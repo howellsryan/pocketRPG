@@ -20,6 +20,9 @@ import {
   removeQuestFromQueueIntent,
   buildCombatTask,
   runCombatTask,
+  buildClueTask,
+  CLUE_LEVELS,
+  isClaimableTask,
   planDungeoneeringReward,
   assignSlayerTask,
   slayerStatus,
@@ -515,6 +518,36 @@ describe('combat intents — slayer task credit', () => {
     expect(r.slayerTask).toBeUndefined()
     // Slayer task settings unchanged
     expect(save.settings.slayerTask.monstersRemaining).toBe(500)
+  })
+})
+
+describe('clue intents', () => {
+  it('advertises the four clue levels', () => {
+    expect(CLUE_LEVELS).toEqual(['medium', 'hard', 'elite', 'master'])
+  })
+
+  it('builds a clue task when the scroll is in the inventory', () => {
+    const save = makeSave({ inventory: [{ itemId: 'clue_scroll_medium', quantity: 1 }] })
+    const task = buildClueTask(save, 'medium')
+    expect(task.type).toBe('clue')
+    expect(task.gatherTask).toMatchObject({ clueLevel: 'medium', requiresItem: 'clue_scroll_medium' })
+    expect(task.gatherTask.ticks).toBeGreaterThan(0)
+    // The built task is claimable via the MCP idle pipeline.
+    expect(isClaimableTask(task)).toBe(true)
+  })
+
+  it('rejects an unknown clue level', () => {
+    const save = makeSave({ inventory: [{ itemId: 'clue_scroll_medium', quantity: 1 }] })
+    expect(() => buildClueTask(save, 'beginner')).toThrow(/Unknown clue level/)
+  })
+
+  it('refuses when the scroll is only in the bank (clues solve from inventory)', () => {
+    const save = makeSave({ bank: { clue_scroll_elite: { itemId: 'clue_scroll_elite', quantity: 2 } } })
+    expect(() => buildClueTask(save, 'elite')).toThrow(/inventory/i)
+  })
+
+  it('refuses when no scroll is held at all', () => {
+    expect(() => buildClueTask(makeSave(), 'hard')).toThrow(/clue scroll/i)
   })
 })
 

@@ -9,6 +9,7 @@
 import itemsData from '../../../src/data/items.json' assert { type: 'json' }
 import monstersData from '../../../src/data/monsters.json' assert { type: 'json' }
 import prayersData from '../../../src/data/prayers.json' assert { type: 'json' }
+import cluesData from '../../../src/data/clues.json' assert { type: 'json' }
 import { GameApiError } from '../game/errors.js'
 import {
   canonicalItemId,
@@ -24,6 +25,7 @@ import { equipItem, unequipSlot, checkEquipRequirements, createEquipment } from 
 import { getLevelFromXP } from '../../../src/engine/experience.js'
 import { simulateIdleSkilling, simulateIdleAgility, simulateIdleCombat, simulateIdleGather } from '../../../src/engine/idleEngine.js'
 import { GATHER_TASKS, findGatherTask } from '../../../src/engine/gatherTasks.js'
+import { getClueCompletionTicks } from '../../../src/engine/clueScrolls.js'
 import { normaliseIdleCombatSetup, defaultIdleCombatSetup, isFoodItem, isPotionItem, getFoodHealAmount } from '../../../src/engine/idleSupplies.js'
 import { simulateIdleThieving } from '../../../src/engine/thieving.js'
 import { simulateIdleHunting } from '../../../src/engine/hunter.js'
@@ -159,7 +161,7 @@ export const SKILL_IDLE_SKILLS = new Set([...IDLE_AUTOBANK_GATHERING_SKILLS, ...
 // magic, construction, dungeoneering and slayer use other systems.
 export const SUPPORTED_IDLE_SKILLS = [...SKILL_IDLE_SKILLS, 'agility', 'thieving', 'hunter']
 
-const SUPPORTED_IDLE_TYPES = new Set(['skill', 'agility', 'thieving', 'hunter', 'quest', 'combat', 'gather'])
+const SUPPORTED_IDLE_TYPES = new Set(['skill', 'agility', 'thieving', 'hunter', 'quest', 'combat', 'gather', 'clue'])
 
 export function isClaimableTask(task) {
   if (!task || !SUPPORTED_IDLE_TYPES.has(task.type)) return false
@@ -189,6 +191,28 @@ export function buildGatherTask(_save, taskId) {
     throw new GameApiError('GP_COST_NOT_SUPPORTED', `'${gatherTask.name}' costs ${gatherTask.gpCost} GP per action which is not yet tracked by the MCP idle engine. Use the game client.`, 400)
   }
   return { type: 'gather', gatherTask }
+}
+
+// Clue-scroll levels the player can solve (keys of clues.json).
+export const CLUE_LEVELS = Object.keys(cluesData)
+
+// Build (and validate) a type:'clue' idle task. The clue completion endpoint
+// consumes the scroll from the inventory (settleActionCompletion →
+// removeItemFromInventory), so require it there before starting — a scroll
+// sitting only in the bank would fail to claim. Rewards are rolled
+// server-side at claim time, so this builds only the timer/consumption shape.
+export function buildClueTask(save, clueLevel) {
+  if (!clueLevel || !CLUE_LEVELS.includes(clueLevel)) {
+    throw new GameApiError('UNKNOWN_CLUE_LEVEL', `Unknown clue level '${clueLevel}'. Valid levels: ${CLUE_LEVELS.join(', ')}.`, 400)
+  }
+  const requiresItem = `clue_scroll_${clueLevel}`
+  const inv = getInventory(save)
+  const held = inv.reduce((n, s) => n + (s?.itemId === requiresItem ? (Number(s.quantity) || 0) : 0), 0)
+  if (held < 1) {
+    throw new GameApiError('NO_CLUE_SCROLL', `No ${clueLevel} clue scroll in the inventory. Withdraw a ${requiresItem} from the bank before starting — clues are solved from the inventory.`, 400)
+  }
+  const ticks = getClueCompletionTicks(clueLevel)
+  return { type: 'clue', gatherTask: { id: `complete_${clueLevel}_clue`, clueLevel, requiresItem, ticks }, bankingEnabled: true }
 }
 
 function findSkillEntry(skill, key, id) {

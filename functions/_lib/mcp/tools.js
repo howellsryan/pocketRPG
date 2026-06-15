@@ -4,7 +4,7 @@ import { getItem, getMonster, itemName, withItemName, REFERENCE_RESOURCES, readR
 import { loadCharacterWithSave, writeSave } from '../game/save.js'
 import { auditLog } from '../game/audit.js'
 import { assertNotInActiveMatch } from '../pvp.js'
-import { depositToBank, withdrawFromBank, equip, unequip, buildIdleTask, runIdleTask, isClaimableTask, buildGatherTask, buildQuestTask, applyQuestTask, questStatuses, buildCombatTask, runCombatTask, planDungeoneeringReward, setIdleCombatSetup, idleCombatSetupSummary, idleFoodWarning, addQuestToQueueIntent, removeQuestFromQueueIntent, dropFromQueue, assignSlayerTask, slayerStatus } from './intents.js'
+import { depositToBank, withdrawFromBank, equip, unequip, buildIdleTask, runIdleTask, isClaimableTask, buildGatherTask, buildClueTask, CLUE_LEVELS, buildQuestTask, applyQuestTask, questStatuses, buildCombatTask, runCombatTask, planDungeoneeringReward, setIdleCombatSetup, idleCombatSetupSummary, idleFoodWarning, addQuestToQueueIntent, removeQuestFromQueueIntent, dropFromQueue, assignSlayerTask, slayerStatus } from './intents.js'
 import { getIdleRow, setIdleTask, resetIdleActiveAt, clearIdleTask, advanceIdleClock } from './idle.js'
 import { SKIP_HOUR_MS } from '../../../src/engine/skipPreflight.js'
 import { simulateBossFight, applyBossFightOutcome } from './bossFight.js'
@@ -31,6 +31,8 @@ import { onRequestPost as postSellImmediate } from '../../api/trading-post/sell-
 import { onRequestPost as completeMonster } from '../../api/actions/monster/complete.js'
 import { onRequestPost as completeRaid } from '../../api/actions/raid/complete.js'
 import { onRequestPost as completeDungeoneering } from '../../api/actions/dungeoneering/complete.js'
+import { onRequestPost as completeClue } from '../../api/actions/clue/complete.js'
+import { TICK_DURATION } from '../../../src/utils/constants.js'
 
 function ok(payload) {
   const text = typeof payload === 'string' ? payload : JSON.stringify(payload, null, 2)
@@ -82,7 +84,7 @@ const MIN_IDLE_MS = 2000
 // Claim a character's running idle skilling task: simulate the elapsed window
 // server-side, apply it to the save, then reset the idle clock. Only supported
 // production-skill tasks are claimed; anything else is left for the game client.
-async function claimIdleCore(env, characterId, identityId) {
+async function claimIdleCore(env, characterId, identityId, authorization) {
   const idle = await getIdleRow(env, characterId)
   if (!idle || !idle.active_task) return { claimed: false, reason: 'no_active_task' }
   let task
@@ -98,6 +100,14 @@ async function claimIdleCore(env, characterId, identityId) {
   // are deferred to the game client where death is handled explicitly.
   if (task.type === 'combat' && (await isOneLifeCharacter(env, characterId))) {
     return { claimed: false, reason: 'one_life_combat' }
+  }
+
+  // Clues are server-rolled: once the timer has elapsed, the completion
+  // endpoint claims a nonce, consumes the scroll, rolls loot and records the
+  // collection log — all in its own atomic save write. We never simulate clue
+  // rewards locally; until the timer finishes we leave the task running.
+  if (task.type === 'clue') {
+    return claimClueCore(env, characterId, authorization, task, elapsedMs, now)
   }
 
   const { saveObject, saveRevision } = await loadCharacterWithSave(env, characterId, identityId)
@@ -128,6 +138,41 @@ async function claimIdleCore(env, characterId, identityId) {
   await writeSave(env, characterId, saveObject, saveRevision)
   await resetIdleActiveAt(env, characterId, now)
   return { claimed: true, elapsedMs, ...result }
+}
+
+// Finish a running clue scroll. Solving a clue is a single server-rolled
+// completion (one scroll → 1–4 rewards), so we complete exactly one clue once
+// the timer elapses and clear the idle slot. The completion endpoint is the
+// same one the game client calls; it owns the save write, nonce claim and
+// collection-log persistence.
+async function claimClueCore(env, characterId, authorization, task, elapsedMs, now) {
+  const clueLevel = task.gatherTask?.clueLevel
+  const requiresItem = task.gatherTask?.requiresItem
+  const ticks = Math.max(1, Number(task.gatherTask?.ticks) || 0)
+  const elapsedTicks = Math.floor(elapsedMs / TICK_DURATION)
+  if (elapsedTicks < ticks) {
+    return { claimed: false, reason: 'in_progress', elapsedMs, ticksRemaining: ticks - elapsedTicks }
+  }
+  const res = await callHandler(completeClue, env, {
+    method: 'POST',
+    authorization,
+    characterId,
+    body: {
+      sourceId: clueLevel,
+      actionNonce: `mcp-clue:${characterId}:${clueLevel}:${now}`,
+      consumptions: [{ itemId: requiresItem, quantity: 1 }],
+    },
+  })
+  if (!res.ok) throw httpError(res)
+  await clearIdleTask(env, characterId, now)
+  return {
+    claimed: true,
+    type: 'clue',
+    elapsedMs,
+    clueLevel,
+    granted: res.data?.granted || [],
+    collectionLogEntries: res.data?.collectionLogEntries || [],
+  }
 }
 
 // True if the character is a One-Life account (combat death = permanent wipe).
@@ -434,6 +479,12 @@ const TOOLS = {
         ? { type: 'combat', monster: task.monster?.name || task.monster?.id || null, stance: task.stance || null }
         : task.type === 'gather'
         ? { type: 'gather', taskId: task.gatherTask?.id || null, task: task.gatherTask?.name || null }
+        : task.type === 'clue'
+        ? {
+            type: 'clue',
+            clueLevel: task.gatherTask?.clueLevel || null,
+            secondsRemaining: Math.max(0, Math.ceil(((Number(task.gatherTask?.ticks) || 0) * TICK_DURATION) / 1000) - runningForSeconds),
+          }
         : {
             type: task.type,
             skill: task.skill || (task.type !== 'skill' ? task.type : null),
@@ -458,7 +509,7 @@ const TOOLS = {
     // Bank any pending rewards from a current supported task before switching;
     // refuse if an unsupported activity (combat/gather/…) is mid-flight so we
     // never silently discard its progress.
-    const autoClaimed = await claimIdleCore(env, id, identity.id)
+    const autoClaimed = await claimIdleCore(env, id, identity.id, authorization)
     if (autoClaimed.reason === 'unsupported_type') {
       throw new Error(`An active ${autoClaimed.type} activity is in progress — claim it in the game client first.`)
     }
@@ -486,7 +537,7 @@ const TOOLS = {
     if (lock) throw new Error('Blocked: the character is in an active PvP match.')
     await assertNoActiveQuest(env, id)
 
-    const autoClaimed = await claimIdleCore(env, id, identity.id)
+    const autoClaimed = await claimIdleCore(env, id, identity.id, authorization)
     if (autoClaimed.reason === 'unsupported_type') {
       throw new Error(`An active ${autoClaimed.type} activity is in progress — claim it in the game client first.`)
     }
@@ -507,12 +558,41 @@ const TOOLS = {
     })
   },
 
+  async start_clue({ clue_level, character_id }, { env, authorization, identity }) {
+    if (!identity?.id) throw new Error('Not authenticated.')
+    if (!clue_level) throw new Error('clue_level is required.')
+    const id = await resolveCharacterId(env, authorization, character_id)
+    const lock = await assertNotInActiveMatch(env, id)
+    if (lock) throw new Error('Blocked: the character is in an active PvP match.')
+    await assertNoActiveQuest(env, id)
+
+    const autoClaimed = await claimIdleCore(env, id, identity.id, authorization)
+    if (autoClaimed.reason === 'unsupported_type') {
+      throw new Error(`An active ${autoClaimed.type} activity is in progress — claim it in the game client first.`)
+    }
+    if (autoClaimed.reason === 'one_life_combat') {
+      throw new Error('One-Life combat is in progress — claim it in the game client, where death is handled.')
+    }
+
+    const { saveObject } = await loadCharacterWithSave(env, id, identity.id)
+    const task = buildClueTask(saveObject, clue_level) // validates level + scroll held in inventory
+    const now = Date.now()
+    await setIdleTask(env, id, JSON.stringify(task), now)
+    await auditLog(env, 'mcp_start_clue', { characterId: id, identityId: identity.id, clueLevel: clue_level }, { swallow: true })
+    return ok({
+      characterId: id,
+      started: { clueLevel: task.gatherTask.clueLevel, requiresItem: task.gatherTask.requiresItem, ticks: task.gatherTask.ticks },
+      note: 'Clue started — it solves after its timer of real time, then consumes one scroll and banks server-rolled rewards. Call claim_activity to collect; skip_hour advances an hour.',
+      autoClaimed: autoClaimed.claimed ? autoClaimed : undefined,
+    })
+  },
+
   async claim_activity({ character_id }, { env, authorization, identity }) {
     if (!identity?.id) throw new Error('Not authenticated.')
     const id = await resolveCharacterId(env, authorization, character_id)
     const lock = await assertNotInActiveMatch(env, id)
     if (lock) throw new Error('Blocked: the character is in an active PvP match.')
-    const result = await claimIdleCore(env, id, identity.id)
+    const result = await claimIdleCore(env, id, identity.id, authorization)
     if (!result.claimed) {
       if (result.reason === 'unsupported_type') {
         return ok({ characterId: id, claimed: false, note: `The active ${result.type} activity must be claimed in the game client.` })
@@ -547,7 +627,7 @@ const TOOLS = {
 
     // Bank/clear any pending supported skilling task first; refuse if an
     // unsupported activity is mid-flight so its progress isn't discarded.
-    const autoClaimed = await claimIdleCore(env, id, identity.id)
+    const autoClaimed = await claimIdleCore(env, id, identity.id, authorization)
     if (autoClaimed.reason === 'unsupported_type') {
       throw new Error(`An active ${autoClaimed.type} activity is in progress — claim it in the game client first.`)
     }
@@ -637,7 +717,7 @@ const TOOLS = {
       })
     }
 
-    const autoClaimed = await claimIdleCore(env, id, identity.id)
+    const autoClaimed = await claimIdleCore(env, id, identity.id, authorization)
     if (autoClaimed.reason === 'unsupported_type') {
       throw new Error(`An active ${autoClaimed.type} activity is in progress — claim it in the game client first.`)
     }

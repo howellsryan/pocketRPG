@@ -103,6 +103,7 @@ describe('MCP tool schema', () => {
       'get_active_activity',
       'start_skilling',
       'start_gather',
+      'start_clue',
       'claim_activity',
       'get_quests',
       'start_quest',
@@ -356,5 +357,118 @@ describe('MCP trading-post source: inventory|bank', () => {
     expect(written.bank.fighter_helm).toBeUndefined()
     // Inventory copy untouched — the bank was the source.
     expect(written.inventory.find((s: any) => s.itemId === 'fighter_helm')?.quantity).toBe(1)
+  })
+})
+
+describe('MCP clue scrolls (start_clue + server claim)', () => {
+  const TEST_SECRET = 'test-jwt-secret'
+  const IDENTITY = 'identity-clue'
+
+  // Stateful mock backing the idle table, the save and the nonce/collection-log
+  // writes the clue completion endpoint performs. The clue claim bridges to the
+  // real /api/actions/clue/complete handler, so this exercises the full path.
+  function mockEnv(opts: { save: any; idle: any }) {
+    const idle = { ...opts.idle }
+    const captured: { saveData: string | null; nonces: string[] } = { saveData: null, nonces: [] }
+    const blob = gzipJsonString(JSON.stringify(opts.save))
+    const prepare = (sql: string) => ({
+      bind: (...args: any[]) => ({
+        all: async () => {
+          if (sql.includes('FROM characters c') && sql.includes('total_pvp_kills')) {
+            return { results: [{ id: 7, username: 'Hero', is_ironman: 0, is_one_life: 0, created_at: 1 }] }
+          }
+          return { results: [] }
+        },
+        first: async () => {
+          if (sql.includes('FROM character_idle_state')) {
+            return idle.active_task === null && idle.last_active_at === null
+              ? null
+              : { last_active_at: idle.last_active_at, active_task: idle.active_task, updated_at: idle.updated_at || 1 }
+          }
+          if (sql.includes('active_match_id FROM characters')) return { active_match_id: null }
+          if (sql.includes('FROM pvp_matches')) return null
+          if (sql.includes('c.credits') && sql.includes('save_blob')) {
+            return { id: Number(args[0]), owner_id: args[1], is_ironman: 0, credits: 0, save_blob: await blob, save_data: null, updated_at: 123, save_revision: 0 }
+          }
+          if (sql.includes('save_revision FROM saves')) return { save_revision: 1 }
+          return null
+        },
+        run: async () => {
+          if (sql.startsWith('UPDATE saves')) captured.saveData = args[1]
+          if (sql.includes('INSERT INTO action_nonces')) {
+            const nonce = String(args[1])
+            if (captured.nonces.includes(nonce)) return { meta: { changes: 0 } }
+            captured.nonces.push(nonce)
+            return { meta: { changes: 1 } }
+          }
+          if (sql.includes('UPDATE character_idle_state') && sql.includes('active_task = NULL')) {
+            idle.active_task = null
+            idle.last_active_at = args[0]
+          }
+          if (sql.includes('INSERT INTO character_idle_state')) {
+            idle.last_active_at = args[1]
+            idle.active_task = args[2]
+          }
+          return { meta: { changes: 1 } }
+        },
+      }),
+    })
+    const env = { DB: { prepare, batch: async () => [] }, JWT_SECRET: TEST_SECRET } as any
+    return { env, idle, captured }
+  }
+
+  async function ctxFor(env: any) {
+    const token = await signJWT({ sub: IDENTITY, provider: 'test' }, TEST_SECRET)
+    return { env, authorization: `Bearer ${token}`, identity: { id: IDENTITY } } as any
+  }
+
+  const clueTask = (now: number, elapsedMs: number) => ({
+    active_task: JSON.stringify({ type: 'clue', gatherTask: { id: 'complete_medium_clue', clueLevel: 'medium', requiresItem: 'clue_scroll_medium', ticks: 500 }, bankingEnabled: true }),
+    last_active_at: now - elapsedMs,
+    updated_at: now - elapsedMs,
+  })
+
+  it('claims a finished clue via the completion endpoint, granting loot and clearing the slot', async () => {
+    const now = Date.now()
+    // medium clue = 500 ticks = 300_000ms; 10 minutes elapsed → done.
+    const { env, idle } = mockEnv({
+      save: { inventory: [{ itemId: 'clue_scroll_medium', quantity: 1 }], bank: {} },
+      idle: clueTask(now, 600_000),
+    })
+    const res = await callTool('claim_activity', { character_id: 7 }, await ctxFor(env))
+    expect(res.isError).toBeFalsy()
+    const data = JSON.parse(res.content[0].text)
+    expect(data.claimed).toBe(true)
+    expect(data.clueLevel).toBe('medium')
+    expect(Array.isArray(data.granted)).toBe(true)
+    expect(data.granted.length).toBeGreaterThan(0)
+    // Slot cleared after a successful clue completion.
+    expect(idle.active_task).toBeNull()
+  })
+
+  it('leaves an unfinished clue running (in_progress, slot intact)', async () => {
+    const now = Date.now()
+    const { env, idle } = mockEnv({
+      save: { inventory: [{ itemId: 'clue_scroll_medium', quantity: 1 }], bank: {} },
+      idle: clueTask(now, 10_000), // 10s « 300_000ms
+    })
+    const res = await callTool('claim_activity', { character_id: 7 }, await ctxFor(env))
+    expect(res.isError).toBeFalsy()
+    const data = JSON.parse(res.content[0].text)
+    expect(data.claimed).toBe(false)
+    expect(data.reason).toBe('in_progress')
+    expect(idle.active_task).not.toBeNull()
+  })
+
+  it('start_clue refuses when the scroll is not in the inventory', async () => {
+    const now = Date.now()
+    const { env } = mockEnv({
+      save: { inventory: [], bank: { clue_scroll_master: { itemId: 'clue_scroll_master', quantity: 1 } } },
+      idle: { active_task: null, last_active_at: null },
+    })
+    void now
+    const res = await callTool('start_clue', { clue_level: 'master', character_id: 7 }, await ctxFor(env))
+    expect(res.isError).toBe(true)
+    expect(res.content[0].text).toMatch(/inventory/i)
   })
 })

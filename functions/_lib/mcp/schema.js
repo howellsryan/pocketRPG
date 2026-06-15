@@ -3,7 +3,7 @@
 // `initialize`. Kept free of handler imports so it can be unit-tested cheaply.
 // The dispatch table in tools.js must expose exactly these names.
 
-import { EQUIP_SLOT_NAMES, SUPPORTED_IDLE_SKILLS, GATHER_TASK_IDS } from './intents.js'
+import { EQUIP_SLOT_NAMES, SUPPORTED_IDLE_SKILLS, GATHER_TASK_IDS, CLUE_LEVELS } from './intents.js'
 import { SKILL_IDS, REFERENCE_TOPIC_NAMES } from './reference.js'
 
 const IDLE_SKILLS = [...SUPPORTED_IDLE_SKILLS]
@@ -53,9 +53,10 @@ Acting:
 - Idle training: start_skilling begins a task that earns XP/items over real
   time (gathering + production skilling, agility, thieving, hunter);
   start_gather starts a field-gathering task (bowstrings, herbs, seaweed, etc.
-  — no level requirement); get_active_activity shows what's running;
-  claim_activity banks the accrued rewards and keeps it going.
-  Combat/farming/prayer/magic idle is still done in the game client.
+  — no level requirement); start_clue solves a clue scroll held in the
+  inventory (server-rolled treasure on completion); get_active_activity shows
+  what's running; claim_activity banks the accrued rewards and keeps it going.
+  Farming/prayer/magic idle is still done in the game client.
 - Quests: get_quests shows what's completed, startable now, or locked (with the
   missing requirements). start_quest begins an eligible quest — it runs for its
   duration of real time, then claim_activity grants the XP/coins and unlocks its
@@ -500,6 +501,21 @@ export const TOOL_SCHEMAS = [
       additionalProperties: false,
     },
     annotations: WRITE('Start gather task'),
+  },
+  {
+    name: 'start_clue',
+    description:
+      "Start solving a clue scroll the character is holding. The scroll must be in the character's INVENTORY (withdraw it from the bank first if needed). It solves after a timer of real time, then consumes one scroll and banks 1–4 server-rolled treasure rewards (with collection-log credit). claim_activity collects the result; skip_hour advances an hour. Valid clue_level values: " + CLUE_LEVELS.join(', ') + '. See pocketrpg://reference/clues for reward tables.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        clue_level: { type: 'string', enum: CLUE_LEVELS, description: "The clue tier to solve, e.g. 'medium', 'hard', 'elite', 'master'." },
+        ...optionalCharacterId,
+      },
+      required: ['clue_level'],
+      additionalProperties: false,
+    },
+    annotations: WRITE('Start clue scroll'),
   },
   {
     name: 'claim_activity',
