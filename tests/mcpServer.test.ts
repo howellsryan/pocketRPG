@@ -71,6 +71,7 @@ describe('MCP tool schema', () => {
   it('exposes the expected tool set', () => {
     expect(TOOL_NAMES).toEqual([
       'list_characters',
+      'create_character',
       'get_account',
       'logout',
       'get_character_state',
@@ -614,5 +615,58 @@ describe('MCP unlock purchases (buy_unlock + buy_slayer_unlock)', () => {
     const res = await callTool('buy_slayer_unlock', { unlock_id: 'not_a_real_unlock', character_id: 7 }, await ctxFor(env))
     expect(res.isError).toBe(true)
     expect(res.content[0].text).toMatch(/Unknown slayer unlock/)
+  })
+})
+
+describe('MCP create_character', () => {
+  const TEST_SECRET = 'test-jwt-secret'
+  const IDENTITY = 'identity-create'
+
+  async function ctxFor(env: any) {
+    const token = await signJWT({ sub: IDENTITY, provider: 'test' }, TEST_SECRET)
+    return { env, authorization: `Bearer ${token}`, identity: { id: IDENTITY } } as any
+  }
+
+  function mockEnv({ reservedTaken = false, nameTaken = false }: { reservedTaken?: boolean; nameTaken?: boolean } = {}) {
+    const prepare = (sql: string) => ({
+      bind: (..._args: any[]) => ({
+        first: async () => {
+          if (sql.includes('FROM reserved_usernames')) return reservedTaken ? { username: 'taken' } : null
+          if (sql.includes('SELECT id FROM characters WHERE username')) return nameTaken ? { id: 1 } : null
+          return null
+        },
+        run: async () => ({ meta: { last_row_id: 42, changes: 1 } }),
+      }),
+    })
+    return { env: { DB: { prepare }, JWT_SECRET: TEST_SECRET } as any }
+  }
+
+  it('creates a character with a valid username', async () => {
+    const { env } = mockEnv()
+    const res = await callTool('create_character', { username: 'Newbie_1' }, await ctxFor(env))
+    expect(res.isError).toBeFalsy()
+    const data = JSON.parse(res.content[0].text)
+    expect(data.character).toMatchObject({ id: 42, username: 'Newbie_1', is_ironman: false, is_one_life: false })
+  })
+
+  it('passes the ironman / one-life flags through', async () => {
+    const { env } = mockEnv()
+    const res = await callTool('create_character', { username: 'IronHero', is_ironman: true, is_one_life: true }, await ctxFor(env))
+    const data = JSON.parse(res.content[0].text)
+    expect(data.character).toMatchObject({ is_ironman: true, is_one_life: true })
+  })
+
+  it('refuses an invalid username before touching the DB', async () => {
+    const { env } = mockEnv()
+    const res = await callTool('create_character', { username: 'ab' }, await ctxFor(env)) // too short
+    expect(res.isError).toBe(true)
+    expect(res.content[0].text).toMatch(/3.16/)
+  })
+
+  it('refuses a taken username', async () => {
+    const { env } = mockEnv({ nameTaken: true })
+    const res = await callTool('create_character', { username: 'TakenName' }, await ctxFor(env))
+    expect(res.isError).toBe(true)
+    expect(res.content[0].text).toMatch(/already taken/i)
   })
 })

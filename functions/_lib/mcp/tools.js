@@ -11,7 +11,7 @@ import { simulateBossFight, applyBossFightOutcome } from './bossFight.js'
 import raidsData from '../../../src/data/raids.json' assert { type: 'json' }
 
 // Reuse the exact production endpoint handlers (see bridge.js).
-import { onRequestGet as listCharacters } from '../../api/characters/index.js'
+import { onRequestGet as listCharacters, onRequestPost as createCharacter } from '../../api/characters/index.js'
 import { onRequestGet as getMe } from '../../api/auth/me.js'
 import { onRequestGet as getSave } from '../../api/save.js'
 import { onRequestGet as getCollectionLog } from '../../api/collection-log.js'
@@ -244,6 +244,20 @@ async function assertNoActiveQuest(env, characterId) {
 const TOOLS = {
   async list_characters(_args, { env, authorization }) {
     const res = await callHandler(listCharacters, env, { authorization })
+    if (!res.ok) throw httpError(res)
+    return ok(res.data)
+  },
+
+  // Create a new character on the account. The endpoint validates the username
+  // and uniqueness; the ironman / one-life flags are permanent once set.
+  async create_character({ username, is_ironman, is_one_life }, { env, authorization, identity }) {
+    if (!identity?.id) throw new Error('Not authenticated.')
+    if (!username) throw new Error('username is required.')
+    const res = await callHandler(createCharacter, env, {
+      method: 'POST',
+      authorization,
+      body: { username, is_ironman: !!is_ironman, is_one_life: !!is_one_life },
+    })
     if (!res.ok) throw httpError(res)
     return ok(res.data)
   },

@@ -128,6 +128,22 @@ export const TOOL_SCHEMAS = [
     annotations: READ('List characters'),
   },
   {
+    name: 'create_character',
+    description:
+      "Create a new character on the signed-in account. Username must be 3–16 characters, letters/digits/_/- only, and not already taken or reserved. The optional ironman (no trading post) and one-life (permadeath) flags are PERMANENT once set — confirm them with the player. Note One-Life combat is still played in the game client, where death is handled. Returns the new character.",
+    inputSchema: {
+      type: 'object',
+      properties: {
+        username: { type: 'string', description: '3–16 characters, letters/digits/_/- only.' },
+        is_ironman: { type: 'boolean', description: 'Permanent ironman mode (no trading post). Defaults false.' },
+        is_one_life: { type: 'boolean', description: 'Permanent one-life/permadeath mode. Defaults false.' },
+      },
+      required: ['username'],
+      additionalProperties: false,
+    },
+    annotations: WRITE('Create character'),
+  },
+  {
     name: 'get_account',
     description:
       "Get the signed-in account identity and, if a character is given, that character's credit balance and PvP kill total.",
