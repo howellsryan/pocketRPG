@@ -26,6 +26,7 @@ import { simulateIdleSkilling, simulateIdleAgility, simulateIdleCombat } from '.
 import { normaliseIdleCombatSetup, defaultIdleCombatSetup, isFoodItem, isPotionItem, getFoodHealAmount } from '../../../src/engine/idleSupplies.js'
 import { simulateIdleThieving } from '../../../src/engine/thieving.js'
 import { simulateIdleHunting } from '../../../src/engine/hunter.js'
+import { applyTaskResult } from '../../../src/engine/applyTaskResult.js'
 import skillsData from '../../../src/data/skills.json' assert { type: 'json' }
 import { getDungeoneeringRewardCost } from '../../../src/engine/dungeoneeringTokens.js'
 import { SLAYER_MASTERS, pickSlayerMonster, buildSlayerTask } from '../../../src/engine/slayerMasters.js'
@@ -234,76 +235,37 @@ export function toSlotArray(save) {
   return arr
 }
 
-// Coins from agility/thieving land in the inventory (stackable, coalescing),
-// falling back to the bank when the inventory is full — matching the client.
-function addCoinsInventoryFirst(save, qty) {
-  if (qty <= 0) return
-  try { addItemToInventory(save, 'coins', qty, { stackable: true }) }
-  catch { addItemToBank(save, 'coins', qty) }
-}
-
 const named = (obj) => Object.entries(obj || {}).map(([itemId, quantity]) => ({ itemId, name: itemsData[itemId]?.name || itemId, quantity }))
 
-// Apply an idle simulation result to the save. Mirrors the client's load-time
-// application (gameState.jsx) exactly per task type so the two paths can't drift.
-export function applyIdleResult(save, sim, type) {
+// Helper: build the normalised state, call applyTaskResult, and write back any
+// fields that may have been replaced (inventory is always a new array after
+// toSlotArray; the others are shared references so mutations propagate).
+function applyToSave(save, sim, type) {
   if (!save.stats || typeof save.stats !== 'object') save.stats = {}
   if (!save.bank || typeof save.bank !== 'object') save.bank = {}
+  if (!save.equipment || typeof save.equipment !== 'object') save.equipment = {}
+  if (!save.settings || typeof save.settings !== 'object') save.settings = {}
+  const inv28 = toSlotArray(save)
+  const state = { stats: save.stats, inventory: inv28, bank: save.bank, equipment: save.equipment, settings: save.settings }
+  const result = applyTaskResult(state, sim, type)
+  save.inventory = state.inventory  // may be sim.finalInventory or modified inv28
+  return result
+}
 
-  // XP (all types) — only for skills the save already tracks.
-  if (sim.xpGained) {
-    for (const [skill, xp] of Object.entries(sim.xpGained)) {
-      if (xp > 0 && save.stats[skill]) {
-        const newXP = Math.min((save.stats[skill].xp || 0) + Math.floor(xp), XP_CAP)
-        save.stats[skill] = { ...save.stats[skill], xp: newXP, level: getLevelFromXP(newXP) }
-      }
-    }
-  }
-
-  if (sim.dungeoneeringTokensGained > 0) {
-    if (!save.settings || typeof save.settings !== 'object') save.settings = {}
-    save.settings.dungeoneeringTokens = (Number(save.settings.dungeoneeringTokens) || 0) + Math.floor(sim.dungeoneeringTokensGained)
-  }
-
-  if (sim.itemsConsumed) {
-    for (const [itemId, qty] of Object.entries(sim.itemsConsumed)) {
-      const existing = save.bank[itemId]
-      if (!existing) continue
-      const newQty = (Number(existing.quantity) || 0) - qty
-      if (newQty <= 0) delete save.bank[itemId]
-      else save.bank[itemId] = { ...existing, quantity: newQty }
-    }
-  }
-
-  const bankAdd = (itemId, qty) => {
-    if (qty <= 0) return
-    const existing = save.bank[itemId]
-    save.bank[itemId] = existing
-      ? { ...existing, quantity: (Number(existing.quantity) || 0) + qty }
-      : { itemId, quantity: qty }
-  }
-
-  let banked = {}
-  if (type === 'skill' || type === 'gather' || type === 'clue') {
-    if (Array.isArray(sim.finalInventory)) save.inventory = sim.finalInventory
-    banked = sim.lootBanked || sim.itemsBanked || {}
-    for (const [itemId, qty] of Object.entries(banked)) bankAdd(itemId, qty)
-  } else if (type === 'agility' || type === 'thieving') {
-    addCoinsInventoryFirst(save, Number(sim.coinsGained) || 0)
-  } else if (type === 'hunter') {
-    for (const reward of sim.rewards || []) bankAdd(reward.itemId, reward.quantity)
-  } else if (sim.itemsGained) {
-    for (const [itemId, qty] of Object.entries(sim.itemsGained)) bankAdd(itemId, qty)
-  }
-
+// Apply an idle simulation result to the save. Kept for backward compatibility
+// with existing callers; delegates to the shared applyTaskResult.
+export function applyIdleResult(save, sim, type) {
+  const result = applyToSave(save, sim, type)
   return {
     skill: sim.skill,
     action: sim.actionName,
     actions: sim.actions || sim.laps || 0,
     xpGained: sim.xpGained || {},
     coinsGained: Number(sim.coinsGained) || 0,
-    itemsBanked: named(banked),
-    rewards: type === 'hunter' ? (sim.rewards || []).map((r) => ({ itemId: r.itemId, name: itemsData[r.itemId]?.name || r.itemId, quantity: r.quantity })) : undefined,
+    itemsBanked: named(result.banked),
+    rewards: type === 'hunter'
+      ? (sim.rewards || []).map((r) => ({ itemId: r.itemId, name: itemsData[r.itemId]?.name || r.itemId, quantity: r.quantity }))
+      : undefined,
     itemsConsumed: named(sim.itemsConsumed),
     stoppedReason: sim.stoppedReason || null,
   }
@@ -312,10 +274,15 @@ export function applyIdleResult(save, sim, type) {
 // Run the right idle simulator for the task type and apply it. Pure over the
 // save (no DB); the caller persists.
 export function runIdleTask(save, task, elapsedMs) {
+  if (!save.stats || typeof save.stats !== 'object') save.stats = {}
+  if (!save.bank || typeof save.bank !== 'object') save.bank = {}
+  if (!save.equipment || typeof save.equipment !== 'object') save.equipment = {}
+  if (!save.settings || typeof save.settings !== 'object') save.settings = {}
+  const inv28 = toSlotArray(save)
   let sim = null
   switch (task.type) {
     case 'skill':
-      sim = simulateIdleSkilling(task, elapsedMs, save.bank || {}, save.equipment || {}, save.stats || {}, itemsData, toSlotArray(save))
+      sim = simulateIdleSkilling(task, elapsedMs, save.bank, save.equipment, save.stats, itemsData, inv28)
       break
     case 'agility':
       sim = simulateIdleAgility(task, elapsedMs)
@@ -330,7 +297,23 @@ export function runIdleTask(save, task, elapsedMs) {
       return { applied: false, reason: 'unsupported_type' }
   }
   if (!sim) return { applied: false, reason: 'no_progress' }
-  return { applied: true, ...applyIdleResult(save, sim, task.type) }
+  const state = { stats: save.stats, inventory: inv28, bank: save.bank, equipment: save.equipment, settings: save.settings }
+  const result = applyTaskResult(state, sim, task.type)
+  save.inventory = state.inventory
+  return {
+    applied: true,
+    skill: sim.skill,
+    action: sim.actionName,
+    actions: sim.actions || sim.laps || 0,
+    xpGained: sim.xpGained || {},
+    coinsGained: Number(sim.coinsGained) || 0,
+    itemsBanked: named(result.banked),
+    rewards: task.type === 'hunter'
+      ? (sim.rewards || []).map((r) => ({ itemId: r.itemId, name: itemsData[r.itemId]?.name || r.itemId, quantity: r.quantity }))
+      : undefined,
+    itemsConsumed: named(sim.itemsConsumed),
+    stoppedReason: sim.stoppedReason || null,
+  }
 }
 
 // ── Idle combat setup (food / potions / prayers) ─────────────────────────────
@@ -759,90 +742,19 @@ function maxHpFromStats(stats) {
   return stats?.hitpoints ? getLevelFromXP(stats.hitpoints.xp || 0) : 10
 }
 
-// Apply a simulateIdleCombat result to the save. Mirrors the client load-time
-// application (gameState.jsx) field-for-field: HP/death, combat XP, bank-side
-// supply consumption, ammo/charge drain, the post-fight inventory and banked
-// loot. On death nothing is wiped here — HP resets to max and the caller clears
-// the task (One-Life accounts are refused upstream).
-function applyIdleCombatResult(save, sim, task) {
+// Run a combat idle task over the elapsed window and apply it to the save.
+export function runCombatTask(save, task, elapsedMs) {
   if (!save.stats || typeof save.stats !== 'object') save.stats = {}
   if (!save.bank || typeof save.bank !== 'object') save.bank = {}
   if (!save.equipment || typeof save.equipment !== 'object') save.equipment = {}
   if (!save.settings || typeof save.settings !== 'object') save.settings = {}
-
-  const maxHP = maxHpFromStats(save.stats)
-  const died = sim.died === true
-  if (died) {
-    save.settings.currentHP = maxHP
-  } else if (Number.isFinite(Number(sim.finalHP))) {
-    save.settings.currentHP = Math.max(1, Math.min(maxHP, Math.floor(Number(sim.finalHP))))
-  }
-
-  const xpGained = {}
-  if (sim.xpGained) {
-    for (const [skill, xp] of Object.entries(sim.xpGained)) {
-      const amount = Math.floor(Number(xp) || 0)
-      if (amount > 0 && save.stats[skill]) {
-        const newXP = Math.min((save.stats[skill].xp || 0) + amount, XP_CAP)
-        save.stats[skill] = { ...save.stats[skill], xp: newXP, level: getLevelFromXP(newXP) }
-        xpGained[skill] = amount
-      }
-    }
-  }
-
-  // Supplies drawn from the bank (inventory-side consumption is already baked
-  // into sim.finalInventory).
-  if (sim.itemsConsumed) {
-    for (const [itemId, qty] of Object.entries(sim.itemsConsumed)) {
-      const existing = save.bank[itemId]
-      if (!existing) continue
-      const newQty = (Number(existing.quantity) || 0) - qty
-      if (newQty <= 0) delete save.bank[itemId]
-      else save.bank[itemId] = { ...existing, quantity: newQty }
-    }
-  }
-
-  if (sim.ammoConsumed && save.equipment.ammo && save.equipment.ammo.itemId === sim.ammoConsumed.itemId) {
-    const remaining = Math.max(0, (Number(save.equipment.ammo.quantity) || 0) - sim.ammoConsumed.quantity)
-    save.equipment.ammo = remaining > 0 ? { ...save.equipment.ammo, quantity: remaining } : null
-  }
-  if (sim.chargesConsumed > 0 && save.equipment.weapon) {
-    const remaining = Math.max(0, (Number(save.equipment.weapon.charges) || 0) - sim.chargesConsumed)
-    save.equipment.weapon = { ...save.equipment.weapon, charges: remaining }
-  }
-
-  if (Array.isArray(sim.finalInventory)) save.inventory = sim.finalInventory
-  const banked = sim.lootBanked || {}
-  for (const [itemId, qty] of Object.entries(banked)) {
-    if (qty <= 0) continue
-    const existing = save.bank[itemId]
-    save.bank[itemId] = existing
-      ? { ...existing, quantity: (Number(existing.quantity) || 0) + qty }
-      : { itemId, quantity: qty }
-  }
-
-  return {
-    type: 'combat',
-    monster: task.monster?.name || task.monster?.id || null,
-    monstersKilled: sim.monstersKilled || 0,
-    xpGained,
-    lootBanked: named(banked),
-    lootGained: named(sim.lootGained),
-    itemsConsumed: named(sim.itemsConsumed),
-    died,
-    finalHP: died ? 0 : (Number.isFinite(Number(sim.finalHP)) ? Math.floor(Number(sim.finalHP)) : null),
-    stoppedReason: sim.stoppedReason || null,
-  }
-}
-
-// Run a combat idle task over the elapsed window and apply it to the save.
-export function runCombatTask(save, task, elapsedMs) {
-  const stats = save.stats || {}
-  const setup = normaliseIdleCombatSetup(save.settings?.idleCombatSetup)
-  const currentHP = Number.isFinite(Number(save.settings?.currentHP))
+  const stats = save.stats
+  const setup = normaliseIdleCombatSetup(save.settings.idleCombatSetup)
+  const currentHP = Number.isFinite(Number(save.settings.currentHP))
     ? Math.max(0, Math.floor(Number(save.settings.currentHP)))
     : maxHpFromStats(stats)
-  const sim = simulateIdleCombat(task, elapsedMs, stats, save.equipment || {}, toSlotArray(save), itemsData, null, save.bank || {}, {
+  const inv28 = toSlotArray(save)
+  const sim = simulateIdleCombat(task, elapsedMs, stats, save.equipment, inv28, itemsData, null, save.bank, {
     currentHP,
     idleFood: setup.food,
     idlePotions: setup.potions,
@@ -850,7 +762,26 @@ export function runCombatTask(save, task, elapsedMs) {
     prayersData,
   })
   if (!sim) return { applied: false, reason: 'no_progress' }
-  return { applied: true, ...applyIdleCombatResult(save, sim, task) }
+  const state = { stats, inventory: inv28, bank: save.bank, equipment: save.equipment, settings: save.settings }
+  const result = applyTaskResult(state, sim, 'combat')
+  save.inventory = state.inventory
+  const xpGained = {}
+  for (const [skill, xp] of Object.entries(sim.xpGained || {})) {
+    if (Math.floor(Number(xp) || 0) > 0) xpGained[skill] = Math.floor(Number(xp))
+  }
+  return {
+    applied: true,
+    type: 'combat',
+    monster: task.monster?.name || task.monster?.id || null,
+    monstersKilled: result.monstersKilled || 0,
+    xpGained,
+    lootBanked: named(result.banked),
+    lootGained: named(sim.lootGained),
+    itemsConsumed: named(sim.itemsConsumed),
+    died: result.died,
+    finalHP: result.finalHP,
+    stoppedReason: result.stoppedReason,
+  }
 }
 
 // ── Dungeoneering rewards (Phase D increment 2) ───────────────────────────────

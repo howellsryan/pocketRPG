@@ -16,6 +16,7 @@ import { CRITICAL_SAVE_REASONS, detectCountIncreases, detectLevelUps, detectSetG
 import itemsData from '../data/items.json'
 import prayersData from '../data/prayers.json'
 import { normaliseDungeoneeringTokens, isDungeoneeringRewardAction } from '../engine/dungeoneeringTokens.js'
+import { applyTaskResult } from '../engine/applyTaskResult.js'
 import { isBackground, getActivityKey } from '../engine/activityRegistry.js'
 import {
   saveActivityProgress, getActivityProgress, hydrateActivityLedger,
@@ -231,9 +232,24 @@ export function GameProvider({ children }) {
           // toast.
           const hpRegenSim = simulateIdleHPRegen(elapsedMs)
           let diedDuringIdle = false
+
+          // ── Shared apply layer (also used by MCP intents.js via applyTaskResult) ──
+          // Build a normalised state object, apply the simulation result in place,
+          // then read back the two primitive fields that may have changed.
+          const applySettings = { currentHP: savedHP, dungeoneeringTokens: savedDungeoneeringTokens }
+          const applyState = { stats: s, inventory: inv, bank: b, equipment: eq, settings: applySettings }
+          applyTaskResult(applyState, sim, savedTask.type)
+          inv = applyState.inventory  // may be sim.finalInventory (new array ref)
+
+          if (applySettings.dungeoneeringTokens !== savedDungeoneeringTokens) {
+            savedDungeoneeringTokens = applySettings.dungeoneeringTokens
+            await saveSetting('dungeoneeringTokens', savedDungeoneeringTokens)
+          }
+
+          // HP: combat uses the sim result already stored in applySettings by
+          // applyTaskResult; non-combat may gain HP regen.
           if (savedTask.type === 'combat' && sim.died === true) {
-            const maxHP = s.hitpoints ? getLevelFromXP(s.hitpoints.xp) : 10
-            savedHP = maxHP
+            savedHP = applySettings.currentHP  // reset to max HP by applyTaskResult
             sim.hpRestored = 0
             // Defer clearing the active task until AFTER the reward-application
             // pass below. That code reads `savedTask.type` repeatedly, so
@@ -245,110 +261,27 @@ export function GameProvider({ children }) {
             diedDuringIdle = true
             try { localStorage.removeItem('pocketrpg_activeTask') } catch {}
           } else if (savedTask.type === 'combat' && Number.isFinite(Number(sim.finalHP))) {
-            const maxHP = s.hitpoints ? getLevelFromXP(s.hitpoints.xp) : 10
-            savedHP = Math.max(1, Math.min(maxHP, Math.floor(Number(sim.finalHP))))
+            savedHP = applySettings.currentHP
             sim.hpRestored = 0
           } else if (hpRegenSim.hpRegen > 0) {
             const maxHP = s.hitpoints ? getLevelFromXP(s.hitpoints.xp) : 10
             savedHP = Math.min((savedHP != null ? savedHP : maxHP) + hpRegenSim.hpRegen, maxHP)
             sim.hpRestored = hpRegenSim.hpRegen
           }
-          // Apply XP directly to raw stats object (quest XP handled in cascade branch below)
-          if (savedTask.type !== 'quest' && sim.xpGained) {
-            for (const [skill, xp] of Object.entries(sim.xpGained)) {
-              if (xp > 0 && s[skill]) {
-                const newXP = Math.min((s[skill].xp || 0) + Math.floor(xp), 200000000)
-                s[skill] = { ...s[skill], xp: newXP, level: getLevelFromXP(newXP) }
-              }
-            }
-          }
-          if (sim.dungeoneeringTokensGained > 0) {
-            savedDungeoneeringTokens += normaliseDungeoneeringTokens(sim.dungeoneeringTokensGained)
-            await saveSetting('dungeoneeringTokens', savedDungeoneeringTokens)
-          }
-          // Apply slayer XP from combat simulation
+
+          // Slayer XP from combat simulation (client-authoritative; MCP gains this in WO-2)
           if (savedTask.type === 'combat' && sim.slayerXpGained > 0) {
             if (s.slayer) {
               const newXP = Math.min((s.slayer.xp || 0) + Math.floor(sim.slayerXpGained), 200000000)
               s.slayer = { ...s.slayer, xp: newXP, level: getLevelFromXP(newXP) }
             }
           }
-          // Deduct consumed materials from bank
-          if (sim.itemsConsumed) {
-            for (const [itemId, qty] of Object.entries(sim.itemsConsumed)) {
-              if (b[itemId]) {
-                const newQty = b[itemId].quantity - qty
-                if (newQty <= 0) {
-                  delete b[itemId]
-                } else {
-                  b[itemId] = { ...b[itemId], quantity: newQty }
-                }
-              }
-            }
-          }
-          if (savedTask.type === 'combat' && sim.ammoConsumed && eq?.ammo && eq.ammo.itemId === sim.ammoConsumed.itemId) {
-            const remainingAmmo = Math.max(0, (eq.ammo.quantity || 0) - sim.ammoConsumed.quantity)
-            eq.ammo = remainingAmmo > 0 ? { ...eq.ammo, quantity: remainingAmmo } : null
+
+          // Save equipment if ammo or charges changed during combat
+          if (savedTask.type === 'combat' && (sim.ammoConsumed || sim.chargesConsumed > 0)) {
             await saveEquipment(eq)
           }
 
-          // Deduct scale charges consumed by the equipped weapon during idle combat
-          if (savedTask.type === 'combat' && sim.chargesConsumed > 0 && eq.weapon) {
-            const remaining = Math.max(0, (eq.weapon.charges || 0) - sim.chargesConsumed)
-            eq.weapon = { ...eq.weapon, charges: remaining }
-            await saveEquipment(eq)
-          }
-          // Apply items to inventory and bank
-          if ((savedTask.type === 'combat' || savedTask.type === 'skill' || savedTask.type === 'gather' || savedTask.type === 'clue') && sim.finalInventory) {
-            // Use the already-mutated inventory from simulation
-            sim.finalInventory.forEach((slot, i) => { inv[i] = slot })
-            // Apply any items banked during auto-bank trips
-            // Combat uses lootBanked, skill/gather use itemsBanked
-            const bankedItems = sim.lootBanked || sim.itemsBanked || {}
-            for (const [itemId, qty] of Object.entries(bankedItems)) {
-              if (qty <= 0) continue
-              if (b[itemId]) {
-                b[itemId] = { ...b[itemId], quantity: b[itemId].quantity + qty }
-              } else {
-                b[itemId] = { itemId, quantity: qty }
-              }
-            }
-          } else if ((savedTask.type === 'agility' || savedTask.type === 'thieving') && sim.coinsGained > 0) {
-            // Agility/Thieving coins go to inventory (stackable), fall back to bank if full
-            const coinsSlot = inv.findIndex(s => s && s.itemId === 'coins')
-            if (coinsSlot >= 0) {
-              inv[coinsSlot] = { ...inv[coinsSlot], quantity: inv[coinsSlot].quantity + sim.coinsGained }
-            } else {
-              const emptySlot = inv.findIndex(s => s === null)
-              if (emptySlot >= 0) {
-                inv[emptySlot] = { itemId: 'coins', quantity: sim.coinsGained }
-              } else {
-                // Inventory full — bank overflow
-                if (b['coins']) {
-                  b['coins'] = { ...b['coins'], quantity: b['coins'].quantity + sim.coinsGained }
-                } else {
-                  b['coins'] = { itemId: 'coins', quantity: sim.coinsGained }
-                }
-              }
-            }
-          } else if (savedTask.type === 'hunter' && sim.rewards && sim.rewards.length > 0) {
-            // Hunter rewards go directly to bank
-            for (const reward of sim.rewards) {
-              if (b[reward.itemId]) {
-                b[reward.itemId] = { ...b[reward.itemId], quantity: b[reward.itemId].quantity + reward.quantity }
-              } else {
-                b[reward.itemId] = { itemId: reward.itemId, quantity: reward.quantity }
-              }
-            }
-          } else if (sim.itemsGained) {
-            for (const [itemId, qty] of Object.entries(sim.itemsGained)) {
-              if (b[itemId]) {
-                b[itemId] = { ...b[itemId], quantity: b[itemId].quantity + qty }
-              } else {
-                b[itemId] = { itemId, quantity: qty }
-              }
-            }
-          }
           // Persist updated stats + bank/inventory to DB
           await saveAllStats(s)
           if (savedTask.type === 'combat' || savedTask.type === 'skill' || savedTask.type === 'gather' || savedTask.type === 'clue') {
