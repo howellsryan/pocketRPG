@@ -25,6 +25,8 @@ import {
   buildMinigameTask,
   MINIGAME_TASK_IDS,
   trainPrayer,
+  trainConstruction,
+  unlockConstructionPerk,
   isClaimableTask,
   planDungeoneeringReward,
   assignSlayerTask,
@@ -648,6 +650,67 @@ describe('prayer intents (train_prayer)', () => {
 
   it('rejects an unknown prayer action', () => {
     expect(() => trainPrayer(makeSave(), 'bury_unicorns', undefined)).toThrow(/Unknown prayer action/)
+  })
+})
+
+describe('construction intents (train_construction + perks)', () => {
+  it('builds with every plank by default, granting N × action.xp', () => {
+    // build_plank: level 1, xp 29, consumes 1 `plank`.
+    const save = makeSave({ stats: { construction: { xp: 0 } }, bank: { plank: { itemId: 'plank', quantity: 10 } } })
+    const r = trainConstruction(save, 'build_plank', undefined)
+    expect(r.actions).toBe(10)
+    expect(r.xpGained.construction).toBe(290)
+    expect(save.stats.construction.xp).toBe(290)
+    expect(save.bank.plank).toBeUndefined()
+    expect(r.planksRemaining).toBe(0)
+  })
+
+  it('drains the inventory first, then the bank', () => {
+    const save = makeSave({
+      stats: { construction: { xp: 0 } },
+      inventory: [{ itemId: 'plank', quantity: 2 }],
+      bank: { plank: { itemId: 'plank', quantity: 5 } },
+    })
+    const r = trainConstruction(save, 'build_plank', 4)
+    expect(r.actions).toBe(4)
+    expect(save.inventory.find((s: any) => s?.itemId === 'plank')).toBeUndefined()
+    expect(save.bank.plank.quantity).toBe(3)
+  })
+
+  it('enforces the action level requirement (nothing consumed)', () => {
+    // build_oak_plank needs Construction level 15; a fresh account is level 1.
+    const save = makeSave({ stats: { construction: { xp: 0 } }, bank: { oak_plank: { itemId: 'oak_plank', quantity: 5 } } })
+    expect(() => trainConstruction(save, 'build_oak_plank', undefined)).toThrow(/level 15/i)
+    expect(save.bank.oak_plank.quantity).toBe(5)
+  })
+
+  it('refuses when no matching planks are held', () => {
+    const save = makeSave({ stats: { construction: { xp: 0 } } })
+    expect(() => trainConstruction(save, 'build_plank', undefined)).toThrow(/No .* available/i)
+  })
+
+  it('rejects an unknown construction action', () => {
+    expect(() => trainConstruction(makeSave(), 'build_unobtanium', undefined)).toThrow(/Unknown construction action/)
+  })
+
+  it('unlocks a perk once the Construction level is met, recording it in settings', () => {
+    // money_purse needs Construction level 70.
+    const save = makeSave({ stats: { construction: { xp: 800_000 } }, settings: { completedQuests: [] } }) // level 70+
+    const r = unlockConstructionPerk(save, 'money_purse')
+    expect(r.unlocked).toBe(true)
+    expect(save.settings.unlockedFeatures).toContain('money_purse')
+    // Re-unlocking the same perk is refused.
+    expect(() => unlockConstructionPerk(save, 'money_purse')).toThrow(/already unlocked/i)
+  })
+
+  it('refuses a perk unlock below the required level', () => {
+    const save = makeSave({ stats: { construction: { xp: 0 } } })
+    expect(() => unlockConstructionPerk(save, 'master_rejuvenation')).toThrow(/level 90/i)
+    expect(save.settings.unlockedFeatures).toBeUndefined()
+  })
+
+  it('rejects an unknown perk id', () => {
+    expect(() => unlockConstructionPerk(makeSave(), 'free_lunch')).toThrow(/Unknown construction perk/)
   })
 })
 

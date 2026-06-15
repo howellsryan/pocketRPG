@@ -106,6 +106,8 @@ describe('MCP tool schema', () => {
       'start_clue',
       'start_minigame',
       'train_prayer',
+      'train_construction',
+      'unlock_construction_perk',
       'claim_activity',
       'get_quests',
       'start_quest',

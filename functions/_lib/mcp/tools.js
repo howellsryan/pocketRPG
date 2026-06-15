@@ -4,7 +4,7 @@ import { getItem, getMonster, itemName, withItemName, REFERENCE_RESOURCES, readR
 import { loadCharacterWithSave, writeSave } from '../game/save.js'
 import { auditLog } from '../game/audit.js'
 import { assertNotInActiveMatch } from '../pvp.js'
-import { depositToBank, withdrawFromBank, equip, unequip, buildIdleTask, runIdleTask, isClaimableTask, buildGatherTask, buildClueTask, CLUE_LEVELS, buildMinigameTask, trainPrayer, buildQuestTask, applyQuestTask, questStatuses, buildCombatTask, runCombatTask, planDungeoneeringReward, setIdleCombatSetup, idleCombatSetupSummary, idleFoodWarning, addQuestToQueueIntent, removeQuestFromQueueIntent, dropFromQueue, assignSlayerTask, slayerStatus } from './intents.js'
+import { depositToBank, withdrawFromBank, equip, unequip, buildIdleTask, runIdleTask, isClaimableTask, buildGatherTask, buildClueTask, CLUE_LEVELS, buildMinigameTask, trainPrayer, trainConstruction, unlockConstructionPerk, buildQuestTask, applyQuestTask, questStatuses, buildCombatTask, runCombatTask, planDungeoneeringReward, setIdleCombatSetup, idleCombatSetupSummary, idleFoodWarning, addQuestToQueueIntent, removeQuestFromQueueIntent, dropFromQueue, assignSlayerTask, slayerStatus } from './intents.js'
 import { getIdleRow, setIdleTask, resetIdleActiveAt, clearIdleTask, advanceIdleClock } from './idle.js'
 import { SKIP_HOUR_MS } from '../../../src/engine/skipPreflight.js'
 import { simulateBossFight, applyBossFightOutcome } from './bossFight.js'
@@ -666,6 +666,16 @@ const TOOLS = {
   train_prayer({ action_id, quantity, character_id }, ctx) {
     if (!action_id) throw new Error('action_id is required.')
     return applySaveIntent(ctx, character_id, (save) => trainPrayer(save, action_id, quantity), 'mcp_train_prayer')
+  },
+
+  train_construction({ action_id, quantity, character_id }, ctx) {
+    if (!action_id) throw new Error('action_id is required.')
+    return applySaveIntent(ctx, character_id, (save) => trainConstruction(save, action_id, quantity), 'mcp_train_construction')
+  },
+
+  unlock_construction_perk({ perk_id, character_id }, ctx) {
+    if (!perk_id) throw new Error('perk_id is required.')
+    return applySaveIntent(ctx, character_id, (save) => unlockConstructionPerk(save, perk_id), 'mcp_unlock_construction_perk')
   },
 
   async claim_activity({ character_id }, { env, authorization, identity }) {

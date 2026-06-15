@@ -27,6 +27,7 @@ import { getLevelFromXP } from '../../../src/engine/experience.js'
 import { simulateIdleSkilling, simulateIdleAgility, simulateIdleCombat, simulateIdleGather } from '../../../src/engine/idleEngine.js'
 import { GATHER_TASKS, findGatherTask } from '../../../src/engine/gatherTasks.js'
 import { getClueCompletionTicks } from '../../../src/engine/clueScrolls.js'
+import { BUILDING_ACTIONS, UNLOCKABLES as CONSTRUCTION_PERKS, findBuildingAction, findConstructionPerk } from '../../../src/engine/construction.js'
 import { normaliseIdleCombatSetup, defaultIdleCombatSetup, isFoodItem, isPotionItem, getFoodHealAmount } from '../../../src/engine/idleSupplies.js'
 import { simulateIdleThieving } from '../../../src/engine/thieving.js'
 import { simulateIdleHunting } from '../../../src/engine/hunter.js'
@@ -332,6 +333,84 @@ export function trainPrayer(save, actionId, quantity) {
     itemsConsumed: [{ itemId: boneId, name: itemsData[boneId]?.name || boneId, quantity: boneTotal }],
     bonesRemaining: heldInInventoryAndBank(save, boneId),
   }
+}
+
+// ── Construction (build planks + perk unlocks) ───────────────────────────────
+// Like prayer, construction is trained by consuming a material for instant XP
+// (one plank per build), so it is a pure bulk save intent. Two level-gated
+// perks (money_purse L70, master_rejuvenation L90) are recorded in
+// settings.unlockedFeatures, exactly as the client's unlockFeature does.
+
+export const CONSTRUCTION_ACTION_IDS = BUILDING_ACTIONS.map((a) => a.id).filter(Boolean)
+export const CONSTRUCTION_PERK_IDS = CONSTRUCTION_PERKS.map((p) => p.id).filter(Boolean)
+
+export function trainConstruction(save, actionId, quantity) {
+  const action = findBuildingAction(actionId)
+  if (!action) {
+    throw new GameApiError('UNKNOWN_ACTION', `Unknown construction action '${actionId}'. Valid ids: ${CONSTRUCTION_ACTION_IDS.join(', ')}.`, 400)
+  }
+  if (!save.stats || typeof save.stats !== 'object') save.stats = {}
+  const conStats = save.stats.construction || { xp: 0 }
+  const currentXP = Math.max(0, Math.floor(Number(conStats.xp) || 0))
+  if (currentXP >= XP_CAP) {
+    throw new GameApiError('XP_CAP_REACHED', 'Construction is already at the XP cap.', 400)
+  }
+  const conLevel = getLevelFromXP(currentXP)
+  if (conLevel < action.level) {
+    throw new GameApiError('LEVEL_TOO_LOW', `${action.name} requires Construction level ${action.level} (you are ${conLevel}).`, 400)
+  }
+  const plankId = Object.keys(action.materials || {})[0]
+  if (!plankId) {
+    throw new GameApiError('INVALID_ACTION', `${action.name} has no plank to consume.`, 400)
+  }
+  const perBuild = Math.max(1, Math.floor(Number(action.materials[plankId]) || 1))
+  const available = heldInInventoryAndBank(save, plankId)
+  const maxByPlanks = Math.floor(available / perBuild)
+
+  let want
+  if (quantity === undefined || quantity === null) {
+    want = maxByPlanks // default: build with every plank the character owns
+  } else {
+    want = Math.floor(Number(quantity))
+    if (!Number.isFinite(want) || want < 1) {
+      throw new GameApiError('INVALID_QUANTITY', 'quantity must be an integer >= 1 (omit to use all planks).', 400)
+    }
+  }
+  const actions = Math.min(want, maxByPlanks)
+  if (actions < 1) {
+    const plankName = itemsData[plankId]?.name || plankId
+    throw new GameApiError('INSUFFICIENT_SUPPLIES', `No ${plankName} available to ${action.name}.`, 400)
+  }
+
+  const plankTotal = actions * perBuild
+  consumeInventoryThenBank(save, plankId, plankTotal)
+  const newXP = Math.min(currentXP + action.xp * actions, XP_CAP)
+  save.stats.construction = { ...conStats, xp: newXP, level: getLevelFromXP(newXP) }
+  return {
+    action: action.name,
+    actions,
+    xpGained: { construction: newXP - currentXP },
+    itemsConsumed: [{ itemId: plankId, name: itemsData[plankId]?.name || plankId, quantity: plankTotal }],
+    planksRemaining: heldInInventoryAndBank(save, plankId),
+  }
+}
+
+export function unlockConstructionPerk(save, perkId) {
+  const perk = findConstructionPerk(perkId)
+  if (!perk) {
+    throw new GameApiError('UNKNOWN_PERK', `Unknown construction perk '${perkId}'. Valid ids: ${CONSTRUCTION_PERK_IDS.join(', ')}.`, 400)
+  }
+  if (!save.settings || typeof save.settings !== 'object') save.settings = {}
+  const unlocked = Array.isArray(save.settings.unlockedFeatures) ? save.settings.unlockedFeatures : []
+  if (unlocked.includes(perkId)) {
+    throw new GameApiError('ALREADY_UNLOCKED', `${perk.name} is already unlocked.`, 400)
+  }
+  const conLevel = getLevelFromXP(Math.max(0, Math.floor(Number(save.stats?.construction?.xp) || 0)))
+  if (conLevel < perk.level) {
+    throw new GameApiError('LEVEL_TOO_LOW', `${perk.name} requires Construction level ${perk.level} (you are ${conLevel}).`, 400)
+  }
+  save.settings.unlockedFeatures = [...unlocked, perkId]
+  return { perk: perk.name, perkId, unlocked: true, unlockedFeatures: save.settings.unlockedFeatures }
 }
 
 function findSkillEntry(skill, key, id) {

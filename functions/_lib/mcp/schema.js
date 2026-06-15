@@ -3,7 +3,7 @@
 // `initialize`. Kept free of handler imports so it can be unit-tested cheaply.
 // The dispatch table in tools.js must expose exactly these names.
 
-import { EQUIP_SLOT_NAMES, SUPPORTED_IDLE_SKILLS, GATHER_TASK_IDS, CLUE_LEVELS, MINIGAME_TASK_IDS, PRAYER_ACTION_IDS } from './intents.js'
+import { EQUIP_SLOT_NAMES, SUPPORTED_IDLE_SKILLS, GATHER_TASK_IDS, CLUE_LEVELS, MINIGAME_TASK_IDS, PRAYER_ACTION_IDS, CONSTRUCTION_ACTION_IDS, CONSTRUCTION_PERK_IDS } from './intents.js'
 import { SKILL_IDS, REFERENCE_TOPIC_NAMES } from './reference.js'
 
 const IDLE_SKILLS = [...SUPPORTED_IDLE_SKILLS]
@@ -59,8 +59,11 @@ Acting:
   get_active_activity shows what's running; claim_activity banks the accrued
   rewards and keeps it going.
   train_prayer trains Prayer instantly by burying/scattering/altar-offering the
-  character's bones (no idle slot used). Farming/magic idle is still done in the
-  game client.
+  character's bones, and train_construction trains Construction instantly by
+  building with planks (neither uses the idle slot);
+  unlock_construction_perk toggles the level-gated money_purse /
+  master_rejuvenation perks. Farming/magic idle is still done in the game
+  client.
 - Quests: get_quests shows what's completed, startable now, or locked (with the
   missing requirements). start_quest begins an eligible quest — it runs for its
   duration of real time, then claim_activity grants the XP/coins and unlocks its
@@ -551,6 +554,37 @@ export const TOOL_SCHEMAS = [
       additionalProperties: false,
     },
     annotations: WRITE('Train prayer'),
+  },
+  {
+    name: 'train_construction',
+    description:
+      "Train Construction by building with planks for instant XP (one plank per build). Drains the planks from the inventory first, then the bank. Omit quantity to use every matching plank the character owns; it stops early when the planks run out. Valid action_id values: " + CONSTRUCTION_ACTION_IDS.join(', ') + '. See list_skill_actions skill="construction" for level/XP/plank details.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        action_id: { type: 'string', enum: CONSTRUCTION_ACTION_IDS, description: "The build action, e.g. 'build_oak_plank', 'build_mahogany_plank'." },
+        quantity: { type: 'integer', minimum: 1, description: 'How many planks to build with. Omit to consume all matching planks the character holds.' },
+        ...optionalCharacterId,
+      },
+      required: ['action_id'],
+      additionalProperties: false,
+    },
+    annotations: WRITE('Train construction'),
+  },
+  {
+    name: 'unlock_construction_perk',
+    description:
+      "Unlock a level-gated Construction perk: 'money_purse' (level 70 — spend bank coins directly when shopping) or 'master_rejuvenation' (level 90 — auto-refill the special-attack bar in combat). Checks the Construction level and that it is not already unlocked. Valid perk_id values: " + CONSTRUCTION_PERK_IDS.join(', ') + '.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        perk_id: { type: 'string', enum: CONSTRUCTION_PERK_IDS, description: "The perk to unlock: 'money_purse' or 'master_rejuvenation'." },
+        ...optionalCharacterId,
+      },
+      required: ['perk_id'],
+      additionalProperties: false,
+    },
+    annotations: WRITE('Unlock construction perk'),
   },
   {
     name: 'claim_activity',
