@@ -3,7 +3,7 @@
 // `initialize`. Kept free of handler imports so it can be unit-tested cheaply.
 // The dispatch table in tools.js must expose exactly these names.
 
-import { EQUIP_SLOT_NAMES, SUPPORTED_IDLE_SKILLS, GATHER_TASK_IDS, CLUE_LEVELS, MINIGAME_TASK_IDS, PRAYER_ACTION_IDS, CONSTRUCTION_ACTION_IDS, CONSTRUCTION_PERK_IDS } from './intents.js'
+import { EQUIP_SLOT_NAMES, SUPPORTED_IDLE_SKILLS, GATHER_TASK_IDS, CLUE_LEVELS, MINIGAME_TASK_IDS, PRAYER_ACTION_IDS, CONSTRUCTION_ACTION_IDS, CONSTRUCTION_PERK_IDS, MAGIC_ACTION_IDS } from './intents.js'
 import { SKILL_IDS, REFERENCE_TOPIC_NAMES } from './reference.js'
 
 const IDLE_SKILLS = [...SUPPORTED_IDLE_SKILLS]
@@ -65,8 +65,11 @@ Acting:
   master_rejuvenation perks.
 - Farming: get_farm shows every patch and what's growing; plant_seed plants in
   an empty patch (the crop grows over real wall-clock time); harvest_patch and
-  harvest_all collect ready crops for produce + Farming XP. Magic idle is still
-  done in the game client.
+  harvest_all collect ready crops for produce + Farming XP.
+- Magic: cast_magic runs the non-combat utility spells (High Alchemy, Superheat,
+  Enchant, Tan Leather, Plank Make, Curse, Stun), consuming runes + inputs for
+  Magic XP and an output. High Alchemy needs target_item_id (the item to turn
+  into coins). Combat spells are still cast in the game client.
 - Quests: get_quests shows what's completed, startable now, or locked (with the
   missing requirements). start_quest begins an eligible quest — it runs for its
   duration of real time, then claim_activity grants the XP/coins and unlocks its
@@ -633,6 +636,23 @@ export const TOOL_SCHEMAS = [
       'Harvest every ready crop across all farm patches at once, banking all produce and granting the total Farming XP. Refused if nothing is ready.',
     inputSchema: { type: 'object', properties: { ...optionalCharacterId }, additionalProperties: false },
     annotations: WRITE('Harvest all crops'),
+  },
+  {
+    name: 'cast_magic',
+    description:
+      "Cast a non-combat Magic utility spell, consuming runes (an equipped elemental staff supplies its element for free) and any input item to produce an output and Magic XP. High Alchemy (action_id 'high_alch') REQUIRES target_item_id — the inventory item to turn into coins (shop value ×1.1); other actions (Superheat, Enchant*, Tan Leather, Plank Make, Curse, Stun) use fixed inputs and ignore target_item_id. Runes/inputs drain inventory first then bank (alchemy targets come from the inventory only). Omit quantity to cast as many times as the runes/inputs allow. Valid action_id values: " + MAGIC_ACTION_IDS.join(', ') + '. See list_skill_actions skill="magic" for runes/inputs/XP.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        action_id: { type: 'string', enum: MAGIC_ACTION_IDS, description: "The magic action, e.g. 'high_alch', 'superheat', 'enchant_ruby', 'plank_make'." },
+        target_item_id: { type: 'string', description: "Required for High Alchemy ('high_alch'): the inventory item id to alchemise into coins. Ignored by other actions." },
+        quantity: { type: 'integer', minimum: 1, description: 'How many times to cast. Omit to cast until the runes or inputs run out.' },
+        ...optionalCharacterId,
+      },
+      required: ['action_id'],
+      additionalProperties: false,
+    },
+    annotations: WRITE('Cast magic'),
   },
   {
     name: 'claim_activity',

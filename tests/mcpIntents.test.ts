@@ -31,6 +31,7 @@ import {
   plantSeed,
   harvestPatch,
   harvestAll,
+  castMagic,
   isClaimableTask,
   planDungeoneeringReward,
   assignSlayerTask,
@@ -808,6 +809,98 @@ describe('farming intents (plant → grow → harvest)', () => {
     expect(r.produce.some((p: any) => p.itemId === 'greenthorn_leaf')).toBe(true)
     expect(r.produce.some((p: any) => p.itemId === 'oak_logs')).toBe(true)
     expect(Object.keys(save.settings.farming.patchesById)).toHaveLength(0)
+  })
+})
+
+describe('magic intents (cast_magic)', () => {
+  it('High Alchemy: consumes runes + the target item, banks coins, grants XP', () => {
+    // high_alch: level 55, xp 65, runes nature_rune:1 + fire_rune:5. oak_logs shopValue 34 → 37 coins.
+    const save = makeSave({
+      stats: { magic: { xp: 200_000 } }, // level 55+
+      inventory: [{ itemId: 'oak_logs', quantity: 5 }],
+      bank: { nature_rune: { itemId: 'nature_rune', quantity: 10 }, fire_rune: { itemId: 'fire_rune', quantity: 50 } },
+    })
+    const r = castMagic(save, 'high_alch', { targetItemId: 'oak_logs' })
+    expect(r.casts).toBe(5) // limited by the 5 oak logs
+    expect(r.xpGained.magic).toBe(65 * 5)
+    expect(r.produced[0]).toMatchObject({ itemId: 'coins', quantity: 37 * 5 })
+    expect(save.bank.coins.quantity).toBe(37 * 5)
+    expect(save.inventory.find((s: any) => s?.itemId === 'oak_logs')).toBeUndefined()
+    expect(save.bank.nature_rune.quantity).toBe(5)
+    expect(save.bank.fire_rune.quantity).toBe(25)
+  })
+
+  it('an equipped elemental staff supplies its rune for free', () => {
+    const save = makeSave({
+      stats: { magic: { xp: 200_000 } },
+      equipment: { weapon: { itemId: 'staff_of_fire' } },
+      inventory: [{ itemId: 'oak_logs', quantity: 3 }],
+      bank: { nature_rune: { itemId: 'nature_rune', quantity: 10 } }, // no fire runes at all
+    })
+    const r = castMagic(save, 'high_alch', { targetItemId: 'oak_logs' })
+    expect(r.casts).toBe(3)
+    expect(save.bank.fire_rune).toBeUndefined()
+    expect(save.bank.nature_rune.quantity).toBe(7)
+  })
+
+  it('Superheat: consumes ore/coal + runes and banks the bar', () => {
+    // superheat: level 43, xp 53, materials iron_ore:1 + coal:1, runes nature_rune:1 + fire_rune:4.
+    const save = makeSave({
+      stats: { magic: { xp: 70_000 } }, // level 43+
+      bank: {
+        iron_ore: { itemId: 'iron_ore', quantity: 3 },
+        coal: { itemId: 'coal', quantity: 3 },
+        nature_rune: { itemId: 'nature_rune', quantity: 5 },
+        fire_rune: { itemId: 'fire_rune', quantity: 20 },
+      },
+    })
+    const r = castMagic(save, 'superheat', {})
+    expect(r.casts).toBe(3)
+    expect(r.produced[0]).toMatchObject({ itemId: 'iron_bar', quantity: 3 })
+    expect(save.bank.iron_bar.quantity).toBe(3)
+    expect(save.bank.iron_ore).toBeUndefined()
+    expect(save.bank.coal).toBeUndefined()
+    expect(save.stats.magic.xp).toBe(70_000 + 53 * 3)
+  })
+
+  it('Enchant: consumes the amulet + runes and banks the enchanted product', () => {
+    // enchant_sapphire: level 7, xp 170, materials sapphire_amulet:1, runes cosmic+water.
+    const save = makeSave({
+      stats: { magic: { xp: 10_000 } },
+      bank: {
+        sapphire_amulet: { itemId: 'sapphire_amulet', quantity: 2 },
+        cosmic_rune: { itemId: 'cosmic_rune', quantity: 5 },
+        water_rune: { itemId: 'water_rune', quantity: 5 },
+      },
+    })
+    const r = castMagic(save, 'enchant_sapphire', { quantity: 2 })
+    expect(r.casts).toBe(2)
+    expect(save.bank.amulet_of_magic.quantity).toBe(2)
+    expect(save.bank.sapphire_amulet).toBeUndefined()
+  })
+
+  it('refuses High Alchemy without a target, listing eligible items', () => {
+    const save = makeSave({
+      stats: { magic: { xp: 200_000 } },
+      inventory: [{ itemId: 'oak_logs', quantity: 1 }],
+      bank: { nature_rune: { itemId: 'nature_rune', quantity: 5 }, fire_rune: { itemId: 'fire_rune', quantity: 25 } },
+    })
+    expect(() => castMagic(save, 'high_alch', {})).toThrow(/target_item_id/)
+    expect(() => castMagic(save, 'high_alch', {})).toThrow(/oak_logs/)
+  })
+
+  it('enforces the magic level requirement', () => {
+    const save = makeSave({ stats: { magic: { xp: 0 } }, inventory: [{ itemId: 'oak_logs', quantity: 1 }] })
+    expect(() => castMagic(save, 'high_alch', { targetItemId: 'oak_logs' })).toThrow(/level 55/i)
+  })
+
+  it('refuses when there are not enough runes', () => {
+    const save = makeSave({ stats: { magic: { xp: 70_000 } }, bank: { iron_ore: { itemId: 'iron_ore', quantity: 3 }, coal: { itemId: 'coal', quantity: 3 } } })
+    expect(() => castMagic(save, 'superheat', {})).toThrow(/Not enough runes or inputs/i)
+  })
+
+  it('rejects an unknown magic action', () => {
+    expect(() => castMagic(makeSave(), 'fireball_supreme', {})).toThrow(/Unknown magic action/)
   })
 })
 

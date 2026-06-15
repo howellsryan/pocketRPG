@@ -30,6 +30,7 @@ import { getClueCompletionTicks } from '../../../src/engine/clueScrolls.js'
 import { BUILDING_ACTIONS, UNLOCKABLES as CONSTRUCTION_PERKS, findBuildingAction, findConstructionPerk } from '../../../src/engine/construction.js'
 import farmingData from '../../../src/data/farming.json' assert { type: 'json' }
 import { getCropDef, getCropType, getPatchesForLocation, plantCrop, harvestCrop, getEffectiveStage } from '../../../src/engine/farming.ts'
+import { getRunesToConsume } from '../../../src/engine/runes.js'
 import { normaliseIdleCombatSetup, defaultIdleCombatSetup, isFoodItem, isPotionItem, getFoodHealAmount } from '../../../src/engine/idleSupplies.js'
 import { simulateIdleThieving } from '../../../src/engine/thieving.js'
 import { simulateIdleHunting } from '../../../src/engine/hunter.js'
@@ -453,6 +454,141 @@ function grantFarmingXp(save, amount) {
   const next = Math.min(cur + Math.floor(Number(amount) || 0), XP_CAP)
   save.stats.farming = { ...(save.stats.farming || {}), xp: next, level: getLevelFromXP(next) }
   return next - cur
+}
+
+// ── Magic (non-combat utility spells) ────────────────────────────────────────
+// The magic skill's utility actions consume runes (and usually an input item)
+// to produce an output and grant magic XP: High Alchemy (item → coins),
+// Superheat (ore → bar), Enchant (jewellery/bolts), Tan Leather, Plank Make,
+// plus rune-only utility spells (Curse, Stun). Runes honour an equipped
+// elemental staff (getRunesToConsume), and everything is consumed/produced via
+// the same shared inventory/bank helpers the client uses — no value created.
+
+const MAGIC_ACTIONS = Array.isArray(skillsData.magic?.actions) ? skillsData.magic.actions : []
+export const MAGIC_ACTION_IDS = MAGIC_ACTIONS.map((a) => a.id).filter(Boolean)
+
+function inventoryOnlyCount(save, itemId) {
+  let n = 0
+  for (const slot of getInventory(save)) {
+    if (slot?.itemId === itemId) n += Number(slot.quantity) || 0
+  }
+  return n
+}
+
+// Items the character could High-Alchemy right now (held in the inventory with a
+// numeric shop value) — surfaced when an alchemy cast omits its target.
+function alchemyTargetOptions(save) {
+  const seen = new Set()
+  const out = []
+  for (const slot of getInventory(save)) {
+    if (!slot?.itemId || seen.has(slot.itemId)) continue
+    const item = itemsData[slot.itemId]
+    if (item && typeof item.shopValue === 'number') {
+      seen.add(slot.itemId)
+      out.push(slot.itemId)
+    }
+  }
+  return out
+}
+
+export function castMagic(save, actionId, { targetItemId, quantity } = {}) {
+  const action = MAGIC_ACTIONS.find((a) => a.id === actionId)
+  if (!action) {
+    throw new GameApiError('UNKNOWN_ACTION', `Unknown magic action '${actionId}'. Valid ids: ${MAGIC_ACTION_IDS.join(', ')}.`, 400)
+  }
+  if (!save.stats || typeof save.stats !== 'object') save.stats = {}
+  const magicStats = save.stats.magic || { xp: 0 }
+  const currentXP = Math.max(0, Math.floor(Number(magicStats.xp) || 0))
+  if (currentXP >= XP_CAP) {
+    throw new GameApiError('XP_CAP_REACHED', 'Magic is already at the XP cap.', 400)
+  }
+  const magicLevel = getLevelFromXP(currentXP)
+  if (magicLevel < action.level) {
+    throw new GameApiError('LEVEL_TOO_LOW', `${action.name} requires Magic level ${action.level} (you are ${magicLevel}).`, 400)
+  }
+
+  const equipment = save.equipment && typeof save.equipment === 'object' ? save.equipment : {}
+  const runesToConsume = getRunesToConsume(action.runeReq, equipment, itemsData)
+  const isAlchemy = action.type === 'alchemy'
+
+  // How many casts the runes alone can pay for (a staff-provided element drops
+  // out of runesToConsume, so it never limits the count).
+  let maxCasts = Infinity
+  for (const [runeId, qty] of Object.entries(runesToConsume)) {
+    const per = Math.max(1, Math.floor(Number(qty) || 1))
+    maxCasts = Math.min(maxCasts, Math.floor(heldInInventoryAndBank(save, runeId) / per))
+  }
+
+  // Resolve the input the cast consumes and the output it produces.
+  let alchItem = null
+  if (isAlchemy) {
+    if (!targetItemId) {
+      const options = alchemyTargetOptions(save)
+      const hint = options.length ? ` Items you can alch now: ${options.join(', ')}.` : ' You hold no alchemisable items.'
+      throw new GameApiError('TARGET_REQUIRED', `${action.name} needs target_item_id — the inventory item to alchemise.${hint}`, 400)
+    }
+    const resolved = resolveItem(targetItemId)
+    alchItem = resolved.item
+    if (typeof alchItem.shopValue !== 'number') {
+      throw new GameApiError('NOT_ALCHEMISABLE', `${alchItem.name || resolved.itemId} has no shop value and cannot be alchemised.`, 400)
+    }
+    targetItemId = resolved.itemId
+    maxCasts = Math.min(maxCasts, inventoryOnlyCount(save, targetItemId)) // alchemy draws from inventory only
+  } else if (action.materials) {
+    for (const [matId, qty] of Object.entries(action.materials)) {
+      const per = Math.max(1, Math.floor(Number(qty) || 1))
+      maxCasts = Math.min(maxCasts, Math.floor(heldInInventoryAndBank(save, matId) / per))
+    }
+  }
+
+  let want
+  if (quantity === undefined || quantity === null) {
+    if (!Number.isFinite(maxCasts)) {
+      throw new GameApiError('INVALID_QUANTITY', `${action.name} has no limiting input — pass quantity to say how many times to cast it.`, 400)
+    }
+    want = maxCasts
+  } else {
+    want = Math.floor(Number(quantity))
+    if (!Number.isFinite(want) || want < 1) {
+      throw new GameApiError('INVALID_QUANTITY', 'quantity must be an integer >= 1 (omit to cast as many times as the runes/inputs allow).', 400)
+    }
+  }
+  const casts = Math.min(want, maxCasts)
+  if (casts < 1) {
+    throw new GameApiError('INSUFFICIENT_SUPPLIES', `Not enough runes or inputs to cast ${action.name}.`, 400)
+  }
+
+  // Consume runes (inventory-first then bank), honouring the staff.
+  for (const [runeId, qty] of Object.entries(runesToConsume)) {
+    consumeInventoryThenBank(save, runeId, Math.max(1, Math.floor(Number(qty) || 1)) * casts)
+  }
+
+  const produced = []
+  if (isAlchemy) {
+    removeItemFromInventory(save, targetItemId, casts) // alchemy consumes from inventory only
+    const coins = Math.floor((Number(alchItem.shopValue) || 0) * 1.1) * casts
+    addItemToBank(save, 'coins', coins)
+    produced.push({ itemId: 'coins', name: 'Coins', quantity: coins })
+  } else if (action.materials) {
+    for (const [matId, qty] of Object.entries(action.materials)) {
+      consumeInventoryThenBank(save, matId, Math.max(1, Math.floor(Number(qty) || 1)) * casts)
+    }
+    if (action.product) {
+      const productQty = Math.max(1, Math.floor(Number(action.productQty) || 1)) * casts
+      addItemToBank(save, action.product, productQty)
+      produced.push({ itemId: action.product, name: itemsData[action.product]?.name || action.product, quantity: productQty })
+    }
+  }
+
+  const newXP = Math.min(currentXP + Math.floor(Number(action.xp) || 0) * casts, XP_CAP)
+  save.stats.magic = { ...magicStats, xp: newXP, level: getLevelFromXP(newXP) }
+  return {
+    action: action.name,
+    casts,
+    xpGained: { magic: newXP - currentXP },
+    produced,
+    target: isAlchemy ? { itemId: targetItemId, name: alchItem.name || targetItemId } : undefined,
+  }
 }
 
 // Read-only view of every farm location, patch and what's growing in it.

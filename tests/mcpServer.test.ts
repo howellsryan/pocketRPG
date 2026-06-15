@@ -112,6 +112,7 @@ describe('MCP tool schema', () => {
       'plant_seed',
       'harvest_patch',
       'harvest_all',
+      'cast_magic',
       'claim_activity',
       'get_quests',
       'start_quest',
