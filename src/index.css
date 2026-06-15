@@ -1456,11 +1456,13 @@ html, body, #app {
 .clog-bar { height: 6px; border-radius: 6px; overflow: hidden; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.06); box-shadow: inset 0 1px 2px rgba(0,0,0,.6); margin-top: 14px; }
 .clog-bar__fill { height: 100%; border-radius: 6px; transition: width .55s cubic-bezier(.22,1,.36,1); }
 
-/* COMPLETE — gilded state */
+/* COMPLETE — gilded state. The gold ring + shimmer come from the shared
+   GildedComplete wrapper (.gild); these rules add the collection-log-specific
+   richness (gold fill, inner frame, recoloured text) on top. */
 .clog-cat.is-done {
   border-color: rgba(240,192,64,0.0);
   background: radial-gradient(120% 140% at 100% 0%, rgba(247,221,142,0.18), transparent 55%), linear-gradient(150deg,#3a2c10 0%,#241a09 60%,#15100a 100%);
-  box-shadow: 0 10px 30px -14px rgba(0,0,0,0.9), 0 0 0 1.5px rgba(240,192,64,0.55), inset 0 0 22px -6px rgba(240,192,64,0.4), inset 0 1px 0 rgba(255,236,176,0.35);
+  box-shadow: 0 10px 30px -14px rgba(0,0,0,0.9);
 }
 .clog-cat.is-done::before { content:''; position:absolute; inset:4px; border-radius:12px; border:1px solid rgba(240,192,64,0.5); pointer-events:none; z-index:3; }
 .clog-cat.is-done .clog-cat__name { color:#fcecb0; text-shadow:0 1px 6px rgba(0,0,0,.8),0 0 14px rgba(240,192,64,.4); }
@@ -1468,7 +1470,6 @@ html, body, #app {
 .clog-cat.is-done .clog-cat__count { color:#fcecb0; opacity:.95; }
 .clog-cat.is-done .clog-cat__count b { color:#fff3cf; }
 .clog-cat.is-done .clog-cat__foot { justify-content: center; }
-.clog-cat.is-done::after { content:''; position:absolute; top:0; bottom:0; width:55%; z-index:5; pointer-events:none; background:linear-gradient(105deg,transparent,rgba(255,247,214,0.30) 50%,transparent); transform:skewX(-18deg); animation:clogShimmer 4.5s ease-in-out infinite; }
 @keyframes clogShimmer { 0% { left:-70%; } 55% { left:140%; } 100% { left:140%; } }
 .clog-done-tag { font-family: var(--font-mono); font-size: 10.5px; font-weight: 700; letter-spacing: 0.28em; color: #fcecb0; text-shadow: 0 0 10px rgba(240,192,64,.5); }
 
