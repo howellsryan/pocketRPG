@@ -103,9 +103,17 @@ export function makeCompletionHandler(sourceType, deps = {}) {
       const collectionLogSourceId = typeof deps.resolveCollectionLogSourceId === 'function'
         ? deps.resolveCollectionLogSourceId({ sourceType, sourceId, body })
         : sourceId
+      // Persist the save (which carries the granted item) FIRST. If a concurrent
+      // writer bumped the revision between the load above and here, writeSave
+      // throws SAVE_REVISION_CONFLICT now — BEFORE we touch the collection_log
+      // or kill_counts tables — so a failed completion can never strand a
+      // collection-log slot (or a kill-count increment) without the item that
+      // earned it. The granted item is irreplaceable; the collection-log entry
+      // is idempotent (ON CONFLICT DO NOTHING) and the kill-count is
+      // recoverable, so they trail the authoritative save rather than leading it.
+      const write = await (deps.writeSave || writeSave)(env, characterId, saveObject, saveRevision)
       const collectionLogEntries = await persistCollectionLogFromGranted(env, characterId, sourceType, collectionLogSourceId, settled.granted)
       const killCount = await persistKillCountFromAction(env, characterId, sourceType, sourceId)
-      const write = await (deps.writeSave || writeSave)(env, characterId, saveObject, saveRevision)
 
       await auditLog(env, 'action_complete', { sourceType, sourceId, characterId, identityId: auth.identity.id, granted: settled.granted.length }, { swallow: true })
       return json({ ok: true, sourceType, sourceId, ...settled, collectionLogEntries, killCount, save: { save_data: JSON.stringify(saveObject), updatedAt: write.updatedAt, save_revision: write.saveRevision } })
