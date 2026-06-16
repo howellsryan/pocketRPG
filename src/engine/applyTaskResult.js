@@ -32,6 +32,9 @@ function bankAdd(bank, itemId, qty) {
 // falling back to the bank when the inventory is full — matching the client.
 function addCoinsInventoryFirst(inventory, bank, qty) {
   if (qty <= 0) return
+  // Coalesce into the unnoted coins stack. The `!s.noted` guard is defensive
+  // only — coins are unnotable in PocketRPG, so no realistic save carries a
+  // noted coins slot — and keeps a stray noted entry from splitting the stack.
   const idx = inventory.findIndex((s) => s && s.itemId === 'coins' && !s.noted)
   if (idx >= 0) {
     inventory[idx] = { ...inventory[idx], quantity: (Number(inventory[idx].quantity) || 0) + qty }
