@@ -108,7 +108,6 @@ export function settleActionCompletion(saveObject, { sourceType, sourceId, nonce
 
 
   const granted = []
-  const inv = getInventory(saveObject)
   for (const reward of rewards) {
     const itemId = typeof reward?.itemId === 'string' ? reward.itemId : null
     const qty = Math.floor(Number(reward?.quantity) || 0)
@@ -116,6 +115,13 @@ export function settleActionCompletion(saveObject, { sourceType, sourceId, nonce
     if (!isValidRewardSourceItem(sourceType, sourceId, itemId)) {
       throw new GameApiError('INVALID_REWARD_SOURCE', 'Reward item not valid for source', 403)
     }
+    // Re-read the live inventory each iteration. addItemToInventory calls
+    // getInventory, which REPLACES save.inventory with a freshly compacted
+    // array — a reference captured once before the loop goes stale after the
+    // first inventory add, so any items pushed onto it afterwards (and the
+    // slot-cap check that decides bank-vs-inventory) would silently miss the
+    // persisted save, losing drops once the inventory starts filling up.
+    const inv = getInventory(saveObject)
     const stackable = isStackableItem(itemId)
     if (stackable) {
       const hasExistingStack = inv.some(s => s?.itemId === itemId)

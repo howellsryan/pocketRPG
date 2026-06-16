@@ -50,13 +50,26 @@ export function createDefaultEquipment() {
 
 // A fresh, well-formed save object. `withStarterKit: false` yields the same
 // baseline with an empty inventory (used where the kit is not wanted).
-export function createDefaultSave({ withStarterKit = true } = {}) {
+//
+// `name` / `isIronman` / `isOneLife` seed the player profile the same way the
+// browser's initNewGame does. Without `name` the Home Screen greets the player
+// with an empty "Welcome," and the in-game ironman/one-life gates (which read
+// `player.is_ironman` / `player.is_one_life` from the save) default to off — so
+// an MCP-created character must carry its username and flags here.
+export function createDefaultSave({ withStarterKit = true, name = null, isIronman = false, isOneLife = false } = {}) {
   const inventory = new Array(INVENTORY_SIZE).fill(null)
   if (withStarterKit) {
     STARTER_KIT.forEach((item, i) => { inventory[i] = { ...item } })
   }
   return {
-    player: { currentHP: 10 },
+    player: {
+      ...(name ? { name } : {}),
+      is_ironman: !!isIronman,
+      is_one_life: !!isOneLife,
+      created: Date.now(),
+      totalPlayTime: 0,
+      currentHP: 10,
+    },
     stats: createDefaultStats(),
     inventory,
     bank: {},
