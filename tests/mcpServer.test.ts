@@ -726,4 +726,30 @@ describe('MCP create_character', () => {
     expect(res.isError).toBe(true)
     expect(res.content[0].text).toMatch(/already taken/i)
   })
+
+  it('seeds a baseline save row for the new character', async () => {
+    // A character created via MCP must own a real save from birth — the browser
+    // seeds-and-saves locally, this path never runs that, so create_character
+    // writes the baseline itself. Without it the save row never exists and idle
+    // XP is dropped on claim ("stuck on Spryroot"). Seeding lives here, NOT in
+    // the shared loadCharacterWithSave loader, so a transient "no save" read can
+    // never fabricate-and-overwrite a real save.
+    const saveWrites: string[] = []
+    const prepare = (sql: string) => ({
+      bind: (..._args: any[]) => ({
+        first: async () => null,
+        run: async () => {
+          if (/saves/.test(sql)) saveWrites.push(sql)
+          return { meta: { last_row_id: 42, changes: 1 } }
+        },
+      }),
+    })
+    const env = { DB: { prepare }, JWT_SECRET: TEST_SECRET } as any
+    const res = await callTool('create_character', { username: 'FreshOne' }, await ctxFor(env))
+    expect(res.isError).toBeFalsy()
+    const data = JSON.parse(res.content[0].text)
+    expect(data.character).toMatchObject({ id: 42, username: 'FreshOne' })
+    expect(data.saveSeeded).toBe(true)
+    expect(saveWrites.some((s) => /saves/.test(s))).toBe(true)
+  })
 })

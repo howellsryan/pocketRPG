@@ -260,7 +260,26 @@ const TOOLS = {
       body: { username, is_ironman: !!is_ironman, is_one_life: !!is_one_life },
     })
     if (!res.ok) throw httpError(res)
-    return ok(res.data)
+    // The browser seeds a fresh character's save locally (db/stores.js
+    // initNewGame) and persists it on first /api/save. A character created
+    // through MCP never runs that path, so seed the canonical baseline save
+    // here — otherwise its save row never exists, every skill reads as
+    // uninitialized, and idle XP is dropped on claim. writeSave at revision 0
+    // INSERTs (ON CONFLICT DO NOTHING), so it only ever creates the row.
+    const newId = res.data?.character?.id
+    let saveSeeded = false
+    if (newId) {
+      try {
+        await writeSave(env, newId, createDefaultSave(), 0)
+        saveSeeded = true
+      } catch {
+        // Non-fatal: the character exists. If seeding lost a race (a concurrent
+        // first save already created the row), that real save wins and this is
+        // a no-op. Surface the flag so the caller knows the state.
+        saveSeeded = false
+      }
+    }
+    return ok({ ...res.data, saveSeeded })
   },
 
   async get_account({ character_id }, { env, authorization }) {
@@ -292,12 +311,8 @@ const TOOLS = {
     const id = await resolveCharacterId(env, authorization, character_id)
     const res = await callHandler(getSave, env, { authorization, characterId: id })
     if (!res.ok) throw httpError(res)
-    // A character created via create_character but never opened in the browser
-    // has no save row yet. Show the canonical fresh-character baseline (what its
-    // first action will persist) rather than a bare "no save", so the model sees
-    // real starting levels instead of treating every skill as level 1.
-    const saveData = res.data?.save?.save_data || JSON.stringify(createDefaultSave())
-    const summary = summarizeSave(saveData)
+    if (!res.data?.save?.save_data) return ok({ characterId: id, state: null, note: 'No save yet.' })
+    const summary = summarizeSave(res.data.save.save_data)
     // Resolve item ids to names so the model doesn't need a separate lookup.
     summary.inventory = summary.inventory.map(withItemName)
     for (const [slot, item] of Object.entries(summary.equipment)) summary.equipment[slot] = withItemName(item)
