@@ -12,6 +12,42 @@ const IDLE_SKILLS = [...SUPPORTED_IDLE_SKILLS]
 export const SERVER_INSTRUCTIONS = `PocketRPG is a menu-driven idle/simulation fantasy RPG. These tools let you
 inspect a player's account and run server-authoritative actions on their behalf.
 
+HOW TO OPERATE (read this first):
+- These tools are the ONLY valid source for anything about this game or this
+  player's account — items, monsters, skills, drops, quests, prices and
+  mechanics, AND the character's coins, levels, bank, inventory, gear, slayer
+  task, quests, farm and running activities. For a PocketRPG question or action,
+  do NOT use web search or browsing, do NOT rely on your own training/RuneScape
+  knowledge, and do NOT reach for tools from other servers — call a tool here.
+- Decision procedure for every request: (1) pick the tool below that provides the
+  data or performs the action; (2) call it; (3) answer ONLY from the result. When
+  unsure which tool fits, prefer a read tool (get_*/list_*/inspect_*/get_reference)
+  over guessing.
+- Safety valve: if NO tool here covers what was asked, say so plainly and stop —
+  do not fall back to the web or to memory, and do not invent values. It is
+  always better to report "that isn't available through these tools" than to
+  guess.
+- Confirm with the player before any action that spends coins, credits or slayer
+  points, creates a character, or sets a permanent flag.
+
+WHAT YOU CAN DO HERE (pick the tool — don't guess; the "Acting" section below has
+the details and guard rails):
+- Look things up — game data: list_items, list_monsters, inspect_item,
+  inspect_monster, list_skill_actions, get_reference. This account:
+  list_characters, get_character_state, get_collection_log, get_kill_counts,
+  get_leaderboard, get_account.
+- Train skills — start_skilling / start_gather (idle), train_prayer /
+  train_construction / cast_magic (instant), plant_seed / harvest_patch /
+  harvest_all (farming); claim_activity collects idle progress.
+- Fight — set_idle_combat_setup then start_fight (idle); fight_boss / kill_boss /
+  kill_raid (bosses & raids); get_slayer_task / assign_slayer_task / skip_slayer_task.
+- Other activities — start_clue, start_minigame, start_quest (+ queue_quest /
+  remove_from_queue), get_active_activity.
+- Economy & account — buy_item / sell_item, the trading-post offer tools
+  (search_market, place_offer, …), deposit_to_bank / withdraw_from_bank,
+  equip_item / unequip_item, buy_unlock / buy_slayer_unlock /
+  unlock_construction_perk, create_character, skip_hour.
+
 IMPORTANT — PocketRPG is its OWN game, not Old School RuneScape (OSRS) or
 RuneScape. Item names, monster stats, drop tables, XP rates, level
 requirements, shop prices, quests and mechanics are PocketRPG-specific and

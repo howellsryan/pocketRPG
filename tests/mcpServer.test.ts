@@ -177,6 +177,26 @@ describe('MCP tool schema', () => {
       expect(TOOL_NAMES).toContain(name)
     }
   })
+
+  it('opens with a tool-first operating contract, a routing index and a safety valve', () => {
+    // The mandate to use these tools (and not the web/memory) must come BEFORE
+    // the deep "Acting" reference so weak models read it first.
+    const howToOperate = SERVER_INSTRUCTIONS.indexOf('HOW TO OPERATE')
+    const acting = SERVER_INSTRUCTIONS.indexOf('Acting:')
+    expect(howToOperate).toBeGreaterThanOrEqual(0)
+    expect(acting).toBeGreaterThan(howToOperate)
+    // Tool-first mandate.
+    expect(SERVER_INSTRUCTIONS).toMatch(/ONLY valid source/)
+    expect(SERVER_INSTRUCTIONS).toMatch(/call a tool here/i)
+    // Safety valve — degrade gracefully instead of guessing.
+    expect(SERVER_INSTRUCTIONS).toMatch(/Safety valve/)
+    expect(SERVER_INSTRUCTIONS).toMatch(/say so plainly and stop/i)
+    // Capability/routing index that names real tools.
+    expect(SERVER_INSTRUCTIONS).toMatch(/WHAT YOU CAN DO HERE/)
+    for (const name of ['start_skilling', 'start_fight', 'plant_seed', 'cast_magic', 'buy_slayer_unlock']) {
+      expect(SERVER_INSTRUCTIONS).toContain(name)
+    }
+  })
 })
 
 describe('MCP browse helpers', () => {
