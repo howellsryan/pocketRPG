@@ -41,6 +41,24 @@ describe('createDefaultSave — canonical fresh-character baseline', () => {
     expect(summary.inventoryUsed).toBe(12)
   })
 
+  it('seeds the player profile name and permanence flags for the Home Screen', () => {
+    // Regression: an MCP-created character whose save omitted player.name greeted
+    // the player with an empty "Welcome," and defaulted the ironman/one-life
+    // gates (which read player.is_ironman / player.is_one_life) to off.
+    const save = createDefaultSave({ name: 'MCP', isIronman: true, isOneLife: false })
+    expect(save.player.name).toBe('MCP')
+    expect(save.player.is_ironman).toBe(true)
+    expect(save.player.is_one_life).toBe(false)
+    expect(save.player.currentHP).toBe(10)
+  })
+
+  it('leaves the name unset when none is supplied', () => {
+    const save = createDefaultSave()
+    expect(save.player.name).toBeUndefined()
+    expect(save.player.is_ironman).toBe(false)
+    expect(save.player.is_one_life).toBe(false)
+  })
+
   it('omits the starter kit when asked', () => {
     const save = createDefaultSave({ withStarterKit: false })
     expect(save.inventory.every((s) => s === null)).toBe(true)

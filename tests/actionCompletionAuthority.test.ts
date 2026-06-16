@@ -77,6 +77,66 @@ describe('action completion authority helpers', () => {
     expect(out.granted).toEqual([{ itemId: 'feather', quantity: 50, destination: 'inventory' }])
   })
 
+  it('persists boss uniques rolled after stackable drops (coins-then-unique tables)', () => {
+    // Regression for "only boss uniques get lost on MCP": getInventory() rebuilds
+    // save.inventory into a fresh array on every call, and addItemToInventory()
+    // calls it internally. A reference captured once before the reward loop went
+    // stale after the first stackable was added to the inventory, so the
+    // non-stackable uniques that follow in a boss's drop table (e.g. Warlord
+    // Grondar lists coins/runes before its unique armour) were pushed onto the
+    // detached array and silently dropped from the persisted save. Stackable
+    // loot was unaffected, matching the observed symptom.
+    const save = makeSave()
+    save.inventory = [{ itemId: 'coins', quantity: 100 }]
+    const out = settleActionCompletion(save, {
+      sourceType: 'monsters',
+      sourceId: 'warlord_grondar',
+      nonce: 'monster:grondar:5',
+      rewards: [
+        { itemId: 'coins', quantity: 20000 },         // stackable — coalesces, reassigns the inv array
+        { itemId: 'grondar_chestplate', quantity: 1 }, // unique listed after coins in the drop table
+        { itemId: 'grondar_hilt', quantity: 1 },
+      ],
+    })
+
+    expect(out.granted).toEqual([
+      { itemId: 'coins', quantity: 20000, destination: 'inventory' },
+      { itemId: 'grondar_chestplate', quantity: 1, destination: 'inventory' },
+      { itemId: 'grondar_hilt', quantity: 1, destination: 'inventory' },
+    ])
+    // The uniques must actually be in the persisted inventory, not just reported.
+    const ids = save.inventory.map((s: any) => s?.itemId)
+    expect(ids).toContain('grondar_chestplate')
+    expect(ids).toContain('grondar_hilt')
+    expect(save.inventory.find((s: any) => s?.itemId === 'coins')?.quantity).toBe(20100)
+  })
+
+  it('banks a boss unique rolled after a stackable when the inventory is full', () => {
+    // "Drops lost after the inventory becomes full": a coins drop coalesces onto
+    // an existing stack (reassigning the inv array), then the unique that follows
+    // must still spill to the bank rather than vanish.
+    const save = makeSave()
+    save.inventory = [
+      { itemId: 'coins', quantity: 100 },
+      ...Array.from({ length: 27 }, (_, i) => ({ itemId: `filler_${i}`, quantity: 1 })),
+    ]
+    const out = settleActionCompletion(save, {
+      sourceType: 'monsters',
+      sourceId: 'warlord_grondar',
+      nonce: 'monster:grondar:6',
+      rewards: [
+        { itemId: 'coins', quantity: 20000 },
+        { itemId: 'grondar_chestplate', quantity: 1 },
+      ],
+    })
+
+    expect(out.granted).toEqual([
+      { itemId: 'coins', quantity: 20000, destination: 'inventory' },
+      { itemId: 'grondar_chestplate', quantity: 1, destination: 'bank' },
+    ])
+    expect(save.bank.grondar_chestplate?.quantity).toBe(1)
+  })
+
   it('spends slayer points from settings.slayerPoints (the canonical save location)', () => {
     // Regression: a slayer unlock purchase (e.g. slayer_helmet, cost 400)
     // round-trips through this handler with slayerPoints: -cost. The points

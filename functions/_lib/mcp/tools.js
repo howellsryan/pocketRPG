@@ -270,7 +270,14 @@ const TOOLS = {
     let saveSeeded = false
     if (newId) {
       try {
-        await writeSave(env, newId, createDefaultSave(), 0)
+        // Seed the profile name + permanence flags from the created character so
+        // the Home Screen greets "Welcome, <name>" and the in-game ironman /
+        // one-life gates match — the browser's initNewGame does the same.
+        await writeSave(env, newId, createDefaultSave({
+          name: res.data?.character?.username || username,
+          isIronman: !!res.data?.character?.is_ironman,
+          isOneLife: !!res.data?.character?.is_one_life,
+        }), 0)
         saveSeeded = true
       } catch {
         // Non-fatal: the character exists. If seeding lost a race (a concurrent
