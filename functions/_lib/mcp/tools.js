@@ -2,6 +2,7 @@ import { callHandler } from './bridge.js'
 import { summarizeSave } from './summary.js'
 import { getItem, getMonster, itemName, withItemName, REFERENCE_RESOURCES, readReference, listSkills, getSkillActions, searchItems, searchMonsters, REFERENCE_TOPICS } from './reference.js'
 import { loadCharacterWithSave, writeSave } from '../game/save.js'
+import { createDefaultSave } from '../../../src/engine/createDefaultSave.js'
 import { auditLog } from '../game/audit.js'
 import { assertNotInActiveMatch } from '../pvp.js'
 import { depositToBank, withdrawFromBank, equip, unequip, buildIdleTask, runIdleTask, isClaimableTask, buildGatherTask, buildClueTask, CLUE_LEVELS, buildMinigameTask, trainPrayer, trainConstruction, unlockConstructionPerk, farmSummary, plantSeed, harvestPatch, harvestAll, castMagic, buildQuestTask, applyQuestTask, questStatuses, buildCombatTask, runCombatTask, planDungeoneeringReward, setIdleCombatSetup, idleCombatSetupSummary, idleFoodWarning, addQuestToQueueIntent, removeQuestFromQueueIntent, dropFromQueue, assignSlayerTask, slayerStatus } from './intents.js'
@@ -259,7 +260,26 @@ const TOOLS = {
       body: { username, is_ironman: !!is_ironman, is_one_life: !!is_one_life },
     })
     if (!res.ok) throw httpError(res)
-    return ok(res.data)
+    // The browser seeds a fresh character's save locally (db/stores.js
+    // initNewGame) and persists it on first /api/save. A character created
+    // through MCP never runs that path, so seed the canonical baseline save
+    // here — otherwise its save row never exists, every skill reads as
+    // uninitialized, and idle XP is dropped on claim. writeSave at revision 0
+    // INSERTs (ON CONFLICT DO NOTHING), so it only ever creates the row.
+    const newId = res.data?.character?.id
+    let saveSeeded = false
+    if (newId) {
+      try {
+        await writeSave(env, newId, createDefaultSave(), 0)
+        saveSeeded = true
+      } catch {
+        // Non-fatal: the character exists. If seeding lost a race (a concurrent
+        // first save already created the row), that real save wins and this is
+        // a no-op. Surface the flag so the caller knows the state.
+        saveSeeded = false
+      }
+    }
+    return ok({ ...res.data, saveSeeded })
   },
 
   async get_account({ character_id }, { env, authorization }) {
