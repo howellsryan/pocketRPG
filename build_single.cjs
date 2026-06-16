@@ -66,6 +66,7 @@ const sourceFiles = [
   'engine/gatherTasks.js',
   'engine/construction.js',
   'engine/idleEngine.js',
+  'engine/applyTaskResult.js',
   'engine/tick.js',
   'engine/farming.js',
   'engine/quests.js',
