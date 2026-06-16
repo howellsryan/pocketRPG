@@ -219,6 +219,45 @@ describe('action completion endpoint tamper guards', () => {
     expect(saved.settings?.bossKillCounts).toBeUndefined()
   })
 
+  it('does not strand a collection-log slot or kill-count when the save write loses a revision race', async () => {
+    // Regression: the granted unique lives in the save blob, but the
+    // collection-log slot and kill-count live in their own tables. If those
+    // tables are written BEFORE the save and the save write then fails on a
+    // stale revision (a concurrent browser/MCP save bumped it), the player ends
+    // up with a log entry / kill-count for an item that never landed in their
+    // bank. The save must be persisted first so a conflict aborts cleanly.
+    const dbCalls = { killCountPrepares: 0, collectionLogBatches: 0 }
+    const env = {
+      DB: {
+        prepare: (sql: string) => {
+          if (/kill_counts/.test(sql)) dbCalls.killCountPrepares++
+          return { bind: () => ({ first: async () => ({ kill_count: 1 }), run: async () => ({}) }) }
+        },
+        batch: async () => { dbCalls.collectionLogBatches++ },
+      },
+    }
+    const { GameApiError } = await import('../functions/_lib/game/errors.js')
+    const handler = makeCompletionHandler('raids', {
+      requireAuth: async () => ({ identity: { id: 1 } }),
+      assertNotInActiveMatch: async () => null,
+      claimActionNonce: async () => {},
+      loadCharacterWithSave: async () => ({ saveObject: { inventory: [], bank: {} }, saveRevision: 7 }),
+      // A concurrent writer moved the revision forward between load and write.
+      writeSave: async () => { throw new GameApiError('SAVE_REVISION_CONFLICT', 'save_revision_conflict', 409) },
+      resolveRewards: () => [{ itemId: 'morvyn_s_hood', quantity: 1 }],
+    })
+    const req = new Request('https://example.com/api/actions/raid/complete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Character-Id': '42' },
+      body: JSON.stringify({ sourceId: 'cryptbound_champions', actionNonce: 'race1' }),
+    })
+    const res = await handler({ request: req, env: env as any })
+    expect(res.status).toBe(409)
+    // Save write failed first → neither side-table was touched.
+    expect(dbCalls.killCountPrepares).toBe(0)
+    expect(dbCalls.collectionLogBatches).toBe(0)
+  })
+
   it('accepts minigame rewards validated by minigame task id', async () => {
     const handler = makeCompletionHandler('minigames', {
       requireAuth: async () => ({ identity: { id: 1 } }),

@@ -3,6 +3,8 @@ import { summarizeSave } from '../functions/_lib/mcp/summary.js'
 import { TOOL_SCHEMAS, TOOL_NAMES, SERVER_INSTRUCTIONS } from '../functions/_lib/mcp/schema.js'
 import { itemName, shopCatalog, REFERENCE_RESOURCES, readReference, getItem, listSkills, getSkillActions, searchItems, searchMonsters, REFERENCE_TOPIC_NAMES } from '../functions/_lib/mcp/reference.js'
 import { callTool } from '../functions/_lib/mcp/tools.js'
+import { signJWT } from '../functions/_lib/jwt.js'
+import { gzipJsonString } from '../functions/_lib/saveCodec.js'
 
 describe('MCP summarizeSave', () => {
   const save = {
@@ -69,6 +71,7 @@ describe('MCP tool schema', () => {
   it('exposes the expected tool set', () => {
     expect(TOOL_NAMES).toEqual([
       'list_characters',
+      'create_character',
       'get_account',
       'logout',
       'get_character_state',
@@ -100,6 +103,19 @@ describe('MCP tool schema', () => {
       'unequip_item',
       'get_active_activity',
       'start_skilling',
+      'start_gather',
+      'start_clue',
+      'start_minigame',
+      'train_prayer',
+      'train_construction',
+      'unlock_construction_perk',
+      'get_farm',
+      'plant_seed',
+      'harvest_patch',
+      'harvest_all',
+      'cast_magic',
+      'buy_unlock',
+      'buy_slayer_unlock',
       'claim_activity',
       'get_quests',
       'start_quest',
@@ -161,6 +177,26 @@ describe('MCP tool schema', () => {
       expect(TOOL_NAMES).toContain(name)
     }
   })
+
+  it('opens with a tool-first operating contract, a routing index and a safety valve', () => {
+    // The mandate to use these tools (and not the web/memory) must come BEFORE
+    // the deep "Acting" reference so weak models read it first.
+    const howToOperate = SERVER_INSTRUCTIONS.indexOf('HOW TO OPERATE')
+    const acting = SERVER_INSTRUCTIONS.indexOf('Acting:')
+    expect(howToOperate).toBeGreaterThanOrEqual(0)
+    expect(acting).toBeGreaterThan(howToOperate)
+    // Tool-first mandate.
+    expect(SERVER_INSTRUCTIONS).toMatch(/ONLY valid source/)
+    expect(SERVER_INSTRUCTIONS).toMatch(/call a tool here/i)
+    // Safety valve — degrade gracefully instead of guessing.
+    expect(SERVER_INSTRUCTIONS).toMatch(/Safety valve/)
+    expect(SERVER_INSTRUCTIONS).toMatch(/say so plainly and stop/i)
+    // Capability/routing index that names real tools.
+    expect(SERVER_INSTRUCTIONS).toMatch(/WHAT YOU CAN DO HERE/)
+    for (const name of ['start_skilling', 'start_fight', 'plant_seed', 'cast_magic', 'buy_slayer_unlock']) {
+      expect(SERVER_INSTRUCTIONS).toContain(name)
+    }
+  })
 })
 
 describe('MCP browse helpers', () => {
@@ -198,6 +234,18 @@ describe('MCP browse helpers', () => {
   it('every advertised reference topic resolves to readable data', () => {
     expect(REFERENCE_TOPIC_NAMES).toContain('mechanics')
     expect(REFERENCE_TOPIC_NAMES).not.toContain('items')
+  })
+
+  it('exposes construction and gather reference topics with real data', () => {
+    expect(REFERENCE_TOPIC_NAMES).toContain('construction')
+    expect(REFERENCE_TOPIC_NAMES).toContain('gather')
+    const construction = readReference('pocketrpg://reference/construction')
+    expect(construction?.mimeType).toBe('application/json')
+    const conData = JSON.parse(construction!.text)
+    expect(conData.buildActions.some((a: any) => a.id === 'build_oak_plank')).toBe(true)
+    expect(conData.perks.some((p: any) => p.id === 'money_purse')).toBe(true)
+    const gather = readReference('pocketrpg://reference/gather')
+    expect(Array.isArray(JSON.parse(gather!.text))).toBe(true)
   })
 })
 
@@ -276,5 +324,432 @@ describe('MCP dispatch', () => {
     expect(data.switchAccount.join(' ')).toMatch(/different account/i)
     // Without an identity it surfaces an auth error rather than guidance.
     expect((await callTool('logout', {}, ctx)).isError).toBe(true)
+  })
+})
+
+describe('MCP trading-post source: inventory|bank', () => {
+  it('place_offer and sell_item advertise an optional inventory|bank source', () => {
+    for (const name of ['place_offer', 'sell_item']) {
+      const src = TOOL_SCHEMAS.find((t) => t.name === name)?.inputSchema.properties.source
+      expect(src).toMatchObject({ type: 'string', enum: ['inventory', 'bank'] })
+      // Optional — never a required field.
+      expect(TOOL_SCHEMAS.find((t) => t.name === name)?.inputSchema.required).not.toContain('source')
+    }
+  })
+
+  // End-to-end: a sell_item call with source:'bank' must reach the production
+  // sell-immediate handler and escrow the item from the bank, leaving any
+  // inventory copy untouched. This proves the MCP layer forwards `source`.
+  const TEST_SECRET = 'test-jwt-secret'
+  const IDENTITY = 'identity-1'
+
+  function mockEnv(save: any) {
+    const captured: { saveData: string | null } = { saveData: null }
+    const blob = gzipJsonString(JSON.stringify(save))
+    const prepare = (sql: string) => ({
+      bind: (...args: any[]) => ({
+        all: async () => {
+          // characters listing (resolveCharacterId)
+          if (sql.includes('FROM characters c') && sql.includes('total_pvp_kills')) {
+            return { results: [{ id: 7, username: 'Hero', is_ironman: 0, is_one_life: 0, created_at: 1 }] }
+          }
+          return { results: [] }
+        },
+        first: async () => {
+          if (sql.includes('active_match_id FROM characters')) return { active_match_id: null }
+          if (sql.includes('FROM pvp_matches')) return null
+          if (sql.includes("c.credits") && sql.includes('save_blob')) {
+            return {
+              id: Number(args[0]),
+              owner_id: args[1],
+              is_ironman: 0,
+              credits: 0,
+              save_blob: await blob,
+              save_data: null,
+              updated_at: 123,
+              save_revision: 0,
+            }
+          }
+          if (sql.includes('save_revision FROM saves')) return { save_revision: 1 }
+          return null
+        },
+        run: async () => {
+          if (sql.startsWith('UPDATE saves')) captured.saveData = args[1]
+          return { meta: { changes: 1 } }
+        },
+      }),
+    })
+    return { env: { DB: { prepare }, JWT_SECRET: TEST_SECRET } as any, captured }
+  }
+
+  it("sell_item with source:'bank' drains the bank and leaves inventory copies", async () => {
+    const save = {
+      inventory: [{ itemId: 'fighter_helm', quantity: 1 }],
+      bank: { fighter_helm: { itemId: 'fighter_helm', quantity: 2 } },
+    }
+    const { env, captured } = mockEnv(save)
+    const token = await signJWT({ sub: IDENTITY, provider: 'test' }, TEST_SECRET)
+    const ctx = { env, authorization: `Bearer ${token}`, identity: { id: IDENTITY } } as any
+
+    const res = await callTool('sell_item', { item_id: 'fighter_helm', quantity: 2, source: 'bank', character_id: 7 }, ctx)
+    expect(res.isError).toBeFalsy()
+    const data = JSON.parse(res.content[0].text)
+    expect(data.source).toBe('bank')
+    expect(data.total_payout).toBe(1000000)
+
+    const written = JSON.parse(captured.saveData!)
+    expect(written.bank.fighter_helm).toBeUndefined()
+    // Inventory copy untouched — the bank was the source.
+    expect(written.inventory.find((s: any) => s.itemId === 'fighter_helm')?.quantity).toBe(1)
+  })
+})
+
+describe('MCP clue scrolls (start_clue + server claim)', () => {
+  const TEST_SECRET = 'test-jwt-secret'
+  const IDENTITY = 'identity-clue'
+
+  // Stateful mock backing the idle table, the save and the nonce/collection-log
+  // writes the clue completion endpoint performs. The clue claim bridges to the
+  // real /api/actions/clue/complete handler, so this exercises the full path.
+  function mockEnv(opts: { save: any; idle: any }) {
+    const idle = { ...opts.idle }
+    const captured: { saveData: string | null; nonces: string[] } = { saveData: null, nonces: [] }
+    const blob = gzipJsonString(JSON.stringify(opts.save))
+    const prepare = (sql: string) => ({
+      bind: (...args: any[]) => ({
+        all: async () => {
+          if (sql.includes('FROM characters c') && sql.includes('total_pvp_kills')) {
+            return { results: [{ id: 7, username: 'Hero', is_ironman: 0, is_one_life: 0, created_at: 1 }] }
+          }
+          return { results: [] }
+        },
+        first: async () => {
+          if (sql.includes('FROM character_idle_state')) {
+            return idle.active_task === null && idle.last_active_at === null
+              ? null
+              : { last_active_at: idle.last_active_at, active_task: idle.active_task, updated_at: idle.updated_at || 1 }
+          }
+          if (sql.includes('active_match_id FROM characters')) return { active_match_id: null }
+          if (sql.includes('FROM pvp_matches')) return null
+          if (sql.includes('c.credits') && sql.includes('save_blob')) {
+            return { id: Number(args[0]), owner_id: args[1], is_ironman: 0, credits: 0, save_blob: await blob, save_data: null, updated_at: 123, save_revision: 0 }
+          }
+          if (sql.includes('save_revision FROM saves')) return { save_revision: 1 }
+          return null
+        },
+        run: async () => {
+          if (sql.startsWith('UPDATE saves')) captured.saveData = args[1]
+          if (sql.includes('INSERT INTO action_nonces')) {
+            const nonce = String(args[1])
+            if (captured.nonces.includes(nonce)) return { meta: { changes: 0 } }
+            captured.nonces.push(nonce)
+            return { meta: { changes: 1 } }
+          }
+          if (sql.includes('UPDATE character_idle_state') && sql.includes('active_task = NULL')) {
+            idle.active_task = null
+            idle.last_active_at = args[0]
+          }
+          if (sql.includes('INSERT INTO character_idle_state')) {
+            idle.last_active_at = args[1]
+            idle.active_task = args[2]
+          }
+          return { meta: { changes: 1 } }
+        },
+      }),
+    })
+    const env = { DB: { prepare, batch: async () => [] }, JWT_SECRET: TEST_SECRET } as any
+    return { env, idle, captured }
+  }
+
+  async function ctxFor(env: any) {
+    const token = await signJWT({ sub: IDENTITY, provider: 'test' }, TEST_SECRET)
+    return { env, authorization: `Bearer ${token}`, identity: { id: IDENTITY } } as any
+  }
+
+  const clueTask = (now: number, elapsedMs: number) => ({
+    active_task: JSON.stringify({ type: 'clue', gatherTask: { id: 'complete_medium_clue', clueLevel: 'medium', requiresItem: 'clue_scroll_medium', ticks: 500 }, bankingEnabled: true }),
+    last_active_at: now - elapsedMs,
+    updated_at: now - elapsedMs,
+  })
+
+  it('claims a finished clue via the completion endpoint, granting loot and clearing the slot', async () => {
+    const now = Date.now()
+    // medium clue = 500 ticks = 300_000ms; 10 minutes elapsed → done.
+    const { env, idle } = mockEnv({
+      save: { inventory: [{ itemId: 'clue_scroll_medium', quantity: 1 }], bank: {} },
+      idle: clueTask(now, 600_000),
+    })
+    const res = await callTool('claim_activity', { character_id: 7 }, await ctxFor(env))
+    expect(res.isError).toBeFalsy()
+    const data = JSON.parse(res.content[0].text)
+    expect(data.claimed).toBe(true)
+    expect(data.clueLevel).toBe('medium')
+    expect(Array.isArray(data.granted)).toBe(true)
+    expect(data.granted.length).toBeGreaterThan(0)
+    // Slot cleared after a successful clue completion.
+    expect(idle.active_task).toBeNull()
+  })
+
+  it('leaves an unfinished clue running (in_progress, slot intact)', async () => {
+    const now = Date.now()
+    const { env, idle } = mockEnv({
+      save: { inventory: [{ itemId: 'clue_scroll_medium', quantity: 1 }], bank: {} },
+      idle: clueTask(now, 10_000), // 10s « 300_000ms
+    })
+    const res = await callTool('claim_activity', { character_id: 7 }, await ctxFor(env))
+    expect(res.isError).toBeFalsy()
+    const data = JSON.parse(res.content[0].text)
+    expect(data.claimed).toBe(false)
+    expect(data.reason).toBe('in_progress')
+    expect(idle.active_task).not.toBeNull()
+  })
+
+  it('refuses to start a new activity over a still-running clue (no silent discard)', async () => {
+    const now = Date.now()
+    // Unfinished medium clue (10s « 300_000ms). Starting skilling must not
+    // overwrite it — it should refuse so the timer isn't silently lost.
+    const { env, idle } = mockEnv({
+      save: { inventory: [{ itemId: 'clue_scroll_medium', quantity: 1 }], bank: {} },
+      idle: clueTask(now, 10_000),
+    })
+    const res = await callTool('start_skilling', { skill: 'firemaking', action_id: 'normal_logs', character_id: 7 }, await ctxFor(env))
+    expect(res.isError).toBe(true)
+    expect(res.content[0].text).toMatch(/still running/i)
+    // The clue task is untouched.
+    expect(idle.active_task).not.toBeNull()
+  })
+
+  it('start_clue refuses when the scroll is not in the inventory', async () => {
+    const now = Date.now()
+    const { env } = mockEnv({
+      save: { inventory: [], bank: { clue_scroll_master: { itemId: 'clue_scroll_master', quantity: 1 } } },
+      idle: { active_task: null, last_active_at: null },
+    })
+    void now
+    const res = await callTool('start_clue', { clue_level: 'master', character_id: 7 }, await ctxFor(env))
+    expect(res.isError).toBe(true)
+    expect(res.content[0].text).toMatch(/inventory/i)
+  })
+
+  const minigameTask = (now: number, elapsedMs: number) => ({
+    active_task: JSON.stringify({ type: 'minigame', minigameTask: { id: 'wg_rune_defender', name: 'Grind for Rune Defender', product: 'runeforged_defender', minigame: 'warriors_guild', ticks: 18000 }, bankingEnabled: true }),
+    last_active_at: now - elapsedMs,
+    updated_at: now - elapsedMs,
+  })
+
+  it('claims a finished minigame via the completion endpoint, granting the unlock and clearing the slot', async () => {
+    const now = Date.now()
+    // wg_rune_defender = 18000 ticks = 10_800_000ms; cap-safe 20h elapsed → done.
+    const { env, idle } = mockEnv({
+      save: { inventory: [], bank: {} },
+      idle: minigameTask(now, 20 * 60 * 60 * 1000),
+    })
+    const res = await callTool('claim_activity', { character_id: 7 }, await ctxFor(env))
+    expect(res.isError).toBeFalsy()
+    const data = JSON.parse(res.content[0].text)
+    expect(data.claimed).toBe(true)
+    expect(data.minigameTaskId).toBe('wg_rune_defender')
+    expect(data.granted.some((g: any) => g.itemId === 'runeforged_defender')).toBe(true)
+    expect(idle.active_task).toBeNull()
+  })
+
+  it('leaves an unfinished minigame running (in_progress, slot intact)', async () => {
+    const now = Date.now()
+    const { env, idle } = mockEnv({ save: { inventory: [], bank: {} }, idle: minigameTask(now, 60_000) })
+    const res = await callTool('claim_activity', { character_id: 7 }, await ctxFor(env))
+    const data = JSON.parse(res.content[0].text)
+    expect(data.claimed).toBe(false)
+    expect(data.reason).toBe('in_progress')
+    expect(idle.active_task).not.toBeNull()
+  })
+
+  it('start_minigame refuses a prerequisite-gated grind when the required item is missing', async () => {
+    const { env } = mockEnv({ save: { inventory: [], bank: {} }, idle: { active_task: null, last_active_at: null } })
+    const res = await callTool('start_minigame', { minigame_task_id: 'wg_dragon_defender', character_id: 7 }, await ctxFor(env))
+    expect(res.isError).toBe(true)
+    expect(res.content[0].text).toMatch(/requires/i)
+  })
+})
+
+describe('MCP unlock purchases (buy_unlock + buy_slayer_unlock)', () => {
+  const TEST_SECRET = 'test-jwt-secret'
+  const IDENTITY = 'identity-unlock'
+
+  async function ctxFor(env: any) {
+    const token = await signJWT({ sub: IDENTITY, provider: 'test' }, TEST_SECRET)
+    return { env, authorization: `Bearer ${token}`, identity: { id: IDENTITY } } as any
+  }
+
+  // Stateful mock covering resolveCharacterId, the credit-unlock debit and the
+  // slayer completion endpoint (nonce + save load/write) the unlock tools hit.
+  function mockEnv(opts: { save?: any; credits?: number } = {}) {
+    const captured: { saveData: string | null } = { saveData: null }
+    const blob = opts.save ? gzipJsonString(JSON.stringify(opts.save)) : null
+    const credits = opts.credits ?? 0
+    const prepare = (sql: string) => ({
+      bind: (...args: any[]) => ({
+        all: async () => {
+          if (sql.includes('FROM characters c') && sql.includes('total_pvp_kills')) {
+            return { results: [{ id: 7, username: 'Hero', is_ironman: 0, is_one_life: 0, created_at: 1 }] }
+          }
+          return { results: [] }
+        },
+        first: async () => {
+          if (sql.includes('active_match_id FROM characters')) return { active_match_id: null }
+          if (sql.includes('FROM pvp_matches')) return null
+          if (sql.startsWith('SELECT id FROM characters')) return { id: 7 }
+          if (sql.includes('UPDATE') && sql.includes('credits_remaining')) {
+            // The atomic debit only matches when credits >= cost (last bind arg).
+            const cost = Number(args[0])
+            return credits >= cost ? { credits_remaining: credits - cost } : null
+          }
+          if (sql.includes('c.credits') && sql.includes('save_blob')) {
+            return { id: Number(args[0]), owner_id: args[1], is_ironman: 0, credits, save_blob: blob ? await blob : null, save_data: null, updated_at: 1, save_revision: 0 }
+          }
+          if (sql.includes('save_revision FROM saves')) return { save_revision: 1 }
+          return null
+        },
+        run: async () => {
+          if (sql.startsWith('UPDATE saves')) captured.saveData = args[1]
+          if (sql.includes('INSERT INTO action_nonces')) return { meta: { changes: 1 } }
+          return { meta: { changes: 1 } }
+        },
+      }),
+    })
+    return { env: { DB: { prepare, batch: async () => [] }, JWT_SECRET: TEST_SECRET } as any, captured }
+  }
+
+  it('buy_unlock debits credits and returns the remaining balance', async () => {
+    const { env } = mockEnv({ credits: 250 })
+    const res = await callTool('buy_unlock', { unlock_id: 'double_slayer_xp', character_id: 7 }, await ctxFor(env))
+    expect(res.isError).toBeFalsy()
+    const data = JSON.parse(res.content[0].text)
+    expect(data.credits_remaining).toBe(150) // 250 - 100
+  })
+
+  it('buy_unlock surfaces insufficient credits', async () => {
+    const { env } = mockEnv({ credits: 50 }) // < 100
+    const res = await callTool('buy_unlock', { unlock_id: 'double_slayer_xp', character_id: 7 }, await ctxFor(env))
+    expect(res.isError).toBe(true)
+    expect(res.content[0].text).toMatch(/insufficient/i)
+  })
+
+  it('buy_slayer_unlock grants the item and debits slayer points via the server endpoint', async () => {
+    const { env, captured } = mockEnv({
+      save: { inventory: [], bank: {}, settings: { slayerPoints: 500 } },
+    })
+    const res = await callTool('buy_slayer_unlock', { unlock_id: 'slayer_helmet', character_id: 7 }, await ctxFor(env))
+    expect(res.isError).toBeFalsy()
+    const data = JSON.parse(res.content[0].text)
+    expect(data.pointsSpent).toBe(400)
+    expect(data.granted.some((g: any) => g.itemId === 'slayer_helmet')).toBe(true)
+    // The written save shows points debited (500 - 400).
+    const written = JSON.parse(captured.saveData!)
+    expect(written.settings.slayerPoints).toBe(100)
+  })
+
+  it('buy_slayer_unlock refuses when slayer points are insufficient', async () => {
+    const { env, captured } = mockEnv({
+      save: { inventory: [], bank: {}, settings: { slayerPoints: 100 } }, // < 400
+    })
+    const res = await callTool('buy_slayer_unlock', { unlock_id: 'slayer_helmet', character_id: 7 }, await ctxFor(env))
+    expect(res.isError).toBe(true)
+    expect(captured.saveData).toBeNull() // nothing written
+  })
+
+  it('buy_slayer_unlock refuses a duplicate the character already owns', async () => {
+    const { env, captured } = mockEnv({
+      save: { inventory: [], bank: { slayer_helmet: { itemId: 'slayer_helmet', quantity: 1 } }, settings: { slayerPoints: 5000 } },
+    })
+    const res = await callTool('buy_slayer_unlock', { unlock_id: 'slayer_helmet', character_id: 7 }, await ctxFor(env))
+    expect(res.isError).toBe(true)
+    expect(res.content[0].text).toMatch(/already own/i)
+    expect(captured.saveData).toBeNull() // no purchase written
+  })
+
+  it('buy_slayer_unlock rejects an unknown unlock id before any server call', async () => {
+    const { env } = mockEnv({ save: { inventory: [], bank: {}, settings: { slayerPoints: 5000 } } })
+    const res = await callTool('buy_slayer_unlock', { unlock_id: 'not_a_real_unlock', character_id: 7 }, await ctxFor(env))
+    expect(res.isError).toBe(true)
+    expect(res.content[0].text).toMatch(/Unknown slayer unlock/)
+  })
+})
+
+describe('MCP create_character', () => {
+  const TEST_SECRET = 'test-jwt-secret'
+  const IDENTITY = 'identity-create'
+
+  async function ctxFor(env: any) {
+    const token = await signJWT({ sub: IDENTITY, provider: 'test' }, TEST_SECRET)
+    return { env, authorization: `Bearer ${token}`, identity: { id: IDENTITY } } as any
+  }
+
+  function mockEnv({ reservedTaken = false, nameTaken = false }: { reservedTaken?: boolean; nameTaken?: boolean } = {}) {
+    const prepare = (sql: string) => ({
+      bind: (..._args: any[]) => ({
+        first: async () => {
+          if (sql.includes('FROM reserved_usernames')) return reservedTaken ? { username: 'taken' } : null
+          if (sql.includes('SELECT id FROM characters WHERE username')) return nameTaken ? { id: 1 } : null
+          return null
+        },
+        run: async () => ({ meta: { last_row_id: 42, changes: 1 } }),
+      }),
+    })
+    return { env: { DB: { prepare }, JWT_SECRET: TEST_SECRET } as any }
+  }
+
+  it('creates a character with a valid username', async () => {
+    const { env } = mockEnv()
+    const res = await callTool('create_character', { username: 'Newbie_1' }, await ctxFor(env))
+    expect(res.isError).toBeFalsy()
+    const data = JSON.parse(res.content[0].text)
+    expect(data.character).toMatchObject({ id: 42, username: 'Newbie_1', is_ironman: false, is_one_life: false })
+  })
+
+  it('passes the ironman / one-life flags through', async () => {
+    const { env } = mockEnv()
+    const res = await callTool('create_character', { username: 'IronHero', is_ironman: true, is_one_life: true }, await ctxFor(env))
+    const data = JSON.parse(res.content[0].text)
+    expect(data.character).toMatchObject({ is_ironman: true, is_one_life: true })
+  })
+
+  it('refuses an invalid username before touching the DB', async () => {
+    const { env } = mockEnv()
+    const res = await callTool('create_character', { username: 'ab' }, await ctxFor(env)) // too short
+    expect(res.isError).toBe(true)
+    expect(res.content[0].text).toMatch(/3.16/)
+  })
+
+  it('refuses a taken username', async () => {
+    const { env } = mockEnv({ nameTaken: true })
+    const res = await callTool('create_character', { username: 'TakenName' }, await ctxFor(env))
+    expect(res.isError).toBe(true)
+    expect(res.content[0].text).toMatch(/already taken/i)
+  })
+
+  it('seeds a baseline save row for the new character', async () => {
+    // A character created via MCP must own a real save from birth — the browser
+    // seeds-and-saves locally, this path never runs that, so create_character
+    // writes the baseline itself. Without it the save row never exists and idle
+    // XP is dropped on claim ("stuck on Spryroot"). Seeding lives here, NOT in
+    // the shared loadCharacterWithSave loader, so a transient "no save" read can
+    // never fabricate-and-overwrite a real save.
+    const saveWrites: string[] = []
+    const prepare = (sql: string) => ({
+      bind: (..._args: any[]) => ({
+        first: async () => null,
+        run: async () => {
+          if (/saves/.test(sql)) saveWrites.push(sql)
+          return { meta: { last_row_id: 42, changes: 1 } }
+        },
+      }),
+    })
+    const env = { DB: { prepare }, JWT_SECRET: TEST_SECRET } as any
+    const res = await callTool('create_character', { username: 'FreshOne' }, await ctxFor(env))
+    expect(res.isError).toBeFalsy()
+    const data = JSON.parse(res.content[0].text)
+    expect(data.character).toMatchObject({ id: 42, username: 'FreshOne' })
+    expect(data.saveSeeded).toBe(true)
+    expect(saveWrites.some((s) => /saves/.test(s))).toBe(true)
   })
 })

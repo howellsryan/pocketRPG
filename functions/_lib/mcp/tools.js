@@ -2,16 +2,17 @@ import { callHandler } from './bridge.js'
 import { summarizeSave } from './summary.js'
 import { getItem, getMonster, itemName, withItemName, REFERENCE_RESOURCES, readReference, listSkills, getSkillActions, searchItems, searchMonsters, REFERENCE_TOPICS } from './reference.js'
 import { loadCharacterWithSave, writeSave } from '../game/save.js'
+import { createDefaultSave } from '../../../src/engine/createDefaultSave.js'
 import { auditLog } from '../game/audit.js'
 import { assertNotInActiveMatch } from '../pvp.js'
-import { depositToBank, withdrawFromBank, equip, unequip, buildIdleTask, runIdleTask, isClaimableTask, buildQuestTask, applyQuestTask, questStatuses, buildCombatTask, runCombatTask, planDungeoneeringReward, setIdleCombatSetup, idleCombatSetupSummary, idleFoodWarning, addQuestToQueueIntent, removeQuestFromQueueIntent, dropFromQueue, assignSlayerTask, slayerStatus } from './intents.js'
+import { depositToBank, withdrawFromBank, equip, unequip, buildIdleTask, runIdleTask, isClaimableTask, buildGatherTask, buildClueTask, CLUE_LEVELS, buildMinigameTask, trainPrayer, trainConstruction, unlockConstructionPerk, farmSummary, plantSeed, harvestPatch, harvestAll, castMagic, buildQuestTask, applyQuestTask, questStatuses, buildCombatTask, runCombatTask, planDungeoneeringReward, setIdleCombatSetup, idleCombatSetupSummary, idleFoodWarning, addQuestToQueueIntent, removeQuestFromQueueIntent, dropFromQueue, assignSlayerTask, slayerStatus } from './intents.js'
 import { getIdleRow, setIdleTask, resetIdleActiveAt, clearIdleTask, advanceIdleClock } from './idle.js'
 import { SKIP_HOUR_MS } from '../../../src/engine/skipPreflight.js'
 import { simulateBossFight, applyBossFightOutcome } from './bossFight.js'
 import raidsData from '../../../src/data/raids.json' assert { type: 'json' }
 
 // Reuse the exact production endpoint handlers (see bridge.js).
-import { onRequestGet as listCharacters } from '../../api/characters/index.js'
+import { onRequestGet as listCharacters, onRequestPost as createCharacter } from '../../api/characters/index.js'
 import { onRequestGet as getMe } from '../../api/auth/me.js'
 import { onRequestGet as getSave } from '../../api/save.js'
 import { onRequestGet as getCollectionLog } from '../../api/collection-log.js'
@@ -31,6 +32,12 @@ import { onRequestPost as postSellImmediate } from '../../api/trading-post/sell-
 import { onRequestPost as completeMonster } from '../../api/actions/monster/complete.js'
 import { onRequestPost as completeRaid } from '../../api/actions/raid/complete.js'
 import { onRequestPost as completeDungeoneering } from '../../api/actions/dungeoneering/complete.js'
+import { onRequestPost as completeClue } from '../../api/actions/clue/complete.js'
+import { onRequestPost as completeMinigame } from '../../api/actions/minigame/complete.js'
+import { onRequestPost as completeSlayer } from '../../api/actions/slayer/complete.js'
+import { onRequestPost as postUnlockPurchase } from '../../api/unlocks/purchase.js'
+import { SLAYER_UNLOCKS, ownsItem as ownsSlayerUnlockItem } from '../../../src/engine/slayerUnlocks.js'
+import { TICK_DURATION } from '../../../src/utils/constants.js'
 
 function ok(payload) {
   const text = typeof payload === 'string' ? payload : JSON.stringify(payload, null, 2)
@@ -82,7 +89,7 @@ const MIN_IDLE_MS = 2000
 // Claim a character's running idle skilling task: simulate the elapsed window
 // server-side, apply it to the save, then reset the idle clock. Only supported
 // production-skill tasks are claimed; anything else is left for the game client.
-async function claimIdleCore(env, characterId, identityId) {
+async function claimIdleCore(env, characterId, identityId, authorization) {
   const idle = await getIdleRow(env, characterId)
   if (!idle || !idle.active_task) return { claimed: false, reason: 'no_active_task' }
   let task
@@ -98,6 +105,21 @@ async function claimIdleCore(env, characterId, identityId) {
   // are deferred to the game client where death is handled explicitly.
   if (task.type === 'combat' && (await isOneLifeCharacter(env, characterId))) {
     return { claimed: false, reason: 'one_life_combat' }
+  }
+
+  // Clues are server-rolled: once the timer has elapsed, the completion
+  // endpoint claims a nonce, consumes the scroll, rolls loot and records the
+  // collection log — all in its own atomic save write. We never simulate clue
+  // rewards locally; until the timer finishes we leave the task running.
+  if (task.type === 'clue') {
+    return claimClueCore(env, characterId, authorization, task, elapsedMs, now)
+  }
+
+  // Minigames are server-rolled one-shot grinds (same pattern as clues): once
+  // the timer elapses, the completion endpoint grants the unlock item and
+  // records the collection log under the parent minigame section.
+  if (task.type === 'minigame') {
+    return claimMinigameCore(env, characterId, authorization, task, elapsedMs, now)
   }
 
   const { saveObject, saveRevision } = await loadCharacterWithSave(env, characterId, identityId)
@@ -130,6 +152,73 @@ async function claimIdleCore(env, characterId, identityId) {
   return { claimed: true, elapsedMs, ...result }
 }
 
+// Finish a running clue scroll. Solving a clue is a single server-rolled
+// completion (one scroll → 1–4 rewards), so we complete exactly one clue once
+// the timer elapses and clear the idle slot. The completion endpoint is the
+// same one the game client calls; it owns the save write, nonce claim and
+// collection-log persistence.
+async function claimClueCore(env, characterId, authorization, task, elapsedMs, now) {
+  const clueLevel = task.gatherTask?.clueLevel
+  const requiresItem = task.gatherTask?.requiresItem
+  const ticks = Math.max(1, Number(task.gatherTask?.ticks) || 0)
+  const elapsedTicks = Math.floor(elapsedMs / TICK_DURATION)
+  if (elapsedTicks < ticks) {
+    return { claimed: false, reason: 'in_progress', elapsedMs, ticksRemaining: ticks - elapsedTicks }
+  }
+  const res = await callHandler(completeClue, env, {
+    method: 'POST',
+    authorization,
+    characterId,
+    body: {
+      sourceId: clueLevel,
+      actionNonce: `mcp-clue:${characterId}:${clueLevel}:${now}`,
+      consumptions: [{ itemId: requiresItem, quantity: 1 }],
+    },
+  })
+  if (!res.ok) throw httpError(res)
+  await clearIdleTask(env, characterId, now)
+  return {
+    claimed: true,
+    type: 'clue',
+    elapsedMs,
+    clueLevel,
+    granted: res.data?.granted || [],
+    collectionLogEntries: res.data?.collectionLogEntries || [],
+  }
+}
+
+// Finish a running minigame grind. One-shot: completing it once awards the
+// unlock item server-side and clears the slot. The completion endpoint owns
+// the save write, nonce claim, reward roll and collection-log persistence
+// (keyed to the parent minigame), so no minigame logic is duplicated.
+async function claimMinigameCore(env, characterId, authorization, task, elapsedMs, now) {
+  const taskId = task.minigameTask?.id
+  const ticks = Math.max(1, Number(task.minigameTask?.ticks) || 0)
+  const elapsedTicks = Math.floor(elapsedMs / TICK_DURATION)
+  if (elapsedTicks < ticks) {
+    return { claimed: false, reason: 'in_progress', elapsedMs, ticksRemaining: ticks - elapsedTicks }
+  }
+  const res = await callHandler(completeMinigame, env, {
+    method: 'POST',
+    authorization,
+    characterId,
+    body: {
+      sourceId: taskId,
+      actionNonce: `mcp-minigame:${characterId}:${taskId}:${now}`,
+    },
+  })
+  if (!res.ok) throw httpError(res)
+  await clearIdleTask(env, characterId, now)
+  return {
+    claimed: true,
+    type: 'minigame',
+    elapsedMs,
+    minigameTaskId: taskId,
+    granted: res.data?.granted || [],
+    collectionLogEntries: res.data?.collectionLogEntries || [],
+  }
+}
+
 // True if the character is a One-Life account (combat death = permanent wipe).
 async function isOneLifeCharacter(env, characterId) {
   const row = await env.DB.prepare('SELECT is_one_life FROM characters WHERE id = ?').bind(characterId).first()
@@ -158,6 +247,39 @@ const TOOLS = {
     const res = await callHandler(listCharacters, env, { authorization })
     if (!res.ok) throw httpError(res)
     return ok(res.data)
+  },
+
+  // Create a new character on the account. The endpoint validates the username
+  // and uniqueness; the ironman / one-life flags are permanent once set.
+  async create_character({ username, is_ironman, is_one_life }, { env, authorization, identity }) {
+    if (!identity?.id) throw new Error('Not authenticated.')
+    if (!username) throw new Error('username is required.')
+    const res = await callHandler(createCharacter, env, {
+      method: 'POST',
+      authorization,
+      body: { username, is_ironman: !!is_ironman, is_one_life: !!is_one_life },
+    })
+    if (!res.ok) throw httpError(res)
+    // The browser seeds a fresh character's save locally (db/stores.js
+    // initNewGame) and persists it on first /api/save. A character created
+    // through MCP never runs that path, so seed the canonical baseline save
+    // here — otherwise its save row never exists, every skill reads as
+    // uninitialized, and idle XP is dropped on claim. writeSave at revision 0
+    // INSERTs (ON CONFLICT DO NOTHING), so it only ever creates the row.
+    const newId = res.data?.character?.id
+    let saveSeeded = false
+    if (newId) {
+      try {
+        await writeSave(env, newId, createDefaultSave(), 0)
+        saveSeeded = true
+      } catch {
+        // Non-fatal: the character exists. If seeding lost a race (a concurrent
+        // first save already created the row), that real save wins and this is
+        // a no-op. Surface the flag so the caller knows the state.
+        saveSeeded = false
+      }
+    }
+    return ok({ ...res.data, saveSeeded })
   },
 
   async get_account({ character_id }, { env, authorization }) {
@@ -350,13 +472,13 @@ const TOOLS = {
     return ok({ characterId: id, maxSlots: res.data?.max_slots, offers })
   },
 
-  async place_offer({ offer_type, item_id, price, quantity, character_id }, { env, authorization }) {
+  async place_offer({ offer_type, item_id, price, quantity, source, character_id }, { env, authorization }) {
     const id = await resolveCharacterId(env, authorization, character_id)
     const res = await callHandler(postPlaceOffer, env, {
       method: 'POST',
       authorization,
       characterId: id,
-      body: { offer_type, item_id, price, quantity },
+      body: { offer_type, item_id, price, quantity, source },
     })
     if (!res.ok) throw httpError(res)
     return ok({ characterId: id, item: itemName(item_id), ...res.data })
@@ -383,14 +505,14 @@ const TOOLS = {
     return ok({ characterId: id, ...res.data })
   },
 
-  async sell_item({ item_id, quantity, character_id }, { env, authorization }) {
+  async sell_item({ item_id, quantity, source, character_id }, { env, authorization }) {
     if (!item_id) throw new Error('item_id is required.')
     const id = await resolveCharacterId(env, authorization, character_id)
     const res = await callHandler(postSellImmediate, env, {
       method: 'POST',
       authorization,
       characterId: id,
-      body: { item_id, quantity },
+      body: { item_id, quantity, source },
     })
     if (!res.ok) throw httpError(res)
     return ok({ characterId: id, item: itemName(item_id), ...res.data })
@@ -432,6 +554,21 @@ const TOOLS = {
           }
         : task.type === 'combat'
         ? { type: 'combat', monster: task.monster?.name || task.monster?.id || null, stance: task.stance || null }
+        : task.type === 'gather'
+        ? { type: 'gather', taskId: task.gatherTask?.id || null, task: task.gatherTask?.name || null }
+        : task.type === 'clue'
+        ? {
+            type: 'clue',
+            clueLevel: task.gatherTask?.clueLevel || null,
+            secondsRemaining: Math.max(0, Math.ceil(((Number(task.gatherTask?.ticks) || 0) * TICK_DURATION) / 1000) - runningForSeconds),
+          }
+        : task.type === 'minigame'
+        ? {
+            type: 'minigame',
+            minigameTaskId: task.minigameTask?.id || null,
+            product: task.minigameTask?.product || null,
+            secondsRemaining: Math.max(0, Math.ceil(((Number(task.minigameTask?.ticks) || 0) * TICK_DURATION) / 1000) - runningForSeconds),
+          }
         : {
             type: task.type,
             skill: task.skill || (task.type !== 'skill' ? task.type : null),
@@ -456,9 +593,12 @@ const TOOLS = {
     // Bank any pending rewards from a current supported task before switching;
     // refuse if an unsupported activity (combat/gather/…) is mid-flight so we
     // never silently discard its progress.
-    const autoClaimed = await claimIdleCore(env, id, identity.id)
+    const autoClaimed = await claimIdleCore(env, id, identity.id, authorization)
     if (autoClaimed.reason === 'unsupported_type') {
       throw new Error(`An active ${autoClaimed.type} activity is in progress — claim it in the game client first.`)
+    }
+    if (autoClaimed.reason === 'in_progress') {
+      throw new Error('A timed clue or minigame is still running — wait for it to finish, then call claim_activity to collect it, before starting another activity.')
     }
     if (autoClaimed.reason === 'one_life_combat') {
       throw new Error('One-Life combat is in progress — claim it in the game client, where death is handled.')
@@ -476,12 +616,203 @@ const TOOLS = {
     })
   },
 
+  async start_gather({ task_id, character_id }, { env, authorization, identity }) {
+    if (!identity?.id) throw new Error('Not authenticated.')
+    if (!task_id) throw new Error('task_id is required.')
+    const id = await resolveCharacterId(env, authorization, character_id)
+    const lock = await assertNotInActiveMatch(env, id)
+    if (lock) throw new Error('Blocked: the character is in an active PvP match.')
+    await assertNoActiveQuest(env, id)
+
+    const autoClaimed = await claimIdleCore(env, id, identity.id, authorization)
+    if (autoClaimed.reason === 'unsupported_type') {
+      throw new Error(`An active ${autoClaimed.type} activity is in progress — claim it in the game client first.`)
+    }
+    if (autoClaimed.reason === 'in_progress') {
+      throw new Error('A timed clue or minigame is still running — wait for it to finish, then call claim_activity to collect it, before starting another activity.')
+    }
+    if (autoClaimed.reason === 'one_life_combat') {
+      throw new Error('One-Life combat is in progress — claim it in the game client, where death is handled.')
+    }
+
+    const { saveObject } = await loadCharacterWithSave(env, id, identity.id)
+    const task = buildGatherTask(saveObject, task_id)
+    const now = Date.now()
+    await setIdleTask(env, id, JSON.stringify(task), now)
+    await auditLog(env, 'mcp_start_gather', { characterId: id, identityId: identity.id, taskId: task_id }, { swallow: true })
+    return ok({
+      characterId: id,
+      started: { taskId: task.gatherTask.id, task: task.gatherTask.name },
+      note: 'Gather task started — items accrue over real time. Call claim_activity to collect them.',
+      autoClaimed: autoClaimed.claimed ? autoClaimed : undefined,
+    })
+  },
+
+  async start_clue({ clue_level, character_id }, { env, authorization, identity }) {
+    if (!identity?.id) throw new Error('Not authenticated.')
+    if (!clue_level) throw new Error('clue_level is required.')
+    const id = await resolveCharacterId(env, authorization, character_id)
+    const lock = await assertNotInActiveMatch(env, id)
+    if (lock) throw new Error('Blocked: the character is in an active PvP match.')
+    await assertNoActiveQuest(env, id)
+
+    const autoClaimed = await claimIdleCore(env, id, identity.id, authorization)
+    if (autoClaimed.reason === 'unsupported_type') {
+      throw new Error(`An active ${autoClaimed.type} activity is in progress — claim it in the game client first.`)
+    }
+    if (autoClaimed.reason === 'in_progress') {
+      throw new Error('A timed clue or minigame is still running — wait for it to finish, then call claim_activity to collect it, before starting another activity.')
+    }
+    if (autoClaimed.reason === 'one_life_combat') {
+      throw new Error('One-Life combat is in progress — claim it in the game client, where death is handled.')
+    }
+
+    const { saveObject } = await loadCharacterWithSave(env, id, identity.id)
+    const task = buildClueTask(saveObject, clue_level) // validates level + scroll held in inventory
+    const now = Date.now()
+    await setIdleTask(env, id, JSON.stringify(task), now)
+    await auditLog(env, 'mcp_start_clue', { characterId: id, identityId: identity.id, clueLevel: clue_level }, { swallow: true })
+    return ok({
+      characterId: id,
+      started: { clueLevel: task.gatherTask.clueLevel, requiresItem: task.gatherTask.requiresItem, ticks: task.gatherTask.ticks },
+      note: 'Clue started — it solves after its timer of real time, then consumes one scroll and banks server-rolled rewards. Call claim_activity to collect; skip_hour advances an hour.',
+      autoClaimed: autoClaimed.claimed ? autoClaimed : undefined,
+    })
+  },
+
+  async start_minigame({ minigame_task_id, character_id }, { env, authorization, identity }) {
+    if (!identity?.id) throw new Error('Not authenticated.')
+    if (!minigame_task_id) throw new Error('minigame_task_id is required.')
+    const id = await resolveCharacterId(env, authorization, character_id)
+    const lock = await assertNotInActiveMatch(env, id)
+    if (lock) throw new Error('Blocked: the character is in an active PvP match.')
+    await assertNoActiveQuest(env, id)
+
+    const autoClaimed = await claimIdleCore(env, id, identity.id, authorization)
+    if (autoClaimed.reason === 'unsupported_type') {
+      throw new Error(`An active ${autoClaimed.type} activity is in progress — claim it in the game client first.`)
+    }
+    if (autoClaimed.reason === 'in_progress') {
+      throw new Error('A timed clue or minigame is still running — wait for it to finish, then call claim_activity to collect it, before starting another activity.')
+    }
+    if (autoClaimed.reason === 'one_life_combat') {
+      throw new Error('One-Life combat is in progress — claim it in the game client, where death is handled.')
+    }
+
+    const { saveObject } = await loadCharacterWithSave(env, id, identity.id)
+    const task = buildMinigameTask(saveObject, minigame_task_id) // validates id + prerequisite item
+    const now = Date.now()
+    await setIdleTask(env, id, JSON.stringify(task), now)
+    await auditLog(env, 'mcp_start_minigame', { characterId: id, identityId: identity.id, minigameTaskId: minigame_task_id }, { swallow: true })
+    return ok({
+      characterId: id,
+      started: { minigameTaskId: task.minigameTask.id, minigame: task.minigameTask.minigame, product: task.minigameTask.product, ticks: task.minigameTask.ticks },
+      note: 'Minigame grind started — it awards its unlock item after the timer of real time. Call claim_activity to collect; skip_hour advances an hour.',
+      autoClaimed: autoClaimed.claimed ? autoClaimed : undefined,
+    })
+  },
+
+  train_prayer({ action_id, quantity, character_id }, ctx) {
+    if (!action_id) throw new Error('action_id is required.')
+    return applySaveIntent(ctx, character_id, (save) => trainPrayer(save, action_id, quantity), 'mcp_train_prayer')
+  },
+
+  train_construction({ action_id, quantity, character_id }, ctx) {
+    if (!action_id) throw new Error('action_id is required.')
+    return applySaveIntent(ctx, character_id, (save) => trainConstruction(save, action_id, quantity), 'mcp_train_construction')
+  },
+
+  unlock_construction_perk({ perk_id, character_id }, ctx) {
+    if (!perk_id) throw new Error('perk_id is required.')
+    return applySaveIntent(ctx, character_id, (save) => unlockConstructionPerk(save, perk_id), 'mcp_unlock_construction_perk')
+  },
+
+  async get_farm({ character_id }, { env, authorization, identity }) {
+    if (!identity?.id) throw new Error('Not authenticated.')
+    const id = await resolveCharacterId(env, authorization, character_id)
+    const { saveObject } = await loadCharacterWithSave(env, id, identity.id)
+    return ok({ characterId: id, ...farmSummary(saveObject) })
+  },
+
+  plant_seed({ patch_id, seed_id, character_id }, ctx) {
+    if (!patch_id) throw new Error('patch_id is required.')
+    if (!seed_id) throw new Error('seed_id is required.')
+    return applySaveIntent(ctx, character_id, (save) => plantSeed(save, patch_id, seed_id), 'mcp_plant_seed')
+  },
+
+  harvest_patch({ patch_id, character_id }, ctx) {
+    if (!patch_id) throw new Error('patch_id is required.')
+    return applySaveIntent(ctx, character_id, (save) => harvestPatch(save, patch_id), 'mcp_harvest_patch')
+  },
+
+  harvest_all({ character_id }, ctx) {
+    return applySaveIntent(ctx, character_id, (save) => harvestAll(save), 'mcp_harvest_all')
+  },
+
+  cast_magic({ action_id, target_item_id, quantity, character_id }, ctx) {
+    if (!action_id) throw new Error('action_id is required.')
+    return applySaveIntent(ctx, character_id, (save) => castMagic(save, action_id, { targetItemId: target_item_id, quantity }), 'mcp_cast_magic')
+  },
+
+  // Permanent credit unlock — server-authoritative price registry; debits the
+  // character's purchased credits.
+  async buy_unlock({ unlock_id, character_id }, { env, authorization }) {
+    if (!unlock_id) throw new Error('unlock_id is required.')
+    const id = await resolveCharacterId(env, authorization, character_id)
+    const res = await callHandler(postUnlockPurchase, env, { method: 'POST', authorization, characterId: id, body: { unlock_id } })
+    if (!res.ok) throw httpError(res)
+    return ok({ characterId: id, ...res.data })
+  },
+
+  // Slayer-point reward unlock. The purchase is server-authoritative (same path
+  // the game client uses): the slayer completion endpoint grants the item,
+  // debits the slayer points atomically and records the collection log under a
+  // replay-protected nonce — so this bridges rather than mutating the save.
+  async buy_slayer_unlock({ unlock_id, character_id }, { env, authorization, identity }) {
+    if (!identity?.id) throw new Error('Not authenticated.')
+    if (!unlock_id) throw new Error('unlock_id is required.')
+    const unlock = SLAYER_UNLOCKS.find((u) => u.itemId === unlock_id)
+    if (!unlock) {
+      throw new Error(`Unknown slayer unlock '${unlock_id}'. Valid ids: ${SLAYER_UNLOCKS.map((u) => u.itemId).join(', ')}.`)
+    }
+    const id = await resolveCharacterId(env, authorization, character_id)
+    // Reject duplicates up front (the client's ALREADY_OWNED guard) — these are
+    // untradeable one-offs; the completion endpoint only enforces affordability,
+    // so without this the same item could be bought (and points spent) twice.
+    const { saveObject } = await loadCharacterWithSave(env, id, identity.id)
+    const ownsInBankOrInv = ownsSlayerUnlockItem({ itemId: unlock_id, bank: saveObject.bank || {}, inventory: saveObject.inventory || [] })
+    const ownsEquipped = Object.values(saveObject.equipment || {}).some((s) => s?.itemId === unlock_id)
+    if (ownsInBankOrInv || ownsEquipped) {
+      throw new Error(`You already own a ${itemName(unlock_id)} — no need to buy another.`)
+    }
+    const res = await callHandler(completeSlayer, env, {
+      method: 'POST',
+      authorization,
+      characterId: id,
+      body: {
+        sourceId: 'slayer',
+        actionNonce: `mcp-slayer-unlock:${id}:${unlock_id}:${Date.now()}`,
+        rewards: [{ itemId: unlock_id, quantity: 1 }],
+        slayerPoints: -unlock.cost,
+      },
+    })
+    if (!res.ok) throw httpError(res)
+    return ok({
+      characterId: id,
+      unlockId: unlock_id,
+      pointsSpent: unlock.cost,
+      granted: res.data?.granted || [],
+      collectionLogEntries: res.data?.collectionLogEntries || [],
+      note: `Unlocked ${itemName(unlock_id)} for ${unlock.cost} slayer points.`,
+    })
+  },
+
   async claim_activity({ character_id }, { env, authorization, identity }) {
     if (!identity?.id) throw new Error('Not authenticated.')
     const id = await resolveCharacterId(env, authorization, character_id)
     const lock = await assertNotInActiveMatch(env, id)
     if (lock) throw new Error('Blocked: the character is in an active PvP match.')
-    const result = await claimIdleCore(env, id, identity.id)
+    const result = await claimIdleCore(env, id, identity.id, authorization)
     if (!result.claimed) {
       if (result.reason === 'unsupported_type') {
         return ok({ characterId: id, claimed: false, note: `The active ${result.type} activity must be claimed in the game client.` })
@@ -516,9 +847,12 @@ const TOOLS = {
 
     // Bank/clear any pending supported skilling task first; refuse if an
     // unsupported activity is mid-flight so its progress isn't discarded.
-    const autoClaimed = await claimIdleCore(env, id, identity.id)
+    const autoClaimed = await claimIdleCore(env, id, identity.id, authorization)
     if (autoClaimed.reason === 'unsupported_type') {
       throw new Error(`An active ${autoClaimed.type} activity is in progress — claim it in the game client first.`)
+    }
+    if (autoClaimed.reason === 'in_progress') {
+      throw new Error('A timed clue or minigame is still running — wait for it to finish, then call claim_activity to collect it, before starting another activity.')
     }
     if (autoClaimed.reason === 'one_life_combat') {
       throw new Error('One-Life combat is in progress — claim it in the game client, where death is handled.')
@@ -606,9 +940,12 @@ const TOOLS = {
       })
     }
 
-    const autoClaimed = await claimIdleCore(env, id, identity.id)
+    const autoClaimed = await claimIdleCore(env, id, identity.id, authorization)
     if (autoClaimed.reason === 'unsupported_type') {
       throw new Error(`An active ${autoClaimed.type} activity is in progress — claim it in the game client first.`)
+    }
+    if (autoClaimed.reason === 'in_progress') {
+      throw new Error('A timed clue or minigame is still running — wait for it to finish, then call claim_activity to collect it, before starting another activity.')
     }
 
     // claimIdleCore may have mutated/persisted the save (a prior task); reload so
@@ -676,12 +1013,15 @@ const TOOLS = {
     if (monster.boss !== true) throw new Error(`${monster.name || monster_id} is not a boss — use start_fight for normal monsters.`)
 
     const { saveObject, saveRevision } = await loadCharacterWithSave(env, id, identity.id)
-    const outcome = simulateBossFight(saveObject, monster) // throws for magic setups
+    // Simulates melee/ranged and magic (powered staff or active spell); refuses
+    // a magic setup with no spell selected.
+    const outcome = simulateBossFight(saveObject, monster)
     applyBossFightOutcome(saveObject, outcome)
     await writeSave(env, id, saveObject, saveRevision)
     await auditLog(env, 'mcp_fight_boss', { characterId: id, identityId: identity.id, monsterId: monster_id, victory: outcome.victory, died: outcome.died, ticks: outcome.ticks }, { swallow: true })
 
     const foodUsed = Object.entries(outcome.foodConsumed).map(([itemId, quantity]) => ({ itemId, name: itemName(itemId), quantity }))
+    const runesUsed = Object.entries(outcome.runesConsumed || {}).map(([itemId, quantity]) => ({ itemId, name: itemName(itemId), quantity }))
     if (!outcome.victory) {
       return ok({
         characterId: id,
@@ -691,6 +1031,7 @@ const TOOLS = {
         ticks: outcome.ticks,
         finalHP: outcome.finalHP,
         foodUsed,
+        runesUsed,
         reason: outcome.died
           ? 'You died before defeating the boss — bring more/better food or stronger gear.'
           : 'Could not out-damage the boss; improve gear before trying again.',
@@ -710,6 +1051,7 @@ const TOOLS = {
       ticks: outcome.ticks,
       finalHP: outcome.finalHP,
       foodUsed,
+      runesUsed,
       granted: (res.data?.granted || []).map((g) => ({ ...g, name: itemName(g.itemId) })),
       killCount: res.data?.killCount,
       collectionLogEntries: res.data?.collectionLogEntries || [],
