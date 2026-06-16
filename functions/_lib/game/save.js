@@ -1,13 +1,19 @@
 import { decodeSaveRow, gzipJsonString } from '../saveCodec.js'
 import { GameApiError } from './errors.js'
 import { migrateLegacyNonces } from './nonces.js'
+import { createDefaultSave } from '../../../src/engine/createDefaultSave.js'
 
 export async function loadCharacterWithSave(env, characterId, identityId) {
   const row = await env.DB.prepare(`SELECT c.id, c.owner_id, c.is_ironman, c.credits, s.save_data, s.save_blob, s.updated_at, s.save_revision FROM characters c LEFT JOIN saves s ON s.character_id = c.id WHERE c.id = ? AND c.owner_id = ? AND c.deleted_at IS NULL`).bind(characterId, identityId).first()
   if (!row) throw new GameApiError('CHARACTER_NOT_FOUND', 'Character not found', 404)
   const decoded = await decodeSaveRow(row)
   const save_data = decoded?.save_data || null
-  const saveObject = save_data ? JSON.parse(save_data) : {}
+  // A character with no save row (created server-side via the MCP
+  // create_character tool and never opened in the browser) gets the canonical
+  // fresh-character baseline instead of an empty {}. Otherwise every skill
+  // reads as uninitialized and idle XP is silently dropped on claim. The first
+  // writeSave (expectedRevision 0) persists this baseline plus the new gains.
+  const saveObject = save_data ? JSON.parse(save_data) : createDefaultSave()
   // One-shot lift of pre-step-6 in-blob nonces to the action_nonces
   // table. INSERT-OR-IGNORE makes it idempotent and safe even if the
   // same save is loaded by concurrent requests.

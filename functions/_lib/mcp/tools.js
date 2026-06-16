@@ -2,6 +2,7 @@ import { callHandler } from './bridge.js'
 import { summarizeSave } from './summary.js'
 import { getItem, getMonster, itemName, withItemName, REFERENCE_RESOURCES, readReference, listSkills, getSkillActions, searchItems, searchMonsters, REFERENCE_TOPICS } from './reference.js'
 import { loadCharacterWithSave, writeSave } from '../game/save.js'
+import { createDefaultSave } from '../../../src/engine/createDefaultSave.js'
 import { auditLog } from '../game/audit.js'
 import { assertNotInActiveMatch } from '../pvp.js'
 import { depositToBank, withdrawFromBank, equip, unequip, buildIdleTask, runIdleTask, isClaimableTask, buildGatherTask, buildClueTask, CLUE_LEVELS, buildMinigameTask, trainPrayer, trainConstruction, unlockConstructionPerk, farmSummary, plantSeed, harvestPatch, harvestAll, castMagic, buildQuestTask, applyQuestTask, questStatuses, buildCombatTask, runCombatTask, planDungeoneeringReward, setIdleCombatSetup, idleCombatSetupSummary, idleFoodWarning, addQuestToQueueIntent, removeQuestFromQueueIntent, dropFromQueue, assignSlayerTask, slayerStatus } from './intents.js'
@@ -291,8 +292,12 @@ const TOOLS = {
     const id = await resolveCharacterId(env, authorization, character_id)
     const res = await callHandler(getSave, env, { authorization, characterId: id })
     if (!res.ok) throw httpError(res)
-    if (!res.data?.save?.save_data) return ok({ characterId: id, state: null, note: 'No save yet.' })
-    const summary = summarizeSave(res.data.save.save_data)
+    // A character created via create_character but never opened in the browser
+    // has no save row yet. Show the canonical fresh-character baseline (what its
+    // first action will persist) rather than a bare "no save", so the model sees
+    // real starting levels instead of treating every skill as level 1.
+    const saveData = res.data?.save?.save_data || JSON.stringify(createDefaultSave())
+    const summary = summarizeSave(saveData)
     // Resolve item ids to names so the model doesn't need a separate lookup.
     summary.inventory = summary.inventory.map(withItemName)
     for (const [slot, item] of Object.entries(summary.equipment)) summary.equipment[slot] = withItemName(item)

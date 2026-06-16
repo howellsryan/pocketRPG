@@ -184,7 +184,7 @@ describe('idle skilling intents', () => {
       skill: 'cooking',
       actionName: 'Cook shrimps',
       actions: 5,
-      xpGained: { cooking: 150, mining: 99 }, // mining absent from stats → ignored
+      xpGained: { cooking: 150, mining: 99 }, // mining absent from stats → now initialized, not dropped
       itemsConsumed: { raw_shrimps: 5 },
       itemsBanked: { shrimps: 5 },
       finalInventory: [{ itemId: 'pickaxe', quantity: 1 }],
@@ -192,7 +192,9 @@ describe('idle skilling intents', () => {
     const summary = applyIdleResult(save, sim, 'skill')
     expect(save.stats.cooking.xp).toBe(1150)
     expect(save.stats.cooking.level).toBe(getLevelFromXP(1150))
-    expect(save.stats.mining).toBeUndefined()
+    // A skill missing from a server-side save is initialized so its XP lands
+    // (the MCP "stuck on Spryroot" fix), not silently discarded.
+    expect(save.stats.mining).toEqual({ skill: 'mining', xp: 99, level: getLevelFromXP(99) })
     expect(save.bank.raw_shrimps.quantity).toBe(5)
     expect(save.bank.shrimps).toEqual({ itemId: 'shrimps', quantity: 5 })
     expect(save.inventory).toEqual([{ itemId: 'pickaxe', quantity: 1 }])

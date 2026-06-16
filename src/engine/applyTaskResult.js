@@ -60,9 +60,15 @@ export function applyTaskResult(state, sim, type) {
   // XP (all non-quest types)
   if (type !== 'quest' && sim.xpGained) {
     for (const [skill, xp] of Object.entries(sim.xpGained)) {
-      if (xp > 0 && stats[skill]) {
-        const newXP = Math.min((stats[skill].xp || 0) + Math.floor(xp), XP_CAP)
-        stats[skill] = { ...stats[skill], xp: newXP, level: getLevelFromXP(newXP) }
+      if (xp > 0) {
+        // Initialize a missing skill rather than dropping the XP. On a fully
+        // browser-seeded save every skill already exists, but a server-side
+        // save (MCP-created character) may not have the entry yet — without
+        // this the gain is silently discarded while the claim result still
+        // reports it, so levels never rise and requirements never unlock.
+        const cur = stats[skill] || { skill, xp: 0, level: 1 }
+        const newXP = Math.min((cur.xp || 0) + Math.floor(xp), XP_CAP)
+        stats[skill] = { ...cur, xp: newXP, level: getLevelFromXP(newXP) }
       }
     }
   }

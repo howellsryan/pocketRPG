@@ -40,11 +40,15 @@ describe('applyTaskResult — skill type', () => {
     expect(state.inventory[0]).toMatchObject({ itemId: 'pickaxe', quantity: 1 })
   })
 
-  it('ignores XP for skills not present in stats', () => {
+  it('initializes a missing skill rather than dropping its XP (MCP save-init regression)', () => {
+    // A server-side (MCP-created) save may not have every skill seeded. The XP
+    // must still land — previously it was silently dropped while the claim
+    // result reported the gain, so levels never rose and requirements never
+    // unlocked (the "stuck on Spryroot" bug).
     const state = makeState({ stats: { firemaking: { xp: 0, level: 1 } } })
-    applyTaskResult(state, { xpGained: { firemaking: 100, mining: 999 } }, 'skill')
+    applyTaskResult(state, { xpGained: { firemaking: 100, agility: 999 } }, 'skill')
     expect(state.stats.firemaking.xp).toBe(100)
-    expect(state.stats.mining).toBeUndefined()
+    expect(state.stats.agility).toEqual({ skill: 'agility', xp: 999, level: getLevelFromXP(999) })
   })
 
   it('caps XP at 200,000,000', () => {
