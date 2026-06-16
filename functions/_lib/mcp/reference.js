@@ -13,6 +13,8 @@ import raidsData from '../../../src/data/raids.json' assert { type: 'json' }
 import farmingData from '../../../src/data/farming.json' assert { type: 'json' }
 import questsData from '../../../src/data/quests.json' assert { type: 'json' }
 import cluesData from '../../../src/data/clues.json' assert { type: 'json' }
+import { GATHER_TASKS } from '../../../src/engine/gatherTasks.js'
+import { BUILDING_ACTIONS, UNLOCKABLES as CONSTRUCTION_PERKS } from '../../../src/engine/construction.js'
 
 // ── Item / monster lookups ───────────────────────────────────────────────────
 
@@ -166,6 +168,8 @@ const REFERENCE = {
   'pocketrpg://reference/minigames': { mime: 'application/json', name: 'Minigames', body: () => minigamesData },
   'pocketrpg://reference/raids': { mime: 'application/json', name: 'Raids', body: () => raidsData },
   'pocketrpg://reference/farming': { mime: 'application/json', name: 'Farming', body: () => farmingData },
+  'pocketrpg://reference/construction': { mime: 'application/json', name: 'Construction (build actions + perks)', body: () => ({ buildActions: BUILDING_ACTIONS, perks: CONSTRUCTION_PERKS }) },
+  'pocketrpg://reference/gather': { mime: 'application/json', name: 'Gather tasks', body: () => GATHER_TASKS },
 }
 
 // Short topic names → reference uris, for the get_reference tool. The big
@@ -182,6 +186,8 @@ export const REFERENCE_TOPICS = {
   minigames: 'pocketrpg://reference/minigames',
   raids: 'pocketrpg://reference/raids',
   farming: 'pocketrpg://reference/farming',
+  construction: 'pocketrpg://reference/construction',
+  gather: 'pocketrpg://reference/gather',
 }
 
 export const REFERENCE_TOPIC_NAMES = Object.keys(REFERENCE_TOPICS)

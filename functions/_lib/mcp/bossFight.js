@@ -7,6 +7,7 @@
 // normal server-rolled completion endpoint; a loss/death grants nothing.
 
 import itemsData from '../../../src/data/items.json' assert { type: 'json' }
+import spellsData from '../../../src/data/spells.json' assert { type: 'json' }
 import { createCombatState, processCombatTick, applyEat } from '../../../src/engine/combat.js'
 import { combatTypeFromEquipment } from '../../../src/engine/combatant.js'
 import { getLevelFromXP } from '../../../src/engine/experience.js'
@@ -58,8 +59,21 @@ function buildFoodQueue(save, setup) {
 export function simulateBossFight(save, monster) {
   const equipment = save.equipment || {}
   const combatType = combatTypeFromEquipment(equipment, itemsData)
-  if (combatType === 'magic') {
-    throw new GameApiError('MAGIC_UNSUPPORTED', 'Magic boss fights are not simulated yet — use kill_boss (credit skip) for magic setups.', 400)
+
+  // Resolve the magic setup. A powered staff (Trident/Sanguine) casts off its
+  // own charges with no spell or runes; a regular staff/wand needs the active
+  // combat spell (and consumes its runes per cast, from the inventory only —
+  // exactly as the client does). Magic with neither is refused, mirroring the
+  // client's "select a spell" gate.
+  const weaponItem = equipment.weapon ? itemsData[equipment.weapon.itemId] : null
+  const isPoweredStaff = !!weaponItem?.poweredStaff
+  let spell = null
+  if (combatType === 'magic' && !isPoweredStaff) {
+    const spellId = save.settings?.activeCombatSpell?.id
+    spell = spellId ? spellsData[spellId] : null
+    if (!spell) {
+      throw new GameApiError('NO_SPELL_SELECTED', 'A magic setup needs an active combat spell. Select one in the game client, or equip a powered staff (e.g. Trident), before using fight_boss.', 400)
+    }
   }
 
   const stats = save.stats || {}
@@ -74,9 +88,16 @@ export function simulateBossFight(save, monster) {
   const foodQueue = buildFoodQueue(save, setup)
   const foodConsumed = {}
   const ammoConsumed = {}
+  const runesConsumed = {}
   let chargesConsumed = 0
 
-  let state = createCombatState(monster, combatType, save.settings?.combatStance || 'accurate', save.settings?.activeCombatSpell || null)
+  // The magic spell path reads runes from the inventory passed to the engine and
+  // stops casting once they run out. Drive it off a CLONE so depletion is
+  // reflected during the sim without mutating the real save (the caller applies
+  // runesConsumed via applyBossFightOutcome).
+  const workingInventory = (save.inventory || []).map((s) => (s ? { ...s } : s))
+
+  let state = createCombatState(monster, combatType, save.settings?.combatStance || 'accurate', spell)
   let died = false
   let ticks = 0
 
@@ -94,9 +115,10 @@ export function simulateBossFight(save, monster) {
     }
 
     const playerStats = { ...levels, currentHP: hp }
-    const { combatState, events } = processCombatTick(state, playerStats, equipment, itemsData, {}, save.inventory || [], null)
+    const { combatState, events } = processCombatTick(state, playerStats, equipment, itemsData, {}, workingInventory, null)
     state = combatState
 
+    let landedHit = false
     for (const ev of events) {
       if (ev.type === 'monsterHit' || ev.type === 'dragonfireHit') {
         hp = Math.max(0, hp - (Number(ev.damage) || 0))
@@ -106,7 +128,20 @@ export function simulateBossFight(save, monster) {
         ammoConsumed[ev.itemId] = (ammoConsumed[ev.itemId] || 0) + (Number(ev.qty) || 1)
       } else if (ev.type === 'consumeCharge') {
         chargesConsumed += (Number(ev.qty) || 1)
+      } else if (ev.type === 'playerHit' && Number(ev.damage) > 0) {
+        landedHit = true
       }
+    }
+
+    // Consume a spell's runes on a landed cast — same rule the client uses: only
+    // on a successful hit, drained from the inventory clone so the engine sees
+    // depletion and stops casting when runes run out.
+    if (landedHit && state.runesConsumed) {
+      for (const [runeId, qty] of Object.entries(state.runesConsumed)) {
+        deductFromInventory(workingInventory, runeId, Number(qty) || 0)
+        runesConsumed[runeId] = (runesConsumed[runeId] || 0) + (Number(qty) || 0)
+      }
+      state.runesConsumed = null
     }
 
     if (hp <= 0) { died = true; break }
@@ -123,8 +158,23 @@ export function simulateBossFight(save, monster) {
     xpGained: { ...(state.xpGained || {}) },
     foodConsumed,
     ammoConsumed,
+    runesConsumed,
     chargesConsumed,
     stoppedReason: died ? 'died' : (victory ? 'victory' : 'tick_cap'),
+  }
+}
+
+// Drain `qty` of an item from a working inventory array in place (used to track
+// rune depletion during the magic sim).
+function deductFromInventory(inventory, itemId, qty) {
+  let left = Math.floor(Number(qty) || 0)
+  for (let i = 0; i < inventory.length && left > 0; i++) {
+    const slot = inventory[i]
+    if (slot?.itemId !== itemId) continue
+    const take = Math.min(left, Number(slot.quantity) || 0)
+    slot.quantity = (Number(slot.quantity) || 0) - take
+    left -= take
+    if (slot.quantity <= 0) inventory[i] = null
   }
 }
 
@@ -170,6 +220,12 @@ export function applyBossFightOutcome(save, outcome) {
     : Math.max(1, Math.min(outcome.maxHP, Math.floor(outcome.finalHP)))
 
   for (const [itemId, qty] of Object.entries(outcome.foodConsumed || {})) {
+    removeItemInventoryThenBank(save, itemId, qty)
+  }
+
+  // Spell runes are cast from the inventory (the engine and client never read
+  // bank runes in combat), so drain them inventory-first to match.
+  for (const [itemId, qty] of Object.entries(outcome.runesConsumed || {})) {
     removeItemInventoryThenBank(save, itemId, qty)
   }
 

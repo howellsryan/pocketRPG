@@ -10,30 +10,7 @@ import { formatNumber } from '../utils/helpers.js'
 import { GATHER_AUTOBANK_CONSTRUCTION_LEVEL } from '../utils/constants.js'
 import itemsData from '../data/items.json'
 import { recordCollectionLogDrop } from '../cloud/collectionLog.js'
-
-const BUILDING_ACTIONS = [
-  { id: 'build_plank', name: 'Build with Plank', level: 1, ticks: 2, xp: 29, materials: { plank: 1 } },
-  { id: 'build_oak_plank', name: 'Build with Oak Plank', level: 15, ticks: 2, xp: 60, materials: { oak_plank: 1 } },
-  { id: 'build_teak_plank', name: 'Build with Teak Plank', level: 35, ticks: 2, xp: 90, materials: { teak_plank: 1 } },
-  { id: 'build_mahogany_plank', name: 'Build with Mahogany Plank', level: 70, ticks: 2, xp: 140, materials: { mahogany_plank: 1 } },
-]
-
-const UNLOCKABLES = [
-  {
-    id: 'money_purse',
-    name: 'Create Money Purse',
-    level: 70,
-    description: 'Spend coins directly from your bank when shopping, without withdrawing them first.',
-    icon: '👛'
-  },
-  {
-    id: 'master_rejuvenation',
-    name: 'Create Master Rejuvenation',
-    level: 90,
-    description: 'Passively refills your special attack bar to 100% whenever it empties during a fight.',
-    icon: '⚡'
-  },
-]
+import { BUILDING_ACTIONS, UNLOCKABLES } from '../engine/construction.js'
 
 export default function ConstructionScreen({ onBack }) {
   const {

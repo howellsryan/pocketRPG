@@ -63,6 +63,8 @@ const sourceFiles = [
   'engine/skilling.js',
   'engine/dungeoneeringTokens.js',
   'engine/idleSupplies.js',
+  'engine/gatherTasks.js',
+  'engine/construction.js',
   'engine/idleEngine.js',
   'engine/tick.js',
   'engine/farming.js',

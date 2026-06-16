@@ -3,7 +3,7 @@
 // `initialize`. Kept free of handler imports so it can be unit-tested cheaply.
 // The dispatch table in tools.js must expose exactly these names.
 
-import { EQUIP_SLOT_NAMES, SUPPORTED_IDLE_SKILLS } from './intents.js'
+import { EQUIP_SLOT_NAMES, SUPPORTED_IDLE_SKILLS, GATHER_TASK_IDS, CLUE_LEVELS, MINIGAME_TASK_IDS, PRAYER_ACTION_IDS, CONSTRUCTION_ACTION_IDS, CONSTRUCTION_PERK_IDS, MAGIC_ACTION_IDS } from './intents.js'
 import { SKILL_IDS, REFERENCE_TOPIC_NAMES } from './reference.js'
 
 const IDLE_SKILLS = [...SUPPORTED_IDLE_SKILLS]
@@ -32,7 +32,7 @@ Getting oriented:
   resources): list_skill_actions (trainable options per skill), list_items and
   list_monsters (search the catalogues by name), inspect_item / inspect_monster
   (full stats + drop tables by id) and get_reference (mechanics, shop, spells,
-  prayers, quests, clues, minigames, raids, farming). The same data is also
+  prayers, quests, clues, minigames, raids, farming, construction, gather). The same data is also
   published as pocketrpg://reference/* resources if your client reads them.
 
 Acting:
@@ -41,8 +41,13 @@ Acting:
 - Slayer: get_slayer_task shows the current task, slayer points, tasks completed
   and each master's eligibility; assign_slayer_task gets a new task from a master
   (none may be active and the character must meet the master's requirements);
-  skip_slayer_task spends a credit to drop the current task. Actually killing the
-  task's monster is done through the normal combat flow (start_fight/the client).
+  skip_slayer_task spends a credit to drop the current task. Killing the task's
+  monster is done through the normal combat flow: start_fight against the task
+  monster credits the active task (progress + points on completion), or fight it
+  in the client.
+  buy_slayer_unlock spends slayer points on a reward item (see the unlocks list
+  in get_slayer_task); buy_unlock spends purchased credits on a permanent perk.
+  Confirm any credit/point spend with the player first.
 - Trading post: search_market to price items, my_offers to see open offers,
   place_offer (buy/sell on the order book), cancel_offer/collect_offer/
   instant_sell_offer to manage them, and sell_item to sell general items at
@@ -52,9 +57,24 @@ Acting:
   equip_item enforces the item's skill/quest requirements.
 - Idle training: start_skilling begins a task that earns XP/items over real
   time (gathering + production skilling, agility, thieving, hunter);
+  start_gather starts a field-gathering task (bowstrings, herbs, seaweed, etc.
+  — no level requirement); start_clue solves a clue scroll held in the
+  inventory (server-rolled treasure on completion); start_minigame runs a
+  minigame grind that awards an unlock item (some need a prior reward first);
   get_active_activity shows what's running; claim_activity banks the accrued
-  rewards and keeps it going. Combat/farming/prayer/magic idle is still done in
-  the game client.
+  rewards and keeps it going.
+  train_prayer trains Prayer instantly by burying/scattering/altar-offering the
+  character's bones, and train_construction trains Construction instantly by
+  building with planks (neither uses the idle slot);
+  unlock_construction_perk toggles the level-gated money_purse /
+  master_rejuvenation perks.
+- Farming: get_farm shows every patch and what's growing; plant_seed plants in
+  an empty patch (the crop grows over real wall-clock time); harvest_patch and
+  harvest_all collect ready crops for produce + Farming XP.
+- Magic: cast_magic runs the non-combat utility spells (High Alchemy, Superheat,
+  Enchant, Tan Leather, Plank Make, Curse, Stun), consuming runes + inputs for
+  Magic XP and an output. High Alchemy needs target_item_id (the item to turn
+  into coins). Combat spells are still cast in the game client.
 - Quests: get_quests shows what's completed, startable now, or locked (with the
   missing requirements). start_quest begins an eligible quest — it runs for its
   duration of real time, then claim_activity grants the XP/coins and unlocks its
@@ -80,16 +100,22 @@ Acting:
 - Bosses & raids: kill_boss / kill_raid spend the target's skip cost in credits
   for an instant kill, then grant the server-rolled loot, kill count and
   collection-log uniques — confirm the credit spend first. fight_boss instead
-  simulates the actual fight (no credits): you win only if your gear/food are
-  strong enough, and it consumes the food used.
+  simulates the actual fight (no credits) for melee/ranged/magic setups: you win
+  only if your gear/food are strong enough, and it consumes the food, ammo and
+  spell runes used.
 - Dungeoneering: train it like any skill (start_skilling skill="dungeoneering")
   to earn XP and tokens, then claim_dungeoneering_reward spends those tokens to
   unlock dungeoneering gear.
 - skip_hour spends a credit to advance the running idle activity by one hour;
   follow it with claim_activity to collect the skipped time.
-- XP, coins and most loot are client-computed in this game, so these tools
-  cannot simulate live training or combat yet; report state and take only the
-  supported actions. Prefer concrete, checkable advice grounded in get_* reads.`
+- These tools cover gathering/production skilling, agility/thieving/hunter,
+  gather/clue/minigame activities, prayer, construction, farming, non-combat
+  magic, quests, idle combat (normal monsters, with Slayer-task credit), bosses
+  and raids (including magic boss fights). Still client-only: PvP,
+  manual/offline special attacks, One-Life combat, and account billing. XP, coins and most idle loot
+  are client-authoritative by design, so the leaderboard is best-effort, not
+  cheat-proof. Prefer concrete, checkable advice grounded in get_* reads, and
+  confirm any coin/credit/point spend with the player first.`
 
 const optionalCharacterId = {
   character_id: {
@@ -108,6 +134,22 @@ export const TOOL_SCHEMAS = [
       'List the characters on the signed-in PocketRPG account (id, username, ironman/one-life flags, last save time). Use an id with the other tools.',
     inputSchema: { type: 'object', properties: {}, additionalProperties: false },
     annotations: READ('List characters'),
+  },
+  {
+    name: 'create_character',
+    description:
+      "Create a new character on the signed-in account. Username must be 3–16 characters, letters/digits/_/- only, and not already taken or reserved. The optional ironman (no trading post) and one-life (permadeath) flags are PERMANENT once set — confirm them with the player. Note One-Life combat is still played in the game client, where death is handled. Returns the new character.",
+    inputSchema: {
+      type: 'object',
+      properties: {
+        username: { type: 'string', description: '3–16 characters, letters/digits/_/- only.' },
+        is_ironman: { type: 'boolean', description: 'Permanent ironman mode (no trading post). Defaults false.' },
+        is_one_life: { type: 'boolean', description: 'Permanent one-life/permadeath mode. Defaults false.' },
+      },
+      required: ['username'],
+      additionalProperties: false,
+    },
+    annotations: WRITE('Create character'),
   },
   {
     name: 'get_account',
@@ -233,7 +275,7 @@ export const TOOL_SCHEMAS = [
   {
     name: 'get_reference',
     description:
-      'Read a PocketRPG reference dataset by topic so you can answer from canonical game data instead of guessing. Topics: mechanics (rules), shop, skills, spells, prayers, quests, clues, minigames, raids, farming.',
+      'Read a PocketRPG reference dataset by topic so you can answer from canonical game data instead of guessing. Topics: mechanics (rules), shop, skills, spells, prayers, quests, clues, minigames, raids, farming, construction (build actions + perks), gather (field-gathering tasks).',
     inputSchema: {
       type: 'object',
       properties: {
@@ -284,7 +326,7 @@ export const TOOL_SCHEMAS = [
   {
     name: 'get_slayer_task',
     description:
-      "Get a character's slayer status: the current task (monster, kills remaining/total, progress %, points awarded on completion), slayer points balance, slayer + combat level, tasks completed, the points multiplier on the next completed task, the skip costs, and every slayer master with whether the character meets its requirements. Read-only.",
+      "Get a character's slayer status: the current task (monster, kills remaining/total, progress %, points awarded on completion), slayer points balance, slayer + combat level, tasks completed, the points multiplier on the next completed task, the skip costs, every slayer master with whether the character meets its requirements, and the `unlocks` list of slayer-point reward items (cost, owned, purchasable) for buy_slayer_unlock. Read-only.",
     inputSchema: { type: 'object', properties: { ...optionalCharacterId }, additionalProperties: false },
     annotations: READ('Get slayer task'),
   },
@@ -345,6 +387,7 @@ export const TOOL_SCHEMAS = [
         item_id: { type: 'string' },
         price: { type: 'integer', minimum: 1, description: 'Coins per item.' },
         quantity: { type: 'integer', minimum: 1 },
+        source: { type: 'string', enum: ['inventory', 'bank'], description: 'For sell offers, where to escrow the items from. Defaults to inventory. Ignored for buy offers.' },
         ...optionalCharacterId,
       },
       required: ['offer_type', 'item_id', 'price', 'quantity'],
@@ -388,12 +431,13 @@ export const TOOL_SCHEMAS = [
   {
     name: 'sell_item',
     description:
-      "Immediately sell general-store-tier items from a character's inventory at their shop value for coins (no order book). Boss/raid/clue uniques must use place_offer instead.",
+      "Immediately sell general-store-tier items at their shop value for coins (no order book), sourcing from the character's inventory (default) or bank. Boss/raid/clue uniques must use place_offer instead.",
     inputSchema: {
       type: 'object',
       properties: {
         item_id: { type: 'string' },
         quantity: { type: 'integer', minimum: 1 },
+        source: { type: 'string', enum: ['inventory', 'bank'], description: 'Where to sell the items from. Defaults to inventory.' },
         ...optionalCharacterId,
       },
       required: ['item_id', 'quantity'],
@@ -482,6 +526,190 @@ export const TOOL_SCHEMAS = [
       additionalProperties: false,
     },
     annotations: WRITE('Start skilling'),
+  },
+  {
+    name: 'start_gather',
+    description:
+      "Start an idle field-gathering task (bowstrings, herbs, seaweed, soda ash, etc.). No skill level required. Items accrue over real time and are collected via claim_activity. Log→plank conversion (gpCost tasks) is not yet supported. Valid task_id values: " + GATHER_TASK_IDS.join(', ') + '.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        task_id: { type: 'string', enum: GATHER_TASK_IDS, description: "The gather task id, e.g. 'gather_bowstring', 'catch_newts', 'pick_white_berries'." },
+        ...optionalCharacterId,
+      },
+      required: ['task_id'],
+      additionalProperties: false,
+    },
+    annotations: WRITE('Start gather task'),
+  },
+  {
+    name: 'start_clue',
+    description:
+      "Start solving a clue scroll the character is holding. The scroll must be in the character's INVENTORY (withdraw it from the bank first if needed). It solves after a timer of real time, then consumes one scroll and banks 1–4 server-rolled treasure rewards (with collection-log credit). claim_activity collects the result; skip_hour advances an hour. Valid clue_level values: " + CLUE_LEVELS.join(', ') + '. See pocketrpg://reference/clues for reward tables.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        clue_level: { type: 'string', enum: CLUE_LEVELS, description: "The clue tier to solve, e.g. 'medium', 'hard', 'elite', 'master'." },
+        ...optionalCharacterId,
+      },
+      required: ['clue_level'],
+      additionalProperties: false,
+    },
+    annotations: WRITE('Start clue scroll'),
+  },
+  {
+    name: 'start_minigame',
+    description:
+      "Start an idle minigame grind that awards an unlock item (e.g. a Dragon Defender, Fighter Helm, Void set) after a timer of real time. Some grinds need a prior reward first (e.g. the Dragon Defender grind requires the Rune Defender) — that prerequisite is checked at start. claim_activity collects the unlock and records its collection-log slot; skip_hour advances an hour. Valid minigame_task_id values: " + MINIGAME_TASK_IDS.join(', ') + '. See pocketrpg://reference/minigames for details.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        minigame_task_id: { type: 'string', enum: MINIGAME_TASK_IDS, description: "The minigame grind id, e.g. 'wg_dragon_defender', 'pc_void_set'." },
+        ...optionalCharacterId,
+      },
+      required: ['minigame_task_id'],
+      additionalProperties: false,
+    },
+    annotations: WRITE('Start minigame grind'),
+  },
+  {
+    name: 'train_prayer',
+    description:
+      "Train Prayer by consuming bones for instant XP — burying them, scattering remains, or offering on a gilded altar (altar_* actions need a level-75 Construction house). Drains the bones from the inventory first, then the bank. Omit quantity to use every matching bone the character owns; it stops early when the bones run out. Valid action_id values: " + PRAYER_ACTION_IDS.join(', ') + '. See list_skill_actions skill="prayer" for level/XP/bone details.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        action_id: { type: 'string', enum: PRAYER_ACTION_IDS, description: "The prayer training action, e.g. 'bury_big_bones', 'altar_dragon_bones'." },
+        quantity: { type: 'integer', minimum: 1, description: 'How many bones to use. Omit to consume all matching bones the character holds.' },
+        ...optionalCharacterId,
+      },
+      required: ['action_id'],
+      additionalProperties: false,
+    },
+    annotations: WRITE('Train prayer'),
+  },
+  {
+    name: 'train_construction',
+    description:
+      "Train Construction by building with planks for instant XP (one plank per build). Drains the planks from the inventory first, then the bank. Omit quantity to use every matching plank the character owns; it stops early when the planks run out. Valid action_id values: " + CONSTRUCTION_ACTION_IDS.join(', ') + '. See list_skill_actions skill="construction" for level/XP/plank details.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        action_id: { type: 'string', enum: CONSTRUCTION_ACTION_IDS, description: "The build action, e.g. 'build_oak_plank', 'build_mahogany_plank'." },
+        quantity: { type: 'integer', minimum: 1, description: 'How many planks to build with. Omit to consume all matching planks the character holds.' },
+        ...optionalCharacterId,
+      },
+      required: ['action_id'],
+      additionalProperties: false,
+    },
+    annotations: WRITE('Train construction'),
+  },
+  {
+    name: 'unlock_construction_perk',
+    description:
+      "Unlock a level-gated Construction perk: 'money_purse' (level 70 — spend bank coins directly when shopping) or 'master_rejuvenation' (level 90 — auto-refill the special-attack bar in combat). Checks the Construction level and that it is not already unlocked. Valid perk_id values: " + CONSTRUCTION_PERK_IDS.join(', ') + '.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        perk_id: { type: 'string', enum: CONSTRUCTION_PERK_IDS, description: "The perk to unlock: 'money_purse' or 'master_rejuvenation'." },
+        ...optionalCharacterId,
+      },
+      required: ['perk_id'],
+      additionalProperties: false,
+    },
+    annotations: WRITE('Unlock construction perk'),
+  },
+  {
+    name: 'get_farm',
+    description:
+      "Show the character's farm: every location and patch (id + type), what's planted (seed, crop, produce), its growth stage, whether it's ready, and seconds until ready. Patch ids (e.g. 'falador_tree_0') are used by plant_seed and harvest_patch. Crops grow over real wall-clock time. See pocketrpg://reference/farming for seed/level/produce data.",
+    inputSchema: { type: 'object', properties: { ...optionalCharacterId }, additionalProperties: false },
+    annotations: READ('Get farm'),
+  },
+  {
+    name: 'plant_seed',
+    description:
+      "Plant a seed in an empty farm patch. Checks the Farming level for the seed, that the seed type matches the patch type (herb/tree/fruitTree), that the patch is empty, and that the character owns the seed (consumed from inventory first, then bank). The crop then grows over real time — harvest it later with harvest_patch. Find patch ids and seed ids via get_farm / pocketrpg://reference/farming.",
+    inputSchema: {
+      type: 'object',
+      properties: {
+        patch_id: { type: 'string', description: "The patch to plant in, e.g. 'falador_herb_0' (from get_farm)." },
+        seed_id: { type: 'string', description: "The seed item id, e.g. 'greenthorn_seed', 'oak_sapling'." },
+        ...optionalCharacterId,
+      },
+      required: ['patch_id', 'seed_id'],
+      additionalProperties: false,
+    },
+    annotations: WRITE('Plant seed'),
+  },
+  {
+    name: 'harvest_patch',
+    description:
+      'Harvest a single ready farm patch, banking the produce and granting Farming XP. Refused if the patch is empty or the crop is not fully grown yet (check ready/secondsUntilReady via get_farm). Yield is randomised, scaling with Farming level.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        patch_id: { type: 'string', description: "The ready patch to harvest, e.g. 'falador_tree_0' (from get_farm)." },
+        ...optionalCharacterId,
+      },
+      required: ['patch_id'],
+      additionalProperties: false,
+    },
+    annotations: WRITE('Harvest patch'),
+  },
+  {
+    name: 'harvest_all',
+    description:
+      'Harvest every ready crop across all farm patches at once, banking all produce and granting the total Farming XP. Refused if nothing is ready.',
+    inputSchema: { type: 'object', properties: { ...optionalCharacterId }, additionalProperties: false },
+    annotations: WRITE('Harvest all crops'),
+  },
+  {
+    name: 'cast_magic',
+    description:
+      "Cast a non-combat Magic utility spell, consuming runes (an equipped elemental staff supplies its element for free) and any input item to produce an output and Magic XP. High Alchemy (action_id 'high_alch') REQUIRES target_item_id — the inventory item to turn into coins (shop value ×1.1); other actions (Superheat, Enchant*, Tan Leather, Plank Make, Curse, Stun) use fixed inputs and ignore target_item_id. Runes/inputs drain inventory first then bank (alchemy targets come from the inventory only). Omit quantity to cast as many times as the runes/inputs allow. Valid action_id values: " + MAGIC_ACTION_IDS.join(', ') + '. See list_skill_actions skill="magic" for runes/inputs/XP.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        action_id: { type: 'string', enum: MAGIC_ACTION_IDS, description: "The magic action, e.g. 'high_alch', 'superheat', 'enchant_ruby', 'plank_make'." },
+        target_item_id: { type: 'string', description: "Required for High Alchemy ('high_alch'): the inventory item id to alchemise into coins. Ignored by other actions." },
+        quantity: { type: 'integer', minimum: 1, description: 'How many times to cast. Omit to cast until the runes or inputs run out.' },
+        ...optionalCharacterId,
+      },
+      required: ['action_id'],
+      additionalProperties: false,
+    },
+    annotations: WRITE('Cast magic'),
+  },
+  {
+    name: 'buy_unlock',
+    description:
+      "Buy a permanent character unlock with the account's purchased CREDITS (server-authoritative price registry). Spends credits — confirm with the player first. Currently available: 'double_slayer_xp' (100 credits — doubles Slayer XP per kill). Returns the remaining credit balance.",
+    inputSchema: {
+      type: 'object',
+      properties: {
+        unlock_id: { type: 'string', description: "The unlock to buy, e.g. 'double_slayer_xp'." },
+        ...optionalCharacterId,
+      },
+      required: ['unlock_id'],
+      additionalProperties: false,
+    },
+    annotations: WRITE('Buy credit unlock'),
+  },
+  {
+    name: 'buy_slayer_unlock',
+    description:
+      "Spend SLAYER POINTS to buy a one-off Slayer reward item (e.g. 'slayer_helmet' 400 pts, 'slayer_defender' / 'gloves_of_slaughter' 1500 pts — boost damage/accuracy against the assigned task). The item is granted and the points debited server-side; refused if you already own it or lack the points. Confirm the point spend with the player first. See the `unlocks` list in get_slayer_task for costs and ownership.",
+    inputSchema: {
+      type: 'object',
+      properties: {
+        unlock_id: { type: 'string', description: "The slayer reward item id, e.g. 'slayer_helmet'." },
+        ...optionalCharacterId,
+      },
+      required: ['unlock_id'],
+      additionalProperties: false,
+    },
+    annotations: WRITE('Buy slayer unlock'),
   },
   {
     name: 'claim_activity',
@@ -626,7 +854,7 @@ export const TOOL_SCHEMAS = [
   {
     name: 'fight_boss',
     description:
-      "Fight a boss for real — the whole fight is simulated over the combat engine (no credits spent), auto-eating your configured idle food. On a win you receive the server-rolled loot, kill count and collection-log uniques; a loss or death grants nothing (but still consumes the food used). Conservative: no prayers/potions/special attacks, so if it reports a loss you may still win in the client. Magic setups and One-Life characters aren't supported here (use kill_boss / the client). Find boss ids via pocketrpg://reference/monsters.",
+      "Fight a boss for real — the whole fight is simulated over the combat engine (no credits spent), auto-eating your configured idle food. Works for melee, ranged and magic setups (a powered staff casts off its charges; a regular staff/wand casts the character's active combat spell, consuming its runes from the inventory). On a win you receive the server-rolled loot, kill count and collection-log uniques; a loss or death grants nothing (but still consumes the food/ammo/runes used). Conservative: no prayers/potions/special attacks, so if it reports a loss you may still win in the client. A magic setup with no active spell selected, and One-Life characters, aren't supported here (use kill_boss / the client). Find boss ids via pocketrpg://reference/monsters.",
     inputSchema: {
       type: 'object',
       properties: {

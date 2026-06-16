@@ -20,6 +20,19 @@ import {
   removeQuestFromQueueIntent,
   buildCombatTask,
   runCombatTask,
+  buildClueTask,
+  CLUE_LEVELS,
+  buildMinigameTask,
+  MINIGAME_TASK_IDS,
+  trainPrayer,
+  trainConstruction,
+  unlockConstructionPerk,
+  farmSummary,
+  plantSeed,
+  harvestPatch,
+  harvestAll,
+  castMagic,
+  isClaimableTask,
   planDungeoneeringReward,
   assignSlayerTask,
   slayerStatus,
@@ -418,6 +431,495 @@ describe('combat intents', () => {
   })
 })
 
+describe('combat intents — slayer task credit', () => {
+  function slayerSave(overrides: any = {}) {
+    return makeSave({
+      stats: {
+        attack: { xp: 1_000_000 },
+        strength: { xp: 1_000_000 },
+        defence: { xp: 1_000_000 },
+        hitpoints: { xp: 1_000_000 },
+        slayer: { xp: 1_000_000 },
+        ranged: { xp: 0 },
+        magic: { xp: 0 },
+      },
+      settings: {
+        currentHP: 73,
+        idleCombatSetup: { food: [], potions: [], prayers: {} },
+        slayerPoints: 10,
+        slayerTasksCompleted: 4,
+        slayerTask: {
+          monsterId: 'field_chicken',
+          monsterName: 'Field Chicken',
+          monstersRemaining: 500,
+          totalCount: 500,
+          masterId: 'turael',
+          pointsOnComplete: 1,
+          isBoss: false,
+        },
+      },
+      ...overrides,
+    })
+  }
+
+  it('buildCombatTask attaches slayerTask when the monster matches the active task', () => {
+    const save = slayerSave()
+    const task = buildCombatTask(save, 'field_chicken', undefined)
+    expect(task.slayerTask).not.toBeNull()
+    expect(task.slayerTask.monsterId).toBe('field_chicken')
+    expect(task.slayerTask.monstersRemaining).toBe(500)
+  })
+
+  it('buildCombatTask leaves slayerTask null when fighting a different monster', () => {
+    const save = slayerSave()
+    const task = buildCombatTask(save, 'cave_goblin', undefined)
+    expect(task.slayerTask).toBeNull()
+  })
+
+  it('buildCombatTask leaves slayerTask null when no active slayer task', () => {
+    const save = slayerSave({ settings: { currentHP: 73, idleCombatSetup: { food: [], potions: [], prayers: {} } } })
+    const task = buildCombatTask(save, 'field_chicken', undefined)
+    expect(task.slayerTask).toBeNull()
+  })
+
+  it('runCombatTask decrements monstersRemaining and adds slayer XP on partial progress', () => {
+    const save = slayerSave()
+    const task = buildCombatTask(save, 'field_chicken', undefined)
+    const r = runCombatTask(save, task, 30_000)
+    expect(r.applied).toBe(true)
+    expect(r.slayerTask).toBeDefined()
+    expect(r.slayerTask.completed).toBe(false)
+    expect(r.slayerTask.monstersRemaining).toBeGreaterThan(0)
+    expect(r.slayerTask.monstersRemaining).toBeLessThan(500)
+    // Slayer task still active — not cleared
+    expect(save.settings.slayerTask).not.toBeNull()
+    expect(save.settings.slayerTask.monstersRemaining).toBe(r.slayerTask.monstersRemaining)
+    // Slayer XP granted for kills on task
+    expect(save.stats.slayer.xp).toBeGreaterThan(1_000_000)
+    expect(r.xpGained.slayer).toBeGreaterThan(0)
+  })
+
+  it('runCombatTask completes the task and grants slayer points when monstersRemaining hits 0', () => {
+    const save = slayerSave({
+      settings: {
+        currentHP: 73,
+        idleCombatSetup: { food: [], potions: [], prayers: {} },
+        slayerPoints: 10,
+        slayerTasksCompleted: 4,
+        slayerTask: { monsterId: 'field_chicken', monsterName: 'Field Chicken', monstersRemaining: 1, totalCount: 10, masterId: 'turael', pointsOnComplete: 1, isBoss: false },
+      },
+    })
+    const task = buildCombatTask(save, 'field_chicken', undefined)
+    const r = runCombatTask(save, task, 60_000)
+    expect(r.applied).toBe(true)
+    expect(r.slayerTask?.completed).toBe(true)
+    // The 5th task completion (tasksCompleted was 4) hits the 5-task milestone → x10
+    expect(r.slayerTask?.pointsEarned).toBe(10)
+    expect(save.settings.slayerTask).toBeNull()
+    expect(save.settings.slayerPoints).toBe(20) // 10 existing + 10 earned
+    expect(save.settings.slayerTasksCompleted).toBe(5)
+    expect(r.slayerTask?.totalSlayerPoints).toBe(20)
+  })
+
+  it('runCombatTask does not produce slayerTask credit when monster does not match', () => {
+    const save = slayerSave()
+    const task = buildCombatTask(save, 'cave_goblin', undefined)
+    const r = runCombatTask(save, task, 60_000)
+    expect(r.slayerTask).toBeUndefined()
+    // Slayer task settings unchanged
+    expect(save.settings.slayerTask.monstersRemaining).toBe(500)
+  })
+})
+
+describe('clue intents', () => {
+  it('advertises the four clue levels', () => {
+    expect(CLUE_LEVELS).toEqual(['medium', 'hard', 'elite', 'master'])
+  })
+
+  it('builds a clue task when the scroll is in the inventory', () => {
+    const save = makeSave({ inventory: [{ itemId: 'clue_scroll_medium', quantity: 1 }] })
+    const task = buildClueTask(save, 'medium')
+    expect(task.type).toBe('clue')
+    expect(task.gatherTask).toMatchObject({ clueLevel: 'medium', requiresItem: 'clue_scroll_medium' })
+    expect(task.gatherTask.ticks).toBeGreaterThan(0)
+    // The built task is claimable via the MCP idle pipeline.
+    expect(isClaimableTask(task)).toBe(true)
+  })
+
+  it('rejects an unknown clue level', () => {
+    const save = makeSave({ inventory: [{ itemId: 'clue_scroll_medium', quantity: 1 }] })
+    expect(() => buildClueTask(save, 'beginner')).toThrow(/Unknown clue level/)
+  })
+
+  it('refuses when the scroll is only in the bank (clues solve from inventory)', () => {
+    const save = makeSave({ bank: { clue_scroll_elite: { itemId: 'clue_scroll_elite', quantity: 2 } } })
+    expect(() => buildClueTask(save, 'elite')).toThrow(/inventory/i)
+  })
+
+  it('refuses when no scroll is held at all', () => {
+    expect(() => buildClueTask(makeSave(), 'hard')).toThrow(/clue scroll/i)
+  })
+})
+
+describe('minigame intents', () => {
+  it('exposes the minigame task ids', () => {
+    expect(MINIGAME_TASK_IDS).toContain('wg_rune_defender')
+    expect(MINIGAME_TASK_IDS).toContain('wg_dragon_defender')
+  })
+
+  it('builds a minigame task with no prerequisite', () => {
+    const task = buildMinigameTask(makeSave(), 'wg_rune_defender')
+    expect(task.type).toBe('minigame')
+    expect(task.minigameTask).toMatchObject({ id: 'wg_rune_defender', product: 'runeforged_defender', minigame: 'warriors_guild' })
+    expect(task.minigameTask.ticks).toBeGreaterThan(0)
+    expect(isClaimableTask(task)).toBe(true)
+  })
+
+  it('rejects an unknown minigame task id', () => {
+    expect(() => buildMinigameTask(makeSave(), 'not_a_task')).toThrow(/No minigame task/)
+  })
+
+  it('refuses a prerequisite-gated grind when the required item is missing', () => {
+    // wg_dragon_defender requires the Rune Defender (runeforged_defender).
+    expect(() => buildMinigameTask(makeSave(), 'wg_dragon_defender')).toThrow(/requires/i)
+  })
+
+  it('allows a prerequisite-gated grind when the item is held (inventory, bank or equipped)', () => {
+    const inInv = buildMinigameTask(makeSave({ inventory: [{ itemId: 'runeforged_defender', quantity: 1 }] }), 'wg_dragon_defender')
+    expect(inInv.minigameTask.id).toBe('wg_dragon_defender')
+    const inBank = buildMinigameTask(makeSave({ bank: { runeforged_defender: { itemId: 'runeforged_defender', quantity: 1 } } }), 'wg_dragon_defender')
+    expect(inBank.minigameTask.product).toBe('dragon_defender')
+    const equipped = buildMinigameTask(makeSave({ equipment: { shield: { itemId: 'runeforged_defender' } } }), 'wg_dragon_defender')
+    expect(equipped.type).toBe('minigame')
+  })
+})
+
+describe('prayer intents (train_prayer)', () => {
+  it('buries every bone by default, granting N × action.xp', () => {
+    // bury_bones: level 1, xp 5, consumes 1 `bones`.
+    const save = makeSave({ stats: { prayer: { xp: 0 } }, bank: { bones: { itemId: 'bones', quantity: 10 } } })
+    const r = trainPrayer(save, 'bury_bones', undefined)
+    expect(r.actions).toBe(10)
+    expect(r.xpGained.prayer).toBe(50)
+    expect(save.stats.prayer.xp).toBe(50)
+    expect(save.bank.bones).toBeUndefined()
+    expect(r.bonesRemaining).toBe(0)
+  })
+
+  it('drains the inventory first, then the bank', () => {
+    const save = makeSave({
+      stats: { prayer: { xp: 0 } },
+      inventory: [{ itemId: 'bones', quantity: 3 }],
+      bank: { bones: { itemId: 'bones', quantity: 5 } },
+    })
+    const r = trainPrayer(save, 'bury_bones', 6)
+    expect(r.actions).toBe(6)
+    // 3 from inventory (emptied), 3 from bank (2 left).
+    expect(save.inventory.find((s: any) => s?.itemId === 'bones')).toBeUndefined()
+    expect(save.bank.bones.quantity).toBe(2)
+    expect(r.bonesRemaining).toBe(2)
+  })
+
+  it('caps the requested quantity at the bones actually owned', () => {
+    const save = makeSave({ stats: { prayer: { xp: 0 } }, bank: { bones: { itemId: 'bones', quantity: 4 } } })
+    const r = trainPrayer(save, 'bury_bones', 100)
+    expect(r.actions).toBe(4)
+    expect(save.stats.prayer.xp).toBe(20)
+  })
+
+  it('enforces the action level requirement (nothing consumed)', () => {
+    // bury_big_bones needs Prayer level 5; a fresh account is level 1.
+    const save = makeSave({ stats: { prayer: { xp: 0 } }, bank: { big_bones: { itemId: 'big_bones', quantity: 10 } } })
+    expect(() => trainPrayer(save, 'bury_big_bones', undefined)).toThrow(/level 5/i)
+    expect(save.bank.big_bones.quantity).toBe(10)
+  })
+
+  it('gilded-altar offerings require a level-75 Construction house', () => {
+    // altar_big_bones: Prayer 5, xp 52, needs the gilded altar.
+    const noAltar = makeSave({ stats: { prayer: { xp: 10_000 } }, bank: { big_bones: { itemId: 'big_bones', quantity: 5 } } })
+    expect(() => trainPrayer(noAltar, 'altar_big_bones', undefined)).toThrow(/Construction level 75/i)
+
+    const withAltar = makeSave({
+      stats: { prayer: { xp: 10_000 }, construction: { xp: 1_300_000 } }, // level 75+
+      bank: { big_bones: { itemId: 'big_bones', quantity: 5 } },
+    })
+    const r = trainPrayer(withAltar, 'altar_big_bones', undefined)
+    expect(r.actions).toBe(5)
+    expect(r.xpGained.prayer).toBe(52 * 5)
+  })
+
+  it('refuses when no matching bones are held', () => {
+    const save = makeSave({ stats: { prayer: { xp: 0 } } })
+    expect(() => trainPrayer(save, 'bury_bones', undefined)).toThrow(/No .* available/i)
+  })
+
+  it('rejects an unknown prayer action', () => {
+    expect(() => trainPrayer(makeSave(), 'bury_unicorns', undefined)).toThrow(/Unknown prayer action/)
+  })
+})
+
+describe('construction intents (train_construction + perks)', () => {
+  it('builds with every plank by default, granting N × action.xp', () => {
+    // build_plank: level 1, xp 29, consumes 1 `plank`.
+    const save = makeSave({ stats: { construction: { xp: 0 } }, bank: { plank: { itemId: 'plank', quantity: 10 } } })
+    const r = trainConstruction(save, 'build_plank', undefined)
+    expect(r.actions).toBe(10)
+    expect(r.xpGained.construction).toBe(290)
+    expect(save.stats.construction.xp).toBe(290)
+    expect(save.bank.plank).toBeUndefined()
+    expect(r.planksRemaining).toBe(0)
+  })
+
+  it('drains the inventory first, then the bank', () => {
+    const save = makeSave({
+      stats: { construction: { xp: 0 } },
+      inventory: [{ itemId: 'plank', quantity: 2 }],
+      bank: { plank: { itemId: 'plank', quantity: 5 } },
+    })
+    const r = trainConstruction(save, 'build_plank', 4)
+    expect(r.actions).toBe(4)
+    expect(save.inventory.find((s: any) => s?.itemId === 'plank')).toBeUndefined()
+    expect(save.bank.plank.quantity).toBe(3)
+  })
+
+  it('enforces the action level requirement (nothing consumed)', () => {
+    // build_oak_plank needs Construction level 15; a fresh account is level 1.
+    const save = makeSave({ stats: { construction: { xp: 0 } }, bank: { oak_plank: { itemId: 'oak_plank', quantity: 5 } } })
+    expect(() => trainConstruction(save, 'build_oak_plank', undefined)).toThrow(/level 15/i)
+    expect(save.bank.oak_plank.quantity).toBe(5)
+  })
+
+  it('refuses when no matching planks are held', () => {
+    const save = makeSave({ stats: { construction: { xp: 0 } } })
+    expect(() => trainConstruction(save, 'build_plank', undefined)).toThrow(/No .* available/i)
+  })
+
+  it('rejects an unknown construction action', () => {
+    expect(() => trainConstruction(makeSave(), 'build_unobtanium', undefined)).toThrow(/Unknown construction action/)
+  })
+
+  it('unlocks a perk once the Construction level is met, recording it in settings', () => {
+    // money_purse needs Construction level 70.
+    const save = makeSave({ stats: { construction: { xp: 800_000 } }, settings: { completedQuests: [] } }) // level 70+
+    const r = unlockConstructionPerk(save, 'money_purse')
+    expect(r.unlocked).toBe(true)
+    expect(save.settings.unlockedFeatures).toContain('money_purse')
+    // Re-unlocking the same perk is refused.
+    expect(() => unlockConstructionPerk(save, 'money_purse')).toThrow(/already unlocked/i)
+  })
+
+  it('refuses a perk unlock below the required level', () => {
+    const save = makeSave({ stats: { construction: { xp: 0 } } })
+    expect(() => unlockConstructionPerk(save, 'master_rejuvenation')).toThrow(/level 90/i)
+    expect(save.settings.unlockedFeatures).toBeUndefined()
+  })
+
+  it('rejects an unknown perk id', () => {
+    expect(() => unlockConstructionPerk(makeSave(), 'free_lunch')).toThrow(/Unknown construction perk/)
+  })
+})
+
+describe('farming intents (plant → grow → harvest)', () => {
+  // Back-date a planted patch so getEffectiveStage (elapsed wall-clock) reports
+  // it fully grown, simulating the passage of real time.
+  function ripen(save: any, patchId: string) {
+    const patch = save.settings.farming.patchesById[patchId]
+    patch.plantedAt = Date.now() - 10_000_000 // > any crop's growthTimeMs
+  }
+
+  it('farmSummary lists locations and empty patches on a fresh save', () => {
+    const out = farmSummary(makeSave({ stats: { farming: { xp: 0 } } }))
+    expect(out.farmingLevel).toBe(1)
+    const falador = out.locations.find((l: any) => l.locationId === 'falador')
+    expect(falador?.patches.some((p: any) => p.patchId === 'falador_herb_0' && p.planted === null)).toBe(true)
+  })
+
+  it('plants a seed: patch occupied, seed consumed, plant XP granted', () => {
+    const save = makeSave({ stats: { farming: { xp: 0 } }, bank: { greenthorn_seed: { itemId: 'greenthorn_seed', quantity: 2 } } })
+    const r = plantSeed(save, 'falador_herb_0', 'greenthorn_seed')
+    expect(r.planted).toBe('Greenthorn')
+    expect(r.xpGained.farming).toBe(11)
+    expect(save.bank.greenthorn_seed.quantity).toBe(1)
+    expect(save.settings.farming.patchesById['falador_herb_0'].cropId).toBe('greenthorn_seed')
+    expect(save.stats.farming.xp).toBe(11)
+  })
+
+  it('refuses to plant in an occupied patch', () => {
+    const save = makeSave({ stats: { farming: { xp: 0 } }, bank: { greenthorn_seed: { itemId: 'greenthorn_seed', quantity: 2 } } })
+    plantSeed(save, 'falador_herb_0', 'greenthorn_seed')
+    expect(() => plantSeed(save, 'falador_herb_0', 'greenthorn_seed')).toThrow(/already has/i)
+  })
+
+  it('refuses a seed whose type does not match the patch', () => {
+    // greenthorn_seed is a herb; falador_tree_0 is a tree patch.
+    const save = makeSave({ stats: { farming: { xp: 0 } }, bank: { greenthorn_seed: { itemId: 'greenthorn_seed', quantity: 1 } } })
+    expect(() => plantSeed(save, 'falador_tree_0', 'greenthorn_seed')).toThrow(/cannot be planted in a tree patch/i)
+  })
+
+  it('enforces the seed level requirement', () => {
+    // duskroot_seed needs Farming 19; a fresh account is level 1.
+    const save = makeSave({ stats: { farming: { xp: 0 } }, bank: { duskroot_seed: { itemId: 'duskroot_seed', quantity: 1 } } })
+    expect(() => plantSeed(save, 'falador_herb_0', 'duskroot_seed')).toThrow(/level 19/i)
+  })
+
+  it('refuses to plant a seed the character does not own', () => {
+    const save = makeSave({ stats: { farming: { xp: 0 } } })
+    expect(() => plantSeed(save, 'falador_herb_0', 'greenthorn_seed')).toThrow(/No .* available/i)
+  })
+
+  it('rejects an unknown patch id and an unknown seed id', () => {
+    const save = makeSave({ stats: { farming: { xp: 0 } }, bank: { greenthorn_seed: { itemId: 'greenthorn_seed', quantity: 1 } } })
+    expect(() => plantSeed(save, 'not_a_patch', 'greenthorn_seed')).toThrow(/No farm patch/)
+    expect(() => plantSeed(save, 'falador_herb_0', 'not_a_seed')).toThrow(/No farming seed/)
+  })
+
+  it('harvests a ripe patch: produce banked, XP granted, patch cleared', () => {
+    const save = makeSave({ stats: { farming: { xp: 0 } }, bank: { greenthorn_seed: { itemId: 'greenthorn_seed', quantity: 1 } } })
+    plantSeed(save, 'falador_herb_0', 'greenthorn_seed')
+    ripen(save, 'falador_herb_0')
+    const r = harvestPatch(save, 'falador_herb_0')
+    expect(r.harvested.itemId).toBe('greenthorn_leaf')
+    expect(r.harvested.quantity).toBeGreaterThanOrEqual(5)
+    expect(save.bank.greenthorn_leaf.quantity).toBe(r.harvested.quantity)
+    expect(r.xpGained.farming).toBeGreaterThan(0)
+    // Patch cleared after harvest.
+    expect(save.settings.farming.patchesById['falador_herb_0']).toBeUndefined()
+  })
+
+  it('refuses to harvest an unripe or empty patch', () => {
+    const save = makeSave({ stats: { farming: { xp: 0 } }, bank: { greenthorn_seed: { itemId: 'greenthorn_seed', quantity: 1 } } })
+    plantSeed(save, 'falador_herb_0', 'greenthorn_seed') // just planted → stage 1
+    expect(() => harvestPatch(save, 'falador_herb_0')).toThrow(/not ready/i)
+    expect(() => harvestPatch(save, 'falador_tree_0')).toThrow(/empty/i)
+  })
+
+  it('harvest_all reaps every ready patch and refuses when nothing is ready', () => {
+    const save = makeSave({
+      stats: { farming: { xp: 0 } },
+      bank: { greenthorn_seed: { itemId: 'greenthorn_seed', quantity: 1 }, oak_sapling: { itemId: 'oak_sapling', quantity: 1 } },
+    })
+    expect(() => harvestAll(save)).toThrow(/No crops are ready/i)
+    plantSeed(save, 'falador_herb_0', 'greenthorn_seed')
+    save.stats.farming = { xp: 1_000_000 } // level 15+ for the oak sapling
+    plantSeed(save, 'falador_tree_0', 'oak_sapling')
+    ripen(save, 'falador_herb_0')
+    ripen(save, 'falador_tree_0')
+    const r = harvestAll(save)
+    expect(r.patchesHarvested).toBe(2)
+    expect(r.produce.some((p: any) => p.itemId === 'greenthorn_leaf')).toBe(true)
+    expect(r.produce.some((p: any) => p.itemId === 'oak_logs')).toBe(true)
+    expect(Object.keys(save.settings.farming.patchesById)).toHaveLength(0)
+  })
+})
+
+describe('magic intents (cast_magic)', () => {
+  it('High Alchemy: consumes runes + the target item, banks coins, grants XP', () => {
+    // high_alch: level 55, xp 65, runes nature_rune:1 + fire_rune:5. oak_logs shopValue 34 → 37 coins.
+    const save = makeSave({
+      stats: { magic: { xp: 200_000 } }, // level 55+
+      inventory: [{ itemId: 'oak_logs', quantity: 5 }],
+      bank: { nature_rune: { itemId: 'nature_rune', quantity: 10 }, fire_rune: { itemId: 'fire_rune', quantity: 50 } },
+    })
+    const r = castMagic(save, 'high_alch', { targetItemId: 'oak_logs' })
+    expect(r.casts).toBe(5) // limited by the 5 oak logs
+    expect(r.xpGained.magic).toBe(65 * 5)
+    expect(r.produced[0]).toMatchObject({ itemId: 'coins', quantity: 37 * 5 })
+    expect(save.bank.coins.quantity).toBe(37 * 5)
+    expect(save.inventory.find((s: any) => s?.itemId === 'oak_logs')).toBeUndefined()
+    expect(save.bank.nature_rune.quantity).toBe(5)
+    expect(save.bank.fire_rune.quantity).toBe(25)
+  })
+
+  it('an equipped elemental staff supplies its rune for free', () => {
+    const save = makeSave({
+      stats: { magic: { xp: 200_000 } },
+      equipment: { weapon: { itemId: 'staff_of_fire' } },
+      inventory: [{ itemId: 'oak_logs', quantity: 3 }],
+      bank: { nature_rune: { itemId: 'nature_rune', quantity: 10 } }, // no fire runes at all
+    })
+    const r = castMagic(save, 'high_alch', { targetItemId: 'oak_logs' })
+    expect(r.casts).toBe(3)
+    expect(save.bank.fire_rune).toBeUndefined()
+    expect(save.bank.nature_rune.quantity).toBe(7)
+  })
+
+  it('Superheat: consumes ore/coal + runes and banks the bar', () => {
+    // superheat: level 43, xp 53, materials iron_ore:1 + coal:1, runes nature_rune:1 + fire_rune:4.
+    const save = makeSave({
+      stats: { magic: { xp: 70_000 } }, // level 43+
+      bank: {
+        iron_ore: { itemId: 'iron_ore', quantity: 3 },
+        coal: { itemId: 'coal', quantity: 3 },
+        nature_rune: { itemId: 'nature_rune', quantity: 5 },
+        fire_rune: { itemId: 'fire_rune', quantity: 20 },
+      },
+    })
+    const r = castMagic(save, 'superheat', {})
+    expect(r.casts).toBe(3)
+    expect(r.produced[0]).toMatchObject({ itemId: 'iron_bar', quantity: 3 })
+    expect(save.bank.iron_bar.quantity).toBe(3)
+    expect(save.bank.iron_ore).toBeUndefined()
+    expect(save.bank.coal).toBeUndefined()
+    expect(save.stats.magic.xp).toBe(70_000 + 53 * 3)
+  })
+
+  it('Enchant: consumes the amulet + runes and banks the enchanted product', () => {
+    // enchant_sapphire: level 7, xp 170, materials sapphire_amulet:1, runes cosmic+water.
+    const save = makeSave({
+      stats: { magic: { xp: 10_000 } },
+      bank: {
+        sapphire_amulet: { itemId: 'sapphire_amulet', quantity: 2 },
+        cosmic_rune: { itemId: 'cosmic_rune', quantity: 5 },
+        water_rune: { itemId: 'water_rune', quantity: 5 },
+      },
+    })
+    const r = castMagic(save, 'enchant_sapphire', { quantity: 2 })
+    expect(r.casts).toBe(2)
+    expect(save.bank.amulet_of_magic.quantity).toBe(2)
+    expect(save.bank.sapphire_amulet).toBeUndefined()
+  })
+
+  it('refuses High Alchemy without a target, listing eligible items', () => {
+    const save = makeSave({
+      stats: { magic: { xp: 200_000 } },
+      inventory: [{ itemId: 'oak_logs', quantity: 1 }],
+      bank: { nature_rune: { itemId: 'nature_rune', quantity: 5 }, fire_rune: { itemId: 'fire_rune', quantity: 25 } },
+    })
+    expect(() => castMagic(save, 'high_alch', {})).toThrow(/target_item_id/)
+    expect(() => castMagic(save, 'high_alch', {})).toThrow(/oak_logs/)
+  })
+
+  it('enforces the magic level requirement', () => {
+    const save = makeSave({ stats: { magic: { xp: 0 } }, inventory: [{ itemId: 'oak_logs', quantity: 1 }] })
+    expect(() => castMagic(save, 'high_alch', { targetItemId: 'oak_logs' })).toThrow(/level 55/i)
+  })
+
+  it('refuses when there are not enough runes', () => {
+    const save = makeSave({ stats: { magic: { xp: 70_000 } }, bank: { iron_ore: { itemId: 'iron_ore', quantity: 3 }, coal: { itemId: 'coal', quantity: 3 } } })
+    expect(() => castMagic(save, 'superheat', {})).toThrow(/Not enough runes or inputs/i)
+  })
+
+  it('rejects an unknown magic action', () => {
+    expect(() => castMagic(makeSave(), 'fireball_supreme', {})).toThrow(/Unknown magic action/)
+  })
+
+  it('High-Alching a rune that is also a cast rune accounts for the combined demand', () => {
+    // high_alch uses nature_rune:1 + fire_rune:5. Alching nature_rune means each
+    // cast needs 2 nature runes (1 rune + 1 target). With 10 nature in inventory
+    // and ample fire runes, that is 5 casts — not a spurious failure.
+    const save = makeSave({
+      stats: { magic: { xp: 200_000 } },
+      inventory: [{ itemId: 'nature_rune', quantity: 10 }, { itemId: 'fire_rune', quantity: 100 }],
+      bank: {},
+    })
+    const r = castMagic(save, 'high_alch', { targetItemId: 'nature_rune' })
+    expect(r.casts).toBe(5)
+    // 5 casts × (1 rune + 1 target) = 10 nature consumed; 5 × 5 fire = 25 fire.
+    expect(save.inventory.find((s: any) => s?.itemId === 'nature_rune')).toBeUndefined()
+    expect(save.inventory.find((s: any) => s?.itemId === 'fire_rune')?.quantity).toBe(75)
+  })
+})
+
 describe('dungeoneering intents', () => {
   it('trains dungeoneering as an idle skill, earning XP and tokens', () => {
     const save = makeSave({ stats: { dungeoneering: { xp: 0, level: 1 } } })
@@ -602,5 +1104,19 @@ describe('slayer intents', () => {
     expect(s.currentTask).toBeNull()
     expect(s.slayerPoints).toBe(0)
     expect(s.nextTaskMultiplier).toBe(1)
+  })
+
+  it('lists slayer-point unlocks with ownership + affordability', () => {
+    const save = makeSave({
+      settings: { slayerPoints: 500 },
+      bank: { slayer_helmet: { itemId: 'slayer_helmet', quantity: 1 } },
+    })
+    const unlocks = slayerStatus(save).unlocks
+    const helm = unlocks.find((u: any) => u.unlockId === 'slayer_helmet')
+    const defender = unlocks.find((u: any) => u.unlockId === 'slayer_defender')
+    // Helmet is owned (in bank) → not purchasable even though affordable.
+    expect(helm).toMatchObject({ owned: true, cost: 400, purchasable: false })
+    // Defender costs 1500 > 500 points → affordable false.
+    expect(defender).toMatchObject({ owned: false, affordable: false, purchasable: false })
   })
 })

@@ -9,6 +9,8 @@
 import itemsData from '../../../src/data/items.json' assert { type: 'json' }
 import monstersData from '../../../src/data/monsters.json' assert { type: 'json' }
 import prayersData from '../../../src/data/prayers.json' assert { type: 'json' }
+import cluesData from '../../../src/data/clues.json' assert { type: 'json' }
+import minigamesData from '../../../src/data/minigames.json' assert { type: 'json' }
 import { GameApiError } from '../game/errors.js'
 import {
   canonicalItemId,
@@ -22,14 +24,22 @@ import {
 } from '../game/inventory.js'
 import { equipItem, unequipSlot, checkEquipRequirements, createEquipment } from '../../../src/engine/equipment.js'
 import { getLevelFromXP } from '../../../src/engine/experience.js'
-import { simulateIdleSkilling, simulateIdleAgility, simulateIdleCombat } from '../../../src/engine/idleEngine.js'
+import { simulateIdleSkilling, simulateIdleAgility, simulateIdleCombat, simulateIdleGather } from '../../../src/engine/idleEngine.js'
+import { GATHER_TASKS, findGatherTask } from '../../../src/engine/gatherTasks.js'
+import { getClueCompletionTicks } from '../../../src/engine/clueScrolls.js'
+import { BUILDING_ACTIONS, UNLOCKABLES as CONSTRUCTION_PERKS, findBuildingAction, findConstructionPerk } from '../../../src/engine/construction.js'
+import farmingData from '../../../src/data/farming.json' assert { type: 'json' }
+import { getCropDef, getCropType, getPatchesForLocation, plantCrop, harvestCrop, getEffectiveStage } from '../../../src/engine/farming.ts'
+import { getRunesToConsume } from '../../../src/engine/runes.js'
 import { normaliseIdleCombatSetup, defaultIdleCombatSetup, isFoodItem, isPotionItem, getFoodHealAmount } from '../../../src/engine/idleSupplies.js'
 import { simulateIdleThieving } from '../../../src/engine/thieving.js'
 import { simulateIdleHunting } from '../../../src/engine/hunter.js'
+import { applyTaskResult } from '../../../src/engine/applyTaskResult.js'
 import skillsData from '../../../src/data/skills.json' assert { type: 'json' }
 import { getDungeoneeringRewardCost } from '../../../src/engine/dungeoneeringTokens.js'
 import { SLAYER_MASTERS, pickSlayerMonster, buildSlayerTask } from '../../../src/engine/slayerMasters.js'
-import { SLAYER_TASK_SKIP_POINT_COST } from '../../../src/engine/slayerTasks.js'
+import { SLAYER_TASK_SKIP_POINT_COST, doesSlayerTaskMatchMonster } from '../../../src/engine/slayerTasks.js'
+import { SLAYER_UNLOCKS, ownsItem as ownsSlayerUnlockItem } from '../../../src/engine/slayerUnlocks.js'
 import { getSlayerTaskReward } from '../../../src/engine/slayerRewards.js'
 import questsData from '../../../src/data/quests.json' assert { type: 'json' }
 import { checkQuestEligibility, getQuestPointsEarned, getCombatLevel } from '../../../src/engine/quests.js'
@@ -157,12 +167,566 @@ export const SKILL_IDLE_SKILLS = new Set([...IDLE_AUTOBANK_GATHERING_SKILLS, ...
 // magic, construction, dungeoneering and slayer use other systems.
 export const SUPPORTED_IDLE_SKILLS = [...SKILL_IDLE_SKILLS, 'agility', 'thieving', 'hunter']
 
-const SUPPORTED_IDLE_TYPES = new Set(['skill', 'agility', 'thieving', 'hunter', 'quest', 'combat'])
+const SUPPORTED_IDLE_TYPES = new Set(['skill', 'agility', 'thieving', 'hunter', 'quest', 'combat', 'gather', 'clue', 'minigame'])
 
 export function isClaimableTask(task) {
   if (!task || !SUPPORTED_IDLE_TYPES.has(task.type)) return false
   if (task.type === 'skill') return SKILL_IDLE_SKILLS.has(task.skill)
+  if (task.type === 'gather') return !task.gatherTask?.isClue && !task.gatherTask?.oneShot
   return true
+}
+
+// IDs for gather tasks that are safe to idle via MCP (no GP cost, not clue/oneShot).
+export const GATHER_TASK_IDS = GATHER_TASKS
+  .filter((t) => !t.isClue && !t.oneShot && !t.gpCost)
+  .map((t) => t.id)
+
+// Build (and validate) a type:'gather' idle task.
+export function buildGatherTask(_save, taskId) {
+  const gatherTask = findGatherTask(taskId)
+  if (!gatherTask) {
+    throw new GameApiError('UNKNOWN_GATHER_TASK', `No gather task with id '${taskId}'. Valid ids: ${GATHER_TASK_IDS.join(', ')}.`, 400)
+  }
+  if (gatherTask.isClue) {
+    throw new GameApiError('CLUE_NOT_SUPPORTED', `'${gatherTask.name}' is a clue scroll task — complete clues in the game client.`, 400)
+  }
+  if (gatherTask.oneShot) {
+    throw new GameApiError('ONE_SHOT_NOT_SUPPORTED', `'${gatherTask.name}' is a one-shot minigame task — complete it in the game client.`, 400)
+  }
+  if (gatherTask.gpCost) {
+    throw new GameApiError('GP_COST_NOT_SUPPORTED', `'${gatherTask.name}' costs ${gatherTask.gpCost} GP per action which is not yet tracked by the MCP idle engine. Use the game client.`, 400)
+  }
+  return { type: 'gather', gatherTask }
+}
+
+// Clue-scroll levels the player can solve (keys of clues.json).
+export const CLUE_LEVELS = Object.keys(cluesData)
+
+// Build (and validate) a type:'clue' idle task. The clue completion endpoint
+// consumes the scroll from the inventory (settleActionCompletion →
+// removeItemFromInventory), so require it there before starting — a scroll
+// sitting only in the bank would fail to claim. Rewards are rolled
+// server-side at claim time, so this builds only the timer/consumption shape.
+export function buildClueTask(save, clueLevel) {
+  if (!clueLevel || !CLUE_LEVELS.includes(clueLevel)) {
+    throw new GameApiError('UNKNOWN_CLUE_LEVEL', `Unknown clue level '${clueLevel}'. Valid levels: ${CLUE_LEVELS.join(', ')}.`, 400)
+  }
+  const requiresItem = `clue_scroll_${clueLevel}`
+  const inv = getInventory(save)
+  const held = inv.reduce((n, s) => n + (s?.itemId === requiresItem ? (Number(s.quantity) || 0) : 0), 0)
+  if (held < 1) {
+    throw new GameApiError('NO_CLUE_SCROLL', `No ${clueLevel} clue scroll in the inventory. Withdraw a ${requiresItem} from the bank before starting — clues are solved from the inventory.`, 400)
+  }
+  const ticks = getClueCompletionTicks(clueLevel)
+  return { type: 'clue', gatherTask: { id: `complete_${clueLevel}_clue`, clueLevel, requiresItem, ticks }, bankingEnabled: true }
+}
+
+// Minigame grind tasks (minigames.json), each a one-shot timer that awards an
+// unlock item. Some need a prior reward (e.g. Dragon Defender needs the Rune
+// Defender), gated by `requiresItem`.
+const MINIGAME_TASKS = Array.isArray(minigamesData?.tasks) ? minigamesData.tasks : []
+export const MINIGAME_TASK_IDS = MINIGAME_TASKS.map((t) => t.id).filter(Boolean)
+
+function findMinigameTask(id) {
+  return MINIGAME_TASKS.find((t) => t.id === id) || null
+}
+
+// Build (and validate) a type:'minigame' idle task. Validates the task id and
+// its prerequisite item (held anywhere — inventory, bank or equipment). Like
+// clues, the reward is rolled server-side at claim time, so this builds only
+// the timer shape; no item is created here.
+export function buildMinigameTask(save, minigameTaskId) {
+  const task = findMinigameTask(minigameTaskId)
+  if (!task) {
+    throw new GameApiError('UNKNOWN_MINIGAME_TASK', `No minigame task with id '${minigameTaskId}'. Valid ids: ${MINIGAME_TASK_IDS.join(', ')}.`, 400)
+  }
+  if (task.requiresItem && !ownsItemAnywhere(save, task.requiresItem)) {
+    const reqName = minigamesData?.itemNames?.[task.requiresItem] || task.requiresItem
+    throw new GameApiError('MINIGAME_PREREQUISITE', `'${task.name}' first requires ${reqName}. Earn it before starting this grind.`, 400)
+  }
+  const ticks = Math.max(1, Math.floor(Number(task.ticks) || 0))
+  return { type: 'minigame', minigameTask: { id: task.id, name: task.name, product: task.product, minigame: task.minigame, ticks }, bankingEnabled: true }
+}
+
+// ── Prayer (bury / altar bones) ──────────────────────────────────────────────
+// Prayer is trained by consuming bones for instant XP: burying them, scattering
+// remains, or offering them on a gilded altar (which needs a level-75
+// Construction house). Unlike the timed idle skills this is a bulk one-shot
+// consume — the engine has no idle simulator for it — so it is a pure save
+// intent that removes the bones (inventory first, then bank) and adds XP.
+
+const PRAYER_ACTIONS = Array.isArray(skillsData.prayer?.actions) ? skillsData.prayer.actions : []
+export const PRAYER_ACTION_IDS = PRAYER_ACTIONS.map((a) => a.id).filter(Boolean)
+const GILDED_ALTAR_CONSTRUCTION_LEVEL = 75
+
+// Total of an item held in the unnoted inventory plus the bank (matches the
+// client's `countItem(inventory, id) + bank[id]` availability check).
+function heldInInventoryAndBank(save, itemId) {
+  let inv = 0
+  for (const slot of getInventory(save)) {
+    if (slot?.itemId === itemId) inv += Number(slot.quantity) || 0
+  }
+  return inv + bankQuantity(save, itemId)
+}
+
+// Remove `total` of an item, draining the inventory first then the bank.
+function consumeInventoryThenBank(save, itemId, total) {
+  let inv = 0
+  for (const slot of getInventory(save)) {
+    if (slot?.itemId === itemId) inv += Number(slot.quantity) || 0
+  }
+  const fromInventory = Math.min(total, inv)
+  if (fromInventory > 0) removeItemFromInventory(save, itemId, fromInventory)
+  const fromBank = total - fromInventory
+  if (fromBank > 0) removeItemFromBank(save, itemId, fromBank)
+}
+
+export function trainPrayer(save, actionId, quantity) {
+  const action = PRAYER_ACTIONS.find((a) => a.id === actionId)
+  if (!action) {
+    throw new GameApiError('UNKNOWN_ACTION', `Unknown prayer action '${actionId}'. Valid ids: ${PRAYER_ACTION_IDS.join(', ')}.`, 400)
+  }
+  if (!save.stats || typeof save.stats !== 'object') save.stats = {}
+  const prayerStats = save.stats.prayer || { xp: 0 }
+  const currentXP = Math.max(0, Math.floor(Number(prayerStats.xp) || 0))
+  if (currentXP >= XP_CAP) {
+    throw new GameApiError('XP_CAP_REACHED', 'Prayer is already at the XP cap.', 400)
+  }
+  const prayerLevel = getLevelFromXP(currentXP)
+  if (prayerLevel < action.level) {
+    throw new GameApiError('LEVEL_TOO_LOW', `${action.name} requires Prayer level ${action.level} (you are ${prayerLevel}).`, 400)
+  }
+  // Gilded-altar offerings need a level-75 Construction house.
+  if (actionId.startsWith('altar_')) {
+    const conLevel = getLevelFromXP(Math.max(0, Math.floor(Number(save.stats.construction?.xp) || 0)))
+    if (conLevel < GILDED_ALTAR_CONSTRUCTION_LEVEL) {
+      throw new GameApiError('NO_GILDED_ALTAR', `Gilded-altar prayer training requires Construction level ${GILDED_ALTAR_CONSTRUCTION_LEVEL} (you are ${conLevel}).`, 400)
+    }
+  }
+  const boneId = Object.keys(action.materials || {})[0]
+  if (!boneId) {
+    throw new GameApiError('INVALID_ACTION', `${action.name} has no bone to consume.`, 400)
+  }
+  const perAction = Math.max(1, Math.floor(Number(action.materials[boneId]) || 1))
+  const available = heldInInventoryAndBank(save, boneId)
+  const maxByBones = Math.floor(available / perAction)
+
+  let want
+  if (quantity === undefined || quantity === null) {
+    want = maxByBones // default: use every bone the character owns
+  } else {
+    want = Math.floor(Number(quantity))
+    if (!Number.isFinite(want) || want < 1) {
+      throw new GameApiError('INVALID_QUANTITY', 'quantity must be an integer >= 1 (omit to use all bones).', 400)
+    }
+  }
+  const actions = Math.min(want, maxByBones)
+  if (actions < 1) {
+    const boneName = itemsData[boneId]?.name || boneId
+    throw new GameApiError('INSUFFICIENT_SUPPLIES', `No ${boneName} available to train ${action.name}.`, 400)
+  }
+
+  const boneTotal = actions * perAction
+  consumeInventoryThenBank(save, boneId, boneTotal)
+  const newXP = Math.min(currentXP + action.xp * actions, XP_CAP)
+  save.stats.prayer = { ...prayerStats, xp: newXP, level: getLevelFromXP(newXP) }
+  return {
+    action: action.name,
+    actions,
+    xpGained: { prayer: newXP - currentXP },
+    itemsConsumed: [{ itemId: boneId, name: itemsData[boneId]?.name || boneId, quantity: boneTotal }],
+    bonesRemaining: heldInInventoryAndBank(save, boneId),
+  }
+}
+
+// ── Construction (build planks + perk unlocks) ───────────────────────────────
+// Like prayer, construction is trained by consuming a material for instant XP
+// (one plank per build), so it is a pure bulk save intent. Two level-gated
+// perks (money_purse L70, master_rejuvenation L90) are recorded in
+// settings.unlockedFeatures, exactly as the client's unlockFeature does.
+
+export const CONSTRUCTION_ACTION_IDS = BUILDING_ACTIONS.map((a) => a.id).filter(Boolean)
+export const CONSTRUCTION_PERK_IDS = CONSTRUCTION_PERKS.map((p) => p.id).filter(Boolean)
+
+export function trainConstruction(save, actionId, quantity) {
+  const action = findBuildingAction(actionId)
+  if (!action) {
+    throw new GameApiError('UNKNOWN_ACTION', `Unknown construction action '${actionId}'. Valid ids: ${CONSTRUCTION_ACTION_IDS.join(', ')}.`, 400)
+  }
+  if (!save.stats || typeof save.stats !== 'object') save.stats = {}
+  const conStats = save.stats.construction || { xp: 0 }
+  const currentXP = Math.max(0, Math.floor(Number(conStats.xp) || 0))
+  if (currentXP >= XP_CAP) {
+    throw new GameApiError('XP_CAP_REACHED', 'Construction is already at the XP cap.', 400)
+  }
+  const conLevel = getLevelFromXP(currentXP)
+  if (conLevel < action.level) {
+    throw new GameApiError('LEVEL_TOO_LOW', `${action.name} requires Construction level ${action.level} (you are ${conLevel}).`, 400)
+  }
+  const plankId = Object.keys(action.materials || {})[0]
+  if (!plankId) {
+    throw new GameApiError('INVALID_ACTION', `${action.name} has no plank to consume.`, 400)
+  }
+  const perBuild = Math.max(1, Math.floor(Number(action.materials[plankId]) || 1))
+  const available = heldInInventoryAndBank(save, plankId)
+  const maxByPlanks = Math.floor(available / perBuild)
+
+  let want
+  if (quantity === undefined || quantity === null) {
+    want = maxByPlanks // default: build with every plank the character owns
+  } else {
+    want = Math.floor(Number(quantity))
+    if (!Number.isFinite(want) || want < 1) {
+      throw new GameApiError('INVALID_QUANTITY', 'quantity must be an integer >= 1 (omit to use all planks).', 400)
+    }
+  }
+  const actions = Math.min(want, maxByPlanks)
+  if (actions < 1) {
+    const plankName = itemsData[plankId]?.name || plankId
+    throw new GameApiError('INSUFFICIENT_SUPPLIES', `No ${plankName} available to ${action.name}.`, 400)
+  }
+
+  const plankTotal = actions * perBuild
+  consumeInventoryThenBank(save, plankId, plankTotal)
+  const newXP = Math.min(currentXP + action.xp * actions, XP_CAP)
+  save.stats.construction = { ...conStats, xp: newXP, level: getLevelFromXP(newXP) }
+  return {
+    action: action.name,
+    actions,
+    xpGained: { construction: newXP - currentXP },
+    itemsConsumed: [{ itemId: plankId, name: itemsData[plankId]?.name || plankId, quantity: plankTotal }],
+    planksRemaining: heldInInventoryAndBank(save, plankId),
+  }
+}
+
+export function unlockConstructionPerk(save, perkId) {
+  const perk = findConstructionPerk(perkId)
+  if (!perk) {
+    throw new GameApiError('UNKNOWN_PERK', `Unknown construction perk '${perkId}'. Valid ids: ${CONSTRUCTION_PERK_IDS.join(', ')}.`, 400)
+  }
+  if (!save.settings || typeof save.settings !== 'object') save.settings = {}
+  const unlocked = Array.isArray(save.settings.unlockedFeatures) ? save.settings.unlockedFeatures : []
+  if (unlocked.includes(perkId)) {
+    throw new GameApiError('ALREADY_UNLOCKED', `${perk.name} is already unlocked.`, 400)
+  }
+  const conLevel = getLevelFromXP(Math.max(0, Math.floor(Number(save.stats?.construction?.xp) || 0)))
+  if (conLevel < perk.level) {
+    throw new GameApiError('LEVEL_TOO_LOW', `${perk.name} requires Construction level ${perk.level} (you are ${conLevel}).`, 400)
+  }
+  save.settings.unlockedFeatures = [...unlocked, perkId]
+  return { perk: perk.name, perkId, unlocked: true, unlockedFeatures: save.settings.unlockedFeatures }
+}
+
+// ── Farming (plant → grow → harvest) ─────────────────────────────────────────
+// Farming is a patch system, not a single-slot idle task: a seed planted in a
+// patch grows over real wall-clock time (the growth math lives entirely in
+// src/engine/farming.ts — getEffectiveStage / harvestCrop — and is reused here,
+// never re-derived). Patch state lives at save.settings.farming.patchesById,
+// keyed by patch id (e.g. `falador_tree_0`). Harvest yield is RNG (client-
+// authoritative, like every other idle/skilling drop). Patch ids are discovered
+// via farmSummary (the get_farm tool).
+
+function getFarmingState(save) {
+  const f = save?.settings?.farming
+  return (f && typeof f === 'object' && f.patchesById && typeof f.patchesById === 'object')
+    ? f
+    : { patchesById: {} }
+}
+
+function farmingLevelOf(save) {
+  return getLevelFromXP(Math.max(0, Math.floor(Number(save?.stats?.farming?.xp) || 0)))
+}
+
+// Locate a patch slot by id across every farm location, returning its declared
+// type and current contents (null patch = empty). Throws on an unknown id.
+function resolvePatchSlot(state, patchId) {
+  for (const loc of farmingData.locations) {
+    for (const slot of getPatchesForLocation(state, loc.id)) {
+      if (slot.patchId === patchId) return { ...slot, locationId: loc.id, locationName: loc.name }
+    }
+  }
+  throw new GameApiError('UNKNOWN_PATCH', `No farm patch with id '${patchId}'. Call get_farm to list patches.`, 400)
+}
+
+// Add farming XP to the save (capped), returning the actual amount granted.
+function grantFarmingXp(save, amount) {
+  if (!save.stats || typeof save.stats !== 'object') save.stats = {}
+  const cur = Math.max(0, Math.floor(Number(save.stats.farming?.xp) || 0))
+  const next = Math.min(cur + Math.floor(Number(amount) || 0), XP_CAP)
+  save.stats.farming = { ...(save.stats.farming || {}), xp: next, level: getLevelFromXP(next) }
+  return next - cur
+}
+
+// ── Magic (non-combat utility spells) ────────────────────────────────────────
+// The magic skill's utility actions consume runes (and usually an input item)
+// to produce an output and grant magic XP: High Alchemy (item → coins),
+// Superheat (ore → bar), Enchant (jewellery/bolts), Tan Leather, Plank Make,
+// plus rune-only utility spells (Curse, Stun). Runes honour an equipped
+// elemental staff (getRunesToConsume), and everything is consumed/produced via
+// the same shared inventory/bank helpers the client uses — no value created.
+
+const MAGIC_ACTIONS = Array.isArray(skillsData.magic?.actions) ? skillsData.magic.actions : []
+export const MAGIC_ACTION_IDS = MAGIC_ACTIONS.map((a) => a.id).filter(Boolean)
+
+function inventoryOnlyCount(save, itemId) {
+  let n = 0
+  for (const slot of getInventory(save)) {
+    if (slot?.itemId === itemId) n += Number(slot.quantity) || 0
+  }
+  return n
+}
+
+// Items the character could High-Alchemy right now (held in the inventory with a
+// numeric shop value) — surfaced when an alchemy cast omits its target.
+function alchemyTargetOptions(save) {
+  const seen = new Set()
+  const out = []
+  for (const slot of getInventory(save)) {
+    if (!slot?.itemId || seen.has(slot.itemId)) continue
+    const item = itemsData[slot.itemId]
+    if (item && typeof item.shopValue === 'number') {
+      seen.add(slot.itemId)
+      out.push(slot.itemId)
+    }
+  }
+  return out
+}
+
+export function castMagic(save, actionId, { targetItemId, quantity } = {}) {
+  const action = MAGIC_ACTIONS.find((a) => a.id === actionId)
+  if (!action) {
+    throw new GameApiError('UNKNOWN_ACTION', `Unknown magic action '${actionId}'. Valid ids: ${MAGIC_ACTION_IDS.join(', ')}.`, 400)
+  }
+  if (!save.stats || typeof save.stats !== 'object') save.stats = {}
+  const magicStats = save.stats.magic || { xp: 0 }
+  const currentXP = Math.max(0, Math.floor(Number(magicStats.xp) || 0))
+  if (currentXP >= XP_CAP) {
+    throw new GameApiError('XP_CAP_REACHED', 'Magic is already at the XP cap.', 400)
+  }
+  const magicLevel = getLevelFromXP(currentXP)
+  if (magicLevel < action.level) {
+    throw new GameApiError('LEVEL_TOO_LOW', `${action.name} requires Magic level ${action.level} (you are ${magicLevel}).`, 400)
+  }
+
+  const equipment = save.equipment && typeof save.equipment === 'object' ? save.equipment : {}
+  const runesToConsume = getRunesToConsume(action.runeReq, equipment, itemsData)
+  const isAlchemy = action.type === 'alchemy'
+
+  // How many casts the runes alone can pay for (a staff-provided element drops
+  // out of runesToConsume, so it never limits the count).
+  let maxCasts = Infinity
+  for (const [runeId, qty] of Object.entries(runesToConsume)) {
+    const per = Math.max(1, Math.floor(Number(qty) || 1))
+    maxCasts = Math.min(maxCasts, Math.floor(heldInInventoryAndBank(save, runeId) / per))
+  }
+
+  // Resolve the input the cast consumes and the output it produces.
+  let alchItem = null
+  if (isAlchemy) {
+    if (!targetItemId) {
+      const options = alchemyTargetOptions(save)
+      const hint = options.length ? ` Items you can alch now: ${options.join(', ')}.` : ' You hold no alchemisable items.'
+      throw new GameApiError('TARGET_REQUIRED', `${action.name} needs target_item_id — the inventory item to alchemise.${hint}`, 400)
+    }
+    const resolved = resolveItem(targetItemId)
+    alchItem = resolved.item
+    if (typeof alchItem.shopValue !== 'number') {
+      throw new GameApiError('NOT_ALCHEMISABLE', `${alchItem.name || resolved.itemId} has no shop value and cannot be alchemised.`, 400)
+    }
+    targetItemId = resolved.itemId
+    // The alch target is drawn from the inventory only. If it is ALSO one of the
+    // spell's runes, each cast needs runeQty + 1 of it (the +1 being the target);
+    // the rune-only loop above under-counts that, so fold the combined demand in.
+    const targetRunePerCast = Math.max(0, Math.floor(Number(runesToConsume[targetItemId]) || 0))
+    maxCasts = Math.min(maxCasts, inventoryOnlyCount(save, targetItemId))
+    if (targetRunePerCast > 0) {
+      maxCasts = Math.min(maxCasts, Math.floor(heldInInventoryAndBank(save, targetItemId) / (targetRunePerCast + 1)))
+    }
+  } else if (action.materials) {
+    for (const [matId, qty] of Object.entries(action.materials)) {
+      const per = Math.max(1, Math.floor(Number(qty) || 1))
+      maxCasts = Math.min(maxCasts, Math.floor(heldInInventoryAndBank(save, matId) / per))
+    }
+  }
+
+  // An unbounded cast count (no rune/material/target limit) is never valid — it
+  // would grant XP for free — so reject it whether or not quantity was passed.
+  if (!Number.isFinite(maxCasts)) {
+    throw new GameApiError('INVALID_QUANTITY', `${action.name} has no limiting input — it cannot be cast through this tool.`, 400)
+  }
+
+  let want
+  if (quantity === undefined || quantity === null) {
+    want = maxCasts
+  } else {
+    want = Math.floor(Number(quantity))
+    if (!Number.isFinite(want) || want < 1) {
+      throw new GameApiError('INVALID_QUANTITY', 'quantity must be an integer >= 1 (omit to cast as many times as the runes/inputs allow).', 400)
+    }
+  }
+  const casts = Math.min(want, maxCasts)
+  if (casts < 1) {
+    throw new GameApiError('INSUFFICIENT_SUPPLIES', `Not enough runes or inputs to cast ${action.name}.`, 400)
+  }
+
+  const produced = []
+  // Consume the alch target FIRST (inventory only) so a target that is also a
+  // required rune still leaves enough inventory+bank for the rune draw below.
+  if (isAlchemy) {
+    removeItemFromInventory(save, targetItemId, casts)
+  }
+  // Consume runes (inventory-first then bank), honouring the staff.
+  for (const [runeId, qty] of Object.entries(runesToConsume)) {
+    consumeInventoryThenBank(save, runeId, Math.max(1, Math.floor(Number(qty) || 1)) * casts)
+  }
+
+  if (isAlchemy) {
+    const coins = Math.floor((Number(alchItem.shopValue) || 0) * 1.1) * casts
+    addItemToBank(save, 'coins', coins)
+    produced.push({ itemId: 'coins', name: 'Coins', quantity: coins })
+  } else if (action.materials) {
+    for (const [matId, qty] of Object.entries(action.materials)) {
+      consumeInventoryThenBank(save, matId, Math.max(1, Math.floor(Number(qty) || 1)) * casts)
+    }
+    if (action.product) {
+      const productQty = Math.max(1, Math.floor(Number(action.productQty) || 1)) * casts
+      addItemToBank(save, action.product, productQty)
+      produced.push({ itemId: action.product, name: itemsData[action.product]?.name || action.product, quantity: productQty })
+    }
+  }
+
+  const newXP = Math.min(currentXP + Math.floor(Number(action.xp) || 0) * casts, XP_CAP)
+  save.stats.magic = { ...magicStats, xp: newXP, level: getLevelFromXP(newXP) }
+  return {
+    action: action.name,
+    casts,
+    xpGained: { magic: newXP - currentXP },
+    produced,
+    target: isAlchemy ? { itemId: targetItemId, name: alchItem.name || targetItemId } : undefined,
+  }
+}
+
+// Read-only view of every farm location, patch and what's growing in it.
+export function farmSummary(save) {
+  const state = getFarmingState(save)
+  const now = Date.now()
+  const locations = farmingData.locations.map((loc) => {
+    const patches = getPatchesForLocation(state, loc.id).map(({ patchId, patch, type }) => {
+      if (!patch?.cropId) return { patchId, type, planted: null }
+      const crop = getCropDef(patch.cropId)
+      const stage = getEffectiveStage(patch)
+      const ready = stage >= 4
+      const readyAt = patch.plantedAt + (crop?.growthTimeMs || 0)
+      return {
+        patchId,
+        type,
+        planted: {
+          seedId: patch.cropId,
+          crop: crop?.name || patch.cropId,
+          produce: crop?.cropId || null,
+          stage,
+          maxStage: 4,
+          ready,
+          secondsUntilReady: ready ? 0 : Math.max(0, Math.ceil((readyAt - now) / 1000)),
+        },
+      }
+    })
+    return { locationId: loc.id, name: loc.name, patches }
+  })
+  return { farmingLevel: farmingLevelOf(save), locations }
+}
+
+export function plantSeed(save, patchId, seedId) {
+  const state = getFarmingState(save)
+  const slot = resolvePatchSlot(state, patchId)
+  if (slot.patch?.cropId) {
+    throw new GameApiError('PATCH_OCCUPIED', `Patch '${patchId}' already has ${getCropDef(slot.patch.cropId)?.name || slot.patch.cropId} growing. Harvest it first.`, 400)
+  }
+  const crop = getCropDef(seedId)
+  if (!crop) {
+    throw new GameApiError('UNKNOWN_SEED', `No farming seed with id '${seedId}'. See pocketrpg://reference/farming.`, 400)
+  }
+  const seedType = getCropType(seedId)
+  if (seedType !== slot.type) {
+    throw new GameApiError('SEED_TYPE_MISMATCH', `${crop.name} is a ${seedType} crop and cannot be planted in a ${slot.type} patch.`, 400)
+  }
+  const level = farmingLevelOf(save)
+  if (level < crop.level) {
+    throw new GameApiError('LEVEL_TOO_LOW', `${crop.name} requires Farming level ${crop.level} (you are ${level}).`, 400)
+  }
+  if (heldInInventoryAndBank(save, seedId) < 1) {
+    throw new GameApiError('INSUFFICIENT_SUPPLIES', `No ${crop.name} seed available to plant.`, 400)
+  }
+  consumeInventoryThenBank(save, seedId, 1)
+  const result = plantCrop(state, patchId, seedId, slot.type)
+  if (!result) {
+    throw new GameApiError('PLANT_FAILED', `Could not plant ${crop.name} in patch '${patchId}'.`, 400)
+  }
+  if (!save.settings || typeof save.settings !== 'object') save.settings = {}
+  save.settings.farming = result.state
+  const xpGained = grantFarmingXp(save, result.plantXp)
+  return {
+    patchId,
+    planted: crop.name,
+    seedConsumed: { itemId: seedId, name: itemsData[seedId]?.name || crop.name, quantity: 1 },
+    xpGained: { farming: xpGained },
+    growthTimeSeconds: Math.ceil((crop.growthTimeMs || 0) / 1000),
+  }
+}
+
+export function harvestPatch(save, patchId) {
+  const state = getFarmingState(save)
+  resolvePatchSlot(state, patchId) // validates the id exists
+  const patch = state.patchesById[patchId]
+  if (!patch?.cropId) {
+    throw new GameApiError('NOTHING_PLANTED', `Patch '${patchId}' is empty.`, 400)
+  }
+  if (getEffectiveStage(patch) < 4) {
+    throw new GameApiError('NOT_READY', `The crop in '${patchId}' is not ready to harvest yet.`, 400)
+  }
+  const result = harvestCrop(state, patchId, farmingLevelOf(save))
+  if (!result) {
+    throw new GameApiError('HARVEST_FAILED', `Could not harvest patch '${patchId}'.`, 400)
+  }
+  if (!save.settings || typeof save.settings !== 'object') save.settings = {}
+  save.settings.farming = result.state
+  addItemToBank(save, result.cropId, result.quantity)
+  const xpGained = grantFarmingXp(save, result.harvestXp)
+  return {
+    patchId,
+    harvested: { itemId: result.cropId, name: itemsData[result.cropId]?.name || result.cropId, quantity: result.quantity },
+    xpGained: { farming: xpGained },
+  }
+}
+
+export function harvestAll(save) {
+  let state = getFarmingState(save)
+  const produce = {}
+  let totalXp = 0
+  let patchesHarvested = 0
+  for (const loc of farmingData.locations) {
+    for (const { patchId, patch } of getPatchesForLocation(state, loc.id)) {
+      if (!patch?.cropId || getEffectiveStage(patch) < 4) continue
+      const result = harvestCrop(state, patchId, farmingLevelOf(save))
+      if (!result) continue
+      state = result.state
+      produce[result.cropId] = (produce[result.cropId] || 0) + result.quantity
+      totalXp += result.harvestXp
+      patchesHarvested++
+    }
+  }
+  if (patchesHarvested < 1) {
+    throw new GameApiError('NOTHING_READY', 'No crops are ready to harvest.', 400)
+  }
+  if (!save.settings || typeof save.settings !== 'object') save.settings = {}
+  save.settings.farming = state
+  for (const [itemId, qty] of Object.entries(produce)) addItemToBank(save, itemId, qty)
+  const xpGained = grantFarmingXp(save, totalXp)
+  return {
+    patchesHarvested,
+    produce: Object.entries(produce).map(([itemId, quantity]) => ({ itemId, name: itemsData[itemId]?.name || itemId, quantity })),
+    xpGained: { farming: xpGained },
+  }
 }
 
 function findSkillEntry(skill, key, id) {
@@ -234,76 +798,37 @@ export function toSlotArray(save) {
   return arr
 }
 
-// Coins from agility/thieving land in the inventory (stackable, coalescing),
-// falling back to the bank when the inventory is full — matching the client.
-function addCoinsInventoryFirst(save, qty) {
-  if (qty <= 0) return
-  try { addItemToInventory(save, 'coins', qty, { stackable: true }) }
-  catch { addItemToBank(save, 'coins', qty) }
-}
-
 const named = (obj) => Object.entries(obj || {}).map(([itemId, quantity]) => ({ itemId, name: itemsData[itemId]?.name || itemId, quantity }))
 
-// Apply an idle simulation result to the save. Mirrors the client's load-time
-// application (gameState.jsx) exactly per task type so the two paths can't drift.
-export function applyIdleResult(save, sim, type) {
+// Helper: build the normalised state, call applyTaskResult, and write back any
+// fields that may have been replaced (inventory is always a new array after
+// toSlotArray; the others are shared references so mutations propagate).
+function applyToSave(save, sim, type) {
   if (!save.stats || typeof save.stats !== 'object') save.stats = {}
   if (!save.bank || typeof save.bank !== 'object') save.bank = {}
+  if (!save.equipment || typeof save.equipment !== 'object') save.equipment = {}
+  if (!save.settings || typeof save.settings !== 'object') save.settings = {}
+  const inv28 = toSlotArray(save)
+  const state = { stats: save.stats, inventory: inv28, bank: save.bank, equipment: save.equipment, settings: save.settings }
+  const result = applyTaskResult(state, sim, type)
+  save.inventory = state.inventory  // may be sim.finalInventory or modified inv28
+  return result
+}
 
-  // XP (all types) — only for skills the save already tracks.
-  if (sim.xpGained) {
-    for (const [skill, xp] of Object.entries(sim.xpGained)) {
-      if (xp > 0 && save.stats[skill]) {
-        const newXP = Math.min((save.stats[skill].xp || 0) + Math.floor(xp), XP_CAP)
-        save.stats[skill] = { ...save.stats[skill], xp: newXP, level: getLevelFromXP(newXP) }
-      }
-    }
-  }
-
-  if (sim.dungeoneeringTokensGained > 0) {
-    if (!save.settings || typeof save.settings !== 'object') save.settings = {}
-    save.settings.dungeoneeringTokens = (Number(save.settings.dungeoneeringTokens) || 0) + Math.floor(sim.dungeoneeringTokensGained)
-  }
-
-  if (sim.itemsConsumed) {
-    for (const [itemId, qty] of Object.entries(sim.itemsConsumed)) {
-      const existing = save.bank[itemId]
-      if (!existing) continue
-      const newQty = (Number(existing.quantity) || 0) - qty
-      if (newQty <= 0) delete save.bank[itemId]
-      else save.bank[itemId] = { ...existing, quantity: newQty }
-    }
-  }
-
-  const bankAdd = (itemId, qty) => {
-    if (qty <= 0) return
-    const existing = save.bank[itemId]
-    save.bank[itemId] = existing
-      ? { ...existing, quantity: (Number(existing.quantity) || 0) + qty }
-      : { itemId, quantity: qty }
-  }
-
-  let banked = {}
-  if (type === 'skill' || type === 'gather' || type === 'clue') {
-    if (Array.isArray(sim.finalInventory)) save.inventory = sim.finalInventory
-    banked = sim.lootBanked || sim.itemsBanked || {}
-    for (const [itemId, qty] of Object.entries(banked)) bankAdd(itemId, qty)
-  } else if (type === 'agility' || type === 'thieving') {
-    addCoinsInventoryFirst(save, Number(sim.coinsGained) || 0)
-  } else if (type === 'hunter') {
-    for (const reward of sim.rewards || []) bankAdd(reward.itemId, reward.quantity)
-  } else if (sim.itemsGained) {
-    for (const [itemId, qty] of Object.entries(sim.itemsGained)) bankAdd(itemId, qty)
-  }
-
+// Apply an idle simulation result to the save. Kept for backward compatibility
+// with existing callers; delegates to the shared applyTaskResult.
+export function applyIdleResult(save, sim, type) {
+  const result = applyToSave(save, sim, type)
   return {
     skill: sim.skill,
     action: sim.actionName,
     actions: sim.actions || sim.laps || 0,
     xpGained: sim.xpGained || {},
     coinsGained: Number(sim.coinsGained) || 0,
-    itemsBanked: named(banked),
-    rewards: type === 'hunter' ? (sim.rewards || []).map((r) => ({ itemId: r.itemId, name: itemsData[r.itemId]?.name || r.itemId, quantity: r.quantity })) : undefined,
+    itemsBanked: named(result.banked),
+    rewards: type === 'hunter'
+      ? (sim.rewards || []).map((r) => ({ itemId: r.itemId, name: itemsData[r.itemId]?.name || r.itemId, quantity: r.quantity }))
+      : undefined,
     itemsConsumed: named(sim.itemsConsumed),
     stoppedReason: sim.stoppedReason || null,
   }
@@ -312,10 +837,15 @@ export function applyIdleResult(save, sim, type) {
 // Run the right idle simulator for the task type and apply it. Pure over the
 // save (no DB); the caller persists.
 export function runIdleTask(save, task, elapsedMs) {
+  if (!save.stats || typeof save.stats !== 'object') save.stats = {}
+  if (!save.bank || typeof save.bank !== 'object') save.bank = {}
+  if (!save.equipment || typeof save.equipment !== 'object') save.equipment = {}
+  if (!save.settings || typeof save.settings !== 'object') save.settings = {}
+  const inv28 = toSlotArray(save)
   let sim = null
   switch (task.type) {
     case 'skill':
-      sim = simulateIdleSkilling(task, elapsedMs, save.bank || {}, save.equipment || {}, save.stats || {}, itemsData, toSlotArray(save))
+      sim = simulateIdleSkilling(task, elapsedMs, save.bank, save.equipment, save.stats, itemsData, inv28)
       break
     case 'agility':
       sim = simulateIdleAgility(task, elapsedMs)
@@ -326,11 +856,30 @@ export function runIdleTask(save, task, elapsedMs) {
     case 'hunter':
       sim = simulateIdleHunting(task, elapsedMs)
       break
+    case 'gather':
+      sim = simulateIdleGather(task, elapsedMs, inv28, save.stats || {}, itemsData, save.bank || {})
+      break
     default:
       return { applied: false, reason: 'unsupported_type' }
   }
   if (!sim) return { applied: false, reason: 'no_progress' }
-  return { applied: true, ...applyIdleResult(save, sim, task.type) }
+  const state = { stats: save.stats, inventory: inv28, bank: save.bank, equipment: save.equipment, settings: save.settings }
+  const result = applyTaskResult(state, sim, task.type)
+  save.inventory = state.inventory
+  return {
+    applied: true,
+    skill: sim.skill,
+    action: sim.actionName,
+    actions: sim.actions || sim.laps || 0,
+    xpGained: sim.xpGained || {},
+    coinsGained: Number(sim.coinsGained) || 0,
+    itemsBanked: named(result.banked),
+    rewards: task.type === 'hunter'
+      ? (sim.rewards || []).map((r) => ({ itemId: r.itemId, name: itemsData[r.itemId]?.name || r.itemId, quantity: r.quantity }))
+      : undefined,
+    itemsConsumed: named(sim.itemsConsumed),
+    stoppedReason: sim.stoppedReason || null,
+  }
 }
 
 // ── Idle combat setup (food / potions / prayers) ─────────────────────────────
@@ -347,6 +896,20 @@ function countOwned(save, itemId) {
     if (slot.itemId === itemId && !slot.noted) n += Number(slot.quantity) || 0
   }
   return n + bankQuantity(save, itemId)
+}
+
+// True if the character holds the item anywhere — inventory, bank or a worn
+// equipment slot. Mirrors the client's `hasItemAnywhere` used to gate minigame
+// prerequisites (a Rune Defender may be equipped, not banked).
+function ownsItemAnywhere(save, itemId) {
+  if (countOwned(save, itemId) > 0) return true
+  const equipment = save?.equipment
+  if (equipment && typeof equipment === 'object') {
+    for (const slot of Object.values(equipment)) {
+      if (slot && slot.itemId === itemId) return true
+    }
+  }
+  return false
 }
 
 // Validate + normalise a food/potion list from the tool ([{ item_id, quantity }]).
@@ -729,8 +1292,9 @@ export function questStatuses(save) {
 // `simulateIdleCombat` engine — the same simulator the client runs at load
 // time. It only fights normal monsters (bosses/raids are blocked inside the
 // simulator and gated again here) and uses the character's own configured idle
-// food/potions/prayers from settings.idleCombatSetup. Slayer-task credit is
-// deliberately left to the client for now (we pass slayerTask = null).
+// food/potions/prayers from settings.idleCombatSetup. If the monster matches
+// the character's active Slayer task, kills are credited and the task progress
+// (or completion + point grant) is written back to save.settings.
 
 const VALID_STANCES = new Set(['accurate', 'aggressive', 'defensive', 'controlled'])
 
@@ -752,97 +1316,30 @@ export function buildCombatTask(save, monsterId, stance) {
   if (!VALID_STANCES.has(chosen)) {
     throw new GameApiError('INVALID_STANCE', `Invalid stance '${chosen}'. Use one of: ${[...VALID_STANCES].join(', ')}.`, 400)
   }
-  return { type: 'combat', monster, stance: chosen, bankingEnabled: true, spell: save.settings?.activeCombatSpell || null }
+  const slayerTask = save.settings?.slayerTask || null
+  const activeSlayerTask = (slayerTask && doesSlayerTaskMatchMonster(slayerTask.monsterId, monster.id))
+    ? slayerTask
+    : null
+  return { type: 'combat', monster, stance: chosen, bankingEnabled: true, spell: save.settings?.activeCombatSpell || null, slayerTask: activeSlayerTask }
 }
 
 function maxHpFromStats(stats) {
   return stats?.hitpoints ? getLevelFromXP(stats.hitpoints.xp || 0) : 10
 }
 
-// Apply a simulateIdleCombat result to the save. Mirrors the client load-time
-// application (gameState.jsx) field-for-field: HP/death, combat XP, bank-side
-// supply consumption, ammo/charge drain, the post-fight inventory and banked
-// loot. On death nothing is wiped here — HP resets to max and the caller clears
-// the task (One-Life accounts are refused upstream).
-function applyIdleCombatResult(save, sim, task) {
+// Run a combat idle task over the elapsed window and apply it to the save.
+export function runCombatTask(save, task, elapsedMs) {
   if (!save.stats || typeof save.stats !== 'object') save.stats = {}
   if (!save.bank || typeof save.bank !== 'object') save.bank = {}
   if (!save.equipment || typeof save.equipment !== 'object') save.equipment = {}
   if (!save.settings || typeof save.settings !== 'object') save.settings = {}
-
-  const maxHP = maxHpFromStats(save.stats)
-  const died = sim.died === true
-  if (died) {
-    save.settings.currentHP = maxHP
-  } else if (Number.isFinite(Number(sim.finalHP))) {
-    save.settings.currentHP = Math.max(1, Math.min(maxHP, Math.floor(Number(sim.finalHP))))
-  }
-
-  const xpGained = {}
-  if (sim.xpGained) {
-    for (const [skill, xp] of Object.entries(sim.xpGained)) {
-      const amount = Math.floor(Number(xp) || 0)
-      if (amount > 0 && save.stats[skill]) {
-        const newXP = Math.min((save.stats[skill].xp || 0) + amount, XP_CAP)
-        save.stats[skill] = { ...save.stats[skill], xp: newXP, level: getLevelFromXP(newXP) }
-        xpGained[skill] = amount
-      }
-    }
-  }
-
-  // Supplies drawn from the bank (inventory-side consumption is already baked
-  // into sim.finalInventory).
-  if (sim.itemsConsumed) {
-    for (const [itemId, qty] of Object.entries(sim.itemsConsumed)) {
-      const existing = save.bank[itemId]
-      if (!existing) continue
-      const newQty = (Number(existing.quantity) || 0) - qty
-      if (newQty <= 0) delete save.bank[itemId]
-      else save.bank[itemId] = { ...existing, quantity: newQty }
-    }
-  }
-
-  if (sim.ammoConsumed && save.equipment.ammo && save.equipment.ammo.itemId === sim.ammoConsumed.itemId) {
-    const remaining = Math.max(0, (Number(save.equipment.ammo.quantity) || 0) - sim.ammoConsumed.quantity)
-    save.equipment.ammo = remaining > 0 ? { ...save.equipment.ammo, quantity: remaining } : null
-  }
-  if (sim.chargesConsumed > 0 && save.equipment.weapon) {
-    const remaining = Math.max(0, (Number(save.equipment.weapon.charges) || 0) - sim.chargesConsumed)
-    save.equipment.weapon = { ...save.equipment.weapon, charges: remaining }
-  }
-
-  if (Array.isArray(sim.finalInventory)) save.inventory = sim.finalInventory
-  const banked = sim.lootBanked || {}
-  for (const [itemId, qty] of Object.entries(banked)) {
-    if (qty <= 0) continue
-    const existing = save.bank[itemId]
-    save.bank[itemId] = existing
-      ? { ...existing, quantity: (Number(existing.quantity) || 0) + qty }
-      : { itemId, quantity: qty }
-  }
-
-  return {
-    type: 'combat',
-    monster: task.monster?.name || task.monster?.id || null,
-    monstersKilled: sim.monstersKilled || 0,
-    xpGained,
-    lootBanked: named(banked),
-    lootGained: named(sim.lootGained),
-    itemsConsumed: named(sim.itemsConsumed),
-    died,
-    finalHP: died ? 0 : (Number.isFinite(Number(sim.finalHP)) ? Math.floor(Number(sim.finalHP)) : null),
-    stoppedReason: sim.stoppedReason || null,
-  }
-}
-
-// Run a combat idle task over the elapsed window and apply it to the save.
-export function runCombatTask(save, task, elapsedMs) {
-  const stats = save.stats || {}
-  const setup = normaliseIdleCombatSetup(save.settings?.idleCombatSetup)
-  const currentHP = Number.isFinite(Number(save.settings?.currentHP))
+  const stats = save.stats
+  const setup = normaliseIdleCombatSetup(save.settings.idleCombatSetup)
+  const currentHP = Number.isFinite(Number(save.settings.currentHP))
     ? Math.max(0, Math.floor(Number(save.settings.currentHP)))
     : maxHpFromStats(stats)
-  const sim = simulateIdleCombat(task, elapsedMs, stats, save.equipment || {}, toSlotArray(save), itemsData, null, save.bank || {}, {
+  const inv28 = toSlotArray(save)
+  const sim = simulateIdleCombat(task, elapsedMs, stats, save.equipment, inv28, itemsData, task.slayerTask || null, save.bank, {
     currentHP,
     idleFood: setup.food,
     idlePotions: setup.potions,
@@ -850,7 +1347,49 @@ export function runCombatTask(save, task, elapsedMs) {
     prayersData,
   })
   if (!sim) return { applied: false, reason: 'no_progress' }
-  return { applied: true, ...applyIdleCombatResult(save, sim, task) }
+  const state = { stats, inventory: inv28, bank: save.bank, equipment: save.equipment, settings: save.settings }
+  const result = applyTaskResult(state, sim, 'combat')
+  save.inventory = state.inventory
+  const xpGained = {}
+  for (const [skill, xp] of Object.entries(sim.xpGained || {})) {
+    if (Math.floor(Number(xp) || 0) > 0) xpGained[skill] = Math.floor(Number(xp))
+  }
+
+  let slayerCredit = null
+  if (task.slayerTask && sim.slayerTaskUpdate) {
+    if (sim.slayerTaskUpdate.completed) {
+      const reward = getSlayerTaskReward(sim.slayerTaskUpdate.pointsOnComplete, Number(save.settings.slayerTasksCompleted) || 0)
+      save.settings.slayerTasksCompleted = reward.totalTasks
+      save.settings.slayerPoints = (Number(save.settings.slayerPoints) || 0) + reward.pointsEarned
+      save.settings.slayerTask = null
+      slayerCredit = { completed: true, pointsEarned: reward.pointsEarned, totalSlayerPoints: save.settings.slayerPoints }
+    } else {
+      save.settings.slayerTask = sim.slayerTaskUpdate
+      slayerCredit = { completed: false, monstersRemaining: sim.slayerTaskUpdate.monstersRemaining, monstersKilledOnTask: sim.monstersKilledOnTask || 0 }
+    }
+  }
+
+  if (Math.floor(Number(sim.slayerXpGained) || 0) > 0) {
+    const slayerStats = save.stats.slayer || { xp: 0 }
+    const newXP = Math.min((slayerStats.xp || 0) + Math.floor(sim.slayerXpGained), XP_CAP)
+    save.stats.slayer = { ...slayerStats, xp: newXP, level: getLevelFromXP(newXP) }
+    xpGained.slayer = Math.floor(sim.slayerXpGained)
+  }
+
+  return {
+    applied: true,
+    type: 'combat',
+    monster: task.monster?.name || task.monster?.id || null,
+    monstersKilled: result.monstersKilled || 0,
+    xpGained,
+    lootBanked: named(result.banked),
+    lootGained: named(sim.lootGained),
+    itemsConsumed: named(sim.itemsConsumed),
+    died: result.died,
+    finalHP: result.finalHP,
+    stoppedReason: result.stoppedReason,
+    ...(slayerCredit ? { slayerTask: slayerCredit } : {}),
+  }
 }
 
 // ── Dungeoneering rewards (Phase D increment 2) ───────────────────────────────
@@ -979,6 +1518,22 @@ export function slayerStatus(save) {
     eligible: combatLevel >= m.combatReq && slayerLevel >= m.slayerReq,
   }))
 
+  // Slayer-point reward unlocks (one-off purchases via buy_slayer_unlock).
+  const bank = (save.bank && typeof save.bank === 'object') ? save.bank : {}
+  const inventory = getInventory(save)
+  const unlocks = SLAYER_UNLOCKS.map((u) => {
+    const owned = ownsSlayerUnlockItem({ itemId: u.itemId, bank, inventory })
+    return {
+      unlockId: u.itemId,
+      name: itemsData[u.itemId]?.name || u.itemId,
+      cost: u.cost,
+      description: u.description,
+      owned,
+      affordable: points >= u.cost,
+      purchasable: !owned && points >= u.cost,
+    }
+  })
+
   return {
     slayerLevel,
     combatLevel,
@@ -988,5 +1543,6 @@ export function slayerStatus(save) {
     nextTaskMultiplier: getSlayerTaskReward(1, tasksCompleted).multiplier,
     skipCosts: { points: SLAYER_TASK_SKIP_POINT_COST, credits: 1 },
     masters,
+    unlocks,
   }
 }
