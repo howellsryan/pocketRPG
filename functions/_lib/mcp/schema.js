@@ -64,6 +64,13 @@ Getting oriented:
   auto-select when the account has a single character.
 - get_character_state returns coins, per-skill level + XP, current HP, worn
   equipment and inventory (item ids include resolved names).
+- Every skilling/combat result (claim_activity, train_prayer, train_construction,
+  cast_magic, plant_seed/harvest_patch/harvest_all, and quest completions) carries
+  a \`progress\` block: for each skill that gained XP it reports the resulting
+  \`level\`, \`totalXp\`, the \`xpGained\` this action, and \`leveledUp\` (with
+  \`fromLevel\`/\`levelsGained\` on a level-up), plus the character's \`coinsTotal\`.
+  Report the new level, XP and coins from \`progress\` — never infer or guess the
+  resulting level yourself.
 - Browse the game content with tools (these work in every client, unlike
   resources): list_skill_actions (trainable options per skill), list_items and
   list_monsters (search the catalogues by name), inspect_item / inspect_monster

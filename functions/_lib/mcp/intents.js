@@ -62,6 +62,45 @@ function isStackable(itemId) {
   return !!itemsData[itemId]?.stackable
 }
 
+// Coins the character currently holds across the unnoted inventory and the bank.
+function totalCoins(save) {
+  let n = 0
+  for (const slot of getInventory(save)) {
+    if (slot?.itemId === 'coins' && !slot.noted) n += Number(slot.quantity) || 0
+  }
+  return n + bankQuantity(save, 'coins')
+}
+
+// Post-gain progress for every skill that gained XP, so a skilling/combat result
+// TELLS the agent the resulting level + total XP (and whether a level was
+// crossed) instead of leaving it to guess. xpGained is the delta already applied
+// to save.stats, so the pre-gain XP — and therefore the previous level — is
+// (newXP - delta). Also reports the character's current total coins. Returns a
+// stable shape:
+//   { skills: [{ skill, level, totalXp, xpGained, leveledUp, fromLevel?, levelsGained? }],
+//     leveledUp: [skillId…], coinsTotal }
+function progressSummary(save, xpGained) {
+  const skills = []
+  for (const [skill, rawGain] of Object.entries(xpGained || {})) {
+    const gained = Math.floor(Number(rawGain) || 0)
+    if (gained <= 0) continue
+    const totalXp = Math.max(0, Math.floor(Number(save?.stats?.[skill]?.xp) || 0))
+    const level = getLevelFromXP(totalXp)
+    const fromLevel = getLevelFromXP(Math.max(0, totalXp - gained))
+    const entry = { skill, level, totalXp, xpGained: gained, leveledUp: level > fromLevel }
+    if (level > fromLevel) {
+      entry.fromLevel = fromLevel
+      entry.levelsGained = level - fromLevel
+    }
+    skills.push(entry)
+  }
+  return {
+    skills,
+    leveledUp: skills.filter((s) => s.leveledUp).map((s) => s.skill),
+    coinsTotal: totalCoins(save),
+  }
+}
+
 export function depositToBank(save, rawItemId, quantity) {
   normalizeSaveItemIds(save, itemsData)
   const { itemId } = resolveItem(rawItemId)
@@ -334,6 +373,7 @@ export function trainPrayer(save, actionId, quantity) {
     action: action.name,
     actions,
     xpGained: { prayer: newXP - currentXP },
+    progress: progressSummary(save, { prayer: newXP - currentXP }),
     itemsConsumed: [{ itemId: boneId, name: itemsData[boneId]?.name || boneId, quantity: boneTotal }],
     bonesRemaining: heldInInventoryAndBank(save, boneId),
   }
@@ -394,6 +434,7 @@ export function trainConstruction(save, actionId, quantity) {
     action: action.name,
     actions,
     xpGained: { construction: newXP - currentXP },
+    progress: progressSummary(save, { construction: newXP - currentXP }),
     itemsConsumed: [{ itemId: plankId, name: itemsData[plankId]?.name || plankId, quantity: plankTotal }],
     planksRemaining: heldInInventoryAndBank(save, plankId),
   }
@@ -601,6 +642,7 @@ export function castMagic(save, actionId, { targetItemId, quantity } = {}) {
     action: action.name,
     casts,
     xpGained: { magic: newXP - currentXP },
+    progress: progressSummary(save, { magic: newXP - currentXP }),
     produced,
     target: isAlchemy ? { itemId: targetItemId, name: alchItem.name || targetItemId } : undefined,
   }
@@ -670,6 +712,7 @@ export function plantSeed(save, patchId, seedId) {
     planted: crop.name,
     seedConsumed: { itemId: seedId, name: itemsData[seedId]?.name || crop.name, quantity: 1 },
     xpGained: { farming: xpGained },
+    progress: progressSummary(save, { farming: xpGained }),
     growthTimeSeconds: Math.ceil((crop.growthTimeMs || 0) / 1000),
   }
 }
@@ -696,6 +739,7 @@ export function harvestPatch(save, patchId) {
     patchId,
     harvested: { itemId: result.cropId, name: itemsData[result.cropId]?.name || result.cropId, quantity: result.quantity },
     xpGained: { farming: xpGained },
+    progress: progressSummary(save, { farming: xpGained }),
   }
 }
 
@@ -726,6 +770,7 @@ export function harvestAll(save) {
     patchesHarvested,
     produce: Object.entries(produce).map(([itemId, quantity]) => ({ itemId, name: itemsData[itemId]?.name || itemId, quantity })),
     xpGained: { farming: xpGained },
+    progress: progressSummary(save, { farming: xpGained }),
   }
 }
 
@@ -825,6 +870,7 @@ export function applyIdleResult(save, sim, type) {
     actions: sim.actions || sim.laps || 0,
     xpGained: sim.xpGained || {},
     coinsGained: Number(sim.coinsGained) || 0,
+    progress: progressSummary(save, sim.xpGained || {}),
     itemsBanked: named(result.banked),
     rewards: type === 'hunter'
       ? (sim.rewards || []).map((r) => ({ itemId: r.itemId, name: itemsData[r.itemId]?.name || r.itemId, quantity: r.quantity }))
@@ -873,6 +919,7 @@ export function runIdleTask(save, task, elapsedMs) {
     actions: sim.actions || sim.laps || 0,
     xpGained: sim.xpGained || {},
     coinsGained: Number(sim.coinsGained) || 0,
+    progress: progressSummary(save, sim.xpGained || {}),
     itemsBanked: named(result.banked),
     rewards: task.type === 'hunter'
       ? (sim.rewards || []).map((r) => ({ itemId: r.itemId, name: itemsData[r.itemId]?.name || r.itemId, quantity: r.quantity }))
@@ -1228,6 +1275,10 @@ export function applyQuestTask(save, task, elapsedMs, now = Date.now()) {
       name: quest.name,
       xpGained: gained,
       coinsGained: coins,
+      // Computed here, immediately after this quest's XP/coins land, so the
+      // resulting levels are accurate even when a cascade completes several
+      // quests that feed the same skill in sequence.
+      progress: progressSummary(save, gained),
       itemUnlocks: (quest.itemUnlocks || []).map((id) => ({ itemId: id, name: itemsData[id]?.name || id })),
     })
   }
@@ -1382,6 +1433,7 @@ export function runCombatTask(save, task, elapsedMs) {
     monster: task.monster?.name || task.monster?.id || null,
     monstersKilled: result.monstersKilled || 0,
     xpGained,
+    progress: progressSummary(save, xpGained),
     lootBanked: named(result.banked),
     lootGained: named(sim.lootGained),
     itemsConsumed: named(sim.itemsConsumed),

@@ -1122,3 +1122,84 @@ describe('slayer intents', () => {
     expect(defender).toMatchObject({ owned: false, affordable: false, purchasable: false })
   })
 })
+
+// Every skilling/combat result must TELL the agent the resulting level, total XP
+// and coins (so it never has to infer them). These assert the shared `progress`
+// block across the idle, instant-skill, farming, combat and quest paths.
+describe('progress reporting (resulting level + xp + coins)', () => {
+  it('idle skilling reports the new level, total XP and coin total', () => {
+    const save = makeSave({
+      stats: { firemaking: { xp: 0, level: 1 } },
+      inventory: [{ itemId: 'logs', quantity: 100 }],
+      bank: { coins: { itemId: 'coins', quantity: 250 } },
+    })
+    const r = runIdleTask(save, buildSkillTask(save, 'firemaking', 'normal_logs'), 60_000)
+    const fm = r.progress.skills.find((s: any) => s.skill === 'firemaking')
+    expect(fm).toBeDefined()
+    expect(fm.totalXp).toBe(save.stats.firemaking.xp)
+    expect(fm.level).toBe(getLevelFromXP(save.stats.firemaking.xp))
+    expect(fm.xpGained).toBe(r.xpGained.firemaking)
+    // The progress block always carries the character's current coin total.
+    expect(r.progress.coinsTotal).toBe(250)
+  })
+
+  it('flags a level-up with fromLevel + levelsGained on the crossing skill', () => {
+    // Level 2 begins at 83 XP; burying one bone (5 XP) from 80 crosses it.
+    const save = makeSave({ stats: { prayer: { xp: 80 } }, bank: { bones: { itemId: 'bones', quantity: 1 } } })
+    const r = trainPrayer(save, 'bury_bones', 1)
+    const prayer = r.progress.skills.find((s: any) => s.skill === 'prayer')
+    expect(prayer).toMatchObject({ skill: 'prayer', totalXp: 85, leveledUp: true, fromLevel: 1, level: 2, levelsGained: 1 })
+    expect(r.progress.leveledUp).toEqual(['prayer'])
+  })
+
+  it('does not flag a level-up when no boundary is crossed', () => {
+    const save = makeSave({ stats: { construction: { xp: 0, level: 1 } }, bank: { plank: { itemId: 'plank', quantity: 1 } } })
+    const r = trainConstruction(save, 'build_plank', 1)
+    const con = r.progress.skills.find((s: any) => s.skill === 'construction')
+    expect(con.leveledUp).toBe(false)
+    expect(con).not.toHaveProperty('fromLevel')
+    expect(r.progress.leveledUp).toEqual([])
+  })
+
+  it('reports the coin total after agility banks coins to the inventory', () => {
+    const save = makeSave({ stats: { agility: { xp: 0, level: 1 } } })
+    const r = runIdleTask(save, buildIdleTask(save, 'agility', 'gnome_stronghold'), 240_000)
+    expect(r.coinsGained).toBe(100)
+    expect(r.progress.coinsTotal).toBe(100)
+    expect(r.progress.skills.find((s: any) => s.skill === 'agility').totalXp).toBe(save.stats.agility.xp)
+  })
+
+  it('combat reports resulting levels for every skill that gained XP', () => {
+    const save = makeSave({
+      stats: {
+        attack: { xp: 1_000_000 }, strength: { xp: 1_000_000 }, defence: { xp: 1_000_000 },
+        hitpoints: { xp: 1_000_000 }, ranged: { xp: 0 }, magic: { xp: 0 },
+      },
+      settings: { currentHP: 73, idleCombatSetup: { food: [], potions: [], prayers: {} } },
+    })
+    const r = runCombatTask(save, buildCombatTask(save, 'field_chicken', 'accurate'), 60_000)
+    const attack = r.progress.skills.find((s: any) => s.skill === 'attack')
+    expect(attack.level).toBe(getLevelFromXP(save.stats.attack.xp))
+    expect(attack.totalXp).toBe(save.stats.attack.xp)
+    expect(r.progress.skills.some((s: any) => s.skill === 'hitpoints')).toBe(true)
+  })
+
+  it('attaches per-quest progress to each completed quest', () => {
+    // a_boarborn_of_interest awards { slayer: 1000 }; the skill must exist on the
+    // save for the XP (and therefore the progress entry) to land.
+    const save = makeSave({ stats: { slayer: { xp: 0 } } })
+    const task = buildQuestTask(save, 'a_boarborn_of_interest', undefined)
+    const r = applyQuestTask(save, task, 24 * 60 * 60 * 1000)
+    expect(r.completed.length).toBeGreaterThan(0)
+    const c = r.completed[0]
+    expect(c.progress).toBeDefined()
+    expect(Object.keys(c.xpGained).length).toBeGreaterThan(0)
+    // The progress skills mirror the quest's xpGained map.
+    for (const skill of Object.keys(c.xpGained)) {
+      const entry = c.progress.skills.find((s: any) => s.skill === skill)
+      expect(entry.totalXp).toBe(save.stats[skill].xp)
+      expect(entry.level).toBe(getLevelFromXP(save.stats[skill].xp))
+      expect(entry.xpGained).toBe(c.xpGained[skill])
+    }
+  })
+})
