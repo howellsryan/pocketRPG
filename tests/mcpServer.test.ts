@@ -752,4 +752,29 @@ describe('MCP create_character', () => {
     expect(data.saveSeeded).toBe(true)
     expect(saveWrites.some((s) => /saves/.test(s))).toBe(true)
   })
+
+  it('denormalizes total_level (33) onto the new character row', async () => {
+    // A fresh save starts every skill at level 1 plus Hitpoints at level 10 =
+    // 33 total. The denormalized characters.total_level column defaults to 0,
+    // so seeding the save must also write the real total — otherwise the new
+    // character shows 0 total level on the leaderboard until its next save.
+    const charUpdates: { sql: string; args: any[] }[] = []
+    const prepare = (sql: string) => ({
+      bind: (...args: any[]) => ({
+        first: async () => null,
+        run: async () => {
+          if (/UPDATE characters/.test(sql)) charUpdates.push({ sql, args })
+          return { meta: { last_row_id: 42, changes: 1 } }
+        },
+      }),
+    })
+    const env = { DB: { prepare }, JWT_SECRET: TEST_SECRET } as any
+    const res = await callTool('create_character', { username: 'TotalsOk' }, await ctxFor(env))
+    expect(res.isError).toBeFalsy()
+    const levelUpdate = charUpdates.find((u) => /SET total_level/.test(u.sql))
+    expect(levelUpdate).toBeTruthy()
+    // bind order: total_level, combat_level, characterId
+    expect(levelUpdate!.args[0]).toBe(33)
+    expect(levelUpdate!.args[2]).toBe(42)
+  })
 })
