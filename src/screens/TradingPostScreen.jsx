@@ -4,6 +4,7 @@ import { countItem } from '../engine/inventory.js'
 import { api, getToken, getCharacterId } from '../cloud/api.js'
 import { isOrderBookItem, getPurchaseRestriction } from '../engine/storeRules.js'
 import { getLevelFromXP } from '../engine/experience.js'
+import { ALL_SKILLS, MAX_TOTAL_LEVEL } from '../utils/constants.js'
 import Panel from '../components/Panel.jsx'
 import GameIcon from '../components/GameIcon.jsx'
 import SharedItemModal from '../components/SharedItemModal.jsx'
@@ -101,7 +102,7 @@ export default function TradingPostScreen({ onBuyCredits }) {
   const WIZARD_IDS = new Set(['wizard_hat', 'black_wizard_hat', 'wizard_robe_top', 'wizard_robe_skirt'])
 
   function getStoreSection(id, item) {
-    if (item.questUnlock || minigameProductIds.has(id) || item.isSkillCape) return 'Minigame & Quest Unlocks'
+    if (item.questUnlock || minigameProductIds.has(id) || item.isSkillCape || item.isMaxCape) return 'Minigame & Quest Unlocks'
     if (item.type === 'rune' || (item.type === 'resource' && id.endsWith('_rune')) || id.startsWith('staff_of_') || WIZARD_IDS.has(id)) return 'Runes, Robes & Staves'
     if (SKILLING_WEAPON_IDS.has(id) || item.type === 'resource' || item.type === 'seed') return 'Skilling Equipment'
     return 'Weapons & Armour'
@@ -113,7 +114,7 @@ export default function TradingPostScreen({ onBuyCredits }) {
     for (const s of STORE_SECTIONS) sections[s] = []
     for (const [id, item] of Object.entries(itemsData)) {
       if (!item || (item.id && item.id !== id)) continue
-      if (!item.isGeneralStore && !item.isSkillCape && !minigameProductIds.has(id) && !item.questUnlock) continue
+      if (!item.isGeneralStore && !item.isSkillCape && !item.isMaxCape && !minigameProductIds.has(id) && !item.questUnlock) continue
       const section = getStoreSection(id, item)
       sections[section].push({ id, item })
     }
@@ -410,6 +411,13 @@ export default function TradingPostScreen({ onBuyCredits }) {
     return null
   }
 
+  const getMaxCapeLevelBlock = (item) => {
+    if (!item?.isMaxCape) return null
+    const totalLevel = ALL_SKILLS.reduce((sum, skill) => sum + getLevelFromXP(stats?.[skill]?.xp || 0), 0)
+    if (totalLevel < MAX_TOTAL_LEVEL) return `🔒 Requires ${MAX_TOTAL_LEVEL} total level`
+    return null
+  }
+
   const renderListRow = (item) => {
     const orderBook = isOrderBookItem(item)
     const isMinigameUnlocked = minigameProductIds.has(item.id) && unlockedMinigameItems.has(item.id)
@@ -419,6 +427,8 @@ export default function TradingPostScreen({ onBuyCredits }) {
       if (minigameProductIds.has(item.id) && !isMinigameUnlocked) return '🔒 Earn from minigame first'
       const capeBlock = getSkillCapeLevelBlock(item)
       if (capeBlock) return capeBlock
+      const maxCapeBlock = getMaxCapeLevelBlock(item)
+      if (maxCapeBlock) return maxCapeBlock
       if (!orderBook && !restriction.allowed && restriction.code !== 'BOSS_UNIQUE_RESTRICTED' && restriction.code !== 'CLUE_REWARD_RESTRICTED') return restriction.message
       return null
     })()

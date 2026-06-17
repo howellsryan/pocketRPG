@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'preact/hooks'
 import Card from '../components/Card.jsx'
 import FilterToggleBar from '../components/FilterToggleBar.jsx'
+import GildedComplete from '../components/GildedComplete.jsx'
 import { formatNumber } from '../utils/helpers.js'
+import { isMaxedTotal } from '../utils/completion.js'
 import { getLeaderboardFilters, getLeaderboardFilterById } from '../engine/leaderboardFilters.js'
 
 const LEADERBOARD_FILTERS = getLeaderboardFilters()
@@ -17,26 +19,31 @@ function LeaderboardRow({ rank, char, metric }) {
   const isKc = metric === 'kc'
   const primaryValue = isKc ? char.killCount : char.totalLevel
   const primaryLabel = isKc ? 'Kill Count' : 'Total Level'
+  // Maxed accounts (every skill at 99) get the gilded completion treatment on
+  // the total-level board, matching the skills/collection-log gold tint.
+  const maxed = !isKc && isMaxedTotal(char.totalLevel)
   return (
-    <Card className="p-3">
-      <div class="flex items-center justify-between">
-        <div class="flex items-center gap-3 flex-1">
-          <div class="text-lg font-semibold text-[var(--color-gold)] min-w-[2rem]">#{rank}</div>
-          <div class="flex-1 min-w-0">
-            <div class="text-sm font-semibold text-[var(--color-parchment)] truncate">
-              {char.isOneLife ? '☠️ ' : ''}{char.username}
+    <GildedComplete complete={maxed} className="rounded-xl">
+      <Card className="p-3">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-3 flex-1">
+            <div class="text-lg font-semibold text-[var(--color-gold)] min-w-[2rem]">#{rank}</div>
+            <div class="flex-1 min-w-0">
+              <div class="text-sm font-semibold text-[var(--color-parchment)] truncate">
+                {char.isOneLife ? '☠️ ' : ''}{char.username}
+              </div>
+            </div>
+          </div>
+          <div class="text-right flex-shrink-0 ml-2">
+            <div class="text-sm font-semibold text-[var(--color-gold)]">{formatNumber(primaryValue ?? 0)}</div>
+            <div class="text-[10px] text-[var(--color-parchment)] opacity-60">{primaryLabel}</div>
+            <div class="text-[10px] font-[var(--font-mono)] text-[var(--color-blood-light)] mt-1">
+              Combat {formatNumber(char.combatLevel ?? 3)}
             </div>
           </div>
         </div>
-        <div class="text-right flex-shrink-0 ml-2">
-          <div class="text-sm font-semibold text-[var(--color-gold)]">{formatNumber(primaryValue ?? 0)}</div>
-          <div class="text-[10px] text-[var(--color-parchment)] opacity-60">{primaryLabel}</div>
-          <div class="text-[10px] font-[var(--font-mono)] text-[var(--color-blood-light)] mt-1">
-            Combat {formatNumber(char.combatLevel ?? 3)}
-          </div>
-        </div>
-      </div>
-    </Card>
+      </Card>
+    </GildedComplete>
   )
 }
 

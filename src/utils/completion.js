@@ -2,9 +2,17 @@
 // truth driving the gilded completion treatment (see components/GildedComplete.jsx)
 // across the skills, quests, minigames and character-unlock screens.
 
+import { MAX_TOTAL_LEVEL } from './constants.js'
+
 // A skill is mastered at the level cap (99).
 export function isSkillMaxed(level) {
   return Number(level) >= 99
+}
+
+// An account is maxed when its total level reaches the cap (every skill at 99).
+// Drives the max cape unlock and the gilded leaderboard treatment.
+export function isMaxedTotal(totalLevel) {
+  return Number(totalLevel) >= MAX_TOTAL_LEVEL
 }
 
 // A quest is complete when its id is in the completed-quests set.

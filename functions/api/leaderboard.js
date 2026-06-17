@@ -72,12 +72,15 @@ export async function onRequestGet(context) {
     } else {
       // Pure indexed read against `characters`. total_level / combat_level are
       // denormalized on every save PUT (see functions/api/save.js), so this
-      // never LEFT JOINs `saves` or JSON.parses save blobs.
+      // never LEFT JOINs `saves` or JSON.parses save blobs. Ties break by
+      // total_level_at (the moment the account first reached its current total
+      // level) so whoever got there first ranks higher; id ASC is the final
+      // tie-break. See migration 0024.
       const rows = await env.DB.prepare(
         `SELECT id, username, total_level, combat_level, is_one_life
            FROM characters
           WHERE deleted_at IS NULL AND total_level > 33 AND is_bot = 0
-          ORDER BY total_level DESC, id ASC
+          ORDER BY total_level DESC, total_level_at ASC, id ASC
           LIMIT ? OFFSET ?`
       ).bind(limit, offset).all()
       characters = (rows.results || []).map(row => ({
