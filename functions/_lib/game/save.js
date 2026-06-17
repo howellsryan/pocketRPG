@@ -1,6 +1,7 @@
 import { decodeSaveRow, gzipJsonString } from '../saveCodec.js'
 import { GameApiError } from './errors.js'
 import { migrateLegacyNonces } from './nonces.js'
+import { computeSaveSummary } from '../saveSummary.js'
 
 export async function loadCharacterWithSave(env, characterId, identityId) {
   const row = await env.DB.prepare(`SELECT c.id, c.owner_id, c.is_ironman, c.credits, s.save_data, s.save_blob, s.updated_at, s.save_revision FROM characters c LEFT JOIN saves s ON s.character_id = c.id WHERE c.id = ? AND c.owner_id = ? AND c.deleted_at IS NULL`).bind(characterId, identityId).first()
@@ -44,6 +45,16 @@ export async function writeSave(env, characterId, saveObject, expectedRevision) 
       throw new GameApiError('SAVE_REVISION_CONFLICT', 'save_revision_conflict', 409)
     }
   }
+  // Keep the denormalized leaderboard / PvP-CB columns on `characters` in sync
+  // with the save we just wrote. /api/save recomputes these in its own batch;
+  // every other server-authoritative save path (MCP create_character, idle
+  // claims, purchases, …) flows through here, so without this they'd leave
+  // total_level / combat_level stale — a brand-new MCP character would sit at
+  // the column default of 0 instead of its real starting total (33).
+  const { totalLevel, combatLevel } = computeSaveSummary(saveObject)
+  await env.DB.prepare(
+    `UPDATE characters SET total_level = ?, combat_level = ? WHERE id = ?`
+  ).bind(totalLevel, combatLevel, characterId).run()
   const latest = await env.DB.prepare('SELECT save_revision FROM saves WHERE character_id = ?').bind(characterId).first()
   return { updatedAt: now, saveRevision: Number(latest?.save_revision) || 0 }
 }
