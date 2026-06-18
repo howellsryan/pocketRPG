@@ -17,7 +17,6 @@ import questsData from '../data/quests.json'
 import minigamesData from '../data/minigames.json'
 
 const MAX_SLOTS = 8
-const GENERAL_BUY_MULTIPLIER = 1.1
 const MINIGAME_UNLOCK_STORE_PRICE = 4_500_000
 const INSTANT_SELL_FRACTION = 0.8
 
@@ -28,9 +27,12 @@ function isReadyToCollectOffer(offer) {
   return remaining <= 0 && (coinsPending > 0 || itemsPending > 0)
 }
 
+// General-store (non-order-book) items — runes, skill capes, the max cape,
+// quest-unlock items, minigame unlocks — are bought at their plain shop value,
+// matching what /api/purchase debits. No markup.
 function generalStoreBuyPrice(item) {
   if (!item) return 0
-  return Math.floor((Number(item.shopValue) || 0) * GENERAL_BUY_MULTIPLIER)
+  return Math.floor(Number(item.shopValue) || 0)
 }
 
 function generalStoreSellPrice(item) {
@@ -759,7 +761,7 @@ export default function TradingPostScreen({ onBuyCredits }) {
         </Panel>
         {!orderBook && isBuy && (
           <div class="text-[10px] text-[#888] -mt-1">
-            The Trading Post cost for this item is {GENERAL_BUY_MULTIPLIER}× the item's shop value.
+            This item is sold at its shop value.
           </div>
         )}
         <div class="flex gap-2">
