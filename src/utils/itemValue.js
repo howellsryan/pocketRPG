@@ -36,3 +36,18 @@ export function getLootTotalValue(loot, itemsData) {
 export function isEpicLootValue(totalValue) {
   return Number(totalValue) > EPIC_LOOT_THRESHOLD
 }
+
+// True when at least one individual item stack in the loot is itself worth over
+// the epic threshold. The purple treatment keys off this — NOT the summed total
+// — so a pile of cheap drops never turns the screen purple. Accepts either an
+// array of { itemId, quantity } entries or an { itemId: quantity } map.
+export function hasEpicLootDrop(loot, itemsData) {
+  if (!loot) return false
+  const entries = Array.isArray(loot)
+    ? loot.filter(Boolean).map((e) => [e.itemId, e.quantity])
+    : Object.entries(loot)
+  for (const [itemId, quantity] of entries) {
+    if (isHighValueDrop(itemId, quantity, itemsData)) return true
+  }
+  return false
+}
