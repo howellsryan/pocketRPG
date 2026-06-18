@@ -1,6 +1,19 @@
 import { getLevelFromXP } from './experience.js'
 import { COOKING_BURN_BASE_CHANCE } from '../utils/constants.js'
 
+/**
+ * Gathering skills that can use a tool. These actions can always be performed —
+ * even bare-handed — but holding a suitable tool grants a faster catch time.
+ */
+export const TOOL_SKILLS = ['mining', 'woodcutting', 'fishing']
+
+/**
+ * Action-time penalty applied to a tool-using skill when the player has no
+ * suitable tool. Bare-handed gathering takes this many times the base (basic
+ * tool) action time, so any tool — including the basic tier — is faster.
+ */
+export const NO_TOOL_ACTION_TICK_MULTIPLIER = 2
+
 
 /**
  * Woodcutting axe speed progression.
@@ -96,23 +109,31 @@ export function getToolSpeedMultiplier(skill, equipment, itemsData, stats = {}, 
 export function getEffectiveToolActionTicks(skill, baseTicks, equipment, itemsData, stats = {}, inventory = []) {
   const safeBaseTicks = Math.max(1, Math.floor(Number(baseTicks) || 1))
 
-  if (skill === 'woodcutting') {
+  // Tool-using gathering skills can always be performed; bare-handed is slower
+  // than holding even the basic tier of tool.
+  if (TOOL_SKILLS.includes(skill)) {
     const bestTool = findBestToolForSkill(skill, equipment, inventory, itemsData, stats)
-    const tier = bestTool ? WOODCUTTING_AXE_REDUCTION_TIERS[bestTool.id] : null
+    if (!bestTool) {
+      return Math.max(1, Math.floor(safeBaseTicks * NO_TOOL_ACTION_TICK_MULTIPLIER))
+    }
 
-    if (typeof tier === 'number') {
-      if (tier <= 0) return safeBaseTicks
+    if (skill === 'woodcutting') {
+      const tier = WOODCUTTING_AXE_REDUCTION_TIERS[bestTool.id]
 
-      const bestPossibleTicks = Math.max(1, Math.floor(safeBaseTicks / 2))
-      const maxReductionTicks = safeBaseTicks - bestPossibleTicks
+      if (typeof tier === 'number') {
+        if (tier <= 0) return safeBaseTicks
 
-      if (maxReductionTicks <= 0) return safeBaseTicks
+        const bestPossibleTicks = Math.max(1, Math.floor(safeBaseTicks / 2))
+        const maxReductionTicks = safeBaseTicks - bestPossibleTicks
 
-      const reductionTicks = tier >= 1
-        ? maxReductionTicks
-        : Math.max(1, Math.ceil(maxReductionTicks * tier))
+        if (maxReductionTicks <= 0) return safeBaseTicks
 
-      return Math.max(bestPossibleTicks, safeBaseTicks - reductionTicks)
+        const reductionTicks = tier >= 1
+          ? maxReductionTicks
+          : Math.max(1, Math.ceil(maxReductionTicks * tier))
+
+        return Math.max(bestPossibleTicks, safeBaseTicks - reductionTicks)
+      }
     }
   }
 
@@ -183,13 +204,9 @@ export function canPerformAction(action, skillXP, inventory, itemsData, bank = {
   const level = getLevelFromXP(skillXP)
   if (level < action.level) return { can: false, reason: `Requires ${action.skillName || 'skill'} level ${action.level}` }
 
-  // Check for required tool (if skill uses tools)
-  if (skill && ['mining', 'woodcutting', 'fishing'].includes(skill)) {
-    if (!hasToolForSkill(skill, equipment, inventory, itemsData, stats)) {
-      const toolName = skill === 'mining' ? 'pickaxe' : skill === 'woodcutting' ? 'axe' : 'rod'
-      return { can: false, reason: `Need a ${toolName}` }
-    }
-  }
+  // Tool-using gathering skills (mining/woodcutting/fishing) no longer require a
+  // tool — the action can always be performed, just slower bare-handed. Tool
+  // speed is applied via getEffectiveToolActionTicks().
 
   // Check required materials (inventory + bank combined)
   if (action.materials) {
