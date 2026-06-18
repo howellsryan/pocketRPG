@@ -104,7 +104,7 @@ function isBlackHide(id) {
 //   • a per-item coloured rim/glow from OUTLINE_SPEC.
 function glowFor(id, type) {
   if (!id) return undefined
-  if (id === 'infernal_cape') return glowing(RIM.gold)
+  if (id === 'infernal_cape' || id === 'max_cape' || id === 'infernal_max_cape') return glowing(RIM.gold)
   if (id.startsWith('2nd_age_')) return 'drop-shadow(0 0 3px #e5e4e2)'
   if (isCryptboundChampion(id) || isBlackHide(id)) return outline(RIM.white)
   const spec = OUTLINE_SPEC[id]

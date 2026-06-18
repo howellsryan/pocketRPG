@@ -2,7 +2,7 @@ import Panel from './Panel.jsx'
 import BonusDisplay from './BonusDisplay.jsx'
 import GameIcon from './GameIcon.jsx'
 
-export default function ItemDetailPanel({ item, children, quantity, noted, extraInfo }) {
+export default function ItemDetailPanel({ item, children, quantity, noted, extraInfo, hideSlot }) {
   if (!item) return null
   const hasAttackBonus = item.attackBonus && Object.values(item.attackBonus).some(v => v !== 0)
   const hasDefenceBonus = item.defenceBonus && Object.values(item.defenceBonus).some(v => v !== 0)
@@ -21,7 +21,7 @@ export default function ItemDetailPanel({ item, children, quantity, noted, extra
 
       <Panel className="text-[12px] text-[var(--color-parchment)] opacity-80 space-y-2">
         {noted && <p class="text-[var(--color-gold)] font-semibold">📜 Noted — cannot be used</p>}
-        {item.slot && <p>Slot: {item.slot}</p>}
+        {item.slot && !hideSlot && <p>Slot: {item.slot}</p>}
         {item.slot === 'weapon' && <p>Attack speed: {item.attackSpeed || 4} ticks</p>}
         {item.attackStyle && <p>Style: {item.attackStyle}</p>}
         {item.type === 'food' && <p>Heals {item.heals} HP</p>}
