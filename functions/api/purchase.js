@@ -9,6 +9,7 @@ import { addItemToInventory } from '../_lib/game/inventory.js'
 import { auditLog } from '../_lib/game/audit.js'
 import { toErrorResponse } from '../_lib/game/errors.js'
 import { getLevelFromXP } from '../../src/engine/experience.js'
+import { ALL_SKILLS, MAX_TOTAL_LEVEL } from '../../src/utils/constants.js'
 
 const MINIGAME_UNLOCK_STORE_PRICE = 4_500_000
 const MINIGAME_STORE_PRODUCTS = new Set(
@@ -48,6 +49,18 @@ export async function onRequestPost({ request, env }) {
         if (playerLevel < 99) {
           return json({ error: `You need level 99 ${reqSkill} to buy this cape.`, code: 'LEVEL_REQUIREMENT_NOT_MET' }, 403)
         }
+      }
+    }
+
+    // The Max Cape is only purchasable by a maxed account (every skill at the
+    // level cap). Total level is summed from the save's per-skill XP.
+    if (item.isMaxCape) {
+      const totalLevel = ALL_SKILLS.reduce(
+        (sum, skill) => sum + getLevelFromXP(saveObject.stats?.[skill]?.xp || 0),
+        0,
+      )
+      if (totalLevel < MAX_TOTAL_LEVEL) {
+        return json({ error: 'You must be maxed (2376 total level) to buy this cape.', code: 'MAX_LEVEL_REQUIREMENT_NOT_MET' }, 403)
       }
     }
 

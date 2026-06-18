@@ -171,6 +171,19 @@ describe('data contracts', () => {
     }
   })
 
+  it('combine recipes reference existing target and result items', () => {
+    for (const [itemId, item] of Object.entries(items as Record<string, any>)) {
+      if (item.id !== itemId) continue
+      if (!item.combineWith && !item.combineResult) continue
+      // A combine recipe needs both halves: the target to consume and the result.
+      // References must be current item keys, not legacy_item_id values.
+      expect(item.combineWith, `${itemId} combine recipe missing combineWith`).toBeTruthy()
+      expect(item.combineResult, `${itemId} combine recipe missing combineResult`).toBeTruthy()
+      expect(itemIds.has(item.combineWith), `${itemId} combineWith ${item.combineWith} not found`).toBe(true)
+      expect(itemIds.has(item.combineResult), `${itemId} combineResult ${item.combineResult} not found`).toBe(true)
+    }
+  })
+
   it('item requirement keys reference known skills (no typos)', () => {
     const knownSkills = new Set(ALL_SKILLS)
     for (const [itemId, item] of Object.entries(items as Record<string, any>)) {

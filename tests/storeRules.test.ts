@@ -48,6 +48,27 @@ describe('store rules', () => {
     expect(getPurchaseRestriction(itemsData.dragon_dagger, { isIronman: false }).allowed).toBe(true)
     expect(getPurchaseRestriction(itemsData.attack_cape, { isIronman: false }).allowed).toBe(true)
   })
+  it('lets Ironman accounts buy skill capes (self-obtained prestige rewards)', () => {
+    expect(getPurchaseRestriction(itemsData.attack_cape, { isIronman: true }).allowed).toBe(true)
+    expect(isStoreVisibleItem(itemsData.attack_cape, { isIronman: true })).toBe(true)
+  })
+  it('treats the max cape like a skill cape: untradeable but purchasable + visible to all', () => {
+    expect(itemsData.max_cape.isMaxCape).toBe(true)
+    expect(itemsData.max_cape.isUntradeable).toBe(true)
+    expect(getPurchaseRestriction(itemsData.max_cape, { isIronman: false }).allowed).toBe(true)
+    expect(getPurchaseRestriction(itemsData.max_cape, { isIronman: true }).allowed).toBe(true)
+    expect(isStoreVisibleItem(itemsData.max_cape, { isIronman: false })).toBe(true)
+    expect(isStoreVisibleItem(itemsData.max_cape, { isIronman: true })).toBe(true)
+  })
+  it('keeps the infernal max cape out of the store (combine-only)', () => {
+    expect(itemsData.infernal_max_cape.isMaxCape).toBeUndefined()
+    expect(itemsData.infernal_max_cape.isUntradeable).toBe(true)
+    expect(getPurchaseRestriction(itemsData.infernal_max_cape, { isIronman: false })).toMatchObject({
+      allowed: false,
+      code: 'UNTRADEABLE_RESTRICTED',
+    })
+    expect(isStoreVisibleItem(itemsData.infernal_max_cape, { isIronman: false })).toBe(false)
+  })
   it('sells General Store stock through the fixed-price store, not the order book', () => {
     for (const id of ['air_rune', 'bronze_scimitar', 'anti_dragon_shield', 'staff_of_fire', 'feather', 'fishing_rod']) {
       expect(itemsData[id].isGeneralStore, `${id} should be General Store stock`).toBe(true)

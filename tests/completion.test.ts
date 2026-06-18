@@ -1,10 +1,12 @@
 import { describe, it, expect } from 'vitest'
 import {
   isSkillMaxed,
+  isMaxedTotal,
   isQuestComplete,
   isMinigameItemUnlocked,
   isUnlockOwned,
 } from '../src/utils/completion.js'
+import { MAX_TOTAL_LEVEL } from '../src/utils/constants.js'
 
 describe('isSkillMaxed', () => {
   it('is true only at level 99 or above', () => {
@@ -17,6 +19,24 @@ describe('isSkillMaxed', () => {
     expect(isSkillMaxed('99')).toBe(true)
     expect(isSkillMaxed('98')).toBe(false)
     expect(isSkillMaxed(undefined)).toBe(false)
+  })
+})
+
+describe('isMaxedTotal', () => {
+  it('caps at 2376 (24 skills × 99)', () => {
+    expect(MAX_TOTAL_LEVEL).toBe(2376)
+  })
+
+  it('is true only at the total-level cap or above', () => {
+    expect(isMaxedTotal(2375)).toBe(false)
+    expect(isMaxedTotal(2376)).toBe(true)
+    expect(isMaxedTotal(2377)).toBe(true)
+  })
+
+  it('coerces strings and handles missing input', () => {
+    expect(isMaxedTotal('2376')).toBe(true)
+    expect(isMaxedTotal('2375')).toBe(false)
+    expect(isMaxedTotal(undefined)).toBe(false)
   })
 })
 

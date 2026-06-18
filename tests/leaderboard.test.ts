@@ -37,6 +37,8 @@ describe('GET /api/leaderboard (denormalized + paginated)', () => {
     expect(sql).toContain('total_level > 33')
     expect(sql).toContain('deleted_at IS NULL')
     expect(sql).toMatch(/ORDER BY\s+total_level\s+DESC/i)
+    // Ties break by who reached the total level first, then by id (migration 0024).
+    expect(sql).toMatch(/ORDER BY\s+total_level\s+DESC,\s+total_level_at\s+ASC,\s+id\s+ASC/i)
   })
 
   it('uses default pagination when no params are given', async () => {

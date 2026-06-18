@@ -58,8 +58,12 @@ export function getPurchaseRestriction(item, { isIronman = false, allowMinigameU
   const isQuestItem = Boolean(item.questUnlock)
   const isMinigameUnlockItem = allowMinigameUnlockPurchase === true
   const isSkillCape = Boolean(item.isSkillCape)
+  // The Max Cape is an untradeable prestige reward bought from the store once the
+  // account is maxed (the total-level gate is enforced server-side in
+  // functions/api/purchase.js). Treat it like a skill cape for store rules.
+  const isMaxCape = Boolean(item.isMaxCape)
 
-  if (item.isUntradeable && !isQuestItem && !isMinigameUnlockItem && !isSkillCape) {
+  if (item.isUntradeable && !isQuestItem && !isMinigameUnlockItem && !isSkillCape && !isMaxCape) {
     return {
       allowed: false,
       code: 'UNTRADEABLE_RESTRICTED',
@@ -67,7 +71,10 @@ export function getPurchaseRestriction(item, { isIronman = false, allowMinigameU
     }
   }
 
-  if (isIronman && !isQuestItem && !item.isGeneralStore) {
+  // Skill capes and the max cape are self-obtained prestige rewards that
+  // Ironman accounts may buy; everything else still follows the General Store
+  // restriction for Ironmen.
+  if (isIronman && !isQuestItem && !item.isGeneralStore && !isSkillCape && !isMaxCape) {
     return {
       allowed: false,
       code: 'IRONMAN_RESTRICTED',
@@ -84,7 +91,9 @@ export function isStoreVisibleItem(item, { isIronman = false, includeQuestItems 
 
   const isQuestItem = Boolean(item.questUnlock)
   if (isQuestItem) return includeQuestItems
-  if (item.isSkillCape) return !isIronman
+  // Skill capes and the max cape are browsable (and buyable) for everyone,
+  // Ironman included.
+  if (item.isSkillCape || item.isMaxCape) return true
   if (item.isUntradeable) return false
   if (isIronman) return Boolean(item.isGeneralStore)
   return true

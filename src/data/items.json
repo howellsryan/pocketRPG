@@ -8867,6 +8867,71 @@
     "shopValue": 0,
     "icon": "\ud83c\udf0b",
     "isUntradeable": true,
+    "isGeneralStore": false,
+    "combineWith": "max_cape",
+    "combineResult": "infernal_max_cape"
+  },
+  "max_cape": {
+    "id": "max_cape",
+    "name": "Max Cape",
+    "type": "armour",
+    "slot": "cape",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 10,
+      "slash": 10,
+      "crush": 10,
+      "magic": 10,
+      "ranged": 10
+    },
+    "defenceBonus": {
+      "stab": 10,
+      "slash": 10,
+      "crush": 10,
+      "magic": 10,
+      "ranged": 10
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {},
+    "shopValue": 1000000000,
+    "icon": "\ud83c\udf96\ufe0f",
+    "isUntradeable": true,
+    "isMaxCape": true,
+    "isGeneralStore": false
+  },
+  "infernal_max_cape": {
+    "id": "infernal_max_cape",
+    "name": "Infernal Max Cape",
+    "type": "armour",
+    "slot": "cape",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 25,
+      "slash": 25,
+      "crush": 25,
+      "magic": 25,
+      "ranged": 25
+    },
+    "defenceBonus": {
+      "stab": 25,
+      "slash": 25,
+      "crush": 25,
+      "magic": 25,
+      "ranged": 25
+    },
+    "otherBonus": {
+      "meleeStrength": 20,
+      "rangedStrength": 20,
+      "magicDamage": 20
+    },
+    "requirements": {},
+    "shopValue": 0,
+    "icon": "\u2604\ufe0f",
+    "isUntradeable": true,
     "isGeneralStore": false
   },
   "shardglass_shards": {
@@ -15523,7 +15588,7 @@
     "shopValue": 266500,
     "icon": "\ud83e\udd91",
     "isGeneralStore": false,
-    "combineWith": "abyssal_whip",
+    "combineWith": "nether_demon_whip",
     "combineResult": "abyssal_tentacle",
     "combineDescription": "Attach to an Abyssal whip to create an Abyssal tentacle.",
     "isBossUnique": true
@@ -16272,7 +16337,7 @@
     "isGeneralStore": false,
     "isBossUnique": true,
     "combineWith": "dragon_boots",
-    "combineResult": "primordial_boots",
+    "combineResult": "primeval_boots",
     "combineDescription": "Combine with Dragon boots to forge Primeval boots."
   },
   "skyfury_crystal": {
@@ -16285,8 +16350,8 @@
     "icon": "\ud83d\udc8e",
     "isGeneralStore": false,
     "isBossUnique": true,
-    "combineWith": "ranger_boots",
-    "combineResult": "pegasian_boots",
+    "combineWith": "pathfinder_boots",
+    "combineResult": "skyfury_boots",
     "combineDescription": "Combine with Ranger boots to forge Skyfury boots."
   },
   "evermore_crystal": {
@@ -16299,8 +16364,8 @@
     "icon": "\ud83d\udc8e",
     "isGeneralStore": false,
     "isBossUnique": true,
-    "combineWith": "wizard_boots",
-    "combineResult": "eternal_boots",
+    "combineWith": "spellweaver_boots",
+    "combineResult": "evermore_boots",
     "combineDescription": "Combine with Wizard boots to forge Evermore boots."
   },
   "primeval_boots": {
@@ -16429,7 +16494,7 @@
     "icon": "\ud83e\udd9e",
     "isGeneralStore": false,
     "isBossUnique": true,
-    "combineWith": "zamorak_spear",
+    "combineWith": "krylth_spear",
     "combineResult": "dragon_hunter_lance",
     "combineDescription": "Combine with a Krylth spear to forge a Dragon hunter lance."
   },

@@ -51,6 +51,10 @@ export const UTILITY_SKILLS = ['agility', 'thieving', 'hunter', 'slayer', 'const
 
 export const ALL_SKILLS = [...COMBAT_SKILLS, ...GATHERING_SKILLS, ...PRODUCTION_SKILLS, ...UTILITY_SKILLS]
 
+// Maxed account = every skill at the level cap. Drives the max cape unlock and
+// the gilded leaderboard treatment.
+export const MAX_TOTAL_LEVEL = ALL_SKILLS.length * MAX_LEVEL
+
 export const STUB_SKILLS = new Set([])
 
 // Agility banking: delay in ms at level 1 and level 99
