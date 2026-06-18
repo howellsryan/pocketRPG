@@ -197,29 +197,21 @@ export async function onRequestPut({ request, env }) {
   // characters UPDATE in the batch when the stored summary actually differs.
   // This removes roughly half the daily save-path writes in the common case.
   if (Number(ch.total_level) !== totalLevel || Number(ch.combat_level) !== combatLevel) {
-    // Stamp total_level_at the moment the account reaches a *new* total level
-    // so the leaderboard can break ties by who got there first (migration
-    // 0024). A flat combat-level change leaves the timestamp untouched.
-    if (totalLevel > Number(ch.total_level)) {
-      statements.push(
-        env.DB.prepare(
-          `UPDATE characters
-              SET total_level = ?,
-                  combat_level = ?,
-                  total_level_at = ?
-            WHERE id = ? AND owner_id = ? AND deleted_at IS NULL`
-        ).bind(totalLevel, combatLevel, now, ch.id, auth.identity.id),
-      )
-    } else {
-      statements.push(
-        env.DB.prepare(
-          `UPDATE characters
-              SET total_level = ?,
-                  combat_level = ?
-            WHERE id = ? AND owner_id = ? AND deleted_at IS NULL`
-        ).bind(totalLevel, combatLevel, ch.id, auth.identity.id),
-      )
-    }
+    // total_level_at anchors the leaderboard's first-achieved tie-break
+    // (migration 0024): it's the moment the account first reached its current
+    // total level. The CASE only advances it when total level actually goes up
+    // (the RHS sees the pre-update row value), so a combat-level-only change
+    // leaves the timestamp frozen — otherwise ties would degrade to "most
+    // recently saved" instead of "got there first".
+    statements.push(
+      env.DB.prepare(
+        `UPDATE characters
+            SET total_level = ?,
+                combat_level = ?,
+                total_level_at = CASE WHEN ? > total_level THEN ? ELSE total_level_at END
+          WHERE id = ? AND owner_id = ? AND deleted_at IS NULL`
+      ).bind(totalLevel, combatLevel, totalLevel, now, ch.id, auth.identity.id),
+    )
   }
   await env.DB.batch(statements)
 
