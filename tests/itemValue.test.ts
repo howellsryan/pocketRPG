@@ -7,11 +7,13 @@ import {
   isHighValueDrop,
   getLootTotalValue,
   isEpicLootValue,
+  hasEpicLootDrop,
   EPIC_LOOT_THRESHOLD,
 } from '../src/utils/itemValue.js'
 
 const items = {
   shrimps: { id: 'shrimps', shopValue: 5 },
+  rune_sword: { id: 'rune_sword', shopValue: 700_000 },
   nether_demon_whip: { id: 'nether_demon_whip', shopValue: 1_500_000 },
   fire_cape: { id: 'fire_cape', shopValue: 0 },
 }
@@ -64,5 +66,37 @@ describe('epic loot threshold (purple fireworks)', () => {
   it('isHighValueDrop matches the same threshold per drop', () => {
     expect(isHighValueDrop('nether_demon_whip', 1, items)).toBe(true)
     expect(isHighValueDrop('shrimps', 1000, items)).toBe(false)
+  })
+})
+
+describe('hasEpicLootDrop (purple keys off a single rare item, not the total)', () => {
+  it('is false when no single item exceeds 1m, even if the total does', () => {
+    // Two 700k items sum to 1.4m, but neither stack is individually >1m.
+    const loot = [
+      { itemId: 'rune_sword', quantity: 1 },
+      { itemId: 'rune_sword', quantity: 1 },
+    ]
+    expect(getLootTotalValue(loot, items)).toBe(1_400_000)
+    expect(hasEpicLootDrop(loot, items)).toBe(false)
+  })
+
+  it('is true when at least one item stack exceeds 1m', () => {
+    const loot = [
+      { itemId: 'shrimps', quantity: 3 },
+      { itemId: 'nether_demon_whip', quantity: 1 },
+    ]
+    expect(hasEpicLootDrop(loot, items)).toBe(true)
+  })
+
+  it('counts stack value, so enough copies of a sub-1m item still qualify', () => {
+    // 2 × 700k = 1.4m in a single stack.
+    expect(hasEpicLootDrop([{ itemId: 'rune_sword', quantity: 2 }], items)).toBe(true)
+  })
+
+  it('accepts a map and handles empty/null loot', () => {
+    expect(hasEpicLootDrop({ nether_demon_whip: 1 }, items)).toBe(true)
+    expect(hasEpicLootDrop({ shrimps: 1000 }, items)).toBe(false)
+    expect(hasEpicLootDrop(null, items)).toBe(false)
+    expect(hasEpicLootDrop([], items)).toBe(false)
   })
 })

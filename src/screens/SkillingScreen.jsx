@@ -7,7 +7,7 @@ import ProgressBar from '../components/ProgressBar.jsx'
 import { getActionProgress } from '../hooks/useActionTick.js'
 import { STUB_SKILLS, GATHERING_SKILLS, PRODUCTION_SKILLS, UTILITY_SKILLS, SCREENS, formatDropChance, GATHER_AUTOBANK_CONSTRUCTION_LEVEL } from '../utils/constants.js'
 import { getLevelFromXP } from '../engine/experience.js'
-import { createSkillingState, processSkillingTick, getAvailableActions, checkBurn, getEffectiveToolActionTicks, hasToolForSkill, getEquippedSkillXpMultiplier } from '../engine/skilling.js'
+import { createSkillingState, processSkillingTick, getAvailableActions, checkBurn, getEffectiveToolActionTicks, hasToolForSkill, getEquippedSkillXpMultiplier, TOOL_SKILLS } from '../engine/skilling.js'
 import { addItem, removeItem, countItem, canFit } from '../engine/inventory.js'
 import { hasRequiredRunes, getRunesToConsume } from '../engine/runes.js'
 import { onTick } from '../engine/tick.js'
@@ -637,23 +637,19 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
 
         {/* Banking toggle for skilling */}
         {(() => {
-          const needsTool = ['mining', 'woodcutting', 'fishing'].includes(selectedSkill)
+          const needsTool = TOOL_SKILLS.includes(selectedSkill)
           const hasTool = !needsTool || hasToolForSkill(selectedSkill, equipment, inventory, itemsData, stats)
-          if (needsTool && !hasTool) {
-            return (
-              <div class="mt-10 flex flex-col items-center justify-center gap-2 text-center">
-                <SkillIcon skill={selectedSkill} size={40} class="opacity-30" />
-                <p class="text-sm font-semibold text-[#ff6b6b]">No tool available</p>
-                <p class="text-xs text-[var(--color-parchment)] opacity-50">
-                  {selectedSkill === 'mining'
-                    ? 'Equip or carry a pickaxe to mine.'
-                    : selectedSkill === 'woodcutting'
-                      ? 'Equip or carry an axe to chop trees.'
-                      : 'Equip or carry a fishing tool to fish.'}
-                </p>
-              </div>
-            )
-          }
+          const toolHint = needsTool && !hasTool ? (
+            <div class="mb-3 rounded-xl border border-[var(--color-void-border)] bg-[var(--color-void-light)] px-3 py-2 text-center">
+              <p class="text-xs text-[var(--color-parchment)] opacity-60">
+                {selectedSkill === 'mining'
+                  ? 'No pickaxe — mining bare-handed is slower. Equip or carry a pickaxe to mine faster.'
+                  : selectedSkill === 'woodcutting'
+                    ? 'No axe — chopping bare-handed is slower. Equip or carry an axe to chop faster.'
+                    : 'No fishing tool — fishing bare-handed is slower. Equip or carry a net, rod, or cage to fish faster.'}
+              </p>
+            </div>
+          ) : null
           const renderActionRow = (action) => {
             const requiresGildedAltarConstruction = selectedSkill === 'prayer' && action.id?.startsWith('altar_')
             const meetsGildedAltarConstruction = !requiresGildedAltarConstruction || constructionLevel >= 75
@@ -700,8 +696,10 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
                   <div class="text-[10px] text-[var(--color-parchment)] opacity-40">
                     {isDungeoneeringReward
                       ? `Lv ${action.level} · Cost: ${formatNumber(rewardCost)} tokens`
-                      : <>Lv {action.level} · {displayXP} XP{xpMultiplier !== 1 && <span class="text-[var(--color-gold)] opacity-100"> (+{Math.round((xpMultiplier - 1) * 100)}%)</span>} · {effectiveTicks !== action.ticks
+                      : <>Lv {action.level} · {displayXP} XP{xpMultiplier !== 1 && <span class="text-[var(--color-gold)] opacity-100"> (+{Math.round((xpMultiplier - 1) * 100)}%)</span>} · {effectiveTicks < action.ticks
                       ? <><span class="line-through">{formatActionDuration(action.ticks)}</span> <span class="text-[var(--color-gold)] opacity-100">{formatActionDuration(effectiveTicks)}</span></>
+                      : effectiveTicks > action.ticks
+                      ? <span class="text-[#ff6b6b]">{formatActionDuration(effectiveTicks)}</span>
                       : formatActionDuration(action.ticks)}</>}
                     {isDungeoneeringReward && rowEnabled === false && (
                       <span class="block text-[#ff6b6b] mt-1">
@@ -774,9 +772,12 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
           }
 
           return (
-            <div class="space-y-2">
-              {allActions.map(renderActionRow)}
-            </div>
+            <>
+              {toolHint}
+              <div class="space-y-2">
+                {allActions.map(renderActionRow)}
+              </div>
+            </>
           )
         })()}
 

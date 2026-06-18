@@ -154,6 +154,46 @@ describe('woodcutting axe effective action ticks', () => {
   })
 })
 
+describe('bare-handed gathering (no tool)', () => {
+  const pickaxeItems = {
+    bronze_pickaxe: {
+      id: 'bronze_pickaxe',
+      name: 'Bronze pickaxe',
+      toolFor: 'mining',
+      requirements: { mining: 1 },
+      speedMultiplier: 1.0,
+    },
+  } as any
+  const minedStats = { mining: { xp: 13_034_431 } } as any
+
+  it('woodcutting: bare-handed takes twice the base action time', () => {
+    const barehandTicks = getEffectiveToolActionTicks(
+      'woodcutting',
+      4,
+      {},
+      axeItems,
+      maxedWoodcuttingStats,
+      [],
+    )
+    expect(barehandTicks).toBe(8)
+    expect(barehandTicks).toBeGreaterThan(
+      getEffectiveToolActionTicks('woodcutting', 4, {}, axeItems, maxedWoodcuttingStats, makeInventory('bronze_axe')),
+    )
+  })
+
+  it('mining: bare-handed is slower than holding the basic pickaxe', () => {
+    const barehandTicks = getEffectiveToolActionTicks('mining', 5, {}, pickaxeItems, minedStats, [])
+    const bronzeTicks = getEffectiveToolActionTicks('mining', 5, {}, pickaxeItems, minedStats, makeInventory('bronze_pickaxe'))
+    expect(barehandTicks).toBe(10)
+    expect(bronzeTicks).toBe(5)
+    expect(barehandTicks).toBeGreaterThan(bronzeTicks)
+  })
+
+  it('non-tool skills are unaffected by the bare-handed penalty', () => {
+    expect(getEffectiveToolActionTicks('cooking', 4, {}, {}, {}, [])).toBe(4)
+  })
+})
+
 describe('buildGatherTask — validation', () => {
   it('returns a valid gather task for a known id', () => {
     const task = buildGatherTask(makeSave(), 'gather_bowstring')
