@@ -226,6 +226,9 @@ const ITEM_TINT = {
   // Special capes (skill capes are handled separately by accent colour)
   fire_cape:          'var(--tier-fire-cape)',
   infernal_cape:      'var(--tier-infernal-cape)',
+  // Max cape and its infernal upgrade share the infernal cape's look.
+  max_cape:           'var(--tier-infernal-cape)',
+  infernal_max_cape:  'var(--tier-infernal-cape)',
   imbued_god_cape:    'var(--tier-cryptbound)',
   ava_s_assembler:    'var(--tier-jewel-green)',
   ava_s_accumulator:  'var(--tier-jewel-green)',

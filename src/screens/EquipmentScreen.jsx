@@ -343,7 +343,7 @@ export default function EquipmentScreen() {
 
       {/* Unequip modal */}
       {selected && (
-        <SharedItemModal item={selected.item} onClose={() => setSelected(null)} extraInfo={<p>Slot: {EQ_SLOT_NAMES[selected.slot]}</p>}>
+        <SharedItemModal item={selected.item} onClose={() => setSelected(null)} hideSlot extraInfo={<p>Slot: {EQ_SLOT_NAMES[selected.slot]}</p>}>
           <div class="flex flex-col gap-2">
 
             {/* Scale charges panel */}
