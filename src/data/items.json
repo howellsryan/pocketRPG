@@ -15588,7 +15588,7 @@
     "shopValue": 266500,
     "icon": "\ud83e\udd91",
     "isGeneralStore": false,
-    "combineWith": "abyssal_whip",
+    "combineWith": "nether_demon_whip",
     "combineResult": "abyssal_tentacle",
     "combineDescription": "Attach to an Abyssal whip to create an Abyssal tentacle.",
     "isBossUnique": true
@@ -16337,7 +16337,7 @@
     "isGeneralStore": false,
     "isBossUnique": true,
     "combineWith": "dragon_boots",
-    "combineResult": "primordial_boots",
+    "combineResult": "primeval_boots",
     "combineDescription": "Combine with Dragon boots to forge Primeval boots."
   },
   "skyfury_crystal": {
@@ -16350,8 +16350,8 @@
     "icon": "\ud83d\udc8e",
     "isGeneralStore": false,
     "isBossUnique": true,
-    "combineWith": "ranger_boots",
-    "combineResult": "pegasian_boots",
+    "combineWith": "pathfinder_boots",
+    "combineResult": "skyfury_boots",
     "combineDescription": "Combine with Ranger boots to forge Skyfury boots."
   },
   "evermore_crystal": {
@@ -16364,8 +16364,8 @@
     "icon": "\ud83d\udc8e",
     "isGeneralStore": false,
     "isBossUnique": true,
-    "combineWith": "wizard_boots",
-    "combineResult": "eternal_boots",
+    "combineWith": "spellweaver_boots",
+    "combineResult": "evermore_boots",
     "combineDescription": "Combine with Wizard boots to forge Evermore boots."
   },
   "primeval_boots": {
@@ -16494,7 +16494,7 @@
     "icon": "\ud83e\udd9e",
     "isGeneralStore": false,
     "isBossUnique": true,
-    "combineWith": "zamorak_spear",
+    "combineWith": "krylth_spear",
     "combineResult": "dragon_hunter_lance",
     "combineDescription": "Combine with a Krylth spear to forge a Dragon hunter lance."
   },
