@@ -11,6 +11,7 @@ import { MELEE_XP_PER_DAMAGE, RANGED_XP_PER_DAMAGE, MAGIC_XP_PER_DAMAGE, HP_XP_P
 import { randInt } from '../utils/helpers.js'
 import { getSlayerTaskEquipmentBonuses } from './slayerCombatBonuses.js'
 import { getVoidKingCombatMultipliers } from './combatSetBonuses.js'
+import { getMonsterSeedDrops } from './seedDrops.js'
 
 
 function getAvasAmmoSaveChance(equipment) {
@@ -917,10 +918,9 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
  * Roll monster drops
  */
 function rollDrops(monster) {
-  if (!monster.drops) return []
   const loot = []
   const rolls = monster.dropRolls || 1
-  for (const drop of monster.drops) {
+  for (const drop of (monster.drops || [])) {
     // Always drops (chance === 1.0) are rolled once regardless of dropRolls
     const timesToRoll = (drop.chance >= 1.0) ? 1 : rolls
     for (let r = 0; r < timesToRoll; r++) {
@@ -931,6 +931,11 @@ function rollDrops(monster) {
         loot.push({ itemId: drop.itemId, quantity: qty, ...(drop.noted ? { noted: true } : {}) })
       }
     }
+  }
+  // Seeds / saplings — universal bonus drop scaled by combat level. Rolled once
+  // each (independent of dropRolls) so high-multi-roll monsters don't inflate it.
+  for (const drop of getMonsterSeedDrops(monster)) {
+    if (Math.random() < drop.chance) loot.push({ itemId: drop.itemId, quantity: drop.quantity })
   }
   return loot
 }

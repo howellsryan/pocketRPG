@@ -19,6 +19,7 @@ import { getSkillArt } from '../utils/skillArt.js'
 import { getPrayerStyleIcon } from '../utils/prayerIcons.js'
 import { createCombatState, createRaidCombatState, processCombatTick, applyEat, applySpecialAttack, applyInstantKill } from '../engine/combat.js'
 import { getLevelFromXP } from '../engine/experience.js'
+import { getMonsterSeedDrops } from '../engine/seedDrops.js'
 import { getAgilityBankDelayMs, formatBankDelay } from '../engine/agility.js'
 import { onTick, pauseTicks, resumeTicks } from '../engine/tick.js'
 import { addItem, removeItem, freeSlots } from '../engine/inventory.js'
@@ -2017,7 +2018,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
               <div>
                 <h4 class="text-xs font-semibold text-[var(--color-gold-dim)] uppercase tracking-wider mb-2 opacity-70">Drops</h4>
                 <div class="space-y-1">
-                  {selectedMonsterInfo.drops.map(drop => {
+                  {[...(selectedMonsterInfo.drops || []), ...getMonsterSeedDrops(selectedMonsterInfo)].map(drop => {
                     const item = itemsData[drop.itemId]
                     return (
                       <div key={drop.itemId} class="bg-[#111] rounded-lg p-2">
@@ -3187,7 +3188,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
               <div>
                 <h4 class="text-xs font-semibold text-[var(--color-gold-dim)] uppercase tracking-wider mb-2 opacity-70">Drops</h4>
                 <div class="space-y-1">
-                  {selectedMonsterInfo.drops.map(drop => {
+                  {[...(selectedMonsterInfo.drops || []), ...getMonsterSeedDrops(selectedMonsterInfo)].map(drop => {
                     const item = itemsData[drop.itemId]
                     return (
                       <div key={drop.itemId} class="bg-[#111] rounded-lg p-2">

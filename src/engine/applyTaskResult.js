@@ -116,6 +116,10 @@ export function applyTaskResult(state, sim, type) {
     for (const [itemId, qty] of Object.entries(banked)) bankAdd(bank, itemId, qty)
   } else if (type === 'agility' || type === 'thieving') {
     addCoinsInventoryFirst(state.inventory, bank, Number(sim.coinsGained) || 0)
+    // Master Farmer seed rewards (thieving) bank like other idle skill loot.
+    if (sim.itemsGained) {
+      for (const [itemId, qty] of Object.entries(sim.itemsGained)) bankAdd(bank, itemId, qty)
+    }
   } else if (type === 'hunter') {
     for (const reward of sim.rewards || []) bankAdd(bank, reward.itemId, reward.quantity)
   } else if (sim.itemsGained) {

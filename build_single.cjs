@@ -32,6 +32,7 @@ const sourceFiles = [
   'hooks/useIsDesktop.js',
   'hooks/useEscapeKey.js',
   'engine/experience.js',
+  'engine/seedDrops.js',
   'engine/formulas.js',
   'engine/equipment.js',
   'engine/inventory.js',

@@ -60,4 +60,13 @@ describe('thieving engine', () => {
     const noCoins = simulateIdleThieving({ npc: { name: 'A', xp: 5 } } as any, 2400)
     expect(noCoins?.coinsGained).toBe(0)
   })
+
+  it('rewards Master Farmer seeds (one per pickpocket) instead of coins', () => {
+    const farmer = { name: 'Master Farmer', xp: 43, coins: 0, seedReward: true }
+    const sim = simulateIdleThieving({ npc: farmer } as any, 5000) as any
+    expect(sim.actions).toBe(2)
+    expect(sim.coinsGained).toBe(0)
+    const totalSeeds = Object.values(sim.itemsGained).reduce((a: number, b: any) => a + b, 0)
+    expect(totalSeeds).toBe(2)
+  })
 })

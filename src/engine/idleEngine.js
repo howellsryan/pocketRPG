@@ -24,6 +24,7 @@ import { rollClueRewards } from './clueScrolls.js'
 export { simulateIdleAgility }
 import { resolveSlayerTaskKill, doesSlayerTaskMatchMonster } from './slayerTasks.js'
 import { calculateDungeoneeringTokensForAction } from './dungeoneeringTokens.js'
+import { getMonsterSeedDrops } from './seedDrops.js'
 import { getSlayerTaskEquipmentBonuses } from './slayerCombatBonuses.js'
 import { getVoidKingCombatMultipliers } from './combatSetBonuses.js'
 import {
@@ -892,6 +893,10 @@ function idleRollDrops(monster) {
         : drop.quantity
       drops.push({ itemId: drop.itemId, quantity: qty })
     }
+  }
+  // Seeds / saplings — universal bonus drop scaled by combat level.
+  for (const drop of getMonsterSeedDrops(monster)) {
+    if (Math.random() < drop.chance) drops.push({ itemId: drop.itemId, quantity: drop.quantity })
   }
   return drops
 }

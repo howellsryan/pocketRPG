@@ -2984,8 +2984,9 @@
         "name": "Pickpocket Master Farmer",
         "level": 38,
         "xp": 43,
-        "coins": 20,
-        "description": "A simple man who cares about plants."
+        "coins": 0,
+        "seedReward": true,
+        "description": "A simple man who cares about plants. Rewards seeds and saplings instead of coins."
       },
       {
         "id": "guard",

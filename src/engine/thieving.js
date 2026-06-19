@@ -4,6 +4,7 @@
  */
 
 import { getLevelFromXP } from './experience.js'
+import { rollMasterFarmerSeeds } from './seedDrops.js'
 
 /**
  * Create a thieving state object for a pickpocketing session.
@@ -74,6 +75,19 @@ export function simulateIdleThieving(task, elapsedMs) {
   if (actions <= 0) return null
 
   const xpGained = { thieving: task.npc.xp * actions }
+
+  // Master Farmer rewards one seed per pickpocket instead of coins.
+  if (task.npc.seedReward) {
+    return {
+      xpGained,
+      coinsGained: 0,
+      itemsGained: rollMasterFarmerSeeds(actions),
+      actions,
+      skill: 'thieving',
+      actionName: task.npc.name,
+    }
+  }
+
   const coinsGained = (task.npc.coins || 0) * actions
 
   return { xpGained, coinsGained, actions, skill: 'thieving', actionName: task.npc.name }
