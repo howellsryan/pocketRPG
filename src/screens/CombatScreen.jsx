@@ -3001,7 +3001,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
         const drops = !lootModal.loading && lootModal.loot ? lootModal.loot : []
         const valuedDrops = drops.map(d => {
           const unitVal = getItemUnitValue(d.itemId, itemsData) || 0
-          return { ...d, totalGp: unitVal * (d.quantity || 1) }
+          return { ...d, unitGp: unitVal, totalGp: unitVal * (d.quantity || 1) }
         })
         const sorted = [...valuedDrops].sort((a, b) => b.totalGp - a.totalGp)
         const hero = sorted[0] || null
@@ -3024,6 +3024,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             heroItem={!lootModal.loading && heroItemData ? heroItemData : null}
             heroName={!lootModal.loading && hero ? (heroItemData?.name || hero.itemId) : null}
             heroGp={!lootModal.loading && hero ? hero.totalGp : 0}
+            heroUnitGp={!lootModal.loading && hero ? hero.unitGp : 0}
             skipLabel={!lootModal.loading && getToken() && getCharacterId()
               ? (isRaid ? `Skip raid (${raidsData[lootModal.raidId]?.skipCost ?? 1})` : 'Skip')
               : null}
@@ -3035,6 +3036,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                   name: itemsData[drop.itemId]?.name || drop.itemId,
                   quantity: drop.quantity,
                   gp: drop.totalGp,
+                  unitGp: drop.unitGp,
                 }))
               : null}
             lootTitle="Loot Secured"

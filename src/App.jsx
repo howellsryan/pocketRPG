@@ -2387,6 +2387,7 @@ function GameApp() {
             name: itemsData[itemId]?.name || itemId.replace(/_/g, ' '),
             quantity: qty,
             gp: unitVal * qty,
+            unitGp: unitVal,
           }
         })
         const lootTotal = lootRows.reduce((s, r) => s + (r.gp || 0), 0)

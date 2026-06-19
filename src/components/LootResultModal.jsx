@@ -113,8 +113,8 @@ function useCountUp(target, dur, active) {
 
 // ─── LootResultRow ───────────────────────────────────────────────────────────
 
-export function LootResultRow({ item, name, quantity, gp, lost = false, highlight = false, rarity: explicitRarity }) {
-  const rarity = lost ? 'common' : rarityOf(gp || 0, explicitRarity || (highlight ? 'legendary' : undefined))
+export function LootResultRow({ item, name, quantity, gp, unitGp, lost = false, highlight = false, rarity: explicitRarity }) {
+  const rarity = lost ? 'common' : rarityOf(unitGp ?? gp ?? 0, explicitRarity || (highlight ? 'legendary' : undefined))
   const r = RARITY[rarity]
 
   const gpClass = lost ? 'lm-row__gp lm-row__gp--loss' : 'lm-row__gp'
@@ -250,14 +250,15 @@ export function SuppliesCard({ heading, icon: emoji, rows }) {
  *   icon            — emoji string shown in seal (for "progress" mode)
  *   heroItem        — item object for hero spotlight (for "loot" mode)
  *   heroName        — display name of hero item
- *   heroGp          — hero item GP value
+ *   heroGp          — hero item GP value (total, for display)
+ *   heroUnitGp      — hero item unit shop value (for rarity; falls back to heroGp)
  *   heroRate        — drop rate string e.g. "1 / 512"
  *   eyebrow         — small uppercase text above title (e.g. "BOSS DEFEATED")
  *   title           — large display title
  *   sub             — small monospace subtitle
  *   skipLabel       — label for skip button (null to hide)
  *   onSkip          — skip button handler
- *   loot            — array of { item, name, quantity, gp, lost, highlight, rarity }
+ *   loot            — array of { item, name, quantity, gp, unitGp, lost, highlight, rarity }
  *   lootTitle       — section header for loot (e.g. "Loot Secured", "Gathered")
  *   lootTotal       — total GP value for count-up display
  *   lootSigned      — "+" | "-"
@@ -284,6 +285,7 @@ export default function LootResultModal({
   heroItem,
   heroName,
   heroGp,
+  heroUnitGp,
   heroRate,
   eyebrow,
   title = 'Loot!',
@@ -319,7 +321,7 @@ export default function LootResultModal({
   const rcDeep = isBlood ? LM_BLOOD_DEEP : isPurple ? LM_PURPLE_DEEP : LM_GOLD_DEEP
 
   // Hero item rarity
-  const heroRarity = heroItem ? rarityOf(heroGp || 0) : null
+  const heroRarity = heroItem ? rarityOf(heroUnitGp ?? heroGp ?? 0) : null
   const heroR = heroRarity ? RARITY[heroRarity] : null
 
   // Check if any loot item is legendary (for theme override)
