@@ -5,16 +5,19 @@ import { useIsDesktop } from '../hooks/useIsDesktop.js'
 import DesktopLandingScreen from './DesktopLandingScreen.jsx'
 
 const LANDING_DIMS = {
-  'ss-stats':         { w: 560, h: 979  },
-  'ss-combat-select': { w: 560, h: 996  },
+  'ss-stats':         { w: 560, h: 1068 },
+  'ss-combat-select': { w: 560, h: 1070 },
   'ss-thieving':      { w: 560, h: 991  },
-  'ss-bank':          { w: 560, h: 987  },
+  'ss-bank':          { w: 560, h: 1077 },
   'ss-quests':        { w: 560, h: 990  },
-  'ss-inventory':     { w: 560, h: 985  },
-  'ss-combat':        { w: 560, h: 994  },
+  'ss-inventory':     { w: 560, h: 1032 },
+  'ss-combat':        { w: 560, h: 1082 },
   'ss-farming':       { w: 560, h: 995  },
-  'ss-collection':    { w: 560, h: 998  },
-  'ss-trading':       { w: 560, h: 998  },
+  'ss-collection':    { w: 560, h: 1075 },
+  'ss-trading':       { w: 560, h: 1075 },
+  'ss-minigames':     { w: 560, h: 1073 },
+  'ss-leaderboard':   { w: 560, h: 1076 },
+  'ss-connect':       { w: 560, h: 1070 },
 }
 
 const FEATURES = [
@@ -58,6 +61,9 @@ const STRIP = [
   { key: 'ss-farming',    src: landingImages['ss-farming'],    alt: 'Farming locations' },
   { key: 'ss-collection', src: landingImages['ss-collection'], alt: 'Collection Log' },
   { key: 'ss-trading',    src: landingImages['ss-trading'],    alt: 'Trading Post market' },
+  { key: 'ss-minigames',   src: landingImages['ss-minigames'],   alt: 'Minigame reward grinds' },
+  { key: 'ss-leaderboard', src: landingImages['ss-leaderboard'], alt: 'Global leaderboard' },
+  { key: 'ss-connect',     src: landingImages['ss-connect'],     alt: 'Connect AI assistant' },
 ]
 
 export default function LandingScreen({ onGitHubLogin, onGoogleLogin, embedded, showBrowserHint, copied, onCopyLink }) {
@@ -106,9 +112,9 @@ export default function LandingScreen({ onGitHubLogin, onGoogleLogin, embedded, 
             src={landingImages['ss-stats']}
             srcset={landingSrcSet(landingImages['ss-stats'])}
             sizes="280px"
-            alt="PocketRPG skills overview — Combat 102, Total Level 1457"
+            alt="PocketRPG skills overview — Combat 126, Total Level 2,376"
             class="w-full block"
-            width="560" height="979"
+            width="560" height="1068"
             loading="eager"
             fetchpriority="high"
             decoding="async"

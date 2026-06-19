@@ -20,4 +20,7 @@ export const landingImages = {
   'ss-farming': `${base}landing/ss-farming.webp`,
   'ss-collection': `${base}landing/ss-collection.webp`,
   'ss-trading': `${base}landing/ss-trading.webp`,
+  'ss-minigames': `${base}landing/ss-minigames.webp`,
+  'ss-leaderboard': `${base}landing/ss-leaderboard.webp`,
+  'ss-connect': `${base}landing/ss-connect.webp`,
 }
