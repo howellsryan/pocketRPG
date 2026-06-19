@@ -170,13 +170,13 @@ export default function ThievingScreen({ initialNpcId, idleResult, onBack }) {
               >
                 <div class="flex-1">
                   <div class="text-sm font-semibold text-[var(--color-parchment)]">{npc.name}</div>
-                  <div class="text-[10px] text-[var(--color-parchment)] opacity-40 mt-0.5">
+                  <div class="text-[10px] text-[var(--color-parchment)] opacity-40 mt-0.5 flex items-center gap-0.5 flex-wrap">
                     Lv {npc.level} · {npc.xp} XP · <GameIcon iconKey="coins" size={10} color="var(--color-gold)" /> {npc.coins} coins
                   </div>
                   <div class="text-[10px] text-[var(--color-parchment)] opacity-40">{npc.description}</div>
                 </div>
                 <div class="text-right ml-3 flex flex-col justify-center">
-                  <div class="text-xs font-[var(--font-mono)] text-[var(--color-gold)]">
+                  <div class="text-xs font-[var(--font-mono)] text-[var(--color-gold)] flex items-center gap-0.5 justify-end">
                     <GameIcon iconKey="coins" size={13} color="var(--color-gold)" /> {npc.coins.toLocaleString()}
                   </div>
                   <div class="text-[10px] text-[var(--color-parchment)] opacity-30">per pocket</div>
