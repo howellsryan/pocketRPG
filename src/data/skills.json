@@ -2986,7 +2986,8 @@
         "xp": 43,
         "coins": 0,
         "seedReward": true,
-        "description": "A simple man who cares about plants. Rewards seeds and saplings instead of coins."
+        "pickpocketTicks": 8,
+        "description": "A simple man who cares about plants. Rewards seeds and saplings instead of coins, but takes longer to pickpocket."
       },
       {
         "id": "guard",

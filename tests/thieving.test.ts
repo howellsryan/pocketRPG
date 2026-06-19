@@ -61,12 +61,19 @@ describe('thieving engine', () => {
     expect(noCoins?.coinsGained).toBe(0)
   })
 
-  it('rewards Master Farmer seeds (one per pickpocket) instead of coins', () => {
-    const farmer = { name: 'Master Farmer', xp: 43, coins: 0, seedReward: true }
-    const sim = simulateIdleThieving({ npc: farmer } as any, 5000) as any
+  it('rewards Master Farmer seeds (one per pickpocket) instead of coins, at 2x duration', () => {
+    const farmer = { name: 'Master Farmer', xp: 43, coins: 0, seedReward: true, pickpocketTicks: 8 }
+    // 8 ticks/action → 4800ms per pickpocket. 5000ms is still only one action.
+    const one = simulateIdleThieving({ npc: farmer } as any, 5000) as any
+    expect(one.actions).toBe(1)
+    expect(one.coinsGained).toBe(0)
+    expect(Object.values(one.itemsGained).reduce((a: number, b: any) => a + b, 0)).toBe(1)
+
+    // Twice as long as a normal NPC: 8 ticks vs 4 over the same window.
+    const sim = simulateIdleThieving({ npc: farmer } as any, 10_000) as any
     expect(sim.actions).toBe(2)
-    expect(sim.coinsGained).toBe(0)
-    const totalSeeds = Object.values(sim.itemsGained).reduce((a: number, b: any) => a + b, 0)
-    expect(totalSeeds).toBe(2)
+
+    // createThievingState reflects the slower cadence.
+    expect(createThievingState(farmer as any).ticksRemaining).toBe(8)
   })
 })

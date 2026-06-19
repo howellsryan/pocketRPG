@@ -219,7 +219,7 @@ export default function ThievingScreen({ initialNpcId, idleResult, onBack }) {
   }
 
   // Active pickpocketing
-  const progress = getActionProgress(thieving.active, thieving.ticksRemaining, 4)
+  const progress = getActionProgress(thieving.active, thieving.ticksRemaining, thieving.npc.pickpocketTicks || 4)
   const elapsed = thieving.startedAt ? Date.now() - thieving.startedAt : 0
   const pickpocketsPerHr = elapsed > 5000 && thieving.totalPickpockets > 0
     ? Math.round(thieving.totalPickpockets / (elapsed / 3_600_000))

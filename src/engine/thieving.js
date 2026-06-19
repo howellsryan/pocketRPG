@@ -13,10 +13,17 @@ export function createThievingState(npc) {
   return {
     active: true,
     npc,
-    ticksRemaining: 4, // Each pickpocket takes roughly 4 ticks (2.4 seconds)
+    // Each pickpocket takes roughly 4 ticks (2.4s) unless the NPC overrides it
+    // (e.g. the Master Farmer is slower at 8 ticks).
+    ticksRemaining: getPickpocketTicks(npc),
     tickCount: 0,
     justCompleted: false
   }
+}
+
+// Ticks per successful pickpocket for an NPC (default 4).
+function getPickpocketTicks(npc) {
+  return npc?.pickpocketTicks || 4
 }
 
 /**
@@ -32,7 +39,7 @@ export function processThievingTick(thievingState) {
 
   // Check justCompleted FIRST to reset before checking for new completion
   if (state.justCompleted) {
-    state.ticksRemaining = 4
+    state.ticksRemaining = getPickpocketTicks(state.npc)
     state.justCompleted = false
   } else {
     state.ticksRemaining--
@@ -68,7 +75,7 @@ export function simulateIdleThieving(task, elapsedMs) {
   if (!task || !task.npc) return null
 
   const TICK_MS = 600
-  const TICKS_PER_ACTION = 4 // Each pickpocket takes ~4 ticks
+  const TICKS_PER_ACTION = getPickpocketTicks(task.npc) // Master Farmer is slower
   const totalTicks = Math.floor(elapsedMs / TICK_MS)
   const actions = Math.floor(totalTicks / TICKS_PER_ACTION)
 

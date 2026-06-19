@@ -9,11 +9,12 @@ export function getItemUnitValue(itemId, itemsData) {
   return value
 }
 
-export function isHighValueDrop(itemId, quantity, itemsData) {
+// True when a single item is itself legendary — its own unit value reaches the
+// epic threshold. Quantity is irrelevant: one legendary item qualifies no matter
+// the count, and any number of cheap items never does.
+export function isLegendaryItem(itemId, itemsData) {
   const unitValue = getItemUnitValue(itemId, itemsData)
-  if (!unitValue) return false
-  const qty = Math.max(0, Number(quantity) || 0)
-  return (unitValue * qty) > EPIC_LOOT_THRESHOLD
+  return !!unitValue && unitValue >= EPIC_LOOT_THRESHOLD
 }
 
 // Total shop value of a loot collection. Accepts either an array of
@@ -37,17 +38,18 @@ export function isEpicLootValue(totalValue) {
   return Number(totalValue) > EPIC_LOOT_THRESHOLD
 }
 
-// True when at least one individual item stack in the loot is itself worth over
-// the epic threshold. The purple treatment keys off this — NOT the summed total
-// — so a pile of cheap drops never turns the screen purple. Accepts either an
-// array of { itemId, quantity } entries or an { itemId: quantity } map.
+// True when the loot contains at least one legendary item. The purple
+// treatment keys off this — NOT the summed total, and NOT a large stack of
+// cheap items — so the screen only goes purple when a genuinely legendary item
+// is received. Accepts either an array of { itemId, quantity } entries or an
+// { itemId: quantity } map.
 export function hasEpicLootDrop(loot, itemsData) {
   if (!loot) return false
   const entries = Array.isArray(loot)
     ? loot.filter(Boolean).map((e) => [e.itemId, e.quantity])
     : Object.entries(loot)
-  for (const [itemId, quantity] of entries) {
-    if (isHighValueDrop(itemId, quantity, itemsData)) return true
+  for (const [itemId] of entries) {
+    if (isLegendaryItem(itemId, itemsData)) return true
   }
   return false
 }
