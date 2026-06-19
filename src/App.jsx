@@ -61,6 +61,7 @@ import { SKIP_HOUR_MS, getSkipPreflight, isChargeableSkipOutcome } from './engin
 import { getSlayerTaskReward } from './engine/slayerRewards.js'
 import { isHighValueDrop, hasEpicLootDrop, getItemUnitValue } from './utils/itemValue.js'
 import LootResultModal, { SummaryCard, SuppliesCard } from './components/LootResultModal.jsx'
+import GameIcon from './components/GameIcon.jsx'
 import { computeIdleElapsedMs } from './utils/idleElapsed.js'
 import { advanceFarmingState } from './engine/farming.ts'
 import { recordCollectionLogDrop, fetchCollectionLog, clearCollectionLogCache, onCollectionLogSlotComplete, applyServerCollectionLogEntries } from './cloud/collectionLog.js'
@@ -2336,10 +2337,10 @@ function GameApp() {
           summaryRows.push({ emoji: undefined, name: 'Slayer', value: `+${Math.floor(idleResult.slayerXpGained).toLocaleString()}`, rate: perHr(idleResult.slayerXpGained), xp: true })
         }
         if (idleResult.coinsGained > 0) {
-          summaryRows.push({ emoji: '💰', name: 'Coins Earned', value: idleResult.coinsGained.toLocaleString(), rate: perHr(idleResult.coinsGained) })
+          summaryRows.push({ emoji: <GameIcon iconKey="coins" size={16} color="var(--color-gold)" />, name: 'Coins Earned', value: idleResult.coinsGained.toLocaleString(), rate: perHr(idleResult.coinsGained) })
         }
         if (idleResult.dungeoneeringTokensGained > 0) {
-          summaryRows.push({ emoji: '🏰', name: 'Dungeoneering Tokens', value: `+${idleResult.dungeoneeringTokensGained.toLocaleString()}`, rate: perHr(idleResult.dungeoneeringTokensGained) })
+          summaryRows.push({ emoji: <GameIcon iconKey="dungeon_gate" size={16} color="#7f8c95" />, name: 'Dungeoneering Tokens', value: `+${idleResult.dungeoneeringTokensGained.toLocaleString()}`, rate: perHr(idleResult.dungeoneeringTokensGained) })
         }
 
         // Build supplies rows
