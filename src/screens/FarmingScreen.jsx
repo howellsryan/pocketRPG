@@ -3,9 +3,11 @@ import { useGame } from '../state/gameState.jsx'
 import { getLevelFromXP } from '../engine/experience.js'
 import Modal from '../components/Modal.jsx'
 import GameIcon from '../components/GameIcon.jsx'
+import LootResultModal from '../components/LootResultModal.jsx'
 import FarmLocationPicker from '../screens/FarmLocationPicker.jsx'
 import FarmPatchView from '../screens/FarmPatchView.jsx'
 import farmingData from '../data/farming.json'
+import { getItemUnitValue } from '../utils/itemValue.js'
 import { applyPlantAll, getCropDef, getPatchesForLocation, getPlantableCropOptions, harvestCrop, getEffectiveStage, initFarmingState } from '../engine/farming.ts'
 
 export default function FarmingScreen({ onBack }) {
@@ -139,17 +141,34 @@ export default function FarmingScreen({ onBack }) {
         </div>
       </Modal>
       )}
-      {resultModal && (
-        <Modal title={resultModal.title} onClose={() => setResultModal(null)}>
-          <div class="text-xs text-[var(--color-parchment)] space-y-2">
-            <div>Farming XP gained: <span class="text-[var(--color-gold)] font-semibold">{Math.floor(resultModal.xp)}</span></div>
-            {Object.entries(resultModal.items).map(([itemId, qty]) => {
-              const item = itemsData[itemId] || getCropDef(itemId)
-              return <div key={itemId} class="flex items-center gap-1">{resultModal.action} {item && <GameIcon item={item} size={14} />} {item?.name || itemId} ×{qty}</div>
-            })}
-          </div>
-        </Modal>
-      )}
+      {resultModal && (() => {
+        const isHarvest = resultModal.action === 'Harvested'
+        const lootRows = Object.entries(resultModal.items).map(([itemId, qty]) => {
+          const item = itemsData[itemId] || getCropDef(itemId) || null
+          const unitVal = getItemUnitValue(itemId, itemsData) || 0
+          return { key: itemId, item, name: item?.name || itemId, quantity: qty, gp: unitVal * qty, unitGp: unitVal }
+        })
+        const lootTotal = lootRows.reduce((s, r) => s + (r.gp || 0), 0)
+        const summaryRows = []
+        if (resultModal.xp > 0) {
+          summaryRows.push({ emoji: undefined, name: 'Farming', value: `+${Math.floor(resultModal.xp).toLocaleString()}`, xp: true })
+        }
+        return (
+          <LootResultModal
+            theme="gold"
+            kind="progress"
+            icon={isHarvest ? '🌾' : '🌱'}
+            eyebrow={isHarvest ? 'Harvest Complete' : 'Planting Complete'}
+            title={isHarvest ? 'Crops Gathered' : 'Seeds Planted'}
+            loot={lootRows.length > 0 ? lootRows : null}
+            lootTitle={isHarvest ? 'Harvested' : 'Planted'}
+            lootTotal={isHarvest ? lootTotal : undefined}
+            summaryRows={summaryRows.length > 0 ? summaryRows : null}
+            primaryAction={{ label: 'Continue', onClick: () => setResultModal(null) }}
+            onClose={() => setResultModal(null)}
+          />
+        )
+      })()}
     </>
   )
 }

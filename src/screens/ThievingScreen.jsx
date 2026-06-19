@@ -8,6 +8,7 @@ import { createThievingState, processThievingTick } from '../engine/thieving.js'
 import { onTick } from '../engine/tick.js'
 import { markScreenTick } from '../engine/activityRunner.js'
 import { formatNumber } from '../utils/helpers.js'
+import GameIcon from '../components/GameIcon.jsx'
 import skillsData from '../data/skills.json'
 
 const thievingData = skillsData.thieving
@@ -169,14 +170,14 @@ export default function ThievingScreen({ initialNpcId, idleResult, onBack }) {
               >
                 <div class="flex-1">
                   <div class="text-sm font-semibold text-[var(--color-parchment)]">{npc.name}</div>
-                  <div class="text-[10px] text-[var(--color-parchment)] opacity-40 mt-0.5">
-                    Lv {npc.level} · {npc.xp} XP · 🪙 {npc.coins} coins
+                  <div class="text-[10px] text-[var(--color-parchment)] opacity-40 mt-0.5 flex items-center gap-0.5 flex-wrap">
+                    Lv {npc.level} · {npc.xp} XP · <GameIcon iconKey="coins" size={10} color="var(--color-gold)" /> {npc.coins} coins
                   </div>
                   <div class="text-[10px] text-[var(--color-parchment)] opacity-40">{npc.description}</div>
                 </div>
                 <div class="text-right ml-3 flex flex-col justify-center">
-                  <div class="text-xs font-[var(--font-mono)] text-[var(--color-gold)]">
-                    🪙 {npc.coins.toLocaleString()}
+                  <div class="text-xs font-[var(--font-mono)] text-[var(--color-gold)] flex items-center gap-0.5 justify-end">
+                    <GameIcon iconKey="coins" size={13} color="var(--color-gold)" /> {npc.coins.toLocaleString()}
                   </div>
                   <div class="text-[10px] text-[var(--color-parchment)] opacity-30">per pocket</div>
                 </div>
@@ -234,12 +235,12 @@ export default function ThievingScreen({ initialNpcId, idleResult, onBack }) {
           </div>
           <div class="flex justify-between text-sm">
             <span class="text-[var(--color-parchment)] opacity-60">Coins earned</span>
-            <span class="font-[var(--font-mono)] text-[var(--color-gold)]">🪙 {thieving.totalCoins.toLocaleString()}</span>
+            <span class="font-[var(--font-mono)] text-[var(--color-gold)] flex items-center gap-1"><GameIcon iconKey="coins" size={14} color="var(--color-gold)" /> {thieving.totalCoins.toLocaleString()}</span>
           </div>
           <div class="flex justify-between text-sm">
             <span class="text-[var(--color-parchment)] opacity-60">Coins/hr</span>
-            <span class="font-[var(--font-mono)] text-[var(--color-gold)]">
-              {xpPerHr ? `🪙 ${Math.round(thieving.totalCoins / (elapsed / 3_600_000)).toLocaleString()}` : '—'}
+            <span class="font-[var(--font-mono)] text-[var(--color-gold)] flex items-center gap-1">
+              {xpPerHr ? <><GameIcon iconKey="coins" size={14} color="var(--color-gold)" /> {Math.round(thieving.totalCoins / (elapsed / 3_600_000)).toLocaleString()}</> : '—'}
             </span>
           </div>
         </div>
