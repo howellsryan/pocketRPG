@@ -5,7 +5,7 @@ import { usePvp } from '../state/pvpState.jsx'
 import PvpLobbyModal from './PvpLobbyModal.jsx'
 import PvpCombatScreen from './PvpCombatScreen.jsx'
 import Modal from '../components/Modal.jsx'
-import LootResultModal, { LootResultRow as PveLootResultRow } from '../components/LootResultModal.jsx'
+import LootResultModal from '../components/LootResultModal.jsx'
 import HPBar from '../components/HPBar.jsx'
 import IdleCombatSetupModal from '../components/IdleCombatSetupModal.jsx'
 import EquipmentPaperdoll from '../components/EquipmentPaperdoll.jsx'
@@ -33,7 +33,7 @@ import prayersData from '../data/prayers.json'
 import spellsData from '../data/spells.json'
 import raidsData from '../data/raids.json'
 import { SCREENS, formatDropChance } from '../utils/constants.js'
-import { isHighValueDrop, hasEpicLootDrop } from '../utils/itemValue.js'
+import { isHighValueDrop, hasEpicLootDrop, getItemUnitValue, getLootTotalValue } from '../utils/itemValue.js'
 import { splatsFromCombatEvents, HIT_SPLAT_DURATION_MS } from '../utils/hitSplats.js'
 import { HitSplatLayer } from '../components/HitSplat.jsx'
 import ActivePotionBadges from '../components/ActivePotionBadges.jsx'
@@ -2997,78 +2997,90 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       )}
 
       {/* Loot Modal */}
-      {lootModal && (
-        <LootResultModal
-          theme={!lootModal.loading && hasEpicLootDrop(lootModal.loot, itemsData) ? 'purple' : 'gold'}
-          icon={lootModal.raidId ? '🏆' : (MONSTER_ICONS[lootModal.monster?.id] || '👹')}
-          title={lootModal.raidId
-            ? `${raidsData[lootModal.raidId]?.name || 'Raid'} Complete`
-            : `${lootModal.monster?.name || 'Monster'} Defeated!`}
-          titleRight={!lootModal.loading && getToken() && getCharacterId() && (
-            <button
-              onClick={skipAgain}
-              class="flex items-center gap-1 px-2 py-1 rounded-full bg-[#2a2010] border border-[var(--color-gold-dim)] hover:border-[var(--color-gold)] transition-colors text-[11px] font-semibold text-[var(--color-gold-light)] whitespace-nowrap"
-              title={lootModal.raidId
-                ? `Skip the entire raid (costs ${raidsData[lootModal.raidId]?.skipCost ?? 1} credit${(raidsData[lootModal.raidId]?.skipCost ?? 1) === 1 ? '' : 's'})`
-                : 'Fight again and skip automatically'}
-            >
-              <span>⏭️</span>
-              <span>{lootModal.raidId ? `Skip raid (${raidsData[lootModal.raidId]?.skipCost ?? 1})` : 'Skip'}</span>
-            </button>
-          )}
-          loot={!lootModal.loading && lootModal.loot && lootModal.loot.length > 0
-            ? lootModal.loot.map((drop, idx) => ({
-                key: idx,
-                item: itemsData[drop.itemId] || null,
-                name: itemsData[drop.itemId]?.name || drop.itemId,
-                quantity: drop.quantity,
-                highlight: isHighValueDrop(drop.itemId, drop.quantity, itemsData),
-              }))
-            : null}
-          primaryAction={!lootModal.loading ? {
-            label: lootModal.raidId ? 'Raid Again' : 'Fight Again',
-            onClick: () => {
-              if (lootModal.raidId) {
-                const raid = raidsData[lootModal.raidId]
-                if (raid) startRaid(raid)
-              } else {
-                const original = monstersData[lootModal.monster.id]
-                if (original) continueFight(original)
-              }
-              setLootModal(null)
-            },
-          } : null}
-          secondaryAction={!lootModal.loading ? {
-            label: lootModal.raidId ? 'Leave' : 'Run Away',
-            onClick: () => {
-              setLootModal(null)
-              stopAndBack()
-            },
-          } : null}
-          onClose={() => setLootModal(null)}
-        >
-          {/* Loading state shown as child content */}
-          {lootModal.loading && (
-            <div class="flex flex-col items-center py-6 gap-3">
-              <div class="w-8 h-8 border-2 border-[var(--color-gold)] border-t-transparent rounded-full animate-spin" />
-              <div class="text-sm text-[var(--color-parchment)] opacity-70">Waiting for server loot…</div>
-            </div>
-          )}
-          {!lootModal.loading && (!lootModal.loot || lootModal.loot.length === 0) && (
-            <div class="text-center py-4 text-[var(--color-parchment)] opacity-60 text-sm">No loot dropped</div>
-          )}
-        </LootResultModal>
-      )}
+      {lootModal && (() => {
+        const drops = !lootModal.loading && lootModal.loot ? lootModal.loot : []
+        const valuedDrops = drops.map(d => {
+          const unitVal = getItemUnitValue(d.itemId, itemsData) || 0
+          return { ...d, totalGp: unitVal * (d.quantity || 1) }
+        })
+        const sorted = [...valuedDrops].sort((a, b) => b.totalGp - a.totalGp)
+        const hero = sorted[0] || null
+        const rest = sorted.slice(1)
+        const heroItemData = hero ? (itemsData[hero.itemId] || null) : null
+        const lootTotal = valuedDrops.reduce((s, d) => s + d.totalGp, 0)
+        const isRaid = !!lootModal.raidId
+
+        return (
+          <LootResultModal
+            theme={!lootModal.loading && hasEpicLootDrop(lootModal.loot, itemsData) ? 'purple' : 'gold'}
+            kind="loot"
+            eyebrow={isRaid ? 'Raid Complete' : (lootModal.isBossKill ? 'Boss Defeated' : 'Monster Slain')}
+            title={isRaid
+              ? (raidsData[lootModal.raidId]?.name || 'Raid')
+              : (lootModal.monster?.name || 'Monster')}
+            sub={isRaid
+              ? undefined
+              : undefined}
+            heroItem={!lootModal.loading && heroItemData ? heroItemData : null}
+            heroName={!lootModal.loading && hero ? (heroItemData?.name || hero.itemId) : null}
+            heroGp={!lootModal.loading && hero ? hero.totalGp : 0}
+            skipLabel={!lootModal.loading && getToken() && getCharacterId()
+              ? (isRaid ? `Skip raid (${raidsData[lootModal.raidId]?.skipCost ?? 1})` : 'Skip')
+              : null}
+            onSkip={skipAgain}
+            loot={!lootModal.loading && rest.length > 0
+              ? rest.map((drop, idx) => ({
+                  key: idx,
+                  item: itemsData[drop.itemId] || null,
+                  name: itemsData[drop.itemId]?.name || drop.itemId,
+                  quantity: drop.quantity,
+                  gp: drop.totalGp,
+                }))
+              : null}
+            lootTitle="Loot Secured"
+            lootTotal={lootTotal}
+            primaryAction={!lootModal.loading ? {
+              label: isRaid ? 'Raid Again' : 'Fight Again',
+              onClick: () => {
+                if (isRaid) {
+                  const raid = raidsData[lootModal.raidId]
+                  if (raid) startRaid(raid)
+                } else {
+                  const original = monstersData[lootModal.monster.id]
+                  if (original) continueFight(original)
+                }
+                setLootModal(null)
+              },
+            } : null}
+            secondaryAction={!lootModal.loading ? {
+              label: isRaid ? 'Leave' : 'Run Away',
+              onClick: () => {
+                setLootModal(null)
+                stopAndBack()
+              },
+            } : null}
+            onClose={() => setLootModal(null)}
+          >
+            {lootModal.loading && (
+              <div class="flex flex-col items-center py-6 gap-3" style={{ position: 'relative', zIndex: 4 }}>
+                <div class="w-8 h-8 border-2 border-[var(--color-gold)] border-t-transparent rounded-full animate-spin" />
+                <div class="text-sm text-[var(--color-parchment)] opacity-70">Waiting for server loot…</div>
+              </div>
+            )}
+          </LootResultModal>
+        )
+      })()}
 
       {/* PvE Death Modal */}
       {deathModal && (
         <LootResultModal
           theme="blood"
+          kind="progress"
           icon="💀"
-          title="Defeated"
-          subtitle={deathModal.cause === 'incinerated'
+          eyebrow={deathModal.cause === 'incinerated'
             ? `Incinerated by ${deathModal.monsterName}`
             : `Slain by ${deathModal.monsterName}`}
+          title="Defeated"
           primaryAction={{
             label: 'Continue',
             onClick: () => setDeathModal(null),

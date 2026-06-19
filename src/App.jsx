@@ -59,8 +59,8 @@ import { getLevelFromXP } from './engine/experience.js'
 import { pvpApi } from './cloud/pvp.js'
 import { SKIP_HOUR_MS, getSkipPreflight, isChargeableSkipOutcome } from './engine/skipPreflight.js'
 import { getSlayerTaskReward } from './engine/slayerRewards.js'
-import { isHighValueDrop, hasEpicLootDrop } from './utils/itemValue.js'
-import LootResultModal from './components/LootResultModal.jsx'
+import { isHighValueDrop, hasEpicLootDrop, getItemUnitValue } from './utils/itemValue.js'
+import LootResultModal, { SummaryCard, SuppliesCard } from './components/LootResultModal.jsx'
 import { computeIdleElapsedMs } from './utils/idleElapsed.js'
 import { advanceFarmingState } from './engine/farming.ts'
 import { recordCollectionLogDrop, fetchCollectionLog, clearCollectionLogCache, onCollectionLogSlotComplete, applyServerCollectionLogEntries } from './cloud/collectionLog.js'
@@ -2304,404 +2304,224 @@ function GameApp() {
       )}
 
       {/* Idle Result Modal */}
-      {idleResult && !skipSaving && !gameLocked && pvp.phase !== 'in_match' && Date.now() >= suppressIdleModalUntil && (
-        <LootResultModal
-          theme={idleResult.died ? 'blood' : (hasIdleEpicLootDrop(idleResult, itemsData) ? 'purple' : 'gold')}
-          icon={idleResult.died ? '💀' : '💤'}
-          title={idleResult.died ? 'Defeated' : 'Welcome Back!'}
-          status={idleResult.died ? undefined : `Away for ${formatIdleTime(idleResult.elapsedMs)}`}
-          subtitle={idleResult.died ? 'You died during idle combat' : (idleResult.task ? (
-            idleResult.task.type === 'combat' ? `Fighting ${idleResult.task.monster?.name || ''}` :
-            idleResult.task.type === 'skill' ? `Training ${idleResult.task.skill}` :
-            idleResult.task.type === 'gather' ? idleResult.task.gatherTask?.name :
-            idleResult.task.type === 'minigame' ? idleResult.task.minigameTask?.name :
-            idleResult.task.type === 'thieving' ? `Pickpocketing ${idleResult.task.npc?.name}` :
-            idleResult.task.type === 'agility' ? 'Training agility' :
-            idleResult.task.type === 'hunter' ? idleResult.task.action?.name :
-            idleResult.task.type === 'quest' ? (idleResult.completedQuests?.length > 1 ? `✅ ${idleResult.completedQuests.length} Quests Completed` : (idleResult.completed ? '✅ Completed' : '⏳ On quest')) :
-            undefined
-          ) : undefined)}
-          titleRight={!idleResult.died && isCloudAccount && idleResult.task && !(idleResult.task?.type === 'combat' && (idleResult.task?.monster?.boss === true || idleResult.task?.raid === true)) && (
-            <button
-              onClick={handleSkip1h}
-              class="flex items-center gap-1 px-2 py-1 rounded-full bg-[#2a2010] border border-[var(--color-gold-dim)] hover:border-[var(--color-gold)] transition-colors text-[11px] font-semibold text-[var(--color-gold-light)] whitespace-nowrap"
-              title="Skip 1 hour"
-            >
-              <span>⏭️</span>
-              <span>Skip</span>
-            </button>
-          )}
-          primaryAction={{ label: 'Continue Adventure', onClick: closeIdleResultModal }}
-          onClose={closeIdleResultModal}
-        >
-          {/* Inner idle-specific content — kept intact */}
-          <div style={{ padding: '0 0 4px' }}>
-            {/* Content */}
-            <div style={{ padding: '16px' }}>
+      {idleResult && !skipSaving && !gameLocked && pvp.phase !== 'in_match' && Date.now() >= suppressIdleModalUntil && (() => {
+        const hrs = idleResult.elapsedMs / 3600000
+        const perHr = (n) => hrs > 0 ? Math.round(n / hrs).toLocaleString() : '—'
+
+        const taskLabel = idleResult.died ? 'You died during idle combat' : (idleResult.task ? (
+          idleResult.task.type === 'combat' ? `Fighting ${idleResult.task.monster?.name || ''}` :
+          idleResult.task.type === 'skill' ? `Training ${idleResult.task.skill}` :
+          idleResult.task.type === 'gather' ? idleResult.task.gatherTask?.name :
+          idleResult.task.type === 'minigame' ? idleResult.task.minigameTask?.name :
+          idleResult.task.type === 'thieving' ? `Pickpocketing ${idleResult.task.npc?.name}` :
+          idleResult.task.type === 'agility' ? 'Training agility' :
+          idleResult.task.type === 'hunter' ? idleResult.task.action?.name :
+          idleResult.task.type === 'quest' ? (idleResult.completedQuests?.length > 1 ? `${idleResult.completedQuests.length} Quests Completed` : (idleResult.completed ? 'Completed' : 'On quest')) :
+          undefined
+        ) : undefined)
+
+        // Build summary rows
+        const xpSource = idleResult.aggregatedXpReward || idleResult.xpGained
+        const xpEntries = xpSource ? Object.entries(xpSource).filter(([_, xp]) => xp > 0) : []
+        const hasMonstersKilled = idleResult.task?.type === 'combat' && idleResult.monstersKilled > 0
+
+        const summaryRows = []
+        if (hasMonstersKilled) {
+          summaryRows.push({ emoji: '🗡️', name: 'Monsters Slain', value: idleResult.monstersKilled.toLocaleString(), rate: perHr(idleResult.monstersKilled), big: true })
+        }
+        for (const [skill, xp] of xpEntries) {
+          summaryRows.push({ emoji: undefined, name: skill.charAt(0).toUpperCase() + skill.slice(1), value: `+${Math.floor(xp).toLocaleString()}`, rate: perHr(xp), xp: true })
+        }
+        if (idleResult.slayerXpGained > 0) {
+          summaryRows.push({ emoji: undefined, name: 'Slayer', value: `+${Math.floor(idleResult.slayerXpGained).toLocaleString()}`, rate: perHr(idleResult.slayerXpGained), xp: true })
+        }
+        if (idleResult.coinsGained > 0) {
+          summaryRows.push({ emoji: '💰', name: 'Coins Earned', value: idleResult.coinsGained.toLocaleString(), rate: perHr(idleResult.coinsGained) })
+        }
+        if (idleResult.dungeoneeringTokensGained > 0) {
+          summaryRows.push({ emoji: '🏰', name: 'Dungeoneering Tokens', value: `+${idleResult.dungeoneeringTokensGained.toLocaleString()}`, rate: perHr(idleResult.dungeoneeringTokensGained) })
+        }
+
+        // Build supplies rows
+        const supplyRows = []
+        if (idleResult.task?.type === 'combat' && idleResult.idleSupplies) {
+          const supplies = idleResult.idleSupplies
+          const consumedFood = idleResult.foodConsumed || {}
+          const consumedPotions = idleResult.potionsConsumed || {}
+          for (const itemId of Object.keys(supplies.foodConfigured || {})) {
+            const cap = Math.min(supplies.foodConfigured[itemId] || 0, supplies.foodAvailable[itemId] || 0)
+            const used = consumedFood[itemId] || 0
+            const name = itemsData[itemId]?.name || itemId
+            supplyRows.push({ emoji: '🍗', name: 'Food', detail: name, val: `${used} / ${cap}`, low: used >= cap })
+          }
+          for (const itemId of Object.keys(supplies.potionsConfigured || {})) {
+            const cap = Math.min(supplies.potionsConfigured[itemId] || 0, supplies.potionsAvailable[itemId] || 0)
+            const used = consumedPotions[itemId] || 0
+            const name = itemsData[itemId]?.name || itemId
+            supplyRows.push({ emoji: '🧪', name: 'Potions', detail: name, val: `${used} / ${cap}` })
+          }
+        }
+
+        // Build loot rows from merged idle loot
+        const merged = {}
+        for (const src of [idleResult.lootGained, idleResult.lootBanked, idleResult.lootLost, idleResult.itemsGained]) {
+          if (!src) continue
+          for (const [itemId, qty] of Object.entries(src)) {
+            if (qty > 0) merged[itemId] = (merged[itemId] || 0) + qty
+          }
+        }
+        // Also merge hunter rewards
+        if (idleResult.task?.type === 'hunter' && idleResult.rewards) {
+          for (const reward of idleResult.rewards) {
+            if (reward.itemId && reward.quantity > 0) {
+              merged[reward.itemId] = (merged[reward.itemId] || 0) + reward.quantity
+            }
+          }
+        }
+        const lootEntries = Object.entries(merged)
+        const lootRows = lootEntries.map(([itemId, qty]) => {
+          const unitVal = getItemUnitValue(itemId, itemsData) || 0
+          return {
+            key: itemId,
+            item: itemsData[itemId] || null,
+            name: itemsData[itemId]?.name || itemId.replace(/_/g, ' '),
+            quantity: qty,
+            gp: unitVal * qty,
+          }
+        })
+        const lootTotal = lootRows.reduce((s, r) => s + (r.gp || 0), 0)
+
+        return (
+          <LootResultModal
+            theme={idleResult.died ? 'blood' : (hasIdleEpicLootDrop(idleResult, itemsData) ? 'purple' : 'gold')}
+            kind="progress"
+            icon={idleResult.died ? '💀' : '💤'}
+            eyebrow={idleResult.died ? undefined : `Away for ${formatIdleTime(idleResult.elapsedMs)}`}
+            title={idleResult.died ? 'Defeated' : 'Welcome Back!'}
+            sub={taskLabel ? taskLabel.toUpperCase() : undefined}
+            skipLabel={!idleResult.died && isCloudAccount && idleResult.task && !(idleResult.task?.type === 'combat' && (idleResult.task?.monster?.boss === true || idleResult.task?.raid === true))
+              ? 'Skip' : null}
+            onSkip={handleSkip1h}
+            summaryRows={summaryRows.length > 0 ? summaryRows : null}
+            summaryHeading="Summary"
+            summaryIcon="📊"
+            suppliesRows={supplyRows.length > 0 ? supplyRows : null}
+            suppliesHeading="Idle Supplies"
+            suppliesIcon="🛡️"
+            loot={lootRows.length > 0 ? lootRows : null}
+            lootTitle="Loot"
+            lootTotal={lootTotal}
+            primaryAction={{ label: 'Continue Adventure', onClick: closeIdleResultModal }}
+            onClose={closeIdleResultModal}
+          >
+            {/* Warnings and special cards injected as children */}
+            <div class="lm-cards" style={{ position: 'relative', zIndex: 4 }}>
+              {/* Cloud override notice */}
+              {idleResult.cloudOverride && (
+                <div class="lm-card" style={{ borderColor: 'rgba(123, 179, 240, 0.3)', borderLeft: '3px solid #7bb3f0' }}>
+                  <div class="lm-card__head" style={{ color: '#7bb3f0' }}>
+                    <span class="lm-card__icn">☁️</span>Cloud Save Loaded
+                  </div>
+                  <div style={{ fontSize: '11px', color: '#bcd7f5', lineHeight: '1.4' }}>
+                    Another session saved while you were away. Idle progress was discarded to stay in sync.
+                  </div>
+                </div>
+              )}
+
+              {/* Boss/Raid Warning */}
+              {idleResult.task?.type === 'combat' && (idleResult.task?.monster?.boss === true || idleResult.task?.raid === true) && (
+                <div class="lm-card" style={{ borderColor: 'rgba(220, 53, 69, 0.3)', borderLeft: '3px solid #dc3545' }}>
+                  <div class="lm-card__head" style={{ color: '#ff6b6b' }}>
+                    <span class="lm-card__icn">⚠️</span>Boss/Raid Active
+                  </div>
+                  <div style={{ fontSize: '11px', color: '#ff8787', lineHeight: '1.4' }}>
+                    Boss and raid fights cannot be fought while idle. Return to the fight to continue!
+                  </div>
+                </div>
+              )}
+
+              {/* Minigame / Reward Progress */}
+              {idleResult.minigameTimeReduced && (
+                <IdleResultProgressCard type='minigame_progress' idleResult={idleResult} taskName={idleResult.task?.gatherTask?.name || idleResult.task?.minigameTask?.name} />
+              )}
+              {idleResult.minigameCompleted && (
+                <IdleResultProgressCard type='minigame_complete' idleResult={idleResult} taskName={idleResult.task?.gatherTask?.name || idleResult.task?.minigameTask?.name} />
+              )}
+              {idleResult.rewardTimeReduced && (
+                <IdleResultProgressCard type='reward_progress' idleResult={idleResult} taskName={idleResult.task?.action?.name || 'Reward action'} />
+              )}
+              {idleResult.rewardCompleted && (
+                <IdleResultProgressCard type='reward_complete' idleResult={idleResult} taskName={`${idleResult.task?.action?.name || 'Reward action'} completed.`} />
+              )}
+
+              {/* Slayer task update */}
+              {idleResult.slayerTaskUpdate && idleResult.monstersKilledOnTask > 0 && (
+                <div class="lm-card" style={{ borderColor: 'rgba(212, 175, 55, 0.3)', borderLeft: '3px solid #d4af37' }}>
+                  <div class="lm-card__head" style={{ color: '#d4af37' }}>
+                    <span class="lm-card__icn">💀</span>Slayer Task
+                  </div>
+                  <div style={{ fontSize: '12px', color: '#d4af37', fontWeight: 'bold' }}>
+                    {idleResult.slayerTaskUpdate.completed
+                      ? `${idleResult.monstersKilledOnTask.toLocaleString()} ${idleResult.slayerTaskUpdate.monsterName} — Task Complete!`
+                      : `${idleResult.monstersKilledOnTask.toLocaleString()} ${idleResult.slayerTaskUpdate.monsterName} / ${idleResult.slayerTaskUpdate.monstersRemaining.toLocaleString()} remaining`}
+                  </div>
+                </div>
+              )}
+
+              {/* Quests Completed */}
+              {idleResult.completedQuests && idleResult.completedQuests.length > 0 && (
+                <div class="lm-card" style={{ borderColor: 'rgba(74, 222, 128, 0.3)', borderLeft: '3px solid #4ade80' }}>
+                  <div class="lm-card__head" style={{ color: '#4ade80' }}>
+                    <span class="lm-card__icn">📜</span>Quests Completed ({idleResult.completedQuests.length})
+                  </div>
+                  {idleResult.completedQuests.map((quest) => (
+                    <div key={quest.id} style={{ padding: '4px 0', fontSize: '12px', color: 'var(--color-parchment)' }}>{quest.name}</div>
+                  ))}
+                </div>
+              )}
+
+              {/* Idle death / stopped early warning */}
+              {idleResult.task?.type === 'combat' && idleResult.idleSupplies && (() => {
+                const stoppedReason = idleResult.stoppedReason
+                const effMs = idleResult.effectiveElapsedMs ?? null
+                const showShortened = stoppedReason && stoppedReason !== 'completed_elapsed' && effMs != null && effMs < idleResult.elapsedMs
+                const reasonLabel = {
+                  out_of_food: 'Ran out of food', out_of_hp: 'Ran out of HP',
+                  out_of_prayer: 'Ran out of prayer', out_of_potion: 'Ran out of potions',
+                  resource_limited: 'Out of ammo / runes / charges', died: 'You died',
+                }[stoppedReason] || null
+                if (!showShortened && !idleResult.died) return null
+                return (
+                  <div class="lm-card" style={{ borderColor: 'rgba(255, 135, 135, 0.3)', borderLeft: '3px solid #ff8787' }}>
+                    <div class="lm-card__head" style={{ color: '#ff8787' }}>
+                      <span class="lm-card__icn">{idleResult.died ? '☠️' : '⚠️'}</span>
+                      {idleResult.died ? 'Combat Halted' : 'Stopped Early'}
+                    </div>
+                    <div style={{ fontSize: '11px', color: '#ff8787', lineHeight: '1.4' }}>
+                      {idleResult.died
+                        ? `You died during idle combat! Halted after ${formatIdleTime(effMs ?? 0)}.`
+                        : `Combat ran for ${formatIdleTime(effMs)} of ${formatIdleTime(idleResult.elapsedMs)}${reasonLabel ? ` — ${reasonLabel}` : ''}`}
+                    </div>
+                  </div>
+                )
+              })()}
+
+              {/* Clue scrolls completed */}
               {(() => {
-                const hrs = idleResult.elapsedMs / 3600000
-                const perHr = (n) => hrs > 0 ? Math.round(n / hrs).toLocaleString() : '—'
-
-                return (<>
-                  {/* Cloud override notice — another session saved while we were away */}
-                  {idleResult.cloudOverride && (
-                    <div style={{ marginBottom: '12px', padding: '10px', background: 'rgba(123, 179, 240, 0.12)', borderRadius: '10px', borderLeft: '3px solid #7bb3f0' }}>
-                      <div style={{ fontSize: '12px', color: '#7bb3f0', fontWeight: 'bold', marginBottom: '4px' }}>☁️ Cloud Save Loaded</div>
-                      <div style={{ fontSize: '11px', color: '#bcd7f5', lineHeight: '1.4' }}>
-                        Another session of this character saved while you were away. Idle progress on this device was discarded to keep both sessions in sync.
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Boss/Raid Warning */}
-                  {idleResult.task?.type === 'combat' && (idleResult.task?.monster?.boss === true || idleResult.task?.raid === true) && (
-                    <div style={{ marginBottom: '12px', padding: '10px', background: 'rgba(220, 53, 69, 0.15)', borderRadius: '10px', borderLeft: '3px solid #dc3545' }}>
-                      <div style={{ fontSize: '12px', color: '#ff6b6b', fontWeight: 'bold', marginBottom: '4px' }}>⚠️ Boss/Raid Active</div>
-                      <div style={{ fontSize: '11px', color: '#ff8787', lineHeight: '1.4' }}>
-                        Boss and raid fights cannot be fought while idle. You must actively fight. Return to the fight to continue!
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Minigame Progress */}
-                  {idleResult.minigameTimeReduced && (
-                    <IdleResultProgressCard
-                      type='minigame_progress'
-                      idleResult={idleResult}
-                      taskName={idleResult.task?.gatherTask?.name || idleResult.task?.minigameTask?.name}
-                    />
-                  )}
-
-                  {/* Minigame Completed */}
-                  {idleResult.minigameCompleted && (
-                    <IdleResultProgressCard
-                      type='minigame_complete'
-                      idleResult={idleResult}
-                      taskName={idleResult.task?.gatherTask?.name || idleResult.task?.minigameTask?.name}
-                    />
-                  )}
-
-                  {/* Long-form Reward Progress (e.g. unlock actions) */}
-                  {idleResult.rewardTimeReduced && (
-                    <IdleResultProgressCard
-                      type='reward_progress'
-                      idleResult={idleResult}
-                      taskName={idleResult.task?.action?.name || 'Reward action'}
-                    />
-                  )}
-
-                  {idleResult.rewardCompleted && (
-                    <div>
-                      <IdleResultProgressCard
-                        type='reward_complete'
-                        idleResult={idleResult}
-                        taskName={`${idleResult.task?.action?.name || 'Reward action'} completed.`}
-                      />
-                      {idleResult.itemsGained && Object.entries(idleResult.itemsGained).length > 0 && (
-                        <div style={{ marginTop: '-4px', marginBottom: '12px', padding: '0 10px', fontSize: '12px', color: '#d4af37' }}>
-                          🎁 Item achieved: {Object.entries(idleResult.itemsGained).map(([itemId, qty]) => `${itemsData[itemId]?.name || itemId} ×${qty}`).join(', ')}
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Quests Completed */}
-                  {idleResult.completedQuests && idleResult.completedQuests.length > 0 && (
-                    <div style={{ marginBottom: '12px', padding: '10px', background: '#1a3a2a', borderRadius: '10px', borderLeft: '3px solid #4ade80' }}>
-                      <div style={{ fontSize: '12px', color: '#4ade80', fontWeight: 'bold', marginBottom: '8px' }}>📜 Quests Completed ({idleResult.completedQuests.length})</div>
-                      {idleResult.completedQuests.map((quest) => (
-                        <div key={quest.id} style={{ marginBottom: '8px', padding: '6px', background: 'rgba(74, 222, 128, 0.1)', borderRadius: '6px' }}>
-                          <div style={{ fontSize: '12px', color: '#e8d5b0' }}>{quest.name}</div>
-                        </div>
-                      ))}
-                      {idleResult.aggregatedXpReward && Object.entries(idleResult.aggregatedXpReward).filter(([_, xp]) => xp > 0).length > 0 && (
-                        <div style={{ marginTop: '8px', paddingTop: '8px', borderTop: '1px solid rgba(74, 222, 128, 0.2)' }}>
-                          <div style={{ fontSize: '11px', color: '#4ade80', fontWeight: 'bold', marginBottom: '4px' }}>Total XP Rewards:</div>
-                          {Object.entries(idleResult.aggregatedXpReward).filter(([_, xp]) => xp > 0).map(([skill, xp]) => (
-                            <div key={skill} style={{ fontSize: '11px', color: '#d4af37', display: 'flex', justifyContent: 'space-between' }}>
-                              <span>{skill.charAt(0).toUpperCase() + skill.slice(1)}</span>
-                              <span>+{Math.floor(xp).toLocaleString()}</span>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* XP Gained Summary */}
-                  {(() => {
-                    // Use aggregated XP from completed quests if available, otherwise use xpGained
-                    const xpSource = idleResult.aggregatedXpReward || idleResult.xpGained
-                    const xpEntries = xpSource ? Object.entries(xpSource).filter(([_, xp]) => xp > 0) : []
-                    const hasXp = xpEntries.length > 0
-                    const hasMonstersKilled = idleResult.task?.type === 'combat' && idleResult.monstersKilled > 0
-                    const hasSlayerXp = idleResult.slayerXpGained > 0
-                    const taskCompleted = idleResult.slayerTaskUpdate?.completed
-
-                    return (hasXp || hasMonstersKilled || hasSlayerXp || taskCompleted) ? (
-                      <div style={{ marginBottom: '12px', padding: '10px', background: '#111', borderRadius: '10px' }}>
-                        <div style={{ fontSize: '11px', color: '#e8d5b0', opacity: 0.5, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: '700', marginBottom: '6px' }}>📊 Summary</div>
-                        {idleResult.slayerTaskUpdate && idleResult.monstersKilledOnTask > 0 && (
-                          <div style={{ marginBottom: '8px', padding: '8px', background: 'rgba(212, 175, 55, 0.1)', borderRadius: '6px', borderLeft: '3px solid #d4af37' }}>
-                            {taskCompleted ? (
-                              <>
-                                <div style={{ fontSize: '12px', color: '#d4af37', fontWeight: 'bold' }}>💀 Slayer: {idleResult.monstersKilledOnTask.toLocaleString()} {idleResult.slayerTaskUpdate.monsterName}</div>
-                                <div style={{ fontSize: '11px', color: '#d4af37', marginTop: '2px' }}>✅ Task Complete!</div>
-                              </>
-                            ) : (
-                              <div style={{ fontSize: '12px', color: '#d4af37', fontWeight: 'bold' }}>
-                                💀 Slayer: {idleResult.monstersKilledOnTask.toLocaleString()} {idleResult.slayerTaskUpdate.monsterName} / {idleResult.slayerTaskUpdate.monstersRemaining.toLocaleString()} remaining
-                              </div>
-                            )}
-                          </div>
-                        )}
-                        {hasMonstersKilled && (
-                          <div style={{ marginBottom: '6px' }}>
-                            <div style={{ fontSize: '13px', color: '#e8d5b0' }}>🗡️ Monsters Slain</div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#d4af37', fontFamily: 'monospace', fontWeight: 'bold' }}>
-                              <span>{idleResult.monstersKilled.toLocaleString()}</span>
-                              <span style={{ fontSize: '11px', color: '#e8d5b0', opacity: 0.45 }}>/hr {perHr(idleResult.monstersKilled)}</span>
-                            </div>
-                          </div>
-                        )}
-                        {xpEntries.map(([skill, xp]) => (
-                          <div key={skill} style={{ marginBottom: '4px' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#e8d5b0' }}>
-                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}><SkillIcon skill={skill} size={14} /> {skill.charAt(0).toUpperCase() + skill.slice(1)}</span>
-                              <span style={{ color: '#d4af37', fontFamily: 'monospace', fontWeight: 'bold' }}>+{Math.floor(xp).toLocaleString()}</span>
-                            </div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#e8d5b0', opacity: 0.45 }}>
-                              <span>/hr</span>
-                              <span style={{ fontFamily: 'monospace' }}>{perHr(xp)}</span>
-                            </div>
-                          </div>
-                        ))}
-                        {hasSlayerXp && (
-                          <div style={{ marginBottom: '4px' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#e8d5b0' }}>
-                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}><SkillIcon skill="slayer" size={14} /> Slayer</span>
-                              <span style={{ color: '#d4af37', fontFamily: 'monospace', fontWeight: 'bold' }}>+{Math.floor(idleResult.slayerXpGained).toLocaleString()}</span>
-                            </div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#e8d5b0', opacity: 0.45 }}>
-                              <span>/hr</span>
-                              <span style={{ fontFamily: 'monospace' }}>{perHr(idleResult.slayerXpGained)}</span>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    ) : null
-                  })()}
-
-                  {idleResult.dungeoneeringTokensGained > 0 && (
-                    <div style={{ marginBottom: '12px', padding: '10px', background: '#111', borderRadius: '10px' }}>
-                      <div style={{ fontSize: '11px', color: '#e8d5b0', opacity: 0.5, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: '700', marginBottom: '6px' }}>🏰 Dungeoneering</div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#e8d5b0' }}>
-                        <span>Tokens Gained</span>
-                        <span style={{ color: '#d4af37', fontFamily: 'monospace', fontWeight: 'bold' }}>+{idleResult.dungeoneeringTokensGained.toLocaleString()}</span>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Idle combat supply / prayer summary — only shown when an
-                      idle combat supply was configured, so non-combat or unsupplied
-                      sessions stay compact. */}
-                  {idleResult.task?.type === 'combat' && idleResult.idleSupplies && (() => {
-                    const supplies = idleResult.idleSupplies
-                    const foodEntries = Object.keys(supplies.foodConfigured || {})
-                    const potionEntries = Object.keys(supplies.potionsConfigured || {})
-                    const consumedFood = idleResult.foodConsumed || {}
-                    const consumedPotions = idleResult.potionsConsumed || {}
-                    const stoppedReason = idleResult.stoppedReason
-                    const effMs = idleResult.effectiveElapsedMs ?? null
-                    const showShortened = stoppedReason && stoppedReason !== 'completed_elapsed' && effMs != null && effMs < idleResult.elapsedMs
-                    const reasonLabel = {
-                      out_of_food: 'Ran out of food',
-                      out_of_hp: 'Ran out of HP',
-                      out_of_prayer: 'Ran out of prayer',
-                      out_of_potion: 'Ran out of potions',
-                      resource_limited: 'Out of ammo / runes / charges',
-                      died: 'You died',
-                    }[stoppedReason] || null
-                    const died = idleResult.died === true
-                    if (foodEntries.length === 0 && potionEntries.length === 0 && !idleResult.prayerPointsStarted && !showShortened && !died) return null
-                    return (
-                      <div style={{ marginBottom: '12px', padding: '10px', background: '#111', borderRadius: '10px' }}>
-                        <div style={{ fontSize: '11px', color: '#e8d5b0', opacity: 0.5, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: '700', marginBottom: '6px' }}>🛡️ Idle Supplies</div>
-
-                        {died && (
-                          <div style={{ marginBottom: '8px', padding: '8px', borderRadius: '8px', background: '#3a1212', border: '1px solid #ff8787', fontSize: '12px', color: '#ff8787', fontWeight: '700', textAlign: 'center' }}>
-                            ☠️ You died during idle combat! Combat halted after {formatIdleTime(effMs ?? 0)}.
-                          </div>
-                        )}
-
-                        {showShortened && !died && (
-                          <div style={{ marginBottom: '6px', fontSize: '11px', color: '#ff8787' }}>
-                            ⚠ Combat ran for {formatIdleTime(effMs)} of {formatIdleTime(idleResult.elapsedMs)}{reasonLabel ? ` — ${reasonLabel}` : ''}
-                          </div>
-                        )}
-
-                        {foodEntries.length > 0 && (
-                          <div style={{ marginBottom: '4px' }}>
-                            <div style={{ fontSize: '11px', color: '#a8d8a8', marginBottom: '2px' }}>🍖 Food</div>
-                            {foodEntries.map(itemId => {
-                              const cap = Math.min(supplies.foodConfigured[itemId] || 0, supplies.foodAvailable[itemId] || 0)
-                              const used = consumedFood[itemId] || 0
-                              const name = itemsData[itemId]?.name || itemId
-                              return (
-                                <div key={itemId} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#e8d5b0' }}>
-                                  <span>{name}</span>
-                                  <span style={{ fontFamily: 'monospace' }}>{used} / {cap}</span>
-                                </div>
-                              )
-                            })}
-                          </div>
-                        )}
-
-                        {potionEntries.length > 0 && (
-                          <div style={{ marginBottom: '4px' }}>
-                            <div style={{ fontSize: '11px', color: '#a8d8a8', marginBottom: '2px' }}>🧪 Potions</div>
-                            {potionEntries.map(itemId => {
-                              const cap = Math.min(supplies.potionsConfigured[itemId] || 0, supplies.potionsAvailable[itemId] || 0)
-                              const used = consumedPotions[itemId] || 0
-                              const name = itemsData[itemId]?.name || itemId
-                              return (
-                                <div key={itemId} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#e8d5b0' }}>
-                                  <span>{name}</span>
-                                  <span style={{ fontFamily: 'monospace' }}>{used} / {cap}</span>
-                                </div>
-                              )
-                            })}
-                          </div>
-                        )}
-
-                        {idleResult.prayerPointsStarted > 0 && (
-                          <div style={{ marginTop: '6px', paddingTop: '6px', borderTop: '1px solid #222' }}>
-                            <div style={{ fontSize: '11px', color: '#a8d8a8', marginBottom: '2px' }}>🙏 Prayer</div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#e8d5b0' }}>
-                              <span>Started / Restored</span>
-                              <span style={{ fontFamily: 'monospace' }}>{idleResult.prayerPointsStarted} / +{idleResult.prayerPointsRestored || 0}</span>
-                            </div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#e8d5b0' }}>
-                              <span>Used / Remaining</span>
-                              <span style={{ fontFamily: 'monospace' }}>{idleResult.prayerPointsUsed || 0} / {idleResult.prayerPointsRemaining || 0}</span>
-                            </div>
-                            {idleResult.damagePreventedByPrayer > 0 && (
-                              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#a8d8a8' }}>
-                                <span>Damage Prevented</span>
-                                <span style={{ fontFamily: 'monospace' }}>{idleResult.damagePreventedByPrayer.toLocaleString()}</span>
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    )
-                  })()}
-
-                  {/* Coins earned — agility/thieving specific */}
-                  {idleResult.coinsGained > 0 && (
-                    <div style={{ marginBottom: '12px', padding: '10px', background: '#111', borderRadius: '10px' }}>
-                      <div style={{ fontSize: '11px', color: '#e8d5b0', opacity: 0.5, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: '700', marginBottom: '6px' }}>💰 Coins</div>
-                      <div style={{ marginBottom: '4px' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#e8d5b0' }}>
-                          <span>Coins Earned</span>
-                          <span style={{ color: '#d4af37', fontFamily: 'monospace', fontWeight: 'bold' }}>🪙 {idleResult.coinsGained.toLocaleString()}</span>
-                        </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#e8d5b0', opacity: 0.45 }}>
-                          <span>/hr</span>
-                          <span style={{ fontFamily: 'monospace' }}>{perHr(idleResult.coinsGained)}</span>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Hunter loot */}
-                  {idleResult.task?.type === 'hunter' && idleResult.rewards && idleResult.rewards.length > 0 && (() => {
-                    const itemsByName = {}
-                    for (const reward of idleResult.rewards) {
-                      const itemData = itemsDataRef.current?.[reward.itemId]
-                      const name = itemData?.name || reward.itemId
-                      if (itemsByName[name]) {
-                        itemsByName[name] += reward.quantity
-                      } else {
-                        itemsByName[name] = reward.quantity
-                      }
-                    }
-                    const rewards = Object.entries(itemsByName)
-                    return rewards.length > 0 ? (
-                      <div style={{ marginBottom: '12px', padding: '10px', background: '#111', borderRadius: '10px' }}>
-                        <div style={{ fontSize: '11px', color: '#e8d5b0', opacity: 0.5, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: '700', marginBottom: '6px' }}>🎯 Loot</div>
-                        {rewards.slice(0, 8).map(([name, qty]) => (
-                          <div key={name} style={{ marginBottom: '4px' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#e8d5b0' }}>
-                              <span>{name}</span>
-                              <span style={{ color: '#d4af37', fontFamily: 'monospace', fontWeight: 'bold' }}>× {qty.toLocaleString()}</span>
-                            </div>
-                          </div>
-                        ))}
-                        {rewards.length > 8 && (
-                          <div style={{ marginTop: '6px', paddingTop: '6px', borderTop: '1px solid rgba(212, 175, 55, 0.2)', fontSize: '11px', color: '#d4af37' }}>
-                            +{rewards.length - 8} more items
-                          </div>
-                        )}
-                      </div>
-                    ) : null
-                  })()}
-
-                  {/* Clue scrolls completed */}
-                  {(() => {
-                    const clueScrollCount = Object.entries(idleResult.itemsConsumed || {}).reduce((sum, [itemId, qty]) => {
-                      if (itemId.includes('clue')) return sum + qty
-                      return sum
-                    }, 0)
-                    return clueScrollCount > 0 ? (
-                      <div style={{ marginBottom: '12px', padding: '10px', background: '#111', borderRadius: '10px' }}>
-                        <div style={{ fontSize: '11px', color: '#e8d5b0', opacity: 0.5, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: '700', marginBottom: '6px' }}>📜 Clue Scrolls</div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#e8d5b0' }}>
-                          <span>Completed</span>
-                          <span style={{ color: '#d4af37', fontFamily: 'monospace', fontWeight: 'bold' }}>×{clueScrollCount.toLocaleString()}</span>
-                        </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#e8d5b0', opacity: 0.45 }}>
-                          <span>/hr</span>
-                          <span style={{ fontFamily: 'monospace' }}>{perHr(clueScrollCount)}</span>
-                        </div>
-                      </div>
-                    ) : null
-                  })()}
-
-                  {/* Loot gained — drop table results only */}
-                  {(() => {
-                    const merged = {}
-                    for (const src of [idleResult.lootGained, idleResult.lootBanked, idleResult.lootLost, idleResult.itemsGained]) {
-                      if (!src) continue
-                      for (const [itemId, qty] of Object.entries(src)) {
-                        if (qty > 0) merged[itemId] = (merged[itemId] || 0) + qty
-                      }
-                    }
-                    const entries = Object.entries(merged)
-                    return entries.length > 0 ? (
-                      <div style={{ marginBottom: '12px', padding: '10px', background: '#111', borderRadius: '10px' }}>
-                        <div style={{ fontSize: '11px', color: '#e8d5b0', opacity: 0.5, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: '700', marginBottom: '6px' }}>🎒 Loot</div>
-                        {entries.map(([itemId, qty]) => (
-                          <div key={itemId} style={{ marginBottom: '4px' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#e8d5b0' }}>
-                              <span style={{ textTransform: 'capitalize', color: isHighValueDrop(itemId, qty, itemsData) ? '#c084fc' : '#e8d5b0', fontWeight: isHighValueDrop(itemId, qty, itemsData) ? '700' : '400' }}>{itemsData[itemId]?.name || itemId.replace(/_/g, ' ')}</span>
-                              <span style={{ color: '#d4af37', fontFamily: 'monospace', fontWeight: 'bold' }}>×{qty.toLocaleString()}</span>
-                            </div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#e8d5b0', opacity: 0.45 }}>
-                              <span>/hr</span>
-                              <span style={{ fontFamily: 'monospace' }}>{perHr(qty)}</span>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    ) : null
-                  })()}
-                </>)
+                const clueScrollCount = Object.entries(idleResult.itemsConsumed || {}).reduce((sum, [itemId, qty]) => {
+                  if (itemId.includes('clue')) return sum + qty
+                  return sum
+                }, 0)
+                return clueScrollCount > 0 ? (
+                  <SummaryCard heading="Clue Scrolls" icon="📜" rows={[
+                    { name: 'Completed', value: `×${clueScrollCount.toLocaleString()}`, rate: perHr(clueScrollCount) },
+                  ]} />
+                ) : null
               })()}
             </div>
-          </div>
-        </LootResultModal>
-      )}
+          </LootResultModal>
+        )
+      })()}
 
       {showBuyCreditsModal && isCloudAccount && (
         <BuyCreditsModal
