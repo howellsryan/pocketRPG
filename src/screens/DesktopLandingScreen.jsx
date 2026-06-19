@@ -17,9 +17,9 @@ const DL_LANDING_DIMS = {
   'ss-stats':         { w: 560, h: 1068 },
   'ss-combat-select': { w: 560, h: 1070 },
   'ss-thieving':      { w: 560, h: 991  },
-  'ss-bank':          { w: 560, h: 987  },
+  'ss-bank':          { w: 560, h: 1077 },
   'ss-quests':        { w: 560, h: 990  },
-  'ss-inventory':     { w: 560, h: 985  },
+  'ss-inventory':     { w: 560, h: 1032 },
   'ss-combat':        { w: 560, h: 1082 },
   'ss-farming':       { w: 560, h: 995  },
   'ss-collection':    { w: 560, h: 1075 },
@@ -169,7 +169,7 @@ export default function DesktopLandingScreen({ onGitHubLogin, onGoogleLogin, emb
             </div>
             <div class="dl-cluster">
               <div class="dl-device dl-device--back"><img src={landingImages['ss-combat']} srcset={landingSrcSet(landingImages['ss-combat'])} sizes="202px" alt="Boss fight in progress" width="560" height="1082" loading="eager" decoding="async" /></div>
-              <div class="dl-device dl-device--back2"><img src={landingImages['ss-inventory']} srcset={landingSrcSet(landingImages['ss-inventory'])} sizes="182px" alt="Full inventory grid" width="560" height="985" loading="eager" decoding="async" /></div>
+              <div class="dl-device dl-device--back2"><img src={landingImages['ss-inventory']} srcset={landingSrcSet(landingImages['ss-inventory'])} sizes="182px" alt="Full inventory grid" width="560" height="1032" loading="eager" decoding="async" /></div>
               <div class="dl-device dl-device--main"><img src={landingImages['ss-stats']} srcset={landingSrcSet(landingImages['ss-stats'])} sizes="250px" alt="Skills overview" width="560" height="1068" loading="eager" fetchpriority="high" decoding="async" /></div>
             </div>
           </div>
