@@ -437,6 +437,7 @@ export default function LootResultModal({
                         name={row.name}
                         quantity={row.quantity}
                         gp={row.gp}
+                        unitGp={row.unitGp}
                         lost={row.lost}
                         highlight={row.highlight}
                         rarity={row.rarity}
@@ -500,6 +501,7 @@ export default function LootResultModal({
                         name={row.name}
                         quantity={row.quantity}
                         gp={row.gp}
+                        unitGp={row.unitGp}
                         lost={row.lost}
                         highlight={row.highlight}
                         rarity={row.rarity}
