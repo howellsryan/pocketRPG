@@ -446,7 +446,7 @@ export default function LootResultModal({
                 </>
               )}
               {!hasLoot && !children && (
-                <div class="lm-empty">No loot dropped</div>
+                <div class="lm-empty">{heroItem ? 'No other loot dropped' : 'No loot dropped'}</div>
               )}
             </>
           ) : (

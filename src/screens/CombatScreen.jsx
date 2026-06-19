@@ -1151,6 +1151,8 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     if (!modal || modal.loading) return
 
     if (modal.raidId) {
+      setLootModal(null)
+      await new Promise(r => requestAnimationFrame(r))
       await skipEntireRaid({
         raidId: modal.raidId,
         monster: modal.monster,
