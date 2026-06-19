@@ -42,6 +42,21 @@ describe('getActionTicksForTask', () => {
     expect(getActionTicksForTask({ type: 'agility', action: { ticks: 7 } } as any)).toBe(7)
     expect(getActionTicksForTask({ type: 'gather', gatherTask: { ticks: 3 } } as any)).toBe(3)
   })
+
+  it('honours a per-NPC pickpocket cadence (Master Farmer is slower)', () => {
+    expect(getActionTicksForTask({ type: 'thieving', npc: { pickpocketTicks: 8 } } as any)).toBe(8)
+  })
+})
+
+describe('thieving cadence matches the simulation window (no false out-of-materials)', () => {
+  it('completes a Master Farmer action over its 8-tick window', () => {
+    const task = { type: 'thieving', npc: { name: 'Master Farmer', xp: 43, coins: 0, seedReward: true, pickpocketTicks: 8 } }
+    const result = runOneAction(task as any, {})
+    expect(result).not.toBeNull()
+    expect(resultActions(result)).toBe(1)
+    const seeds = Object.values(result?.itemsGained || {}).reduce((a: number, b: any) => a + b, 0)
+    expect(seeds).toBe(1)
+  })
 })
 
 describe('simulateTaskWindow (one action)', () => {

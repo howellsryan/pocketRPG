@@ -37,8 +37,8 @@ export default function ThievingScreen({ initialNpcId, idleResult, onBack }) {
     }
   }, [initialNpcId])
 
-  // When a skip completes while actively thieving, add the skipped XP and
-  // coins to the running session totals.
+  // When a skip completes while actively thieving, add the skipped XP, coins
+  // and seeds (Master Farmer) to the running session totals.
   useEffect(() => {
     if (!thieving?.active) return
     if (!idleResult) return
@@ -47,7 +47,10 @@ export default function ThievingScreen({ initialNpcId, idleResult, onBack }) {
     const coinsGained = idleResult.coinsGained || 0
     const actions = idleResult.actions || 0
     const elapsedMs = idleResult.elapsedMs || 0
-    if (xpGained === 0 && coinsGained === 0) return
+    const seedsGained = idleResult.itemsGained
+      ? Object.values(idleResult.itemsGained).reduce((sum, q) => sum + (Number(q) || 0), 0)
+      : 0
+    if (xpGained === 0 && coinsGained === 0 && seedsGained === 0) return
     setThieving((prev) => {
       if (!prev?.active) return prev
       const next = {
@@ -55,6 +58,7 @@ export default function ThievingScreen({ initialNpcId, idleResult, onBack }) {
         totalPickpockets: (prev.totalPickpockets || 0) + actions,
         totalXP: (prev.totalXP || 0) + xpGained,
         totalCoins: (prev.totalCoins || 0) + coinsGained,
+        totalSeeds: (prev.totalSeeds || 0) + seedsGained,
         startedAt: (prev.startedAt || Date.now()) - elapsedMs,
       }
       thievingRef.current = next

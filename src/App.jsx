@@ -1496,6 +1496,10 @@ function GameApp() {
     }
     // Coin rewards: alchemy (skill), agility and thieving.
     if (result.coinsGained > 0) updateBankDirect({ coins: result.coinsGained })
+    // Thieving seed rewards (Master Farmer) go straight to the bank.
+    if (result.itemsGained && Object.keys(result.itemsGained).length > 0) {
+      updateBankDirect(result.itemsGained)
+    }
     // Hunter loot goes straight to the bank.
     if (task.type === 'hunter' && Array.isArray(result.rewards) && result.rewards.length > 0) {
       const banked = {}
