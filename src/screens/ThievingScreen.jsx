@@ -8,6 +8,7 @@ import { createThievingState, processThievingTick } from '../engine/thieving.js'
 import { onTick } from '../engine/tick.js'
 import { markScreenTick } from '../engine/activityRunner.js'
 import { formatNumber } from '../utils/helpers.js'
+import GameIcon from '../components/GameIcon.jsx'
 import skillsData from '../data/skills.json'
 
 const thievingData = skillsData.thieving
@@ -234,12 +235,12 @@ export default function ThievingScreen({ initialNpcId, idleResult, onBack }) {
           </div>
           <div class="flex justify-between text-sm">
             <span class="text-[var(--color-parchment)] opacity-60">Coins earned</span>
-            <span class="font-[var(--font-mono)] text-[var(--color-gold)]">🪙 {thieving.totalCoins.toLocaleString()}</span>
+            <span class="font-[var(--font-mono)] text-[var(--color-gold)] flex items-center gap-1"><GameIcon iconKey="coins" size={14} color="var(--color-gold)" /> {thieving.totalCoins.toLocaleString()}</span>
           </div>
           <div class="flex justify-between text-sm">
             <span class="text-[var(--color-parchment)] opacity-60">Coins/hr</span>
-            <span class="font-[var(--font-mono)] text-[var(--color-gold)]">
-              {xpPerHr ? `🪙 ${Math.round(thieving.totalCoins / (elapsed / 3_600_000)).toLocaleString()}` : '—'}
+            <span class="font-[var(--font-mono)] text-[var(--color-gold)] flex items-center gap-1">
+              {xpPerHr ? <><GameIcon iconKey="coins" size={14} color="var(--color-gold)" /> {Math.round(thieving.totalCoins / (elapsed / 3_600_000)).toLocaleString()}</> : '—'}
             </span>
           </div>
         </div>
