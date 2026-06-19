@@ -5,16 +5,16 @@ import { useIsDesktop } from '../hooks/useIsDesktop.js'
 import DesktopLandingScreen from './DesktopLandingScreen.jsx'
 
 const LANDING_DIMS = {
-  'ss-stats':         { w: 560, h: 979  },
-  'ss-combat-select': { w: 560, h: 996  },
+  'ss-stats':         { w: 560, h: 1068 },
+  'ss-combat-select': { w: 560, h: 1070 },
   'ss-thieving':      { w: 560, h: 991  },
   'ss-bank':          { w: 560, h: 987  },
   'ss-quests':        { w: 560, h: 990  },
   'ss-inventory':     { w: 560, h: 985  },
-  'ss-combat':        { w: 560, h: 994  },
+  'ss-combat':        { w: 560, h: 1082 },
   'ss-farming':       { w: 560, h: 995  },
-  'ss-collection':    { w: 560, h: 998  },
-  'ss-trading':       { w: 560, h: 998  },
+  'ss-collection':    { w: 560, h: 1075 },
+  'ss-trading':       { w: 560, h: 1075 },
 }
 
 const FEATURES = [
@@ -106,9 +106,9 @@ export default function LandingScreen({ onGitHubLogin, onGoogleLogin, embedded, 
             src={landingImages['ss-stats']}
             srcset={landingSrcSet(landingImages['ss-stats'])}
             sizes="280px"
-            alt="PocketRPG skills overview — Combat 102, Total Level 1457"
+            alt="PocketRPG skills overview — Combat 126, Total Level 2,376"
             class="w-full block"
-            width="560" height="979"
+            width="560" height="1068"
             loading="eager"
             fetchpriority="high"
             decoding="async"
