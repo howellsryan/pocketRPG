@@ -176,7 +176,7 @@ export default function AgilityScreen({ initialActionId, idleResult, onBack }) {
                 </div>
                 <div class="text-right ml-3 flex flex-col justify-center">
                   <div class="text-xs font-[var(--font-mono)] text-[var(--color-gold)]">
-                    🪙 {action.coinReward.toLocaleString()}
+                    <GameIcon iconKey="coins" size={13} color="var(--color-gold)" /> {action.coinReward.toLocaleString()}
                   </div>
                   <div class="text-[10px] text-[var(--color-parchment)] opacity-30">per lap</div>
                 </div>
