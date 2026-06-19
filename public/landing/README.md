@@ -20,3 +20,6 @@ Target: each file < ~100 KB, phone-portrait aspect ratio.
 | Collection Log                            | `ss-collection.webp`    |
 | Trading Post market                       | `ss-trading.webp`       |
 | Farming Locations                         | `ss-farming.webp`       |
+| Minigames reward grinds                   | `ss-minigames.webp`     |
+| Global leaderboard (Total Level)          | `ss-leaderboard.webp`   |
+| Connect AI (MCP server)                   | `ss-connect.webp`       |

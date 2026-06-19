@@ -15,6 +15,9 @@ const LANDING_DIMS = {
   'ss-farming':       { w: 560, h: 995  },
   'ss-collection':    { w: 560, h: 1075 },
   'ss-trading':       { w: 560, h: 1075 },
+  'ss-minigames':     { w: 560, h: 1073 },
+  'ss-leaderboard':   { w: 560, h: 1076 },
+  'ss-connect':       { w: 560, h: 1070 },
 }
 
 const FEATURES = [
@@ -58,6 +61,9 @@ const STRIP = [
   { key: 'ss-farming',    src: landingImages['ss-farming'],    alt: 'Farming locations' },
   { key: 'ss-collection', src: landingImages['ss-collection'], alt: 'Collection Log' },
   { key: 'ss-trading',    src: landingImages['ss-trading'],    alt: 'Trading Post market' },
+  { key: 'ss-minigames',   src: landingImages['ss-minigames'],   alt: 'Minigame reward grinds' },
+  { key: 'ss-leaderboard', src: landingImages['ss-leaderboard'], alt: 'Global leaderboard' },
+  { key: 'ss-connect',     src: landingImages['ss-connect'],     alt: 'Connect AI assistant' },
 ]
 
 export default function LandingScreen({ onGitHubLogin, onGoogleLogin, embedded, showBrowserHint, copied, onCopyLink }) {

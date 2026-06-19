@@ -24,6 +24,9 @@ const DL_LANDING_DIMS = {
   'ss-farming':       { w: 560, h: 995  },
   'ss-collection':    { w: 560, h: 1075 },
   'ss-trading':       { w: 560, h: 1075 },
+  'ss-minigames':     { w: 560, h: 1073 },
+  'ss-leaderboard':   { w: 560, h: 1076 },
+  'ss-connect':       { w: 560, h: 1070 },
 }
 
 const DL_FEATURES = [
@@ -58,7 +61,7 @@ const DL_SKILLS = [
   ['slayer', 'Slayer'], ['construction', 'Construct.'], ['fletching', 'Fletching'], ['dungeoneering', 'Dungeon.'],
 ]
 
-const DL_GALLERY = ['ss-inventory', 'ss-combat', 'ss-farming', 'ss-collection', 'ss-trading', 'ss-stats']
+const DL_GALLERY = ['ss-inventory', 'ss-combat', 'ss-farming', 'ss-collection', 'ss-trading', 'ss-stats', 'ss-minigames', 'ss-leaderboard', 'ss-connect']
 
 const DL_STATS = [
   ['600ms', 'Game tick'],
