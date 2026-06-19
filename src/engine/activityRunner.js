@@ -62,7 +62,7 @@ export function getActionTicksForTask(task, ctx = {}) {
     case 'gather':   return Math.max(1, Math.ceil(task.gatherTask.ticks || 1))
     case 'agility':  return Math.max(1, Math.ceil(task.action.ticks || 1))
     case 'hunter':   return Math.max(1, Math.ceil(task.action.ticks || 1))
-    case 'thieving': return THIEVING_TICKS_PER_ACTION
+    case 'thieving': return task.npc?.pickpocketTicks || THIEVING_TICKS_PER_ACTION
     default:         return 1
   }
 }

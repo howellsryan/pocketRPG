@@ -5,6 +5,7 @@ import SkillIcon from '../components/SkillIcon.jsx'
 import { getActionProgress } from '../hooks/useActionTick.js'
 import { getLevelFromXP } from '../engine/experience.js'
 import { createThievingState, processThievingTick } from '../engine/thieving.js'
+import { rollMasterFarmerSeed } from '../engine/seedDrops.js'
 import { onTick } from '../engine/tick.js'
 import { markScreenTick } from '../engine/activityRunner.js'
 import { formatNumber } from '../utils/helpers.js'
@@ -36,8 +37,8 @@ export default function ThievingScreen({ initialNpcId, idleResult, onBack }) {
     }
   }, [initialNpcId])
 
-  // When a skip completes while actively thieving, add the skipped XP and
-  // coins to the running session totals.
+  // When a skip completes while actively thieving, add the skipped XP, coins
+  // and seeds (Master Farmer) to the running session totals.
   useEffect(() => {
     if (!thieving?.active) return
     if (!idleResult) return
@@ -46,7 +47,10 @@ export default function ThievingScreen({ initialNpcId, idleResult, onBack }) {
     const coinsGained = idleResult.coinsGained || 0
     const actions = idleResult.actions || 0
     const elapsedMs = idleResult.elapsedMs || 0
-    if (xpGained === 0 && coinsGained === 0) return
+    const seedsGained = idleResult.itemsGained
+      ? Object.values(idleResult.itemsGained).reduce((sum, q) => sum + (Number(q) || 0), 0)
+      : 0
+    if (xpGained === 0 && coinsGained === 0 && seedsGained === 0) return
     setThieving((prev) => {
       if (!prev?.active) return prev
       const next = {
@@ -54,6 +58,7 @@ export default function ThievingScreen({ initialNpcId, idleResult, onBack }) {
         totalPickpockets: (prev.totalPickpockets || 0) + actions,
         totalXP: (prev.totalXP || 0) + xpGained,
         totalCoins: (prev.totalCoins || 0) + coinsGained,
+        totalSeeds: (prev.totalSeeds || 0) + seedsGained,
         startedAt: (prev.startedAt || Date.now()) - elapsedMs,
       }
       thievingRef.current = next
@@ -79,6 +84,28 @@ export default function ThievingScreen({ initialNpcId, idleResult, onBack }) {
         if (ev.type === 'pickpocketSuccess') {
           grantXP('thieving', ev.xp)
 
+          // Master Farmer rewards a single seed / sapling per pickpocket
+          // (stackable, inventory-first, falling back to the bank).
+          let seedGained = 0
+          if (state.npc.seedReward) {
+            const seedId = rollMasterFarmerSeed()
+            const currentInv = [...(inventoryRef.current)]
+            const seedSlotIdx = currentInv.findIndex(s => s && s.itemId === seedId)
+            if (seedSlotIdx >= 0) {
+              currentInv[seedSlotIdx] = { ...currentInv[seedSlotIdx], quantity: currentInv[seedSlotIdx].quantity + 1 }
+              updateInventory(currentInv)
+            } else {
+              const emptyIdx = currentInv.findIndex(s => s === null)
+              if (emptyIdx >= 0) {
+                currentInv[emptyIdx] = { itemId: seedId, quantity: 1 }
+                updateInventory(currentInv)
+              } else {
+                updateBankDirect({ [seedId]: 1 })
+              }
+            }
+            seedGained = 1
+          }
+
           // Add coins to inventory or bank
           if (ev.coins > 0) {
             const currentInv = [...(inventoryRef.current)]
@@ -102,7 +129,8 @@ export default function ThievingScreen({ initialNpcId, idleResult, onBack }) {
             ...thievingRef.current,
             totalPickpockets: (thievingRef.current.totalPickpockets || 0) + 1,
             totalXP: (thievingRef.current.totalXP || 0) + ev.xp,
-            totalCoins: (thievingRef.current.totalCoins || 0) + ev.coins
+            totalCoins: (thievingRef.current.totalCoins || 0) + ev.coins,
+            totalSeeds: (thievingRef.current.totalSeeds || 0) + seedGained
           }
         }
       }
@@ -119,6 +147,7 @@ export default function ThievingScreen({ initialNpcId, idleResult, onBack }) {
       totalPickpockets: 0,
       totalXP: 0,
       totalCoins: 0,
+      totalSeeds: 0,
       startedAt: Date.now()
     }
     setThieving(state)
@@ -171,13 +200,17 @@ export default function ThievingScreen({ initialNpcId, idleResult, onBack }) {
                 <div class="flex-1">
                   <div class="text-sm font-semibold text-[var(--color-parchment)]">{npc.name}</div>
                   <div class="text-[10px] text-[var(--color-parchment)] opacity-40 mt-0.5 flex items-center gap-0.5 flex-wrap">
-                    Lv {npc.level} · {npc.xp} XP · <GameIcon iconKey="coins" size={10} color="var(--color-gold)" /> {npc.coins} coins
+                    Lv {npc.level} · {npc.xp} XP · {npc.seedReward
+                      ? <span class="flex items-center gap-0.5">🌱 seeds</span>
+                      : <><GameIcon iconKey="coins" size={10} color="var(--color-gold)" /> {npc.coins} coins</>}
                   </div>
                   <div class="text-[10px] text-[var(--color-parchment)] opacity-40">{npc.description}</div>
                 </div>
                 <div class="text-right ml-3 flex flex-col justify-center">
                   <div class="text-xs font-[var(--font-mono)] text-[var(--color-gold)] flex items-center gap-0.5 justify-end">
-                    <GameIcon iconKey="coins" size={13} color="var(--color-gold)" /> {npc.coins.toLocaleString()}
+                    {npc.seedReward
+                      ? <span>🌱 seeds</span>
+                      : <><GameIcon iconKey="coins" size={13} color="var(--color-gold)" /> {npc.coins.toLocaleString()}</>}
                   </div>
                   <div class="text-[10px] text-[var(--color-parchment)] opacity-30">per pocket</div>
                 </div>
@@ -190,7 +223,7 @@ export default function ThievingScreen({ initialNpcId, idleResult, onBack }) {
   }
 
   // Active pickpocketing
-  const progress = getActionProgress(thieving.active, thieving.ticksRemaining, 4)
+  const progress = getActionProgress(thieving.active, thieving.ticksRemaining, thieving.npc.pickpocketTicks || 4)
   const elapsed = thieving.startedAt ? Date.now() - thieving.startedAt : 0
   const pickpocketsPerHr = elapsed > 5000 && thieving.totalPickpockets > 0
     ? Math.round(thieving.totalPickpockets / (elapsed / 3_600_000))
@@ -233,16 +266,25 @@ export default function ThievingScreen({ initialNpcId, idleResult, onBack }) {
             <span class="text-[var(--color-parchment)] opacity-60">XP/hr</span>
             <span class="font-[var(--font-mono)] text-[var(--color-gold)]">{xpPerHr ? formatNumber(xpPerHr) : '—'}</span>
           </div>
-          <div class="flex justify-between text-sm">
-            <span class="text-[var(--color-parchment)] opacity-60">Coins earned</span>
-            <span class="font-[var(--font-mono)] text-[var(--color-gold)] flex items-center gap-1"><GameIcon iconKey="coins" size={14} color="var(--color-gold)" /> {thieving.totalCoins.toLocaleString()}</span>
-          </div>
-          <div class="flex justify-between text-sm">
-            <span class="text-[var(--color-parchment)] opacity-60">Coins/hr</span>
-            <span class="font-[var(--font-mono)] text-[var(--color-gold)] flex items-center gap-1">
-              {xpPerHr ? <><GameIcon iconKey="coins" size={14} color="var(--color-gold)" /> {Math.round(thieving.totalCoins / (elapsed / 3_600_000)).toLocaleString()}</> : '—'}
-            </span>
-          </div>
+          {thieving.npc.seedReward ? (
+            <div class="flex justify-between text-sm">
+              <span class="text-[var(--color-parchment)] opacity-60">Seeds collected</span>
+              <span class="font-[var(--font-mono)] text-[var(--color-gold)] flex items-center gap-1">🌱 {(thieving.totalSeeds || 0).toLocaleString()}</span>
+            </div>
+          ) : (
+            <>
+              <div class="flex justify-between text-sm">
+                <span class="text-[var(--color-parchment)] opacity-60">Coins earned</span>
+                <span class="font-[var(--font-mono)] text-[var(--color-gold)] flex items-center gap-1"><GameIcon iconKey="coins" size={14} color="var(--color-gold)" /> {thieving.totalCoins.toLocaleString()}</span>
+              </div>
+              <div class="flex justify-between text-sm">
+                <span class="text-[var(--color-parchment)] opacity-60">Coins/hr</span>
+                <span class="font-[var(--font-mono)] text-[var(--color-gold)] flex items-center gap-1">
+                  {xpPerHr ? <><GameIcon iconKey="coins" size={14} color="var(--color-gold)" /> {Math.round(thieving.totalCoins / (elapsed / 3_600_000)).toLocaleString()}</> : '—'}
+                </span>
+              </div>
+            </>
+          )}
         </div>
       </div>
 

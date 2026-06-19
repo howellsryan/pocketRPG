@@ -4,7 +4,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   getItemUnitValue,
-  isHighValueDrop,
+  isLegendaryItem,
   getLootTotalValue,
   isEpicLootValue,
   hasEpicLootDrop,
@@ -14,6 +14,7 @@ import {
 const items = {
   shrimps: { id: 'shrimps', shopValue: 5 },
   rune_sword: { id: 'rune_sword', shopValue: 700_000 },
+  legendary_blade: { id: 'legendary_blade', shopValue: 1_000_000 },
   nether_demon_whip: { id: 'nether_demon_whip', shopValue: 1_500_000 },
   fire_cape: { id: 'fire_cape', shopValue: 0 },
 }
@@ -63,15 +64,17 @@ describe('epic loot threshold (purple fireworks)', () => {
     expect(isEpicLootValue(getLootTotalValue(loot, items))).toBe(true)
   })
 
-  it('isHighValueDrop matches the same threshold per drop', () => {
-    expect(isHighValueDrop('nether_demon_whip', 1, items)).toBe(true)
-    expect(isHighValueDrop('shrimps', 1000, items)).toBe(false)
+  it('isLegendaryItem keys off unit value at/above the threshold', () => {
+    expect(isLegendaryItem('nether_demon_whip', items)).toBe(true)
+    expect(isLegendaryItem('legendary_blade', items)).toBe(true) // exactly 1m qualifies
+    expect(isLegendaryItem('rune_sword', items)).toBe(false)
+    expect(isLegendaryItem('shrimps', items)).toBe(false)
   })
 })
 
-describe('hasEpicLootDrop (purple keys off a single rare item, not the total)', () => {
-  it('is false when no single item exceeds 1m, even if the total does', () => {
-    // Two 700k items sum to 1.4m, but neither stack is individually >1m.
+describe('hasEpicLootDrop (purple keys off a single legendary item, not the total)', () => {
+  it('is false when no single item is legendary, even if the total exceeds 1m', () => {
+    // Two 700k items sum to 1.4m, but neither item is individually legendary.
     const loot = [
       { itemId: 'rune_sword', quantity: 1 },
       { itemId: 'rune_sword', quantity: 1 },
@@ -80,17 +83,18 @@ describe('hasEpicLootDrop (purple keys off a single rare item, not the total)', 
     expect(hasEpicLootDrop(loot, items)).toBe(false)
   })
 
-  it('is true when at least one item stack exceeds 1m', () => {
+  it('is false for a large stack of cheap items even when the stack value exceeds 1m', () => {
+    // 2 × 700k = 1.4m in a single stack, but rune_sword is not legendary.
+    expect(hasEpicLootDrop([{ itemId: 'rune_sword', quantity: 2 }], items)).toBe(false)
+    expect(hasEpicLootDrop([{ itemId: 'shrimps', quantity: 1_000_000 }], items)).toBe(false)
+  })
+
+  it('is true when at least one legendary item is received', () => {
     const loot = [
       { itemId: 'shrimps', quantity: 3 },
       { itemId: 'nether_demon_whip', quantity: 1 },
     ]
     expect(hasEpicLootDrop(loot, items)).toBe(true)
-  })
-
-  it('counts stack value, so enough copies of a sub-1m item still qualify', () => {
-    // 2 × 700k = 1.4m in a single stack.
-    expect(hasEpicLootDrop([{ itemId: 'rune_sword', quantity: 2 }], items)).toBe(true)
   })
 
   it('accepts a map and handles empty/null loot', () => {

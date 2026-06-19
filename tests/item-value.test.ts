@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { isHighValueDrop } from '../src/utils/itemValue.js'
+import { isLegendaryItem } from '../src/utils/itemValue.js'
 
 const itemsData: any = {
   expensive: { shopValue: 1_000_001 },
@@ -8,26 +8,28 @@ const itemsData: any = {
   novalue: { shopValue: 0 },
 }
 
-describe('isHighValueDrop', () => {
+describe('isLegendaryItem', () => {
   it('returns false for missing item', () => {
-    expect(isHighValueDrop('missing', 1, itemsData)).toBe(false)
+    expect(isLegendaryItem('missing', itemsData)).toBe(false)
   })
 
   it('returns false for missing/zero value', () => {
-    expect(isHighValueDrop('novalue', 1, itemsData)).toBe(false)
+    expect(isLegendaryItem('novalue', itemsData)).toBe(false)
   })
 
-  it('returns false at exactly 1,000,000 total', () => {
-    expect(isHighValueDrop('exact', 1, itemsData)).toBe(false)
-    expect(isHighValueDrop('coins', 1_000_000, itemsData)).toBe(false)
+  it('returns true at exactly 1,000,000 (matches the Legendary rarity label)', () => {
+    expect(isLegendaryItem('exact', itemsData)).toBe(true)
   })
 
-  it('returns true above 1,000,000 total', () => {
-    expect(isHighValueDrop('expensive', 1, itemsData)).toBe(true)
-    expect(isHighValueDrop('coins', 1_000_001, itemsData)).toBe(true)
+  it('returns true above 1,000,000', () => {
+    expect(isLegendaryItem('expensive', itemsData)).toBe(true)
   })
 
-  it('uses quantity multiplication', () => {
-    expect(isHighValueDrop('stack', 2, itemsData)).toBe(true)
+  it('keys off unit value only — quantity is irrelevant', () => {
+    // A 600k item is never legendary, no matter how many drop. (The old
+    // stack-based behaviour would have turned a stack worth >1m purple.)
+    expect(isLegendaryItem('stack', itemsData)).toBe(false)
+    // Coins (unit value 1) are never legendary, even an enormous pile.
+    expect(isLegendaryItem('coins', itemsData)).toBe(false)
   })
 })

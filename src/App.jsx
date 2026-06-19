@@ -59,7 +59,7 @@ import { getLevelFromXP } from './engine/experience.js'
 import { pvpApi } from './cloud/pvp.js'
 import { SKIP_HOUR_MS, getSkipPreflight, isChargeableSkipOutcome } from './engine/skipPreflight.js'
 import { getSlayerTaskReward } from './engine/slayerRewards.js'
-import { isHighValueDrop, hasEpicLootDrop, getItemUnitValue } from './utils/itemValue.js'
+import { hasEpicLootDrop, getItemUnitValue } from './utils/itemValue.js'
 import LootResultModal, { SummaryCard, SuppliesCard } from './components/LootResultModal.jsx'
 import GameIcon from './components/GameIcon.jsx'
 import { computeIdleElapsedMs } from './utils/idleElapsed.js'
@@ -1496,6 +1496,10 @@ function GameApp() {
     }
     // Coin rewards: alchemy (skill), agility and thieving.
     if (result.coinsGained > 0) updateBankDirect({ coins: result.coinsGained })
+    // Thieving seed rewards (Master Farmer) go straight to the bank.
+    if (result.itemsGained && Object.keys(result.itemsGained).length > 0) {
+      updateBankDirect(result.itemsGained)
+    }
     // Hunter loot goes straight to the bank.
     if (task.type === 'hunter' && Array.isArray(result.rewards) && result.rewards.length > 0) {
       const banked = {}

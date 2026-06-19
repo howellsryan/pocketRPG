@@ -3,6 +3,7 @@ import SkillEmblem from '../components/SkillEmblem.jsx'
 import GameIcon from '../components/GameIcon.jsx'
 import collectionLogData from '../data/collectionLog.json'
 import { formatDropChance } from '../utils/constants.js'
+import { getMonsterSeedDrops } from '../engine/seedDrops.js'
 import {
   getMonsterArt,
   getRaidArt,
@@ -138,7 +139,10 @@ export function CombatMonsterInfoSheet({ monster, categoryKey, itemsData, onClos
   const weakness = getMonsterWeakness(monster)
   const maxHit = getMonsterMaxHit(monster)
   const uniques = loggedUniques('monsters', monster.id)
-  const regularDrops = (monster.drops || []).filter(d => !uniques.includes(d.itemId))
+  const regularDrops = [
+    ...(monster.drops || []).filter(d => !uniques.includes(d.itemId)),
+    ...getMonsterSeedDrops(monster),
+  ]
 
   const stats = [
     ['Combat', monster.combatLevel],
