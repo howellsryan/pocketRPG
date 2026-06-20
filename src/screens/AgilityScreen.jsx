@@ -193,12 +193,11 @@ export default function AgilityScreen({ initialActionId, idleResult, onBack }) {
           xp={agilityXP}
           level={agilityLevel}
           onBack={onBack}
-          backLabel="Skills"
         />
 
         <SkillInfoBanner
           tone="neutral"
-          icon={<SkillIcon skill="agility" size={19} color="var(--color-gold)" />}
+          icon={<SkillIcon skill="agility" size={19} />}
           className="mb-4"
         >
           Current bank speed: <span class="text-[var(--color-gold)] font-bold opacity-100">{formatBankDelay(bankDelay)}</span> delay per full inventory
@@ -210,7 +209,7 @@ export default function AgilityScreen({ initialActionId, idleResult, onBack }) {
             return (
               <SkillActionRow
                 key={action.id}
-                icon={<SkillIcon skill="agility" size={26} color="var(--color-gold)" />}
+                icon={<SkillIcon skill="agility" size={26} />}
                 title={action.name}
                 meta={<><span class="text-[var(--color-gold)] font-bold opacity-100">Lv {action.level}</span> · {action.xp} XP · {(action.ticks * 0.6).toFixed(1)}s lap</>}
                 chip={<><GameIcon iconKey="coins" size={16} color="var(--color-gold)" /> {action.coinReward.toLocaleString()} / lap</>}

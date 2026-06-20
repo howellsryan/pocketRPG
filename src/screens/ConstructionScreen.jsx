@@ -178,7 +178,6 @@ export default function ConstructionScreen({ onBack }) {
         xp={stats.construction?.xp || 0}
         level={constructionLevel}
         onBack={onBack}
-        backLabel="Skills"
       />
 
       <SectionHeader className="mb-2.5">Building</SectionHeader>
@@ -196,7 +195,7 @@ export default function ConstructionScreen({ onBack }) {
           return (
             <SkillActionRow
               key={action.id}
-              icon={<SkillIcon skill="construction" size={26} color="var(--color-gold)" />}
+              icon={<SkillIcon skill="construction" size={26} />}
               title={action.name}
               meta={<>
                 <span class="text-[var(--color-gold)] font-bold opacity-100">Lv {action.level}</span> · {action.xp} XP · {(action.ticks * 0.6).toFixed(1)}s · Needs: {matName}

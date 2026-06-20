@@ -169,11 +169,10 @@ export default function HunterScreen({ initialActionId, idleResult, onBack }) {
           xp={hunterXP}
           level={hunterLevel}
           onBack={onBack}
-          backLabel="Skills"
         />
 
         <SkillInfoBanner
-          icon={<SkillIcon skill="hunter" size={19} color="var(--color-gold)" />}
+          icon={<SkillIcon skill="hunter" size={19} />}
           className="mb-4"
         >
           Hunt creatures and NPCs to earn items and experience.
@@ -186,7 +185,7 @@ export default function HunterScreen({ initialActionId, idleResult, onBack }) {
               <div key={action.id} class="flex gap-2 items-center">
                 <div class="flex-1 min-w-0">
                   <SkillActionRow
-                    icon={<SkillIcon skill="hunter" size={26} color="var(--color-gold)" />}
+                    icon={<SkillIcon skill="hunter" size={26} />}
                     title={action.name}
                     meta={<><span class="text-[var(--color-gold)] font-bold opacity-100">Lv {action.level}</span> · {action.xp} XP · {action.description}</>}
                     active={activeTask?.type === 'hunter' && activeTask.action?.id === action.id}

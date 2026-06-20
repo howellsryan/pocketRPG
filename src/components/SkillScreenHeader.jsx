@@ -49,7 +49,7 @@ export default function SkillScreenHeader({
 
       <div class="flex items-center gap-3.5">
         <div class="w-[52px] h-[52px] flex-shrink-0 rounded-2xl flex items-center justify-center bg-gradient-to-br from-[rgba(212,160,23,0.16)] to-[rgba(212,160,23,0.03)] border border-[rgba(212,160,23,0.28)]">
-          <SkillIcon skill={skill} size={28} color="var(--color-gold)" />
+          <SkillIcon skill={skill} size={28} />
         </div>
         <div class="flex-1 min-w-0">
           <div class="font-[var(--font-display)] text-[22px] font-bold text-[var(--color-gold)] leading-tight truncate">

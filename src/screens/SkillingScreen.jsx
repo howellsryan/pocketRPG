@@ -801,7 +801,7 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
             return (
               <SkillActionRow
                 key={action.id}
-                icon={productItem ? <GameIcon item={productItem} size={26} /> : <SkillIcon skill={selectedSkill} size={26} color="var(--color-gold)" />}
+                icon={productItem ? <GameIcon item={productItem} size={26} /> : <SkillIcon skill={selectedSkill} size={26} />}
                 title={action.name}
                 meta={meta}
                 chip={action.product && !action.dropTable ? <>→ {itemsData[action.product]?.name || action.product}</> : null}

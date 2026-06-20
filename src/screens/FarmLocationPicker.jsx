@@ -26,7 +26,6 @@ export default function FarmLocationPicker({ farmingLevel, farmingXp = 0, farmin
         xp={farmingXp}
         level={farmingLevel}
         onBack={onBack}
-        backLabel="Skills"
       />
 
       <div class="flex gap-2 mb-4">
@@ -35,7 +34,7 @@ export default function FarmLocationPicker({ farmingLevel, farmingXp = 0, farmin
       </div>
 
       <SkillInfoBanner
-        icon={<SkillIcon skill="farming" size={19} color="var(--color-gold)" />}
+        icon={<SkillIcon skill="farming" size={19} />}
         className="mb-4"
       >
         Plant seeds at farms and harvest crops over time.
@@ -48,7 +47,7 @@ export default function FarmLocationPicker({ farmingLevel, farmingXp = 0, farmin
           return (
             <SkillActionRow
               key={location.id}
-              icon={<SkillIcon skill="farming" size={26} color="var(--color-gold)" />}
+              icon={<SkillIcon skill="farming" size={26} />}
               title={location.name}
               meta={<>
                 {location.patches.map(p => `${p.count}× ${patchTypeLabels[p.type]}`).join(' · ')}

@@ -35,7 +35,7 @@ export default function SkillActivePanel({
   stopLabel = 'Stop & Back',
 }) {
   const pct = Math.max(0, Math.min(100, Math.round(progress * 100)))
-  const glyph = icon || <SkillIcon skill={skill} size={50} color="var(--color-gold-light)" />
+  const glyph = icon || <SkillIcon skill={skill} size={50} />
 
   return (
     <div class="h-full flex flex-col px-5 pt-2 min-h-0">

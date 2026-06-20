@@ -221,11 +221,10 @@ export default function ThievingScreen({ initialNpcId, idleResult, onBack }) {
           xp={thievingXP}
           level={thievingLevel}
           onBack={onBack}
-          backLabel="Skills"
         />
 
         <SkillInfoBanner
-          icon={<SkillIcon skill="thieving" size={19} color="var(--color-gold)" />}
+          icon={<SkillIcon skill="thieving" size={19} />}
           className="mb-4"
         >
           Pickpocket targets to earn coins and experience.
@@ -237,7 +236,7 @@ export default function ThievingScreen({ initialNpcId, idleResult, onBack }) {
             return (
               <SkillActionRow
                 key={npc.id}
-                icon={<SkillIcon skill="thieving" size={26} color="var(--color-gold)" />}
+                icon={<SkillIcon skill="thieving" size={26} />}
                 title={npc.name}
                 meta={<><span class="text-[var(--color-gold)] font-bold opacity-100">Lv {npc.level}</span> · {npc.xp} XP · {npc.description}</>}
                 chip={npc.seedReward

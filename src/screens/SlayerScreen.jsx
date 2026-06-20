@@ -177,7 +177,6 @@ export default function SlayerScreen({ onBack, onNavigate }) {
         xp={stats.slayer?.xp || 0}
         level={slayerLevel}
         onBack={onBack}
-        backLabel="Skills"
         right={(
           <div class="text-right flex-shrink-0">
             <div class="text-[13px] font-bold font-[var(--font-mono)] text-[var(--color-gold)]">{slayerPoints.toLocaleString()} pts</div>

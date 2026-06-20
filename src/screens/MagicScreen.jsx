@@ -302,7 +302,6 @@ export default function MagicScreen({ onBack, onNavigate }) {
         xp={stats.magic?.xp || 0}
         level={magicLevel}
         onBack={handleBack}
-        backLabel="Skills"
       />
 
       {grouped.map(({ label, actions }) => (
@@ -334,7 +333,7 @@ export default function MagicScreen({ onBack, onNavigate }) {
               return (
                 <SkillActionRow
                   key={action.id}
-                  icon={productItem ? <GameIcon item={productItem} size={26} /> : <SkillIcon skill="magic" size={26} color="var(--color-gold)" />}
+                  icon={productItem ? <GameIcon item={productItem} size={26} /> : <SkillIcon skill="magic" size={26} />}
                   title={action.name}
                   meta={<>
                     <span class="text-[var(--color-gold)] font-bold opacity-100">Lv {action.level}</span> · {action.xp} XP · {formatActionDuration(action.ticks)}
