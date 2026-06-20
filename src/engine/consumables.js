@@ -11,6 +11,10 @@
  * prayer-point pool and bank-draw rules; it is intentionally not unified here.
  */
 
+// Prayer points restored by drinking a restore potion mid-combat (kept in sync
+// with prayerDrain.js, duplicated here to avoid a circular import).
+const PRAYER_RESTORE_AMOUNTS = { prayer: 20, super_restore: 22 }
+
 // Heal amount granted by eating a food/brew item (canonical `heals`, legacy `heal`).
 export function getHealAmount(item) {
   const n = Number(item?.heals ?? item?.heal ?? 0)
@@ -122,14 +126,22 @@ export function applyConsumableEffect(actor, item, itemId, kind) {
   }
 
   // Drink a potion: register its buff for the full duration. HP-effect potions
-  // also heal immediately. Non-boosting potions (prayer/super_restore) are
-  // consumed for no mechanical effect, matching live PvE.
+  // also heal immediately; prayer/super_restore potions refill the prayer pool
+  // when the actor tracks one (live combat). Both effects fall through harmlessly
+  // when the actor has no matching field.
   actor.activePotions[itemId] = getPotionDurationTicks(item)
   if (item.effect === 'hp') {
     const heal = Number(item.boost) || 10
     const before = actor.hp
     actor.hp = Math.min(maxHP, actor.hp + heal)
     return { healed: actor.hp - before, wiped: false, buffed: true }
+  }
+  const restore = PRAYER_RESTORE_AMOUNTS[item.effect] || 0
+  if (restore > 0 && typeof actor.prayerPoints === 'number') {
+    const max = Number(actor.maxPrayerPoints) || actor.prayerPoints
+    const before = actor.prayerPoints
+    actor.prayerPoints = Math.min(max, actor.prayerPoints + restore)
+    return { healed: 0, wiped: false, buffed: true, prayerRestored: actor.prayerPoints - before }
   }
   return { healed: 0, wiped: false, buffed: true }
 }

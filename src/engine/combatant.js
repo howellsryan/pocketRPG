@@ -62,6 +62,7 @@
 // Quantity for non-stackable items is always 1; stackables use real counts.
 
 import { getLevelFromXP } from './experience.js'
+import { getMaxPrayerPoints } from './prayerDrain.js'
 import { EQUIPMENT_SLOTS, INVENTORY_SIZE } from '../utils/constants.js'
 
 /** Spec energy at match start. PvP rule: starts at 100 and regenerates during match. */
@@ -167,6 +168,12 @@ export function buildPlayerCombatant({
     comboCooldown: 0,
     activeCombatPrayer: null,
     activeProtectionPrayer: null,    // protection prayers disabled in v1
+    // Prayer pool (OSRS-influenced): caps at Prayer level, drains while a combat
+    // prayer is active, refilled by restore potions. Protection prayers stay off
+    // in PvP v1, so only offensive prayers ever drain here.
+    prayerPoints: getMaxPrayerPoints(normalised.prayer),
+    maxPrayerPoints: getMaxPrayerPoints(normalised.prayer),
+    prayerDrainAccumulator: 0,
     activePotions: {},
     specialAttackEnergy: PVP_INITIAL_SPEC_ENERGY,
     specialAttackQueued: false,

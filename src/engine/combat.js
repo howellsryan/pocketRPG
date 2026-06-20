@@ -11,6 +11,7 @@ import { MELEE_XP_PER_DAMAGE, RANGED_XP_PER_DAMAGE, MAGIC_XP_PER_DAMAGE, HP_XP_P
 import { randInt } from '../utils/helpers.js'
 import { getSlayerTaskEquipmentBonuses } from './slayerCombatBonuses.js'
 import { getPotionStatBoost, getActivePotionBoosts } from './consumables.js'
+import { applyPrayerDrainTick } from './prayerDrain.js'
 import { getVoidKingCombatMultipliers } from './combatSetBonuses.js'
 import { getMonsterSeedDrops } from './seedDrops.js'
 
@@ -47,6 +48,9 @@ export function createCombatState(monster, combatType = 'melee', stance = 'accur
     specialAttackQueued: false,  // flag to fire special attack on next available tick
     activeProtectionPrayer: null,  // one protection prayer, reset on each new fight
     activeCombatPrayer: null,      // one combat enhancing prayer, reset on each new fight
+    prayerPoints: null,            // prayer-point pool (set by the screen to Prayer level at fight start)
+    maxPrayerPoints: null,         // pool cap = Prayer level
+    prayerDrainAccumulator: 0,     // fractional carry for sub-1/tick drain
     activePotions: {},             // { potionItemId: durationInTicks } - multiple different potion types allowed
     doubleKillCount: 0,            // tracks how many times a requiresDoubleKill boss has been defeated
     raid: null                     // raid state: { raidId, bosses[], currentBossIndex, monstersData }
@@ -357,6 +361,10 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
   if (state.eatCooldown > 0) state.eatCooldown--
   if (state.potionCooldown > 0) state.potionCooldown--
   if (state.comboCooldown > 0) state.comboCooldown--
+
+  // Drain the prayer pool for this tick (higher-tier prayers drain faster). When
+  // it empties, active prayers switch off — so their bonuses below are skipped.
+  applyPrayerDrainTick(state, prayersData)
 
   // Decrement potion durations and remove expired potions
   for (const [potionId, duration] of Object.entries(state.activePotions)) {

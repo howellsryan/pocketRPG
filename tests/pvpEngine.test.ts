@@ -24,6 +24,7 @@ const items = {
   strength_potion: { id: 'strength_potion', type: 'potion', effect: 'strength', boost: 13, duration: 300 },
   defence_potion: { id: 'defence_potion', type: 'potion', effect: 'defence', boost: 13, duration: 300 },
   ranging_potion: { id: 'ranging_potion', type: 'potion', effect: 'ranged', boost: 14, duration: 300 },
+  prayer_potion: { id: 'prayer_potion', type: 'potion', effect: 'prayer', boost: 32, duration: 300 },
 }
 
 function buildPlayer(overrides: any = {}) {
@@ -208,6 +209,41 @@ describe('pvpEngine phase 2B contract', () => {
     expect(out.events.some((e: any) => e.type === 'eat')).toBe(true)
     expect(out.events.some((e: any) => e.type === 'attack' && e.attackerCharacterId === 1)).toBe(false)
     expect(out.stateNext.combatants['1'].attackTimer).toBe(4)
+  })
+
+  it('drains the prayer pool while a combat prayer is active', () => {
+    const a = buildPlayer({ characterId: 1 })
+    const b = buildPlayer({ characterId: 2 })
+    let state = createPvpState(a, b, 0)
+    state.combatants['1'].attackTimer = 99
+    state.combatants['2'].attackTimer = 99
+    expect(state.combatants['1'].prayerPoints).toBe(99) // = Prayer level
+
+    // Activate a damage prayer, then let several ticks elapse.
+    let out = processPvpTick(state, [
+      { tick_number: 1, characterId: 1, characterSeq: 1, action: { type: 'toggle_prayer', prayerId: 'piety' } },
+    ], items)
+    expect(out.stateNext.combatants['1'].activeCombatPrayer).toBe('piety')
+
+    for (let i = 0; i < 250; i++) out = processPvpTick(out.stateNext, [], items)
+    // Piety drains 40/min = 0.4/tick → 250 ticks ≈ 100 points, so a 99 pool empties.
+    expect(out.stateNext.combatants['1'].prayerPoints).toBe(0)
+    expect(out.stateNext.combatants['1'].activeCombatPrayer).toBe(null) // switched off when empty
+  })
+
+  it('restores prayer points when a prayer potion is drunk', () => {
+    const a = buildPlayer({ characterId: 1, inventory: [{ itemId: 'prayer_potion', quantity: 1 }] })
+    const b = buildPlayer({ characterId: 2 })
+    const state = createPvpState(a, b, 0)
+    state.combatants['1'].attackTimer = 99
+    state.combatants['2'].attackTimer = 99
+    state.combatants['1'].prayerPoints = 50
+
+    const out = processPvpTick(state, [
+      { tick_number: 1, characterId: 1, characterSeq: 1, action: { type: 'drink_potion', inventorySlot: 0 } },
+    ], items)
+    // +20 from the prayer potion, capped at maxPrayerPoints (99).
+    expect(out.stateNext.combatants['1'].prayerPoints).toBe(70)
   })
 
   it('trims recentEvents to the latest 20 entries', () => {

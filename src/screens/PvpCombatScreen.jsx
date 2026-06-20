@@ -43,12 +43,15 @@ function formatPvpRank(combatant) {
   return Number.isFinite(rank) && rank > 0 ? `#${Math.floor(rank)}` : 'No Rank'
 }
 
-function CompactHpBadge({ label, combatant, align = 'left', splats = null }) {
+function CompactHpBadge({ label, combatant, align = 'left', splats = null, showPrayer = false }) {
   const current = Math.max(0, Number(combatant?.hp ?? combatant?.currentHP ?? 0) || 0)
   const max = Math.max(1, Number(combatant?.maxHP ?? 1) || 1)
   const pct = Math.max(0, Math.min(100, (current / max) * 100))
   const totalRisk = getCombatantTotalRisk(combatant)
   const rankLabel = formatPvpRank(combatant)
+  const prayerMax = Math.max(0, Number(combatant?.maxPrayerPoints ?? 0) || 0)
+  const prayerPts = Math.max(0, Math.ceil(Number(combatant?.prayerPoints ?? 0) || 0))
+  const prayerPct = prayerMax > 0 ? Math.max(0, Math.min(100, (prayerPts / prayerMax) * 100)) : 0
 
   return (
     <div class={`relative min-w-0 ${align === 'right' ? 'text-right' : 'text-left'}`}>
@@ -64,6 +67,14 @@ function CompactHpBadge({ label, combatant, align = 'left', splats = null }) {
       <div class="h-1.5 rounded bg-[var(--color-void)] overflow-hidden mt-1">
         <div class="h-full bg-[var(--color-blood-light)]" style={{ width: `${pct}%` }} />
       </div>
+      {showPrayer && prayerMax > 0 && (
+        <>
+          <div class="text-[10px] font-[var(--font-mono)] text-[#7ec8ff] mt-1">🙏 {prayerPts}/{prayerMax}</div>
+          <div class="h-1.5 rounded bg-[var(--color-void)] overflow-hidden mt-0.5">
+            <div class="h-full bg-[#5aa0e0]" style={{ width: `${prayerPct}%` }} />
+          </div>
+        </>
+      )}
     </div>
   )
 }
@@ -771,7 +782,7 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
         <div class="grid grid-cols-[minmax(220px,1fr)_minmax(0,1.4fr)_minmax(220px,1fr)] gap-4 items-start">
           <div class="space-y-2">
             <Card className="bg-[var(--color-void-dark)]">
-              <CompactHpBadge label="You" combatant={pair.self} align="left" splats={selfSplats} />
+              <CompactHpBadge label="You" combatant={pair.self} align="left" splats={selfSplats} showPrayer />
             </Card>
             <Card>
               <div class="flex items-center justify-between mb-2">
@@ -877,7 +888,7 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
           <Card className="bg-[var(--color-void-dark)]">
             <div class="grid grid-cols-2 gap-3 items-start">
               <CompactHpBadge label="Opponent" combatant={pair.opp} align="left" splats={oppSplats} />
-              <CompactHpBadge label="You" combatant={pair.self} align="right" splats={selfSplats} />
+              <CompactHpBadge label="You" combatant={pair.self} align="right" splats={selfSplats} showPrayer />
             </div>
             <div class="mt-2 text-center text-[10px] font-[var(--font-mono)] text-[var(--color-gold)]">
               Tick {state?.tick ?? matchMeta?.current_tick ?? 0}

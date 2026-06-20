@@ -8277,7 +8277,7 @@
     "icon": "\ud83e\uddea",
     "effect": "prayer",
     "boost": 32,
-    "idlePrayerRestore": 15,
+    "idlePrayerRestore": 20,
     "duration": 300,
     "isGeneralStore": false
   },
@@ -8316,7 +8316,7 @@
     "shopValue": 5000,
     "icon": "\ud83e\uddea",
     "effect": "super_restore",
-    "idlePrayerRestore": 20,
+    "idlePrayerRestore": 22,
     "duration": 300,
     "isGeneralStore": false
   },
