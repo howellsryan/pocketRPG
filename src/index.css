@@ -892,7 +892,10 @@ html, body, #app {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 14px 0;
+  /* Push controls (and the scrollable title below) clear of the phone status
+     bar (time/battery/signal) in the native app / standalone PWA. Resolves to
+     14px in a normal browser where the inset is 0. */
+  padding: calc(14px + env(safe-area-inset-top, 0px)) 14px 0;
   flex-shrink: 0;
 }
 
@@ -1321,7 +1324,9 @@ html, body, #app {
   z-index: 4;
   display: flex;
   gap: 10px;
-  padding: 14px 18px 18px;
+  /* Keep the action buttons above the home indicator / gesture bar. Resolves to
+     the base 18px in a normal browser where the inset is 0. */
+  padding: 14px 18px calc(18px + env(safe-area-inset-bottom, 0px));
   margin-top: auto;
   flex-shrink: 0;
 }
