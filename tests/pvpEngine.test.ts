@@ -19,6 +19,7 @@ const items = {
   },
   dragon_arrow: { id: 'dragon_arrow', slot: 'ammo', stackable: true, otherBonus: { rangedStrength: 60 } },
   shark: { id: 'shark', type: 'food', heals: 20, stackable: false },
+  karam: { id: 'karam', type: 'food', heals: 18, combo: true, stackable: false },
   attack_potion: { id: 'attack_potion', type: 'potion', effect: 'attack', boost: 13, duration: 300 },
   strength_potion: { id: 'strength_potion', type: 'potion', effect: 'strength', boost: 13, duration: 300 },
   defence_potion: { id: 'defence_potion', type: 'potion', effect: 'defence', boost: 13, duration: 300 },
@@ -95,6 +96,46 @@ describe('pvpEngine phase 2B contract', () => {
 
     expect(out.events.some(e => e.type === 'eat')).toBe(true)
     expect(out.stateNext.combatants['1'].hp).toBeGreaterThan(0)
+  })
+
+  it('eats a normal food and a combo food on the same tick (both heal)', () => {
+    const a = buildPlayer({
+      characterId: 1, currentHP: 10, maxHP: 99,
+      inventory: [{ itemId: 'shark', quantity: 1 }, { itemId: 'karam', quantity: 1 }],
+    })
+    const b = buildPlayer({ characterId: 2, currentHP: 99 })
+    const state = createPvpState(a, b, 0)
+    state.combatants['1'].attackTimer = 99
+    state.combatants['2'].attackTimer = 99
+
+    const out = processPvpTick(state, [
+      { tick_number: 1, characterId: 1, characterSeq: 1, action: { type: 'eat', inventorySlot: 0 } },
+      { tick_number: 1, characterId: 1, characterSeq: 2, action: { type: 'eat', inventorySlot: 1 } },
+    ], items)
+
+    // Shark (20) + Karam (18) both land: 10 + 20 + 18 = 48
+    expect(out.stateNext.combatants['1'].hp).toBe(48)
+    expect(out.events.filter((e: any) => e.type === 'eat').length).toBe(2)
+  })
+
+  it('blocks a second normal food on the same tick (shared eat cooldown)', () => {
+    const a = buildPlayer({
+      characterId: 1, currentHP: 10, maxHP: 99,
+      inventory: [{ itemId: 'shark', quantity: 1 }, { itemId: 'shark', quantity: 1 }],
+    })
+    const b = buildPlayer({ characterId: 2, currentHP: 99 })
+    const state = createPvpState(a, b, 0)
+    state.combatants['1'].attackTimer = 99
+    state.combatants['2'].attackTimer = 99
+
+    const out = processPvpTick(state, [
+      { tick_number: 1, characterId: 1, characterSeq: 1, action: { type: 'eat', inventorySlot: 0 } },
+      { tick_number: 1, characterId: 1, characterSeq: 2, action: { type: 'eat', inventorySlot: 1 } },
+    ], items)
+
+    // Only the first shark lands: 10 + 20 = 30
+    expect(out.stateNext.combatants['1'].hp).toBe(30)
+    expect(out.events.filter((e: any) => e.type === 'eat').length).toBe(1)
   })
 
   it('recomputes combatType when a weapon of a different style is equipped', () => {

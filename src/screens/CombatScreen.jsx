@@ -18,8 +18,8 @@ import { CombatMonsterInfoSheet, CombatRaidInfoSheet, MultiStyleChip } from './C
 import { getMonsterArt, getMonsterAttackStyles, getMonsterWeakness } from '../utils/combatArt.js'
 import { getSkillArt } from '../utils/skillArt.js'
 import { getPrayerStyleIcon } from '../utils/prayerIcons.js'
-import { createCombatState, createRaidCombatState, processCombatTick, applyEat, applySpecialAttack, applyInstantKill } from '../engine/combat.js'
-import { applyConsumableEffect, isLumiraBrew } from '../engine/consumables.js'
+import { createCombatState, createRaidCombatState, processCombatTick, applyEat, applyCombo, applySpecialAttack, applyInstantKill } from '../engine/combat.js'
+import { applyConsumableEffect, isLumiraBrew, isComboConsumable } from '../engine/consumables.js'
 import { getLevelFromXP } from '../engine/experience.js'
 import { getMonsterSeedDrops } from '../engine/seedDrops.js'
 import { getAgilityBankDelayMs, formatBankDelay } from '../engine/agility.js'
@@ -1211,11 +1211,12 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     hpRef.current = actor.hp
 
     if (combat) {
-      // Carry the wiped potion set into combat state, then apply the eat-delay so
-      // the brew shares the food cooldown.
-      const afterEat = applyEat({ ...combatRef.current, activePotions: actor.activePotions })
-      setCombat(afterEat)
-      combatRef.current = afterEat
+      // Carry the wiped potion set into combat state. A brew is a combo item, so
+      // it uses the combo cooldown — it can be drunk on the same tick as a normal
+      // food and does not delay the next attack.
+      const afterCombo = applyCombo({ ...combatRef.current, activePotions: actor.activePotions })
+      setCombat(afterCombo)
+      combatRef.current = afterCombo
     }
 
     setLog(prev => [...prev.slice(-20), {
@@ -1263,7 +1264,9 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     hpRef.current = actor.hp
 
     if (combat) {
-      const newState = applyEat(combat)
+      // Combo food (e.g. Karam) uses the combo cooldown so it can be eaten on the
+      // same tick as a normal food; normal food uses the standard eat delay.
+      const newState = isComboConsumable(food) ? applyCombo(combat) : applyEat(combat)
       setCombat(newState)
       combatRef.current = newState
     }
@@ -1334,7 +1337,8 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     applyConsumableEffect(actor, potion, potionItemId, 'drink')
     updateHP(actor.hp)
     hpRef.current = actor.hp
-    const newState = { ...combatRef.current, activePotions: actor.activePotions }
+    // Potions are combo items — combo cooldown, no attack delay, same-tick as food.
+    const newState = applyCombo({ ...combatRef.current, activePotions: actor.activePotions })
 
     if (potion.effect === 'hp') {
       setLog(prev => [...prev.slice(-20), {

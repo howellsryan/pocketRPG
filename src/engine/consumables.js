@@ -32,6 +32,24 @@ export function isConsumablePotion(item) {
   return !!item && item.type === 'potion'
 }
 
+// A "combo" consumable can be used on the SAME tick as a normal food. This
+// covers combo food (e.g. Karam, flagged `combo: true`) and EVERY potion —
+// brews (which heal) and stat/restore potions alike. Combo items share a single
+// combo cooldown so only one lands per tick, independent of the normal-food eat
+// delay, and they do not delay the next attack. Used by both the PvE combat tick
+// and the server-authoritative PvP engine so the rule stays in lockstep.
+export function isComboConsumable(item) {
+  if (!item) return false
+  if (item.type === 'potion') return true
+  return item.type === 'food' && item.combo === true
+}
+
+// Normal food obeys the eat delay (one per few ticks) and blocks the next
+// attack. Combo food (Karam) is excluded.
+export function isNormalFood(item) {
+  return !!item && item.type === 'food' && item.combo !== true
+}
+
 // Buff duration in 600ms ticks. `item.duration` is in seconds (default 300s).
 export function getPotionDurationTicks(item) {
   return Math.floor((Number(item?.duration) || 300) / 0.6)

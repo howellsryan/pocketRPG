@@ -1016,6 +1016,33 @@
     "icon": "\ud83e\udd88",
     "isGeneralStore": false
   },
+  "raw_karam": {
+    "id": "raw_karam",
+    "legacy_item_id": "raw_karam",
+    "name": "Raw Karam",
+    "type": "resource",
+    "stackable": false,
+    "cookedInto": "karam",
+    "cookLevel": 65,
+    "cookXP": 190,
+    "burnStopLevel": 99,
+    "shopValue": 600,
+    "icon": "🐡",
+    "isGeneralStore": false
+  },
+  "karam": {
+    "id": "karam",
+    "legacy_item_id": "karam",
+    "name": "Karam",
+    "type": "food",
+    "stackable": false,
+    "heals": 18,
+    "eatTicks": 3,
+    "combo": true,
+    "shopValue": 1000,
+    "icon": "🐡",
+    "isGeneralStore": false
+  },
   "raw_manta_ray": {
     "id": "raw_manta_ray",
     "legacy_item_id": "raw_manta_ray",

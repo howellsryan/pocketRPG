@@ -164,6 +164,7 @@ export function buildPlayerCombatant({
     attackTimer: 0,
     eatCooldown: 0,
     potionCooldown: 0,
+    comboCooldown: 0,
     activeCombatPrayer: null,
     activeProtectionPrayer: null,    // protection prayers disabled in v1
     activePotions: {},

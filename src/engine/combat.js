@@ -38,6 +38,7 @@ export function createCombatState(monster, combatType = 'melee', stance = 'accur
     monsterAttackTimer: preparedMonster.attackSpeed || 4,  // 1-attack delay so player always gets first hit
     eatCooldown: 0,
     potionCooldown: 0,
+    comboCooldown: 0,  // combo food / potions — own cooldown, usable on the same tick as normal food
     log: [],         // combat log entries
     tickCount: 0,
     xpGained: {},    // accumulated xp per skill
@@ -355,6 +356,7 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
   if (state.monsterAttackTimer > 0) state.monsterAttackTimer--
   if (state.eatCooldown > 0) state.eatCooldown--
   if (state.potionCooldown > 0) state.potionCooldown--
+  if (state.comboCooldown > 0) state.comboCooldown--
 
   // Decrement potion durations and remove expired potions
   for (const [potionId, duration] of Object.entries(state.activePotions)) {
@@ -981,6 +983,15 @@ function rollRaidRewards(rewards) {
  */
 export function applyEat(combatState) {
   return { ...combatState, eatCooldown: EAT_TICK_COST, playerAttackTimer: Math.max(combatState.playerAttackTimer, EAT_TICK_COST) }
+}
+
+/**
+ * Apply a combo consumable (combo food like Karam, brews, or potions). Uses its
+ * own cooldown so it can be used on the SAME tick as a normal food, and — unlike
+ * eating — does NOT delay the next attack.
+ */
+export function applyCombo(combatState) {
+  return { ...combatState, comboCooldown: EAT_TICK_COST }
 }
 
 /**
