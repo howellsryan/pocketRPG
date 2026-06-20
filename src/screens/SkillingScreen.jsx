@@ -3,7 +3,11 @@ import { useGame } from '../state/gameState.jsx'
 import Modal from '../components/Modal.jsx'
 import GameIcon from '../components/GameIcon.jsx'
 import SkillIcon from '../components/SkillIcon.jsx'
-import ProgressBar from '../components/ProgressBar.jsx'
+import SkillScreenHeader from '../components/SkillScreenHeader.jsx'
+import SkillInfoBanner from '../components/SkillInfoBanner.jsx'
+import SkillActionRow from '../components/SkillActionRow.jsx'
+import SkillActivePanel from '../components/SkillActivePanel.jsx'
+import { getAgilityBankDelayMs, formatBankDelay } from '../engine/agility.js'
 import { getActionProgress } from '../hooks/useActionTick.js'
 import { STUB_SKILLS, GATHERING_SKILLS, PRODUCTION_SKILLS, UTILITY_SKILLS, SCREENS, formatDropChance, GATHER_AUTOBANK_CONSTRUCTION_LEVEL } from '../utils/constants.js'
 import { getLevelFromXP } from '../engine/experience.js'
@@ -618,37 +622,33 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
   if (!skilling) {
     return (
       <div class="h-full overflow-y-auto p-4">
-        <button onClick={() => setSelectedSkill(null)}
-          class="text-xs text-[var(--color-gold-dim)] mb-3 flex items-center gap-1">
-          ← Back
-        </button>
-
-        <div class="mb-1 flex items-center justify-between">
-          <h2 class="flex items-center gap-2 font-[var(--font-display)] text-base font-bold text-[var(--color-gold)] capitalize">
-            <SkillIcon skill={selectedSkill} size={20} /> {selectedSkill}
-          </h2>
-          {selectedSkill === 'dungeoneering' && (
-            <div class="inline-flex rounded-full border border-[var(--color-void-border)] bg-[var(--color-void-light)] px-2 py-1 text-[10px] font-[var(--font-mono)] text-[var(--color-gold)]">
-              Tokens: {formatNumber(dungeoneeringTokens)}
+        <SkillScreenHeader
+          skill={selectedSkill}
+          xp={skillXP}
+          level={skillLevel}
+          onBack={() => setSelectedSkill(null)}
+          right={selectedSkill === 'dungeoneering' && (
+            <div class="inline-flex rounded-full border border-[var(--color-void-border)] bg-[var(--color-void-light)] px-2.5 py-1 text-[11px] font-[var(--font-mono)] text-[var(--color-gold)]">
+              {formatNumber(dungeoneeringTokens)} tokens
             </div>
           )}
-        </div>
-        <p class="text-xs text-[var(--color-parchment)] opacity-40 mb-3">Level {skillLevel}</p>
+        />
 
         {/* Banking toggle for skilling */}
         {(() => {
           const needsTool = TOOL_SKILLS.includes(selectedSkill)
           const hasTool = !needsTool || hasToolForSkill(selectedSkill, equipment, inventory, itemsData, stats)
           const toolHint = needsTool && !hasTool ? (
-            <div class="mb-3 rounded-xl border border-[var(--color-void-border)] bg-[var(--color-void-light)] px-3 py-2 text-center">
-              <p class="text-xs text-[var(--color-parchment)] opacity-60">
-                {selectedSkill === 'mining'
-                  ? 'No pickaxe — mining bare-handed is slower. Equip or carry a pickaxe to mine faster.'
-                  : selectedSkill === 'woodcutting'
-                    ? 'No axe — chopping bare-handed is slower. Equip or carry an axe to chop faster.'
-                    : 'No fishing tool — fishing bare-handed is slower. Equip or carry a net, rod, or cage to fish faster.'}
-              </p>
-            </div>
+            <SkillInfoBanner
+              className="mb-4"
+              icon={<svg width="19" height="19" viewBox="0 0 24 24" fill="none"><path d="M12 3l9 16H3l9-16z" fill="none" stroke="var(--color-gold)" stroke-width="1.8" stroke-linejoin="round"/><path d="M12 10v4" stroke="var(--color-gold)" stroke-width="1.9" stroke-linecap="round"/><circle cx="12" cy="16.4" r="1" fill="var(--color-gold)"/></svg>}
+            >
+              {selectedSkill === 'mining'
+                ? 'No pickaxe — mining bare-handed is slower. Equip or carry a pickaxe to mine faster.'
+                : selectedSkill === 'woodcutting'
+                  ? 'No axe — chopping bare-handed is slower. Equip or carry an axe to chop faster.'
+                  : 'No fishing tool — fishing bare-handed is slower. Equip or carry a net, rod, or cage to fish faster.'}
+            </SkillInfoBanner>
           ) : null
           const renderActionRow = (action) => {
             const requiresGildedAltarConstruction = selectedSkill === 'prayer' && action.id?.startsWith('altar_')
@@ -678,74 +678,50 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
             const xpMultiplier = getEquippedSkillXpMultiplier(selectedSkill, equipment, itemsData)
             const displayXP = xpMultiplier !== 1 ? Math.floor(action.xp * xpMultiplier) : action.xp
             const productItem = action.product ? itemsData[action.product] : null
+            // Locked = the level/construction gate isn't met. Disabled = gated by
+            // missing materials/runes/items/tokens (the row still explains why).
+            const levelLocked = action.level > skillLevel
+            const remaining = calculateRemainingActions(action, inventory, bank)
+            const meta = isDungeoneeringReward
+              ? <><span class="text-[var(--color-gold)] font-bold opacity-100">Lv {action.level}</span> · Cost: {formatNumber(rewardCost)} tokens
+                  {rowEnabled === false && skillLevel >= action.level && <span class="block text-[var(--color-blood-ember)] mt-1">Need {formatNumber(rewardCost)} tokens</span>}
+                </>
+              : <>
+                  <span class="text-[var(--color-gold)] font-bold opacity-100">Lv {action.level}</span> · {displayXP} XP{xpMultiplier !== 1 && <span class="text-[var(--color-gold)] opacity-100"> (+{Math.round((xpMultiplier - 1) * 100)}%)</span>} · {effectiveTicks < action.ticks
+                    ? <><span class="line-through">{formatActionDuration(action.ticks)}</span> <span class="text-[var(--color-gold)] opacity-100">{formatActionDuration(effectiveTicks)}</span></>
+                    : effectiveTicks > action.ticks
+                    ? <span class="text-[var(--color-blood-ember)]">{formatActionDuration(effectiveTicks)}</span>
+                    : formatActionDuration(action.ticks)}
+                  {remaining !== null && <span class="text-[var(--color-gold)]"> · {remaining.toLocaleString()} actions</span>}
+                  {action.materials && <span> · Needs: {Object.entries(action.materials).map(([id, qty]) => `${itemsData[id]?.name || id} ×${qty}`).join(', ')}</span>}
+                  {action.runeReq && <span> · Runes: {Object.entries(action.runeReq).map(([id, qty]) => `${itemsData[id]?.name || id} ×${qty}`).join(', ')}</span>}
+                  {action.itemReq && !hasItems && <span class="block text-[var(--color-blood-ember)] mt-1">✨ Needs: {action.itemReq.map(id => itemsData[id]?.name || id).join(' or ')}</span>}
+                  {action.runeReq && !hasRunes && <span class="block text-[var(--color-blood-ember)] mt-1">🔮 Missing runes (or equip staff)</span>}
+                  {requiresGildedAltarConstruction && !meetsGildedAltarConstruction && <span class="block text-[var(--color-blood-ember)] mt-1">🏠 Requires Construction level 75</span>}
+                </>
+            const dropRight = action.dropTable && (
+              <div class="text-right flex flex-col gap-0.5 flex-shrink-0">
+                {action.dropTable.map(drop => (
+                  <div key={drop.itemId} class="text-[9px] text-[var(--color-gold-dim)]">
+                    {formatDropChance(drop.chance)} {itemsData[drop.itemId]?.name || drop.itemId}
+                  </div>
+                ))}
+              </div>
+            )
             return (
-              <button
+              <SkillActionRow
                 key={action.id}
-                onClick={() => rowEnabled && startSkilling(action)}
-                disabled={!rowEnabled}
-                class={`w-full flex items-center gap-3 p-3 rounded-xl border transition-colors
-                  ${rowEnabled
-                    ? 'bg-[#1a1a1a] border-[#2a2a2a] active:bg-[#222]'
-                    : 'bg-[#111] border-[#1a1a1a] opacity-40'}`}
-              >
-                {productItem && (
-                  <GameIcon item={productItem} size={28} class="flex-shrink-0" />
-                )}
-                <div class="text-left flex-1">
-                  <div class="text-sm font-semibold text-[var(--color-parchment)]">{action.name}</div>
-                  <div class="text-[10px] text-[var(--color-parchment)] opacity-40">
-                    {isDungeoneeringReward
-                      ? `Lv ${action.level} · Cost: ${formatNumber(rewardCost)} tokens`
-                      : <>Lv {action.level} · {displayXP} XP{xpMultiplier !== 1 && <span class="text-[var(--color-gold)] opacity-100"> (+{Math.round((xpMultiplier - 1) * 100)}%)</span>} · {effectiveTicks < action.ticks
-                      ? <><span class="line-through">{formatActionDuration(action.ticks)}</span> <span class="text-[var(--color-gold)] opacity-100">{formatActionDuration(effectiveTicks)}</span></>
-                      : effectiveTicks > action.ticks
-                      ? <span class="text-[#ff6b6b]">{formatActionDuration(effectiveTicks)}</span>
-                      : formatActionDuration(action.ticks)}</>}
-                    {isDungeoneeringReward && rowEnabled === false && (
-                      <span class="block text-[#ff6b6b] mt-1">
-                        {skillLevel < action.level ? `Requires level ${action.level}` : `Need ${formatNumber(rewardCost)} tokens`}
-                      </span>
-                    )}
-                    {(() => {
-                      const remaining = calculateRemainingActions(action, inventory, bank)
-                      return remaining !== null ? <span class="text-[var(--color-gold)]"> · {remaining.toLocaleString()} actions</span> : null
-                    })()}
-                    {action.materials && (
-                      <span> · Needs: {Object.entries(action.materials).map(([id, qty]) => `${itemsData[id]?.name || id} ×${qty}`).join(', ')}</span>
-                    )}
-                    {action.runeReq && (
-                      <span> · Runes: {Object.entries(action.runeReq).map(([id, qty]) => `${itemsData[id]?.name || id} ×${qty}`).join(', ')}</span>
-                    )}
-                    {action.itemReq && !hasItems && (
-                      <span class="block text-[#ff6b6b] mt-1">
-                        ✨ Needs: {action.itemReq.map(id => itemsData[id]?.name || id).join(' or ')}
-                      </span>
-                    )}
-                    {action.runeReq && !hasRunes && (
-                      <span class="block text-[#ff6b6b] mt-1">
-                        🔮 Missing runes (or equip staff)
-                      </span>
-                    )}
-                    {requiresGildedAltarConstruction && !meetsGildedAltarConstruction && (
-                      <span class="block text-[#ff6b6b] mt-1">
-                        🏠 Requires Construction level 75
-                      </span>
-                    )}
-                  </div>
-                </div>
-                {action.product && (
-                  <span class="text-[10px] text-[var(--color-gold-dim)]">→ {itemsData[action.product]?.name || action.product}</span>
-                )}
-                {action.dropTable && (
-                  <div class="text-right flex flex-col gap-0.5">
-                    {action.dropTable.map(drop => (
-                      <div key={drop.itemId} class="text-[9px] text-[var(--color-gold-dim)]">
-                        {formatDropChance(drop.chance)} {itemsData[drop.itemId]?.name || drop.itemId}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </button>
+                icon={productItem ? <GameIcon item={productItem} size={26} /> : <SkillIcon skill={selectedSkill} size={26} color="var(--color-gold)" />}
+                title={action.name}
+                meta={meta}
+                chip={action.product && !action.dropTable ? <>→ {itemsData[action.product]?.name || action.product}</> : null}
+                right={dropRight || undefined}
+                locked={levelLocked}
+                lockBadge={`LV ${action.level}`}
+                lockHint={`Unlocks at ${selectedSkill.charAt(0).toUpperCase() + selectedSkill.slice(1)} ${action.level}`}
+                disabled={!levelLocked && !rowEnabled}
+                onClick={() => startSkilling(action)}
+              />
             )
           }
 
@@ -754,7 +730,7 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
             const rewardActions = allActions.filter(a => a.category === 'reward')
             return (
               <>
-                <div class="space-y-2">
+                <div class="flex flex-col gap-2.5">
                   {trainingActions.map(renderActionRow)}
                 </div>
                 {rewardActions.length > 0 && (
@@ -762,7 +738,7 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
                     <h3 class="font-[var(--font-display)] text-xs font-bold text-[var(--color-gold)] uppercase tracking-wider mt-5 mb-2">
                       Equipment Unlocks
                     </h3>
-                    <div class="space-y-2">
+                    <div class="flex flex-col gap-2.5">
                       {rewardActions.map(renderActionRow)}
                     </div>
                   </>
@@ -774,7 +750,7 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
           return (
             <>
               {toolHint}
-              <div class="space-y-2">
+              <div class="flex flex-col gap-2.5">
                 {allActions.map(renderActionRow)}
               </div>
             </>
@@ -847,61 +823,40 @@ Shop value: ×1.1
   // Active skilling modal
   const progress = getActionProgress(skilling.active, skilling.ticksRemaining, skilling.action.ticks)
 
+  const elapsedMs = skilling.startedAt ? Date.now() - skilling.startedAt : 0
+  const hasRate = elapsedMs > 5000
+  const actionsPerHr = hasRate ? Math.round(skilling.totalActions / (elapsedMs / 3600000)) : null
+  const xpPerHr = hasRate ? Math.round(skilling.totalXP / (elapsedMs / 3600000)) : null
+  const isGathering = GATHERING_SKILLS.includes(selectedSkill)
+  const producedItem = skilling.action.product ? itemsData[skilling.action.product] : null
+
+  const sessionStats = [
+    { label: 'Actions completed', value: skilling.totalActions },
+    { label: 'Actions / hr', value: actionsPerHr !== null ? actionsPerHr.toLocaleString() : '—', accent: actionsPerHr !== null },
+    { label: 'XP gained', value: formatNumber(skilling.totalXP) },
+    { label: 'XP / hr', value: xpPerHr !== null ? formatNumber(xpPerHr) : '—', accent: xpPerHr !== null },
+  ]
+  if (selectedSkill === 'dungeoneering') {
+    sessionStats.push({ label: 'Tokens gained', value: formatNumber(skilling.totalDungeoneeringTokens || 0) })
+  }
+
   return (
-    <div class="h-full flex flex-col p-4">
-      <div class="flex-1 flex flex-col items-center justify-center">
-        <SkillIcon skill={selectedSkill} size={44} class="mb-2" />
-        <h2 class="font-[var(--font-display)] text-lg font-bold text-[var(--color-gold)] mb-1">
-          {skilling.action.name}
-        </h2>
-
-        {/* Progress bar */}
-        <div class="w-full max-w-xs mb-4">
-          <ProgressBar value={progress} max={1} height="h-4" color="var(--color-gold)" showText />
-        </div>
-
-        {/* Stats */}
-        <div class="bg-[#111] rounded-lg p-3 w-full max-w-xs space-y-1.5">
-          <div class="flex justify-between text-sm">
-            <span class="text-[var(--color-parchment)] opacity-60">Actions completed</span>
-            <span class="font-[var(--font-mono)] text-[var(--color-gold)]">{skilling.totalActions}</span>
-          </div>
-          <div class="flex justify-between text-sm">
-            <span class="text-[var(--color-parchment)] opacity-60">Actions/hr</span>
-            <span class="font-[var(--font-mono)] text-[var(--color-gold)]">
-              {skilling.startedAt && (Date.now() - skilling.startedAt) > 5000
-                ? Math.round(skilling.totalActions / ((Date.now() - skilling.startedAt) / 3600000)).toLocaleString()
-                : '—'}
-            </span>
-          </div>
-          <div class="flex justify-between text-sm">
-            <span class="text-[var(--color-parchment)] opacity-60">XP gained</span>
-            <span class="font-[var(--font-mono)] text-[var(--color-gold)]">{formatNumber(skilling.totalXP)}</span>
-          </div>
-          <div class="flex justify-between text-sm">
-            <span class="text-[var(--color-parchment)] opacity-60">XP/hr</span>
-            <span class="font-[var(--font-mono)] text-[var(--color-gold)]">
-              {skilling.startedAt && (Date.now() - skilling.startedAt) > 5000
-                ? formatNumber(Math.round(skilling.totalXP / ((Date.now() - skilling.startedAt) / 3600000)))
-                : '—'}
-            </span>
-          </div>
-          {selectedSkill === 'dungeoneering' && (
-            <div class="flex justify-between text-sm">
-              <span class="text-[var(--color-parchment)] opacity-60">Tokens gained</span>
-              <span class="font-[var(--font-mono)] text-[var(--color-gold)]">{formatNumber(skilling.totalDungeoneeringTokens || 0)}</span>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Stop & Back */}
-      <div class="flex-shrink-0 flex gap-2 mt-3">
-        <button onClick={stopSkilling}
-          class="flex-1 py-2.5 rounded-lg bg-[#222] text-[var(--color-parchment)] font-semibold text-sm active:opacity-80">
-          ← Stop &amp; Back
-        </button>
-      </div>
-    </div>
+    <SkillActivePanel
+      skill={selectedSkill}
+      title={skilling.action.name}
+      progress={progress}
+      producing={producedItem && <>
+        <GameIcon item={producedItem} size={16} />
+        <span class="text-[12px] font-semibold text-[var(--color-parchment)] opacity-60">Producing</span>
+        <span class="text-[13px] font-semibold text-[var(--color-gold-light)]">{producedItem.name}</span>
+      </>}
+      stats={sessionStats}
+      footer={isGathering ? {
+        icon: <span class="text-[14px]">🏦</span>,
+        label: 'Bank speed',
+        value: `${formatBankDelay(getAgilityBankDelayMs(getLevelFromXP(stats.agility?.xp || 0)))} delay`,
+      } : null}
+      onStop={stopSkilling}
+    />
   )
 }

@@ -1,5 +1,7 @@
 import { useGame } from '../state/gameState.jsx'
-import SkillIcon from '../components/SkillIcon.jsx'
+import SkillScreenHeader from '../components/SkillScreenHeader.jsx'
+import SkillActionRow from '../components/SkillActionRow.jsx'
+import SectionHeader from '../components/SectionHeader.jsx'
 import { getLevelFromXP } from '../engine/experience.js'
 import monstersData from '../data/monsters.json'
 import itemsData from '../data/items.json'
@@ -169,130 +171,102 @@ export default function SlayerScreen({ onBack, onNavigate }) {
 
   return (
     <div class="h-full overflow-y-auto p-4">
-      {/* Back button */}
-      <button onClick={onBack}
-        class="text-xs text-[var(--color-gold-dim)] mb-3 flex items-center gap-1">
-        ← Skills
-      </button>
-
-      {/* Header */}
-      <h2 class="flex items-center gap-2 font-[var(--font-display)] text-base font-bold text-[var(--color-gold)] mb-0.5">
-        <SkillIcon skill="slayer" size={18} /> Slayer
-      </h2>
-      <p class="text-xs text-[var(--color-parchment)] opacity-40 mb-3">
-        Level {slayerLevel} · Combat {combatLevel} · {slayerPoints.toLocaleString()} points · {slayerTasksCompleted.toLocaleString()} tasks completed
-      </p>
+      <SkillScreenHeader
+        skill="slayer"
+        title="Slayer"
+        xp={stats.slayer?.xp || 0}
+        level={slayerLevel}
+        onBack={onBack}
+        backLabel="Skills"
+        right={(
+          <div class="text-right flex-shrink-0">
+            <div class="text-[13px] font-bold font-[var(--font-mono)] text-[var(--color-gold)]">{slayerPoints.toLocaleString()} pts</div>
+            <div class="text-[11px] font-semibold text-[var(--color-parchment)] opacity-40">CB {combatLevel}</div>
+          </div>
+        )}
+      />
 
       {/* Current task banner */}
       {slayerTask ? (
-        <div class="mb-4 bg-[#1a1a08] border border-[#3a3a10] rounded-xl p-3">
-          <div class="flex items-center justify-between mb-2">
-            <div class="text-[10px] text-yellow-400 uppercase font-bold tracking-wider">⚔️ Current Task</div>
+        <div class="mb-4 rounded-2xl p-3.5 bg-gradient-to-b from-[rgba(212,160,23,0.08)] to-[rgba(212,160,23,0.03)] border-[1.5px] border-[rgba(212,160,23,0.42)]">
+          <div class="flex items-center justify-between mb-2.5">
+            <div class="text-[9.5px] text-[var(--color-gold)] uppercase font-bold tracking-[0.14em]">⚔️ Current Task</div>
             {onNavigate && (
               <button
                 onClick={handleSlayTask}
-                class="px-3 py-1.5 rounded-lg bg-yellow-600 text-black text-[11px] font-bold uppercase tracking-wider active:bg-yellow-700 min-h-[36px] min-w-[64px]"
+                class="px-3.5 py-1.5 rounded-lg bg-[var(--color-gold)] text-[#0f0f0f] text-[11px] font-bold uppercase tracking-wider active:opacity-80 min-h-[36px] min-w-[64px]"
               >
                 ⚔️ Slay
               </button>
             )}
           </div>
-          <div class="flex items-center gap-2 mb-2">
-            <span class="text-xl">{SLAYER_MONSTER_ICONS[slayerTask.monsterId] || '👹'}</span>
-            <div>
-              <div class="text-sm font-bold text-[var(--color-parchment)]">{slayerTask.monsterName}</div>
-              <div class="text-[10px] text-[var(--color-parchment)] opacity-50">
+          <div class="flex items-center gap-3 mb-2.5">
+            <div class="w-[46px] h-[46px] flex-shrink-0 rounded-xl flex items-center justify-center text-2xl bg-[rgba(212,160,23,0.08)] border border-[rgba(212,160,23,0.22)]">
+              {SLAYER_MONSTER_ICONS[slayerTask.monsterId] || '👹'}
+            </div>
+            <div class="min-w-0">
+              <div class="text-[16px] font-semibold text-[var(--color-parchment)]">{slayerTask.monsterName}</div>
+              <div class="text-[12px] text-[var(--color-parchment)] opacity-45 mt-0.5">
                 {slayerTask.monstersRemaining} / {slayerTask.totalCount} remaining
                 {slayerTask.pointsOnComplete > 0 && ` · +${slayerTask.pointsOnComplete} pts on complete`}
               </div>
             </div>
           </div>
-          {/* Progress bar */}
-          <div class="h-2 rounded-full bg-[#333] overflow-hidden mb-2">
+          <div class="h-2 rounded-full bg-[rgba(255,255,255,0.07)] overflow-hidden mb-2">
             <div
-              class="h-full rounded-full transition-all"
-              style={{ width: `${progressPct}%`, background: '#eab308' }}
+              class="h-full rounded-full transition-all bg-gradient-to-r from-[var(--color-gold-dim)] to-[var(--color-gold-light)]"
+              style={{ width: `${progressPct}%` }}
             />
           </div>
           <div class="flex items-center justify-between">
-            <span class="text-[10px] text-yellow-400">{progressPct}% complete</span>
+            <span class="text-[11px] font-semibold text-[var(--color-gold)]">{progressPct}% complete</span>
             <div class="flex items-center gap-3">
-              <button
-                onClick={handleCancelTask}
-                class="text-[10px] text-[var(--color-parchment)] opacity-40 underline"
-              >
-                Skip (-{SLAYER_TASK_SKIP_POINT_COST} points)
+              <button onClick={handleCancelTask} class="text-[11px] text-[var(--color-parchment)] opacity-40 underline">
+                Skip (-{SLAYER_TASK_SKIP_POINT_COST} pts)
               </button>
-              <button
-                onClick={handleSkipWithCredit}
-                class="text-[10px] text-[var(--color-parchment)] opacity-40 underline"
-              >
+              <button onClick={handleSkipWithCredit} class="text-[11px] text-[var(--color-parchment)] opacity-40 underline">
                 Skip (-1 credit)
               </button>
             </div>
           </div>
         </div>
       ) : (
-        <div class="mb-3 bg-[#111] rounded-xl p-3 text-center">
-          <div class="text-[11px] text-[var(--color-parchment)] opacity-50">No active task — select a master below to get one.</div>
+        <div class="mb-4 rounded-2xl p-3.5 text-center bg-[rgba(255,255,255,0.025)] border border-[rgba(255,255,255,0.06)]">
+          <div class="text-[12px] text-[var(--color-parchment)] opacity-50">No active task — select a master below to get one.</div>
         </div>
       )}
 
       {/* Slayer masters */}
-      <div class="text-[10px] text-[var(--color-parchment)] opacity-50 uppercase font-bold tracking-wider mb-2">
-        Slayer Masters
-      </div>
-      <div class="space-y-2">
+      <SectionHeader className="mb-2.5">Slayer Masters</SectionHeader>
+      <div class="flex flex-col gap-2.5">
         {SLAYER_MASTERS.map(master => {
           const meetsCombat = combatLevel >= master.combatReq
           const meetsSlayer = slayerLevel >= master.slayerReq
           const meetsReq = meetsCombat && meetsSlayer
           return (
-            <button
+            <SkillActionRow
               key={master.id}
-              onClick={() => meetsReq && handleGetTask(master)}
+              icon={<span class="text-2xl">{master.icon}</span>}
+              title={master.name}
+              meta={<>
+                {master.location} · {master.description}
+                <span class="block mt-1">
+                  {master.combatReq > 0 && <span class={meetsCombat ? 'text-[var(--color-hp-green)]' : 'text-[var(--color-blood-light)]'}>CB {master.combatReq}</span>}
+                  {master.slayerReq > 0 && <span class={`ml-2 ${meetsSlayer ? 'text-[var(--color-hp-green)]' : 'text-[var(--color-blood-light)]'}`}>Slayer {master.slayerReq}</span>}
+                  {master.combatReq === 0 && master.slayerReq === 0 && <span class="text-[var(--color-hp-green)]">No requirement</span>}
+                </span>
+              </>}
+              chip={<>{master.pointsPerTask} pts</>}
               disabled={!meetsReq || !!slayerTask}
-              class={`w-full flex items-center justify-between p-3 rounded-xl border transition-colors text-left
-                ${meetsReq && !slayerTask
-                  ? 'bg-[#1a1a1a] border-[#2a2a2a] active:bg-[#222]'
-                  : 'bg-[#111] border-[#1a1a1a] opacity-40'}`}
-            >
-              <div class="flex items-center gap-3 min-w-0">
-                <span class="text-2xl flex-shrink-0">{master.icon}</span>
-                <div class="min-w-0">
-                  <div class="text-sm font-semibold text-[var(--color-parchment)]">{master.name}</div>
-                  <div class="text-[10px] text-[var(--color-parchment)] opacity-50">{master.location}</div>
-                  <div class="text-[9px] text-[var(--color-parchment)] opacity-35 mt-0.5 leading-tight">{master.description}</div>
-                </div>
-              </div>
-              <div class="text-right flex-shrink-0 ml-3 space-y-0.5">
-                <div class="text-[10px] font-[var(--font-mono)] text-[var(--color-gold)]">
-                  {master.pointsPerTask} pts
-                </div>
-                {master.combatReq > 0 && (
-                  <div class={`text-[9px] font-semibold ${meetsCombat ? 'text-[var(--color-hp-green)]' : 'text-[var(--color-blood-light)]'}`}>
-                    CB {master.combatReq}
-                  </div>
-                )}
-                {master.slayerReq > 0 && (
-                  <div class={`text-[9px] font-semibold ${meetsSlayer ? 'text-[var(--color-hp-green)]' : 'text-[var(--color-blood-light)]'}`}>
-                    Slay {master.slayerReq}
-                  </div>
-                )}
-                {master.combatReq === 0 && (
-                  <div class="text-[9px] text-[var(--color-hp-green)]">No req</div>
-                )}
-              </div>
-            </button>
+              onClick={() => handleGetTask(master)}
+            />
           )
         })}
       </div>
 
       {/* Unlocks — purchasable with slayer points */}
-      <div class="mt-5 mb-2 text-[10px] text-[var(--color-parchment)] opacity-50 uppercase font-bold tracking-wider">
-        Unlocks
-      </div>
-      <div class="space-y-2">
+      <SectionHeader className="mt-5 mb-2.5">Unlocks</SectionHeader>
+      <div class="flex flex-col gap-2.5">
         {SLAYER_UNLOCKS.map(unlock => {
           const item = itemsData[unlock.itemId]
           if (!item) return null
@@ -300,97 +274,48 @@ export default function SlayerScreen({ onBack, onNavigate }) {
           const canAfford = slayerPoints >= unlock.cost
           const disabled = owned || !canAfford
           return (
-            <button
+            <SkillActionRow
               key={unlock.itemId}
-              onClick={() => !disabled && handleUnlock(unlock)}
+              icon={<span class="text-2xl">{item.icon || '🎁'}</span>}
+              title={item.name}
+              meta={<>
+                {unlock.description}
+                {item.requirements?.slayer > 0 && <span class="block mt-1 opacity-80">Requires Slayer {item.requirements.slayer} to wear</span>}
+              </>}
+              chip={owned
+                ? <span class="text-[var(--color-hp-green)]">Owned</span>
+                : <span class={canAfford ? '' : 'text-[var(--color-blood-light)]'}>{unlock.cost.toLocaleString()} pts</span>}
               disabled={disabled}
-              class={`w-full flex items-center justify-between p-3 rounded-xl border transition-colors text-left
-                ${!disabled
-                  ? 'bg-[#1a1a1a] border-[#2a2a2a] active:bg-[#222]'
-                  : 'bg-[#111] border-[#1a1a1a] opacity-50'}`}
-            >
-              <div class="flex items-center gap-3 min-w-0">
-                <span class="text-2xl flex-shrink-0">{item.icon || '🎁'}</span>
-                <div class="min-w-0">
-                  <div class="text-sm font-semibold text-[var(--color-parchment)]">{item.name}</div>
-                  <div class="text-[9px] text-[var(--color-parchment)] opacity-50 mt-0.5 leading-tight">
-                    {unlock.description}
-                  </div>
-                  {item.requirements?.slayer > 0 && (
-                    <div class="text-[9px] text-[var(--color-parchment)] opacity-40 mt-0.5">
-                      Requires Slayer {item.requirements.slayer} to wear
-                    </div>
-                  )}
-                </div>
-              </div>
-              <div class="text-right flex-shrink-0 ml-3 space-y-0.5">
-                {owned ? (
-                  <div class="text-[10px] font-bold text-[var(--color-hp-green)]">Owned</div>
-                ) : (
-                  <>
-                    <div class={`text-[11px] font-[var(--font-mono)] font-bold ${canAfford ? 'text-[var(--color-gold)]' : 'text-[var(--color-blood-light)]'}`}>
-                      {unlock.cost.toLocaleString()} pts
-                    </div>
-                    <div class="text-[9px] text-[var(--color-parchment)] opacity-40">
-                      {canAfford ? 'Buy' : 'Locked'}
-                    </div>
-                  </>
-                )}
-              </div>
-            </button>
+              onClick={() => handleUnlock(unlock)}
+            />
           )
         })}
       </div>
 
       {/* Perks — point-purchased, non-item bonuses */}
-      <div class="mt-5 mb-2 text-[10px] text-[var(--color-parchment)] opacity-50 uppercase font-bold tracking-wider">
-        Perks
-      </div>
-      <div class="space-y-2">
+      <SectionHeader className="mt-5 mb-2.5">Perks</SectionHeader>
+      <div class="flex flex-col gap-2.5">
         {(() => {
           const perkOwned = slayerPerks?.doubleQuantity === true
           const cost = 250
           const canAfford = slayerPoints >= cost
           const disabled = perkOwned || !canAfford
           return (
-            <button
+            <SkillActionRow
+              icon={<span class="text-2xl">🗡️</span>}
+              title="Slayer Multitask"
+              meta="Doubles the number of monsters assigned by your Slayer Master."
+              chip={perkOwned
+                ? <span class="text-[var(--color-hp-green)]">Active</span>
+                : <span class={canAfford ? '' : 'text-[var(--color-blood-light)]'}>{cost.toLocaleString()} pts</span>}
+              disabled={disabled}
               onClick={() => {
-                if (disabled) return
                 updateSlayerPoints(slayerPoints - cost)
                 updateSlayerPerk('doubleQuantity', true)
                 requestCriticalPushSave(() => getSnapshot(), CRITICAL_SAVE_REASONS.SLAYER_TASK_CHANGE)
                 addToast('🗡️ Slayer Multitask unlocked!', 'info')
               }}
-              disabled={disabled}
-              class={`w-full flex items-center justify-between p-3 rounded-xl border transition-colors text-left
-                ${!disabled
-                  ? 'bg-[#1a1a1a] border-[#2a2a2a] active:bg-[#222]'
-                  : 'bg-[#111] border-[#1a1a1a] opacity-50'}`}
-            >
-              <div class="flex items-center gap-3 min-w-0">
-                <span class="text-2xl flex-shrink-0">🗡️</span>
-                <div class="min-w-0">
-                  <div class="text-sm font-semibold text-[var(--color-parchment)]">Slayer Multitask</div>
-                  <div class="text-[9px] text-[var(--color-parchment)] opacity-50 mt-0.5 leading-tight">
-                    Doubles the number of monsters assigned by your Slayer Master.
-                  </div>
-                </div>
-              </div>
-              <div class="text-right flex-shrink-0 ml-3 space-y-0.5">
-                {perkOwned ? (
-                  <div class="text-[10px] font-bold text-[var(--color-hp-green)]">Active</div>
-                ) : (
-                  <>
-                    <div class={`text-[11px] font-[var(--font-mono)] font-bold ${canAfford ? 'text-[var(--color-gold)]' : 'text-[var(--color-blood-light)]'}`}>
-                      {cost.toLocaleString()} pts
-                    </div>
-                    <div class="text-[9px] text-[var(--color-parchment)] opacity-40">
-                      {canAfford ? 'Buy' : 'Locked'}
-                    </div>
-                  </>
-                )}
-              </div>
-            </button>
+            />
           )
         })()}
       </div>

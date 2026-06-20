@@ -871,10 +871,17 @@ export function GameProvider({ children }) {
   // ── Toasts ──
   const addToast = useCallback((message, type = 'info', icon = null) => {
     const id = Date.now() + Math.random()
-    setToasts(prev => [...prev, { id, message, type, icon }])
+    // Reward-style toasts (level ups, collection-log unlocks) linger a little
+    // longer so the player can read the richer card before it auto-clears.
+    const ttl = (type === 'levelup' || type === 'reward') ? 6000 : 3500
+    setToasts(prev => [...prev, { id, message, type, icon, ttl }])
     setTimeout(() => {
       setToasts(prev => prev.filter(t => t.id !== id))
-    }, 3000)
+    }, ttl)
+  }, [])
+
+  const dismissToast = useCallback((id) => {
+    setToasts(prev => prev.filter(t => t.id !== id))
   }, [])
 
   // Returns a fresh snapshot of all live state — always reads from refs, never stale
@@ -1041,7 +1048,7 @@ export function GameProvider({ children }) {
     awaitCombatCompletion, resolveCombatCompletion,
     loadGame, grantXP, updateInventory, updateEquipment, updateBank,
     removeFromInventory, addToBank,
-    updateHP, getMaxHP, getSkillLevel, addToast, setPlayer,
+    updateHP, getMaxHP, getSkillLevel, addToast, dismissToast, setPlayer,
     markDirty, itemsData, updateHomeShortcuts, updateCombatStance,
     setActiveTask, updateBankDirect, getSnapshot, updateAutoBankLoot, updateBankConfig,
     getActivityProgress, clearActivityProgress,
