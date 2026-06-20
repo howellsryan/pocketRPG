@@ -1,5 +1,6 @@
 import { useState } from 'preact/hooks'
 import GameIcon from './GameIcon.jsx'
+import { isConsumableFood, isConsumablePotion } from '../engine/consumables.js'
 
 // Shared mobile combat quick-actions panel (Food / Potions / Weapons / Armour
 // tabs). Used by BOTH PvE (CombatScreen) and PvP (PvpCombatScreen) so the layout
@@ -43,12 +44,11 @@ export default function CombatQuickActions({
   }
 
   const POT_TAG = { hp: '+HP', attack: '+ATK', strength: '+STR', defence: '+DEF', ranged: '+RNG', magic: '+MAG', combat: '+ALL', super_restore: 'RESTORE' }
-  const isLumiraBrew = (item) => !!(item && item.type === 'potion' && item.wipesPotions)
   // Stable name-sort so the grid doesn't reshuffle as items are equipped/consumed.
   const byName = (a, b) => a.item.name.localeCompare(b.item.name)
 
-  const foods = groupInv(it => it.type === 'food' || isLumiraBrew(it))
-  const potions = groupInv(it => it.type === 'potion')
+  const foods = groupInv(isConsumableFood)
+  const potions = groupInv(isConsumablePotion)
   const weapons = groupInv(it => it.slot === 'weapon').sort(byName)
   const armour = groupInv(it => it.slot && it.slot !== 'weapon').sort(byName)
   const tabs = [['food', 'Food', foods.length], ['potion', 'Potions', potions.length], ['weapon', 'Weapons', weapons.length], ['armour', 'Armour', armour.length]]

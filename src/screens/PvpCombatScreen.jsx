@@ -12,10 +12,9 @@ import itemsData from '../data/items.json'
 import prayersData from '../data/prayers.json'
 import { getCharacterId } from '../cloud/api.js'
 import { normalizePvpState } from '../engine/pvpState.js'
-import { isPvpFoodItem } from '../engine/pvpFood.js'
+import { isConsumableFood, isConsumablePotion } from '../engine/consumables.js'
 import { hasEpicLootDrop } from '../utils/itemValue.js'
 import { getEquippedPvpSpecialAttack, getPvpSpecialAttackLabel, hasEnoughPvpSpecialEnergy } from '../engine/pvpSpecialAttacks.js'
-import { isPvpCombatPotion } from '../engine/pvpPotions.js'
 import { calculatePvpRiskValues } from '../engine/pvpRisk.js'
 import { formatCompactCoins } from '../utils/formatters.js'
 import { getPrayerStyleIcon } from '../utils/prayerIcons.js'
@@ -784,8 +783,8 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
                   let onClick
                   if (slot && item) {
                     if (item.slot) onClick = () => queueGearEquip(idx)
-                    else if (isPvpFoodItem(item)) onClick = () => queueAction({ type: 'eat', inventorySlot: idx }, { showBusy: false })
-                    else if (isPvpCombatPotion(item)) onClick = () => queueAction({ type: 'drink_potion', inventorySlot: idx }, { showBusy: false })
+                    else if (isConsumableFood(item)) onClick = () => queueAction({ type: 'eat', inventorySlot: idx }, { showBusy: false })
+                    else if (isConsumablePotion(item)) onClick = () => queueAction({ type: 'drink_potion', inventorySlot: idx }, { showBusy: false })
                   }
                   return (
                     <div key={`inv-${idx}`} onClick={onClick}>

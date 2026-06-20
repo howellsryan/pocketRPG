@@ -36,9 +36,19 @@ describe('PvP intent validation food checks', () => {
     expect(result).toEqual({ ok: false, error: 'insufficient_prayer_level' })
   })
 
-  it('accepts supported combat potions and rejects unrelated potions', () => {
+  it('accepts any potion for drink intents (parity with PvE)', () => {
     expect(validateIntentAction(stateWithInventory('attack_potion'), 1, { type: 'drink_potion', inventorySlot: 0 })).toEqual({ ok: true })
-    expect(validateIntentAction(stateWithInventory('prayer_potion'), 1, { type: 'drink_potion', inventorySlot: 0 })).toEqual({ ok: false, error: 'item_not_potion' })
+    // Previously-rejected potions now drink in PvP, matching PvE: prayer/super
+    // restore are consumed for no live effect, magic boosts magic, lumira heals.
+    expect(validateIntentAction(stateWithInventory('prayer_potion'), 1, { type: 'drink_potion', inventorySlot: 0 })).toEqual({ ok: true })
+    expect(validateIntentAction(stateWithInventory('magic_potion'), 1, { type: 'drink_potion', inventorySlot: 0 })).toEqual({ ok: true })
+    expect(validateIntentAction(stateWithInventory('lumira_brew'), 1, { type: 'drink_potion', inventorySlot: 0 })).toEqual({ ok: true })
+    // A non-potion, non-food item is still rejected.
+    expect(validateIntentAction(stateWithInventory('bronze_dagger'), 1, { type: 'drink_potion', inventorySlot: 0 })).toEqual({ ok: false, error: 'item_not_potion' })
+  })
+
+  it('accepts lumira brew for eat intents (it heals on eat)', () => {
+    expect(validateIntentAction(stateWithInventory('lumira_brew'), 1, { type: 'eat', inventorySlot: 0 })).toEqual({ ok: true })
   })
 
   it('validates queue_special energy and weapon requirements', () => {
