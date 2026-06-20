@@ -1,21 +1,25 @@
 import { useState, useEffect, useRef } from 'preact/hooks'
 import { useGame } from '../state/gameState.jsx'
-import ProgressBar from '../components/ProgressBar.jsx'
 import SkillIcon from '../components/SkillIcon.jsx'
 import { getActionProgress } from '../hooks/useActionTick.js'
 import { getLevelFromXP } from '../engine/experience.js'
 import { createThievingState, processThievingTick } from '../engine/thieving.js'
+import { emptySession } from '../engine/activitySession.js'
 import { rollMasterFarmerSeed } from '../engine/seedDrops.js'
 import { onTick } from '../engine/tick.js'
 import { markScreenTick } from '../engine/activityRunner.js'
 import { formatNumber } from '../utils/helpers.js'
 import GameIcon from '../components/GameIcon.jsx'
+import SkillScreenHeader from '../components/SkillScreenHeader.jsx'
+import SkillInfoBanner from '../components/SkillInfoBanner.jsx'
+import SkillActionRow from '../components/SkillActionRow.jsx'
+import SkillActivePanel from '../components/SkillActivePanel.jsx'
 import skillsData from '../data/skills.json'
 
 const thievingData = skillsData.thieving
 
 export default function ThievingScreen({ initialNpcId, idleResult, onBack }) {
-  const { stats, inventory, updateInventory, bank, updateBankDirect, grantXP, addToast, setActiveTask } = useGame()
+  const { stats, inventory, updateInventory, bank, updateBankDirect, grantXP, addToast, setActiveTask, activeTask } = useGame()
 
   const thievingLevel = getLevelFromXP(stats.thieving?.xp || 0)
   const thievingXP = stats.thieving?.xp || 0
@@ -136,24 +140,68 @@ export default function ThievingScreen({ initialNpcId, idleResult, onBack }) {
       }
 
       setThieving({ ...thievingRef.current })
+      if (thievingRef.current?.active) mirrorActiveTask(thievingRef.current)
     })
 
     return unsub
   }, [thieving?.active])
 
+  const mirrorActiveTask = (state) => {
+    if (!state) return
+    const ticks = state.npc.pickpocketTicks || 4
+    setActiveTask({
+      type: 'thieving',
+      npc: state.npc,
+      totalTicks: ticks,
+      ticksRemaining: state.ticksRemaining,
+      session: { startedAt: state.startedAt, actions: state.totalPickpockets || 0, xp: state.totalXP || 0, coins: state.totalCoins || 0, items: 0, seeds: state.totalSeeds || 0, tokens: 0 },
+    }, { skipCloudSync: true })
+  }
+
+  const buildResumedState = (task) => {
+    const npc = thievingData.npcs.find(n => n.id === task.npc?.id)
+    if (!npc) return null
+    const state = { ...createThievingState(npc), totalPickpockets: task.session?.actions || 0, totalXP: task.session?.xp || 0, totalCoins: task.session?.coins || 0, totalSeeds: task.session?.seeds || 0, startedAt: task.session?.startedAt || Date.now() }
+    const ticks = npc.pickpocketTicks || 4
+    if (typeof task.ticksRemaining === 'number' && task.ticksRemaining > 0 && task.ticksRemaining <= ticks) state.ticksRemaining = task.ticksRemaining
+    return state
+  }
+
+  // Resume a pickpocket target already running in the background.
+  useEffect(() => {
+    if (thieving || hasAutoStarted.current) return
+    if (activeTask?.type !== 'thieving') return
+    const resumed = buildResumedState(activeTask)
+    if (!resumed) return
+    hasAutoStarted.current = true
+    setThieving(resumed)
+    thievingRef.current = resumed
+  }, [])
+
   const startThieving = (npc) => {
+    if (activeTask?.type === 'thieving' && activeTask.npc?.id === npc.id) {
+      const resumed = buildResumedState(activeTask)
+      if (resumed) { setThieving(resumed); thievingRef.current = resumed; return }
+    }
+    const startedAt = Date.now()
     const state = {
       ...createThievingState(npc),
       totalPickpockets: 0,
       totalXP: 0,
       totalCoins: 0,
       totalSeeds: 0,
-      startedAt: Date.now()
+      startedAt
     }
     setThieving(state)
     thievingRef.current = state
-    setActiveTask({ type: 'thieving', npc })
+    setActiveTask({ type: 'thieving', npc, session: emptySession(startedAt) })
     addToast(`Started pickpocketing ${npc.name}`, 'info')
+  }
+
+  const backToList = () => {
+    if (thievingRef.current) mirrorActiveTask(thievingRef.current)
+    setThieving(null)
+    thievingRef.current = null
   }
 
   const stopThieving = () => {
@@ -167,54 +215,39 @@ export default function ThievingScreen({ initialNpcId, idleResult, onBack }) {
   if (!thieving) {
     return (
       <div class="h-full overflow-y-auto p-4">
-        {onBack && (
-          <button onClick={onBack} class="text-xs text-[var(--color-gold-dim)] mb-3 flex items-center gap-1">
-            ← Skills
-          </button>
-        )}
-        <div class="flex items-center justify-between mb-1">
-          <h2 class="font-[var(--font-display)] text-sm font-bold text-[var(--color-parchment)] opacity-60 uppercase tracking-wider">
-            Thieving Targets
-          </h2>
-          <span class="text-xs font-[var(--font-mono)] text-[var(--color-gold)]">Lv {thievingLevel}</span>
-        </div>
+        <SkillScreenHeader
+          skill="thieving"
+          title="Thieving"
+          xp={thievingXP}
+          level={thievingLevel}
+          onBack={onBack}
+        />
 
-        <div class="mb-3 bg-[#111] rounded-lg px-3 py-2 text-[11px] text-[var(--color-parchment)] opacity-60 flex items-center gap-2">
-          <SkillIcon skill="thieving" size={16} />
-          <span>Pickpocket targets to earn coins and experience</span>
-        </div>
+        <SkillInfoBanner
+          icon={<SkillIcon skill="thieving" size={19} />}
+          className="mb-4"
+        >
+          Pickpocket targets to earn coins and experience.
+        </SkillInfoBanner>
 
-        <div class="space-y-2">
+        <div class="flex flex-col gap-2.5">
           {thievingData.npcs.map(npc => {
             const available = thievingLevel >= npc.level
             return (
-              <button
+              <SkillActionRow
                 key={npc.id}
-                onClick={() => available && startThieving(npc)}
-                disabled={!available}
-                class={`w-full flex items-between justify-between p-3 rounded-xl border transition-colors text-left
-                  ${available
-                    ? 'bg-[#1a1a1a] border-[#2a2a2a] active:bg-[#222]'
-                    : 'bg-[#111] border-[#1a1a1a] opacity-40'}`}
-              >
-                <div class="flex-1">
-                  <div class="text-sm font-semibold text-[var(--color-parchment)]">{npc.name}</div>
-                  <div class="text-[10px] text-[var(--color-parchment)] opacity-40 mt-0.5 flex items-center gap-0.5 flex-wrap">
-                    Lv {npc.level} · {npc.xp} XP · {npc.seedReward
-                      ? <span class="flex items-center gap-0.5">🌱 seeds</span>
-                      : <><GameIcon iconKey="coins" size={10} color="var(--color-gold)" /> {npc.coins} coins</>}
-                  </div>
-                  <div class="text-[10px] text-[var(--color-parchment)] opacity-40">{npc.description}</div>
-                </div>
-                <div class="text-right ml-3 flex flex-col justify-center">
-                  <div class="text-xs font-[var(--font-mono)] text-[var(--color-gold)] flex items-center gap-0.5 justify-end">
-                    {npc.seedReward
-                      ? <span>🌱 seeds</span>
-                      : <><GameIcon iconKey="coins" size={13} color="var(--color-gold)" /> {npc.coins.toLocaleString()}</>}
-                  </div>
-                  <div class="text-[10px] text-[var(--color-parchment)] opacity-30">per pocket</div>
-                </div>
-              </button>
+                icon={<SkillIcon skill="thieving" size={26} />}
+                title={npc.name}
+                meta={<><span class="text-[var(--color-gold)] font-bold opacity-100">Lv {npc.level}</span> · {npc.xp} XP · {npc.description}</>}
+                chip={npc.seedReward
+                  ? <><span>🌱</span> seeds</>
+                  : <><GameIcon iconKey="coins" size={16} color="var(--color-gold)" /> {npc.coins.toLocaleString()} / pocket</>}
+                active={activeTask?.type === 'thieving' && activeTask.npc?.id === npc.id}
+                locked={!available}
+                lockBadge={`LV ${npc.level}`}
+                lockHint={`Unlocks at Thieving ${npc.level}`}
+                onClick={() => startThieving(npc)}
+              />
             )
           })}
         </div>
@@ -232,69 +265,28 @@ export default function ThievingScreen({ initialNpcId, idleResult, onBack }) {
     ? Math.round(thieving.totalXP / (elapsed / 3_600_000))
     : null
 
+  const coinIcon = <GameIcon iconKey="coins" size={14} color="var(--color-gold-light)" />
+  const rewardStats = thieving.npc.seedReward
+    ? [{ label: 'Seeds collected', value: <><span>🌱</span> {(thieving.totalSeeds || 0).toLocaleString()}</> }]
+    : [
+        { label: 'Coins earned', value: <>{coinIcon} {thieving.totalCoins.toLocaleString()}</> },
+        { label: 'Coins / hr', value: xpPerHr ? <>{coinIcon} {Math.round(thieving.totalCoins / (elapsed / 3_600_000)).toLocaleString()}</> : '—', accent: !!xpPerHr },
+      ]
   return (
-    <div class="h-full flex flex-col p-4">
-      <div class="flex-1 flex flex-col items-center justify-center">
-        <SkillIcon skill="thieving" size={40} class="mb-2" />
-        <h2 class="font-[var(--font-display)] text-lg font-bold text-[var(--color-gold)] mb-1">
-          {thieving.npc.name}
-        </h2>
-        <div class="text-xs text-[var(--color-parchment)] opacity-40 mb-4">
-          {thieving.npc.description}
-        </div>
-
-        {/* Progress bar */}
-        <div class="w-full max-w-xs mb-4">
-          <ProgressBar value={progress} max={1} height="h-4" color="var(--color-gold)" showText />
-        </div>
-
-        {/* Stats */}
-        <div class="bg-[#111] rounded-lg p-3 w-full max-w-xs space-y-1.5">
-          <div class="flex justify-between text-sm">
-            <span class="text-[var(--color-parchment)] opacity-60">Pickpockets completed</span>
-            <span class="font-[var(--font-mono)] text-[var(--color-gold)]">{thieving.totalPickpockets}</span>
-          </div>
-          <div class="flex justify-between text-sm">
-            <span class="text-[var(--color-parchment)] opacity-60">Pickpockets/hr</span>
-            <span class="font-[var(--font-mono)] text-[var(--color-gold)]">{pickpocketsPerHr ? pickpocketsPerHr.toLocaleString() : '—'}</span>
-          </div>
-          <div class="flex justify-between text-sm">
-            <span class="text-[var(--color-parchment)] opacity-60">XP gained</span>
-            <span class="font-[var(--font-mono)] text-[var(--color-gold)]">{formatNumber(thieving.totalXP)}</span>
-          </div>
-          <div class="flex justify-between text-sm">
-            <span class="text-[var(--color-parchment)] opacity-60">XP/hr</span>
-            <span class="font-[var(--font-mono)] text-[var(--color-gold)]">{xpPerHr ? formatNumber(xpPerHr) : '—'}</span>
-          </div>
-          {thieving.npc.seedReward ? (
-            <div class="flex justify-between text-sm">
-              <span class="text-[var(--color-parchment)] opacity-60">Seeds collected</span>
-              <span class="font-[var(--font-mono)] text-[var(--color-gold)] flex items-center gap-1">🌱 {(thieving.totalSeeds || 0).toLocaleString()}</span>
-            </div>
-          ) : (
-            <>
-              <div class="flex justify-between text-sm">
-                <span class="text-[var(--color-parchment)] opacity-60">Coins earned</span>
-                <span class="font-[var(--font-mono)] text-[var(--color-gold)] flex items-center gap-1"><GameIcon iconKey="coins" size={14} color="var(--color-gold)" /> {thieving.totalCoins.toLocaleString()}</span>
-              </div>
-              <div class="flex justify-between text-sm">
-                <span class="text-[var(--color-parchment)] opacity-60">Coins/hr</span>
-                <span class="font-[var(--font-mono)] text-[var(--color-gold)] flex items-center gap-1">
-                  {xpPerHr ? <><GameIcon iconKey="coins" size={14} color="var(--color-gold)" /> {Math.round(thieving.totalCoins / (elapsed / 3_600_000)).toLocaleString()}</> : '—'}
-                </span>
-              </div>
-            </>
-          )}
-        </div>
-      </div>
-
-      {/* Stop & Back */}
-      <div class="flex-shrink-0 flex gap-2 mt-3">
-        <button onClick={stopThieving}
-          class="flex-1 py-2.5 rounded-lg bg-[#222] text-[var(--color-parchment)] font-semibold text-sm active:opacity-80">
-          ← Stop &amp; Back
-        </button>
-      </div>
-    </div>
+    <SkillActivePanel
+      skill="thieving"
+      title={thieving.npc.name}
+      subtitle={thieving.npc.description}
+      progress={progress}
+      stats={[
+        { label: 'Pickpockets', value: thieving.totalPickpockets },
+        { label: 'Pickpockets / hr', value: pickpocketsPerHr ? pickpocketsPerHr.toLocaleString() : '—', accent: !!pickpocketsPerHr },
+        { label: 'XP gained', value: formatNumber(thieving.totalXP) },
+        { label: 'XP / hr', value: xpPerHr ? formatNumber(xpPerHr) : '—', accent: !!xpPerHr },
+        ...rewardStats,
+      ]}
+      onBack={backToList}
+      onStop={stopThieving}
+    />
   )
 }

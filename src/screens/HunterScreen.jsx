@@ -1,10 +1,15 @@
 import { useState, useEffect, useRef } from 'preact/hooks'
 import { useGame } from '../state/gameState.jsx'
-import ProgressBar from '../components/ProgressBar.jsx'
 import Modal from '../components/Modal.jsx'
+import SkillIcon from '../components/SkillIcon.jsx'
+import SkillScreenHeader from '../components/SkillScreenHeader.jsx'
+import SkillInfoBanner from '../components/SkillInfoBanner.jsx'
+import SkillActionRow from '../components/SkillActionRow.jsx'
+import SkillActivePanel from '../components/SkillActivePanel.jsx'
 import { getActionProgress } from '../hooks/useActionTick.js'
 import { getLevelFromXP } from '../engine/experience.js'
 import { createHunterState, processHunterTick } from '../engine/hunter.js'
+import { emptySession } from '../engine/activitySession.js'
 import { onTick } from '../engine/tick.js'
 import { markScreenTick } from '../engine/activityRunner.js'
 import { formatNumber } from '../utils/helpers.js'
@@ -14,7 +19,7 @@ import itemsData from '../data/items.json'
 const hunterData = skillsData.hunter
 
 export default function HunterScreen({ initialActionId, idleResult, onBack }) {
-  const { stats, inventory, updateInventory, bank, updateBankDirect, grantXP, addToast, setActiveTask } = useGame()
+  const { stats, inventory, updateInventory, bank, updateBankDirect, grantXP, addToast, setActiveTask, activeTask } = useGame()
 
   const hunterLevel = getLevelFromXP(stats.hunter?.xp || 0)
   const hunterXP = stats.hunter?.xp || 0
@@ -88,22 +93,64 @@ export default function HunterScreen({ initialActionId, idleResult, onBack }) {
       }
 
       setHunter({ ...hunterRef.current })
+      if (hunterRef.current?.active) mirrorActiveTask(hunterRef.current)
     })
 
     return unsub
   }, [hunter?.active])
 
+  const mirrorActiveTask = (state) => {
+    if (!state) return
+    setActiveTask({
+      type: 'hunter',
+      action: state.action,
+      totalTicks: state.action.ticks,
+      ticksRemaining: state.ticksRemaining,
+      session: { startedAt: state.startedAt, actions: state.totalActions || 0, xp: state.totalXP || 0, coins: 0, items: 0, seeds: 0, tokens: 0 },
+    }, { skipCloudSync: true })
+  }
+
+  const buildResumedState = (task) => {
+    const action = hunterData.actions.find(a => a.id === task.action?.id)
+    if (!action) return null
+    const state = { ...createHunterState(action), totalActions: task.session?.actions || 0, totalXP: task.session?.xp || 0, startedAt: task.session?.startedAt || Date.now() }
+    if (typeof task.ticksRemaining === 'number' && task.ticksRemaining > 0 && task.ticksRemaining <= action.ticks) state.ticksRemaining = task.ticksRemaining
+    return state
+  }
+
+  // Resume a hunting action already running in the background.
+  useEffect(() => {
+    if (hunter || hasAutoStarted.current) return
+    if (activeTask?.type !== 'hunter') return
+    const resumed = buildResumedState(activeTask)
+    if (!resumed) return
+    hasAutoStarted.current = true
+    setHunter(resumed)
+    hunterRef.current = resumed
+  }, [])
+
   const startHunting = (action) => {
+    if (activeTask?.type === 'hunter' && activeTask.action?.id === action.id) {
+      const resumed = buildResumedState(activeTask)
+      if (resumed) { setHunter(resumed); hunterRef.current = resumed; return }
+    }
+    const startedAt = Date.now()
     const state = {
       ...createHunterState(action),
       totalActions: 0,
       totalXP: 0,
-      startedAt: Date.now()
+      startedAt
     }
     setHunter(state)
     hunterRef.current = state
-    setActiveTask({ type: 'hunter', action })
+    setActiveTask({ type: 'hunter', action, session: emptySession(startedAt) })
     addToast(`Started ${action.name}`, 'info')
+  }
+
+  const backToList = () => {
+    if (hunterRef.current) mirrorActiveTask(hunterRef.current)
+    setHunter(null)
+    hunterRef.current = null
   }
 
   const stopHunting = () => {
@@ -116,48 +163,42 @@ export default function HunterScreen({ initialActionId, idleResult, onBack }) {
     return (
       <>
       <div class="h-full overflow-y-auto p-4">
-        {onBack && (
-          <button onClick={onBack} class="text-xs text-[var(--color-gold-dim)] mb-3 flex items-center gap-1">
-            ← Skills
-          </button>
-        )}
-        <div class="flex items-center justify-between mb-1">
-          <h2 class="font-[var(--font-display)] text-sm font-bold text-[var(--color-parchment)] opacity-60 uppercase tracking-wider">
-            Hunting Actions
-          </h2>
-          <span class="text-xs font-[var(--font-mono)] text-[var(--color-gold)]">Lv {hunterLevel}</span>
-        </div>
+        <SkillScreenHeader
+          skill="hunter"
+          title="Hunter"
+          xp={hunterXP}
+          level={hunterLevel}
+          onBack={onBack}
+        />
 
-        <div class="mb-3 bg-[#111] rounded-lg px-3 py-2 text-[11px] text-[var(--color-parchment)] opacity-60 flex items-center gap-2">
-          <span>🎯</span>
-          <span>Hunt creatures and NPCs to earn items and experience</span>
-        </div>
+        <SkillInfoBanner
+          icon={<SkillIcon skill="hunter" size={19} />}
+          className="mb-4"
+        >
+          Hunt creatures and NPCs to earn items and experience.
+        </SkillInfoBanner>
 
-        <div class="space-y-2">
+        <div class="flex flex-col gap-2.5">
           {hunterData.actions.map(action => {
             const available = hunterLevel >= action.level
             return (
               <div key={action.id} class="flex gap-2 items-center">
-                <button
-                  onClick={() => available && startHunting(action)}
-                  disabled={!available}
-                  class={`flex-1 flex items-between justify-between p-3 rounded-xl border transition-colors text-left
-                    ${available
-                      ? 'bg-[#1a1a1a] border-[#2a2a2a] active:bg-[#222]'
-                      : 'bg-[#111] border-[#1a1a1a] opacity-40'}`}
-                >
-                  <div class="flex-1">
-                    <div class="text-sm font-semibold text-[var(--color-parchment)]">{action.name}</div>
-                    <div class="text-[10px] text-[var(--color-parchment)] opacity-40 mt-0.5">
-                      Lv {action.level} · {action.xp} XP
-                    </div>
-                    <div class="text-[10px] text-[var(--color-parchment)] opacity-40">{action.description}</div>
-                  </div>
-                </button>
+                <div class="flex-1 min-w-0">
+                  <SkillActionRow
+                    icon={<SkillIcon skill="hunter" size={26} />}
+                    title={action.name}
+                    meta={<><span class="text-[var(--color-gold)] font-bold opacity-100">Lv {action.level}</span> · {action.xp} XP · {action.description}</>}
+                    active={activeTask?.type === 'hunter' && activeTask.action?.id === action.id}
+                    locked={!available}
+                    lockBadge={`LV ${action.level}`}
+                    lockHint={`Unlocks at Hunter ${action.level}`}
+                    onClick={() => startHunting(action)}
+                  />
+                </div>
                 <button
                   onClick={() => setSelectedActionInfo(action)}
                   aria-label="Action info"
-                  class="flex-shrink-0 w-9 h-9 rounded-full border border-[var(--color-void-border)] bg-[var(--color-void-light)] text-[var(--color-gold)] text-[14px] font-bold flex items-center justify-center active:opacity-70"
+                  class="flex-shrink-0 w-11 h-11 rounded-full border border-[var(--color-void-border)] bg-[var(--color-void-light)] text-[var(--color-gold)] text-[15px] font-bold flex items-center justify-center active:opacity-70"
                   title="View Action Info"
                 >
                   ⓘ
@@ -272,47 +313,20 @@ export default function HunterScreen({ initialActionId, idleResult, onBack }) {
 
   return (
     <>
-    <div class="h-full flex flex-col p-4">
-      <div class="flex-1 flex flex-col items-center justify-center">
-        <span class="text-4xl mb-2">🎯</span>
-        <h2 class="font-[var(--font-display)] text-lg font-bold text-[var(--color-gold)] mb-1">
-          {hunter.action.name}
-        </h2>
-        <div class="text-xs text-[var(--color-parchment)] opacity-40 mb-4">
-          {hunter.action.description}
-        </div>
-
-        <div class="w-full max-w-xs mb-4">
-          <ProgressBar value={progress} max={1} height="h-4" color="var(--color-gold)" showText />
-        </div>
-
-        <div class="bg-[#111] rounded-lg p-3 w-full max-w-xs space-y-1.5">
-          <div class="flex justify-between text-sm">
-            <span class="text-[var(--color-parchment)] opacity-60">Actions completed</span>
-            <span class="font-[var(--font-mono)] text-[var(--color-gold)]">{hunter.totalActions}</span>
-          </div>
-          <div class="flex justify-between text-sm">
-            <span class="text-[var(--color-parchment)] opacity-60">Actions/hr</span>
-            <span class="font-[var(--font-mono)] text-[var(--color-gold)]">{actionsPerHr ? actionsPerHr.toLocaleString() : '—'}</span>
-          </div>
-          <div class="flex justify-between text-sm">
-            <span class="text-[var(--color-parchment)] opacity-60">XP gained</span>
-            <span class="font-[var(--font-mono)] text-[var(--color-gold)]">{formatNumber(hunter.totalXP)}</span>
-          </div>
-          <div class="flex justify-between text-sm">
-            <span class="text-[var(--color-parchment)] opacity-60">XP/hr</span>
-            <span class="font-[var(--font-mono)] text-[var(--color-gold)]">{xpPerHr ? formatNumber(xpPerHr) : '—'}</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="flex-shrink-0 flex gap-2 mt-3">
-        <button onClick={stopHunting}
-          class="flex-1 py-2.5 rounded-lg bg-[#222] text-[var(--color-parchment)] font-semibold text-sm active:opacity-80">
-          ← Stop &amp; Back
-        </button>
-      </div>
-    </div>
+    <SkillActivePanel
+      skill="hunter"
+      title={hunter.action.name}
+      subtitle={hunter.action.description}
+      progress={progress}
+      stats={[
+        { label: 'Actions completed', value: hunter.totalActions },
+        { label: 'Actions / hr', value: actionsPerHr ? actionsPerHr.toLocaleString() : '—', accent: !!actionsPerHr },
+        { label: 'XP gained', value: formatNumber(hunter.totalXP) },
+        { label: 'XP / hr', value: xpPerHr ? formatNumber(xpPerHr) : '—', accent: !!xpPerHr },
+      ]}
+      onBack={backToList}
+      onStop={stopHunting}
+    />
 
     {selectedActionInfo && (
       <Modal onClose={() => setSelectedActionInfo(null)}>
@@ -343,7 +357,7 @@ export default function HunterScreen({ initialActionId, idleResult, onBack }) {
               <h4 class="text-xs font-semibold text-[var(--color-gold-dim)] uppercase tracking-wider mb-2 opacity-70">Reward Table {selectedActionInfo.rewardTables.length > 1 ? `(Main)` : ''}</h4>
               <div class="bg-[#111] rounded-lg p-3 space-y-1.5">
                 {selectedActionInfo.rewardTables[0].rewards.map((reward, idx) => {
-                  const itemData = items?.[reward.itemId]
+                  const itemData = itemsData[reward.itemId]
                   const chance = (reward.chance * 100).toFixed(2)
                   const quantityStr = typeof reward.quantity === 'object'
                     ? `${reward.quantity[0]}–${reward.quantity[1]}`
@@ -364,7 +378,7 @@ export default function HunterScreen({ initialActionId, idleResult, onBack }) {
               <h4 class="text-xs font-semibold text-[var(--color-gold-dim)] uppercase tracking-wider mb-2 opacity-70">Rare Reward Table (1/{selectedActionInfo.rewardTables[1].rarity || 'Unknown'})</h4>
               <div class="bg-[#111] rounded-lg p-3 space-y-1.5">
                 {selectedActionInfo.rewardTables[1].rewards.map((reward, idx) => {
-                  const itemData = items?.[reward.itemId]
+                  const itemData = itemsData[reward.itemId]
                   const chance = (reward.chance * 100).toFixed(2)
                   const quantityStr = typeof reward.quantity === 'object'
                     ? `${reward.quantity[0]}–${reward.quantity[1]}`
@@ -385,7 +399,7 @@ export default function HunterScreen({ initialActionId, idleResult, onBack }) {
               <h4 class="text-xs font-semibold text-[var(--color-gold-dim)] uppercase tracking-wider mb-2 opacity-70">Very Rare Reward Table (1/{selectedActionInfo.rewardTables[2].rarity || 'Unknown'})</h4>
               <div class="bg-[#111] rounded-lg p-3 space-y-1.5">
                 {selectedActionInfo.rewardTables[2].rewards.map((reward, idx) => {
-                  const itemData = items?.[reward.itemId]
+                  const itemData = itemsData[reward.itemId]
                   const chance = (reward.chance * 100).toFixed(2)
                   const quantityStr = typeof reward.quantity === 'object'
                     ? `${reward.quantity[0]}–${reward.quantity[1]}`

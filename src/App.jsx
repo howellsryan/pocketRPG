@@ -43,7 +43,8 @@ import { schedulePushSave, pushNow, pullSave, applyCloudSave, checkCloudNewer, r
 import { CRITICAL_SAVE_REASONS } from './cloud/criticalSavePolicy.js'
 import { fetchIdleState, heartbeatIdleState, beaconIdleState, resetIdleStateSync } from './cloud/idleState.js'
 import { isBackground } from './engine/activityRegistry.js'
-import { isRunnableBackgroundTask, getActionTicksForTask, simulateTaskWindow, resultActions, isScreenRecentlyDriving } from './engine/activityRunner.js'
+import { isRunnableBackgroundTask, getActionTicksForTask, getCarriedPendingTicks, simulateTaskWindow, resultActions, isScreenRecentlyDriving } from './engine/activityRunner.js'
+import { mergeSession, sessionPatchFromResult } from './engine/activitySession.js'
 import { resetActivityProgressSync } from './cloud/activityProgress.js'
 import { formatIdleTime, simulateIdleSkilling, simulateIdleGather, simulateIdleCombat, simulateIdleAgility, simulateIdleHPRegen } from './engine/idleEngine.js'
 import { triggerOneLifeDeath } from './utils/oneLifeDeath.js'
@@ -1552,10 +1553,14 @@ function GameApp() {
         itemsData: itemsDataRef.current,
       }
       const totalTicks = getActionTicksForTask(task, ctx)
-      const pending = (Number(task.pendingTicks) || 0) + 1
+      // Resume the current action where it left off. While an activity screen is
+      // driving, it mirrors `ticksRemaining`/`totalTicks` (not `pendingTicks`)
+      // onto the task; when the runner takes back over (the player navigated
+      // away), infer the elapsed ticks so the action continues, not restarts.
+      const pending = getCarriedPendingTicks(task, totalTicks) + 1
 
-      const commit = (pendingTicks) => {
-        const next = { ...task, pendingTicks, totalTicks, ticksRemaining: Math.max(0, totalTicks - pendingTicks) }
+      const commit = (pendingTicks, session = task.session) => {
+        const next = { ...task, pendingTicks, totalTicks, ticksRemaining: Math.max(0, totalTicks - pendingTicks), session }
         activeTaskRef.current = next
         // Only pendingTicks/ticksRemaining change here — skip D1 write every tick.
         // The 30s heartbeat keeps last_active_at fresh; task identity hasn't changed.
@@ -1572,6 +1577,11 @@ function GameApp() {
       const result = simulateTaskWindow(task, pending * 600, ctx)
       const actions = resultActions(result)
       if (result && actions > 0) applyBackgroundActionResult(task, result)
+      // Keep the session tally counting while the background runner drives, so
+      // the activity screen shows continuous stats when the player returns.
+      const nextSession = (result && actions > 0)
+        ? mergeSession(task.session, sessionPatchFromResult(task, result))
+        : task.session
 
       if (!result) {
         applyBackgroundStop(task, task.gatherTask?.requiresItem ? 'missing_input' : 'out_of_materials')
@@ -1588,7 +1598,7 @@ function GameApp() {
 
       // actions > 0 → reset and refill toward the next action; actions === 0
       // means a bank trip is still pending, so keep the accumulated ticks.
-      commit(actions > 0 ? 0 : pending)
+      commit(actions > 0 ? 0 : pending, nextSession)
     })
     return unsub
   }, [gameReady])

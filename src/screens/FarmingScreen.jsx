@@ -109,6 +109,7 @@ export default function FarmingScreen({ onBack }) {
     <>
       <FarmLocationPicker
         farmingLevel={farmingLevel}
+        farmingXp={stats.farming?.xp || 0}
         farming={farming}
         onSelectLocation={setSelectedLocation}
         onBack={onBack}
