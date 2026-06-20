@@ -63,11 +63,21 @@ describe('consumables — boosts', () => {
     expect(getPotionStatBoost(ITEMS.lumira_brew)).toEqual({})
   })
 
-  it('takes the max per stat across active potions (no double-stack)', () => {
+  it('sums boosts across active potions (PvE stacking)', () => {
+    // attack(13) + super_combat(18) stack on the same stat → 31
     const boosts = getActivePotionBoosts({ attack_potion: 100, super_combat: 100 }, ITEMS)
-    expect(boosts.attack).toBe(18)     // max(13, 18)
-    expect(boosts.strength).toBe(18)
+    expect(boosts.attack).toBe(31)
+    expect(boosts.strength).toBe(18) // super_combat only
     expect(boosts.magic).toBe(18)
+  })
+
+  it('applies different-stat potions simultaneously', () => {
+    const boosts = getActivePotionBoosts({ attack_potion: 100, super_combat: 0, super_strength: 100 }, {
+      ...ITEMS,
+      super_strength: { id: 'super_strength', type: 'potion', effect: 'strength', boost: 18, duration: 300 },
+    })
+    expect(boosts.attack).toBe(13)   // attack potion
+    expect(boosts.strength).toBe(18) // strength potion — both active at once
   })
 
   it('ignores expired and unknown potions', () => {

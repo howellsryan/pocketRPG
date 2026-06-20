@@ -54,10 +54,11 @@ export function getPotionStatBoost(item) {
   }
 }
 
-// Total additive stat boosts from all active potions, taking the MAX per stat so
-// overlapping potions (e.g. attack + super attack) don't double-stack. Used by
-// both the PvE tick and the PvP combat-modifier layer to feed effective-level
-// maths, so the two stay in lockstep.
+// Total additive stat boosts from all active potions, SUMMED across them (mirrors
+// PvE, which applies each active potion's boost in turn). Different potions stack
+// — an attack potion and a strength potion are both applied — and two potions
+// boosting the same stat add together. Used by both the PvE tick and the PvP
+// combat-modifier layer so the two stay in lockstep.
 export function getActivePotionBoosts(activePotions, itemsData) {
   const totals = { attack: 0, strength: 0, defence: 0, ranged: 0, magic: 0 }
   if (!activePotions || typeof activePotions !== 'object' || !itemsData) return totals
@@ -66,7 +67,7 @@ export function getActivePotionBoosts(activePotions, itemsData) {
     const item = itemsData[potionId]
     if (!item) continue
     for (const [stat, val] of Object.entries(getPotionStatBoost(item))) {
-      totals[stat] = Math.max(totals[stat] || 0, val)
+      totals[stat] = (totals[stat] || 0) + val
     }
   }
   return totals
