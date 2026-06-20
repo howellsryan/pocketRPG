@@ -11,6 +11,7 @@ import IdleCombatSetupModal from '../components/IdleCombatSetupModal.jsx'
 import EquipmentPaperdoll from '../components/EquipmentPaperdoll.jsx'
 import ItemSlot from '../components/ItemSlot.jsx'
 import GameIcon from '../components/GameIcon.jsx'
+import CombatQuickActions from '../components/CombatQuickActions.jsx'
 import SkillEmblem from '../components/SkillEmblem.jsx'
 import CombatMobileSelect from './CombatMobileSelect.jsx'
 import { CombatMonsterInfoSheet, CombatRaidInfoSheet, MultiStyleChip } from './CombatMobileSheets.jsx'
@@ -242,9 +243,6 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   const [isDesktopCombatLayout, setIsDesktopCombatLayout] = useState(false)
   const [monsterSplats, setMonsterSplats] = useState([])
   const [playerSplats, setPlayerSplats] = useState([])
-  // Mobile quick-actions panel (replaces the combat log + Eat/Potion/Gear buttons)
-  const [invTab, setInvTab] = useState('food')
-
   const combatRef = useRef(null)
   const hpRef = useRef(currentHP)
   const hasAutoStarted = useRef(false)
@@ -1494,29 +1492,6 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     setCombat(newState)
   }
 
-  // ── Mobile quick-actions helpers ──────────────────────────────────────────
-  // Compact quantity formatter for slot badges (312 → 312, 5085 → 5.1k).
-  const fmtQty = (n) => {
-    if (n >= 1000000) return (n / 1000000).toFixed(1).replace(/\.0$/, '') + 'M'
-    if (n >= 1000) return (n / 1000).toFixed(1).replace(/\.0$/, '') + 'k'
-    return `${n}`
-  }
-
-  // Group the live inventory into distinct item cards (summing stacked qty),
-  // filtered by a predicate over the resolved item definition.
-  const groupInv = (predicate) => {
-    const map = new Map()
-    for (const slot of inventory) {
-      if (!slot || slot.noted) continue
-      const item = itemsData[slot.itemId]
-      if (!item || !predicate(item)) continue
-      const cur = map.get(slot.itemId)
-      if (cur) cur.qty += slot.quantity || 1
-      else map.set(slot.itemId, { itemId: slot.itemId, item, qty: slot.quantity || 1 })
-    }
-    return [...map.values()]
-  }
-
   const handleAddToHome = (monster) => {
     const icon = MONSTER_ICONS[monster.id] || '👹'
     const shortcut = {
@@ -2634,78 +2609,16 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
               )}
 
               {/* Quick-actions panel — replaces the text combat log */}
-              {combat.active && !isAutoRestarting && (() => {
-                const POT_TAG = { hp: '+HP', attack: '+ATK', strength: '+STR', defence: '+DEF', ranged: '+RNG', magic: '+MAG', combat: '+ALL', super_restore: 'RESTORE' }
-                // Stable name-sort so the grid doesn't reshuffle as items are
-                // equipped/consumed. Weapons/armour only list inventory items —
-                // currently-worn gear is intentionally not shown here.
-                const byName = (a, b) => a.item.name.localeCompare(b.item.name)
-                const foods = groupInv(it => it.type === 'food' || isLumiraBrew(it))
-                const potions = groupInv(it => it.type === 'potion')
-                const weapons = groupInv(it => it.slot === 'weapon').sort(byName)
-                const armour = groupInv(it => it.slot && it.slot !== 'weapon').sort(byName)
-                const tabs = [['food', 'Food', foods.length], ['potion', 'Potions', potions.length], ['weapon', 'Weapons', weapons.length], ['armour', 'Armour', armour.length]]
-                return (
-                  <div class="cb-qa">
-                    <div class="cb-qa__tabs">
-                      {tabs.map(([id, label, n]) => (
-                        <button key={id} class={'cb-qa__tab' + (invTab === id ? ' is-on' : '')} onClick={() => setInvTab(id)}>
-                          {label}<span class="cb-qa__tabn">{n}</span>
-                        </button>
-                      ))}
-                    </div>
-
-                    <div class="cb-qa__grid">
-                      {invTab === 'food' && (foods.length === 0
-                        ? <div class="cb-qa__empty">No food in your inventory</div>
-                        : foods.map(({ itemId, item, qty }) => (
-                          <button key={itemId} class="cb-slot" onClick={() => handleEatItem(itemId)}>
-                            <span class="cb-slot__qty">{fmtQty(qty)}</span>
-                            <GameIcon item={item} size={18} />
-                            <span class="cb-slot__name">{item.name}</span>
-                            {item.heals != null && <span class="cb-slot__tag heal">+{item.heals}</span>}
-                          </button>
-                        )))}
-
-                      {invTab === 'potion' && (potions.length === 0
-                        ? <div class="cb-qa__empty">No potions in your inventory</div>
-                        : potions.map(({ itemId, item, qty }) => {
-                          const active = Object.keys(combat?.activePotions || {}).some(pid => itemsData[pid]?.effect === item.effect)
-                          return (
-                            <button key={itemId} class={'cb-slot' + (active ? ' is-active' : '')} onClick={() => handlePotion(itemId)}>
-                              <span class="cb-slot__qty">{fmtQty(qty)}</span>
-                              <GameIcon item={item} size={18} />
-                              <span class="cb-slot__name">{item.name}</span>
-                              {POT_TAG[item.effect] && <span class="cb-slot__tag">{POT_TAG[item.effect]}</span>}
-                              {active && <span class="cb-slot__ring" />}
-                            </button>
-                          )
-                        }))}
-
-                      {invTab === 'weapon' && (weapons.length === 0
-                        ? <div class="cb-qa__empty">No weapons to wield</div>
-                        : weapons.map(({ itemId, item, qty }) => (
-                          <button key={itemId} class="cb-slot" onClick={() => handleEquipItem(itemId)}>
-                            {qty > 1 && <span class="cb-slot__qty">{fmtQty(qty)}</span>}
-                            <GameIcon item={item} size={18} />
-                            <span class="cb-slot__name">{item.name}</span>
-                          </button>
-                        )))}
-
-                      {invTab === 'armour' && (armour.length === 0
-                        ? <div class="cb-qa__empty">No armour to equip</div>
-                        : armour.map(({ itemId, item, qty }) => (
-                          <button key={itemId} class="cb-slot" onClick={() => handleEquipItem(itemId)}>
-                            {qty > 1 && <span class="cb-slot__qty">{fmtQty(qty)}</span>}
-                            <GameIcon item={item} size={18} />
-                            <span class="cb-slot__name">{item.name}</span>
-                            <span class="cb-slot__tag">{item.slot}</span>
-                          </button>
-                        )))}
-                    </div>
-                  </div>
-                )
-              })()}
+              {combat.active && !isAutoRestarting && (
+                <CombatQuickActions
+                  inventory={inventory}
+                  itemsData={itemsData}
+                  onEat={(entry) => handleEatItem(entry.itemId)}
+                  onPotion={(entry) => handlePotion(entry.itemId)}
+                  onEquip={(entry) => handleEquipItem(entry.itemId)}
+                  isPotionActive={(item) => Object.keys(combat?.activePotions || {}).some(pid => itemsData[pid]?.effect === item.effect)}
+                />
+              )}
 
               {/* Kill stats */}
               {fightStartedAt && (
