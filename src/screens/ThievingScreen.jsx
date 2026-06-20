@@ -4,6 +4,7 @@ import SkillIcon from '../components/SkillIcon.jsx'
 import { getActionProgress } from '../hooks/useActionTick.js'
 import { getLevelFromXP } from '../engine/experience.js'
 import { createThievingState, processThievingTick } from '../engine/thieving.js'
+import { emptySession } from '../engine/activitySession.js'
 import { rollMasterFarmerSeed } from '../engine/seedDrops.js'
 import { onTick } from '../engine/tick.js'
 import { markScreenTick } from '../engine/activityRunner.js'
@@ -18,7 +19,7 @@ import skillsData from '../data/skills.json'
 const thievingData = skillsData.thieving
 
 export default function ThievingScreen({ initialNpcId, idleResult, onBack }) {
-  const { stats, inventory, updateInventory, bank, updateBankDirect, grantXP, addToast, setActiveTask } = useGame()
+  const { stats, inventory, updateInventory, bank, updateBankDirect, grantXP, addToast, setActiveTask, activeTask } = useGame()
 
   const thievingLevel = getLevelFromXP(stats.thieving?.xp || 0)
   const thievingXP = stats.thieving?.xp || 0
@@ -139,24 +140,68 @@ export default function ThievingScreen({ initialNpcId, idleResult, onBack }) {
       }
 
       setThieving({ ...thievingRef.current })
+      if (thievingRef.current?.active) mirrorActiveTask(thievingRef.current)
     })
 
     return unsub
   }, [thieving?.active])
 
+  const mirrorActiveTask = (state) => {
+    if (!state) return
+    const ticks = state.npc.pickpocketTicks || 4
+    setActiveTask({
+      type: 'thieving',
+      npc: state.npc,
+      totalTicks: ticks,
+      ticksRemaining: state.ticksRemaining,
+      session: { startedAt: state.startedAt, actions: state.totalPickpockets || 0, xp: state.totalXP || 0, coins: state.totalCoins || 0, items: 0, seeds: state.totalSeeds || 0, tokens: 0 },
+    }, { skipCloudSync: true })
+  }
+
+  const buildResumedState = (task) => {
+    const npc = thievingData.npcs.find(n => n.id === task.npc?.id)
+    if (!npc) return null
+    const state = { ...createThievingState(npc), totalPickpockets: task.session?.actions || 0, totalXP: task.session?.xp || 0, totalCoins: task.session?.coins || 0, totalSeeds: task.session?.seeds || 0, startedAt: task.session?.startedAt || Date.now() }
+    const ticks = npc.pickpocketTicks || 4
+    if (typeof task.ticksRemaining === 'number' && task.ticksRemaining > 0 && task.ticksRemaining <= ticks) state.ticksRemaining = task.ticksRemaining
+    return state
+  }
+
+  // Resume a pickpocket target already running in the background.
+  useEffect(() => {
+    if (thieving || hasAutoStarted.current) return
+    if (activeTask?.type !== 'thieving') return
+    const resumed = buildResumedState(activeTask)
+    if (!resumed) return
+    hasAutoStarted.current = true
+    setThieving(resumed)
+    thievingRef.current = resumed
+  }, [])
+
   const startThieving = (npc) => {
+    if (activeTask?.type === 'thieving' && activeTask.npc?.id === npc.id) {
+      const resumed = buildResumedState(activeTask)
+      if (resumed) { setThieving(resumed); thievingRef.current = resumed; return }
+    }
+    const startedAt = Date.now()
     const state = {
       ...createThievingState(npc),
       totalPickpockets: 0,
       totalXP: 0,
       totalCoins: 0,
       totalSeeds: 0,
-      startedAt: Date.now()
+      startedAt
     }
     setThieving(state)
     thievingRef.current = state
-    setActiveTask({ type: 'thieving', npc })
+    setActiveTask({ type: 'thieving', npc, session: emptySession(startedAt) })
     addToast(`Started pickpocketing ${npc.name}`, 'info')
+  }
+
+  const backToList = () => {
+    if (thievingRef.current) mirrorActiveTask(thievingRef.current)
+    setThieving(null)
+    thievingRef.current = null
   }
 
   const stopThieving = () => {
@@ -198,6 +243,7 @@ export default function ThievingScreen({ initialNpcId, idleResult, onBack }) {
                 chip={npc.seedReward
                   ? <><span>🌱</span> seeds</>
                   : <><GameIcon iconKey="coins" size={16} color="var(--color-gold)" /> {npc.coins.toLocaleString()} / pocket</>}
+                active={activeTask?.type === 'thieving' && activeTask.npc?.id === npc.id}
                 locked={!available}
                 lockBadge={`LV ${npc.level}`}
                 lockHint={`Unlocks at Thieving ${npc.level}`}
@@ -240,6 +286,7 @@ export default function ThievingScreen({ initialNpcId, idleResult, onBack }) {
         { label: 'XP / hr', value: xpPerHr ? formatNumber(xpPerHr) : '—', accent: !!xpPerHr },
         ...rewardStats,
       ]}
+      onBack={backToList}
       onStop={stopThieving}
     />
   )

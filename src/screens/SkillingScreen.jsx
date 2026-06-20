@@ -8,6 +8,7 @@ import SkillInfoBanner from '../components/SkillInfoBanner.jsx'
 import SkillActionRow from '../components/SkillActionRow.jsx'
 import SkillActivePanel from '../components/SkillActivePanel.jsx'
 import { getAgilityBankDelayMs, formatBankDelay } from '../engine/agility.js'
+import { emptySession, ratePerHour } from '../engine/activitySession.js'
 import { getActionProgress } from '../hooks/useActionTick.js'
 import { STUB_SKILLS, GATHERING_SKILLS, PRODUCTION_SKILLS, UTILITY_SKILLS, SCREENS, formatDropChance, GATHER_AUTOBANK_CONSTRUCTION_LEVEL } from '../utils/constants.js'
 import { getLevelFromXP } from '../engine/experience.js'
@@ -35,6 +36,9 @@ import { recordCollectionLogDrop } from '../cloud/collectionLog.js'
 // Farming, Agility, Prayer, Thieving, Hunter, Slayer, Construction, and Dungeoneering are special
 // skills shown here in the Skills tab.
 const SPECIAL_SKILLS = ['farming', 'agility', 'prayer', 'thieving', 'hunter', 'slayer', 'construction', 'dungeoneering', 'magic']
+// Skills this screen delegates to a dedicated sub-screen — those screens own
+// their own resume-from-background logic, so the generic resume path skips them.
+const DELEGATED_SKILLS = new Set(['agility', 'slayer', 'thieving', 'hunter', 'farming', 'construction', 'magic'])
 const trainableSkills = [...GATHERING_SKILLS, ...PRODUCTION_SKILLS].filter(s => !STUB_SKILLS.has(s) && skillsData[s]?.actions?.length > 0)
 const allSkillsInTab = [...trainableSkills, ...SPECIAL_SKILLS]
 
@@ -369,6 +373,7 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
       }
 
       setSkilling({ ...skillingRef.current })
+      if (skillingRef.current?.active) mirrorActiveTask(skillingRef.current)
     })
 
     return unsub
@@ -392,6 +397,9 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
   }, [activeTask, selectedSkill, skilling])
 
   const startSkilling = async (action) => {
+    // Re-opening the action that's already running in the background: resume the
+    // live panel from the persisted session rather than restarting it.
+    if (resumeActiveAction(action)) return
     if (selectedSkill === 'dungeoneering' && action.category === 'reward') {
       const currentLevel = getLevelFromXP(stats.dungeoneering?.xp || 0)
       if (currentLevel < (action.level || 1)) return addToast(`Requires Dungeoneering level ${action.level}.`, 'error')
@@ -471,11 +479,36 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
     setSelectedAction(action)
     setSkilling(state)
     // Store original action in task — idle engine will apply tool multiplier separately
-    const newTask = { type: 'skill', skill: selectedSkill, action, bankingEnabled: true }
+    const newTask = { type: 'skill', skill: selectedSkill, action, bankingEnabled: true, session: emptySession(state.startedAt) }
     if (action.category === 'reward') {
       newTask.ticksRemaining = isResumableReward ? activeTask.ticksRemaining : action.ticks
     }
     setActiveTask(newTask)
+  }
+
+  // Rebuild the live skilling panel from a running background task (same skill +
+  // action), seeding session totals and the current action's remaining ticks so
+  // progress continues exactly where the background runner left it.
+  const buildResumedState = (task, action, skill = selectedSkill) => {
+    const effectiveTicks = getEffectiveToolActionTicks(skill, action.ticks, equipment, itemsData, stats, inventory)
+    const adjustedAction = effectiveTicks !== action.ticks ? { ...action, ticks: effectiveTicks } : action
+    const state = { ...createSkillingState(skill, adjustedAction), startedAt: task.session?.startedAt || Date.now() }
+    state.totalActions = task.session?.actions || 0
+    state.totalXP = task.session?.xp || 0
+    state.totalDungeoneeringTokens = task.session?.tokens || 0
+    if (typeof task.ticksRemaining === 'number' && task.ticksRemaining > 0 && task.ticksRemaining <= adjustedAction.ticks) {
+      state.ticksRemaining = task.ticksRemaining
+    }
+    return state
+  }
+
+  const resumeActiveAction = (action) => {
+    const t = activeTask
+    if (!t || t.type !== 'skill' || t.skill !== selectedSkill) return false
+    if (t.action?.id !== action.id || t.action?.category === 'reward') return false
+    setSelectedAction(action)
+    setSkilling(buildResumedState(t, action))
+    return true
   }
 
   const startAlchemy = (item) => {
@@ -551,9 +584,45 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
     setActiveTask(null)
   }
 
-  // Auto-start from home shortcut
+  // Mirror the live per-action progress + session tally onto the global task so
+  // the top-nav indicator stays in sync and the session survives navigation.
+  // The ORIGINAL action is stored (the idle engine reapplies the tool multiplier).
+  const mirrorActiveTask = (state) => {
+    if (!state || !selectedAction) return
+    setActiveTask({
+      type: 'skill',
+      skill: selectedSkill,
+      action: selectedAction,
+      bankingEnabled: true,
+      ...(selectedAlchemyItem ? { selectedAlchemyItem } : {}),
+      totalTicks: state.action.ticks,
+      ticksRemaining: state.ticksRemaining,
+      session: {
+        startedAt: state.startedAt,
+        actions: state.totalActions || 0,
+        xp: state.totalXP || 0,
+        coins: 0, items: 0, seeds: 0,
+        tokens: state.totalDungeoneeringTokens || 0,
+      },
+    }, { skipCloudSync: true })
+  }
+
+  // Back (does NOT stop): flush progress and return to the action list while the
+  // task keeps running in the background. "Stop & Back" still cancels the task.
+  const backToList = () => {
+    if (skillingRef.current) mirrorActiveTask(skillingRef.current)
+    skillingRef.current = null
+    setSkilling(null)
+    setSelectedAction(null)
+    setSelectedAlchemyItem(null)
+  }
+
+  // Auto-start from home shortcut, or resume an in-progress background task when
+  // the player navigates back into the Skills section.
   useEffect(() => {
-    if (initialSkillId && initialActionId && !hasAutoStarted.current) {
+    if (hasAutoStarted.current) return
+
+    if (initialSkillId && initialActionId) {
       hasAutoStarted.current = true
       const skill = skillsData[initialSkillId]
       if (skill) {
@@ -571,13 +640,30 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
             state.totalXP = (idleResult.xpGained?.[initialSkillId] || 0)
             if (initialSkillId === 'dungeoneering') state.totalDungeoneeringTokens = idleResult.dungeoneeringTokensGained || 0
           }
-          setSelectedAction(adjustedAction)
+          setSelectedAction(action)
           setSkilling(state)
           // Store original action in task — idle engine will apply tool multiplier separately
-          setActiveTask({ type: 'skill', skill: initialSkillId, action })
+          setActiveTask({ type: 'skill', skill: initialSkillId, action, session: emptySession(state.startedAt) })
         }
       }
+      return
     }
+
+    // Resume: a runnable skill task is already running (navigated away & back).
+    // Delegated skills (agility/thieving/hunter/…) resume in their own screens,
+    // so only rebuild the live panel for skills this screen drives directly.
+    const t = activeTask
+    if (selectedSkill || !t || t.type !== 'skill' || t.action?.category === 'reward') return
+    if (DELEGATED_SKILLS.has(t.skill)) return
+    const sdata = skillsData[t.skill]
+    const action = sdata?.actions?.find(a => a.id === t.action?.id)
+    if (!action) return
+    hasAutoStarted.current = true
+    setSelectedSkill(t.skill)
+    setSelectedAction(action)
+    // selectedSkill state isn't committed yet; build against the task's skill so
+    // tool multipliers resolve correctly.
+    setSkilling(buildResumedState(t, action, t.skill))
   }, [initialSkillId, initialActionId])
 
 
@@ -708,6 +794,10 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
                 ))}
               </div>
             )
+            const isRunning = activeTask?.type === 'skill'
+              && activeTask.skill === selectedSkill
+              && activeTask.action?.id === action.id
+              && activeTask.action?.category !== 'reward'
             return (
               <SkillActionRow
                 key={action.id}
@@ -716,6 +806,7 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
                 meta={meta}
                 chip={action.product && !action.dropTable ? <>→ {itemsData[action.product]?.name || action.product}</> : null}
                 right={dropRight || undefined}
+                active={isRunning}
                 locked={levelLocked}
                 lockBadge={`LV ${action.level}`}
                 lockHint={`Unlocks at ${selectedSkill.charAt(0).toUpperCase() + selectedSkill.slice(1)} ${action.level}`}
@@ -823,10 +914,8 @@ Shop value: ×1.1
   // Active skilling modal
   const progress = getActionProgress(skilling.active, skilling.ticksRemaining, skilling.action.ticks)
 
-  const elapsedMs = skilling.startedAt ? Date.now() - skilling.startedAt : 0
-  const hasRate = elapsedMs > 5000
-  const actionsPerHr = hasRate ? Math.round(skilling.totalActions / (elapsedMs / 3600000)) : null
-  const xpPerHr = hasRate ? Math.round(skilling.totalXP / (elapsedMs / 3600000)) : null
+  const actionsPerHr = ratePerHour(skilling.totalActions, skilling.startedAt)
+  const xpPerHr = ratePerHour(skilling.totalXP, skilling.startedAt)
   const isGathering = GATHERING_SKILLS.includes(selectedSkill)
   const producedItem = skilling.action.product ? itemsData[skilling.action.product] : null
 
@@ -856,6 +945,7 @@ Shop value: ×1.1
         label: 'Bank speed',
         value: `${formatBankDelay(getAgilityBankDelayMs(getLevelFromXP(stats.agility?.xp || 0)))} delay`,
       } : null}
+      onBack={backToList}
       onStop={stopSkilling}
     />
   )

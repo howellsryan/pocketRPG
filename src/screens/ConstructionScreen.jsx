@@ -7,6 +7,7 @@ import SkillActivePanel from '../components/SkillActivePanel.jsx'
 import SectionHeader from '../components/SectionHeader.jsx'
 import { getLevelFromXP } from '../engine/experience.js'
 import { createSkillingState, processSkillingTick } from '../engine/skilling.js'
+import { emptySession } from '../engine/activitySession.js'
 import { countItem, removeItemUnnotedFirst } from '../engine/inventory.js'
 import { onTick } from '../engine/tick.js'
 import { formatNumber } from '../utils/helpers.js'
@@ -19,24 +20,66 @@ export default function ConstructionScreen({ onBack }) {
   const {
     stats, inventory, bank,
     grantXP, updateInventory, updateBankDirect, addToast,
-    unlockedFeatures, unlockFeature, setActiveTask
+    unlockedFeatures, unlockFeature, setActiveTask, activeTask
   } = useGame()
 
   const constructionLevel = getLevelFromXP(stats.construction?.xp || 0)
 
   const [skilling, setSkilling] = useState(null)
   const skillingRef = useRef(null)
+  const hasResumed = useRef(false)
   const inventoryRef = useRef(inventory)
   const bankRef = useRef(bank)
 
   useEffect(() => { inventoryRef.current = inventory }, [inventory])
   useEffect(() => { bankRef.current = bank }, [bank])
 
+  const mirrorActiveTask = (state) => {
+    if (!state) return
+    setActiveTask({
+      type: 'skill', skill: 'construction', action: state.action, bankingEnabled: false,
+      totalTicks: state.action.ticks, ticksRemaining: state.ticksRemaining,
+      session: { startedAt: state.startedAt, actions: state.totalActions || 0, xp: state.totalXP || 0, coins: 0, items: 0, seeds: 0, tokens: 0 },
+    }, { skipCloudSync: true })
+  }
+
+  const buildResumedState = (task) => {
+    const action = BUILDING_ACTIONS.find(a => a.id === task.action?.id)
+    if (!action) return null
+    const state = { ...createSkillingState('construction', action), startedAt: task.session?.startedAt || Date.now() }
+    state.totalActions = task.session?.actions || 0
+    state.totalXP = task.session?.xp || 0
+    if (typeof task.ticksRemaining === 'number' && task.ticksRemaining > 0 && task.ticksRemaining <= action.ticks) state.ticksRemaining = task.ticksRemaining
+    return state
+  }
+
+  // Resume a build already running in the background (navigated away & back).
+  useEffect(() => {
+    if (skilling || hasResumed.current) return
+    if (activeTask?.type !== 'skill' || activeTask.skill !== 'construction') return
+    const resumed = buildResumedState(activeTask)
+    if (!resumed) return
+    hasResumed.current = true
+    setSkilling(resumed)
+    skillingRef.current = resumed
+  }, [])
+
   const startBuilding = (action) => {
-    const state = { ...createSkillingState('construction', action), startedAt: Date.now() }
+    if (activeTask?.type === 'skill' && activeTask.skill === 'construction' && activeTask.action?.id === action.id) {
+      const resumed = buildResumedState(activeTask)
+      if (resumed) { setSkilling(resumed); skillingRef.current = resumed; return }
+    }
+    const startedAt = Date.now()
+    const state = { ...createSkillingState('construction', action), startedAt }
     setSkilling(state)
     skillingRef.current = state
-    setActiveTask({ type: 'skill', skill: 'construction', action, bankingEnabled: false })
+    setActiveTask({ type: 'skill', skill: 'construction', action, bankingEnabled: false, session: emptySession(startedAt) })
+  }
+
+  const backToList = () => {
+    if (skillingRef.current) mirrorActiveTask(skillingRef.current)
+    setSkilling(null)
+    skillingRef.current = null
   }
 
   const stopBuilding = () => {
@@ -94,6 +137,7 @@ export default function ConstructionScreen({ onBack }) {
       }
 
       setSkilling({ ...skillingRef.current })
+      if (skillingRef.current?.active) mirrorActiveTask(skillingRef.current)
     })
 
     return unsub
@@ -120,6 +164,7 @@ export default function ConstructionScreen({ onBack }) {
           { label: 'XP gained', value: formatNumber(skilling.totalXP) },
           { label: 'XP / hr', value: xpPerHr, accent: xpPerHr !== '—' },
         ]}
+        onBack={backToList}
         onStop={stopBuilding}
       />
     )
@@ -158,6 +203,7 @@ export default function ConstructionScreen({ onBack }) {
                 {available && !hasMats && <span class="block text-[var(--color-blood-ember)] mt-1">No {matName} in inventory or bank</span>}
               </>}
               chip={<>{totalMats.toLocaleString()} avail</>}
+              active={activeTask?.type === 'skill' && activeTask.skill === 'construction' && activeTask.action?.id === action.id}
               locked={!available}
               lockBadge={`LV ${action.level}`}
               lockHint={`Unlocks at Construction ${action.level}`}

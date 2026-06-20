@@ -216,32 +216,73 @@ export default function GatherScreen({ initialTaskId, idleResult }) {
         }
         taskRef.current = updated
         setLocalTask(updated)
+        mirrorActiveTask(updated)
       } else {
         taskRef.current = next
         setLocalTask(next)
+        mirrorActiveTask(next)
       }
     })
 
     return unsub
   }, [activeTask?.task?.id, inventory, bank, stats])
 
+  // Mirror live progress + session onto the global task so the top-nav indicator
+  // stays in sync and the session survives navigation.
+  const mirrorActiveTask = (state) => {
+    if (!state || state.stopped) return
+    setActiveTask({
+      type: 'gather', gatherTask: state.task,
+      totalTicks: state.task.ticks, ticksRemaining: state.ticksRemaining,
+      session: { startedAt: state.startedAt, actions: state.totalDone || 0, xp: 0, coins: 0, items: state.totalItems || 0, seeds: 0, tokens: 0 },
+    }, { skipCloudSync: true })
+  }
+
+  const buildResumedState = (task) => {
+    const gatherTask = GATHER_TASKS.find(t => t.id === task.gatherTask?.id)
+    if (!gatherTask) return null
+    const state = {
+      task: gatherTask,
+      ticksRemaining: gatherTask.ticks,
+      totalDone: task.session?.actions || 0,
+      totalItems: task.session?.items || 0,
+      startedAt: task.session?.startedAt || Date.now(),
+      stopped: false,
+      justCompleted: false,
+    }
+    if (typeof task.ticksRemaining === 'number' && task.ticksRemaining > 0 && task.ticksRemaining <= gatherTask.ticks) state.ticksRemaining = task.ticksRemaining
+    return state
+  }
+
   const startTask = (task, seedFromIdle = false) => {
+    // Re-opening the running gather: resume the live panel from its session.
+    if (globalActiveTask?.type === 'gather' && globalActiveTask.gatherTask?.id === task.id && !seedFromIdle) {
+      const resumed = buildResumedState(globalActiveTask)
+      if (resumed) { taskRef.current = resumed; setLocalTask(resumed); return }
+    }
     const idleActions = seedFromIdle && idleResult?.actions ? idleResult.actions : 0
     const idleItems = seedFromIdle && idleResult?.itemsGained
       ? Object.values(idleResult.itemsGained).reduce((s, v) => s + v, 0)
       : 0
+    const startedAt = Date.now()
     const newState = {
       task,
       ticksRemaining: task.ticks,
       totalDone: idleActions,
       totalItems: idleItems,
-      startedAt: Date.now(),
+      startedAt,
       stopped: false,
       justCompleted: false,
     }
     taskRef.current = newState
     setLocalTask(newState)
-    setActiveTask({ type: 'gather', gatherTask: task })
+    setActiveTask({ type: 'gather', gatherTask: task, session: { startedAt, actions: idleActions, xp: 0, coins: 0, items: idleItems, seeds: 0, tokens: 0 } })
+  }
+
+  // Back (no stop): flush progress and return to the task list; task keeps running.
+  const backToList = () => {
+    if (taskRef.current) mirrorActiveTask(taskRef.current)
+    setLocalTask(null)
   }
 
   const stopTask = () => {
@@ -249,6 +290,17 @@ export default function GatherScreen({ initialTaskId, idleResult }) {
     setLocalTask(null)
     setActiveTask(null)
   }
+
+  // Resume a gather already running in the background (navigated away & back).
+  useEffect(() => {
+    if (activeTask || hasAutoStarted.current || initialTaskId) return
+    if (globalActiveTask?.type !== 'gather') return
+    const resumed = buildResumedState(globalActiveTask)
+    if (!resumed) return
+    hasAutoStarted.current = true
+    taskRef.current = resumed
+    setLocalTask(resumed)
+  }, [])
 
   // Auto-start from home shortcut
   useEffect(() => {
@@ -328,6 +380,7 @@ export default function GatherScreen({ initialTaskId, idleResult }) {
         note={getLevelFromXP(stats.construction?.xp || 0) >= GATHER_AUTOBANK_CONSTRUCTION_LEVEL
           ? '🏦 Items fill your inventory, then auto-bank when full.'
           : '🎒 Items go to your inventory. Gathering stops when it\'s full.'}
+        onBack={backToList}
         onStop={stopTask}
       />
     )
@@ -383,6 +436,7 @@ export default function GatherScreen({ initialTaskId, idleResult }) {
                   {task.materials && <> · Needs: {Object.entries(task.materials).map(([id, qty]) => `${nameOf(id)} ×${qty}`).join(', ')}</>}
                 </>}
                 chip={<>→ {nameOf(task.product)}</>}
+                active={globalActiveTask?.type === 'gather' && globalActiveTask.gatherTask?.id === task.id}
                 disabled={!enabled}
                 onClick={() => startTask(task)}
               />

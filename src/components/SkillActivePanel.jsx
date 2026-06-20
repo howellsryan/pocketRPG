@@ -30,6 +30,7 @@ export default function SkillActivePanel({
   statsTitle = 'SESSION',
   footer = null,
   note = null,
+  onBack = null,
   onStop,
   stopLabel = 'Stop & Back',
 }) {
@@ -37,9 +38,22 @@ export default function SkillActivePanel({
   const glyph = icon || <SkillIcon skill={skill} size={50} color="var(--color-gold-light)" />
 
   return (
-    <div class="h-full flex flex-col px-5 pt-2">
+    <div class="h-full flex flex-col px-5 pt-2 min-h-0">
+      {/* Back — leaves the task running (Stop & Back below cancels it) */}
+      {onBack && (
+        <button
+          onClick={onBack}
+          class="flex-shrink-0 mb-1 flex items-center gap-1.5 text-[var(--color-gold)] bg-transparent border-0 p-0 cursor-pointer active:opacity-70 self-start"
+        >
+          <span class="text-base leading-none">‹</span>
+          <span class="text-sm font-semibold">Back</span>
+        </button>
+      )}
+
+      {/* Scrollable body so the SESSION card never gets clipped on short screens */}
+      <div class="flex-1 min-h-0 overflow-y-auto">
       {/* Orb */}
-      <div class="flex flex-col items-center mt-10">
+      <div class="flex flex-col items-center mt-6">
         <div class="relative w-[148px] h-[148px] flex items-center justify-center">
           <div class="absolute inset-0 rounded-full border-[1.5px] border-dashed border-[rgba(212,160,23,0.30)] skill-ring-spin" />
           <div class="w-[112px] h-[112px] rounded-full flex items-center justify-center skill-orb-pulse bg-[radial-gradient(circle_at_50%_38%,#1a1813,#0c0b0a)]">
@@ -119,14 +133,13 @@ export default function SkillActivePanel({
           {note}
         </div>
       )}
+      </div>
 
-      <div class="flex-1" />
-
-      {/* Stop button */}
+      {/* Stop button — pinned below the scroll area */}
       <button
         type="button"
         onClick={onStop}
-        class="mb-6 mt-4 w-full py-4 rounded-2xl flex items-center justify-center gap-2.5 cursor-pointer bg-[rgba(192,57,43,0.08)] border-[1.5px] border-[rgba(192,57,43,0.32)] active:opacity-80"
+        class="flex-shrink-0 mb-6 mt-4 w-full py-4 rounded-2xl flex items-center justify-center gap-2.5 cursor-pointer bg-[rgba(192,57,43,0.08)] border-[1.5px] border-[rgba(192,57,43,0.32)] active:opacity-80"
       >
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
           <rect x="6" y="6" width="12" height="12" rx="2.5" fill="var(--color-blood-ember)" />

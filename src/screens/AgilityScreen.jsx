@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'preact/hooks'
 import { useGame } from '../state/gameState.jsx'
 import { getLevelFromXP } from '../engine/experience.js'
 import { createAgilityState, processAgilityTick, getAgilityBankDelayMs, formatBankDelay } from '../engine/agility.js'
+import { emptySession } from '../engine/activitySession.js'
 import { onTick } from '../engine/tick.js'
 import { markScreenTick } from '../engine/activityRunner.js'
 import { formatNumber } from '../utils/helpers.js'
@@ -16,7 +17,7 @@ import skillsData from '../data/skills.json'
 const agilityData = skillsData.agility
 
 export default function AgilityScreen({ initialActionId, idleResult, onBack }) {
-  const { stats, inventory, updateInventory, bank, updateBankDirect, grantXP, addToast, setActiveTask } = useGame()
+  const { stats, inventory, updateInventory, bank, updateBankDirect, grantXP, addToast, setActiveTask, activeTask } = useGame()
 
   const agilityLevel = getLevelFromXP(stats.agility?.xp || 0)
   const agilityXP = stats.agility?.xp || 0
@@ -108,22 +109,61 @@ export default function AgilityScreen({ initialActionId, idleResult, onBack }) {
       }
 
       setAgility({ ...agilityRef.current })
+      if (agilityRef.current?.active) mirrorActiveTask(agilityRef.current)
     })
 
     return unsub
   }, [agility?.active])
 
+  // Mirror live progress + session onto the global task so the top-nav
+  // indicator stays in sync and the session survives navigation.
+  const mirrorActiveTask = (state) => {
+    if (!state) return
+    setActiveTask({
+      type: 'agility',
+      action: state.action,
+      totalTicks: state.action.ticks,
+      ticksRemaining: state.ticksRemaining,
+      session: { startedAt: state.startedAt, actions: state.totalLaps || 0, xp: state.totalXP || 0, coins: state.totalCoins || 0, items: 0, seeds: 0, tokens: 0 },
+    }, { skipCloudSync: true })
+  }
+
+  const buildResumedState = (task) => {
+    const action = agilityData.actions.find(a => a.id === task.action?.id)
+    if (!action) return null
+    const state = { ...createAgilityState(action), totalLaps: task.session?.actions || 0, totalXP: task.session?.xp || 0, totalCoins: task.session?.coins || 0, startedAt: task.session?.startedAt || Date.now() }
+    if (typeof task.ticksRemaining === 'number' && task.ticksRemaining > 0 && task.ticksRemaining <= action.ticks) state.ticksRemaining = task.ticksRemaining
+    return state
+  }
+
+  // Resume an agility course already running in the background (navigated away & back).
+  useEffect(() => {
+    if (agility || hasAutoStarted.current) return
+    if (activeTask?.type !== 'agility') return
+    const resumed = buildResumedState(activeTask)
+    if (!resumed) return
+    hasAutoStarted.current = true
+    setAgility(resumed)
+    agilityRef.current = resumed
+  }, [])
+
   const startCourse = (action) => {
+    // Re-opening the running course: resume the live panel from its session.
+    if (activeTask?.type === 'agility' && activeTask.action?.id === action.id) {
+      const resumed = buildResumedState(activeTask)
+      if (resumed) { setAgility(resumed); agilityRef.current = resumed; return }
+    }
+    const startedAt = Date.now()
     const state = {
       ...createAgilityState(action),
       totalLaps: 0,
       totalXP: 0,
       totalCoins: 0,
-      startedAt: Date.now()
+      startedAt,
     }
     setAgility(state)
     agilityRef.current = state
-    setActiveTask({ type: 'agility', action })
+    setActiveTask({ type: 'agility', action, session: emptySession(startedAt) })
     addToast(`Started: ${action.name}`, 'info')
   }
 
@@ -132,6 +172,13 @@ export default function AgilityScreen({ initialActionId, idleResult, onBack }) {
     agilityRef.current = null
     setActiveTask(null)
     if (onBack) onBack()
+  }
+
+  // Back (no stop): flush progress and return to the course list; task keeps running.
+  const backToList = () => {
+    if (agilityRef.current) mirrorActiveTask(agilityRef.current)
+    setAgility(null)
+    agilityRef.current = null
   }
 
   const bankDelay = getAgilityBankDelayMs(agilityLevel)
@@ -167,6 +214,7 @@ export default function AgilityScreen({ initialActionId, idleResult, onBack }) {
                 title={action.name}
                 meta={<><span class="text-[var(--color-gold)] font-bold opacity-100">Lv {action.level}</span> · {action.xp} XP · {(action.ticks * 0.6).toFixed(1)}s lap</>}
                 chip={<><GameIcon iconKey="coins" size={16} color="var(--color-gold)" /> {action.coinReward.toLocaleString()} / lap</>}
+                active={activeTask?.type === 'agility' && activeTask.action?.id === action.id}
                 locked={!available}
                 lockBadge={`LV ${action.level}`}
                 lockHint={`Unlocks at Agility ${action.level}`}
@@ -216,6 +264,7 @@ export default function AgilityScreen({ initialActionId, idleResult, onBack }) {
         label: 'Bank speed',
         value: `${formatBankDelay(bankDelay)} delay`,
       }}
+      onBack={backToList}
       onStop={stopCourse}
     />
   )

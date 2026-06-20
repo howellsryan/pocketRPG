@@ -8,6 +8,7 @@ import SkillActionRow from '../components/SkillActionRow.jsx'
 import SkillActivePanel from '../components/SkillActivePanel.jsx'
 import { getLevelFromXP } from '../engine/experience.js'
 import { createSkillingState, processSkillingTick } from '../engine/skilling.js'
+import { emptySession } from '../engine/activitySession.js'
 import { countItem, removeItem } from '../engine/inventory.js'
 import { hasRequiredRunes, getRunesToConsume, getEquippedElementalStaff } from '../engine/runes.js'
 import { onTick } from '../engine/tick.js'
@@ -50,7 +51,7 @@ function groupActions(actions) {
 export default function MagicScreen({ onBack, onNavigate }) {
   const {
     stats, inventory, bank, equipment,
-    grantXP, updateInventory, updateBankDirect, addToast, setActiveTask
+    grantXP, updateInventory, updateBankDirect, addToast, setActiveTask, activeTask
   } = useGame()
 
   const magicLevel = getLevelFromXP(stats.magic?.xp || 0)
@@ -61,6 +62,7 @@ export default function MagicScreen({ onBack, onNavigate }) {
   const [selectedAlchemyItem, setSelectedAlchemyItem] = useState(null)
   const [pendingAlchemyAction, setPendingAlchemyAction] = useState(null)
   const skillingRef = useRef(null)
+  const hasResumed = useRef(false)
   const inventoryRef = useRef(inventory)
   const bankRef = useRef(bank)
   const equipmentRef = useRef(equipment)
@@ -76,14 +78,58 @@ export default function MagicScreen({ onBack, onNavigate }) {
     else if (onNavigate) onNavigate(SCREENS.SKILLS)
   }
 
+  const mirrorActiveTask = (state, alchemyItem) => {
+    if (!state) return
+    const task = {
+      type: 'skill', skill: 'magic', action: state.action, bankingEnabled: true,
+      totalTicks: state.action.ticks, ticksRemaining: state.ticksRemaining,
+      session: { startedAt: state.startedAt, actions: state.totalActions || 0, xp: state.totalXP || 0, coins: 0, items: 0, seeds: 0, tokens: 0 },
+    }
+    if (alchemyItem || selectedAlchemyItemRef.current) task.selectedAlchemyItem = alchemyItem || selectedAlchemyItemRef.current
+    setActiveTask(task, { skipCloudSync: true })
+  }
+
+  const buildResumedState = (task) => {
+    const action = allActions.find(a => a.id === task.action?.id)
+    if (!action) return null
+    const state = { ...createSkillingState('magic', action), startedAt: task.session?.startedAt || Date.now() }
+    state.totalActions = task.session?.actions || 0
+    state.totalXP = task.session?.xp || 0
+    if (typeof task.ticksRemaining === 'number' && task.ticksRemaining > 0 && task.ticksRemaining <= action.ticks) state.ticksRemaining = task.ticksRemaining
+    return state
+  }
+
+  // Resume a spell already running in the background (navigated away & back).
+  useEffect(() => {
+    if (skilling || hasResumed.current) return
+    if (activeTask?.type !== 'skill' || activeTask.skill !== 'magic') return
+    const resumed = buildResumedState(activeTask)
+    if (!resumed) return
+    hasResumed.current = true
+    if (activeTask.selectedAlchemyItem) { setSelectedAlchemyItem(activeTask.selectedAlchemyItem); selectedAlchemyItemRef.current = activeTask.selectedAlchemyItem }
+    setSkilling(resumed)
+    skillingRef.current = resumed
+  }, [])
+
   const startSpell = (action, alchemyItem) => {
-    const state = { ...createSkillingState('magic', action), startedAt: Date.now() }
+    if (activeTask?.type === 'skill' && activeTask.skill === 'magic' && activeTask.action?.id === action.id && !alchemyItem) {
+      const resumed = buildResumedState(activeTask)
+      if (resumed) { setSkilling(resumed); skillingRef.current = resumed; markScreenTick(); return }
+    }
+    const startedAt = Date.now()
+    const state = { ...createSkillingState('magic', action), startedAt }
     setSkilling(state)
     skillingRef.current = state
-    const task = { type: 'skill', skill: 'magic', action, bankingEnabled: true }
+    const task = { type: 'skill', skill: 'magic', action, bankingEnabled: true, session: emptySession(startedAt) }
     if (alchemyItem) task.selectedAlchemyItem = alchemyItem
     setActiveTask(task)
     markScreenTick()
+  }
+
+  const backToList = () => {
+    if (skillingRef.current) mirrorActiveTask(skillingRef.current)
+    setSkilling(null)
+    skillingRef.current = null
   }
 
   const handleActionClick = (action) => {
@@ -216,6 +262,7 @@ export default function MagicScreen({ onBack, onNavigate }) {
       }
 
       setSkilling({ ...skillingRef.current })
+      if (skillingRef.current?.active) mirrorActiveTask(skillingRef.current)
     })
 
     return unsub
@@ -236,6 +283,7 @@ export default function MagicScreen({ onBack, onNavigate }) {
           { label: 'XP gained', value: formatNumber(skilling.totalXP) },
           { label: 'XP / hr', value: xpPerHr, accent: xpPerHr !== '—' },
         ]}
+        onBack={backToList}
         onStop={stopSpell}
       />
     )
@@ -298,6 +346,7 @@ export default function MagicScreen({ onBack, onNavigate }) {
                     {levelOk && hasRunes && !hasMats && <span class="block text-[var(--color-blood-ember)] mt-1">Missing materials</span>}
                   </>}
                   chip={action.product ? <>→ {itemsData[action.product]?.name || action.product}</> : null}
+                  active={activeTask?.type === 'skill' && activeTask.skill === 'magic' && activeTask.action?.id === action.id}
                   locked={!levelOk}
                   lockBadge={`LV ${action.level}`}
                   lockHint={`Unlocks at Magic ${action.level}`}

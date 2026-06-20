@@ -9,6 +9,7 @@ import SkillActivePanel from '../components/SkillActivePanel.jsx'
 import { getActionProgress } from '../hooks/useActionTick.js'
 import { getLevelFromXP } from '../engine/experience.js'
 import { createHunterState, processHunterTick } from '../engine/hunter.js'
+import { emptySession } from '../engine/activitySession.js'
 import { onTick } from '../engine/tick.js'
 import { markScreenTick } from '../engine/activityRunner.js'
 import { formatNumber } from '../utils/helpers.js'
@@ -18,7 +19,7 @@ import itemsData from '../data/items.json'
 const hunterData = skillsData.hunter
 
 export default function HunterScreen({ initialActionId, idleResult, onBack }) {
-  const { stats, inventory, updateInventory, bank, updateBankDirect, grantXP, addToast, setActiveTask } = useGame()
+  const { stats, inventory, updateInventory, bank, updateBankDirect, grantXP, addToast, setActiveTask, activeTask } = useGame()
 
   const hunterLevel = getLevelFromXP(stats.hunter?.xp || 0)
   const hunterXP = stats.hunter?.xp || 0
@@ -92,22 +93,64 @@ export default function HunterScreen({ initialActionId, idleResult, onBack }) {
       }
 
       setHunter({ ...hunterRef.current })
+      if (hunterRef.current?.active) mirrorActiveTask(hunterRef.current)
     })
 
     return unsub
   }, [hunter?.active])
 
+  const mirrorActiveTask = (state) => {
+    if (!state) return
+    setActiveTask({
+      type: 'hunter',
+      action: state.action,
+      totalTicks: state.action.ticks,
+      ticksRemaining: state.ticksRemaining,
+      session: { startedAt: state.startedAt, actions: state.totalActions || 0, xp: state.totalXP || 0, coins: 0, items: 0, seeds: 0, tokens: 0 },
+    }, { skipCloudSync: true })
+  }
+
+  const buildResumedState = (task) => {
+    const action = hunterData.actions.find(a => a.id === task.action?.id)
+    if (!action) return null
+    const state = { ...createHunterState(action), totalActions: task.session?.actions || 0, totalXP: task.session?.xp || 0, startedAt: task.session?.startedAt || Date.now() }
+    if (typeof task.ticksRemaining === 'number' && task.ticksRemaining > 0 && task.ticksRemaining <= action.ticks) state.ticksRemaining = task.ticksRemaining
+    return state
+  }
+
+  // Resume a hunting action already running in the background.
+  useEffect(() => {
+    if (hunter || hasAutoStarted.current) return
+    if (activeTask?.type !== 'hunter') return
+    const resumed = buildResumedState(activeTask)
+    if (!resumed) return
+    hasAutoStarted.current = true
+    setHunter(resumed)
+    hunterRef.current = resumed
+  }, [])
+
   const startHunting = (action) => {
+    if (activeTask?.type === 'hunter' && activeTask.action?.id === action.id) {
+      const resumed = buildResumedState(activeTask)
+      if (resumed) { setHunter(resumed); hunterRef.current = resumed; return }
+    }
+    const startedAt = Date.now()
     const state = {
       ...createHunterState(action),
       totalActions: 0,
       totalXP: 0,
-      startedAt: Date.now()
+      startedAt
     }
     setHunter(state)
     hunterRef.current = state
-    setActiveTask({ type: 'hunter', action })
+    setActiveTask({ type: 'hunter', action, session: emptySession(startedAt) })
     addToast(`Started ${action.name}`, 'info')
+  }
+
+  const backToList = () => {
+    if (hunterRef.current) mirrorActiveTask(hunterRef.current)
+    setHunter(null)
+    hunterRef.current = null
   }
 
   const stopHunting = () => {
@@ -146,6 +189,7 @@ export default function HunterScreen({ initialActionId, idleResult, onBack }) {
                     icon={<SkillIcon skill="hunter" size={26} color="var(--color-gold)" />}
                     title={action.name}
                     meta={<><span class="text-[var(--color-gold)] font-bold opacity-100">Lv {action.level}</span> · {action.xp} XP · {action.description}</>}
+                    active={activeTask?.type === 'hunter' && activeTask.action?.id === action.id}
                     locked={!available}
                     lockBadge={`LV ${action.level}`}
                     lockHint={`Unlocks at Hunter ${action.level}`}
@@ -281,6 +325,7 @@ export default function HunterScreen({ initialActionId, idleResult, onBack }) {
         { label: 'XP gained', value: formatNumber(hunter.totalXP) },
         { label: 'XP / hr', value: xpPerHr ? formatNumber(xpPerHr) : '—', accent: !!xpPerHr },
       ]}
+      onBack={backToList}
       onStop={stopHunting}
     />
 
