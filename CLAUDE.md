@@ -30,6 +30,9 @@
   - Accurate/Aggressive/Defensive: +3 relevant effective level.
   - Controlled: +1 to attack/strength/defence effective levels.
 - Dragonfire: 33% proc, max 50 hit, fully blocked by `otherBonus.antiDragon: true`.
+- Prayer (live combat, PvE + PvP): drains a prayer-point pool that maxes at the player's Prayer level. Each active prayer drains points over time and higher-tier prayers drain faster (`drainPerMinute` per prayer in `src/data/prayers.json`); when the pool empties, active prayers switch off. Pool starts full per combat session and persists across auto-fight kills. Prayer potion restores 20, super restore 22 (live + idle). PvP keeps protection prayers disabled (v1), so only offensive prayers drain there. Single source of truth: `src/engine/prayerDrain.js` (idle keeps its own pool in `idleSupplies.js`).
+- Combo food: combo consumables — combo food (flagged `combo: true`, e.g. Karam) plus every potion/brew — use a separate combo cooldown, so ONE combo item may be used on the same tick as one normal food (and never delays the next attack). See `isComboConsumable` in `src/engine/consumables.js`; honoured by both `combat.js` (PvE) and `pvpEngine.js` (PvP).
+- Boss Slayer XP: `BOSS_SLAYER_TASK_XP_MULTIPLIER` (×4) in `src/engine/slayerRewards.js`; avoid inflated explicit `slayerXP` on bosses so XP/hr stays at most ~2× the best regular monster.
 
 ## 5) XP & Leveling
 - Level range: 1–99.
@@ -104,7 +107,7 @@ Schema:
   - capped at 100.
 - Equipment swap anti-abuse: `attackTimer = max(currentTimer, newWeaponSpeed)`.
 - Simultaneous deaths tie-breaker: lower `characterId`.
-- Protection prayers disabled in PvP v1.
+- Protection prayers disabled in PvP v1 (only offensive prayers apply, and they drain the prayer pool — see §4 Prayer).
 - Forfeit treated as death for loot transfer.
 
 ### PvP Bot System
