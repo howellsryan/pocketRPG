@@ -68,6 +68,8 @@ import { advanceFarmingState } from './engine/farming.ts'
 import { recordCollectionLogDrop, fetchCollectionLog, clearCollectionLogCache, onCollectionLogSlotComplete, applyServerCollectionLogEntries } from './cloud/collectionLog.js'
 import { fetchKillCounts } from './cloud/killCounts.js'
 import { isLoggedDrop, collectIdleCombatLoggedDrops } from './engine/collectionLog.js'
+import { rollClueRewards } from './engine/clueScrolls.js'
+import { countItem } from './engine/inventory.js'
 
 // ── Lazy in-game code chunk ──────────────────────────────────────────────────
 // The single-file production build (build_single.cjs) splits the heavy in-game
@@ -141,6 +143,44 @@ function grantMinigameTaskRewards(task, { updateBankDirect, unlockMinigameItem, 
 function markMinigameRewardsUnlocked(task, { unlockMinigameItem }) {
   const rewards = getMinigameRewardEntries(task)
   for (const reward of rewards) unlockMinigameItem(reward.itemId)
+}
+
+function clueRevealTitle(clueTask) {
+  const level = clueTask?.clueLevel || ''
+  return `${level.charAt(0).toUpperCase()}${level.slice(1)} Clue Reward`
+}
+
+// Grant one clue-scroll solve. Server-authoritative when signed in (rolls loot,
+// records kill-count/collection-log and replay nonce server-side); otherwise
+// rolls locally and banks the rewards. Mirrors the path previously inlined in
+// CluesScreen so the App-level tick can drive clues on any screen.
+function completeClueSolve(clueTask, { updateBankDirect, getSnapshot, addToast, isInPvpMatch }) {
+  const title = clueRevealTitle(clueTask)
+  if (getToken() && getCharacterId()) {
+    void api.completeClue(clueTask.clueLevel, {
+      actionNonce: `clue:${clueTask.clueLevel}:${Date.now()}`,
+      consumptions: [{ itemId: clueTask.requiresItem, quantity: 1 }],
+    }).then(async (res) => {
+      if (res?.save?.save_data) await applyCloudSave(JSON.parse(res.save.save_data), res.save.updatedAt, res.save.save_revision)
+      applyServerCollectionLogEntries(res?.collectionLogEntries || [])
+      const granted = Array.isArray(res?.granted) ? res.granted : []
+      if (granted.length > 0) emitRewardReveal(title, clueTask.icon || '📜', granted)
+      else addToast(`${clueTask.icon || '📜'} Clue complete — no rewards.`, 'info')
+    }).catch((err) => {
+      addToast(`Clue claim failed: ${err?.message || 'server_error'}`, 'error')
+    })
+  } else {
+    const rewards = rollClueRewards(clueTask.clueLevel)
+    const bankUpdates = {}
+    for (const reward of rewards) bankUpdates[reward.itemId] = reward.quantity
+    bankUpdates[clueTask.requiresItem] = -1
+    updateBankDirect(bankUpdates)
+    for (const reward of rewards) {
+      if (isLoggedDrop(reward.itemId, 'clues', clueTask.clueLevel)) recordCollectionLogDrop({ itemId: reward.itemId, sourceType: 'clues', sourceId: clueTask.clueLevel })
+    }
+    if (!isInPvpMatch) requestCriticalPushSave(() => getSnapshot(), CRITICAL_SAVE_REASONS.CLUE_REWARD)
+    emitRewardReveal(title, clueTask.icon || '📜', rewards)
+  }
 }
 function recordCollectionLogDropForMinigame(task) {
   const itemId = task?.product
@@ -789,7 +829,17 @@ function GameApp() {
               sim = { minigameTimeReduced: true, hoursRemaining: Math.ceil(newRemaining / 6000) }
             }
           } else if (savedTask.type === 'skill')   sim = simulateIdleSkilling(savedTask, elapsedMs, freshBank, freshEq, freshStats, itemsDataRef.current, freshInv)
-          else if (savedTask.type === 'gather' || savedTask.type === 'clue')  sim = simulateIdleGather(savedTask, elapsedMs, freshInv, freshStats, itemsDataRef.current, freshBank)
+          else if (savedTask.type === 'gather')  sim = simulateIdleGather(savedTask, elapsedMs, freshInv, freshStats, itemsDataRef.current, freshBank)
+          else if (savedTask.type === 'clue') {
+            sim = simulateIdleGather(savedTask, elapsedMs, freshInv, freshStats, itemsDataRef.current, freshBank)
+            // Offline catch-up already settled whole solves over the elapsed
+            // window; restart the in-progress solve so the live App-tick loop
+            // (which drives clues on every screen) doesn't re-grant a partial.
+            const clueTotal = savedTask.totalTicks ?? savedTask.gatherTask?.ticks
+            const restarted = { ...savedTask, totalTicks: clueTotal, ticksRemaining: clueTotal, justCompleted: false }
+            setActiveTask(restarted)
+            activeTaskRef.current = restarted
+          }
           else if (savedTask.type === 'combat')  sim = simulateIdleCombat(savedTask, elapsedMs, freshStats, freshEq, freshInv, itemsDataRef.current, freshSlayerTask, freshBank, {
             currentHP: currentHPRef.current ?? getMaxHP(),
             idleFood: idleCombatSetupRef.current?.food || [],
@@ -1138,6 +1188,37 @@ function GameApp() {
           }
         } else {
           setActiveTask({ ...task, ticksRemaining: remaining, totalTicks: total }, { skipCloudSync: true })
+        }
+      }
+
+      // Clue tick — a repeating "solve a scroll" loop driven here (not in the
+      // CluesScreen) so it keeps progressing on any screen, exactly like
+      // skills/gather/minigames. Offline catch-up is handled separately by
+      // simulateIdleGather. A `justCompleted` flip-flop defers the next-scroll
+      // check by one tick so the async server grant can settle the bank first.
+      if (task && task.type === 'clue' && task.gatherTask) {
+        const clueTask = task.gatherTask
+        const total = task.totalTicks ?? clueTask.ticks
+        if (task.justCompleted) {
+          const snap = getSnapshot()
+          const scrolls = (snap.bank?.[clueTask.requiresItem]?.quantity || 0) + countItem(snap.inventory, clueTask.requiresItem)
+          if (scrolls <= 0) {
+            setActiveTask(null)
+            activeTaskRef.current = null
+            try { localStorage.removeItem('pocketrpg_activeTask') } catch {}
+            addToast(`No ${itemsData[clueTask.requiresItem]?.name || clueTask.requiresItem} left.`, 'info')
+          } else {
+            setActiveTask({ ...task, ticksRemaining: total, totalTicks: total, justCompleted: false }, { skipCloudSync: true })
+          }
+        } else {
+          const remaining = (task.ticksRemaining ?? total) - 1
+          if (remaining <= 0) {
+            completeClueSolve(clueTask, { updateBankDirect, getSnapshot, addToast, isInPvpMatch })
+            const session = mergeSession(task.session, { actions: 1 })
+            setActiveTask({ ...task, ticksRemaining: 0, totalTicks: total, justCompleted: true, session }, { skipCloudSync: true })
+          } else {
+            setActiveTask({ ...task, ticksRemaining: remaining, totalTicks: total }, { skipCloudSync: true })
+          }
         }
       }
     })
@@ -1881,7 +1962,16 @@ function GameApp() {
           }
         } else {
           if (savedTask.type === 'skill')   sim = simulateIdleSkilling(savedTask, elapsedMs, freshBank, freshEq, freshStats, itemsDataRef.current, freshInv)
-          if (savedTask.type === 'gather' || savedTask.type === 'clue')  sim = simulateIdleGather(savedTask, elapsedMs, freshInv, freshStats, itemsDataRef.current, freshBank)
+          if (savedTask.type === 'gather')  sim = simulateIdleGather(savedTask, elapsedMs, freshInv, freshStats, itemsDataRef.current, freshBank)
+          if (savedTask.type === 'clue') {
+            sim = simulateIdleGather(savedTask, elapsedMs, freshInv, freshStats, itemsDataRef.current, freshBank)
+            // Restart the partial solve so the live App-tick clue loop doesn't
+            // re-grant what the skip catch-up already settled.
+            const clueTotal = savedTask.totalTicks ?? savedTask.gatherTask?.ticks
+            const restarted = { ...savedTask, totalTicks: clueTotal, ticksRemaining: clueTotal, justCompleted: false }
+            setActiveTask(restarted)
+            activeTaskRef.current = restarted
+          }
           if (savedTask.type === 'combat')  sim = simulateIdleCombat(savedTask, elapsedMs, freshStats, freshEq, freshInv, itemsDataRef.current, freshSlayerTask, freshBank, {
             currentHP: currentHPRef.current ?? getMaxHP(),
             idleFood: idleCombatSetupRef.current?.food || [],

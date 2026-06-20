@@ -1,26 +1,17 @@
-import { useState, useEffect, useRef } from 'preact/hooks'
+import { useState, useEffect } from 'preact/hooks'
 import { useGame } from '../state/gameState.jsx'
-import ProgressBar from '../components/ProgressBar.jsx'
 import Panel from '../components/Panel.jsx'
 import Modal from '../components/Modal.jsx'
 import SectionHeader from '../components/SectionHeader.jsx'
+import SkillActivePanel from '../components/SkillActivePanel.jsx'
+import GameIcon from '../components/GameIcon.jsx'
 import { getActionProgress } from '../hooks/useActionTick.js'
 import { countItem } from '../engine/inventory.js'
-import { onTick } from '../engine/tick.js'
 import cluesData from '../data/clues.json'
-import GameIcon from '../components/GameIcon.jsx'
-import { rollClueRewards } from '../engine/clueScrolls.js'
-import { api, getToken, getCharacterId } from '../cloud/api.js'
-import { applyCloudSave, requestCriticalPushSave } from '../cloud/sync.js'
-import { CRITICAL_SAVE_REASONS } from '../cloud/criticalSavePolicy.js'
-import { recordCollectionLogDrop, applyServerCollectionLogEntries } from '../cloud/collectionLog.js'
-import { isLoggedDrop } from '../engine/collectionLog.js'
-import { emitRewardReveal } from '../utils/rewardReveal.js'
 
-const clueRevealTitle = (task) => {
-  const level = task?.clueLevel || ''
-  return `${level.charAt(0).toUpperCase()}${level.slice(1)} Clue Reward`
-}
+// Clue solving is driven by the App-level tick (see App.jsx), so it keeps
+// progressing on any screen — exactly like skilling, gathering and minigames.
+// This screen only starts/stops the task and renders its progress.
 
 const CLUE_TASKS = [
   {
@@ -94,156 +85,68 @@ function formatClueRemaining(totalSeconds) {
 }
 
 export default function CluesScreen() {
-  const { inventory, bank, equipment, updateBankDirect, addToast, setActiveTask, activeTask: globalActiveTask, itemsData, getSnapshot } = useGame()
-  const [activeTask, setLocalTask] = useState(null)
+  const { inventory, bank, equipment, addToast, setActiveTask, activeTask, itemsData } = useGame()
+  const [showPanel, setShowPanel] = useState(false)
   const [infoTask, setInfoTask] = useState(null)
-  const taskRef = useRef(null)
 
+  const clueActive = activeTask?.type === 'clue' ? activeTask : null
+
+  // Surface the running clue's panel when arriving on this screen, and drop back
+  // to the list automatically if the task ends (out of scrolls / stopped).
   useEffect(() => {
-    if (!activeTask) return
-    taskRef.current = activeTask
-
-    const unsub = onTick(() => {
-      const state = taskRef.current
-      if (!state || state.stopped) return
-
-      let ticksRemaining = state.ticksRemaining
-      let justCompleted = state.justCompleted || false
-
-      if (justCompleted) {
-        const scrollCount = bank?.[state.task.requiresItem]?.quantity || 0
-        if (scrollCount <= 0) {
-          taskRef.current = { ...state, stopped: true }
-          setLocalTask(null)
-          setActiveTask(null)
-          addToast(`No ${CLUE_ITEM_NAMES[state.task.requiresItem] || state.task.requiresItem} left.`, 'info')
-          return
-        }
-        ticksRemaining = state.task.ticks
-        justCompleted = false
-      } else {
-        ticksRemaining--
-      }
-
-      const next = { ...state, ticksRemaining, justCompleted }
-
-      if (next.ticksRemaining <= 0) {
-        const task = next.task
-        if (getToken() && getCharacterId()) {
-          void api.completeClue(task.clueLevel, {
-            actionNonce: `clue:${task.clueLevel}:${Date.now()}`,
-            consumptions: [{ itemId: task.requiresItem, quantity: 1 }],
-          }).then(async (res) => {
-            if (res?.save?.save_data) await applyCloudSave(JSON.parse(res.save.save_data), res.save.updatedAt, res.save.save_revision)
-            applyServerCollectionLogEntries(res?.collectionLogEntries || [])
-            const granted = Array.isArray(res?.granted) ? res.granted : []
-            if (granted.length > 0) emitRewardReveal(clueRevealTitle(task), task.icon || '📜', granted)
-            else addToast(`${task.icon} Clue complete — no rewards.`, 'info')
-          }).catch((err) => {
-            addToast(`Clue claim failed: ${err?.message || 'server_error'}`, 'error')
-          })
-        } else {
-          const rewards = rollClueRewards(task.clueLevel)
-          const bankUpdates = {}
-          for (const reward of rewards) bankUpdates[reward.itemId] = reward.quantity
-          bankUpdates[task.requiresItem] = -1
-          updateBankDirect(bankUpdates)
-          for (const reward of rewards) {
-            if (isLoggedDrop(reward.itemId, 'clues', task.clueLevel)) recordCollectionLogDrop({ itemId: reward.itemId, sourceType: 'clues', sourceId: task.clueLevel })
-          }
-          requestCriticalPushSave(() => getSnapshot(), CRITICAL_SAVE_REASONS.CLUE_REWARD)
-          emitRewardReveal(clueRevealTitle(task), task.icon || '📜', rewards)
-        }
-
-        const updated = {
-          ...next,
-          totalDone: next.totalDone + 1,
-          justCompleted: true,
-        }
-        taskRef.current = updated
-        setLocalTask(updated)
-      } else {
-        taskRef.current = next
-        setLocalTask(next)
-      }
-    })
-
-    return unsub
-  }, [activeTask?.task?.id, inventory, bank])
+    if (clueActive) setShowPanel(true)
+    else setShowPanel(false)
+  }, [clueActive?.gatherTask?.id, !!clueActive])
 
   const startTask = (task) => {
-    const newState = {
-      task,
+    setActiveTask({
+      type: 'clue',
+      gatherTask: task,
+      bankingEnabled: true,
+      totalTicks: task.ticks,
       ticksRemaining: task.ticks,
-      totalDone: 0,
-      startedAt: Date.now(),
-      stopped: false,
       justCompleted: false,
-    }
-    taskRef.current = newState
-    setLocalTask(newState)
-    setActiveTask({ type: 'clue', gatherTask: task, bankingEnabled: true })
+      session: { startedAt: Date.now(), actions: 0, xp: 0, coins: 0, items: 0, seeds: 0, tokens: 0 },
+    })
+    setShowPanel(true)
   }
 
+  // Back: leave the clue running and return to the list.
+  const backToList = () => setShowPanel(false)
+
+  // Stop & Back: cancel the running clue entirely.
   const stopTask = () => {
-    if (taskRef.current) taskRef.current = { ...taskRef.current, stopped: true }
-    setLocalTask(null)
     setActiveTask(null)
+    setShowPanel(false)
   }
 
-  useEffect(() => {
-    if (!activeTask) return
-    const globalGatherTask = (globalActiveTask?.type === 'gather' || globalActiveTask?.type === 'clue') ? globalActiveTask.gatherTask : null
-    if (!globalGatherTask || globalGatherTask.id !== activeTask.task?.id) {
-      taskRef.current = null
-      setLocalTask(null)
-    }
-  }, [globalActiveTask, activeTask])
-
-  if (activeTask) {
-    const task = activeTask.task
-    const ticksRemaining = activeTask.ticksRemaining
-    const progress = getActionProgress(true, ticksRemaining, task.ticks)
+  if (clueActive && showPanel) {
+    const task = clueActive.gatherTask
+    const totalTicks = clueActive.totalTicks ?? task.ticks
+    const ticksRemaining = clueActive.ticksRemaining ?? totalTicks
+    const progress = getActionProgress(true, ticksRemaining, totalTicks)
     const remainingSeconds = ticksRemaining * 0.6
+    const completed = clueActive.session?.actions || 0
 
     return (
-      <div class="h-full flex flex-col p-4">
-        <button
-          onClick={stopTask}
-          class="text-[12px] text-[#c4af7a] mb-3 flex items-center gap-1 bg-transparent border-0 cursor-pointer"
-        >
-          ← Back
-        </button>
-
-        <div class="flex-1 flex flex-col items-center justify-center">
-          <span class="text-[48px] mb-2">{task.icon}</span>
-          <h2 class="font-[var(--font-display)] text-[18px] font-bold text-[var(--color-gold)] mb-1 text-center">
-            {task.name}
-          </h2>
-          <p class="text-[11px] text-[var(--color-parchment)] opacity-50 mb-4 text-center">{task.description}</p>
-
-          <div class="w-full max-w-[280px] mb-4">
-            <ProgressBar value={progress} max={1} height="h-4" color="var(--color-gold)" showText />
-          </div>
-
-          <Panel padding="p-3" className="w-full max-w-[280px] mb-3 rounded-xl">
-            <div class="flex justify-between mb-2">
-              <span class="text-[13px] text-[var(--color-parchment)] opacity-60">Clue Required</span>
-              <span class="font-[var(--font-mono)] text-[var(--color-gold)] font-bold">{CLUE_ITEM_NAMES[task.requiresItem] || task.requiresItem}</span>
-            </div>
-            <div class="flex justify-between">
-              <span class="text-[13px] text-[var(--color-parchment)] opacity-60">Time remaining</span>
-              <span class="font-[var(--font-mono)] text-[var(--color-gold)] font-bold">
-                {formatClueRemaining(remainingSeconds)}
-              </span>
-            </div>
-          </Panel>
-
-          <div class="text-[11px] text-[var(--color-parchment)] opacity-50 text-center max-w-[280px]">
-            ⏳ Solving clue... 1–4 rewards will be banked on completion.
-          </div>
-        </div>
-      </div>
+      <SkillActivePanel
+        icon={<span class="text-[44px]">{task.icon}</span>}
+        title={task.name}
+        subtitle={task.description}
+        progress={progress}
+        producing={<>
+          <span class="text-[14px]">{task.icon}</span>
+          <span class="text-[12px] font-semibold text-[var(--color-parchment)] opacity-60">Solving</span>
+          <span class="text-[13px] font-semibold text-[var(--color-gold-light)]">{CLUE_ITEM_NAMES[task.requiresItem] || task.requiresItem}</span>
+        </>}
+        stats={[
+          { label: 'Clues solved', value: completed },
+          { label: 'Time remaining', value: formatClueRemaining(remainingSeconds) },
+        ]}
+        note="🗝️ Each clue banks 1–4 rewards on completion, then automatically starts the next while you have scrolls. Runs in the background."
+        onBack={backToList}
+        onStop={stopTask}
+      />
     )
   }
 
@@ -258,6 +161,7 @@ export default function CluesScreen() {
           {CLUE_TASKS.map(task => {
             const hasRequiredItem = hasClueScroll(task.requiresItem, inventory, bank, equipment)
             const enabled = hasRequiredItem
+            const isRunning = clueActive?.gatherTask?.id === task.id
             const rowClass = enabled
               ? 'bg-[var(--color-void-light)] border-[#2a2a2a] opacity-100'
               : 'bg-[#111] border-[#1a1a1a] opacity-45'
@@ -265,11 +169,11 @@ export default function CluesScreen() {
             return (
               <div
                 key={task.id}
-                class={`p-3 rounded-xl border flex items-center gap-3 ${rowClass}`}
+                class={`p-3 rounded-xl border flex items-center gap-3 ${rowClass} ${isRunning ? 'ring-1 ring-[var(--color-gold)]' : ''}`}
               >
                 <button
-                  onClick={() => enabled && startTask(task)}
-                  disabled={!enabled}
+                  onClick={() => (isRunning ? setShowPanel(true) : (enabled && startTask(task)))}
+                  disabled={!enabled && !isRunning}
                   class="flex-1 min-w-0 flex items-center gap-3 text-left bg-transparent border-0 p-0 disabled:cursor-not-allowed"
                 >
                   <span class="text-[28px] flex-shrink-0">{task.icon}</span>
@@ -281,9 +185,9 @@ export default function CluesScreen() {
                   </div>
                   <div class="flex-shrink-0 text-right">
                     <div class="text-[18px]">→</div>
-                    <div class="text-[9px] text-[#c8a96e] opacity-70">Rewards</div>
-                    <div class={`text-[9px] mt-[2px] ${enabled ? 'text-[#4caf50]' : 'text-[#e57373]'}`}>
-                      {enabled ? '✓ ready' : '✗ need scroll'}
+                    <div class="text-[9px] text-[#c8a96e] opacity-70">{isRunning ? 'Solving' : 'Rewards'}</div>
+                    <div class={`text-[9px] mt-[2px] ${isRunning ? 'text-[var(--color-gold)]' : enabled ? 'text-[#4caf50]' : 'text-[#e57373]'}`}>
+                      {isRunning ? '● running' : enabled ? '✓ ready' : '✗ need scroll'}
                     </div>
                   </div>
                 </button>
