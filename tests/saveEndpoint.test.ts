@@ -31,6 +31,7 @@ const baseSave = (extra: Record<string, unknown> = {}) => ({
 
 function makeEnv({ existingSaveData, character }: { existingSaveData: string | null, character?: any }) {
   const batches: any[][] = []
+  const runs: { sql: string, args: any[] }[] = []
   const env = {
     DB: {
       prepare: (sql: string) => ({
@@ -51,12 +52,13 @@ function makeEnv({ existingSaveData, character }: { existingSaveData: string | n
             }
             return null
           },
+          run: async () => { runs.push({ sql, args }) },
         }),
       }),
       batch: async (statements: any[]) => { batches.push(statements) },
     },
   }
-  return { env, batches }
+  return { env, batches, runs }
 }
 
 function makePut(body: Record<string, unknown>) {
@@ -68,18 +70,24 @@ function makePut(body: Record<string, unknown>) {
 }
 
 describe('PUT /api/save no-op detection', () => {
-  it('skips all writes when only the client timestamp changed', async () => {
+  it('skips the blob rewrite but touches updated_at when only the client timestamp changed', async () => {
     const stored = JSON.stringify(baseSave({ timestamp: 1111 }))
     const incoming = JSON.stringify(baseSave({ timestamp: 99999 }))
-    const { env, batches } = makeEnv({ existingSaveData: stored })
+    const { env, batches, runs } = makeEnv({ existingSaveData: stored })
 
     const res = await onRequestPut({ request: makePut({ save_data: incoming, save_revision: 7 }), env } as any)
     expect(res.status).toBe(200)
     const body = await res.json()
     expect(body.ok).toBe(true)
     expect(body.noop).toBe(true)
-    expect(body.save_revision).toBe(7) // unchanged — no write happened
+    expect(body.save_revision).toBe(7) // unchanged — no blob rewrite / revision bump
     expect(batches).toHaveLength(0)
+    // Freshness touch: a single cheap updated_at write so server-authoritative
+    // staleness checks (PvP match-create) see the save as current. Without this
+    // a post-match identical re-push leaves updated_at stale and trips stale_save.
+    const touch = runs.find(r => /UPDATE saves SET updated_at/.test(r.sql))
+    expect(touch).toBeTruthy()
+    expect(touch?.sql).not.toMatch(/save_blob/)
   })
 
   it('writes when the payload content actually changed', async () => {
