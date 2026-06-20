@@ -18,11 +18,11 @@ const items = {
     otherBonus: { meleeStrength: 0, rangedStrength: 40, magicDamage: 0 },
   },
   dragon_arrow: { id: 'dragon_arrow', slot: 'ammo', stackable: true, otherBonus: { rangedStrength: 60 } },
-  shark: { id: 'shark', heals: 20, stackable: false },
-  attack_potion: { id: 'attack_potion', type: 'potion' },
-  strength_potion: { id: 'strength_potion', type: 'potion' },
-  defence_potion: { id: 'defence_potion', type: 'potion' },
-  ranging_potion: { id: 'ranging_potion', type: 'potion' },
+  shark: { id: 'shark', type: 'food', heals: 20, stackable: false },
+  attack_potion: { id: 'attack_potion', type: 'potion', effect: 'attack', boost: 13, duration: 300 },
+  strength_potion: { id: 'strength_potion', type: 'potion', effect: 'strength', boost: 13, duration: 300 },
+  defence_potion: { id: 'defence_potion', type: 'potion', effect: 'defence', boost: 13, duration: 300 },
+  ranging_potion: { id: 'ranging_potion', type: 'potion', effect: 'ranged', boost: 14, duration: 300 },
 }
 
 function buildPlayer(overrides: any = {}) {
@@ -320,8 +320,9 @@ describe('pvpEngine phase 2B contract', () => {
       { tick_number: 1, characterId: 1, characterSeq: 1, action: { type: 'drink_potion', inventorySlot: 0 } },
     ], items)
     expect(out.events.some((e: any) => e.type === 'drink')).toBe(true)
+    // Duration now matches PvE: 300s / 0.6 = 500 ticks, less 1 for this tick.
     const firstTicks = out.stateNext.combatants['1'].activePotions.attack_potion
-    expect(firstTicks).toBe(99)
+    expect(firstTicks).toBe(499)
 
     out.stateNext.combatants['1'].attackTimer = 0
     out.stateNext.combatants['2'].attackTimer = 99

@@ -1,8 +1,7 @@
 import { requireAuth, json } from '../../../../_lib/auth.js'
 import { getOwnedCharacter, sweepStaleRows } from '../../../../_lib/pvp.js'
 import { readOwnedActiveMatch, itemsData } from '../../../../_lib/pvpMatch.js'
-import { isPvpFoodItem } from '../../../../../src/engine/pvpFood.js'
-import { isPvpCombatPotion } from '../../../../../src/engine/pvpPotions.js'
+import { isConsumableFood, isConsumablePotion } from '../../../../../src/engine/consumables.js'
 import { getEquippedPvpSpecialAttack, hasEnoughPvpSpecialEnergy } from '../../../../../src/engine/pvpSpecialAttacks.js'
 import { applyPvpSpecialAttackRegenToState } from '../../../../../src/engine/pvpEngine.js'
 import spellsData from '../../../../../src/data/spells.json' assert { type: 'json' }
@@ -83,8 +82,8 @@ export function validateIntentAction(state, characterId, action) {
     const item = itemsData?.[slot.itemId]
     if (!item) return { ok: false, error: 'unknown_item' }
     if (action.type === 'equip') return item.slot ? { ok: true } : { ok: false, error: 'item_not_equippable' }
-    if (action.type === 'eat') return isPvpFoodItem(item) ? { ok: true } : { ok: false, error: 'item_not_food' }
-    return isPvpCombatPotion(item) ? { ok: true } : { ok: false, error: 'item_not_potion' }
+    if (action.type === 'eat') return isConsumableFood(item) ? { ok: true } : { ok: false, error: 'item_not_food' }
+    return isConsumablePotion(item) ? { ok: true } : { ok: false, error: 'item_not_potion' }
   }
 
   if (action.type === 'unequip') {

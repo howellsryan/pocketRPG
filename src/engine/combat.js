@@ -10,6 +10,7 @@ import { hasRequiredRunes, getRunesToConsume } from './runes.js'
 import { MELEE_XP_PER_DAMAGE, RANGED_XP_PER_DAMAGE, MAGIC_XP_PER_DAMAGE, HP_XP_PER_DAMAGE, EAT_TICK_COST } from '../utils/constants.js'
 import { randInt } from '../utils/helpers.js'
 import { getSlayerTaskEquipmentBonuses } from './slayerCombatBonuses.js'
+import { getPotionStatBoost, getActivePotionBoosts } from './consumables.js'
 import { getVoidKingCombatMultipliers } from './combatSetBonuses.js'
 import { getMonsterSeedDrops } from './seedDrops.js'
 
@@ -376,12 +377,14 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
     }
   }
 
-  // Apply potion bonuses to player stats from all active potions
+  // Apply potion bonuses to player stats from all active potions (max per stat,
+  // via the shared consumables engine — same maths PvP uses).
   if (Object.keys(state.activePotions).length > 0 && itemsData && typeof itemsData === 'object') {
-    for (const potionId of Object.keys(state.activePotions)) {
-      const potionItem = itemsData[potionId]
-      if (potionItem) {
-        boostedPlayerStats = applyPotionBonuses(boostedPlayerStats, potionItem) || boostedPlayerStats
+    const potBoosts = getActivePotionBoosts(state.activePotions, itemsData)
+    boostedPlayerStats = { ...boostedPlayerStats }
+    for (const [stat, val] of Object.entries(potBoosts)) {
+      if (val && typeof boostedPlayerStats[stat] === 'number') {
+        boostedPlayerStats[stat] = Math.floor(boostedPlayerStats[stat] + val)
       }
     }
   }
@@ -1035,43 +1038,17 @@ export function applyPrayerBonuses(playerStats, activePrayer, prayersData = {}) 
  * Apply potion bonuses to player stats based on active potion
  */
 export function applyPotionBonuses(playerStats, potionItem) {
-  // If no potion item or no boost, return unmodified stats
-  if (!potionItem || !potionItem.boost) {
-    return playerStats
-  }
-
+  // Delegates the per-effect boost map to the shared consumables engine so PvE,
+  // PvP and the idle sim all read identical flat `item.boost` values.
   try {
+    const boost = getPotionStatBoost(potionItem)
+    if (!boost || Object.keys(boost).length === 0) return playerStats
     const boostedStats = { ...playerStats }
-    const effect = potionItem.effect
-
-    if (effect === 'combat') {
-      // Apply boost to all combat stats (melee + ranged + magic)
-      boostedStats.attack = Math.floor(boostedStats.attack + potionItem.boost)
-      boostedStats.strength = Math.floor(boostedStats.strength + potionItem.boost)
-      boostedStats.defence = Math.floor(boostedStats.defence + potionItem.boost)
-      boostedStats.ranged = Math.floor(boostedStats.ranged + potionItem.boost)
-      boostedStats.magic = Math.floor(boostedStats.magic + potionItem.boost)
-    } else if (effect === 'attack') {
-      // Apply boost to attack only
-      boostedStats.attack = Math.floor(boostedStats.attack + potionItem.boost)
-    } else if (effect === 'strength') {
-      // Apply boost to strength only
-      boostedStats.strength = Math.floor(boostedStats.strength + potionItem.boost)
-    } else if (effect === 'defence') {
-      // Apply boost to defence only
-      boostedStats.defence = Math.floor(boostedStats.defence + potionItem.boost)
-    } else if (effect === 'ranged') {
-      // Apply boost to ranged only
-      boostedStats.ranged = Math.floor(boostedStats.ranged + potionItem.boost)
-    } else if (effect === 'magic') {
-      // Apply boost to magic only
-      boostedStats.magic = Math.floor(boostedStats.magic + potionItem.boost)
-    } else if (effect === 'hp') {
-      // HP effect is handled in the drinking logic, not here
-      // Return unmodified stats
-      return playerStats
+    for (const [stat, val] of Object.entries(boost)) {
+      if (typeof boostedStats[stat] === 'number') {
+        boostedStats[stat] = Math.floor(boostedStats[stat] + val)
+      }
     }
-
     return boostedStats
   } catch (e) {
     // Silently return unmodified stats if anything goes wrong

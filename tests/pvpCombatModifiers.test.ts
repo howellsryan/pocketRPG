@@ -62,7 +62,9 @@ describe('pvp combat modifiers', () => {
       activePotions: { attack_potion: 5, super_attack: 5, super_combat: 5 },
       stats: base,
     } as any).potions
-    expect(stacked.attack).toBeGreaterThanOrEqual(superAttackOnly.attack)
-    expect(stacked.attack).toBe(active.attack)
+    // Boosts sum across active potions (PvE stacking), so the stacked total
+    // exceeds any single potion's contribution.
+    expect(stacked.attack).toBeGreaterThan(superAttackOnly.attack)
+    expect(stacked.attack).toBeGreaterThan(active.attack)
   })
 })

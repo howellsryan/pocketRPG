@@ -4,6 +4,7 @@ import Card from '../components/Card.jsx'
 import Panel from '../components/Panel.jsx'
 import Button from '../components/Button.jsx'
 import ItemSlot from '../components/ItemSlot.jsx'
+import CombatQuickActions from '../components/CombatQuickActions.jsx'
 import Modal from '../components/Modal.jsx'
 import LootResultModal, { MatchupHpStrip, LootResultRow } from '../components/LootResultModal.jsx'
 import { pvpApi } from '../cloud/pvp.js'
@@ -11,10 +12,9 @@ import itemsData from '../data/items.json'
 import prayersData from '../data/prayers.json'
 import { getCharacterId } from '../cloud/api.js'
 import { normalizePvpState } from '../engine/pvpState.js'
-import { isPvpFoodItem } from '../engine/pvpFood.js'
+import { isConsumableFood, isConsumablePotion } from '../engine/consumables.js'
 import { hasEpicLootDrop } from '../utils/itemValue.js'
 import { getEquippedPvpSpecialAttack, getPvpSpecialAttackLabel, hasEnoughPvpSpecialEnergy } from '../engine/pvpSpecialAttacks.js'
-import { isPvpCombatPotion } from '../engine/pvpPotions.js'
 import { calculatePvpRiskValues } from '../engine/pvpRisk.js'
 import { formatCompactCoins } from '../utils/formatters.js'
 import { getPrayerStyleIcon } from '../utils/prayerIcons.js'
@@ -227,6 +227,10 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
   const mounted = useRef(true)
   const tickInFlight = useRef(false)
   const pendingActionRef = useRef(null)
+  // Gear (equip/unequip) intents batch so any number of swaps can land on a
+  // single tick. Consumables/prayer/special stay one-per-tick via pendingAction.
+  const pendingGearRef = useRef([])
+  const gearFlushTimer = useRef(null)
   const lastPollOkAt = useRef(0)
   const latestTick = useRef(0)
   const fatalNotified = useRef(false)
@@ -327,6 +331,7 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
     return () => {
       mounted.current = false
       if (pollTimer.current) clearTimeout(pollTimer.current)
+      if (gearFlushTimer.current) clearTimeout(gearFlushTimer.current)
       if (prayerOverrideTimer.current) clearTimeout(prayerOverrideTimer.current)
       for (const t of splatTimersRef.current) clearTimeout(t)
       splatTimersRef.current.clear()
@@ -448,6 +453,16 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
     tickInFlight.current = true
     try {
       if (terminalHandledRef.current) return false
+      // Post every queued gear swap for this tick (server orders them by
+      // character_seq), so a full set of armour/weapon changes applies at once.
+      if (pendingGearRef.current.length > 0) {
+        const gearBatch = pendingGearRef.current
+        pendingGearRef.current = []
+        for (const gearAction of gearBatch) {
+          if (terminalHandledRef.current) break
+          await pvpApi.postIntent(matchId, latestTick.current, gearAction)
+        }
+      }
       const action = pendingActionRef.current
       if (action) {
         await pvpApi.postIntent(matchId, latestTick.current, action)
@@ -602,24 +617,6 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
     .filter((prayer) => prayer && prayer.bonusType !== 'protection' && !PVP_SCREEN_PROTECTION_PRAYER_IDS.has(prayer.id))
     .sort((a, b) => (Number(b.level) || 0) - (Number(a.level) || 0))
 
-  const foodSlots = toArray(pair.self?.inventory)
-    .map((slot, idx) => ({ slot, idx, item: slot ? itemsData?.[slot.itemId] : null }))
-    .filter(({ slot, item }) => slot && item && isPvpFoodItem(item))
-    .slice(0, 8)
-
-  const potionSlots = toArray(pair.self?.inventory)
-    .map((slot, idx) => ({ slot, idx, item: slot ? itemsData?.[slot.itemId] : null }))
-    .filter(({ slot, item }) => slot && item && isPvpCombatPotion(item))
-    .slice(0, 8)
-
-  const equippableSlots = toArray(pair.self?.inventory)
-    .map((slot, idx) => ({ slot, idx, item: slot ? itemsData?.[slot.itemId] : null }))
-    .filter(({ slot, item }) => slot && item?.slot)
-
-  const equippedSlots = Object.entries(pair.self?.equipment || {})
-    .filter(([, entry]) => !!entry)
-    .map(([slot, entry]) => ({ slot, entry, item: itemsData?.[entry.itemId] }))
-  const hasGearActions = equippableSlots.length > 0 || equippedSlots.length > 0
   const mobilePrayers = availablePrayers.filter((prayer) => playerPrayerLevel >= (prayer.level || 1))
 
   const equippedSpecial = getEquippedPvpSpecialAttack(pair.self, itemsData)
@@ -703,16 +700,25 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
     setActionPanel((current) => (current === panel ? null : panel))
   }
 
-  const queueGearEquip = (inventorySlot) => {
+  // Batch gear intents and flush them together on a short debounce, so tapping
+  // several armour/weapon slots in quick succession all lands on one tick.
+  const enqueueGear = (action) => {
     if (terminalHandledRef.current || endModalOpenRef.current) return
-    queueAction({ type: 'equip', inventorySlot }, { showBusy: false })
+    pendingGearRef.current.push(action)
     setActionPanel(null)
+    if (gearFlushTimer.current) clearTimeout(gearFlushTimer.current)
+    gearFlushTimer.current = setTimeout(() => {
+      gearFlushTimer.current = null
+      if (!terminalHandledRef.current && !endModalOpenRef.current && !tickInFlight.current) runTick()
+    }, 120)
+  }
+
+  const queueGearEquip = (inventorySlot) => {
+    enqueueGear({ type: 'equip', inventorySlot })
   }
 
   const queueGearUnequip = (equipmentSlot) => {
-    if (terminalHandledRef.current || endModalOpenRef.current) return
-    queueAction({ type: 'unequip', equipmentSlot }, { showBusy: false })
-    setActionPanel(null)
+    enqueueGear({ type: 'unequip', equipmentSlot })
   }
   const endTotalRiskValue = getEndLootTotal(endModal?.loot)
   const endTotalRiskLabel = `${formatCompactCoins(endTotalRiskValue)} gp`
@@ -801,8 +807,8 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
                   let onClick
                   if (slot && item) {
                     if (item.slot) onClick = () => queueGearEquip(idx)
-                    else if (isPvpFoodItem(item)) onClick = () => queueAction({ type: 'eat', inventorySlot: idx }, { showBusy: false })
-                    else if (isPvpCombatPotion(item)) onClick = () => queueAction({ type: 'drink_potion', inventorySlot: idx }, { showBusy: false })
+                    else if (isConsumableFood(item)) onClick = () => queueAction({ type: 'eat', inventorySlot: idx }, { showBusy: false })
+                    else if (isConsumablePotion(item)) onClick = () => queueAction({ type: 'drink_potion', inventorySlot: idx }, { showBusy: false })
                   }
                   return (
                     <div key={`inv-${idx}`} onClick={onClick}>
@@ -883,21 +889,17 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
             <EquipmentMiniPanel title="Your gear" combatant={pair.self} align="right" onUnequipSlot={queueGearUnequip} />
           </div>
 
-          <Card>
-            <div class="text-xs font-semibold text-[var(--color-gold)] mb-2">Quick Actions</div>
-            <div class="flex gap-2 flex-wrap">
-              {foodSlots.length === 0 && <div class="text-[11px] text-[var(--color-parchment)] opacity-60">No food in inventory.</div>}
-              {foodSlots.map(({ slot, idx }) => (
-                <div key={`${slot.itemId}-${idx}`} onClick={() => queueAction({ type: 'eat', inventorySlot: idx })}>
-                  <ItemSlot slot={slot} size="small" />
-                </div>
-              ))}
-            </div>
-          </Card>
+          <CombatQuickActions
+            inventory={toArray(pair.self?.inventory)}
+            itemsData={itemsData}
+            onEat={(entry) => queueAction({ type: 'eat', inventorySlot: entry.slotIdx }, { showBusy: false })}
+            onPotion={(entry) => queueAction({ type: 'drink_potion', inventorySlot: entry.slotIdx }, { showBusy: false })}
+            onEquip={(entry) => queueGearEquip(entry.slotIdx)}
+          />
 
           <Card>
             <div class="text-xs font-semibold text-[var(--color-gold)] mb-2">Combat actions</div>
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+            <div class="grid grid-cols-2 gap-2">
               <Button
                 variant={specialVisuallyQueued ? 'primary' : 'secondary'}
                 size="md"
@@ -922,24 +924,6 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
                 onClick={() => toggleActionPanel('prayer')}
               >
                 🙏 Prayer
-              </Button>
-              <Button
-                variant={actionPanel === 'potion' ? 'primary' : 'secondary'}
-                size="md"
-                className="w-full"
-                disabled={busy || potionSlots.length === 0}
-                onClick={() => toggleActionPanel('potion')}
-              >
-                🧪 Potion
-              </Button>
-              <Button
-                variant={actionPanel === 'gear' ? 'primary' : 'secondary'}
-                size="md"
-                className="w-full"
-                disabled={busy || !hasGearActions}
-                onClick={() => toggleActionPanel('gear')}
-              >
-                ⚙️ Gear
               </Button>
             </div>
 
@@ -973,91 +957,7 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
               </div>
             )}
 
-            {actionPanel === 'potion' && (
-              <div class="mt-3">
-                {potionSlots.length === 0 ? (
-                  <div class="text-[11px] text-[var(--color-parchment)] opacity-60">No PvP potions in inventory.</div>
-                ) : (
-                  <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
-                    {potionSlots.map(({ slot, idx, item }) => (
-                      <Button
-                        key={`${slot.itemId}-${idx}`}
-                        variant="secondary"
-                        size="md"
-                        className="min-h-11 w-full justify-center px-1 text-center text-[10px] leading-tight"
-                        onClick={() => queueAction({ type: 'drink_potion', inventorySlot: idx }, { showBusy: false })}
-                      >
-                        <span class="block truncate">{item?.icon || '🧪'} {item?.name || slot.itemId}</span>
-                      </Button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
           </Card>
-
-          {actionPanel === 'gear' && (
-            <Modal onClose={() => setActionPanel(null)}>
-              <div class="flex items-center justify-between mb-3">
-                <h3 class="font-[var(--font-display)] text-base font-bold text-[var(--color-gold)]">
-                  Gear
-                </h3>
-                <button
-                  onClick={() => setActionPanel(null)}
-                  class="w-6 h-6 flex items-center justify-center rounded-lg bg-[#222] text-[var(--color-parchment)] hover:bg-[#333] active:bg-[#444] transition-colors"
-                  title="Close"
-                >
-                  ✕
-                </button>
-              </div>
-
-              <div class="text-[10px] text-[var(--color-parchment)] opacity-60 mb-3">
-                Equip an item from your inventory or unequip current gear. Gear changes are queued and apply on the next PvP tick.
-              </div>
-
-              <div class="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
-                <div>
-                  <div class="text-[10px] uppercase tracking-wide text-[var(--color-gold)] mb-2">
-                    Inventory gear
-                  </div>
-
-                  {equippableSlots.length === 0 ? (
-                    <div class="text-[11px] text-[var(--color-parchment)] opacity-50">
-                      No equippable items in inventory.
-                    </div>
-                  ) : (
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-                      {equippableSlots.map(({ slot, idx, item }) => (
-                        <button
-                          key={`inventory-gear-${idx}-${slot.itemId}`}
-                          onClick={() => queueGearEquip(idx)}
-                          class="w-full p-3 rounded-lg border bg-[#1a1a1a] border-[#2a2a2a] active:bg-[#222] transition-colors text-left"
-                        >
-                          <div class="flex items-center justify-between gap-3">
-                            <div class="flex items-center gap-2 min-w-0">
-                              <ItemSlot slot={slot} size="small" />
-                              <div class="min-w-0">
-                                <div class="text-sm font-semibold text-[var(--color-parchment)] truncate">
-                                  {item?.name || slot.itemId}
-                                </div>
-                                <div class="text-[10px] text-[var(--color-parchment)] opacity-60 capitalize">
-                                  {item?.slot || 'gear'}
-                                  {(slot.quantity || 0) > 1 ? ` · x${slot.quantity}` : ''}
-                                </div>
-                              </div>
-                            </div>
-                            <span class="text-[10px] text-[var(--color-gold)] shrink-0">
-                              Equip
-                            </span>
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </Modal>
-          )}
 
           <Panel>
             <div class="text-xs font-semibold text-[var(--color-gold)] mb-1">Recent actions</div>

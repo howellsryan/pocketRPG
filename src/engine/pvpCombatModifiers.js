@@ -1,5 +1,6 @@
 import prayersData from '../data/prayers.json'
-import { getPvpPotionBoosts } from './pvpPotions.js'
+import itemsData from '../data/items.json'
+import { getActivePotionBoosts } from './consumables.js'
 
 const PVP_MODIFIERS_PROTECTION_PRAYER_IDS = new Set([
   'protection_from_magic',
@@ -50,6 +51,6 @@ function getPrayerMultipliers(prayerId) {
 
 export function getPvpCombatModifiers(combatant) {
   const prayer = getPrayerMultipliers(combatant?.activeCombatPrayer)
-  const potions = getPvpPotionBoosts(combatant?.activePotions, combatant?.stats || {})
+  const potions = getActivePotionBoosts(combatant?.activePotions, itemsData)
   return { prayer, potions }
 }
