@@ -109,7 +109,7 @@ describe('getSlayerTaskXpForKill', () => {
       .toBe(120 * DEFAULT_SLAYER_TASK_XP_MULTIPLIER)
   })
 
-  it('awards 10x base Slayer XP for boss task kills', () => {
+  it('awards the boss multiplier on base Slayer XP for boss task kills', () => {
     expect(getSlayerTaskXpForKill({ id: 'deepmaw_kraken', name: 'Deepmaw Kraken', boss: true }, null, monstersData))
       .toBe(255 * BOSS_SLAYER_TASK_XP_MULTIPLIER)
   })
@@ -124,7 +124,7 @@ describe('getSlayerTaskXpForKill', () => {
       .toBe(Math.floor(120 * DEFAULT_SLAYER_TASK_XP_MULTIPLIER * 2))
   })
 
-  it('doubles XP when doubleXp option is set for a boss (stacks with ×10)', () => {
+  it('doubles XP when doubleXp option is set for a boss (stacks with the boss multiplier)', () => {
     expect(getSlayerTaskXpForKill({ id: 'deepmaw_kraken', name: 'Deepmaw Kraken', boss: true }, null, monstersData, { doubleXp: true }))
       .toBe(Math.floor(255 * BOSS_SLAYER_TASK_XP_MULTIPLIER * 2))
   })
