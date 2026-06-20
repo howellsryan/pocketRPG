@@ -1,4 +1,4 @@
-import { useState } from 'preact/hooks'
+import { useState, useRef } from 'preact/hooks'
 import GameIcon from './GameIcon.jsx'
 import { isConsumableFood, isConsumablePotion } from '../engine/consumables.js'
 
@@ -17,6 +17,25 @@ export default function CombatQuickActions({
   isPotionActive,
 }) {
   const [tab, setTab] = useState('food')
+
+  // Tap-acknowledgement flash. PvP queues intents (no instant inventory change),
+  // so blink the tapped slot to confirm the action registered — same feedback in
+  // PvE for consistency. `n` is a nonce so re-tapping the same slot replays it.
+  const [pinged, setPinged] = useState(null)
+  const pingTimer = useRef(null)
+  const pingNonce = useRef(0)
+  const flash = (id) => {
+    pingNonce.current += 1
+    setPinged({ id, n: pingNonce.current })
+    if (pingTimer.current) clearTimeout(pingTimer.current)
+    pingTimer.current = setTimeout(() => setPinged(null), 300)
+  }
+  const handleEat = (entry) => { flash(entry.itemId); if (onEat) onEat(entry) }
+  const handlePotion = (entry) => { flash(entry.itemId); if (onPotion) onPotion(entry) }
+  const handleEquip = (entry) => { flash(entry.itemId); if (onEquip) onEquip(entry) }
+  const ping = (entry) => (pinged && pinged.id === entry.itemId
+    ? <span key={pinged.n} class="cb-slot__ping" />
+    : null)
 
   // Compact quantity formatter for slot badges (312 → 312, 5085 → 5.1k).
   const fmtQty = (n) => {
@@ -67,11 +86,12 @@ export default function CombatQuickActions({
         {tab === 'food' && (foods.length === 0
           ? <div class="cb-qa__empty">No food in your inventory</div>
           : foods.map((entry) => (
-            <button key={entry.itemId} class="cb-slot" onClick={() => onEat && onEat(entry)}>
+            <button key={entry.itemId} class="cb-slot" onClick={() => handleEat(entry)}>
               <span class="cb-slot__qty">{fmtQty(entry.qty)}</span>
               <GameIcon item={entry.item} size={18} />
               <span class="cb-slot__name">{entry.item.name}</span>
               {entry.item.heals != null && <span class="cb-slot__tag heal">+{entry.item.heals}</span>}
+              {ping(entry)}
             </button>
           )))}
 
@@ -80,12 +100,13 @@ export default function CombatQuickActions({
           : potions.map((entry) => {
             const active = isPotionActive ? isPotionActive(entry.item) : false
             return (
-              <button key={entry.itemId} class={'cb-slot' + (active ? ' is-active' : '')} onClick={() => onPotion && onPotion(entry)}>
+              <button key={entry.itemId} class={'cb-slot' + (active ? ' is-active' : '')} onClick={() => handlePotion(entry)}>
                 <span class="cb-slot__qty">{fmtQty(entry.qty)}</span>
                 <GameIcon item={entry.item} size={18} />
                 <span class="cb-slot__name">{entry.item.name}</span>
                 {POT_TAG[entry.item.effect] && <span class="cb-slot__tag">{POT_TAG[entry.item.effect]}</span>}
                 {active && <span class="cb-slot__ring" />}
+                {ping(entry)}
               </button>
             )
           }))}
@@ -93,21 +114,23 @@ export default function CombatQuickActions({
         {tab === 'weapon' && (weapons.length === 0
           ? <div class="cb-qa__empty">No weapons to wield</div>
           : weapons.map((entry) => (
-            <button key={entry.itemId} class="cb-slot" onClick={() => onEquip && onEquip(entry)}>
+            <button key={entry.itemId} class="cb-slot" onClick={() => handleEquip(entry)}>
               {entry.qty > 1 && <span class="cb-slot__qty">{fmtQty(entry.qty)}</span>}
               <GameIcon item={entry.item} size={18} />
               <span class="cb-slot__name">{entry.item.name}</span>
+              {ping(entry)}
             </button>
           )))}
 
         {tab === 'armour' && (armour.length === 0
           ? <div class="cb-qa__empty">No armour to equip</div>
           : armour.map((entry) => (
-            <button key={entry.itemId} class="cb-slot" onClick={() => onEquip && onEquip(entry)}>
+            <button key={entry.itemId} class="cb-slot" onClick={() => handleEquip(entry)}>
               {entry.qty > 1 && <span class="cb-slot__qty">{fmtQty(entry.qty)}</span>}
               <GameIcon item={entry.item} size={18} />
               <span class="cb-slot__name">{entry.item.name}</span>
               <span class="cb-slot__tag">{entry.item.slot}</span>
+              {ping(entry)}
             </button>
           )))}
       </div>
