@@ -67,6 +67,21 @@ export function getActionTicksForTask(task, ctx = {}) {
   }
 }
 
+/**
+ * Ticks already elapsed in the task's current action, so the background runner
+ * resumes where an activity screen left off instead of restarting the action.
+ *
+ * The runner stores `pendingTicks` directly; activity screens instead mirror
+ * `ticksRemaining`/`totalTicks` each tick (not `pendingTicks`), so when the
+ * runner takes back over after the player navigates away we infer the elapsed
+ * count from the remaining ticks.
+ */
+export function getCarriedPendingTicks(task, totalTicks) {
+  if (Number.isFinite(task?.pendingTicks)) return Math.max(0, Number(task.pendingTicks))
+  if (Number.isFinite(task?.ticksRemaining)) return Math.max(0, totalTicks - Number(task.ticksRemaining))
+  return 0
+}
+
 /** Number of actions completed by a sim result (sims use `actions` or `laps`). */
 export function resultActions(result) {
   if (!result) return 0

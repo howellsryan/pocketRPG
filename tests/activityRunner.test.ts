@@ -2,9 +2,29 @@ import { describe, expect, it } from 'vitest'
 import {
   isRunnableBackgroundTask,
   getActionTicksForTask,
+  getCarriedPendingTicks,
   simulateTaskWindow,
   resultActions,
 } from '../src/engine/activityRunner.js'
+
+describe('getCarriedPendingTicks (resume the current action, not restart it)', () => {
+  it('uses an explicit pendingTicks when the runner already owns the task', () => {
+    expect(getCarriedPendingTicks({ pendingTicks: 3 }, 10)).toBe(3)
+    expect(getCarriedPendingTicks({ pendingTicks: 0 }, 10)).toBe(0)
+  })
+
+  it('infers elapsed ticks from a screen-mirrored ticksRemaining', () => {
+    // Screen left the action with 4 of 10 ticks remaining → 6 elapsed.
+    expect(getCarriedPendingTicks({ ticksRemaining: 4 }, 10)).toBe(6)
+    // Just started (full remaining) → 0 elapsed, no restart jump.
+    expect(getCarriedPendingTicks({ ticksRemaining: 10 }, 10)).toBe(0)
+  })
+
+  it('clamps and defaults safely', () => {
+    expect(getCarriedPendingTicks({ ticksRemaining: 99 }, 10)).toBe(0)
+    expect(getCarriedPendingTicks({}, 10)).toBe(0)
+  })
+})
 
 const inv28 = () => Array(28).fill(null)
 // Construction XP comfortably past level 80 (the gather auto-bank unlock).

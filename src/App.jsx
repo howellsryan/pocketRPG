@@ -43,7 +43,7 @@ import { schedulePushSave, pushNow, pullSave, applyCloudSave, checkCloudNewer, r
 import { CRITICAL_SAVE_REASONS } from './cloud/criticalSavePolicy.js'
 import { fetchIdleState, heartbeatIdleState, beaconIdleState, resetIdleStateSync } from './cloud/idleState.js'
 import { isBackground } from './engine/activityRegistry.js'
-import { isRunnableBackgroundTask, getActionTicksForTask, simulateTaskWindow, resultActions, isScreenRecentlyDriving } from './engine/activityRunner.js'
+import { isRunnableBackgroundTask, getActionTicksForTask, getCarriedPendingTicks, simulateTaskWindow, resultActions, isScreenRecentlyDriving } from './engine/activityRunner.js'
 import { mergeSession, sessionPatchFromResult } from './engine/activitySession.js'
 import { resetActivityProgressSync } from './cloud/activityProgress.js'
 import { formatIdleTime, simulateIdleSkilling, simulateIdleGather, simulateIdleCombat, simulateIdleAgility, simulateIdleHPRegen } from './engine/idleEngine.js'
@@ -1553,7 +1553,11 @@ function GameApp() {
         itemsData: itemsDataRef.current,
       }
       const totalTicks = getActionTicksForTask(task, ctx)
-      const pending = (Number(task.pendingTicks) || 0) + 1
+      // Resume the current action where it left off. While an activity screen is
+      // driving, it mirrors `ticksRemaining`/`totalTicks` (not `pendingTicks`)
+      // onto the task; when the runner takes back over (the player navigated
+      // away), infer the elapsed ticks so the action continues, not restarts.
+      const pending = getCarriedPendingTicks(task, totalTicks) + 1
 
       const commit = (pendingTicks, session = task.session) => {
         const next = { ...task, pendingTicks, totalTicks, ticksRemaining: Math.max(0, totalTicks - pendingTicks), session }
