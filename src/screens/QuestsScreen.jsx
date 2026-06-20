@@ -40,6 +40,10 @@ export default function QuestsScreen() {
   const [hideCompleted, setHideCompleted] = useState(false)
   const [selectedQuest, setSelectedQuest] = useState(null)
   const [showQueue, setShowQueue] = useState(false)
+  // "Back" collapses the active-quest view to the list without abandoning it —
+  // the quest keeps running (App ticks it). A new/changed active quest resets it.
+  const [collapsedActive, setCollapsedActive] = useState(false)
+  useEffect(() => { setCollapsedActive(false) }, [activeTask?.quest?.id])
   const hasAutoStarted = useRef(false)
   const isDesktop = useIsDesktop()
 
@@ -76,9 +80,10 @@ export default function QuestsScreen() {
     addToast(`📜 Queued: ${quest.name}`, 'info')
   }
 
-  const abandonQuest = () => {
-    setActiveTask(null)
-    addToast('Quest abandoned', 'info')
+  // Leave the active-quest view without stopping or abandoning it. Progress is
+  // always kept (the quest keeps running in the background).
+  const backFromActiveQuest = () => {
+    setCollapsedActive(true)
   }
 
   const removeQuestFromQueue = (questId) => {
@@ -115,7 +120,7 @@ export default function QuestsScreen() {
   const completedCount = completedQuests.size
 
   // ── Active quest view (App.jsx ticks the quest; we just render state) ──────
-  if (activeTask?.type === 'quest' && activeTask.quest) {
+  if (activeTask?.type === 'quest' && activeTask.quest && !collapsedActive) {
     const { quest, totalTicks } = activeTask
     const ticksRemaining = activeTask.ticksRemaining ?? totalTicks
     const progress = 1 - ticksRemaining / totalTicks
@@ -125,10 +130,10 @@ export default function QuestsScreen() {
       <div class="h-full flex flex-col p-4">
         <div class="flex justify-between items-center mb-3">
           <button
-            onClick={abandonQuest}
+            onClick={backFromActiveQuest}
             class="text-[12px] text-[#c4af7a] flex items-center gap-1 bg-transparent border-0 cursor-pointer"
           >
-            ← Abandon Quest
+            ← Back
           </button>
           {questQueue.length > 0 && (
             <span class="text-[11px] text-[var(--color-gold)] font-[var(--font-mono)]">
@@ -228,6 +233,18 @@ export default function QuestsScreen() {
         list={
       <div class="h-full overflow-y-auto px-4 pb-4">
         <div class="flex flex-col gap-2">
+            {collapsedActive && activeTask?.type === 'quest' && activeTask.quest && (
+              <button
+                onClick={() => setCollapsedActive(false)}
+                class="mb-2 w-full flex items-center justify-between gap-2 p-3 rounded-xl border border-[var(--color-gold)] bg-[rgba(212,175,55,0.12)] text-left active:opacity-80"
+              >
+                <span class="flex items-center gap-2 min-w-0">
+                  <span class="w-2 h-2 rounded-full bg-[var(--color-xp-bar)] flex-shrink-0" />
+                  <span class="text-[13px] font-semibold text-[var(--color-parchment)] truncate">{activeTask.quest.name} — in progress</span>
+                </span>
+                <span class="text-[12px] font-semibold text-[var(--color-gold)] flex-shrink-0">View ›</span>
+              </button>
+            )}
             {showQueue && questQueue.length > 0 && (
               <div class="flex flex-col gap-2 pt-2 mb-4">
                 <SectionHeader size="sm">📋 Quest Queue</SectionHeader>
