@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef } from 'preact/hooks'
 import { useGame } from '../state/gameState.jsx'
-import ProgressBar from '../components/ProgressBar.jsx'
-import Panel from '../components/Panel.jsx'
 import SectionHeader from '../components/SectionHeader.jsx'
 import GameIcon from '../components/GameIcon.jsx'
+import SkillActionRow from '../components/SkillActionRow.jsx'
+import SkillActivePanel from '../components/SkillActivePanel.jsx'
 import { getActionProgress } from '../hooks/useActionTick.js'
 import { countItem, addItem } from '../engine/inventory.js'
 import { getLevelFromXP } from '../engine/experience.js'
@@ -216,32 +216,73 @@ export default function GatherScreen({ initialTaskId, idleResult }) {
         }
         taskRef.current = updated
         setLocalTask(updated)
+        mirrorActiveTask(updated)
       } else {
         taskRef.current = next
         setLocalTask(next)
+        mirrorActiveTask(next)
       }
     })
 
     return unsub
   }, [activeTask?.task?.id, inventory, bank, stats])
 
+  // Mirror live progress + session onto the global task so the top-nav indicator
+  // stays in sync and the session survives navigation.
+  const mirrorActiveTask = (state) => {
+    if (!state || state.stopped) return
+    setActiveTask({
+      type: 'gather', gatherTask: state.task,
+      totalTicks: state.task.ticks, ticksRemaining: state.ticksRemaining,
+      session: { startedAt: state.startedAt, actions: state.totalDone || 0, xp: 0, coins: 0, items: state.totalItems || 0, seeds: 0, tokens: 0 },
+    }, { skipCloudSync: true })
+  }
+
+  const buildResumedState = (task) => {
+    const gatherTask = GATHER_TASKS.find(t => t.id === task.gatherTask?.id)
+    if (!gatherTask) return null
+    const state = {
+      task: gatherTask,
+      ticksRemaining: gatherTask.ticks,
+      totalDone: task.session?.actions || 0,
+      totalItems: task.session?.items || 0,
+      startedAt: task.session?.startedAt || Date.now(),
+      stopped: false,
+      justCompleted: false,
+    }
+    if (typeof task.ticksRemaining === 'number' && task.ticksRemaining > 0 && task.ticksRemaining <= gatherTask.ticks) state.ticksRemaining = task.ticksRemaining
+    return state
+  }
+
   const startTask = (task, seedFromIdle = false) => {
+    // Re-opening the running gather: resume the live panel from its session.
+    if (globalActiveTask?.type === 'gather' && globalActiveTask.gatherTask?.id === task.id && !seedFromIdle) {
+      const resumed = buildResumedState(globalActiveTask)
+      if (resumed) { taskRef.current = resumed; setLocalTask(resumed); return }
+    }
     const idleActions = seedFromIdle && idleResult?.actions ? idleResult.actions : 0
     const idleItems = seedFromIdle && idleResult?.itemsGained
       ? Object.values(idleResult.itemsGained).reduce((s, v) => s + v, 0)
       : 0
+    const startedAt = Date.now()
     const newState = {
       task,
       ticksRemaining: task.ticks,
       totalDone: idleActions,
       totalItems: idleItems,
-      startedAt: Date.now(),
+      startedAt,
       stopped: false,
       justCompleted: false,
     }
     taskRef.current = newState
     setLocalTask(newState)
-    setActiveTask({ type: 'gather', gatherTask: task })
+    setActiveTask({ type: 'gather', gatherTask: task, session: { startedAt, actions: idleActions, xp: 0, coins: 0, items: idleItems, seeds: 0, tokens: 0 } })
+  }
+
+  // Back (no stop): flush progress and return to the task list; task keeps running.
+  const backToList = () => {
+    if (taskRef.current) mirrorActiveTask(taskRef.current)
+    setLocalTask(null)
   }
 
   const stopTask = () => {
@@ -249,6 +290,17 @@ export default function GatherScreen({ initialTaskId, idleResult }) {
     setLocalTask(null)
     setActiveTask(null)
   }
+
+  // Resume a gather already running in the background (navigated away & back).
+  useEffect(() => {
+    if (activeTask || hasAutoStarted.current || initialTaskId) return
+    if (globalActiveTask?.type !== 'gather') return
+    const resumed = buildResumedState(globalActiveTask)
+    if (!resumed) return
+    hasAutoStarted.current = true
+    taskRef.current = resumed
+    setLocalTask(resumed)
+  }, [])
 
   // Auto-start from home shortcut
   useEffect(() => {
@@ -311,46 +363,26 @@ export default function GatherScreen({ initialTaskId, idleResult }) {
     const perHour = elapsedHrs > 0 ? Math.round(activeTask.totalItems / elapsedHrs) : 0
 
     return (
-      <div class="h-full flex flex-col p-4">
-        <button
-          onClick={stopTask}
-          class="text-[12px] text-[#c4af7a] mb-3 flex items-center gap-1 bg-transparent border-0 cursor-pointer"
-        >
-          ← Back
-        </button>
-
-        <div class="flex-1 flex flex-col items-center justify-center">
-          <GameIcon iconKey={task.iconKey} item={{ icon: task.icon }} size={48} color="var(--color-gold)" class="mb-2" />
-
-          <h2 class="font-[var(--font-display)] text-[18px] font-bold text-[var(--color-gold)] mb-1 text-center">
-            {task.name}
-          </h2>
-          <p class="text-[11px] text-[var(--color-parchment)] opacity-50 mb-4 text-center">{task.description}</p>
-
-          <div class="w-full max-w-[280px] mb-4">
-            <ProgressBar value={progress} max={1} height="h-4" color="var(--color-gold)" showText />
-          </div>
-
-          <Panel padding="p-3" className="w-full max-w-[280px] mb-3 rounded-xl">
-            <div class="flex justify-between mb-2">
-              <span class="text-[13px] text-[var(--color-parchment)] opacity-60">Items gathered</span>
-              <span class="font-[var(--font-mono)] text-[var(--color-gold)] font-bold">{activeTask.totalItems}</span>
-            </div>
-            <div class="flex justify-between">
-              <span class="text-[13px] text-[var(--color-parchment)] opacity-60">Items/hr</span>
-              <span class="font-[var(--font-mono)] text-[var(--color-gold)] font-bold">
-                {elapsedHrs > 0 ? perHour.toLocaleString() : '—'}
-              </span>
-            </div>
-          </Panel>
-
-          <div class="text-[11px] text-[var(--color-parchment)] opacity-50 text-center max-w-[280px]">
-            {getLevelFromXP(stats.construction?.xp || 0) >= GATHER_AUTOBANK_CONSTRUCTION_LEVEL
-              ? '🏦 Items fill your inventory, then auto-bank when full.'
-              : '🎒 Items go to your inventory. Gathering stops when it\'s full.'}
-          </div>
-        </div>
-      </div>
+      <SkillActivePanel
+        icon={<GameIcon iconKey={task.iconKey} item={{ icon: task.icon }} size={50} color="var(--color-gold-light)" />}
+        title={task.name}
+        subtitle={task.description}
+        progress={progress}
+        producing={<>
+          <GameIcon iconKey={task.iconKey} item={{ icon: task.icon }} size={16} color="var(--color-gold-light)" />
+          <span class="text-[12px] font-semibold text-[var(--color-parchment)] opacity-60">Producing</span>
+          <span class="text-[13px] font-semibold text-[var(--color-gold-light)]">{nameOf(task.product)}</span>
+        </>}
+        stats={[
+          { label: 'Items gathered', value: activeTask.totalItems },
+          { label: 'Items / hr', value: elapsedHrs > 0 ? perHour.toLocaleString() : '—', accent: elapsedHrs > 0 },
+        ]}
+        note={getLevelFromXP(stats.construction?.xp || 0) >= GATHER_AUTOBANK_CONSTRUCTION_LEVEL
+          ? '🏦 Items fill your inventory, then auto-bank when full.'
+          : '🎒 Items go to your inventory. Gathering stops when it\'s full.'}
+        onBack={backToList}
+        onStop={stopTask}
+      />
     )
   }
 
@@ -385,56 +417,29 @@ export default function GatherScreen({ initialTaskId, idleResult }) {
 
       {/* Body */}
       <div class="flex-1 overflow-y-auto px-4 pb-4">
-        <div class="flex flex-col gap-2">
+        <div class="flex flex-col gap-2.5">
           {visibleTasks.map(task => {
             const hasMats = !task.materials || Object.entries(task.materials).every(
               ([id, qty]) => (countItem(inventory, id) + (bank[id]?.quantity || 0)) >= qty
             )
             const hasRequiredItem = !task.requiresItem || hasItemAnywhere(task.requiresItem, inventory, bank, equipment)
             const enabled = hasMats && hasRequiredItem
-            const rowClass = enabled
-              ? 'bg-[var(--color-void-light)] border-[#2a2a2a] opacity-100'
-              : 'bg-[#111] border-[#1a1a1a] opacity-45'
 
             return (
-              <div
+              <SkillActionRow
                 key={task.id}
-                class={`p-3 rounded-xl border flex items-center gap-3 ${rowClass}`}
-              >
-                <button
-                  onClick={() => enabled && startTask(task)}
-                  disabled={!enabled}
-                  class="flex-1 min-w-0 flex items-center gap-3 text-left bg-transparent border-0 p-0 disabled:cursor-not-allowed"
-                >
-                  <GameIcon iconKey={task.iconKey} item={{ icon: task.icon }} size={28} color="var(--color-gold)" class="flex-shrink-0" />
-
-                  <div class="flex-1 min-w-0">
-                    <div class="text-[13px] font-semibold text-[var(--color-parchment)] mb-1">{task.name}</div>
-                    <div class="text-[10px] text-[#c8a96e] opacity-80">
-                      ⏱ {(task.ticks * 0.6).toFixed(1)}s/action
-                      {task.requiresItem && !task.isClue && (
-                      <span class="text-[var(--color-parchment)] opacity-50">
-                        {' · '}Requires: {nameOf(task.requiresItem)}
-                      </span>
-                    )}
-                    {task.materials && (
-                        <span class="text-[var(--color-parchment)] opacity-50">
-                          {' · '}Needs: {Object.entries(task.materials).map(([id, qty]) => `${nameOf(id)} ×${qty}`).join(', ')}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  <div class="flex-shrink-0 text-right">
-                    <div class="text-[18px]">→</div>
-                    <div class="text-[9px] text-[#c8a96e] opacity-70">{nameOf(task.product)}</div>
-                    {(task.materials || task.requiresItem) && (
-                      <div class={`text-[9px] mt-[2px] ${enabled ? 'text-[#4caf50]' : 'text-[#e57373]'}`}>
-                        {enabled ? '✓ ready' : '✗ need item'}
-                      </div>
-                    )}
-                  </div>
-                </button>
-              </div>
+                icon={<GameIcon iconKey={task.iconKey} item={{ icon: task.icon }} size={26} color="var(--color-gold)" />}
+                title={task.name}
+                meta={<>
+                  ⏱ {(task.ticks * 0.6).toFixed(1)}s/action
+                  {task.requiresItem && !task.isClue && <> · Requires: {nameOf(task.requiresItem)}</>}
+                  {task.materials && <> · Needs: {Object.entries(task.materials).map(([id, qty]) => `${nameOf(id)} ×${qty}`).join(', ')}</>}
+                </>}
+                chip={<>→ {nameOf(task.product)}</>}
+                active={globalActiveTask?.type === 'gather' && globalActiveTask.gatherTask?.id === task.id}
+                disabled={!enabled}
+                onClick={() => startTask(task)}
+              />
             )
           })}
         </div>

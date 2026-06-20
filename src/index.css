@@ -123,6 +123,19 @@ html, body, #app {
 }
 .progress-active { animation: progress-pulse 1.2s ease-in-out infinite; }
 
+/* ── Shared skilling action screen (orb + shine + countdown) ── */
+@keyframes skill-orb-pulse {
+  0%, 100% { box-shadow: 0 0 0 1px rgba(212,160,23,0.5), 0 0 30px rgba(212,160,23,0.26), inset 0 0 22px rgba(212,160,23,0.12); }
+  50%      { box-shadow: 0 0 0 1px rgba(212,160,23,0.75), 0 0 48px rgba(212,160,23,0.42), inset 0 0 28px rgba(212,160,23,0.2); }
+}
+@keyframes skill-ring-spin { to { transform: rotate(360deg); } }
+@keyframes skill-bar-shine { 0% { transform: translateX(-120%); } 60%, 100% { transform: translateX(320%); } }
+@keyframes skill-toast-shrink { from { transform: scaleX(1); } to { transform: scaleX(0); } }
+.skill-orb-pulse { animation: skill-orb-pulse 2.6s ease-in-out infinite; }
+.skill-ring-spin { animation: skill-ring-spin 14s linear infinite; }
+.skill-bar-shine { animation: skill-bar-shine 2.4s ease-in-out infinite; }
+.skill-toast-shrink { transform-origin: left; animation: skill-toast-shrink linear forwards; }
+
 /* Combat hit flash */
 @keyframes hit-flash {
   0% { background-color: rgba(192, 57, 43, 0.3); }

@@ -871,10 +871,17 @@ export function GameProvider({ children }) {
   // ── Toasts ──
   const addToast = useCallback((message, type = 'info', icon = null) => {
     const id = Date.now() + Math.random()
-    setToasts(prev => [...prev, { id, message, type, icon }])
+    // Reward-style toasts (level ups, collection-log unlocks) linger a little
+    // longer so the player can read the richer card before it auto-clears.
+    const ttl = (type === 'levelup' || type === 'reward') ? 6000 : 3500
+    setToasts(prev => [...prev, { id, message, type, icon, ttl }])
     setTimeout(() => {
       setToasts(prev => prev.filter(t => t.id !== id))
-    }, 3000)
+    }, ttl)
+  }, [])
+
+  const dismissToast = useCallback((id) => {
+    setToasts(prev => prev.filter(t => t.id !== id))
   }, [])
 
   // Returns a fresh snapshot of all live state — always reads from refs, never stale
@@ -1001,13 +1008,21 @@ export function GameProvider({ children }) {
     }
   }, [loaded, stats, bossKillCounts, raidKillCounts, completedQuests, unlockedFeatures, slayerPoints, getSnapshot])
 
+  // Stable identity for the running activity — only the activity itself (not its
+  // per-tick progress/session) should restart the heartbeat interval. Without
+  // this the interval would reset every 600ms (the runner and the activity
+  // screens both mutate the task object each tick) and the 30s heartbeat would
+  // never fire.
+  const heartbeatTaskKey = (loaded && activeTask && HEARTBEAT_ACTIVE_TASK_TYPES.has(activeTask.type))
+    ? `${activeTask.type}:${activeTask.action?.id || activeTask.npc?.id || activeTask.gatherTask?.id || ''}`
+    : null
   useEffect(() => {
-    if (!loaded || !activeTask || !HEARTBEAT_ACTIVE_TASK_TYPES.has(activeTask.type)) return
+    if (!heartbeatTaskKey) return
     const timer = setInterval(() => {
       requestCriticalPushSave(() => getSnapshot(), CRITICAL_SAVE_REASONS.ACTIVITY_HEARTBEAT)
     }, CLOUD_ACTIVITY_HEARTBEAT_MS)
     return () => clearInterval(timer)
-  }, [loaded, activeTask, getSnapshot])
+  }, [heartbeatTaskKey, getSnapshot])
 
   const value = {
     loaded, player, stats, inventory, equipment, bank, currentHP, toasts, isSaving,
@@ -1041,7 +1056,7 @@ export function GameProvider({ children }) {
     awaitCombatCompletion, resolveCombatCompletion,
     loadGame, grantXP, updateInventory, updateEquipment, updateBank,
     removeFromInventory, addToBank,
-    updateHP, getMaxHP, getSkillLevel, addToast, setPlayer,
+    updateHP, getMaxHP, getSkillLevel, addToast, dismissToast, setPlayer,
     markDirty, itemsData, updateHomeShortcuts, updateCombatStance,
     setActiveTask, updateBankDirect, getSnapshot, updateAutoBankLoot, updateBankConfig,
     getActivityProgress, clearActivityProgress,

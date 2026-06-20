@@ -1,11 +1,14 @@
 import { useState, useEffect, useRef } from 'preact/hooks'
 import { useGame } from '../state/gameState.jsx'
-import ProgressBar from '../components/ProgressBar.jsx'
 import SkillIcon from '../components/SkillIcon.jsx'
 import GameIcon from '../components/GameIcon.jsx'
 import Modal from '../components/Modal.jsx'
+import SkillScreenHeader from '../components/SkillScreenHeader.jsx'
+import SkillActionRow from '../components/SkillActionRow.jsx'
+import SkillActivePanel from '../components/SkillActivePanel.jsx'
 import { getLevelFromXP } from '../engine/experience.js'
 import { createSkillingState, processSkillingTick } from '../engine/skilling.js'
+import { emptySession } from '../engine/activitySession.js'
 import { countItem, removeItem } from '../engine/inventory.js'
 import { hasRequiredRunes, getRunesToConsume, getEquippedElementalStaff } from '../engine/runes.js'
 import { onTick } from '../engine/tick.js'
@@ -48,7 +51,7 @@ function groupActions(actions) {
 export default function MagicScreen({ onBack, onNavigate }) {
   const {
     stats, inventory, bank, equipment,
-    grantXP, updateInventory, updateBankDirect, addToast, setActiveTask
+    grantXP, updateInventory, updateBankDirect, addToast, setActiveTask, activeTask
   } = useGame()
 
   const magicLevel = getLevelFromXP(stats.magic?.xp || 0)
@@ -59,6 +62,7 @@ export default function MagicScreen({ onBack, onNavigate }) {
   const [selectedAlchemyItem, setSelectedAlchemyItem] = useState(null)
   const [pendingAlchemyAction, setPendingAlchemyAction] = useState(null)
   const skillingRef = useRef(null)
+  const hasResumed = useRef(false)
   const inventoryRef = useRef(inventory)
   const bankRef = useRef(bank)
   const equipmentRef = useRef(equipment)
@@ -74,14 +78,58 @@ export default function MagicScreen({ onBack, onNavigate }) {
     else if (onNavigate) onNavigate(SCREENS.SKILLS)
   }
 
+  const mirrorActiveTask = (state, alchemyItem) => {
+    if (!state) return
+    const task = {
+      type: 'skill', skill: 'magic', action: state.action, bankingEnabled: true,
+      totalTicks: state.action.ticks, ticksRemaining: state.ticksRemaining,
+      session: { startedAt: state.startedAt, actions: state.totalActions || 0, xp: state.totalXP || 0, coins: 0, items: 0, seeds: 0, tokens: 0 },
+    }
+    if (alchemyItem || selectedAlchemyItemRef.current) task.selectedAlchemyItem = alchemyItem || selectedAlchemyItemRef.current
+    setActiveTask(task, { skipCloudSync: true })
+  }
+
+  const buildResumedState = (task) => {
+    const action = allActions.find(a => a.id === task.action?.id)
+    if (!action) return null
+    const state = { ...createSkillingState('magic', action), startedAt: task.session?.startedAt || Date.now() }
+    state.totalActions = task.session?.actions || 0
+    state.totalXP = task.session?.xp || 0
+    if (typeof task.ticksRemaining === 'number' && task.ticksRemaining > 0 && task.ticksRemaining <= action.ticks) state.ticksRemaining = task.ticksRemaining
+    return state
+  }
+
+  // Resume a spell already running in the background (navigated away & back).
+  useEffect(() => {
+    if (skilling || hasResumed.current) return
+    if (activeTask?.type !== 'skill' || activeTask.skill !== 'magic') return
+    const resumed = buildResumedState(activeTask)
+    if (!resumed) return
+    hasResumed.current = true
+    if (activeTask.selectedAlchemyItem) { setSelectedAlchemyItem(activeTask.selectedAlchemyItem); selectedAlchemyItemRef.current = activeTask.selectedAlchemyItem }
+    setSkilling(resumed)
+    skillingRef.current = resumed
+  }, [])
+
   const startSpell = (action, alchemyItem) => {
-    const state = { ...createSkillingState('magic', action), startedAt: Date.now() }
+    if (activeTask?.type === 'skill' && activeTask.skill === 'magic' && activeTask.action?.id === action.id && !alchemyItem) {
+      const resumed = buildResumedState(activeTask)
+      if (resumed) { setSkilling(resumed); skillingRef.current = resumed; markScreenTick(); return }
+    }
+    const startedAt = Date.now()
+    const state = { ...createSkillingState('magic', action), startedAt }
     setSkilling(state)
     skillingRef.current = state
-    const task = { type: 'skill', skill: 'magic', action, bankingEnabled: true }
+    const task = { type: 'skill', skill: 'magic', action, bankingEnabled: true, session: emptySession(startedAt) }
     if (alchemyItem) task.selectedAlchemyItem = alchemyItem
     setActiveTask(task)
     markScreenTick()
+  }
+
+  const backToList = () => {
+    if (skillingRef.current) mirrorActiveTask(skillingRef.current)
+    setSkilling(null)
+    skillingRef.current = null
   }
 
   const handleActionClick = (action) => {
@@ -214,6 +262,7 @@ export default function MagicScreen({ onBack, onNavigate }) {
       }
 
       setSkilling({ ...skillingRef.current })
+      if (skillingRef.current?.active) mirrorActiveTask(skillingRef.current)
     })
 
     return unsub
@@ -221,42 +270,22 @@ export default function MagicScreen({ onBack, onNavigate }) {
 
   if (skilling && skilling.active) {
     const progress = 1 - (skilling.ticksRemaining / skilling.action.ticks)
+    const xpPerHr = skilling.startedAt && (Date.now() - skilling.startedAt) > 5000
+      ? formatNumber(Math.round(skilling.totalXP / ((Date.now() - skilling.startedAt) / 3600000)))
+      : '—'
     return (
-      <div class="h-full flex flex-col p-4">
-        <div class="flex-1 flex flex-col items-center justify-center">
-          <SkillIcon skill="magic" size={40} class="mb-2" />
-          <h2 class="font-[var(--font-display)] text-lg font-bold text-[var(--color-gold)] mb-1">
-            {skilling.action.name}
-          </h2>
-          <div class="w-full max-w-xs mb-4">
-            <ProgressBar value={progress} max={1} height="h-4" color="var(--color-gold)" showText />
-          </div>
-          <div class="bg-[#111] rounded-lg p-3 w-full max-w-xs space-y-1.5">
-            <div class="flex justify-between text-sm">
-              <span class="text-[var(--color-parchment)] opacity-60">Actions</span>
-              <span class="font-[var(--font-mono)] text-[var(--color-gold)]">{skilling.totalActions}</span>
-            </div>
-            <div class="flex justify-between text-sm">
-              <span class="text-[var(--color-parchment)] opacity-60">XP gained</span>
-              <span class="font-[var(--font-mono)] text-[var(--color-gold)]">{formatNumber(skilling.totalXP)}</span>
-            </div>
-            <div class="flex justify-between text-sm">
-              <span class="text-[var(--color-parchment)] opacity-60">XP/hr</span>
-              <span class="font-[var(--font-mono)] text-[var(--color-gold)]">
-                {skilling.startedAt && (Date.now() - skilling.startedAt) > 5000
-                  ? formatNumber(Math.round(skilling.totalXP / ((Date.now() - skilling.startedAt) / 3600000)))
-                  : '—'}
-              </span>
-            </div>
-          </div>
-        </div>
-        <div class="flex-shrink-0 mt-3">
-          <button onClick={stopSpell}
-            class="w-full py-2.5 rounded-lg bg-[#222] text-[var(--color-parchment)] font-semibold text-sm active:opacity-80">
-            ← Stop &amp; Back
-          </button>
-        </div>
-      </div>
+      <SkillActivePanel
+        skill="magic"
+        title={skilling.action.name}
+        progress={progress}
+        stats={[
+          { label: 'Actions completed', value: skilling.totalActions },
+          { label: 'XP gained', value: formatNumber(skilling.totalXP) },
+          { label: 'XP / hr', value: xpPerHr, accent: xpPerHr !== '—' },
+        ]}
+        onBack={backToList}
+        onStop={stopSpell}
+      />
     )
   }
 
@@ -267,21 +296,20 @@ export default function MagicScreen({ onBack, onNavigate }) {
 
   return (
     <div class="h-full overflow-y-auto p-4">
-      <button onClick={handleBack} class="text-xs text-[var(--color-gold-dim)] mb-3 flex items-center gap-1">
-        ← Back
-      </button>
-
-      <h2 class="flex items-center gap-2 font-[var(--font-display)] text-base font-bold text-[var(--color-gold)] mb-1">
-        <SkillIcon skill="magic" size={18} /> Magic
-      </h2>
-      <p class="text-xs text-[var(--color-parchment)] opacity-40 mb-4">Level {magicLevel}</p>
+      <SkillScreenHeader
+        skill="magic"
+        title="Magic"
+        xp={stats.magic?.xp || 0}
+        level={magicLevel}
+        onBack={handleBack}
+      />
 
       {grouped.map(({ label, actions }) => (
         <div key={label} class="mb-5">
-          <h3 class="font-[var(--font-display)] text-xs font-bold text-[var(--color-parchment)] opacity-60 uppercase tracking-wider mb-2">
+          <h3 class="font-[var(--font-display)] text-xs font-bold text-[var(--color-parchment)] opacity-60 uppercase tracking-wider mb-2.5">
             {label}
           </h3>
-          <div class="space-y-2">
+          <div class="flex flex-col gap-2.5">
             {actions.map(action => {
               const levelOk = action.level <= magicLevel
               const hasRunes = hasRequiredRunes(action.runeReq, inventory, bank, equipment, itemsData)
@@ -303,49 +331,27 @@ export default function MagicScreen({ onBack, onNavigate }) {
               const productItem = action.product ? itemsData[action.product] : null
 
               return (
-                <button
+                <SkillActionRow
                   key={action.id}
-                  onClick={() => canStart && handleActionClick(action)}
-                  disabled={!canStart}
-                  class={`w-full flex items-center gap-3 p-3 rounded-xl border transition-colors
-                    ${canStart
-                      ? 'bg-[#1a1a1a] border-[#2a2a2a] active:bg-[#222]'
-                      : 'bg-[#111] border-[#1a1a1a] opacity-40'}`}
-                >
-                  {productItem && (
-                    <GameIcon item={productItem} size={28} class="flex-shrink-0" />
-                  )}
-                  <div class="text-left flex-1">
-                    <div class="text-sm font-semibold text-[var(--color-parchment)]">{action.name}</div>
-                    <div class="text-[10px] text-[var(--color-parchment)] opacity-40">
-                      Lv {action.level} · {action.xp} XP · {formatActionDuration(action.ticks)}
-                      {action.runeReq && (
-                        <span> · Runes: {Object.entries(action.runeReq).map(([id, qty]) =>
-                          staffRuneType === id
-                            ? `Staff (${itemsData[id]?.name || id})`
-                            : `${itemsData[id]?.name || id} ×${qty}`
-                        ).join(', ')}</span>
-                      )}
-                      {action.materials && (
-                        <span> · Needs: {Object.entries(action.materials).map(([id, qty]) =>
-                          `${itemsData[id]?.name || id} ×${qty}`
-                        ).join(', ')}</span>
-                      )}
-                      {availCount !== null && (
-                        <span class="text-[var(--color-gold)]"> · {availCount.toLocaleString()} actions</span>
-                      )}
-                    </div>
-                    {levelOk && !hasRunes && (
-                      <div class="text-[9px] text-[#ff6b6b] mt-0.5">Missing runes (or equip elemental staff)</div>
-                    )}
-                    {levelOk && hasRunes && !hasMats && (
-                      <div class="text-[9px] text-[#ff6b6b] mt-0.5">Missing materials</div>
-                    )}
-                  </div>
-                  <div class="text-xs font-[var(--font-mono)] text-[var(--color-gold-dim)] shrink-0">
-                    {!levelOk ? `Lv ${action.level}` : (action.product ? `→ ${itemsData[action.product]?.name || action.product}` : null)}
-                  </div>
-                </button>
+                  icon={productItem ? <GameIcon item={productItem} size={26} /> : <SkillIcon skill="magic" size={26} />}
+                  title={action.name}
+                  meta={<>
+                    <span class="text-[var(--color-gold)] font-bold opacity-100">Lv {action.level}</span> · {action.xp} XP · {formatActionDuration(action.ticks)}
+                    {action.runeReq && <span> · Runes: {Object.entries(action.runeReq).map(([id, qty]) =>
+                      staffRuneType === id ? `Staff (${itemsData[id]?.name || id})` : `${itemsData[id]?.name || id} ×${qty}`).join(', ')}</span>}
+                    {action.materials && <span> · Needs: {Object.entries(action.materials).map(([id, qty]) => `${itemsData[id]?.name || id} ×${qty}`).join(', ')}</span>}
+                    {availCount !== null && <span class="text-[var(--color-gold)]"> · {availCount.toLocaleString()} actions</span>}
+                    {levelOk && !hasRunes && <span class="block text-[var(--color-blood-ember)] mt-1">🔮 Missing runes (or equip elemental staff)</span>}
+                    {levelOk && hasRunes && !hasMats && <span class="block text-[var(--color-blood-ember)] mt-1">Missing materials</span>}
+                  </>}
+                  chip={action.product ? <>→ {itemsData[action.product]?.name || action.product}</> : null}
+                  active={activeTask?.type === 'skill' && activeTask.skill === 'magic' && activeTask.action?.id === action.id}
+                  locked={!levelOk}
+                  lockBadge={`LV ${action.level}`}
+                  lockHint={`Unlocks at Magic ${action.level}`}
+                  disabled={levelOk && !canStart}
+                  onClick={() => handleActionClick(action)}
+                />
               )
             })}
           </div>

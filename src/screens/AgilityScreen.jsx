@@ -1,18 +1,23 @@
 import { useState, useEffect, useRef } from 'preact/hooks'
 import { useGame } from '../state/gameState.jsx'
-import ProgressBar from '../components/ProgressBar.jsx'
 import { getLevelFromXP } from '../engine/experience.js'
 import { createAgilityState, processAgilityTick, getAgilityBankDelayMs, formatBankDelay } from '../engine/agility.js'
+import { emptySession } from '../engine/activitySession.js'
 import { onTick } from '../engine/tick.js'
 import { markScreenTick } from '../engine/activityRunner.js'
 import { formatNumber } from '../utils/helpers.js'
 import GameIcon from '../components/GameIcon.jsx'
+import SkillIcon from '../components/SkillIcon.jsx'
+import SkillScreenHeader from '../components/SkillScreenHeader.jsx'
+import SkillInfoBanner from '../components/SkillInfoBanner.jsx'
+import SkillActionRow from '../components/SkillActionRow.jsx'
+import SkillActivePanel from '../components/SkillActivePanel.jsx'
 import skillsData from '../data/skills.json'
 
 const agilityData = skillsData.agility
 
 export default function AgilityScreen({ initialActionId, idleResult, onBack }) {
-  const { stats, inventory, updateInventory, bank, updateBankDirect, grantXP, addToast, setActiveTask } = useGame()
+  const { stats, inventory, updateInventory, bank, updateBankDirect, grantXP, addToast, setActiveTask, activeTask } = useGame()
 
   const agilityLevel = getLevelFromXP(stats.agility?.xp || 0)
   const agilityXP = stats.agility?.xp || 0
@@ -104,22 +109,61 @@ export default function AgilityScreen({ initialActionId, idleResult, onBack }) {
       }
 
       setAgility({ ...agilityRef.current })
+      if (agilityRef.current?.active) mirrorActiveTask(agilityRef.current)
     })
 
     return unsub
   }, [agility?.active])
 
+  // Mirror live progress + session onto the global task so the top-nav
+  // indicator stays in sync and the session survives navigation.
+  const mirrorActiveTask = (state) => {
+    if (!state) return
+    setActiveTask({
+      type: 'agility',
+      action: state.action,
+      totalTicks: state.action.ticks,
+      ticksRemaining: state.ticksRemaining,
+      session: { startedAt: state.startedAt, actions: state.totalLaps || 0, xp: state.totalXP || 0, coins: state.totalCoins || 0, items: 0, seeds: 0, tokens: 0 },
+    }, { skipCloudSync: true })
+  }
+
+  const buildResumedState = (task) => {
+    const action = agilityData.actions.find(a => a.id === task.action?.id)
+    if (!action) return null
+    const state = { ...createAgilityState(action), totalLaps: task.session?.actions || 0, totalXP: task.session?.xp || 0, totalCoins: task.session?.coins || 0, startedAt: task.session?.startedAt || Date.now() }
+    if (typeof task.ticksRemaining === 'number' && task.ticksRemaining > 0 && task.ticksRemaining <= action.ticks) state.ticksRemaining = task.ticksRemaining
+    return state
+  }
+
+  // Resume an agility course already running in the background (navigated away & back).
+  useEffect(() => {
+    if (agility || hasAutoStarted.current) return
+    if (activeTask?.type !== 'agility') return
+    const resumed = buildResumedState(activeTask)
+    if (!resumed) return
+    hasAutoStarted.current = true
+    setAgility(resumed)
+    agilityRef.current = resumed
+  }, [])
+
   const startCourse = (action) => {
+    // Re-opening the running course: resume the live panel from its session.
+    if (activeTask?.type === 'agility' && activeTask.action?.id === action.id) {
+      const resumed = buildResumedState(activeTask)
+      if (resumed) { setAgility(resumed); agilityRef.current = resumed; return }
+    }
+    const startedAt = Date.now()
     const state = {
       ...createAgilityState(action),
       totalLaps: 0,
       totalXP: 0,
       totalCoins: 0,
-      startedAt: Date.now()
+      startedAt,
     }
     setAgility(state)
     agilityRef.current = state
-    setActiveTask({ type: 'agility', action })
+    setActiveTask({ type: 'agility', action, session: emptySession(startedAt) })
     addToast(`Started: ${action.name}`, 'info')
   }
 
@@ -130,57 +174,51 @@ export default function AgilityScreen({ initialActionId, idleResult, onBack }) {
     if (onBack) onBack()
   }
 
+  // Back (no stop): flush progress and return to the course list; task keeps running.
+  const backToList = () => {
+    if (agilityRef.current) mirrorActiveTask(agilityRef.current)
+    setAgility(null)
+    agilityRef.current = null
+  }
+
   const bankDelay = getAgilityBankDelayMs(agilityLevel)
 
   // Course picker
   if (!agility) {
     return (
       <div class="h-full overflow-y-auto p-4">
-        {onBack && (
-          <button onClick={onBack} class="text-xs text-[var(--color-gold-dim)] mb-3 flex items-center gap-1">
-            ← Skills
-          </button>
-        )}
-        <div class="flex items-center justify-between mb-1">
-          <h2 class="font-[var(--font-display)] text-sm font-bold text-[var(--color-parchment)] opacity-60 uppercase tracking-wider">
-            Agility Courses
-          </h2>
-          <span class="text-xs font-[var(--font-mono)] text-[var(--color-gold)]">Lv {agilityLevel}</span>
-        </div>
+        <SkillScreenHeader
+          skill="agility"
+          title="Agility Courses"
+          xp={agilityXP}
+          level={agilityLevel}
+          onBack={onBack}
+        />
 
-        {/* Agility bonus info */}
-        <div class="mb-3 bg-[#111] rounded-lg px-3 py-2 text-[11px] text-[var(--color-parchment)] opacity-60 flex items-center gap-2">
-          <span>🏦</span>
-          <span>Current bank speed: <span class="text-[var(--color-gold)] opacity-100">{formatBankDelay(bankDelay)}</span> delay per full inventory</span>
-        </div>
+        <SkillInfoBanner
+          tone="neutral"
+          icon={<SkillIcon skill="agility" size={19} />}
+          className="mb-4"
+        >
+          Current bank speed: <span class="text-[var(--color-gold)] font-bold opacity-100">{formatBankDelay(bankDelay)}</span> delay per full inventory
+        </SkillInfoBanner>
 
-        <div class="space-y-2">
+        <div class="flex flex-col gap-2.5">
           {agilityData.actions.map(action => {
             const available = agilityLevel >= action.level
             return (
-              <button
+              <SkillActionRow
                 key={action.id}
-                onClick={() => available && startCourse(action)}
-                disabled={!available}
-                class={`w-full flex items-between justify-between p-3 rounded-xl border transition-colors text-left
-                  ${available
-                    ? 'bg-[#1a1a1a] border-[#2a2a2a] active:bg-[#222]'
-                    : 'bg-[#111] border-[#1a1a1a] opacity-40'}`}
-              >
-                <div class="flex-1">
-                  <div class="text-sm font-semibold text-[var(--color-parchment)]">{action.name}</div>
-                  <div class="text-[10px] text-[var(--color-parchment)] opacity-40 mt-0.5">
-                    Lv {action.level} · {action.xp} XP · {(action.ticks * 0.6).toFixed(1)}s lap
-                  </div>
-                  <div class="text-[10px] text-[var(--color-parchment)] opacity-40">{action.description}</div>
-                </div>
-                <div class="text-right ml-3 flex flex-col justify-center">
-                  <div class="text-xs font-[var(--font-mono)] text-[var(--color-gold)] flex items-center gap-0.5 justify-end">
-                    <GameIcon iconKey="coins" size={13} color="var(--color-gold)" /> {action.coinReward.toLocaleString()}
-                  </div>
-                  <div class="text-[10px] text-[var(--color-parchment)] opacity-30">per lap</div>
-                </div>
-              </button>
+                icon={<SkillIcon skill="agility" size={26} />}
+                title={action.name}
+                meta={<><span class="text-[var(--color-gold)] font-bold opacity-100">Lv {action.level}</span> · {action.xp} XP · {(action.ticks * 0.6).toFixed(1)}s lap</>}
+                chip={<><GameIcon iconKey="coins" size={16} color="var(--color-gold)" /> {action.coinReward.toLocaleString()} / lap</>}
+                active={activeTask?.type === 'agility' && activeTask.action?.id === action.id}
+                locked={!available}
+                lockBadge={`LV ${action.level}`}
+                lockHint={`Unlocks at Agility ${action.level}`}
+                onClick={() => startCourse(action)}
+              />
             )
           })}
         </div>
@@ -200,64 +238,33 @@ export default function AgilityScreen({ initialActionId, idleResult, onBack }) {
     ? Math.round(agility.totalXP / (elapsed / 3_600_000))
     : null
 
+  const coinIcon = <GameIcon iconKey="coins" size={14} color="var(--color-gold-light)" />
   return (
-    <div class="h-full flex flex-col p-4">
-      <div class="flex-1 flex flex-col items-center justify-center">
-        <span class="text-4xl mb-2">🏃</span>
-        <h2 class="font-[var(--font-display)] text-lg font-bold text-[var(--color-gold)] mb-1">
-          {agility.action.name}
-        </h2>
-        <div class="text-xs text-[var(--color-parchment)] opacity-40 mb-4">
-          {agility.action.description}
-        </div>
-
-        {/* Progress bar */}
-        <div class="w-full max-w-xs mb-4">
-          <ProgressBar value={progress} max={1} height="h-4" color="var(--color-gold)" showText />
-        </div>
-
-        {/* Stats */}
-        <div class="bg-[#111] rounded-lg p-3 w-full max-w-xs space-y-1.5">
-          <div class="flex justify-between text-sm">
-            <span class="text-[var(--color-parchment)] opacity-60">Laps completed</span>
-            <span class="font-[var(--font-mono)] text-[var(--color-gold)]">{agility.totalLaps}</span>
-          </div>
-          <div class="flex justify-between text-sm">
-            <span class="text-[var(--color-parchment)] opacity-60">Laps/hr</span>
-            <span class="font-[var(--font-mono)] text-[var(--color-gold)]">{lapsPerHr ? lapsPerHr.toLocaleString() : '—'}</span>
-          </div>
-          <div class="flex justify-between text-sm">
-            <span class="text-[var(--color-parchment)] opacity-60">XP gained</span>
-            <span class="font-[var(--font-mono)] text-[var(--color-gold)]">{formatNumber(agility.totalXP)}</span>
-          </div>
-          <div class="flex justify-between text-sm">
-            <span class="text-[var(--color-parchment)] opacity-60">XP/hr</span>
-            <span class="font-[var(--font-mono)] text-[var(--color-gold)]">{xpPerHr ? formatNumber(xpPerHr) : '—'}</span>
-          </div>
-          <div class="flex justify-between text-sm">
-            <span class="text-[var(--color-parchment)] opacity-60">Coins earned</span>
-            <span class="font-[var(--font-mono)] text-[var(--color-gold)] flex items-center gap-1"><GameIcon iconKey="coins" size={14} color="var(--color-gold)" /> {agility.totalCoins.toLocaleString()}</span>
-          </div>
-          <div class="flex justify-between text-sm">
-            <span class="text-[var(--color-parchment)] opacity-60">Coins/hr</span>
-            <span class="font-[var(--font-mono)] text-[var(--color-gold)] flex items-center gap-1">
-              {xpPerHr ? <><GameIcon iconKey="coins" size={14} color="var(--color-gold)" /> {Math.round(agility.totalCoins / (elapsed / 3_600_000)).toLocaleString()}</> : '—'}
-            </span>
-          </div>
-          <div class="flex justify-between text-sm border-t border-[#222] pt-1.5 mt-1.5">
-            <span class="text-[var(--color-parchment)] opacity-60">🏦 Bank speed</span>
-            <span class="font-[var(--font-mono)] text-[var(--color-gold)]">{formatBankDelay(bankDelay)} delay</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Stop & Back */}
-      <div class="flex-shrink-0 flex gap-2 mt-3">
-        <button onClick={stopCourse}
-          class="flex-1 py-2.5 rounded-lg bg-[#222] text-[var(--color-parchment)] font-semibold text-sm active:opacity-80">
-          ← Stop &amp; Back
-        </button>
-      </div>
-    </div>
+    <SkillActivePanel
+      skill="agility"
+      title={agility.action.name}
+      subtitle={agility.action.description}
+      progress={progress}
+      producing={<>
+        {coinIcon}
+        <span class="text-[12px] font-semibold text-[var(--color-parchment)] opacity-60">Earning</span>
+        <span class="text-[13px] font-semibold text-[var(--color-gold-light)]">{agility.action.coinReward.toLocaleString()} / lap</span>
+      </>}
+      stats={[
+        { label: 'Laps completed', value: agility.totalLaps },
+        { label: 'Laps / hr', value: lapsPerHr ? lapsPerHr.toLocaleString() : '—', accent: !!lapsPerHr },
+        { label: 'XP gained', value: formatNumber(agility.totalXP) },
+        { label: 'XP / hr', value: xpPerHr ? formatNumber(xpPerHr) : '—', accent: !!xpPerHr },
+        { label: 'Coins earned', value: <>{coinIcon} {agility.totalCoins.toLocaleString()}</> },
+        { label: 'Coins / hr', value: xpPerHr ? <>{coinIcon} {Math.round(agility.totalCoins / (elapsed / 3_600_000)).toLocaleString()}</> : '—', accent: !!xpPerHr },
+      ]}
+      footer={{
+        icon: <span class="text-[14px]">🏦</span>,
+        label: 'Bank speed',
+        value: `${formatBankDelay(bankDelay)} delay`,
+      }}
+      onBack={backToList}
+      onStop={stopCourse}
+    />
   )
 }
