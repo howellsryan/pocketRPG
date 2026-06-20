@@ -172,6 +172,22 @@ export async function onRequestPut({ request, env }) {
     const prevKey = JSON.stringify({ ...previousSave, timestamp: 0 })
     const nextKey = JSON.stringify({ ...parsedNext, timestamp: 0 })
     if (prevKey === nextKey) {
+      // Content-identical to what's stored: skip the expensive blob rewrite,
+      // revision bump and summary UPDATE. But STILL touch updated_at — the
+      // client just re-confirmed this save is current as of `now`, and
+      // server-authoritative freshness checks depend on updated_at reflecting
+      // that confirmation. In particular the PvP match-create guard refuses to
+      // start a match on a save older than 15s: after a match the client pulls
+      // the loot-settled save (so its state now equals the server's) and then
+      // force-pushes before queueing the next fight; without this touch that
+      // push is a no-op, updated_at stays pinned to the previous match's end
+      // time, and the next accept trips a spurious `stale_save` rejection.
+      // This stays write-cheap (one indexed column, no 130 KB blob) and the
+      // client-side dirty check already filters genuine AFK no-op pushes before
+      // they ever reach the server.
+      await env.DB.prepare(
+        'UPDATE saves SET updated_at = ? WHERE character_id = ?'
+      ).bind(now, ch.id).run()
       return json({ ok: true, updatedAt: now, save_revision: currentRevision, noop: true })
     }
   }
