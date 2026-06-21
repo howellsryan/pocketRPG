@@ -223,6 +223,27 @@ export function getWeaponMagicDamageMultiplier(equipment, itemsData) {
 }
 
 /**
+ * Worn magic-damage bonus after the equipped weapon's multiplier, with the
+ * multiplied passive capped at the weapon's `magicDamageMultiplierCap`. This
+ * mirrors OSRS's Tumeken's shadow: it triples the worn gear's magic damage but
+ * the tripled bonus can never exceed +100% total. The cap only applies when a
+ * multiplier (> 1) is actually in effect, so ordinary staves are unaffected.
+ * Single source of truth for the live (combat.js), idle (idleEngine.js) and PvP
+ * (combatPrimitives.js) magic paths.
+ */
+export function getEffectiveWornMagicDamage(baseMagicDamage, equipment, itemsData) {
+  const mult = getWeaponMagicDamageMultiplier(equipment, itemsData)
+  let value = (Number(baseMagicDamage) || 0) * mult
+  if (mult > 1) {
+    const weaponEntry = equipment?.weapon
+    const weapon = weaponEntry ? itemsData?.[weaponEntry.itemId] : null
+    const cap = Number(weapon?.magicDamageMultiplierCap)
+    if (Number.isFinite(cap) && cap > 0) value = Math.min(value, cap)
+  }
+  return value
+}
+
+/**
  * Get the attack speed of the equipped weapon (default 4 ticks unarmed)
  */
 export function getAttackSpeed(equipment, itemsData) {

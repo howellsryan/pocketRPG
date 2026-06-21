@@ -4,7 +4,7 @@ import {
   getMeleeXPSkill, effectiveRanged, rangedMaxHit, getRangedStyleBonus,
   effectiveMagic, monsterMagicDefenceRoll, magicMaxHit
 } from './formulas.js'
-import { getEquipmentBonuses, getAttackSpeed, getAttackStyle, getRangedAmmoRequirementFailure, getWeaponMagicDamageMultiplier } from './equipment.js'
+import { getEquipmentBonuses, getAttackSpeed, getAttackStyle, getRangedAmmoRequirementFailure, getEffectiveWornMagicDamage } from './equipment.js'
 import { getLevelFromXP } from './experience.js'
 import { hasRequiredRunes, getRunesToConsume } from './runes.js'
 import { MELEE_XP_PER_DAMAGE, RANGED_XP_PER_DAMAGE, MAGIC_XP_PER_DAMAGE, HP_XP_PER_DAMAGE, EAT_TICK_COST } from '../utils/constants.js'
@@ -675,7 +675,7 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
       // At 75 = 24, at 99 = 32, at 123 = 39 (matches PocketRPG trident formulas approx).
       const magicLevel = boostedPlayerStats.magic || 1
       const baseDamage = Math.max(1, Math.floor(magicLevel / 3) + 9)
-      const wornMagicDamage = bonuses.otherBonus.magicDamage * getWeaponMagicDamageMultiplier(equipment, itemsData)
+      const wornMagicDamage = getEffectiveWornMagicDamage(bonuses.otherBonus.magicDamage, equipment, itemsData)
       const maxHit = Math.floor(magicMaxHit(baseDamage, wornMagicDamage + voidMult.magicDamageBonusFlat) + slayerEquipmentBonus.damageFlat)
       damage = rollDamage(acc, maxHit)
 
@@ -703,7 +703,7 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
         const atkRoll = Math.floor(maxAttackRoll(effMag, (bonuses.attackBonus.magic || 0) + slayerEquipmentBonus.accuracyFlat) * voidMult.magicAccuracy)
         const defRoll = monsterMagicDefenceRoll(monster.stats.magic, monster.stats.defence, monster.defenceBonus.magic || 0)
         const acc = hitChance(atkRoll, defRoll)
-        const wornMagicDamage = bonuses.otherBonus.magicDamage * getWeaponMagicDamageMultiplier(equipment, itemsData)
+        const wornMagicDamage = getEffectiveWornMagicDamage(bonuses.otherBonus.magicDamage, equipment, itemsData)
         const maxHit = Math.floor(magicMaxHit(state.spell.baseDamage, wornMagicDamage + voidMult.magicDamageBonusFlat) + slayerEquipmentBonus.damageFlat)
         damage = rollDamage(acc, maxHit)
 

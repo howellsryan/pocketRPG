@@ -29,7 +29,7 @@ import {
   getMeleeStyleBonuses, getRangedStyleBonus,
   effectiveDefence, playerDefenceRoll,
 } from './formulas.js'
-import { getEquipmentBonuses, getAttackStyle, getWeaponMagicDamageMultiplier } from './equipment.js'
+import { getEquipmentBonuses, getAttackStyle, getEffectiveWornMagicDamage } from './equipment.js'
 import { getCombatSetMultipliers } from './combatSetBonuses.js'
 import { getPvpCombatModifiers } from './pvpCombatModifiers.js'
 
@@ -182,7 +182,7 @@ export function rollMagicAttack(attacker, defender, itemsData, opts = {}) {
   const effMagDef = effectiveDefence(playerMagicDefLevel)
   const defRoll = playerDefenceRoll(effMagDef, defBonuses.defenceBonus.magic || 0)
 
-  const wornMagicDamage = atkBonuses.otherBonus.magicDamage * getWeaponMagicDamageMultiplier(attacker.equipment, itemsData)
+  const wornMagicDamage = getEffectiveWornMagicDamage(atkBonuses.otherBonus.magicDamage, attacker.equipment, itemsData)
   let maxHit
   if (typeof maxHitOverride === 'number') {
     maxHit = magicMaxHit(maxHitOverride, wornMagicDamage + voidMult.magicDamageBonusFlat)

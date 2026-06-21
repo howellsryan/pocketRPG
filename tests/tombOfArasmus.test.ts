@@ -4,9 +4,10 @@ import itemsData from '../src/data/items.json'
 import monstersData from '../src/data/monsters.json'
 import { getCollectionLogData } from '../src/engine/collectionLog.js'
 import { getCombatSetMultipliers } from '../src/engine/combatSetBonuses.js'
-import { getWeaponMagicDamageMultiplier } from '../src/engine/equipment.js'
+import { getWeaponMagicDamageMultiplier, getEffectiveWornMagicDamage } from '../src/engine/equipment.js'
 import { getRaidArt } from '../src/utils/combatArt.js'
 import { getItemIconTint } from '../src/utils/itemIcons.js'
+import { COMBAT_POTION_RANGED_BOOST, COMBAT_POTION_MAGIC_BOOST } from '../src/engine/consumables.js'
 
 const UNIQUE_IDS = [
   'fang_of_osmun',
@@ -152,6 +153,25 @@ describe('Tomb of Arasmus item effects', () => {
     for (const r of shadow.chargeRecipe) {
       expect((itemsData as any)[r.itemId], `charge item ${r.itemId} must exist`).toBeTruthy()
     }
+  })
+
+  it('caps the Shadow of Tumaken tripled magic damage at +100% (OSRS parity)', () => {
+    const shadow = (itemsData as any).shadow_of_tumaken
+    expect(shadow.magicDamageMultiplierCap).toBe(100)
+    const equip = { weapon: { itemId: 'shadow_of_tumaken' } }
+    // 99% worn × 3 = 297% → capped to 100
+    expect(getEffectiveWornMagicDamage(99, equip, itemsData as any)).toBe(100)
+    // below the cap the full tripled value still applies (20 × 3 = 60)
+    expect(getEffectiveWornMagicDamage(20, equip, itemsData as any)).toBe(60)
+    // a non-multiplier weapon is never capped and never scaled
+    expect(getEffectiveWornMagicDamage(99, { weapon: { itemId: 'fang_of_osmun' } }, itemsData as any)).toBe(99)
+    expect(getEffectiveWornMagicDamage(0, equip, itemsData as any)).toBe(0)
+  })
+
+  it('super combat potion grants ranged/magic boosts matching the dedicated potions', () => {
+    expect(COMBAT_POTION_RANGED_BOOST).toBe((itemsData as any).ranging_potion.boost)
+    expect(COMBAT_POTION_MAGIC_BOOST).toBe((itemsData as any).magic_potion.boost)
+    expect((itemsData as any).super_combat.effect).toBe('combat')
   })
 })
 

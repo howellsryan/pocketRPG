@@ -9832,6 +9832,7 @@
     "attackStyle": "magic",
     "poweredStaff": true,
     "magicDamageMultiplier": 3,
+    "magicDamageMultiplierCap": 100,
     "scaleCharged": true,
     "chargeRecipe": [
       { "itemId": "chaos_rune", "qty": 5 },

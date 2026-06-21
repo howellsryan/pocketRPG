@@ -59,6 +59,14 @@ export function getPotionDurationTicks(item) {
   return Math.floor((Number(item?.duration) || 300) / 0.6)
 }
 
+// Combat ("super combat" family) potions are primarily melee, but in PocketRPG
+// they also grant a secondary ranged & magic boost equal to the dedicated
+// Ranging Potion (+14) and Magic Potion (+4) — so a combat potion is a true
+// all-styles boost without out-boosting the specialist potions on those styles.
+// Kept in lockstep with those items by tests/consumables.test.ts.
+export const COMBAT_POTION_RANGED_BOOST = 14 // === Ranging Potion boost
+export const COMBAT_POTION_MAGIC_BOOST = 4   // === Magic Potion boost
+
 // Flat per-stat boost contributed by a single potion item (PvE `item.boost`
 // model). Returns a partial { attack, strength, defence, ranged, magic } map;
 // hp / prayer / super_restore contribute no stat boost.
@@ -66,7 +74,7 @@ export function getPotionStatBoost(item) {
   const boost = Number(item?.boost) || 0
   if (!boost) return {}
   switch (item?.effect) {
-    case 'combat':   return { attack: boost, strength: boost, defence: boost, ranged: boost, magic: boost }
+    case 'combat':   return { attack: boost, strength: boost, defence: boost, ranged: COMBAT_POTION_RANGED_BOOST, magic: COMBAT_POTION_MAGIC_BOOST }
     case 'attack':   return { attack: boost }
     case 'strength': return { strength: boost }
     case 'defence':  return { defence: boost }
