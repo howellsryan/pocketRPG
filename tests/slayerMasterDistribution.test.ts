@@ -82,6 +82,42 @@ describe('Slayer master monster coverage', () => {
   })
 })
 
+describe('quest-gated task eligibility', () => {
+  // Monsters carrying a questRequirement that also live in a master pool.
+  const questGated = Object.entries(monsters)
+    .filter(([, m]: [string, any]) => m.questRequirement && pooledMonsterIds.has((m as any).id || ''))
+    .map(([id, m]: [string, any]) => [id, m.questRequirement]) as [string, string][]
+
+  it('has at least one quest-gated pool monster to guard', () => {
+    expect(questGated.length).toBeGreaterThan(0)
+  })
+
+  it('treats a quest-gated monster as ineligible without the quest, eligible with it', () => {
+    for (const [id, questId] of questGated) {
+      const lvl = (monsters[id].slayerRequirement || 0) + 0
+      expect(isEntryEligible(id, lvl, new Set())).toBe(false)
+      expect(isEntryEligible(id, lvl, new Set([questId]))).toBe(true)
+    }
+  })
+
+  it('skips quest gating entirely when completedQuests is omitted (back-compat)', () => {
+    for (const [id] of questGated) {
+      expect(isEntryEligible(id, monsters[id].slayerRequirement || 1)).toBe(true)
+    }
+  })
+
+  it('pickSlayerMonster never assigns a quest-gated task without the quest', () => {
+    const druven = SLAYER_MASTERS.find(m => m.id === 'duradel')!
+    const gatedIds = new Set(questGated.map(([id]) => id))
+    const history = new Map<string, string[]>()
+    for (let i = 0; i < 300; i++) {
+      const pick = pickSlayerMonster(druven, 99, { history, completedQuests: new Set() })
+      if (!pick) continue
+      expect(gatedIds.has(pick.monsterId)).toBe(false)
+    }
+  })
+})
+
 describe('pickSlayerMonster eligibility', () => {
   it('only returns monsters whose slayer requirement is met', () => {
     const druven = SLAYER_MASTERS.find(m => m.id === 'duradel')!

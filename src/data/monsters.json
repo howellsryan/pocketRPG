@@ -4013,6 +4013,7 @@
         "chance": 0.02
       }
     ],
+    "questRequirement": "dragon_slayer_ii",
     "legacy_id": "adamant_dragon"
   },
   "rune_dragon": {
@@ -4171,6 +4172,7 @@
         "chance": 0.02
       }
     ],
+    "questRequirement": "dragon_slayer_ii",
     "legacy_id": "rune_dragon"
   },
   "venomcoil_matriarch": {
@@ -4839,6 +4841,7 @@
         "chance": 0.02
       }
     ],
+    "questRequirement": "hymn_of_the_elves",
     "legacy_id": "corrupted_gauntlet"
   },
   "the_great_olm": {
@@ -5082,6 +5085,7 @@
       }
     ],
     "slayerRequirement": 70,
+    "questRequirement": "gorilla_slayer_ii",
     "legacy_id": "demonic_gorilla"
   },
   "the_maiden_of_sugadinti": {

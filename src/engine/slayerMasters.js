@@ -181,12 +181,27 @@ function getEntryId(entry) {
   return typeof entry === 'object' ? entry.id : entry
 }
 
-// A pool entry is eligible only when the player meets the slayer requirement of
-// every monster the task resolves to.
-export function isEntryEligible(entry, slayerLevel) {
+// Does the player satisfy a monster's quest gate? Quest gating is only enforced
+// when a `completedQuests` collection is supplied (Set or array); when it is
+// omitted the check is skipped, keeping older callers/tests backward compatible.
+function meetsQuestRequirement(monster, completedQuests) {
+  const required = monster?.questRequirement
+  if (!required) return true
+  if (completedQuests == null) return true
+  if (typeof completedQuests.has === 'function') return completedQuests.has(required)
+  if (Array.isArray(completedQuests)) return completedQuests.includes(required)
+  return true
+}
+
+// A pool entry is eligible only when the player meets the slayer requirement —
+// and, when `completedQuests` is supplied, any quest requirement — of every
+// monster the task resolves to.
+export function isEntryEligible(entry, slayerLevel, completedQuests) {
   return resolveTaskMonsterIds(getEntryId(entry)).every(monsterKey => {
     const monster = monstersData[monsterKey]
-    return !monster?.slayerRequirement || slayerLevel >= monster.slayerRequirement
+    if (monster?.slayerRequirement && slayerLevel < monster.slayerRequirement) return false
+    if (!meetsQuestRequirement(monster, completedQuests)) return false
+    return true
   })
 }
 
@@ -209,8 +224,9 @@ const recentTasksByMaster = new Map()
 export function pickSlayerMonster(master, slayerLevel, options = {}) {
   const rng = options.rng || Math.random
   const history = options.history || recentTasksByMaster
+  const completedQuests = options.completedQuests
 
-  const eligible = master.monsterPool.filter(entry => isEntryEligible(entry, slayerLevel))
+  const eligible = master.monsterPool.filter(entry => isEntryEligible(entry, slayerLevel, completedQuests))
   if (eligible.length === 0) return null
 
   const recent = history.get(master.id) || []
