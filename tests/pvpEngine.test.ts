@@ -180,6 +180,47 @@ describe('pvpEngine phase 2B contract', () => {
     expect(out.stateNext.combatants['1'].equipment.weapon.itemId).toBe('nether_demon_whip')
   })
 
+  it('equipping a weapon while ready swings on the same tick (no swap delay)', () => {
+    const a = buildPlayer({
+      characterId: 1,
+      equipment: {}, // unarmed
+      inventory: [{ itemId: 'nether_demon_whip', quantity: 1 }],
+    })
+    const b = buildPlayer({ characterId: 2 })
+    const state = createPvpState(a, b, 0)
+    state.combatants['1'].attackTimer = 0 // ready to attack
+    state.combatants['2'].attackTimer = 99
+
+    const out = processPvpTick(state, [
+      { tick_number: 1, characterId: 1, characterSeq: 1, action: { type: 'equip', inventorySlot: 0 } },
+    ], items)
+
+    // Swung with the freshly equipped weapon this very tick (OSRS parity)…
+    expect(out.events.some(e => e.type === 'attack' && e.attackerCharacterId === 1)).toBe(true)
+    // …and the next attack is governed by the new weapon's speed (4).
+    expect(out.stateNext.combatants['1'].attackTimer).toBe(4)
+  })
+
+  it('equipping mid-cooldown neither resets nor extends the attack timer', () => {
+    const a = buildPlayer({
+      characterId: 1,
+      equipment: { weapon: { itemId: 'nether_demon_whip' } },
+      inventory: [{ itemId: 'test_bow', quantity: 1 }, { itemId: 'dragon_arrow', quantity: 100 }],
+    })
+    const b = buildPlayer({ characterId: 2 })
+    const state = createPvpState(a, b, 0)
+    state.combatants['1'].attackTimer = 5
+    state.combatants['2'].attackTimer = 99
+
+    const out = processPvpTick(state, [
+      { tick_number: 1, characterId: 1, characterSeq: 1, action: { type: 'equip', inventorySlot: 0 } },
+    ], items)
+
+    // Timer just ticks down by one (5 → 4); the swap left it untouched.
+    expect(out.stateNext.combatants['1'].attackTimer).toBe(4)
+    expect(out.events.some(e => e.type === 'attack' && e.attackerCharacterId === 1)).toBe(false)
+  })
+
   it('drinks a potion: consumes the dose and applies the boost', () => {
     const a = buildPlayer({ characterId: 1, inventory: [{ itemId: 'strength_potion', quantity: 2 }] })
     const b = buildPlayer({ characterId: 2 })

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks'
 import EquipmentPaperdoll from '../components/EquipmentPaperdoll.jsx'
+import GameIcon from '../components/GameIcon.jsx'
 import Card from '../components/Card.jsx'
 import Button from '../components/Button.jsx'
 import ItemSlot from '../components/ItemSlot.jsx'
@@ -85,7 +86,9 @@ function GearWeaponSummary({ label, combatant, align = 'left' }) {
     <div class={`flex flex-col ${align === 'right' ? 'items-end text-right' : 'items-start'}`}>
       <div class="text-[10px] uppercase tracking-wide text-[var(--color-gold)] mb-1">{label}</div>
       <div class={`flex items-center gap-1.5 max-w-full ${align === 'right' ? 'flex-row-reverse' : ''}`}>
-        <span class="shrink-0 text-base leading-none">{weapon?.icon || '🗡️'}</span>
+        {weapon
+          ? <GameIcon item={weapon} size={16} class="shrink-0" />
+          : <span class="shrink-0 text-base leading-none">🗡️</span>}
         <span class="truncate text-[11px] text-[var(--color-parchment)] opacity-90">{weapon?.name || 'Unarmed'}</span>
       </div>
     </div>

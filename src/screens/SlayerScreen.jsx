@@ -358,7 +358,7 @@ export default function SlayerScreen({ onBack, onNavigate }) {
                   icon={<span class="text-2xl">{master.icon}</span>}
                   title={master.name}
                   meta={<>
-                    {master.location} · {master.description}
+                    {master.location}
                     <span class="block mt-1">
                       {master.combatReq > 0 && <span class={meetsCombat ? 'text-[var(--color-hp-green)]' : 'text-[var(--color-blood-light)]'}>CB {master.combatReq}</span>}
                       {master.slayerReq > 0 && <span class={`ml-2 ${meetsSlayer ? 'text-[var(--color-hp-green)]' : 'text-[var(--color-blood-light)]'}`}>Slayer {master.slayerReq}</span>}
