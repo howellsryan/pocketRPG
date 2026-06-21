@@ -8,8 +8,8 @@
 import { EQUIPMENT_SLOTS, INVENTORY_SIZE } from '../utils/constants.js'
 import { checkEquipRequirements } from './equipment.js'
 
-// Cap mirrors the bank-tab convention (BankScreen MAX_TABS).
-export const MAX_EQUIPMENT_PRESETS = 8
+// Cap on saved loadouts per character.
+export const MAX_EQUIPMENT_PRESETS = 3
 const MAX_PRESET_NAME = 24
 
 // ── Snapshot creation ────────────────────────────────────────────────────────

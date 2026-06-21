@@ -49,7 +49,7 @@ describe('equipmentPresets — snapshot', () => {
     const r = renamePreset(p, 'x'.repeat(40))
     expect(r.name).toHaveLength(24)
     expect(renamePreset(p, '   ').name).toBe('Mage Setup') // empty falls back to current
-    expect(MAX_EQUIPMENT_PRESETS).toBeGreaterThan(0)
+    expect(MAX_EQUIPMENT_PRESETS).toBe(3)
   })
 })
 
