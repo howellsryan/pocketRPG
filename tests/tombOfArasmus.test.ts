@@ -6,6 +6,7 @@ import { getCollectionLogData } from '../src/engine/collectionLog.js'
 import { getCombatSetMultipliers } from '../src/engine/combatSetBonuses.js'
 import { getWeaponMagicDamageMultiplier } from '../src/engine/equipment.js'
 import { getRaidArt } from '../src/utils/combatArt.js'
+import { getItemIconTint } from '../src/utils/itemIcons.js'
 
 const UNIQUE_IDS = [
   'fang_of_osmun',
@@ -139,6 +140,19 @@ describe('Tomb of Arasmus item effects', () => {
   it('Shadow of Tumaken uses a unique wizard-staff icon', () => {
     expect((itemsData as any).shadow_of_tumaken.iconId).toBe('wizard_staff')
   })
+
+  it('Shadow of Tumaken is scale-charged with a 5 Chaos + 2 Soul rune recipe', () => {
+    const shadow = (itemsData as any).shadow_of_tumaken
+    expect(shadow.scaleCharged).toBe(true)
+    expect(shadow.chargeRecipe).toEqual([
+      { itemId: 'chaos_rune', qty: 5 },
+      { itemId: 'soul_rune', qty: 2 },
+    ])
+    // every recipe ingredient must be a real item
+    for (const r of shadow.chargeRecipe) {
+      expect((itemsData as any)[r.itemId], `charge item ${r.itemId} must exist`).toBeTruthy()
+    }
+  })
 })
 
 describe('Tomb of Arasmus presentation', () => {
@@ -149,6 +163,12 @@ describe('Tomb of Arasmus presentation', () => {
     expect(toa.accent).not.toBe(vaults.accent)
     // not the generic fallback either
     expect(toa.icon).toBe('crowned_skull')
+  })
+
+  it('renders the Masari set with a black icon body', () => {
+    for (const id of ['masari_mask', 'masari_body', 'masari_chaps']) {
+      expect(getItemIconTint((itemsData as any)[id])).toBe('#111111')
+    }
   })
 })
 

@@ -14,6 +14,17 @@ import { OTHER_BONUS_LABELS, OTHER_BONUS_PERCENT_KEYS } from '../utils/bonusLabe
 
 const DEFAULT_CHARGE_ITEM_ID = 'venomcoil_scales'
 
+// Resolve a chargeable weapon's cost into a normalized recipe: the list of
+// { itemId, qty } consumed PER charge. Single-ingredient weapons (Trident,
+// Venom Blowpipe, Scythe) stay a 1×chargeItemId recipe; weapons that declare a
+// `chargeRecipe` (e.g. Shadow of Tumaken — 5 Chaos + 2 Soul per charge) use it.
+function getChargeRecipe(item) {
+  if (Array.isArray(item?.chargeRecipe) && item.chargeRecipe.length > 0) {
+    return item.chargeRecipe.map(r => ({ itemId: r.itemId, qty: Math.max(1, r.qty || 1) }))
+  }
+  return [{ itemId: item?.chargeItemId || DEFAULT_CHARGE_ITEM_ID, qty: 1 }]
+}
+
 export default function EquipmentScreen() {
   const { equipment, inventory, bank, stats, updateEquipment, updateInventory, updateBank, addToast, itemsData, completedQuests } = useGame()
   const [selected, setSelected] = useState(null) // { slot, item }
@@ -96,13 +107,15 @@ export default function EquipmentScreen() {
     setSelected(null)
   }
 
-  const selectedWeaponEntry = selected ? equipment[selected.slot] : null
-  const selectedChargeItemId = selectedWeaponEntry && itemsData[selectedWeaponEntry.itemId]
-    ? (itemsData[selectedWeaponEntry.itemId].chargeItemId || DEFAULT_CHARGE_ITEM_ID)
-    : DEFAULT_CHARGE_ITEM_ID
-  const selectedChargeItemName = itemsData[selectedChargeItemId]?.name || selectedChargeItemId
+  const availableForId = (id) => inventory.reduce((sum, s) => sum + (s && s.itemId === id ? s.quantity : 0), 0)
 
-  const scaleCount = inventory.reduce((sum, s) => sum + (s && s.itemId === selectedChargeItemId ? s.quantity : 0), 0)
+  const selectedWeaponEntry = selected ? equipment[selected.slot] : null
+  const selectedChargeItem = selectedWeaponEntry ? itemsData[selectedWeaponEntry.itemId] : null
+  const selectedRecipe = selectedChargeItem ? getChargeRecipe(selectedChargeItem) : null
+  // Max charges affordable is gated by the scarcest recipe ingredient.
+  const maxChargeable = selectedRecipe
+    ? selectedRecipe.reduce((min, r) => Math.min(min, Math.floor(availableForId(r.itemId) / r.qty)), Infinity)
+    : 0
 
   const handleChargeWeapon = (qty) => {
     if (!selected) return
@@ -112,23 +125,25 @@ export default function EquipmentScreen() {
     const item = itemsData[weaponEntry.itemId]
     if (!item?.scaleCharged) return
 
-    const chargeItemId = item.chargeItemId || DEFAULT_CHARGE_ITEM_ID
-    const chargeItemName = itemsData[chargeItemId]?.name || chargeItemId
-    const availableQty = inventory.reduce((sum, s) => sum + (s && s.itemId === chargeItemId ? s.quantity : 0), 0)
-    const actualQty = Math.min(qty, availableQty)
+    const recipe = getChargeRecipe(item)
+    const affordable = recipe.reduce((min, r) => Math.min(min, Math.floor(availableForId(r.itemId) / r.qty)), Infinity)
+    const actualQty = Math.min(qty, affordable)
     if (actualQty <= 0) {
-      addToast(`No ${chargeItemName} in inventory`, 'error')
+      const need = recipe.map(r => `${r.qty} ${itemsData[r.itemId]?.name || r.itemId}`).join(' + ')
+      addToast(`Need ${need} per charge`, 'error')
       return
     }
 
     const newInv = [...inventory]
-    let remaining = actualQty
-    for (let i = 0; i < newInv.length && remaining > 0; i++) {
-      if (newInv[i]?.itemId === chargeItemId) {
-        const take = Math.min(newInv[i].quantity, remaining)
-        newInv[i] = { ...newInv[i], quantity: newInv[i].quantity - take }
-        if (newInv[i].quantity <= 0) newInv[i] = null
-        remaining -= take
+    for (const r of recipe) {
+      let remaining = actualQty * r.qty
+      for (let i = 0; i < newInv.length && remaining > 0; i++) {
+        if (newInv[i]?.itemId === r.itemId) {
+          const take = Math.min(newInv[i].quantity, remaining)
+          newInv[i] = { ...newInv[i], quantity: newInv[i].quantity - take }
+          if (newInv[i].quantity <= 0) newInv[i] = null
+          remaining -= take
+        }
       }
     }
 
@@ -138,7 +153,7 @@ export default function EquipmentScreen() {
 
     updateInventory(newInv)
     updateEquipment(newEq)
-    addToast(`Charged ${item.name} with ${actualQty} ${chargeItemName}`, 'info')
+    addToast(`Charged ${item.name} with ${actualQty} charge${actualQty === 1 ? '' : 's'}`, 'info')
     setChargeInput('')
   }
 
@@ -197,24 +212,28 @@ export default function EquipmentScreen() {
       newBank[weaponEntry.itemId] = { ...newBank[weaponEntry.itemId], charges: 0 }
     }
 
-    const chargeItemId = item.chargeItemId || DEFAULT_CHARGE_ITEM_ID
-    const chargeItemName = itemsData[chargeItemId]?.name || chargeItemId
-    const existingIdx = newInv.findIndex(s => s && s.itemId === chargeItemId)
-    if (existingIdx !== -1) {
-      newInv[existingIdx] = { ...newInv[existingIdx], quantity: newInv[existingIdx].quantity + totalCharges }
-    } else {
-      const empty = newInv.indexOf(null)
-      if (empty === -1) {
-        addToast('Inventory full — cannot uncharge', 'error')
-        return
+    // Recover every recipe ingredient, scaled by the total charges removed.
+    const recipe = getChargeRecipe(item)
+    const recovered = recipe.map(r => ({ itemId: r.itemId, qty: r.qty * totalCharges }))
+    for (const rec of recovered) {
+      const existingIdx = newInv.findIndex(s => s && s.itemId === rec.itemId)
+      if (existingIdx !== -1) {
+        newInv[existingIdx] = { ...newInv[existingIdx], quantity: newInv[existingIdx].quantity + rec.qty }
+      } else {
+        const empty = newInv.indexOf(null)
+        if (empty === -1) {
+          addToast('Inventory full — cannot uncharge', 'error')
+          return
+        }
+        newInv[empty] = { itemId: rec.itemId, quantity: rec.qty }
       }
-      newInv[empty] = { itemId: chargeItemId, quantity: totalCharges }
     }
 
     updateInventory(newInv)
     updateEquipment(newEq)
     updateBank(newBank)
-    addToast(`Uncharged ${item.name}, recovered ${totalCharges} ${chargeItemName}`, 'info')
+    const recoveredText = recovered.map(r => `${r.qty} ${itemsData[r.itemId]?.name || r.itemId}`).join(', ')
+    addToast(`Uncharged ${item.name}, recovered ${recoveredText}`, 'info')
   }
 
   const bonuses = getEquipmentBonuses(equipment, itemsData)
@@ -351,24 +370,29 @@ export default function EquipmentScreen() {
               const currentCharges = equipment[selected.slot]?.charges || 0
               const parsedInput = parseInt(chargeInput, 10)
               const customQty = Number.isFinite(parsedInput) && parsedInput > 0 ? parsedInput : 0
-              const chargeItemId = selected.item.chargeItemId || DEFAULT_CHARGE_ITEM_ID
-              const chargeItemName = itemsData[chargeItemId]?.name || chargeItemId
-              const chargeIcon = chargeItemId === 'blood_rune' ? '🩸' : '🐍'
+              const recipe = getChargeRecipe(selected.item)
+              const isRecipe = recipe.length > 1 || recipe[0].qty > 1
+              const chargeIcon = recipe.length === 1 && recipe[0].itemId === 'blood_rune' ? '🩸'
+                : isRecipe ? '🔮' : '🐍'
+              const costLabel = recipe.map(r => `${r.qty}× ${itemsData[r.itemId]?.name || r.itemId}`).join(' + ')
               return (
                 <Panel className="border-[#1a3a2a]">
                   <div class="flex items-center justify-between mb-2">
-                    <span class="text-[12px] font-semibold text-[#4ade80]">{chargeIcon} {chargeItemName} Charges</span>
+                    <span class="text-[12px] font-semibold text-[#4ade80]">{chargeIcon} Charges</span>
                     <span class="font-[var(--font-mono)] text-[12px] text-[var(--color-parchment)]">
                       {currentCharges} / ∞
                     </span>
                   </div>
+                  <div class="text-[10px] text-[var(--color-parchment)] opacity-50 mb-1">
+                    Cost: {costLabel} per charge
+                  </div>
                   <div class="text-[10px] text-[var(--color-parchment)] opacity-50 mb-2">
-                    {chargeItemName} in inventory: {scaleCount}
+                    {recipe.map(r => `${itemsData[r.itemId]?.name || r.itemId}: ${availableForId(r.itemId)}`).join(' · ')}
                   </div>
                   <div class="grid grid-cols-3 gap-1 mb-[6px]">
-                    <Button variant="success" size="sm" disabled={scaleCount <= 0} onClick={() => handleChargeWeapon(10)}>+10</Button>
-                    <Button variant="success" size="sm" disabled={scaleCount <= 0} onClick={() => handleChargeWeapon(100)}>+100</Button>
-                    <Button variant="success" size="sm" disabled={scaleCount <= 0} onClick={() => handleChargeWeapon(scaleCount)}>+All</Button>
+                    <Button variant="success" size="sm" disabled={maxChargeable <= 0} onClick={() => handleChargeWeapon(10)}>+10</Button>
+                    <Button variant="success" size="sm" disabled={maxChargeable <= 0} onClick={() => handleChargeWeapon(100)}>+100</Button>
+                    <Button variant="success" size="sm" disabled={maxChargeable <= 0} onClick={() => handleChargeWeapon(maxChargeable)}>+All</Button>
                   </div>
                   <div class="flex gap-1 mb-[6px]">
                     <input
@@ -379,7 +403,7 @@ export default function EquipmentScreen() {
                       placeholder="Custom amount"
                       class="flex-1 px-2 py-2 rounded-md bg-[#0a0a0a] border border-[#222] text-[var(--color-parchment)] text-[11px] font-[var(--font-mono)]"
                     />
-                    <Button variant="success" size="md" disabled={customQty <= 0 || scaleCount <= 0} onClick={() => handleChargeWeapon(customQty)}>
+                    <Button variant="success" size="md" disabled={customQty <= 0 || maxChargeable <= 0} onClick={() => handleChargeWeapon(customQty)}>
                       Charge
                     </Button>
                   </div>
@@ -390,7 +414,7 @@ export default function EquipmentScreen() {
                     onClick={handleUnchargeWeapon}
                     className="w-full"
                   >
-                    Uncharge (recover {currentCharges} {chargeItemName})
+                    Uncharge (recover {currentCharges} charge{currentCharges === 1 ? '' : 's'})
                   </Button>
                 </Panel>
               )

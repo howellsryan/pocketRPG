@@ -21,7 +21,9 @@
 > - **Shop values:** Shadow 1.5b, Fang 75m, Ward 50m, Sunbearer 15m, Masari body 375m, Masari chaps 250m, Masari mask 100m.
 > - **Masari ranged buff:** ranged-attack increased ×1.5 (mask 12→18, body 43→64, chaps 22→33) and +2 ranged strength on each piece.
 > - **Icons:** Shadow uses a unique `iconId: "wizard_staff"`; the raid has its own `RAID_ART` entry (`crowned_skull` / `#a855f7`) so it no longer shares Vaults of Xyren's `temple_gate`.
-> - **Purple shadow theme:** all 7 uniques get a purple tint (`ITEM_TINT` → `var(--tier-jewel-purple)`) plus a purple glowing drop-shadow halo (`OUTLINE_SPEC` → `['purple', true]`).
+> - **Purple shadow theme:** the four non-Masari uniques get a purple tint (`ITEM_TINT` → `var(--tier-jewel-purple)`) plus a purple glowing drop-shadow halo (`OUTLINE_SPEC` → `['purple', true]`).
+> - **Masari set look:** black icon body (`ITEM_TINT` → `#111111`) with a red glowing drop-shadow halo (`OUTLINE_SPEC` → `['red', true]`).
+> - **Shadow of Tumaken charges:** scale-charged like the Trident (`scaleCharged: true`), but with a multi-ingredient `chargeRecipe` of **5 Chaos + 2 Soul runes per charge**. `EquipmentScreen.jsx` resolves single-item weapons and recipe weapons through a shared `getChargeRecipe()` helper; combat/idle still consume **one charge per attack**.
 
 ---
 

@@ -253,14 +253,14 @@ const ITEM_TINT = {
   slayer_defender:       'var(--tier-cryptbound)',
   avernal_defender:      'var(--tier-cryptbound)',
   slayer_helmet:         'var(--tier-cryptbound)',
-  // Tomb of Arasmus uniques — purple shadow theme
+  // Tomb of Arasmus uniques — purple shadow theme (Masari set: black body, red shadow)
   shadow_of_tumaken:  'var(--tier-jewel-purple)',
   fang_of_osmun:      'var(--tier-jewel-purple)',
   ward_of_elidria:    'var(--tier-jewel-purple)',
   sunbearer_ring:     'var(--tier-jewel-purple)',
-  masari_mask:        'var(--tier-jewel-purple)',
-  masari_body:        'var(--tier-jewel-purple)',
-  masari_chaps:       'var(--tier-jewel-purple)',
+  masari_mask:        '#111111',
+  masari_body:        '#111111',
+  masari_chaps:       '#111111',
   // Weapons
   colossal_ballista:  'var(--tier-cryptbound)',
   twisted_longbow:    'var(--tier-cryptbound)',

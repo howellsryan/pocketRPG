@@ -9832,6 +9832,11 @@
     "attackStyle": "magic",
     "poweredStaff": true,
     "magicDamageMultiplier": 3,
+    "scaleCharged": true,
+    "chargeRecipe": [
+      { "itemId": "chaos_rune", "qty": 5 },
+      { "itemId": "soul_rune", "qty": 2 }
+    ],
     "iconId": "wizard_staff",
     "attackBonus": {
       "stab": 0,
