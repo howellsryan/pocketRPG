@@ -301,9 +301,10 @@ export default function EquipmentScreen() {
         {presets.length < MAX_EQUIPMENT_PRESETS && (
           <button
             onClick={() => { setCreateOpen(true); setCreateName('') }}
-            class="px-3 py-1.5 rounded-md bg-[#222] text-[var(--color-parchment)] opacity-50 text-xs font-bold active:opacity-80"
+            class="px-2.5 py-1.5 rounded-md bg-[#222] text-[var(--color-parchment)] opacity-50 text-sm font-bold active:opacity-80"
+            aria-label="Save current loadout as a preset"
           >
-            + Save loadout
+            +
           </button>
         )}
       </div>
