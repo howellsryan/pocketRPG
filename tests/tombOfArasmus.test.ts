@@ -3,6 +3,8 @@ import raidsData from '../src/data/raids.json'
 import itemsData from '../src/data/items.json'
 import monstersData from '../src/data/monsters.json'
 import { getCollectionLogData } from '../src/engine/collectionLog.js'
+import { getCombatSetMultipliers } from '../src/engine/combatSetBonuses.js'
+import { getWeaponMagicDamageMultiplier } from '../src/engine/equipment.js'
 
 const UNIQUE_IDS = [
   'fang_of_osmun',
@@ -86,5 +88,50 @@ describe('Tomb of Arasmus raid', () => {
     expect([...section.items].sort()).toEqual([...UNIQUE_IDS].sort())
     // section id must equal the raid id so server-side log grants validate
     expect(section.id).toBe(raid.id)
+  })
+})
+
+describe('Tomb of Arasmus item effects', () => {
+  const fullMasari = {
+    head: { itemId: 'masari_mask' },
+    body: { itemId: 'masari_body' },
+    legs: { itemId: 'masari_chaps' },
+  }
+
+  it('Fang of Osmun carries a fang special attack', () => {
+    const fang = (itemsData as any).fang_of_osmun
+    expect(fang.specialAttack).toBeTruthy()
+    expect(fang.specialAttack.type).toBe('fang')
+    expect(fang.specialAttack.energyCost).toBe(25)
+  })
+
+  it('full Masari set grants a ranged set bonus via the shared set engine', () => {
+    const none = getCombatSetMultipliers({})
+    expect(none.rangedDamage).toBe(1)
+    expect(none.rangedAccuracy).toBe(1)
+    const full = getCombatSetMultipliers(fullMasari)
+    expect(full.rangedDamage).toBeCloseTo(1.1, 6)
+    expect(full.rangedAccuracy).toBeCloseTo(1.1, 6)
+    // melee/magic untouched by Masari
+    expect(full.meleeDamage).toBe(1)
+    expect(full.magicAccuracy).toBe(1)
+  })
+
+  it('a partial Masari set grants no bonus', () => {
+    const partial = { head: { itemId: 'masari_mask' }, body: { itemId: 'masari_body' } }
+    const mult = getCombatSetMultipliers(partial)
+    expect(mult.rangedDamage).toBe(1)
+    expect(mult.rangedAccuracy).toBe(1)
+  })
+
+  it('Shadow of Tumaken triples worn magic damage through the shared weapon helper', () => {
+    const shadow = (itemsData as any).shadow_of_tumaken
+    expect(shadow.poweredStaff).toBe(true)
+    expect(shadow.magicDamageMultiplier).toBe(3)
+    const equip = { weapon: { itemId: 'shadow_of_tumaken' } }
+    expect(getWeaponMagicDamageMultiplier(equip, itemsData as any)).toBe(3)
+    // a non-multiplier weapon returns 1
+    expect(getWeaponMagicDamageMultiplier({ weapon: { itemId: 'fang_of_osmun' } }, itemsData as any)).toBe(1)
+    expect(getWeaponMagicDamageMultiplier({}, itemsData as any)).toBe(1)
   })
 })

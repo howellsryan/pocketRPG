@@ -9640,6 +9640,11 @@
       "attack": 82
     },
     "shopValue": 2400000,
+    "specialAttack": {
+      "type": "fang",
+      "energyCost": 25,
+      "description": "Strikes with deadly precision \u2014 rolls accuracy twice and avoids low hits, dealing 15%\u201385% of max."
+    },
     "icon": "\ud83d\udde1\ufe0f",
     "isGeneralStore": false,
     "isBossUnique": true
@@ -9825,6 +9830,8 @@
     "stackable": false,
     "attackSpeed": 5,
     "attackStyle": "magic",
+    "poweredStaff": true,
+    "magicDamageMultiplier": 3,
     "attackBonus": {
       "stab": 0,
       "slash": 0,

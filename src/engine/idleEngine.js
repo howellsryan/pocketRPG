@@ -10,7 +10,7 @@ import {
   effectiveRanged, rangedMaxHit, getRangedStyleBonus,
   effectiveMagic, monsterMagicDefenceRoll, magicMaxHit
 } from './formulas.js'
-import { getEquipmentBonuses, getAttackSpeed, getAttackStyle, getCombatType, getRangedAmmoRequirementFailure } from './equipment.js'
+import { getEquipmentBonuses, getAttackSpeed, getAttackStyle, getCombatType, getRangedAmmoRequirementFailure, getWeaponMagicDamageMultiplier } from './equipment.js'
 import { getEffectiveToolActionTicks, getEquippedSkillXpMultiplier } from './skilling.js'
 import { hasRequiredRunes, getRunesToConsume } from './runes.js'
 import { MELEE_XP_PER_DAMAGE, RANGED_XP_PER_DAMAGE, MAGIC_XP_PER_DAMAGE, HP_XP_PER_DAMAGE, GATHERING_SKILLS, IDLE_AUTOBANK_GATHERING_SKILLS, GATHER_AUTOBANK_CONSTRUCTION_LEVEL } from '../utils/constants.js'
@@ -26,7 +26,7 @@ import { resolveSlayerTaskKill, doesSlayerTaskMatchMonster } from './slayerTasks
 import { calculateDungeoneeringTokensForAction } from './dungeoneeringTokens.js'
 import { getMonsterSeedDrops } from './seedDrops.js'
 import { getSlayerTaskEquipmentBonuses } from './slayerCombatBonuses.js'
-import { getVoidKingCombatMultipliers } from './combatSetBonuses.js'
+import { getCombatSetMultipliers } from './combatSetBonuses.js'
 import {
   isFoodItem, getFoodHealAmount, isBoostPotion, isPrayerRestorePotion,
   getPrayerRestoreAmount, getBoostPotionDurationTicks,
@@ -842,7 +842,7 @@ function avgHitStats(playerStats, equipment, monster, stance, itemsData, spell =
   const bonuses = getEquipmentBonuses(equipment, itemsData)
   const slayerEquipmentBonus = getSlayerTaskEquipmentBonuses({ equipment, itemsData, slayerTask, monsterId: monster.id })
   const weaponSpeed = getAttackSpeed(equipment, itemsData)
-  const voidMult = getVoidKingCombatMultipliers(equipment)
+  const voidMult = getCombatSetMultipliers(equipment)
   const combatType = getCombatType(equipment, itemsData)
 
   let maxHit, atkRoll, defRoll, acc
@@ -861,7 +861,8 @@ function avgHitStats(playerStats, equipment, monster, stance, itemsData, spell =
     const effMag = effectiveMagic(playerStats.magic || 1)
     // Powered staffs (Sanguinesti, Trident) scale max hit with magic level: floor(magic/3)+9.
     const baseDamage = spell ? spell.baseDamage : Math.max(1, Math.floor((playerStats.magic || 1) / 3) + 9)
-    maxHit = magicMaxHit(baseDamage, (bonuses.otherBonus.magicDamage || 0) + voidMult.magicDamageBonusFlat)
+    const wornMagicDamage = (bonuses.otherBonus.magicDamage || 0) * getWeaponMagicDamageMultiplier(equipment, itemsData)
+    maxHit = magicMaxHit(baseDamage, wornMagicDamage + voidMult.magicDamageBonusFlat)
     atkRoll = Math.floor(maxAttackRoll(effMag, bonuses.attackBonus.magic || 0) * voidMult.magicAccuracy)
     defRoll = monsterMagicDefenceRoll(monster.stats.magic || 1, monster.stats.defence, monster.defenceBonus?.magic || 0)
   } else {

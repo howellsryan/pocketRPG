@@ -208,6 +208,21 @@ export function getEquipmentBonuses(equipment, itemsData) {
 }
 
 /**
+ * Multiplier a magic weapon applies to the magic-damage bonus of the rest of
+ * the worn gear (e.g. Shadow of Tumaken triples it). Data-driven via the
+ * weapon's `magicDamageMultiplier` field so any future staff can opt in;
+ * returns 1 when no weapon is equipped or the weapon has no multiplier.
+ * Shared by the live (combat.js), idle (idleEngine.js) and PvP
+ * (combatPrimitives.js) magic paths.
+ */
+export function getWeaponMagicDamageMultiplier(equipment, itemsData) {
+  const weaponEntry = equipment?.weapon
+  const weapon = weaponEntry ? itemsData?.[weaponEntry.itemId] : null
+  const mult = Number(weapon?.magicDamageMultiplier)
+  return Number.isFinite(mult) && mult > 0 ? mult : 1
+}
+
+/**
  * Get the attack speed of the equipped weapon (default 4 ticks unarmed)
  */
 export function getAttackSpeed(equipment, itemsData) {

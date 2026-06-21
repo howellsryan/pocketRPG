@@ -297,11 +297,11 @@ In the `raids` category (`id: "raids"`), add a new section after `vaults_of_xyre
 ```
 The `section.id` **must equal** the raid `id` (`tomb_of_arasmus`) — `_completeShared.js` persists log entries under the completion `sourceId`, and `isValidEntry('raids', 'tomb_of_arasmus', itemId)` is what gates them server-side.
 
-### Unimplemented-effect TODO list (carry into the PR description)
-- Sunbearer Ring: 2× special-attack energy regen — no PvE passive-regen hook.
-- Masari set: full-set ranged-strength % bonus — no set-bonus engine.
-- Shadow of Tumaken: ×3 worn magic-damage passive — no multiplier hook.
-- Fang of Osmun: special attack — only if §6 not done.
+### Signature-effect status (updated — most now shipped)
+- **Fang of Osmun: special attack — ✅ DONE.** `fang` case in `applySpecialAttack()` (PvE, `combat.js`) and in `pvpEngine.js` (PvP): two accuracy rolls (hit if either connects), damage compressed to 15%–85% of max. Label "🗡️ Deadly Strike" registered in both `CombatScreen.jsx` `specLabels` and `pvpSpecialAttacks.js`.
+- **Masari set: ranged set bonus — ✅ DONE (shared engine).** `combatSetBonuses.js` is now a data-driven registry (`COMBAT_SETS`); full Masari grants ×1.10 ranged accuracy + damage. Combines with Void via `getCombatSetMultipliers()`, consumed by live/idle/PvP. (Implemented as a Void-style multiplier rather than OSRS's ranged-strength %, per requester.)
+- **Shadow of Tumaken: ×3 worn magic damage — ✅ DONE (shared weapon passive).** Data flag `magicDamageMultiplier` on the item + `poweredStaff: true` (autocasts, no runes). Applied via shared `getWeaponMagicDamageMultiplier()` in all three magic paths (`combat.js`, `idleEngine.js`, `combatPrimitives.js`).
+- **Sunbearer Ring: 2× special-attack energy regen — ⏳ DEFERRED** (bespoke logic, held by requester). Item ships with correct zero-stat profile; no regen hook yet.
 
 ---
 

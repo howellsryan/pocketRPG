@@ -4,7 +4,7 @@ import {
   getMeleeXPSkill, effectiveRanged, rangedMaxHit, getRangedStyleBonus,
   effectiveMagic, monsterMagicDefenceRoll, magicMaxHit
 } from './formulas.js'
-import { getEquipmentBonuses, getAttackSpeed, getAttackStyle, getRangedAmmoRequirementFailure } from './equipment.js'
+import { getEquipmentBonuses, getAttackSpeed, getAttackStyle, getRangedAmmoRequirementFailure, getWeaponMagicDamageMultiplier } from './equipment.js'
 import { getLevelFromXP } from './experience.js'
 import { hasRequiredRunes, getRunesToConsume } from './runes.js'
 import { MELEE_XP_PER_DAMAGE, RANGED_XP_PER_DAMAGE, MAGIC_XP_PER_DAMAGE, HP_XP_PER_DAMAGE, EAT_TICK_COST } from '../utils/constants.js'
@@ -12,7 +12,7 @@ import { randInt } from '../utils/helpers.js'
 import { getSlayerTaskEquipmentBonuses } from './slayerCombatBonuses.js'
 import { getPotionStatBoost, getActivePotionBoosts } from './consumables.js'
 import { applyPrayerDrainTick } from './prayerDrain.js'
-import { getVoidKingCombatMultipliers } from './combatSetBonuses.js'
+import { getCombatSetMultipliers } from './combatSetBonuses.js'
 import { getMonsterSeedDrops } from './seedDrops.js'
 
 
@@ -476,7 +476,7 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
     }
 
     const slayerEquipmentBonus = getSlayerTaskEquipmentBonuses({ equipment, itemsData, slayerTask, monsterId: monster.id })
-    const voidMult = getVoidKingCombatMultipliers(equipment)
+    const voidMult = getCombatSetMultipliers(equipment)
     let damage = 0
     let xpSkills = {}
 
@@ -675,7 +675,8 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
       // At 75 = 24, at 99 = 32, at 123 = 39 (matches PocketRPG trident formulas approx).
       const magicLevel = boostedPlayerStats.magic || 1
       const baseDamage = Math.max(1, Math.floor(magicLevel / 3) + 9)
-      const maxHit = Math.floor(magicMaxHit(baseDamage, bonuses.otherBonus.magicDamage + voidMult.magicDamageBonusFlat) + slayerEquipmentBonus.damageFlat)
+      const wornMagicDamage = bonuses.otherBonus.magicDamage * getWeaponMagicDamageMultiplier(equipment, itemsData)
+      const maxHit = Math.floor(magicMaxHit(baseDamage, wornMagicDamage + voidMult.magicDamageBonusFlat) + slayerEquipmentBonus.damageFlat)
       damage = rollDamage(acc, maxHit)
 
       if (weaponIsScaleCharged) {
@@ -702,7 +703,8 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
         const atkRoll = Math.floor(maxAttackRoll(effMag, (bonuses.attackBonus.magic || 0) + slayerEquipmentBonus.accuracyFlat) * voidMult.magicAccuracy)
         const defRoll = monsterMagicDefenceRoll(monster.stats.magic, monster.stats.defence, monster.defenceBonus.magic || 0)
         const acc = hitChance(atkRoll, defRoll)
-        const maxHit = Math.floor(magicMaxHit(state.spell.baseDamage, bonuses.otherBonus.magicDamage + voidMult.magicDamageBonusFlat) + slayerEquipmentBonus.damageFlat)
+        const wornMagicDamage = bonuses.otherBonus.magicDamage * getWeaponMagicDamageMultiplier(equipment, itemsData)
+        const maxHit = Math.floor(magicMaxHit(state.spell.baseDamage, wornMagicDamage + voidMult.magicDamageBonusFlat) + slayerEquipmentBonus.damageFlat)
         damage = rollDamage(acc, maxHit)
 
         // Track which runes to consume (excluding those provided by staff)
@@ -1134,6 +1136,30 @@ export function applySpecialAttack(combatState, playerStats, equipment, itemsDat
       _accXP(state, xpSkills)
       events.push({ type: 'xp', xpSkills })
       events.push({ type: 'specialHit', hits: [damage], totalDamage: actual, specType: 'zero_defence', monsterHP: monster.currentHP })
+      break
+    }
+
+    case 'fang': {
+      // Fang of Osmun — rolls accuracy twice (hit if either succeeds) and, on a
+      // hit, the damage range is compressed to 15%–85% of max (no low rolls).
+      const styleBonuses = getMeleeStyleBonuses(state.stance)
+      const effStr = effectiveStrength(playerStats.strength, 0, 1.0, styleBonuses.strengthStyleBonus)
+      const maxHit = meleeMaxHit(effStr, bonuses.otherBonus.meleeStrength)
+      const effAtk = effectiveAttack(playerStats.attack, 0, 1.0, styleBonuses.attackStyleBonus)
+      const atkRoll = maxAttackRoll(effAtk, bonuses.attackBonus[weaponStyle] || 0)
+      const defRoll = maxDefenceRoll(monster.stats.defence, monster.defenceBonus[weaponStyle] || 0)
+      const acc = hitChance(atkRoll, defRoll)
+      // Two independent accuracy rolls; the attack lands if either connects.
+      const hit = Math.random() < acc || Math.random() < acc
+      const minHit = Math.floor(maxHit * 0.15)
+      const cappedMax = Math.floor(maxHit * 0.85)
+      const damage = hit ? minHit + Math.floor(Math.random() * (cappedMax - minHit + 1)) : 0
+      const actual = Math.min(damage, Math.max(0, monster.currentHP))
+      monster.currentHP -= actual
+      const xpSkills = _meleeXP(state.stance, actual)
+      _accXP(state, xpSkills)
+      events.push({ type: 'xp', xpSkills })
+      events.push({ type: 'specialHit', hits: [damage], totalDamage: actual, specType: 'fang', monsterHP: monster.currentHP })
       break
     }
 
