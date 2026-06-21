@@ -17,6 +17,12 @@
 | Skip cost | **10 credits** (`skipCost: 10`). |
 | Naming | Follow the existing codebase convention: **PocketRPG-original names** + a `legacy_id` / `legacy_item_id` pointer to the OSRS source (e.g. *Chambers of Xeric → Vaults of Xyren*, *Twisted Bow → Twisted Longbow*). |
 
+> **Post-build value/presentation overrides (shipped — supersede the skeletons below):**
+> - **Shop values:** Shadow 1.5b, Fang 75m, Ward 50m, Sunbearer 15m, Masari body 375m, Masari chaps 250m, Masari mask 100m.
+> - **Masari ranged buff:** ranged-attack increased ×1.5 (mask 12→18, body 43→64, chaps 22→33) and +2 ranged strength on each piece.
+> - **Icons:** Shadow uses a unique `iconId: "wizard_staff"`; the raid has its own `RAID_ART` entry (`crowned_skull` / `#a855f7`) so it no longer shares Vaults of Xyren's `temple_gate`.
+> - **Purple shadow theme:** all 7 uniques get a purple tint (`ITEM_TINT` → `var(--tier-jewel-purple)`) plus a purple glowing drop-shadow halo (`OUTLINE_SPEC` → `['purple', true]`).
+
 ---
 
 ## 1) Why this is almost entirely data-driven

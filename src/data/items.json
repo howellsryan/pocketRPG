@@ -9639,7 +9639,7 @@
     "requirements": {
       "attack": 82
     },
-    "shopValue": 2400000,
+    "shopValue": 75000000,
     "specialAttack": {
       "type": "fang",
       "energyCost": 25,
@@ -9676,7 +9676,7 @@
       "magicDamage": 0
     },
     "requirements": {},
-    "shopValue": 2000000,
+    "shopValue": 15000000,
     "icon": "\ud83d\udc8d",
     "isGeneralStore": false,
     "isBossUnique": true
@@ -9710,7 +9710,7 @@
     "requirements": {
       "magic": 75
     },
-    "shopValue": 1500000,
+    "shopValue": 50000000,
     "icon": "\ud83d\udee1\ufe0f",
     "isGeneralStore": false,
     "isBossUnique": true
@@ -9727,7 +9727,7 @@
       "slash": 0,
       "crush": 0,
       "magic": 0,
-      "ranged": 12
+      "ranged": 18
     },
     "defenceBonus": {
       "stab": 4,
@@ -9738,14 +9738,14 @@
     },
     "otherBonus": {
       "meleeStrength": 0,
-      "rangedStrength": 0,
+      "rangedStrength": 2,
       "magicDamage": 0
     },
     "requirements": {
       "ranged": 80,
       "defence": 30
     },
-    "shopValue": 15000000,
+    "shopValue": 100000000,
     "icon": "\ud83c\udfad",
     "isGeneralStore": false,
     "isBossUnique": true
@@ -9762,7 +9762,7 @@
       "slash": 0,
       "crush": 0,
       "magic": 0,
-      "ranged": 43
+      "ranged": 64
     },
     "defenceBonus": {
       "stab": 56,
@@ -9773,14 +9773,14 @@
     },
     "otherBonus": {
       "meleeStrength": 0,
-      "rangedStrength": 0,
+      "rangedStrength": 2,
       "magicDamage": 0
     },
     "requirements": {
       "ranged": 80,
       "defence": 30
     },
-    "shopValue": 40000000,
+    "shopValue": 375000000,
     "icon": "\ud83e\udd85",
     "isGeneralStore": false,
     "isBossUnique": true
@@ -9797,7 +9797,7 @@
       "slash": 0,
       "crush": 0,
       "magic": 0,
-      "ranged": 22
+      "ranged": 33
     },
     "defenceBonus": {
       "stab": 33,
@@ -9808,14 +9808,14 @@
     },
     "otherBonus": {
       "meleeStrength": 0,
-      "rangedStrength": 0,
+      "rangedStrength": 2,
       "magicDamage": 0
     },
     "requirements": {
       "ranged": 80,
       "defence": 30
     },
-    "shopValue": 20000000,
+    "shopValue": 250000000,
     "icon": "\ud83d\udc56",
     "isGeneralStore": false,
     "isBossUnique": true
@@ -9832,6 +9832,7 @@
     "attackStyle": "magic",
     "poweredStaff": true,
     "magicDamageMultiplier": 3,
+    "iconId": "wizard_staff",
     "attackBonus": {
       "stab": 0,
       "slash": 0,
@@ -9854,7 +9855,7 @@
     "requirements": {
       "magic": 85
     },
-    "shopValue": 80000000,
+    "shopValue": 1500000000,
     "icon": "\ud83d\udd31",
     "isGeneralStore": false,
     "isBossUnique": true

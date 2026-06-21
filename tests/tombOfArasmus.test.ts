@@ -5,6 +5,7 @@ import monstersData from '../src/data/monsters.json'
 import { getCollectionLogData } from '../src/engine/collectionLog.js'
 import { getCombatSetMultipliers } from '../src/engine/combatSetBonuses.js'
 import { getWeaponMagicDamageMultiplier } from '../src/engine/equipment.js'
+import { getRaidArt } from '../src/utils/combatArt.js'
 
 const UNIQUE_IDS = [
   'fang_of_osmun',
@@ -134,4 +135,52 @@ describe('Tomb of Arasmus item effects', () => {
     expect(getWeaponMagicDamageMultiplier({ weapon: { itemId: 'fang_of_osmun' } }, itemsData as any)).toBe(1)
     expect(getWeaponMagicDamageMultiplier({}, itemsData as any)).toBe(1)
   })
+
+  it('Shadow of Tumaken uses a unique wizard-staff icon', () => {
+    expect((itemsData as any).shadow_of_tumaken.iconId).toBe('wizard_staff')
+  })
+})
+
+describe('Tomb of Arasmus presentation', () => {
+  it('has its own raid art, distinct from Vaults of Xyren', () => {
+    const toa = getRaidArt('tomb_of_arasmus')
+    const vaults = getRaidArt('vaults_of_xyren')
+    expect(toa.icon).not.toBe(vaults.icon)
+    expect(toa.accent).not.toBe(vaults.accent)
+    // not the generic fallback either
+    expect(toa.icon).toBe('crowned_skull')
+  })
+})
+
+describe('Masari ranged stat buff', () => {
+  const cases = [
+    { id: 'masari_mask', ranged: 18, shopValue: 100000000 },
+    { id: 'masari_body', ranged: 64, shopValue: 375000000 },
+    { id: 'masari_chaps', ranged: 33, shopValue: 250000000 },
+  ]
+  for (const { id, ranged, shopValue } of cases) {
+    it(`${id} has the boosted ranged attack, +2 ranged strength, and updated shop value`, () => {
+      const item = (itemsData as any)[id]
+      expect(item.attackBonus.ranged).toBe(ranged)
+      expect(item.otherBonus.rangedStrength).toBe(2)
+      expect(item.shopValue).toBe(shopValue)
+    })
+  }
+})
+
+describe('Tomb of Arasmus shop values', () => {
+  const expected: Record<string, number> = {
+    shadow_of_tumaken: 1500000000,
+    fang_of_osmun: 75000000,
+    ward_of_elidria: 50000000,
+    sunbearer_ring: 15000000,
+    masari_body: 375000000,
+    masari_chaps: 250000000,
+    masari_mask: 100000000,
+  }
+  for (const [id, value] of Object.entries(expected)) {
+    it(`${id} is worth ${value}`, () => {
+      expect((itemsData as any)[id].shopValue).toBe(value)
+    })
+  }
 })
