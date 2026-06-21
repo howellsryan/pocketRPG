@@ -5702,13 +5702,7 @@
         }
       }
     },
-    "drops": [
-      {
-        "itemId": "clue_scroll_master",
-        "quantity": 1,
-        "chance": 0.02
-      }
-    ],
+    "drops": [],
     "legacy_id": "akkha"
   },
   "gorroth_the_mountain_ape": {
@@ -5736,13 +5730,7 @@
       "magic": 30,
       "ranged": 90
     },
-    "drops": [
-      {
-        "itemId": "clue_scroll_master",
-        "quantity": 1,
-        "chance": 0.02
-      }
-    ],
+    "drops": [],
     "legacy_id": "baba"
   },
   "khepra_the_scarab_matron": {
@@ -5812,13 +5800,7 @@
         }
       }
     },
-    "drops": [
-      {
-        "itemId": "clue_scroll_master",
-        "quantity": 1,
-        "chance": 0.02
-      }
-    ],
+    "drops": [],
     "legacy_id": "kephri"
   },
   "sebakh_the_devourer": {
@@ -5846,13 +5828,7 @@
       "magic": 60,
       "ranged": 90
     },
-    "drops": [
-      {
-        "itemId": "clue_scroll_master",
-        "quantity": 1,
-        "chance": 0.02
-      }
-    ],
+    "drops": [],
     "legacy_id": "zebak"
   },
   "warden_of_arasmus": {
@@ -5934,13 +5910,7 @@
         }
       }
     },
-    "drops": [
-      {
-        "itemId": "clue_scroll_master",
-        "quantity": 1,
-        "chance": 0.02
-      }
-    ],
+    "drops": [],
     "legacy_id": "wardens"
   },
   "morvyn_the_blighted": {
