@@ -354,7 +354,7 @@ export default function SlayerScreen({ onBack, onNavigate }) {
               <div class="flex-1 min-w-0">
                 <SkillActionRow
                   icon={<GameIcon iconKey={master.iconKey} color="var(--color-gold)" size={30} />}
-                  title={`${master.name} — ${master.location}`}
+                  title={master.name}
                   chip={<>{master.pointsPerTask} pts</>}
                   disabled={!meetsReq || !!slayerTask}
                   onClick={() => handleGetTask(master)}
