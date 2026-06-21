@@ -105,7 +105,7 @@ Schema:
   - starts at 100,
   - regenerates +10 every 30s,
   - capped at 100.
-- Equipment swap anti-abuse: `attackTimer = max(currentTimer, newWeaponSpeed)`.
+- Equipment swap: never adds an attack delay (OSRS parity). Equipping/unequipping leaves `attackTimer` untouched — if your attack is ready you swing with the newly equipped weapon on the same tick; mid-cooldown swaps keep the remaining cooldown and the new weapon's speed only applies from the next swing.
 - Simultaneous deaths tie-breaker: lower `characterId`.
 - Protection prayers disabled in PvP v1 (only offensive prayers apply, and they drain the prayer pool — see §4 Prayer).
 - Forfeit treated as death for loot transfer.

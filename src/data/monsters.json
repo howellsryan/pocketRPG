@@ -7283,11 +7283,6 @@
         "chance": 0.002
       },
       {
-        "itemId": "ferocious_gloves",
-        "quantity": 1,
-        "chance": 0.001
-      },
-      {
         "itemId": "death_rune",
         "quantity": [
           25,

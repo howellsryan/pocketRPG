@@ -524,7 +524,7 @@ const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>PocketRPG</title>
@@ -545,6 +545,7 @@ ${css}
 </head>
 <body>
 <script>if(navigator.standalone){document.documentElement.classList.add('pwa-standalone');var s=document.createElement('style');s.textContent='.pwa-standalone .overflow-y-auto{padding-bottom:env(safe-area-inset-bottom)}';document.head.appendChild(s)}</script>
+<script>['gesturestart','gesturechange','gestureend'].forEach(function(t){document.addEventListener(t,function(e){e.preventDefault()},{passive:false})});</script>
 <div id="app-splash"><div class="app-splash__brand">PocketRPG</div><div class="app-splash__sub">Loading your adventure…</div></div>
 <main id="app"></main>
 <script>

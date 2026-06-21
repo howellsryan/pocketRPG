@@ -97,6 +97,10 @@ html, body, #app {
   background-color: var(--color-void);
   color: var(--color-parchment);
   font-family: var(--font-body);
+  /* Disable double-tap-to-zoom (and the legacy 300ms tap delay) so quick taps
+     never accidentally zoom the game. Pinch-zoom is blocked via the viewport
+     meta + gesture handlers. */
+  touch-action: manipulation;
 }
 
 /* Scrollbar styling */

@@ -1097,7 +1097,7 @@ describe('slayer intents', () => {
     expect(s.currentTask.killed).toBe(70)
     expect(s.currentTask.progressPct).toBe(70)
     expect(s.nextTaskMultiplier).toBe(10) // the 5th task hits a x10 milestone
-    expect(s.skipCosts).toEqual({ points: 30, credits: 1 })
+    expect(s.skipCosts).toEqual({ points: 10, credits: 1 })
     expect(s.masters.find((m: any) => m.id === 'turael')?.eligible).toBe(true)
   })
 
