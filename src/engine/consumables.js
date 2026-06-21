@@ -11,9 +11,9 @@
  * prayer-point pool and bank-draw rules; it is intentionally not unified here.
  */
 
-// Prayer points restored by drinking a restore potion mid-combat (kept in sync
-// with prayerDrain.js, duplicated here to avoid a circular import).
-const PRAYER_RESTORE_AMOUNTS = { prayer: 20, super_restore: 22 }
+// Prayer points restored by drinking a restore potion mid-combat — shared with
+// the prayer-drain module (one-way import; prayerDrain.js depends on nothing).
+import { PRAYER_RESTORE_AMOUNTS } from './prayerDrain.js'
 
 // Heal amount granted by eating a food/brew item (canonical `heals`, legacy `heal`).
 export function getHealAmount(item) {

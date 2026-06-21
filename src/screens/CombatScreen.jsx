@@ -1221,7 +1221,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     updateHP(actor.hp)
     hpRef.current = actor.hp
 
-    if (combat) {
+    if (combatRef.current) {
       // Carry the wiped potion set into combat state. A brew is a combo item, so
       // it uses the combo cooldown — it can be drunk on the same tick as a normal
       // food and does not delay the next attack.
@@ -1274,10 +1274,13 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     updateHP(actor.hp)
     hpRef.current = actor.hp
 
-    if (combat) {
+    if (combatRef.current) {
       // Combo food (e.g. Karam) uses the combo cooldown so it can be eaten on the
-      // same tick as a normal food; normal food uses the standard eat delay.
-      const newState = isComboConsumable(food) ? applyCombo(combat) : applyEat(combat)
+      // same tick as a normal food; normal food uses the standard eat delay. Build
+      // from combatRef.current (not the stale `combat` closure) so a normal food
+      // and a combo food eaten on the same tick don't clobber each other's state.
+      const base = combatRef.current
+      const newState = isComboConsumable(food) ? applyCombo(base) : applyEat(base)
       setCombat(newState)
       combatRef.current = newState
     }
@@ -2642,6 +2645,22 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                   <HitSplatLayer splats={playerSplats} />
                 </div>
               </div>
+
+              {/* Prayer pool */}
+              {typeof combat?.maxPrayerPoints === 'number' && (
+                <div class="cb-hpblock">
+                  <div class="cb-hplabel">
+                    <span>🙏 Prayer</span>
+                    <span class="cb-hplabel__v" style={{ color: '#7ec8ff' }}>{Math.ceil(combat.prayerPoints || 0)}/{combat.maxPrayerPoints}</span>
+                  </div>
+                  <div class="h-2 rounded-full bg-[rgba(255,255,255,0.07)] overflow-hidden">
+                    <div
+                      class="h-full rounded-full bg-gradient-to-r from-[#3b82f6] to-[#7ec8ff]"
+                      style={{ width: `${Math.max(0, Math.min(100, ((combat.prayerPoints || 0) / combat.maxPrayerPoints) * 100))}%` }}
+                    />
+                  </div>
+                </div>
+              )}
 
               {/* Slayer task indicator */}
               {doesSlayerTaskMatchMonster(slayerTask?.monsterId, m.id) && (

@@ -43,8 +43,60 @@ function checkJsonImportNames() {
   }
 }
 
+// Engine modules are concatenated into the single-file build via an EXPLICIT
+// `sourceFiles`/`GAME_CHUNK_FILES` list in build_single.cjs (src/engine is never
+// globbed). A new engine module that isn't registered there compiles & tests
+// fine under Vite/Vitest but is simply ABSENT from the bundle — every reference
+// to its exports becomes an undefined global and throws at runtime (and because
+// onTick swallows listener errors, that surfaces as "combat silently frozen").
+// Enforce that every engine module is registered so that can't ship again.
+function checkEngineModulesRegistered() {
+  const srcDir = path.join(root, 'src');
+  const engineDir = path.join(srcDir, 'engine');
+  if (!fs.existsSync(engineDir)) return;
+  const buildSrc = fs.readFileSync(path.join(root, 'build_single.cjs'), 'utf8');
+
+  // Collect every engine module that some client (src/**) file imports. Engine
+  // modules imported only by functions/** (the Cloudflare server) are exempt —
+  // they're not part of the browser bundle.
+  const needed = new Set();
+  const walk = (dir) => {
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) { walk(full); continue; }
+      if (!/\.(jsx?|tsx?)$/.test(entry.name)) continue;
+      const code = fs.readFileSync(full, 'utf8');
+      const re = /from\s+['"](\.\.?\/[^'"]+)['"]/g;
+      let m;
+      while ((m = re.exec(code))) {
+        const base = path.resolve(path.dirname(full), m[1]).replace(/\.(jsx?|tsx?)$/, '');
+        for (const ext of ['.js', '.ts', '.jsx', '.tsx']) {
+          const candidate = base + ext;
+          if (candidate.startsWith(engineDir + path.sep) && fs.existsSync(candidate)) {
+            needed.add(path.relative(srcDir, candidate).replace(/\\/g, '/').replace(/\.tsx?$/, '.js'));
+            break;
+          }
+        }
+      }
+    }
+  };
+  walk(srcDir);
+
+  const offenders = [];
+  for (const rel of needed) {
+    if (!buildSrc.includes(`'${rel}'`) && !buildSrc.includes(`"${rel}"`)) {
+      offenders.push(`${rel} is imported by client source but not registered in build_single.cjs (sourceFiles or GAME_CHUNK_FILES) — it would be missing from the single-file build`);
+    }
+  }
+  if (offenders.length) {
+    console.error('Single-file build engine-module registration check failed:\n  ' + offenders.join('\n  '));
+    process.exit(1);
+  }
+}
+
 try {
   checkJsonImportNames();
+  checkEngineModulesRegistered();
 
   const html = fs.readFileSync(indexPath, 'utf8');
   // The build emits the core app as a classic inline <script> (so it shares the
