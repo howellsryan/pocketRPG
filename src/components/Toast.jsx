@@ -1,15 +1,17 @@
 import { useGame } from '../state/gameState.jsx'
 
 // Per-type visual treatment. `rich` types get the full gold reward card;
-// everything else uses the compact, colour-coded system style.
+// everything else uses the compact, colour-coded system style. Level-up uses the
+// solid compact style (with a gold accent) so it matches the other toasts rather
+// than the see-through reward card.
 const TOAST_STYLES = {
-  levelup: { rich: true, label: 'LEVEL UP', accent: 'var(--color-gold-light)' },
-  reward:  { rich: true, label: 'REWARD', accent: 'var(--color-gold-light)' },
-  error:   { label: 'ERROR', accent: 'var(--color-blood-ember)', bar: 'var(--color-blood)' },
-  combat:  { label: 'COMBAT', accent: 'var(--color-blood-light)', bar: 'var(--color-blood-light)' },
-  drop:    { label: 'REWARD', accent: 'var(--color-emerald-light)', bar: 'var(--color-emerald)' },
-  success: { label: 'DONE', accent: 'var(--color-emerald-light)', bar: 'var(--color-emerald)' },
-  info:    { label: 'INFO', accent: 'var(--color-mana-light)', bar: 'var(--color-mana)' },
+  levelup: { accent: 'var(--color-gold-light)', bar: 'var(--color-gold)' },
+  reward:  { rich: true, accent: 'var(--color-gold-light)' },
+  error:   { accent: 'var(--color-blood-ember)', bar: 'var(--color-blood)' },
+  combat:  { accent: 'var(--color-blood-light)', bar: 'var(--color-blood-light)' },
+  drop:    { accent: 'var(--color-emerald-light)', bar: 'var(--color-emerald)' },
+  success: { accent: 'var(--color-emerald-light)', bar: 'var(--color-emerald)' },
+  info:    { accent: 'var(--color-mana-light)', bar: 'var(--color-mana)' },
 }
 
 const DEFAULT_ICONS = {
@@ -46,8 +48,7 @@ function RichToast({ toast, onDismiss }) {
         {icon}
       </div>
       <div class="flex-1 min-w-0">
-        <div class="text-[9.5px] font-bold tracking-[0.14em] text-[var(--color-gold)]">{style.label}</div>
-        <div class="text-[15px] font-bold text-[var(--color-parchment)] mt-0.5 leading-snug">{toast.message}</div>
+        <div class="text-[15px] font-bold text-[var(--color-parchment)] leading-snug">{toast.message}</div>
       </div>
       <DismissBtn onClick={() => onDismiss(toast.id)} accent="var(--color-gold)" size={28} />
       <Countdown ttl={toast.ttl} color="linear-gradient(90deg,var(--color-gold-light),var(--color-gold-dim))" />
@@ -68,8 +69,7 @@ function CompactToast({ toast, onDismiss }) {
         {icon}
       </div>
       <div class="flex-1 min-w-0">
-        <div class="text-[9.5px] font-bold tracking-[0.12em]" style={{ color: style.accent }}>{style.label}</div>
-        <div class="text-[14px] font-semibold text-[var(--color-parchment)] mt-0.5 leading-snug">{toast.message}</div>
+        <div class="text-[14px] font-semibold text-[var(--color-parchment)] leading-snug">{toast.message}</div>
       </div>
       <DismissBtn onClick={() => onDismiss(toast.id)} accent={style.accent} />
       <Countdown ttl={toast.ttl} color={style.bar} />

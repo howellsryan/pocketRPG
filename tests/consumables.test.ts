@@ -151,4 +151,16 @@ describe('consumables — applyConsumableEffect', () => {
     expect(actor.hp).toBe(50)                       // no heal
     expect(getActivePotionBoosts(actor.activePotions, ITEMS)).toEqual({ attack: 0, strength: 0, defence: 0, ranged: 0, magic: 0 })
   })
+
+  it('restore potions are not registered as timed buffs (no countdown)', () => {
+    // Single-use restores must not appear in activePotions, so the combat UI
+    // never shows a time-down icon for them.
+    const actor = { hp: 50, maxHP: 99, activePotions: {}, prayerPoints: 5, maxPrayerPoints: 50 }
+    applyConsumableEffect(actor, ITEMS.prayer_potion, 'prayer_potion', 'drink')
+    expect(actor.activePotions).toEqual({})
+    expect(actor.prayerPoints).toBe(25)             // +20 prayer restore
+    applyConsumableEffect(actor, ITEMS.super_restore, 'super_restore', 'drink')
+    expect(actor.activePotions).toEqual({})
+    expect(actor.prayerPoints).toBe(47)             // +22 super restore
+  })
 })
