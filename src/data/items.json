@@ -12107,39 +12107,66 @@
     "id": "mithril_plateskirt",
     "legacy_item_id": "mithril_plateskirt",
     "name": "Mithril Plateskirt",
-    "type": "resource",
-    "stackable": true,
-    "shopValue": 1147,
-    "icon": "\ud83d\udce6",
-    "isGeneralStore": false,
-    "defenceBonus": {
-      "stab": 28,
-      "slash": 0,
-      "crush": 0,
-      "magic": 0,
-      "ranged": 0
-    },
+    "type": "armour",
+    "slot": "legs",
+    "stackable": false,
     "attackBonus": {
       "stab": 0,
       "slash": 0,
       "crush": 0,
-      "magic": 0,
-      "ranged": 0
+      "magic": -21,
+      "ranged": -7
+    },
+    "defenceBonus": {
+      "stab": 28,
+      "slash": 31,
+      "crush": 26,
+      "magic": -4,
+      "ranged": 28
     },
     "otherBonus": {
       "meleeStrength": 0,
       "rangedStrength": 0,
       "magicDamage": 0
-    }
+    },
+    "requirements": {
+      "defence": 20
+    },
+    "shopValue": 1147,
+    "icon": "\ud83e\uddb5",
+    "isGeneralStore": false
   },
   "adamant_plateskirt": {
     "id": "adamant_plateskirt",
     "legacy_item_id": "adamant_plateskirt",
     "name": "Adamant Plateskirt",
-    "type": "resource",
-    "stackable": true,
+    "type": "armour",
+    "slot": "legs",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": -21,
+      "ranged": -7
+    },
+    "defenceBonus": {
+      "stab": 40,
+      "slash": 45,
+      "crush": 38,
+      "magic": -4,
+      "ranged": 40
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "defence": 30
+    },
     "shopValue": 3715,
-    "icon": "\ud83d\udce6",
+    "icon": "\ud83e\uddb5",
     "isGeneralStore": false
   },
   "purple_sweets": {
