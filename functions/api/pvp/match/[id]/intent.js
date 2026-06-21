@@ -49,8 +49,12 @@ export function validateIntentAction(state, characterId, action) {
   }
 
   if (action.type === 'change_combat_spell') {
+    if (action.spellId === null) return { ok: true }
     const spell = spellsData?.[action.spellId]
     if (!spell) return { ok: false, error: 'invalid_spell' }
+    if ((combatant?.stats?.magic || 1) < (spell.levelReq || 1)) {
+      return { ok: false, error: 'insufficient_magic_level' }
+    }
     if (!hasRequiredRunes(combatant.inventory, spell.runeReq)) {
       return { ok: false, error: 'insufficient_runes' }
     }

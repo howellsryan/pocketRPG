@@ -43,3 +43,21 @@ it('uses saved combat stance and normalizes invalid values', () => {
   })
   expect(fallback.stance).toBe('accurate')
 })
+
+it('seeds the saved combat spell as a full spell definition', () => {
+  const fromObject = buildCombatantFromSave({
+    characterId: 1,
+    username: 'Tester',
+    savePayload: { settings: { activeCombatSpell: { id: 'fire_bolt' } }, stats: {}, equipment: {}, inventory: [] },
+  })
+  expect(fromObject.spell?.id).toBe('fire_bolt')
+  expect(typeof fromObject.spell?.baseDamage).toBe('number')
+  expect(fromObject.spell?.runeReq).toBeTruthy()
+
+  const noSpell = buildCombatantFromSave({
+    characterId: 1,
+    username: 'Tester',
+    savePayload: { stats: {}, equipment: {}, inventory: [] },
+  })
+  expect(noSpell.spell).toBeNull()
+})
