@@ -1017,6 +1017,19 @@ export function GameProvider({ children }) {
     }
   }, [loaded, stats, bossKillCounts, raidKillCounts, completedQuests, unlockedFeatures, slayerPoints, getSnapshot])
 
+  // Equipment presets persist to IndexedDB immediately (updateEquipmentPresets),
+  // but that alone leaves them only on this device until the 60s autosave reaches
+  // the cloud — so a preset saved just before the tab/container closes could be
+  // lost. Treat any preset change as a critical save so it's pushed to the cloud
+  // promptly. The first post-load run is hydration (loading existing presets),
+  // which must not trigger a redundant push.
+  const presetsHydratedRef = useRef(false)
+  useEffect(() => {
+    if (!loaded) return
+    if (!presetsHydratedRef.current) { presetsHydratedRef.current = true; return }
+    requestCriticalPushSave(() => getSnapshot(), CRITICAL_SAVE_REASONS.EQUIPMENT_PRESET_CHANGE)
+  }, [loaded, equipmentPresets, getSnapshot])
+
   // Stable identity for the running activity — only the activity itself (not its
   // per-tick progress/session) should restart the heartbeat interval. Without
   // this the interval would reset every 600ms (the runner and the activity

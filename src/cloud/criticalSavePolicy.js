@@ -14,6 +14,7 @@ export const CRITICAL_SAVE_REASONS = Object.freeze({
   PURCHASE: 'purchase',
   SKIP_HOUR: 'skip_hour',
   PVP_MATCH_COMPLETE: 'pvp_match_complete',
+  EQUIPMENT_PRESET_CHANGE: 'equipment_preset_change',
 })
 
 export const CRITICAL_SAVE_COALESCE_MS = 3_000
