@@ -21,6 +21,7 @@ import { getPrayerStyleIcon } from '../utils/prayerIcons.js'
 import { createCombatState, createRaidCombatState, processCombatTick, applyEat, applyCombo, applySpecialAttack, applyInstantKill } from '../engine/combat.js'
 import { applyConsumableEffect, isLumiraBrew, isComboConsumable } from '../engine/consumables.js'
 import { getLevelFromXP } from '../engine/experience.js'
+import { checkBossRequirements as checkBossRequirementsPure, checkRaidRequirements as checkRaidRequirementsPure } from '../engine/combatRequirements.js'
 import { getMonsterSeedDrops } from '../engine/seedDrops.js'
 import { getAgilityBankDelayMs, formatBankDelay } from '../engine/agility.js'
 import { onTick, pauseTicks, resumeTicks } from '../engine/tick.js'
@@ -932,29 +933,14 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     setCollapsedSections(prev => ({ ...prev, [sectionKey]: !prev[sectionKey] }))
   }
 
-  const checkBossRequirements = (monster) => {
-    const slayLvl = getSlayerLevel()
-    if (monster.slayerRequirement && slayLvl < monster.slayerRequirement) {
-      return { locked: true, reason: `Need Slayer level ${monster.slayerRequirement} to fight ${monster.name}` }
-    }
-    // Quest gates are data-driven (monster.questRequirement) so the slayer master
-    // assignment and this combat gate share one source of truth.
-    if (monster.questRequirement && !completedQuests.has(monster.questRequirement)) {
-      const questName = questsData.find(q => q.id === monster.questRequirement)?.name || monster.questRequirement.replace(/_/g, ' ')
-      return { locked: true, reason: `Complete ${questName} to fight ${monster.name}` }
-    }
-    if (monster.id === 'ashen_crucible' && (!bossKillCounts['ember_tyrant'] || bossKillCounts['ember_tyrant'] < 1)) {
-      return { locked: true, reason: 'Defeat Ember Tyrant first to unlock Ashen Crucible' }
-    }
-    return { locked: false }
-  }
+  const checkBossRequirements = (monster) => checkBossRequirementsPure(monster, {
+    slayerLevel: getSlayerLevel(),
+    completedQuests,
+    bossKillCounts,
+    questsData,
+  })
 
-  const checkRaidRequirements = (raid) => {
-    if (raid.id === 'theatre_of_blood' && !completedQuests.has('a_night_at_the_theatre')) {
-      return { locked: true, reason: 'Complete A Night at the Theatre to access Crimson Night Theatre' }
-    }
-    return { locked: false }
-  }
+  const checkRaidRequirements = (raid) => checkRaidRequirementsPure(raid, { completedQuests })
 
   const startFight = (monster) => {
     const req = checkBossRequirements(monster)

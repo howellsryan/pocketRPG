@@ -54,6 +54,7 @@ const sourceFiles = [
   'engine/prayerDrain.js',
   'engine/consumables.js',
   'engine/combat.js',
+  'engine/combatRequirements.js',
   'engine/combatant.js',
   'engine/combatPrimitives.js',
   'engine/pvpCombatModifiers.js',
