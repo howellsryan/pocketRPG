@@ -11,15 +11,18 @@ This is sized as a two-day backlog. Each item is **independent** and ordered rou
 
 ## Summary table
 
-| # | Title | Type | Priority | Est. |
-|---|-------|------|----------|------|
-| 1 | Thieving has a 100% success rate (no failure/stun mechanic) | Correctness / balance | P1 | 0.5d |
-| 2 | Combat-level formula is copy-pasted in 3 places and has diverged | Correctness / tech debt | P1 | 0.5d |
-| 3 | `activityRegistry.js` (progress-persistence routing) is completely untested | Test coverage | P1 | 0.5d |
-| 4 | `quests.js` eligibility + idle-sim logic is untested (and used by MCP) | Test coverage | P1 | 0.5d |
-| 5 | `gatherTasks.js` / `construction.js` / `clueScrolls.js` / `activitySession.js` untested | Test coverage | P2 | 0.5d |
-| 6 | `CombatScreen.jsx` is a 3,195-line monolith | Tech debt / maintainability | P2 | 1d (scoped) |
-| 7 | Stale planning docs vs. shipped behavior (idle-robustness, feature-plan) | Doc debt | P2 | 0.25d |
+| # | Title | Type | Priority | Est. | Status |
+|---|-------|------|----------|------|--------|
+| 1 | Thieving has a 100% success rate (no failure/stun mechanic) | Correctness / balance | P1 | 0.5d | ⏸️ Deferred (balance change — needs product tuning) |
+| 2 | Combat-level formula is copy-pasted in 3 places and has diverged | Correctness / tech debt | P1 | 0.5d | ✅ Done |
+| 3 | `activityRegistry.js` (progress-persistence routing) is completely untested | Test coverage | P1 | 0.5d | ✅ Done |
+| 4 | `quests.js` eligibility + idle-sim logic is untested (and used by MCP) | Test coverage | P1 | 0.5d | ✅ Done |
+| 5 | `gatherTasks.js` / `construction.js` / `clueScrolls.js` / `activitySession.js` untested | Test coverage | P2 | 0.5d | ✅ Done (+ found & fixed an invalid master-clue item: `torstol` → `kingsherb`) |
+| 6 | `CombatScreen.jsx` is a 3,195-line monolith | Tech debt / maintainability | P2 | 1d (scoped) | ✅ Done (scoped: content gates extracted + 14 tests) |
+| 7 | Stale planning docs vs. shipped behavior (idle-robustness, feature-plan) | Doc debt | P2 | 0.25d | ✅ Done |
+
+> Item 1 is the only one deferred, by request — it changes game balance/economy
+> and wants product input on the failure-rate curve before implementation.
 
 ---
 

@@ -1,8 +1,17 @@
 # Idle Robustness & Unified Activity Engine — Implementation Guide
 
-> **Status:** Plan for review / handover. No code changes yet.
+> **Status (updated 2026-06-21):** ✅ **Largely shipped.** The wipe-on-navigate
+> bug (§3.2) is fixed — `navigate()` now preserves any background activity via
+> `isBackground(activeTask)` (`src/App.jsx`), and the per-activity progress
+> ledger described in Decision 2 is wired through `getActivityKey` /
+> `saveActivityProgress` (`src/state/gameState.jsx`, `src/engine/activityRegistry.js`,
+> consumed by `QuestsScreen.jsx` / `MinigamesScreen.jsx`). The activity taxonomy
+> lives in `src/engine/activityRegistry.js`; server-authoritative idle claims with
+> nonce verification are in place (see `tests/idleClaimAuthority.test.ts`).
+> Remaining/optional work: full engine unification (Decision 4 / Goal 4) is partial.
+> Routing is covered by `tests/activityRegistry.test.ts`.
 > **Owner branch:** `claude/idle-function-robustness-Mghpe`
-> **Audience:** the engineer/agent who will implement this. Read §1–§4 for the design, §5+ for the concrete work.
+> **Audience:** the engineer/agent who will implement this. Read §1–§4 for the design, §5+ for the concrete work. The "as-is" descriptions in §3 predate the fix above.
 
 ---
 

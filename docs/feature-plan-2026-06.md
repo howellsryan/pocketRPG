@@ -1,6 +1,12 @@
 # PocketRPG — Feature Plan & Implementation Guide
 
 > Status: planning doc. Features are implemented **one at a time**, each on branch `claude/session-fmoCB`, each validated with the commit gate (`npm test && npm run build && npm run rebuild && npm run check:single`, or `npm run ci && npm test`) before commit.
+>
+> **Update 2026-06-21:** Feature 1 (bank tab ordering) has **shipped** — first-time
+> insert ordering and a one-time backfill for legacy saves live in
+> `src/state/gameState.jsx` (`ensureBankOrder`-style assignment at the idle-deposit
+> loop / `addToBank` and the load-time backfill). Treat Feature 1 below as
+> reference/rationale, not outstanding work.
 
 Confirmed design decisions (from product owner):
 - **Log→Plank**: keep conversions limited to the **4 existing tiers** (logs, oak, teak, mahogany). Do **not** add willow/maple/yew/magic/redwood plank items. The "all types" scope is satisfied by adding **noted-item support** to the existing conversions + Construction.
