@@ -7955,6 +7955,7 @@
     "slot": "head",
     "stackable": false,
     "icon": "\ud83d\udc80",
+    "iconId": "horned_skull",
     "shopValue": 1000000,
     "attackBonus": {
       "stab": 10,
@@ -9479,7 +9480,7 @@
       "magicDamage": 0
     },
     "requirements": {
-      "attack": 75
+      "attack": 60
     },
     "specialAttack": {
       "type": "slice_and_dice",
@@ -15554,6 +15555,7 @@
     "stackable": false,
     "shopValue": 5000000,
     "icon": "\ud83e\udd4a",
+    "iconId": "gauntlet",
     "isGeneralStore": false,
     "slot": "gloves",
     "attackBonus": {
