@@ -10,32 +10,18 @@ import Button from '../components/Button.jsx'
 import SectionHeader from '../components/SectionHeader.jsx'
 import EquipmentPaperdoll, { EQ_SLOT_NAMES } from '../components/EquipmentPaperdoll.jsx'
 import ItemSlot from '../components/ItemSlot.jsx'
+import WeaponChargePanel, { getChargeRecipe } from '../components/WeaponChargePanel.jsx'
 import { OTHER_BONUS_LABELS, OTHER_BONUS_PERCENT_KEYS } from '../utils/bonusLabels.js'
-
-const DEFAULT_CHARGE_ITEM_ID = 'venomcoil_scales'
-
-// Resolve a chargeable weapon's cost into a normalized recipe: the list of
-// { itemId, qty } consumed PER charge. Single-ingredient weapons (Trident,
-// Venom Blowpipe, Scythe) stay a 1×chargeItemId recipe; weapons that declare a
-// `chargeRecipe` (e.g. Shadow of Tumaken — 5 Chaos + 2 Soul per charge) use it.
-function getChargeRecipe(item) {
-  if (Array.isArray(item?.chargeRecipe) && item.chargeRecipe.length > 0) {
-    return item.chargeRecipe.map(r => ({ itemId: r.itemId, qty: Math.max(1, r.qty || 1) }))
-  }
-  return [{ itemId: item?.chargeItemId || DEFAULT_CHARGE_ITEM_ID, qty: 1 }]
-}
 
 export default function EquipmentScreen() {
   const { equipment, inventory, bank, stats, updateEquipment, updateInventory, updateBank, addToast, itemsData, completedQuests } = useGame()
   const [selected, setSelected] = useState(null) // { slot, item }
   const [showSpecInfo, setShowSpecInfo] = useState(false)
-  const [chargeInput, setChargeInput] = useState('')
   const [invSelected, setInvSelected] = useState(null) // { slotIndex, slot, item }
 
   const handleSelect = (slotName, item) => {
     setSelected({ slot: slotName, item })
     setShowSpecInfo(false)
-    setChargeInput('')
   }
 
   const handleInvSlotClick = (slot, item, index) => {
@@ -109,14 +95,6 @@ export default function EquipmentScreen() {
 
   const availableForId = (id) => inventory.reduce((sum, s) => sum + (s && s.itemId === id ? s.quantity : 0), 0)
 
-  const selectedWeaponEntry = selected ? equipment[selected.slot] : null
-  const selectedChargeItem = selectedWeaponEntry ? itemsData[selectedWeaponEntry.itemId] : null
-  const selectedRecipe = selectedChargeItem ? getChargeRecipe(selectedChargeItem) : null
-  // Max charges affordable is gated by the scarcest recipe ingredient.
-  const maxChargeable = selectedRecipe
-    ? selectedRecipe.reduce((min, r) => Math.min(min, Math.floor(availableForId(r.itemId) / r.qty)), Infinity)
-    : 0
-
   const handleChargeWeapon = (qty) => {
     if (!selected) return
     const equipSlotName = selected.slot
@@ -154,7 +132,6 @@ export default function EquipmentScreen() {
     updateInventory(newInv)
     updateEquipment(newEq)
     addToast(`Charged ${item.name} with ${actualQty} charge${actualQty === 1 ? '' : 's'}`, 'info')
-    setChargeInput('')
   }
 
   const handleUnchargeWeapon = () => {
@@ -366,59 +343,16 @@ export default function EquipmentScreen() {
           <div class="flex flex-col gap-2">
 
             {/* Scale charges panel */}
-            {selected.item.scaleCharged && (() => {
-              const currentCharges = equipment[selected.slot]?.charges || 0
-              const parsedInput = parseInt(chargeInput, 10)
-              const customQty = Number.isFinite(parsedInput) && parsedInput > 0 ? parsedInput : 0
-              const recipe = getChargeRecipe(selected.item)
-              const isRecipe = recipe.length > 1 || recipe[0].qty > 1
-              const chargeIcon = recipe.length === 1 && recipe[0].itemId === 'blood_rune' ? '🩸'
-                : isRecipe ? '🔮' : '🐍'
-              const costLabel = recipe.map(r => `${r.qty}× ${itemsData[r.itemId]?.name || r.itemId}`).join(' + ')
-              return (
-                <Panel className="border-[#1a3a2a]">
-                  <div class="flex items-center justify-between mb-2">
-                    <span class="text-[12px] font-semibold text-[#4ade80]">{chargeIcon} Charges</span>
-                    <span class="font-[var(--font-mono)] text-[12px] text-[var(--color-parchment)]">
-                      {currentCharges} / ∞
-                    </span>
-                  </div>
-                  <div class="text-[10px] text-[var(--color-parchment)] opacity-50 mb-1">
-                    Cost: {costLabel} per charge
-                  </div>
-                  <div class="text-[10px] text-[var(--color-parchment)] opacity-50 mb-2">
-                    {recipe.map(r => `${itemsData[r.itemId]?.name || r.itemId}: ${availableForId(r.itemId)}`).join(' · ')}
-                  </div>
-                  <div class="grid grid-cols-3 gap-1 mb-[6px]">
-                    <Button variant="success" size="sm" disabled={maxChargeable <= 0} onClick={() => handleChargeWeapon(10)}>+10</Button>
-                    <Button variant="success" size="sm" disabled={maxChargeable <= 0} onClick={() => handleChargeWeapon(100)}>+100</Button>
-                    <Button variant="success" size="sm" disabled={maxChargeable <= 0} onClick={() => handleChargeWeapon(maxChargeable)}>+All</Button>
-                  </div>
-                  <div class="flex gap-1 mb-[6px]">
-                    <input
-                      type="number"
-                      min="1"
-                      value={chargeInput}
-                      onInput={(e) => setChargeInput(e.currentTarget.value)}
-                      placeholder="Custom amount"
-                      class="flex-1 px-2 py-2 rounded-md bg-[#0a0a0a] border border-[#222] text-[var(--color-parchment)] text-[11px] font-[var(--font-mono)]"
-                    />
-                    <Button variant="success" size="md" disabled={customQty <= 0 || maxChargeable <= 0} onClick={() => handleChargeWeapon(customQty)}>
-                      Charge
-                    </Button>
-                  </div>
-                  <Button
-                    variant="danger"
-                    size="md"
-                    disabled={currentCharges <= 0}
-                    onClick={handleUnchargeWeapon}
-                    className="w-full"
-                  >
-                    Uncharge (recover {currentCharges} charge{currentCharges === 1 ? '' : 's'})
-                  </Button>
-                </Panel>
-              )
-            })()}
+            {selected.item.scaleCharged && (
+              <WeaponChargePanel
+                item={selected.item}
+                currentCharges={equipment[selected.slot]?.charges || 0}
+                inventory={inventory}
+                itemsData={itemsData}
+                onCharge={handleChargeWeapon}
+                onUncharge={handleUnchargeWeapon}
+              />
+            )}
 
             {/* Special attack info */}
             {selected.item.specialAttack && (

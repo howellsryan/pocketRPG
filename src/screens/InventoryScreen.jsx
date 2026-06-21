@@ -3,6 +3,7 @@ import { useGame } from '../state/gameState.jsx'
 import ItemSlot from '../components/ItemSlot.jsx'
 import Modal from '../components/Modal.jsx'
 import SharedItemModal from '../components/SharedItemModal.jsx'
+import WeaponChargePanel, { getChargeRecipe } from '../components/WeaponChargePanel.jsx'
 import TradingPostSellForm from '../components/TradingPostSellForm.jsx'
 import { freeSlots, countItem } from '../engine/inventory.js'
 import { isOrderBookItem } from '../engine/storeRules.js'
@@ -17,7 +18,6 @@ export default function InventoryScreen() {
   const [showSpecInfo, setShowSpecInfo] = useState(false)
   const [bankQuantityMode, setBankQuantityMode] = useState(null) // 'stackable' | 'nonStackable' | null
   const [bankQuantityInput, setBankQuantityInput] = useState('')
-  const [chargeInput, setChargeInput] = useState('')
   const [showChargeModal, setShowChargeModal] = useState(false)
   const [showDropConfirm, setShowDropConfirm] = useState(false)
   const [sellBusy, setSellBusy] = useState(false)
@@ -170,31 +170,36 @@ export default function InventoryScreen() {
       return
     }
 
-    const chargeItemId = item.chargeItemId || 'venomcoil_scales'
-    const chargeItemName = itemsData[chargeItemId]?.name || chargeItemId
-    const scalesIdx = inventory.findIndex(s => s && s.itemId === chargeItemId)
-    if (scalesIdx === -1) {
-      addToast(`No ${chargeItemName} in inventory`, 'error')
+    const recipe = getChargeRecipe(item)
+    const availableForId = (id) => inventory.reduce((sum, s) => sum + (s && s.itemId === id ? s.quantity : 0), 0)
+    const affordable = recipe.reduce((min, r) => Math.min(min, Math.floor(availableForId(r.itemId) / r.qty)), Infinity)
+    const actualQty = Math.min(qty, affordable)
+    if (actualQty <= 0) {
+      const need = recipe.map(r => `${r.qty} ${itemsData[r.itemId]?.name || r.itemId}`).join(' + ')
+      addToast(`Need ${need} per charge`, 'error')
       return
     }
 
-    const scales = inventory[scalesIdx]
-    const chargeQty = Math.min(qty, scales.quantity)
     const newInv = [...inventory]
-    const newSlot = { ...slot, charges: (slot.charges || 0) + chargeQty }
-    newInv[slotIndex] = newSlot
-
-    if (scales.quantity <= chargeQty) {
-      newInv[scalesIdx] = null
-    } else {
-      newInv[scalesIdx] = { ...scales, quantity: scales.quantity - chargeQty }
+    for (const r of recipe) {
+      let remaining = actualQty * r.qty
+      for (let i = 0; i < newInv.length && remaining > 0; i++) {
+        if (i === slotIndex) continue // never consume from the weapon's own slot
+        if (newInv[i]?.itemId === r.itemId) {
+          const take = Math.min(newInv[i].quantity, remaining)
+          newInv[i] = { ...newInv[i], quantity: newInv[i].quantity - take }
+          if (newInv[i].quantity <= 0) newInv[i] = null
+          remaining -= take
+        }
+      }
     }
+
+    const newSlot = { ...slot, charges: (slot.charges || 0) + actualQty }
+    newInv[slotIndex] = newSlot
 
     updateInventory(newInv)
     setSelected({ ...selected, slot: newSlot })
-    addToast(`Charged ${item.name} with ${chargeQty} ${chargeItemName} (${newSlot.charges} total)`, 'info')
-    setShowChargeModal(false)
-    setChargeInput('')
+    addToast(`Charged ${item.name} with ${actualQty} charge${actualQty === 1 ? '' : 's'}`, 'info')
   }
 
   const handleUnchargeWeapon = () => {
@@ -255,18 +260,21 @@ export default function InventoryScreen() {
       newBank[item.id] = { ...newBank[item.id], charges: 0 }
     }
 
-    const chargeItemId = item.chargeItemId || 'venomcoil_scales'
-    const chargeItemName = itemsData[chargeItemId]?.name || chargeItemId
-    const existingIdx = newInv.findIndex(s => s && s.itemId === chargeItemId)
-    if (existingIdx !== -1) {
-      newInv[existingIdx] = { ...newInv[existingIdx], quantity: newInv[existingIdx].quantity + totalCharges }
-    } else {
-      const empty = newInv.indexOf(null)
-      if (empty === -1) {
-        addToast('Inventory full — cannot uncharge', 'error')
-        return
+    // Recover every recipe ingredient, scaled by the total charges removed.
+    const recipe = getChargeRecipe(item)
+    const recovered = recipe.map(r => ({ itemId: r.itemId, qty: r.qty * totalCharges }))
+    for (const rec of recovered) {
+      const existingIdx = newInv.findIndex(s => s && s.itemId === rec.itemId)
+      if (existingIdx !== -1) {
+        newInv[existingIdx] = { ...newInv[existingIdx], quantity: newInv[existingIdx].quantity + rec.qty }
+      } else {
+        const empty = newInv.indexOf(null)
+        if (empty === -1) {
+          addToast('Inventory full — cannot uncharge', 'error')
+          return
+        }
+        newInv[empty] = { itemId: rec.itemId, quantity: rec.qty }
       }
-      newInv[empty] = { itemId: chargeItemId, quantity: totalCharges }
     }
 
     updateInventory(newInv)
@@ -275,7 +283,8 @@ export default function InventoryScreen() {
 
     const updatedSlot = { ...slot, charges: 0 }
     setSelected({ ...selected, slot: updatedSlot })
-    addToast(`Uncharged ${item.name}, recovered ${totalCharges} ${chargeItemName}`, 'info')
+    const recoveredText = recovered.map(r => `${r.qty} ${itemsData[r.itemId]?.name || r.itemId}`).join(', ')
+    addToast(`Uncharged ${item.name}, recovered ${recoveredText}`, 'info')
   }
 
   // Deposit to bank — stackable: deposit all; non-stackable: show qty picker
@@ -582,8 +591,8 @@ export default function InventoryScreen() {
                 )}
                 {selected.item.scaleCharged && !selected.slot.noted && (
                   <button onClick={() => setShowChargeModal(true)}
-                    class="py-2.5 rounded-lg bg-[#1a3a3a] text-[var(--color-emerald)] font-semibold text-sm active:opacity-80 border border-[var(--color-emerald)]/30">
-                    Charge ⚡
+                    class="py-2.5 rounded-lg bg-[#1a3a3a] text-white font-semibold text-sm active:opacity-80 border border-[var(--color-emerald)]/30">
+                    Charge
                   </button>
                 )}
                 {selected.item.combineWith && !selected.slot.noted && (() => {
@@ -609,16 +618,12 @@ export default function InventoryScreen() {
                   Drop
                 </button>
               </div>
-              {selected.item.scaleCharged && !selected.slot.noted && (selected.slot.charges || 0) > 0 && (() => {
-                const chargeItemId = selected.item.chargeItemId || 'venomcoil_scales'
-                const chargeItemName = itemsData[chargeItemId]?.name || chargeItemId
-                return (
-                  <button onClick={handleUnchargeWeapon}
-                    class="w-full py-2.5 rounded-lg bg-[#3a1a1a] text-[var(--color-blood)] font-semibold text-sm active:opacity-80 border border-[var(--color-blood)]/30">
-                    Uncharge ({selected.slot.charges} {chargeItemName})
-                  </button>
-                )
-              })()}
+              {selected.item.scaleCharged && !selected.slot.noted && (selected.slot.charges || 0) > 0 && (
+                <button onClick={handleUnchargeWeapon}
+                  class="w-full py-2.5 rounded-lg bg-[#3a1a1a] text-[var(--color-blood)] font-semibold text-sm active:opacity-80 border border-[var(--color-blood)]/30">
+                  Uncharge ({selected.slot.charges} charge{selected.slot.charges === 1 ? '' : 's'})
+                </button>
+              )}
             </div>
 
             {/* Bank deposit section */}
@@ -802,48 +807,19 @@ export default function InventoryScreen() {
         )
       })()}
 
-      {/* ── Charge weapon modal ──────────────────────────────────────── */}
-      {showChargeModal && selected && (() => {
-        const chargeItemId = selected.item.chargeItemId || 'venomcoil_scales'
-        const chargeItemName = itemsData[chargeItemId]?.name || chargeItemId
-        const scalesInInv = inventory.find(s => s && s.itemId === chargeItemId)
-        const availableScales = scalesInInv?.quantity || 0
-        const currentCharges = selected.slot.charges || 0
-
-        return (
-          <Modal title={`Charge ${selected.item.name}`} onClose={() => { setShowChargeModal(false); setChargeInput('') }}>
-            <div class="space-y-3">
-              <div class="bg-[#111] rounded-lg p-3 text-sm text-[var(--color-parchment)] opacity-70">
-                <p>Current charges: <span class="text-[var(--color-emerald)] font-bold">{currentCharges}</span></p>
-                <p>{chargeItemName} available: <span class="text-[var(--color-gold)] font-bold">{availableScales}</span></p>
-              </div>
-              <div>
-                <p class="text-[10px] text-[var(--color-parchment)] opacity-40 mb-1 uppercase tracking-wider">Add {chargeItemName}</p>
-                <input
-                  type="number"
-                  value={chargeInput}
-                  onInput={(e) => setChargeInput(e.target.value)}
-                  min="1"
-                  max={availableScales}
-                  placeholder={`Enter ${chargeItemName} to add`}
-                  class="w-full bg-[#1a1a1a] border border-[#333] rounded-lg px-3 py-2 text-sm text-[var(--color-parchment)] outline-none focus:border-[var(--color-emerald)]"
-                  autoFocus
-                />
-              </div>
-              {availableScales === 0 && (
-                <p class="text-[10px] text-[var(--color-blood)] text-center">You need {chargeItemName} to charge this weapon</p>
-              )}
-              <button
-                onClick={() => handleChargeWeapon(parseInt(chargeInput, 10))}
-                disabled={availableScales === 0 || !chargeInput || isNaN(parseInt(chargeInput, 10)) || parseInt(chargeInput, 10) <= 0}
-                class="w-full py-2.5 rounded-lg bg-[#1a3a3a] text-[var(--color-emerald)] font-semibold text-sm active:opacity-80 border border-[var(--color-emerald)]/30 disabled:opacity-40 disabled:cursor-default"
-              >
-                Add {chargeInput || '0'} {chargeItemName}
-              </button>
-            </div>
-          </Modal>
-        )
-      })()}
+      {/* ── Charge weapon modal (shared panel — same UI as Equipment) ──── */}
+      {showChargeModal && selected && (
+        <Modal title={`Charge ${selected.item.name}`} onClose={() => setShowChargeModal(false)}>
+          <WeaponChargePanel
+            item={selected.item}
+            currentCharges={selected.slot.charges || 0}
+            inventory={inventory}
+            itemsData={itemsData}
+            onCharge={handleChargeWeapon}
+            onUncharge={handleUnchargeWeapon}
+          />
+        </Modal>
+      )}
 
       {showDropConfirm && selected && (
         <Modal title="Drop item?" onClose={() => setShowDropConfirm(false)}>
