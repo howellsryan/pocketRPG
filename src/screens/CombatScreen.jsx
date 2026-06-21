@@ -1835,11 +1835,6 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                                 💀 Slayer {slayReq}{slayLocked ? ` (you: ${slayLvl})` : ' ✓'}
                               </div>
                             )}
-                            {slayReq && !slayLocked && !isOnTask && (
-                              <div class="text-[9px] font-semibold text-[var(--color-blood-light)]">
-                                🔒 Slayer task required
-                              </div>
-                            )}
                             {bossReq.locked && !slayLocked && !slayReq && (
                               <div class="text-[9px] font-semibold text-[var(--color-blood-light)]">
                                 🔒 {monster.id === 'blighted_gauntlet' ? 'Song of the Elves' :

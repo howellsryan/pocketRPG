@@ -141,7 +141,7 @@ export default function CombatMobileSelect({
                     const lockText = slayLocked
                       ? `Slayer ${slayReq} (you: ${slayerLevel})`
                       : bossReq.locked ? bossReq.reason
-                      : (slayReq && !isOnTask) ? 'Slayer task required' : null
+                      : null
                     return (
                       <div
                         key={monster.id}

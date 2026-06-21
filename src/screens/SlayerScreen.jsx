@@ -106,7 +106,6 @@ function SlayerTaskRow({ entry, slayerLevel, completedQuests }) {
       </div>
       <div class="cb-room__right">
         <MultiStyleChip chip={getMonsterAttackStyles(monster)} />
-        {!eligible && <span class="text-[13px] opacity-70" aria-label="Locked">🔒</span>}
       </div>
     </div>
   )
