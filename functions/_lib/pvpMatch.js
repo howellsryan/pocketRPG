@@ -1,4 +1,5 @@
 import itemsData from '../../src/data/items.json' assert { type: 'json' }
+import spellsData from '../../src/data/spells.json' assert { type: 'json' }
 import { buildPlayerCombatant } from '../../src/engine/combatant.js'
 import { getLevelFromXP } from '../../src/engine/experience.js'
 import { decodeSaveRow } from './saveCodec.js'
@@ -28,6 +29,14 @@ async function parseSaveRow(row) {
   }
 }
 
+export function resolveSavedCombatSpell(savePayload) {
+  const saved = savePayload?.settings?.activeCombatSpell ?? savePayload?.activeCombatSpell
+  const spellId = typeof saved === 'string' ? saved : saved?.id
+  if (typeof spellId !== 'string') return null
+  const spell = spellsData?.[spellId]
+  return spell ? { ...spell } : null
+}
+
 export function buildCombatantFromSave({ characterId, username, savePayload }) {
   return buildPlayerCombatant({
     characterId,
@@ -39,7 +48,10 @@ export function buildCombatantFromSave({ characterId, username, savePayload }) {
     // Do not inherit stale PvE/local currentHP from the cloud save, because
     // a stale 0 HP value can terminally end the match on the first tick.
     stance: normalizePvpCombatStance(savePayload?.settings?.combatStance ?? savePayload?.combatStance),
-    spell: null,
+    // Seed the player's chosen combat spell so a staff-wielding mage starts
+    // casting immediately. The engine only uses it while combatType === 'magic'
+    // and the weapon isn't a powered staff (those scale off magic level).
+    spell: resolveSavedCombatSpell(savePayload),
     itemsData,
   })
 }
