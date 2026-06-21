@@ -348,23 +348,13 @@ export default function SlayerScreen({ onBack, onNavigate }) {
       <SectionHeader className="mb-2.5">Slayer Masters</SectionHeader>
       <div class="flex flex-col gap-2.5">
         {SLAYER_MASTERS.map(master => {
-          const meetsCombat = combatLevel >= master.combatReq
-          const meetsSlayer = slayerLevel >= master.slayerReq
-          const meetsReq = meetsCombat && meetsSlayer
+          const meetsReq = combatLevel >= master.combatReq && slayerLevel >= master.slayerReq
           return (
             <div key={master.id} class="flex gap-2 items-center">
               <div class="flex-1 min-w-0">
                 <SkillActionRow
-                  icon={<span class="text-2xl">{master.icon}</span>}
-                  title={master.name}
-                  meta={<>
-                    {master.location}
-                    <span class="block mt-1">
-                      {master.combatReq > 0 && <span class={meetsCombat ? 'text-[var(--color-hp-green)]' : 'text-[var(--color-blood-light)]'}>CB {master.combatReq}</span>}
-                      {master.slayerReq > 0 && <span class={`ml-2 ${meetsSlayer ? 'text-[var(--color-hp-green)]' : 'text-[var(--color-blood-light)]'}`}>Slayer {master.slayerReq}</span>}
-                      {master.combatReq === 0 && master.slayerReq === 0 && <span class="text-[var(--color-hp-green)]">No requirement</span>}
-                    </span>
-                  </>}
+                  icon={<GameIcon iconKey={master.iconKey} color="var(--color-gold)" size={30} />}
+                  title={`${master.name} — ${master.location}`}
                   chip={<>{master.pointsPerTask} pts</>}
                   disabled={!meetsReq || !!slayerTask}
                   onClick={() => handleGetTask(master)}
@@ -395,7 +385,7 @@ export default function SlayerScreen({ onBack, onNavigate }) {
           return (
             <SkillActionRow
               key={unlock.itemId}
-              icon={<span class="text-2xl">{item.icon || '🎁'}</span>}
+              icon={<GameIcon item={item} size={30} />}
               title={item.name}
               meta={<>
                 {unlock.description}
