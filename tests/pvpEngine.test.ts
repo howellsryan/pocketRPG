@@ -19,10 +19,12 @@ const items = {
   },
   dragon_arrow: { id: 'dragon_arrow', slot: 'ammo', stackable: true, otherBonus: { rangedStrength: 60 } },
   shark: { id: 'shark', type: 'food', heals: 20, stackable: false },
+  karam: { id: 'karam', type: 'food', heals: 18, combo: true, stackable: false },
   attack_potion: { id: 'attack_potion', type: 'potion', effect: 'attack', boost: 13, duration: 300 },
   strength_potion: { id: 'strength_potion', type: 'potion', effect: 'strength', boost: 13, duration: 300 },
   defence_potion: { id: 'defence_potion', type: 'potion', effect: 'defence', boost: 13, duration: 300 },
   ranging_potion: { id: 'ranging_potion', type: 'potion', effect: 'ranged', boost: 14, duration: 300 },
+  prayer_potion: { id: 'prayer_potion', type: 'potion', effect: 'prayer', boost: 32, duration: 300 },
 }
 
 function buildPlayer(overrides: any = {}) {
@@ -97,6 +99,68 @@ describe('pvpEngine phase 2B contract', () => {
     expect(out.stateNext.combatants['1'].hp).toBeGreaterThan(0)
   })
 
+  it('eats a normal food and a combo food on the same tick (both heal)', () => {
+    const a = buildPlayer({
+      characterId: 1, currentHP: 10, maxHP: 99,
+      inventory: [{ itemId: 'shark', quantity: 1 }, { itemId: 'karam', quantity: 1 }],
+    })
+    const b = buildPlayer({ characterId: 2, currentHP: 99 })
+    const state = createPvpState(a, b, 0)
+    state.combatants['1'].attackTimer = 99
+    state.combatants['2'].attackTimer = 99
+
+    const out = processPvpTick(state, [
+      { tick_number: 1, characterId: 1, characterSeq: 1, action: { type: 'eat', inventorySlot: 0 } },
+      { tick_number: 1, characterId: 1, characterSeq: 2, action: { type: 'eat', inventorySlot: 1 } },
+    ], items)
+
+    // Shark (20) + Karam (18) both land: 10 + 20 + 18 = 48
+    expect(out.stateNext.combatants['1'].hp).toBe(48)
+    expect(out.events.filter((e: any) => e.type === 'eat').length).toBe(2)
+  })
+
+  it('eats a normal food and drinks a potion on the same tick (heal + boost together)', () => {
+    const a = buildPlayer({
+      characterId: 1, currentHP: 10, maxHP: 99,
+      inventory: [{ itemId: 'shark', quantity: 1 }, { itemId: 'strength_potion', quantity: 1 }],
+    })
+    const b = buildPlayer({ characterId: 2, currentHP: 99 })
+    const state = createPvpState(a, b, 0)
+    state.combatants['1'].attackTimer = 99
+    state.combatants['2'].attackTimer = 99
+
+    const out = processPvpTick(state, [
+      { tick_number: 1, characterId: 1, characterSeq: 1, action: { type: 'eat', inventorySlot: 0 } },
+      { tick_number: 1, characterId: 1, characterSeq: 2, action: { type: 'drink_potion', inventorySlot: 1 } },
+    ], items)
+
+    const self = out.stateNext.combatants['1']
+    expect(self.hp).toBe(30)                                   // shark healed +20
+    expect(self.activePotions.strength_potion).toBeGreaterThan(0) // boost applied same tick
+    expect(out.events.some((e: any) => e.type === 'eat')).toBe(true)
+    expect(out.events.some((e: any) => e.type === 'drink')).toBe(true)
+  })
+
+  it('blocks a second normal food on the same tick (shared eat cooldown)', () => {
+    const a = buildPlayer({
+      characterId: 1, currentHP: 10, maxHP: 99,
+      inventory: [{ itemId: 'shark', quantity: 1 }, { itemId: 'shark', quantity: 1 }],
+    })
+    const b = buildPlayer({ characterId: 2, currentHP: 99 })
+    const state = createPvpState(a, b, 0)
+    state.combatants['1'].attackTimer = 99
+    state.combatants['2'].attackTimer = 99
+
+    const out = processPvpTick(state, [
+      { tick_number: 1, characterId: 1, characterSeq: 1, action: { type: 'eat', inventorySlot: 0 } },
+      { tick_number: 1, characterId: 1, characterSeq: 2, action: { type: 'eat', inventorySlot: 1 } },
+    ], items)
+
+    // Only the first shark lands: 10 + 20 = 30
+    expect(out.stateNext.combatants['1'].hp).toBe(30)
+    expect(out.events.filter((e: any) => e.type === 'eat').length).toBe(1)
+  })
+
   it('recomputes combatType when a weapon of a different style is equipped', () => {
     // Start ranged (test bow), swap to a melee weapon (whip) mid-fight.
     const a = buildPlayer({
@@ -167,6 +231,41 @@ describe('pvpEngine phase 2B contract', () => {
     expect(out.events.some((e: any) => e.type === 'eat')).toBe(true)
     expect(out.events.some((e: any) => e.type === 'attack' && e.attackerCharacterId === 1)).toBe(false)
     expect(out.stateNext.combatants['1'].attackTimer).toBe(4)
+  })
+
+  it('drains the prayer pool while a combat prayer is active', () => {
+    const a = buildPlayer({ characterId: 1 })
+    const b = buildPlayer({ characterId: 2 })
+    let state = createPvpState(a, b, 0)
+    state.combatants['1'].attackTimer = 99
+    state.combatants['2'].attackTimer = 99
+    expect(state.combatants['1'].prayerPoints).toBe(99) // = Prayer level
+
+    // Activate a damage prayer, then let several ticks elapse.
+    let out = processPvpTick(state, [
+      { tick_number: 1, characterId: 1, characterSeq: 1, action: { type: 'toggle_prayer', prayerId: 'piety' } },
+    ], items)
+    expect(out.stateNext.combatants['1'].activeCombatPrayer).toBe('piety')
+
+    for (let i = 0; i < 250; i++) out = processPvpTick(out.stateNext, [], items)
+    // Piety drains 40/min = 0.4/tick → 250 ticks ≈ 100 points, so a 99 pool empties.
+    expect(out.stateNext.combatants['1'].prayerPoints).toBe(0)
+    expect(out.stateNext.combatants['1'].activeCombatPrayer).toBe(null) // switched off when empty
+  })
+
+  it('restores prayer points when a prayer potion is drunk', () => {
+    const a = buildPlayer({ characterId: 1, inventory: [{ itemId: 'prayer_potion', quantity: 1 }] })
+    const b = buildPlayer({ characterId: 2 })
+    const state = createPvpState(a, b, 0)
+    state.combatants['1'].attackTimer = 99
+    state.combatants['2'].attackTimer = 99
+    state.combatants['1'].prayerPoints = 50
+
+    const out = processPvpTick(state, [
+      { tick_number: 1, characterId: 1, characterSeq: 1, action: { type: 'drink_potion', inventorySlot: 0 } },
+    ], items)
+    // +20 from the prayer potion, capped at maxPrayerPoints (99).
+    expect(out.stateNext.combatants['1'].prayerPoints).toBe(70)
   })
 
   it('trims recentEvents to the latest 20 entries', () => {

@@ -14,8 +14,8 @@ const BOOST_EFFECTS = new Set(['attack', 'strength', 'defence', 'combat', 'range
 const PRAYER_RESTORE_EFFECTS = new Set(['prayer', 'super_restore'])
 
 const PRAYER_RESTORE_DEFAULT = {
-  prayer: 15,
-  super_restore: 20,
+  prayer: 20,
+  super_restore: 22,
 }
 
 export function isFoodItem(item) {

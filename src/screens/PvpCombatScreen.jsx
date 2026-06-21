@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks'
 import EquipmentPaperdoll from '../components/EquipmentPaperdoll.jsx'
 import Card from '../components/Card.jsx'
-import Panel from '../components/Panel.jsx'
 import Button from '../components/Button.jsx'
 import ItemSlot from '../components/ItemSlot.jsx'
 import CombatQuickActions from '../components/CombatQuickActions.jsx'
@@ -12,9 +11,9 @@ import itemsData from '../data/items.json'
 import prayersData from '../data/prayers.json'
 import { getCharacterId } from '../cloud/api.js'
 import { normalizePvpState } from '../engine/pvpState.js'
-import { isConsumableFood, isConsumablePotion } from '../engine/consumables.js'
+import { isConsumableFood, isConsumablePotion, isComboConsumable } from '../engine/consumables.js'
 import { hasEpicLootDrop } from '../utils/itemValue.js'
-import { getEquippedPvpSpecialAttack, getPvpSpecialAttackLabel, hasEnoughPvpSpecialEnergy } from '../engine/pvpSpecialAttacks.js'
+import { getEquippedPvpSpecialAttack, hasEnoughPvpSpecialEnergy } from '../engine/pvpSpecialAttacks.js'
 import { calculatePvpRiskValues } from '../engine/pvpRisk.js'
 import { formatCompactCoins } from '../utils/formatters.js'
 import { getPrayerStyleIcon } from '../utils/prayerIcons.js'
@@ -27,7 +26,6 @@ const NO_POLL_WARNING_MS = 5000
 const MATCH_BOOT_GRACE_MS = 8000
 const MATCH_BOOT_RETRY_MS = 500
 const PVP_SCREEN_PROTECTION_PRAYER_IDS = new Set(['protection_from_magic', 'protection_from_missiles', 'protection_from_melee'])
-const EQUIPMENT_DISPLAY_SLOTS = ['weapon', 'shield', 'head', 'body', 'legs', 'gloves', 'boots', 'cape', 'neck', 'ring', 'ammo']
 
 function getCombatantTotalRisk(combatant) {
   const risk = calculatePvpRiskValues({
@@ -43,12 +41,15 @@ function formatPvpRank(combatant) {
   return Number.isFinite(rank) && rank > 0 ? `#${Math.floor(rank)}` : 'No Rank'
 }
 
-function CompactHpBadge({ label, combatant, align = 'left', splats = null }) {
+function CompactHpBadge({ label, combatant, align = 'left', splats = null, showPrayer = false }) {
   const current = Math.max(0, Number(combatant?.hp ?? combatant?.currentHP ?? 0) || 0)
   const max = Math.max(1, Number(combatant?.maxHP ?? 1) || 1)
   const pct = Math.max(0, Math.min(100, (current / max) * 100))
   const totalRisk = getCombatantTotalRisk(combatant)
   const rankLabel = formatPvpRank(combatant)
+  const prayerMax = Math.max(0, Number(combatant?.maxPrayerPoints ?? 0) || 0)
+  const prayerPts = Math.max(0, Math.ceil(Number(combatant?.prayerPoints ?? 0) || 0))
+  const prayerPct = prayerMax > 0 ? Math.max(0, Math.min(100, (prayerPts / prayerMax) * 100)) : 0
 
   return (
     <div class={`relative min-w-0 ${align === 'right' ? 'text-right' : 'text-left'}`}>
@@ -64,53 +65,68 @@ function CompactHpBadge({ label, combatant, align = 'left', splats = null }) {
       <div class="h-1.5 rounded bg-[var(--color-void)] overflow-hidden mt-1">
         <div class="h-full bg-[var(--color-blood-light)]" style={{ width: `${pct}%` }} />
       </div>
+      {showPrayer && prayerMax > 0 && (
+        <>
+          <div class="text-[10px] font-[var(--font-mono)] text-[#7ec8ff] mt-1">🙏 {prayerPts}/{prayerMax}</div>
+          <div class="h-1.5 rounded bg-[var(--color-void)] overflow-hidden mt-0.5">
+            <div class="h-full bg-[#5aa0e0]" style={{ width: `${prayerPct}%` }} />
+          </div>
+        </>
+      )}
     </div>
   )
 }
 
-function EquipmentMiniPanel({ title, combatant, align = 'left', onUnequipSlot = null }) {
-  const equipment = combatant?.equipment || {}
-  const equipped = EQUIPMENT_DISPLAY_SLOTS
-    .map((slot) => ({ slot, entry: equipment?.[slot], item: equipment?.[slot] ? itemsData[equipment[slot].itemId] : null }))
-    .filter(({ entry }) => !!entry)
-  const weapon = equipment?.weapon ? itemsData[equipment.weapon.itemId] : null
+// Weapon-only summary for the collapsed gear view: just the equipped weapon
+// icon + name for one combatant.
+function GearWeaponSummary({ label, combatant, align = 'left' }) {
+  const weapon = combatant?.equipment?.weapon ? itemsData[combatant.equipment.weapon.itemId] : null
+  return (
+    <div class={`flex flex-col ${align === 'right' ? 'items-end text-right' : 'items-start'}`}>
+      <div class="text-[10px] uppercase tracking-wide text-[var(--color-gold)] mb-1">{label}</div>
+      <div class={`flex items-center gap-1.5 max-w-full ${align === 'right' ? 'flex-row-reverse' : ''}`}>
+        <span class="shrink-0 text-base leading-none">{weapon?.icon || '🗡️'}</span>
+        <span class="truncate text-[11px] text-[var(--color-parchment)] opacity-90">{weapon?.name || 'Unarmed'}</span>
+      </div>
+    </div>
+  )
+}
 
+// Combined, collapsible gear comparison for PvP mobile. Shows both combatants'
+// full paperdolls flanking (opponent left, you right); collapses to weapon-only.
+// Tapping a slot on your own paperdoll unequips it. Starts expanded.
+function GearComparePanel({ opp, self, onUnequipSlot }) {
+  const [collapsed, setCollapsed] = useState(false)
   return (
     <Card className="p-2">
-      <div class={`text-[10px] uppercase tracking-wide text-[var(--color-gold)] mb-1 ${align === 'right' ? 'text-right' : ''}`}>
-        {title}
+      <div class="flex items-center justify-between mb-2">
+        <div class="text-[10px] uppercase tracking-wide text-[var(--color-gold)]">Gear</div>
+        <button
+          type="button"
+          onClick={() => setCollapsed((c) => !c)}
+          aria-expanded={!collapsed}
+          class="text-[10px] text-[var(--color-gold-dim)] hover:text-[var(--color-gold)] active:text-[var(--color-gold)] px-1 py-0.5"
+        >
+          {collapsed ? 'Show gear ▾' : 'Hide gear ▴'}
+        </button>
       </div>
-      <div class={`text-[11px] text-[var(--color-parchment)] opacity-80 mb-2 truncate ${align === 'right' ? 'text-right' : ''}`}>
-        Weapon: {weapon?.name || 'None'}
-      </div>
-      <div class={`flex gap-1 flex-wrap ${align === 'right' ? 'justify-end' : 'justify-start'}`}>
-        {equipped.length === 0 && (
-          <span class="text-[10px] text-[var(--color-parchment)] opacity-50">No gear equipped</span>
-        )}
-        {equipped.slice(0, 8).map(({ slot, entry, item }) => (
-          <span
-            key={`${slot}-${entry.itemId}`}
-            title={`${slot}: ${item?.name || entry.itemId}`}
-            class="inline-flex max-w-full items-center rounded border border-[var(--color-gold-dim)] bg-[var(--color-void-light)] px-1.5 py-0.5 text-[10px] text-[var(--color-parchment)] gap-1"
-          >
-            <span class="inline-flex max-w-full items-center gap-1 align-middle">
-              <span class="shrink-0">{item?.icon || '▫️'}</span>
-              <span class="truncate">{item?.name || entry.itemId}</span>
-            </span>
-            {onUnequipSlot && (
-              <button
-                type="button"
-                onClick={() => onUnequipSlot(slot)}
-                class="inline-flex h-4 w-4 shrink-0 items-center justify-center rounded text-[9px] leading-none text-[var(--color-parchment)] opacity-70 hover:opacity-100 active:opacity-100"
-                title={`Unequip ${item?.name || entry.itemId}`}
-                aria-label={`Unequip ${item?.name || entry.itemId}`}
-              >
-                ✕
-              </button>
-            )}
-          </span>
-        ))}
-      </div>
+      {collapsed ? (
+        <div class="grid grid-cols-2 gap-2 items-start">
+          <GearWeaponSummary label="Opponent" combatant={opp} align="left" />
+          <GearWeaponSummary label="You" combatant={self} align="right" />
+        </div>
+      ) : (
+        <div class="grid grid-cols-2 gap-2 items-start">
+          <div class="flex flex-col items-center min-w-0">
+            <div class="text-[10px] uppercase tracking-wide text-[var(--color-gold)] mb-1">Opponent</div>
+            <EquipmentPaperdoll equipment={opp?.equipment || {}} itemsData={itemsData} size="sm" asCard={false} />
+          </div>
+          <div class="flex flex-col items-center min-w-0">
+            <div class="text-[10px] uppercase tracking-wide text-[var(--color-gold)] mb-1">You</div>
+            <EquipmentPaperdoll equipment={self?.equipment || {}} itemsData={itemsData} size="sm" asCard={false} onSelect={(slotName) => onUnequipSlot && onUnequipSlot(slotName)} />
+          </div>
+        </div>
+      )}
     </Card>
   )
 }
@@ -173,36 +189,6 @@ function getEndLootTotal(loot) {
   return Math.floor(value)
 }
 
-function formatHitList(hits, totalDamage) {
-  const clean = Array.isArray(hits) && hits.length > 0 ? hits : [totalDamage || 0]
-  return clean.map((hit) => {
-    const value = Math.max(0, Math.floor(Number(hit) || 0))
-    return value > 0 ? String(value) : 'miss'
-  }).join(' + ')
-}
-
-function prettifyEvent(evt, selfId) {
-  if (!evt) return null
-  if (evt.type === 'attack') {
-    const mine = evt.attackerCharacterId === selfId
-    const actor = mine ? 'You' : 'Opponent'
-    const totalDamage = Math.max(0, Math.floor(Number(evt.totalDamage ?? evt.damage ?? evt.specialAttack?.totalDamage ?? 0) || 0))
-    if (evt.special || evt.specialAttack) {
-      const specType = evt.specialAttack?.type || evt.specType || 'special'
-      const label = evt.specialAttack?.label || getPvpSpecialAttackLabel(specType)
-      const hits = evt.specialAttack?.hits || evt.hits || [totalDamage]
-      return `${actor} used ${label}: ${formatHitList(hits, totalDamage)} (total ${totalDamage})`
-    }
-    return `${actor} hit ${evt.damage} ${evt.hit ? '✓' : '✗'}`
-  }
-  if (evt.type === 'eat') {
-    return `${evt.characterId === selfId ? 'You' : 'Opponent'} ate +${evt.heal}`
-  }
-  if (evt.type === 'drink') return `${evt.characterId === selfId ? 'You' : 'Opponent'} drank a potion`
-  if (evt.type === 'forfeit') return `${evt.characterId === selfId ? 'You' : 'Opponent'} forfeited`
-  return evt.type
-}
-
 export default function PvpCombatScreen({ matchId, onExit, addToast }) {
   const [state, setState] = useState(null)
   const [matchMeta, setMatchMeta] = useState(null)
@@ -231,6 +217,10 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
   // single tick. Consumables/prayer/special stay one-per-tick via pendingAction.
   const pendingGearRef = useRef([])
   const gearFlushTimer = useRef(null)
+  // Consumables batch like gear, but capped to one normal food + one combo item
+  // per tick so a food and a combo land together (combined heal), matching PvE.
+  const pendingConsumablesRef = useRef([])
+  const consumableFlushTimer = useRef(null)
   const lastPollOkAt = useRef(0)
   const latestTick = useRef(0)
   const fatalNotified = useRef(false)
@@ -332,6 +322,7 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
       mounted.current = false
       if (pollTimer.current) clearTimeout(pollTimer.current)
       if (gearFlushTimer.current) clearTimeout(gearFlushTimer.current)
+      if (consumableFlushTimer.current) clearTimeout(consumableFlushTimer.current)
       if (prayerOverrideTimer.current) clearTimeout(prayerOverrideTimer.current)
       for (const t of splatTimersRef.current) clearTimeout(t)
       splatTimersRef.current.clear()
@@ -463,6 +454,17 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
           await pvpApi.postIntent(matchId, latestTick.current, gearAction)
         }
       }
+      // Post the consumables for this tick (one normal food + one combo item), so
+      // a food and a combo resolve on the SAME server tick (combined heal). The
+      // engine enforces the eat/combo cooldowns, so over-eating is rejected there.
+      if (pendingConsumablesRef.current.length > 0) {
+        const consBatch = pendingConsumablesRef.current
+        pendingConsumablesRef.current = []
+        for (const entry of consBatch) {
+          if (terminalHandledRef.current) break
+          await pvpApi.postIntent(matchId, latestTick.current, entry.action)
+        }
+      }
       const action = pendingActionRef.current
       if (action) {
         await pvpApi.postIntent(matchId, latestTick.current, action)
@@ -588,8 +590,6 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
     }
   }, [matchId, hiddenMode])
 
-  const safeRecentEvents = Array.isArray(state?.recentEvents) ? state.recentEvents : []
-  const recentLines = safeRecentEvents.slice(-6).map((evt) => prettifyEvent(evt, selfId)).filter(Boolean)
 
   const queueAction = (action, options = {}) => {
     const { showBusy = true, runImmediately = true } = options
@@ -713,6 +713,24 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
     }, 120)
   }
 
+  // Queue an eat / drink for this tick. Caps at one normal food + one combo item
+  // (Karam/brew/potion); extra taps inside the window are dropped (the engine
+  // also enforces the multi-tick eat/combo cooldown). Flushes on a short debounce
+  // like gear so a food + combo tapped together land on one tick.
+  const enqueueConsumable = (action, item) => {
+    if (terminalHandledRef.current || endModalOpenRef.current) return
+    const combo = isComboConsumable(item)
+    const batch = pendingConsumablesRef.current
+    if (batch.some((e) => e.combo === combo)) return // already have this kind this tick → drop
+    batch.push({ action, combo })
+    setActionPanel(null)
+    if (consumableFlushTimer.current) clearTimeout(consumableFlushTimer.current)
+    consumableFlushTimer.current = setTimeout(() => {
+      consumableFlushTimer.current = null
+      if (!terminalHandledRef.current && !endModalOpenRef.current && !tickInFlight.current) runTick()
+    }, 120)
+  }
+
   const queueGearEquip = (inventorySlot) => {
     enqueueGear({ type: 'equip', inventorySlot })
   }
@@ -771,7 +789,7 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
         <div class="grid grid-cols-[minmax(220px,1fr)_minmax(0,1.4fr)_minmax(220px,1fr)] gap-4 items-start">
           <div class="space-y-2">
             <Card className="bg-[var(--color-void-dark)]">
-              <CompactHpBadge label="You" combatant={pair.self} align="left" splats={selfSplats} />
+              <CompactHpBadge label="You" combatant={pair.self} align="left" splats={selfSplats} showPrayer />
             </Card>
             <Card>
               <div class="flex items-center justify-between mb-2">
@@ -807,8 +825,8 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
                   let onClick
                   if (slot && item) {
                     if (item.slot) onClick = () => queueGearEquip(idx)
-                    else if (isConsumableFood(item)) onClick = () => queueAction({ type: 'eat', inventorySlot: idx }, { showBusy: false })
-                    else if (isConsumablePotion(item)) onClick = () => queueAction({ type: 'drink_potion', inventorySlot: idx }, { showBusy: false })
+                    else if (isConsumableFood(item)) onClick = () => enqueueConsumable({ type: 'eat', inventorySlot: idx }, item)
+                    else if (isConsumablePotion(item)) onClick = () => enqueueConsumable({ type: 'drink_potion', inventorySlot: idx }, item)
                   }
                   return (
                     <div key={`inv-${idx}`} onClick={onClick}>
@@ -877,23 +895,20 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
           <Card className="bg-[var(--color-void-dark)]">
             <div class="grid grid-cols-2 gap-3 items-start">
               <CompactHpBadge label="Opponent" combatant={pair.opp} align="left" splats={oppSplats} />
-              <CompactHpBadge label="You" combatant={pair.self} align="right" splats={selfSplats} />
+              <CompactHpBadge label="You" combatant={pair.self} align="right" splats={selfSplats} showPrayer />
             </div>
             <div class="mt-2 text-center text-[10px] font-[var(--font-mono)] text-[var(--color-gold)]">
               Tick {state?.tick ?? matchMeta?.current_tick ?? 0}
             </div>
           </Card>
 
-          <div class="grid grid-cols-2 gap-2">
-            <EquipmentMiniPanel title="Opponent gear" combatant={pair.opp} align="left" />
-            <EquipmentMiniPanel title="Your gear" combatant={pair.self} align="right" onUnequipSlot={queueGearUnequip} />
-          </div>
+          <GearComparePanel opp={pair.opp} self={pair.self} onUnequipSlot={queueGearUnequip} />
 
           <CombatQuickActions
             inventory={toArray(pair.self?.inventory)}
             itemsData={itemsData}
-            onEat={(entry) => queueAction({ type: 'eat', inventorySlot: entry.slotIdx }, { showBusy: false })}
-            onPotion={(entry) => queueAction({ type: 'drink_potion', inventorySlot: entry.slotIdx }, { showBusy: false })}
+            onEat={(entry) => enqueueConsumable({ type: 'eat', inventorySlot: entry.slotIdx }, entry.item)}
+            onPotion={(entry) => enqueueConsumable({ type: 'drink_potion', inventorySlot: entry.slotIdx }, entry.item)}
             onEquip={(entry) => queueGearEquip(entry.slotIdx)}
           />
 
@@ -958,16 +973,6 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
             )}
 
           </Card>
-
-          <Panel>
-            <div class="text-xs font-semibold text-[var(--color-gold)] mb-1">Recent actions</div>
-            <div class="space-y-1 max-h-24 overflow-y-auto">
-              {recentLines.length === 0 && <div class="text-[11px] text-[var(--color-parchment)] opacity-60">Waiting for first swing…</div>}
-              {recentLines.map((line, i) => (
-                <div key={i} class="text-[11px] text-[var(--color-parchment)] opacity-80">• {line}</div>
-              ))}
-            </div>
-          </Panel>
         </>
       )}
 

@@ -18,8 +18,8 @@ import { CombatMonsterInfoSheet, CombatRaidInfoSheet, MultiStyleChip } from './C
 import { getMonsterArt, getMonsterAttackStyles, getMonsterWeakness } from '../utils/combatArt.js'
 import { getSkillArt } from '../utils/skillArt.js'
 import { getPrayerStyleIcon } from '../utils/prayerIcons.js'
-import { createCombatState, createRaidCombatState, processCombatTick, applyEat, applySpecialAttack, applyInstantKill } from '../engine/combat.js'
-import { applyConsumableEffect, isLumiraBrew } from '../engine/consumables.js'
+import { createCombatState, createRaidCombatState, processCombatTick, applyEat, applyCombo, applySpecialAttack, applyInstantKill } from '../engine/combat.js'
+import { applyConsumableEffect, isLumiraBrew, isComboConsumable } from '../engine/consumables.js'
 import { getLevelFromXP } from '../engine/experience.js'
 import { getMonsterSeedDrops } from '../engine/seedDrops.js'
 import { getAgilityBankDelayMs, formatBankDelay } from '../engine/agility.js'
@@ -976,6 +976,10 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     const state = createCombatState(monster, combatType, combatStance, spell)
     // Reset special attack energy on new fight; preserve active potions so they last their full 5 minutes
     state.specialAttackEnergy = 100
+    // Prayer pool starts full (= Prayer level) at the start of a combat session.
+    const prayerLvl = getLevelFromXP(stats.prayer?.xp || 0)
+    state.maxPrayerPoints = prayerLvl
+    state.prayerPoints = prayerLvl
     state.activePotions = combatRef.current ? { ...combatRef.current.activePotions } : {}
     setCombat(state)
     setKillCount(0)
@@ -1004,6 +1008,9 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       return
     }
     state.specialAttackEnergy = 100
+    const raidPrayerLvl = getLevelFromXP(stats.prayer?.xp || 0)
+    state.maxPrayerPoints = raidPrayerLvl
+    state.prayerPoints = raidPrayerLvl
     state.activePotions = combatRef.current ? { ...combatRef.current.activePotions } : {}
     combatRef.current = state
     setCombat(state)
@@ -1028,6 +1035,10 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     state.activePotions = combatRef.current ? { ...combatRef.current.activePotions } : {}
     state.activeProtectionPrayer = combatRef.current?.activeProtectionPrayer ?? null
     state.activeCombatPrayer = combatRef.current?.activeCombatPrayer ?? null
+    // Prayer pool is a persistent pool — carry it (and its fractional drain) across kills.
+    state.maxPrayerPoints = combatRef.current?.maxPrayerPoints ?? getLevelFromXP(stats.prayer?.xp || 0)
+    state.prayerPoints = combatRef.current?.prayerPoints ?? state.maxPrayerPoints
+    state.prayerDrainAccumulator = combatRef.current?.prayerDrainAccumulator || 0
     combatRef.current = state
     setCombat(state)
     setActiveTask({ type: 'combat', monster, stance: combatStance, bankingEnabled: true, spell: spell || null })
@@ -1196,6 +1207,8 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     const brewId = newInv[idx].itemId
     const brew = itemsData[brewId]
     if (!brew) return
+    // A brew is a combo item — one per combo-delay; drop extra taps.
+    if (combatRef.current?.active && (combatRef.current.comboCooldown || 0) > 0) return
     if (newInv[idx].quantity > 1) {
       newInv[idx] = { ...newInv[idx], quantity: newInv[idx].quantity - 1 }
     } else {
@@ -1210,12 +1223,13 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     updateHP(actor.hp)
     hpRef.current = actor.hp
 
-    if (combat) {
-      // Carry the wiped potion set into combat state, then apply the eat-delay so
-      // the brew shares the food cooldown.
-      const afterEat = applyEat({ ...combatRef.current, activePotions: actor.activePotions })
-      setCombat(afterEat)
-      combatRef.current = afterEat
+    if (combatRef.current) {
+      // Carry the wiped potion set into combat state. A brew is a combo item, so
+      // it uses the combo cooldown — it can be drunk on the same tick as a normal
+      // food and does not delay the next attack.
+      const afterCombo = applyCombo({ ...combatRef.current, activePotions: actor.activePotions })
+      setCombat(afterCombo)
+      combatRef.current = afterCombo
     }
 
     setLog(prev => [...prev.slice(-20), {
@@ -1250,6 +1264,13 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     const foodId = newInv[foodIdx].itemId
     const food = itemsData[foodId]
     if (!food) return
+    // Spam guard (shared rule with PvP): one normal food per eat-delay, one combo
+    // item per combo-delay. Extra taps inside the delay window are dropped.
+    const combo = isComboConsumable(food)
+    if (combatRef.current?.active) {
+      const cd = combo ? (combatRef.current.comboCooldown || 0) : (combatRef.current.eatCooldown || 0)
+      if (cd > 0) return
+    }
     if (newInv[foodIdx].quantity > 1) {
       newInv[foodIdx] = { ...newInv[foodIdx], quantity: newInv[foodIdx].quantity - 1 }
     } else {
@@ -1262,8 +1283,13 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     updateHP(actor.hp)
     hpRef.current = actor.hp
 
-    if (combat) {
-      const newState = applyEat(combat)
+    if (combatRef.current) {
+      // Combo food (e.g. Karam) uses the combo cooldown so it can be eaten on the
+      // same tick as a normal food; normal food uses the standard eat delay. Build
+      // from combatRef.current (not the stale `combat` closure) so a normal food
+      // and a combo food eaten on the same tick don't clobber each other's state.
+      const base = combatRef.current
+      const newState = combo ? applyCombo(base) : applyEat(base)
       setCombat(newState)
       combatRef.current = newState
     }
@@ -1313,11 +1339,14 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     const potion = itemsData[potionItemId]
     if (!potion) return
 
-    // Lumira Brew: unlimited use, heals, wipes all active potion effects — bypass normal gate
+    // Lumira Brew: heals + wipes active potion effects — routed through the brew path.
     if (isLumiraBrew(potion)) {
       consumeBrewAt(potionIdx, newInv)
       return
     }
+
+    // Potions are combo items — one per combo-delay; drop extra taps.
+    if (combatRef.current.comboCooldown > 0) return
 
     // Remove potion from inventory
     if (newInv[potionIdx].quantity > 1) {
@@ -1328,13 +1357,19 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     updateInventory(newInv)
     inventoryRef.current = newInv
 
-    // Apply the drink (buff registration + immediate HP heal) via the shared
-    // consumables engine, then carry the result into combat state.
-    const actor = { hp: hpRef.current, maxHP: getMaxHP(), activePotions: { ...(combatRef.current.activePotions || {}) } }
-    applyConsumableEffect(actor, potion, potionItemId, 'drink')
+    // Apply the drink (buff registration + immediate HP heal + prayer restore)
+    // via the shared consumables engine, then carry the result into combat state.
+    const actor = {
+      hp: hpRef.current, maxHP: getMaxHP(),
+      activePotions: { ...(combatRef.current.activePotions || {}) },
+      prayerPoints: combatRef.current.prayerPoints,
+      maxPrayerPoints: combatRef.current.maxPrayerPoints,
+    }
+    const drinkResult = applyConsumableEffect(actor, potion, potionItemId, 'drink')
     updateHP(actor.hp)
     hpRef.current = actor.hp
-    const newState = { ...combatRef.current, activePotions: actor.activePotions }
+    // Potions are combo items — combo cooldown, no attack delay, same-tick as food.
+    const newState = applyCombo({ ...combatRef.current, activePotions: actor.activePotions, prayerPoints: actor.prayerPoints })
 
     if (potion.effect === 'hp') {
       setLog(prev => [...prev.slice(-20), {
@@ -1343,8 +1378,9 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
         time: Date.now()
       }])
     } else {
+      const restored = drinkResult?.prayerRestored || 0
       setLog(prev => [...prev.slice(-20), {
-        text: `Drank ${potion.name}`,
+        text: restored > 0 ? `Drank ${potion.name}, +${restored} prayer` : `Drank ${potion.name}`,
         type: 'heal',
         time: Date.now()
       }])
@@ -1475,13 +1511,21 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
 
     let newState = { ...combatRef.current }
 
-    // Determine prayer type and update accordingly
-    if (prayer.bonusType === 'protection') {
-      // Toggle or set protection prayer
-      newState.activeProtectionPrayer = combatRef.current.activeProtectionPrayer === prayerId ? null : prayerId
+    const isProtection = prayer.bonusType === 'protection'
+    const currentlyActive = isProtection
+      ? combatRef.current.activeProtectionPrayer === prayerId
+      : combatRef.current.activeCombatPrayer === prayerId
+
+    // Block turning a prayer ON with an empty pool (toggling OFF is always allowed).
+    if (!currentlyActive && (combatRef.current.prayerPoints ?? 0) <= 0) {
+      addToast('Out of prayer points!', 'error')
+      return
+    }
+
+    if (isProtection) {
+      newState.activeProtectionPrayer = currentlyActive ? null : prayerId
     } else {
-      // Toggle or set combat prayer
-      newState.activeCombatPrayer = combatRef.current.activeCombatPrayer === prayerId ? null : prayerId
+      newState.activeCombatPrayer = currentlyActive ? null : prayerId
     }
 
     combatRef.current = newState
@@ -2190,6 +2234,24 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
         </div>
       </div>
 
+      {/* Prayer pool — drains while prayers are active; restored by prayer/super restore potions */}
+      {typeof combat?.maxPrayerPoints === 'number' && (
+        <div class="mb-2">
+          <div class="flex items-center justify-between mb-0.5">
+            <div class="text-[10px] text-[var(--color-parchment)] opacity-50">🙏 Prayer</div>
+            <div class="text-[10px] font-[var(--font-mono)] text-[#7ec8ff]">
+              {Math.ceil(combat.prayerPoints || 0)}/{combat.maxPrayerPoints}
+            </div>
+          </div>
+          <div class="h-2 rounded-full bg-[rgba(255,255,255,0.07)] overflow-hidden">
+            <div
+              class="h-full rounded-full bg-gradient-to-r from-[#3b82f6] to-[#7ec8ff]"
+              style={{ width: `${Math.max(0, Math.min(100, ((combat.prayerPoints || 0) / combat.maxPrayerPoints) * 100))}%` }}
+            />
+          </div>
+        </div>
+      )}
+
       {/* Slayer task indicator */}
       {doesSlayerTaskMatchMonster(slayerTask?.monsterId, combat.monster.id) && (
         <div class="mb-2 bg-[#1a1a08] border border-[#3a3a10] rounded-lg px-3 py-1.5 flex items-center justify-between">
@@ -2595,6 +2657,22 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                   <HitSplatLayer splats={playerSplats} />
                 </div>
               </div>
+
+              {/* Prayer pool */}
+              {typeof combat?.maxPrayerPoints === 'number' && (
+                <div class="cb-hpblock">
+                  <div class="cb-hplabel">
+                    <span>🙏 Prayer</span>
+                    <span class="cb-hplabel__v" style={{ color: '#7ec8ff' }}>{Math.ceil(combat.prayerPoints || 0)}/{combat.maxPrayerPoints}</span>
+                  </div>
+                  <div class="h-2 rounded-full bg-[rgba(255,255,255,0.07)] overflow-hidden">
+                    <div
+                      class="h-full rounded-full bg-gradient-to-r from-[#3b82f6] to-[#7ec8ff]"
+                      style={{ width: `${Math.max(0, Math.min(100, ((combat.prayerPoints || 0) / combat.maxPrayerPoints) * 100))}%` }}
+                    />
+                  </div>
+                </div>
+              )}
 
               {/* Slayer task indicator */}
               {doesSlayerTaskMatchMonster(slayerTask?.monsterId, m.id) && (

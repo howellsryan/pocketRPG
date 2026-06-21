@@ -1,5 +1,11 @@
 export const DEFAULT_SLAYER_TASK_XP_MULTIPLIER = 2
-export const BOSS_SLAYER_TASK_XP_MULTIPLIER = 10
+// Bosses are tanky (high HP + high defence) so a kill takes far longer than a
+// regular monster's. Because Slayer XP/kill scales with the target's HP while
+// time-to-kill also scales with HP, a flat multiplier keeps Slayer XP/hour
+// roughly constant across targets. ×4 keeps a boss at most ~2× the best regular
+// monster's Slayer XP/hour once their heavier defence is accounted for — a
+// reward premium without the previous drastic (×10 + inflated slayerXP) spike.
+export const BOSS_SLAYER_TASK_XP_MULTIPLIER = 4
 
 function asPositiveNumber(value) {
   const number = Number(value)

@@ -411,6 +411,22 @@ describe('getItemIconTint — tier colouring', () => {
     ['ranging_potion',       'var(--potion-ranging)'],
     ['super_combat',         'var(--potion-super-combat)'],
     ['lumira_brew',          'var(--potion-strength)'],
+    // Runes — per-element colours
+    ['air_rune',             '#ffffff'],
+    ['water_rune',           '#3b82f6'],
+    ['earth_rune',           '#8b5a2b'],
+    ['fire_rune',            '#ef4444'],
+    ['chaos_rune',           '#eab308'],
+    ['death_rune',           '#f5f5f5'],
+    ['blood_rune',           '#b3221d'],
+    ['soul_rune',            '#9fd0ff'],
+    ['law_rune',             '#2a3f8f'],
+    ['cosmic_rune',          '#eab308'],
+    ['wrath_rune',           '#ef4444'],
+    ['mind_rune',            '#f08a24'],
+    ['body_rune',            '#5aa0e0'],
+    ['astral_rune',          '#f5f5f5'],
+    ['nature_rune',          '#3fae5a'],
   ]
 
   for (const [id, expected] of cases) {

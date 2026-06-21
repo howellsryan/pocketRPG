@@ -2,7 +2,7 @@ import { useState, useRef } from 'preact/hooks'
 import GameIcon from './GameIcon.jsx'
 import { isConsumableFood, isConsumablePotion } from '../engine/consumables.js'
 
-// Shared mobile combat quick-actions panel (Food / Potions / Weapons / Armour
+// Shared mobile combat quick-actions panel (Food & Potions / Weapons / Armour
 // tabs). Used by BOTH PvE (CombatScreen) and PvP (PvpCombatScreen) so the layout
 // lives in one place. Each screen supplies its own dispatch: PvE acts immediately
 // by itemId, PvP queues by inventory slot index — both read the same resolved
@@ -16,7 +16,7 @@ export default function CombatQuickActions({
   onEquip,
   isPotionActive,
 }) {
-  const [tab, setTab] = useState('food')
+  const [tab, setTab] = useState('consumable')
 
   // Tap-acknowledgement flash. PvP queues intents (no instant inventory change),
   // so blink the tapped slot to confirm the action registered — same feedback in
@@ -66,11 +66,16 @@ export default function CombatQuickActions({
   // Stable name-sort so the grid doesn't reshuffle as items are equipped/consumed.
   const byName = (a, b) => a.item.name.localeCompare(b.item.name)
 
-  const foods = groupInv(isConsumableFood)
-  const potions = groupInv(isConsumablePotion)
+  // Food and potions share one tab: food first (sorted), then potions (sorted).
+  // Each entry carries its `kind` so the grid can route eat vs. drink and pick
+  // the right tag/active-highlight. A brew (e.g. Lumira) is both eat-able and a
+  // potion, so exclude potions from the food group to show it once (as a potion).
+  const foods = groupInv(it => isConsumableFood(it) && !isConsumablePotion(it)).sort(byName).map(e => ({ ...e, kind: 'food' }))
+  const potions = groupInv(isConsumablePotion).sort(byName).map(e => ({ ...e, kind: 'potion' }))
+  const consumables = [...foods, ...potions]
   const weapons = groupInv(it => it.slot === 'weapon').sort(byName)
   const armour = groupInv(it => it.slot && it.slot !== 'weapon').sort(byName)
-  const tabs = [['food', 'Food', foods.length], ['potion', 'Potions', potions.length], ['weapon', 'Weapons', weapons.length], ['armour', 'Armour', armour.length]]
+  const tabs = [['consumable', 'Food & Potions', consumables.length], ['weapon', 'Weapons', weapons.length], ['armour', 'Armour', armour.length]]
 
   return (
     <div class="cb-qa">
@@ -83,28 +88,19 @@ export default function CombatQuickActions({
       </div>
 
       <div class="cb-qa__grid">
-        {tab === 'food' && (foods.length === 0
-          ? <div class="cb-qa__empty">No food in your inventory</div>
-          : foods.map((entry) => (
-            <button key={entry.itemId} class="cb-slot" onClick={() => handleEat(entry)}>
-              <span class="cb-slot__qty">{fmtQty(entry.qty)}</span>
-              <GameIcon item={entry.item} size={18} />
-              <span class="cb-slot__name">{entry.item.name}</span>
-              {entry.item.heals != null && <span class="cb-slot__tag heal">+{entry.item.heals}</span>}
-              {ping(entry)}
-            </button>
-          )))}
-
-        {tab === 'potion' && (potions.length === 0
-          ? <div class="cb-qa__empty">No potions in your inventory</div>
-          : potions.map((entry) => {
-            const active = isPotionActive ? isPotionActive(entry.item) : false
+        {tab === 'consumable' && (consumables.length === 0
+          ? <div class="cb-qa__empty">No food or potions in your inventory</div>
+          : consumables.map((entry) => {
+            const isPotion = entry.kind === 'potion'
+            const active = isPotion && isPotionActive ? isPotionActive(entry.item) : false
             return (
-              <button key={entry.itemId} class={'cb-slot' + (active ? ' is-active' : '')} onClick={() => handlePotion(entry)}>
+              <button key={entry.itemId} class={'cb-slot' + (active ? ' is-active' : '')} onClick={() => (isPotion ? handlePotion(entry) : handleEat(entry))}>
                 <span class="cb-slot__qty">{fmtQty(entry.qty)}</span>
                 <GameIcon item={entry.item} size={18} />
                 <span class="cb-slot__name">{entry.item.name}</span>
-                {POT_TAG[entry.item.effect] && <span class="cb-slot__tag">{POT_TAG[entry.item.effect]}</span>}
+                {isPotion
+                  ? (POT_TAG[entry.item.effect] && <span class="cb-slot__tag">{POT_TAG[entry.item.effect]}</span>)
+                  : (entry.item.heals != null && <span class="cb-slot__tag heal">+{entry.item.heals}</span>)}
                 {active && <span class="cb-slot__ring" />}
                 {ping(entry)}
               </button>

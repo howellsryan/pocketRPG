@@ -176,8 +176,8 @@ export function computeBotIntents(state, botId, itemsData) {
   const intents = []
 
   // 1. Drink potion — at fight start or when boost has worn off.
-  //    potionCooldown > 0 means we cannot drink yet.
-  if ((bot.potionCooldown || 0) <= 0) {
+  //    Potions are combo items, gated by the shared combo cooldown.
+  if ((bot.comboCooldown || 0) <= 0) {
     const hasPotionActive = Object.keys(bot.activePotions || {}).some(
       (pid) => (bot.activePotions[pid] || 0) > 0,
     )

@@ -8,6 +8,8 @@ import {
   getPotionStatBoost,
   getActivePotionBoosts,
   applyConsumableEffect,
+  isComboConsumable,
+  isNormalFood,
 } from '../src/engine/consumables.js'
 
 const ITEMS: any = {
@@ -19,6 +21,7 @@ const ITEMS: any = {
   prayer_potion: { id: 'prayer_potion', type: 'potion', effect: 'prayer', boost: 32, duration: 300 },
   super_restore: { id: 'super_restore', type: 'potion', effect: 'super_restore', duration: 300 },
   lumira_brew: { id: 'lumira_brew', type: 'potion', effect: 'hp', boost: 22, wipesPotions: true, duration: 300 },
+  karam: { id: 'karam', type: 'food', heals: 18, combo: true },
   bronze_dagger: { id: 'bronze_dagger', type: 'weapon', slot: 'weapon' },
 }
 
@@ -42,6 +45,22 @@ describe('consumables — eligibility', () => {
   it('identifies brews by wipesPotions', () => {
     expect(isLumiraBrew(ITEMS.lumira_brew)).toBe(true)
     expect(isLumiraBrew(ITEMS.attack_potion)).toBe(false)
+  })
+
+  it('classifies combo consumables: combo food + every potion (brews included)', () => {
+    expect(isComboConsumable(ITEMS.karam)).toBe(true)       // combo food
+    expect(isComboConsumable(ITEMS.attack_potion)).toBe(true)
+    expect(isComboConsumable(ITEMS.super_combat)).toBe(true)
+    expect(isComboConsumable(ITEMS.lumira_brew)).toBe(true)  // brew is a potion
+    expect(isComboConsumable(ITEMS.shark)).toBe(false)       // normal food
+    expect(isComboConsumable(ITEMS.bronze_dagger)).toBe(false)
+  })
+
+  it('normal food excludes combo food and potions', () => {
+    expect(isNormalFood(ITEMS.shark)).toBe(true)
+    expect(isNormalFood(ITEMS.trout)).toBe(true)
+    expect(isNormalFood(ITEMS.karam)).toBe(false)            // combo food
+    expect(isNormalFood(ITEMS.lumira_brew)).toBe(false)
   })
 
   it('reads heal amount from canonical and legacy fields', () => {

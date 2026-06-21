@@ -4351,7 +4351,6 @@
     "skipCost": 10,
     "combatLevel": 702,
     "hitpoints": 250,
-    "slayerXP": 10000,
     "stats": {
       "attack": 960,
       "strength": 960,
@@ -4443,7 +4442,6 @@
     "skipCost": 250,
     "combatLevel": 1400,
     "hitpoints": 600,
-    "slayerXP": 25000,
     "stats": {
       "attack": 1200,
       "strength": 1200,
@@ -7953,7 +7951,6 @@
     "combatLevel": 250,
     "hitpoints": 480,
     "slayerRequirement": 80,
-    "slayerXP": 12000,
     "stats": { "attack": 180, "strength": 180, "defence": 150, "magic": 150, "ranged": 1 },
     "attackSpeed": 4,
     "attackStyle": "slash",

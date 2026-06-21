@@ -38,6 +38,8 @@ const OUTLINE_SPEC = {
   kodai_robe_bottom:   ['black', false],
   ancient_maul:        ['black', true],
   occult_necklace:     ['black', true],
+  // Wrath rune — red body with a black rim so it reads as "red & black".
+  wrath_rune:          ['black', true],
   // Red rim
   colossal_ballista:   ['red', false],
   nightfang_bow:       ['red', false],

@@ -11,6 +11,7 @@ import { MELEE_XP_PER_DAMAGE, RANGED_XP_PER_DAMAGE, MAGIC_XP_PER_DAMAGE, HP_XP_P
 import { randInt } from '../utils/helpers.js'
 import { getSlayerTaskEquipmentBonuses } from './slayerCombatBonuses.js'
 import { getPotionStatBoost, getActivePotionBoosts } from './consumables.js'
+import { applyPrayerDrainTick } from './prayerDrain.js'
 import { getVoidKingCombatMultipliers } from './combatSetBonuses.js'
 import { getMonsterSeedDrops } from './seedDrops.js'
 
@@ -38,6 +39,7 @@ export function createCombatState(monster, combatType = 'melee', stance = 'accur
     monsterAttackTimer: preparedMonster.attackSpeed || 4,  // 1-attack delay so player always gets first hit
     eatCooldown: 0,
     potionCooldown: 0,
+    comboCooldown: 0,  // combo food / potions — own cooldown, usable on the same tick as normal food
     log: [],         // combat log entries
     tickCount: 0,
     xpGained: {},    // accumulated xp per skill
@@ -46,6 +48,9 @@ export function createCombatState(monster, combatType = 'melee', stance = 'accur
     specialAttackQueued: false,  // flag to fire special attack on next available tick
     activeProtectionPrayer: null,  // one protection prayer, reset on each new fight
     activeCombatPrayer: null,      // one combat enhancing prayer, reset on each new fight
+    prayerPoints: null,            // prayer-point pool (set by the screen to Prayer level at fight start)
+    maxPrayerPoints: null,         // pool cap = Prayer level
+    prayerDrainAccumulator: 0,     // fractional carry for sub-1/tick drain
     activePotions: {},             // { potionItemId: durationInTicks } - multiple different potion types allowed
     doubleKillCount: 0,            // tracks how many times a requiresDoubleKill boss has been defeated
     raid: null                     // raid state: { raidId, bosses[], currentBossIndex, monstersData }
@@ -355,6 +360,11 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
   if (state.monsterAttackTimer > 0) state.monsterAttackTimer--
   if (state.eatCooldown > 0) state.eatCooldown--
   if (state.potionCooldown > 0) state.potionCooldown--
+  if (state.comboCooldown > 0) state.comboCooldown--
+
+  // Drain the prayer pool for this tick (higher-tier prayers drain faster). When
+  // it empties, active prayers switch off — so their bonuses below are skipped.
+  applyPrayerDrainTick(state, prayersData)
 
   // Decrement potion durations and remove expired potions
   for (const [potionId, duration] of Object.entries(state.activePotions)) {
@@ -981,6 +991,15 @@ function rollRaidRewards(rewards) {
  */
 export function applyEat(combatState) {
   return { ...combatState, eatCooldown: EAT_TICK_COST, playerAttackTimer: Math.max(combatState.playerAttackTimer, EAT_TICK_COST) }
+}
+
+/**
+ * Apply a combo consumable (combo food like Karam, brews, or potions). Uses its
+ * own cooldown so it can be used on the SAME tick as a normal food, and — unlike
+ * eating — does NOT delay the next attack.
+ */
+export function applyCombo(combatState) {
+  return { ...combatState, comboCooldown: EAT_TICK_COST }
 }
 
 /**

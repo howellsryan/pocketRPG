@@ -11,6 +11,10 @@
  * prayer-point pool and bank-draw rules; it is intentionally not unified here.
  */
 
+// Prayer points restored by drinking a restore potion mid-combat — shared with
+// the prayer-drain module (one-way import; prayerDrain.js depends on nothing).
+import { PRAYER_RESTORE_AMOUNTS } from './prayerDrain.js'
+
 // Heal amount granted by eating a food/brew item (canonical `heals`, legacy `heal`).
 export function getHealAmount(item) {
   const n = Number(item?.heals ?? item?.heal ?? 0)
@@ -30,6 +34,24 @@ export function isConsumableFood(item) {
 // Eligible for the `drink_potion` action: any potion item.
 export function isConsumablePotion(item) {
   return !!item && item.type === 'potion'
+}
+
+// A "combo" consumable can be used on the SAME tick as a normal food. This
+// covers combo food (e.g. Karam, flagged `combo: true`) and EVERY potion —
+// brews (which heal) and stat/restore potions alike. Combo items share a single
+// combo cooldown so only one lands per tick, independent of the normal-food eat
+// delay, and they do not delay the next attack. Used by both the PvE combat tick
+// and the server-authoritative PvP engine so the rule stays in lockstep.
+export function isComboConsumable(item) {
+  if (!item) return false
+  if (item.type === 'potion') return true
+  return item.type === 'food' && item.combo === true
+}
+
+// Normal food obeys the eat delay (one per few ticks) and blocks the next
+// attack. Combo food (Karam) is excluded.
+export function isNormalFood(item) {
+  return !!item && item.type === 'food' && item.combo !== true
 }
 
 // Buff duration in 600ms ticks. `item.duration` is in seconds (default 300s).
@@ -104,14 +126,22 @@ export function applyConsumableEffect(actor, item, itemId, kind) {
   }
 
   // Drink a potion: register its buff for the full duration. HP-effect potions
-  // also heal immediately. Non-boosting potions (prayer/super_restore) are
-  // consumed for no mechanical effect, matching live PvE.
+  // also heal immediately; prayer/super_restore potions refill the prayer pool
+  // when the actor tracks one (live combat). Both effects fall through harmlessly
+  // when the actor has no matching field.
   actor.activePotions[itemId] = getPotionDurationTicks(item)
   if (item.effect === 'hp') {
     const heal = Number(item.boost) || 10
     const before = actor.hp
     actor.hp = Math.min(maxHP, actor.hp + heal)
     return { healed: actor.hp - before, wiped: false, buffed: true }
+  }
+  const restore = PRAYER_RESTORE_AMOUNTS[item.effect] || 0
+  if (restore > 0 && typeof actor.prayerPoints === 'number') {
+    const max = Number(actor.maxPrayerPoints) || actor.prayerPoints
+    const before = actor.prayerPoints
+    actor.prayerPoints = Math.min(max, actor.prayerPoints + restore)
+    return { healed: 0, wiped: false, buffed: true, prayerRestored: actor.prayerPoints - before }
   }
   return { healed: 0, wiped: false, buffed: true }
 }

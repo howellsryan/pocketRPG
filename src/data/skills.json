@@ -234,6 +234,14 @@
         "product": "raw_eel"
       },
       {
+        "id": "karam",
+        "name": "Fish Karam",
+        "level": 65,
+        "ticks": 8,
+        "xp": 105,
+        "product": "raw_karam"
+      },
+      {
         "id": "shark",
         "name": "Fish Shark",
         "level": 76,
@@ -1269,6 +1277,18 @@
           "raw_eel": 1
         },
         "burnStopLevel": 86
+      },
+      {
+        "id": "cook_karam",
+        "name": "Cook Karam",
+        "level": 65,
+        "ticks": 4,
+        "xp": 190,
+        "product": "karam",
+        "materials": {
+          "raw_karam": 1
+        },
+        "burnStopLevel": 99
       },
       {
         "id": "cook_shark",
