@@ -1,14 +1,16 @@
+import { useState } from 'preact/hooks'
 import { useGame } from '../state/gameState.jsx'
 import SkillScreenHeader from '../components/SkillScreenHeader.jsx'
 import SkillActionRow from '../components/SkillActionRow.jsx'
 import SectionHeader from '../components/SectionHeader.jsx'
+import Modal from '../components/Modal.jsx'
 import { getLevelFromXP } from '../engine/experience.js'
 import monstersData from '../data/monsters.json'
 import itemsData from '../data/items.json'
 import { SLAYER_UNLOCKS, getSlayerUnlockPurchaseState, ownsItem } from '../engine/slayerUnlocks.js'
 import { requestCriticalPushSave } from '../cloud/sync.js'
 import { DAGANNOTH_KINGS_TASK_ID, SLAYER_TASK_SKIP_POINT_COST } from '../engine/slayerTasks.js'
-import { SLAYER_MASTERS, resolveTaskMonsterIds, pickSlayerMonster, buildSlayerTask } from '../engine/slayerMasters.js'
+import { SLAYER_MASTERS, resolveTaskMonsterIds, pickSlayerMonster, buildSlayerTask, isEntryEligible } from '../engine/slayerMasters.js'
 import { api, getToken, getCharacterId, CREDITS_UPDATED_EVENT } from '../cloud/api.js'
 import { applyCloudSave } from '../cloud/sync.js'
 import { CRITICAL_SAVE_REASONS } from '../cloud/criticalSavePolicy.js'
@@ -56,8 +58,48 @@ const SLAYER_MONSTER_ICONS = {
   marshscale_shaman: '🦎', crazy_archaeologist: '🏺', adamant_dragon: '🐲', rune_dragon: '🐲',
 }
 
+// Resolve a master's monster-pool entry into display info for the info modal.
+// Composite tasks (e.g. Nagadoth Kings) resolve to several monsters; we surface
+// the highest combat level / slayer requirement among them.
+function getPoolEntryInfo(entry) {
+  const id = typeof entry === 'object' ? entry.id : entry
+  const isBoss = typeof entry === 'object' && !!entry.boss
+  const resolved = resolveTaskMonsterIds(id).map(mid => monstersData[mid]).filter(Boolean)
+  const name = id === DAGANNOTH_KINGS_TASK_ID
+    ? 'Nagadoth Kings'
+    : (monstersData[id]?.name || id.replace(/_/g, ' '))
+  const combatLevel = resolved.length ? Math.max(...resolved.map(m => m.combatLevel || 0)) : 0
+  const slayerReq = resolved.length ? Math.max(...resolved.map(m => m.slayerRequirement || 0)) : 0
+  return { id, isBoss, name, combatLevel, slayerReq, icon: SLAYER_MONSTER_ICONS[id] || '👹' }
+}
+
+// Renders one task row inside the slayer-master info modal. Monsters the player
+// can't yet be assigned (slayer level too low) are dimmed with a lock hint.
+function SlayerTaskInfoRow({ entry, slayerLevel }) {
+  const { name, combatLevel, slayerReq, icon } = getPoolEntryInfo(entry)
+  const eligible = isEntryEligible(entry, slayerLevel)
+  return (
+    <div class={`flex items-center gap-2.5 px-2.5 py-2 rounded-lg bg-[rgba(255,255,255,0.025)] border border-[rgba(255,255,255,0.05)] ${eligible ? '' : 'opacity-50'}`}>
+      <span class="text-xl flex-shrink-0 w-7 text-center">{icon}</span>
+      <div class="flex-1 min-w-0">
+        <div class="text-[13px] font-semibold text-[var(--color-parchment)] truncate">{name}</div>
+        {slayerReq > 0 && (
+          <div class={`text-[10px] font-semibold mt-0.5 ${eligible ? 'text-[var(--color-parchment)] opacity-45' : 'text-[var(--color-blood-light)]'}`}>
+            {eligible ? `Requires Slayer ${slayerReq}` : `🔒 Requires Slayer ${slayerReq}`}
+          </div>
+        )}
+      </div>
+      {combatLevel > 0 && (
+        <span class="text-[10px] font-[var(--font-mono)] text-[var(--color-blood-light)] flex-shrink-0">CB {combatLevel}</span>
+      )}
+    </div>
+  )
+}
+
 export default function SlayerScreen({ onBack, onNavigate }) {
   const { stats, slayerTask, setSlayerTask, slayerPoints, updateSlayerPoints, addToast, bank, inventory, addToBank, getSnapshot, slayerTasksCompleted, loadGame, slayerPerks, updateSlayerPerk } = useGame()
+
+  const [infoMaster, setInfoMaster] = useState(null)
 
   const combatLevel = getPlayerCombatLevel(stats)
   const slayerLevel = getLevelFromXP(stats.slayer?.xp || 0)
@@ -243,22 +285,33 @@ export default function SlayerScreen({ onBack, onNavigate }) {
           const meetsSlayer = slayerLevel >= master.slayerReq
           const meetsReq = meetsCombat && meetsSlayer
           return (
-            <SkillActionRow
-              key={master.id}
-              icon={<span class="text-2xl">{master.icon}</span>}
-              title={master.name}
-              meta={<>
-                {master.location} · {master.description}
-                <span class="block mt-1">
-                  {master.combatReq > 0 && <span class={meetsCombat ? 'text-[var(--color-hp-green)]' : 'text-[var(--color-blood-light)]'}>CB {master.combatReq}</span>}
-                  {master.slayerReq > 0 && <span class={`ml-2 ${meetsSlayer ? 'text-[var(--color-hp-green)]' : 'text-[var(--color-blood-light)]'}`}>Slayer {master.slayerReq}</span>}
-                  {master.combatReq === 0 && master.slayerReq === 0 && <span class="text-[var(--color-hp-green)]">No requirement</span>}
-                </span>
-              </>}
-              chip={<>{master.pointsPerTask} pts</>}
-              disabled={!meetsReq || !!slayerTask}
-              onClick={() => handleGetTask(master)}
-            />
+            <div key={master.id} class="flex gap-2 items-center">
+              <div class="flex-1 min-w-0">
+                <SkillActionRow
+                  icon={<span class="text-2xl">{master.icon}</span>}
+                  title={master.name}
+                  meta={<>
+                    {master.location} · {master.description}
+                    <span class="block mt-1">
+                      {master.combatReq > 0 && <span class={meetsCombat ? 'text-[var(--color-hp-green)]' : 'text-[var(--color-blood-light)]'}>CB {master.combatReq}</span>}
+                      {master.slayerReq > 0 && <span class={`ml-2 ${meetsSlayer ? 'text-[var(--color-hp-green)]' : 'text-[var(--color-blood-light)]'}`}>Slayer {master.slayerReq}</span>}
+                      {master.combatReq === 0 && master.slayerReq === 0 && <span class="text-[var(--color-hp-green)]">No requirement</span>}
+                    </span>
+                  </>}
+                  chip={<>{master.pointsPerTask} pts</>}
+                  disabled={!meetsReq || !!slayerTask}
+                  onClick={() => handleGetTask(master)}
+                />
+              </div>
+              <button
+                onClick={() => setInfoMaster(master)}
+                aria-label="Slayer master tasks info"
+                class="flex-shrink-0 w-11 h-11 rounded-full border border-[var(--color-void-border)] bg-[var(--color-void-light)] text-[var(--color-gold)] text-[15px] font-bold flex items-center justify-center active:opacity-70"
+                title="View assignable tasks"
+              >
+                ⓘ
+              </button>
+            </div>
           )
         })}
       </div>
@@ -318,6 +371,40 @@ export default function SlayerScreen({ onBack, onNavigate }) {
           )
         })()}
       </div>
+
+      {/* Master task info — lists every monster / boss this master can assign */}
+      {infoMaster && (() => {
+        const pool = infoMaster.monsterPool || []
+        const bosses = pool.filter(entry => typeof entry === 'object' && !!entry.boss)
+        const monsters = pool.filter(entry => !(typeof entry === 'object' && entry.boss))
+        return (
+          <Modal title={`${infoMaster.icon} ${infoMaster.name} — Tasks`} onClose={() => setInfoMaster(null)}>
+            <p class="mb-3 text-[11px] text-[var(--color-parchment)] opacity-60 leading-relaxed">
+              {infoMaster.name} can assign any of the following tasks. Greyed-out entries require a higher Slayer level before they can be assigned to you.
+            </p>
+            {monsters.length > 0 && (
+              <>
+                <SectionHeader size="sm" className="mb-2">Monsters</SectionHeader>
+                <div class="flex flex-col gap-1.5 mb-4">
+                  {monsters.map(entry => (
+                    <SlayerTaskInfoRow key={typeof entry === 'object' ? entry.id : entry} entry={entry} slayerLevel={slayerLevel} />
+                  ))}
+                </div>
+              </>
+            )}
+            {bosses.length > 0 && (
+              <>
+                <SectionHeader size="sm" className="mb-2">Bosses</SectionHeader>
+                <div class="flex flex-col gap-1.5">
+                  {bosses.map(entry => (
+                    <SlayerTaskInfoRow key={typeof entry === 'object' ? entry.id : entry} entry={entry} slayerLevel={slayerLevel} />
+                  ))}
+                </div>
+              </>
+            )}
+          </Modal>
+        )
+      })()}
     </div>
   )
 }
