@@ -37,6 +37,7 @@ export const RAID_ART = {
   "vaults_of_xyren": { icon: "temple_gate", accent: "#9b6cff" },
   "crimson_night_theatre": { icon: "ancient_columns", accent: "#c0453b" },
   "cryptbound_champions": { icon: "stone_tower", accent: "#8b9a8f" },
+  "tomb_of_arasmus": { icon: "crowned_skull", accent: "#a855f7" },
 }
 
 // Monster id -> emblem + accent (accent inherited from its area / raid).

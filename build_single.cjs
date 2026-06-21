@@ -116,6 +116,7 @@ const sourceFiles = [
   'components/Card.js',
   'components/Panel.js',
   'components/Button.js',
+  'components/WeaponChargePanel.js',
   'components/SectionHeader.js',
   'components/BonusDisplay.js',
   'components/ItemDetailPanel.js',

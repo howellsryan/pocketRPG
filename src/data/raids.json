@@ -360,6 +360,98 @@
     },
     "legacy_id": "barrows_brothers"
   },
+  "tomb_of_arasmus": {
+    "id": "tomb_of_arasmus",
+    "name": "Tomb of Arasmus",
+    "icon": "🏜️",
+    "description": "Brave the cursed tomb of the god-king Arasmus. Defeat his four guardians and the Warden to claim the treasures within.",
+    "bosses": [
+      "khareth_the_shadowbound",
+      "gorroth_the_mountain_ape",
+      "khepra_the_scarab_matron",
+      "sebakh_the_devourer",
+      "warden_of_arasmus"
+    ],
+    "skipCost": 10,
+    "rewards": {
+      "always": [
+        {
+          "itemId": "coins",
+          "quantity": [
+            80000,
+            250000
+          ],
+          "chance": 1
+        },
+        {
+          "itemId": "blood_rune",
+          "quantity": [
+            120,
+            280
+          ],
+          "chance": 0.7
+        },
+        {
+          "itemId": "death_rune",
+          "quantity": [
+            100,
+            250
+          ],
+          "chance": 0.6
+        },
+        {
+          "itemId": "soul_rune",
+          "quantity": [
+            50,
+            150
+          ],
+          "chance": 0.45
+        },
+        {
+          "itemId": "snapdrake",
+          "quantity": [
+            5,
+            20
+          ],
+          "chance": 0.4
+        }
+      ],
+      "unique": {
+        "chance": 0.06666666666666667,
+        "items": [
+          {
+            "itemId": "fang_of_osmun",
+            "weight": 16
+          },
+          {
+            "itemId": "sunbearer_ring",
+            "weight": 16
+          },
+          {
+            "itemId": "ward_of_elidria",
+            "weight": 11
+          },
+          {
+            "itemId": "masari_mask",
+            "weight": 7
+          },
+          {
+            "itemId": "masari_body",
+            "weight": 7
+          },
+          {
+            "itemId": "masari_chaps",
+            "weight": 7
+          },
+          {
+            "itemId": "shadow_of_tumaken",
+            "weight": 3
+          }
+        ]
+      }
+    },
+    "legacy_id": "tombs_of_amascut"
+  },
   "chambers_of_xeric": {
     "id": "vaults_of_xyren",
     "name": "Vaults of Xyren",
@@ -720,5 +812,97 @@
       }
     },
     "legacy_id": "barrows_brothers"
+  },
+  "tombs_of_amascut": {
+    "id": "tomb_of_arasmus",
+    "name": "Tomb of Arasmus",
+    "icon": "🏜️",
+    "description": "Brave the cursed tomb of the god-king Arasmus. Defeat his four guardians and the Warden to claim the treasures within.",
+    "bosses": [
+      "khareth_the_shadowbound",
+      "gorroth_the_mountain_ape",
+      "khepra_the_scarab_matron",
+      "sebakh_the_devourer",
+      "warden_of_arasmus"
+    ],
+    "skipCost": 10,
+    "rewards": {
+      "always": [
+        {
+          "itemId": "coins",
+          "quantity": [
+            80000,
+            250000
+          ],
+          "chance": 1
+        },
+        {
+          "itemId": "blood_rune",
+          "quantity": [
+            120,
+            280
+          ],
+          "chance": 0.7
+        },
+        {
+          "itemId": "death_rune",
+          "quantity": [
+            100,
+            250
+          ],
+          "chance": 0.6
+        },
+        {
+          "itemId": "soul_rune",
+          "quantity": [
+            50,
+            150
+          ],
+          "chance": 0.45
+        },
+        {
+          "itemId": "snapdrake",
+          "quantity": [
+            5,
+            20
+          ],
+          "chance": 0.4
+        }
+      ],
+      "unique": {
+        "chance": 0.06666666666666667,
+        "items": [
+          {
+            "itemId": "fang_of_osmun",
+            "weight": 16
+          },
+          {
+            "itemId": "sunbearer_ring",
+            "weight": 16
+          },
+          {
+            "itemId": "ward_of_elidria",
+            "weight": 11
+          },
+          {
+            "itemId": "masari_mask",
+            "weight": 7
+          },
+          {
+            "itemId": "masari_body",
+            "weight": 7
+          },
+          {
+            "itemId": "masari_chaps",
+            "weight": 7
+          },
+          {
+            "itemId": "shadow_of_tumaken",
+            "weight": 3
+          }
+        ]
+      }
+    },
+    "legacy_id": "tombs_of_amascut"
   }
 }

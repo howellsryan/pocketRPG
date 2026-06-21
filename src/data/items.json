@@ -9607,6 +9607,265 @@
     "isGeneralStore": false,
     "isBossUnique": true
   },
+  "fang_of_osmun": {
+    "id": "fang_of_osmun",
+    "legacy_item_id": "osmumtens_fang",
+    "name": "Fang Of Osmun",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": false,
+    "stackable": false,
+    "attackSpeed": 5,
+    "attackStyle": "stab",
+    "attackBonus": {
+      "stab": 55,
+      "slash": 50,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 60,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "attack": 82
+    },
+    "shopValue": 75000000,
+    "specialAttack": {
+      "type": "fang",
+      "energyCost": 25,
+      "description": "Strikes with deadly precision \u2014 rolls accuracy twice and avoids low hits, dealing 15%\u201385% of max."
+    },
+    "icon": "\ud83d\udde1\ufe0f",
+    "isGeneralStore": false,
+    "isBossUnique": true
+  },
+  "sunbearer_ring": {
+    "id": "sunbearer_ring",
+    "legacy_item_id": "lightbearer",
+    "name": "Sunbearer Ring",
+    "type": "armour",
+    "slot": "ring",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {},
+    "shopValue": 15000000,
+    "icon": "\ud83d\udc8d",
+    "isGeneralStore": false,
+    "isBossUnique": true
+  },
+  "ward_of_elidria": {
+    "id": "ward_of_elidria",
+    "legacy_item_id": "elidinis_ward",
+    "name": "Ward Of Elidria",
+    "type": "armour",
+    "slot": "shield",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 15,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 5,
+      "slash": 5,
+      "crush": 5,
+      "magic": 20,
+      "ranged": 5
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 5
+    },
+    "requirements": {
+      "magic": 75
+    },
+    "shopValue": 50000000,
+    "icon": "\ud83d\udee1\ufe0f",
+    "isGeneralStore": false,
+    "isBossUnique": true
+  },
+  "masari_mask": {
+    "id": "masari_mask",
+    "legacy_item_id": "masori_mask",
+    "name": "Masari Mask",
+    "type": "armour",
+    "slot": "head",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 18
+    },
+    "defenceBonus": {
+      "stab": 4,
+      "slash": 2,
+      "crush": 6,
+      "magic": 9,
+      "ranged": 15
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 2,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "ranged": 80,
+      "defence": 30
+    },
+    "shopValue": 100000000,
+    "icon": "\ud83c\udfad",
+    "isGeneralStore": false,
+    "isBossUnique": true
+  },
+  "masari_body": {
+    "id": "masari_body",
+    "legacy_item_id": "masori_body",
+    "name": "Masari Body",
+    "type": "armour",
+    "slot": "body",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 64
+    },
+    "defenceBonus": {
+      "stab": 56,
+      "slash": 52,
+      "crush": 50,
+      "magic": 44,
+      "ranged": 59
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 2,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "ranged": 80,
+      "defence": 30
+    },
+    "shopValue": 375000000,
+    "icon": "\ud83e\udd85",
+    "isGeneralStore": false,
+    "isBossUnique": true
+  },
+  "masari_chaps": {
+    "id": "masari_chaps",
+    "legacy_item_id": "masori_chaps",
+    "name": "Masari Chaps",
+    "type": "armour",
+    "slot": "legs",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 33
+    },
+    "defenceBonus": {
+      "stab": 33,
+      "slash": 30,
+      "crush": 35,
+      "magic": 25,
+      "ranged": 33
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 2,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "ranged": 80,
+      "defence": 30
+    },
+    "shopValue": 250000000,
+    "icon": "\ud83d\udc56",
+    "isGeneralStore": false,
+    "isBossUnique": true
+  },
+  "shadow_of_tumaken": {
+    "id": "shadow_of_tumaken",
+    "legacy_item_id": "tumekens_shadow",
+    "name": "Shadow Of Tumaken",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": true,
+    "stackable": false,
+    "attackSpeed": 5,
+    "attackStyle": "magic",
+    "poweredStaff": true,
+    "magicDamageMultiplier": 3,
+    "magicDamageMultiplierCap": 100,
+    "scaleCharged": true,
+    "chargeRecipe": [
+      { "itemId": "chaos_rune", "qty": 5 },
+      { "itemId": "soul_rune", "qty": 2 }
+    ],
+    "iconId": "wizard_staff",
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 35,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 15,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "magic": 85
+    },
+    "shopValue": 1500000000,
+    "icon": "\ud83d\udd31",
+    "isGeneralStore": false,
+    "isBossUnique": true
+  },
   "zyrite_amulet": {
     "id": "zyrite_amulet",
     "legacy_item_id": "zenyte_amulet",

@@ -75,7 +75,9 @@ describe('consumables — boosts', () => {
   it('maps flat item.boost per effect', () => {
     expect(getPotionStatBoost(ITEMS.attack_potion)).toEqual({ attack: 13 })
     expect(getPotionStatBoost(ITEMS.magic_potion)).toEqual({ magic: 4 })
-    expect(getPotionStatBoost(ITEMS.super_combat)).toEqual({ attack: 18, strength: 18, defence: 18, ranged: 18, magic: 18 })
+    // Super combat: full melee boost, but ranged/magic match the dedicated
+    // Ranging (+14) and Magic (+4) potions.
+    expect(getPotionStatBoost(ITEMS.super_combat)).toEqual({ attack: 18, strength: 18, defence: 18, ranged: 14, magic: 4 })
     // hp / prayer / super_restore contribute no stat boost
     expect(getPotionStatBoost(ITEMS.prayer_potion)).toEqual({})
     expect(getPotionStatBoost(ITEMS.super_restore)).toEqual({})
@@ -87,7 +89,8 @@ describe('consumables — boosts', () => {
     const boosts = getActivePotionBoosts({ attack_potion: 100, super_combat: 100 }, ITEMS)
     expect(boosts.attack).toBe(31)
     expect(boosts.strength).toBe(18) // super_combat only
-    expect(boosts.magic).toBe(18)
+    expect(boosts.ranged).toBe(14)   // super_combat ranged === Ranging Potion
+    expect(boosts.magic).toBe(4)     // super_combat magic === Magic Potion
   })
 
   it('applies different-stat potions simultaneously', () => {

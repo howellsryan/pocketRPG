@@ -1,5 +1,6 @@
 export const PVP_SPECIAL_ATTACK_LABELS = {
   double_hit: '⚔️⚔️ Puncture',
+  fang: '🗡️ Deadly Strike',
   zero_defence: '🎯 Sever',
   stun: '🪱 Energy Drain',
   judgement: '⚡ The Judgement',

@@ -5639,6 +5639,280 @@
     ],
     "legacy_id": "muttadile"
   },
+  "khareth_the_shadowbound": {
+    "id": "khareth_the_shadowbound",
+    "name": "Khareth the Shadowbound",
+    "boss": true,
+    "raidBoss": true,
+    "combatLevel": 700,
+    "hitpoints": 520,
+    "stats": {
+      "attack": 180,
+      "strength": 180,
+      "defence": 140,
+      "magic": 180,
+      "ranged": 1
+    },
+    "attackSpeed": 4,
+    "attackStyle": "magic",
+    "attackBonus": 160,
+    "strengthBonus": 170,
+    "defenceBonus": {
+      "stab": 80,
+      "slash": 80,
+      "crush": 80,
+      "magic": 80,
+      "ranged": 80
+    },
+    "multiForm": true,
+    "formSwitchMin": 2,
+    "formSwitchMax": 4,
+    "initialForm": "magic",
+    "forms": {
+      "magic": {
+        "displayName": "Shadow Bolt",
+        "icon": "🌑",
+        "attackStyle": "magic",
+        "weakness": "melee",
+        "maxHit": 26,
+        "attackBonus": 180,
+        "strengthBonus": 170,
+        "defenceBonus": {
+          "stab": 80,
+          "slash": 80,
+          "crush": 80,
+          "magic": 80,
+          "ranged": 80
+        }
+      },
+      "melee": {
+        "displayName": "Phantom Strike",
+        "icon": "🗡️",
+        "attackStyle": "slash",
+        "weakness": "magic",
+        "maxHit": 24,
+        "attackBonus": 160,
+        "strengthBonus": 170,
+        "defenceBonus": {
+          "stab": 80,
+          "slash": 80,
+          "crush": 80,
+          "magic": 80,
+          "ranged": 80
+        }
+      }
+    },
+    "drops": [],
+    "legacy_id": "akkha"
+  },
+  "gorroth_the_mountain_ape": {
+    "id": "gorroth_the_mountain_ape",
+    "name": "Gorroth, the Mountain-Ape",
+    "boss": true,
+    "raidBoss": true,
+    "combatLevel": 650,
+    "hitpoints": 600,
+    "stats": {
+      "attack": 170,
+      "strength": 190,
+      "defence": 150,
+      "magic": 40,
+      "ranged": 1
+    },
+    "attackSpeed": 5,
+    "attackStyle": "crush",
+    "attackBonus": 160,
+    "strengthBonus": 185,
+    "defenceBonus": {
+      "stab": 90,
+      "slash": 90,
+      "crush": 70,
+      "magic": 30,
+      "ranged": 90
+    },
+    "drops": [],
+    "legacy_id": "baba"
+  },
+  "khepra_the_scarab_matron": {
+    "id": "khepra_the_scarab_matron",
+    "name": "Khepra, the Scarab Matron",
+    "boss": true,
+    "raidBoss": true,
+    "combatLevel": 680,
+    "hitpoints": 500,
+    "stats": {
+      "attack": 150,
+      "strength": 150,
+      "defence": 130,
+      "magic": 170,
+      "ranged": 180
+    },
+    "attackSpeed": 4,
+    "attackStyle": "ranged",
+    "attackBonus": 160,
+    "strengthBonus": 160,
+    "defenceBonus": {
+      "stab": 70,
+      "slash": 70,
+      "crush": 70,
+      "magic": 70,
+      "ranged": 70
+    },
+    "multiForm": true,
+    "initialForm": "ranged",
+    "formCycleOrder": [
+      "ranged",
+      "magic"
+    ],
+    "formSwitchMin": 3,
+    "formSwitchMax": 5,
+    "forms": {
+      "ranged": {
+        "displayName": "Swarm Volley",
+        "icon": "🪲",
+        "attackStyle": "ranged",
+        "weakness": "magic",
+        "maxHit": 25,
+        "attackBonus": 180,
+        "strengthBonus": 160,
+        "defenceBonus": {
+          "stab": 70,
+          "slash": 70,
+          "crush": 70,
+          "magic": 70,
+          "ranged": 70
+        }
+      },
+      "magic": {
+        "displayName": "Plague Cloud",
+        "icon": "🦠",
+        "attackStyle": "magic",
+        "weakness": "ranged",
+        "maxHit": 27,
+        "attackBonus": 170,
+        "strengthBonus": 160,
+        "defenceBonus": {
+          "stab": 70,
+          "slash": 70,
+          "crush": 70,
+          "magic": 70,
+          "ranged": 70
+        }
+      }
+    },
+    "drops": [],
+    "legacy_id": "kephri"
+  },
+  "sebakh_the_devourer": {
+    "id": "sebakh_the_devourer",
+    "name": "Sebakh the Devourer",
+    "boss": true,
+    "raidBoss": true,
+    "combatLevel": 720,
+    "hitpoints": 580,
+    "stats": {
+      "attack": 170,
+      "strength": 170,
+      "defence": 150,
+      "magic": 200,
+      "ranged": 150
+    },
+    "attackSpeed": 4,
+    "attackStyle": "magic",
+    "attackBonus": 190,
+    "strengthBonus": 170,
+    "defenceBonus": {
+      "stab": 80,
+      "slash": 80,
+      "crush": 80,
+      "magic": 60,
+      "ranged": 90
+    },
+    "drops": [],
+    "legacy_id": "zebak"
+  },
+  "warden_of_arasmus": {
+    "id": "warden_of_arasmus",
+    "name": "Warden of Arasmus",
+    "boss": true,
+    "raidBoss": true,
+    "combatLevel": 900,
+    "hitpoints": 700,
+    "stats": {
+      "attack": 250,
+      "strength": 250,
+      "defence": 160,
+      "magic": 250,
+      "ranged": 250
+    },
+    "attackSpeed": 2,
+    "attackStyle": "magic",
+    "attackBonus": 250,
+    "strengthBonus": 250,
+    "defenceBonus": {
+      "stab": 180,
+      "slash": 180,
+      "crush": 180,
+      "magic": 180,
+      "ranged": 180
+    },
+    "multiForm": true,
+    "formSwitchMin": 3,
+    "formSwitchMax": 3,
+    "initialForm": "magic",
+    "forms": {
+      "magic": {
+        "displayName": "Searing Light",
+        "icon": "🔆",
+        "attackStyle": "magic",
+        "weakness": "ranged",
+        "maxHit": 28,
+        "attackBonus": 250,
+        "strengthBonus": 250,
+        "defenceBonus": {
+          "stab": 180,
+          "slash": 180,
+          "crush": 180,
+          "magic": 180,
+          "ranged": 180
+        }
+      },
+      "ranged": {
+        "displayName": "Sand Barrage",
+        "icon": "🌪️",
+        "attackStyle": "ranged",
+        "weakness": "magic",
+        "maxHit": 28,
+        "attackBonus": 250,
+        "strengthBonus": 250,
+        "defenceBonus": {
+          "stab": 180,
+          "slash": 180,
+          "crush": 180,
+          "magic": 180,
+          "ranged": 180
+        }
+      },
+      "melee": {
+        "displayName": "Crushing Blow",
+        "icon": "✊",
+        "attackStyle": "crush",
+        "weakness": "magic",
+        "maxHit": 28,
+        "attackBonus": 250,
+        "strengthBonus": 250,
+        "defenceBonus": {
+          "stab": 180,
+          "slash": 180,
+          "crush": 180,
+          "magic": 180,
+          "ranged": 180
+        }
+      }
+    },
+    "drops": [],
+    "legacy_id": "wardens"
+  },
   "morvyn_the_blighted": {
     "id": "morvyn_the_blighted",
     "name": "Morvyn the Blighted",

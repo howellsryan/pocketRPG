@@ -59,6 +59,14 @@ const OUTLINE_SPEC = {
   twisted_longbow:     ['green', true],
   // Purple rim
   ancestral_wand:      ['purple', true],
+  // Tomb of Arasmus uniques — purple shadow glow (Masari set: black body, red shadow)
+  shadow_of_tumaken:   ['purple', true],
+  fang_of_osmun:       ['purple', true],
+  ward_of_elidria:     ['purple', true],
+  sunbearer_ring:      ['purple', true],
+  masari_mask:         ['red', true],
+  masari_body:         ['red', true],
+  masari_chaps:        ['red', true],
   // Gem bolts — gem-coloured rim over material-tier body
   ruby_dragon_bolt:          ['red',        false],
   ruby_dragon_bolt_e:        ['red',        false],

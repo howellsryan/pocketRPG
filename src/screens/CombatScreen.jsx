@@ -436,6 +436,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           const hitsStr = ev.hits.map(h => h > 0 ? h : 'miss').join(' + ')
           const specLabels = {
             double_hit: '⚔️⚔️ Puncture',
+            fang: '🗡️ Deadly Strike',
             zero_defence: '🎯 Sever',
             stun: ev.stunned ? '🪱 Energy Drain (stunned!)' : '🪱 Energy Drain',
             judgement: '⚡ The Judgement',

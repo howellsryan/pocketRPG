@@ -412,6 +412,20 @@
           ]
         },
         {
+          "id": "tomb_of_arasmus",
+          "label": "Tomb of Arasmus",
+          "icon": "🏜️",
+          "items": [
+            "fang_of_osmun",
+            "sunbearer_ring",
+            "ward_of_elidria",
+            "masari_mask",
+            "masari_body",
+            "masari_chaps",
+            "shadow_of_tumaken"
+          ]
+        },
+        {
           "id": "crimson_night_theatre",
           "label": "Crimson Night Theatre",
           "icon": "\ud83e\ude78",
