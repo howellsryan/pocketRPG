@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { resolveSlayerTaskKill, doesSlayerTaskMatchMonster, canFightSlayerMonster } from '../src/engine/slayerTasks.js'
+import { resolveSlayerTaskKill, doesSlayerTaskMatchMonster } from '../src/engine/slayerTasks.js'
 
 describe('resolveSlayerTaskKill', () => {
   it('does nothing when the killed monster is not on task', () => {
@@ -90,34 +90,5 @@ describe('doesSlayerTaskMatchMonster', () => {
 
   it('does not treat unrelated monsters as equivalent', () => {
     expect(doesSlayerTaskMatchMonster('nagadoth_rex', 'deepmaw_kraken')).toBe(false)
-  })
-})
-
-describe('canFightSlayerMonster', () => {
-  const slayerMonster = { id: 'nether_demon', slayerRequirement: 85 }
-  const regularMonster = { id: 'chicken' }
-
-  it('allows fighting any non-slayer monster regardless of task', () => {
-    expect(canFightSlayerMonster(regularMonster, null)).toBe(true)
-    expect(canFightSlayerMonster(regularMonster, { monsterId: 'nether_demon' })).toBe(true)
-  })
-
-  it('blocks slayer monsters when no task is active', () => {
-    expect(canFightSlayerMonster(slayerMonster, null)).toBe(false)
-    expect(canFightSlayerMonster(slayerMonster, undefined)).toBe(false)
-  })
-
-  it('blocks slayer monsters when the active task targets a different monster', () => {
-    expect(canFightSlayerMonster(slayerMonster, { monsterId: 'bone_wyvern' })).toBe(false)
-  })
-
-  it('allows slayer monsters when the active task matches', () => {
-    expect(canFightSlayerMonster(slayerMonster, { monsterId: 'nether_demon' })).toBe(true)
-  })
-
-  it('honors Nagadoth Kings group matching', () => {
-    const rex = { id: 'nagadoth_rex', slayerRequirement: 90 }
-    expect(canFightSlayerMonster(rex, { monsterId: 'dagganoth_kings' })).toBe(true)
-    expect(canFightSlayerMonster(rex, { monsterId: 'nagadoth_prime' })).toBe(true)
   })
 })

@@ -31,6 +31,7 @@ import { pullSave, applyCloudSave, requestCriticalPushSave, pushNow, isSaveConfl
 import { pvpApi } from '../cloud/pvp.js'
 import { triggerOneLifeDeath } from '../utils/oneLifeDeath.js'
 import monstersData from '../data/monsters.json'
+import questsData from '../data/quests.json'
 import itemsData from '../data/items.json'
 import prayersData from '../data/prayers.json'
 import spellsData from '../data/spells.json'
@@ -41,7 +42,7 @@ import { splatsFromCombatEvents, HIT_SPLAT_DURATION_MS } from '../utils/hitSplat
 import { HitSplatLayer } from '../components/HitSplat.jsx'
 import ActivePotionBadges from '../components/ActivePotionBadges.jsx'
 import { getSlayerTaskXpForKill, resolveMonsterRewardData } from '../engine/slayerRewards.js'
-import { resolveSlayerTaskKill, doesSlayerTaskMatchMonster, canFightSlayerMonster } from '../engine/slayerTasks.js'
+import { resolveSlayerTaskKill, doesSlayerTaskMatchMonster } from '../engine/slayerTasks.js'
 import { getSlayerTaskReward } from '../engine/slayerRewards.js'
 import { CRITICAL_SAVE_REASONS, hasCriticalDrop } from '../cloud/criticalSavePolicy.js'
 import { recordCollectionLogDrop, applyServerCollectionLogEntries } from '../cloud/collectionLog.js'
@@ -935,20 +936,14 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     if (monster.slayerRequirement && slayLvl < monster.slayerRequirement) {
       return { locked: true, reason: `Need Slayer level ${monster.slayerRequirement} to fight ${monster.name}` }
     }
-    if (!canFightSlayerMonster(monster, slayerTask)) {
-      return { locked: true, reason: `${monster.name} can only be slain on an active Slayer task` }
-    }
-    if (monster.id === 'blighted_gauntlet' && !completedQuests.has('hymn_of_the_elves')) {
-      return { locked: true, reason: 'Complete Hymn of the Elves to fight Blighted Gauntlet' }
+    // Quest gates are data-driven (monster.questRequirement) so the slayer master
+    // assignment and this combat gate share one source of truth.
+    if (monster.questRequirement && !completedQuests.has(monster.questRequirement)) {
+      const questName = questsData.find(q => q.id === monster.questRequirement)?.name || monster.questRequirement.replace(/_/g, ' ')
+      return { locked: true, reason: `Complete ${questName} to fight ${monster.name}` }
     }
     if (monster.id === 'ashen_crucible' && (!bossKillCounts['ember_tyrant'] || bossKillCounts['ember_tyrant'] < 1)) {
       return { locked: true, reason: 'Defeat Ember Tyrant first to unlock Ashen Crucible' }
-    }
-    if ((monster.id === 'adamant_dragon' || monster.id === 'rune_dragon') && !completedQuests.has('dragon_slayer_ii')) {
-      return { locked: true, reason: 'Complete Dragon Slayer II to fight Metal Dragons' }
-    }
-    if (monster.id === 'hellbound_gorilla' && !completedQuests.has('gorilla_slayer_ii')) {
-      return { locked: true, reason: 'Complete Monkey Madness II to fight Hellbound Gorilla' }
     }
     return { locked: false }
   }
@@ -1837,12 +1832,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                             </div>
                             {slayReq && (
                               <div class={`text-[9px] font-semibold ${slayLocked ? 'text-[var(--color-blood-light)]' : 'text-[var(--color-hp-green)]'}`}>
-                                💀 Slayer {slayReq}{slayLocked ? ` (you: ${slayLvl})` : ' ✓'}
-                              </div>
-                            )}
-                            {slayReq && !slayLocked && !isOnTask && (
-                              <div class="text-[9px] font-semibold text-[var(--color-blood-light)]">
-                                🔒 Slayer task required
+                                💀 Slayer {slayReq}{slayLocked ? '' : ' ✓'}
                               </div>
                             )}
                             {bossReq.locked && !slayLocked && !slayReq && (

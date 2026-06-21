@@ -1,14 +1,20 @@
+import { useState } from 'preact/hooks'
 import { useGame } from '../state/gameState.jsx'
 import SkillScreenHeader from '../components/SkillScreenHeader.jsx'
 import SkillActionRow from '../components/SkillActionRow.jsx'
 import SectionHeader from '../components/SectionHeader.jsx'
+import SkillEmblem from '../components/SkillEmblem.jsx'
+import GameIcon from '../components/GameIcon.jsx'
+import { MultiStyleChip } from './CombatMobileSheets.jsx'
+import { getMonsterArt, getCategoryArt, getMonsterAttackStyles } from '../utils/combatArt.js'
 import { getLevelFromXP } from '../engine/experience.js'
 import monstersData from '../data/monsters.json'
 import itemsData from '../data/items.json'
+import questsData from '../data/quests.json'
 import { SLAYER_UNLOCKS, getSlayerUnlockPurchaseState, ownsItem } from '../engine/slayerUnlocks.js'
 import { requestCriticalPushSave } from '../cloud/sync.js'
 import { DAGANNOTH_KINGS_TASK_ID, SLAYER_TASK_SKIP_POINT_COST } from '../engine/slayerTasks.js'
-import { SLAYER_MASTERS, resolveTaskMonsterIds, pickSlayerMonster, buildSlayerTask } from '../engine/slayerMasters.js'
+import { SLAYER_MASTERS, resolveTaskMonsterIds, pickSlayerMonster, buildSlayerTask, isEntryEligible } from '../engine/slayerMasters.js'
 import { api, getToken, getCharacterId, CREDITS_UPDATED_EVENT } from '../cloud/api.js'
 import { applyCloudSave } from '../cloud/sync.js'
 import { CRITICAL_SAVE_REASONS } from '../cloud/criticalSavePolicy.js'
@@ -54,10 +60,110 @@ const SLAYER_MONSTER_ICONS = {
   cinderfang_reaver: '🗡️', ashen_marauder: '⚒️',
   sovrathar_the_ashen_sovereign: '👑',
   marshscale_shaman: '🦎', crazy_archaeologist: '🏺', adamant_dragon: '🐲', rune_dragon: '🐲',
+  hellbound_gorilla: '🦍',
+}
+
+// Resolve a master's monster-pool entry into display info for the info sheet.
+// Composite tasks (e.g. Nagadoth Kings) resolve to several monsters; we surface
+// the highest combat level / slayer requirement among them and use the first
+// resolved monster for art + attack-style derivation.
+function getTaskInfo(entry, slayerLevel, completedQuests) {
+  const id = typeof entry === 'object' ? entry.id : entry
+  const isBoss = typeof entry === 'object' && !!entry.boss
+  const resolvedIds = resolveTaskMonsterIds(id)
+  const resolved = resolvedIds.map(mid => monstersData[mid]).filter(Boolean)
+  const lead = resolved[0] || null
+  const name = id === DAGANNOTH_KINGS_TASK_ID
+    ? 'Nagadoth Kings'
+    : (monstersData[id]?.name || id.replace(/_/g, ' '))
+  const combatLevel = resolved.length ? Math.max(...resolved.map(m => m.combatLevel || 0)) : 0
+  const slayerReq = resolved.length ? Math.max(...resolved.map(m => m.slayerRequirement || 0)) : 0
+  const questReq = resolved.map(m => m.questRequirement).find(Boolean) || null
+  return {
+    id, isBoss, name, combatLevel, slayerReq, questReq,
+    monster: lead,
+    art: getMonsterArt(lead || { id }),
+    eligible: isEntryEligible(entry, slayerLevel, completedQuests),
+  }
+}
+
+// One task row in the slayer-master info sheet, styled like the combat
+// bestiary's chamber rows. Eligible tasks are full-opacity; tasks gated by the
+// player's Slayer level or an unfinished quest are dimmed and show a lock.
+function SlayerTaskRow({ entry, slayerLevel, completedQuests }) {
+  const { name, combatLevel, slayerReq, questReq, monster, art, eligible } = getTaskInfo(entry, slayerLevel, completedQuests)
+  const questName = questReq ? (questsData.find(q => q.id === questReq)?.name || questReq.replace(/_/g, ' ')) : null
+  return (
+    <div class={'cb-room' + (eligible ? ' is-clear' : '')}>
+      <div class="cb-room__icon">
+        <SkillEmblem iconKey={art.icon} accent={art.accent} size={32} glow={eligible ? 1 : 0.5} />
+      </div>
+      <div class="cb-room__body">
+        <div class="cb-room__name">{name}</div>
+        <div class="cb-room__boss">
+          CB {combatLevel}{slayerReq > 0 ? ` · Slayer ${slayerReq}` : ''}{questName ? ` · ${questName}` : ''}
+        </div>
+      </div>
+      <div class="cb-room__right">
+        <MultiStyleChip chip={getMonsterAttackStyles(monster)} />
+      </div>
+    </div>
+  )
+}
+
+// Slide-up bestiary sheet for a slayer master — every monster + boss it can
+// assign, grouped into Monsters and Bosses, matching the combat info design.
+function SlayerMasterInfoSheet({ master, slayerLevel, completedQuests, onClose }) {
+  const art = getCategoryArt('slayer')
+  const pool = master.monsterPool || []
+  const keyOf = e => (typeof e === 'object' ? e.id : e)
+  const monsters = pool.filter(e => !(typeof e === 'object' && e.boss))
+  const bosses = pool.filter(e => typeof e === 'object' && !!e.boss)
+  return (
+    <div class="cb-overlay" onClick={onClose}>
+      <div class="cb-sheet" onClick={e => e.stopPropagation()}>
+        <div class="cb-sheet__grab" />
+        <div class="cb-sheet__hero">
+          <div class="cb-sheet__emblem">
+            <div class="cb-sheet__glow" style={{ background: `radial-gradient(circle, ${art.accent}8c, transparent 64%)` }} />
+            <SkillEmblem iconKey={art.icon} accent={art.accent} size={56} glow={1.2} />
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <h2 class="cb-sheet__name">{master.name}</h2>
+            <div class="cb-sheet__sub">{master.location}</div>
+          </div>
+          <button class="cb-x" onClick={onClose} aria-label="Close"><GameIcon iconKey="cancel" color="#cdbf9f" size={16} /></button>
+        </div>
+        <div class="cb-sheet__scroll">
+          <p class="cb-idledesc" style={{ margin: '0 2px 8px' }}>
+            {master.description} Greyed-out tasks need a higher Slayer level before they can be assigned.
+          </p>
+          {monsters.length > 0 && (
+            <>
+              <div class="cb-sheet__sec">Monsters</div>
+              <div class="cb-rooms">
+                {monsters.map(e => <SlayerTaskRow key={keyOf(e)} entry={e} slayerLevel={slayerLevel} completedQuests={completedQuests} />)}
+              </div>
+            </>
+          )}
+          {bosses.length > 0 && (
+            <>
+              <div class="cb-sheet__sec">Bosses</div>
+              <div class="cb-rooms">
+                {bosses.map(e => <SlayerTaskRow key={keyOf(e)} entry={e} slayerLevel={slayerLevel} completedQuests={completedQuests} />)}
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  )
 }
 
 export default function SlayerScreen({ onBack, onNavigate }) {
-  const { stats, slayerTask, setSlayerTask, slayerPoints, updateSlayerPoints, addToast, bank, inventory, addToBank, getSnapshot, slayerTasksCompleted, loadGame, slayerPerks, updateSlayerPerk } = useGame()
+  const { stats, slayerTask, setSlayerTask, slayerPoints, updateSlayerPoints, addToast, bank, inventory, addToBank, getSnapshot, slayerTasksCompleted, loadGame, slayerPerks, updateSlayerPerk, completedQuests } = useGame()
+
+  const [infoMaster, setInfoMaster] = useState(null)
 
   const combatLevel = getPlayerCombatLevel(stats)
   const slayerLevel = getLevelFromXP(stats.slayer?.xp || 0)
@@ -77,10 +183,12 @@ export default function SlayerScreen({ onBack, onNavigate }) {
       return
     }
 
-    // Evenly distributed pick across the master's eligible monsters.
-    const pick = pickSlayerMonster(master, slayerLevel)
+    // Evenly distributed pick across the master's eligible monsters — gated by
+    // both slayer level and any quest requirement so the player can always fight
+    // what they're assigned.
+    const pick = pickSlayerMonster(master, slayerLevel, { completedQuests })
     if (!pick) {
-      addToast('No tasks available — raise your slayer level for this master.', 'error')
+      addToast('No tasks available — raise your slayer level (or finish required quests) for this master.', 'error')
       return
     }
 
@@ -170,6 +278,7 @@ export default function SlayerScreen({ onBack, onNavigate }) {
   }
 
   return (
+    <>
     <div class="h-full overflow-y-auto p-4">
       <SkillScreenHeader
         skill="slayer"
@@ -243,22 +352,33 @@ export default function SlayerScreen({ onBack, onNavigate }) {
           const meetsSlayer = slayerLevel >= master.slayerReq
           const meetsReq = meetsCombat && meetsSlayer
           return (
-            <SkillActionRow
-              key={master.id}
-              icon={<span class="text-2xl">{master.icon}</span>}
-              title={master.name}
-              meta={<>
-                {master.location} · {master.description}
-                <span class="block mt-1">
-                  {master.combatReq > 0 && <span class={meetsCombat ? 'text-[var(--color-hp-green)]' : 'text-[var(--color-blood-light)]'}>CB {master.combatReq}</span>}
-                  {master.slayerReq > 0 && <span class={`ml-2 ${meetsSlayer ? 'text-[var(--color-hp-green)]' : 'text-[var(--color-blood-light)]'}`}>Slayer {master.slayerReq}</span>}
-                  {master.combatReq === 0 && master.slayerReq === 0 && <span class="text-[var(--color-hp-green)]">No requirement</span>}
-                </span>
-              </>}
-              chip={<>{master.pointsPerTask} pts</>}
-              disabled={!meetsReq || !!slayerTask}
-              onClick={() => handleGetTask(master)}
-            />
+            <div key={master.id} class="flex gap-2 items-center">
+              <div class="flex-1 min-w-0">
+                <SkillActionRow
+                  icon={<span class="text-2xl">{master.icon}</span>}
+                  title={master.name}
+                  meta={<>
+                    {master.location} · {master.description}
+                    <span class="block mt-1">
+                      {master.combatReq > 0 && <span class={meetsCombat ? 'text-[var(--color-hp-green)]' : 'text-[var(--color-blood-light)]'}>CB {master.combatReq}</span>}
+                      {master.slayerReq > 0 && <span class={`ml-2 ${meetsSlayer ? 'text-[var(--color-hp-green)]' : 'text-[var(--color-blood-light)]'}`}>Slayer {master.slayerReq}</span>}
+                      {master.combatReq === 0 && master.slayerReq === 0 && <span class="text-[var(--color-hp-green)]">No requirement</span>}
+                    </span>
+                  </>}
+                  chip={<>{master.pointsPerTask} pts</>}
+                  disabled={!meetsReq || !!slayerTask}
+                  onClick={() => handleGetTask(master)}
+                />
+              </div>
+              <button
+                onClick={() => setInfoMaster(master)}
+                aria-label="Slayer master tasks info"
+                class="flex-shrink-0 w-11 h-11 rounded-full border border-[var(--color-void-border)] bg-[var(--color-void-light)] text-[var(--color-gold)] text-[15px] font-bold flex items-center justify-center active:opacity-70"
+                title="View assignable tasks"
+              >
+                ⓘ
+              </button>
+            </div>
           )
         })}
       </div>
@@ -318,6 +438,18 @@ export default function SlayerScreen({ onBack, onNavigate }) {
           )
         })()}
       </div>
+
     </div>
+
+    {/* Master task info — slide-up bestiary sheet (matches combat info design) */}
+    {infoMaster && (
+      <SlayerMasterInfoSheet
+        master={infoMaster}
+        slayerLevel={slayerLevel}
+        completedQuests={completedQuests}
+        onClose={() => setInfoMaster(null)}
+      />
+    )}
+    </>
   )
 }

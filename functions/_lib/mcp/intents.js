@@ -1511,9 +1511,10 @@ export function assignSlayerTask(save, masterId, options = {}) {
   if (slayerLevel < master.slayerReq) {
     throw new GameApiError('SLAYER_LEVEL_TOO_LOW', `${master.name} requires slayer level ${master.slayerReq} (you have ${slayerLevel}).`, 400)
   }
-  const pick = pickSlayerMonster(master, slayerLevel, options)
+  const completedQuests = new Set(Array.isArray(save.settings?.completedQuests) ? save.settings.completedQuests : [])
+  const pick = pickSlayerMonster(master, slayerLevel, { ...options, completedQuests })
   if (!pick) {
-    throw new GameApiError('NO_SLAYER_TASK', `${master.name} has no eligible task for slayer level ${slayerLevel}. Raise slayer or pick another master.`, 400)
+    throw new GameApiError('NO_SLAYER_TASK', `${master.name} has no eligible task for slayer level ${slayerLevel} and your completed quests. Raise slayer, finish required quests, or pick another master.`, 400)
   }
   const task = buildSlayerTask(master, pick.monsterId, pick.isBoss, options)
   save.settings.slayerTask = task

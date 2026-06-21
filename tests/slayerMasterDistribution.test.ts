@@ -30,6 +30,18 @@ describe('Slayer master monster coverage', () => {
     expect(missing, `unassigned monsters: ${missing.join(', ')}`).toEqual([])
   })
 
+  it('includes every Slayer-gated monster on at least one master', () => {
+    // Any monster that requires a Slayer level to fight must be assignable as a
+    // task somewhere — including boss-flagged slayer monsters (e.g. Hellbound
+    // Gorilla), which the non-boss coverage check above deliberately skips. Raid
+    // bosses are excluded: they're killed via the raid flow, not slayer tasks.
+    const slayerGated = Object.entries(monsters)
+      .filter(([, m]: [string, any]) => (m.slayerRequirement || 0) > 0 && !m.raidBoss)
+      .map(([id]) => id)
+    const missing = slayerGated.filter(id => !pooledMonsterIds.has(id))
+    expect(missing, `unassigned slayer monsters: ${missing.join(', ')}`).toEqual([])
+  })
+
   it('never assigns a boss or raid monster as a plain (non-boss) task', () => {
     for (const master of SLAYER_MASTERS) {
       for (const entry of master.monsterPool) {
@@ -66,6 +78,42 @@ describe('Slayer master monster coverage', () => {
       const m = monsters[id]
       expect(m).toBeDefined()
       expect(m.combatLevel).toBeLessThanOrEqual(40)
+    }
+  })
+})
+
+describe('quest-gated task eligibility', () => {
+  // Monsters carrying a questRequirement that also live in a master pool.
+  const questGated = Object.entries(monsters)
+    .filter(([, m]: [string, any]) => m.questRequirement && pooledMonsterIds.has((m as any).id || ''))
+    .map(([id, m]: [string, any]) => [id, m.questRequirement]) as [string, string][]
+
+  it('has at least one quest-gated pool monster to guard', () => {
+    expect(questGated.length).toBeGreaterThan(0)
+  })
+
+  it('treats a quest-gated monster as ineligible without the quest, eligible with it', () => {
+    for (const [id, questId] of questGated) {
+      const lvl = (monsters[id].slayerRequirement || 0) + 0
+      expect(isEntryEligible(id, lvl, new Set())).toBe(false)
+      expect(isEntryEligible(id, lvl, new Set([questId]))).toBe(true)
+    }
+  })
+
+  it('skips quest gating entirely when completedQuests is omitted (back-compat)', () => {
+    for (const [id] of questGated) {
+      expect(isEntryEligible(id, monsters[id].slayerRequirement || 1)).toBe(true)
+    }
+  })
+
+  it('pickSlayerMonster never assigns a quest-gated task without the quest', () => {
+    const druven = SLAYER_MASTERS.find(m => m.id === 'duradel')!
+    const gatedIds = new Set(questGated.map(([id]) => id))
+    const history = new Map<string, string[]>()
+    for (let i = 0; i < 300; i++) {
+      const pick = pickSlayerMonster(druven, 99, { history, completedQuests: new Set() })
+      if (!pick) continue
+      expect(gatedIds.has(pick.monsterId)).toBe(false)
     }
   })
 })
