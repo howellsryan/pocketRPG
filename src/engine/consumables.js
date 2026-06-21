@@ -133,23 +133,29 @@ export function applyConsumableEffect(actor, item, itemId, kind) {
     return { healed: actor.hp - before, wiped: false, buffed: false }
   }
 
-  // Drink a potion: register its buff for the full duration. HP-effect potions
-  // also heal immediately; prayer/super_restore potions refill the prayer pool
-  // when the actor tracks one (live combat). Both effects fall through harmlessly
-  // when the actor has no matching field.
+  // Prayer / super restore potions are single-use: they refill the prayer pool
+  // instantly and grant no timed stat buff, so they are NOT registered in
+  // activePotions (no countdown/active-ring in the combat UI). The prayer refill
+  // falls through harmlessly when the actor has no pool (e.g. idle keeps its own).
+  const restore = PRAYER_RESTORE_AMOUNTS[item.effect] || 0
+  if (restore > 0) {
+    if (typeof actor.prayerPoints === 'number') {
+      const max = Number(actor.maxPrayerPoints) || actor.prayerPoints
+      const before = actor.prayerPoints
+      actor.prayerPoints = Math.min(max, actor.prayerPoints + restore)
+      return { healed: 0, wiped: false, buffed: true, prayerRestored: actor.prayerPoints - before }
+    }
+    return { healed: 0, wiped: false, buffed: true }
+  }
+
+  // Stat/HP potions: register the buff for the full duration. HP-effect potions
+  // also heal immediately.
   actor.activePotions[itemId] = getPotionDurationTicks(item)
   if (item.effect === 'hp') {
     const heal = Number(item.boost) || 10
     const before = actor.hp
     actor.hp = Math.min(maxHP, actor.hp + heal)
     return { healed: actor.hp - before, wiped: false, buffed: true }
-  }
-  const restore = PRAYER_RESTORE_AMOUNTS[item.effect] || 0
-  if (restore > 0 && typeof actor.prayerPoints === 'number') {
-    const max = Number(actor.maxPrayerPoints) || actor.prayerPoints
-    const before = actor.prayerPoints
-    actor.prayerPoints = Math.min(max, actor.prayerPoints + restore)
-    return { healed: 0, wiped: false, buffed: true, prayerRestored: actor.prayerPoints - before }
   }
   return { healed: 0, wiped: false, buffed: true }
 }
