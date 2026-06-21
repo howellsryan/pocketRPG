@@ -2207,6 +2207,17 @@
           "zyrite": 1,
           "gold_bar": 1
         }
+      },
+      {
+        "id": "ferocious_gloves",
+        "name": "Craft ferocious gloves",
+        "level": 80,
+        "ticks": 4,
+        "xp": 250,
+        "product": "ferocious_gloves",
+        "materials": {
+          "ashen_hydra_leather": 1
+        }
       }
     ]
   },
