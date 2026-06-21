@@ -30,6 +30,18 @@ describe('Slayer master monster coverage', () => {
     expect(missing, `unassigned monsters: ${missing.join(', ')}`).toEqual([])
   })
 
+  it('includes every Slayer-gated monster on at least one master', () => {
+    // Any monster that requires a Slayer level to fight must be assignable as a
+    // task somewhere — including boss-flagged slayer monsters (e.g. Hellbound
+    // Gorilla), which the non-boss coverage check above deliberately skips. Raid
+    // bosses are excluded: they're killed via the raid flow, not slayer tasks.
+    const slayerGated = Object.entries(monsters)
+      .filter(([, m]: [string, any]) => (m.slayerRequirement || 0) > 0 && !m.raidBoss)
+      .map(([id]) => id)
+    const missing = slayerGated.filter(id => !pooledMonsterIds.has(id))
+    expect(missing, `unassigned slayer monsters: ${missing.join(', ')}`).toEqual([])
+  })
+
   it('never assigns a boss or raid monster as a plain (non-boss) task', () => {
     for (const master of SLAYER_MASTERS) {
       for (const entry of master.monsterPool) {

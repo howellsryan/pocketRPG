@@ -56,6 +56,7 @@ const SLAYER_MONSTER_ICONS = {
   cinderfang_reaver: '🗡️', ashen_marauder: '⚒️',
   sovrathar_the_ashen_sovereign: '👑',
   marshscale_shaman: '🦎', crazy_archaeologist: '🏺', adamant_dragon: '🐲', rune_dragon: '🐲',
+  hellbound_gorilla: '🦍',
 }
 
 // Resolve a master's monster-pool entry into display info for the info modal.
