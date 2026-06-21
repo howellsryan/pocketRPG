@@ -1,3 +1,5 @@
+import { combatLevelFromLevels } from '../engine/combatLevel.js'
+
 /**
  * Random integer between min and max (inclusive)
  */
@@ -103,12 +105,10 @@ export function withTimeout(promise, ms, fallback) {
 }
 
 /**
- * Calculate combat level from skills
+ * Calculate combat level from skill LEVELS.
+ * Delegates to the single source of truth in src/engine/combatLevel.js so the
+ * client UI can never drift from the server's PvP matchmaking computation.
  */
 export function calcCombatLevel(stats) {
-  const base = 0.25 * (stats.defence + stats.hitpoints + Math.floor(stats.prayer / 2))
-  const melee = 0.325 * (stats.attack + stats.strength)
-  const range = 0.325 * Math.floor(stats.ranged * 1.5)
-  const mage = 0.325 * Math.floor(stats.magic * 1.5)
-  return Math.floor(base + Math.max(melee, range, mage))
+  return combatLevelFromLevels(stats)
 }
