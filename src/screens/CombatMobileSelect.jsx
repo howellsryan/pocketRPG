@@ -139,7 +139,7 @@ export default function CombatMobileSelect({
                     const isOnTask = doesSlayerTaskMatchMonster(slayerTask?.monsterId, monster.id)
                     const mArt = getMonsterArt(monster, category.key)
                     const lockText = slayLocked
-                      ? `Slayer ${slayReq} (you: ${slayerLevel})`
+                      ? `Slayer ${slayReq}`
                       : bossReq.locked ? bossReq.reason
                       : null
                     return (

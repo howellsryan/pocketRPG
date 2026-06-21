@@ -1832,7 +1832,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                             </div>
                             {slayReq && (
                               <div class={`text-[9px] font-semibold ${slayLocked ? 'text-[var(--color-blood-light)]' : 'text-[var(--color-hp-green)]'}`}>
-                                💀 Slayer {slayReq}{slayLocked ? ` (you: ${slayLvl})` : ' ✓'}
+                                💀 Slayer {slayReq}{slayLocked ? '' : ' ✓'}
                               </div>
                             )}
                             {bossReq.locked && !slayLocked && !slayReq && (
