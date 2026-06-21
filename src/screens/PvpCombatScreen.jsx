@@ -12,7 +12,7 @@ import itemsData from '../data/items.json'
 import prayersData from '../data/prayers.json'
 import { getCharacterId } from '../cloud/api.js'
 import { normalizePvpState } from '../engine/pvpState.js'
-import { isConsumableFood, isConsumablePotion } from '../engine/consumables.js'
+import { isConsumableFood, isConsumablePotion, isComboConsumable } from '../engine/consumables.js'
 import { hasEpicLootDrop } from '../utils/itemValue.js'
 import { getEquippedPvpSpecialAttack, getPvpSpecialAttackLabel, hasEnoughPvpSpecialEnergy } from '../engine/pvpSpecialAttacks.js'
 import { calculatePvpRiskValues } from '../engine/pvpRisk.js'
@@ -242,6 +242,10 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
   // single tick. Consumables/prayer/special stay one-per-tick via pendingAction.
   const pendingGearRef = useRef([])
   const gearFlushTimer = useRef(null)
+  // Consumables batch like gear, but capped to one normal food + one combo item
+  // per tick so a food and a combo land together (combined heal), matching PvE.
+  const pendingConsumablesRef = useRef([])
+  const consumableFlushTimer = useRef(null)
   const lastPollOkAt = useRef(0)
   const latestTick = useRef(0)
   const fatalNotified = useRef(false)
@@ -343,6 +347,7 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
       mounted.current = false
       if (pollTimer.current) clearTimeout(pollTimer.current)
       if (gearFlushTimer.current) clearTimeout(gearFlushTimer.current)
+      if (consumableFlushTimer.current) clearTimeout(consumableFlushTimer.current)
       if (prayerOverrideTimer.current) clearTimeout(prayerOverrideTimer.current)
       for (const t of splatTimersRef.current) clearTimeout(t)
       splatTimersRef.current.clear()
@@ -472,6 +477,17 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
         for (const gearAction of gearBatch) {
           if (terminalHandledRef.current) break
           await pvpApi.postIntent(matchId, latestTick.current, gearAction)
+        }
+      }
+      // Post the consumables for this tick (one normal food + one combo item), so
+      // a food and a combo resolve on the SAME server tick (combined heal). The
+      // engine enforces the eat/combo cooldowns, so over-eating is rejected there.
+      if (pendingConsumablesRef.current.length > 0) {
+        const consBatch = pendingConsumablesRef.current
+        pendingConsumablesRef.current = []
+        for (const entry of consBatch) {
+          if (terminalHandledRef.current) break
+          await pvpApi.postIntent(matchId, latestTick.current, entry.action)
         }
       }
       const action = pendingActionRef.current
@@ -724,6 +740,24 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
     }, 120)
   }
 
+  // Queue an eat / drink for this tick. Caps at one normal food + one combo item
+  // (Karam/brew/potion); extra taps inside the window are dropped (the engine
+  // also enforces the multi-tick eat/combo cooldown). Flushes on a short debounce
+  // like gear so a food + combo tapped together land on one tick.
+  const enqueueConsumable = (action, item) => {
+    if (terminalHandledRef.current || endModalOpenRef.current) return
+    const combo = isComboConsumable(item)
+    const batch = pendingConsumablesRef.current
+    if (batch.some((e) => e.combo === combo)) return // already have this kind this tick → drop
+    batch.push({ action, combo })
+    setActionPanel(null)
+    if (consumableFlushTimer.current) clearTimeout(consumableFlushTimer.current)
+    consumableFlushTimer.current = setTimeout(() => {
+      consumableFlushTimer.current = null
+      if (!terminalHandledRef.current && !endModalOpenRef.current && !tickInFlight.current) runTick()
+    }, 120)
+  }
+
   const queueGearEquip = (inventorySlot) => {
     enqueueGear({ type: 'equip', inventorySlot })
   }
@@ -818,8 +852,8 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
                   let onClick
                   if (slot && item) {
                     if (item.slot) onClick = () => queueGearEquip(idx)
-                    else if (isConsumableFood(item)) onClick = () => queueAction({ type: 'eat', inventorySlot: idx }, { showBusy: false })
-                    else if (isConsumablePotion(item)) onClick = () => queueAction({ type: 'drink_potion', inventorySlot: idx }, { showBusy: false })
+                    else if (isConsumableFood(item)) onClick = () => enqueueConsumable({ type: 'eat', inventorySlot: idx }, item)
+                    else if (isConsumablePotion(item)) onClick = () => enqueueConsumable({ type: 'drink_potion', inventorySlot: idx }, item)
                   }
                   return (
                     <div key={`inv-${idx}`} onClick={onClick}>
@@ -903,8 +937,8 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
           <CombatQuickActions
             inventory={toArray(pair.self?.inventory)}
             itemsData={itemsData}
-            onEat={(entry) => queueAction({ type: 'eat', inventorySlot: entry.slotIdx }, { showBusy: false })}
-            onPotion={(entry) => queueAction({ type: 'drink_potion', inventorySlot: entry.slotIdx }, { showBusy: false })}
+            onEat={(entry) => enqueueConsumable({ type: 'eat', inventorySlot: entry.slotIdx }, entry.item)}
+            onPotion={(entry) => enqueueConsumable({ type: 'drink_potion', inventorySlot: entry.slotIdx }, entry.item)}
             onEquip={(entry) => queueGearEquip(entry.slotIdx)}
           />
 

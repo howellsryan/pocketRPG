@@ -1207,6 +1207,8 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     const brewId = newInv[idx].itemId
     const brew = itemsData[brewId]
     if (!brew) return
+    // A brew is a combo item — one per combo-delay; drop extra taps.
+    if (combatRef.current?.active && (combatRef.current.comboCooldown || 0) > 0) return
     if (newInv[idx].quantity > 1) {
       newInv[idx] = { ...newInv[idx], quantity: newInv[idx].quantity - 1 }
     } else {
@@ -1262,6 +1264,13 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     const foodId = newInv[foodIdx].itemId
     const food = itemsData[foodId]
     if (!food) return
+    // Spam guard (shared rule with PvP): one normal food per eat-delay, one combo
+    // item per combo-delay. Extra taps inside the delay window are dropped.
+    const combo = isComboConsumable(food)
+    if (combatRef.current?.active) {
+      const cd = combo ? (combatRef.current.comboCooldown || 0) : (combatRef.current.eatCooldown || 0)
+      if (cd > 0) return
+    }
     if (newInv[foodIdx].quantity > 1) {
       newInv[foodIdx] = { ...newInv[foodIdx], quantity: newInv[foodIdx].quantity - 1 }
     } else {
@@ -1280,7 +1289,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       // from combatRef.current (not the stale `combat` closure) so a normal food
       // and a combo food eaten on the same tick don't clobber each other's state.
       const base = combatRef.current
-      const newState = isComboConsumable(food) ? applyCombo(base) : applyEat(base)
+      const newState = combo ? applyCombo(base) : applyEat(base)
       setCombat(newState)
       combatRef.current = newState
     }
@@ -1330,11 +1339,14 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     const potion = itemsData[potionItemId]
     if (!potion) return
 
-    // Lumira Brew: unlimited use, heals, wipes all active potion effects — bypass normal gate
+    // Lumira Brew: heals + wipes active potion effects — routed through the brew path.
     if (isLumiraBrew(potion)) {
       consumeBrewAt(potionIdx, newInv)
       return
     }
+
+    // Potions are combo items — one per combo-delay; drop extra taps.
+    if (combatRef.current.comboCooldown > 0) return
 
     // Remove potion from inventory
     if (newInv[potionIdx].quantity > 1) {
