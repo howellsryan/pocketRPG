@@ -35,6 +35,7 @@ const sourceFiles = [
   'engine/seedDrops.js',
   'engine/formulas.js',
   'engine/equipment.js',
+  'engine/equipmentPresets.js',
   'engine/inventory.js',
   'engine/storeRules.js',
   'engine/agility.js',

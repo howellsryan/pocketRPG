@@ -1,6 +1,8 @@
 import { useState } from 'preact/hooks'
 import { useGame } from '../state/gameState.jsx'
 import { unequipSlot, getEquipmentBonuses, checkEquipRequirements, equipItem } from '../engine/equipment.js'
+import { createPreset, applyPreset, renamePreset, MAX_EQUIPMENT_PRESETS } from '../engine/equipmentPresets.js'
+import Modal from '../components/Modal.jsx'
 import { hasFullVoidKingSet } from '../engine/combatSetBonuses.js'
 import { EQUIPMENT_SLOTS } from '../utils/constants.js'
 import SharedItemModal from '../components/SharedItemModal.jsx'
@@ -14,10 +16,65 @@ import WeaponChargePanel, { getChargeRecipe } from '../components/WeaponChargePa
 import { OTHER_BONUS_LABELS, OTHER_BONUS_PERCENT_KEYS } from '../utils/bonusLabels.js'
 
 export default function EquipmentScreen() {
-  const { equipment, inventory, bank, stats, updateEquipment, updateInventory, updateBank, addToast, itemsData, completedQuests } = useGame()
+  const { equipment, inventory, bank, stats, updateEquipment, updateInventory, updateBank, addToast, itemsData, completedQuests, equipmentPresets, updateEquipmentPresets } = useGame()
   const [selected, setSelected] = useState(null) // { slot, item }
   const [showSpecInfo, setShowSpecInfo] = useState(false)
   const [invSelected, setInvSelected] = useState(null) // { slotIndex, slot, item }
+  const [createOpen, setCreateOpen] = useState(false)
+  const [createName, setCreateName] = useState('')
+  const [managePreset, setManagePreset] = useState(null) // preset being renamed/deleted
+  const [manageName, setManageName] = useState('')
+
+  const presets = Array.isArray(equipmentPresets) ? equipmentPresets : []
+  const nameOf = (id) => itemsData[id]?.name || id
+
+  const handleCreatePreset = () => {
+    if (presets.length >= MAX_EQUIPMENT_PRESETS) {
+      addToast(`Preset limit reached (${MAX_EQUIPMENT_PRESETS})`, 'error')
+      return
+    }
+    const preset = createPreset(createName.trim() || `Preset ${presets.length + 1}`, equipment, inventory)
+    updateEquipmentPresets([...presets, preset])
+    setCreateOpen(false)
+    setCreateName('')
+    addToast(`Saved preset “${preset.name}”`, 'success')
+  }
+
+  // Load a preset: re-arrange owned items across equipment/inventory/bank, then
+  // report anything the player lacks (missing / requirement-locked / partial
+  // stacks) in a single toast so empty slots are explained.
+  const handleLoadPreset = (preset) => {
+    const result = applyPreset(preset, { equipment, inventory, bank }, itemsData, stats, completedQuests)
+    updateEquipment(result.equipment)
+    updateInventory(result.inventory)
+    updateBank(result.bank)
+
+    const problems = []
+    if (result.reqFailed.length) {
+      problems.push(`couldn’t equip ${result.reqFailed.map(r => nameOf(r.itemId)).join(', ')} (requirement not met)`)
+    }
+    if (result.missing.length) {
+      problems.push(`missing ${result.missing.map(m => `${m.quantity > 1 ? `${m.quantity}× ` : ''}${nameOf(m.itemId)}`).join(', ')}`)
+    }
+    if (result.partial.length) {
+      problems.push(`partial ${result.partial.map(p => `${nameOf(p.itemId)} (${p.got}/${p.wanted})`).join(', ')}`)
+    }
+
+    if (problems.length) addToast(`Loaded “${preset.name}” — ${problems.join('; ')}`, 'error')
+    else addToast(`Loaded “${preset.name}”`, 'success')
+  }
+
+  const handleRenamePreset = () => {
+    if (!managePreset) return
+    updateEquipmentPresets(presets.map(p => (p.id === managePreset.id ? renamePreset(p, manageName) : p)))
+    setManagePreset(null)
+  }
+
+  const handleDeletePreset = () => {
+    if (!managePreset) return
+    updateEquipmentPresets(presets.filter(p => p.id !== managePreset.id))
+    setManagePreset(null)
+  }
 
   const handleSelect = (slotName, item) => {
     setSelected({ slot: slotName, item })
@@ -219,6 +276,38 @@ export default function EquipmentScreen() {
     <div class="h-full overflow-y-auto p-4">
       <SectionHeader className="mb-3">Equipment</SectionHeader>
 
+      {/* Loadout presets — save/load the full equipment + inventory state, the
+          gear analogue of bank tabs. Loading re-arranges items the character
+          already owns; anything missing is reported and its slot left empty. */}
+      <div class="mb-3 flex items-center gap-1.5 flex-wrap">
+        <span class="text-[10px] uppercase tracking-wider text-[var(--color-gold-dim)] opacity-60 mr-1">Presets</span>
+        {presets.map(p => (
+          <div key={p.id} class="flex items-stretch rounded-md overflow-hidden">
+            <button
+              onClick={() => handleLoadPreset(p)}
+              class="px-3 py-1.5 bg-[#222] text-[var(--color-parchment)] text-xs font-bold max-w-[110px] truncate active:opacity-80"
+            >
+              {p.name}
+            </button>
+            <button
+              onClick={() => { setManagePreset(p); setManageName(p.name) }}
+              class="px-2 py-1.5 bg-[#1a1a1a] text-[var(--color-parchment)] opacity-40 text-xs active:opacity-70"
+              aria-label={`Edit preset ${p.name}`}
+            >
+              ✏️
+            </button>
+          </div>
+        ))}
+        {presets.length < MAX_EQUIPMENT_PRESETS && (
+          <button
+            onClick={() => { setCreateOpen(true); setCreateName('') }}
+            class="px-3 py-1.5 rounded-md bg-[#222] text-[var(--color-parchment)] opacity-50 text-xs font-bold active:opacity-80"
+          >
+            + Save loadout
+          </button>
+        )}
+      </div>
+
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
       <div class="w-full">
         <EquipmentPaperdoll
@@ -382,6 +471,65 @@ export default function EquipmentScreen() {
             </Button>
           </div>
         </SharedItemModal>
+      )}
+
+      {/* Save-loadout modal */}
+      {createOpen && (
+        <Modal title="Save Loadout" onClose={() => setCreateOpen(false)}>
+          <div class="space-y-3">
+            <p class="text-[11px] text-[var(--color-parchment)] opacity-60">
+              Saves your current equipment and inventory as a preset you can reload later.
+            </p>
+            <div>
+              <p class="text-[10px] text-[var(--color-parchment)] opacity-40 mb-1 uppercase tracking-wider">Preset Name</p>
+              <input
+                type="text"
+                value={createName}
+                onInput={(e) => setCreateName(e.target.value)}
+                maxLength={24}
+                class="w-full bg-[#1a1a1a] border border-[#333] rounded-lg px-3 py-2 text-sm text-[var(--color-parchment)] outline-none focus:border-[var(--color-gold)]"
+                placeholder={`Preset ${presets.length + 1}`}
+              />
+            </div>
+            <button
+              onClick={handleCreatePreset}
+              class="w-full py-2.5 rounded-lg bg-[var(--color-mana)] text-white font-semibold text-sm active:opacity-80"
+            >
+              Save Loadout
+            </button>
+          </div>
+        </Modal>
+      )}
+
+      {/* Edit/delete preset modal */}
+      {managePreset && (
+        <Modal title="Edit Preset" onClose={() => setManagePreset(null)}>
+          <div class="space-y-3">
+            <div>
+              <p class="text-[10px] text-[var(--color-parchment)] opacity-40 mb-1 uppercase tracking-wider">Preset Name</p>
+              <input
+                type="text"
+                value={manageName}
+                onInput={(e) => setManageName(e.target.value)}
+                maxLength={24}
+                class="w-full bg-[#1a1a1a] border border-[#333] rounded-lg px-3 py-2 text-sm text-[var(--color-parchment)] outline-none focus:border-[var(--color-gold)]"
+                placeholder="Enter preset name"
+              />
+            </div>
+            <button
+              onClick={handleRenamePreset}
+              class="w-full py-2.5 rounded-lg bg-[var(--color-mana)] text-white font-semibold text-sm active:opacity-80"
+            >
+              Rename
+            </button>
+            <button
+              onClick={handleDeletePreset}
+              class="w-full py-2.5 rounded-lg bg-red-900 text-white font-semibold text-sm active:opacity-80"
+            >
+              Delete Preset
+            </button>
+          </div>
+        </Modal>
       )}
     </div>
   )

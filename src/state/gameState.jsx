@@ -51,6 +51,7 @@ export function GameProvider({ children }) {
   const [activeTask, setActiveTaskState] = useState(null)
   const activeTaskInternalRef = useRef(null) // tracks latest active task for flush in setActiveTask
   const [bankConfig, setBankConfig] = useState({ tabs: [], itemTabMap: {} })
+  const [equipmentPresets, setEquipmentPresetsState] = useState([])
   const [unlockedFeatures, setUnlockedFeatures] = useState(new Set())
   const [slayerTask, setSlayerTaskState] = useState(null)
   const [slayerPoints, setSlayerPointsState] = useState(0)
@@ -120,10 +121,10 @@ export function GameProvider({ children }) {
 
   // Load all state from IndexedDB — runs idle simulation inline, returns idleResult
   const loadGame = useCallback(async () => {
-    let [p, s, inv, eq, b, shortcuts, stance, savedHP, autoBankSetting, savedBankConfig, savedUnlocks, savedSlayerTask, savedSlayerPoints, savedSlayerTasksCompleted, savedDungeoneeringTokens, savedBossKillCounts, savedRaidKillCounts, savedFarming, savedCompletedQuests, savedQuestQueue, savedActiveCombatSpell, savedUnlockedMinigameItems, savedIdleCombatSetup, savedSlayerPerks, savedCharacterUnlocks] = await Promise.all([
+    let [p, s, inv, eq, b, shortcuts, stance, savedHP, autoBankSetting, savedBankConfig, savedEquipmentPresets, savedUnlocks, savedSlayerTask, savedSlayerPoints, savedSlayerTasksCompleted, savedDungeoneeringTokens, savedBossKillCounts, savedRaidKillCounts, savedFarming, savedCompletedQuests, savedQuestQueue, savedActiveCombatSpell, savedUnlockedMinigameItems, savedIdleCombatSetup, savedSlayerPerks, savedCharacterUnlocks] = await Promise.all([
       getPlayer(), getAllStats(), getInventory(), getEquipment(), getBank(),
       getSetting('homeShortcuts'), getSetting('combatStance'), getSetting('currentHP'),
-      getSetting('autoBankLoot'), getSetting('bankConfig'), getSetting('unlockedFeatures'),
+      getSetting('autoBankLoot'), getSetting('bankConfig'), getSetting('equipmentPresets'), getSetting('unlockedFeatures'),
       getSetting('slayerTask'), getSetting('slayerPoints'), getSetting('slayerTasksCompleted'), getSetting('dungeoneeringTokens'), getSetting('bossKillCounts'), getSetting('raidKillCounts'), getSetting('farming'),
       getSetting('completedQuests'), getSetting('questQueue'), getSetting('activeCombatSpell'), getSetting('unlockedMinigameItems'),
       getSetting('idleCombatSetup'), getSetting('slayerPerks'), getSetting('characterUnlocks')
@@ -454,6 +455,7 @@ export function GameProvider({ children }) {
     setIdleCombatSetupState(normalisedIdleCombatSetup)
     setAutoBankLootState(autoBankSetting !== false) // default true
     setBankConfig(savedBankConfig ?? { tabs: [], itemTabMap: {} })
+    setEquipmentPresetsState(Array.isArray(savedEquipmentPresets) ? savedEquipmentPresets : [])
     setUnlockedFeatures(new Set(savedUnlocks || []))
     setActiveTaskState(savedTask ?? null)
     // Update slayer task if idle simulation modified it
@@ -653,6 +655,12 @@ export function GameProvider({ children }) {
   const updateBankConfig = useCallback((config) => {
     setBankConfig(config)
     saveSetting('bankConfig', config)
+  }, [])
+
+  const updateEquipmentPresets = useCallback((presets) => {
+    const next = Array.isArray(presets) ? presets : []
+    setEquipmentPresetsState(next)
+    saveSetting('equipmentPresets', next)
   }, [])
 
   const unlockFeature = useCallback((featureId) => {
@@ -895,6 +903,7 @@ export function GameProvider({ children }) {
       currentHP,
       autoBankLoot,
       bankConfig,
+      equipmentPresets,
       homeShortcuts,
       combatStance,
       idleCombatSetup,
@@ -914,7 +923,7 @@ export function GameProvider({ children }) {
       slayerPerks: slayerPerksRef.current,
       characterUnlocks: characterUnlocksRef.current,
     },
-  }), [currentHP, autoBankLoot, bankConfig, homeShortcuts, combatStance, idleCombatSetup, unlockedFeatures, activeTask, activeCombatSpell, slayerTask, slayerPoints, slayerTasksCompleted, dungeoneeringTokens, bossKillCounts, raidKillCounts, farming, completedQuests, unlockedMinigameItems, questQueue, slayerPerks, characterUnlocks])
+  }), [currentHP, autoBankLoot, bankConfig, equipmentPresets, homeShortcuts, combatStance, idleCombatSetup, unlockedFeatures, activeTask, activeCombatSpell, slayerTask, slayerPoints, slayerTasksCompleted, dungeoneeringTokens, bossKillCounts, raidKillCounts, farming, completedQuests, unlockedMinigameItems, questQueue, slayerPerks, characterUnlocks])
 
 
   // ---- Shared game lock --------------------------------------------------
@@ -1028,6 +1037,7 @@ export function GameProvider({ children }) {
     loaded, player, stats, inventory, equipment, bank, currentHP, toasts, isSaving,
     homeShortcuts, combatStance, idleCombatSetup, updateIdleCombatSetup,
     activeTask, autoBankLoot, bankConfig,
+    equipmentPresets, updateEquipmentPresets,
     unlockedFeatures, unlockFeature,
     slayerTask, setSlayerTask, slayerPoints, updateSlayerPoints, awardSlayerPoints,
     slayerTasksCompleted,
