@@ -68,8 +68,9 @@ export default function CombatQuickActions({
 
   // Food and potions share one tab: food first (sorted), then potions (sorted).
   // Each entry carries its `kind` so the grid can route eat vs. drink and pick
-  // the right tag/active-highlight.
-  const foods = groupInv(isConsumableFood).sort(byName).map(e => ({ ...e, kind: 'food' }))
+  // the right tag/active-highlight. A brew (e.g. Lumira) is both eat-able and a
+  // potion, so exclude potions from the food group to show it once (as a potion).
+  const foods = groupInv(it => isConsumableFood(it) && !isConsumablePotion(it)).sort(byName).map(e => ({ ...e, kind: 'food' }))
   const potions = groupInv(isConsumablePotion).sort(byName).map(e => ({ ...e, kind: 'potion' }))
   const consumables = [...foods, ...potions]
   const weapons = groupInv(it => it.slot === 'weapon').sort(byName)
