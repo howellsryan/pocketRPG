@@ -1,32 +1,17 @@
-// Server-side combat level computation. Mirrors src/engine/quests.js's
-// getCombatLevel but lives here so Pages Functions don't pull JSX/Preact
-// transitively. Reads stats from a parsed save_data JSON blob.
+// Server-side combat level computation. Delegates to the single source of
+// truth in src/engine/combatLevel.js (which pulls no JSX/Preact, only
+// experience.js), so the server can never drift from the client. Reads stats
+// from a parsed save_data JSON blob.
 //
 // We intentionally re-derive CB from the save rather than trusting the
 // client to send it — the waiting-room CB column is a server-authoritative
 // snapshot taken at join time and refreshed on heartbeat.
 
-import { getLevelFromXP } from '../../src/engine/experience.js'
+import { combatLevelFromStats } from '../../src/engine/combatLevel.js'
 
 export function getCombatLevelFromSave(save) {
   if (!save || typeof save !== 'object') return 3
-  const stats = save.stats || {}
-  const lvl = (skill) => {
-    const xp = stats?.[skill]?.xp || 0
-    return getLevelFromXP(xp)
-  }
-  const atk = lvl('attack')
-  const str = lvl('strength')
-  const def = lvl('defence')
-  const hp = lvl('hitpoints')
-  const pray = lvl('prayer')
-  const ranged = lvl('ranged')
-  const magic = lvl('magic')
-  const base = 0.25 * (def + hp + Math.floor(pray / 2))
-  const melee = 0.325 * (atk + str)
-  const range = 0.325 * (Math.floor(ranged / 2) + ranged)
-  const mage  = 0.325 * (Math.floor(magic / 2) + magic)
-  return Math.max(3, Math.floor(base + Math.max(melee, range, mage)))
+  return combatLevelFromStats(save.stats || {})
 }
 
 // Read the denormalized CB column off `characters`. Populated on every save

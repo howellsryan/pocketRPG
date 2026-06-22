@@ -5,11 +5,13 @@ import Card from '../components/Card.jsx'
 import Button from '../components/Button.jsx'
 import ItemSlot from '../components/ItemSlot.jsx'
 import CombatQuickActions from '../components/CombatQuickActions.jsx'
+import SpellSelectGrid from '../components/SpellSelectGrid.jsx'
 import Modal from '../components/Modal.jsx'
 import LootResultModal, { MatchupHpStrip, LootResultRow } from '../components/LootResultModal.jsx'
 import { pvpApi } from '../cloud/pvp.js'
 import itemsData from '../data/items.json'
 import prayersData from '../data/prayers.json'
+import { getCombatType } from '../engine/equipment.js'
 import { getCharacterId } from '../cloud/api.js'
 import { normalizePvpState } from '../engine/pvpState.js'
 import { isConsumableFood, isConsumablePotion, isComboConsumable } from '../engine/consumables.js'
@@ -208,6 +210,7 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
   const [staleWarning, setStaleWarning] = useState(false)
   const [specialQueuedOverride, setSpecialQueuedOverride] = useState(null)
   const [prayerQueuedOverride, setPrayerQueuedOverride] = useState(undefined)
+  const [spellSelectionOverride, setSpellSelectionOverride] = useState(undefined)
   const [selfSplats, setSelfSplats] = useState([])
   const [oppSplats, setOppSplats] = useState([])
 
@@ -298,6 +301,11 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
     ? prayerQueuedOverride
     : serverActivePrayerId
 
+  const serverSelectedSpellId = pair.self?.spell?.id || null
+  const visuallySelectedSpellId = spellSelectionOverride !== undefined
+    ? spellSelectionOverride
+    : serverSelectedSpellId
+
   useEffect(() => {
     if (specialQueuedOverride === null) return
     if (serverSpecialQueued === specialQueuedOverride) {
@@ -316,6 +324,13 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
       }
     }
   }, [serverActivePrayerId, prayerQueuedOverride])
+
+  useEffect(() => {
+    if (spellSelectionOverride === undefined) return
+    if (serverSelectedSpellId === spellSelectionOverride) {
+      setSpellSelectionOverride(undefined)
+    }
+  }, [serverSelectedSpellId, spellSelectionOverride])
 
   useEffect(() => {
     mounted.current = true
@@ -622,6 +637,21 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
 
   const mobilePrayers = availablePrayers.filter((prayer) => playerPrayerLevel >= (prayer.level || 1))
 
+  const playerMagicLevel = Number(pair.self?.stats?.magic || 1)
+  const selfCombatType = getCombatType(pair.self?.equipment || {}, itemsData)
+  const equippedWeaponItem = pair.self?.equipment?.weapon ? itemsData?.[pair.self.equipment.weapon.itemId] : null
+  const isPoweredStaff = !!equippedWeaponItem?.poweredStaff
+  // Spell selection only matters for staff-style magic that fires standard
+  // spells. Powered staves (Trident etc.) scale off magic level and need no spell.
+  const canSelectSpell = selfCombatType === 'magic' && !isPoweredStaff
+
+  const queueSpellChange = (spellId) => {
+    if (terminalHandledRef.current || endModalOpenRef.current) return
+    const nextSpellId = visuallySelectedSpellId === spellId ? null : spellId
+    setSpellSelectionOverride(nextSpellId)
+    queueAction({ type: 'change_combat_spell', spellId: nextSpellId }, { showBusy: false })
+  }
+
   const equippedSpecial = getEquippedPvpSpecialAttack(pair.self, itemsData)
   const specialReady = hasEnoughPvpSpecialEnergy(pair.self, itemsData)
   const specialEnergy = Math.max(0, Math.floor(Number(pair.self?.specialAttackEnergy ?? 0) || 0))
@@ -875,6 +905,20 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
                 })}
               </div>
             </Card>
+            {canSelectSpell && (
+              <Card>
+                <div class="text-[10px] uppercase tracking-wider text-[var(--color-gold-dim)] opacity-60 mb-1.5 px-1">Spell</div>
+                <SpellSelectGrid
+                  magicLevel={playerMagicLevel}
+                  activeSpellId={visuallySelectedSpellId}
+                  onSelect={(spell) => queueSpellChange(spell.id)}
+                  requireRunes
+                  inventory={toArray(pair.self?.inventory)}
+                  equipment={pair.self?.equipment || {}}
+                  itemsData={itemsData}
+                />
+              </Card>
+            )}
           </div>
 
           <div class="space-y-2">
@@ -917,7 +961,7 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
 
           <Card>
             <div class="text-xs font-semibold text-[var(--color-gold)] mb-2">Combat actions</div>
-            <div class="grid grid-cols-2 gap-2">
+            <div class={`grid ${canSelectSpell ? 'grid-cols-3' : 'grid-cols-2'} gap-2`}>
               <Button
                 variant={specialVisuallyQueued ? 'primary' : 'secondary'}
                 size="md"
@@ -943,7 +987,36 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
               >
                 🙏 Prayer
               </Button>
+              {canSelectSpell && (
+                <Button
+                  variant={actionPanel === 'spell' || visuallySelectedSpellId ? 'primary' : 'secondary'}
+                  size="md"
+                  className={`w-full transition-none ${
+                    visuallySelectedSpellId
+                      ? '!border-[var(--color-gold)] !bg-[var(--color-gold)] !text-[var(--color-void-dark)]'
+                      : ''
+                  }`}
+                  aria-pressed={!!visuallySelectedSpellId}
+                  onClick={() => toggleActionPanel('spell')}
+                >
+                  🔮 Cast Spell
+                </Button>
+              )}
             </div>
+
+            {actionPanel === 'spell' && canSelectSpell && (
+              <div class="mt-3">
+                <SpellSelectGrid
+                  magicLevel={playerMagicLevel}
+                  activeSpellId={visuallySelectedSpellId}
+                  onSelect={(spell) => queueSpellChange(spell.id)}
+                  requireRunes
+                  inventory={toArray(pair.self?.inventory)}
+                  equipment={pair.self?.equipment || {}}
+                  itemsData={itemsData}
+                />
+              </div>
+            )}
 
             {actionPanel === 'prayer' && (
               <div class="mt-3">

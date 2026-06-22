@@ -4,6 +4,7 @@
  */
 
 import { getLevelFromXP } from './experience.js'
+import { combatLevelFromStats } from './combatLevel.js'
 import { TICK_DURATION } from '../utils/constants.js'
 
 /**
@@ -33,23 +34,11 @@ export function getQuestPointsEarned(completedQuestIds, questsData) {
  * Convert the effective player combat level from the stats object.
  * Mirrors the PocketRPG combat level formula.
  */
+// Delegates to the single source of truth in src/engine/combatLevel.js.
+// Kept as a named re-export here because the MCP quest-eligibility path
+// imports it from this module.
 export function getCombatLevel(stats) {
-  const lvl = (skill) => {
-    const xp = stats?.[skill]?.xp || 0
-    return getLevelFromXP(xp)
-  }
-  const atk = lvl('attack')
-  const str = lvl('strength')
-  const def = lvl('defence')
-  const hp = lvl('hitpoints')
-  const pray = lvl('prayer')
-  const ranged = lvl('ranged')
-  const magic = lvl('magic')
-  const base = 0.25 * (def + hp + Math.floor(pray / 2))
-  const melee = 0.325 * (atk + str)
-  const range = 0.325 * (Math.floor(ranged / 2) + ranged)
-  const mage = 0.325 * (Math.floor(magic / 2) + magic)
-  return Math.floor(base + Math.max(melee, range, mage))
+  return combatLevelFromStats(stats)
 }
 
 /**

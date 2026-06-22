@@ -502,7 +502,7 @@ describe('pvpEngine phase 2B contract', () => {
         otherBonus: { meleeStrength: 0, rangedStrength: 0, magicDamage: 0 },
       },
     }
-    const a = buildPlayer({ characterId: 1, combatType: 'magic', equipment: { weapon: { itemId: 'trident' } }, spell: { id: 'fire_bolt', baseDamage: 12 } as any })
+    const a = buildPlayer({ characterId: 1, combatType: 'magic', equipment: { weapon: { itemId: 'trident' } }, spell: { id: 'fire_bolt', baseDamage: 12, runeReq: { fire_rune: 5, air_rune: 2 } } as any, inventory: [{ itemId: 'fire_rune', quantity: 1000 }, { itemId: 'air_rune', quantity: 1000 }] })
     const b = buildPlayer({ characterId: 2 })
     const state = createPvpState(a, b, 0)
     state.combatants['2'].attackTimer = 99
@@ -524,6 +524,132 @@ describe('pvpEngine phase 2B contract', () => {
     const state = createPvpState(a, b, 0)
     expect(state.combatants['1'].specialAttackEnergy).toBe(100)
     expect(state.combatants['2'].specialAttackEnergy).toBe(100)
+  })
+
+  describe('magic combat', () => {
+    const mageItems: any = {
+      ...items,
+      battlestaff: {
+        id: 'battlestaff', slot: 'weapon', attackStyle: 'magic', attackSpeed: 5,
+        attackBonus: { stab: 0, slash: 0, crush: 0, magic: 15, ranged: 0 },
+        defenceBonus: { stab: 0, slash: 0, crush: 0, magic: 0, ranged: 0 },
+        otherBonus: { meleeStrength: 0, rangedStrength: 0, magicDamage: 0 },
+      },
+      trident: {
+        id: 'trident', slot: 'weapon', attackStyle: 'magic', attackSpeed: 4, poweredStaff: true,
+        attackBonus: { stab: 0, slash: 0, crush: 0, magic: 25, ranged: 0 },
+        defenceBonus: { stab: 0, slash: 0, crush: 0, magic: 0, ranged: 0 },
+        otherBonus: { meleeStrength: 0, rangedStrength: 0, magicDamage: 0 },
+      },
+      fire_staff: {
+        id: 'fire_staff', slot: 'weapon', attackStyle: 'magic', attackSpeed: 5, elemental: 'fire_rune',
+        attackBonus: { stab: 0, slash: 0, crush: 0, magic: 15, ranged: 0 },
+        defenceBonus: { stab: 0, slash: 0, crush: 0, magic: 0, ranged: 0 },
+        otherBonus: { meleeStrength: 0, rangedStrength: 0, magicDamage: 0 },
+      },
+    }
+    const fireBolt = { id: 'fire_bolt', name: 'Fire Bolt', baseDamage: 12, levelReq: 35, baseXP: 22, runeReq: { fire_rune: 5, air_rune: 2 } }
+    const mage = (overrides: any = {}) => buildPlayer({
+      characterId: 1, combatType: 'magic',
+      equipment: { weapon: { itemId: 'battlestaff' } },
+      spell: { ...fireBolt },
+      ...overrides,
+    })
+
+    it('casts a standard spell and consumes the required runes', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.01) // force a hit
+      const a = mage({ inventory: [{ itemId: 'fire_rune', quantity: 5 }, { itemId: 'air_rune', quantity: 2 }] })
+      const b = buildPlayer({ characterId: 2 })
+      const state = createPvpState(a, b, 0)
+      state.combatants['2'].attackTimer = 99
+      const out = processPvpTick(state, [], mageItems)
+      const attack = out.events.find((e: any) => e.type === 'attack' && e.attackerCharacterId === 1)
+      expect(attack).toBeTruthy()
+      expect(attack.style).toBe('magic')
+      // 5 fire + 2 air runes consumed → inventory empty
+      const inv = out.stateNext.combatants['1'].inventory.filter(Boolean)
+      expect(inv.length).toBe(0)
+    })
+
+    it('blocks the cast and emits no_runes when runes are missing', () => {
+      const a = mage({ inventory: [{ itemId: 'fire_rune', quantity: 1 }] })
+      const b = buildPlayer({ characterId: 2 })
+      const state = createPvpState(a, b, 0)
+      state.combatants['2'].attackTimer = 99
+      const out = processPvpTick(state, [], mageItems)
+      expect(out.events.some((e: any) => e.type === 'attack' && e.attackerCharacterId === 1)).toBe(false)
+      const blocked = out.events.find((e: any) => e.type === 'no_runes' && e.characterId === 1)
+      expect(blocked).toBeTruthy()
+      expect(blocked.reason).toBe('no_runes')
+      // The unspent rune is preserved.
+      expect(out.stateNext.combatants['1'].inventory.filter(Boolean).length).toBe(1)
+    })
+
+    it('credits an equipped elemental staff for its element rune — only air runes needed for fire_bolt', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.01) // force a hit
+      // A Staff of Fire supplies the fire runes for free (PvE parity), so a
+      // wielder carrying only the 2 air runes still casts fire_bolt in PvP.
+      const a = mage({ equipment: { weapon: { itemId: 'fire_staff' } }, inventory: [{ itemId: 'air_rune', quantity: 2 }] })
+      const b = buildPlayer({ characterId: 2 })
+      const state = createPvpState(a, b, 0)
+      state.combatants['2'].attackTimer = 99
+      const out = processPvpTick(state, [], mageItems)
+      const attack = out.events.find((e: any) => e.type === 'attack' && e.attackerCharacterId === 1)
+      expect(attack).toBeTruthy()
+      expect(attack.style).toBe('magic')
+      // Only the 2 air runes are spent; the staff covered the fire runes for free.
+      expect(out.stateNext.combatants['1'].inventory.filter(Boolean).length).toBe(0)
+    })
+
+    it('still blocks when a non-staff rune is missing from inventory, staff equipped or not', () => {
+      // Staff of Fire covers fire runes, but with no air runes carried the cast
+      // is blocked — runes other than the staff's element come from inventory only.
+      const a = mage({ equipment: { weapon: { itemId: 'fire_staff' } }, inventory: [] })
+      const b = buildPlayer({ characterId: 2 })
+      const state = createPvpState(a, b, 0)
+      state.combatants['2'].attackTimer = 99
+      const out = processPvpTick(state, [], mageItems)
+      expect(out.events.some((e: any) => e.type === 'attack' && e.attackerCharacterId === 1)).toBe(false)
+      expect(out.events.find((e: any) => e.type === 'no_runes' && e.characterId === 1)).toBeTruthy()
+    })
+
+    it('powered staff swings without a spell or runes', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.01)
+      const a = mage({ equipment: { weapon: { itemId: 'trident' } }, spell: null, inventory: [] })
+      const b = buildPlayer({ characterId: 2 })
+      const state = createPvpState(a, b, 0)
+      state.combatants['2'].attackTimer = 99
+      const out = processPvpTick(state, [], mageItems)
+      const attack = out.events.find((e: any) => e.type === 'attack' && e.attackerCharacterId === 1)
+      expect(attack).toBeTruthy()
+      expect(attack.maxHit).toBeGreaterThan(0)
+    })
+
+    it('change_combat_spell resolves the full spell definition from data', () => {
+      const a = mage({ spell: null, inventory: [{ itemId: 'fire_rune', quantity: 99 }, { itemId: 'air_rune', quantity: 99 }] })
+      const b = buildPlayer({ characterId: 2 })
+      const state = createPvpState(a, b, 0)
+      state.combatants['1'].attackTimer = 99
+      state.combatants['2'].attackTimer = 99
+      const out = processPvpTick(state, [
+        { tick_number: 1, characterId: 1, characterSeq: 1, action: { type: 'change_combat_spell', spellId: 'fire_bolt' } },
+      ], mageItems)
+      expect(out.stateNext.combatants['1'].spell.id).toBe('fire_bolt')
+      expect(out.stateNext.combatants['1'].spell.baseDamage).toBe(12)
+    })
+
+    it('does not consume ammo for a magic combatant', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.01)
+      const a = mage({
+        equipment: { weapon: { itemId: 'battlestaff' }, ammo: { itemId: 'dragon_arrow', quantity: 50 } },
+        inventory: [{ itemId: 'fire_rune', quantity: 99 }, { itemId: 'air_rune', quantity: 99 }],
+      })
+      const b = buildPlayer({ characterId: 2 })
+      const state = createPvpState(a, b, 0)
+      state.combatants['2'].attackTimer = 99
+      const out = processPvpTick(state, [], mageItems)
+      expect(out.stateNext.combatants['1'].equipment.ammo.quantity).toBe(50)
+    })
   })
 
   it('supports every item specialAttack type in PvP', () => {

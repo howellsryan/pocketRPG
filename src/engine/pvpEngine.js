@@ -1,7 +1,8 @@
 import { addItem } from './inventory.js'
 import { equipItem, unequipSlot, getAttackSpeed, getRangedAmmoRequirementFailure, getCombatType } from './equipment.js'
-import { rollMeleeAttack, rollRangedAttack, rollMagicAttack } from './combatPrimitives.js'
+import { rollMeleeAttack, rollRangedAttack, rollMagicAttack, resolveMagicSwing } from './combatPrimitives.js'
 import prayersData from '../data/prayers.json'
+import spellsData from '../data/spells.json'
 import { isConsumableFood, isConsumablePotion, isComboConsumable, applyConsumableEffect } from './consumables.js'
 import { applyPrayerDrainTick } from './prayerDrain.js'
 import { hitChance, rollDamage } from './formulas.js'
@@ -66,6 +67,20 @@ function rapidAdjustedSpeed(combatant, itemsData) { const base = getAttackSpeed(
 function attackSnapshot(attacker, defender, itemsData) { if (attacker.combatType === 'ranged') return rollRangedAttack(attacker, defender, itemsData); if (attacker.combatType === 'magic') return rollMagicAttack(attacker, defender, itemsData); return rollMeleeAttack(attacker, defender, itemsData) }
 function pvpRandInt(min, max) { const lo = Math.ceil(Math.min(min, max)); const hi = Math.floor(Math.max(min, max)); return lo + Math.floor(Math.random() * (hi - lo + 1)) }
 function consumeEquippedAmmo(combatant, qty = 1) { const ammo = combatant?.equipment?.ammo; if (!ammo) return false; const currentQty = Number.isFinite(Number(ammo.quantity)) ? Number(ammo.quantity) : 1; const nextQty = Math.max(0, currentQty - qty); combatant.equipment.ammo = nextQty <= 0 ? null : { ...ammo, quantity: nextQty }; return true }
+function consumeRunes(combatant, runesToConsume) {
+  if (!runesToConsume || !Array.isArray(combatant?.inventory)) return
+  for (const [runeId, qty] of Object.entries(runesToConsume)) {
+    let remaining = Math.max(0, Math.floor(Number(qty) || 0))
+    for (let i = 0; i < combatant.inventory.length && remaining > 0; i++) {
+      const slot = combatant.inventory[i]
+      if (!slot || slot.itemId !== runeId) continue
+      const take = Math.min(slot.quantity || 1, remaining)
+      slot.quantity = (slot.quantity || 1) - take
+      remaining -= take
+      if (slot.quantity <= 0) combatant.inventory[i] = null
+    }
+  }
+}
 function rangedAmmoBlockedSwing(attacker, itemsData) { if (attacker?.combatType !== 'ranged') return null; const failure = getRangedAmmoRequirementFailure(attacker.equipment, itemsData); if (!failure) return null; attacker.specialAttackQueued = false; return { blocked: true, ammoFailure: failure, damage: 0 } }
 
 function rollModifiedSwing(attacker, defender, itemsData, opts = {}) {
@@ -88,6 +103,14 @@ function attachSpecialMetadata(attacker, weapon, spec, energyBefore, energyAfter
 function resolveSwing(attacker, defender, itemsData, events) {
   const ammoBlocked = rangedAmmoBlockedSwing(attacker, itemsData)
   if (ammoBlocked) return ammoBlocked
+  // Magic resolves through the shared rune / powered-staff path. Staves carry
+  // no melee/ranged special attacks, so we never fall through to the spec logic.
+  if (attacker.combatType === 'magic') {
+    attacker.specialAttackQueued = false
+    const magic = resolveMagicSwing(attacker, defender, itemsData)
+    if (magic.blocked) return { blocked: true, blockType: 'magic', reason: magic.reason, spellId: magic.spellId, damage: 0 }
+    return { ...magic.swing, runesToConsume: magic.runesToConsume || null }
+  }
   const equipped = getEquippedPvpSpecialAttack(attacker, itemsData)
   const weapon = equipped?.weapon || null
   const spec = equipped?.specialAttack || null
@@ -125,7 +148,7 @@ function resolveSwing(attacker, defender, itemsData, events) {
 }
 
 function terminalResult(next, winnerId, loserId, reason, events) { return { stateNext: next, events, terminal: { winner: winnerId, loser: loserId, reason } } }
-function applyIntent(combatant, intentAction, itemsData, events) { if (!intentAction || typeof intentAction !== 'object') return; if (intentAction.type === 'change_stance') { if (VALID_STANCES.has(intentAction.stance)) combatant.stance = intentAction.stance; return } if (intentAction.type === 'change_combat_spell') { combatant.spell = intentAction.spellId ? { id: intentAction.spellId } : null; return } if (intentAction.type === 'queue_special') { combatant.specialAttackQueued = !combatant.specialAttackQueued; return }
+function applyIntent(combatant, intentAction, itemsData, events) { if (!intentAction || typeof intentAction !== 'object') return; if (intentAction.type === 'change_stance') { if (VALID_STANCES.has(intentAction.stance)) combatant.stance = intentAction.stance; return } if (intentAction.type === 'change_combat_spell') { if (!intentAction.spellId) { combatant.spell = null; return } const spell = spellsData?.[intentAction.spellId]; combatant.spell = spell ? { ...spell } : null; return } if (intentAction.type === 'queue_special') { combatant.specialAttackQueued = !combatant.specialAttackQueued; return }
 if (intentAction.type === 'toggle_prayer') { const prayer = prayersData?.[intentAction.prayerId]; const isProtectionPrayer = prayer?.bonusType === 'protection' || PVP_ENGINE_PROTECTION_PRAYER_IDS.has(intentAction.prayerId); if (typeof intentAction.prayerId === 'string' && prayer && !isProtectionPrayer) { const turningOn = combatant.activeCombatPrayer !== intentAction.prayerId; if (turningOn && (combatant.prayerPoints || 0) <= 0) return; combatant.activeCombatPrayer = turningOn ? intentAction.prayerId : null } return }
 if (intentAction.type === 'equip') { const i = intentAction.inventorySlot; if (typeof i !== 'number' || i < 0 || i >= combatant.inventory.length) return; const slot = combatant.inventory[i]; if (!slot) return; const item = itemsData?.[slot.itemId]; if (!item?.slot) return; const result = equipItem(combatant.equipment, item, itemsData, slot); if (!result?.equipped) return; if (item.slot === 'weapon') combatant.combatType = getCombatType(combatant.equipment, itemsData); combatant.inventory[i] = null; for (const uneq of result.unequipped || []) addItem(combatant.inventory, uneq.itemId, uneq.quantity || 1, !!itemsData?.[uneq.itemId]?.stackable); return }
 if (intentAction.type === 'unequip') { const eqSlot = intentAction.equipmentSlot; if (!eqSlot) return; const removed = unequipSlot(combatant.equipment, eqSlot); if (!removed) return; addItem(combatant.inventory, removed.itemId, removed.quantity || 1, !!itemsData?.[removed.itemId]?.stackable); return }
@@ -148,10 +171,10 @@ export function processPvpTick(state, intents, itemsData, now = Date.now()) {
   const rightSwing = (right.hp > 0 && right.attackTimer === 0 && right.eatCooldown === 0) ? resolveSwing(right, left, itemsData, events) : null
   const leftDamage = leftSwing ? Math.max(0, Math.min(right.hp, leftSwing.damage || 0)) : 0
   const rightDamage = rightSwing ? Math.max(0, Math.min(left.hp, rightSwing.damage || 0)) : 0
-  if (leftSwing?.blocked) { events.push({ type: 'no_ammo', characterId: left.characterId, ...(leftSwing.ammoFailure || {}) }); left.attackTimer = rapidAdjustedSpeed(left, itemsData) }
-  else if (leftSwing) { const hits = Array.isArray(leftSwing.hits) ? capHitsToHp(leftSwing.hits, right.hp) : undefined; const totalDamage = hits ? hits.reduce((sum, hit) => sum + hit, 0) : leftDamage; const specialAttack = leftSwing.specialAttack ? { ...leftSwing.specialAttack, hits: hits || [leftDamage], totalDamage } : undefined; events.push({ type: 'attack', attackerCharacterId: left.characterId, defenderCharacterId: right.characterId, ...leftSwing, damage: totalDamage, totalDamage, ...(hits ? { hits } : {}), ...(specialAttack ? { specialAttack } : {}) }); if (left.combatType === 'ranged') consumeEquippedAmmo(left, 1); left.attackTimer = rapidAdjustedSpeed(left, itemsData) }
-  if (rightSwing?.blocked) { events.push({ type: 'no_ammo', characterId: right.characterId, ...(rightSwing.ammoFailure || {}) }); right.attackTimer = rapidAdjustedSpeed(right, itemsData) }
-  else if (rightSwing) { const hits = Array.isArray(rightSwing.hits) ? capHitsToHp(rightSwing.hits, left.hp) : undefined; const totalDamage = hits ? hits.reduce((sum, hit) => sum + hit, 0) : rightDamage; const specialAttack = rightSwing.specialAttack ? { ...rightSwing.specialAttack, hits: hits || [rightDamage], totalDamage } : undefined; events.push({ type: 'attack', attackerCharacterId: right.characterId, defenderCharacterId: left.characterId, ...rightSwing, damage: totalDamage, totalDamage, ...(hits ? { hits } : {}), ...(specialAttack ? { specialAttack } : {}) }); if (right.combatType === 'ranged') consumeEquippedAmmo(right, 1); right.attackTimer = rapidAdjustedSpeed(right, itemsData) }
+  if (leftSwing?.blocked) { events.push(leftSwing.blockType === 'magic' ? { type: 'no_runes', characterId: left.characterId, reason: leftSwing.reason, ...(leftSwing.spellId ? { spellId: leftSwing.spellId } : {}) } : { type: 'no_ammo', characterId: left.characterId, ...(leftSwing.ammoFailure || {}) }); left.attackTimer = rapidAdjustedSpeed(left, itemsData) }
+  else if (leftSwing) { const hits = Array.isArray(leftSwing.hits) ? capHitsToHp(leftSwing.hits, right.hp) : undefined; const totalDamage = hits ? hits.reduce((sum, hit) => sum + hit, 0) : leftDamage; const specialAttack = leftSwing.specialAttack ? { ...leftSwing.specialAttack, hits: hits || [leftDamage], totalDamage } : undefined; events.push({ type: 'attack', attackerCharacterId: left.characterId, defenderCharacterId: right.characterId, ...leftSwing, damage: totalDamage, totalDamage, ...(hits ? { hits } : {}), ...(specialAttack ? { specialAttack } : {}) }); if (left.combatType === 'ranged') consumeEquippedAmmo(left, 1); else if (left.combatType === 'magic') consumeRunes(left, leftSwing.runesToConsume); left.attackTimer = rapidAdjustedSpeed(left, itemsData) }
+  if (rightSwing?.blocked) { events.push(rightSwing.blockType === 'magic' ? { type: 'no_runes', characterId: right.characterId, reason: rightSwing.reason, ...(rightSwing.spellId ? { spellId: rightSwing.spellId } : {}) } : { type: 'no_ammo', characterId: right.characterId, ...(rightSwing.ammoFailure || {}) }); right.attackTimer = rapidAdjustedSpeed(right, itemsData) }
+  else if (rightSwing) { const hits = Array.isArray(rightSwing.hits) ? capHitsToHp(rightSwing.hits, left.hp) : undefined; const totalDamage = hits ? hits.reduce((sum, hit) => sum + hit, 0) : rightDamage; const specialAttack = rightSwing.specialAttack ? { ...rightSwing.specialAttack, hits: hits || [rightDamage], totalDamage } : undefined; events.push({ type: 'attack', attackerCharacterId: right.characterId, defenderCharacterId: left.characterId, ...rightSwing, damage: totalDamage, totalDamage, ...(hits ? { hits } : {}), ...(specialAttack ? { specialAttack } : {}) }); if (right.combatType === 'ranged') consumeEquippedAmmo(right, 1); else if (right.combatType === 'magic') consumeRunes(right, rightSwing.runesToConsume); right.attackTimer = rapidAdjustedSpeed(right, itemsData) }
   right.hp = Math.max(0, right.hp - leftDamage); left.hp = Math.max(0, left.hp - rightDamage); left.currentHP = left.hp; right.currentHP = right.hp
   // Tag events with the tick they landed on so clients can dedup recentEvents
   // across polls (tick responses only carry events for the advancing caller).

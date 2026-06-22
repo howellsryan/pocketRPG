@@ -51,6 +51,60 @@ describe('PvP intent validation food checks', () => {
     expect(validateIntentAction(stateWithInventory('lumira_brew'), 1, { type: 'eat', inventorySlot: 0 })).toEqual({ ok: true })
   })
 
+  it('validates change_combat_spell runes, magic level, and clearing', () => {
+    const base = (runes: any[], magic = 99) => ({
+      combatants: { '1': { characterId: 1, stats: { magic }, inventory: runes, equipment: {} } },
+    })
+    // fire_bolt needs fire_rune 5 + air_rune 2 + chaos_rune 1 and magic level 35.
+    const ok = validateIntentAction(base([{ itemId: 'fire_rune', quantity: 5 }, { itemId: 'air_rune', quantity: 2 }, { itemId: 'chaos_rune', quantity: 1 }]), 1, { type: 'change_combat_spell', spellId: 'fire_bolt' })
+    expect(ok).toEqual({ ok: true })
+
+    const noRunes = validateIntentAction(base([{ itemId: 'fire_rune', quantity: 1 }]), 1, { type: 'change_combat_spell', spellId: 'fire_bolt' })
+    expect(noRunes).toEqual({ ok: false, error: 'insufficient_runes' })
+
+    const lowLevel = validateIntentAction(base([{ itemId: 'fire_rune', quantity: 5 }, { itemId: 'air_rune', quantity: 2 }, { itemId: 'chaos_rune', quantity: 1 }], 1), 1, { type: 'change_combat_spell', spellId: 'fire_bolt' })
+    expect(lowLevel).toEqual({ ok: false, error: 'insufficient_magic_level' })
+
+    const unknown = validateIntentAction(base([]), 1, { type: 'change_combat_spell', spellId: 'not_a_spell' })
+    expect(unknown).toEqual({ ok: false, error: 'invalid_spell' })
+
+    // Clearing the selected spell (null) is always allowed.
+    expect(validateIntentAction(base([]), 1, { type: 'change_combat_spell', spellId: null })).toEqual({ ok: true })
+  })
+
+  it('credits an equipped elemental staff for its element rune; other runes come from inventory', () => {
+    // fire_bolt needs fire_rune 5 + air_rune 2 + chaos_rune 1. A Staff of Fire
+    // supplies the fire runes for free (PvE parity), so only the air + chaos
+    // runes must be carried in inventory — matching resolveMagicSwing.
+    const withStaff = {
+      combatants: {
+        '1': {
+          characterId: 1,
+          stats: { magic: 99 },
+          inventory: [{ itemId: 'air_rune', quantity: 2 }, { itemId: 'chaos_rune', quantity: 1 }],
+          equipment: { weapon: { itemId: 'staff_of_fire' } },
+        },
+      },
+    }
+    expect(validateIntentAction(withStaff, 1, { type: 'change_combat_spell', spellId: 'fire_bolt' }))
+      .toEqual({ ok: true })
+
+    // Without the staff the same inventory is short the fire runes → blocked.
+    // (Bank is never consulted in combat — only inventory + the equipped staff.)
+    const withoutStaff = {
+      combatants: {
+        '1': {
+          characterId: 1,
+          stats: { magic: 99 },
+          inventory: [{ itemId: 'air_rune', quantity: 2 }],
+          equipment: {},
+        },
+      },
+    }
+    expect(validateIntentAction(withoutStaff, 1, { type: 'change_combat_spell', spellId: 'fire_bolt' }))
+      .toEqual({ ok: false, error: 'insufficient_runes' })
+  })
+
   it('validates queue_special energy and weapon requirements', () => {
     const noSpec: any = { combatants: { '1': { characterId: 1, equipment: {}, inventory: [], specialAttackEnergy: 100 } } }
     expect(validateIntentAction(noSpec, 1, { type: 'queue_special' })).toEqual({ ok: false, error: 'no_special_attack' })

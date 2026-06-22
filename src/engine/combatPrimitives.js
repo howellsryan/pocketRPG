@@ -32,6 +32,7 @@ import {
 import { getEquipmentBonuses, getAttackStyle, getEffectiveWornMagicDamage } from './equipment.js'
 import { getCombatSetMultipliers } from './combatSetBonuses.js'
 import { getPvpCombatModifiers } from './pvpCombatModifiers.js'
+import { hasRequiredRunes, getRunesToConsume } from './runes.js'
 
 // ── Helpers ─────────────────────────────────────────────────────────────
 
@@ -204,4 +205,60 @@ export function rollMagicAttack(attacker, defender, itemsData, opts = {}) {
     defenceRoll: defRoll,
     style: 'magic',
   }
+}
+
+/**
+ * Powered-staff base damage from magic level. Mirrors the PvE powered-staff
+ * branch in combat.js (base at L75, +1 per 3 magic levels): floor(mag/3)+9.
+ * Kept here so PvE and PvP share the same scaling for staves like the
+ * Trident / Sanguinesti.
+ */
+export function poweredStaffMagicBaseDamage(magicLevel) {
+  return Math.max(1, Math.floor((Number(magicLevel) || 1) / 3) + 9)
+}
+
+function zeroMagicSwing() {
+  return { hit: false, damage: 0, accuracy: 0, maxHit: 0, attackRoll: 0, defenceRoll: 0, style: 'magic' }
+}
+
+/**
+ * Resolve a full magic swing for a combatant, mirroring the PvE magic
+ * branches (powered staff → spell → no cast). Shared by pvpEngine so PvP
+ * magic obeys the same rune/powered-staff rules as PvE.
+ *
+ * Returns { swing, runesToConsume, blocked, reason }:
+ *  - powered staff: maxHit scaled from magic level, no runes consumed.
+ *  - standard spell with runes: a normal cast plus the runes to consume.
+ *  - standard spell but out of runes, or no spell selected: blocked (0 dmg).
+ *
+ * Pure: it never mutates the combatant. The caller (pvpEngine) is
+ * responsible for actually removing `runesToConsume` from the inventory.
+ */
+export function resolveMagicSwing(attacker, defender, itemsData) {
+  const weaponEntry = attacker?.equipment?.weapon
+  const weapon = weaponEntry ? itemsData?.[weaponEntry.itemId] : null
+
+  // Powered staff path (e.g. Trident): no spell, no runes — scale with magic.
+  if (weapon?.poweredStaff) {
+    const mods = getPvpCombatModifiers(attacker)
+    const boostedMagic = Math.floor(((attacker?.stats?.magic || 1) + (mods.potions.magic || 0)) * (mods.prayer.magic || 1))
+    const maxHitOverride = poweredStaffMagicBaseDamage(boostedMagic)
+    return { swing: rollMagicAttack(attacker, defender, itemsData, { maxHitOverride }), runesToConsume: null, blocked: false }
+  }
+
+  const spell = attacker?.spell
+  if (!spell || typeof spell.baseDamage !== 'number') {
+    return { swing: zeroMagicSwing(), runesToConsume: null, blocked: true, reason: 'no_spell' }
+  }
+  // PvP rune sourcing matches PvE: an equipped elemental staff supplies its
+  // element rune for free, and all other runes must be carried in the caster's
+  // INVENTORY (bank is never consulted in combat — the {} below). The staff's
+  // rune is excluded from both the availability check and the consume set.
+  if (!hasRequiredRunes(spell.runeReq, attacker.inventory || [], {}, attacker.equipment, itemsData)) {
+    return { swing: zeroMagicSwing(), runesToConsume: null, blocked: true, reason: 'no_runes', spellId: spell.id }
+  }
+
+  const swing = rollMagicAttack(attacker, defender, itemsData, { spell })
+  const runesToConsume = spell.runeReq ? getRunesToConsume(spell.runeReq, attacker.equipment, itemsData) : null
+  return { swing, runesToConsume, blocked: false }
 }

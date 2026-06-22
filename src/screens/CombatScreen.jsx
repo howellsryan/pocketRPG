@@ -12,6 +12,7 @@ import EquipmentPaperdoll from '../components/EquipmentPaperdoll.jsx'
 import ItemSlot from '../components/ItemSlot.jsx'
 import GameIcon from '../components/GameIcon.jsx'
 import CombatQuickActions from '../components/CombatQuickActions.jsx'
+import SpellSelectGrid from '../components/SpellSelectGrid.jsx'
 import SkillEmblem from '../components/SkillEmblem.jsx'
 import CombatMobileSelect from './CombatMobileSelect.jsx'
 import { CombatMonsterInfoSheet, CombatRaidInfoSheet, MultiStyleChip } from './CombatMobileSheets.jsx'
@@ -21,6 +22,7 @@ import { getPrayerStyleIcon } from '../utils/prayerIcons.js'
 import { createCombatState, createRaidCombatState, processCombatTick, applyEat, applyCombo, applySpecialAttack, applyInstantKill } from '../engine/combat.js'
 import { applyConsumableEffect, isLumiraBrew, isComboConsumable } from '../engine/consumables.js'
 import { getLevelFromXP } from '../engine/experience.js'
+import { checkBossRequirementsPure, checkRaidRequirementsPure } from '../engine/combatRequirements.js'
 import { getMonsterSeedDrops } from '../engine/seedDrops.js'
 import { getAgilityBankDelayMs, formatBankDelay } from '../engine/agility.js'
 import { onTick, pauseTicks, resumeTicks } from '../engine/tick.js'
@@ -932,29 +934,14 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     setCollapsedSections(prev => ({ ...prev, [sectionKey]: !prev[sectionKey] }))
   }
 
-  const checkBossRequirements = (monster) => {
-    const slayLvl = getSlayerLevel()
-    if (monster.slayerRequirement && slayLvl < monster.slayerRequirement) {
-      return { locked: true, reason: `Need Slayer level ${monster.slayerRequirement} to fight ${monster.name}` }
-    }
-    // Quest gates are data-driven (monster.questRequirement) so the slayer master
-    // assignment and this combat gate share one source of truth.
-    if (monster.questRequirement && !completedQuests.has(monster.questRequirement)) {
-      const questName = questsData.find(q => q.id === monster.questRequirement)?.name || monster.questRequirement.replace(/_/g, ' ')
-      return { locked: true, reason: `Complete ${questName} to fight ${monster.name}` }
-    }
-    if (monster.id === 'ashen_crucible' && (!bossKillCounts['ember_tyrant'] || bossKillCounts['ember_tyrant'] < 1)) {
-      return { locked: true, reason: 'Defeat Ember Tyrant first to unlock Ashen Crucible' }
-    }
-    return { locked: false }
-  }
+  const checkBossRequirements = (monster) => checkBossRequirementsPure(monster, {
+    slayerLevel: getSlayerLevel(),
+    completedQuests,
+    bossKillCounts,
+    questsData,
+  })
 
-  const checkRaidRequirements = (raid) => {
-    if (raid.id === 'theatre_of_blood' && !completedQuests.has('a_night_at_the_theatre')) {
-      return { locked: true, reason: 'Complete A Night at the Theatre to access Crimson Night Theatre' }
-    }
-    return { locked: false }
-  }
+  const checkRaidRequirements = (raid) => checkRaidRequirementsPure(raid, { completedQuests })
 
   const startFight = (monster) => {
     const req = checkBossRequirements(monster)
@@ -967,7 +954,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     const isPoweredStaff = !!weaponItem?.poweredStaff
     const spell = combatType === 'magic' && activeCombatSpell && !isPoweredStaff ? spellsData[activeCombatSpell.id] : null
     if (combatType === 'magic' && !spell && !isPoweredStaff) {
-      addToast('No spell selected! Use the 🔮 Cast button to pick a spell.', 'error')
+      addToast('No spell selected! Use the 🔮 Cast Spell button to pick a spell.', 'error')
     }
     const state = createCombatState(monster, combatType, combatStance, spell)
     // Reset special attack energy on new fight; preserve active potions so they last their full 5 minutes
@@ -996,7 +983,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     const isPoweredStaff = !!weaponItem?.poweredStaff
     const spell = combatType === 'magic' && activeCombatSpell && !isPoweredStaff ? spellsData[activeCombatSpell.id] : null
     if (combatType === 'magic' && !spell && !isPoweredStaff) {
-      addToast('No spell selected! Use the 🔮 Cast button to pick a spell.', 'error')
+      addToast('No spell selected! Use the 🔮 Cast Spell button to pick a spell.', 'error')
     }
     const state = createRaidCombatState(raidData, monstersData, combatType, combatStance, spell)
     if (!state) {
@@ -2281,7 +2268,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                   class={`py-2.5 rounded-lg font-semibold text-sm transition-opacity ${isMagic ? 'active:opacity-80' : 'opacity-40 cursor-default'}`}
                   style={isMagic ? 'background:linear-gradient(135deg,#1a2a3a,#2a3a5a);border:1px solid rgba(100,150,200,0.35);color:#a8d8ff' : 'background:#1a1a1a;border:1px solid #2a2a2a;color:#888'}
                 >
-                  🔮 Cast
+                  🔮 Cast Spell
                 </button>
               </>
             )
@@ -2547,7 +2534,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
               class={`py-2.5 rounded-lg font-semibold text-sm transition-opacity ${isMagic ? 'active:opacity-80' : 'opacity-40 cursor-default'}`}
               style={isMagic ? 'background:linear-gradient(135deg,#1a2a3a,#2a3a5a);border:1px solid rgba(100,150,200,0.35);color:#a8d8ff' : 'background:#1a1a1a;border:1px solid #2a2a2a;color:#888'}
             >
-              🔮 Cast
+              🔮 Cast Spell
             </button>
           )
           const prayerBtn = (
@@ -2710,7 +2697,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                     </button>
                     <button class={'cb-act cb-act--violet' + (isMagic ? ' is-on' : '')} disabled={!isMagic} onClick={isMagic ? () => setShowSpellModal(true) : undefined}>
                       <GameIcon iconKey="crystal_ball" color={isMagic ? '#c9b6ff' : '#9b978c'} size={18} />
-                      <span>Cast</span>
+                      <span>Cast Spell</span>
                     </button>
                     <button class={'cb-act cb-act--green' + (prayerActive ? ' is-on' : '')} onClick={() => setShowPrayerModal(true)}>
                       <GameIcon iconKey="prayer" color={prayerActive ? '#cfeccb' : '#9b978c'} size={18} />
@@ -2852,58 +2839,25 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
         </Modal>
       )}
 
-      {/* Spell modal */}
+      {/* Spell modal — same card grid as the prayer modal (shared component) */}
       {showSpellModal && (
         <Modal onClose={() => setShowSpellModal(false)}>
-          <div class="flex items-center justify-between mb-3">
-            <h3 class="font-[var(--font-display)] text-base font-bold text-[var(--color-gold)]">Select Spell</h3>
-            <button
-              onClick={() => setShowSpellModal(false)}
-              class="w-6 h-6 flex items-center justify-center rounded-lg bg-[#222] text-[var(--color-parchment)] hover:bg-[#333] active:bg-[#444] transition-colors"
-              title="Close"
-            >
-              ✕
+          <div class="cb-prayhead">
+            <h3>Spells</h3>
+            <button onClick={() => setShowSpellModal(false)} class="cb-x" aria-label="Close">
+              <GameIcon iconKey="cancel" color="#cdbf9f" size={16} />
             </button>
           </div>
-
-          <div class="space-y-2 max-h-96 overflow-y-auto">
-            {Object.values(spellsData).map(spell => {
-              const magicLevel = getLevelFromXP(stats.magic?.xp || 0)
-              const canCast = magicLevel >= spell.levelReq
-              const isActive = activeCombatSpell?.id === spell.id
-              return (
-                <button
-                  key={spell.id}
-                  onClick={() => { if (canCast) { updateActiveCombatSpell({ id: spell.id, name: spell.name, baseDamage: spell.baseDamage }); addToast(`Spell changed to ${spell.name}`, 'info'); setShowSpellModal(false); } }}
-                  disabled={!canCast}
-                  class={`w-full p-3 rounded-lg border transition-colors ${
-                    isActive
-                      ? 'bg-[#1a2a3a] border-[#2a5a7a]'
-                      : canCast
-                        ? 'bg-[#1a1a2a] border-[#2a2a4a] active:bg-[#2a2a3a]'
-                        : 'bg-[#111] border-[#1a1a1a] opacity-40'
-                  }`}
-                >
-                  <div class="flex items-center justify-between">
-                    <div class="text-left flex-1">
-                      <div class="text-sm font-semibold text-[var(--color-parchment)]">🔮 {spell.name}</div>
-                      <div class="text-[10px] text-[var(--color-parchment)] opacity-60 mt-0.5">
-                        {spell.tier ? `${spell.tier.charAt(0).toUpperCase() + spell.tier.slice(1)} · ` : ''}Damage {spell.baseDamage}
-                      </div>
-                      {spell.runeReq && Object.entries(spell.runeReq).length > 0 && (
-                        <div class="text-[9px] text-[var(--color-gold-dim)] mt-0.5">
-                          Runes: {Object.entries(spell.runeReq).map(([runeId, qty]) => `${qty}x ${runeId.split('_')[0].charAt(0).toUpperCase() + runeId.split('_')[0].slice(1)}`).join(', ')}
-                        </div>
-                      )}
-                      <div class="text-[9px] text-[var(--color-gold-dim)] mt-0.5">Lv {spell.levelReq}</div>
-                    </div>
-                    {isActive && (
-                      <span class="text-base text-[#a8d8ff]">✓</span>
-                    )}
-                  </div>
-                </button>
-              )
-            })}
+          <div class="max-h-96 overflow-y-auto">
+            <SpellSelectGrid
+              magicLevel={getLevelFromXP(stats.magic?.xp || 0)}
+              activeSpellId={activeCombatSpell?.id || null}
+              onSelect={(spell) => {
+                updateActiveCombatSpell({ id: spell.id, name: spell.name, baseDamage: spell.baseDamage })
+                addToast(`Spell changed to ${spell.name}`, 'info')
+                setShowSpellModal(false)
+              }}
+            />
           </div>
         </Modal>
       )}
