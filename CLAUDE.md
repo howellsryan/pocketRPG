@@ -3,7 +3,7 @@
 > **Purpose**: Fast, reliable, *accurate* instructions for AI/human contributors. Claude Code loads this file every session. Keep it aligned with the live codebase and scripts — when behaviour or scripts change, update this file in the same change.
 
 ## 0) Orientation (read first)
-- **Product**: menu-driven, tick-based, mobile-first fantasy **idle RPG**. Deterministic core logic, offline-first.
+- **Product**: menu-driven, tick-based, mobile-first fantasy **idle RPG**. Deterministic core logic; account-gated and server-backed — the client runs the game loop locally for responsiveness and syncs to a server that is the source of truth for accounts, high-value grants, and competitive/social systems (§14).
 - **Where code lives**: client game in `src/`, Cloudflare server in `functions/`, static content in `src/data/`, logic tests in `tests/`.
 - **The build is a single file**: the deployed app is a generated, **gitignored** `index.html` + a lazy `game-<hash>.js` chunk (see §12). Edit sources in `src/**`, never the generated output.
 - **Before you commit**: pass the §11 commit gate. Don't commit with failing checks.
@@ -12,7 +12,7 @@
 ## 1) Project Snapshot
 - **Genre**: idle/simulation fantasy RPG with OSRS-style combat/skilling mechanics (PocketRPG-owned fantasy naming).
 - **Engine tick**: 600ms (`TICK_MS = 600`).
-- **Goals**: mobile-first UI, offline-first gameplay, deterministic core logic.
+- **Goals**: mobile-first UI, low-latency local play (client runs the tick loop, then syncs), deterministic core logic. Requires an account and server connectivity (auth, characters, rewards, PvP, payments are all server-side).
 - **Hosting**: Cloudflare Pages (`pages_build_output_dir = "."`); server logic runs as Pages Functions.
 
 ## 2) Tech Stack (Current)
@@ -154,14 +154,20 @@ Do not commit with failing checks.
 - When this guide becomes stale, update it in the same change as the behavior/script change.
 
 ## 14) Production Security Model (Server Authority)
-- PocketRPG is offline-first: live skilling, idle/offline catch-up, and skip-hour compute XP, coins, and drops on the **client** and persist them through `/api/save`. There is no server-side game engine to recompute against, so XP/coins (and any client-created items: idle/offline loot, crafted/smithed/cooked products, skill capes) are **client-authoritative by design**. The leaderboard is best-effort, not cheat-proof — do **not** add `/api/save` checks that police economy/item *increases*; they break the core loop and provide no real protection while XP/coins remain client-side.
-- Integrity is enforced where it actually *can* be server-authoritative, not on the trusted save:
-  - **High-value reward grants** — boss/raid/clue/minigame/dungeoneering uniques are granted by the server-side completion endpoints (`/api/actions/**`), which roll loot RNG server-side, record kill-counts and collection-log entries, and claim a nonce for replay protection. The save merely carries the already-granted item.
-  - **Purchases** — `/api/purchase` debits coins and grants the item server-side.
-  - **Credits** — debited atomically by `/api/skip-hour` and `/api/slayer/skip`; never bumped from `/api/save`.
-  - **PvP settlement / trading post** — their own server-authoritative paths.
-- `/api/save` enforces exactly two write guards (integrity, not anti-cheat): stale-write rejection (`save_revision`) and the total-level regression guard (account-wipe protection — a save whose total level drops below the stored one is refused).
-- New API mutations that can materially change economy/progression must emit **audit events**.
+The server is the source of truth for everything that *can* be made authoritative. The one deliberate exception is the save blob: there is no server-side game engine to recompute the tick loop, so the client computes XP/coins/drops and the server trusts them. Know which side owns each thing before you change an endpoint.
+
+**Server-authoritative (the integrity boundary — never move these to the client/save):**
+- **Identity & ownership** — auth (session JWT via `requireAuth`), characters, and OAuth all live server-side; every `/api/*` route verifies the token.
+- **High-value reward grants** — boss/raid/clue/minigame/dungeoneering uniques are granted by the completion endpoints (`/api/actions/**`), which roll loot RNG server-side, record kill-counts and collection-log entries, and claim a nonce for replay protection. The save merely carries the already-granted item.
+- **Purchases** — `/api/purchase` debits coins and grants the item server-side.
+- **Credits** — debited atomically by `/api/skip-hour` and `/api/slayer/skip`; **never** bumped from `/api/save`.
+- **PvP settlement / trading post** — their own server-authoritative paths (§10).
+- New API mutations that can materially change economy/progression must emit **audit events** (`functions/_lib/game/audit.js`).
+
+**Client-trusted (the save blob — a deliberate, bounded exception, not an oversight):**
+- Live skilling, idle/offline catch-up, and skip-hour compute XP, coins, and drops on the **client** and persist them through `/api/save`. XP/coins and client-created items (idle/offline loot, crafted/smithed/cooked products, skill capes) ride in the trusted blob because the same client paths legitimately create them and the server has no engine to re-derive them.
+- Because of this, the leaderboard is best-effort, not cheat-proof. Do **not** add `/api/save` checks that police economy/item *increases* — they break the core loop and buy no real protection while XP/coins are client-computed. Tighten integrity by moving a reward onto a server-authoritative endpoint, not by validating the save.
+- `/api/save` enforces exactly **two** write guards (integrity, not anti-cheat): stale-write rejection (`save_revision`) and the total-level regression guard (account-wipe protection — a save whose total level drops below the stored one is refused; see `functions/_lib/game/saveValidation.js`). Saves are also locked entirely while a PvP match is active.
 
 ## 15) MCP Server (`/api/mcp`)
 A stateless MCP server (JSON-RPC 2.0) lives at `functions/api/mcp.js`, with its own OAuth 2.1 authorization server. The full architecture and the **how-to-add-a-tool** extension rule (bridge tools vs. save-intents, the required `schema.js`/`tools.js`/test trio, and `applyTaskResult.js` as the single source of truth) live in the path-scoped rule **`.claude/rules/mcp.md`**, which auto-loads when you open `functions/api/mcp.js`, `functions/_lib/mcp/**`, the OAuth paths (`functions/_lib/oauth/**`, `functions/api/oauth/**`, `functions/.well-known/**`), `src/screens/OAuthConsentScreen.jsx`, or `tests/mcp*.test.ts`.
@@ -169,11 +175,13 @@ A stateless MCP server (JSON-RPC 2.0) lives at `functions/api/mcp.js`, with its 
 ## 16) Token efficiency — MANDATORY (Headroom-style discipline)
 > These rules replicate, in-session, the token savings Headroom's proxy gets mechanically. They are **not optional** and apply to **every** session (web/cloud included, where the local wrapper cannot reach). Follow them by default; deviate only when the user explicitly asks for more detail.
 
-**A) Output shaping (replicates Headroom's verbosity steering — "be terse, don't restate context"):**
-- Answer directly. No preamble ("Sure, I'll…"), no postamble ("Let me know if…"), no restating the question or the plan.
-- Don't re-describe context already visible to the user (file contents you just edited, tool output, their own request). Reference it; don't echo it.
-- Default to the shortest correct answer — a sentence or a few bullets. Prose over headings; skip section scaffolding unless the answer is genuinely long.
-- Report results plainly; don't narrate routine steps ("Now I'll read X…") — just do them.
+**A) Output shaping — HARD DEFAULT (replicates Headroom's verbosity steering. This is the rule violated most often; obey it literally):**
+- **Lead with the answer or result in the first sentence.** No preamble ("Sure, I'll…", "Great question", "You're right"), no postamble ("Let me know if…", "Hope this helps"), no restating the question, the plan, or what you just did.
+- **Budget: ≤6 lines for a routine reply; a post-edit status update is 1–3 lines.** Exceed this only when the user asks for depth, or correctness genuinely needs a table / numbered steps / code block — then still delete every sentence that adds no information.
+- **Never echo context the user can already see**: file contents you just edited, tool output, diffs, full commands, or their own request. Point to it (`save.js:146`); don't reproduce it.
+- **No step narration** ("Now I'll read X…", "Let me check Y") — just call the tool. **No closing recap** of work the diff or tool output already shows, and **no unprompted "what I changed and why" justification**.
+- **One idea per line; cut filler** ("it's worth noting", "as you can see", "in order to", "I went ahead and"). If a sentence survives deletion without information loss, delete it.
+- If you catch yourself writing a recap, a justification, or a summary the user didn't ask for, stop and delete it before sending.
 
 **B) Effort routing (replicates Headroom's effort routing):**
 - Spend minimal reasoning on routine/mechanical work (file reads, obvious edits, passing tests, lookups). Reserve deep reasoning for genuinely novel or ambiguous problems.
