@@ -5,14 +5,13 @@ import Card from '../components/Card.jsx'
 import Button from '../components/Button.jsx'
 import ItemSlot from '../components/ItemSlot.jsx'
 import CombatQuickActions from '../components/CombatQuickActions.jsx'
+import SpellSelectGrid from '../components/SpellSelectGrid.jsx'
 import Modal from '../components/Modal.jsx'
 import LootResultModal, { MatchupHpStrip, LootResultRow } from '../components/LootResultModal.jsx'
 import { pvpApi } from '../cloud/pvp.js'
 import itemsData from '../data/items.json'
 import prayersData from '../data/prayers.json'
-import spellsData from '../data/spells.json'
 import { getCombatType } from '../engine/equipment.js'
-import { hasRequiredRunes } from '../engine/runes.js'
 import { getCharacterId } from '../cloud/api.js'
 import { normalizePvpState } from '../engine/pvpState.js'
 import { isConsumableFood, isConsumablePotion, isComboConsumable } from '../engine/consumables.js'
@@ -645,11 +644,6 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
   // Spell selection only matters for staff-style magic that fires standard
   // spells. Powered staves (Trident etc.) scale off magic level and need no spell.
   const canSelectSpell = selfCombatType === 'magic' && !isPoweredStaff
-  const availableSpells = canSelectSpell
-    ? Object.values(spellsData || {})
-      .filter((spell) => spell && typeof spell.baseDamage === 'number')
-      .sort((a, b) => (Number(a.levelReq) || 0) - (Number(b.levelReq) || 0))
-    : []
 
   const queueSpellChange = (spellId) => {
     if (terminalHandledRef.current || endModalOpenRef.current) return
@@ -914,32 +908,15 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
             {canSelectSpell && (
               <Card>
                 <div class="text-[10px] uppercase tracking-wider text-[var(--color-gold-dim)] opacity-60 mb-1.5 px-1">Spell</div>
-                <div class="grid grid-cols-4 gap-1">
-                  {availableSpells.map((spell) => {
-                    const active = visuallySelectedSpellId === spell.id
-                    const canUse = playerMagicLevel >= (spell.levelReq || 1) && hasRequiredRunes(spell.runeReq, toArray(pair.self?.inventory), {}, pair.self?.equipment || {}, itemsData)
-                    return (
-                      <button
-                        key={spell.id}
-                        type="button"
-                        onClick={() => canUse && queueSpellChange(spell.id)}
-                        disabled={!canUse}
-                        aria-pressed={active}
-                        title={`${spell.name} · Lv ${spell.levelReq} · ${spell.baseDamage} base dmg`}
-                        class={`px-1 py-1 rounded-md border text-center transition-colors ${
-                          active
-                            ? 'bg-[#2a1a3a] border-[var(--color-gold)]'
-                            : canUse
-                              ? 'bg-[#1a1a2a] border-[#3a2a4a] active:bg-[#2a2a3a]'
-                              : 'bg-[#111] border-[#1a1a1a] opacity-30 cursor-default'
-                        }`}
-                      >
-                        <div class="text-[9px] font-[var(--font-mono)] text-[var(--color-parchment)] leading-tight truncate">{spell.name}</div>
-                        <div class="text-[8px] text-[var(--color-gold-dim)] opacity-70 mt-0.5">Lv {spell.levelReq}</div>
-                      </button>
-                    )
-                  })}
-                </div>
+                <SpellSelectGrid
+                  magicLevel={playerMagicLevel}
+                  activeSpellId={visuallySelectedSpellId}
+                  onSelect={(spell) => queueSpellChange(spell.id)}
+                  requireRunes
+                  inventory={toArray(pair.self?.inventory)}
+                  equipment={pair.self?.equipment || {}}
+                  itemsData={itemsData}
+                />
               </Card>
             )}
           </div>
@@ -1029,29 +1006,15 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
 
             {actionPanel === 'spell' && canSelectSpell && (
               <div class="mt-3">
-                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
-                  {availableSpells.map((spell) => {
-                    const active = visuallySelectedSpellId === spell.id
-                    const canUse = playerMagicLevel >= (spell.levelReq || 1) && hasRequiredRunes(spell.runeReq, toArray(pair.self?.inventory), {}, pair.self?.equipment || {}, itemsData)
-                    return (
-                      <Button
-                        key={spell.id}
-                        variant={active ? 'primary' : 'secondary'}
-                        size="md"
-                        disabled={!canUse}
-                        className={`min-h-11 w-full justify-center px-1 text-center text-[10px] leading-tight transition-none ${
-                          active
-                            ? '!border-[var(--color-gold)] !bg-[var(--color-gold)] !text-[var(--color-void-dark)]'
-                            : ''
-                        }`}
-                        aria-pressed={active}
-                        onClick={() => queueSpellChange(spell.id)}
-                      >
-                        <span class="block truncate">✨ {spell.name}</span>
-                      </Button>
-                    )
-                  })}
-                </div>
+                <SpellSelectGrid
+                  magicLevel={playerMagicLevel}
+                  activeSpellId={visuallySelectedSpellId}
+                  onSelect={(spell) => queueSpellChange(spell.id)}
+                  requireRunes
+                  inventory={toArray(pair.self?.inventory)}
+                  equipment={pair.self?.equipment || {}}
+                  itemsData={itemsData}
+                />
               </div>
             )}
 

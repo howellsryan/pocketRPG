@@ -12,6 +12,7 @@ import EquipmentPaperdoll from '../components/EquipmentPaperdoll.jsx'
 import ItemSlot from '../components/ItemSlot.jsx'
 import GameIcon from '../components/GameIcon.jsx'
 import CombatQuickActions from '../components/CombatQuickActions.jsx'
+import SpellSelectGrid from '../components/SpellSelectGrid.jsx'
 import SkillEmblem from '../components/SkillEmblem.jsx'
 import CombatMobileSelect from './CombatMobileSelect.jsx'
 import { CombatMonsterInfoSheet, CombatRaidInfoSheet, MultiStyleChip } from './CombatMobileSheets.jsx'
@@ -2838,58 +2839,25 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
         </Modal>
       )}
 
-      {/* Spell modal */}
+      {/* Spell modal — same card grid as the prayer modal (shared component) */}
       {showSpellModal && (
         <Modal onClose={() => setShowSpellModal(false)}>
-          <div class="flex items-center justify-between mb-3">
-            <h3 class="font-[var(--font-display)] text-base font-bold text-[var(--color-gold)]">Select Spell</h3>
-            <button
-              onClick={() => setShowSpellModal(false)}
-              class="w-6 h-6 flex items-center justify-center rounded-lg bg-[#222] text-[var(--color-parchment)] hover:bg-[#333] active:bg-[#444] transition-colors"
-              title="Close"
-            >
-              ✕
+          <div class="cb-prayhead">
+            <h3>Spells</h3>
+            <button onClick={() => setShowSpellModal(false)} class="cb-x" aria-label="Close">
+              <GameIcon iconKey="cancel" color="#cdbf9f" size={16} />
             </button>
           </div>
-
-          <div class="space-y-2 max-h-96 overflow-y-auto">
-            {Object.values(spellsData).map(spell => {
-              const magicLevel = getLevelFromXP(stats.magic?.xp || 0)
-              const canCast = magicLevel >= spell.levelReq
-              const isActive = activeCombatSpell?.id === spell.id
-              return (
-                <button
-                  key={spell.id}
-                  onClick={() => { if (canCast) { updateActiveCombatSpell({ id: spell.id, name: spell.name, baseDamage: spell.baseDamage }); addToast(`Spell changed to ${spell.name}`, 'info'); setShowSpellModal(false); } }}
-                  disabled={!canCast}
-                  class={`w-full p-3 rounded-lg border transition-colors ${
-                    isActive
-                      ? 'bg-[#1a2a3a] border-[#2a5a7a]'
-                      : canCast
-                        ? 'bg-[#1a1a2a] border-[#2a2a4a] active:bg-[#2a2a3a]'
-                        : 'bg-[#111] border-[#1a1a1a] opacity-40'
-                  }`}
-                >
-                  <div class="flex items-center justify-between">
-                    <div class="text-left flex-1">
-                      <div class="text-sm font-semibold text-[var(--color-parchment)]">🔮 {spell.name}</div>
-                      <div class="text-[10px] text-[var(--color-parchment)] opacity-60 mt-0.5">
-                        {spell.tier ? `${spell.tier.charAt(0).toUpperCase() + spell.tier.slice(1)} · ` : ''}Damage {spell.baseDamage}
-                      </div>
-                      {spell.runeReq && Object.entries(spell.runeReq).length > 0 && (
-                        <div class="text-[9px] text-[var(--color-gold-dim)] mt-0.5">
-                          Runes: {Object.entries(spell.runeReq).map(([runeId, qty]) => `${qty}x ${runeId.split('_')[0].charAt(0).toUpperCase() + runeId.split('_')[0].slice(1)}`).join(', ')}
-                        </div>
-                      )}
-                      <div class="text-[9px] text-[var(--color-gold-dim)] mt-0.5">Lv {spell.levelReq}</div>
-                    </div>
-                    {isActive && (
-                      <span class="text-base text-[#a8d8ff]">✓</span>
-                    )}
-                  </div>
-                </button>
-              )
-            })}
+          <div class="max-h-96 overflow-y-auto">
+            <SpellSelectGrid
+              magicLevel={getLevelFromXP(stats.magic?.xp || 0)}
+              activeSpellId={activeCombatSpell?.id || null}
+              onSelect={(spell) => {
+                updateActiveCombatSpell({ id: spell.id, name: spell.name, baseDamage: spell.baseDamage })
+                addToast(`Spell changed to ${spell.name}`, 'info')
+                setShowSpellModal(false)
+              }}
+            />
           </div>
         </Modal>
       )}

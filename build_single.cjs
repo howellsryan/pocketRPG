@@ -105,6 +105,7 @@ const sourceFiles = [
   'components/SkillBadge.js',
   'components/GameIcon.js',
   'components/CombatQuickActions.js',
+  'components/SpellSelectGrid.js',
   'components/SkillEmblem.js',
   'components/SkillIcon.js',
   'components/ItemSlot.js',
