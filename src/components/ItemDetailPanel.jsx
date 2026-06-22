@@ -30,6 +30,7 @@ export default function ItemDetailPanel({ item, children, quantity, noted, extra
         )}
         {quantity > 1 && <p>Quantity: {quantity}</p>}
         {item.shopValue > 0 && <p>Value: <span class="text-[var(--color-gold)]">{item.shopValue.toLocaleString()} gp</span></p>}
+        {item.description && <p class="text-[var(--color-gold)]">{item.description}</p>}
         {extraInfo}
         {hasBonuses && (
           <div class="pt-2 border-t border-[var(--color-void-border)]">

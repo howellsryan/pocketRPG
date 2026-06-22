@@ -323,7 +323,7 @@ describe('New Items', () => {
     expect((bot as any).otherBonus.magicDamage).toBe(2)
   })
 
-  it('kodai wand should give +15% magic damage bonus and provide water runes', () => {
+  it('ancestral wand should give +15% magic damage bonus and provide water runes', () => {
     const wand = itemsData['ancestral_wand' as keyof typeof itemsData]
     expect((wand as any).otherBonus.magicDamage).toBe(15)
     expect((wand as any).elemental).toBe('water_rune')

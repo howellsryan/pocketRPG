@@ -66,6 +66,15 @@ describe('magic utility spell actions', () => {
     expect(stunConsume).toEqual({ soul_rune: 1, earth_rune: 12 })
   })
 
+  it('the Ancestral Wand covers water runes for every spell', () => {
+    const equipment = { weapon: { itemId: 'ancestral_wand' } }
+
+    // curse: body + water + earth → only the water rune is covered
+    expect(getRunesToConsume(curse.runeReq, equipment as any, items as any)).toEqual({ body_rune: 1, earth_rune: 3 })
+    // stun: soul + water + earth → only the water rune is covered
+    expect(getRunesToConsume(stun.runeReq, equipment as any, items as any)).toEqual({ soul_rune: 1, earth_rune: 12 })
+  })
+
   it('idle skilling caps on non-elemental runes, grants magic xp, and gives no products/coins', () => {
     const sim = simulateIdleSkilling(
       { skill: 'magic', action: curse } as any,
