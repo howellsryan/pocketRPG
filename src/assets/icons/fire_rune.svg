@@ -1,8 +1,13 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <g stroke="#241c2b" stroke-width="12" stroke-linejoin="round" stroke-linecap="round">
-    <ellipse cx="256" cy="268" rx="168" ry="172" fill="#e23b4a"/>
-    <path d="M256 116 C 330 124 396 188 400 266 C 360 196 300 160 256 152 C 212 160 152 196 112 266 C 116 188 182 124 256 116 Z" fill="#ff8a8f" stroke="none"/>
-    <path d="M256 168 C 286 214 300 230 300 282 C 300 330 282 360 256 372 C 230 360 212 330 212 282 C 212 252 230 232 244 246 C 240 216 248 192 256 168 Z" fill="#ffcf6a" stroke="#a81e2c" stroke-width="10"/>
-    <path d="M256 252 C 272 274 278 296 268 322 C 260 338 250 338 244 322 C 238 304 244 280 256 252 Z" fill="#fff0c4" stroke="none"/>
+  <defs>
+    <radialGradient id="fire_rune_stone" cx="0.4" cy="0.32" r="0.85">
+      <stop offset="0" stop-color="#ffb27a"/><stop offset="0.55" stop-color="#e8743a"/><stop offset="1" stop-color="#a8431a"/>
+    </radialGradient>
+  </defs>
+  <g stroke="#3a1c0c" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M150 168 L362 156 L420 250 L388 372 L256 416 L120 360 L104 232 Z" fill="url(#fire_rune_stone)"/>
+    <path d="M150 168 L362 156 L300 210 C 240 198 184 204 150 230 Z" fill="#ffcb9e" stroke="none"/>
+    <path d="M256 178 C 288 224 302 244 300 292 C 298 338 280 366 256 378 C 232 366 214 338 212 292 C 210 262 226 244 240 256 C 236 222 246 198 256 178 Z" fill="#7a2a0c" stroke="#5a1f08" stroke-width="9"/>
+    <path d="M256 262 C 272 284 276 304 268 328 C 260 344 252 344 246 328 C 240 312 244 288 256 262 Z" fill="#ffe2b0" stroke="none"/>
   </g>
 </svg>

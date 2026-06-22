@@ -1,10 +1,18 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <g stroke="#241c2b" stroke-width="12" stroke-linejoin="round" stroke-linecap="round">
-    <polygon points="392,236 470,188 452,256 470,324 392,276" fill="#7d8b96"/>
-    <path d="M96 256 C 168 184 332 184 404 232 L420 256 L404 280 C 332 328 168 328 96 256 Z" fill="#9aa6b0"/>
-    <polygon points="232,200 282,128 312,206" fill="#7d8b96"/>
-    <path d="M96 256 C 168 296 300 300 360 286 L360 312 C 280 322 170 312 110 282 Z" fill="#c4ccd3" stroke="none"/>
-    <circle cx="158" cy="240" r="13" fill="#241c2b" stroke="none"/>
-    <polyline points="108,272 132,266 120,280 144,274 132,288 156,282" fill="none" stroke="#f4f6f8" stroke-width="7"/>
+  <defs>
+    <linearGradient id="shark_body" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#aebccb"/><stop offset="0.55" stop-color="#7d8fa0"/><stop offset="1" stop-color="#566576"/>
+    </linearGradient>
+  </defs>
+  <g stroke="#1a2530" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
+    <polygon points="392,236 470,184 450,256 470,328 392,276" fill="#6b7d8e"/>
+    <path d="M92 258 C 168 180 332 180 404 230 L424 256 L404 282 C 332 332 168 332 92 258 Z" fill="url(#shark_body)"/>
+    <polygon points="228,198 286,120 318,206" fill="#6b7d8e"/>
+    <polygon points="210,300 250,360 286,308" fill="#6b7d8e"/>
+    <path d="M104 250 C 180 296 300 300 360 288 L360 312 C 280 322 168 312 110 286 Z" fill="#c4ccd5" stroke="none"/>
+    <circle cx="156" cy="240" r="14" fill="#15202a" stroke="none"/>
+    <circle cx="151" cy="235" r="4" fill="#fff" stroke="none"/>
+    <path d="M96 280 C 120 296 150 300 178 298" fill="none" stroke="#1a2530" stroke-width="7"/>
+    <polyline points="100,272 122,268 110,282 134,276 122,290 146,284" fill="none" stroke="#eef3f7" stroke-width="6"/>
   </g>
 </svg>

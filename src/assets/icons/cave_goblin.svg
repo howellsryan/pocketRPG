@@ -1,18 +1,22 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <g stroke="#241c2b" stroke-width="12" stroke-linejoin="round" stroke-linecap="round">
-    <polygon points="158,236 64,196 156,300" fill="#7b9a3e"/>
-    <polygon points="354,236 448,196 356,300" fill="#7b9a3e"/>
-    <path d="M178 184 Q 256 116 334 184 Q 384 232 362 322 Q 330 408 256 416 Q 182 408 150 322 Q 128 232 178 184 Z" fill="#7b9a3e"/>
-    <path d="M334 184 Q 384 232 362 322 Q 330 408 256 416 Q 300 360 300 280 Q 300 214 286 168 Q 312 168 334 184 Z" fill="#52701f" stroke="none"/>
-    <ellipse cx="214" cy="268" rx="30" ry="24" fill="#ffe08a"/>
-    <ellipse cx="300" cy="268" rx="30" ry="24" fill="#ffe08a"/>
-    <circle cx="220" cy="272" r="11" fill="#241c2b" stroke="none"/>
-    <circle cx="306" cy="272" r="11" fill="#241c2b" stroke="none"/>
-    <path d="M176 232 L244 252" stroke="#241c2b" stroke-width="14" fill="none"/>
-    <path d="M338 232 L272 252" stroke="#241c2b" stroke-width="14" fill="none"/>
-    <path d="M256 286 L238 312 L256 352 L286 332 Z" fill="#52701f"/>
-    <path d="M196 360 Q 256 392 320 360 L304 384 Q 256 404 212 384 Z" fill="#3a4d12"/>
-    <polygon points="222,366 234,388 246,366" fill="#f4f6e8" stroke="none"/>
-    <polygon points="268,366 280,388 292,366" fill="#f4f6e8" stroke="none"/>
+  <defs>
+    <radialGradient id="cave_goblin_skin" cx="0.42" cy="0.34" r="0.8">
+      <stop offset="0" stop-color="#9fc24e"/><stop offset="0.6" stop-color="#6b8e23"/><stop offset="1" stop-color="#46611a"/>
+    </radialGradient>
+  </defs>
+  <g stroke="#1f2b0c" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
+    <polygon points="160,236 66,194 158,302" fill="url(#cave_goblin_skin)"/>
+    <polygon points="352,236 446,194 354,302" fill="url(#cave_goblin_skin)"/>
+    <path d="M178 184 Q 256 114 334 184 Q 386 232 364 322 Q 332 410 256 418 Q 180 410 148 322 Q 126 232 178 184 Z" fill="url(#cave_goblin_skin)"/>
+    <ellipse cx="212" cy="268" rx="32" ry="25" fill="#fff2b8"/>
+    <ellipse cx="300" cy="268" rx="32" ry="25" fill="#fff2b8"/>
+    <circle cx="220" cy="272" r="12" fill="#1a1410" stroke="none"/>
+    <circle cx="308" cy="272" r="12" fill="#1a1410" stroke="none"/>
+    <path d="M172 230 L246 254" stroke="#1f2b0c" stroke-width="15" fill="none"/>
+    <path d="M340 230 L266 254" stroke="#1f2b0c" stroke-width="15" fill="none"/>
+    <path d="M256 286 L236 314 L256 356 L288 334 Z" fill="#46611a"/>
+    <path d="M192 360 Q 256 396 322 360 L304 388 Q 256 410 210 388 Z" fill="#2c3d10"/>
+    <polygon points="220,366 232,390 244,366" fill="#f4f6e0" stroke="none"/>
+    <polygon points="268,366 280,390 292,366" fill="#f4f6e0" stroke="none"/>
   </g>
 </svg>

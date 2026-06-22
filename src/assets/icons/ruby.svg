@@ -1,9 +1,15 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <g stroke="#241c2b" stroke-width="12" stroke-linejoin="round" stroke-linecap="round">
-    <polygon points="256,108 364,182 412,266 256,432 100,266 148,182" fill="#e23b4a"/>
-    <polygon points="256,108 364,182 256,236 148,182" fill="#ff8a8f"/>
-    <polygon points="148,182 256,236 256,432 100,266" fill="#a81e2c"/>
-    <polygon points="364,182 412,266 256,432 256,236" fill="#c92a3a"/>
-    <polygon points="190,164 256,200 210,214" fill="#ffd0d3" stroke="none"/>
+  <defs>
+    <radialGradient id="ruby_body" cx="0.4" cy="0.3" r="0.85">
+      <stop offset="0" stop-color="#ff6b78"/><stop offset="0.55" stop-color="#d11a2a"/><stop offset="1" stop-color="#8a0f1c"/>
+    </radialGradient>
+  </defs>
+  <g stroke="#3a0810" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
+    <polygon points="256,104 366,180 412,266 256,432 100,266 146,180" fill="url(#ruby_body)"/>
+    <polygon points="256,104 366,180 256,238 146,180" fill="#ff8a94"/>
+    <polygon points="146,180 256,238 256,432 100,266" fill="#a8121f"/>
+    <polygon points="366,180 412,266 256,432 256,238" fill="#c4172a"/>
+    <polygon points="186,160 256,196 212,214" fill="#ffd6da" stroke="none"/>
+    <polygon points="256,238 300,300 256,360 212,300" fill="#e8324a" stroke="#8a0f1c" stroke-width="6"/>
   </g>
 </svg>

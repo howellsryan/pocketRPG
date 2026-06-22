@@ -1,13 +1,20 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <g stroke="#241c2b" stroke-width="12" stroke-linejoin="round" stroke-linecap="round">
-    <circle cx="186" cy="338" r="84" fill="#a3743f"/>
-    <circle cx="186" cy="338" r="52" fill="none" stroke="#6f4a23" stroke-width="9"/>
-    <circle cx="186" cy="338" r="22" fill="#c89a63" stroke="#6f4a23" stroke-width="8"/>
-    <circle cx="338" cy="338" r="84" fill="#a3743f"/>
-    <circle cx="338" cy="338" r="52" fill="none" stroke="#6f4a23" stroke-width="9"/>
-    <circle cx="338" cy="338" r="22" fill="#c89a63" stroke="#6f4a23" stroke-width="8"/>
-    <circle cx="262" cy="214" r="84" fill="#b07f47"/>
-    <circle cx="262" cy="214" r="52" fill="none" stroke="#6f4a23" stroke-width="9"/>
-    <circle cx="262" cy="214" r="22" fill="#c89a63" stroke="#6f4a23" stroke-width="8"/>
+  <defs>
+    <linearGradient id="oak_logs_bark" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#c08a4c"/><stop offset="0.5" stop-color="#9a6a36"/><stop offset="1" stop-color="#6f4a23"/>
+    </linearGradient>
+    <radialGradient id="oak_logs_end" cx="0.4" cy="0.38" r="0.7">
+      <stop offset="0" stop-color="#d6a766"/><stop offset="1" stop-color="#8a5e30"/>
+    </radialGradient>
+  </defs>
+  <g stroke="#3a2614" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
+    <rect x="96" y="300" width="320" height="92" rx="46" fill="url(#oak_logs_bark)"/>
+    <ellipse cx="386" cy="346" rx="40" ry="46" fill="url(#oak_logs_end)"/>
+    <ellipse cx="386" cy="346" rx="22" ry="26" fill="none" stroke="#7a5024" stroke-width="8"/>
+    <rect x="120" y="196" width="300" height="92" rx="46" fill="url(#oak_logs_bark)"/>
+    <ellipse cx="390" cy="242" rx="40" ry="46" fill="url(#oak_logs_end)"/>
+    <ellipse cx="390" cy="242" rx="22" ry="26" fill="none" stroke="#7a5024" stroke-width="8"/>
+    <path d="M150 214 L360 214" stroke="#c89a63" stroke-width="6" fill="none"/>
+    <path d="M130 318 L340 318" stroke="#c89a63" stroke-width="6" fill="none"/>
   </g>
 </svg>

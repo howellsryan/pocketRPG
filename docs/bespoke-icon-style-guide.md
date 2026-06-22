@@ -8,25 +8,34 @@
 - **Safe area**: keep all content within `[56, 456]` on both axes (~11% padding). Long items (swords, bows) may extend to `[40, 472]` on their long axis only.
 - **Composition**: single hero object, centered, presented at a **3/4 / 45° angle** for weapons & tools, **front-on** for consumables, gems, runes, currency, and emblems.
 
-## Colour & shading (flat, not gradients)
-- **Flat 2–3 tone shading per surface**: a base tone, one lighter highlight, one darker shade. No `<linearGradient>`/`<radialGradient>`/filters — they bloat the file and break the unified look. (A single subtle gradient is allowed only for glass/liquid in potions.)
+## Colour & shading (OSRS-style rendered look)
+- **Goal: evoke the OSRS item-sprite idiom** — recognizable silhouette, canonical tier palette, a 3/4 viewing angle, and *rendered* (smoothly shaded) surfaces with a bright specular highlight. We author **original art in that style**, never tracing/copying Jagex sprites.
+- **Gradient shading is the default**: each surface uses a `<linearGradient>` (blades/bars/limbs, light→dark along the top-left light axis) or `<radialGradient>` (gems/runes/round metal, bright spot up-left). Add a small solid specular shape for the metal "glint."
+- **Gradient ids MUST be globally unique** — prefix every gradient id with the entity id (e.g. `id="bronze_dagger_blade"`). All icon bodies share one DOM id namespace once injected, so an unprefixed `id="g"` collides across icons.
 - **Light source**: top-left. Highlights up/left, shadows down/right.
-- **Outline**: every silhouette carries a dark contour `#241c2b`, `stroke-width="12"`, `stroke-linejoin="round"`, `stroke-linecap="round"`. Put the stroke on the shape (or a group) — do not draw a separate outline shape.
+- **Outline**: every silhouette carries a dark contour `#1a1410`, `stroke-width="13"`, `stroke-linejoin="round"`, `stroke-linecap="round"` (OSRS sprites have a crisp dark outline). Put the stroke on the shape (or a group) — do not draw a separate outline shape.
+- **Tradeoff**: gradients add ~0.2–0.4 KB/icon vs. flat. Acceptable for the OSRS look; revisit only if the full ~900-set bundle gets heavy.
 - **Palette** (reuse so tiers stay coherent across the whole set):
+
+Tier palette mirrors OSRS metal conventions so a player reads the tier at a glance:
 
 | Family | base | light | shade |
 |---|---|---|---|
-| Bronze | `#c87f3a` | `#e6a85f` | `#9a5a22` |
-| Iron | `#8a8f99` | `#b4b9c2` | `#5f646d` |
-| Steel | `#b9c2cf` | `#e2e8f0` | `#888f9c` |
-| Runeforged (cyan) | `#46c7b8` | `#8df0e4` | `#2a9285` |
-| Gold | `#f0c040` | `#ffe08a` | `#c4912a` |
-| Wood (oak) | `#a3743f` | `#c89a63` | `#6f4a23` |
-| Leaf/nature | `#4caf50` | `#8bd98f` | `#2f7a37` |
-| Fire/ruby red | `#e23b4a` | `#ff8a8f` | `#a81e2c` |
-| Coal/onyx | `#3a3340` | `#5a5460` | `#1e1a24` |
-| Glass/mana | `#5bb8e0` | `#a7e0f5` | `#2f7fae` |
-| Goblin skin | `#7b9a3e` | `#a7c266` | `#52701f` |
+| Bronze | `#b87333` | `#e6a85f` | `#7a4a1e` |
+| Iron | `#6e747e` | `#9aa0aa` | `#41454d` |
+| Steel | `#bcc6d2` | `#eef3f8` | `#7f8893` |
+| Mithril (blue) | `#3a52c8` | `#7d92f0` | `#23337e` |
+| Adamant (green) | `#3f8a5a` | `#74c98e` | `#246b3c` |
+| Rune (teal) | `#2fd0c0` | `#aef5ec` | `#1a8a7e` |
+| Dragon (red) | `#c0392b` | `#ff6b5a` | `#7a1d14` |
+| Gold | `#ffcf33` | `#fff0a0` | `#c48f12` |
+| Wood (oak) | `#b07a3e` | `#d6a766` | `#6f4a23` |
+| Nature green | `#3fa64a` | `#8fe08f` | `#246b2c` |
+| Fire orange | `#e8743a` | `#ffb27a` | `#a8431a` |
+| Ruby red | `#d11a2a` | `#ff6b78` | `#8a0f1c` |
+| Coal | `#3b424b` | `#5a636e` | `#1c2026` |
+| Glass/mana | `#7fd0ef` | `#cdeefb` | `#3f8fb8` |
+| Goblin skin | `#6b8e23` | `#9fc24e` | `#46611a` |
 
 ## Structure conventions
 - Wrap the whole icon in one `<g>` so a future tint/glow hook can target it.

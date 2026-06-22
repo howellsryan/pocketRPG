@@ -1,10 +1,15 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <g stroke="#241c2b" stroke-width="12" stroke-linejoin="round" stroke-linecap="round">
-    <path d="M152 198 L246 150 L368 172 L424 262 L392 366 L282 414 L158 384 L108 288 Z" fill="#8a8f99"/>
-    <path d="M152 198 L246 150 L304 232 L208 274 Z" fill="#b4b9c2" stroke="none"/>
-    <path d="M392 366 L282 414 L240 332 L344 300 Z" fill="#5f646d" stroke="none"/>
-    <circle cx="300" cy="296" r="20" fill="#cdd2da" stroke="none"/>
-    <circle cx="250" cy="346" r="13" fill="#e2e8f0" stroke="none"/>
-    <circle cx="346" cy="244" r="14" fill="#cdd2da" stroke="none"/>
+  <defs>
+    <radialGradient id="iron_ore_rock" cx="0.38" cy="0.32" r="0.8">
+      <stop offset="0" stop-color="#9aa0aa"/><stop offset="0.6" stop-color="#6e747e"/><stop offset="1" stop-color="#41454d"/>
+    </radialGradient>
+  </defs>
+  <g stroke="#1a1410" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M150 200 L246 150 L368 172 L424 262 L392 366 L282 414 L158 384 L108 288 Z" fill="url(#iron_ore_rock)"/>
+    <path d="M150 200 L246 150 L300 230 L206 272 Z" fill="#aeb4be" stroke="none"/>
+    <circle cx="300" cy="296" r="19" fill="#a0561f" stroke="none"/>
+    <circle cx="252" cy="350" r="13" fill="#b86a2c" stroke="none"/>
+    <circle cx="350" cy="246" r="14" fill="#a0561f" stroke="none"/>
+    <circle cx="220" cy="320" r="8" fill="#c47a3a" stroke="none"/>
   </g>
 </svg>

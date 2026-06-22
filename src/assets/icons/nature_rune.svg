@@ -1,8 +1,13 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <g stroke="#241c2b" stroke-width="12" stroke-linejoin="round" stroke-linecap="round">
-    <ellipse cx="256" cy="268" rx="168" ry="172" fill="#4caf50"/>
-    <path d="M256 116 C 330 124 396 188 400 266 C 360 196 300 160 256 152 C 212 160 152 196 112 266 C 116 188 182 124 256 116 Z" fill="#8bd98f" stroke="none"/>
-    <path d="M256 360 C 200 340 168 286 180 220 C 244 214 312 248 332 312 C 312 352 286 364 256 360 Z" fill="#eaffd0" stroke="#2f7a37" stroke-width="10"/>
-    <path d="M210 232 C 250 268 286 300 312 332" fill="none" stroke="#2f7a37" stroke-width="10"/>
+  <defs>
+    <radialGradient id="nature_rune_stone" cx="0.4" cy="0.32" r="0.85">
+      <stop offset="0" stop-color="#8fe08f"/><stop offset="0.55" stop-color="#3fa64a"/><stop offset="1" stop-color="#246b2c"/>
+    </radialGradient>
+  </defs>
+  <g stroke="#123a18" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M150 168 L362 156 L420 250 L388 372 L256 416 L120 360 L104 232 Z" fill="url(#nature_rune_stone)"/>
+    <path d="M150 168 L362 156 L300 210 C 240 198 184 204 150 230 Z" fill="#b6efb6" stroke="none"/>
+    <path d="M256 366 C 198 346 166 290 180 222 C 246 216 316 252 336 318 C 314 358 286 370 256 366 Z" fill="#163d1c" stroke="#0e2a12" stroke-width="9"/>
+    <path d="M206 234 C 248 272 286 306 314 340" fill="none" stroke="#9fe89f" stroke-width="9"/>
   </g>
 </svg>

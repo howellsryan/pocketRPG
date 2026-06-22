@@ -1,12 +1,23 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <g stroke="#241c2b" stroke-width="12" stroke-linejoin="round" stroke-linecap="round">
-    <circle cx="256" cy="256" r="186" fill="#6f4a23"/>
-    <circle cx="256" cy="256" r="186" fill="none" stroke="#9a6a33" stroke-width="14"/>
-    <path d="M118 372 L344 156" stroke="#241c2b" stroke-width="40"/>
-    <path d="M118 372 L344 156" stroke="#a3743f" stroke-width="24"/>
-    <path d="M268 110 C 322 96 384 118 410 168 L378 196 C 356 158 318 142 286 150 Z" fill="#b9c2cf"/>
-    <path d="M410 168 C 360 150 320 156 296 178 L286 150 C 318 142 356 158 378 196 Z" fill="#e2e8f0" stroke="none"/>
-    <path d="M150 402 L196 356 L226 386 L180 432 C 164 438 146 432 142 416 Z" fill="#3a3340"/>
-    <circle cx="190" cy="396" r="12" fill="#46c7b8" stroke="none"/>
+  <defs>
+    <radialGradient id="mining_badge" cx="0.4" cy="0.34" r="0.85">
+      <stop offset="0" stop-color="#8a5e30"/><stop offset="0.7" stop-color="#5c3d1e"/><stop offset="1" stop-color="#3a2614"/>
+    </radialGradient>
+    <linearGradient id="mining_head" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#aef5ec"/><stop offset="0.5" stop-color="#2fd0c0"/><stop offset="1" stop-color="#177064"/>
+    </linearGradient>
+    <linearGradient id="mining_handle" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#c08a4c"/><stop offset="1" stop-color="#6f4a23"/>
+    </linearGradient>
+  </defs>
+  <g stroke="#1a1410" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
+    <circle cx="256" cy="256" r="188" fill="url(#mining_badge)"/>
+    <circle cx="256" cy="256" r="188" fill="none" stroke="#9a6a33" stroke-width="14"/>
+    <path d="M126 384 L352 158" stroke="#3a2614" stroke-width="40"/>
+    <path d="M126 384 L352 158" stroke="url(#mining_handle)" stroke-width="24"/>
+    <path d="M262 110 C 322 92 392 116 420 172 L384 202 C 360 158 320 142 286 152 Z" fill="url(#mining_head)"/>
+    <path d="M420 172 C 366 152 322 158 298 182 L286 152 C 320 142 360 158 384 202 Z" fill="#cffaf3" stroke="none"/>
+    <path d="M150 408 L198 360 L230 392 L182 440 C 166 446 148 438 144 422 Z" fill="#3b424b"/>
+    <circle cx="194" cy="400" r="13" fill="#ff6b78" stroke="none"/>
   </g>
 </svg>

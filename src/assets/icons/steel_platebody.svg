@@ -1,10 +1,17 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <g stroke="#241c2b" stroke-width="12" stroke-linejoin="round" stroke-linecap="round">
-    <path d="M256 168 C 232 130 184 138 168 182 C 124 196 122 248 138 306 L150 384 Q 256 416 362 384 L374 306 C 390 248 388 196 344 182 C 328 138 280 130 256 168 Z" fill="#b9c2cf"/>
-    <path d="M256 168 C 232 130 184 138 168 182 C 150 196 146 224 150 252 C 200 232 312 232 362 252 C 366 224 362 196 344 182 C 328 138 280 130 256 168 Z" fill="#e2e8f0" stroke="none"/>
-    <path d="M256 196 C 244 178 244 178 256 196 L256 388" stroke="#888f9c" stroke-width="10" fill="none"/>
-    <path d="M196 280 Q 224 304 256 300" stroke="#888f9c" stroke-width="9" fill="none"/>
-    <path d="M316 280 Q 288 304 256 300" stroke="#888f9c" stroke-width="9" fill="none"/>
-    <path d="M150 384 Q 256 416 362 384 L356 410 Q 256 440 156 410 Z" fill="#888f9c" stroke="none"/>
+  <defs>
+    <linearGradient id="steel_platebody_plate" x1="0" y1="0" x2="0.7" y2="1">
+      <stop offset="0" stop-color="#eef3f8"/><stop offset="0.5" stop-color="#bcc6d2"/><stop offset="1" stop-color="#7f8893"/>
+    </linearGradient>
+  </defs>
+  <g stroke="#1a1410" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M256 150 C 232 132 196 138 184 166 C 140 178 130 232 146 290 L150 360 C 150 390 200 402 256 402 C 312 402 362 390 362 360 L366 290 C 382 232 372 178 328 166 C 316 138 280 132 256 150 Z" fill="url(#steel_platebody_plate)"/>
+    <path d="M184 166 C 150 180 142 220 150 256 C 196 238 200 238 224 236 C 210 206 200 180 200 162 C 192 162 188 164 184 166 Z" fill="#eef3f8" stroke="none"/>
+    <path d="M256 196 L256 392" stroke="#7f8893" stroke-width="9" fill="none"/>
+    <path d="M198 286 Q 226 308 256 304" stroke="#7f8893" stroke-width="8" fill="none"/>
+    <path d="M314 286 Q 286 308 256 304" stroke="#7f8893" stroke-width="8" fill="none"/>
+    <path d="M150 362 C 150 390 200 402 256 402 C 312 402 362 390 362 362 L356 392 C 320 410 192 410 156 392 Z" fill="#7f8893" stroke="none"/>
+    <circle cx="178" cy="214" r="7" fill="#5a626d" stroke="none"/>
+    <circle cx="334" cy="214" r="7" fill="#5a626d" stroke="none"/>
   </g>
 </svg>
