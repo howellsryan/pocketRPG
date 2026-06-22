@@ -8,13 +8,11 @@
     </linearGradient>
   </defs>
   <g transform="rotate(-45 256 256)" stroke="#1a1410" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
-    <path d="M256 56 C 286 130 292 220 286 286 L226 286 C 220 220 226 130 256 56 Z" fill="url(#{{id}}_blade)"/>
-    <path d="M256 92 L256 282" stroke="{{light}}" stroke-width="7" fill="none"/>
-    <path d="M256 92 L256 282" stroke="{{shade}}" stroke-width="3" fill="none"/>
-    <path d="M192 286 C 210 300 302 300 320 286 L322 312 C 300 326 212 326 190 312 Z" fill="url(#{{id}}_grip)"/>
-    <rect x="238" y="312" width="36" height="86" rx="8" fill="url(#{{id}}_grip)"/>
-    <path d="M240 330 L272 330 M240 352 L272 352 M240 374 L272 374" stroke="#2a1a0c" stroke-width="5"/>
-    <circle cx="256" cy="416" r="26" fill="#c4912a"/>
-    <circle cx="247" cy="408" r="8" fill="#ffe08a" stroke="none"/>
+    <path d="M256 156 C 274 196 278 244 276 272 L236 272 C 234 244 238 196 256 156 Z" fill="url(#{{id}}_blade)"/>
+    <path d="M256 180 L256 268" stroke="{{light}}" stroke-width="6" fill="none"/>
+    <path d="M214 272 C 230 284 282 284 298 272 L300 294 C 282 306 230 306 212 294 Z" fill="url(#{{id}}_grip)"/>
+    <rect x="240" y="294" width="32" height="50" rx="8" fill="url(#{{id}}_grip)"/>
+    <path d="M242 310 L270 310 M242 330 L270 330" stroke="#2a1a0c" stroke-width="5"/>
+    <circle cx="256" cy="360" r="20" fill="#c4912a"/>
   </g>
 </svg>
