@@ -7,7 +7,20 @@
 export function getEquippedElementalStaff(equipment, itemsData) {
   if (!equipment?.weapon) return null
   const staff = itemsData[equipment.weapon.itemId]
-  return (staff && staff.elemental) ? staff : null
+  return (staff && (staff.elemental || staff.elementals)) ? staff : null
+}
+
+/**
+ * Get the set of rune types an elemental staff supplies for free.
+ * Supports single-rune staves (`elemental`) and multi-rune staves
+ * (`elementals`, e.g. the Ancestral Wand covering all four elements).
+ * @param {object|null} staff - staff item data from getEquippedElementalStaff
+ * @returns {Set<string>} rune ids provided by the staff
+ */
+export function getStaffRuneTypes(staff) {
+  if (!staff) return new Set()
+  if (Array.isArray(staff.elementals)) return new Set(staff.elementals)
+  return staff.elemental ? new Set([staff.elemental]) : new Set()
 }
 
 /**
@@ -23,11 +36,11 @@ export function hasRequiredRunes(runeReq, inventory, bank, equipment, itemsData)
   if (!runeReq) return true
 
   const staff = getEquippedElementalStaff(equipment, itemsData)
-  const staffRuneType = staff?.elemental
+  const staffRuneTypes = getStaffRuneTypes(staff)
 
   for (const [runeId, qty] of Object.entries(runeReq)) {
     // If this rune type is provided by the equipped staff, skip the check
-    if (staffRuneType === runeId) continue
+    if (staffRuneTypes.has(runeId)) continue
 
     const invCount = inventory.reduce((sum, slot) => sum + (slot?.itemId === runeId ? (slot?.quantity || 1) : 0), 0)
     const bankCount = bank[runeId]?.quantity || 0
@@ -50,12 +63,12 @@ export function getRunesToConsume(runeReq, equipment, itemsData) {
   if (!runeReq) return {}
 
   const staff = getEquippedElementalStaff(equipment, itemsData)
-  const staffRuneType = staff?.elemental
+  const staffRuneTypes = getStaffRuneTypes(staff)
 
   const toConsume = {}
   for (const [runeId, qty] of Object.entries(runeReq)) {
     // Skip runes provided by the staff
-    if (staffRuneType === runeId) continue
+    if (staffRuneTypes.has(runeId)) continue
     toConsume[runeId] = qty
   }
   return toConsume
@@ -71,7 +84,7 @@ export function getRunesToConsume(runeReq, equipment, itemsData) {
  */
 export function countRune(runeId, inventory, equipment, itemsData) {
   const staff = getEquippedElementalStaff(equipment, itemsData)
-  if (staff?.elemental === runeId) {
+  if (getStaffRuneTypes(staff).has(runeId)) {
     return Infinity // Unlimited rune from staff
   }
   return inventory.reduce((sum, slot) => sum + (slot?.itemId === runeId ? (slot?.quantity || 1) : 0), 0)

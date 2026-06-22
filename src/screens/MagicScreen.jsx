@@ -10,7 +10,7 @@ import { getLevelFromXP } from '../engine/experience.js'
 import { createSkillingState, processSkillingTick } from '../engine/skilling.js'
 import { emptySession } from '../engine/activitySession.js'
 import { countItem, removeItem } from '../engine/inventory.js'
-import { hasRequiredRunes, getRunesToConsume, getEquippedElementalStaff } from '../engine/runes.js'
+import { hasRequiredRunes, getRunesToConsume, getEquippedElementalStaff, getStaffRuneTypes } from '../engine/runes.js'
 import { onTick } from '../engine/tick.js'
 import { markScreenTick } from '../engine/activityRunner.js'
 import { formatNumber } from '../utils/helpers.js'
@@ -290,7 +290,7 @@ export default function MagicScreen({ onBack, onNavigate }) {
   }
 
   const staff = getEquippedElementalStaff(equipment, itemsData)
-  const staffRuneType = staff?.elemental
+  const staffRuneTypes = getStaffRuneTypes(staff)
 
   const grouped = groupActions(allActions)
 
@@ -338,7 +338,7 @@ export default function MagicScreen({ onBack, onNavigate }) {
                   meta={<>
                     <span class="text-[var(--color-gold)] font-bold opacity-100">Lv {action.level}</span> · {action.xp} XP · {formatActionDuration(action.ticks)}
                     {action.runeReq && <span> · Runes: {Object.entries(action.runeReq).map(([id, qty]) =>
-                      staffRuneType === id ? `Staff (${itemsData[id]?.name || id})` : `${itemsData[id]?.name || id} ×${qty}`).join(', ')}</span>}
+                      staffRuneTypes.has(id) ? `Staff (${itemsData[id]?.name || id})` : `${itemsData[id]?.name || id} ×${qty}`).join(', ')}</span>}
                     {action.materials && <span> · Needs: {Object.entries(action.materials).map(([id, qty]) => `${itemsData[id]?.name || id} ×${qty}`).join(', ')}</span>}
                     {availCount !== null && <span class="text-[var(--color-gold)]"> · {availCount.toLocaleString()} actions</span>}
                     {levelOk && !hasRunes && <span class="block text-[var(--color-blood-ember)] mt-1">🔮 Missing runes (or equip elemental staff)</span>}

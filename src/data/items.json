@@ -9540,7 +9540,8 @@
     "stackable": false,
     "attackSpeed": 4,
     "attackStyle": "magic",
-    "elemental": "water_rune",
+    "elementals": ["air_rune", "water_rune", "earth_rune", "fire_rune"],
+    "description": "Covers the cost of all elemental runes (air, water, earth and fire) for every spell.",
     "attackBonus": {
       "stab": 0,
       "slash": 0,
