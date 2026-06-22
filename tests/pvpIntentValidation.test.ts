@@ -55,14 +55,14 @@ describe('PvP intent validation food checks', () => {
     const base = (runes: any[], magic = 99) => ({
       combatants: { '1': { characterId: 1, stats: { magic }, inventory: runes, equipment: {} } },
     })
-    // fire_bolt needs fire_rune 5 + air_rune 2 and magic level 35.
-    const ok = validateIntentAction(base([{ itemId: 'fire_rune', quantity: 5 }, { itemId: 'air_rune', quantity: 2 }]), 1, { type: 'change_combat_spell', spellId: 'fire_bolt' })
+    // fire_bolt needs fire_rune 5 + air_rune 2 + chaos_rune 1 and magic level 35.
+    const ok = validateIntentAction(base([{ itemId: 'fire_rune', quantity: 5 }, { itemId: 'air_rune', quantity: 2 }, { itemId: 'chaos_rune', quantity: 1 }]), 1, { type: 'change_combat_spell', spellId: 'fire_bolt' })
     expect(ok).toEqual({ ok: true })
 
     const noRunes = validateIntentAction(base([{ itemId: 'fire_rune', quantity: 1 }]), 1, { type: 'change_combat_spell', spellId: 'fire_bolt' })
     expect(noRunes).toEqual({ ok: false, error: 'insufficient_runes' })
 
-    const lowLevel = validateIntentAction(base([{ itemId: 'fire_rune', quantity: 5 }, { itemId: 'air_rune', quantity: 2 }], 1), 1, { type: 'change_combat_spell', spellId: 'fire_bolt' })
+    const lowLevel = validateIntentAction(base([{ itemId: 'fire_rune', quantity: 5 }, { itemId: 'air_rune', quantity: 2 }, { itemId: 'chaos_rune', quantity: 1 }], 1), 1, { type: 'change_combat_spell', spellId: 'fire_bolt' })
     expect(lowLevel).toEqual({ ok: false, error: 'insufficient_magic_level' })
 
     const unknown = validateIntentAction(base([]), 1, { type: 'change_combat_spell', spellId: 'not_a_spell' })
@@ -73,15 +73,15 @@ describe('PvP intent validation food checks', () => {
   })
 
   it('credits an equipped elemental staff for its element rune; other runes come from inventory', () => {
-    // fire_bolt needs fire_rune 5 + air_rune 2. A Staff of Fire supplies the
-    // fire runes for free (PvE parity), so only the air_rune must be carried in
-    // inventory — matching the cast path in resolveMagicSwing.
+    // fire_bolt needs fire_rune 5 + air_rune 2 + chaos_rune 1. A Staff of Fire
+    // supplies the fire runes for free (PvE parity), so only the air + chaos
+    // runes must be carried in inventory — matching resolveMagicSwing.
     const withStaff = {
       combatants: {
         '1': {
           characterId: 1,
           stats: { magic: 99 },
-          inventory: [{ itemId: 'air_rune', quantity: 2 }],
+          inventory: [{ itemId: 'air_rune', quantity: 2 }, { itemId: 'chaos_rune', quantity: 1 }],
           equipment: { weapon: { itemId: 'staff_of_fire' } },
         },
       },
