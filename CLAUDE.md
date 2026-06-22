@@ -116,28 +116,7 @@ Schema:
 - A new shared component must be registered in `build_single.cjs` `sourceFiles` (follow existing ordering conventions); in-game screens also go in `GAME_CHUNK_FILES` (§12).
 
 ## 10) PvP Rules (Current Lockdown)
-- Server-authoritative under `/api/pvp/*`.
-- Matchmaking constraints: combat level ±10; Ironman and One-Life blocked.
-- Save/idle/purchase/skip-hour writes are **locked** while `characters.active_match_id` is set.
-- Tick cadence: 600ms; deterministic ordering by tick + character ids.
-- PvP special energy: starts at 100, regenerates **+10 every 30s**, capped at 100.
-- **Equipment swap never adds an attack delay** (OSRS parity): equipping/unequipping leaves `attackTimer` untouched — a ready attack swings with the newly equipped weapon on the same tick; mid-cooldown swaps keep the remaining cooldown, and the new weapon's speed applies from the next swing.
-- Simultaneous deaths tie-breaker: lower `characterId`.
-- Protection prayers disabled in PvP v1 (only offensive prayers apply, and they drain the prayer pool — see §4).
-- Forfeit is treated as death for loot transfer.
-- **Magic combat (PvE parity)**: all three styles fight in PvP. `combatType` is derived from the equipped weapon; magic uses the shared `resolveMagicSwing` (`src/engine/combatPrimitives.js`). Standard spells consume runes from the combatant's **inventory** per cast (an equipped elemental staff supplies its element rune free, as in PvE; the bank is never consulted in combat) and a cast is blocked with a `no_runes` event when runes run out. Powered staves (`item.poweredStaff`, e.g. Trident) need no spell/runes and scale max hit off magic level. The active spell is seeded from `save.settings.activeCombatSpell` at match start and changed mid-fight via the `change_combat_spell` intent (validated in `intent.js`; resolved against `src/data/spells.json` by the engine).
-
-### PvP Bot System
-- Bots live in the `characters` table with `is_bot=1` and a `bot_template_id` referencing `src/data/pvpBots.json`. Seeded once via `scripts/seed-pvp-bots.cjs` (`npm run seed:bots`).
-- **Four integration seams**:
-  1. **Lobby** — `GET /api/pvp/waiting` UNIONs virtual bot entries for the player's CB band.
-  2. **Auto-accept** — `POST /api/pvp/invitations` detects `target.is_bot` and calls `createMatch()` immediately.
-  3. **AI injection** — `tick.js` calls `computeBotIntents(state, botId, itemsData)` before `processPvpTick`, merging intents in-memory (no DB writes for bot actions).
-  4. **Post-match reset** — `resetBotSave(env, botCharacterId)` rebuilds the bot's save from its template after every match end or stall-abort.
-- **Loot on bot match end** (server-authoritative, `finalizeTerminalMatch`): human wins → `rollBotLootBox()` grants coins or a ~2% Zesta unique to the human's bank (collection log written for Zesta); bot wins → `splitInventoryByTradeable()` strips the human's tradeable gear (item sink). Normal `applyLootTransfer` is bypassed for bot matches.
-- **Reward items** (untradeables, collection log category `pvp` / section `pvp_bots`): `zesta_longsword`, `zesta_vest`, `zesta_skirt`.
-- `aiProfile` in the template selects behaviour in `src/engine/pvpBotAI.js`.
-- Bots are excluded from the PvP kill-count rank ladder (the ranking query filters `is_bot = 0`; see `functions/_lib/pvpRanks.js` and `functions/api/leaderboard.js`).
+PvP is server-authoritative under `/api/pvp/*`. The full rules — matchmaking, save-lockdown, special-energy/equipment-swap timing, magic parity, and the bot system — live in the path-scoped rule **`.claude/rules/pvp.md`**, which auto-loads when you open `functions/api/pvp/**`, `functions/_lib/pvp*`, `src/engine/pvp*`, `src/data/pvpBots.json`, or `functions/api/leaderboard.js`. The shared combat tick model is §6; prayer/combo invariants are §4.
 
 ## 11) Build/Test Commands (Authoritative)
 npm scripts are the source of truth:
@@ -185,16 +164,7 @@ Do not commit with failing checks.
 - New API mutations that can materially change economy/progression must emit **audit events**.
 
 ## 15) MCP Server (`/api/mcp`)
-- A stateless MCP (Model Context Protocol) server lives in the Pages app at `functions/api/mcp.js` (JSON-RPC 2.0 over POST). It lets AI assistants view characters and run server-authoritative actions, and serves context via `instructions` + resources (`functions/_lib/mcp/reference.js`). Roadmap: `docs/mcp-roadmap.md`; gap-closure: `docs/mcp-gap-plan.md`.
-- Tools never duplicate game logic: each `tools/call` forwards the caller's bearer token to the matching `/api/*` handler via `functions/_lib/mcp/bridge.js`, so all auth/locks/audit run in the existing endpoints. Adding a tool = add it to `functions/_lib/mcp/schema.js` (metadata) and `functions/_lib/mcp/tools.js` (dispatch).
-- Auth is **OAuth 2.1** (PKCE + Dynamic Client Registration), tailored for ChatGPT custom connectors. PocketRPG is its own authorization server (`functions/api/oauth/**`, `functions/.well-known/**`, `functions/_lib/oauth/**`, migration `0022`); the issued access token is the normal session JWT, verified by `requireAuth` like every other route. The in-app consent screen is `src/screens/OAuthConsentScreen.jsx` (reached via `/?oauth=…`, must stay **out** of `GAME_CHUNK_FILES`). No new secrets — reuses `JWT_SECRET`.
-
-### MCP extension rule (how to add or change a tool)
-1. **Default to a bridge tool** — import the real `/api/*` handler and call it via `callHandler` in `tools.js`. API changes (auth, locks, audit, validation) propagate for free; nothing in `intents.js` needs to change.
-2. **Use a save-intent only when no endpoint exists** — write a pure function in `functions/_lib/mcp/intents.js` that mutates the decoded save object in place and throws `GameApiError` on bad input. Intents **must** reuse shared `src/engine` helpers (especially `applyTaskResult` from `src/engine/applyTaskResult.js` for any idle-sim result) — never re-code reward application.
-3. **Adding a tool always requires three files**: `schema.js` (metadata + JSON Schema input), `tools.js` (dispatch handler), and a test in `tests/mcpIntents.test.ts` or `tests/mcpServer.test.ts`. The parity test in `tests/mcpServer.test.ts` ("every advertised tool has a dispatch handler") enforces schema ↔ dispatch lockstep.
-4. **`src/engine/applyTaskResult.js` is the single source of truth** for applying idle simulation results (XP, bank, inventory, HP, ammo/charges, dungeoneeringTokens) to a save. Both the MCP (`intents.js`) and the browser (`gameState.jsx`) import it. Never copy-paste this logic — extend the shared module.
-- Keep scope to three kinds of action: reads, server-authoritative bridge tools (the legitimate grant/spend paths), and *constrained* save intents — pure, validated mutations that reuse `src/engine` helpers. Never expose a raw/arbitrary save write: anything that grants a high-value unique or spends credits/points must go through its existing endpoint, not an intent. See `docs/mcp-roadmap.md` for the shipped surface and the deliberately-excluded set.
+A stateless MCP server (JSON-RPC 2.0) lives at `functions/api/mcp.js`, with its own OAuth 2.1 authorization server. The full architecture and the **how-to-add-a-tool** extension rule (bridge tools vs. save-intents, the required `schema.js`/`tools.js`/test trio, and `applyTaskResult.js` as the single source of truth) live in the path-scoped rule **`.claude/rules/mcp.md`**, which auto-loads when you open `functions/api/mcp.js`, `functions/_lib/mcp/**`, the OAuth paths (`functions/_lib/oauth/**`, `functions/api/oauth/**`, `functions/.well-known/**`), `src/screens/OAuthConsentScreen.jsx`, or `tests/mcp*.test.ts`.
 
 ## 16) Token efficiency — MANDATORY (Headroom-style discipline)
 > These rules replicate, in-session, the token savings Headroom's proxy gets mechanically. They are **not optional** and apply to **every** session (web/cloud included, where the local wrapper cannot reach). Follow them by default; deviate only when the user explicitly asks for more detail.
