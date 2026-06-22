@@ -184,3 +184,29 @@ Do not commit with failing checks.
 3. **Adding a tool always requires three files**: `schema.js` (metadata + JSON Schema input), `tools.js` (dispatch handler), and a test in `tests/mcpIntents.test.ts` or `tests/mcpServer.test.ts`. The parity test in `tests/mcpServer.test.ts` ("every advertised tool has a dispatch handler") enforces schema ↔ dispatch lockstep.
 4. **`src/engine/applyTaskResult.js` is the single source of truth** for applying idle simulation results (XP, bank, inventory, HP, ammo/charges, dungeoneeringTokens) to a save. Both the MCP (`intents.js`) and the browser (`gameState.jsx`) import it. Never copy-paste this logic — extend the shared module instead.
 - Keep scope to three kinds of action: reads, server-authoritative bridge tools (the legitimate grant/spend paths), and *constrained* save intents — pure, validated mutations that reuse `src/engine` helpers (idle-sim claims, bank/gear moves, instant prayer/construction/magic training, farming). Never expose a raw/arbitrary save write: the save blob is not a free-form write target, and anything that grants a high-value unique or spends credits/points must go through its existing endpoint, not an intent. See `docs/mcp-roadmap.md` for the shipped surface and the deliberately-excluded set.
+
+## 16) Token efficiency — MANDATORY (Headroom-style discipline)
+> These rules replicate, in-session, the token savings Headroom's proxy gets mechanically. They are **not optional** and apply to **every** session (web/cloud included, where the local wrapper cannot reach). Follow them by default; deviate only when the user explicitly asks for more detail.
+
+**A) Output shaping (replicates Headroom's verbosity steering — "be terse, don't restate context"):**
+- Answer directly. No preamble ("Sure, I'll…"), no postamble ("Let me know if…"), no restating the question or the plan.
+- Don't re-describe context already visible to the user (file contents you just edited, tool output, their own request). Reference it; don't echo it.
+- Default to the shortest correct answer — a sentence or a few bullets. Prose over headings; skip section scaffolding unless the answer is genuinely long.
+- Report results plainly; don't narrate routine steps ("Now I'll read X…") — just do them.
+
+**B) Effort routing (replicates Headroom's effort routing):**
+- Spend minimal reasoning on routine/mechanical work (file reads, obvious edits, passing tests, lookups). Reserve deep reasoning for genuinely novel or ambiguous problems.
+
+**C) Intake reduction (replicates Headroom's context/tool-output compression by not pulling bulk into context):**
+- Read narrowly: targeted `Grep`/`Glob`, `Read` with `offset`/`limit`, request only the PDF pages/lines you need. Avoid whole-file reads when a slice suffices.
+- Prefer `files_with_matches` first; escalate to `content` only when necessary.
+- Don't re-read a file already in context (Edit/Write already confirm success) and don't re-derive established facts.
+- Batch independent tool calls in one turn; avoid exploratory/redundant calls.
+- Fetch-on-demand, not just-in-case: pull data when a step needs it, not preemptively.
+
+**Enforcement note:** `CLAUDE.md` is strong standing guidance, not a hard mechanical gate. For mechanically-enforced compression on *local* sessions, additionally launch via the Headroom wrapper below.
+
+### Headroom wrapper (optional, local sessions only)
+- To run Claude Code through actual [Headroom](https://github.com/headroomlabs-ai/headroom) compression + response shaping, launch via the wrapper instead of bare `claude`: `npm run claude:headroom` (== `scripts/headroom-claude.sh`). One-time prereq: `pip install "headroom-ai[all]"`.
+- The wrapper sets `HEADROOM_OUTPUT_SHAPER=1` to shorten responses; see `HEADROOM.md` for the full env table and proxy alternative.
+- Scope: this wraps Claude Code **at launch time, locally**. It does not affect already-running sessions and cannot reroute Claude Code Web / cloud sessions (their model transport is Anthropic-managed) — which is why section 16's rules above carry the load for web sessions. Do not commit `ANTHROPIC_BASE_URL` into shared settings — it would break sessions with no local proxy listening.
