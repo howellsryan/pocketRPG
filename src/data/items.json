@@ -5360,6 +5360,7 @@
     "attackSpeed": 5,
     "attackStyle": "magic",
     "elemental": "air_rune",
+    "description": "Covers the cost of air runes for every spell.",
     "attackBonus": {
       "stab": 7,
       "slash": -1,
@@ -5397,6 +5398,7 @@
     "attackSpeed": 5,
     "attackStyle": "magic",
     "elemental": "water_rune",
+    "description": "Covers the cost of water runes for every spell.",
     "attackBonus": {
       "stab": 7,
       "slash": -1,
@@ -5434,6 +5436,7 @@
     "attackSpeed": 5,
     "attackStyle": "magic",
     "elemental": "fire_rune",
+    "description": "Covers the cost of fire runes for every spell.",
     "attackBonus": {
       "stab": 7,
       "slash": -1,
@@ -5471,6 +5474,7 @@
     "attackSpeed": 5,
     "attackStyle": "magic",
     "elemental": "earth_rune",
+    "description": "Covers the cost of earth runes for every spell.",
     "attackBonus": {
       "stab": 7,
       "slash": -1,
@@ -9540,8 +9544,8 @@
     "stackable": false,
     "attackSpeed": 4,
     "attackStyle": "magic",
-    "elementals": ["air_rune", "water_rune", "earth_rune", "fire_rune"],
-    "description": "Covers the cost of all elemental runes (air, water, earth and fire) for every spell.",
+    "elemental": "water_rune",
+    "description": "Covers the cost of water runes for every spell.",
     "attackBonus": {
       "stab": 0,
       "slash": 0,

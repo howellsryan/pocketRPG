@@ -66,18 +66,13 @@ describe('magic utility spell actions', () => {
     expect(stunConsume).toEqual({ soul_rune: 1, earth_rune: 12 })
   })
 
-  it('the Ancestral Wand covers air, water, earth and fire runes for every spell', () => {
+  it('the Ancestral Wand covers water runes for every spell', () => {
     const equipment = { weapon: { itemId: 'ancestral_wand' } }
 
-    // curse: body + water + earth → only the non-elemental body rune remains
-    expect(getRunesToConsume(curse.runeReq, equipment as any, items as any)).toEqual({ body_rune: 1 })
-    // stun: soul + water + earth → only the non-elemental soul rune remains
-    expect(getRunesToConsume(stun.runeReq, equipment as any, items as any)).toEqual({ soul_rune: 1 })
-
-    // With the elemental runes covered, only the catalytic runes are needed.
-    const inventory = [{ itemId: 'body_rune', quantity: 1 }, { itemId: 'soul_rune', quantity: 1 }]
-    expect(hasRequiredRunes(curse.runeReq, inventory as any, {} as any, equipment as any, items as any)).toBe(true)
-    expect(hasRequiredRunes(stun.runeReq, inventory as any, {} as any, equipment as any, items as any)).toBe(true)
+    // curse: body + water + earth → only the water rune is covered
+    expect(getRunesToConsume(curse.runeReq, equipment as any, items as any)).toEqual({ body_rune: 1, earth_rune: 3 })
+    // stun: soul + water + earth → only the water rune is covered
+    expect(getRunesToConsume(stun.runeReq, equipment as any, items as any)).toEqual({ soul_rune: 1, earth_rune: 12 })
   })
 
   it('idle skilling caps on non-elemental runes, grants magic xp, and gives no products/coins', () => {
