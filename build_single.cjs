@@ -252,6 +252,7 @@ function processFile(relPath) {
 
 // Read JSON data
 const gameIconsJSON = readSrc('data/gameIcons.json');
+const bespokeIconsJSON = readSrc('data/bespokeIcons.json');
 const itemsJSON = readSrc('data/items.json');
 const monstersJSON = readSrc('data/monsters.json');
 const skillsJSON = readSrc('data/skills.json');
@@ -477,7 +478,7 @@ const SPLIT_MINIFY = {
 // desktop landing — the one place an icon renders before the player is in-game —
 // fetches the chunk on mount (see DesktopLandingScreen) and GameIcon falls back
 // to an emoji until it arrives.
-const gameChunkSource = `const gameIconsData = ${gameIconsJSON};\n${gameJS}`;
+const gameChunkSource = `const gameIconsData = ${gameIconsJSON};\nconst bespokeIconsData = ${bespokeIconsJSON};\n${gameJS}`;
 const gameChunkScript = esbuild.transformSync(gameChunkSource, SPLIT_MINIFY).code.trim();
 const gameChunkBody = `"use strict";\n${gameChunkScript}\n`;
 const gameChunkHash = require('crypto').createHash('sha256').update(gameChunkBody).digest('hex').slice(0, 12);

@@ -1,0 +1,66 @@
+{
+  "bronze_dagger": {
+    "body": "<g transform=\"rotate(-45 256 256)\" stroke=\"#241c2b\" stroke-width=\"12\" stroke-linejoin=\"round\" stroke-linecap=\"round\"><polygon points=\"256,64 296,300 216,300\" fill=\"#c87f3a\"/><polygon points=\"256,64 256,300 216,300\" fill=\"#9a5a22\" stroke=\"none\"/><polygon points=\"256,90 268,296 256,296\" fill=\"#e6a85f\" stroke=\"none\"/><rect x=\"186\" y=\"300\" width=\"140\" height=\"28\" rx=\"8\" fill=\"#e6a85f\"/><rect x=\"238\" y=\"328\" width=\"36\" height=\"92\" rx=\"8\" fill=\"#6f4a23\"/><circle cx=\"256\" cy=\"436\" r=\"26\" fill=\"#c4912a\"/></g>",
+    "viewBox": null
+  },
+  "cave_goblin": {
+    "body": "<g stroke=\"#241c2b\" stroke-width=\"12\" stroke-linejoin=\"round\" stroke-linecap=\"round\"><polygon points=\"158,236 64,196 156,300\" fill=\"#7b9a3e\"/><polygon points=\"354,236 448,196 356,300\" fill=\"#7b9a3e\"/><path d=\"M178 184 Q 256 116 334 184 Q 384 232 362 322 Q 330 408 256 416 Q 182 408 150 322 Q 128 232 178 184 Z\" fill=\"#7b9a3e\"/><path d=\"M334 184 Q 384 232 362 322 Q 330 408 256 416 Q 300 360 300 280 Q 300 214 286 168 Q 312 168 334 184 Z\" fill=\"#52701f\" stroke=\"none\"/><ellipse cx=\"214\" cy=\"268\" rx=\"30\" ry=\"24\" fill=\"#ffe08a\"/><ellipse cx=\"300\" cy=\"268\" rx=\"30\" ry=\"24\" fill=\"#ffe08a\"/><circle cx=\"220\" cy=\"272\" r=\"11\" fill=\"#241c2b\" stroke=\"none\"/><circle cx=\"306\" cy=\"272\" r=\"11\" fill=\"#241c2b\" stroke=\"none\"/><path d=\"M176 232 L244 252\" stroke=\"#241c2b\" stroke-width=\"14\" fill=\"none\"/><path d=\"M338 232 L272 252\" stroke=\"#241c2b\" stroke-width=\"14\" fill=\"none\"/><path d=\"M256 286 L238 312 L256 352 L286 332 Z\" fill=\"#52701f\"/><path d=\"M196 360 Q 256 392 320 360 L304 384 Q 256 404 212 384 Z\" fill=\"#3a4d12\"/><polygon points=\"222,366 234,388 246,366\" fill=\"#f4f6e8\" stroke=\"none\"/><polygon points=\"268,366 280,388 292,366\" fill=\"#f4f6e8\" stroke=\"none\"/></g>",
+    "viewBox": null
+  },
+  "coal": {
+    "body": "<g stroke=\"#241c2b\" stroke-width=\"12\" stroke-linejoin=\"round\" stroke-linecap=\"round\"><path d=\"M118 286 L204 222 L296 252 L306 344 L214 396 L130 354 Z\" fill=\"#3a3340\"/><path d=\"M276 196 L372 186 L424 272 L382 352 L300 332 L268 256 Z\" fill=\"#3a3340\"/><polygon points=\"204,222 256,252 212,286 162,272\" fill=\"#5a5460\" stroke=\"none\"/><polygon points=\"340,206 392,250 350,284 308,250\" fill=\"#5a5460\" stroke=\"none\"/><circle cx=\"236\" cy=\"332\" r=\"9\" fill=\"#7a7484\" stroke=\"none\"/><circle cx=\"360\" cy=\"312\" r=\"8\" fill=\"#7a7484\" stroke=\"none\"/></g>",
+    "viewBox": null
+  },
+  "coins": {
+    "body": "<g stroke=\"#241c2b\" stroke-width=\"12\" stroke-linejoin=\"round\" stroke-linecap=\"round\"><ellipse cx=\"196\" cy=\"232\" rx=\"120\" ry=\"92\" fill=\"#f0c040\"/><ellipse cx=\"196\" cy=\"232\" rx=\"74\" ry=\"54\" fill=\"#ffe08a\" stroke=\"none\"/><ellipse cx=\"322\" cy=\"330\" rx=\"120\" ry=\"92\" fill=\"#f0c040\"/><ellipse cx=\"322\" cy=\"330\" rx=\"74\" ry=\"54\" fill=\"#ffe08a\" stroke=\"none\"/><path d=\"M150 196 l14 28 28 14 -28 14 -14 28 -14 -28 -28 -14 28 -14z\" fill=\"#fff6d8\" stroke=\"none\"/></g>",
+    "viewBox": null
+  },
+  "fire_rune": {
+    "body": "<g stroke=\"#241c2b\" stroke-width=\"12\" stroke-linejoin=\"round\" stroke-linecap=\"round\"><ellipse cx=\"256\" cy=\"268\" rx=\"168\" ry=\"172\" fill=\"#e23b4a\"/><path d=\"M256 116 C 330 124 396 188 400 266 C 360 196 300 160 256 152 C 212 160 152 196 112 266 C 116 188 182 124 256 116 Z\" fill=\"#ff8a8f\" stroke=\"none\"/><path d=\"M256 168 C 286 214 300 230 300 282 C 300 330 282 360 256 372 C 230 360 212 330 212 282 C 212 252 230 232 244 246 C 240 216 248 192 256 168 Z\" fill=\"#ffcf6a\" stroke=\"#a81e2c\" stroke-width=\"10\"/><path d=\"M256 252 C 272 274 278 296 268 322 C 260 338 250 338 244 322 C 238 304 244 280 256 252 Z\" fill=\"#fff0c4\" stroke=\"none\"/></g>",
+    "viewBox": null
+  },
+  "gold_bar": {
+    "body": "<g stroke=\"#241c2b\" stroke-width=\"12\" stroke-linejoin=\"round\" stroke-linecap=\"round\"><polygon points=\"118,262 394,262 366,392 146,392\" fill=\"#f0c040\"/><polygon points=\"158,196 434,196 394,262 118,262\" fill=\"#ffe08a\"/><polygon points=\"394,262 434,196 434,322 366,392\" fill=\"#c4912a\"/><polygon points=\"150,288 360,288 352,320 158,320\" fill=\"#ffe9a8\" stroke=\"none\"/></g>",
+    "viewBox": null
+  },
+  "iron_ore": {
+    "body": "<g stroke=\"#241c2b\" stroke-width=\"12\" stroke-linejoin=\"round\" stroke-linecap=\"round\"><path d=\"M152 198 L246 150 L368 172 L424 262 L392 366 L282 414 L158 384 L108 288 Z\" fill=\"#8a8f99\"/><path d=\"M152 198 L246 150 L304 232 L208 274 Z\" fill=\"#b4b9c2\" stroke=\"none\"/><path d=\"M392 366 L282 414 L240 332 L344 300 Z\" fill=\"#5f646d\" stroke=\"none\"/><circle cx=\"300\" cy=\"296\" r=\"20\" fill=\"#cdd2da\" stroke=\"none\"/><circle cx=\"250\" cy=\"346\" r=\"13\" fill=\"#e2e8f0\" stroke=\"none\"/><circle cx=\"346\" cy=\"244\" r=\"14\" fill=\"#cdd2da\" stroke=\"none\"/></g>",
+    "viewBox": null
+  },
+  "mining": {
+    "body": "<g stroke=\"#241c2b\" stroke-width=\"12\" stroke-linejoin=\"round\" stroke-linecap=\"round\"><circle cx=\"256\" cy=\"256\" r=\"186\" fill=\"#6f4a23\"/><circle cx=\"256\" cy=\"256\" r=\"186\" fill=\"none\" stroke=\"#9a6a33\" stroke-width=\"14\"/><path d=\"M118 372 L344 156\" stroke=\"#241c2b\" stroke-width=\"40\"/><path d=\"M118 372 L344 156\" stroke=\"#a3743f\" stroke-width=\"24\"/><path d=\"M268 110 C 322 96 384 118 410 168 L378 196 C 356 158 318 142 286 150 Z\" fill=\"#b9c2cf\"/><path d=\"M410 168 C 360 150 320 156 296 178 L286 150 C 318 142 356 158 378 196 Z\" fill=\"#e2e8f0\" stroke=\"none\"/><path d=\"M150 402 L196 356 L226 386 L180 432 C 164 438 146 432 142 416 Z\" fill=\"#3a3340\"/><circle cx=\"190\" cy=\"396\" r=\"12\" fill=\"#46c7b8\" stroke=\"none\"/></g>",
+    "viewBox": null
+  },
+  "nature_rune": {
+    "body": "<g stroke=\"#241c2b\" stroke-width=\"12\" stroke-linejoin=\"round\" stroke-linecap=\"round\"><ellipse cx=\"256\" cy=\"268\" rx=\"168\" ry=\"172\" fill=\"#4caf50\"/><path d=\"M256 116 C 330 124 396 188 400 266 C 360 196 300 160 256 152 C 212 160 152 196 112 266 C 116 188 182 124 256 116 Z\" fill=\"#8bd98f\" stroke=\"none\"/><path d=\"M256 360 C 200 340 168 286 180 220 C 244 214 312 248 332 312 C 312 352 286 364 256 360 Z\" fill=\"#eaffd0\" stroke=\"#2f7a37\" stroke-width=\"10\"/><path d=\"M210 232 C 250 268 286 300 312 332\" fill=\"none\" stroke=\"#2f7a37\" stroke-width=\"10\"/></g>",
+    "viewBox": null
+  },
+  "oak_logs": {
+    "body": "<g stroke=\"#241c2b\" stroke-width=\"12\" stroke-linejoin=\"round\" stroke-linecap=\"round\"><circle cx=\"186\" cy=\"338\" r=\"84\" fill=\"#a3743f\"/><circle cx=\"186\" cy=\"338\" r=\"52\" fill=\"none\" stroke=\"#6f4a23\" stroke-width=\"9\"/><circle cx=\"186\" cy=\"338\" r=\"22\" fill=\"#c89a63\" stroke=\"#6f4a23\" stroke-width=\"8\"/><circle cx=\"338\" cy=\"338\" r=\"84\" fill=\"#a3743f\"/><circle cx=\"338\" cy=\"338\" r=\"52\" fill=\"none\" stroke=\"#6f4a23\" stroke-width=\"9\"/><circle cx=\"338\" cy=\"338\" r=\"22\" fill=\"#c89a63\" stroke=\"#6f4a23\" stroke-width=\"8\"/><circle cx=\"262\" cy=\"214\" r=\"84\" fill=\"#b07f47\"/><circle cx=\"262\" cy=\"214\" r=\"52\" fill=\"none\" stroke=\"#6f4a23\" stroke-width=\"9\"/><circle cx=\"262\" cy=\"214\" r=\"22\" fill=\"#c89a63\" stroke=\"#6f4a23\" stroke-width=\"8\"/></g>",
+    "viewBox": null
+  },
+  "prayer_potion": {
+    "body": "<g stroke=\"#241c2b\" stroke-width=\"12\" stroke-linejoin=\"round\" stroke-linecap=\"round\"><path d=\"M212 206 C 150 238 132 330 184 388 C 224 432 288 432 328 388 C 380 330 362 238 300 206 Z\" fill=\"#d4eef8\"/><path d=\"M164 314 C 210 348 302 348 348 314 C 356 372 320 414 256 414 C 192 414 156 372 164 314 Z\" fill=\"#5bb8e0\" stroke=\"none\"/><ellipse cx=\"256\" cy=\"316\" rx=\"92\" ry=\"16\" fill=\"#a7e0f5\" stroke=\"none\"/><rect x=\"214\" y=\"160\" width=\"84\" height=\"52\" rx=\"6\" fill=\"#d4eef8\"/><rect x=\"222\" y=\"120\" width=\"68\" height=\"48\" rx=\"10\" fill=\"#a3743f\"/><rect x=\"226\" y=\"338\" width=\"20\" height=\"62\" rx=\"10\" fill=\"#eaf7fc\" stroke=\"none\"/></g>",
+    "viewBox": null
+  },
+  "ruby": {
+    "body": "<g stroke=\"#241c2b\" stroke-width=\"12\" stroke-linejoin=\"round\" stroke-linecap=\"round\"><polygon points=\"256,108 364,182 412,266 256,432 100,266 148,182\" fill=\"#e23b4a\"/><polygon points=\"256,108 364,182 256,236 148,182\" fill=\"#ff8a8f\"/><polygon points=\"148,182 256,236 256,432 100,266\" fill=\"#a81e2c\"/><polygon points=\"364,182 412,266 256,432 256,236\" fill=\"#c92a3a\"/><polygon points=\"190,164 256,200 210,214\" fill=\"#ffd0d3\" stroke=\"none\"/></g>",
+    "viewBox": null
+  },
+  "runeforged_scimitar": {
+    "body": "<g stroke=\"#241c2b\" stroke-width=\"12\" stroke-linejoin=\"round\" stroke-linecap=\"round\"><path d=\"M168 360 C 196 196 326 104 442 124 C 360 176 296 264 236 358 Z\" fill=\"#46c7b8\"/><path d=\"M210 332 C 244 220 330 152 410 138 C 350 184 300 256 256 338 Z\" fill=\"#8df0e4\" stroke=\"none\"/><g transform=\"rotate(42 176 360)\"><rect x=\"120\" y=\"346\" width=\"116\" height=\"26\" rx=\"8\" fill=\"#c4912a\"/><rect x=\"160\" y=\"372\" width=\"34\" height=\"86\" rx=\"8\" fill=\"#6f4a23\"/><circle cx=\"177\" cy=\"470\" r=\"24\" fill=\"#c4912a\"/></g></g>",
+    "viewBox": null
+  },
+  "shark": {
+    "body": "<g stroke=\"#241c2b\" stroke-width=\"12\" stroke-linejoin=\"round\" stroke-linecap=\"round\"><polygon points=\"392,236 470,188 452,256 470,324 392,276\" fill=\"#7d8b96\"/><path d=\"M96 256 C 168 184 332 184 404 232 L420 256 L404 280 C 332 328 168 328 96 256 Z\" fill=\"#9aa6b0\"/><polygon points=\"232,200 282,128 312,206\" fill=\"#7d8b96\"/><path d=\"M96 256 C 168 296 300 300 360 286 L360 312 C 280 322 170 312 110 282 Z\" fill=\"#c4ccd3\" stroke=\"none\"/><circle cx=\"158\" cy=\"240\" r=\"13\" fill=\"#241c2b\" stroke=\"none\"/><polyline points=\"108,272 132,266 120,280 144,274 132,288 156,282\" fill=\"none\" stroke=\"#f4f6f8\" stroke-width=\"7\"/></g>",
+    "viewBox": null
+  },
+  "steel_platebody": {
+    "body": "<g stroke=\"#241c2b\" stroke-width=\"12\" stroke-linejoin=\"round\" stroke-linecap=\"round\"><path d=\"M256 168 C 232 130 184 138 168 182 C 124 196 122 248 138 306 L150 384 Q 256 416 362 384 L374 306 C 390 248 388 196 344 182 C 328 138 280 130 256 168 Z\" fill=\"#b9c2cf\"/><path d=\"M256 168 C 232 130 184 138 168 182 C 150 196 146 224 150 252 C 200 232 312 232 362 252 C 366 224 362 196 344 182 C 328 138 280 130 256 168 Z\" fill=\"#e2e8f0\" stroke=\"none\"/><path d=\"M256 196 C 244 178 244 178 256 196 L256 388\" stroke=\"#888f9c\" stroke-width=\"10\" fill=\"none\"/><path d=\"M196 280 Q 224 304 256 300\" stroke=\"#888f9c\" stroke-width=\"9\" fill=\"none\"/><path d=\"M316 280 Q 288 304 256 300\" stroke=\"#888f9c\" stroke-width=\"9\" fill=\"none\"/><path d=\"M150 384 Q 256 416 362 384 L356 410 Q 256 440 156 410 Z\" fill=\"#888f9c\" stroke=\"none\"/></g>",
+    "viewBox": null
+  },
+  "twisted_longbow": {
+    "body": "<g fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M330 72 C 300 110 348 150 322 200 C 196 230 196 282 322 312 C 348 362 300 402 330 440\" stroke=\"#241c2b\" stroke-width=\"46\"/><path d=\"M330 72 C 300 110 348 150 322 200 C 196 230 196 282 322 312 C 348 362 300 402 330 440\" stroke=\"#a3743f\" stroke-width=\"28\"/><path d=\"M318 110 C 300 140 332 170 312 210\" stroke=\"#c89a63\" stroke-width=\"8\"/><line x1=\"330\" y1=\"78\" x2=\"330\" y2=\"434\" stroke=\"#241c2b\" stroke-width=\"9\"/><line x1=\"246\" y1=\"222\" x2=\"246\" y2=\"290\" stroke=\"#4caf50\" stroke-width=\"20\"/><line x1=\"246\" y1=\"222\" x2=\"246\" y2=\"290\" stroke=\"#8bd98f\" stroke-width=\"7\"/></g>",
+    "viewBox": null
+  }
+}
