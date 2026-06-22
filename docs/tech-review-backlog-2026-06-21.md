@@ -17,7 +17,7 @@ This is sized as a two-day backlog. Each item is **independent** and ordered rou
 | 2 | Combat-level formula is copy-pasted in 3 places and has diverged | Correctness / tech debt | P1 | 0.5d | ✅ Done |
 | 3 | `activityRegistry.js` (progress-persistence routing) is completely untested | Test coverage | P1 | 0.5d | ✅ Done |
 | 4 | `quests.js` eligibility + idle-sim logic is untested (and used by MCP) | Test coverage | P1 | 0.5d | ✅ Done |
-| 5 | `gatherTasks.js` / `construction.js` / `clueScrolls.js` / `activitySession.js` untested | Test coverage | P2 | 0.5d | ✅ Done (+ found & fixed an invalid master-clue item: `torstol` → `kingsherb`) |
+| 5 | `gatherTasks.js` / `construction.js` / `clueScrolls.js` / `activitySession.js` untested | Test coverage | P2 | 0.5d | ✅ Done (+ found & fixed an invalid master-clue item: `torstol` → `thornspire`, its faithful renamed successor) |
 | 6 | `CombatScreen.jsx` is a 3,195-line monolith | Tech debt / maintainability | P2 | 1d (scoped) | ✅ Done (scoped: content gates extracted + 14 tests) |
 | 7 | Stale planning docs vs. shipped behavior (idle-robustness, feature-plan) | Doc debt | P2 | 0.25d | ✅ Done |
 
