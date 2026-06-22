@@ -1,0 +1,17 @@
+{
+  "_comment": "Palette + tier table for metal-gear icon templates. The build (scripts/build-bespoke-icons.cjs) expands src/assets/icon-templates/<shape>.svg into <tier>_<shape> entries, one per listed tier, swapping {{base}}/{{light}}/{{shade}}. Tier colours mirror OSRS metal conventions (see docs/bespoke-icon-style-guide.md).",
+  "palettes": {
+    "bronze":     { "base": "#b87333", "light": "#f2bd78", "shade": "#6f4119" },
+    "iron":       { "base": "#6e747e", "light": "#b4bcc6", "shade": "#41454d" },
+    "steel":      { "base": "#bcc6d2", "light": "#f3f7fb", "shade": "#737d89" },
+    "mithril":    { "base": "#3f57c4", "light": "#8aa0f2", "shade": "#22307a" },
+    "adamant":    { "base": "#3f8a5a", "light": "#74c98e", "shade": "#246b3c" },
+    "runeforged": { "base": "#2fd0c0", "light": "#c6fff8", "shade": "#136055" },
+    "dragon":     { "base": "#c0392b", "light": "#ff7a68", "shade": "#6f1810" }
+  },
+  "items": {
+    "scimitar":  ["bronze", "iron", "steel", "mithril", "adamant", "runeforged", "dragon"],
+    "dagger":    ["bronze", "iron", "steel", "mithril", "adamant", "dragon"],
+    "platebody": ["bronze", "iron", "steel", "mithril", "adamant", "runeforged"]
+  }
+}
