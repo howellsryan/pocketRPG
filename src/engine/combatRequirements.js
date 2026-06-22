@@ -20,7 +20,7 @@
  * @param {Record<string, number>} ctx.bossKillCounts
  * @param {Array<{id:string,name:string}>} ctx.questsData
  */
-export function checkBossRequirements(monster, ctx = {}) {
+export function checkBossRequirementsPure(monster, ctx = {}) {
   const {
     slayerLevel = 0,
     completedQuests = new Set(),
@@ -56,7 +56,7 @@ export function checkBossRequirements(monster, ctx = {}) {
  * @param {object} ctx
  * @param {Set<string>|{has:(id:string)=>boolean}} ctx.completedQuests
  */
-export function checkRaidRequirements(raid, ctx = {}) {
+export function checkRaidRequirementsPure(raid, ctx = {}) {
   const { completedQuests = new Set() } = ctx
 
   if (!raid) return { locked: false }

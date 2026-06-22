@@ -5,8 +5,8 @@
 
 import { describe, it, expect } from 'vitest'
 import {
-  checkBossRequirements,
-  checkRaidRequirements,
+  checkBossRequirementsPure as checkBossRequirements,
+  checkRaidRequirementsPure as checkRaidRequirements,
 } from '../src/engine/combatRequirements.js'
 
 const QUESTS = [
