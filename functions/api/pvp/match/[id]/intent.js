@@ -40,10 +40,10 @@ export function validateIntentAction(state, characterId, action) {
     if ((combatant?.stats?.magic || 1) < (spell.levelReq || 1)) {
       return { ok: false, error: 'insufficient_magic_level' }
     }
-    // Validate runes the same way the engine does in PvP: only the runes in
-    // the caster's inventory count — an equipped elemental staff does NOT
-    // supply its rune for free (matches resolveMagicSwing in combatPrimitives).
-    if (!hasRequiredRunes(spell.runeReq, combatant.inventory || [], {}, null, itemsData)) {
+    // Validate runes the same way the engine does: an equipped elemental staff
+    // supplies its element rune for free; all other runes must be in inventory
+    // (bank is not consulted in combat — the {}). Matches resolveMagicSwing.
+    if (!hasRequiredRunes(spell.runeReq, combatant.inventory || [], {}, combatant.equipment, itemsData)) {
       return { ok: false, error: 'insufficient_runes' }
     }
     return { ok: true }
