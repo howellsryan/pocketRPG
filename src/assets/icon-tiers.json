@@ -1,17 +1,47 @@
 {
-  "_comment": "Palette + tier table for metal-gear icon templates. The build (scripts/build-bespoke-icons.cjs) expands src/assets/icon-templates/<shape>.svg into <tier>_<shape> entries, one per listed tier, swapping {{base}}/{{light}}/{{shade}}. Tier colours mirror OSRS metal conventions (see docs/bespoke-icon-style-guide.md).",
+  "_comment": "Palette + tier table for templated icon families. The build (scripts/build-bespoke-icons.cjs) expands src/assets/icon-templates/<shape>.svg into <tier>_<shape> entries, swapping {{base}}/{{light}}/{{shade}}. Metal tiers mirror OSRS conventions; resource tiers colour ore/bar/logs by material. See docs/bespoke-icon-style-guide.md.",
   "palettes": {
     "bronze":     { "base": "#b87333", "light": "#f2bd78", "shade": "#6f4119" },
     "iron":       { "base": "#6e747e", "light": "#b4bcc6", "shade": "#41454d" },
     "steel":      { "base": "#bcc6d2", "light": "#f3f7fb", "shade": "#737d89" },
     "mithril":    { "base": "#3f57c4", "light": "#8aa0f2", "shade": "#22307a" },
     "adamant":    { "base": "#3f8a5a", "light": "#74c98e", "shade": "#246b3c" },
+    "adamantite": { "base": "#3f8a5a", "light": "#74c98e", "shade": "#246b3c" },
     "runeforged": { "base": "#2fd0c0", "light": "#c6fff8", "shade": "#136055" },
-    "dragon":     { "base": "#c0392b", "light": "#ff7a68", "shade": "#6f1810" }
+    "dragon":     { "base": "#c0392b", "light": "#ff7a68", "shade": "#6f1810" },
+    "gold":       { "base": "#ffcf33", "light": "#fff0a0", "shade": "#c48f12" },
+    "tin":        { "base": "#9aa0a8", "light": "#cfd3d9", "shade": "#646a72" },
+    "copper":     { "base": "#c2702f", "light": "#e69a54", "shade": "#7f4216" },
+    "oak":        { "base": "#b07a3e", "light": "#d6a766", "shade": "#6f4a23" },
+    "willow":     { "base": "#a7a24e", "light": "#cfca7e", "shade": "#6f6a2c" },
+    "maple":      { "base": "#a85f34", "light": "#cf8654", "shade": "#6a3a1c" },
+    "yew":        { "base": "#6f6536", "light": "#938a52", "shade": "#43391c" },
+    "magic":      { "base": "#5a7fd0", "light": "#9fbcf0", "shade": "#33508f" },
+    "redwood":    { "base": "#b23a2a", "light": "#d4604a", "shade": "#741c12" },
+    "teak":       { "base": "#9a6a38", "light": "#bf8e54", "shade": "#5e3e1c" },
+    "mahogany":   { "base": "#7a3a24", "light": "#9e5436", "shade": "#481c10" }
   },
   "items": {
     "scimitar":  ["bronze", "iron", "steel", "mithril", "adamant", "runeforged", "dragon"],
     "dagger":    ["bronze", "iron", "steel", "mithril", "adamant", "dragon"],
-    "platebody": ["bronze", "iron", "steel", "mithril", "adamant", "runeforged"]
+    "sword":     ["bronze", "iron", "steel", "mithril", "adamant", "runeforged"],
+    "longsword": ["bronze", "iron", "steel", "mithril", "adamant", "dragon"],
+    "mace":      ["bronze", "iron", "steel", "mithril", "adamant", "dragon"],
+    "warhammer": ["dragon"],
+    "battleaxe": ["dragon"],
+    "2h_sword":  ["runeforged"],
+    "spear":     ["bronze"],
+    "axe":       ["bronze", "iron", "steel", "mithril", "adamant", "runeforged", "dragon", "gold"],
+    "pickaxe":   ["bronze", "iron", "steel", "mithril", "adamant", "runeforged", "dragon", "gold"],
+    "platebody": ["bronze", "iron", "steel", "mithril", "adamant", "runeforged"],
+    "platelegs": ["bronze", "iron", "steel", "mithril", "adamant", "runeforged", "dragon"],
+    "plateskirt":["mithril", "adamant", "runeforged", "dragon"],
+    "full_helm": ["bronze", "iron", "steel", "mithril", "adamant", "runeforged", "dragon"],
+    "med_helm":  ["runeforged"],
+    "kiteshield":["bronze", "iron", "steel", "mithril", "adamant", "runeforged", "dragon"],
+    "chainbody": ["bronze", "iron", "steel", "mithril", "runeforged", "dragon"],
+    "ore":       ["tin", "copper", "iron", "mithril", "adamantite", "runeforged", "gold"],
+    "bar":       ["bronze", "iron", "steel", "mithril", "adamant", "runeforged", "gold"],
+    "logs":      ["oak", "willow", "maple", "yew", "magic", "redwood", "teak", "mahogany"]
   }
 }

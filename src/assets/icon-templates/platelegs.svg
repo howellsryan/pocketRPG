@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="{{id}}_plate" x1="0.1" y1="0" x2="0.7" y2="1">
+      <stop offset="0" stop-color="{{light}}"/><stop offset="0.5" stop-color="{{base}}"/><stop offset="1" stop-color="{{shade}}"/>
+    </linearGradient>
+  </defs>
+  <g stroke="#15110d" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M170 226 L242 226 L236 332 L228 420 L182 420 L176 318 Z" fill="url(#{{id}}_plate)"/>
+    <path d="M342 226 L270 226 L276 332 L284 420 L330 420 L336 318 Z" fill="url(#{{id}}_plate)"/>
+    <path d="M156 168 C 156 156 168 150 180 150 L332 150 C 344 150 356 156 356 168 L356 214 C 356 226 344 232 332 232 L180 232 C 168 232 156 226 156 214 Z" fill="url(#{{id}}_plate)"/>
+    <rect x="166" y="166" width="180" height="14" rx="6" fill="{{light}}" stroke="none"/>
+    <ellipse cx="204" cy="338" rx="26" ry="22" fill="{{shade}}"/>
+    <ellipse cx="308" cy="338" rx="26" ry="22" fill="{{shade}}"/>
+    <path d="M200 250 L210 408 M312 250 L302 408" stroke="{{shade}}" stroke-width="6" fill="none"/>
+    <circle cx="178" cy="200" r="6" fill="{{shade}}" stroke="none"/>
+    <circle cx="334" cy="200" r="6" fill="{{shade}}" stroke="none"/>
+  </g>
+</svg>

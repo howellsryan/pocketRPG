@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="{{id}}_shield" x1="0.2" y1="0" x2="0.8" y2="1">
+      <stop offset="0" stop-color="{{light}}"/><stop offset="0.5" stop-color="{{base}}"/><stop offset="1" stop-color="{{shade}}"/>
+    </linearGradient>
+  </defs>
+  <g stroke="#15110d" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M256 122 C 332 134 362 166 362 226 C 362 318 320 402 256 446 C 192 402 150 318 150 226 C 150 166 180 134 256 122 Z" fill="url(#{{id}}_shield)"/>
+    <path d="M256 140 C 224 148 200 162 188 188 C 220 174 256 172 256 172 Z" fill="{{light}}" stroke="none"/>
+    <path d="M256 150 L256 430" stroke="{{shade}}" stroke-width="8" fill="none"/>
+    <path d="M168 224 C 230 244 282 244 344 224" stroke="{{shade}}" stroke-width="7" fill="none"/>
+    <circle cx="256" cy="244" r="30" fill="{{shade}}"/>
+    <circle cx="247" cy="236" r="9" fill="{{light}}" stroke="none"/>
+    <circle cx="186" cy="206" r="6" fill="{{shade}}" stroke="none"/>
+    <circle cx="326" cy="206" r="6" fill="{{shade}}" stroke="none"/>
+  </g>
+</svg>

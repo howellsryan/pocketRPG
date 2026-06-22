@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="{{id}}_plate" x1="0.1" y1="0" x2="0.7" y2="1">
+      <stop offset="0" stop-color="{{light}}"/><stop offset="0.5" stop-color="{{base}}"/><stop offset="1" stop-color="{{shade}}"/>
+    </linearGradient>
+  </defs>
+  <g stroke="#15110d" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M176 220 L336 220 L372 404 C 320 422 192 422 140 404 Z" fill="url(#{{id}}_plate)"/>
+    <path d="M156 168 C 156 156 168 150 180 150 L332 150 C 344 150 356 156 356 168 L356 214 C 356 226 344 232 332 232 L180 232 C 168 232 156 226 156 214 Z" fill="url(#{{id}}_plate)"/>
+    <rect x="166" y="166" width="180" height="14" rx="6" fill="{{light}}" stroke="none"/>
+    <path d="M214 236 L196 404 M256 236 L256 412 M298 236 L316 404" stroke="{{shade}}" stroke-width="7" fill="none"/>
+    <path d="M186 252 C 240 264 272 264 326 252" stroke="{{shade}}" stroke-width="6" fill="none"/>
+    <circle cx="178" cy="200" r="6" fill="{{shade}}" stroke="none"/>
+    <circle cx="334" cy="200" r="6" fill="{{shade}}" stroke="none"/>
+  </g>
+</svg>

@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="{{id}}_head" x1="0" y1="0" x2="1" y2="0.4">
+      <stop offset="0" stop-color="{{light}}"/><stop offset="0.5" stop-color="{{base}}"/><stop offset="1" stop-color="{{shade}}"/>
+    </linearGradient>
+    <linearGradient id="{{id}}_handle" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#a3743f"/><stop offset="1" stop-color="#5a3d14"/>
+    </linearGradient>
+  </defs>
+  <g transform="rotate(-45 256 256)" stroke="#1a1410" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
+    <rect x="246" y="180" width="24" height="248" rx="10" fill="url(#{{id}}_handle)"/>
+    <path d="M262 152 C 348 150 400 196 396 262 C 360 230 320 222 280 230 L262 226 Z" fill="url(#{{id}}_head)"/>
+    <path d="M250 152 L250 232 L226 226 C 220 196 228 168 250 152 Z" fill="{{shade}}"/>
+    <path d="M286 244 C 330 240 364 250 388 270" stroke="{{light}}" stroke-width="8" fill="none"/>
+    <circle cx="256" cy="432" r="18" fill="#5a3d14"/>
+  </g>
+</svg>

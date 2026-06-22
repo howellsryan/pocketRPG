@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="{{id}}_bark" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="{{light}}"/><stop offset="0.5" stop-color="{{base}}"/><stop offset="1" stop-color="{{shade}}"/>
+    </linearGradient>
+    <radialGradient id="{{id}}_end" cx="0.4" cy="0.38" r="0.7">
+      <stop offset="0" stop-color="{{light}}"/><stop offset="1" stop-color="{{shade}}"/>
+    </radialGradient>
+  </defs>
+  <g stroke="#3a2614" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
+    <rect x="96" y="300" width="320" height="92" rx="46" fill="url(#{{id}}_bark)"/>
+    <ellipse cx="386" cy="346" rx="40" ry="46" fill="url(#{{id}}_end)"/>
+    <ellipse cx="386" cy="346" rx="22" ry="26" fill="none" stroke="{{shade}}" stroke-width="8"/>
+    <rect x="120" y="196" width="300" height="92" rx="46" fill="url(#{{id}}_bark)"/>
+    <ellipse cx="390" cy="242" rx="40" ry="46" fill="url(#{{id}}_end)"/>
+    <ellipse cx="390" cy="242" rx="22" ry="26" fill="none" stroke="{{shade}}" stroke-width="8"/>
+    <path d="M150 214 L356 214" stroke="{{light}}" stroke-width="6" fill="none"/>
+    <path d="M130 318 L336 318" stroke="{{light}}" stroke-width="6" fill="none"/>
+  </g>
+</svg>

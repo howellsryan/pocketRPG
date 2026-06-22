@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="{{id}}_mailbase" x1="0.1" y1="0" x2="0.7" y2="1">
+      <stop offset="0" stop-color="{{light}}"/><stop offset="0.5" stop-color="{{base}}"/><stop offset="1" stop-color="{{shade}}"/>
+    </linearGradient>
+    <pattern id="{{id}}_mail" width="22" height="22" patternUnits="userSpaceOnUse">
+      <circle cx="11" cy="11" r="6.5" fill="none" stroke="{{shade}}" stroke-width="3"/>
+      <circle cx="0" cy="0" r="6.5" fill="none" stroke="{{shade}}" stroke-width="3"/>
+      <circle cx="22" cy="22" r="6.5" fill="none" stroke="{{shade}}" stroke-width="3"/>
+    </pattern>
+  </defs>
+  <g stroke="#15110d" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M150 222 C 128 252 124 296 134 332 L182 320 C 176 286 178 252 188 226 C 172 216 160 216 150 222 Z" fill="url(#{{id}}_mailbase)"/>
+    <path d="M362 222 C 384 252 388 296 378 332 L330 320 C 336 286 334 252 324 226 C 340 216 352 216 362 222 Z" fill="url(#{{id}}_mailbase)"/>
+    <path d="M190 196 C 162 218 160 274 168 322 L176 392 C 176 410 214 418 256 418 C 298 418 336 410 336 392 L344 322 C 352 274 350 218 322 196 C 298 184 214 184 190 196 Z" fill="url(#{{id}}_mailbase)"/>
+    <path d="M190 196 C 162 218 160 274 168 322 L176 392 C 176 410 214 418 256 418 C 298 418 336 410 336 392 L344 322 C 352 274 350 218 322 196 C 298 184 214 184 190 196 Z" fill="url(#{{id}}_mail)" stroke="none"/>
+    <ellipse cx="256" cy="200" rx="42" ry="22" fill="#2a241c"/>
+    <path d="M196 198 C 220 188 292 188 316 198" stroke="{{light}}" stroke-width="7" fill="none"/>
+  </g>
+</svg>
