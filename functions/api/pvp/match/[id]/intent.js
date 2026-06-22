@@ -4,27 +4,12 @@ import { readOwnedActiveMatch, itemsData } from '../../../../_lib/pvpMatch.js'
 import { isConsumableFood, isConsumablePotion } from '../../../../../src/engine/consumables.js'
 import { getEquippedPvpSpecialAttack, hasEnoughPvpSpecialEnergy } from '../../../../../src/engine/pvpSpecialAttacks.js'
 import { applyPvpSpecialAttackRegenToState } from '../../../../../src/engine/pvpEngine.js'
+import { hasRequiredRunes } from '../../../../../src/engine/runes.js'
 import spellsData from '../../../../../src/data/spells.json' assert { type: 'json' }
 import prayersData from '../../../../../src/data/prayers.json' assert { type: 'json' }
 
 const VALID_STANCES = new Set(['accurate', 'aggressive', 'defensive', 'controlled', 'rapid', 'longrange'])
 const PROTECTION_PRAYER_IDS = new Set(['protection_from_magic', 'protection_from_missiles', 'protection_from_melee'])
-
-function getItemCount(inventory, itemId) {
-  let count = 0
-  for (const slot of inventory || []) {
-    if (slot?.itemId === itemId) count += slot.quantity || 1
-  }
-  return count
-}
-
-function hasRequiredRunes(inventory, runeReq) {
-  if (!runeReq || typeof runeReq !== 'object') return true
-  for (const [runeId, req] of Object.entries(runeReq)) {
-    if (getItemCount(inventory, runeId) < (req || 0)) return false
-  }
-  return true
-}
 
 export function validateIntentAction(state, characterId, action) {
   const combatant = state?.combatants?.[String(characterId)]
@@ -55,7 +40,9 @@ export function validateIntentAction(state, characterId, action) {
     if ((combatant?.stats?.magic || 1) < (spell.levelReq || 1)) {
       return { ok: false, error: 'insufficient_magic_level' }
     }
-    if (!hasRequiredRunes(combatant.inventory, spell.runeReq)) {
+    // Validate runes the same way the engine does: an equipped elemental staff
+    // supplies its rune for free (matches resolveMagicSwing in combatPrimitives).
+    if (!hasRequiredRunes(spell.runeReq, combatant.inventory || [], {}, combatant.equipment, itemsData)) {
       return { ok: false, error: 'insufficient_runes' }
     }
     return { ok: true }

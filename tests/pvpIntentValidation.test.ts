@@ -72,6 +72,37 @@ describe('PvP intent validation food checks', () => {
     expect(validateIntentAction(base([]), 1, { type: 'change_combat_spell', spellId: null })).toEqual({ ok: true })
   })
 
+  it('counts an equipped elemental staff as supplying its rune for free (engine parity)', () => {
+    // fire_bolt needs fire_rune 5 + air_rune 2. With a Staff of Fire equipped the
+    // fire runes are free, so only air_rune must be carried — matching the cast
+    // path in resolveMagicSwing. Without the staff this same inventory is blocked.
+    const withStaff = {
+      combatants: {
+        '1': {
+          characterId: 1,
+          stats: { magic: 99 },
+          inventory: [{ itemId: 'air_rune', quantity: 2 }],
+          equipment: { weapon: { itemId: 'staff_of_fire' } },
+        },
+      },
+    }
+    expect(validateIntentAction(withStaff, 1, { type: 'change_combat_spell', spellId: 'fire_bolt' }))
+      .toEqual({ ok: true })
+
+    const withoutStaff = {
+      combatants: {
+        '1': {
+          characterId: 1,
+          stats: { magic: 99 },
+          inventory: [{ itemId: 'air_rune', quantity: 2 }],
+          equipment: {},
+        },
+      },
+    }
+    expect(validateIntentAction(withoutStaff, 1, { type: 'change_combat_spell', spellId: 'fire_bolt' }))
+      .toEqual({ ok: false, error: 'insufficient_runes' })
+  })
+
   it('validates queue_special energy and weapon requirements', () => {
     const noSpec: any = { combatants: { '1': { characterId: 1, equipment: {}, inventory: [], specialAttackEnergy: 100 } } }
     expect(validateIntentAction(noSpec, 1, { type: 'queue_special' })).toEqual({ ok: false, error: 'no_special_attack' })
