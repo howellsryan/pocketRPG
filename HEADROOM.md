@@ -51,6 +51,12 @@ two consequences:
    infrastructure, not by env vars or files in this repo, so there is nothing local
    for Headroom to sit in front of. Use the wrapper for local development.
 
+   For web/cloud sessions, the savings come instead from **`CLAUDE.md` §16
+   (Token efficiency — MANDATORY)**, which encodes Headroom's behavioral levers
+   (output shaping, effort routing, intake reduction) as standing rules every agent
+   follows. That's guidance rather than a mechanical proxy, but it's the lever that
+   actually reaches a cloud session.
+
 ## Alternative: proxy mode
 
 If you'd rather run Headroom as a standalone local proxy and point an Anthropic
