@@ -1,19 +1,20 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
   <defs>
-    <linearGradient id="runeforged_scimitar_blade" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#aef5ec"/><stop offset="0.45" stop-color="#2fd0c0"/><stop offset="1" stop-color="#177064"/>
+    <linearGradient id="runeforged_scimitar_blade" x1="0" y1="0" x2="0.5" y2="1">
+      <stop offset="0" stop-color="#c6fff8"/><stop offset="0.45" stop-color="#2fd0c0"/><stop offset="1" stop-color="#136055"/>
     </linearGradient>
     <linearGradient id="runeforged_scimitar_grip" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0" stop-color="#caa24a"/><stop offset="1" stop-color="#7a531c"/>
+      <stop offset="0" stop-color="#caa24a"/><stop offset="1" stop-color="#6f4a18"/>
     </linearGradient>
   </defs>
-  <g stroke="#1a1410" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
-    <path d="M166 350 C 196 232 300 144 446 116 C 360 172 286 258 232 346 Z" fill="url(#runeforged_scimitar_blade)"/>
-    <path d="M206 326 C 244 226 326 158 418 132 C 348 182 296 252 252 332" fill="none" stroke="#e7fffb" stroke-width="9"/>
-    <g transform="rotate(40 176 358)">
-      <rect x="118" y="342" width="120" height="28" rx="8" fill="url(#runeforged_scimitar_grip)"/>
-      <rect x="158" y="370" width="36" height="92" rx="9" fill="#5a3d14"/>
-      <circle cx="176" cy="474" r="25" fill="#caa24a"/>
+  <g stroke="#13110d" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M188 348 C 210 244 300 158 454 122 C 384 168 318 224 268 300 C 254 322 244 336 236 348 Z" fill="url(#runeforged_scimitar_blade)"/>
+    <path d="M214 332 C 240 240 318 172 430 138 C 372 180 314 236 268 304" fill="none" stroke="#e9fffb" stroke-width="8"/>
+    <g transform="rotate(38 184 356)">
+      <path d="M112 340 C 134 332 244 332 262 342 L262 372 C 244 382 134 382 112 372 Z" fill="url(#runeforged_scimitar_grip)"/>
+      <rect x="160" y="372" width="36" height="92" rx="9" fill="#4a3210"/>
+      <path d="M168 392 L188 392 M168 414 L188 414 M168 436 L188 436" stroke="#2a1c08" stroke-width="5"/>
+      <circle cx="178" cy="476" r="24" fill="#caa24a"/>
     </g>
   </g>
 </svg>
