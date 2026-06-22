@@ -250,11 +250,15 @@ export function resolveMagicSwing(attacker, defender, itemsData) {
   if (!spell || typeof spell.baseDamage !== 'number') {
     return { swing: zeroMagicSwing(), runesToConsume: null, blocked: true, reason: 'no_spell' }
   }
-  if (!hasRequiredRunes(spell.runeReq, attacker.inventory || [], {}, attacker.equipment, itemsData)) {
+  // PvP requires the actual runes carried in the caster's inventory. Unlike
+  // PvE/idle, an equipped elemental staff does NOT supply its rune for free
+  // here (equipment is intentionally omitted from the rune check & consume),
+  // so the full runeReq must be present and is spent from inventory.
+  if (!hasRequiredRunes(spell.runeReq, attacker.inventory || [], {}, null, itemsData)) {
     return { swing: zeroMagicSwing(), runesToConsume: null, blocked: true, reason: 'no_runes', spellId: spell.id }
   }
 
   const swing = rollMagicAttack(attacker, defender, itemsData, { spell })
-  const runesToConsume = spell.runeReq ? getRunesToConsume(spell.runeReq, attacker.equipment, itemsData) : null
+  const runesToConsume = spell.runeReq ? getRunesToConsume(spell.runeReq, null, itemsData) : null
   return { swing, runesToConsume, blocked: false }
 }

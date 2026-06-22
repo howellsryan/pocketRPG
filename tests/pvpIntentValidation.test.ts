@@ -72,11 +72,11 @@ describe('PvP intent validation food checks', () => {
     expect(validateIntentAction(base([]), 1, { type: 'change_combat_spell', spellId: null })).toEqual({ ok: true })
   })
 
-  it('counts an equipped elemental staff as supplying its rune for free (engine parity)', () => {
-    // fire_bolt needs fire_rune 5 + air_rune 2. With a Staff of Fire equipped the
-    // fire runes are free, so only air_rune must be carried — matching the cast
-    // path in resolveMagicSwing. Without the staff this same inventory is blocked.
-    const withStaff = {
+  it('does NOT credit an equipped elemental staff in PvP — only inventory runes count (engine parity)', () => {
+    // fire_bolt needs fire_rune 5 + air_rune 2. In PvP a Staff of Fire does NOT
+    // supply the fire runes for free (unlike PvE/idle): the player must carry
+    // every rune in their inventory, matching the cast path in resolveMagicSwing.
+    const withStaffButNoFireRunes = {
       combatants: {
         '1': {
           characterId: 1,
@@ -86,21 +86,22 @@ describe('PvP intent validation food checks', () => {
         },
       },
     }
-    expect(validateIntentAction(withStaff, 1, { type: 'change_combat_spell', spellId: 'fire_bolt' }))
-      .toEqual({ ok: true })
+    expect(validateIntentAction(withStaffButNoFireRunes, 1, { type: 'change_combat_spell', spellId: 'fire_bolt' }))
+      .toEqual({ ok: false, error: 'insufficient_runes' })
 
-    const withoutStaff = {
+    // Carrying the full rune cost in inventory is accepted, staff equipped or not.
+    const withAllRunes = {
       combatants: {
         '1': {
           characterId: 1,
           stats: { magic: 99 },
-          inventory: [{ itemId: 'air_rune', quantity: 2 }],
-          equipment: {},
+          inventory: [{ itemId: 'fire_rune', quantity: 5 }, { itemId: 'air_rune', quantity: 2 }],
+          equipment: { weapon: { itemId: 'staff_of_fire' } },
         },
       },
     }
-    expect(validateIntentAction(withoutStaff, 1, { type: 'change_combat_spell', spellId: 'fire_bolt' }))
-      .toEqual({ ok: false, error: 'insufficient_runes' })
+    expect(validateIntentAction(withAllRunes, 1, { type: 'change_combat_spell', spellId: 'fire_bolt' }))
+      .toEqual({ ok: true })
   })
 
   it('validates queue_special energy and weapon requirements', () => {

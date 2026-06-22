@@ -953,7 +953,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     const isPoweredStaff = !!weaponItem?.poweredStaff
     const spell = combatType === 'magic' && activeCombatSpell && !isPoweredStaff ? spellsData[activeCombatSpell.id] : null
     if (combatType === 'magic' && !spell && !isPoweredStaff) {
-      addToast('No spell selected! Use the 🔮 Cast button to pick a spell.', 'error')
+      addToast('No spell selected! Use the 🔮 Cast Spell button to pick a spell.', 'error')
     }
     const state = createCombatState(monster, combatType, combatStance, spell)
     // Reset special attack energy on new fight; preserve active potions so they last their full 5 minutes
@@ -982,7 +982,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     const isPoweredStaff = !!weaponItem?.poweredStaff
     const spell = combatType === 'magic' && activeCombatSpell && !isPoweredStaff ? spellsData[activeCombatSpell.id] : null
     if (combatType === 'magic' && !spell && !isPoweredStaff) {
-      addToast('No spell selected! Use the 🔮 Cast button to pick a spell.', 'error')
+      addToast('No spell selected! Use the 🔮 Cast Spell button to pick a spell.', 'error')
     }
     const state = createRaidCombatState(raidData, monstersData, combatType, combatStance, spell)
     if (!state) {
@@ -2267,7 +2267,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                   class={`py-2.5 rounded-lg font-semibold text-sm transition-opacity ${isMagic ? 'active:opacity-80' : 'opacity-40 cursor-default'}`}
                   style={isMagic ? 'background:linear-gradient(135deg,#1a2a3a,#2a3a5a);border:1px solid rgba(100,150,200,0.35);color:#a8d8ff' : 'background:#1a1a1a;border:1px solid #2a2a2a;color:#888'}
                 >
-                  🔮 Cast
+                  🔮 Cast Spell
                 </button>
               </>
             )
@@ -2533,7 +2533,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
               class={`py-2.5 rounded-lg font-semibold text-sm transition-opacity ${isMagic ? 'active:opacity-80' : 'opacity-40 cursor-default'}`}
               style={isMagic ? 'background:linear-gradient(135deg,#1a2a3a,#2a3a5a);border:1px solid rgba(100,150,200,0.35);color:#a8d8ff' : 'background:#1a1a1a;border:1px solid #2a2a2a;color:#888'}
             >
-              🔮 Cast
+              🔮 Cast Spell
             </button>
           )
           const prayerBtn = (
@@ -2696,7 +2696,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                     </button>
                     <button class={'cb-act cb-act--violet' + (isMagic ? ' is-on' : '')} disabled={!isMagic} onClick={isMagic ? () => setShowSpellModal(true) : undefined}>
                       <GameIcon iconKey="crystal_ball" color={isMagic ? '#c9b6ff' : '#9b978c'} size={18} />
-                      <span>Cast</span>
+                      <span>Cast Spell</span>
                     </button>
                     <button class={'cb-act cb-act--green' + (prayerActive ? ' is-on' : '')} onClick={() => setShowPrayerModal(true)}>
                       <GameIcon iconKey="prayer" color={prayerActive ? '#cfeccb' : '#9b978c'} size={18} />

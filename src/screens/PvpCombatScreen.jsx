@@ -1022,7 +1022,7 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
                   aria-pressed={!!visuallySelectedSpellId}
                   onClick={() => toggleActionPanel('spell')}
                 >
-                  ✨ Spell
+                  🔮 Cast Spell
                 </Button>
               )}
             </div>

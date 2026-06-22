@@ -541,6 +541,12 @@ describe('pvpEngine phase 2B contract', () => {
         defenceBonus: { stab: 0, slash: 0, crush: 0, magic: 0, ranged: 0 },
         otherBonus: { meleeStrength: 0, rangedStrength: 0, magicDamage: 0 },
       },
+      fire_staff: {
+        id: 'fire_staff', slot: 'weapon', attackStyle: 'magic', attackSpeed: 5, elemental: 'fire_rune',
+        attackBonus: { stab: 0, slash: 0, crush: 0, magic: 15, ranged: 0 },
+        defenceBonus: { stab: 0, slash: 0, crush: 0, magic: 0, ranged: 0 },
+        otherBonus: { meleeStrength: 0, rangedStrength: 0, magicDamage: 0 },
+      },
     }
     const fireBolt = { id: 'fire_bolt', name: 'Fire Bolt', baseDamage: 12, levelReq: 35, baseXP: 22, runeReq: { fire_rune: 5, air_rune: 2 } }
     const mage = (overrides: any = {}) => buildPlayer({
@@ -577,6 +583,34 @@ describe('pvpEngine phase 2B contract', () => {
       expect(blocked.reason).toBe('no_runes')
       // The unspent rune is preserved.
       expect(out.stateNext.combatants['1'].inventory.filter(Boolean).length).toBe(1)
+    })
+
+    it('does NOT credit an equipped elemental staff in PvP — fire runes must be carried', () => {
+      // A Staff of Fire wielder with only air_rune cannot cast fire_bolt in PvP:
+      // unlike PvE/idle, the staff does not supply its rune for free here.
+      const a = mage({ equipment: { weapon: { itemId: 'fire_staff' } }, inventory: [{ itemId: 'air_rune', quantity: 2 }] })
+      const b = buildPlayer({ characterId: 2 })
+      const state = createPvpState(a, b, 0)
+      state.combatants['2'].attackTimer = 99
+      const out = processPvpTick(state, [], mageItems)
+      expect(out.events.some((e: any) => e.type === 'attack' && e.attackerCharacterId === 1)).toBe(false)
+      const blocked = out.events.find((e: any) => e.type === 'no_runes' && e.characterId === 1)
+      expect(blocked).toBeTruthy()
+      // The air runes are untouched since the cast never fired.
+      expect(out.stateNext.combatants['1'].inventory.filter(Boolean).length).toBe(1)
+    })
+
+    it('consumes the full rune cost from inventory even with an elemental staff equipped', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.01) // force a hit
+      const a = mage({ equipment: { weapon: { itemId: 'fire_staff' } }, inventory: [{ itemId: 'fire_rune', quantity: 5 }, { itemId: 'air_rune', quantity: 2 }] })
+      const b = buildPlayer({ characterId: 2 })
+      const state = createPvpState(a, b, 0)
+      state.combatants['2'].attackTimer = 99
+      const out = processPvpTick(state, [], mageItems)
+      const attack = out.events.find((e: any) => e.type === 'attack' && e.attackerCharacterId === 1)
+      expect(attack).toBeTruthy()
+      // All 5 fire + 2 air runes are spent — the staff did not cover the fire runes.
+      expect(out.stateNext.combatants['1'].inventory.filter(Boolean).length).toBe(0)
     })
 
     it('powered staff swings without a spell or runes', () => {
