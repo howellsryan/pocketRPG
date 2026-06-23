@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <radialGradient id="staff_of_water_o" cx="0.4" cy="0.35" r="0.75">
+      <stop offset="0" stop-color="#cfeeff"/><stop offset="0.55" stop-color="#4f9fe0"/><stop offset="1" stop-color="#1f5aa8"/>
+    </radialGradient>
+  </defs>
+  <g transform="rotate(-22 256 256)" stroke="#1a1410" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
+    <rect x="244" y="160" width="26" height="300" rx="12" fill="#6f4a23"/>
+    <path d="M256 162 L256 454" stroke="#a3743f" stroke-width="6" fill="none"/>
+    <path d="M218 170 C 210 128 232 112 232 112 C 230 142 252 150 256 150 C 260 150 282 142 280 112 C 280 112 302 128 294 170 Z" fill="#3f6f9a"/>
+    <circle cx="256" cy="112" r="46" fill="url(#staff_of_water_o)"/>
+    <circle cx="240" cy="96" r="13" fill="#eafaff" stroke="none"/>
+  </g>
+</svg>

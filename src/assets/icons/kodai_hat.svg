@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="kodai_hat_b" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#dfeaf6"/><stop offset="0.55" stop-color="#7fa6d0"/><stop offset="1" stop-color="#3f6aa8"/>
+    </linearGradient>
+  </defs>
+  <g stroke="#1a1410" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M256 66 C 250 66 246 74 244 86 L176 358 C 230 342 282 342 336 358 L268 86 C 266 74 262 66 256 66 Z" fill="url(#kodai_hat_b)"/>
+    <path d="M140 358 C 220 390 292 390 372 358 C 372 386 360 402 332 408 C 282 418 230 418 180 408 C 152 402 140 386 140 358 Z" fill="#5f86bc"/>
+    <path d="M232 200 L280 200 M222 250 L290 250" stroke="#2f5a9a" stroke-width="8" fill="none"/>
+    <circle cx="256" cy="140" r="26" fill="#eafaff" stroke="#3f6aa8" stroke-width="7"/>
+    <circle cx="248" cy="132" r="8" fill="#ffffff" stroke="none"/>
+  </g>
+</svg>

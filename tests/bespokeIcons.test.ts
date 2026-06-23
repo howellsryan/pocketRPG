@@ -30,7 +30,7 @@ describe('bespoke icon set', () => {
   })
 
   it('includes the pilot batch ids', () => {
-    const pilot = ['coins', 'bronze_dagger', 'runeforged_scimitar', 'fire_rune', 'cave_goblin', 'mining']
+    const pilot = ['coins', 'bronze_dagger', 'runeforged_scimitar', 'fire_rune', 'goblin_head', 'mining']
     for (const id of pilot) {
       expect(bespokeIcons, id).toHaveProperty(id)
     }

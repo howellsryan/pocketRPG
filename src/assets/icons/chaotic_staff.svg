@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="chaotic_staff_w" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#4a3a6a"/><stop offset="0.5" stop-color="#2e2248"/><stop offset="1" stop-color="#1a1230"/>
+    </linearGradient>
+    <radialGradient id="chaotic_staff_o" cx="0.4" cy="0.35" r="0.8">
+      <stop offset="0" stop-color="#d6fff4"/><stop offset="0.5" stop-color="#33c9b8"/><stop offset="1" stop-color="#1a6f8a"/>
+    </radialGradient>
+  </defs>
+  <g transform="rotate(-22 256 256)" stroke="#1a1410" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
+    <rect x="244" y="180" width="26" height="280" rx="12" fill="url(#chaotic_staff_w)"/>
+    <path d="M212 180 C 196 152 210 120 228 134 C 218 104 244 96 256 116 C 268 96 294 104 284 134 C 302 120 316 152 300 180 Z" fill="#5a4a8a"/>
+    <path d="M256 96 L268 124 L256 150 L244 124 Z" fill="#c9a24a"/>
+    <circle cx="256" cy="128" r="40" fill="url(#chaotic_staff_o)"/>
+    <circle cx="242" cy="116" r="11" fill="#eafff9" stroke="none"/>
+    <path d="M256 192 L256 446" stroke="#6a5a9a" stroke-width="6" fill="none"/>
+  </g>
+</svg>

@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="battlestaff_w" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#6a4a2a"/><stop offset="0.5" stop-color="#4a2f18"/><stop offset="1" stop-color="#2e1c0e"/>
+    </linearGradient>
+  </defs>
+  <g transform="rotate(-22 256 256)" stroke="#1a1410" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
+    <rect x="244" y="150" width="26" height="312" rx="12" fill="url(#battlestaff_w)"/>
+    <path d="M256 152 L256 458" stroke="#7a5a32" stroke-width="6" fill="none"/>
+    <path d="M232 150 L280 150 L280 116 C 280 96 268 84 256 84 C 244 84 232 96 232 116 Z" fill="#c9a24a"/>
+    <path d="M238 110 L274 110 M238 128 L274 128" stroke="#7a5a1a" stroke-width="7" fill="none"/>
+    <rect x="236" y="150" width="40" height="18" rx="6" fill="#c9a24a"/>
+  </g>
+</svg>

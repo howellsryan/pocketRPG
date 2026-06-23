@@ -92,6 +92,13 @@ emblem is now bespoke.
 Also: mace template reworked to a spiked morningstar head; bank-tab item icons
 enlarged (GameIcon size 22 -> 33, ~1.5x) so they don't get lost.
 
+### Phase 4e — magic gear ✅ (now 372)
+- [x] staves: staff, magic_staff, staff_of_air/water/fire/earth, battlestaff,
+  staff_of_the_dead, trident_of_venom, sanguine_staff, chaotic_staff
+- [x] wands: ancestral_wand, 2nd_age_wand
+- [x] hats: wizard_hat, black_wizard_hat, kodai_hat
+- [x] robes: wizard_robe_top/skirt, black_wizard_robe, kodai_robe_top/bottom
+
 ## Remaining
 - **Monsters batch 2-3** (~44 glyphs): hanging_spider, masked_spider, tiger_head,
   horned_reptile, lizardman, grim_reaper, tree_face, devil_mask, bleeding_eye,

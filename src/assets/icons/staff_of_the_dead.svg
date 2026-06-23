@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="staff_of_the_dead_w" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#5a4a4a"/><stop offset="0.5" stop-color="#322626"/><stop offset="1" stop-color="#1a1212"/>
+    </linearGradient>
+    <radialGradient id="staff_of_the_dead_g" cx="0.4" cy="0.35" r="0.8">
+      <stop offset="0" stop-color="#d6ffcf"/><stop offset="0.55" stop-color="#4fc94a"/><stop offset="1" stop-color="#1a6a1f"/>
+    </radialGradient>
+  </defs>
+  <g transform="rotate(-22 256 256)" stroke="#1a1410" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
+    <rect x="244" y="170" width="26" height="290" rx="12" fill="url(#staff_of_the_dead_w)"/>
+    <path d="M210 168 C 206 120 234 96 234 130 C 234 150 248 156 256 156 C 264 156 278 150 278 130 C 278 96 306 120 302 168 Z" fill="#4a4a4a"/>
+    <circle cx="256" cy="118" r="40" fill="url(#staff_of_the_dead_g)"/>
+    <circle cx="244" cy="108" r="9" fill="#1a3a14" stroke="none"/>
+    <circle cx="268" cy="108" r="9" fill="#1a3a14" stroke="none"/>
+    <path d="M246 132 L266 132" stroke="#1a3a14" stroke-width="6" fill="none"/>
+  </g>
+</svg>
