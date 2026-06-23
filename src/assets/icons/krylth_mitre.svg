@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="krylth_mitre_b" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ff7a68"/><stop offset="0.5" stop-color="#c0392b"/><stop offset="1" stop-color="#6f1810"/>
+    </linearGradient>
+  </defs>
+  <g stroke="#1a1410" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M220 280 L200 240 L190 180 L200 140 L220 120 L256 100 L292 120 L312 140 L322 180 L312 240 L292 280 Z" fill="url(#krylth_mitre_b)"/>
+    <path d="M256 100 L256 60" stroke="#ff7a68" stroke-width="10"/>
+    <path d="M220 280 L200 360 L256 380 L312 360 L292 280" fill="url(#krylth_mitre_b)"/>
+    <path d="M210 200 L210 260 M256 180 L256 260 M302 200 L302 260" stroke="#1a1410" stroke-width="7"/>
+  </g>
+</svg>

@@ -116,6 +116,14 @@ masari) reusing full_helm/platebody/platelegs/plateskirt silhouettes:
 - [x] hand-drawn: void_king_robe, void_king_gloves, slayer_defender,
   gloves_of_slaughter
 
+### Phase 4h — god coifs, mitres, and stat rings ✅ (now 437)
+- [x] coifs ×8: lumira_coif, verdant_coif, krylth_coif, zephyra_coif, ancient_coif,
+  grondar_coif, stonegale_coif, kaelor_s_coif
+- [x] mitres ×6: lumira_mitre, verdant_mitre, krylth_mitre, zephyra_mitre,
+  ancient_mitre, grondar_mitre
+- [x] stat rings ×7: archers_ring, berserker_ring, seers_ring, warriors_ring,
+  sunbearer_ring, zyrite_ring, ring_of_affliction
+
 ## Remaining
 - **Monsters batch 2-3** (~44 glyphs): hanging_spider, masked_spider, tiger_head,
   horned_reptile, lizardman, grim_reaper, tree_face, devil_mask, bleeding_eye,

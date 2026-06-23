@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <radialGradient id="sunbearer_ring_b" cx="50%" cy="50%" r="40%">
+      <stop offset="0" stop-color="#fff0a0"/><stop offset="1" stop-color="#ffcf33"/>
+    </radialGradient>
+  </defs>
+  <g stroke="#1a1410" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
+    <circle cx="256" cy="256" r="120" fill="none" stroke="#c48f12" stroke-width="16"/>
+    <path d="M220 160 L256 120 L292 160 L292 220 L256 260 L220 220 Z" fill="url(#sunbearer_ring_b)"/>
+    <circle cx="256" cy="210" r="28" fill="none" stroke="#8a6f00" stroke-width="8"/>
+    <path d="M200 150 L280 270 M280 150 L200 270" stroke="#ffcf33" stroke-width="6" stroke-linecap="round"/>
+  </g>
+</svg>
