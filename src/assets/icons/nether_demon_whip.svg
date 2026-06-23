@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="nether_demon_whip_h" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#6a2a2a"/><stop offset="1" stop-color="#2a0c0c"/>
+    </linearGradient>
+  </defs>
+  <g stroke="#1a0808" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M170 430 L170 330 C 170 250 250 250 256 200 C 262 150 200 140 200 100 C 200 76 224 64 256 64 C 320 64 352 110 352 168 C 352 250 268 268 264 330 C 262 380 320 400 350 412" fill="none" stroke="#3a1010" stroke-width="26"/>
+    <path d="M170 430 L170 330 C 170 250 250 250 256 200 C 262 150 200 140 200 100 C 200 76 224 64 256 64 C 320 64 352 110 352 168 C 352 250 268 268 264 330 C 262 380 320 400 350 412" fill="none" stroke="#c43838" stroke-width="9"/>
+    <rect x="150" y="424" width="40" height="56" rx="14" fill="url(#nether_demon_whip_h)"/>
+    <path d="M350 412 L388 408 L364 440 Z" fill="#e0d0b0"/>
+  </g>
+</svg>

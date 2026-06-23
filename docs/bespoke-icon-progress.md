@@ -99,6 +99,14 @@ enlarged (GameIcon size 22 -> 33, ~1.5x) so they don't get lost.
 - [x] hats: wizard_hat, black_wizard_hat, kodai_hat
 - [x] robes: wizard_robe_top/skirt, black_wizard_robe, kodai_robe_top/bottom
 
+### Phase 4f — unique melee/ranged weapons ✅ (now 393)
+- [x] godswords: grondar/zephyra/lumira/krylth + godsword_blade
+- [x] nether_demon_whip, dragon_claws
+- [x] mauls: ancient_maul, chaotic_maul, gargoyle_maul, cindermaw_maul
+- [x] blades: chaotic_rapier, chaotic_longsword, ironclad_longsword, zesta_longsword
+- [x] ranged: venom_blowpipe, javelin, dragon_javelin, bow_of_faerdhinen,
+  nightfang_bow, thornspine_shortbow
+
 ## Remaining
 - **Monsters batch 2-3** (~44 glyphs): hanging_spider, masked_spider, tiger_head,
   horned_reptile, lizardman, grim_reaper, tree_face, devil_mask, bleeding_eye,

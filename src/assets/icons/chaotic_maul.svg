@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="chaotic_maul_h" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#6fe0d0"/><stop offset="0.5" stop-color="#2f9a8a"/><stop offset="1" stop-color="#1a5a52"/>
+    </linearGradient>
+  </defs>
+  <g transform="rotate(-18 256 256)" stroke="#1a1410" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
+    <rect x="246" y="190" width="24" height="270" rx="10" fill="#2a2238"/>
+    <path d="M160 110 L352 110 L380 152 L352 194 L160 194 L132 152 Z" fill="url(#chaotic_maul_h)"/>
+    <path d="M196 110 L196 194 M316 110 L316 194" stroke="#1a5a52" stroke-width="8" fill="none"/>
+    <path d="M256 96 L272 130 L256 150 L240 130 Z" fill="#caa24a"/>
+    <circle cx="256" cy="152" r="16" fill="#d6fff4" stroke="#1a5a52" stroke-width="6"/>
+  </g>
+</svg>
