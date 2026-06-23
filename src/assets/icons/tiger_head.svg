@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <radialGradient id="tiger_head_s" cx="0.42" cy="0.34" r="0.8">
+      <stop offset="0" stop-color="#f0a24a"/><stop offset="0.6" stop-color="#d07a26"/><stop offset="1" stop-color="#8a4e16"/>
+    </radialGradient>
+  </defs>
+  <g stroke="#3a2410" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
+    <polygon points="170,200 130,128 220,168" fill="url(#tiger_head_s)"/>
+    <polygon points="342,200 382,128 292,168" fill="url(#tiger_head_s)"/>
+    <path d="M176 178 Q 256 138 336 178 Q 376 230 360 308 Q 330 400 256 414 Q 182 400 152 308 Q 136 230 176 178 Z" fill="url(#tiger_head_s)"/>
+    <path d="M196 318 Q 256 350 316 318 Q 296 372 256 380 Q 216 372 196 318 Z" fill="#f4ead4"/>
+    <ellipse cx="212" cy="258" rx="26" ry="20" fill="#ffe066"/>
+    <ellipse cx="300" cy="258" rx="26" ry="20" fill="#ffe066"/>
+    <circle cx="216" cy="260" r="10" fill="#1a1410" stroke="none"/>
+    <circle cx="304" cy="260" r="10" fill="#1a1410" stroke="none"/>
+    <path d="M256 300 L240 320 L256 332 L272 320 Z" fill="#d0392b"/>
+    <path d="M210 200 L208 250 M256 188 L256 232 M302 200 L304 250" stroke="#3a2410" stroke-width="9" fill="none"/>
+    <path d="M196 348 L150 340 M196 360 L150 372 M316 348 L362 340 M316 360 L362 372" stroke="#3a2410" stroke-width="5" fill="none"/>
+  </g>
+</svg>

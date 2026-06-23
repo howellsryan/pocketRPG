@@ -66,7 +66,16 @@ covers all 104 monsters. Batch 1 (20) done:
   imp, frog, bat, snake, spider_alt, scorpion, wolf_head, gorilla, dragon_head,
   daemon_skull, spectre, orc_head
 
-Total covered so far: **282 icons**.
+Batch 2 (20) done:
+- [x] hanging_spider, masked_spider, tiger_head, horned_reptile, lizardman,
+  grim_reaper, tree_face, devil_mask, bleeding_eye, werewolf, spiked_dragon_head,
+  rock_golem, gladius, wyvern, gargoyle, pyromaniac, barbute, totem_head,
+  floating_ghost, fairy
+
+Total covered so far: **302 icons**.
+
+Also: mace template reworked to a spiked morningstar head; bank-tab item icons
+enlarged (GameIcon size 22 -> 33, ~1.5x) so they don't get lost.
 
 ## Remaining
 - **Monsters batch 2-3** (~44 glyphs): hanging_spider, masked_spider, tiger_head,

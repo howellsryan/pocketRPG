@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <radialGradient id="wyvern_s" cx="0.42" cy="0.34" r="0.8">
+      <stop offset="0" stop-color="#5fae8a"/><stop offset="0.6" stop-color="#3a7a5c"/><stop offset="1" stop-color="#214e38"/>
+    </radialGradient>
+  </defs>
+  <g stroke="#0f3326" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M196 250 C 110 196 64 150 60 100 C 120 130 168 150 210 190 Z" fill="#3a7a5c"/>
+    <path d="M316 250 C 402 196 448 150 452 100 C 392 130 344 150 302 190 Z" fill="#3a7a5c"/>
+    <polygon points="186,160 150,90 230,150" fill="url(#wyvern_s)"/>
+    <polygon points="326,160 362,90 282,150" fill="url(#wyvern_s)"/>
+    <path d="M186 176 Q 256 140 326 176 Q 360 226 344 304 Q 314 392 256 404 Q 198 392 168 304 Q 152 226 186 176 Z" fill="url(#wyvern_s)"/>
+    <polygon points="208,256 248,244 226,282" fill="#ffe04a" stroke="#0f3326" stroke-width="8"/>
+    <polygon points="304,256 264,244 286,282" fill="#ffe04a" stroke="#0f3326" stroke-width="8"/>
+    <circle cx="224" cy="264" r="7" fill="#1a1410" stroke="none"/>
+    <circle cx="288" cy="264" r="7" fill="#1a1410" stroke="none"/>
+    <path d="M212 332 Q 256 356 300 332" stroke="#0f3326" stroke-width="10" fill="none"/>
+  </g>
+</svg>

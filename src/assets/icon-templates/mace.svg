@@ -8,12 +8,17 @@
     </linearGradient>
   </defs>
   <g transform="rotate(-45 256 256)" stroke="#1a1410" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
-    <rect x="240" y="170" width="32" height="244" rx="12" fill="url(#{{id}}_shaft)"/>
-    <polygon points="256,86 300,128 256,150 212,128" fill="{{shade}}"/>
-    <polygon points="186,150 222,124 244,160 210,184" fill="{{shade}}"/>
-    <polygon points="326,150 290,124 268,160 302,184" fill="{{shade}}"/>
-    <circle cx="256" cy="150" r="56" fill="url(#{{id}}_head)"/>
-    <circle cx="238" cy="134" r="14" fill="{{light}}" stroke="none"/>
+    <rect x="240" y="180" width="32" height="234" rx="12" fill="url(#{{id}}_shaft)"/>
+    <g fill="{{shade}}">
+      <polygon points="256,46 238,116 274,116"/>
+      <polygon points="466,150 396,138 408,176"/>
+      <polygon points="46,150 116,138 104,176"/>
+      <polygon points="406,68 352,108 384,128"/>
+      <polygon points="106,68 160,108 128,128"/>
+      <polygon points="256,272 238,206 274,206"/>
+    </g>
+    <circle cx="256" cy="150" r="62" fill="url(#{{id}}_head)"/>
+    <circle cx="234" cy="130" r="15" fill="{{light}}" stroke="none"/>
     <circle cx="256" cy="430" r="22" fill="#c4912a"/>
   </g>
 </svg>

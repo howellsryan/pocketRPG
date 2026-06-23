@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <radialGradient id="horned_reptile_s" cx="0.42" cy="0.34" r="0.8">
+      <stop offset="0" stop-color="#6fae6a"/><stop offset="0.6" stop-color="#447a40"/><stop offset="1" stop-color="#274d24"/>
+    </radialGradient>
+  </defs>
+  <g stroke="#142e12" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
+    <polygon points="172,196 120,116 214,162" fill="#cdd2c4"/>
+    <polygon points="340,196 392,116 298,162" fill="#cdd2c4"/>
+    <path d="M178 184 Q 256 142 334 184 Q 374 234 358 312 Q 328 404 256 416 Q 184 404 154 312 Q 138 234 178 184 Z" fill="url(#horned_reptile_s)"/>
+    <path d="M186 248 Q 256 230 326 248" stroke="#274d24" stroke-width="8" fill="none"/>
+    <ellipse cx="212" cy="270" rx="24" ry="18" fill="#ffd24a"/>
+    <ellipse cx="300" cy="270" rx="24" ry="18" fill="#ffd24a"/>
+    <ellipse cx="212" cy="272" rx="7" ry="13" fill="#1a1410" stroke="none"/>
+    <ellipse cx="300" cy="272" rx="7" ry="13" fill="#1a1410" stroke="none"/>
+    <path d="M210 344 Q 256 368 302 344" stroke="#142e12" stroke-width="11" fill="none"/>
+    <circle cx="224" cy="230" r="6" fill="#cdd2c4" stroke="none"/>
+    <circle cx="288" cy="230" r="6" fill="#cdd2c4" stroke="none"/>
+  </g>
+</svg>

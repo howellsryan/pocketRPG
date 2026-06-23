@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <radialGradient id="werewolf_s" cx="0.42" cy="0.34" r="0.8">
+      <stop offset="0" stop-color="#6a625a"/><stop offset="0.6" stop-color="#44403a"/><stop offset="1" stop-color="#241f1c"/>
+    </radialGradient>
+  </defs>
+  <g stroke="#15110d" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
+    <polygon points="160,200 134,96 232,168" fill="url(#werewolf_s)"/>
+    <polygon points="352,200 378,96 280,168" fill="url(#werewolf_s)"/>
+    <path d="M172 188 Q 256 144 340 188 Q 374 240 356 312 L312 352 Q 290 372 256 366 Q 222 372 200 352 L156 312 Q 138 240 172 188 Z" fill="url(#werewolf_s)"/>
+    <ellipse cx="208" cy="252" rx="24" ry="18" fill="#ffe04a"/>
+    <ellipse cx="304" cy="252" rx="24" ry="18" fill="#ffe04a"/>
+    <ellipse cx="212" cy="254" rx="8" ry="11" fill="#1a1410" stroke="none"/>
+    <ellipse cx="300" cy="254" rx="8" ry="11" fill="#1a1410" stroke="none"/>
+    <path d="M256 300 L240 318 L256 330 L272 318 Z" fill="#15110d"/>
+    <path d="M200 340 Q 256 372 312 340 L302 372 Q 256 392 210 372 Z" fill="#15110d"/>
+    <polygon points="212,346 220,366 230,346" fill="#fff" stroke="none"/>
+    <polygon points="282,346 290,366 300,346" fill="#fff" stroke="none"/>
+    <path d="M188 226 L236 244 M324 226 L276 244" stroke="#15110d" stroke-width="10" fill="none"/>
+  </g>
+</svg>

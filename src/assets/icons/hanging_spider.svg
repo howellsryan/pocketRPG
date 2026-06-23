@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <radialGradient id="hanging_spider_s" cx="0.42" cy="0.4" r="0.7">
+      <stop offset="0" stop-color="#5a5060"/><stop offset="0.6" stop-color="#332c3a"/><stop offset="1" stop-color="#16121c"/>
+    </radialGradient>
+  </defs>
+  <line x1="256" y1="40" x2="256" y2="196" stroke="#cdd2d8" stroke-width="6"/>
+  <g fill="none" stroke="#120e16" stroke-width="13" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M210 290 C 150 280 120 250 104 214 M214 320 C 150 326 110 356 92 392 M210 356 C 160 372 134 404 124 436"/>
+    <path d="M302 290 C 362 280 392 250 408 214 M298 320 C 362 326 402 356 420 392 M302 356 C 352 372 378 404 388 436"/>
+  </g>
+  <g stroke="#120e16" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
+    <ellipse cx="256" cy="340" rx="90" ry="76" fill="url(#hanging_spider_s)"/>
+    <circle cx="256" cy="226" r="54" fill="url(#hanging_spider_s)"/>
+    <circle cx="234" cy="220" r="12" fill="#ff5a3a" stroke="none"/>
+    <circle cx="278" cy="220" r="12" fill="#ff5a3a" stroke="none"/>
+    <circle cx="222" cy="244" r="7" fill="#ff8a6a" stroke="none"/>
+    <circle cx="290" cy="244" r="7" fill="#ff8a6a" stroke="none"/>
+  </g>
+</svg>

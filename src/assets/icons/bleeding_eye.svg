@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <radialGradient id="bleeding_eye_i" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#ffd24a"/><stop offset="0.5" stop-color="#e8743a"/><stop offset="1" stop-color="#a8281a"/>
+    </radialGradient>
+  </defs>
+  <g stroke="#3a0a06" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M80 256 C 150 168 362 168 432 256 C 362 344 150 344 80 256 Z" fill="#f0e6d4"/>
+    <circle cx="256" cy="256" r="84" fill="url(#bleeding_eye_i)"/>
+    <circle cx="256" cy="256" r="40" fill="#1a0a06"/>
+    <circle cx="238" cy="238" r="13" fill="#fff" stroke="none"/>
+    <path d="M120 256 C 180 200 332 200 392 256" stroke="#b03020" stroke-width="6" fill="none"/>
+  </g>
+  <g stroke="#5a0f08" stroke-width="10" stroke-linecap="round">
+    <path d="M210 322 C 204 360 206 392 218 416" fill="none" stroke="#c0271a"/>
+    <path d="M286 326 C 296 356 296 384 286 410" fill="none" stroke="#c0271a"/>
+  </g>
+</svg>
