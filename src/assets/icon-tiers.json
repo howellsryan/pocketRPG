@@ -104,7 +104,13 @@
     "skill_crafting":    { "base": "#b07a3a", "light": "#d6a76f", "shade": "#6f4a1c" },
     "skill_herblore":    { "base": "#3fae5a", "light": "#7cd98e", "shade": "#246b32" },
     "skill_agility":     { "base": "#3a6fae", "light": "#7c9fd6", "shade": "#22467e" },
-    "skill_thieving":    { "base": "#7a4f9a", "light": "#a886c8", "shade": "#4f2f6f" }
+    "skill_thieving":    { "base": "#7a4f9a", "light": "#a886c8", "shade": "#4f2f6f" },
+
+    "leather":    { "base": "#8b5e3c", "light": "#b88060", "shade": "#5a3820" },
+    "climbing":   { "base": "#5a4230", "light": "#8a6a4a", "shade": "#2a1e10" },
+    "fire_orange":{ "base": "#e8743a", "light": "#ffb27a", "shade": "#a8431a" },
+    "ranger_green":{ "base": "#4a8a5a", "light": "#80c490", "shade": "#236b35" },
+    "arcane_blue":{ "base": "#4a72c8", "light": "#8aacf0", "shade": "#263f8a" }
   },
   "items": {
     "scimitar":  ["bronze", "iron", "steel", "mithril", "adamant", "runeforged", "dragon"],
@@ -136,7 +142,8 @@
     "crossbow":  ["iron", "steel", "mithril", "adamant", "runeforged"],
     "d_hide_body":  ["red", "green", "black", "lumira", "verdant", "krylth", "ancient", "zephyra", "grondar"],
     "d_hide_chaps": ["red", "green", "black", "lumira", "verdant", "krylth", "ancient", "zephyra", "grondar"],
-    "plank":        ["oak", "teak", "mahogany"]
+    "plank":        ["oak", "teak", "mahogany"],
+    "boots":        ["dragon"]
   },
   "sets": {
     "full_helm": {
@@ -195,6 +202,25 @@
     "eel": { "eel": "cooked_eel", "raw_eel": "raw_eel" },
     "manta_ray": { "manta_ray": "cooked_manta", "raw_manta_ray": "raw_manta" },
     "drumstick": { "cooked_chicken": "cooked_chicken", "raw_chicken": "raw_chicken" },
-    "meat": { "cooked_meat": "cooked_meat", "raw_beef": "raw_beef" }
+    "meat": { "cooked_meat": "cooked_meat", "raw_beef": "raw_beef" },
+    "boots": {
+      "leather_boots": "leather",
+      "climbing_boots": "climbing",
+      "climbing_boots_g": "gold",
+      "grondar_boots": "grondar",
+      "lumira_d_hide_boots": "lumira",
+      "verdant_d_hide_boots": "verdant",
+      "krylth_d_hide_boots": "krylth",
+      "ancient_d_hide_boots": "ancient",
+      "zephyra_d_hide_boots": "zephyra",
+      "grondar_d_hide_boots": "grondar",
+      "pathfinder_boots": "ranger_green",
+      "spellweaver_boots": "arcane_blue",
+      "arcanist_boots": "arcane_blue",
+      "primeval_boots": "krylth",
+      "skyfury_boots": "verdant",
+      "evermore_boots": "lumira",
+      "emberhowl_boots": "fire_orange"
+    }
   }
 }
