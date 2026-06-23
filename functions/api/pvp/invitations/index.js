@@ -15,9 +15,7 @@
 import { requireAuth, json } from '../../../_lib/auth.js'
 import { getOwnedCharacter, sweepStaleRows, assertNotInActiveMatch } from '../../../_lib/pvp.js'
 import { readCombatLevel } from '../../../_lib/combatLevel.js'
-import { itemsData, readCharacterSave, readCombatStatLevels } from '../../../_lib/pvpMatch.js'
-import { readCharacterPvpRank } from '../../../_lib/pvpRanks.js'
-import { calculatePvpRiskValues } from '../../../../src/engine/pvpRisk.js'
+import { buildInvitationLists } from '../../../_lib/pvpLobby.js'
 import { createMatch } from '../../../_lib/pvpMatchCreate.js'
 
 const CB_BAND = 10
@@ -34,104 +32,11 @@ export async function onRequestGet({ request, env }) {
     'SELECT active_match_id FROM characters WHERE id = ?'
   ).bind(ch.id).first()
 
-  // List in/out pending invites with the other character's username + CB
-  // for nice rendering. We filter to status='pending' only — declined and
-  // accepted rows are bookkeeping for the engine, not user-facing.
-  const incoming = await env.DB.prepare(
-    `SELECT i.id, i.from_character, i.to_character, i.created_at,
-            c.username AS from_username,
-            COALESCE(w.combat_level, 0) AS from_combat_level
-       FROM pvp_invitations i
-       JOIN characters c ON c.id = i.from_character
-  LEFT JOIN pvp_waiting_room w ON w.character_id = i.from_character
-      WHERE i.to_character = ? AND i.status = 'pending'
-   ORDER BY i.created_at ASC`
-  ).bind(ch.id).all()
-
-  const outgoing = await env.DB.prepare(
-    `SELECT i.id, i.from_character, i.to_character, i.created_at,
-            c.username AS to_username,
-            COALESCE(w.combat_level, 0) AS to_combat_level
-       FROM pvp_invitations i
-       JOIN characters c ON c.id = i.to_character
-  LEFT JOIN pvp_waiting_room w ON w.character_id = i.to_character
-      WHERE i.from_character = ? AND i.status = 'pending'
-   ORDER BY i.created_at ASC`
-  ).bind(ch.id).all()
-
-  const incomingWithRisk = await Promise.all((incoming.results || []).map(async (row) => {
-    try {
-      const [save, pvpRank] = await Promise.all([
-        readCharacterSave(env, row.from_character),
-        readCharacterPvpRank(env, row.from_character),
-      ])
-      const risk = calculatePvpRiskValues({
-        inventory: save?.payload?.inventory,
-        equipment: save?.payload?.equipment,
-        itemsData,
-      })
-      return {
-        ...row,
-        from_inventory_shop_value: risk.inventoryShopValue,
-        from_equipment_shop_value: risk.equipmentShopValue,
-        from_total_shop_value: risk.totalShopValue,
-        from_combat_stats: readCombatStatLevels(save?.payload),
-        from_total_pvp_kills: pvpRank.totalPvpKills,
-        from_last_updated_total_pvp_kills: pvpRank.lastUpdatedTotalPvpKills,
-        from_pvp_rank: pvpRank.rank,
-      }
-    } catch {
-      return {
-        ...row,
-        from_inventory_shop_value: 0,
-        from_equipment_shop_value: 0,
-        from_total_shop_value: 0,
-        from_combat_stats: readCombatStatLevels(null),
-        from_total_pvp_kills: 0,
-        from_last_updated_total_pvp_kills: null,
-        from_pvp_rank: null,
-      }
-    }
-  }))
-
-  const outgoingWithRisk = await Promise.all((outgoing.results || []).map(async (row) => {
-    try {
-      const [save, pvpRank] = await Promise.all([
-        readCharacterSave(env, row.to_character),
-        readCharacterPvpRank(env, row.to_character),
-      ])
-      const risk = calculatePvpRiskValues({
-        inventory: save?.payload?.inventory,
-        equipment: save?.payload?.equipment,
-        itemsData,
-      })
-      return {
-        ...row,
-        to_inventory_shop_value: risk.inventoryShopValue,
-        to_equipment_shop_value: risk.equipmentShopValue,
-        to_total_shop_value: risk.totalShopValue,
-        to_combat_stats: readCombatStatLevels(save?.payload),
-        to_total_pvp_kills: pvpRank.totalPvpKills,
-        to_last_updated_total_pvp_kills: pvpRank.lastUpdatedTotalPvpKills,
-        to_pvp_rank: pvpRank.rank,
-      }
-    } catch {
-      return {
-        ...row,
-        to_inventory_shop_value: 0,
-        to_equipment_shop_value: 0,
-        to_total_shop_value: 0,
-        to_combat_stats: readCombatStatLevels(null),
-        to_total_pvp_kills: 0,
-        to_last_updated_total_pvp_kills: null,
-        to_pvp_rank: null,
-      }
-    }
-  }))
+  const { incoming, outgoing } = await buildInvitationLists(env, ch.id)
 
   return json({
-    incoming: incomingWithRisk,
-    outgoing: outgoingWithRisk,
+    incoming,
+    outgoing,
     active_match_id: activeRow?.active_match_id || null,
   })
 }

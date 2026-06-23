@@ -1,11 +1,13 @@
-// Cloud-save push/pull. Pushes are debounced to once per 60s per character.
+// Cloud-save push/pull. Pushes are debounced to once per 120s per character;
+// durability between debounce windows comes from critical-save milestones
+// (level-up / boss / quest / unlock) and the visibility/unload flush.
 
 import { api, getToken, getCharacterId, setLocalCharacterId, SAVE_REVISION_EVENT } from './api.js'
 import { buildSavePayloadFromSnapshot, applySavePayload } from '../db/saveload.js'
 import { withTimeout } from '../utils/helpers.js'
 import { CRITICAL_SAVE_COALESCE_MS, CRITICAL_SAVE_REASONS, normaliseCriticalSaveReason } from './criticalSavePolicy.js'
 
-const PUSH_DEBOUNCE_MS = 60_000
+const PUSH_DEBOUNCE_MS = 120_000
 // Grace window for clock skew between this client and the cloud server when
 // deciding whether the cloud copy is meaningfully newer than our last push.
 const FRESHNESS_GRACE_MS = 5_000
