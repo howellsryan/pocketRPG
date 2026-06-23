@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="ferocious_gloves_b" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#e8a86a"/><stop offset="0.55" stop-color="#c0703a"/><stop offset="1" stop-color="#8a3a1a"/>
+    </linearGradient>
+  </defs>
+  <g stroke="#1a1410" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M160 240 L160 180 L190 160 L230 160 L230 280 L190 300 Z" fill="url(#ferocious_gloves_b)"/>
+    <path d="M352 240 L352 180 L322 160 L282 160 L282 280 L322 300 Z" fill="url(#ferocious_gloves_b)"/>
+    <path d="M180 170 L210 170 M180 210 L210 210 M180 250 L210 250 M180 290 L210 290" stroke="#3a1a0a" stroke-width="7"/>
+    <path d="M300 170 L330 170 M300 210 L330 210 M300 250 L330 250 M300 290 L330 290" stroke="#3a1a0a" stroke-width="7"/>
+  </g>
+</svg>

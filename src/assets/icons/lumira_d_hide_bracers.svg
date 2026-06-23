@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="lumira_d_hide_bracers_b" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#8aa0f2"/><stop offset="0.55" stop-color="#3a57c4"/><stop offset="1" stop-color="#22307a"/>
+    </linearGradient>
+  </defs>
+  <g stroke="#1a1410" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M160 240 L160 180 L190 160 L230 160 L230 280 L190 300 Z" fill="url(#lumira_d_hide_bracers_b)"/>
+    <path d="M352 240 L352 180 L322 160 L282 160 L282 280 L322 300 Z" fill="url(#lumira_d_hide_bracers_b)"/>
+    <path d="M180 180 L200 170 M200 240 L210 240 M190 280 L210 270" stroke="#1a1410" stroke-width="7"/>
+    <path d="M322 180 L302 170 M302 240 L292 240 M322 280 L302 270" stroke="#1a1410" stroke-width="7"/>
+  </g>
+</svg>

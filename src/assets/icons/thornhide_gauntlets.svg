@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="thornhide_gauntlets_b" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#9aaa7a"/><stop offset="0.55" stop-color="#6a8a4a"/><stop offset="1" stop-color="#3a5a2a"/>
+    </linearGradient>
+  </defs>
+  <g stroke="#1a1410" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M160 240 L160 180 L190 160 L230 160 L230 280 L190 300 Z" fill="url(#thornhide_gauntlets_b)"/>
+    <path d="M352 240 L352 180 L322 160 L282 160 L282 280 L322 300 Z" fill="url(#thornhide_gauntlets_b)"/>
+    <path d="M185 165 L195 150 M185 200 L195 185 M185 235 L195 220 M185 270 L195 255" stroke="#2a3a1a" stroke-width="6" stroke-linecap="round"/>
+    <path d="M305 165 L315 150 M305 200 L315 185 M305 235 L315 220 M305 270 L315 255" stroke="#2a3a1a" stroke-width="6" stroke-linecap="round"/>
+  </g>
+</svg>

@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="cryptbound_gloves_b" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#7a8f9a"/><stop offset="0.55" stop-color="#4a6f8a"/><stop offset="1" stop-color="#2a4f6a"/>
+    </linearGradient>
+  </defs>
+  <g stroke="#1a1410" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M160 240 L160 180 L190 160 L230 160 L230 280 L190 300 Z" fill="url(#cryptbound_gloves_b)"/>
+    <path d="M352 240 L352 180 L322 160 L282 160 L282 280 L322 300 Z" fill="url(#cryptbound_gloves_b)"/>
+    <path d="M180 180 L210 180 M180 220 L210 220 M180 260 L210 260" stroke="#0a3a5a" stroke-width="6"/>
+    <path d="M300 180 L330 180 M300 220 L330 220 M300 260 L330 260" stroke="#0a3a5a" stroke-width="6"/>
+  </g>
+</svg>
