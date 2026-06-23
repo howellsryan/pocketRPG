@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="mr_bottle" x1="0.2" y1="0" x2="0.8" y2="1">
+      <stop offset="0" stop-color="#60d080"/><stop offset="0.5" stop-color="#28a040"/><stop offset="1" stop-color="#106020"/>
+    </linearGradient>
+    <radialGradient id="mr_glow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#90f8a0" stop-opacity="0.6"/><stop offset="1" stop-color="#28a040" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <g stroke="#1a1410" stroke-linejoin="round" stroke-linecap="round">
+    <!-- Glow halo -->
+    <circle cx="256" cy="290" r="140" fill="url(#mr_glow)" stroke="none"/>
+    <!-- Potion bottle body -->
+    <path d="M 200 284 C 186 250 186 208 196 192 L 316 192 C 326 208 326 250 312 284 L 312 394 C 312 410 286 422 256 422 C 226 422 200 410 200 394 Z" fill="url(#mr_bottle)" stroke-width="13"/>
+    <!-- Neck -->
+    <rect x="228" y="148" width="56" height="48" rx="6" fill="#50c070" stroke-width="12"/>
+    <!-- Cork/stopper with golden band -->
+    <rect x="234" y="126" width="44" height="26" rx="8" fill="#c89040" stroke-width="11"/>
+    <!-- Gold star seal on stopper -->
+    <path d="M 256 130 L 260 140 L 270 140 L 262 148 L 266 158 L 256 152 L 246 158 L 250 148 L 242 140 L 252 140 Z" fill="#f8d830" stroke="none" opacity="0.8"/>
+    <!-- Light refraction on bottle -->
+    <path d="M 208 228 C 208 260 210 300 212 340" stroke="#c0f8c0" stroke-width="10" fill="none" opacity="0.5"/>
+    <ellipse cx="226" cy="212" rx="14" ry="20" fill="#d8ffd8" stroke="none" opacity="0.35"/>
+    <!-- Magical swirl inside -->
+    <path d="M 248 310 C 240 290 248 272 264 274 C 276 276 278 292 268 308 C 260 320 256 334 266 344" stroke="#e0ffe0" stroke-width="8" fill="none" opacity="0.55"/>
+    <!-- Stars/sparkles outside bottle -->
+    <path d="M 156 200 L 162 216 L 170 200 L 162 216 L 148 222" stroke="#80e890" stroke-width="7" fill="none" opacity="0.7"/>
+    <path d="M 350 240 L 356 254 L 364 240 L 356 254 L 342 260" stroke="#80e890" stroke-width="6" fill="none" opacity="0.65"/>
+  </g>
+</svg>

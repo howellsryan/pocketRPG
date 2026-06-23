@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <radialGradient id="uob_orb" cx="0.38" cy="0.35" r="0.65">
+      <stop offset="0" stop-color="#d8d8d8"/><stop offset="0.5" stop-color="#a0a0a0"/><stop offset="1" stop-color="#484848"/>
+    </radialGradient>
+  </defs>
+  <g stroke="#1a1410" stroke-linejoin="round" stroke-linecap="round">
+    <!-- Orb body -->
+    <circle cx="256" cy="264" r="148" fill="url(#uob_orb)" stroke-width="13"/>
+    <!-- Metal band equator -->
+    <path d="M 108 264 C 108 254 174 246 256 246 C 338 246 404 254 404 264 C 404 274 338 282 256 282 C 174 282 108 274 108 264 Z" fill="#8a8878" stroke-width="10"/>
+    <!-- Metal meridian band (vertical) -->
+    <path d="M 256 116 C 246 116 238 186 238 264 C 238 342 246 412 256 412 C 266 412 274 342 274 264 C 274 186 266 116 256 116 Z" fill="#8a8878" stroke-width="10"/>
+    <!-- Glass specular highlight -->
+    <ellipse cx="210" cy="204" rx="40" ry="28" fill="#f8f8f8" stroke="none" opacity="0.4"/>
+    <!-- Dull inner reflection -->
+    <path d="M 166 196 C 178 168 206 148 240 144" stroke="#d0d0d0" stroke-width="8" fill="none" opacity="0.4"/>
+    <!-- No inner glow - unpowered -->
+  </g>
+</svg>

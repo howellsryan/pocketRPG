@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="sah_metal" x1="0.2" y1="0" x2="0.8" y2="1">
+      <stop offset="0" stop-color="#c8c0b0"/><stop offset="0.5" stop-color="#888070"/><stop offset="1" stop-color="#3e3830"/>
+    </linearGradient>
+  </defs>
+  <g stroke="#1a1410" stroke-linejoin="round" stroke-linecap="round">
+    <!-- Grip (wrapped in dark hide) -->
+    <rect x="234" y="296" width="44" height="120" rx="8" fill="#3e3830" stroke-width="12"/>
+    <!-- Hide wrapping pattern -->
+    <path d="M 232 310 L 280 322 M 232 334 L 280 346 M 232 358 L 280 370 M 232 382 L 280 394 M 232 406 L 280 418" stroke="#5e5448" stroke-width="6" fill="none" opacity="0.5"/>
+    <!-- Pommel - dragon skull design -->
+    <ellipse cx="256" cy="428" rx="36" ry="24" fill="url(#sah_metal)" stroke-width="12"/>
+    <!-- Dragon eye sockets on pommel -->
+    <ellipse cx="242" cy="426" rx="8" ry="6" fill="#1e1810" stroke-width="7"/>
+    <ellipse cx="270" cy="426" rx="8" ry="6" fill="#1e1810" stroke-width="7"/>
+    <!-- Guard - asymmetric dragon wing design -->
+    <path d="M 146 278 C 148 250 164 234 190 236 C 210 238 228 250 242 264 L 256 268 L 270 264 C 284 250 302 238 322 236 C 348 234 364 250 366 278 C 358 298 336 308 310 304 L 256 300 L 202 304 C 176 308 154 298 146 278 Z" fill="url(#sah_metal)" stroke-width="13"/>
+    <!-- Hydra heads suggestion on guard ends -->
+    <path d="M 146 278 C 128 264 116 248 118 236 C 126 236 138 248 148 264 Z" fill="#888070" stroke-width="10"/>
+    <path d="M 366 278 C 384 264 396 248 394 236 C 386 236 374 248 364 264 Z" fill="#888070" stroke-width="10"/>
+    <!-- Ash-charred marks -->
+    <path d="M 166 270 C 174 262 182 258 192 258" stroke="#5e5448" stroke-width="7" fill="none" opacity="0.5"/>
+    <path d="M 320 258 C 330 258 338 262 346 270" stroke="#5e5448" stroke-width="7" fill="none" opacity="0.5"/>
+    <!-- Central guard gem (cracked) -->
+    <circle cx="256" cy="278" r="18" fill="#484038" stroke-width="9"/>
+    <path d="M 250 270 L 258 278 L 252 286" stroke="#c8b890" stroke-width="5" fill="none" opacity="0.6"/>
+    <!-- Tang -->
+    <rect x="246" y="172" width="20" height="86" rx="4" fill="#888070" stroke-width="10"/>
+    <path d="M 240 172 L 256 146 L 272 172 Z" fill="#a89878" stroke-width="10"/>
+  </g>
+</svg>

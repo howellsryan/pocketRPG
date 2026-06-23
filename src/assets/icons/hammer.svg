@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="hmr_head" x1="0.2" y1="0" x2="0.8" y2="1">
+      <stop offset="0" stop-color="#c8c4b8"/><stop offset="0.5" stop-color="#a0a090"/><stop offset="1" stop-color="#606050"/>
+    </linearGradient>
+  </defs>
+  <g stroke="#1a1410" stroke-linejoin="round" stroke-linecap="round">
+    <!-- Handle (diagonal, lower-left) -->
+    <path d="M 200 410 L 310 220" stroke="#9a6820" stroke-width="22" stroke-linecap="round" fill="none"/>
+    <!-- Handle highlight -->
+    <path d="M 208 400 L 316 214" stroke="#c8902a" stroke-width="8" fill="none" opacity="0.4" stroke-linecap="round"/>
+    <!-- Hammer head -->
+    <rect x="268" y="150" width="114" height="72" rx="10" fill="url(#hmr_head)" stroke-width="13" transform="rotate(-30 325 186)"/>
+    <!-- Peen (back of head) -->
+    <path d="M 278 140 L 296 130 L 302 160 L 282 168 Z" fill="#b0ac9c" stroke-width="10"/>
+    <!-- Face highlight -->
+    <path d="M 296 154 L 368 132" stroke="#e0dcd0" stroke-width="7" fill="none" opacity="0.5"/>
+  </g>
+</svg>

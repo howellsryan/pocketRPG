@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="ads_shaft" x1="0.3" y1="0" x2="0.7" y2="1">
+      <stop offset="0" stop-color="#a0c870"/><stop offset="0.5" stop-color="#6a9030"/><stop offset="1" stop-color="#385010"/>
+    </linearGradient>
+    <radialGradient id="ads_orb" cx="0.38" cy="0.35" r="0.65">
+      <stop offset="0" stop-color="#d0f870"/><stop offset="0.5" stop-color="#80c020"/><stop offset="1" stop-color="#306000"/>
+    </radialGradient>
+  </defs>
+  <g stroke="#1a1410" stroke-linejoin="round" stroke-linecap="round">
+    <!-- Staff shaft (gnarled wood) -->
+    <path d="M 196 440 L 296 96" stroke="url(#ads_shaft)" stroke-width="22" stroke-linecap="round" fill="none"/>
+    <!-- Gnarled knots on shaft -->
+    <ellipse cx="240" cy="360" rx="18" ry="12" fill="#5a8020" stroke-width="9" transform="rotate(-10 240 360)"/>
+    <ellipse cx="264" cy="280" rx="16" ry="10" fill="#5a8020" stroke-width="9" transform="rotate(-8 264 280)"/>
+    <!-- Ancient gold binding rings -->
+    <rect x="230" y="312" width="28" height="12" rx="4" fill="#d4a030" stroke-width="9" transform="rotate(-70 244 318)"/>
+    <rect x="256" y="232" width="26" height="10" rx="4" fill="#d4a030" stroke-width="8" transform="rotate(-70 269 237)"/>
+    <!-- Head - crescent moon with orb -->
+    <path d="M 268 108 C 260 80 270 56 296 52 C 320 56 330 80 322 108 C 312 94 304 88 296 88 C 288 88 278 94 268 108 Z" fill="url(#ads_shaft)" stroke-width="12"/>
+    <!-- Central nature orb -->
+    <circle cx="296" cy="106" r="32" fill="url(#ads_orb)" stroke-width="12"/>
+    <circle cx="296" cy="106" r="18" fill="#c0f040" stroke="none" opacity="0.35"/>
+    <ellipse cx="284" cy="96" rx="10" ry="7" fill="#e8ff90" stroke="none" opacity="0.5"/>
+    <!-- Small leaves growing from head -->
+    <path d="M 274 78 C 264 60 266 42 278 40 C 282 52 280 66 274 78 Z" fill="#78b830" stroke-width="9"/>
+    <path d="M 318 78 C 328 60 326 42 314 40 C 310 52 312 66 318 78 Z" fill="#78b830" stroke-width="9"/>
+    <!-- Ancient runes on shaft -->
+    <path d="M 232 400 L 228 386 L 240 380" stroke="#80b030" stroke-width="6" fill="none" opacity="0.5"/>
+    <path d="M 252 328 L 248 314 L 260 308" stroke="#80b030" stroke-width="6" fill="none" opacity="0.45"/>
+  </g>
+</svg>

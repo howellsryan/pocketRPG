@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <g stroke="#1a1410" stroke-linejoin="round" stroke-linecap="round">
+    <!-- Net frame (circular) -->
+    <circle cx="256" cy="276" r="148" fill="#c8a84a" stroke-width="14" opacity="0.15"/>
+    <circle cx="256" cy="276" r="148" fill="none" stroke="#7a5818" stroke-width="14"/>
+    <!-- Net grid lines (horizontal) -->
+    <path d="M 110 220 L 402 220 M 112 260 L 400 260 M 114 300 L 398 300 M 118 340 L 394 340 M 132 380 L 380 380" stroke="#9a7030" stroke-width="7" fill="none" opacity="0.7"/>
+    <!-- Net grid lines (vertical) -->
+    <path d="M 160 130 L 140 400 M 200 116 L 190 412 M 240 112 L 236 414 M 280 114 L 276 414 M 320 118 L 308 412 M 360 132 L 336 404" stroke="#9a7030" stroke-width="6" fill="none" opacity="0.65"/>
+    <!-- Corner weights (small circles) -->
+    <circle cx="148" cy="276" r="12" fill="#7a6820" stroke-width="9"/>
+    <circle cx="364" cy="276" r="12" fill="#7a6820" stroke-width="9"/>
+    <circle cx="256" cy="128" r="12" fill="#7a6820" stroke-width="9"/>
+    <circle cx="256" cy="424" r="12" fill="#7a6820" stroke-width="9"/>
+    <!-- Pull rope at top -->
+    <path d="M 256 128 C 256 100 258 80 256 62" stroke="#9a7030" stroke-width="12" fill="none"/>
+    <path d="M 248 62 L 264 62" stroke="#9a7030" stroke-width="11" fill="none"/>
+  </g>
+</svg>

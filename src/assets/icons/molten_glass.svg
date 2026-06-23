@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <radialGradient id="mg_glow" cx="0.4" cy="0.4" r="0.65">
+      <stop offset="0" stop-color="#fffbe0"/><stop offset="0.4" stop-color="#f0d840"/><stop offset="0.75" stop-color="#e07010"/><stop offset="1" stop-color="#802000"/>
+    </radialGradient>
+  </defs>
+  <g stroke="#1a1410" stroke-linejoin="round" stroke-linecap="round">
+    <!-- Blob of molten glass -->
+    <path d="M 256 118 C 312 122 374 168 388 230 C 400 284 374 350 318 386 C 280 408 232 408 194 386 C 138 350 112 284 124 230 C 138 168 200 122 256 118 Z" fill="url(#mg_glow)" stroke-width="13"/>
+    <!-- Hot orange inner glow -->
+    <ellipse cx="244" cy="248" rx="80" ry="72" fill="#fff4a0" stroke="none" opacity="0.45"/>
+    <!-- Drip at bottom -->
+    <path d="M 248 396 C 244 420 250 444 256 454 C 262 444 268 420 264 396 Z" fill="#e07010" stroke-width="9"/>
+    <!-- Highlight streak -->
+    <path d="M 188 160 C 176 210 180 270 190 320" stroke="#fff8c0" stroke-width="11" fill="none" opacity="0.55"/>
+  </g>
+</svg>

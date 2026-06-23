@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <radialGradient id="gd_pile" cx="0.4" cy="0.35" r="0.65">
+      <stop offset="0" stop-color="#b0a898"/><stop offset="0.5" stop-color="#888078"/><stop offset="1" stop-color="#504848"/>
+    </radialGradient>
+  </defs>
+  <g stroke="#1a1410" stroke-linejoin="round" stroke-linecap="round">
+    <!-- Stone dust heap -->
+    <path d="M 140 370 C 140 330 190 270 256 260 C 322 270 372 330 372 370 L 372 400 L 140 400 Z" fill="url(#gd_pile)" stroke-width="12"/>
+    <ellipse cx="256" cy="370" rx="116" ry="30" fill="#9a9088" stroke-width="11"/>
+    <!-- Stone chip fragments scattered -->
+    <path d="M 176 318 L 198 296 L 218 310 L 196 330 Z" fill="#a09888" stroke-width="9"/>
+    <path d="M 306 312 L 328 296 L 344 314 L 322 330 Z" fill="#989088" stroke-width="9"/>
+    <path d="M 236 258 L 252 238 L 268 254 L 252 272 Z" fill="#b0a898" stroke-width="9"/>
+    <!-- Stone chunks on pile -->
+    <path d="M 200 350 L 216 332 L 234 346 L 220 364 Z" fill="#888078" stroke-width="8"/>
+    <path d="M 280 344 L 296 326 L 314 340 L 298 358 Z" fill="#888078" stroke-width="8"/>
+    <!-- Dust particles -->
+    <circle cx="160" cy="360" r="7" fill="#a09888" stroke-width="6"/>
+    <circle cx="352" cy="354" r="6" fill="#a09888" stroke-width="5"/>
+    <circle cx="256" cy="396" r="5" fill="#b0a898" stroke-width="5"/>
+    <!-- Pile highlight -->
+    <path d="M 180 346 C 206 330 246 322 282 328" stroke="#c8c0b0" stroke-width="7" fill="none" opacity="0.45"/>
+  </g>
+</svg>

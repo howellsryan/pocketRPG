@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <g stroke="#1a1410" stroke-linejoin="round" stroke-linecap="round">
+    <!-- Long pole -->
+    <path d="M 148 420 L 380 120" stroke="#9a6820" stroke-width="16" stroke-linecap="round" fill="none"/>
+    <!-- Net bag hanging from pole tip (triangle shape) -->
+    <path d="M 380 120 L 420 200 L 340 290 Z" fill="#c89040" stroke-width="12" opacity="0.3"/>
+    <path d="M 380 120 L 420 200 L 340 290 Z" fill="none" stroke="#7a5010" stroke-width="12"/>
+    <!-- Net grid lines inside bag -->
+    <path d="M 380 120 L 380 200 M 380 120 L 360 200" stroke="#9a6820" stroke-width="6" fill="none" opacity="0.6"/>
+    <path d="M 380 160 L 420 200 M 380 160 L 340 230" stroke="#9a6820" stroke-width="6" fill="none" opacity="0.55"/>
+    <path d="M 395 180 L 360 260 M 405 190 L 342 270" stroke="#9a6820" stroke-width="5" fill="none" opacity="0.5"/>
+    <!-- Net mouth hoop -->
+    <path d="M 380 120 C 408 148 420 178 420 200" stroke="#9a6820" stroke-width="11" fill="none"/>
+    <!-- Rope binding -->
+    <path d="M 370 128 L 378 116" stroke="#c89040" stroke-width="9" fill="none"/>
+    <path d="M 362 136 L 370 124" stroke="#c89040" stroke-width="7" fill="none"/>
+  </g>
+</svg>

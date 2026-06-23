@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <radialGradient id="pf_body" cx="0.38" cy="0.35" r="0.68">
+      <stop offset="0" stop-color="#e09040"/><stop offset="0.5" stop-color="#b05c18"/><stop offset="1" stop-color="#682a04"/>
+    </radialGradient>
+  </defs>
+  <g stroke="#1a1410" stroke-linejoin="round" stroke-linecap="round">
+    <!-- Three coconut-like fruits in a cluster -->
+    <!-- Back left -->
+    <circle cx="198" cy="280" r="80" fill="url(#pf_body)" stroke-width="11" opacity="0.85"/>
+    <ellipse cx="178" cy="258" rx="24" ry="16" fill="#e8a860" stroke="none" opacity="0.35"/>
+    <!-- Back right -->
+    <circle cx="316" cy="275" r="76" fill="url(#pf_body)" stroke-width="11" opacity="0.85"/>
+    <ellipse cx="296" cy="254" rx="22" ry="15" fill="#e8a860" stroke="none" opacity="0.35"/>
+    <!-- Front center (largest) -->
+    <circle cx="256" cy="304" r="88" fill="url(#pf_body)" stroke-width="12"/>
+    <!-- Fibre texture on front fruit -->
+    <path d="M 200 286 C 218 270 248 264 272 272" stroke="#8a4810" stroke-width="7" fill="none" opacity="0.45"/>
+    <path d="M 196 310 C 216 294 248 290 278 298" stroke="#8a4810" stroke-width="6" fill="none" opacity="0.4"/>
+    <path d="M 202 334 C 222 318 250 316 278 322" stroke="#8a4810" stroke-width="6" fill="none" opacity="0.35"/>
+    <!-- Stem attachment point on front fruit -->
+    <ellipse cx="256" cy="218" rx="18" ry="12" fill="#5a2a08" stroke-width="9"/>
+    <!-- Short stubby stem -->
+    <path d="M 248 218 C 242 198 252 182 260 188 C 262 198 260 208 256 218" fill="#7a4010" stroke-width="9"/>
+    <!-- Highlight -->
+    <ellipse cx="226" cy="276" rx="28" ry="20" fill="#e8b060" stroke="none" opacity="0.3"/>
+  </g>
+</svg>

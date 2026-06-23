@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="ws_wood" x1="0.2" y1="0" x2="0.8" y2="1">
+      <stop offset="0" stop-color="#c8a060"/><stop offset="0.5" stop-color="#9a7030"/><stop offset="1" stop-color="#5c3e10"/>
+    </linearGradient>
+  </defs>
+  <g stroke="#1a1410" stroke-linejoin="round" stroke-linecap="round">
+    <!-- Stock main body (crossbow stock shape, horizontal) -->
+    <path d="M 108 230 L 380 214 L 392 248 L 108 264 Z" fill="url(#ws_wood)" stroke-width="12"/>
+    <!-- Tiller (thicker rear grip area) -->
+    <path d="M 108 220 L 200 214 L 200 270 L 108 280 Z" fill="#b08840" stroke-width="12"/>
+    <!-- Trigger slot cutout -->
+    <rect x="154" y="236" width="32" height="24" rx="4" fill="#1a1410" stroke-width="8"/>
+    <!-- Fore-end narrowing toward tip -->
+    <path d="M 310 222 L 392 218 L 392 248 L 310 244 Z" fill="#8a6020" stroke-width="11"/>
+    <!-- Wood grain lines -->
+    <path d="M 140 224 L 380 214" stroke="#c8a060" stroke-width="5" fill="none" opacity="0.4"/>
+    <path d="M 140 250 L 380 240" stroke="#5c3e10" stroke-width="4" fill="none" opacity="0.3"/>
+    <!-- Limb attachment notch at tip -->
+    <path d="M 385 214 L 398 200 L 406 210 L 406 256 L 398 264 L 385 252" fill="#787060" stroke-width="10"/>
+  </g>
+</svg>

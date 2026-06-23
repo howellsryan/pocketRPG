@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="at_body" x1="0.2" y1="0" x2="0.8" y2="1">
+      <stop offset="0" stop-color="#583070"/><stop offset="0.5" stop-color="#361850"/><stop offset="1" stop-color="#160830"/>
+    </linearGradient>
+  </defs>
+  <g stroke="#1a1410" stroke-linejoin="round" stroke-linecap="round">
+    <!-- Main tentacle (whip-shaped weapon, coiling more aggressively) -->
+    <path d="M 168 440 C 162 390 180 330 218 280 C 250 240 290 218 318 200 C 348 180 366 162 358 140 C 352 122 332 116 312 122" fill="none" stroke="url(#at_body)" stroke-width="40" stroke-linecap="round"/>
+    <!-- Tip with abyssal barb -->
+    <path d="M 312 122 C 300 112 286 100 282 86" fill="none" stroke="#361850" stroke-width="24" stroke-linecap="round"/>
+    <!-- Barbed tip -->
+    <path d="M 282 86 L 266 68 L 278 78 L 268 58 L 286 74 L 280 54 L 294 74 L 290 62 L 302 80 L 290 72 Z" fill="#7040a0" stroke-width="9"/>
+    <!-- Abyssal suckers (spiky, not plain circles) -->
+    <path d="M 224 278 L 216 266 L 228 270 L 220 258 L 232 264 L 224 254 L 236 262 L 232 250 L 240 260 L 236 248 L 244 260 Z" fill="#5020a0" stroke-width="8" opacity="0.7"/>
+    <path d="M 262 238 L 254 228 L 264 232 L 258 220 L 268 228 L 262 218 L 272 226 Z" fill="#5020a0" stroke-width="8" opacity="0.65"/>
+    <path d="M 298 216 L 290 208 L 300 210 L 296 200 L 304 208 Z" fill="#5020a0" stroke-width="7" opacity="0.6"/>
+    <!-- Purple-black shimmer -->
+    <path d="M 198 374 C 200 348 212 318 228 294" stroke="#9050d0" stroke-width="8" fill="none" opacity="0.35"/>
+    <!-- Void aura wisps -->
+    <path d="M 254 256 C 244 240 248 224 262 226" stroke="#8030c0" stroke-width="7" fill="none" opacity="0.45"/>
+    <path d="M 314 204 C 304 188 308 172 322 174" stroke="#8030c0" stroke-width="6" fill="none" opacity="0.4"/>
+  </g>
+</svg>

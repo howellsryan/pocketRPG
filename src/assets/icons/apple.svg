@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <radialGradient id="apl_body" cx="0.38" cy="0.35" r="0.68">
+      <stop offset="0" stop-color="#f06060"/><stop offset="0.5" stop-color="#c02020"/><stop offset="1" stop-color="#700808"/>
+    </radialGradient>
+  </defs>
+  <g stroke="#1a1410" stroke-linejoin="round" stroke-linecap="round">
+    <!-- Apple body -->
+    <path d="M 256 160 C 174 162 126 214 126 284 C 126 352 178 422 256 428 C 334 422 386 352 386 284 C 386 214 338 162 256 160 Z" fill="url(#apl_body)" stroke-width="13"/>
+    <!-- Cleft at top -->
+    <path d="M 220 170 C 224 148 248 136 256 136 C 264 136 288 148 292 170" fill="url(#apl_body)" stroke-width="12"/>
+    <!-- Stem -->
+    <path d="M 256 136 C 254 112 256 90 260 72" stroke="#6a4010" stroke-width="12" fill="none"/>
+    <!-- Leaf -->
+    <path d="M 260 96 C 280 72 316 70 320 84 C 304 90 282 94 260 96 Z" fill="#3a8820" stroke-width="10"/>
+    <!-- Highlight -->
+    <ellipse cx="208" cy="222" rx="36" ry="26" fill="#f8a090" stroke="none" opacity="0.4"/>
+    <path d="M 176 240 C 170 268 172 306 178 338" stroke="#f09090" stroke-width="9" fill="none" opacity="0.35"/>
+  </g>
+</svg>

@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="vf_head" x1="0.2" y1="0" x2="0.8" y2="1">
+      <stop offset="0" stop-color="#d04848"/><stop offset="0.5" stop-color="#901818"/><stop offset="1" stop-color="#480808"/>
+    </linearGradient>
+  </defs>
+  <g stroke="#1a1410" stroke-linejoin="round" stroke-linecap="round">
+    <!-- Handle -->
+    <path d="M 148 400 L 260 270" stroke="#9a6820" stroke-width="22" stroke-linecap="round" fill="none"/>
+    <!-- Handle highlight -->
+    <path d="M 156 392 L 266 264" stroke="#c89040" stroke-width="8" fill="none" opacity="0.4" stroke-linecap="round"/>
+    <!-- Chain links -->
+    <path d="M 260 270 C 268 254 280 242 296 238" stroke="#b0a898" stroke-width="12" fill="none"/>
+    <ellipse cx="268" cy="258" rx="12" ry="8" fill="none" stroke="#c0b8a8" stroke-width="9" transform="rotate(-30 268 258)"/>
+    <ellipse cx="284" cy="244" rx="12" ry="8" fill="none" stroke="#c0b8a8" stroke-width="9" transform="rotate(-60 284 244)"/>
+    <!-- Flail head (spiked ball) -->
+    <circle cx="316" cy="224" r="52" fill="url(#vf_head)" stroke-width="13"/>
+    <!-- Spikes -->
+    <path d="M 316 172 L 316 148" stroke="#c03030" stroke-width="12" fill="none" stroke-linecap="round"/>
+    <path d="M 368 224 L 392 224" stroke="#c03030" stroke-width="12" fill="none" stroke-linecap="round"/>
+    <path d="M 316 276 L 316 300" stroke="#c03030" stroke-width="12" fill="none" stroke-linecap="round"/>
+    <path d="M 264 224 L 240 224" stroke="#c03030" stroke-width="12" fill="none" stroke-linecap="round"/>
+    <path d="M 353 188 L 371 170" stroke="#c03030" stroke-width="11" fill="none" stroke-linecap="round"/>
+    <path d="M 353 260 L 371 278" stroke="#c03030" stroke-width="11" fill="none" stroke-linecap="round"/>
+    <path d="M 279 188 L 261 170" stroke="#c03030" stroke-width="11" fill="none" stroke-linecap="round"/>
+    <path d="M 279 260 L 261 278" stroke="#c03030" stroke-width="11" fill="none" stroke-linecap="round"/>
+    <!-- Head highlight -->
+    <ellipse cx="296" cy="200" rx="20" ry="14" fill="#e07070" stroke="none" opacity="0.35"/>
+  </g>
+</svg>

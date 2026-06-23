@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="cl_leaf" x1="0.3" y1="0" x2="0.7" y2="1">
+      <stop offset="0" stop-color="#a0d858"/><stop offset="0.5" stop-color="#68a828"/><stop offset="1" stop-color="#346010"/>
+    </linearGradient>
+  </defs>
+  <g stroke="#1a1410" stroke-linejoin="round" stroke-linecap="round">
+    <!-- Central stem -->
+    <path d="M 256 440 L 256 140" stroke="#5a4010" stroke-width="13" fill="none"/>
+    <!-- Small leaf pairs (curry leaf is pinnate) -->
+    <!-- Lower pair -->
+    <path d="M 256 390 C 228 370 204 348 212 322 C 222 336 238 358 256 374 Z" fill="url(#cl_leaf)" stroke-width="10"/>
+    <path d="M 256 390 C 284 370 308 348 300 322 C 290 336 274 358 256 374 Z" fill="url(#cl_leaf)" stroke-width="10"/>
+    <!-- Middle pair -->
+    <path d="M 256 330 C 222 310 196 286 206 260 C 218 274 238 298 256 314 Z" fill="url(#cl_leaf)" stroke-width="10"/>
+    <path d="M 256 330 C 290 310 316 286 306 260 C 294 274 274 298 256 314 Z" fill="url(#cl_leaf)" stroke-width="10"/>
+    <!-- Upper pair -->
+    <path d="M 256 268 C 220 246 196 220 208 196 C 218 210 238 234 256 250 Z" fill="url(#cl_leaf)" stroke-width="10"/>
+    <path d="M 256 268 C 292 246 316 220 304 196 C 294 210 274 234 256 250 Z" fill="url(#cl_leaf)" stroke-width="10"/>
+    <!-- Terminal leaf at top -->
+    <path d="M 256 208 C 236 178 228 148 256 130 C 284 148 276 178 256 208 Z" fill="url(#cl_leaf)" stroke-width="10"/>
+    <!-- Midrib on terminal leaf -->
+    <path d="M 256 208 L 256 138" stroke="#5a8018" stroke-width="6" fill="none" opacity="0.5"/>
+    <!-- Midribs on lower leaves -->
+    <path d="M 256 390 C 242 372 228 354 216 332" stroke="#5a8018" stroke-width="5" fill="none" opacity="0.4"/>
+    <path d="M 256 390 C 270 372 284 354 296 332" stroke="#5a8018" stroke-width="5" fill="none" opacity="0.4"/>
+  </g>
+</svg>
