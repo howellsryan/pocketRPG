@@ -58,7 +58,28 @@ cave_goblin, mining.
 
 Total covered so far: **263 icons**.
 
-## Remaining (Phase 4c — needs per-item bespoke authoring, multi-batch)
+### Phase 4c — monsters (creature emblems, keyed by MONSTER_ART glyph names)
+Combat screens render monsters via SkillEmblem(iconKey=MONSTER_ART[id].icon),
+now bespoke-aware — so authoring the ~64 distinct creature/boss/raid glyph keys
+covers all 104 monsters. Batch 1 (20) done:
+- [x] goblin_head, chicken, bull, crab, rat, ogre, skeleton, shambling_zombie,
+  imp, frog, bat, snake, spider_alt, scorpion, wolf_head, gorilla, dragon_head,
+  daemon_skull, spectre, orc_head
+
+Total covered so far: **282 icons**.
+
+## Remaining
+- **Monsters batch 2-3** (~44 glyphs): hanging_spider, masked_spider, tiger_head,
+  horned_reptile, lizardman, grim_reaper, tree_face, devil_mask, bleeding_eye,
+  werewolf, spiked_dragon_head, rock_golem, gladius, wyvern, gargoyle, pyromaniac,
+  barbute, totem_head, crowned_skull, horned_skull, wizard_staff, fire_silhouette,
+  tentacle_strike, hydra, winged_sword, harpy, scroll_unfurled, volcano, gauntlet,
+  reptile_tail, wasp_sting, crystal_ball, queen_crown, bleeding_heart, vomiting,
+  anvil_impact, mighty_force, maggot, floating_ghost, fairy, lightning_arc,
+  cut_palm, temple_gate, ancient_columns, stone_tower.
+- **Named unique items** (~250): see categories below.
+- **Consumables/food**: brews, super_restore, food (fish raw+cooked, meats, pies), herbs.
+- **UI / misc**: nav glyphs, prayers, spells, farming crops, minigames, clue/collection markers.
 These are distinct designs that can't be templated — each needs hand-authoring.
 - **Named unique weapons**: godswords, chaotic/ironclad/zesta longswords, whips, staves/wands, dragon_javelin, special boss weapons, gem/dragon bolts, thornspine/twisted bows variants.
 - **Named unique armour**: robes (wizard/kodai/ancestral/2nd_age/arcanist), hats, coifs, boots, gloves, rings, necklaces, ranger/void/god sets, boss/raid uniques (dravok_s_*, gorath_s_*, torvek_s_*, verin_s_*, masari_*, gravehusk_*, etc.), slayer_defender + gloves_of_slaughter.

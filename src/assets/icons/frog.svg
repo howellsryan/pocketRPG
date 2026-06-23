@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <radialGradient id="frog_s" cx="0.42" cy="0.36" r="0.8">
+      <stop offset="0" stop-color="#7fc24a"/><stop offset="0.6" stop-color="#4e9a2e"/><stop offset="1" stop-color="#2f6620"/>
+    </radialGradient>
+  </defs>
+  <g stroke="#1c3a12" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M120 380 C 90 350 120 320 156 332 M392 380 C 422 350 392 320 356 332" fill="#4e9a2e"/>
+    <path d="M150 250 C 110 270 100 330 140 366 C 200 410 312 410 372 366 C 412 330 402 270 362 250 C 320 226 192 226 150 250 Z" fill="url(#frog_s)"/>
+    <circle cx="194" cy="220" r="48" fill="url(#frog_s)"/>
+    <circle cx="318" cy="220" r="48" fill="url(#frog_s)"/>
+    <circle cx="194" cy="210" r="26" fill="#ffe066" stroke="#1c3a12" stroke-width="8"/>
+    <circle cx="318" cy="210" r="26" fill="#ffe066" stroke="#1c3a12" stroke-width="8"/>
+    <ellipse cx="194" cy="212" rx="9" ry="16" fill="#1a1410" stroke="none"/>
+    <ellipse cx="318" cy="212" rx="9" ry="16" fill="#1a1410" stroke="none"/>
+    <path d="M168 350 Q 256 396 344 350" stroke="#1c3a12" stroke-width="12" fill="none"/>
+    <path d="M210 300 C 226 290 240 290 252 298" stroke="#2f6620" stroke-width="7" fill="none"/>
+  </g>
+</svg>

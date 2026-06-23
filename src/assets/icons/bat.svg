@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <radialGradient id="bat_s" cx="0.42" cy="0.34" r="0.8">
+      <stop offset="0" stop-color="#5a5060"/><stop offset="0.6" stop-color="#3a3340"/><stop offset="1" stop-color="#1e1a24"/>
+    </radialGradient>
+  </defs>
+  <g stroke="#120f16" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M196 230 C 130 170 70 176 56 220 C 96 224 110 250 108 286 C 150 256 176 262 200 286 C 196 262 196 244 196 230 Z" fill="url(#bat_s)"/>
+    <path d="M316 230 C 382 170 442 176 456 220 C 416 224 402 250 404 286 C 362 256 336 262 312 286 C 316 262 316 244 316 230 Z" fill="url(#bat_s)"/>
+    <path d="M210 196 C 210 168 246 158 256 178 C 266 158 302 168 302 196 Q 320 230 312 286 Q 290 340 256 348 Q 222 340 200 286 Q 192 230 210 196 Z" fill="url(#bat_s)"/>
+    <polygon points="212,180 206,150 230,170" fill="#3a3340"/>
+    <polygon points="300,180 306,150 282,170" fill="#3a3340"/>
+    <circle cx="228" cy="252" r="11" fill="#ff7a2a" stroke="none"/>
+    <circle cx="284" cy="252" r="11" fill="#ff7a2a" stroke="none"/>
+    <polygon points="240,288 256,310 272,288" fill="#fff" stroke="none"/>
+  </g>
+</svg>

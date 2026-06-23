@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <radialGradient id="spider_alt_s" cx="0.42" cy="0.36" r="0.75">
+      <stop offset="0" stop-color="#5a5060"/><stop offset="0.6" stop-color="#332c3a"/><stop offset="1" stop-color="#16121c"/>
+    </radialGradient>
+  </defs>
+  <g fill="none" stroke="#120e16" stroke-width="14" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M188 234 C 130 210 104 168 96 132 M188 270 C 120 268 80 244 56 214 M196 306 C 130 320 92 352 76 388"/>
+    <path d="M324 234 C 382 210 408 168 416 132 M324 270 C 392 268 432 244 456 214 M316 306 C 382 320 420 352 436 388"/>
+  </g>
+  <g stroke="#120e16" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
+    <ellipse cx="256" cy="300" rx="96" ry="78" fill="url(#spider_alt_s)"/>
+    <circle cx="256" cy="210" r="56" fill="url(#spider_alt_s)"/>
+    <circle cx="232" cy="200" r="13" fill="#d0392b" stroke="none"/>
+    <circle cx="280" cy="200" r="13" fill="#d0392b" stroke="none"/>
+    <circle cx="220" cy="226" r="7" fill="#ff8a6a" stroke="none"/>
+    <circle cx="292" cy="226" r="7" fill="#ff8a6a" stroke="none"/>
+    <path d="M256 268 C 280 290 280 320 256 360" stroke="#4a4252" stroke-width="7" fill="none"/>
+  </g>
+</svg>

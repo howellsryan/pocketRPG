@@ -1,13 +1,13 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
   <defs>
-    <radialGradient id="cave_goblin_skin" cx="0.42" cy="0.34" r="0.8">
+    <radialGradient id="goblin_head_s" cx="0.42" cy="0.34" r="0.8">
       <stop offset="0" stop-color="#9fc24e"/><stop offset="0.6" stop-color="#6b8e23"/><stop offset="1" stop-color="#46611a"/>
     </radialGradient>
   </defs>
   <g stroke="#1f2b0c" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
-    <polygon points="160,236 66,194 158,302" fill="url(#cave_goblin_skin)"/>
-    <polygon points="352,236 446,194 354,302" fill="url(#cave_goblin_skin)"/>
-    <path d="M178 184 Q 256 114 334 184 Q 386 232 364 322 Q 332 410 256 418 Q 180 410 148 322 Q 126 232 178 184 Z" fill="url(#cave_goblin_skin)"/>
+    <polygon points="160,236 66,194 158,302" fill="url(#goblin_head_s)"/>
+    <polygon points="352,236 446,194 354,302" fill="url(#goblin_head_s)"/>
+    <path d="M178 184 Q 256 114 334 184 Q 386 232 364 322 Q 332 410 256 418 Q 180 410 148 322 Q 126 232 178 184 Z" fill="url(#goblin_head_s)"/>
     <ellipse cx="212" cy="268" rx="32" ry="25" fill="#fff2b8"/>
     <ellipse cx="300" cy="268" rx="32" ry="25" fill="#fff2b8"/>
     <circle cx="220" cy="272" r="12" fill="#1a1410" stroke="none"/>
