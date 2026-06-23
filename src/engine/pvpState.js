@@ -54,13 +54,16 @@ function normalizeCombatant(rawCombatant) {
     rawCombatant.current_hp,
     10,
   )
-  const hp = readPositiveInt(
+  // HP may legitimately be 0 (a dead combatant on the terminal tick), so accept
+  // any finite value >= 0 and only fall back to maxHP when no HP field is
+  // present. Using a positive-only read here would snap a 0-HP corpse back to
+  // full health on the kill/death screen.
+  const hp = readNonNegativeIntOr(maxHP,
     rawCombatant.hp,
     rawCombatant.currentHP,
     rawCombatant.current_hp,
     rawCombatant.player?.currentHP,
     rawCombatant.player?.current_hp,
-    maxHP,
   )
 
   return {
@@ -119,6 +122,17 @@ function readPositiveInt(...values) {
     if (Number.isFinite(parsed) && parsed > 0) return Math.floor(parsed)
   }
   return 1
+}
+
+// Returns the first finite value >= 0 (skipping null/undefined/non-numeric), or
+// `fallback` when none qualifies. Unlike readPositiveInt, a real 0 is honoured.
+function readNonNegativeIntOr(fallback, ...values) {
+  for (const value of values) {
+    if (value === null || value === undefined || value === '') continue
+    const parsed = Number(value)
+    if (Number.isFinite(parsed) && parsed >= 0) return Math.floor(parsed)
+  }
+  return fallback
 }
 
 function readPvpStateNonNegativeInt(...values) {

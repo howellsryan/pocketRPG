@@ -75,6 +75,22 @@ describe('normalizePvpState', () => {
     expect(state?.combatants?.['22']?.hp).toBe(99)
   })
 
+  it('preserves hp 0 for a dead combatant on the terminal tick', () => {
+    const state = normalizePvpState({
+      tick: 5,
+      combatants: {
+        '7': {
+          character_id: 7,
+          hp: 0,
+          currentHP: 0,
+          max_hp: 99,
+        },
+      },
+    })
+    expect(state?.combatants?.['7']?.maxHP).toBe(99)
+    expect(state?.combatants?.['7']?.hp).toBe(0)
+  })
+
   it('normalizes rank/kills from snake_case and camelCase combatants', () => {
     const state = normalizePvpState({
       tick: 1,
