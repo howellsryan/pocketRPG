@@ -411,6 +411,21 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
   const weaponIsPoweredStaff = !!equippedWeapon?.poweredStaff
   const weaponCharges = equippedWeaponEntry?.charges || 0
 
+  // ── Force-kill resolution ──
+  // A monster that ENTERS a tick already at 0 HP was force-killed out of band
+  // (e.g. the boss "skip" instant-kill arms monster.currentHP = 0). Resolve its
+  // death deterministically here, before the attack blocks — those can
+  // early-return on no ammo / no charges / insufficient runes, which would
+  // otherwise strand the kill (death event never fires) and hang the skip's
+  // awaitCombatCompletion lock on the "Saving…" overlay. checkMonsterDeath
+  // handles phase/double-kill/raid semantics, so a regenerating boss simply
+  // continues with combat still active.
+  if (monster.currentHP <= 0 && state.active) {
+    state.monster = monster
+    checkMonsterDeath(state, monster, events)
+    return { combatState: state, events }
+  }
+
   // ── Player Attack ──
   if (state.playerAttackTimer <= 0 && state.eatCooldown <= 0) {
     // Check if special attack is queued

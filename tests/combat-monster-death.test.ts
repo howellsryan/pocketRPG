@@ -115,3 +115,59 @@ describe('processCombatTick — monsterDeath event (loot modal trigger)', () => 
     expect(deathEvent.loot).toEqual([])
   })
 })
+
+// Boss "skip" arms a kill by setting monster.currentHP = 0 out of band and
+// letting the next tick resolve the death (CombatScreen forceKillHandler). The
+// death MUST fire on that tick regardless of whether the player's attack would
+// land — otherwise executeBossSkip's awaitCombatCompletion never resolves and
+// the player is stranded on the "Saving…" overlay with a spent credit.
+describe('processCombatTick — force-kill resolution (boss skip)', () => {
+  const rangedItems: any = {
+    runeforged_crossbow: {
+      id: 'runeforged_crossbow', name: 'Runeforged Crossbow', slot: 'weapon',
+      attackStyle: 'ranged', attackSpeed: 5, ammoType: 'bolt',
+      attackBonus: { stab: 0, slash: 0, crush: 0, magic: 0, ranged: 100 },
+      defenceBonus: { stab: 0, slash: 0, crush: 0, magic: 0, ranged: 0 },
+      otherBonus: { rangedStrength: 0 },
+    },
+    rune_bolt: { id: 'rune_bolt', name: 'Rune Bolt', slot: 'ammo', ammoKind: 'bolt' },
+    bones: { id: 'bones' },
+  }
+
+  function buildRangedBoss(hp = 255) {
+    return {
+      id: 'skyrender_kharra', name: 'Skyrender Kharra', boss: true,
+      hitpoints: hp, combatLevel: 580, attackSpeed: 99, attackStyle: 'ranged',
+      stats: { attack: 1, strength: 1, defence: 260, magic: 1, ranged: 1 },
+      attackBonus: 0, strengthBonus: 0,
+      defenceBonus: { stab: 1000, slash: 1000, crush: 1000, magic: 60, ranged: 60 },
+      drops: [{ itemId: 'bones', chance: 1.0, quantity: 1 }],
+    }
+  }
+
+  it('resolves the death on the next tick when a healthy boss is force-killed', () => {
+    const state = createCombatState(buildRangedBoss(), 'ranged', 'rapid')
+    // Simulate the skip arming the kill.
+    state.monster.currentHP = 0
+    state.playerAttackTimer = 0
+
+    const { combatState, events } = processCombatTick(state, maxedStats, { weapon: { itemId: 'runeforged_crossbow' }, ammo: { itemId: 'rune_bolt', quantity: 100 } }, rangedItems)
+    const death = events.find(e => e.type === 'monsterDeath')
+    expect(death, 'force-kill must emit monsterDeath even with full HP bar armed to 0').toBeDefined()
+    expect(death.monster.id).toBe('skyrender_kharra')
+    expect(combatState.active).toBe(false)
+  })
+
+  it('resolves the death even when the player has NO ammo (the stuck-skip bug)', () => {
+    const state = createCombatState(buildRangedBoss(), 'ranged', 'rapid')
+    state.monster.currentHP = 0
+    state.playerAttackTimer = 0
+
+    // No ammo equipped: the ranged attack block would early-return with a
+    // 'noAmmo' event BEFORE the in-attack death check, stranding the kill.
+    const { combatState, events } = processCombatTick(state, maxedStats, { weapon: { itemId: 'runeforged_crossbow' } }, rangedItems)
+    const death = events.find(e => e.type === 'monsterDeath')
+    expect(death, 'force-kill must not depend on a landed player attack').toBeDefined()
+    expect(combatState.active).toBe(false)
+  })
+})
