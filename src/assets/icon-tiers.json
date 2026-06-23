@@ -55,6 +55,14 @@
     "zephyra": { "base": "#2fd0c0", "light": "#c6fff8", "shade": "#136055" },
     "grondar": { "base": "#b87333", "light": "#f2bd78", "shade": "#6f4119" },
 
+    "dravok":    { "base": "#8a2f22", "light": "#d8694a", "shade": "#4a140c" },
+    "gorath":    { "base": "#6f8a4a", "light": "#b8d088", "shade": "#3a4a22" },
+    "torvek":    { "base": "#5a7088", "light": "#aebfd2", "shade": "#2f3e52" },
+    "verin":     { "base": "#d8a838", "light": "#ffe49a", "shade": "#8a6212" },
+    "gravehusk": { "base": "#6a7062", "light": "#aab09c", "shade": "#383c32" },
+    "void_king": { "base": "#5a3a8a", "light": "#9a7ad0", "shade": "#2a1648" },
+    "masari":    { "base": "#a83a2a", "light": "#e88a6a", "shade": "#5a160c" },
+
     "bone":    { "base": "#ddd6c2", "light": "#f4efe0", "shade": "#a89e84" },
     "seed":    { "base": "#7a9e3a", "light": "#a8c86f", "shade": "#4a6620" },
     "sapling": { "base": "#4caf50", "light": "#8fd98f", "shade": "#2f7a37" },
@@ -131,6 +139,22 @@
     "plank":        ["oak", "teak", "mahogany"]
   },
   "sets": {
+    "full_helm": {
+      "dravok_s_helm": "dravok", "gorath_s_helm": "gorath", "torvek_s_helm": "torvek",
+      "verin_s_helm": "verin", "gravehusk_helm": "gravehusk", "void_king_helm": "void_king",
+      "masari_mask": "masari"
+    },
+    "platebody": {
+      "dravok_s_platebody": "dravok", "gorath_s_platebody": "gorath",
+      "torvek_s_platebody": "torvek", "verin_s_brassard": "verin",
+      "gravehusk_platebody": "gravehusk", "void_king_top": "void_king", "masari_body": "masari"
+    },
+    "platelegs": {
+      "dravok_s_platelegs": "dravok", "torvek_s_platelegs": "torvek", "masari_chaps": "masari"
+    },
+    "plateskirt": {
+      "gorath_s_chainskirt": "gorath", "verin_s_plateskirt": "verin"
+    },
     "gem": {
       "ruby": "ruby", "sapphire": "sapphire", "emerald": "emerald", "diamond": "diamond",
       "dragonstone": "dragonstone", "onyx": "onyx", "zyrite": "zyrite"

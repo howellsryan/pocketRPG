@@ -107,6 +107,15 @@ enlarged (GameIcon size 22 -> 33, ~1.5x) so they don't get lost.
 - [x] ranged: venom_blowpipe, javelin, dragon_javelin, bow_of_faerdhinen,
   nightfang_bow, thornspine_shortbow
 
+### Phase 4g — boss/raid armour sets ✅ (now 416)
+Templated via new boss palettes (dravok/gorath/torvek/verin/gravehusk/void_king/
+masari) reusing full_helm/platebody/platelegs/plateskirt silhouettes:
+- [x] dravok_s_ helm/platebody/platelegs; gorath_s_ helm/platebody/chainskirt;
+  torvek_s_ helm/platebody/platelegs; verin_s_ helm/brassard/plateskirt;
+  gravehusk_ helm/platebody; void_king_ helm/top; masari_ mask/body/chaps
+- [x] hand-drawn: void_king_robe, void_king_gloves, slayer_defender,
+  gloves_of_slaughter
+
 ## Remaining
 - **Monsters batch 2-3** (~44 glyphs): hanging_spider, masked_spider, tiger_head,
   horned_reptile, lizardman, grim_reaper, tree_face, devil_mask, bleeding_eye,
