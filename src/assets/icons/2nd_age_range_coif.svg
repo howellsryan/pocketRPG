@@ -1,12 +1,22 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
   <defs>
-    <linearGradient id="2nd_age_range_coif_b" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#c0e8a0"/><stop offset="0.5" stop-color="#8ac85a"/><stop offset="1" stop-color="#4a7a2a"/>
+    <linearGradient id="2nd_age_range_coif_b" x1="0.3" y1="0" x2="0.7" y2="1">
+      <stop offset="0" stop-color="#b8d890"/><stop offset="0.55" stop-color="#6a9840"/><stop offset="1" stop-color="#304818"/>
     </linearGradient>
   </defs>
   <g stroke="#1a1410" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
-    <path d="M190 220 L200 160 L210 140 L256 130 L302 140 L312 160 L322 220 L310 280 C 310 320 285 350 256 365 C 227 350 202 320 202 280 Z" fill="url(#2nd_age_range_coif_b)"/>
-    <path d="M210 170 L210 240 M256 150 L256 280 M302 170 L302 240" stroke="#2a5a1a" stroke-width="7"/>
-    <circle cx="256" cy="200" r="16" fill="none" stroke="#4a7a2a" stroke-width="5"/>
+    <!-- Coif with gold trim (2nd age aesthetic) -->
+    <path d="M 170 290 C 170 180 200 110 256 100 C 312 110 342 180 342 290 C 342 340 320 380 256 394 C 192 380 170 340 170 290 Z" fill="url(#2nd_age_range_coif_b)"/>
+    <path d="M 154 330 C 192 390 320 390 358 330 C 338 372 296 388 256 390 C 216 388 174 372 154 330 Z" fill="#304818"/>
+    <!-- Gold trim bands -->
+    <path d="M 154 330 C 192 350 320 350 358 330" fill="none" stroke="#c9a24a" stroke-width="12"/>
+    <path d="M 184 190 C 212 184 300 184 328 190" fill="none" stroke="#c9a24a" stroke-width="9"/>
+    <!-- Vertical panel lines -->
+    <path d="M 256 106 L 256 388" stroke="#304818" stroke-width="7" fill="none"/>
+    <path d="M 208 124 C 200 200 198 300 202 378" stroke="#304818" stroke-width="5" fill="none"/>
+    <path d="M 304 124 C 312 200 314 300 310 378" stroke="#304818" stroke-width="5" fill="none"/>
+    <!-- Gold gem accent on brow -->
+    <ellipse cx="256" cy="156" rx="22" ry="16" fill="#c9a24a" stroke="#1a1410" stroke-width="9"/>
+    <ellipse cx="250" cy="150" rx="7" ry="5" fill="#fff8d0" stroke="none"/>
   </g>
 </svg>

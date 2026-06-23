@@ -1,15 +1,18 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
   <defs>
-    <linearGradient id="zyrite_bracelet_b" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#6a3040"/><stop offset="0.55" stop-color="#3a2028"/><stop offset="1" stop-color="#1a1014"/>
+    <linearGradient id="zyrite_bracelet_b" x1="0.3" y1="0" x2="0.7" y2="1">
+      <stop offset="0" stop-color="#6a5060"/><stop offset="0.5" stop-color="#3a2030"/><stop offset="1" stop-color="#1a0c18"/>
     </linearGradient>
+    <radialGradient id="zyrite_bracelet_gem" cx="0.4" cy="0.35" r="0.75">
+      <stop offset="0" stop-color="#c06070"/><stop offset="0.5" stop-color="#7a1c30"/><stop offset="1" stop-color="#2e060e"/>
+    </radialGradient>
   </defs>
   <g stroke="#1a1410" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
-    <circle cx="160" cy="256" r="60" fill="url(#zyrite_bracelet_b)" stroke="#1a1410" stroke-width="13"/>
-    <circle cx="160" cy="256" r="40" fill="none" stroke="#1a1014" stroke-width="8"/>
-    <path d="M140 236 L180 276 M180 236 L140 276" stroke="#3a2028" stroke-width="6"/>
-    <circle cx="352" cy="256" r="60" fill="url(#zyrite_bracelet_b)" stroke="#1a1410" stroke-width="13"/>
-    <circle cx="352" cy="256" r="40" fill="none" stroke="#1a1014" stroke-width="8"/>
-    <path d="M332 236 L372 276 M372 236 L332 276" stroke="#3a2028" stroke-width="6"/>
+    <path d="M 256 130 C 340 130 410 196 410 280 C 410 340 376 388 326 410 C 360 380 380 332 380 280 C 380 212 324 158 256 158 C 188 158 132 212 132 280 C 132 332 152 380 186 410 C 136 388 102 340 102 280 C 102 196 172 130 256 130 Z" fill="url(#zyrite_bracelet_b)"/>
+    <path d="M 256 168 C 196 168 146 214 142 274" fill="none" stroke="#6a5060" stroke-width="6"/>
+    <path d="M 218 110 L 256 70 L 294 110 L 282 156 L 230 156 Z" fill="url(#zyrite_bracelet_b)" stroke="#1a1410" stroke-width="11"/>
+    <circle cx="256" cy="108" r="38" fill="url(#zyrite_bracelet_gem)" stroke="#1a1410" stroke-width="10"/>
+    <path d="M 256 76 L 256 140 M 224 108 L 288 108" stroke="#2e060e" stroke-width="5" fill="none"/>
+    <circle cx="244" cy="96" r="9" fill="#e090a0" stroke="none"/>
   </g>
 </svg>

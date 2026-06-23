@@ -1,13 +1,18 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
   <defs>
-    <radialGradient id="seers_ring_b" cx="50%" cy="50%" r="40%">
-      <stop offset="0" stop-color="#9fc8f0"/><stop offset="1" stop-color="#3a6fd0"/>
+    <linearGradient id="seers_ring_band" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#d8e4f0"/><stop offset="0.5" stop-color="#9aacbe"/><stop offset="1" stop-color="#5a6e82"/>
+    </linearGradient>
+    <radialGradient id="seers_ring_gem" cx="0.38" cy="0.3" r="0.8">
+      <stop offset="0" stop-color="#9fc8f4"/><stop offset="0.55" stop-color="#3a6fd0"/><stop offset="1" stop-color="#1c448a"/>
     </radialGradient>
   </defs>
   <g stroke="#1a1410" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
-    <circle cx="256" cy="256" r="120" fill="none" stroke="#1c468f" stroke-width="16"/>
-    <path d="M220 160 L256 120 L292 160 L292 220 L256 260 L220 220 Z" fill="url(#seers_ring_b)"/>
-    <circle cx="256" cy="210" r="28" fill="none" stroke="#0c2c6f" stroke-width="8"/>
-    <path d="M220 200 M280 200" stroke="#3a6fd0" stroke-width="7" stroke-linecap="round"/>
+    <ellipse cx="256" cy="370" rx="148" ry="52" fill="none" stroke="url(#seers_ring_band)" stroke-width="42"/>
+    <ellipse cx="256" cy="358" rx="114" ry="28" fill="none" stroke="#d8e4f0" stroke-width="4"/>
+    <path d="M 222 324 L 222 300 C 222 278 240 266 256 266 C 272 266 290 278 290 300 L 290 324 Z" fill="url(#seers_ring_band)" stroke="#1a1410" stroke-width="11"/>
+    <path d="M 218 300 L 240 258 L 256 244 L 272 258 L 294 300 L 282 326 L 230 326 Z" fill="url(#seers_ring_gem)" stroke="#1a1410" stroke-width="11"/>
+    <path d="M 240 258 L 256 294 M 272 258 L 256 294 M 218 300 L 294 300" stroke="#1c448a" stroke-width="5" fill="none"/>
+    <path d="M 236 272 L 256 246 L 270 270 Z" fill="#d8f0ff" stroke="none"/>
   </g>
 </svg>
