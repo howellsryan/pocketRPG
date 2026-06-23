@@ -121,8 +121,15 @@ async function performPush() {
     const data = buildSavePayloadFromSnapshot(snap)
     const json = JSON.stringify(data)
     const contentKey = saveContentKey(data)
-    // Dirty check: identical to the last successful push → nothing to do.
-    if (contentKey === lastPushedContentKey) {
+    // Dirty check: identical to the last successful push → nothing to do, so we
+    // never hit the network (and the server therefore never writes). The one
+    // exception is a `touch` push (PvP lobby): the match-create guard refuses a
+    // save whose updated_at is >15s old, so a lobby-sitting player whose save
+    // content hasn't changed still needs the server to bump updated_at. Those
+    // pushes skip the dirty check and the server bumps updated_at without
+    // rewriting the blob (see save.js no-op branch).
+    const wantsTouch = pendingSaveOptions.touch === true
+    if (!wantsTouch && contentKey === lastPushedContentKey) {
       pendingSaveOptions = {}
       hasUnsyncedChanges = false
       consecutiveFailures = 0
@@ -247,11 +254,14 @@ export function isSaveConflict() { return conflictPending }
 // Returns true if the save landed on the server, false otherwise — callers
 // that gate UI on durable persistence (e.g. the paid skip-hour flow) use
 // this to decide whether to reveal rewards or keep retrying.
-export async function pushNow(snapshot) {
+export async function pushNow(snapshot, options = {}) {
   if (!canSync()) return false
   // Once we've detected a divergence, stop pushing — the app is rolling back to
   // the cloud copy. Any further push would just repeat the 409.
   if (conflictPending) return false
+  // `touch: true` (PvP lobby) forces the push through the dirty check so the
+  // server can refresh updated_at even when the save content is unchanged.
+  if (options && options.touch) pendingSaveOptions = { ...pendingSaveOptions, touch: true }
   // If a push is already on the wire, wait for it to settle before issuing our
   // own. We must never abandon the server mid-response — the paid skip-hour
   // flow awaits this to confirm progress is durable before revealing rewards.
@@ -372,6 +382,13 @@ export async function checkCloudNewer() {
 export async function applyCloudSave(payload, updatedAt, saveRevision) {
   await applySavePayload(payload, { restoreLocalIdleMirrors: false })
   if (updatedAt) lastPushedAt = updatedAt
+  // We just adopted the server's copy, so its content is already durably stored.
+  // Seed the dirty-check key with it: the next autosave / screen-change push of
+  // unchanged state is then recognised as a no-op CLIENT-side and never hits the
+  // network — closing the gap where the first push after a boot pull or a
+  // server-authoritative save would otherwise reach the server and make it write
+  // updated_at for nothing.
+  try { lastPushedContentKey = saveContentKey(payload) } catch { lastPushedContentKey = null }
   // When the server hands back its authoritative revision (e.g. an action
   // completion / skip that wrote the save server-side), adopt it. Otherwise the
   // next client save would push a stale save_revision and be rejected 409.

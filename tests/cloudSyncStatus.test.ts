@@ -167,7 +167,9 @@ describe('cloud sync save status events', () => {
     // revision 0 and the next save is rejected 409 save_revision_conflict.
     await sync.applyCloudSave({ player: { name: 'Hero' } }, 100, 8)
 
-    const ok = await sync.pushNow({ player: { name: 'Hero' } })
+    // Push CHANGED content (applyCloudSave seeds the dirty-check key, so an
+    // identical push would be a client-side no-op and never reach the server).
+    const ok = await sync.pushNow({ player: { name: 'Hero', hp: 1 } })
     expect(ok).toBe(true)
     expect(putSaveMock).toHaveBeenCalledTimes(1)
     expect(putSaveMock.mock.calls[0][1].saveRevision).toBe(8)

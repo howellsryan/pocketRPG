@@ -171,7 +171,10 @@ export default function PvpLobbyModal({ onClose, getSnapshot }) {
     if (!force && now - lastSavePushAt.current < SAVE_HEARTBEAT_MS) return
     const snapshot = getSnapshot ? getSnapshot() : null
     if (!snapshot) return
-    await pushNow(snapshot)
+    // touch:true — the match-create guard rejects a save whose updated_at is
+    // >15s old, so keep the server's timestamp fresh while we sit in the lobby
+    // even when our save content hasn't changed.
+    await pushNow(snapshot, { touch: true })
     lastSavePushAt.current = now
   }, [getSnapshot])
 

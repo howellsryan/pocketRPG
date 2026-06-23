@@ -21,7 +21,7 @@ vi.mock('../src/db/saveload.js', () => ({
   applySavePayload: async () => {},
 }))
 
-import { pushNow, resetSyncState, saveContentKey } from '../src/cloud/sync.js'
+import { pushNow, resetSyncState, saveContentKey, applyCloudSave } from '../src/cloud/sync.js'
 
 describe('saveContentKey', () => {
   it('ignores the volatile timestamp but nothing else', () => {
@@ -49,6 +49,41 @@ describe('push dirty check', () => {
     // Changed content — pushes again.
     expect(await pushNow({ stats: { attack: { xp: 9 } } })).toBe(true)
     expect(putSave).toHaveBeenCalledTimes(2)
+  })
+
+  it('applyCloudSave seeds the content key so an identical push never hits the network', async () => {
+    resetSyncState()
+    putSave.mockClear()
+
+    // Adopt a cloud copy (boot pull / server-authoritative save). Its content is
+    // already durable, so a subsequent push of the SAME state must be a no-op
+    // client-side — never reaching the server (which would otherwise write
+    // updated_at for nothing).
+    await applyCloudSave({ version: 1, timestamp: 1, stats: { attack: { xp: 5 } } }, 123, 1)
+    expect(await pushNow({ stats: { attack: { xp: 5 } } })).toBe(true)
+    expect(putSave).not.toHaveBeenCalled()
+
+    // Changed state still pushes.
+    expect(await pushNow({ stats: { attack: { xp: 9 } } })).toBe(true)
+    expect(putSave).toHaveBeenCalledTimes(1)
+  })
+
+  it('touch:true forces an identical push through the dirty check', async () => {
+    resetSyncState()
+    putSave.mockClear()
+
+    const snap = { stats: { attack: { xp: 5 } } }
+    await pushNow(snap)
+    expect(putSave).toHaveBeenCalledTimes(1)
+
+    // Same content without touch — skipped.
+    await pushNow({ stats: { attack: { xp: 5 } } })
+    expect(putSave).toHaveBeenCalledTimes(1)
+
+    // Same content WITH touch — sent, carrying the touch flag (PvP freshness).
+    await pushNow({ stats: { attack: { xp: 5 } } }, { touch: true })
+    expect(putSave).toHaveBeenCalledTimes(2)
+    expect(putSave.mock.calls[1][1]).toMatchObject({ touch: true })
   })
 
   it('resetSyncState clears the cached content key', async () => {
