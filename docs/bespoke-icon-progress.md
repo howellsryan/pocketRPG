@@ -128,6 +128,12 @@ masari) reusing full_helm/platebody/platelegs/plateskirt silhouettes:
 - [x] ashen_slayer_helm, slayer_helmet, berserker_helm, ironclad_helm,
   cinderforged_helm, fighter_helm, justicar_faceguard, morvyn_s_hood
 
+### Phase 4j — fancy heads & special helms ✅ (now 459)
+- [x] partyhats ×6: blue, green, purple, red, white, yellow
+- [x] 2nd age set ×4: 2nd_age_mage_hat, 2nd_age_range_coif, 2nd_age_full_helm
+- [x] special ×4: arcanist_hat, fancy_tiara, robin_hood_hat, shardglass_helmet,
+  zephyra_helmet
+
 ## Remaining
 - **Monsters batch 2-3** (~44 glyphs): hanging_spider, masked_spider, tiger_head,
   horned_reptile, lizardman, grim_reaper, tree_face, devil_mask, bleeding_eye,

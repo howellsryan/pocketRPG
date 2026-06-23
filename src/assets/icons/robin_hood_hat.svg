@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="robin_hood_hat_b" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#8f9870"/><stop offset="0.5" stop-color="#5a6a4a"/><stop offset="1" stop-color="#3a4a2a"/>
+    </linearGradient>
+  </defs>
+  <g stroke="#1a1410" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M210 240 L200 180 L220 140 L256 120 L292 140 L312 180 L302 240 Z" fill="url(#robin_hood_hat_b)"/>
+    <path d="M256 120 L280 100 L290 130 L270 150 Z" fill="#2a5a2a"/>
+    <path d="M210 240 L200 300 L220 340 L256 360 L292 340 L312 300 L302 240" fill="url(#robin_hood_hat_b)"/>
+  </g>
+</svg>
