@@ -180,6 +180,9 @@ export const api = {
     body: JSON.stringify({
       save_data,
       save_revision: Number.isFinite(options?.saveRevision) ? options.saveRevision : 0,
+      // PvP-lobby freshness pushes ask the server to bump updated_at even when
+      // the blob is unchanged. Omitted otherwise so a no-op save writes nothing.
+      ...(options?.touch === true ? { touch: true } : {}),
     }),
   }),
   getCollectionLog: () => request('/api/collection-log'),

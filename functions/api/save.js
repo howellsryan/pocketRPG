@@ -79,6 +79,12 @@ export async function onRequestPut({ request, env }) {
   let body
   try { body = await request.json() } catch { return json({ error: 'Invalid JSON' }, 400) }
   const save_data = body.save_data
+  // `touch` (PvP-lobby freshness): when the incoming blob is identical to what's
+  // stored, the client can still ask us to bump updated_at so the PvP
+  // match-create guard (which rejects saves older than 15s) sees a fresh save.
+  // Absent this flag, a content-identical save writes NOTHING — not even
+  // updated_at — so routine no-op saves (e.g. screen changes) cost zero writes.
+  const touchOnNoop = body?.touch === true
   const expectedSaveRevision = Number.isFinite(body?.save_revision) ? body.save_revision : parseInt(body?.save_revision, 10)
   // credits_used_increment is intentionally NOT read from the client.
   // Credit consumption flows through /api/skip-hour and /api/slayer/skip,
@@ -95,7 +101,7 @@ export async function onRequestPut({ request, env }) {
     return json({ error: 'save_revision_required', code: 'SAVE_REVISION_REQUIRED' }, 400)
   }
 
-  const existing = await env.DB.prepare('SELECT save_data, save_blob, save_revision FROM saves WHERE character_id = ?').bind(ch.id).first()
+  const existing = await env.DB.prepare('SELECT save_data, save_blob, save_revision, updated_at FROM saves WHERE character_id = ?').bind(ch.id).first()
   const currentRevision = Number(existing?.save_revision) || 0
   if (expectedSaveRevision !== currentRevision) {
     return json({ error: 'save_revision_conflict', code: 'SAVE_REVISION_CONFLICT', current_revision: currentRevision }, 409)
@@ -166,29 +172,33 @@ export async function onRequestPut({ request, env }) {
   // No-op save: the incoming payload matches what's already stored (modulo
   // the volatile top-level `timestamp` the client stamps on every push), so
   // skip the write entirely and hand back the current revision. AFK/idle
-  // tabs push unchanged saves on the 60s cadence; together with the
+  // tabs push unchanged saves on the autosave cadence; together with the
   // client-side dirty check this stops them burning the daily write budget.
   if (save_data !== null && previousJson !== null && parsedNext) {
     const prevKey = JSON.stringify({ ...previousSave, timestamp: 0 })
     const nextKey = JSON.stringify({ ...parsedNext, timestamp: 0 })
     if (prevKey === nextKey) {
-      // Content-identical to what's stored: skip the expensive blob rewrite,
-      // revision bump and summary UPDATE. But STILL touch updated_at — the
-      // client just re-confirmed this save is current as of `now`, and
-      // server-authoritative freshness checks depend on updated_at reflecting
-      // that confirmation. In particular the PvP match-create guard refuses to
-      // start a match on a save older than 15s: after a match the client pulls
-      // the loot-settled save (so its state now equals the server's) and then
-      // force-pushes before queueing the next fight; without this touch that
-      // push is a no-op, updated_at stays pinned to the previous match's end
-      // time, and the next accept trips a spurious `stale_save` rejection.
-      // This stays write-cheap (one indexed column, no 130 KB blob) and the
-      // client-side dirty check already filters genuine AFK no-op pushes before
-      // they ever reach the server.
-      await env.DB.prepare(
-        'UPDATE saves SET updated_at = ? WHERE character_id = ?'
-      ).bind(now, ch.id).run()
-      return json({ ok: true, updatedAt: now, save_revision: currentRevision, noop: true })
+      // Content-identical to what's stored. Default: write NOTHING at all — not
+      // the blob, the revision, the summary, NOR updated_at — so a routine no-op
+      // save (screen change, AFK tab) costs zero D1 writes.
+      //
+      // The ONE exception is an explicit `touch` push from the PvP lobby: the
+      // match-create guard refuses to start a match on a save older than 15s, so
+      // a lobby-sitting player whose content hasn't changed still needs us to
+      // bump updated_at. That stays write-cheap (one indexed column, no 130 KB
+      // blob). Only the lobby sets `touch`, so general play never pays for it.
+      if (touchOnNoop) {
+        await env.DB.prepare(
+          'UPDATE saves SET updated_at = ? WHERE character_id = ?'
+        ).bind(now, ch.id).run()
+        return json({ ok: true, updatedAt: now, save_revision: currentRevision, noop: true })
+      }
+      return json({
+        ok: true,
+        updatedAt: Number(existing?.updated_at) || now,
+        save_revision: currentRevision,
+        noop: true,
+      })
     }
   }
 

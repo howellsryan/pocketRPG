@@ -11,7 +11,7 @@ import { api, getCharacterId } from '../cloud/api.js'
 import { pauseTicks } from '../engine/tick.js'
 import { formatCompactCoins } from '../utils/formatters.js'
 
-const POLL_MS = 2500   // light enough to be cheap, fast enough to feel live in the lobby
+const POLL_MS = 5000   // light enough to be cheap, fast enough to feel live in the lobby
 const SAVE_HEARTBEAT_MS = 3000
 const LOBBY_PVP_SYNC_BLOCK_KEY = 'pocketrpg_pvp_sync_block'
 const COMBAT_STAT_ROWS = [
@@ -171,7 +171,10 @@ export default function PvpLobbyModal({ onClose, getSnapshot }) {
     if (!force && now - lastSavePushAt.current < SAVE_HEARTBEAT_MS) return
     const snapshot = getSnapshot ? getSnapshot() : null
     if (!snapshot) return
-    await pushNow(snapshot)
+    // touch:true — the match-create guard rejects a save whose updated_at is
+    // >15s old, so keep the server's timestamp fresh while we sit in the lobby
+    // even when our save content hasn't changed.
+    await pushNow(snapshot, { touch: true })
     lastSavePushAt.current = now
   }, [getSnapshot])
 
@@ -218,33 +221,29 @@ export default function PvpLobbyModal({ onClose, getSnapshot }) {
       } catch {
         // save heartbeat is best-effort; lobby polling should continue
       }
-      const [waitingRes, invitesRes] = await Promise.all([
-        pvpApi.listWaiting(),
-        pvpApi.listInvitations(),
-      ])
+      // One round-trip: the lobby GET heartbeats the waiting-room row (so it
+      // isn't GC'd by the 30s sweep), and returns the waiting list, invitations
+      // and any active match together — replacing the old listWaiting +
+      // listInvitations + joinWaiting trio.
+      const res = await pvpApi.lobbyState()
       if (!mounted.current) return
-      setMyCB(waitingRes.my_combat_level)
-      setBand(waitingRes.band)
-      setWaiting(waitingRes.waiting || [])
-      setInvitations({
-        incoming: invitesRes.incoming || [],
-        outgoing: invitesRes.outgoing || [],
-      })
-      if (invitesRes.active_match_id) {
-        await launchMatch(invitesRes.active_match_id, 'PvP match ready — entering combat.')
+      if (res.active_match_id) {
+        await launchMatch(res.active_match_id, 'PvP match ready — entering combat.')
         return
       }
-      // Heartbeat the waiting room while we're joined so the row doesn't
-      // get GC'd by the server's 30s sweep.
-      if (joined) {
-        try { await pvpApi.joinWaiting() } catch { /* heartbeat is best-effort */ }
-      }
+      setMyCB(res.my_combat_level)
+      setBand(res.band)
+      setWaiting(res.waiting || [])
+      setInvitations({
+        incoming: res.incoming || [],
+        outgoing: res.outgoing || [],
+      })
     } catch (err) {
       if (!mounted.current) return
       // Don't spam toasts — only set inline error.
       setError(err.body?.error || err.message)
     }
-  }, [joined, launchMatch, pushLobbySnapshot])
+  }, [launchMatch, pushLobbySnapshot])
 
   // Boot: ironman / one-life accounts should never have reached this
   // modal but defend in depth — close immediately if they did.
@@ -264,14 +263,24 @@ export default function PvpLobbyModal({ onClose, getSnapshot }) {
     }
   }, [])
 
-  // Polling loop — only runs once we've successfully joined.
+  // Polling loop — only runs once we've successfully joined. The interval
+  // skips while the tab is hidden (no point polling a lobby nobody's looking
+  // at); a visibilitychange listener fires an immediate refresh on return so
+  // the list is fresh the moment the user comes back.
   useEffect(() => {
     if (!joined) return
-    refresh()
-    pollTimer.current = setInterval(refresh, POLL_MS)
+    const tick = () => {
+      if (typeof document !== 'undefined' && document.hidden) return
+      refresh()
+    }
+    tick()
+    pollTimer.current = setInterval(tick, POLL_MS)
+    const onVisible = () => { if (!document.hidden) refresh() }
+    document.addEventListener('visibilitychange', onVisible)
     return () => {
       if (pollTimer.current) clearInterval(pollTimer.current)
       pollTimer.current = null
+      document.removeEventListener('visibilitychange', onVisible)
     }
   }, [joined, refresh])
 

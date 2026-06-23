@@ -55,7 +55,7 @@ describe('cloud sync save status events', () => {
     sync.schedulePushSave({ player: { name: 'Hero' } })
     expect(window.dispatchEvent).toHaveBeenCalledWith(expect.objectContaining({ detail: expect.objectContaining({ status: 'pending' }) }))
 
-    await vi.advanceTimersByTimeAsync(60_000)
+    await vi.advanceTimersByTimeAsync(120_000)
     await vi.runAllTicks()
 
     const calls = (window.dispatchEvent as any).mock.calls.map((c: any[]) => c[0].detail.status)
@@ -68,7 +68,7 @@ describe('cloud sync save status events', () => {
     const sync = await import('../src/cloud/sync.js')
 
     sync.schedulePushSave({ player: { name: 'Hero' } })
-    await vi.advanceTimersByTimeAsync(60_000)
+    await vi.advanceTimersByTimeAsync(120_000)
     await vi.runAllTicks()
 
     const calls = (window.dispatchEvent as any).mock.calls.map((c: any[]) => c[0].detail.status)
@@ -84,7 +84,7 @@ describe('cloud sync save status events', () => {
     sync.schedulePushSave({ player: { name: 'Hero' } })
     // First attempt fires after the debounce; each failure schedules an
     // escalating backoff retry (3s, 6s, …).
-    await vi.advanceTimersByTimeAsync(60_000)
+    await vi.advanceTimersByTimeAsync(120_000)
     await vi.runAllTicks()
     await vi.advanceTimersByTimeAsync(3_000)
     await vi.runAllTicks()
@@ -108,7 +108,7 @@ describe('cloud sync save status events', () => {
     const sync = await import('../src/cloud/sync.js')
 
     sync.schedulePushSave({ player: { name: 'Hero' } })
-    await vi.advanceTimersByTimeAsync(60_000)
+    await vi.advanceTimersByTimeAsync(120_000)
     await vi.runAllTicks()
     await vi.advanceTimersByTimeAsync(3_000)
     await vi.runAllTicks()
@@ -132,7 +132,7 @@ describe('cloud sync save status events', () => {
     const sync = await import('../src/cloud/sync.js')
 
     sync.schedulePushSave({ player: { name: 'Hero' }, rev: 7 })
-    await vi.advanceTimersByTimeAsync(60_000)
+    await vi.advanceTimersByTimeAsync(120_000)
     await vi.runAllTicks()
     // Backoff retry re-sends the SAME snapshot rather than dropping it.
     await vi.advanceTimersByTimeAsync(3_000)
@@ -167,7 +167,9 @@ describe('cloud sync save status events', () => {
     // revision 0 and the next save is rejected 409 save_revision_conflict.
     await sync.applyCloudSave({ player: { name: 'Hero' } }, 100, 8)
 
-    const ok = await sync.pushNow({ player: { name: 'Hero' } })
+    // Push CHANGED content (applyCloudSave seeds the dirty-check key, so an
+    // identical push would be a client-side no-op and never reach the server).
+    const ok = await sync.pushNow({ player: { name: 'Hero', hp: 1 } })
     expect(ok).toBe(true)
     expect(putSaveMock).toHaveBeenCalledTimes(1)
     expect(putSaveMock.mock.calls[0][1].saveRevision).toBe(8)
@@ -195,7 +197,7 @@ describe('cloud sync save status events', () => {
     const sync = await import('../src/cloud/sync.js')
 
     sync.schedulePushSave({ player: { name: 'Hero' }, rev: 1 })
-    await vi.advanceTimersByTimeAsync(60_000)
+    await vi.advanceTimersByTimeAsync(120_000)
     await vi.runAllTicks()
 
     sync.schedulePushSave({ player: { name: 'Hero' }, rev: 2 })
@@ -225,7 +227,7 @@ describe('cloud sync save status events', () => {
     expect(calls).not.toContain('blocked')
 
     // No backoff retry should be scheduled for a conflict.
-    await vi.advanceTimersByTimeAsync(60_000)
+    await vi.advanceTimersByTimeAsync(120_000)
     await vi.runAllTicks()
     expect(putSaveMock).toHaveBeenCalledTimes(1)
     expect(sync.isSaveConflict()).toBe(true)
@@ -243,7 +245,7 @@ describe('cloud sync save status events', () => {
     const second = await sync.pushNow({ player: { name: 'Hero' } })
     expect(second).toBe(false)
     sync.schedulePushSave({ player: { name: 'Hero' } })
-    await vi.advanceTimersByTimeAsync(60_000)
+    await vi.advanceTimersByTimeAsync(120_000)
     await vi.runAllTicks()
     expect(putSaveMock).toHaveBeenCalledTimes(1)
   })
@@ -255,7 +257,7 @@ describe('cloud sync save status events', () => {
     sync.suspendSaves()
     sync.schedulePushSave({ player: { name: 'Hero' } })
     sync.requestCriticalPushSave(() => ({ player: { name: 'Hero' } }), 'level_up')
-    await vi.advanceTimersByTimeAsync(60_000)
+    await vi.advanceTimersByTimeAsync(120_000)
     await vi.runAllTicks()
     expect(putSaveMock).not.toHaveBeenCalled()
 
@@ -268,7 +270,7 @@ describe('cloud sync save status events', () => {
     // an identical snapshot would be (correctly) skipped by the dirty check.
     sync.resumeSaves()
     sync.schedulePushSave({ player: { name: 'Hero', hp: 50 } })
-    await vi.advanceTimersByTimeAsync(60_000)
+    await vi.advanceTimersByTimeAsync(120_000)
     await vi.runAllTicks()
     expect(putSaveMock).toHaveBeenCalledTimes(2)
   })
@@ -307,7 +309,7 @@ describe('cloud sync save status events', () => {
     await vi.runAllTicks()
 
     sync.schedulePushSave({ player: { name: 'Hero' }, rev: 2 })
-    await vi.advanceTimersByTimeAsync(60_000)
+    await vi.advanceTimersByTimeAsync(120_000)
     await vi.runAllTicks()
 
     expect(putSaveMock).toHaveBeenCalledTimes(2)

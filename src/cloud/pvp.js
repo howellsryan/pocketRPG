@@ -42,6 +42,11 @@ export const pvpApi = {
   leaveWaiting: () => pvpRequest('/api/pvp/waiting', { method: 'DELETE' }),
   listWaiting: () => pvpRequest('/api/pvp/waiting'),
 
+  // Merged lobby poll: heartbeat + waiting list + invitations + active match
+  // in one round-trip (replaces per-tick joinWaiting + listWaiting +
+  // listInvitations).
+  lobbyState: () => pvpRequest('/api/pvp/lobby'),
+
   // Invitations
   listInvitations: () => pvpRequest('/api/pvp/invitations'),
   sendInvitation: (toCharacter) => pvpRequest('/api/pvp/invitations', {

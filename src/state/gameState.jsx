@@ -30,7 +30,7 @@ const normalisePointCurrency = (value) => {
   const n = Math.floor(Number(value) || 0)
   return n > 0 ? n : 0
 }
-const CLOUD_ACTIVITY_HEARTBEAT_MS = 30_000
+const CLOUD_ACTIVITY_HEARTBEAT_MS = 120_000
 const HEARTBEAT_ACTIVE_TASK_TYPES = new Set(['skill', 'gather', 'clue', 'agility', 'thieving', 'hunter', 'minigame', 'quest'])
 
 const GameContext = createContext(null)
@@ -1041,6 +1041,10 @@ export function GameProvider({ children }) {
   useEffect(() => {
     if (!heartbeatTaskKey) return
     const timer = setInterval(() => {
+      // Skip the heartbeat while the tab is hidden — the visibilitychange
+      // handler already flushes a save on hide, so a background tab doesn't
+      // need to keep writing. Cuts idle D1 writes from backgrounded sessions.
+      if (typeof document !== 'undefined' && document.hidden) return
       requestCriticalPushSave(() => getSnapshot(), CRITICAL_SAVE_REASONS.ACTIVITY_HEARTBEAT)
     }, CLOUD_ACTIVITY_HEARTBEAT_MS)
     return () => clearInterval(timer)

@@ -42,10 +42,10 @@ function makeEnv({ existingSaveData, character }: { existingSaveData: string | n
             if (/FROM characters WHERE id/.test(sql)) {
               return character ?? { id: 42, total_level: 1, combat_level: 3 }
             }
-            if (/SELECT save_data, save_blob, save_revision FROM saves/.test(sql)) {
+            if (/SELECT save_data, save_blob, save_revision.* FROM saves/.test(sql)) {
               return existingSaveData === null
                 ? null
-                : { save_data: existingSaveData, save_blob: null, save_revision: 7 }
+                : { save_data: existingSaveData, save_blob: null, save_revision: 7, updated_at: 555 }
             }
             if (/SELECT save_revision FROM saves/.test(sql)) {
               return { save_revision: 8 }
@@ -70,7 +70,7 @@ function makePut(body: Record<string, unknown>) {
 }
 
 describe('PUT /api/save no-op detection', () => {
-  it('skips the blob rewrite but touches updated_at when only the client timestamp changed', async () => {
+  it('writes NOTHING (not even updated_at) when only the client timestamp changed', async () => {
     const stored = JSON.stringify(baseSave({ timestamp: 1111 }))
     const incoming = JSON.stringify(baseSave({ timestamp: 99999 }))
     const { env, batches, runs } = makeEnv({ existingSaveData: stored })
@@ -81,10 +81,25 @@ describe('PUT /api/save no-op detection', () => {
     expect(body.ok).toBe(true)
     expect(body.noop).toBe(true)
     expect(body.save_revision).toBe(7) // unchanged — no blob rewrite / revision bump
+    expect(body.updatedAt).toBe(555)   // hands back the stored timestamp, untouched
     expect(batches).toHaveLength(0)
-    // Freshness touch: a single cheap updated_at write so server-authoritative
-    // staleness checks (PvP match-create) see the save as current. Without this
-    // a post-match identical re-push leaves updated_at stale and trips stale_save.
+    // The whole point: a content-identical save costs ZERO D1 writes — no blob,
+    // no revision bump, no summary UPDATE, and crucially no updated_at touch.
+    expect(runs).toHaveLength(0)
+  })
+
+  it('bumps updated_at on a no-op only when touch:true (PvP-lobby freshness)', async () => {
+    const stored = JSON.stringify(baseSave({ timestamp: 1111 }))
+    const incoming = JSON.stringify(baseSave({ timestamp: 99999 }))
+    const { env, batches, runs } = makeEnv({ existingSaveData: stored })
+
+    const res = await onRequestPut({ request: makePut({ save_data: incoming, save_revision: 7, touch: true }), env } as any)
+    expect(res.status).toBe(200)
+    const body = await res.json()
+    expect(body.noop).toBe(true)
+    expect(batches).toHaveLength(0)
+    // One cheap indexed-column write so the PvP match-create guard sees the save
+    // as current; never the 130 KB blob.
     const touch = runs.find(r => /UPDATE saves SET updated_at/.test(r.sql))
     expect(touch).toBeTruthy()
     expect(touch?.sql).not.toMatch(/save_blob/)

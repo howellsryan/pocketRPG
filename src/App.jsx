@@ -1110,13 +1110,17 @@ function GameApp() {
         // Cloud sync piggy-backs on the local snapshot cadence (debounced, hash-skipped).
         if (!isInPvpMatch) schedulePushSave(getSnapshot())
       }
-      // Idle heartbeat: ~30s cadence. Server stamps last_active_at on write,
+      // Idle heartbeat: ~120s cadence. Server stamps last_active_at on write,
       // so this keeps the "last seen" timestamp fresh even if the tab dies
-      // suddenly (beacon on hide/unload is the other half).
+      // suddenly (beacon on hide/unload is the other half). Skipped while the
+      // tab is hidden — the beacon covers a backgrounded tab, so we don't burn
+      // a D1 write every interval from sessions the user isn't looking at.
       idleHeartbeatCounter.current++
-      if (idleHeartbeatCounter.current >= 50) {
+      if (idleHeartbeatCounter.current >= 200) {
         idleHeartbeatCounter.current = 0
-        if (!isInPvpMatch) heartbeatIdleState(activeTaskRef.current)
+        if (!isInPvpMatch && !(typeof document !== 'undefined' && document.hidden)) {
+          heartbeatIdleState(activeTaskRef.current)
+        }
       }
       hpRegenCounter.current++
       if (hpRegenCounter.current >= 100) {
