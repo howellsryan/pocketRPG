@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="{{id}}_face" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="{{light}}"/><stop offset="0.5" stop-color="{{base}}"/><stop offset="1" stop-color="{{shade}}"/>
+    </linearGradient>
+  </defs>
+  <g stroke="#3a2614" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
+    <polygon points="96,196 416,184 420,250 100,262" fill="url(#{{id}}_face)"/>
+    <polygon points="100,262 420,250 424,316 104,328" fill="{{base}}"/>
+    <polygon points="104,328 424,316 428,382 108,394" fill="url(#{{id}}_face)"/>
+    <path d="M140 214 L392 206 M140 280 L392 272 M140 346 L392 338" stroke="{{shade}}" stroke-width="5" fill="none"/>
+    <path d="M180 198 C 196 220 196 240 180 258 M300 192 C 316 214 316 234 300 252" stroke="{{shade}}" stroke-width="4" fill="none"/>
+  </g>
+</svg>

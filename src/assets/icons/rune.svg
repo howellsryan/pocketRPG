@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <radialGradient id="rune_s" cx="0.4" cy="0.32" r="0.85">
+      <stop offset="0" stop-color="#d8a7f0"/><stop offset="0.55" stop-color="#a766d6"/><stop offset="1" stop-color="#6a3fa0"/>
+    </radialGradient>
+  </defs>
+  <g stroke="#2a1840" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M150 168 L362 156 L420 250 L388 372 L256 416 L120 360 L104 232 Z" fill="url(#rune_s)"/>
+    <path d="M150 168 L362 156 L300 210 C 240 198 184 204 150 230 Z" fill="#e2c4f5" stroke="none"/>
+    <path d="M256 196 L256 372 M186 240 L326 240 M196 312 L316 312" stroke="#4f2f80" stroke-width="14" fill="none"/>
+    <path d="M256 196 L196 240 M256 196 L316 240 M256 372 L196 312 M256 372 L316 312" stroke="#4f2f80" stroke-width="11" fill="none"/>
+  </g>
+</svg>

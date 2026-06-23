@@ -55,6 +55,10 @@
     "zephyra": { "base": "#2fd0c0", "light": "#c6fff8", "shade": "#136055" },
     "grondar": { "base": "#b87333", "light": "#f2bd78", "shade": "#6f4119" },
 
+    "bone":    { "base": "#ddd6c2", "light": "#f4efe0", "shade": "#a89e84" },
+    "seed":    { "base": "#7a9e3a", "light": "#a8c86f", "shade": "#4a6620" },
+    "sapling": { "base": "#4caf50", "light": "#8fd98f", "shade": "#2f7a37" },
+
     "pot_attack":   { "base": "#56a0e0", "light": "#8fc4f0", "shade": "#356f9f" },
     "pot_strength": { "base": "#d04a3a", "light": "#f0897a", "shade": "#8a261a" },
     "pot_defence":  { "base": "#5ac0d0", "light": "#93e0ec", "shade": "#357f8f" },
@@ -110,7 +114,8 @@
     "longbow":   ["oak", "willow", "maple"],
     "crossbow":  ["iron", "steel", "mithril", "adamant", "runeforged"],
     "d_hide_body":  ["red", "green", "black", "lumira", "verdant", "krylth", "ancient", "zephyra", "grondar"],
-    "d_hide_chaps": ["red", "green", "black", "lumira", "verdant", "krylth", "ancient", "zephyra", "grondar"]
+    "d_hide_chaps": ["red", "green", "black", "lumira", "verdant", "krylth", "ancient", "zephyra", "grondar"],
+    "plank":        ["oak", "teak", "mahogany"]
   },
   "sets": {
     "gem": {
@@ -132,6 +137,18 @@
       "fishing_cape": "skill_fishing", "smithing_cape": "skill_smithing", "cooking_cape": "skill_cooking",
       "fletching_cape": "skill_fletching", "crafting_cape": "skill_crafting", "herblore_cape": "skill_herblore",
       "agility_cape": "skill_agility", "thieving_cape": "skill_thieving"
+    },
+    "bone": {
+      "big_bones": "bone", "dragon_bones": "bone", "nagadoth_bones": "bone", "ashen_hydra_bones": "bone"
+    },
+    "seed": {
+      "greenthorn_seed": "seed", "miremint_seed": "seed", "duskroot_seed": "seed", "kingsherb_seed": "seed",
+      "graysage_seed": "seed", "bogtuber_seed": "seed", "rynarr_seed": "seed"
+    },
+    "sapling": {
+      "oak_sapling": "sapling", "willow_sapling": "sapling", "maple_sapling": "sapling", "yew_sapling": "sapling",
+      "magic_sapling": "sapling", "apple_sapling": "sapling", "banana_sapling": "sapling", "orange_sapling": "sapling",
+      "curry_sapling": "sapling", "papaya_sapling": "sapling", "palm_sapling": "sapling"
     }
   }
 }

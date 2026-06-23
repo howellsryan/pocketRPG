@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <radialGradient id="muscle_up_s" cx="0.4" cy="0.35" r="0.85">
+      <stop offset="0" stop-color="#e6b488"/><stop offset="0.6" stop-color="#cf9a64"/><stop offset="1" stop-color="#9a6a3a"/>
+    </radialGradient>
+  </defs>
+  <g stroke="#3a2414" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
+    <rect x="126" y="290" width="160" height="58" rx="29" fill="url(#muscle_up_s)"/>
+    <circle cx="250" cy="276" r="52" fill="url(#muscle_up_s)"/>
+    <rect x="272" y="156" width="60" height="140" rx="28" fill="url(#muscle_up_s)"/>
+    <path d="M262 128 C 262 116 272 110 284 110 L330 110 C 344 110 352 120 350 134 L344 184 L268 184 Z" fill="url(#muscle_up_s)"/>
+    <path d="M284 150 L284 182 M306 148 L306 182 M328 150 L328 180" stroke="#9a6a3a" stroke-width="6" fill="none"/>
+    <path d="M226 252 C 244 268 262 270 278 264" stroke="#9a6a3a" stroke-width="7" fill="none"/>
+  </g>
+</svg>

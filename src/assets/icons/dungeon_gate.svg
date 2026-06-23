@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="dungeon_gate_g" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#8a929c"/><stop offset="0.5" stop-color="#5f666e"/><stop offset="1" stop-color="#3a3f45"/>
+    </linearGradient>
+  </defs>
+  <g stroke="#1c1f23" stroke-width="12" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M120 150 L392 150 L392 410 L120 410 Z" fill="#2a2e33"/>
+    <path d="M150 410 L150 220 C 150 160 200 130 256 130 C 312 130 362 160 362 220 L362 410 Z" fill="#181b1f"/>
+    <g fill="url(#dungeon_gate_g)">
+      <rect x="166" y="150" width="22" height="260"/>
+      <rect x="222" y="150" width="22" height="260"/>
+      <rect x="268" y="150" width="22" height="260"/>
+      <rect x="324" y="150" width="22" height="260"/>
+    </g>
+    <g fill="url(#dungeon_gate_g)">
+      <rect x="150" y="200" width="212" height="20"/>
+      <rect x="150" y="290" width="212" height="20"/>
+      <rect x="150" y="380" width="212" height="20"/>
+    </g>
+    <path d="M166 154 L166 404 M222 154 L222 404" stroke="#aab0b8" stroke-width="4" fill="none"/>
+  </g>
+</svg>

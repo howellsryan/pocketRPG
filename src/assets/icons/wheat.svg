@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="wheat_g" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f5dd7a"/><stop offset="0.6" stop-color="#d8b13a"/><stop offset="1" stop-color="#9a7a18"/>
+    </linearGradient>
+  </defs>
+  <g stroke="#5a4310" stroke-width="11" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M256 200 L256 446" stroke="#9a7a18" stroke-width="14" fill="none"/>
+    <path d="M256 90 C 280 120 288 158 280 196 C 252 178 244 140 256 90 Z" fill="url(#wheat_g)"/>
+    <path d="M256 150 C 296 158 326 184 338 222 C 300 224 268 206 252 176 Z" fill="url(#wheat_g)"/>
+    <path d="M256 150 C 216 158 186 184 174 222 C 212 224 244 206 260 176 Z" fill="url(#wheat_g)"/>
+    <path d="M256 214 C 300 222 330 248 342 286 C 304 288 272 270 256 240 Z" fill="url(#wheat_g)"/>
+    <path d="M256 214 C 212 222 182 248 170 286 C 208 288 240 270 256 240 Z" fill="url(#wheat_g)"/>
+    <path d="M256 278 C 300 286 330 312 342 350 C 304 352 272 334 256 304 Z" fill="url(#wheat_g)"/>
+    <path d="M256 278 C 212 286 182 312 170 350 C 208 352 240 334 256 304 Z" fill="url(#wheat_g)"/>
+  </g>
+</svg>

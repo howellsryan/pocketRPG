@@ -49,9 +49,16 @@ cave_goblin, mining.
 - [x] cape ×17 (skill capes, per-skill accent)
 - [x] d_hide_body ×9, d_hide_chaps ×9 (per hide colour)
 
-Total covered so far: **215 icons**.
+### Phase 4b — skills + generic resources ✅
+- [x] skill emblems ×24 (keyed by SKILL_ART glyph names: crossed_swords, muscle_up,
+  shield, hearts, high_shot, pointy_hat, prayer, mining, wood_axe, fishing_pole,
+  wheat, anvil, cooking_pot, sewing_needle, arrow, vial, rune, flame, sprint,
+  hood, wolf_trap, death_skull, castle, dungeon_gate)
+- [x] planks ×3, bones ×4, seeds ×7, saplings ×11
 
-## Remaining (Phase 4b — needs per-item bespoke authoring, multi-batch)
+Total covered so far: **263 icons**.
+
+## Remaining (Phase 4c — needs per-item bespoke authoring, multi-batch)
 These are distinct designs that can't be templated — each needs hand-authoring.
 - **Named unique weapons**: godswords, chaotic/ironclad/zesta longswords, whips, staves/wands, dragon_javelin, special boss weapons, gem/dragon bolts, thornspine/twisted bows variants.
 - **Named unique armour**: robes (wizard/kodai/ancestral/2nd_age/arcanist), hats, coifs, boots, gloves, rings, necklaces, ranger/void/god sets, boss/raid uniques (dravok_s_*, gorath_s_*, torvek_s_*, verin_s_*, masari_*, gravehusk_*, etc.), slayer_defender + gloves_of_slaughter.

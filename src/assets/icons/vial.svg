@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="vial_l" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#8fe08f"/><stop offset="1" stop-color="#2f7a37"/>
+    </linearGradient>
+  </defs>
+  <g stroke="#163a1a" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M222 150 L222 250 C 178 282 168 360 206 404 C 234 434 278 434 306 404 C 344 360 334 282 290 250 L290 150 Z" fill="#dff2e0"/>
+    <path d="M196 318 C 232 344 280 344 316 318 C 322 372 290 410 256 410 C 222 410 190 372 196 318 Z" fill="url(#vial_l)" stroke="none"/>
+    <ellipse cx="256" cy="320" rx="62" ry="11" fill="#b6efb6" stroke="none"/>
+    <rect x="210" y="124" width="92" height="34" rx="8" fill="#dff2e0"/>
+    <rect x="220" y="96" width="72" height="36" rx="9" fill="#8a5a2c"/>
+    <path d="M232 338 C 226 360 228 384 240 400" stroke="#eafaf0" stroke-width="11" fill="none"/>
+  </g>
+</svg>

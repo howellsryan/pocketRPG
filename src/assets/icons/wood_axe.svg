@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="wood_axe_h" x1="0" y1="0" x2="1" y2="0.5">
+      <stop offset="0" stop-color="#dfe6ee"/><stop offset="0.5" stop-color="#a9743f"/><stop offset="1" stop-color="#a9743f"/>
+    </linearGradient>
+    <linearGradient id="wood_axe_steel" x1="0" y1="0" x2="1" y2="0.5">
+      <stop offset="0" stop-color="#eef3f8"/><stop offset="0.5" stop-color="#bcc6d2"/><stop offset="1" stop-color="#737d89"/>
+    </linearGradient>
+  </defs>
+  <g transform="rotate(-40 256 256)" stroke="#1a1410" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
+    <rect x="244" y="170" width="26" height="266" rx="11" fill="#a9743f"/>
+    <path d="M260 150 C 350 146 404 196 398 268 C 358 232 316 224 272 234 L260 228 Z" fill="url(#wood_axe_steel)"/>
+    <path d="M248 150 L248 234 L222 226 C 216 194 226 166 248 150 Z" fill="#8e96a3"/>
+    <path d="M284 248 C 330 244 366 256 392 280" stroke="#eef3f8" stroke-width="8" fill="none"/>
+  </g>
+</svg>
