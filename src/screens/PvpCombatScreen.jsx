@@ -28,6 +28,11 @@ const POLL_HIDDEN_MS = 1500
 const NO_POLL_WARNING_MS = 5000
 const MATCH_BOOT_GRACE_MS = 8000
 const MATCH_BOOT_RETRY_MS = 500
+// On a live kill/death, hold the final tick on screen before the reward modal so
+// the killing-blow hit splat (HIT_SPLAT_DURATION_MS) and the HP bar dropping to 0
+// are both visible — players can see how the match ended. Recovery/bootstrap
+// paths (reconnecting to an already-finished match) skip this and open at once.
+const PVP_DEATH_REVEAL_MS = 1200
 const PVP_SCREEN_PROTECTION_PRAYER_IDS = new Set(['protection_from_magic', 'protection_from_missiles', 'protection_from_melee'])
 
 function getCombatantTotalRisk(combatant) {
@@ -233,6 +238,7 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
   const terminalHandledRef = useRef(false)
   const endModalOpenRef = useRef(false)
   const prayerOverrideTimer = useRef(null)
+  const endModalDelayTimer = useRef(null)
   const splatTimersRef = useRef(new Set())
   const lastSplatTickRef = useRef(null)
 
@@ -342,6 +348,7 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
       if (gearFlushTimer.current) clearTimeout(gearFlushTimer.current)
       if (consumableFlushTimer.current) clearTimeout(consumableFlushTimer.current)
       if (prayerOverrideTimer.current) clearTimeout(prayerOverrideTimer.current)
+      if (endModalDelayTimer.current) clearTimeout(endModalDelayTimer.current)
       for (const t of splatTimersRef.current) clearTimeout(t)
       splatTimersRef.current.clear()
     }
@@ -403,15 +410,25 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
     return { youWon, reason: terminal.reason || 'death', writebackOk, loot: writebackOk ? (summary.loot || res?.loot || { added: [], dropped: [], droppedValue: 0, bankedValue: 0, addedValue: 0, totalRiskValue: 0 }) : null }
   }
 
-  const openEndModalFromResponse = (res) => {
+  const openEndModalFromResponse = (res, { delayMs = 0 } = {}) => {
     const modal = buildEndModalFromResponse(res)
     if (!modal) return false
+    // Stop ticking/polling immediately so no further intents or ticks fire while
+    // the killing blow is on screen, even when the modal itself is deferred.
     terminalHandledRef.current = true
-    setEndModal(modal)
     setLoading(false)
     setBootstrapError(null)
     setStaleWarning(false)
     if (pollTimer.current) clearTimeout(pollTimer.current)
+    if (delayMs > 0) {
+      if (endModalDelayTimer.current) clearTimeout(endModalDelayTimer.current)
+      endModalDelayTimer.current = setTimeout(() => {
+        endModalDelayTimer.current = null
+        if (mounted.current) setEndModal(modal)
+      }, delayMs)
+    } else {
+      setEndModal(modal)
+    }
     return true
   }
 
@@ -504,19 +521,26 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
       setStaleWarning(false)
 
       if (tickRes.terminal) {
-        if (!openEndModalFromResponse(tickRes)) {
+        // Defer the reward modal so the final hit splat and the HP bar draining
+        // to 0 (set above via setState/ingestSplats) play out first.
+        if (!openEndModalFromResponse(tickRes, { delayMs: PVP_DEATH_REVEAL_MS })) {
           terminalHandledRef.current = true
         const youWon = Number(tickRes.terminal.winner) === selfId
         const writebackOk = tickRes.terminal_writeback !== false
         if (!writebackOk) {
           console.error('[PocketRPG][PvP] terminal writeback failed', tickRes)
         }
-        setEndModal({
-          youWon,
-          reason: tickRes.terminal.reason,
-          writebackOk,
-          loot: writebackOk ? (tickRes.loot || { added: [], dropped: [], droppedValue: 0, bankedValue: 0, totalRiskValue: 0 }) : null,
-        })
+        if (endModalDelayTimer.current) clearTimeout(endModalDelayTimer.current)
+        endModalDelayTimer.current = setTimeout(() => {
+          endModalDelayTimer.current = null
+          if (!mounted.current) return
+          setEndModal({
+            youWon,
+            reason: tickRes.terminal.reason,
+            writebackOk,
+            loot: writebackOk ? (tickRes.loot || { added: [], dropped: [], droppedValue: 0, bankedValue: 0, totalRiskValue: 0 }) : null,
+          })
+        }, PVP_DEATH_REVEAL_MS)
         if (pollTimer.current) clearTimeout(pollTimer.current)
         }
         return false
