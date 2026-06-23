@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="gauntlet_s" x1="0.1" y1="0" x2="0.7" y2="1">
+      <stop offset="0" stop-color="#c2cad4"/><stop offset="0.5" stop-color="#8e96a0"/><stop offset="1" stop-color="#565d66"/>
+    </linearGradient>
+  </defs>
+  <g stroke="#1a1d22" stroke-width="12" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M168 260 L168 200 C 168 186 178 178 192 178 C 206 178 216 186 216 200 L216 240 L240 240 L240 176 C 240 162 250 154 264 154 C 278 154 288 162 288 176 L288 240 L312 240 L312 196 C 312 182 322 174 336 174 C 350 174 360 182 360 196 L360 280 C 360 360 312 412 256 412 C 200 412 160 360 160 300 L160 268 C 152 252 156 232 172 236 Z" fill="url(#gauntlet_s)"/>
+    <path d="M168 290 L352 290" stroke="#565d66" stroke-width="9" fill="none"/>
+    <path d="M168 330 L352 330" stroke="#565d66" stroke-width="9" fill="none"/>
+    <circle cx="200" cy="262" r="8" fill="#d6dde4" stroke="none"/>
+    <circle cx="256" cy="262" r="8" fill="#d6dde4" stroke="none"/>
+    <circle cx="312" cy="262" r="8" fill="#d6dde4" stroke="none"/>
+  </g>
+</svg>

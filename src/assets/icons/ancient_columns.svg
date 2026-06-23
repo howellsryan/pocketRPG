@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="ancient_columns_s" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#d6cdb8"/><stop offset="0.6" stop-color="#b0a888"/><stop offset="1" stop-color="#7a7258"/>
+    </linearGradient>
+  </defs>
+  <g stroke="#3a3424" stroke-width="12" stroke-linejoin="round" stroke-linecap="round">
+    <rect x="96" y="120" width="320" height="34" rx="6" fill="#9a9078"/>
+    <g fill="url(#ancient_columns_s)">
+      <path d="M134 154 L198 154 L188 376 L144 376 Z"/>
+      <path d="M226 154 L286 154 L282 376 L230 376 Z"/>
+      <path d="M314 154 L378 154 L368 376 L324 376 Z"/>
+    </g>
+    <g fill="none" stroke="#7a7258" stroke-width="6">
+      <path d="M150 180 L150 366 M172 180 L172 366"/>
+      <path d="M244 180 L244 366 M266 180 L266 366"/>
+      <path d="M334 180 L334 366 M356 180 L356 366"/>
+    </g>
+    <rect x="88" y="376" width="336" height="40" rx="6" fill="#9a9078"/>
+    <rect x="80" y="416" width="352" height="22" rx="6" fill="#7a7258"/>
+  </g>
+</svg>

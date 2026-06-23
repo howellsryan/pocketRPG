@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="tentacle_strike_s" x1="0" y1="1" x2="0.3" y2="0">
+      <stop offset="0" stop-color="#6a3f9a"/><stop offset="0.6" stop-color="#9a4fb0"/><stop offset="1" stop-color="#c98fe0"/>
+    </linearGradient>
+  </defs>
+  <g stroke="#2a1240" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M120 440 C 140 340 180 268 256 220 C 340 168 380 120 392 72 C 350 120 300 150 256 168 C 300 110 308 88 308 88 C 270 130 230 156 196 200 C 220 150 224 130 224 130 C 188 184 156 256 150 360 C 130 380 120 410 120 440 Z" fill="url(#tentacle_strike_s)"/>
+    <circle cx="244" cy="244" r="14" fill="#e0c0f0" stroke="#2a1240" stroke-width="7"/>
+    <circle cx="206" cy="296" r="13" fill="#e0c0f0" stroke="#2a1240" stroke-width="7"/>
+    <circle cx="180" cy="356" r="12" fill="#e0c0f0" stroke="#2a1240" stroke-width="7"/>
+    <circle cx="288" cy="200" r="12" fill="#e0c0f0" stroke="#2a1240" stroke-width="7"/>
+  </g>
+</svg>

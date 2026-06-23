@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="fire_silhouette_s" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffd24a"/><stop offset="0.5" stop-color="#ef6b3a"/><stop offset="1" stop-color="#a8281a"/>
+    </linearGradient>
+  </defs>
+  <g stroke="#3a1208" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M256 56 C 290 110 300 150 332 176 C 360 150 372 162 372 192 C 396 220 408 300 372 360 C 392 300 372 270 350 268 C 360 320 330 360 300 372 C 312 340 300 320 286 314 C 296 360 268 392 256 420 C 244 392 216 360 226 314 C 212 320 200 340 212 372 C 182 360 152 320 162 268 C 140 270 120 300 140 360 C 104 300 116 220 140 192 C 140 162 152 150 180 176 C 212 150 222 110 256 56 Z" fill="url(#fire_silhouette_s)"/>
+    <path d="M256 180 C 280 226 286 264 270 308 C 262 332 250 332 242 308 C 226 264 232 226 256 180 Z" fill="#fff0b0" stroke="none"/>
+    <ellipse cx="232" cy="276" rx="11" ry="14" fill="#3a1208" stroke="none"/>
+    <ellipse cx="280" cy="276" rx="11" ry="14" fill="#3a1208" stroke="none"/>
+  </g>
+</svg>

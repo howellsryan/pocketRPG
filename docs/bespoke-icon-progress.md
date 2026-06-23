@@ -72,7 +72,15 @@ Batch 2 (20) done:
   rock_golem, gladius, wyvern, gargoyle, pyromaniac, barbute, totem_head,
   floating_ghost, fairy
 
-Total covered so far: **302 icons**.
+Batch 3 (25) done — **monster set complete** (all 73 combatArt glyphs covered):
+- [x] crowned_skull, horned_skull, wizard_staff, fire_silhouette, tentacle_strike,
+  hydra, winged_sword, harpy, scroll_unfurled, volcano, gauntlet, reptile_tail,
+  wasp_sting, crystal_ball, queen_crown, bleeding_heart, vomiting, anvil_impact,
+  mighty_force, maggot, lightning_arc, cut_palm, temple_gate, ancient_columns,
+  stone_tower
+
+Total covered so far: **327 icons**. Every monster, area category, and raid
+emblem is now bespoke.
 
 Also: mace template reworked to a spiked morningstar head; bank-tab item icons
 enlarged (GameIcon size 22 -> 33, ~1.5x) so they don't get lost.

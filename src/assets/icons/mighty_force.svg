@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <radialGradient id="mighty_force_s" cx="0.42" cy="0.36" r="0.75">
+      <stop offset="0" stop-color="#cf9a64"/><stop offset="0.6" stop-color="#a3743f"/><stop offset="1" stop-color="#6a481f"/>
+    </radialGradient>
+  </defs>
+  <g stroke="#3a2410" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
+    <g fill="#ffd24a" stroke="#c48f12" stroke-width="9">
+      <polygon points="256,32 274,96 238,96"/>
+      <polygon points="100,90 158,128 128,156"/>
+      <polygon points="412,90 354,128 384,156"/>
+      <polygon points="40,236 104,218 104,256"/>
+      <polygon points="472,236 408,218 408,256"/>
+    </g>
+    <path d="M166 220 L166 184 C 166 170 176 162 190 162 C 204 162 214 170 214 184 L214 220 L238 220 L238 168 C 238 154 248 146 262 146 C 276 146 286 154 286 168 L286 222 L310 222 L310 186 C 310 172 320 164 334 164 C 348 164 358 172 358 186 L358 286 C 358 366 312 418 256 418 C 200 418 158 366 158 300 L158 262 C 150 246 154 226 170 230 Z" fill="url(#mighty_force_s)"/>
+    <path d="M166 280 L348 280 M166 320 L348 320" stroke="#6a481f" stroke-width="9" fill="none"/>
+  </g>
+</svg>

@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="temple_gate_s" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#c2cad4"/><stop offset="0.6" stop-color="#9aa3ac"/><stop offset="1" stop-color="#646b73"/>
+    </linearGradient>
+  </defs>
+  <g stroke="#23272c" stroke-width="12" stroke-linejoin="round" stroke-linecap="round">
+    <polygon points="256,70 432,150 80,150" fill="url(#temple_gate_s)"/>
+    <rect x="96" y="150" width="320" height="26" fill="#7a828c"/>
+    <g fill="url(#temple_gate_s)">
+      <rect x="110" y="176" width="44" height="220"/>
+      <rect x="188" y="176" width="44" height="220"/>
+      <rect x="280" y="176" width="44" height="220"/>
+      <rect x="358" y="176" width="44" height="220"/>
+    </g>
+    <rect x="80" y="396" width="352" height="40" fill="#7a828c"/>
+    <path d="M232 176 L232 396 L280 396 L280 176" fill="#2a2e33" stroke="none"/>
+  </g>
+</svg>

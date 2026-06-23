@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="stone_tower_s" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#bcbfc4"/><stop offset="0.6" stop-color="#8a8e94"/><stop offset="1" stop-color="#565a60"/>
+    </linearGradient>
+  </defs>
+  <g stroke="#23262a" stroke-width="12" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M168 150 L168 110 L196 110 L196 134 L228 134 L228 110 L284 110 L284 134 L316 134 L316 110 L344 110 L344 150 Z" fill="url(#stone_tower_s)"/>
+    <path d="M180 150 L332 150 L356 430 L156 430 Z" fill="url(#stone_tower_s)"/>
+    <path d="M222 196 C 222 168 290 168 290 196 L290 250 L222 250 Z" fill="#2a2e33"/>
+    <path d="M186 290 L326 290 M182 350 L330 350" stroke="#565a60" stroke-width="7" fill="none"/>
+    <path d="M216 250 L216 430 M256 290 L256 430 M296 250 L296 430" stroke="#565a60" stroke-width="6" fill="none"/>
+    <rect x="148" y="430" width="216" height="26" rx="6" fill="#6a6e74"/>
+  </g>
+</svg>
