@@ -5069,6 +5069,14 @@
         "chance": 0.15
       },
       {
+        "itemId": "dragon_javelin",
+        "quantity": [
+          10,
+          50
+        ],
+        "chance": 0.15
+      },
+      {
         "itemId": "uncut_zyrite",
         "quantity": 1,
         "chance": 0.00333
