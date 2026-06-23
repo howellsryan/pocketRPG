@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="{{id}}_hide" x1="0.1" y1="0" x2="0.7" y2="1">
+      <stop offset="0" stop-color="{{light}}"/><stop offset="0.5" stop-color="{{base}}"/><stop offset="1" stop-color="{{shade}}"/>
+    </linearGradient>
+  </defs>
+  <g stroke="#1a1410" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M168 224 L244 224 L238 330 L230 414 L182 414 L176 320 Z" fill="url(#{{id}}_hide)"/>
+    <path d="M344 224 L268 224 L274 330 L282 414 L330 414 L336 320 Z" fill="url(#{{id}}_hide)"/>
+    <path d="M158 172 C 158 162 168 156 178 156 L334 156 C 344 156 354 162 354 172 L354 216 C 354 226 344 232 334 232 L178 232 C 168 232 158 226 158 216 Z" fill="url(#{{id}}_hide)"/>
+    <path d="M200 250 C 192 320 200 372 206 410 M312 250 C 320 320 312 372 306 410" stroke="{{light}}" stroke-width="5" stroke-dasharray="4 9" fill="none"/>
+    <path d="M182 414 L182 446 M204 414 L204 444 M226 414 L226 446 M286 414 L286 446 M308 414 L308 444 M330 414 L330 446" stroke="{{shade}}" stroke-width="8" fill="none"/>
+    <rect x="166" y="170" width="180" height="14" rx="6" fill="{{shade}}" stroke="none"/>
+  </g>
+</svg>

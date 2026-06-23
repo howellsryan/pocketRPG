@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="{{id}}_fabric" x1="0" y1="0" x2="0.4" y2="1">
+      <stop offset="0" stop-color="{{light}}"/><stop offset="0.5" stop-color="{{base}}"/><stop offset="1" stop-color="{{shade}}"/>
+    </linearGradient>
+  </defs>
+  <g stroke="#1a1410" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M168 188 Q 200 320 152 432 Q 256 406 360 432 Q 312 320 344 188 Q 256 170 168 188 Z" fill="url(#{{id}}_fabric)"/>
+    <path d="M180 150 Q 256 132 332 150 L348 196 Q 256 178 164 196 Z" fill="{{shade}}"/>
+    <path d="M218 198 Q 204 320 200 414 M294 198 Q 308 320 312 414 M256 196 L256 416" stroke="{{shade}}" stroke-width="7" fill="none"/>
+    <path d="M188 206 Q 178 320 170 412" stroke="{{light}}" stroke-width="8" fill="none"/>
+  </g>
+</svg>

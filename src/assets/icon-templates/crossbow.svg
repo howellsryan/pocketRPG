@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <g stroke-linecap="round" stroke-linejoin="round">
+    <path d="M118 250 C 180 206 332 206 394 250" fill="none" stroke="#1a1410" stroke-width="40"/>
+    <path d="M118 250 C 180 206 332 206 394 250" fill="none" stroke="{{base}}" stroke-width="24"/>
+    <path d="M150 240 C 200 214 312 214 362 240" fill="none" stroke="{{light}}" stroke-width="6"/>
+    <line x1="124" y1="246" x2="388" y2="246" stroke="#1a1410" stroke-width="9"/>
+    <line x1="124" y1="246" x2="388" y2="246" stroke="#efe6d4" stroke-width="4"/>
+    <rect x="240" y="210" width="32" height="222" rx="10" fill="#a3743f" stroke="#1a1410" stroke-width="13"/>
+    <rect x="247" y="222" width="10" height="198" rx="5" fill="#c89a63" stroke="none"/>
+    <circle cx="256" cy="250" r="22" fill="{{base}}" stroke="#1a1410" stroke-width="12"/>
+    <circle cx="248" cy="244" r="7" fill="{{light}}" stroke="none"/>
+  </g>
+</svg>

@@ -58,10 +58,17 @@ function add(id, entry, source) {
   if (bytes > MAX_BYTES) warnings.push(`${id}: ${bytes}B exceeds ${MAX_BYTES}B budget`)
 }
 
-// 1. Tier templates → <tier>_<shape> entries.
+// 1. Tier templates → <tier>_<shape> entries, and named sets → explicit ids.
 if (fs.existsSync(TIERS_PATH)) {
   const tiers = JSON.parse(fs.readFileSync(TIERS_PATH, 'utf-8'))
   const palettes = tiers.palettes || {}
+  const fill = (tpl, id, pal) => tpl
+    .replace(/\{\{id\}\}/g, id)
+    .replace(/\{\{base\}\}/g, pal.base)
+    .replace(/\{\{light\}\}/g, pal.light)
+    .replace(/\{\{shade\}\}/g, pal.shade)
+
+  // items: id is <tier>_<shape>, shape names the template.
   for (const [shape, tierList] of Object.entries(tiers.items || {})) {
     const tplPath = path.join(TEMPLATE_DIR, `${shape}.svg`)
     if (!fs.existsSync(tplPath)) { warnings.push(`template ${shape}.svg missing`); continue }
@@ -70,12 +77,20 @@ if (fs.existsSync(TIERS_PATH)) {
       const pal = palettes[tier]
       if (!pal) { warnings.push(`palette "${tier}" missing for ${shape}`); continue }
       const id = `${tier}_${shape}`
-      const filled = tpl
-        .replace(/\{\{id\}\}/g, id)
-        .replace(/\{\{base\}\}/g, pal.base)
-        .replace(/\{\{light\}\}/g, pal.light)
-        .replace(/\{\{shade\}\}/g, pal.shade)
-      add(id, parseSvg(filled, `${shape}.svg[${tier}]`), `template:${shape}`)
+      add(id, parseSvg(fill(tpl, id, pal), `${shape}.svg[${tier}]`), `template:${shape}`)
+    }
+  }
+
+  // sets: ids that don't follow <tier>_<shape> (e.g. bare gem names). Each set
+  // names a template and maps explicit ids → palette name.
+  for (const [shape, idMap] of Object.entries(tiers.sets || {})) {
+    const tplPath = path.join(TEMPLATE_DIR, `${shape}.svg`)
+    if (!fs.existsSync(tplPath)) { warnings.push(`set template ${shape}.svg missing`); continue }
+    const tpl = fs.readFileSync(tplPath, 'utf-8')
+    for (const [id, palName] of Object.entries(idMap)) {
+      const pal = palettes[palName]
+      if (!pal) { warnings.push(`palette "${palName}" missing for ${id}`); continue }
+      add(id, parseSvg(fill(tpl, id, pal), `${shape}.svg[${id}]`), `set:${shape}`)
     }
   }
 }

@@ -1,5 +1,5 @@
 {
-  "_comment": "Palette + tier table for templated icon families. The build (scripts/build-bespoke-icons.cjs) expands src/assets/icon-templates/<shape>.svg into <tier>_<shape> entries, swapping {{base}}/{{light}}/{{shade}}. Metal tiers mirror OSRS conventions; resource tiers colour ore/bar/logs by material. See docs/bespoke-icon-style-guide.md.",
+  "_comment": "Palette + tier/set table for templated icon families. items[] expand to <tier>_<shape> via icon-templates/<shape>.svg; sets[] map explicit ids (that don't follow <tier>_<shape>) to a palette. Swaps {{base}}/{{light}}/{{shade}}. See docs/bespoke-icon-style-guide.md.",
   "palettes": {
     "bronze":     { "base": "#b87333", "light": "#f2bd78", "shade": "#6f4119" },
     "iron":       { "base": "#6e747e", "light": "#b4bcc6", "shade": "#41454d" },
@@ -19,7 +19,67 @@
     "magic":      { "base": "#5a7fd0", "light": "#9fbcf0", "shade": "#33508f" },
     "redwood":    { "base": "#b23a2a", "light": "#d4604a", "shade": "#741c12" },
     "teak":       { "base": "#9a6a38", "light": "#bf8e54", "shade": "#5e3e1c" },
-    "mahogany":   { "base": "#7a3a24", "light": "#9e5436", "shade": "#481c10" }
+    "mahogany":   { "base": "#7a3a24", "light": "#9e5436", "shade": "#481c10" },
+
+    "air":    { "base": "#d8e2ea", "light": "#ffffff", "shade": "#9aa6b0" },
+    "water":  { "base": "#2f7fd0", "light": "#79b4ec", "shade": "#1c4f8f" },
+    "earth":  { "base": "#7a5a2e", "light": "#a98a52", "shade": "#4a3518" },
+    "fire":   { "base": "#e8743a", "light": "#ffb27a", "shade": "#a8431a" },
+    "mind":   { "base": "#d98f3a", "light": "#f3bd78", "shade": "#9a5e1c" },
+    "body":   { "base": "#5aa0e0", "light": "#9fc8f0", "shade": "#356a9f" },
+    "chaos":  { "base": "#d6a93a", "light": "#f3d27a", "shade": "#9a7320" },
+    "death":  { "base": "#dcdcdc", "light": "#ffffff", "shade": "#9a9a9a" },
+    "nature": { "base": "#3fa64a", "light": "#8fe08f", "shade": "#246b2c" },
+    "law":    { "base": "#3a4f9a", "light": "#7c8fd0", "shade": "#222f66" },
+    "cosmic": { "base": "#b06fd0", "light": "#d8a7f0", "shade": "#7a3fa0" },
+    "blood":  { "base": "#b3221d", "light": "#e85a52", "shade": "#761010" },
+    "soul":   { "base": "#7fb8ee", "light": "#bfe0fb", "shade": "#4f7faf" },
+    "astral": { "base": "#cfe0f5", "light": "#ffffff", "shade": "#9ab0cf" },
+    "wrath":  { "base": "#e23b2a", "light": "#ff7a68", "shade": "#9a1c10" },
+
+    "sapphire":    { "base": "#2f6fd0", "light": "#79a4ec", "shade": "#1c4488" },
+    "emerald":     { "base": "#2fae5a", "light": "#74d98e", "shade": "#1c7a3c" },
+    "ruby":        { "base": "#d11a2a", "light": "#ff6b78", "shade": "#8a0f1c" },
+    "diamond":     { "base": "#cfe6f0", "light": "#ffffff", "shade": "#9ab8c8" },
+    "dragonstone": { "base": "#b04fd0", "light": "#d88ff0", "shade": "#7a2fa0" },
+    "onyx":        { "base": "#2a2630", "light": "#4a4654", "shade": "#15121a" },
+    "zyrite":      { "base": "#3a2028", "light": "#6a3040", "shade": "#1a1014" },
+
+    "red":     { "base": "#b23a2a", "light": "#d4604a", "shade": "#741c12" },
+    "green":   { "base": "#3f8a4a", "light": "#74c98e", "shade": "#246b32" },
+    "black":   { "base": "#2c2a30", "light": "#4a4654", "shade": "#161418" },
+    "lumira":  { "base": "#3a57c4", "light": "#8aa0f2", "shade": "#22307a" },
+    "verdant": { "base": "#3f8a5a", "light": "#74c98e", "shade": "#246b3c" },
+    "krylth":  { "base": "#c0392b", "light": "#ff7a68", "shade": "#6f1810" },
+    "ancient": { "base": "#8a4fc0", "light": "#b88ff0", "shade": "#5a2f90" },
+    "zephyra": { "base": "#2fd0c0", "light": "#c6fff8", "shade": "#136055" },
+    "grondar": { "base": "#b87333", "light": "#f2bd78", "shade": "#6f4119" },
+
+    "pot_attack":   { "base": "#56a0e0", "light": "#8fc4f0", "shade": "#356f9f" },
+    "pot_strength": { "base": "#d04a3a", "light": "#f0897a", "shade": "#8a261a" },
+    "pot_defence":  { "base": "#5ac0d0", "light": "#93e0ec", "shade": "#357f8f" },
+    "pot_combat":   { "base": "#b56fd0", "light": "#d8a7f0", "shade": "#7a3f9a" },
+    "pot_prayer":   { "base": "#6fd0c0", "light": "#aef0e6", "shade": "#3f9286" },
+    "pot_ranging":  { "base": "#4caf50", "light": "#8fd98f", "shade": "#2f7a37" },
+    "pot_magic":    { "base": "#d09a3a", "light": "#f0c87a", "shade": "#8a6520" },
+
+    "skill_attack":      { "base": "#c0392b", "light": "#e8736a", "shade": "#7a1d14" },
+    "skill_strength":    { "base": "#2f9e44", "light": "#74c98e", "shade": "#1c6b2c" },
+    "skill_defence":     { "base": "#3a6fd0", "light": "#7c9fec", "shade": "#22468f" },
+    "skill_hitpoints":   { "base": "#d04a4a", "light": "#f0897a", "shade": "#8a2626" },
+    "skill_ranged":      { "base": "#4caf50", "light": "#8fd98f", "shade": "#2f7a37" },
+    "skill_magic":       { "base": "#3aa0d0", "light": "#7cc8ec", "shade": "#22688f" },
+    "skill_prayer":      { "base": "#e8d44a", "light": "#f5e88f", "shade": "#a89220" },
+    "skill_mining":      { "base": "#6f8fae", "light": "#a3bcd6", "shade": "#46627e" },
+    "skill_woodcutting": { "base": "#6f9e3a", "light": "#a3c86f", "shade": "#46661c" },
+    "skill_fishing":     { "base": "#4fa0c0", "light": "#8fc8e0", "shade": "#2f6f8a" },
+    "skill_smithing":    { "base": "#8a8f99", "light": "#bcc2cc", "shade": "#5a5f68" },
+    "skill_cooking":     { "base": "#c06f3a", "light": "#e8a36f", "shade": "#7a3f1c" },
+    "skill_fletching":   { "base": "#6f9e6f", "light": "#a3c8a3", "shade": "#466646" },
+    "skill_crafting":    { "base": "#b07a3a", "light": "#d6a76f", "shade": "#6f4a1c" },
+    "skill_herblore":    { "base": "#3fae5a", "light": "#7cd98e", "shade": "#246b32" },
+    "skill_agility":     { "base": "#3a6fae", "light": "#7c9fd6", "shade": "#22467e" },
+    "skill_thieving":    { "base": "#7a4f9a", "light": "#a886c8", "shade": "#4f2f6f" }
   },
   "items": {
     "scimitar":  ["bronze", "iron", "steel", "mithril", "adamant", "runeforged", "dragon"],
@@ -42,6 +102,36 @@
     "chainbody": ["bronze", "iron", "steel", "mithril", "runeforged", "dragon"],
     "ore":       ["tin", "copper", "iron", "mithril", "adamantite", "runeforged", "gold"],
     "bar":       ["bronze", "iron", "steel", "mithril", "adamant", "runeforged", "gold"],
-    "logs":      ["oak", "willow", "maple", "yew", "magic", "redwood", "teak", "mahogany"]
+    "logs":      ["oak", "willow", "maple", "yew", "magic", "redwood", "teak", "mahogany"],
+    "rune":      ["air", "water", "earth", "fire", "mind", "body", "chaos", "death", "nature", "law", "cosmic", "blood", "soul", "astral", "wrath"],
+    "amulet":    ["sapphire", "emerald", "ruby", "diamond", "dragonstone", "onyx", "zyrite"],
+    "arrow":     ["bronze", "iron", "steel", "mithril", "adamant", "runeforged", "dragon"],
+    "shortbow":  ["oak", "willow", "maple", "yew", "magic"],
+    "longbow":   ["oak", "willow", "maple"],
+    "crossbow":  ["iron", "steel", "mithril", "adamant", "runeforged"],
+    "d_hide_body":  ["red", "green", "black", "lumira", "verdant", "krylth", "ancient", "zephyra", "grondar"],
+    "d_hide_chaps": ["red", "green", "black", "lumira", "verdant", "krylth", "ancient", "zephyra", "grondar"]
+  },
+  "sets": {
+    "gem": {
+      "ruby": "ruby", "sapphire": "sapphire", "emerald": "emerald", "diamond": "diamond",
+      "dragonstone": "dragonstone", "onyx": "onyx", "zyrite": "zyrite"
+    },
+    "uncut_gem": {
+      "uncut_ruby": "ruby", "uncut_sapphire": "sapphire", "uncut_emerald": "emerald",
+      "uncut_diamond": "diamond", "uncut_dragonstone": "dragonstone", "uncut_onyx": "onyx", "uncut_zyrite": "zyrite"
+    },
+    "potion": {
+      "attack_potion": "pot_attack", "strength_potion": "pot_strength", "defence_potion": "pot_defence",
+      "combat_potion": "pot_combat", "prayer_potion": "pot_prayer", "ranging_potion": "pot_ranging", "magic_potion": "pot_magic"
+    },
+    "cape": {
+      "attack_cape": "skill_attack", "strength_cape": "skill_strength", "defence_cape": "skill_defence",
+      "hitpoints_cape": "skill_hitpoints", "ranged_cape": "skill_ranged", "magic_cape": "skill_magic",
+      "prayer_cape": "skill_prayer", "mining_cape": "skill_mining", "woodcutting_cape": "skill_woodcutting",
+      "fishing_cape": "skill_fishing", "smithing_cape": "skill_smithing", "cooking_cape": "skill_cooking",
+      "fletching_cape": "skill_fletching", "crafting_cape": "skill_crafting", "herblore_cape": "skill_herblore",
+      "agility_cape": "skill_agility", "thieving_cape": "skill_thieving"
+    }
   }
 }

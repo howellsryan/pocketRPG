@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <radialGradient id="{{id}}_jewel" cx="0.4" cy="0.32" r="0.85">
+      <stop offset="0" stop-color="{{light}}"/><stop offset="0.55" stop-color="{{base}}"/><stop offset="1" stop-color="{{shade}}"/>
+    </radialGradient>
+  </defs>
+  <g stroke="#1a1410" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M256 96 C 170 120 120 184 124 252" fill="none" stroke="#c9a24a" stroke-width="16"/>
+    <path d="M256 96 C 342 120 392 184 388 252" fill="none" stroke="#c9a24a" stroke-width="16"/>
+    <path d="M256 248 C 320 256 360 300 360 348 C 360 404 312 444 256 458 C 200 444 152 404 152 348 C 152 300 192 256 256 248 Z" fill="url(#{{id}}_jewel)"/>
+    <path d="M256 270 C 224 278 200 300 192 326 C 224 312 256 310 256 310 Z" fill="{{light}}" stroke="none"/>
+    <circle cx="256" cy="252" r="22" fill="#e0b94a" stroke="#7a5a16"/>
+  </g>
+</svg>

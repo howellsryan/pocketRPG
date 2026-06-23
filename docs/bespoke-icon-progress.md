@@ -39,14 +39,30 @@ cave_goblin, mining.
 - [x] bar ×7 (bronze,iron,steel,mithril,adamant,runeforged,gold)
 - [x] logs ×8 (oak,willow,maple,yew,magic,redwood,teak,mahogany) + coal (file)
 
-## Remaining (Phase 4 — to be bunched later)
-- **Other weapons**: godswords, chaotic/ironclad/zesta longswords, dragon_plateskirt set extras, whips, bows (shortbow/longbow/crossbow tiers), thrown/ammo (arrows, bolts, darts), staves/wands, special boss weapons (named uniques).
-- **Other armour**: chaps/d'hide sets, robes (magic), boots, gloves, capes (skill capes + special), amulets/rings/necklaces, ranger/void/god sets, named boss/raid uniques (dravok_s_*, gorath_s_*, torvek_s_*, verin_s_*, masari_*, kodai, ancestral, etc.), slayer_defender + gloves_of_slaughter.
-- **Consumables**: all potions/brews (per type colour), food (fish raw+cooked, meats, pies, etc.), runes (all elements), seeds, herbs.
-- **Resources cont.**: gems (sapphire/emerald/diamond/dragonstone/onyx/zyrite + uncut), feathers, hides/leather, planks, bones/ashes, fishing/crafting mats.
-- **Monsters**: 104 monster ids (portraits).
-- **Skills**: 17 skill emblems (mining done; 16 to go).
+### Phase 4a — families (templated/sets) ✅
+- [x] rune ×15 (all elements) — fire_rune/nature_rune files removed
+- [x] potion ×7 (attack,strength,defence,combat,prayer,ranging,magic) — prayer_potion file removed
+- [x] gem ×7 + uncut_gem ×7 (sapphire..zyrite) — ruby file removed
+- [x] amulet ×7 (gem-based)
+- [x] arrow ×7 (metal tiers)
+- [x] shortbow ×5 (wood), longbow ×3 (wood), crossbow ×5 (metal)
+- [x] cape ×17 (skill capes, per-skill accent)
+- [x] d_hide_body ×9, d_hide_chaps ×9 (per hide colour)
+
+Total covered so far: **215 icons**.
+
+## Remaining (Phase 4b — needs per-item bespoke authoring, multi-batch)
+These are distinct designs that can't be templated — each needs hand-authoring.
+- **Named unique weapons**: godswords, chaotic/ironclad/zesta longswords, whips, staves/wands, dragon_javelin, special boss weapons, gem/dragon bolts, thornspine/twisted bows variants.
+- **Named unique armour**: robes (wizard/kodai/ancestral/2nd_age/arcanist), hats, coifs, boots, gloves, rings, necklaces, ranger/void/god sets, boss/raid uniques (dravok_s_*, gorath_s_*, torvek_s_*, verin_s_*, masari_*, gravehusk_*, etc.), slayer_defender + gloves_of_slaughter.
+- **Consumables/resources cont.**: brews (lumira), super_restore, food (fish raw+cooked, meats, pies), seeds ×7, saplings ×11, herbs, planks ×3, bones ×4, feathers, leather/hides, coins(done)/coal(done).
+- **Monsters**: 104 monster portraits.
+- **Skills**: 16 skill emblems (mining done).
 - **UI / misc**: nav glyphs, toasts, prayers, spells, farming crops, minigames, clue/collection-log markers.
+
+> Phase 4b is the genuinely bespoke majority (~250+ unique designs incl. 104
+> monsters). It cannot be completed in a single pass at acceptable quality; the
+> game-icons + emoji fallback keeps every uncovered id rendering meanwhile.
 
 ## Notes
 - Metal tiers come from one template + `icon-tiers.json` palette/tier table.
