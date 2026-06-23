@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <radialGradient id="{{id}}_b" cx="0.42" cy="0.38" r="0.75">
+      <stop offset="0" stop-color="{{light}}"/><stop offset="0.6" stop-color="{{base}}"/><stop offset="1" stop-color="{{shade}}"/>
+    </radialGradient>
+  </defs>
+  <g stroke="#3a2014" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M150 200 C 220 150 340 156 392 220 C 436 274 420 356 350 384 C 270 416 160 404 120 340 C 96 300 108 232 150 200 Z" fill="url(#{{id}}_b)"/>
+    <path d="M120 300 C 96 280 88 250 100 224" stroke="#f0e6d2" stroke-width="24" fill="none"/>
+    <circle cx="100" cy="220" r="18" fill="#f0e6d2"/>
+    <path d="M200 232 C 256 216 320 224 360 256 M196 300 C 256 288 320 296 356 322" stroke="{{shade}}" stroke-width="8" fill="none"/>
+    <path d="M214 210 C 268 196 330 204 366 234" stroke="{{light}}" stroke-width="8" fill="none"/>
+  </g>
+</svg>

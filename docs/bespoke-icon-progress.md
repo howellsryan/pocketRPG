@@ -82,6 +82,13 @@ Batch 3 (25) done — **monster set complete** (all 73 combatArt glyphs covered)
 Total covered so far: **327 icons**. Every monster, area category, and raid
 emblem is now bespoke.
 
+### Phase 4d — food & consumables ✅ (now 351)
+- [x] fish/meat families (templated, raw+cooked palettes): trout, anglerfish,
+  karam (+raw), shrimps (+raw), eel (+raw), manta_ray (+raw), cooked_chicken/
+  raw_chicken, cooked_meat/raw_beef
+- [x] standalone: raw_crab, raw_shark, super_restore, super_combat, lumira_brew,
+  feather, red_spiders_eggs, potato_cactus
+
 Also: mace template reworked to a spiked morningstar head; bank-tab item icons
 enlarged (GameIcon size 22 -> 33, ~1.5x) so they don't get lost.
 

@@ -59,6 +59,19 @@
     "seed":    { "base": "#7a9e3a", "light": "#a8c86f", "shade": "#4a6620" },
     "sapling": { "base": "#4caf50", "light": "#8fd98f", "shade": "#2f7a37" },
 
+    "cooked_fish":    { "base": "#c9a44e", "light": "#e6c47a", "shade": "#8a6a2c" },
+    "raw_fish":       { "base": "#e0a7a0", "light": "#f3c8c2", "shade": "#a86f68" },
+    "cooked_shrimp":  { "base": "#e8743a", "light": "#ffaa7a", "shade": "#a8431a" },
+    "raw_shrimp":     { "base": "#cdb0b8", "light": "#e6d2d8", "shade": "#9a7f88" },
+    "cooked_eel":     { "base": "#7a6438", "light": "#a08a54", "shade": "#4a3c1c" },
+    "raw_eel":        { "base": "#566472", "light": "#8896a4", "shade": "#33404c" },
+    "cooked_manta":   { "base": "#8a7a5a", "light": "#b4a380", "shade": "#564a32" },
+    "raw_manta":      { "base": "#8a929c", "light": "#b4bcc6", "shade": "#565d66" },
+    "cooked_chicken": { "base": "#c89a5a", "light": "#e8c488", "shade": "#8a6230" },
+    "raw_chicken":    { "base": "#e8c0b0", "light": "#f6ddd2", "shade": "#b0867a" },
+    "cooked_meat":    { "base": "#9a5a2c", "light": "#c07a44", "shade": "#6a3a18" },
+    "raw_beef":       { "base": "#d06a6a", "light": "#e89a9a", "shade": "#9a4040" },
+
     "pot_attack":   { "base": "#56a0e0", "light": "#8fc4f0", "shade": "#356f9f" },
     "pot_strength": { "base": "#d04a3a", "light": "#f0897a", "shade": "#8a261a" },
     "pot_defence":  { "base": "#5ac0d0", "light": "#93e0ec", "shade": "#357f8f" },
@@ -149,6 +162,15 @@
       "oak_sapling": "sapling", "willow_sapling": "sapling", "maple_sapling": "sapling", "yew_sapling": "sapling",
       "magic_sapling": "sapling", "apple_sapling": "sapling", "banana_sapling": "sapling", "orange_sapling": "sapling",
       "curry_sapling": "sapling", "papaya_sapling": "sapling", "palm_sapling": "sapling"
-    }
+    },
+    "fish": {
+      "trout": "cooked_fish", "raw_trout": "raw_fish", "anglerfish": "cooked_fish", "raw_anglerfish": "raw_fish",
+      "karam": "cooked_fish", "raw_karam": "raw_fish"
+    },
+    "shrimp": { "shrimps": "cooked_shrimp", "raw_shrimps": "raw_shrimp" },
+    "eel": { "eel": "cooked_eel", "raw_eel": "raw_eel" },
+    "manta_ray": { "manta_ray": "cooked_manta", "raw_manta_ray": "raw_manta" },
+    "drumstick": { "cooked_chicken": "cooked_chicken", "raw_chicken": "raw_chicken" },
+    "meat": { "cooked_meat": "cooked_meat", "raw_beef": "raw_beef" }
   }
 }

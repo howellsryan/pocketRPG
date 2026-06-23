@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="{{id}}_b" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="{{light}}"/><stop offset="0.55" stop-color="{{base}}"/><stop offset="1" stop-color="{{shade}}"/>
+    </linearGradient>
+  </defs>
+  <g stroke="#2a2018" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
+    <polygon points="396,256 466,200 448,256 466,312 396,300" fill="{{shade}}"/>
+    <path d="M92 256 C 168 182 332 182 404 232 L422 256 L404 280 C 332 330 168 330 92 256 Z" fill="url(#{{id}}_b)"/>
+    <polygon points="232,200 290,128 314,206" fill="{{shade}}"/>
+    <path d="M104 250 C 180 296 300 300 360 288 L360 312 C 280 322 168 312 110 282 Z" fill="{{light}}" stroke="none"/>
+    <circle cx="156" cy="240" r="13" fill="#2a2018" stroke="none"/>
+    <circle cx="151" cy="235" r="4" fill="#fff" stroke="none"/>
+    <path d="M186 226 L186 286 M212 222 L212 290" stroke="{{shade}}" stroke-width="6" fill="none"/>
+  </g>
+</svg>

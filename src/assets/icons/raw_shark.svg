@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="raw_shark_b" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#c8d0d8"/><stop offset="0.5" stop-color="#97a4b0"/><stop offset="1" stop-color="#6a7580"/>
+    </linearGradient>
+  </defs>
+  <g stroke="#2a323a" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
+    <polygon points="404,250 472,196 452,254 474,330 402,288" fill="#7d8a96"/>
+    <path d="M72 268 C 150 214 250 206 360 232 C 392 240 414 250 414 262 C 414 274 392 286 360 296 C 250 322 150 320 92 296 C 76 290 66 278 72 268 Z" fill="url(#raw_shark_b)"/>
+    <polygon points="236,214 312,118 320,224" fill="#7d8a96"/>
+    <polygon points="196,300 232,372 286,312" fill="#7d8a96"/>
+    <path d="M96 286 C 170 312 280 312 356 300 C 360 312 356 320 350 322 C 270 334 168 330 104 304 Z" fill="#dbe2e8" stroke="none"/>
+    <circle cx="140" cy="258" r="13" fill="#2a323a" stroke="none"/>
+    <path d="M76 276 C 100 290 128 294 156 292" fill="none" stroke="#2a323a" stroke-width="7"/>
+  </g>
+</svg>
