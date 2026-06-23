@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <radialGradient id="ward_of_elidria_body" cx="0.4" cy="0.35" r="0.7">
+      <stop offset="0" stop-color="#e8f4ff"/><stop offset="0.5" stop-color="#7ab0e8"/><stop offset="1" stop-color="#2a5090"/>
+    </radialGradient>
+    <radialGradient id="ward_of_elidria_glow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#c0e0ff" stop-opacity="0.6"/><stop offset="1" stop-color="#4080c0" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <g stroke="#1a1410" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
+    <!-- Outer glow -->
+    <circle cx="256" cy="270" r="208" fill="url(#ward_of_elidria_glow)" stroke="none"/>
+    <!-- Shield body -->
+    <path d="M256 86 C 334 100 382 152 382 224 C 382 330 334 416 256 452 C 178 416 130 330 130 224 C 130 152 178 100 256 86 Z" fill="url(#ward_of_elidria_body)" stroke="#2a5090" stroke-width="13"/>
+    <!-- Runic circle -->
+    <circle cx="256" cy="270" r="88" fill="none" stroke="#c0e0ff" stroke-width="8"/>
+    <!-- Cardinal rune marks -->
+    <path d="M 256 182 L 262 196 L 256 192 L 250 196 Z" fill="#c0e0ff"/>
+    <path d="M 344 270 L 330 264 L 334 270 L 330 276 Z" fill="#c0e0ff"/>
+    <path d="M 256 358 L 250 344 L 256 348 L 262 344 Z" fill="#c0e0ff"/>
+    <path d="M 168 270 L 182 276 L 178 270 L 182 264 Z" fill="#c0e0ff"/>
+    <!-- Central bright gem -->
+    <circle cx="256" cy="270" r="38" fill="#e8f4ff" stroke="#2a5090" stroke-width="10"/>
+    <circle cx="250" cy="264" r="14" fill="#ffffff" stroke="none"/>
+    <!-- Cross symbol -->
+    <path d="M 256 242 L 256 298 M 228 270 L 284 270" stroke="#2a5090" stroke-width="8" fill="none"/>
+    <!-- Shield highlight -->
+    <path d="M 186 152 C 180 240 186 324 180 408" stroke="#e8f4ff" stroke-width="8" fill="none" opacity="0.4"/>
+  </g>
+</svg>

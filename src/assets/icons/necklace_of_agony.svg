@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <radialGradient id="necklace_of_agony_gem" cx="0.38" cy="0.3" r="0.75">
+      <stop offset="0" stop-color="#ff6878"/><stop offset="0.55" stop-color="#c0182a"/><stop offset="1" stop-color="#6a080e"/>
+    </radialGradient>
+  </defs>
+  <g stroke="#1a1410" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
+    <!-- Chain — dark -->
+    <path d="M256 96 C 170 120 120 184 124 252" fill="none" stroke="#3a2a2a" stroke-width="16"/>
+    <path d="M256 96 C 342 120 392 184 388 252" fill="none" stroke="#3a2a2a" stroke-width="16"/>
+    <!-- Thorn mount frame -->
+    <path d="M 218 266 L 198 246 L 218 254 L 228 236 L 238 254 L 256 244 L 274 254 L 284 236 L 294 254 L 314 246 L 294 266 L 304 286 L 284 278 L 294 298 L 274 286 L 256 304 L 238 286 L 218 298 L 228 278 L 208 286 Z" fill="#2a1a1a" stroke="#1a0a0a" stroke-width="10"/>
+    <!-- Gem body -->
+    <ellipse cx="256" cy="272" rx="46" ry="50" fill="url(#necklace_of_agony_gem)"/>
+    <!-- Gem facets -->
+    <path d="M 256 230 L 282 262 L 256 292 L 230 262 Z" fill="#ff6878" stroke="none" opacity="0.5"/>
+    <!-- Highlight -->
+    <path d="M 230 248 C 238 238 250 234 262 236" stroke="#ff6878" stroke-width="8" fill="none" opacity="0.7"/>
+    <!-- Dark chain clasp -->
+    <circle cx="256" cy="252" r="18" fill="#2a1a1a" stroke="#1a0a0a" stroke-width="9"/>
+  </g>
+</svg>

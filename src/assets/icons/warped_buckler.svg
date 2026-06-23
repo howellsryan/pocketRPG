@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <radialGradient id="warped_buckler_body" cx="0.38" cy="0.32" r="0.75">
+      <stop offset="0" stop-color="#7a8070"/><stop offset="0.55" stop-color="#3a4838"/><stop offset="1" stop-color="#1a2018"/>
+    </radialGradient>
+  </defs>
+  <g stroke="#1a1410" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
+    <!-- Buckler body — slightly warped/asymmetric -->
+    <path d="M 256 88 C 358 96 404 172 398 256 C 392 340 348 422 256 452 C 168 432 120 354 116 268 C 112 176 158 100 256 88 Z" fill="url(#warped_buckler_body)"/>
+    <!-- Warped crack lines -->
+    <path d="M 240 130 C 228 160 238 190 228 226 C 220 256 206 278 210 310" stroke="#1a2018" stroke-width="8" fill="none"/>
+    <path d="M 280 150 C 292 178 284 208 296 240 C 308 268 316 290 308 320" stroke="#1a2018" stroke-width="7" fill="none"/>
+    <!-- Twisted boss diamond -->
+    <path d="M 256 220 L 278 256 L 256 292 L 234 256 Z" fill="#5a6050" stroke="#1a2018" stroke-width="9"/>
+    <circle cx="256" cy="256" r="28" fill="#2a3028" stroke="#1a1410" stroke-width="10"/>
+    <circle cx="252" cy="252" r="10" fill="#5a6050" stroke="none"/>
+    <!-- Rim details -->
+    <path d="M 148 200 C 136 228 128 260 126 292" stroke="#3a4838" stroke-width="9" fill="none"/>
+    <path d="M 362 198 C 374 228 382 260 386 294" stroke="#3a4838" stroke-width="8" fill="none"/>
+    <!-- Highlight -->
+    <path d="M 168 176 C 162 252 170 326 164 402" stroke="#7a8070" stroke-width="7" fill="none" opacity="0.4"/>
+  </g>
+</svg>

@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="{{id}}_body" x1="0.2" y1="0" x2="0.75" y2="1">
+      <stop offset="0" stop-color="{{light}}"/><stop offset="0.55" stop-color="{{base}}"/><stop offset="1" stop-color="{{shade}}"/>
+    </linearGradient>
+    <radialGradient id="{{id}}_gem" cx="0.38" cy="0.3" r="0.75">
+      <stop offset="0" stop-color="{{light}}"/><stop offset="0.6" stop-color="{{base}}"/><stop offset="1" stop-color="{{shade}}"/>
+    </radialGradient>
+  </defs>
+  <g stroke="#1a1410" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
+    <!-- Chain left -->
+    <path d="M 190 100 C 172 106 152 118 140 138 L 126 170" stroke="#c9a24a" stroke-width="15" fill="none"/>
+    <!-- Chain right -->
+    <path d="M 322 100 C 340 106 360 118 372 138 L 386 170" stroke="#c9a24a" stroke-width="15" fill="none"/>
+    <!-- Gold outer frame -->
+    <ellipse cx="256" cy="316" rx="108" ry="134" fill="#c9a24a" stroke="#1a1410" stroke-width="13"/>
+    <!-- Pendant body -->
+    <ellipse cx="256" cy="316" rx="90" ry="116" fill="url(#{{id}}_body)" stroke="none"/>
+    <!-- Central gem -->
+    <ellipse cx="256" cy="308" rx="52" ry="60" fill="url(#{{id}}_gem)" stroke="#c9a24a" stroke-width="8"/>
+    <!-- Gem highlight -->
+    <path d="M 230 282 C 238 274 252 272 262 276" stroke="{{light}}" stroke-width="7" fill="none" opacity="0.7"/>
+    <!-- Top connector -->
+    <path d="M 232 182 C 232 168 248 160 256 160 C 264 160 280 168 280 182 L 276 202 L 236 202 Z" fill="#c9a24a" stroke="#1a1410" stroke-width="10"/>
+    <!-- Frame decorations -->
+    <path d="M 148 300 L 156 316 L 148 332" stroke="#8a6010" stroke-width="6" fill="none"/>
+    <path d="M 364 300 L 356 316 L 364 332" stroke="#8a6010" stroke-width="6" fill="none"/>
+  </g>
+</svg>

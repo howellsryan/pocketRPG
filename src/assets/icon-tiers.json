@@ -136,6 +136,7 @@
     "logs":      ["oak", "willow", "maple", "yew", "magic", "redwood", "teak", "mahogany"],
     "rune":      ["air", "water", "earth", "fire", "mind", "body", "chaos", "death", "nature", "law", "cosmic", "blood", "soul", "astral", "wrath"],
     "amulet":    ["sapphire", "emerald", "ruby", "diamond", "dragonstone", "onyx", "zyrite"],
+    "stole":     ["lumira", "verdant", "krylth", "ancient", "zephyra", "grondar"],
     "arrow":     ["bronze", "iron", "steel", "mithril", "adamant", "runeforged", "dragon"],
     "shortbow":  ["oak", "willow", "maple", "yew", "magic"],
     "longbow":   ["oak", "willow", "maple"],
@@ -143,13 +144,23 @@
     "d_hide_body":  ["red", "green", "black", "lumira", "verdant", "krylth", "ancient", "zephyra", "grondar"],
     "d_hide_chaps": ["red", "green", "black", "lumira", "verdant", "krylth", "ancient", "zephyra", "grondar"],
     "plank":        ["oak", "teak", "mahogany"],
-    "boots":        ["dragon"]
+    "boots":        ["dragon"],
+    "d_hide_shield": ["lumira", "verdant", "krylth", "ancient", "zephyra", "grondar"]
   },
   "sets": {
     "full_helm": {
       "dravok_s_helm": "dravok", "gorath_s_helm": "gorath", "torvek_s_helm": "torvek",
       "verin_s_helm": "verin", "gravehusk_helm": "gravehusk", "void_king_helm": "void_king",
       "masari_mask": "masari"
+    },
+    "amulet": {
+      "amulet_of_strength": "ruby",
+      "amulet_of_power": "diamond",
+      "amulet_of_magic": "sapphire"
+    },
+    "kiteshield": {
+      "eagle_eyed_kiteshield": "ranger_green",
+      "arcane_kiteshield": "arcane_blue"
     },
     "platebody": {
       "dravok_s_platebody": "dravok", "gorath_s_platebody": "gorath",
