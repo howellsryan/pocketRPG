@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M312 138 C 206 206 206 306 312 374" stroke="#1a1410" stroke-width="44"/>
+    <path d="M312 138 C 206 206 206 306 312 374" stroke="{{base}}" stroke-width="26"/>
+    <path d="M300 168 C 232 212 232 300 300 344" stroke="{{light}}" stroke-width="7"/>
+    <!-- No bowstring — unstrung -->
+    <circle cx="312" cy="138" r="10" fill="{{shade}}" stroke="#1a1410" stroke-width="8"/>
+    <circle cx="312" cy="374" r="10" fill="{{shade}}" stroke="#1a1410" stroke-width="8"/>
+  </g>
+</svg>

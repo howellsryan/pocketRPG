@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="{{id}}_scroll" x1="0.2" y1="0" x2="0.75" y2="1">
+      <stop offset="0" stop-color="{{light}}"/><stop offset="0.5" stop-color="{{base}}"/><stop offset="1" stop-color="{{shade}}"/>
+    </linearGradient>
+  </defs>
+  <g stroke="#1a1410" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
+    <!-- Scroll body -->
+    <rect x="120" y="148" width="272" height="216" rx="16" fill="url(#{{id}}_scroll)"/>
+    <!-- Top rolled end -->
+    <ellipse cx="256" cy="148" rx="136" ry="28" fill="{{light}}" stroke="#1a1410" stroke-width="13"/>
+    <!-- Bottom rolled end -->
+    <ellipse cx="256" cy="364" rx="136" ry="28" fill="{{shade}}" stroke="#1a1410" stroke-width="13"/>
+    <!-- Text lines on scroll -->
+    <path d="M 172 210 L 340 210 M 172 238 L 340 238 M 172 266 L 316 266 M 172 294 L 330 294" stroke="{{shade}}" stroke-width="8" fill="none" opacity="0.6"/>
+    <!-- Seal/wax stamp -->
+    <circle cx="256" cy="256" r="28" fill="{{shade}}" stroke="#1a1410" stroke-width="10"/>
+    <path d="M 244 248 L 256 240 L 268 248 L 264 262 L 248 262 Z" fill="{{light}}" stroke="none"/>
+  </g>
+</svg>

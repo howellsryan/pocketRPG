@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <radialGradient id="{{id}}_hide" cx="0.4" cy="0.38" r="0.7">
+      <stop offset="0" stop-color="{{light}}"/><stop offset="0.55" stop-color="{{base}}"/><stop offset="1" stop-color="{{shade}}"/>
+    </radialGradient>
+  </defs>
+  <g stroke="#1a1410" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
+    <!-- Hide body — stretched pelt shape -->
+    <path d="M 256 82 C 318 88 390 120 412 190 C 428 244 404 318 370 372 C 334 428 296 452 256 452 C 216 452 178 428 142 372 C 108 318 84 244 100 190 C 122 120 194 88 256 82 Z" fill="url(#{{id}}_hide)"/>
+    <!-- Hide grain texture lines -->
+    <path d="M 192 160 C 210 190 214 240 202 290" stroke="{{shade}}" stroke-width="7" fill="none" opacity="0.5"/>
+    <path d="M 256 130 L 256 390" stroke="{{shade}}" stroke-width="6" fill="none" opacity="0.4"/>
+    <path d="M 316 160 C 298 190 294 240 308 290" stroke="{{shade}}" stroke-width="7" fill="none" opacity="0.5"/>
+    <!-- Highlight -->
+    <path d="M 174 178 C 166 248 180 318 168 386" stroke="{{light}}" stroke-width="8" fill="none" opacity="0.45"/>
+  </g>
+</svg>

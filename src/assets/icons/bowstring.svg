@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <g stroke-linecap="round" stroke-linejoin="round">
+    <!-- Coiled/looped bowstring -->
+    <path d="M 200 140 C 160 180 148 240 156 300 C 164 356 188 400 220 430" stroke="#1a1410" stroke-width="14" fill="none"/>
+    <path d="M 200 140 C 160 180 148 240 156 300 C 164 356 188 400 220 430" stroke="#efe6d4" stroke-width="8" fill="none"/>
+    <!-- Second loop -->
+    <path d="M 220 140 C 264 160 280 210 272 270 C 264 328 240 384 220 430" stroke="#1a1410" stroke-width="12" fill="none"/>
+    <path d="M 220 140 C 264 160 280 210 272 270 C 264 328 240 384 220 430" stroke="#d8c89a" stroke-width="6" fill="none"/>
+    <!-- End loops (nocks) -->
+    <circle cx="210" cy="140" r="14" fill="none" stroke="#c9a24a" stroke-width="10"/>
+    <circle cx="220" cy="430" r="14" fill="none" stroke="#c9a24a" stroke-width="10"/>
+  </g>
+</svg>
