@@ -134,6 +134,12 @@ masari) reusing full_helm/platebody/platelegs/plateskirt silhouettes:
 - [x] special ×4: arcanist_hat, fancy_tiara, robin_hood_hat, shardglass_helmet,
   zephyra_helmet
 
+### Phase 4k — d'hide bracers & jewellery gloves ✅ (now 474)
+- [x] d_hide_bracers ×6: lumira/verdant/krylth/zephyra/ancient/grondar
+- [x] bracelets ×2: afflicted_bracelet, zyrite_bracelet
+- [x] vambraces & gauntlets ×7: 2nd_age_vambraces, cryptbound_gloves, arcanist_gloves,
+  ferocious_gloves, holy_wraps, razorwing_vambraces, thornhide_gauntlets
+
 ## Remaining
 - **Monsters batch 2-3** (~44 glyphs): hanging_spider, masked_spider, tiger_head,
   horned_reptile, lizardman, grim_reaper, tree_face, devil_mask, bleeding_eye,
