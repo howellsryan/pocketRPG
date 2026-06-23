@@ -131,6 +131,10 @@
     "body": "<defs><linearGradient id=\"ashen_hydra_bones_bone\" x1=\"0\" y1=\"0\" x2=\"1\" y2=\"1\"><stop offset=\"0\" stop-color=\"#f4efe0\"/><stop offset=\"0.6\" stop-color=\"#ddd6c2\"/><stop offset=\"1\" stop-color=\"#a89e84\"/></linearGradient></defs><g transform=\"rotate(-38 256 256)\" stroke=\"#3a342a\" stroke-width=\"13\" stroke-linejoin=\"round\" stroke-linecap=\"round\"><rect x=\"226\" y=\"160\" width=\"60\" height=\"192\" fill=\"url(#ashen_hydra_bones_bone)\"/><circle cx=\"214\" cy=\"158\" r=\"40\" fill=\"url(#ashen_hydra_bones_bone)\"/><circle cx=\"298\" cy=\"158\" r=\"40\" fill=\"url(#ashen_hydra_bones_bone)\"/><circle cx=\"214\" cy=\"354\" r=\"40\" fill=\"url(#ashen_hydra_bones_bone)\"/><circle cx=\"298\" cy=\"354\" r=\"40\" fill=\"url(#ashen_hydra_bones_bone)\"/><path d=\"M242 180 L242 332\" stroke=\"#f4efe0\" stroke-width=\"8\" fill=\"none\"/></g>",
     "viewBox": null
   },
+  "ashen_slayer_helm": {
+    "body": "<defs><linearGradient id=\"ashen_slayer_helm_b\" x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\"><stop offset=\"0\" stop-color=\"#7a7a7a\"/><stop offset=\"0.5\" stop-color=\"#4a4a4a\"/><stop offset=\"1\" stop-color=\"#2a2a2a\"/></linearGradient></defs><g stroke=\"#1a1410\" stroke-width=\"13\" stroke-linejoin=\"round\" stroke-linecap=\"round\"><path d=\"M180 240 L180 160 C 180 140 200 130 200 160 L200 200 L220 200 L220 120 C 220 100 240 100 240 120 L240 196 L256 196 L256 100 C 256 80 276 80 276 100 L276 196 L292 196 L292 120 C 292 100 312 100 312 120 L312 200 L332 200 L332 160 C 332 140 352 150 352 170 L352 240 C 352 300 320 340 256 360 C 192 340 180 300 180 240 Z\" fill=\"url(#ashen_slayer_helm_b)\"/><path d=\"M220 200 L220 280 M256 196 L256 280 M292 196 L292 280\" stroke=\"#1a1410\" stroke-width=\"8\"/><circle cx=\"220\" cy=\"140\" r=\"12\" fill=\"#ff6a4a\"/><circle cx=\"292\" cy=\"140\" r=\"12\" fill=\"#ff6a4a\"/></g>",
+    "viewBox": null
+  },
   "astral_rune": {
     "body": "<defs><radialGradient id=\"astral_rune_stone\" cx=\"0.4\" cy=\"0.32\" r=\"0.85\"><stop offset=\"0\" stop-color=\"#ffffff\"/><stop offset=\"0.55\" stop-color=\"#cfe0f5\"/><stop offset=\"1\" stop-color=\"#9ab0cf\"/></radialGradient></defs><g stroke=\"#1a1410\" stroke-width=\"13\" stroke-linejoin=\"round\" stroke-linecap=\"round\"><path d=\"M150 168 L362 156 L420 250 L388 372 L256 416 L120 360 L104 232 Z\" fill=\"url(#astral_rune_stone)\"/><path d=\"M150 168 L362 156 L300 210 C 240 198 184 204 150 230 Z\" fill=\"#ffffff\" stroke=\"none\"/><path d=\"M256 196 L256 372 M186 240 L326 240 M196 312 L316 312\" stroke=\"#9ab0cf\" stroke-width=\"14\" fill=\"none\"/><path d=\"M256 196 L196 240 M256 196 L316 240 M256 372 L196 312 M256 372 L316 312\" stroke=\"#9ab0cf\" stroke-width=\"11\" fill=\"none\"/></g>",
     "viewBox": null
@@ -157,6 +161,10 @@
   },
   "battlestaff": {
     "body": "<defs><linearGradient id=\"battlestaff_w\" x1=\"0\" y1=\"0\" x2=\"1\" y2=\"0\"><stop offset=\"0\" stop-color=\"#6a4a2a\"/><stop offset=\"0.5\" stop-color=\"#4a2f18\"/><stop offset=\"1\" stop-color=\"#2e1c0e\"/></linearGradient></defs><g transform=\"rotate(-22 256 256)\" stroke=\"#1a1410\" stroke-width=\"13\" stroke-linejoin=\"round\" stroke-linecap=\"round\"><rect x=\"244\" y=\"150\" width=\"26\" height=\"312\" rx=\"12\" fill=\"url(#battlestaff_w)\"/><path d=\"M256 152 L256 458\" stroke=\"#7a5a32\" stroke-width=\"6\" fill=\"none\"/><path d=\"M232 150 L280 150 L280 116 C 280 96 268 84 256 84 C 244 84 232 96 232 116 Z\" fill=\"#c9a24a\"/><path d=\"M238 110 L274 110 M238 128 L274 128\" stroke=\"#7a5a1a\" stroke-width=\"7\" fill=\"none\"/><rect x=\"236\" y=\"150\" width=\"40\" height=\"18\" rx=\"6\" fill=\"#c9a24a\"/></g>",
+    "viewBox": null
+  },
+  "berserker_helm": {
+    "body": "<defs><linearGradient id=\"berserker_helm_b\" x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\"><stop offset=\"0\" stop-color=\"#e8a06a\"/><stop offset=\"0.5\" stop-color=\"#c0703a\"/><stop offset=\"1\" stop-color=\"#8a3a1a\"/></linearGradient></defs><g stroke=\"#1a1410\" stroke-width=\"13\" stroke-linejoin=\"round\" stroke-linecap=\"round\"><path d=\"M170 260 L170 160 L200 140 L256 120 L312 140 L342 160 L342 260 C 342 310 300 350 256 370 C 212 350 170 310 170 260 Z\" fill=\"url(#berserker_helm_b)\"/><path d=\"M210 240 L210 300 M256 220 L256 310 M302 240 L302 300\" stroke=\"#1a1410\" stroke-width=\"8\"/><path d=\"M200 160 L312 160\" stroke=\"#8a3a1a\" stroke-width=\"10\"/><circle cx=\"256\" cy=\"180\" r=\"16\" fill=\"#ff6a4a\" stroke=\"#1a1410\" stroke-width=\"5\"/></g>",
     "viewBox": null
   },
   "berserker_ring": {
@@ -297,6 +305,10 @@
   },
   "chicken": {
     "body": "<defs><radialGradient id=\"chicken_b\" cx=\"0.4\" cy=\"0.35\" r=\"0.8\"><stop offset=\"0\" stop-color=\"#ffffff\"/><stop offset=\"0.7\" stop-color=\"#e6e2d6\"/><stop offset=\"1\" stop-color=\"#b4ad9a\"/></radialGradient></defs><g stroke=\"#3a342a\" stroke-width=\"13\" stroke-linejoin=\"round\" stroke-linecap=\"round\"><path d=\"M210 250 C 140 270 120 350 176 396 C 230 436 320 430 358 380 C 392 334 380 268 320 248 C 300 200 240 206 210 250 Z\" fill=\"url(#chicken_b)\"/><circle cx=\"232\" cy=\"210\" r=\"58\" fill=\"url(#chicken_b)\"/><path d=\"M232 158 C 220 132 244 118 256 134 C 268 118 292 132 280 158 C 268 168 244 168 232 158 Z\" fill=\"#d0392b\"/><polygon points=\"184,212 130,224 184,242\" fill=\"#e8a13a\"/><path d=\"M196 248 L210 244 L208 260 Z\" fill=\"#e8a13a\"/><circle cx=\"212\" cy=\"200\" r=\"11\" fill=\"#1a1410\" stroke=\"none\"/><circle cx=\"216\" cy=\"196\" r=\"3.5\" fill=\"#fff\" stroke=\"none\"/><path d=\"M340 300 C 380 296 408 312 420 340 C 388 344 360 338 338 326 Z\" fill=\"#e6e2d6\"/><path d=\"M200 414 L200 446 M236 418 L236 448\" stroke=\"#e8a13a\" stroke-width=\"12\" fill=\"none\"/></g>",
+    "viewBox": null
+  },
+  "cinderforged_helm": {
+    "body": "<defs><linearGradient id=\"cinderforged_helm_b\" x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\"><stop offset=\"0\" stop-color=\"#ff9860\"/><stop offset=\"0.5\" stop-color=\"#d06a3a\"/><stop offset=\"1\" stop-color=\"#8a3a1a\"/></linearGradient></defs><g stroke=\"#1a1410\" stroke-width=\"13\" stroke-linejoin=\"round\" stroke-linecap=\"round\"><path d=\"M170 260 L170 160 L200 140 L256 120 L312 140 L342 160 L342 260 C 342 310 300 350 256 370 C 212 350 170 310 170 260 Z\" fill=\"url(#cinderforged_helm_b)\"/><circle cx=\"220\" cy=\"200\" r=\"24\" fill=\"none\" stroke=\"#5a2a1a\" stroke-width=\"8\"/><circle cx=\"292\" cy=\"200\" r=\"24\" fill=\"none\" stroke=\"#5a2a1a\" stroke-width=\"8\"/><path d=\"M220 200 L292 200\" stroke=\"#ff9860\" stroke-width=\"9\"/><path d=\"M200 320 L312 320 L312 360 L200 360 Z\" fill=\"#2a1410\" opacity=\"0.5\"/></g>",
     "viewBox": null
   },
   "cindermaw_maul": {
@@ -521,6 +533,10 @@
   },
   "feather": {
     "body": "<defs><linearGradient id=\"feather_b\" x1=\"0\" y1=\"0\" x2=\"1\" y2=\"1\"><stop offset=\"0\" stop-color=\"#ffffff\"/><stop offset=\"0.6\" stop-color=\"#dfe7ef\"/><stop offset=\"1\" stop-color=\"#a7b4c0\"/></linearGradient></defs><g stroke=\"#46505c\" stroke-width=\"12\" stroke-linejoin=\"round\" stroke-linecap=\"round\"><path d=\"M384 96 C 280 110 176 196 134 320 C 122 356 132 380 160 388 C 280 360 372 256 396 140 C 400 116 396 100 384 96 Z\" fill=\"url(#feather_b)\"/><path d=\"M372 124 C 300 160 220 240 168 360\" stroke=\"#8a98a6\" stroke-width=\"8\" fill=\"none\"/><g stroke=\"#8a98a6\" stroke-width=\"6\" fill=\"none\"><path d=\"M344 150 L300 138 M312 186 L266 172 M280 224 L232 212 M248 264 L200 254 M218 304 L172 296\"/><path d=\"M344 150 L356 192 M312 186 L326 228 M280 224 L296 266 M248 264 L264 306 M218 304 L234 344\"/></g><line x1=\"160\" y1=\"388\" x2=\"120\" y2=\"428\" stroke=\"#8a98a6\" stroke-width=\"12\"/></g>",
+    "viewBox": null
+  },
+  "fighter_helm": {
+    "body": "<defs><linearGradient id=\"fighter_helm_b\" x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\"><stop offset=\"0\" stop-color=\"#b8a878\"/><stop offset=\"0.5\" stop-color=\"#8a8a5a\"/><stop offset=\"1\" stop-color=\"#5a5a3a\"/></linearGradient></defs><g stroke=\"#1a1410\" stroke-width=\"13\" stroke-linejoin=\"round\" stroke-linecap=\"round\"><path d=\"M170 260 L170 160 L200 140 L256 120 L312 140 L342 160 L342 260 C 342 310 300 350 256 370 C 212 350 170 310 170 260 Z\" fill=\"url(#fighter_helm_b)\"/><rect x=\"210\" y=\"170\" width=\"92\" height=\"80\" rx=\"8\" fill=\"none\" stroke=\"#3a3a2a\" stroke-width=\"8\"/><path d=\"M210 210 L342 210\" stroke=\"#1a1410\" stroke-width=\"6\"/><path d=\"M256 170 L256 250\" stroke=\"#3a3a2a\" stroke-width=\"7\"/></g>",
     "viewBox": null
   },
   "fire_rune": {
@@ -771,12 +787,20 @@
     "body": "<defs><linearGradient id=\"iron_sword_blade\" x1=\"0\" y1=\"0\" x2=\"1\" y2=\"0.3\"><stop offset=\"0\" stop-color=\"#b4bcc6\"/><stop offset=\"0.5\" stop-color=\"#6e747e\"/><stop offset=\"1\" stop-color=\"#41454d\"/></linearGradient><linearGradient id=\"iron_sword_grip\" x1=\"0\" y1=\"0\" x2=\"1\" y2=\"0\"><stop offset=\"0\" stop-color=\"#7a4a1e\"/><stop offset=\"1\" stop-color=\"#3a2410\"/></linearGradient></defs><g transform=\"rotate(-45 256 256)\" stroke=\"#1a1410\" stroke-width=\"13\" stroke-linejoin=\"round\" stroke-linecap=\"round\"><path d=\"M256 104 C 278 170 282 252 280 300 L232 300 C 230 252 234 170 256 104 Z\" fill=\"url(#iron_sword_blade)\"/><path d=\"M256 134 L256 296\" stroke=\"#b4bcc6\" stroke-width=\"7\" fill=\"none\"/><path d=\"M256 134 L256 296\" stroke=\"#41454d\" stroke-width=\"3\" fill=\"none\"/><path d=\"M196 300 C 214 314 298 314 316 300 L318 324 C 298 338 214 338 194 324 Z\" fill=\"url(#iron_sword_grip)\"/><rect x=\"240\" y=\"324\" width=\"32\" height=\"58\" rx=\"8\" fill=\"url(#iron_sword_grip)\"/><path d=\"M242 342 L270 342 M242 364 L270 364\" stroke=\"#2a1a0c\" stroke-width=\"5\"/><circle cx=\"256\" cy=\"400\" r=\"22\" fill=\"#c4912a\"/></g>",
     "viewBox": null
   },
+  "ironclad_helm": {
+    "body": "<defs><linearGradient id=\"ironclad_helm_b\" x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\"><stop offset=\"0\" stop-color=\"#c4cad8\"/><stop offset=\"0.5\" stop-color=\"#8a9aaa\"/><stop offset=\"1\" stop-color=\"#5a6a7a\"/></linearGradient></defs><g stroke=\"#1a1410\" stroke-width=\"13\" stroke-linejoin=\"round\" stroke-linecap=\"round\"><path d=\"M170 260 L170 160 L200 140 L256 120 L312 140 L342 160 L342 260 C 342 310 300 350 256 370 C 212 350 170 310 170 260 Z\" fill=\"url(#ironclad_helm_b)\"/><path d=\"M200 140 L200 320 M220 150 L220 300 M256 140 L256 330 M292 150 L292 300 M312 140 L312 320\" stroke=\"#3a5a7a\" stroke-width=\"7\"/><path d=\"M220 200 L292 200 M220 250 L292 250\" stroke=\"#1a1410\" stroke-width=\"6\"/></g>",
+    "viewBox": null
+  },
   "ironclad_longsword": {
     "body": "<defs><linearGradient id=\"ironclad_longsword_b\" x1=\"0\" y1=\"0\" x2=\"1\" y2=\"0\"><stop offset=\"0\" stop-color=\"#dfe6ee\"/><stop offset=\"0.5\" stop-color=\"#9aa6b4\"/><stop offset=\"1\" stop-color=\"#5a6470\"/></linearGradient></defs><g transform=\"rotate(-40 256 256)\" stroke=\"#1a1410\" stroke-width=\"13\" stroke-linejoin=\"round\" stroke-linecap=\"round\"><path d=\"M256 50 L284 96 L280 340 L232 340 L228 96 Z\" fill=\"url(#ironclad_longsword_b)\"/><path d=\"M256 64 L256 332\" stroke=\"#c4cfd9\" stroke-width=\"6\" fill=\"none\"/><path d=\"M188 340 L324 340 L312 368 L200 368 Z\" fill=\"#4a525e\"/><rect x=\"244\" y=\"364\" width=\"24\" height=\"86\" rx=\"9\" fill=\"#2a2f38\"/><rect x=\"234\" y=\"446\" width=\"44\" height=\"20\" rx=\"8\" fill=\"#4a525e\"/></g>",
     "viewBox": null
   },
   "javelin": {
     "body": "<defs><linearGradient id=\"javelin_t\" x1=\"0\" y1=\"0\" x2=\"1\" y2=\"0\"><stop offset=\"0\" stop-color=\"#dfe6ee\"/><stop offset=\"0.5\" stop-color=\"#9aa6b4\"/><stop offset=\"1\" stop-color=\"#5a6470\"/></linearGradient></defs><g transform=\"rotate(-30 256 256)\" stroke=\"#1a1410\" stroke-width=\"12\" stroke-linejoin=\"round\" stroke-linecap=\"round\"><path d=\"M256 56 L278 116 L256 140 L234 116 Z\" fill=\"url(#javelin_t)\"/><rect x=\"248\" y=\"134\" width=\"16\" height=\"300\" rx=\"7\" fill=\"#7a5630\"/><path d=\"M248 380 L210 420 L248 410 Z M264 380 L302 420 L264 410 Z\" fill=\"#c43838\"/><path d=\"M248 408 L214 444 L248 432 Z M264 408 L298 444 L264 432 Z\" fill=\"#c43838\"/></g>",
+    "viewBox": null
+  },
+  "justicar_faceguard": {
+    "body": "<defs><linearGradient id=\"justicar_faceguard_b\" x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\"><stop offset=\"0\" stop-color=\"#d0c87a\"/><stop offset=\"0.5\" stop-color=\"#a0a04a\"/><stop offset=\"1\" stop-color=\"#707020\"/></linearGradient></defs><g stroke=\"#1a1410\" stroke-width=\"13\" stroke-linejoin=\"round\" stroke-linecap=\"round\"><path d=\"M200 200 L200 160 C 200 140 220 130 220 160 L220 240 L236 240 L236 150 C 236 130 256 130 256 150 L256 240 L276 240 L276 150 C 276 130 296 130 296 150 L296 240 L312 240 L312 160 C 312 140 332 150 332 170 L332 280 C 332 340 300 380 256 400 C 212 380 200 340 200 280 Z\" fill=\"url(#justicar_faceguard_b)\"/><path d=\"M220 240 L220 340 M256 240 L256 380 M292 240 L292 340\" stroke=\"#4a4a20\" stroke-width=\"7\"/></g>",
     "viewBox": null
   },
   "kaelor_s_coif": {
@@ -1017,6 +1041,10 @@
   },
   "mithril_sword": {
     "body": "<defs><linearGradient id=\"mithril_sword_blade\" x1=\"0\" y1=\"0\" x2=\"1\" y2=\"0.3\"><stop offset=\"0\" stop-color=\"#8aa0f2\"/><stop offset=\"0.5\" stop-color=\"#3f57c4\"/><stop offset=\"1\" stop-color=\"#22307a\"/></linearGradient><linearGradient id=\"mithril_sword_grip\" x1=\"0\" y1=\"0\" x2=\"1\" y2=\"0\"><stop offset=\"0\" stop-color=\"#7a4a1e\"/><stop offset=\"1\" stop-color=\"#3a2410\"/></linearGradient></defs><g transform=\"rotate(-45 256 256)\" stroke=\"#1a1410\" stroke-width=\"13\" stroke-linejoin=\"round\" stroke-linecap=\"round\"><path d=\"M256 104 C 278 170 282 252 280 300 L232 300 C 230 252 234 170 256 104 Z\" fill=\"url(#mithril_sword_blade)\"/><path d=\"M256 134 L256 296\" stroke=\"#8aa0f2\" stroke-width=\"7\" fill=\"none\"/><path d=\"M256 134 L256 296\" stroke=\"#22307a\" stroke-width=\"3\" fill=\"none\"/><path d=\"M196 300 C 214 314 298 314 316 300 L318 324 C 298 338 214 338 194 324 Z\" fill=\"url(#mithril_sword_grip)\"/><rect x=\"240\" y=\"324\" width=\"32\" height=\"58\" rx=\"8\" fill=\"url(#mithril_sword_grip)\"/><path d=\"M242 342 L270 342 M242 364 L270 364\" stroke=\"#2a1a0c\" stroke-width=\"5\"/><circle cx=\"256\" cy=\"400\" r=\"22\" fill=\"#c4912a\"/></g>",
+    "viewBox": null
+  },
+  "morvyn_s_hood": {
+    "body": "<defs><linearGradient id=\"morvyn_s_hood_b\" x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\"><stop offset=\"0\" stop-color=\"#7a8fa8\"/><stop offset=\"0.5\" stop-color=\"#4a6f88\"/><stop offset=\"1\" stop-color=\"#2a4f68\"/></linearGradient></defs><g stroke=\"#1a1410\" stroke-width=\"13\" stroke-linejoin=\"round\" stroke-linecap=\"round\"><path d=\"M190 280 L190 200 C 190 160 220 140 256 140 C 292 140 322 160 322 200 L322 280 L310 300 C 310 340 285 360 256 370 C 227 360 202 340 202 300 Z\" fill=\"url(#morvyn_s_hood_b)\"/><path d=\"M220 200 L220 260 M256 180 L256 300 M292 200 L292 260\" stroke=\"#1a1410\" stroke-width=\"7\"/><circle cx=\"256\" cy=\"200\" r=\"18\" fill=\"none\" stroke=\"#2a4a68\" stroke-width=\"6\"/></g>",
     "viewBox": null
   },
   "muscle_up": {
@@ -1325,6 +1353,10 @@
   },
   "slayer_defender": {
     "body": "<defs><linearGradient id=\"slayer_defender_b\" x1=\"0\" y1=\"0\" x2=\"1\" y2=\"0\"><stop offset=\"0\" stop-color=\"#5a6a52\"/><stop offset=\"0.5\" stop-color=\"#33402e\"/><stop offset=\"1\" stop-color=\"#1a2216\"/></linearGradient></defs><g stroke=\"#10150c\" stroke-width=\"13\" stroke-linejoin=\"round\" stroke-linecap=\"round\"><path d=\"M256 60 L274 130 L268 360 L244 360 L238 130 Z\" fill=\"#cfe6c0\"/><path d=\"M256 80 L256 350\" stroke=\"#8aa67a\" stroke-width=\"5\" fill=\"none\"/><path d=\"M150 170 L238 200 L238 250 L120 220 C 120 196 132 178 150 170 Z\" fill=\"url(#slayer_defender_b)\"/><path d=\"M362 170 L274 200 L274 250 L392 220 C 392 196 380 178 362 170 Z\" fill=\"url(#slayer_defender_b)\"/><ellipse cx=\"256\" cy=\"360\" rx=\"60\" ry=\"44\" fill=\"url(#slayer_defender_b)\"/><circle cx=\"256\" cy=\"360\" r=\"22\" fill=\"#7fd06a\" stroke=\"#10150c\" stroke-width=\"8\"/><rect x=\"244\" y=\"396\" width=\"24\" height=\"64\" rx=\"9\" fill=\"#2a3422\"/></g>",
+    "viewBox": null
+  },
+  "slayer_helmet": {
+    "body": "<defs><linearGradient id=\"slayer_helmet_b\" x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\"><stop offset=\"0\" stop-color=\"#8a5f5a\"/><stop offset=\"0.5\" stop-color=\"#5a3f3a\"/><stop offset=\"1\" stop-color=\"#3a1f1a\"/></linearGradient></defs><g stroke=\"#1a1410\" stroke-width=\"13\" stroke-linejoin=\"round\" stroke-linecap=\"round\"><path d=\"M170 260 L170 160 L200 140 L256 120 L312 140 L342 160 L342 260 C 342 310 300 350 256 370 C 212 350 170 310 170 260 Z\" fill=\"url(#slayer_helmet_b)\"/><circle cx=\"220\" cy=\"180\" r=\"22\" fill=\"#0a0a0a\" stroke=\"#1a1410\" stroke-width=\"6\"/><circle cx=\"292\" cy=\"180\" r=\"22\" fill=\"#0a0a0a\" stroke=\"#1a1410\" stroke-width=\"6\"/><circle cx=\"256\" cy=\"200\" r=\"16\" fill=\"#ff4a4a\" stroke=\"#1a1410\" stroke-width=\"5\"/><path d=\"M200 280 L312 280\" stroke=\"#8a5f5a\" stroke-width=\"9\"/></g>",
     "viewBox": null
   },
   "smithing_cape": {
