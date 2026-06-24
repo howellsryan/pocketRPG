@@ -159,8 +159,7 @@ export function CombatMonsterInfoSheet({ monster, categoryKey, itemsData, onClos
         <div class="cb-sheet__grab" />
         <div class="cb-sheet__hero">
           <div class="cb-sheet__emblem">
-            <div class="cb-sheet__glow" style={{ background: `radial-gradient(circle, ${art.accent}8c, transparent 64%)` }} />
-            <SkillEmblem iconKey={art.icon} accent={art.accent} size={56} glow={1.2} />
+            <SkillEmblem iconKey={art.icon} accent={art.accent} size={56} glow={0} />
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <h2 class="cb-sheet__name">{monster.name}</h2>
@@ -225,8 +224,7 @@ export function CombatRaidInfoSheet({ raid, monstersData, itemsData, raidKillCou
         <div class="cb-sheet__grab" />
         <div class="cb-sheet__hero">
           <div class="cb-sheet__emblem">
-            <div class="cb-sheet__glow" style={{ background: `radial-gradient(circle, ${art.accent}8c, transparent 64%)` }} />
-            <SkillEmblem iconKey={art.icon} accent={art.accent} size={56} glow={1.3} />
+            <SkillEmblem iconKey={art.icon} accent={art.accent} size={56} glow={0} />
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div class="cb-raid__tag">RAID</div>
@@ -255,7 +253,7 @@ export function CombatRaidInfoSheet({ raid, monstersData, itemsData, raidKillCou
                     {i < raid.bosses.length - 1 && <span class="cb-room__line" />}
                   </div>
                   <div class="cb-room__icon">
-                    <SkillEmblem iconKey={getMonsterArt(boss).icon} accent={art.accent} size={26} glow={cleared ? 1 : 0.5} />
+                    <SkillEmblem iconKey={getMonsterArt(boss).icon} accent={art.accent} size={26} glow={0} />
                   </div>
                   <div class="cb-room__body">
                     <div class="cb-room__name">{i + 1}. {boss.name}</div>

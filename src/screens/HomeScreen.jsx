@@ -28,7 +28,7 @@ function SkillCard({ skill, level, progress, toNext, onClick }) {
   return (
     <GildedComplete complete={isMax} className="rounded-[10px]">
       <button class="skill-card" onClick={() => onClick(skill)} aria-label={`${titleCase(skill)}, level ${level}`}>
-        <SkillEmblem class="skill-card__emblem" iconKey={art.icon} accent={art.accent} size={28} glow={0.5} />
+        <SkillEmblem class="skill-card__emblem" iconKey={art.icon} accent={art.accent} size={28} glow={0} />
         <div class="skill-card__top">
           <div class="skill-card__name">
             <span>{titleCase(skill)}</span>
@@ -95,7 +95,7 @@ export default function HomeScreen({ onNavigate, onLogout, onManualSave, isCloud
           <div class="welcome-card__bottom">
             <div class="welcome-card__stats">
               <span class="wstat">
-                <GameIcon iconKey="crossed_swords" color="#cdd6e0" size={18} title="Combat level" />
+                <GameIcon iconKey="crossed_swords" color="#cdd6e0" size={36} title="Combat level" />
                 Combat <b>{combatLevel}</b>
               </span>
               <span class="wstat">
@@ -172,7 +172,7 @@ export default function HomeScreen({ onNavigate, onLogout, onManualSave, isCloud
         <Modal title={titleCase(selectedSkillDetail)} onClose={() => setSelectedSkillDetail(null)}>
           <div class="space-y-3">
             <div class="skill-detail__hero">
-              <SkillEmblem iconKey={selArt.icon} accent={selArt.accent} size={64} />
+              <SkillEmblem iconKey={selArt.icon} accent={selArt.accent} size={64} glow={0} />
               <div class="skill-detail__lvl">Level <b>{selLevel}</b> / 99</div>
             </div>
             <div class="bg-[#111] rounded-lg p-3 space-y-2">

@@ -2579,7 +2579,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
               {/* Fight header */}
               <div class="cb-fight__head">
                 <div class="cb-fight__id">
-                  <SkillEmblem iconKey={mArt.icon} accent={mArt.accent} size={34} glow={1} />
+                  <SkillEmblem iconKey={mArt.icon} accent={mArt.accent} size={34} glow={0} />
                   <div>
                     <div class="cb-fight__name">{m.name}</div>
                     <div class="cb-fight__chips">
