@@ -117,7 +117,7 @@ export default function HomeScreen({ onNavigate, onLogout, onManualSave, isCloud
           <div class="welcome-card__bottom">
             <div class="welcome-card__stats">
               <span class="wstat">
-                <span class="wstat__icon"><GameIcon iconKey="crossed_swords" color="#cdd6e0" size={34} title="Combat level" /></span>
+                <span class="wstat__icon"><GameIcon iconKey="combat_level" size={32} title="Combat level" /></span>
                 Combat <b>{combatLevel}</b>
               </span>
               <span class="wstat">
