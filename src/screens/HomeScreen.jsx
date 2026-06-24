@@ -95,11 +95,11 @@ export default function HomeScreen({ onNavigate, onLogout, onManualSave, isCloud
           <div class="welcome-card__bottom">
             <div class="welcome-card__stats">
               <span class="wstat">
-                <GameIcon iconKey="crossed_swords" color="#cdd6e0" size={36} title="Combat level" />
+                <GameIcon iconKey="crossed_swords" color="#cdd6e0" size={18} title="Combat level" />
                 Combat <b>{combatLevel}</b>
               </span>
               <span class="wstat">
-                <GameIcon iconKey="progression" color="#9aa7b0" size={36} title="Total level" />
+                <GameIcon iconKey="progression" color="#9aa7b0" size={18} title="Total level" />
                 Total <b>{totalLevel.toLocaleString()}</b>
               </span>
             </div>
@@ -111,7 +111,7 @@ export default function HomeScreen({ onNavigate, onLogout, onManualSave, isCloud
                 aria-label="Save game"
                 title={saving ? 'Saving…' : 'Save your chronicle'}
               >
-                <GameIcon iconKey="save" color="#f0c040" size={48} title="Save" />
+                <GameIcon iconKey="save" color="#f0c040" size={24} title="Save" />
               </button>
               <button
                 class="rune-btn"
@@ -120,7 +120,7 @@ export default function HomeScreen({ onNavigate, onLogout, onManualSave, isCloud
                 aria-label="Log out"
                 title={isCloudAccount && loggingOut ? 'Saving…' : 'Log out'}
               >
-                <GameIcon iconKey="door" color="#e8d5a8" size={48} title="Log out" />
+                <GameIcon iconKey="door" color="#e8d5a8" size={24} title="Log out" />
               </button>
             </div>
           </div>
