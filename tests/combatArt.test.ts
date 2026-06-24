@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import monsters from '../src/data/monsters.json'
 import raids from '../src/data/raids.json'
 import gameIcons from '../src/data/gameIcons.json'
+import bespokeIcons from '../src/data/bespokeIcons.json'
 import {
   CATEGORY_ART,
   RAID_ART,
@@ -19,6 +20,13 @@ import monsters from '../src/data/monsters.json' assert { type: 'json' }
 const monstersData = monsters as Record<string, any>
 const raidsData = raids as Record<string, any>
 const gameIconsData = gameIcons as Record<string, { body: string; viewBox: string | null }>
+const bespokeData = bespokeIcons as Record<string, { body: string; viewBox: string | null }>
+
+// An art glyph is valid if it resolves to either a vendored game-icons glyph or
+// a bespoke PocketRPG-owned icon — GameIcon/SkillEmblem check bespoke first.
+function hasGlyph(key: string): boolean {
+  return Boolean(gameIconsData[key] || bespokeData[key])
+}
 
 function allArtIcons(): string[] {
   const icons: string[] = []
@@ -31,7 +39,7 @@ function allArtIcons(): string[] {
 
 describe('combatArt', () => {
   it('every art glyph key is vendored in gameIcons.json', () => {
-    const missing = allArtIcons().filter((k) => !gameIconsData[k])
+    const missing = allArtIcons().filter((k) => !hasGlyph(k))
     if (missing.length > 0) {
       throw new Error(`missing glyphs: ${[...new Set(missing)].join(', ')}`)
     }
@@ -41,7 +49,7 @@ describe('combatArt', () => {
     const missing: string[] = []
     for (const monster of Object.values(monstersData)) {
       const art = getMonsterArt(monster, undefined)
-      if (!art || !gameIconsData[art.icon]) missing.push(monster.id)
+      if (!art || !hasGlyph(art.icon)) missing.push(monster.id)
     }
     // Every monster must resolve to a real glyph — MONSTER_ART covers them all,
     // and the default fallback is always a present glyph.
@@ -51,7 +59,7 @@ describe('combatArt', () => {
   it('every raid resolves to a present glyph + accent', () => {
     for (const raid of Object.values(raidsData)) {
       const art = getRaidArt(raid.id)
-      expect(gameIconsData[art.icon]).toBeTruthy()
+      expect(hasGlyph(art.icon)).toBe(true)
       expect(art.accent).toMatch(/^#[0-9a-f]{6}$/i)
     }
   })

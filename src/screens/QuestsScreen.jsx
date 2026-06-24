@@ -144,7 +144,7 @@ export default function QuestsScreen() {
         </div>
 
         <div class="flex-1 flex flex-col items-center justify-center">
-          <GameIcon iconKey="scroll" size={48} class="mb-2" />
+          <GameIcon iconKey="clue_scroll_medium" size={48} class="mb-2" />
           <h2 class="font-[var(--font-display)] text-[18px] font-bold text-[var(--color-gold)] mb-1 text-center">
             {quest.name}
           </h2>
@@ -190,7 +190,7 @@ export default function QuestsScreen() {
     <div class="h-full flex flex-col">
       <div class="px-4 pt-4 pb-2 flex-shrink-0">
         <div class="flex justify-between items-baseline mb-2">
-          <SectionHeader size="lg">📜 Quests</SectionHeader>
+          <SectionHeader size="lg"><span class="inline-flex items-center gap-2"><GameIcon iconKey="clue_scroll_medium" size={18} class="flex-shrink-0" /> Quests</span></SectionHeader>
           <span class="text-[11px] text-[var(--color-gold)] font-[var(--font-mono)]">
             {completedCount}/{questsData.length} · {totalQp} QP
           </span>
@@ -288,7 +288,7 @@ export default function QuestsScreen() {
                     }`}
                   >
                     <span class="text-[24px] flex-shrink-0">
-                      {completed ? '✅' : <GameIcon iconKey="scroll" size={24} />}
+                      {completed ? <GameIcon iconKey="check_mark" color="#4ade80" size={24} /> : <GameIcon iconKey="clue_scroll_medium" size={24} />}
                     </span>
                     <div class="flex-1 min-w-0">
                       <div
@@ -395,7 +395,7 @@ function QuestDetailsBody({ quest, stats, completedQuests, itemsData, onClose, o
   return (
       <div class="flex flex-col gap-3">
         <Panel className="flex items-center gap-3">
-          <span class="text-[28px]">{completed ? '✅' : <GameIcon iconKey="scroll" size={28} />}</span>
+          <span class="text-[28px]">{completed ? <GameIcon iconKey="check_mark" color="#4ade80" size={28} /> : <GameIcon iconKey="clue_scroll_medium" size={28} />}</span>
           <div class="flex-1">
             <div class="text-[13px] font-semibold text-[var(--color-parchment)]">
               {quest.complexity} · {quest.length}
