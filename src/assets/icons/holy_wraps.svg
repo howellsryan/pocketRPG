@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="holy_wraps_b" x1="0.3" y1="0" x2="0.7" y2="1">
+      <stop offset="0" stop-color="#f8f0d0"/><stop offset="0.5" stop-color="#d8c890"/><stop offset="1" stop-color="#a08850"/>
+    </linearGradient>
+  </defs>
+  <g stroke="#1a1410" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
+    <!-- Cloth-wrapped hand -->
+    <path d="M 186 360 L 186 410 C 186 430 200 442 220 442 L 300 442 C 320 442 334 430 334 410 L 334 360 Z" fill="url(#holy_wraps_b)"/>
+    <path d="M 186 360 L 182 230 C 182 206 200 192 224 192 L 230 130 C 230 110 252 110 254 130 L 258 196 L 268 196 L 274 150 C 274 130 296 132 296 152 L 298 200 C 320 206 334 222 334 246 L 334 360 Z" fill="url(#holy_wraps_b)"/>
+    <path d="M 182 250 L 150 230 C 134 220 128 240 140 254 L 182 286 Z" fill="url(#holy_wraps_b)"/>
+    <!-- Diagonal cloth wrap bands -->
+    <path d="M 182 240 L 320 280 M 184 270 L 332 310 M 188 300 L 334 340 M 186 330 L 334 366" stroke="#a08850" stroke-width="7" fill="none"/>
+    <path d="M 226 196 L 252 132 M 268 198 L 282 150" stroke="#a08850" stroke-width="6" fill="none"/>
+    <!-- Holy gold symbol on back of hand -->
+    <path d="M 258 282 L 258 338 M 234 304 L 282 304" stroke="#e8c040" stroke-width="9" fill="none"/>
+    <!-- Cuff knot -->
+    <path d="M 186 372 L 334 372" stroke="#a08850" stroke-width="9" fill="none"/>
+  </g>
+</svg>

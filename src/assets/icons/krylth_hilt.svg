@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="krh_metal" x1="0.2" y1="0" x2="0.8" y2="1">
+      <stop offset="0" stop-color="#c890e0"/><stop offset="0.5" stop-color="#8040b0"/><stop offset="1" stop-color="#3c1060"/>
+    </linearGradient>
+  </defs>
+  <g stroke="#1a1410" stroke-linejoin="round" stroke-linecap="round">
+    <!-- Grip (dark, twisted) -->
+    <rect x="234" y="296" width="44" height="120" rx="8" fill="#2e1248" stroke-width="12"/>
+    <!-- Grip twisted wrapping -->
+    <path d="M 234 308 C 248 312 266 308 278 316 M 234 332 C 248 336 266 332 278 340 M 234 356 C 248 360 266 356 278 364 M 234 380 C 248 384 266 380 278 388 M 234 404 C 248 408 266 404 278 412" stroke="#6830a0" stroke-width="7" fill="none" opacity="0.6"/>
+    <!-- Pommel - void orb -->
+    <circle cx="256" cy="428" r="30" fill="url(#krh_metal)" stroke-width="12"/>
+    <circle cx="256" cy="428" r="16" fill="#1a0830" stroke-width="8"/>
+    <ellipse cx="250" cy="422" rx="6" ry="8" fill="#d060f0" stroke="none" opacity="0.5"/>
+    <!-- Guard - curved demonic horns -->
+    <path d="M 168 280 C 152 252 148 220 164 208 C 172 216 176 238 184 268 Z" fill="url(#krh_metal)" stroke-width="11"/>
+    <path d="M 344 280 C 360 252 364 220 348 208 C 340 216 336 238 328 268 Z" fill="url(#krh_metal)" stroke-width="11"/>
+    <!-- Guard center body -->
+    <path d="M 168 280 C 180 264 212 256 256 256 C 300 256 332 264 344 280 C 336 298 308 306 280 304 L 256 302 L 232 304 C 204 306 176 298 168 280 Z" fill="url(#krh_metal)" stroke-width="13"/>
+    <!-- Guard void gem -->
+    <circle cx="256" cy="278" r="18" fill="#0a0218" stroke-width="9"/>
+    <circle cx="256" cy="278" r="10" fill="#9030d8" stroke="none" opacity="0.7"/>
+    <!-- Tang -->
+    <rect x="246" y="172" width="20" height="86" rx="4" fill="#6830a0" stroke-width="10"/>
+    <path d="M 240 172 L 256 146 L 272 172 Z" fill="#a050d0" stroke-width="10"/>
+  </g>
+</svg>

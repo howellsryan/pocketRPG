@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="ashen_slayer_helm_b" x1="0.3" y1="0" x2="0.7" y2="1">
+      <stop offset="0" stop-color="#b8b0a8"/><stop offset="0.5" stop-color="#706860"/><stop offset="1" stop-color="#302820"/>
+    </linearGradient>
+  </defs>
+  <g stroke="#1a1410" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M 168 280 C 168 160 206 100 256 92 C 306 100 344 160 344 280 L 336 340 C 296 380 216 380 176 340 Z" fill="url(#ashen_slayer_helm_b)"/>
+    <path d="M 160 340 C 200 400 312 400 352 340 C 332 374 296 390 256 392 C 216 390 180 374 160 340 Z" fill="#302820"/>
+    <!-- Bone-like spikes on top (ashen = undead-themed) -->
+    <path d="M 230 94 L 222 60 L 238 88" fill="#e8e0d0" stroke="#1a1410" stroke-width="9"/>
+    <path d="M 256 90 L 256 52 L 268 86" fill="#e8e0d0" stroke="#1a1410" stroke-width="9"/>
+    <path d="M 282 94 L 290 60 L 274 88" fill="#e8e0d0" stroke="#1a1410" stroke-width="9"/>
+    <!-- Face cage (like slayer helm) -->
+    <path d="M 190 208 L 322 208 C 330 208 336 214 336 222 L 336 330 C 294 352 218 352 176 330 L 176 222 C 176 214 182 208 190 208 Z" fill="none" stroke="#1a1410" stroke-width="11"/>
+    <path d="M 196 220 L 316 220 M 196 260 L 316 260 M 196 300 L 316 300" stroke="#0f0a0a" stroke-width="11" fill="none"/>
+    <path d="M 216 210 L 216 330 M 256 208 L 256 332 M 296 210 L 296 330" stroke="#0f0a0a" stroke-width="9" fill="none"/>
+    <!-- Ashen/grey glow eyes -->
+    <circle cx="214" cy="184" r="14" fill="#8a8888"/>
+    <circle cx="298" cy="184" r="14" fill="#8a8888"/>
+    <circle cx="218" cy="182" r="6" fill="#d8d4d0" stroke="none"/>
+    <circle cx="302" cy="182" r="6" fill="#d8d4d0" stroke="none"/>
+  </g>
+</svg>

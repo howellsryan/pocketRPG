@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="gh_metal" x1="0.2" y1="0" x2="0.8" y2="1">
+      <stop offset="0" stop-color="#d0c8a8"/><stop offset="0.5" stop-color="#a89870"/><stop offset="1" stop-color="#604e28"/>
+    </linearGradient>
+  </defs>
+  <g stroke="#1a1410" stroke-linejoin="round" stroke-linecap="round">
+    <!-- Grip/handle -->
+    <rect x="232" y="300" width="48" height="124" rx="8" fill="#7a5018" stroke-width="12"/>
+    <!-- Grip wrapping bands -->
+    <path d="M 230 328 L 282 328 M 230 352 L 282 352 M 230 376 L 282 376 M 230 400 L 282 400" stroke="#5a3a08" stroke-width="8" fill="none" opacity="0.5"/>
+    <!-- Pommel (bottom) -->
+    <ellipse cx="256" cy="424" rx="38" ry="20" fill="url(#gh_metal)" stroke-width="12"/>
+    <!-- Guard (crossguard) - wide, bony/brutal design -->
+    <path d="M 128 284 C 128 266 148 254 180 254 L 332 254 C 364 254 384 266 384 284 C 384 300 370 310 342 314 L 170 314 C 142 310 128 300 128 284 Z" fill="url(#gh_metal)" stroke-width="13"/>
+    <!-- Guard boss (center) -->
+    <ellipse cx="256" cy="284" rx="28" ry="18" fill="#d0c0a0" stroke-width="10"/>
+    <!-- Guard end spikes -->
+    <path d="M 128 284 L 104 268 L 100 290 L 120 298 Z" fill="#a89060" stroke-width="10"/>
+    <path d="M 384 284 L 408 268 L 412 290 L 392 298 Z" fill="#a89060" stroke-width="10"/>
+    <!-- Blade tang stub at top -->
+    <rect x="244" y="176" width="24" height="82" rx="4" fill="#a89070" stroke-width="10"/>
+    <!-- Exposed blade connection point -->
+    <path d="M 238 176 L 256 148 L 274 176 Z" fill="#c0b880" stroke-width="10"/>
+  </g>
+</svg>

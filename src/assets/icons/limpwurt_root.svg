@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="lwr_root" x1="0.3" y1="0" x2="0.7" y2="1">
+      <stop offset="0" stop-color="#e04848"/><stop offset="0.5" stop-color="#a82828"/><stop offset="1" stop-color="#601010"/>
+    </linearGradient>
+  </defs>
+  <g stroke="#1a1410" stroke-linejoin="round" stroke-linecap="round">
+    <!-- Main root body (knobbly bulb) -->
+    <path d="M 256 140 C 310 140 356 180 362 230 C 368 278 344 330 310 358 C 290 374 270 380 256 380 C 242 380 222 374 202 358 C 168 330 144 278 150 230 C 156 180 202 140 256 140 Z" fill="url(#lwr_root)" stroke-width="13"/>
+    <!-- Root tendrils at bottom -->
+    <path d="M 240 374 C 232 406 216 428 210 446" stroke="#a02020" stroke-width="11" stroke-linecap="round" fill="none"/>
+    <path d="M 256 382 C 256 412 252 438 252 454" stroke="#a02020" stroke-width="11" stroke-linecap="round" fill="none"/>
+    <path d="M 272 374 C 280 406 294 428 298 446" stroke="#a02020" stroke-width="11" stroke-linecap="round" fill="none"/>
+    <!-- Knobby bumps on surface -->
+    <circle cx="200" cy="220" r="18" fill="#c03030" stroke-width="9"/>
+    <circle cx="310" cy="210" r="16" fill="#c03030" stroke-width="9"/>
+    <circle cx="256" cy="180" r="14" fill="#d04040" stroke-width="9"/>
+    <circle cx="178" cy="280" r="14" fill="#b02828" stroke-width="8"/>
+    <circle cx="334" cy="276" r="14" fill="#b02828" stroke-width="8"/>
+    <!-- Highlight -->
+    <path d="M 186 188 C 176 226 178 272 184 312" stroke="#e87070" stroke-width="9" fill="none" opacity="0.45"/>
+  </g>
+</svg>

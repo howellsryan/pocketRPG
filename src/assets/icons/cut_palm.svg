@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="cut_palm_t" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#a3743f"/><stop offset="1" stop-color="#5c3d1e"/>
+    </linearGradient>
+  </defs>
+  <g stroke="#241406" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M230 430 C 224 360 236 264 256 196 L286 200 C 270 268 262 362 272 430 Z" fill="url(#cut_palm_t)"/>
+    <path d="M236 250 L256 246 M232 310 L252 306 M230 374 L250 370" stroke="#3a2410" stroke-width="6" fill="none"/>
+    <g fill="#3f8a3a" stroke="#1c4012" stroke-width="9">
+      <path d="M256 186 C 196 150 130 150 84 184 C 140 178 196 196 248 220 Z"/>
+      <path d="M256 186 C 316 150 382 150 428 184 C 372 178 316 196 264 220 Z"/>
+      <path d="M256 186 C 220 124 168 92 110 88 C 160 120 200 168 240 214 Z"/>
+      <path d="M256 186 C 292 124 344 92 402 88 C 352 120 312 168 272 214 Z"/>
+      <path d="M256 180 C 256 130 240 86 210 60 C 232 110 240 150 248 200 Z"/>
+    </g>
+    <circle cx="256" cy="196" r="20" fill="#caa24a"/>
+  </g>
+</svg>

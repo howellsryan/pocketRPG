@@ -639,7 +639,7 @@ export default function BankScreen() {
                             : 'bg-[#1a1a1a] border-[#2a2a2a] active:bg-[#222]'
                     }`}
                   >
-                    <GameIcon item={item} size={22} />
+                    <GameIcon item={item} size={33} />
                     <span class="text-[8px] text-[var(--color-parchment)] opacity-60 truncate w-full text-center">{item.name}</span>
                     <span class={`text-[9px] font-[var(--font-mono)] font-bold ${isInactivePlaceholder ? 'text-[#8a8a8a]' : (isM ? 'text-[var(--color-emerald)]' : 'text-[var(--color-gold)]')}`}>{isInactivePlaceholder ? '\u00A0' : `×${text}`}</span>
                   </button>

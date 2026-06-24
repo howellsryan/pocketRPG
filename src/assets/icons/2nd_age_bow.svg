@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Bow body — ancient gold -->
+    <path d="M312 82 C 192 148 176 296 312 430" stroke="#1a1410" stroke-width="48"/>
+    <path d="M312 82 C 192 148 176 296 312 430" stroke="#c9a24a" stroke-width="30"/>
+    <!-- Highlight on limbs -->
+    <path d="M298 112 C 218 168 206 298 298 400" stroke="#fff0a0" stroke-width="8"/>
+    <!-- Ancient rune engravings -->
+    <path d="M 296 200 L 304 210 L 296 220 M 296 240 L 304 250 L 296 260 M 296 280 L 304 290 L 296 300" stroke="#7a5a16" stroke-width="7"/>
+    <!-- Bowstring -->
+    <line x1="312" y1="88" x2="312" y2="424" stroke="#1a1410" stroke-width="10"/>
+    <line x1="312" y1="92" x2="312" y2="420" stroke="#fff0a0" stroke-width="5"/>
+    <!-- Grip wrap (gold) -->
+    <path d="M 284 240 C 284 224 292 214 312 212 L 312 302 C 292 300 284 288 284 272 Z" fill="#c9a24a" stroke="#7a5a16" stroke-width="9"/>
+  </g>
+</svg>

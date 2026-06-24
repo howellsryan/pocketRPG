@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="2nd_age_full_helm_b" x1="0.25" y1="0" x2="0.75" y2="1">
+      <stop offset="0" stop-color="#e0d8c0"/><stop offset="0.5" stop-color="#a89860"/><stop offset="1" stop-color="#6a5c28"/>
+    </linearGradient>
+  </defs>
+  <g stroke="#1a1410" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
+    <!-- Ancient full helm with distinctive gold trim -->
+    <path d="M 168 288 C 168 164 202 100 256 92 C 310 100 344 164 344 288 L 338 356 C 298 398 214 398 174 356 Z" fill="url(#2nd_age_full_helm_b)"/>
+    <path d="M 158 362 C 200 422 312 422 354 362 C 334 396 298 412 256 414 C 214 412 178 396 158 362 Z" fill="#6a5c28"/>
+    <!-- Narrow visor slit -->
+    <path d="M 192 238 L 320 238 L 320 262 L 192 262 Z" fill="#0f0d0b"/>
+    <!-- Ornate gold trim border -->
+    <path d="M 180 202 L 332 202 C 342 202 348 210 348 220 L 348 360 C 306 396 206 396 164 360 L 164 220 C 164 210 170 202 180 202 Z" fill="none" stroke="#c9a24a" stroke-width="11"/>
+    <!-- Gold trim brow band -->
+    <path d="M 172 235 C 212 218 300 218 340 235" fill="none" stroke="#c9a24a" stroke-width="10"/>
+    <!-- Center crest line -->
+    <path d="M 256 94 L 256 390" stroke="#c9a24a" stroke-width="7" fill="none"/>
+    <!-- Ancient rune symbols on cheeks -->
+    <path d="M 194 296 L 200 280 L 206 296 L 200 312 Z" fill="#c9a24a" stroke="none"/>
+    <path d="M 306 296 L 312 280 L 318 296 L 312 312 Z" fill="#c9a24a" stroke="none"/>
+  </g>
+</svg>

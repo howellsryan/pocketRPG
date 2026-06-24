@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="trident_of_venom_m" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#a7f0a0"/><stop offset="0.5" stop-color="#4fae3a"/><stop offset="1" stop-color="#1f6a1a"/>
+    </linearGradient>
+  </defs>
+  <g transform="rotate(-22 256 256)" stroke="#1a1410" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
+    <rect x="246" y="190" width="22" height="270" rx="10" fill="#3a6a2a"/>
+    <path d="M257 200 L257 452" stroke="#7ad06a" stroke-width="5" fill="none"/>
+    <path d="M200 196 L314 196 C 318 178 312 168 300 168 C 304 150 296 140 286 144 L286 96 L272 110 L272 168 L264 168 L264 84 L250 84 L250 168 L242 168 L242 110 L228 96 L228 144 C 218 140 210 150 214 168 C 202 168 196 178 200 196 Z" fill="url(#trident_of_venom_m)"/>
+    <circle cx="257" cy="220" r="16" fill="#bfffb0"/>
+  </g>
+</svg>

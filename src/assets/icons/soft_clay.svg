@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <radialGradient id="sc_fill" cx="0.38" cy="0.38" r="0.7">
+      <stop offset="0" stop-color="#e0b890"/><stop offset="0.5" stop-color="#c08850"/><stop offset="1" stop-color="#845828"/>
+    </radialGradient>
+  </defs>
+  <g stroke="#1a1410" stroke-linejoin="round" stroke-linecap="round">
+    <!-- Soft clay lump (slightly rounder/squishier than clay) -->
+    <path d="M 148 230 C 148 162 196 124 256 120 C 316 124 364 162 364 230 C 378 258 374 308 356 338 C 334 374 298 400 256 400 C 214 400 178 374 156 338 C 138 308 134 258 148 230 Z" fill="url(#sc_fill)" stroke-width="13"/>
+    <!-- Squish indentation marks (soft texture) -->
+    <path d="M 195 196 C 218 208 252 210 280 200" stroke="#845828" stroke-width="9" fill="none" opacity="0.45"/>
+    <path d="M 185 266 C 212 284 252 286 284 270" stroke="#845828" stroke-width="8" fill="none" opacity="0.4"/>
+    <path d="M 196 330 C 220 348 256 350 280 336" stroke="#845828" stroke-width="7" fill="none" opacity="0.38"/>
+    <!-- Moisture sheen highlight -->
+    <path d="M 184 166 C 170 210 172 268 180 316" stroke="#f0d0a8" stroke-width="11" fill="none" opacity="0.55"/>
+    <ellipse cx="220" cy="158" rx="22" ry="14" fill="#f4dab8" stroke="none" opacity="0.4"/>
+  </g>
+</svg>

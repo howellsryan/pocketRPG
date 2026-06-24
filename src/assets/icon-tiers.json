@@ -1,0 +1,382 @@
+{
+  "_comment": "Palette + tier/set table for templated icon families. items[] expand to <tier>_<shape> via icon-templates/<shape>.svg; sets[] map explicit ids (that don't follow <tier>_<shape>) to a palette. Swaps {{base}}/{{light}}/{{shade}}. See docs/bespoke-icon-style-guide.md.",
+  "palettes": {
+    "bronze":     { "base": "#b87333", "light": "#f2bd78", "shade": "#6f4119" },
+    "iron":       { "base": "#6e747e", "light": "#b4bcc6", "shade": "#41454d" },
+    "steel":      { "base": "#bcc6d2", "light": "#f3f7fb", "shade": "#737d89" },
+    "mithril":    { "base": "#3f57c4", "light": "#8aa0f2", "shade": "#22307a" },
+    "adamant":    { "base": "#3f8a5a", "light": "#74c98e", "shade": "#246b3c" },
+    "adamantite": { "base": "#3f8a5a", "light": "#74c98e", "shade": "#246b3c" },
+    "runeforged": { "base": "#2fd0c0", "light": "#c6fff8", "shade": "#136055" },
+    "dragon":     { "base": "#c0392b", "light": "#ff7a68", "shade": "#6f1810" },
+    "gold":       { "base": "#ffcf33", "light": "#fff0a0", "shade": "#c48f12" },
+    "tin":        { "base": "#9aa0a8", "light": "#cfd3d9", "shade": "#646a72" },
+    "copper":     { "base": "#c2702f", "light": "#e69a54", "shade": "#7f4216" },
+    "oak":        { "base": "#b07a3e", "light": "#d6a766", "shade": "#6f4a23" },
+    "willow":     { "base": "#a7a24e", "light": "#cfca7e", "shade": "#6f6a2c" },
+    "maple":      { "base": "#a85f34", "light": "#cf8654", "shade": "#6a3a1c" },
+    "yew":        { "base": "#6f6536", "light": "#938a52", "shade": "#43391c" },
+    "magic":      { "base": "#5a7fd0", "light": "#9fbcf0", "shade": "#33508f" },
+    "redwood":    { "base": "#b23a2a", "light": "#d4604a", "shade": "#741c12" },
+    "teak":       { "base": "#9a6a38", "light": "#bf8e54", "shade": "#5e3e1c" },
+    "mahogany":   { "base": "#7a3a24", "light": "#9e5436", "shade": "#481c10" },
+
+    "air":    { "base": "#d8e2ea", "light": "#ffffff", "shade": "#9aa6b0" },
+    "water":  { "base": "#2f7fd0", "light": "#79b4ec", "shade": "#1c4f8f" },
+    "earth":  { "base": "#7a5a2e", "light": "#a98a52", "shade": "#4a3518" },
+    "fire":   { "base": "#e8743a", "light": "#ffb27a", "shade": "#a8431a" },
+    "mind":   { "base": "#d98f3a", "light": "#f3bd78", "shade": "#9a5e1c" },
+    "body":   { "base": "#5aa0e0", "light": "#9fc8f0", "shade": "#356a9f" },
+    "chaos":  { "base": "#d6a93a", "light": "#f3d27a", "shade": "#9a7320" },
+    "death":  { "base": "#dcdcdc", "light": "#ffffff", "shade": "#9a9a9a" },
+    "nature": { "base": "#3fa64a", "light": "#8fe08f", "shade": "#246b2c" },
+    "law":    { "base": "#3a4f9a", "light": "#7c8fd0", "shade": "#222f66" },
+    "cosmic": { "base": "#b06fd0", "light": "#d8a7f0", "shade": "#7a3fa0" },
+    "blood":  { "base": "#b3221d", "light": "#e85a52", "shade": "#761010" },
+    "soul":   { "base": "#7fb8ee", "light": "#bfe0fb", "shade": "#4f7faf" },
+    "astral": { "base": "#cfe0f5", "light": "#ffffff", "shade": "#9ab0cf" },
+    "wrath":  { "base": "#e23b2a", "light": "#ff7a68", "shade": "#9a1c10" },
+
+    "sapphire":    { "base": "#2f6fd0", "light": "#79a4ec", "shade": "#1c4488" },
+    "emerald":     { "base": "#2fae5a", "light": "#74d98e", "shade": "#1c7a3c" },
+    "ruby":        { "base": "#d11a2a", "light": "#ff6b78", "shade": "#8a0f1c" },
+    "diamond":     { "base": "#cfe6f0", "light": "#ffffff", "shade": "#9ab8c8" },
+    "dragonstone": { "base": "#b04fd0", "light": "#d88ff0", "shade": "#7a2fa0" },
+    "onyx":        { "base": "#2a2630", "light": "#4a4654", "shade": "#15121a" },
+    "zyrite":      { "base": "#3a2028", "light": "#6a3040", "shade": "#1a1014" },
+
+    "red":     { "base": "#b23a2a", "light": "#d4604a", "shade": "#741c12" },
+    "green":   { "base": "#3f8a4a", "light": "#74c98e", "shade": "#246b32" },
+    "black":   { "base": "#2c2a30", "light": "#4a4654", "shade": "#161418" },
+    "lumira":  { "base": "#3a57c4", "light": "#8aa0f2", "shade": "#22307a" },
+    "verdant": { "base": "#3f8a5a", "light": "#74c98e", "shade": "#246b3c" },
+    "krylth":  { "base": "#c0392b", "light": "#ff7a68", "shade": "#6f1810" },
+    "ancient": { "base": "#8a4fc0", "light": "#b88ff0", "shade": "#5a2f90" },
+    "zephyra": { "base": "#2fd0c0", "light": "#c6fff8", "shade": "#136055" },
+    "grondar": { "base": "#b87333", "light": "#f2bd78", "shade": "#6f4119" },
+
+    "dravok":    { "base": "#8a2f22", "light": "#d8694a", "shade": "#4a140c" },
+    "gorath":    { "base": "#6f8a4a", "light": "#b8d088", "shade": "#3a4a22" },
+    "torvek":    { "base": "#5a7088", "light": "#aebfd2", "shade": "#2f3e52" },
+    "verin":     { "base": "#d8a838", "light": "#ffe49a", "shade": "#8a6212" },
+    "gravehusk": { "base": "#6a7062", "light": "#aab09c", "shade": "#383c32" },
+    "void_king": { "base": "#5a3a8a", "light": "#9a7ad0", "shade": "#2a1648" },
+    "masari":    { "base": "#a83a2a", "light": "#e88a6a", "shade": "#5a160c" },
+
+    "bone":    { "base": "#ddd6c2", "light": "#f4efe0", "shade": "#a89e84" },
+    "seed":    { "base": "#7a9e3a", "light": "#a8c86f", "shade": "#4a6620" },
+    "sapling": { "base": "#4caf50", "light": "#8fd98f", "shade": "#2f7a37" },
+
+    "cooked_fish":    { "base": "#c9a44e", "light": "#e6c47a", "shade": "#8a6a2c" },
+    "raw_fish":       { "base": "#e0a7a0", "light": "#f3c8c2", "shade": "#a86f68" },
+    "cooked_shrimp":  { "base": "#e8743a", "light": "#ffaa7a", "shade": "#a8431a" },
+    "raw_shrimp":     { "base": "#cdb0b8", "light": "#e6d2d8", "shade": "#9a7f88" },
+    "cooked_eel":     { "base": "#7a6438", "light": "#a08a54", "shade": "#4a3c1c" },
+    "raw_eel":        { "base": "#566472", "light": "#8896a4", "shade": "#33404c" },
+    "cooked_manta":   { "base": "#8a7a5a", "light": "#b4a380", "shade": "#564a32" },
+    "raw_manta":      { "base": "#8a929c", "light": "#b4bcc6", "shade": "#565d66" },
+    "cooked_chicken": { "base": "#c89a5a", "light": "#e8c488", "shade": "#8a6230" },
+    "raw_chicken":    { "base": "#e8c0b0", "light": "#f6ddd2", "shade": "#b0867a" },
+    "cooked_meat":    { "base": "#9a5a2c", "light": "#c07a44", "shade": "#6a3a18" },
+    "raw_beef":       { "base": "#d06a6a", "light": "#e89a9a", "shade": "#9a4040" },
+
+    "pot_attack":   { "base": "#56a0e0", "light": "#8fc4f0", "shade": "#356f9f" },
+    "pot_strength": { "base": "#d04a3a", "light": "#f0897a", "shade": "#8a261a" },
+    "pot_defence":  { "base": "#5ac0d0", "light": "#93e0ec", "shade": "#357f8f" },
+    "pot_combat":   { "base": "#b56fd0", "light": "#d8a7f0", "shade": "#7a3f9a" },
+    "pot_prayer":   { "base": "#6fd0c0", "light": "#aef0e6", "shade": "#3f9286" },
+    "pot_ranging":  { "base": "#4caf50", "light": "#8fd98f", "shade": "#2f7a37" },
+    "pot_magic":    { "base": "#d09a3a", "light": "#f0c87a", "shade": "#8a6520" },
+
+    "skill_attack":      { "base": "#c0392b", "light": "#e8736a", "shade": "#7a1d14" },
+    "skill_strength":    { "base": "#2f9e44", "light": "#74c98e", "shade": "#1c6b2c" },
+    "skill_defence":     { "base": "#3a6fd0", "light": "#7c9fec", "shade": "#22468f" },
+    "skill_hitpoints":   { "base": "#d04a4a", "light": "#f0897a", "shade": "#8a2626" },
+    "skill_ranged":      { "base": "#4caf50", "light": "#8fd98f", "shade": "#2f7a37" },
+    "skill_magic":       { "base": "#3aa0d0", "light": "#7cc8ec", "shade": "#22688f" },
+    "skill_prayer":      { "base": "#e8d44a", "light": "#f5e88f", "shade": "#a89220" },
+    "skill_mining":      { "base": "#6f8fae", "light": "#a3bcd6", "shade": "#46627e" },
+    "skill_woodcutting": { "base": "#6f9e3a", "light": "#a3c86f", "shade": "#46661c" },
+    "skill_fishing":     { "base": "#4fa0c0", "light": "#8fc8e0", "shade": "#2f6f8a" },
+    "skill_smithing":    { "base": "#8a8f99", "light": "#bcc2cc", "shade": "#5a5f68" },
+    "skill_cooking":     { "base": "#c06f3a", "light": "#e8a36f", "shade": "#7a3f1c" },
+    "skill_fletching":   { "base": "#6f9e6f", "light": "#a3c8a3", "shade": "#466646" },
+    "skill_crafting":    { "base": "#b07a3a", "light": "#d6a76f", "shade": "#6f4a1c" },
+    "skill_herblore":    { "base": "#3fae5a", "light": "#7cd98e", "shade": "#246b32" },
+    "skill_agility":     { "base": "#3a6fae", "light": "#7c9fd6", "shade": "#22467e" },
+    "skill_thieving":    { "base": "#7a4f9a", "light": "#a886c8", "shade": "#4f2f6f" },
+
+    "leather":    { "base": "#8b5e3c", "light": "#b88060", "shade": "#5a3820" },
+    "climbing":   { "base": "#5a4230", "light": "#8a6a4a", "shade": "#2a1e10" },
+    "fire_orange":{ "base": "#e8743a", "light": "#ffb27a", "shade": "#a8431a" },
+    "ranger_green":{ "base": "#4a8a5a", "light": "#80c490", "shade": "#236b35" },
+    "arcane_blue":{ "base": "#4a72c8", "light": "#8aacf0", "shade": "#263f8a" },
+    "shardglass": { "base": "#90c4d8", "light": "#e0f4ff", "shade": "#4a8aaa" },
+    "studded":    { "base": "#7a8090", "light": "#b4bcc6", "shade": "#4a505a" }
+  },
+  "items": {
+    "scimitar":  ["bronze", "iron", "steel", "mithril", "adamant", "runeforged", "dragon"],
+    "dagger":    ["bronze", "iron", "steel", "mithril", "adamant", "dragon"],
+    "sword":     ["bronze", "iron", "steel", "mithril", "adamant", "runeforged"],
+    "longsword": ["bronze", "iron", "steel", "mithril", "adamant", "dragon"],
+    "mace":      ["bronze", "iron", "steel", "mithril", "adamant", "dragon"],
+    "warhammer": ["dragon"],
+    "battleaxe": ["dragon"],
+    "2h_sword":  ["runeforged"],
+    "spear":     ["bronze"],
+    "axe":       ["bronze", "iron", "steel", "mithril", "adamant", "runeforged", "dragon", "gold"],
+    "pickaxe":   ["bronze", "iron", "steel", "mithril", "adamant", "runeforged", "dragon", "gold"],
+    "platebody": ["bronze", "iron", "steel", "mithril", "adamant", "runeforged"],
+    "platelegs": ["bronze", "iron", "steel", "mithril", "adamant", "runeforged", "dragon"],
+    "plateskirt":["mithril", "adamant", "runeforged", "dragon"],
+    "full_helm": ["bronze", "iron", "steel", "mithril", "adamant", "runeforged", "dragon"],
+    "med_helm":  ["runeforged"],
+    "kiteshield":["bronze", "iron", "steel", "mithril", "adamant", "runeforged", "dragon"],
+    "chainbody": ["bronze", "iron", "steel", "mithril", "runeforged", "dragon"],
+    "ore":       ["tin", "copper", "iron", "mithril", "adamantite", "runeforged", "gold"],
+    "bar":       ["bronze", "iron", "steel", "mithril", "adamant", "runeforged", "gold"],
+    "logs":      ["oak", "willow", "maple", "yew", "magic", "redwood", "teak", "mahogany"],
+    "rune":      ["air", "water", "earth", "fire", "mind", "body", "chaos", "death", "nature", "law", "cosmic", "blood", "soul", "astral", "wrath"],
+    "amulet":    ["sapphire", "emerald", "ruby", "diamond", "dragonstone", "onyx", "zyrite"],
+    "stole":     ["lumira", "verdant", "krylth", "ancient", "zephyra", "grondar"],
+    "arrow":     ["bronze", "iron", "steel", "mithril", "adamant", "runeforged", "dragon"],
+    "shortbow":  ["oak", "willow", "maple", "yew", "magic"],
+    "shortbow_u": ["oak", "willow", "maple", "yew", "magic"],
+    "longbow":   ["oak", "willow", "maple"],
+    "crossbow":  ["iron", "steel", "mithril", "adamant", "runeforged"],
+    "d_hide_body":  ["red", "green", "black", "lumira", "verdant", "krylth", "ancient", "zephyra", "grondar"],
+    "d_hide_chaps": ["red", "green", "black", "lumira", "verdant", "krylth", "ancient", "zephyra", "grondar"],
+    "plank":        ["oak", "teak", "mahogany"],
+    "boots":        ["dragon"],
+    "d_hide_shield": ["lumira", "verdant", "krylth", "ancient", "zephyra", "grondar"],
+    "bolt":     ["bronze", "iron", "steel", "mithril", "adamant", "dragon"],
+    "arrowtip": [],
+    "gem_bolt": [],
+    "charm":    [],
+    "herb": [],
+    "hide": [],
+    "crystal": [],
+    "clue_scroll": []
+  },
+  "sets": {
+    "full_helm": {
+      "dravok_s_helm": "dravok", "gorath_s_helm": "gorath", "torvek_s_helm": "torvek",
+      "verin_s_helm": "verin", "gravehusk_helm": "gravehusk", "void_king_helm": "void_king",
+      "masari_mask": "masari", "serpentine_helm": "verdant"
+    },
+    "amulet": {
+      "amulet_of_strength": "ruby",
+      "amulet_of_power": "diamond",
+      "amulet_of_magic": "sapphire"
+    },
+    "kiteshield": {
+      "eagle_eyed_kiteshield": "ranger_green",
+      "arcane_kiteshield": "arcane_blue"
+    },
+    "bolt": {
+      "runite_bolt": "runeforged",
+      "bronze_bolt_unf": "bronze", "iron_bolt_unf": "iron", "steel_bolt_unf": "steel",
+      "mithril_bolt_unf": "mithril", "adamant_bolt_unf": "adamant", "runite_bolt_unf": "runeforged",
+      "dragon_bolt_unf": "dragon"
+    },
+    "gem_bolt": {
+      "ruby_bolt": "ruby", "ruby_bolt_e": "ruby",
+      "diamond_bolt": "diamond", "diamond_bolt_e": "diamond",
+      "dragonstone_bolt": "dragonstone", "dragonstone_bolt_e": "dragonstone",
+      "onyx_bolt": "onyx", "onyx_bolt_e": "onyx",
+      "ruby_dragon_bolt": "ruby", "ruby_dragon_bolt_e": "ruby",
+      "diamond_dragon_bolt": "diamond", "diamond_dragon_bolt_e": "diamond",
+      "dragonstone_dragon_bolt": "dragonstone", "dragonstone_dragon_bolt_e": "dragonstone",
+      "onyx_dragon_bolt": "onyx", "onyx_dragon_bolt_e": "onyx",
+      "ruby_bolt_tips": "ruby", "diamond_bolt_tips": "diamond",
+      "dragonstone_bolt_tips": "dragonstone", "onyx_bolt_tips": "onyx"
+    },
+    "arrowtip": {
+      "iron_arrowtips": "iron", "steel_arrowtips": "steel",
+      "mithril_arrowtips": "mithril", "adamant_arrowtips": "adamant", "runeforged_arrowtips": "runeforged"
+    },
+    "charm": {
+      "sacred_charm": "gold",
+      "peace_blessing": "air",
+      "profane_charm": "death",
+      "honorable_blessing": "law",
+      "battle_charm": "blood",
+      "elder_charm": "cosmic"
+    },
+    "platebody": {
+      "dravok_s_platebody": "dravok", "gorath_s_platebody": "gorath",
+      "torvek_s_platebody": "torvek", "verin_s_brassard": "verin",
+      "gravehusk_platebody": "gravehusk", "void_king_top": "void_king", "masari_body": "masari",
+      "grondar_chestplate": "grondar", "zephyra_chestplate": "zephyra",
+      "2nd_age_platebody": "gold", "justicar_chestguard": "steel",
+      "sovereigns_cinderplate": "fire_orange", "cindermaw_scale_body": "krylth",
+      "shardglass_plate_body": "shardglass", "decorative_top": "gold"
+    },
+    "platelegs": {
+      "dravok_s_platelegs": "dravok", "torvek_s_platelegs": "torvek", "masari_chaps": "masari",
+      "grondar_tassets": "grondar", "2nd_age_platelegs": "gold",
+      "justicar_legguards": "steel", "thornhide_platelegs": "verdant",
+      "shardglass_platelegs": "shardglass", "sovereigns_cindergreaves": "fire_orange"
+    },
+    "plateskirt": {
+      "gorath_s_chainskirt": "gorath", "verin_s_plateskirt": "verin",
+      "zephyra_chainskirt": "zephyra", "2nd_age_plateskirt": "gold", "freminnik_kilt": "verdant"
+    },
+    "gem": {
+      "ruby": "ruby", "sapphire": "sapphire", "emerald": "emerald", "diamond": "diamond",
+      "dragonstone": "dragonstone", "onyx": "onyx", "zyrite": "zyrite"
+    },
+    "uncut_gem": {
+      "uncut_ruby": "ruby", "uncut_sapphire": "sapphire", "uncut_emerald": "emerald",
+      "uncut_diamond": "diamond", "uncut_dragonstone": "dragonstone", "uncut_onyx": "onyx", "uncut_zyrite": "zyrite"
+    },
+    "potion": {
+      "attack_potion": "pot_attack", "strength_potion": "pot_strength", "defence_potion": "pot_defence",
+      "combat_potion": "pot_combat", "prayer_potion": "pot_prayer", "ranging_potion": "pot_ranging", "magic_potion": "pot_magic",
+      "super_attack": "pot_attack", "super_strength": "pot_strength", "super_defence": "pot_defence"
+    },
+    "shortbow": {
+      "shortbow": "oak",
+      "stonegale_bow": "steel"
+    },
+    "shortbow_u": {
+      "shortbow_u": "oak"
+    },
+    "longbow": {
+      "longbow": "oak"
+    },
+    "crossbow": {
+      "crossbow": "oak",
+      "zephyra_crossbow": "zephyra",
+      "dragon_slayer_crossbow": "dragon",
+      "chaotic_crossbow": "void_king",
+      "kaelor_s_crossbow": "lumira",
+      "razorwing_crossbow": "verdant"
+    },
+    "cape": {
+      "attack_cape": "skill_attack", "strength_cape": "skill_strength", "defence_cape": "skill_defence",
+      "hitpoints_cape": "skill_hitpoints", "ranged_cape": "skill_ranged", "magic_cape": "skill_magic",
+      "prayer_cape": "skill_prayer", "mining_cape": "skill_mining", "woodcutting_cape": "skill_woodcutting",
+      "fishing_cape": "skill_fishing", "smithing_cape": "skill_smithing", "cooking_cape": "skill_cooking",
+      "fletching_cape": "skill_fletching", "crafting_cape": "skill_crafting", "herblore_cape": "skill_herblore",
+      "agility_cape": "skill_agility", "thieving_cape": "skill_thieving"
+    },
+    "d_hide_body": {
+      "2nd_age_range_top": "gold", "leather_body": "leather", "hard_leather_body": "climbing",
+      "studded_body": "studded", "kaelor_s_leathertop": "lumira", "arcanist_robe_top": "arcane_blue",
+      "drake_leather_body": "verdant", "fighter_body": "red", "rangers_tunic": "ranger_green",
+      "morvyn_s_robetop": "masari", "shroud_robes_top": "void_king", "zesta_vest": "krylth",
+      "2nd_age_robe_top": "ancient", "2nd_age_druidic_robe_top": "verdant"
+    },
+    "d_hide_chaps": {
+      "2nd_age_range_legs": "gold", "leather_chaps": "leather", "studded_chaps": "studded",
+      "kaelor_s_leatherskirt": "lumira", "arcanist_robe_bottom": "arcane_blue",
+      "morvyn_s_robeskirt": "masari", "2nd_age_robe_legs": "ancient",
+      "2nd_age_druidic_robe_bottoms": "verdant", "zesta_skirt": "krylth"
+    },
+    "longsword": {
+      "lumira_sword": "lumira", "2nd_age_longsword": "gold"
+    },
+    "spear": {
+      "krylth_spear": "krylth", "gorath_s_warspear": "gorath", "dragon_hunter_lance": "dragon"
+    },
+    "axe": {
+      "2nd_age_axe": "gold", "emberhowl_axe": "fire_orange", "shardglass_axe": "shardglass"
+    },
+    "pickaxe": {
+      "2nd_age_pickaxe": "gold", "shardglass_pickaxe": "shardglass"
+    },
+    "battleaxe": {
+      "dravok_s_greataxe": "dravok"
+    },
+    "warhammer": {
+      "torvek_s_hammers": "torvek"
+    },
+    "bone": {
+      "bones": "bone", "big_bones": "bone", "dragon_bones": "bone", "nagadoth_bones": "bone", "ashen_hydra_bones": "bone"
+    },
+    "seed": {
+      "greenthorn_seed": "seed", "miremint_seed": "seed", "duskroot_seed": "seed", "kingsherb_seed": "seed",
+      "graysage_seed": "seed", "bogtuber_seed": "seed", "rynarr_seed": "seed"
+    },
+    "sapling": {
+      "oak_sapling": "sapling", "willow_sapling": "sapling", "maple_sapling": "sapling", "yew_sapling": "sapling",
+      "magic_sapling": "sapling", "apple_sapling": "sapling", "banana_sapling": "sapling", "orange_sapling": "sapling",
+      "curry_sapling": "sapling", "papaya_sapling": "sapling", "palm_sapling": "sapling"
+    },
+    "fish": {
+      "trout": "cooked_fish", "raw_trout": "raw_fish", "anglerfish": "cooked_fish", "raw_anglerfish": "raw_fish",
+      "karam": "cooked_fish", "raw_karam": "raw_fish"
+    },
+    "shrimp": { "shrimps": "cooked_shrimp", "raw_shrimps": "raw_shrimp" },
+    "eel": { "eel": "cooked_eel", "raw_eel": "raw_eel" },
+    "manta_ray": { "manta_ray": "cooked_manta", "raw_manta_ray": "raw_manta" },
+    "drumstick": { "cooked_chicken": "cooked_chicken", "raw_chicken": "raw_chicken" },
+    "meat": { "cooked_meat": "cooked_meat", "raw_beef": "raw_beef" },
+    "boots": {
+      "leather_boots": "leather",
+      "climbing_boots": "climbing",
+      "climbing_boots_g": "gold",
+      "grondar_boots": "grondar",
+      "lumira_d_hide_boots": "lumira",
+      "verdant_d_hide_boots": "verdant",
+      "krylth_d_hide_boots": "krylth",
+      "ancient_d_hide_boots": "ancient",
+      "zephyra_d_hide_boots": "zephyra",
+      "grondar_d_hide_boots": "grondar",
+      "pathfinder_boots": "ranger_green",
+      "spellweaver_boots": "arcane_blue",
+      "arcanist_boots": "arcane_blue",
+      "primeval_boots": "krylth",
+      "skyfury_boots": "verdant",
+      "evermore_boots": "lumira",
+      "emberhowl_boots": "fire_orange"
+    },
+    "herb": {
+      "nettle": "verdant", "greenthorn_leaf": "verdant", "duskroot": "krylth",
+      "rynarr_weed": "lumira", "sunblossom": "gold", "emberleaf": "fire_orange",
+      "wyrmspice": "grondar", "snapdrake": "dragon", "cinderbloom": "fire_orange",
+      "stonefern": "steel", "mistvine": "zephyra", "marshflax": "verdant",
+      "thornspire": "black", "miremint": "verdant", "kingsherb": "gold",
+      "graysage": "mithril", "bogtuber": "krylth"
+    },
+    "hide": {
+      "cowhide": "leather", "leather": "leather",
+      "hard_leather": "climbing",
+      "green_dragon_leather": "green", "blue_dragon_leather": "lumira",
+      "red_dragon_leather": "dragon", "black_dragon_leather": "black",
+      "ashen_hydra_leather": "krylth"
+    },
+    "crystal": {
+      "primeval_crystal": "krylth", "skyfury_crystal": "zephyra",
+      "evermore_crystal": "lumira", "shardglass_shards": "shardglass",
+      "zyrite_shard": "zyrite", "godsword_shard": "gold"
+    },
+    "clue_scroll": {
+      "clue_scroll_medium": "verdant", "clue_scroll_hard": "lumira",
+      "clue_scroll_elite": "grondar", "clue_scroll_master": "krylth"
+    },
+    "logs": {
+      "logs": "oak"
+    },
+    "plank": {
+      "plank": "oak"
+    },
+    "longsword": {
+      "lumira_sword": "lumira", "2nd_age_longsword": "gold",
+      "blade_of_saeldor": "verdant", "shadow_of_tumaken": "void_king",
+      "ashen_sovereigns_edge": "krylth"
+    },
+    "dagger": {
+      "ghraxis_rapier": "lumira", "boneclaw_rapier": "bone",
+      "fang_of_osmun": "void_king"
+    },
+    "axe": {
+      "2nd_age_axe": "gold", "emberhowl_axe": "fire_orange",
+      "shardglass_axe": "shardglass", "gold_spade": "gold"
+    },
+    "2h_sword": {
+      "scythe_of_vythar": "krylth", "durn_s_bulwark": "gorath"
+    }
+  }
+}

@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'preact/hooks'
 import itemsData from '../data/items.json'
 import { getItemIconKey } from '../utils/itemIcons'
+import GameIcon from './GameIcon.jsx'
 import { skillEmblemMask, skillArtTreatment } from '../utils/skillArt.js'
 import GildedComplete from './GildedComplete.jsx'
 import {
@@ -176,10 +177,9 @@ function CategoryCard({ category, meta, obtained, total, onOpen }) {
 
 function ClogItemSlot({ itemId, accent, gold }) {
   const item = itemsData[itemId]
-  const glyphKey = getItemIconKey(item) || 'default'
   return (
     <div class="clog-slot is-got gold-card">
-      <CollogArt glyphKey={glyphKey} accent={accent} gold={gold} size={38} glow={1} />
+      <GameIcon item={item} size={38} />
       <div class="clog-slot__name">{itemLabel(itemId)}</div>
     </div>
   )
@@ -192,7 +192,6 @@ function LockedSlot({ itemId, accent }) {
     <div class="clog-slot is-locked">
       <CollogArt glyphKey={glyphKey} accent={accent} locked size={38} />
       <div class="clog-slot__name">???</div>
-      <span class="clog-slot__lock">🔒</span>
     </div>
   )
 }

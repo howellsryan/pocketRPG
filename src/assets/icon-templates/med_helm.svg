@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="{{id}}_helm" x1="0.2" y1="0" x2="0.7" y2="1">
+      <stop offset="0" stop-color="{{light}}"/><stop offset="0.5" stop-color="{{base}}"/><stop offset="1" stop-color="{{shade}}"/>
+    </linearGradient>
+  </defs>
+  <g stroke="#15110d" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M158 296 C 158 178 354 178 354 296 L354 314 C 354 326 344 334 332 334 L180 334 C 168 334 158 326 158 314 Z" fill="url(#{{id}}_helm)"/>
+    <path d="M186 286 C 186 200 240 188 256 188 C 232 216 220 250 220 296 C 204 294 194 292 186 286 Z" fill="{{light}}" stroke="none"/>
+    <rect x="244" y="296" width="24" height="78" rx="8" fill="url(#{{id}}_helm)"/>
+    <path d="M256 168 C 268 180 268 196 256 208 C 244 196 244 180 256 168 Z" fill="{{base}}"/>
+    <path d="M170 314 L342 314" stroke="{{shade}}" stroke-width="7" fill="none"/>
+    <circle cx="186" cy="276" r="6" fill="{{shade}}" stroke="none"/>
+    <circle cx="326" cy="276" r="6" fill="{{shade}}" stroke="none"/>
+  </g>
+</svg>

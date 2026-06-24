@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="potato_cactus_b" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#6fbf5a"/><stop offset="0.6" stop-color="#3f8a3a"/><stop offset="1" stop-color="#255a24"/>
+    </linearGradient>
+  </defs>
+  <g stroke="#143012" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M210 430 L210 250 C 210 196 250 168 256 168 C 262 168 302 196 302 250 L302 430 Z" fill="url(#potato_cactus_b)"/>
+    <path d="M210 300 C 160 300 134 260 134 214 C 174 214 210 244 210 290 Z" fill="url(#potato_cactus_b)"/>
+    <path d="M302 320 C 352 320 378 280 378 234 C 338 234 302 264 302 310 Z" fill="url(#potato_cactus_b)"/>
+    <path d="M256 200 L256 410 M232 320 L232 410 M280 330 L280 410" stroke="#255a24" stroke-width="6" fill="none"/>
+    <g stroke="#f0e6c0" stroke-width="6"><path d="M226 240 L214 232 M250 220 L250 206 M286 250 L298 242 M232 300 L220 296 M282 300 L294 296 M256 360 L256 348"/></g>
+    <path d="M192 430 L320 430 L308 458 L204 458 Z" fill="#8a5a2c"/>
+  </g>
+</svg>

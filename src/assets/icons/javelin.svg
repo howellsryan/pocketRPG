@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="javelin_t" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#dfe6ee"/><stop offset="0.5" stop-color="#9aa6b4"/><stop offset="1" stop-color="#5a6470"/>
+    </linearGradient>
+  </defs>
+  <g transform="rotate(-30 256 256)" stroke="#1a1410" stroke-width="12" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M256 56 L278 116 L256 140 L234 116 Z" fill="url(#javelin_t)"/>
+    <rect x="248" y="134" width="16" height="300" rx="7" fill="#7a5630"/>
+    <path d="M248 380 L210 420 L248 410 Z M264 380 L302 420 L264 410 Z" fill="#c43838"/>
+    <path d="M248 408 L214 444 L248 432 Z M264 408 L298 444 L264 432 Z" fill="#c43838"/>
+  </g>
+</svg>

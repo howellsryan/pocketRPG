@@ -364,12 +364,12 @@ export default function GatherScreen({ initialTaskId, idleResult }) {
 
     return (
       <SkillActivePanel
-        icon={<GameIcon iconKey={task.iconKey} item={{ icon: task.icon }} size={50} color="var(--color-gold-light)" />}
+        icon={<GameIcon iconKey={task.product} item={{ icon: task.icon }} size={100} color="var(--color-gold-light)" />}
         title={task.name}
         subtitle={task.description}
         progress={progress}
         producing={<>
-          <GameIcon iconKey={task.iconKey} item={{ icon: task.icon }} size={16} color="var(--color-gold-light)" />
+          <GameIcon iconKey={task.product} item={{ icon: task.icon }} size={32} color="var(--color-gold-light)" />
           <span class="text-[12px] font-semibold text-[var(--color-parchment)] opacity-60">Producing</span>
           <span class="text-[13px] font-semibold text-[var(--color-gold-light)]">{nameOf(task.product)}</span>
         </>}
@@ -391,7 +391,12 @@ export default function GatherScreen({ initialTaskId, idleResult }) {
     <div class="h-full flex flex-col">
       {/* Header */}
       <div class="px-4 pt-4 pb-2 flex-shrink-0">
-        <SectionHeader size="lg" className="mb-[10px]">🌿 Gather</SectionHeader>
+        <SectionHeader size="lg" className="mb-[10px]">
+          <span class="inline-flex items-center gap-2">
+            <GameIcon iconKey="kingsherb" size={22} />
+            Gather
+          </span>
+        </SectionHeader>
 
 
         {/* Category tabs */}
@@ -428,7 +433,7 @@ export default function GatherScreen({ initialTaskId, idleResult }) {
             return (
               <SkillActionRow
                 key={task.id}
-                icon={<GameIcon iconKey={task.iconKey} item={{ icon: task.icon }} size={26} color="var(--color-gold)" />}
+                icon={<GameIcon iconKey={task.product} item={{ icon: task.icon }} size={52} color="var(--color-gold)" />}
                 title={task.name}
                 meta={<>
                   ⏱ {(task.ticks * 0.6).toFixed(1)}s/action

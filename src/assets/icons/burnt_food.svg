@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <radialGradient id="bf_body" cx="0.4" cy="0.4" r="0.65">
+      <stop offset="0" stop-color="#5a4030"/><stop offset="0.5" stop-color="#2e1e10"/><stop offset="1" stop-color="#100800"/>
+    </radialGradient>
+  </defs>
+  <g stroke="#1a1410" stroke-linejoin="round" stroke-linecap="round">
+    <!-- Burnt lump -->
+    <path d="M 180 190 C 166 150 200 110 256 108 C 312 110 346 150 332 190 C 356 206 370 250 360 300 C 346 358 306 400 256 400 C 206 400 166 358 152 300 C 142 250 156 206 180 190 Z" fill="url(#bf_body)" stroke-width="12"/>
+    <!-- Charred cracks -->
+    <path d="M 220 160 L 234 210 L 218 260" stroke="#6a4828" stroke-width="7" fill="none" opacity="0.6"/>
+    <path d="M 272 148 L 280 200 L 294 248" stroke="#6a4828" stroke-width="6" fill="none" opacity="0.55"/>
+    <path d="M 196 280 C 220 290 260 292 294 280" stroke="#6a4828" stroke-width="5" fill="none" opacity="0.5"/>
+    <!-- Smoke wisps -->
+    <path d="M 224 110 C 218 88 226 70 220 52" stroke="#787068" stroke-width="7" fill="none" opacity="0.55"/>
+    <path d="M 256 102 C 252 78 260 60 254 42" stroke="#787068" stroke-width="6" fill="none" opacity="0.5"/>
+    <path d="M 288 108 C 284 84 292 68 288 50" stroke="#787068" stroke-width="6" fill="none" opacity="0.45"/>
+    <!-- Ash highlight -->
+    <path d="M 188 200 C 178 240 180 290 188 334" stroke="#7a6050" stroke-width="8" fill="none" opacity="0.4"/>
+  </g>
+</svg>

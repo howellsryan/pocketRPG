@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <radialGradient id="chicken_b" cx="0.4" cy="0.35" r="0.8">
+      <stop offset="0" stop-color="#ffffff"/><stop offset="0.7" stop-color="#e6e2d6"/><stop offset="1" stop-color="#b4ad9a"/>
+    </radialGradient>
+  </defs>
+  <g stroke="#3a342a" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M210 250 C 140 270 120 350 176 396 C 230 436 320 430 358 380 C 392 334 380 268 320 248 C 300 200 240 206 210 250 Z" fill="url(#chicken_b)"/>
+    <circle cx="232" cy="210" r="58" fill="url(#chicken_b)"/>
+    <path d="M232 158 C 220 132 244 118 256 134 C 268 118 292 132 280 158 C 268 168 244 168 232 158 Z" fill="#d0392b"/>
+    <polygon points="184,212 130,224 184,242" fill="#e8a13a"/>
+    <path d="M196 248 L210 244 L208 260 Z" fill="#e8a13a"/>
+    <circle cx="212" cy="200" r="11" fill="#1a1410" stroke="none"/>
+    <circle cx="216" cy="196" r="3.5" fill="#fff" stroke="none"/>
+    <path d="M340 300 C 380 296 408 312 420 340 C 388 344 360 338 338 326 Z" fill="#e6e2d6"/>
+    <path d="M200 414 L200 446 M236 418 L236 448" stroke="#e8a13a" stroke-width="12" fill="none"/>
+  </g>
+</svg>

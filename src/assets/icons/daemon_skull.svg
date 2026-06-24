@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <radialGradient id="daemon_skull_s" cx="0.4" cy="0.34" r="0.8">
+      <stop offset="0" stop-color="#5a5060"/><stop offset="0.6" stop-color="#3a3340"/><stop offset="1" stop-color="#1e1a24"/>
+    </radialGradient>
+  </defs>
+  <g stroke="#120e16" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M150 150 C 130 110 168 96 200 120 C 196 150 196 168 206 188 Z" fill="url(#daemon_skull_s)"/>
+    <path d="M362 150 C 382 110 344 96 312 120 C 316 150 316 168 306 188 Z" fill="url(#daemon_skull_s)"/>
+    <path d="M256 110 C 168 110 132 176 132 248 C 132 300 158 336 188 356 L188 384 C 188 396 198 404 210 404 L302 404 C 314 404 324 396 324 384 L324 356 C 354 336 380 300 380 248 C 380 176 344 110 256 110 Z" fill="url(#daemon_skull_s)"/>
+    <path d="M170 232 L246 256 L210 296 Z" fill="#ff5a2a"/>
+    <path d="M342 232 L266 256 L302 296 Z" fill="#ff5a2a"/>
+    <circle cx="206" cy="262" r="11" fill="#ffe08a" stroke="none"/>
+    <circle cx="306" cy="262" r="11" fill="#ffe08a" stroke="none"/>
+    <path d="M256 300 L236 340 L256 352 L276 340 Z" fill="#120e16"/>
+    <path d="M210 374 L210 404 M256 378 L256 404 M302 374 L302 404" stroke="#120e16" stroke-width="9" fill="none"/>
+  </g>
+</svg>

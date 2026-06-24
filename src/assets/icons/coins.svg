@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <radialGradient id="coins_face" cx="0.4" cy="0.35" r="0.75">
+      <stop offset="0" stop-color="#fff0a0"/><stop offset="0.6" stop-color="#ffcf33"/><stop offset="1" stop-color="#c48f12"/>
+    </radialGradient>
+  </defs>
+  <g stroke="#5a3d08" stroke-width="12" stroke-linejoin="round" stroke-linecap="round">
+    <ellipse cx="180" cy="338" rx="86" ry="70" fill="url(#coins_face)"/>
+    <ellipse cx="332" cy="348" rx="86" ry="70" fill="url(#coins_face)"/>
+    <ellipse cx="256" cy="224" rx="96" ry="78" fill="url(#coins_face)"/>
+    <ellipse cx="256" cy="224" rx="58" ry="46" fill="none" stroke="#c48f12" stroke-width="8"/>
+    <path d="M212 196 l12 22 24 12 -24 12 -12 22 -12 -22 -24 -12 24 -12z" fill="#fff8da" stroke="none"/>
+  </g>
+</svg>

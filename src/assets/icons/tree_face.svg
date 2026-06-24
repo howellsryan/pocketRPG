@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <radialGradient id="tree_face_s" cx="0.42" cy="0.4" r="0.75">
+      <stop offset="0" stop-color="#8a6a44"/><stop offset="0.6" stop-color="#5c4228"/><stop offset="1" stop-color="#352414"/>
+    </radialGradient>
+  </defs>
+  <g stroke="#1f140c" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M168 130 C 150 90 110 96 110 134 M256 110 C 250 70 210 66 200 102 M344 130 C 362 90 402 96 402 134" fill="#3f8a3a"/>
+    <path d="M150 196 C 130 110 200 96 256 104 C 312 96 382 110 362 196 Q 384 260 366 332 Q 332 416 256 424 Q 180 416 146 332 Q 128 260 150 196 Z" fill="url(#tree_face_s)"/>
+    <path d="M170 220 C 178 280 176 350 184 408 M342 220 C 334 280 336 350 328 408 M256 200 L256 420" stroke="#352414" stroke-width="6" fill="none"/>
+    <path d="M186 264 L246 280 L210 304 Z" fill="#1f140c"/>
+    <path d="M326 264 L266 280 L302 304 Z" fill="#1f140c"/>
+    <circle cx="210" cy="282" r="9" fill="#ffd24a" stroke="none"/>
+    <circle cx="302" cy="282" r="9" fill="#ffd24a" stroke="none"/>
+    <path d="M204 350 Q 256 332 308 350 Q 290 384 256 384 Q 222 384 204 350 Z" fill="#1f140c"/>
+  </g>
+</svg>

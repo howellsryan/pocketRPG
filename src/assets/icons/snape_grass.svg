@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="sg_blade" x1="0.3" y1="1" x2="0.7" y2="0">
+      <stop offset="0" stop-color="#6ab040"/><stop offset="0.6" stop-color="#4a9030"/><stop offset="1" stop-color="#2a6018"/>
+    </linearGradient>
+  </defs>
+  <g stroke="#1a1410" stroke-linejoin="round" stroke-linecap="round">
+    <!-- Three grass blades -->
+    <path d="M 200 430 C 196 380 186 310 192 240 C 198 196 212 172 224 168 C 222 210 212 290 214 370 Z" fill="url(#sg_blade)" stroke-width="11"/>
+    <path d="M 256 440 C 254 380 248 300 256 224 C 262 180 274 154 284 148 C 280 192 270 276 272 368 Z" fill="url(#sg_blade)" stroke-width="11"/>
+    <path d="M 316 430 C 310 382 316 308 324 238 C 330 194 342 172 352 170 C 346 214 332 296 330 374 Z" fill="url(#sg_blade)" stroke-width="11"/>
+    <!-- Seed head on center blade -->
+    <path d="M 284 148 C 292 128 298 108 292 88 C 298 82 308 82 312 90 C 308 112 300 136 284 148" fill="#8ac848" stroke-width="10"/>
+    <!-- Small side seeds -->
+    <path d="M 224 168 C 214 148 210 128 218 110 C 224 104 232 106 234 114 C 228 136 224 152 224 168" fill="#8ac848" stroke-width="9"/>
+    <!-- Blade highlights -->
+    <path d="M 204 240 C 200 300 202 360 204 410" stroke="#a0d060" stroke-width="6" fill="none" opacity="0.5"/>
+    <path d="M 260 248 C 258 306 260 364 262 416" stroke="#a0d060" stroke-width="5" fill="none" opacity="0.45"/>
+  </g>
+</svg>

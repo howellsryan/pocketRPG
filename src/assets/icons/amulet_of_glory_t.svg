@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <radialGradient id="amulet_of_glory_t_jewel" cx="0.38" cy="0.3" r="0.8">
+      <stop offset="0" stop-color="#d88ff0"/><stop offset="0.55" stop-color="#b04fd0"/><stop offset="1" stop-color="#7a2fa0"/>
+    </radialGradient>
+  </defs>
+  <g stroke="#1a1410" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
+    <!-- Chain -->
+    <path d="M256 96 C 170 120 120 184 124 252" fill="none" stroke="#c9a24a" stroke-width="16"/>
+    <path d="M256 96 C 342 120 392 184 388 252" fill="none" stroke="#c9a24a" stroke-width="16"/>
+    <!-- Gold outer frame (trimmed) -->
+    <path d="M256 240 C 334 248 382 300 382 356 C 382 420 324 464 256 464 C 188 464 130 420 130 356 C 130 300 178 248 256 240 Z" fill="#c9a24a" stroke="#1a1410" stroke-width="13"/>
+    <!-- Pendant gem body -->
+    <path d="M256 252 C 318 260 358 306 358 352 C 358 408 310 448 256 456 C 202 448 154 408 154 352 C 154 306 194 260 256 252 Z" fill="url(#amulet_of_glory_t_jewel)"/>
+    <!-- Inner facets -->
+    <path d="M 256 276 L 292 310 L 256 344 L 220 310 Z" fill="#d88ff0" stroke="#7a2fa0" stroke-width="7" opacity="0.6"/>
+    <!-- Highlight -->
+    <path d="M 210 294 C 218 282 230 276 242 274" stroke="#d88ff0" stroke-width="8" fill="none" opacity="0.75"/>
+    <!-- Frame trim marks -->
+    <path d="M 134 330 L 146 356 L 134 382" stroke="#fff0a0" stroke-width="6" fill="none"/>
+    <path d="M 378 330 L 366 356 L 378 382" stroke="#fff0a0" stroke-width="6" fill="none"/>
+    <!-- Gold mount with gem -->
+    <circle cx="256" cy="244" r="24" fill="#e0b94a" stroke="#7a5a16" stroke-width="9"/>
+    <circle cx="256" cy="244" r="10" fill="#fff0a0" stroke="none"/>
+  </g>
+</svg>

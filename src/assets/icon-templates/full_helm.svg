@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="{{id}}_helm" x1="0.2" y1="0" x2="0.7" y2="1">
+      <stop offset="0" stop-color="{{light}}"/><stop offset="0.5" stop-color="{{base}}"/><stop offset="1" stop-color="{{shade}}"/>
+    </linearGradient>
+  </defs>
+  <g stroke="#15110d" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M164 254 C 164 156 348 156 348 254 L348 320 C 348 372 304 398 256 398 C 208 398 164 372 164 320 Z" fill="url(#{{id}}_helm)"/>
+    <path d="M184 250 C 184 176 240 168 256 168 C 232 196 220 230 220 268 C 204 264 192 258 184 250 Z" fill="{{light}}" stroke="none"/>
+    <rect x="192" y="266" width="128" height="26" rx="8" fill="#2a241c"/>
+    <rect x="244" y="266" width="24" height="116" rx="8" fill="#2a241c"/>
+    <path d="M256 150 C 268 162 268 178 256 190 C 244 178 244 162 256 150 Z" fill="{{base}}"/>
+    <path d="M178 324 C 220 340 292 340 334 324" stroke="{{shade}}" stroke-width="7" fill="none"/>
+    <circle cx="190" cy="232" r="6" fill="{{shade}}" stroke="none"/>
+    <circle cx="322" cy="232" r="6" fill="{{shade}}" stroke="none"/>
+  </g>
+</svg>

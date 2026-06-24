@@ -1,10 +1,10 @@
 import Card from './Card.jsx'
 import GameIcon from './GameIcon.jsx'
 
-const EQ_SLOT_LABELS = {
-  head: '🪖', cape: '🧣', neck: '📿', ammo: '🏹',
-  weapon: '🗡️', body: '👕', shield: '🛡️',
-  legs: '👖', gloves: '🧤', boots: '👢', ring: '💍'
+const EQ_SLOT_ICONS = {
+  head: 'iron_full_helm', cape: 'attack_cape', neck: 'amulet_of_strength', ammo: 'bronze_arrow',
+  weapon: 'iron_sword', body: 'iron_platebody', shield: 'iron_kiteshield',
+  legs: 'iron_platelegs', gloves: 'leather_gloves', boots: 'iron_boots', ring: 'ruby'
 }
 
 export const EQ_SLOT_NAMES = {
@@ -37,7 +37,7 @@ function EquipSlot({ slotName, equipment, itemsData, onSelect, size = 'md' }) {
     >
       {item
         ? <GameIcon item={item} size={parseInt(preset.icon, 10)} />
-        : <span style={{ fontSize: preset.emptyIcon }}>{EQ_SLOT_LABELS[slotName]}</span>
+        : <GameIcon iconKey={EQ_SLOT_ICONS[slotName]} size={parseInt(preset.emptyIcon, 10)} />
       }
       {charges > 0 && (
         <span class="absolute bottom-[2px] right-[2px] text-[8px] text-[#4ade80] font-bold">⚡</span>

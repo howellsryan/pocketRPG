@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <radialGradient id="wolf_trap_g" cx="0.5" cy="0.5" r="0.6">
+      <stop offset="0" stop-color="#9aa0aa"/><stop offset="1" stop-color="#54595f"/>
+    </radialGradient>
+  </defs>
+  <g stroke="#181b1f" stroke-width="12" stroke-linejoin="round" stroke-linecap="round">
+    <circle cx="256" cy="262" r="92" fill="none" stroke="#3a3e44" stroke-width="22"/>
+    <path d="M164 262 C 196 236 220 236 256 262 C 292 236 316 236 348 262" fill="none" stroke="url(#wolf_trap_g)" stroke-width="20"/>
+    <path d="M170 250 L150 200 M204 236 L196 182 M256 232 L256 176 M308 236 L316 182 M342 250 L362 200" stroke="#cfd4da" stroke-width="14" fill="none"/>
+    <path d="M170 274 L150 324 M204 288 L196 342 M256 292 L256 348 M308 288 L316 342 M342 274 L362 324" stroke="#9aa0aa" stroke-width="14" fill="none"/>
+    <circle cx="256" cy="262" r="26" fill="#3a3e44"/>
+    <line x1="348" y1="262" x2="430" y2="300" stroke="#54595f" stroke-width="14"/>
+  </g>
+</svg>

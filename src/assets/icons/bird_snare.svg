@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <g stroke="#1a1410" stroke-linejoin="round" stroke-linecap="round">
+    <!-- Stick base (vertical) -->
+    <path d="M 256 400 L 256 210" stroke="#9a7030" stroke-width="14" fill="none"/>
+    <!-- Horizontal perch stick -->
+    <path d="M 186 280 L 326 280" stroke="#9a7030" stroke-width="13" fill="none"/>
+    <!-- Trap door (flat piece propped up) -->
+    <path d="M 178 380 L 334 380 L 326 280 L 186 280 Z" fill="#c89040" stroke-width="11" opacity="0.7"/>
+    <!-- Prop stick (diagonal support) -->
+    <path d="M 256 210 L 256 280" stroke="#7a5818" stroke-width="10" fill="none"/>
+    <path d="M 242 256 L 256 210 L 270 256" fill="#9a7030" stroke-width="9"/>
+    <!-- Net/mesh on trap door (simplified) -->
+    <path d="M 196 300 L 316 300 M 196 320 L 316 320 M 196 340 L 316 340 M 196 360 L 316 360" stroke="#7a6840" stroke-width="5" fill="none" opacity="0.55"/>
+    <path d="M 212 280 L 212 380 M 232 280 L 232 380 M 256 280 L 256 380 M 280 280 L 280 380 M 300 280 L 300 380" stroke="#7a6840" stroke-width="4" fill="none" opacity="0.5"/>
+    <!-- Trigger string -->
+    <path d="M 256 210 C 270 196 280 188 290 180" stroke="#c8a060" stroke-width="7" fill="none" opacity="0.7"/>
+    <!-- Bait (seed) at base -->
+    <ellipse cx="256" cy="388" rx="12" ry="8" fill="#e8c840" stroke-width="8"/>
+  </g>
+</svg>

@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="dragon_defender_body" x1="0.2" y1="0" x2="0.75" y2="1">
+      <stop offset="0" stop-color="#ff7a68"/><stop offset="0.5" stop-color="#c0392b"/><stop offset="1" stop-color="#6f1810"/>
+    </linearGradient>
+  </defs>
+  <g stroke="#1a1410" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
+    <!-- Defender hexagonal body -->
+    <path d="M 256 86 L 382 200 L 382 340 L 256 448 L 130 340 L 130 200 Z" fill="url(#dragon_defender_body)" stroke="#6f1810" stroke-width="13"/>
+    <!-- Inner frame -->
+    <path d="M 256 118 L 352 214 L 352 328 L 256 418 L 160 328 L 160 214 Z" fill="none" stroke="#6f1810" stroke-width="9"/>
+    <!-- Dragon scale pattern -->
+    <path d="M 192 206 C 212 196 232 200 240 214 C 212 212 194 220 192 206 Z" fill="#ff7a68" opacity="0.5"/>
+    <path d="M 240 214 C 260 204 280 208 288 222 C 260 220 242 228 240 214 Z" fill="#ff7a68" opacity="0.5"/>
+    <path d="M 192 250 C 212 240 232 244 240 258 C 212 256 194 264 192 250 Z" fill="#ff7a68" opacity="0.4"/>
+    <path d="M 240 250 C 260 240 280 244 290 258 C 262 256 242 264 240 250 Z" fill="#ff7a68" opacity="0.4"/>
+    <!-- Dragon claw emblem -->
+    <path d="M 256 220 L 278 270 L 266 264 L 256 310 L 246 264 L 234 270 Z" fill="#6f1810" stroke="#ff7a68" stroke-width="8" opacity="0.85"/>
+    <!-- Central boss -->
+    <circle cx="256" cy="264" r="36" fill="#6f1810" stroke="#ff7a68" stroke-width="9"/>
+    <circle cx="252" cy="258" r="13" fill="#ff7a68" stroke="none"/>
+    <!-- Shine -->
+    <path d="M 188 152 C 182 240 188 326 182 410" stroke="#ff7a68" stroke-width="7" fill="none" opacity="0.35"/>
+  </g>
+</svg>

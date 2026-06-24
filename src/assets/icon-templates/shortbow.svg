@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M312 138 C 206 206 206 306 312 374" stroke="#1a1410" stroke-width="44"/>
+    <path d="M312 138 C 206 206 206 306 312 374" stroke="{{base}}" stroke-width="26"/>
+    <path d="M300 168 C 232 212 232 300 300 344" stroke="{{light}}" stroke-width="7"/>
+    <line x1="312" y1="144" x2="312" y2="368" stroke="#1a1410" stroke-width="10"/>
+    <line x1="312" y1="148" x2="312" y2="364" stroke="#efe6d4" stroke-width="5"/>
+  </g>
+</svg>

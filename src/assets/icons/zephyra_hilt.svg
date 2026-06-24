@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="zph_metal" x1="0.2" y1="0" x2="0.8" y2="1">
+      <stop offset="0" stop-color="#e0f0f8"/><stop offset="0.5" stop-color="#90c0e0"/><stop offset="1" stop-color="#3870a0"/>
+    </linearGradient>
+  </defs>
+  <g stroke="#1a1410" stroke-linejoin="round" stroke-linecap="round">
+    <!-- Grip (light, elegant) -->
+    <rect x="236" y="296" width="40" height="120" rx="10" fill="#d0e8f8" stroke-width="12"/>
+    <!-- Grip wrap -->
+    <path d="M 234 320 L 278 320 M 234 344 L 278 344 M 234 368 L 278 368 M 234 392 L 278 392" stroke="#90c0e0" stroke-width="7" fill="none" opacity="0.5"/>
+    <!-- Pommel - wind-swirl design -->
+    <circle cx="256" cy="420" r="28" fill="url(#zph_metal)" stroke-width="12"/>
+    <path d="M 244 412 C 248 404 260 402 266 410 C 270 418 264 428 256 426 C 248 424 244 416 248 410" stroke="#c0e4f8" stroke-width="6" fill="none" opacity="0.6"/>
+    <!-- Guard - swept wing design -->
+    <path d="M 148 274 C 160 258 192 250 220 256 L 256 258 L 292 256 C 320 250 352 258 364 274 C 356 290 336 298 308 296 L 256 294 L 204 296 C 176 298 156 290 148 274 Z" fill="url(#zph_metal)" stroke-width="13"/>
+    <!-- Guard swept tips -->
+    <path d="M 148 274 C 132 262 116 256 104 262 C 108 274 122 286 140 284 Z" fill="#90c0e0" stroke-width="10"/>
+    <path d="M 364 274 C 380 262 396 256 408 262 C 404 274 390 286 372 284 Z" fill="#90c0e0" stroke-width="10"/>
+    <!-- Guard gem center -->
+    <ellipse cx="256" cy="274" rx="22" ry="14" fill="#c8e8f8" stroke-width="9"/>
+    <!-- Tang/blade stub -->
+    <rect x="246" y="174" width="20" height="84" rx="4" fill="#90c0e0" stroke-width="10"/>
+    <path d="M 240 174 L 256 148 L 272 174 Z" fill="#c0e0f8" stroke-width="10"/>
+  </g>
+</svg>

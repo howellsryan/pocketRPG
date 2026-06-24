@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="gold_amulet_u_body" x1="0.2" y1="0" x2="0.75" y2="1">
+      <stop offset="0" stop-color="#fff0a0"/><stop offset="0.5" stop-color="#c9a24a"/><stop offset="1" stop-color="#7a5a16"/>
+    </linearGradient>
+  </defs>
+  <g stroke="#1a1410" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
+    <!-- Gold pendant body -->
+    <path d="M256 148 C 332 162 372 228 372 300 C 372 380 318 446 256 458 C 194 446 140 380 140 300 C 140 228 180 162 256 148 Z" fill="url(#gold_amulet_u_body)"/>
+    <!-- Top loop for stringing -->
+    <path d="M 238 150 C 238 130 248 118 256 118 C 264 118 274 130 274 150" stroke="#c9a24a" stroke-width="14" fill="none"/>
+    <!-- Highlight shine -->
+    <path d="M 188 200 C 184 270 192 340 184 408" stroke="#fff0a0" stroke-width="9" fill="none" opacity="0.45"/>
+    <!-- Bottom gleam -->
+    <path d="M 198 378 C 218 420 256 444 280 432" stroke="#fff0a0" stroke-width="7" fill="none" opacity="0.4"/>
+  </g>
+</svg>

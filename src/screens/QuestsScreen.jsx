@@ -8,6 +8,7 @@ import ProgressBar from '../components/ProgressBar.jsx'
 import TwoPaneLayout from '../components/TwoPaneLayout.jsx'
 import GildedComplete from '../components/GildedComplete.jsx'
 import { isQuestComplete } from '../utils/completion.js'
+import GameIcon from '../components/GameIcon.jsx'
 import { useIsDesktop } from '../hooks/useIsDesktop.js'
 import {
   createQuestState, checkQuestEligibility,
@@ -143,7 +144,7 @@ export default function QuestsScreen() {
         </div>
 
         <div class="flex-1 flex flex-col items-center justify-center">
-          <span class="text-[48px] mb-2">📜</span>
+          <GameIcon iconKey="scroll" size={48} class="mb-2" />
           <h2 class="font-[var(--font-display)] text-[18px] font-bold text-[var(--color-gold)] mb-1 text-center">
             {quest.name}
           </h2>
@@ -287,7 +288,7 @@ export default function QuestsScreen() {
                     }`}
                   >
                     <span class="text-[24px] flex-shrink-0">
-                      {completed ? '✅' : '📜'}
+                      {completed ? '✅' : <GameIcon iconKey="scroll" size={24} />}
                     </span>
                     <div class="flex-1 min-w-0">
                       <div
@@ -394,7 +395,7 @@ function QuestDetailsBody({ quest, stats, completedQuests, itemsData, onClose, o
   return (
       <div class="flex flex-col gap-3">
         <Panel className="flex items-center gap-3">
-          <span class="text-[28px]">{completed ? '✅' : '📜'}</span>
+          <span class="text-[28px]">{completed ? '✅' : <GameIcon iconKey="scroll" size={28} />}</span>
           <div class="flex-1">
             <div class="text-[13px] font-semibold text-[var(--color-parchment)]">
               {quest.complexity} · {quest.length}

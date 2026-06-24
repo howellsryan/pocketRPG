@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <radialGradient id="prayer_o" cx="0.4" cy="0.35" r="0.8">
+      <stop offset="0" stop-color="#fff0a0"/><stop offset="0.6" stop-color="#f0c040"/><stop offset="1" stop-color="#b07f12"/>
+    </radialGradient>
+  </defs>
+  <g stroke="#5a3d08" stroke-width="11" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M256 60 L256 130 M256 382 L256 452 M60 256 L130 256 M382 256 L452 256 M118 118 L168 168 M344 344 L394 394 M394 118 L344 168 M168 344 L118 394" stroke="#f0c040" stroke-width="16" fill="none"/>
+    <path d="M256 150 C 300 210 322 256 322 304 C 322 356 296 392 256 408 C 216 392 190 356 190 304 C 190 256 212 210 256 150 Z" fill="url(#prayer_o)"/>
+    <path d="M256 232 C 274 258 280 286 270 314 C 262 332 250 332 244 314 C 238 296 244 268 256 232 Z" fill="#fff6d0" stroke="none"/>
+  </g>
+</svg>

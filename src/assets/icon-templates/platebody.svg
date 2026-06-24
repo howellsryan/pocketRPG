@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="{{id}}_plate" x1="0.1" y1="0" x2="0.7" y2="1">
+      <stop offset="0" stop-color="{{light}}"/><stop offset="0.5" stop-color="{{base}}"/><stop offset="1" stop-color="{{shade}}"/>
+    </linearGradient>
+    <radialGradient id="{{id}}_pauldron" cx="0.4" cy="0.35" r="0.75">
+      <stop offset="0" stop-color="{{light}}"/><stop offset="1" stop-color="{{shade}}"/>
+    </radialGradient>
+  </defs>
+  <g stroke="#15110d" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M150 224 C 116 262 108 320 122 366 C 140 380 168 380 184 366 C 178 318 180 268 192 230 C 176 214 162 216 150 224 Z" fill="url(#{{id}}_plate)"/>
+    <path d="M362 224 C 396 262 404 320 390 366 C 372 380 344 380 328 366 C 334 318 332 268 320 230 C 336 214 350 216 362 224 Z" fill="url(#{{id}}_plate)"/>
+    <path d="M126 300 L182 296 M126 332 L186 330" stroke="{{shade}}" stroke-width="7" fill="none"/>
+    <path d="M386 300 L330 296 M386 332 L326 330" stroke="{{shade}}" stroke-width="7" fill="none"/>
+    <path d="M192 196 C 158 220 154 280 166 332 L172 378 C 172 402 214 412 256 412 C 298 412 340 402 340 378 L346 332 C 358 280 354 220 320 196 C 296 182 216 182 192 196 Z" fill="url(#{{id}}_plate)"/>
+    <ellipse cx="188" cy="212" rx="48" ry="40" fill="url(#{{id}}_pauldron)"/>
+    <ellipse cx="324" cy="212" rx="48" ry="40" fill="url(#{{id}}_pauldron)"/>
+    <ellipse cx="256" cy="196" rx="40" ry="22" fill="#3a3026"/>
+    <ellipse cx="256" cy="196" rx="40" ry="22" fill="none" stroke="{{shade}}" stroke-width="9"/>
+    <path d="M256 218 L256 400" stroke="{{shade}}" stroke-width="8" fill="none"/>
+    <path d="M210 296 Q 234 316 256 312" stroke="{{shade}}" stroke-width="7" fill="none"/>
+    <path d="M302 296 Q 278 316 256 312" stroke="{{shade}}" stroke-width="7" fill="none"/>
+    <path d="M172 376 C 172 402 214 412 256 412 C 298 412 340 402 340 376 L334 402 C 300 418 212 418 178 402 Z" fill="{{shade}}" stroke="none"/>
+    <circle cx="184" cy="238" r="6" fill="{{shade}}" stroke="none"/>
+    <circle cx="328" cy="238" r="6" fill="{{shade}}" stroke="none"/>
+  </g>
+</svg>

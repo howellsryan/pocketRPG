@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <radialGradient id="harpy_s" cx="0.42" cy="0.34" r="0.8">
+      <stop offset="0" stop-color="#b08a5a"/><stop offset="0.6" stop-color="#7a5a34"/><stop offset="1" stop-color="#4a3620"/>
+    </radialGradient>
+  </defs>
+  <g stroke="#241608" stroke-width="12" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M196 248 C 120 230 76 180 60 120 C 130 150 176 170 214 212 C 200 230 196 248 196 248 Z" fill="#5a4228"/>
+    <path d="M316 248 C 392 230 436 180 452 120 C 382 150 336 170 298 212 C 312 230 316 248 316 248 Z" fill="#5a4228"/>
+    <path d="M210 260 Q 256 300 302 260 Q 296 360 256 420 Q 216 360 210 260 Z" fill="#5a4228"/>
+    <circle cx="256" cy="200" r="64" fill="url(#harpy_s)"/>
+    <polygon points="256,210 224,224 256,244 288,224" fill="#e8b04a" stroke="#241608" stroke-width="8"/>
+    <ellipse cx="232" cy="188" rx="14" ry="17" fill="#ffe04a"/>
+    <ellipse cx="280" cy="188" rx="14" ry="17" fill="#ffe04a"/>
+    <circle cx="234" cy="190" r="6" fill="#1a1410" stroke="none"/>
+    <circle cx="282" cy="190" r="6" fill="#1a1410" stroke="none"/>
+    <path d="M206 150 L228 130 M306 150 L284 130 M256 138 L256 116" stroke="#241608" stroke-width="9" fill="none"/>
+  </g>
+</svg>

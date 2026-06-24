@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <radialGradient id="gorilla_s" cx="0.42" cy="0.34" r="0.8">
+      <stop offset="0" stop-color="#4a4650"/><stop offset="0.6" stop-color="#2e2b34"/><stop offset="1" stop-color="#16141a"/>
+    </radialGradient>
+  </defs>
+  <g stroke="#0e0c12" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
+    <ellipse cx="150" cy="256" rx="40" ry="52" fill="url(#gorilla_s)"/>
+    <ellipse cx="362" cy="256" rx="40" ry="52" fill="url(#gorilla_s)"/>
+    <path d="M180 160 Q 256 120 332 160 Q 372 214 360 300 Q 332 396 256 410 Q 180 396 152 300 Q 140 214 180 160 Z" fill="url(#gorilla_s)"/>
+    <path d="M190 300 Q 256 268 322 300 Q 312 372 256 386 Q 200 372 190 300 Z" fill="#6a5448"/>
+    <ellipse cx="214" cy="266" rx="24" ry="20" fill="#cdb29a"/>
+    <ellipse cx="298" cy="266" rx="24" ry="20" fill="#cdb29a"/>
+    <circle cx="218" cy="270" r="10" fill="#1a1410" stroke="none"/>
+    <circle cx="302" cy="270" r="10" fill="#1a1410" stroke="none"/>
+    <path d="M176 238 Q 214 224 244 238 M336 238 Q 298 224 268 238" stroke="#0e0c12" stroke-width="11" fill="none"/>
+    <path d="M256 300 L242 322 L256 332 L270 322 Z" fill="#3a2e28"/>
+    <path d="M214 350 Q 256 372 298 350" stroke="#3a2e28" stroke-width="10" fill="none"/>
+  </g>
+</svg>

@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="sunbearer_ring_band" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff0a0"/><stop offset="0.5" stop-color="#d4a020"/><stop offset="1" stop-color="#8a6010"/>
+    </linearGradient>
+    <radialGradient id="sunbearer_ring_disc" cx="0.4" cy="0.38" r="0.75">
+      <stop offset="0" stop-color="#ffffff"/><stop offset="0.45" stop-color="#ffe878"/><stop offset="1" stop-color="#c07a10"/>
+    </radialGradient>
+  </defs>
+  <g stroke="#1a1410" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
+    <ellipse cx="256" cy="370" rx="148" ry="52" fill="none" stroke="url(#sunbearer_ring_band)" stroke-width="42"/>
+    <ellipse cx="256" cy="358" rx="114" ry="28" fill="none" stroke="#fff0a0" stroke-width="4"/>
+    <path d="M 222 324 L 222 296 C 222 270 240 258 256 258 C 272 258 290 270 290 296 L 290 324 Z" fill="url(#sunbearer_ring_band)" stroke="#1a1410" stroke-width="11"/>
+    <!-- Sun disc -->
+    <circle cx="256" cy="244" r="52" fill="url(#sunbearer_ring_disc)" stroke="#1a1410" stroke-width="11"/>
+    <!-- Sun rays -->
+    <line x1="256" y1="178" x2="256" y2="162" stroke="#ffe060" stroke-width="9" stroke-linecap="round"/>
+    <line x1="304" y1="196" x2="316" y2="184" stroke="#ffe060" stroke-width="9" stroke-linecap="round"/>
+    <line x1="322" y1="244" x2="338" y2="244" stroke="#ffe060" stroke-width="9" stroke-linecap="round"/>
+    <line x1="304" y1="292" x2="316" y2="304" stroke="#ffe060" stroke-width="9" stroke-linecap="round"/>
+    <line x1="208" y1="196" x2="196" y2="184" stroke="#ffe060" stroke-width="9" stroke-linecap="round"/>
+    <line x1="190" y1="244" x2="174" y2="244" stroke="#ffe060" stroke-width="9" stroke-linecap="round"/>
+    <line x1="208" y1="292" x2="196" y2="304" stroke="#ffe060" stroke-width="9" stroke-linecap="round"/>
+    <!-- Inner circle -->
+    <circle cx="256" cy="244" r="28" fill="none" stroke="#c07a10" stroke-width="6"/>
+    <circle cx="240" cy="232" r="10" fill="#ffffff" stroke="none"/>
+  </g>
+</svg>

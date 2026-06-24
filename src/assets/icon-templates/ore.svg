@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <radialGradient id="{{id}}_rock" cx="0.38" cy="0.32" r="0.82">
+      <stop offset="0" stop-color="{{light}}"/><stop offset="0.6" stop-color="{{base}}"/><stop offset="1" stop-color="{{shade}}"/>
+    </radialGradient>
+  </defs>
+  <g stroke="#1a1410" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M150 200 L246 150 L368 172 L424 262 L392 366 L282 414 L158 384 L108 288 Z" fill="url(#{{id}}_rock)"/>
+    <path d="M150 200 L246 150 L300 230 L206 272 Z" fill="{{light}}" stroke="none"/>
+    <path d="M392 366 L282 414 L240 332 L344 300 Z" fill="{{shade}}" stroke="none"/>
+    <circle cx="300" cy="296" r="20" fill="{{light}}" stroke="none"/>
+    <circle cx="250" cy="346" r="13" fill="{{light}}" stroke="none"/>
+    <circle cx="348" cy="244" r="14" fill="{{shade}}" stroke="none"/>
+  </g>
+</svg>

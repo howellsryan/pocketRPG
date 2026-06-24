@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="feather_b" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffffff"/><stop offset="0.6" stop-color="#dfe7ef"/><stop offset="1" stop-color="#a7b4c0"/>
+    </linearGradient>
+  </defs>
+  <g stroke="#46505c" stroke-width="12" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M384 96 C 280 110 176 196 134 320 C 122 356 132 380 160 388 C 280 360 372 256 396 140 C 400 116 396 100 384 96 Z" fill="url(#feather_b)"/>
+    <path d="M372 124 C 300 160 220 240 168 360" stroke="#8a98a6" stroke-width="8" fill="none"/>
+    <g stroke="#8a98a6" stroke-width="6" fill="none">
+      <path d="M344 150 L300 138 M312 186 L266 172 M280 224 L232 212 M248 264 L200 254 M218 304 L172 296"/>
+      <path d="M344 150 L356 192 M312 186 L326 228 M280 224 L296 266 M248 264 L264 306 M218 304 L234 344"/>
+    </g>
+    <line x1="160" y1="388" x2="120" y2="428" stroke="#8a98a6" stroke-width="12"/>
+  </g>
+</svg>

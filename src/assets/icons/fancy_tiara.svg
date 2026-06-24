@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="fancy_tiara_b" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f8e880"/><stop offset="0.5" stop-color="#d0a830"/><stop offset="1" stop-color="#8a6810"/>
+    </linearGradient>
+    <radialGradient id="fancy_tiara_c_gem" cx="0.4" cy="0.35" r="0.75">
+      <stop offset="0" stop-color="#ffffff"/><stop offset="0.5" stop-color="#a0c8ff"/><stop offset="1" stop-color="#3060d0"/>
+    </radialGradient>
+  </defs>
+  <g stroke="#1a1410" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
+    <!-- Tiara base band -->
+    <path d="M 126 360 C 126 340 186 320 256 320 C 326 320 386 340 386 360 L 380 390 C 326 410 186 410 132 390 Z" fill="url(#fancy_tiara_b)"/>
+    <!-- Left small point -->
+    <path d="M 160 322 L 150 280 L 176 310 Z" fill="url(#fancy_tiara_b)"/>
+    <!-- Left-center medium point -->
+    <path d="M 204 320 L 190 260 L 220 302 Z" fill="url(#fancy_tiara_b)"/>
+    <!-- Center tall point with gem -->
+    <path d="M 256 318 L 238 220 L 274 220 Z" fill="url(#fancy_tiara_b)"/>
+    <!-- Right-center medium point -->
+    <path d="M 308 320 L 322 260 L 292 302 Z" fill="url(#fancy_tiara_b)"/>
+    <!-- Right small point -->
+    <path d="M 352 322 L 362 280 L 336 310 Z" fill="url(#fancy_tiara_b)"/>
+    <!-- Band highlight -->
+    <path d="M 132 372 C 190 380 322 380 380 372" fill="none" stroke="#f8e880" stroke-width="7"/>
+    <!-- Center gem (large, blue) -->
+    <circle cx="256" cy="204" r="28" fill="url(#fancy_tiara_c_gem)" stroke="#1a1410" stroke-width="10"/>
+    <circle cx="246" cy="195" r="9" fill="#ffffff" stroke="none"/>
+    <!-- Side gems -->
+    <circle cx="190" cy="254" r="16" fill="#ff6090" stroke="#1a1410" stroke-width="8"/>
+    <circle cx="322" cy="254" r="16" fill="#60d890" stroke="#1a1410" stroke-width="8"/>
+  </g>
+</svg>

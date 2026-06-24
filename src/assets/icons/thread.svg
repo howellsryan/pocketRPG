@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="thr_spool" x1="0.3" y1="0" x2="0.7" y2="1">
+      <stop offset="0" stop-color="#c89040"/><stop offset="1" stop-color="#7a5018"/>
+    </linearGradient>
+  </defs>
+  <g stroke="#1a1410" stroke-linejoin="round" stroke-linecap="round">
+    <!-- Spool body cylinder -->
+    <rect x="200" y="196" width="112" height="120" rx="6" fill="#e8e0d0" stroke-width="12"/>
+    <!-- Thread wound on spool (multiple rows) -->
+    <rect x="206" y="202" width="100" height="108" rx="4" fill="#d04030" stroke="none"/>
+    <!-- Thread row lines -->
+    <path d="M 206 220 L 306 220 M 206 236 L 306 236 M 206 252 L 306 252 M 206 268 L 306 268 M 206 284 L 306 284 M 206 300 L 306 300" stroke="#e86050" stroke-width="4" fill="none" opacity="0.5"/>
+    <!-- Top flange -->
+    <ellipse cx="256" cy="196" rx="68" ry="18" fill="url(#thr_spool)" stroke-width="12"/>
+    <!-- Bottom flange -->
+    <ellipse cx="256" cy="316" rx="68" ry="18" fill="url(#thr_spool)" stroke-width="12"/>
+    <!-- Spool center rod (visible at ends) -->
+    <ellipse cx="256" cy="196" rx="16" ry="8" fill="#a06820" stroke-width="9"/>
+    <ellipse cx="256" cy="316" rx="16" ry="8" fill="#a06820" stroke-width="9"/>
+    <!-- Loose thread end -->
+    <path d="M 306 248 C 330 238 350 220 344 196" stroke="#d04030" stroke-width="9" fill="none"/>
+  </g>
+</svg>

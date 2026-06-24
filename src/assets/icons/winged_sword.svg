@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="winged_sword_b" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f3f7fb"/><stop offset="0.5" stop-color="#bcc6d2"/><stop offset="1" stop-color="#737d89"/>
+    </linearGradient>
+  </defs>
+  <g stroke="#1a1410" stroke-width="12" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M196 230 C 130 220 90 188 64 146 C 120 156 160 150 196 168 C 170 196 196 230 196 230 Z" fill="#eef2f7"/>
+    <path d="M316 230 C 382 220 422 188 448 146 C 392 156 352 150 316 168 C 342 196 316 230 316 230 Z" fill="#eef2f7"/>
+    <path d="M256 64 C 268 130 272 250 270 312 L242 312 C 240 250 244 130 256 64 Z" fill="url(#winged_sword_b)"/>
+    <path d="M256 92 L256 308" stroke="#fbfdff" stroke-width="6" fill="none"/>
+    <rect x="196" y="230" width="120" height="22" rx="7" fill="#caa24a"/>
+    <rect x="240" y="312" width="32" height="64" rx="8" fill="#6f4a18"/>
+    <circle cx="256" cy="396" r="22" fill="#caa24a"/>
+  </g>
+</svg>

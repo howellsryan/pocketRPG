@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="thornhide_gauntlets_b" x1="0.3" y1="0" x2="0.7" y2="1">
+      <stop offset="0" stop-color="#9aaa7a"/><stop offset="0.5" stop-color="#5a7038"/><stop offset="1" stop-color="#2e3c18"/>
+    </linearGradient>
+  </defs>
+  <g stroke="#1a1410" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
+    <!-- Gauntlet glove -->
+    <path d="M 186 360 L 186 410 C 186 430 200 442 220 442 L 300 442 C 320 442 334 430 334 410 L 334 360 Z" fill="url(#thornhide_gauntlets_b)"/>
+    <path d="M 186 360 L 182 230 C 182 206 200 192 224 192 L 230 130 C 230 110 252 110 254 130 L 258 196 L 268 196 L 274 150 C 274 130 296 132 296 152 L 298 200 C 320 206 334 222 334 246 L 334 360 Z" fill="url(#thornhide_gauntlets_b)"/>
+    <path d="M 182 250 L 150 230 C 134 220 128 240 140 254 L 182 286 Z" fill="url(#thornhide_gauntlets_b)"/>
+    <path d="M 234 196 L 238 280 M 268 198 L 272 280" stroke="#2e3c18" stroke-width="7" fill="none"/>
+    <!-- Thorns protruding along back of hand and knuckles -->
+    <path d="M 200 246 L 188 222 L 212 240 Z" fill="#3a4a20" stroke="#1a1410" stroke-width="6"/>
+    <path d="M 240 240 L 232 214 L 254 234 Z" fill="#3a4a20" stroke="#1a1410" stroke-width="6"/>
+    <path d="M 282 244 L 278 218 L 298 240 Z" fill="#3a4a20" stroke="#1a1410" stroke-width="6"/>
+    <path d="M 196 320 L 184 300 L 208 314 Z" fill="#3a4a20" stroke="#1a1410" stroke-width="6"/>
+    <path d="M 320 318 L 332 298 L 312 312 Z" fill="#3a4a20" stroke="#1a1410" stroke-width="6"/>
+    <!-- Cuff band -->
+    <path d="M 186 372 L 334 372" stroke="#2e3c18" stroke-width="9" fill="none"/>
+  </g>
+</svg>

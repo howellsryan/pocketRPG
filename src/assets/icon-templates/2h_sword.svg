@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="{{id}}_blade" x1="0" y1="0" x2="1" y2="0.3">
+      <stop offset="0" stop-color="{{light}}"/><stop offset="0.5" stop-color="{{base}}"/><stop offset="1" stop-color="{{shade}}"/>
+    </linearGradient>
+    <linearGradient id="{{id}}_grip" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#7a4a1e"/><stop offset="1" stop-color="#3a2410"/>
+    </linearGradient>
+  </defs>
+  <g transform="rotate(-45 256 256)" stroke="#1a1410" stroke-width="14" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M256 22 C 300 96 312 250 310 322 L202 322 C 200 250 212 96 256 22 Z" fill="url(#{{id}}_blade)"/>
+    <path d="M256 60 L256 316" stroke="{{light}}" stroke-width="10" fill="none"/>
+    <path d="M232 90 L232 312 M280 90 L280 312" stroke="{{shade}}" stroke-width="4" fill="none"/>
+    <path d="M158 322 C 188 342 324 342 354 322 L356 354 C 324 374 188 374 156 354 Z" fill="url(#{{id}}_grip)"/>
+    <rect x="234" y="354" width="44" height="124" rx="10" fill="url(#{{id}}_grip)"/>
+    <path d="M238 376 L274 376 M238 402 L274 402 M238 428 L274 428 M238 454 L274 454" stroke="#2a1a0c" stroke-width="6"/>
+    <circle cx="256" cy="496" r="26" fill="#c4912a"/>
+  </g>
+</svg>

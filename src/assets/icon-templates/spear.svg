@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="{{id}}_head" x1="0" y1="0" x2="1" y2="0.4">
+      <stop offset="0" stop-color="{{light}}"/><stop offset="0.5" stop-color="{{base}}"/><stop offset="1" stop-color="{{shade}}"/>
+    </linearGradient>
+    <linearGradient id="{{id}}_shaft" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#7a4a1e"/><stop offset="1" stop-color="#3a2410"/>
+    </linearGradient>
+  </defs>
+  <g transform="rotate(-45 256 256)" stroke="#1a1410" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
+    <rect x="246" y="172" width="20" height="276" rx="9" fill="url(#{{id}}_shaft)"/>
+    <path d="M256 58 C 282 110 288 154 286 186 L226 186 C 224 154 230 110 256 58 Z" fill="url(#{{id}}_head)"/>
+    <path d="M256 86 L256 182" stroke="{{light}}" stroke-width="6" fill="none"/>
+    <rect x="232" y="184" width="48" height="22" rx="7" fill="{{shade}}"/>
+    <circle cx="256" cy="458" r="14" fill="#5a3d14"/>
+  </g>
+</svg>

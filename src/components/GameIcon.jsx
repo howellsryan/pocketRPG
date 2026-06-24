@@ -1,4 +1,5 @@
 import gameIconsData from '../data/gameIcons.json'
+import bespokeIconsData from '../data/bespokeIcons.json'
 import { getItemIconKey, getItemIconTint, isCryptboundChampion } from '../utils/itemIcons'
 
 // Outline / glow palette.
@@ -141,6 +142,29 @@ function glowFor(id, type) {
  * so un-curated items never render blank.
  */
 export default function GameIcon({ item, iconKey, size = 24, color, class: cls = '', title }) {
+  // Bespoke, PocketRPG-owned full-color SVGs take priority over the shared
+  // game-icons glyphs. They are keyed 1:1 by entity id (or an explicit iconKey)
+  // and render exactly as authored — no currentColor tint override, since the
+  // art carries its own colours. Like gameIconsData, the map ships in the lazy
+  // game chunk, so guard the access with `typeof`.
+  const bespoke    = typeof bespokeIconsData !== 'undefined' ? bespokeIconsData : null
+  const bespokeKey = iconKey || item?.id
+  const bespokeEntry = bespoke && bespokeKey ? bespoke[bespokeKey] : undefined
+  if (bespokeEntry) {
+    const px        = typeof size === 'number' ? size : undefined
+    const sizeStyle = px ? { width: px, height: px, flexShrink: 0 } : undefined
+    return (
+      <svg
+        viewBox={bespokeEntry.viewBox || '0 0 512 512'}
+        style={sizeStyle}
+        class={cls}
+        role="img"
+        aria-label={title || item?.name || bespokeKey}
+        dangerouslySetInnerHTML={{ __html: bespokeEntry.body }}
+      />
+    )
+  }
+
   // In the single-file production build, gameIconsData lives in the lazily
   // loaded game chunk (it is never needed on the mobile landing/login page).
   // Before that chunk loads it is an undeclared global, so guard every access

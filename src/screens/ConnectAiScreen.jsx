@@ -1,6 +1,7 @@
 import { useState } from 'preact/hooks'
 import Card from '../components/Card.jsx'
 import Button from '../components/Button.jsx'
+import GameIcon from '../components/GameIcon.jsx'
 
 // Brand marks for the provider tabs/headers. Inline single-path SVGs (fill via
 // currentColor) so they scale crisply and inherit a Tailwind text-color class.
@@ -86,7 +87,10 @@ export default function ConnectAiScreen({ isCloudAccount }) {
   return (
     <div class="h-full flex flex-col">
       <div class="flex-shrink-0 bg-[#111] border-b border-[var(--color-void-border)] px-4 py-3">
-        <h1 class="font-[var(--font-display)] text-lg font-bold text-[var(--color-gold)]">🤖 Connect AI</h1>
+        <h1 class="font-[var(--font-display)] text-lg font-bold text-[var(--color-gold)] flex items-center gap-2">
+          <GameIcon iconKey="claude" size={22} color="#D97757" />
+          Connect AI
+        </h1>
       </div>
 
       <div class="flex-1 overflow-y-auto px-4 py-4 space-y-4">

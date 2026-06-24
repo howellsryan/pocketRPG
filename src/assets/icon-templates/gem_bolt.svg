@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <radialGradient id="{{id}}_gem" cx="0.35" cy="0.3" r="0.75">
+      <stop offset="0" stop-color="{{light}}"/><stop offset="0.55" stop-color="{{base}}"/><stop offset="1" stop-color="{{shade}}"/>
+    </radialGradient>
+    <radialGradient id="{{id}}_glow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="{{light}}" stop-opacity="0.4"/><stop offset="1" stop-color="{{base}}" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <g transform="rotate(-45 256 256)" stroke="#1a1410" stroke-width="12" stroke-linejoin="round" stroke-linecap="round">
+    <!-- Shaft -->
+    <rect x="244" y="188" width="24" height="180" rx="8" fill="#a3743f"/>
+    <rect x="250" y="196" width="8" height="165" rx="4" fill="#c89a63" stroke="none"/>
+    <!-- Gem tip glow halo -->
+    <circle cx="256" cy="152" r="44" fill="url(#{{id}}_glow)" stroke="none"/>
+    <!-- Gem tip -->
+    <path d="M 256 108 L 290 152 L 256 182 L 222 152 Z" fill="url(#{{id}}_gem)" stroke="{{shade}}" stroke-width="9"/>
+    <!-- Gem highlight -->
+    <path d="M 242 120 C 250 114 260 116 266 124" stroke="{{light}}" stroke-width="6" fill="none" opacity="0.7"/>
+    <!-- Fletchings -->
+    <path d="M244 330 L218 372 L244 360 L244 344 Z" fill="{{shade}}" stroke="#1a1410" stroke-width="9"/>
+    <path d="M268 330 L294 372 L268 360 L268 344 Z" fill="#d9d2c4" stroke="#1a1410" stroke-width="9"/>
+    <rect x="244" y="362" width="24" height="14" rx="5" fill="#5a3a1c"/>
+  </g>
+</svg>

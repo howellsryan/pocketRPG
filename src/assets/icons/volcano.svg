@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="volcano_m" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#6a6058"/><stop offset="0.6" stop-color="#44403a"/><stop offset="1" stop-color="#241f1c"/>
+    </linearGradient>
+  </defs>
+  <g stroke="#15110d" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M96 410 L196 200 L316 200 L416 410 Z" fill="url(#volcano_m)"/>
+    <path d="M196 200 L316 200 L296 240 L216 240 Z" fill="#3a342e"/>
+    <path d="M218 226 C 210 160 200 110 232 70 C 232 110 248 120 256 100 C 262 130 286 130 280 96 C 312 130 300 180 294 226 Z" fill="#ef6b3a"/>
+    <path d="M236 220 C 232 170 234 140 252 112 C 256 144 270 144 268 120 C 286 150 276 190 272 220 Z" fill="#ffd24a" stroke="none"/>
+    <path d="M210 250 C 220 290 200 320 214 360 M300 250 C 290 290 312 320 298 360" stroke="#ff7a3a" stroke-width="11" fill="none"/>
+  </g>
+</svg>

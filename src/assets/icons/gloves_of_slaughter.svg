@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="gloves_of_slaughter_b" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#a83a2a"/><stop offset="0.55" stop-color="#6f1c12"/><stop offset="1" stop-color="#3a0c08"/>
+    </linearGradient>
+  </defs>
+  <g stroke="#1a0806" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M196 250 L196 150 C 196 130 214 122 214 150 L214 210 L226 210 L226 120 C 226 100 246 100 246 120 L246 206 L258 206 L258 116 C 258 96 278 96 278 116 L278 210 L290 210 L290 140 C 290 120 310 124 310 144 L312 260 C 312 320 286 360 256 360 C 226 360 196 320 196 260 Z" fill="url(#gloves_of_slaughter_b)"/>
+    <path d="M176 300 L196 270 L210 350 L186 380 C 168 360 166 330 176 300 Z" fill="url(#gloves_of_slaughter_b)"/>
+    <rect x="200" y="356" width="112" height="48" rx="14" fill="#2a0c08"/>
+    <path d="M214 230 L222 250 M244 226 L252 248 M274 230 L282 250" stroke="#1a0806" stroke-width="7" fill="none"/>
+    <path d="M210 392 C 250 404 262 404 302 392" stroke="#e88a6a" stroke-width="7" fill="none"/>
+  </g>
+</svg>

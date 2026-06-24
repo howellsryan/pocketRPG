@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <radialGradient id="rock_golem_s" cx="0.42" cy="0.34" r="0.8">
+      <stop offset="0" stop-color="#9a948c"/><stop offset="0.6" stop-color="#6a645c"/><stop offset="1" stop-color="#3e3a34"/>
+    </radialGradient>
+  </defs>
+  <g stroke="#211e1a" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M168 158 L260 134 L350 162 L380 250 L356 348 L260 392 L160 356 L132 256 Z" fill="url(#rock_golem_s)"/>
+    <path d="M168 158 L260 134 L300 222 L196 250 Z" fill="#b0aaa0" stroke="none"/>
+    <path d="M356 348 L260 392 L226 308 L340 280 Z" fill="#4e4a44" stroke="none"/>
+    <rect x="190" y="250" width="50" height="32" rx="8" fill="#ffce4a"/>
+    <rect x="280" y="250" width="50" height="32" rx="8" fill="#ffce4a"/>
+    <path d="M196 330 L236 322 L268 332 L300 322 L328 330" stroke="#211e1a" stroke-width="11" fill="none"/>
+    <path d="M196 196 L260 184 L300 222 M132 256 L196 250 M380 250 L320 256" stroke="#211e1a" stroke-width="6" fill="none"/>
+  </g>
+</svg>

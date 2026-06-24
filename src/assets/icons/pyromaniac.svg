@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="pyromaniac_f" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffd24a"/><stop offset="0.5" stop-color="#ef6b3a"/><stop offset="1" stop-color="#a8281a"/>
+    </linearGradient>
+  </defs>
+  <g stroke="#3a1208" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M256 60 C 286 120 332 150 344 210 C 372 188 392 196 396 224 C 410 300 360 392 256 404 C 152 392 102 300 116 224 C 120 196 140 188 168 210 C 180 150 226 120 256 60 Z" fill="url(#pyromaniac_f)"/>
+    <ellipse cx="212" cy="270" rx="24" ry="20" fill="#3a1208"/>
+    <ellipse cx="300" cy="270" rx="24" ry="20" fill="#3a1208"/>
+    <ellipse cx="216" cy="272" rx="9" ry="11" fill="#ffe8a0" stroke="none"/>
+    <ellipse cx="304" cy="272" rx="9" ry="11" fill="#ffe8a0" stroke="none"/>
+    <path d="M212 332 Q 256 360 300 332 L288 360 Q 256 378 224 360 Z" fill="#3a1208"/>
+    <path d="M256 150 C 268 190 270 220 256 252 C 242 220 244 190 256 150 Z" fill="#fff4c8" stroke="none"/>
+  </g>
+</svg>

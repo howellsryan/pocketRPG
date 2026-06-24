@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="krylth_godsword_b" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#f6dcdc"/><stop offset="0.5" stop-color="#c47a7a"/><stop offset="1" stop-color="#7a3838"/>
+    </linearGradient>
+  </defs>
+  <g transform="rotate(-8 256 256)" stroke="#1a1410" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M256 48 L290 104 L284 320 L228 320 L222 104 Z" fill="url(#krylth_godsword_b)"/>
+    <path d="M256 62 L256 314" stroke="#9a5a5a" stroke-width="6" fill="none"/>
+    <path d="M150 322 C 196 304 216 320 256 320 C 296 320 316 304 362 322 C 340 350 300 344 300 344 L212 344 C 212 344 172 350 150 322 Z" fill="#3a1c1c"/>
+    <circle cx="256" cy="330" r="20" fill="#d02a2a"/>
+    <circle cx="250" cy="324" r="6" fill="#ff9a8a" stroke="none"/>
+    <rect x="244" y="344" width="24" height="96" rx="9" fill="#5a2a2a"/>
+    <rect x="232" y="436" width="48" height="22" rx="9" fill="#9a3030"/>
+  </g>
+</svg>

@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <g stroke="#1a1410" stroke-width="12" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Shaft with fletching at 45 deg -->
+    <line x1="194" y1="136" x2="350" y2="374" stroke="#1a1410" stroke-width="28"/>
+    <line x1="194" y1="136" x2="350" y2="374" stroke="#a3743f" stroke-width="16"/>
+    <line x1="200" y1="142" x2="344" y2="368" stroke="#c89a63" stroke-width="6"/>
+    <!-- Fletching feathers (at shaft tail) -->
+    <path d="M 194 136 L 156 96 L 180 130 Z" fill="#e8d0a8" stroke="#1a1410" stroke-width="9"/>
+    <path d="M 194 136 L 162 108 L 188 136 Z" fill="#d8c090" stroke="#1a1410" stroke-width="8"/>
+    <path d="M 194 136 L 170 84 L 190 124 Z" fill="#e0c898" stroke="#1a1410" stroke-width="8"/>
+    <!-- Nock end (blunt - no tip) -->
+    <circle cx="350" cy="374" r="12" fill="#5a3a1c" stroke="#1a1410" stroke-width="9"/>
+  </g>
+</svg>

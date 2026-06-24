@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="zv_metal" x1="0.2" y1="0" x2="0.8" y2="1">
+      <stop offset="0" stop-color="#70e0d0"/><stop offset="0.5" stop-color="#2898a8"/><stop offset="1" stop-color="#0a5060"/>
+    </linearGradient>
+  </defs>
+  <g stroke="#1a1410" stroke-linejoin="round" stroke-linecap="round">
+    <!-- Left vambrace (behind) -->
+    <path d="M 136 238 C 128 218 128 188 140 170 C 152 158 170 154 180 162 L 212 174 L 208 276 L 174 284 C 160 282 144 266 136 238 Z" fill="url(#zv_metal)" stroke-width="11" opacity="0.8"/>
+    <!-- Right vambrace (front) -->
+    <path d="M 308 238 C 300 218 300 188 312 170 C 324 158 342 154 352 162 L 384 174 L 380 276 L 346 284 C 332 282 316 266 308 238 Z" fill="url(#zv_metal)" stroke-width="12"/>
+    <!-- Vambrace front plate decoration - runic lines on right -->
+    <path d="M 322 188 L 372 188 M 316 208 L 380 208 M 318 226 L 376 226 M 322 244 L 372 244" stroke="#a0f0e0" stroke-width="7" fill="none" opacity="0.5"/>
+    <!-- Elbow guard cap (right) -->
+    <ellipse cx="364" cy="172" rx="22" ry="14" fill="#2898a8" stroke-width="10"/>
+    <!-- Wrist cuff (right) -->
+    <rect x="300" y="264" width="84" height="22" rx="6" fill="#1a7080" stroke-width="10"/>
+    <!-- Zyrite gem inlaid on right -->
+    <ellipse cx="346" cy="216" rx="16" ry="12" fill="#90f0e8" stroke-width="9"/>
+    <ellipse cx="340" cy="210" rx="5" ry="4" fill="#d0fff8" stroke="none" opacity="0.6"/>
+    <!-- Elbow guard cap (left, behind) -->
+    <ellipse cx="192" cy="172" rx="20" ry="13" fill="#2898a8" stroke-width="10" opacity="0.8"/>
+    <!-- Wrist cuff (left) -->
+    <rect x="128" y="264" width="84" height="20" rx="6" fill="#1a7080" stroke-width="10" opacity="0.8"/>
+    <!-- Metal highlight on right -->
+    <path d="M 314 186 C 314 212 314 242 316 264" stroke="#80e8d8" stroke-width="8" fill="none" opacity="0.4"/>
+  </g>
+</svg>

@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <radialGradient id="eon_eyeball" cx="0.38" cy="0.35" r="0.7">
+      <stop offset="0" stop-color="#f0ece0"/><stop offset="0.6" stop-color="#d8d0b8"/><stop offset="1" stop-color="#a89878"/>
+    </radialGradient>
+    <radialGradient id="eon_pupil" cx="0.4" cy="0.38" r="0.65">
+      <stop offset="0" stop-color="#e03020"/><stop offset="0.5" stop-color="#801808"/><stop offset="1" stop-color="#300800"/>
+    </radialGradient>
+  </defs>
+  <g stroke="#1a1410" stroke-linejoin="round" stroke-linecap="round">
+    <!-- Eyeball -->
+    <ellipse cx="256" cy="260" rx="148" ry="120" fill="url(#eon_eyeball)" stroke-width="13"/>
+    <!-- Iris -->
+    <circle cx="256" cy="260" r="68" fill="#6a9838" stroke-width="11"/>
+    <!-- Pupil -->
+    <circle cx="256" cy="260" r="36" fill="url(#eon_pupil)" stroke-width="10"/>
+    <!-- Pupil slit (vertical) -->
+    <ellipse cx="256" cy="260" rx="10" ry="34" fill="#100400" stroke="none"/>
+    <!-- Iris detail lines -->
+    <path d="M 200 236 L 220 254 M 312 236 L 292 254 M 200 284 L 220 266 M 312 284 L 292 266" stroke="#4a7828" stroke-width="5" fill="none" opacity="0.6"/>
+    <!-- Specular highlight on pupil -->
+    <ellipse cx="242" cy="246" rx="10" ry="14" fill="#fff8f0" stroke="none" opacity="0.7"/>
+    <!-- Corneal highlight -->
+    <path d="M 136 228 C 148 196 190 172 240 168" stroke="#fffcf0" stroke-width="10" fill="none" opacity="0.4"/>
+    <!-- Eyelid lines (top+bottom of ellipse) -->
+    <path d="M 108 260 C 108 178 170 140 256 140 C 342 140 404 178 404 260" fill="none" stroke="#1a1410" stroke-width="13"/>
+    <path d="M 108 260 C 108 342 170 380 256 380 C 342 380 404 342 404 260" fill="none" stroke="#1a1410" stroke-width="13"/>
+  </g>
+</svg>

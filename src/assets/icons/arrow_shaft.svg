@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <g stroke="#1a1410" stroke-width="12" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Bundle of 3 arrow shafts at 45 degrees -->
+    <!-- Shaft 1 -->
+    <line x1="198" y1="112" x2="314" y2="400" stroke="#1a1410" stroke-width="22"/>
+    <line x1="198" y1="112" x2="314" y2="400" stroke="#a3743f" stroke-width="12"/>
+    <!-- Shaft 2 -->
+    <line x1="222" y1="96" x2="338" y2="384" stroke="#1a1410" stroke-width="20"/>
+    <line x1="222" y1="96" x2="338" y2="384" stroke="#c89a63" stroke-width="10"/>
+    <!-- Shaft 3 -->
+    <line x1="174" y1="128" x2="290" y2="416" stroke="#1a1410" stroke-width="20"/>
+    <line x1="174" y1="128" x2="290" y2="416" stroke="#b08048" stroke-width="10"/>
+    <!-- End nocks -->
+    <circle cx="198" cy="112" r="10" fill="#5a3a1c" stroke="#1a1410" stroke-width="8"/>
+    <circle cx="222" cy="96" r="10" fill="#5a3a1c" stroke="#1a1410" stroke-width="8"/>
+    <circle cx="174" cy="128" r="10" fill="#5a3a1c" stroke="#1a1410" stroke-width="8"/>
+  </g>
+</svg>

@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="2nd_age_amulet_body" x1="0.2" y1="0" x2="0.75" y2="1">
+      <stop offset="0" stop-color="#fff0a0"/><stop offset="0.5" stop-color="#c9a24a"/><stop offset="1" stop-color="#7a5a16"/>
+    </linearGradient>
+  </defs>
+  <g stroke="#1a1410" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
+    <!-- Chain — gold -->
+    <path d="M256 96 C 170 120 120 184 124 252" fill="none" stroke="#c9a24a" stroke-width="16"/>
+    <path d="M256 96 C 342 120 392 184 388 252" fill="none" stroke="#c9a24a" stroke-width="16"/>
+    <!-- Hexagonal pendant body -->
+    <path d="M 256 252 L 340 294 L 340 378 L 256 420 L 172 378 L 172 294 Z" fill="url(#2nd_age_amulet_body)" stroke="#1a1410" stroke-width="13"/>
+    <!-- Ancient eye motif -->
+    <ellipse cx="256" cy="334" rx="52" ry="32" fill="#3e1a6a" stroke="#c9a24a" stroke-width="8"/>
+    <ellipse cx="256" cy="334" rx="27" ry="24" fill="#7030b8"/>
+    <circle cx="256" cy="334" r="14" fill="#2a0e50"/>
+    <circle cx="250" cy="330" r="5" fill="#9060d8" stroke="none"/>
+    <circle cx="246" cy="326" r="3" fill="#d8b8f8" stroke="none"/>
+    <!-- Eyelash curves -->
+    <path d="M 204 334 C 215 318 242 310 256 310 C 270 310 297 318 308 334" stroke="#c9a24a" stroke-width="6" fill="none"/>
+    <path d="M 204 334 C 215 350 242 358 256 358 C 270 358 297 350 308 334" stroke="#c9a24a" stroke-width="6" fill="none"/>
+    <!-- Gold clasp -->
+    <circle cx="256" cy="252" r="20" fill="#c9a24a" stroke="#7a5a16" stroke-width="9"/>
+    <circle cx="256" cy="252" r="8" fill="#fff0a0" stroke="none"/>
+  </g>
+</svg>

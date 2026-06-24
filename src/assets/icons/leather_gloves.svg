@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="lg_leather" x1="0.25" y1="0" x2="0.75" y2="1">
+      <stop offset="0" stop-color="#c89858"/><stop offset="0.5" stop-color="#9a6830"/><stop offset="1" stop-color="#5c3a10"/>
+    </linearGradient>
+  </defs>
+  <g stroke="#1a1410" stroke-linejoin="round" stroke-linecap="round">
+    <!-- Left glove (behind) -->
+    <!-- Fingers left glove -->
+    <path d="M 118 272 L 118 206 C 118 198 126 192 134 194 L 134 272" fill="url(#lg_leather)" stroke-width="10" opacity="0.8"/>
+    <path d="M 148 266 L 148 190 C 148 182 156 176 164 178 L 164 266" fill="url(#lg_leather)" stroke-width="10" opacity="0.8"/>
+    <path d="M 174 266 L 174 188 C 174 180 182 176 190 178 L 190 266" fill="url(#lg_leather)" stroke-width="10" opacity="0.8"/>
+    <path d="M 200 270 L 200 194 C 200 186 208 182 216 184 L 216 270" fill="url(#lg_leather)" stroke-width="10" opacity="0.8"/>
+    <!-- Palm left glove -->
+    <path d="M 108 272 L 230 272 L 230 340 C 230 360 214 374 196 374 L 142 374 C 124 374 108 360 108 340 Z" fill="url(#lg_leather)" stroke-width="11" opacity="0.8"/>
+    <!-- Thumb left glove -->
+    <path d="M 108 290 L 80 268 C 70 256 74 240 86 240 L 108 252 Z" fill="url(#lg_leather)" stroke-width="10" opacity="0.8"/>
+
+    <!-- Right glove (front) -->
+    <path d="M 284 272 L 284 206 C 284 198 292 192 300 194 L 300 272" fill="url(#lg_leather)" stroke-width="11"/>
+    <path d="M 314 266 L 314 190 C 314 182 322 176 330 178 L 330 266" fill="url(#lg_leather)" stroke-width="11"/>
+    <path d="M 342 266 L 342 188 C 342 180 350 176 358 178 L 358 266" fill="url(#lg_leather)" stroke-width="11"/>
+    <path d="M 368 270 L 368 194 C 368 186 376 182 384 184 L 384 270" fill="url(#lg_leather)" stroke-width="11"/>
+    <!-- Palm right glove -->
+    <path d="M 274 272 L 396 272 L 396 340 C 396 360 380 374 362 374 L 308 374 C 290 374 274 360 274 340 Z" fill="url(#lg_leather)" stroke-width="12"/>
+    <!-- Thumb right glove -->
+    <path d="M 396 290 L 422 268 C 432 256 430 240 418 240 L 396 252 Z" fill="url(#lg_leather)" stroke-width="11"/>
+    <!-- Knuckle lines right -->
+    <path d="M 290 276 L 290 290 M 320 272 L 320 286 M 348 272 L 348 286 M 376 274 L 376 288" stroke="#5c3a10" stroke-width="7" fill="none" opacity="0.45"/>
+    <!-- Leather highlight right -->
+    <path d="M 284 290 C 300 280 336 278 380 286" stroke="#d8a868" stroke-width="7" fill="none" opacity="0.4"/>
+  </g>
+</svg>

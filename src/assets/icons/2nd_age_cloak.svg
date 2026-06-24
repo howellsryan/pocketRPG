@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="2nd_age_cloak_body" x1="0.3" y1="0" x2="0.7" y2="1">
+      <stop offset="0" stop-color="#8a4fc0"/><stop offset="0.5" stop-color="#5a2f90"/><stop offset="1" stop-color="#2a1448"/>
+    </linearGradient>
+    <linearGradient id="2nd_age_cloak_trim" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#e8d070"/><stop offset="0.5" stop-color="#fff0a0"/><stop offset="1" stop-color="#c9a24a"/>
+    </linearGradient>
+  </defs>
+  <g stroke="#1a1410" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
+    <!-- Cape body — royal purple -->
+    <path d="M 158 80 C 140 80 128 90 122 100 L 88 420 Q 180 456 256 456 Q 332 456 424 420 L 390 100 C 384 90 372 80 354 80 Z" fill="url(#2nd_age_cloak_body)"/>
+    <!-- Collar -->
+    <path d="M 158 80 L 354 80 L 340 110 L 256 120 L 172 110 Z" fill="#3e1a6a" stroke="#1a1410" stroke-width="11"/>
+    <!-- Gold trim on edges and hem -->
+    <path d="M 122 100 L 88 420 Q 180 456 256 456" stroke="url(#2nd_age_cloak_trim)" stroke-width="11" fill="none"/>
+    <path d="M 390 100 L 424 420 Q 332 456 256 456" stroke="url(#2nd_age_cloak_trim)" stroke-width="11" fill="none"/>
+    <!-- Ancient eye motif (2nd age signature) -->
+    <ellipse cx="256" cy="278" rx="58" ry="36" fill="#3e1a6a" stroke="#c9a24a" stroke-width="9"/>
+    <ellipse cx="256" cy="278" rx="30" ry="28" fill="#7030b8"/>
+    <circle cx="256" cy="278" r="16" fill="#2a0e50"/>
+    <circle cx="252" cy="274" r="6" fill="#9060d8" stroke="none"/>
+    <!-- Highlights on pupil -->
+    <circle cx="248" cy="270" r="4" fill="#d8b8f8" stroke="none"/>
+    <!-- Eyelashes (decorative) -->
+    <path d="M 198 278 C 210 260 244 252 256 252 C 268 252 302 260 314 278" stroke="#c9a24a" stroke-width="7" fill="none"/>
+    <path d="M 198 278 C 210 296 244 304 256 304 C 268 304 302 296 314 278" stroke="#c9a24a" stroke-width="7" fill="none"/>
+    <!-- Clasp with 2nd-age style -->
+    <path d="M 240 86 L 256 70 L 272 86 L 264 110 L 248 110 Z" fill="#c9a24a" stroke="#8a6010" stroke-width="8"/>
+    <circle cx="256" cy="90" r="8" fill="#fff0a0" stroke="none"/>
+  </g>
+</svg>

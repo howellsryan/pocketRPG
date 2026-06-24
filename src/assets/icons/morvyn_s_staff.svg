@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="ms_shaft" x1="0.2" y1="0" x2="0.8" y2="1">
+      <stop offset="0" stop-color="#483068"/><stop offset="0.5" stop-color="#2e1848"/><stop offset="1" stop-color="#180830"/>
+    </linearGradient>
+    <radialGradient id="ms_gem" cx="0.38" cy="0.35" r="0.65">
+      <stop offset="0" stop-color="#f0a0f8"/><stop offset="0.5" stop-color="#b040c8"/><stop offset="1" stop-color="#5a1070"/>
+    </radialGradient>
+  </defs>
+  <g stroke="#1a1410" stroke-linejoin="round" stroke-linecap="round">
+    <!-- Staff shaft -->
+    <path d="M 196 440 L 316 96" stroke="url(#ms_shaft)" stroke-width="20" stroke-linecap="round" fill="none"/>
+    <!-- Shaft runes etched into wood -->
+    <path d="M 230 380 L 236 368 M 246 348 L 252 336 M 262 316 L 268 304 M 278 284 L 284 272" stroke="#8040c0" stroke-width="6" fill="none" opacity="0.6"/>
+    <!-- Staff head (split fork with orb) -->
+    <path d="M 300 114 C 292 94 294 70 308 58 C 316 58 322 70 318 90 Z" fill="#8040c0" stroke-width="11"/>
+    <path d="M 316 114 C 324 94 322 70 308 58 C 300 58 294 70 298 90 Z" fill="#8040c0" stroke-width="11"/>
+    <!-- Central orb in fork -->
+    <circle cx="308" cy="108" r="34" fill="url(#ms_gem)" stroke-width="12"/>
+    <!-- Orb inner glow -->
+    <circle cx="308" cy="108" r="20" fill="#e060f0" stroke="none" opacity="0.3"/>
+    <ellipse cx="298" cy="98" rx="10" ry="7" fill="#f8c0ff" stroke="none" opacity="0.55"/>
+    <!-- Magical wisps from orb -->
+    <path d="M 290 80 C 278 62 278 44 290 40" stroke="#d060f0" stroke-width="7" fill="none" opacity="0.6"/>
+    <path d="M 326 80 C 338 62 336 44 326 40" stroke="#d060f0" stroke-width="7" fill="none" opacity="0.55"/>
+    <!-- Shaft reinforcing rings -->
+    <path d="M 270 270 L 284 250 M 246 330 L 260 310" stroke="#6830a0" stroke-width="10" stroke-linecap="round" fill="none"/>
+  </g>
+</svg>

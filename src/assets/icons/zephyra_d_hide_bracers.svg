@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="zephyra_d_hide_bracers_b" x1="0.3" y1="0" x2="0.7" y2="1">
+      <stop offset="0" stop-color="#c6fff8"/><stop offset="0.55" stop-color="#2fd0c0"/><stop offset="1" stop-color="#0e6058"/>
+    </linearGradient>
+  </defs>
+  <g stroke="#1a1410" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M 116 180 C 116 160 130 148 150 146 L 216 146 C 236 148 248 160 248 180 L 248 330 C 248 350 236 362 216 364 L 150 364 C 130 362 116 350 116 330 Z" fill="url(#zephyra_d_hide_bracers_b)"/>
+    <path d="M 128 194 L 236 194 M 128 330 L 236 330" stroke="#0e6058" stroke-width="8" fill="none"/>
+    <circle cx="142" cy="194" r="8" fill="#c6fff8" stroke="#1a1410" stroke-width="5"/>
+    <circle cx="222" cy="194" r="8" fill="#c6fff8" stroke="#1a1410" stroke-width="5"/>
+    <circle cx="142" cy="330" r="8" fill="#c6fff8" stroke="#1a1410" stroke-width="5"/>
+    <circle cx="222" cy="330" r="8" fill="#c6fff8" stroke="#1a1410" stroke-width="5"/>
+    <path d="M 136 200 C 136 260 136 300 138 326" stroke="#c6fff8" stroke-width="7" fill="none" stroke-linecap="round"/>
+    <path d="M 264 180 C 264 160 278 148 298 146 L 364 146 C 384 148 396 160 396 180 L 396 330 C 396 350 384 362 364 364 L 298 364 C 278 362 264 350 264 330 Z" fill="url(#zephyra_d_hide_bracers_b)"/>
+    <path d="M 276 194 L 384 194 M 276 330 L 384 330" stroke="#0e6058" stroke-width="8" fill="none"/>
+    <circle cx="290" cy="194" r="8" fill="#c6fff8" stroke="#1a1410" stroke-width="5"/>
+    <circle cx="370" cy="194" r="8" fill="#c6fff8" stroke="#1a1410" stroke-width="5"/>
+    <circle cx="290" cy="330" r="8" fill="#c6fff8" stroke="#1a1410" stroke-width="5"/>
+    <circle cx="370" cy="330" r="8" fill="#c6fff8" stroke="#1a1410" stroke-width="5"/>
+    <path d="M 284 200 C 284 260 284 300 286 326" stroke="#c6fff8" stroke-width="7" fill="none" stroke-linecap="round"/>
+  </g>
+</svg>

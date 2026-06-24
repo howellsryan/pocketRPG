@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <radialGradient id="coal_a" cx="0.4" cy="0.35" r="0.8">
+      <stop offset="0" stop-color="#5a636e"/><stop offset="0.6" stop-color="#3b424b"/><stop offset="1" stop-color="#1c2026"/>
+    </radialGradient>
+    <radialGradient id="coal_b" cx="0.4" cy="0.35" r="0.8">
+      <stop offset="0" stop-color="#525a64"/><stop offset="0.6" stop-color="#343b43"/><stop offset="1" stop-color="#191d22"/>
+    </radialGradient>
+  </defs>
+  <g stroke="#120f0c" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M118 286 L204 222 L296 252 L306 344 L214 396 L130 354 Z" fill="url(#coal_a)"/>
+    <path d="M276 196 L372 186 L424 272 L382 352 L300 332 L268 256 Z" fill="url(#coal_b)"/>
+    <polygon points="204,222 252,250 212,282 164,270" fill="#6b7480" stroke="none"/>
+    <polygon points="340,206 390,250 350,282 308,250" fill="#6b7480" stroke="none"/>
+  </g>
+</svg>

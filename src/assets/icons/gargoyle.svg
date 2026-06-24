@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <radialGradient id="gargoyle_s" cx="0.42" cy="0.34" r="0.8">
+      <stop offset="0" stop-color="#8a8e94"/><stop offset="0.6" stop-color="#5c6066"/><stop offset="1" stop-color="#33363a"/>
+    </radialGradient>
+  </defs>
+  <g stroke="#1c1e20" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
+    <polygon points="166,200 120,108 224,166" fill="url(#gargoyle_s)"/>
+    <polygon points="346,200 392,108 288,166" fill="url(#gargoyle_s)"/>
+    <path d="M174 180 Q 256 138 338 180 Q 376 232 360 312 Q 330 402 256 416 Q 182 402 152 312 Q 136 232 174 180 Z" fill="url(#gargoyle_s)"/>
+    <path d="M170 244 L246 262 L208 296 Z" fill="#1c1e20"/>
+    <path d="M342 244 L266 262 L304 296 Z" fill="#1c1e20"/>
+    <circle cx="206" cy="270" r="9" fill="#cfd6dc" stroke="none"/>
+    <circle cx="306" cy="270" r="9" fill="#cfd6dc" stroke="none"/>
+    <path d="M196 332 Q 256 372 316 332 L302 366 Q 256 388 210 366 Z" fill="#1c1e20"/>
+    <polygon points="214,338 224,358 234,338" fill="#cfd6dc" stroke="none"/>
+    <polygon points="278,338 288,358 298,338" fill="#cfd6dc" stroke="none"/>
+    <path d="M212 220 L240 232 M300 220 L272 232" stroke="#1c1e20" stroke-width="9" fill="none"/>
+  </g>
+</svg>

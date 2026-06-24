@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <radialGradient id="hearts_h" cx="0.38" cy="0.32" r="0.8">
+      <stop offset="0" stop-color="#ff8a8f"/><stop offset="0.55" stop-color="#e8554e"/><stop offset="1" stop-color="#9a201d"/>
+    </radialGradient>
+  </defs>
+  <g stroke="#3a0d0d" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M256 424 C 110 318 104 200 184 172 C 232 155 256 196 256 226 C 256 196 280 155 328 172 C 408 200 402 318 256 424 Z" fill="url(#hearts_h)"/>
+    <path d="M198 210 C 180 230 178 262 190 290" stroke="#ffb6b9" stroke-width="14" fill="none"/>
+  </g>
+</svg>

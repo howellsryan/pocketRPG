@@ -1,4 +1,5 @@
 import { useEffect } from 'preact/hooks'
+import GameIcon from './GameIcon.jsx'
 import { NAV_TABS } from './navTabs.js'
 
 export default function BurgerMenu({ open, onClose, active, onNavigate, isInCombat, onDisabledClick }) {
@@ -65,7 +66,7 @@ export default function BurgerMenu({ open, onClose, active, onNavigate, isInComb
                 aria-current={isActive ? 'page' : undefined}
                 class={`flex items-center gap-3 w-full px-4 min-h-[48px] border-0 text-left transition-colors ${activeBg} ${activeBorder} ${baseColor} ${opacity} ${cursor}`}
               >
-                <span class="text-xl leading-none w-7 text-center">{tab.icon}</span>
+                <GameIcon iconKey={tab.iconKey} size={44} class="flex-shrink-0" />
                 <span class="text-base font-semibold font-[var(--font-body)]">{label}</span>
               </button>
             )

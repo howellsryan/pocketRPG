@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="berserker_ring_band" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#e8c870"/><stop offset="0.5" stop-color="#b89030"/><stop offset="1" stop-color="#7a5a10"/>
+    </linearGradient>
+    <radialGradient id="berserker_ring_gem" cx="0.38" cy="0.3" r="0.8">
+      <stop offset="0" stop-color="#ff9a7a"/><stop offset="0.55" stop-color="#d04a3a"/><stop offset="1" stop-color="#7a1a0a"/>
+    </radialGradient>
+  </defs>
+  <g stroke="#1a1410" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
+    <ellipse cx="256" cy="370" rx="148" ry="52" fill="none" stroke="url(#berserker_ring_band)" stroke-width="42"/>
+    <ellipse cx="256" cy="358" rx="114" ry="28" fill="none" stroke="#e8c870" stroke-width="4"/>
+    <path d="M 222 324 L 222 300 C 222 278 240 266 256 266 C 272 266 290 278 290 300 L 290 324 Z" fill="url(#berserker_ring_band)" stroke="#1a1410" stroke-width="11"/>
+    <path d="M 218 300 L 240 258 L 256 244 L 272 258 L 294 300 L 282 326 L 230 326 Z" fill="url(#berserker_ring_gem)" stroke="#1a1410" stroke-width="11"/>
+    <path d="M 240 258 L 256 294 M 272 258 L 256 294 M 218 300 L 294 300" stroke="#7a1a0a" stroke-width="5" fill="none"/>
+    <path d="M 236 272 L 256 246 L 270 270 Z" fill="#ffcaba" stroke="none"/>
+  </g>
+</svg>

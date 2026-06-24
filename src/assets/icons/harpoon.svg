@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="harp_shaft" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0" stop-color="#b87830"/><stop offset="0.5" stop-color="#9a6020"/><stop offset="1" stop-color="#c89040"/>
+    </linearGradient>
+  </defs>
+  <g stroke="#1a1410" stroke-linejoin="round" stroke-linecap="round">
+    <!-- Shaft (diagonal) -->
+    <path d="M 156 400 L 388 136" stroke="url(#harp_shaft)" stroke-width="20" stroke-linecap="round" fill="none"/>
+    <!-- Metal spearhead -->
+    <path d="M 388 136 L 408 108 L 426 128 L 404 152 Z" fill="#d0ccc0" stroke-width="12"/>
+    <!-- Barb (hook pointing back) -->
+    <path d="M 404 152 L 420 170 L 396 162 Z" fill="#c0bcac" stroke-width="10"/>
+    <!-- Second barb -->
+    <path d="M 410 138 L 430 150 L 412 158 Z" fill="#c0bcac" stroke-width="10"/>
+    <!-- Rope binding near head -->
+    <path d="M 362 162 L 374 148" stroke="#c89040" stroke-width="9" fill="none" opacity="0.7"/>
+    <path d="M 356 168 L 368 154" stroke="#c89040" stroke-width="7" fill="none" opacity="0.6"/>
+    <!-- Rope at tail end -->
+    <path d="M 156 400 C 136 420 116 424 108 412" stroke="#c89040" stroke-width="10" fill="none"/>
+    <!-- Head highlight -->
+    <path d="M 394 140 L 410 122" stroke="#f0ece0" stroke-width="6" fill="none" opacity="0.5"/>
+  </g>
+</svg>

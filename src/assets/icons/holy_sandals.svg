@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="holy_sandals_strap" x1="0" y1="0" x2="0.5" y2="1">
+      <stop offset="0" stop-color="#f0e0c0"/><stop offset="0.5" stop-color="#d4b87a"/><stop offset="1" stop-color="#9a7a3a"/>
+    </linearGradient>
+    <linearGradient id="holy_sandals_sole" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#c49a5a"/><stop offset="1" stop-color="#7a5a2a"/>
+    </linearGradient>
+  </defs>
+  <g stroke="#1a1410" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
+    <!-- Sole — flat foot-shaped base -->
+    <path d="M 110 400 Q 200 380 320 384 Q 420 390 436 410 Q 380 436 200 432 Q 110 428 104 410 Z" fill="url(#holy_sandals_sole)"/>
+    <!-- Toe strap across the front -->
+    <path d="M 148 382 C 180 364 280 360 360 378" stroke="url(#holy_sandals_strap)" stroke-width="26" fill="none" stroke-linecap="round"/>
+    <!-- Ankle strap -->
+    <path d="M 112 406 C 130 364 150 326 168 300 L 190 300 C 172 328 156 368 142 408" fill="url(#holy_sandals_strap)"/>
+    <!-- Counter strap (other side) -->
+    <path d="M 320 378 C 348 348 368 320 378 296 L 398 296 C 388 322 366 352 338 384" fill="url(#holy_sandals_strap)"/>
+    <!-- Cross strap from heel -->
+    <path d="M 148 414 C 230 396 340 400 428 416" stroke="url(#holy_sandals_strap)" stroke-width="16" fill="none"/>
+    <!-- Gold gem on toe strap -->
+    <circle cx="254" cy="370" r="18" fill="#fff0a0" stroke="#c48f12" stroke-width="8"/>
+    <circle cx="254" cy="368" r="8" fill="#ffffff" stroke="none"/>
+    <!-- Sole edge highlight -->
+    <path d="M 128 416 Q 260 402 420 416" stroke="#c49a5a" stroke-width="5" fill="none"/>
+  </g>
+</svg>

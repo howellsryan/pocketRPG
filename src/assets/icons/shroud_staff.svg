@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="ss_shaft" x1="0.3" y1="0" x2="0.7" y2="1">
+      <stop offset="0" stop-color="#484858"/><stop offset="0.5" stop-color="#282838"/><stop offset="1" stop-color="#101018"/>
+    </linearGradient>
+    <radialGradient id="ss_gem" cx="0.4" cy="0.38" r="0.65">
+      <stop offset="0" stop-color="#c8d0e8"/><stop offset="0.5" stop-color="#8090b8"/><stop offset="1" stop-color="#303858"/>
+    </radialGradient>
+  </defs>
+  <g stroke="#1a1410" stroke-linejoin="round" stroke-linecap="round">
+    <!-- Shaft (dark, featureless) -->
+    <path d="M 196 440 L 296 100" stroke="url(#ss_shaft)" stroke-width="20" stroke-linecap="round" fill="none"/>
+    <!-- Shadowy wisps along shaft -->
+    <path d="M 232 368 C 224 356 226 344 236 348" stroke="#5058a0" stroke-width="7" fill="none" opacity="0.45"/>
+    <path d="M 252 302 C 244 290 246 278 256 282" stroke="#5058a0" stroke-width="6" fill="none" opacity="0.4"/>
+    <path d="M 272 236 C 264 224 266 212 276 216" stroke="#5058a0" stroke-width="6" fill="none" opacity="0.35"/>
+    <!-- Staff head - spectral scythe blade -->
+    <path d="M 280 108 C 296 78 340 62 380 76 C 376 96 348 112 316 116 Z" fill="#5068a8" stroke-width="12"/>
+    <!-- Scythe inner crescent -->
+    <path d="M 290 108 C 302 86 336 72 368 80 C 358 94 330 106 304 112 Z" fill="#283850" stroke-width="9"/>
+    <!-- Central gem/skull in scythe joint -->
+    <circle cx="288" cy="116" r="28" fill="url(#ss_gem)" stroke-width="12"/>
+    <!-- Skull face on gem -->
+    <ellipse cx="282" cy="112" rx="5" ry="6" fill="#101828" stroke-width="6"/>
+    <ellipse cx="296" cy="112" rx="5" ry="6" fill="#101828" stroke-width="6"/>
+    <path d="M 280 122 C 284 128 292 128 296 122" stroke="#101828" stroke-width="5" fill="none"/>
+    <!-- Spectral wisps from scythe -->
+    <path d="M 360 80 C 374 66 384 52 378 40" stroke="#8090c0" stroke-width="8" fill="none" opacity="0.5"/>
+    <path d="M 336 70 C 344 54 346 38 338 32" stroke="#8090c0" stroke-width="7" fill="none" opacity="0.45"/>
+    <!-- Shadow cloth trailing from gem -->
+    <path d="M 278 140 C 262 156 254 174 258 190" stroke="#484860" stroke-width="9" fill="none" opacity="0.5"/>
+    <path d="M 286 144 C 274 162 270 182 276 198" stroke="#484860" stroke-width="7" fill="none" opacity="0.45"/>
+  </g>
+</svg>

@@ -57,7 +57,7 @@ function DropRow({ drop, itemsData, accent }) {
   return (
     <div class="cb-droprow">
       <div class="cb-droprow__l">
-        <GameIcon item={item} iconKey={key} size={22} />
+        <GameIcon item={item} iconKey={key} size={44} />
         <span class="cb-droprow__name">{item?.name || drop.itemId}</span>
       </div>
       <div class="cb-droprow__r">
@@ -91,7 +91,7 @@ function UniquePanel({ items, itemsData, sharedChance, drops }) {
           const item = itemsData[itemId]
           return (
             <div key={itemId} class="cb-unique__item">
-              <GameIcon item={item} iconKey={item?.iconId} size={20} color="#f0c040" />
+              <GameIcon item={item} iconKey={item?.iconId} size={40} color="#f0c040" />
               <span>{item?.name || itemId}</span>
             </div>
           )
@@ -117,7 +117,7 @@ function UniquePanel({ items, itemsData, sharedChance, drops }) {
                 return (
                   <div key={itemId} class="cb-rates__row">
                     <div class="cb-rates__l">
-                      <GameIcon item={item} iconKey={item?.iconId} size={20} color="#f0c040" />
+                      <GameIcon item={item} iconKey={item?.iconId} size={40} color="#f0c040" />
                       <span>{item?.name || itemId}</span>
                     </div>
                     {chance != null && <span class="cb-rates__rate">{formatDropChance(chance)}</span>}

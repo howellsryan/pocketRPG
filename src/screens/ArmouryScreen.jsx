@@ -49,7 +49,7 @@ export default function ArmouryScreen() {
                     {hasSpecialAttack(item) && (
                       <span class="armoury-card__spec" title="Has a special attack" aria-label="Has a special attack">⚔️</span>
                     )}
-                    <GameIcon item={item} size={26} class="shrink-0" />
+                    <GameIcon item={item} size={52} class="shrink-0" />
                     <span class="min-w-0">
                       <span class="armoury-card__name">{item.name}</span>
                       <span class="armoury-card__tier">{tier > 0 ? `Lvl ${tier}` : '—'}</span>

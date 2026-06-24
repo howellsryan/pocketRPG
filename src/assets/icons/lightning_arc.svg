@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="lightning_arc_g" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#eafaff"/><stop offset="0.5" stop-color="#7fd0ef"/><stop offset="1" stop-color="#3a8fd0"/>
+    </linearGradient>
+  </defs>
+  <g stroke="#1c3a5a" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
+    <polygon points="288,56 150,288 240,288 196,456 380,224 280,224 348,56" fill="url(#lightning_arc_g)"/>
+    <polyline points="280,96 198,260 268,260" fill="none" stroke="#fff" stroke-width="9"/>
+  </g>
+</svg>

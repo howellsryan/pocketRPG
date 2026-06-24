@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="super_combat_g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#eafaff"/><stop offset="1" stop-color="#aacedd"/>
+    </linearGradient>
+    <linearGradient id="super_combat_l" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffb05a"/><stop offset="0.5" stop-color="#e8542a"/><stop offset="1" stop-color="#a01818"/>
+    </linearGradient>
+  </defs>
+  <g stroke="#3a1410" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M214 206 L214 250 C 150 282 130 360 178 408 C 222 450 290 450 334 408 C 382 360 362 282 298 250 L298 206 Z" fill="url(#super_combat_g)"/>
+    <path d="M168 322 C 214 354 298 354 344 322 C 356 384 318 426 256 426 C 194 426 156 384 168 322 Z" fill="url(#super_combat_l)" stroke="none"/>
+    <ellipse cx="256" cy="324" rx="90" ry="14" fill="#ffc88a" stroke="none"/>
+    <path d="M178 356 L334 356 M186 384 L326 384" stroke="#9a2818" stroke-width="4" fill="none"/>
+    <rect x="212" y="158" width="88" height="50" rx="6" fill="url(#super_combat_g)"/>
+    <rect x="220" y="116" width="72" height="50" rx="11" fill="#8a5a2c"/>
+    <path d="M232 336 C 226 360 228 384 240 402" fill="none" stroke="#eafaff" stroke-width="12"/>
+  </g>
+</svg>

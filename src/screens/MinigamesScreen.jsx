@@ -70,7 +70,7 @@ export default function MinigamesScreen() {
         </button>
 
         <div class="flex-1 flex flex-col items-center justify-center">
-          <GameIcon iconKey={task.iconKey} item={{ icon: task.icon }} size={48} color="var(--color-gold)" class="mb-2" />
+          <GameIcon iconKey={task.product} item={{ icon: task.icon }} size={96} color="var(--color-gold)" class="mb-2" />
 
           <h2 class="font-[var(--font-display)] text-[18px] font-bold text-[var(--color-gold)] mb-1 text-center">
             {task.name}
@@ -136,7 +136,7 @@ export default function MinigamesScreen() {
                         disabled={!enabled}
                         class={`w-full p-3 rounded-xl border text-left flex items-center gap-3 ${rowClass}`}
                       >
-                        <GameIcon iconKey={task.iconKey} item={{ icon: task.icon }} size={28} color="var(--color-gold)" class="flex-shrink-0" />
+                        <GameIcon iconKey={task.product} item={{ icon: task.icon }} size={56} color="var(--color-gold)" class="flex-shrink-0" />
 
                         <div class="flex-1 min-w-0">
                           <div class="text-[13px] font-semibold text-[var(--color-parchment)] mb-1">{task.name}</div>

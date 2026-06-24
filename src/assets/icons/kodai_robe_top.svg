@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="kodai_robe_top_b" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#dfeaf6"/><stop offset="0.55" stop-color="#7fa6d0"/><stop offset="1" stop-color="#3f6aa8"/>
+    </linearGradient>
+  </defs>
+  <g stroke="#1a1410" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M188 120 L256 150 L324 120 L378 168 L344 220 L320 200 L330 408 C 280 424 232 424 182 408 L192 200 L168 220 L134 168 Z" fill="url(#kodai_robe_top_b)"/>
+    <path d="M222 132 L256 196 L290 132" fill="#3f6aa8" stroke="#1a1410" stroke-width="11"/>
+    <path d="M210 250 L302 250 M204 300 L308 300" stroke="#2f5a9a" stroke-width="8" fill="none"/>
+    <circle cx="256" cy="220" r="16" fill="#eafaff" stroke="#3f6aa8" stroke-width="6"/>
+  </g>
+</svg>

@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="halo_ring" x1="0" y1="0.5" x2="1" y2="0.5">
+      <stop offset="0" stop-color="#f8d840"/><stop offset="0.3" stop-color="#ffe860"/><stop offset="0.7" stop-color="#e8a820"/><stop offset="1" stop-color="#c87810"/>
+    </linearGradient>
+    <radialGradient id="halo_glow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0.4" stop-color="#fff8a0" stop-opacity="0.4"/><stop offset="1" stop-color="#f8d040" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <g stroke="#1a1410" stroke-linejoin="round" stroke-linecap="round">
+    <!-- Glow halo effect -->
+    <ellipse cx="256" cy="248" rx="170" ry="60" fill="url(#halo_glow)" stroke="none"/>
+    <!-- Main halo ring (thick ellipse, viewed at angle) -->
+    <ellipse cx="256" cy="248" rx="148" ry="52" fill="none" stroke="url(#halo_ring)" stroke-width="36"/>
+    <!-- Inner edge detail -->
+    <ellipse cx="256" cy="248" rx="130" ry="42" fill="none" stroke="#f8e060" stroke-width="6" opacity="0.5"/>
+    <!-- Outer edge detail -->
+    <ellipse cx="256" cy="248" rx="166" ry="58" fill="none" stroke="#c87010" stroke-width="4" opacity="0.4"/>
+    <!-- Sparkle points around ring -->
+    <path d="M 110 248 L 102 248 M 402 248 L 410 248" stroke="#ffe060" stroke-width="8" fill="none" opacity="0.7"/>
+    <path d="M 164 196 L 158 190 M 348 196 L 354 190" stroke="#ffe060" stroke-width="7" fill="none" opacity="0.6"/>
+    <path d="M 164 300 L 158 306 M 348 300 L 354 306" stroke="#ffe060" stroke-width="7" fill="none" opacity="0.6"/>
+    <!-- Divine rays from ring -->
+    <path d="M 256 100 L 256 82 M 180 130 L 170 118 M 332 130 L 342 118" stroke="#f8e050" stroke-width="9" fill="none" opacity="0.55" stroke-linecap="round"/>
+    <!-- Small stars -->
+    <circle cx="256" cy="76" r="8" fill="#ffe860" stroke-width="7"/>
+    <circle cx="166" cy="112" r="6" fill="#ffe860" stroke-width="6"/>
+    <circle cx="346" cy="112" r="6" fill="#ffe860" stroke-width="6"/>
+  </g>
+</svg>

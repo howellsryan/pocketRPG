@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <radialGradient id="ogre_s" cx="0.42" cy="0.34" r="0.8">
+      <stop offset="0" stop-color="#a7b078"/><stop offset="0.6" stop-color="#7a8450"/><stop offset="1" stop-color="#4e5630"/>
+    </radialGradient>
+  </defs>
+  <g stroke="#23280f" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M168 168 Q 256 120 344 168 Q 384 220 376 312 Q 360 404 256 420 Q 152 404 136 312 Q 128 220 168 168 Z" fill="url(#ogre_s)"/>
+    <path d="M150 250 Q 256 232 362 250" stroke="#4e5630" stroke-width="8" fill="none"/>
+    <ellipse cx="212" cy="276" rx="30" ry="20" fill="#f4efd8"/>
+    <ellipse cx="300" cy="276" rx="30" ry="20" fill="#f4efd8"/>
+    <circle cx="216" cy="278" r="11" fill="#1a1410" stroke="none"/>
+    <circle cx="304" cy="278" r="11" fill="#1a1410" stroke="none"/>
+    <path d="M176 244 L240 256 M336 244 L272 256" stroke="#23280f" stroke-width="13" fill="none"/>
+    <path d="M242 300 L256 332 L272 300 Z" fill="#4e5630"/>
+    <path d="M196 356 Q 256 384 318 356 L312 380 Q 256 400 200 380 Z" fill="#3a4020"/>
+    <polygon points="216,360 226,344 236,362" fill="#f4efd8" stroke="none"/>
+    <polygon points="276,362 286,344 296,360" fill="#f4efd8" stroke="none"/>
+  </g>
+</svg>

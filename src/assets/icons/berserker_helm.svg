@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="berserker_helm_b" x1="0.3" y1="0" x2="0.7" y2="1">
+      <stop offset="0" stop-color="#e8c890"/><stop offset="0.5" stop-color="#c08840"/><stop offset="1" stop-color="#7a5010"/>
+    </linearGradient>
+  </defs>
+  <g stroke="#1a1410" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
+    <!-- Open-faced warrior helm with cheek guards -->
+    <path d="M 176 270 C 176 160 208 100 256 90 C 304 100 336 160 336 270 L 330 330 C 310 360 202 360 182 330 Z" fill="url(#berserker_helm_b)"/>
+    <!-- Left horn -->
+    <path d="M 188 190 C 168 170 130 140 112 100 C 128 130 148 168 170 200 Z" fill="url(#berserker_helm_b)"/>
+    <!-- Right horn -->
+    <path d="M 324 190 C 344 170 382 140 400 100 C 384 130 364 168 342 200 Z" fill="url(#berserker_helm_b)"/>
+    <!-- Nose guard -->
+    <rect x="245" y="200" width="22" height="110" rx="8" fill="#c08840" stroke="#1a1410" stroke-width="10"/>
+    <!-- Eye openings -->
+    <ellipse cx="218" cy="206" rx="26" ry="20" fill="#0f0d0b" stroke="#1a1410" stroke-width="8"/>
+    <ellipse cx="294" cy="206" rx="26" ry="20" fill="#0f0d0b" stroke="#1a1410" stroke-width="8"/>
+    <!-- Cheek guards -->
+    <path d="M 176 260 L 156 310 C 170 340 200 358 218 360 L 210 290 Z" fill="url(#berserker_helm_b)"/>
+    <path d="M 336 260 L 356 310 C 342 340 312 358 294 360 L 302 290 Z" fill="url(#berserker_helm_b)"/>
+    <!-- Brow ridge -->
+    <path d="M 188 188 C 220 172 292 172 324 188" fill="none" stroke="#7a5010" stroke-width="9"/>
+  </g>
+</svg>

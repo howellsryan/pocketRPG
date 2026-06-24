@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="morvyn_s_hood_b" x1="0.3" y1="0" x2="0.7" y2="1">
+      <stop offset="0" stop-color="#8090a8"/><stop offset="0.5" stop-color="#4a5a70"/><stop offset="1" stop-color="#1e2a3a"/>
+    </linearGradient>
+  </defs>
+  <g stroke="#1a1410" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
+    <!-- Pointed hood shape (like a ranger/assassin hood) -->
+    <path d="M 256 76 C 250 76 230 82 210 96 L 178 140 L 166 200 L 162 280 C 162 340 200 390 256 410 C 312 390 350 340 350 280 L 346 200 L 334 140 L 302 96 C 282 82 262 76 256 76 Z" fill="url(#morvyn_s_hood_b)"/>
+    <!-- Shadow underneath hood brow -->
+    <path d="M 190 180 L 256 200 L 322 180 L 322 160 C 300 152 210 152 190 160 Z" fill="#1e2a3a"/>
+    <!-- Hood rim/edge detail -->
+    <path d="M 180 196 C 210 188 302 188 332 196" fill="none" stroke="#8090a8" stroke-width="9"/>
+    <!-- Left fabric drape -->
+    <path d="M 166 200 L 140 260 L 148 340 L 168 380 L 186 300 L 178 220 Z" fill="url(#morvyn_s_hood_b)"/>
+    <!-- Right fabric drape -->
+    <path d="M 346 200 L 372 260 L 364 340 L 344 380 L 326 300 L 334 220 Z" fill="url(#morvyn_s_hood_b)"/>
+    <!-- Magical blue eye/mark in shadow -->
+    <ellipse cx="256" cy="220" rx="22" ry="16" fill="#2060c0"/>
+    <ellipse cx="256" cy="220" rx="10" ry="8" fill="#60c0ff"/>
+    <ellipse cx="252" cy="216" rx="4" ry="3" fill="#ffffff" stroke="none"/>
+    <!-- Pointed tip at crown -->
+    <path d="M 248 78 L 256 52 L 264 78" fill="url(#morvyn_s_hood_b)" stroke="#1a1410" stroke-width="9"/>
+  </g>
+</svg>
