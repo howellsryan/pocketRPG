@@ -28,7 +28,7 @@ function SkillCard({ skill, level, progress, toNext, onClick }) {
   return (
     <GildedComplete complete={isMax} className="rounded-[10px]">
       <button class="skill-card" onClick={() => onClick(skill)} aria-label={`${titleCase(skill)}, level ${level}`}>
-        <SkillEmblem class="skill-card__emblem" iconKey={art.icon} accent={art.accent} size={28} glow={0} />
+        <SkillEmblem class="skill-card__emblem" iconKey={art.icon} accent={art.accent} size={38} glow={0} />
         <div class="skill-card__top">
           <div class="skill-card__name">
             <span>{titleCase(skill)}</span>
