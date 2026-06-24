@@ -1,7 +1,7 @@
 import { SCREENS } from '../utils/constants.js'
 
 export const NAV_TABS = [
-  { id: SCREENS.HOME,               label: 'Home',           icon: '🏠', iconKey: 'home' },
+  { id: SCREENS.HOME,               label: 'Home',           icon: '🏠', iconKey: 'home', iconSize: 34 },
   { id: SCREENS.BANK,               label: 'Bank',           icon: '🏦', iconKey: 'coins' },
   { id: SCREENS.INVENTORY,          label: 'Items',          icon: '🎒', iconKey: 'money_purse' },
   { id: SCREENS.EQUIPMENT,          label: 'Equip',          icon: '🛡️', iconKey: 'iron_platebody' },
