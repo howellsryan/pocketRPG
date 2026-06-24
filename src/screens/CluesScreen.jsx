@@ -130,12 +130,12 @@ export default function CluesScreen() {
 
     return (
       <SkillActivePanel
-        icon={<span class="text-[44px]">{task.icon}</span>}
+        icon={<GameIcon iconKey={task.requiresItem} size={44} />}
         title={task.name}
         subtitle={task.description}
         progress={progress}
         producing={<>
-          <span class="text-[14px]">{task.icon}</span>
+          <GameIcon iconKey={task.requiresItem} size={14} />
           <span class="text-[12px] font-semibold text-[var(--color-parchment)] opacity-60">Solving</span>
           <span class="text-[13px] font-semibold text-[var(--color-gold-light)]">{CLUE_ITEM_NAMES[task.requiresItem] || task.requiresItem}</span>
         </>}
@@ -176,7 +176,7 @@ export default function CluesScreen() {
                   disabled={!enabled && !isRunning}
                   class="flex-1 min-w-0 flex items-center gap-3 text-left bg-transparent border-0 p-0 disabled:cursor-not-allowed"
                 >
-                  <span class="text-[28px] flex-shrink-0">{task.icon}</span>
+                  <GameIcon iconKey={task.requiresItem} size={28} class="flex-shrink-0" />
                   <div class="flex-1 min-w-0">
                     <div class="text-[13px] font-semibold text-[var(--color-parchment)] mb-1">{task.name}</div>
                     <div class="text-[10px] text-[#c8a96e] opacity-80">
@@ -261,7 +261,7 @@ function ClueDropRatesModal({ task, itemsData, onClose }) {
   }
 
   return (
-    <Modal title={`${task.icon} ${tierLabel} Clue — Drop Rates`} onClose={onClose}>
+    <Modal title={`${tierLabel} Clue — Drop Rates`} onClose={onClose}>
       <p class="text-[11px] text-[var(--color-parchment)] opacity-60 mb-3">
         Each completed clue rolls 1–4 reward slots. Percentages below are the chance per slot.
       </p>
@@ -277,7 +277,7 @@ function ClueDropRatesModal({ task, itemsData, onClose }) {
             {rows.map(r => (
               <div key={r.itemId} class="flex items-center justify-between py-[3px] text-[12px]">
                 <div class="flex items-center gap-2 text-[var(--color-parchment)] truncate flex-1">
-                  {r.item ? <GameIcon item={r.item} size={14} /> : <span class="text-[14px] flex-shrink-0">•</span>}
+                  {r.item ? <GameIcon item={r.item} size={28} /> : <span class="text-[28px] flex-shrink-0">•</span>}
                   <div class="truncate flex-1">
                     <div class="truncate">{r.name}</div>
                     {r.reqs && (

@@ -801,7 +801,7 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
             return (
               <SkillActionRow
                 key={action.id}
-                icon={productItem ? <GameIcon item={productItem} size={26} /> : <SkillIcon skill={selectedSkill} size={26} />}
+                icon={productItem ? <GameIcon item={productItem} size={52} /> : <SkillIcon skill={selectedSkill} size={52} />}
                 title={action.name}
                 meta={meta}
                 chip={action.product && !action.dropTable ? <>→ {itemsData[action.product]?.name || action.product}</> : null}
@@ -883,7 +883,7 @@ Shop value: ×1.1
                   >
                     <div class="flex items-center justify-between">
                       <div class="flex items-center gap-2 flex-1">
-                        <GameIcon item={item} size={20} />
+                        <GameIcon item={item} size={40} />
                         <div>
                           <div class="text-sm font-semibold text-[var(--color-parchment)]">{item.name}</div>
                           <div class="text-[10px] text-[var(--color-parchment)] opacity-60">
@@ -935,7 +935,7 @@ Shop value: ×1.1
       title={skilling.action.name}
       progress={progress}
       producing={producedItem && <>
-        <GameIcon item={producedItem} size={16} />
+        <GameIcon item={producedItem} size={32} />
         <span class="text-[12px] font-semibold text-[var(--color-parchment)] opacity-60">Producing</span>
         <span class="text-[13px] font-semibold text-[var(--color-gold-light)]">{producedItem.name}</span>
       </>}

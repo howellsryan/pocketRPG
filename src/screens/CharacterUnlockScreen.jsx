@@ -3,6 +3,7 @@ import { api, getToken, getCharacterId, CREDITS_UPDATED_EVENT } from '../cloud/a
 import { requestCriticalPushSave } from '../cloud/sync.js'
 import { CRITICAL_SAVE_REASONS } from '../cloud/criticalSavePolicy.js'
 import GildedComplete from '../components/GildedComplete.jsx'
+import GameIcon from '../components/GameIcon.jsx'
 import { isUnlockOwned } from '../utils/completion.js'
 
 const CHARACTER_UNLOCKS_DEF = [
@@ -70,7 +71,7 @@ export default function CharacterUnlockScreen({ onBack }) {
                 class={`flex items-center justify-between p-3 rounded-xl border ${owned ? 'bg-[#0f1f0f] border-[var(--color-hp-green)]/30' : 'bg-[#1a1a1a] border-[#2a2a2a]'}`}
               >
                 <div class="flex items-center gap-3 min-w-0">
-                  <span class="text-2xl flex-shrink-0">{unlock.icon}</span>
+                  <GameIcon iconKey="death_skull" size={36} color="#c0453b" class="flex-shrink-0" />
                   <div class="min-w-0">
                     <div class="text-sm font-semibold text-[var(--color-parchment)]">{unlock.name}</div>
                     <div class="text-[9px] text-[var(--color-parchment)] opacity-50 mt-0.5 leading-tight">

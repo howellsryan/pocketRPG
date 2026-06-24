@@ -22,7 +22,7 @@ export default function ItemSlot({ slot, onClick, size = 'normal', showName = fa
   const iconSize = size === 'small'
     ? 16
     : size === 'inventory'
-      ? 24
+      ? 48
       : 20
 
   const nameSizeClass = size === 'inventory'
