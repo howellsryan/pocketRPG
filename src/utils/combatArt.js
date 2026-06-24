@@ -17,7 +17,7 @@ const DEFAULT_ART = { icon: 'crossed_swords', accent: '#cdd6e0' }
 
 // Area category key -> emblem + accent (also the fallback for monsters in it).
 export const CATEGORY_ART = {
-  "training": { icon: "crossed_swords", accent: "#cdd6e0", blurb: "Cut your teeth on the weak" },
+  "training": { icon: "combat_level", accent: "#cdd6e0", blurb: "Cut your teeth on the weak" },
   "slayer": { icon: "death_skull", accent: "#c0453b", blurb: "Tasks from the Slayer Master" },
   "bossing": { icon: "crowned_skull", accent: "#d8b13a", blurb: "Generals of the eternal war" },
   "dagganoth_kings": { icon: "horned_skull", accent: "#e0564b", blurb: "The crowned tyrants" },
@@ -84,7 +84,7 @@ export const MONSTER_ART = {
   "drakthul_wyrmling": { icon: "dragon_head", accent: "#c0453b" },
   "runestone_gargoyle": { icon: "gargoyle", accent: "#c0453b" },
   "bonelight_pyromancer": { icon: "pyromaniac", accent: "#c0453b" },
-  "vicious_black_dragon": { icon: "dragon_head", accent: "#c0453b" },
+  "vicious_black_dragon": { icon: "dragon_head", accent: "#7a7f88" },
   "cinderfang_reaver": { icon: "orc_head", accent: "#c0453b" },
   "ashen_marauder": { icon: "barbute", accent: "#c0453b" },
   "marshscale_shaman": { icon: "totem_head", accent: "#c0453b" },
@@ -97,11 +97,11 @@ export const MONSTER_ART = {
   "nightfang_beast": { icon: "bat", accent: "#c0453b" },
   "threefang_cerberus": { icon: "wolf_head", accent: "#c0453b" },
   "ashen_hydra": { icon: "hydra", accent: "#c0453b" },
-  "green_dragon": { icon: "dragon_head", accent: "#46a7c4" },
-  "red_dragon": { icon: "dragon_head", accent: "#46a7c4" },
-  "adamant_dragon": { icon: "dragon_head", accent: "#46a7c4" },
-  "rune_dragon": { icon: "dragon_head", accent: "#46a7c4" },
-  "king_black_dragon": { icon: "dragon_head", accent: "#46a7c4" },
+  "green_dragon": { icon: "dragon_head", accent: "#3fb56b" },
+  "red_dragon": { icon: "dragon_head", accent: "#d23b2f" },
+  "adamant_dragon": { icon: "dragon_head", accent: "#5e8c5e" },
+  "rune_dragon": { icon: "dragon_head", accent: "#4a90d9" },
+  "king_black_dragon": { icon: "dragon_head", accent: "#7a7f88" },
   "warlord_grondar": { icon: "orc_head", accent: "#d8b13a" },
   "commander_zephyra": { icon: "winged_sword", accent: "#d8b13a" },
   "krylth_the_defiler": { icon: "daemon_skull", accent: "#d8b13a" },
@@ -140,6 +140,12 @@ export const MONSTER_ART = {
   "morvyn_the_blighted": { icon: "wizard_staff", accent: "#8b9a8f" },
   "torvek_the_corrupted": { icon: "orc_head", accent: "#8b9a8f" },
   "verin_the_defiled": { icon: "horned_skull", accent: "#8b9a8f" },
+  // Tomb of Arasmus bosses — bespoke desert-tomb icons.
+  "khareth_the_shadowbound": { icon: "tomb_khareth", accent: "#9b6cff" },
+  "gorroth_the_mountain_ape": { icon: "tomb_gorroth", accent: "#b08d57" },
+  "khepra_the_scarab_matron": { icon: "tomb_khepra", accent: "#3fb5a8" },
+  "sebakh_the_devourer": { icon: "tomb_sebakh", accent: "#6f9e5e" },
+  "warden_of_arasmus": { icon: "tomb_warden", accent: "#d8b13a" },
 }
 
 // Attack style (monsters.json attackStyle) -> chip glyph + colour. The melee

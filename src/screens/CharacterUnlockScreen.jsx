@@ -55,8 +55,9 @@ export default function CharacterUnlockScreen({ onBack }) {
         ← Back
       </button>
 
-      <h2 class="font-[var(--font-display)] text-base font-bold text-[var(--color-gold)] mb-0.5">
-        ✨ Character Unlocks
+      <h2 class="flex items-center gap-2 font-[var(--font-display)] text-base font-bold text-[var(--color-gold)] mb-0.5">
+        <GameIcon iconKey="master_rejuvenation" size={20} class="flex-shrink-0" />
+        Character Unlocks
       </h2>
       <p class="text-xs text-[var(--color-parchment)] opacity-40 mb-4">
         Permanent upgrades purchased with credits. Unlocks apply to this character forever.

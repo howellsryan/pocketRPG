@@ -5,7 +5,7 @@ import gameIconsData from '../data/gameIcons.json'
 // `accent` drives the card's metallic gradient art tint and coloured glow halo.
 export const SKILL_ART = {
   // Combat
-  attack:        { icon: 'crossed_swords', accent: '#cdd6e0' },
+  attack:        { icon: 'combat_level',   accent: '#cdd6e0' },
   strength:      { icon: 'muscle_up',      accent: '#d9904a' },
   defence:       { icon: 'shield',         accent: '#8fa6c0' },
   hitpoints:     { icon: 'hearts',         accent: '#e8554e' },

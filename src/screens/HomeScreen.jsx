@@ -28,7 +28,7 @@ function SkillCard({ skill, level, progress, toNext, onClick }) {
   return (
     <GildedComplete complete={isMax} className="rounded-[10px]">
       <button class="skill-card" onClick={() => onClick(skill)} aria-label={`${titleCase(skill)}, level ${level}`}>
-        <SkillEmblem class="skill-card__emblem" iconKey={art.icon} accent={art.accent} size={28} glow={0.5} />
+        <SkillEmblem class="skill-card__emblem" iconKey={art.icon} accent={art.accent} size={38} glow={0} />
         <div class="skill-card__top">
           <div class="skill-card__name">
             <span>{titleCase(skill)}</span>
@@ -91,18 +91,8 @@ export default function HomeScreen({ onNavigate, onLogout, onManualSave, isCloud
       {/* Welcome card with rune save/logout buttons */}
       <div class="px-4 pt-4 pb-2 flex-shrink-0">
         <div class="welcome-card">
-          <h1 class="welcome-card__title">Welcome, {player.name}</h1>
-          <div class="welcome-card__bottom">
-            <div class="welcome-card__stats">
-              <span class="wstat">
-                <GameIcon iconKey="crossed_swords" color="#cdd6e0" size={18} title="Combat level" />
-                Combat <b>{combatLevel}</b>
-              </span>
-              <span class="wstat">
-                <GameIcon iconKey="progression" color="#9aa7b0" size={18} title="Total level" />
-                Total <b>{totalLevel.toLocaleString()}</b>
-              </span>
-            </div>
+          <div class="welcome-card__top">
+            <h1 class="welcome-card__title">Welcome, {player.name}</h1>
             <div class="welcome-card__actions">
               <button
                 class="rune-btn"
@@ -122,6 +112,18 @@ export default function HomeScreen({ onNavigate, onLogout, onManualSave, isCloud
               >
                 <GameIcon iconKey="door" color="#e8d5a8" size={24} title="Log out" />
               </button>
+            </div>
+          </div>
+          <div class="welcome-card__bottom">
+            <div class="welcome-card__stats">
+              <span class="wstat">
+                <span class="wstat__icon"><GameIcon iconKey="combat_level" size={32} title="Combat level" /></span>
+                Combat <b>{combatLevel}</b>
+              </span>
+              <span class="wstat">
+                <span class="wstat__icon"><GameIcon iconKey="progression" color="#9aa7b0" size={26} title="Total level" /></span>
+                Total <b>{totalLevel.toLocaleString()}</b>
+              </span>
             </div>
           </div>
         </div>
@@ -172,7 +174,7 @@ export default function HomeScreen({ onNavigate, onLogout, onManualSave, isCloud
         <Modal title={titleCase(selectedSkillDetail)} onClose={() => setSelectedSkillDetail(null)}>
           <div class="space-y-3">
             <div class="skill-detail__hero">
-              <SkillEmblem iconKey={selArt.icon} accent={selArt.accent} size={64} />
+              <SkillEmblem iconKey={selArt.icon} accent={selArt.accent} size={64} glow={0} />
               <div class="skill-detail__lvl">Level <b>{selLevel}</b> / 99</div>
             </div>
             <div class="bg-[#111] rounded-lg p-3 space-y-2">

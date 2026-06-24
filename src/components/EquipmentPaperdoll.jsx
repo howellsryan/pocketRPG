@@ -4,7 +4,7 @@ import GameIcon from './GameIcon.jsx'
 const EQ_SLOT_ICONS = {
   head: 'iron_full_helm', cape: 'attack_cape', neck: 'amulet_of_strength', ammo: 'bronze_arrow',
   weapon: 'iron_sword', body: 'iron_platebody', shield: 'iron_kiteshield',
-  legs: 'iron_platelegs', gloves: 'leather_gloves', boots: 'iron_boots', ring: 'ruby'
+  legs: 'iron_platelegs', gloves: 'leather_gloves', boots: 'leather_boots', ring: 'ruby'
 }
 
 export const EQ_SLOT_NAMES = {

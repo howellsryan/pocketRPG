@@ -1,13 +1,27 @@
 import { useState, useEffect } from 'preact/hooks'
 import Card from '../components/Card.jsx'
 import FilterToggleBar from '../components/FilterToggleBar.jsx'
+import GameIcon from '../components/GameIcon.jsx'
 import GildedComplete from '../components/GildedComplete.jsx'
 import { formatNumber } from '../utils/helpers.js'
 import { isMaxedTotal } from '../utils/completion.js'
 import { getLeaderboardFilters, getLeaderboardFilterById } from '../engine/leaderboardFilters.js'
+import { getRaidArt, getMonsterArt } from '../utils/combatArt.js'
 
 const LEADERBOARD_FILTERS = getLeaderboardFilters()
-const LEADERBOARD_FILTER_OPTIONS = LEADERBOARD_FILTERS.map(f => ({ id: f.id, label: f.label, icon: f.icon || null }))
+
+// Resolve a game-icons glyph for each filter chip so none render blank/wrong:
+// total → the progression (total level) icon, raids → their raid art, bosses →
+// their monster art (falls back to crossed swords for any un-arted boss).
+function filterIconKey(f) {
+  if (!f) return null
+  if (f.type === 'total') return 'progression'
+  if (f.sourceType === 'raids') return getRaidArt(f.sourceId).icon
+  if (f.sourceType === 'monsters') return getMonsterArt({ id: f.sourceId }).icon
+  return null
+}
+
+const LEADERBOARD_FILTER_OPTIONS = LEADERBOARD_FILTERS.map(f => ({ id: f.id, label: f.label, iconKey: filterIconKey(f) }))
 
 function buildLeaderboardUrl(filter) {
   if (!filter || filter.type !== 'kc') return '/api/leaderboard'
@@ -85,7 +99,10 @@ export default function LeaderboardScreen() {
   return (
     <div class="h-full flex flex-col">
       <div class="flex-shrink-0 bg-[#111] border-b border-[var(--color-void-border)] px-4 py-3">
-        <h1 class="font-[var(--font-display)] text-lg font-bold text-[var(--color-gold)]">🏆 Leaderboard</h1>
+        <h1 class="flex items-center gap-2 font-[var(--font-display)] text-lg font-bold text-[var(--color-gold)]">
+          <GameIcon iconKey="progression" size={22} class="flex-shrink-0" />
+          Leaderboard
+        </h1>
         <div class="mt-2">
           <FilterToggleBar options={LEADERBOARD_FILTER_OPTIONS} value={filterId} onChange={setFilterId} />
         </div>

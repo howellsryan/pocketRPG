@@ -319,7 +319,7 @@ export default function CollectionLogPanel() {
         <div class="clog-pad">
           <div class="clog-header">
             <div class="clog-header__title">
-              <CollogArt glyphKey="scroll_unfurled" gold size={28} glow={1} />
+              <GameIcon iconKey="empty_bird_s_nest" size={28} class="flex-shrink-0" />
               <h1>Collection Log</h1>
             </div>
             <div class="clog-header__sub">Your hall of trophies</div>

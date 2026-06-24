@@ -120,8 +120,7 @@ export default function CombatMobileSelect({
           return (
             <div key={category.key} class={'cb-area' + (!isCollapsed ? ' is-open' : '')}>
               <button class="cb-area__head" onClick={() => onToggleSection(category.key)} disabled={empty}>
-                <div class="cb-area__glow" style={{ background: `radial-gradient(circle, ${art.accent}, transparent 66%)` }} />
-                <div class="cb-area__icon"><SkillEmblem iconKey={art.icon} accent={art.accent} size={30} glow={0.95} /></div>
+                <div class="cb-area__icon"><SkillEmblem iconKey={art.icon} accent={art.accent} size={30} glow={0} /></div>
                 <div class="cb-area__txt">
                   <div class="cb-area__name">{category.label}</div>
                   <div class="cb-area__blurb">{empty ? 'Coming soon' : art.blurb}</div>
@@ -149,7 +148,7 @@ export default function CombatMobileSelect({
                         onClick={() => !isLocked && onFight(monster)}
                         title={isLocked && bossReq.locked ? bossReq.reason : ''}
                       >
-                        <div class="cb-mon__art"><SkillEmblem iconKey={mArt.icon} accent={mArt.accent} size={42} glow={0.95} /></div>
+                        <div class="cb-mon__art"><SkillEmblem iconKey={mArt.icon} accent={mArt.accent} size={42} glow={0} /></div>
                         <div class="cb-mon__body">
                           <div class="cb-mon__name">
                             {monster.name}
@@ -196,8 +195,7 @@ export default function CombatMobileSelect({
               title={isLocked ? raidReq.reason : ''}
             >
               <div class="cb-area__head" role="button">
-                <div class="cb-area__glow" style={{ background: `radial-gradient(circle, ${art.accent}, transparent 66%)` }} />
-                <div class="cb-area__icon"><SkillEmblem iconKey={art.icon} accent={art.accent} size={30} glow={0.95} /></div>
+                <div class="cb-area__icon"><SkillEmblem iconKey={art.icon} accent={art.accent} size={30} glow={0} /></div>
                 <div class="cb-area__txt">
                   <div class="cb-area__name">{raid.name}</div>
                   <div class="cb-area__blurb">{isLocked ? '🔒 ' + raidReq.reason : raid.description}</div>

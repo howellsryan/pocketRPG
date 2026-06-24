@@ -1,7 +1,7 @@
 import { SCREENS } from '../utils/constants.js'
 
 export const NAV_TABS = [
-  { id: SCREENS.HOME,               label: 'Home',           icon: '🏠', iconKey: 'iron_full_helm' },
+  { id: SCREENS.HOME,               label: 'Home',           icon: '🏠', iconKey: 'home', iconSize: 34 },
   { id: SCREENS.BANK,               label: 'Bank',           icon: '🏦', iconKey: 'coins' },
   { id: SCREENS.INVENTORY,          label: 'Items',          icon: '🎒', iconKey: 'money_purse' },
   { id: SCREENS.EQUIPMENT,          label: 'Equip',          icon: '🛡️', iconKey: 'iron_platebody' },
@@ -13,7 +13,7 @@ export const NAV_TABS = [
   { id: SCREENS.MINIGAMES,          label: 'Minigames',      icon: '🎮', iconKey: 'purple_sweets' },
   { id: SCREENS.GATHER,             label: 'Gather',         icon: '🌿', iconKey: 'kingsherb' },
   { id: SCREENS.COLLECTION_LOG,     label: 'Collection Log', icon: '📖', iconKey: 'empty_bird_s_nest' },
-  { id: SCREENS.LEADERBOARD,        label: 'Leaderboard',    icon: '🏆', iconKey: 'halo' },
+  { id: SCREENS.LEADERBOARD,        label: 'Leaderboard',    icon: '🏆', iconKey: 'progression', iconSize: 22 },
   { id: SCREENS.ARMOURY,            label: 'Armoury',        icon: '🗡️', iconKey: 'iron_longsword' },
   { id: SCREENS.HELP,               label: 'Help',           icon: '🧭', iconKey: 'tinderbox' },
   { id: SCREENS.CHARACTER_UNLOCKS,  label: 'Unlocks',        icon: '✨', iconKey: 'master_rejuvenation' },

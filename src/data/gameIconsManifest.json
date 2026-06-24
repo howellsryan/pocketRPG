@@ -1,5 +1,6 @@
 {
   "_comment": "Maps our stable icon keys to game-icons.net glyph names. Run scripts/build-game-icons.cjs to regenerate gameIcons.json.",
+  "home": "house",
   "coins": "coins",
   "ore": "ore",
   "metal_bar": "metal-bar",
