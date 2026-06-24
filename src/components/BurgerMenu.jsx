@@ -66,7 +66,9 @@ export default function BurgerMenu({ open, onClose, active, onNavigate, isInComb
                 aria-current={isActive ? 'page' : undefined}
                 class={`flex items-center gap-3 w-full px-4 min-h-[48px] border-0 text-left transition-colors ${activeBg} ${activeBorder} ${baseColor} ${opacity} ${cursor}`}
               >
-                <GameIcon iconKey={tab.iconKey} size={44} class="flex-shrink-0" />
+                <span class="w-11 flex justify-center items-center flex-shrink-0">
+                  <GameIcon iconKey={tab.iconKey} size={tab.iconSize || 44} />
+                </span>
                 <span class="text-base font-semibold font-[var(--font-body)]">{label}</span>
               </button>
             )

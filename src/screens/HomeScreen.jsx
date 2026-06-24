@@ -91,18 +91,8 @@ export default function HomeScreen({ onNavigate, onLogout, onManualSave, isCloud
       {/* Welcome card with rune save/logout buttons */}
       <div class="px-4 pt-4 pb-2 flex-shrink-0">
         <div class="welcome-card">
-          <h1 class="welcome-card__title">Welcome, {player.name}</h1>
-          <div class="welcome-card__bottom">
-            <div class="welcome-card__stats">
-              <span class="wstat">
-                <GameIcon iconKey="crossed_swords" color="#cdd6e0" size={36} title="Combat level" />
-                Combat <b>{combatLevel}</b>
-              </span>
-              <span class="wstat">
-                <GameIcon iconKey="progression" color="#9aa7b0" size={18} title="Total level" />
-                Total <b>{totalLevel.toLocaleString()}</b>
-              </span>
-            </div>
+          <div class="welcome-card__top">
+            <h1 class="welcome-card__title">Welcome, {player.name}</h1>
             <div class="welcome-card__actions">
               <button
                 class="rune-btn"
@@ -122,6 +112,18 @@ export default function HomeScreen({ onNavigate, onLogout, onManualSave, isCloud
               >
                 <GameIcon iconKey="door" color="#e8d5a8" size={24} title="Log out" />
               </button>
+            </div>
+          </div>
+          <div class="welcome-card__bottom">
+            <div class="welcome-card__stats">
+              <span class="wstat">
+                <GameIcon iconKey="crossed_swords" color="#cdd6e0" size={54} title="Combat level" />
+                Combat <b>{combatLevel}</b>
+              </span>
+              <span class="wstat">
+                <GameIcon iconKey="progression" color="#9aa7b0" size={27} title="Total level" />
+                Total <b>{totalLevel.toLocaleString()}</b>
+              </span>
             </div>
           </div>
         </div>
