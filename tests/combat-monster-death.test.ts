@@ -105,7 +105,7 @@ describe('processCombatTick — monsterDeath event (loot modal trigger)', () => 
   })
 
   it('emits monsterDeath with an empty loot array when the drop table is empty', () => {
-    const state = createCombatState(buildLowHpMonster({ drops: [] }), 'melee', 'aggressive')
+    const state = createCombatState(buildLowHpMonster({ drops: [], combatLevel: 0 }), 'melee', 'aggressive')
     const { events } = tickUntilKill(state)
 
     const deathEvent = events.find(e => e.type === 'monsterDeath')
