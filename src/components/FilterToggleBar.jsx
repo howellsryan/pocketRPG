@@ -2,10 +2,11 @@ import GameIcon from './GameIcon.jsx'
 
 // Horizontal, scrollable, single-select filter chips. Reusable across screens
 // for switching a view between mutually exclusive options.
-//   options: [{ id, label, icon?, iconKey? }]
+//   options: [{ id, label, icon?, iconKey?, item? }]
 //   value:   id of the active option
 //   onChange(id)
-// An `iconKey` renders a tinted game-icons glyph (inherits the chip text colour);
+// An `item` renders its tier-tinted game-icons glyph (keeps the item's own
+// colour); an `iconKey` renders a tinted glyph inheriting the chip text colour;
 // `icon` is a plain emoji fallback.
 export default function FilterToggleBar({ options, value, onChange, className = '' }) {
   return (
@@ -21,9 +22,11 @@ export default function FilterToggleBar({ options, value, onChange, className = 
             onClick={() => onChange(opt.id)}
             class={`flex-shrink-0 inline-flex items-center gap-1.5 min-h-[44px] px-3 rounded-[20px] text-[11px] font-semibold border whitespace-nowrap ${pillClass}`}
           >
-            {opt.iconKey
-              ? <GameIcon iconKey={opt.iconKey} size={16} class="flex-shrink-0" />
-              : opt.icon ? <span class="flex-shrink-0">{opt.icon}</span> : null}
+            {opt.item
+              ? <GameIcon item={opt.item} size={16} class="flex-shrink-0" />
+              : opt.iconKey
+                ? <GameIcon iconKey={opt.iconKey} size={16} class="flex-shrink-0" />
+                : opt.icon ? <span class="flex-shrink-0">{opt.icon}</span> : null}
             {opt.label}
           </button>
         )

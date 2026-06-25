@@ -55,7 +55,7 @@ export async function onRequestGet(context) {
       // (written only by the action completion endpoints, migration 0019) and
       // indexed by (source_type, source_id, kill_count DESC), migration 0020.
       const rows = await env.DB.prepare(
-        `SELECT c.username, c.combat_level, c.is_one_life, k.kill_count
+        `SELECT c.username, c.combat_level, c.is_one_life, c.is_ironman, k.kill_count
            FROM kill_counts k
            JOIN characters c ON c.id = k.character_id
           WHERE k.source_type = ? AND k.source_id = ?
@@ -69,6 +69,7 @@ export async function onRequestGet(context) {
         killCount: row.kill_count,
         combatLevel: row.combat_level,
         isOneLife: !!row.is_one_life,
+        isIronman: !!row.is_ironman,
       }))
     } else {
       // Pure indexed read against `characters`. total_level / combat_level are
@@ -80,7 +81,7 @@ export async function onRequestGet(context) {
       // query scoped to is_ironman accounts.
       const ironmanClause = metric === 'ironman' ? ' AND is_ironman = 1' : ''
       const rows = await env.DB.prepare(
-        `SELECT id, username, total_level, combat_level, is_one_life
+        `SELECT id, username, total_level, combat_level, is_one_life, is_ironman
            FROM characters
           WHERE deleted_at IS NULL AND total_level > 33 AND is_bot = 0${ironmanClause}
           ORDER BY total_level DESC, total_level_at ASC, id ASC
@@ -91,6 +92,7 @@ export async function onRequestGet(context) {
         totalLevel: row.total_level,
         combatLevel: row.combat_level,
         isOneLife: !!row.is_one_life,
+        isIronman: !!row.is_ironman,
       }))
     }
 

@@ -10,19 +10,31 @@ import { getRaidArt, getMonsterArt } from '../utils/combatArt.js'
 
 const LEADERBOARD_FILTERS = getLeaderboardFilters()
 
+// Minimal item shells so GameIcon resolves the full-helm glyph (crested_helmet)
+// with the right tier tint — iron (grey) for Ironman, dragon (red) for accounts
+// that are both Ironman and One Life. No need to pull in the full items.json.
+const IRON_HELM_ITEM = { id: 'iron_full_helm', slot: 'head', type: 'armour', name: 'Iron Full Helm' }
+const DRAGON_HELM_ITEM = { id: 'dragon_full_helm', slot: 'head', type: 'armour', name: 'Dragon Full Helm' }
+
 // Resolve a game-icons glyph for each filter chip so none render blank/wrong:
 // total → the progression (total level) icon, raids → their raid art, bosses →
 // their monster art (falls back to crossed swords for any un-arted boss).
 function filterIconKey(f) {
   if (!f) return null
   if (f.type === 'total') return 'progression'
-  if (f.type === 'ironman') return 'crested_helmet' // bronze full helm glyph
+  if (f.type === 'ironman') return null // rendered via the iron-tinted item icon
   if (f.sourceType === 'raids') return getRaidArt(f.sourceId).icon
   if (f.sourceType === 'monsters') return getMonsterArt({ id: f.sourceId }).icon
   return null
 }
 
-const LEADERBOARD_FILTER_OPTIONS = LEADERBOARD_FILTERS.map(f => ({ id: f.id, label: f.label, iconKey: filterIconKey(f), icon: f.icon || null }))
+const LEADERBOARD_FILTER_OPTIONS = LEADERBOARD_FILTERS.map(f => ({
+  id: f.id,
+  label: f.label,
+  iconKey: filterIconKey(f),
+  icon: f.icon || null,
+  item: f.type === 'ironman' ? IRON_HELM_ITEM : null,
+}))
 
 function buildLeaderboardUrl(filter) {
   if (!filter) return '/api/leaderboard'
@@ -46,8 +58,15 @@ function LeaderboardRow({ rank, char, metric }) {
           <div class="flex items-center gap-3 flex-1">
             <div class="text-lg font-semibold text-[var(--color-gold)] min-w-[2rem]">#{rank}</div>
             <div class="flex-1 min-w-0">
-              <div class="text-sm font-semibold text-[var(--color-parchment)] truncate">
-                {char.isOneLife ? '☠️ ' : ''}{char.username}
+              <div class="flex items-center gap-1 text-sm font-semibold text-[var(--color-parchment)] min-w-0">
+                {char.isIronman && char.isOneLife ? (
+                  <GameIcon item={DRAGON_HELM_ITEM} size={15} class="flex-shrink-0" title="Ironman · One Life" />
+                ) : char.isIronman ? (
+                  <GameIcon item={IRON_HELM_ITEM} size={15} class="flex-shrink-0" title="Ironman" />
+                ) : char.isOneLife ? (
+                  <span class="flex-shrink-0" title="One Life">☠️</span>
+                ) : null}
+                <span class="truncate">{char.username}</span>
               </div>
             </div>
           </div>
