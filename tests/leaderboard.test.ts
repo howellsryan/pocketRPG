@@ -81,6 +81,31 @@ describe('GET /api/leaderboard (denormalized + paginated)', () => {
     expect(body.pagination).toEqual({ limit: 50, offset: 10, count: 2 })
   })
 
+  it('scopes the ironman board to is_ironman accounts, ordered by total level', async () => {
+    const { env, prepare, bind } = mockDb([
+      { id: 1, username: 'ironbob', total_level: 1200, combat_level: 100, is_one_life: 0 },
+    ])
+    const res = await onRequestGet({ request: reqWith('?metric=ironman'), env } as any)
+    const body = await res.json() as any
+
+    const sql = prepare.mock.calls[0][0] as string
+    expect(sql).toContain('FROM characters')
+    expect(sql).toContain('is_ironman = 1')
+    expect(sql).toMatch(/ORDER BY\s+total_level\s+DESC/i)
+    expect(bind).toHaveBeenCalledWith(100, 0)
+    expect(body.metric).toBe('ironman')
+    expect(body.characters).toEqual([
+      { username: 'ironbob', totalLevel: 1200, combatLevel: 100, isOneLife: false },
+    ])
+  })
+
+  it('does NOT add the is_ironman filter to the default total board', async () => {
+    const { env, prepare } = mockDb([])
+    await onRequestGet({ request: reqWith(), env } as any)
+    const sql = prepare.mock.calls[0][0] as string
+    expect(sql).not.toContain('is_ironman')
+  })
+
   it('returns 500 + empty list on DB error rather than crashing', async () => {
     const all = vi.fn().mockRejectedValue(new Error('boom'))
     const env = { DB: { prepare: vi.fn(() => ({ bind: vi.fn(() => ({ all })) })) } } as any

@@ -16,15 +16,18 @@ const LEADERBOARD_FILTERS = getLeaderboardFilters()
 function filterIconKey(f) {
   if (!f) return null
   if (f.type === 'total') return 'progression'
+  if (f.type === 'ironman') return null // emoji fallback (f.icon)
   if (f.sourceType === 'raids') return getRaidArt(f.sourceId).icon
   if (f.sourceType === 'monsters') return getMonsterArt({ id: f.sourceId }).icon
   return null
 }
 
-const LEADERBOARD_FILTER_OPTIONS = LEADERBOARD_FILTERS.map(f => ({ id: f.id, label: f.label, iconKey: filterIconKey(f) }))
+const LEADERBOARD_FILTER_OPTIONS = LEADERBOARD_FILTERS.map(f => ({ id: f.id, label: f.label, iconKey: filterIconKey(f), icon: f.icon || null }))
 
 function buildLeaderboardUrl(filter) {
-  if (!filter || filter.type !== 'kc') return '/api/leaderboard'
+  if (!filter) return '/api/leaderboard'
+  if (filter.type === 'ironman') return '/api/leaderboard?metric=ironman'
+  if (filter.type !== 'kc') return '/api/leaderboard'
   const params = new URLSearchParams({ metric: 'kc', source_type: filter.sourceType, source_id: filter.sourceId })
   return `/api/leaderboard?${params.toString()}`
 }

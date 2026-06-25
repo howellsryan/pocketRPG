@@ -14,6 +14,15 @@ export const TOTAL_LEVEL_FILTER = Object.freeze({
   label: 'Total Level',
 })
 
+// Ironman-only board, ranked by total level (same metric as the main board,
+// scoped to is_ironman accounts server-side).
+export const IRONMAN_FILTER = Object.freeze({
+  id: 'ironman',
+  type: 'ironman',
+  label: 'Ironman',
+  icon: '🛡️',
+})
+
 // Canonical raids only. raids.json carries legacy_id aliases as extra keys
 // whose `id` points back at the canonical entry; skip those so each raid
 // appears once. Preserves raids.json declaration order.
@@ -67,6 +76,7 @@ export function getLeaderboardFilters() {
   if (!cachedLeaderboardFilters) {
     cachedLeaderboardFilters = [
       TOTAL_LEVEL_FILTER,
+      IRONMAN_FILTER,
       ...buildRaidLeaderboardFilters(),
       ...buildBossLeaderboardFilters(),
     ]
