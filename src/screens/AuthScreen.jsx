@@ -2,6 +2,9 @@ import { useState, useEffect } from 'preact/hooks'
 import { api, startGitHubLogin, startGoogleLogin, isEmbeddedBrowser, setCharacter, getToken, clearAuth } from '../cloud/api.js'
 import { resetSyncState } from '../cloud/sync.js'
 import LandingScreen from './LandingScreen.jsx'
+import GameIcon from '../components/GameIcon.jsx'
+
+const AUTH_IRON_HELM_ITEM = { id: 'iron_full_helm', slot: 'head', type: 'armour', name: 'Iron Full Helm' }
 
 // Three internal modes:
 //   login      — no token, show OAuth login options
@@ -206,7 +209,9 @@ export default function AuthScreen({ onCloudReady }) {
                 style={{ width: '18px', height: '18px', cursor: 'pointer' }}
               />
               <div>
-                <div style={{ fontSize: '13px', color: '#d4af37', fontWeight: 'bold' }}>🛡️ Ironman Mode</div>
+                <div style={{ fontSize: '13px', color: '#d4af37', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <GameIcon item={AUTH_IRON_HELM_ITEM} size={16} /> Ironman Mode
+                </div>
                 <div style={{ fontSize: '10px', color: '#e8d5b0', opacity: 0.6, marginTop: '2px' }}>
                   Fully self-sufficient: no PvP and no trading post offers with other players. You can still use the general store. Permanent once set.
                 </div>
