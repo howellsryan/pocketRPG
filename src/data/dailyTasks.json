@@ -440,6 +440,14 @@
     "trigger": { "type": "skill_produce", "skill": "smithing", "itemId": "godsword_blade", "target": 1 }
   },
   {
+    "id": "kill_nether_wraiths",
+    "tier": "Master",
+    "name": "Banish Nether Wraiths",
+    "description": "Defeat 5 nether wraiths.",
+    "icon": "nether_wraith",
+    "trigger": { "type": "monster_kill", "monsterId": "nether_wraith", "target": 5 }
+  },
+  {
     "id": "craft_black_d_hide_body",
     "tier": "Master",
     "name": "Craft a Black D'hide Body",
