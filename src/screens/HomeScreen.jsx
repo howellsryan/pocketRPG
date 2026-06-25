@@ -117,7 +117,7 @@ export default function HomeScreen({ onNavigate, onLogout, onManualSave, isCloud
           <div class="welcome-card__bottom">
             <div class="welcome-card__stats">
               <span class="wstat">
-                <span class="wstat__icon"><GameIcon iconKey="combat_level" size={32} title="Combat level" /></span>
+                <span class="wstat__icon"><GameIcon iconKey="combat_level" size={20} title="Combat level" /></span>
                 Combat <b>{combatLevel}</b>
               </span>
               <div class="welcome-card__actions welcome-card__actions--inline">
@@ -141,7 +141,7 @@ export default function HomeScreen({ onNavigate, onLogout, onManualSave, isCloud
                 </button>
               </div>
               <span class="wstat">
-                <span class="wstat__icon"><GameIcon iconKey="progression" color="#9aa7b0" size={26} title="Total level" /></span>
+                <span class="wstat__icon"><GameIcon iconKey="progression" color="#9aa7b0" size={16} title="Total level" /></span>
                 Total <b>{totalLevel.toLocaleString()}</b>
               </span>
             </div>
