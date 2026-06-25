@@ -1,5 +1,4 @@
 import dailyTasksData from '../data/dailyTasks.json'
-export { COMPLEXITY_COLORS, COMPLEXITY_ORDER } from '../utils/complexityColors.js'
 
 export function taskById(id) {
   return dailyTasksData.find(t => t.id === id) ?? null
