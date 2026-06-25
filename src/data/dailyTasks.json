@@ -1,0 +1,554 @@
+[
+  {
+    "id": "craft_leather_gloves",
+    "tier": "Novice",
+    "name": "Craft Leather Gloves",
+    "description": "Craft a pair of leather gloves.",
+    "icon": "leather_gloves",
+    "trigger": { "type": "skill_produce", "skill": "crafting", "itemId": "leather_gloves", "target": 1 }
+  },
+  {
+    "id": "cut_sapphire",
+    "tier": "Novice",
+    "name": "Cut a Sapphire",
+    "description": "Cut an uncut sapphire.",
+    "icon": "sapphire",
+    "trigger": { "type": "skill_produce", "skill": "crafting", "itemId": "sapphire", "target": 1 }
+  },
+  {
+    "id": "mine_iron_ore",
+    "tier": "Novice",
+    "name": "Mine Iron Ore",
+    "description": "Mine 10 iron ore.",
+    "icon": "iron_ore",
+    "trigger": { "type": "skill_gather", "skill": "mining", "itemId": "iron_ore", "target": 10 }
+  },
+  {
+    "id": "chop_oak_logs",
+    "tier": "Novice",
+    "name": "Chop Oak Logs",
+    "description": "Chop 10 oak logs.",
+    "icon": "oak_logs",
+    "trigger": { "type": "skill_gather", "skill": "woodcutting", "itemId": "oak_logs", "target": 10 }
+  },
+  {
+    "id": "cook_shrimps",
+    "tier": "Novice",
+    "name": "Cook Shrimps",
+    "description": "Cook 10 shrimps.",
+    "icon": "shrimps",
+    "trigger": { "type": "skill_produce", "skill": "cooking", "itemId": "shrimps", "target": 10 }
+  },
+  {
+    "id": "catch_shrimps",
+    "tier": "Novice",
+    "name": "Catch Shrimps",
+    "description": "Catch 10 shrimps.",
+    "icon": "raw_shrimps",
+    "trigger": { "type": "skill_gather", "skill": "fishing", "itemId": "raw_shrimps", "target": 10 }
+  },
+  {
+    "id": "kill_field_chickens",
+    "tier": "Novice",
+    "name": "Cull the Field Chickens",
+    "description": "Defeat 20 field chickens.",
+    "icon": "field_chicken",
+    "trigger": { "type": "monster_kill", "monsterId": "field_chicken", "target": 20 }
+  },
+  {
+    "id": "kill_cave_goblins",
+    "tier": "Novice",
+    "name": "Rout the Cave Goblins",
+    "description": "Defeat 20 cave goblins.",
+    "icon": "cave_goblin",
+    "trigger": { "type": "monster_kill", "monsterId": "cave_goblin", "target": 20 }
+  },
+  {
+    "id": "smelt_bronze_bars",
+    "tier": "Novice",
+    "name": "Smelt Bronze Bars",
+    "description": "Smelt 5 bronze bars.",
+    "icon": "bronze_bar",
+    "trigger": { "type": "skill_produce", "skill": "smithing", "itemId": "bronze_bar", "target": 5 }
+  },
+  {
+    "id": "craft_leather_body",
+    "tier": "Novice",
+    "name": "Craft a Leather Body",
+    "description": "Craft a leather body.",
+    "icon": "leather_body",
+    "trigger": { "type": "skill_produce", "skill": "crafting", "itemId": "leather_body", "target": 1 }
+  },
+  {
+    "id": "kill_pasture_bulls",
+    "tier": "Novice",
+    "name": "Defeat Pasture Bulls",
+    "description": "Defeat 15 pasture bulls.",
+    "icon": "pasture_bull",
+    "trigger": { "type": "monster_kill", "monsterId": "pasture_bull", "target": 15 }
+  },
+  {
+    "id": "gain_mining_xp",
+    "tier": "Novice",
+    "name": "Earn Mining XP",
+    "description": "Earn 500 Mining XP.",
+    "icon": "iron_ore",
+    "trigger": { "type": "skill_xp", "skill": "mining", "target": 500 }
+  },
+  {
+    "id": "gain_prayer_xp",
+    "tier": "Novice",
+    "name": "Earn Prayer XP",
+    "description": "Earn 200 Prayer XP.",
+    "icon": "bones",
+    "trigger": { "type": "skill_xp", "skill": "prayer", "target": 200 }
+  },
+  {
+    "id": "cook_chicken_novice",
+    "tier": "Novice",
+    "name": "Cook Chicken",
+    "description": "Cook 5 pieces of chicken.",
+    "icon": "cooked_chicken",
+    "trigger": { "type": "skill_produce", "skill": "cooking", "itemId": "cooked_chicken", "target": 5 }
+  },
+  {
+    "id": "kill_lesser_fiends",
+    "tier": "Intermediate",
+    "name": "Cull the Lesser Fiends",
+    "description": "Defeat 20 lesser fiends.",
+    "icon": "lesser_fiend",
+    "trigger": { "type": "monster_kill", "monsterId": "lesser_fiend", "target": 20 }
+  },
+  {
+    "id": "kill_stoneback_crabs",
+    "tier": "Intermediate",
+    "name": "Crack the Stoneback Crabs",
+    "description": "Defeat 10 stoneback crabs.",
+    "icon": "stoneback_crab",
+    "trigger": { "type": "monster_kill", "monsterId": "stoneback_crab", "target": 10 }
+  },
+  {
+    "id": "mine_mithril_ore",
+    "tier": "Intermediate",
+    "name": "Mine Mithril Ore",
+    "description": "Mine 5 mithril ore.",
+    "icon": "mithril_ore",
+    "trigger": { "type": "skill_gather", "skill": "mining", "itemId": "mithril_ore", "target": 5 }
+  },
+  {
+    "id": "cook_trout",
+    "tier": "Intermediate",
+    "name": "Cook Trout",
+    "description": "Cook 10 trout.",
+    "icon": "trout",
+    "trigger": { "type": "skill_produce", "skill": "cooking", "itemId": "trout", "target": 10 }
+  },
+  {
+    "id": "chop_willow_logs",
+    "tier": "Intermediate",
+    "name": "Chop Willow Logs",
+    "description": "Chop 15 willow logs.",
+    "icon": "willow_logs",
+    "trigger": { "type": "skill_gather", "skill": "woodcutting", "itemId": "willow_logs", "target": 15 }
+  },
+  {
+    "id": "catch_trout",
+    "tier": "Intermediate",
+    "name": "Catch Trout",
+    "description": "Catch 10 trout.",
+    "icon": "raw_trout",
+    "trigger": { "type": "skill_gather", "skill": "fishing", "itemId": "raw_trout", "target": 10 }
+  },
+  {
+    "id": "smelt_iron_bars",
+    "tier": "Intermediate",
+    "name": "Smelt Iron Bars",
+    "description": "Smelt 5 iron bars.",
+    "icon": "iron_bar",
+    "trigger": { "type": "skill_produce", "skill": "smithing", "itemId": "iron_bar", "target": 5 }
+  },
+  {
+    "id": "smith_iron_scimitar",
+    "tier": "Intermediate",
+    "name": "Smith an Iron Scimitar",
+    "description": "Smith an iron scimitar.",
+    "icon": "iron_scimitar",
+    "trigger": { "type": "skill_produce", "skill": "smithing", "itemId": "iron_scimitar", "target": 1 }
+  },
+  {
+    "id": "craft_hard_leather_body",
+    "tier": "Intermediate",
+    "name": "Craft a Hard Leather Body",
+    "description": "Craft a hard leather body.",
+    "icon": "hard_leather_body",
+    "trigger": { "type": "skill_produce", "skill": "crafting", "itemId": "hard_leather_body", "target": 1 }
+  },
+  {
+    "id": "cut_emerald",
+    "tier": "Intermediate",
+    "name": "Cut an Emerald",
+    "description": "Cut an uncut emerald.",
+    "icon": "emerald",
+    "trigger": { "type": "skill_produce", "skill": "crafting", "itemId": "emerald", "target": 1 }
+  },
+  {
+    "id": "kill_highland_giants",
+    "tier": "Intermediate",
+    "name": "Slay the Highland Giants",
+    "description": "Defeat 10 highland giants.",
+    "icon": "highland_giant",
+    "trigger": { "type": "monster_kill", "monsterId": "highland_giant", "target": 10 }
+  },
+  {
+    "id": "kill_broodfang_spiders",
+    "tier": "Intermediate",
+    "name": "Exterminate Broodfang Spiders",
+    "description": "Defeat 15 broodfang spiders.",
+    "icon": "broodfang_spider",
+    "trigger": { "type": "monster_kill", "monsterId": "broodfang_spider", "target": 15 }
+  },
+  {
+    "id": "complete_slayer_task",
+    "tier": "Intermediate",
+    "name": "Complete a Slayer Task",
+    "description": "Complete any slayer task.",
+    "icon": "bones",
+    "trigger": { "type": "slayer_task_complete", "target": 1 }
+  },
+  {
+    "id": "kill_duneback_crabs",
+    "tier": "Intermediate",
+    "name": "Hunt the Duneback Crabs",
+    "description": "Defeat 10 duneback crabs.",
+    "icon": "duneback_crab",
+    "trigger": { "type": "monster_kill", "monsterId": "duneback_crab", "target": 10 }
+  },
+  {
+    "id": "kill_arcane_adepts",
+    "tier": "Experienced",
+    "name": "Banish Arcane Adepts",
+    "description": "Defeat 10 arcane adepts.",
+    "icon": "arcane_adept",
+    "trigger": { "type": "monster_kill", "monsterId": "arcane_adept", "target": 10 }
+  },
+  {
+    "id": "kill_umbral_adepts",
+    "tier": "Experienced",
+    "name": "Dispel Umbral Adepts",
+    "description": "Defeat 10 umbral adepts.",
+    "icon": "umbral_adept",
+    "trigger": { "type": "monster_kill", "monsterId": "umbral_adept", "target": 10 }
+  },
+  {
+    "id": "mine_adamantite_ore",
+    "tier": "Experienced",
+    "name": "Mine Adamantite Ore",
+    "description": "Mine 5 adamantite ore.",
+    "icon": "adamantite_ore",
+    "trigger": { "type": "skill_gather", "skill": "mining", "itemId": "adamantite_ore", "target": 5 }
+  },
+  {
+    "id": "cook_shark",
+    "tier": "Experienced",
+    "name": "Cook Sharks",
+    "description": "Cook 10 sharks.",
+    "icon": "shark",
+    "trigger": { "type": "skill_produce", "skill": "cooking", "itemId": "shark", "target": 10 }
+  },
+  {
+    "id": "chop_yew_logs",
+    "tier": "Experienced",
+    "name": "Chop Yew Logs",
+    "description": "Chop 10 yew logs.",
+    "icon": "yew_logs",
+    "trigger": { "type": "skill_gather", "skill": "woodcutting", "itemId": "yew_logs", "target": 10 }
+  },
+  {
+    "id": "catch_shark",
+    "tier": "Experienced",
+    "name": "Catch Sharks",
+    "description": "Catch 5 sharks.",
+    "icon": "raw_shark",
+    "trigger": { "type": "skill_gather", "skill": "fishing", "itemId": "raw_shark", "target": 5 }
+  },
+  {
+    "id": "smelt_adamant_bars",
+    "tier": "Experienced",
+    "name": "Smelt Adamant Bars",
+    "description": "Smelt 5 adamant bars.",
+    "icon": "adamant_bar",
+    "trigger": { "type": "skill_produce", "skill": "smithing", "itemId": "adamant_bar", "target": 5 }
+  },
+  {
+    "id": "cut_ruby",
+    "tier": "Experienced",
+    "name": "Cut a Ruby",
+    "description": "Cut an uncut ruby.",
+    "icon": "ruby",
+    "trigger": { "type": "skill_produce", "skill": "crafting", "itemId": "ruby", "target": 1 }
+  },
+  {
+    "id": "kill_nether_demons",
+    "tier": "Experienced",
+    "name": "Bind the Nether Demons",
+    "description": "Defeat 5 nether demons.",
+    "icon": "nether_demon",
+    "trigger": { "type": "monster_kill", "monsterId": "nether_demon", "target": 5 }
+  },
+  {
+    "id": "kill_briar_giants",
+    "tier": "Experienced",
+    "name": "Topple the Briar Giants",
+    "description": "Defeat 10 briar giants.",
+    "icon": "briar_giant",
+    "trigger": { "type": "monster_kill", "monsterId": "briar_giant", "target": 10 }
+  },
+  {
+    "id": "complete_quest_experienced",
+    "tier": "Experienced",
+    "name": "Complete a Quest",
+    "description": "Complete any quest.",
+    "icon": "feather",
+    "trigger": { "type": "quest_complete", "target": 1 }
+  },
+  {
+    "id": "gain_agility_xp",
+    "tier": "Experienced",
+    "name": "Earn Agility XP",
+    "description": "Earn 5,000 Agility XP.",
+    "icon": "feather",
+    "trigger": { "type": "skill_xp", "skill": "agility", "target": 5000 }
+  },
+  {
+    "id": "kill_sanguine_velds",
+    "tier": "Experienced",
+    "name": "Slay the Sanguine Veld",
+    "description": "Defeat 5 sanguine veld.",
+    "icon": "sanguine_veld",
+    "trigger": { "type": "monster_kill", "monsterId": "sanguine_veld", "target": 5 }
+  },
+  {
+    "id": "smith_runeforged_scimitar",
+    "tier": "Experienced",
+    "name": "Smith a Runeforged Scimitar",
+    "description": "Smith a runeforged scimitar.",
+    "icon": "runeforged_scimitar",
+    "trigger": { "type": "skill_produce", "skill": "smithing", "itemId": "runeforged_scimitar", "target": 1 }
+  },
+  {
+    "id": "slay_king_black_dragon",
+    "tier": "Experienced",
+    "name": "Slay the King Black Dragon",
+    "description": "Defeat the King Black Dragon.",
+    "icon": "king_black_dragon",
+    "trigger": { "type": "boss_kill", "monsterId": "king_black_dragon", "target": 1 }
+  },
+  {
+    "id": "slay_deepmaw_kraken",
+    "tier": "Experienced",
+    "name": "Slay the Deepmaw Kraken",
+    "description": "Defeat the Deepmaw Kraken.",
+    "icon": "deepmaw_kraken",
+    "trigger": { "type": "boss_kill", "monsterId": "deepmaw_kraken", "target": 1 }
+  },
+  {
+    "id": "slay_warlord_grondar",
+    "tier": "Master",
+    "name": "Slay Warlord Grondar",
+    "description": "Defeat Warlord Grondar 5 times.",
+    "icon": "warlord_grondar",
+    "trigger": { "type": "boss_kill", "monsterId": "warlord_grondar", "target": 5 }
+  },
+  {
+    "id": "slay_commander_zephyra",
+    "tier": "Master",
+    "name": "Slay Commander Zephyra",
+    "description": "Defeat Commander Zephyra 5 times.",
+    "icon": "commander_zephyra",
+    "trigger": { "type": "boss_kill", "monsterId": "commander_zephyra", "target": 5 }
+  },
+  {
+    "id": "slay_skyrender_kharra",
+    "tier": "Master",
+    "name": "Slay Skyrender Kharra",
+    "description": "Defeat Skyrender Kharra 5 times.",
+    "icon": "skyrender_kharra",
+    "trigger": { "type": "boss_kill", "monsterId": "skyrender_kharra", "target": 5 }
+  },
+  {
+    "id": "slay_krylth_the_defiler",
+    "tier": "Master",
+    "name": "Slay Krylth the Defiler",
+    "description": "Defeat Krylth the Defiler 5 times.",
+    "icon": "krylth_the_defiler",
+    "trigger": { "type": "boss_kill", "monsterId": "krylth_the_defiler", "target": 5 }
+  },
+  {
+    "id": "conquer_vaults_of_xyren",
+    "tier": "Master",
+    "name": "Conquer the Vaults of Xyren",
+    "description": "Complete the Vaults of Xyren raid.",
+    "icon": "feather",
+    "trigger": { "type": "raid_complete", "raidId": "vaults_of_xyren", "target": 1 }
+  },
+  {
+    "id": "conquer_cryptbound_champions",
+    "tier": "Master",
+    "name": "Conquer the Cryptbound Champions",
+    "description": "Complete the Cryptbound Champions raid.",
+    "icon": "feather",
+    "trigger": { "type": "raid_complete", "raidId": "cryptbound_champions", "target": 1 }
+  },
+  {
+    "id": "mine_runite_ore",
+    "tier": "Master",
+    "name": "Mine Runite Ore",
+    "description": "Mine 5 runite ore.",
+    "icon": "runeforged_ore",
+    "trigger": { "type": "skill_gather", "skill": "mining", "itemId": "runeforged_ore", "target": 5 }
+  },
+  {
+    "id": "chop_redwood_logs",
+    "tier": "Master",
+    "name": "Chop Redwood Logs",
+    "description": "Chop 5 redwood logs.",
+    "icon": "redwood_logs",
+    "trigger": { "type": "skill_gather", "skill": "woodcutting", "itemId": "redwood_logs", "target": 5 }
+  },
+  {
+    "id": "catch_anglerfish",
+    "tier": "Master",
+    "name": "Catch Anglerfish",
+    "description": "Catch 3 anglerfish.",
+    "icon": "raw_anglerfish",
+    "trigger": { "type": "skill_gather", "skill": "fishing", "itemId": "raw_anglerfish", "target": 3 }
+  },
+  {
+    "id": "cook_anglerfish",
+    "tier": "Master",
+    "name": "Cook Anglerfish",
+    "description": "Cook 3 anglerfish.",
+    "icon": "anglerfish",
+    "trigger": { "type": "skill_produce", "skill": "cooking", "itemId": "anglerfish", "target": 3 }
+  },
+  {
+    "id": "smith_godsword_blade",
+    "tier": "Master",
+    "name": "Forge a Godsword Blade",
+    "description": "Forge a godsword blade.",
+    "icon": "godsword_blade",
+    "trigger": { "type": "skill_produce", "skill": "smithing", "itemId": "godsword_blade", "target": 1 }
+  },
+  {
+    "id": "kill_nether_wraiths",
+    "tier": "Master",
+    "name": "Banish Nether Wraiths",
+    "description": "Defeat 5 nether wraiths.",
+    "icon": "nether_wraith",
+    "trigger": { "type": "monster_kill", "monsterId": "nether_wraith", "target": 5 }
+  },
+  {
+    "id": "craft_black_d_hide_body",
+    "tier": "Master",
+    "name": "Craft a Black D'hide Body",
+    "description": "Craft a black dragonhide body.",
+    "icon": "black_d_hide_body",
+    "trigger": { "type": "skill_produce", "skill": "crafting", "itemId": "black_d_hide_body", "target": 1 }
+  },
+  {
+    "id": "conquer_crimson_night_theatre",
+    "tier": "Grandmaster",
+    "name": "Conquer the Crimson Night Theatre",
+    "description": "Complete the Crimson Night Theatre raid.",
+    "icon": "feather",
+    "trigger": { "type": "raid_complete", "raidId": "crimson_night_theatre", "target": 1 }
+  },
+  {
+    "id": "conquer_tomb_of_arasmus",
+    "tier": "Grandmaster",
+    "name": "Conquer the Tomb of Arasmus",
+    "description": "Complete the Tomb of Arasmus raid.",
+    "icon": "feather",
+    "trigger": { "type": "raid_complete", "raidId": "tomb_of_arasmus", "target": 1 }
+  },
+  {
+    "id": "vanquish_warlord_grondar",
+    "tier": "Grandmaster",
+    "name": "Vanquish Warlord Grondar",
+    "description": "Defeat Warlord Grondar 20 times.",
+    "icon": "warlord_grondar",
+    "trigger": { "type": "boss_kill", "monsterId": "warlord_grondar", "target": 20 }
+  },
+  {
+    "id": "vanquish_commander_zephyra",
+    "tier": "Grandmaster",
+    "name": "Vanquish Commander Zephyra",
+    "description": "Defeat Commander Zephyra 20 times.",
+    "icon": "commander_zephyra",
+    "trigger": { "type": "boss_kill", "monsterId": "commander_zephyra", "target": 20 }
+  },
+  {
+    "id": "slay_venomcoil_matriarch",
+    "tier": "Grandmaster",
+    "name": "Slay the Venomcoil Matriarch",
+    "description": "Defeat the Venomcoil Matriarch 5 times.",
+    "icon": "venomcoil_matriarch",
+    "trigger": { "type": "boss_kill", "monsterId": "venomcoil_matriarch", "target": 5 }
+  },
+  {
+    "id": "slay_sebakh_the_devourer",
+    "tier": "Grandmaster",
+    "name": "Slay Sebakh the Devourer",
+    "description": "Defeat Sebakh the Devourer 5 times.",
+    "icon": "sebakh_the_devourer",
+    "trigger": { "type": "boss_kill", "monsterId": "sebakh_the_devourer", "target": 5 }
+  },
+  {
+    "id": "slay_ember_tyrant",
+    "tier": "Grandmaster",
+    "name": "Slay the Ember Tyrant",
+    "description": "Defeat the Ember Tyrant 5 times.",
+    "icon": "ember_tyrant",
+    "trigger": { "type": "boss_kill", "monsterId": "ember_tyrant", "target": 5 }
+  },
+  {
+    "id": "slay_ashen_crucible",
+    "tier": "Grandmaster",
+    "name": "Slay the Ashen Crucible",
+    "description": "Defeat the Ashen Crucible.",
+    "icon": "ashen_crucible",
+    "trigger": { "type": "boss_kill", "monsterId": "ashen_crucible", "target": 1 }
+  },
+  {
+    "id": "craft_onyx_amulet",
+    "tier": "Grandmaster",
+    "name": "Craft an Onyx Amulet",
+    "description": "Craft an onyx amulet.",
+    "icon": "onyx_amulet",
+    "trigger": { "type": "skill_produce", "skill": "crafting", "itemId": "onyx_amulet", "target": 1 }
+  },
+  {
+    "id": "cut_zyrite_gem",
+    "tier": "Grandmaster",
+    "name": "Cut a Zyrite",
+    "description": "Cut an uncut zyrite gemstone.",
+    "icon": "zyrite",
+    "trigger": { "type": "skill_produce", "skill": "crafting", "itemId": "zyrite", "target": 1 }
+  },
+  {
+    "id": "craft_soul_runes",
+    "tier": "Grandmaster",
+    "name": "Craft Soul Runes",
+    "description": "Craft 50 soul runes.",
+    "icon": "soul_rune",
+    "trigger": { "type": "skill_produce", "skill": "runecraft", "itemId": "soul_rune", "target": 50 }
+  },
+  {
+    "id": "forge_visage_shield",
+    "tier": "Grandmaster",
+    "name": "Forge a Visage Shield",
+    "description": "Forge a dragonfire visage shield.",
+    "icon": "visage_shield",
+    "trigger": { "type": "skill_produce", "skill": "smithing", "itemId": "visage_shield", "target": 1 }
+  }
+]

@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'preact/hooks'
 import { CLOUD_SAVE_STATUS_EVENT } from '../cloud/sync.js'
 import ActivityIndicator from './ActivityIndicator.jsx'
 
-export default function Header({ activity, credits = 0, isCloudAccount = false, onSkip1h = null, onBuyCredits = null, onMenuClick = null, onNavigate = null, skipMode = 'hour', raidSkipCost = null }) {
+export default function Header({ activity, credits = 0, isCloudAccount = false, onSkip1h = null, onBuyCredits = null, onDailyTasks = null, dailyTasksCompleted = 0, dailyTasksTotal = 5, onMenuClick = null, onNavigate = null, skipMode = 'hour', raidSkipCost = null }) {
   const { player, currentHP, getMaxHP } = useGame()
   const [cloudStatus, setCloudStatus] = useState('idle')
   const [showSavedToCloud, setShowSavedToCloud] = useState(false)
@@ -95,31 +95,55 @@ export default function Header({ activity, credits = 0, isCloudAccount = false, 
               </span>
             </button>
           )}
-        </div>
 
-        {/* Cloud save indicator — centered between left group and HP bar */}
-        <div class="flex-1 flex items-center justify-center pointer-events-none min-w-0">
-          {!showSavedToCloud && (cloudStatus === 'pending' || cloudStatus === 'saving') && <div class="h-3.5 w-3.5 rounded-full border-2 border-[#555] border-t-[var(--color-gold)] animate-spin" aria-label="Saving to Cloud" />}
-          {showSavedToCloud && (
-            <span class="text-[13px] leading-none text-[var(--color-success)]" aria-label="Saved to Cloud" title="Saved to Cloud">💾</span>
+          {/* Daily tasks button — cloud accounts only */}
+          {isCloudAccount && (
+            <button
+              onClick={() => onDailyTasks?.()}
+              aria-label="Daily Tasks"
+              title="Daily Tasks"
+              class="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-[#0f1a10] border border-[#2a5a2a] whitespace-nowrap hover:border-[#3a7a3a] transition-colors cursor-pointer"
+            >
+              <span class="text-[10px]">📋</span>
+              <span
+                class="text-[10px] font-[var(--font-mono)] font-bold"
+                style={{ color: dailyTasksCompleted === dailyTasksTotal ? 'var(--color-gold)' : 'var(--color-parchment)' }}
+              >
+                {dailyTasksCompleted}/{dailyTasksTotal}
+              </span>
+            </button>
           )}
         </div>
 
-        {/* Background activity indicator */}
-        <ActivityIndicator onNavigate={onNavigate} />
+        {/* Spacer */}
+        <div class="flex-1 min-w-0" />
 
-        {/* HP bar */}
-        <div class="flex items-center gap-1.5">
-          <span class="text-xs">❤️</span>
-          <div class="w-14 h-3 bg-[#222] rounded-full overflow-hidden border border-[#444]">
-            <div
-              class="h-full rounded-full transition-all duration-300"
-              style={{ width: `${hpPct}%`, backgroundColor: hpColor }}
-            />
+        {/* Right group: save indicator · activity · HP */}
+        <div class="flex items-center gap-2">
+          {/* Cloud save indicator */}
+          <div class="pointer-events-none w-4 flex items-center justify-center">
+            {!showSavedToCloud && (cloudStatus === 'pending' || cloudStatus === 'saving') && <div class="h-3.5 w-3.5 rounded-full border-2 border-[#555] border-t-[var(--color-gold)] animate-spin" aria-label="Saving to Cloud" />}
+            {showSavedToCloud && (
+              <span class="text-[13px] leading-none text-[var(--color-success)]" aria-label="Saved to Cloud" title="Saved to Cloud">💾</span>
+            )}
           </div>
-          <span class="text-[10px] font-[var(--font-mono)] text-[var(--color-parchment)] opacity-80 min-w-[32px]">
-            {currentHP}/{maxHP}
-          </span>
+
+          {/* Background activity indicator */}
+          <ActivityIndicator onNavigate={onNavigate} />
+
+          {/* HP bar */}
+          <div class="flex items-center gap-1.5">
+            <span class="hidden md:inline text-xs">❤️</span>
+            <div class="w-14 h-3 bg-[#222] rounded-full overflow-hidden border border-[#444]">
+              <div
+                class="h-full rounded-full transition-all duration-300"
+                style={{ width: `${hpPct}%`, backgroundColor: hpColor }}
+              />
+            </div>
+            <span class="text-[10px] font-[var(--font-mono)] text-[var(--color-parchment)] opacity-80 min-w-[32px]">
+              {currentHP}/{maxHP}
+            </span>
+          </div>
         </div>
       </div>
 

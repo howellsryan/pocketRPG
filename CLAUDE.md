@@ -37,6 +37,7 @@
 - **Prayer (live PvE+PvP)**: drains a pool maxing at Prayer level; each prayer drains over time, higher tiers faster (`drainPerMinute` in `src/data/prayers.json`). Empty pool → prayers off. Pool starts full per session, persists across auto-fight kills. Prayer potion restores 20, super restore 22 (live+idle). PvP keeps protection prayers off (v1) so only offensive prayers drain. **Source of truth: `src/engine/prayerDrain.js`** (idle keeps its own pool in `src/engine/idleSupplies.js`).
 - **Combo food**: combo consumables (flagged `combo: true`, e.g. Karam, plus every potion/brew) use a **separate combo cooldown** — one combo item may be used the same tick as one normal food, never delaying the next attack. See `isComboConsumable` in `src/engine/consumables.js`; honoured by `combat.js` (PvE) + `pvpEngine.js` (PvP).
 - **Boss Slayer XP**: `BOSS_SLAYER_TASK_XP_MULTIPLIER` (×4) in `src/engine/slayerRewards.js`; avoid inflated explicit `slayerXP` on bosses (keep XP/hr ≤ ~2× best regular monster).
+- **Daily Tasks**: 5 tasks/day (one per tier: Novice → Grandmaster), reset **00:00 UTC**, **+1 credit** each. Server-authoritative grant via `/api/daily-tasks/complete` (idempotent `credited` flag + audit), **never** via `/api/save`. Issuance is lazy on `GET /api/daily-tasks`; durable table `character_daily_tasks` (migration 0025, outside the save blob). Cloud accounts only (mirrors credits pill). Event bus: `recordGameEvent(evt)` in `gameState.jsx`; matcher: `src/engine/dailyTasks.js`.
 
 ## 5) XP & Leveling
 - Levels **1–99**. XP cap **200,000,000**.
@@ -103,7 +104,8 @@ Server is source of truth for everything that *can* be authoritative. The one de
 **Server-authoritative (integrity boundary — never move to client/save):**
 - **Identity & ownership** — auth (session JWT via `requireAuth`), characters, OAuth; every `/api/*` route verifies the token.
 - **High-value grants** — boss/raid/clue/minigame/dungeoneering uniques granted by `/api/actions/**` (server-side loot RNG, kill-counts, collection-log, nonce replay protection). Save only carries the already-granted item.
-- **Purchases** — `/api/purchase` debits coins + grants server-side. **Credits** — debited atomically by `/api/skip-hour` and `/api/slayer/skip`; **never** from `/api/save`.
+- **Purchases** — `/api/purchase` debits coins + grants server-side. **Credits** — debited atomically by `/api/skip-hour`, `/api/slayer/skip`, and `/api/daily-tasks/complete`; **never** from `/api/save`.
+- **Daily task credit grants** — `/api/daily-tasks/complete` atomically flips `credited=0→1` (idempotency key) then increments `credits`; replay returns `creditsGranted: 0`. PvP-lockdown enforced.
 - **PvP settlement / trading post** — own server-authoritative paths (§10).
 - New economy/progression mutations must emit **audit events** (`functions/_lib/game/audit.js`).
 

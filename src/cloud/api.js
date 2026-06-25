@@ -191,6 +191,8 @@ export const api = {
     body: JSON.stringify({ entries }),
   }),
   getKillCounts: () => request('/api/kill-counts'),
+  getDailyTasks: () => request('/api/daily-tasks'),
+  completeDailyTask: (payload) => request('/api/daily-tasks/complete', { method: 'POST', body: JSON.stringify(payload) }),
   getIdle: () => request('/api/idle'),
   putIdle: (activeTask) => request('/api/idle', {
     method: 'PUT',

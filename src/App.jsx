@@ -11,6 +11,7 @@ import SkillIcon from './components/SkillIcon.jsx'
 import RewardRevealOverlay from './components/RewardRevealOverlay.jsx'
 import { emitRewardReveal } from './utils/rewardReveal.js'
 import BuyCreditsModal from './components/BuyCreditsModal.jsx'
+import DailyTasksModal from './components/DailyTasksModal.jsx'
 import HomeScreen from './screens/HomeScreen.jsx'
 import StatsScreen from './screens/StatsScreen.jsx'
 import InventoryScreen from './screens/InventoryScreen.jsx'
@@ -69,6 +70,7 @@ import { recordCollectionLogDrop, fetchCollectionLog, clearCollectionLogCache, o
 import { fetchKillCounts } from './cloud/killCounts.js'
 import { isLoggedDrop, collectIdleCombatLoggedDrops } from './engine/collectionLog.js'
 import { rollClueRewards } from './engine/clueScrolls.js'
+import dailyTasksData from './data/dailyTasks.json'
 import { countItem } from './engine/inventory.js'
 
 // ── Lazy in-game code chunk ──────────────────────────────────────────────────
@@ -272,7 +274,7 @@ function GameApp() {
   const { loaded, loadGame, player, stats, equipment, inventory, bank, currentHP, updateHP, getMaxHP, updateInventory, updateEquipment, updateBank, updateBankDirect, grantXP, addToast, activeTask, setActiveTask, itemsData, getSnapshot, unlockedFeatures, setSlayerTask, awardSlayerPoints, slayerTasksCompleted, setSlayerTasksCompleted, completeQuest, completedQuests, questQueue, removeFromQuestQueue, updateQuestQueue,
     unlockMinigameItem, unlockedMinigameItems, awardDungeoneeringTokens, farming, updateFarming, idleCombatSetup, isOneLife, updateBossKillCounts, updateRaidKillCounts, syncServerKillCounts, markKillCountsLoaded, combatSkipHandlerRef, skipHourHandlerRef, chargeSkipRef, raidSkipHandlerRef,
     gameLocked, lockGame, unlockGame, runLockedSave, awaitCombatCompletion, resolveCombatCompletion,
-    characterUnlocks } = useGame()
+    characterUnlocks, dailyTaskStates, setDailyTasks, recordGameEvent } = useGame()
   const pvp = usePvp()
   const [screen, setScreen] = useState(SCREENS.HOME)
   const [menuOpen, setMenuOpen] = useState(false)
@@ -304,6 +306,9 @@ function GameApp() {
   const [stripeLinks, setStripeLinks] = useState({})
   const [credits, setCredits] = useState(0)
   const [showBuyCreditsModal, setShowBuyCreditsModal] = useState(false)
+  const [showDailyTasksModal, setShowDailyTasksModal] = useState(false)
+  const [dailyTaskDate, setDailyTaskDate] = useState(null)
+  const [dailyTaskResetInMs, setDailyTaskResetInMs] = useState(0)
   // Set on mount if Stripe redirected back with a payment query/path — drives the
   // post-checkout thank-you toast + credits refresh once the game is ready.
   const paymentReturnRef = useRef(false)
@@ -496,6 +501,7 @@ function GameApp() {
     }
 
     addToast(`📜 Quest complete: ${questName}`, 'levelup', '🏆')
+    recordGameEvent?.({ kind: 'quest_complete' })
   }
 
   function handleXpChoiceComplete(chosen) {
@@ -799,6 +805,7 @@ function GameApp() {
                 grantMinigameTaskRewards(savedTask.gatherTask, { updateBankDirect, unlockMinigameItem, recordCollectionLogDropForMinigame })
                 if (!isInPvpMatch) requestCriticalPushSave(() => buildMinigameCompletionSnapshot(savedTask.gatherTask), 'minigame_complete')
               }
+              recordGameEvent?.({ kind: 'minigame_complete', minigameId: savedTask.gatherTask?.id ?? 'any' })
               sim = { minigameCompleted: true }
             } else {
               setActiveTask({ ...savedTask, totalTicks, ticksRemaining: newRemaining })
@@ -823,6 +830,7 @@ function GameApp() {
                 grantMinigameTaskRewards(savedTask.minigameTask, { updateBankDirect, unlockMinigameItem, recordCollectionLogDropForMinigame })
                 if (!isInPvpMatch) requestCriticalPushSave(() => buildMinigameCompletionSnapshot(savedTask.minigameTask), 'minigame_complete')
               }
+              recordGameEvent?.({ kind: 'minigame_complete', minigameId: savedTask.minigameTask?.id ?? 'any' })
               sim = { minigameCompleted: true }
             } else {
               setActiveTask({ ...savedTask, totalTicks, ticksRemaining: newRemaining })
@@ -1053,6 +1061,21 @@ function GameApp() {
           }
 
           setIdleResult({ elapsedMs, task: savedTask, ...sim })
+
+          // Feed idle gains into the daily task tracker
+          if (savedTask.type === 'combat' && sim.monstersKilled > 0 && savedTask.monster?.id) {
+            const kind = savedTask.monster?.boss === true ? 'boss_kill' : 'monster_kill'
+            recordGameEvent?.({ kind, monsterId: savedTask.monster.id, count: sim.monstersKilled })
+          }
+          if ((savedTask.type === 'skill' || savedTask.type === 'gather') && sim.itemsGained) {
+            for (const [itemId, qty] of Object.entries(sim.itemsGained)) {
+              if (qty > 0) recordGameEvent?.({ kind: 'skill_gather', itemId, count: qty })
+            }
+          }
+          if (savedTask.type === 'combat' && sim.slayerTaskUpdate?.completed) {
+            recordGameEvent?.({ kind: 'slayer_task_complete' })
+          }
+
           // Push the post-idle state to the cloud (debounced + hash-skipped).
           if (!isInPvpMatch) schedulePushSave(getSnapshot())
         } catch (err) {
@@ -1086,6 +1109,23 @@ function GameApp() {
       window.removeEventListener('beforeunload', handleBeforeUnload)
     }
   }, [gameReady, grantXP, updateInventory, updateBankDirect, isInPvpMatch])
+
+  // Day rollover: re-fetch daily tasks when UTC date changes while game is open
+  useEffect(() => {
+    if (!gameReady || !dailyTaskDate) return
+    const id = setInterval(() => {
+      const today = new Date().toISOString().slice(0, 10)
+      if (today !== dailyTaskDate) {
+        api.getDailyTasks().then(dt => {
+          if (!dt?.tasks) return
+          setDailyTaskDate(dt.date)
+          setDailyTaskResetInMs(dt.resetInMs ?? 0)
+          setDailyTasks(dt.tasks, dt.date)
+        }).catch(() => {})
+      }
+    }, 60_000)
+    return () => clearInterval(id)
+  }, [gameReady, dailyTaskDate, setDailyTasks])
 
   // HP regen tick: once per minute (100 ticks at 600ms = 60s)
   useEffect(() => {
@@ -1163,6 +1203,7 @@ function GameApp() {
             grantMinigameTaskRewards(task.gatherTask, { updateBankDirect, unlockMinigameItem, recordCollectionLogDropForMinigame })
             if (!isInPvpMatch) requestCriticalPushSave(() => buildMinigameCompletionSnapshot(task.gatherTask), 'minigame_complete')
           }
+          recordGameEvent?.({ kind: 'minigame_complete', minigameId: task.gatherTask?.id ?? 'any' })
         } else {
           setActiveTask({ ...task, ticksRemaining: remaining, totalTicks: total }, { skipCloudSync: true })
         }
@@ -1190,6 +1231,7 @@ function GameApp() {
             grantMinigameTaskRewards(mgTask, { updateBankDirect, unlockMinigameItem, recordCollectionLogDropForMinigame })
             if (!isInPvpMatch) requestCriticalPushSave(() => buildMinigameCompletionSnapshot(mgTask), 'minigame_complete')
           }
+          recordGameEvent?.({ kind: 'minigame_complete', minigameId: mgTask?.id ?? 'any' })
         } else {
           setActiveTask({ ...task, ticksRemaining: remaining, totalTicks: total }, { skipCloudSync: true })
         }
@@ -1218,6 +1260,7 @@ function GameApp() {
           const remaining = (task.ticksRemaining ?? total) - 1
           if (remaining <= 0) {
             completeClueSolve(clueTask, { updateBankDirect, getSnapshot, addToast, isInPvpMatch })
+            recordGameEvent?.({ kind: 'clue_complete', tier: clueTask.tier })
             const session = mergeSession(task.session, { actions: 1 })
             setActiveTask({ ...task, ticksRemaining: 0, totalTicks: total, justCompleted: true, session }, { skipCloudSync: true })
           } else {
@@ -1298,10 +1341,10 @@ function GameApp() {
       }
 
       setCloudPhase('ready')
-      // Kick off KC fetch in parallel with checkSave to minimise the window
-      // where KC is missing from the first render. The result is merged via
-      // max(local, server) so a transient empty response never zeros local KC.
+      // Kick off KC + daily-tasks fetch in parallel with checkSave to minimise the
+      // window where data is missing from the first render.
       const kcPromise = fetchKillCounts()
+      const dailyTasksPromise = api.getDailyTasks().catch(() => null)
       await checkSave()
       // Pull collection log alongside the save. Fire-and-forget — UI shows a
       // loading state until cache populates.
@@ -1314,6 +1357,12 @@ function GameApp() {
         // IDB KC was already loaded by checkSave, so a failed fetch still
         // shows the warm cache rather than blocking the screen.
         markKillCountsLoaded()
+      })
+      dailyTasksPromise.then(dt => {
+        if (!dt?.tasks) return
+        setDailyTaskDate(dt.date)
+        setDailyTaskResetInMs(dt.resetInMs ?? 0)
+        setDailyTasks(dt.tasks, dt.date)
       })
     } catch (err) {
       console.warn('[PocketRPG] Cloud init failed:', err)
@@ -2331,7 +2380,7 @@ function GameApp() {
         onDisabledClick={() => addToast('⚔️ Cannot navigate during PvP combat!', 'warning')}
       />
       <div class="flex-1 flex flex-col min-w-0 min-h-0">
-        <Header activity={activity} credits={credits} isCloudAccount={isCloudAccount} onSkip1h={isCloudAccount ? handleSkip1h : null} onBuyCredits={() => setShowBuyCreditsModal(true)} onMenuClick={() => setMenuOpen(true)} onNavigate={(s) => navigate(s)} skipMode={activeTask?.type === 'combat' && (activeTask?.monster?.boss === true || activeTask?.raid === true) ? 'kill' : 'hour'} raidSkipCost={activeTask?.type === 'combat' && activeTask?.raidId ? (raidsData[activeTask.raidId]?.skipCost ?? 1) : null} />
+        <Header activity={activity} credits={credits} isCloudAccount={isCloudAccount} onSkip1h={isCloudAccount ? handleSkip1h : null} onBuyCredits={() => setShowBuyCreditsModal(true)} onDailyTasks={() => setShowDailyTasksModal(true)} dailyTasksCompleted={(dailyTaskStates || []).filter(t => t.completed).length} dailyTasksTotal={5} onMenuClick={() => setMenuOpen(true)} onNavigate={(s) => navigate(s)} skipMode={activeTask?.type === 'combat' && (activeTask?.monster?.boss === true || activeTask?.raid === true) ? 'kill' : 'hour'} raidSkipCost={activeTask?.type === 'combat' && activeTask?.raidId ? (raidsData[activeTask.raidId]?.skipCost ?? 1) : null} />
         <ToastContainer />
         <main class="flex-1 overflow-hidden">
           {renderScreen()}
@@ -2639,6 +2688,15 @@ function GameApp() {
           identityId={identityId}
           characterId={getCharacterId()}
           stripeLinks={stripeLinks}
+        />
+      )}
+
+      {showDailyTasksModal && isCloudAccount && (
+        <DailyTasksModal
+          onClose={() => setShowDailyTasksModal(false)}
+          tasks={dailyTaskStates || []}
+          resetInMs={dailyTaskResetInMs}
+          taskPool={dailyTasksData}
         />
       )}
 

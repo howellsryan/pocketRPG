@@ -43,7 +43,7 @@ function hasItemAnywhere(itemId, inventory, bank, equipment) {
 }
 
 export default function GatherScreen({ initialTaskId, idleResult }) {
-  const { inventory, bank, equipment, stats, updateInventory, updateBankDirect, addToast, setActiveTask, activeTask: globalActiveTask, itemsData } = useGame()
+  const { inventory, bank, equipment, stats, updateInventory, updateBankDirect, addToast, setActiveTask, activeTask: globalActiveTask, itemsData, recordGameEvent } = useGame()
   const [category, setCategory] = useState('all')
   const [activeTask, setLocalTask] = useState(null)
   const taskRef = useRef(null)
@@ -207,6 +207,7 @@ export default function GatherScreen({ initialTaskId, idleResult }) {
         // Update bank (material/gp deductions + any bank trip) and inventory.
         if (Object.keys(bankUpdates).length > 0) updateBankDirect(bankUpdates)
         updateInventory(newInv)
+        recordGameEvent?.({ kind: 'skill_gather', itemId: product, count: qty })
 
         const updated = {
           ...next,
