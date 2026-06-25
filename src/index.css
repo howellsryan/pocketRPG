@@ -207,6 +207,11 @@ html, body, #app {
 .wstat__icon { width: 34px; height: 34px; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .wstat b { margin-left: 2px; font-weight: 800; color: var(--color-gold-light); }
 .welcome-card__actions { display: flex; gap: 8px; flex-shrink: 0; }
+.welcome-card__actions--inline { display: none; }
+@media (max-width: 639px) {
+  .welcome-card__actions--header { display: none; }
+  .welcome-card__actions--inline { display: flex; }
+}
 .rune-btn {
   width: 44px; height: 44px; border-radius: 12px;
   border: 1px solid rgba(212, 160, 23, 0.28);

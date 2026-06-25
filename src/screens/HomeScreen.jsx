@@ -93,7 +93,7 @@ export default function HomeScreen({ onNavigate, onLogout, onManualSave, isCloud
         <div class="welcome-card">
           <div class="welcome-card__top">
             <h1 class="welcome-card__title">Welcome, {player.name}</h1>
-            <div class="welcome-card__actions">
+            <div class="welcome-card__actions welcome-card__actions--header">
               <button
                 class="rune-btn"
                 onClick={handleManualSave}
@@ -120,6 +120,26 @@ export default function HomeScreen({ onNavigate, onLogout, onManualSave, isCloud
                 <span class="wstat__icon"><GameIcon iconKey="combat_level" size={32} title="Combat level" /></span>
                 Combat <b>{combatLevel}</b>
               </span>
+              <div class="welcome-card__actions welcome-card__actions--inline">
+                <button
+                  class="rune-btn"
+                  onClick={handleManualSave}
+                  disabled={saveDisabled}
+                  aria-label="Save game"
+                  title={saving ? 'Saving…' : 'Save your chronicle'}
+                >
+                  <GameIcon iconKey="save" color="#f0c040" size={24} title="Save" />
+                </button>
+                <button
+                  class="rune-btn"
+                  onClick={handleLogout}
+                  disabled={loggingOut || saving}
+                  aria-label="Log out"
+                  title={isCloudAccount && loggingOut ? 'Saving…' : 'Log out'}
+                >
+                  <GameIcon iconKey="door" color="#e8d5a8" size={24} title="Log out" />
+                </button>
+              </div>
               <span class="wstat">
                 <span class="wstat__icon"><GameIcon iconKey="progression" color="#9aa7b0" size={26} title="Total level" /></span>
                 Total <b>{totalLevel.toLocaleString()}</b>
