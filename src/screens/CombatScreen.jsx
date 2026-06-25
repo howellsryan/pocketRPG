@@ -1714,7 +1714,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
         <div class="flex gap-1.5 mb-2">
           <button
             onClick={() => setIdleSetupMode('food')}
-            class="flex-1 py-1.5 rounded-lg text-[10px] font-semibold bg-[#1a1a1a] text-[var(--color-parchment)] active:bg-[#2a2a2a]"
+            class="flex-1 py-1.5 rounded-lg text-[10px] font-semibold bg-[#1a1a1a] text-[var(--color-parchment)] active:bg-[#2a2a2a] flex items-center justify-center gap-1.5"
             title="Configure food the simulator can use during idle/skip combat"
           >
             <GameIcon iconKey="meat" color={idleCombatSetup?.food?.length > 0 ? '#7ce88a' : '#9b978c'} size={14} /> Idle Eat
@@ -1724,7 +1724,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           </button>
           <button
             onClick={() => setIdleSetupMode('prayer')}
-            class="flex-1 py-1.5 rounded-lg text-[10px] font-semibold bg-[#1a1a1a] text-[var(--color-parchment)] active:bg-[#2a2a2a]"
+            class="flex-1 py-1.5 rounded-lg text-[10px] font-semibold bg-[#1a1a1a] text-[var(--color-parchment)] active:bg-[#2a2a2a] flex items-center justify-center gap-1.5"
             title="Configure prayers the simulator should use during idle/skip combat"
           >
             <GameIcon iconKey="prayer" color={(idleCombatSetup?.prayers?.protectionPrayerId || idleCombatSetup?.prayers?.combatPrayerId) ? '#7ce88a' : '#9b978c'} size={14} /> Idle Pray
@@ -1734,7 +1734,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           </button>
           <button
             onClick={() => setIdleSetupMode('potion')}
-            class="flex-1 py-1.5 rounded-lg text-[10px] font-semibold bg-[#1a1a1a] text-[var(--color-parchment)] active:bg-[#2a2a2a]"
+            class="flex-1 py-1.5 rounded-lg text-[10px] font-semibold bg-[#1a1a1a] text-[var(--color-parchment)] active:bg-[#2a2a2a] flex items-center justify-center gap-1.5"
             title="Configure potions the simulator can drink during idle/skip combat"
           >
             <GameIcon iconKey="potion_ball" color={idleCombatSetup?.potions?.length > 0 ? '#7ce88a' : '#9b978c'} size={14} /> Idle Potion
@@ -1923,7 +1923,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
               class="w-full p-3 rounded-xl border border-[var(--color-blood)] bg-[#2a1010] text-[var(--color-blood-light)] active:bg-[#3a1818] transition-colors flex items-center justify-center gap-2"
               title="Player vs Player"
             >
-              <span class="text-lg">☠️</span>
+              <GameIcon iconKey="crossed_swords" color="var(--color-blood-light)" size={18} />
               <span class="text-sm font-bold tracking-wider">PvP — Player vs Player</span>
             </button>
             <div class="text-[9px] text-[var(--color-parchment)] opacity-40 mt-1.5 text-center px-2">

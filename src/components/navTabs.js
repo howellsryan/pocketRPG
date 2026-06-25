@@ -12,7 +12,7 @@ export const NAV_TABS = [
   { id: SCREENS.CLUES,              label: 'Clues',          icon: '🗝️', iconKey: 'clue_scroll_hard' },
   { id: SCREENS.MINIGAMES,          label: 'Minigames',      icon: '🎮', iconKey: 'purple_sweets' },
   { id: SCREENS.GATHER,             label: 'Gather',         icon: '🌿', iconKey: 'kingsherb' },
-  { id: SCREENS.COLLECTION_LOG,     label: 'Collection Log', icon: '📖', iconKey: 'empty_bird_s_nest' },
+  { id: SCREENS.COLLECTION_LOG,     label: 'Collection Log', icon: '📖', iconKey: 'open_book', iconColor: '#f0c040' },
   { id: SCREENS.LEADERBOARD,        label: 'Leaderboard',    icon: '🏆', iconKey: 'progression', iconSize: 22 },
   { id: SCREENS.ARMOURY,            label: 'Armoury',        icon: '🗡️', iconKey: 'iron_longsword' },
   { id: SCREENS.HELP,               label: 'Help',           icon: '🧭', iconKey: 'tinderbox' },

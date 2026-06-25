@@ -319,7 +319,7 @@ export default function CollectionLogPanel() {
         <div class="clog-pad">
           <div class="clog-header">
             <div class="clog-header__title">
-              <GameIcon iconKey="empty_bird_s_nest" size={28} class="flex-shrink-0" />
+              <span class="flex-shrink-0" style={{ filter: 'drop-shadow(0 0 6px rgba(240,192,64,0.7))' }}><GameIcon iconKey="open_book" size={28} color="#f0c040" /></span>
               <h1>Collection Log</h1>
             </div>
             <div class="clog-header__sub">Your hall of trophies</div>
