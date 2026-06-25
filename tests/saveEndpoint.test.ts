@@ -105,6 +105,43 @@ describe('PUT /api/save no-op detection', () => {
     expect(touch?.sql).not.toMatch(/save_blob/)
   })
 
+  it('treats a save that only churned the activeTask countdown as a no-op', async () => {
+    const stored = JSON.stringify(baseSave({
+      settings: { activeTask: { type: 'skill', skill: 'mining', action: { id: 'iron_ore' }, ticksRemaining: 5, pendingTicks: 0, session: { actions: 2, xp: 70 } } },
+    }))
+    // Same real state; only the per-tick countdown/session advanced.
+    const incoming = JSON.stringify(baseSave({
+      timestamp: 99999,
+      settings: { activeTask: { type: 'skill', skill: 'mining', action: { id: 'iron_ore' }, ticksRemaining: 3, pendingTicks: 2, session: { actions: 2, xp: 70 } } },
+    }))
+    const { env, batches, runs } = makeEnv({ existingSaveData: stored })
+
+    const res = await onRequestPut({ request: makePut({ save_data: incoming, save_revision: 7 }), env } as any)
+    expect(res.status).toBe(200)
+    const body = await res.json()
+    expect(body.noop).toBe(true)
+    expect(batches).toHaveLength(0)
+    expect(runs).toHaveLength(0)
+  })
+
+  it('still writes when a running task makes real progress', async () => {
+    const stored = JSON.stringify(baseSave({
+      stats: { attack: { xp: 0 }, mining: { xp: 50 } },
+      settings: { activeTask: { type: 'skill', skill: 'mining', action: { id: 'iron_ore' }, ticksRemaining: 5 } },
+    }))
+    const incoming = JSON.stringify(baseSave({
+      timestamp: 99999,
+      stats: { attack: { xp: 0 }, mining: { xp: 90 } }, // real XP gain
+      settings: { activeTask: { type: 'skill', skill: 'mining', action: { id: 'iron_ore' }, ticksRemaining: 3 } },
+    }))
+    const { env, batches } = makeEnv({ existingSaveData: stored })
+
+    const res = await onRequestPut({ request: makePut({ save_data: incoming, save_revision: 7 }), env } as any)
+    const body = await res.json()
+    expect(body.noop).toBeUndefined()
+    expect(batches).toHaveLength(1)
+  })
+
   it('writes when the payload content actually changed', async () => {
     const stored = JSON.stringify(baseSave())
     const incoming = JSON.stringify(baseSave({

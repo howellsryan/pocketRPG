@@ -36,9 +36,28 @@ let lastSaveRevision = 0
 // equal to the last successful push is already on the server.
 let lastPushedContentKey = null
 
+// Volatile fields on settings.activeTask that the activity runner mutates on
+// EVERY 600ms tick (per-action countdown + live session tallies). They carry no
+// durable state the cloud needs — XP/coins/items already live in stats/inventory/
+// bank — but if they're left in the dirty-check key, a task merely counting down
+// (or an AFK tab with a task running) looks "changed" every tick and defeats the
+// no-op skip, so each periodic/heartbeat save writes even when nothing real
+// progressed. Neutralise them so only genuine progress (or a task identity
+// change) counts as a content change. Task IDENTITY (type/skill/action/…) is
+// preserved, so starting/stopping/switching a task still triggers a save.
+const VOLATILE_ACTIVE_TASK_FIELDS = ['ticksRemaining', 'pendingTicks', 'totalTicks', 'session']
+
+function normaliseActiveTaskForKey(settings) {
+  const activeTask = settings?.activeTask
+  if (!activeTask || typeof activeTask !== 'object') return settings
+  const trimmed = { ...activeTask }
+  for (const f of VOLATILE_ACTIVE_TASK_FIELDS) delete trimmed[f]
+  return { ...settings, activeTask: trimmed }
+}
+
 // Exported for tests: timestamp-insensitive content key for a save payload.
 export function saveContentKey(payload) {
-  return JSON.stringify({ ...payload, timestamp: 0 })
+  return JSON.stringify({ ...payload, timestamp: 0, settings: normaliseActiveTaskForKey(payload?.settings) })
 }
 let pendingTimer = null
 let pendingSnapshot = null

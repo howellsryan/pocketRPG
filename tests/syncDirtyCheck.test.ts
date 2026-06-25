@@ -31,6 +31,38 @@ describe('saveContentKey', () => {
     expect(a).toBe(b)
     expect(a).not.toBe(c)
   })
+
+  it('ignores the per-tick activeTask countdown/session churn', () => {
+    const base = {
+      timestamp: 1,
+      stats: { mining: { xp: 100 } },
+      settings: {
+        currentHP: 10,
+        activeTask: { type: 'skill', skill: 'mining', action: { id: 'iron_ore' }, ticksRemaining: 4, pendingTicks: 0, totalTicks: 5, session: { actions: 3, xp: 105 } },
+      },
+    }
+    // Same real progress, task merely counted down a tick → identical key (no write).
+    const ticked = {
+      ...base,
+      timestamp: 2,
+      settings: { ...base.settings, activeTask: { ...base.settings.activeTask, ticksRemaining: 3, pendingTicks: 1, session: { actions: 3, xp: 105 } } },
+    }
+    expect(saveContentKey(base)).toBe(saveContentKey(ticked))
+  })
+
+  it('still keys on real progress and on task identity changes', () => {
+    const base = {
+      timestamp: 1,
+      stats: { mining: { xp: 100 } },
+      settings: { activeTask: { type: 'skill', skill: 'mining', action: { id: 'iron_ore' }, ticksRemaining: 4 } },
+    }
+    // Real XP gain → different key (must still write).
+    const progressed = { ...base, stats: { mining: { xp: 130 } } }
+    expect(saveContentKey(base)).not.toBe(saveContentKey(progressed))
+    // Switched to a different action → different key (start/stop/switch still saves).
+    const switched = { ...base, settings: { activeTask: { ...base.settings.activeTask, action: { id: 'coal' } } } }
+    expect(saveContentKey(base)).not.toBe(saveContentKey(switched))
+  })
 })
 
 describe('push dirty check', () => {
