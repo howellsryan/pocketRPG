@@ -33,7 +33,7 @@ export default function SideNav({ active, onNavigate, isInCombat, onDisabledClic
             class={`flex items-center gap-3 w-full px-4 py-2 mx-0 border-0 text-left transition-colors ${activeBg} ${activeBorder} ${baseColor} ${opacity} ${cursor} ${hover}`}
           >
             <span class="w-11 flex justify-center items-center flex-shrink-0">
-              <GameIcon iconKey={tab.iconKey} size={tab.iconSize || 44} />
+              <GameIcon iconKey={tab.iconKey} size={tab.iconSize || 44} color={tab.iconColor} />
             </span>
             <span class="text-sm font-semibold font-[var(--font-body)]">{label}</span>
           </button>

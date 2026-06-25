@@ -16,7 +16,7 @@ import SpellSelectGrid from '../components/SpellSelectGrid.jsx'
 import SkillEmblem from '../components/SkillEmblem.jsx'
 import CombatMobileSelect from './CombatMobileSelect.jsx'
 import { CombatMonsterInfoSheet, CombatRaidInfoSheet, MultiStyleChip } from './CombatMobileSheets.jsx'
-import { getMonsterArt, getMonsterAttackStyles, getMonsterWeakness } from '../utils/combatArt.js'
+import { getMonsterArt, getMonsterAttackStyles, getMonsterWeakness, getCategoryArt, getRaidArt } from '../utils/combatArt.js'
 import { getSkillArt } from '../utils/skillArt.js'
 import { getPrayerStyleIcon } from '../utils/prayerIcons.js'
 import { createCombatState, createRaidCombatState, processCombatTick, applyEat, applyCombo, applySpecialAttack, applyInstantKill } from '../engine/combat.js'
@@ -1714,30 +1714,30 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
         <div class="flex gap-1.5 mb-2">
           <button
             onClick={() => setIdleSetupMode('food')}
-            class="flex-1 py-1.5 rounded-lg text-[10px] font-semibold bg-[#1a1a1a] text-[var(--color-parchment)] active:bg-[#2a2a2a]"
+            class="flex-1 py-1.5 rounded-lg text-[10px] font-semibold bg-[#1a1a1a] text-[var(--color-parchment)] active:bg-[#2a2a2a] flex items-center justify-center gap-1.5"
             title="Configure food the simulator can use during idle/skip combat"
           >
-            🍖 Idle Eat
+            <GameIcon iconKey="meat" color={idleCombatSetup?.food?.length > 0 ? '#7ce88a' : '#9b978c'} size={14} /> Idle Eat
             {idleCombatSetup?.food?.length > 0 && (
               <span class="ml-1 text-[var(--color-gold)]">✓</span>
             )}
           </button>
           <button
             onClick={() => setIdleSetupMode('prayer')}
-            class="flex-1 py-1.5 rounded-lg text-[10px] font-semibold bg-[#1a1a1a] text-[var(--color-parchment)] active:bg-[#2a2a2a]"
+            class="flex-1 py-1.5 rounded-lg text-[10px] font-semibold bg-[#1a1a1a] text-[var(--color-parchment)] active:bg-[#2a2a2a] flex items-center justify-center gap-1.5"
             title="Configure prayers the simulator should use during idle/skip combat"
           >
-            🙏 Idle Pray
+            <GameIcon iconKey="prayer" color={(idleCombatSetup?.prayers?.protectionPrayerId || idleCombatSetup?.prayers?.combatPrayerId) ? '#7ce88a' : '#9b978c'} size={14} /> Idle Pray
             {(idleCombatSetup?.prayers?.protectionPrayerId || idleCombatSetup?.prayers?.combatPrayerId) && (
               <span class="ml-1 text-[var(--color-gold)]">✓</span>
             )}
           </button>
           <button
             onClick={() => setIdleSetupMode('potion')}
-            class="flex-1 py-1.5 rounded-lg text-[10px] font-semibold bg-[#1a1a1a] text-[var(--color-parchment)] active:bg-[#2a2a2a]"
+            class="flex-1 py-1.5 rounded-lg text-[10px] font-semibold bg-[#1a1a1a] text-[var(--color-parchment)] active:bg-[#2a2a2a] flex items-center justify-center gap-1.5"
             title="Configure potions the simulator can drink during idle/skip combat"
           >
-            🧪 Idle Potion
+            <GameIcon iconKey="potion_ball" color={idleCombatSetup?.potions?.length > 0 ? '#7ce88a' : '#9b978c'} size={14} /> Idle Potion
             {idleCombatSetup?.potions?.length > 0 && (
               <span class="ml-1 text-[var(--color-gold)]">✓</span>
             )}
@@ -1774,6 +1774,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                 return a.combatLevel - b.combatLevel
               })
             const isCollapsed = collapsedSections[category.key] ?? true
+            const categoryArt = getCategoryArt(category.key)
             return (
               <div key={category.key}>
                 <button
@@ -1781,7 +1782,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                   onClick={() => toggleSection(category.key)}
                   class="w-full flex items-center gap-2 mb-2 px-1 py-1 text-left rounded-lg active:bg-[#1a1a1a]"
                 >
-                  <span class="text-base">{category.icon}</span>
+                  <SkillEmblem iconKey={categoryArt.icon} accent={categoryArt.accent} size={24} glow={0} />
                   <span class="text-xs font-semibold text-[var(--color-parchment)] uppercase tracking-wider opacity-60">{category.label}</span>
                   <span class="ml-auto text-[10px] text-[var(--color-parchment)] opacity-60">{isCollapsed ? '▶' : '▼'}</span>
                   {monsters.length === 0 && (
@@ -1809,7 +1810,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                             'bg-[#1a1a1a] border-[#2a2a2a] active:bg-[#222]'}`}
                       >
                         <div class="flex items-center gap-3">
-                          <span class="text-2xl">{MONSTER_ICONS[monster.id] || '👹'}</span>
+                          <SkillEmblem iconKey={getMonsterArt(monster, category.key).icon} accent={getMonsterArt(monster, category.key).accent} size={36} glow={0} />
                           <div class="text-left">
                             <div class="flex items-center gap-1.5">
                               <span class="text-sm font-semibold text-[var(--color-parchment)]">{monster.name}</span>
@@ -1849,7 +1850,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                         class="flex-shrink-0 w-9 h-9 rounded-full border border-[var(--color-void-border)] bg-[var(--color-void-light)] text-[var(--color-gold)] text-[14px] font-bold flex items-center justify-center active:opacity-70"
                         title="View Monster Info"
                       >
-                        ⓘ
+                        <GameIcon iconKey="info" color="#f0c040" size={18} />
                       </button>
                     </div>
                     )
@@ -1868,7 +1869,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             onClick={() => toggleSection('raids')}
             class="w-full flex items-center gap-2 mb-3 px-1 py-1 text-left rounded-lg active:bg-[#1a1a1a]"
           >
-            <span class="text-base">🏆</span>
+            <SkillEmblem iconKey="temple_gate" accent="#9b6cff" size={24} glow={0} />
             <span class="text-xs font-semibold text-[var(--color-gold)] uppercase tracking-wider">Raids</span>
             <span class="ml-auto text-[10px] text-[var(--color-parchment)] opacity-60">{(collapsedSections.raids ?? true) ? '▶' : '▼'}</span>
           </button>
@@ -1889,7 +1890,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                       ${isRaidLocked ? 'bg-[#111] border-[#1a1a1a] opacity-50' : 'bg-[#1a1a1a] border-[#2a2a2a] active:bg-[#222]'}`}
                   >
                     <div class="flex-1 flex items-center gap-2">
-                      <span class="text-2xl">{raid.icon}</span>
+                      <SkillEmblem iconKey={getRaidArt(raid.id).icon} accent={getRaidArt(raid.id).accent} size={36} glow={0} />
                       <div>
                         <div class="text-sm font-semibold text-[var(--color-parchment)]">{raid.name}</div>
                         <div class={`text-[10px] ${isRaidLocked ? 'text-[var(--color-blood-light)]' : 'text-[var(--color-parchment)]'} opacity-40`}>{isRaidLocked ? '🔒 ' + raidReq.reason : raid.description}</div>
@@ -1905,7 +1906,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                     class="flex-shrink-0 w-9 h-9 rounded-full border border-[var(--color-void-border)] bg-[var(--color-void-light)] text-[var(--color-gold)] text-[14px] font-bold flex items-center justify-center active:opacity-70"
                     title="View Raid Info"
                   >
-                    ⓘ
+                    <GameIcon iconKey="info" color="#c9b6ff" size={18} />
                   </button>
                 </div>
               )
@@ -1919,11 +1920,12 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           <div class="mt-6 pb-2">
             <button
               onClick={() => setShowPvpLobby(true)}
-              class="w-full p-3 rounded-xl border border-[var(--color-blood)] bg-[#2a1010] text-[var(--color-blood-light)] active:bg-[#3a1818] transition-colors flex items-center justify-center gap-2"
+              class="cb-raid__enter flex items-center justify-center gap-2"
+              style={{ marginTop: 0, background: 'linear-gradient(180deg,#c0392b,#8b1a1a)', color: 'var(--color-parchment)', boxShadow: '0 8px 20px -8px rgba(192,57,43,0.6), inset 0 1px 0 rgba(255,255,255,0.15)' }}
               title="Player vs Player"
             >
-              <span class="text-lg">☠️</span>
-              <span class="text-sm font-bold tracking-wider">PvP — Player vs Player</span>
+              <GameIcon iconKey="crossed_swords" color="var(--color-parchment)" size={18} />
+              <span>Player vs Player</span>
             </button>
             <div class="text-[9px] text-[var(--color-parchment)] opacity-40 mt-1.5 text-center px-2">
               On death, your tradeable inventory + equipped gear go to the winner. Untradeables stay with you.
@@ -1970,8 +1972,8 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       {selectedMonsterInfo && isDesktopCombatLayout && (
         <Modal onClose={() => setSelectedMonsterInfo(null)}>
           <div class="flex items-center justify-between mb-3">
-            <h3 class="font-[var(--font-display)] text-base font-bold text-[var(--color-gold)]">
-              {MONSTER_ICONS[selectedMonsterInfo.id] || '👹'} {selectedMonsterInfo.name}
+            <h3 class="font-[var(--font-display)] text-base font-bold text-[var(--color-gold)] flex items-center gap-2">
+              <SkillEmblem iconKey={getMonsterArt(selectedMonsterInfo).icon} accent={getMonsterArt(selectedMonsterInfo).accent} size={28} glow={0} /> {selectedMonsterInfo.name}
             </h3>
             <button
               onClick={() => setSelectedMonsterInfo(null)}
