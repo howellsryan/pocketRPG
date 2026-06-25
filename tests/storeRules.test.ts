@@ -111,10 +111,10 @@ describe('store rules', () => {
     expect(iron.requiresAccount).toBe('ironman')
     expect(dragon.requiresAccount).toBe('ironman_onelife')
 
-    // Ironman helm: any Ironman may buy it; non-Ironman are blocked.
+    // Ironman helm: only a STANDARD Ironman (not One Life) may buy it.
     expect(getPurchaseRestriction(iron, { isIronman: false }).code).toBe('ACCOUNT_TYPE_RESTRICTED')
     expect(getPurchaseRestriction(iron, { isIronman: true }).allowed).toBe(true)
-    expect(getPurchaseRestriction(iron, { isIronman: true, isOneLife: true }).allowed).toBe(true)
+    expect(getPurchaseRestriction(iron, { isIronman: true, isOneLife: true }).code).toBe('ACCOUNT_TYPE_RESTRICTED')
 
     // One Life Ironman helm: only Ironman + One Life accounts may buy it.
     expect(getPurchaseRestriction(dragon, { isIronman: false }).code).toBe('ACCOUNT_TYPE_RESTRICTED')

@@ -29,13 +29,14 @@ export function getPurchaseRestriction(item, { isIronman = false, isOneLife = fa
   }
 
   // Account-identity items (the Ironman / One Life Ironman full helms) sell from
-  // the store, but only to the matching account type. Everyone else is blocked
-  // regardless of how they reach this item.
-  if (item.requiresAccount === 'ironman' && !isIronman) {
+  // the store, but only to the exact matching account type — a standard Ironman
+  // gets the Ironman helm, a One Life Ironman the One Life Ironman helm, and
+  // neither can buy the other's. Everyone else is blocked outright.
+  if (item.requiresAccount === 'ironman' && !(isIronman && !isOneLife)) {
     return {
       allowed: false,
       code: 'ACCOUNT_TYPE_RESTRICTED',
-      message: 'Only Ironman characters can buy this item.',
+      message: 'Only standard Ironman characters can buy this item.',
     }
   }
   if (item.requiresAccount === 'ironman_onelife' && !(isIronman && isOneLife)) {

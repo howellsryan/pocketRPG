@@ -120,8 +120,9 @@ export default function TradingPostScreen({ onBuyCredits }) {
     for (const [id, item] of Object.entries(itemsData)) {
       if (!item || (item.id && item.id !== id)) continue
       if (!item.isGeneralStore && !item.isSkillCape && !item.isMaxCape && !minigameProductIds.has(id) && !item.questUnlock) continue
-      // Account-identity helms only appear in the store for the matching type.
-      if (item.requiresAccount === 'ironman' && !isIronman) continue
+      // Account-identity helms only appear in the store for the exact matching
+      // type: standard Ironman vs One Life Ironman never see each other's helm.
+      if (item.requiresAccount === 'ironman' && !(isIronman && !isOneLife)) continue
       if (item.requiresAccount === 'ironman_onelife' && !(isIronman && isOneLife)) continue
       const section = getStoreSection(id, item)
       sections[section].push({ id, item })
