@@ -16,7 +16,7 @@ const LEADERBOARD_FILTERS = getLeaderboardFilters()
 function filterIconKey(f) {
   if (!f) return null
   if (f.type === 'total') return 'progression'
-  if (f.type === 'ironman') return null // emoji fallback (f.icon)
+  if (f.type === 'ironman') return 'crested_helmet' // bronze full helm glyph
   if (f.sourceType === 'raids') return getRaidArt(f.sourceId).icon
   if (f.sourceType === 'monsters') return getMonsterArt({ id: f.sourceId }).icon
   return null

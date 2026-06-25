@@ -20,7 +20,7 @@ export const IRONMAN_FILTER = Object.freeze({
   id: 'ironman',
   type: 'ironman',
   label: 'Ironman',
-  icon: '🛡️',
+  icon: '🪖', // emoji fallback before the helm glyph chunk loads
 })
 
 // Canonical raids only. raids.json carries legacy_id aliases as extra keys
