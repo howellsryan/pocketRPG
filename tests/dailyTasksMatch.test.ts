@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { matchTaskProgress, isComplete } from '../src/engine/dailyTasks.js'
+import { matchTaskProgress, isComplete, taskById } from '../src/engine/dailyTasks.js'
 
 function makeTask(overrides = {}) {
   return {
@@ -112,6 +112,24 @@ describe('matchTaskProgress', () => {
       const task = makeTask({ trigger: { type: 'minigame_complete', minigameId: 'castle_wars', target: 1 } })
       expect(matchTaskProgress(task, { kind: 'minigame_complete', minigameId: 'castle_wars' })).toBe(1)
     })
+  })
+})
+
+// Regression: bare task state from the API (no trigger field) must be looked up
+// via taskById before passing to matchTaskProgress.
+describe('taskById + matchTaskProgress integration', () => {
+  it('matches skill_produce via taskById lookup for craft_leather_body', () => {
+    const def = taskById('craft_leather_body')
+    expect(def).not.toBeNull()
+    expect(matchTaskProgress(def!, { kind: 'skill_produce', skill: 'crafting', itemId: 'leather_body' })).toBe(1)
+  })
+  it('returns 0 for unknown taskId', () => {
+    expect(taskById('nonexistent_task')).toBeNull()
+  })
+  it('bare task state (no trigger) returns 0 — lookup must happen before calling matchTaskProgress', () => {
+    const bareState = { taskId: 'craft_leather_body', tier: 'Novice', target: 1, progress: 0, completed: false, slot: 0 }
+    // Without the trigger, matchTaskProgress correctly returns 0 (caller must do the lookup)
+    expect(matchTaskProgress(bareState as any, { kind: 'skill_produce', skill: 'crafting', itemId: 'leather_body' })).toBe(0)
   })
 })
 

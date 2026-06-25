@@ -11,7 +11,7 @@ import { debounce } from '../utils/helpers.js'
 import { mergeKillCounts } from '../utils/killCountMerge.js'
 import { fetchIdleState, pushIdleState } from '../cloud/idleState.js'
 import { api, getToken, getCharacterId, CREDITS_UPDATED_EVENT } from '../cloud/api.js'
-import { matchTaskProgress } from '../engine/dailyTasks.js'
+import { matchTaskProgress, taskById } from '../engine/dailyTasks.js'
 import { requestCriticalPushSave, pushNow, suspendSaves, resumeSaves, isSaveConflict } from '../cloud/sync.js'
 import { CRITICAL_SAVE_REASONS, detectCountIncreases, detectLevelUps, detectSetGrowth, didNumberIncrease, extractSkillLevels } from '../cloud/criticalSavePolicy.js'
 import itemsData from '../data/items.json'
@@ -1088,7 +1088,8 @@ export function GameProvider({ children }) {
     let changed = false
     const next = tasks.map(task => {
       if (task.completed || task._completing) return task
-      const inc = matchTaskProgress(task, evt)
+      const taskDef = taskById(task.taskId)
+      const inc = taskDef ? matchTaskProgress(taskDef, evt) : 0
       if (!inc) return task
       changed = true
       const newProgress = Math.min((task.progress ?? 0) + inc, task.target ?? 1)
