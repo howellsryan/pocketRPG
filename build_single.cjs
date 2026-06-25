@@ -38,6 +38,7 @@ const sourceFiles = [
   'engine/equipment.js',
   'engine/equipmentPresets.js',
   'engine/inventory.js',
+  'engine/createDefaultSave.js',
   'engine/storeRules.js',
   'engine/agility.js',
   'engine/thieving.js',

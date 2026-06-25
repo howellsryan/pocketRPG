@@ -49,6 +49,7 @@ export default function TradingPostScreen({ onBuyCredits }) {
     addToast,
     itemsData,
     isIronman,
+    isOneLife,
     unlockedFeatures,
     unlockedMinigameItems,
     completedQuests,
@@ -119,6 +120,9 @@ export default function TradingPostScreen({ onBuyCredits }) {
     for (const [id, item] of Object.entries(itemsData)) {
       if (!item || (item.id && item.id !== id)) continue
       if (!item.isGeneralStore && !item.isSkillCape && !item.isMaxCape && !minigameProductIds.has(id) && !item.questUnlock) continue
+      // Account-identity helms only appear in the store for the matching type.
+      if (item.requiresAccount === 'ironman' && !isIronman) continue
+      if (item.requiresAccount === 'ironman_onelife' && !(isIronman && isOneLife)) continue
       const section = getStoreSection(id, item)
       sections[section].push({ id, item })
     }
@@ -126,7 +130,7 @@ export default function TradingPostScreen({ onBuyCredits }) {
       sections[s].sort((a, b) => (a.item.name || '').localeCompare(b.item.name || ''))
     }
     return sections
-  }, [itemsData, minigameProductIds])
+  }, [itemsData, minigameProductIds, isIronman, isOneLife])
 
   const refreshMyOffers = async () => {
     try {
@@ -254,7 +258,7 @@ export default function TradingPostScreen({ onBuyCredits }) {
         closeModal()
       } else {
         // General-store path -- legacy /api/purchase endpoint.
-        const r = getPurchaseRestriction(selected, { isIronman, allowMinigameUnlockPurchase: minigameProductIds.has(selected.id) && unlockedMinigameItems.has(selected.id) })
+        const r = getPurchaseRestriction(selected, { isIronman, isOneLife, allowMinigameUnlockPurchase: minigameProductIds.has(selected.id) && unlockedMinigameItems.has(selected.id) })
         if (!r.allowed) {
           addToast(r.message || 'This item cannot be purchased here.', 'error')
           setBusy(false)
@@ -414,7 +418,7 @@ export default function TradingPostScreen({ onBuyCredits }) {
   const renderListRow = (item) => {
     const orderBook = isOrderBookItem(item)
     const isMinigameUnlocked = minigameProductIds.has(item.id) && unlockedMinigameItems.has(item.id)
-    const restriction = getPurchaseRestriction(item, { isIronman, allowMinigameUnlockPurchase: isMinigameUnlocked })
+    const restriction = getPurchaseRestriction(item, { isIronman, isOneLife, allowMinigameUnlockPurchase: isMinigameUnlocked })
     const buyDisabledReason = (() => {
       if (item.questUnlock && !completedQuests.has(item.questUnlock)) return `🔒 ${questMap[item.questUnlock] || 'Quest required'}`
       if (minigameProductIds.has(item.id) && !isMinigameUnlocked) return '🔒 Earn from minigame first'

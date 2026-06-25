@@ -89,6 +89,8 @@ describe('store rules', () => {
       'anti_dragon_shield', 'feather', 'greenthorn_seed',
       'fishing_net', 'harpoon', 'lobster_cage', 'fishing_rod',
       'empty_bird_s_nest',
+      // Account-identity helms — store-sold, gated to the matching account type.
+      'ironman_helm', 'onelife_ironman_helm',
     ])
     const flagged = new Set(Object.keys(itemsData).filter((id) => itemsData[id].isGeneralStore === true))
     expect([...flagged].sort()).toEqual([...expected].sort())
@@ -102,6 +104,22 @@ describe('store rules', () => {
     const types = getStoreItemTypes(fake as any, { isIronman: false })
     expect(types).toContain('boss-only-type')
     expect(types).toContain('clue-only-type')
+  })
+  it('gates the account-identity helms to the matching account type', () => {
+    const iron = itemsData.ironman_helm
+    const dragon = itemsData.onelife_ironman_helm
+    expect(iron.requiresAccount).toBe('ironman')
+    expect(dragon.requiresAccount).toBe('ironman_onelife')
+
+    // Ironman helm: any Ironman may buy it; non-Ironman are blocked.
+    expect(getPurchaseRestriction(iron, { isIronman: false }).code).toBe('ACCOUNT_TYPE_RESTRICTED')
+    expect(getPurchaseRestriction(iron, { isIronman: true }).allowed).toBe(true)
+    expect(getPurchaseRestriction(iron, { isIronman: true, isOneLife: true }).allowed).toBe(true)
+
+    // One Life Ironman helm: only Ironman + One Life accounts may buy it.
+    expect(getPurchaseRestriction(dragon, { isIronman: false }).code).toBe('ACCOUNT_TYPE_RESTRICTED')
+    expect(getPurchaseRestriction(dragon, { isIronman: true }).code).toBe('ACCOUNT_TYPE_RESTRICTED')
+    expect(getPurchaseRestriction(dragon, { isIronman: true, isOneLife: true }).allowed).toBe(true)
   })
   it('allows clue-reward items to remain sellable via isUntradeable false', () => {
     expect(itemsData.pathfinder_boots.isClueReward).toBe(true)
