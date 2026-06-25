@@ -1920,11 +1920,12 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           <div class="mt-6 pb-2">
             <button
               onClick={() => setShowPvpLobby(true)}
-              class="w-full p-3 rounded-xl border border-[var(--color-blood)] bg-[#2a1010] text-[var(--color-blood-light)] active:bg-[#3a1818] transition-colors flex items-center justify-center gap-2"
+              class="cb-raid__enter flex items-center justify-center gap-2"
+              style={{ marginTop: 0, background: 'linear-gradient(180deg,#c0392b,#8b1a1a)', color: 'var(--color-parchment)', boxShadow: '0 8px 20px -8px rgba(192,57,43,0.6), inset 0 1px 0 rgba(255,255,255,0.15)' }}
               title="Player vs Player"
             >
-              <GameIcon iconKey="crossed_swords" color="var(--color-blood-light)" size={18} />
-              <span class="text-sm font-bold tracking-wider">PvP — Player vs Player</span>
+              <GameIcon iconKey="crossed_swords" color="var(--color-parchment)" size={18} />
+              <span>Player vs Player</span>
             </button>
             <div class="text-[9px] text-[var(--color-parchment)] opacity-40 mt-1.5 text-center px-2">
               On death, your tradeable inventory + equipped gear go to the winner. Untradeables stay with you.
