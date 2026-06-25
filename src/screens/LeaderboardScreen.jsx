@@ -58,13 +58,13 @@ function LeaderboardRow({ rank, char, metric }) {
           <div class="flex items-center gap-3 flex-1">
             <div class="text-lg font-semibold text-[var(--color-gold)] min-w-[2rem]">#{rank}</div>
             <div class="flex-1 min-w-0">
-              <div class="flex items-center gap-1 text-sm font-semibold text-[var(--color-parchment)] min-w-0">
+              <div class="flex items-center gap-2 text-sm font-semibold text-[var(--color-parchment)] min-w-0">
                 {char.isIronman && char.isOneLife ? (
-                  <GameIcon item={DRAGON_HELM_ITEM} size={15} class="flex-shrink-0" title="Ironman · One Life" />
+                  <GameIcon item={DRAGON_HELM_ITEM} size={26} class="flex-shrink-0" title="Ironman · One Life" />
                 ) : char.isIronman ? (
-                  <GameIcon item={IRON_HELM_ITEM} size={15} class="flex-shrink-0" title="Ironman" />
+                  <GameIcon item={IRON_HELM_ITEM} size={26} class="flex-shrink-0" title="Ironman" />
                 ) : char.isOneLife ? (
-                  <span class="flex-shrink-0" title="One Life">☠️</span>
+                  <span class="flex-shrink-0 text-xl leading-none" title="One Life">☠️</span>
                 ) : null}
                 <span class="truncate">{char.username}</span>
               </div>
