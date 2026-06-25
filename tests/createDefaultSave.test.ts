@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { createDefaultSave, createDefaultStats } from '../src/engine/createDefaultSave.js'
+import { createDefaultSave, createDefaultStats, getStarterKit, starterHelmetId } from '../src/engine/createDefaultSave.js'
 import { ALL_SKILLS, HITPOINTS_START_XP, INVENTORY_SIZE, EQUIPMENT_SLOTS } from '../src/utils/constants.js'
 import { summarizeSave } from '../functions/_lib/mcp/summary.js'
 
@@ -21,15 +21,36 @@ describe('createDefaultSave — canonical fresh-character baseline', () => {
     }
   })
 
-  it('produces a full 28-slot inventory with the bronze starter kit', () => {
+  it('produces a full 28-slot inventory with the starter kit', () => {
     const save = createDefaultSave()
     expect(save.inventory).toHaveLength(INVENTORY_SIZE)
     expect(save.inventory[0]).toEqual({ itemId: 'bronze_dagger', quantity: 1 })
-    expect(save.inventory[11]).toEqual({ itemId: 'coins', quantity: 25 })
-    expect(save.inventory[12]).toBeNull()
+    // Default account starts in the bronze full helm.
+    expect(save.inventory[2]).toEqual({ itemId: 'bronze_full_helm', quantity: 1 })
+    // Ranged + magic starter supplies.
+    expect(save.inventory).toContainEqual({ itemId: 'shortbow', quantity: 1 })
+    expect(save.inventory).toContainEqual({ itemId: 'bronze_arrow', quantity: 100 })
+    for (const rune of ['mind_rune', 'air_rune', 'fire_rune', 'water_rune', 'earth_rune']) {
+      expect(save.inventory).toContainEqual({ itemId: rune, quantity: 100 })
+    }
+    // Coins close out the kit (19 items in total).
+    expect(save.inventory[18]).toEqual({ itemId: 'coins', quantity: 25 })
+    expect(save.inventory[19]).toBeNull()
     // Empty equipment with every slot keyed.
     for (const slot of EQUIPMENT_SLOTS) expect(save.equipment[slot]).toBeNull()
     expect(save.bank).toEqual({})
+  })
+
+  it('swaps the head slot to the account-specific horned helm', () => {
+    expect(starterHelmetId({})).toBe('bronze_full_helm')
+    expect(starterHelmetId({ isIronman: true })).toBe('ironman_helm')
+    expect(starterHelmetId({ isIronman: true, isOneLife: true })).toBe('onelife_ironman_helm')
+    // One Life on its own (non-Ironman) keeps the bronze helm.
+    expect(starterHelmetId({ isOneLife: true })).toBe('bronze_full_helm')
+
+    expect(getStarterKit({ isIronman: true })[2]).toEqual({ itemId: 'ironman_helm', quantity: 1 })
+    expect(createDefaultSave({ isIronman: true, isOneLife: true }).inventory[2])
+      .toEqual({ itemId: 'onelife_ironman_helm', quantity: 1 })
   })
 
   it('can be summarized for get_character_state (real starting levels, not all level 1)', () => {
@@ -38,7 +59,7 @@ describe('createDefaultSave — canonical fresh-character baseline', () => {
     expect(summary.skills.agility.level).toBe(1)
     expect(summary.currentHP).toBe(10)
     // The starter kit shows up as occupied inventory slots.
-    expect(summary.inventoryUsed).toBe(12)
+    expect(summary.inventoryUsed).toBe(19)
   })
 
   it('seeds the player profile name and permanence flags for the Home Screen', () => {

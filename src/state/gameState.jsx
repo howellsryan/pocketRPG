@@ -439,11 +439,30 @@ export function GameProvider({ children }) {
       }
     }
 
-    setPlayer(p)
-    setStats({ ...s })
-    setInventory([...inv])
-    setEquipment(eq)
-    setBank({ ...b })
+    const loadedPlayer = p
+    const loadedStats = { ...s }
+    const loadedInventory = [...inv]
+    const loadedEquipment = eq
+    const loadedBank = { ...b }
+    setPlayer(loadedPlayer)
+    setStats(loadedStats)
+    setInventory(loadedInventory)
+    setEquipment(loadedEquipment)
+    setBank(loadedBank)
+    // Sync the snapshot ref in lockstep with the freshly loaded character. The
+    // per-field effects that normally mirror state into stateRef only run after
+    // the next render — too late for a getSnapshot() called synchronously after
+    // `await loadGame()`. The new-character seed push (App.initCloudAndSave) does
+    // exactly that, so without this it would snapshot the PREVIOUSLY loaded
+    // character's stats and write them to the new character's save row, which the
+    // server then rejects forever as a total-level regression (e.g. switching
+    // accounts in one session: old total 56 written over the new account, whose
+    // real saves at total 46 are then refused).
+    stateRef.current.player = loadedPlayer
+    stateRef.current.stats = loadedStats
+    stateRef.current.inventory = loadedInventory
+    stateRef.current.equipment = loadedEquipment
+    stateRef.current.bank = loadedBank
     setHomeShortcuts(shortcuts ?? null)
     const loadedStance = stance === 'controlled' ? 'accurate' : (stance ?? 'accurate')
     setCombatStanceState(loadedStance)

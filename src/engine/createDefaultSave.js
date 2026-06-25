@@ -24,23 +24,42 @@ export function createDefaultStats() {
   return stats
 }
 
-// The deterministic bronze starter kit every new character receives — identical
-// to initNewGame's starterInv. Not RNG, so granting it server-side carries no
-// integrity concern (it is the baseline, like the browser's).
-const STARTER_KIT = [
-  { itemId: 'bronze_dagger', quantity: 1 },
-  { itemId: 'bronze_scimitar', quantity: 1 },
-  { itemId: 'bronze_full_helm', quantity: 1 },
-  { itemId: 'bronze_platebody', quantity: 1 },
-  { itemId: 'bronze_platelegs', quantity: 1 },
-  { itemId: 'bronze_kiteshield', quantity: 1 },
-  { itemId: 'shrimps', quantity: 1 },
-  { itemId: 'shrimps', quantity: 1 },
-  { itemId: 'shrimps', quantity: 1 },
-  { itemId: 'shrimps', quantity: 1 },
-  { itemId: 'shrimps', quantity: 1 },
-  { itemId: 'coins', quantity: 25 },
-]
+// The head slot every new character starts with depends on account type:
+// Ironman and One Life Ironman get their exclusive horned full helm, everyone
+// else the bronze full helm.
+export function starterHelmetId({ isIronman = false, isOneLife = false } = {}) {
+  if (isIronman && isOneLife) return 'onelife_ironman_helm'
+  if (isIronman) return 'ironman_helm'
+  return 'bronze_full_helm'
+}
+
+// The deterministic starter kit every new character receives — single source of
+// truth shared with initNewGame's browser path. Not RNG, so granting it
+// server-side carries no integrity concern (it is the baseline). The head slot
+// varies by account type; everything else is identical for every account.
+export function getStarterKit({ isIronman = false, isOneLife = false } = {}) {
+  return [
+    { itemId: 'bronze_dagger', quantity: 1 },
+    { itemId: 'bronze_scimitar', quantity: 1 },
+    { itemId: starterHelmetId({ isIronman, isOneLife }), quantity: 1 },
+    { itemId: 'bronze_platebody', quantity: 1 },
+    { itemId: 'bronze_platelegs', quantity: 1 },
+    { itemId: 'bronze_kiteshield', quantity: 1 },
+    { itemId: 'shortbow', quantity: 1 },
+    { itemId: 'bronze_arrow', quantity: 100 },
+    { itemId: 'mind_rune', quantity: 100 },
+    { itemId: 'air_rune', quantity: 100 },
+    { itemId: 'fire_rune', quantity: 100 },
+    { itemId: 'water_rune', quantity: 100 },
+    { itemId: 'earth_rune', quantity: 100 },
+    { itemId: 'shrimps', quantity: 1 },
+    { itemId: 'shrimps', quantity: 1 },
+    { itemId: 'shrimps', quantity: 1 },
+    { itemId: 'shrimps', quantity: 1 },
+    { itemId: 'shrimps', quantity: 1 },
+    { itemId: 'coins', quantity: 25 },
+  ]
+}
 
 export function createDefaultEquipment() {
   const equipment = {}
@@ -59,7 +78,7 @@ export function createDefaultEquipment() {
 export function createDefaultSave({ withStarterKit = true, name = null, isIronman = false, isOneLife = false } = {}) {
   const inventory = new Array(INVENTORY_SIZE).fill(null)
   if (withStarterKit) {
-    STARTER_KIT.forEach((item, i) => { inventory[i] = { ...item } })
+    getStarterKit({ isIronman, isOneLife }).forEach((item, i) => { inventory[i] = { ...item } })
   }
   return {
     player: {

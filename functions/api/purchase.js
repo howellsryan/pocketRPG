@@ -38,7 +38,7 @@ export async function onRequestPost({ request, env }) {
 
     const { row, saveObject, saveRevision } = await loadCharacterWithSave(env, characterId, auth.identity.id)
     const allowMinigameUnlockPurchase = MINIGAME_STORE_PRODUCTS.has(itemId) && unlockedMinigameItems.has(itemId)
-    const restriction = assertPurchasable(item, { isIronman: Boolean(row.is_ironman), allowMinigameUnlockPurchase })
+    const restriction = assertPurchasable(item, { isIronman: Boolean(row.is_ironman), isOneLife: Boolean(row.is_one_life), allowMinigameUnlockPurchase })
     if (!restriction.allowed) return json({ error: restriction.message, code: restriction.code }, 403)
 
     if (item.isSkillCape) {

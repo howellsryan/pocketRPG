@@ -4,20 +4,28 @@ import {
   getLeaderboardFilterById,
   isValidKcSource,
   TOTAL_LEVEL_FILTER,
+  IRONMAN_FILTER,
 } from '../src/engine/leaderboardFilters.js'
 import raidsData from '../src/data/raids.json'
 import monstersData from '../src/data/monsters.json'
 
 describe('leaderboard filters (shared client/server)', () => {
-  it('puts total level first, then raids, then bosses', () => {
+  it('puts total level first, then ironman, then raids, then bosses', () => {
     const filters = getLeaderboardFilters()
     expect(filters[0]).toEqual(TOTAL_LEVEL_FILTER)
+    expect(filters[1]).toEqual(IRONMAN_FILTER)
 
     const firstKcIdx = filters.findIndex(f => f.type === 'kc')
     const lastRaidIdx = filters.map(f => f.sourceType).lastIndexOf('raids')
     const firstBossIdx = filters.findIndex(f => f.sourceType === 'monsters')
-    expect(firstKcIdx).toBe(1)
+    expect(firstKcIdx).toBe(2)
     expect(lastRaidIdx).toBeLessThan(firstBossIdx)
+  })
+
+  it('exposes an ironman filter resolvable by id, excluded from KC sources', () => {
+    expect(getLeaderboardFilterById('ironman')).toEqual(IRONMAN_FILTER)
+    expect(IRONMAN_FILTER.type).toBe('ironman')
+    expect(isValidKcSource('ironman', 'ironman')).toBe(false)
   })
 
   it('includes only canonical raids (legacy aliases excluded)', () => {

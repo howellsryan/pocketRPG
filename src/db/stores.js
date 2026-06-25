@@ -1,5 +1,6 @@
 import { getDB } from './database.js'
 import { ALL_SKILLS, HITPOINTS_START_XP, INVENTORY_SIZE, EQUIPMENT_SLOTS } from '../utils/constants.js'
+import { getStarterKit } from '../engine/createDefaultSave.js'
 
 // ── Player Profile ──
 
@@ -159,19 +160,9 @@ export async function initNewGame(playerName, isIronman = false, isOneLife = fal
   for (const s of EQUIPMENT_SLOTS) eq[s] = null
   await saveEquipment(eq)
 
-  // Give starter items
+  // Give starter items — shared source of truth with the server's
+  // createDefaultSave, including the account-type-specific head slot.
   const starterInv = new Array(INVENTORY_SIZE).fill(null)
-  starterInv[0] = { itemId: 'bronze_dagger', quantity: 1 }
-  starterInv[1] = { itemId: 'bronze_scimitar', quantity: 1 }
-  starterInv[2] = { itemId: 'bronze_full_helm', quantity: 1 }
-  starterInv[3] = { itemId: 'bronze_platebody', quantity: 1 }
-  starterInv[4] = { itemId: 'bronze_platelegs', quantity: 1 }
-  starterInv[5] = { itemId: 'bronze_kiteshield', quantity: 1 }
-  starterInv[6] = { itemId: 'shrimps', quantity: 1 }
-  starterInv[7] = { itemId: 'shrimps', quantity: 1 }
-  starterInv[8] = { itemId: 'shrimps', quantity: 1 }
-  starterInv[9] = { itemId: 'shrimps', quantity: 1 }
-  starterInv[10] = { itemId: 'shrimps', quantity: 1 }
-  starterInv[11] = { itemId: 'coins', quantity: 25 }
+  getStarterKit({ isIronman, isOneLife }).forEach((item, i) => { starterInv[i] = { ...item } })
   await saveInventory(starterInv)
 }

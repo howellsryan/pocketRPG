@@ -84,6 +84,17 @@ describe('POST /api/trading-post/sell-immediate — untradeable items', () => {
     expect(body.code).toBe('NO_VALUE')
   })
 
+  it('lets Ironman accounts use the immediate store-sell path (not a trading post offer)', async () => {
+    const save = { inventory: [{ itemId: 'fighter_helm', quantity: 1 }], bank: {} }
+    const { env, captured } = mockEnv({ save, isIronman: true })
+    const res = await onRequestPost({ request: await makeRequest({ item_id: 'fighter_helm', quantity: 1 }), env })
+    expect(res.status).toBe(200)
+    const body = await res.json() as any
+    expect(body.total_payout).toBe(500000)
+    const written = JSON.parse(captured.saveData!)
+    expect(written.inventory.find((s: any) => s.itemId === 'coins')?.quantity).toBe(500000)
+  })
+
   it('still routes order-book uniques to the listing endpoint', async () => {
     const save = { inventory: [{ itemId: 'twisted_longbow', quantity: 1 }], bank: {} }
     const { env } = mockEnv({ save })

@@ -23,9 +23,28 @@ export function isOrderBookItem(item) {
   return Math.floor(Number(item.shopValue) || 0) > 0
 }
 
-export function getPurchaseRestriction(item, { isIronman = false, allowMinigameUnlockPurchase = false } = {}) {
+export function getPurchaseRestriction(item, { isIronman = false, isOneLife = false, allowMinigameUnlockPurchase = false } = {}) {
   if (!item) {
     return { allowed: false, code: 'ITEM_NOT_FOUND', message: 'Item not found' }
+  }
+
+  // Account-identity items (the Ironman / One Life Ironman full helms) sell from
+  // the store, but only to the exact matching account type — a standard Ironman
+  // gets the Ironman helm, a One Life Ironman the One Life Ironman helm, and
+  // neither can buy the other's. Everyone else is blocked outright.
+  if (item.requiresAccount === 'ironman' && !(isIronman && !isOneLife)) {
+    return {
+      allowed: false,
+      code: 'ACCOUNT_TYPE_RESTRICTED',
+      message: 'Only standard Ironman characters can buy this item.',
+    }
+  }
+  if (item.requiresAccount === 'ironman_onelife' && !(isIronman && isOneLife)) {
+    return {
+      allowed: false,
+      code: 'ACCOUNT_TYPE_RESTRICTED',
+      message: 'Only One Life Ironman characters can buy this item.',
+    }
   }
 
   if (isBossUniqueItem(item)) {

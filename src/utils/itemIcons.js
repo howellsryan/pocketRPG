@@ -200,6 +200,10 @@ export function getItemIconKey(item) {
 // Explicit per-item tints (named uniques: jewellery, magic gear, boss weapons,
 // boots, gloves, etc.). One id → one CSS colour.
 const ITEM_TINT = {
+  // Account-identity full helms — share the horned glyph, tinted by tier so the
+  // Ironman variant reads iron-grey and the One Life Ironman variant dragon-red.
+  ironman_helm:          'var(--tier-iron)',
+  onelife_ironman_helm:  'var(--tier-dragon)',
   // Jewellery
   amulet_of_torment:  'var(--tier-jewel-red)',
   necklace_of_agony:  'var(--tier-jewel-green)',

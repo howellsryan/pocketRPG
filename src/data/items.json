@@ -599,6 +599,76 @@
     "icon": "\u26d1\ufe0f",
     "isGeneralStore": false
   },
+  "ironman_helm": {
+    "id": "ironman_helm",
+    "legacy_item_id": "ironman_helm",
+    "name": "Ironman Full Helm",
+    "type": "armour",
+    "slot": "head",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": -6,
+      "ranged": -3
+    },
+    "defenceBonus": {
+      "stab": 7,
+      "slash": 8,
+      "crush": 6,
+      "magic": -1,
+      "ranged": 7
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "defence": 1
+    },
+    "shopValue": 1000,
+    "icon": "\u26d1\ufe0f",
+    "iconId": "horned_full_helm",
+    "isGeneralStore": true,
+    "requiresAccount": "ironman"
+  },
+  "onelife_ironman_helm": {
+    "id": "onelife_ironman_helm",
+    "legacy_item_id": "onelife_ironman_helm",
+    "name": "One Life Ironman Full Helm",
+    "type": "armour",
+    "slot": "head",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": -6,
+      "ranged": -3
+    },
+    "defenceBonus": {
+      "stab": 10,
+      "slash": 11,
+      "crush": 9,
+      "magic": -1,
+      "ranged": 10
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "defence": 1
+    },
+    "shopValue": 10000,
+    "icon": "\u26d1\ufe0f",
+    "iconId": "horned_full_helm",
+    "isGeneralStore": true,
+    "requiresAccount": "ironman_onelife"
+  },
   "iron_platebody": {
     "id": "iron_platebody",
     "legacy_item_id": "iron_platebody",

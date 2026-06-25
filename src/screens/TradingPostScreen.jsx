@@ -49,6 +49,7 @@ export default function TradingPostScreen({ onBuyCredits }) {
     addToast,
     itemsData,
     isIronman,
+    isOneLife,
     unlockedFeatures,
     unlockedMinigameItems,
     completedQuests,
@@ -57,7 +58,9 @@ export default function TradingPostScreen({ onBuyCredits }) {
   } = useGame()
   const isDesktop = useIsDesktop()
 
-  const [mode, setMode] = useState('market')
+  // Ironman accounts are barred from the order book (Market / Offers / Listings)
+  // but keep the General Store, so they open straight to — and stay on — Store.
+  const [mode, setMode] = useState(isIronman ? 'store' : 'market')
   const [activeStoreSection, setActiveStoreSection] = useState(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [selected, setSelected] = useState(null) // item entry from search
@@ -117,6 +120,10 @@ export default function TradingPostScreen({ onBuyCredits }) {
     for (const [id, item] of Object.entries(itemsData)) {
       if (!item || (item.id && item.id !== id)) continue
       if (!item.isGeneralStore && !item.isSkillCape && !item.isMaxCape && !minigameProductIds.has(id) && !item.questUnlock) continue
+      // Account-identity helms only appear in the store for the exact matching
+      // type: standard Ironman vs One Life Ironman never see each other's helm.
+      if (item.requiresAccount === 'ironman' && !(isIronman && !isOneLife)) continue
+      if (item.requiresAccount === 'ironman_onelife' && !(isIronman && isOneLife)) continue
       const section = getStoreSection(id, item)
       sections[section].push({ id, item })
     }
@@ -124,7 +131,7 @@ export default function TradingPostScreen({ onBuyCredits }) {
       sections[s].sort((a, b) => (a.item.name || '').localeCompare(b.item.name || ''))
     }
     return sections
-  }, [itemsData, minigameProductIds])
+  }, [itemsData, minigameProductIds, isIronman, isOneLife])
 
   const refreshMyOffers = async () => {
     try {
@@ -209,17 +216,6 @@ export default function TradingPostScreen({ onBuyCredits }) {
     setBidPrice(0)
   }
 
-  if (isIronman) {
-    return (
-      <div class="h-full flex flex-col items-center justify-center p-8 text-center">
-        <div class="text-[var(--color-gold)] text-[15px] font-bold mb-2">⚔️ Trading Post Unavailable</div>
-        <div class="text-[12px] text-[var(--color-parchment)] opacity-70 max-w-md">
-          Ironman characters cannot use the trading post. All gear must be acquired through gameplay.
-        </div>
-      </div>
-    )
-  }
-
   if (!getToken() || !getCharacterId()) {
     return (
       <div class="h-full flex flex-col items-center justify-center p-8 text-center">
@@ -263,7 +259,7 @@ export default function TradingPostScreen({ onBuyCredits }) {
         closeModal()
       } else {
         // General-store path -- legacy /api/purchase endpoint.
-        const r = getPurchaseRestriction(selected, { isIronman: false, allowMinigameUnlockPurchase: minigameProductIds.has(selected.id) && unlockedMinigameItems.has(selected.id) })
+        const r = getPurchaseRestriction(selected, { isIronman, isOneLife, allowMinigameUnlockPurchase: minigameProductIds.has(selected.id) && unlockedMinigameItems.has(selected.id) })
         if (!r.allowed) {
           addToast(r.message || 'This item cannot be purchased here.', 'error')
           setBusy(false)
@@ -423,7 +419,7 @@ export default function TradingPostScreen({ onBuyCredits }) {
   const renderListRow = (item) => {
     const orderBook = isOrderBookItem(item)
     const isMinigameUnlocked = minigameProductIds.has(item.id) && unlockedMinigameItems.has(item.id)
-    const restriction = getPurchaseRestriction(item, { isIronman: false, allowMinigameUnlockPurchase: isMinigameUnlocked })
+    const restriction = getPurchaseRestriction(item, { isIronman, isOneLife, allowMinigameUnlockPurchase: isMinigameUnlocked })
     const buyDisabledReason = (() => {
       if (item.questUnlock && !completedQuests.has(item.questUnlock)) return `🔒 ${questMap[item.questUnlock] || 'Quest required'}`
       if (minigameProductIds.has(item.id) && !isMinigameUnlocked) return '🔒 Earn from minigame first'
@@ -784,11 +780,12 @@ export default function TradingPostScreen({ onBuyCredits }) {
     <div class="h-full flex flex-col overflow-hidden">
       <div class="px-4 pt-3 pb-3 flex-shrink-0">
         <div class="flex justify-between items-baseline mb-3">
-          <h2 class="font-[var(--font-display)] text-[15px] font-bold text-[var(--color-gold)] m-0">Trading Post</h2>
+          <h2 class="font-[var(--font-display)] text-[15px] font-bold text-[var(--color-gold)] m-0">{isIronman ? 'General Store' : 'Trading Post'}</h2>
           <span class="inline-flex items-center gap-1 text-[11px] text-[var(--color-gold)] font-[var(--font-mono)]">
             <GameIcon iconKey="coins" size={13} color="var(--color-gold)" /> {coins.toLocaleString()}
           </span>
         </div>
+        {!isIronman && (
         <div class="flex gap-2 mb-3">
           <button
             onClick={() => setMode('market')}
@@ -829,6 +826,7 @@ export default function TradingPostScreen({ onBuyCredits }) {
             } inline-flex items-center gap-1`}
           ><GameIcon iconKey="search" size={13} color="currentColor" /> Listings</button>
         </div>
+        )}
         {mode === 'market' && (
           <input
             type="text"

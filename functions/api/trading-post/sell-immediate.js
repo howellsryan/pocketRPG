@@ -45,10 +45,12 @@ export async function onRequestPost({ request, env }) {
     const unit = Math.floor(Number(item.shopValue) || 0)
     if (unit <= 0) return json({ error: 'This item has no shop value.', code: 'NO_VALUE' }, 400)
 
-    const { row, saveObject, saveRevision } = await loadCharacterWithSave(env, characterId, auth.identity.id)
-    if (row.is_ironman) {
-      return json({ error: 'Ironman characters cannot use the trading post.', code: 'IRONMAN_RESTRICTED' }, 403)
-    }
+    // No Ironman gate here: this endpoint already rejects order-book items
+    // (the "trading post offers" Ironmen are barred from). It only settles the
+    // immediate-execute store path — General Store stock, quest-unlock items and
+    // the untradeable sink — at the item's static shopValue, which Ironmen may
+    // use (matching the General Store buy path in /api/purchase).
+    const { saveObject, saveRevision } = await loadCharacterWithSave(env, characterId, auth.identity.id)
 
     normalizeSaveItemIds(saveObject, itemsData)
     removeItemFromSource(saveObject, itemId, quantity, source)
