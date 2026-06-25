@@ -10,7 +10,8 @@ import { ALL_SKILLS, MAX_XP, AUTO_SAVE_DEBOUNCE, QUEST_QUEUE_MAX } from '../util
 import { debounce } from '../utils/helpers.js'
 import { mergeKillCounts } from '../utils/killCountMerge.js'
 import { fetchIdleState, pushIdleState } from '../cloud/idleState.js'
-import { getToken, getCharacterId } from '../cloud/api.js'
+import { api, getToken, getCharacterId, CREDITS_UPDATED_EVENT } from '../cloud/api.js'
+import { matchTaskProgress } from '../engine/dailyTasks.js'
 import { requestCriticalPushSave, pushNow, suspendSaves, resumeSaves, isSaveConflict } from '../cloud/sync.js'
 import { CRITICAL_SAVE_REASONS, detectCountIncreases, detectLevelUps, detectSetGrowth, didNumberIncrease, extractSkillLevels } from '../cloud/criticalSavePolicy.js'
 import itemsData from '../data/items.json'
@@ -80,6 +81,10 @@ export function GameProvider({ children }) {
   // nothing can race the in-flight write.
   const [gameLockCount, setGameLockCount] = useState(0)
   const gameLockCountRef = useRef(0)
+  const [dailyTaskStates, setDailyTaskStates] = useState([])
+  const dailyTaskStatesRef = useRef([])
+  const dailyTaskDateRef = useRef(null)
+
   const dirty = useRef({ stats: false, inventory: false, equipment: false, bank: false, player: false })
   // CombatScreen registers a force-kill handler here so handleSkip1h (in App) can invoke it
   const combatSkipHandlerRef = useRef(null)
@@ -1069,6 +1074,53 @@ export function GameProvider({ children }) {
     return () => clearInterval(timer)
   }, [heartbeatTaskKey, getSnapshot])
 
+  useEffect(() => { dailyTaskStatesRef.current = dailyTaskStates }, [dailyTaskStates])
+
+  const setDailyTasks = useCallback((tasks, date) => {
+    dailyTaskDateRef.current = date
+    dailyTaskStatesRef.current = tasks
+    setDailyTaskStates(tasks)
+  }, [])
+
+  const recordGameEvent = useCallback((evt) => {
+    const tasks = dailyTaskStatesRef.current
+    if (!tasks || tasks.length === 0) return
+    let changed = false
+    const next = tasks.map(task => {
+      if (task.completed || task._completing) return task
+      const inc = matchTaskProgress(task, evt)
+      if (!inc) return task
+      changed = true
+      const newProgress = Math.min((task.progress ?? 0) + inc, task.target ?? 1)
+      const nowComplete = newProgress >= (task.target ?? 1)
+      if (nowComplete) {
+        const charId = getCharacterId()
+        const date = dailyTaskDateRef.current
+        if (charId && date) {
+          ;(async () => {
+            try {
+              const res = await api.completeDailyTask({ taskId: task.taskId, slot: task.slot, date })
+              if (res?.creditsGranted > 0) {
+                window.dispatchEvent(new CustomEvent(CREDITS_UPDATED_EVENT, {
+                  detail: { credits_remaining: res.credits },
+                }))
+              }
+            } catch (e) {
+              console.error('[DailyTasks] completeDailyTask failed', e)
+            }
+          })()
+        }
+        addToast('Daily task complete! +1 💎', 'success')
+        return { ...task, progress: newProgress, completed: true, _completing: true }
+      }
+      return { ...task, progress: newProgress }
+    })
+    if (changed) {
+      dailyTaskStatesRef.current = next
+      setDailyTaskStates(next)
+    }
+  }, [addToast])
+
   const value = {
     loaded, player, stats, inventory, equipment, bank, currentHP, toasts, isSaving,
     homeShortcuts, combatStance, idleCombatSetup, updateIdleCombatSetup,
@@ -1109,7 +1161,8 @@ export function GameProvider({ children }) {
     slayerPerks, updateSlayerPerk,
     characterUnlocks, updateCharacterUnlock,
     isIronman: player?.is_ironman || false,
-    isOneLife: player?.is_one_life || false
+    isOneLife: player?.is_one_life || false,
+    dailyTaskStates, setDailyTasks, recordGameEvent,
   }
 
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>

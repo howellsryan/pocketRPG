@@ -222,7 +222,7 @@ class PvpCombatErrorBoundary extends Component {
 }
 
 export default function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onCombatStatusChange }) {
-  const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, updateEquipment, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, idleCombatSetup, updateIdleCombatSetup, homeShortcuts, updateHomeShortcuts, setActiveTask, slayerTask, setSlayerTask, awardSlayerPoints, slayerTasksCompleted, setSlayerTasksCompleted, activeCombatSpell, updateActiveCombatSpell, bossKillCounts, updateBossKillCounts, raidKillCounts, updateRaidKillCounts, unlockedFeatures, completedQuests, isOneLife, isIronman, getSnapshot, loadGame, combatSkipHandlerRef, skipHourHandlerRef, chargeSkipRef, raidSkipHandlerRef, lockGame, unlockGame, resolveCombatCompletion, characterUnlocks, killCountsLoaded } = useGame()
+  const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, updateEquipment, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, idleCombatSetup, updateIdleCombatSetup, homeShortcuts, updateHomeShortcuts, setActiveTask, slayerTask, setSlayerTask, awardSlayerPoints, slayerTasksCompleted, setSlayerTasksCompleted, activeCombatSpell, updateActiveCombatSpell, bossKillCounts, updateBossKillCounts, raidKillCounts, updateRaidKillCounts, unlockedFeatures, completedQuests, isOneLife, isIronman, getSnapshot, loadGame, combatSkipHandlerRef, skipHourHandlerRef, chargeSkipRef, raidSkipHandlerRef, lockGame, unlockGame, resolveCombatCompletion, characterUnlocks, killCountsLoaded, recordGameEvent } = useGame()
   const pvp = usePvp()
   const [showPvpLobby, setShowPvpLobby] = useState(false)
 
@@ -802,11 +802,17 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
               }
               requestCriticalPushSave(() => getSnapshot(), CRITICAL_SAVE_REASONS.SLAYER_TASK_COMPLETE)
               addToast(`💀 Slayer Task #${reward.totalTasks} Completed - ${reward.pointsEarned.toLocaleString()} points.`, 'levelup')
+              recordGameEvent?.({ kind: 'slayer_task_complete' })
             } else if (slayerResult.onTask) {
               slayerTaskRef.current = slayerResult.task
               setSlayerTask(slayerResult.task)
               requestCriticalPushSave(() => getSnapshot(), CRITICAL_SAVE_REASONS.SLAYER_TASK_CHANGE)
             }
+          }
+
+          if (defeatedMonsterId) {
+            const kind = isDefeatedBoss ? 'boss_kill' : 'monster_kill'
+            recordGameEvent?.({ kind, monsterId: defeatedMonsterId })
           }
 
           if (cloudAuthoritativeRaid) {
@@ -1067,6 +1073,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       if (res?.save?.save_data) {
         await applyCloudSave(JSON.parse(res.save.save_data), res.save.updatedAt, res.save.save_revision)
       }
+      recordGameEvent?.({ kind: 'raid_complete', raidId })
       setLootModal({
         monster,
         loot: granted.map(reward => ({ itemId: reward.itemId, quantity: reward.quantity })),

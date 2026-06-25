@@ -14,6 +14,7 @@ function readSrc(rel) { return fs.readFileSync(path.join(SRC, rel), 'utf-8'); }
 const sourceFiles = [
   'utils/constants.js',
   'utils/helpers.js',
+  'utils/complexityColors.js',
   'utils/completion.js',
   'utils/formatters.js',
   'utils/itemValue.js',
@@ -77,6 +78,7 @@ const sourceFiles = [
   'engine/quests.js',
   'engine/questIdleCascade.js',
   'engine/clueScrolls.js',
+  'engine/dailyTasks.js',
   'engine/collectionLog.js',
   'engine/leaderboardFilters.js',
   'engine/activityRegistry.js',
@@ -130,6 +132,7 @@ const sourceFiles = [
   'components/TradingPostSellForm.js',
   'components/QuestXpChoiceModal.js',
   'components/BuyCreditsModal.js',
+  'components/DailyTasksModal.js',
   'components/IdleCombatSetupModal.js',
   'components/EquipmentPaperdoll.js',
   'components/CollectionLogPanel.js',

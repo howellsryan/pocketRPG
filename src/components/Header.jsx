@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'preact/hooks'
 import { CLOUD_SAVE_STATUS_EVENT } from '../cloud/sync.js'
 import ActivityIndicator from './ActivityIndicator.jsx'
 
-export default function Header({ activity, credits = 0, isCloudAccount = false, onSkip1h = null, onBuyCredits = null, onMenuClick = null, onNavigate = null, skipMode = 'hour', raidSkipCost = null }) {
+export default function Header({ activity, credits = 0, isCloudAccount = false, onSkip1h = null, onBuyCredits = null, onDailyTasks = null, dailyTasksCompleted = 0, dailyTasksTotal = 5, onMenuClick = null, onNavigate = null, skipMode = 'hour', raidSkipCost = null }) {
   const { player, currentHP, getMaxHP } = useGame()
   const [cloudStatus, setCloudStatus] = useState('idle')
   const [showSavedToCloud, setShowSavedToCloud] = useState(false)
@@ -92,6 +92,24 @@ export default function Header({ activity, credits = 0, isCloudAccount = false, 
               <span class="text-[10px]">💎</span>
               <span class="text-[10px] font-[var(--font-mono)] font-bold text-[#e879f9]">
                 {credits.toLocaleString()}
+              </span>
+            </button>
+          )}
+
+          {/* Daily tasks button — cloud accounts only */}
+          {isCloudAccount && (
+            <button
+              onClick={() => onDailyTasks?.()}
+              aria-label="Daily Tasks"
+              title="Daily Tasks"
+              class="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-[#0f1a10] border border-[#2a5a2a] whitespace-nowrap hover:border-[#3a7a3a] transition-colors cursor-pointer"
+            >
+              <span class="text-[10px]">📋</span>
+              <span
+                class="text-[10px] font-[var(--font-mono)] font-bold"
+                style={{ color: dailyTasksCompleted === dailyTasksTotal ? 'var(--color-gold)' : 'var(--color-parchment)' }}
+              >
+                {dailyTasksCompleted}/{dailyTasksTotal}
               </span>
             </button>
           )}

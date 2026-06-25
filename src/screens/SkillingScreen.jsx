@@ -56,7 +56,7 @@ function calculateRemainingActions(action, inventory, bank) {
 }
 
 export default function SkillingScreen({ initialSkillId, initialActionId, idleResult, onNavigate }) {
-  const { stats, inventory, bank, equipment, updateInventory, updateBankDirect, grantXP, addToast, setActiveTask, activeTask, dungeoneeringTokens, awardDungeoneeringTokens, trySpendDungeoneeringTokens, loadGame } = useGame()
+  const { stats, inventory, bank, equipment, updateInventory, updateBankDirect, grantXP, addToast, setActiveTask, activeTask, dungeoneeringTokens, awardDungeoneeringTokens, trySpendDungeoneeringTokens, loadGame, recordGameEvent } = useGame()
   const [selectedSkill, setSelectedSkill] = useState(initialSkillId || null)
   const [selectedAction, setSelectedAction] = useState(null)
   const [skilling, setSkilling] = useState(null)
@@ -314,10 +314,12 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
               // Gathered resources fill the inventory; stop or bank-trip on full.
               if (!depositGathered(newInv, { [action.product]: qty })) return
               updateInventory(newInv)
+              recordGameEvent?.({ kind: 'skill_gather', skill: state.skill, itemId: action.product, count: qty })
             } else {
               // Production output goes to the bank directly.
               updateBankDirect({ [action.product]: qty })
               if (action.materials) updateInventory(newInv)
+              recordGameEvent?.({ kind: 'skill_produce', skill: state.skill, itemId: action.product, count: qty })
             }
           } else if (action.dropTable) {
             // Roll drops from drop table

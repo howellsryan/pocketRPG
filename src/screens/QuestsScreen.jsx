@@ -17,19 +17,7 @@ import {
 import { QUEST_QUEUE_MAX } from '../utils/constants.js'
 import questsData from '../data/quests.json'
 import { getActivityKey } from '../engine/activityRegistry.js'
-
-const COMPLEXITY_COLORS = {
-  Novice:        '#7fbf7f',
-  Intermediate:  '#7bb3f0',
-  Experienced:   '#d4af37',
-  Master:        '#e57373',
-  Grandmaster:   '#b265e0',
-  Special:       '#f06292',
-}
-
-const COMPLEXITY_ORDER = {
-  Novice: 1, Intermediate: 2, Experienced: 3, Master: 4, Grandmaster: 5, Special: 6,
-}
+import { COMPLEXITY_COLORS, COMPLEXITY_ORDER } from '../utils/complexityColors.js'
 
 export default function QuestsScreen() {
   const {
