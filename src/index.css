@@ -204,9 +204,15 @@ html, body, #app {
 .welcome-card__bottom { display: flex; align-items: center; justify-content: center; gap: 12px; }
 .welcome-card__stats { display: flex; gap: 18px; align-items: center; justify-content: center; }
 .wstat { display: flex; align-items: center; gap: 7px; font-size: 13.5px; font-weight: 600; color: var(--color-parchment); opacity: 0.82; }
-.wstat__icon { width: 34px; height: 34px; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.wstat__icon { width: 24px; height: 24px; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .wstat b { margin-left: 2px; font-weight: 800; color: var(--color-gold-light); }
 .welcome-card__actions { display: flex; gap: 8px; flex-shrink: 0; }
+.welcome-card__actions--inline { display: none; }
+@media (max-width: 639px) {
+  .welcome-card__actions--header { display: none; }
+  .welcome-card__actions--inline { display: flex; }
+  .welcome-card__stats { gap: 10px; }
+}
 .rune-btn {
   width: 44px; height: 44px; border-radius: 12px;
   border: 1px solid rgba(212, 160, 23, 0.28);
