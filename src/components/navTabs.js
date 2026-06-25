@@ -17,5 +17,5 @@ export const NAV_TABS = [
   { id: SCREENS.ARMOURY,            label: 'Armoury',        icon: '🗡️', iconKey: 'iron_longsword' },
   { id: SCREENS.HELP,               label: 'Help',           icon: '🧭', iconKey: 'tinderbox' },
   { id: SCREENS.CHARACTER_UNLOCKS,  label: 'Unlocks',        icon: '✨', iconKey: 'master_rejuvenation' },
-  { id: SCREENS.CONNECT_AI,         label: 'Connect AI',     icon: '🤖', iconKey: 'brain', iconColor: '#D97757' },
+  { id: SCREENS.CONNECT_AI,         label: 'Connect AI',     icon: '🤖', iconKey: 'brain', iconColor: '#D97757', iconSize: 28 },
 ]
