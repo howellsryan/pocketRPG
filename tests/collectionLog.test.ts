@@ -9,6 +9,7 @@ import {
   isSlotObtained,
   isSharedCollectionLogItem,
   collectIdleCombatLoggedDrops,
+  monsterHasLoggedDrop,
 } from '../src/engine/collectionLog.js'
 import raids from '../src/data/raids.json' assert { type: 'json' }
 import minigames from '../src/data/minigames.json' assert { type: 'json' }
@@ -61,6 +62,16 @@ describe('collection log data', () => {
     ]
     const filtered = filterLoggedDrops(drops, firstCat.id, firstSec.id)
     expect(filtered).toEqual([known])
+  })
+
+  it('monsterHasLoggedDrop gates which monsters stay server-authoritative', () => {
+    const monsterCat = data.categories.find((c: any) => c.id === 'monsters')
+    const sectionWithItems = monsterCat.sections.find((s: any) => (s.items || []).length > 0)
+    expect(monsterHasLoggedDrop(sectionWithItems.id)).toBe(true)
+    // A monster id with no collection-log slot is client-trusted.
+    expect(monsterHasLoggedDrop('not_a_logged_monster_xyz')).toBe(false)
+    expect(monsterHasLoggedDrop(null)).toBe(false)
+    expect(monsterHasLoggedDrop(undefined)).toBe(false)
   })
 
   it('summarizeProgress reports 0/total when nothing collected', () => {

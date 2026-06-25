@@ -31,7 +31,10 @@ const normalisePointCurrency = (value) => {
   return n > 0 ? n : 0
 }
 const CLOUD_ACTIVITY_HEARTBEAT_MS = 120_000
-const HEARTBEAT_ACTIVE_TASK_TYPES = new Set(['skill', 'gather', 'clue', 'agility', 'thieving', 'hunter', 'minigame', 'quest'])
+// 'combat' is included so an auto-fight grind persists on the 120s heartbeat
+// instead of forcing a cloud save on every monster kill (the old per-kill
+// critical save was the main /api/save write-amplifier for idle sessions).
+const HEARTBEAT_ACTIVE_TASK_TYPES = new Set(['skill', 'gather', 'clue', 'agility', 'thieving', 'hunter', 'minigame', 'quest', 'combat'])
 
 const GameContext = createContext(null)
 

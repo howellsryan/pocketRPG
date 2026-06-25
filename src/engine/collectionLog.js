@@ -49,6 +49,25 @@ export function isLoggedDrop(itemId, categoryId, sectionId) {
   return VALID_KEYS.has(`${categoryId}:${sectionId}:${itemId}`)
 }
 
+// Monster ids that drop a collection-logged unique. These (and bosses) keep the
+// server-authoritative completion path so their uniques can't be self-granted;
+// every other monster is client-trusted — its client-rolled loot is applied
+// locally and persisted on the save heartbeat, not via a per-kill cloud write.
+const MONSTERS_WITH_LOGGED_DROPS = (() => {
+  const set = new Set()
+  for (const cat of (collectionLogData.categories || [])) {
+    if (cat.id !== 'monsters') continue
+    for (const sec of (cat.sections || [])) {
+      if (sec.id && (sec.items || []).length > 0) set.add(sec.id)
+    }
+  }
+  return set
+})()
+
+export function monsterHasLoggedDrop(monsterId) {
+  return !!monsterId && MONSTERS_WITH_LOGGED_DROPS.has(monsterId)
+}
+
 // True when a given (category, section, item) slot should render as obtained
 // for the user. Direct match always counts; shared items count when ANY entry
 // for that itemId exists across the user's log.

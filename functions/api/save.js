@@ -18,6 +18,25 @@ export function shouldSweepOnSave(rng = Math.random) {
   return rng() < SAVE_SWEEP_PROBABILITY
 }
 
+// Volatile fields the activity runner rewrites on every 600ms tick (per-action
+// countdown + live session tallies). They carry no durable state the cloud
+// needs — XP/coins/items live in stats/inventory/bank — so two saves that differ
+// ONLY in these are content-identical for no-op purposes. Mirrors the client's
+// saveContentKey (src/cloud/sync.js) so the DB skips the write even if a client
+// still ships the churn.
+const VOLATILE_ACTIVE_TASK_FIELDS = ['ticksRemaining', 'pendingTicks', 'totalTicks', 'session']
+
+export function noopSaveKey(save) {
+  const next = { ...(save || {}), timestamp: 0 }
+  const activeTask = next?.settings?.activeTask
+  if (activeTask && typeof activeTask === 'object') {
+    const trimmed = { ...activeTask }
+    for (const f of VOLATILE_ACTIVE_TASK_FIELDS) delete trimmed[f]
+    next.settings = { ...next.settings, activeTask: trimmed }
+  }
+  return JSON.stringify(next)
+}
+
 async function getCharacterId(request, env, identityId) {
   const url = new URL(request.url)
   const headerId = request.headers.get('X-Character-Id')
@@ -169,14 +188,16 @@ export async function onRequestPut({ request, env }) {
 
   const now = Date.now()
 
-  // No-op save: the incoming payload matches what's already stored (modulo
-  // the volatile top-level `timestamp` the client stamps on every push), so
-  // skip the write entirely and hand back the current revision. AFK/idle
-  // tabs push unchanged saves on the autosave cadence; together with the
-  // client-side dirty check this stops them burning the daily write budget.
+  // No-op save: the incoming payload matches what's already stored (modulo the
+  // volatile top-level `timestamp` the client stamps on every push AND the
+  // per-tick activeTask countdown/session churn — see noopSaveKey), so skip the
+  // write entirely and hand back the current revision. AFK/idle tabs push
+  // unchanged saves on the autosave cadence; together with the client-side dirty
+  // check this stops them burning the daily write budget. This backstop catches
+  // any client (old or new) that still ships activeTask-only churn saves.
   if (save_data !== null && previousJson !== null && parsedNext) {
-    const prevKey = JSON.stringify({ ...previousSave, timestamp: 0 })
-    const nextKey = JSON.stringify({ ...parsedNext, timestamp: 0 })
+    const prevKey = noopSaveKey(previousSave)
+    const nextKey = noopSaveKey(parsedNext)
     if (prevKey === nextKey) {
       // Content-identical to what's stored. Default: write NOTHING at all — not
       // the blob, the revision, the summary, NOR updated_at — so a routine no-op
