@@ -48,7 +48,7 @@ import { resolveSlayerTaskKill, doesSlayerTaskMatchMonster } from '../engine/sla
 import { getSlayerTaskReward } from '../engine/slayerRewards.js'
 import { CRITICAL_SAVE_REASONS, hasCriticalDrop } from '../cloud/criticalSavePolicy.js'
 import { recordCollectionLogDrop, applyServerCollectionLogEntries } from '../cloud/collectionLog.js'
-import { filterLoggedDrops } from '../engine/collectionLog.js'
+import { filterLoggedDrops, monsterHasLoggedDrop } from '../engine/collectionLog.js'
 
 const COMBAT_CATEGORIES = [
   {
@@ -752,13 +752,21 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           const killLoot = Array.isArray(ev.loot) ? ev.loot : []
           const raidId = state.raid?.raidId || null
           const cloudAuthoritativeRaid = Boolean(raidId && getToken() && getCharacterId())
-          const cloudAuthoritativeMonster = Boolean(!raidId && defeatedMonsterId && getToken() && getCharacterId())
+          // Only bosses and monsters with a collection-logged unique settle
+          // server-side (server-rolled loot + grant), so their high-value drops
+          // can't be self-granted. Every other monster is client-trusted: its
+          // client-rolled loot (ev.loot) is applied locally below and persisted
+          // on the combat save heartbeat — NOT via a per-kill cloud write. This
+          // is what keeps an auto-fight grind from hammering /api/save.
+          const monsterNeedsServerGrant = isDefeatedBoss || monsterHasLoggedDrop(defeatedMonsterId)
+          const cloudAuthoritativeMonster = Boolean(!raidId && defeatedMonsterId && monsterNeedsServerGrant && getToken() && getCharacterId())
           const cloudAuthoritativeCompletion = cloudAuthoritativeRaid || cloudAuthoritativeMonster
           let slayerXpGained = 0
           setKillCount(k => k + 1)
-          if (!cloudAuthoritativeCompletion) {
-            requestCriticalPushSave(() => getSnapshot(), CRITICAL_SAVE_REASONS.MONSTER_KILL)
-          }
+          // A routine kill is not a save milestone — it rides the 120s combat
+          // heartbeat like a skilling action. Milestone saves still fire below:
+          // RARE_DROP on a genuinely rare drop, and the server-authoritative
+          // completion for bosses / logged-drop monsters.
 
           // Boss kill count tracking
           if (!cloudAuthoritativeCompletion && isDefeatedBoss && defeatedMonsterId) {

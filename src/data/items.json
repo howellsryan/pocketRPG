@@ -637,7 +637,7 @@
   "onelife_ironman_helm": {
     "id": "onelife_ironman_helm",
     "legacy_item_id": "onelife_ironman_helm",
-    "name": "One Life Ironman Full Helm",
+    "name": "Hardcore Ironman Helmet",
     "type": "armour",
     "slot": "head",
     "stackable": false,
@@ -665,7 +665,7 @@
     },
     "shopValue": 10000,
     "icon": "\u26d1\ufe0f",
-    "iconId": "horned_full_helm",
+    "iconId": "hardcore_ironman_helm",
     "isGeneralStore": true,
     "requiresAccount": "ironman_onelife"
   },
