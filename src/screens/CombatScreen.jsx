@@ -3047,8 +3047,8 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       {selectedMonsterInfo && (
         <Modal onClose={() => setSelectedMonsterInfo(null)}>
           <div class="flex items-center justify-between mb-3">
-            <h3 class="font-[var(--font-display)] text-base font-bold text-[var(--color-gold)]">
-              {MONSTER_ICONS[selectedMonsterInfo.id] || '👹'} {selectedMonsterInfo.name}
+            <h3 class="font-[var(--font-display)] text-base font-bold text-[var(--color-gold)] flex items-center gap-2">
+              <SkillEmblem iconKey={getMonsterArt(selectedMonsterInfo).icon} accent={getMonsterArt(selectedMonsterInfo).accent} size={28} glow={0} /> {selectedMonsterInfo.name}
             </h3>
             <button
               onClick={() => setSelectedMonsterInfo(null)}
