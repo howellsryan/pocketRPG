@@ -2,21 +2,17 @@
 // clock for cloud characters — the client resyncs from it on load, so a
 // server-side claim that resets last_active_at does not double-grant).
 
+import { stampIdleActive } from '../game/idleStamp.js'
+
 export async function getIdleRow(env, characterId) {
   return env.DB.prepare(
     'SELECT last_active_at, active_task, updated_at FROM character_idle_state WHERE character_id = ?',
   ).bind(characterId).first()
 }
 
+// Delegates to the shared idle upsert so there's one SQL source of truth.
 export async function setIdleTask(env, characterId, activeTaskJson, now) {
-  await env.DB.prepare(
-    `INSERT INTO character_idle_state (character_id, last_active_at, active_task, updated_at)
-     VALUES (?, ?, ?, ?)
-     ON CONFLICT(character_id) DO UPDATE SET
-       last_active_at = excluded.last_active_at,
-       active_task    = excluded.active_task,
-       updated_at     = excluded.updated_at`,
-  ).bind(characterId, now, activeTaskJson, now).run()
+  await stampIdleActive(env, characterId, activeTaskJson, now)
 }
 
 // Reset the idle clock to `now` while keeping the active task running.

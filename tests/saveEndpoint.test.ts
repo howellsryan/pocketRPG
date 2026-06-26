@@ -13,8 +13,10 @@ vi.mock('../functions/_lib/auth.js', () => ({
     new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } }),
 }))
 
+// Mutable so a test can simulate the PvP inventory lock (active match → 409).
+let pvpLockResponse: Response | null = null
 vi.mock('../functions/_lib/pvp.js', () => ({
-  assertNotInActiveMatch: async () => null,
+  assertNotInActiveMatch: async () => pvpLockResponse,
   sweepStaleRows: async () => {},
 }))
 
@@ -83,9 +85,15 @@ describe('PUT /api/save no-op detection', () => {
     expect(body.save_revision).toBe(7) // unchanged — no blob rewrite / revision bump
     expect(body.updatedAt).toBe(555)   // hands back the stored timestamp, untouched
     expect(batches).toHaveLength(0)
-    // The whole point: a content-identical save costs ZERO D1 writes — no blob,
-    // no revision bump, no summary UPDATE, and crucially no updated_at touch.
-    expect(runs).toHaveLength(0)
+    // A content-identical save costs ZERO blob writes — no blob, no revision
+    // bump, no summary UPDATE, and no updated_at touch. The ONE write that still
+    // fires is the folded idle heartbeat (last_active_at stamp). Without this a
+    // long AFK foreground session would never refresh last_active_at and offline
+    // rewards would inflate on next load.
+    const idleStamps = runs.filter(r => /INSERT INTO character_idle_state/.test(r.sql))
+    expect(idleStamps).toHaveLength(1)
+    expect(runs.some(r => /UPDATE saves/.test(r.sql))).toBe(false)
+    expect(runs).toHaveLength(1)
   })
 
   it('bumps updated_at on a no-op only when touch:true (PvP-lobby freshness)', async () => {
@@ -121,7 +129,12 @@ describe('PUT /api/save no-op detection', () => {
     const body = await res.json()
     expect(body.noop).toBe(true)
     expect(batches).toHaveLength(0)
-    expect(runs).toHaveLength(0)
+    // Only the folded idle stamp runs; the blob write is still skipped. The
+    // stamped active_task mirrors the (volatile-stripped) running task.
+    expect(runs).toHaveLength(1)
+    expect(runs[0].sql).toMatch(/INSERT INTO character_idle_state/)
+    const stampedTask = JSON.parse(runs[0].args[2])
+    expect(stampedTask.skill).toBe('mining')
   })
 
   it('still writes when a running task makes real progress', async () => {
@@ -173,8 +186,11 @@ describe('PUT /api/save summary update skipping', () => {
 
     await onRequestPut({ request: makePut({ save_data: incoming, save_revision: 7 }), env } as any)
     expect(batches).toHaveLength(1)
-    expect(batches[0]).toHaveLength(1) // saves upsert only
+    // saves upsert + folded idle stamp; no characters UPDATE (summary unchanged).
+    expect(batches[0]).toHaveLength(2)
     expect(batches[0][0].sql).toMatch(/INSERT INTO saves/)
+    expect(batches[0][1].sql).toMatch(/INSERT INTO character_idle_state/)
+    expect(batches[0].some((s: any) => /UPDATE characters/.test(s.sql))).toBe(false)
   })
 
   it('includes the characters UPDATE when the summary changed', async () => {
@@ -189,8 +205,57 @@ describe('PUT /api/save summary update skipping', () => {
 
     await onRequestPut({ request: makePut({ save_data: incoming, save_revision: 7 }), env } as any)
     expect(batches).toHaveLength(1)
-    expect(batches[0]).toHaveLength(2)
-    expect(batches[0][1].sql).toMatch(/UPDATE characters/)
+    // saves upsert + folded idle stamp + characters UPDATE (summary changed).
+    expect(batches[0]).toHaveLength(3)
+    expect(batches[0].some((s: any) => /UPDATE characters/.test(s.sql))).toBe(true)
+    expect(batches[0].some((s: any) => /INSERT INTO character_idle_state/.test(s.sql))).toBe(true)
+  })
+})
+
+describe('PUT /api/save folds the idle heartbeat', () => {
+  it('stamps character_idle_state with last_active_at + active_task on a normal write', async () => {
+    const stored = JSON.stringify(baseSave())
+    const incoming = JSON.stringify(baseSave({
+      bank: { shrimps: { itemId: 'shrimps', quantity: 6 } },
+      settings: { activeTask: { type: 'skill', skill: 'fishing', action: { id: 'shrimps' }, ticksRemaining: 4 } },
+    }))
+    const { env, batches } = makeEnv({ existingSaveData: stored })
+
+    const res = await onRequestPut({ request: makePut({ save_data: incoming, save_revision: 7 }), env } as any)
+    expect(res.status).toBe(200)
+    const stamp = batches[0].find((s: any) => /INSERT INTO character_idle_state/.test(s.sql))
+    expect(stamp).toBeTruthy()
+    // args: [character_id, last_active_at, active_task, updated_at]
+    expect(stamp.args[0]).toBe(42)
+    expect(typeof stamp.args[1]).toBe('number')
+    expect(JSON.parse(stamp.args[2]).skill).toBe('fishing')
+  })
+
+  it('stamps a null active_task when the save has no running task', async () => {
+    const stored = JSON.stringify(baseSave())
+    const incoming = JSON.stringify(baseSave({ bank: { shrimps: { itemId: 'shrimps', quantity: 6 } } }))
+    const { env, batches } = makeEnv({ existingSaveData: stored })
+
+    await onRequestPut({ request: makePut({ save_data: incoming, save_revision: 7 }), env } as any)
+    const stamp = batches[0].find((s: any) => /INSERT INTO character_idle_state/.test(s.sql))
+    expect(stamp.args[2]).toBeNull()
+  })
+
+  it('performs NO idle write when the PvP inventory lock returns (active match)', async () => {
+    const stored = JSON.stringify(baseSave())
+    const incoming = JSON.stringify(baseSave({ bank: { shrimps: { itemId: 'shrimps', quantity: 6 } } }))
+    const { env, batches, runs } = makeEnv({ existingSaveData: stored })
+    pvpLockResponse = new Response(JSON.stringify({ error: 'in_active_match' }), { status: 409 })
+    try {
+      const res = await onRequestPut({ request: makePut({ save_data: incoming, save_revision: 7 }), env } as any)
+      expect(res.status).toBe(409)
+      // Guard returns before parsing/derivation — neither the blob nor the idle
+      // stamp may write.
+      expect(batches).toHaveLength(0)
+      expect(runs.some(r => /character_idle_state/.test(r.sql))).toBe(false)
+    } finally {
+      pvpLockResponse = null
+    }
   })
 })
 

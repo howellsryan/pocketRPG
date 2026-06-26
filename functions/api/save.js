@@ -3,6 +3,7 @@ import { assertNotInActiveMatch, sweepStaleRows } from '../_lib/pvp.js'
 import { computeSaveSummaryFromJson } from '../_lib/saveSummary.js'
 import { decodeSaveRow, gzipJsonString } from '../_lib/saveCodec.js'
 import { detectTotalLevelRegression } from '../_lib/game/saveValidation.js'
+import { stampIdleActive, stampIdleActiveStatement } from '../_lib/game/idleStamp.js'
 
 const MAX_SAVE_BYTES = 256 * 1024 // 256 KB ceiling — current saves are well under this
 
@@ -156,6 +157,14 @@ export async function onRequestPut({ request, env }) {
     }
   }
 
+  // Idle heartbeat, folded into the save write: stamp last_active_at + the
+  // active task so idling clients no longer need a separate periodic PUT
+  // /api/idle. Serialize the task exactly as the client's putIdle does. The
+  // PvP lock above already returned, so an in-match save never reaches here —
+  // the stamp stays blocked during a match just like the dedicated idle PUT.
+  const activeTaskObj = parsedNext?.settings?.activeTask ?? null
+  const idleTaskJson = activeTaskObj ? JSON.stringify(activeTaskObj) : null
+
   // Total-level regression guard — the definitive backstop against a fresh /
   // "level 3" character being written over a real one (see
   // detectTotalLevelRegression). A null save_data clears the blob to total
@@ -202,9 +211,14 @@ export async function onRequestPut({ request, env }) {
     const prevKey = noopSaveKey(previousSave)
     const nextKey = noopSaveKey(parsedNext)
     if (prevKey === nextKey) {
-      // Content-identical to what's stored. Default: write NOTHING at all — not
+      // Even on a no-op blob write the idle heartbeat MUST still fire: a long
+      // AFK foreground session pushes content-identical saves, and without this
+      // stamp last_active_at would never refresh, inflating offline rewards on
+      // the next load. This is the regression-critical case — keep it.
+      await stampIdleActive(env, ch.id, idleTaskJson, now)
+      // Content-identical to what's stored. Default: write NOTHING else — not
       // the blob, the revision, the summary, NOR updated_at — so a routine no-op
-      // save (screen change, AFK tab) costs zero D1 writes.
+      // save (screen change, AFK tab) costs zero further D1 writes.
       //
       // The ONE exception is an explicit `touch` push from the PvP lobby: the
       // match-create guard refuses to start a match on a save older than 15s, so
@@ -242,6 +256,9 @@ export async function onRequestPut({ request, env }) {
          updated_at = excluded.updated_at,
          save_revision = COALESCE(saves.save_revision, 0) + 1`
     ).bind(ch.id, save_blob, save_data, now),
+    // Fold the idle heartbeat into the same atomic batch — stamps
+    // last_active_at + active_task so idling clients drop the separate idle PUT.
+    stampIdleActiveStatement(env, ch.id, idleTaskJson, now),
   ]
   // total_level / combat_level rarely change between saves — only include the
   // characters UPDATE in the batch when the stored summary actually differs.
