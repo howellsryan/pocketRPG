@@ -41,6 +41,27 @@ describe('simulateIdleSkilling (alchemy)', () => {
     expect(sim?.itemsConsumed.nature_rune).toBe(2)
   })
 
+  it('pays Ironmen the reduced Ironman alch value', () => {
+    const sim = simulateIdleSkilling(
+      {
+        skill: 'magic',
+        action: { name: 'High Alchemy', type: 'alchemy', ticks: 5, xp: 65, runeReq: { nature_rune: 1 } },
+        selectedAlchemyItem: { itemId: 'adamant_platebody' }
+      } as any,
+      60_000,
+      { nature_rune: { quantity: 100 } } as any,
+      {} as any,
+      {} as any,
+      { adamant_platebody: { shopValue: 16000 } } as any,
+      [{ itemId: 'adamant_platebody', quantity: 2 }, ...Array(27).fill(null)] as any,
+      { isIronman: true }
+    )
+
+    expect(sim?.actions).toBe(2)
+    // Ironman alch = floor(floor(16000 * 0.4) * 1.1) = floor(6400 * 1.1) = 7040 per action.
+    expect(sim?.coinsGained).toBe(14_080)
+  })
+
   it('can alch noted items and only consumes the selected noted form', () => {
     const sim = simulateIdleSkilling(
       {

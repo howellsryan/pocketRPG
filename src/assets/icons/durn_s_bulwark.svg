@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="durn_s_bulwark_body" x1="0.2" y1="0" x2="0.8" y2="1">
+      <stop offset="0" stop-color="#b59ad6"/><stop offset="0.5" stop-color="#7a4fb0"/><stop offset="1" stop-color="#3a1f60"/>
+    </linearGradient>
+    <radialGradient id="durn_s_bulwark_boss" cx="0.4" cy="0.35" r="0.7">
+      <stop offset="0" stop-color="#e6d0ff"/><stop offset="0.6" stop-color="#9a5ad0"/><stop offset="1" stop-color="#3a1060"/>
+    </radialGradient>
+  </defs>
+  <g stroke="#1a1024" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
+    <!-- Radiating spikes around the shield rim -->
+    <g fill="#5a3a8a" stroke="#1a1024" stroke-width="10">
+      <path d="M256 30 L286 110 L226 110 Z"/>
+      <path d="M482 256 L402 286 L402 226 Z"/>
+      <path d="M30 256 L110 226 L110 286 Z"/>
+      <path d="M256 482 L226 402 L286 402 Z"/>
+      <path d="M416 96 L350 150 L386 188 Z"/>
+      <path d="M96 96 L162 150 L126 188 Z"/>
+      <path d="M416 416 L386 324 L350 362 Z"/>
+      <path d="M96 416 L126 324 L162 362 Z"/>
+    </g>
+    <!-- Big round shield body -->
+    <circle cx="256" cy="256" r="158" fill="url(#durn_s_bulwark_body)"/>
+    <!-- Inner ring -->
+    <circle cx="256" cy="256" r="120" fill="none" stroke="#3a1f60" stroke-width="10"/>
+    <!-- Studs around the inner ring -->
+    <g fill="#d8c0f0" stroke="none">
+      <circle cx="256" cy="148" r="11"/><circle cx="256" cy="364" r="11"/>
+      <circle cx="148" cy="256" r="11"/><circle cx="364" cy="256" r="11"/>
+      <circle cx="180" cy="180" r="9"/><circle cx="332" cy="180" r="9"/>
+      <circle cx="180" cy="332" r="9"/><circle cx="332" cy="332" r="9"/>
+    </g>
+    <!-- Central spiked boss -->
+    <circle cx="256" cy="256" r="58" fill="url(#durn_s_bulwark_boss)" stroke="#3a1f60" stroke-width="10"/>
+    <path d="M256 198 L268 244 L256 256 L244 244 Z M314 256 L268 268 L256 256 L268 244 Z M256 314 L244 268 L256 256 L268 268 Z M198 256 L244 244 L256 256 L244 268 Z" fill="#3a1060" stroke="none"/>
+    <circle cx="248" cy="248" r="14" fill="#f0e0ff" stroke="none"/>
+  </g>
+</svg>

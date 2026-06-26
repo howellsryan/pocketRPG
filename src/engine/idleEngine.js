@@ -11,8 +11,9 @@ import {
   effectiveMagic, monsterMagicDefenceRoll, magicMaxHit
 } from './formulas.js'
 import { getEquipmentBonuses, getAttackSpeed, getAttackStyle, getCombatType, getRangedAmmoRequirementFailure, getEffectiveWornMagicDamage } from './equipment.js'
-import { getEffectiveToolActionTicks, getEquippedSkillXpMultiplier } from './skilling.js'
+import { getEffectiveToolActionTicks, getEquippedSkillXpMultiplier, rollGatherBonusDrops } from './skilling.js'
 import { hasRequiredRunes, getRunesToConsume } from './runes.js'
+import { getHighAlchValue } from '../utils/itemValue.js'
 import { MELEE_XP_PER_DAMAGE, RANGED_XP_PER_DAMAGE, MAGIC_XP_PER_DAMAGE, HP_XP_PER_DAMAGE, GATHERING_SKILLS, IDLE_AUTOBANK_GATHERING_SKILLS, GATHER_AUTOBANK_CONSTRUCTION_LEVEL } from '../utils/constants.js'
 import { addItem, canFit } from './inventory.js'
 import { getAgilityBankDelayFromStats, simulateIdleAgility } from './agility.js'
@@ -108,8 +109,9 @@ export function formatIdleTime(ms) {
  * itemsData is required when equipment is provided (for tool lookup).
  * inventory is required when bankingEnabled is true (for inventory processing).
  */
-export function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, stats = {}, itemsData = {}, inventory = []) {
+export function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, stats = {}, itemsData = {}, inventory = [], options = {}) {
   if (!task || !task.action) return null
+  const isIronman = !!options.isIronman
 
   const totalTicks = Math.floor(elapsedMs / TICK_MS)
 
@@ -279,7 +281,7 @@ export function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, st
   if (task.action.type === 'alchemy' && task.selectedAlchemyItem) {
     const alchItem = itemsData[task.selectedAlchemyItem.itemId]
     if (alchItem && typeof alchItem.shopValue === 'number') {
-      const coinsPerAction = Math.floor(alchItem.shopValue * 1.1)
+      const coinsPerAction = getHighAlchValue(alchItem, { isIronman })
       coinsGained = coinsPerAction * actions
 
       // Consume the alchemized items from inventory
@@ -326,6 +328,10 @@ export function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, st
       const drops = task.action.dropTable
         ? rollDropTableOnce(task.action.dropTable)
         : { [task.action.product]: productQty }
+      const bonus = rollGatherBonusDrops(task.skill)
+      for (const [itemId, qty] of Object.entries(bonus)) {
+        drops[itemId] = (drops[itemId] || 0) + qty
+      }
 
       if (!canFit(newInv, drops, itemsData)) {
         if (bankWhenFull) {
@@ -694,6 +700,16 @@ export function simulateIdleGather(task, elapsedMs, inventory = [], stats = {}, 
     actions = Math.min(actions, maxFromMaterials)
   }
 
+  // Cap actions by available coins for gpCost tasks
+  if (task.gatherTask.gpCost) {
+    const invCoins = inventory.reduce((sum, slot) => sum + (slot?.itemId === 'coins' ? (slot?.quantity || 0) : 0), 0)
+    const bankCoins = (bank && bank['coins']) ? bank['coins'].quantity : 0
+    const maxFromCoins = Math.floor((invCoins + bankCoins) / task.gatherTask.gpCost)
+    if (maxFromCoins === 0) return null
+    if (maxFromCoins < actions) outOfMaterials = true
+    actions = Math.min(actions, maxFromCoins)
+  }
+
   // Gathered items land in the inventory by default. Once full, the action
   // stops — unless the player has the Construction unlock, which turns a full
   // inventory into an agility-scaled bank trip so gathering can continue.
@@ -761,6 +777,20 @@ export function simulateIdleGather(task, elapsedMs, inventory = [], stats = {}, 
       // Remainder comes from bank
       if (remaining > 0) itemsConsumed[itemId] = remaining
     }
+  }
+
+  // Deduct GP cost — inventory coins first, then bank
+  if (task.gatherTask.gpCost && actionsCompleted > 0) {
+    let remaining = task.gatherTask.gpCost * actionsCompleted
+    for (let i = 0; i < newInv.length && remaining > 0; i++) {
+      const slot = newInv[i]
+      if (!slot || slot.itemId !== 'coins') continue
+      const take = Math.min(slot.quantity, remaining)
+      newInv[i] = { ...slot, quantity: slot.quantity - take }
+      if (newInv[i].quantity === 0) newInv[i] = null
+      remaining -= take
+    }
+    if (remaining > 0) itemsConsumed['coins'] = (itemsConsumed['coins'] || 0) + remaining
   }
 
   // Compute itemsGained = net new items = (all banked + final inventory) - starting inventory

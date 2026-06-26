@@ -1,32 +1,32 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
   <defs>
     <linearGradient id="visage_shield_body" x1="0.2" y1="0" x2="0.75" y2="1">
-      <stop offset="0" stop-color="#b0d0c8"/><stop offset="0.5" stop-color="#6090a8"/><stop offset="1" stop-color="#2a4a5a"/>
+      <stop offset="0" stop-color="#3a1414"/><stop offset="0.5" stop-color="#1e0a0a"/><stop offset="1" stop-color="#0a0404"/>
     </linearGradient>
-    <radialGradient id="visage_shield_face" cx="0.4" cy="0.35" r="0.7">
-      <stop offset="0" stop-color="#80c0a0"/><stop offset="0.5" stop-color="#3a8060"/><stop offset="1" stop-color="#1a4030"/>
+    <radialGradient id="visage_shield_fire" cx="0.5" cy="0.5" r="0.6">
+      <stop offset="0" stop-color="#ffe060"/><stop offset="0.4" stop-color="#ff7a1a"/><stop offset="1" stop-color="#c01010" stop-opacity="0"/>
     </radialGradient>
   </defs>
-  <g stroke="#1a1410" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
-    <!-- Shield body -->
-    <path d="M256 82 C 336 96 384 148 384 222 C 384 328 334 416 256 452 C 178 416 128 328 128 222 C 128 148 176 96 256 82 Z" fill="url(#visage_shield_body)"/>
-    <!-- Draconic visage face -->
-    <ellipse cx="256" cy="268" rx="106" ry="90" fill="url(#visage_shield_face)" stroke="#1a4030" stroke-width="10"/>
-    <!-- Dragon horns -->
-    <path d="M 190 228 C 176 196 166 170 168 148 C 184 168 192 196 200 228 Z" fill="#3a8060" stroke="#1a4030" stroke-width="9"/>
-    <path d="M 322 228 C 336 196 346 170 344 148 C 328 168 320 196 312 228 Z" fill="#3a8060" stroke="#1a4030" stroke-width="9"/>
-    <!-- Dragon eyes -->
-    <ellipse cx="222" cy="256" rx="20" ry="14" fill="#ffd040" stroke="#1a1410" stroke-width="8"/>
-    <ellipse cx="290" cy="256" rx="20" ry="14" fill="#ffd040" stroke="#1a1410" stroke-width="8"/>
-    <ellipse cx="222" cy="256" rx="8" ry="10" fill="#1a0a00"/>
-    <ellipse cx="290" cy="256" rx="8" ry="10" fill="#1a0a00"/>
-    <!-- Nostril slits -->
-    <path d="M 244 288 C 250 284 252 286 256 290 C 260 286 262 284 268 288" stroke="#1a4030" stroke-width="8" fill="none"/>
-    <!-- Dragon jaw line -->
-    <path d="M 190 292 C 220 312 256 318 256 318 C 256 318 292 312 322 292" stroke="#1a4030" stroke-width="9" fill="none"/>
-    <!-- Scale highlight -->
-    <path d="M 200 248 C 220 240 244 238 256 240" stroke="#80c0a0" stroke-width="6" fill="none" opacity="0.5"/>
+  <g stroke="#160606" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
+    <!-- Shield body — black -->
+    <path d="M256 82 C 336 96 384 148 384 222 C 384 328 334 416 256 452 C 178 416 128 328 128 222 C 128 148 176 96 256 82 Z" fill="url(#visage_shield_body)" stroke="#c0241a" stroke-width="14"/>
+    <!-- Inner red frame -->
+    <path d="M256 112 C 322 124 360 162 360 224 C 360 314 320 388 256 420 C 192 388 152 314 152 224 C 152 162 190 124 256 112 Z" fill="none" stroke="#6f1810" stroke-width="8"/>
+    <!-- Dragonfire breath glow -->
+    <ellipse cx="256" cy="356" rx="78" ry="64" fill="url(#visage_shield_fire)" stroke="none"/>
+    <!-- Dragon head emblem -->
+    <path d="M256 168 C 296 176 322 206 318 238 C 316 252 306 262 294 260 L256 300 L218 260 C 206 262 196 252 194 238 C 190 206 216 176 256 168 Z" fill="#c0392b" stroke="#6f1810" stroke-width="9"/>
+    <!-- Horns -->
+    <path d="M214 188 C 196 168 188 150 190 134 C 204 150 212 172 222 190 Z M298 188 C 316 168 324 150 322 134 C 308 150 300 172 290 190 Z" fill="#8a2418" stroke="#6f1810" stroke-width="8"/>
+    <!-- Eyes -->
+    <circle cx="236" cy="210" r="11" fill="#ffd040" stroke="#160606" stroke-width="6"/>
+    <circle cx="276" cy="210" r="11" fill="#ffd040" stroke="#160606" stroke-width="6"/>
+    <circle cx="238" cy="212" r="4" fill="#1a0a00" stroke="none"/>
+    <circle cx="278" cy="212" r="4" fill="#1a0a00" stroke="none"/>
+    <!-- Flames pouring from the maw -->
+    <path d="M232 300 C 226 340 240 372 230 410 C 256 384 256 360 256 360 C 256 360 256 384 282 410 C 272 372 286 340 280 300 C 270 322 242 322 232 300 Z" fill="url(#visage_shield_fire)" stroke="none"/>
+    <path d="M256 314 C 252 348 256 376 256 404 C 260 376 264 348 256 314 Z" fill="#ffe060" stroke="none"/>
     <!-- Shield highlight -->
-    <path d="M 188 160 C 182 248 188 328 182 406" stroke="#c0d8d8" stroke-width="8" fill="none" opacity="0.35"/>
+    <path d="M188 158 C 182 246 188 326 182 404" stroke="#c0241a" stroke-width="7" fill="none" opacity="0.4"/>
   </g>
 </svg>

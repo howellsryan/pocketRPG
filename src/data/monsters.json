@@ -1061,6 +1061,132 @@
     ],
     "legacy_id": "moss_giant"
   },
+  "ember_giant": {
+    "id": "ember_giant",
+    "name": "Ember Giant",
+    "combatLevel": 86,
+    "hitpoints": 111,
+    "stats": {
+      "attack": 70,
+      "strength": 70,
+      "defence": 70,
+      "magic": 1,
+      "ranged": 1
+    },
+    "attackSpeed": 6,
+    "attackStyle": "slash",
+    "attackBonus": 35,
+    "strengthBonus": 32,
+    "defenceBonus": {
+      "stab": 20,
+      "slash": 20,
+      "crush": 20,
+      "magic": 0,
+      "ranged": 0
+    },
+    "drops": [
+      {
+        "itemId": "big_bones",
+        "quantity": 1,
+        "chance": 1
+      },
+      {
+        "itemId": "coins",
+        "quantity": [100, 400],
+        "chance": 0.6
+      },
+      {
+        "itemId": "fire_rune",
+        "quantity": [25, 60],
+        "chance": 0.3
+      },
+      {
+        "itemId": "nature_rune",
+        "quantity": [8, 16],
+        "chance": 0.15
+      },
+      {
+        "itemId": "chaos_rune",
+        "quantity": [4, 10],
+        "chance": 0.12
+      },
+      {
+        "itemId": "law_rune",
+        "quantity": [3, 5],
+        "chance": 0.1
+      },
+      {
+        "itemId": "cosmic_rune",
+        "quantity": [2, 4],
+        "chance": 0.08
+      },
+      {
+        "itemId": "staff_of_fire",
+        "quantity": 1,
+        "chance": 0.025
+      },
+      {
+        "itemId": "mithril_full_helm",
+        "quantity": 1,
+        "chance": 0.03
+      },
+      {
+        "itemId": "mithril_platelegs",
+        "quantity": 1,
+        "chance": 0.025
+      },
+      {
+        "itemId": "mithril_kiteshield",
+        "quantity": 1,
+        "chance": 0.02
+      },
+      {
+        "itemId": "mithril_chainbody",
+        "quantity": 1,
+        "chance": 0.02
+      },
+      {
+        "itemId": "greenthorn_seed",
+        "quantity": 1,
+        "chance": 0.05
+      },
+      {
+        "itemId": "miremint_seed",
+        "quantity": 1,
+        "chance": 0.04
+      },
+      {
+        "itemId": "duskroot_seed",
+        "quantity": 1,
+        "chance": 0.03
+      },
+      {
+        "itemId": "greenthorn_leaf",
+        "quantity": [1, 2],
+        "chance": 0.04
+      },
+      {
+        "itemId": "duskroot",
+        "quantity": [1, 2],
+        "chance": 0.03
+      },
+      {
+        "itemId": "rynarr_weed",
+        "quantity": [1, 2],
+        "chance": 0.025
+      },
+      {
+        "itemId": "runeforged_scimitar",
+        "quantity": 1,
+        "chance": 0.0078125
+      },
+      {
+        "itemId": "clue_scroll_hard",
+        "quantity": 1,
+        "chance": 0.015
+      }
+    ]
+  },
   "arcane_adept": {
     "id": "arcane_adept",
     "name": "Arcane Adept",

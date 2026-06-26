@@ -51,6 +51,7 @@ export const MONSTER_ART = {
   "tidereaper_crab": { icon: "crab", accent: "#c0453b" },
   "highland_giant": { icon: "ogre", accent: "#cdd6e0" },
   "briar_giant": { icon: "ogre", accent: "#cdd6e0" },
+  "ember_giant": { icon: "ogre", accent: "#e07030" },
   "arcane_adept": { icon: "pointy_hat", accent: "#cdd6e0" },
   "umbral_adept": { icon: "pointy_hat", accent: "#cdd6e0" },
   "lesser_fiend": { icon: "daemon_skull", accent: "#cdd6e0" },

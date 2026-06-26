@@ -309,6 +309,30 @@ export function hasToolForSkill(skill, equipment, inventory, itemsData, stats = 
   return findBestToolForSkill(skill, equipment, inventory, itemsData, stats) !== null
 }
 
+/**
+ * Bird's nest bonus drop. Woodcutting actions have a flat chance, identical for
+ * every tree, of yielding an empty bird's nest in addition to the logs.
+ */
+export const BIRD_NEST_ITEM_ID = 'empty_bird_s_nest'
+export const BIRD_NEST_DROP_CHANCE = 1 / 256
+
+/**
+ * Roll for bonus gather drops awarded alongside the primary product of a
+ * gathering action. Currently only woodcutting (bird's nests). Returns a drops
+ * map ({ itemId: qty }) that may be empty.
+ *
+ * @param {string} skill - gathering skill id, e.g. 'woodcutting'
+ * @param {() => number} [rng] - injectable RNG for tests (defaults to Math.random)
+ * @returns {Record<string, number>}
+ */
+export function rollGatherBonusDrops(skill, rng = Math.random) {
+  const drops = {}
+  if (skill === 'woodcutting' && rng() < BIRD_NEST_DROP_CHANCE) {
+    drops[BIRD_NEST_ITEM_ID] = 1
+  }
+  return drops
+}
+
 export function getEquippedSkillXpMultiplier(skill, equipment, itemsData) {
   if (!equipment?.weapon) return 1
   const weapon = itemsData?.[equipment.weapon.itemId]

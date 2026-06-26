@@ -7,6 +7,7 @@ import SectionHeader from '../components/SectionHeader.jsx'
 import ProgressBar from '../components/ProgressBar.jsx'
 import TwoPaneLayout from '../components/TwoPaneLayout.jsx'
 import GildedComplete from '../components/GildedComplete.jsx'
+import SkillActionRow from '../components/SkillActionRow.jsx'
 import { isQuestComplete } from '../utils/completion.js'
 import GameIcon from '../components/GameIcon.jsx'
 import { useIsDesktop } from '../hooks/useIsDesktop.js'
@@ -264,40 +265,20 @@ export default function QuestsScreen() {
               const complexityColor = COMPLEXITY_COLORS[quest.complexity] || '#888'
 
               return (
-                <GildedComplete key={quest.id} complete={completed} className="rounded-xl">
-                  <button
+                <GildedComplete key={quest.id} complete={completed} className="rounded-2xl">
+                  <SkillActionRow
+                    icon={completed
+                      ? <GameIcon iconKey="check_mark" color="#4ade80" size={32} />
+                      : <GameIcon iconKey="clue_scroll_medium" size={52} />}
+                    title={quest.name}
+                    meta={<span class="flex items-center gap-2">
+                      <span style={{ color: complexityColor }}>{quest.complexity}</span>
+                      <span class="opacity-50">·</span>
+                      <span>{formatQuestDuration(quest.durationSeconds)}</span>
+                      {!completed && !elig.eligible && <span class="text-[#e57373]">· 🔒 Locked</span>}
+                    </span>}
                     onClick={() => setSelectedQuest(quest)}
-                    class={`w-full p-3 rounded-xl border text-left flex items-center gap-3 ${
-                      completed
-                        ? 'bg-[rgba(74,222,128,0.06)] border-[rgba(74,222,128,0.2)]'
-                        : elig.eligible
-                          ? 'bg-[var(--color-void-light)] border-[#2a2a2a]'
-                          : 'bg-[#111] border-[#1a1a1a] opacity-70'
-                    }`}
-                  >
-                    <span class="text-[24px] flex-shrink-0">
-                      {completed ? <GameIcon iconKey="check_mark" color="#4ade80" size={24} /> : <GameIcon iconKey="clue_scroll_medium" size={24} />}
-                    </span>
-                    <div class="flex-1 min-w-0">
-                      <div
-                        class={`text-[13px] font-semibold ${
-                          completed ? 'text-[#4ade80]' : 'text-[var(--color-parchment)]'
-                        }`}
-                      >
-                        {quest.name}
-                      </div>
-                      <div class="text-[10px] flex items-center gap-2 mt-[2px]">
-                        <span style={{ color: complexityColor }}>{quest.complexity}</span>
-                        <span class="text-[var(--color-parchment)] opacity-50">·</span>
-                        <span class="text-[var(--color-parchment)] opacity-60">
-                          {formatQuestDuration(quest.durationSeconds)}
-                        </span>
-                      </div>
-                    </div>
-                    <div class="flex-shrink-0 text-[18px] text-[var(--color-parchment)] opacity-40">
-                      →
-                    </div>
-                  </button>
+                  />
                 </GildedComplete>
               )
             })}

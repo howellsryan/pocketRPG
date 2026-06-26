@@ -52,6 +52,7 @@ export function GameProvider({ children }) {
   const [combatStance, setCombatStanceState] = useState('accurate')
   const [idleCombatSetup, setIdleCombatSetupState] = useState(() => defaultIdleCombatSetup())
   const [autoBankLoot, setAutoBankLootState] = useState(true)
+  const [showInfoToasts, setShowInfoToastsState] = useState(false)
   const [activeTask, setActiveTaskState] = useState(null)
   const activeTaskInternalRef = useRef(null) // tracks latest active task for flush in setActiveTask
   const [bankConfig, setBankConfig] = useState({ tabs: [], itemTabMap: {} })
@@ -88,6 +89,7 @@ export function GameProvider({ children }) {
   const dailyTaskStatesRef = useRef([])
   const dailyTaskDateRef = useRef(null)
   const recordGameEventRef = useRef(null)
+  const showInfoToastsRef = useRef(false)
 
   const dirty = useRef({ stats: false, inventory: false, equipment: false, bank: false, player: false })
   // CombatScreen registers a force-kill handler here so handleSkip1h (in App) can invoke it
@@ -123,6 +125,7 @@ export function GameProvider({ children }) {
   useEffect(() => { stateRef.current.bank = bank }, [bank])
   useEffect(() => { stateRef.current.player = player }, [player])
   useEffect(() => { stateRef.current.bankConfig = bankConfig }, [bankConfig])
+  useEffect(() => { showInfoToastsRef.current = showInfoToasts }, [showInfoToasts])
   useEffect(() => { slayerTaskRef.current = slayerTask }, [slayerTask])
   useEffect(() => { slayerPointsRef.current = normalisePointCurrency(slayerPoints) }, [slayerPoints])
   useEffect(() => { dungeoneeringTokensRef.current = dungeoneeringTokens }, [dungeoneeringTokens])
@@ -130,13 +133,14 @@ export function GameProvider({ children }) {
 
   // Load all state from IndexedDB — runs idle simulation inline, returns idleResult
   const loadGame = useCallback(async () => {
-    let [p, s, inv, eq, b, shortcuts, stance, savedHP, autoBankSetting, savedBankConfig, savedEquipmentPresets, savedUnlocks, savedSlayerTask, savedSlayerPoints, savedSlayerTasksCompleted, savedDungeoneeringTokens, savedBossKillCounts, savedRaidKillCounts, savedFarming, savedCompletedQuests, savedQuestQueue, savedActiveCombatSpell, savedUnlockedMinigameItems, savedIdleCombatSetup, savedSlayerPerks, savedCharacterUnlocks] = await Promise.all([
+    let [p, s, inv, eq, b, shortcuts, stance, savedHP, autoBankSetting, savedBankConfig, savedEquipmentPresets, savedUnlocks, savedSlayerTask, savedSlayerPoints, savedSlayerTasksCompleted, savedDungeoneeringTokens, savedBossKillCounts, savedRaidKillCounts, savedFarming, savedCompletedQuests, savedQuestQueue, savedActiveCombatSpell, savedUnlockedMinigameItems, savedIdleCombatSetup, savedSlayerPerks, savedCharacterUnlocks, savedShowInfoToasts] = await Promise.all([
       getPlayer(), getAllStats(), getInventory(), getEquipment(), getBank(),
       getSetting('homeShortcuts'), getSetting('combatStance'), getSetting('currentHP'),
       getSetting('autoBankLoot'), getSetting('bankConfig'), getSetting('equipmentPresets'), getSetting('unlockedFeatures'),
       getSetting('slayerTask'), getSetting('slayerPoints'), getSetting('slayerTasksCompleted'), getSetting('dungeoneeringTokens'), getSetting('bossKillCounts'), getSetting('raidKillCounts'), getSetting('farming'),
       getSetting('completedQuests'), getSetting('questQueue'), getSetting('activeCombatSpell'), getSetting('unlockedMinigameItems'),
-      getSetting('idleCombatSetup'), getSetting('slayerPerks'), getSetting('characterUnlocks')
+      getSetting('idleCombatSetup'), getSetting('slayerPerks'), getSetting('characterUnlocks'),
+      getSetting('showInfoToasts')
     ])
     const normalisedIdleCombatSetup = normaliseIdleCombatSetup(savedIdleCombatSetup)
     // Rewrite legacy item ids (e.g. void_knight_* → void_king_*) before the
@@ -222,7 +226,7 @@ export function GameProvider({ children }) {
         let sim = null
         try {
           if (savedTask.type === 'skill') {
-            sim = simulateIdleSkilling(savedTask, elapsedMs, b, eq, s, itemsData, inv)
+            sim = simulateIdleSkilling(savedTask, elapsedMs, b, eq, s, itemsData, inv, { isIronman: getIronmanMode() })
           } else if (savedTask.type === 'gather' || savedTask.type === 'clue') {
             sim = simulateIdleGather(savedTask, elapsedMs, inv, s, itemsData, b)
           } else if (savedTask.type === 'combat') {
@@ -503,6 +507,7 @@ export function GameProvider({ children }) {
     }
     setIdleCombatSetupState(normalisedIdleCombatSetup)
     setAutoBankLootState(autoBankSetting !== false) // default true
+    setShowInfoToastsState(savedShowInfoToasts === true) // default false
     setBankConfig(savedBankConfig ?? { tabs: [], itemTabMap: {} })
     setEquipmentPresetsState(Array.isArray(savedEquipmentPresets) ? savedEquipmentPresets : [])
     setUnlockedFeatures(new Set(savedUnlocks || []))
@@ -703,6 +708,12 @@ export function GameProvider({ children }) {
   const updateAutoBankLoot = useCallback((enabled) => {
     setAutoBankLootState(enabled)
     saveSetting('autoBankLoot', enabled)
+  }, [])
+
+  const updateShowInfoToasts = useCallback((enabled) => {
+    showInfoToastsRef.current = enabled
+    setShowInfoToastsState(enabled)
+    saveSetting('showInfoToasts', enabled)
   }, [])
 
   const updateBankConfig = useCallback((config) => {
@@ -931,6 +942,7 @@ export function GameProvider({ children }) {
 
   // ── Toasts ──
   const addToast = useCallback((message, type = 'info', icon = null) => {
+    if (type === 'info' && !showInfoToastsRef.current) return
     const id = Date.now() + Math.random()
     // Reward-style toasts (level ups, collection-log unlocks) linger a little
     // longer so the player can read the richer card before it auto-clears.
@@ -956,6 +968,7 @@ export function GameProvider({ children }) {
       currentHP,
       autoBankLoot,
       bankConfig,
+      showInfoToasts,
       equipmentPresets,
       homeShortcuts,
       combatStance,
@@ -976,7 +989,7 @@ export function GameProvider({ children }) {
       slayerPerks: slayerPerksRef.current,
       characterUnlocks: characterUnlocksRef.current,
     },
-  }), [currentHP, autoBankLoot, bankConfig, equipmentPresets, homeShortcuts, combatStance, idleCombatSetup, unlockedFeatures, activeTask, activeCombatSpell, slayerTask, slayerPoints, slayerTasksCompleted, dungeoneeringTokens, bossKillCounts, raidKillCounts, farming, completedQuests, unlockedMinigameItems, questQueue, slayerPerks, characterUnlocks])
+  }), [currentHP, autoBankLoot, bankConfig, showInfoToasts, equipmentPresets, homeShortcuts, combatStance, idleCombatSetup, unlockedFeatures, activeTask, activeCombatSpell, slayerTask, slayerPoints, slayerTasksCompleted, dungeoneeringTokens, bossKillCounts, raidKillCounts, farming, completedQuests, unlockedMinigameItems, questQueue, slayerPerks, characterUnlocks])
 
 
   // ---- Shared game lock --------------------------------------------------
@@ -1083,6 +1096,25 @@ export function GameProvider({ children }) {
     requestCriticalPushSave(() => getSnapshot(), CRITICAL_SAVE_REASONS.EQUIPMENT_PRESET_CHANGE)
   }, [loaded, equipmentPresets, getSnapshot])
 
+  // Bank tab layout and the info-toast suppression toggle ride the save blob
+  // (getSnapshot.settings) too, but the 60s autosave can drop a just-made change
+  // if the tab/container closes first — the same loss the presets push above
+  // guards against. Push each critically so a tab reorg or a toggle reaches the
+  // cloud promptly. First post-load run is hydration; skip it.
+  const bankConfigHydratedRef = useRef(false)
+  useEffect(() => {
+    if (!loaded) return
+    if (!bankConfigHydratedRef.current) { bankConfigHydratedRef.current = true; return }
+    requestCriticalPushSave(() => getSnapshot(), CRITICAL_SAVE_REASONS.BANK_CONFIG_CHANGE)
+  }, [loaded, bankConfig, getSnapshot])
+
+  const infoToastsHydratedRef = useRef(false)
+  useEffect(() => {
+    if (!loaded) return
+    if (!infoToastsHydratedRef.current) { infoToastsHydratedRef.current = true; return }
+    requestCriticalPushSave(() => getSnapshot(), CRITICAL_SAVE_REASONS.INFO_TOAST_SETTING_CHANGE)
+  }, [loaded, showInfoToasts, getSnapshot])
+
   // Stable identity for the running activity — only the activity itself (not its
   // per-tick progress/session) should restart the heartbeat interval. Without
   // this the interval would reset every 600ms (the runner and the activity
@@ -1155,7 +1187,7 @@ export function GameProvider({ children }) {
   const value = {
     loaded, player, stats, inventory, equipment, bank, currentHP, toasts, isSaving,
     homeShortcuts, combatStance, idleCombatSetup, updateIdleCombatSetup,
-    activeTask, autoBankLoot, bankConfig,
+    activeTask, autoBankLoot, bankConfig, showInfoToasts, updateShowInfoToasts,
     equipmentPresets, updateEquipmentPresets,
     unlockedFeatures, unlockFeature,
     slayerTask, setSlayerTask, slayerPoints, updateSlayerPoints, awardSlayerPoints,

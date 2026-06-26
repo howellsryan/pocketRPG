@@ -206,9 +206,10 @@ describe('buildGatherTask — validation', () => {
     expect(() => buildGatherTask(makeSave(), 'nonexistent_task')).toThrow()
   })
 
-  it('refuses tasks with gpCost (log→plank sawmill conversions)', () => {
-    expect(() => buildGatherTask(makeSave(), 'convert_log_to_plank')).toThrow()
-    expect(() => buildGatherTask(makeSave(), 'convert_oak_log_to_plank')).toThrow()
+  it('accepts gpCost tasks (log→plank sawmill conversions)', () => {
+    const task = buildGatherTask(makeSave(), 'convert_log_to_plank')
+    expect(task.type).toBe('gather')
+    expect(task.gatherTask.gpCost).toBe(150)
   })
 })
 
@@ -266,5 +267,41 @@ describe('runIdleTask — gather type', () => {
     expect(save.bank.seaweed).toBeUndefined()
     const slots = save.inventory.filter((s: any) => s?.itemId === 'soda_ash')
     expect(slots.length).toBe(5)
+  })
+
+  it('log→plank conversion deducts gpCost coins and logs', () => {
+    // 1 tick = 600ms each; 3000ms → 5 actions
+    // gpCost 150 × 5 = 750 coins; 5 logs consumed; 5 planks gained
+    const save = makeSave({
+      inventory: [{ itemId: 'coins', quantity: 1000 }, ...Array(27).fill(null)],
+      bank: { logs: { itemId: 'logs', quantity: 10 } },
+    })
+    const task = buildGatherTask(save, 'convert_log_to_plank')
+    const result = runIdleTask(save, task, 3_000)
+    expect(result.applied).toBe(true)
+    expect(result.actions).toBe(5)
+    // 750 coins deducted from inventory (1000 - 750 = 250)
+    const coinSlot = save.inventory.find((s: any) => s?.itemId === 'coins')
+    expect(coinSlot?.quantity).toBe(250)
+    // 5 logs consumed from bank
+    expect(save.bank.logs.quantity).toBe(5)
+    // 5 planks in inventory (stackable)
+    const plankSlot = save.inventory.find((s: any) => s?.itemId === 'plank')
+    expect(plankSlot?.quantity).toBe(5)
+  })
+
+  it('log→plank conversion is capped by available coins', () => {
+    // 300 coins → only 2 actions at 150gp each despite having time and logs
+    const save = makeSave({
+      bank: {
+        coins: { itemId: 'coins', quantity: 300 },
+        logs: { itemId: 'logs', quantity: 10 },
+      },
+    })
+    const task = buildGatherTask(save, 'convert_log_to_plank')
+    const result = runIdleTask(save, task, 30_000)
+    expect(result.applied).toBe(true)
+    expect(result.actions).toBe(2)
+    expect(save.bank.coins).toBeUndefined()
   })
 })

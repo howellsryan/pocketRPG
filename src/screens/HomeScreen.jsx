@@ -94,15 +94,17 @@ export default function HomeScreen({ onNavigate, onLogout, onManualSave, isCloud
           <div class="welcome-card__top">
             <h1 class="welcome-card__title">Welcome, {player.name}</h1>
             <div class="welcome-card__actions welcome-card__actions--header">
-              <button
-                class="rune-btn"
-                onClick={handleManualSave}
-                disabled={saveDisabled}
-                aria-label="Save game"
-                title={saving ? 'Saving…' : 'Save your chronicle'}
-              >
-                <GameIcon iconKey="save" color="#f0c040" size={24} title="Save" />
-              </button>
+              {isCloudAccount && (
+                <button
+                  class="rune-btn"
+                  onClick={handleManualSave}
+                  disabled={saveDisabled}
+                  aria-label="Save to cloud"
+                  title={saving ? 'Saving…' : 'Force cloud save'}
+                >
+                  <GameIcon iconKey="save" color="#f0c040" size={24} title="Save" />
+                </button>
+              )}
               <button
                 class="rune-btn"
                 onClick={handleLogout}
@@ -121,15 +123,17 @@ export default function HomeScreen({ onNavigate, onLogout, onManualSave, isCloud
                 Combat <b>{combatLevel}</b>
               </span>
               <div class="welcome-card__actions welcome-card__actions--inline">
-                <button
-                  class="rune-btn"
-                  onClick={handleManualSave}
-                  disabled={saveDisabled}
-                  aria-label="Save game"
-                  title={saving ? 'Saving…' : 'Save your chronicle'}
-                >
-                  <GameIcon iconKey="save" color="#f0c040" size={24} title="Save" />
-                </button>
+                {isCloudAccount && (
+                  <button
+                    class="rune-btn"
+                    onClick={handleManualSave}
+                    disabled={saveDisabled}
+                    aria-label="Save to cloud"
+                    title={saving ? 'Saving…' : 'Force cloud save'}
+                  >
+                    <GameIcon iconKey="save" color="#f0c040" size={24} title="Save" />
+                  </button>
+                )}
                 <button
                   class="rune-btn"
                   onClick={handleLogout}

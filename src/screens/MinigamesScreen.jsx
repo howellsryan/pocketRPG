@@ -4,6 +4,7 @@ import ProgressBar from '../components/ProgressBar.jsx'
 import SectionHeader from '../components/SectionHeader.jsx'
 import GameIcon from '../components/GameIcon.jsx'
 import GildedComplete from '../components/GildedComplete.jsx'
+import SkillActionRow from '../components/SkillActionRow.jsx'
 import { isMinigameItemUnlocked } from '../utils/completion.js'
 import { countItem } from '../engine/inventory.js'
 import minigamesData from '../data/minigames.json'
@@ -125,38 +126,24 @@ export default function MinigamesScreen() {
                   const missingReq = task.requiresItem && !hasItemAnywhere(task.requiresItem)
                   const alreadyUnlocked = isMinigameItemUnlocked(unlockedMinigameItems, task.product)
                   const enabled = !missingReq
-                  const rowClass = enabled
-                    ? 'bg-[var(--color-void-light)] border-[#2a2a2a] opacity-100'
-                    : 'bg-[#111] border-[#1a1a1a] opacity-45'
 
                   return (
-                    <GildedComplete key={task.id} complete={alreadyUnlocked} className="rounded-xl">
-                      <button
-                        onClick={() => enabled && startMinigame(task)}
+                    <GildedComplete key={task.id} complete={alreadyUnlocked} className="rounded-2xl">
+                      <SkillActionRow
+                        icon={<GameIcon iconKey={task.product} item={{ icon: task.icon }} size={52} color="var(--color-gold)" />}
+                        title={task.name}
+                        meta={<>
+                          {alreadyUnlocked && <span class="text-[#7a7]">✓ </span>}
+                          ⏱ {formatMinigameHours(task.hours)} total
+                          {task.requiresItem && (
+                            <span class={missingReq ? 'text-[#e57373]' : ''}>
+                              {' · '}Needs: {minigamesData.itemNames[task.requiresItem] || task.requiresItem}
+                            </span>
+                          )}
+                        </>}
                         disabled={!enabled}
-                        class={`w-full p-3 rounded-xl border text-left flex items-center gap-3 ${rowClass}`}
-                      >
-                        <GameIcon iconKey={task.product} item={{ icon: task.icon }} size={56} color="var(--color-gold)" class="flex-shrink-0" />
-
-                        <div class="flex-1 min-w-0">
-                          <div class="text-[13px] font-semibold text-[var(--color-parchment)] mb-1">{task.name}</div>
-                          <div class="text-[10px] text-[#c8a96e] opacity-80">
-                            {alreadyUnlocked && <span class="text-[#7a7]">✓</span>}
-                            {alreadyUnlocked && task.requiresItem && ' · '}
-
-                            ⏱ {formatMinigameHours(task.hours)} total
-                            {task.requiresItem && (
-                              <span class={`${missingReq ? 'text-[#e57373]' : 'text-[var(--color-parchment)] opacity-50'}`}>
-                                {' · '}Needs: {minigamesData.itemNames[task.requiresItem] || task.requiresItem}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                        <div class="flex-shrink-0 text-right">
-                          <div class="text-[18px]">→</div>
-                          <div class="text-[9px] text-[#c8a96e] opacity-70">{minigamesData.itemNames[task.product] || task.product}</div>
-                        </div>
-                      </button>
+                        onClick={() => startMinigame(task)}
+                      />
                     </GildedComplete>
                   )
                 })}
