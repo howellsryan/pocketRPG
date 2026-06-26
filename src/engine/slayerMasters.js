@@ -43,6 +43,7 @@ export const SLAYER_MASTERS = [
       'umbral_adept', 'wailing_banshee', 'frostbite_imp', 'broodfang_spider',
       'highland_giant', 'marshfen_toad', 'cinderpaw_cub', 'briar_giant',
       'glaive_skeleton', 'mirebound_husk', 'verdant_stalker', 'stoneglare_basilisk',
+      'elder_tree_spirit', 'elder_rock_golem',
     ],
   },
   {
@@ -62,6 +63,7 @@ export const SLAYER_MASTERS = [
       'stoneglare_basilisk', 'embertongue_lizard', 'hollow_reaver', 'green_dragon',
       'lesser_fiend', 'ember_giant', 'briarheart_treant', 'frostmaw_direwolf', 'pyreclaw_demon',
       'wraithgale_specter', 'bloodmoon_stalker', 'ash_wyrm',
+      'elder_tree_spirit', 'elder_rock_golem',
     ],
   },
   {

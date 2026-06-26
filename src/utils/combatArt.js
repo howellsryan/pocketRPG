@@ -55,6 +55,8 @@ export const MONSTER_ART = {
   "arcane_adept": { icon: "pointy_hat", accent: "#cdd6e0" },
   "umbral_adept": { icon: "pointy_hat", accent: "#cdd6e0" },
   "lesser_fiend": { icon: "daemon_skull", accent: "#cdd6e0" },
+  "elder_tree_spirit": { icon: "tree_face", accent: "#cdd6e0" },
+  "elder_rock_golem": { icon: "rock_golem", accent: "#cdd6e0" },
   "dustpaw_rat": { icon: "rat", accent: "#c0453b" },
   "wailing_banshee": { icon: "floating_ghost", accent: "#c0453b" },
   "bogling_sprite": { icon: "fairy", accent: "#c0453b" },

@@ -55,7 +55,7 @@ const COMBAT_CATEGORIES = [
     key: 'training',
     label: 'Training',
     icon: '⚔️',
-    ids: ['field_chicken', 'cave_goblin', 'pasture_bull', 'stoneback_crab', 'duneback_crab', 'arcane_adept', 'umbral_adept', 'broodfang_spider', 'highland_giant', 'briar_giant', 'ember_giant', 'lesser_fiend'],
+    ids: ['field_chicken', 'cave_goblin', 'pasture_bull', 'stoneback_crab', 'duneback_crab', 'arcane_adept', 'umbral_adept', 'broodfang_spider', 'highland_giant', 'briar_giant', 'ember_giant', 'lesser_fiend', 'elder_tree_spirit', 'elder_rock_golem'],
   },
   {
     key: 'slayer',
@@ -155,6 +155,7 @@ function getMonsterCategoryKey(monsterId) {
 const MONSTER_ICONS = {
   field_chicken: '🐔', cave_goblin: '👺', pasture_bull: '🐄', broodfang_spider: '🕷️',
   stoneback_crab: '🦀', duneback_crab: '🦀', highland_giant: '👊', briar_giant: '🌿', ember_giant: '🔥',
+  elder_tree_spirit: '🌳', elder_rock_golem: '🗿',
   arcane_adept: '🧙', umbral_adept: '🧙‍♂️', hellbound_gorilla: '🦍',
   wailing_banshee: '👻', sanguine_veld: '🩸', warped_spectre: '👁️', ash_wyrm: '🐍',
   astral_warrior: '⚔️', astral_ranger: '🏹', astral_mage: '🔮', runestone_gargoyle: '🗿',
