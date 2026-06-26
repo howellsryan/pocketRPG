@@ -781,7 +781,6 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
                     ? <span class="text-[var(--color-blood-ember)]">{formatActionDuration(effectiveTicks)}</span>
                     : formatActionDuration(action.ticks)}
                   {remaining !== null && <span class="text-[var(--color-gold)]"> · {remaining.toLocaleString()} actions</span>}
-                  {action.materials && <span> · Needs: {Object.entries(action.materials).map(([id, qty]) => `${itemsData[id]?.name || id} ×${qty}`).join(', ')}</span>}
                   {action.runeReq && <span> · Runes: {Object.entries(action.runeReq).map(([id, qty]) => `${itemsData[id]?.name || id} ×${qty}`).join(', ')}</span>}
                   {action.itemReq && !hasItems && <span class="block text-[var(--color-blood-ember)] mt-1">✨ Needs: {action.itemReq.map(id => itemsData[id]?.name || id).join(' or ')}</span>}
                   {action.runeReq && !hasRunes && <span class="block text-[var(--color-blood-ember)] mt-1">🔮 Missing runes (or equip staff)</span>}
@@ -806,8 +805,8 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
                 icon={productItem ? <GameIcon item={productItem} size={52} /> : <SkillIcon skill={selectedSkill} size={52} />}
                 title={action.name}
                 meta={meta}
-                chip={action.product && !action.dropTable ? <>→ {itemsData[action.product]?.name || action.product}</> : null}
                 right={dropRight || undefined}
+                below={!levelLocked && action.materials ? <span class="text-[12.5px] font-semibold text-[var(--color-gold)]">{Object.entries(action.materials).map(([id, qty]) => `${itemsData[id]?.name || id} ×${qty}`).join(', ')}</span> : undefined}
                 active={isRunning}
                 locked={levelLocked}
                 lockBadge={`LV ${action.level}`}
