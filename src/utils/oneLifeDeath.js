@@ -18,10 +18,18 @@ import { clearCollectionLogCache } from '../cloud/collectionLog.js'
 // atomic server reset already committed — covers a retry after a committed
 // request whose response was lost. (After a successful reset the old id is
 // gone, so the endpoint answers 404; a non-one-life id answers 400.)
+//
+// Be precise about the 400: the endpoint returns 400 for BOTH "not one-life"
+// AND "Missing X-Character-Id header". The latter is a transient/client error,
+// NOT proof the reset ran — accepting it would let wipeLocalState() blow away
+// the device while the cloud one-life character (and its trading-post escrow)
+// survives, the half-finished reset this flow exists to prevent. So a 400 only
+// counts as "already reset" when the message confirms the not-one-life case.
 export function isAlreadyReset(err) {
   const status = err?.status
   const msg = String(err?.message || '')
-  return status === 404 || status === 400 || /not found|not one-life/i.test(msg)
+  if (status === 404) return true
+  return /not found|not one-life/i.test(msg)
 }
 
 const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms))

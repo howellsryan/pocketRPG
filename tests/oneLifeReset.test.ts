@@ -41,11 +41,18 @@ beforeEach(() => {
 })
 
 describe('isAlreadyReset', () => {
-  it('treats 404 / 400 and "not found" / "not one-life" as already reset', () => {
+  it('treats 404 and "not found" / "not one-life" as already reset', () => {
     expect(isAlreadyReset({ status: 404 })).toBe(true)
-    expect(isAlreadyReset({ status: 400 })).toBe(true)
     expect(isAlreadyReset(new Error('Character not found'))).toBe(true)
     expect(isAlreadyReset(new Error('Character is not one-life'))).toBe(true)
+    expect(isAlreadyReset({ status: 400, message: 'Character is not one-life' })).toBe(true)
+  })
+
+  it('does NOT treat a bare 400 (missing X-Character-Id header) as already reset', () => {
+    // This 400 is a transient/client error, not proof the atomic reset ran —
+    // accepting it would wipe the device while the cloud character survives.
+    expect(isAlreadyReset({ status: 400 })).toBe(false)
+    expect(isAlreadyReset({ status: 400, message: 'Missing X-Character-Id header' })).toBe(false)
   })
 
   it('treats transient errors (timeout / 500) as retryable', () => {

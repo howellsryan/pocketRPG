@@ -10,7 +10,7 @@ import { ALL_SKILLS, MAX_XP, AUTO_SAVE_DEBOUNCE, QUEST_QUEUE_MAX } from '../util
 import { debounce } from '../utils/helpers.js'
 import { mergeKillCounts } from '../utils/killCountMerge.js'
 import { fetchIdleState, pushIdleState } from '../cloud/idleState.js'
-import { api, getToken, getCharacterId, CREDITS_UPDATED_EVENT } from '../cloud/api.js'
+import { api, getToken, getCharacterId, syncAccountModeFlags, CREDITS_UPDATED_EVENT } from '../cloud/api.js'
 import { matchTaskProgress, taskById } from '../engine/dailyTasks.js'
 import { requestCriticalPushSave, pushNow, suspendSaves, resumeSaves, isSaveConflict } from '../cloud/sync.js'
 import { CRITICAL_SAVE_REASONS, detectCountIncreases, detectLevelUps, detectSetGrowth, didNumberIncrease, extractSkillLevels } from '../cloud/criticalSavePolicy.js'
@@ -186,6 +186,12 @@ export function GameProvider({ children }) {
       localStorage.removeItem('pocketrpg_activeTask')
       localStorage.removeItem('pocketrpg_lastTick')
     }
+
+    // Re-anchor the ironman / one-life mode flags to the freshly loaded profile
+    // BEFORE the idle simulation runs — an idle/offline death is decided against
+    // these flags, so a stale value here would wrongly wipe (or fail to wipe) a
+    // One-Life account on the very first catch-up after boot.
+    syncAccountModeFlags(p)
 
     // ── Idle simulation (runs on raw DB data, before state is set) ──
     let idleResult = null
