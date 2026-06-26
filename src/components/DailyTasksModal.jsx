@@ -76,9 +76,10 @@ export default function DailyTasksModal({ onClose, tasks = [], resetInMs = 0, ta
                     <GameIcon iconKey={icon} size={28} />
                   </span>
                   <div class="flex-1 min-w-0">
-                    <div class="flex items-center gap-2 flex-wrap">
-                      <span class="text-[13px] font-semibold text-[var(--color-parchment)] leading-tight">{name}</span>
+                    <span class="text-[13px] font-semibold text-[var(--color-parchment)] leading-tight">{name}</span>
+                    <div class="flex items-center gap-2 mt-0.5">
                       <TierChip tier={task.tier} />
+                      <span class="ml-auto shrink-0 text-[12px] font-bold text-[var(--color-gold)]">+1 💎</span>
                     </div>
                     {description ? (
                       <div class="text-[11px] text-[var(--color-parchment)] opacity-60 mt-0.5 leading-snug">{description}</div>
@@ -91,7 +92,6 @@ export default function DailyTasksModal({ onClose, tasks = [], resetInMs = 0, ta
                       )}
                     </div>
                   </div>
-                  <div class="shrink-0 text-[12px] font-bold text-[var(--color-gold)]">+1 💎</div>
                 </div>
               </GildedComplete>
             )
