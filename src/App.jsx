@@ -39,7 +39,7 @@ import { hasSave, closeDB } from './db/database.js'
 import { initNewGame, saveSetting, getSetting, getAllStats, getInventory, getEquipment, getBank } from './db/stores.js'
 import { startTicks, stopTicks, onTick, pauseTicks, resumeTicks } from './engine/tick.js'
 import { wipeLocalSave } from './db/saveload.js'
-import { api, captureTokenFromHash, getToken, getCharacterId, getCharacterName, setCharacter, clearAuth, getLocalCharacterId, setLocalCharacterId, getIronmanMode, getOneLifeMode, CREDITS_UPDATED_EVENT } from './cloud/api.js'
+import { api, captureTokenFromHash, getToken, getCharacterId, getCharacterName, setCharacter, clearAuth, getLocalCharacterId, setLocalCharacterId, getIronmanMode, getOneLifeMode, syncAccountModeFlags, CREDITS_UPDATED_EVENT } from './cloud/api.js'
 import { schedulePushSave, pushNow, pullSave, applyCloudSave, checkCloudNewer, resetSyncState, requestCriticalPushSave, retrySaveNow, isSaveConflict, CLOUD_SAVE_STATUS_EVENT } from './cloud/sync.js'
 import { CRITICAL_SAVE_REASONS } from './cloud/criticalSavePolicy.js'
 import { fetchIdleState, heartbeatIdleState, beaconIdleState, resetIdleStateSync } from './cloud/idleState.js'
@@ -1307,7 +1307,16 @@ function GameApp() {
             setIdentityId(meData.identity.id)
           }
           if (meData?.stripe_links) setStripeLinks(meData.stripe_links)
-          if (meData?.character) setCredits(meData.character.credits ?? 0)
+          if (meData?.character) {
+            setCredits(meData.character.credits ?? 0)
+            // Re-anchor the one-life / ironman flags to the authoritative server
+            // character row. A returning session boots straight into the game
+            // (no character picker, so setCharacter never runs), so without this
+            // the death wipe would rely solely on a possibly-stale save blob and
+            // treat a one-life death as a normal respawn. loadGame reads these
+            // flags to correct the save blob before the idle death sim runs.
+            syncAccountModeFlags(meData.character)
+          }
         } catch { /* hide buttons on error — non-fatal */ }
 
         // Guard against character-switch leakage: if IDB currently belongs to

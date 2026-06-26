@@ -17,7 +17,7 @@ export async function onRequestGet({ request, env }) {
   const charId = charIdHeader ? parseInt(charIdHeader, 10) : null
   if (charId) {
     const charRow = await env.DB.prepare(
-      `SELECT id, credits,
+      `SELECT id, credits, is_ironman, is_one_life,
               COALESCE(total_pvp_kills, 0) AS total_pvp_kills,
               last_updated_total_pvp_kills
          FROM characters
@@ -27,6 +27,12 @@ export async function onRequestGet({ request, env }) {
       character = {
         id: charRow.id,
         credits: charRow.credits ?? 0,
+        // Authoritative account-type flags. The client mirrors these into its
+        // one-life / ironman gates (incl. the One-Life death wipe) at boot, so a
+        // returning session that skips the character picker can't drift out of
+        // sync with the server row and treat a one-life death as a respawn.
+        is_ironman: charRow.is_ironman === 1,
+        is_one_life: charRow.is_one_life === 1,
         total_pvp_kills: charRow.total_pvp_kills ?? 0,
         last_updated_total_pvp_kills: charRow.last_updated_total_pvp_kills ?? null,
       }
