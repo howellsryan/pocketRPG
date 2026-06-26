@@ -37,6 +37,9 @@ const MONSTER_SEED_CHANCE = 0.04  // total per-kill chance of any seed drop
  */
 export function getMonsterSeedDrops(monster) {
   if (!monster || monster.boss === true || monster.raidBoss === true) return []
+  // Opt-out for monsters that author their own seed/sapling table (or shouldn't
+  // drop seeds at all), so the universal window doesn't duplicate or contradict it.
+  if (monster.noSeedDrops === true) return []
   const combatLevel = Number(monster.combatLevel) || 0
   const n = SEEDS_BY_LEVEL.length
   if (!n || combatLevel <= 0) return []

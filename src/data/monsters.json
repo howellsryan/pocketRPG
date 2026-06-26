@@ -8524,6 +8524,7 @@
     "attackStyle": "magic",
     "attackBonus": 0,
     "strengthBonus": 0,
+    "noSeedDrops": true,
     "defenceBonus": { "stab": 8, "slash": 8, "crush": 8, "magic": 30, "ranged": -12 },
     "drops": [
       { "itemId": "coins", "quantity": [20, 120], "chance": 0.7 },
@@ -8552,6 +8553,7 @@
     "attackStyle": "crush",
     "attackBonus": 0,
     "strengthBonus": 0,
+    "noSeedDrops": true,
     "defenceBonus": { "stab": 20, "slash": 20, "crush": 20, "magic": -12, "ranged": 18 },
     "drops": [
       { "itemId": "coins", "quantity": [20, 140], "chance": 0.7 },
