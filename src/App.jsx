@@ -1075,6 +1075,9 @@ function GameApp() {
           if (savedTask.type === 'combat' && sim.slayerTaskUpdate?.completed) {
             recordGameEvent?.({ kind: 'slayer_task_complete' })
           }
+          if (savedTask.type === 'hunter' && sim.actions > 0 && savedTask.action?.id) {
+            recordGameEvent?.({ kind: 'hunter_hunt', actionId: savedTask.action.id, count: sim.actions })
+          }
 
           // Push the post-idle state to the cloud (debounced + hash-skipped).
           if (!isInPvpMatch) schedulePushSave(getSnapshot())
@@ -1640,6 +1643,9 @@ function GameApp() {
       const banked = {}
       for (const r of result.rewards) banked[r.itemId] = (banked[r.itemId] || 0) + r.quantity
       updateBankDirect(banked)
+    }
+    if (task.type === 'hunter' && (result.actions ?? 0) > 0 && task.action?.id) {
+      recordGameEvent?.({ kind: 'hunter_hunt', actionId: task.action.id, count: result.actions })
     }
     if (result.dungeoneeringTokensGained > 0) awardDungeoneeringTokens(result.dungeoneeringTokensGained)
   }

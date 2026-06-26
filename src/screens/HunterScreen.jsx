@@ -19,7 +19,7 @@ import itemsData from '../data/items.json'
 const hunterData = skillsData.hunter
 
 export default function HunterScreen({ initialActionId, idleResult, onBack }) {
-  const { stats, inventory, updateInventory, bank, updateBankDirect, grantXP, addToast, setActiveTask, activeTask } = useGame()
+  const { stats, inventory, updateInventory, bank, updateBankDirect, grantXP, addToast, setActiveTask, activeTask, recordGameEvent } = useGame()
 
   const hunterLevel = getLevelFromXP(stats.hunter?.xp || 0)
   const hunterXP = stats.hunter?.xp || 0
@@ -89,6 +89,7 @@ export default function HunterScreen({ initialActionId, idleResult, onBack }) {
             totalActions: (hunterRef.current.totalActions || 0) + 1,
             totalXP: (hunterRef.current.totalXP || 0) + ev.xp
           }
+          if (ev.actionId) recordGameEvent?.({ kind: 'hunter_hunt', actionId: ev.actionId, count: 1 })
         }
       }
 
