@@ -33,6 +33,7 @@ export default function SkillActionRow({
   meta = null,
   chip = null,
   right = null,
+  below = null,
   active = false,
   locked = false,
   lockBadge = null,
@@ -61,8 +62,9 @@ export default function SkillActionRow({
       type="button"
       onClick={interactive ? onClick : undefined}
       disabled={!interactive}
-      class={`w-full text-left flex items-center gap-3 px-3.5 py-3 rounded-2xl transition-colors ${frameClass} ${interactive ? 'cursor-pointer' : 'cursor-default'} ${className}`}
+      class={`w-full text-left flex flex-col gap-2 px-3.5 py-3 rounded-2xl transition-colors ${frameClass} ${interactive ? 'cursor-pointer' : 'cursor-default'} ${className}`}
     >
+      <div class="flex items-center gap-3 w-full">
       <div class={`w-[46px] h-[46px] flex-shrink-0 rounded-xl flex items-center justify-center ${tileClass}`}>
         {locked ? <LockGlyph /> : icon}
       </div>
@@ -98,6 +100,9 @@ export default function SkillActionRow({
           {chip}
         </div>
       ))}
+      </div>
+
+      {below && <div class="w-full text-center">{below}</div>}
     </button>
   )
 }
