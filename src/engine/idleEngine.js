@@ -698,6 +698,16 @@ export function simulateIdleGather(task, elapsedMs, inventory = [], stats = {}, 
     actions = Math.min(actions, maxFromMaterials)
   }
 
+  // Cap actions by available coins for gpCost tasks
+  if (task.gatherTask.gpCost) {
+    const invCoins = inventory.reduce((sum, slot) => sum + (slot?.itemId === 'coins' ? (slot?.quantity || 0) : 0), 0)
+    const bankCoins = (bank && bank['coins']) ? bank['coins'].quantity : 0
+    const maxFromCoins = Math.floor((invCoins + bankCoins) / task.gatherTask.gpCost)
+    if (maxFromCoins === 0) return null
+    if (maxFromCoins < actions) outOfMaterials = true
+    actions = Math.min(actions, maxFromCoins)
+  }
+
   // Gathered items land in the inventory by default. Once full, the action
   // stops — unless the player has the Construction unlock, which turns a full
   // inventory into an agility-scaled bank trip so gathering can continue.
@@ -765,6 +775,20 @@ export function simulateIdleGather(task, elapsedMs, inventory = [], stats = {}, 
       // Remainder comes from bank
       if (remaining > 0) itemsConsumed[itemId] = remaining
     }
+  }
+
+  // Deduct GP cost — inventory coins first, then bank
+  if (task.gatherTask.gpCost && actionsCompleted > 0) {
+    let remaining = task.gatherTask.gpCost * actionsCompleted
+    for (let i = 0; i < newInv.length && remaining > 0; i++) {
+      const slot = newInv[i]
+      if (!slot || slot.itemId !== 'coins') continue
+      const take = Math.min(slot.quantity, remaining)
+      newInv[i] = { ...slot, quantity: slot.quantity - take }
+      if (newInv[i].quantity === 0) newInv[i] = null
+      remaining -= take
+    }
+    if (remaining > 0) itemsConsumed['coins'] = (itemsConsumed['coins'] || 0) + remaining
   }
 
   // Compute itemsGained = net new items = (all banked + final inventory) - starting inventory
