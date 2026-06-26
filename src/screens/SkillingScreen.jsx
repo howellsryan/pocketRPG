@@ -782,7 +782,6 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
                     : formatActionDuration(action.ticks)}
                   {remaining !== null && <span class="text-[var(--color-gold)]"> · {remaining.toLocaleString()} actions</span>}
                   {action.runeReq && <span> · Runes: {Object.entries(action.runeReq).map(([id, qty]) => `${itemsData[id]?.name || id} ×${qty}`).join(', ')}</span>}
-                  {action.materials && <span class="block text-center text-[var(--color-gold)] mt-1">{Object.entries(action.materials).map(([id, qty]) => `${itemsData[id]?.name || id} ×${qty}`).join(', ')}</span>}
                   {action.itemReq && !hasItems && <span class="block text-[var(--color-blood-ember)] mt-1">✨ Needs: {action.itemReq.map(id => itemsData[id]?.name || id).join(' or ')}</span>}
                   {action.runeReq && !hasRunes && <span class="block text-[var(--color-blood-ember)] mt-1">🔮 Missing runes (or equip staff)</span>}
                   {requiresGildedAltarConstruction && !meetsGildedAltarConstruction && <span class="block text-[var(--color-blood-ember)] mt-1">🏠 Requires Construction level 75</span>}
@@ -807,6 +806,7 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
                 title={action.name}
                 meta={meta}
                 right={dropRight || undefined}
+                below={!levelLocked && action.materials ? <span class="text-[12.5px] font-semibold text-[var(--color-gold)]">{Object.entries(action.materials).map(([id, qty]) => `${itemsData[id]?.name || id} ×${qty}`).join(', ')}</span> : undefined}
                 active={isRunning}
                 locked={levelLocked}
                 lockBadge={`LV ${action.level}`}
