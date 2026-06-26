@@ -8517,7 +8517,7 @@
   "elder_tree_spirit": {
     "id": "elder_tree_spirit",
     "name": "Elder Tree Spirit",
-    "combatLevel": 52,
+    "combatLevel": 70,
     "hitpoints": 200,
     "stats": { "attack": 1, "strength": 1, "defence": 42, "magic": 70, "ranged": 1 },
     "attackSpeed": 5,
@@ -8546,7 +8546,7 @@
   "elder_rock_golem": {
     "id": "elder_rock_golem",
     "name": "Elder Rock Golem",
-    "combatLevel": 58,
+    "combatLevel": 70,
     "hitpoints": 200,
     "stats": { "attack": 60, "strength": 82, "defence": 48, "magic": 1, "ranged": 1 },
     "attackSpeed": 5,
