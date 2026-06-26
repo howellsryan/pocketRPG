@@ -87,6 +87,7 @@ export function GameProvider({ children }) {
   const [dailyTaskStates, setDailyTaskStates] = useState([])
   const dailyTaskStatesRef = useRef([])
   const dailyTaskDateRef = useRef(null)
+  const recordGameEventRef = useRef(null)
 
   const dirty = useRef({ stats: false, inventory: false, equipment: false, bank: false, player: false })
   // CombatScreen registers a force-kill handler here so handleSkip1h (in App) can invoke it
@@ -577,6 +578,10 @@ export function GameProvider({ children }) {
       autoSave()
       return next
     })
+    // Feed XP gains to the daily-task event bus (live + idle/offline all funnel
+    // through grantXP). Floor to keep task progress integer-aligned with displayed XP.
+    const gained = Math.floor(amount)
+    if (gained > 0) recordGameEventRef.current?.({ kind: 'skill_xp', skill, xp: gained })
   }, [autoSave])
 
   const updateInventory = useCallback((newInv) => {
@@ -1124,6 +1129,7 @@ export function GameProvider({ children }) {
       setDailyTaskStates(next)
     }
   }, [addToast])
+  recordGameEventRef.current = recordGameEvent
 
   const value = {
     loaded, player, stats, inventory, equipment, bank, currentHP, toasts, isSaving,
