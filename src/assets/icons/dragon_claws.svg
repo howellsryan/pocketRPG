@@ -5,11 +5,21 @@
     </linearGradient>
   </defs>
   <g stroke="#1a1410" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
-    <path d="M210 320 L210 230 C 210 210 226 200 246 200 L300 200 C 320 200 336 214 336 234 L336 320 Z" fill="url(#dragon_claws_m)"/>
-    <path d="M236 200 C 230 150 210 110 176 86 C 196 130 200 170 200 200 Z" fill="url(#dragon_claws_m)"/>
-    <path d="M276 200 C 272 142 256 96 224 68 C 244 116 246 164 246 200 Z" fill="url(#dragon_claws_m)"/>
-    <path d="M316 200 C 314 150 300 108 270 82 C 288 128 290 168 290 200 Z" fill="url(#dragon_claws_m)"/>
-    <path d="M210 320 L336 320 L322 430 C 320 446 308 456 292 456 L254 456 C 238 456 226 446 224 430 Z" fill="#5a2a1a"/>
-    <circle cx="273" cy="260" r="14" fill="#ffcaba" stroke="none"/>
+    <!-- LEFT CLAW (angled outward) -->
+    <g transform="rotate(-13 196 256)">
+      <path d="M156 256 L236 256 C 242 256 246 260 246 266 L238 388 C 236 404 224 414 208 414 L184 414 C 168 414 156 404 154 388 L146 266 C 146 260 150 256 156 256 Z" fill="#5a2a1a"/>
+      <path d="M150 262 C 138 206 120 152 110 116 C 126 162 154 216 174 262 Z" fill="url(#dragon_claws_m)"/>
+      <path d="M186 262 C 178 200 166 142 168 94 C 184 146 210 202 216 262 Z" fill="url(#dragon_claws_m)"/>
+      <path d="M226 262 C 224 210 230 158 240 120 C 246 166 250 214 250 262 Z" fill="url(#dragon_claws_m)"/>
+      <circle cx="196" cy="300" r="13" fill="#ffcaba" stroke="none"/>
+    </g>
+    <!-- RIGHT CLAW (mirrored) -->
+    <g transform="translate(512 0) scale(-1 1) rotate(-13 196 256)">
+      <path d="M156 256 L236 256 C 242 256 246 260 246 266 L238 388 C 236 404 224 414 208 414 L184 414 C 168 414 156 404 154 388 L146 266 C 146 260 150 256 156 256 Z" fill="#5a2a1a"/>
+      <path d="M150 262 C 138 206 120 152 110 116 C 126 162 154 216 174 262 Z" fill="url(#dragon_claws_m)"/>
+      <path d="M186 262 C 178 200 166 142 168 94 C 184 146 210 202 216 262 Z" fill="url(#dragon_claws_m)"/>
+      <path d="M226 262 C 224 210 230 158 240 120 C 246 166 250 214 250 262 Z" fill="url(#dragon_claws_m)"/>
+      <circle cx="196" cy="300" r="13" fill="#ffcaba" stroke="none"/>
+    </g>
   </g>
 </svg>

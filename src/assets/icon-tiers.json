@@ -364,7 +364,7 @@
     },
     "longsword": {
       "lumira_sword": "lumira", "2nd_age_longsword": "gold",
-      "blade_of_saeldor": "verdant", "shadow_of_tumaken": "void_king",
+      "blade_of_saeldor": "verdant",
       "ashen_sovereigns_edge": "krylth"
     },
     "dagger": {
@@ -376,7 +376,7 @@
       "shardglass_axe": "shardglass", "gold_spade": "gold"
     },
     "2h_sword": {
-      "scythe_of_vythar": "krylth", "durn_s_bulwark": "gorath"
+      "scythe_of_vythar": "krylth"
     }
   }
 }
