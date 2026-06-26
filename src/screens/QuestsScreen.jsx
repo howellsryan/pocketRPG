@@ -268,7 +268,7 @@ export default function QuestsScreen() {
                 <GildedComplete key={quest.id} complete={completed} className="rounded-2xl">
                   <SkillActionRow
                     icon={completed
-                      ? <GameIcon iconKey="check_mark" color="#4ade80" size={52} />
+                      ? <GameIcon iconKey="check_mark" color="#4ade80" size={32} />
                       : <GameIcon iconKey="clue_scroll_medium" size={52} />}
                     title={quest.name}
                     meta={<span class="flex items-center gap-2">

@@ -441,7 +441,6 @@ export default function GatherScreen({ initialTaskId, idleResult }) {
                   {task.requiresItem && !task.isClue && <> · Requires: {nameOf(task.requiresItem)}</>}
                   {task.materials && <> · Needs: {Object.entries(task.materials).map(([id, qty]) => `${nameOf(id)} ×${qty}`).join(', ')}</>}
                 </>}
-                chip={<>→ {nameOf(task.product)}</>}
                 active={globalActiveTask?.type === 'gather' && globalActiveTask.gatherTask?.id === task.id}
                 disabled={!enabled}
                 onClick={() => startTask(task)}

@@ -165,30 +165,30 @@ export default function CluesScreen() {
             const isRunning = clueActive?.gatherTask?.id === task.id
 
             return (
-              <div key={task.id} class="flex items-stretch gap-2">
-                <SkillActionRow
-                  className="flex-1 min-w-0"
-                  icon={<GameIcon iconKey={task.requiresItem} size={52} />}
-                  title={task.name}
-                  meta={<>
-                    ⏱ {(task.ticks * 0.6).toFixed(1)}s/action
-                    <span class={`block mt-0.5 ${isRunning ? 'text-[var(--color-gold)]' : enabled ? 'text-[#4caf50]' : 'text-[#e57373]'}`}>
-                      {isRunning ? '● running' : enabled ? '✓ ready' : '✗ need scroll'}
-                    </span>
-                  </>}
-                  chip={isRunning ? 'Solving' : 'Rewards'}
-                  active={isRunning}
-                  disabled={!enabled && !isRunning}
-                  onClick={() => (isRunning ? setShowPanel(true) : (enabled && startTask(task)))}
-                />
-                <button
-                  onClick={() => setInfoTask(task)}
-                  aria-label="Drop rates"
-                  class="flex-shrink-0 w-11 rounded-2xl border border-[var(--color-void-border)] bg-[var(--color-void-light)] text-[var(--color-gold)] text-[14px] font-bold flex items-center justify-center active:opacity-70"
-                >
-                  ⓘ
-                </button>
-              </div>
+              <SkillActionRow
+                key={task.id}
+                icon={<GameIcon iconKey={task.requiresItem} size={52} />}
+                title={task.name}
+                meta={<>
+                  ⏱ {(task.ticks * 0.6).toFixed(1)}s/action
+                  <span class={`block mt-0.5 ${isRunning ? 'text-[var(--color-gold)]' : enabled ? 'text-[#4caf50]' : 'text-[#e57373]'}`}>
+                    {isRunning ? '● running' : enabled ? '✓ ready' : '✗ need scroll'}
+                  </span>
+                </>}
+                right={
+                  <span
+                    role="button"
+                    tabIndex={0}
+                    onClick={(e) => { e.stopPropagation(); setInfoTask(task) }}
+                    aria-label="Drop rates"
+                    class="flex-shrink-0 w-11 h-11 rounded-2xl border border-[var(--color-void-border)] bg-[var(--color-void-light)] text-[var(--color-gold)] text-[14px] font-bold flex items-center justify-center active:opacity-70"
+                  >
+                    ⓘ
+                  </span>
+                }
+                active={isRunning}
+                onClick={() => (isRunning ? setShowPanel(true) : (enabled && startTask(task)))}
+              />
             )
           })}
         </div>

@@ -141,7 +141,6 @@ export default function MinigamesScreen() {
                             </span>
                           )}
                         </>}
-                        chip={minigamesData.itemNames[task.product] || task.product}
                         disabled={!enabled}
                         onClick={() => startMinigame(task)}
                       />
