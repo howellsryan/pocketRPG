@@ -367,7 +367,7 @@
       "blade_of_saeldor": "verdant",
       "ashen_sovereigns_edge": "krylth"
     },
-    "dagger": {
+    "rapier": {
       "ghraxis_rapier": "lumira", "boneclaw_rapier": "bone",
       "fang_of_osmun": "void_king"
     },
@@ -375,8 +375,6 @@
       "2nd_age_axe": "gold", "emberhowl_axe": "fire_orange",
       "shardglass_axe": "shardglass", "gold_spade": "gold"
     },
-    "2h_sword": {
-      "scythe_of_vythar": "krylth"
-    }
+    "2h_sword": {}
   }
 }
