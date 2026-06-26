@@ -806,7 +806,6 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
                 icon={productItem ? <GameIcon item={productItem} size={52} /> : <SkillIcon skill={selectedSkill} size={52} />}
                 title={action.name}
                 meta={meta}
-                chip={action.product && !action.dropTable ? <>→ {itemsData[action.product]?.name || action.product}</> : null}
                 right={dropRight || undefined}
                 active={isRunning}
                 locked={levelLocked}
