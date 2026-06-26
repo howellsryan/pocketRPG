@@ -4,6 +4,7 @@ import Panel from '../components/Panel.jsx'
 import Modal from '../components/Modal.jsx'
 import SectionHeader from '../components/SectionHeader.jsx'
 import SkillActivePanel from '../components/SkillActivePanel.jsx'
+import SkillActionRow from '../components/SkillActionRow.jsx'
 import GameIcon from '../components/GameIcon.jsx'
 import { getActionProgress } from '../hooks/useActionTick.js'
 import { countItem } from '../engine/inventory.js'
@@ -162,43 +163,32 @@ export default function CluesScreen() {
             const hasRequiredItem = hasClueScroll(task.requiresItem, inventory, bank, equipment)
             const enabled = hasRequiredItem
             const isRunning = clueActive?.gatherTask?.id === task.id
-            const rowClass = enabled
-              ? 'bg-[var(--color-void-light)] border-[#2a2a2a] opacity-100'
-              : 'bg-[#111] border-[#1a1a1a] opacity-45'
 
             return (
-              <div
+              <SkillActionRow
                 key={task.id}
-                class={`p-3 rounded-xl border flex items-center gap-3 ${rowClass} ${isRunning ? 'ring-1 ring-[var(--color-gold)]' : ''}`}
-              >
-                <button
-                  onClick={() => (isRunning ? setShowPanel(true) : (enabled && startTask(task)))}
-                  disabled={!enabled && !isRunning}
-                  class="flex-1 min-w-0 flex items-center gap-3 text-left bg-transparent border-0 p-0 disabled:cursor-not-allowed"
-                >
-                  <GameIcon iconKey={task.requiresItem} size={28} class="flex-shrink-0" />
-                  <div class="flex-1 min-w-0">
-                    <div class="text-[13px] font-semibold text-[var(--color-parchment)] mb-1">{task.name}</div>
-                    <div class="text-[10px] text-[#c8a96e] opacity-80">
-                      ⏱ {(task.ticks * 0.6).toFixed(1)}s/action
-                    </div>
-                  </div>
-                  <div class="flex-shrink-0 text-right">
-                    <div class="text-[18px]">→</div>
-                    <div class="text-[9px] text-[#c8a96e] opacity-70">{isRunning ? 'Solving' : 'Rewards'}</div>
-                    <div class={`text-[9px] mt-[2px] ${isRunning ? 'text-[var(--color-gold)]' : enabled ? 'text-[#4caf50]' : 'text-[#e57373]'}`}>
-                      {isRunning ? '● running' : enabled ? '✓ ready' : '✗ need scroll'}
-                    </div>
-                  </div>
-                </button>
-                <button
-                  onClick={(e) => { e.stopPropagation(); setInfoTask(task) }}
-                  aria-label="Drop rates"
-                  class="flex-shrink-0 w-9 h-9 rounded-full border border-[var(--color-void-border)] bg-[var(--color-void-light)] text-[var(--color-gold)] text-[14px] font-bold flex items-center justify-center active:opacity-70"
-                >
-                  ⓘ
-                </button>
-              </div>
+                icon={<GameIcon iconKey={task.requiresItem} size={52} />}
+                title={task.name}
+                meta={<>
+                  ⏱ {(task.ticks * 0.6).toFixed(1)}s/action
+                  <span class={`block mt-0.5 ${isRunning ? 'text-[var(--color-gold)]' : enabled ? 'text-[#4caf50]' : 'text-[#e57373]'}`}>
+                    {isRunning ? '● running' : enabled ? '✓ ready' : '✗ need scroll'}
+                  </span>
+                </>}
+                right={
+                  <span
+                    role="button"
+                    tabIndex={0}
+                    onClick={(e) => { e.stopPropagation(); setInfoTask(task) }}
+                    aria-label="Drop rates"
+                    class="flex-shrink-0 w-11 h-11 rounded-2xl border border-[var(--color-void-border)] bg-[var(--color-void-light)] text-[var(--color-gold)] text-[14px] font-bold flex items-center justify-center active:opacity-70"
+                  >
+                    ⓘ
+                  </span>
+                }
+                active={isRunning}
+                onClick={() => (isRunning ? setShowPanel(true) : (enabled && startTask(task)))}
+              />
             )
           })}
         </div>

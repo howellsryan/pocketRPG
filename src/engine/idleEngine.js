@@ -11,7 +11,7 @@ import {
   effectiveMagic, monsterMagicDefenceRoll, magicMaxHit
 } from './formulas.js'
 import { getEquipmentBonuses, getAttackSpeed, getAttackStyle, getCombatType, getRangedAmmoRequirementFailure, getEffectiveWornMagicDamage } from './equipment.js'
-import { getEffectiveToolActionTicks, getEquippedSkillXpMultiplier } from './skilling.js'
+import { getEffectiveToolActionTicks, getEquippedSkillXpMultiplier, rollGatherBonusDrops } from './skilling.js'
 import { hasRequiredRunes, getRunesToConsume } from './runes.js'
 import { MELEE_XP_PER_DAMAGE, RANGED_XP_PER_DAMAGE, MAGIC_XP_PER_DAMAGE, HP_XP_PER_DAMAGE, GATHERING_SKILLS, IDLE_AUTOBANK_GATHERING_SKILLS, GATHER_AUTOBANK_CONSTRUCTION_LEVEL } from '../utils/constants.js'
 import { addItem, canFit } from './inventory.js'
@@ -326,6 +326,10 @@ export function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, st
       const drops = task.action.dropTable
         ? rollDropTableOnce(task.action.dropTable)
         : { [task.action.product]: productQty }
+      const bonus = rollGatherBonusDrops(task.skill)
+      for (const [itemId, qty] of Object.entries(bonus)) {
+        drops[itemId] = (drops[itemId] || 0) + qty
+      }
 
       if (!canFit(newInv, drops, itemsData)) {
         if (bankWhenFull) {
