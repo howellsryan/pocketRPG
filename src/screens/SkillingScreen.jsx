@@ -12,7 +12,7 @@ import { emptySession, ratePerHour } from '../engine/activitySession.js'
 import { getActionProgress } from '../hooks/useActionTick.js'
 import { STUB_SKILLS, GATHERING_SKILLS, PRODUCTION_SKILLS, UTILITY_SKILLS, SCREENS, formatDropChance, GATHER_AUTOBANK_CONSTRUCTION_LEVEL } from '../utils/constants.js'
 import { getLevelFromXP } from '../engine/experience.js'
-import { createSkillingState, processSkillingTick, getAvailableActions, checkBurn, getEffectiveToolActionTicks, hasToolForSkill, getEquippedSkillXpMultiplier, TOOL_SKILLS } from '../engine/skilling.js'
+import { createSkillingState, processSkillingTick, getAvailableActions, checkBurn, getEffectiveToolActionTicks, hasToolForSkill, getEquippedSkillXpMultiplier, rollGatherBonusDrops, TOOL_SKILLS } from '../engine/skilling.js'
 import { addItem, removeItem, countItem, canFit } from '../engine/inventory.js'
 import { hasRequiredRunes, getRunesToConsume } from '../engine/runes.js'
 import { onTick } from '../engine/tick.js'
@@ -312,7 +312,12 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
             const qty = action.productQty || 1
             if (isGatheringSkill) {
               // Gathered resources fill the inventory; stop or bank-trip on full.
-              if (!depositGathered(newInv, { [action.product]: qty })) return
+              const drops = { [action.product]: qty }
+              const bonus = rollGatherBonusDrops(state.skill)
+              for (const [itemId, bonusQty] of Object.entries(bonus)) {
+                drops[itemId] = (drops[itemId] || 0) + bonusQty
+              }
+              if (!depositGathered(newInv, drops)) return
               updateInventory(newInv)
               recordGameEvent?.({ kind: 'skill_gather', skill: state.skill, itemId: action.product, count: qty })
             } else {
