@@ -11,6 +11,7 @@ import {
   getIronmanShopValue,
   getHighAlchValue,
   IRONMAN_VALUE_FRACTION,
+  IRONMAN_VALUE_CAP,
   EPIC_LOOT_THRESHOLD,
 } from '../src/utils/itemValue.js'
 
@@ -97,6 +98,14 @@ describe('getIronmanShopValue (Ironman vendor value)', () => {
     expect(getIronmanShopValue(ironItems.valueless)).toBe(0)
     expect(getIronmanShopValue(null as any)).toBe(0)
   })
+
+  it('caps the Ironman vendor value at 1m (fraction fallback and explicit)', () => {
+    expect(IRONMAN_VALUE_CAP).toBe(1_000_000)
+    // 1.58b shopValue × 0.4 = 632m, clamped to 1m.
+    expect(getIronmanShopValue({ id: 'tbow', shopValue: 1_581_879_938 })).toBe(IRONMAN_VALUE_CAP)
+    // An explicit over-cap value is clamped too.
+    expect(getIronmanShopValue({ id: 'x', shopValue: 1, ironmanShopValue: 5_000_000 })).toBe(IRONMAN_VALUE_CAP)
+  })
 })
 
 describe('getHighAlchValue (alch payout, account-aware)', () => {
@@ -109,6 +118,13 @@ describe('getHighAlchValue (alch payout, account-aware)', () => {
     const ironBase = getIronmanShopValue(item)
     expect(getHighAlchValue(item, { isIronman: true })).toBe(Math.floor(ironBase * 1.1))
     expect(getHighAlchValue(item, { isIronman: true })).toBeLessThan(getHighAlchValue(item))
+  })
+
+  it('caps the Ironman alch value at 1m', () => {
+    const tbow = { id: 'tbow', shopValue: 1_581_879_938 }
+    expect(getHighAlchValue(tbow, { isIronman: true })).toBe(IRONMAN_VALUE_CAP)
+    // Normal accounts are not capped — they alch the full shopValue × 1.1.
+    expect(getHighAlchValue(tbow, { isIronman: false })).toBeGreaterThan(IRONMAN_VALUE_CAP)
   })
 })
 
