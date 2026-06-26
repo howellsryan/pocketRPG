@@ -6,6 +6,7 @@ import TradingPostSellForm from '../components/TradingPostSellForm.jsx'
 import { formatQuantity } from '../utils/helpers'
 import GameIcon from '../components/GameIcon.jsx'
 import { isOrderBookItem } from '../engine/storeRules.js'
+import { getIronmanShopValue } from '../utils/itemValue.js'
 import { api, getToken, getCharacterId } from '../cloud/api.js'
 import { pullSave, applyCloudSave, pushNow } from '../cloud/sync.js'
 
@@ -255,7 +256,9 @@ export default function BankScreen() {
 
     const item = itemsData[selected.itemId]
     if (!item) return
-    const defaultPrice = Math.floor(Number(item.shopValue) || 0)
+    // Ironmen vendor at the reduced Ironman value (display-only here; the server
+    // is authoritative for the payout on the quick-sell path).
+    const defaultPrice = isIronman ? getIronmanShopValue(item) : Math.floor(Number(item.shopValue) || 0)
     const price = Math.floor(Number(overridePrice ?? defaultPrice) || 0)
     if (price <= 0) {
       addToast('This item has no value', 'error')
@@ -840,6 +843,7 @@ export default function BankScreen() {
               {/* Sell section */}
               {selItem?.shopValue > 0 && selItem?.type !== 'currency' && (() => {
                 const useQuickSell = isIronman || selItem?.isUntradeable || !isOrderBookItem(selItem)
+                const sellUnit = isIronman ? getIronmanShopValue(selItem) : selItem?.shopValue
                 return (
                   <div class="border-t border-[#333] pt-2">
                     <p class="text-[10px] text-[var(--color-parchment)] opacity-40 mb-1.5 uppercase tracking-wider font-bold">
@@ -862,7 +866,7 @@ export default function BankScreen() {
                         <button onClick={() => handleSell(selected.quantity)}
                           disabled={sellBusy}
                           class={`py-2 rounded-lg text-white font-semibold text-sm col-span-3 ${sellBusy ? 'bg-[#222] opacity-30' : 'bg-[var(--color-gold-dim)] active:opacity-80'}`}>
-                          Sell All ({selected.quantity * selItem?.shopValue} gp)
+                          Sell All ({selected.quantity * sellUnit} gp)
                         </button>
                       </div>
                     )}

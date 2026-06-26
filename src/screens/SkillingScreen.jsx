@@ -18,6 +18,7 @@ import { hasRequiredRunes, getRunesToConsume } from '../engine/runes.js'
 import { onTick } from '../engine/tick.js'
 import { markScreenTick } from '../engine/activityRunner.js'
 import { formatNumber } from '../utils/helpers.js'
+import { getHighAlchValue } from '../utils/itemValue.js'
 import { formatActionDuration } from '../utils/formatters.js'
 import { calculateDungeoneeringTokensForAction, getDungeoneeringRewardCost, canAffordDungeoneeringReward } from '../engine/dungeoneeringTokens.js'
 import { api, getToken, getCharacterId } from '../cloud/api.js'
@@ -56,7 +57,7 @@ function calculateRemainingActions(action, inventory, bank) {
 }
 
 export default function SkillingScreen({ initialSkillId, initialActionId, idleResult, onNavigate }) {
-  const { stats, inventory, bank, equipment, updateInventory, updateBankDirect, grantXP, addToast, setActiveTask, activeTask, dungeoneeringTokens, awardDungeoneeringTokens, trySpendDungeoneeringTokens, loadGame, recordGameEvent } = useGame()
+  const { stats, inventory, bank, equipment, isIronman, updateInventory, updateBankDirect, grantXP, addToast, setActiveTask, activeTask, dungeoneeringTokens, awardDungeoneeringTokens, trySpendDungeoneeringTokens, loadGame, recordGameEvent } = useGame()
   const [selectedSkill, setSelectedSkill] = useState(initialSkillId || null)
   const [selectedAction, setSelectedAction] = useState(null)
   const [skilling, setSkilling] = useState(null)
@@ -294,7 +295,7 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
                 return
               }
 
-              const alchValue = Math.floor(alchItem.shopValue * 1.1)
+              const alchValue = getHighAlchValue(alchItem, { isIronman })
 
               // Remove the alchemized item from inventory
               if (newInv[alchemyItemIdx].quantity > 1) {
@@ -880,7 +881,7 @@ Shop value: ×1.1
                   // Skip if not stackable but quantity > 1 (only show first instance)
                   return null
                 }
-                const alchValue = Math.floor(item.shopValue * 1.1)
+                const alchValue = getHighAlchValue(item, { isIronman })
                 return (
                   <button
                     key={`${idx}-${slot.itemId}`}

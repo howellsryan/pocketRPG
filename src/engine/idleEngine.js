@@ -13,6 +13,7 @@ import {
 import { getEquipmentBonuses, getAttackSpeed, getAttackStyle, getCombatType, getRangedAmmoRequirementFailure, getEffectiveWornMagicDamage } from './equipment.js'
 import { getEffectiveToolActionTicks, getEquippedSkillXpMultiplier, rollGatherBonusDrops } from './skilling.js'
 import { hasRequiredRunes, getRunesToConsume } from './runes.js'
+import { getHighAlchValue } from '../utils/itemValue.js'
 import { MELEE_XP_PER_DAMAGE, RANGED_XP_PER_DAMAGE, MAGIC_XP_PER_DAMAGE, HP_XP_PER_DAMAGE, GATHERING_SKILLS, IDLE_AUTOBANK_GATHERING_SKILLS, GATHER_AUTOBANK_CONSTRUCTION_LEVEL } from '../utils/constants.js'
 import { addItem, canFit } from './inventory.js'
 import { getAgilityBankDelayFromStats, simulateIdleAgility } from './agility.js'
@@ -108,8 +109,9 @@ export function formatIdleTime(ms) {
  * itemsData is required when equipment is provided (for tool lookup).
  * inventory is required when bankingEnabled is true (for inventory processing).
  */
-export function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, stats = {}, itemsData = {}, inventory = []) {
+export function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, stats = {}, itemsData = {}, inventory = [], options = {}) {
   if (!task || !task.action) return null
+  const isIronman = !!options.isIronman
 
   const totalTicks = Math.floor(elapsedMs / TICK_MS)
 
@@ -279,7 +281,7 @@ export function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, st
   if (task.action.type === 'alchemy' && task.selectedAlchemyItem) {
     const alchItem = itemsData[task.selectedAlchemyItem.itemId]
     if (alchItem && typeof alchItem.shopValue === 'number') {
-      const coinsPerAction = Math.floor(alchItem.shopValue * 1.1)
+      const coinsPerAction = getHighAlchValue(alchItem, { isIronman })
       coinsGained = coinsPerAction * actions
 
       // Consume the alchemized items from inventory

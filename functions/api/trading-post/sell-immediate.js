@@ -5,6 +5,7 @@ import { loadCharacterWithSave, writeSave } from '../../_lib/game/save.js'
 import { toErrorResponse } from '../../_lib/game/errors.js'
 import { auditLog } from '../../_lib/game/audit.js'
 import { isOrderBookItem, normalizeSellSource } from '../../_lib/game/tradingPost.js'
+import { getIronmanShopValue } from '../../_lib/game/itemValue.js'
 import { removeItemFromSource, canonicalItemId, normalizeSaveItemIds } from '../../_lib/game/inventory.js'
 import { addCoins } from '../../_lib/game/economy.js'
 
@@ -36,21 +37,31 @@ export async function onRequestPost({ request, env }) {
     const itemId = canonicalItemId(itemsData, rawItemId)
     const item = itemsData[itemId] || itemsData[rawItemId]
     if (!item) return json({ error: 'Item not found', code: 'ITEM_NOT_FOUND' }, 404)
-    if (isOrderBookItem(item)) {
+
+    const { row, saveObject, saveRevision } = await loadCharacterWithSave(env, characterId, auth.identity.id)
+    const isIronman = !!row?.is_ironman
+
+    // Order-book items (tradeable goods, plus boss/raid/clue uniques) normally
+    // have to be listed on the player order book. Ironmen can't touch the order
+    // book at all, so for them this immediate-sell path is the ONLY liquidation
+    // route — let them vendor order-book items here. Normal accounts still get
+    // bounced to /api/trading-post/list.
+    if (isOrderBookItem(item) && !isIronman) {
       return json({
         error: 'Restricted items must be listed on the order book via /api/trading-post/list.',
         code: 'ORDER_BOOK_REQUIRED',
       }, 400)
     }
-    const unit = Math.floor(Number(item.shopValue) || 0)
-    if (unit <= 0) return json({ error: 'This item has no shop value.', code: 'NO_VALUE' }, 400)
 
-    // No Ironman gate here: this endpoint already rejects order-book items
-    // (the "trading post offers" Ironmen are barred from). It only settles the
-    // immediate-execute store path — General Store stock, quest-unlock items and
-    // the untradeable sink — at the item's static shopValue, which Ironmen may
-    // use (matching the General Store buy path in /api/purchase).
-    const { saveObject, saveRevision } = await loadCharacterWithSave(env, characterId, auth.identity.id)
+    // Ironmen settle at the controlled Ironman vendor value (explicit
+    // ironmanShopValue, else a fraction of shopValue) so liquidation can't pay
+    // out the full shop/market rate. Normal accounts keep the static shopValue
+    // for the General Store stock / quest-unlock items / untradeable sink they
+    // reach here.
+    const unit = isIronman
+      ? getIronmanShopValue(item)
+      : Math.floor(Number(item.shopValue) || 0)
+    if (unit <= 0) return json({ error: 'This item has no shop value.', code: 'NO_VALUE' }, 400)
 
     normalizeSaveItemIds(saveObject, itemsData)
     removeItemFromSource(saveObject, itemId, quantity, source)

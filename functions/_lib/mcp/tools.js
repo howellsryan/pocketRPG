@@ -76,8 +76,8 @@ async function applySaveIntent({ env, authorization, identity }, characterIdArg,
   const id = await resolveCharacterId(env, authorization, characterIdArg)
   const lock = await assertNotInActiveMatch(env, id)
   if (lock) throw new Error('Blocked: the character is in an active PvP match.')
-  const { saveObject, saveRevision } = await loadCharacterWithSave(env, id, identity.id)
-  const result = intentFn(saveObject)
+  const { row, saveObject, saveRevision } = await loadCharacterWithSave(env, id, identity.id)
+  const result = intentFn(saveObject, { isIronman: !!row?.is_ironman })
   const write = await writeSave(env, id, saveObject, saveRevision)
   await auditLog(env, auditType, { characterId: id, identityId: identity.id, ...result }, { swallow: true })
   return ok({ characterId: id, ...result, save_revision: write.saveRevision })
@@ -122,7 +122,7 @@ async function claimIdleCore(env, characterId, identityId, authorization) {
     return claimMinigameCore(env, characterId, authorization, task, elapsedMs, now)
   }
 
-  const { saveObject, saveRevision } = await loadCharacterWithSave(env, characterId, identityId)
+  const { row, saveObject, saveRevision } = await loadCharacterWithSave(env, characterId, identityId)
 
   // Combat continues like skilling, but a simulated death clears the slot and
   // resets HP to max (rewards up to the killing blow are kept by the engine).
@@ -145,7 +145,7 @@ async function claimIdleCore(env, characterId, identityId, authorization) {
     return { claimed: true, elapsedMs, ...result }
   }
 
-  const result = runIdleTask(saveObject, task, elapsedMs)
+  const result = runIdleTask(saveObject, task, elapsedMs, { isIronman: !!row?.is_ironman })
   if (!result.applied) return { claimed: false, reason: result.reason || 'no_progress', elapsedMs }
   await writeSave(env, characterId, saveObject, saveRevision)
   await resetIdleActiveAt(env, characterId, now)
@@ -758,7 +758,7 @@ const TOOLS = {
 
   cast_magic({ action_id, target_item_id, quantity, character_id }, ctx) {
     if (!action_id) throw new Error('action_id is required.')
-    return applySaveIntent(ctx, character_id, (save) => castMagic(save, action_id, { targetItemId: target_item_id, quantity }), 'mcp_cast_magic')
+    return applySaveIntent(ctx, character_id, (save, { isIronman }) => castMagic(save, action_id, { targetItemId: target_item_id, quantity, isIronman }), 'mcp_cast_magic')
   },
 
   // Permanent credit unlock — server-authoritative price registry; debits the

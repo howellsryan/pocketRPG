@@ -8,6 +8,10 @@ import {
   getLootTotalValue,
   isEpicLootValue,
   hasEpicLootDrop,
+  getIronmanShopValue,
+  getHighAlchValue,
+  IRONMAN_VALUE_FRACTION,
+  IRONMAN_VALUE_CAP,
   EPIC_LOOT_THRESHOLD,
 } from '../src/utils/itemValue.js'
 
@@ -69,6 +73,58 @@ describe('epic loot threshold (purple fireworks)', () => {
     expect(isLegendaryItem('legendary_blade', items)).toBe(true) // exactly 1m qualifies
     expect(isLegendaryItem('rune_sword', items)).toBe(false)
     expect(isLegendaryItem('shrimps', items)).toBe(false)
+  })
+})
+
+describe('getIronmanShopValue (Ironman vendor value)', () => {
+  const ironItems = {
+    rune_sword: { id: 'rune_sword', shopValue: 700_000 },
+    capped: { id: 'capped', shopValue: 1000, ironmanShopValue: 7 },
+    free: { id: 'free', ironmanShopValue: 0 },
+    valueless: { id: 'valueless', shopValue: 0 },
+  }
+
+  it('falls back to the fraction of shopValue when no explicit value is set', () => {
+    expect(getIronmanShopValue(ironItems.rune_sword)).toBe(Math.floor(700_000 * IRONMAN_VALUE_FRACTION))
+    expect(IRONMAN_VALUE_FRACTION).toBeLessThan(1)
+  })
+
+  it('honours an explicit per-item ironmanShopValue (including 0)', () => {
+    expect(getIronmanShopValue(ironItems.capped)).toBe(7)
+    expect(getIronmanShopValue(ironItems.free)).toBe(0)
+  })
+
+  it('returns 0 for valueless / missing items', () => {
+    expect(getIronmanShopValue(ironItems.valueless)).toBe(0)
+    expect(getIronmanShopValue(null as any)).toBe(0)
+  })
+
+  it('caps the Ironman vendor value at 1m (fraction fallback and explicit)', () => {
+    expect(IRONMAN_VALUE_CAP).toBe(1_000_000)
+    // 1.58b shopValue × 0.4 = 632m, clamped to 1m.
+    expect(getIronmanShopValue({ id: 'tbow', shopValue: 1_581_879_938 })).toBe(IRONMAN_VALUE_CAP)
+    // An explicit over-cap value is clamped too.
+    expect(getIronmanShopValue({ id: 'x', shopValue: 1, ironmanShopValue: 5_000_000 })).toBe(IRONMAN_VALUE_CAP)
+  })
+})
+
+describe('getHighAlchValue (alch payout, account-aware)', () => {
+  const item = { id: 'rune_sword', shopValue: 700_000 }
+  it('pays normal accounts shopValue × 1.1', () => {
+    expect(getHighAlchValue(item, { isIronman: false })).toBe(Math.floor(700_000 * 1.1))
+    expect(getHighAlchValue(item)).toBe(Math.floor(700_000 * 1.1))
+  })
+  it('pays Ironmen the reduced Ironman value × 1.1', () => {
+    const ironBase = getIronmanShopValue(item)
+    expect(getHighAlchValue(item, { isIronman: true })).toBe(Math.floor(ironBase * 1.1))
+    expect(getHighAlchValue(item, { isIronman: true })).toBeLessThan(getHighAlchValue(item))
+  })
+
+  it('caps the Ironman alch value at 1m', () => {
+    const tbow = { id: 'tbow', shopValue: 1_581_879_938 }
+    expect(getHighAlchValue(tbow, { isIronman: true })).toBe(IRONMAN_VALUE_CAP)
+    // Normal accounts are not capped — they alch the full shopValue × 1.1.
+    expect(getHighAlchValue(tbow, { isIronman: false })).toBeGreaterThan(IRONMAN_VALUE_CAP)
   })
 })
 
