@@ -60,7 +60,7 @@ export const SLAYER_MASTERS = [
     monsterPool: [
       'briar_giant', 'glaive_skeleton', 'mirebound_husk', 'verdant_stalker',
       'stoneglare_basilisk', 'embertongue_lizard', 'hollow_reaver', 'green_dragon',
-      'lesser_fiend', 'briarheart_treant', 'frostmaw_direwolf', 'pyreclaw_demon',
+      'lesser_fiend', 'ember_giant', 'briarheart_treant', 'frostmaw_direwolf', 'pyreclaw_demon',
       'wraithgale_specter', 'bloodmoon_stalker', 'ash_wyrm',
     ],
   },

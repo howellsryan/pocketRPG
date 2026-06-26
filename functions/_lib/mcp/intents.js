@@ -215,9 +215,9 @@ export function isClaimableTask(task) {
   return true
 }
 
-// IDs for gather tasks that are safe to idle via MCP (no GP cost, not clue/oneShot).
+// IDs for gather tasks that are safe to idle via MCP (not clue/oneShot).
 export const GATHER_TASK_IDS = GATHER_TASKS
-  .filter((t) => !t.isClue && !t.oneShot && !t.gpCost)
+  .filter((t) => !t.isClue && !t.oneShot)
   .map((t) => t.id)
 
 // Build (and validate) a type:'gather' idle task.
@@ -231,9 +231,6 @@ export function buildGatherTask(_save, taskId) {
   }
   if (gatherTask.oneShot) {
     throw new GameApiError('ONE_SHOT_NOT_SUPPORTED', `'${gatherTask.name}' is a one-shot minigame task — complete it in the game client.`, 400)
-  }
-  if (gatherTask.gpCost) {
-    throw new GameApiError('GP_COST_NOT_SUPPORTED', `'${gatherTask.name}' costs ${gatherTask.gpCost} GP per action which is not yet tracked by the MCP idle engine. Use the game client.`, 400)
   }
   return { type: 'gather', gatherTask }
 }

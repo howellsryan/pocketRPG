@@ -429,7 +429,8 @@ export default function GatherScreen({ initialTaskId, idleResult }) {
               ([id, qty]) => (countItem(inventory, id) + (bank[id]?.quantity || 0)) >= qty
             )
             const hasRequiredItem = !task.requiresItem || hasItemAnywhere(task.requiresItem, inventory, bank, equipment)
-            const enabled = hasMats && hasRequiredItem
+            const hasCoins = !task.gpCost || (countItem(inventory, 'coins') + (bank['coins']?.quantity || 0)) >= task.gpCost
+            const enabled = hasMats && hasRequiredItem && hasCoins
 
             return (
               <SkillActionRow
@@ -439,7 +440,10 @@ export default function GatherScreen({ initialTaskId, idleResult }) {
                 meta={<>
                   ⏱ {(task.ticks * 0.6).toFixed(1)}s/action
                   {task.requiresItem && !task.isClue && <> · Requires: {nameOf(task.requiresItem)}</>}
-                  {task.materials && <> · Needs: {Object.entries(task.materials).map(([id, qty]) => `${nameOf(id)} ×${qty}`).join(', ')}</>}
+                  {(task.materials || task.gpCost) && <> · Needs: {[
+                    ...(task.materials ? Object.entries(task.materials).map(([id, qty]) => `${nameOf(id)} ×${qty}`) : []),
+                    ...(task.gpCost ? [`${task.gpCost.toLocaleString()} coins`] : []),
+                  ].join(', ')}</>}
                 </>}
                 active={globalActiveTask?.type === 'gather' && globalActiveTask.gatherTask?.id === task.id}
                 disabled={!enabled}
