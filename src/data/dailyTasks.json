@@ -88,22 +88,6 @@
     "trigger": { "type": "monster_kill", "monsterId": "pasture_bull", "target": 15 }
   },
   {
-    "id": "gain_mining_xp",
-    "tier": "Novice",
-    "name": "Earn Mining XP",
-    "description": "Earn 500 Mining XP.",
-    "icon": "iron_ore",
-    "trigger": { "type": "skill_xp", "skill": "mining", "target": 500 }
-  },
-  {
-    "id": "gain_prayer_xp",
-    "tier": "Novice",
-    "name": "Earn Prayer XP",
-    "description": "Earn 200 Prayer XP.",
-    "icon": "bones",
-    "trigger": { "type": "skill_xp", "skill": "prayer", "target": 200 }
-  },
-  {
     "id": "cook_chicken_novice",
     "tier": "Novice",
     "name": "Cook Chicken",
@@ -310,14 +294,6 @@
     "description": "Complete any quest.",
     "icon": "feather",
     "trigger": { "type": "quest_complete", "target": 1 }
-  },
-  {
-    "id": "gain_agility_xp",
-    "tier": "Experienced",
-    "name": "Earn Agility XP",
-    "description": "Earn 5,000 Agility XP.",
-    "icon": "feather",
-    "trigger": { "type": "skill_xp", "skill": "agility", "target": 5000 }
   },
   {
     "id": "kill_sanguine_velds",
