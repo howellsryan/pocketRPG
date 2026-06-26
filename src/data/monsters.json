@@ -1178,7 +1178,7 @@
       {
         "itemId": "runeforged_scimitar",
         "quantity": 1,
-        "chance": 0.005
+        "chance": 0.0078125
       },
       {
         "itemId": "clue_scroll_hard",
