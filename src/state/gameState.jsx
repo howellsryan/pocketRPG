@@ -226,7 +226,7 @@ export function GameProvider({ children }) {
         let sim = null
         try {
           if (savedTask.type === 'skill') {
-            sim = simulateIdleSkilling(savedTask, elapsedMs, b, eq, s, itemsData, inv)
+            sim = simulateIdleSkilling(savedTask, elapsedMs, b, eq, s, itemsData, inv, { isIronman: getIronmanMode() })
           } else if (savedTask.type === 'gather' || savedTask.type === 'clue') {
             sim = simulateIdleGather(savedTask, elapsedMs, inv, s, itemsData, b)
           } else if (savedTask.type === 'combat') {
@@ -968,6 +968,7 @@ export function GameProvider({ children }) {
       currentHP,
       autoBankLoot,
       bankConfig,
+      showInfoToasts,
       equipmentPresets,
       homeShortcuts,
       combatStance,
@@ -988,7 +989,7 @@ export function GameProvider({ children }) {
       slayerPerks: slayerPerksRef.current,
       characterUnlocks: characterUnlocksRef.current,
     },
-  }), [currentHP, autoBankLoot, bankConfig, equipmentPresets, homeShortcuts, combatStance, idleCombatSetup, unlockedFeatures, activeTask, activeCombatSpell, slayerTask, slayerPoints, slayerTasksCompleted, dungeoneeringTokens, bossKillCounts, raidKillCounts, farming, completedQuests, unlockedMinigameItems, questQueue, slayerPerks, characterUnlocks])
+  }), [currentHP, autoBankLoot, bankConfig, showInfoToasts, equipmentPresets, homeShortcuts, combatStance, idleCombatSetup, unlockedFeatures, activeTask, activeCombatSpell, slayerTask, slayerPoints, slayerTasksCompleted, dungeoneeringTokens, bossKillCounts, raidKillCounts, farming, completedQuests, unlockedMinigameItems, questQueue, slayerPerks, characterUnlocks])
 
 
   // ---- Shared game lock --------------------------------------------------
@@ -1094,6 +1095,25 @@ export function GameProvider({ children }) {
     if (!presetsHydratedRef.current) { presetsHydratedRef.current = true; return }
     requestCriticalPushSave(() => getSnapshot(), CRITICAL_SAVE_REASONS.EQUIPMENT_PRESET_CHANGE)
   }, [loaded, equipmentPresets, getSnapshot])
+
+  // Bank tab layout and the info-toast suppression toggle ride the save blob
+  // (getSnapshot.settings) too, but the 60s autosave can drop a just-made change
+  // if the tab/container closes first — the same loss the presets push above
+  // guards against. Push each critically so a tab reorg or a toggle reaches the
+  // cloud promptly. First post-load run is hydration; skip it.
+  const bankConfigHydratedRef = useRef(false)
+  useEffect(() => {
+    if (!loaded) return
+    if (!bankConfigHydratedRef.current) { bankConfigHydratedRef.current = true; return }
+    requestCriticalPushSave(() => getSnapshot(), CRITICAL_SAVE_REASONS.BANK_CONFIG_CHANGE)
+  }, [loaded, bankConfig, getSnapshot])
+
+  const infoToastsHydratedRef = useRef(false)
+  useEffect(() => {
+    if (!loaded) return
+    if (!infoToastsHydratedRef.current) { infoToastsHydratedRef.current = true; return }
+    requestCriticalPushSave(() => getSnapshot(), CRITICAL_SAVE_REASONS.INFO_TOAST_SETTING_CHANGE)
+  }, [loaded, showInfoToasts, getSnapshot])
 
   // Stable identity for the running activity — only the activity itself (not its
   // per-tick progress/session) should restart the heartbeat interval. Without

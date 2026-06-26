@@ -2,6 +2,8 @@ import { describe, it, expect } from 'vitest'
 import { onRequestPost } from '../functions/api/trading-post/sell-immediate.js'
 import { signJWT } from '../functions/_lib/jwt.js'
 import { gzipJsonString } from '../functions/_lib/saveCodec.js'
+import { getIronmanShopValue } from '../functions/_lib/game/itemValue.js'
+import itemsData from '../src/data/items.json'
 
 const TEST_SECRET = 'test-jwt-secret'
 const IDENTITY = 'identity-1'
@@ -84,24 +86,40 @@ describe('POST /api/trading-post/sell-immediate — untradeable items', () => {
     expect(body.code).toBe('NO_VALUE')
   })
 
-  it('lets Ironman accounts use the immediate store-sell path (not a trading post offer)', async () => {
+  it('pays Ironman accounts the reduced Ironman vendor value (not full shopValue)', async () => {
+    const expected = getIronmanShopValue((itemsData as any).fighter_helm)
+    expect(expected).toBeLessThan((itemsData as any).fighter_helm.shopValue)
     const save = { inventory: [{ itemId: 'fighter_helm', quantity: 1 }], bank: {} }
     const { env, captured } = mockEnv({ save, isIronman: true })
     const res = await onRequestPost({ request: await makeRequest({ item_id: 'fighter_helm', quantity: 1 }), env })
     expect(res.status).toBe(200)
     const body = await res.json() as any
-    expect(body.total_payout).toBe(500000)
+    expect(body.total_payout).toBe(expected)
     const written = JSON.parse(captured.saveData!)
-    expect(written.inventory.find((s: any) => s.itemId === 'coins')?.quantity).toBe(500000)
+    expect(written.inventory.find((s: any) => s.itemId === 'coins')?.quantity).toBe(expected)
   })
 
-  it('still routes order-book uniques to the listing endpoint', async () => {
+  it('still routes order-book uniques to the listing endpoint for NORMAL accounts', async () => {
     const save = { inventory: [{ itemId: 'twisted_longbow', quantity: 1 }], bank: {} }
     const { env } = mockEnv({ save })
     const res = await onRequestPost({ request: await makeRequest({ item_id: 'twisted_longbow', quantity: 1 }), env })
     expect(res.status).toBe(400)
     const body = await res.json() as any
     expect(body.code).toBe('ORDER_BOOK_REQUIRED')
+  })
+
+  it('lets Ironman accounts liquidate order-book items at the Ironman vendor value', async () => {
+    const expected = getIronmanShopValue((itemsData as any).twisted_longbow)
+    expect(expected).toBeGreaterThan(0)
+    const save = { inventory: [{ itemId: 'twisted_longbow', quantity: 1 }], bank: {} }
+    const { env, captured } = mockEnv({ save, isIronman: true })
+    const res = await onRequestPost({ request: await makeRequest({ item_id: 'twisted_longbow', quantity: 1 }), env })
+    expect(res.status).toBe(200)
+    const body = await res.json() as any
+    expect(body.total_payout).toBe(expected)
+    const written = JSON.parse(captured.saveData!)
+    expect(written.inventory.find((s: any) => s.itemId === 'twisted_longbow')).toBeUndefined()
+    expect(written.inventory.find((s: any) => s.itemId === 'coins')?.quantity).toBe(expected)
   })
 
   it("sells from the BANK when source: 'bank', leaving inventory copies intact", async () => {

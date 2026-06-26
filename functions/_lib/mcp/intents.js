@@ -12,6 +12,7 @@ import prayersData from '../../../src/data/prayers.json' assert { type: 'json' }
 import cluesData from '../../../src/data/clues.json' assert { type: 'json' }
 import minigamesData from '../../../src/data/minigames.json' assert { type: 'json' }
 import { GameApiError } from '../game/errors.js'
+import { getHighAlchValue } from '../game/itemValue.js'
 import {
   canonicalItemId,
   normalizeSaveItemIds,
@@ -530,7 +531,7 @@ function alchemyTargetOptions(save) {
   return out
 }
 
-export function castMagic(save, actionId, { targetItemId, quantity } = {}) {
+export function castMagic(save, actionId, { targetItemId, quantity, isIronman = false } = {}) {
   const action = MAGIC_ACTIONS.find((a) => a.id === actionId)
   if (!action) {
     throw new GameApiError('UNKNOWN_ACTION', `Unknown magic action '${actionId}'. Valid ids: ${MAGIC_ACTION_IDS.join(', ')}.`, 400)
@@ -619,7 +620,7 @@ export function castMagic(save, actionId, { targetItemId, quantity } = {}) {
   }
 
   if (isAlchemy) {
-    const coins = Math.floor((Number(alchItem.shopValue) || 0) * 1.1) * casts
+    const coins = getHighAlchValue(alchItem, { isIronman }) * casts
     addItemToBank(save, 'coins', coins)
     produced.push({ itemId: 'coins', name: 'Coins', quantity: coins })
   } else if (action.materials) {
@@ -879,7 +880,7 @@ export function applyIdleResult(save, sim, type) {
 
 // Run the right idle simulator for the task type and apply it. Pure over the
 // save (no DB); the caller persists.
-export function runIdleTask(save, task, elapsedMs) {
+export function runIdleTask(save, task, elapsedMs, { isIronman = false } = {}) {
   if (!save.stats || typeof save.stats !== 'object') save.stats = {}
   if (!save.bank || typeof save.bank !== 'object') save.bank = {}
   if (!save.equipment || typeof save.equipment !== 'object') save.equipment = {}
@@ -888,7 +889,7 @@ export function runIdleTask(save, task, elapsedMs) {
   let sim = null
   switch (task.type) {
     case 'skill':
-      sim = simulateIdleSkilling(task, elapsedMs, save.bank, save.equipment, save.stats, itemsData, inv28)
+      sim = simulateIdleSkilling(task, elapsedMs, save.bank, save.equipment, save.stats, itemsData, inv28, { isIronman })
       break
     case 'agility':
       sim = simulateIdleAgility(task, elapsedMs)

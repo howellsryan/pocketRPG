@@ -14,6 +14,7 @@ import { hasRequiredRunes, getRunesToConsume, getEquippedElementalStaff } from '
 import { onTick } from '../engine/tick.js'
 import { markScreenTick } from '../engine/activityRunner.js'
 import { formatNumber } from '../utils/helpers.js'
+import { getHighAlchValue } from '../utils/itemValue.js'
 import { formatActionDuration } from '../utils/formatters.js'
 import { SCREENS } from '../utils/constants.js'
 import skillsData from '../data/skills.json'
@@ -50,7 +51,7 @@ function groupActions(actions) {
 
 export default function MagicScreen({ onBack, onNavigate }) {
   const {
-    stats, inventory, bank, equipment,
+    stats, inventory, bank, equipment, isIronman,
     grantXP, updateInventory, updateBankDirect, addToast, setActiveTask, activeTask
   } = useGame()
 
@@ -215,7 +216,7 @@ export default function MagicScreen({ onBack, onNavigate }) {
                 addToast('Out of items to alchemize!', 'error')
                 return
               }
-              const alchValue = Math.floor((alchItem?.shopValue || 0) * 1.1)
+              const alchValue = getHighAlchValue(alchItem, { isIronman })
               if (newInv[slotIdx].quantity > 1) {
                 newInv[slotIdx] = { ...newInv[slotIdx], quantity: newInv[slotIdx].quantity - 1 }
               } else {
@@ -371,7 +372,7 @@ export default function MagicScreen({ onBack, onNavigate }) {
               if (!slot) return null
               const item = itemsData[slot.itemId]
               if (!item || typeof item.shopValue !== 'number') return null
-              const alchValue = Math.floor(item.shopValue * 1.1)
+              const alchValue = getHighAlchValue(item, { isIronman })
               return (
                 <button
                   key={`${idx}-${slot.itemId}`}

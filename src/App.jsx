@@ -835,7 +835,7 @@ function GameApp() {
               setActiveTask({ ...savedTask, totalTicks, ticksRemaining: newRemaining })
               sim = { minigameTimeReduced: true, hoursRemaining: Math.ceil(newRemaining / 6000) }
             }
-          } else if (savedTask.type === 'skill')   sim = simulateIdleSkilling(savedTask, elapsedMs, freshBank, freshEq, freshStats, itemsDataRef.current, freshInv)
+          } else if (savedTask.type === 'skill')   sim = simulateIdleSkilling(savedTask, elapsedMs, freshBank, freshEq, freshStats, itemsDataRef.current, freshInv, { isIronman: getIronmanMode() })
           else if (savedTask.type === 'gather')  sim = simulateIdleGather(savedTask, elapsedMs, freshInv, freshStats, itemsDataRef.current, freshBank)
           else if (savedTask.type === 'clue') {
             sim = simulateIdleGather(savedTask, elapsedMs, freshInv, freshStats, itemsDataRef.current, freshBank)
@@ -1691,6 +1691,7 @@ function GameApp() {
         stats: statsRef.current,
         equipment: equipmentRef.current,
         itemsData: itemsDataRef.current,
+        isIronman: getIronmanMode(),
       }
       const totalTicks = getActionTicksForTask(task, ctx)
       // Resume the current action where it left off. While an activity screen is
@@ -2020,7 +2021,7 @@ function GameApp() {
             sim = { minigameTimeReduced: true }
           }
         } else {
-          if (savedTask.type === 'skill')   sim = simulateIdleSkilling(savedTask, elapsedMs, freshBank, freshEq, freshStats, itemsDataRef.current, freshInv)
+          if (savedTask.type === 'skill')   sim = simulateIdleSkilling(savedTask, elapsedMs, freshBank, freshEq, freshStats, itemsDataRef.current, freshInv, { isIronman: getIronmanMode() })
           if (savedTask.type === 'gather')  sim = simulateIdleGather(savedTask, elapsedMs, freshInv, freshStats, itemsDataRef.current, freshBank)
           if (savedTask.type === 'clue') {
             sim = simulateIdleGather(savedTask, elapsedMs, freshInv, freshStats, itemsDataRef.current, freshBank)

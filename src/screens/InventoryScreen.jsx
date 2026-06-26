@@ -7,6 +7,7 @@ import WeaponChargePanel, { getChargeRecipe } from '../components/WeaponChargePa
 import TradingPostSellForm from '../components/TradingPostSellForm.jsx'
 import { freeSlots, countItem } from '../engine/inventory.js'
 import { isOrderBookItem } from '../engine/storeRules.js'
+import { getIronmanShopValue } from '../utils/itemValue.js'
 import { equipItem, checkEquipRequirements } from '../engine/equipment.js'
 import { getLevelFromXP } from '../engine/experience.js'
 import { api, getToken, getCharacterId } from '../cloud/api.js'
@@ -361,7 +362,11 @@ export default function InventoryScreen() {
     }
 
     const { slot, item } = selected
-    const defaultPrice = Math.floor(Number(item.shopValue) || 0)
+    // Ironmen settle the immediate-sell at the reduced Ironman vendor value, so
+    // the confirmation toast must quote that — not the full shop price. (The
+    // server is authoritative for the payout; price here is display-only on the
+    // quick-sell path.)
+    const defaultPrice = isIronman ? getIronmanShopValue(item) : Math.floor(Number(item.shopValue) || 0)
     const price = Math.floor(Number(overridePrice ?? defaultPrice) || 0)
     if (price <= 0) {
       addToast('This item has no value', 'error')
@@ -701,6 +706,8 @@ export default function InventoryScreen() {
               // Untradeable items can't be listed at all, so they always sell
               // instantly to the NPC.
               const useQuickSell = isIronman || selected.item.isUntradeable || !isOrderBookItem(selected.item)
+              // Ironmen vendor at the reduced Ironman value; everyone else at shopValue.
+              const sellUnit = isIronman ? getIronmanShopValue(selected.item) : selected.item.shopValue
               return (
               <div class="border-t border-[#333] pt-2 mt-1">
                 <p class="text-[10px] text-[var(--color-parchment)] opacity-40 mb-1.5 uppercase tracking-wider font-bold">
@@ -717,13 +724,13 @@ export default function InventoryScreen() {
                       <button key={qty} onClick={() => handleSell(qty)}
                         disabled={selected.slot.quantity < qty || sellBusy}
                         class={`py-2 rounded-lg text-white font-semibold text-sm ${selected.slot.quantity < qty || sellBusy ? 'bg-[#222] opacity-30' : 'bg-[var(--color-gold-dim)] active:opacity-80'}`}>
-                        Sell {qty} ({qty * selected.item.shopValue}gp)
+                        Sell {qty} ({qty * sellUnit}gp)
                       </button>
                     ))}
                     <button onClick={() => handleSell(selected.slot.quantity)}
                       disabled={sellBusy}
                       class={`py-2 rounded-lg text-white font-semibold text-sm col-span-3 ${sellBusy ? 'bg-[#222] opacity-30' : 'bg-[var(--color-gold-dim)] active:opacity-80'}`}>
-                      Sell All ({selected.slot.quantity * selected.item.shopValue} gp)
+                      Sell All ({selected.slot.quantity * sellUnit} gp)
                     </button>
                   </div>
                 ) : useQuickSell ? (
@@ -731,7 +738,7 @@ export default function InventoryScreen() {
                     <button onClick={() => handleSell(1)}
                       disabled={sellBusy}
                       class={`py-2 rounded-lg text-white font-semibold text-sm ${sellBusy ? 'bg-[#222] opacity-30' : 'bg-[var(--color-gold-dim)] active:opacity-80'}`}>
-                      Sell 1 ({selected.item.shopValue}gp)
+                      Sell 1 ({sellUnit}gp)
                     </button>
                     {sameItemCount >= 3 && (
                       <button onClick={() => handleSell(5)}
@@ -751,7 +758,7 @@ export default function InventoryScreen() {
                       <button onClick={() => handleSell(sameItemCount)}
                         disabled={sellBusy}
                         class={`py-2 rounded-lg text-white font-semibold text-sm ${sameItemCount >= 10 ? 'col-span-3' : sameItemCount >= 3 ? 'col-span-1' : 'col-span-2'} ${sellBusy ? 'bg-[#222] opacity-30' : 'bg-[var(--color-gold-dim)] active:opacity-80'}`}>
-                        Sell All ({sameItemCount * selected.item.shopValue}gp)
+                        Sell All ({sameItemCount * sellUnit}gp)
                       </button>
                     )}
                   </div>

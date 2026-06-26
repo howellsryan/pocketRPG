@@ -1,5 +1,39 @@
 export const EPIC_LOOT_THRESHOLD = 1_000_000
 
+// Fraction of an item's shopValue an Ironman receives when no explicit
+// `ironmanShopValue` is authored on the item. Deliberately well below 1 so
+// Ironmen — who can liquidate order-book items only through this path — can't
+// turn loot into gp at the full market/shop rate. Tune per-item by adding an
+// explicit `ironmanShopValue` to src/data/items.json.
+export const IRONMAN_VALUE_FRACTION = 0.4
+
+// The gp an Ironman gets for one of this item when vendoring it (the
+// sell-immediate path). An explicit `ironmanShopValue` on the item wins;
+// otherwise fall back to IRONMAN_VALUE_FRACTION × shopValue. Items with no
+// shop value (and no explicit override) return 0 — nothing to sell against.
+// NOTE: a server-side copy lives in functions/_lib/game/itemValue.js — keep
+// the two aligned.
+export function getIronmanShopValue(item) {
+  if (!item) return 0
+  const explicit = Number(item.ironmanShopValue)
+  if (Number.isFinite(explicit) && explicit >= 0) return Math.floor(explicit)
+  const shop = Number(item.shopValue)
+  if (!Number.isFinite(shop) || shop <= 0) return 0
+  return Math.floor(shop * IRONMAN_VALUE_FRACTION)
+}
+
+// High-alchemy payout for one item. Normal accounts alch at shopValue × 1.1;
+// Ironmen alch at their (reduced) ironmanShopValue × 1.1 so the spell can't
+// bypass the Ironman value curve. Single source of truth for the ×1.1 across
+// the live magic screen, live skilling screen and the idle engine.
+export function getHighAlchValue(item, { isIronman = false } = {}) {
+  if (!item) return 0
+  const base = isIronman
+    ? getIronmanShopValue(item)
+    : Math.floor(Number(item.shopValue) || 0)
+  return Math.floor(base * 1.1)
+}
+
 export function getItemUnitValue(itemId, itemsData) {
   if (!itemId || !itemsData) return null
   if (itemId === 'coins') return 1
