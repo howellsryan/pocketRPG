@@ -780,15 +780,13 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
                     : effectiveTicks > action.ticks
                     ? <span class="text-[var(--color-blood-ember)]">{formatActionDuration(effectiveTicks)}</span>
                     : formatActionDuration(action.ticks)}
+                  {remaining !== null && <span class="text-[var(--color-gold)]"> · {remaining.toLocaleString()} actions</span>}
                   {action.runeReq && <span> · Runes: {Object.entries(action.runeReq).map(([id, qty]) => `${itemsData[id]?.name || id} ×${qty}`).join(', ')}</span>}
                   {action.materials && <span class="block text-center text-[var(--color-gold)] mt-1">{Object.entries(action.materials).map(([id, qty]) => `${itemsData[id]?.name || id} ×${qty}`).join(', ')}</span>}
                   {action.itemReq && !hasItems && <span class="block text-[var(--color-blood-ember)] mt-1">✨ Needs: {action.itemReq.map(id => itemsData[id]?.name || id).join(' or ')}</span>}
                   {action.runeReq && !hasRunes && <span class="block text-[var(--color-blood-ember)] mt-1">🔮 Missing runes (or equip staff)</span>}
                   {requiresGildedAltarConstruction && !meetsGildedAltarConstruction && <span class="block text-[var(--color-blood-ember)] mt-1">🏠 Requires Construction level 75</span>}
                 </>
-            const actionsRight = remaining !== null ? (
-              <div class="flex-shrink-0 text-[12.5px] font-semibold text-[var(--color-gold)]">{remaining.toLocaleString()} actions</div>
-            ) : null
             const dropRight = action.dropTable && (
               <div class="text-right flex flex-col gap-0.5 flex-shrink-0">
                 {action.dropTable.map(drop => (
@@ -808,7 +806,7 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
                 icon={productItem ? <GameIcon item={productItem} size={52} /> : <SkillIcon skill={selectedSkill} size={52} />}
                 title={action.name}
                 meta={meta}
-                right={dropRight || actionsRight || undefined}
+                right={dropRight || undefined}
                 active={isRunning}
                 locked={levelLocked}
                 lockBadge={`LV ${action.level}`}
