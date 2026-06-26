@@ -8513,5 +8513,65 @@
       { "itemId": "razorwing_vambraces", "quantity": 1, "chance": 0.005 },
       { "itemId": "clue_scroll_hard", "quantity": 1, "chance": 0.02 }
     ]
+  },
+  "elder_tree_spirit": {
+    "id": "elder_tree_spirit",
+    "name": "Elder Tree Spirit",
+    "combatLevel": 52,
+    "hitpoints": 48,
+    "stats": { "attack": 1, "strength": 1, "defence": 42, "magic": 70, "ranged": 1 },
+    "attackSpeed": 5,
+    "attackStyle": "magic",
+    "attackBonus": 0,
+    "strengthBonus": 0,
+    "defenceBonus": { "stab": 8, "slash": 8, "crush": 8, "magic": 30, "ranged": -12 },
+    "drops": [
+      { "itemId": "coins", "quantity": [20, 120], "chance": 0.7 },
+      { "itemId": "crushed_bird_s_nest", "quantity": 10, "chance": 0.1 },
+      { "itemId": "oak_sapling", "quantity": 1, "chance": 0.125 },
+      { "itemId": "willow_sapling", "quantity": 1, "chance": 0.0625 },
+      { "itemId": "maple_sapling", "quantity": 1, "chance": 0.03125 },
+      { "itemId": "yew_sapling", "quantity": 1, "chance": 0.015625 },
+      { "itemId": "magic_sapling", "quantity": 1, "chance": 0.0078125 },
+      { "itemId": "bronze_axe", "quantity": 1, "chance": 0.25 },
+      { "itemId": "iron_axe", "quantity": 1, "chance": 0.125 },
+      { "itemId": "steel_axe", "quantity": 1, "chance": 0.083333 },
+      { "itemId": "mithril_axe", "quantity": 1, "chance": 0.0625 },
+      { "itemId": "adamant_axe", "quantity": 1, "chance": 0.03125 },
+      { "itemId": "runeforged_axe", "quantity": 1, "chance": 0.015625 },
+      { "itemId": "clue_scroll_medium", "quantity": 1, "chance": 0.02 }
+    ]
+  },
+  "elder_rock_golem": {
+    "id": "elder_rock_golem",
+    "name": "Elder Rock Golem",
+    "combatLevel": 58,
+    "hitpoints": 62,
+    "stats": { "attack": 60, "strength": 82, "defence": 48, "magic": 1, "ranged": 1 },
+    "attackSpeed": 5,
+    "attackStyle": "crush",
+    "attackBonus": 0,
+    "strengthBonus": 0,
+    "defenceBonus": { "stab": 20, "slash": 20, "crush": 20, "magic": -12, "ranged": 18 },
+    "drops": [
+      { "itemId": "coins", "quantity": [20, 140], "chance": 0.7 },
+      { "itemId": "copper_ore", "quantity": [1, 3], "chance": 0.2 },
+      { "itemId": "tin_ore", "quantity": [1, 3], "chance": 0.2 },
+      { "itemId": "iron_ore", "quantity": [1, 2], "chance": 0.12 },
+      { "itemId": "coal", "quantity": [1, 3], "chance": 0.1 },
+      { "itemId": "mithril_ore", "quantity": 1, "chance": 0.0625 },
+      { "itemId": "adamantite_ore", "quantity": 1, "chance": 0.03125 },
+      { "itemId": "uncut_sapphire", "quantity": 1, "chance": 0.0625 },
+      { "itemId": "uncut_emerald", "quantity": 1, "chance": 0.03125 },
+      { "itemId": "uncut_ruby", "quantity": 1, "chance": 0.015625 },
+      { "itemId": "uncut_diamond", "quantity": 1, "chance": 0.0078125 },
+      { "itemId": "bronze_pickaxe", "quantity": 1, "chance": 0.25 },
+      { "itemId": "iron_pickaxe", "quantity": 1, "chance": 0.125 },
+      { "itemId": "steel_pickaxe", "quantity": 1, "chance": 0.083333 },
+      { "itemId": "mithril_pickaxe", "quantity": 1, "chance": 0.0625 },
+      { "itemId": "adamant_pickaxe", "quantity": 1, "chance": 0.03125 },
+      { "itemId": "runeforged_pickaxe", "quantity": 1, "chance": 0.015625 },
+      { "itemId": "clue_scroll_medium", "quantity": 1, "chance": 0.02 }
+    ]
   }
 }
