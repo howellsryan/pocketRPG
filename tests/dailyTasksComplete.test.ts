@@ -38,13 +38,14 @@ function mockEnv({
     const bind = vi.fn(() => {
       // Order:
       //  1: SELECT characters (ownership check)
-      //  2: assertNotInActiveMatch: SELECT active_match_id
-      //  3: assertNotInActiveMatch: SELECT id from pvp_matches
-      //  4: UPDATE character_daily_tasks ... WHERE credited = 0 RETURNING
-      //  5: UPDATE characters SET credits = credits + 1 RETURNING
+      //  2: assertNotInActiveMatch: SELECT active_match_id (null here)
+      //  3: UPDATE character_daily_tasks ... WHERE credited = 0 RETURNING
+      //  4: UPDATE characters SET credits = credits + 1 RETURNING
+      // With active_match_id null the pvp_matches probe is skipped, so the
+      // claim/grant writes are calls #3 and #4.
       if (prepareCallCount === 1) return { first: characterFirst, all: vi.fn(), run: vi.fn() }
-      if (prepareCallCount === 4) return { first: claimedFirst, all: vi.fn(), run: vi.fn() }
-      if (prepareCallCount === 5) return { first: grantFirst, all: vi.fn(), run: vi.fn() }
+      if (prepareCallCount === 3) return { first: claimedFirst, all: vi.fn(), run: vi.fn() }
+      if (prepareCallCount === 4) return { first: grantFirst, all: vi.fn(), run: vi.fn() }
       return { first: lockFirst, all: vi.fn(), run: vi.fn() }
     })
     return { bind }

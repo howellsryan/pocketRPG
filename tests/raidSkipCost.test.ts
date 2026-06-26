@@ -51,7 +51,9 @@ function makeRequest(body: Record<string, unknown> = {}, { characterId = '42', a
 }
 
 // Mirrors the slayer-skip harness: prepare call order is
-//   1: SELECT characters (existence) · 2-3: assertNotInActiveMatch · 4: debit UPDATE.
+//   1: SELECT characters (existence) · 2: assertNotInActiveMatch SELECT
+//   active_match_id · 3: debit UPDATE. With active_match_id null (the common
+//   case) the pvp_matches probe is skipped, so the debit is call #3.
 function mockEnv({ characterRow = { id: 42 }, debitResult = { credits_remaining: 0 } } = {}) {
   const characterFirst = vi.fn().mockResolvedValue(characterRow)
   const debitFirst = vi.fn().mockResolvedValue(debitResult)
@@ -62,7 +64,7 @@ function mockEnv({ characterRow = { id: 42 }, debitResult = { credits_remaining:
     const localCount = prepareCallCount
     const bind = vi.fn(() => {
       if (localCount === 1) return { first: characterFirst, all: vi.fn(), run: vi.fn() }
-      if (localCount === 4) return { first: debitFirst, all: vi.fn(), run: vi.fn() }
+      if (localCount === 3) return { first: debitFirst, all: vi.fn(), run: vi.fn() }
       return { first: lockFirst, all: vi.fn(), run: vi.fn() }
     })
     return { bind }

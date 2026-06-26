@@ -3,6 +3,7 @@ import { assertNotInActiveMatch, sweepStaleRows } from '../_lib/pvp.js'
 import { computeSaveSummaryFromJson } from '../_lib/saveSummary.js'
 import { decodeSaveRow, gzipJsonString } from '../_lib/saveCodec.js'
 import { detectTotalLevelRegression } from '../_lib/game/saveValidation.js'
+import { stampIdleActive, stampIdleActiveStatement } from '../_lib/game/idleStamp.js'
 
 const MAX_SAVE_BYTES = 256 * 1024 // 256 KB ceiling — current saves are well under this
 
@@ -47,12 +48,14 @@ async function getCharacterId(request, env, identityId) {
   if (!Number.isFinite(id)) return { error: 'Invalid character id', status: 400 }
 
   // Confirm ownership. total_level / combat_level ride along so the PUT
-  // path can skip the denormalized-summary UPDATE when nothing changed.
+  // path can skip the denormalized-summary UPDATE when nothing changed, and
+  // active_match_id so the PvP lock check reuses this read instead of issuing
+  // its own identical SELECT.
   const row = await env.DB.prepare(
-    'SELECT id, total_level, combat_level FROM characters WHERE id = ? AND owner_id = ? AND deleted_at IS NULL'
+    'SELECT id, total_level, combat_level, active_match_id FROM characters WHERE id = ? AND owner_id = ? AND deleted_at IS NULL'
   ).bind(id, identityId).first()
   if (!row) return { error: 'Character not found', status: 404 }
-  return { id, total_level: row.total_level, combat_level: row.combat_level }
+  return { id, total_level: row.total_level, combat_level: row.combat_level, active_match_id: row.active_match_id ?? null }
 }
 
 export async function onRequestGet({ request, env }) {
@@ -86,7 +89,8 @@ export async function onRequestPut({ request, env }) {
   if (ch.error) return json({ error: ch.error }, ch.status)
 
   // PvP inventory lock: refuse local-client saves while a match is active.
-  const lock = await assertNotInActiveMatch(env, ch.id)
+  // Reuse the active_match_id already fetched by getCharacterId.
+  const lock = await assertNotInActiveMatch(env, ch.id, ch.active_match_id)
   if (lock) return lock
   // Probabilistic sweep — see SAVE_SWEEP_PROBABILITY above. PvP endpoints
   // already sweep on every action, so the global state stays fresh during
@@ -153,6 +157,14 @@ export async function onRequestPut({ request, env }) {
     }
   }
 
+  // Idle heartbeat, folded into the save write: stamp last_active_at + the
+  // active task so idling clients no longer need a separate periodic PUT
+  // /api/idle. Serialize the task exactly as the client's putIdle does. The
+  // PvP lock above already returned, so an in-match save never reaches here —
+  // the stamp stays blocked during a match just like the dedicated idle PUT.
+  const activeTaskObj = parsedNext?.settings?.activeTask ?? null
+  const idleTaskJson = activeTaskObj ? JSON.stringify(activeTaskObj) : null
+
   // Total-level regression guard — the definitive backstop against a fresh /
   // "level 3" character being written over a real one (see
   // detectTotalLevelRegression). A null save_data clears the blob to total
@@ -199,9 +211,14 @@ export async function onRequestPut({ request, env }) {
     const prevKey = noopSaveKey(previousSave)
     const nextKey = noopSaveKey(parsedNext)
     if (prevKey === nextKey) {
-      // Content-identical to what's stored. Default: write NOTHING at all — not
+      // Even on a no-op blob write the idle heartbeat MUST still fire: a long
+      // AFK foreground session pushes content-identical saves, and without this
+      // stamp last_active_at would never refresh, inflating offline rewards on
+      // the next load. This is the regression-critical case — keep it.
+      await stampIdleActive(env, ch.id, idleTaskJson, now)
+      // Content-identical to what's stored. Default: write NOTHING else — not
       // the blob, the revision, the summary, NOR updated_at — so a routine no-op
-      // save (screen change, AFK tab) costs zero D1 writes.
+      // save (screen change, AFK tab) costs zero further D1 writes.
       //
       // The ONE exception is an explicit `touch` push from the PvP lobby: the
       // match-create guard refuses to start a match on a save older than 15s, so
@@ -239,6 +256,9 @@ export async function onRequestPut({ request, env }) {
          updated_at = excluded.updated_at,
          save_revision = COALESCE(saves.save_revision, 0) + 1`
     ).bind(ch.id, save_blob, save_data, now),
+    // Fold the idle heartbeat into the same atomic batch — stamps
+    // last_active_at + active_task so idling clients drop the separate idle PUT.
+    stampIdleActiveStatement(env, ch.id, idleTaskJson, now),
   ]
   // total_level / combat_level rarely change between saves — only include the
   // characters UPDATE in the batch when the stored summary actually differs.
@@ -262,8 +282,11 @@ export async function onRequestPut({ request, env }) {
   }
   await env.DB.batch(statements)
 
-  const revisionRow = await env.DB.prepare('SELECT save_revision FROM saves WHERE character_id = ?').bind(ch.id).first()
-  return json({ ok: true, updatedAt: now, save_revision: Number(revisionRow?.save_revision) || 0 })
+  // The upsert always bumps the revision by one — to 1 on a fresh insert (where
+  // currentRevision is 0) or COALESCE(save_revision,0)+1 on update — so the new
+  // revision is currentRevision + 1 in both cases. Compute it instead of issuing
+  // a post-write SELECT.
+  return json({ ok: true, updatedAt: now, save_revision: currentRevision + 1 })
 }
 
 // Hard-delete the saves row for this character. Used on One-Life death so

@@ -18,36 +18,48 @@ import { resetBotSave } from './pvpBot.js'
 // 409 'character_in_active_match' body. Endpoints should:
 //   const lock = await assertNotInActiveMatch(env, characterId)
 //   if (lock) return lock
-export async function assertNotInActiveMatch(env, characterId) {
-  const row = await env.DB.prepare(
-    'SELECT active_match_id FROM characters WHERE id = ?'
-  ).bind(characterId).first()
-  if (row?.active_match_id) {
-    const activeMatch = await env.DB.prepare("SELECT id FROM pvp_matches WHERE id = ? AND status = 'active'").bind(row.active_match_id).first()
+//
+// Mutating endpoints already SELECT the `characters` row for ownership; they
+// can pass that row's `active_match_id` as `knownActiveMatchId` so this helper
+// reuses it instead of issuing a second identical read. Callers that have no
+// pre-fetched value omit the arg and we read it ourselves (legacy behaviour).
+export async function assertNotInActiveMatch(env, characterId, knownActiveMatchId = undefined) {
+  let activeMatchId = knownActiveMatchId
+  if (activeMatchId === undefined) {
+    const row = await env.DB.prepare(
+      'SELECT active_match_id FROM characters WHERE id = ?'
+    ).bind(characterId).first()
+    activeMatchId = row?.active_match_id ?? null
+  }
+
+  if (activeMatchId) {
+    const activeMatch = await env.DB.prepare("SELECT id FROM pvp_matches WHERE id = ? AND status = 'active'").bind(activeMatchId).first()
     if (activeMatch?.id) {
       return json(
-        { error: 'character_in_active_match', match_id: row.active_match_id },
+        { error: 'character_in_active_match', match_id: activeMatchId },
         409,
       )
     }
-    await env.DB.prepare('UPDATE characters SET active_match_id = NULL WHERE id = ? AND active_match_id = ?').bind(characterId, row.active_match_id).run()
-  }
+    await env.DB.prepare('UPDATE characters SET active_match_id = NULL WHERE id = ? AND active_match_id = ?').bind(characterId, activeMatchId).run()
 
-  // Defence in depth for any stale/null active_match_id rows:
-  // enforce "character not present in any active pvp_matches row"
-  // across BOTH columns.
-  const activeRow = await env.DB.prepare(
-    `SELECT id
-       FROM pvp_matches
-      WHERE status = 'active'
-        AND (character_a = ? OR character_b = ?)
-      LIMIT 1`
-  ).bind(characterId, characterId).first()
-  if (activeRow?.id) {
-    return json(
-      { error: 'character_in_active_match', match_id: activeRow.id },
-      409,
-    )
+    // Defence in depth: active_match_id was set but pointed at a no-longer-active
+    // match. Confirm the character isn't present in some OTHER active match row
+    // (either column) before clearing them to mutate. Skipped entirely when
+    // active_match_id was null — it's the source of truth set on match start and
+    // cleared on match end, so a null lock means no active match.
+    const activeRow = await env.DB.prepare(
+      `SELECT id
+         FROM pvp_matches
+        WHERE status = 'active'
+          AND (character_a = ? OR character_b = ?)
+        LIMIT 1`
+    ).bind(characterId, characterId).first()
+    if (activeRow?.id) {
+      return json(
+        { error: 'character_in_active_match', match_id: activeRow.id },
+        409,
+      )
+    }
   }
   return null
 }

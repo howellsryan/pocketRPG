@@ -42,7 +42,7 @@ import { wipeLocalSave } from './db/saveload.js'
 import { api, captureTokenFromHash, getToken, getCharacterId, getCharacterName, setCharacter, clearAuth, getLocalCharacterId, setLocalCharacterId, getIronmanMode, getOneLifeMode, CREDITS_UPDATED_EVENT } from './cloud/api.js'
 import { schedulePushSave, pushNow, pullSave, applyCloudSave, checkCloudNewer, resetSyncState, requestCriticalPushSave, retrySaveNow, isSaveConflict, CLOUD_SAVE_STATUS_EVENT } from './cloud/sync.js'
 import { CRITICAL_SAVE_REASONS } from './cloud/criticalSavePolicy.js'
-import { fetchIdleState, heartbeatIdleState, beaconIdleState, resetIdleStateSync } from './cloud/idleState.js'
+import { fetchIdleState, beaconIdleState, resetIdleStateSync } from './cloud/idleState.js'
 import { isBackground } from './engine/activityRegistry.js'
 import { isRunnableBackgroundTask, getActionTicksForTask, getCarriedPendingTicks, simulateTaskWindow, resultActions, isScreenRecentlyDriving } from './engine/activityRunner.js'
 import { mergeSession, sessionPatchFromResult } from './engine/activitySession.js'
@@ -320,7 +320,6 @@ function GameApp() {
   // Refs for tick-based systems
   const hpRegenCounter = useRef(0)
   const snapshotCounter = useRef(99) // Start at 99 so first snapshot fires after 1 tick
-  const idleHeartbeatCounter = useRef(49) // 50 ticks = ~30s — first heartbeat ~600ms after load
   const hiddenAtPerfRef = useRef(null) // performance.now() at hide — monotonic, immune to clock changes
 
   async function syncCompletedMinigameToServer(task) {
@@ -1153,18 +1152,10 @@ function GameApp() {
         // Cloud sync piggy-backs on the local snapshot cadence (debounced, hash-skipped).
         if (!isInPvpMatch) schedulePushSave(getSnapshot())
       }
-      // Idle heartbeat: ~120s cadence. Server stamps last_active_at on write,
-      // so this keeps the "last seen" timestamp fresh even if the tab dies
-      // suddenly (beacon on hide/unload is the other half). Skipped while the
-      // tab is hidden — the beacon covers a backgrounded tab, so we don't burn
-      // a D1 write every interval from sessions the user isn't looking at.
-      idleHeartbeatCounter.current++
-      if (idleHeartbeatCounter.current >= 200) {
-        idleHeartbeatCounter.current = 0
-        if (!isInPvpMatch && !(typeof document !== 'undefined' && document.hidden)) {
-          heartbeatIdleState(activeTaskRef.current)
-        }
-      }
+      // No periodic idle heartbeat: /api/save now stamps last_active_at +
+      // active_task server-side on every write (including no-op writes) at an
+      // equal-or-faster cadence than the old heartbeat. The beacon on
+      // hide/unload still covers a tab that dies suddenly.
       hpRegenCounter.current++
       if (hpRegenCounter.current >= 100) {
         hpRegenCounter.current = 0

@@ -4,11 +4,14 @@ import { assertNotInActiveMatch } from '../_lib/pvp.js'
 
 const MAX_TASK_BYTES = 16 * 1024 // 16 KB — task JSON carries a full monster/action object; 16KB is generous
 
+// Returns the owning row ({ id, active_match_id }) or null. active_match_id
+// rides along so the PvP lock check can reuse this read instead of issuing its
+// own identical SELECT.
 async function assertCharacterOwned(env, characterId, identityId) {
   const row = await env.DB.prepare(
-    'SELECT id FROM characters WHERE id = ? AND owner_id = ? AND deleted_at IS NULL'
+    'SELECT id, active_match_id FROM characters WHERE id = ? AND owner_id = ? AND deleted_at IS NULL'
   ).bind(characterId, identityId).first()
-  return !!row
+  return row || null
 }
 
 function getCharacterIdFromHeaders(request) {
@@ -115,13 +118,15 @@ export async function onRequestPut({ request, env }) {
   const characterId = getCharacterIdFromHeaders(request)
   if (characterId === null) return json({ error: 'Missing X-Character-Id header' }, 400)
 
-  if (!(await assertCharacterOwned(env, characterId, auth.identity.id))) {
+  const owned = await assertCharacterOwned(env, characterId, auth.identity.id)
+  if (!owned) {
     return json({ error: 'Character not found' }, 404)
   }
 
   // PvP inventory lock: idle-task writes during a match could re-bind the
   // resume-task and bleed into post-match state. Block while in-match.
-  const lock = await assertNotInActiveMatch(env, characterId)
+  // Reuse the active_match_id from the ownership read above.
+  const lock = await assertNotInActiveMatch(env, characterId, owned.active_match_id ?? null)
   if (lock) return lock
 
   let body
@@ -166,12 +171,13 @@ export async function onRequestPost({ request, env }) {
   const characterId = Number.isFinite(body.character_id) ? body.character_id : parseInt(body.character_id, 10)
   if (!Number.isFinite(characterId)) return json({ error: 'Missing character_id' }, 400)
 
-  if (!(await assertCharacterOwned(env, characterId, payload.sub))) {
+  const owned = await assertCharacterOwned(env, characterId, payload.sub)
+  if (!owned) {
     return json({ error: 'Character not found' }, 404)
   }
 
-  // PvP inventory lock for the beacon path too.
-  const lock = await assertNotInActiveMatch(env, characterId)
+  // PvP inventory lock for the beacon path too. Reuse the ownership read.
+  const lock = await assertNotInActiveMatch(env, characterId, owned.active_match_id ?? null)
   if (lock) return lock
 
   const check = validateTaskJson(body.active_task == null ? null : body.active_task)

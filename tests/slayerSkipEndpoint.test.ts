@@ -35,11 +35,12 @@ function mockEnv({ characterRow, debitResult }: { characterRow: any, debitResult
     const bind = vi.fn(() => {
       // Order of prepare calls in handler:
       //   1: SELECT characters (existence check)
-      //   2: assertNotInActiveMatch: SELECT active_match_id
-      //   3: assertNotInActiveMatch: SELECT id from pvp_matches (defence in depth)
-      //   4: UPDATE characters ... RETURNING credits_remaining
+      //   2: assertNotInActiveMatch: SELECT active_match_id (null here)
+      //   3: UPDATE characters ... RETURNING credits_remaining
+      // With active_match_id null the pvp_matches probe is skipped, so the
+      // debit is call #3.
       if (prepareCallCount === 1) return { first: characterFirst, all: vi.fn(), run: vi.fn() }
-      if (prepareCallCount === 4) return { first: debitFirst, all: vi.fn(), run: vi.fn() }
+      if (prepareCallCount === 3) return { first: debitFirst, all: vi.fn(), run: vi.fn() }
       return { first: lockFirst, all: vi.fn(), run: vi.fn() }
     })
     return { bind }
