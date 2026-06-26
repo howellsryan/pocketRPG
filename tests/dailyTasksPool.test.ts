@@ -48,6 +48,7 @@ describe('dailyTasks.json pool integrity', () => {
       'monster_kill', 'boss_kill', 'raid_complete',
       'skill_produce', 'skill_gather', 'skill_xp',
       'clue_complete', 'minigame_complete', 'quest_complete', 'slayer_task_complete',
+      'hunter_hunt',
     ])
     for (const task of pool) {
       expect(validTypes, `${task.id}: unknown trigger type "${task.trigger?.type}"`)

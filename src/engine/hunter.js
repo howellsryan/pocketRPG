@@ -34,7 +34,8 @@ export function processHunterTick(hunterState) {
       type: 'hunterSuccess',
       xp: state.action.xp,
       rewards,
-      actionName: state.action.name
+      actionName: state.action.name,
+      actionId: state.action.id
     })
 
     state.justCompleted = true
@@ -119,5 +120,5 @@ export function simulateIdleHunting(task, elapsedMs) {
     }
   }
 
-  return { xpGained, rewards, actions, skill: 'hunter', actionName: task.action.name }
+  return { xpGained, rewards, actions, skill: 'hunter', actionName: task.action.name, actionId: task.action.id }
 }

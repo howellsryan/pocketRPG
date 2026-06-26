@@ -57,6 +57,11 @@ export function matchTaskProgress(task, event) {
       if (event.kind !== 'slayer_task_complete') return 0
       return event.count ?? 1
 
+    case 'hunter_hunt':
+      if (event.kind !== 'hunter_hunt') return 0
+      if (t.actionId && t.actionId !== event.actionId) return 0
+      return event.count ?? 1
+
     default:
       return 0
   }
