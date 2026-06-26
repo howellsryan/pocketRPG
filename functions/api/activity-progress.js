@@ -10,11 +10,14 @@ function getCharacterIdFromHeaders(request) {
   return Number.isFinite(id) ? id : null
 }
 
+// Returns the owning row ({ id, active_match_id }) or null. active_match_id
+// rides along so the PvP lock check can reuse this read instead of issuing its
+// own identical SELECT.
 async function assertCharacterOwned(env, characterId, identityId) {
   const row = await env.DB.prepare(
-    'SELECT id FROM characters WHERE id = ? AND owner_id = ? AND deleted_at IS NULL'
+    'SELECT id, active_match_id FROM characters WHERE id = ? AND owner_id = ? AND deleted_at IS NULL'
   ).bind(characterId, identityId).first()
-  return !!row
+  return row || null
 }
 
 function validateEntry(key, entry) {
@@ -56,11 +59,13 @@ export async function onRequestPut({ request, env }) {
 
   const characterId = getCharacterIdFromHeaders(request)
   if (characterId === null) return json({ error: 'Missing X-Character-Id header' }, 400)
-  if (!(await assertCharacterOwned(env, characterId, auth.identity.id))) {
+  const owned = await assertCharacterOwned(env, characterId, auth.identity.id)
+  if (!owned) {
     return json({ error: 'Character not found' }, 404)
   }
 
-  const lock = await assertNotInActiveMatch(env, characterId)
+  // Reuse the active_match_id from the ownership read above.
+  const lock = await assertNotInActiveMatch(env, characterId, owned.active_match_id ?? null)
   if (lock) return lock
 
   let body

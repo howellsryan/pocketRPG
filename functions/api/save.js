@@ -47,12 +47,14 @@ async function getCharacterId(request, env, identityId) {
   if (!Number.isFinite(id)) return { error: 'Invalid character id', status: 400 }
 
   // Confirm ownership. total_level / combat_level ride along so the PUT
-  // path can skip the denormalized-summary UPDATE when nothing changed.
+  // path can skip the denormalized-summary UPDATE when nothing changed, and
+  // active_match_id so the PvP lock check reuses this read instead of issuing
+  // its own identical SELECT.
   const row = await env.DB.prepare(
-    'SELECT id, total_level, combat_level FROM characters WHERE id = ? AND owner_id = ? AND deleted_at IS NULL'
+    'SELECT id, total_level, combat_level, active_match_id FROM characters WHERE id = ? AND owner_id = ? AND deleted_at IS NULL'
   ).bind(id, identityId).first()
   if (!row) return { error: 'Character not found', status: 404 }
-  return { id, total_level: row.total_level, combat_level: row.combat_level }
+  return { id, total_level: row.total_level, combat_level: row.combat_level, active_match_id: row.active_match_id ?? null }
 }
 
 export async function onRequestGet({ request, env }) {
@@ -86,7 +88,8 @@ export async function onRequestPut({ request, env }) {
   if (ch.error) return json({ error: ch.error }, ch.status)
 
   // PvP inventory lock: refuse local-client saves while a match is active.
-  const lock = await assertNotInActiveMatch(env, ch.id)
+  // Reuse the active_match_id already fetched by getCharacterId.
+  const lock = await assertNotInActiveMatch(env, ch.id, ch.active_match_id)
   if (lock) return lock
   // Probabilistic sweep — see SAVE_SWEEP_PROBABILITY above. PvP endpoints
   // already sweep on every action, so the global state stays fresh during
@@ -262,8 +265,11 @@ export async function onRequestPut({ request, env }) {
   }
   await env.DB.batch(statements)
 
-  const revisionRow = await env.DB.prepare('SELECT save_revision FROM saves WHERE character_id = ?').bind(ch.id).first()
-  return json({ ok: true, updatedAt: now, save_revision: Number(revisionRow?.save_revision) || 0 })
+  // The upsert always bumps the revision by one — to 1 on a fresh insert (where
+  // currentRevision is 0) or COALESCE(save_revision,0)+1 on update — so the new
+  // revision is currentRevision + 1 in both cases. Compute it instead of issuing
+  // a post-write SELECT.
+  return json({ ok: true, updatedAt: now, save_revision: currentRevision + 1 })
 }
 
 // Hard-delete the saves row for this character. Used on One-Life death so
