@@ -71,6 +71,25 @@ export function getOneLifeMode() {
   return v === 'true' || v === '1'
 }
 
+// Re-anchor the ironman / one-life mode flags to the AUTHORITATIVE loaded save
+// (player profile). The death handlers gate the One-Life wipe on
+// `isOneLife || getOneLifeMode()`, so these localStorage flags must never go
+// stale relative to the character actually in play. setCharacter() only runs on
+// the auth screen, so a normal boot/reload (which applies the cloud save without
+// re-selecting a character) used to leave whatever flag the PREVIOUS character
+// set — letting a normal account inherit a stale `one_life=true` (wrongly wiped
+// on death) or a one-life account keep a stale `one_life=false` (never wiped).
+// Call this whenever a save is loaded so the flag mirrors `player.is_one_life`.
+export function syncAccountModeFlags(player) {
+  if (!player || typeof player !== 'object') return
+  if ('is_ironman' in player) {
+    localStorage.setItem('pocketrpg_ironman_mode', String(player.is_ironman === true))
+  }
+  if ('is_one_life' in player) {
+    localStorage.setItem('pocketrpg_one_life_mode', String(player.is_one_life === true))
+  }
+}
+
 export function getCharacterName() {
   return localStorage.getItem(CHARACTER_NAME_KEY)
 }
