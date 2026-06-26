@@ -85,6 +85,21 @@ describe('matchTaskProgress', () => {
     })
   })
 
+  describe('skill_xp', () => {
+    it('returns the xp gained for a matching skill', () => {
+      const task = makeTask({ trigger: { type: 'skill_xp', skill: 'mining', target: 500 } })
+      expect(matchTaskProgress(task, { kind: 'skill_xp', skill: 'mining', xp: 120 })).toBe(120)
+    })
+    it('returns 0 for a different skill', () => {
+      const task = makeTask({ trigger: { type: 'skill_xp', skill: 'mining', target: 500 } })
+      expect(matchTaskProgress(task, { kind: 'skill_xp', skill: 'prayer', xp: 120 })).toBe(0)
+    })
+    it('returns 0 for a non skill_xp event', () => {
+      const task = makeTask({ trigger: { type: 'skill_xp', skill: 'mining', target: 500 } })
+      expect(matchTaskProgress(task, { kind: 'skill_gather', skill: 'mining', itemId: 'iron_ore' })).toBe(0)
+    })
+  })
+
   describe('slayer_task_complete', () => {
     it('increments on matching event', () => {
       const task = makeTask({ trigger: { type: 'slayer_task_complete', target: 1 } })
@@ -122,6 +137,11 @@ describe('taskById + matchTaskProgress integration', () => {
     const def = taskById('craft_leather_body')
     expect(def).not.toBeNull()
     expect(matchTaskProgress(def!, { kind: 'skill_produce', skill: 'crafting', itemId: 'leather_body' })).toBe(1)
+  })
+  it('matches skill_xp via taskById lookup for gain_mining_xp', () => {
+    const def = taskById('gain_mining_xp')
+    expect(def).not.toBeNull()
+    expect(matchTaskProgress(def!, { kind: 'skill_xp', skill: 'mining', xp: 250 })).toBe(250)
   })
   it('returns 0 for unknown taskId', () => {
     expect(taskById('nonexistent_task')).toBeNull()
