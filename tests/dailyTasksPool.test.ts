@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import pool from '../src/data/dailyTasks.json'
 import monstersData from '../src/data/monsters.json'
 import itemsData from '../src/data/items.json'
+import raidsData from '../src/data/raids.json'
 
 const TIERS = ['Novice', 'Intermediate', 'Experienced', 'Master', 'Grandmaster']
 
@@ -58,6 +59,19 @@ describe('dailyTasks.json pool integrity', () => {
     for (const task of pool) {
       const t = task.trigger?.target ?? 1
       expect(Number.isInteger(t) && t > 0, `${task.id}: target "${t}" not positive integer`).toBe(true)
+    }
+  })
+
+  it('no boss_kill task targets a raid boss', () => {
+    const raidBossIds = new Set(
+      Object.values(raidsData as Record<string, { bosses: string[] }>).flatMap(r => r.bosses)
+    )
+    const bossKillTasks = pool.filter(t => t.trigger?.type === 'boss_kill')
+    for (const task of bossKillTasks) {
+      expect(
+        raidBossIds.has(task.trigger.monsterId),
+        `${task.id}: monsterId "${task.trigger.monsterId}" is a raid boss — use raid_complete instead`
+      ).toBe(false)
     }
   })
 })

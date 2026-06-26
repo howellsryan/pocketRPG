@@ -496,12 +496,12 @@
     "trigger": { "type": "boss_kill", "monsterId": "venomcoil_matriarch", "target": 5 }
   },
   {
-    "id": "slay_sebakh_the_devourer",
+    "id": "slay_blighted_gauntlet",
     "tier": "Grandmaster",
-    "name": "Slay Sebakh the Devourer",
-    "description": "Defeat Sebakh the Devourer 5 times.",
-    "icon": "sebakh_the_devourer",
-    "trigger": { "type": "boss_kill", "monsterId": "sebakh_the_devourer", "target": 5 }
+    "name": "Conquer the Blighted Gauntlet",
+    "description": "Defeat the Blighted Gauntlet 3 times.",
+    "icon": "blighted_gauntlet",
+    "trigger": { "type": "boss_kill", "monsterId": "blighted_gauntlet", "target": 3 }
   },
   {
     "id": "slay_ember_tyrant",
