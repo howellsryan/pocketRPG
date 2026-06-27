@@ -8,6 +8,22 @@ import { withTimeout } from '../utils/helpers.js'
 import { CRITICAL_SAVE_COALESCE_MS, CRITICAL_SAVE_REASONS, normaliseCriticalSaveReason } from './criticalSavePolicy.js'
 
 const PUSH_DEBOUNCE_MS = 120_000
+// Engagement-aware idle throttle. The periodic autosave + activity heartbeat
+// are crash-durability BACKSTOPS, not the durability mechanism: live progress
+// is mirrored to IndexedDB/localStorage every tick, flushed to the cloud on
+// tab-hide/unload, and — on a hard crash — recovered on next boot by idle
+// catch-up from the server-stamped last_active_at (which moves atomically with
+// the save blob). Genuine milestones (level-up, rare drop, boss/quest/unlock,
+// slayer) still push immediately via the critical-save path. So an AFK
+// foreground session running an idle grind does NOT need a write every ~2 min —
+// it only needs an occasional backstop. We keep the responsive cadence while
+// the player is actually interacting and stretch it to ~hourly once idle, which
+// is the dominant lever on idle D1 write/read volume.
+const ENGAGED_INTERACTION_WINDOW_MS = 90_000
+const IDLE_PERIODIC_SAVE_INTERVAL_MS = 3_600_000 // ~1h
+// Last time the player interacted with the page (pointer/key/touch, or a
+// tab-foreground transition). Seeded to "now" so a fresh session starts engaged.
+let lastInteractionAt = Date.now()
 // Grace window for clock skew between this client and the cloud server when
 // deciding whether the cloud copy is meaningfully newer than our last push.
 const FRESHNESS_GRACE_MS = 5_000
@@ -256,6 +272,50 @@ export function schedulePushSave(snapshot) {
   schedulePush(snapshot)
 }
 
+// Public: record that the player just interacted (pointer/key/touch/foreground).
+// Drives the engaged-vs-idle decision in schedulePeriodicSave. Exported for the
+// app to forward synthetic interactions if needed; the listeners below cover the
+// common cases automatically.
+export function noteUserInteraction(at = Date.now()) {
+  lastInteractionAt = at
+}
+
+function isEngaged(now = Date.now()) {
+  return now - lastInteractionAt < ENGAGED_INTERACTION_WINDOW_MS
+}
+
+// Public: engagement-aware periodic/heartbeat backstop save. Called on the
+// fixed-interval autosave tick and the activity heartbeat. While the player is
+// actively interacting it behaves like schedulePushSave (responsive 120s
+// debounce). Once the session is idle/AFK it only schedules a push after
+// IDLE_PERIODIC_SAVE_INTERVAL_MS has elapsed since the last *successful* write —
+// so an idle grind writes at most ~hourly instead of every ~2 min. lastPushedAt
+// advances on every successful push (including critical-milestone saves), so an
+// idle session that keeps levelling naturally coalesces its backstop with those.
+export function schedulePeriodicSave(snapshot) {
+  if (!canSync()) return
+  if (savesSuspended || conflictPending) return
+  if (!isEngaged()) {
+    if (Date.now() - lastPushedAt < IDLE_PERIODIC_SAVE_INTERVAL_MS) return
+  }
+  schedulePush(snapshot)
+}
+
+// Treat genuine user input as engagement. Passive + capture so we observe it
+// without interfering with the app's own handlers. A tab returning to the
+// foreground also counts — the player is back and may be about to act.
+if (typeof window !== 'undefined') {
+  const markInteraction = () => { lastInteractionAt = Date.now() }
+  for (const evt of ['pointerdown', 'keydown', 'touchstart']) {
+    window.addEventListener(evt, markInteraction, { passive: true, capture: true })
+  }
+  if (typeof document !== 'undefined') {
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) lastInteractionAt = Date.now()
+    })
+  }
+}
+
 // Public: freeze/unfreeze the background save cadence while a critical,
 // all-or-nothing operation (paid skip) owns the single in-flight write. The
 // operation drives its own durable save via pushNow(), which bypasses this gate.
@@ -424,6 +484,7 @@ export function resetSyncState() {
   lastPushedAt = 0
   lastSaveRevision = 0
   lastPushedContentKey = null
+  lastInteractionAt = Date.now()
   pendingSnapshot = null
   hasUnsyncedChanges = false
   consecutiveFailures = 0
