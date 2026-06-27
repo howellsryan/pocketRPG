@@ -127,7 +127,7 @@ export default function FarmingScreen({ onBack }) {
                   const selected = plantSelections[type] === crop.id
                   return (
                     <button key={crop.id} onClick={() => setPlantSelections(prev => ({ ...prev, [type]: selected ? null : crop.id }))} class={`w-full p-2 rounded border text-left flex items-center justify-between ${selected ? 'border-[var(--color-gold)] bg-[#201a08]' : 'border-[#2a2a2a] bg-[#1a1a1a]'}`}>
-                      <span class="text-xs text-[var(--color-parchment)]">{crop.icon} {crop.name}</span>
+                      <span class="text-xs text-[var(--color-parchment)] flex items-center gap-2"><GameIcon item={itemsData[crop.id] || crop} size={20} /> {crop.name}</span>
                       <span class={`text-sm ${selected ? 'text-[var(--color-gold)]' : 'text-[var(--color-parchment)] opacity-30'}`}>{selected ? '✓' : '○'}</span>
                     </button>
                   )
