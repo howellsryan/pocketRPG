@@ -1,0 +1,15 @@
+-- Idle write ceiling support.
+--
+-- `last_active_at` is bumped by every save (including idle backstop writes), so
+-- it can't tell an actively-played session from a forgotten foreground tab that
+-- keeps an idle activity ticking. `last_interactive_at` records the last save
+-- the player was genuinely INTERACTING with (server defaults this from the
+-- client's engagement flag; idle backstop saves leave it untouched). Once it is
+-- older than the 24h idle/offline cap, the save endpoint stops persisting that
+-- character's idle writes — its progress is reconstructable on return via idle
+-- catch-up — which stops abandoned tabs spamming D1 at scale.
+--
+-- NULL = "never reported interactive" (e.g. pre-flag clients): the ceiling is
+-- not enforced until the column has been set, so existing/old clients are never
+-- throttled mid-play.
+ALTER TABLE character_idle_state ADD COLUMN last_interactive_at INTEGER;

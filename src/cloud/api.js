@@ -202,6 +202,10 @@ export const api = {
       // PvP-lobby freshness pushes ask the server to bump updated_at even when
       // the blob is unchanged. Omitted otherwise so a no-op save writes nothing.
       ...(options?.touch === true ? { touch: true } : {}),
+      // Idle backstop writes flag themselves non-interactive so the server can
+      // enforce the idle write ceiling. Omitted (→ server default interactive)
+      // for genuine/engaged saves so they always persist + refresh freshness.
+      ...(options?.interactive === false ? { interactive: false } : {}),
     }),
   }),
   getCollectionLog: () => request('/api/collection-log'),

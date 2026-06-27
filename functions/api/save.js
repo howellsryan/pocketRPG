@@ -7,6 +7,16 @@ import { stampIdleActive, stampIdleActiveStatement } from '../_lib/game/idleStam
 
 const MAX_SAVE_BYTES = 256 * 1024 // 256 KB ceiling — current saves are well under this
 
+// Idle write ceiling. A session with no genuine player interaction for this
+// long is an abandoned (typically forgotten-foreground) tab whose idle activity
+// keeps ticking. Past this point its idle backstop saves are refused: the live
+// progress is reconstructable on return via idle catch-up, which is itself
+// capped at 24h, so persisting further idle ticks buys a returning player
+// nothing and only burns D1 writes at scale. Aligned to MAX_OFFLINE_MS on the
+// client. Interactive saves (screen actions, milestones, leave-flush) are never
+// refused and refresh the freshness stamp.
+const IDLE_WRITE_CEILING_MS = 24 * 60 * 60 * 1000
+
 // Probabilistic gate for the PvP-state sweep on the save-PUT path. Saves
 // happen on a tight client-side cadence; running the full sweep on every
 // one was burning a chunk of the daily D1 write budget on cleanup work
@@ -124,10 +134,41 @@ export async function onRequestPut({ request, env }) {
     return json({ error: 'save_revision_required', code: 'SAVE_REVISION_REQUIRED' }, 400)
   }
 
-  const existing = await env.DB.prepare('SELECT save_data, save_blob, save_revision, updated_at FROM saves WHERE character_id = ?').bind(ch.id).first()
+  // Fold the idle-state freshness read (last_interactive_at) into the existing
+  // save read via a correlated subquery — no extra round-trip — so the idle
+  // write ceiling can be evaluated before any heavy decode/gzip work.
+  const existing = await env.DB.prepare(
+    `SELECT save_data, save_blob, save_revision, updated_at,
+            (SELECT last_interactive_at FROM character_idle_state WHERE character_id = ?) AS last_interactive_at
+       FROM saves WHERE character_id = ?`
+  ).bind(ch.id, ch.id).first()
   const currentRevision = Number(existing?.save_revision) || 0
   if (expectedSaveRevision !== currentRevision) {
     return json({ error: 'save_revision_conflict', code: 'SAVE_REVISION_CONFLICT', current_revision: currentRevision }, 409)
+  }
+
+  const now = Date.now()
+  // `interactive` reflects whether the player has touched this session recently
+  // (the client sends `interactive:false` only for an idle backstop write).
+  // Absent → treated as interactive, so pre-flag clients are never throttled.
+  const interactive = body?.interactive !== false
+  const interactiveAt = interactive ? now : null
+  // Idle write ceiling: once a non-interactive session has gone
+  // IDLE_WRITE_CEILING_MS past its last genuine interaction, refuse the write
+  // and FREEZE the idle row — we don't bump last_active_at, so the stored
+  // active_task + last_active_at stay put and idle catch-up still resumes
+  // correctly (capped at 24h) when the player returns. Costs zero writes. The
+  // NULL guard grandfathers rows that have never reported interactivity.
+  const lastInteractiveAt = Number(existing?.last_interactive_at)
+  if (!interactive && Number.isFinite(lastInteractiveAt) && lastInteractiveAt > 0 &&
+      (now - lastInteractiveAt) > IDLE_WRITE_CEILING_MS) {
+    return json({
+      ok: true,
+      updatedAt: Number(existing?.updated_at) || now,
+      save_revision: currentRevision,
+      noop: true,
+      idle_ceiling: true,
+    })
   }
 
   // Decode the previous save once. The total-level regression guard and the
@@ -198,8 +239,6 @@ export async function onRequestPut({ request, env }) {
   // cheat-proof. The only write this endpoint refuses is a total-level
   // regression (above), which is account-wipe protection, not anti-cheat.
 
-  const now = Date.now()
-
   // No-op save: the incoming payload matches what's already stored (modulo the
   // volatile top-level `timestamp` the client stamps on every push AND the
   // per-tick activeTask countdown/session churn — see noopSaveKey), so skip the
@@ -215,7 +254,7 @@ export async function onRequestPut({ request, env }) {
       // AFK foreground session pushes content-identical saves, and without this
       // stamp last_active_at would never refresh, inflating offline rewards on
       // the next load. This is the regression-critical case — keep it.
-      await stampIdleActive(env, ch.id, idleTaskJson, now)
+      await stampIdleActive(env, ch.id, idleTaskJson, now, interactiveAt)
       // Content-identical to what's stored. Default: write NOTHING else — not
       // the blob, the revision, the summary, NOR updated_at — so a routine no-op
       // save (screen change, AFK tab) costs zero further D1 writes.
@@ -258,7 +297,8 @@ export async function onRequestPut({ request, env }) {
     ).bind(ch.id, save_blob, save_data, now),
     // Fold the idle heartbeat into the same atomic batch — stamps
     // last_active_at + active_task so idling clients drop the separate idle PUT.
-    stampIdleActiveStatement(env, ch.id, idleTaskJson, now),
+    // interactiveAt advances last_interactive_at only on interactive saves.
+    stampIdleActiveStatement(env, ch.id, idleTaskJson, now, interactiveAt),
   ]
   // total_level / combat_level rarely change between saves — only include the
   // characters UPDATE in the batch when the stored summary actually differs.
