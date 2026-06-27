@@ -2560,17 +2560,18 @@ function GameApp() {
         })
         const lootTotal = lootRows.reduce((s, r) => s + (r.gp || 0), 0)
 
-        // Trophy the session's most valuable drop in the spotlight (instead of
-        // the 💤 emoji), mirroring the boss/loot modal. Picks highest total gp,
-        // tie-broken by quantity; falls back to the emoji when nothing dropped
-        // or the player died (the 💀 stays). The hero is de-duped out of the
-        // loot list below (it's named under the spotlight); lootTotal still
-        // sums the whole session.
+        // Trophy the session's standout drop in the spotlight (instead of the
+        // 💤 emoji), mirroring the boss/loot modal. Picks the highest *unit*
+        // shop value (the rare/prestige drop), not the biggest stack — a
+        // billion coins shouldn't outrank dragon claws — tie-broken by total
+        // gp. Falls back to the emoji when nothing dropped or the player died
+        // (the 💀 stays). The hero is de-duped out of the loot list below (it's
+        // named under the spotlight); lootTotal still sums the whole session.
         const heroLoot = idleResult.died ? null : lootRows.reduce((best, r) => {
           if (!r.item) return best
           if (!best) return r
-          if ((r.gp || 0) !== (best.gp || 0)) return (r.gp || 0) > (best.gp || 0) ? r : best
-          return (r.quantity || 0) > (best.quantity || 0) ? r : best
+          if ((r.unitGp || 0) !== (best.unitGp || 0)) return (r.unitGp || 0) > (best.unitGp || 0) ? r : best
+          return (r.gp || 0) > (best.gp || 0) ? r : best
         }, null)
         const restLootRows = heroLoot ? lootRows.filter(r => r !== heroLoot) : lootRows
 

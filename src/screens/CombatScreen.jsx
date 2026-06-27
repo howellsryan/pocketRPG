@@ -2957,8 +2957,15 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           return { ...d, unitGp: unitVal, totalGp: unitVal * (d.quantity || 1) }
         })
         const sorted = [...valuedDrops].sort((a, b) => b.totalGp - a.totalGp)
-        const hero = sorted[0] || null
-        const rest = sorted.slice(1)
+        // Spotlight the highest *unit* shop value (the rare/prestige drop), not
+        // the biggest stack — a billion coins shouldn't outrank dragon claws.
+        // Tie-break by total gp. The loot list keeps its total-gp ordering.
+        const hero = valuedDrops.reduce((best, d) => {
+          if (!best) return d
+          if ((d.unitGp || 0) !== (best.unitGp || 0)) return (d.unitGp || 0) > (best.unitGp || 0) ? d : best
+          return (d.totalGp || 0) > (best.totalGp || 0) ? d : best
+        }, null)
+        const rest = sorted.filter(d => d !== hero)
         const heroItemData = hero ? (itemsData[hero.itemId] || null) : null
         const lootTotal = valuedDrops.reduce((s, d) => s + d.totalGp, 0)
         const isRaid = !!lootModal.raidId
