@@ -2560,11 +2560,23 @@ function GameApp() {
         })
         const lootTotal = lootRows.reduce((s, r) => s + (r.gp || 0), 0)
 
+        // Trophy the session's most valuable drop in the spotlight (instead of
+        // the 💤 emoji), mirroring the boss/loot modal. Picks highest total gp,
+        // tie-broken by quantity; falls back to the emoji when nothing dropped
+        // or the player died (the 💀 stays).
+        const heroLoot = idleResult.died ? null : lootRows.reduce((best, r) => {
+          if (!r.item) return best
+          if (!best) return r
+          if ((r.gp || 0) !== (best.gp || 0)) return (r.gp || 0) > (best.gp || 0) ? r : best
+          return (r.quantity || 0) > (best.quantity || 0) ? r : best
+        }, null)
+
         return (
           <LootResultModal
             theme={idleResult.died ? 'blood' : (hasIdleEpicLootDrop(idleResult, itemsData) ? 'purple' : 'gold')}
             kind="progress"
             icon={idleResult.died ? '💀' : '💤'}
+            heroItem={heroLoot?.item || null}
             eyebrow={idleResult.died ? undefined : `Away for ${formatIdleTime(idleResult.elapsedMs)}`}
             title={idleResult.died ? 'Defeated' : 'Welcome Back!'}
             sub={taskLabel ? taskLabel.toUpperCase() : undefined}

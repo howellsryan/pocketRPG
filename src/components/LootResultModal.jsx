@@ -247,8 +247,8 @@ export function SuppliesCard({ heading, icon: emoji, rows }) {
  * Props:
  *   theme           — "gold" | "blood" | "purple"
  *   kind            — "loot" | "progress" (default "loot")
- *   icon            — emoji string shown in seal (for "progress" mode)
- *   heroItem        — item object for hero spotlight (for "loot" mode)
+ *   icon            — emoji string shown in seal ("progress" mode fallback when no heroItem)
+ *   heroItem        — item object for hero spotlight ("loot" mode, and "progress" mode when set)
  *   heroName        — display name of hero item
  *   heroGp          — hero item GP value (total, for display)
  *   heroUnitGp      — hero item unit shop value (for rarity; falls back to heroGp)
@@ -452,14 +452,19 @@ export default function LootResultModal({
             </>
           ) : (
             <>
-              {/* Progress mode: featured icon above kicker */}
+              {/* Progress mode: featured icon above kicker. When a heroItem is
+                  supplied (e.g. an idle session's most valuable drop) it takes
+                  the spotlight in place of the emoji — mirroring the loot-mode
+                  hero so a skip/idle result trophies the best item, not a 💤. */}
               <div class="lm-spot lm-spot--feat">
                 <div class="lm-stage">
                   <div class="lm-ring" />
                   <div class="lm-ring2" />
                   <div class="lm-disc" />
                   <div class="lm-icn">
-                    <span style={{ fontSize: '42px', lineHeight: 1 }}>{icon || '🏆'}</span>
+                    {heroItem
+                      ? <GameIcon item={heroItem} size={56} />
+                      : <span style={{ fontSize: '42px', lineHeight: 1 }}>{icon || '🏆'}</span>}
                   </div>
                 </div>
               </div>
