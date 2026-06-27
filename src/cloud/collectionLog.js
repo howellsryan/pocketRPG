@@ -146,9 +146,17 @@ function scheduleFlush() {
 // dedupe against the local cache so we don't spam the buffer with already-
 // owned entries. Skips records whose slot is already visually obtained
 // (covers the shared-item case where one source credits multiple slots).
-export function recordCollectionLogDrop({ itemId, sourceType, sourceId }) {
+//
+// `monsters`/`raids` drops normally settle server-side via /api/actions/**
+// (live combat / boss / raid kills), so this client path skips them to avoid
+// double-recording and firing toasts off a client loot roll the server didn't
+// grant. Idle/offline combat is client-trusted and has NO actions call, so its
+// monster uniques would otherwise never be logged — pass `fromIdle` to record
+// them here. The /api/collection-log POST still enforces item ownership, so
+// this isn't a self-attest backdoor.
+export function recordCollectionLogDrop({ itemId, sourceType, sourceId }, { fromIdle = false } = {}) {
   if (!itemId || !sourceType || !sourceId) return
-  if (SERVER_AUTHORITATIVE_SOURCES.has(sourceType)) return
+  if (!fromIdle && SERVER_AUTHORITATIVE_SOURCES.has(sourceType)) return
   const key = `${sourceType}:${sourceId}:${itemId}`
   if (cachedEntries) {
     if (cachedEntries.has(key)) return

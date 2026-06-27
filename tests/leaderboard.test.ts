@@ -67,8 +67,8 @@ describe('GET /api/leaderboard (denormalized + paginated)', () => {
 
   it('shapes rows into { username, totalLevel, combatLevel, isOneLife } and returns pagination meta', async () => {
     const { env } = mockDb([
-      { id: 1, username: 'alice', total_level: 1500, combat_level: 110, is_one_life: 0 },
-      { id: 2, username: 'bob', total_level: 900, combat_level: 70, is_one_life: 1 },
+      { id: 1, username: 'alice', total_level: 1500, combat_level: 110, is_one_life: 0, total_count: 120 },
+      { id: 2, username: 'bob', total_level: 900, combat_level: 70, is_one_life: 1, total_count: 120 },
     ])
 
     const res = await onRequestGet({ request: reqWith('?limit=50&offset=10'), env } as any)
@@ -78,7 +78,7 @@ describe('GET /api/leaderboard (denormalized + paginated)', () => {
       { username: 'alice', totalLevel: 1500, combatLevel: 110, isOneLife: false, isIronman: false },
       { username: 'bob', totalLevel: 900, combatLevel: 70, isOneLife: true, isIronman: false },
     ])
-    expect(body.pagination).toEqual({ limit: 50, offset: 10, count: 2 })
+    expect(body.pagination).toEqual({ limit: 50, offset: 10, count: 2, total: 120 })
   })
 
   it('scopes the ironman board to is_ironman accounts, ordered by total level', async () => {

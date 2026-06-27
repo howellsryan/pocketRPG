@@ -247,9 +247,10 @@ export function SuppliesCard({ heading, icon: emoji, rows }) {
  * Props:
  *   theme           — "gold" | "blood" | "purple"
  *   kind            — "loot" | "progress" (default "loot")
- *   icon            — emoji string shown in seal (for "progress" mode)
- *   heroItem        — item object for hero spotlight (for "loot" mode)
+ *   icon            — emoji string shown in seal ("progress" mode fallback when no heroItem)
+ *   heroItem        — item object for hero spotlight ("loot" mode, and "progress" mode when set)
  *   heroName        — display name of hero item
+ *   heroQuantity    — hero item stack size; rendered as "×N" beside the name when > 1
  *   heroGp          — hero item GP value (total, for display)
  *   heroUnitGp      — hero item unit shop value (for rarity; falls back to heroGp)
  *   heroRate        — drop rate string e.g. "1 / 512"
@@ -284,6 +285,7 @@ export default function LootResultModal({
   icon,
   heroItem,
   heroName,
+  heroQuantity,
   heroGp,
   heroUnitGp,
   heroRate,
@@ -406,7 +408,12 @@ export default function LootResultModal({
               {/* Hero label */}
               <div class="lm-hero">
                 {heroR && <div class="lm-ribbon">{heroR.label} Drop</div>}
-                {heroName && <div class="lm-hname">{heroName}</div>}
+                {heroName && (
+                  <div class="lm-hname">
+                    {heroName}
+                    {heroQuantity > 1 && <span class="lm-hqty">×{heroQuantity.toLocaleString()}</span>}
+                  </div>
+                )}
                 <div class="lm-hmeta">
                   {heroGp > 0 && <span class="lm-hgp">+{formatCompactCoins(heroGp)} gp</span>}
                   {heroGp > 0 && heroRate && <span class="lm-hdot" />}
@@ -452,14 +459,19 @@ export default function LootResultModal({
             </>
           ) : (
             <>
-              {/* Progress mode: featured icon above kicker */}
+              {/* Progress mode: featured icon above kicker. When a heroItem is
+                  supplied (e.g. an idle session's most valuable drop) it takes
+                  the spotlight in place of the emoji — mirroring the loot-mode
+                  hero so a skip/idle result trophies the best item, not a 💤. */}
               <div class="lm-spot lm-spot--feat">
                 <div class="lm-stage">
                   <div class="lm-ring" />
                   <div class="lm-ring2" />
                   <div class="lm-disc" />
                   <div class="lm-icn">
-                    <span style={{ fontSize: '42px', lineHeight: 1 }}>{icon || '🏆'}</span>
+                    {heroItem
+                      ? <GameIcon item={heroItem} size={56} />
+                      : <span style={{ fontSize: '42px', lineHeight: 1 }}>{icon || '🏆'}</span>}
                   </div>
                 </div>
               </div>
@@ -469,6 +481,22 @@ export default function LootResultModal({
                 <h1 class="lm-h1">{title}</h1>
                 {effectiveSub && <div class="lm-csub">{effectiveSub}</div>}
               </div>
+
+              {/* Hero label — names the featured drop (de-duped from the loot
+                  list below) with its stack size and value. */}
+              {heroItem && heroName && (
+                <div class="lm-hero" style={{ paddingTop: 0 }}>
+                  <div class="lm-hname">
+                    {heroName}
+                    {heroQuantity > 1 && <span class="lm-hqty">×{heroQuantity.toLocaleString()}</span>}
+                  </div>
+                  {heroGp > 0 && (
+                    <div class="lm-hmeta">
+                      <span class="lm-hgp">+{formatCompactCoins(heroGp)} gp</span>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Summary & supplies cards */}
               {(summaryRows || suppliesRows) && (

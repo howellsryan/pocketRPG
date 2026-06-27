@@ -3,12 +3,14 @@ import Card from '../components/Card.jsx'
 import FilterToggleBar from '../components/FilterToggleBar.jsx'
 import GameIcon from '../components/GameIcon.jsx'
 import GildedComplete from '../components/GildedComplete.jsx'
+import Pagination from '../components/Pagination.jsx'
 import { formatNumber } from '../utils/helpers.js'
 import { isMaxedTotal } from '../utils/completion.js'
 import { getLeaderboardFilters, getLeaderboardFilterById } from '../engine/leaderboardFilters.js'
 import { getRaidArt, getMonsterArt } from '../utils/combatArt.js'
 
 const LEADERBOARD_FILTERS = getLeaderboardFilters()
+const PAGE_SIZE = 50
 
 // Minimal item shells so GameIcon resolves the full-helm glyph (crested_helmet)
 // with the right tier tint — iron (grey) for Ironman, dragon (red) for accounts
@@ -36,12 +38,14 @@ const LEADERBOARD_FILTER_OPTIONS = LEADERBOARD_FILTERS.map(f => ({
   item: f.type === 'ironman' ? IRON_HELM_ITEM : null,
 }))
 
-function buildLeaderboardUrl(filter) {
-  if (!filter) return '/api/leaderboard'
-  if (filter.type === 'ironman') return '/api/leaderboard?metric=ironman'
-  if (filter.type !== 'kc') return '/api/leaderboard'
-  const params = new URLSearchParams({ metric: 'kc', source_type: filter.sourceType, source_id: filter.sourceId })
-  return `/api/leaderboard?${params.toString()}`
+function buildLeaderboardUrl(filter, page, pageSize) {
+  const params = new URLSearchParams({ limit: String(pageSize), offset: String(page * pageSize) })
+  if (!filter || filter.type === 'total') return `/api/leaderboard?${params}`
+  if (filter.type === 'ironman') { params.set('metric', 'ironman'); return `/api/leaderboard?${params}` }
+  params.set('metric', 'kc')
+  params.set('source_type', filter.sourceType)
+  params.set('source_id', filter.sourceId)
+  return `/api/leaderboard?${params}`
 }
 
 function LeaderboardRow({ rank, char, metric }) {
@@ -85,36 +89,47 @@ function LeaderboardRow({ rank, char, metric }) {
 
 export default function LeaderboardScreen() {
   const [filterId, setFilterId] = useState('total')
+  const [page, setPage] = useState(0)
   const [characters, setCharacters] = useState([])
+  const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
   const filter = getLeaderboardFilterById(filterId) || LEADERBOARD_FILTERS[0]
   const metric = filter.type === 'kc' ? 'kc' : 'total'
+  const offset = page * PAGE_SIZE
+  const totalPages = total > 0 ? Math.ceil(total / PAGE_SIZE) : 0
 
   useEffect(() => {
     let cancelled = false
     async function fetchLeaderboard() {
       try {
         setLoading(true)
-        const res = await fetch(buildLeaderboardUrl(filter))
+        const res = await fetch(buildLeaderboardUrl(filter, page, PAGE_SIZE))
         if (!res.ok) throw new Error('Failed to fetch leaderboard')
         const data = await res.json()
         if (cancelled) return
         setCharacters(data.characters || [])
+        setTotal(data.pagination?.total ?? 0)
         setError(null)
       } catch (err) {
         if (cancelled) return
         console.error('Leaderboard fetch error:', err)
         setError(err.message || 'Failed to load leaderboard')
         setCharacters([])
+        setTotal(0)
       } finally {
         if (!cancelled) setLoading(false)
       }
     }
     fetchLeaderboard()
     return () => { cancelled = true }
-  }, [filterId])
+  }, [filterId, page])
+
+  function handleFilterChange(id) {
+    setFilterId(id)
+    setPage(0)
+  }
 
   const emptyText = metric === 'kc' ? 'No kills recorded yet' : 'No characters found'
 
@@ -126,7 +141,7 @@ export default function LeaderboardScreen() {
           Leaderboard
         </h1>
         <div class="mt-2">
-          <FilterToggleBar options={LEADERBOARD_FILTER_OPTIONS} value={filterId} onChange={setFilterId} />
+          <FilterToggleBar options={LEADERBOARD_FILTER_OPTIONS} value={filterId} onChange={handleFilterChange} />
         </div>
       </div>
       <div class="flex-1 overflow-y-auto px-4 py-4">
@@ -142,9 +157,12 @@ export default function LeaderboardScreen() {
         {!loading && !error && characters.length > 0 && (
           <div class="space-y-2">
             {characters.map((char, idx) => (
-              <LeaderboardRow key={`${filterId}:${idx}`} rank={idx + 1} char={char} metric={metric} />
+              <LeaderboardRow key={`${filterId}:${page}:${idx}`} rank={offset + idx + 1} char={char} metric={metric} />
             ))}
           </div>
+        )}
+        {!loading && !error && (
+          <Pagination page={page} totalPages={totalPages} totalCount={total} onPageChange={setPage} />
         )}
       </div>
     </div>
