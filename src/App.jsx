@@ -2476,17 +2476,29 @@ function GameApp() {
         const hrs = idleResult.elapsedMs / 3600000
         const perHr = (n) => hrs > 0 ? Math.round(n / hrs).toLocaleString() : '—'
 
-        const taskLabel = idleResult.died ? 'You died during idle combat' : (idleResult.task ? (
-          idleResult.task.type === 'combat' ? `Fighting ${idleResult.task.monster?.name || ''}` :
-          idleResult.task.type === 'skill' ? `Training ${idleResult.task.skill}` :
-          idleResult.task.type === 'gather' ? idleResult.task.gatherTask?.name :
-          idleResult.task.type === 'minigame' ? idleResult.task.minigameTask?.name :
-          idleResult.task.type === 'thieving' ? `Pickpocketing ${idleResult.task.npc?.name}` :
-          idleResult.task.type === 'agility' ? 'Training agility' :
-          idleResult.task.type === 'hunter' ? idleResult.task.action?.name :
-          idleResult.task.type === 'quest' ? (idleResult.completedQuests?.length > 1 ? `${idleResult.completedQuests.length} Quests Completed` : (idleResult.completed ? 'Completed' : 'On quest')) :
-          undefined
-        ) : undefined)
+        // Quests run via a cascade whose finalTask is nulled once the queue
+        // empties, so idleResult.task is gone by the time the modal shows —
+        // key the quest label off questCascade/completedQuests instead of task.
+        // Clues are type 'clue' with the tier on gatherTask.clueLevel.
+        const completedQuestCount = idleResult.completedQuests?.length || 0
+        const clueTier = idleResult.task?.gatherTask?.clueLevel
+        const clueTierLabel = clueTier ? `${clueTier.charAt(0).toUpperCase()}${clueTier.slice(1)} Clue` : 'a Clue'
+        const taskLabel = idleResult.died ? 'You died during idle combat'
+          : (idleResult.questCascade || idleResult.task?.type === 'quest') ? (
+              completedQuestCount > 1 ? `Completed ${completedQuestCount} Quests`
+              : completedQuestCount === 1 ? `Completed ${idleResult.completedQuests[0]?.name || 'Quest'}`
+              : 'Completing Quests')
+          : (idleResult.task ? (
+              idleResult.task.type === 'combat' ? `Fighting ${idleResult.task.monster?.name || ''}` :
+              idleResult.task.type === 'skill' ? `Training ${idleResult.task.skill}` :
+              idleResult.task.type === 'clue' ? `Completing ${clueTier ? `a ${clueTierLabel}` : clueTierLabel}` :
+              idleResult.task.type === 'gather' ? idleResult.task.gatherTask?.name :
+              idleResult.task.type === 'minigame' ? idleResult.task.minigameTask?.name :
+              idleResult.task.type === 'thieving' ? `Pickpocketing ${idleResult.task.npc?.name}` :
+              idleResult.task.type === 'agility' ? 'Training agility' :
+              idleResult.task.type === 'hunter' ? idleResult.task.action?.name :
+              undefined
+            ) : undefined)
 
         // Build summary rows
         const xpSource = idleResult.aggregatedXpReward || idleResult.xpGained
