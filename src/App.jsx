@@ -2563,13 +2563,16 @@ function GameApp() {
         // Trophy the session's most valuable drop in the spotlight (instead of
         // the 💤 emoji), mirroring the boss/loot modal. Picks highest total gp,
         // tie-broken by quantity; falls back to the emoji when nothing dropped
-        // or the player died (the 💀 stays).
+        // or the player died (the 💀 stays). The hero is de-duped out of the
+        // loot list below (it's named under the spotlight); lootTotal still
+        // sums the whole session.
         const heroLoot = idleResult.died ? null : lootRows.reduce((best, r) => {
           if (!r.item) return best
           if (!best) return r
           if ((r.gp || 0) !== (best.gp || 0)) return (r.gp || 0) > (best.gp || 0) ? r : best
           return (r.quantity || 0) > (best.quantity || 0) ? r : best
         }, null)
+        const restLootRows = heroLoot ? lootRows.filter(r => r !== heroLoot) : lootRows
 
         return (
           <LootResultModal
@@ -2577,6 +2580,9 @@ function GameApp() {
             kind="progress"
             icon={idleResult.died ? '💀' : '💤'}
             heroItem={heroLoot?.item || null}
+            heroName={heroLoot?.name || null}
+            heroQuantity={heroLoot?.quantity ?? null}
+            heroGp={heroLoot?.gp ?? 0}
             eyebrow={idleResult.died ? undefined : `Away for ${formatIdleTime(idleResult.elapsedMs)}`}
             title={idleResult.died ? 'Defeated' : 'Welcome Back!'}
             sub={taskLabel ? taskLabel.toUpperCase() : undefined}
@@ -2589,7 +2595,7 @@ function GameApp() {
             suppliesRows={supplyRows.length > 0 ? supplyRows : null}
             suppliesHeading="Idle Supplies"
             suppliesIcon="🛡️"
-            loot={lootRows.length > 0 ? lootRows : null}
+            loot={restLootRows.length > 0 ? restLootRows : null}
             lootTitle="Loot"
             lootTotal={lootTotal}
             primaryAction={{ label: 'Continue Adventure', onClick: closeIdleResultModal }}

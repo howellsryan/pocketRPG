@@ -2976,6 +2976,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
               : undefined}
             heroItem={!lootModal.loading && heroItemData ? heroItemData : null}
             heroName={!lootModal.loading && hero ? (heroItemData?.name || hero.itemId) : null}
+            heroQuantity={!lootModal.loading && hero ? hero.quantity : null}
             heroGp={!lootModal.loading && hero ? hero.totalGp : 0}
             heroUnitGp={!lootModal.loading && hero ? hero.unitGp : 0}
             skipLabel={!lootModal.loading && getToken() && getCharacterId()

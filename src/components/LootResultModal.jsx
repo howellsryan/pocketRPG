@@ -250,6 +250,7 @@ export function SuppliesCard({ heading, icon: emoji, rows }) {
  *   icon            — emoji string shown in seal ("progress" mode fallback when no heroItem)
  *   heroItem        — item object for hero spotlight ("loot" mode, and "progress" mode when set)
  *   heroName        — display name of hero item
+ *   heroQuantity    — hero item stack size; rendered as "×N" beside the name when > 1
  *   heroGp          — hero item GP value (total, for display)
  *   heroUnitGp      — hero item unit shop value (for rarity; falls back to heroGp)
  *   heroRate        — drop rate string e.g. "1 / 512"
@@ -284,6 +285,7 @@ export default function LootResultModal({
   icon,
   heroItem,
   heroName,
+  heroQuantity,
   heroGp,
   heroUnitGp,
   heroRate,
@@ -406,7 +408,12 @@ export default function LootResultModal({
               {/* Hero label */}
               <div class="lm-hero">
                 {heroR && <div class="lm-ribbon">{heroR.label} Drop</div>}
-                {heroName && <div class="lm-hname">{heroName}</div>}
+                {heroName && (
+                  <div class="lm-hname">
+                    {heroName}
+                    {heroQuantity > 1 && <span class="lm-hqty">×{heroQuantity.toLocaleString()}</span>}
+                  </div>
+                )}
                 <div class="lm-hmeta">
                   {heroGp > 0 && <span class="lm-hgp">+{formatCompactCoins(heroGp)} gp</span>}
                   {heroGp > 0 && heroRate && <span class="lm-hdot" />}
@@ -474,6 +481,22 @@ export default function LootResultModal({
                 <h1 class="lm-h1">{title}</h1>
                 {effectiveSub && <div class="lm-csub">{effectiveSub}</div>}
               </div>
+
+              {/* Hero label — names the featured drop (de-duped from the loot
+                  list below) with its stack size and value. */}
+              {heroItem && heroName && (
+                <div class="lm-hero" style={{ paddingTop: 0 }}>
+                  <div class="lm-hname">
+                    {heroName}
+                    {heroQuantity > 1 && <span class="lm-hqty">×{heroQuantity.toLocaleString()}</span>}
+                  </div>
+                  {heroGp > 0 && (
+                    <div class="lm-hmeta">
+                      <span class="lm-hgp">+{formatCompactCoins(heroGp)} gp</span>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Summary & supplies cards */}
               {(summaryRows || suppliesRows) && (
