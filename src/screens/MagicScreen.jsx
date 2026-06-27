@@ -345,7 +345,6 @@ export default function MagicScreen({ onBack, onNavigate }) {
                     {levelOk && !hasRunes && <span class="block text-[var(--color-blood-ember)] mt-1">🔮 Missing runes (or equip elemental staff)</span>}
                     {levelOk && hasRunes && !hasMats && <span class="block text-[var(--color-blood-ember)] mt-1">Missing materials</span>}
                   </>}
-                  chip={action.product ? <>→ {itemsData[action.product]?.name || action.product}</> : null}
                   active={activeTask?.type === 'skill' && activeTask.skill === 'magic' && activeTask.action?.id === action.id}
                   locked={!levelOk}
                   lockBadge={`LV ${action.level}`}
