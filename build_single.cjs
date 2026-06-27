@@ -138,6 +138,7 @@ const sourceFiles = [
   'components/CollectionLogPanel.js',
   'components/GildedComplete.js',
   'components/FilterToggleBar.js',
+  'components/Pagination.js',
   'components/SkillScreenHeader.js',
   'components/SkillInfoBanner.js',
   'components/SkillActionRow.js',
