@@ -196,7 +196,10 @@ function recordCollectionLogDropForMinigame(task) {
 // Fire one record per matching unique against the monster source.
 function recordCollectionLogDropsForIdleCombat(monsterId, sim) {
   for (const itemId of collectIdleCombatLoggedDrops(monsterId, sim)) {
-    recordCollectionLogDrop({ itemId, sourceType: 'monsters', sourceId: monsterId })
+    // Idle combat is client-trusted (no /api/actions/** completion), so monster
+    // uniques must be recorded via this client path; the live-combat skip for
+    // 'monsters' would otherwise drop them silently. Server enforces ownership.
+    recordCollectionLogDrop({ itemId, sourceType: 'monsters', sourceId: monsterId }, { fromIdle: true })
   }
 }
 

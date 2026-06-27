@@ -46,6 +46,26 @@ describe('collection log slot completion notifications', () => {
     expect(postCollectionLogMock).not.toHaveBeenCalled()
   })
 
+  it('records idle-sourced monster drops (client-trusted; no actions completion)', async () => {
+    const mod: any = await freshClient()
+    getCollectionLogMock.mockResolvedValueOnce({ entries: [], total: 100 })
+    await mod.fetchCollectionLog({ force: true })
+
+    const seen: Array<{ itemId: string; sourceType: string; sourceId: string }> = []
+    mod.onCollectionLogSlotComplete((e: any) => seen.push(e))
+
+    mod.recordCollectionLogDrop(
+      { itemId: 'dragon_boots', sourceType: 'monsters', sourceId: 'astral_ranger' },
+      { fromIdle: true },
+    )
+    expect(seen).toEqual([{ itemId: 'dragon_boots', sourceType: 'monsters', sourceId: 'astral_ranger' }])
+    await vi.advanceTimersByTimeAsync(1000)
+    expect(postCollectionLogMock).toHaveBeenCalledTimes(1)
+    expect(postCollectionLogMock).toHaveBeenCalledWith([
+      { itemId: 'dragon_boots', sourceType: 'monsters', sourceId: 'astral_ranger' },
+    ])
+  })
+
   it('does not re-fire when the entry already exists in the cached server state', async () => {
     const mod: any = await freshClient()
     getCollectionLogMock.mockResolvedValueOnce({
