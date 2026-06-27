@@ -63,6 +63,47 @@ describe('schedulePeriodicSave throttling', () => {
     expect(putSave).toHaveBeenCalledTimes(2)
   })
 
+  it('stops emitting periodic saves entirely once past the 24h interaction ceiling', async () => {
+    // Establish a baseline write while engaged.
+    noteUserInteraction()
+    schedulePeriodicSave({ stats: { attack: { xp: 5 } } })
+    await vi.advanceTimersByTimeAsync(DEBOUNCE_MS)
+    expect(putSave).toHaveBeenCalledTimes(1)
+
+    // No interaction for >24h → abandoned tab. Even past the hourly interval,
+    // the periodic backstop must emit nothing (stops hitting the server).
+    await vi.advanceTimersByTimeAsync(25 * HOUR_MS)
+    schedulePeriodicSave({ stats: { attack: { xp: 9 } } })
+    await vi.advanceTimersByTimeAsync(DEBOUNCE_MS)
+    expect(putSave).toHaveBeenCalledTimes(1)
+
+    // The player returns → re-arms immediately.
+    noteUserInteraction()
+    schedulePeriodicSave({ stats: { attack: { xp: 12 } } })
+    await vi.advanceTimersByTimeAsync(DEBOUNCE_MS)
+    expect(putSave).toHaveBeenCalledTimes(2)
+  })
+
+  it('flags engaged saves interactive (true) and idle backstops interactive:false', async () => {
+    // The flag is evaluated when the debounced push actually fires, so a player
+    // still interacting through the debounce window marks the save interactive.
+    noteUserInteraction()
+    schedulePeriodicSave({ stats: { attack: { xp: 5 } } })
+    await vi.advanceTimersByTimeAsync(DEBOUNCE_MS / 2)
+    noteUserInteraction() // still interacting as the push lands
+    await vi.advanceTimersByTimeAsync(DEBOUNCE_MS / 2)
+    expect(putSave).toHaveBeenCalledTimes(1)
+    expect(putSave.mock.calls[0][1].interactive).toBe(true)
+
+    // Now go quiet past the engagement window and let the hourly backstop fire →
+    // marked non-interactive so the server can enforce the ceiling.
+    await vi.advanceTimersByTimeAsync(HOUR_MS)
+    schedulePeriodicSave({ stats: { attack: { xp: 9 } } })
+    await vi.advanceTimersByTimeAsync(DEBOUNCE_MS)
+    expect(putSave).toHaveBeenCalledTimes(2)
+    expect(putSave.mock.calls[1][1].interactive).toBe(false)
+  })
+
   it('a fresh interaction re-engages the responsive cadence', async () => {
     noteUserInteraction()
     schedulePeriodicSave({ stats: { attack: { xp: 5 } } })

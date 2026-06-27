@@ -31,7 +31,7 @@ const baseSave = (extra: Record<string, unknown> = {}) => ({
   ...extra,
 })
 
-function makeEnv({ existingSaveData, character }: { existingSaveData: string | null, character?: any }) {
+function makeEnv({ existingSaveData, character, lastInteractiveAt = null }: { existingSaveData: string | null, character?: any, lastInteractiveAt?: number | null }) {
   const batches: any[][] = []
   const runs: { sql: string, args: any[] }[] = []
   const env = {
@@ -44,10 +44,10 @@ function makeEnv({ existingSaveData, character }: { existingSaveData: string | n
             if (/FROM characters WHERE id/.test(sql)) {
               return character ?? { id: 42, total_level: 1, combat_level: 3 }
             }
-            if (/SELECT save_data, save_blob, save_revision.* FROM saves/.test(sql)) {
+            if (/SELECT save_data, save_blob, save_revision[\s\S]* FROM saves/.test(sql)) {
               return existingSaveData === null
                 ? null
-                : { save_data: existingSaveData, save_blob: null, save_revision: 7, updated_at: 555 }
+                : { save_data: existingSaveData, save_blob: null, save_revision: 7, updated_at: 555, last_interactive_at: lastInteractiveAt }
             }
             if (/SELECT save_revision FROM saves/.test(sql)) {
               return { save_revision: 8 }
@@ -256,6 +256,65 @@ describe('PUT /api/save folds the idle heartbeat', () => {
     } finally {
       pvpLockResponse = null
     }
+  })
+})
+
+describe('PUT /api/save idle write ceiling', () => {
+  const STALE = Date.now() - (25 * 60 * 60 * 1000) // 25h ago → past the 24h ceiling
+  const FRESH = Date.now() - (60 * 1000)            // 1m ago → well within
+
+  it('refuses an idle (interactive:false) write once past the 24h ceiling, frozen', async () => {
+    const stored = JSON.stringify(baseSave({ stats: { attack: { xp: 0 }, mining: { xp: 50 } } }))
+    const incoming = JSON.stringify(baseSave({ timestamp: 99999, stats: { attack: { xp: 0 }, mining: { xp: 999 } } }))
+    const { env, batches, runs } = makeEnv({ existingSaveData: stored, lastInteractiveAt: STALE })
+
+    const res = await onRequestPut({ request: makePut({ save_data: incoming, save_revision: 7, interactive: false }), env } as any)
+    expect(res.status).toBe(200)
+    const body = await res.json()
+    expect(body.idle_ceiling).toBe(true)
+    expect(body.noop).toBe(true)
+    expect(body.save_revision).toBe(7)
+    // Frozen: zero writes — not even the idle stamp (last_active_at stays put so
+    // catch-up still resumes from the stored anchor on return).
+    expect(batches).toHaveLength(0)
+    expect(runs).toHaveLength(0)
+  })
+
+  it('still writes an idle save when within the ceiling', async () => {
+    const stored = JSON.stringify(baseSave({ stats: { attack: { xp: 0 }, mining: { xp: 50 } } }))
+    const incoming = JSON.stringify(baseSave({ timestamp: 99999, stats: { attack: { xp: 0 }, mining: { xp: 999 } } }))
+    const { env, batches } = makeEnv({ existingSaveData: stored, lastInteractiveAt: FRESH })
+
+    const res = await onRequestPut({ request: makePut({ save_data: incoming, save_revision: 7, interactive: false }), env } as any)
+    const body = await res.json()
+    expect(body.idle_ceiling).toBeUndefined()
+    expect(batches).toHaveLength(1)
+  })
+
+  it('never refuses an interactive save, even past the ceiling, and refreshes freshness', async () => {
+    const stored = JSON.stringify(baseSave({ stats: { attack: { xp: 0 }, mining: { xp: 50 } } }))
+    const incoming = JSON.stringify(baseSave({ timestamp: 99999, stats: { attack: { xp: 0 }, mining: { xp: 999 } } }))
+    const { env, batches } = makeEnv({ existingSaveData: stored, lastInteractiveAt: STALE })
+
+    // interactive omitted → server default interactive=true.
+    const res = await onRequestPut({ request: makePut({ save_data: incoming, save_revision: 7 }), env } as any)
+    const body = await res.json()
+    expect(body.idle_ceiling).toBeUndefined()
+    expect(batches).toHaveLength(1)
+    const stamp = batches[0].find((s: any) => /INSERT INTO character_idle_state/.test(s.sql))
+    // args: [character_id, last_active_at, active_task, updated_at, last_interactive_at]
+    expect(typeof stamp.args[4]).toBe('number') // freshness advanced
+  })
+
+  it('grandfathers rows that never reported interactivity (null freshness)', async () => {
+    const stored = JSON.stringify(baseSave({ stats: { attack: { xp: 0 }, mining: { xp: 50 } } }))
+    const incoming = JSON.stringify(baseSave({ timestamp: 99999, stats: { attack: { xp: 0 }, mining: { xp: 999 } } }))
+    const { env, batches } = makeEnv({ existingSaveData: stored, lastInteractiveAt: null })
+
+    const res = await onRequestPut({ request: makePut({ save_data: incoming, save_revision: 7, interactive: false }), env } as any)
+    const body = await res.json()
+    expect(body.idle_ceiling).toBeUndefined()
+    expect(batches).toHaveLength(1)
   })
 })
 

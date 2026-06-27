@@ -21,6 +21,12 @@ const PUSH_DEBOUNCE_MS = 120_000
 // is the dominant lever on idle D1 write/read volume.
 const ENGAGED_INTERACTION_WINDOW_MS = 90_000
 const IDLE_PERIODIC_SAVE_INTERVAL_MS = 3_600_000 // ~1h
+// Hard ceiling: once a session has gone this long with no human interaction it
+// is an abandoned/forgotten tab. The periodic backstop stops emitting saves
+// entirely so it stops hitting the server — live progress is reconstructable on
+// return via idle catch-up (itself capped at 24h). Re-arms on the next
+// interaction. Mirrors the server-side IDLE_WRITE_CEILING_MS / MAX_OFFLINE_MS.
+const IDLE_WRITE_CEILING_MS = 24 * 60 * 60 * 1000
 // Last time the player interacted with the page (pointer/key/touch, or a
 // tab-foreground transition). Seeded to "now" so a fresh session starts engaged.
 let lastInteractionAt = Date.now()
@@ -171,7 +177,12 @@ async function performPush() {
       emitCloudSaveStatus('saved', { updatedAt: lastPushedAt || null, skipped: true })
       return true
     }
-    const res = await api.putSave(json, { ...pendingSaveOptions, saveRevision: lastSaveRevision })
+    // Tell the server whether the player is genuinely engaged (interacted
+    // recently). Idle backstop writes carry interactive:false so the server can
+    // enforce the idle write ceiling; engaged/manual saves omit it (default
+    // interactive) and always persist + refresh the freshness stamp.
+    const interactive = isEngaged()
+    const res = await api.putSave(json, { ...pendingSaveOptions, saveRevision: lastSaveRevision, interactive })
     pendingSaveOptions = {}
     if (res?.updatedAt) lastPushedAt = res.updatedAt
     if (Number.isFinite(res?.save_revision)) lastSaveRevision = res.save_revision
@@ -295,8 +306,13 @@ function isEngaged(now = Date.now()) {
 export function schedulePeriodicSave(snapshot) {
   if (!canSync()) return
   if (savesSuspended || conflictPending) return
-  if (!isEngaged()) {
-    if (Date.now() - lastPushedAt < IDLE_PERIODIC_SAVE_INTERVAL_MS) return
+  const now = Date.now()
+  // Phase 1 hard ceiling: an abandoned tab stops emitting periodic saves
+  // altogether (the real lever on stale-tab request spam). Re-arms when the
+  // player next interacts.
+  if (now - lastInteractionAt > IDLE_WRITE_CEILING_MS) return
+  if (!isEngaged(now)) {
+    if (now - lastPushedAt < IDLE_PERIODIC_SAVE_INTERVAL_MS) return
   }
   schedulePush(snapshot)
 }
