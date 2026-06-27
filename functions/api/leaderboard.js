@@ -50,12 +50,13 @@ export async function onRequestGet(context) {
     }
 
     let characters
+    let totalCount = 0
     if (metric === 'kc') {
       // Top killers of a given boss/raid. kill_counts is server-authoritative
       // (written only by the action completion endpoints, migration 0019) and
       // indexed by (source_type, source_id, kill_count DESC), migration 0020.
       const rows = await env.DB.prepare(
-        `SELECT c.username, c.combat_level, c.is_one_life, c.is_ironman, k.kill_count
+        `SELECT COUNT(*) OVER () as total_count, c.username, c.combat_level, c.is_one_life, c.is_ironman, k.kill_count
            FROM kill_counts k
            JOIN characters c ON c.id = k.character_id
           WHERE k.source_type = ? AND k.source_id = ?
@@ -64,6 +65,7 @@ export async function onRequestGet(context) {
           ORDER BY k.kill_count DESC, c.id ASC
           LIMIT ? OFFSET ?`
       ).bind(sourceType, sourceId, limit, offset).all()
+      totalCount = rows.results?.[0]?.total_count ?? 0
       characters = (rows.results || []).map(row => ({
         username: row.username,
         killCount: row.kill_count,
@@ -81,12 +83,13 @@ export async function onRequestGet(context) {
       // query scoped to is_ironman accounts.
       const ironmanClause = metric === 'ironman' ? ' AND is_ironman = 1' : ''
       const rows = await env.DB.prepare(
-        `SELECT id, username, total_level, combat_level, is_one_life, is_ironman
+        `SELECT COUNT(*) OVER () as total_count, id, username, total_level, combat_level, is_one_life, is_ironman
            FROM characters
           WHERE deleted_at IS NULL AND total_level > 33 AND is_bot = 0${ironmanClause}
           ORDER BY total_level DESC, total_level_at ASC, id ASC
           LIMIT ? OFFSET ?`
       ).bind(limit, offset).all()
+      totalCount = rows.results?.[0]?.total_count ?? 0
       characters = (rows.results || []).map(row => ({
         username: row.username,
         totalLevel: row.total_level,
@@ -102,7 +105,7 @@ export async function onRequestGet(context) {
         metric,
         sourceType: metric === 'kc' ? sourceType : null,
         sourceId: metric === 'kc' ? sourceId : null,
-        pagination: { limit, offset, count: characters.length },
+        pagination: { limit, offset, count: characters.length, total: totalCount },
       },
       200,
       { 'Cache-Control': `public, max-age=${CACHE_TTL_SECONDS}, s-maxage=${CACHE_TTL_SECONDS}` },
