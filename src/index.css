@@ -1093,6 +1093,15 @@ html, body, #app {
   margin-bottom: 7px;
   text-shadow: 0 2px 14px color-mix(in srgb, var(--rc) 40%, transparent);
 }
+.lm-hqty {
+  font-size: 0.62em;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  opacity: 0.6;
+  margin-left: 6px;
+  white-space: nowrap;
+  vertical-align: middle;
+}
 .lm-hmeta {
   display: flex;
   align-items: center;

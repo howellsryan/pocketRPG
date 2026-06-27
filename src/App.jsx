@@ -196,7 +196,10 @@ function recordCollectionLogDropForMinigame(task) {
 // Fire one record per matching unique against the monster source.
 function recordCollectionLogDropsForIdleCombat(monsterId, sim) {
   for (const itemId of collectIdleCombatLoggedDrops(monsterId, sim)) {
-    recordCollectionLogDrop({ itemId, sourceType: 'monsters', sourceId: monsterId })
+    // Idle combat is client-trusted (no /api/actions/** completion), so monster
+    // uniques must be recorded via this client path; the live-combat skip for
+    // 'monsters' would otherwise drop them silently. Server enforces ownership.
+    recordCollectionLogDrop({ itemId, sourceType: 'monsters', sourceId: monsterId }, { fromIdle: true })
   }
 }
 
@@ -2477,17 +2480,29 @@ function GameApp() {
         const hrs = idleResult.elapsedMs / 3600000
         const perHr = (n) => hrs > 0 ? Math.round(n / hrs).toLocaleString() : '—'
 
-        const taskLabel = idleResult.died ? 'You died during idle combat' : (idleResult.task ? (
-          idleResult.task.type === 'combat' ? `Fighting ${idleResult.task.monster?.name || ''}` :
-          idleResult.task.type === 'skill' ? `Training ${idleResult.task.skill}` :
-          idleResult.task.type === 'gather' ? idleResult.task.gatherTask?.name :
-          idleResult.task.type === 'minigame' ? idleResult.task.minigameTask?.name :
-          idleResult.task.type === 'thieving' ? `Pickpocketing ${idleResult.task.npc?.name}` :
-          idleResult.task.type === 'agility' ? 'Training agility' :
-          idleResult.task.type === 'hunter' ? idleResult.task.action?.name :
-          idleResult.task.type === 'quest' ? (idleResult.completedQuests?.length > 1 ? `${idleResult.completedQuests.length} Quests Completed` : (idleResult.completed ? 'Completed' : 'On quest')) :
-          undefined
-        ) : undefined)
+        // Quests run via a cascade whose finalTask is nulled once the queue
+        // empties, so idleResult.task is gone by the time the modal shows —
+        // key the quest label off questCascade/completedQuests instead of task.
+        // Clues are type 'clue' with the tier on gatherTask.clueLevel.
+        const completedQuestCount = idleResult.completedQuests?.length || 0
+        const clueTier = idleResult.task?.gatherTask?.clueLevel
+        const clueTierLabel = clueTier ? `${clueTier.charAt(0).toUpperCase()}${clueTier.slice(1)} Clue` : 'a Clue'
+        const taskLabel = idleResult.died ? 'You died during idle combat'
+          : (idleResult.questCascade || idleResult.task?.type === 'quest') ? (
+              completedQuestCount > 1 ? `Completed ${completedQuestCount} Quests`
+              : completedQuestCount === 1 ? `Completed ${idleResult.completedQuests[0]?.name || 'Quest'}`
+              : 'Completing Quests')
+          : (idleResult.task ? (
+              idleResult.task.type === 'combat' ? `Fighting ${idleResult.task.monster?.name || ''}` :
+              idleResult.task.type === 'skill' ? `Training ${idleResult.task.skill}` :
+              idleResult.task.type === 'clue' ? `Completing ${clueTier ? `a ${clueTierLabel}` : clueTierLabel}` :
+              idleResult.task.type === 'gather' ? idleResult.task.gatherTask?.name :
+              idleResult.task.type === 'minigame' ? idleResult.task.minigameTask?.name :
+              idleResult.task.type === 'thieving' ? `Pickpocketing ${idleResult.task.npc?.name}` :
+              idleResult.task.type === 'agility' ? 'Training agility' :
+              idleResult.task.type === 'hunter' ? idleResult.task.action?.name :
+              undefined
+            ) : undefined)
 
         // Build summary rows
         const xpSource = idleResult.aggregatedXpReward || idleResult.xpGained
@@ -2561,11 +2576,30 @@ function GameApp() {
         })
         const lootTotal = lootRows.reduce((s, r) => s + (r.gp || 0), 0)
 
+        // Trophy the session's standout drop in the spotlight (instead of the
+        // 💤 emoji), mirroring the boss/loot modal. Picks the highest *unit*
+        // shop value (the rare/prestige drop), not the biggest stack — a
+        // billion coins shouldn't outrank dragon claws — tie-broken by total
+        // gp. Falls back to the emoji when nothing dropped or the player died
+        // (the 💀 stays). The hero is de-duped out of the loot list below (it's
+        // named under the spotlight); lootTotal still sums the whole session.
+        const heroLoot = idleResult.died ? null : lootRows.reduce((best, r) => {
+          if (!r.item) return best
+          if (!best) return r
+          if ((r.unitGp || 0) !== (best.unitGp || 0)) return (r.unitGp || 0) > (best.unitGp || 0) ? r : best
+          return (r.gp || 0) > (best.gp || 0) ? r : best
+        }, null)
+        const restLootRows = heroLoot ? lootRows.filter(r => r !== heroLoot) : lootRows
+
         return (
           <LootResultModal
             theme={idleResult.died ? 'blood' : (hasIdleEpicLootDrop(idleResult, itemsData) ? 'purple' : 'gold')}
             kind="progress"
             icon={idleResult.died ? '💀' : '💤'}
+            heroItem={heroLoot?.item || null}
+            heroName={heroLoot?.name || null}
+            heroQuantity={heroLoot?.quantity ?? null}
+            heroGp={heroLoot?.gp ?? 0}
             eyebrow={idleResult.died ? undefined : `Away for ${formatIdleTime(idleResult.elapsedMs)}`}
             title={idleResult.died ? 'Defeated' : 'Welcome Back!'}
             sub={taskLabel ? taskLabel.toUpperCase() : undefined}
@@ -2578,7 +2612,7 @@ function GameApp() {
             suppliesRows={supplyRows.length > 0 ? supplyRows : null}
             suppliesHeading="Idle Supplies"
             suppliesIcon="🛡️"
-            loot={lootRows.length > 0 ? lootRows : null}
+            loot={restLootRows.length > 0 ? restLootRows : null}
             lootTitle="Loot"
             lootTotal={lootTotal}
             primaryAction={{ label: 'Continue Adventure', onClick: closeIdleResultModal }}
