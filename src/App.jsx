@@ -40,7 +40,7 @@ import { initNewGame, saveSetting, getSetting, getAllStats, getInventory, getEqu
 import { startTicks, stopTicks, onTick, pauseTicks, resumeTicks } from './engine/tick.js'
 import { wipeLocalSave } from './db/saveload.js'
 import { api, captureTokenFromHash, getToken, getCharacterId, getCharacterName, setCharacter, clearAuth, getLocalCharacterId, setLocalCharacterId, getIronmanMode, getOneLifeMode, syncAccountModeFlags, CREDITS_UPDATED_EVENT } from './cloud/api.js'
-import { schedulePushSave, pushNow, pullSave, applyCloudSave, checkCloudNewer, resetSyncState, requestCriticalPushSave, retrySaveNow, isSaveConflict, CLOUD_SAVE_STATUS_EVENT } from './cloud/sync.js'
+import { schedulePushSave, schedulePeriodicSave, pushNow, pullSave, applyCloudSave, checkCloudNewer, resetSyncState, requestCriticalPushSave, retrySaveNow, isSaveConflict, CLOUD_SAVE_STATUS_EVENT } from './cloud/sync.js'
 import { CRITICAL_SAVE_REASONS } from './cloud/criticalSavePolicy.js'
 import { fetchIdleState, beaconIdleState, resetIdleStateSync } from './cloud/idleState.js'
 import { isBackground } from './engine/activityRegistry.js'
@@ -1152,8 +1152,12 @@ function GameApp() {
       snapshotCounter.current++
       if (snapshotCounter.current >= 100) {
         snapshotCounter.current = 0
-        // Cloud sync piggy-backs on the local snapshot cadence (debounced, hash-skipped).
-        if (!isInPvpMatch) schedulePushSave(getSnapshot())
+        // Cloud sync piggy-backs on the local snapshot cadence (debounced,
+        // hash-skipped). schedulePeriodicSave stretches this to ~hourly once the
+        // session is idle/AFK so an unattended idle grind stops writing every
+        // ~2 min — the local snapshot above still runs every 60s as the IDB
+        // failover, and tab-hide/unload + critical milestones still flush.
+        if (!isInPvpMatch) schedulePeriodicSave(getSnapshot())
       }
       // No periodic idle heartbeat: /api/save now stamps last_active_at +
       // active_task server-side on every write (including no-op writes) at an

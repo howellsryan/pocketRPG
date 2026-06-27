@@ -12,7 +12,7 @@ import { mergeKillCounts } from '../utils/killCountMerge.js'
 import { fetchIdleState, pushIdleState } from '../cloud/idleState.js'
 import { api, getToken, getCharacterId, getIronmanMode, getOneLifeMode, syncAccountModeFlags, CREDITS_UPDATED_EVENT } from '../cloud/api.js'
 import { matchTaskProgress, taskById } from '../engine/dailyTasks.js'
-import { requestCriticalPushSave, pushNow, suspendSaves, resumeSaves, isSaveConflict } from '../cloud/sync.js'
+import { requestCriticalPushSave, schedulePeriodicSave, pushNow, suspendSaves, resumeSaves, isSaveConflict } from '../cloud/sync.js'
 import { CRITICAL_SAVE_REASONS, detectCountIncreases, detectLevelUps, detectSetGrowth, didNumberIncrease, extractSkillLevels } from '../cloud/criticalSavePolicy.js'
 import itemsData from '../data/items.json'
 import prayersData from '../data/prayers.json'
@@ -1130,7 +1130,12 @@ export function GameProvider({ children }) {
       // handler already flushes a save on hide, so a background tab doesn't
       // need to keep writing. Cuts idle D1 writes from backgrounded sessions.
       if (typeof document !== 'undefined' && document.hidden) return
-      requestCriticalPushSave(() => getSnapshot(), CRITICAL_SAVE_REASONS.ACTIVITY_HEARTBEAT)
+      // Engagement-aware backstop: responsive while the player is interacting,
+      // throttled to ~hourly once the foreground session is idle/AFK. Genuine
+      // milestones (level-up, rare drop, boss/quest/unlock) still fire their own
+      // immediate critical saves elsewhere; this heartbeat only backstops slow
+      // XP/coin accumulation, which idle catch-up recovers on the next boot.
+      schedulePeriodicSave(getSnapshot())
     }, CLOUD_ACTIVITY_HEARTBEAT_MS)
     return () => clearInterval(timer)
   }, [heartbeatTaskKey, getSnapshot])
