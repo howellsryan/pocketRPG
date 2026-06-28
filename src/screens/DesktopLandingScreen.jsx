@@ -143,7 +143,7 @@ export default function DesktopLandingScreen({ onGitHubLogin, onGoogleLogin, onP
           <div class="dl-nav__right">
             <a class="dl-signin" href="#dl-play">Sign in</a>
             {onPlayDemo
-              ? <button type="button" class="dl-btn dl-btn--gold" onClick={onPlayDemo}>▶ Play Demo</button>
+              ? <button type="button" class="dl-btn dl-btn--gold" onClick={onPlayDemo}>Play Demo</button>
               : <a class="dl-btn dl-btn--gold" href="#dl-play">Play Now — Free</a>}
           </div>
         </div>
