@@ -28,7 +28,7 @@ import { getAgilityBankDelayMs, formatBankDelay } from '../engine/agility.js'
 import { onTick, pauseTicks, resumeTicks } from '../engine/tick.js'
 import { addItem, removeItem, freeSlots } from '../engine/inventory.js'
 import { getCombatType, equipItem, checkEquipRequirements } from '../engine/equipment.js'
-import { api, getToken, getCharacterId, getOneLifeMode } from '../cloud/api.js'
+import { api, getToken, getCharacterId, getOneLifeMode, isDemoMode } from '../cloud/api.js'
 import { pullSave, applyCloudSave, requestCriticalPushSave, pushNow, isSaveConflict } from '../cloud/sync.js'
 import { pvpApi } from '../cloud/pvp.js'
 import { triggerOneLifeDeath } from '../utils/oneLifeDeath.js'
@@ -225,6 +225,8 @@ class PvpCombatErrorBoundary extends Component {
 export default function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onCombatStatusChange }) {
   const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, updateEquipment, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, idleCombatSetup, updateIdleCombatSetup, homeShortcuts, updateHomeShortcuts, setActiveTask, slayerTask, setSlayerTask, awardSlayerPoints, slayerTasksCompleted, setSlayerTasksCompleted, activeCombatSpell, updateActiveCombatSpell, bossKillCounts, updateBossKillCounts, raidKillCounts, updateRaidKillCounts, unlockedFeatures, completedQuests, isOneLife, isIronman, getSnapshot, loadGame, combatSkipHandlerRef, skipHourHandlerRef, chargeSkipRef, raidSkipHandlerRef, lockGame, unlockGame, resolveCombatCompletion, characterUnlocks, killCountsLoaded, recordGameEvent } = useGame()
   const pvp = usePvp()
+  // Offline demo: bosses, raids and PvP are locked (server-authoritative).
+  const isDemo = isDemoMode() && !(getToken() && getCharacterId())
   const [showPvpLobby, setShowPvpLobby] = useState(false)
 
   const [combat, setCombat] = useState(null)
@@ -959,6 +961,10 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   const checkRaidRequirements = (raid) => checkRaidRequirementsPure(raid, { completedQuests })
 
   const startFight = (monster) => {
+    if (isDemo && monster.boss === true) {
+      addToast('🔒 Bosses are available with a free account.', 'info')
+      return
+    }
     const req = checkBossRequirements(monster)
     if (req.locked) {
       addToast(req.reason, 'error')
@@ -988,6 +994,10 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   }
 
   const startRaid = (raidData) => {
+    if (isDemo) {
+      addToast('🔒 Raids are available with a free account.', 'info')
+      return
+    }
     const req = checkRaidRequirements(raidData)
     if (req.locked) {
       addToast(req.reason, 'error')
@@ -1716,8 +1726,9 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             onStance={updateCombatStance}
             idleSetup={idleCombatSetup}
             onOpenIdle={setIdleSetupMode}
-            showPvp={!isIronman && !isOneLife}
+            showPvp={!isIronman && !isOneLife && !isDemo}
             onOpenPvp={() => setShowPvpLobby(true)}
+            demoLockBosses={isDemo}
           />
         </div>
       ) : (
@@ -1812,7 +1823,8 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                     const slayReq = monster.slayerRequirement
                     const slayLocked = slayReq && slayLvl < slayReq
                     const bossReq = checkBossRequirements(monster)
-                    const isLocked = slayLocked || bossReq.locked
+                    const demoBossLocked = isDemo && monster.boss === true
+                    const isLocked = slayLocked || bossReq.locked || demoBossLocked
                     const isOnTask = doesSlayerTaskMatchMonster(slayerTask?.monsterId, monster.id)
                     return (
                     <div key={monster.id} class="flex gap-2 items-center" title={isLocked ? (bossReq.locked ? bossReq.reason : '') : ''}>
@@ -1846,6 +1858,11 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                                      monster.id === 'ashen_crucible' ? 'Defeat Ember Tyrant' :
                                      (monster.id === 'adamant_dragon' || monster.id === 'rune_dragon') ? 'Dragon Slayer II' :
                                      monster.id === 'hellbound_gorilla' ? 'Monkey Madness II' : 'Locked'}
+                              </div>
+                            )}
+                            {demoBossLocked && !bossReq.locked && !slayLocked && (
+                              <div class="text-[9px] font-semibold text-[var(--color-blood-light)]">
+                                🔒 Free account
                               </div>
                             )}
                           </div>
@@ -1895,13 +1912,15 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
               allRaids.findIndex(candidate => candidate.id === raid.id) === index
             ).map(raid => {
               const raidReq = checkRaidRequirements(raid)
-              const isRaidLocked = raidReq.locked
+              const demoRaidLocked = isDemo
+              const isRaidLocked = raidReq.locked || demoRaidLocked
+              const raidLockReason = raidReq.locked ? raidReq.reason : demoRaidLocked ? 'Available with a free account' : ''
               return (
-                <div key={raid.id} class="flex gap-2 items-center" title={isRaidLocked ? raidReq.reason : ''}>
+                <div key={raid.id} class="flex gap-2 items-center" title={isRaidLocked ? raidLockReason : ''}>
                   <button
                     onClick={() => !isRaidLocked && startRaid(raid)}
                     disabled={isRaidLocked}
-                    title={isRaidLocked ? raidReq.reason : ''}
+                    title={isRaidLocked ? raidLockReason : ''}
                     class={`flex-1 p-3 rounded-xl border transition-colors text-left flex items-center justify-between
                       ${isRaidLocked ? 'bg-[#111] border-[#1a1a1a] opacity-50' : 'bg-[#1a1a1a] border-[#2a2a2a] active:bg-[#222]'}`}
                   >
@@ -1909,7 +1928,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                       <SkillEmblem iconKey={getRaidArt(raid.id).icon} accent={getRaidArt(raid.id).accent} size={36} glow={0} />
                       <div>
                         <div class="text-sm font-semibold text-[var(--color-parchment)]">{raid.name}</div>
-                        <div class={`text-[10px] ${isRaidLocked ? 'text-[var(--color-blood-light)]' : 'text-[var(--color-parchment)]'} opacity-40`}>{isRaidLocked ? '🔒 ' + raidReq.reason : raid.description}</div>
+                        <div class={`text-[10px] ${isRaidLocked ? 'text-[var(--color-blood-light)]' : 'text-[var(--color-parchment)]'} opacity-40`}>{isRaidLocked ? '🔒 ' + raidLockReason : raid.description}</div>
                       </div>
                     </div>
                     {raidKillCounts[raid.id] > 0 && (
@@ -1931,8 +1950,8 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           )}
         </div>
 
-        {/* PvP entry — hidden for ironman / one-life accounts. */}
-        {!isIronman && !isOneLife && (
+        {/* PvP entry — hidden for ironman / one-life accounts and the demo. */}
+        {!isIronman && !isOneLife && !isDemo && (
           <div class="mt-6 pb-2">
             <button
               onClick={() => setShowPvpLobby(true)}

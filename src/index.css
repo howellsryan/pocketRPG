@@ -674,6 +674,7 @@ html, body, #app {
 .dl-hero__h1 { font-family: var(--font-display); font-weight: 900; font-size: 60px; line-height: 1.02; letter-spacing: 0.005em; margin: 18px 0 0; }
 .dl-hero__sub { font-size: 20px; line-height: 1.5; color: var(--parchment); opacity: 0.78; margin: 20px 0 0; max-width: 30ch; }
 .dl-hero__cta { display: flex; gap: 14px; margin-top: 34px; flex-wrap: wrap; }
+.dl-hero__note { font-size: 13px; line-height: 1.5; color: var(--parchment); opacity: 0.5; margin: 16px 0 0; max-width: 42ch; }
 .dl-hero__proof { display: flex; gap: 30px; margin-top: 34px; align-items: center; }
 .dl-proof { display: flex; flex-direction: column; gap: 2px; }
 .dl-proof b { font-family: var(--font-mono); font-weight: 700; font-size: 22px; color: var(--gold-light); }

@@ -16,7 +16,7 @@ function IronHelmIcon({ size = 16 }) {
 //   login      — no token, show OAuth login options
 //   characters — token present, listing characters, picking or creating
 //   create     — submitting a new character username
-export default function AuthScreen({ onCloudReady }) {
+export default function AuthScreen({ onCloudReady, onPlayDemo }) {
   const [mode, setMode] = useState(getToken() ? 'characters' : 'login')
   const [identity, setIdentity] = useState(null)
   const [characters, setCharacters] = useState(null)
@@ -130,6 +130,7 @@ export default function AuthScreen({ onCloudReady }) {
       <LandingScreen
         onGitHubLogin={startGitHubLogin}
         onGoogleLogin={handleGoogleLogin}
+        onPlayDemo={onPlayDemo}
         embedded={embedded}
         showBrowserHint={showBrowserHint}
         copied={copied}

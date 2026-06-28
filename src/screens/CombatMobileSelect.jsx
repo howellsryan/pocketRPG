@@ -52,6 +52,7 @@ export default function CombatMobileSelect({
   onOpenIdle,
   showPvp,
   onOpenPvp,
+  demoLockBosses = false,
 }) {
   const slayerLevel = getSlayerLevel()
 
@@ -134,12 +135,14 @@ export default function CombatMobileSelect({
                     const slayReq = monster.slayerRequirement
                     const slayLocked = slayReq && slayerLevel < slayReq
                     const bossReq = checkBossRequirements(monster)
-                    const isLocked = slayLocked || bossReq.locked
+                    const demoBossLocked = demoLockBosses && monster.boss === true
+                    const isLocked = slayLocked || bossReq.locked || demoBossLocked
                     const isOnTask = doesSlayerTaskMatchMonster(slayerTask?.monsterId, monster.id)
                     const mArt = getMonsterArt(monster, category.key)
                     const lockText = slayLocked
                       ? `Slayer ${slayReq}`
                       : bossReq.locked ? bossReq.reason
+                      : demoBossLocked ? 'Free account'
                       : null
                     return (
                       <div
@@ -185,20 +188,21 @@ export default function CombatMobileSelect({
         {/* Raids */}
         {uniqueRaids.map(raid => {
           const raidReq = checkRaidRequirements(raid)
-          const isLocked = raidReq.locked
+          const isLocked = raidReq.locked || demoLockBosses
+          const raidLockReason = raidReq.locked ? raidReq.reason : demoLockBosses ? 'Available with a free account' : ''
           const art = getRaidArt(raid.id)
           return (
             <div
               key={raid.id}
               class={'cb-area cb-area--raid' + (isLocked ? ' cb-area--locked' : '')}
               onClick={() => !isLocked && onStartRaid(raid)}
-              title={isLocked ? raidReq.reason : ''}
+              title={isLocked ? raidLockReason : ''}
             >
               <div class="cb-area__head" role="button">
                 <div class="cb-area__icon"><SkillEmblem iconKey={art.icon} accent={art.accent} size={30} glow={0} /></div>
                 <div class="cb-area__txt">
                   <div class="cb-area__name">{raid.name}</div>
-                  <div class="cb-area__blurb">{isLocked ? '🔒 ' + raidReq.reason : raid.description}</div>
+                  <div class="cb-area__blurb">{isLocked ? '🔒 ' + raidLockReason : raid.description}</div>
                 </div>
                 {raidKillCounts[raid.id] > 0 && <span class="cb-mon__kc">KC {raidKillCounts[raid.id].toLocaleString()}</span>}
                 <span class="cb-area__raidtag">RAID</span>
