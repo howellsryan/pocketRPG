@@ -159,7 +159,7 @@ export default function DesktopLandingScreen({ onGitHubLogin, onGoogleLogin, onP
               <p class="dl-hero__sub">Combat, skills, quests, and raids that keep progressing — whether you're watching or not.</p>
               <div class="dl-hero__cta">
                 {onPlayDemo
-                  ? <button type="button" class="dl-btn dl-btn--gold dl-btn--lg" onClick={onPlayDemo}>▶ Play Demo</button>
+                  ? <button type="button" class="dl-btn dl-btn--gold dl-btn--lg" onClick={onPlayDemo}>Play Demo</button>
                   : <a class="dl-btn dl-btn--gold dl-btn--lg" href="#dl-play">Play Now — Free</a>}
                 <a class="dl-btn dl-btn--ghost dl-btn--lg" href="#dl-play">Sign in — save to cloud</a>
               </div>
