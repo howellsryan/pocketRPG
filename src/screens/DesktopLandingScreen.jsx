@@ -4,6 +4,7 @@ import { landingSrcSet } from '../utils/helpers.js'
 import { homeLogo } from '../utils/homeLogo.js'
 import { getSkillArt } from '../utils/skillArt.js'
 import GameIcon from '../components/GameIcon.jsx'
+import LandingMediaModal, { ImageThumb, PROMO_VIDEO_SRC, PromoVideoThumb } from './LandingMediaModal.jsx'
 
 // Wide marketing landing for desktop (≥768px). Mirrors the Claude "Desktop
 // Landing" design, built on the real product copy, landing screenshots,
@@ -61,7 +62,10 @@ const DL_SKILLS = [
   ['slayer', 'Slayer'], ['construction', 'Construct.'], ['fletching', 'Fletching'], ['dungeoneering', 'Dungeon.'],
 ]
 
-const DL_GALLERY = ['ss-inventory', 'ss-combat', 'ss-farming', 'ss-collection', 'ss-trading', 'ss-stats', 'ss-minigames', 'ss-leaderboard', 'ss-connect']
+const DL_GALLERY = [
+  { key: 'promo', type: 'video', src: PROMO_VIDEO_SRC, poster: landingImages['ss-stats'], posterAlt: 'PocketRPG skills overview' },
+  ...['ss-inventory', 'ss-combat', 'ss-farming', 'ss-collection', 'ss-trading', 'ss-stats', 'ss-minigames', 'ss-leaderboard', 'ss-connect'].map(key => ({ key, src: landingImages[key], alt: key })),
+]
 
 const DL_STATS = [
   ['600ms', 'Game tick'],
@@ -106,6 +110,7 @@ export default function DesktopLandingScreen({ onGitHubLogin, onGoogleLogin, onP
   // fallback. No-op in the Vite builds, where gameIconsData is statically
   // bundled and the icons render immediately.
   const [, bumpIcons] = useState(0)
+  const [openMedia, setOpenMedia] = useState(null)
   useEffect(() => {
     const load = (typeof globalThis !== 'undefined') && globalThis.__loadGameChunk
     if (load) load().then(() => bumpIcons(n => n + 1)).catch(() => {})
@@ -250,9 +255,11 @@ export default function DesktopLandingScreen({ onGitHubLogin, onGoogleLogin, onP
           <div class="dl-gallery-wrap">
             <div class="dl-gallery">
               {DL_GALLERY.map(g => (
-                <div class="dl-shot" key={g}><img src={landingImages[g]} srcset={landingSrcSet(landingImages[g])} sizes="200px" alt={g}
-                  width={DL_LANDING_DIMS[g]?.w} height={DL_LANDING_DIMS[g]?.h}
-                  loading="lazy" decoding="async" /></div>
+                g.type === 'video'
+                  ? <PromoVideoThumb key={g.key} className="dl-shot" poster={g.poster} posterAlt={g.posterAlt} sizes="230px" onOpen={() => setOpenMedia(g)} />
+                  : <ImageThumb key={g.key} className="dl-shot" src={g.src} sizes="230px" alt={g.alt}
+                    width={DL_LANDING_DIMS[g.key]?.w} height={DL_LANDING_DIMS[g.key]?.h}
+                    onOpen={() => setOpenMedia(g)} />
               ))}
             </div>
           </div>
@@ -340,6 +347,7 @@ export default function DesktopLandingScreen({ onGitHubLogin, onGoogleLogin, onP
           </div>
         </div>
       </footer>
+      <LandingMediaModal media={openMedia} onClose={() => setOpenMedia(null)} />
     </div>
   )
 }
