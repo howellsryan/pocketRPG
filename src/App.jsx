@@ -31,6 +31,7 @@ import LeaderboardScreen from './screens/LeaderboardScreen.jsx'
 import HelpScreen from './screens/HelpScreen.jsx'
 import CharacterUnlockScreen from './screens/CharacterUnlockScreen.jsx'
 import ConnectAiScreen from './screens/ConnectAiScreen.jsx'
+import DemoLockedScreen from './screens/DemoLockedScreen.jsx'
 import MagicScreen from './screens/MagicScreen.jsx'
 import AuthScreen from './screens/AuthScreen.jsx'
 import OAuthConsentScreen from './screens/OAuthConsentScreen.jsx'
@@ -39,7 +40,7 @@ import { hasSave, closeDB } from './db/database.js'
 import { initNewGame, saveSetting, getSetting, getAllStats, getInventory, getEquipment, getBank } from './db/stores.js'
 import { startTicks, stopTicks, onTick, pauseTicks, resumeTicks } from './engine/tick.js'
 import { wipeLocalSave } from './db/saveload.js'
-import { api, captureTokenFromHash, getToken, getCharacterId, getCharacterName, setCharacter, clearAuth, getLocalCharacterId, setLocalCharacterId, getIronmanMode, getOneLifeMode, syncAccountModeFlags, CREDITS_UPDATED_EVENT } from './cloud/api.js'
+import { api, captureTokenFromHash, getToken, getCharacterId, getCharacterName, setCharacter, clearAuth, getLocalCharacterId, setLocalCharacterId, getIronmanMode, getOneLifeMode, syncAccountModeFlags, isDemoMode, setDemoMode, CREDITS_UPDATED_EVENT } from './cloud/api.js'
 import { schedulePushSave, schedulePeriodicSave, pushNow, pullSave, applyCloudSave, checkCloudNewer, resetSyncState, requestCriticalPushSave, retrySaveNow, isSaveConflict, CLOUD_SAVE_STATUS_EVENT } from './cloud/sync.js'
 import { CRITICAL_SAVE_REASONS } from './cloud/criticalSavePolicy.js'
 import { fetchIdleState, beaconIdleState, resetIdleStateSync } from './cloud/idleState.js'
@@ -273,6 +274,12 @@ function IdleResultProgressCard({ type, idleResult, taskName }) {
   )
 }
 
+// Screens that require a cloud account (server-authoritative economy/social
+// systems — see CLAUDE.md §14). In the offline demo these stay visible in the
+// nav but are locked behind DemoLockedScreen.
+const CLOUD_ONLY_SCREENS = new Set([SCREENS.STORE, SCREENS.LEADERBOARD, SCREENS.CONNECT_AI])
+const DEMO_LOCKED_MESSAGE = '🔒 Sign in to use this — not available in the demo.'
+
 function GameApp() {
   const { loaded, loadGame, player, stats, equipment, inventory, bank, currentHP, updateHP, getMaxHP, updateInventory, updateEquipment, updateBank, updateBankDirect, grantXP, addToast, activeTask, setActiveTask, itemsData, getSnapshot, unlockedFeatures, setSlayerTask, awardSlayerPoints, slayerTasksCompleted, setSlayerTasksCompleted, completeQuest, completedQuests, questQueue, removeFromQuestQueue, updateQuestQueue,
     unlockMinigameItem, unlockedMinigameItems, awardDungeoneeringTokens, farming, updateFarming, idleCombatSetup, isOneLife, updateBossKillCounts, updateRaidKillCounts, syncServerKillCounts, markKillCountsLoaded, combatSkipHandlerRef, skipHourHandlerRef, chargeSkipRef, raidSkipHandlerRef,
@@ -296,6 +303,9 @@ function GameApp() {
   const pendingXpChoicesRef = useRef(pendingXpChoices)
   // Cloud auth gate: 'pending' until we resolve, 'auth' if AuthScreen needed, 'ready' to boot game
   const [cloudPhase, setCloudPhase] = useState('pending')
+  // Offline demo session (no cloud account). Mirrors the persisted demo flag so
+  // the UI can lock cloud-only features. Set when the player picks "Play Demo".
+  const [demoMode, setDemoModeState] = useState(() => isDemoMode())
   // OAuth consent: the signed request token when an MCP client is connecting
   // (arrives as ?oauth=… from /api/oauth/authorize; held across login).
   const [oauthRequest, setOauthRequest] = useState(null)
@@ -1286,6 +1296,25 @@ function GameApp() {
       const hasCharacter = !!getCharacterId()
 
       if (!hasToken) {
+        // Offline demo: boot a local-only character with no cloud sync. The
+        // engine (checkSave → startNewGame/loadGame) runs identically to a
+        // logged-out session; only the boot routing differs.
+        if (isDemoMode()) {
+          setDemoModeState(true)
+          setCloudLoadError(null)
+          // Never expose a cloud character's leftover local save as the demo.
+          // A cloud-owned IDB is stamped with its character id; wipe it so the
+          // demo always starts from (or resumes) its own untagged save.
+          if (getLocalCharacterId()) {
+            await wipeLocalSave()
+            setLocalCharacterId(null)
+            resetSyncState()
+          }
+          setCloudPhase('ready')
+          markKillCountsLoaded()
+          await checkSave()
+          return
+        }
         setCloudPhase('auth')
         return
       }
@@ -1484,7 +1513,39 @@ function GameApp() {
   // Switch character — flush any pending push, clear character (keep GitHub
    // token) and bounce back to AuthScreen so the user can pick or create
    // another character under the same GitHub login.
+  // Shown when a player taps a cloud-only feature while in the offline demo.
+  const notifyDemoLocked = () => addToast(DEMO_LOCKED_MESSAGE, 'info')
+
+  // Enter the offline demo from the landing page. Persists the demo flag and
+  // re-runs boot, which takes the no-token demo branch in initCloudAndSave.
+  async function enterDemoMode() {
+    setDemoMode(true)
+    setDemoModeState(true)
+    setCloudLoadError(null)
+    setCloudPhase('pending')
+    await initCloudAndSave()
+  }
+
+  // Exit the demo back to the landing/login screen. The local demo save is left
+  // in place (it resumes if the player taps Play Demo again); only the demo flag
+  // is cleared so the next boot shows the landing page.
+  function exitDemoMode() {
+    setDemoMode(false)
+    setDemoModeState(false)
+    setActiveTask(null)
+    try {
+      localStorage.removeItem('pocketrpg_activeTask')
+      localStorage.removeItem('pocketrpg_hiddenAt')
+    } catch { /* best-effort */ }
+    setGameReady(false)
+    setCloudPhase('auth')
+  }
+
   async function handleLogoutToCharacterSelect({ skipSave = false } = {}) {
+    if (isDemoMode()) {
+      exitDemoMode()
+      return
+    }
     // When leaving from the save-blocked modal the save is already failing, so
     // skip the final push (it would just hang) and drop the doomed retry queue.
     if (!skipSave && !isInPvpMatch) {
@@ -1538,6 +1599,11 @@ function GameApp() {
   }
   // Navigate with optional action data
   const navigate = (scr, data) => {
+    // Cloud-only destinations are locked in the offline demo.
+    if (demoMode && CLOUD_ONLY_SCREENS.has(scr)) {
+      notifyDemoLocked()
+      return
+    }
     // Every activity except combat persists across screens — skills and gathering
     // keep accruing in the background. Only combat stops when the player leaves.
     if (!isBackground(activeTask)) {
@@ -2319,6 +2385,7 @@ function GameApp() {
     }
     return (
       <AuthScreen
+        onPlayDemo={enterDemoMode}
         onCloudReady={async () => {
           // After character selection, re-run the full cloud+local boot
           setCloudPhase('pending')
@@ -2349,6 +2416,11 @@ function GameApp() {
 
   // Main game
   const renderScreen = () => {
+    // Backstop for the locked nav: if a cloud-only screen is somehow reached in
+    // the demo (deep link, home shortcut), show the locked placeholder instead.
+    if (demoMode && CLOUD_ONLY_SCREENS.has(screen)) {
+      return <DemoLockedScreen screen={screen} onBack={() => navigate(SCREENS.HOME)} />
+    }
     switch (screen) {
       case SCREENS.HOME:      return <HomeScreen onNavigate={navigate} onLogout={handleLogoutToCharacterSelect} onManualSave={handleManualSave} isCloudAccount={!!getToken() && !!getCharacterId()} removeAds={removeAds} identityId={identityId} characterId={getCharacterId()} stripeLinks={stripeLinks} />
       case SCREENS.STATS:     return <StatsScreen />
@@ -2391,10 +2463,13 @@ function GameApp() {
         active={screen}
         onNavigate={(s) => navigate(s)}
         isInCombat={isInPvpMatch}
+        demo={demoMode}
+        lockedScreens={CLOUD_ONLY_SCREENS}
         onDisabledClick={() => addToast('⚔️ Cannot navigate during PvP combat!', 'warning')}
+        onLockedClick={notifyDemoLocked}
       />
       <div class="flex-1 flex flex-col min-w-0 min-h-0">
-        <Header activity={activity} credits={credits} isCloudAccount={isCloudAccount} onSkip1h={isCloudAccount ? handleSkip1h : null} onBuyCredits={() => setShowBuyCreditsModal(true)} onDailyTasks={() => setShowDailyTasksModal(true)} dailyTasksCompleted={(dailyTaskStates || []).filter(t => t.completed).length} dailyTasksTotal={5} onMenuClick={() => setMenuOpen(true)} onNavigate={(s) => navigate(s)} skipMode={activeTask?.type === 'combat' && (activeTask?.monster?.boss === true || activeTask?.raid === true) ? 'kill' : 'hour'} raidSkipCost={activeTask?.type === 'combat' && activeTask?.raidId ? (raidsData[activeTask.raidId]?.skipCost ?? 1) : null} />
+        <Header activity={activity} credits={credits} isCloudAccount={isCloudAccount} demo={demoMode} onLockedFeature={notifyDemoLocked} onSkip1h={isCloudAccount ? handleSkip1h : null} onBuyCredits={() => setShowBuyCreditsModal(true)} onDailyTasks={() => setShowDailyTasksModal(true)} dailyTasksCompleted={(dailyTaskStates || []).filter(t => t.completed).length} dailyTasksTotal={5} onMenuClick={() => setMenuOpen(true)} onNavigate={(s) => navigate(s)} skipMode={activeTask?.type === 'combat' && (activeTask?.monster?.boss === true || activeTask?.raid === true) ? 'kill' : 'hour'} raidSkipCost={activeTask?.type === 'combat' && activeTask?.raidId ? (raidsData[activeTask.raidId]?.skipCost ?? 1) : null} />
         <ToastContainer />
         <main class="flex-1 overflow-hidden">
           {renderScreen()}
@@ -2408,7 +2483,10 @@ function GameApp() {
         active={screen}
         onNavigate={(s) => navigate(s)}
         isInCombat={isInPvpMatch}
+        demo={demoMode}
+        lockedScreens={CLOUD_ONLY_SCREENS}
         onDisabledClick={() => addToast('⚔️ Cannot navigate during PvP combat!', 'warning')}
+        onLockedClick={notifyDemoLocked}
       />
 
       {/* Game-lock overlay — shown for the WHOLE of any durable-save operation

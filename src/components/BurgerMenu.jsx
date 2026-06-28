@@ -2,7 +2,7 @@ import { useEffect } from 'preact/hooks'
 import GameIcon from './GameIcon.jsx'
 import { NAV_TABS } from './navTabs.js'
 
-export default function BurgerMenu({ open, onClose, active, onNavigate, isInCombat, onDisabledClick }) {
+export default function BurgerMenu({ open, onClose, active, onNavigate, isInCombat, onDisabledClick, demo = false, lockedScreens = null, onLockedClick }) {
   useEffect(() => {
     if (!open) return
     const onKey = (e) => { if (e.key === 'Escape') onClose?.() }
@@ -12,6 +12,7 @@ export default function BurgerMenu({ open, onClose, active, onNavigate, isInComb
 
   const handleSelect = (tabId) => {
     if (isInCombat) { onDisabledClick?.(); return }
+    if (demo && lockedScreens?.has(tabId)) { onLockedClick?.(); return }
     onNavigate?.(tabId)
     onClose?.()
   }
@@ -50,8 +51,9 @@ export default function BurgerMenu({ open, onClose, active, onNavigate, isInComb
         <div class="flex-1 overflow-y-auto py-2">
           {NAV_TABS.map(tab => {
             const isActive = active === tab.id
+            const isLocked = demo && lockedScreens?.has(tab.id)
             const baseColor = isActive ? 'text-[var(--color-gold)]' : 'text-[var(--color-parchment)]'
-            const opacity = isInCombat ? 'opacity-30' : isActive ? 'opacity-100' : 'opacity-85'
+            const opacity = isInCombat ? 'opacity-30' : isLocked ? 'opacity-40' : isActive ? 'opacity-100' : 'opacity-85'
             const cursor = isInCombat ? 'cursor-not-allowed' : 'cursor-pointer'
             const activeBg = isActive ? 'bg-[var(--color-void-light)]' : 'bg-transparent'
             const activeBorder = isActive
@@ -64,12 +66,14 @@ export default function BurgerMenu({ open, onClose, active, onNavigate, isInComb
                 onClick={() => handleSelect(tab.id)}
                 disabled={isInCombat}
                 aria-current={isActive ? 'page' : undefined}
+                title={isLocked ? 'Available with a free account' : undefined}
                 class={`flex items-center gap-3 w-full px-4 min-h-[48px] border-0 text-left transition-colors ${activeBg} ${activeBorder} ${baseColor} ${opacity} ${cursor}`}
               >
                 <span class="w-11 flex justify-center items-center flex-shrink-0">
                   <GameIcon iconKey={tab.iconKey} size={tab.iconSize || 44} color={tab.iconColor} />
                 </span>
                 <span class="text-base font-semibold font-[var(--font-body)]">{label}</span>
+                {isLocked && <span class="ml-auto text-[12px] opacity-70" aria-hidden="true">🔒</span>}
               </button>
             )
           })}

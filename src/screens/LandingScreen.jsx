@@ -66,7 +66,7 @@ const STRIP = [
   { key: 'ss-connect',     src: landingImages['ss-connect'],     alt: 'Connect AI assistant' },
 ]
 
-export default function LandingScreen({ onGitHubLogin, onGoogleLogin, embedded, showBrowserHint, copied, onCopyLink }) {
+export default function LandingScreen({ onGitHubLogin, onGoogleLogin, onPlayDemo, embedded, showBrowserHint, copied, onCopyLink }) {
   const authRef = useRef(null)
   const isDesktop = useIsDesktop()
 
@@ -79,6 +79,7 @@ export default function LandingScreen({ onGitHubLogin, onGoogleLogin, embedded, 
       <DesktopLandingScreen
         onGitHubLogin={onGitHubLogin}
         onGoogleLogin={onGoogleLogin}
+        onPlayDemo={onPlayDemo}
         embedded={embedded}
         showBrowserHint={showBrowserHint}
         copied={copied}
@@ -101,12 +102,23 @@ export default function LandingScreen({ onGitHubLogin, onGoogleLogin, embedded, 
         <p class="text-sm text-[var(--color-parchment)] opacity-55 max-w-xs leading-relaxed mb-8">
           A tick-based idle fantasy RPG. Combat, skills, quests, and raids that progress whether you're watching or not.
         </p>
+        {onPlayDemo && (
+          <button
+            onClick={onPlayDemo}
+            class="font-display font-bold text-base bg-[var(--color-gold)] text-[var(--color-void)] px-10 py-4 rounded-2xl min-h-[52px] min-w-[180px] hover:bg-[var(--color-gold-light)] transition-colors mb-3 tracking-wide"
+          >
+            ▶ Play Demo
+          </button>
+        )}
         <button
           onClick={scrollToAuth}
-          class="font-display font-bold text-base bg-[var(--color-gold)] text-[var(--color-void)] px-10 py-4 rounded-2xl min-h-[52px] min-w-[180px] hover:bg-[var(--color-gold-light)] transition-colors mb-10 tracking-wide"
+          class="font-display font-semibold text-sm border border-[var(--color-gold-dim)] text-[var(--color-gold)] px-8 py-3 rounded-2xl min-h-[48px] min-w-[180px] hover:border-[var(--color-gold)] transition-colors mb-3 tracking-wide"
         >
-          Play Now — Free
+          Sign in — save to cloud
         </button>
+        <p class="text-xs text-[var(--color-parchment)] opacity-45 mb-10 max-w-xs leading-relaxed">
+          The demo runs offline in your browser — skills, combat, quests and more. Sign in for cloud saves, bosses, raids, the Trading Post and leaderboards.
+        </p>
         <div class="w-full max-w-[280px] rounded-2xl overflow-hidden border border-[var(--color-gold-dim)] shadow-2xl">
           <img
             src={landingImages['ss-stats']}

@@ -10,6 +10,11 @@ const CHARACTER_NAME_KEY = 'pocketrpg_cloud_character_name'
 // Used to detect "I switched characters but IDB still holds the old one" and
 // wipe before loading, so characters never bleed into each other.
 const LOCAL_CHARACTER_KEY = 'pocketrpg_local_character_id'
+// Set when the player chose "Play Demo" from the landing page. The demo is a
+// fully local, non-cloud session: the game engine runs offline (no token, no
+// character) and cloud/economy/social features are locked. Persisted so the
+// demo resumes across reloads until the player exits it or signs in.
+const DEMO_MODE_KEY = 'pocketrpg_demo'
 // Backstop timeout for all transactional API calls. Reads also have a tighter
 // 5s guard at the sync layer; this is the hard cap that aborts a genuinely hung
 // connection so it can't trap boot or wedge the save queue (inFlight) forever.
@@ -107,6 +112,17 @@ export function setLocalCharacterId(id) {
 export function clearAuth() {
   setToken(null)
   setCharacter(null)
+}
+
+// Offline demo session (no cloud account). When true, the game boots straight
+// into a local-only character and cloud features are presented as locked.
+export function isDemoMode() {
+  return localStorage.getItem(DEMO_MODE_KEY) === '1'
+}
+
+export function setDemoMode(on) {
+  if (on) localStorage.setItem(DEMO_MODE_KEY, '1')
+  else localStorage.removeItem(DEMO_MODE_KEY)
 }
 
 // Pull a `#token=...` fragment dropped by the OAuth callback redirect into

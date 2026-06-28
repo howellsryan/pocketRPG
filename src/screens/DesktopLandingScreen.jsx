@@ -99,7 +99,7 @@ function DlGitHubMark() {
   )
 }
 
-export default function DesktopLandingScreen({ onGitHubLogin, onGoogleLogin, embedded, showBrowserHint, copied, onCopyLink }) {
+export default function DesktopLandingScreen({ onGitHubLogin, onGoogleLogin, onPlayDemo, embedded, showBrowserHint, copied, onCopyLink }) {
   // The desktop landing renders game-icons glyphs, whose data (gameIconsData)
   // ships in the lazily-loaded game chunk in the single-file build. Fetch it on
   // mount and re-render once it arrives so the icons swap in from their emoji
@@ -142,7 +142,9 @@ export default function DesktopLandingScreen({ onGitHubLogin, onGoogleLogin, emb
           </nav>
           <div class="dl-nav__right">
             <a class="dl-signin" href="#dl-play">Sign in</a>
-            <a class="dl-btn dl-btn--gold" href="#dl-play">Play Now — Free</a>
+            {onPlayDemo
+              ? <button type="button" class="dl-btn dl-btn--gold" onClick={onPlayDemo}>▶ Play Demo</button>
+              : <a class="dl-btn dl-btn--gold" href="#dl-play">Play Now — Free</a>}
           </div>
         </div>
       </header>
@@ -156,9 +158,14 @@ export default function DesktopLandingScreen({ onGitHubLogin, onGoogleLogin, emb
               <h1 class="dl-hero__h1"><span class="dl-gold">Level up</span><br />while you live<br />your life.</h1>
               <p class="dl-hero__sub">Combat, skills, quests, and raids that keep progressing — whether you're watching or not.</p>
               <div class="dl-hero__cta">
-                <a class="dl-btn dl-btn--gold dl-btn--lg" href="#dl-play">Play Now — Free</a>
-                <a class="dl-btn dl-btn--ghost dl-btn--lg" href="#dl-features">Explore the game</a>
+                {onPlayDemo
+                  ? <button type="button" class="dl-btn dl-btn--gold dl-btn--lg" onClick={onPlayDemo}>▶ Play Demo</button>
+                  : <a class="dl-btn dl-btn--gold dl-btn--lg" href="#dl-play">Play Now — Free</a>}
+                <a class="dl-btn dl-btn--ghost dl-btn--lg" href="#dl-play">Sign in — save to cloud</a>
               </div>
+              {onPlayDemo && (
+                <p class="dl-hero__note">No account needed — the demo runs offline in your browser. Sign in for cloud saves, bosses, raids, the Trading Post and leaderboards.</p>
+              )}
               <div class="dl-hero__proof">
                 <div class="dl-proof"><b>600ms</b><span>World tick</span></div>
                 <div class="dl-proof-div" />
