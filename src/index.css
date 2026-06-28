@@ -601,41 +601,37 @@ html, body, #app {
 .cb-done:active { transform: scale(0.97); }
 
 /* ──────────────────────────────────────────────────────────────────────────
-   Mobile Landing — astral atlas design with floating device previews.
+   Mobile Landing — clean product-focused marketing layout.
    ────────────────────────────────────────────────────────────────────────── */
 .ml-root {
   height: 100%; overflow-y: auto; overflow-x: hidden; color: var(--color-parchment);
   background:
-    radial-gradient(420px 320px at 14% -4%, rgba(120, 74, 255, 0.28), transparent 65%),
-    radial-gradient(360px 280px at 92% 9%, rgba(240, 192, 64, 0.20), transparent 60%),
-    linear-gradient(180deg, #090b12 0%, #101018 46%, #090806 100%);
+    radial-gradient(420px 280px at 50% -6%, rgba(240, 192, 64, 0.18), transparent 68%),
+    linear-gradient(180deg, #10100d 0%, #15140f 44%, #090806 100%);
 }
 .ml-root button { border: 0; cursor: pointer; }
-.ml-hero { position: relative; isolation: isolate; padding: 46px 20px 34px; text-align: center; overflow: hidden; }
+.ml-hero { position: relative; isolation: isolate; padding: 38px 20px 30px; text-align: center; overflow: hidden; }
 .ml-hero::before {
-  content: ''; position: absolute; inset: 18px 14px auto; height: 360px; z-index: -1; opacity: .36;
-  background-image: linear-gradient(rgba(245,230,200,.08) 1px, transparent 1px), linear-gradient(90deg, rgba(245,230,200,.08) 1px, transparent 1px);
-  background-size: 38px 38px; mask-image: radial-gradient(ellipse at 50% 20%, #000, transparent 72%);
+  content: ''; position: absolute; inset: 16px 18px auto; height: 310px; z-index: -1; opacity: .26;
+  background-image: linear-gradient(rgba(245,230,200,.07) 1px, transparent 1px), linear-gradient(90deg, rgba(245,230,200,.07) 1px, transparent 1px);
+  background-size: 44px 44px; mask-image: linear-gradient(#000, transparent 88%);
 }
-.ml-orb { position: absolute; border-radius: 50%; filter: blur(1px); pointer-events: none; }
-.ml-orb--one { width: 150px; height: 150px; left: -54px; top: 142px; background: radial-gradient(circle, rgba(96,168,255,.28), transparent 66%); }
-.ml-orb--two { width: 190px; height: 190px; right: -80px; top: 260px; background: radial-gradient(circle, rgba(240,192,64,.22), transparent 68%); }
-.ml-kicker { display: inline-flex; padding: 8px 12px; border: 1px solid rgba(240,192,64,.28); border-radius: 999px; background: rgba(255,255,255,.04); font: 800 10px/1 var(--font-mono); letter-spacing: .14em; text-transform: uppercase; color: var(--color-gold-light); }
-.ml-title { margin: 18px 0 0; font: 950 clamp(3.4rem, 17vw, 5.6rem)/.86 var(--font-display); letter-spacing: -.05em; background: linear-gradient(180deg, #fff1b8 0%, #f0c040 42%, #9b6b12 100%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent; text-shadow: 0 24px 70px rgba(240,192,64,.18); }
-.ml-tagline { max-width: 19rem; margin: 16px auto 0; font-size: 18px; line-height: 1.35; opacity: .86; }
+.ml-kicker { display: inline-flex; padding: 7px 11px; border: 1px solid rgba(240,192,64,.26); border-radius: 999px; background: rgba(255,255,255,.035); font: 800 10px/1 var(--font-mono); letter-spacing: .16em; text-transform: uppercase; color: var(--color-gold-light); }
+.ml-title { margin: 15px 0 0; font: 900 clamp(2.8rem, 13vw, 4.25rem)/.95 var(--font-display); letter-spacing: -.025em; background: linear-gradient(180deg, #fff0b0 0%, #f0c040 48%, #b98516 100%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent; }
+.ml-tagline { max-width: 20rem; margin: 13px auto 0; font-size: 16.5px; line-height: 1.42; opacity: .84; }
 .ml-actions { display: grid; grid-template-columns: 1fr; gap: 10px; max-width: 280px; margin: 24px auto 0; }
 .ml-btn { min-height: 52px; border-radius: 18px; font-family: var(--font-display); font-weight: 900; letter-spacing: .04em; }
 .ml-btn--primary { color: #140d05; background: linear-gradient(180deg, #ffe08a, #d4a017 62%, #9f7112); box-shadow: 0 14px 32px -14px rgba(240,192,64,.9); }
 .ml-btn--secondary { color: var(--color-parchment); background: rgba(255,255,255,.055); border: 1px solid rgba(240,192,64,.30); }
 .ml-note { max-width: 21rem; margin: 14px auto 0; font-size: 12.5px; line-height: 1.55; opacity: .52; }
 .ml-phone-stage { position: relative; width: min(100%, 340px); margin: 30px auto 0; padding: 12px 0 2px; }
-.ml-phone { width: 252px; margin: 0 auto; padding: 8px; border-radius: 34px; background: linear-gradient(145deg, #31323c, #050507 66%); box-shadow: 0 34px 80px -32px #000, 0 0 0 1px rgba(255,255,255,.08); transform: rotate(-2deg); }
+.ml-phone { width: 246px; margin: 0 auto; padding: 8px; border-radius: 32px; background: linear-gradient(145deg, #30302d, #050505 66%); box-shadow: 0 28px 70px -34px #000, 0 0 0 1px rgba(255,255,255,.08); }
 .ml-phone img { width: 100%; border-radius: 27px; display: block; }
 .ml-mini-card { position: absolute; z-index: 2; min-width: 90px; padding: 10px 12px; border-radius: 16px; text-align: left; background: rgba(13, 12, 18, .82); border: 1px solid rgba(240,192,64,.26); backdrop-filter: blur(10px); box-shadow: 0 18px 36px -24px #000; }
 .ml-mini-card b { display: block; font: 900 18px/1 var(--font-mono); color: var(--color-gold-light); }
 .ml-mini-card span { display: block; margin-top: 4px; font-size: 10px; letter-spacing: .12em; text-transform: uppercase; opacity: .58; }
-.ml-mini-card--left { left: 0; top: 86px; transform: rotate(-8deg); }
-.ml-mini-card--right { right: 0; bottom: 70px; transform: rotate(7deg); }
+.ml-mini-card--left { left: 0; top: 88px; }
+.ml-mini-card--right { right: 0; bottom: 74px; }
 .ml-section { padding: 38px 16px; }
 .ml-section--flush { padding-left: 0; padding-right: 0; }
 .ml-section-head { max-width: 340px; margin: 0 auto 18px; text-align: center; }
@@ -847,41 +843,40 @@ html, body, #app {
   .dl-skills__grid { grid-template-columns: repeat(4, 1fr); }
 }
 
-/* Desktop landing redesign overrides — cosmic command-center aesthetic. */
+/* Desktop landing redesign overrides — clean product-focused marketing layout. */
 .dl-root {
   --void-deep: #070911; --void-card: #11131f; --border: rgba(255,255,255,.10);
   background:
-    radial-gradient(900px 520px at 10% 8%, rgba(83, 92, 255, .20), transparent 62%),
-    radial-gradient(720px 500px at 90% 0%, rgba(240, 192, 64, .20), transparent 60%),
-    linear-gradient(180deg, #070911 0%, #111018 46%, #080706 100%);
+    radial-gradient(980px 540px at 50% -12%, rgba(240, 192, 64, .16), transparent 64%),
+    linear-gradient(180deg, #0b0b09 0%, #14130f 48%, #080706 100%);
 }
 .dl-nav { background: rgba(7,9,17,.66); backdrop-filter: blur(18px); border-bottom-color: rgba(255,255,255,.08); }
 .dl-nav__inner { height: 80px; }
 .dl-brand .dl-emblem { box-shadow: 0 0 0 1px rgba(240,192,64,.28), 0 14px 36px -20px rgba(240,192,64,.8); }
 .dl-nav__links { padding: 9px 14px; border: 1px solid rgba(255,255,255,.08); border-radius: 999px; background: rgba(255,255,255,.035); }
-.dl-hero { min-height: 720px; display: grid; align-items: center; padding: 88px 0; }
+.dl-hero { min-height: 650px; display: grid; align-items: center; padding: 72px 0 80px; }
 .dl-hero::before {
-  content: ''; position: absolute; inset: 22px 32px 40px; border-radius: 42px; pointer-events: none;
-  background-image: linear-gradient(rgba(245,230,200,.055) 1px, transparent 1px), linear-gradient(90deg, rgba(245,230,200,.055) 1px, transparent 1px);
-  background-size: 54px 54px; mask-image: radial-gradient(ellipse at 62% 38%, #000, transparent 78%);
+  content: ''; position: absolute; inset: 22px 32px 40px; border-radius: 34px; pointer-events: none;
+  background-image: linear-gradient(rgba(245,230,200,.05) 1px, transparent 1px), linear-gradient(90deg, rgba(245,230,200,.05) 1px, transparent 1px);
+  background-size: 58px 58px; mask-image: linear-gradient(90deg, transparent, #000 18%, #000 82%, transparent);
 }
-.dl-hero__grid { grid-template-columns: .9fr 1.1fr; gap: 72px; }
-.dl-hero__h1 { font-size: clamp(72px, 7vw, 112px); line-height: .86; letter-spacing: -.06em; margin-top: 22px; }
-.dl-hero__sub { max-width: 36ch; font-size: 22px; opacity: .82; }
+.dl-hero__grid { grid-template-columns: .95fr 1.05fr; gap: 64px; }
+.dl-hero__h1 { font-size: clamp(58px, 5.4vw, 82px); line-height: .98; letter-spacing: -.035em; margin-top: 18px; }
+.dl-hero__sub { max-width: 38ch; font-size: 20px; opacity: .80; }
 .dl-hero__proof { width: fit-content; padding: 14px 18px; border-radius: 22px; background: rgba(255,255,255,.045); border: 1px solid rgba(255,255,255,.08); backdrop-filter: blur(10px); }
-.dl-cluster { height: 600px; border-radius: 42px; background: radial-gradient(circle at 50% 36%, rgba(240,192,64,.18), transparent 44%), rgba(255,255,255,.035); border: 1px solid rgba(255,255,255,.08); box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 40px 100px -62px #000; }
-.dl-cluster::before { width: 520px; height: 520px; background: conic-gradient(from 160deg, transparent, rgba(240,192,64,.24), rgba(95,143,255,.22), transparent); filter: blur(20px); animation: skill-ring-spin 20s linear infinite; }
+.dl-cluster { height: 560px; border-radius: 34px; background: radial-gradient(circle at 50% 36%, rgba(240,192,64,.14), transparent 46%), rgba(255,255,255,.032); border: 1px solid rgba(255,255,255,.08); box-shadow: inset 0 1px 0 rgba(255,255,255,.07), 0 34px 90px -60px #000; }
+.dl-cluster::before { width: 420px; height: 420px; background: radial-gradient(circle, rgba(240,192,64,.18), transparent 66%); filter: blur(18px); }
 .dl-device { border-radius: 42px; padding: 10px; background: linear-gradient(145deg, #454757, #07070a 64%); box-shadow: 0 38px 90px -36px #000, 0 0 0 1px rgba(255,255,255,.12); }
-.dl-device--main { width: 292px; }
-.dl-device--main img { width: 272px; }
-.dl-device--back { transform: translate(-190px, 40px) rotate(-13deg); }
-.dl-device--back2 { transform: translate(196px, 62px) rotate(11deg); }
+.dl-device--main { width: 278px; }
+.dl-device--main img { width: 258px; }
+.dl-device--back { transform: translate(-170px, 36px) rotate(-7deg); }
+.dl-device--back2 { transform: translate(174px, 50px) rotate(6deg); }
 .dl-strip { background: rgba(255,255,255,.035); border-color: rgba(255,255,255,.08); }
 .dl-strip__inner { padding: 22px 32px; }
 .dl-stat { padding: 18px 10px; border-radius: 18px; background: rgba(255,255,255,.035); border: 1px solid rgba(255,255,255,.07); }
 .dl-block { padding: 104px 0; }
 .dl-head { margin-bottom: 64px; }
-.dl-title { font-size: 50px; letter-spacing: -.025em; }
+.dl-title { font-size: 44px; letter-spacing: -.015em; }
 .dl-features { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
 .dl-feature, .dl-feature:nth-child(even) .dl-feature__media { display: flex; flex-direction: column; gap: 0; order: 0; align-items: stretch; overflow: hidden; border-radius: 28px; background: linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.025)); border: 1px solid rgba(255,255,255,.09); }
 .dl-feature__media { min-height: 238px; align-items: flex-start; }
@@ -895,8 +890,7 @@ html, body, #app {
 .dl-band { background: linear-gradient(180deg, rgba(255,255,255,.045), rgba(255,255,255,.015)); border-color: rgba(255,255,255,.08); }
 .dl-skchip, .dl-step, .dl-cta { background: linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.025)); border-color: rgba(255,255,255,.09); }
 .dl-gallery { grid-auto-columns: 230px; }
-.dl-shot { border-radius: 28px; border-color: rgba(255,255,255,.10); transform: rotate(-1deg); }
-.dl-shot:nth-child(even) { transform: rotate(1deg) translateY(16px); }
+.dl-shot { border-radius: 24px; border-color: rgba(255,255,255,.10); }
 .dl-cta { border-radius: 38px; padding: 64px 54px; background: radial-gradient(90% 120% at 50% 0%, rgba(240,192,64,.22), transparent 58%), linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.025)); }
 @media (max-width: 1180px) {
   .dl-hero__grid { grid-template-columns: 1fr; }

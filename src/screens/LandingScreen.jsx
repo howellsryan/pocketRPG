@@ -91,18 +91,16 @@ export default function LandingScreen({ onGitHubLogin, onGoogleLogin, onPlayDemo
   return (
     <div class="ml-root">
       <section class="ml-hero">
-        <div class="ml-orb ml-orb--one" aria-hidden="true" />
-        <div class="ml-orb ml-orb--two" aria-hidden="true" />
-        <div class="ml-kicker">Idle fantasy · live economy · cloud saves</div>
+        <div class="ml-kicker">Idle fantasy RPG</div>
         <h1 class="ml-title">PocketRPG</h1>
-        <p class="ml-tagline">A tiny fantasy world that keeps ticking in your pocket.</p>
+        <p class="ml-tagline">Train, quest, fight bosses, and build your bank in focused daily sessions.</p>
         <div class="ml-actions">
           {onPlayDemo && <button onClick={onPlayDemo} class="ml-btn ml-btn--primary">Play Demo</button>}
-          <button onClick={scrollToAuth} class="ml-btn ml-btn--secondary">Save to cloud</button>
+          <button onClick={scrollToAuth} class="ml-btn ml-btn--secondary">Create Account</button>
         </div>
-        <p class="ml-note">Demo offline. Sign in for bosses, raids, Trading Post, leaderboards, and synced character rosters.</p>
+        <p class="ml-note">Try the offline demo first. Sign in when you're ready for cloud saves, raids, the Trading Post, and leaderboards.</p>
         <div class="ml-phone-stage">
-          <div class="ml-mini-card ml-mini-card--left"><b>600ms</b><span>tick loop</span></div>
+          <div class="ml-mini-card ml-mini-card--left"><b>600ms</b><span>tick</span></div>
           <div class="ml-mini-card ml-mini-card--right"><b>24</b><span>skills</span></div>
           <div class="ml-phone">
             <img src={landingImages['ss-stats']} srcset={landingSrcSet(landingImages['ss-stats'])} sizes="300px" alt="PocketRPG skills overview — Combat 126, Total Level 2,376" width="560" height="1068" loading="eager" fetchpriority="high" decoding="async" />
@@ -111,7 +109,7 @@ export default function LandingScreen({ onGitHubLogin, onGoogleLogin, onPlayDemo
       </section>
 
       <section class="ml-section">
-        <div class="ml-section-head"><span>Game loops</span><h2>Pick a path. Let time do the grinding.</h2></div>
+        <div class="ml-section-head"><span>Game loops</span><h2>Progress that fits around your day.</h2></div>
         <div class="ml-feature-grid">
           {FEATURES.map(f => (
             <article key={f.title} class="ml-feature-card">
@@ -123,7 +121,7 @@ export default function LandingScreen({ onGitHubLogin, onGoogleLogin, onPlayDemo
       </section>
 
       <section class="ml-section ml-section--flush">
-        <div class="ml-section-head"><span>Screenshots</span><h2>Your next grind at a glance.</h2></div>
+        <div class="ml-section-head"><span>Screenshots</span><h2>Everything is built for quick decisions.</h2></div>
         <div class="ml-shot-rail">
           {STRIP.map(s => (
             <div key={s.src} class="ml-shot"><img src={s.src} srcset={landingSrcSet(s.src)} sizes="158px" alt={s.alt} width={LANDING_DIMS[s.key].w} height={LANDING_DIMS[s.key].h} loading="lazy" decoding="async" /></div>
