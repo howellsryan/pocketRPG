@@ -601,6 +601,69 @@ html, body, #app {
 .cb-done:active { transform: scale(0.97); }
 
 /* ──────────────────────────────────────────────────────────────────────────
+   Mobile Landing — astral atlas design with floating device previews.
+   ────────────────────────────────────────────────────────────────────────── */
+.ml-root {
+  height: 100%; overflow-y: auto; overflow-x: hidden; color: var(--color-parchment);
+  background:
+    radial-gradient(420px 320px at 14% -4%, rgba(120, 74, 255, 0.28), transparent 65%),
+    radial-gradient(360px 280px at 92% 9%, rgba(240, 192, 64, 0.20), transparent 60%),
+    linear-gradient(180deg, #090b12 0%, #101018 46%, #090806 100%);
+}
+.ml-root button { border: 0; cursor: pointer; }
+.ml-hero { position: relative; isolation: isolate; padding: 46px 20px 34px; text-align: center; overflow: hidden; }
+.ml-hero::before {
+  content: ''; position: absolute; inset: 18px 14px auto; height: 360px; z-index: -1; opacity: .36;
+  background-image: linear-gradient(rgba(245,230,200,.08) 1px, transparent 1px), linear-gradient(90deg, rgba(245,230,200,.08) 1px, transparent 1px);
+  background-size: 38px 38px; mask-image: radial-gradient(ellipse at 50% 20%, #000, transparent 72%);
+}
+.ml-orb { position: absolute; border-radius: 50%; filter: blur(1px); pointer-events: none; }
+.ml-orb--one { width: 150px; height: 150px; left: -54px; top: 142px; background: radial-gradient(circle, rgba(96,168,255,.28), transparent 66%); }
+.ml-orb--two { width: 190px; height: 190px; right: -80px; top: 260px; background: radial-gradient(circle, rgba(240,192,64,.22), transparent 68%); }
+.ml-kicker { display: inline-flex; padding: 8px 12px; border: 1px solid rgba(240,192,64,.28); border-radius: 999px; background: rgba(255,255,255,.04); font: 800 10px/1 var(--font-mono); letter-spacing: .14em; text-transform: uppercase; color: var(--color-gold-light); }
+.ml-title { margin: 18px 0 0; font: 950 clamp(3.4rem, 17vw, 5.6rem)/.86 var(--font-display); letter-spacing: -.05em; background: linear-gradient(180deg, #fff1b8 0%, #f0c040 42%, #9b6b12 100%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent; text-shadow: 0 24px 70px rgba(240,192,64,.18); }
+.ml-tagline { max-width: 19rem; margin: 16px auto 0; font-size: 18px; line-height: 1.35; opacity: .86; }
+.ml-actions { display: grid; grid-template-columns: 1fr; gap: 10px; max-width: 280px; margin: 24px auto 0; }
+.ml-btn { min-height: 52px; border-radius: 18px; font-family: var(--font-display); font-weight: 900; letter-spacing: .04em; }
+.ml-btn--primary { color: #140d05; background: linear-gradient(180deg, #ffe08a, #d4a017 62%, #9f7112); box-shadow: 0 14px 32px -14px rgba(240,192,64,.9); }
+.ml-btn--secondary { color: var(--color-parchment); background: rgba(255,255,255,.055); border: 1px solid rgba(240,192,64,.30); }
+.ml-note { max-width: 21rem; margin: 14px auto 0; font-size: 12.5px; line-height: 1.55; opacity: .52; }
+.ml-phone-stage { position: relative; width: min(100%, 340px); margin: 30px auto 0; padding: 12px 0 2px; }
+.ml-phone { width: 252px; margin: 0 auto; padding: 8px; border-radius: 34px; background: linear-gradient(145deg, #31323c, #050507 66%); box-shadow: 0 34px 80px -32px #000, 0 0 0 1px rgba(255,255,255,.08); transform: rotate(-2deg); }
+.ml-phone img { width: 100%; border-radius: 27px; display: block; }
+.ml-mini-card { position: absolute; z-index: 2; min-width: 90px; padding: 10px 12px; border-radius: 16px; text-align: left; background: rgba(13, 12, 18, .82); border: 1px solid rgba(240,192,64,.26); backdrop-filter: blur(10px); box-shadow: 0 18px 36px -24px #000; }
+.ml-mini-card b { display: block; font: 900 18px/1 var(--font-mono); color: var(--color-gold-light); }
+.ml-mini-card span { display: block; margin-top: 4px; font-size: 10px; letter-spacing: .12em; text-transform: uppercase; opacity: .58; }
+.ml-mini-card--left { left: 0; top: 86px; transform: rotate(-8deg); }
+.ml-mini-card--right { right: 0; bottom: 70px; transform: rotate(7deg); }
+.ml-section { padding: 38px 16px; }
+.ml-section--flush { padding-left: 0; padding-right: 0; }
+.ml-section-head { max-width: 340px; margin: 0 auto 18px; text-align: center; }
+.ml-section-head span { font: 800 11px/1 var(--font-mono); letter-spacing: .2em; text-transform: uppercase; color: var(--color-gold-light); opacity: .72; }
+.ml-section-head h2 { margin: 9px 0 0; font: 850 28px/1.04 var(--font-display); color: var(--color-parchment); }
+.ml-feature-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; max-width: 680px; margin: 0 auto; }
+.ml-feature-card { overflow: hidden; border-radius: 22px; background: linear-gradient(180deg, rgba(255,255,255,.065), rgba(255,255,255,.025)); border: 1px solid rgba(255,255,255,.09); box-shadow: inset 0 1px 0 rgba(255,255,255,.07); }
+.ml-feature-card img { width: 100%; max-height: 170px; object-fit: cover; object-position: top; display: block; }
+.ml-feature-card div { padding: 12px; }
+.ml-feature-icon { display: inline-flex; font-size: 22px; margin-bottom: 6px; }
+.ml-feature-card h3 { font: 800 14px/1.15 var(--font-display); color: var(--color-gold-light); }
+.ml-feature-card p { margin: 7px 0 0; font-size: 11.5px; line-height: 1.45; opacity: .62; }
+.ml-shot-rail { display: flex; gap: 12px; overflow-x: auto; padding: 4px 16px 12px; scroll-snap-type: x mandatory; }
+.ml-shot { flex: 0 0 158px; scroll-snap-align: center; overflow: hidden; border-radius: 22px; border: 1px solid rgba(240,192,64,.18); box-shadow: 0 18px 44px -28px #000; background: #050505; }
+.ml-shot img { display: block; width: 100%; }
+.ml-auth-wrap { padding: 28px 16px 58px; }
+.ml-auth-card { max-width: 380px; margin: 0 auto; padding: 26px 18px; border-radius: 28px; text-align: center; background: radial-gradient(120% 90% at 50% 0%, rgba(240,192,64,.18), transparent 54%), rgba(255,255,255,.05); border: 1px solid rgba(240,192,64,.28); box-shadow: 0 30px 80px -44px #000; }
+.ml-auth-sigil { width: 54px; height: 54px; margin: 0 auto 14px; display: grid; place-items: center; border-radius: 18px; color: #160f05; background: linear-gradient(180deg, #ffe08a, #d4a017); font-size: 28px; box-shadow: 0 12px 28px -12px rgba(240,192,64,.75); }
+.ml-auth-card h2 { font: 850 28px/1 var(--font-display); color: var(--color-gold-light); }
+.ml-auth-card p { margin: 10px auto 20px; max-width: 22rem; opacity: .66; line-height: 1.45; }
+.ml-auth-btn { width: 100%; min-height: 52px; border-radius: 16px; margin-bottom: 10px; font-family: var(--font-display); font-weight: 900; letter-spacing: .04em; }
+.ml-auth-btn--github { color: #130d05; background: linear-gradient(180deg, #ffe08a, #d4a017 62%, #9f7112); }
+.ml-auth-btn--google { color: #202124; background: #fff; }
+.ml-embed-hint { display: grid; gap: 7px; margin: 12px 0; padding: 12px; border-radius: 14px; text-align: left; background: rgba(26,18,0,.78); border: 1px solid var(--color-gold-dim); font-size: 12px; line-height: 1.45; }
+.ml-embed-hint button { min-height: 42px; border-radius: 10px; color: var(--color-parchment); background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.12); }
+.ml-auth-card small { display: block; margin-top: 12px; font-size: 11px; line-height: 1.45; opacity: .42; }
+
+/* ──────────────────────────────────────────────────────────────────────────
    Desktop Landing (≥1024px) — wide marketing page. All classes prefixed `dl-`
    and brand tokens scoped to .dl-root so nothing leaks into the app UI.
    ────────────────────────────────────────────────────────────────────────── */
@@ -782,6 +845,62 @@ html, body, #app {
   .dl-cluster { margin-top: 30px; }
   .dl-feature, .dl-feature:nth-child(even) .dl-feature__media { grid-template-columns: 1fr; order: 0; }
   .dl-skills__grid { grid-template-columns: repeat(4, 1fr); }
+}
+
+/* Desktop landing redesign overrides — cosmic command-center aesthetic. */
+.dl-root {
+  --void-deep: #070911; --void-card: #11131f; --border: rgba(255,255,255,.10);
+  background:
+    radial-gradient(900px 520px at 10% 8%, rgba(83, 92, 255, .20), transparent 62%),
+    radial-gradient(720px 500px at 90% 0%, rgba(240, 192, 64, .20), transparent 60%),
+    linear-gradient(180deg, #070911 0%, #111018 46%, #080706 100%);
+}
+.dl-nav { background: rgba(7,9,17,.66); backdrop-filter: blur(18px); border-bottom-color: rgba(255,255,255,.08); }
+.dl-nav__inner { height: 80px; }
+.dl-brand .dl-emblem { box-shadow: 0 0 0 1px rgba(240,192,64,.28), 0 14px 36px -20px rgba(240,192,64,.8); }
+.dl-nav__links { padding: 9px 14px; border: 1px solid rgba(255,255,255,.08); border-radius: 999px; background: rgba(255,255,255,.035); }
+.dl-hero { min-height: 720px; display: grid; align-items: center; padding: 88px 0; }
+.dl-hero::before {
+  content: ''; position: absolute; inset: 22px 32px 40px; border-radius: 42px; pointer-events: none;
+  background-image: linear-gradient(rgba(245,230,200,.055) 1px, transparent 1px), linear-gradient(90deg, rgba(245,230,200,.055) 1px, transparent 1px);
+  background-size: 54px 54px; mask-image: radial-gradient(ellipse at 62% 38%, #000, transparent 78%);
+}
+.dl-hero__grid { grid-template-columns: .9fr 1.1fr; gap: 72px; }
+.dl-hero__h1 { font-size: clamp(72px, 7vw, 112px); line-height: .86; letter-spacing: -.06em; margin-top: 22px; }
+.dl-hero__sub { max-width: 36ch; font-size: 22px; opacity: .82; }
+.dl-hero__proof { width: fit-content; padding: 14px 18px; border-radius: 22px; background: rgba(255,255,255,.045); border: 1px solid rgba(255,255,255,.08); backdrop-filter: blur(10px); }
+.dl-cluster { height: 600px; border-radius: 42px; background: radial-gradient(circle at 50% 36%, rgba(240,192,64,.18), transparent 44%), rgba(255,255,255,.035); border: 1px solid rgba(255,255,255,.08); box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 40px 100px -62px #000; }
+.dl-cluster::before { width: 520px; height: 520px; background: conic-gradient(from 160deg, transparent, rgba(240,192,64,.24), rgba(95,143,255,.22), transparent); filter: blur(20px); animation: skill-ring-spin 20s linear infinite; }
+.dl-device { border-radius: 42px; padding: 10px; background: linear-gradient(145deg, #454757, #07070a 64%); box-shadow: 0 38px 90px -36px #000, 0 0 0 1px rgba(255,255,255,.12); }
+.dl-device--main { width: 292px; }
+.dl-device--main img { width: 272px; }
+.dl-device--back { transform: translate(-190px, 40px) rotate(-13deg); }
+.dl-device--back2 { transform: translate(196px, 62px) rotate(11deg); }
+.dl-strip { background: rgba(255,255,255,.035); border-color: rgba(255,255,255,.08); }
+.dl-strip__inner { padding: 22px 32px; }
+.dl-stat { padding: 18px 10px; border-radius: 18px; background: rgba(255,255,255,.035); border: 1px solid rgba(255,255,255,.07); }
+.dl-block { padding: 104px 0; }
+.dl-head { margin-bottom: 64px; }
+.dl-title { font-size: 50px; letter-spacing: -.025em; }
+.dl-features { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
+.dl-feature, .dl-feature:nth-child(even) .dl-feature__media { display: flex; flex-direction: column; gap: 0; order: 0; align-items: stretch; overflow: hidden; border-radius: 28px; background: linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.025)); border: 1px solid rgba(255,255,255,.09); }
+.dl-feature__media { min-height: 238px; align-items: flex-start; }
+.dl-feature__media::after { content: none; }
+.dl-frame { width: 100%; border-radius: 0; padding: 0; background: #050505; box-shadow: none; }
+.dl-frame img { width: 100%; height: 238px; object-fit: cover; object-position: top; border-radius: 0; }
+.dl-feature__copy { padding: 24px; max-width: none; }
+.dl-feature__ico { margin-bottom: 18px; border-radius: 18px; background: rgba(240,192,64,.10); }
+.dl-feature__copy h3 { font-size: 24px; }
+.dl-feature__copy p { font-size: 15px; }
+.dl-band { background: linear-gradient(180deg, rgba(255,255,255,.045), rgba(255,255,255,.015)); border-color: rgba(255,255,255,.08); }
+.dl-skchip, .dl-step, .dl-cta { background: linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.025)); border-color: rgba(255,255,255,.09); }
+.dl-gallery { grid-auto-columns: 230px; }
+.dl-shot { border-radius: 28px; border-color: rgba(255,255,255,.10); transform: rotate(-1deg); }
+.dl-shot:nth-child(even) { transform: rotate(1deg) translateY(16px); }
+.dl-cta { border-radius: 38px; padding: 64px 54px; background: radial-gradient(90% 120% at 50% 0%, rgba(240,192,64,.22), transparent 58%), linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.025)); }
+@media (max-width: 1180px) {
+  .dl-hero__grid { grid-template-columns: 1fr; }
+  .dl-features { grid-template-columns: repeat(2, 1fr); }
 }
 
 /* Static loading splash — painted during HTML stream, before the app JS
