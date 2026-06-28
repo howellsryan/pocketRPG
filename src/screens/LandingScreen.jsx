@@ -107,7 +107,7 @@ export default function LandingScreen({ onGitHubLogin, onGoogleLogin, onPlayDemo
             onClick={onPlayDemo}
             class="font-display font-bold text-base bg-[var(--color-gold)] text-[var(--color-void)] px-10 py-4 rounded-2xl min-h-[52px] min-w-[180px] hover:bg-[var(--color-gold-light)] transition-colors mb-3 tracking-wide"
           >
-            ▶ Play Demo
+            Play Demo
           </button>
         )}
         <button
