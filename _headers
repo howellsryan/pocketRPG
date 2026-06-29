@@ -5,6 +5,7 @@
 # Run Lighthouse against the production domain (pocketrpg.co.uk) to verify.
 /*
   X-Robots-Tag: index, follow
+  Content-Security-Policy: frame-ancestors *
 
 # Long-lived caching for static, content-stable assets (fonts + landing
 # screenshots). These are served from /public by Cloudflare Pages.
