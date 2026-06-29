@@ -287,10 +287,10 @@ export default function DesktopLandingScreen({ onGitHubLogin, onGoogleLogin, onP
               <h2 class="dl-gold">Start your adventure</h2>
               <p>Free account. Progress saved to the cloud.<br />Play across all your devices.</p>
               <div class="dl-auth">
-                <button class="dl-btn dl-btn--github dl-btn--lg" onClick={hosted ? undefined : onGitHubLogin} disabled={hosted}>
+                <button class="dl-btn dl-btn--github dl-btn--lg" onClick={hosted ? undefined : onGitHubLogin} disabled={hosted} style={hosted ? { pointerEvents: 'none' } : undefined}>
                   <DlGitHubMark />Continue with GitHub
                 </button>
-                <button class="dl-btn dl-btn--google dl-btn--lg" onClick={hosted ? undefined : onGoogleLogin} disabled={hosted}>
+                <button class="dl-btn dl-btn--google dl-btn--lg" onClick={hosted ? undefined : onGoogleLogin} disabled={hosted} style={hosted ? { pointerEvents: 'none' } : undefined}>
                   <span class="dl-gg">G</span>Continue with Google
                 </button>
               </div>

@@ -190,6 +190,7 @@ export default function LandingScreen({ onGitHubLogin, onGoogleLogin, onPlayDemo
           <button
             onClick={hosted ? undefined : onGitHubLogin}
             disabled={hosted}
+            style={hosted ? { pointerEvents: 'none' } : undefined}
             class="w-full font-display font-bold text-sm py-4 rounded-xl mb-3 min-h-[52px] tracking-wide bg-[var(--color-gold)] text-[var(--color-void)] transition-colors flex items-center justify-center gap-2 hover:bg-[var(--color-gold-light)] disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor" class="flex-none" aria-hidden="true">
@@ -201,6 +202,7 @@ export default function LandingScreen({ onGitHubLogin, onGoogleLogin, onPlayDemo
           <button
             onClick={hosted ? undefined : onGoogleLogin}
             disabled={hosted}
+            style={hosted ? { pointerEvents: 'none' } : undefined}
             class="w-full font-display font-bold text-sm py-4 rounded-xl mb-4 min-h-[52px] tracking-wide bg-white text-[#1f1f1f] transition-opacity flex items-center justify-center gap-2 hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <span
