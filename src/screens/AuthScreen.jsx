@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'preact/hooks'
-import { api, startGitHubLogin, startGoogleLogin, isEmbeddedBrowser, setCharacter, getToken, clearAuth } from '../cloud/api.js'
+import { api, startGitHubLogin, startGoogleLogin, isEmbeddedBrowser, isHosted, setCharacter, getToken, clearAuth } from '../cloud/api.js'
 import { resetSyncState } from '../cloud/sync.js'
 import LandingScreen from './LandingScreen.jsx'
 // Inline the iron full helm SVG so it renders on the auth screen before the
@@ -27,6 +27,7 @@ export default function AuthScreen({ onCloudReady, onPlayDemo }) {
   const [isOneLife, setIsOneLife] = useState(false)
   const [oneLifeAck, setOneLifeAck] = useState(false)
   const [embedded] = useState(() => isEmbeddedBrowser())
+  const [hosted] = useState(() => isHosted())
   const [showBrowserHint, setShowBrowserHint] = useState(false)
   const [copied, setCopied] = useState(false)
 
@@ -132,6 +133,7 @@ export default function AuthScreen({ onCloudReady, onPlayDemo }) {
         onGoogleLogin={handleGoogleLogin}
         onPlayDemo={onPlayDemo}
         embedded={embedded}
+        hosted={hosted}
         showBrowserHint={showBrowserHint}
         copied={copied}
         onCopyLink={copyAppLink}
