@@ -331,6 +331,11 @@ export function startGoogleLogin() {
 // "Error 403: disallowed_useragent" ("Use secure browsers" policy). Detect the
 // common in-app webviews so the UI can steer users to a real browser, where
 // Google sign-in works. GitHub OAuth is unaffected and still works in webviews.
+export function isItchio() {
+  if (typeof window === 'undefined') return false
+  return new URLSearchParams(window.location.search).has('itchio')
+}
+
 export function isEmbeddedBrowser() {
   if (typeof navigator === 'undefined') return false
   const ua = navigator.userAgent || ''
