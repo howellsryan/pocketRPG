@@ -15,7 +15,7 @@ export const NAV_TABS = [
   { id: SCREENS.COLLECTION_LOG,     label: 'Collection Log', icon: '📖', iconKey: 'open_book', iconColor: '#f0c040', iconSize: 28 },
   { id: SCREENS.LEADERBOARD,        label: 'Leaderboard',    icon: '🏆', iconKey: 'progression', iconSize: 22 },
   { id: SCREENS.ARMOURY,            label: 'Armoury',        icon: '🗡️', iconKey: 'iron_longsword' },
-  { id: SCREENS.HELP,               label: 'Help',           icon: '🧭', iconKey: 'tinderbox' },
+  { id: SCREENS.HELP,               label: 'Help & Settings', icon: '🧭', iconKey: 'tinderbox' },
   { id: SCREENS.CHARACTER_UNLOCKS,  label: 'Unlocks',        icon: '✨', iconKey: 'master_rejuvenation' },
   { id: SCREENS.CONNECT_AI,         label: 'Connect AI',     icon: '🤖', iconKey: 'brain', iconColor: '#D97757', iconSize: 28 },
 ]

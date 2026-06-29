@@ -1553,7 +1553,12 @@ function GameApp() {
     }
     setSaveBlocked(false)
     setSaveBlockedError(null)
-    setActiveTask(null)
+    // Clear the local session's active task WITHOUT pushing `null` to the
+    // server idle row. The character we're leaving keeps its server-side idle
+    // task + last_active_at so it continues accruing offline while the player
+    // hops to another account on the same device. (Pushing null here would
+    // stop that character's idle entirely — the bug this guards against.)
+    setActiveTask(null, { skipCloudSync: true })
     localStorage.removeItem('pocketrpg_activeTask')
     localStorage.removeItem('pocketrpg_hiddenAt')
     setCharacter(null)

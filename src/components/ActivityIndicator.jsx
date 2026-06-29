@@ -16,7 +16,7 @@ function describeTask(task) {
       return { skill: task.skill, icon: SKILL_ICONS[task.skill] || '🔨', screen: SCREENS.SKILLS, label: task.skill }
     case 'gather':
       if (task.gatherTask?.oneShot || task.gatherTask?.isClue) return null
-      return { icon: task.gatherTask?.icon || '🌿', screen: SCREENS.GATHER, label: task.gatherTask?.name || 'Gathering' }
+      return { iconKey: task.gatherTask?.product, icon: task.gatherTask?.icon || '🌿', screen: SCREENS.GATHER, label: task.gatherTask?.name || 'Gathering' }
     case 'agility':
       return { skill: 'agility', icon: SKILL_ICONS.agility || '🏃', screen: SCREENS.AGILITY, label: 'Agility' }
     case 'thieving':
@@ -24,16 +24,16 @@ function describeTask(task) {
     case 'hunter':
       return { skill: 'hunter', icon: SKILL_ICONS.hunter || '🪤', screen: SCREENS.SKILLS, label: 'Hunter' }
     case 'quest':
-      return { icon: '📜', screen: SCREENS.QUESTS, label: task.quest?.name || 'Quest' }
+      return { iconKey: 'clue_scroll_medium', icon: '📜', screen: SCREENS.QUESTS, label: task.quest?.name || 'Quest' }
     case 'minigame':
       return {
-        iconKey: task.minigameTask?.iconKey,
+        iconKey: task.minigameTask?.product,
         icon: task.minigameTask?.icon || '🎮',
         screen: SCREENS.MINIGAMES,
         label: task.minigameTask?.name || 'Minigame',
       }
     case 'clue':
-      return { icon: '🗺️', screen: SCREENS.CLUES, label: 'Clue scroll' }
+      return { iconKey: task.gatherTask?.requiresItem, icon: '🗝️', screen: SCREENS.CLUES, label: task.gatherTask?.name || 'Clue scroll' }
     default:
       return null
   }
