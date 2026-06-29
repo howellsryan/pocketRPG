@@ -99,7 +99,7 @@ function DlGitHubMark() {
   )
 }
 
-export default function DesktopLandingScreen({ onGitHubLogin, onGoogleLogin, onPlayDemo, embedded, itchio, showBrowserHint, copied, onCopyLink }) {
+export default function DesktopLandingScreen({ onGitHubLogin, onGoogleLogin, onPlayDemo, embedded, hosted, showBrowserHint, copied, onCopyLink }) {
   // The desktop landing renders game-icons glyphs, whose data (gameIconsData)
   // ships in the lazily-loaded game chunk in the single-file build. Fetch it on
   // mount and re-render once it arrives so the icons swap in from their emoji
@@ -287,15 +287,15 @@ export default function DesktopLandingScreen({ onGitHubLogin, onGoogleLogin, onP
               <h2 class="dl-gold">Start your adventure</h2>
               <p>Free account. Progress saved to the cloud.<br />Play across all your devices.</p>
               <div class="dl-auth">
-                <button class="dl-btn dl-btn--github dl-btn--lg" onClick={itchio ? undefined : onGitHubLogin} disabled={itchio}>
+                <button class="dl-btn dl-btn--github dl-btn--lg" onClick={hosted ? undefined : onGitHubLogin} disabled={hosted}>
                   <DlGitHubMark />Continue with GitHub
                 </button>
-                <button class="dl-btn dl-btn--google dl-btn--lg" onClick={itchio ? undefined : onGoogleLogin} disabled={itchio}>
+                <button class="dl-btn dl-btn--google dl-btn--lg" onClick={hosted ? undefined : onGoogleLogin} disabled={hosted}>
                   <span class="dl-gg">G</span>Continue with Google
                 </button>
               </div>
-              {itchio && (
-                <p class="dl-itchio-note">
+              {hosted && (
+                <p class="dl-hosted-note">
                   Sign in &amp; save your progress at{' '}
                   <a href="https://pocketrpg.co.uk" target="_blank" rel="noopener">pocketrpg.co.uk</a>
                 </p>

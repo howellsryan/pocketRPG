@@ -753,8 +753,8 @@ html, body, #app {
 .dl-auth { display: flex; gap: 14px; justify-content: center; margin-top: 30px; flex-wrap: wrap; }
 .dl-btn--github { background: linear-gradient(180deg, #f0c040, #d4a017 60%, #b3851a); color: #1a1206; padding: 15px 28px; }
 .dl-btn--google { background: #fff; color: #1f1f1f; padding: 15px 28px; }
-.dl-itchio-note { font-size: 13px; text-align: center; color: var(--gold); opacity: 0.8; margin-top: 10px; }
-.dl-itchio-note a { color: inherit; text-decoration: underline; }
+.dl-hosted-note { font-size: 13px; text-align: center; color: var(--gold); opacity: 0.8; margin-top: 10px; }
+.dl-hosted-note a { color: inherit; text-decoration: underline; }
 .dl-gg { width: 20px; height: 20px; border-radius: 50%; display: inline-grid; place-items: center; font-weight: 800; font-size: 12px; color: #fff; background: conic-gradient(from -45deg, #ea4335 0 25%, #fbbc05 25% 50%, #34a853 50% 75%, #4285f4 75% 100%); }
 .dl-auth__error { margin-top: 18px; font-size: 14px; color: #ff6b6b; font-weight: 600; }
 .dl-fineprint { margin-top: 22px; font-size: 13px; opacity: 0.42; line-height: 1.5; max-width: 46ch; margin-left: auto; margin-right: auto; }
