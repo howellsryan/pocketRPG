@@ -52,7 +52,7 @@ function groupActions(actions) {
 export default function MagicScreen({ onBack, onNavigate }) {
   const {
     stats, inventory, bank, equipment, isIronman,
-    grantXP, updateInventory, updateBankDirect, addToast, setActiveTask, activeTask
+    grantXP, updateInventory, updateBankDirect, addToast, setActiveTask, requestActivityStart, activeTask
   } = useGame()
 
   const magicLevel = getLevelFromXP(stats.magic?.xp || 0)
@@ -117,6 +117,8 @@ export default function MagicScreen({ onBack, onNavigate }) {
       const resumed = buildResumedState(activeTask)
       if (resumed) { setSkilling(resumed); skillingRef.current = resumed; markScreenTick(); return }
     }
+    // Map-driven gating (Phase 3): magic trains at a bank — must be at a place that has one.
+    if (!requestActivityStart({ type: 'skill', skill: 'magic', action })) return
     const startedAt = Date.now()
     const state = { ...createSkillingState('magic', action), startedAt }
     setSkilling(state)

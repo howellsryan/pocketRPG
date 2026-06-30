@@ -203,8 +203,17 @@ Each phase is independently shippable and reversible against the live game.
     is mapped onto the placeholder 8-place geography by a deterministic auto-distributor,
     `scripts/seedWorldContent.cjs`, whose output is committed into `src/data/world.json`
     (`activities` are now `{ kind, ref }`). Re-run the script after adding content.
-    Quests/clues stay ungated (Phase 5). Magic/prayer/slayer/dungeoneering are
-    intentionally unmapped (fall through to start normally).
+    Quests/clues stay ungated (Phase 5). Slayer/dungeoneering are intentionally unmapped
+    (fall through to start normally).
+  - **Facilities**: some skills are tied to a building rather than level-banded. Places
+    carry a `facilities` array and the world has a `facilities` metadata map. **Bank**
+    (cities + towns) offers construction, magic, thieving, prayer, firemaking, herblore,
+    fletching, crafting, cooking; **Furnace & Anvil** (a curated subset — Emberhold +
+    Saltmarket) offers smithing. Every action of a facility skill is available at every
+    place with that facility (`FACILITY_SKILLS`/`facilitiesFor` in the seed). Magic trains
+    via its own screen, so `MagicScreen` is also gated; the place hub shows facility chips.
+    Remaining `skill`-kind training (mining/woodcutting/fishing/runecraft), combat,
+    agility, hunter and gather tasks stay level-banded.
 - **Phase 4 — world authoring** (mapping done; geography pending): the content→place
   schema and full mapping now exist (above). What remains is designing the *real* curated
   geography (place count, names, tiers, edges) and re-running the seed (or hand-curating)

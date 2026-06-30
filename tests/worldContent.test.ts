@@ -8,6 +8,7 @@ import {
 } from '../src/engine/worldContent.js'
 import worldData from '../src/data/world.json'
 import monstersData from '../src/data/monsters.json'
+import skillsData from '../src/data/skills.json'
 import { GATHER_TASKS } from '../src/engine/gatherTasks.js'
 
 const asArray = (v: any) => (Array.isArray(v) ? v : Object.values(v || {}))
@@ -44,7 +45,40 @@ describe('content -> place coverage', () => {
 
   it('returns no places for unmapped content', () => {
     expect(placesForActivity('combat', 'no_such_monster')).toEqual([])
-    expect(placesForActivity('skill', 'magic:curse')).toEqual([]) // magic is intentionally unmapped
+    expect(placesForActivity('skill', 'magic:no_such_spell')).toEqual([]) // fake ref
+    expect(placesForActivity('skill', 'dungeoneering:dungeoneering_floor_1')).toEqual([]) // skill intentionally unmapped
+  })
+})
+
+describe('facility-bound skills', () => {
+  const bankPlaces = Object.keys(worldData.places).filter((id) => (worldData.places[id] as any).facilities?.includes('bank'))
+  const furnacePlaces = Object.keys(worldData.places).filter((id) => (worldData.places[id] as any).facilities?.includes('furnace_anvil'))
+  const noBank = Object.keys(worldData.places).filter((id) => !(worldData.places[id] as any).facilities?.includes('bank'))
+
+  it('places a bank skill (cooking) at every bank place and nowhere else', () => {
+    const places = placesForActivity('skill', 'cooking:cook_shrimp')
+    expect(places.length).toBeGreaterThan(0)
+    expect([...places].sort()).toEqual([...bankPlaces].sort())
+  })
+
+  it('places smithing only at furnace & anvil places', () => {
+    const places = placesForActivity('skill', 'smithing:smelt_bronze')
+    expect([...places].sort()).toEqual([...furnacePlaces].sort())
+    // a bank-only place must NOT offer smithing
+    for (const id of noBank) expect(places).not.toContain(id)
+  })
+
+  it('maps every thieving target to the bank places', () => {
+    const npcs = (skillsData as any).thieving.npcs
+    for (const n of npcs) {
+      expect([...placesForActivity('thieving', n.id)].sort(), `thieving ${n.id}`).toEqual([...bankPlaces].sort())
+    }
+  })
+
+  it('does not offer a facility skill at a place without the facility', () => {
+    for (const id of noBank) {
+      expect(placesForActivity('skill', 'prayer:bury_bones').includes(id)).toBe(false)
+    }
   })
 })
 

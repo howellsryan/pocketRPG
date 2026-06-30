@@ -312,6 +312,14 @@ function PlaceHub({ place, here, travelling, onTravel, onClose }) {
         </div>
         <div class="wm-hub-body">
           <p class="wm-hub-lore">{place.lore}</p>
+          {(place.facilities?.length > 0) && (
+            <div class="wm-hub-facilities">
+              {place.facilities.map((fid) => {
+                const fac = getWorld().facilities?.[fid]
+                return <span class="wm-facility" key={fid}>{fac?.icon || '🏛️'} {fac?.label || fid}</span>
+              })}
+            </div>
+          )}
           <div class="wm-hub-note">
             {isHere
               ? 'You are here.'

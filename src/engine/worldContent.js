@@ -39,7 +39,9 @@ function skillAction(skillRef) {
 }
 
 function actionInSkill(skillId, actionId) {
-  return asArray(skillsData[skillId]?.actions).find((a) => a.id === actionId) || null
+  // Thieving stores its targets under `npcs`, every other skill under `actions`.
+  const list = skillId === 'thieving' ? skillsData.thieving?.npcs : skillsData[skillId]?.actions
+  return asArray(list).find((a) => a.id === actionId) || null
 }
 
 // ---- reverse index: `${kind}|${ref}` -> [placeId, ...] ----------------------------
