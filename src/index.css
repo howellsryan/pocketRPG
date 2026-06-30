@@ -1799,7 +1799,8 @@ html, body, #app {
   transition: transform .14s ease, box-shadow .14s ease; }
 .wm-face { position: absolute; inset: 12%; border-radius: 50%; display: grid; place-items: center;
   background: radial-gradient(circle at 38% 30%, #2a2622, #100e0c);
-  box-shadow: inset 0 0 0 1px var(--wm-accent); line-height: 1; }
+  box-shadow: inset 0 0 0 1px var(--wm-accent); line-height: 1; overflow: hidden; }
+.wm-face-art { filter: drop-shadow(0 1px 1px rgba(0,0,0,.55)); }
 .wm-node:hover .wm-medal { transform: translateY(-2px) scale(1.05); }
 .wm-node--here .wm-medal { box-shadow: 0 0 0 3px rgba(240,116,42,0.5), 0 0 24px 2px rgba(240,116,42,0.45), 0 5px 14px -4px #000; }
 .wm-plate { display: flex; flex-direction: column; align-items: center; padding: 3px 10px; border-radius: 4px;
@@ -1827,8 +1828,16 @@ html, body, #app {
 .wm-hub { position: absolute; z-index: 50; right: 0; top: 0; height: 100%; width: min(460px, 100%);
   display: flex; flex-direction: column; background: var(--color-void-light); border-left: 1px solid var(--color-void-border);
   box-shadow: -12px 0 40px -20px #000; }
-.wm-hub-banner { position: relative; flex: 0 0 auto; height: 150px; display: flex; align-items: flex-end;
+.wm-hub-banner { position: relative; flex: 0 0 auto; height: 170px; display: flex; align-items: flex-end; overflow: hidden;
   background: linear-gradient(160deg, color-mix(in srgb, var(--wm-accent) 22%, #15130d), #100d08); }
+/* Bespoke per-place establishing illustration, sized to fill the banner and stay crisp
+   at any width (mobile + desktop). The veil keeps the name/tier text legible over it. */
+.wm-hub-scene { position: absolute; inset: 0; z-index: 0; }
+.wm-hub-scene > svg { width: 100%; height: 100%; }
+.wm-hub-scene-veil { position: absolute; inset: 0; z-index: 1; pointer-events: none;
+  background: linear-gradient(to top, rgba(8,6,4,0.82) 4%, rgba(8,6,4,0.28) 42%, rgba(8,6,4,0) 70%); }
+.wm-hub-banner > .wm-hub-meta { position: relative; z-index: 2; }
+@media (min-width: 560px) { .wm-hub-banner { height: 196px; } }
 .wm-hub-close { position: absolute; top: 10px; right: 10px; z-index: 4; width: 34px; height: 34px; border-radius: 50%;
   background: rgba(20,17,13,.7); border: 1px solid rgba(176,136,66,.5); color: var(--color-parchment); font-size: 18px; cursor: pointer; }
 .wm-hub-close:hover { color: var(--color-gold-light); }

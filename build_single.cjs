@@ -103,6 +103,7 @@ const sourceFiles = [
   'state/gameState.js',
   'state/pvpState.js',
   'components/Modal.js',
+  'components/PlaceArt.js',
   'components/TravelPrompt.js',
   'components/HPBar.js',
   'components/HitSplat.js',

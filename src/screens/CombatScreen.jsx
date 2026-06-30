@@ -1005,8 +1005,10 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       addToast(req.reason, 'error')
       return
     }
-    // Map-driven gating (Phase 3): must be at a place that offers this raid's first boss.
-    if (!requestActivityStart({ type: 'combat', monster: monstersData[raidData.bosses[0]] })) return
+    // Map-driven gating (Phase 3): must be at a city that offers this raid. Raids are
+    // their own activity kind — gate on the raid, not its first boss (which is raid-only
+    // content and not a standalone monster on the map).
+    if (!requestActivityStart({ type: 'raid', raid: raidData })) return
     const combatType = getCombatType(equipment, itemsData)
     const weaponItem = equipment?.weapon ? itemsData[equipment.weapon.itemId] : null
     const isPoweredStaff = !!weaponItem?.poweredStaff

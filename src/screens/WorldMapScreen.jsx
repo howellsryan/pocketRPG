@@ -3,6 +3,17 @@ import { useState, useRef, useEffect, useCallback } from 'preact/hooks'
 import { getWorld, getPlace, listPlaces, getTier, getKind, shortestPath, pathLegs } from '../engine/world.js'
 import { describeActivity } from '../engine/worldContent.js'
 import { createTravelTask, travelFraction, travelDestName } from '../engine/travel.js'
+import { PlaceIcon, PlaceScene } from '../components/PlaceArt.jsx'
+import GameIcon from '../components/GameIcon.jsx'
+
+// Facility chip glyph: bank reuses the existing in-game bank icon (the nav's coins
+// glyph); furnace & anvil gets its bespoke PlaceIcon; anything else falls back to its
+// emoji. Sized for the 44px-min facility chips.
+function FacilityGlyph({ fid, fac }) {
+  if (fid === 'bank') return <GameIcon iconKey="coins" size={16} title={fac?.label || 'Bank'} />
+  if (fid === 'furnace_anvil') return <PlaceIcon facility="furnace_anvil" size={18} />
+  return <span aria-hidden="true">{fac?.icon || '🏛️'}</span>
+}
 
 /**
  * World Map — Phase 1 (read-only) of the map-driven overhaul.
@@ -232,7 +243,9 @@ export default function WorldMapScreen() {
                 aria-label={`${p.name} — ${tier?.label || ''}${isHere ? ' (you are here)' : ''}`}
               >
                 <span class="wm-medal" style={{ width: sz + 'px', height: sz + 'px' }}>
-                  <span class="wm-face" style={{ fontSize: Math.round(sz * 0.42) + 'px' }} aria-hidden="true">{p.icon}</span>
+                  <span class="wm-face">
+                    <PlaceIcon tier={p.tier} size={Math.round(sz * 0.58)} class="wm-face-art" />
+                  </span>
                 </span>
                 <span class="wm-plate">
                   <span class="wm-name">{p.name}</span>
@@ -303,9 +316,11 @@ function PlaceHub({ place, here, travelling, onTravel, onClose }) {
       <div class="wm-scrim" onClick={onClose} />
       <div class="wm-hub" role="dialog" aria-label={place.name}>
         <div class="wm-hub-banner" style={{ '--wm-accent': tier?.accent || 'var(--color-gold)' }}>
+          <div class="wm-hub-scene" aria-hidden="true"><PlaceScene place={place} /></div>
+          <div class="wm-hub-scene-veil" aria-hidden="true" />
           <button class="wm-hub-close" onClick={onClose} aria-label="Close">✕</button>
           <div class="wm-hub-meta">
-            <span class="wm-hub-tier">{place.icon} {tier?.label}</span>
+            <span class="wm-hub-tier"><PlaceIcon tier={place.tier} size={18} /> {tier?.label}</span>
             <div class="wm-hub-name">{place.name}</div>
             <div class="wm-hub-sub">{place.sub}</div>
           </div>
@@ -316,7 +331,7 @@ function PlaceHub({ place, here, travelling, onTravel, onClose }) {
             <div class="wm-hub-facilities">
               {place.facilities.map((fid) => {
                 const fac = getWorld().facilities?.[fid]
-                return <span class="wm-facility" key={fid}>{fac?.icon || '🏛️'} {fac?.label || fid}</span>
+                return <span class="wm-facility" key={fid}><FacilityGlyph fid={fid} fac={fac} /> {fac?.label || fid}</span>
               })}
             </div>
           )}

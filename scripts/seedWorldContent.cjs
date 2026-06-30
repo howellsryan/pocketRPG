@@ -27,10 +27,35 @@ const world = JSON.parse(fs.readFileSync(worldPath, 'utf8'))
 
 const monsters = require(path.join(ROOT, 'src/data/monsters.json'))
 const skills = require(path.join(ROOT, 'src/data/skills.json'))
+const raids = require(path.join(ROOT, 'src/data/raids.json'))
 const { GATHER_TASKS } = require(path.join(ROOT, 'src/engine/gatherTasks.js'))
 const { BUILDING_ACTIONS } = require(path.join(ROOT, 'src/engine/construction.js'))
 
 const asArray = (v) => (Array.isArray(v) ? v : Object.values(v || {}))
+
+// ---- raids ------------------------------------------------------------------------
+// Raids are their own activity kind (kind 'raid'), authored at a fixed city — NOT
+// distributed as combat. raids.json keys content under both PocketRPG-canonical ids and
+// OSRS-name aliases that share a `raid.id`; dedupe to the canonical id so each raid is
+// placed once. Their boss monsters are excluded from the combat distribution below so a
+// raid never shows up in a place hub as a standalone monster.
+const canonicalRaids = []
+const seenRaidIds = new Set()
+for (const raid of asArray(raids)) {
+  if (!raid || !raid.id || seenRaidIds.has(raid.id)) continue
+  seenRaidIds.add(raid.id)
+  canonicalRaids.push(raid)
+}
+// Raid -> host city (legend: cities host raids). Authored, not level-banded.
+const RAID_PLACEMENT = {
+  vaults_of_xyren: 'faloden',
+  crimson_night_theatre: 'varrick',
+  cryptbound_champions: 'ardounne',
+  tomb_of_arasmus: 'ardounne',
+}
+const RAID_DEFAULT_CITY = 'varrick'
+const raidBossIds = new Set()
+for (const raid of canonicalRaids) for (const b of raid.bosses || []) raidBossIds.add(b)
 
 // ---- facilities -------------------------------------------------------------------
 // Skills tied to a building. Every action of these skills is available at every place
@@ -83,8 +108,16 @@ function distribute(kind, items, out) {
 const out = {}
 for (const id of Object.keys(world.places)) out[id] = []
 
-// Combat: every monster by combatLevel.
-distribute('combat', asArray(monsters).map((m) => ({ ref: m.id, level: m.combatLevel ?? 1 })), out)
+// Combat: every monster by combatLevel, excluding raid bosses (those are raid content,
+// placed below as kind 'raid' — never as a standalone monster).
+distribute('combat', asArray(monsters).filter((m) => !raidBossIds.has(m.id)).map((m) => ({ ref: m.id, level: m.combatLevel ?? 1 })), out)
+
+// Raids: authored at a fixed city (kind 'raid'), one entry per canonical raid.
+for (const raid of canonicalRaids) {
+  const placeId = world.places[RAID_PLACEMENT[raid.id]] ? RAID_PLACEMENT[raid.id] : RAID_DEFAULT_CITY
+  out[placeId] = out[placeId] || []
+  out[placeId].push({ kind: 'raid', ref: raid.id })
+}
 
 // Level-band skill actions (gathering + runecraft).
 const skillItems = []
@@ -93,8 +126,27 @@ for (const skillId of LEVEL_BAND_SKILLS) {
 }
 distribute('skill', skillItems, out)
 
-// Agility / hunter — own kinds, level-banded.
-distribute('agility', asArray(skills.agility?.actions).map((a) => ({ ref: a.id, level: a.level ?? 1 })), out)
+// Agility — authored 1:1 to its namesake world city (rooftop courses are renamed to
+// match the city they sit above), matching OSRS course levels. Not level-banded.
+const AGILITY_PLACEMENT = {
+  gnome_stronghold: 'lumbright',
+  draynor_village: 'draynar',
+  al_kharid: 'alkarid',
+  varrock: 'varrick',
+  canifis: 'canifel',
+  falador: 'faloden',
+  seers_village: 'seerhold',
+  pollnivneach: 'brimhollow',
+  rellekka: 'catherra',
+  ardougne: 'ardounne',
+}
+for (const a of asArray(skills.agility?.actions)) {
+  const placeId = world.places[AGILITY_PLACEMENT[a.id]] ? AGILITY_PLACEMENT[a.id] : placesOrdered[0]
+  out[placeId] = out[placeId] || []
+  out[placeId].push({ kind: 'agility', ref: a.id })
+}
+
+// Hunter — own kind, level-banded.
 distribute('hunter', asArray(skills.hunter?.actions).map((a) => ({ ref: a.id, level: a.level ?? 1 })), out)
 
 // Gather tasks have no level; band them by their order so they spread.
@@ -125,6 +177,7 @@ for (const id of Object.keys(world.places)) {
 }
 
 world.kinds = Object.assign({}, world.kinds, {
+  raid: { label: 'Raid', color: 'var(--color-blood-light)' },
   skill: { label: 'Skill', color: 'var(--color-emerald-light)' },
   gather: { label: 'Gather', color: 'var(--color-emerald)' },
   agility: { label: 'Agility', color: 'var(--color-mana-light)' },

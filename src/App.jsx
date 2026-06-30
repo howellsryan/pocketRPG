@@ -812,6 +812,7 @@ function GameApp() {
               activeTaskRef.current = null
               try { localStorage.removeItem('pocketrpg_activeTask') } catch {}
               addToast(`🧭 Arrived at ${travelDestName(savedTask)}`, 'info')
+              resumeAutoStart(savedTask.autoStart)
             } else {
               setActiveTask(adv.task)
               activeTaskRef.current = adv.task
@@ -1228,6 +1229,7 @@ function GameApp() {
           activeTaskRef.current = null
           try { localStorage.removeItem('pocketrpg_activeTask') } catch {}
           addToast(`🧭 Arrived at ${travelDestName(task)}`, 'info')
+          resumeAutoStart(task.autoStart)
         } else {
           setActiveTask({ ...task, ticksRemaining: remaining }, { skipCloudSync: true })
         }
@@ -1661,6 +1663,28 @@ function GameApp() {
     setScreen(scr)
     if (gameReady && isCloudAccount && !isInPvpMatch && cloudPhase === 'ready') {
       void pushNow(getSnapshot()).catch(() => {})
+    }
+  }
+
+  // Resume the action a player was travelling to (a gated activity start embedded its
+  // descriptor in the travel task's `autoStart`). On arrival we navigate to the owning
+  // screen with the same actionData a home shortcut would use, so the screen's existing
+  // auto-start effect fires the fight/skilling immediately — even if the player idled
+  // away on another screen while travelling.
+  const resumeAutoStart = (autoStart) => {
+    if (!autoStart || !autoStart.kind) return
+    switch (autoStart.kind) {
+      case 'combat':   navigate(SCREENS.COMBAT, { monsterId: autoStart.monsterId }); break
+      case 'raid':     navigate(SCREENS.COMBAT, { raidId: autoStart.raidId }); break
+      case 'agility':  navigate(SCREENS.AGILITY, { actionId: autoStart.actionId }); break
+      case 'gather':   navigate(SCREENS.GATHER, { gatherTaskId: autoStart.gatherTaskId }); break
+      case 'thieving': navigate(SCREENS.SKILLS, { skillId: 'thieving', actionId: autoStart.npcId }); break
+      case 'hunter':   navigate(SCREENS.SKILLS, { skillId: 'hunter', actionId: autoStart.actionId }); break
+      case 'skill':
+        if (autoStart.skill === 'magic') navigate(SCREENS.MAGIC)
+        else navigate(SCREENS.SKILLS, { skillId: autoStart.skill, actionId: autoStart.actionId })
+        break
+      default: break
     }
   }
 

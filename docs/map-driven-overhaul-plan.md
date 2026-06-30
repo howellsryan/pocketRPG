@@ -192,7 +192,8 @@ Each phase is independently shippable and reversible against the live game.
   `requestActivityStart` (`src/state/gameState.jsx`) — must be at a place that offers the
   activity, else a `TravelPrompt` (`src/components/TravelPrompt.jsx`) confirms travel
   (single place) or shows a multi-location picker; starting is blocked while in transit
-  (combat lock). On arrival the destination hub opens (decided: no auto-start). Gating
+  (combat lock). On arrival, a gated activity start now resumes automatically (see the
+  post-Phase-4 polish bullet); manual map travel still just lands at the destination. Gating
   engine: `src/engine/worldContent.js` (`activityRef`/`placesForActivity`/
   `resolveActivityStart`/`describeActivity`, + `tests/worldContent.test.ts`). Gated at the
   §6 touch points in Combat/Skilling/Gather/Agility/Thieving/Hunter/Construction screens.
@@ -221,6 +222,28 @@ Each phase is independently shippable and reversible against the live game.
   Catherra/Canifel), all reachable from the start. Geography + facilities are hand-authored
   in `src/data/world.json`; `seedWorldContent.cjs` fills `activities` and reads facilities
   rather than deriving them. Discovery/unlocks remain a later effort (§9.1).
+- **Post-Phase-4 polish** (done): map presentation + content-fidelity pass.
+  - **Bespoke art** (`src/components/PlaceArt.jsx`, pure SVG, no raster assets): `PlaceIcon`
+    draws the settlement-tier medallions (city/town/village/hamlet) and the furnace-&-anvil
+    facility glyph; **bank reuses the existing in-game bank icon** (the nav `coins` glyph via
+    `GameIcon`). `PlaceScene` is a wide, per-place establishing illustration on the hub banner
+    (e.g. Faloden = white castle + white bridge, Al-Karid = desert palace, Brimhollow =
+    volcano + docks), composed from landmark primitives and keyed by place id with a
+    tier-themed fallback. Responsive (viewBox + `xMidYMid slice`). Styling: `.wm-hub-scene`,
+    `.wm-face-art` in `src/index.css`.
+  - **Raids are their own kind** (`kind: 'raid'`), authored at a city in the seed and gated
+    on the raid (not its first boss). Raid boss monsters are excluded from the `combat`
+    distribution so they no longer appear as standalone map monsters. `startRaid` requests
+    `{ type: 'raid', raid }`; `worldContent.js` adds `raid` to `activityRef`/`describeActivity`.
+  - **Agility/thieving renamed to the world geography**: rooftop courses are named after and
+    placed at their namesake world city (Ardounne/Faloden/Varrick/…), OSRS levels preserved;
+    `Pickpocket Silverkeep Knight` → `Pickpocket Ardounne Knight`. Placement is authored in
+    the seed (`AGILITY_PLACEMENT`), not level-banded.
+  - **Arrival auto-start**: a gated start embeds an `autoStart` descriptor
+    (`autoStartFromTask`) in the travel task; on arrival `App.jsx` `resumeAutoStart` navigates
+    to the owning screen so combat/skilling begins immediately, even while idling. Rides the
+    persisted task (survives tab-return). Supersedes the earlier "no auto-start" decision for
+    the gated-start flow only.
 - **Phase 5 — active clues/quests**: multi-step place-bound clue/quest journeys, with
   the idle alternative preserved.
 - **Later**: discovery/unlocks, teleport (reserved for a future magic level).

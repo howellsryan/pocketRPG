@@ -27,6 +27,13 @@ describe('createTravelTask', () => {
   it('returns null for an unreachable destination', () => {
     expect(createTravelTask('lumbright', 'atlantis')).toBeNull()
   })
+
+  it('embeds an autoStart descriptor when given one, and omits it otherwise', () => {
+    const plain = createTravelTask('lumbright', 'draynar')!
+    expect('autoStart' in plain).toBe(false)
+    const withStart = createTravelTask('lumbright', 'draynar', { kind: 'combat', monsterId: 'cow' })!
+    expect(withStart.autoStart).toEqual({ kind: 'combat', monsterId: 'cow' })
+  })
 })
 
 describe('advanceTravel', () => {

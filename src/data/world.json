@@ -139,10 +139,6 @@
         },
         {
           "kind": "combat",
-          "ref": "duneback_crab"
-        },
-        {
-          "kind": "combat",
           "ref": "dustpaw_rat"
         },
         {
@@ -806,36 +802,40 @@
       ],
       "activities": [
         {
+          "kind": "agility",
+          "ref": "varrock"
+        },
+        {
           "kind": "combat",
           "ref": "ashen_crucible"
         },
         {
           "kind": "combat",
-          "ref": "sotetseg"
+          "ref": "blighted_gauntlet"
         },
         {
           "kind": "combat",
-          "ref": "the_great_olm"
+          "ref": "ember_tyrant"
         },
         {
           "kind": "combat",
-          "ref": "the_maiden_of_sugadinti"
+          "ref": "krylth_the_defiler"
         },
         {
           "kind": "combat",
-          "ref": "verzik_vitur"
+          "ref": "venomcoil_matriarch"
         },
         {
           "kind": "combat",
-          "ref": "warden_of_arasmus"
-        },
-        {
-          "kind": "combat",
-          "ref": "xarpus"
+          "ref": "warlord_grondar"
         },
         {
           "kind": "gather",
           "ref": "convert_mahogany_log_to_plank"
+        },
+        {
+          "kind": "raid",
+          "ref": "crimson_night_theatre"
         },
         {
           "kind": "skill",
@@ -1803,43 +1803,39 @@
       "activities": [
         {
           "kind": "agility",
-          "ref": "ardougne"
+          "ref": "falador"
         },
         {
           "kind": "combat",
-          "ref": "blighted_gauntlet"
+          "ref": "adamant_dragon"
         },
         {
           "kind": "combat",
-          "ref": "ember_tyrant"
+          "ref": "commander_zephyra"
         },
         {
           "kind": "combat",
-          "ref": "khareth_the_shadowbound"
+          "ref": "rune_dragon"
         },
         {
           "kind": "combat",
-          "ref": "khepra_the_scarab_matron"
+          "ref": "skyrender_kharra"
         },
         {
           "kind": "combat",
-          "ref": "nylocas_vasilias"
+          "ref": "threefang_cerberus"
         },
         {
           "kind": "combat",
-          "ref": "pestilent_bloat"
-        },
-        {
-          "kind": "combat",
-          "ref": "sebakh_the_devourer"
-        },
-        {
-          "kind": "combat",
-          "ref": "venomcoil_matriarch"
+          "ref": "vicious_black_dragon"
         },
         {
           "kind": "gather",
           "ref": "convert_teak_log_to_plank"
+        },
+        {
+          "kind": "raid",
+          "ref": "vaults_of_xyren"
         },
         {
           "kind": "skill",
@@ -2806,35 +2802,31 @@
       "activities": [
         {
           "kind": "agility",
-          "ref": "rellekka"
+          "ref": "ardougne"
         },
         {
           "kind": "combat",
-          "ref": "adamant_dragon"
+          "ref": "deepmaw_kraken"
         },
         {
           "kind": "combat",
-          "ref": "commander_zephyra"
+          "ref": "hellbound_gorilla"
         },
         {
           "kind": "combat",
-          "ref": "gorroth_the_mountain_ape"
+          "ref": "king_black_dragon"
         },
         {
           "kind": "combat",
-          "ref": "krylth_the_defiler"
+          "ref": "nagadoth_prime"
         },
         {
           "kind": "combat",
-          "ref": "rune_dragon"
+          "ref": "nagadoth_rex"
         },
         {
           "kind": "combat",
-          "ref": "skyrender_kharra"
-        },
-        {
-          "kind": "combat",
-          "ref": "warlord_grondar"
+          "ref": "nagadoth_supreme"
         },
         {
           "kind": "gather",
@@ -2843,6 +2835,14 @@
         {
           "kind": "hunter",
           "ref": "hunt_master_trader"
+        },
+        {
+          "kind": "raid",
+          "ref": "cryptbound_champions"
+        },
+        {
+          "kind": "raid",
+          "ref": "tomb_of_arasmus"
         },
         {
           "kind": "skill",
@@ -3477,39 +3477,31 @@
       "activities": [
         {
           "kind": "agility",
-          "ref": "varrock"
+          "ref": "draynor_village"
         },
         {
           "kind": "combat",
-          "ref": "bloodmoon_stalker"
+          "ref": "briarheart_treant"
         },
         {
           "kind": "combat",
-          "ref": "boneclaw_revenant"
+          "ref": "ember_giant"
         },
         {
           "kind": "combat",
-          "ref": "ironfang_drake"
+          "ref": "frostmaw_direwolf"
         },
         {
           "kind": "combat",
-          "ref": "pyreclaw_demon"
+          "ref": "gravehusk_brute"
         },
         {
           "kind": "combat",
-          "ref": "shadeglass_golem"
+          "ref": "green_dragon"
         },
         {
           "kind": "combat",
-          "ref": "tidereaper_crab"
-        },
-        {
-          "kind": "combat",
-          "ref": "warped_spectre"
-        },
-        {
-          "kind": "combat",
-          "ref": "wraithgale_specter"
+          "ref": "lesser_fiend"
         },
         {
           "kind": "gather",
@@ -4153,35 +4145,31 @@
       "activities": [
         {
           "kind": "agility",
-          "ref": "canifis"
+          "ref": "al_kharid"
         },
         {
           "kind": "combat",
-          "ref": "ash_wyrm"
+          "ref": "bloodmoon_stalker"
         },
         {
           "kind": "combat",
-          "ref": "ashen_marauder"
+          "ref": "ironfang_drake"
         },
         {
           "kind": "combat",
-          "ref": "bonelight_pyromancer"
+          "ref": "pyreclaw_demon"
         },
         {
           "kind": "combat",
-          "ref": "cinderfang_reaver"
+          "ref": "shadeglass_golem"
         },
         {
           "kind": "combat",
-          "ref": "drakthul_wyrmling"
+          "ref": "warped_spectre"
         },
         {
           "kind": "combat",
-          "ref": "stonegale_elemental"
-        },
-        {
-          "kind": "combat",
-          "ref": "voidweave_stalker"
+          "ref": "wraithgale_specter"
         },
         {
           "kind": "gather",
@@ -5151,36 +5139,28 @@
       ],
       "activities": [
         {
-          "kind": "agility",
-          "ref": "seers_village"
+          "kind": "combat",
+          "ref": "astral_mage"
         },
         {
           "kind": "combat",
-          "ref": "bone_wyvern"
+          "ref": "astral_warrior"
         },
         {
           "kind": "combat",
-          "ref": "emberhowl_warlord"
+          "ref": "cindermaw_serpent"
         },
         {
           "kind": "combat",
-          "ref": "marshscale_shaman"
+          "ref": "ironclad_guardian"
         },
         {
           "kind": "combat",
-          "ref": "razorwing_harpy"
+          "ref": "nether_demon"
         },
         {
           "kind": "combat",
-          "ref": "red_dragon"
-        },
-        {
-          "kind": "combat",
-          "ref": "tekton"
-        },
-        {
-          "kind": "combat",
-          "ref": "thornhide_colossus"
+          "ref": "shroudwraith_specter"
         },
         {
           "kind": "gather",
@@ -5818,20 +5798,12 @@
       ],
       "activities": [
         {
-          "kind": "agility",
-          "ref": "draynor_village"
-        },
-        {
-          "kind": "combat",
-          "ref": "briar_giant"
-        },
-        {
           "kind": "combat",
           "ref": "broodfang_spider"
         },
         {
           "kind": "combat",
-          "ref": "cinderpaw_cub"
+          "ref": "duneback_crab"
         },
         {
           "kind": "combat",
@@ -5840,10 +5812,6 @@
         {
           "kind": "combat",
           "ref": "highland_giant"
-        },
-        {
-          "kind": "combat",
-          "ref": "marshfen_toad"
         },
         {
           "kind": "combat",
@@ -6215,24 +6183,20 @@
       "facilities": [],
       "activities": [
         {
-          "kind": "combat",
-          "ref": "briarheart_treant"
+          "kind": "agility",
+          "ref": "rellekka"
         },
         {
           "kind": "combat",
-          "ref": "ember_giant"
+          "ref": "elder_rock_golem"
         },
         {
           "kind": "combat",
-          "ref": "frostmaw_direwolf"
+          "ref": "elder_tree_spirit"
         },
         {
           "kind": "combat",
-          "ref": "gravehusk_brute"
-        },
-        {
-          "kind": "combat",
-          "ref": "green_dragon"
+          "ref": "embertongue_lizard"
         },
         {
           "kind": "combat",
@@ -6240,11 +6204,11 @@
         },
         {
           "kind": "combat",
-          "ref": "lesser_fiend"
+          "ref": "sanguine_veld"
         },
         {
           "kind": "combat",
-          "ref": "sanguine_veld"
+          "ref": "stoneglare_basilisk"
         },
         {
           "kind": "gather",
@@ -6278,36 +6242,32 @@
       ],
       "activities": [
         {
-          "kind": "combat",
-          "ref": "deepmaw_kraken"
+          "kind": "agility",
+          "ref": "seers_village"
         },
         {
           "kind": "combat",
-          "ref": "hellbound_gorilla"
+          "ref": "ashen_hydra"
         },
         {
           "kind": "combat",
-          "ref": "king_black_dragon"
+          "ref": "black_dragon"
         },
         {
           "kind": "combat",
-          "ref": "nagadoth_prime"
+          "ref": "cinder_devil"
         },
         {
           "kind": "combat",
-          "ref": "nagadoth_rex"
+          "ref": "crazy_archaeologist"
         },
         {
           "kind": "combat",
-          "ref": "nagadoth_supreme"
+          "ref": "nightfang_beast"
         },
         {
           "kind": "combat",
-          "ref": "threefang_cerberus"
-        },
-        {
-          "kind": "combat",
-          "ref": "vicious_black_dragon"
+          "ref": "sovrathar_the_ashen_sovereign"
         },
         {
           "kind": "gather",
@@ -6945,36 +6905,32 @@
       ],
       "activities": [
         {
-          "kind": "combat",
-          "ref": "astral_ranger"
+          "kind": "agility",
+          "ref": "pollnivneach"
         },
         {
           "kind": "combat",
-          "ref": "dravok_the_wretched"
+          "ref": "ash_wyrm"
         },
         {
           "kind": "combat",
-          "ref": "gorath_the_infested"
+          "ref": "ashen_marauder"
         },
         {
           "kind": "combat",
-          "ref": "gravethorn_drake"
+          "ref": "boneclaw_revenant"
         },
         {
           "kind": "combat",
-          "ref": "kaelor_the_tainted"
+          "ref": "bonelight_pyromancer"
         },
         {
           "kind": "combat",
-          "ref": "morvyn_the_blighted"
+          "ref": "cinderfang_reaver"
         },
         {
           "kind": "combat",
-          "ref": "nether_wraith"
-        },
-        {
-          "kind": "combat",
-          "ref": "runestone_gargoyle"
+          "ref": "tidereaper_crab"
         },
         {
           "kind": "gather",
@@ -7611,19 +7567,15 @@
       "activities": [
         {
           "kind": "agility",
-          "ref": "al_kharid"
+          "ref": "canifis"
         },
         {
           "kind": "combat",
-          "ref": "elder_rock_golem"
+          "ref": "briar_giant"
         },
         {
           "kind": "combat",
-          "ref": "elder_tree_spirit"
-        },
-        {
-          "kind": "combat",
-          "ref": "embertongue_lizard"
+          "ref": "cinderpaw_cub"
         },
         {
           "kind": "combat",
@@ -7631,11 +7583,11 @@
         },
         {
           "kind": "combat",
-          "ref": "mirebound_husk"
+          "ref": "marshfen_toad"
         },
         {
           "kind": "combat",
-          "ref": "stoneglare_basilisk"
+          "ref": "mirebound_husk"
         },
         {
           "kind": "combat",
@@ -7677,40 +7629,32 @@
       ],
       "activities": [
         {
-          "kind": "agility",
-          "ref": "falador"
+          "kind": "combat",
+          "ref": "astral_ranger"
         },
         {
           "kind": "combat",
-          "ref": "astral_mage"
+          "ref": "drakthul_wyrmling"
         },
         {
           "kind": "combat",
-          "ref": "astral_warrior"
+          "ref": "gravethorn_drake"
         },
         {
           "kind": "combat",
-          "ref": "cindermaw_serpent"
+          "ref": "nether_wraith"
         },
         {
           "kind": "combat",
-          "ref": "ironclad_guardian"
+          "ref": "runestone_gargoyle"
         },
         {
           "kind": "combat",
-          "ref": "nether_demon"
+          "ref": "stonegale_elemental"
         },
         {
           "kind": "combat",
-          "ref": "shroudwraith_specter"
-        },
-        {
-          "kind": "combat",
-          "ref": "torvek_the_corrupted"
-        },
-        {
-          "kind": "combat",
-          "ref": "verin_the_defiled"
+          "ref": "voidweave_stalker"
         },
         {
           "kind": "gather",
@@ -8356,40 +8300,28 @@
       ],
       "activities": [
         {
-          "kind": "agility",
-          "ref": "pollnivneach"
+          "kind": "combat",
+          "ref": "bone_wyvern"
         },
         {
           "kind": "combat",
-          "ref": "ashen_hydra"
+          "ref": "emberhowl_warlord"
         },
         {
           "kind": "combat",
-          "ref": "black_dragon"
+          "ref": "marshscale_shaman"
         },
         {
           "kind": "combat",
-          "ref": "cinder_devil"
+          "ref": "razorwing_harpy"
         },
         {
           "kind": "combat",
-          "ref": "crazy_archaeologist"
+          "ref": "red_dragon"
         },
         {
           "kind": "combat",
-          "ref": "muttadile"
-        },
-        {
-          "kind": "combat",
-          "ref": "nightfang_beast"
-        },
-        {
-          "kind": "combat",
-          "ref": "sovrathar_the_ashen_sovereign"
-        },
-        {
-          "kind": "combat",
-          "ref": "vespula"
+          "ref": "thornhide_colossus"
         },
         {
           "kind": "gather",
@@ -9047,7 +8979,7 @@
   "kinds": {
     "raid": {
       "label": "Raid",
-      "color": "var(--color-gold-light)"
+      "color": "var(--color-blood-light)"
     },
     "boss": {
       "label": "Boss",

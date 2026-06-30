@@ -28,7 +28,7 @@ import { defaultIdleCombatSetup, normaliseIdleCombatSetup } from '../engine/idle
 import { migrateLegacyItemIds } from '../engine/itemMigrations.js'
 import { WORLD_START_PLACE, normaliseLocation } from '../engine/world.js'
 import { advanceTravel, createTravelTask } from '../engine/travel.js'
-import { resolveTaskStart, activityRef } from '../engine/worldContent.js'
+import { resolveTaskStart, activityRef, autoStartFromTask } from '../engine/worldContent.js'
 import { isWorldMapEnabled } from '../utils/constants.js'
 
 const normalisePointCurrency = (value) => {
@@ -62,6 +62,7 @@ export function GameProvider({ children }) {
   const activeTaskInternalRef = useRef(null) // tracks latest active task for flush in setActiveTask
   const worldLocationRef = useRef(WORLD_START_PLACE) // latest location for gating in callbacks
   const [travelPrompt, setTravelPrompt] = useState(null) // {task,kind,ref,places} when a start needs travel
+  const travelPromptRef = useRef(null) // latest travelPrompt for startTravelTo's auto-start capture
   const [bankConfig, setBankConfig] = useState({ tabs: [], itemTabMap: {} })
   const [equipmentPresets, setEquipmentPresetsState] = useState([])
   const [unlockedFeatures, setUnlockedFeatures] = useState(new Set())
@@ -127,6 +128,9 @@ export function GameProvider({ children }) {
 
   // Keep worldLocationRef in sync (load, travel arrival, updateWorldLocation all set state)
   useEffect(() => { worldLocationRef.current = worldLocation }, [worldLocation])
+
+  // Keep travelPromptRef in sync so startTravelTo can read the prompt's originating task.
+  useEffect(() => { travelPromptRef.current = travelPrompt }, [travelPrompt])
 
   // Keep refs in sync with state
   useEffect(() => { stateRef.current.stats = stats }, [stats])
@@ -1010,10 +1014,14 @@ export function GameProvider({ children }) {
     return false
   }, [addToast, setActiveTask])
 
-  // Confirm a travel prompt: begin travelling to the chosen place. Arrival opens the
-  // destination hub via the existing Phase-2 arrival path (we do not auto-start the action).
+  // Confirm a travel prompt: begin travelling to the chosen place. The action that
+  // triggered the prompt is embedded in the travel task as `autoStart` so arrival can
+  // resume it automatically (start combat/skilling on reaching the place, even while
+  // idling). Manual map travel goes through WorldMapScreen's own createTravelTask call
+  // with no autoStart, so it still just lands at the destination.
   const startTravelTo = useCallback((placeId) => {
-    const task = createTravelTask(worldLocationRef.current, placeId)
+    const autoStart = autoStartFromTask(travelPromptRef.current?.task)
+    const task = createTravelTask(worldLocationRef.current, placeId, autoStart)
     if (task) setActiveTask(task)
     setTravelPrompt(null)
   }, [setActiveTask])

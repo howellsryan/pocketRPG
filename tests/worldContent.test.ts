@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   activityRef,
+  autoStartFromTask,
   placesForActivity,
   resolveActivityStart,
   resolveTaskStart,
@@ -9,9 +10,16 @@ import {
 import worldData from '../src/data/world.json'
 import monstersData from '../src/data/monsters.json'
 import skillsData from '../src/data/skills.json'
+import raidsData from '../src/data/raids.json'
 import { GATHER_TASKS } from '../src/engine/gatherTasks.js'
 
 const asArray = (v: any) => (Array.isArray(v) ? v : Object.values(v || {}))
+
+// Raid bosses are raid-only content (placed as kind 'raid', not standalone monsters).
+const raidBossIds = new Set<string>()
+for (const r of asArray(raidsData)) for (const b of (r.bosses || [])) raidBossIds.add(b)
+// First regular (non-raid-boss) monster — a stable subject for the gating tests.
+const regularMonster = asArray(monstersData).find((m: any) => !raidBossIds.has(m.id))
 
 describe('activityRef', () => {
   it('derives the gating ref from each gated task shape', () => {
@@ -21,6 +29,7 @@ describe('activityRef', () => {
     expect(activityRef({ type: 'agility', action: { id: 'gnome_stronghold' } })).toEqual({ kind: 'agility', ref: 'gnome_stronghold' })
     expect(activityRef({ type: 'thieving', npc: { id: 'villager' } })).toEqual({ kind: 'thieving', ref: 'villager' })
     expect(activityRef({ type: 'hunter', action: { id: 'hunt_cow' } })).toEqual({ kind: 'hunter', ref: 'hunt_cow' })
+    expect(activityRef({ type: 'raid', raid: { id: 'crimson_night_theatre' } })).toEqual({ kind: 'raid', ref: 'crimson_night_theatre' })
   })
 
   it('returns null for non-place-bound task types', () => {
@@ -31,10 +40,31 @@ describe('activityRef', () => {
 })
 
 describe('content -> place coverage', () => {
-  it('maps every monster to at least one place', () => {
+  it('maps every non-raid monster to at least one place', () => {
     for (const m of asArray(monstersData)) {
+      if (raidBossIds.has(m.id)) continue // raid bosses are placed as kind 'raid', not combat
       expect(placesForActivity('combat', m.id).length, `monster ${m.id}`).toBeGreaterThan(0)
     }
+  })
+
+  it('places each raid (kind raid) at a city, and never its bosses as standalone combat', () => {
+    const seen = new Set<string>()
+    for (const r of asArray(raidsData)) {
+      if (seen.has(r.id)) continue
+      seen.add(r.id)
+      const places = placesForActivity('raid', r.id)
+      expect(places.length, `raid ${r.id}`).toBeGreaterThan(0)
+      for (const id of places) expect((worldData.places as any)[id].tier).toBe('city')
+      // its bosses must not leak into the combat layer
+      for (const b of r.bosses || []) expect(placesForActivity('combat', b), `boss ${b}`).toEqual([])
+    }
+  })
+
+  it('places each agility course at its namesake world city', () => {
+    expect(placesForActivity('agility', 'ardougne')).toEqual(['ardounne'])
+    expect(placesForActivity('agility', 'falador')).toEqual(['faloden'])
+    expect(placesForActivity('agility', 'varrock')).toEqual(['varrick'])
+    expect(placesForActivity('agility', 'al_kharid')).toEqual(['alkarid'])
   })
 
   it('maps every gather task to at least one place', () => {
@@ -85,8 +115,8 @@ describe('facility-bound skills', () => {
 })
 
 describe('resolveActivityStart', () => {
-  // Pick a real mapping to drive the gate.
-  const monster = asArray(monstersData)[0]
+  // Pick a real mapping to drive the gate (a regular, non-raid monster).
+  const monster = regularMonster
   const place = placesForActivity('combat', monster.id)[0]
   const elsewhere = Object.keys(worldData.places).find((p) => p !== place)!
 
@@ -116,11 +146,29 @@ describe('resolveActivityStart', () => {
   })
 })
 
+describe('autoStartFromTask', () => {
+  it('extracts a compact, serialisable resume descriptor per task type', () => {
+    expect(autoStartFromTask({ type: 'combat', monster: { id: 'cow' } })).toEqual({ kind: 'combat', monsterId: 'cow' })
+    expect(autoStartFromTask({ type: 'raid', raid: { id: 'crimson_night_theatre' } })).toEqual({ kind: 'raid', raidId: 'crimson_night_theatre' })
+    expect(autoStartFromTask({ type: 'skill', skill: 'mining', action: { id: 'copper' } })).toEqual({ kind: 'skill', skill: 'mining', actionId: 'copper' })
+    expect(autoStartFromTask({ type: 'agility', action: { id: 'ardougne' } })).toEqual({ kind: 'agility', actionId: 'ardougne' })
+    expect(autoStartFromTask({ type: 'thieving', npc: { id: 'guard' } })).toEqual({ kind: 'thieving', npcId: 'guard' })
+    expect(autoStartFromTask({ type: 'gather', gatherTask: { id: 'collect_sand' } })).toEqual({ kind: 'gather', gatherTaskId: 'collect_sand' })
+  })
+
+  it('returns null for untracked or empty tasks', () => {
+    expect(autoStartFromTask(null)).toBeNull()
+    expect(autoStartFromTask({ type: 'pvp' })).toBeNull()
+    expect(autoStartFromTask({ type: 'combat' })).toBeNull()
+  })
+})
+
 describe('describeActivity', () => {
   it('resolves human-readable names from refs', () => {
     const monster = asArray(monstersData)[0]
     expect(describeActivity('combat', monster.id).name).toBe(monster.name)
     expect(describeActivity('skill', 'mining:copper').name).toBeTruthy()
     expect(describeActivity('combat', 'no_such_monster').name).toBe('no_such_monster') // falls back to ref
+    expect(describeActivity('raid', 'crimson_night_theatre').name).toBe('Crimson Night Theatre')
   })
 })

@@ -12,6 +12,7 @@
 import worldData from '../data/world.json'
 import monstersData from '../data/monsters.json'
 import skillsData from '../data/skills.json'
+import raidsData from '../data/raids.json'
 import { GATHER_TASKS } from './gatherTasks.js'
 import { BUILDING_ACTIONS } from './construction.js'
 import { normaliseLocation } from './world.js'
@@ -74,11 +75,32 @@ export function activityRef(task) {
   if (!task) return null
   switch (task.type) {
     case 'combat': return task.monster?.id ? { kind: 'combat', ref: task.monster.id } : null
+    case 'raid': return task.raid?.id ? { kind: 'raid', ref: task.raid.id } : null
     case 'skill': return (task.skill && task.action?.id) ? { kind: 'skill', ref: `${task.skill}:${task.action.id}` } : null
     case 'gather': return task.gatherTask?.id ? { kind: 'gather', ref: task.gatherTask.id } : null
     case 'agility': return task.action?.id ? { kind: 'agility', ref: task.action.id } : null
     case 'thieving': return task.npc?.id ? { kind: 'thieving', ref: task.npc.id } : null
     case 'hunter': return task.action?.id ? { kind: 'hunter', ref: task.action.id } : null
+    default: return null
+  }
+}
+
+/**
+ * Compact, serialisable descriptor of the action a player was trying to start when a
+ * travel prompt sent them across the map — embedded in the travel task so arrival can
+ * resume it (auto-start on arrival, even while idling). Returns null for task types that
+ * carry no resumable action. Kept minimal (ids only) so it rides the save blob cheaply.
+ */
+export function autoStartFromTask(task) {
+  if (!task) return null
+  switch (task.type) {
+    case 'combat': return task.monster?.id ? { kind: 'combat', monsterId: task.monster.id } : null
+    case 'raid': return task.raid?.id ? { kind: 'raid', raidId: task.raid.id } : null
+    case 'skill': return (task.skill && task.action?.id) ? { kind: 'skill', skill: task.skill, actionId: task.action.id } : null
+    case 'gather': return task.gatherTask?.id ? { kind: 'gather', gatherTaskId: task.gatherTask.id } : null
+    case 'agility': return task.action?.id ? { kind: 'agility', actionId: task.action.id } : null
+    case 'thieving': return task.npc?.id ? { kind: 'thieving', npcId: task.npc.id } : null
+    case 'hunter': return task.action?.id ? { kind: 'hunter', actionId: task.action.id } : null
     default: return null
   }
 }
@@ -115,6 +137,10 @@ export function describeActivity(kind, ref) {
     case 'combat': {
       const m = monstersById[ref]
       return { name: m?.name || ref, icon: '⚔️', level: m?.combatLevel ?? null }
+    }
+    case 'raid': {
+      const r = raidsData[ref]
+      return { name: r?.name || ref, icon: r?.icon || '🩸', level: null }
     }
     case 'skill': {
       const a = skillAction(ref)
