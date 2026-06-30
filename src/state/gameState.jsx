@@ -727,33 +727,6 @@ export function GameProvider({ children }) {
     saveSetting('worldLocation', next)
   }, [])
 
-  // Phase 3 activity gating: a pure gate the activity screens call before starting a
-  // fresh action. Returns true if the caller may start now (it keeps its own
-  // setActiveTask call), false if the start was blocked (travelling) or deferred to a
-  // travel prompt. When the world map is off, always allow (menu-driven fallback).
-  // `task` only needs the shape `activityRef` reads (type + the relevant id).
-  const requestActivityStart = useCallback((task) => {
-    if (!isWorldMapEnabled()) return true
-    const travelActive = activeTaskInternalRef.current?.type === 'travel'
-    const res = resolveTaskStart(task, { location: worldLocationRef.current, travel: travelActive })
-    if (res.status === 'start') return true
-    if (res.status === 'blocked-transit') {
-      addToast("You can't start that while travelling.", 'info')
-      return false
-    }
-    setTravelPrompt({ task, ...(activityRef(task) || {}), places: res.places })
-    return false
-  }, [addToast])
-
-  // Confirm a travel prompt: begin travelling to the chosen place. Arrival opens the
-  // destination hub via the existing Phase-2 arrival path (we do not auto-start the action).
-  const startTravelTo = useCallback((placeId) => {
-    const task = createTravelTask(worldLocationRef.current, placeId)
-    if (task) setActiveTask(task)
-    setTravelPrompt(null)
-  }, [setActiveTask])
-
-  const dismissTravelPrompt = useCallback(() => setTravelPrompt(null), [])
 
   const updateIdleCombatSetup = useCallback((setup) => {
     const next = normaliseIdleCombatSetup(setup)
@@ -1017,6 +990,35 @@ export function GameProvider({ children }) {
   const dismissToast = useCallback((id) => {
     setToasts(prev => prev.filter(t => t.id !== id))
   }, [])
+
+  // Phase 3 activity gating: a pure gate the activity screens call before starting a
+  // fresh action. Returns true if the caller may start now (it keeps its own
+  // setActiveTask call), false if the start was blocked (travelling) or deferred to a
+  // travel prompt. When the world map is off, always allow (menu-driven fallback).
+  // `task` only needs the shape `activityRef` reads (type + the relevant id).
+  // Defined after addToast so its dependency closure isn't in the TDZ at render time.
+  const requestActivityStart = useCallback((task) => {
+    if (!isWorldMapEnabled()) return true
+    const travelActive = activeTaskInternalRef.current?.type === 'travel'
+    const res = resolveTaskStart(task, { location: worldLocationRef.current, travel: travelActive })
+    if (res.status === 'start') return true
+    if (res.status === 'blocked-transit') {
+      addToast("You can't start that while travelling.", 'info')
+      return false
+    }
+    setTravelPrompt({ task, ...(activityRef(task) || {}), places: res.places })
+    return false
+  }, [addToast, setActiveTask])
+
+  // Confirm a travel prompt: begin travelling to the chosen place. Arrival opens the
+  // destination hub via the existing Phase-2 arrival path (we do not auto-start the action).
+  const startTravelTo = useCallback((placeId) => {
+    const task = createTravelTask(worldLocationRef.current, placeId)
+    if (task) setActiveTask(task)
+    setTravelPrompt(null)
+  }, [setActiveTask])
+
+  const dismissTravelPrompt = useCallback(() => setTravelPrompt(null), [])
 
   // Returns a fresh snapshot of all live state — always reads from refs, never stale
   const getSnapshot = useCallback(() => ({
