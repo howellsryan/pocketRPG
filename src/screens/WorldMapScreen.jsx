@@ -1,6 +1,7 @@
 import { useGame } from '../state/gameState.jsx'
 import { useState, useRef, useEffect, useCallback } from 'preact/hooks'
 import { getWorld, getPlace, listPlaces, getTier, getKind, shortestPath, pathLegs } from '../engine/world.js'
+import { describeActivity } from '../engine/worldContent.js'
 import { createTravelTask, travelFraction, travelDestName } from '../engine/travel.js'
 
 /**
@@ -14,6 +15,23 @@ import { createTravelTask, travelFraction, travelDestName } from '../engine/trav
 
 const MIN_K = 0.35
 const MAX_K = 2.2
+
+// Group a place's `{ kind, ref }` activities into [kind, [ref, ...]] pairs in a stable
+// kind order for the hub's grouped list.
+const WM_KIND_ORDER = ['raid', 'boss', 'dungeon', 'combat', 'skill', 'gather', 'agility', 'thieving', 'hunter', 'quest', 'minigame', 'shop']
+function groupActivities(activities) {
+  const byKind = {}
+  for (const a of activities || []) {
+    if (!a || !a.kind || !a.ref) continue
+    ;(byKind[a.kind] || (byKind[a.kind] = [])).push(a.ref)
+  }
+  return Object.keys(byKind)
+    .sort((x, y) => {
+      const ix = WM_KIND_ORDER.indexOf(x), iy = WM_KIND_ORDER.indexOf(y)
+      return (ix < 0 ? 99 : ix) - (iy < 0 ? 99 : iy)
+    })
+    .map((kind) => [kind, byKind[kind]])
+}
 
 export default function WorldMapScreen() {
   const { worldLocation, activeTask, setActiveTask, addToast } = useGame()
@@ -309,20 +327,25 @@ function PlaceHub({ place, here, travelling, onTravel, onClose }) {
             </button>
           )}
           <div class="wm-hub-sectionhead"><span>Available here</span></div>
-          <div>
-            {place.activities.map((a, i) => {
-              const k = getKind(a.t)
+          <div class="wm-hub-acts">
+            {groupActivities(place.activities).map(([kind, refs]) => {
+              const k = getKind(kind)
               return (
-                <div class="wm-act" key={i}>
-                  <span class="wm-act-icon" aria-hidden="true">{a.icon}</span>
-                  <span class="wm-act-main">
-                    <span class="wm-act-name">{a.name}</span>
-                    <span class="wm-act-note">{a.note}</span>
-                  </span>
-                  <span class="wm-act-right">
-                    <span class="wm-act-lvl">{a.lvl}</span>
-                    <span class="wm-tag" style={{ color: k?.color || 'var(--color-gold)' }}>{k?.label || a.t}</span>
-                  </span>
+                <div class="wm-act-group" key={kind}>
+                  <div class="wm-act-grouphead">
+                    <span class="wm-tag" style={{ color: k?.color || 'var(--color-gold)' }}>{k?.label || kind}</span>
+                    <span class="wm-act-count">{refs.length}</span>
+                  </div>
+                  <div class="wm-act-names">
+                    {refs.map((ref, i) => {
+                      const d = describeActivity(kind, ref)
+                      return (
+                        <span class="wm-act-chip" key={i}>
+                          {d.icon} {d.name}{d.level != null ? ` · ${d.level}` : ''}
+                        </span>
+                      )
+                    })}
+                  </div>
                 </div>
               )
             })}

@@ -34,6 +34,7 @@ import ConnectAiScreen from './screens/ConnectAiScreen.jsx'
 import DemoLockedScreen from './screens/DemoLockedScreen.jsx'
 import MagicScreen from './screens/MagicScreen.jsx'
 import WorldMapScreen from './screens/WorldMapScreen.jsx'
+import TravelPrompt from './components/TravelPrompt.jsx'
 import { advanceTravel, travelDestName } from './engine/travel.js'
 import AuthScreen from './screens/AuthScreen.jsx'
 import OAuthConsentScreen from './screens/OAuthConsentScreen.jsx'
@@ -2516,6 +2517,7 @@ function GameApp() {
       <div class="flex-1 flex flex-col min-w-0 min-h-0">
         <Header activity={activity} credits={credits} isCloudAccount={isCloudAccount} demo={demoMode} onLockedFeature={notifyDemoLocked} onSkip1h={isCloudAccount ? handleSkip1h : null} onBuyCredits={() => setShowBuyCreditsModal(true)} onDailyTasks={() => setShowDailyTasksModal(true)} dailyTasksCompleted={(dailyTaskStates || []).filter(t => t.completed).length} dailyTasksTotal={5} onMenuClick={() => setMenuOpen(true)} onNavigate={(s) => navigate(s)} skipMode={activeTask?.type === 'combat' && (activeTask?.monster?.boss === true || activeTask?.raid === true) ? 'kill' : 'hour'} raidSkipCost={activeTask?.type === 'combat' && activeTask?.raidId ? (raidsData[activeTask.raidId]?.skipCost ?? 1) : null} />
         <ToastContainer />
+        <TravelPrompt />
         <main class="flex-1 overflow-hidden">
           {renderScreen()}
         </main>

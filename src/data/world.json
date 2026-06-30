@@ -1,19 +1,70 @@
 {
   "start": "emberhold",
-  "board": { "w": 1640, "h": 1160 },
+  "board": {
+    "w": 1640,
+    "h": 1160
+  },
   "edges": [
-    ["emberhold", "greyfen", 18],
-    ["emberhold", "saltmarket", 22],
-    ["emberhold", "oakhollow", 16],
-    ["emberhold", "mudgate", 14],
-    ["emberhold", "ashenrest", 20],
-    ["greyfen", "thornwick", 12],
-    ["greyfen", "ashenrest", 13],
-    ["thornwick", "mudgate", 15],
-    ["saltmarket", "crowfoot", 17],
-    ["saltmarket", "ashenrest", 19],
-    ["oakhollow", "crowfoot", 14],
-    ["oakhollow", "mudgate", 18]
+    [
+      "emberhold",
+      "greyfen",
+      18
+    ],
+    [
+      "emberhold",
+      "saltmarket",
+      22
+    ],
+    [
+      "emberhold",
+      "oakhollow",
+      16
+    ],
+    [
+      "emberhold",
+      "mudgate",
+      14
+    ],
+    [
+      "emberhold",
+      "ashenrest",
+      20
+    ],
+    [
+      "greyfen",
+      "thornwick",
+      12
+    ],
+    [
+      "greyfen",
+      "ashenrest",
+      13
+    ],
+    [
+      "thornwick",
+      "mudgate",
+      15
+    ],
+    [
+      "saltmarket",
+      "crowfoot",
+      17
+    ],
+    [
+      "saltmarket",
+      "ashenrest",
+      19
+    ],
+    [
+      "oakhollow",
+      "crowfoot",
+      14
+    ],
+    [
+      "oakhollow",
+      "mudgate",
+      18
+    ]
   ],
   "places": {
     "emberhold": {
@@ -26,13 +77,238 @@
       "sub": "Capital of the Cinder Reach",
       "lore": "Smoke never leaves the spires of Emberhold; every road in the Reach ends at its gates.",
       "activities": [
-        { "t": "raid", "name": "The Molten Vault", "icon": "🔥", "lvl": "90+", "note": "8-player · weekly lockout" },
-        { "t": "boss", "name": "Ashmaw, the Forge-Wyrm", "icon": "💀", "lvl": "Lv 84", "note": "Solo or duo · rare drops" },
-        { "t": "dungeon", "name": "The Undercinder", "icon": "🚪", "lvl": "70–88", "note": "3 floors · 24 monsters" },
-        { "t": "combat", "name": "Slag Pits", "icon": "⚔️", "lvl": "62–75", "note": "Fire imps · cinder hounds" },
-        { "t": "quest", "name": "The Guildmaster's Debt", "icon": "📜", "lvl": "Lv 60", "note": "Story · 3 stages" },
-        { "t": "minigame", "name": "Anvil Rhythm", "icon": "🔨", "lvl": "Any", "note": "Smithing minigame" },
-        { "t": "shop", "name": "Grand Bazaar", "icon": "🪙", "lvl": "—", "note": "Trading Post · 40 stalls" }
+        {
+          "kind": "agility",
+          "ref": "ardougne"
+        },
+        {
+          "kind": "agility",
+          "ref": "rellekka"
+        },
+        {
+          "kind": "combat",
+          "ref": "ashen_crucible"
+        },
+        {
+          "kind": "combat",
+          "ref": "blighted_gauntlet"
+        },
+        {
+          "kind": "combat",
+          "ref": "ember_tyrant"
+        },
+        {
+          "kind": "combat",
+          "ref": "khareth_the_shadowbound"
+        },
+        {
+          "kind": "combat",
+          "ref": "khepra_the_scarab_matron"
+        },
+        {
+          "kind": "combat",
+          "ref": "krylth_the_defiler"
+        },
+        {
+          "kind": "combat",
+          "ref": "nylocas_vasilias"
+        },
+        {
+          "kind": "combat",
+          "ref": "pestilent_bloat"
+        },
+        {
+          "kind": "combat",
+          "ref": "sebakh_the_devourer"
+        },
+        {
+          "kind": "combat",
+          "ref": "sotetseg"
+        },
+        {
+          "kind": "combat",
+          "ref": "the_great_olm"
+        },
+        {
+          "kind": "combat",
+          "ref": "the_maiden_of_sugadinti"
+        },
+        {
+          "kind": "combat",
+          "ref": "venomcoil_matriarch"
+        },
+        {
+          "kind": "combat",
+          "ref": "verzik_vitur"
+        },
+        {
+          "kind": "combat",
+          "ref": "warden_of_arasmus"
+        },
+        {
+          "kind": "combat",
+          "ref": "xarpus"
+        },
+        {
+          "kind": "gather",
+          "ref": "convert_mahogany_log_to_plank"
+        },
+        {
+          "kind": "gather",
+          "ref": "convert_oak_log_to_plank"
+        },
+        {
+          "kind": "gather",
+          "ref": "convert_teak_log_to_plank"
+        },
+        {
+          "kind": "hunter",
+          "ref": "hunt_master_trader"
+        },
+        {
+          "kind": "skill",
+          "ref": "construction:build_mahogany_plank"
+        },
+        {
+          "kind": "skill",
+          "ref": "cooking:cook_anglerfish"
+        },
+        {
+          "kind": "skill",
+          "ref": "cooking:cook_manta_ray"
+        },
+        {
+          "kind": "skill",
+          "ref": "crafting:black_d_hide_body"
+        },
+        {
+          "kind": "skill",
+          "ref": "crafting:cut_zenyte"
+        },
+        {
+          "kind": "skill",
+          "ref": "crafting:ferocious_gloves"
+        },
+        {
+          "kind": "skill",
+          "ref": "crafting:onyx_amulet"
+        },
+        {
+          "kind": "skill",
+          "ref": "crafting:zyrite_amulet"
+        },
+        {
+          "kind": "skill",
+          "ref": "crafting:zyrite_bracelet"
+        },
+        {
+          "kind": "skill",
+          "ref": "crafting:zyrite_necklace"
+        },
+        {
+          "kind": "skill",
+          "ref": "crafting:zyrite_ring"
+        },
+        {
+          "kind": "skill",
+          "ref": "firemaking:redwood_logs"
+        },
+        {
+          "kind": "skill",
+          "ref": "fishing:anglerfish"
+        },
+        {
+          "kind": "skill",
+          "ref": "fishing:manta_ray"
+        },
+        {
+          "kind": "skill",
+          "ref": "fletching:magic_shortbow_string"
+        },
+        {
+          "kind": "skill",
+          "ref": "fletching:magic_shortbow_u_cut"
+        },
+        {
+          "kind": "skill",
+          "ref": "fletching:make_dragon_bolts"
+        },
+        {
+          "kind": "skill",
+          "ref": "fletching:tip_diamond_dragon_bolts"
+        },
+        {
+          "kind": "skill",
+          "ref": "fletching:tip_dragonstone_dragon_bolts"
+        },
+        {
+          "kind": "skill",
+          "ref": "fletching:tip_onyx_dragon_bolts"
+        },
+        {
+          "kind": "skill",
+          "ref": "fletching:tip_ruby_dragon_bolts"
+        },
+        {
+          "kind": "skill",
+          "ref": "herblore:lumira_brew"
+        },
+        {
+          "kind": "skill",
+          "ref": "herblore:super_combat"
+        },
+        {
+          "kind": "skill",
+          "ref": "mining:runite"
+        },
+        {
+          "kind": "skill",
+          "ref": "runecraft:craft_soul_rune"
+        },
+        {
+          "kind": "skill",
+          "ref": "runecraft:craft_wrath_rune"
+        },
+        {
+          "kind": "skill",
+          "ref": "smithing:forge_godsword_blade"
+        },
+        {
+          "kind": "skill",
+          "ref": "smithing:make_armadyl_godsword"
+        },
+        {
+          "kind": "skill",
+          "ref": "smithing:make_bandos_godsword"
+        },
+        {
+          "kind": "skill",
+          "ref": "smithing:make_dragonfire_shield"
+        },
+        {
+          "kind": "skill",
+          "ref": "smithing:make_saradomin_godsword"
+        },
+        {
+          "kind": "skill",
+          "ref": "smithing:make_zamorak_godsword"
+        },
+        {
+          "kind": "skill",
+          "ref": "smithing:smith_runeforged_platebody"
+        },
+        {
+          "kind": "skill",
+          "ref": "smithing:smith_runeforged_platelegs"
+        },
+        {
+          "kind": "skill",
+          "ref": "smithing:smith_runeforged_plateskirt"
+        },
+        {
+          "kind": "skill",
+          "ref": "woodcutting:redwood"
+        }
       ]
     },
     "greyfen": {
@@ -45,11 +321,162 @@
       "sub": "Fenland trading town",
       "lore": "Built on stilts above the mire, Greyfen runs on eels, peat and quiet bargains.",
       "activities": [
-        { "t": "dungeon", "name": "Sunken Warrens", "icon": "🚪", "lvl": "40–58", "note": "Flooded · 2 floors" },
-        { "t": "boss", "name": "The Bog Matron", "icon": "💀", "lvl": "Lv 52", "note": "Weekly · poison fight" },
-        { "t": "combat", "name": "Reed Marshes", "icon": "⚔️", "lvl": "32–48", "note": "Marsh lurkers · leeches" },
-        { "t": "quest", "name": "Salt in the Water", "icon": "📜", "lvl": "Lv 38", "note": "Story · 2 stages" },
-        { "t": "minigame", "name": "Eel Trapping", "icon": "🎣", "lvl": "Any", "note": "Fishing minigame" }
+        {
+          "kind": "agility",
+          "ref": "seers_village"
+        },
+        {
+          "kind": "combat",
+          "ref": "ashen_hydra"
+        },
+        {
+          "kind": "combat",
+          "ref": "commander_zephyra"
+        },
+        {
+          "kind": "combat",
+          "ref": "crazy_archaeologist"
+        },
+        {
+          "kind": "combat",
+          "ref": "gorroth_the_mountain_ape"
+        },
+        {
+          "kind": "combat",
+          "ref": "king_black_dragon"
+        },
+        {
+          "kind": "combat",
+          "ref": "muttadile"
+        },
+        {
+          "kind": "combat",
+          "ref": "nagadoth_prime"
+        },
+        {
+          "kind": "combat",
+          "ref": "nagadoth_supreme"
+        },
+        {
+          "kind": "combat",
+          "ref": "rune_dragon"
+        },
+        {
+          "kind": "combat",
+          "ref": "sovrathar_the_ashen_sovereign"
+        },
+        {
+          "kind": "combat",
+          "ref": "vicious_black_dragon"
+        },
+        {
+          "kind": "gather",
+          "ref": "collect_wine_of_zamorak"
+        },
+        {
+          "kind": "gather",
+          "ref": "convert_log_to_plank"
+        },
+        {
+          "kind": "hunter",
+          "ref": "hunt_grim_reaper"
+        },
+        {
+          "kind": "skill",
+          "ref": "construction:build_teak_plank"
+        },
+        {
+          "kind": "skill",
+          "ref": "crafting:cut_onyx"
+        },
+        {
+          "kind": "skill",
+          "ref": "crafting:dragonstone_amulet"
+        },
+        {
+          "kind": "skill",
+          "ref": "firemaking:magic_logs"
+        },
+        {
+          "kind": "skill",
+          "ref": "fishing:shark"
+        },
+        {
+          "kind": "skill",
+          "ref": "fletching:cut_onyx_bolt_tips"
+        },
+        {
+          "kind": "skill",
+          "ref": "fletching:make_runite_bolts"
+        },
+        {
+          "kind": "skill",
+          "ref": "fletching:tip_dragonstone_bolts"
+        },
+        {
+          "kind": "skill",
+          "ref": "mining:adamantite"
+        },
+        {
+          "kind": "skill",
+          "ref": "mining:gem_mining"
+        },
+        {
+          "kind": "skill",
+          "ref": "runecraft:craft_death_rune"
+        },
+        {
+          "kind": "skill",
+          "ref": "smithing:smith_adamant_bolts_unf"
+        },
+        {
+          "kind": "skill",
+          "ref": "smithing:smith_adamant_dagger"
+        },
+        {
+          "kind": "skill",
+          "ref": "smithing:smith_adamant_longsword"
+        },
+        {
+          "kind": "skill",
+          "ref": "smithing:smith_adamant_mace"
+        },
+        {
+          "kind": "skill",
+          "ref": "smithing:smith_adamant_platelegs"
+        },
+        {
+          "kind": "skill",
+          "ref": "smithing:smith_adamant_scimitar"
+        },
+        {
+          "kind": "skill",
+          "ref": "smithing:smith_rune_axe"
+        },
+        {
+          "kind": "skill",
+          "ref": "smithing:smith_rune_scimitar"
+        },
+        {
+          "kind": "skill",
+          "ref": "smithing:smith_runeforged_chainbody"
+        },
+        {
+          "kind": "skill",
+          "ref": "smithing:smith_runeforged_full_helm"
+        },
+        {
+          "kind": "skill",
+          "ref": "smithing:smith_runeforged_med_helm"
+        },
+        {
+          "kind": "skill",
+          "ref": "smithing:smith_runeforged_sword"
+        },
+        {
+          "kind": "skill",
+          "ref": "smithing:smith_runite_bolts_unf"
+        }
       ]
     },
     "saltmarket": {
@@ -62,11 +489,150 @@
       "sub": "Harbour town of the Pale Coast",
       "lore": "Where the tide brings cargo and the cartels bring trouble; salt cures both.",
       "activities": [
-        { "t": "dungeon", "name": "The Brine Caves", "icon": "🚪", "lvl": "46–64", "note": "Tidal · 3 floors" },
-        { "t": "boss", "name": "Captain Vorrl", "icon": "💀", "lvl": "Lv 58", "note": "Drops cutlass set" },
-        { "t": "combat", "name": "Smugglers' Strand", "icon": "⚔️", "lvl": "38–55", "note": "Pirates · sea wraiths" },
-        { "t": "quest", "name": "The Drowned Ledger", "icon": "📜", "lvl": "Lv 44", "note": "Story · 3 stages" },
-        { "t": "minigame", "name": "Cargo Run", "icon": "🪙", "lvl": "Any", "note": "Trading minigame" }
+        {
+          "kind": "agility",
+          "ref": "pollnivneach"
+        },
+        {
+          "kind": "combat",
+          "ref": "adamant_dragon"
+        },
+        {
+          "kind": "combat",
+          "ref": "black_dragon"
+        },
+        {
+          "kind": "combat",
+          "ref": "cinder_devil"
+        },
+        {
+          "kind": "combat",
+          "ref": "deepmaw_kraken"
+        },
+        {
+          "kind": "combat",
+          "ref": "hellbound_gorilla"
+        },
+        {
+          "kind": "combat",
+          "ref": "nagadoth_rex"
+        },
+        {
+          "kind": "combat",
+          "ref": "nightfang_beast"
+        },
+        {
+          "kind": "combat",
+          "ref": "skyrender_kharra"
+        },
+        {
+          "kind": "combat",
+          "ref": "threefang_cerberus"
+        },
+        {
+          "kind": "combat",
+          "ref": "vespula"
+        },
+        {
+          "kind": "combat",
+          "ref": "warlord_grondar"
+        },
+        {
+          "kind": "gather",
+          "ref": "pick_limpwurt_root"
+        },
+        {
+          "kind": "skill",
+          "ref": "cooking:cook_shark"
+        },
+        {
+          "kind": "skill",
+          "ref": "crafting:black_d_hide_chaps"
+        },
+        {
+          "kind": "skill",
+          "ref": "crafting:diamond_amulet"
+        },
+        {
+          "kind": "skill",
+          "ref": "crafting:red_d_hide_body"
+        },
+        {
+          "kind": "skill",
+          "ref": "crafting:red_d_hide_chaps"
+        },
+        {
+          "kind": "skill",
+          "ref": "fletching:cut_dragonstone_bolt_tips"
+        },
+        {
+          "kind": "skill",
+          "ref": "fletching:rune_arrows"
+        },
+        {
+          "kind": "skill",
+          "ref": "fletching:tip_onyx_bolts"
+        },
+        {
+          "kind": "skill",
+          "ref": "fletching:yew_shortbow_u_cut"
+        },
+        {
+          "kind": "skill",
+          "ref": "herblore:magic_potion"
+        },
+        {
+          "kind": "skill",
+          "ref": "herblore:ranging_potion"
+        },
+        {
+          "kind": "skill",
+          "ref": "herblore:super_defence"
+        },
+        {
+          "kind": "skill",
+          "ref": "runecraft:craft_blood_rune"
+        },
+        {
+          "kind": "skill",
+          "ref": "smithing:smelt_adamant"
+        },
+        {
+          "kind": "skill",
+          "ref": "smithing:smelt_rune"
+        },
+        {
+          "kind": "skill",
+          "ref": "smithing:smith_adamant_axe"
+        },
+        {
+          "kind": "skill",
+          "ref": "smithing:smith_adamant_pickaxe"
+        },
+        {
+          "kind": "skill",
+          "ref": "smithing:smith_adamant_platebody"
+        },
+        {
+          "kind": "skill",
+          "ref": "smithing:smith_adamant_plateskirt"
+        },
+        {
+          "kind": "skill",
+          "ref": "smithing:smith_adamant_sword"
+        },
+        {
+          "kind": "skill",
+          "ref": "smithing:smith_rune_pickaxe"
+        },
+        {
+          "kind": "skill",
+          "ref": "smithing:smith_runeforged_kiteshield"
+        },
+        {
+          "kind": "skill",
+          "ref": "woodcutting:magic"
+        }
       ]
     },
     "thornwick": {
@@ -79,9 +645,186 @@
       "sub": "Woodcutters' village",
       "lore": "A ring of timber halls under the old briarwood, far from any road that matters.",
       "activities": [
-        { "t": "combat", "name": "Briarwood Glade", "icon": "⚔️", "lvl": "12–26", "note": "Wolves · briar sprites" },
-        { "t": "quest", "name": "The Crooked Bough", "icon": "📜", "lvl": "Lv 16", "note": "Story · 2 stages" },
-        { "t": "minigame", "name": "Timber Felling", "icon": "🪓", "lvl": "Any", "note": "Woodcutting minigame" }
+        {
+          "kind": "agility",
+          "ref": "falador"
+        },
+        {
+          "kind": "combat",
+          "ref": "astral_mage"
+        },
+        {
+          "kind": "combat",
+          "ref": "astral_warrior"
+        },
+        {
+          "kind": "combat",
+          "ref": "drakthul_wyrmling"
+        },
+        {
+          "kind": "combat",
+          "ref": "dravok_the_wretched"
+        },
+        {
+          "kind": "combat",
+          "ref": "kaelor_the_tainted"
+        },
+        {
+          "kind": "combat",
+          "ref": "marshscale_shaman"
+        },
+        {
+          "kind": "combat",
+          "ref": "nether_demon"
+        },
+        {
+          "kind": "combat",
+          "ref": "nether_wraith"
+        },
+        {
+          "kind": "combat",
+          "ref": "red_dragon"
+        },
+        {
+          "kind": "combat",
+          "ref": "runestone_gargoyle"
+        },
+        {
+          "kind": "combat",
+          "ref": "stonegale_elemental"
+        },
+        {
+          "kind": "combat",
+          "ref": "thornhide_colossus"
+        },
+        {
+          "kind": "combat",
+          "ref": "torvek_the_corrupted"
+        },
+        {
+          "kind": "gather",
+          "ref": "collect_spiders_eggs"
+        },
+        {
+          "kind": "gather",
+          "ref": "crush_birds_nest"
+        },
+        {
+          "kind": "hunter",
+          "ref": "hunt_merchant"
+        },
+        {
+          "kind": "skill",
+          "ref": "crafting:cut_diamond"
+        },
+        {
+          "kind": "skill",
+          "ref": "crafting:green_d_hide_body"
+        },
+        {
+          "kind": "skill",
+          "ref": "crafting:green_d_hide_chaps"
+        },
+        {
+          "kind": "skill",
+          "ref": "crafting:tan_green_dhide"
+        },
+        {
+          "kind": "skill",
+          "ref": "firemaking:maple_logs"
+        },
+        {
+          "kind": "skill",
+          "ref": "fishing:eel"
+        },
+        {
+          "kind": "skill",
+          "ref": "fishing:karam"
+        },
+        {
+          "kind": "skill",
+          "ref": "fletching:adamant_arrows"
+        },
+        {
+          "kind": "skill",
+          "ref": "fletching:make_mithril_bolts"
+        },
+        {
+          "kind": "skill",
+          "ref": "fletching:maple_shortbow_u_cut"
+        },
+        {
+          "kind": "skill",
+          "ref": "fletching:tip_diamond_bolts"
+        },
+        {
+          "kind": "skill",
+          "ref": "fletching:tip_ruby_bolts"
+        },
+        {
+          "kind": "skill",
+          "ref": "herblore:super_attack"
+        },
+        {
+          "kind": "skill",
+          "ref": "mining:mithril"
+        },
+        {
+          "kind": "skill",
+          "ref": "runecraft:craft_astral_rune"
+        },
+        {
+          "kind": "skill",
+          "ref": "smithing:smith_adamant_kiteshield"
+        },
+        {
+          "kind": "skill",
+          "ref": "smithing:smith_mithril_axe"
+        },
+        {
+          "kind": "skill",
+          "ref": "smithing:smith_mithril_dagger"
+        },
+        {
+          "kind": "skill",
+          "ref": "smithing:smith_mithril_full_helm"
+        },
+        {
+          "kind": "skill",
+          "ref": "smithing:smith_mithril_kiteshield"
+        },
+        {
+          "kind": "skill",
+          "ref": "smithing:smith_mithril_pickaxe"
+        },
+        {
+          "kind": "skill",
+          "ref": "smithing:smith_mithril_platebody"
+        },
+        {
+          "kind": "skill",
+          "ref": "smithing:smith_mithril_plateskirt"
+        },
+        {
+          "kind": "skill",
+          "ref": "smithing:smith_mithril_scimitar"
+        },
+        {
+          "kind": "skill",
+          "ref": "smithing:smith_steel_chainbody"
+        },
+        {
+          "kind": "skill",
+          "ref": "smithing:smith_steel_platebody"
+        },
+        {
+          "kind": "skill",
+          "ref": "woodcutting:maple"
+        },
+        {
+          "kind": "skill",
+          "ref": "woodcutting:yew"
+        }
       ]
     },
     "oakhollow": {
@@ -94,9 +837,190 @@
       "sub": "Farming village",
       "lore": "Golden terraces and a single tavern; Oakhollow measures the year in harvests.",
       "activities": [
-        { "t": "combat", "name": "Scarecrow Fields", "icon": "⚔️", "lvl": "18–30", "note": "Field husks · crows" },
-        { "t": "quest", "name": "A Poor Harvest", "icon": "📜", "lvl": "Lv 22", "note": "Story · 2 stages" },
-        { "t": "minigame", "name": "Reaping Rush", "icon": "🌾", "lvl": "Any", "note": "Farming minigame" }
+        {
+          "kind": "agility",
+          "ref": "canifis"
+        },
+        {
+          "kind": "combat",
+          "ref": "astral_ranger"
+        },
+        {
+          "kind": "combat",
+          "ref": "bone_wyvern"
+        },
+        {
+          "kind": "combat",
+          "ref": "cindermaw_serpent"
+        },
+        {
+          "kind": "combat",
+          "ref": "emberhowl_warlord"
+        },
+        {
+          "kind": "combat",
+          "ref": "gorath_the_infested"
+        },
+        {
+          "kind": "combat",
+          "ref": "gravethorn_drake"
+        },
+        {
+          "kind": "combat",
+          "ref": "ironclad_guardian"
+        },
+        {
+          "kind": "combat",
+          "ref": "morvyn_the_blighted"
+        },
+        {
+          "kind": "combat",
+          "ref": "razorwing_harpy"
+        },
+        {
+          "kind": "combat",
+          "ref": "shroudwraith_specter"
+        },
+        {
+          "kind": "combat",
+          "ref": "tekton"
+        },
+        {
+          "kind": "combat",
+          "ref": "verin_the_defiled"
+        },
+        {
+          "kind": "combat",
+          "ref": "voidweave_stalker"
+        },
+        {
+          "kind": "gather",
+          "ref": "gather_snape_grass"
+        },
+        {
+          "kind": "gather",
+          "ref": "harvest_potato_cactus"
+        },
+        {
+          "kind": "hunter",
+          "ref": "hunt_jeweller"
+        },
+        {
+          "kind": "skill",
+          "ref": "cooking:cook_eel"
+        },
+        {
+          "kind": "skill",
+          "ref": "cooking:cook_karam"
+        },
+        {
+          "kind": "skill",
+          "ref": "crafting:cut_dragonstone"
+        },
+        {
+          "kind": "skill",
+          "ref": "crafting:ruby_amulet"
+        },
+        {
+          "kind": "skill",
+          "ref": "firemaking:yew_logs"
+        },
+        {
+          "kind": "skill",
+          "ref": "fletching:cut_diamond_bolt_tips"
+        },
+        {
+          "kind": "skill",
+          "ref": "fletching:cut_ruby_bolt_tips"
+        },
+        {
+          "kind": "skill",
+          "ref": "fletching:make_adamant_bolts"
+        },
+        {
+          "kind": "skill",
+          "ref": "fletching:make_steel_bolts"
+        },
+        {
+          "kind": "skill",
+          "ref": "fletching:maple_shortbow_string"
+        },
+        {
+          "kind": "skill",
+          "ref": "fletching:mithril_arrows"
+        },
+        {
+          "kind": "skill",
+          "ref": "fletching:yew_shortbow_string"
+        },
+        {
+          "kind": "skill",
+          "ref": "herblore:super_restore"
+        },
+        {
+          "kind": "skill",
+          "ref": "herblore:super_strength"
+        },
+        {
+          "kind": "skill",
+          "ref": "mining:gold"
+        },
+        {
+          "kind": "skill",
+          "ref": "runecraft:craft_law_rune"
+        },
+        {
+          "kind": "skill",
+          "ref": "runecraft:craft_nature_rune"
+        },
+        {
+          "kind": "skill",
+          "ref": "smithing:smelt_gold"
+        },
+        {
+          "kind": "skill",
+          "ref": "smithing:smelt_mithril"
+        },
+        {
+          "kind": "skill",
+          "ref": "smithing:smith_adamant_full_helm"
+        },
+        {
+          "kind": "skill",
+          "ref": "smithing:smith_mithril_bolts_unf"
+        },
+        {
+          "kind": "skill",
+          "ref": "smithing:smith_mithril_chainbody"
+        },
+        {
+          "kind": "skill",
+          "ref": "smithing:smith_mithril_longsword"
+        },
+        {
+          "kind": "skill",
+          "ref": "smithing:smith_mithril_mace"
+        },
+        {
+          "kind": "skill",
+          "ref": "smithing:smith_mithril_platelegs"
+        },
+        {
+          "kind": "skill",
+          "ref": "smithing:smith_mithril_sword"
+        },
+        {
+          "kind": "skill",
+          "ref": "smithing:smith_steel_kiteshield"
+        },
+        {
+          "kind": "skill",
+          "ref": "smithing:smith_steel_platelegs"
+        },
+        {
+          "kind": "skill",
+          "ref": "woodcutting:mahogany"
+        }
       ]
     },
     "mudgate": {
@@ -109,7 +1033,194 @@
       "sub": "Roadside hamlet",
       "lore": "Three shacks and a well at the meeting of roads. Most travellers don't stop.",
       "activities": [
-        { "t": "combat", "name": "The Ditches", "icon": "⚔️", "lvl": "3–10", "note": "Rats · road bandits" }
+        {
+          "kind": "agility",
+          "ref": "al_kharid"
+        },
+        {
+          "kind": "combat",
+          "ref": "bogling_sprite"
+        },
+        {
+          "kind": "combat",
+          "ref": "bonelight_pyromancer"
+        },
+        {
+          "kind": "combat",
+          "ref": "briarheart_treant"
+        },
+        {
+          "kind": "combat",
+          "ref": "broodfang_spider"
+        },
+        {
+          "kind": "combat",
+          "ref": "cave_goblin"
+        },
+        {
+          "kind": "combat",
+          "ref": "cinderpaw_cub"
+        },
+        {
+          "kind": "combat",
+          "ref": "embertongue_lizard"
+        },
+        {
+          "kind": "combat",
+          "ref": "frostmaw_direwolf"
+        },
+        {
+          "kind": "combat",
+          "ref": "hollow_reaver"
+        },
+        {
+          "kind": "combat",
+          "ref": "mirebound_husk"
+        },
+        {
+          "kind": "combat",
+          "ref": "tidereaper_crab"
+        },
+        {
+          "kind": "combat",
+          "ref": "umbral_adept"
+        },
+        {
+          "kind": "combat",
+          "ref": "warped_spectre"
+        },
+        {
+          "kind": "combat",
+          "ref": "wraithgale_specter"
+        },
+        {
+          "kind": "gather",
+          "ref": "collect_seaweed"
+        },
+        {
+          "kind": "gather",
+          "ref": "pick_white_berries"
+        },
+        {
+          "kind": "skill",
+          "ref": "cooking:cook_shrimp"
+        },
+        {
+          "kind": "skill",
+          "ref": "crafting:leather_body"
+        },
+        {
+          "kind": "skill",
+          "ref": "crafting:leather_chaps"
+        },
+        {
+          "kind": "skill",
+          "ref": "crafting:leather_cowl"
+        },
+        {
+          "kind": "skill",
+          "ref": "crafting:tan_cowhide"
+        },
+        {
+          "kind": "skill",
+          "ref": "firemaking:oak_logs"
+        },
+        {
+          "kind": "skill",
+          "ref": "fishing:shrimps"
+        },
+        {
+          "kind": "skill",
+          "ref": "fletching:headless_arrows"
+        },
+        {
+          "kind": "skill",
+          "ref": "fletching:make_iron_bolts"
+        },
+        {
+          "kind": "skill",
+          "ref": "fletching:oak_shortbow_string"
+        },
+        {
+          "kind": "skill",
+          "ref": "fletching:shortbow_u_cut"
+        },
+        {
+          "kind": "skill",
+          "ref": "fletching:steel_arrows"
+        },
+        {
+          "kind": "skill",
+          "ref": "herblore:combat_potion"
+        },
+        {
+          "kind": "skill",
+          "ref": "mining:copper"
+        },
+        {
+          "kind": "skill",
+          "ref": "runecraft:craft_air_rune"
+        },
+        {
+          "kind": "skill",
+          "ref": "runecraft:craft_chaos_rune"
+        },
+        {
+          "kind": "skill",
+          "ref": "runecraft:craft_cosmic_rune"
+        },
+        {
+          "kind": "skill",
+          "ref": "runecraft:craft_earth_rune"
+        },
+        {
+          "kind": "skill",
+          "ref": "smithing:smelt_iron"
+        },
+        {
+          "kind": "skill",
+          "ref": "smithing:smelt_steel"
+        },
+        {
+          "kind": "skill",
+          "ref": "smithing:smith_bronze_pickaxe"
+        },
+        {
+          "kind": "skill",
+          "ref": "smithing:smith_iron_axe"
+        },
+        {
+          "kind": "skill",
+          "ref": "smithing:smith_iron_chainbody"
+        },
+        {
+          "kind": "skill",
+          "ref": "smithing:smith_iron_longsword"
+        },
+        {
+          "kind": "skill",
+          "ref": "smithing:smith_iron_scimitar"
+        },
+        {
+          "kind": "skill",
+          "ref": "smithing:smith_steel_bolts_unf"
+        },
+        {
+          "kind": "skill",
+          "ref": "smithing:smith_steel_mace"
+        },
+        {
+          "kind": "skill",
+          "ref": "smithing:smith_steel_scimitar"
+        },
+        {
+          "kind": "skill",
+          "ref": "woodcutting:normal"
+        },
+        {
+          "kind": "skill",
+          "ref": "woodcutting:willow"
+        }
       ]
     },
     "crowfoot": {
@@ -122,7 +1233,206 @@
       "sub": "Moorland hamlet",
       "lore": "Wind, gorse and crows. The kind of place you pass through with a hand on your purse.",
       "activities": [
-        { "t": "combat", "name": "Gorse Moor", "icon": "⚔️", "lvl": "5–12", "note": "Moor wolves · crow swarms" }
+        {
+          "kind": "agility",
+          "ref": "draynor_village"
+        },
+        {
+          "kind": "combat",
+          "ref": "arcane_adept"
+        },
+        {
+          "kind": "combat",
+          "ref": "ashen_marauder"
+        },
+        {
+          "kind": "combat",
+          "ref": "boneclaw_revenant"
+        },
+        {
+          "kind": "combat",
+          "ref": "duneback_crab"
+        },
+        {
+          "kind": "combat",
+          "ref": "dustpaw_rat"
+        },
+        {
+          "kind": "combat",
+          "ref": "elder_tree_spirit"
+        },
+        {
+          "kind": "combat",
+          "ref": "frostbite_imp"
+        },
+        {
+          "kind": "combat",
+          "ref": "glaive_skeleton"
+        },
+        {
+          "kind": "combat",
+          "ref": "green_dragon"
+        },
+        {
+          "kind": "combat",
+          "ref": "ironfang_drake"
+        },
+        {
+          "kind": "combat",
+          "ref": "lesser_fiend"
+        },
+        {
+          "kind": "combat",
+          "ref": "marshfen_toad"
+        },
+        {
+          "kind": "combat",
+          "ref": "pyreclaw_demon"
+        },
+        {
+          "kind": "combat",
+          "ref": "stoneglare_basilisk"
+        },
+        {
+          "kind": "gather",
+          "ref": "catch_newts"
+        },
+        {
+          "kind": "gather",
+          "ref": "collect_sand"
+        },
+        {
+          "kind": "hunter",
+          "ref": "hunt_wizard"
+        },
+        {
+          "kind": "skill",
+          "ref": "construction:build_oak_plank"
+        },
+        {
+          "kind": "skill",
+          "ref": "cooking:cook_meat"
+        },
+        {
+          "kind": "skill",
+          "ref": "cooking:cook_trout"
+        },
+        {
+          "kind": "skill",
+          "ref": "crafting:cut_emerald"
+        },
+        {
+          "kind": "skill",
+          "ref": "crafting:cut_ruby"
+        },
+        {
+          "kind": "skill",
+          "ref": "crafting:leather_boots"
+        },
+        {
+          "kind": "skill",
+          "ref": "crafting:molten_glass"
+        },
+        {
+          "kind": "skill",
+          "ref": "crafting:sapphire_amulet"
+        },
+        {
+          "kind": "skill",
+          "ref": "firemaking:normal_logs"
+        },
+        {
+          "kind": "skill",
+          "ref": "firemaking:willow_logs"
+        },
+        {
+          "kind": "skill",
+          "ref": "fishing:crab"
+        },
+        {
+          "kind": "skill",
+          "ref": "fishing:trout"
+        },
+        {
+          "kind": "skill",
+          "ref": "fletching:bronze_arrows"
+        },
+        {
+          "kind": "skill",
+          "ref": "fletching:make_bronze_bolts"
+        },
+        {
+          "kind": "skill",
+          "ref": "fletching:shortbow_string"
+        },
+        {
+          "kind": "skill",
+          "ref": "fletching:willow_shortbow_u_cut"
+        },
+        {
+          "kind": "skill",
+          "ref": "herblore:prayer_potion"
+        },
+        {
+          "kind": "skill",
+          "ref": "herblore:strength_potion"
+        },
+        {
+          "kind": "skill",
+          "ref": "mining:clay"
+        },
+        {
+          "kind": "skill",
+          "ref": "mining:coal"
+        },
+        {
+          "kind": "skill",
+          "ref": "mining:iron"
+        },
+        {
+          "kind": "skill",
+          "ref": "mining:tin"
+        },
+        {
+          "kind": "skill",
+          "ref": "runecraft:craft_body_rune"
+        },
+        {
+          "kind": "skill",
+          "ref": "smithing:smith_bronze_axe"
+        },
+        {
+          "kind": "skill",
+          "ref": "smithing:smith_bronze_dagger"
+        },
+        {
+          "kind": "skill",
+          "ref": "smithing:smith_iron_pickaxe"
+        },
+        {
+          "kind": "skill",
+          "ref": "smithing:smith_iron_platebody"
+        },
+        {
+          "kind": "skill",
+          "ref": "smithing:smith_iron_sword"
+        },
+        {
+          "kind": "skill",
+          "ref": "smithing:smith_steel_axe"
+        },
+        {
+          "kind": "skill",
+          "ref": "smithing:smith_steel_dagger"
+        },
+        {
+          "kind": "skill",
+          "ref": "woodcutting:oak"
+        },
+        {
+          "kind": "skill",
+          "ref": "woodcutting:teak"
+        }
       ]
     },
     "ashenrest": {
@@ -135,23 +1445,291 @@
       "sub": "Waystation hamlet",
       "lore": "A shrine and a graveyard on the ash road north. People rest here. Some stay.",
       "activities": [
-        { "t": "combat", "name": "The Ashen Field", "icon": "⚔️", "lvl": "8–15", "note": "Cinder ghouls · wisps" }
+        {
+          "kind": "agility",
+          "ref": "gnome_stronghold"
+        },
+        {
+          "kind": "agility",
+          "ref": "varrock"
+        },
+        {
+          "kind": "combat",
+          "ref": "ash_wyrm"
+        },
+        {
+          "kind": "combat",
+          "ref": "bloodmoon_stalker"
+        },
+        {
+          "kind": "combat",
+          "ref": "briar_giant"
+        },
+        {
+          "kind": "combat",
+          "ref": "cinderfang_reaver"
+        },
+        {
+          "kind": "combat",
+          "ref": "elder_rock_golem"
+        },
+        {
+          "kind": "combat",
+          "ref": "ember_giant"
+        },
+        {
+          "kind": "combat",
+          "ref": "field_chicken"
+        },
+        {
+          "kind": "combat",
+          "ref": "gravehusk_brute"
+        },
+        {
+          "kind": "combat",
+          "ref": "highland_giant"
+        },
+        {
+          "kind": "combat",
+          "ref": "pasture_bull"
+        },
+        {
+          "kind": "combat",
+          "ref": "sanguine_veld"
+        },
+        {
+          "kind": "combat",
+          "ref": "shadeglass_golem"
+        },
+        {
+          "kind": "combat",
+          "ref": "stoneback_crab"
+        },
+        {
+          "kind": "combat",
+          "ref": "verdant_stalker"
+        },
+        {
+          "kind": "combat",
+          "ref": "wailing_banshee"
+        },
+        {
+          "kind": "gather",
+          "ref": "burn_seaweed"
+        },
+        {
+          "kind": "gather",
+          "ref": "gather_bowstring"
+        },
+        {
+          "kind": "hunter",
+          "ref": "hunt_cow"
+        },
+        {
+          "kind": "skill",
+          "ref": "construction:build_plank"
+        },
+        {
+          "kind": "skill",
+          "ref": "cooking:cook_chicken"
+        },
+        {
+          "kind": "skill",
+          "ref": "cooking:cook_crab"
+        },
+        {
+          "kind": "skill",
+          "ref": "crafting:cut_sapphire"
+        },
+        {
+          "kind": "skill",
+          "ref": "crafting:emerald_amulet"
+        },
+        {
+          "kind": "skill",
+          "ref": "crafting:hard_leather_body"
+        },
+        {
+          "kind": "skill",
+          "ref": "crafting:leather_gloves"
+        },
+        {
+          "kind": "skill",
+          "ref": "crafting:tan_cowhide_hard"
+        },
+        {
+          "kind": "skill",
+          "ref": "fletching:arrow_shafts"
+        },
+        {
+          "kind": "skill",
+          "ref": "fletching:cut_wooden_stocks"
+        },
+        {
+          "kind": "skill",
+          "ref": "fletching:iron_arrows"
+        },
+        {
+          "kind": "skill",
+          "ref": "fletching:oak_shortbow_u_cut"
+        },
+        {
+          "kind": "skill",
+          "ref": "fletching:willow_shortbow_string"
+        },
+        {
+          "kind": "skill",
+          "ref": "herblore:attack_potion"
+        },
+        {
+          "kind": "skill",
+          "ref": "herblore:defence_potion"
+        },
+        {
+          "kind": "skill",
+          "ref": "mining:rune_essence"
+        },
+        {
+          "kind": "skill",
+          "ref": "runecraft:craft_fire_rune"
+        },
+        {
+          "kind": "skill",
+          "ref": "runecraft:craft_mind_rune"
+        },
+        {
+          "kind": "skill",
+          "ref": "runecraft:craft_water_rune"
+        },
+        {
+          "kind": "skill",
+          "ref": "smithing:smelt_bronze"
+        },
+        {
+          "kind": "skill",
+          "ref": "smithing:smith_bronze_bolts_unf"
+        },
+        {
+          "kind": "skill",
+          "ref": "smithing:smith_bronze_scimitar"
+        },
+        {
+          "kind": "skill",
+          "ref": "smithing:smith_iron_bolts_unf"
+        },
+        {
+          "kind": "skill",
+          "ref": "smithing:smith_iron_dagger"
+        },
+        {
+          "kind": "skill",
+          "ref": "smithing:smith_iron_full_helm"
+        },
+        {
+          "kind": "skill",
+          "ref": "smithing:smith_iron_kiteshield"
+        },
+        {
+          "kind": "skill",
+          "ref": "smithing:smith_iron_mace"
+        },
+        {
+          "kind": "skill",
+          "ref": "smithing:smith_iron_platelegs"
+        },
+        {
+          "kind": "skill",
+          "ref": "smithing:smith_steel_full_helm"
+        },
+        {
+          "kind": "skill",
+          "ref": "smithing:smith_steel_longsword"
+        },
+        {
+          "kind": "skill",
+          "ref": "smithing:smith_steel_pickaxe"
+        },
+        {
+          "kind": "skill",
+          "ref": "smithing:smith_steel_sword"
+        }
       ]
     }
   },
   "tiers": {
-    "city": { "label": "City", "size": 92, "accent": "var(--color-gold-light)", "blurb": "Raids · dungeons · bosses · quests · minigames · shops" },
-    "town": { "label": "Town", "size": 72, "accent": "var(--color-mana-light)", "blurb": "Dungeons · bosses · quests · minigames" },
-    "village": { "label": "Village", "size": 56, "accent": "var(--color-emerald-light)", "blurb": "Monsters · quests · minigames" },
-    "hamlet": { "label": "Hamlet", "size": 46, "accent": "var(--tier-bronze)", "blurb": "Low-level monsters" }
+    "city": {
+      "label": "City",
+      "size": 92,
+      "accent": "var(--color-gold-light)",
+      "blurb": "Raids · dungeons · bosses · quests · minigames · shops"
+    },
+    "town": {
+      "label": "Town",
+      "size": 72,
+      "accent": "var(--color-mana-light)",
+      "blurb": "Dungeons · bosses · quests · minigames"
+    },
+    "village": {
+      "label": "Village",
+      "size": 56,
+      "accent": "var(--color-emerald-light)",
+      "blurb": "Monsters · quests · minigames"
+    },
+    "hamlet": {
+      "label": "Hamlet",
+      "size": 46,
+      "accent": "var(--tier-bronze)",
+      "blurb": "Low-level monsters"
+    }
   },
   "kinds": {
-    "raid": { "label": "Raid", "color": "var(--color-gold-light)" },
-    "boss": { "label": "Boss", "color": "var(--color-blood-light)" },
-    "dungeon": { "label": "Dungeon", "color": "var(--color-mana-light)" },
-    "combat": { "label": "Combat", "color": "var(--color-blood-ember)" },
-    "quest": { "label": "Quest", "color": "var(--color-emerald-light)" },
-    "minigame": { "label": "Minigame", "color": "var(--tier-bronze)" },
-    "shop": { "label": "Shop", "color": "var(--color-gold)" }
+    "raid": {
+      "label": "Raid",
+      "color": "var(--color-gold-light)"
+    },
+    "boss": {
+      "label": "Boss",
+      "color": "var(--color-blood-light)"
+    },
+    "dungeon": {
+      "label": "Dungeon",
+      "color": "var(--color-mana-light)"
+    },
+    "combat": {
+      "label": "Combat",
+      "color": "var(--color-blood-ember)"
+    },
+    "quest": {
+      "label": "Quest",
+      "color": "var(--color-emerald-light)"
+    },
+    "minigame": {
+      "label": "Minigame",
+      "color": "var(--tier-bronze)"
+    },
+    "shop": {
+      "label": "Shop",
+      "color": "var(--color-gold)"
+    },
+    "skill": {
+      "label": "Skill",
+      "color": "var(--color-emerald-light)"
+    },
+    "gather": {
+      "label": "Gather",
+      "color": "var(--color-emerald)"
+    },
+    "agility": {
+      "label": "Agility",
+      "color": "var(--color-mana-light)"
+    },
+    "thieving": {
+      "label": "Thieving",
+      "color": "var(--tier-bronze)"
+    },
+    "hunter": {
+      "label": "Hunter",
+      "color": "var(--color-gold)"
+    }
   }
 }

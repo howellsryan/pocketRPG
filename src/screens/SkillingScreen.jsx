@@ -57,7 +57,7 @@ function calculateRemainingActions(action, inventory, bank) {
 }
 
 export default function SkillingScreen({ initialSkillId, initialActionId, idleResult, onNavigate }) {
-  const { stats, inventory, bank, equipment, isIronman, updateInventory, updateBankDirect, grantXP, addToast, setActiveTask, activeTask, dungeoneeringTokens, awardDungeoneeringTokens, trySpendDungeoneeringTokens, loadGame, recordGameEvent } = useGame()
+  const { stats, inventory, bank, equipment, isIronman, updateInventory, updateBankDirect, grantXP, addToast, setActiveTask, requestActivityStart, activeTask, dungeoneeringTokens, awardDungeoneeringTokens, trySpendDungeoneeringTokens, loadGame, recordGameEvent } = useGame()
   const [selectedSkill, setSelectedSkill] = useState(initialSkillId || null)
   const [selectedAction, setSelectedAction] = useState(null)
   const [skilling, setSkilling] = useState(null)
@@ -468,6 +468,9 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
       return
     }
 
+    // Map-driven gating (Phase 3): must be at a place that offers this skill action.
+    if (!requestActivityStart({ type: 'skill', skill: selectedSkill, action })) return
+
     const effectiveTicks = getEffectiveToolActionTicks(selectedSkill, action.ticks, equipment, itemsData, stats, inventory)
     const adjustedAction = effectiveTicks !== action.ticks
       ? { ...action, ticks: effectiveTicks }
@@ -521,6 +524,7 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
 
   const startAlchemy = (item) => {
     if (!selectedAction) return
+    if (!requestActivityStart({ type: 'skill', skill: selectedSkill, action: selectedAction })) return
     setShowAlchemyPicker(false)
     setSelectedAlchemyItem(item)
 

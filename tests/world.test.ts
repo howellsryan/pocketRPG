@@ -26,11 +26,12 @@ describe('world model', () => {
     }
   })
 
-  it('every place has a known tier and its activities have known kinds', () => {
+  it('every place has a known tier and its activities have known kinds + refs', () => {
     for (const p of listPlaces()) {
       expect(getTier(p.tier), `tier ${p.tier}`).toBeTruthy()
       for (const a of p.activities) {
-        expect(getKind(a.t), `kind ${a.t}`).toBeTruthy()
+        expect(getKind(a.kind), `kind ${a.kind}`).toBeTruthy()
+        expect(typeof a.ref, `ref for ${a.kind}`).toBe('string')
       }
     }
   })

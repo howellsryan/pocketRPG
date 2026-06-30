@@ -19,7 +19,7 @@ import itemsData from '../data/items.json'
 const hunterData = skillsData.hunter
 
 export default function HunterScreen({ initialActionId, idleResult, onBack }) {
-  const { stats, inventory, updateInventory, bank, updateBankDirect, grantXP, addToast, setActiveTask, activeTask, recordGameEvent } = useGame()
+  const { stats, inventory, updateInventory, bank, updateBankDirect, grantXP, addToast, setActiveTask, requestActivityStart, activeTask, recordGameEvent } = useGame()
 
   const hunterLevel = getLevelFromXP(stats.hunter?.xp || 0)
   const hunterXP = stats.hunter?.xp || 0
@@ -135,6 +135,8 @@ export default function HunterScreen({ initialActionId, idleResult, onBack }) {
       const resumed = buildResumedState(activeTask)
       if (resumed) { setHunter(resumed); hunterRef.current = resumed; return }
     }
+    // Map-driven gating (Phase 3): must be at a place that offers this hunt.
+    if (!requestActivityStart({ type: 'hunter', action })) return
     const startedAt = Date.now()
     const state = {
       ...createHunterState(action),

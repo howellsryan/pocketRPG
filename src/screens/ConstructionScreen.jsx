@@ -20,7 +20,7 @@ export default function ConstructionScreen({ onBack }) {
   const {
     stats, inventory, bank,
     grantXP, updateInventory, updateBankDirect, addToast,
-    unlockedFeatures, unlockFeature, setActiveTask, activeTask
+    unlockedFeatures, unlockFeature, setActiveTask, requestActivityStart, activeTask
   } = useGame()
 
   const constructionLevel = getLevelFromXP(stats.construction?.xp || 0)
@@ -69,6 +69,8 @@ export default function ConstructionScreen({ onBack }) {
       const resumed = buildResumedState(activeTask)
       if (resumed) { setSkilling(resumed); skillingRef.current = resumed; return }
     }
+    // Map-driven gating (Phase 3): must be at a place that offers this build.
+    if (!requestActivityStart({ type: 'skill', skill: 'construction', action })) return
     const startedAt = Date.now()
     const state = { ...createSkillingState('construction', action), startedAt }
     setSkilling(state)

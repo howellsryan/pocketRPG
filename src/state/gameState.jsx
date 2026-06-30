@@ -27,7 +27,9 @@ import { getSlayerTaskReward } from '../engine/slayerRewards.js'
 import { defaultIdleCombatSetup, normaliseIdleCombatSetup } from '../engine/idleSupplies.js'
 import { migrateLegacyItemIds } from '../engine/itemMigrations.js'
 import { WORLD_START_PLACE, normaliseLocation } from '../engine/world.js'
-import { advanceTravel } from '../engine/travel.js'
+import { advanceTravel, createTravelTask } from '../engine/travel.js'
+import { resolveTaskStart, activityRef } from '../engine/worldContent.js'
+import { isWorldMapEnabled } from '../utils/constants.js'
 
 const normalisePointCurrency = (value) => {
   const n = Math.floor(Number(value) || 0)
@@ -58,6 +60,8 @@ export function GameProvider({ children }) {
   const [showInfoToasts, setShowInfoToastsState] = useState(false)
   const [activeTask, setActiveTaskState] = useState(null)
   const activeTaskInternalRef = useRef(null) // tracks latest active task for flush in setActiveTask
+  const worldLocationRef = useRef(WORLD_START_PLACE) // latest location for gating in callbacks
+  const [travelPrompt, setTravelPrompt] = useState(null) // {task,kind,ref,places} when a start needs travel
   const [bankConfig, setBankConfig] = useState({ tabs: [], itemTabMap: {} })
   const [equipmentPresets, setEquipmentPresetsState] = useState([])
   const [unlockedFeatures, setUnlockedFeatures] = useState(new Set())
@@ -120,6 +124,9 @@ export function GameProvider({ children }) {
 
   // Keep activeTaskInternalRef in sync with state (handles setActiveTaskState calls that bypass setActiveTask)
   useEffect(() => { activeTaskInternalRef.current = activeTask }, [activeTask])
+
+  // Keep worldLocationRef in sync (load, travel arrival, updateWorldLocation all set state)
+  useEffect(() => { worldLocationRef.current = worldLocation }, [worldLocation])
 
   // Keep refs in sync with state
   useEffect(() => { stateRef.current.stats = stats }, [stats])
@@ -715,9 +722,38 @@ export function GameProvider({ children }) {
 
   const updateWorldLocation = useCallback((placeId) => {
     const next = normaliseLocation(placeId)
+    worldLocationRef.current = next
     setWorldLocationState(next)
     saveSetting('worldLocation', next)
   }, [])
+
+  // Phase 3 activity gating: a pure gate the activity screens call before starting a
+  // fresh action. Returns true if the caller may start now (it keeps its own
+  // setActiveTask call), false if the start was blocked (travelling) or deferred to a
+  // travel prompt. When the world map is off, always allow (menu-driven fallback).
+  // `task` only needs the shape `activityRef` reads (type + the relevant id).
+  const requestActivityStart = useCallback((task) => {
+    if (!isWorldMapEnabled()) return true
+    const travelActive = activeTaskInternalRef.current?.type === 'travel'
+    const res = resolveTaskStart(task, { location: worldLocationRef.current, travel: travelActive })
+    if (res.status === 'start') return true
+    if (res.status === 'blocked-transit') {
+      addToast("You can't start that while travelling.", 'info')
+      return false
+    }
+    setTravelPrompt({ task, ...(activityRef(task) || {}), places: res.places })
+    return false
+  }, [addToast])
+
+  // Confirm a travel prompt: begin travelling to the chosen place. Arrival opens the
+  // destination hub via the existing Phase-2 arrival path (we do not auto-start the action).
+  const startTravelTo = useCallback((placeId) => {
+    const task = createTravelTask(worldLocationRef.current, placeId)
+    if (task) setActiveTask(task)
+    setTravelPrompt(null)
+  }, [setActiveTask])
+
+  const dismissTravelPrompt = useCallback(() => setTravelPrompt(null), [])
 
   const updateIdleCombatSetup = useCallback((setup) => {
     const next = normaliseIdleCombatSetup(setup)
@@ -1219,6 +1255,7 @@ export function GameProvider({ children }) {
     loaded, player, stats, inventory, equipment, bank, currentHP, toasts, isSaving,
     homeShortcuts, combatStance, idleCombatSetup, updateIdleCombatSetup,
     worldLocation, updateWorldLocation,
+    requestActivityStart, travelPrompt, startTravelTo, dismissTravelPrompt,
     activeTask, autoBankLoot, bankConfig, showInfoToasts, updateShowInfoToasts,
     equipmentPresets, updateEquipmentPresets,
     unlockedFeatures, unlockFeature,

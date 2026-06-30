@@ -43,7 +43,7 @@ function hasItemAnywhere(itemId, inventory, bank, equipment) {
 }
 
 export default function GatherScreen({ initialTaskId, idleResult }) {
-  const { inventory, bank, equipment, stats, updateInventory, updateBankDirect, addToast, setActiveTask, activeTask: globalActiveTask, itemsData, recordGameEvent } = useGame()
+  const { inventory, bank, equipment, stats, updateInventory, updateBankDirect, addToast, setActiveTask, requestActivityStart, activeTask: globalActiveTask, itemsData, recordGameEvent } = useGame()
   const [category, setCategory] = useState('all')
   const [activeTask, setLocalTask] = useState(null)
   const taskRef = useRef(null)
@@ -261,6 +261,8 @@ export default function GatherScreen({ initialTaskId, idleResult }) {
       const resumed = buildResumedState(globalActiveTask)
       if (resumed) { taskRef.current = resumed; setLocalTask(resumed); return }
     }
+    // Map-driven gating (Phase 3): fresh starts must be at a place that offers this task.
+    if (!seedFromIdle && !requestActivityStart({ type: 'gather', gatherTask: task })) return
     const idleActions = seedFromIdle && idleResult?.actions ? idleResult.actions : 0
     const idleItems = seedFromIdle && idleResult?.itemsGained
       ? Object.values(idleResult.itemsGained).reduce((s, v) => s + v, 0)

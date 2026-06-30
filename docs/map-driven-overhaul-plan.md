@@ -188,11 +188,27 @@ Each phase is independently shippable and reversible against the live game.
   + route + **Turn back**), an animated traveller token, and a **Travel here** action in
   the place hub. Registered `travel` as background in `activityRegistry.js` (no ledger
   key). Combat-lock-in-transit is deferred to Phase 3 (activity gating).
-- **Phase 3 — activity gating**: intercept activity starts to require being at the
-  place; "Travel here" confirms; multi-location pickers. Combat locked in transit.
-- **Phase 4 — world authoring**: design the real world (places, tiers, edges) and the
-  content→place reference schema; map every existing monster/skill/minigame/clue/quest
-  onto places. This is the big content effort decision #4 deferred.
+- **Phase 3 — activity gating** (done): fresh activity starts are intercepted by
+  `requestActivityStart` (`src/state/gameState.jsx`) — must be at a place that offers the
+  activity, else a `TravelPrompt` (`src/components/TravelPrompt.jsx`) confirms travel
+  (single place) or shows a multi-location picker; starting is blocked while in transit
+  (combat lock). On arrival the destination hub opens (decided: no auto-start). Gating
+  engine: `src/engine/worldContent.js` (`activityRef`/`placesForActivity`/
+  `resolveActivityStart`/`describeActivity`, + `tests/worldContent.test.ts`). Gated at the
+  §6 touch points in Combat/Skilling/Gather/Agility/Thieving/Hunter/Construction screens.
+  Gated by `isWorldMapEnabled()` (flag off → menu-driven fallback). Travel/skilling are
+  mutually exclusive (single `activeTask`).
+  - **Phase 4 content pulled forward**: decision #4 was taken early — *all* startable
+    content (monsters, gated skill actions, gather/agility/thieving/hunter, construction)
+    is mapped onto the placeholder 8-place geography by a deterministic auto-distributor,
+    `scripts/seedWorldContent.cjs`, whose output is committed into `src/data/world.json`
+    (`activities` are now `{ kind, ref }`). Re-run the script after adding content.
+    Quests/clues stay ungated (Phase 5). Magic/prayer/slayer/dungeoneering are
+    intentionally unmapped (fall through to start normally).
+- **Phase 4 — world authoring** (mapping done; geography pending): the content→place
+  schema and full mapping now exist (above). What remains is designing the *real* curated
+  geography (place count, names, tiers, edges) and re-running the seed (or hand-curating)
+  against it — the throwaway "Cinder Reach" sample is still placeholder.
 - **Phase 5 — active clues/quests**: multi-step place-bound clue/quest journeys, with
   the idle alternative preserved.
 - **Later**: discovery/unlocks, teleport (reserved for a future magic level).
@@ -202,8 +218,10 @@ Each phase is independently shippable and reversible against the live game.
 1. **Discovery/unlocks** vs. every place reachable immediately (the prototype's own open
    question). Affects Phase 1 data + Phase 4.
 2. **Partial travel on "turn back"** — snap to nearest passed node, or revert to origin?
-3. **On arrival** — auto-start the action the player came for, or just open the hub?
-4. **Travel + background skilling** — mutually exclusive, or can you skill while walking?
+3. **On arrival** — ~~auto-start the action the player came for, or just open the hub?~~
+   **Resolved (Phase 3): just open the hub.**
+4. **Travel + background skilling** — ~~mutually exclusive, or can you skill while
+   walking?~~ **Resolved (Phase 3): mutually exclusive (single activeTask).**
 5. **Travel cost** — pure time, or also consume supplies/food/run-energy later?
 6. **Teleport** — reserved for a future magic level; out of scope for v1.
 7. **Real world scale** — how many places, and the canonical map (decision #4 deferred).

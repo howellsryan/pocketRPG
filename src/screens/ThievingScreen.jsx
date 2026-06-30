@@ -19,7 +19,7 @@ import skillsData from '../data/skills.json'
 const thievingData = skillsData.thieving
 
 export default function ThievingScreen({ initialNpcId, idleResult, onBack }) {
-  const { stats, inventory, updateInventory, bank, updateBankDirect, grantXP, addToast, setActiveTask, activeTask } = useGame()
+  const { stats, inventory, updateInventory, bank, updateBankDirect, grantXP, addToast, setActiveTask, requestActivityStart, activeTask } = useGame()
 
   const thievingLevel = getLevelFromXP(stats.thieving?.xp || 0)
   const thievingXP = stats.thieving?.xp || 0
@@ -183,6 +183,8 @@ export default function ThievingScreen({ initialNpcId, idleResult, onBack }) {
       const resumed = buildResumedState(activeTask)
       if (resumed) { setThieving(resumed); thievingRef.current = resumed; return }
     }
+    // Map-driven gating (Phase 3): must be at a place that offers this target.
+    if (!requestActivityStart({ type: 'thieving', npc })) return
     const startedAt = Date.now()
     const state = {
       ...createThievingState(npc),

@@ -223,7 +223,7 @@ class PvpCombatErrorBoundary extends Component {
 }
 
 export default function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onCombatStatusChange }) {
-  const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, updateEquipment, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, idleCombatSetup, updateIdleCombatSetup, homeShortcuts, updateHomeShortcuts, setActiveTask, slayerTask, setSlayerTask, awardSlayerPoints, slayerTasksCompleted, setSlayerTasksCompleted, activeCombatSpell, updateActiveCombatSpell, bossKillCounts, updateBossKillCounts, raidKillCounts, updateRaidKillCounts, unlockedFeatures, completedQuests, isOneLife, isIronman, getSnapshot, loadGame, combatSkipHandlerRef, skipHourHandlerRef, chargeSkipRef, raidSkipHandlerRef, lockGame, unlockGame, resolveCombatCompletion, characterUnlocks, killCountsLoaded, recordGameEvent } = useGame()
+  const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, updateEquipment, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, idleCombatSetup, updateIdleCombatSetup, homeShortcuts, updateHomeShortcuts, setActiveTask, requestActivityStart, slayerTask, setSlayerTask, awardSlayerPoints, slayerTasksCompleted, setSlayerTasksCompleted, activeCombatSpell, updateActiveCombatSpell, bossKillCounts, updateBossKillCounts, raidKillCounts, updateRaidKillCounts, unlockedFeatures, completedQuests, isOneLife, isIronman, getSnapshot, loadGame, combatSkipHandlerRef, skipHourHandlerRef, chargeSkipRef, raidSkipHandlerRef, lockGame, unlockGame, resolveCombatCompletion, characterUnlocks, killCountsLoaded, recordGameEvent } = useGame()
   const pvp = usePvp()
   // Offline demo: bosses, raids and PvP are locked (server-authoritative).
   const isDemo = isDemoMode() && !(getToken() && getCharacterId())
@@ -970,6 +970,8 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       addToast(req.reason, 'error')
       return
     }
+    // Map-driven gating (Phase 3): must be at a place that offers this monster.
+    if (!requestActivityStart({ type: 'combat', monster })) return
     const combatType = getCombatType(equipment, itemsData)
     const weaponItem = equipment?.weapon ? itemsData[equipment.weapon.itemId] : null
     const isPoweredStaff = !!weaponItem?.poweredStaff
@@ -1003,6 +1005,8 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       addToast(req.reason, 'error')
       return
     }
+    // Map-driven gating (Phase 3): must be at a place that offers this raid's first boss.
+    if (!requestActivityStart({ type: 'combat', monster: monstersData[raidData.bosses[0]] })) return
     const combatType = getCombatType(equipment, itemsData)
     const weaponItem = equipment?.weapon ? itemsData[equipment.weapon.itemId] : null
     const isPoweredStaff = !!weaponItem?.poweredStaff
