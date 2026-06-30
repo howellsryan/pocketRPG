@@ -33,9 +33,10 @@ import CharacterUnlockScreen from './screens/CharacterUnlockScreen.jsx'
 import ConnectAiScreen from './screens/ConnectAiScreen.jsx'
 import DemoLockedScreen from './screens/DemoLockedScreen.jsx'
 import MagicScreen from './screens/MagicScreen.jsx'
+import WorldMapScreen from './screens/WorldMapScreen.jsx'
 import AuthScreen from './screens/AuthScreen.jsx'
 import OAuthConsentScreen from './screens/OAuthConsentScreen.jsx'
-import { SCREENS } from './utils/constants.js'
+import { SCREENS, isWorldMapEnabled } from './utils/constants.js'
 import { hasSave, closeDB } from './db/database.js'
 import { initNewGame, saveSetting, getSetting, getAllStats, getInventory, getEquipment, getBank } from './db/stores.js'
 import { startTicks, stopTicks, onTick, pauseTicks, resumeTicks } from './engine/tick.js'
@@ -2438,6 +2439,7 @@ function GameApp() {
       case SCREENS.GATHER:    return <GatherScreen initialTaskId={actionData?.gatherTaskId} idleResult={idleResult} />
       case SCREENS.AGILITY:     return <AgilityScreen initialActionId={actionData?.actionId} idleResult={idleResult} />
       case SCREENS.MAGIC:       return <MagicScreen onNavigate={navigate} />
+      case SCREENS.WORLD_MAP:   return isWorldMapEnabled() ? <WorldMapScreen /> : <HomeScreen onNavigate={navigate} onLogout={handleLogoutToCharacterSelect} onManualSave={handleManualSave} isCloudAccount={!!getToken() && !!getCharacterId()} removeAds={removeAds} identityId={identityId} characterId={getCharacterId()} stripeLinks={stripeLinks} />
       case SCREENS.STORE:       return <TradingPostScreen />
       case SCREENS.QUESTS:         return <QuestsScreen />
       case SCREENS.CLUES:          return <CluesScreen />

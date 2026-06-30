@@ -26,6 +26,7 @@ import {
 import { getSlayerTaskReward } from '../engine/slayerRewards.js'
 import { defaultIdleCombatSetup, normaliseIdleCombatSetup } from '../engine/idleSupplies.js'
 import { migrateLegacyItemIds } from '../engine/itemMigrations.js'
+import { WORLD_START_PLACE, normaliseLocation } from '../engine/world.js'
 
 const normalisePointCurrency = (value) => {
   const n = Math.floor(Number(value) || 0)
@@ -50,6 +51,7 @@ export function GameProvider({ children }) {
   const [currentHP, setCurrentHP] = useState(10)
   const [homeShortcuts, setHomeShortcuts] = useState(null) // null = not loaded yet
   const [combatStance, setCombatStanceState] = useState('accurate')
+  const [worldLocation, setWorldLocationState] = useState(WORLD_START_PLACE) // map-driven overhaul (phase 1)
   const [idleCombatSetup, setIdleCombatSetupState] = useState(() => defaultIdleCombatSetup())
   const [autoBankLoot, setAutoBankLootState] = useState(true)
   const [showInfoToasts, setShowInfoToastsState] = useState(false)
@@ -133,14 +135,14 @@ export function GameProvider({ children }) {
 
   // Load all state from IndexedDB — runs idle simulation inline, returns idleResult
   const loadGame = useCallback(async () => {
-    let [p, s, inv, eq, b, shortcuts, stance, savedHP, autoBankSetting, savedBankConfig, savedEquipmentPresets, savedUnlocks, savedSlayerTask, savedSlayerPoints, savedSlayerTasksCompleted, savedDungeoneeringTokens, savedBossKillCounts, savedRaidKillCounts, savedFarming, savedCompletedQuests, savedQuestQueue, savedActiveCombatSpell, savedUnlockedMinigameItems, savedIdleCombatSetup, savedSlayerPerks, savedCharacterUnlocks, savedShowInfoToasts] = await Promise.all([
+    let [p, s, inv, eq, b, shortcuts, stance, savedHP, autoBankSetting, savedBankConfig, savedEquipmentPresets, savedUnlocks, savedSlayerTask, savedSlayerPoints, savedSlayerTasksCompleted, savedDungeoneeringTokens, savedBossKillCounts, savedRaidKillCounts, savedFarming, savedCompletedQuests, savedQuestQueue, savedActiveCombatSpell, savedUnlockedMinigameItems, savedIdleCombatSetup, savedSlayerPerks, savedCharacterUnlocks, savedShowInfoToasts, savedWorldLocation] = await Promise.all([
       getPlayer(), getAllStats(), getInventory(), getEquipment(), getBank(),
       getSetting('homeShortcuts'), getSetting('combatStance'), getSetting('currentHP'),
       getSetting('autoBankLoot'), getSetting('bankConfig'), getSetting('equipmentPresets'), getSetting('unlockedFeatures'),
       getSetting('slayerTask'), getSetting('slayerPoints'), getSetting('slayerTasksCompleted'), getSetting('dungeoneeringTokens'), getSetting('bossKillCounts'), getSetting('raidKillCounts'), getSetting('farming'),
       getSetting('completedQuests'), getSetting('questQueue'), getSetting('activeCombatSpell'), getSetting('unlockedMinigameItems'),
       getSetting('idleCombatSetup'), getSetting('slayerPerks'), getSetting('characterUnlocks'),
-      getSetting('showInfoToasts')
+      getSetting('showInfoToasts'), getSetting('worldLocation')
     ])
     const normalisedIdleCombatSetup = normaliseIdleCombatSetup(savedIdleCombatSetup)
     // Rewrite legacy item ids (e.g. void_knight_* → void_king_*) before the
@@ -508,6 +510,7 @@ export function GameProvider({ children }) {
     setIdleCombatSetupState(normalisedIdleCombatSetup)
     setAutoBankLootState(autoBankSetting !== false) // default true
     setShowInfoToastsState(savedShowInfoToasts === true) // default false
+    setWorldLocationState(normaliseLocation(savedWorldLocation)) // un-migrated saves → start place
     setBankConfig(savedBankConfig ?? { tabs: [], itemTabMap: {} })
     setEquipmentPresetsState(Array.isArray(savedEquipmentPresets) ? savedEquipmentPresets : [])
     setUnlockedFeatures(new Set(savedUnlocks || []))
@@ -692,6 +695,12 @@ export function GameProvider({ children }) {
     const next = stance === 'controlled' ? 'accurate' : stance
     setCombatStanceState(next)
     saveSetting('combatStance', next)
+  }, [])
+
+  const updateWorldLocation = useCallback((placeId) => {
+    const next = normaliseLocation(placeId)
+    setWorldLocationState(next)
+    saveSetting('worldLocation', next)
   }, [])
 
   const updateIdleCombatSetup = useCallback((setup) => {
@@ -972,6 +981,7 @@ export function GameProvider({ children }) {
       equipmentPresets,
       homeShortcuts,
       combatStance,
+      worldLocation,
       idleCombatSetup,
       unlockedFeatures: [...unlockedFeatures],
       activeTask,
@@ -989,7 +999,7 @@ export function GameProvider({ children }) {
       slayerPerks: slayerPerksRef.current,
       characterUnlocks: characterUnlocksRef.current,
     },
-  }), [currentHP, autoBankLoot, bankConfig, showInfoToasts, equipmentPresets, homeShortcuts, combatStance, idleCombatSetup, unlockedFeatures, activeTask, activeCombatSpell, slayerTask, slayerPoints, slayerTasksCompleted, dungeoneeringTokens, bossKillCounts, raidKillCounts, farming, completedQuests, unlockedMinigameItems, questQueue, slayerPerks, characterUnlocks])
+  }), [currentHP, autoBankLoot, bankConfig, showInfoToasts, equipmentPresets, homeShortcuts, combatStance, worldLocation, idleCombatSetup, unlockedFeatures, activeTask, activeCombatSpell, slayerTask, slayerPoints, slayerTasksCompleted, dungeoneeringTokens, bossKillCounts, raidKillCounts, farming, completedQuests, unlockedMinigameItems, questQueue, slayerPerks, characterUnlocks])
 
 
   // ---- Shared game lock --------------------------------------------------
@@ -1192,6 +1202,7 @@ export function GameProvider({ children }) {
   const value = {
     loaded, player, stats, inventory, equipment, bank, currentHP, toasts, isSaving,
     homeShortcuts, combatStance, idleCombatSetup, updateIdleCombatSetup,
+    worldLocation, updateWorldLocation,
     activeTask, autoBankLoot, bankConfig, showInfoToasts, updateShowInfoToasts,
     equipmentPresets, updateEquipmentPresets,
     unlockedFeatures, unlockFeature,

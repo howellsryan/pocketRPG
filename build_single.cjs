@@ -34,6 +34,7 @@ const sourceFiles = [
   'hooks/useEscapeKey.js',
   'engine/experience.js',
   'engine/combatLevel.js',
+  'engine/world.js',
   'engine/seedDrops.js',
   'engine/formulas.js',
   'engine/equipment.js',
@@ -161,6 +162,7 @@ const sourceFiles = [
   'screens/SkillingScreen.js',
   'screens/ConstructionScreen.js',
   'screens/MagicScreen.js',
+  'screens/WorldMapScreen.js',
   'screens/SlayerScreen.js',
   'screens/GatherScreen.js',
   'screens/TradingPostScreen.js',
@@ -219,6 +221,7 @@ const GAME_CHUNK_FILES = new Set([
   'screens/SkillingScreen.js',
   'screens/ConstructionScreen.js',
   'screens/MagicScreen.js',
+  'screens/WorldMapScreen.js',
   'screens/SlayerScreen.js',
   'screens/GatherScreen.js',
   'screens/TradingPostScreen.js',
@@ -272,6 +275,7 @@ const minigamesJSON = readSrc('data/minigames.json');
 const cluesJSON = readSrc('data/clues.json');
 const collectionLogJSON = readSrc('data/collectionLog.json');
 const dailyTasksJSON = readSrc('data/dailyTasks.json');
+const worldJSON = readSrc('data/world.json');
 
 // Landing screen images. Served as external files from /public/landing/ (the
 // Cloudflare Pages output dir is the repo root) and referenced by URL rather
@@ -524,6 +528,7 @@ const minigamesData = ${minigamesJSON};
 const cluesData = ${cluesJSON};
 const collectionLogData = ${collectionLogJSON};
 const dailyTasksData = ${dailyTasksJSON};
+const worldData = ${worldJSON};
 const landingImages = ${landingImagesJSON};
 const homeLogo = ${homeLogoJSON};
 

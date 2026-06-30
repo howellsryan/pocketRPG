@@ -169,9 +169,15 @@ Touch points to intercept (do **not** rewrite the combat loop — just gate its 
 Each phase is independently shippable and reversible against the live game.
 
 - **Phase 0 — this doc + assets** (done): plan + `docs/world-map-prototype/` reference.
-- **Phase 1 — read-only map**: `WORLD_MAP` screen rendering the graph from `world.json`;
-  current location stored in save (default start place); pan/zoom/fit; place hub shows
-  lore + activity cards as **informational only** (no gating yet). Behind a flag.
+- **Phase 1 — read-only map** (done): `WORLD_MAP` screen rendering the graph from
+  `src/data/world.json`; current location in the save blob (`worldLocation` setting,
+  defaults to start place via `normaliseLocation`); pan/zoom/fit; place hub shows lore +
+  activity cards **informational only** (no gating), with each place's tick-distance from
+  the player shown via `shortestPath`. Gated by `WORLD_MAP_ENABLED` /
+  `isWorldMapEnabled()` (`src/utils/constants.js`) — off in prod; set localStorage
+  `prpg.worldmap=1` for a no-rebuild dev preview. Files: `src/data/world.json`,
+  `src/engine/world.js` (+ `tests/world.test.ts`), `src/screens/WorldMapScreen.jsx`,
+  `.wm-*` styles in `src/index.css`; wired in `navTabs.js`, `App.jsx`, `build_single.cjs`.
 - **Phase 2 — travel**: `type:'travel'` activeTask + travel engine + offline resolution
   + travel banner + "turn back". Location persists and resolves on return.
 - **Phase 3 — activity gating**: intercept activity starts to require being at the
