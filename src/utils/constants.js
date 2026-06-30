@@ -114,7 +114,7 @@ export const SCREENS = {
 // World Map as a read-only screen behind this flag. Off by default in prod; flip
 // the const for a build, or set localStorage `prpg.worldmap` = '1' for a no-rebuild
 // dev preview. When off the nav tab is hidden and the route falls through to Home.
-export const WORLD_MAP_ENABLED = false
+export const WORLD_MAP_ENABLED = true
 
 export function isWorldMapEnabled() {
   if (WORLD_MAP_ENABLED) return true
