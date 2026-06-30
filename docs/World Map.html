@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+<title>PocketRPG — World Map</title>
+<link rel="stylesheet" href="styles.css" />
+<link rel="stylesheet" href="world/world.css" />
+<script src="assets/glyphs.js"></script>
+<script src="assets/bespoke-glyphs.js"></script>
+<script src="assets/icon-inline.js"></script>
+<script src="image-slot.js"></script>
+</head>
+<body>
+<div id="app">
+
+  <!-- top bar -->
+  <header class="topbar">
+    <div class="topbar__mark"><i data-icon="crossed_swords" data-color="#2a0f02" data-size="20"></i></div>
+    <div>
+      <div class="topbar__title"><span class="gilt">PocketRPG</span></div>
+      <div class="topbar__crumb">Chart of the Cinder Reach</div>
+    </div>
+    <div class="topbar__spacer"></div>
+    <div class="topbar__loc">
+      <i data-icon="home" data-color="#e6c878" data-size="18"></i>
+      <span><small>You are at</small><b id="loc-name">Emberhold</b></span>
+    </div>
+  </header>
+
+  <!-- map -->
+  <main class="stage">
+    <div id="board">
+      <div class="board__chart"></div>
+      <svg id="routes" xmlns="http://www.w3.org/2000/svg"></svg>
+    </div>
+
+    <!-- travel banner -->
+    <div class="travelbar">
+      <div class="travelbar__inner">
+        <div class="travelbar__top">
+          <span class="lead" id="tv-lead">Travelling…</span>
+          <span class="ticks" id="tv-ticks">0 / 0 ticks</span>
+        </div>
+        <div class="track"><div class="track__fill" id="tv-fill"></div></div>
+        <div class="travelbar__route" id="tv-route"></div>
+        <button class="travelbar__cancel" id="tv-cancel">Turn back</button>
+      </div>
+    </div>
+
+    <!-- legend -->
+    <aside class="legend">
+      <h4>Settlements</h4>
+      <div class="row"><span class="dot" style="background:var(--fm-ember)"></span> City — raids, dungeons, all</div>
+      <div class="row"><span class="dot" style="background:var(--fm-woad)"></span> Town — dungeons, bosses</div>
+      <div class="row"><span class="dot" style="background:var(--fm-verdigris)"></span> Village — monsters, quests</div>
+      <div class="row"><span class="dot" style="background:var(--fm-brass)"></span> Hamlet — low-level monsters</div>
+      <div class="hint">Routes show travel cost in ticks. Tap a settlement to walk there.</div>
+    </aside>
+
+    <!-- map controls -->
+    <div class="mapctl">
+      <button id="zin" title="Zoom in">+</button>
+      <button id="zout" title="Zoom out">−</button>
+      <button id="zfit" title="Fit map"><i data-icon="scroll" data-color="#e6c878" data-size="18"></i></button>
+    </div>
+  </main>
+
+  <!-- place hub -->
+  <div id="scrim" class="scrim"></div>
+  <div id="hub" class="hub">
+    <div class="hub__frame">
+      <div class="hub__rivets"><i></i><i></i><i></i><i></i></div>
+      <div class="hub__sheet">
+        <div class="hub__banner" id="hub-banner-outer">
+          <div id="hub-banner"></div>
+          <button class="hub__close" id="hub-close">✕</button>
+          <div class="hub__bannermeta">
+            <span class="hub__tier" id="hub-tier"></span>
+            <div class="hub__placename" id="hub-name"></div>
+            <div class="hub__sub" id="hub-sub"></div>
+          </div>
+        </div>
+        <div class="hub__body">
+          <p class="hub__lore" id="hub-lore"></p>
+          <div class="hub__travelnote">What you can do here — <span id="hub-tierblurb"></span>.</div>
+          <div class="hub__sectionhead"><span>Available here</span></div>
+          <div id="hub-acts"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- toast -->
+  <div id="toast">
+    <img class="seal" src="assets/forge/wax-seal.svg" alt="" />
+    <span id="toast-msg"></span>
+  </div>
+
+</div>
+
+<script src="world/world-data.js"></script>
+<script src="world/world.js"></script>
+</body>
+</html>
