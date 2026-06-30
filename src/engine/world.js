@@ -47,6 +47,29 @@ export function normaliseLocation(id) {
   return id && worldData.places[id] ? id : WORLD_START_PLACE
 }
 
+/**
+ * Tick cost of the direct road between two adjacent places, or null if no edge.
+ */
+export function edgeTicks(a, b) {
+  for (const [x, y, t] of worldData.edges) {
+    if ((x === a && y === b) || (x === b && y === a)) return t
+  }
+  return null
+}
+
+/**
+ * Split a path ([a, b, c, ...]) into legs with their tick weights:
+ * [{ from, to, ticks }]. Used to interpolate the traveller token along the route.
+ */
+export function pathLegs(path) {
+  const legs = []
+  if (!Array.isArray(path)) return legs
+  for (let i = 0; i < path.length - 1; i++) {
+    legs.push({ from: path[i], to: path[i + 1], ticks: edgeTicks(path[i], path[i + 1]) ?? 0 })
+  }
+  return legs
+}
+
 /** Adjacency map { placeId: [[neighbourId, ticks], ...] } from the edge list. */
 function buildAdjacency() {
   const adj = {}

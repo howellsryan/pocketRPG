@@ -27,6 +27,7 @@ import { getSlayerTaskReward } from '../engine/slayerRewards.js'
 import { defaultIdleCombatSetup, normaliseIdleCombatSetup } from '../engine/idleSupplies.js'
 import { migrateLegacyItemIds } from '../engine/itemMigrations.js'
 import { WORLD_START_PLACE, normaliseLocation } from '../engine/world.js'
+import { advanceTravel } from '../engine/travel.js'
 
 const normalisePointCurrency = (value) => {
   const n = Math.floor(Number(value) || 0)
@@ -450,6 +451,21 @@ export function GameProvider({ children }) {
           // active task afterwards.
           if (diedDuringIdle) savedTask = null
           idleResult = { elapsedMs, task: savedTask, ...sim }
+        }
+        // Travel resolves offline (no rewards, no modal): advance the countdown
+        // by elapsed time and either land the player at the destination or keep
+        // the reduced in-progress trip for the live tick to finish.
+        if (savedTask && savedTask.type === 'travel') {
+          const adv = advanceTravel(savedTask, elapsedMs)
+          if (adv.arrived) {
+            savedWorldLocation = savedTask.dest
+            await saveSetting('worldLocation', normaliseLocation(savedTask.dest))
+            savedTask = null
+            try { localStorage.removeItem('pocketrpg_activeTask'); localStorage.removeItem('pocketrpg_lastTick') } catch {}
+          } else {
+            savedTask = adv.task
+            try { localStorage.setItem('pocketrpg_activeTask', JSON.stringify(savedTask)) } catch {}
+          }
         }
       }
     }

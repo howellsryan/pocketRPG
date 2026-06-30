@@ -1,6 +1,7 @@
 import { useGame } from '../state/gameState.jsx'
 import { useState, useRef, useEffect, useCallback } from 'preact/hooks'
-import { getWorld, getPlace, listPlaces, getTier, getKind, shortestPath } from '../engine/world.js'
+import { getWorld, getPlace, listPlaces, getTier, getKind, shortestPath, pathLegs } from '../engine/world.js'
+import { createTravelTask, travelFraction, travelDestName } from '../engine/travel.js'
 
 /**
  * World Map — Phase 1 (read-only) of the map-driven overhaul.
@@ -15,9 +16,23 @@ const MIN_K = 0.35
 const MAX_K = 2.2
 
 export default function WorldMapScreen() {
-  const { worldLocation } = useGame()
+  const { worldLocation, activeTask, setActiveTask, addToast } = useGame()
   const world = getWorld()
   const here = getPlace(worldLocation) ? worldLocation : world.start
+  const travel = activeTask?.type === 'travel' ? activeTask : null
+
+  const beginTravel = (destId) => {
+    const task = createTravelTask(here, destId)
+    if (!task) return
+    setActiveTask(task)
+    setOpenId(null)
+    addToast(`🧭 Travelling to ${travelDestName(task)}`, 'info')
+  }
+  const cancelTravel = () => {
+    if (!travel) return
+    setActiveTask(null)
+    addToast('Travel cancelled', 'info')
+  }
 
   const stageRef = useRef(null)
   const boardRef = useRef(null)
@@ -119,6 +134,26 @@ export default function WorldMapScreen() {
   const places = listPlaces()
   const openPlace = openId ? getPlace(openId) : null
 
+  // Interpolate the traveller token along its route legs by the fraction done.
+  const tokenPos = (() => {
+    if (!travel) return null
+    const legs = pathLegs(travel.path)
+    if (!legs.length) return null
+    const total = travel.totalTicks || legs.reduce((s, l) => s + l.ticks, 0) || 1
+    let travelled = travelFraction(travel) * total
+    for (const leg of legs) {
+      const a = getPlace(leg.from)
+      const b = getPlace(leg.to)
+      if (!a || !b) continue
+      if (travelled <= leg.ticks || leg === legs[legs.length - 1]) {
+        const f = leg.ticks > 0 ? Math.min(1, travelled / leg.ticks) : 1
+        return { x: a.x + (b.x - a.x) * f, y: a.y + (b.y - a.y) * f }
+      }
+      travelled -= leg.ticks
+    }
+    return null
+  })()
+
   return (
     <div class="h-full w-full relative overflow-hidden bg-[var(--color-void)]" style={{ touchAction: 'none' }}>
       {/* top bar */}
@@ -128,8 +163,8 @@ export default function WorldMapScreen() {
         <div class="ml-auto flex items-center gap-2 px-3 py-1 rounded bg-[var(--color-void)] border border-[var(--color-void-border)]">
           <span class="text-base" aria-hidden="true">📍</span>
           <span class="flex flex-col leading-tight">
-            <small class="uppercase tracking-widest text-[9px] text-[var(--color-ink-light)]">You are at</small>
-            <b class="font-[var(--font-display)] text-[13px] text-[var(--color-gold-light)]">{getPlace(here)?.name}</b>
+            <small class="uppercase tracking-widest text-[9px] text-[var(--color-ink-light)]">{travel ? 'Travelling to' : 'You are at'}</small>
+            <b class="font-[var(--font-display)] text-[13px] text-[var(--color-gold-light)]">{travel ? travelDestName(travel) : getPlace(here)?.name}</b>
           </span>
         </div>
       </div>
@@ -188,6 +223,10 @@ export default function WorldMapScreen() {
               </button>
             )
           })}
+
+          {tokenPos && (
+            <div class="wm-token" style={{ left: tokenPos.x + 'px', top: tokenPos.y + 'px' }} aria-hidden="true">🚶</div>
+          )}
         </div>
 
         {/* legend */}
@@ -197,7 +236,7 @@ export default function WorldMapScreen() {
           <div class="wm-legrow"><span class="wm-dot" style={{ background: 'var(--color-mana-light)' }} /> Town — dungeons, bosses</div>
           <div class="wm-legrow"><span class="wm-dot" style={{ background: 'var(--color-emerald-light)' }} /> Village — monsters, quests</div>
           <div class="wm-legrow"><span class="wm-dot" style={{ background: 'var(--tier-bronze)' }} /> Hamlet — low-level monsters</div>
-          <div class="wm-hint">Tap a settlement to see what's there. Travel arrives in a later update.</div>
+          <div class="wm-hint">Tap a settlement to travel there. Far places route through the roads between.</div>
         </aside>
 
         {/* controls */}
@@ -206,6 +245,19 @@ export default function WorldMapScreen() {
           <button onClick={() => zoomBy(0.8)} title="Zoom out" aria-label="Zoom out">−</button>
           <button onClick={fitAll} title="Fit map" aria-label="Fit map">⤢</button>
         </div>
+
+        {/* travel banner */}
+        {travel && (
+          <div class="wm-travelbar" role="status">
+            <div class="wm-travelbar-top">
+              <span class="wm-travelbar-lead">Travelling to <b>{travelDestName(travel)}</b></span>
+              <span class="wm-travelbar-ticks">{(travel.totalTicks ?? 0) - (travel.ticksRemaining ?? 0)} / {travel.totalTicks ?? 0} ticks</span>
+            </div>
+            <div class="wm-track"><div class="wm-track-fill" style={{ width: Math.round(travelFraction(travel) * 100) + '%' }} /></div>
+            <div class="wm-travelbar-route">Route: {(travel.path || []).map((id) => getPlace(id)?.name || id).join(' → ')}</div>
+            <button class="wm-travelbar-cancel" onClick={cancelTravel}>Turn back</button>
+          </div>
+        )}
       </div>
 
       {/* place hub */}
@@ -213,6 +265,8 @@ export default function WorldMapScreen() {
         <PlaceHub
           place={openPlace}
           here={here}
+          travelling={!!travel}
+          onTravel={beginTravel}
           onClose={() => setOpenId(null)}
         />
       )}
@@ -220,10 +274,11 @@ export default function WorldMapScreen() {
   )
 }
 
-function PlaceHub({ place, here, onClose }) {
+function PlaceHub({ place, here, travelling, onTravel, onClose }) {
   const tier = getTier(place.tier)
   const isHere = place.id === here
   const route = isHere ? null : shortestPath(here, place.id)
+  const canTravel = !isHere && !travelling && route && route.ticks > 0
 
   return (
     <>
@@ -242,10 +297,17 @@ function PlaceHub({ place, here, onClose }) {
           <div class="wm-hub-note">
             {isHere
               ? 'You are here.'
-              : route
-                ? `${place.name} is ${route.ticks} ticks away by road. Travel arrives in a later update.`
-                : 'No road reaches this place yet.'}
+              : travelling
+                ? 'You are already travelling. Turn back first to choose a new destination.'
+                : route
+                  ? `${place.name} is ${route.ticks} ticks away by road, via ${route.path.map((id) => getPlace(id)?.name || id).join(' → ')}.`
+                  : 'No road reaches this place yet.'}
           </div>
+          {canTravel && (
+            <button class="wm-travel-btn" onClick={() => onTravel(place.id)}>
+              Travel here · {route.ticks} ticks
+            </button>
+          )}
           <div class="wm-hub-sectionhead"><span>Available here</span></div>
           <div>
             {place.activities.map((a, i) => {

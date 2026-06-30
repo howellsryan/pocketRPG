@@ -34,6 +34,7 @@ import ConnectAiScreen from './screens/ConnectAiScreen.jsx'
 import DemoLockedScreen from './screens/DemoLockedScreen.jsx'
 import MagicScreen from './screens/MagicScreen.jsx'
 import WorldMapScreen from './screens/WorldMapScreen.jsx'
+import { advanceTravel, travelDestName } from './engine/travel.js'
 import AuthScreen from './screens/AuthScreen.jsx'
 import OAuthConsentScreen from './screens/OAuthConsentScreen.jsx'
 import { SCREENS, isWorldMapEnabled } from './utils/constants.js'
@@ -285,7 +286,7 @@ function GameApp() {
   const { loaded, loadGame, player, stats, equipment, inventory, bank, currentHP, updateHP, getMaxHP, updateInventory, updateEquipment, updateBank, updateBankDirect, grantXP, addToast, activeTask, setActiveTask, itemsData, getSnapshot, unlockedFeatures, setSlayerTask, awardSlayerPoints, slayerTasksCompleted, setSlayerTasksCompleted, completeQuest, completedQuests, questQueue, removeFromQuestQueue, updateQuestQueue,
     unlockMinigameItem, unlockedMinigameItems, awardDungeoneeringTokens, farming, updateFarming, idleCombatSetup, isOneLife, updateBossKillCounts, updateRaidKillCounts, syncServerKillCounts, markKillCountsLoaded, combatSkipHandlerRef, skipHourHandlerRef, chargeSkipRef, raidSkipHandlerRef,
     gameLocked, lockGame, unlockGame, runLockedSave, awaitCombatCompletion, resolveCombatCompletion,
-    characterUnlocks, dailyTaskStates, setDailyTasks, recordGameEvent } = useGame()
+    characterUnlocks, dailyTaskStates, setDailyTasks, recordGameEvent, updateWorldLocation } = useGame()
   const pvp = usePvp()
   const [screen, setScreen] = useState(SCREENS.HOME)
   const [menuOpen, setMenuOpen] = useState(false)
@@ -798,6 +799,26 @@ function GameApp() {
           ])
 
           let sim = null
+
+          // Travel resolves offline: advance by elapsed time, then either land at
+          // the destination (update location, clear task, toast) or keep the
+          // reduced trip for the live tick. No reward modal.
+          if (savedTask.type === 'travel') {
+            const adv = advanceTravel(savedTask, elapsedMs)
+            if (adv.arrived) {
+              updateWorldLocation(savedTask.dest)
+              setActiveTask(null)
+              activeTaskRef.current = null
+              try { localStorage.removeItem('pocketrpg_activeTask') } catch {}
+              addToast(`🧭 Arrived at ${travelDestName(savedTask)}`, 'info')
+            } else {
+              setActiveTask(adv.task)
+              activeTaskRef.current = adv.task
+            }
+            if (!isInPvpMatch) schedulePushSave(getSnapshot())
+            return
+          }
+
           // OneShot minigames — reduce remaining time while away; complete if timer reached 0.
           if (savedTask.type === 'gather' && savedTask.gatherTask?.oneShot) {
             const elapsedTicks = Math.floor(elapsedMs / 600)
@@ -1189,6 +1210,23 @@ function GameApp() {
         const remaining = (task.ticksRemaining ?? task.totalTicks) - 1
         if (remaining <= 0) {
           handleQuestCompletion(task.quest, task.quest.xpReward, task.quest.coinReward)
+        } else {
+          setActiveTask({ ...task, ticksRemaining: remaining }, { skipCloudSync: true })
+        }
+      }
+
+      // Travel tick — counts down the journey on any screen. Arrival updates
+      // the player's location and clears the task; offline catch-up is handled
+      // separately by advanceTravel on boot / tab-return.
+      if (task && task.type === 'travel') {
+        const total = task.totalTicks ?? 0
+        const remaining = (task.ticksRemaining ?? total) - 1
+        if (remaining <= 0) {
+          updateWorldLocation(task.dest)
+          setActiveTask(null)
+          activeTaskRef.current = null
+          try { localStorage.removeItem('pocketrpg_activeTask') } catch {}
+          addToast(`🧭 Arrived at ${travelDestName(task)}`, 'info')
         } else {
           setActiveTask({ ...task, ticksRemaining: remaining }, { skipCloudSync: true })
         }

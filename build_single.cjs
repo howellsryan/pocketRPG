@@ -35,6 +35,7 @@ const sourceFiles = [
   'engine/experience.js',
   'engine/combatLevel.js',
   'engine/world.js',
+  'engine/travel.js',
   'engine/seedDrops.js',
   'engine/formulas.js',
   'engine/equipment.js',

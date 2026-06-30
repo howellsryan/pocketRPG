@@ -179,8 +179,15 @@ Each phase is independently shippable and reversible against the live game.
   flipped back). Files: `src/data/world.json`,
   `src/engine/world.js` (+ `tests/world.test.ts`), `src/screens/WorldMapScreen.jsx`,
   `.wm-*` styles in `src/index.css`; wired in `navTabs.js`, `App.jsx`, `build_single.cjs`.
-- **Phase 2 — travel**: `type:'travel'` activeTask + travel engine + offline resolution
-  + travel banner + "turn back". Location persists and resolves on return.
+- **Phase 2 — travel** (done): `type:'travel'` background activeTask + travel engine
+  (`src/engine/travel.js`: `createTravelTask`/`advanceTravel`/`travelFraction`, +
+  `pathLegs` in `world.js`; `tests/travel.test.ts`). Costs road ticks; counts down on
+  the live App tick (`App.jsx`), and resolves offline via `advanceTravel` on tab-return
+  (`App.jsx` visibility handler) and cold boot (`gameState.loadGame`). Arrival updates
+  `worldLocation` + clears the task + toasts. World Map shows a travel banner (progress
+  + route + **Turn back**), an animated traveller token, and a **Travel here** action in
+  the place hub. Registered `travel` as background in `activityRegistry.js` (no ledger
+  key). Combat-lock-in-transit is deferred to Phase 3 (activity gating).
 - **Phase 3 — activity gating**: intercept activity starts to require being at the
   place; "Travel here" confirms; multi-location pickers. Combat locked in transit.
 - **Phase 4 — world authoring**: design the real world (places, tiers, edges) and the
