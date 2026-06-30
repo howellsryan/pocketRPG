@@ -51,9 +51,11 @@ describe('content -> place coverage', () => {
 })
 
 describe('facility-bound skills', () => {
-  const bankPlaces = Object.keys(worldData.places).filter((id) => (worldData.places[id] as any).facilities?.includes('bank'))
-  const furnacePlaces = Object.keys(worldData.places).filter((id) => (worldData.places[id] as any).facilities?.includes('furnace_anvil'))
-  const noBank = Object.keys(worldData.places).filter((id) => !(worldData.places[id] as any).facilities?.includes('bank'))
+  const hasFacility = (id: string, f: string) => (worldData.places[id] as any).facilities?.includes(f)
+  const bankPlaces = Object.keys(worldData.places).filter((id) => hasFacility(id, 'bank'))
+  const furnacePlaces = Object.keys(worldData.places).filter((id) => hasFacility(id, 'furnace_anvil'))
+  const noBank = Object.keys(worldData.places).filter((id) => !hasFacility(id, 'bank'))
+  const noFurnace = Object.keys(worldData.places).filter((id) => !hasFacility(id, 'furnace_anvil'))
 
   it('places a bank skill (cooking) at every bank place and nowhere else', () => {
     const places = placesForActivity('skill', 'cooking:cook_shrimp')
@@ -64,8 +66,8 @@ describe('facility-bound skills', () => {
   it('places smithing only at furnace & anvil places', () => {
     const places = placesForActivity('skill', 'smithing:smelt_bronze')
     expect([...places].sort()).toEqual([...furnacePlaces].sort())
-    // a bank-only place must NOT offer smithing
-    for (const id of noBank) expect(places).not.toContain(id)
+    // a place without a furnace & anvil must NOT offer smithing
+    for (const id of noFurnace) expect(places).not.toContain(id)
   })
 
   it('maps every thieving target to the bank places', () => {

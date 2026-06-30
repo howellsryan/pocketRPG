@@ -5,8 +5,8 @@
  * `shortestPath` is included now (pure + tested) so the Phase 2 travel engine can
  * build on it without re-deriving the graph.
  *
- * Geography is PLACEHOLDER (decision #4 in docs/map-driven-overhaul-plan.md): the
- * 8-place Cinder Reach is a sample world, not the canonical content map.
+ * Geography is the OSRS-inspired realm of Eldermoor (Phase 4, decision #4 in
+ * docs/map-driven-overhaul-plan.md): 14 places, all reachable from the start.
  */
 import worldData from '../data/world.json'
 

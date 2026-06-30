@@ -12,7 +12,7 @@ import {
 
 describe('world model', () => {
   it('exposes a valid start place', () => {
-    expect(WORLD_START_PLACE).toBe('emberhold')
+    expect(WORLD_START_PLACE).toBe('lumbright')
     expect(getPlace(WORLD_START_PLACE)).toBeTruthy()
   })
 
@@ -45,7 +45,7 @@ describe('world model', () => {
 
 describe('normaliseLocation', () => {
   it('passes through a valid location', () => {
-    expect(normaliseLocation('crowfoot')).toBe('crowfoot')
+    expect(normaliseLocation('draynar')).toBe('draynar')
   })
   it('falls back to the start place for missing/unknown locations', () => {
     expect(normaliseLocation(undefined)).toBe(WORLD_START_PLACE)
@@ -56,30 +56,30 @@ describe('normaliseLocation', () => {
 
 describe('shortestPath', () => {
   it('returns a zero-cost single-node path for from === to', () => {
-    expect(shortestPath('emberhold', 'emberhold')).toEqual({ path: ['emberhold'], ticks: 0 })
+    expect(shortestPath('lumbright', 'lumbright')).toEqual({ path: ['lumbright'], ticks: 0 })
   })
 
   it('uses a direct edge when it is cheapest', () => {
-    const res = shortestPath('emberhold', 'mudgate')
-    expect(res).toEqual({ path: ['emberhold', 'mudgate'], ticks: 14 })
+    const res = shortestPath('lumbright', 'draynar')
+    expect(res).toEqual({ path: ['lumbright', 'draynar'], ticks: 8 })
   })
 
   it('composes a multi-leg route via the cheapest path', () => {
-    // emberhold→oakhollow (16) + oakhollow→crowfoot (14) = 30, cheaper than
-    // emberhold→saltmarket (22) + saltmarket→crowfoot (17) = 39.
-    const res = shortestPath('emberhold', 'crowfoot')
-    expect(res).toEqual({ path: ['emberhold', 'oakhollow', 'crowfoot'], ticks: 30 })
+    // lumbright→draynar (8) + draynar→portsarin (10) = 18, cheaper than routing
+    // through faloden (lumbright→draynar→faloden→portsarin = 8+14+12 = 34).
+    const res = shortestPath('lumbright', 'portsarin')
+    expect(res).toEqual({ path: ['lumbright', 'draynar', 'portsarin'], ticks: 18 })
   })
 
   it('is symmetric (undirected graph)', () => {
-    const a = shortestPath('crowfoot', 'emberhold')!
-    const b = shortestPath('emberhold', 'crowfoot')!
+    const a = shortestPath('portsarin', 'lumbright')!
+    const b = shortestPath('lumbright', 'portsarin')!
     expect(a.ticks).toBe(b.ticks)
     expect(a.path).toEqual([...b.path].reverse())
   })
 
   it('returns null for unknown endpoints', () => {
-    expect(shortestPath('emberhold', 'atlantis')).toBeNull()
-    expect(shortestPath('atlantis', 'emberhold')).toBeNull()
+    expect(shortestPath('lumbright', 'atlantis')).toBeNull()
+    expect(shortestPath('atlantis', 'lumbright')).toBeNull()
   })
 })

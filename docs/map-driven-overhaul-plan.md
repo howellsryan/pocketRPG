@@ -200,32 +200,35 @@ Each phase is independently shippable and reversible against the live game.
   mutually exclusive (single `activeTask`).
   - **Phase 4 content pulled forward**: decision #4 was taken early — *all* startable
     content (monsters, gated skill actions, gather/agility/thieving/hunter, construction)
-    is mapped onto the placeholder 8-place geography by a deterministic auto-distributor,
+    is mapped onto the world geography by a deterministic auto-distributor,
     `scripts/seedWorldContent.cjs`, whose output is committed into `src/data/world.json`
     (`activities` are now `{ kind, ref }`). Re-run the script after adding content.
     Quests/clues stay ungated (Phase 5). Slayer/dungeoneering are intentionally unmapped
     (fall through to start normally).
   - **Facilities**: some skills are tied to a building rather than level-banded. Places
-    carry a `facilities` array and the world has a `facilities` metadata map. **Bank**
-    (cities + towns) offers construction, magic, thieving, prayer, firemaking, herblore,
-    fletching, crafting, cooking; **Furnace & Anvil** (a curated subset — Emberhold +
-    Saltmarket) offers smithing. Every action of a facility skill is available at every
-    place with that facility (`FACILITY_SKILLS`/`facilitiesFor` in the seed). Magic trains
-    via its own screen, so `MagicScreen` is also gated; the place hub shows facility chips.
-    Remaining `skill`-kind training (mining/woodcutting/fishing/runecraft), combat,
-    agility, hunter and gather tasks stay level-banded.
-- **Phase 4 — world authoring** (mapping done; geography pending): the content→place
-  schema and full mapping now exist (above). What remains is designing the *real* curated
-  geography (place count, names, tiers, edges) and re-running the seed (or hand-curating)
-  against it — the throwaway "Cinder Reach" sample is still placeholder.
+    carry an authored `facilities` array and the world has a `facilities` metadata map.
+    **Bank** offers construction, magic, thieving, prayer, firemaking, herblore, fletching,
+    crafting, cooking; **Furnace & Anvil** offers smithing. Every action of a facility
+    skill is available at every place with that facility (`FACILITY_SKILLS` in the seed,
+    which reads `place.facilities`). Magic trains via its own screen, so `MagicScreen` is
+    also gated; the place hub shows facility chips. Remaining `skill`-kind training
+    (mining/woodcutting/fishing/runecraft), combat, agility, hunter and gather tasks stay
+    level-banded — the seed orders places low→high (start place anchored first) so the
+    starter has the lowest-level monsters and cities hold the bosses.
+- **Phase 4 — world authoring** (done): real geography authored — the OSRS-inspired realm
+  of **Eldermoor**, 14 places (Lumbright starter; cities Varrick/Faloden/Ardounne; towns
+  Edgevale/Al-Karid/Seerhold/Brimhollow/Camlann/Port Sarin; villages Draynar/Barlock/
+  Catherra/Canifel), all reachable from the start. Geography + facilities are hand-authored
+  in `src/data/world.json`; `seedWorldContent.cjs` fills `activities` and reads facilities
+  rather than deriving them. Discovery/unlocks remain a later effort (§9.1).
 - **Phase 5 — active clues/quests**: multi-step place-bound clue/quest journeys, with
   the idle alternative preserved.
 - **Later**: discovery/unlocks, teleport (reserved for a future magic level).
 
 ## 9. Open design questions (resolve before the relevant phase)
 
-1. **Discovery/unlocks** vs. every place reachable immediately (the prototype's own open
-   question). Affects Phase 1 data + Phase 4.
+1. **Discovery/unlocks** vs. every place reachable immediately. **Phase 4 decision: all
+   reachable from the start** for now; progressive unlocks remain a later effort.
 2. **Partial travel on "turn back"** — snap to nearest passed node, or revert to origin?
 3. **On arrival** — ~~auto-start the action the player came for, or just open the hub?~~
    **Resolved (Phase 3): just open the hub.**
@@ -233,7 +236,8 @@ Each phase is independently shippable and reversible against the live game.
    walking?~~ **Resolved (Phase 3): mutually exclusive (single activeTask).**
 5. **Travel cost** — pure time, or also consume supplies/food/run-energy later?
 6. **Teleport** — reserved for a future magic level; out of scope for v1.
-7. **Real world scale** — how many places, and the canonical map (decision #4 deferred).
+7. **Real world scale** — ~~how many places, and the canonical map.~~ **Resolved
+   (Phase 4): 14 places, the realm of Eldermoor (OSRS-inspired). Expandable later.**
 
 ## 10. Live-game safety & risks
 

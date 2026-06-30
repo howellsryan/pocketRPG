@@ -177,7 +177,7 @@ export default function WorldMapScreen() {
       {/* top bar */}
       <div class="absolute top-0 left-0 right-0 z-30 flex items-center gap-3 px-4 py-2 bg-[var(--color-void-light)] border-b border-[var(--color-void-border)]">
         <div class="font-[var(--font-display)] text-[var(--color-gold-light)] font-bold text-lg">World Map</div>
-        <div class="text-[var(--color-parchment-dark)] text-xs italic font-[var(--font-body)]">Chart of the Cinder Reach</div>
+        <div class="text-[var(--color-parchment-dark)] text-xs italic font-[var(--font-body)]">Chart of Eldermoor</div>
         <div class="ml-auto flex items-center gap-2 px-3 py-1 rounded bg-[var(--color-void)] border border-[var(--color-void-border)]">
           <span class="text-base" aria-hidden="true">📍</span>
           <span class="flex flex-col leading-tight">

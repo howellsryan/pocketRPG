@@ -39,18 +39,9 @@ const FACILITY_SKILLS = {
   bank: ['construction', 'magic', 'thieving', 'prayer', 'firemaking', 'herblore', 'fletching', 'crafting', 'cooking'],
   furnace_anvil: ['smithing'],
 }
-const FACILITY_META = {
-  bank: { label: 'Bank', icon: '🏦' },
-  furnace_anvil: { label: 'Furnace & Anvil', icon: '🔨' },
-}
-// Facility placement rule for the PLACEHOLDER geography (real geography re-authors this):
-// banks at every city + town; furnace & anvil at a curated subset ("only some").
-const FURNACE_ANVIL_PLACES = new Set(['emberhold', 'saltmarket'])
+// A place's facilities are authored directly in world.json (`place.facilities`).
 function facilitiesFor(placeId, place) {
-  const f = []
-  if (place.tier === 'city' || place.tier === 'town') f.push('bank')
-  if (FURNACE_ANVIL_PLACES.has(placeId)) f.push('furnace_anvil')
-  return f
+  return Array.isArray(place.facilities) ? place.facilities : []
 }
 
 // Skills distributed by level band (kind 'skill'); the facility skills are excluded.
@@ -64,30 +55,26 @@ function skillActivities(skillId) {
 }
 
 // ---- level-band distribution ------------------------------------------------------
-const TIER_ORDER = ['hamlet', 'village', 'town', 'city']
-const placesByTier = {}
-for (const t of TIER_ORDER) placesByTier[t] = []
-for (const id of Object.keys(world.places)) {
-  const tier = world.places[id].tier
-  if (placesByTier[tier]) placesByTier[tier].push(id)
-}
-for (const t of TIER_ORDER) placesByTier[t].sort()
-
-function tierForPercentile(p) {
-  if (p < 0.40) return 'hamlet'
-  if (p < 0.65) return 'village'
-  if (p < 0.85) return 'town'
-  return 'city'
-}
+// Places ordered low -> high so low-level content lands in the easiest places and the
+// highest in cities. The START place is anchored first so a fresh character always has
+// the lowest-level monsters where they begin; the rest follow by tier rank then id.
+// Robust to whichever tiers a world actually uses.
+const TIER_RANK = { hamlet: 0, village: 1, town: 2, city: 3 }
+const placesOrdered = [
+  world.start,
+  ...Object.keys(world.places)
+    .filter((id) => id !== world.start)
+    .sort((a, b) => (TIER_RANK[world.places[a].tier] ?? 2) - (TIER_RANK[world.places[b].tier] ?? 2) || (a < b ? -1 : 1)),
+].filter((id) => world.places[id])
 
 // Assign a category across places by level rank. `items` -> [{ ref, level }].
 function distribute(kind, items, out) {
   const sorted = items.slice().sort((a, b) => (a.level - b.level) || (a.ref < b.ref ? -1 : a.ref > b.ref ? 1 : 0))
   const n = sorted.length
+  const N = placesOrdered.length
   sorted.forEach((item, i) => {
-    const p = n <= 1 ? 0 : i / (n - 1)
-    const pool = placesByTier[tierForPercentile(p)]
-    const placeId = pool[i % pool.length]
+    const p = n <= 1 ? 0 : i / n // 0..<1 rank
+    const placeId = placesOrdered[Math.min(N - 1, Math.floor(p * N))]
     out[placeId] = out[placeId] || []
     out[placeId].push({ kind, ref: item.ref })
   })
@@ -123,9 +110,9 @@ for (const id of Object.keys(world.places)) {
   }
 }
 
-// Write back: facilities + activities (deduped, sorted for stable diffs).
+// Write back: activities only (geography + facilities are authored in world.json).
+// Deduped, sorted for stable diffs.
 for (const id of Object.keys(world.places)) {
-  world.places[id].facilities = facilitiesFor(id, world.places[id])
   const seen = new Set()
   const acts = (out[id] || []).filter((a) => {
     const k = a.kind + '|' + a.ref
@@ -137,7 +124,6 @@ for (const id of Object.keys(world.places)) {
   world.places[id].activities = acts
 }
 
-world.facilities = FACILITY_META
 world.kinds = Object.assign({}, world.kinds, {
   skill: { label: 'Skill', color: 'var(--color-emerald-light)' },
   gather: { label: 'Gather', color: 'var(--color-emerald)' },
