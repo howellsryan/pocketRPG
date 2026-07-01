@@ -102,7 +102,7 @@ export default function HomeScreen({ onNavigate, onLogout, onManualSave, isCloud
                   aria-label="Save to cloud"
                   title={saving ? 'Saving…' : 'Force cloud save'}
                 >
-                  <GameIcon iconKey="save" color="#f0c040" size={24} title="Save" />
+                  <GameIcon iconKey="save" color="var(--fm-ember-deep)" size={24} title="Save" />
                 </button>
               )}
               <button
@@ -112,7 +112,7 @@ export default function HomeScreen({ onNavigate, onLogout, onManualSave, isCloud
                 aria-label="Log out"
                 title={isCloudAccount && loggingOut ? 'Saving…' : 'Log out'}
               >
-                <GameIcon iconKey="door" color="#e8d5a8" size={24} title="Log out" />
+                <GameIcon iconKey="door" color="var(--fm-ink-soft)" size={24} title="Log out" />
               </button>
             </div>
           </div>
@@ -131,7 +131,7 @@ export default function HomeScreen({ onNavigate, onLogout, onManualSave, isCloud
                     aria-label="Save to cloud"
                     title={saving ? 'Saving…' : 'Force cloud save'}
                   >
-                    <GameIcon iconKey="save" color="#f0c040" size={24} title="Save" />
+                    <GameIcon iconKey="save" color="var(--fm-ember-deep)" size={24} title="Save" />
                   </button>
                 )}
                 <button
@@ -141,7 +141,7 @@ export default function HomeScreen({ onNavigate, onLogout, onManualSave, isCloud
                   aria-label="Log out"
                   title={isCloudAccount && loggingOut ? 'Saving…' : 'Log out'}
                 >
-                  <GameIcon iconKey="door" color="#e8d5a8" size={24} title="Log out" />
+                  <GameIcon iconKey="door" color="var(--fm-ink-soft)" size={24} title="Log out" />
                 </button>
               </div>
               <span class="wstat">

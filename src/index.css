@@ -515,8 +515,8 @@ html, body, #app {
 .forge-shell .welcome-card__title { background-image: var(--fm-gilt-text); }
 .forge-shell .wstat { color: var(--fm-ink-soft); }
 .forge-shell .wstat b { color: var(--fm-ember); }
-.forge-shell .rune-btn { border-color: var(--fm-brass-lo); background: linear-gradient(180deg, #2a2622, #14110d); }
-.forge-shell .rune-btn:hover { border-color: var(--fm-brass); }
+.forge-shell .rune-btn { border-color: var(--fm-rule); background: var(--fm-parch-lo); box-shadow: var(--fm-parch-inset); }
+.forge-shell .rune-btn:hover { border-color: var(--fm-brass); background: var(--fm-parch-hi); }
 .forge-shell .skill-card { background: #e6d8b6; background-image: var(--fm-tex-parch); background-size: cover; border-color: var(--fm-rule); box-shadow: var(--fm-parch-inset); }
 .forge-shell .skill-card:hover { border-color: var(--fm-brass); }
 .forge-shell .skill-card__name span { color: var(--fm-ink); text-shadow: none; }
