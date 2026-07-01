@@ -35,10 +35,6 @@ export default function HelpScreen() {
             </button>
           </div>
         </Card>
-        {/* CC BY 3.0 requires visible attribution; this is its only in-game home. */}
-        <p class="text-xs text-[var(--color-parchment)] opacity-50 px-1">
-          Item icons by game-icons.net (CC BY 3.0). See the NOTICE file for full attribution.
-        </p>
       </div>
     </div>
   )
