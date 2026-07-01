@@ -169,13 +169,20 @@
   --color-mana: var(--fm-woad);
   --color-mana-light: #527bb0;
 
-  /* A flat --fm-soot fill reads as plain black next to the textured parchment
-     cards; give the screen itself the same warm-glow-on-iron treatment. Screens
-     that override their own background (e.g. .wm-hub, below) win over this. */
-  background:
-    radial-gradient(120% 90% at 50% 120%, rgba(194,65,12,0.10), transparent 55%),
-    radial-gradient(80% 60% at 50% -10%, rgba(201,162,39,0.06), transparent 60%),
-    var(--fm-soot);
+  /* Text that sits directly on the screen background (not inside a card) still
+     uses --color-parchment/-dark — flip those to ink too now that the page
+     itself is paper, not void-black. Anything already on a parchment card
+     (welcome-card, skill-card, cb-area, etc.) sets its own ink color already,
+     so this only affects text that was previously assumed to be on dark. */
+  --color-parchment: var(--fm-ink-soft);
+  --color-parchment-dark: var(--fm-ink-faint);
+
+  /* Forgemark is the *page* — parchment, not iron. Cards sit on it as a
+     slightly deeper/richer shade of the same paper (see .skill-card etc.),
+     not a different dark material. */
+  background-color: var(--fm-vellum);
+  background-image: var(--fm-tex-parch);
+  background-size: 600px;
 }
 
 /* ── Forgemark material classes: iron frames, parchment panels, rivets,
@@ -516,6 +523,7 @@ html, body, #app {
 .forge-shell .skill-card__level { color: var(--fm-ember-deep); text-shadow: none; }
 .forge-shell .xp-meta { color: var(--fm-ink-faint); }
 .forge-shell .xp-meta--max { color: var(--fm-ember); }
+.forge-shell .hero-total b { color: var(--fm-ember-deep); }
 
 /* Forgemark pilot — Combat screen: area/monster picker rows + stat tiles
    flip to parchment. The combat log keeps its dark terminal-feed look
@@ -524,7 +532,9 @@ html, body, #app {
 .forge-shell .cb-mon,
 .forge-shell .cb-kstat,
 .forge-shell .cb-stat,
-.forge-shell .cb-act:not(.is-on) {
+.forge-shell .cb-act:not(.is-on),
+.forge-shell .cb-idle:not(.is-on),
+.forge-shell .cb-styleseg:not(.is-on) {
   background: #e6d8b6; background-image: var(--fm-tex-parch); background-size: cover;
   border-color: var(--fm-rule); box-shadow: var(--fm-parch-inset);
 }
@@ -538,6 +548,21 @@ html, body, #app {
 .forge-shell .cb-kstat__v, .forge-shell .cb-stat__v { color: var(--fm-ember-deep); }
 .forge-shell .cb-act:not(.is-on) { color: var(--fm-ink); }
 .forge-shell .cb-mon__kc { color: var(--fm-ember-deep); }
+.forge-shell .cb-idle:not(.is-on), .forge-shell .cb-styleseg:not(.is-on) { color: var(--fm-ink); opacity: 1; }
+.forge-shell .cb-idle:not(.is-on):hover, .forge-shell .cb-styleseg:not(.is-on):hover { border-color: var(--fm-brass); }
+.forge-shell .cb-h1 { background-image: var(--fm-gilt-text); }
+
+/* Quick-actions panel (Food & Potions / Weapons / Armour tabs + item slots) —
+   was a translucent dark overlay (looks fine on a dark page, turns to grey
+   mush on parchment), so it needs the same paper treatment as everything else. */
+.forge-shell .cb-qa { background: var(--fm-parch-lo); box-shadow: var(--fm-parch-inset); border-color: var(--fm-rule); }
+.forge-shell .cb-qa__tab:not(.is-on) { background: rgba(43,33,20,0.05); color: var(--fm-ink-soft); opacity: 1; }
+.forge-shell .cb-qa__tab.is-on { color: var(--fm-ember-deep); }
+.forge-shell .cb-qa__tabn { color: var(--fm-ink-faint); opacity: 1; }
+.forge-shell .cb-qa__empty { color: var(--fm-ink-faint); opacity: 1; }
+.forge-shell .cb-slot:not(.is-active) { background: var(--fm-parch-hi); border-color: var(--fm-rule); }
+.forge-shell .cb-slot__qty, .forge-shell .cb-slot__tag { color: var(--fm-ink-faint); opacity: 1; }
+.forge-shell .cb-slot__name { color: var(--fm-ink); opacity: 1; }
 
 /* Forgemark pilot — World Map place hub: the sheet below the banner becomes a
    genuine parchment page (this screen is where the "Forgemark" identity
@@ -567,22 +592,22 @@ html, body, #app {
 .wm-cat-btn__label { flex: 1; min-width: 0; font-family: var(--fm-serif); font-weight: 700; font-size: 13.5px; color: var(--fm-ink); }
 .wm-cat-btn__count { font-family: var(--fm-num); font-size: 12px; font-weight: 600; color: var(--fm-ink-faint); flex-shrink: 0; }
 
-.wm-actmodal-panel { background-color: #1b1916; background-image: var(--fm-tex-iron); background-size: 280px; border-color: #000; }
-.wm-actmodal-content { background: radial-gradient(120% 90% at 50% 120%, rgba(194,65,12,0.08), transparent 55%), radial-gradient(80% 60% at 50% -10%, rgba(201,162,39,0.05), transparent 60%); }
-.wm-actmodal-count { font-family: var(--fm-num); font-size: 13px; color: var(--fm-brass-hi); }
+.wm-actmodal-panel { background-color: var(--fm-vellum); background-image: var(--fm-tex-parch); background-size: 280px; border-color: var(--fm-rule); }
+.wm-actmodal-content { background: radial-gradient(130% 120% at 50% 50%, transparent 62%, rgba(110,75,30,0.14)); }
+.wm-actmodal-count { font-family: var(--fm-num); font-size: 13px; color: var(--fm-ember-deep); }
 .wm-actmodal-group + .wm-actmodal-group { margin-top: 14px; }
 .wm-actmodal-grouphead {
   font-family: var(--fm-serif); font-weight: 700; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
-  color: var(--fm-brass-hi); margin-bottom: 6px;
+  color: var(--fm-ink-faint); margin-bottom: 6px;
 }
 .wm-actmodal-row {
   display: flex; align-items: center; gap: 10px; padding: 8px 4px;
-  border-bottom: 1px solid rgba(255,255,255,0.07); font-family: var(--fm-serif); font-size: 13.5px;
+  border-bottom: 1px solid var(--fm-rule); font-family: var(--fm-serif); font-size: 13.5px;
 }
 .wm-actmodal-row:last-child { border-bottom: 0; }
 .wm-actmodal-row__icon { flex-shrink: 0; }
-.wm-actmodal-row__name { flex: 1; min-width: 0; color: var(--fm-parch); }
-.wm-actmodal-row__lvl { font-family: var(--fm-num); font-size: 12.5px; font-weight: 600; color: var(--fm-brass-hi); flex-shrink: 0; }
+.wm-actmodal-row__name { flex: 1; min-width: 0; color: var(--fm-ink); }
+.wm-actmodal-row__lvl { font-family: var(--fm-num); font-size: 12.5px; font-weight: 600; color: var(--fm-ember-deep); flex-shrink: 0; }
 
 /* Emblem primitive */
 .skill-emblem { position: relative; pointer-events: none; }
