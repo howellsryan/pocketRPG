@@ -9,7 +9,14 @@ import { auditLog } from '../_lib/game/audit.js'
 import { callTool } from '../_lib/mcp/tools.js'
 import { KNOWLEDGE_CHUNKS } from '../_lib/chat/knowledge.js'
 import { buildIndex, searchKnowledge } from '../_lib/chat/retrieval.js'
-import { claimCharacterMessage, claimGlobalAiCall, CHAT_DAILY_LIMIT } from '../_lib/chat/quota.js'
+import {
+  claimCharacterMessage,
+  reserveMessageNeurons,
+  settleMessageNeurons,
+  usageMilliNeurons,
+  CHAT_DAILY_LIMIT,
+  CHAT_MESSAGE_RESERVE_MILLI,
+} from '../_lib/chat/quota.js'
 import {
   CHAT_MODEL,
   CHAT_MAX_TOOL_ROUNDS,
@@ -66,12 +73,22 @@ function answerText(res) {
   return content.replace(/<think>[\s\S]*?<\/think>/g, '').trim()
 }
 
+// Accumulate a call's reported token usage into per-message neuron stats.
+// A call that doesn't report usage marks the message unknown so the endpoint
+// keeps its full worst-case reserve instead of refunding.
+function trackUsage(stats, res) {
+  const usage = res?.usage
+  if (usage && typeof usage.prompt_tokens === 'number') stats.milliNeurons += usageMilliNeurons(usage)
+  else stats.usageUnknown = true
+}
+
 // Run the Workers AI tool loop. Tool calls are restricted to the read-only
 // allowlist and character_id is pinned to the authenticated character.
-async function runAiChat(env, messages, { authorization, identity, characterId }) {
+async function runAiChat(env, messages, { authorization, identity, characterId, stats }) {
   const tools = chatToolDefs()
   for (let round = 0; round < CHAT_MAX_TOOL_ROUNDS; round++) {
     const res = await env.AI.run(CHAT_MODEL, { messages, tools, ...CHAT_RUN_OPTS })
+    trackUsage(stats, res)
     const message = res?.choices?.[0]?.message
     const calls = (Array.isArray(message?.tool_calls) ? message.tool_calls : [])
       .filter((c) => c?.type === 'function' && c.function)
@@ -100,6 +117,7 @@ async function runAiChat(env, messages, { authorization, identity, characterId }
   // Tool budget exhausted or empty response — one last call with no tools so
   // the model must answer from what it has.
   const final = await env.AI.run(CHAT_MODEL, { messages, ...CHAT_RUN_OPTS })
+  trackUsage(stats, final)
   return answerText(final) || 'Sorry, I had trouble answering that — try rephrasing your PocketRPG question.'
 }
 
@@ -145,14 +163,21 @@ export async function onRequestPost({ request, env }) {
 
   let answer
   let mode = 'ai'
-  const aiAvailable = env.AI && (await claimGlobalAiCall(env, dayKey))
+  const aiAvailable = env.AI && (await reserveMessageNeurons(env, dayKey))
   if (!aiAvailable) {
     answer = retrievalOnlyAnswer(chunks)
     mode = 'retrieval'
   } else {
+    const stats = { milliNeurons: 0, usageUnknown: false }
     try {
       const messages = buildMessages({ question, history: body?.history, chunks })
-      answer = await runAiChat(env, messages, { authorization, identity: auth.identity, characterId })
+      answer = await runAiChat(env, messages, { authorization, identity: auth.identity, characterId, stats })
+      // Refund the unused slice of the worst-case reserve. Skipped when any
+      // call didn't report usage — keeping the full reserve only makes the
+      // budget more conservative, never billable.
+      if (!stats.usageUnknown) {
+        await settleMessageNeurons(env, dayKey, CHAT_MESSAGE_RESERVE_MILLI - stats.milliNeurons)
+      }
     } catch (err) {
       console.error('[PocketRPG][chat] AI call failed:', err?.message || err)
       answer = retrievalOnlyAnswer(chunks)
