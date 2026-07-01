@@ -4,11 +4,12 @@
 
 import { TOOL_SCHEMAS } from '../mcp/schema.js'
 
-// Workers AI model to use. One constant so it's swappable (e.g. to
-// '@cf/meta/llama-3.3-70b-instruct-fp8-fast' for quality, or a paid provider
-// later). Chosen for cost: smallest function-calling-capable instruct model on
-// the free allocation.
-export const CHAT_MODEL = '@cf/meta/llama-3.1-8b-instruct'
+// Workers AI model to use. One constant so it's swappable (e.g. to a larger
+// model for quality, or a paid provider later). Chosen for cost: cheapest
+// current function-calling-capable model ($0.06/M in, $0.40/M out) —
+// Cloudflare's recommended fast tool-calling replacement after
+// '@cf/meta/llama-3.1-8b-instruct' was deprecated 2026-05-30.
+export const CHAT_MODEL = '@cf/zai-org/glm-4.7-flash'
 
 export const CHAT_MAX_TOOL_ROUNDS = 3
 export const CHAT_MAX_ANSWER_TOKENS = 600
