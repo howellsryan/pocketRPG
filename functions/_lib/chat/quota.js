@@ -1,5 +1,4 @@
-// Chatbot usage quotas (migrations 0027 + 0028). Two layers keep the chatbot
-// at £0:
+// Chatbot usage quotas (migration 0027). Two layers keep the chatbot at £0:
 //   1. Per-character daily message cap — hard refusal once exhausted.
 //   2. Global daily neuron budget — Workers AI bills in neurons ($0.011/1k)
 //      and every plan includes 10,000 free per day. Each message atomically
