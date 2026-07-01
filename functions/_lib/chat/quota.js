@@ -16,12 +16,14 @@ export const CHAT_DAILY_LIMIT = 30
 export const MILLI_NEURONS_PER_INPUT_TOKEN = 5.46
 export const MILLI_NEURONS_PER_OUTPUT_TOKEN = 36.37
 
-// 9,500 of the 10,000 free daily neurons — the margin absorbs estimation
-// drift and any other Workers AI use on the account.
-export const CHAT_NEURON_BUDGET_MILLI = 9_500_000
-// Worst-case message: 4 model calls, every context and output limit maxed
-// (~520 neurons), rounded up.
-export const CHAT_MESSAGE_RESERVE_MILLI = 550_000
+// Budget + one in-flight worst-case reserve must stay ≤ the 10,000 free
+// daily neurons (10,000,000 milli); the gap also absorbs estimation drift
+// and any other Workers AI use on the account.
+export const CHAT_NEURON_BUDGET_MILLI = 9_200_000
+// Worst-case message: 4 model calls with every context and output limit
+// maxed. tests/chatQuota.test.ts derives this bound from the CHAT_MAX_*
+// constants — raise it there first if a limit grows.
+export const CHAT_MESSAGE_RESERVE_MILLI = 750_000
 
 // Atomically claim one message for the character's daily allowance.
 // Returns { allowed, remaining }.
@@ -68,16 +70,31 @@ export async function reserveMessageNeurons(
   return (res?.meta?.changes ?? 0) > 0
 }
 
-// Refund the unused part of a message's reserve once actual usage is known.
-// Best-effort: a failed refund only makes the cap more conservative.
-export async function settleMessageNeurons(env, dayKey, refundMilli) {
-  const refund = Math.floor(refundMilli)
-  if (!(refund > 0)) return
+// Replace a message's reserve with its actual usage once known: refunds the
+// unused part, or charges the overage if usage somehow exceeded the reserve
+// (belt-and-braces — the reserve is meant to be a true upper bound). A failed
+// refund only makes the cap more conservative.
+export async function settleMessageNeurons(env, dayKey, reserveMilli, actualMilli) {
+  const delta = Math.ceil(actualMilli) - reserveMilli
+  if (delta === 0) return
   try {
-    await env.DB.prepare('UPDATE chat_neuron_usage SET milli_neurons = MAX(0, milli_neurons - ?) WHERE day_key = ?')
-      .bind(refund, dayKey)
+    await env.DB.prepare('UPDATE chat_neuron_usage SET milli_neurons = MAX(0, milli_neurons + ?) WHERE day_key = ?')
+      .bind(delta, dayKey)
       .run()
   } catch (err) {
     console.error('[PocketRPG][chat] neuron settle failed:', err?.message || err)
+  }
+}
+
+// Give back a character's daily message when the answer degraded to
+// retrieval-only — the player didn't get an AI answer, so the question
+// shouldn't count against their allowance.
+export async function refundCharacterMessage(env, characterId, dayKey) {
+  try {
+    await env.DB.prepare('UPDATE chat_usage SET count = MAX(0, count - 1) WHERE character_id = ? AND day_key = ?')
+      .bind(characterId, dayKey)
+      .run()
+  } catch (err) {
+    console.error('[PocketRPG][chat] message refund failed:', err?.message || err)
   }
 }
