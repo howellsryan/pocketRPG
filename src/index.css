@@ -21,6 +21,7 @@
   --color-mana: #2c5aa0;
   --color-mana-light: #3498db;
   --color-void: #0f0f0f;
+  --color-void-dark: #000000;
   --color-void-light: #1a1a1a;
   --color-void-lighter: #252525;
   --color-void-border: #333;
@@ -159,6 +160,7 @@
      used everywhere else; --color-void (Panel, nested/sunken) a shade deeper;
      --color-void-lighter a lighter "raised" tone. All paper, no iron. */
   --color-void: var(--fm-parch-lo);
+  --color-void-dark: var(--fm-ink);
   --color-void-light: #e6d8b6;
   --color-void-lighter: var(--fm-parch-hi);
   --color-void-border: var(--fm-rule);

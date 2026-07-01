@@ -1747,7 +1747,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
         <div class="flex gap-1.5 mb-2">
           <button
             onClick={() => setIdleSetupMode('food')}
-            class="flex-1 py-1.5 rounded-lg text-[10px] font-semibold bg-[#1a1a1a] text-[var(--color-parchment)] active:bg-[#2a2a2a] flex items-center justify-center gap-1.5"
+            class="flex-1 py-1.5 rounded-lg text-[10px] font-semibold bg-[var(--color-void-light)] text-[var(--color-parchment)] active:bg-[var(--color-void-lighter)] flex items-center justify-center gap-1.5"
             title="Configure food the simulator can use during idle/skip combat"
           >
             <GameIcon iconKey="meat" color={idleCombatSetup?.food?.length > 0 ? '#7ce88a' : '#9b978c'} size={14} /> Idle Eat
@@ -1757,7 +1757,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           </button>
           <button
             onClick={() => setIdleSetupMode('prayer')}
-            class="flex-1 py-1.5 rounded-lg text-[10px] font-semibold bg-[#1a1a1a] text-[var(--color-parchment)] active:bg-[#2a2a2a] flex items-center justify-center gap-1.5"
+            class="flex-1 py-1.5 rounded-lg text-[10px] font-semibold bg-[var(--color-void-light)] text-[var(--color-parchment)] active:bg-[var(--color-void-lighter)] flex items-center justify-center gap-1.5"
             title="Configure prayers the simulator should use during idle/skip combat"
           >
             <GameIcon iconKey="prayer" color={(idleCombatSetup?.prayers?.protectionPrayerId || idleCombatSetup?.prayers?.combatPrayerId) ? '#7ce88a' : '#9b978c'} size={14} /> Idle Pray
@@ -1767,7 +1767,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           </button>
           <button
             onClick={() => setIdleSetupMode('potion')}
-            class="flex-1 py-1.5 rounded-lg text-[10px] font-semibold bg-[#1a1a1a] text-[var(--color-parchment)] active:bg-[#2a2a2a] flex items-center justify-center gap-1.5"
+            class="flex-1 py-1.5 rounded-lg text-[10px] font-semibold bg-[var(--color-void-light)] text-[var(--color-parchment)] active:bg-[var(--color-void-lighter)] flex items-center justify-center gap-1.5"
             title="Configure potions the simulator can drink during idle/skip combat"
           >
             <GameIcon iconKey="potion_ball" color={idleCombatSetup?.potions?.length > 0 ? '#7ce88a' : '#9b978c'} size={14} /> Idle Potion
@@ -1786,7 +1786,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                 key={s}
                 onClick={() => updateCombatStance(s)}
                 class={`flex-1 py-1.5 rounded-lg text-[10px] font-semibold capitalize transition-colors flex items-center justify-center gap-1
-                  ${combatStance === s ? 'bg-[var(--color-gold-dim)] text-white' : 'bg-[#1a1a1a] text-[var(--color-parchment)] opacity-50'}`}
+                  ${combatStance === s ? 'bg-[var(--color-gold-dim)] text-white' : 'bg-[var(--color-void-light)] text-[var(--color-parchment)] opacity-50'}`}
               >
                 <GameIcon iconKey={art.icon} color={art.accent} size={14} />
                 {s}
@@ -1813,7 +1813,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                 <button
                   type="button"
                   onClick={() => toggleSection(category.key)}
-                  class="w-full flex items-center gap-2 mb-2 px-1 py-1 text-left rounded-lg active:bg-[#1a1a1a]"
+                  class="w-full flex items-center gap-2 mb-2 px-1 py-1 text-left rounded-lg active:bg-[var(--color-void-light)]"
                 >
                   <SkillEmblem iconKey={categoryArt.icon} accent={categoryArt.accent} size={24} glow={0} />
                   <span class="text-xs font-semibold text-[var(--color-parchment)] uppercase tracking-wider opacity-60">{category.label}</span>
@@ -1839,9 +1839,9 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                         disabled={isLocked}
                         title={isLocked && bossReq.locked ? bossReq.reason : ''}
                         class={`flex-1 flex items-center justify-between p-3 rounded-xl border transition-colors
-                          ${isOnTask ? 'bg-[#1a1a08] border-[#3a3a10]' :
-                            isLocked ? 'bg-[#111] border-[#1a1a1a] opacity-50' :
-                            'bg-[#1a1a1a] border-[#2a2a2a] active:bg-[#222]'}`}
+                          ${isOnTask ? 'bg-[var(--fm-parch-hi)] border-[var(--color-gold-dim)]' :
+                            isLocked ? 'bg-[var(--color-void)] border-[var(--color-void-light)] opacity-50' :
+                            'bg-[var(--color-void-light)] border-[var(--color-void-border)] active:bg-[var(--color-void-lighter)]'}`}
                       >
                         <div class="flex items-center gap-3">
                           <SkillEmblem iconKey={getMonsterArt(monster, category.key).icon} accent={getMonsterArt(monster, category.key).accent} size={36} glow={0} />
@@ -1906,7 +1906,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           <button
             type="button"
             onClick={() => toggleSection('raids')}
-            class="w-full flex items-center gap-2 mb-3 px-1 py-1 text-left rounded-lg active:bg-[#1a1a1a]"
+            class="w-full flex items-center gap-2 mb-3 px-1 py-1 text-left rounded-lg active:bg-[var(--color-void-light)]"
           >
             <SkillEmblem iconKey="temple_gate" accent="#9b6cff" size={24} glow={0} />
             <span class="text-xs font-semibold text-[var(--color-gold)] uppercase tracking-wider">Raids</span>
@@ -1928,7 +1928,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                     disabled={isRaidLocked}
                     title={isRaidLocked ? raidLockReason : ''}
                     class={`flex-1 p-3 rounded-xl border transition-colors text-left flex items-center justify-between
-                      ${isRaidLocked ? 'bg-[#111] border-[#1a1a1a] opacity-50' : 'bg-[#1a1a1a] border-[#2a2a2a] active:bg-[#222]'}`}
+                      ${isRaidLocked ? 'bg-[var(--color-void)] border-[var(--color-void-light)] opacity-50' : 'bg-[var(--color-void-light)] border-[var(--color-void-border)] active:bg-[var(--color-void-lighter)]'}`}
                   >
                     <div class="flex-1 flex items-center gap-2">
                       <SkillEmblem iconKey={getRaidArt(raid.id).icon} accent={getRaidArt(raid.id).accent} size={36} glow={0} />
@@ -2018,7 +2018,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             </h3>
             <button
               onClick={() => setSelectedMonsterInfo(null)}
-              class="w-6 h-6 flex items-center justify-center rounded-lg bg-[#222] text-[var(--color-parchment)] hover:bg-[#333] active:bg-[#444] transition-colors"
+              class="w-6 h-6 flex items-center justify-center rounded-lg bg-[var(--color-void-light)] text-[var(--color-parchment)] hover:bg-[var(--color-void-lighter)] active:bg-[var(--color-void-border)] transition-colors"
               title="Close"
             >
               ✕
@@ -2027,7 +2027,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           <div class="space-y-4 max-h-96 overflow-y-auto">
             <div>
               <h4 class="text-xs font-semibold text-[var(--color-gold-dim)] uppercase tracking-wider mb-2 opacity-70">Combat Stats</h4>
-              <div class="bg-[#111] rounded-lg p-3 space-y-1">
+              <div class="bg-[var(--color-void)] rounded-lg p-3 space-y-1">
                 <div class="flex justify-between text-[11px] text-[var(--color-parchment)]"><span>Combat Level</span><span class="font-[var(--font-mono)] text-[var(--color-gold)]">{selectedMonsterInfo.combatLevel}</span></div>
                 <div class="flex justify-between text-[11px] text-[var(--color-parchment)]"><span>HP</span><span class="font-[var(--font-mono)] text-[var(--color-hp-green)]">{selectedMonsterInfo.hitpoints}</span></div>
                 <div class="flex justify-between text-[11px] text-[var(--color-parchment)]"><span>Attack</span><span class="font-[var(--font-mono)]">{selectedMonsterInfo.stats.attack}</span></div>
@@ -2039,7 +2039,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             </div>
             <div>
               <h4 class="text-xs font-semibold text-[var(--color-gold-dim)] uppercase tracking-wider mb-2 opacity-70">Defence Bonuses</h4>
-              <div class="bg-[#111] rounded-lg p-3 space-y-1">
+              <div class="bg-[var(--color-void)] rounded-lg p-3 space-y-1">
                 {['stab', 'slash', 'crush', 'magic', 'ranged'].map(style => (
                   <div key={style} class="flex justify-between text-[11px] text-[var(--color-parchment)]">
                     <span class="capitalize">{style}</span>
@@ -2057,7 +2057,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                   {[...(selectedMonsterInfo.drops || []), ...getMonsterSeedDrops(selectedMonsterInfo)].map(drop => {
                     const item = itemsData[drop.itemId]
                     return (
-                      <div key={drop.itemId} class="bg-[#111] rounded-lg p-2">
+                      <div key={drop.itemId} class="bg-[var(--color-void)] rounded-lg p-2">
                         <div class="flex items-start justify-between gap-2">
                           <div class="text-left flex-1 min-w-0">
                             <div class="text-[11px] font-semibold text-[var(--color-parchment)]">{item?.icon || '📦'} {item?.name || drop.itemId}</div>
@@ -2098,7 +2098,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             </h3>
             <button
               onClick={() => setSelectedRaidInfo(null)}
-              class="w-6 h-6 flex items-center justify-center rounded-lg bg-[#222] text-[var(--color-parchment)] hover:bg-[#333] active:bg-[#444] transition-colors"
+              class="w-6 h-6 flex items-center justify-center rounded-lg bg-[var(--color-void-light)] text-[var(--color-parchment)] hover:bg-[var(--color-void-lighter)] active:bg-[var(--color-void-border)] transition-colors"
               title="Close"
             >
               ✕
@@ -2115,7 +2115,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                   const boss = monstersData[bossId]
                   if (!boss) return null
                   return (
-                    <div key={bossId} class="bg-[#111] rounded-lg p-2 flex items-center justify-between">
+                    <div key={bossId} class="bg-[var(--color-void)] rounded-lg p-2 flex items-center justify-between">
                       <div class="flex items-center gap-2">
                         <span class="text-base">{MONSTER_ICONS[bossId] || '👹'}</span>
                         <div>
@@ -2136,7 +2136,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                   {selectedRaidInfo.rewards.always?.map(drop => {
                     const item = itemsData[drop.itemId]
                     return (
-                      <div key={drop.itemId} class="bg-[#111] rounded-lg p-2 flex items-center justify-between">
+                      <div key={drop.itemId} class="bg-[var(--color-void)] rounded-lg p-2 flex items-center justify-between">
                         <div class="text-[11px] text-[var(--color-parchment)]">{item?.icon || '📦'} {item?.name || drop.itemId}</div>
                         <div class="text-[9px] text-[var(--color-parchment)] opacity-50">
                           {formatDropChance(drop.chance)}
@@ -2146,7 +2146,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                     )
                   })}
                   {selectedRaidInfo.rewards.unique && (
-                    <div class="bg-[#1a1208] border border-[#3a2a10] rounded-lg p-2 mt-1">
+                    <div class="bg-[var(--fm-parch-hi)] border border-[var(--color-gold-dim)] rounded-lg p-2 mt-1">
                       <div class="text-[10px] font-semibold text-[var(--color-gold)] mb-1">
                         ✨ Unique Drop ({(selectedRaidInfo.rewards.unique.chance * 100).toFixed(1)}% chance)
                       </div>
@@ -2220,7 +2220,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
 
       {/* Raid progress indicator */}
       {combat.raid && (
-        <div class="mb-2 bg-[#111] border border-[#2a2a2a] rounded-lg px-3 py-2">
+        <div class="mb-2 bg-[var(--color-void)] border border-[var(--color-void-border)] rounded-lg px-3 py-2">
           <div class="flex items-center justify-between mb-1.5">
             <span class="text-[10px] font-semibold text-[var(--color-gold)]">{raidsData[combat.raid.raidId]?.icon} {raidsData[combat.raid.raidId]?.name || 'Raid'}</span>
             <span class="text-[10px] font-[var(--font-mono)] text-[var(--color-parchment)] opacity-60">
@@ -2234,7 +2234,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                 class={`flex-1 h-1.5 rounded-full ${
                   i < combat.raid.currentBossIndex ? 'bg-[var(--color-hp-green)]' :
                   i === combat.raid.currentBossIndex ? 'bg-[var(--color-gold)]' :
-                  'bg-[#333]'
+                  'bg-[var(--color-void-border)]'
                 }`}
                 title={monstersData[bossId]?.name || bossId}
               />
@@ -2260,7 +2260,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
         <div class="mb-2">
           <div class="flex items-center justify-between mb-0.5">
             <div class="text-[10px] text-[var(--color-parchment)] opacity-50">🙏 Prayer</div>
-            <div class="text-[10px] font-[var(--font-mono)] text-[#7ec8ff]">
+            <div class="text-[10px] font-[var(--font-mono)] text-[var(--color-mana)]">
               {Math.ceil(combat.prayerPoints || 0)}/{combat.maxPrayerPoints}
             </div>
           </div>
@@ -2275,7 +2275,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
 
       {/* Slayer task indicator */}
       {doesSlayerTaskMatchMonster(slayerTask?.monsterId, combat.monster.id) && (
-        <div class="mb-2 bg-[#1a1a08] border border-[#3a3a10] rounded-lg px-3 py-1.5 flex items-center justify-between">
+        <div class="mb-2 bg-[var(--fm-parch-hi)] border border-[var(--color-gold-dim)] rounded-lg px-3 py-1.5 flex items-center justify-between">
           <span class="text-[10px] text-yellow-400 font-semibold">💀 Slayer Task</span>
           <span class="text-[10px] font-[var(--font-mono)] text-yellow-400">
             {slayerTask.monstersRemaining} / {slayerTask.totalCount} remaining
@@ -2412,10 +2412,10 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                       title={`${prayer.name} · Lv ${prayer.level}`}
                       class={`px-1 py-1.5 rounded-md border text-center transition-colors ${
                         isActive
-                          ? 'bg-[#2a4a2a] border-[var(--color-gold)]'
+                          ? 'bg-[var(--fm-parch-hi)] border-[var(--color-gold)]'
                           : canUse
-                            ? 'bg-[#1a2a1a] border-[#2a4a2a] active:bg-[#2a3a2a]'
-                            : 'bg-[#111] border-[#1a1a1a] opacity-30 cursor-default'
+                            ? 'bg-[var(--fm-parch-hi)] border-[var(--color-emerald)] active:bg-[var(--fm-parch)]'
+                            : 'bg-[var(--color-void)] border-[var(--color-void-light)] opacity-30 cursor-default'
                       }`}
                     >
                       <div class="text-[12px] leading-none">{prayer.icon}</div>
@@ -2437,10 +2437,10 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                       title={`${prayer.name} · Lv ${prayer.level}\n${prayer.description}`}
                       class={`px-1 py-1 rounded-md border text-center transition-colors ${
                         isActive
-                          ? 'bg-[#2a3a1a] border-[var(--color-gold)]'
+                          ? 'bg-[var(--fm-parch-hi)] border-[var(--color-gold)]'
                           : canUse
-                            ? 'bg-[#1a2a1a] border-[#2a4a2a] active:bg-[#2a3a2a]'
-                            : 'bg-[#111] border-[#1a1a1a] opacity-30 cursor-default'
+                            ? 'bg-[var(--fm-parch-hi)] border-[var(--color-emerald)] active:bg-[var(--fm-parch)]'
+                            : 'bg-[var(--color-void)] border-[var(--color-void-light)] opacity-30 cursor-default'
                       }`}
                     >
                       {styled ? (
@@ -2473,12 +2473,12 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
         const energy = combat.specialAttackEnergy || 0
         const canSpec = energy >= weapon.specialAttack.energyCost
         return (
-          <div class="mb-2 bg-[#111] rounded-lg px-3 py-2">
+          <div class="mb-2 bg-[var(--color-void)] rounded-lg px-3 py-2">
             <div class="flex items-center justify-between mb-1">
               <span class="text-[10px] text-yellow-400 font-semibold">⚡ Special Attack</span>
               <span class="text-[10px] font-[var(--font-mono)] text-yellow-400">{energy}%</span>
             </div>
-            <div class="h-2 rounded-full bg-[#222] overflow-hidden">
+            <div class="h-2 rounded-full bg-[var(--color-void-light)] overflow-hidden">
               <div
                 class="h-full rounded-full transition-all duration-300"
                 style={{ width: `${energy}%`, background: canSpec ? '#eab308' : '#78530a' }}
@@ -2492,7 +2492,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       })()}
 
       {/* Combat log */}
-      <div ref={logRef} class="flex-1 bg-[#111] rounded-lg border border-[#222] p-2 overflow-y-auto mb-2 min-h-[100px]">
+      <div ref={logRef} class="flex-1 bg-[var(--color-void)] rounded-lg border border-[var(--color-void-light)] p-2 overflow-y-auto mb-2 min-h-[100px]">
         {log.map((entry, i) => (
           <div key={i} class={`text-[11px] font-[var(--font-mono)] py-0.5
             ${entry.type === 'hit' ? 'text-[var(--color-emerald-light)]' :
@@ -2512,7 +2512,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
 
       {/* Kill stats */}
       {fightStartedAt && (
-        <div class="flex-shrink-0 flex justify-between bg-[#111] rounded-lg px-3 py-2 mb-2 text-[11px]">
+        <div class="flex-shrink-0 flex justify-between bg-[var(--color-void)] rounded-lg px-3 py-2 mb-2 text-[11px]">
           <span class="text-[var(--color-parchment)] opacity-50">Kills</span>
           <span class="font-[var(--font-mono)] text-[var(--color-gold)]">{killCount}</span>
           <span class="text-[var(--color-parchment)] opacity-50">Kills/hr</span>
@@ -2639,14 +2639,14 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
 
               {/* Raid progress */}
               {combat.raid && (
-                <div class="mb-2 bg-[#111] border border-[#2a2a2a] rounded-lg px-3 py-2">
+                <div class="mb-2 bg-[var(--color-void)] border border-[var(--color-void-border)] rounded-lg px-3 py-2">
                   <div class="flex items-center justify-between mb-1.5">
                     <span class="text-[10px] font-semibold text-[var(--color-gold)]">{raidsData[combat.raid.raidId]?.name || 'Raid'}</span>
                     <span class="text-[10px] font-[var(--font-mono)] text-[var(--color-parchment)] opacity-60">Boss {combat.raid.currentBossIndex + 1}/{combat.raid.bosses.length}</span>
                   </div>
                   <div class="flex gap-1">
                     {combat.raid.bosses.map((bossId, i) => (
-                      <div key={bossId} class={`flex-1 h-1.5 rounded-full ${i < combat.raid.currentBossIndex ? 'bg-[var(--color-hp-green)]' : i === combat.raid.currentBossIndex ? 'bg-[var(--color-gold)]' : 'bg-[#333]'}`} title={monstersData[bossId]?.name || bossId} />
+                      <div key={bossId} class={`flex-1 h-1.5 rounded-full ${i < combat.raid.currentBossIndex ? 'bg-[var(--color-hp-green)]' : i === combat.raid.currentBossIndex ? 'bg-[var(--color-gold)]' : 'bg-[var(--color-void-border)]'}`} title={monstersData[bossId]?.name || bossId} />
                     ))}
                   </div>
                 </div>
@@ -2697,7 +2697,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
 
               {/* Slayer task indicator */}
               {doesSlayerTaskMatchMonster(slayerTask?.monsterId, m.id) && (
-                <div class="mb-2 bg-[#1a1a08] border border-[#3a3a10] rounded-lg px-3 py-1.5 flex items-center justify-between">
+                <div class="mb-2 bg-[var(--fm-parch-hi)] border border-[var(--color-gold-dim)] rounded-lg px-3 py-1.5 flex items-center justify-between">
                   <span class="text-[10px] text-yellow-400 font-semibold">💀 Slayer Task</span>
                   <span class="text-[10px] font-[var(--font-mono)] text-yellow-400">{slayerTask.monstersRemaining} / {slayerTask.totalCount} remaining</span>
                 </div>
@@ -2829,7 +2829,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             <h3 class="font-[var(--font-display)] text-base font-bold text-[var(--color-gold)]">Choose Potion</h3>
             <button
               onClick={() => setShowPotionModal(false)}
-              class="w-6 h-6 flex items-center justify-center rounded-lg bg-[#222] text-[var(--color-parchment)] hover:bg-[#333] active:bg-[#444] transition-colors"
+              class="w-6 h-6 flex items-center justify-center rounded-lg bg-[var(--color-void-light)] text-[var(--color-parchment)] hover:bg-[var(--color-void-lighter)] active:bg-[var(--color-void-border)] transition-colors"
               title="Close"
             >
               ✕
@@ -2853,7 +2853,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                   <button
                     key={slot.itemId}
                     onClick={() => handlePotion(slot.itemId)}
-                    class="w-full p-3 rounded-lg border bg-[#1a2a1a] border-[#2a4a2a] active:bg-[#2a3a2a] transition-colors"
+                    class="w-full p-3 rounded-lg border bg-[var(--fm-parch-hi)] border-[var(--color-emerald)] active:bg-[var(--fm-parch)] transition-colors"
                   >
                     <div class="flex items-center justify-between">
                       <div class="text-left flex-1">
@@ -2912,7 +2912,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             <h3 class="font-[var(--font-display)] text-base font-bold text-[var(--color-gold)]">Swap Gear</h3>
             <button
               onClick={() => setShowEquipmentModal(false)}
-              class="w-6 h-6 flex items-center justify-center rounded-lg bg-[#222] text-[var(--color-parchment)] hover:bg-[#333] active:bg-[#444] transition-colors"
+              class="w-6 h-6 flex items-center justify-center rounded-lg bg-[var(--color-void-light)] text-[var(--color-parchment)] hover:bg-[var(--color-void-lighter)] active:bg-[var(--color-void-border)] transition-colors"
               title="Close"
             >
               ✕
@@ -2953,8 +2953,8 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                         onClick={() => handleEquipItem(slot.itemId)}
                         class={`p-1.5 rounded-lg border transition-colors flex flex-col items-center ${
                           equipped
-                            ? 'bg-[#2a3a2a] border-[#4a8a4a]'
-                            : 'bg-[#1a2a1a] border-[#2a4a2a] active:bg-[#2a3a2a]'
+                            ? 'bg-[var(--fm-parch-hi)] border-[var(--color-emerald-light)]'
+                            : 'bg-[var(--fm-parch-hi)] border-[var(--color-emerald)] active:bg-[var(--fm-parch)]'
                         }`}
                       >
                         <div class="text-lg leading-none">{item.icon}</div>
@@ -3086,7 +3086,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             </h3>
             <button
               onClick={() => setSelectedMonsterInfo(null)}
-              class="w-6 h-6 flex items-center justify-center rounded-lg bg-[#222] text-[var(--color-parchment)] hover:bg-[#333] active:bg-[#444] transition-colors"
+              class="w-6 h-6 flex items-center justify-center rounded-lg bg-[var(--color-void-light)] text-[var(--color-parchment)] hover:bg-[var(--color-void-lighter)] active:bg-[var(--color-void-border)] transition-colors"
               title="Close"
             >
               ✕
@@ -3097,7 +3097,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             {/* Combat Stats */}
             <div>
               <h4 class="text-xs font-semibold text-[var(--color-gold-dim)] uppercase tracking-wider mb-2 opacity-70">Combat Stats</h4>
-              <div class="bg-[#111] rounded-lg p-3 space-y-1">
+              <div class="bg-[var(--color-void)] rounded-lg p-3 space-y-1">
                 <div class="flex justify-between text-[11px] text-[var(--color-parchment)]">
                   <span>Combat Level</span>
                   <span class="font-[var(--font-mono)] text-[var(--color-gold)]">{selectedMonsterInfo.combatLevel}</span>
@@ -3132,7 +3132,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             {/* Defence Bonuses */}
             <div>
               <h4 class="text-xs font-semibold text-[var(--color-gold-dim)] uppercase tracking-wider mb-2 opacity-70">Defence Bonuses</h4>
-              <div class="bg-[#111] rounded-lg p-3 space-y-1">
+              <div class="bg-[var(--color-void)] rounded-lg p-3 space-y-1">
                 <div class="flex justify-between text-[11px] text-[var(--color-parchment)]">
                   <span>Stab</span>
                   <span class={`font-[var(--font-mono)] ${selectedMonsterInfo.defenceBonus.stab >= 0 ? 'text-green-400' : 'text-red-400'}`}>
@@ -3174,7 +3174,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                   {[...(selectedMonsterInfo.drops || []), ...getMonsterSeedDrops(selectedMonsterInfo)].map(drop => {
                     const item = itemsData[drop.itemId]
                     return (
-                      <div key={drop.itemId} class="bg-[#111] rounded-lg p-2">
+                      <div key={drop.itemId} class="bg-[var(--color-void)] rounded-lg p-2">
                         <div class="flex items-start justify-between gap-2">
                           <div class="text-left flex-1 min-w-0">
                             <div class="text-[11px] font-semibold text-[var(--color-parchment)]">

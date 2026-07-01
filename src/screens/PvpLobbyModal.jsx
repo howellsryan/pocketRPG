@@ -415,7 +415,7 @@ export default function PvpLobbyModal({ onClose, getSnapshot }) {
       {/* Death warning banner */}
       <div class="mb-3 p-3 rounded-lg bg-[#2a1010] border border-[var(--color-blood)]">
         <div class="text-xs font-bold text-[var(--color-blood-light)] mb-1">⚠️ Risk warning</div>
-        <div class="text-[11px] text-[var(--color-parchment)] leading-snug">
+        <div class="text-[11px] text-[#f5e6c8] leading-snug">
           On death, your entire <b>tradeable</b> inventory and equipped gear are sent to your opponent.
           Untradeable items stay with you. <b>Forfeit counts as a loss</b> — you'll still drop your loot.
         </div>
@@ -443,14 +443,14 @@ export default function PvpLobbyModal({ onClose, getSnapshot }) {
         <button
           onClick={() => setTab('waiting')}
           class={`flex-1 py-2 rounded-lg text-xs font-semibold transition-colors
-            ${tab === 'waiting' ? 'bg-[var(--color-gold-dim)] text-white' : 'bg-[#1a1a1a] text-[var(--color-parchment)] opacity-60'}`}
+            ${tab === 'waiting' ? 'bg-[var(--color-gold-dim)] text-white' : 'bg-[var(--color-void-light)] text-[var(--color-parchment)] opacity-60'}`}
         >
           Waiting Room ({waiting.length})
         </button>
         <button
           onClick={() => setTab('invitations')}
           class={`flex-1 py-2 rounded-lg text-xs font-semibold transition-colors relative
-            ${tab === 'invitations' ? 'bg-[var(--color-gold-dim)] text-white' : 'bg-[#1a1a1a] text-[var(--color-parchment)] opacity-60'}`}
+            ${tab === 'invitations' ? 'bg-[var(--color-gold-dim)] text-white' : 'bg-[var(--color-void-light)] text-[var(--color-parchment)] opacity-60'}`}
         >
           Invitations ({incomingCount + invitations.outgoing.length})
           {incomingCount > 0 && (
