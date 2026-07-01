@@ -168,6 +168,14 @@
   --color-emerald-light: #4f9784;
   --color-mana: var(--fm-woad);
   --color-mana-light: #527bb0;
+
+  /* A flat --fm-soot fill reads as plain black next to the textured parchment
+     cards; give the screen itself the same warm-glow-on-iron treatment. Screens
+     that override their own background (e.g. .wm-hub, below) win over this. */
+  background:
+    radial-gradient(120% 90% at 50% 120%, rgba(194,65,12,0.10), transparent 55%),
+    radial-gradient(80% 60% at 50% -10%, rgba(201,162,39,0.06), transparent 60%),
+    var(--fm-soot);
 }
 
 /* ── Forgemark material classes: iron frames, parchment panels, rivets,
@@ -536,19 +544,45 @@ html, body, #app {
    originated — see docs/map-driven-overhaul-plan.md). The banner itself
    (photo or vector scene + white overlay text) is unaffected — that overlay
    treatment already works over any art, themed or not. */
-.forge-shell .wm-hub { background: #e6d8b6; background-image: var(--fm-tex-parch); background-size: cover; }
+.forge-shell.wm-hub { background: #e6d8b6; background-image: var(--fm-tex-parch); background-size: cover; }
 .forge-shell .wm-hub-lore { color: var(--fm-ink-soft); }
 .forge-shell .wm-hub-sectionhead::before, .forge-shell .wm-hub-sectionhead::after { background: var(--fm-rule); }
 .forge-shell .wm-hub-sectionhead span { color: var(--fm-ink-faint); }
-.forge-shell .wm-act, .forge-shell .wm-act-chip, .forge-shell .wm-facility {
-  background: var(--fm-parch-hi); border-color: var(--fm-rule);
-}
-.forge-shell .wm-act-name { color: var(--fm-ink); }
-.forge-shell .wm-act-note, .forge-shell .wm-act-count { color: var(--fm-ink-faint); }
-.forge-shell .wm-act-lvl { color: var(--fm-ink-soft); }
-.forge-shell .wm-act-chip { color: var(--fm-ink-soft); }
-.forge-shell .wm-facility { color: var(--fm-ember-deep); }
+.forge-shell .wm-facility { background: var(--fm-parch-hi); border-color: var(--fm-rule); color: var(--fm-ember-deep); }
 .wm-hub-seal { float: right; margin: 0 0 8px 12px; }
+
+/* Category buttons (replaces the old flat activity chip-wall) + the dark,
+   hammered-iron action modal they open. One neutral card style per button —
+   only a small color dot carries the kind's accent, so a place with 7
+   categories doesn't turn into a wall of clashing border/text colors. */
+.wm-cat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 4px; }
+.wm-cat-btn {
+  display: flex; align-items: center; gap: 9px; min-height: 44px; padding: 10px 12px;
+  border-radius: 10px; cursor: pointer; text-align: left;
+  background: var(--fm-parch-hi); border: 1px solid var(--fm-rule);
+}
+.wm-cat-btn:hover { border-color: var(--fm-brass); }
+.wm-cat-btn:active { transform: scale(0.98); }
+.wm-cat-btn__dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+.wm-cat-btn__label { flex: 1; min-width: 0; font-family: var(--fm-serif); font-weight: 700; font-size: 13.5px; color: var(--fm-ink); }
+.wm-cat-btn__count { font-family: var(--fm-num); font-size: 12px; font-weight: 600; color: var(--fm-ink-faint); flex-shrink: 0; }
+
+.wm-actmodal-panel { background-color: #1b1916; background-image: var(--fm-tex-iron); background-size: 280px; border-color: #000; }
+.wm-actmodal-content { background: radial-gradient(120% 90% at 50% 120%, rgba(194,65,12,0.08), transparent 55%), radial-gradient(80% 60% at 50% -10%, rgba(201,162,39,0.05), transparent 60%); }
+.wm-actmodal-count { font-family: var(--fm-num); font-size: 13px; color: var(--fm-brass-hi); }
+.wm-actmodal-group + .wm-actmodal-group { margin-top: 14px; }
+.wm-actmodal-grouphead {
+  font-family: var(--fm-serif); font-weight: 700; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--fm-brass-hi); margin-bottom: 6px;
+}
+.wm-actmodal-row {
+  display: flex; align-items: center; gap: 10px; padding: 8px 4px;
+  border-bottom: 1px solid rgba(255,255,255,0.07); font-family: var(--fm-serif); font-size: 13.5px;
+}
+.wm-actmodal-row:last-child { border-bottom: 0; }
+.wm-actmodal-row__icon { flex-shrink: 0; }
+.wm-actmodal-row__name { flex: 1; min-width: 0; color: var(--fm-parch); }
+.wm-actmodal-row__lvl { font-family: var(--fm-num); font-size: 12.5px; font-weight: 600; color: var(--fm-brass-hi); flex-shrink: 0; }
 
 /* Emblem primitive */
 .skill-emblem { position: relative; pointer-events: none; }
@@ -2134,21 +2168,12 @@ html, body, #app {
 .wm-act-note { display: block; font-size: 12px; color: var(--color-parchment-dark); margin-top: 2px; }
 .wm-act-right { text-align: right; flex: 0 0 auto; }
 .wm-act-lvl { font-family: var(--font-mono); font-size: 12px; font-weight: 600; color: var(--color-parchment); opacity: .7; display: block; margin-bottom: 4px; }
-.wm-tag { display: inline-flex; align-items: center; font-weight: 700; font-size: 9.5px; letter-spacing: .08em; text-transform: uppercase;
-  padding: 2px 7px; border-radius: 4px; border: 1px solid currentColor; }
 
-/* World Map — place hub facilities + grouped activities (phase 3) */
+/* World Map — place hub facilities */
 .wm-hub-facilities { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
 .wm-facility { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 600;
   color: var(--color-gold-light); background: var(--color-void); border: 1px solid var(--color-gold-dark);
   border-radius: 6px; padding: 5px 9px; }
-.wm-hub-acts { display: flex; flex-direction: column; gap: 14px; }
-.wm-act-group { display: flex; flex-direction: column; gap: 8px; }
-.wm-act-grouphead { display: flex; align-items: center; gap: 8px; }
-.wm-act-count { font-family: var(--font-mono); font-size: 12px; font-weight: 600; color: var(--color-parchment-dark); }
-.wm-act-names { display: flex; flex-wrap: wrap; gap: 6px; }
-.wm-act-chip { display: inline-flex; align-items: center; font-size: 12px; line-height: 1.2; color: var(--color-parchment);
-  background: var(--color-void); border: 1px solid var(--color-void-border); border-radius: 6px; padding: 5px 8px; }
 
 /* Travel prompt / location picker (phase 3 activity gating) */
 .wm-tp { display: flex; flex-direction: column; gap: 12px; padding: 4px 2px; }

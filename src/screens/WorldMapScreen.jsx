@@ -1,11 +1,12 @@
 import { useGame } from '../state/gameState.jsx'
 import { useState, useRef, useEffect, useCallback } from 'preact/hooks'
 import { getWorld, getPlace, listPlaces, getTier, getKind, shortestPath, pathLegs } from '../engine/world.js'
-import { describeActivity } from '../engine/worldContent.js'
+import { describeActivity, activityGroupLabel } from '../engine/worldContent.js'
 import { createTravelTask, travelFraction, travelDestName } from '../engine/travel.js'
 import { PlaceIcon, PlaceScene } from '../components/PlaceArt.jsx'
 import GameIcon from '../components/GameIcon.jsx'
 import WaxSeal from '../components/WaxSeal.jsx'
+import Modal from '../components/Modal.jsx'
 
 // Facility chip glyph: bank reuses the existing in-game bank icon (the nav's coins
 // glyph); furnace & anvil gets its bespoke PlaceIcon; anything else falls back to its
@@ -311,6 +312,7 @@ function PlaceHub({ place, here, travelling, onTravel, onClose }) {
   const isHere = place.id === here
   const route = isHere ? null : shortestPath(here, place.id)
   const canTravel = !isHere && !travelling && route && route.ticks > 0
+  const [openCategory, setOpenCategory] = useState(null)
 
   return (
     <>
@@ -352,31 +354,66 @@ function PlaceHub({ place, here, travelling, onTravel, onClose }) {
             </button>
           )}
           <div class="wm-hub-sectionhead"><span>Available here</span></div>
-          <div class="wm-hub-acts">
+          <div class="wm-cat-grid">
             {groupActivities(place.activities).map(([kind, refs]) => {
               const k = getKind(kind)
               return (
-                <div class="wm-act-group" key={kind}>
-                  <div class="wm-act-grouphead">
-                    <span class="wm-tag" style={{ color: k?.color || 'var(--color-gold)' }}>{k?.label || kind}</span>
-                    <span class="wm-act-count">{refs.length}</span>
-                  </div>
-                  <div class="wm-act-names">
-                    {refs.map((ref, i) => {
-                      const d = describeActivity(kind, ref)
-                      return (
-                        <span class="wm-act-chip" key={i}>
-                          {d.icon} {d.name}{d.level != null ? ` · ${d.level}` : ''}
-                        </span>
-                      )
-                    })}
-                  </div>
-                </div>
+                <button class="wm-cat-btn" key={kind} onClick={() => setOpenCategory(kind)}>
+                  <span class="wm-cat-btn__dot" style={{ background: k?.color || 'var(--fm-brass)' }} />
+                  <span class="wm-cat-btn__label">{k?.label || kind}</span>
+                  <span class="wm-cat-btn__count">{refs.length}</span>
+                </button>
               )
             })}
           </div>
         </div>
       </div>
+      {openCategory && (
+        <CategoryModal
+          kind={openCategory}
+          refs={groupActivities(place.activities).find(([k]) => k === openCategory)?.[1] || []}
+          label={getKind(openCategory)?.label || openCategory}
+          onClose={() => setOpenCategory(null)}
+        />
+      )}
     </>
+  )
+}
+
+// One category's actions, e.g. all "Skill" refs at a place — sub-grouped by skill
+// (activityGroupLabel) where that's meaningful, so a 140-action city doesn't render
+// as one flat list. Dark hammered-iron panel (wm-actmodal-panel) rather than the
+// hub's parchment, matching the rest of the app's dark chrome.
+function CategoryModal({ kind, refs, label, onClose }) {
+  const groups = []
+  const byLabel = new Map()
+  for (const ref of refs) {
+    const groupLabel = activityGroupLabel(kind, ref)
+    if (groupLabel == null) { groups.push({ label: null, refs: [ref] }); continue }
+    let g = byLabel.get(groupLabel)
+    if (!g) { g = { label: groupLabel, refs: [] }; byLabel.set(groupLabel, g); groups.push(g) }
+    g.refs.push(ref)
+  }
+
+  return (
+    <Modal title={label} titleRight={<span class="wm-actmodal-count">{refs.length}</span>} onClose={onClose} className="wm-actmodal-panel" contentClassName="wm-actmodal-content">
+      {groups.map((g, gi) => (
+        <div class="wm-actmodal-group" key={g.label || gi}>
+          {g.label && <div class="wm-actmodal-grouphead">{g.label}</div>}
+          <div class="fm-ledger">
+            {g.refs.map((ref, i) => {
+              const d = describeActivity(kind, ref)
+              return (
+                <div class="wm-actmodal-row" key={i}>
+                  <span class="wm-actmodal-row__icon">{d.icon}</span>
+                  <span class="wm-actmodal-row__name">{d.name}</span>
+                  {d.level != null && <span class="wm-actmodal-row__lvl">{d.level}</span>}
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      ))}
+    </Modal>
   )
 }

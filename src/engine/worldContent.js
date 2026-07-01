@@ -129,6 +129,18 @@ export function resolveTaskStart(task, { location, travel }) {
 }
 
 /**
+ * Sub-group label for an activity within its kind — currently only meaningful for
+ * `skill` (refs are `skillId:actionId`, e.g. `cooking:cook_eel`), used to break the
+ * "Skill" category up by skill (Cooking / Crafting / Fletching / ...) instead of one
+ * flat list. Returns null for kinds that aren't sub-groupable.
+ */
+export function activityGroupLabel(kind, ref) {
+  if (kind !== 'skill') return null
+  const skillId = ref.indexOf(':') >= 0 ? ref.slice(0, ref.indexOf(':')) : null
+  return skillsData[skillId]?.name || skillId
+}
+
+/**
  * Human-readable `{ name, icon, level }` for an activity ref, for hub/picker rendering.
  * Falls back to the raw ref if the content can't be resolved.
  */
