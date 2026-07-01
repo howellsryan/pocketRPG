@@ -9,6 +9,7 @@ import ToastContainer from './components/Toast.jsx'
 import XpDropOverlay from './components/XpDropOverlay.jsx'
 import SkillIcon from './components/SkillIcon.jsx'
 import RewardRevealOverlay from './components/RewardRevealOverlay.jsx'
+import ChatWidget from './components/ChatWidget.jsx'
 import { emitRewardReveal } from './utils/rewardReveal.js'
 import BuyCreditsModal from './components/BuyCreditsModal.jsx'
 import DailyTasksModal from './components/DailyTasksModal.jsx'
@@ -2482,6 +2483,7 @@ function GameApp() {
       </div>
       <XpDropOverlay />
       <RewardRevealOverlay />
+      <ChatWidget isCloudAccount={isCloudAccount && !demoMode} />
       <BurgerMenu
         open={menuOpen}
         onClose={() => setMenuOpen(false)}
