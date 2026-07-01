@@ -15,7 +15,7 @@ export default function FilterToggleBar({ options, value, onChange, className = 
         const isActive = opt.id === value
         const pillClass = isActive
           ? 'border-[var(--color-gold)] bg-[rgba(212,175,55,0.15)] text-[var(--color-gold)] opacity-100'
-          : 'border-[#2a2a2a] bg-[var(--color-void-light)] text-[var(--color-parchment)] opacity-60'
+          : 'border-[var(--color-void-border)] bg-[var(--color-void-light)] text-[var(--color-parchment)] opacity-60'
         return (
           <button
             key={opt.id}

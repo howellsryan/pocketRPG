@@ -1,8 +1,8 @@
 const BUTTON_VARIANTS = {
   primary:   'bg-[var(--color-gold)] text-[var(--color-void)] hover:bg-[var(--color-gold-light)] border border-transparent',
-  secondary: 'bg-[#222] text-[var(--color-parchment)] border border-[var(--color-void-border)] hover:bg-[#2a2a2a]',
+  secondary: 'bg-[var(--color-void-light)] text-[var(--color-parchment)] border border-[var(--color-void-border)] hover:bg-[var(--color-void-lighter)]',
   danger:    'bg-[var(--color-blood)] text-white border border-transparent hover:bg-[var(--color-blood-light)]',
-  success:   'bg-[#1a4a2a] text-[#4ade80] border border-transparent hover:bg-[#235a38]',
+  success:   'bg-[var(--color-emerald-mid)] text-[#4ade80] border border-transparent hover:bg-[var(--color-emerald)]',
   ghost:     'bg-transparent text-[var(--color-parchment)] border border-transparent hover:bg-[var(--color-void-light)]',
   // Forgemark — pressed-metal / parchment buttons. Only use inside a .forge-shell screen.
   forgePrimary:   'fm-btn fm-btn--ember',

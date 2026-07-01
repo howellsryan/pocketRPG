@@ -72,7 +72,7 @@ export default function WeaponChargePanel({ item, currentCharges = 0, inventory,
           value={chargeInput}
           onInput={(e) => setChargeInput(e.currentTarget.value)}
           placeholder="Custom amount"
-          class="flex-1 px-2 py-2 rounded-md bg-[#0a0a0a] border border-[#222] text-[var(--color-parchment)] text-[11px] font-[var(--font-mono)]"
+          class="flex-1 px-2 py-2 rounded-md bg-[var(--color-void-light)] border border-[var(--color-void-border)] text-[var(--color-parchment)] text-[11px] font-[var(--font-mono)]"
         />
         <Button variant="success" size="md" disabled={customQty <= 0 || maxChargeable <= 0} onClick={() => doCharge(customQty)}>
           Charge
