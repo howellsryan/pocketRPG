@@ -112,11 +112,17 @@ describe('facility-bound skills', () => {
     for (const id of noFurnace) expect(places).not.toContain(id)
   })
 
-  it('maps every thieving target to the bank places', () => {
+  it('spreads thieving targets across places instead of offering them all everywhere', () => {
     const npcs = (skillsData as any).thieving.npcs
     for (const n of npcs) {
-      expect([...placesForActivity('thieving', n.id)].sort(), `thieving ${n.id}`).toEqual([...bankPlaces].sort())
+      const places = placesForActivity('thieving', n.id)
+      expect(places.length, `thieving ${n.id}`).toBeGreaterThan(0)
+      expect(places.length, `thieving ${n.id} should not be at every bank place`).toBeLessThan(bankPlaces.length)
     }
+  })
+
+  it('places the Ardounne Knight only in Ardounne', () => {
+    expect(placesForActivity('thieving', 'ardougne_knight')).toEqual(['ardounne'])
   })
 
   it('does not offer a facility skill at a place without the facility', () => {

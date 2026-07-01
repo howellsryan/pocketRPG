@@ -1,7 +1,8 @@
 import { useGame } from '../state/gameState.jsx'
 import { useState, useRef, useEffect, useCallback } from 'preact/hooks'
 import { getWorld, getPlace, listPlaces, getTier, getKind, shortestPath, pathLegs } from '../engine/world.js'
-import { describeActivity, activityGroupLabel, isPlaceVaryingSkillRef } from '../engine/worldContent.js'
+import { describeActivity, activityGroupLabel, isPlaceVaryingSkillRef, autoStartFromTask } from '../engine/worldContent.js'
+import { SCREENS } from '../utils/constants.js'
 import { createTravelTask, travelFraction, travelDestName } from '../engine/travel.js'
 import { PlaceIcon, PlaceScene } from '../components/PlaceArt.jsx'
 import GameIcon from '../components/GameIcon.jsx'
@@ -47,8 +48,30 @@ function groupActivities(activities) {
     .map((kind) => [kind, byKind[kind]])
 }
 
-export default function WorldMapScreen() {
-  const { worldLocation, activeTask, setActiveTask, addToast } = useGame()
+// Minimal task shape carrying only the id field `activityRef`/`autoStartFromTask` read
+// for this kind — enough to gate + resume a start, without needing the full content
+// record (monster/action/etc) that the owning screen looks up for itself.
+function fakeTaskFor(kind, ref) {
+  switch (kind) {
+    case 'combat': return { type: 'combat', monster: { id: ref } }
+    case 'raid': return { type: 'raid', raid: { id: ref } }
+    case 'skill': {
+      const i = ref.indexOf(':')
+      return i < 0 ? null : { type: 'skill', skill: ref.slice(0, i), action: { id: ref.slice(i + 1) } }
+    }
+    case 'gather': return { type: 'gather', gatherTask: { id: ref } }
+    case 'agility': return { type: 'agility', action: { id: ref } }
+    case 'thieving': return { type: 'thieving', npc: { id: ref } }
+    case 'hunter': return { type: 'hunter', action: { id: ref } }
+    // No specific reward task at this level (the place hub lists the whole venue) — gate
+    // by the minigame itself; arrival just opens the Minigames screen, task unpicked.
+    case 'minigame': return { type: 'minigame', minigameTask: { minigame: ref } }
+    default: return null
+  }
+}
+
+export default function WorldMapScreen({ onNavigate, onAutoStart } = {}) {
+  const { worldLocation, activeTask, setActiveTask, addToast, requestActivityStart } = useGame()
   const world = getWorld()
   const here = getPlace(worldLocation) ? worldLocation : world.start
   const travel = activeTask?.type === 'travel' ? activeTask : null
@@ -59,6 +82,20 @@ export default function WorldMapScreen() {
     setActiveTask(task)
     setOpenId(null)
     addToast(`🧭 Travelling to ${travelDestName(task)}`, 'info')
+  }
+
+  // Clicking an activity row in the place hub acts exactly like clicking it from its own
+  // screen: starts immediately if we're already at a place that offers it, or opens the
+  // same travel prompt used everywhere else if not (gameState's requestActivityStart
+  // handles both — this just supplies the minimal task shape and, on an immediate start,
+  // navigates to the owning screen the same way arrival auto-resume does).
+  const activateActivity = (kind, ref) => {
+    const task = fakeTaskFor(kind, ref)
+    if (!task) return
+    if (requestActivityStart(task)) {
+      if (kind === 'minigame') onNavigate?.(SCREENS.MINIGAMES)
+      else onAutoStart?.(autoStartFromTask(task))
+    }
   }
   const cancelTravel = () => {
     if (!travel) return
@@ -302,13 +339,14 @@ export default function WorldMapScreen() {
           travelling={!!travel}
           onTravel={beginTravel}
           onClose={() => setOpenId(null)}
+          onActivate={activateActivity}
         />
       )}
     </div>
   )
 }
 
-function PlaceHub({ place, here, travelling, onTravel, onClose }) {
+function PlaceHub({ place, here, travelling, onTravel, onClose, onActivate }) {
   const tier = getTier(place.tier)
   const isHere = place.id === here
   const route = isHere ? null : shortestPath(here, place.id)
@@ -340,15 +378,15 @@ function PlaceHub({ place, here, travelling, onTravel, onClose }) {
               })}
             </div>
           )}
-          <div class="wm-hub-note">
-            {isHere
-              ? 'You are here.'
-              : travelling
-                ? 'You are already travelling. Turn back first to choose a new destination.'
-                : route
-                  ? `${place.name} is ${route.ticks} ticks away by road, via ${route.path.map((id) => getPlace(id)?.name || id).join(' → ')}.`
+          {(isHere || travelling || !route) && (
+            <div class="wm-hub-note">
+              {isHere
+                ? 'You are here.'
+                : travelling
+                  ? 'You are already travelling. Turn back first to choose a new destination.'
                   : 'No road reaches this place yet.'}
-          </div>
+            </div>
+          )}
           {canTravel && (
             <button class="wm-travel-btn" onClick={() => onTravel(place.id)}>
               Travel here · {route.ticks} ticks
@@ -375,6 +413,7 @@ function PlaceHub({ place, here, travelling, onTravel, onClose }) {
           refs={groupActivities(place.activities).find(([k]) => k === openCategory)?.[1] || []}
           label={getKind(openCategory)?.label || openCategory}
           onClose={() => setOpenCategory(null)}
+          onActivate={onActivate}
         />
       )}
     </>
@@ -385,10 +424,22 @@ function PlaceHub({ place, here, travelling, onTravel, onClose }) {
 // (activityGroupLabel) where that's meaningful, so a 140-action city doesn't render
 // as one flat list. Dark hammered-iron panel (wm-actmodal-panel) rather than the
 // hub's parchment, matching the rest of the app's dark chrome.
-function CategoryModal({ kind, refs, label, onClose }) {
+function CategoryModal({ kind, refs, label, onClose, onActivate }) {
+  // Ascending by level (unmapped/no-level entries sort last, stable otherwise) so
+  // low-level skilling actions and weak monsters lead the list.
+  const sortedRefs = refs
+    .map((ref) => ({ ref, level: describeActivity(kind, ref).level }))
+    .sort((a, b) => {
+      if (a.level == null && b.level == null) return 0
+      if (a.level == null) return 1
+      if (b.level == null) return -1
+      return a.level - b.level
+    })
+    .map((x) => x.ref)
+
   const groups = []
   const byLabel = new Map()
-  for (const ref of refs) {
+  for (const ref of sortedRefs) {
     const groupLabel = activityGroupLabel(kind, ref)
     if (groupLabel == null) { groups.push({ label: null, refs: [ref] }); continue }
     let g = byLabel.get(groupLabel)
@@ -405,11 +456,11 @@ function CategoryModal({ kind, refs, label, onClose }) {
             {g.refs.map((ref, i) => {
               const d = describeActivity(kind, ref)
               return (
-                <div class="wm-actmodal-row" key={i}>
+                <button class="wm-actmodal-row" key={i} onClick={() => onActivate(kind, ref)}>
                   <span class="wm-actmodal-row__icon">{d.icon}</span>
                   <span class="wm-actmodal-row__name">{d.name}</span>
                   {d.level != null && <span class="wm-actmodal-row__lvl">{d.level}</span>}
-                </div>
+                </button>
               )
             })}
           </div>

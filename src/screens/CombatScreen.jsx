@@ -1750,7 +1750,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             class="flex-1 py-1.5 rounded-lg text-[10px] font-semibold bg-[var(--color-void-light)] text-[var(--color-parchment)] active:bg-[var(--color-void-lighter)] flex items-center justify-center gap-1.5"
             title="Configure food the simulator can use during idle/skip combat"
           >
-            <GameIcon iconKey="meat" color={idleCombatSetup?.food?.length > 0 ? '#7ce88a' : '#9b978c'} size={14} /> Idle Eat
+            <GameIcon iconKey="meat" color={idleCombatSetup?.food?.length > 0 ? 'var(--color-gold)' : '#9b978c'} size={14} /> Idle Eat
             {idleCombatSetup?.food?.length > 0 && (
               <span class="ml-1 text-[var(--color-gold)]">✓</span>
             )}
@@ -1760,7 +1760,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             class="flex-1 py-1.5 rounded-lg text-[10px] font-semibold bg-[var(--color-void-light)] text-[var(--color-parchment)] active:bg-[var(--color-void-lighter)] flex items-center justify-center gap-1.5"
             title="Configure prayers the simulator should use during idle/skip combat"
           >
-            <GameIcon iconKey="prayer" color={(idleCombatSetup?.prayers?.protectionPrayerId || idleCombatSetup?.prayers?.combatPrayerId) ? '#7ce88a' : '#9b978c'} size={14} /> Idle Pray
+            <GameIcon iconKey="prayer" color={(idleCombatSetup?.prayers?.protectionPrayerId || idleCombatSetup?.prayers?.combatPrayerId) ? 'var(--color-gold)' : '#9b978c'} size={14} /> Idle Pray
             {(idleCombatSetup?.prayers?.protectionPrayerId || idleCombatSetup?.prayers?.combatPrayerId) && (
               <span class="ml-1 text-[var(--color-gold)]">✓</span>
             )}
@@ -1770,7 +1770,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             class="flex-1 py-1.5 rounded-lg text-[10px] font-semibold bg-[var(--color-void-light)] text-[var(--color-parchment)] active:bg-[var(--color-void-lighter)] flex items-center justify-center gap-1.5"
             title="Configure potions the simulator can drink during idle/skip combat"
           >
-            <GameIcon iconKey="potion_ball" color={idleCombatSetup?.potions?.length > 0 ? '#7ce88a' : '#9b978c'} size={14} /> Idle Potion
+            <GameIcon iconKey="potion_ball" color={idleCombatSetup?.potions?.length > 0 ? 'var(--color-gold)' : '#9b978c'} size={14} /> Idle Potion
             {idleCombatSetup?.potions?.length > 0 && (
               <span class="ml-1 text-[var(--color-gold)]">✓</span>
             )}

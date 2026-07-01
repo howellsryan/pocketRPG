@@ -744,47 +744,7 @@
         },
         {
           "kind": "thieving",
-          "ref": "ardougne_knight"
-        },
-        {
-          "kind": "thieving",
-          "ref": "baker"
-        },
-        {
-          "kind": "thieving",
-          "ref": "cake_stall"
-        },
-        {
-          "kind": "thieving",
-          "ref": "elf"
-        },
-        {
-          "kind": "thieving",
-          "ref": "farmer"
-        },
-        {
-          "kind": "thieving",
-          "ref": "gardener"
-        },
-        {
-          "kind": "thieving",
-          "ref": "guard"
-        },
-        {
-          "kind": "thieving",
-          "ref": "knight"
-        },
-        {
-          "kind": "thieving",
-          "ref": "master_farmer"
-        },
-        {
-          "kind": "thieving",
           "ref": "villager"
-        },
-        {
-          "kind": "thieving",
-          "ref": "vyre"
         }
       ]
     },
@@ -1742,50 +1702,6 @@
         {
           "kind": "skill",
           "ref": "woodcutting:redwood"
-        },
-        {
-          "kind": "thieving",
-          "ref": "ardougne_knight"
-        },
-        {
-          "kind": "thieving",
-          "ref": "baker"
-        },
-        {
-          "kind": "thieving",
-          "ref": "cake_stall"
-        },
-        {
-          "kind": "thieving",
-          "ref": "elf"
-        },
-        {
-          "kind": "thieving",
-          "ref": "farmer"
-        },
-        {
-          "kind": "thieving",
-          "ref": "gardener"
-        },
-        {
-          "kind": "thieving",
-          "ref": "guard"
-        },
-        {
-          "kind": "thieving",
-          "ref": "knight"
-        },
-        {
-          "kind": "thieving",
-          "ref": "master_farmer"
-        },
-        {
-          "kind": "thieving",
-          "ref": "villager"
-        },
-        {
-          "kind": "thieving",
-          "ref": "vyre"
         }
       ]
     },
@@ -2746,47 +2662,7 @@
         },
         {
           "kind": "thieving",
-          "ref": "ardougne_knight"
-        },
-        {
-          "kind": "thieving",
-          "ref": "baker"
-        },
-        {
-          "kind": "thieving",
-          "ref": "cake_stall"
-        },
-        {
-          "kind": "thieving",
           "ref": "elf"
-        },
-        {
-          "kind": "thieving",
-          "ref": "farmer"
-        },
-        {
-          "kind": "thieving",
-          "ref": "gardener"
-        },
-        {
-          "kind": "thieving",
-          "ref": "guard"
-        },
-        {
-          "kind": "thieving",
-          "ref": "knight"
-        },
-        {
-          "kind": "thieving",
-          "ref": "master_farmer"
-        },
-        {
-          "kind": "thieving",
-          "ref": "villager"
-        },
-        {
-          "kind": "thieving",
-          "ref": "vyre"
         }
       ]
     },
@@ -3430,42 +3306,6 @@
         },
         {
           "kind": "thieving",
-          "ref": "baker"
-        },
-        {
-          "kind": "thieving",
-          "ref": "cake_stall"
-        },
-        {
-          "kind": "thieving",
-          "ref": "elf"
-        },
-        {
-          "kind": "thieving",
-          "ref": "farmer"
-        },
-        {
-          "kind": "thieving",
-          "ref": "gardener"
-        },
-        {
-          "kind": "thieving",
-          "ref": "guard"
-        },
-        {
-          "kind": "thieving",
-          "ref": "knight"
-        },
-        {
-          "kind": "thieving",
-          "ref": "master_farmer"
-        },
-        {
-          "kind": "thieving",
-          "ref": "villager"
-        },
-        {
-          "kind": "thieving",
           "ref": "vyre"
         }
       ]
@@ -4094,47 +3934,7 @@
         },
         {
           "kind": "thieving",
-          "ref": "ardougne_knight"
-        },
-        {
-          "kind": "thieving",
-          "ref": "baker"
-        },
-        {
-          "kind": "thieving",
-          "ref": "cake_stall"
-        },
-        {
-          "kind": "thieving",
-          "ref": "elf"
-        },
-        {
-          "kind": "thieving",
-          "ref": "farmer"
-        },
-        {
-          "kind": "thieving",
           "ref": "gardener"
-        },
-        {
-          "kind": "thieving",
-          "ref": "guard"
-        },
-        {
-          "kind": "thieving",
-          "ref": "knight"
-        },
-        {
-          "kind": "thieving",
-          "ref": "master_farmer"
-        },
-        {
-          "kind": "thieving",
-          "ref": "villager"
-        },
-        {
-          "kind": "thieving",
-          "ref": "vyre"
         }
       ]
     },
@@ -5091,47 +4891,7 @@
         },
         {
           "kind": "thieving",
-          "ref": "ardougne_knight"
-        },
-        {
-          "kind": "thieving",
           "ref": "baker"
-        },
-        {
-          "kind": "thieving",
-          "ref": "cake_stall"
-        },
-        {
-          "kind": "thieving",
-          "ref": "elf"
-        },
-        {
-          "kind": "thieving",
-          "ref": "farmer"
-        },
-        {
-          "kind": "thieving",
-          "ref": "gardener"
-        },
-        {
-          "kind": "thieving",
-          "ref": "guard"
-        },
-        {
-          "kind": "thieving",
-          "ref": "knight"
-        },
-        {
-          "kind": "thieving",
-          "ref": "master_farmer"
-        },
-        {
-          "kind": "thieving",
-          "ref": "villager"
-        },
-        {
-          "kind": "thieving",
-          "ref": "vyre"
         }
       ]
     },
@@ -5755,47 +5515,7 @@
         },
         {
           "kind": "thieving",
-          "ref": "ardougne_knight"
-        },
-        {
-          "kind": "thieving",
-          "ref": "baker"
-        },
-        {
-          "kind": "thieving",
-          "ref": "cake_stall"
-        },
-        {
-          "kind": "thieving",
-          "ref": "elf"
-        },
-        {
-          "kind": "thieving",
-          "ref": "farmer"
-        },
-        {
-          "kind": "thieving",
-          "ref": "gardener"
-        },
-        {
-          "kind": "thieving",
           "ref": "guard"
-        },
-        {
-          "kind": "thieving",
-          "ref": "knight"
-        },
-        {
-          "kind": "thieving",
-          "ref": "master_farmer"
-        },
-        {
-          "kind": "thieving",
-          "ref": "villager"
-        },
-        {
-          "kind": "thieving",
-          "ref": "vyre"
         }
       ]
     },
@@ -6188,6 +5908,10 @@
         {
           "kind": "skill",
           "ref": "woodcutting:normal"
+        },
+        {
+          "kind": "thieving",
+          "ref": "cake_stall"
         }
       ]
     },
@@ -6870,50 +6594,6 @@
         {
           "kind": "skill",
           "ref": "runecraft:craft_death_rune"
-        },
-        {
-          "kind": "thieving",
-          "ref": "ardougne_knight"
-        },
-        {
-          "kind": "thieving",
-          "ref": "baker"
-        },
-        {
-          "kind": "thieving",
-          "ref": "cake_stall"
-        },
-        {
-          "kind": "thieving",
-          "ref": "elf"
-        },
-        {
-          "kind": "thieving",
-          "ref": "farmer"
-        },
-        {
-          "kind": "thieving",
-          "ref": "gardener"
-        },
-        {
-          "kind": "thieving",
-          "ref": "guard"
-        },
-        {
-          "kind": "thieving",
-          "ref": "knight"
-        },
-        {
-          "kind": "thieving",
-          "ref": "master_farmer"
-        },
-        {
-          "kind": "thieving",
-          "ref": "villager"
-        },
-        {
-          "kind": "thieving",
-          "ref": "vyre"
         }
       ]
     },
@@ -7534,50 +7214,6 @@
         {
           "kind": "skill",
           "ref": "woodcutting:teak"
-        },
-        {
-          "kind": "thieving",
-          "ref": "ardougne_knight"
-        },
-        {
-          "kind": "thieving",
-          "ref": "baker"
-        },
-        {
-          "kind": "thieving",
-          "ref": "cake_stall"
-        },
-        {
-          "kind": "thieving",
-          "ref": "elf"
-        },
-        {
-          "kind": "thieving",
-          "ref": "farmer"
-        },
-        {
-          "kind": "thieving",
-          "ref": "gardener"
-        },
-        {
-          "kind": "thieving",
-          "ref": "guard"
-        },
-        {
-          "kind": "thieving",
-          "ref": "knight"
-        },
-        {
-          "kind": "thieving",
-          "ref": "master_farmer"
-        },
-        {
-          "kind": "thieving",
-          "ref": "villager"
-        },
-        {
-          "kind": "thieving",
-          "ref": "vyre"
         }
       ]
     },
@@ -7640,6 +7276,10 @@
         {
           "kind": "skill",
           "ref": "runecraft:craft_water_rune"
+        },
+        {
+          "kind": "thieving",
+          "ref": "farmer"
         }
       ]
     },
@@ -8275,47 +7915,7 @@
         },
         {
           "kind": "thieving",
-          "ref": "ardougne_knight"
-        },
-        {
-          "kind": "thieving",
-          "ref": "baker"
-        },
-        {
-          "kind": "thieving",
-          "ref": "cake_stall"
-        },
-        {
-          "kind": "thieving",
-          "ref": "elf"
-        },
-        {
-          "kind": "thieving",
-          "ref": "farmer"
-        },
-        {
-          "kind": "thieving",
-          "ref": "gardener"
-        },
-        {
-          "kind": "thieving",
-          "ref": "guard"
-        },
-        {
-          "kind": "thieving",
-          "ref": "knight"
-        },
-        {
-          "kind": "thieving",
           "ref": "master_farmer"
-        },
-        {
-          "kind": "thieving",
-          "ref": "villager"
-        },
-        {
-          "kind": "thieving",
-          "ref": "vyre"
         }
       ]
     },
@@ -8943,47 +8543,7 @@
         },
         {
           "kind": "thieving",
-          "ref": "ardougne_knight"
-        },
-        {
-          "kind": "thieving",
-          "ref": "baker"
-        },
-        {
-          "kind": "thieving",
-          "ref": "cake_stall"
-        },
-        {
-          "kind": "thieving",
-          "ref": "elf"
-        },
-        {
-          "kind": "thieving",
-          "ref": "farmer"
-        },
-        {
-          "kind": "thieving",
-          "ref": "gardener"
-        },
-        {
-          "kind": "thieving",
-          "ref": "guard"
-        },
-        {
-          "kind": "thieving",
           "ref": "knight"
-        },
-        {
-          "kind": "thieving",
-          "ref": "master_farmer"
-        },
-        {
-          "kind": "thieving",
-          "ref": "villager"
-        },
-        {
-          "kind": "thieving",
-          "ref": "vyre"
         }
       ]
     }

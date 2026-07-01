@@ -62,7 +62,7 @@ for (const raid of canonicalRaids) for (const b of raid.bosses || []) raidBossId
 // Skills tied to a building. Every action of these skills is available at every place
 // that has the matching facility (not level-banded).
 const FACILITY_SKILLS = {
-  bank: ['construction', 'magic', 'thieving', 'prayer', 'firemaking', 'herblore', 'fletching', 'crafting', 'cooking'],
+  bank: ['construction', 'magic', 'prayer', 'firemaking', 'herblore', 'fletching', 'crafting', 'cooking'],
   furnace_anvil: ['smithing'],
 }
 // A place's facilities are authored directly in world.json (`place.facilities`).
@@ -163,6 +163,24 @@ for (const mg of asArray(minigames.minigames)) {
   out[placeId] = out[placeId] || []
   out[placeId].push({ kind: 'minigame', ref: mg.id })
 }
+
+// Thieving — own kind, level-banded (pickpocketing needs no facility, unlike the other
+// bank skills, so it isn't bundled into FACILITY_SKILLS). ardougne_knight is authored to
+// Ardounne by name, like the agility courses; every other target spreads by level, same
+// as combat/mining, so a place only offers a handful of pickpocket targets, not all of
+// them.
+const THIEVING_PLACEMENT = { ardougne_knight: 'ardounne' }
+const thievingItems = []
+for (const n of asArray(skills.thieving?.npcs)) {
+  if (THIEVING_PLACEMENT[n.id]) {
+    const placeId = world.places[THIEVING_PLACEMENT[n.id]] ? THIEVING_PLACEMENT[n.id] : placesOrdered[0]
+    out[placeId] = out[placeId] || []
+    out[placeId].push({ kind: 'thieving', ref: n.id })
+  } else {
+    thievingItems.push({ ref: n.id, level: n.level ?? 1 })
+  }
+}
+distribute('thieving', thievingItems, out)
 
 // Hunter — own kind, level-banded.
 distribute('hunter', asArray(skills.hunter?.actions).map((a) => ({ ref: a.id, level: a.level ?? 1 })), out)
