@@ -30,7 +30,7 @@ export default function ChatWidget({ isCloudAccount = false }) {
     if (!question || busy) return
     const history = messages
       .filter((m) => m !== GREETING)
-      .slice(-8)
+      .slice(-6)
       .map((m) => ({ role: m.role, content: m.content }))
     setMessages((prev) => [...prev, { role: 'user', content: question }])
     setInput('')

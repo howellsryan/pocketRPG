@@ -51,12 +51,13 @@ function toolResultText(result) {
 }
 
 // GLM-4.7-flash speaks the OpenAI chat-completions shape: answers live in
-// choices[0].message. Reasoning is disabled via chat_template_kwargs (help
-// answers don't need it; thinking tokens would eat the answer budget), but
-// strip any <think> block defensively in case it reasons anyway.
+// choices[0].message. Reasoning stays on (its default) — it's most of this
+// model's quality and CHAT_MAX_ANSWER_TOKENS budgets for it; any inline
+// <think> block is stripped from the answer. Temperature sits below GLM's
+// ~1.0 default for factual consistency without starving the thinking pass.
 const CHAT_RUN_OPTS = {
   max_tokens: CHAT_MAX_ANSWER_TOKENS,
-  chat_template_kwargs: { enable_thinking: false },
+  temperature: 0.6,
 }
 
 function answerText(res) {
@@ -136,7 +137,9 @@ export async function onRequestPost({ request, env }) {
     })
   }
 
-  const hits = searchKnowledge(question, getIndex(), 4)
+  // 6 chunks: guide sections average ~68 tokens, so wider retrieval is nearly
+  // free and lifts answer quality more than any other input.
+  const hits = searchKnowledge(question, getIndex(), 6)
   const chunks = hits.map((h) => h.chunk)
   const sources = chunks.map((c) => ({ id: c.id, title: c.title }))
 

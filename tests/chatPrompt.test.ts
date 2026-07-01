@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { TOOL_SCHEMAS } from '../functions/_lib/mcp/schema.js'
 import {
+  CHAT_MAX_HISTORY_CHARS,
+  CHAT_MAX_HISTORY_MESSAGES,
   CHAT_TOOL_ALLOWLIST,
   SYSTEM_PROMPT,
   buildMessages,
@@ -64,9 +66,9 @@ describe('chat prompt assembly', () => {
       ...Array.from({ length: 12 }, (_, i) => ({ role: 'assistant', content: `m${i}` })),
     ]
     const clean = sanitizeHistory(history)
-    expect(clean.length).toBe(8)
+    expect(clean.length).toBe(CHAT_MAX_HISTORY_MESSAGES)
     expect(clean.every((m) => m.role === 'user' || m.role === 'assistant')).toBe(true)
-    expect(clean.every((m) => m.content.length <= 1200)).toBe(true)
+    expect(clean.every((m) => m.content.length <= CHAT_MAX_HISTORY_CHARS)).toBe(true)
     expect(sanitizeHistory(undefined)).toEqual([])
   })
 
