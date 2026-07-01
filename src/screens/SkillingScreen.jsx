@@ -719,7 +719,7 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
 
   if (!skilling) {
     return (
-      <div class="h-full overflow-y-auto p-4">
+      <div class="forge-shell h-full overflow-y-auto p-4">
         <SkillScreenHeader
           skill={selectedSkill}
           xp={skillXP}

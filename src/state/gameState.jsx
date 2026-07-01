@@ -1266,6 +1266,12 @@ export function GameProvider({ children }) {
     homeShortcuts, combatStance, idleCombatSetup, updateIdleCombatSetup,
     worldLocation, updateWorldLocation,
     requestActivityStart, travelPrompt, startTravelTo, dismissTravelPrompt,
+    // Synchronous read of the latest task — activeTaskInternalRef updates the
+    // instant setActiveTask runs, unlike the `activeTask` state value below
+    // which only reflects it after React's next render. Callers that set a
+    // task and immediately need to branch on it in the same tick (e.g. a
+    // travel confirm that then navigates) should use this, not `activeTask`.
+    getActiveTask: () => activeTaskInternalRef.current,
     activeTask, autoBankLoot, bankConfig, showInfoToasts, updateShowInfoToasts,
     equipmentPresets, updateEquipmentPresets,
     unlockedFeatures, unlockFeature,

@@ -568,6 +568,15 @@ html, body, #app {
 .forge-shell .clog-cat__count b { color: var(--fm-ember-deep); }
 .forge-shell .clog-header__sub, .forge-shell .clog-hero__k, .forge-shell .clog-hero__v, .forge-shell .clog-secthead span { color: var(--fm-ink-faint); }
 .forge-shell .clog-hero__v b { color: var(--fm-ember-deep); }
+.forge-shell .clog-hero {
+  background: radial-gradient(130% 90% at 0% 0%, rgba(176,136,66,0.14), transparent 55%), var(--fm-parch);
+  background-image: var(--fm-tex-parch), radial-gradient(130% 90% at 0% 0%, rgba(176,136,66,0.14), transparent 55%);
+  background-size: cover, 100% 100%;
+  border-color: var(--fm-rule);
+  box-shadow: var(--fm-parch-inset);
+}
+.forge-shell .clog-hero__div { background: linear-gradient(90deg, var(--fm-brass-lo), transparent); }
+.forge-shell .clog-hero__mastered { color: var(--fm-ember-deep); text-shadow: none; }
 .clog-sheet:not(.is-done) { background: var(--fm-vellum); background-image: var(--fm-tex-parch); background-size: 400px; border-top-color: var(--fm-brass-lo); }
 .clog-sheet:not(.is-done) .clog-sheet__name, .clog-sheet:not(.is-done) .clog-cat__name { color: var(--fm-ink); }
 .clog-sheet:not(.is-done) .clog-sheet__sub { color: var(--fm-ink-faint); }
@@ -2239,7 +2248,7 @@ html, body, #app {
 /* World Map — place hub facilities */
 .wm-hub-facilities { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
 .wm-facility { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 600;
-  color: var(--color-gold-light); background: var(--color-void); border: 1px solid var(--color-gold-dark);
+  color: var(--color-gold-light); background: var(--color-void); border: 1px solid var(--color-gold-dim);
   border-radius: 6px; padding: 5px 9px; }
 
 /* Travel prompt / location picker (phase 3 activity gating) */
@@ -2250,7 +2259,7 @@ html, body, #app {
 .wm-tp-list { display: flex; flex-direction: column; gap: 8px; }
 .wm-tp-option { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px;
   width: 100%; text-align: left; padding: 10px 14px; border-radius: 8px; cursor: pointer;
-  background: var(--color-void); border: 1px solid var(--color-gold-dark); color: var(--color-parchment); }
+  background: var(--color-void); border: 1px solid var(--color-gold-dim); color: var(--color-parchment); }
 .wm-tp-option:hover { border-color: var(--color-gold); background: var(--color-void-border); }
 .wm-tp-place { font-family: var(--font-display); font-weight: 600; font-size: 15px; }
 .wm-tp-ticks { font-family: var(--font-mono); font-size: 13px; color: var(--color-gold-light); }

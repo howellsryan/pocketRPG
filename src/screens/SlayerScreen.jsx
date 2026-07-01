@@ -339,7 +339,7 @@ export default function SlayerScreen({ onBack, onNavigate }) {
           </div>
         </div>
       ) : (
-        <div class="mb-4 rounded-2xl p-3.5 text-center bg-[rgba(255,255,255,0.025)] border border-[rgba(255,255,255,0.06)]">
+        <div class="mb-4 rounded-2xl p-3.5 text-center bg-[var(--color-void-light)] border border-[var(--color-void-border)]">
           <div class="text-[12px] text-[var(--color-parchment)] opacity-50">No active task — select a master below to get one.</div>
         </div>
       )}

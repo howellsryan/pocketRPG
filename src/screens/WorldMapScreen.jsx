@@ -188,14 +188,14 @@ export default function WorldMapScreen() {
   return (
     <div class="h-full w-full relative overflow-hidden bg-[var(--color-void)]" style={{ touchAction: 'none' }}>
       {/* top bar */}
-      <div class="absolute top-0 left-0 right-0 z-30 flex items-center gap-3 px-4 py-2 bg-[var(--color-void-light)] border-b border-[var(--color-void-border)]">
-        <div class="font-[var(--font-display)] text-[var(--color-gold-light)] font-bold text-lg">World Map</div>
+      <div class="forge-shell absolute top-0 left-0 right-0 z-30 flex items-center gap-3 px-4 py-2 bg-[var(--color-void-light)] border-b border-[var(--color-void-border)]">
+        <div class="font-[var(--font-display)] text-[var(--color-gold)] font-bold text-lg">World Map</div>
         <div class="text-[var(--color-parchment-dark)] text-xs italic font-[var(--font-body)]">Chart of Eldermoor</div>
         <div class="ml-auto flex items-center gap-2 px-3 py-1 rounded bg-[var(--color-void)] border border-[var(--color-void-border)]">
           <span class="text-base" aria-hidden="true">📍</span>
           <span class="flex flex-col leading-tight">
             <small class="uppercase tracking-widest text-[9px] text-[var(--color-ink-light)]">{travel ? 'Travelling to' : 'You are at'}</small>
-            <b class="font-[var(--font-display)] text-[13px] text-[var(--color-gold-light)]">{travel ? travelDestName(travel) : getPlace(here)?.name}</b>
+            <b class="font-[var(--font-display)] text-[13px] text-[var(--color-gold)]">{travel ? travelDestName(travel) : getPlace(here)?.name}</b>
           </span>
         </div>
       </div>
@@ -281,7 +281,7 @@ export default function WorldMapScreen() {
 
         {/* travel banner */}
         {travel && (
-          <div class="wm-travelbar" role="status">
+          <div class="forge-shell wm-travelbar" role="status">
             <div class="wm-travelbar-top">
               <span class="wm-travelbar-lead">Travelling to <b>{travelDestName(travel)}</b></span>
               <span class="wm-travelbar-ticks">{(travel.totalTicks ?? 0) - (travel.ticksRemaining ?? 0)} / {travel.totalTicks ?? 0} ticks</span>
