@@ -128,6 +128,8 @@ const sourceFiles = [
   'components/Card.js',
   'components/Panel.js',
   'components/Button.js',
+  'components/IronFrame.js',
+  'components/WaxSeal.js',
   'components/WeaponChargePanel.js',
   'components/SectionHeader.js',
   'components/BonusDisplay.js',
@@ -390,19 +392,29 @@ const compiledTailwindCSS = fs.readFileSync(path.join(__dirname, '.tmp', 'app.cs
 // the document, shortening the chain. Below-the-fold / in-app-only weights
 // (Nunito 600/700, all JetBrains Mono) are intentionally NOT preloaded so they
 // don't compete with the LCP image for early bandwidth.
+// Forgemark (in-game only, loaded inside the lazy game chunk — never preloaded):
+//   Grenze Gotisch    — display / headings
+//   Spectral          — body serif (needs italic for the "ledger" emphasis voice)
+//   IM Fell English   — lore/flavour italic (its only real use is italic)
+//   Spline Sans Mono  — numerics
 const FONT_FACES = [
-  { pkg: '@fontsource/cinzel',         family: 'Cinzel',         weights: [400, 700, 900], preload: [400, 700, 900] },
-  { pkg: '@fontsource/nunito',          family: 'Nunito',         weights: [400, 600, 700], preload: [400]           },
-  { pkg: '@fontsource/jetbrains-mono', family: 'JetBrains Mono', weights: [400, 700],      preload: []              },
+  { pkg: '@fontsource/cinzel',           family: 'Cinzel',           weights: [400, 700, 900], preload: [400, 700, 900] },
+  { pkg: '@fontsource/nunito',            family: 'Nunito',           weights: [400, 600, 700], preload: [400]           },
+  { pkg: '@fontsource/jetbrains-mono',   family: 'JetBrains Mono',   weights: [400, 700],      preload: []              },
+  { pkg: '@fontsource/grenze-gotisch',   family: 'Grenze Gotisch',   weights: [400, 700, 900], preload: []              },
+  { pkg: '@fontsource/spectral',         family: 'Spectral',         weights: [400, 600, 700], italics: [400, 600],    preload: [] },
+  { pkg: '@fontsource/im-fell-english',  family: 'IM Fell English',  weights: [400],           italics: [400],         preload: [] },
+  { pkg: '@fontsource/spline-sans-mono', family: 'Spline Sans Mono', weights: [400, 500, 600, 700], preload: []        },
 ];
 const fontsOutDir = path.join(__dirname, 'public', 'fonts');
 fs.mkdirSync(fontsOutDir, { recursive: true });
 let fontFaceCSS = '';
 let fontPreloadTags = '';
-for (const { pkg, family, weights, preload } of FONT_FACES) {
+for (const { pkg, family, weights, italics, preload } of FONT_FACES) {
   const fontName = pkg.split('/')[1];
-  for (const weight of weights) {
-    const fname = `${fontName}-latin-${weight}-normal.woff2`;
+  const styles = weights.map((weight) => [weight, 'normal']).concat((italics || []).map((weight) => [weight, 'italic']));
+  for (const [weight, style] of styles) {
+    const fname = `${fontName}-latin-${weight}-${style}.woff2`;
     const fpath = path.join(__dirname, 'node_modules', pkg, 'files', fname);
     if (!fs.existsSync(fpath)) {
       console.error(`Missing font: ${fpath}`);
@@ -410,7 +422,7 @@ for (const { pkg, family, weights, preload } of FONT_FACES) {
     }
     fs.copyFileSync(fpath, path.join(fontsOutDir, fname));
     fontFaceCSS +=
-      `@font-face{font-family:'${family}';font-style:normal;font-weight:${weight};` +
+      `@font-face{font-family:'${family}';font-style:${style};font-weight:${weight};` +
       `font-display:swap;src:url('/public/fonts/${fname}') format('woff2')}\n`;
     // `crossorigin` is required even for same-origin fonts: woff2 is always
     // fetched in CORS-anonymous mode, so a preload without it would be a

@@ -1710,7 +1710,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       {/* Mobile uses the artsy CombatMobileSelect; desktop keeps the responsive
           grid below unchanged. Shared modals (info / raid / idle / PvP) follow. */}
       {!isDesktopCombatLayout ? (
-        <div class="h-full overflow-y-auto">
+        <div class="forge-shell h-full overflow-y-auto">
           <CombatMobileSelect
             categories={COMBAT_CATEGORIES}
             monstersData={monstersData}
@@ -2174,7 +2174,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
 
   // Combat view
   return (
-    <div class={`h-full flex flex-col p-4 ${isDesktopCombatLayout ? 'overflow-hidden' : ''}`}>
+    <div class={`forge-shell h-full flex flex-col p-4 ${isDesktopCombatLayout ? 'overflow-hidden' : ''}`}>
       {/* Back button */}
       <button onClick={stopAndBack}
         class="text-xs text-[var(--color-gold-dim)] mb-3 flex items-center gap-1">

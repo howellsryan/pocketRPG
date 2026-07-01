@@ -77,6 +77,219 @@
   --color-blood-glow: rgba(224, 86, 75, 0.18);
 }
 
+/* ════════════════════════════════════════════════════════════════════════
+   FORGEMARK — bespoke illuminated-ledger / blacksmith's-workshop identity.
+   New tokens only (no name collisions with the base palette above), so they
+   are safe at :root — inert everywhere until a .fm-* class or a semantic
+   token override below actually opts a surface in. Ported from the
+   Claude Design export in docs/PocketRPG Design System 4.zip.
+   ════════════════════════════════════════════════════════════════════════ */
+:root {
+  --fm-parch: #e9dcbd;
+  --fm-parch-hi: #f3ead0;
+  --fm-parch-lo: #d8c69e;
+  --fm-ink: #2b2114;
+  --fm-ink-soft: #5a4a32;
+  --fm-ink-faint: #8a7553;
+  --fm-rule: #b6a079;
+  --fm-iron: #1c1a18;
+  --fm-soot: #14110d;
+  --fm-brass: #b08842;
+  --fm-brass-hi: #e6c878;
+  --fm-brass-lo: #6e521f;
+  --fm-ember: #c2410c;
+  --fm-ember-hi: #f0742a;
+  --fm-ember-deep: #7c2708;
+  --fm-blood: #7f1d1d;
+  --fm-verdigris: #2f6b5e;
+  --fm-woad: #2c4a73;
+  --fm-royal: #5b3a86;
+
+  --fm-display: 'Grenze Gotisch', 'Cinzel', serif;
+  --fm-serif: 'Spectral', Georgia, serif;
+  --fm-fell: 'IM Fell English', 'Spectral', serif;
+  --fm-num: 'Spline Sans Mono', 'JetBrains Mono', monospace;
+
+  --fm-r-sharp: 2px;
+  --fm-r-sm: 4px;
+  --fm-r-frame: 7px;
+
+  --fm-frame-shadow:
+    0 2px 0 rgba(0,0,0,0.5),
+    0 14px 28px -14px rgba(0,0,0,0.85),
+    inset 0 1px 0 rgba(255,255,255,0.07),
+    inset 0 0 0 1px rgba(0,0,0,0.6);
+  --fm-parch-inset:
+    inset 0 2px 5px rgba(74,54,28,0.35),
+    inset 0 0 0 1px rgba(120,95,55,0.25);
+  --fm-rivet: radial-gradient(circle at 38% 32%, var(--fm-brass-hi), var(--fm-brass) 48%, var(--fm-brass-lo) 100%);
+  --fm-ember-face: linear-gradient(178deg, #f0742a 0%, #c2410c 52%, #8a2d06 100%);
+  --fm-parch-face:
+    radial-gradient(120% 80% at 0% 0%, rgba(255,240,200,0.5), transparent 55%),
+    radial-gradient(140% 120% at 100% 100%, rgba(150,110,60,0.18), transparent 60%),
+    linear-gradient(160deg, #ece0c2, #e0d0a8);
+  --fm-gilt-text: linear-gradient(180deg, #f3dd9a 0%, #c9a227 55%, #8c6a16 100%);
+  --fm-ease: cubic-bezier(0.2, 0.9, 0.3, 1);
+  --fm-dur: 0.16s;
+
+  --fm-tex-parch: url('/public/forge/parchment.svg');
+  --fm-tex-iron: url('/public/forge/iron.svg');
+  --fm-orn-corner: url('/public/forge/corner.svg');
+  --fm-orn-divider: url('/public/forge/divider.svg');
+}
+
+/* Opt-in per screen — wrap a screen's own root element in .forge-shell (see
+   HomeScreen/CombatScreen/WorldMapScreen) rather than the shared App.jsx
+   shell, so the reskin stays confined to piloted screens: the nav rail and
+   header are persistent chrome shown on every screen and must not flip along
+   with them, and every other screen must keep its current look until it gets
+   its own pass. Re-routes the *existing* semantic vars every screen already
+   consumes, so Card/Panel/Button/etc. pick up the new identity without
+   call-site changes. HP/XP bar colors are intentionally left alone — those
+   are safety semantics (low health = red), not brand decoration. */
+.forge-shell {
+  --font-display: var(--fm-display);
+  --font-body: var(--fm-serif);
+  --font-mono: var(--fm-num);
+
+  --color-void: var(--fm-soot);
+  --color-void-light: var(--fm-iron);
+  --color-void-lighter: #3a352f;
+  --color-void-border: #4d453a;
+
+  --color-gold: var(--fm-brass);
+  --color-gold-light: var(--fm-brass-hi);
+  --color-gold-dim: var(--fm-brass-lo);
+  --color-blood: var(--fm-blood);
+  --color-blood-mid: #6b1414;
+  --color-blood-light: #b3392f;
+  --color-emerald: var(--fm-verdigris);
+  --color-emerald-mid: #26564b;
+  --color-emerald-light: #4f9784;
+  --color-mana: var(--fm-woad);
+  --color-mana-light: #527bb0;
+}
+
+/* ── Forgemark material classes: iron frames, parchment panels, rivets,
+   ledger rows, gilt/gothic type, ornaments. Shared by IronFrame, ForgeButton,
+   Ledger, WaxSeal and SkillCrest (src/components/). ── */
+.fm-frame {
+  position: relative;
+  border-radius: var(--fm-r-frame);
+  background-color: #1b1916;
+  background-image: var(--fm-tex-iron);
+  background-size: 280px;
+  border: 1px solid #000;
+  box-shadow: var(--fm-frame-shadow);
+  padding: 9px;
+}
+.fm-frame::before {
+  content: ''; position: absolute; inset: 1px; border-radius: calc(var(--fm-r-frame) - 1px);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), inset 0 -10px 22px -14px rgba(0,0,0,0.9);
+  pointer-events: none;
+}
+.fm-frame > .fm-rivets { position: absolute; inset: 0; pointer-events: none; }
+.fm-rivet {
+  position: absolute; width: 11px; height: 11px; border-radius: 50%;
+  background: var(--fm-rivet);
+  box-shadow: 0 1px 1px rgba(0,0,0,0.7), inset 0 -1px 1px rgba(0,0,0,0.4), inset 0 1px 1px rgba(255,240,200,0.5);
+}
+.fm-rivet--tl { top: 8px; left: 8px; }  .fm-rivet--tr { top: 8px; right: 8px; }
+.fm-rivet--bl { bottom: 8px; left: 8px; } .fm-rivet--br { bottom: 8px; right: 8px; }
+
+.fm-parch {
+  position: relative;
+  border-radius: var(--fm-r-sm);
+  background-color: #e6d8b6;
+  background-image: var(--fm-tex-parch);
+  background-size: cover;
+  box-shadow: var(--fm-parch-inset);
+  color: var(--fm-ink);
+  overflow: hidden;
+}
+.fm-parch::after {
+  content: ''; position: absolute; inset: 0; pointer-events: none; border-radius: inherit;
+  box-shadow: inset 0 0 36px rgba(120,80,30,0.32), inset 0 0 6px rgba(80,50,15,0.25);
+  background: radial-gradient(130% 120% at 50% 50%, transparent 62%, rgba(110,75,30,0.22));
+}
+
+.fm-banner { font-family: var(--fm-display); font-weight: 800; letter-spacing: 0.01em; line-height: 1.0; color: var(--fm-ink); }
+.fm-banner--gilt {
+  background: var(--fm-gilt-text); -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent; color: transparent;
+  filter: drop-shadow(0 1px 0 rgba(0,0,0,0.5));
+  padding-right: 0.12em;
+}
+.fm-eyebrow { font-family: var(--fm-serif); font-weight: 600; font-size: 12px; letter-spacing: 0.34em; text-transform: uppercase; color: var(--fm-ink-faint); }
+.fm-eyebrow--light { color: var(--fm-brass); }
+.fm-lore { font-family: var(--fm-fell); font-style: italic; color: var(--fm-ink-soft); line-height: 1.5; }
+.fm-num { font-family: var(--fm-num); font-variant-numeric: tabular-nums; }
+
+.fm-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 9px;
+  font-family: var(--fm-display); font-weight: 700; letter-spacing: 0.03em;
+  border: 1px solid #000; border-radius: var(--fm-r-sm); cursor: pointer;
+  padding: 12px 22px; font-size: 16px; position: relative;
+  transition: transform var(--fm-dur) var(--fm-ease), filter var(--fm-dur), box-shadow var(--fm-dur);
+}
+.fm-btn:active { transform: translateY(1px); }
+.fm-btn--ember {
+  color: #2a0f02; background: var(--fm-ember-face);
+  box-shadow: inset 0 1px 0 rgba(255,220,180,0.55), inset 0 -2px 4px rgba(120,40,8,0.6), 0 4px 14px -6px rgba(194,65,12,0.7);
+  text-shadow: 0 1px 0 rgba(255,210,160,0.4);
+}
+.fm-btn--ember:hover { filter: brightness(1.07); box-shadow: inset 0 1px 0 rgba(255,220,180,0.6), 0 7px 20px -6px rgba(240,116,42,0.8); }
+.fm-btn--iron {
+  color: var(--fm-parch); background-color: #221f1b; background-image: var(--fm-tex-iron); background-size: 200px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.07), 0 3px 10px -6px rgba(0,0,0,0.8);
+}
+.fm-btn--iron:hover { color: var(--fm-brass-hi); }
+.fm-btn--ghost { background: transparent; border-color: var(--fm-rule); color: var(--fm-ink); font-family: var(--fm-serif); font-weight: 600; }
+.fm-btn--ghost:hover { border-color: var(--fm-ink-soft); background: rgba(74,54,28,0.08); }
+.fm-btn--lg { font-size: 18px; padding: 15px 30px; }
+.fm-btn--sm { font-size: 13px; padding: 8px 14px; }
+
+.fm-ledger { width: 100%; }
+.fm-row { display: flex; align-items: center; gap: 12px; padding: 9px 12px; border-bottom: 1px solid var(--fm-rule); }
+.fm-row:last-child { border-bottom: 0; }
+.fm-row--head { border-bottom: 2px solid var(--fm-ink); }
+.fm-row__label { font-weight: 600; color: var(--fm-ink); }
+.fm-row__val { margin-left: auto; font-family: var(--fm-num); font-variant-numeric: tabular-nums; color: var(--fm-ink); font-weight: 600; }
+.fm-row--alt:nth-child(even) { background: rgba(120,90,45,0.07); }
+
+.fm-tag {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-family: var(--fm-serif); font-weight: 700; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;
+  padding: 3px 9px; border-radius: var(--fm-r-sharp); border: 1px solid currentColor;
+}
+.fm-tag--ember { color: var(--fm-ember); }
+.fm-tag--verdigris { color: var(--fm-verdigris); }
+.fm-tag--blood { color: var(--fm-blood); }
+.fm-tag--woad { color: var(--fm-woad); }
+.fm-tag--brass { color: var(--fm-brass-lo); }
+
+.fm-corner { position: absolute; width: 30px; height: 30px; background: var(--fm-orn-corner) center/contain no-repeat; pointer-events: none; opacity: 0.5; }
+.fm-corner--tl { top: 7px; left: 7px; }
+.fm-corner--tr { top: 7px; right: 7px; transform: scaleX(-1); }
+.fm-corner--bl { bottom: 7px; left: 7px; transform: scaleY(-1); }
+.fm-corner--br { bottom: 7px; right: 7px; transform: scale(-1); }
+.fm-divider { height: 18px; background: var(--fm-orn-divider) center/auto 100% no-repeat; }
+.fm-rule-head { display: flex; align-items: center; gap: 14px; }
+.fm-rule-head::before, .fm-rule-head::after { content: ''; height: 1px; flex: 1; background: linear-gradient(90deg, transparent, var(--fm-rule), transparent); }
+
+.fm-crest { position: relative; display: inline-flex; align-items: center; justify-content: center; }
+.fm-crest__ring {
+  position: absolute; inset: 0; border-radius: 50%;
+  background: var(--fm-rivet);
+  box-shadow: inset 0 2px 3px rgba(255,240,200,0.5), inset 0 -3px 5px rgba(80,55,15,0.7), 0 3px 8px -3px rgba(0,0,0,0.7);
+}
+.fm-crest__face {
+  position: absolute; border-radius: 50%; inset: 5px;
+  background: radial-gradient(circle at 38% 32%, #2a2622, #14110d);
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,0.7), inset 0 2px 6px rgba(0,0,0,0.8);
+  display: flex; align-items: center; justify-content: center;
+}
+
 * {
   -webkit-tap-highlight-color: transparent;
   -webkit-touch-callout: none;
@@ -277,6 +490,65 @@ html, body, #app {
 }
 .xp-meta { margin-top: 1px; font-family: var(--font-mono); font-size: 8px; letter-spacing: 0.02em; color: var(--color-parchment); opacity: 0.42; text-align: center; }
 .xp-meta--max { color: var(--color-gold-light); opacity: 0.85; letter-spacing: 0.2em; font-weight: 700; }
+
+/* Forgemark pilot — Home screen surfaces flip to parchment; only the inner
+   text/border colors need overriding here since the *screen* background
+   (--color-void) stays dark under .forge-shell, so anything not on one of
+   these parchment surfaces already reads fine unchanged. */
+.forge-shell .welcome-card { background: var(--fm-parch-face); border-color: var(--fm-rule); box-shadow: var(--fm-parch-inset); }
+.forge-shell .welcome-card::after { display: none; }
+.forge-shell .welcome-card__title { background-image: var(--fm-gilt-text); }
+.forge-shell .wstat { color: var(--fm-ink-soft); }
+.forge-shell .wstat b { color: var(--fm-ember); }
+.forge-shell .rune-btn { border-color: var(--fm-brass-lo); background: linear-gradient(180deg, #2a2622, #14110d); }
+.forge-shell .rune-btn:hover { border-color: var(--fm-brass); }
+.forge-shell .skill-card { background: #e6d8b6; background-image: var(--fm-tex-parch); background-size: cover; border-color: var(--fm-rule); box-shadow: var(--fm-parch-inset); }
+.forge-shell .skill-card:hover { border-color: var(--fm-brass); }
+.forge-shell .skill-card__name span { color: var(--fm-ink); text-shadow: none; }
+.forge-shell .skill-card__level { color: var(--fm-ember-deep); text-shadow: none; }
+.forge-shell .xp-meta { color: var(--fm-ink-faint); }
+.forge-shell .xp-meta--max { color: var(--fm-ember); }
+
+/* Forgemark pilot — Combat screen: area/monster picker rows + stat tiles
+   flip to parchment. The combat log keeps its dark terminal-feed look
+   (hit/damage/loot colors are gameplay signal, not brand decoration). */
+.forge-shell .cb-area,
+.forge-shell .cb-mon,
+.forge-shell .cb-kstat,
+.forge-shell .cb-stat,
+.forge-shell .cb-act:not(.is-on) {
+  background: #e6d8b6; background-image: var(--fm-tex-parch); background-size: cover;
+  border-color: var(--fm-rule); box-shadow: var(--fm-parch-inset);
+}
+.forge-shell .cb-area--raid { background-image: var(--fm-tex-parch); border-color: var(--fm-royal); }
+.forge-shell .cb-mon--task { border-color: var(--fm-brass); }
+.forge-shell .cb-area:hover, .forge-shell .cb-mon:hover { border-color: var(--fm-brass); }
+.forge-shell .cb-area__name, .forge-shell .cb-mon__name, .forge-shell .cb-fight__name { color: var(--fm-ink); }
+.forge-shell .cb-area__blurb, .forge-shell .cb-area__count, .forge-shell .cb-mon__stats { color: var(--fm-ink-faint); }
+.forge-shell .cb-back { color: var(--fm-ember); }
+.forge-shell .cb-kstat__k, .forge-shell .cb-stat__k { color: var(--fm-ink-faint); }
+.forge-shell .cb-kstat__v, .forge-shell .cb-stat__v { color: var(--fm-ember-deep); }
+.forge-shell .cb-act:not(.is-on) { color: var(--fm-ink); }
+.forge-shell .cb-mon__kc { color: var(--fm-ember-deep); }
+
+/* Forgemark pilot — World Map place hub: the sheet below the banner becomes a
+   genuine parchment page (this screen is where the "Forgemark" identity
+   originated — see docs/map-driven-overhaul-plan.md). The banner itself
+   (photo or vector scene + white overlay text) is unaffected — that overlay
+   treatment already works over any art, themed or not. */
+.forge-shell .wm-hub { background: #e6d8b6; background-image: var(--fm-tex-parch); background-size: cover; }
+.forge-shell .wm-hub-lore { color: var(--fm-ink-soft); }
+.forge-shell .wm-hub-sectionhead::before, .forge-shell .wm-hub-sectionhead::after { background: var(--fm-rule); }
+.forge-shell .wm-hub-sectionhead span { color: var(--fm-ink-faint); }
+.forge-shell .wm-act, .forge-shell .wm-act-chip, .forge-shell .wm-facility {
+  background: var(--fm-parch-hi); border-color: var(--fm-rule);
+}
+.forge-shell .wm-act-name { color: var(--fm-ink); }
+.forge-shell .wm-act-note, .forge-shell .wm-act-count { color: var(--fm-ink-faint); }
+.forge-shell .wm-act-lvl { color: var(--fm-ink-soft); }
+.forge-shell .wm-act-chip { color: var(--fm-ink-soft); }
+.forge-shell .wm-facility { color: var(--fm-ember-deep); }
+.wm-hub-seal { float: right; margin: 0 0 8px 12px; }
 
 /* Emblem primitive */
 .skill-emblem { position: relative; pointer-events: none; }

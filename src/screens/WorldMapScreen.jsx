@@ -5,6 +5,7 @@ import { describeActivity } from '../engine/worldContent.js'
 import { createTravelTask, travelFraction, travelDestName } from '../engine/travel.js'
 import { PlaceIcon, PlaceScene } from '../components/PlaceArt.jsx'
 import GameIcon from '../components/GameIcon.jsx'
+import WaxSeal from '../components/WaxSeal.jsx'
 
 // Facility chip glyph: bank reuses the existing in-game bank icon (the nav's coins
 // glyph); furnace & anvil gets its bespoke PlaceIcon; anything else falls back to its
@@ -314,7 +315,7 @@ function PlaceHub({ place, here, travelling, onTravel, onClose }) {
   return (
     <>
       <div class="wm-scrim" onClick={onClose} />
-      <div class="wm-hub" role="dialog" aria-label={place.name}>
+      <div class="forge-shell wm-hub" role="dialog" aria-label={place.name}>
         <div class="wm-hub-banner" style={{ '--wm-accent': tier?.accent || 'var(--color-gold)' }}>
           <div class="wm-hub-scene" aria-hidden="true"><PlaceScene place={place} /></div>
           <div class="wm-hub-scene-veil" aria-hidden="true" />
@@ -326,6 +327,7 @@ function PlaceHub({ place, here, travelling, onTravel, onClose }) {
           </div>
         </div>
         <div class="wm-hub-body">
+          {place.tier === 'city' && <WaxSeal size={48} rotate={-6} label="Capital" class="wm-hub-seal" />}
           <p class="wm-hub-lore">{place.lore}</p>
           {(place.facilities?.length > 0) && (
             <div class="wm-hub-facilities">

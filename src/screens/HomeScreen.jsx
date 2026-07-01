@@ -87,7 +87,7 @@ export default function HomeScreen({ onNavigate, onLogout, onManualSave, isCloud
   const saveDisabled = saving || loggingOut || !onManualSave
 
   return (
-    <div class="h-full flex flex-col">
+    <div class="forge-shell h-full flex flex-col">
       {/* Welcome card with rune save/logout buttons */}
       <div class="px-4 pt-4 pb-2 flex-shrink-0">
         <div class="welcome-card">
