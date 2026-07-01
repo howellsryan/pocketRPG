@@ -223,14 +223,16 @@ Each phase is independently shippable and reversible against the live game.
   in `src/data/world.json`; `seedWorldContent.cjs` fills `activities` and reads facilities
   rather than deriving them. Discovery/unlocks remain a later effort (§9.1).
 - **Post-Phase-4 polish** (done): map presentation + content-fidelity pass.
-  - **Bespoke art** (`src/components/PlaceArt.jsx`, pure SVG, no raster assets): `PlaceIcon`
-    draws the settlement-tier medallions (city/town/village/hamlet) and the furnace-&-anvil
-    facility glyph; **bank reuses the existing in-game bank icon** (the nav `coins` glyph via
-    `GameIcon`). `PlaceScene` is a wide, per-place establishing illustration on the hub banner
-    (e.g. Faloden = white castle + white bridge, Al-Karid = desert palace, Brimhollow =
-    volcano + docks), composed from landmark primitives and keyed by place id with a
-    tier-themed fallback. Responsive (viewBox + `xMidYMid slice`). Styling: `.wm-hub-scene`,
-    `.wm-face-art` in `src/index.css`.
+  - **Bespoke art** (`src/components/PlaceArt.jsx`): `PlaceIcon` draws the settlement-tier
+    medallions (city/town/village/hamlet) and the furnace-&-anvil facility glyph, pure SVG;
+    **bank reuses the existing in-game bank icon** (the nav `coins` glyph via `GameIcon`).
+    `PlaceScene` is a wide, per-place establishing illustration on the hub banner. If a
+    place has a generated `image` (static asset under `/public/world/`, e.g. `draynar`,
+    `seerhold`), that photo is shown directly; otherwise it falls back to a hand-drawn
+    vector scene (e.g. Faloden = white castle + white bridge, Al-Karid = desert palace,
+    Brimhollow = volcano + docks), composed from landmark primitives and keyed by place id
+    with a tier-themed fallback. Responsive (viewBox + `xMidYMid slice`, or `object-fit:
+    cover` for photos). Styling: `.wm-hub-scene`, `.wm-face-art` in `src/index.css`.
   - **Raids are their own kind** (`kind: 'raid'`), authored at a city in the seed and gated
     on the raid (not its first boss). Raid boss monsters are excluded from the `combat`
     distribution so they no longer appear as standalone map monsters. `startRaid` requests

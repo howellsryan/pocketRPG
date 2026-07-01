@@ -1,17 +1,18 @@
 /**
- * PlaceArt — bespoke, PocketRPG-owned vector art for the world map.
+ * PlaceArt — map art for the world map.
  *
- * Two exports, both pure SVG (no raster assets, so they scale crisply on mobile and
- * desktop and ship inside the lazy game chunk with the rest of the map):
  *   • <PlaceIcon>  — the settlement-tier medallions (city/town/village/hamlet) and the
- *                    furnace-&-anvil facility glyph. Drawn at a 64×64 viewBox.
+ *                    furnace-&-anvil facility glyph. Pure SVG, 64×64 viewBox.
  *   • <PlaceScene> — a wide, per-place establishing illustration shown on the place hub
- *                    banner (e.g. Faloden = white castle + white bridge). Composed from a
- *                    small library of landmark primitives keyed by place id, falling back
- *                    to a tier-themed scene so new places always render something.
+ *                    banner. If `place.image` is set (a generated static asset under
+ *                    /public/world/), that photo is used directly. Otherwise falls back
+ *                    to a bespoke vector scene composed from a small library of landmark
+ *                    primitives keyed by place id, or a tier-themed scene so places
+ *                    without either always render something.
  *
- * Art uses the theme CSS variables (`var(--color-…)`) for cohesion with the rest of the
- * UI. Keep it dependency-free and self-contained — this is the single home for map art.
+ * Vector art uses the theme CSS variables (`var(--color-…)`) for cohesion with the rest
+ * of the UI. Keep it dependency-free and self-contained — this is the single home for
+ * map art.
  */
 
 // ───────────────────────── tier / facility icons (64×64) ─────────────────────────
@@ -330,8 +331,20 @@ const TIER_SCENE = {
 /**
  * Wide establishing illustration for a place hub banner. `place` is the world.json place
  * object (needs id + tier). Responsive: fills its container width, fixed 400×220 aspect.
+ * Prefers a real generated photo (`place.image`) over the bespoke vector scene.
  */
 export function PlaceScene({ place, class: cls = '' }) {
+  if (place?.image) {
+    return (
+      <img
+        src={place.image}
+        alt={`View of ${place.name}`}
+        class={cls}
+        loading="lazy"
+        style={{ display: 'block', width: '100%', height: '100%', objectFit: 'cover' }}
+      />
+    )
+  }
   const scene = (place && SCENES[place.id]) || TIER_SCENE[place?.tier] || TIER_SCENE.village
   const id = `pa_sky_${place?.id || place?.tier || 'x'}`
   return (

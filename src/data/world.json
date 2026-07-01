@@ -3469,6 +3469,7 @@
       "x": 660,
       "y": 820,
       "icon": "🏡",
+      "image": "/public/world/draynar.webp",
       "sub": "Willow-shaded village",
       "lore": "A quiet village of willows and a watchful bank, just down the river road from Lumbright. Pickpockets practice here before the city.",
       "facilities": [
@@ -6235,6 +6236,7 @@
       "x": 560,
       "y": 180,
       "icon": "🏘️",
+      "image": "/public/world/seerhold.webp",
       "sub": "Town of the far-seers",
       "lore": "A misty town of soothsayers and flax fields, where the crystal halls hum with quiet magic.",
       "facilities": [
