@@ -50,39 +50,56 @@ function toolResultText(result) {
   return result?.isError ? `Tool error: ${clipped || 'unknown error'}` : clipped || '(empty result)'
 }
 
+// GLM-4.7-flash speaks the OpenAI chat-completions shape: answers live in
+// choices[0].message. Reasoning is disabled via chat_template_kwargs (help
+// answers don't need it; thinking tokens would eat the answer budget), but
+// strip any <think> block defensively in case it reasons anyway.
+const CHAT_RUN_OPTS = {
+  max_tokens: CHAT_MAX_ANSWER_TOKENS,
+  chat_template_kwargs: { enable_thinking: false },
+}
+
+function answerText(res) {
+  const content = res?.choices?.[0]?.message?.content
+  if (typeof content !== 'string') return ''
+  return content.replace(/<think>[\s\S]*?<\/think>/g, '').trim()
+}
+
 // Run the Workers AI tool loop. Tool calls are restricted to the read-only
 // allowlist and character_id is pinned to the authenticated character.
 async function runAiChat(env, messages, { authorization, identity, characterId }) {
   const tools = chatToolDefs()
   for (let round = 0; round < CHAT_MAX_TOOL_ROUNDS; round++) {
-    const res = await env.AI.run(CHAT_MODEL, { messages, tools, max_tokens: CHAT_MAX_ANSWER_TOKENS })
-    const calls = Array.isArray(res?.tool_calls) ? res.tool_calls.slice(0, 3) : []
+    const res = await env.AI.run(CHAT_MODEL, { messages, tools, ...CHAT_RUN_OPTS })
+    const message = res?.choices?.[0]?.message
+    const calls = (Array.isArray(message?.tool_calls) ? message.tool_calls : [])
+      .filter((c) => c?.type === 'function' && c.function)
+      .slice(0, 3)
+      .map((c, i) => ({ ...c, id: c.id || `call_${round}_${i}` }))
     if (!calls.length) {
-      const answer = typeof res?.response === 'string' ? res.response.trim() : ''
+      const answer = answerText(res)
       if (answer) return answer
       break
     }
-    messages.push({ role: 'assistant', content: JSON.stringify({ tool_calls: calls }) })
+    messages.push({ role: 'assistant', content: message.content ?? null, tool_calls: calls })
     for (const call of calls) {
-      const name = call?.name
+      const name = call.function.name
       let text
       if (!CHAT_TOOL_ALLOWLIST.includes(name)) {
         text = `Tool error: '${name}' is not available.`
       } else {
-        const args = parseToolArgs(call.arguments ?? call.parameters)
+        const args = parseToolArgs(call.function.arguments)
         args.character_id = characterId
         const result = await callTool(name, args, { env, authorization, identity })
         text = toolResultText(result)
       }
-      messages.push({ role: 'tool', name: name || 'unknown', content: text })
+      messages.push({ role: 'tool', tool_call_id: call.id, content: text })
     }
   }
   // Tool budget exhausted or empty response — one last call with no tools so
   // the model must answer from what it has.
-  const final = await env.AI.run(CHAT_MODEL, { messages, max_tokens: CHAT_MAX_ANSWER_TOKENS })
-  return typeof final?.response === 'string' && final.response.trim()
-    ? final.response.trim()
-    : 'Sorry, I had trouble answering that — try rephrasing your PocketRPG question.'
+  const final = await env.AI.run(CHAT_MODEL, { messages, ...CHAT_RUN_OPTS })
+  return answerText(final) || 'Sorry, I had trouble answering that — try rephrasing your PocketRPG question.'
 }
 
 export async function onRequestPost({ request, env }) {

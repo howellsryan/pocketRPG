@@ -24,10 +24,11 @@ describe('chat tool surface', () => {
     }
   })
 
-  it('strips character_id from every exposed tool schema', () => {
+  it('exposes OpenAI-format tool defs with character_id stripped', () => {
     for (const def of chatToolDefs()) {
-      expect(def.parameters.properties).not.toHaveProperty('character_id')
-      expect(def.parameters.required ?? []).not.toContain('character_id')
+      expect(def.type).toBe('function')
+      expect(def.function.parameters.properties).not.toHaveProperty('character_id')
+      expect(def.function.parameters.required ?? []).not.toContain('character_id')
     }
     expect(chatToolDefs().length).toBe(CHAT_TOOL_ALLOWLIST.length)
   })
