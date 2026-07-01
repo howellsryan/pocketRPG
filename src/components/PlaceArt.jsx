@@ -9,11 +9,19 @@
  *                    to a bespoke vector scene composed from a small library of landmark
  *                    primitives keyed by place id, or a tier-themed scene so places
  *                    without either always render something.
+ *   • <WorldTerrain> — the painted landscape behind the world-map graph: sea and
+ *                    coastline, the northern loch, rivers, forests, mountain ranges,
+ *                    the Kharid sands, the mistmarsh, Duskwood, grass, waves and chart
+ *                    ornaments (compass rose, ship, region names). Deterministic: all
+ *                    scatter comes from a fixed-seed PRNG laid out once at module scope,
+ *                    with exclusion zones around every place node, road and road label
+ *                    so the terrain never fights the interactive layer.
  *
  * Vector art uses the theme CSS variables (`var(--color-…)`) for cohesion with the rest
  * of the UI. Keep it dependency-free and self-contained — this is the single home for
  * map art.
  */
+import { getWorld } from '../engine/world.js'
 
 // ───────────────────────── tier / facility icons (64×64) ─────────────────────────
 
@@ -362,6 +370,449 @@ export function PlaceScene({ place, class: cls = '' }) {
       </defs>
       <rect x="0" y="0" width="400" height="220" fill={`url(#${id})`} />
       {scene.render()}
+    </svg>
+  )
+}
+
+// ───────────────────────── world terrain (map background) ─────────────────────────
+// Painted-chart landscape for the 1640×1160 board in src/data/world.json. Geography is
+// hand-authored to match the place scenes above (Port Sarin/Brimhollow on the south
+// coast, the loch by Camlann/Catherra, the river bridges at Faloden and Lumbright, the
+// desert around Al-Karid, the marsh at Draynar, the haunted wood at Canifel).
+
+const WT_W = 1640
+const WT_H = 1160
+
+// South coastline, west→east. Everything below it is the Sarin Sea.
+const WT_COAST = [
+  [0, 795], [120, 825], [250, 845], [360, 875], [440, 900], [530, 895],
+  [640, 930], [760, 965], [880, 1000], [990, 1020], [1080, 1000],
+  [1180, 1055], [1290, 1030], [1400, 980], [1520, 950], [1640, 930],
+]
+
+// Loch Camlann (closed blob), and the two rivers that meet the sea by Port Sarin.
+const WT_LAKE = [[180, 215], [225, 160], [300, 145], [370, 170], [412, 225], [370, 275], [290, 295], [215, 270]]
+const WT_RIVER = [[382, 262], [420, 340], [462, 420], [492, 500], [520, 585], [560, 665], [598, 745], [600, 810], [560, 860], [520, 902]]
+const WT_RIVER2 = [[858, 652], [800, 690], [740, 730], [672, 772], [612, 800]]
+
+// Biome regions (ellipses: cx, cy, rx, ry) — used both to paint the wash and to route
+// the right scatter species into each.
+const WT_DESERT = { cx: 1150, cy: 800, rx: 300, ry: 185 }
+const WT_SWAMP = { cx: 668, cy: 838, rx: 130, ry: 78 }
+const WT_DUSK = { cx: 1330, cy: 440, rx: 160, ry: 115 }
+const WT_ASH = { cx: 1210, cy: 1000, rx: 150, ry: 100 }
+
+// Mountain peaks [x, y, size] — the Eldern Peaks (NE) and the Westwall (NW corner).
+const WT_PEAKS = [
+  [1040, 205, 44], [1125, 165, 52], [1215, 205, 46], [1300, 160, 56], [1390, 215, 48], [1480, 180, 54], [1565, 235, 44],
+  [1090, 265, 30], [1190, 285, 28], [1295, 270, 32], [1405, 300, 28], [1505, 290, 30],
+  [80, 165, 34], [150, 115, 40], [230, 165, 32],
+]
+
+// Forest clusters: deterministic scatter inside each ellipse. `kind` picks the glyph.
+const WT_FORESTS = [
+  { cx: 620, cy: 290, rx: 115, ry: 65, n: 15, kind: 'pine' },   // Seerhold pines
+  { cx: 1240, cy: 355, rx: 190, ry: 45, n: 9, kind: 'pine' },   // Eldern foothills
+  { cx: 300, cy: 620, rx: 130, ry: 80, n: 13, kind: 'oak' },    // Ardounne oakwood
+  { cx: 330, cy: 745, rx: 90, ry: 55, n: 8, kind: 'oak' },
+  { cx: 890, cy: 865, rx: 105, ry: 55, n: 9, kind: 'oak' },     // south of Lumbright
+  { cx: 1330, cy: 440, rx: 150, ry: 105, n: 17, kind: 'dead' }, // Duskwood
+  { cx: 668, cy: 838, rx: 120, ry: 70, n: 7, kind: 'reed' },    // mistmarsh reeds
+  { cx: 668, cy: 838, rx: 120, ry: 70, n: 5, kind: 'dead' },
+]
+
+function wtMulberry32(a) {
+  return function () {
+    a |= 0; a = (a + 0x6D2B79F5) | 0
+    let t = Math.imul(a ^ (a >>> 15), 1 | a)
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
+  }
+}
+
+// Smooth open/closed paths through control points (quadratics through midpoints).
+function wtSmoothOpen(pts) {
+  let d = `M${pts[0][0]} ${pts[0][1]}`
+  for (let i = 1; i < pts.length - 1; i++) {
+    const mx = (pts[i][0] + pts[i + 1][0]) / 2
+    const my = (pts[i][1] + pts[i + 1][1]) / 2
+    d += ` Q ${pts[i][0]} ${pts[i][1]} ${mx} ${my}`
+  }
+  const last = pts[pts.length - 1]
+  return d + ` L ${last[0]} ${last[1]}`
+}
+function wtSmoothClosed(pts) {
+  const n = pts.length
+  const mid = (a, b) => [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2]
+  let m = mid(pts[n - 1], pts[0])
+  let d = `M${m[0]} ${m[1]}`
+  for (let i = 0; i < n; i++) {
+    m = mid(pts[i], pts[(i + 1) % n])
+    d += ` Q ${pts[i][0]} ${pts[i][1]} ${m[0]} ${m[1]}`
+  }
+  return d + ' Z'
+}
+
+// Linear-interp y of the coastline at x (close enough to the smoothed curve).
+function wtCoastY(x) {
+  const c = WT_COAST
+  if (x <= c[0][0]) return c[0][1]
+  for (let i = 1; i < c.length; i++) {
+    if (x <= c[i][0]) {
+      const f = (x - c[i - 1][0]) / (c[i][0] - c[i - 1][0])
+      return c[i - 1][1] + (c[i][1] - c[i - 1][1]) * f
+    }
+  }
+  return c[c.length - 1][1]
+}
+
+const wtInEllipse = (x, y, e, pad = 0) => {
+  const dx = (x - e.cx) / (e.rx + pad)
+  const dy = (y - e.cy) / (e.ry + pad)
+  return dx * dx + dy * dy <= 1
+}
+
+function wtSegDist(px, py, x1, y1, x2, y2) {
+  const dx = x2 - x1, dy = y2 - y1
+  const len2 = dx * dx + dy * dy || 1
+  const t = Math.max(0, Math.min(1, ((px - x1) * dx + (py - y1) * dy) / len2))
+  const cx = x1 + t * dx, cy = y1 + t * dy
+  return Math.hypot(px - cx, py - cy)
+}
+
+function wtNearPolyline(x, y, pts, r) {
+  for (let i = 0; i < pts.length - 1; i++) {
+    if (wtSegDist(x, y, pts[i][0], pts[i][1], pts[i + 1][0], pts[i + 1][1]) < r) return true
+  }
+  return false
+}
+
+// Everything scattered is computed once and cached — the world graph is static data.
+let WT_LAYOUT = null
+function wtLayout() {
+  if (WT_LAYOUT) return WT_LAYOUT
+  const world = getWorld()
+  const places = Object.values(world.places)
+  const roads = world.edges
+    .map(([a, b]) => {
+      const pa = world.places[a], pb = world.places[b]
+      return pa && pb ? [pa.x, pa.y, pb.x, pb.y] : null
+    })
+    .filter(Boolean)
+
+  // Clear of the interactive layer: place medallions + name plates, roads and the
+  // tick labels at each road's midpoint.
+  const clear = (x, y) => {
+    for (const p of places) {
+      const sz = (world.tiers?.[p.tier]?.size || 56) / 2
+      if (Math.hypot(x - p.x, y - p.y) < sz + 62) return false
+    }
+    for (const [x1, y1, x2, y2] of roads) {
+      if (wtSegDist(x, y, x1, y1, x2, y2) < 30) return false
+      if (Math.hypot(x - (x1 + x2) / 2, y - (y1 + y2) / 2) < 46) return false
+    }
+    return true
+  }
+  const onLand = (x, y, pad = 18) =>
+    y < wtCoastY(x) - pad &&
+    !wtInEllipse(x, y, { cx: 296, cy: 222, rx: 118, ry: 82 }, pad) && // loch
+    !wtNearPolyline(x, y, WT_RIVER, 24) &&
+    !wtNearPolyline(x, y, WT_RIVER2, 20)
+  const nearPeak = (x, y) => WT_PEAKS.some(([px, py, s]) => Math.hypot(x - px, y - py) < s + 14)
+
+  const rand = wtMulberry32(20260701)
+  const trees = []
+  for (const f of WT_FORESTS) {
+    for (let i = 0, made = 0; i < f.n * 30 && made < f.n; i++) {
+      const a = rand() * Math.PI * 2
+      const r = Math.sqrt(rand())
+      const x = f.cx + Math.cos(a) * f.rx * r
+      const y = f.cy + Math.sin(a) * f.ry * r
+      if (!clear(x, y) || !onLand(x, y) || nearPeak(x, y)) continue
+      if (f.kind === 'reed' && !wtInEllipse(x, y, WT_SWAMP)) continue // reeds stay in the marsh
+      trees.push({ kind: f.kind, x, y, s: 0.8 + rand() * 0.5 })
+      made++
+    }
+  }
+  // Lone trees across the plains (skip the authored biomes — they have their own flora).
+  for (let i = 0, made = 0; i < 400 && made < 34; i++) {
+    const x = 30 + rand() * (WT_W - 60)
+    const y = 60 + rand() * (WT_H - 120)
+    if (!clear(x, y) || !onLand(x, y) || nearPeak(x, y)) continue
+    if (wtInEllipse(x, y, WT_DESERT) || wtInEllipse(x, y, WT_SWAMP) || wtInEllipse(x, y, WT_DUSK, 30)) continue
+    trees.push({ kind: y < 420 ? 'pine' : 'oak', x, y, s: 0.75 + rand() * 0.5 })
+    made++
+  }
+  // A few desert palms + the oasis stand.
+  const palms = [[1002, 852], [1032, 868], [986, 880]]
+  for (let i = 0, made = 0; i < 200 && made < 5; i++) {
+    const a = rand() * Math.PI * 2
+    const r = Math.sqrt(rand())
+    const x = WT_DESERT.cx + Math.cos(a) * WT_DESERT.rx * 0.9 * r
+    const y = WT_DESERT.cy + Math.sin(a) * WT_DESERT.ry * 0.9 * r
+    if (!clear(x, y) || !onLand(x, y) || wtInEllipse(x, y, WT_ASH, 10)) continue
+    palms.push([x, y])
+    made++
+  }
+  for (const [x, y] of palms) trees.push({ kind: 'palm', x, y, s: 0.85 + rand() * 0.35 })
+  trees.sort((a, b) => a.y - b.y)
+
+  // Grass tufts on the open plains.
+  const grass = []
+  for (let gx = 50; gx < WT_W - 40; gx += 72) {
+    for (let gy = 70; gy < WT_H - 60; gy += 62) {
+      const x = gx + (rand() - 0.5) * 56
+      const y = gy + (rand() - 0.5) * 48
+      if (!clear(x, y) || !onLand(x, y) || nearPeak(x, y)) continue
+      if (wtInEllipse(x, y, WT_DESERT) || wtInEllipse(x, y, WT_SWAMP) || wtInEllipse(x, y, WT_DUSK)) continue
+      if (rand() < 0.3) continue
+      grass.push({ x, y, s: 1.15 + rand() * 0.6 })
+    }
+  }
+
+  // Waves in open water; dune ridges in the sands.
+  const waves = []
+  for (let gx = 40; gx < WT_W; gx += 118) {
+    for (let gy = 0; gy < 4; gy++) {
+      const x = gx + (rand() - 0.5) * 56
+      const y = wtCoastY(gx) + 52 + gy * 62 + (rand() - 0.5) * 30
+      if (y > WT_H - 26 || y < wtCoastY(x) + 34) continue
+      if (Math.hypot(x - 150, y - 1005) < 92) continue // compass rose
+      if (Math.hypot(x - 760, y - 1052) < 70) continue // ship
+      waves.push({ x, y, s: 0.8 + rand() * 0.6 })
+    }
+  }
+  waves.push({ x: 250, y: 218, s: 0.7 }, { x: 320, y: 245, s: 0.8 }, { x: 300, y: 190, s: 0.6 })
+  const dunes = []
+  for (let i = 0, made = 0; i < 300 && made < 11; i++) {
+    const a = rand() * Math.PI * 2
+    const r = Math.sqrt(rand())
+    const x = WT_DESERT.cx + Math.cos(a) * WT_DESERT.rx * 0.85 * r
+    const y = WT_DESERT.cy + Math.sin(a) * WT_DESERT.ry * 0.85 * r
+    if (!clear(x, y) || !onLand(x, y) || wtInEllipse(x, y, WT_ASH, 20)) continue
+    dunes.push({ x, y, s: 0.8 + rand() * 0.7 })
+    made++
+  }
+  // Boulders below the peaks and on the moors.
+  const rocks = []
+  for (let i = 0, made = 0; i < 200 && made < 9; i++) {
+    const x = 60 + rand() * (WT_W - 120)
+    const y = 100 + rand() * 340
+    if (!clear(x, y) || !onLand(x, y) || nearPeak(x, y) || wtInEllipse(x, y, WT_DUSK, 20)) continue
+    rocks.push({ x, y, s: 0.7 + rand() * 0.7 })
+    made++
+  }
+
+  WT_LAYOUT = { trees, grass, waves, dunes, rocks }
+  return WT_LAYOUT
+}
+
+const wtEllipseBlob = (e, shrink = 0, seed = 1) => {
+  // Irregular closed blob approximating the ellipse (8 jittered spokes).
+  const rand = wtMulberry32(seed)
+  const pts = []
+  for (let i = 0; i < 8; i++) {
+    const a = (i / 8) * Math.PI * 2
+    const j = 0.82 + rand() * 0.3
+    pts.push([e.cx + Math.cos(a) * (e.rx - shrink) * j, e.cy + Math.sin(a) * (e.ry - shrink) * j])
+  }
+  return wtSmoothClosed(pts)
+}
+
+function WtPeak({ x, y, s }) {
+  return (
+    <g>
+      <path d={`M${x - s} ${y + s * 0.62} L${x} ${y - s * 0.55} L${x + s} ${y + s * 0.62} Z`} fill="#c6b492" stroke="#6b5636" stroke-width="1.6" stroke-linejoin="round" />
+      <path d={`M${x} ${y - s * 0.55} L${x + s} ${y + s * 0.62} H${x} Z`} fill="#a8946f" opacity="0.5" />
+      <path d={`M${x} ${y - s * 0.55} L${x + s * 0.3} ${y - s * 0.17} L${x + s * 0.13} ${y - s * 0.23} L${x + s * 0.02} ${y - s * 0.1} L${x - s * 0.14} ${y - s * 0.22} L${x - s * 0.3} ${y - s * 0.17} Z`} fill="#f4eedd" stroke="none" />
+    </g>
+  )
+}
+
+function WtCompass({ x, y }) {
+  const spoke = (a, len, w, f) => {
+    const dx = Math.cos(a) * len, dy = Math.sin(a) * len
+    const px = Math.cos(a + Math.PI / 2) * w, py = Math.sin(a + Math.PI / 2) * w
+    return <path d={`M${x + dx} ${y + dy} L${x + px} ${y + py} L${x - px} ${y - py} Z`} fill={f} stroke="#33544c" stroke-width="0.8" />
+  }
+  const arms = []
+  for (let i = 0; i < 4; i++) {
+    const a = (i * Math.PI) / 2 - Math.PI / 2
+    arms.push(spoke(a, 44, 7, '#e9dfc0'), spoke(a + Math.PI / 4, 26, 5, '#33544c'))
+  }
+  return (
+    <g opacity="0.85">
+      <circle cx={x} cy={y} r="50" fill="none" stroke="#33544c" stroke-width="1.4" opacity="0.7" />
+      <circle cx={x} cy={y} r="42" fill="none" stroke="#33544c" stroke-width="0.8" opacity="0.5" />
+      {arms}
+      <circle cx={x} cy={y} r="4.5" fill="#33544c" />
+      <text x={x} y={y - 56} text-anchor="middle" font-size="15" fill="#33544c" font-weight="700" style={{ fontFamily: 'var(--fm-fell)' }}>N</text>
+    </g>
+  )
+}
+
+function WtShip({ x, y }) {
+  return (
+    <g stroke="#2f4a42" stroke-width="1.6" fill="none" stroke-linecap="round" opacity="0.9">
+      <path d={`M${x - 22} ${y} h44 l-8 10 h-28 z`} fill="#8a6a40" />
+      <line x1={x} y1={y} x2={x} y2={y - 30} />
+      <path d={`M${x} ${y - 30} l20 24 h-20 z`} fill="#efe6cb" />
+      <path d={`M${x} ${y - 26} l-14 18 h14 z`} fill="#e3d5ae" />
+      <path d={`M${x - 34} ${y + 14} q10 5 20 0 q10 -5 20 0 q10 5 20 0`} opacity="0.6" />
+    </g>
+  )
+}
+
+function WtSerpent({ x, y }) {
+  return (
+    <g stroke="#31584e" stroke-width="4" fill="none" stroke-linecap="round" opacity="0.75">
+      <path d={`M${x - 44} ${y} q10 -18 22 0`} />
+      <path d={`M${x - 4} ${y} q10 -22 22 0`} />
+      <path d={`M${x + 34} ${y} q6 -14 14 -2 l6 -8`} />
+      <circle cx={x + 52} cy={y - 12} r="2" fill="#31584e" stroke="none" />
+    </g>
+  )
+}
+
+// Region names, drawn in the chart's engraved italic. [x, y, text, size, color, opacity, rotate?]
+const WT_LABELS = [
+  [560, 1084, 'The Sarin Sea', 36, '#2f544a', 0.8, -1],
+  [296, 228, 'Loch Camlann', 16, '#2f5a52', 0.75, -4],
+  [1155, 668, 'The Kharid Sands', 21, '#8a6428', 0.6, -3],
+  [1310, 92, 'The Eldern Peaks', 21, '#6b5636', 0.65, -2],
+  [748, 908, 'Mistmarsh', 15, '#4f5f42', 0.7, -4],
+  [1442, 552, 'Duskwood', 18, '#494258', 0.7, -3],
+]
+
+/**
+ * The full painted terrain layer for the world map. Sized to the world board and
+ * rendered once under `.wm-routes`/the place nodes inside `.wm-board`.
+ */
+export function WorldTerrain() {
+  const { trees, grass, waves, dunes, rocks } = wtLayout()
+  const coastOpen = wtSmoothOpen(WT_COAST)
+  const seaPath = `${coastOpen} L ${WT_W} ${WT_H} L 0 ${WT_H} Z`
+  const landPath = `${coastOpen} L ${WT_W} 0 L 0 0 Z`
+  const use = (href) => (p, i) => <use key={i} href={href} transform={`translate(${p.x} ${p.y}) scale(${p.s})`} />
+  return (
+    <svg class="wm-terrain" viewBox={`0 0 ${WT_W} ${WT_H}`} width="100%" height="100%" aria-hidden="true">
+      <defs>
+        <linearGradient id="wt-sea" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#93b5a9" />
+          <stop offset="1" stop-color="#7aa094" />
+        </linearGradient>
+        <g id="wt-pine">
+          <path d="M-1.6 0 h3.2 v-5 h-3.2 z" fill="#54412a" />
+          <path d="M0 -26 L8.5 -10 H-8.5 Z" fill="#4f7040" />
+          <path d="M0 -17 L10.5 -1 H-10.5 Z" fill="#43613a" />
+        </g>
+        <g id="wt-oak">
+          <path d="M-1.7 0 h3.4 v-6 h-3.4 z" fill="#5d4527" />
+          <circle cx="-6" cy="-10" r="6.5" fill="#5d7a44" />
+          <circle cx="6" cy="-10" r="6.5" fill="#557141" />
+          <circle cx="0" cy="-15" r="7.5" fill="#63834a" />
+        </g>
+        <g id="wt-dead" stroke="#4a4150" stroke-width="2.3" fill="none" stroke-linecap="round">
+          <path d="M0 0 V-19 M0 -9 L-8 -16 M0 -14 L7 -22 M0 -18 L-5 -25" />
+        </g>
+        <g id="wt-palm">
+          <path d="M0 0 q3 -10 1 -19" stroke="#7a5a30" stroke-width="2.6" fill="none" />
+          <g stroke="#4f7a40" stroke-width="2" fill="none" stroke-linecap="round">
+            <path d="M1 -19 q-9 -2 -14 4" /><path d="M1 -19 q9 -2 14 4" />
+            <path d="M1 -19 q-7 -7 -13 -6" /><path d="M1 -19 q7 -7 13 -6" />
+            <path d="M1 -19 q0 -9 -3 -12" />
+          </g>
+        </g>
+        <g id="wt-reed" stroke="#6d7a4e" stroke-width="1.6" fill="none" stroke-linecap="round">
+          <path d="M-4 0 q-1 -6 -3 -9 M0 0 q0 -8 -1 -11 M4 0 q1 -6 3 -10" />
+        </g>
+        <g id="wt-tuft" stroke="#7d8a56" stroke-width="1.4" fill="none" stroke-linecap="round" opacity="0.6">
+          <path d="M-3 0 q-1 -3 -2 -5 M0 0 q0 -4 0 -6 M3 0 q1 -3 2 -5" />
+        </g>
+        <path id="wt-wave" d="M-11 0 q5.5 -6 11 0 q5.5 6 11 0" stroke="#e7f0e6" stroke-width="1.6" fill="none" stroke-linecap="round" opacity="0.55" />
+        <path id="wt-dune" d="M-16 0 q8 -8 16 0 q4 4 10 2" stroke="#b3924f" stroke-width="1.8" fill="none" stroke-linecap="round" opacity="0.6" />
+        <g id="wt-rock">
+          <path d="M-7 0 L-4 -6 L2 -7 L7 -2 L6 0 Z" fill="#b9a988" stroke="#6b5a3a" stroke-width="1" stroke-linejoin="round" />
+        </g>
+      </defs>
+
+      {/* land wash over the parchment, then the biome tints */}
+      <path d={landPath} fill="#adbe7c" opacity="0.42" />
+      <path d={wtEllipseBlob(WT_DESERT, 0, 11)} fill="#e3cd96" opacity="0.85" />
+      <path d={wtEllipseBlob(WT_DESERT, 40, 12)} fill="#ead7a2" opacity="0.6" />
+      <path d={wtEllipseBlob(WT_DUSK, 0, 13)} fill="#a5a1b2" opacity="0.32" />
+      <path d={wtEllipseBlob(WT_SWAMP, 0, 14)} fill="#9fae83" opacity="0.55" />
+      <path d={wtEllipseBlob({ ...WT_ASH, ry: 80 }, 0, 15)} fill="#a08a7c" opacity="0.38" />
+
+      {/* shoreline: beach under the waterline, then the sea, shallows and ink line */}
+      <path d={coastOpen} fill="none" stroke="#efe4bd" stroke-width="12" opacity="0.8" />
+      <path d={seaPath} fill="url(#wt-sea)" />
+      <path d={coastOpen} fill="none" stroke="#a9c6ba" stroke-width="10" opacity="0.45" transform="translate(0 6)" />
+      <path d={coastOpen} fill="none" stroke="#3f5a4e" stroke-width="1.8" opacity="0.55" />
+
+      {/* loch + rivers */}
+      <path d={wtSmoothClosed(WT_LAKE)} fill="url(#wt-sea)" stroke="#3f5a4e" stroke-width="1.6" opacity="0.95" />
+      <g fill="none" stroke-linecap="round">
+        <path d={wtSmoothOpen(WT_RIVER)} stroke="#5f4a28" stroke-width="12" opacity="0.25" />
+        <path d={wtSmoothOpen(WT_RIVER)} stroke="#86ac9f" stroke-width="8" opacity="0.95" />
+        <path d={wtSmoothOpen(WT_RIVER2)} stroke="#5f4a28" stroke-width="10" opacity="0.22" />
+        <path d={wtSmoothOpen(WT_RIVER2)} stroke="#86ac9f" stroke-width="6.5" opacity="0.95" />
+      </g>
+
+      {/* oasis pool in the sands */}
+      <ellipse cx="1008" cy="866" rx="26" ry="12" fill="#86ac9f" stroke="#3f5a4e" stroke-width="1.2" opacity="0.95" />
+
+      {/* mountains, then flora sorted by y so overlaps stack naturally */}
+      {WT_PEAKS.map(([x, y, s], i) => <WtPeak key={i} x={x} y={y} s={s} />)}
+      {rocks.map(use('#wt-rock'))}
+      {grass.map(use('#wt-tuft'))}
+      {dunes.map(use('#wt-dune'))}
+      {trees.map((t, i) => <use key={i} href={`#wt-${t.kind}`} transform={`translate(${t.x} ${t.y}) scale(${t.s})`} />)}
+
+      {/* fields by Lumbright (the cabbage farms of its lore): furrows + cabbage rows */}
+      {[[788, 645, -10, 68, 40], [906, 792, 7, 60, 36]].map(([fx, fy, rot, fw, fh], fi) => (
+        <g key={fi} transform={`translate(${fx} ${fy}) rotate(${rot})`} opacity="0.85">
+          <rect x={-fw / 2} y={-fh / 2} width={fw} height={fh} rx="4" fill="#cdbd7e" stroke="#7c6434" stroke-width="1.3" />
+          {[-1, 0, 1].map((row) => (
+            <g key={row}>
+              <line x1={-fw / 2 + 6} y1={row * 11 + 5} x2={fw / 2 - 6} y2={row * 11 + 5} stroke="#7c6434" stroke-width="1.1" opacity="0.6" />
+              {[-2, -1, 0, 1, 2].map((col) => (
+                <circle key={col} cx={col * (fw / 5.6)} cy={row * 11} r="2.6" fill="#6f8a48" stroke="#4c6132" stroke-width="0.7" />
+              ))}
+            </g>
+          ))}
+        </g>
+      ))}
+
+      {/* Brimhollow's smoking cone on the headland */}
+      <g>
+        <path d="M1222 1043 L1252 973 h24 L1306 1043 Z" fill="#5a4640" stroke="#32241f" stroke-width="1.6" stroke-linejoin="round" />
+        <path d="M1252 973 h24 l-5 9 h-14 z" fill="#22140f" />
+        <path d="M1256 968 q8 -12 16 0 q-4 -4 -8 0 q-4 -4 -8 0z" fill="#e06a2b" />
+        <path d="M1268 950 q10 -10 4 -22" stroke="#8a7a70" stroke-width="4" fill="none" stroke-linecap="round" opacity="0.6" />
+      </g>
+
+      {/* sea ornaments + waves */}
+      {waves.map(use('#wt-wave'))}
+      <WtCompass x={150} y={1005} />
+      <WtShip x={760} y={1046} />
+      <WtSerpent x={1420} y={1090} />
+
+      {/* engraved region names */}
+      {WT_LABELS.map(([x, y, text, size, fill, op, rot], i) => (
+        <text
+          key={i}
+          x={x}
+          y={y}
+          text-anchor="middle"
+          font-size={size}
+          fill={fill}
+          opacity={op}
+          font-style="italic"
+          transform={rot ? `rotate(${rot} ${x} ${y})` : undefined}
+          style={{ fontFamily: 'var(--fm-fell)', letterSpacing: '0.14em' }}
+        >{text}</text>
+      ))}
     </svg>
   )
 }

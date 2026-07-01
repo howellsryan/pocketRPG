@@ -4,7 +4,7 @@ import { getWorld, getPlace, listPlaces, getTier, getKind, shortestPath, pathLeg
 import { describeActivity, activityGroupLabel, isPlaceVaryingSkillRef, autoStartFromTask } from '../engine/worldContent.js'
 import { SCREENS } from '../utils/constants.js'
 import { createTravelTask, travelFraction, travelDestName } from '../engine/travel.js'
-import { PlaceIcon, PlaceScene } from '../components/PlaceArt.jsx'
+import { PlaceIcon, PlaceScene, WorldTerrain } from '../components/PlaceArt.jsx'
 import GameIcon from '../components/GameIcon.jsx'
 import WaxSeal from '../components/WaxSeal.jsx'
 import Modal from '../components/Modal.jsx'
@@ -251,6 +251,8 @@ export default function WorldMapScreen({ onNavigate, onAutoStart } = {}) {
       >
         <div ref={boardRef} class="wm-board" style={{ width: world.board.w + 'px', height: world.board.h + 'px' }}>
           <div class="wm-chart" />
+          <WorldTerrain />
+          <div class="wm-grunge" aria-hidden="true" />
           <svg class="wm-routes" width={world.board.w} height={world.board.h} xmlns="http://www.w3.org/2000/svg">
             {world.edges.map(([a, b, t]) => {
               const pa = world.places[a]
@@ -301,7 +303,7 @@ export default function WorldMapScreen({ onNavigate, onAutoStart } = {}) {
         </div>
 
         {/* legend */}
-        <aside class="wm-legend">
+        <aside class="forge-shell wm-legend">
           <h4>Settlements</h4>
           <div class="wm-legrow"><span class="wm-dot" style={{ background: 'var(--color-gold-light)' }} /> City — raids, all</div>
           <div class="wm-legrow"><span class="wm-dot" style={{ background: 'var(--color-mana-light)' }} /> Town — dungeons, bosses</div>
@@ -422,8 +424,8 @@ function PlaceHub({ place, here, travelling, onTravel, onClose, onActivate }) {
 
 // One category's actions, e.g. all "Skill" refs at a place — sub-grouped by skill
 // (activityGroupLabel) where that's meaningful, so a 140-action city doesn't render
-// as one flat list. Dark hammered-iron panel (wm-actmodal-panel) rather than the
-// hub's parchment, matching the rest of the app's dark chrome.
+// as one flat list. Vellum ledger panel (wm-actmodal-panel), matching the app-wide
+// Forgemark parchment.
 function CategoryModal({ kind, refs, label, onClose, onActivate }) {
   // Ascending by level (unmapped/no-level entries sort last, stable otherwise) so
   // low-level skilling actions and weak monsters lead the list.

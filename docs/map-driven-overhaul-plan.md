@@ -241,6 +241,13 @@ Each phase is independently shippable and reversible against the live game.
     placed at their namesake world city (Ardounne/Faloden/Varrick/…), OSRS levels preserved;
     `Pickpocket Silverkeep Knight` → `Pickpocket Ardounne Knight`. Placement is authored in
     the seed (`AGILITY_PLACEMENT`), not level-banded.
+  - **Painted terrain** (`WorldTerrain` in `src/components/PlaceArt.jsx`): the board
+    behind the graph is a full painted chart — the Sarin Sea + coastline, Loch Camlann,
+    rivers (bridging Faloden/Lumbright per their scenes), the Kharid Sands, the Draynar
+    Mistmarsh, Duskwood, the Eldern Peaks, forests/grass/fields, compass rose, ship and
+    region labels. Deterministic fixed-seed scatter with exclusion zones around nodes,
+    roads and tick labels. Styling: `.wm-terrain`/`.wm-grunge` (aged-vellum multiply
+    overlay) in `src/index.css`; node name plates flipped from dark iron to vellum tags.
   - **Arrival auto-start**: a gated start embeds an `autoStart` descriptor
     (`autoStartFromTask`) in the travel task; on arrival `App.jsx` `resumeAutoStart` navigates
     to the owning screen so combat/skilling begins immediately, even while idling. Rides the

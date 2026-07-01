@@ -89,6 +89,11 @@
   --fm-parch: #e9dcbd;
   --fm-parch-hi: #f3ead0;
   --fm-parch-lo: #d8c69e;
+  /* Page vellum — the tone the parchment texture tile is built on. Referenced by
+     .forge-shell, .clog-sheet and .wm-actmodal-panel; must match the base rect fill
+     in public/forge/parchment.svg so the texture and the color agree while the
+     texture image is still loading (previously undefined — transparent fallback). */
+  --fm-vellum: #e6d8b6;
   --fm-ink: #2b2114;
   --fm-ink-soft: #5a4a32;
   --fm-ink-faint: #8a7553;
@@ -2161,19 +2166,27 @@ html, body, #app {
 .clog-slot__lock { position: absolute; top: 5px; right: 7px; font-size: 11px; opacity: .4; line-height: 1; }
 
 /* ════ World Map (map-driven overhaul, phase 1) ═══════════════════════════ */
-.wm-stage { cursor: grab; background:
+/* The "desk" the chart sits on: hammered Forgemark iron, not flat void. */
+.wm-stage { cursor: grab; background-color: var(--fm-soot); background-image:
   radial-gradient(120% 90% at 50% 120%, rgba(192,57,43,0.10), transparent 55%),
   radial-gradient(80% 60% at 50% -10%, rgba(212,160,23,0.06), transparent 60%),
-  var(--color-void); }
+  var(--fm-tex-iron);
+  background-size: auto, auto, 280px; }
 .wm-stage:active { cursor: grabbing; }
 .wm-board { position: absolute; top: 0; left: 0; transform-origin: 0 0; will-change: transform; }
-.wm-chart { position: absolute; inset: 0; background-color: #e4d6b2; border-radius: 10px;
-  box-shadow: inset 0 0 0 2px rgba(120,95,55,0.4), inset 0 0 120px rgba(110,75,30,0.4), 0 30px 80px -30px #000; }
-.wm-chart::after { content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
-  background: radial-gradient(130% 120% at 50% 50%, transparent 58%, rgba(90,60,20,0.30)); }
+.wm-chart { position: absolute; inset: 0; background-color: #e4d6b2; background-image: var(--fm-tex-parch); background-size: 600px;
+  border-radius: 10px;
+  box-shadow: inset 0 0 0 2px rgba(120,95,55,0.4), 0 30px 80px -30px #000; }
+/* Painted terrain (PlaceArt's <WorldTerrain>) sits over the parchment; the grunge layer
+   re-ages it (vignette + fibre texture multiplied back on top) so the sea/forest paint
+   still reads as ink on old vellum rather than a flat digital illustration. */
+.wm-terrain { position: absolute; inset: 0; border-radius: 10px; }
+.wm-grunge { position: absolute; inset: 0; border-radius: 10px; pointer-events: none;
+  background-image: radial-gradient(130% 120% at 50% 50%, transparent 55%, rgba(90,60,20,0.35)), var(--fm-tex-parch);
+  background-size: cover, 600px; mix-blend-mode: multiply; opacity: 0.5; }
 .wm-routes { position: absolute; top: 0; left: 0; overflow: visible; }
-.wm-road { stroke: #7c5c2a; stroke-width: 3; stroke-dasharray: 2 9; stroke-linecap: round; opacity: 0.85; }
-.wm-tickbg { fill: #e9dcbd; opacity: 0.9; stroke: #b6a079; stroke-width: 1; }
+.wm-road { stroke: #6e4f20; stroke-width: 3; stroke-dasharray: 2 9; stroke-linecap: round; opacity: 0.9; }
+.wm-tickbg { fill: #efe4c2; opacity: 0.92; stroke: #a68d5e; stroke-width: 1; }
 .wm-tick { fill: #5a4a2a; font-family: var(--font-mono); font-size: 13px; font-weight: 600; }
 
 .wm-node { position: absolute; transform: translate(-50%, -50%); display: flex; flex-direction: column;
@@ -2188,25 +2201,30 @@ html, body, #app {
 .wm-face-art { filter: drop-shadow(0 1px 1px rgba(0,0,0,.55)); }
 .wm-node:hover .wm-medal { transform: translateY(-2px) scale(1.05); }
 .wm-node--here .wm-medal { box-shadow: 0 0 0 3px rgba(240,116,42,0.5), 0 0 24px 2px rgba(240,116,42,0.45), 0 5px 14px -4px #000; }
+/* Name plates read as chart labels: vellum tags with engraved ink over the painted
+   terrain (the old dark-iron plates fought the parchment map). */
 .wm-plate { display: flex; flex-direction: column; align-items: center; padding: 3px 10px; border-radius: 4px;
-  background: rgba(20,17,13,0.82); border: 1px solid rgba(176,136,66,0.4); box-shadow: 0 3px 9px -4px #000; white-space: nowrap; }
-.wm-name { font-family: var(--font-display); font-weight: 600; font-size: 14px; color: var(--color-parchment); line-height: 1.1; }
-.wm-tier { font-size: 8.5px; letter-spacing: .2em; text-transform: uppercase; color: var(--wm-accent); font-weight: 700; }
-.wm-node--here .wm-name { color: var(--color-gold-light); }
+  background: rgba(243,234,208,0.92); border: 1px solid rgba(122,95,55,0.55); box-shadow: 0 2px 7px -3px rgba(50,32,8,0.75); white-space: nowrap; }
+.wm-name { font-family: var(--font-display); font-weight: 600; font-size: 14px; color: var(--fm-ink); line-height: 1.1; }
+.wm-tier { font-size: 8.5px; letter-spacing: .2em; text-transform: uppercase; font-weight: 700;
+  color: color-mix(in srgb, var(--wm-accent) 55%, var(--fm-ink)); }
+.wm-node--here .wm-plate { border-color: rgba(194,65,12,0.75); box-shadow: 0 0 0 1px rgba(240,116,42,0.35), 0 2px 7px -3px rgba(50,32,8,0.75); }
+.wm-node--here .wm-name { color: var(--fm-ember-deep); }
 
 .wm-legend { position: absolute; left: 14px; bottom: 14px; z-index: 20; padding: 10px 12px; border-radius: 8px; max-width: 220px;
-  background: var(--color-void-light); border: 1px solid var(--color-void-border); box-shadow: 0 6px 18px -10px #000; }
-.wm-legend h4 { margin: 0 0 7px; font-family: var(--font-display); font-weight: 600; font-size: 12px; color: var(--color-gold-light); }
+  background: var(--color-void-light); border: 1px solid var(--color-void-border); box-shadow: 0 6px 18px -10px #000, var(--fm-parch-inset); }
+.wm-legend h4 { margin: 0 0 7px; font-family: var(--font-display); font-weight: 600; font-size: 12px; color: var(--fm-ember-deep); }
 .wm-legrow { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--color-parchment); margin: 4px 0; }
 .wm-dot { width: 13px; height: 13px; border-radius: 50%; flex: 0 0 auto; box-shadow: inset 0 0 0 2px rgba(0,0,0,.4); }
 .wm-hint { margin-top: 8px; font-style: italic; font-size: 11.5px; color: var(--color-parchment-dark); }
 @media (max-width: 560px) { .wm-legend { display: none; } }
 
 .wm-ctl { position: absolute; right: 14px; bottom: 14px; z-index: 20; display: flex; flex-direction: column; gap: 8px; }
-.wm-ctl button { width: 44px; height: 44px; border-radius: 8px; cursor: pointer; color: var(--color-parchment);
-  background: var(--color-void-light); border: 1px solid var(--color-void-border); font-size: 20px; font-family: var(--font-display);
-  display: grid; place-items: center; }
-.wm-ctl button:hover { color: var(--color-gold-light); }
+.wm-ctl button { width: 44px; height: 44px; border-radius: 8px; cursor: pointer; color: var(--fm-ink);
+  background-color: var(--fm-vellum); background-image: var(--fm-tex-parch); background-size: 240px;
+  border: 1px solid var(--fm-rule); box-shadow: 0 4px 12px -6px #000, var(--fm-parch-inset);
+  font-size: 20px; font-family: var(--fm-display); display: grid; place-items: center; }
+.wm-ctl button:hover { color: var(--fm-ember-deep); border-color: var(--fm-brass); }
 .wm-ctl button:active { transform: translateY(1px); }
 
 .wm-scrim { position: absolute; inset: 0; z-index: 40; background: rgba(8,6,4,0.62); }
