@@ -5138,6 +5138,7 @@
       "x": 840,
       "y": 300,
       "icon": "🏘️",
+      "image": "/public/world/edgevale.webp",
       "sub": "Last town before the wilds",
       "lore": "A rough frontier town on the edge of the lawless north. The bank stays open; the gate stays locked after dark.",
       "facilities": [
@@ -8305,6 +8306,7 @@
       "x": 440,
       "y": 820,
       "icon": "🏘️",
+      "image": "/public/world/portsarin.webp",
       "sub": "The southern port",
       "lore": "A salt-crusted harbour town of fishmongers and smugglers, where every ship south casts off from its crowded quays.",
       "facilities": [
