@@ -115,6 +115,7 @@
       "x": 820,
       "y": 720,
       "icon": "🏰",
+      "image": "/public/world/lumbright.webp",
       "sub": "The starter town",
       "lore": "Where every adventurer's tale begins. A sleepy river town under an old castle, ringed by cabbage fields and the gentlest monsters in Eldermoor.",
       "facilities": [
@@ -794,6 +795,7 @@
       "x": 980,
       "y": 430,
       "icon": "🏰",
+      "image": "/public/world/varrick.webp",
       "sub": "Capital of the realm",
       "lore": "The great stone capital — crowded markets, the grand smithy, and roads that run to every corner of Eldermoor.",
       "facilities": [
@@ -1794,6 +1796,7 @@
       "x": 470,
       "y": 560,
       "icon": "🏰",
+      "image": "/public/world/faloden.webp",
       "sub": "City of the White Order",
       "lore": "A walled city of knights and miners, its furnaces never cold. The heart of smithing in the west.",
       "facilities": [
@@ -2794,6 +2797,7 @@
       "x": 180,
       "y": 520,
       "icon": "🏰",
+      "image": "/public/world/ardounne.webp",
       "sub": "The western city",
       "lore": "A sprawling, divided city of grand spires and crooked back-alleys — paradise for a light-fingered thief.",
       "facilities": [
@@ -4137,6 +4141,7 @@
       "x": 1080,
       "y": 760,
       "icon": "🏘️",
+      "image": "/public/world/alkarid.webp",
       "sub": "Gateway to the dunes",
       "lore": "A sun-baked toll town at the desert's edge, its great furnace roaring day and night for the caravans.",
       "facilities": [
@@ -5792,6 +5797,7 @@
       "x": 650,
       "y": 430,
       "icon": "🏡",
+      "image": "/public/world/barlock.webp",
       "sub": "Village of the war-clans",
       "lore": "A muddy ring of longhouses and anvils where the hill-clans mine, brawl, and hammer iron between feuds.",
       "facilities": [
@@ -6179,6 +6185,7 @@
       "x": 430,
       "y": 230,
       "icon": "🏡",
+      "image": "/public/world/catherra.webp",
       "sub": "Fishing village on the bay",
       "lore": "Nets dry on every fence and the catch is always fresh. A calm coastal village beneath the northern hills.",
       "facilities": [],
@@ -6900,6 +6907,7 @@
       "x": 1180,
       "y": 980,
       "icon": "🏘️",
+      "image": "/public/world/brimhollow.webp",
       "sub": "Tropical port of the south isle",
       "lore": "A humid harbour town under a smoking volcano, all dock-rats, rum, and ships bound for stranger shores.",
       "facilities": [
@@ -7563,6 +7571,7 @@
       "x": 1320,
       "y": 470,
       "icon": "🏡",
+      "image": "/public/world/canifel.webp",
       "sub": "Hamlet of the haunted fens",
       "lore": "A shuttered village in the eastern marsh, where the fog never lifts and something always watches the road.",
       "facilities": [],
@@ -7624,6 +7633,7 @@
       "x": 360,
       "y": 110,
       "icon": "🏘️",
+      "image": "/public/world/camlann.webp",
       "sub": "Hall of the round table",
       "lore": "A noble hill-town of banners and knights-errant, the northernmost seat of honour in Eldermoor.",
       "facilities": [
