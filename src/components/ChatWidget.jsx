@@ -44,7 +44,7 @@ export default function ChatWidget({ isCloudAccount = false }) {
       .catch(() => {
         setMessages((prev) => [
           ...prev,
-          { role: 'assistant', content: 'Sorry, I could not reach the helper — check your connection and try again.' },
+          { role: 'assistant', content: 'Sorry, that question was a bit too much for me — try asking something shorter or simpler.' },
         ])
       })
       .finally(() => setBusy(false))
