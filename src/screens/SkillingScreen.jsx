@@ -682,7 +682,7 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
   // Skill picker
   if (!selectedSkill) {
     return (
-      <div class="h-full overflow-y-auto p-4">
+      <div class="forge-shell h-full overflow-y-auto p-4">
         <h2 class="font-[var(--font-display)] text-sm font-bold text-[var(--color-parchment)] opacity-60 uppercase tracking-wider mb-3">
           Train a Skill
         </h2>
@@ -694,7 +694,7 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
               <button
                 key={skill}
                 onClick={() => setSelectedSkill(skill)}
-                class="flex items-center gap-2.5 p-3 rounded-xl border transition-colors bg-[#1a1a1a] border-[#2a2a2a] active:bg-[#222]"
+                class="flex items-center gap-2.5 p-3 rounded-xl border transition-colors bg-[var(--color-void-light)] border-[var(--color-void-border)] active:bg-[var(--color-void-lighter)]"
               >
                 <SkillIcon skill={skill} size={24} />
                 <div class="text-left">
@@ -866,7 +866,7 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
               <h3 class="font-[var(--font-display)] text-base font-bold text-[var(--color-gold)]">Select item to Alchemize</h3>
               <button
                 onClick={() => { setShowAlchemyPicker(false); setSelectedAction(null); }}
-                class="w-6 h-6 flex items-center justify-center rounded-lg bg-[#222] text-[var(--color-parchment)] hover:bg-[#333] active:bg-[#444] transition-colors"
+                class="w-6 h-6 flex items-center justify-center rounded-lg bg-[var(--color-void-light)] text-[var(--color-parchment)] hover:bg-[var(--color-void-lighter)] active:bg-[var(--color-void-lighter)] transition-colors"
                 title="Close"
               >
                 ✕
@@ -890,7 +890,7 @@ Shop value: ×1.1
                   <button
                     key={`${idx}-${slot.itemId}`}
                     onClick={() => startAlchemy(slot)}
-                    class="w-full p-3 rounded-lg border bg-[#1a1a1a] border-[#2a4a2a] active:bg-[#2a3a2a] transition-colors text-left"
+                    class="w-full p-3 rounded-lg border bg-[var(--color-void-light)] border-[var(--color-emerald)] active:bg-[var(--fm-parch-hi)] transition-colors text-left"
                   >
                     <div class="flex items-center justify-between">
                       <div class="flex items-center gap-2 flex-1">

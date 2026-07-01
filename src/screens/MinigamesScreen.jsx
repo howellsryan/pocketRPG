@@ -62,10 +62,10 @@ export default function MinigamesScreen() {
     const remainingSeconds = ticksRemaining * 0.6
 
     return (
-      <div class="h-full flex flex-col p-4">
+      <div class="forge-shell h-full flex flex-col p-4">
         <button
           onClick={stopMinigame}
-          class="text-[12px] text-[#c4af7a] mb-3 flex items-center gap-1 bg-transparent border-0 cursor-pointer"
+          class="text-[12px] text-[var(--fm-ember)] mb-3 flex items-center gap-1 bg-transparent border-0 cursor-pointer"
         >
           ← Abandon
         </button>
@@ -104,7 +104,7 @@ export default function MinigamesScreen() {
   }
 
   return (
-    <div class="h-full flex flex-col">
+    <div class="forge-shell h-full flex flex-col">
       <div class="px-4 pt-4 pb-2 flex-shrink-0">
         <SectionHeader size="lg"><span class="inline-flex items-center gap-2"><GameIcon iconKey="purple_sweets" size={18} class="flex-shrink-0" /> Minigames</span></SectionHeader>
       </div>

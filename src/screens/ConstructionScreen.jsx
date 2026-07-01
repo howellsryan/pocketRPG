@@ -173,7 +173,7 @@ export default function ConstructionScreen({ onBack }) {
   }
 
   return (
-    <div class="h-full overflow-y-auto p-4">
+    <div class="forge-shell h-full overflow-y-auto p-4">
       <SkillScreenHeader
         skill="construction"
         title="Construction"
@@ -227,10 +227,10 @@ export default function ConstructionScreen({ onBack }) {
               key={unlockable.id}
               class={`p-3 rounded-xl border ${
                 alreadyDone
-                  ? 'bg-[#0a1a0a] border-[#1a3a1a]'
+                  ? 'bg-[var(--fm-parch-hi)] border-[var(--color-emerald)]'
                   : available
-                    ? 'bg-[#1a1a1a] border-[#2a2a2a]'
-                    : 'bg-[#111] border-[#1a1a1a] opacity-40'
+                    ? 'bg-[var(--color-void-light)] border-[var(--color-void-border)]'
+                    : 'bg-[var(--color-void)] border-[var(--color-void-border)] opacity-40'
               }`}
             >
               <div class="flex items-start justify-between gap-2">
@@ -252,7 +252,7 @@ export default function ConstructionScreen({ onBack }) {
                     class={`shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
                       available
                         ? 'bg-[var(--color-gold)] text-[#0f0f0f] active:opacity-80'
-                        : 'bg-[#222] text-[#666] cursor-not-allowed'
+                        : 'bg-[var(--color-void-light)] text-[var(--fm-ink-faint)] cursor-not-allowed'
                     }`}
                   >
                     {available ? 'Create' : `Lv ${unlockable.level}`}
@@ -271,7 +271,7 @@ export default function ConstructionScreen({ onBack }) {
         {(() => {
           const unlocked = constructionLevel >= GATHER_AUTOBANK_CONSTRUCTION_LEVEL
           return (
-            <div class={`p-3 rounded-xl border ${unlocked ? 'bg-[#0a1a0a] border-[#1a3a1a]' : 'bg-[#111] border-[#1a1a1a] opacity-40'}`}>
+            <div class={`p-3 rounded-xl border ${unlocked ? 'bg-[var(--fm-parch-hi)] border-[var(--color-emerald)]' : 'bg-[var(--color-void)] border-[var(--color-void-border)] opacity-40'}`}>
               <div class="flex items-start justify-between gap-2">
                 <div class="flex-1 min-w-0">
                   <div class="flex items-center gap-1.5 mb-0.5">
@@ -282,7 +282,7 @@ export default function ConstructionScreen({ onBack }) {
                     Lv 80 required · Gathered resources auto-bank when your inventory fills, so gathering never stops.
                   </div>
                 </div>
-                <span class={`text-xs font-semibold shrink-0 pt-0.5 ${unlocked ? 'text-green-400' : 'text-[#666]'}`}>
+                <span class={`text-xs font-semibold shrink-0 pt-0.5 ${unlocked ? 'text-green-400' : 'text-[var(--fm-ink-faint)]'}`}>
                   {unlocked ? '✓ Unlocked' : 'Lv 80'}
                 </span>
               </div>

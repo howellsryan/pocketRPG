@@ -19,7 +19,7 @@ const readyTypeLabels = {
 
 export default function FarmLocationPicker({ farmingLevel, farmingXp = 0, farming, onSelectLocation, onBack, onHarvestAll, onPlantAll }) {
   return (
-    <div class="h-full overflow-y-auto p-4">
+    <div class="forge-shell h-full overflow-y-auto p-4">
       <SkillScreenHeader
         skill="farming"
         title="Farming"

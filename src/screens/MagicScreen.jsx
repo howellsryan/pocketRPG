@@ -298,7 +298,7 @@ export default function MagicScreen({ onBack, onNavigate }) {
   const grouped = groupActions(allActions)
 
   return (
-    <div class="h-full overflow-y-auto p-4">
+    <div class="forge-shell h-full overflow-y-auto p-4">
       <SkillScreenHeader
         skill="magic"
         title="Magic"
@@ -378,7 +378,7 @@ export default function MagicScreen({ onBack, onNavigate }) {
                 <button
                   key={`${idx}-${slot.itemId}`}
                   onClick={() => handleAlchemyPick(slot)}
-                  class="w-full p-3 rounded-lg border bg-[#1a1a1a] border-[#2a4a2a] active:bg-[#2a3a2a] transition-colors text-left"
+                  class="w-full p-3 rounded-lg border bg-[var(--color-void-light)] border-[var(--color-emerald)] active:bg-[var(--fm-parch-hi)] transition-colors text-left"
                 >
                   <div class="flex items-center justify-between">
                     <div class="flex items-center gap-2 flex-1">

@@ -391,7 +391,7 @@ export default function GatherScreen({ initialTaskId, idleResult }) {
 
   // Task picker
   return (
-    <div class="h-full flex flex-col">
+    <div class="forge-shell h-full flex flex-col">
       {/* Header */}
       <div class="px-4 pt-4 pb-2 flex-shrink-0">
         <SectionHeader size="lg" className="mb-[10px]">
@@ -408,7 +408,7 @@ export default function GatherScreen({ initialTaskId, idleResult }) {
             const isActive = category === cat.id
             const pillClass = isActive
               ? 'border-[var(--color-gold)] bg-[rgba(212,175,55,0.15)] text-[var(--color-gold)] opacity-100'
-              : 'border-[#2a2a2a] bg-[var(--color-void-light)] text-[var(--color-parchment)] opacity-60'
+              : 'border-[var(--color-void-border)] bg-[var(--color-void-light)] text-[var(--color-parchment)] opacity-60'
             return (
               <button
                 key={cat.id}

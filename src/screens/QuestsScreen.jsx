@@ -117,11 +117,11 @@ export default function QuestsScreen() {
     const remainingSec = Math.ceil(ticksRemaining * 0.6)
 
     return (
-      <div class="h-full flex flex-col p-4">
+      <div class="forge-shell h-full flex flex-col p-4">
         <div class="flex justify-between items-center mb-3">
           <button
             onClick={backFromActiveQuest}
-            class="text-[12px] text-[#c4af7a] flex items-center gap-1 bg-transparent border-0 cursor-pointer"
+            class="text-[12px] text-[var(--fm-ember)] flex items-center gap-1 bg-transparent border-0 cursor-pointer"
           >
             ← Back
           </button>
@@ -176,7 +176,7 @@ export default function QuestsScreen() {
 
   // ── Quest list ──────────────────────────────────────────────────────────────
   return (
-    <div class="h-full flex flex-col">
+    <div class="forge-shell h-full flex flex-col">
       <div class="px-4 pt-4 pb-2 flex-shrink-0">
         <div class="flex justify-between items-baseline mb-2">
           <SectionHeader size="lg"><span class="inline-flex items-center gap-2"><GameIcon iconKey="clue_scroll_medium" size={18} class="flex-shrink-0" /> Quests</span></SectionHeader>
@@ -192,7 +192,7 @@ export default function QuestsScreen() {
               class={`px-3 py-[5px] rounded-[20px] text-[11px] font-semibold border ${
                 hideCompleted
                   ? 'border-[var(--color-gold)] bg-[rgba(212,175,55,0.15)] text-[var(--color-gold)]'
-                  : 'border-[#2a2a2a] bg-[var(--color-void-light)] text-[var(--color-parchment)] opacity-60'
+                  : 'border-[var(--color-void-border)] bg-[var(--color-void-light)] text-[var(--color-parchment)] opacity-60'
               }`}
             >
               {hideCompleted ? '✓ Hiding completed' : 'Show all'}
@@ -239,7 +239,7 @@ export default function QuestsScreen() {
               <div class="flex flex-col gap-2 pt-2 mb-4">
                 <SectionHeader size="sm">📋 Quest Queue</SectionHeader>
                 {questQueue.map((quest, idx) => (
-                  <div key={quest.id} class="p-3 rounded-xl bg-[var(--color-void-light)] border border-[#2a2a2a] flex items-center justify-between gap-2">
+                  <div key={quest.id} class="p-3 rounded-xl bg-[var(--color-void-light)] border border-[var(--color-void-border)] flex items-center justify-between gap-2">
                     <div class="flex-1 min-w-0">
                       <div class="text-[13px] font-semibold text-[var(--color-parchment)]">
                         {idx + 1}. {quest.name}
@@ -284,7 +284,7 @@ export default function QuestsScreen() {
             })}
 
             {visibleQuests.length === 0 && (
-              <div class="py-10 text-center text-[#888] text-[12px]">
+              <div class="py-10 text-center text-[var(--fm-ink-faint)] text-[12px]">
                 No quests to show.
               </div>
             )}

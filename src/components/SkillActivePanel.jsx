@@ -38,7 +38,7 @@ export default function SkillActivePanel({
   const glyph = icon || <SkillIcon skill={skill} size={50} />
 
   return (
-    <div class="h-full flex flex-col px-5 pt-2 min-h-0">
+    <div class="forge-shell h-full flex flex-col px-5 pt-2 min-h-0">
       {/* Back — leaves the task running (Stop & Back below cancels it) */}
       {onBack && (
         <button

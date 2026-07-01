@@ -120,13 +120,13 @@ export default function FarmingScreen({ onBack }) {
       <Modal title="Plant All" onClose={() => setPlantAllOpen(false)}>
         <div class="space-y-3">
           {['herb', 'tree', 'fruitTree'].map(type => (
-            <div class="bg-[#111] rounded-lg p-2" key={type}>
+            <div class="bg-[var(--color-void)] rounded-lg p-2" key={type}>
               <div class="text-xs font-semibold text-[var(--color-gold)] capitalize mb-2">{type === 'fruitTree' ? 'Fruit Trees' : `${type}s`}</div>
               <div class="space-y-1">
                 {cropGroups[type].filter(x => x.ownedQuantity > 0).map(({ crop }) => {
                   const selected = plantSelections[type] === crop.id
                   return (
-                    <button key={crop.id} onClick={() => setPlantSelections(prev => ({ ...prev, [type]: selected ? null : crop.id }))} class={`w-full p-2 rounded border text-left flex items-center justify-between ${selected ? 'border-[var(--color-gold)] bg-[#201a08]' : 'border-[#2a2a2a] bg-[#1a1a1a]'}`}>
+                    <button key={crop.id} onClick={() => setPlantSelections(prev => ({ ...prev, [type]: selected ? null : crop.id }))} class={`w-full p-2 rounded border text-left flex items-center justify-between ${selected ? 'border-[var(--color-gold)] bg-[var(--fm-parch-hi)]' : 'border-[var(--color-void-border)] bg-[var(--color-void-light)]'}`}>
                       <span class="text-xs text-[var(--color-parchment)] flex items-center gap-2"><GameIcon item={itemsData[crop.id] || crop} size={20} /> {crop.name}</span>
                       <span class={`text-sm ${selected ? 'text-[var(--color-gold)]' : 'text-[var(--color-parchment)] opacity-30'}`}>{selected ? '✓' : '○'}</span>
                     </button>
@@ -136,7 +136,7 @@ export default function FarmingScreen({ onBack }) {
             </div>
           ))}
           <div class="flex gap-2">
-            <button onClick={() => setPlantAllOpen(false)} class="flex-1 py-2 rounded-lg bg-[#2a2a2a] text-[var(--color-parchment)] text-sm">Cancel</button>
+            <button onClick={() => setPlantAllOpen(false)} class="flex-1 py-2 rounded-lg bg-[var(--color-void-light)] text-[var(--color-parchment)] text-sm">Cancel</button>
             <button disabled={!Object.values(plantSelections).some(Boolean)} onClick={confirmPlantAll} class="flex-1 py-2 rounded-lg bg-[var(--color-gold)] text-[#111] text-sm font-semibold disabled:opacity-50">Plant</button>
           </div>
         </div>

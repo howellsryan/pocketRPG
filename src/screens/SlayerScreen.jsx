@@ -279,7 +279,7 @@ export default function SlayerScreen({ onBack, onNavigate }) {
 
   return (
     <>
-    <div class="h-full overflow-y-auto p-4">
+    <div class="forge-shell h-full overflow-y-auto p-4">
       <SkillScreenHeader
         skill="slayer"
         title="Slayer"

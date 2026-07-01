@@ -914,6 +914,17 @@ html, body, #app {
 .cb-raid__enter { margin-top: 14px; flex-shrink: 0; width: 100%; min-height: 48px; padding: 14px; border: none; cursor: pointer; border-radius: 14px; font-family: var(--font-display); font-weight: 800; font-size: 16px; letter-spacing: 0.03em; color: #1a1206; background: linear-gradient(180deg, var(--color-gold-light), var(--color-gold) 60%, #b3851a); box-shadow: 0 8px 20px -8px rgba(212,160,23,0.6), inset 0 1px 0 rgba(255,255,255,0.4); }
 .cb-raid__enter:active { transform: scale(0.98); }
 
+/* Bestiary/task bottom sheet (CombatMobileSheets, SlayerScreen) — always
+   Forgemark parchment; both consumers are fully reskinned so this doesn't
+   need .forge-shell scoping, and uses the global --fm-* tokens directly. */
+.cb-sheet, .cb-sheet--raid { background: var(--fm-vellum); background-image: var(--fm-tex-parch); background-size: 500px; border-top-color: var(--fm-brass-lo); }
+.cb-sheet__name, .cb-room__name { color: var(--fm-ink); }
+.cb-sheet__sub, .cb-sheet__sec, .cb-room__boss { color: var(--fm-ink-faint); }
+.cb-room__dot { background: var(--fm-parch-lo); border-color: var(--fm-rule); }
+.cb-room.is-clear .cb-room__dot { background: radial-gradient(circle, #fcecb0, var(--fm-brass)); border-color: var(--fm-brass-hi); }
+.cb-room__line { background: var(--fm-rule); }
+.cb-req { color: var(--fm-ink-soft); background: var(--fm-parch-hi); border-color: var(--fm-rule); }
+
 /* Idle config sheet */
 .cb-sheet--idle { padding-top: 18px; }
 .cb-idlehead { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; flex-shrink: 0; }

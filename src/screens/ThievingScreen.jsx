@@ -216,7 +216,7 @@ export default function ThievingScreen({ initialNpcId, idleResult, onBack }) {
   // NPC picker
   if (!thieving) {
     return (
-      <div class="h-full overflow-y-auto p-4">
+      <div class="forge-shell h-full overflow-y-auto p-4">
         <SkillScreenHeader
           skill="thieving"
           title="Thieving"
