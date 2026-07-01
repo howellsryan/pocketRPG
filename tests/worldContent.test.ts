@@ -6,6 +6,7 @@ import {
   resolveActivityStart,
   resolveTaskStart,
   describeActivity,
+  isPlaceVaryingSkillRef,
 } from '../src/engine/worldContent.js'
 import worldData from '../src/data/world.json'
 import monstersData from '../src/data/monsters.json'
@@ -172,6 +173,19 @@ describe('autoStartFromTask', () => {
     expect(autoStartFromTask(null)).toBeNull()
     expect(autoStartFromTask({ type: 'pvp' })).toBeNull()
     expect(autoStartFromTask({ type: 'combat' })).toBeNull()
+  })
+})
+
+describe('isPlaceVaryingSkillRef', () => {
+  it('excludes facility-bound skills that are identical at every place that offers them', () => {
+    expect(isPlaceVaryingSkillRef('construction:workbench')).toBe(false)
+    expect(isPlaceVaryingSkillRef('crafting:cut_gem')).toBe(false)
+    expect(isPlaceVaryingSkillRef('smithing:smelt_bronze')).toBe(false)
+  })
+
+  it('includes level-banded skills that differ by place', () => {
+    expect(isPlaceVaryingSkillRef('mining:copper')).toBe(true)
+    expect(isPlaceVaryingSkillRef('woodcutting:oak')).toBe(true)
   })
 })
 

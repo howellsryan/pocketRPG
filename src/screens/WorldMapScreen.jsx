@@ -1,7 +1,7 @@
 import { useGame } from '../state/gameState.jsx'
 import { useState, useRef, useEffect, useCallback } from 'preact/hooks'
 import { getWorld, getPlace, listPlaces, getTier, getKind, shortestPath, pathLegs } from '../engine/world.js'
-import { describeActivity, activityGroupLabel } from '../engine/worldContent.js'
+import { describeActivity, activityGroupLabel, isPlaceVaryingSkillRef } from '../engine/worldContent.js'
 import { createTravelTask, travelFraction, travelDestName } from '../engine/travel.js'
 import { PlaceIcon, PlaceScene } from '../components/PlaceArt.jsx'
 import GameIcon from '../components/GameIcon.jsx'
@@ -36,6 +36,7 @@ function groupActivities(activities) {
   const byKind = {}
   for (const a of activities || []) {
     if (!a || !a.kind || !a.ref) continue
+    if (a.kind === 'skill' && !isPlaceVaryingSkillRef(a.ref)) continue
     ;(byKind[a.kind] || (byKind[a.kind] = [])).push(a.ref)
   }
   return Object.keys(byKind)

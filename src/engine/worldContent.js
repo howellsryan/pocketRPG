@@ -138,6 +138,22 @@ export function resolveTaskStart(task, { location, travel }) {
   return resolveActivityStart({ location, travel, kind: r.kind, ref: r.ref })
 }
 
+// Facility-bound skills (bank/furnace & anvil) offer the exact same actions at every
+// place that has the facility — they never vary by location, so listing them in a
+// place's World Map hub tells the player nothing about that specific place. Must stay
+// in sync with FACILITY_SKILLS in scripts/seedWorldContent.cjs.
+const FACILITY_SKILLS = new Set(['construction', 'magic', 'prayer', 'firemaking', 'herblore', 'fletching', 'crafting', 'cooking', 'smithing'])
+
+/**
+ * True if a `skill` kind ref's skill varies by place (i.e. isn't a facility-bound skill
+ * whose actions are identical at every place that offers it). Used to declutter the
+ * World Map place hub's "Available here" list down to location-meaningful skills.
+ */
+export function isPlaceVaryingSkillRef(ref) {
+  const skillId = ref.indexOf(':') >= 0 ? ref.slice(0, ref.indexOf(':')) : ref
+  return !FACILITY_SKILLS.has(skillId)
+}
+
 /**
  * Sub-group label for an activity within its kind — currently only meaningful for
  * `skill` (refs are `skillId:actionId`, e.g. `cooking:cook_eel`), used to break the
