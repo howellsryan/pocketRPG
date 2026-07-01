@@ -519,7 +519,7 @@ export default function InventoryScreen() {
   const selectedListingMaxQty = selected ? getListingMaxQty(selected.slot, selected.item) : 1
 
   return (
-    <div class="h-full overflow-y-auto p-4">
+    <div class="forge-shell h-full overflow-y-auto p-4">
       <div class="flex justify-between items-center mb-3">
         <h2 class="font-[var(--font-display)] text-sm font-bold text-[var(--color-parchment)] opacity-60 uppercase tracking-wider">
           Inventory
@@ -558,10 +558,10 @@ export default function InventoryScreen() {
               )}
             {/* Special attack info — shown for weapons with a spec */}
             {selected.item.specialAttack && (
-              <div class="bg-[#111] rounded-lg border border-yellow-900 overflow-hidden">
+              <div class="bg-[var(--fm-parch-lo)] rounded-lg border border-yellow-900 overflow-hidden">
                 <button
                   onClick={() => setShowSpecInfo(v => !v)}
-                  class="w-full flex items-center justify-between px-3 py-2 active:bg-[#1a1a1a]"
+                  class="w-full flex items-center justify-between px-3 py-2 active:bg-[var(--fm-parch-lo)]"
                 >
                   <span class="text-xs font-semibold text-yellow-400">⚡ Special Attack</span>
                   <span class="text-[10px] text-yellow-600">{showSpecInfo ? '▲' : '▼'} {selected.item.specialAttack.energyCost}% energy</span>
@@ -612,7 +612,7 @@ export default function InventoryScreen() {
                       disabled={!hasTarget}
                       class={`py-2.5 rounded-lg font-semibold text-sm border ${hasTarget
                         ? 'bg-[#2a1a3a] text-[#c084fc] border-[#c084fc]/30 active:opacity-80'
-                        : 'bg-[#222] text-[var(--color-parchment)] opacity-40 border-transparent cursor-not-allowed'}`}
+                        : 'bg-[var(--fm-parch-lo)] text-[var(--color-parchment)] opacity-40 border-transparent cursor-not-allowed'}`}
                     >
                       Use on {targetName}
                     </button>
@@ -632,7 +632,7 @@ export default function InventoryScreen() {
             </div>
 
             {/* Bank deposit section */}
-            <div class="border-t border-[#333] pt-2 mt-1">
+            <div class="border-t border-[var(--fm-rule)] pt-2 mt-1">
               <p class="text-[10px] text-[var(--color-parchment)] opacity-40 mb-1.5 uppercase tracking-wider font-bold">Bank</p>
               {(selected.item.stackable || selected.slot.noted) ? (
                 <div>
@@ -640,7 +640,7 @@ export default function InventoryScreen() {
                     {[1, 5, 10].map(qty => (
                       <button key={qty} onClick={() => handleDeposit(qty)}
                         disabled={selected.slot.quantity < qty}
-                        class={`py-2 rounded-lg text-white font-semibold text-sm ${selected.slot.quantity < qty ? 'bg-[#222] opacity-30' : 'bg-[var(--color-emerald-mid)] active:opacity-80'}`}>
+                        class={`py-2 rounded-lg text-white font-semibold text-sm ${selected.slot.quantity < qty ? 'bg-[var(--fm-parch-lo)] opacity-30' : 'bg-[var(--color-emerald-mid)] active:opacity-80'}`}>
                         Bank {qty}
                       </button>
                     ))}
@@ -709,7 +709,7 @@ export default function InventoryScreen() {
               // Ironmen vendor at the reduced Ironman value; everyone else at shopValue.
               const sellUnit = isIronman ? getIronmanShopValue(selected.item) : selected.item.shopValue
               return (
-              <div class="border-t border-[#333] pt-2 mt-1">
+              <div class="border-t border-[var(--fm-rule)] pt-2 mt-1">
                 <p class="text-[10px] text-[var(--color-parchment)] opacity-40 mb-1.5 uppercase tracking-wider font-bold">
                   {useQuickSell ? 'Sell' : 'Trading Post Listing'}
                 </p>
@@ -723,13 +723,13 @@ export default function InventoryScreen() {
                     {[1, 5, 10].map(qty => (
                       <button key={qty} onClick={() => handleSell(qty)}
                         disabled={selected.slot.quantity < qty || sellBusy}
-                        class={`py-2 rounded-lg text-white font-semibold text-sm ${selected.slot.quantity < qty || sellBusy ? 'bg-[#222] opacity-30' : 'bg-[var(--color-gold-dim)] active:opacity-80'}`}>
+                        class={`py-2 rounded-lg text-white font-semibold text-sm ${selected.slot.quantity < qty || sellBusy ? 'bg-[var(--fm-parch-lo)] opacity-30' : 'bg-[var(--color-gold-dim)] active:opacity-80'}`}>
                         Sell {qty} ({qty * sellUnit}gp)
                       </button>
                     ))}
                     <button onClick={() => handleSell(selected.slot.quantity)}
                       disabled={sellBusy}
-                      class={`py-2 rounded-lg text-white font-semibold text-sm col-span-3 ${sellBusy ? 'bg-[#222] opacity-30' : 'bg-[var(--color-gold-dim)] active:opacity-80'}`}>
+                      class={`py-2 rounded-lg text-white font-semibold text-sm col-span-3 ${sellBusy ? 'bg-[var(--fm-parch-lo)] opacity-30' : 'bg-[var(--color-gold-dim)] active:opacity-80'}`}>
                       Sell All ({selected.slot.quantity * sellUnit} gp)
                     </button>
                   </div>
@@ -737,27 +737,27 @@ export default function InventoryScreen() {
                   <div class="grid grid-cols-3 gap-2">
                     <button onClick={() => handleSell(1)}
                       disabled={sellBusy}
-                      class={`py-2 rounded-lg text-white font-semibold text-sm ${sellBusy ? 'bg-[#222] opacity-30' : 'bg-[var(--color-gold-dim)] active:opacity-80'}`}>
+                      class={`py-2 rounded-lg text-white font-semibold text-sm ${sellBusy ? 'bg-[var(--fm-parch-lo)] opacity-30' : 'bg-[var(--color-gold-dim)] active:opacity-80'}`}>
                       Sell 1 ({sellUnit}gp)
                     </button>
                     {sameItemCount >= 3 && (
                       <button onClick={() => handleSell(5)}
                         disabled={sellBusy}
-                        class={`py-2 rounded-lg text-white font-semibold text-sm ${sellBusy ? 'bg-[#222] opacity-30' : 'bg-[var(--color-gold-dim)] active:opacity-80'}`}>
+                        class={`py-2 rounded-lg text-white font-semibold text-sm ${sellBusy ? 'bg-[var(--fm-parch-lo)] opacity-30' : 'bg-[var(--color-gold-dim)] active:opacity-80'}`}>
                         Sell 5
                       </button>
                     )}
                     {sameItemCount >= 10 && (
                       <button onClick={() => handleSell(10)}
                         disabled={sellBusy}
-                        class={`py-2 rounded-lg text-white font-semibold text-sm ${sellBusy ? 'bg-[#222] opacity-30' : 'bg-[var(--color-gold-dim)] active:opacity-80'}`}>
+                        class={`py-2 rounded-lg text-white font-semibold text-sm ${sellBusy ? 'bg-[var(--fm-parch-lo)] opacity-30' : 'bg-[var(--color-gold-dim)] active:opacity-80'}`}>
                         Sell 10
                       </button>
                     )}
                     {sameItemCount > 1 && (
                       <button onClick={() => handleSell(sameItemCount)}
                         disabled={sellBusy}
-                        class={`py-2 rounded-lg text-white font-semibold text-sm ${sameItemCount >= 10 ? 'col-span-3' : sameItemCount >= 3 ? 'col-span-1' : 'col-span-2'} ${sellBusy ? 'bg-[#222] opacity-30' : 'bg-[var(--color-gold-dim)] active:opacity-80'}`}>
+                        class={`py-2 rounded-lg text-white font-semibold text-sm ${sameItemCount >= 10 ? 'col-span-3' : sameItemCount >= 3 ? 'col-span-1' : 'col-span-2'} ${sellBusy ? 'bg-[var(--fm-parch-lo)] opacity-30' : 'bg-[var(--color-gold-dim)] active:opacity-80'}`}>
                         Sell All ({sameItemCount * sellUnit}gp)
                       </button>
                     )}
@@ -798,7 +798,7 @@ export default function InventoryScreen() {
                   min="1"
                   max={maxQty}
                   placeholder="Enter quantity"
-                  class="w-full bg-[#1a1a1a] border border-[#333] rounded-lg px-3 py-2 text-sm text-[var(--color-parchment)] outline-none focus:border-[var(--color-gold)]"
+                  class="w-full bg-[var(--fm-parch-lo)] border border-[var(--fm-rule)] rounded-lg px-3 py-2 text-sm text-[var(--color-parchment)] outline-none focus:border-[var(--color-gold)]"
                   autoFocus
                 />
               </div>
@@ -837,7 +837,7 @@ export default function InventoryScreen() {
             <div class="grid grid-cols-2 gap-2">
               <button
                 onClick={() => setShowDropConfirm(false)}
-                class="min-h-[44px] py-2.5 rounded-lg bg-[#222] text-[var(--color-parchment)] font-semibold text-sm active:opacity-80 border border-[#333]"
+                class="min-h-[44px] py-2.5 rounded-lg bg-[var(--fm-parch-lo)] text-[var(--color-parchment)] font-semibold text-sm active:opacity-80 border border-[var(--fm-rule)]"
               >
                 Cancel
               </button>

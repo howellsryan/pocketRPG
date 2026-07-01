@@ -1653,7 +1653,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           <div className="p-3">
             <Card className="border-[var(--color-blood)] bg-[#2a1010]">
               <div class="text-sm font-bold text-[var(--color-blood-light)]">PvP match view failed to render</div>
-              <div class="text-[11px] text-[var(--color-parchment)] opacity-70 mt-1">
+              <div class="text-[11px] text-[#f5e6c8] opacity-70 mt-1">
                 The server still has you in an active PvP match. Do not return to PvE.
               </div>
               {message && (

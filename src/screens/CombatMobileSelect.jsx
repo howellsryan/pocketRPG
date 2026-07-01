@@ -221,7 +221,7 @@ export default function CombatMobileSelect({
 
       {/* PvP entry — hidden for ironman / one-life accounts */}
       {showPvp && (
-        <button class="cb-raid__enter" style={{ marginTop: 18, background: 'linear-gradient(180deg,#c0392b,#8b1a1a)', color: 'var(--color-parchment)' }} onClick={onOpenPvp}>
+        <button class="cb-raid__enter" style={{ marginTop: 18, background: 'linear-gradient(180deg,#c0392b,#8b1a1a)', color: '#f5e6c8' }} onClick={onOpenPvp}>
           ⚔ Player vs Player
         </button>
       )}

@@ -7,7 +7,7 @@
 export default function Card({ children, className = '', padding = 'p-3', variant = 'default', as: Tag = 'div', ...props }) {
   const surface = variant === 'parchment'
     ? 'fm-parch'
-    : 'bg-[var(--color-void-light)] border border-[#2a2a2a] rounded-xl'
+    : 'bg-[var(--color-void-light)] border border-[var(--color-void-border)] rounded-xl'
   return (
     <Tag
       class={`${surface} ${padding} ${className}`}

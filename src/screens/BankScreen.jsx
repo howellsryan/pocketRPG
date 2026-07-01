@@ -529,7 +529,7 @@ export default function BankScreen() {
   const displayItems = getDisplayItems()
 
   return (
-    <div class="h-full flex flex-col overflow-hidden">
+    <div class="forge-shell h-full flex flex-col overflow-hidden">
 
       {/* ── Header + Tab bar ─────────────────────────────────────────────── */}
       <div class="px-4 pt-4 pb-0 flex-shrink-0">
@@ -537,7 +537,7 @@ export default function BankScreen() {
           <h2 class="font-[var(--font-display)] text-sm font-bold text-[var(--color-parchment)] opacity-60 uppercase tracking-wider flex-shrink-0">
             Bank ({bankItems.length})
           </h2>
-          <div class="flex-1 min-w-0 flex items-center bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg px-2.5 py-1.5">
+          <div class="flex-1 min-w-0 flex items-center bg-[var(--fm-parch-lo)] border border-[var(--fm-rule)] rounded-lg px-2.5 py-1.5">
             <input
               type="text"
               value={searchTerm}
@@ -563,7 +563,7 @@ export default function BankScreen() {
               setTabMenu(activeTab)
               setRenameValue(activeTab === 0 ? allTabName : (tabs[activeTab - 1] ?? ''))
             }}
-            class="flex-shrink-0 px-2.5 py-1.5 rounded-md bg-[#222] text-[var(--color-parchment)] opacity-40 text-sm active:opacity-70"
+            class="flex-shrink-0 px-2.5 py-1.5 rounded-md bg-[var(--fm-parch-lo)] text-[var(--color-parchment)] opacity-40 text-sm active:opacity-70"
             aria-label="Edit tab"
           >
             ✏️
@@ -575,7 +575,7 @@ export default function BankScreen() {
             class={`flex-shrink-0 px-3 py-1.5 rounded-md text-xs font-bold max-w-[80px] truncate ${
               activeTab === 0
                 ? 'bg-[var(--color-gold-dim)] text-white'
-                : 'bg-[#222] text-[var(--color-parchment)] opacity-50 active:opacity-80'
+                : 'bg-[var(--fm-parch-lo)] text-[var(--color-parchment)] opacity-50 active:opacity-80'
             }`}
           >
             {allTabName}
@@ -588,7 +588,7 @@ export default function BankScreen() {
               class={`flex-shrink-0 px-3 py-1.5 rounded-md text-xs font-bold max-w-[80px] truncate ${
                 activeTab === i + 1
                   ? 'bg-[var(--color-mana)] text-white'
-                  : 'bg-[#222] text-[var(--color-parchment)] opacity-50 active:opacity-80'
+                  : 'bg-[var(--fm-parch-lo)] text-[var(--color-parchment)] opacity-50 active:opacity-80'
               }`}
             >
               {name}
@@ -598,7 +598,7 @@ export default function BankScreen() {
           {tabs.length < MAX_TABS && (
             <button
               onClick={addTab}
-              class="flex-shrink-0 px-2.5 py-1.5 rounded-md bg-[#222] text-[var(--color-parchment)] opacity-30 text-sm font-bold active:opacity-60"
+              class="flex-shrink-0 px-2.5 py-1.5 rounded-md bg-[var(--fm-parch-lo)] text-[var(--color-parchment)] opacity-30 text-sm font-bold active:opacity-60"
             >
               +
             </button>
@@ -634,12 +634,12 @@ export default function BankScreen() {
                     onClick={() => !isInactivePlaceholder && setSelectedId(entry.itemId)}
                     class={`w-full flex flex-col items-center p-2 rounded-lg border select-none ${
                       isDragging
-                        ? 'opacity-30 border-[#444] bg-[#1a1a1a]'
+                        ? 'opacity-30 border-[var(--fm-rule)] bg-[var(--fm-parch-lo)]'
                         : isOver
-                          ? 'bg-[#252520] border-[var(--color-gold)]'
+                          ? 'bg-[var(--fm-parch-lo)] border-[var(--color-gold)]'
                           : isInactivePlaceholder
-                            ? 'bg-[#141414] border-[#2a2a2a] opacity-45'
-                            : 'bg-[#1a1a1a] border-[#2a2a2a] active:bg-[#222]'
+                            ? 'bg-[var(--fm-parch-lo)] border-[var(--fm-rule)] opacity-45'
+                            : 'bg-[var(--fm-parch-lo)] border-[var(--fm-rule)] active:bg-[var(--fm-parch-lo)]'
                     }`}
                   >
                     <GameIcon item={item} size={33} />
@@ -651,7 +651,7 @@ export default function BankScreen() {
                   {isInactivePlaceholder ? (
                     <button
                       onClick={() => clearPlaceholder(entry.itemId)}
-                      class="absolute top-0.5 right-0.5 text-[11px] text-[#c8c8c8] opacity-80 leading-none select-none z-10 px-1 py-0.5 rounded bg-[#2a2a2a] hover:opacity-100 active:opacity-100"
+                      class="absolute top-0.5 right-0.5 text-[11px] text-[var(--fm-ink-soft)] opacity-80 leading-none select-none z-10 px-1 py-0.5 rounded bg-[var(--fm-parch-hi)] hover:opacity-100 active:opacity-100"
                       aria-label={`Clear placeholder for ${item.name}`}
                     >
                       ✕
@@ -689,7 +689,7 @@ export default function BankScreen() {
                 value={renameValue}
                 onInput={(e) => setRenameValue(e.target.value)}
                 maxLength={20}
-                class="w-full bg-[#1a1a1a] border border-[#333] rounded-lg px-3 py-2 text-sm text-[var(--color-parchment)] outline-none focus:border-[var(--color-gold)]"
+                class="w-full bg-[var(--fm-parch-lo)] border border-[var(--fm-rule)] rounded-lg px-3 py-2 text-sm text-[var(--color-parchment)] outline-none focus:border-[var(--color-gold)]"
                 placeholder="Enter tab name"
               />
             </div>
@@ -731,7 +731,7 @@ export default function BankScreen() {
 
               {/* Tab assignment — only shown when tabs exist — moved here */}
               {tabs.length > 0 && (
-                <div class="border-t border-[#333] pt-2">
+                <div class="border-t border-[var(--fm-rule)] pt-2">
                   <p class="text-[10px] text-[var(--color-parchment)] opacity-40 mb-1 uppercase tracking-wider font-bold">Move to Tab</p>
                   <div class="flex flex-wrap gap-1.5">
                     {/* All tab as first option */}
@@ -743,7 +743,7 @@ export default function BankScreen() {
                           class={`px-3 py-1.5 rounded-md text-xs font-semibold ${
                             isInAll
                               ? 'bg-[var(--color-gold-dim)] text-white cursor-default'
-                              : 'bg-[#2a2a2a] text-[var(--color-parchment)] active:opacity-70'
+                              : 'bg-[var(--fm-parch-hi)] text-[var(--color-parchment)] active:opacity-70'
                           }`}
                         >
                           {allTabName}
@@ -760,7 +760,7 @@ export default function BankScreen() {
                           class={`px-3 py-1.5 rounded-md text-xs font-semibold ${
                             isAssigned
                               ? 'bg-[var(--color-mana)] text-white cursor-default'
-                              : 'bg-[#2a2a2a] text-[var(--color-parchment)] active:opacity-70'
+                              : 'bg-[var(--fm-parch-hi)] text-[var(--color-parchment)] active:opacity-70'
                           }`}
                         >
                           {name}
@@ -805,7 +805,7 @@ export default function BankScreen() {
 
               {/* Withdraw as Note */}
               {!isStackable && (
-                <div class="border-t border-[#333] pt-2">
+                <div class="border-t border-[var(--fm-rule)] pt-2">
                   <p class="text-[10px] text-[var(--color-parchment)] opacity-40 mb-1.5 uppercase tracking-wider font-bold">Withdraw as Note</p>
                   <div class="grid grid-cols-3 gap-2 mb-2">
                     {[1, 5, 10].map(qty => (
@@ -845,7 +845,7 @@ export default function BankScreen() {
                 const useQuickSell = isIronman || selItem?.isUntradeable || !isOrderBookItem(selItem)
                 const sellUnit = isIronman ? getIronmanShopValue(selItem) : selItem?.shopValue
                 return (
-                  <div class="border-t border-[#333] pt-2">
+                  <div class="border-t border-[var(--fm-rule)] pt-2">
                     <p class="text-[10px] text-[var(--color-parchment)] opacity-40 mb-1.5 uppercase tracking-wider font-bold">
                       {useQuickSell ? 'Sell' : 'Trading Post Listing'}
                     </p>
@@ -859,13 +859,13 @@ export default function BankScreen() {
                         {[1, 5, 10].map(qty => (
                           <button key={qty} onClick={() => handleSell(qty)}
                             disabled={selected.quantity < qty || sellBusy}
-                            class={`py-2 rounded-lg text-white font-semibold text-sm ${selected.quantity < qty || sellBusy ? 'bg-[#222] opacity-30' : 'bg-[var(--color-gold-dim)] active:opacity-80'}`}>
+                            class={`py-2 rounded-lg text-white font-semibold text-sm ${selected.quantity < qty || sellBusy ? 'bg-[var(--fm-parch-lo)] opacity-30' : 'bg-[var(--color-gold-dim)] active:opacity-80'}`}>
                             Sell {qty}
                           </button>
                         ))}
                         <button onClick={() => handleSell(selected.quantity)}
                           disabled={sellBusy}
-                          class={`py-2 rounded-lg text-white font-semibold text-sm col-span-3 ${sellBusy ? 'bg-[#222] opacity-30' : 'bg-[var(--color-gold-dim)] active:opacity-80'}`}>
+                          class={`py-2 rounded-lg text-white font-semibold text-sm col-span-3 ${sellBusy ? 'bg-[var(--fm-parch-lo)] opacity-30' : 'bg-[var(--color-gold-dim)] active:opacity-80'}`}>
                           Sell All ({selected.quantity * sellUnit} gp)
                         </button>
                       </div>
@@ -909,7 +909,7 @@ export default function BankScreen() {
                   min="1"
                   max={maxQty}
                   placeholder="Enter quantity"
-                  class="w-full bg-[#1a1a1a] border border-[#333] rounded-lg px-3 py-2 text-sm text-[var(--color-parchment)] outline-none focus:border-[var(--color-gold)]"
+                  class="w-full bg-[var(--fm-parch-lo)] border border-[var(--fm-rule)] rounded-lg px-3 py-2 text-sm text-[var(--color-parchment)] outline-none focus:border-[var(--color-gold)]"
                   autoFocus
                 />
               </div>

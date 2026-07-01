@@ -27,7 +27,7 @@ function EquipSlot({ slotName, equipment, itemsData, onSelect, size = 'md' }) {
   const ammoQuantity = slotName === 'ammo' ? Number(entry?.quantity || 1) : 1
   const preset = SIZE_PRESETS[size] || SIZE_PRESETS.md
 
-  const bgClass = isEmpty ? 'bg-[#111] border-[#222] opacity-40' : 'bg-[var(--color-void-light)] border-[#444]'
+  const bgClass = isEmpty ? 'bg-[var(--color-void)] border-[var(--color-void-border)] opacity-40' : 'bg-[var(--color-void-light)] border-[var(--color-void-border)]'
   const cursorClass = item ? 'cursor-pointer' : 'cursor-default'
 
   return (
@@ -101,7 +101,6 @@ export default function EquipmentPaperdoll({
     <Card
       padding="p-4"
       className="flex flex-col items-center"
-      style={{ background: 'linear-gradient(135deg, #141414, #0f0f0f)' }}
     >
       {grid}
     </Card>

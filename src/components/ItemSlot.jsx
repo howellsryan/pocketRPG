@@ -9,7 +9,7 @@ const TYPE_COLORS = {
   resource: 'border-[var(--color-gold-dim)]/40',
   ammo: 'border-[var(--color-parchment)]/20',
   currency: 'border-[var(--color-gold)]/40',
-  default: 'border-[#333]'
+  default: 'border-[var(--color-void-border)]'
 }
 
 export default function ItemSlot({ slot, onClick, size = 'normal', showName = false, highlight = false }) {
@@ -31,8 +31,8 @@ export default function ItemSlot({ slot, onClick, size = 'normal', showName = fa
 
   if (!slot) {
     return (
-      <div class={`${sizeClass} rounded-lg bg-[#1a1a1a] border border-[#2a2a2a] flex items-center justify-center`}>
-        <span class="text-[#2a2a2a] text-xs">—</span>
+      <div class={`${sizeClass} rounded-lg bg-[var(--color-void-light)] border border-[var(--color-void-border)] flex items-center justify-center`}>
+        <span class="text-[var(--color-void-border)] text-xs">—</span>
       </div>
     )
   }
@@ -45,9 +45,9 @@ export default function ItemSlot({ slot, onClick, size = 'normal', showName = fa
   return (
     <button
       onClick={() => onClick?.(slot, item)}
-      class={`${sizeClass} rounded-lg bg-[#1a1a1a] border ${borderClass}
+      class={`${sizeClass} rounded-lg bg-[var(--color-void-light)] border ${borderClass}
         flex flex-col items-center justify-center relative
-        active:bg-[#252525] transition-colors
+        active:bg-[var(--color-void-lighter)] transition-colors
         ${highlight ? 'ring-1 ring-[var(--color-gold)]' : ''}`}
     >
       <GameIcon item={item} size={iconSize} />

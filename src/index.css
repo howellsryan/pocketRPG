@@ -152,10 +152,16 @@
   --font-body: var(--fm-serif);
   --font-mono: var(--fm-num);
 
-  --color-void: var(--fm-soot);
-  --color-void-light: var(--fm-iron);
-  --color-void-lighter: #3a352f;
-  --color-void-border: #4d453a;
+  /* Card/Panel/Button's *default* variant (and any other markup still reading
+     these vars directly) render via these — retinted to the parchment family
+     so wrapping a new screen in .forge-shell "just works" without hand-tuning
+     every card: --color-void-light (Card) is the same medium parchment tone
+     used everywhere else; --color-void (Panel, nested/sunken) a shade deeper;
+     --color-void-lighter a lighter "raised" tone. All paper, no iron. */
+  --color-void: var(--fm-parch-lo);
+  --color-void-light: #e6d8b6;
+  --color-void-lighter: var(--fm-parch-hi);
+  --color-void-border: var(--fm-rule);
 
   --color-gold: var(--fm-brass);
   --color-gold-light: var(--fm-brass-hi);
