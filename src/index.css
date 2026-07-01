@@ -554,6 +554,23 @@ html, body, #app {
 .forge-shell .cb-kstat__v, .forge-shell .cb-stat__v { color: var(--fm-ember-deep); }
 .forge-shell .cb-act:not(.is-on) { color: var(--fm-ink); }
 .forge-shell .cb-mon__kc { color: var(--fm-ember-deep); }
+
+/* Forgemark pilot — Collection Log: category cards flip to parchment (the
+   "done" gilt-glow treatment is left alone, it already reads as a highlight
+   on any background). Sheet/modal is always Forgemark since CollectionLog
+   is fully reskinned. */
+.forge-shell .clog-cat:not(.is-done) { background: #e6d8b6; background-image: var(--fm-tex-parch); background-size: cover; border-color: var(--fm-rule); box-shadow: var(--fm-parch-inset); }
+.forge-shell .clog-cat:not(.is-done):hover { border-color: var(--fm-brass); }
+.forge-shell .clog-cat__name, .forge-shell .clog-cat__count { color: var(--fm-ink); text-shadow: none; }
+.forge-shell .clog-cat__blurb, .forge-shell .clog-cat__foot span { color: var(--fm-ink-faint); }
+.forge-shell .clog-cat__count b { color: var(--fm-ember-deep); }
+.forge-shell .clog-header__sub, .forge-shell .clog-hero__k, .forge-shell .clog-hero__v, .forge-shell .clog-secthead span { color: var(--fm-ink-faint); }
+.forge-shell .clog-hero__v b { color: var(--fm-ember-deep); }
+.clog-sheet:not(.is-done) { background: var(--fm-vellum); background-image: var(--fm-tex-parch); background-size: 400px; border-top-color: var(--fm-brass-lo); }
+.clog-sheet:not(.is-done) .clog-sheet__name, .clog-sheet:not(.is-done) .clog-cat__name { color: var(--fm-ink); }
+.clog-sheet:not(.is-done) .clog-sheet__sub { color: var(--fm-ink-faint); }
+.clog-sheet:not(.is-done) .clog-sheet__count b { color: var(--fm-ember-deep); }
+.clog-sheet:not(.is-done) .clog-sheet__count span, .clog-sheet:not(.is-done) .clog-sheet__count em { color: var(--fm-ink-faint); }
 .forge-shell .cb-idle:not(.is-on), .forge-shell .cb-styleseg:not(.is-on) { color: var(--fm-ink); opacity: 1; }
 .forge-shell .cb-idle:not(.is-on):hover, .forge-shell .cb-styleseg:not(.is-on):hover { border-color: var(--fm-brass); }
 .forge-shell .cb-h1 { background-image: var(--fm-gilt-text); }
@@ -637,6 +654,12 @@ html, body, #app {
 .armoury-card__name { display: block; font-size: 11px; font-weight: 700; line-height: 1.2; color: var(--color-parchment); text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7); }
 .armoury-card__tier { display: block; font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.04em; color: var(--color-gold-light); opacity: 0.8; }
 .armoury-card__spec { position: absolute; top: 4px; right: 6px; font-size: 11px; line-height: 1; filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.85)); }
+.forge-shell .armoury-card { background: var(--fm-parch); background-image: var(--fm-tex-parch); background-size: cover; border-color: var(--fm-rule); box-shadow: var(--fm-parch-inset); }
+.forge-shell .armoury-card:hover { border-color: var(--fm-brass); }
+.forge-shell .armoury-card__name { color: var(--fm-ink); text-shadow: none; }
+.forge-shell .armoury-card__tier { color: var(--fm-ember-deep); opacity: 1; }
+.forge-shell .section-head span { color: var(--fm-ink-faint); }
+.forge-shell .section-head__rule { background: linear-gradient(90deg, var(--fm-brass-lo), transparent); }
 
 /* Skill detail modal hero */
 .skill-detail__hero { display: flex; align-items: center; gap: 14px; }

@@ -26,7 +26,7 @@ export default function ArmouryScreen() {
   const [selected, setSelected] = useState(null)
 
   return (
-    <div class="h-full flex flex-col">
+    <div class="forge-shell h-full flex flex-col">
       <div class="px-4 pt-4 pb-2 flex-shrink-0">
         <h1 class="font-[var(--font-display)] text-[var(--color-gold)] text-lg font-bold tracking-wide">Armoury</h1>
         <p class="text-[11px] text-[var(--color-parchment)] opacity-50 mt-[2px]">

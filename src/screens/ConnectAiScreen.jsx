@@ -85,8 +85,8 @@ export default function ConnectAiScreen({ isCloudAccount }) {
   const guide = GUIDES[provider]
 
   return (
-    <div class="h-full flex flex-col">
-      <div class="flex-shrink-0 bg-[#111] border-b border-[var(--color-void-border)] px-4 py-3">
+    <div class="forge-shell h-full flex flex-col">
+      <div class="flex-shrink-0 bg-[var(--color-void-light)] border-b border-[var(--color-void-border)] px-4 py-3">
         <h1 class="font-[var(--font-display)] text-lg font-bold text-[var(--color-gold)] flex items-center gap-2">
           <GameIcon iconKey="brain" size={22} color="#D97757" />
           Connect AI
@@ -102,7 +102,7 @@ export default function ConnectAiScreen({ isCloudAccount }) {
         </p>
 
         {!isCloudAccount && (
-          <Card className="p-3 bg-[#2a1d12] border border-[#5a3d1a]">
+          <Card className="p-3 bg-[var(--fm-parch-hi)] border border-[var(--fm-brass)]">
             <p class="text-xs text-[var(--color-parchment)] opacity-90 leading-relaxed">
               You're playing on a local account. Sign in with a cloud account (GitHub or Google) to connect
               an AI assistant — the MCP server only works with cloud characters.
@@ -114,7 +114,7 @@ export default function ConnectAiScreen({ isCloudAccount }) {
         <div>
           <div class="text-xs uppercase tracking-wide opacity-50 mb-1">MCP server URL</div>
           <div class="flex items-center gap-2">
-            <code class="flex-1 min-w-0 break-all rounded-lg bg-[#111] border border-[var(--color-void-border)] p-2 font-[var(--font-mono)] text-xs text-[var(--color-gold)]">
+            <code class="flex-1 min-w-0 break-all rounded-lg bg-[var(--color-void-light)] border border-[var(--color-void-border)] p-2 font-[var(--font-mono)] text-xs text-[var(--color-gold)]">
               {mcpServerUrl}
             </code>
             <Button size="md" variant="primary" onClick={copyUrl}>
@@ -166,7 +166,7 @@ export default function ConnectAiScreen({ isCloudAccount }) {
         </Card>
 
         {/* Mobile note */}
-        <Card className="p-3 bg-[#2a1d12] border border-[#5a3d1a]">
+        <Card className="p-3 bg-[var(--fm-parch-hi)] border border-[var(--fm-brass)]">
           <div class="flex items-center gap-2 mb-1">
             <span class="text-lg">📱</span>
             <span class="font-bold text-[var(--color-gold)] text-sm">Mobile apps don't work — use a computer</span>
