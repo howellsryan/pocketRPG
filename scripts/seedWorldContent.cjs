@@ -28,6 +28,7 @@ const world = JSON.parse(fs.readFileSync(worldPath, 'utf8'))
 const monsters = require(path.join(ROOT, 'src/data/monsters.json'))
 const skills = require(path.join(ROOT, 'src/data/skills.json'))
 const raids = require(path.join(ROOT, 'src/data/raids.json'))
+const minigames = require(path.join(ROOT, 'src/data/minigames.json'))
 const { GATHER_TASKS } = require(path.join(ROOT, 'src/engine/gatherTasks.js'))
 const { BUILDING_ACTIONS } = require(path.join(ROOT, 'src/engine/construction.js'))
 
@@ -144,6 +145,23 @@ for (const a of asArray(skills.agility?.actions)) {
   const placeId = world.places[AGILITY_PLACEMENT[a.id]] ? AGILITY_PLACEMENT[a.id] : placesOrdered[0]
   out[placeId] = out[placeId] || []
   out[placeId].push({ kind: 'agility', ref: a.id })
+}
+
+// Minigames — authored 1:1 to a place, like agility (a minigame is a fixed venue, not
+// something to level-band). Every reward task of a minigame is gated together since
+// they're all "the same place" from the player's perspective.
+const MINIGAME_PLACEMENT = {
+  pest_control: 'portsarin',
+  castle_wars: 'ardounne',
+  barbarian_assault: 'camlann',
+  fishing_trawler: 'catherra',
+  mage_arena: 'edgevale',
+  warriors_guild: 'barlock',
+}
+for (const mg of asArray(minigames.minigames)) {
+  const placeId = world.places[MINIGAME_PLACEMENT[mg.id]] ? MINIGAME_PLACEMENT[mg.id] : placesOrdered[0]
+  out[placeId] = out[placeId] || []
+  out[placeId].push({ kind: 'minigame', ref: mg.id })
 }
 
 // Hunter — own kind, level-banded.

@@ -11,6 +11,7 @@ import worldData from '../src/data/world.json'
 import monstersData from '../src/data/monsters.json'
 import skillsData from '../src/data/skills.json'
 import raidsData from '../src/data/raids.json'
+import minigamesData from '../src/data/minigames.json'
 import { GATHER_TASKS } from '../src/engine/gatherTasks.js'
 
 const asArray = (v: any) => (Array.isArray(v) ? v : Object.values(v || {}))
@@ -30,6 +31,7 @@ describe('activityRef', () => {
     expect(activityRef({ type: 'thieving', npc: { id: 'villager' } })).toEqual({ kind: 'thieving', ref: 'villager' })
     expect(activityRef({ type: 'hunter', action: { id: 'hunt_cow' } })).toEqual({ kind: 'hunter', ref: 'hunt_cow' })
     expect(activityRef({ type: 'raid', raid: { id: 'crimson_night_theatre' } })).toEqual({ kind: 'raid', ref: 'crimson_night_theatre' })
+    expect(activityRef({ type: 'minigame', minigameTask: { id: 'pc_void_set', minigame: 'pest_control' } })).toEqual({ kind: 'minigame', ref: 'pest_control' })
   })
 
   it('returns null for non-place-bound task types', () => {
@@ -71,6 +73,15 @@ describe('content -> place coverage', () => {
     for (const t of GATHER_TASKS) {
       expect(placesForActivity('gather', t.id).length, `gather ${t.id}`).toBeGreaterThan(0)
     }
+  })
+
+  it('places each minigame at its authored venue', () => {
+    expect(placesForActivity('minigame', 'pest_control')).toEqual(['portsarin'])
+    expect(placesForActivity('minigame', 'castle_wars')).toEqual(['ardounne'])
+    expect(placesForActivity('minigame', 'barbarian_assault')).toEqual(['camlann'])
+    expect(placesForActivity('minigame', 'fishing_trawler')).toEqual(['catherra'])
+    expect(placesForActivity('minigame', 'mage_arena')).toEqual(['edgevale'])
+    expect(placesForActivity('minigame', 'warriors_guild')).toEqual(['barlock'])
   })
 
   it('returns no places for unmapped content', () => {
@@ -154,6 +165,7 @@ describe('autoStartFromTask', () => {
     expect(autoStartFromTask({ type: 'agility', action: { id: 'ardougne' } })).toEqual({ kind: 'agility', actionId: 'ardougne' })
     expect(autoStartFromTask({ type: 'thieving', npc: { id: 'guard' } })).toEqual({ kind: 'thieving', npcId: 'guard' })
     expect(autoStartFromTask({ type: 'gather', gatherTask: { id: 'collect_sand' } })).toEqual({ kind: 'gather', gatherTaskId: 'collect_sand' })
+    expect(autoStartFromTask({ type: 'minigame', minigameTask: { id: 'pc_void_set', minigame: 'pest_control' } })).toEqual({ kind: 'minigame', taskId: 'pc_void_set' })
   })
 
   it('returns null for untracked or empty tasks', () => {
@@ -170,5 +182,6 @@ describe('describeActivity', () => {
     expect(describeActivity('skill', 'mining:copper').name).toBeTruthy()
     expect(describeActivity('combat', 'no_such_monster').name).toBe('no_such_monster') // falls back to ref
     expect(describeActivity('raid', 'crimson_night_theatre').name).toBe('Crimson Night Theatre')
+    expect(describeActivity('minigame', 'pest_control').name).toBe('Void Breach')
   })
 })

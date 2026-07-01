@@ -13,6 +13,7 @@ import worldData from '../data/world.json'
 import monstersData from '../data/monsters.json'
 import skillsData from '../data/skills.json'
 import raidsData from '../data/raids.json'
+import minigamesData from '../data/minigames.json'
 import { GATHER_TASKS } from './gatherTasks.js'
 import { BUILDING_ACTIONS } from './construction.js'
 import { normaliseLocation } from './world.js'
@@ -28,6 +29,9 @@ for (const t of GATHER_TASKS) gatherById[t.id] = t
 
 const buildingById = {}
 for (const a of asArray(BUILDING_ACTIONS)) buildingById[a.id] = a
+
+const minigamesById = {}
+for (const mg of asArray(minigamesData.minigames)) minigamesById[mg.id] = mg
 
 /** Resolve a `${skillId}:${actionId}` skill ref to its action object. */
 function skillAction(skillRef) {
@@ -81,6 +85,9 @@ export function activityRef(task) {
     case 'agility': return task.action?.id ? { kind: 'agility', ref: task.action.id } : null
     case 'thieving': return task.npc?.id ? { kind: 'thieving', ref: task.npc.id } : null
     case 'hunter': return task.action?.id ? { kind: 'hunter', ref: task.action.id } : null
+    // Gated per-minigame (not per-task) — every reward task of a minigame lives at the
+    // same place, so the whole minigame is the unit that's location-bound.
+    case 'minigame': return task.minigameTask?.minigame ? { kind: 'minigame', ref: task.minigameTask.minigame } : null
     default: return null
   }
 }
@@ -101,6 +108,9 @@ export function autoStartFromTask(task) {
     case 'agility': return task.action?.id ? { kind: 'agility', actionId: task.action.id } : null
     case 'thieving': return task.npc?.id ? { kind: 'thieving', npcId: task.npc.id } : null
     case 'hunter': return task.action?.id ? { kind: 'hunter', actionId: task.action.id } : null
+    // Carries the specific reward task id (not just the minigame) so arrival resumes
+    // exactly the task the player picked, not just any task from that minigame.
+    case 'minigame': return task.minigameTask?.id ? { kind: 'minigame', taskId: task.minigameTask.id } : null
     default: return null
   }
 }
@@ -173,6 +183,10 @@ export function describeActivity(kind, ref) {
     case 'hunter': {
       const a = actionInSkill('hunter', ref)
       return { name: a?.name || ref, icon: '🪤', level: a?.level ?? null }
+    }
+    case 'minigame': {
+      const mg = minigamesById[ref]
+      return { name: mg?.label || ref, icon: mg?.icon || '🎮', level: null }
     }
     default:
       return { name: ref, icon: '•', level: null }

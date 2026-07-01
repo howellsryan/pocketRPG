@@ -1738,7 +1738,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           />
         </div>
       ) : (
-      <div class="h-full overflow-y-auto p-4">
+      <div class="forge-shell h-full overflow-y-auto p-4">
         <h2 class="font-[var(--font-display)] text-sm font-bold text-[var(--color-parchment)] opacity-60 uppercase tracking-wider mb-3">
           Choose a Foe
         </h2>

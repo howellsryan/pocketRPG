@@ -1681,6 +1681,7 @@ function GameApp() {
       case 'gather':   navigate(SCREENS.GATHER, { gatherTaskId: autoStart.gatherTaskId }); break
       case 'thieving': navigate(SCREENS.SKILLS, { skillId: 'thieving', actionId: autoStart.npcId }); break
       case 'hunter':   navigate(SCREENS.SKILLS, { skillId: 'hunter', actionId: autoStart.actionId }); break
+      case 'minigame': navigate(SCREENS.MINIGAMES, { minigameTaskId: autoStart.taskId }); break
       case 'skill':
         if (autoStart.skill === 'magic') navigate(SCREENS.MAGIC)
         else navigate(SCREENS.SKILLS, { skillId: autoStart.skill, actionId: autoStart.actionId })
@@ -2507,7 +2508,7 @@ function GameApp() {
       case SCREENS.STORE:       return <TradingPostScreen />
       case SCREENS.QUESTS:         return <QuestsScreen />
       case SCREENS.CLUES:          return <CluesScreen />
-      case SCREENS.MINIGAMES:      return <MinigamesScreen />
+      case SCREENS.MINIGAMES:      return <MinigamesScreen initialTaskId={actionData?.minigameTaskId} />
       case SCREENS.COLLECTION_LOG: return <CollectionLogScreen />
       case SCREENS.LEADERBOARD:    return <LeaderboardScreen />
       case SCREENS.HELP:                return <HelpScreen />

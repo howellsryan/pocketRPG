@@ -21,7 +21,7 @@ const FEATURE_COPY = {
 export default function DemoLockedScreen({ screen, onBack }) {
   const copy = FEATURE_COPY[screen] || { title: 'This feature', blurb: 'This feature needs a free account.' }
   return (
-    <div class="h-full overflow-y-auto flex items-center justify-center p-6 bg-[var(--color-void)]">
+    <div class="forge-shell h-full overflow-y-auto flex items-center justify-center p-6 bg-[var(--color-void)]">
       <div class="max-w-sm w-full text-center bg-[var(--color-void-light)] border border-[var(--color-void-border)] rounded-2xl p-6">
         <div class="text-4xl mb-3" aria-hidden="true">🔒</div>
         <h1 class="font-[var(--font-display)] text-xl font-bold text-[var(--color-gold)] mb-2">

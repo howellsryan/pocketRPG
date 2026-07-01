@@ -2841,6 +2841,10 @@
           "ref": "hunt_master_trader"
         },
         {
+          "kind": "minigame",
+          "ref": "castle_wars"
+        },
+        {
           "kind": "raid",
           "ref": "cryptbound_champions"
         },
@@ -5174,6 +5178,10 @@
           "ref": "collect_wine_of_zamorak"
         },
         {
+          "kind": "minigame",
+          "ref": "mage_arena"
+        },
+        {
           "kind": "skill",
           "ref": "construction:build_mahogany_plank"
         },
@@ -5834,6 +5842,10 @@
           "ref": "collect_seaweed"
         },
         {
+          "kind": "minigame",
+          "ref": "warriors_guild"
+        },
+        {
           "kind": "skill",
           "ref": "mining:tin"
         },
@@ -6222,6 +6234,10 @@
         {
           "kind": "gather",
           "ref": "catch_newts"
+        },
+        {
+          "kind": "minigame",
+          "ref": "fishing_trawler"
         },
         {
           "kind": "skill",
@@ -7682,6 +7698,10 @@
           "ref": "hunt_merchant"
         },
         {
+          "kind": "minigame",
+          "ref": "barbarian_assault"
+        },
+        {
           "kind": "skill",
           "ref": "construction:build_mahogany_plank"
         },
@@ -8344,6 +8364,10 @@
         {
           "kind": "hunter",
           "ref": "hunt_grim_reaper"
+        },
+        {
+          "kind": "minigame",
+          "ref": "pest_control"
         },
         {
           "kind": "skill",

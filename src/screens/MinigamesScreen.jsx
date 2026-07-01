@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'preact/hooks'
 import { useGame } from '../state/gameState.jsx'
 import Panel from '../components/Panel.jsx'
 import ProgressBar from '../components/ProgressBar.jsx'
@@ -15,13 +16,17 @@ function formatMinigameHours(hours) {
   return `${hours.toFixed(1)}h`
 }
 
-export default function MinigamesScreen() {
+export default function MinigamesScreen({ initialTaskId } = {}) {
   const {
     inventory, bank, equipment, activeTask, setActiveTask, unlockedMinigameItems,
-    getActivityProgress, addToast,
+    getActivityProgress, addToast, requestActivityStart,
   } = useGame()
+  const hasAutoStarted = useRef(false)
 
-  const startMinigame = (task) => {
+  const startMinigame = (task, seedFromTravel = false) => {
+    // Map-driven gating (Phase 3): fresh starts must be at a place that offers this
+    // minigame. Arrivals via travel/home-shortcut skip the check — they're already there.
+    if (!seedFromTravel && !requestActivityStart({ type: 'minigame', minigameTask: task })) return
     const key = getActivityKey({ type: 'minigame', minigameTask: task })
     const savedProgress = key ? getActivityProgress(key) : null
     const ticksRemaining = savedProgress?.progressTicks > 0
@@ -38,6 +43,16 @@ export default function MinigamesScreen() {
     })
     if (resuming) addToast(`🎮 Resuming: ${task.name}`, 'info')
   }
+
+  // Auto-start on arrival: a travel prompt sent the player here (autoStart), or a home
+  // shortcut launched this task directly.
+  useEffect(() => {
+    if (initialTaskId && !hasAutoStarted.current && activeTask?.type !== 'minigame') {
+      hasAutoStarted.current = true
+      const task = minigamesData.tasks.find(t => t.id === initialTaskId)
+      if (task) startMinigame(task, true)
+    }
+  }, [initialTaskId])
 
   const stopMinigame = () => {
     setActiveTask(null)
