@@ -144,7 +144,8 @@
       "lore": "The great stone capital — crowded markets, the grand smithy, and roads that run to every corner of Eldermoor.",
       "facilities": [
         "bank",
-        "furnace_anvil"
+        "furnace_anvil",
+        "sawmill"
       ],
       "teleport": {
         "level": 25,
@@ -168,7 +169,8 @@
       "lore": "A walled city of knights and miners, its furnaces never cold. The heart of smithing in the west.",
       "facilities": [
         "bank",
-        "furnace_anvil"
+        "furnace_anvil",
+        "sawmill"
       ],
       "teleport": {
         "level": 31,
@@ -191,7 +193,8 @@
       "sub": "The western city",
       "lore": "A sprawling, divided city of grand spires and crooked back-alleys — paradise for a light-fingered thief.",
       "facilities": [
-        "bank"
+        "bank",
+        "sawmill"
       ],
       "teleport": {
         "level": 37,
@@ -326,7 +329,8 @@
       "sub": "Town of the far-seers",
       "lore": "A misty town of soothsayers and flax fields, where the crystal halls hum with quiet magic.",
       "facilities": [
-        "bank"
+        "bank",
+        "sawmill"
       ],
       "teleport": {
         "level": 58,
@@ -512,6 +516,10 @@
     "furnace_anvil": {
       "label": "Furnace & Anvil",
       "icon": "🔨"
+    },
+    "sawmill": {
+      "label": "Sawmill",
+      "icon": "🪚"
     }
   }
 }

@@ -34,10 +34,6 @@
     },
     {
       "kind": "gather",
-      "ref": "collect_sand"
-    },
-    {
-      "kind": "gather",
       "ref": "gather_bowstring"
     },
     {
@@ -656,7 +652,19 @@
     },
     {
       "kind": "gather",
+      "ref": "convert_log_to_plank"
+    },
+    {
+      "kind": "gather",
       "ref": "convert_mahogany_log_to_plank"
+    },
+    {
+      "kind": "gather",
+      "ref": "convert_oak_log_to_plank"
+    },
+    {
+      "kind": "gather",
+      "ref": "convert_teak_log_to_plank"
     },
     {
       "kind": "raid",
@@ -1598,7 +1606,23 @@
     },
     {
       "kind": "gather",
+      "ref": "convert_log_to_plank"
+    },
+    {
+      "kind": "gather",
+      "ref": "convert_mahogany_log_to_plank"
+    },
+    {
+      "kind": "gather",
+      "ref": "convert_oak_log_to_plank"
+    },
+    {
+      "kind": "gather",
       "ref": "convert_teak_log_to_plank"
+    },
+    {
+      "kind": "gather",
+      "ref": "pick_limpwurt_root"
     },
     {
       "kind": "raid",
@@ -2544,7 +2568,23 @@
     },
     {
       "kind": "gather",
+      "ref": "collect_wine_of_zamorak"
+    },
+    {
+      "kind": "gather",
+      "ref": "convert_log_to_plank"
+    },
+    {
+      "kind": "gather",
+      "ref": "convert_mahogany_log_to_plank"
+    },
+    {
+      "kind": "gather",
       "ref": "convert_oak_log_to_plank"
+    },
+    {
+      "kind": "gather",
+      "ref": "convert_teak_log_to_plank"
     },
     {
       "kind": "hunter",
@@ -3174,7 +3214,7 @@
     },
     {
       "kind": "gather",
-      "ref": "pick_white_berries"
+      "ref": "catch_newts"
     },
     {
       "kind": "hunter",
@@ -3788,7 +3828,7 @@
     },
     {
       "kind": "gather",
-      "ref": "gather_snape_grass"
+      "ref": "pick_white_berries"
     },
     {
       "kind": "skill",
@@ -4726,7 +4766,7 @@
     },
     {
       "kind": "gather",
-      "ref": "collect_wine_of_zamorak"
+      "ref": "collect_spiders_eggs"
     },
     {
       "kind": "minigame",
@@ -5336,7 +5376,7 @@
     },
     {
       "kind": "gather",
-      "ref": "collect_seaweed"
+      "ref": "collect_sand"
     },
     {
       "kind": "minigame",
@@ -5722,7 +5762,7 @@
     },
     {
       "kind": "gather",
-      "ref": "catch_newts"
+      "ref": "burn_seaweed"
     },
     {
       "kind": "minigame",
@@ -5773,6 +5813,22 @@
     {
       "kind": "gather",
       "ref": "convert_log_to_plank"
+    },
+    {
+      "kind": "gather",
+      "ref": "convert_mahogany_log_to_plank"
+    },
+    {
+      "kind": "gather",
+      "ref": "convert_oak_log_to_plank"
+    },
+    {
+      "kind": "gather",
+      "ref": "convert_teak_log_to_plank"
+    },
+    {
+      "kind": "gather",
+      "ref": "crush_birds_nest"
     },
     {
       "kind": "skill",
@@ -6375,10 +6431,6 @@
     {
       "kind": "combat",
       "ref": "tidereaper_crab"
-    },
-    {
-      "kind": "gather",
-      "ref": "collect_spiders_eggs"
     },
     {
       "kind": "skill",
@@ -6984,7 +7036,7 @@
     },
     {
       "kind": "gather",
-      "ref": "burn_seaweed"
+      "ref": "collect_seaweed"
     },
     {
       "kind": "hunter",
@@ -7038,11 +7090,7 @@
     },
     {
       "kind": "gather",
-      "ref": "crush_birds_nest"
-    },
-    {
-      "kind": "gather",
-      "ref": "harvest_potato_cactus"
+      "ref": "gather_snape_grass"
     },
     {
       "kind": "hunter",
@@ -7656,7 +7704,7 @@
     },
     {
       "kind": "gather",
-      "ref": "pick_limpwurt_root"
+      "ref": "harvest_potato_cactus"
     },
     {
       "kind": "hunter",
