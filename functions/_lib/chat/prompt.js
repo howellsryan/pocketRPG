@@ -12,6 +12,11 @@ import { TOOL_SCHEMAS } from '../mcp/schema.js'
 export const CHAT_MODEL = '@cf/zai-org/glm-4.7-flash'
 
 export const CHAT_MAX_TOOL_ROUNDS = 3
+// Wall-clock budget for the whole AI path (all model + tool calls). Must stay
+// comfortably under the client's 60s /api/chat timeout (src/cloud/api.js) so a
+// slow answer degrades to a retrieval answer the player actually receives,
+// instead of the request aborting client-side with nothing.
+export const CHAT_TIME_BUDGET_MS = 45_000
 // Budget covers GLM's thinking pass + the visible answer (reasoning enabled —
 // it's most of this model's quality and costs ~$0.0004/question at $0.40/M).
 export const CHAT_MAX_ANSWER_TOKENS = 2000

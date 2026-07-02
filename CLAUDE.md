@@ -119,7 +119,7 @@ Stateless MCP server (JSON-RPC 2.0) at `functions/api/mcp.js` with its own OAuth
 
 ## 16) Help Chatbot (`/api/chat`)
 - In-game helper (floating 💬, `src/components/ChatWidget.jsx`) answering PocketRPG-only questions. Backend `functions/api/chat.js`: Workers AI (`env.AI`, model in `functions/_lib/chat/prompt.js`) + lexical retrieval over a generated knowledge index + **read-only** MCP tools via `callTool` (allowlist in `prompt.js`; never add write tools; `character_id` pinned server-side). No web access.
-- Zero-cost guards: 30 msgs/char/day + global daily **neuron budget** (reserve-then-settle, pinned under the free 10k neurons/day so AI spend never bills; `functions/_lib/chat/quota.js`, migration 0027); when exhausted or AI fails → retrieval-only answer.
+- Zero-cost guards: 30 msgs/char/day + global daily **neuron budget** (reserve-then-settle, pinned under the free 10k neurons/day so AI spend never bills; `functions/_lib/chat/quota.js`, migration 0027); any AI-path failure — budget exhausted, model error, time budget hit (`CHAT_TIME_BUDGET_MS` 45s, under the client's 60s fetch timeout), empty answer — → retrieval-only answer, never a bare apology. Tool calls run in parallel; a failing tool degrades to a `Tool error:` message the model can route around.
 - Knowledge index: `npm run gen:knowledge` regenerates `functions/_lib/chat/knowledge.js` from `docs/game-guide.md` (player-facing; each `##` = one chunk) + `src/data/*.json`. Update guide + regenerate + commit when mechanics/content change.
 
 ## 17) Token efficiency (mandatory, every session)
