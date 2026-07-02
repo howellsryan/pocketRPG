@@ -39,16 +39,24 @@ const argOf = (name, fallback) => {
   return i >= 0 && args[i + 1] ? args[i + 1] : fallback
 }
 
+// Mirrors the world.json place coordinates on the 1640×1160 board (x→east,
+// y→south) so nodes land on their analogue regions with minimal re-placing.
 const DEFAULT_PROMPT = [
-  'A complete top-down fantasy world map of a medieval realm, in the style of a classic',
-  'MMORPG overworld chart. Landmass layout: a great walled capital city in the north-east',
-  'centre; a white-stone city to its west across mining hills; a small farming town in the',
-  'south-east beside a winding river; a desert with a mining town south-east beyond the river;',
-  'a fishing port on the southern coast; a swamp and gothic haunted woodland in the far east;',
-  'a large western region across the river with an elegant market city; a snowy mountain range',
-  'in the north; scattered villages, roads connecting every settlement, forests, lakes and a',
-  'sea along the south and west coasts. Painted parchment cartography style, muted greens and',
-  'tans, subtle relief shading, no text, no labels, no border, orthographic top-down view.',
+  'A complete top-down fantasy world map of a medieval realm, wide landscape orientation,',
+  'in the style of a classic MMORPG overworld chart. Landmass layout: a great walled stone',
+  'capital city in the upper-east-centre; a rough frontier town north of it with dark lawless',
+  'wilds beyond the northern edge; a foggy haunted marsh hamlet with gothic woodland in the',
+  'far east; a small mining village among hills at the map centre; a white-walled city of',
+  'knights below it in the west-centre; a sprawling elegant city of spires on the far western',
+  'coast; a noble hill-town with banners in the far north-west; a misty town of flax fields',
+  'near it and a small fishing village on a northern bay; snowy mountain peaks between the',
+  'north-west towns and the white city; a river winding from the north down through a gentle',
+  'starter castle-town in the centre-south, ringed by farmland; a golden desert east of the',
+  'river with a sun-baked toll town at its edge; a willow-shaded village and a busy harbour',
+  'town on the southern coast; a tropical volcanic island port in the far south-east; roads',
+  'connecting every settlement, forests, lakes, and open sea along the south and west coasts.',
+  'Painted parchment cartography style, muted greens and tans, subtle relief shading,',
+  'no text, no labels, no border, orthographic top-down view.',
 ].join(' ')
 
 const type = argOf('type', 'text_to_model')
