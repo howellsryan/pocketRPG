@@ -206,8 +206,10 @@ export function teleportIntoJourney(task, placeId) {
  * chaining phases exactly as the live tick would. Never grants the content —
  * a finished journey is returned parked on its final search with 0 ticks left
  * (`completedPending: true`), and the App's next live tick completes it with the
- * full toast/reward path. Returns { task, location, completedPending }:
- * `location` is the last waypoint reached (null if still on the first leg).
+ * full toast/reward path. Returns { task, location, completedPending, msRemaining }:
+ * `location` is the last waypoint reached (null if still on the first leg);
+ * `msRemaining` is the unspent elapsed time when the journey finished early
+ * (0 unless completedPending) — the credit skip uses it to chain further clues.
  */
 export function advanceJourneyOffline(task, elapsedMs) {
   let cur = task
@@ -216,16 +218,16 @@ export function advanceJourneyOffline(task, elapsedMs) {
   for (;;) {
     const remainingMs = (cur.ticksRemaining ?? cur.totalTicks ?? 0) * JOURNEY_TICK_MS
     const adv = advanceTravel(cur, ms)
-    if (!adv.arrived) return { task: adv.task, location, completedPending: false }
+    if (!adv.arrived) return { task: adv.task, location, completedPending: false, msRemaining: 0 }
     ms -= remainingMs
     const step = advanceJourneyPhase(adv.task)
     if (!step || step.kind === 'complete') {
       location = adv.task.dest
-      return { task: { ...adv.task, ticksRemaining: 0 }, location, completedPending: true }
+      return { task: { ...adv.task, ticksRemaining: 0 }, location, completedPending: true, msRemaining: Math.max(0, ms) }
     }
     if (step.kind === 'search') location = adv.task.dest
     cur = step.next
-    if (ms <= 0) return { task: cur, location, completedPending: false }
+    if (ms <= 0) return { task: cur, location, completedPending: false, msRemaining: 0 }
   }
 }
 

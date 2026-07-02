@@ -2150,6 +2150,58 @@ function GameApp() {
         return
       }
 
+      // Travel & journeys: 1 credit = 1 hour of trail time. A plain walk just
+      // arrives (roads are seconds long). A journey always finishes its CURRENT
+      // clue/quest in full — a master trail longer than the hour still completes,
+      // it simply consumes the whole budget — and any time left over chains
+      // through the next scroll / queued quest exactly as idling would (a stack
+      // of medium scrolls burns several per credit).
+      if (task?.type === 'travel') {
+        const skipResult = await api.skipHour()
+        setCredits(skipResult?.credits_remaining ?? credits)
+
+        if (!task.journey) {
+          updateWorldLocation(task.dest)
+          clearPersistedActiveTask()
+          addToast(`🧭 Arrived at ${travelDestName(task)}`, 'info')
+          resumeAutoStart(task.autoStart)
+        } else {
+          let budgetMs = SKIP_HOUR_MS
+          let cur = task
+          let first = true
+          for (let guard = 0; cur?.journey && guard < 30; guard++) {
+            let adv = advanceJourneyOffline(cur, budgetMs)
+            if (!adv.completedPending && first) {
+              adv = advanceJourneyOffline(cur, Number.MAX_SAFE_INTEGER)
+              budgetMs = 0
+            } else {
+              budgetMs = adv.completedPending ? Math.max(0, adv.msRemaining ?? 0) : 0
+            }
+            first = false
+            if (!adv.completedPending) {
+              // Hour spent mid-journey (only possible on a chained trail):
+              // park the advanced task for the live tick to carry on.
+              if (adv.location) updateWorldLocation(adv.location)
+              setActiveTask(adv.task)
+              activeTaskRef.current = adv.task
+              break
+            }
+            const endedAt = adv.location || adv.task.dest
+            updateWorldLocation(endedAt)
+            clearPersistedActiveTask()
+            // Grants the content and, when another scroll / queued quest exists,
+            // sets the next journey as the active task — picked up below.
+            completeJourneyContent(adv.task.journey, endedAt)
+            cur = activeTaskRef.current
+            if (!cur || cur.type !== 'travel' || budgetMs <= 0) break
+          }
+        }
+
+        addToast('⏭️ Skipped 1 hour', 'info')
+        await persistSkipThenReveal(null)
+        return
+      }
+
       const result = await api.skipHour()
       setCredits(result?.credits_remaining ?? credits)
 

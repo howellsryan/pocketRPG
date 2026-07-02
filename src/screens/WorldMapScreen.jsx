@@ -12,7 +12,7 @@ import GameIcon from '../components/GameIcon.jsx'
 import { getSkillArt } from '../utils/skillArt.js'
 import WaxSeal from '../components/WaxSeal.jsx'
 import Modal from '../components/Modal.jsx'
-import { api, getToken, getCharacterId, CREDITS_UPDATED_EVENT } from '../cloud/api.js'
+import { getToken, getCharacterId } from '../cloud/api.js'
 
 // Facility chip glyph: bank reuses the existing in-game bank icon (the nav's coins
 // glyph); furnace & anvil gets its bespoke PlaceIcon; anything else falls back to its
@@ -89,6 +89,7 @@ export default function WorldMapScreen({ onNavigate, onAutoStart } = {}) {
   const {
     worldLocation, updateWorldLocation, activeTask, setActiveTask, addToast, requestActivityStart,
     inventory, bank, equipment, stats, itemsData, updateInventory, updateBankDirect, grantXP,
+    skipHourHandlerRef,
   } = useGame()
   const world = getWorld()
   const here = getPlace(worldLocation) ? worldLocation : world.start
@@ -178,33 +179,17 @@ export default function WorldMapScreen({ onNavigate, onAutoStart } = {}) {
     }
   }
 
-  // Credit skip: the server owns the atomic 1-credit debit (/api/travel/skip);
-  // the client then zeroes the countdown so the very next game tick runs the
-  // normal completion path — walking legs arrive, searches finish (final
-  // searches grant their content), journey phases chain, and queued
-  // auto-starts fire exactly as if the timer ran out on its own. Cloud
-  // accounts only (credits live server-side).
-  const travelRef = useRef(travel)
-  travelRef.current = travel
+  // Credit skip: delegates to the shared Skip-1h flow (preflight, atomic
+  // /api/skip-hour debit, then 1 hour of trail time — the current clue/quest
+  // always finishes, leftover time chains the next scroll). Cloud accounts
+  // only, same as the header skip button.
   const [skipBusy, setSkipBusy] = useState(false)
   const canCreditSkip = !!(getToken() && getCharacterId())
   const skipTravel = async () => {
-    if (skipBusy || !travelRef.current) return
+    if (skipBusy) return
     setSkipBusy(true)
     try {
-      const res = await api.travelSkip()
-      const remaining = Number(res?.credits_remaining)
-      if (Number.isFinite(remaining)) {
-        window.dispatchEvent(new CustomEvent(CREDITS_UPDATED_EVENT, { detail: { credits_remaining: remaining } }))
-      }
-      // Re-read the live task: if the leg ended during the round-trip there
-      // is nothing left to finish (never resurrect a completed task).
-      const cur = travelRef.current
-      if (cur) setActiveTask({ ...cur, ticksRemaining: 0 })
-      addToast('💎 Skipped ahead — 1 credit', 'info')
-    } catch (err) {
-      if (err?.status === 402) addToast('Not enough credits to skip.', 'error')
-      else addToast(err?.message || 'Failed to skip travel.', 'error')
+      await skipHourHandlerRef?.current?.()
     } finally {
       setSkipBusy(false)
     }
@@ -495,7 +480,7 @@ export default function WorldMapScreen({ onNavigate, onAutoStart } = {}) {
               </div>
               <div class="wm-travelbar-actions">
                 {canCreditSkip && (
-                  <button class="wm-travelbar-skip" disabled={skipBusy} onClick={skipTravel} title={js?.searching ? 'Finish this search instantly — costs 1 credit' : 'Finish this walk instantly — costs 1 credit'}>
+                  <button class="wm-travelbar-skip" disabled={skipBusy} onClick={skipTravel} title="Skip 1 hour of travel — 1 credit. The current clue or quest always finishes; spare time runs the next scroll.">
                     💎 Skip · 1 credit
                   </button>
                 )}

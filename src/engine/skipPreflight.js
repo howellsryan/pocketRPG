@@ -100,9 +100,14 @@ function getSkillSkipPreflight(activeTask, context, elapsedMs) {
 
 export function getSkipPreflight(activeTask, context, elapsedMs = SKIP_HOUR_MS) {
   if (!activeTask?.type) return invalid('Start an action before using Skip 1h.', 'none', false)
-  // No skip executor advances travel/journeys — without this they'd fall into the
-  // generic branch below, present as skippable and risk charging a credit for nothing.
-  if (activeTask.type === 'travel') return invalid("Travel can't be skipped — journeys resolve on their own.", 'travel', false)
+  // Travel/journeys: 1 credit = 1 hour of trail time. Walks always finish (roads
+  // are seconds long); a journey's current clue/quest completes in full even past
+  // the hour, and leftover time chains further scrolls — see App's travel branch.
+  if (activeTask.type === 'travel') {
+    const remaining = Number(activeTask.ticksRemaining ?? activeTask.totalTicks ?? 0)
+    if (remaining <= 0 && !activeTask.journey) return invalid('You have already arrived.', 'travel', true)
+    return valid(1, activeTask.journey ? 'travel:journey' : 'travel')
+  }
   if (activeTask.type === 'gather' || activeTask.type === 'clue') return getGatherSkipPreflight(activeTask, context, elapsedMs)
   if (activeTask.type === 'skill') return getSkillSkipPreflight(activeTask, context, elapsedMs)
   if (activeTask.type === 'quest') return (Number(activeTask.ticksRemaining || 0) > 0 || (context.questQueue || []).length > 0) ? valid(1, 'quest') : invalid('No quest time remains to skip.', 'quest', true)

@@ -105,7 +105,7 @@ Server is source of truth for everything that *can* be authoritative. The one de
 **Server-authoritative (integrity boundary — never move to client/save):**
 - **Identity & ownership** — auth (session JWT via `requireAuth`), characters, OAuth; every `/api/*` route verifies the token.
 - **High-value grants** — boss/raid/clue/minigame/dungeoneering uniques granted by `/api/actions/**` (server-side loot RNG, kill-counts, collection-log, nonce replay protection). Save only carries the already-granted item.
-- **Purchases** — `/api/purchase` debits coins + grants server-side. **Credits** — debited atomically by `/api/skip-hour`, `/api/slayer/skip`, `/api/travel/skip`, and `/api/daily-tasks/complete`; **never** from `/api/save`.
+- **Purchases** — `/api/purchase` debits coins + grants server-side. **Credits** — debited atomically by `/api/skip-hour`, `/api/slayer/skip`, and `/api/daily-tasks/complete`; **never** from `/api/save`. Skip-1h also covers travel/journeys: the current clue/quest always completes (even past the hour), leftover time chains further scrolls.
 - **Daily task credit grants** — `/api/daily-tasks/complete` atomically flips `credited=0→1` (idempotency key) then increments `credits`; replay returns `creditsGranted: 0`. PvP-lockdown enforced.
 - **PvP settlement / trading post** — own server-authoritative paths (§10).
 - New economy/progression mutations must emit **audit events** (`functions/_lib/game/audit.js`).

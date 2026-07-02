@@ -125,6 +125,7 @@ describe('advanceJourneyOffline', () => {
     const leg = plan()
     const res = advanceJourneyOffline(leg, 600) // one tick
     expect(res.completedPending).toBe(false)
+    expect(res.msRemaining).toBe(0)
     expect(res.task.ticksRemaining).toBe(leg.totalTicks - 1)
     expect(res.location).toBeNull()
   })
@@ -142,6 +143,9 @@ describe('advanceJourneyOffline', () => {
     const leg = plan()
     const res = advanceJourneyOffline(leg, 24 * 60 * 60 * 1000) // a day away
     expect(res.completedPending).toBe(true)
+    // Unspent time is reported so the credit skip can chain further scrolls.
+    expect(res.msRemaining).toBeGreaterThan(0)
+    expect(res.msRemaining).toBeLessThanOrEqual(24 * 60 * 60 * 1000)
     expect(res.task.ticksRemaining).toBe(0)
     expect(res.task.journey.phase).toBe('search')
     expect(res.location).toBe(leg.journey.steps[leg.journey.steps.length - 1])

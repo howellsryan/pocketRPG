@@ -36,4 +36,16 @@ describe('skipPreflight', () => {
     expect(pre.shouldStopTask).toBe(true)
     expect(isChargeableSkipOutcome(task as any, { rewardCompleted: true, rewardTimeReduced: true })).toBe(false)
   })
+  it('allows skipping an active walk and an active journey', () => {
+    const walk = { type: 'travel', totalTicks: 20, ticksRemaining: 12 }
+    expect(getSkipPreflight(walk as any, baseCtx, SKIP_HOUR_MS)).toMatchObject({ canSkip: true, kind: 'travel' })
+    const journey = { type: 'travel', totalTicks: 40, ticksRemaining: 0, journey: { kind: 'clue', phase: 'search' } }
+    expect(getSkipPreflight(journey as any, baseCtx, SKIP_HOUR_MS)).toMatchObject({ canSkip: true, kind: 'travel:journey' })
+  })
+  it('rejects a walk that already arrived', () => {
+    const walk = { type: 'travel', totalTicks: 20, ticksRemaining: 0 }
+    const pre = getSkipPreflight(walk as any, baseCtx, SKIP_HOUR_MS)
+    expect(pre.canSkip).toBe(false)
+    expect(pre.shouldStopTask).toBe(true)
+  })
 })
