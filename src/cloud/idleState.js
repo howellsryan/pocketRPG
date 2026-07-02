@@ -21,6 +21,26 @@ const FETCH_TIMEOUT_MS = 3_000
 let lastHeartbeatAt = 0
 let heartbeatInFlight = false
 let pendingHeartbeatTask = undefined // `undefined` = none pending, otherwise holds latest task
+// Identity of the last task successfully pushed. setActiveTask fires on every
+// task (re)start — including the per-kill "Fight again" restart of the SAME
+// monster and re-tapping the same skilling action — and each push is a D1
+// write to character_idle_state. When the task identity hasn't changed the
+// row already holds it, and /api/save stamps last_active_at + active_task on
+// every real save anyway, so a same-identity push buys nothing. Dedupe here.
+let lastPushedTaskIdentity = null
+
+// Fields the runner/screens rewrite per tick or per action (countdown +
+// session tallies). They're irrelevant to which task the idle engine should
+// resume, so they're excluded from the identity. Mirrors the volatile-field
+// list in src/cloud/sync.js saveContentKey.
+const VOLATILE_TASK_FIELDS = ['ticksRemaining', 'pendingTicks', 'totalTicks', 'session', 'justCompleted']
+
+export function taskIdentityKey(task) {
+  if (!task || typeof task !== 'object') return 'none'
+  const trimmed = { ...task }
+  for (const f of VOLATILE_TASK_FIELDS) delete trimmed[f]
+  try { return JSON.stringify(trimmed) } catch { return null }
+}
 
 function isPvpIdleSyncBlocked() {
   try {
@@ -62,8 +82,15 @@ export async function fetchIdleState() {
 // Pass `null` when the player has no active task (e.g. stopped / navigated away).
 export async function pushIdleState(task) {
   if (!canUseCloud()) return
+  // Same task identity as the last successful push → the server row already
+  // says this; skip the network round-trip and the D1 write. Restarting the
+  // same fight/action after every kill was one of the top two write-volume
+  // sources. A changed identity (start/stop/switch) still pushes immediately.
+  const identity = taskIdentityKey(task)
+  if (identity !== null && identity === lastPushedTaskIdentity) return
   try {
     await api.putIdle(task ?? null)
+    lastPushedTaskIdentity = identity
     lastHeartbeatAt = Date.now()
   } catch (err) {
     console.warn('[PocketRPG] Idle push failed:', err.message)
@@ -112,4 +139,5 @@ export function resetIdleStateSync() {
   lastHeartbeatAt = 0
   heartbeatInFlight = false
   pendingHeartbeatTask = undefined
+  lastPushedTaskIdentity = null
 }
