@@ -9,6 +9,7 @@ import { teleportCheck, deductRunes, formatRuneCost } from '../engine/teleports.
 import { getLevelFromXP } from '../engine/experience.js'
 import { PlaceIcon, PlaceScene, WorldTerrain } from '../components/PlaceArt.jsx'
 import GameIcon from '../components/GameIcon.jsx'
+import { getSkillArt } from '../utils/skillArt.js'
 import WaxSeal from '../components/WaxSeal.jsx'
 import Modal from '../components/Modal.jsx'
 
@@ -133,7 +134,7 @@ export default function WorldMapScreen({ onNavigate, onAutoStart } = {}) {
     setActiveTask(nextTask)
     setOpenId(null)
     const name = getPlace(destId)?.name || destId
-    addToast(searching ? `✨ Teleported to ${name} — the search begins` : `✨ Teleported to ${name}`, 'info')
+    addToast(searching ? `Teleported to ${name} — the search begins` : `Teleported to ${name}`, 'info')
   }
 
   // Clicking an activity row in the place hub acts exactly like clicking it from its own
@@ -174,6 +175,10 @@ export default function WorldMapScreen({ onNavigate, onAutoStart } = {}) {
   const pinchRef = useRef(null) // { d0, k0, x0, y0, mid0 } while pinching
   const pinchEndedAtRef = useRef(0) // suppress the trailing click on a node
   const [openId, setOpenId] = useState(null)
+  // Generated map art (scripts/tripo-worldmap.mjs → world.json `mapImage`):
+  // when set and loadable it replaces the painted procedural terrain; any
+  // load failure falls straight back so the chart never renders blank.
+  const [mapArtOk, setMapArtOk] = useState(true)
 
   const applyView = useCallback(() => {
     const board = boardRef.current
@@ -366,7 +371,9 @@ export default function WorldMapScreen({ onNavigate, onAutoStart } = {}) {
       >
         <div ref={boardRef} class="wm-board" style={{ width: world.board.w + 'px', height: world.board.h + 'px' }}>
           <div class="wm-chart" />
-          <WorldTerrain />
+          {world.mapImage && mapArtOk
+            ? <img class="wm-map-img" src={world.mapImage} alt="" draggable={false} onError={() => setMapArtOk(false)} />
+            : <WorldTerrain />}
           <div class="wm-grunge" aria-hidden="true" />
           <svg class="wm-routes" width={world.board.w} height={world.board.h} xmlns="http://www.w3.org/2000/svg">
             {world.edges.map(([a, b, t]) => {
@@ -459,7 +466,7 @@ export default function WorldMapScreen({ onNavigate, onAutoStart } = {}) {
               <div class="wm-travelbar-actions">
                 {tele?.ok && (
                   <button class="wm-travelbar-tele" onClick={() => castTeleport(travel.dest)} title={`Consumes ${formatRuneCost(tele.runes, itemsData)} · +${tele.xp} Magic XP`}>
-                    ✨ Teleport ahead
+                    <GameIcon iconKey={getSkillArt('magic').icon} color="#fff" size={16} /> Teleport ahead
                   </button>
                 )}
                 <button class="wm-travelbar-cancel" onClick={cancelTravel}>{js ? 'Abandon journey' : 'Turn back'}</button>
@@ -546,7 +553,9 @@ function PlaceHub({ place, here, travelling, searching, tele, itemsData, onTrave
               disabled={!tele.ok}
               title={tele.ok ? `Teleport — instant, +${tele.xp} Magic XP` : tele.reason}
             >
-              <span class="wm-tele-btn__lead">✨ Teleport · Magic {place.teleport.level}</span>
+              <span class="wm-tele-btn__lead">
+                <GameIcon iconKey={getSkillArt('magic').icon} color={tele.ok ? '#fff' : 'var(--fm-ink-faint)'} size={16} /> Teleport · Magic {place.teleport.level}
+              </span>
               <span class="wm-tele-btn__cost">{tele.ok ? formatRuneCost(tele.runes, itemsData) : tele.reason}</span>
             </button>
           )}

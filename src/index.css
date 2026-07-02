@@ -2186,6 +2186,10 @@ html, body, #app {
    re-ages it (vignette + fibre texture multiplied back on top) so the sea/forest paint
    still reads as ink on old vellum rather than a flat digital illustration. */
 .wm-terrain { position: absolute; inset: 0; border-radius: 10px; }
+/* Generated map art (world.json `mapImage`) — fills the board under the grunge
+   vignette; the procedural terrain renders instead when absent/broken. */
+.wm-map-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; border-radius: 10px; pointer-events: none; user-select: none; }
+
 .wm-grunge { position: absolute; inset: 0; border-radius: 10px; pointer-events: none;
   background-image: radial-gradient(130% 120% at 50% 50%, transparent 55%, rgba(90,60,20,0.35)), var(--fm-tex-parch);
   background-size: cover, 600px; mix-blend-mode: multiply; opacity: 0.5; }
@@ -2315,7 +2319,8 @@ html, body, #app {
   font-size: 13px; color: var(--color-parchment); background: transparent; border: 1px solid var(--color-void-border);
   border-radius: 8px; cursor: pointer; }
 .wm-travelbar-cancel:hover { border-color: var(--color-gold); color: var(--color-gold-light); }
-.wm-travelbar-tele { flex: 1; min-height: 44px; font-family: var(--font-display); font-weight: 700;
+.wm-travelbar-tele { flex: 1; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  font-family: var(--font-display); font-weight: 700;
   font-size: 13px; color: #fff; cursor: pointer; border-radius: 8px;
   background: linear-gradient(180deg, color-mix(in srgb, var(--fm-royal) 72%, white), var(--fm-royal));
   border: 1px solid var(--fm-royal); box-shadow: 0 2px 8px -3px #000; }
@@ -2336,7 +2341,7 @@ html, body, #app {
   font-family: var(--font-display);
   background: linear-gradient(180deg, color-mix(in srgb, var(--fm-royal) 72%, white), var(--fm-royal));
   border: 1px solid var(--fm-royal); box-shadow: 0 2px 8px -3px #000; }
-.wm-tele-btn__lead { font-weight: 700; font-size: 14px; color: #fff; }
+.wm-tele-btn__lead { display: inline-flex; align-items: center; gap: 6px; font-weight: 700; font-size: 14px; color: #fff; }
 .wm-tele-btn__cost { font-family: var(--font-body); font-size: 11px; color: #fff; }
 .wm-tele-btn:hover { filter: brightness(1.08); }
 .wm-tele-btn:active { transform: translateY(1px); }

@@ -282,6 +282,16 @@ Each phase is independently shippable and reversible against the live game.
   place hub or the travel banner's "Teleport ahead"; mid-journey it re-plans the walking
   leg from the landing place (`teleportIntoJourney`) — landing on the waypoint skips
   straight to the search. A search in progress is bound to its waypoint (finish or abandon).
+- **Map art (in progress)**: the board supports a generated background image —
+  `world.json` top-level `mapImage` (e.g. `/public/world/map.webp`) replaces the
+  painted procedural terrain when present/loadable, with automatic fallback.
+  Generation: `TRIPO_API_KEY=… node scripts/tripo-worldmap.mjs` drives Tripo's
+  task API (text→model; the task's `rendered_image` output is the map art) with a
+  prompt describing a like-for-like OSRS-style overworld. Once the art is picked:
+  commit it as `public/world/map.webp`, set `mapImage`, and re-place each place's
+  x/y onto its analogue region. Regions on the art with no PocketRPG place yet are
+  deliberate future scope — they stay visible but uninhabited until places are
+  added (data-only change). The API key is env-only, never committed.
 - **Later**: discovery/unlocks.
 
 ## 9. Open design questions (resolve before the relevant phase)

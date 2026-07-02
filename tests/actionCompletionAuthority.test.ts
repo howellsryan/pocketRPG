@@ -137,6 +137,52 @@ describe('action completion authority helpers', () => {
     expect(save.bank.grondar_chestplate?.quantity).toBe(1)
   })
 
+  it('consumes a bank-held clue scroll (inventory-first, then bank)', () => {
+    // Regression for "clue claim failed: insufficient supplies": scrolls are
+    // auto-banked on drop and the client gates on inventory+bank, but the
+    // consumption step only debited the inventory — a bank-held scroll made
+    // the server reject a legitimate solve.
+    const save = makeSave()
+    save.bank = { clue_scroll_medium: { itemId: 'clue_scroll_medium', quantity: 2 } }
+    settleActionCompletion(save, {
+      sourceType: 'clues',
+      sourceId: 'medium',
+      nonce: 'clue:medium:1',
+      rewards: [],
+      consumptions: [{ itemId: 'clue_scroll_medium', quantity: 1 }],
+    })
+    expect(save.bank.clue_scroll_medium.quantity).toBe(1)
+  })
+
+  it('splits a consumption across inventory and bank, inventory first', () => {
+    const save = makeSave()
+    save.inventory = [{ itemId: 'clue_scroll_medium', quantity: 1 }]
+    save.bank = { clue_scroll_medium: { itemId: 'clue_scroll_medium', quantity: 1 } }
+    settleActionCompletion(save, {
+      sourceType: 'clues',
+      sourceId: 'medium',
+      nonce: 'clue:medium:2',
+      rewards: [],
+      consumptions: [{ itemId: 'clue_scroll_medium', quantity: 2 }],
+    })
+    expect(save.inventory.filter((s: any) => s?.itemId === 'clue_scroll_medium')).toEqual([])
+    expect(save.bank.clue_scroll_medium).toBeUndefined()
+  })
+
+  it('still rejects a consumption that inventory and bank together cannot cover', () => {
+    const save = makeSave()
+    save.bank = { clue_scroll_medium: { itemId: 'clue_scroll_medium', quantity: 1 } }
+    expect(() => settleActionCompletion(save, {
+      sourceType: 'clues',
+      sourceId: 'medium',
+      nonce: 'clue:medium:3',
+      rewards: [],
+      consumptions: [{ itemId: 'clue_scroll_medium', quantity: 2 }],
+    })).toThrow(/Insufficient supplies/)
+    // and nothing was debited by the failed attempt
+    expect(save.bank.clue_scroll_medium.quantity).toBe(1)
+  })
+
   it('spends slayer points from settings.slayerPoints (the canonical save location)', () => {
     // Regression: a slayer unlock purchase (e.g. slayer_helmet, cost 400)
     // round-trips through this handler with slayerPoints: -cost. The points
