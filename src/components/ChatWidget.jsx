@@ -41,11 +41,13 @@ export default function ChatWidget({ isCloudAccount = false }) {
         setMessages((prev) => [...prev, { role: 'assistant', content: res.answer }])
         if (typeof res.remaining === 'number') setRemaining(res.remaining)
       })
-      .catch(() => {
-        setMessages((prev) => [
-          ...prev,
-          { role: 'assistant', content: 'Sorry, I could not reach the helper — check your connection and try again.' },
-        ])
+      .catch((err) => {
+        // Timeouts mean the question ran long; anything else is a real
+        // connection/server problem and shouldn't blame the question.
+        const content = err?.message === 'request_timeout'
+          ? 'Sorry, that question was a bit too much for me — try asking something shorter or simpler.'
+          : 'Sorry, I could not reach the helper — check your connection and try again.'
+        setMessages((prev) => [...prev, { role: 'assistant', content }])
       })
       .finally(() => setBusy(false))
   }

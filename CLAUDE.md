@@ -6,7 +6,7 @@
 - **Product**: menu-driven, tick-based, mobile-first fantasy **idle RPG**. Deterministic core; client runs the game loop locally and syncs to a server that is the source of truth for accounts, high-value grants, and competitive/social systems (§14).
 - **Code**: client in `src/`, Cloudflare server in `functions/`, content in `src/data/`, tests in `tests/`.
 - **Build**: deployed app is a generated, gitignored `index.html` + lazy `game-<hash>.js` (§12). Edit `src/**`, never the generated output.
-- Pass the §11 commit gate before committing. §16 (token discipline) applies to every session.
+- Pass the §11 commit gate before committing. §17 (token discipline) applies to every session.
 
 ## 1) Snapshot
 - Idle/sim fantasy RPG with OSRS-style combat/skilling (PocketRPG-owned fantasy naming).

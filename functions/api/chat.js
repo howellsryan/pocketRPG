@@ -11,6 +11,7 @@ import { KNOWLEDGE_CHUNKS } from '../_lib/chat/knowledge.js'
 import { buildIndex, searchKnowledge } from '../_lib/chat/retrieval.js'
 import {
   claimCharacterMessage,
+  refundCharacterMessage,
   reserveMessageNeurons,
   settleMessageNeurons,
   usageMilliNeurons,
@@ -70,16 +71,21 @@ const CHAT_RUN_OPTS = {
 function answerText(res) {
   const content = res?.choices?.[0]?.message?.content
   if (typeof content !== 'string') return ''
-  return content.replace(/<think>[\s\S]*?<\/think>/g, '').trim()
+  // Also strip an unterminated <think> tail: if max_tokens cuts the model off
+  // mid-reasoning, the block never closes and must not leak to the player.
+  return content.replace(/<think>[\s\S]*?(?:<\/think>|$)/g, '').trim()
 }
 
 // Accumulate a call's reported token usage into per-message neuron stats.
-// A call that doesn't report usage marks the message unknown so the endpoint
-// keeps its full worst-case reserve instead of refunding.
+// A call that doesn't report both token counts marks the message unknown so
+// the endpoint keeps its full worst-case reserve instead of refunding.
 function trackUsage(stats, res) {
   const usage = res?.usage
-  if (usage && typeof usage.prompt_tokens === 'number') stats.milliNeurons += usageMilliNeurons(usage)
-  else stats.usageUnknown = true
+  if (usage && typeof usage.prompt_tokens === 'number' && typeof usage.completion_tokens === 'number') {
+    stats.milliNeurons += usageMilliNeurons(usage)
+  } else {
+    stats.usageUnknown = true
+  }
 }
 
 // Run the Workers AI tool loop. Tool calls are restricted to the read-only
@@ -172,17 +178,24 @@ export async function onRequestPost({ request, env }) {
     try {
       const messages = buildMessages({ question, history: body?.history, chunks })
       answer = await runAiChat(env, messages, { authorization, identity: auth.identity, characterId, stats })
-      // Refund the unused slice of the worst-case reserve. Skipped when any
-      // call didn't report usage — keeping the full reserve only makes the
-      // budget more conservative, never billable.
+      // Swap the worst-case reserve for the actual metered usage. Skipped
+      // when any call didn't report usage — keeping the full reserve only
+      // makes the budget more conservative, never billable.
       if (!stats.usageUnknown) {
-        await settleMessageNeurons(env, dayKey, CHAT_MESSAGE_RESERVE_MILLI - stats.milliNeurons)
+        await settleMessageNeurons(env, dayKey, CHAT_MESSAGE_RESERVE_MILLI, stats.milliNeurons)
       }
     } catch (err) {
       console.error('[PocketRPG][chat] AI call failed:', err?.message || err)
       answer = retrievalOnlyAnswer(chunks)
       mode = 'retrieval'
     }
+  }
+
+  // A degraded answer shouldn't cost the player one of their daily questions.
+  let remaining = claim.remaining
+  if (mode === 'retrieval') {
+    await refundCharacterMessage(env, characterId, dayKey)
+    remaining = Math.min(CHAT_DAILY_LIMIT, remaining + 1)
   }
 
   await auditLog(
@@ -192,5 +205,5 @@ export async function onRequestPost({ request, env }) {
     { swallow: true },
   )
 
-  return json({ answer, sources, mode, remaining: claim.remaining, resetInMs: nextResetMs() })
+  return json({ answer, sources, mode, remaining, resetInMs: nextResetMs() })
 }

@@ -115,4 +115,4 @@ PocketRPG has an AI connector: from the Connect AI screen you can link AI assist
 
 ## Getting help
 
-The in-game Help screen covers the basics, and this assistant (the 💬 button) answers questions about PocketRPG — game mechanics, items, monsters, and your own character's progress. It can only talk about PocketRPG; it has no access to the internet and won't answer unrelated questions.
+This assistant (the 💬 button) is the in-game help: it answers questions about PocketRPG — game mechanics, items, monsters, and your own character's progress. It can only talk about PocketRPG; it has no access to the internet and won't answer unrelated questions. The Settings screen holds game preferences, such as toggling info notifications.
