@@ -163,7 +163,10 @@ function clueRevealTitle(clueTask) {
 function completeClueSolve(clueTask, { updateBankDirect, getSnapshot, addToast, isInPvpMatch }) {
   const title = clueRevealTitle(clueTask)
   if (getToken() && getCharacterId()) {
-    void api.completeClue(clueTask.clueLevel, {
+    // Returned (not just fired) so paid skips can await settlement: the grant
+    // bumps save_revision server-side, and pushing a save before the response's
+    // applyCloudSave lands would be a guaranteed stale-write conflict.
+    return api.completeClue(clueTask.clueLevel, {
       actionNonce: `clue:${clueTask.clueLevel}:${Date.now()}`,
       consumptions: [{ itemId: clueTask.requiresItem, quantity: 1 }],
     }).then(async (res) => {
@@ -458,6 +461,8 @@ function GameApp() {
   // keeps the background loop rolling: another scroll of the same tier chains
   // straight into a fresh trail from where this one ended, and quests promote
   // the queue (as journeys) the same way.
+  // Returns the clue grant's settlement promise (undefined for quests/offline)
+  // so paid skips can await the server-side save write before force-pushing.
   function completeJourneyContent(journey, endedAt) {
     if (journey?.kind === 'clue' && journey.payload) {
       const clueTask = journey.payload
@@ -465,7 +470,7 @@ function GameApp() {
       // asynchronously): ≥2 now means one is still left after this solve.
       const snap = getSnapshot()
       const scrollsNow = (snap.bank?.[clueTask.requiresItem]?.quantity || 0) + countItem(snap.inventory || [], clueTask.requiresItem)
-      completeClueSolve(clueTask, { updateBankDirect, getSnapshot, addToast, isInPvpMatch })
+      const settled = completeClueSolve(clueTask, { updateBankDirect, getSnapshot, addToast, isInPvpMatch })
       recordGameEvent?.({ kind: 'clue_complete', tier: clueTask.tier })
       if (scrollsNow >= 2) {
         const nextTask = planClueJourney(clueTask, endedAt)
@@ -475,6 +480,7 @@ function GameApp() {
           addToast(`🗺️ Another scroll — the trail continues (${nextTask.journey.steps.length} places)`, 'info')
         }
       }
+      return settled
     } else if (journey?.kind === 'quest' && journey.payload) {
       handleQuestCompletion(journey.payload, journey.payload.xpReward, journey.payload.coinReward, endedAt)
     }
@@ -2190,8 +2196,12 @@ function GameApp() {
             updateWorldLocation(endedAt)
             clearPersistedActiveTask()
             // Grants the content and, when another scroll / queued quest exists,
-            // sets the next journey as the active task — picked up below.
-            completeJourneyContent(adv.task.journey, endedAt)
+            // sets the next journey as the active task — picked up below. The
+            // await matters twice over: the signed-in clue grant bumps
+            // save_revision server-side (pushing before its applyCloudSave lands
+            // is a guaranteed stale-write conflict), and the settled debit keeps
+            // the next iteration's scroll count honest.
+            await completeJourneyContent(adv.task.journey, endedAt)
             cur = activeTaskRef.current
             if (!cur || cur.type !== 'travel' || budgetMs <= 0) break
           }
