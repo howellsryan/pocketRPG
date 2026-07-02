@@ -19,11 +19,11 @@ export const MILLI_NEURONS_PER_OUTPUT_TOKEN = 36.37
 // Budget + one in-flight worst-case reserve must stay ≤ the 10,000 free
 // daily neurons (10,000,000 milli); the gap also absorbs estimation drift
 // and any other Workers AI use on the account.
-export const CHAT_NEURON_BUDGET_MILLI = 9_200_000
+export const CHAT_NEURON_BUDGET_MILLI = 9_000_000
 // Worst-case message: 4 model calls with every context and output limit
 // maxed. tests/chatQuota.test.ts derives this bound from the CHAT_MAX_*
 // constants — raise it there first if a limit grows.
-export const CHAT_MESSAGE_RESERVE_MILLI = 750_000
+export const CHAT_MESSAGE_RESERVE_MILLI = 950_000
 
 // Atomically claim one message for the character's daily allowance.
 // Returns { allowed, remaining }.

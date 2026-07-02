@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { summarizeSave } from '../functions/_lib/mcp/summary.js'
 import { TOOL_SCHEMAS, TOOL_NAMES, SERVER_INSTRUCTIONS } from '../functions/_lib/mcp/schema.js'
-import { itemName, shopCatalog, REFERENCE_RESOURCES, readReference, getItem, listSkills, getSkillActions, searchItems, searchMonsters, REFERENCE_TOPIC_NAMES } from '../functions/_lib/mcp/reference.js'
+import { itemName, itemSources, shopCatalog, REFERENCE_RESOURCES, readReference, getItem, listSkills, getSkillActions, searchItems, searchMonsters, REFERENCE_TOPIC_NAMES } from '../functions/_lib/mcp/reference.js'
 import { callTool } from '../functions/_lib/mcp/tools.js'
 import { signJWT } from '../functions/_lib/jwt.js'
 import { gzipJsonString } from '../functions/_lib/saveCodec.js'
@@ -270,6 +270,22 @@ describe('MCP reference data', () => {
     const uris = REFERENCE_RESOURCES.map((r) => r.uri)
     expect(uris).toContain('pocketrpg://reference/mechanics')
     expect(uris).toContain('pocketrpg://reference/items')
+  })
+
+  it('itemSources reverse-lookup answers "how do I get X"', async () => {
+    const boots = itemSources('dragon_boots')
+    expect(boots?.monsters?.length).toBeGreaterThan(0)
+    for (const m of boots!.monsters) {
+      expect(typeof m.name).toBe('string')
+      expect(m.chance).toBeGreaterThan(0)
+    }
+    // Skilling products and General Store stock are sources too.
+    expect(itemSources('tin_ore')?.skills?.[0]?.skill).toBeTruthy()
+    // Unknown/ungranted items return null, not an empty object.
+    expect(itemSources('definitely_not_an_item')).toBe(null)
+    // inspect_item surfaces the sources field to the model.
+    const res = await callTool('inspect_item', { item_id: 'dragon_boots' }, { env: {} } as any)
+    expect(JSON.parse(res.content[0].text).sources.monsters.length).toBeGreaterThan(0)
   })
 
   it('reads markdown mechanics and a JSON index, and rejects unknown uris', () => {

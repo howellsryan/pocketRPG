@@ -176,6 +176,28 @@ function bossChunk() {
   }
 }
 
+function monsterChunks() {
+  const monsters = readJson('monsters.json')
+  const fmtChance = (c) => (c >= 1 ? 'always' : `1 in ${Math.round(1 / c).toLocaleString('en-GB')}`)
+  return Object.values(monsters).map((m) => {
+    const drops = (m.drops || [])
+      .slice()
+      .sort((a, b) => a.chance - b.chance)
+      .map((d) => `${titleCaseId(d.itemId)} (${fmtChance(d.chance)})`)
+    const kind = m.boss ? 'boss' : 'monster'
+    const slayer = m.slayerRequirement ? ` Requires Slayer level ${m.slayerRequirement}.` : ''
+    const text =
+      `${m.name} is a ${kind} at combat level ${m.combatLevel} with ${m.hitpoints} HP, attacking with ${m.attackStyle || 'melee'}.${slayer}` +
+      (drops.length ? ` Drops: ${drops.join(', ')}.` : '')
+    return {
+      id: `monster_${m.id}`,
+      title: `${m.boss ? 'Boss' : 'Monster'}: ${m.name} — stats and drops`,
+      tags: ['monster', 'drops', ...(m.boss ? ['boss'] : [])],
+      text,
+    }
+  })
+}
+
 function clueChunks() {
   const clues = readJson('clues.json')
   // Engine constants (src/engine/clueScrolls.js): completion ticks per tier.
@@ -249,6 +271,7 @@ const chunks = [
   ...farmingChunks(),
   ...skillChunks(),
   bossChunk(),
+  ...monsterChunks(),
   ...clueChunks(),
   ...dailyTaskChunks(),
   ...collectionLogChunks(),
