@@ -655,7 +655,11 @@ html, body, #app {
 
 /* Forgemark nav rail (desktop SideNav + mobile BurgerMenu drawer) — the app
    chrome joins the parchment screens: vellum texture, rule border, gilt brand. */
-.fm-navrail { background-color: var(--fm-vellum); background-image: var(--fm-tex-parch); background-size: 400px; border-right: 1px solid var(--fm-rule); }
+.fm-navrail { background-color: var(--fm-vellum); background-image: var(--fm-tex-parch); background-size: 400px; border-right: 1px solid var(--fm-rule); scrollbar-width: thin; scrollbar-color: var(--fm-rule) transparent; }
+/* The global scrollbar track (--color-void-light) resolves near-black outside
+   .forge-shell — on the vellum rail it reads as a black line. Parchment it. */
+.fm-navrail::-webkit-scrollbar-track { background: transparent; }
+.fm-navrail::-webkit-scrollbar-thumb { background: var(--fm-rule); }
 .fm-navbrand { font-family: var(--font-display); font-weight: 800; letter-spacing: 0.02em; background: var(--fm-gilt-text); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent; }
 
 /* Desktop top bar joins the parchment chrome too; mobile keeps the black bar.

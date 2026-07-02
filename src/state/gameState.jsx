@@ -1119,8 +1119,9 @@ export function GameProvider({ children }) {
   // Run an operation behind the game lock and persist its result durably before
   // unlocking — the lock is held until the save SUCCESSFULLY RESPONDS, not just
   // until the operation completes. Returns true if the save landed. On a
-  // save-revision conflict we leave the lock up (the app is rolling back to the
-  // authoritative cloud copy via a reload). Used by the manual Save button.
+  // save-revision conflict the push loop stops (the app rolls back to the
+  // authoritative cloud copy in place, behind its own overlay). Used by the
+  // manual Save button.
   const runLockedSave = useCallback(async (operation) => {
     lockGame()
     try {
@@ -1133,7 +1134,7 @@ export function GameProvider({ children }) {
       }
       return saved
     } finally {
-      if (!isSaveConflict()) unlockGame()
+      unlockGame()
     }
   }, [lockGame, unlockGame, getSnapshot])
 

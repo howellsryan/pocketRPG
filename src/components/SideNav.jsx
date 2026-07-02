@@ -4,10 +4,12 @@ import { NAV_TABS } from './navTabs.js'
 export default function SideNav({ active, onNavigate, isInCombat, onDisabledClick, demo = false, lockedScreens = null, onLockedClick }) {
   return (
     <nav
-      class="hidden md:flex flex-col flex-shrink-0 w-44 lg:w-52 fm-navrail py-3 gap-1 overflow-y-auto"
+      class="hidden md:flex flex-col flex-shrink-0 w-44 lg:w-52 fm-navrail pb-3 gap-1 overflow-y-auto"
       aria-label="Primary"
     >
-      <div class="px-4 pb-3 mb-1 border-b border-[var(--fm-rule)]">
+      {/* h-14 matches the desktop top bar (Header md:h-14) so this border-b
+          and the top bar's border-b form one continuous line. */}
+      <div class="h-14 flex-shrink-0 flex items-center px-4 mb-1 border-b border-[var(--fm-rule)]">
         <div class="fm-navbrand text-base tracking-wide">
           PocketRPG
         </div>

@@ -46,7 +46,7 @@ import { initNewGame, saveSetting, getSetting, getAllStats, getInventory, getEqu
 import { startTicks, stopTicks, onTick, pauseTicks, resumeTicks } from './engine/tick.js'
 import { wipeLocalSave } from './db/saveload.js'
 import { api, captureTokenFromHash, getToken, getCharacterId, getCharacterName, setCharacter, clearAuth, getLocalCharacterId, setLocalCharacterId, getIronmanMode, getOneLifeMode, syncAccountModeFlags, isDemoMode, setDemoMode, CREDITS_UPDATED_EVENT } from './cloud/api.js'
-import { schedulePushSave, schedulePeriodicSave, pushNow, pullSave, applyCloudSave, checkCloudNewer, resetSyncState, requestCriticalPushSave, retrySaveNow, isSaveConflict, CLOUD_SAVE_STATUS_EVENT } from './cloud/sync.js'
+import { schedulePushSave, schedulePeriodicSave, pushNow, pullSave, applyCloudSave, checkCloudNewer, resetSyncState, requestCriticalPushSave, retrySaveNow, isSaveConflict, clearSaveConflict, CLOUD_SAVE_STATUS_EVENT } from './cloud/sync.js'
 import { CRITICAL_SAVE_REASONS } from './cloud/criticalSavePolicy.js'
 import { fetchIdleState, beaconIdleState, resetIdleStateSync } from './cloud/idleState.js'
 import { isBackground } from './engine/activityRegistry.js'
@@ -714,11 +714,35 @@ function GameApp() {
       } else if (status === 'conflict') {
         // Our local progress diverged from the server's authoritative save (a
         // "bad state" — typically progress applied faster than a prior save
-        // round-tripped). Roll back to the cloud copy: a full reload re-pulls
-        // and re-applies the server save over local IDB on boot. We keep the
-        // overlay up and reload on the next frame so it paints first.
+        // round-tripped). Roll back to the cloud copy IN PLACE: re-pull and
+        // re-apply the server save (the same applyCloudSave + loadGame path a
+        // server-side minigame completion uses) instead of hard-reloading —
+        // a reload boots back to the Home screen, which reads as a crash
+        // mid-session. conflictPending parks every push until the re-pull
+        // adopts the server's revision; the reload survives as the fallback
+        // when the pull itself fails.
         setRollingBack(true)
-        setTimeout(() => { try { window.location.reload() } catch {} }, 50)
+        ;(async () => {
+          try {
+            const pulled = await pullSave()
+            if (pulled?.payload) {
+              pauseTicks()
+              try {
+                await applyCloudSave(pulled.payload, pulled.updatedAt)
+                await loadGame()
+              } finally {
+                resumeTicks()
+              }
+              clearSaveConflict()
+              setRollingBack(false)
+              addToast('☁️ Progress re-synced from the cloud.', 'success')
+              return
+            }
+          } catch (err) {
+            console.error('[PocketRPG] In-place cloud rollback failed, reloading:', err)
+          }
+          setTimeout(() => { try { window.location.reload() } catch {} }, 50)
+        })()
       }
     }
     window.addEventListener(CLOUD_SAVE_STATUS_EVENT, handler)
@@ -1816,7 +1840,9 @@ function GameApp() {
         addToast(err.message || 'Error during skip!', 'error')
       }
     } finally {
-      if (!isSaveConflict()) unlockGame()
+      // Pairs with this handler's lockGame — a conflict rollback re-applies
+      // the cloud copy in place under its own overlay.
+      unlockGame()
     }
   }
 
@@ -2026,7 +2052,9 @@ function GameApp() {
       }
     } finally {
       setSkipSaving(false)
-      if (idleResultData) setIdleResult(idleResultData)
+      // A conflict rolls the whole skip back to the cloud copy — the modal
+      // would celebrate rewards that no longer exist.
+      if (idleResultData && !isSaveConflict()) setIdleResult(idleResultData)
     }
   }
 
@@ -2118,6 +2146,14 @@ function GameApp() {
       // Both are released in finally.
       pauseTicks()
       lockGame()
+
+      // Settle any queued/in-flight autosave and land the pre-skip state
+      // BEFORE charging: a push that was already on the wire with an older
+      // revision (or another device's newer save) surfaces the conflict here
+      // — where no credit has been spent and the rollback loses nothing —
+      // instead of 409ing the post-skip push and eating the paid hour.
+      await pushNow(getSnapshot())
+      if (isSaveConflict()) return
 
       if (task?.type === 'quest') {
         const skipResult = await api.skipHour()
@@ -2534,13 +2570,12 @@ function GameApp() {
         addToast(err.message || 'Error during skip!', 'error')
       }
     } finally {
-      // Release the skip lock. When an idle-result modal is being shown we
-      // intentionally keep ticks paused so combat cannot advance while the
-      // player reviews the result. closeIdleResultModal calls resumeTicks().
-      if (!isSaveConflict()) {
-        unlockGame()
-        if (!didShowIdleModal) resumeTicks()
-      }
+      // Release the skip lock (it pairs with THIS handler's lockGame — the
+      // in-place conflict rollback holds its own overlay). Ticks stay paused
+      // when an idle-result modal is up (closeIdleResultModal resumes) or a
+      // conflict rollback is re-applying the cloud copy (it resumes itself).
+      unlockGame()
+      if (!didShowIdleModal && !isSaveConflict()) resumeTicks()
       isSkippingRef.current = false
     }
   }
