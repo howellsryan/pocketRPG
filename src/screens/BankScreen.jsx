@@ -541,7 +541,7 @@ export default function BankScreen({ onBack }) {
               aria-label="Back"
               class="flex-shrink-0 w-11 h-11 -my-2 -ml-2 flex items-center justify-center gap-1 text-[var(--color-gold)] bg-transparent border-0 cursor-pointer active:opacity-70"
             >
-              <span class="text-xl leading-none">‹</span>
+              <span class="text-xl leading-none">← Back</span>
             </button>
           )}
           <h2 class="font-[var(--font-display)] text-sm font-bold text-[var(--color-parchment)] opacity-60 uppercase tracking-wider flex-shrink-0">
