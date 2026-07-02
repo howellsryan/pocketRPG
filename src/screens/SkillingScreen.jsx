@@ -641,6 +641,12 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
         const action = skill.actions.find(a => a.id === initialActionId)
         if (action) {
           setSelectedSkill(initialSkillId)
+          // Auto-starts (world-map arrival, home shortcuts) must respect the same
+          // level lock as the action list — land on the list instead of starting.
+          if ((action.level || 1) > getLevelFromXP(stats[initialSkillId]?.xp || 0)) {
+            addToast(`Requires ${skill.name || initialSkillId} level ${action.level}.`, 'error')
+            return
+          }
           const effectiveTicks = getEffectiveToolActionTicks(initialSkillId, action.ticks, equipment, itemsData, stats, inventory)
           const adjustedAction = effectiveTicks !== action.ticks
             ? { ...action, ticks: effectiveTicks }

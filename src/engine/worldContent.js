@@ -189,6 +189,25 @@ export function activityGroupLabel(kind, ref) {
 }
 
 /**
+ * Skill-level requirement to start an activity: `{ skill, level }`, or null when the
+ * kind carries none the client enforces at start time (combat/raid/gather/minigame
+ * gate on their own screens). The World Map hub checks this before starting/queuing
+ * an activity — its rows would otherwise bypass the owning screens' level locks.
+ */
+export function activityLevelRequirement(kind, ref) {
+  if (kind === 'skill') {
+    const i = ref.indexOf(':')
+    const level = Number(skillAction(ref)?.level) || 0
+    return i >= 0 && level > 1 ? { skill: ref.slice(0, i), level } : null
+  }
+  if (kind === 'agility' || kind === 'thieving' || kind === 'hunter') {
+    const level = Number(actionInSkill(kind, ref)?.level) || 0
+    return level > 1 ? { skill: kind, level } : null
+  }
+  return null
+}
+
+/**
  * Human-readable `{ name, icon, level }` for an activity ref, for hub/picker rendering.
  * Falls back to the raw ref if the content can't be resolved.
  */

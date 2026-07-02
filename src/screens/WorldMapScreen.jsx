@@ -1,7 +1,7 @@
 import { useGame } from '../state/gameState.jsx'
 import { useState, useRef, useEffect, useCallback } from 'preact/hooks'
 import { getWorld, getPlace, listPlaces, getTier, getKind, shortestPath, pathLegs } from '../engine/world.js'
-import { describeActivity, activityGroupLabel, isPlaceVaryingSkillRef, autoStartFromTask, placeActivities } from '../engine/worldContent.js'
+import { describeActivity, activityGroupLabel, isPlaceVaryingSkillRef, autoStartFromTask, placeActivities, activityLevelRequirement } from '../engine/worldContent.js'
 import { SCREENS } from '../utils/constants.js'
 import { createTravelTask, travelFraction, travelDestName, travelCancelLocation } from '../engine/travel.js'
 import { journeyStatus, teleportIntoJourney } from '../engine/journeys.js'
@@ -157,6 +157,13 @@ export default function WorldMapScreen({ onNavigate, onAutoStart } = {}) {
   const activateActivity = (kind, ref) => {
     const task = fakeTaskFor(kind, ref)
     if (!task) return
+    // Same level lock the owning screens enforce on their action lists — without it
+    // the hub row would start (or travel to + auto-start) an action above the level.
+    const req = activityLevelRequirement(kind, ref)
+    if (req && getLevelFromXP(stats?.[req.skill]?.xp || 0) < req.level) {
+      addToast(`Requires ${req.skill.charAt(0).toUpperCase()}${req.skill.slice(1)} level ${req.level}.`, 'error')
+      return
+    }
     if (requestActivityStart(task)) {
       if (kind === 'minigame') onNavigate?.(SCREENS.MINIGAMES)
       else onAutoStart?.(autoStartFromTask(task))

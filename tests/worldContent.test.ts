@@ -7,6 +7,7 @@ import {
   resolveTaskStart,
   describeActivity,
   isPlaceVaryingSkillRef,
+  activityLevelRequirement,
 } from '../src/engine/worldContent.js'
 import worldData from '../src/data/world.json'
 import monstersData from '../src/data/monsters.json'
@@ -192,6 +193,31 @@ describe('isPlaceVaryingSkillRef', () => {
   it('includes level-banded skills that differ by place', () => {
     expect(isPlaceVaryingSkillRef('mining:copper')).toBe(true)
     expect(isPlaceVaryingSkillRef('woodcutting:oak')).toBe(true)
+  })
+})
+
+describe('activityLevelRequirement', () => {
+  it('returns the skill + level for a levelled skill ref', () => {
+    const action = (skillsData as any).mining.actions.find((a: any) => (a.level || 1) > 1)
+    expect(activityLevelRequirement('skill', `mining:${action.id}`)).toEqual({ skill: 'mining', level: action.level })
+  })
+
+  it('returns null for level-1 refs and kinds without a start-time level lock', () => {
+    const lvl1 = (skillsData as any).mining.actions.find((a: any) => (a.level || 1) <= 1)
+    expect(activityLevelRequirement('skill', `mining:${lvl1.id}`)).toBeNull()
+    expect(activityLevelRequirement('combat', regularMonster.id)).toBeNull() // combatLevel is not a requirement
+    expect(activityLevelRequirement('gather', 'collect_sand')).toBeNull()
+    expect(activityLevelRequirement('minigame', 'pest_control')).toBeNull()
+    expect(activityLevelRequirement('skill', 'not-a-ref')).toBeNull() // no skill:action separator
+  })
+
+  it('gates agility / thieving / hunter by their own skill level', () => {
+    for (const kind of ['agility', 'thieving', 'hunter'] as const) {
+      const list = kind === 'thieving' ? (skillsData as any).thieving.npcs : (skillsData as any)[kind].actions
+      const levelled = asArray(list).find((a: any) => (a.level || 1) > 1)
+      if (!levelled) continue
+      expect(activityLevelRequirement(kind, levelled.id)).toEqual({ skill: kind, level: levelled.level })
+    }
   })
 })
 

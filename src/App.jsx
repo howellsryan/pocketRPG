@@ -463,7 +463,8 @@ function GameApp() {
   // the queue (as journeys) the same way.
   // Returns the clue grant's settlement promise (undefined for quests/offline)
   // so paid skips can await the server-side save write before force-pushing.
-  function completeJourneyContent(journey, endedAt) {
+  // `questSummary` (paid skips) aggregates quest completions for one reveal.
+  function completeJourneyContent(journey, endedAt, questSummary = null) {
     if (journey?.kind === 'clue' && journey.payload) {
       const clueTask = journey.payload
       // Count before the solve settles (the signed-in grant debits the scroll
@@ -482,24 +483,34 @@ function GameApp() {
       }
       return settled
     } else if (journey?.kind === 'quest' && journey.payload) {
-      handleQuestCompletion(journey.payload, journey.payload.xpReward, journey.payload.coinReward, endedAt)
+      handleQuestCompletion(journey.payload, journey.payload.xpReward, journey.payload.coinReward, endedAt, questSummary)
     }
   }
 
-  // Handle quest completion with queue cascading
-  function handleQuestCompletion(quest, xpReward, coinReward, fromPlace) {
+  // Handle quest completion with queue cascading. `summary` (paid skips) collects
+  // { completedQuests, aggregatedXpReward, coinsGained } for one questCascade
+  // reveal instead of per-quest toasts — same summary the legacy quest skip shows.
+  function handleQuestCompletion(quest, xpReward, coinReward, fromPlace, summary = null) {
     // Award rewards
     const { fixed, choices } = splitQuestXpRewards(xpReward)
     for (const [skill, xp] of Object.entries(fixed)) grantXP(skill, xp)
     if (coinReward > 0) updateBankDirect({ coins: coinReward })
+    if (summary) {
+      summary.completedQuests.push(quest)
+      if (coinReward > 0) summary.coinsGained += coinReward
+      for (const [skill, xp] of Object.entries(xpReward || {})) {
+        const amount = Math.floor(Number(xp) || 0)
+        if (amount > 0) summary.aggregatedXpReward[skill] = (summary.aggregatedXpReward[skill] || 0) + amount
+      }
+    }
 
     // The completed quest was already removed from the queue when it was
     // started, so the queue holds the next quests to run. Pop the next one
     // off and promote it to the active task.
-    promoteNextQueuedQuestOrClear(fromPlace)
+    promoteNextQueuedQuestOrClear(fromPlace, { quiet: !!summary })
 
     // Finalise the completed quest (show choice modal if needed)
-    finaliseQuest(quest.id, quest.name, choices)
+    finaliseQuest(quest.id, quest.name, choices, { quiet: !!summary })
   }
 
   function clearPersistedActiveTask() {
@@ -511,7 +522,7 @@ function GameApp() {
   // Auto-chain the quest queue as journeys: the next queued quest sets out from
   // wherever the player is standing (for a finished journey, its last waypoint —
   // passed by the caller since the worldLocation state flush may lag).
-  function promoteNextQueuedQuestOrClear(fromPlace) {
+  function promoteNextQueuedQuestOrClear(fromPlace, { quiet = false } = {}) {
     const currentQueue = questQueueRef.current || []
     if (currentQueue.length === 0) {
       clearPersistedActiveTask()
@@ -519,7 +530,12 @@ function GameApp() {
     }
 
     const nextQuest = currentQueue[0]
-    updateQuestQueue(currentQueue.slice(1))
+    const restQueue = currentQueue.slice(1)
+    updateQuestQueue(restQueue)
+    // Sync the ref NOW: the state effect only catches up after a render, and the
+    // paid-skip loop promotes several quests back-to-back with no render between —
+    // a stale ref re-pops (and re-completes) the same quest each iteration.
+    questQueueRef.current = restQueue
     const nextTask = planQuestJourney(nextQuest, fromPlace || worldLocationRef.current)
     if (!nextTask) {
       clearPersistedActiveTask()
@@ -528,12 +544,13 @@ function GameApp() {
     }
     setActiveTask(nextTask)
     activeTaskRef.current = nextTask
-    addToast(`🗺️ Journey begun: ${nextQuest.name} — ${nextTask.journey.steps.length} places to visit`, 'info')
+    if (!quiet) addToast(`🗺️ Journey begun: ${nextQuest.name} — ${nextTask.journey.steps.length} places to visit`, 'info')
     return nextTask
   }
 
-  // Finalise a completed quest: show choice modal if needed, else complete immediately
-  function finaliseQuest(questId, questName, choices) {
+  // Finalise a completed quest: show choice modal if needed, else complete immediately.
+  // `quiet` skips the completion toast (paid skips show one summary reveal instead).
+  function finaliseQuest(questId, questName, choices, { quiet = false } = {}) {
     const alreadyCompleted = completedQuestsRef.current?.has?.(questId)
     const alreadyPendingChoice = pendingXpChoicesRef.current?.some?.(p => p.questId === questId)
 
@@ -551,7 +568,7 @@ function GameApp() {
       return
     }
 
-    addToast(`📜 Quest complete: ${questName}`, 'levelup', '🏆')
+    if (!quiet) addToast(`📜 Quest complete: ${questName}`, 'levelup', '🏆')
     recordGameEvent?.({ kind: 'quest_complete' })
   }
 
@@ -2166,6 +2183,9 @@ function GameApp() {
         const skipResult = await api.skipHour()
         setCredits(skipResult?.credits_remaining ?? credits)
 
+        // Quest completions aggregate into one questCascade reveal (same summary
+        // the legacy quest skip shows) instead of a toast per quest in the chain.
+        const questSummary = { completedQuests: [], aggregatedXpReward: {}, coinsGained: 0 }
         if (!task.journey) {
           updateWorldLocation(task.dest)
           clearPersistedActiveTask()
@@ -2201,14 +2221,21 @@ function GameApp() {
             // save_revision server-side (pushing before its applyCloudSave lands
             // is a guaranteed stale-write conflict), and the settled debit keeps
             // the next iteration's scroll count honest.
-            await completeJourneyContent(adv.task.journey, endedAt)
+            await completeJourneyContent(adv.task.journey, endedAt, questSummary)
             cur = activeTaskRef.current
             if (!cur || cur.type !== 'travel' || budgetMs <= 0) break
           }
         }
 
         addToast('⏭️ Skipped 1 hour', 'info')
-        await persistSkipThenReveal(null)
+        await persistSkipThenReveal(questSummary.completedQuests.length > 0 ? {
+          elapsedMs: SKIP_HOUR_MS,
+          task: activeTaskRef.current,
+          questCascade: true,
+          completedQuests: questSummary.completedQuests,
+          aggregatedXpReward: questSummary.aggregatedXpReward,
+          coinsGained: questSummary.coinsGained,
+        } : null)
         return
       }
 
