@@ -19,7 +19,7 @@ import itemsData from '../data/items.json'
 const hunterData = skillsData.hunter
 
 export default function HunterScreen({ initialActionId, idleResult, onBack }) {
-  const { stats, inventory, updateInventory, bank, updateBankDirect, grantXP, addToast, setActiveTask, activeTask, recordGameEvent } = useGame()
+  const { stats, inventory, updateInventory, bank, updateBankDirect, grantXP, addToast, setActiveTask, requestActivityStart, activeTask, recordGameEvent } = useGame()
 
   const hunterLevel = getLevelFromXP(stats.hunter?.xp || 0)
   const hunterXP = stats.hunter?.xp || 0
@@ -135,6 +135,8 @@ export default function HunterScreen({ initialActionId, idleResult, onBack }) {
       const resumed = buildResumedState(activeTask)
       if (resumed) { setHunter(resumed); hunterRef.current = resumed; return }
     }
+    // Map-driven gating (Phase 3): must be at a place that offers this hunt.
+    if (!requestActivityStart({ type: 'hunter', action })) return
     const startedAt = Date.now()
     const state = {
       ...createHunterState(action),
@@ -163,7 +165,7 @@ export default function HunterScreen({ initialActionId, idleResult, onBack }) {
   if (!hunter) {
     return (
       <>
-      <div class="h-full overflow-y-auto p-4">
+      <div class="forge-shell h-full overflow-y-auto p-4">
         <SkillScreenHeader
           skill="hunter"
           title="Hunter"
@@ -218,7 +220,7 @@ export default function HunterScreen({ initialActionId, idleResult, onBack }) {
             </h3>
             <button
               onClick={() => setSelectedActionInfo(null)}
-              class="w-6 h-6 flex items-center justify-center rounded-lg bg-[#222] text-[var(--color-parchment)] hover:bg-[#333] active:bg-[#444] transition-colors"
+              class="w-6 h-6 flex items-center justify-center rounded-lg bg-[var(--color-void-light)] text-[var(--color-parchment)] hover:bg-[var(--color-void-lighter)] active:bg-[var(--color-void-lighter)] transition-colors"
               title="Close"
             >
               ✕
@@ -227,7 +229,7 @@ export default function HunterScreen({ initialActionId, idleResult, onBack }) {
           <div class="space-y-4 max-h-96 overflow-y-auto">
             <div>
               <h4 class="text-xs font-semibold text-[var(--color-gold-dim)] uppercase tracking-wider mb-2 opacity-70">Action Info</h4>
-              <div class="bg-[#111] rounded-lg p-3 space-y-1">
+              <div class="bg-[var(--color-void)] rounded-lg p-3 space-y-1">
                 <div class="flex justify-between text-[11px] text-[var(--color-parchment)]"><span>Level Required</span><span class="font-[var(--font-mono)] text-[var(--color-gold)]">{selectedActionInfo.level}</span></div>
                 <div class="flex justify-between text-[11px] text-[var(--color-parchment)]"><span>XP Granted</span><span class="font-[var(--font-mono)] text-[var(--color-gold)]">{selectedActionInfo.xp}</span></div>
                 <div class="flex justify-between text-[11px] text-[var(--color-parchment)]"><span>Time per Action</span><span class="font-[var(--font-mono)] text-[var(--color-gold)]">{(selectedActionInfo.ticks * 0.6).toFixed(1)}s</span></div>
@@ -237,7 +239,7 @@ export default function HunterScreen({ initialActionId, idleResult, onBack }) {
             {selectedActionInfo.rewardTables && selectedActionInfo.rewardTables.length > 0 && (
               <div>
                 <h4 class="text-xs font-semibold text-[var(--color-gold-dim)] uppercase tracking-wider mb-2 opacity-70">Reward Table {selectedActionInfo.rewardTables.length > 1 ? `(Main)` : ''}</h4>
-                <div class="bg-[#111] rounded-lg p-3 space-y-1.5">
+                <div class="bg-[var(--color-void)] rounded-lg p-3 space-y-1.5">
                   {selectedActionInfo.rewardTables[0].rewards.map((reward, idx) => {
                     const itemData = itemsData[reward.itemId]
                     const chance = (reward.chance * 100).toFixed(2)
@@ -258,7 +260,7 @@ export default function HunterScreen({ initialActionId, idleResult, onBack }) {
             {selectedActionInfo.rewardTables && selectedActionInfo.rewardTables.length > 1 && (
               <div>
                 <h4 class="text-xs font-semibold text-[var(--color-gold-dim)] uppercase tracking-wider mb-2 opacity-70">Rare Reward Table (1/{selectedActionInfo.rewardTables[1].rarity || 'Unknown'})</h4>
-                <div class="bg-[#111] rounded-lg p-3 space-y-1.5">
+                <div class="bg-[var(--color-void)] rounded-lg p-3 space-y-1.5">
                   {selectedActionInfo.rewardTables[1].rewards.map((reward, idx) => {
                     const itemData = itemsData[reward.itemId]
                     const chance = (reward.chance * 100).toFixed(2)
@@ -279,7 +281,7 @@ export default function HunterScreen({ initialActionId, idleResult, onBack }) {
             {selectedActionInfo.rewardTables && selectedActionInfo.rewardTables.length > 2 && (
               <div>
                 <h4 class="text-xs font-semibold text-[var(--color-gold-dim)] uppercase tracking-wider mb-2 opacity-70">Very Rare Reward Table (1/{selectedActionInfo.rewardTables[2].rarity || 'Unknown'})</h4>
-                <div class="bg-[#111] rounded-lg p-3 space-y-1.5">
+                <div class="bg-[var(--color-void)] rounded-lg p-3 space-y-1.5">
                   {selectedActionInfo.rewardTables[2].rewards.map((reward, idx) => {
                     const itemData = itemsData[reward.itemId]
                     const chance = (reward.chance * 100).toFixed(2)
@@ -337,7 +339,7 @@ export default function HunterScreen({ initialActionId, idleResult, onBack }) {
           </h3>
           <button
             onClick={() => setSelectedActionInfo(null)}
-            class="w-6 h-6 flex items-center justify-center rounded-lg bg-[#222] text-[var(--color-parchment)] hover:bg-[#333] active:bg-[#444] transition-colors"
+            class="w-6 h-6 flex items-center justify-center rounded-lg bg-[var(--color-void-light)] text-[var(--color-parchment)] hover:bg-[var(--color-void-lighter)] active:bg-[var(--color-void-lighter)] transition-colors"
             title="Close"
           >
             ✕
@@ -346,7 +348,7 @@ export default function HunterScreen({ initialActionId, idleResult, onBack }) {
         <div class="space-y-4 max-h-96 overflow-y-auto">
           <div>
             <h4 class="text-xs font-semibold text-[var(--color-gold-dim)] uppercase tracking-wider mb-2 opacity-70">Action Info</h4>
-            <div class="bg-[#111] rounded-lg p-3 space-y-1">
+            <div class="bg-[var(--color-void)] rounded-lg p-3 space-y-1">
               <div class="flex justify-between text-[11px] text-[var(--color-parchment)]"><span>Level Required</span><span class="font-[var(--font-mono)] text-[var(--color-gold)]">{selectedActionInfo.level}</span></div>
               <div class="flex justify-between text-[11px] text-[var(--color-parchment)]"><span>XP Granted</span><span class="font-[var(--font-mono)] text-[var(--color-gold)]">{selectedActionInfo.xp}</span></div>
               <div class="flex justify-between text-[11px] text-[var(--color-parchment)]"><span>Time per Action</span><span class="font-[var(--font-mono)] text-[var(--color-gold)]">{(selectedActionInfo.ticks * 0.6).toFixed(1)}s</span></div>
@@ -356,7 +358,7 @@ export default function HunterScreen({ initialActionId, idleResult, onBack }) {
           {selectedActionInfo.rewardTables && selectedActionInfo.rewardTables.length > 0 && (
             <div>
               <h4 class="text-xs font-semibold text-[var(--color-gold-dim)] uppercase tracking-wider mb-2 opacity-70">Reward Table {selectedActionInfo.rewardTables.length > 1 ? `(Main)` : ''}</h4>
-              <div class="bg-[#111] rounded-lg p-3 space-y-1.5">
+              <div class="bg-[var(--color-void)] rounded-lg p-3 space-y-1.5">
                 {selectedActionInfo.rewardTables[0].rewards.map((reward, idx) => {
                   const itemData = itemsData[reward.itemId]
                   const chance = (reward.chance * 100).toFixed(2)
@@ -377,7 +379,7 @@ export default function HunterScreen({ initialActionId, idleResult, onBack }) {
           {selectedActionInfo.rewardTables && selectedActionInfo.rewardTables.length > 1 && (
             <div>
               <h4 class="text-xs font-semibold text-[var(--color-gold-dim)] uppercase tracking-wider mb-2 opacity-70">Rare Reward Table (1/{selectedActionInfo.rewardTables[1].rarity || 'Unknown'})</h4>
-              <div class="bg-[#111] rounded-lg p-3 space-y-1.5">
+              <div class="bg-[var(--color-void)] rounded-lg p-3 space-y-1.5">
                 {selectedActionInfo.rewardTables[1].rewards.map((reward, idx) => {
                   const itemData = itemsData[reward.itemId]
                   const chance = (reward.chance * 100).toFixed(2)
@@ -398,7 +400,7 @@ export default function HunterScreen({ initialActionId, idleResult, onBack }) {
           {selectedActionInfo.rewardTables && selectedActionInfo.rewardTables.length > 2 && (
             <div>
               <h4 class="text-xs font-semibold text-[var(--color-gold-dim)] uppercase tracking-wider mb-2 opacity-70">Very Rare Reward Table (1/{selectedActionInfo.rewardTables[2].rarity || 'Unknown'})</h4>
-              <div class="bg-[#111] rounded-lg p-3 space-y-1.5">
+              <div class="bg-[var(--color-void)] rounded-lg p-3 space-y-1.5">
                 {selectedActionInfo.rewardTables[2].rewards.map((reward, idx) => {
                   const itemData = itemsData[reward.itemId]
                   const chance = (reward.chance * 100).toFixed(2)

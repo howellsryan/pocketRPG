@@ -26,7 +26,7 @@ export default function BonusDisplay({ item }) {
         type="button"
         onClick={() => setExpanded(e => !e)}
         aria-expanded={expanded}
-        class="w-full flex items-center gap-2 py-1 text-left rounded-lg active:bg-[#1a1a1a]"
+        class="w-full flex items-center gap-2 py-1 text-left rounded-lg active:bg-[var(--color-void-light)]"
       >
         <SectionHeader size="sm" className="opacity-60">Bonuses</SectionHeader>
         <span class="ml-auto text-[10px] text-[var(--color-parchment)] opacity-60">{expanded ? '▼' : '▶'}</span>

@@ -8,11 +8,17 @@ import SkillActionRow from '../components/SkillActionRow.jsx'
 import GameIcon from '../components/GameIcon.jsx'
 import { getActionProgress } from '../hooks/useActionTick.js'
 import { countItem } from '../engine/inventory.js'
+import { planClueJourney } from '../engine/journeys.js'
+import { SCREENS } from '../utils/constants.js'
 import cluesData from '../data/clues.json'
 
-// Clue solving is driven by the App-level tick (see App.jsx), so it keeps
-// progressing on any screen — exactly like skilling, gathering and minigames.
-// This screen only starts/stops the task and renders its progress.
+// Clues are solved by following a trail across the world map (engine/journeys.js):
+// travel to and search 2–4 places; the final search consumes the scroll and rolls
+// rewards through the same path as before. The journey is an ordinary travel task,
+// so it runs in the background on any screen and catches up offline — and while
+// you have scrolls, finishing one trail chains straight into the next (App.jsx).
+// The old stand-still solve timer is retired; its active panel below only renders
+// a legacy in-flight task from an older save.
 
 const CLUE_TASKS = [
   {
@@ -85,31 +91,37 @@ function formatClueRemaining(totalSeconds) {
   return `${secs}s`
 }
 
-export default function CluesScreen() {
-  const { inventory, bank, equipment, addToast, setActiveTask, activeTask, itemsData } = useGame()
+export default function CluesScreen({ onNavigate } = {}) {
+  const { inventory, bank, equipment, addToast, setActiveTask, activeTask, itemsData, worldLocation } = useGame()
   const [showPanel, setShowPanel] = useState(false)
   const [infoTask, setInfoTask] = useState(null)
 
   const clueActive = activeTask?.type === 'clue' ? activeTask : null
+  const journeyActive = activeTask?.type === 'travel' && activeTask.journey?.kind === 'clue' ? activeTask : null
 
-  // Surface the running clue's panel when arriving on this screen, and drop back
-  // to the list automatically if the task ends (out of scrolls / stopped).
+  // Surface a legacy running clue's panel when arriving on this screen, and drop
+  // back to the list automatically if the task ends (out of scrolls / stopped).
   useEffect(() => {
     if (clueActive) setShowPanel(true)
     else setShowPanel(false)
   }, [clueActive?.gatherTask?.id, !!clueActive])
 
-  const startTask = (task) => {
-    setActiveTask({
-      type: 'clue',
-      gatherTask: task,
-      bankingEnabled: true,
-      totalTicks: task.ticks,
-      ticksRemaining: task.ticks,
-      justCompleted: false,
-      session: { startedAt: Date.now(), actions: 0, xp: 0, coins: 0, items: 0, seeds: 0, tokens: 0 },
-    })
-    setShowPanel(true)
+  // Starting a clue plots a trail and drops you onto the world map to walk it
+  // (or teleport between its waypoints). The scroll is only consumed on the
+  // final search, so abandoning costs nothing but time.
+  const startJourney = (task) => {
+    if (activeTask?.type === 'travel') {
+      addToast('Finish or turn back your current journey first.', 'info')
+      return
+    }
+    const jt = planClueJourney(task, worldLocation)
+    if (!jt) {
+      addToast('No trail can be plotted from here.', 'error')
+      return
+    }
+    setActiveTask(jt)
+    addToast(`🗺️ The trail begins — ${jt.journey.steps.length} places to search`, 'info')
+    onNavigate?.(SCREENS.WORLD_MAP)
   }
 
   // Back: leave the clue running and return to the list.
@@ -152,7 +164,7 @@ export default function CluesScreen() {
   }
 
   return (
-    <div class="h-full flex flex-col">
+    <div class="forge-shell h-full flex flex-col">
       <div class="px-4 pt-4 pb-2 flex-shrink-0">
         <SectionHeader size="lg" className="mb-[10px]"><span class="inline-flex items-center gap-2"><GameIcon iconKey="clue_scroll_hard" size={18} class="flex-shrink-0" /> Clues</span></SectionHeader>
       </div>
@@ -162,7 +174,9 @@ export default function CluesScreen() {
           {CLUE_TASKS.map(task => {
             const hasRequiredItem = hasClueScroll(task.requiresItem, inventory, bank, equipment)
             const enabled = hasRequiredItem
-            const isRunning = clueActive?.gatherTask?.id === task.id
+            const isLegacyRunning = clueActive?.gatherTask?.id === task.id
+            const isOnTrail = journeyActive?.journey?.ref === task.id
+            const isRunning = isLegacyRunning || isOnTrail
 
             return (
               <SkillActionRow
@@ -170,9 +184,9 @@ export default function CluesScreen() {
                 icon={<GameIcon iconKey={task.requiresItem} size={52} />}
                 title={task.name}
                 meta={<>
-                  ⏱ {(task.ticks * 0.6).toFixed(1)}s/action
+                  🗺️ trail of 2–4 places · scroll spent on the last search
                   <span class={`block mt-0.5 ${isRunning ? 'text-[var(--color-gold)]' : enabled ? 'text-[#4caf50]' : 'text-[#e57373]'}`}>
-                    {isRunning ? '● running' : enabled ? '✓ ready' : '✗ need scroll'}
+                    {isOnTrail ? '● on the trail — tap to view map' : isLegacyRunning ? '● running' : enabled ? '✓ ready' : '✗ need scroll'}
                   </span>
                 </>}
                 right={
@@ -181,13 +195,17 @@ export default function CluesScreen() {
                     tabIndex={0}
                     onClick={(e) => { e.stopPropagation(); setInfoTask(task) }}
                     aria-label="Drop rates"
-                    class="flex-shrink-0 w-11 h-11 rounded-2xl border border-[var(--color-void-border)] bg-[var(--color-void-light)] text-[var(--color-gold)] text-[14px] font-bold flex items-center justify-center active:opacity-70"
+                    class="w-11 h-11 rounded-2xl border border-[var(--color-void-border)] bg-[var(--color-void-light)] text-[var(--color-gold)] text-[14px] font-bold flex items-center justify-center flex-shrink-0 active:opacity-70"
                   >
                     ⓘ
                   </span>
                 }
                 active={isRunning}
-                onClick={() => (isRunning ? setShowPanel(true) : (enabled && startTask(task)))}
+                onClick={() => {
+                  if (isOnTrail) onNavigate?.(SCREENS.WORLD_MAP)
+                  else if (isLegacyRunning) setShowPanel(true)
+                  else if (enabled) startJourney(task)
+                }}
               />
             )
           })}

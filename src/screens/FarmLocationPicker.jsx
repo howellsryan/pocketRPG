@@ -19,7 +19,7 @@ const readyTypeLabels = {
 
 export default function FarmLocationPicker({ farmingLevel, farmingXp = 0, farming, onSelectLocation, onBack, onHarvestAll, onPlantAll }) {
   return (
-    <div class="h-full overflow-y-auto p-4">
+    <div class="forge-shell h-full overflow-y-auto p-4">
       <SkillScreenHeader
         skill="farming"
         title="Farming"
@@ -30,7 +30,7 @@ export default function FarmLocationPicker({ farmingLevel, farmingXp = 0, farmin
 
       <div class="flex gap-2 mb-4">
         <button onClick={onHarvestAll} class="min-h-[44px] flex-1 px-3 rounded-xl border border-[rgba(212,160,23,0.42)] bg-[rgba(212,160,23,0.08)] text-[13px] font-semibold text-[var(--color-gold)] active:opacity-80">Harvest All</button>
-        <button onClick={onPlantAll} class="min-h-[44px] flex-1 px-3 rounded-xl border border-[rgba(255,255,255,0.06)] bg-[rgba(255,255,255,0.025)] text-[13px] font-semibold text-[var(--color-parchment)] active:opacity-80">Plant All</button>
+        <button onClick={onPlantAll} class="min-h-[44px] flex-1 px-3 rounded-xl border border-[var(--color-void-border)] bg-[var(--color-void-light)] text-[13px] font-semibold text-[var(--color-parchment)] active:opacity-80">Plant All</button>
       </div>
 
       <SkillInfoBanner

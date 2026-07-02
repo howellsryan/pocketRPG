@@ -57,7 +57,7 @@ function calculateRemainingActions(action, inventory, bank) {
 }
 
 export default function SkillingScreen({ initialSkillId, initialActionId, idleResult, onNavigate }) {
-  const { stats, inventory, bank, equipment, isIronman, updateInventory, updateBankDirect, grantXP, addToast, setActiveTask, activeTask, dungeoneeringTokens, awardDungeoneeringTokens, trySpendDungeoneeringTokens, loadGame, recordGameEvent } = useGame()
+  const { stats, inventory, bank, equipment, isIronman, updateInventory, updateBankDirect, grantXP, addToast, setActiveTask, requestActivityStart, activeTask, dungeoneeringTokens, awardDungeoneeringTokens, trySpendDungeoneeringTokens, loadGame, recordGameEvent } = useGame()
   const [selectedSkill, setSelectedSkill] = useState(initialSkillId || null)
   const [selectedAction, setSelectedAction] = useState(null)
   const [skilling, setSkilling] = useState(null)
@@ -468,6 +468,9 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
       return
     }
 
+    // Map-driven gating (Phase 3): must be at a place that offers this skill action.
+    if (!requestActivityStart({ type: 'skill', skill: selectedSkill, action })) return
+
     const effectiveTicks = getEffectiveToolActionTicks(selectedSkill, action.ticks, equipment, itemsData, stats, inventory)
     const adjustedAction = effectiveTicks !== action.ticks
       ? { ...action, ticks: effectiveTicks }
@@ -521,6 +524,7 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
 
   const startAlchemy = (item) => {
     if (!selectedAction) return
+    if (!requestActivityStart({ type: 'skill', skill: selectedSkill, action: selectedAction })) return
     setShowAlchemyPicker(false)
     setSelectedAlchemyItem(item)
 
@@ -637,6 +641,12 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
         const action = skill.actions.find(a => a.id === initialActionId)
         if (action) {
           setSelectedSkill(initialSkillId)
+          // Auto-starts (world-map arrival, home shortcuts) must respect the same
+          // level lock as the action list — land on the list instead of starting.
+          if ((action.level || 1) > getLevelFromXP(stats[initialSkillId]?.xp || 0)) {
+            addToast(`Requires ${skill.name || initialSkillId} level ${action.level}.`, 'error')
+            return
+          }
           const effectiveTicks = getEffectiveToolActionTicks(initialSkillId, action.ticks, equipment, itemsData, stats, inventory)
           const adjustedAction = effectiveTicks !== action.ticks
             ? { ...action, ticks: effectiveTicks }
@@ -678,7 +688,7 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
   // Skill picker
   if (!selectedSkill) {
     return (
-      <div class="h-full overflow-y-auto p-4">
+      <div class="forge-shell h-full overflow-y-auto p-4">
         <h2 class="font-[var(--font-display)] text-sm font-bold text-[var(--color-parchment)] opacity-60 uppercase tracking-wider mb-3">
           Train a Skill
         </h2>
@@ -690,7 +700,7 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
               <button
                 key={skill}
                 onClick={() => setSelectedSkill(skill)}
-                class="flex items-center gap-2.5 p-3 rounded-xl border transition-colors bg-[#1a1a1a] border-[#2a2a2a] active:bg-[#222]"
+                class="flex items-center gap-2.5 p-3 rounded-xl border transition-colors bg-[var(--color-void-light)] border-[var(--color-void-border)] active:bg-[var(--color-void-lighter)]"
               >
                 <SkillIcon skill={skill} size={24} />
                 <div class="text-left">
@@ -715,7 +725,7 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
 
   if (!skilling) {
     return (
-      <div class="h-full overflow-y-auto p-4">
+      <div class="forge-shell h-full overflow-y-auto p-4">
         <SkillScreenHeader
           skill={selectedSkill}
           xp={skillXP}
@@ -862,7 +872,7 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
               <h3 class="font-[var(--font-display)] text-base font-bold text-[var(--color-gold)]">Select item to Alchemize</h3>
               <button
                 onClick={() => { setShowAlchemyPicker(false); setSelectedAction(null); }}
-                class="w-6 h-6 flex items-center justify-center rounded-lg bg-[#222] text-[var(--color-parchment)] hover:bg-[#333] active:bg-[#444] transition-colors"
+                class="w-6 h-6 flex items-center justify-center rounded-lg bg-[var(--color-void-light)] text-[var(--color-parchment)] hover:bg-[var(--color-void-lighter)] active:bg-[var(--color-void-lighter)] transition-colors"
                 title="Close"
               >
                 ✕
@@ -886,7 +896,7 @@ Shop value: ×1.1
                   <button
                     key={`${idx}-${slot.itemId}`}
                     onClick={() => startAlchemy(slot)}
-                    class="w-full p-3 rounded-lg border bg-[#1a1a1a] border-[#2a4a2a] active:bg-[#2a3a2a] transition-colors text-left"
+                    class="w-full p-3 rounded-lg border bg-[var(--color-void-light)] border-[var(--color-emerald)] active:bg-[var(--fm-parch-hi)] transition-colors text-left"
                   >
                     <div class="flex items-center justify-between">
                       <div class="flex items-center gap-2 flex-1">

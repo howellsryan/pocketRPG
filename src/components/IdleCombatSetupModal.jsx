@@ -249,8 +249,8 @@ function PrayerSection({ prayersData, prayerLevel, draft, onSelect }) {
                 onClick={() => onSelect(prayer.id, 'protection')}
                 class={`p-2 rounded-lg border text-center ${
                   isActive
-                    ? 'bg-[#2a4a2a] border-[#4a8a4a]'
-                    : 'bg-[var(--color-void-light)] border-[var(--color-void-border)] active:bg-[#2a3a2a]'
+                    ? 'bg-[var(--fm-parch-hi)] border-[var(--color-emerald-light)]'
+                    : 'bg-[var(--color-void-light)] border-[var(--color-void-border)] active:bg-[var(--fm-parch)]'
                 }`}
               >
                 <div class="text-base">{prayer.icon}</div>
@@ -278,8 +278,8 @@ function PrayerSection({ prayersData, prayerLevel, draft, onSelect }) {
                 onClick={() => onSelect(prayer.id, 'combat')}
                 class={`p-2 rounded-lg border text-left ${
                   isActive
-                    ? 'bg-[#2a3a1a] border-[#4a8a2a]'
-                    : 'bg-[var(--color-void-light)] border-[var(--color-void-border)] active:bg-[#2a3a2a]'
+                    ? 'bg-[var(--fm-parch-hi)] border-[var(--color-gold)]'
+                    : 'bg-[var(--color-void-light)] border-[var(--color-void-border)] active:bg-[var(--fm-parch)]'
                 }`}
               >
                 <div class="text-sm text-[var(--color-parchment)]">{icon} {prayer.name}</div>

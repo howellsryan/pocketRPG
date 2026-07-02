@@ -20,6 +20,9 @@ export const ACTIVITY_POLICY = {
   // All skills (gathering, production, dungeoneering, etc.) keep accruing in
   // the background; only combat stops when the player leaves its screen.
   skill:         { persistence: 'background' },
+  // Travelling between places (map-driven overhaul). A one-shot countdown to
+  // arrival that keeps progressing offline; no ledger key (getActivityKey → null).
+  travel:        { persistence: 'background' },
   combat:        { persistence: 'modal' },
 }
 

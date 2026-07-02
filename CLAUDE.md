@@ -38,6 +38,7 @@
 - **Combo food**: combo consumables (flagged `combo: true`, e.g. Karam, plus every potion/brew) use a **separate combo cooldown** — one combo item may be used the same tick as one normal food, never delaying the next attack. See `isComboConsumable` in `src/engine/consumables.js`; honoured by `combat.js` (PvE) + `pvpEngine.js` (PvP).
 - **Boss Slayer XP**: `BOSS_SLAYER_TASK_XP_MULTIPLIER` (×4) in `src/engine/slayerRewards.js`; avoid inflated explicit `slayerXP` on bosses (keep XP/hr ≤ ~2× best regular monster).
 - **Daily Tasks**: 5 tasks/day (one per tier: Novice → Grandmaster), reset **00:00 UTC**, **+1 credit** each. Server-authoritative grant via `/api/daily-tasks/complete` (idempotent `credited` flag + audit), **never** via `/api/save`. Issuance is lazy on `GET /api/daily-tasks`; durable table `character_daily_tasks` (migration 0025, outside the save blob). Cloud accounts only (mirrors credits pill). Event bus: `recordGameEvent(evt)` in `gameState.jsx`; matcher: `src/engine/dailyTasks.js`.
+- **Journeys & teleports**: clues/quests run **only** as world-map journeys (`src/engine/journeys.js`; content granted on the final search; auto-chains next scroll / quest queue in `App.jsx`; legacy timer tasks still tick out). Per-place Magic teleports in `src/data/world.json` `teleport` (cities low — Varrick 25 — villages up to 87; always law runes; XP = level+10; `src/engine/teleports.js`); mid-journey teleports re-plan the walking leg, searches are pinned to their waypoint.
 
 ## 5) XP & Leveling
 - Levels **1–99**. XP cap **200,000,000**.
@@ -91,7 +92,7 @@ Server-authoritative under `/api/pvp/*`. Full rules (matchmaking, save-lockdown,
 - Top-level declarations must be **globally unique** across both output files; duplicate-identifier errors are release-blocking. Prefer `src/utils/helpers.js`.
 - **Code-split**: two CLASSIC scripts (not modules) — inline core in `index.html` + content-hashed `game-<hash>.js` (heavy in-game screens, `GAME_CHUNK_FILES`), loaded lazily on `cloudPhase === 'ready'` via `globalThis.__loadGameChunk`. Classic scripts share one global lexical env; cross-refs resolve by source name. Both minify with `minifyIdentifiers: false` — **do not re-enable**.
 - New in-game screen → add to `sourceFiles` **and** `GAME_CHUNK_FILES`. Landing/auth-reachable screens stay **out** of `GAME_CHUNK_FILES`; core must not reference a chunk binding at module-eval time (only inside `renderScreen`).
-- `gameIconsData` (~126 KiB) is in the chunk. Core icon code (`GameIcon`, `itemIcons`, `skillArt`) guards every access with `typeof gameIconsData !== 'undefined'` + emoji fallback — **keep those guards**.
+- `gameIconsData` (~126 KiB) and `worldActivitiesData` (~150 KiB, `src/data/worldActivities.json`) are in the chunk. Core code guards every access (`typeof gameIconsData !== 'undefined'` + emoji fallback in icon code; `placeActivities()` in `src/engine/worldContent.js`) — **keep those guards**. World geography (`src/data/world.json`) stays in core.
 
 ## 13) Agent Best Practices
 - Keep changes minimal and scoped; no unrelated refactors. Update logic tests with new gameplay logic.
@@ -104,7 +105,7 @@ Server is source of truth for everything that *can* be authoritative. The one de
 **Server-authoritative (integrity boundary — never move to client/save):**
 - **Identity & ownership** — auth (session JWT via `requireAuth`), characters, OAuth; every `/api/*` route verifies the token.
 - **High-value grants** — boss/raid/clue/minigame/dungeoneering uniques granted by `/api/actions/**` (server-side loot RNG, kill-counts, collection-log, nonce replay protection). Save only carries the already-granted item.
-- **Purchases** — `/api/purchase` debits coins + grants server-side. **Credits** — debited atomically by `/api/skip-hour`, `/api/slayer/skip`, and `/api/daily-tasks/complete`; **never** from `/api/save`.
+- **Purchases** — `/api/purchase` debits coins + grants server-side. **Credits** — debited atomically by `/api/skip-hour`, `/api/slayer/skip`, and `/api/daily-tasks/complete`; **never** from `/api/save`. Skip-1h also covers travel/journeys: the current clue/quest always completes (even past the hour), leftover time chains further scrolls.
 - **Daily task credit grants** — `/api/daily-tasks/complete` atomically flips `credited=0→1` (idempotency key) then increments `credits`; replay returns `creditsGranted: 0`. PvP-lockdown enforced.
 - **PvP settlement / trading post** — own server-authoritative paths (§10).
 - New economy/progression mutations must emit **audit events** (`functions/_lib/game/audit.js`).

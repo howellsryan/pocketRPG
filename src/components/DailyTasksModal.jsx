@@ -69,7 +69,7 @@ export default function DailyTasksModal({ onClose, tasks = [], resetInMs = 0, ta
             return (
               <GildedComplete key={task.slot} complete={done}>
                 <div
-                  class="flex items-center gap-3 p-3 rounded-lg bg-[#0f0f1f] border border-[#2a2a5a]"
+                  class="flex items-center gap-3 p-3 rounded-lg bg-[var(--color-void-light)] border border-[var(--color-void-border)]"
                   style={{ borderLeft: `3px solid ${color}` }}
                 >
                   <span class="text-[28px] shrink-0">

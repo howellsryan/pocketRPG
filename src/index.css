@@ -21,6 +21,7 @@
   --color-mana: #2c5aa0;
   --color-mana-light: #3498db;
   --color-void: #0f0f0f;
+  --color-void-dark: #000000;
   --color-void-light: #1a1a1a;
   --color-void-lighter: #252525;
   --color-void-border: #333;
@@ -75,6 +76,246 @@
   --font-mono: 'JetBrains Mono', monospace;
   --color-blood-ember: #e0564b;
   --color-blood-glow: rgba(224, 86, 75, 0.18);
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   FORGEMARK — bespoke illuminated-ledger / blacksmith's-workshop identity.
+   New tokens only (no name collisions with the base palette above), so they
+   are safe at :root — inert everywhere until a .fm-* class or a semantic
+   token override below actually opts a surface in. Ported from the
+   Claude Design export in docs/PocketRPG Design System 4.zip.
+   ════════════════════════════════════════════════════════════════════════ */
+:root {
+  --fm-parch: #e9dcbd;
+  --fm-parch-hi: #f3ead0;
+  --fm-parch-lo: #d8c69e;
+  /* Page vellum — the tone the parchment texture tile is built on. Referenced by
+     .forge-shell, .clog-sheet and .wm-actmodal-panel; must match the base rect fill
+     in public/forge/parchment.svg so the texture and the color agree while the
+     texture image is still loading (previously undefined — transparent fallback). */
+  --fm-vellum: #e6d8b6;
+  --fm-ink: #2b2114;
+  --fm-ink-soft: #5a4a32;
+  --fm-ink-faint: #8a7553;
+  --fm-rule: #b6a079;
+  --fm-iron: #1c1a18;
+  --fm-soot: #14110d;
+  --fm-brass: #b08842;
+  --fm-brass-hi: #e6c878;
+  --fm-brass-lo: #6e521f;
+  --fm-ember: #c2410c;
+  --fm-ember-hi: #f0742a;
+  --fm-ember-deep: #7c2708;
+  --fm-blood: #7f1d1d;
+  --fm-verdigris: #2f6b5e;
+  --fm-woad: #2c4a73;
+  --fm-royal: #5b3a86;
+
+  --fm-display: 'Grenze Gotisch', 'Cinzel', serif;
+  --fm-serif: 'Spectral', Georgia, serif;
+  --fm-fell: 'IM Fell English', 'Spectral', serif;
+  --fm-num: 'Spline Sans Mono', 'JetBrains Mono', monospace;
+
+  --fm-r-sharp: 2px;
+  --fm-r-sm: 4px;
+  --fm-r-frame: 7px;
+
+  --fm-frame-shadow:
+    0 2px 0 rgba(0,0,0,0.5),
+    0 14px 28px -14px rgba(0,0,0,0.85),
+    inset 0 1px 0 rgba(255,255,255,0.07),
+    inset 0 0 0 1px rgba(0,0,0,0.6);
+  --fm-parch-inset:
+    inset 0 2px 5px rgba(74,54,28,0.35),
+    inset 0 0 0 1px rgba(120,95,55,0.25);
+  --fm-rivet: radial-gradient(circle at 38% 32%, var(--fm-brass-hi), var(--fm-brass) 48%, var(--fm-brass-lo) 100%);
+  --fm-ember-face: linear-gradient(178deg, #f0742a 0%, #c2410c 52%, #8a2d06 100%);
+  --fm-parch-face:
+    radial-gradient(120% 80% at 0% 0%, rgba(255,240,200,0.5), transparent 55%),
+    radial-gradient(140% 120% at 100% 100%, rgba(150,110,60,0.18), transparent 60%),
+    linear-gradient(160deg, #ece0c2, #e0d0a8);
+  --fm-gilt-text: linear-gradient(180deg, #f3dd9a 0%, #c9a227 55%, #8c6a16 100%);
+  --fm-ease: cubic-bezier(0.2, 0.9, 0.3, 1);
+  --fm-dur: 0.16s;
+
+  --fm-tex-parch: url('/public/forge/parchment.svg');
+  --fm-tex-iron: url('/public/forge/iron.svg');
+  --fm-orn-corner: url('/public/forge/corner.svg');
+  --fm-orn-divider: url('/public/forge/divider.svg');
+}
+
+/* Opt-in per screen — wrap a screen's own root element in .forge-shell (see
+   HomeScreen/CombatScreen/WorldMapScreen) rather than the shared App.jsx
+   shell, so the reskin stays confined to piloted screens: the nav rail and
+   header are persistent chrome shown on every screen and must not flip along
+   with them, and every other screen must keep its current look until it gets
+   its own pass. Re-routes the *existing* semantic vars every screen already
+   consumes, so Card/Panel/Button/etc. pick up the new identity without
+   call-site changes. HP/XP bar colors are intentionally left alone — those
+   are safety semantics (low health = red), not brand decoration. */
+.forge-shell {
+  --font-display: var(--fm-display);
+  --font-body: var(--fm-serif);
+  --font-mono: var(--fm-num);
+
+  /* Card/Panel/Button's *default* variant (and any other markup still reading
+     these vars directly) render via these — retinted to the parchment family
+     so wrapping a new screen in .forge-shell "just works" without hand-tuning
+     every card: --color-void-light (Card) is the same medium parchment tone
+     used everywhere else; --color-void (Panel, nested/sunken) a shade deeper;
+     --color-void-lighter a lighter "raised" tone. All paper, no iron. */
+  --color-void: var(--fm-parch-lo);
+  --color-void-dark: var(--fm-ink);
+  --color-void-light: #e6d8b6;
+  --color-void-lighter: var(--fm-parch-hi);
+  --color-void-border: var(--fm-rule);
+
+  --color-gold: var(--fm-brass);
+  --color-gold-light: var(--fm-brass-hi);
+  --color-gold-dim: var(--fm-brass-lo);
+  --color-blood: var(--fm-blood);
+  --color-blood-mid: #6b1414;
+  --color-blood-light: #b3392f;
+  --color-emerald: var(--fm-verdigris);
+  --color-emerald-mid: #26564b;
+  --color-emerald-light: #4f9784;
+  --color-mana: var(--fm-woad);
+  --color-mana-light: #527bb0;
+
+  /* Text that sits directly on the screen background (not inside a card) still
+     uses --color-parchment/-dark — flip those to ink too now that the page
+     itself is paper, not void-black. Anything already on a parchment card
+     (welcome-card, skill-card, cb-area, etc.) sets its own ink color already,
+     so this only affects text that was previously assumed to be on dark. */
+  --color-parchment: var(--fm-ink-soft);
+  --color-parchment-dark: var(--fm-ink-faint);
+
+  /* Forgemark is the *page* — parchment, not iron. Cards sit on it as a
+     slightly deeper/richer shade of the same paper (see .skill-card etc.),
+     not a different dark material. */
+  background-color: var(--fm-vellum);
+  background-image: var(--fm-tex-parch);
+  background-size: 600px;
+}
+
+/* ── Forgemark material classes: iron frames, parchment panels, rivets,
+   ledger rows, gilt/gothic type, ornaments. Shared by IronFrame, ForgeButton,
+   Ledger, WaxSeal and SkillCrest (src/components/). ── */
+.fm-frame {
+  position: relative;
+  border-radius: var(--fm-r-frame);
+  background-color: #1b1916;
+  background-image: var(--fm-tex-iron);
+  background-size: 280px;
+  border: 1px solid #000;
+  box-shadow: var(--fm-frame-shadow);
+  padding: 9px;
+}
+.fm-frame::before {
+  content: ''; position: absolute; inset: 1px; border-radius: calc(var(--fm-r-frame) - 1px);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), inset 0 -10px 22px -14px rgba(0,0,0,0.9);
+  pointer-events: none;
+}
+.fm-frame > .fm-rivets { position: absolute; inset: 0; pointer-events: none; }
+.fm-rivet {
+  position: absolute; width: 11px; height: 11px; border-radius: 50%;
+  background: var(--fm-rivet);
+  box-shadow: 0 1px 1px rgba(0,0,0,0.7), inset 0 -1px 1px rgba(0,0,0,0.4), inset 0 1px 1px rgba(255,240,200,0.5);
+}
+.fm-rivet--tl { top: 8px; left: 8px; }  .fm-rivet--tr { top: 8px; right: 8px; }
+.fm-rivet--bl { bottom: 8px; left: 8px; } .fm-rivet--br { bottom: 8px; right: 8px; }
+
+.fm-parch {
+  position: relative;
+  border-radius: var(--fm-r-sm);
+  background-color: #e6d8b6;
+  background-image: var(--fm-tex-parch);
+  background-size: cover;
+  box-shadow: var(--fm-parch-inset);
+  color: var(--fm-ink);
+  overflow: hidden;
+}
+.fm-parch::after {
+  content: ''; position: absolute; inset: 0; pointer-events: none; border-radius: inherit;
+  box-shadow: inset 0 0 36px rgba(120,80,30,0.32), inset 0 0 6px rgba(80,50,15,0.25);
+  background: radial-gradient(130% 120% at 50% 50%, transparent 62%, rgba(110,75,30,0.22));
+}
+
+.fm-banner { font-family: var(--fm-display); font-weight: 800; letter-spacing: 0.01em; line-height: 1.0; color: var(--fm-ink); }
+.fm-banner--gilt {
+  background: var(--fm-gilt-text); -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent; color: transparent;
+  filter: drop-shadow(0 1px 0 rgba(0,0,0,0.5));
+  padding-right: 0.12em;
+}
+.fm-eyebrow { font-family: var(--fm-serif); font-weight: 600; font-size: 12px; letter-spacing: 0.34em; text-transform: uppercase; color: var(--fm-ink-faint); }
+.fm-eyebrow--light { color: var(--fm-brass); }
+.fm-lore { font-family: var(--fm-fell); font-style: italic; color: var(--fm-ink-soft); line-height: 1.5; }
+.fm-num { font-family: var(--fm-num); font-variant-numeric: tabular-nums; }
+
+.fm-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 9px;
+  font-family: var(--fm-display); font-weight: 700; letter-spacing: 0.03em;
+  border: 1px solid #000; border-radius: var(--fm-r-sm); cursor: pointer;
+  padding: 12px 22px; font-size: 16px; position: relative;
+  transition: transform var(--fm-dur) var(--fm-ease), filter var(--fm-dur), box-shadow var(--fm-dur);
+}
+.fm-btn:active { transform: translateY(1px); }
+.fm-btn--ember {
+  color: #2a0f02; background: var(--fm-ember-face);
+  box-shadow: inset 0 1px 0 rgba(255,220,180,0.55), inset 0 -2px 4px rgba(120,40,8,0.6), 0 4px 14px -6px rgba(194,65,12,0.7);
+  text-shadow: 0 1px 0 rgba(255,210,160,0.4);
+}
+.fm-btn--ember:hover { filter: brightness(1.07); box-shadow: inset 0 1px 0 rgba(255,220,180,0.6), 0 7px 20px -6px rgba(240,116,42,0.8); }
+.fm-btn--iron {
+  color: var(--fm-parch); background-color: #221f1b; background-image: var(--fm-tex-iron); background-size: 200px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.07), 0 3px 10px -6px rgba(0,0,0,0.8);
+}
+.fm-btn--iron:hover { color: var(--fm-brass-hi); }
+.fm-btn--ghost { background: transparent; border-color: var(--fm-rule); color: var(--fm-ink); font-family: var(--fm-serif); font-weight: 600; }
+.fm-btn--ghost:hover { border-color: var(--fm-ink-soft); background: rgba(74,54,28,0.08); }
+.fm-btn--lg { font-size: 18px; padding: 15px 30px; }
+.fm-btn--sm { font-size: 13px; padding: 8px 14px; }
+
+.fm-ledger { width: 100%; }
+.fm-row { display: flex; align-items: center; gap: 12px; padding: 9px 12px; border-bottom: 1px solid var(--fm-rule); }
+.fm-row:last-child { border-bottom: 0; }
+.fm-row--head { border-bottom: 2px solid var(--fm-ink); }
+.fm-row__label { font-weight: 600; color: var(--fm-ink); }
+.fm-row__val { margin-left: auto; font-family: var(--fm-num); font-variant-numeric: tabular-nums; color: var(--fm-ink); font-weight: 600; }
+.fm-row--alt:nth-child(even) { background: rgba(120,90,45,0.07); }
+
+.fm-tag {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-family: var(--fm-serif); font-weight: 700; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;
+  padding: 3px 9px; border-radius: var(--fm-r-sharp); border: 1px solid currentColor;
+}
+.fm-tag--ember { color: var(--fm-ember); }
+.fm-tag--verdigris { color: var(--fm-verdigris); }
+.fm-tag--blood { color: var(--fm-blood); }
+.fm-tag--woad { color: var(--fm-woad); }
+.fm-tag--brass { color: var(--fm-brass-lo); }
+
+.fm-corner { position: absolute; width: 30px; height: 30px; background: var(--fm-orn-corner) center/contain no-repeat; pointer-events: none; opacity: 0.5; }
+.fm-corner--tl { top: 7px; left: 7px; }
+.fm-corner--tr { top: 7px; right: 7px; transform: scaleX(-1); }
+.fm-corner--bl { bottom: 7px; left: 7px; transform: scaleY(-1); }
+.fm-corner--br { bottom: 7px; right: 7px; transform: scale(-1); }
+.fm-divider { height: 18px; background: var(--fm-orn-divider) center/auto 100% no-repeat; }
+.fm-rule-head { display: flex; align-items: center; gap: 14px; }
+.fm-rule-head::before, .fm-rule-head::after { content: ''; height: 1px; flex: 1; background: linear-gradient(90deg, transparent, var(--fm-rule), transparent); }
+
+.fm-crest { position: relative; display: inline-flex; align-items: center; justify-content: center; }
+.fm-crest__ring {
+  position: absolute; inset: 0; border-radius: 50%;
+  background: var(--fm-rivet);
+  box-shadow: inset 0 2px 3px rgba(255,240,200,0.5), inset 0 -3px 5px rgba(80,55,15,0.7), 0 3px 8px -3px rgba(0,0,0,0.7);
+}
+.fm-crest__face {
+  position: absolute; border-radius: 50%; inset: 5px;
+  background: radial-gradient(circle at 38% 32%, #2a2622, #14110d);
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,0.7), inset 0 2px 6px rgba(0,0,0,0.8);
+  display: flex; align-items: center; justify-content: center;
 }
 
 * {
@@ -278,6 +519,165 @@ html, body, #app {
 .xp-meta { margin-top: 1px; font-family: var(--font-mono); font-size: 8px; letter-spacing: 0.02em; color: var(--color-parchment); opacity: 0.42; text-align: center; }
 .xp-meta--max { color: var(--color-gold-light); opacity: 0.85; letter-spacing: 0.2em; font-weight: 700; }
 
+/* Forgemark pilot — Home screen surfaces flip to parchment; only the inner
+   text/border colors need overriding here since the *screen* background
+   (--color-void) stays dark under .forge-shell, so anything not on one of
+   these parchment surfaces already reads fine unchanged. */
+.forge-shell .welcome-card { background: var(--fm-parch-face); border-color: var(--fm-rule); box-shadow: var(--fm-parch-inset); }
+.forge-shell .welcome-card::after { display: none; }
+.forge-shell .welcome-card__title { background-image: var(--fm-gilt-text); }
+.forge-shell .wstat { color: var(--fm-ink-soft); }
+.forge-shell .wstat b { color: var(--fm-ember); }
+.forge-shell .rune-btn { border-color: var(--fm-rule); background: var(--fm-parch-lo); box-shadow: var(--fm-parch-inset); }
+.forge-shell .rune-btn:hover { border-color: var(--fm-brass); background: var(--fm-parch-hi); }
+.forge-shell .skill-card { background: #e6d8b6; background-image: var(--fm-tex-parch); background-size: cover; border-color: var(--fm-rule); box-shadow: var(--fm-parch-inset); }
+.forge-shell .skill-card:hover { border-color: var(--fm-brass); }
+.forge-shell .skill-card__name span { color: var(--fm-ink); text-shadow: none; }
+.forge-shell .skill-card__level { color: var(--fm-ember-deep); text-shadow: none; }
+.forge-shell .xp-meta { color: var(--fm-ink-faint); }
+.forge-shell .xp-meta--max { color: var(--fm-ember); }
+.forge-shell .hero-total b { color: var(--fm-ember-deep); }
+
+/* Forgemark pilot — Combat screen: area/monster picker rows + stat tiles
+   flip to parchment. The combat log keeps its dark terminal-feed look
+   (hit/damage/loot colors are gameplay signal, not brand decoration). */
+.forge-shell .cb-area,
+.forge-shell .cb-mon,
+.forge-shell .cb-kstat,
+.forge-shell .cb-stat,
+.forge-shell .cb-act:not(.is-on),
+.forge-shell .cb-idle:not(.is-on),
+.forge-shell .cb-styleseg:not(.is-on) {
+  background: #e6d8b6; background-image: var(--fm-tex-parch); background-size: cover;
+  border-color: var(--fm-rule); box-shadow: var(--fm-parch-inset);
+}
+.forge-shell .cb-area--raid { background-image: var(--fm-tex-parch); border-color: var(--fm-royal); }
+.forge-shell .cb-mon--task { border-color: var(--fm-brass); }
+.forge-shell .cb-area:hover, .forge-shell .cb-mon:hover { border-color: var(--fm-brass); }
+.forge-shell .cb-area__name, .forge-shell .cb-mon__name, .forge-shell .cb-fight__name { color: var(--fm-ink); }
+.forge-shell .cb-area__blurb, .forge-shell .cb-area__count, .forge-shell .cb-mon__stats { color: var(--fm-ink-soft); opacity: 1; }
+.forge-shell .cb-h1sub { color: var(--fm-ink-soft); opacity: 1; }
+.forge-shell .cb-mon__info { background: var(--fm-parch-hi); border-color: var(--fm-brass); }
+.forge-shell .cb-back { color: var(--fm-ember); }
+.forge-shell .cb-kstat__k, .forge-shell .cb-stat__k { color: var(--fm-ink-faint); }
+.forge-shell .cb-kstat__v, .forge-shell .cb-stat__v { color: var(--fm-ember-deep); }
+.forge-shell .cb-act:not(.is-on) { color: var(--fm-ink); }
+.forge-shell .cb-mon__kc { color: var(--fm-ember-deep); }
+
+/* Forgemark pilot — Collection Log: category cards flip to parchment (the
+   "done" gilt-glow treatment is left alone, it already reads as a highlight
+   on any background). Sheet/modal is always Forgemark since CollectionLog
+   is fully reskinned. */
+.forge-shell .clog-cat:not(.is-done) { background: #e6d8b6; background-image: var(--fm-tex-parch); background-size: cover; border-color: var(--fm-rule); box-shadow: var(--fm-parch-inset); }
+.forge-shell .clog-cat:not(.is-done):hover { border-color: var(--fm-brass); }
+.forge-shell .clog-cat__name, .forge-shell .clog-cat__count { color: var(--fm-ink); text-shadow: none; }
+.forge-shell .clog-cat__blurb, .forge-shell .clog-cat__foot span { color: var(--fm-ink-faint); }
+.forge-shell .clog-cat__count b { color: var(--fm-ember-deep); }
+.forge-shell .clog-header__sub, .forge-shell .clog-hero__k, .forge-shell .clog-hero__v, .forge-shell .clog-secthead span { color: var(--fm-ink-faint); }
+.forge-shell .clog-hero__v b { color: var(--fm-ember-deep); }
+.forge-shell .clog-hero {
+  background: radial-gradient(130% 90% at 0% 0%, rgba(176,136,66,0.14), transparent 55%), var(--fm-parch);
+  background-image: var(--fm-tex-parch), radial-gradient(130% 90% at 0% 0%, rgba(176,136,66,0.14), transparent 55%);
+  background-size: cover, 100% 100%;
+  border-color: var(--fm-rule);
+  box-shadow: var(--fm-parch-inset);
+}
+.forge-shell .clog-hero__div { background: linear-gradient(90deg, var(--fm-brass-lo), transparent); }
+.forge-shell .clog-hero__mastered { color: var(--fm-ember-deep); text-shadow: none; }
+.clog-sheet:not(.is-done) { background: var(--fm-vellum); background-image: var(--fm-tex-parch); background-size: 400px; border-top-color: var(--fm-brass-lo); }
+.clog-sheet:not(.is-done) .clog-sheet__name, .clog-sheet:not(.is-done) .clog-cat__name { color: var(--fm-ink); }
+.clog-sheet:not(.is-done) .clog-sheet__sub { color: var(--fm-ink-faint); }
+.clog-sheet:not(.is-done) .clog-sheet__count b { color: var(--fm-ember-deep); }
+.clog-sheet:not(.is-done) .clog-sheet__count span, .clog-sheet:not(.is-done) .clog-sheet__count em { color: var(--fm-ink-faint); }
+.forge-shell .cb-idle:not(.is-on), .forge-shell .cb-styleseg:not(.is-on) { color: var(--fm-ink); opacity: 1; }
+.forge-shell .cb-idle:not(.is-on):hover, .forge-shell .cb-styleseg:not(.is-on):hover { border-color: var(--fm-brass); }
+.forge-shell .cb-h1 { background-image: var(--fm-gilt-text); }
+
+/* Quick-actions panel (Food & Potions / Weapons / Armour tabs + item slots) —
+   was a translucent dark overlay (looks fine on a dark page, turns to grey
+   mush on parchment), so it needs the same paper treatment as everything else. */
+.forge-shell .cb-qa { background: var(--fm-parch-lo); box-shadow: var(--fm-parch-inset); border-color: var(--fm-rule); }
+.forge-shell .cb-qa__tab:not(.is-on) { background: rgba(43,33,20,0.05); color: var(--fm-ink-soft); opacity: 1; }
+.forge-shell .cb-qa__tab.is-on { color: var(--fm-ember-deep); }
+.forge-shell .cb-qa__tabn { color: var(--fm-ink-faint); opacity: 1; }
+.forge-shell .cb-qa__empty { color: var(--fm-ink-faint); opacity: 1; }
+.forge-shell .cb-slot:not(.is-active) { background: var(--fm-parch-hi); border-color: var(--fm-rule); }
+.forge-shell .cb-slot__qty, .forge-shell .cb-slot__tag { color: var(--fm-ink-faint); opacity: 1; }
+.forge-shell .cb-slot__name { color: var(--fm-ink); opacity: 1; }
+
+/* Forgemark pilot — World Map place hub: the sheet below the banner becomes a
+   genuine parchment page (this screen is where the "Forgemark" identity
+   originated — see docs/map-driven-overhaul-plan.md). The banner itself
+   (photo or vector scene + white overlay text) is unaffected — that overlay
+   treatment already works over any art, themed or not. */
+.forge-shell.wm-hub { background: #e6d8b6; background-image: var(--fm-tex-parch); background-size: cover; }
+.forge-shell .wm-hub-lore { color: var(--fm-ink-soft); }
+.forge-shell .wm-hub-sectionhead::before, .forge-shell .wm-hub-sectionhead::after { background: var(--fm-rule); }
+.forge-shell .wm-hub-sectionhead span { color: var(--fm-ink-faint); }
+.forge-shell .wm-facility { background: var(--fm-parch-hi); border-color: var(--fm-rule); color: var(--fm-ember-deep); }
+.wm-hub-seal { float: right; margin: 0 0 8px 12px; }
+
+/* Category buttons (replaces the old flat activity chip-wall) + the dark,
+   hammered-iron action modal they open. One neutral card style per button —
+   only a small color dot carries the kind's accent, so a place with 7
+   categories doesn't turn into a wall of clashing border/text colors. */
+.wm-cat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 4px; }
+.wm-cat-btn {
+  display: flex; align-items: center; gap: 9px; min-height: 44px; padding: 10px 12px;
+  border-radius: 10px; cursor: pointer; text-align: left;
+  background: var(--fm-parch-hi); border: 1px solid var(--fm-rule);
+}
+.wm-cat-btn:hover { border-color: var(--fm-brass); }
+.wm-cat-btn:active { transform: scale(0.98); }
+.wm-cat-btn__dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+.wm-cat-btn__label { flex: 1; min-width: 0; font-family: var(--fm-serif); font-weight: 700; font-size: 13.5px; color: var(--fm-ink); }
+.wm-cat-btn__count { font-family: var(--fm-num); font-size: 12px; font-weight: 600; color: var(--fm-ink-faint); flex-shrink: 0; }
+
+.wm-actmodal-panel { background-color: var(--fm-vellum); background-image: var(--fm-tex-parch); background-size: 280px; border-color: var(--fm-rule); }
+.wm-actmodal-content { background: radial-gradient(130% 120% at 50% 50%, transparent 62%, rgba(110,75,30,0.14)); }
+.wm-actmodal-count { font-family: var(--fm-num); font-size: 13px; color: var(--fm-ember-deep); }
+.wm-actmodal-group + .wm-actmodal-group { margin-top: 14px; }
+.wm-actmodal-grouphead {
+  font-family: var(--fm-serif); font-weight: 700; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--fm-ink-faint); margin-bottom: 6px;
+}
+.wm-actmodal-row {
+  display: flex; align-items: center; gap: 10px; padding: 8px 4px; min-height: 44px;
+  border-bottom: 1px solid var(--fm-rule); font-family: var(--fm-serif); font-size: 13.5px;
+  width: 100%; text-align: left; background: none; border-left: 0; border-right: 0; border-top: 0;
+  cursor: pointer;
+}
+.wm-actmodal-row:last-child { border-bottom: 0; }
+.wm-actmodal-row:hover, .wm-actmodal-row:active { background: rgba(120,90,45,0.08); }
+.wm-actmodal-row__icon { flex-shrink: 0; }
+.wm-actmodal-row__name { flex: 1; min-width: 0; color: var(--fm-ink); }
+.wm-actmodal-row__lvl { font-family: var(--fm-num); font-size: 12.5px; font-weight: 600; color: var(--fm-ember-deep); flex-shrink: 0; }
+
+/* Forgemark nav rail (desktop SideNav + mobile BurgerMenu drawer) — the app
+   chrome joins the parchment screens: vellum texture, rule border, gilt brand. */
+.fm-navrail { background-color: var(--fm-vellum); background-image: var(--fm-tex-parch); background-size: 400px; border-right: 1px solid var(--fm-rule); scrollbar-width: thin; scrollbar-color: var(--fm-rule) transparent; }
+/* The global scrollbar track (--color-void-light) resolves near-black outside
+   .forge-shell — on the vellum rail it reads as a black line. Parchment it. */
+.fm-navrail::-webkit-scrollbar-track { background: transparent; }
+.fm-navrail::-webkit-scrollbar-thumb { background: var(--fm-rule); }
+.fm-navbrand { font-family: var(--font-display); font-weight: 800; letter-spacing: 0.02em; background: var(--fm-gilt-text); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent; }
+
+/* Desktop top bar joins the parchment chrome too; mobile keeps the black bar.
+   Same token remap as .forge-shell so var-based text reads as ink on vellum —
+   hardcoded dark chips (skip/credits pills, HP track) stay iron-on-parchment. */
+@media (min-width: 768px) {
+  .fm-topbar {
+    background-color: var(--fm-vellum);
+    background-image: var(--fm-tex-parch);
+    background-size: 400px;
+    border-bottom-color: var(--fm-rule);
+    --color-parchment: var(--fm-ink-soft);
+    --color-parchment-dark: var(--fm-ink-faint);
+    --color-gold: var(--fm-brass);
+    --color-gold-dim: var(--fm-brass-lo);
+  }
+}
+
 /* Emblem primitive */
 .skill-emblem { position: relative; pointer-events: none; }
 .skill-emblem__glow { position: absolute; inset: -8%; filter: blur(9px); }
@@ -300,6 +700,12 @@ html, body, #app {
 .armoury-card__name { display: block; font-size: 11px; font-weight: 700; line-height: 1.2; color: var(--color-parchment); text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7); }
 .armoury-card__tier { display: block; font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.04em; color: var(--color-gold-light); opacity: 0.8; }
 .armoury-card__spec { position: absolute; top: 4px; right: 6px; font-size: 11px; line-height: 1; filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.85)); }
+.forge-shell .armoury-card { background: var(--fm-parch); background-image: var(--fm-tex-parch); background-size: cover; border-color: var(--fm-rule); box-shadow: var(--fm-parch-inset); }
+.forge-shell .armoury-card:hover { border-color: var(--fm-brass); }
+.forge-shell .armoury-card__name { color: var(--fm-ink); text-shadow: none; }
+.forge-shell .armoury-card__tier { color: var(--fm-ember-deep); opacity: 1; }
+.forge-shell .section-head span { color: var(--fm-ink-faint); }
+.forge-shell .section-head__rule { background: linear-gradient(90deg, var(--fm-brass-lo), transparent); }
 
 /* Skill detail modal hero */
 .skill-detail__hero { display: flex; align-items: center; gap: 14px; }
@@ -340,7 +746,12 @@ html, body, #app {
   transition: border-color .14s, background .14s, transform .1s;
 }
 .cb-idle:active { transform: scale(0.97); }
-.cb-idle.is-on { border-color: rgba(60,176,67,0.5); background: linear-gradient(160deg, #122016, #0e1410); color: #cfeccb; box-shadow: inset 0 0 16px -8px rgba(60,176,67,0.5); }
+.cb-idle.is-on {
+  color: #1a1206;
+  background: linear-gradient(180deg, var(--color-gold-light), var(--color-gold) 60%, #b3851a);
+  border-color: rgba(240,192,64,0.6);
+  box-shadow: 0 6px 16px -8px rgba(212,160,23,0.6), inset 0 1px 0 rgba(255,255,255,0.4);
+}
 .cb-idle__chk { width: 13px; height: 13px; }
 
 /* Attack-style selector */
@@ -373,7 +784,7 @@ html, body, #app {
 .cb-area__name { font-family: var(--font-display); font-weight: 700; font-size: 17px; color: var(--color-parchment); letter-spacing: 0.01em; }
 .cb-area__blurb { font-size: 11px; color: var(--color-parchment); opacity: 0.46; font-weight: 600; margin-top: 2px; }
 .cb-area__count { font-family: var(--font-mono); font-size: 10.5px; font-weight: 700; color: var(--color-parchment); opacity: 0.45; flex-shrink: 0; white-space: nowrap; }
-.cb-area__raidtag { font-family: var(--font-mono); font-size: 10px; font-weight: 700; letter-spacing: 0.18em; color: #c9b6ff; background: rgba(155,108,255,0.16); border: 1px solid rgba(155,108,255,0.4); padding: 4px 9px; border-radius: 999px; flex-shrink: 0; }
+.cb-area__raidtag { font-family: var(--font-mono); font-size: 10px; font-weight: 700; letter-spacing: 0.18em; color: var(--fm-parch-hi); background: var(--fm-royal); border: 1px solid var(--fm-royal); padding: 4px 9px; border-radius: 999px; flex-shrink: 0; }
 .cb-area__chev { display: flex; align-items: center; justify-content: center; width: 26px; flex-shrink: 0; }
 .cb-area__chev img, .cb-area__chev svg { width: 22px; height: 22px; opacity: 0.85; }
 .cb-chev { width: 9px; height: 9px; border-right: 2px solid var(--color-parchment); border-bottom: 2px solid var(--color-parchment); transform: rotate(-45deg); opacity: 0.5; transition: transform .2s; }
@@ -471,16 +882,16 @@ html, body, #app {
 
 /* ── Prayer picker (mobile combat prayer modal) ── */
 .cb-prayhead { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
-.cb-prayhead h3 { font-family: var(--font-display); font-weight: 800; font-size: 20px; margin: 0; background: linear-gradient(180deg, #f7dd8e, var(--color-gold)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent; }
-.cb-praysec { font-family: var(--font-mono); font-size: 10.5px; font-weight: 700; letter-spacing: 0.22em; text-transform: uppercase; color: var(--color-parchment); opacity: 0.45; margin: 16px 2px 9px; }
+.cb-prayhead h3 { font-family: var(--font-display); font-weight: 800; font-size: 20px; margin: 0; background: var(--fm-gilt-text); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent; }
+.cb-praysec { font-family: var(--font-mono); font-size: 10.5px; font-weight: 700; letter-spacing: 0.22em; text-transform: uppercase; color: var(--fm-ink-faint); margin: 16px 2px 9px; }
 .cb-praygrid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .cb-praygrid--prot { grid-template-columns: 1fr 1fr 1fr; }
-.cb-prayer { position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: 3px; min-height: 60px; padding: 11px 12px; border-radius: 13px; cursor: pointer; text-align: left; background: linear-gradient(160deg, #16140e, #100d09); border: 1px solid rgba(255,255,255,0.08); transition: border-color .14s, background .14s, transform .1s; }
+.cb-prayer { position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: 3px; min-height: 60px; padding: 11px 12px; border-radius: 13px; cursor: pointer; text-align: left; background: var(--fm-parch-hi); border: 1px solid var(--fm-rule); transition: border-color .14s, background .14s, transform .1s; }
 .cb-prayer:active { transform: scale(0.97); }
-.cb-prayer.is-on { border-color: rgba(60,176,67,0.55); background: linear-gradient(160deg, #122016, #0e1410); box-shadow: inset 0 0 18px -8px rgba(60,176,67,0.5); }
+.cb-prayer.is-on { border-color: #2e7d32; background: rgba(60,176,67,0.16); box-shadow: inset 0 0 18px -8px rgba(46,125,50,0.4); }
 .cb-prayer.is-locked { opacity: 0.4; cursor: default; }
-.cb-prayer__name { font-family: var(--font-display); font-weight: 700; font-size: 13.5px; color: var(--color-parchment); display: flex; align-items: center; gap: 6px; }
-.cb-prayer__desc { font-size: 10px; color: var(--color-parchment); opacity: 0.55; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.cb-prayer__name { font-family: var(--font-display); font-weight: 700; font-size: 13.5px; color: var(--fm-ink); display: flex; align-items: center; gap: 6px; }
+.cb-prayer__desc { font-size: 10px; color: var(--fm-ink-soft); line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .cb-prayer__lv { font-family: var(--font-mono); font-size: 9px; font-weight: 700; color: var(--color-gold-dim); margin-top: auto; }
 .cb-prayer__chk { position: absolute; top: 8px; right: 10px; color: #7ce88a; font-size: 13px; font-weight: 700; }
 
@@ -496,41 +907,41 @@ html, body, #app {
 
 /* Drop table + unique panel */
 .cb-drops { display: flex; flex-direction: column; gap: 7px; }
-.cb-droprow { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 9px 13px; border-radius: 11px; background: linear-gradient(160deg, #16130d, #0f0d09); border: 1px solid rgba(255,255,255,0.05); }
+.cb-droprow { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 9px 13px; border-radius: 11px; background: var(--fm-parch-hi); border: 1px solid var(--fm-rule); }
 .cb-droprow__l { display: flex; align-items: center; gap: 10px; min-width: 0; }
-.cb-droprow__name { font-size: 13.5px; font-weight: 700; color: var(--color-parchment); opacity: 0.9; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cb-droprow__name { font-size: 13.5px; font-weight: 700; color: var(--fm-ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .cb-droprow__r { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
 .cb-droprow__rate { font-family: var(--font-mono); font-size: 12px; font-weight: 700; }
-.cb-droprow__rate.common { color: #9aa7b0; }
-.cb-droprow__rate.uncommon { color: #7bbf52; }
-.cb-droprow__rate.rare { color: #5aa9f0; }
-.cb-droprow__rate.veryrare { color: var(--color-gold-light); }
-.cb-droprow__qty { font-family: var(--font-mono); font-size: 11px; color: var(--color-parchment); opacity: 0.45; min-width: 54px; text-align: right; }
-.cb-unique { margin-top: 4px; border-radius: 14px; padding: 13px 14px 14px; background: radial-gradient(120% 90% at 100% 0%, rgba(247,221,142,0.14), transparent 60%), linear-gradient(160deg, #2a2010, #16110a); border: 1px solid rgba(240,192,64,0.45); box-shadow: inset 0 0 22px -8px rgba(240,192,64,0.4); }
-.cb-unique__head { display: flex; align-items: center; gap: 8px; font-family: var(--font-display); font-weight: 800; font-size: 14px; color: #fcecb0; text-shadow: 0 0 12px rgba(240,192,64,.5); }
-.cb-unique__spark { color: var(--color-gold-light); }
+.cb-droprow__rate.common { color: #66707a; }
+.cb-droprow__rate.uncommon { color: #3d7020; }
+.cb-droprow__rate.rare { color: #1e5fa8; }
+.cb-droprow__rate.veryrare { color: var(--fm-ember-deep); }
+.cb-droprow__qty { font-family: var(--font-mono); font-size: 11px; color: var(--fm-ink-soft); min-width: 54px; text-align: right; }
+.cb-unique { margin-top: 4px; border-radius: 14px; padding: 13px 14px 14px; background: radial-gradient(120% 90% at 100% 0%, rgba(176,136,66,0.22), transparent 60%), var(--fm-parch-hi); border: 1px solid var(--fm-brass); box-shadow: var(--fm-parch-inset); }
+.cb-unique__head { display: flex; align-items: center; gap: 8px; font-family: var(--font-display); font-weight: 800; font-size: 14px; color: var(--fm-ember-deep); }
+.cb-unique__spark { color: var(--fm-brass); }
 .cb-unique__grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px 14px; margin-top: 11px; }
-.cb-unique__item { display: flex; align-items: center; gap: 8px; font-size: 12.5px; font-weight: 700; color: #f4e6c0; min-width: 0; }
+.cb-unique__item { display: flex; align-items: center; gap: 8px; font-size: 12.5px; font-weight: 700; color: var(--fm-ink); min-width: 0; }
 .cb-unique__item span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .cb-unique__info { margin-left: auto; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; padding: 3px; border: 0; background: transparent; cursor: pointer; }
 .cb-unique__info:active { opacity: 0.6; }
 
 /* Unique drop-rate modal (opened from the ✦ Unique Drops info icon) */
 .cb-rates-overlay { position: fixed; inset: 0; z-index: 200; display: flex; align-items: center; justify-content: center; padding: 22px; background: rgba(4,3,2,0.8); backdrop-filter: blur(3px); animation: cbFade .2s ease; }
-.cb-rates { width: 100%; max-width: 340px; max-height: 70vh; overflow-y: auto; border-radius: 16px; padding: 13px 15px 15px; background: radial-gradient(120% 90% at 100% 0%, rgba(247,221,142,0.12), transparent 60%), linear-gradient(160deg, #2a2010, #16110a); border: 1px solid rgba(240,192,64,0.45); box-shadow: 0 20px 50px -10px rgba(0,0,0,0.85); }
-.cb-rates__head { display: flex; align-items: center; justify-content: space-between; font-family: var(--font-display); font-weight: 800; font-size: 15px; color: #fcecb0; text-shadow: 0 0 12px rgba(240,192,64,.4); margin-bottom: 8px; }
-.cb-rates__note { font-family: var(--font-mono); font-size: 12px; font-weight: 700; color: #e7c97e; opacity: 0.9; padding: 2px 0 6px; }
-.cb-rates__row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 0; border-top: 1px solid rgba(240,192,64,0.12); }
+.cb-rates { width: 100%; max-width: 340px; max-height: 70vh; overflow-y: auto; border-radius: 16px; padding: 13px 15px 15px; background-color: var(--fm-vellum); background-image: var(--fm-tex-parch); background-size: 400px; border: 1px solid var(--fm-brass); box-shadow: 0 20px 50px -10px rgba(0,0,0,0.6); }
+.cb-rates__head { display: flex; align-items: center; justify-content: space-between; font-family: var(--font-display); font-weight: 800; font-size: 15px; color: var(--fm-ink); margin-bottom: 8px; }
+.cb-rates__note { font-family: var(--font-mono); font-size: 12px; font-weight: 700; color: var(--fm-ember-deep); padding: 2px 0 6px; }
+.cb-rates__row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 0; border-top: 1px solid var(--fm-rule); }
 .cb-rates__row:first-child { border-top: 0; }
-.cb-rates__l { display: flex; align-items: center; gap: 9px; min-width: 0; font-size: 13px; font-weight: 700; color: #f4e6c0; }
+.cb-rates__l { display: flex; align-items: center; gap: 9px; min-width: 0; font-size: 13px; font-weight: 700; color: var(--fm-ink); }
 .cb-rates__l span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.cb-rates__rate { flex-shrink: 0; font-family: var(--font-mono); font-size: 12.5px; font-weight: 700; color: #e7c97e; }
+.cb-rates__rate { flex-shrink: 0; font-family: var(--font-mono); font-size: 12.5px; font-weight: 700; color: var(--fm-ember-deep); }
 
 /* Combat-stats grid */
 .cb-statgrid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
-.cb-stat { display: flex; flex-direction: column; gap: 3px; padding: 11px 12px; border-radius: 12px; background: linear-gradient(160deg, #16130d, #100d09); border: 1px solid rgba(255,255,255,0.06); }
-.cb-stat__k { font-size: 9.5px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; color: var(--color-parchment); opacity: 0.45; }
-.cb-stat__v { font-family: var(--font-mono); font-weight: 700; font-size: 17px; color: var(--color-gold-light); }
+.cb-stat { display: flex; flex-direction: column; gap: 3px; padding: 11px 12px; border-radius: 12px; background: var(--fm-parch-hi); border: 1px solid var(--fm-rule); }
+.cb-stat__k { font-size: 9.5px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; color: var(--fm-ink-faint); }
+.cb-stat__v { font-family: var(--font-mono); font-weight: 700; font-size: 17px; color: var(--fm-ember-deep); }
 
 /* Slide-up sheet (mobile only; desktop keeps <Modal>) */
 .cb-overlay { position: absolute; inset: 0; z-index: 100; display: flex; align-items: flex-end; justify-content: center; background: rgba(4,3,2,0.74); backdrop-filter: blur(3px); animation: cbFade .2s ease; }
@@ -551,12 +962,12 @@ html, body, #app {
 .cb-sheet__sec { font-family: var(--font-mono); font-size: 10.5px; font-weight: 700; letter-spacing: 0.22em; text-transform: uppercase; color: var(--color-parchment); opacity: 0.45; margin: 18px 2px 11px; }
 
 /* Raid sheet specifics */
-.cb-raid__tag { display: inline-block; font-family: var(--font-mono); font-size: 9.5px; font-weight: 700; letter-spacing: 0.2em; color: #c9b6ff; background: rgba(155,108,255,0.16); border: 1px solid rgba(155,108,255,0.4); padding: 2px 8px; border-radius: 999px; margin-bottom: 5px; }
+.cb-raid__tag { display: inline-block; font-family: var(--font-mono); font-size: 9.5px; font-weight: 700; letter-spacing: 0.2em; color: var(--fm-parch-hi); background: var(--fm-royal); border: 1px solid var(--fm-royal); padding: 2px 8px; border-radius: 999px; margin-bottom: 5px; }
 .cb-raid__times { display: grid; grid-template-columns: 1fr; gap: 8px; }
-.cb-raid__time { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 11px 6px; border-radius: 12px; background: linear-gradient(160deg, #16130d, #100d09); border: 1px solid rgba(255,255,255,0.06); }
-.cb-raid__tk { font-size: 9px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; opacity: 0.45; }
-.cb-raid__tv { font-family: var(--font-mono); font-weight: 700; font-size: 15px; color: var(--color-parchment); opacity: 0.85; }
-.cb-raid__tv.gold { color: var(--color-gold-light); }
+.cb-raid__time { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 11px 6px; border-radius: 12px; background: var(--fm-parch-hi); border: 1px solid var(--fm-rule); }
+.cb-raid__tk { font-size: 9px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--fm-ink-faint); }
+.cb-raid__tv { font-family: var(--font-mono); font-weight: 700; font-size: 15px; color: var(--fm-ink); }
+.cb-raid__tv.gold { color: var(--fm-ember-deep); }
 .cb-rooms { display: flex; flex-direction: column; }
 .cb-room { display: flex; align-items: center; gap: 10px; padding: 4px 0; position: relative; opacity: 0.65; }
 .cb-room.is-clear { opacity: 1; }
@@ -570,33 +981,46 @@ html, body, #app {
 .cb-room__boss { font-size: 11px; color: var(--color-parchment); opacity: 0.5; margin-top: 1px; }
 .cb-room__right { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; flex-shrink: 0; }
 .cb-room__status { font-family: var(--font-mono); font-size: 10px; font-weight: 700; opacity: 0.4; }
-.cb-room__status.clear { color: #7ce88a; opacity: 1; }
+.cb-room__status.clear { color: #2e7d32; opacity: 1; }
 .cb-reqs { display: flex; flex-wrap: wrap; gap: 7px; }
 .cb-req { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; color: var(--color-parchment); opacity: 0.8; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 999px; padding: 6px 11px; }
 .cb-req img, .cb-req svg { width: 13px; height: 13px; }
 .cb-raid__enter { margin-top: 14px; flex-shrink: 0; width: 100%; min-height: 48px; padding: 14px; border: none; cursor: pointer; border-radius: 14px; font-family: var(--font-display); font-weight: 800; font-size: 16px; letter-spacing: 0.03em; color: #1a1206; background: linear-gradient(180deg, var(--color-gold-light), var(--color-gold) 60%, #b3851a); box-shadow: 0 8px 20px -8px rgba(212,160,23,0.6), inset 0 1px 0 rgba(255,255,255,0.4); }
 .cb-raid__enter:active { transform: scale(0.98); }
 
+/* Bestiary/task bottom sheet (CombatMobileSheets, SlayerScreen) — always
+   Forgemark parchment; both consumers are fully reskinned so this doesn't
+   need .forge-shell scoping, and uses the global --fm-* tokens directly. */
+.cb-sheet, .cb-sheet--raid { background: var(--fm-vellum); background-image: var(--fm-tex-parch); background-size: 500px; border-top-color: var(--fm-brass-lo); }
+.cb-sheet--raid { border-top-color: var(--fm-royal); }
+.cb-sheet__grab { background: var(--fm-rule); }
+.cb-sheet__name, .cb-room__name { color: var(--fm-ink); }
+.cb-sheet__sub, .cb-sheet__sec, .cb-room__boss { color: var(--fm-ink-faint); }
+.cb-room__dot { background: var(--fm-parch-lo); border-color: var(--fm-rule); }
+.cb-room.is-clear .cb-room__dot { background: radial-gradient(circle, #fcecb0, var(--fm-brass)); border-color: var(--fm-brass-hi); }
+.cb-room__line { background: var(--fm-rule); }
+.cb-req { color: var(--fm-ink-soft); background: var(--fm-parch-hi); border-color: var(--fm-rule); }
+
 /* Idle config sheet */
 .cb-sheet--idle { padding-top: 18px; }
 .cb-idlehead { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; flex-shrink: 0; }
 .cb-idlehead__title { display: flex; align-items: center; gap: 9px; }
-.cb-idlehead__title h2 { font-family: var(--font-display); font-weight: 800; font-size: 20px; margin: 0; background: linear-gradient(180deg, #f7dd8e, var(--color-gold)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent; }
-.cb-x { width: 44px; height: 44px; border-radius: 50%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.cb-idlehead__title h2 { font-family: var(--font-display); font-weight: 800; font-size: 20px; margin: 0; background: var(--fm-gilt-text); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent; }
+.cb-x { width: 44px; height: 44px; border-radius: 50%; background: var(--fm-parch-hi); border: 1px solid var(--fm-rule); cursor: pointer; display: flex; align-items: center; justify-content: center; }
 .cb-x img, .cb-x svg { width: 16px; height: 16px; }
-.cb-idledesc { font-size: 13px; line-height: 1.5; color: var(--color-parchment); opacity: 0.55; margin: 6px 2px 14px; flex-shrink: 0; }
+.cb-idledesc { font-size: 13px; line-height: 1.5; color: var(--fm-ink-soft); margin: 6px 2px 14px; flex-shrink: 0; }
 .cb-idlelist { overflow-y: auto; display: flex; flex-direction: column; gap: 9px; padding: 2px; }
 .cb-idlelist::-webkit-scrollbar { width: 4px; }
 .cb-idlelist::-webkit-scrollbar-thumb { background: rgba(240,192,64,0.3); border-radius: 999px; }
-.cb-fooditem { display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 12px 13px; border-radius: 14px; cursor: pointer; background: linear-gradient(160deg, #16130d, #100d09); border: 1px solid rgba(255,255,255,0.07); transition: border-color .14s, background .14s; }
-.cb-fooditem.is-sel { border-color: rgba(240,192,64,0.45); background: radial-gradient(120% 90% at 100% 0%, rgba(240,192,64,0.1), transparent 60%), linear-gradient(160deg, #1c1810, #110e09); box-shadow: inset 0 0 18px -8px rgba(240,192,64,0.4); }
+.cb-fooditem { display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 12px 13px; border-radius: 14px; cursor: pointer; background: var(--fm-parch-hi); border: 1px solid var(--fm-rule); transition: border-color .14s, background .14s; }
+.cb-fooditem.is-sel { border-color: var(--fm-brass); background: radial-gradient(120% 90% at 100% 0%, rgba(176,136,66,0.2), transparent 60%), var(--fm-parch-hi); box-shadow: var(--fm-parch-inset); }
 .cb-fooditem__art { flex-shrink: 0; }
 .cb-fooditem__body { flex: 1; min-width: 0; }
-.cb-fooditem__name { font-family: var(--font-display); font-weight: 700; font-size: 16px; color: var(--color-parchment); }
-.cb-fooditem__heal { color: #7ce88a; font-family: var(--font-mono); font-size: 13px; font-weight: 700; }
-.cb-fooditem__sub { font-size: 11.5px; color: var(--color-parchment); opacity: 0.48; margin-top: 2px; font-weight: 600; }
-.cb-fooditem__btn { flex-shrink: 0; font-family: var(--font-body); font-weight: 800; font-size: 13px; color: var(--color-parchment); opacity: 0.7; padding: 7px 15px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.14); }
-.cb-fooditem__btn.is-sel { color: var(--color-gold-light); opacity: 1; border-color: rgba(240,192,64,0.45); background: rgba(240,192,64,0.08); }
+.cb-fooditem__name { font-family: var(--font-display); font-weight: 700; font-size: 16px; color: var(--fm-ink); }
+.cb-fooditem__heal { color: #2e7d32; font-family: var(--font-mono); font-size: 13px; font-weight: 700; }
+.cb-fooditem__sub { font-size: 11.5px; color: var(--fm-ink-soft); margin-top: 2px; font-weight: 600; }
+.cb-fooditem__btn { flex-shrink: 0; font-family: var(--font-body); font-weight: 800; font-size: 13px; color: var(--fm-ink-soft); padding: 7px 15px; border-radius: 999px; border: 1px solid var(--fm-rule); }
+.cb-fooditem__btn.is-sel { color: var(--fm-ember-deep); border-color: var(--fm-brass); background: rgba(176,136,66,0.15); }
 .cb-done { margin-top: 14px; flex-shrink: 0; align-self: flex-end; min-height: 44px; padding: 11px 28px; border: none; cursor: pointer; border-radius: 12px; font-family: var(--font-display); font-weight: 800; font-size: 15px; color: #1a1206; background: linear-gradient(180deg, var(--color-gold-light), var(--color-gold) 60%, #b3851a); box-shadow: 0 6px 16px -8px rgba(212,160,23,0.6); }
 .cb-done:active { transform: scale(0.97); }
 
@@ -1774,3 +2198,187 @@ html, body, #app {
 .clog-slot__name { font-size: 10px; font-weight: 700; line-height: 1.2; letter-spacing: .01em; color: var(--color-parchment); opacity: .85; min-height: 24px; display: flex; align-items: center; }
 .clog-slot.is-locked .clog-slot__name { opacity: .32; }
 .clog-slot__lock { position: absolute; top: 5px; right: 7px; font-size: 11px; opacity: .4; line-height: 1; }
+
+/* ════ World Map (map-driven overhaul, phase 1) ═══════════════════════════ */
+/* The "desk" the chart sits on: hammered Forgemark iron, not flat void. */
+.wm-stage { cursor: grab; background-color: var(--fm-soot); background-image:
+  radial-gradient(120% 90% at 50% 120%, rgba(192,57,43,0.10), transparent 55%),
+  radial-gradient(80% 60% at 50% -10%, rgba(212,160,23,0.06), transparent 60%),
+  var(--fm-tex-iron);
+  background-size: auto, auto, 280px; }
+.wm-stage:active { cursor: grabbing; }
+.wm-board { position: absolute; top: 0; left: 0; transform-origin: 0 0; will-change: transform; }
+.wm-chart { position: absolute; inset: 0; background-color: #e4d6b2; background-image: var(--fm-tex-parch); background-size: 600px;
+  border-radius: 10px;
+  box-shadow: inset 0 0 0 2px rgba(120,95,55,0.4), 0 30px 80px -30px #000; }
+/* Painted terrain (PlaceArt's <WorldTerrain>) sits over the parchment; the grunge layer
+   re-ages it (vignette + fibre texture multiplied back on top) so the sea/forest paint
+   still reads as ink on old vellum rather than a flat digital illustration. */
+.wm-terrain { position: absolute; inset: 0; border-radius: 10px; }
+/* Generated map art (world.json `mapImage`) — fills the board under the grunge
+   vignette; the procedural terrain renders instead when absent/broken. */
+.wm-map-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; border-radius: 10px; pointer-events: none; user-select: none; }
+
+.wm-grunge { position: absolute; inset: 0; border-radius: 10px; pointer-events: none;
+  background-image: radial-gradient(130% 120% at 50% 50%, transparent 55%, rgba(90,60,20,0.35)), var(--fm-tex-parch);
+  background-size: cover, 600px; mix-blend-mode: multiply; opacity: 0.5; }
+.wm-routes { position: absolute; top: 0; left: 0; overflow: visible; }
+.wm-road { stroke: #6e4f20; stroke-width: 3; stroke-dasharray: 2 9; stroke-linecap: round; opacity: 0.9; }
+
+.wm-node { position: absolute; transform: translate(-50%, -50%); display: flex; flex-direction: column;
+  align-items: center; gap: 6px; border: 0; background: none; padding: 0; cursor: pointer; min-width: 44px; min-height: 44px; }
+.wm-medal { position: relative; border-radius: 50%; background: linear-gradient(160deg,#c9a23a,#7c5c1e);
+  display: grid; place-items: center; box-shadow: inset 0 2px 3px rgba(255,240,200,0.55),
+  inset 0 -3px 6px rgba(80,55,15,0.7), 0 5px 14px -4px rgba(0,0,0,0.8);
+  transition: transform .14s ease, box-shadow .14s ease; }
+.wm-face { position: absolute; inset: 12%; border-radius: 50%; display: grid; place-items: center;
+  background: radial-gradient(circle at 38% 30%, #2a2622, #100e0c);
+  box-shadow: inset 0 0 0 1px var(--wm-accent); line-height: 1; overflow: hidden; }
+.wm-face-art { filter: drop-shadow(0 1px 1px rgba(0,0,0,.55)); }
+.wm-node:hover .wm-medal { transform: translateY(-2px) scale(1.05); }
+.wm-node--here .wm-medal { box-shadow: 0 0 0 3px rgba(240,116,42,0.5), 0 0 24px 2px rgba(240,116,42,0.45), 0 5px 14px -4px #000; }
+/* Name plates read as chart labels: vellum tags with engraved ink over the painted
+   terrain (the old dark-iron plates fought the parchment map). */
+.wm-plate { display: flex; flex-direction: column; align-items: center; padding: 3px 10px; border-radius: 4px;
+  background: rgba(243,234,208,0.92); border: 1px solid rgba(122,95,55,0.55); box-shadow: 0 2px 7px -3px rgba(50,32,8,0.75); white-space: nowrap; }
+.wm-name { font-family: var(--font-display); font-weight: 600; font-size: 14px; color: var(--fm-ink); line-height: 1.1; }
+.wm-tier { font-size: 8.5px; letter-spacing: .2em; text-transform: uppercase; font-weight: 700;
+  color: color-mix(in srgb, var(--wm-accent) 55%, var(--fm-ink)); }
+.wm-node--here .wm-plate { border-color: rgba(194,65,12,0.75); box-shadow: 0 0 0 1px rgba(240,116,42,0.35), 0 2px 7px -3px rgba(50,32,8,0.75); }
+.wm-node--here .wm-name { color: var(--fm-ember-deep); }
+
+.wm-legend { position: absolute; left: 14px; bottom: 14px; z-index: 20; padding: 10px 12px; border-radius: 8px; max-width: 220px;
+  background: var(--color-void-light); border: 1px solid var(--color-void-border); box-shadow: 0 6px 18px -10px #000, var(--fm-parch-inset); }
+.wm-legend h4 { margin: 0 0 7px; font-family: var(--font-display); font-weight: 600; font-size: 12px; color: var(--fm-ember-deep); }
+.wm-legrow { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--color-parchment); margin: 4px 0; }
+.wm-dot { width: 13px; height: 13px; border-radius: 50%; flex: 0 0 auto; box-shadow: inset 0 0 0 2px rgba(0,0,0,.4); }
+.wm-hint { margin-top: 8px; font-style: italic; font-size: 11.5px; color: var(--color-parchment-dark); }
+@media (max-width: 560px) { .wm-legend { display: none; } }
+
+.wm-ctl { position: absolute; right: 14px; bottom: 14px; z-index: 20; display: flex; flex-direction: column; gap: 8px; }
+.wm-ctl button { width: 44px; height: 44px; border-radius: 8px; cursor: pointer; color: var(--fm-ink);
+  background-color: var(--fm-vellum); background-image: var(--fm-tex-parch); background-size: 240px;
+  border: 1px solid var(--fm-rule); box-shadow: 0 4px 12px -6px #000, var(--fm-parch-inset);
+  font-size: 20px; font-family: var(--fm-display); display: grid; place-items: center; }
+.wm-ctl button:hover { color: var(--fm-ember-deep); border-color: var(--fm-brass); }
+.wm-ctl button:active { transform: translateY(1px); }
+
+.wm-scrim { position: absolute; inset: 0; z-index: 40; background: rgba(8,6,4,0.62); }
+.wm-hub { position: absolute; z-index: 50; right: 0; top: 0; height: 100%; width: min(460px, 100%);
+  display: flex; flex-direction: column; background: var(--color-void-light); border-left: 1px solid var(--color-void-border);
+  box-shadow: -12px 0 40px -20px #000; }
+.wm-hub-banner { position: relative; flex: 0 0 auto; height: 170px; display: flex; align-items: flex-end; overflow: hidden;
+  background: linear-gradient(160deg, color-mix(in srgb, var(--wm-accent) 22%, #15130d), #100d08); }
+/* Bespoke per-place establishing illustration, sized to fill the banner and stay crisp
+   at any width (mobile + desktop). The veil keeps the name/tier text legible over it. */
+.wm-hub-scene { position: absolute; inset: 0; z-index: 0; }
+.wm-hub-scene > svg { width: 100%; height: 100%; }
+.wm-hub-scene-veil { position: absolute; inset: 0; z-index: 1; pointer-events: none;
+  background: linear-gradient(to top, rgba(8,6,4,0.82) 4%, rgba(8,6,4,0.28) 42%, rgba(8,6,4,0) 70%); }
+.wm-hub-banner > .wm-hub-meta { position: relative; z-index: 2; }
+@media (min-width: 560px) { .wm-hub-banner { height: 196px; } }
+.wm-hub-close { position: absolute; top: 10px; right: 10px; z-index: 4; width: 34px; height: 34px; border-radius: 50%;
+  background: rgba(20,17,13,.7); border: 1px solid rgba(176,136,66,.5); color: #fff; font-size: 18px; cursor: pointer; }
+.wm-hub-close:hover { color: var(--color-gold-light); }
+.wm-hub-meta { padding: 0 16px 12px; }
+.wm-hub-tier { display: inline-flex; align-items: center; gap: 6px; font-weight: 700; font-size: 10px; letter-spacing: .18em;
+  text-transform: uppercase; padding: 3px 9px; border-radius: 4px; color: #fff; border: 1px solid rgba(255,255,255,.3); background: rgba(0,0,0,.35); }
+.wm-hub-name { font-family: var(--font-display); font-weight: 700; font-size: 28px; color: #fff; line-height: 1; margin: 6px 0 2px; }
+.wm-hub-sub { font-style: italic; font-size: 13px; color: var(--color-parchment-dark); }
+.wm-hub-body { flex: 1; min-height: 0; overflow-y: auto; padding: 14px 16px 18px; }
+.wm-hub-lore { font-style: italic; color: var(--color-parchment); opacity: .85; font-size: 14px; line-height: 1.5; margin: 0 0 14px; }
+.wm-hub-note { margin: 2px 0 16px; font-style: italic; font-size: 12.5px; color: var(--color-parchment-dark); }
+.wm-hub-sectionhead { display: flex; align-items: center; gap: 12px; margin: 4px 0 12px; }
+.wm-hub-sectionhead::before, .wm-hub-sectionhead::after { content: ''; height: 1px; flex: 1; background: var(--color-void-border); }
+.wm-hub-sectionhead span { font-family: var(--font-display); font-weight: 600; font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--color-parchment-dark); }
+.wm-act { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; padding: 11px 12px; margin-bottom: 9px;
+  border-radius: 8px; background: var(--color-void); border: 1px solid var(--color-void-border); }
+.wm-act-icon { width: 42px; height: 42px; flex: 0 0 auto; border-radius: 50%; display: grid; place-items: center; font-size: 22px;
+  background: radial-gradient(circle at 38% 30%, #2a2622, #100e0c); box-shadow: inset 0 0 0 2px var(--color-gold-dim); }
+.wm-act-main { flex: 1; min-width: 0; }
+.wm-act-name { display: block; font-family: var(--font-display); font-weight: 600; font-size: 16px; color: var(--color-parchment); line-height: 1.1; }
+.wm-act-note { display: block; font-size: 12px; color: var(--color-parchment-dark); margin-top: 2px; }
+.wm-act-right { text-align: right; flex: 0 0 auto; }
+.wm-act-lvl { font-family: var(--font-mono); font-size: 12px; font-weight: 600; color: var(--color-parchment); opacity: .7; display: block; margin-bottom: 4px; }
+
+/* World Map — place hub facilities */
+.wm-hub-facilities { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+.wm-facility { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 600;
+  color: var(--color-gold-light); background: var(--color-void); border: 1px solid var(--color-gold-dim);
+  border-radius: 6px; padding: 5px 9px; }
+
+/* Travel prompt / location picker (phase 3 activity gating) */
+.wm-tp { display: flex; flex-direction: column; gap: 12px; padding: 4px 2px; }
+.wm-tp-lead { margin: 0; font-size: 15px; color: var(--color-parchment); }
+.wm-tp-act strong { font-family: var(--font-display); }
+.wm-tp-sub { margin: 0; font-size: 13px; color: var(--color-parchment-dark); }
+.wm-tp-list { display: flex; flex-direction: column; gap: 8px; }
+.wm-tp-option { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px;
+  width: 100%; text-align: left; padding: 10px 14px; border-radius: 8px; cursor: pointer;
+  background: var(--color-void); border: 1px solid var(--color-gold-dim); color: var(--color-parchment); }
+.wm-tp-option:hover { border-color: var(--color-gold); background: var(--color-void-border); }
+.wm-tp-place { font-family: var(--font-display); font-weight: 600; font-size: 15px; }
+.wm-tp-ticks { font-family: var(--font-mono); font-size: 13px; color: var(--color-gold-light); }
+.wm-tp-cancel { min-height: 44px; padding: 10px 14px; border-radius: 8px; cursor: pointer;
+  background: transparent; border: 1px solid var(--color-void-border); color: var(--color-parchment-dark); }
+.wm-tp-cancel:hover { color: var(--color-parchment); border-color: var(--color-parchment-dark); }
+
+/* World Map — travel (phase 2) */
+.wm-token { position: absolute; z-index: 6; transform: translate(-50%, -50%); width: 30px; height: 30px;
+  border-radius: 50%; display: grid; place-items: center; font-size: 16px; line-height: 1;
+  background: radial-gradient(circle at 38% 30%, #ffd9a8, #f0742a);
+  box-shadow: inset 0 1px 0 rgba(255,220,180,.6), 0 0 18px 3px rgba(240,116,42,.55), 0 3px 8px -2px #000;
+  transition: left .55s linear, top .55s linear; }
+
+.wm-travelbar { position: absolute; left: 50%; top: 12px; transform: translateX(-50%); z-index: 25;
+  width: min(520px, calc(100% - 28px)); padding: 12px 16px 14px; border-radius: 12px;
+  background: var(--color-void-light); border: 1px solid var(--color-void-border); box-shadow: 0 10px 30px -14px #000; }
+.wm-travelbar-top { display: flex; align-items: baseline; gap: 10px; margin-bottom: 9px; }
+.wm-travelbar-lead { font-family: var(--font-display); font-weight: 600; font-size: 15px; color: var(--color-parchment); }
+.wm-travelbar-lead b { color: var(--color-gold-light); }
+.wm-travelbar-ticks { margin-left: auto; font-family: var(--font-mono); font-size: 13px; color: var(--color-gold-light); }
+.wm-track { height: 12px; border-radius: 999px; overflow: hidden; background: rgba(0,0,0,0.5); box-shadow: inset 0 1px 3px rgba(0,0,0,.8); }
+.wm-track-fill { height: 100%; border-radius: inherit; background: linear-gradient(90deg, #f0742a, #ffd9a8);
+  box-shadow: inset 0 1px 0 rgba(255,220,180,.5); transition: width .55s linear; }
+.wm-travelbar-route { margin-top: 8px; font-style: italic; font-size: 12px; color: var(--color-parchment-dark); }
+.wm-travelbar-actions { margin-top: 10px; display: flex; gap: 8px; }
+.wm-travelbar-cancel { flex: 1; min-height: 44px; font-family: var(--font-display); font-weight: 600;
+  font-size: 13px; color: var(--color-parchment); background: transparent; border: 1px solid var(--color-void-border);
+  border-radius: 8px; cursor: pointer; }
+.wm-travelbar-cancel:hover { border-color: var(--color-gold); color: var(--color-gold-light); }
+.wm-travelbar-skip { flex: 1; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  font-family: var(--font-display); font-weight: 700; font-size: 13px; color: var(--color-ink); cursor: pointer;
+  border-radius: 8px; background: linear-gradient(180deg, var(--color-gold-light), var(--color-gold-dim));
+  border: 1px solid var(--color-gold-dim); box-shadow: 0 2px 8px -3px #000; }
+.wm-travelbar-skip:hover { filter: brightness(1.05); }
+.wm-travelbar-skip:active { transform: translateY(1px); }
+.wm-travelbar-skip:disabled { opacity: 0.6; cursor: default; }
+.wm-travelbar-tele { flex: 1; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  font-family: var(--font-display); font-weight: 700;
+  font-size: 13px; color: #fff; cursor: pointer; border-radius: 8px;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--fm-royal) 72%, white), var(--fm-royal));
+  border: 1px solid var(--fm-royal); box-shadow: 0 2px 8px -3px #000; }
+.wm-travelbar-tele:hover { filter: brightness(1.08); }
+.wm-travelbar-tele:active { transform: translateY(1px); }
+
+.wm-travel-btn { width: 100%; min-height: 44px; margin: 0 0 16px; font-family: var(--font-display); font-weight: 700;
+  font-size: 15px; color: var(--color-ink); cursor: pointer; border-radius: 8px;
+  background: linear-gradient(180deg, var(--color-gold-light), var(--color-gold-dim));
+  border: 1px solid var(--color-gold-dim); box-shadow: 0 2px 8px -3px #000; }
+.wm-travel-btn:hover { filter: brightness(1.06); }
+.wm-travel-btn:active { transform: translateY(1px); }
+
+/* Hub teleport button — arcane royal against the gold travel button; locked
+   state flattens to a vellum ghost carrying the unmet requirement. */
+.wm-tele-btn { width: 100%; min-height: 44px; margin: 0 0 16px; padding: 6px 12px; cursor: pointer; border-radius: 8px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
+  font-family: var(--font-display);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--fm-royal) 72%, white), var(--fm-royal));
+  border: 1px solid var(--fm-royal); box-shadow: 0 2px 8px -3px #000; }
+.wm-tele-btn__lead { display: inline-flex; align-items: center; gap: 6px; font-weight: 700; font-size: 14px; color: #fff; }
+.wm-tele-btn__cost { font-family: var(--font-body); font-size: 11px; color: #fff; }
+.wm-tele-btn:hover { filter: brightness(1.08); }
+.wm-tele-btn:active { transform: translateY(1px); }
+.wm-tele-btn.is-locked { cursor: default; background: var(--fm-parch-hi, transparent); border-color: var(--fm-rule, var(--color-void-border)); box-shadow: none; filter: none; transform: none; }
+.wm-tele-btn.is-locked .wm-tele-btn__lead { color: var(--fm-ink-faint, var(--color-parchment)); }
+.wm-tele-btn.is-locked .wm-tele-btn__cost { color: var(--fm-ink-faint, var(--color-parchment)); }

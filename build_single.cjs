@@ -34,6 +34,9 @@ const sourceFiles = [
   'hooks/useEscapeKey.js',
   'engine/experience.js',
   'engine/combatLevel.js',
+  'engine/world.js',
+  'engine/travel.js',
+  'engine/journeys.js',
   'engine/seedDrops.js',
   'engine/formulas.js',
   'engine/equipment.js',
@@ -45,6 +48,7 @@ const sourceFiles = [
   'engine/thieving.js',
   'engine/hunter.js',
   'engine/runes.js',
+  'engine/teleports.js',
   'engine/slayerRewards.js',
   'engine/slayerTasks.js',
   'engine/slayerMasters.js',
@@ -71,6 +75,7 @@ const sourceFiles = [
   'engine/idleSupplies.js',
   'engine/gatherTasks.js',
   'engine/construction.js',
+  'engine/worldContent.js',
   'engine/idleEngine.js',
   'engine/applyTaskResult.js',
   'engine/tick.js',
@@ -100,6 +105,8 @@ const sourceFiles = [
   'state/gameState.js',
   'state/pvpState.js',
   'components/Modal.js',
+  'components/PlaceArt.js', // -> game chunk (map art; only WorldMapScreen renders it)
+  'components/TravelPrompt.js',
   'components/HPBar.js',
   'components/HitSplat.js',
   'components/ActivePotionBadges.js',
@@ -124,6 +131,8 @@ const sourceFiles = [
   'components/Card.js',
   'components/Panel.js',
   'components/Button.js',
+  'components/IronFrame.js',
+  'components/WaxSeal.js',
   'components/WeaponChargePanel.js',
   'components/SectionHeader.js',
   'components/BonusDisplay.js',
@@ -162,6 +171,7 @@ const sourceFiles = [
   'screens/SkillingScreen.js',
   'screens/ConstructionScreen.js',
   'screens/MagicScreen.js',
+  'screens/WorldMapScreen.js',
   'screens/SlayerScreen.js',
   'screens/GatherScreen.js',
   'screens/TradingPostScreen.js',
@@ -202,6 +212,7 @@ const sourceFiles = [
 // reference a game screen at module-evaluation time (App only does so inside
 // renderScreen, which runs after the chunk has loaded).
 const GAME_CHUNK_FILES = new Set([
+  'components/PlaceArt.js',
   'screens/HomeScreen.js',
   'screens/StatsScreen.js',
   'screens/InventoryScreen.js',
@@ -220,6 +231,7 @@ const GAME_CHUNK_FILES = new Set([
   'screens/SkillingScreen.js',
   'screens/ConstructionScreen.js',
   'screens/MagicScreen.js',
+  'screens/WorldMapScreen.js',
   'screens/SlayerScreen.js',
   'screens/GatherScreen.js',
   'screens/TradingPostScreen.js',
@@ -273,6 +285,8 @@ const minigamesJSON = readSrc('data/minigames.json');
 const cluesJSON = readSrc('data/clues.json');
 const collectionLogJSON = readSrc('data/collectionLog.json');
 const dailyTasksJSON = readSrc('data/dailyTasks.json');
+const worldJSON = readSrc('data/world.json');
+const worldActivitiesJSON = readSrc('data/worldActivities.json');
 
 // Landing screen images. Served as external files from /public/landing/ (the
 // Cloudflare Pages output dir is the repo root) and referenced by URL rather
@@ -383,19 +397,29 @@ const compiledTailwindCSS = fs.readFileSync(path.join(__dirname, '.tmp', 'app.cs
 // the document, shortening the chain. Below-the-fold / in-app-only weights
 // (Nunito 600/700, all JetBrains Mono) are intentionally NOT preloaded so they
 // don't compete with the LCP image for early bandwidth.
+// Forgemark (in-game only, loaded inside the lazy game chunk — never preloaded):
+//   Grenze Gotisch    — display / headings
+//   Spectral          — body serif (needs italic for the "ledger" emphasis voice)
+//   IM Fell English   — lore/flavour italic (its only real use is italic)
+//   Spline Sans Mono  — numerics
 const FONT_FACES = [
-  { pkg: '@fontsource/cinzel',         family: 'Cinzel',         weights: [400, 700, 900], preload: [400, 700, 900] },
-  { pkg: '@fontsource/nunito',          family: 'Nunito',         weights: [400, 600, 700], preload: [400]           },
-  { pkg: '@fontsource/jetbrains-mono', family: 'JetBrains Mono', weights: [400, 700],      preload: []              },
+  { pkg: '@fontsource/cinzel',           family: 'Cinzel',           weights: [400, 700, 900], preload: [400, 700, 900] },
+  { pkg: '@fontsource/nunito',            family: 'Nunito',           weights: [400, 600, 700], preload: [400]           },
+  { pkg: '@fontsource/jetbrains-mono',   family: 'JetBrains Mono',   weights: [400, 700],      preload: []              },
+  { pkg: '@fontsource/grenze-gotisch',   family: 'Grenze Gotisch',   weights: [400, 700, 900], preload: []              },
+  { pkg: '@fontsource/spectral',         family: 'Spectral',         weights: [400, 600, 700], italics: [400, 600],    preload: [] },
+  { pkg: '@fontsource/im-fell-english',  family: 'IM Fell English',  weights: [400],           italics: [400],         preload: [] },
+  { pkg: '@fontsource/spline-sans-mono', family: 'Spline Sans Mono', weights: [400, 500, 600, 700], preload: []        },
 ];
 const fontsOutDir = path.join(__dirname, 'public', 'fonts');
 fs.mkdirSync(fontsOutDir, { recursive: true });
 let fontFaceCSS = '';
 let fontPreloadTags = '';
-for (const { pkg, family, weights, preload } of FONT_FACES) {
+for (const { pkg, family, weights, italics, preload } of FONT_FACES) {
   const fontName = pkg.split('/')[1];
-  for (const weight of weights) {
-    const fname = `${fontName}-latin-${weight}-normal.woff2`;
+  const styles = weights.map((weight) => [weight, 'normal']).concat((italics || []).map((weight) => [weight, 'italic']));
+  for (const [weight, style] of styles) {
+    const fname = `${fontName}-latin-${weight}-${style}.woff2`;
     const fpath = path.join(__dirname, 'node_modules', pkg, 'files', fname);
     if (!fs.existsSync(fpath)) {
       console.error(`Missing font: ${fpath}`);
@@ -403,7 +427,7 @@ for (const { pkg, family, weights, preload } of FONT_FACES) {
     }
     fs.copyFileSync(fpath, path.join(fontsOutDir, fname));
     fontFaceCSS +=
-      `@font-face{font-family:'${family}';font-style:normal;font-weight:${weight};` +
+      `@font-face{font-family:'${family}';font-style:${style};font-weight:${weight};` +
       `font-display:swap;src:url('/public/fonts/${fname}') format('woff2')}\n`;
     // `crossorigin` is required even for same-origin fonts: woff2 is always
     // fetched in CORS-anonymous mode, so a preload without it would be a
@@ -487,7 +511,14 @@ const SPLIT_MINIFY = {
 // desktop landing — the one place an icon renders before the player is in-game —
 // fetches the chunk on mount (see DesktopLandingScreen) and GameIcon falls back
 // to an emoji until it arrives.
-const gameChunkSource = `const gameIconsData = ${gameIconsJSON};\nconst bespokeIconsData = ${bespokeIconsJSON};\n${gameJS}`;
+//
+// worldActivitiesData (the ~150 KiB content→place mapping) also rides the chunk:
+// only in-game code reads it (activity gating via requestActivityStart, and the
+// World Map place hub — both unreachable before the chunk loads). Core keeps the
+// small world.json geography for boot-time location/travel; worldContent.js
+// guards every access with `typeof worldActivitiesData !== 'undefined'`, so a
+// pre-chunk call degrades to "unmapped, never gate".
+const gameChunkSource = `const gameIconsData = ${gameIconsJSON};\nconst bespokeIconsData = ${bespokeIconsJSON};\nconst worldActivitiesData = ${worldActivitiesJSON};\n${gameJS}`;
 const gameChunkScript = esbuild.transformSync(gameChunkSource, SPLIT_MINIFY).code.trim();
 const gameChunkBody = `"use strict";\n${gameChunkScript}\n`;
 const gameChunkHash = require('crypto').createHash('sha256').update(gameChunkBody).digest('hex').slice(0, 12);
@@ -525,6 +556,7 @@ const minigamesData = ${minigamesJSON};
 const cluesData = ${cluesJSON};
 const collectionLogData = ${collectionLogJSON};
 const dailyTasksData = ${dailyTasksJSON};
+const worldData = ${worldJSON};
 const landingImages = ${landingImagesJSON};
 const homeLogo = ${homeLogoJSON};
 

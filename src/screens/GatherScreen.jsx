@@ -43,7 +43,7 @@ function hasItemAnywhere(itemId, inventory, bank, equipment) {
 }
 
 export default function GatherScreen({ initialTaskId, idleResult }) {
-  const { inventory, bank, equipment, stats, updateInventory, updateBankDirect, addToast, setActiveTask, activeTask: globalActiveTask, itemsData, recordGameEvent } = useGame()
+  const { inventory, bank, equipment, stats, updateInventory, updateBankDirect, addToast, setActiveTask, requestActivityStart, activeTask: globalActiveTask, itemsData, recordGameEvent } = useGame()
   const [category, setCategory] = useState('all')
   const [activeTask, setLocalTask] = useState(null)
   const taskRef = useRef(null)
@@ -261,6 +261,8 @@ export default function GatherScreen({ initialTaskId, idleResult }) {
       const resumed = buildResumedState(globalActiveTask)
       if (resumed) { taskRef.current = resumed; setLocalTask(resumed); return }
     }
+    // Map-driven gating (Phase 3): fresh starts must be at a place that offers this task.
+    if (!seedFromIdle && !requestActivityStart({ type: 'gather', gatherTask: task })) return
     const idleActions = seedFromIdle && idleResult?.actions ? idleResult.actions : 0
     const idleItems = seedFromIdle && idleResult?.itemsGained
       ? Object.values(idleResult.itemsGained).reduce((s, v) => s + v, 0)
@@ -389,7 +391,7 @@ export default function GatherScreen({ initialTaskId, idleResult }) {
 
   // Task picker
   return (
-    <div class="h-full flex flex-col">
+    <div class="forge-shell h-full flex flex-col">
       {/* Header */}
       <div class="px-4 pt-4 pb-2 flex-shrink-0">
         <SectionHeader size="lg" className="mb-[10px]">
@@ -406,7 +408,7 @@ export default function GatherScreen({ initialTaskId, idleResult }) {
             const isActive = category === cat.id
             const pillClass = isActive
               ? 'border-[var(--color-gold)] bg-[rgba(212,175,55,0.15)] text-[var(--color-gold)] opacity-100'
-              : 'border-[#2a2a2a] bg-[var(--color-void-light)] text-[var(--color-parchment)] opacity-60'
+              : 'border-[var(--color-void-border)] bg-[var(--color-void-light)] text-[var(--color-parchment)] opacity-60'
             return (
               <button
                 key={cat.id}

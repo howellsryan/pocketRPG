@@ -91,7 +91,7 @@ function MasterRing({ pct, size = 148, stroke = 9, complete }) {
             <stop offset="100%" stop-color="#a9781a" />
           </linearGradient>
         </defs>
-        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="rgba(255,255,255,0.07)" stroke-width={stroke} />
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="rgba(120,90,45,0.16)" stroke-width={stroke} />
         <circle
           cx={size / 2} cy={size / 2} r={r} fill="none" stroke="url(#clogRingGrad)" stroke-width={stroke}
           stroke-linecap="round" stroke-dasharray={c} stroke-dashoffset={off}

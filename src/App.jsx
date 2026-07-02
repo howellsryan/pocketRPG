@@ -34,15 +34,19 @@ import CharacterUnlockScreen from './screens/CharacterUnlockScreen.jsx'
 import ConnectAiScreen from './screens/ConnectAiScreen.jsx'
 import DemoLockedScreen from './screens/DemoLockedScreen.jsx'
 import MagicScreen from './screens/MagicScreen.jsx'
+import WorldMapScreen from './screens/WorldMapScreen.jsx'
+import TravelPrompt from './components/TravelPrompt.jsx'
+import { advanceTravel, travelDestName } from './engine/travel.js'
+import { advanceJourneyPhase, advanceJourneyOffline, journeyStatus, planClueJourney, planQuestJourney } from './engine/journeys.js'
 import AuthScreen from './screens/AuthScreen.jsx'
 import OAuthConsentScreen from './screens/OAuthConsentScreen.jsx'
-import { SCREENS } from './utils/constants.js'
+import { SCREENS, isWorldMapEnabled } from './utils/constants.js'
 import { hasSave, closeDB } from './db/database.js'
 import { initNewGame, saveSetting, getSetting, getAllStats, getInventory, getEquipment, getBank } from './db/stores.js'
 import { startTicks, stopTicks, onTick, pauseTicks, resumeTicks } from './engine/tick.js'
 import { wipeLocalSave } from './db/saveload.js'
 import { api, captureTokenFromHash, getToken, getCharacterId, getCharacterName, setCharacter, clearAuth, getLocalCharacterId, setLocalCharacterId, getIronmanMode, getOneLifeMode, syncAccountModeFlags, isDemoMode, setDemoMode, CREDITS_UPDATED_EVENT } from './cloud/api.js'
-import { schedulePushSave, schedulePeriodicSave, pushNow, pullSave, applyCloudSave, checkCloudNewer, resetSyncState, requestCriticalPushSave, retrySaveNow, isSaveConflict, CLOUD_SAVE_STATUS_EVENT } from './cloud/sync.js'
+import { schedulePushSave, schedulePeriodicSave, pushNow, pullSave, applyCloudSave, checkCloudNewer, resetSyncState, requestCriticalPushSave, retrySaveNow, isSaveConflict, clearSaveConflict, CLOUD_SAVE_STATUS_EVENT } from './cloud/sync.js'
 import { CRITICAL_SAVE_REASONS } from './cloud/criticalSavePolicy.js'
 import { fetchIdleState, beaconIdleState, resetIdleStateSync } from './cloud/idleState.js'
 import { isBackground } from './engine/activityRegistry.js'
@@ -57,7 +61,6 @@ import minigamesData from './data/minigames.json'
 import raidsData from './data/raids.json'
 import { simulateIdleThieving } from './engine/thieving.js'
 import { simulateIdleHunting } from './engine/hunter.js'
-import { createQuestState } from './engine/quests.js'
 import { simulateQuestIdleCascade, splitQuestXpRewards } from './engine/questIdleCascade.js'
 import { getLevelFromXP } from './engine/experience.js'
 import { pvpApi } from './cloud/pvp.js'
@@ -161,7 +164,10 @@ function clueRevealTitle(clueTask) {
 function completeClueSolve(clueTask, { updateBankDirect, getSnapshot, addToast, isInPvpMatch }) {
   const title = clueRevealTitle(clueTask)
   if (getToken() && getCharacterId()) {
-    void api.completeClue(clueTask.clueLevel, {
+    // Returned (not just fired) so paid skips can await settlement: the grant
+    // bumps save_revision server-side, and pushing a save before the response's
+    // applyCloudSave lands would be a guaranteed stale-write conflict.
+    return api.completeClue(clueTask.clueLevel, {
       actionNonce: `clue:${clueTask.clueLevel}:${Date.now()}`,
       consumptions: [{ itemId: clueTask.requiresItem, quantity: 1 }],
     }).then(async (res) => {
@@ -282,10 +288,10 @@ const CLOUD_ONLY_SCREENS = new Set([SCREENS.STORE, SCREENS.LEADERBOARD, SCREENS.
 const DEMO_LOCKED_MESSAGE = '🔒 Sign in to use this — not available in the demo.'
 
 function GameApp() {
-  const { loaded, loadGame, player, stats, equipment, inventory, bank, currentHP, updateHP, getMaxHP, updateInventory, updateEquipment, updateBank, updateBankDirect, grantXP, addToast, activeTask, setActiveTask, itemsData, getSnapshot, unlockedFeatures, setSlayerTask, awardSlayerPoints, slayerTasksCompleted, setSlayerTasksCompleted, completeQuest, completedQuests, questQueue, removeFromQuestQueue, updateQuestQueue,
+  const { loaded, loadGame, player, stats, equipment, inventory, bank, currentHP, updateHP, getMaxHP, updateInventory, updateEquipment, updateBank, updateBankDirect, grantXP, addToast, activeTask, setActiveTask, getActiveTask, itemsData, getSnapshot, unlockedFeatures, setSlayerTask, awardSlayerPoints, slayerTasksCompleted, setSlayerTasksCompleted, completeQuest, completedQuests, questQueue, removeFromQuestQueue, updateQuestQueue,
     unlockMinigameItem, unlockedMinigameItems, awardDungeoneeringTokens, farming, updateFarming, idleCombatSetup, isOneLife, updateBossKillCounts, updateRaidKillCounts, syncServerKillCounts, markKillCountsLoaded, combatSkipHandlerRef, skipHourHandlerRef, chargeSkipRef, raidSkipHandlerRef,
     gameLocked, lockGame, unlockGame, runLockedSave, awaitCombatCompletion, resolveCombatCompletion,
-    characterUnlocks, dailyTaskStates, setDailyTasks, recordGameEvent } = useGame()
+    characterUnlocks, dailyTaskStates, setDailyTasks, recordGameEvent, updateWorldLocation, worldLocation } = useGame()
   const pvp = usePvp()
   const [screen, setScreen] = useState(SCREENS.HOME)
   const [menuOpen, setMenuOpen] = useState(false)
@@ -449,20 +455,63 @@ function GameApp() {
     return () => window.removeEventListener('pocketrpg:pvp-active-match', onActiveMatchConflict)
   }, [addToast, pvp.enterMatch])
 
-  // Handle quest completion with queue cascading
-  function handleQuestCompletion(quest, xpReward, coinReward) {
+  // A finished journey grants its content through the exact same paths idling
+  // used — completeClueSolve consumes the scroll + rolls/banks rewards
+  // (server-authoritative when signed in), and handleQuestCompletion awards
+  // XP/coins. Journeys are now the only clue/quest flow, so completion also
+  // keeps the background loop rolling: another scroll of the same tier chains
+  // straight into a fresh trail from where this one ended, and quests promote
+  // the queue (as journeys) the same way.
+  // Returns the clue grant's settlement promise (undefined for quests/offline)
+  // so paid skips can await the server-side save write before force-pushing.
+  // `questSummary` (paid skips) aggregates quest completions for one reveal.
+  function completeJourneyContent(journey, endedAt, questSummary = null) {
+    if (journey?.kind === 'clue' && journey.payload) {
+      const clueTask = journey.payload
+      // Count before the solve settles (the signed-in grant debits the scroll
+      // asynchronously): ≥2 now means one is still left after this solve.
+      const snap = getSnapshot()
+      const scrollsNow = (snap.bank?.[clueTask.requiresItem]?.quantity || 0) + countItem(snap.inventory || [], clueTask.requiresItem)
+      const settled = completeClueSolve(clueTask, { updateBankDirect, getSnapshot, addToast, isInPvpMatch })
+      recordGameEvent?.({ kind: 'clue_complete', tier: clueTask.tier })
+      if (scrollsNow >= 2) {
+        const nextTask = planClueJourney(clueTask, endedAt)
+        if (nextTask) {
+          setActiveTask(nextTask)
+          activeTaskRef.current = nextTask
+          addToast(`🗺️ Another scroll — the trail continues (${nextTask.journey.steps.length} places)`, 'info')
+        }
+      }
+      return settled
+    } else if (journey?.kind === 'quest' && journey.payload) {
+      handleQuestCompletion(journey.payload, journey.payload.xpReward, journey.payload.coinReward, endedAt, questSummary)
+    }
+  }
+
+  // Handle quest completion with queue cascading. `summary` (paid skips) collects
+  // { completedQuests, aggregatedXpReward, coinsGained } for one questCascade
+  // reveal instead of per-quest toasts — same summary the legacy quest skip shows.
+  function handleQuestCompletion(quest, xpReward, coinReward, fromPlace, summary = null) {
     // Award rewards
     const { fixed, choices } = splitQuestXpRewards(xpReward)
     for (const [skill, xp] of Object.entries(fixed)) grantXP(skill, xp)
     if (coinReward > 0) updateBankDirect({ coins: coinReward })
+    if (summary) {
+      summary.completedQuests.push(quest)
+      if (coinReward > 0) summary.coinsGained += coinReward
+      for (const [skill, xp] of Object.entries(xpReward || {})) {
+        const amount = Math.floor(Number(xp) || 0)
+        if (amount > 0) summary.aggregatedXpReward[skill] = (summary.aggregatedXpReward[skill] || 0) + amount
+      }
+    }
 
     // The completed quest was already removed from the queue when it was
     // started, so the queue holds the next quests to run. Pop the next one
     // off and promote it to the active task.
-    promoteNextQueuedQuestOrClear()
+    promoteNextQueuedQuestOrClear(fromPlace, { quiet: !!summary })
 
     // Finalise the completed quest (show choice modal if needed)
-    finaliseQuest(quest.id, quest.name, choices)
+    finaliseQuest(quest.id, quest.name, choices, { quiet: !!summary })
   }
 
   function clearPersistedActiveTask() {
@@ -471,7 +520,10 @@ function GameApp() {
     try { localStorage.removeItem('pocketrpg_activeTask') } catch { /* best-effort */ }
   }
 
-  function promoteNextQueuedQuestOrClear() {
+  // Auto-chain the quest queue as journeys: the next queued quest sets out from
+  // wherever the player is standing (for a finished journey, its last waypoint —
+  // passed by the caller since the worldLocation state flush may lag).
+  function promoteNextQueuedQuestOrClear(fromPlace, { quiet = false } = {}) {
     const currentQueue = questQueueRef.current || []
     if (currentQueue.length === 0) {
       clearPersistedActiveTask()
@@ -479,23 +531,27 @@ function GameApp() {
     }
 
     const nextQuest = currentQueue[0]
-    updateQuestQueue(currentQueue.slice(1))
-    const state = createQuestState(nextQuest)
-    const nextTask = {
-      type: 'quest',
-      quest: nextQuest,
-      totalTicks: state.totalTicks,
-      ticksRemaining: state.ticksRemaining,
-      startedAt: state.startedAt,
+    const restQueue = currentQueue.slice(1)
+    updateQuestQueue(restQueue)
+    // Sync the ref NOW: the state effect only catches up after a render, and the
+    // paid-skip loop promotes several quests back-to-back with no render between —
+    // a stale ref re-pops (and re-completes) the same quest each iteration.
+    questQueueRef.current = restQueue
+    const nextTask = planQuestJourney(nextQuest, fromPlace || worldLocationRef.current)
+    if (!nextTask) {
+      clearPersistedActiveTask()
+      addToast(`No route can be plotted for ${nextQuest.name} — start it from the Quests screen.`, 'error')
+      return null
     }
     setActiveTask(nextTask)
     activeTaskRef.current = nextTask
-    addToast(`📜 Started: ${nextQuest.name}`, 'info')
+    if (!quiet) addToast(`🗺️ Journey begun: ${nextQuest.name} — ${nextTask.journey.steps.length} places to visit`, 'info')
     return nextTask
   }
 
-  // Finalise a completed quest: show choice modal if needed, else complete immediately
-  function finaliseQuest(questId, questName, choices) {
+  // Finalise a completed quest: show choice modal if needed, else complete immediately.
+  // `quiet` skips the completion toast (paid skips show one summary reveal instead).
+  function finaliseQuest(questId, questName, choices, { quiet = false } = {}) {
     const alreadyCompleted = completedQuestsRef.current?.has?.(questId)
     const alreadyPendingChoice = pendingXpChoicesRef.current?.some?.(p => p.questId === questId)
 
@@ -513,7 +569,7 @@ function GameApp() {
       return
     }
 
-    addToast(`📜 Quest complete: ${questName}`, 'levelup', '🏆')
+    if (!quiet) addToast(`📜 Quest complete: ${questName}`, 'levelup', '🏆')
     recordGameEvent?.({ kind: 'quest_complete' })
   }
 
@@ -658,11 +714,35 @@ function GameApp() {
       } else if (status === 'conflict') {
         // Our local progress diverged from the server's authoritative save (a
         // "bad state" — typically progress applied faster than a prior save
-        // round-tripped). Roll back to the cloud copy: a full reload re-pulls
-        // and re-applies the server save over local IDB on boot. We keep the
-        // overlay up and reload on the next frame so it paints first.
+        // round-tripped). Roll back to the cloud copy IN PLACE: re-pull and
+        // re-apply the server save (the same applyCloudSave + loadGame path a
+        // server-side minigame completion uses) instead of hard-reloading —
+        // a reload boots back to the Home screen, which reads as a crash
+        // mid-session. conflictPending parks every push until the re-pull
+        // adopts the server's revision; the reload survives as the fallback
+        // when the pull itself fails.
         setRollingBack(true)
-        setTimeout(() => { try { window.location.reload() } catch {} }, 50)
+        ;(async () => {
+          try {
+            const pulled = await pullSave()
+            if (pulled?.payload) {
+              pauseTicks()
+              try {
+                await applyCloudSave(pulled.payload, pulled.updatedAt)
+                await loadGame()
+              } finally {
+                resumeTicks()
+              }
+              clearSaveConflict()
+              setRollingBack(false)
+              addToast('☁️ Progress re-synced from the cloud.', 'success')
+              return
+            }
+          } catch (err) {
+            console.error('[PocketRPG] In-place cloud rollback failed, reloading:', err)
+          }
+          setTimeout(() => { try { window.location.reload() } catch {} }, 50)
+        })()
       }
     }
     window.addEventListener(CLOUD_SAVE_STATUS_EVENT, handler)
@@ -691,9 +771,11 @@ function GameApp() {
   const itemsDataRef = useRef(itemsData)
   const bankRef = useRef(bank)
   const questQueueRef = useRef(questQueue)
+  const worldLocationRef = useRef(worldLocation)
   const idleCombatSetupRef = useRef(idleCombatSetup)
   const currentHPRef = useRef(currentHP)
   useEffect(() => { bankRef.current = bank }, [bank])
+  useEffect(() => { worldLocationRef.current = worldLocation }, [worldLocation])
   useEffect(() => { idleCombatSetupRef.current = idleCombatSetup }, [idleCombatSetup])
   useEffect(() => { currentHPRef.current = currentHP }, [currentHP])
   useEffect(() => { completedQuestsRef.current = completedQuests }, [completedQuests])
@@ -798,6 +880,37 @@ function GameApp() {
           ])
 
           let sim = null
+
+          // Travel resolves offline: advance by elapsed time, then either land at
+          // the destination (update location, clear task, toast) or keep the
+          // reduced trip for the live tick. No reward modal. Journeys chain their
+          // legs/searches through the elapsed time; a journey that finished while
+          // away is parked on its final search at 0 ticks and the next live tick
+          // completes it with the full toast/reward path.
+          if (savedTask.type === 'travel') {
+            if (savedTask.journey) {
+              const adv = advanceJourneyOffline(savedTask, elapsedMs)
+              if (adv.location) updateWorldLocation(adv.location)
+              setActiveTask(adv.task)
+              activeTaskRef.current = adv.task
+            } else {
+              const adv = advanceTravel(savedTask, elapsedMs)
+              if (adv.arrived) {
+                updateWorldLocation(savedTask.dest)
+                setActiveTask(null)
+                activeTaskRef.current = null
+                try { localStorage.removeItem('pocketrpg_activeTask') } catch {}
+                addToast(`🧭 Arrived at ${travelDestName(savedTask)}`, 'info')
+                resumeAutoStart(savedTask.autoStart)
+              } else {
+                setActiveTask(adv.task)
+                activeTaskRef.current = adv.task
+              }
+            }
+            if (!isInPvpMatch) schedulePushSave(getSnapshot())
+            return
+          }
+
           // OneShot minigames — reduce remaining time while away; complete if timer reached 0.
           if (savedTask.type === 'gather' && savedTask.gatherTask?.oneShot) {
             const elapsedTicks = Math.floor(elapsedMs / 600)
@@ -1189,6 +1302,48 @@ function GameApp() {
         const remaining = (task.ticksRemaining ?? task.totalTicks) - 1
         if (remaining <= 0) {
           handleQuestCompletion(task.quest, task.quest.xpReward, task.quest.coinReward)
+        } else {
+          setActiveTask({ ...task, ticksRemaining: remaining }, { skipCloudSync: true })
+        }
+      }
+
+      // Travel tick — counts down the journey on any screen. Arrival updates
+      // the player's location and clears the task; offline catch-up is handled
+      // separately by advanceTravel on boot / tab-return. A travel task carrying
+      // a `journey` (Phase 5 active clue/quest journeys) chains its next phase
+      // instead of ending: search the waypoint, walk on, or — after the final
+      // search — complete the clue/quest through the same path idling uses.
+      if (task && task.type === 'travel') {
+        const total = task.totalTicks ?? 0
+        const remaining = (task.ticksRemaining ?? total) - 1
+        if (remaining <= 0) {
+          if (task.journey) {
+            const step = advanceJourneyPhase(task)
+            if (step?.kind === 'complete') {
+              updateWorldLocation(task.dest)
+              setActiveTask(null)
+              activeTaskRef.current = null
+              try { localStorage.removeItem('pocketrpg_activeTask') } catch {}
+              completeJourneyContent(task.journey, task.dest)
+            } else if (step) {
+              if (step.kind === 'search') {
+                updateWorldLocation(task.dest)
+                const s = journeyStatus(step.next)
+                addToast(`🔎 Searching ${travelDestName(task)} (${s?.step}/${s?.steps})`, 'info')
+              } else {
+                addToast(`🧭 The trail leads on to ${travelDestName(step.next)}`, 'info')
+              }
+              setActiveTask(step.next)
+              activeTaskRef.current = step.next
+            }
+          } else {
+            updateWorldLocation(task.dest)
+            setActiveTask(null)
+            activeTaskRef.current = null
+            try { localStorage.removeItem('pocketrpg_activeTask') } catch {}
+            addToast(`🧭 Arrived at ${travelDestName(task)}`, 'info')
+            resumeAutoStart(task.autoStart)
+          }
         } else {
           setActiveTask({ ...task, ticksRemaining: remaining }, { skipCloudSync: true })
         }
@@ -1612,8 +1767,9 @@ function GameApp() {
     }
     // Every activity except combat persists across screens — skills and gathering
     // keep accruing in the background. Only combat stops when the player leaves.
-    if (!isBackground(activeTask)) {
-      if (activeTask) {
+    const currentTask = getActiveTask()
+    if (!isBackground(currentTask)) {
+      if (currentTask) {
         addToast('You fled combat.', 'info')
       }
       setActiveTask(null)
@@ -1622,6 +1778,29 @@ function GameApp() {
     setScreen(scr)
     if (gameReady && isCloudAccount && !isInPvpMatch && cloudPhase === 'ready') {
       void pushNow(getSnapshot()).catch(() => {})
+    }
+  }
+
+  // Resume the action a player was travelling to (a gated activity start embedded its
+  // descriptor in the travel task's `autoStart`). On arrival we navigate to the owning
+  // screen with the same actionData a home shortcut would use, so the screen's existing
+  // auto-start effect fires the fight/skilling immediately — even if the player idled
+  // away on another screen while travelling.
+  const resumeAutoStart = (autoStart) => {
+    if (!autoStart || !autoStart.kind) return
+    switch (autoStart.kind) {
+      case 'combat':   navigate(SCREENS.COMBAT, { monsterId: autoStart.monsterId }); break
+      case 'raid':     navigate(SCREENS.COMBAT, { raidId: autoStart.raidId }); break
+      case 'agility':  navigate(SCREENS.AGILITY, { actionId: autoStart.actionId }); break
+      case 'gather':   navigate(SCREENS.GATHER, { gatherTaskId: autoStart.gatherTaskId }); break
+      case 'thieving': navigate(SCREENS.SKILLS, { skillId: 'thieving', actionId: autoStart.npcId }); break
+      case 'hunter':   navigate(SCREENS.SKILLS, { skillId: 'hunter', actionId: autoStart.actionId }); break
+      case 'minigame': navigate(SCREENS.MINIGAMES, { minigameTaskId: autoStart.taskId }); break
+      case 'skill':
+        if (autoStart.skill === 'magic') navigate(SCREENS.MAGIC)
+        else navigate(SCREENS.SKILLS, { skillId: autoStart.skill, actionId: autoStart.actionId })
+        break
+      default: break
     }
   }
 
@@ -1661,7 +1840,9 @@ function GameApp() {
         addToast(err.message || 'Error during skip!', 'error')
       }
     } finally {
-      if (!isSaveConflict()) unlockGame()
+      // Pairs with this handler's lockGame — a conflict rollback re-applies
+      // the cloud copy in place under its own overlay.
+      unlockGame()
     }
   }
 
@@ -1871,7 +2052,9 @@ function GameApp() {
       }
     } finally {
       setSkipSaving(false)
-      if (idleResultData) setIdleResult(idleResultData)
+      // A conflict rolls the whole skip back to the cloud copy — the modal
+      // would celebrate rewards that no longer exist.
+      if (idleResultData && !isSaveConflict()) setIdleResult(idleResultData)
     }
   }
 
@@ -1964,6 +2147,14 @@ function GameApp() {
       pauseTicks()
       lockGame()
 
+      // Settle any queued/in-flight autosave and land the pre-skip state
+      // BEFORE charging: a push that was already on the wire with an older
+      // revision (or another device's newer save) surfaces the conflict here
+      // — where no credit has been spent and the rollback loses nothing —
+      // instead of 409ing the post-skip push and eating the paid hour.
+      await pushNow(getSnapshot())
+      if (isSaveConflict()) return
+
       if (task?.type === 'quest') {
         const skipResult = await api.skipHour()
         setCredits(skipResult?.credits_remaining ?? credits)
@@ -2016,6 +2207,72 @@ function GameApp() {
           elapsedMsUsed: cascade.elapsedMsUsed,
           elapsedMsRemaining: cascade.elapsedMsRemaining,
         })
+        return
+      }
+
+      // Travel & journeys: 1 credit = 1 hour of trail time. A plain walk just
+      // arrives (roads are seconds long). A journey always finishes its CURRENT
+      // clue/quest in full — a master trail longer than the hour still completes,
+      // it simply consumes the whole budget — and any time left over chains
+      // through the next scroll / queued quest exactly as idling would (a stack
+      // of medium scrolls burns several per credit).
+      if (task?.type === 'travel') {
+        const skipResult = await api.skipHour()
+        setCredits(skipResult?.credits_remaining ?? credits)
+
+        // Quest completions aggregate into one questCascade reveal (same summary
+        // the legacy quest skip shows) instead of a toast per quest in the chain.
+        const questSummary = { completedQuests: [], aggregatedXpReward: {}, coinsGained: 0 }
+        if (!task.journey) {
+          updateWorldLocation(task.dest)
+          clearPersistedActiveTask()
+          addToast(`🧭 Arrived at ${travelDestName(task)}`, 'info')
+          resumeAutoStart(task.autoStart)
+        } else {
+          let budgetMs = SKIP_HOUR_MS
+          let cur = task
+          let first = true
+          for (let guard = 0; cur?.journey && guard < 30; guard++) {
+            let adv = advanceJourneyOffline(cur, budgetMs)
+            if (!adv.completedPending && first) {
+              adv = advanceJourneyOffline(cur, Number.MAX_SAFE_INTEGER)
+              budgetMs = 0
+            } else {
+              budgetMs = adv.completedPending ? Math.max(0, adv.msRemaining ?? 0) : 0
+            }
+            first = false
+            if (!adv.completedPending) {
+              // Hour spent mid-journey (only possible on a chained trail):
+              // park the advanced task for the live tick to carry on.
+              if (adv.location) updateWorldLocation(adv.location)
+              setActiveTask(adv.task)
+              activeTaskRef.current = adv.task
+              break
+            }
+            const endedAt = adv.location || adv.task.dest
+            updateWorldLocation(endedAt)
+            clearPersistedActiveTask()
+            // Grants the content and, when another scroll / queued quest exists,
+            // sets the next journey as the active task — picked up below. The
+            // await matters twice over: the signed-in clue grant bumps
+            // save_revision server-side (pushing before its applyCloudSave lands
+            // is a guaranteed stale-write conflict), and the settled debit keeps
+            // the next iteration's scroll count honest.
+            await completeJourneyContent(adv.task.journey, endedAt, questSummary)
+            cur = activeTaskRef.current
+            if (!cur || cur.type !== 'travel' || budgetMs <= 0) break
+          }
+        }
+
+        addToast('⏭️ Skipped 1 hour', 'info')
+        await persistSkipThenReveal(questSummary.completedQuests.length > 0 ? {
+          elapsedMs: SKIP_HOUR_MS,
+          task: activeTaskRef.current,
+          questCascade: true,
+          completedQuests: questSummary.completedQuests,
+          aggregatedXpReward: questSummary.aggregatedXpReward,
+          coinsGained: questSummary.coinsGained,
+        } : null)
         return
       }
 
@@ -2313,13 +2570,12 @@ function GameApp() {
         addToast(err.message || 'Error during skip!', 'error')
       }
     } finally {
-      // Release the skip lock. When an idle-result modal is being shown we
-      // intentionally keep ticks paused so combat cannot advance while the
-      // player reviews the result. closeIdleResultModal calls resumeTicks().
-      if (!isSaveConflict()) {
-        unlockGame()
-        if (!didShowIdleModal) resumeTicks()
-      }
+      // Release the skip lock (it pairs with THIS handler's lockGame — the
+      // in-place conflict rollback holds its own overlay). Ticks stay paused
+      // when an idle-result modal is up (closeIdleResultModal resumes) or a
+      // conflict rollback is re-applying the cloud copy (it resumes itself).
+      unlockGame()
+      if (!didShowIdleModal && !isSaveConflict()) resumeTicks()
       isSkippingRef.current = false
     }
   }
@@ -2439,10 +2695,11 @@ function GameApp() {
       case SCREENS.GATHER:    return <GatherScreen initialTaskId={actionData?.gatherTaskId} idleResult={idleResult} />
       case SCREENS.AGILITY:     return <AgilityScreen initialActionId={actionData?.actionId} idleResult={idleResult} />
       case SCREENS.MAGIC:       return <MagicScreen onNavigate={navigate} />
+      case SCREENS.WORLD_MAP:   return isWorldMapEnabled() ? <WorldMapScreen onNavigate={navigate} onAutoStart={resumeAutoStart} /> : <HomeScreen onNavigate={navigate} onLogout={handleLogoutToCharacterSelect} onManualSave={handleManualSave} isCloudAccount={!!getToken() && !!getCharacterId()} removeAds={removeAds} identityId={identityId} characterId={getCharacterId()} stripeLinks={stripeLinks} />
       case SCREENS.STORE:       return <TradingPostScreen />
-      case SCREENS.QUESTS:         return <QuestsScreen />
-      case SCREENS.CLUES:          return <CluesScreen />
-      case SCREENS.MINIGAMES:      return <MinigamesScreen />
+      case SCREENS.QUESTS:         return <QuestsScreen onNavigate={navigate} />
+      case SCREENS.CLUES:          return <CluesScreen onNavigate={navigate} />
+      case SCREENS.MINIGAMES:      return <MinigamesScreen initialTaskId={actionData?.minigameTaskId} />
       case SCREENS.COLLECTION_LOG: return <CollectionLogScreen />
       case SCREENS.LEADERBOARD:    return <LeaderboardScreen />
       case SCREENS.HELP:                return <HelpScreen />
@@ -2477,6 +2734,7 @@ function GameApp() {
       <div class="flex-1 flex flex-col min-w-0 min-h-0">
         <Header activity={activity} credits={credits} isCloudAccount={isCloudAccount} demo={demoMode} onLockedFeature={notifyDemoLocked} onSkip1h={isCloudAccount ? handleSkip1h : null} onBuyCredits={() => setShowBuyCreditsModal(true)} onDailyTasks={() => setShowDailyTasksModal(true)} dailyTasksCompleted={(dailyTaskStates || []).filter(t => t.completed).length} dailyTasksTotal={5} onMenuClick={() => setMenuOpen(true)} onNavigate={(s) => navigate(s)} skipMode={activeTask?.type === 'combat' && (activeTask?.monster?.boss === true || activeTask?.raid === true) ? 'kill' : 'hour'} raidSkipCost={activeTask?.type === 'combat' && activeTask?.raidId ? (raidsData[activeTask.raidId]?.skipCost ?? 1) : null} />
         <ToastContainer />
+        <TravelPrompt onNavigate={navigate} />
         <main class="flex-1 overflow-hidden">
           {renderScreen()}
         </main>

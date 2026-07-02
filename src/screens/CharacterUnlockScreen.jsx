@@ -47,7 +47,7 @@ export default function CharacterUnlockScreen({ onBack }) {
   }
 
   return (
-    <div class="h-full overflow-y-auto p-4">
+    <div class="forge-shell h-full overflow-y-auto p-4">
       <button
         onClick={onBack}
         class="text-xs text-[var(--color-gold-dim)] mb-3 flex items-center gap-1"
@@ -69,7 +69,7 @@ export default function CharacterUnlockScreen({ onBack }) {
           return (
             <GildedComplete key={unlock.id} complete={owned} className="rounded-xl">
               <div
-                class={`flex items-center justify-between p-3 rounded-xl border ${owned ? 'bg-[#0f1f0f] border-[var(--color-hp-green)]/30' : 'bg-[#1a1a1a] border-[#2a2a2a]'}`}
+                class={`flex items-center justify-between p-3 rounded-xl border ${owned ? 'bg-[var(--fm-parch-hi)] border-[var(--color-hp-green)]' : 'bg-[var(--color-void-light)] border-[var(--color-void-border)]'}`}
               >
                 <div class="flex items-center gap-3 min-w-0">
                   <GameIcon iconKey="death_skull" size={36} color="#c0453b" class="flex-shrink-0" />

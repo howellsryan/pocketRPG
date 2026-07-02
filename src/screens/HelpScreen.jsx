@@ -6,8 +6,8 @@ export default function HelpScreen() {
   const { showInfoToasts, updateShowInfoToasts } = useGame()
 
   return (
-    <div class="h-full flex flex-col">
-      <div class="flex-shrink-0 bg-[#111] border-b border-[var(--color-void-border)] px-4 py-3">
+    <div class="forge-shell h-full flex flex-col">
+      <div class="flex-shrink-0 bg-[var(--color-void-light)] border-b border-[var(--color-void-border)] px-4 py-3">
         <h1 class="flex items-center gap-2 font-[var(--font-display)] text-lg font-bold text-[var(--color-gold)]">
           <GameIcon iconKey="tinderbox" size={22} class="flex-shrink-0" />
           Settings

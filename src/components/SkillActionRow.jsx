@@ -48,14 +48,14 @@ export default function SkillActionRow({
   if (active) {
     frameClass = 'bg-gradient-to-b from-[rgba(212,160,23,0.08)] to-[rgba(212,160,23,0.03)] border-[1.5px] border-[rgba(212,160,23,0.42)] shadow-[0_0_22px_rgba(212,160,23,0.10)]'
   } else if (locked || disabled) {
-    frameClass = 'bg-[rgba(255,255,255,0.015)] border border-[rgba(255,255,255,0.04)] opacity-55'
+    frameClass = 'bg-[var(--color-void)] border border-[var(--color-void-border)] opacity-55'
   } else {
-    frameClass = 'bg-[rgba(255,255,255,0.025)] border border-[rgba(255,255,255,0.05)] active:bg-[rgba(255,255,255,0.05)]'
+    frameClass = 'bg-[var(--color-void-light)] border border-[var(--color-void-border)] active:bg-[var(--color-void-lighter)]'
   }
 
   const tileClass = active
     ? 'bg-[rgba(212,160,23,0.08)] border border-[rgba(212,160,23,0.22)]'
-    : 'bg-[rgba(255,255,255,0.03)] border border-[rgba(255,255,255,0.06)]'
+    : 'bg-[var(--color-void)] border border-[var(--color-void-border)]'
 
   return (
     <button
@@ -84,7 +84,7 @@ export default function SkillActionRow({
         {locked ? (
           <div class="flex items-center gap-2 mt-1">
             {lockBadge && (
-              <span class="text-[10.5px] font-bold tracking-wide text-[var(--color-parchment)] opacity-60 bg-[rgba(255,255,255,0.05)] px-1.5 py-0.5 rounded-md">
+              <span class="text-[10.5px] font-bold tracking-wide text-[var(--color-parchment)] opacity-60 bg-[var(--color-void-light)] px-1.5 py-0.5 rounded-md">
                 {lockBadge}
               </span>
             )}

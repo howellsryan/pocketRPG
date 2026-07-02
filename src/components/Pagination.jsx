@@ -17,9 +17,9 @@ function buildPageWindow(page, totalPages) {
 }
 
 const BTN = 'min-h-[44px] min-w-[36px] px-2 rounded-lg text-xs font-semibold flex items-center justify-center'
-const BTN_PAGE = `${BTN} border border-[#2a2a2a] bg-[var(--color-void-light)] text-[var(--color-parchment)]`
+const BTN_PAGE = `${BTN} border border-[var(--color-void-border)] bg-[var(--color-void-light)] text-[var(--color-parchment)]`
 const BTN_ACTIVE = `${BTN} bg-[var(--color-gold)] text-[#111] pointer-events-none`
-const BTN_NAV = `${BTN} border border-[#2a2a2a] bg-[var(--color-void-light)] text-[var(--color-parchment)] text-base`
+const BTN_NAV = `${BTN} border border-[var(--color-void-border)] bg-[var(--color-void-light)] text-[var(--color-parchment)] text-base`
 const BTN_DISABLED = 'opacity-30 pointer-events-none'
 
 // Shared pagination footer for any list with server-side paging.

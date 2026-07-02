@@ -46,27 +46,32 @@ export default function RewardRevealOverlay() {
 
   const dismiss = () => setQueue(prev => prev.slice(1))
 
+  // Same visual language as the system toasts (Toast.jsx compact card): solid
+  // dark card, gold accent bar + icon tile, countdown strip — plus the item chips
+  // that make the reveal a reveal.
   return (
     <div
-      class="pointer-events-none fixed inset-x-0 z-[70] flex justify-center"
-      style={{ top: 'calc(env(safe-area-inset-top, 0px) + 64px)' }}
+      class="pointer-events-none fixed inset-x-0 z-[70] flex justify-center px-4"
+      style={{ top: 'calc(env(safe-area-inset-top, 0px) + 56px)' }}
     >
-      <style>{`@keyframes pocketrpg-reward-pop { 0% { opacity: 0; transform: translateY(-12px) scale(0.96); } 100% { opacity: 1; transform: translateY(0) scale(1); } }`}</style>
       <div
         onClick={dismiss}
         role="status"
-        class="pointer-events-auto mx-3 w-full max-w-[340px] cursor-pointer overflow-hidden rounded-2xl border border-[var(--color-gold-dim)] bg-[#1a1a1a] shadow-2xl"
-        style={{ animation: 'pocketrpg-reward-pop 220ms ease-out' }}
+        key={current.id}
+        class="toast-enter pointer-events-auto relative w-full max-w-sm cursor-pointer overflow-hidden rounded-2xl pl-4 pr-3.5 py-3.5 shadow-[0_10px_28px_rgba(0,0,0,0.4)] bg-[rgba(26,26,26,0.96)] backdrop-blur-sm border border-[rgba(255,255,255,0.08)]"
       >
-        <div class="flex items-center gap-2 border-b border-[#333] bg-[#2a1f0a] px-4 py-2.5">
-          <span class="text-[18px]">{current.icon}</span>
-          <span class="font-bold text-[14px] text-[var(--color-gold)]" style={{ fontFamily: 'Cinzel, serif' }}>{current.title}</span>
+        <div class="absolute left-0 top-0 bottom-0 w-1 bg-[var(--color-gold)]" />
+        <div class="flex items-center gap-3">
+          <div class="w-[38px] h-[38px] flex-shrink-0 rounded-xl flex items-center justify-center text-lg bg-[rgba(255,255,255,0.05)] border border-[var(--color-gold-light)]">
+            {current.icon}
+          </div>
+          <div class="flex-1 min-w-0 text-[14px] font-semibold text-[var(--color-parchment)] leading-snug">{current.title}</div>
         </div>
-        <div class="flex flex-wrap justify-center gap-2 px-3 py-3">
+        <div class="flex flex-wrap gap-1.5 mt-2.5">
           {current.rewards.map(r => {
             const item = itemsData[r.itemId]
             return (
-              <div key={r.itemId} class="flex items-center gap-1.5 rounded-lg border border-[#2a2a2a] bg-[#111] px-2 py-1">
+              <div key={r.itemId} class="flex items-center gap-1.5 rounded-lg border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.05)] px-2 py-1">
                 <GameIcon item={item} size={20} />
                 <span class="text-[12px] text-[var(--color-parchment)]">{item?.name || r.itemId}</span>
                 {r.quantity > 1 && <span class="text-[11px] font-bold text-[var(--color-gold)]">×{r.quantity.toLocaleString()}</span>}
@@ -74,7 +79,10 @@ export default function RewardRevealOverlay() {
             )
           })}
         </div>
-        <div class="pb-2 text-center text-[9px] text-[var(--color-gold-dim)]">tap to dismiss</div>
+        <div
+          class="absolute left-0 bottom-0 h-[3px] w-full skill-toast-shrink bg-[var(--color-gold)]"
+          style={{ animationDuration: `${REVEAL_LIFETIME_MS}ms` }}
+        />
       </div>
     </div>
   )

@@ -1,0 +1,517 @@
+{
+  "start": "lumbright",
+  "name": "Eldermoor",
+  "board": {
+    "w": 1640,
+    "h": 879
+  },
+  "mapImage": "/public/world/map.webp",
+  "edges": [
+    [
+      "lumbright",
+      "varrick",
+      16
+    ],
+    [
+      "lumbright",
+      "draynar",
+      8
+    ],
+    [
+      "lumbright",
+      "alkarid",
+      12
+    ],
+    [
+      "varrick",
+      "edgevale",
+      10
+    ],
+    [
+      "varrick",
+      "barlock",
+      12
+    ],
+    [
+      "varrick",
+      "canifel",
+      22
+    ],
+    [
+      "edgevale",
+      "barlock",
+      9
+    ],
+    [
+      "barlock",
+      "faloden",
+      10
+    ],
+    [
+      "faloden",
+      "draynar",
+      14
+    ],
+    [
+      "faloden",
+      "portsarin",
+      12
+    ],
+    [
+      "faloden",
+      "seerhold",
+      16
+    ],
+    [
+      "faloden",
+      "ardounne",
+      20
+    ],
+    [
+      "draynar",
+      "portsarin",
+      10
+    ],
+    [
+      "portsarin",
+      "brimhollow",
+      20
+    ],
+    [
+      "alkarid",
+      "brimhollow",
+      24
+    ],
+    [
+      "seerhold",
+      "catherra",
+      8
+    ],
+    [
+      "seerhold",
+      "camlann",
+      12
+    ],
+    [
+      "catherra",
+      "camlann",
+      10
+    ],
+    [
+      "camlann",
+      "ardounne",
+      16
+    ],
+    [
+      "ardounne",
+      "seerhold",
+      18
+    ]
+  ],
+  "places": {
+    "lumbright": {
+      "id": "lumbright",
+      "name": "Lumbright",
+      "tier": "town",
+      "x": 784,
+      "y": 518,
+      "icon": "🏰",
+      "image": "/public/world/lumbright.webp",
+      "sub": "The starter town",
+      "lore": "Where every adventurer's tale begins. A sleepy river town under an old castle, ringed by cabbage fields and the gentlest monsters in Eldermoor.",
+      "facilities": [
+        "bank"
+      ],
+      "teleport": {
+        "level": 45,
+        "xp": 55,
+        "runes": {
+          "law_rune": 1,
+          "air_rune": 3,
+          "earth_rune": 1
+        }
+      }
+    },
+    "varrick": {
+      "id": "varrick",
+      "name": "Varrick",
+      "tier": "city",
+      "x": 969,
+      "y": 340,
+      "icon": "🏰",
+      "image": "/public/world/varrick.webp",
+      "sub": "Capital of the realm",
+      "lore": "The great stone capital — crowded markets, the grand smithy, and roads that run to every corner of Eldermoor.",
+      "facilities": [
+        "bank",
+        "furnace_anvil"
+      ],
+      "teleport": {
+        "level": 25,
+        "xp": 35,
+        "runes": {
+          "law_rune": 1,
+          "air_rune": 3,
+          "fire_rune": 1
+        }
+      }
+    },
+    "faloden": {
+      "id": "faloden",
+      "name": "Faloden",
+      "tier": "city",
+      "x": 488,
+      "y": 444,
+      "icon": "🏰",
+      "image": "/public/world/faloden.webp",
+      "sub": "City of the White Order",
+      "lore": "A walled city of knights and miners, its furnaces never cold. The heart of smithing in the west.",
+      "facilities": [
+        "bank",
+        "furnace_anvil"
+      ],
+      "teleport": {
+        "level": 31,
+        "xp": 41,
+        "runes": {
+          "law_rune": 1,
+          "air_rune": 3,
+          "water_rune": 1
+        }
+      }
+    },
+    "ardounne": {
+      "id": "ardounne",
+      "name": "Ardounne",
+      "tier": "city",
+      "x": 348,
+      "y": 562,
+      "icon": "🏰",
+      "image": "/public/world/ardounne.webp",
+      "sub": "The western city",
+      "lore": "A sprawling, divided city of grand spires and crooked back-alleys — paradise for a light-fingered thief.",
+      "facilities": [
+        "bank"
+      ],
+      "teleport": {
+        "level": 37,
+        "xp": 47,
+        "runes": {
+          "law_rune": 2,
+          "water_rune": 2
+        }
+      }
+    },
+    "draynar": {
+      "id": "draynar",
+      "name": "Draynar",
+      "tier": "village",
+      "x": 659,
+      "y": 592,
+      "icon": "🏡",
+      "image": "/public/world/draynar.webp",
+      "sub": "Willow-shaded village",
+      "lore": "A quiet village of willows and a watchful bank, just down the river road from Lumbright. Pickpockets practice here before the city.",
+      "facilities": [
+        "bank"
+      ],
+      "teleport": {
+        "level": 70,
+        "xp": 80,
+        "runes": {
+          "law_rune": 2,
+          "nature_rune": 1,
+          "earth_rune": 4
+        }
+      }
+    },
+    "alkarid": {
+      "id": "alkarid",
+      "name": "Al-Karid",
+      "tier": "town",
+      "x": 910,
+      "y": 585,
+      "icon": "🏘️",
+      "image": "/public/world/alkarid.webp",
+      "sub": "Gateway to the dunes",
+      "lore": "A sun-baked toll town at the desert's edge, its great furnace roaring day and night for the caravans.",
+      "facilities": [
+        "bank",
+        "furnace_anvil"
+      ],
+      "teleport": {
+        "level": 48,
+        "xp": 58,
+        "runes": {
+          "law_rune": 2,
+          "fire_rune": 3
+        }
+      }
+    },
+    "edgevale": {
+      "id": "edgevale",
+      "name": "Edgevale",
+      "tier": "town",
+      "x": 636,
+      "y": 237,
+      "icon": "🏘️",
+      "image": "/public/world/edgevale.webp",
+      "sub": "Last town before the wilds",
+      "lore": "A rough frontier town on the edge of the lawless north. The bank stays open; the gate stays locked after dark.",
+      "facilities": [
+        "bank"
+      ],
+      "teleport": {
+        "level": 54,
+        "xp": 64,
+        "runes": {
+          "law_rune": 2,
+          "air_rune": 4,
+          "earth_rune": 1
+        }
+      }
+    },
+    "barlock": {
+      "id": "barlock",
+      "name": "Barlock",
+      "tier": "village",
+      "x": 747,
+      "y": 400,
+      "icon": "🏡",
+      "image": "/public/world/barlock.webp",
+      "sub": "Village of the war-clans",
+      "lore": "A muddy ring of longhouses and anvils where the hill-clans mine, brawl, and hammer iron between feuds.",
+      "facilities": [
+        "furnace_anvil"
+      ],
+      "teleport": {
+        "level": 75,
+        "xp": 85,
+        "runes": {
+          "law_rune": 2,
+          "nature_rune": 1,
+          "fire_rune": 4
+        }
+      }
+    },
+    "catherra": {
+      "id": "catherra",
+      "name": "Catherra",
+      "tier": "village",
+      "x": 289,
+      "y": 429,
+      "icon": "🏡",
+      "image": "/public/world/catherra.webp",
+      "sub": "Fishing village on the bay",
+      "lore": "Nets dry on every fence and the catch is always fresh. A calm coastal village beneath the northern hills.",
+      "facilities": [],
+      "teleport": {
+        "level": 81,
+        "xp": 91,
+        "runes": {
+          "law_rune": 3,
+          "blood_rune": 1,
+          "water_rune": 4
+        }
+      }
+    },
+    "seerhold": {
+      "id": "seerhold",
+      "name": "Seerhold",
+      "tier": "town",
+      "x": 429,
+      "y": 333,
+      "icon": "🏘️",
+      "image": "/public/world/seerhold.webp",
+      "sub": "Town of the far-seers",
+      "lore": "A misty town of soothsayers and flax fields, where the crystal halls hum with quiet magic.",
+      "facilities": [
+        "bank"
+      ],
+      "teleport": {
+        "level": 58,
+        "xp": 68,
+        "runes": {
+          "law_rune": 2,
+          "water_rune": 3,
+          "earth_rune": 2
+        }
+      }
+    },
+    "brimhollow": {
+      "id": "brimhollow",
+      "name": "Brimhollow",
+      "tier": "town",
+      "x": 1251,
+      "y": 718,
+      "icon": "🏘️",
+      "image": "/public/world/brimhollow.webp",
+      "sub": "Tropical port of the south isle",
+      "lore": "A humid harbour town under a smoking volcano, all dock-rats, rum, and ships bound for stranger shores.",
+      "facilities": [
+        "bank"
+      ],
+      "teleport": {
+        "level": 64,
+        "xp": 74,
+        "runes": {
+          "law_rune": 2,
+          "fire_rune": 4,
+          "earth_rune": 2
+        }
+      }
+    },
+    "canifel": {
+      "id": "canifel",
+      "name": "Canifel",
+      "tier": "village",
+      "x": 1177,
+      "y": 444,
+      "icon": "🏡",
+      "image": "/public/world/canifel.webp",
+      "sub": "Hamlet of the haunted fens",
+      "lore": "A shuttered village in the eastern marsh, where the fog never lifts and something always watches the road.",
+      "facilities": [],
+      "teleport": {
+        "level": 87,
+        "xp": 97,
+        "runes": {
+          "law_rune": 3,
+          "soul_rune": 1,
+          "blood_rune": 1
+        }
+      }
+    },
+    "camlann": {
+      "id": "camlann",
+      "name": "Camlann",
+      "tier": "town",
+      "x": 377,
+      "y": 207,
+      "icon": "🏘️",
+      "image": "/public/world/camlann.webp",
+      "sub": "Hall of the round table",
+      "lore": "A noble hill-town of banners and knights-errant, the northernmost seat of honour in Eldermoor.",
+      "facilities": [
+        "bank"
+      ],
+      "teleport": {
+        "level": 61,
+        "xp": 71,
+        "runes": {
+          "law_rune": 2,
+          "air_rune": 5,
+          "water_rune": 1
+        }
+      }
+    },
+    "portsarin": {
+      "id": "portsarin",
+      "name": "Port Sarin",
+      "tier": "town",
+      "x": 548,
+      "y": 747,
+      "icon": "🏘️",
+      "image": "/public/world/portsarin.webp",
+      "sub": "The southern port",
+      "lore": "A salt-crusted harbour town of fishmongers and smugglers, where every ship south casts off from its crowded quays.",
+      "facilities": [
+        "bank"
+      ],
+      "teleport": {
+        "level": 51,
+        "xp": 61,
+        "runes": {
+          "law_rune": 2,
+          "water_rune": 4
+        }
+      }
+    }
+  },
+  "tiers": {
+    "city": {
+      "label": "City",
+      "size": 92,
+      "accent": "var(--color-gold-light)",
+      "blurb": "Raids · dungeons · bosses · quests · minigames · shops"
+    },
+    "town": {
+      "label": "Town",
+      "size": 72,
+      "accent": "var(--color-mana-light)",
+      "blurb": "Dungeons · bosses · quests · minigames"
+    },
+    "village": {
+      "label": "Village",
+      "size": 56,
+      "accent": "var(--color-emerald-light)",
+      "blurb": "Monsters · quests · minigames"
+    },
+    "hamlet": {
+      "label": "Hamlet",
+      "size": 46,
+      "accent": "var(--tier-bronze)",
+      "blurb": "Low-level monsters"
+    }
+  },
+  "kinds": {
+    "raid": {
+      "label": "Raid",
+      "color": "var(--color-blood-light)"
+    },
+    "boss": {
+      "label": "Boss",
+      "color": "var(--color-blood-light)"
+    },
+    "dungeon": {
+      "label": "Dungeon",
+      "color": "var(--color-mana-light)"
+    },
+    "combat": {
+      "label": "Combat",
+      "color": "var(--color-blood-ember)"
+    },
+    "quest": {
+      "label": "Quest",
+      "color": "var(--color-emerald-light)"
+    },
+    "minigame": {
+      "label": "Minigame",
+      "color": "var(--tier-bronze)"
+    },
+    "shop": {
+      "label": "Shop",
+      "color": "var(--color-gold)"
+    },
+    "skill": {
+      "label": "Skill",
+      "color": "var(--color-emerald-light)"
+    },
+    "gather": {
+      "label": "Gather",
+      "color": "var(--color-emerald)"
+    },
+    "agility": {
+      "label": "Agility",
+      "color": "var(--color-mana-light)"
+    },
+    "thieving": {
+      "label": "Thieving",
+      "color": "var(--tier-bronze)"
+    },
+    "hunter": {
+      "label": "Hunter",
+      "color": "var(--color-gold)"
+    }
+  },
+  "facilities": {
+    "bank": {
+      "label": "Bank",
+      "icon": "🏦"
+    },
+    "furnace_anvil": {
+      "label": "Furnace & Anvil",
+      "icon": "🔨"
+    }
+  }
+}

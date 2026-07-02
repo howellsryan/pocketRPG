@@ -340,6 +340,10 @@ export function resumeSaves() { savesSuspended = false }
 // Public: has the server rejected our state as diverged? The app uses this to
 // short-circuit its own save retry loops and trigger a cloud rollback.
 export function isSaveConflict() { return conflictPending }
+// Public: the app finished rolling back to the authoritative cloud copy
+// (pullSave + applyCloudSave re-adopted the server's revision) — pushes may
+// resume. Only the rollback path should call this.
+export function clearSaveConflict() { conflictPending = false }
 
 // Public: bypass the debounce — used on tab-hide / page-unload so we don't
 // lose a pending push. Also drains any pending critical save inline, so

@@ -132,7 +132,7 @@ function SlayerMasterInfoSheet({ master, slayerLevel, completedQuests, onClose }
             <h2 class="cb-sheet__name">{master.name}</h2>
             <div class="cb-sheet__sub">{master.location}</div>
           </div>
-          <button class="cb-x" onClick={onClose} aria-label="Close"><GameIcon iconKey="cancel" color="#cdbf9f" size={16} /></button>
+          <button class="cb-x" onClick={onClose} aria-label="Close"><GameIcon iconKey="cancel" color="var(--fm-ink-soft)" size={16} /></button>
         </div>
         <div class="cb-sheet__scroll">
           <p class="cb-idledesc" style={{ margin: '0 2px 8px' }}>
@@ -279,7 +279,7 @@ export default function SlayerScreen({ onBack, onNavigate }) {
 
   return (
     <>
-    <div class="h-full overflow-y-auto p-4">
+    <div class="forge-shell h-full overflow-y-auto p-4">
       <SkillScreenHeader
         skill="slayer"
         title="Slayer"
@@ -339,7 +339,7 @@ export default function SlayerScreen({ onBack, onNavigate }) {
           </div>
         </div>
       ) : (
-        <div class="mb-4 rounded-2xl p-3.5 text-center bg-[rgba(255,255,255,0.025)] border border-[rgba(255,255,255,0.06)]">
+        <div class="mb-4 rounded-2xl p-3.5 text-center bg-[var(--color-void-light)] border border-[var(--color-void-border)]">
           <div class="text-[12px] text-[var(--color-parchment)] opacity-50">No active task — select a master below to get one.</div>
         </div>
       )}

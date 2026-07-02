@@ -5,13 +5,16 @@ const SECTION_HEADER_SIZES = {
 }
 
 /**
- * Small uppercase Cinzel label used as section titles throughout the game.
+ * Small uppercase label used as section titles throughout the game (Cinzel by default,
+ * Grenze Gotisch inside a .forge-shell screen — see --font-display).
  * Replaces the repeated inline `fontFamily: 'Cinzel, serif', fontSize: 11px, opacity: 0.6 ...` pattern.
+ * `variant="parchment"` uses ink instead of parchment text — pair with Card/Panel variant="parchment".
  */
-export default function SectionHeader({ children, size = 'md', className = '', as: Tag = 'h3' }) {
+export default function SectionHeader({ children, size = 'md', variant = 'default', className = '', as: Tag = 'h3' }) {
+  const colorClass = variant === 'parchment' ? 'text-[var(--fm-ink-faint)]' : 'text-[var(--color-parchment)]'
   return (
     <Tag
-      class={`font-[var(--font-display)] font-bold text-[var(--color-parchment)] opacity-60 uppercase tracking-wider ${SECTION_HEADER_SIZES[size] || SECTION_HEADER_SIZES.md} ${className}`}
+      class={`font-[var(--font-display)] font-bold ${colorClass} opacity-60 uppercase tracking-wider ${SECTION_HEADER_SIZES[size] || SECTION_HEADER_SIZES.md} ${className}`}
     >
       {children}
     </Tag>

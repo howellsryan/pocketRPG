@@ -12,19 +12,19 @@ import { isQuestComplete } from '../utils/completion.js'
 import GameIcon from '../components/GameIcon.jsx'
 import { useIsDesktop } from '../hooks/useIsDesktop.js'
 import {
-  createQuestState, checkQuestEligibility,
+  checkQuestEligibility,
   getQuestPointsEarned, formatQuestDuration,
 } from '../engine/quests.js'
-import { QUEST_QUEUE_MAX } from '../utils/constants.js'
+import { QUEST_QUEUE_MAX, SCREENS } from '../utils/constants.js'
+import { planQuestJourney } from '../engine/journeys.js'
 import questsData from '../data/quests.json'
-import { getActivityKey } from '../engine/activityRegistry.js'
 import { COMPLEXITY_COLORS, COMPLEXITY_ORDER } from '../utils/complexityColors.js'
 
-export default function QuestsScreen() {
+export default function QuestsScreen({ onNavigate } = {}) {
   const {
     stats, completedQuests, activeTask, setActiveTask,
     addToast, itemsData, questQueue, addQuestToQueue, removeFromQuestQueue, updateQuestQueue,
-    getActivityProgress,
+    worldLocation,
   } = useGame()
 
   const [hideCompleted, setHideCompleted] = useState(false)
@@ -37,27 +37,27 @@ export default function QuestsScreen() {
   const hasAutoStarted = useRef(false)
   const isDesktop = useIsDesktop()
 
-  const startQuest = (quest) => {
-    const state = createQuestState(quest)
-    const key = getActivityKey({ type: 'quest', quest })
-    const savedProgress = key ? getActivityProgress(key) : null
-    const ticksRemaining = savedProgress?.progressTicks > 0
-      ? Math.max(0, state.totalTicks - savedProgress.progressTicks)
-      : state.totalTicks
-    const resuming = savedProgress?.progressTicks > 0 && ticksRemaining > 0
-    setActiveTask({
-      type: 'quest',
-      quest,
-      totalTicks: state.totalTicks,
-      ticksRemaining,
-      startedAt: state.startedAt,
-    })
-    // Remove from queue if it was queued
-    if (questQueue.some(q => q.id === quest.id)) {
-      removeFromQuestQueue(quest.id)
+  // Beginning a quest undertakes it as a journey across the world map — travel
+  // to and search 2–4 places; the final search completes the quest through
+  // handleQuestCompletion (XP choices, queue cascade and all). This is the only
+  // quest flow: the old stand-still timer is retired (a legacy in-flight task
+  // from an older save still renders and ticks out below). Starting drops you
+  // onto the map to walk the trail — or teleport between its waypoints.
+  const startQuestJourney = (quest) => {
+    if (activeTask?.type === 'travel') {
+      addToast('Finish or turn back your current journey first.', 'info')
+      return
     }
+    const jt = planQuestJourney(quest, worldLocation)
+    if (!jt) {
+      addToast('No route can be plotted from here.', 'error')
+      return
+    }
+    setActiveTask(jt)
+    if (questQueue.some(q => q.id === quest.id)) removeFromQuestQueue(quest.id)
     setSelectedQuest(null)
-    addToast(resuming ? `📜 Resuming: ${quest.name}` : `📜 Started: ${quest.name}`, 'info')
+    addToast(`🗺️ Journey begun: ${quest.name} — ${jt.journey.steps.length} places to visit`, 'info')
+    onNavigate?.(SCREENS.WORLD_MAP)
   }
 
   const addToQueue = (quest) => {
@@ -88,11 +88,12 @@ export default function QuestsScreen() {
     updateQuestQueue(newQueue)
   }
 
+  // Begin Queue sets out on the first quest's journey; each completion then
+  // auto-chains the next queued quest's journey from wherever it ended (App.jsx
+  // promoteNextQueuedQuestOrClear) — the queue runs itself in the background.
   const startQueue = () => {
     if (questQueue.length === 0) return
-    const firstQuest = questQueue[0]
-    startQuest(firstQuest)
-    addToast(`Queue started. ${firstQuest.name} started first.`, 'info')
+    startQuestJourney(questQueue[0])
   }
 
   const sortedQuests = [...questsData].sort((a, b) => {
@@ -109,7 +110,8 @@ export default function QuestsScreen() {
   const totalQp = getQuestPointsEarned(completedQuests, questsData)
   const completedCount = completedQuests.size
 
-  // ── Active quest view (App.jsx ticks the quest; we just render state) ──────
+  // ── Legacy active quest view — only a stand-still `type:'quest'` task saved
+  // before the journey flow can reach this (App.jsx still ticks it out) ────────
   if (activeTask?.type === 'quest' && activeTask.quest && !collapsedActive) {
     const { quest, totalTicks } = activeTask
     const ticksRemaining = activeTask.ticksRemaining ?? totalTicks
@@ -117,11 +119,11 @@ export default function QuestsScreen() {
     const remainingSec = Math.ceil(ticksRemaining * 0.6)
 
     return (
-      <div class="h-full flex flex-col p-4">
+      <div class="forge-shell h-full flex flex-col p-4">
         <div class="flex justify-between items-center mb-3">
           <button
             onClick={backFromActiveQuest}
-            class="text-[12px] text-[#c4af7a] flex items-center gap-1 bg-transparent border-0 cursor-pointer"
+            class="text-[12px] text-[var(--fm-ember)] flex items-center gap-1 bg-transparent border-0 cursor-pointer"
           >
             ← Back
           </button>
@@ -176,7 +178,7 @@ export default function QuestsScreen() {
 
   // ── Quest list ──────────────────────────────────────────────────────────────
   return (
-    <div class="h-full flex flex-col">
+    <div class="forge-shell h-full flex flex-col">
       <div class="px-4 pt-4 pb-2 flex-shrink-0">
         <div class="flex justify-between items-baseline mb-2">
           <SectionHeader size="lg"><span class="inline-flex items-center gap-2"><GameIcon iconKey="clue_scroll_medium" size={18} class="flex-shrink-0" /> Quests</span></SectionHeader>
@@ -192,7 +194,7 @@ export default function QuestsScreen() {
               class={`px-3 py-[5px] rounded-[20px] text-[11px] font-semibold border ${
                 hideCompleted
                   ? 'border-[var(--color-gold)] bg-[rgba(212,175,55,0.15)] text-[var(--color-gold)]'
-                  : 'border-[#2a2a2a] bg-[var(--color-void-light)] text-[var(--color-parchment)] opacity-60'
+                  : 'border-[var(--color-void-border)] bg-[var(--color-void-light)] text-[var(--color-parchment)] opacity-60'
               }`}
             >
               {hideCompleted ? '✓ Hiding completed' : 'Show all'}
@@ -223,6 +225,18 @@ export default function QuestsScreen() {
         list={
       <div class="h-full overflow-y-auto px-4 pb-4">
         <div class="flex flex-col gap-2">
+            {activeTask?.type === 'travel' && activeTask.journey?.kind === 'quest' && (
+              <button
+                onClick={() => onNavigate?.(SCREENS.WORLD_MAP)}
+                class="mb-2 w-full flex items-center justify-between gap-2 p-3 rounded-xl border border-[var(--color-gold)] bg-[rgba(212,175,55,0.12)] text-left active:opacity-80"
+              >
+                <span class="flex items-center gap-2 min-w-0">
+                  <span class="w-2 h-2 rounded-full bg-[var(--color-xp-bar)] flex-shrink-0" />
+                  <span class="text-[13px] font-semibold text-[var(--color-parchment)] truncate">🗺️ {activeTask.journey.name} — journey underway</span>
+                </span>
+                <span class="text-[12px] font-semibold text-[var(--color-gold)] flex-shrink-0">View map ›</span>
+              </button>
+            )}
             {collapsedActive && activeTask?.type === 'quest' && activeTask.quest && (
               <button
                 onClick={() => setCollapsedActive(false)}
@@ -239,7 +253,7 @@ export default function QuestsScreen() {
               <div class="flex flex-col gap-2 pt-2 mb-4">
                 <SectionHeader size="sm">📋 Quest Queue</SectionHeader>
                 {questQueue.map((quest, idx) => (
-                  <div key={quest.id} class="p-3 rounded-xl bg-[var(--color-void-light)] border border-[#2a2a2a] flex items-center justify-between gap-2">
+                  <div key={quest.id} class="p-3 rounded-xl bg-[var(--color-void-light)] border border-[var(--color-void-border)] flex items-center justify-between gap-2">
                     <div class="flex-1 min-w-0">
                       <div class="text-[13px] font-semibold text-[var(--color-parchment)]">
                         {idx + 1}. {quest.name}
@@ -284,7 +298,7 @@ export default function QuestsScreen() {
             })}
 
             {visibleQuests.length === 0 && (
-              <div class="py-10 text-center text-[#888] text-[12px]">
+              <div class="py-10 text-center text-[var(--fm-ink-faint)] text-[12px]">
                 No quests to show.
               </div>
             )}
@@ -300,7 +314,7 @@ export default function QuestsScreen() {
                 completedQuests={completedQuests}
                 itemsData={itemsData}
                 onClose={() => setSelectedQuest(null)}
-                onStart={startQuest}
+                onStartJourney={startQuestJourney}
                 onAddToQueue={addToQueue}
                 isInQueue={questQueue.some(q => q.id === selectedQuest.id)}
                 queueFull={questQueue.length >= QUEST_QUEUE_MAX}
@@ -322,7 +336,7 @@ export default function QuestsScreen() {
           completedQuests={completedQuests}
           itemsData={itemsData}
           onClose={() => setSelectedQuest(null)}
-          onStart={startQuest}
+          onStartJourney={startQuestJourney}
           onAddToQueue={addToQueue}
           isInQueue={questQueue.some(q => q.id === selectedQuest.id)}
           queueFull={questQueue.length >= QUEST_QUEUE_MAX}
@@ -334,7 +348,7 @@ export default function QuestsScreen() {
 
 // ──────────────────────────────────────────────────────────────────────────────
 
-function QuestDetailsModal({ quest, stats, completedQuests, itemsData, onClose, onStart, onAddToQueue, isInQueue, queueFull }) {
+function QuestDetailsModal({ quest, stats, completedQuests, itemsData, onClose, onStartJourney, onAddToQueue, isInQueue, queueFull }) {
   return (
     <Modal title={quest.name} onClose={onClose}>
       <QuestDetailsBody
@@ -343,7 +357,7 @@ function QuestDetailsModal({ quest, stats, completedQuests, itemsData, onClose, 
         completedQuests={completedQuests}
         itemsData={itemsData}
         onClose={onClose}
-        onStart={onStart}
+        onStartJourney={onStartJourney}
         onAddToQueue={onAddToQueue}
         isInQueue={isInQueue}
         queueFull={queueFull}
@@ -353,7 +367,7 @@ function QuestDetailsModal({ quest, stats, completedQuests, itemsData, onClose, 
   )
 }
 
-function QuestDetailsBody({ quest, stats, completedQuests, itemsData, onClose, onStart, onAddToQueue, isInQueue, queueFull, showCloseButton = false }) {
+function QuestDetailsBody({ quest, stats, completedQuests, itemsData, onClose, onStartJourney, onAddToQueue, isInQueue, queueFull, showCloseButton = false }) {
   const completed = completedQuests.has(quest.id)
   const elig = checkQuestEligibility(quest, stats, completedQuests, questsData)
   const skillEntries = Object.entries(quest.skillRequirements || {})
@@ -446,13 +460,18 @@ function QuestDetailsBody({ quest, stats, completedQuests, itemsData, onClose, o
                 variant="primary"
                 size="lg"
                 disabled={!elig.eligible}
-                onClick={() => onStart(quest)}
+                onClick={() => onStartJourney(quest)}
                 className="flex-1"
               >
-                {elig.eligible ? 'Begin Quest' : 'Locked'}
+                {elig.eligible ? '🗺️ Begin Quest' : 'Locked'}
               </Button>
             )}
           </div>
+          {!completed && elig.eligible && (
+            <div class="text-[11px] text-[var(--color-parchment)] opacity-50 text-center">
+              Quests are journeys: follow the trail on the world map — teleport between waypoints to finish faster.
+            </div>
+          )}
           {!completed && (
             <Button
               variant={isInQueue ? 'secondary' : 'success'}

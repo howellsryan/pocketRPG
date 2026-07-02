@@ -273,7 +273,7 @@ export default function EquipmentScreen() {
   const bonuses = getEquipmentBonuses(equipment, itemsData)
 
   return (
-    <div class="h-full overflow-y-auto p-4">
+    <div class="forge-shell h-full overflow-y-auto p-4">
       <SectionHeader className="mb-3">Equipment</SectionHeader>
 
       {/* Loadout presets — save/load the full equipment + inventory state, the
@@ -285,13 +285,13 @@ export default function EquipmentScreen() {
           <div key={p.id} class="flex items-stretch rounded-md overflow-hidden">
             <button
               onClick={() => handleLoadPreset(p)}
-              class="px-3 py-1.5 bg-[#222] text-[var(--color-parchment)] text-xs font-bold max-w-[110px] truncate active:opacity-80"
+              class="px-3 py-1.5 bg-[var(--color-void-light)] text-[var(--color-parchment)] text-xs font-bold max-w-[110px] truncate active:opacity-80"
             >
               {p.name}
             </button>
             <button
               onClick={() => { setManagePreset(p); setManageName(p.name) }}
-              class="px-2 py-1.5 bg-[#1a1a1a] text-[var(--color-parchment)] opacity-40 text-xs active:opacity-70"
+              class="px-2 py-1.5 bg-[var(--color-void-light)] text-[var(--color-parchment)] opacity-40 text-xs active:opacity-70"
               aria-label={`Edit preset ${p.name}`}
             >
               ✏️
@@ -301,7 +301,7 @@ export default function EquipmentScreen() {
         {presets.length < MAX_EQUIPMENT_PRESETS && (
           <button
             onClick={() => { setCreateOpen(true); setCreateName('') }}
-            class="px-2.5 py-1.5 rounded-md bg-[#222] text-[var(--color-parchment)] opacity-50 text-sm font-bold active:opacity-80"
+            class="px-2.5 py-1.5 rounded-md bg-[var(--color-void-light)] text-[var(--color-parchment)] opacity-50 text-sm font-bold active:opacity-80"
             aria-label="Save current loadout as a preset"
           >
             +
@@ -353,7 +353,7 @@ export default function EquipmentScreen() {
         </div>
 
         {/* Other bonuses */}
-        <div class="border-t border-[#222] mt-3 pt-3">
+        <div class="border-t border-[var(--color-void-border)] mt-3 pt-3">
           <SectionHeader size="sm" className="mb-1 opacity-40">Other</SectionHeader>
           <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-1 md:gap-3 text-[11px] md:text-[13px]">
             {Object.entries(bonuses.otherBonus).map(([k, v]) => {
@@ -372,7 +372,7 @@ export default function EquipmentScreen() {
 
         {/* Set bonuses — render only when active */}
         {hasFullVoidKingSet(equipment) && (
-          <div class="border-t border-[#222] mt-3 pt-3">
+          <div class="border-t border-[var(--color-void-border)] mt-3 pt-3">
             <SectionHeader size="sm" className="mb-1 opacity-40">Void King Set Bonus</SectionHeader>
             <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-1 md:gap-3 text-[11px] md:text-[13px]">
               {[
@@ -393,7 +393,7 @@ export default function EquipmentScreen() {
         )}
 
         {/* Inventory display — desktop only */}
-        <div class="hidden lg:block border-t border-[#222] mt-3 pt-3">
+        <div class="hidden lg:block border-t border-[var(--color-void-border)] mt-3 pt-3">
           <SectionHeader size="sm" className="mb-2 opacity-50">Inventory</SectionHeader>
           <div class="grid grid-cols-7 gap-1">
             {inventory.map((slot, i) => (
@@ -488,7 +488,7 @@ export default function EquipmentScreen() {
                 value={createName}
                 onInput={(e) => setCreateName(e.target.value)}
                 maxLength={24}
-                class="w-full bg-[#1a1a1a] border border-[#333] rounded-lg px-3 py-2 text-sm text-[var(--color-parchment)] outline-none focus:border-[var(--color-gold)]"
+                class="w-full bg-[var(--color-void-light)] border border-[var(--color-void-border)] rounded-lg px-3 py-2 text-sm text-[var(--color-parchment)] outline-none focus:border-[var(--color-gold)]"
                 placeholder={`Preset ${presets.length + 1}`}
               />
             </div>
@@ -513,7 +513,7 @@ export default function EquipmentScreen() {
                 value={manageName}
                 onInput={(e) => setManageName(e.target.value)}
                 maxLength={24}
-                class="w-full bg-[#1a1a1a] border border-[#333] rounded-lg px-3 py-2 text-sm text-[var(--color-parchment)] outline-none focus:border-[var(--color-gold)]"
+                class="w-full bg-[var(--color-void-light)] border border-[var(--color-void-border)] rounded-lg px-3 py-2 text-sm text-[var(--color-parchment)] outline-none focus:border-[var(--color-gold)]"
                 placeholder="Enter preset name"
               />
             </div>

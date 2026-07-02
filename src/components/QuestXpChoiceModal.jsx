@@ -27,7 +27,7 @@ export default function QuestXpChoiceModal({ rewards, questName, stats, onComple
   const label = current.type === 'combat' ? 'a combat skill' : 'any skill'
 
   return (
-    <div class="fixed inset-0 z-[300] flex items-end sm:items-center justify-center">
+    <div class="forge-shell fixed inset-0 z-[300] flex items-end sm:items-center justify-center">
       <div class="absolute inset-0 bg-black/80" />
       <div class="relative w-full sm:max-w-lg bg-[var(--color-void-light)] border border-[var(--color-void-border)] rounded-t-2xl sm:rounded-2xl overflow-hidden max-h-[90vh] flex flex-col">
 
@@ -38,7 +38,7 @@ export default function QuestXpChoiceModal({ rewards, questName, stats, onComple
         </div>
 
         {/* Prompt */}
-        <div class="px-4 py-3 text-center border-b border-[#222]">
+        <div class="px-4 py-3 text-center border-b border-[var(--color-void-border)]">
           <p class="text-sm text-[var(--color-parchment)]">
             Choose {label} to receive{' '}
             <span class="text-[var(--color-gold)] font-bold">{current.amount.toLocaleString()} XP</span>
@@ -59,7 +59,7 @@ export default function QuestXpChoiceModal({ rewards, questName, stats, onComple
                 <button
                   key={skill}
                   onClick={() => pick(skill)}
-                  class="flex flex-col items-center justify-center gap-1 min-h-[64px] rounded-xl border border-[var(--color-void-border)] bg-[#111] hover:border-[var(--color-gold)] hover:bg-[#1c1c1c] active:bg-[#222] transition-colors p-2"
+                  class="flex flex-col items-center justify-center gap-1 min-h-[64px] rounded-xl border border-[var(--color-void-border)] bg-[var(--color-void)] hover:border-[var(--color-gold)] hover:bg-[var(--color-void-light)] active:bg-[var(--color-void-lighter)] transition-colors p-2"
                 >
                   <SkillIcon skill={skill} size={26} />
                   <span class="text-xs font-bold text-[var(--color-parchment)] capitalize">{skill}</span>

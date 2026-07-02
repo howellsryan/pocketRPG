@@ -13,7 +13,7 @@ import {
 } from '../src/engine/activityRegistry.js'
 
 const BACKGROUND_TYPES = [
-  'quest', 'minigame', 'clue', 'gather', 'agility', 'thieving', 'hunter', 'skill',
+  'quest', 'minigame', 'clue', 'gather', 'agility', 'thieving', 'hunter', 'skill', 'travel',
 ]
 
 describe('activityRegistry — persistence policy', () => {

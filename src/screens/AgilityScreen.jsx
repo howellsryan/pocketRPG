@@ -17,7 +17,7 @@ import skillsData from '../data/skills.json'
 const agilityData = skillsData.agility
 
 export default function AgilityScreen({ initialActionId, idleResult, onBack }) {
-  const { stats, inventory, updateInventory, bank, updateBankDirect, grantXP, addToast, setActiveTask, activeTask } = useGame()
+  const { stats, inventory, updateInventory, bank, updateBankDirect, grantXP, addToast, setActiveTask, requestActivityStart, activeTask } = useGame()
 
   const agilityLevel = getLevelFromXP(stats.agility?.xp || 0)
   const agilityXP = stats.agility?.xp || 0
@@ -153,6 +153,8 @@ export default function AgilityScreen({ initialActionId, idleResult, onBack }) {
       const resumed = buildResumedState(activeTask)
       if (resumed) { setAgility(resumed); agilityRef.current = resumed; return }
     }
+    // Map-driven gating (Phase 3): must be at a place that offers this course.
+    if (!requestActivityStart({ type: 'agility', action })) return
     const startedAt = Date.now()
     const state = {
       ...createAgilityState(action),
@@ -186,7 +188,7 @@ export default function AgilityScreen({ initialActionId, idleResult, onBack }) {
   // Course picker
   if (!agility) {
     return (
-      <div class="h-full overflow-y-auto p-4">
+      <div class="forge-shell h-full overflow-y-auto p-4">
         <SkillScreenHeader
           skill="agility"
           title="Agility Courses"

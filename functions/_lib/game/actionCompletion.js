@@ -1,6 +1,6 @@
 import { isValidEntry } from '../collectionLog.js'
 import { GameApiError } from './errors.js'
-import { addItemToInventory, addItemToBank, removeItemFromInventory, getInventory } from './inventory.js'
+import { addItemToInventory, addItemToBank, removeItemFromInventory, removeItemFromBank, bankQuantity, getInventory } from './inventory.js'
 import { VALID_CLUE_REWARD_ITEMS } from './clueRewards.js'
 import skillsData from '../../../src/data/skills.json' assert { type: 'json' }
 import raidsData from '../../../src/data/raids.json' assert { type: 'json' }
@@ -103,7 +103,20 @@ function isStackableItem(itemId) {
 // caller that hasn't migrated yet (tests can still pass it).
 export function settleActionCompletion(saveObject, { sourceType, sourceId, nonce: _nonce, rewards = [], consumptions = [], slayerPoints = 0, dungeoneeringTokens = 0 }) {
   for (const c of consumptions) {
-    removeItemFromInventory(saveObject, c.itemId, c.quantity)
+    // Consume inventory-first-then-bank: clue scrolls (and most supplies) are
+    // auto-banked on drop and the client gates on inventory+bank, so an
+    // inventory-only debit rejects legitimate completions with
+    // INSUFFICIENT_SUPPLIES whenever the item sits in the bank.
+    const qty = Math.floor(Number(c.quantity) || 0)
+    if (qty < 1) throw new GameApiError('INVALID_QUANTITY', 'Invalid quantity', 400)
+    const inInventory = getInventory(saveObject).reduce(
+      (sum, s) => sum + (s?.itemId === c.itemId ? Math.floor(Number(s.quantity) || 0) : 0), 0)
+    if (inInventory + bankQuantity(saveObject, c.itemId) < qty) {
+      throw new GameApiError('INSUFFICIENT_SUPPLIES', 'Insufficient supplies', 400)
+    }
+    const fromInventory = Math.min(inInventory, qty)
+    if (fromInventory > 0) removeItemFromInventory(saveObject, c.itemId, fromInventory)
+    if (qty - fromInventory > 0) removeItemFromBank(saveObject, c.itemId, qty - fromInventory)
   }
 
 

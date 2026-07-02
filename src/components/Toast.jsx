@@ -1,12 +1,11 @@
 import { useGame } from '../state/gameState.jsx'
 
-// Per-type visual treatment. `rich` types get the full gold reward card;
-// everything else uses the compact, colour-coded system style. Level-up uses the
-// solid compact style (with a gold accent) so it matches the other toasts rather
-// than the see-through reward card.
+// Per-type visual treatment. Every type uses the same compact, colour-coded
+// system style — rewards and level-ups get the gold accent rather than a
+// separate see-through reward card, so all notifications read as one family.
 const TOAST_STYLES = {
   levelup: { accent: 'var(--color-gold-light)', bar: 'var(--color-gold)' },
-  reward:  { rich: true, accent: 'var(--color-gold-light)' },
+  reward:  { accent: 'var(--color-gold-light)', bar: 'var(--color-gold)' },
   error:   { accent: 'var(--color-blood-ember)', bar: 'var(--color-blood)' },
   combat:  { accent: 'var(--color-blood-light)', bar: 'var(--color-blood-light)' },
   drop:    { accent: 'var(--color-emerald-light)', bar: 'var(--color-emerald)' },
@@ -39,23 +38,6 @@ const Countdown = ({ ttl, color }) => (
   />
 )
 
-function RichToast({ toast, onDismiss }) {
-  const style = TOAST_STYLES[toast.type] || TOAST_STYLES.reward
-  const icon = toast.icon || DEFAULT_ICONS[toast.type] || '🏆'
-  return (
-    <div class="toast-enter pointer-events-auto relative w-full max-w-sm flex items-center gap-3 px-3.5 py-3.5 rounded-2xl overflow-hidden shadow-[0_10px_30px_rgba(0,0,0,0.45)] bg-gradient-to-br from-[rgba(240,192,64,0.16)] to-[rgba(212,160,23,0.05)] border border-[rgba(240,192,64,0.42)]">
-      <div class="w-[46px] h-[46px] flex-shrink-0 rounded-xl flex items-center justify-center text-2xl bg-gradient-to-br from-[rgba(240,192,64,0.32)] to-[rgba(212,160,23,0.1)] border border-[rgba(240,192,64,0.5)]">
-        {icon}
-      </div>
-      <div class="flex-1 min-w-0">
-        <div class="text-[15px] font-bold text-[var(--color-parchment)] leading-snug">{toast.message}</div>
-      </div>
-      <DismissBtn onClick={() => onDismiss(toast.id)} accent="var(--color-gold)" size={28} />
-      <Countdown ttl={toast.ttl} color="linear-gradient(90deg,var(--color-gold-light),var(--color-gold-dim))" />
-    </div>
-  )
-}
-
 function CompactToast({ toast, onDismiss }) {
   const style = TOAST_STYLES[toast.type] || TOAST_STYLES.info
   const icon = toast.icon || DEFAULT_ICONS[toast.type] || 'ℹ️'
@@ -82,12 +64,7 @@ export default function ToastContainer() {
 
   return (
     <div class="fixed top-14 left-0 right-0 z-[60] flex flex-col items-center gap-2.5 pointer-events-none px-4">
-      {toasts.map(toast => {
-        const style = TOAST_STYLES[toast.type] || TOAST_STYLES.info
-        return style.rich
-          ? <RichToast key={toast.id} toast={toast} onDismiss={dismissToast} />
-          : <CompactToast key={toast.id} toast={toast} onDismiss={dismissToast} />
-      })}
+      {toasts.map(toast => <CompactToast key={toast.id} toast={toast} onDismiss={dismissToast} />)}
     </div>
   )
 }

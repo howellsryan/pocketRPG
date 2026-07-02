@@ -57,8 +57,10 @@ export default function Header({ activity, credits = 0, isCloudAccount = false, 
   }, [])
 
   return (
-    <header class="pwa-header relative flex-shrink-0 bg-[#111] border-b border-[#333] px-3 py-2 md:px-6 md:py-3">
-      <div class="flex items-center gap-2">
+    // md:min-h-14 matches the side nav's brand row so both bars' bottom
+    // borders form one continuous line across the desktop chrome.
+    <header class="pwa-header fm-topbar relative flex-shrink-0 bg-[#111] border-b border-[#333] px-3 py-2 md:px-6 md:py-0 md:min-h-14 md:flex md:items-center">
+      <div class="flex items-center gap-2 md:flex-1">
         <div class="flex items-center gap-1">
           {onMenuClick && (
             <button

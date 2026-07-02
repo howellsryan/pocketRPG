@@ -49,7 +49,7 @@ export default function StatsScreen() {
   const selToNext = selected ? getXPToNextLevel(selected.xp) : 0
 
   return (
-    <div class="h-full overflow-y-auto p-4">
+    <div class="forge-shell h-full overflow-y-auto p-4">
       {/* Summary */}
       <div class="flex justify-between items-center mb-3 px-1">
         <span class="text-xs text-[var(--color-parchment)] opacity-60">
@@ -73,7 +73,7 @@ export default function StatsScreen() {
               <div class="text-4xl font-[var(--font-mono)] font-bold text-[var(--color-gold)]">{selLevel}</div>
               <div class="text-xs text-[var(--color-parchment)] opacity-50 mt-1">Current Level</div>
             </div>
-            <div class="bg-[#111] rounded-lg p-3 space-y-2">
+            <div class="bg-[var(--color-void-light)] rounded-lg p-3 space-y-2">
               <div class="flex justify-between text-sm">
                 <span class="text-[var(--color-parchment)] opacity-60">Total XP</span>
                 <span class="font-[var(--font-mono)] text-[var(--color-gold)]">{formatNumber(selected.xp)}</span>
@@ -93,7 +93,7 @@ export default function StatsScreen() {
               </div>
             )}
             {selectedSkill === 'agility' && (
-              <div class="bg-[#111] rounded-lg p-3">
+              <div class="bg-[var(--color-void-light)] rounded-lg p-3">
                 <div class="flex justify-between text-sm">
                   <span class="text-[var(--color-parchment)] opacity-60">🏦 Bank delay</span>
                   <span class="font-[var(--font-mono)] text-[var(--color-gold)]">

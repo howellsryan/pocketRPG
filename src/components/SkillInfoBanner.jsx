@@ -10,8 +10,8 @@
  *   className — extra classes
  */
 const TONES = {
-  gold: 'bg-[rgba(212,160,23,0.05)] border-[rgba(212,160,23,0.16)]',
-  neutral: 'bg-[rgba(255,255,255,0.025)] border-[rgba(255,255,255,0.06)]',
+  gold: 'bg-[rgba(212,160,23,0.08)] border-[rgba(212,160,23,0.25)]',
+  neutral: 'bg-[rgba(0,0,0,0.035)] border-[rgba(0,0,0,0.1)]',
 }
 
 export default function SkillInfoBanner({ tone = 'gold', icon = null, children, className = '' }) {
