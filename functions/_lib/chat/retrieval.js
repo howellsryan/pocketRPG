@@ -28,6 +28,13 @@ function stem(token) {
 const K1 = 1.5
 const B = 0.75
 
+// Relevance guards. Coverage down-weights chunks that match only a fraction of
+// the query's informative terms (one generic word like "level" or "fight" must
+// not carry a chunk into the context); the relative floor then drops the weak
+// tail so only chunks in the same league as the best hit are returned.
+const COVERAGE_WEIGHT = 0.5
+const RELATIVE_FLOOR = 0.3
+
 // Build a searchable index over chunks: [{ id, title, tags, text }].
 export function buildIndex(chunks) {
   const docs = chunks.map((chunk) => {
@@ -57,15 +64,22 @@ export function searchKnowledge(query, index, k = 4) {
   const scored = []
   for (const doc of index.docs) {
     let score = 0
+    let matched = 0
     for (const term of terms) {
       const tf = doc.freq.get(term)
       if (!tf) continue
+      matched++
       const df = index.df.get(term) || 0
       const idf = Math.log(1 + (index.n - df + 0.5) / (df + 0.5))
       score += idf * ((tf * (K1 + 1)) / (tf + K1 * (1 - B + (B * doc.len) / index.avgLen)))
     }
-    if (score > 0) scored.push({ chunk: doc.chunk, score })
+    if (score > 0) {
+      score *= 1 - COVERAGE_WEIGHT + COVERAGE_WEIGHT * (matched / terms.length)
+      scored.push({ chunk: doc.chunk, score })
+    }
   }
   scored.sort((a, b) => b.score - a.score)
-  return scored.slice(0, k)
+  if (!scored.length) return []
+  const floor = scored[0].score * RELATIVE_FLOOR
+  return scored.filter((h) => h.score >= floor).slice(0, k)
 }

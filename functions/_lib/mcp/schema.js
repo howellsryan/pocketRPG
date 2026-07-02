@@ -248,7 +248,7 @@ export const TOOL_SCHEMAS = [
   {
     name: 'inspect_item',
     description:
-      'Get the full definition of a single item by id (name, type, equipment slot, combat bonuses, shop value, flags). Use pocketrpg://reference/items to find ids.',
+      'Get the full definition of a single item by id (name, type, equipment slot, combat bonuses, shop value, flags), plus a `sources` field listing where the item comes from — monster drops with chances, clue tiers, raids, skilling actions that produce it, General Store stock. Use this to answer "how do I get X". Use pocketrpg://reference/items to find ids.',
     inputSchema: {
       type: 'object',
       properties: { item_id: { type: 'string', description: "The item id, e.g. 'rune_scimitar'." } },

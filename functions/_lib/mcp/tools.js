@@ -1,6 +1,6 @@
 import { callHandler } from './bridge.js'
 import { summarizeSave } from './summary.js'
-import { getItem, getMonster, itemName, withItemName, REFERENCE_RESOURCES, readReference, listSkills, getSkillActions, searchItems, searchMonsters, REFERENCE_TOPICS } from './reference.js'
+import { getItem, getMonster, itemName, withItemName, itemSources, REFERENCE_RESOURCES, readReference, listSkills, getSkillActions, searchItems, searchMonsters, REFERENCE_TOPICS } from './reference.js'
 import { loadCharacterWithSave, writeSave } from '../game/save.js'
 import { createDefaultSave } from '../../../src/engine/createDefaultSave.js'
 import { auditLog } from '../game/audit.js'
@@ -330,7 +330,8 @@ const TOOLS = {
     if (!item_id) throw new Error('item_id is required.')
     const item = getItem(item_id)
     if (!item) throw new Error(`No item with id '${item_id}'. Browse ids via pocketrpg://reference/items.`)
-    return ok(item)
+    const sources = itemSources(item_id)
+    return ok(sources ? { ...item, sources } : item)
   },
 
   async inspect_monster({ monster_id }) {

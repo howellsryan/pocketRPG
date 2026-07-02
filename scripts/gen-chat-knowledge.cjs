@@ -160,6 +160,90 @@ function farmingChunks() {
   return [category('herbs', 'Herbs'), category('trees', 'Trees'), category('fruitTrees', 'Fruit trees')].filter(Boolean)
 }
 
+function bossChunk() {
+  const monsters = readJson('monsters.json')
+  const lines = Object.values(monsters)
+    .filter((m) => m.boss)
+    .map((m) => {
+      const slayer = m.slayerRequirement ? `, Slayer ${m.slayerRequirement} required` : ''
+      return `${m.name} (combat level ${m.combatLevel}, ${m.hitpoints} HP${slayer})`
+    })
+  return {
+    id: 'data_bosses',
+    title: 'Boss list: combat levels, HP and Slayer requirements',
+    tags: ['boss', 'bosses', 'slayer'],
+    text: `All bosses with combat level, hitpoints and Slayer level requirement where one applies. ${lines.join('. ')}.`,
+  }
+}
+
+function monsterChunks() {
+  const monsters = readJson('monsters.json')
+  const fmtChance = (c) => (c >= 1 ? 'always' : `1 in ${Math.round(1 / c).toLocaleString('en-GB')}`)
+  return Object.values(monsters).map((m) => {
+    const drops = (m.drops || [])
+      .slice()
+      .sort((a, b) => a.chance - b.chance)
+      .map((d) => `${titleCaseId(d.itemId)} (${fmtChance(d.chance)})`)
+    const kind = m.boss ? 'boss' : 'monster'
+    const slayer = m.slayerRequirement ? ` Requires Slayer level ${m.slayerRequirement}.` : ''
+    const text =
+      `${m.name} is a ${kind} at combat level ${m.combatLevel} with ${m.hitpoints} HP, attacking with ${m.attackStyle || 'melee'}.${slayer}` +
+      (drops.length ? ` Drops: ${drops.join(', ')}.` : '')
+    return {
+      id: `monster_${m.id}`,
+      title: `${m.boss ? 'Boss' : 'Monster'}: ${m.name} — stats and drops`,
+      tags: ['monster', 'drops', ...(m.boss ? ['boss'] : [])],
+      text,
+    }
+  })
+}
+
+function clueChunks() {
+  const clues = readJson('clues.json')
+  // Engine constants (src/engine/clueScrolls.js): completion ticks per tier.
+  const minutes = { medium: 5, hard: 15, elite: 30, master: 60 }
+  return Object.entries(clues).map(([tier, data]) => {
+    const rewards = data.rewards || []
+    const uniques = rewards.filter((r) => r.weight < 0.05).map((r) => titleCaseId(r.itemId))
+    const time = minutes[tier] ? `takes about ${minutes[tier]} minutes` : 'takes time'
+    const text =
+      `A ${tier} clue scroll ${time} to complete and rewards 1 to 4 rolls from a table of ` +
+      `${rewards.length} possible rewards (runes, coins and gear).` +
+      (uniques.length ? ` Rare uniques: ${uniques.join(', ')}.` : '')
+    return { id: `clue_${tier}`, title: `Clue scroll tier: ${tier}`, tags: ['clue', 'clues', 'clue scroll'], text }
+  })
+}
+
+function dailyTaskChunks() {
+  const tasks = readJson('dailyTasks.json')
+  const byTier = new Map()
+  for (const t of tasks) {
+    if (!byTier.has(t.tier)) byTier.set(t.tier, [])
+    byTier.get(t.tier).push(t.name)
+  }
+  return [...byTier.entries()].map(([tier, names]) => ({
+    id: `daily_tasks_${slug(tier)}`,
+    title: `Daily tasks: ${tier} tier pool`,
+    tags: ['daily', 'daily tasks', 'tasks'],
+    text: `${tier} daily tasks — one is assigned each day from this pool of ${names.length}: ${names.join(', ')}.`,
+  }))
+}
+
+function collectionLogChunks() {
+  const log = readJson('collectionLog.json')
+  return (log.categories || []).map((cat) => {
+    const sections = cat.sections || []
+    const total = sections.reduce((n, s) => n + (s.items || []).length, 0)
+    const lines = sections.map((s) => `${s.label}: ${(s.items || []).map(titleCaseId).join(', ')}`)
+    return {
+      id: `collection_log_${cat.id}`,
+      title: `Collection log: ${cat.label || cat.id} slots`,
+      tags: ['collection log', 'collection', 'uniques'],
+      text: `The ${cat.label || cat.id} collection log has ${total} slots. ${lines.join('. ')}.`,
+    }
+  })
+}
+
 function skillChunks() {
   const skills = readJson('skills.json')
   return Object.values(skills).map((s) => {
@@ -186,6 +270,11 @@ const chunks = [
   minigameChunk(),
   ...farmingChunks(),
   ...skillChunks(),
+  bossChunk(),
+  ...monsterChunks(),
+  ...clueChunks(),
+  ...dailyTaskChunks(),
+  ...collectionLogChunks(),
 ]
 
 const ids = new Set()

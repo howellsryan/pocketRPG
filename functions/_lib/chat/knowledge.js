@@ -34,6 +34,30 @@ export const KNOWLEDGE_CHUNKS = [
   "text": "Combat is tick-based. Your max hit and accuracy come from your effective levels and equipment bonuses: melee max hit is floor(0.5 + effectiveStrength × (strengthBonus + 64) / 640), and hit chance compares your attack roll against the target's defence roll. Choose a combat style before fighting: Accurate (+3 effective Attack), Aggressive (+3 effective Strength), Defensive (+3 effective Defence), or Controlled (+1 to Attack, Strength and Defence). Auto-fight keeps killing the same monster, banking loot as you go."
  },
  {
+  "id": "guide_combat_level",
+  "title": "Combat level",
+  "tags": [
+   "guide"
+  ],
+  "text": "Your combat level summarises your fighting power for quests and PvP matchmaking. It is 0.25 × (Defence + Hitpoints + half your Prayer level) plus 0.325 × your best attack contribution — Attack + Strength for melee, or 1.5 × Ranged, or 1.5 × Magic — rounded down, with a minimum of 3. Training any combat skill (including Prayer and Hitpoints) raises it."
+ },
+ {
+  "id": "guide_equipment_and_gear",
+  "title": "Equipment and gear",
+  "tags": [
+   "guide"
+  ],
+  "text": "You have 11 equipment slots: weapon, ammo, head, body, legs, shield, neck, gloves, boots, cape and ring. Each piece adds attack, strength and defence bonuses that feed directly into the combat formulas. Metal gear progresses through tiers — Bronze, Iron, Steel, Mithril, Adamant, Rune and Dragon — with level requirements to equip. Compare an item's stats before equipping, and remember special gear effects (like dragonfire protection) only work while the item is worn."
+ },
+ {
+  "id": "guide_ranged_combat_and_ammunition",
+  "title": "Ranged combat and ammunition",
+  "tags": [
+   "guide"
+  ],
+  "text": "Ranged weapons need matching ammunition equipped in your ammo slot (for example arrows for a bow), and ammunition is consumed as you shoot — in live and idle combat alike. If you run out mid-fight your attacks stop with a warning, so stock plenty before long idle sessions. A few special weapons use built-in charges instead of ammunition."
+ },
+ {
   "id": "guide_special_attacks",
   "title": "Special attacks",
   "tags": [
@@ -74,6 +98,14 @@ export const KNOWLEDGE_CHUNKS = [
   "text": "Your hitpoints regenerate naturally at +1 HP every 60 seconds, in and out of combat. For faster healing, eat food or use potions; some weapon specials also heal."
  },
  {
+  "id": "guide_what_happens_when_you_die",
+  "title": "What happens when you die",
+  "tags": [
+   "guide"
+  ],
+  "text": "On a normal character, dying in PvE is forgiving: the fight ends, your hitpoints are restored to full, and you keep all your items and loot — nothing is dropped or lost. If you would die during idle combat or offline catch-up, the simulation stops at that point and you keep everything earned up to it; restock food and check your gear before restarting. One-life (hardcore) characters are the exception: death wipes the character permanently."
+ },
+ {
   "id": "guide_inventory_and_banking",
   "title": "Inventory and banking",
   "tags": [
@@ -95,7 +127,7 @@ export const KNOWLEDGE_CHUNKS = [
   "tags": [
    "guide"
   ],
-  "text": "Credits are a premium currency. You earn +1 credit for each daily task you complete, and can buy more in the store. Spend credits to skip an hour of your current idle activity instantly (Skip 1h), to skip straight to a boss or raid kill while fighting one, or to skip a slayer task you don't like. Credits are tracked server-side on each character."
+  "text": "Credits are a premium currency. You earn +1 credit for each daily task you complete, and can buy more in the store in packs of 10, 100 or 1,000 (real-money purchase via secure checkout). Spend credits to skip an hour of your current idle activity instantly (Skip 1h), to skip straight to a boss or raid kill while fighting one, or to skip a slayer task you don't like. Credits are tracked server-side on each character."
  },
  {
   "id": "guide_daily_tasks",
@@ -127,7 +159,7 @@ export const KNOWLEDGE_CHUNKS = [
   "tags": [
    "guide"
   ],
-  "text": "Clue scrolls come in four tiers: medium, hard, elite and master. Completing a clue takes time and rewards you from that tier's loot table — runes, coins, gear and rare cosmetic uniques that fill your collection log. Higher tiers roll rarer rewards."
+  "text": "Clue scrolls drop from monsters and come in four tiers: medium, hard, elite and master. Completing a clue takes time — about 5 minutes for medium, 15 for hard, 30 for elite and 60 for master — and rewards 1 to 4 rolls from that tier's loot table: runes, coins, gear and rare uniques (like the 2nd Age sets) that fill your collection log. Higher tiers roll rarer rewards."
  },
  {
   "id": "guide_minigames",
@@ -160,6 +192,30 @@ export const KNOWLEDGE_CHUNKS = [
    "guide"
   ],
   "text": "Magic is trained by casting combat spells, which need runes. Each spell has a level requirement, base damage, and rune cost per cast; you earn the spell's base XP plus 2 XP per damage dealt. Higher tiers (strike, bolt, blast and beyond) hit harder and cost pricier runes."
+ },
+ {
+  "id": "guide_construction",
+  "title": "Construction",
+  "tags": [
+   "guide"
+  ],
+  "text": "Construction is trained by building with planks — each build consumes one plank and grants instant XP: Plank (level 1, 29 XP), Oak Plank (level 15, 60 XP), Teak Plank (level 35, 90 XP) and Mahogany Plank (level 70, 140 XP). High Construction also unlocks two permanent perks: the Money Purse (level 70) lets you spend coins directly from your bank when shopping, and Master Rejuvenation (level 90) passively refills your special attack bar to 100% whenever it empties during a fight."
+ },
+ {
+  "id": "guide_dungeoneering",
+  "title": "Dungeoneering",
+  "tags": [
+   "guide"
+  ],
+  "text": "Dungeoneering is trained by clearing dungeons of increasing difficulty, from novice upward. Every clear grants Dungeoneering XP and also earns Dungeoneering tokens (0.15 tokens per XP, rounded up per clear). Spend tokens on exclusive rewards with level requirements — for example the Arcane Necklace at level 65 for 65,000 tokens, or the Chaotic weapons and kiteshields at level 80 for 300,000 tokens each. Dungeoneering rewards count toward your collection log."
+ },
+ {
+  "id": "guide_skill_capes_and_the_max_cape",
+  "title": "Skill capes and the Max cape",
+  "tags": [
+   "guide"
+  ],
+  "text": "Reach level 99 in a skill and you can buy that skill's cape of accomplishment from the store — a prestige item showing off your mastery. The Max cape requires being fully maxed: 2,376 total level (99 in every skill). Skill capes and the Max cape are self-obtained prestige rewards, so Ironman characters can buy them too."
  },
  {
   "id": "guide_trading_post_and_shops",
@@ -2022,5 +2078,1176 @@ export const KNOWLEDGE_CHUNKS = [
    "runecraft"
   ],
   "text": "Runecrafting training options with level requirements and XP per action: Craft air rune (level 1, 10 XP), Craft mind rune (level 2, 11 XP), Craft water rune (level 5, 12 XP), Craft earth rune (level 9, 13 XP), Craft fire rune (level 14, 14 XP), Craft body rune (level 20, 15 XP), Craft cosmic rune (level 27, 16 XP), Craft chaos rune (level 35, 17 XP), Craft astral rune (level 40, 17.4 XP), Craft nature rune (level 44, 18 XP), Craft law rune (level 54, 19 XP), Craft death rune (level 65, 25 XP), Craft blood rune (level 77, 30 XP), Craft soul rune (level 90, 35 XP), Craft wrath rune (level 95, 40 XP)."
+ },
+ {
+  "id": "data_bosses",
+  "title": "Boss list: combat levels, HP and Slayer requirements",
+  "tags": [
+   "boss",
+   "bosses",
+   "slayer"
+  ],
+  "text": "All bosses with combat level, hitpoints and Slayer level requirement where one applies. Deepmaw Kraken (combat level 291, 255 HP, Slayer 87 required). Warlord Grondar (combat level 624, 255 HP). Commander Zephyra (combat level 596, 255 HP). Krylth the Defiler (combat level 650, 255 HP). Skyrender Kharra (combat level 580, 255 HP). Nagadoth Rex (combat level 303, 150 HP). Nagadoth Prime (combat level 303, 150 HP). Nagadoth Supreme (combat level 303, 150 HP). King Black Dragon (combat level 276, 150 HP). Venomcoil Matriarch (combat level 725, 500 HP). Ember Tyrant (combat level 702, 250 HP). Ashen Crucible (combat level 1400, 600 HP). Blighted Gauntlet (combat level 894, 1000 HP). The Grand Olm (combat level 1000, 800 HP). Hellbound Gorilla (combat level 275, 205 HP, Slayer 70 required). The Matron of Sugadinti (combat level 940, 2625 HP). Pestilent Blight (combat level 870, 1500 HP). Nylocas Vashilias (combat level 800, 1875 HP). Sotethseg (combat level 995, 3000 HP). Xarphus (combat level 960, 2250 HP). Verzik Vitura (combat level 1040, 2000 HP). Tecton (combat level 149, 500 HP). Vespara (combat level 202, 400 HP). Mudtadile (combat level 170, 450 HP). Khareth the Shadowbound (combat level 700, 520 HP). Gorroth, the Mountain-Ape (combat level 650, 600 HP). Khepra, the Scarab Matron (combat level 680, 500 HP). Sebakh the Devourer (combat level 720, 580 HP). Warden of Arasmus (combat level 900, 700 HP). Morvyn the Blighted (combat level 115, 100 HP). Dravok the Wretched (combat level 115, 100 HP). Gorath the Infested (combat level 115, 100 HP). Kaelor the Tainted (combat level 115, 100 HP). Torvek the Corrupted (combat level 115, 100 HP). Verin the Defiled (combat level 115, 100 HP). Threefang Cerberus (combat level 318, 600 HP, Slayer 91 required). Ashen Hydra (combat level 194, 320 HP, Slayer 95 required). Sovrathar, the Ashen Sovereign (combat level 250, 480 HP, Slayer 80 required). Gravehusk Brute (combat level 82, 60 HP). Boneclaw Revenant (combat level 98, 75 HP). Shroudwraith Specter (combat level 115, 90 HP). Stonegale Elemental (combat level 100, 80 HP). Cindermaw Serpent (combat level 120, 100 HP). Thornhide Colossus (combat level 140, 120 HP). Gravethorn Drake (combat level 110, 90 HP). Ironclad Guardian (combat level 130, 110 HP). Emberhowl Warlord (combat level 155, 150 HP). Razorwing Harpy (combat level 150, 140 HP)."
+ },
+ {
+  "id": "monster_field_chicken",
+  "title": "Monster: Field Chicken — stats and drops",
+  "tags": [
+   "monster",
+   "drops"
+  ],
+  "text": "Field Chicken is a monster at combat level 1 with 3 HP, attacking with crush. Drops: Clue Scroll Medium (1 in 50), Bones (always), Raw Chicken (always), Feather (always)."
+ },
+ {
+  "id": "monster_cave_goblin",
+  "title": "Monster: Cave Goblin — stats and drops",
+  "tags": [
+   "monster",
+   "drops"
+  ],
+  "text": "Cave Goblin is a monster at combat level 5 with 5 HP, attacking with crush. Drops: Marshflax (1 in 2,000), Mistvine (1 in 1,000), Stonefern (1 in 333), Cinderbloom (1 in 250), Snapdrake (1 in 200), Wyrmspice (1 in 167), Emberleaf (1 in 125), Sunblossom (1 in 100), Rynarr Weed (1 in 83), Duskroot (1 in 67), Greenthorn Leaf (1 in 50), Clue Scroll Medium (1 in 50), Bronze Spear (1 in 20), Coins (1 in 1), Bones (always)."
+ },
+ {
+  "id": "monster_pasture_bull",
+  "title": "Monster: Pasture Bull — stats and drops",
+  "tags": [
+   "monster",
+   "drops"
+  ],
+  "text": "Pasture Bull is a monster at combat level 8 with 8 HP, attacking with crush. Drops: Clue Scroll Medium (1 in 50), Bones (always), Raw Beef (always), Cowhide (always)."
+ },
+ {
+  "id": "monster_broodfang_spider",
+  "title": "Monster: Broodfang Spider — stats and drops",
+  "tags": [
+   "monster",
+   "drops"
+  ],
+  "text": "Broodfang Spider is a monster at combat level 27 with 26 HP, attacking with stab. Drops: Marshflax (1 in 2,000), Mistvine (1 in 1,000), Stonefern (1 in 333), Cinderbloom (1 in 250), Snapdrake (1 in 200), Wyrmspice (1 in 167), Emberleaf (1 in 125), Sunblossom (1 in 100), Rynarr Weed (1 in 83), Duskroot (1 in 67), Greenthorn Leaf (1 in 50), Clue Scroll Medium (1 in 50), Coins (1 in 2), Bones (always)."
+ },
+ {
+  "id": "monster_lesser_fiend",
+  "title": "Monster: Lesser Fiend — stats and drops",
+  "tags": [
+   "monster",
+   "drops"
+  ],
+  "text": "Lesser Fiend is a monster at combat level 82 with 79 HP, attacking with crush. Drops: Marshflax (1 in 1,000), Mistvine (1 in 500), Stonefern (1 in 167), Cinderbloom (1 in 125), Snapdrake (1 in 100), Wyrmspice (1 in 83), Emberleaf (1 in 63), Runeforged Med Helm (1 in 50), Sunblossom (1 in 50), Clue Scroll Elite (1 in 50), Rynarr Weed (1 in 42), Duskroot (1 in 33), Greenthorn Leaf (1 in 25), Coins (1 in 1), Bones (always)."
+ },
+ {
+  "id": "monster_stoneback_crab",
+  "title": "Monster: Stoneback Crab — stats and drops",
+  "tags": [
+   "monster",
+   "drops"
+  ],
+  "text": "Stoneback Crab is a monster at combat level 13 with 50 HP, attacking with crush. Drops: Marshflax (1 in 2,000), Mistvine (1 in 1,000), Stonefern (1 in 333), Cinderbloom (1 in 250), Snapdrake (1 in 200), Wyrmspice (1 in 167), Emberleaf (1 in 125), Sunblossom (1 in 100), Rynarr Weed (1 in 83), Duskroot (1 in 67), Greenthorn Leaf (1 in 50), Clue Scroll Medium (1 in 50), Nature Rune (1 in 13), Iron Ore (1 in 10), Fire Rune (1 in 8), Coins (1 in 2), Bones (always)."
+ },
+ {
+  "id": "monster_duneback_crab",
+  "title": "Monster: Duneback Crab — stats and drops",
+  "tags": [
+   "monster",
+   "drops"
+  ],
+  "text": "Duneback Crab is a monster at combat level 15 with 60 HP, attacking with crush. Drops: Marshflax (1 in 2,000), Mistvine (1 in 1,000), Stonefern (1 in 333), Cinderbloom (1 in 250), Snapdrake (1 in 200), Wyrmspice (1 in 167), Emberleaf (1 in 125), Sunblossom (1 in 100), Rynarr Weed (1 in 83), Duskroot (1 in 67), Greenthorn Leaf (1 in 50), Clue Scroll Medium (1 in 50), Nature Rune (1 in 10), Iron Ore (1 in 8), Fire Rune (1 in 8), Coins (1 in 2), Bones (always)."
+ },
+ {
+  "id": "monster_highland_giant",
+  "title": "Monster: Highland Giant — stats and drops",
+  "tags": [
+   "monster",
+   "drops"
+  ],
+  "text": "Highland Giant is a monster at combat level 28 with 35 HP, attacking with crush. Drops: Marshflax (1 in 2,000), Mistvine (1 in 1,000), Stonefern (1 in 333), Cinderbloom (1 in 250), Snapdrake (1 in 200), Wyrmspice (1 in 167), Emberleaf (1 in 125), Sunblossom (1 in 100), Rynarr Weed (1 in 83), Duskroot (1 in 67), Greenthorn Leaf (1 in 50), Clue Scroll Medium (1 in 50), Death Rune (1 in 25), Steel Longsword (1 in 25), Iron Full Helm (1 in 20), Chaos Rune (1 in 17), Limpwurt Root (1 in 10), Nature Rune (1 in 10), Water Rune (1 in 7), Fire Rune (1 in 7), Iron Arrow (1 in 3), Coins (1 in 2), Big Bones (always)."
+ },
+ {
+  "id": "monster_briar_giant",
+  "title": "Monster: Briar Giant — stats and drops",
+  "tags": [
+   "monster",
+   "drops"
+  ],
+  "text": "Briar Giant is a monster at combat level 42 with 60 HP, attacking with crush. Drops: Marshflax (1 in 2,000), Mistvine (1 in 1,000), Stonefern (1 in 333), Cinderbloom (1 in 250), Snapdrake (1 in 200), Wyrmspice (1 in 167), Emberleaf (1 in 125), Sunblossom (1 in 100), Rynarr Weed (1 in 83), Duskroot (1 in 67), Mithril Scimitar (1 in 50), Greenthorn Leaf (1 in 50), Clue Scroll Hard (1 in 50), Iron Platelegs (1 in 25), Steel Full Helm (1 in 25), Death Rune (1 in 20), Law Rune (1 in 17), Limpwurt Root (1 in 10), Chaos Rune (1 in 10), Nature Rune (1 in 8), Fire Rune (1 in 5), Coins (1 in 2), Big Bones (always)."
+ },
+ {
+  "id": "monster_ember_giant",
+  "title": "Monster: Ember Giant — stats and drops",
+  "tags": [
+   "monster",
+   "drops"
+  ],
+  "text": "Ember Giant is a monster at combat level 86 with 111 HP, attacking with slash. Drops: Runeforged Scimitar (1 in 128), Clue Scroll Hard (1 in 67), Mithril Kiteshield (1 in 50), Mithril Chainbody (1 in 50), Staff Of Fire (1 in 40), Mithril Platelegs (1 in 40), Rynarr Weed (1 in 40), Mithril Full Helm (1 in 33), Duskroot Seed (1 in 33), Duskroot (1 in 33), Miremint Seed (1 in 25), Greenthorn Leaf (1 in 25), Greenthorn Seed (1 in 20), Cosmic Rune (1 in 13), Law Rune (1 in 10), Chaos Rune (1 in 8), Nature Rune (1 in 7), Fire Rune (1 in 3), Coins (1 in 2), Big Bones (always)."
+ },
+ {
+  "id": "monster_arcane_adept",
+  "title": "Monster: Arcane Adept — stats and drops",
+  "tags": [
+   "monster",
+   "drops"
+  ],
+  "text": "Arcane Adept is a monster at combat level 9 with 17 HP, attacking with magic. Drops: Clue Scroll Medium (1 in 50), Nature Rune (1 in 13), Wizard Robe Top (1 in 13), Chaos Rune (1 in 10), Wizard Hat (1 in 10), Staff (1 in 10), Body Rune (1 in 4), Mind Rune (1 in 3), Water Rune (1 in 3), Earth Rune (1 in 3), Fire Rune (1 in 3), Air Rune (1 in 3), Coins (1 in 2), Bones (always)."
+ },
+ {
+  "id": "monster_umbral_adept",
+  "title": "Monster: Umbral Adept — stats and drops",
+  "tags": [
+   "monster",
+   "drops"
+  ],
+  "text": "Umbral Adept is a monster at combat level 20 with 24 HP, attacking with magic. Drops: Clue Scroll Medium (1 in 50), Blood Rune (1 in 25), Magic Staff (1 in 25), Death Rune (1 in 17), Staff Of Water (1 in 17), Staff Of Earth (1 in 17), Staff Of Fire (1 in 17), Law Rune (1 in 13), Staff Of Air (1 in 13), Black Wizard Robe (1 in 10), Cosmic Rune (1 in 8), Black Wizard Hat (1 in 8), Nature Rune (1 in 5), Chaos Rune (1 in 4), Water Rune (1 in 2), Earth Rune (1 in 2), Fire Rune (1 in 2), Air Rune (1 in 2), Coins (1 in 2), Bones (always)."
+ },
+ {
+  "id": "monster_nether_demon",
+  "title": "Monster: Nether Demon — stats and drops",
+  "tags": [
+   "monster",
+   "drops"
+  ],
+  "text": "Nether Demon is a monster at combat level 124 with 150 HP, attacking with slash. Requires Slayer level 85. Drops: Nether Demon Whip (1 in 500), Marshflax (1 in 200), Runeforged Platelegs (1 in 100), Mistvine (1 in 100), Clue Scroll Hard (1 in 50), Adamant Platelegs (1 in 33), Stonefern (1 in 33), Cinderbloom (1 in 25), Runeforged Chainbody (1 in 20), Runeforged Med Helm (1 in 20), Snapdrake (1 in 20), Wyrmspice (1 in 17), Emberleaf (1 in 13), Blood Rune (1 in 10), Sunblossom (1 in 10), Rynarr Weed (1 in 8), Duskroot (1 in 7), Death Rune (1 in 5), Chaos Rune (1 in 5), Greenthorn Leaf (1 in 5), Coins (1 in 1), Bones (always)."
+ },
+ {
+  "id": "monster_sanguine_veld",
+  "title": "Monster: Sanguine Veld — stats and drops",
+  "tags": [
+   "monster",
+   "drops"
+  ],
+  "text": "Sanguine Veld is a monster at combat level 76 with 75 HP, attacking with stab. Requires Slayer level 50. Drops: Runeforged Med Helm (1 in 125), Clue Scroll Hard (1 in 100), Emberleaf (1 in 25), Rynarr Weed (1 in 20), Sunblossom (1 in 17), Blood Rune (1 in 13), Duskroot (1 in 13), Greenthorn Leaf (1 in 10), Death Rune (1 in 8), Fire Rune (1 in 7), Chaos Rune (1 in 6), Coins (1 in 1), Bones (always)."
+ },
+ {
+  "id": "monster_nether_wraith",
+  "title": "Monster: Nether Wraith — stats and drops",
+  "tags": [
+   "monster",
+   "drops"
+  ],
+  "text": "Nether Wraith is a monster at combat level 115 with 105 HP, attacking with slash. Requires Slayer level 80. Drops: Runeforged Chainbody (1 in 83), Clue Scroll Hard (1 in 83), Adamant Platelegs (1 in 40), Cinderbloom (1 in 33), Snapdrake (1 in 25), Wyrmspice (1 in 20), Rynarr Weed (1 in 13), Blood Rune (1 in 8), Chaos Rune (1 in 7), Death Rune (1 in 6), Coins (1 in 1), Bones (always)."
+ },
+ {
+  "id": "monster_bone_wyvern",
+  "title": "Monster: Bone Wyvern — stats and drops",
+  "tags": [
+   "monster",
+   "drops"
+  ],
+  "text": "Bone Wyvern is a monster at combat level 140 with 130 HP, attacking with stab. Requires Slayer level 72. Drops: Runeforged Chainbody (1 in 100), Runeforged Platelegs (1 in 67), Clue Scroll Elite (1 in 56), Adamant Platelegs (1 in 33), Mistvine (1 in 33), Stonefern (1 in 25), Snapdrake (1 in 20), Rynarr Weed (1 in 13), Blood Rune (1 in 7), Death Rune (1 in 6), Chaos Rune (1 in 6), Coins (1 in 1), Dragon Bones (always)."
+ },
+ {
+  "id": "monster_cinder_devil",
+  "title": "Monster: Cinder Devil — stats and drops",
+  "tags": [
+   "monster",
+   "drops"
+  ],
+  "text": "Cinder Devil is a monster at combat level 160 with 95 HP, attacking with ranged. Requires Slayer level 85. Drops: Occult Necklace (1 in 667), Runeforged Chainbody (1 in 83), Clue Scroll Elite (1 in 67), Snapdrake (1 in 25), Wyrmspice (1 in 20), Rynarr Weed (1 in 13), Blood Rune (1 in 7), Fire Rune (1 in 7), Death Rune (1 in 5), Chaos Rune (1 in 5), Coins (1 in 1), Bones (always)."
+ },
+ {
+  "id": "monster_deepmaw_kraken",
+  "title": "Boss: Deepmaw Kraken — stats and drops",
+  "tags": [
+   "monster",
+   "drops",
+   "boss"
+  ],
+  "text": "Deepmaw Kraken is a boss at combat level 291 with 255 HP, attacking with magic. Requires Slayer level 87. Drops: Deepmaw Kraken Tentacle (1 in 303), Clue Scroll Elite (1 in 50), Mistvine (1 in 25), Snapdrake (1 in 17), Rynarr Weed (1 in 13), Chaos Rune (1 in 6), Blood Rune (1 in 5), Death Rune (1 in 4), Big Bones (always), Coins (always)."
+ },
+ {
+  "id": "monster_warlord_grondar",
+  "title": "Boss: Warlord Grondar — stats and drops",
+  "tags": [
+   "monster",
+   "drops",
+   "boss"
+  ],
+  "text": "Warlord Grondar is a boss at combat level 624 with 255 HP, attacking with crush. Drops: Grondar Hilt (1 in 508), Grondar Chestplate (1 in 382), Grondar Tassets (1 in 382), Grondar Boots (1 in 382), Godsword Shard (1 in 254), Marshflax (1 in 200), Runeforged Platelegs (1 in 127), Runeforged Plateskirt (1 in 127), Runeforged 2h Sword (1 in 127), Runeforged Pickaxe (1 in 127), Mistvine (1 in 100), Clue Scroll Master (1 in 50), Stonefern (1 in 33), Cinderbloom (1 in 25), Snapdrake (1 in 20), Wyrmspice (1 in 17), Soul Rune (1 in 13), Emberleaf (1 in 13), Blood Rune (1 in 10), Sunblossom (1 in 10), Rynarr Weed (1 in 8), Death Rune (1 in 7), Duskroot (1 in 7), Greenthorn Leaf (1 in 5), Big Bones (always), Coins (always)."
+ },
+ {
+  "id": "monster_commander_zephyra",
+  "title": "Boss: Commander Zephyra — stats and drops",
+  "tags": [
+   "monster",
+   "drops",
+   "boss"
+  ],
+  "text": "Commander Zephyra is a boss at combat level 596 with 255 HP, attacking with slash. Drops: Zephyra Crossbow (1 in 508), Lumira Hilt (1 in 508), Godsword Shard (1 in 254), Marshflax (1 in 200), Runeforged Platelegs (1 in 127), Runeforged Plateskirt (1 in 127), Lumira Sword (1 in 127), Mistvine (1 in 100), Clue Scroll Master (1 in 50), Stonefern (1 in 33), Cinderbloom (1 in 25), Snapdrake (1 in 20), Wyrmspice (1 in 17), Soul Rune (1 in 13), Emberleaf (1 in 13), Blood Rune (1 in 10), Sunblossom (1 in 10), Rynarr Weed (1 in 8), Death Rune (1 in 7), Duskroot (1 in 7), Greenthorn Leaf (1 in 5), Big Bones (always), Coins (always)."
+ },
+ {
+  "id": "monster_krylth_the_defiler",
+  "title": "Boss: Krylth the Defiler — stats and drops",
+  "tags": [
+   "monster",
+   "drops",
+   "boss"
+  ],
+  "text": "Krylth the Defiler is a boss at combat level 650 with 255 HP, attacking with slash. Drops: Staff Of The Dead (1 in 508), Krylth Hilt (1 in 508), Godsword Shard (1 in 254), Marshflax (1 in 200), Runeforged Platelegs (1 in 127), Runeforged Plateskirt (1 in 127), Runeforged 2h Sword (1 in 127), Krylth Spear (1 in 127), Mistvine (1 in 100), Clue Scroll Master (1 in 50), Stonefern (1 in 33), Cinderbloom (1 in 25), Snapdrake (1 in 20), Wyrmspice (1 in 17), Soul Rune (1 in 13), Emberleaf (1 in 13), Blood Rune (1 in 10), Sunblossom (1 in 10), Rynarr Weed (1 in 8), Death Rune (1 in 7), Duskroot (1 in 7), Greenthorn Leaf (1 in 5), Big Bones (always), Coins (always)."
+ },
+ {
+  "id": "monster_skyrender_kharra",
+  "title": "Boss: Skyrender Kharra — stats and drops",
+  "tags": [
+   "monster",
+   "drops",
+   "boss"
+  ],
+  "text": "Skyrender Kharra is a boss at combat level 580 with 255 HP, attacking with ranged. Drops: Zephyra Hilt (1 in 508), Zephyra Helmet (1 in 382), Zephyra Chestplate (1 in 382), Zephyra Chainskirt (1 in 382), Godsword Shard (1 in 254), Marshflax (1 in 200), Runeforged Platelegs (1 in 127), Runeforged Crossbow (1 in 127), Mistvine (1 in 100), Clue Scroll Master (1 in 50), Stonefern (1 in 33), Cinderbloom (1 in 25), Snapdrake (1 in 20), Wyrmspice (1 in 17), Soul Rune (1 in 13), Emberleaf (1 in 13), Blood Rune (1 in 10), Sunblossom (1 in 10), Rynarr Weed (1 in 8), Death Rune (1 in 7), Duskroot (1 in 7), Greenthorn Leaf (1 in 5), Big Bones (always), Coins (always)."
+ },
+ {
+  "id": "monster_green_dragon",
+  "title": "Monster: Green Dragon — stats and drops",
+  "tags": [
+   "monster",
+   "drops"
+  ],
+  "text": "Green Dragon is a monster at combat level 79 with 75 HP, attacking with slash. Drops: Marshflax (1 in 200), Runeforged Full Helm (1 in 100), Mistvine (1 in 100), Clue Scroll Elite (1 in 50), Stonefern (1 in 33), Adamant Full Helm (1 in 25), Cinderbloom (1 in 25), Snapdrake (1 in 20), Wyrmspice (1 in 17), Law Rune (1 in 13), Emberleaf (1 in 13), Nature Rune (1 in 10), Mithril Arrow (1 in 10), Sunblossom (1 in 10), Chaos Rune (1 in 8), Rynarr Weed (1 in 8), Duskroot (1 in 7), Iron Arrow (1 in 5), Greenthorn Leaf (1 in 5), Coins (1 in 2), Dragon Bones (always), Green Dragonhide (always)."
+ },
+ {
+  "id": "monster_red_dragon",
+  "title": "Monster: Red Dragon — stats and drops",
+  "tags": [
+   "monster",
+   "drops"
+  ],
+  "text": "Red Dragon is a monster at combat level 152 with 140 HP, attacking with slash. Drops: Marshflax (1 in 200), Mistvine (1 in 100), Runeforged Full Helm (1 in 50), Runeforged Platelegs (1 in 50), Clue Scroll Master (1 in 50), Stonefern (1 in 33), Cinderbloom (1 in 25), Adamant Full Helm (1 in 20), Snapdrake (1 in 20), Wyrmspice (1 in 17), Emberleaf (1 in 13), Law Rune (1 in 10), Death Rune (1 in 10), Sunblossom (1 in 10), Nature Rune (1 in 8), Rynarr Weed (1 in 8), Chaos Rune (1 in 7), Duskroot (1 in 7), Greenthorn Leaf (1 in 5), Coins (1 in 2), Dragon Bones (always), Red Dragon Leather (always)."
+ },
+ {
+  "id": "monster_black_dragon",
+  "title": "Monster: Black Dragon — stats and drops",
+  "tags": [
+   "monster",
+   "drops"
+  ],
+  "text": "Black Dragon is a monster at combat level 227 with 200 HP, attacking with slash. Drops: Dragon Full Helm (1 in 25,000), Dragon Visage (1 in 20,000), Marshflax (1 in 200), Mistvine (1 in 100), Dragon Platelegs (1 in 83), Dragon Plateskirt (1 in 83), Runeforged Full Helm (1 in 50), Clue Scroll Master (1 in 50), Stonefern (1 in 33), Cinderbloom (1 in 25), Snapdrake (1 in 20), Wyrmspice (1 in 17), Emberleaf (1 in 13), Law Rune (1 in 10), Death Rune (1 in 10), Sunblossom (1 in 10), Nature Rune (1 in 8), Rynarr Weed (1 in 8), Chaos Rune (1 in 7), Duskroot (1 in 7), Greenthorn Leaf (1 in 5), Coins (1 in 2), Dragon Bones (always), Black Dragon Leather (always)."
+ },
+ {
+  "id": "monster_nagadoth_rex",
+  "title": "Boss: Nagadoth Rex — stats and drops",
+  "tags": [
+   "monster",
+   "drops",
+   "boss"
+  ],
+  "text": "Nagadoth Rex is a boss at combat level 303 with 150 HP, attacking with crush. Drops: Marshflax (1 in 200), Berserker Ring (1 in 128), Warriors Ring (1 in 128), Mistvine (1 in 100), Clue Scroll Master (1 in 50), Stonefern (1 in 33), Cinderbloom (1 in 25), Runeforged Platelegs (1 in 20), Runeforged Platebody (1 in 20), Dragon Axe (1 in 20), Snapdrake (1 in 20), Wyrmspice (1 in 17), Emberleaf (1 in 13), Sunblossom (1 in 10), Rynarr Weed (1 in 8), Duskroot (1 in 7), Greenthorn Leaf (1 in 5), Nagadoth Bones (always), Coins (always)."
+ },
+ {
+  "id": "monster_nagadoth_prime",
+  "title": "Boss: Nagadoth Prime — stats and drops",
+  "tags": [
+   "monster",
+   "drops",
+   "boss"
+  ],
+  "text": "Nagadoth Prime is a boss at combat level 303 with 150 HP, attacking with magic. Drops: Marshflax (1 in 200), Seers Ring (1 in 128), Mistvine (1 in 100), Clue Scroll Master (1 in 50), Stonefern (1 in 33), Cinderbloom (1 in 25), Runeforged Platelegs (1 in 20), Runeforged Platebody (1 in 20), Dragon Axe (1 in 20), Snapdrake (1 in 20), Wyrmspice (1 in 17), Emberleaf (1 in 13), Sunblossom (1 in 10), Rynarr Weed (1 in 8), Duskroot (1 in 7), Greenthorn Leaf (1 in 5), Nagadoth Bones (always), Coins (always)."
+ },
+ {
+  "id": "monster_nagadoth_supreme",
+  "title": "Boss: Nagadoth Supreme — stats and drops",
+  "tags": [
+   "monster",
+   "drops",
+   "boss"
+  ],
+  "text": "Nagadoth Supreme is a boss at combat level 303 with 150 HP, attacking with ranged. Drops: Marshflax (1 in 200), Archers Ring (1 in 128), Mistvine (1 in 100), Clue Scroll Master (1 in 50), Stonefern (1 in 33), Cinderbloom (1 in 25), Runeforged Platelegs (1 in 20), Runeforged Platebody (1 in 20), Dragon Axe (1 in 20), Snapdrake (1 in 20), Wyrmspice (1 in 17), Emberleaf (1 in 13), Sunblossom (1 in 10), Rynarr Weed (1 in 8), Duskroot (1 in 7), Greenthorn Leaf (1 in 5), Nagadoth Bones (always), Coins (always)."
+ },
+ {
+  "id": "monster_crazy_archaeologist",
+  "title": "Monster: Crazy Archaeologist — stats and drops",
+  "tags": [
+   "monster",
+   "drops"
+  ],
+  "text": "Crazy Archaeologist is a monster at combat level 204 with 225 HP, attacking with melee. Drops: Clue Scroll Master (1 in 50), Red D Hide Body (1 in 32), Runeforged Crossbow (1 in 25), Amulet Of Power (1 in 20), White Berries (1 in 20), Sunblossom (1 in 10), Rynarr Weed (1 in 8), Duskroot (1 in 7), Greenthorn Leaf (1 in 5), Bones (always)."
+ },
+ {
+  "id": "monster_king_black_dragon",
+  "title": "Boss: King Black Dragon — stats and drops",
+  "tags": [
+   "monster",
+   "drops",
+   "boss"
+  ],
+  "text": "King Black Dragon is a boss at combat level 276 with 150 HP, attacking with slash. Drops: Dragon Visage (1 in 2,000), Dragon Pickaxe (1 in 400), Clue Scroll Master (1 in 50), Soul Rune (1 in 10), Death Rune (1 in 8), Blood Rune (1 in 7), Runeforged Ore (1 in 5), Coins (1 in 2), Dragon Bones (always)."
+ },
+ {
+  "id": "monster_adamant_dragon",
+  "title": "Monster: Adamant Dragon — stats and drops",
+  "tags": [
+   "monster",
+   "drops"
+  ],
+  "text": "Adamant Dragon is a monster at combat level 338 with 240 HP, attacking with slash. Drops: Uncut Onyx (1 in 1,000), Dragon Visage (1 in 1,000), Dragon Chainbody (1 in 67), Dragon Platelegs (1 in 50), Dragon Plateskirt (1 in 50), Dragon Longsword (1 in 50), Clue Scroll Master (1 in 50), Onyx Bolt Tips (1 in 25), Soul Rune (1 in 10), Nature Rune (1 in 10), Chaos Rune (1 in 8), Blood Rune (1 in 7), Death Rune (1 in 7), Runeforged Ore (1 in 7), Coins (1 in 2), Dragon Bones (always), Runeforged Bar (always)."
+ },
+ {
+  "id": "monster_rune_dragon",
+  "title": "Monster: Rune Dragon — stats and drops",
+  "tags": [
+   "monster",
+   "drops"
+  ],
+  "text": "Rune Dragon is a monster at combat level 380 with 330 HP, attacking with slash. Drops: Dragon Full Helm (1 in 16,000), Dragon Kiteshield (1 in 16,000), Uncut Onyx (1 in 1,000), Dragon Visage (1 in 1,000), Dragon Chainbody (1 in 50), Clue Scroll Master (1 in 50), Dragon Platelegs (1 in 40), Dragon Plateskirt (1 in 40), Dragon Longsword (1 in 40), Dragon Javelin (1 in 33), Onyx Bolt Tips (1 in 25), Soul Rune (1 in 10), Law Rune (1 in 10), Nature Rune (1 in 10), Blood Rune (1 in 7), Death Rune (1 in 7), Runeforged Ore (1 in 5), Coins (1 in 2), Dragon Bones (always), Runeforged Bar (always)."
+ },
+ {
+  "id": "monster_venomcoil_matriarch",
+  "title": "Boss: Venomcoil Matriarch — stats and drops",
+  "tags": [
+   "monster",
+   "drops",
+   "boss"
+  ],
+  "text": "Venomcoil Matriarch is a boss at combat level 725 with 500 HP, attacking with ranged. Drops: Venom Blowpipe (1 in 250), Trident Of Venom (1 in 250), Serpentine Helm (1 in 250), Uncut Onyx (1 in 250), Clue Scroll Master (1 in 50), Snapdrake (1 in 10), Rynarr Weed (1 in 7), Dragon Bones (1 in 7), Death Rune (1 in 5), Blood Rune (1 in 5), Chaos Rune (1 in 5), Coins (1 in 1), Venomcoil Scales (always)."
+ },
+ {
+  "id": "monster_ember_tyrant",
+  "title": "Boss: Ember Tyrant — stats and drops",
+  "tags": [
+   "monster",
+   "drops",
+   "boss"
+  ],
+  "text": "Ember Tyrant is a boss at combat level 702 with 250 HP, attacking with melee. Drops: Clue Scroll Master (1 in 50), Fire Cape (always)."
+ },
+ {
+  "id": "monster_ashen_crucible",
+  "title": "Boss: Ashen Crucible — stats and drops",
+  "tags": [
+   "monster",
+   "drops",
+   "boss"
+  ],
+  "text": "Ashen Crucible is a boss at combat level 1400 with 600 HP, attacking with melee. Drops: Clue Scroll Master (1 in 50), Infernal Cape (always)."
+ },
+ {
+  "id": "monster_blighted_gauntlet",
+  "title": "Boss: Blighted Gauntlet — stats and drops",
+  "tags": [
+   "monster",
+   "drops",
+   "boss"
+  ],
+  "text": "Blighted Gauntlet is a boss at combat level 894 with 1000 HP, attacking with crush. Drops: Shardglass Helmet (1 in 250), Shardglass Plate Body (1 in 250), Shardglass Platelegs (1 in 250), Bow Of Faerdhinen (1 in 250), Blade Of Saeldor (1 in 250), Uncut Onyx (1 in 100), Shardglass Pickaxe (1 in 100), Shardglass Axe (1 in 100), Clue Scroll Master (1 in 50), Uncut Dragonstone (1 in 13), Runeforged Med Helm (1 in 10), Uncut Diamond (1 in 8), Snapdrake (1 in 8), Dragon Scimitar (1 in 8), Runeforged Platelegs (1 in 7), Rynarr Weed (1 in 7), Dragon Dagger (1 in 7), Uncut Ruby (1 in 6), Stonefern (1 in 6), Runeforged Platebody (1 in 6), Uncut Emerald (1 in 6), Cinderbloom (1 in 6), Runeforged Full Helm (1 in 6), Blood Rune (1 in 6), Uncut Sapphire (1 in 5), Wyrmspice (1 in 5), Nagadoth Bones (1 in 5), Death Rune (1 in 5), Emberleaf (1 in 5), Duskroot (1 in 4), Greenthorn Leaf (1 in 4), Dragon Bones (1 in 4), Coins (1 in 1), Shardglass Shards (always)."
+ },
+ {
+  "id": "monster_the_great_olm",
+  "title": "Boss: The Grand Olm — stats and drops",
+  "tags": [
+   "monster",
+   "drops",
+   "boss"
+  ],
+  "text": "The Grand Olm is a boss at combat level 1000 with 800 HP, attacking with crush. Drops: Clue Scroll Master (1 in 50)."
+ },
+ {
+  "id": "monster_hellbound_gorilla",
+  "title": "Boss: Hellbound Gorilla — stats and drops",
+  "tags": [
+   "monster",
+   "drops",
+   "boss"
+  ],
+  "text": "Hellbound Gorilla is a boss at combat level 275 with 205 HP, attacking with crush. Requires Slayer level 70. Drops: Uncut Zyrite (1 in 300), Colossal Ballista (1 in 200), Clue Scroll Master (1 in 50), Snapdrake (1 in 7), Soul Rune (1 in 7), Dragon Javelin (1 in 7), Blood Rune (1 in 5), Death Rune (1 in 3), Rynarr Weed (1 in 3), Coins (always), Dragon Bones (always)."
+ },
+ {
+  "id": "monster_the_maiden_of_sugadinti",
+  "title": "Boss: The Matron of Sugadinti — stats and drops",
+  "tags": [
+   "monster",
+   "drops",
+   "boss"
+  ],
+  "text": "The Matron of Sugadinti is a boss at combat level 940 with 2625 HP, attacking with magic. Drops: Clue Scroll Master (1 in 50)."
+ },
+ {
+  "id": "monster_pestilent_bloat",
+  "title": "Boss: Pestilent Blight — stats and drops",
+  "tags": [
+   "monster",
+   "drops",
+   "boss"
+  ],
+  "text": "Pestilent Blight is a boss at combat level 870 with 1500 HP, attacking with crush. Drops: Clue Scroll Master (1 in 50)."
+ },
+ {
+  "id": "monster_nylocas_vasilias",
+  "title": "Boss: Nylocas Vashilias — stats and drops",
+  "tags": [
+   "monster",
+   "drops",
+   "boss"
+  ],
+  "text": "Nylocas Vashilias is a boss at combat level 800 with 1875 HP, attacking with crush. Drops: Clue Scroll Master (1 in 50)."
+ },
+ {
+  "id": "monster_sotetseg",
+  "title": "Boss: Sotethseg — stats and drops",
+  "tags": [
+   "monster",
+   "drops",
+   "boss"
+  ],
+  "text": "Sotethseg is a boss at combat level 995 with 3000 HP, attacking with crush. Drops: Clue Scroll Master (1 in 50)."
+ },
+ {
+  "id": "monster_xarpus",
+  "title": "Boss: Xarphus — stats and drops",
+  "tags": [
+   "monster",
+   "drops",
+   "boss"
+  ],
+  "text": "Xarphus is a boss at combat level 960 with 2250 HP, attacking with ranged. Drops: Clue Scroll Master (1 in 50)."
+ },
+ {
+  "id": "monster_verzik_vitur",
+  "title": "Boss: Verzik Vitura — stats and drops",
+  "tags": [
+   "monster",
+   "drops",
+   "boss"
+  ],
+  "text": "Verzik Vitura is a boss at combat level 1040 with 2000 HP, attacking with magic. Drops: Clue Scroll Master (1 in 50)."
+ },
+ {
+  "id": "monster_tekton",
+  "title": "Boss: Tecton — stats and drops",
+  "tags": [
+   "monster",
+   "drops",
+   "boss"
+  ],
+  "text": "Tecton is a boss at combat level 149 with 500 HP, attacking with crush. Drops: Clue Scroll Master (1 in 50)."
+ },
+ {
+  "id": "monster_vespula",
+  "title": "Boss: Vespara — stats and drops",
+  "tags": [
+   "monster",
+   "drops",
+   "boss"
+  ],
+  "text": "Vespara is a boss at combat level 202 with 400 HP, attacking with ranged. Drops: Clue Scroll Master (1 in 50)."
+ },
+ {
+  "id": "monster_muttadile",
+  "title": "Boss: Mudtadile — stats and drops",
+  "tags": [
+   "monster",
+   "drops",
+   "boss"
+  ],
+  "text": "Mudtadile is a boss at combat level 170 with 450 HP, attacking with crush. Drops: Clue Scroll Master (1 in 50)."
+ },
+ {
+  "id": "monster_khareth_the_shadowbound",
+  "title": "Boss: Khareth the Shadowbound — stats and drops",
+  "tags": [
+   "monster",
+   "drops",
+   "boss"
+  ],
+  "text": "Khareth the Shadowbound is a boss at combat level 700 with 520 HP, attacking with magic."
+ },
+ {
+  "id": "monster_gorroth_the_mountain_ape",
+  "title": "Boss: Gorroth, the Mountain-Ape — stats and drops",
+  "tags": [
+   "monster",
+   "drops",
+   "boss"
+  ],
+  "text": "Gorroth, the Mountain-Ape is a boss at combat level 650 with 600 HP, attacking with crush."
+ },
+ {
+  "id": "monster_khepra_the_scarab_matron",
+  "title": "Boss: Khepra, the Scarab Matron — stats and drops",
+  "tags": [
+   "monster",
+   "drops",
+   "boss"
+  ],
+  "text": "Khepra, the Scarab Matron is a boss at combat level 680 with 500 HP, attacking with ranged."
+ },
+ {
+  "id": "monster_sebakh_the_devourer",
+  "title": "Boss: Sebakh the Devourer — stats and drops",
+  "tags": [
+   "monster",
+   "drops",
+   "boss"
+  ],
+  "text": "Sebakh the Devourer is a boss at combat level 720 with 580 HP, attacking with magic."
+ },
+ {
+  "id": "monster_warden_of_arasmus",
+  "title": "Boss: Warden of Arasmus — stats and drops",
+  "tags": [
+   "monster",
+   "drops",
+   "boss"
+  ],
+  "text": "Warden of Arasmus is a boss at combat level 900 with 700 HP, attacking with magic."
+ },
+ {
+  "id": "monster_morvyn_the_blighted",
+  "title": "Boss: Morvyn the Blighted — stats and drops",
+  "tags": [
+   "monster",
+   "drops",
+   "boss"
+  ],
+  "text": "Morvyn the Blighted is a boss at combat level 115 with 100 HP, attacking with magic. Drops: Clue Scroll Master (1 in 50), Morvyn S Hood (1 in 4), Morvyn S Robetop (1 in 4), Morvyn S Robeskirt (1 in 4), Morvyn S Staff (1 in 4), Coins (always)."
+ },
+ {
+  "id": "monster_dravok_the_wretched",
+  "title": "Boss: Dravok the Wretched — stats and drops",
+  "tags": [
+   "monster",
+   "drops",
+   "boss"
+  ],
+  "text": "Dravok the Wretched is a boss at combat level 115 with 100 HP, attacking with crush. Drops: Clue Scroll Master (1 in 50), Dravok S Helm (1 in 4), Dravok S Platebody (1 in 4), Dravok S Platelegs (1 in 4), Dravok S Greataxe (1 in 4), Coins (always)."
+ },
+ {
+  "id": "monster_gorath_the_infested",
+  "title": "Boss: Gorath the Infested — stats and drops",
+  "tags": [
+   "monster",
+   "drops",
+   "boss"
+  ],
+  "text": "Gorath the Infested is a boss at combat level 115 with 100 HP, attacking with stab. Drops: Clue Scroll Master (1 in 50), Gorath S Helm (1 in 4), Gorath S Platebody (1 in 4), Gorath S Chainskirt (1 in 4), Gorath S Warspear (1 in 4), Coins (always)."
+ },
+ {
+  "id": "monster_kaelor_the_tainted",
+  "title": "Boss: Kaelor the Tainted — stats and drops",
+  "tags": [
+   "monster",
+   "drops",
+   "boss"
+  ],
+  "text": "Kaelor the Tainted is a boss at combat level 115 with 100 HP, attacking with ranged. Drops: Clue Scroll Master (1 in 50), Kaelor S Coif (1 in 4), Kaelor S Leathertop (1 in 4), Kaelor S Leatherskirt (1 in 4), Kaelor S Crossbow (1 in 4), Coins (always)."
+ },
+ {
+  "id": "monster_torvek_the_corrupted",
+  "title": "Boss: Torvek the Corrupted — stats and drops",
+  "tags": [
+   "monster",
+   "drops",
+   "boss"
+  ],
+  "text": "Torvek the Corrupted is a boss at combat level 115 with 100 HP, attacking with crush. Drops: Clue Scroll Master (1 in 50), Torvek S Helm (1 in 4), Torvek S Platebody (1 in 4), Torvek S Platelegs (1 in 4), Torvek S Hammers (1 in 4), Coins (always)."
+ },
+ {
+  "id": "monster_verin_the_defiled",
+  "title": "Boss: Verin the Defiled — stats and drops",
+  "tags": [
+   "monster",
+   "drops",
+   "boss"
+  ],
+  "text": "Verin the Defiled is a boss at combat level 115 with 100 HP, attacking with crush. Drops: Clue Scroll Master (1 in 50), Verin S Helm (1 in 4), Verin S Brassard (1 in 4), Verin S Plateskirt (1 in 4), Verin S Flail (1 in 4), Coins (always)."
+ },
+ {
+  "id": "monster_marshscale_shaman",
+  "title": "Monster: Marshscale Shaman — stats and drops",
+  "tags": [
+   "monster",
+   "drops"
+  ],
+  "text": "Marshscale Shaman is a monster at combat level 150 with 150 HP, attacking with ranged. Requires Slayer level 80. Drops: Dragon Warhammer (1 in 3,000), Runeforged Chainbody (1 in 20), Rynarr Weed (1 in 10), Snapdrake (1 in 10), Wyrmspice (1 in 10), Runeforged Arrow (1 in 7), Chaos Rune (1 in 7), Death Rune (1 in 7), Blood Rune (1 in 7), Coins (1 in 4), Big Bones (always)."
+ },
+ {
+  "id": "monster_wailing_banshee",
+  "title": "Monster: Wailing Banshee — stats and drops",
+  "tags": [
+   "monster",
+   "drops"
+  ],
+  "text": "Wailing Banshee is a monster at combat level 23 with 22 HP, attacking with magic. Requires Slayer level 1. Drops: Clue Scroll Medium (1 in 67), Emberleaf (1 in 50), Steel Dagger (1 in 50), Rynarr Weed (1 in 33), Sunblossom (1 in 25), Death Rune (1 in 20), Duskroot (1 in 20), Iron Dagger (1 in 20), Greenthorn Leaf (1 in 17), Chaos Rune (1 in 10), Mind Rune (1 in 5), Coins (1 in 2), Bones (always)."
+ },
+ {
+  "id": "monster_warped_spectre",
+  "title": "Monster: Warped Spectre — stats and drops",
+  "tags": [
+   "monster",
+   "drops"
+  ],
+  "text": "Warped Spectre is a monster at combat level 96 with 90 HP, attacking with magic. Requires Slayer level 60. Drops: Arcanist Robe Top (1 in 500), Arcanist Robe Bottom (1 in 333), Arcanist Hat (1 in 200), Arcanist Gloves (1 in 200), Arcanist Boots (1 in 200), Clue Scroll Hard (1 in 67), Mistvine (1 in 50), Stonefern (1 in 50), Rynarr Seed (1 in 25), Cinderbloom (1 in 25), Snapdrake (1 in 20), Wyrmspice (1 in 20), Rynarr Weed (1 in 13), Blood Rune (1 in 8), Death Rune (1 in 6), Chaos Rune (1 in 6), Coins (1 in 1), Bones (always)."
+ },
+ {
+  "id": "monster_ash_wyrm",
+  "title": "Monster: Ash Wyrm — stats and drops",
+  "tags": [
+   "monster",
+   "drops"
+  ],
+  "text": "Ash Wyrm is a monster at combat level 99 with 130 HP, attacking with magic. Requires Slayer level 62. Drops: Arcanist Robe Top (1 in 667), Clue Scroll Hard (1 in 67), Mistvine (1 in 33), Snapdrake (1 in 25), Rynarr Weed (1 in 17), Death Rune (1 in 8), Chaos Rune (1 in 7), Earth Rune (1 in 6), Fire Rune (1 in 6), Coins (1 in 1), Bones (always), Gargoyle Dust (always)."
+ },
+ {
+  "id": "monster_astral_warrior",
+  "title": "Monster: Astral Warrior — stats and drops",
+  "tags": [
+   "monster",
+   "drops"
+  ],
+  "text": "Astral Warrior is a monster at combat level 134 with 145 HP, attacking with stab. Requires Slayer level 68. Drops: Dragon Boots (1 in 250), Runeforged Platelegs (1 in 125), Runeforged Full Helm (1 in 100), Runeforged Chainbody (1 in 83), Clue Scroll Elite (1 in 83), Snapdrake (1 in 20), Rynarr Weed (1 in 14), Shark (1 in 10), Blood Rune (1 in 7), Death Rune (1 in 6), Coins (1 in 1), Bones (always)."
+ },
+ {
+  "id": "monster_astral_mage",
+  "title": "Monster: Astral Mage — stats and drops",
+  "tags": [
+   "monster",
+   "drops"
+  ],
+  "text": "Astral Mage is a monster at combat level 120 with 115 HP, attacking with magic. Requires Slayer level 83. Drops: Arcanist Robe Top (1 in 667), Arcanist Robe Bottom (1 in 500), Arcanist Hat (1 in 333), Dragon Boots (1 in 250), Clue Scroll Elite (1 in 83), Mistvine (1 in 33), Snapdrake (1 in 25), Rynarr Weed (1 in 17), Blood Rune (1 in 6), Chaos Rune (1 in 6), Death Rune (1 in 5), Coins (1 in 1), Bones (always)."
+ },
+ {
+  "id": "monster_astral_ranger",
+  "title": "Monster: Astral Ranger — stats and drops",
+  "tags": [
+   "monster",
+   "drops"
+  ],
+  "text": "Astral Ranger is a monster at combat level 113 with 105 HP, attacking with ranged. Requires Slayer level 63. Drops: Dragon Boots (1 in 250), Clue Scroll Elite (1 in 83), Snapdrake (1 in 25), Blue Dragon Leather (1 in 20), Rynarr Weed (1 in 17), Green Dragon Leather (1 in 10), Blood Rune (1 in 8), Runeforged Arrow (1 in 7), Death Rune (1 in 7), Chaos Rune (1 in 7), Coins (1 in 1), Bones (always)."
+ },
+ {
+  "id": "monster_runestone_gargoyle",
+  "title": "Monster: Runestone Gargoyle — stats and drops",
+  "tags": [
+   "monster",
+   "drops"
+  ],
+  "text": "Runestone Gargoyle is a monster at combat level 111 with 105 HP, attacking with crush. Requires Slayer level 75. Drops: Gargoyle Maul (1 in 1,333), Runeforged Full Helm (1 in 125), Runeforged Chainbody (1 in 83), Clue Scroll Hard (1 in 67), Snapdrake (1 in 25), Wyrmspice (1 in 20), Rynarr Weed (1 in 14), Blood Rune (1 in 8), Death Rune (1 in 7), Chaos Rune (1 in 7), Coins (1 in 1), Bones (always)."
+ },
+ {
+  "id": "monster_vicious_black_dragon",
+  "title": "Monster: Vicious Black Dragon — stats and drops",
+  "tags": [
+   "monster",
+   "drops"
+  ],
+  "text": "Vicious Black Dragon is a monster at combat level 318 with 315 HP, attacking with ranged. Requires Slayer level 77. Drops: Dragon Visage (1 in 1,000), Clue Scroll Elite (1 in 56), Thornspire (1 in 33), Dragon Arrow (1 in 20), Snapdrake (1 in 17), Rynarr Weed (1 in 13), Soul Rune (1 in 8), Runeforged Ore (1 in 7), Runeforged Arrow (1 in 6), Blood Rune (1 in 6), Death Rune (1 in 5), Coins (1 in 2), Dragon Bones (always), Black Dragon Leather (always)."
+ },
+ {
+  "id": "monster_nightfang_beast",
+  "title": "Monster: Nightfang Beast — stats and drops",
+  "tags": [
+   "monster",
+   "drops"
+  ],
+  "text": "Nightfang Beast is a monster at combat level 182 with 220 HP, attacking with ranged. Requires Slayer level 90. Drops: Nightfang Bow (1 in 1,250), Runeforged Chainbody (1 in 83), Clue Scroll Elite (1 in 56), Thornspire (1 in 25), Snapdrake (1 in 17), Rynarr Weed (1 in 13), Runeforged Ore (1 in 8), Blood Rune (1 in 7), Chaos Rune (1 in 7), Runeforged Arrow (1 in 6), Death Rune (1 in 5), Coins (1 in 1), Bones (always)."
+ },
+ {
+  "id": "monster_threefang_cerberus",
+  "title": "Boss: Threefang Cerberus — stats and drops",
+  "tags": [
+   "monster",
+   "drops",
+   "boss"
+  ],
+  "text": "Threefang Cerberus is a boss at combat level 318 with 600 HP, attacking with crush. Requires Slayer level 91. Drops: Primeval Crystal (1 in 650), Skyfury Crystal (1 in 650), Evermore Crystal (1 in 650), Runeforged Platebody (1 in 83), Runeforged 2h Sword (1 in 83), Clue Scroll Elite (1 in 40), Thornspire (1 in 20), Snapdrake (1 in 13), Rynarr Weed (1 in 10), Soul Rune (1 in 8), Death Rune (1 in 5), Blood Rune (1 in 5), Coins (1 in 2), Dragon Bones (always)."
+ },
+ {
+  "id": "monster_ashen_hydra",
+  "title": "Boss: Ashen Hydra — stats and drops",
+  "tags": [
+   "monster",
+   "drops",
+   "boss"
+  ],
+  "text": "Ashen Hydra is a boss at combat level 194 with 320 HP, attacking with slash. Requires Slayer level 95. Drops: Ashen Hydra Claw (1 in 500), Ashen Hydra Leather (1 in 200), Clue Scroll Elite (1 in 50), Thornspire (1 in 25), Snapdrake (1 in 17), Rynarr Weed (1 in 13), Runeforged Ore (1 in 10), Soul Rune (1 in 8), Runeforged Arrow (1 in 7), Blood Rune (1 in 6), Death Rune (1 in 5), Coins (1 in 1), Ashen Hydra Bones (always)."
+ },
+ {
+  "id": "monster_dustpaw_rat",
+  "title": "Monster: Dustpaw Rat — stats and drops",
+  "tags": [
+   "monster",
+   "drops"
+  ],
+  "text": "Dustpaw Rat is a monster at combat level 4 with 6 HP, attacking with stab. Requires Slayer level 1. Drops: Clue Scroll Medium (1 in 200), Raw Chicken (1 in 20), Coins (1 in 2), Bones (always)."
+ },
+ {
+  "id": "monster_bogling_sprite",
+  "title": "Monster: Bogling Sprite — stats and drops",
+  "tags": [
+   "monster",
+   "drops"
+  ],
+  "text": "Bogling Sprite is a monster at combat level 12 with 14 HP, attacking with magic. Requires Slayer level 3. Drops: Clue Scroll Medium (1 in 100), Iron Dagger (1 in 25), Greenthorn Leaf (1 in 17), Water Rune (1 in 3), Air Rune (1 in 3), Mind Rune (1 in 3), Coins (1 in 1), Bones (always)."
+ },
+ {
+  "id": "monster_frostbite_imp",
+  "title": "Monster: Frostbite Imp — stats and drops",
+  "tags": [
+   "monster",
+   "drops"
+  ],
+  "text": "Frostbite Imp is a monster at combat level 25 with 22 HP, attacking with magic. Requires Slayer level 8. Drops: Clue Scroll Medium (1 in 100), Bronze Kiteshield (1 in 25), Bronze Full Helm (1 in 20), Duskroot (1 in 10), Chaos Rune (1 in 7), Water Rune (1 in 3), Coins (1 in 1), Bones (always)."
+ },
+ {
+  "id": "monster_marshfen_toad",
+  "title": "Monster: Marshfen Toad — stats and drops",
+  "tags": [
+   "monster",
+   "drops"
+  ],
+  "text": "Marshfen Toad is a monster at combat level 30 with 35 HP, attacking with crush. Requires Slayer level 12. Drops: Clue Scroll Medium (1 in 67), Rynarr Weed (1 in 10), Nature Rune (1 in 10), Duskroot (1 in 7), Iron Arrow (1 in 7), Greenthorn Leaf (1 in 5), Coins (1 in 2), Bones (always)."
+ },
+ {
+  "id": "monster_cinderpaw_cub",
+  "title": "Monster: Cinderpaw Cub — stats and drops",
+  "tags": [
+   "monster",
+   "drops"
+  ],
+  "text": "Cinderpaw Cub is a monster at combat level 36 with 40 HP, attacking with slash. Requires Slayer level 15. Drops: Clue Scroll Medium (1 in 67), Steel Dagger (1 in 25), Iron Full Helm (1 in 20), Sunblossom (1 in 8), Emberleaf (1 in 7), Fire Rune (1 in 3), Coins (1 in 1), Bones (always)."
+ },
+ {
+  "id": "monster_glaive_skeleton",
+  "title": "Monster: Glaive Skeleton — stats and drops",
+  "tags": [
+   "monster",
+   "drops"
+  ],
+  "text": "Glaive Skeleton is a monster at combat level 45 with 48 HP, attacking with slash. Requires Slayer level 20. Drops: Clue Scroll Medium (1 in 50), Steel Scimitar (1 in 40), Iron Scimitar (1 in 20), Iron Bar (1 in 10), Chaos Rune (1 in 7), Mind Rune (1 in 5), Coins (1 in 1), Bones (always)."
+ },
+ {
+  "id": "monster_mirebound_husk",
+  "title": "Monster: Mirebound Husk — stats and drops",
+  "tags": [
+   "monster",
+   "drops"
+  ],
+  "text": "Mirebound Husk is a monster at combat level 52 with 60 HP, attacking with magic. Requires Slayer level 22. Drops: Clue Scroll Medium (1 in 50), Snapdrake (1 in 10), Duskroot (1 in 7), Rynarr Weed (1 in 6), Chaos Rune (1 in 5), Nature Rune (1 in 4), Coins (1 in 2), Bones (always)."
+ },
+ {
+  "id": "monster_verdant_stalker",
+  "title": "Monster: Verdant Stalker — stats and drops",
+  "tags": [
+   "monster",
+   "drops"
+  ],
+  "text": "Verdant Stalker is a monster at combat level 58 with 55 HP, attacking with ranged. Requires Slayer level 25. Drops: Clue Scroll Medium (1 in 50), Shortbow (1 in 20), Emberleaf (1 in 7), Greenthorn Leaf (1 in 5), Iron Arrow (1 in 3), Feather (1 in 3), Coins (1 in 2), Bones (always)."
+ },
+ {
+  "id": "monster_stoneglare_basilisk",
+  "title": "Monster: Stoneglare Basilisk — stats and drops",
+  "tags": [
+   "monster",
+   "drops"
+  ],
+  "text": "Stoneglare Basilisk is a monster at combat level 62 with 70 HP, attacking with slash. Requires Slayer level 28. Drops: Clue Scroll Hard (1 in 83), Uncut Emerald (1 in 33), Uncut Sapphire (1 in 20), Mithril Bar (1 in 20), Nature Rune (1 in 5), Earth Rune (1 in 3), Coins (1 in 1), Bones (always)."
+ },
+ {
+  "id": "monster_embertongue_lizard",
+  "title": "Monster: Embertongue Lizard — stats and drops",
+  "tags": [
+   "monster",
+   "drops"
+  ],
+  "text": "Embertongue Lizard is a monster at combat level 68 with 75 HP, attacking with magic. Requires Slayer level 32. Drops: Clue Scroll Hard (1 in 67), Uncut Ruby (1 in 25), Wyrmspice (1 in 8), Sunblossom (1 in 8), Emberleaf (1 in 6), Nature Rune (1 in 5), Fire Rune (1 in 3), Coins (1 in 1), Bones (always)."
+ },
+ {
+  "id": "monster_hollow_reaver",
+  "title": "Monster: Hollow Reaver — stats and drops",
+  "tags": [
+   "monster",
+   "drops"
+  ],
+  "text": "Hollow Reaver is a monster at combat level 75 with 85 HP, attacking with slash. Requires Slayer level 38. Drops: Clue Scroll Hard (1 in 56), Adamant Scimitar (1 in 25), Snapdrake (1 in 8), Death Rune (1 in 6), Rynarr Weed (1 in 6), Chaos Rune (1 in 5), Coins (1 in 1), Big Bones (always)."
+ },
+ {
+  "id": "monster_briarheart_treant",
+  "title": "Monster: Briarheart Treant — stats and drops",
+  "tags": [
+   "monster",
+   "drops"
+  ],
+  "text": "Briarheart Treant is a monster at combat level 82 with 110 HP, attacking with crush. Requires Slayer level 42. Drops: Clue Scroll Hard (1 in 50), Uncut Emerald (1 in 25), Yew Logs (1 in 10), Rynarr Weed (1 in 7), Maple Logs (1 in 5), Greenthorn Leaf (1 in 5), Willow Logs (1 in 3), Oak Logs (1 in 3), Coins (1 in 1), Big Bones (always)."
+ },
+ {
+  "id": "monster_frostmaw_direwolf",
+  "title": "Monster: Frostmaw Direwolf — stats and drops",
+  "tags": [
+   "monster",
+   "drops"
+  ],
+  "text": "Frostmaw Direwolf is a monster at combat level 85 with 95 HP, attacking with slash. Requires Slayer level 45. Drops: Clue Scroll Hard (1 in 50), Uncut Ruby (1 in 25), Adamant Scimitar (1 in 20), Adamant Bar (1 in 13), Iron Bar (1 in 7), Raw Beef (1 in 5), Cowhide (1 in 4), Coins (1 in 1), Bones (always)."
+ },
+ {
+  "id": "monster_pyreclaw_demon",
+  "title": "Monster: Pyreclaw Demon — stats and drops",
+  "tags": [
+   "monster",
+   "drops"
+  ],
+  "text": "Pyreclaw Demon is a monster at combat level 88 with 100 HP, attacking with magic. Requires Slayer level 50. Drops: Clue Scroll Hard (1 in 45), Runeforged Ore (1 in 13), Wyrmspice (1 in 7), Emberleaf (1 in 6), Death Rune (1 in 5), Chaos Rune (1 in 4), Fire Rune (1 in 3), Coins (1 in 1), Big Bones (always)."
+ },
+ {
+  "id": "monster_wraithgale_specter",
+  "title": "Monster: Wraithgale Specter — stats and drops",
+  "tags": [
+   "monster",
+   "drops"
+  ],
+  "text": "Wraithgale Specter is a monster at combat level 92 with 95 HP, attacking with magic. Requires Slayer level 55. Drops: Clue Scroll Hard (1 in 45), Uncut Diamond (1 in 33), Blood Rune (1 in 7), Snapdrake (1 in 7), Death Rune (1 in 5), Nature Rune (1 in 5), Rynarr Weed (1 in 5), Chaos Rune (1 in 4), Coins (1 in 1), Bones (always)."
+ },
+ {
+  "id": "monster_bloodmoon_stalker",
+  "title": "Monster: Bloodmoon Stalker — stats and drops",
+  "tags": [
+   "monster",
+   "drops"
+  ],
+  "text": "Bloodmoon Stalker is a monster at combat level 93 with 90 HP, attacking with ranged. Requires Slayer level 58. Drops: Clue Scroll Hard (1 in 45), Uncut Dragonstone (1 in 40), Magic Shortbow (1 in 20), Thornspire (1 in 10), Runeforged Ore (1 in 10), Runeforged Arrow (1 in 3), Feather (1 in 3), Coins (1 in 1), Bones (always)."
+ },
+ {
+  "id": "monster_ironfang_drake",
+  "title": "Monster: Ironfang Drake — stats and drops",
+  "tags": [
+   "monster",
+   "drops"
+  ],
+  "text": "Ironfang Drake is a monster at combat level 96 with 130 HP, attacking with slash. Requires Slayer level 60. Drops: Dragon Visage (1 in 5,000), Clue Scroll Elite (1 in 56), Uncut Dragonstone (1 in 29), Thornspire (1 in 10), Runeforged Ore (1 in 7), Wyrmspice (1 in 7), Runeforged Arrow (1 in 4), Coins (1 in 1), Dragon Bones (always)."
+ },
+ {
+  "id": "monster_shadeglass_golem",
+  "title": "Monster: Shadeglass Golem — stats and drops",
+  "tags": [
+   "monster",
+   "drops"
+  ],
+  "text": "Shadeglass Golem is a monster at combat level 97 with 140 HP, attacking with crush. Requires Slayer level 65. Drops: Clue Scroll Elite (1 in 56), Uncut Diamond (1 in 33), Runeforged Med Helm (1 in 25), Runeforged Bar (1 in 10), Runeforged Ore (1 in 7), Soft Clay (1 in 4), Molten Glass (1 in 3), Coins (1 in 1), Big Bones (always)."
+ },
+ {
+  "id": "monster_tidereaper_crab",
+  "title": "Monster: Tidereaper Crab — stats and drops",
+  "tags": [
+   "monster",
+   "drops"
+  ],
+  "text": "Tidereaper Crab is a monster at combat level 98 with 130 HP, attacking with crush. Requires Slayer level 68. Drops: Clue Scroll Elite (1 in 50), Uncut Dragonstone (1 in 40), Thornspire (1 in 13), Runeforged Ore (1 in 10), Uncut Sapphire (1 in 7), Raw Eel (1 in 4), Raw Crab (1 in 3), Coins (1 in 1), Big Bones (always)."
+ },
+ {
+  "id": "monster_voidweave_stalker",
+  "title": "Monster: Voidweave Stalker — stats and drops",
+  "tags": [
+   "monster",
+   "drops"
+  ],
+  "text": "Voidweave Stalker is a monster at combat level 99 with 120 HP, attacking with magic. Requires Slayer level 70. Drops: Clue Scroll Elite (1 in 50), Uncut Diamond (1 in 25), Snapdrake (1 in 7), Soul Rune (1 in 6), Rynarr Weed (1 in 5), Blood Rune (1 in 4), Chaos Rune (1 in 4), Death Rune (1 in 3), Coins (1 in 1), Bones (always)."
+ },
+ {
+  "id": "monster_drakthul_wyrmling",
+  "title": "Monster: Drakthul Wyrmling — stats and drops",
+  "tags": [
+   "monster",
+   "drops"
+  ],
+  "text": "Drakthul Wyrmling is a monster at combat level 99 with 135 HP, attacking with magic. Requires Slayer level 73. Drops: Dragon Visage (1 in 5,000), Clue Scroll Elite (1 in 45), Uncut Dragonstone (1 in 25), Runeforged Chainbody (1 in 25), Thornspire (1 in 8), Runeforged Ore (1 in 7), Wyrmspice (1 in 6), Fire Rune (1 in 3), Coins (1 in 1), Dragon Bones (always)."
+ },
+ {
+  "id": "monster_bonelight_pyromancer",
+  "title": "Monster: Bonelight Pyromancer — stats and drops",
+  "tags": [
+   "monster",
+   "drops"
+  ],
+  "text": "Bonelight Pyromancer is a monster at combat level 99 with 110 HP, attacking with magic. Requires Slayer level 75. Drops: Clue Scroll Elite (1 in 45), Uncut Diamond (1 in 29), Snapdrake (1 in 7), Soul Rune (1 in 6), Nature Rune (1 in 5), Rynarr Weed (1 in 5), Death Rune (1 in 4), Fire Rune (1 in 3), Coins (1 in 1), Big Bones (always)."
+ },
+ {
+  "id": "monster_cinderfang_reaver",
+  "title": "Monster: Cinderfang Reaver — stats and drops",
+  "tags": [
+   "monster",
+   "drops"
+  ],
+  "text": "Cinderfang Reaver is a monster at combat level 99 with 130 HP, attacking with slash. Requires Slayer level 77. Drops: Clue Scroll Elite (1 in 45), Uncut Dragonstone (1 in 33), Runeforged Scimitar (1 in 22), Runeforged Ore (1 in 7), Wyrmspice (1 in 7), Emberleaf (1 in 6), Runeforged Arrow (1 in 4), Coins (1 in 1), Big Bones (always)."
+ },
+ {
+  "id": "monster_ashen_marauder",
+  "title": "Monster: Ashen Marauder — stats and drops",
+  "tags": [
+   "monster",
+   "drops"
+  ],
+  "text": "Ashen Marauder is a monster at combat level 99 with 140 HP, attacking with crush. Requires Slayer level 79. Drops: Clue Scroll Elite (1 in 45), Uncut Dragonstone (1 in 29), Runeforged 2h Sword (1 in 25), Amulet Of Strength (1 in 17), Runeforged Bar (1 in 8), Wyrmspice (1 in 7), Runeforged Ore (1 in 6), Emberleaf (1 in 5), Coins (1 in 1), Big Bones (always)."
+ },
+ {
+  "id": "monster_sovrathar_the_ashen_sovereign",
+  "title": "Boss: Sovrathar, the Ashen Sovereign — stats and drops",
+  "tags": [
+   "monster",
+   "drops",
+   "boss"
+  ],
+  "text": "Sovrathar, the Ashen Sovereign is a boss at combat level 250 with 480 HP, attacking with slash. Requires Slayer level 80. Drops: Ashen Sovereigns Edge (1 in 250), Sovereigns Cinderplate (1 in 150), Sovereigns Cindergreaves (1 in 150), Cinderforged Helm (1 in 125), Sovrathar Ashen Hilt (1 in 45), Clue Scroll Master (1 in 33), Thornspire (1 in 8), Runeforged Bar (1 in 7), Snapdrake (1 in 7), Runeforged Ore (1 in 5), Rynarr Weed (1 in 5), Soul Rune (1 in 5), Blood Rune (1 in 4), Death Rune (1 in 3), Coins (1 in 1), Dragon Bones (always)."
+ },
+ {
+  "id": "monster_gravehusk_brute",
+  "title": "Boss: Gravehusk Brute — stats and drops",
+  "tags": [
+   "monster",
+   "drops",
+   "boss"
+  ],
+  "text": "Gravehusk Brute is a boss at combat level 82 with 60 HP, attacking with crush. Drops: Gravehusk Platebody (1 in 250), Gravehusk Helm (1 in 167), Clue Scroll Hard (1 in 40), Rynarr Weed (1 in 10), Earth Rune (1 in 5), Chaos Rune (1 in 4), Coins (1 in 1), Big Bones (always)."
+ },
+ {
+  "id": "monster_boneclaw_revenant",
+  "title": "Boss: Boneclaw Revenant — stats and drops",
+  "tags": [
+   "monster",
+   "drops",
+   "boss"
+  ],
+  "text": "Boneclaw Revenant is a boss at combat level 98 with 75 HP, attacking with stab. Drops: Boneclaw Rapier (1 in 200), Boneclaw Shield (1 in 167), Clue Scroll Hard (1 in 40), Rynarr Weed (1 in 10), Blood Rune (1 in 8), Chaos Rune (1 in 5), Coins (1 in 1), Big Bones (always)."
+ },
+ {
+  "id": "monster_shroudwraith_specter",
+  "title": "Boss: Shroudwraith Specter — stats and drops",
+  "tags": [
+   "monster",
+   "drops",
+   "boss"
+  ],
+  "text": "Shroudwraith Specter is a boss at combat level 115 with 90 HP, attacking with magic. Drops: Shroud Robes Top (1 in 200), Shroud Staff (1 in 200), Clue Scroll Hard (1 in 40), Snapdrake (1 in 13), Soul Rune (1 in 7), Death Rune (1 in 5), Coins (1 in 1), Big Bones (always)."
+ },
+ {
+  "id": "monster_stonegale_elemental",
+  "title": "Boss: Stonegale Elemental — stats and drops",
+  "tags": [
+   "monster",
+   "drops",
+   "boss"
+  ],
+  "text": "Stonegale Elemental is a boss at combat level 100 with 80 HP, attacking with magic. Drops: Stonegale Bow (1 in 200), Stonegale Coif (1 in 167), Clue Scroll Hard (1 in 40), Rynarr Weed (1 in 10), Earth Rune (1 in 5), Air Rune (1 in 4), Coins (1 in 1), Big Bones (always)."
+ },
+ {
+  "id": "monster_cindermaw_serpent",
+  "title": "Boss: Cindermaw Serpent — stats and drops",
+  "tags": [
+   "monster",
+   "drops",
+   "boss"
+  ],
+  "text": "Cindermaw Serpent is a boss at combat level 120 with 100 HP, attacking with crush. Drops: Cindermaw Maul (1 in 250), Cindermaw Scale Body (1 in 200), Clue Scroll Hard (1 in 45), Snapdrake (1 in 13), Chaos Rune (1 in 6), Fire Rune (1 in 5), Coins (1 in 1), Big Bones (always)."
+ },
+ {
+  "id": "monster_thornhide_colossus",
+  "title": "Boss: Thornhide Colossus — stats and drops",
+  "tags": [
+   "monster",
+   "drops",
+   "boss"
+  ],
+  "text": "Thornhide Colossus is a boss at combat level 140 with 120 HP, attacking with slash. Drops: Thornhide Platelegs (1 in 250), Thornhide Gauntlets (1 in 167), Clue Scroll Hard (1 in 45), Thornspire (1 in 13), Rynarr Weed (1 in 8), Nature Rune (1 in 5), Coins (1 in 1), Big Bones (always)."
+ },
+ {
+  "id": "monster_gravethorn_drake",
+  "title": "Boss: Gravethorn Drake — stats and drops",
+  "tags": [
+   "monster",
+   "drops",
+   "boss"
+  ],
+  "text": "Gravethorn Drake is a boss at combat level 110 with 90 HP, attacking with ranged. Drops: Thornspine Shortbow (1 in 250), Drake Leather Body (1 in 200), Clue Scroll Hard (1 in 40), Rynarr Weed (1 in 10), Nature Rune (1 in 5), Earth Rune (1 in 5), Coins (1 in 1), Big Bones (always)."
+ },
+ {
+  "id": "monster_ironclad_guardian",
+  "title": "Boss: Ironclad Guardian — stats and drops",
+  "tags": [
+   "monster",
+   "drops",
+   "boss"
+  ],
+  "text": "Ironclad Guardian is a boss at combat level 130 with 110 HP, attacking with stab. Drops: Ironclad Longsword (1 in 250), Ironclad Helm (1 in 200), Clue Scroll Hard (1 in 45), Snapdrake (1 in 13), Blood Rune (1 in 8), Death Rune (1 in 6), Coins (1 in 1), Big Bones (always)."
+ },
+ {
+  "id": "monster_emberhowl_warlord",
+  "title": "Boss: Emberhowl Warlord — stats and drops",
+  "tags": [
+   "monster",
+   "drops",
+   "boss"
+  ],
+  "text": "Emberhowl Warlord is a boss at combat level 155 with 150 HP, attacking with crush. Drops: Emberhowl Axe (1 in 250), Emberhowl Boots (1 in 200), Clue Scroll Hard (1 in 50), Thornspire (1 in 10), Chaos Rune (1 in 6), Fire Rune (1 in 5), Coins (1 in 1), Big Bones (always)."
+ },
+ {
+  "id": "monster_razorwing_harpy",
+  "title": "Boss: Razorwing Harpy — stats and drops",
+  "tags": [
+   "monster",
+   "drops",
+   "boss"
+  ],
+  "text": "Razorwing Harpy is a boss at combat level 150 with 140 HP, attacking with ranged. Drops: Razorwing Crossbow (1 in 250), Razorwing Vambraces (1 in 200), Clue Scroll Hard (1 in 50), Snapdrake (1 in 13), Blood Rune (1 in 7), Death Rune (1 in 5), Coins (1 in 1), Big Bones (always)."
+ },
+ {
+  "id": "monster_elder_tree_spirit",
+  "title": "Monster: Elder Tree Spirit — stats and drops",
+  "tags": [
+   "monster",
+   "drops"
+  ],
+  "text": "Elder Tree Spirit is a monster at combat level 70 with 200 HP, attacking with magic. Drops: Magic Sapling (1 in 128), Yew Sapling (1 in 64), Runeforged Axe (1 in 64), Clue Scroll Medium (1 in 50), Maple Sapling (1 in 32), Adamant Axe (1 in 32), Willow Sapling (1 in 16), Mithril Axe (1 in 16), Steel Axe (1 in 12), Crushed Bird S Nest (1 in 10), Oak Sapling (1 in 8), Iron Axe (1 in 8), Bronze Axe (1 in 4), Coins (1 in 1)."
+ },
+ {
+  "id": "monster_elder_rock_golem",
+  "title": "Monster: Elder Rock Golem — stats and drops",
+  "tags": [
+   "monster",
+   "drops"
+  ],
+  "text": "Elder Rock Golem is a monster at combat level 70 with 200 HP, attacking with crush. Drops: Uncut Diamond (1 in 128), Uncut Ruby (1 in 64), Runeforged Pickaxe (1 in 64), Clue Scroll Medium (1 in 50), Adamantite Ore (1 in 32), Uncut Emerald (1 in 32), Adamant Pickaxe (1 in 32), Mithril Ore (1 in 16), Uncut Sapphire (1 in 16), Mithril Pickaxe (1 in 16), Steel Pickaxe (1 in 12), Coal (1 in 10), Iron Ore (1 in 8), Iron Pickaxe (1 in 8), Copper Ore (1 in 5), Tin Ore (1 in 5), Bronze Pickaxe (1 in 4), Coins (1 in 1)."
+ },
+ {
+  "id": "clue_medium",
+  "title": "Clue scroll tier: medium",
+  "tags": [
+   "clue",
+   "clues",
+   "clue scroll"
+  ],
+  "text": "A medium clue scroll takes about 5 minutes to complete and rewards 1 to 4 rolls from a table of 45 possible rewards (runes, coins and gear). Rare uniques: Pathfinder Boots, Spellweaver Boots, Holy Sandals, Spiked Manacles, Climbing Boots G, Lumira Mitre, Verdant Mitre, Krylth Mitre, Ancient Mitre, Zephyra Mitre, Grondar Mitre, Sacred Charm, Peace Blessing, Profane Charm, Honorable Blessing, Battle Charm, Elder Charm, Lumira Stole, Verdant Stole, Krylth Stole, Ancient Stole, Zephyra Stole, Grondar Stole, Robin Hood Hat."
+ },
+ {
+  "id": "clue_hard",
+  "title": "Clue scroll tier: hard",
+  "tags": [
+   "clue",
+   "clues",
+   "clue scroll"
+  ],
+  "text": "A hard clue scroll takes about 15 minutes to complete and rewards 1 to 4 rolls from a table of 70 possible rewards (runes, coins and gear). Rare uniques: Lumira D Hide Body, Lumira D Hide Chaps, Lumira D Hide Boots, Lumira D Hide Bracers, Lumira Coif, Verdant D Hide Body, Verdant D Hide Chaps, Verdant D Hide Boots, Verdant D Hide Bracers, Verdant Coif, Krylth D Hide Body, Krylth D Hide Chaps, Krylth D Hide Boots, Krylth D Hide Bracers, Krylth Coif, Ancient D Hide Body, Ancient D Hide Chaps, Ancient D Hide Boots, Ancient D Hide Bracers, Ancient Coif, Zephyra D Hide Body, Zephyra D Hide Chaps, Zephyra D Hide Boots, Zephyra D Hide Bracers, Zephyra Coif, Grondar D Hide Body, Grondar D Hide Chaps, Grondar D Hide Boots, Grondar D Hide Bracers, Grondar Coif, Amulet Of Glory T, 2nd Age Full Helm, 2nd Age Platebody, 2nd Age Platelegs, 2nd Age Plateskirt, 2nd Age Kiteshield, 2nd Age Range Coif, 2nd Age Range Top, 2nd Age Range Legs, 2nd Age Vambraces, 2nd Age Mage Hat, 2nd Age Robe Top, 2nd Age Robe Legs, 2nd Age Amulet, Lumira D Hide Shield, Verdant D Hide Shield, Krylth D Hide Shield, Ancient D Hide Shield, Zephyra D Hide Shield, Grondar D Hide Shield."
+ },
+ {
+  "id": "clue_elite",
+  "title": "Clue scroll tier: elite",
+  "tags": [
+   "clue",
+   "clues",
+   "clue scroll"
+  ],
+  "text": "A elite clue scroll takes about 30 minutes to complete and rewards 1 to 4 rolls from a table of 30 possible rewards (runes, coins and gear). Rare uniques: 2nd Age Longsword, 2nd Age Bow, 2nd Age Wand, 2nd Age Cloak."
+ },
+ {
+  "id": "clue_master",
+  "title": "Clue scroll tier: master",
+  "tags": [
+   "clue",
+   "clues",
+   "clue scroll"
+  ],
+  "text": "A master clue scroll takes about 60 minutes to complete and rewards 1 to 4 rolls from a table of 22 possible rewards (runes, coins and gear). Rare uniques: 2nd Age Druidic Robe Top, 2nd Age Druidic Robe Bottoms, 2nd Age Druidic Cloak, 2nd Age Druidic Staff, 2nd Age Pickaxe, 2nd Age Axe, Gold Pickaxe, Gold Axe, Gold Spade, Fancy Tiara."
+ },
+ {
+  "id": "daily_tasks_novice",
+  "title": "Daily tasks: Novice tier pool",
+  "tags": [
+   "daily",
+   "daily tasks",
+   "tasks"
+  ],
+  "text": "Novice daily tasks — one is assigned each day from this pool of 28: Craft Leather Gloves, Cut a Sapphire, Mine Iron Ore, Chop Oak Logs, Cook Shrimps, Catch Shrimps, Cull the Field Chickens, Rout the Cave Goblins, Smelt Bronze Bars, Craft a Leather Body, Defeat Pasture Bulls, Earn Mining XP, Earn Prayer XP, Cook Chicken, Mine Tin Ore, Chop Logs, Smith a Bronze Dagger, Craft Leather Boots, Craft a Leather Cowl, Fletch Arrow Shafts, Fletch Headless Arrows, Brew an Attack Potion, Craft Air Runes, Craft Fire Runes, Cull the Dustpaw Rats, Scatter the Bogling Sprites, Complete a Medium Clue, Hunt Cows."
+ },
+ {
+  "id": "daily_tasks_intermediate",
+  "title": "Daily tasks: Intermediate tier pool",
+  "tags": [
+   "daily",
+   "daily tasks",
+   "tasks"
+  ],
+  "text": "Intermediate daily tasks — one is assigned each day from this pool of 29: Cull the Lesser Fiends, Crack the Stoneback Crabs, Mine Mithril Ore, Cook Trout, Chop Willow Logs, Catch Trout, Smelt Iron Bars, Smith an Iron Scimitar, Craft a Hard Leather Body, Cut an Emerald, Slay the Highland Giants, Exterminate Broodfang Spiders, Complete a Slayer Task, Hunt the Duneback Crabs, Mine Coal, Mine Gold Ore, Chop Teak Logs, Chop Maple Logs, Catch Crabs, Brew Defence Potions, Brew a Prayer Potion, Craft Chaos Runes, Smelt Steel Bars, Fletch Willow Shortbows, Craft a Sapphire Amulet, Silence the Wailing Banshees, Banish Frostbite Imps, Hunt the Jeweller, Complete a Hard Clue."
+ },
+ {
+  "id": "daily_tasks_experienced",
+  "title": "Daily tasks: Experienced tier pool",
+  "tags": [
+   "daily",
+   "daily tasks",
+   "tasks"
+  ],
+  "text": "Experienced daily tasks — one is assigned each day from this pool of 29: Banish Arcane Adepts, Dispel Umbral Adepts, Mine Adamantite Ore, Cook Sharks, Chop Yew Logs, Catch Sharks, Smelt Adamant Bars, Cut a Ruby, Bind the Nether Demons, Topple the Briar Giants, Complete a Quest, Earn Agility XP, Slay the Sanguine Veld, Smith a Runeforged Scimitar, Slay the King Black Dragon, Slay the Deepmaw Kraken, Chop Mahogany Logs, Catch Raw Eels, Cook Karam, Fletch Yew Shortbows, Brew Super Strength, Brew a Ranging Potion, Craft Nature Runes, Craft Death Runes, Cut Down the Hollow Reavers, Slay Green Dragons, Complete a Minigame, Hunt the Grim Reaper, Complete an Elite Clue."
+ },
+ {
+  "id": "daily_tasks_master",
+  "title": "Daily tasks: Master tier pool",
+  "tags": [
+   "daily",
+   "daily tasks",
+   "tasks"
+  ],
+  "text": "Master daily tasks — one is assigned each day from this pool of 24: Slay Warlord Grondar, Slay Commander Zephyra, Slay Skyrender Kharra, Slay Krylth the Defiler, Conquer the Vaults of Xyren, Conquer the Cryptbound Champions, Mine Runite Ore, Chop Redwood Logs, Catch Anglerfish, Cook Anglerfish, Forge a Godsword Blade, Banish Nether Wraiths, Craft a Black D'hide Body, Catch Manta Rays, Cook Manta Rays, Fletch a Magic Shortbow, Brew a Lumira Brew, Craft Blood Runes, Craft a Dragonstone Amulet, Slay Black Dragons, Fell the Bone Wyverns, Defeat the Cinder Devils, Slay Nagadoth Rex, Smith a Runeforged Platebody."
+ },
+ {
+  "id": "daily_tasks_grandmaster",
+  "title": "Daily tasks: Grandmaster tier pool",
+  "tags": [
+   "daily",
+   "daily tasks",
+   "tasks"
+  ],
+  "text": "Grandmaster daily tasks — one is assigned each day from this pool of 24: Conquer the Crimson Night Theatre, Conquer the Tomb of Arasmus, Vanquish Warlord Grondar, Vanquish Commander Zephyra, Slay the Venomcoil Matriarch, Conquer the Blighted Gauntlet, Slay the Ember Tyrant, Slay the Ashen Crucible, Craft an Onyx Amulet, Cut a Zyrite, Craft Soul Runes, Forge a Visage Shield, Slay the Hellbound Gorilla, Brew Super Combat Potions, Craft Wrath Runes, Fletch Onyx Dragon Bolts, Hunt Master Trader, Cut an Onyx, Slay Nagadoth Prime, Slay Nagadoth Supreme, Slay the Threefang Cerberus, Conquer the Vaults of Xyren, Complete a Master Clue, Conquer the Cryptbound Champions."
+ },
+ {
+  "id": "collection_log_monsters",
+  "title": "Collection log: Monsters slots",
+  "tags": [
+   "collection log",
+   "collection",
+   "uniques"
+  ],
+  "text": "The Monsters collection log has 84 slots. Nether Demon: Nether Demon Whip. Adamant Dragon: Uncut Onyx, Dragon Visage. Vicious Black Dragon: Dragon Visage. Threefang Cerberus: Primeval Crystal, Skyfury Crystal, Evermore Crystal. Commander Zephyra: Lumira Sword, Zephyra Crossbow, Lumira Hilt. Blighted Gauntlet: Uncut Onyx, Shardglass Pickaxe, Shardglass Axe, Shardglass Helmet, Shardglass Plate Body, Shardglass Platelegs, Bow Of Faerdhinen, Blade Of Saeldor. Nagadoth Prime: Dragon Axe, Seers Ring. Nagadoth Rex: Dragon Axe, Berserker Ring, Warriors Ring. Nagadoth Supreme: Dragon Axe, Archers Ring. Nightfang Beast: Nightfang Bow. Hellbound Gorilla: Uncut Zyrite, Colossal Ballista. Runestone Gargoyle: Gargoyle Maul. Warlord Grondar: Grondar Chestplate, Grondar Tassets, Grondar Boots, Grondar Hilt. Ashen Hydra: Ashen Hydra Leather, Ashen Hydra Claw. Krylth the Defiler: Krylth Spear, Staff Of The Dead, Krylth Hilt. King Black Dragon: Dragon Pickaxe, Dragon Visage. Black Dragon: Dragon Visage, Dragon Full Helm. Deepmaw Kraken: Deepmaw Kraken Tentacle. Skyrender Kharra: Zephyra Helmet, Zephyra Chestplate, Zephyra Chainskirt, Zephyra Hilt. Marshscale Shaman: Dragon Warhammer. Runeforged Dragon: Uncut Onyx, Dragon Visage. Cinder Devil: Occult Necklace. Astral Mage: Dragon Boots. Astral Ranger: Dragon Boots. Astral Warrior: Dragon Boots. Venomcoil Matriarch: Venom Blowpipe, Trident Of Venom, Serpentine Helm, Uncut Onyx. Sovrathar, the Ashen Sovereign: Sovrathar Ashen Hilt, Cinderforged Helm, Sovereigns Cinderplate, Sovereigns Cindergreaves, Ashen Sovereigns Edge, Ashen Slayer Helm. Gravehusk Brute: Gravehusk Helm, Gravehusk Platebody. Boneclaw Revenant: Boneclaw Rapier, Boneclaw Shield. Shroudwraith Specter: Shroud Robes Top, Shroud Staff. Stonegale Elemental: Stonegale Bow, Stonegale Coif. Cindermaw Serpent: Cindermaw Maul, Cindermaw Scale Body. Thornhide Colossus: Thornhide Platelegs, Thornhide Gauntlets. Gravethorn Drake: Thornspine Shortbow, Drake Leather Body. Ironclad Guardian: Ironclad Longsword, Ironclad Helm. Emberhowl Warlord: Emberhowl Axe, Emberhowl Boots. Razorwing Harpy: Razorwing Crossbow, Razorwing Vambraces."
+ },
+ {
+  "id": "collection_log_raids",
+  "title": "Collection log: Raids slots",
+  "tags": [
+   "collection log",
+   "collection",
+   "uniques"
+  ],
+  "text": "The Raids collection log has 49 slots. Cryptbound Champions: Morvyn S Hood, Morvyn S Robetop, Morvyn S Robeskirt, Morvyn S Staff, Dravok S Helm, Dravok S Platebody, Dravok S Platelegs, Dravok S Greataxe, Gorath S Helm, Gorath S Platebody, Gorath S Chainskirt, Gorath S Warspear, Kaelor S Coif, Kaelor S Leathertop, Kaelor S Leatherskirt, Kaelor S Crossbow, Torvek S Helm, Torvek S Platebody, Torvek S Platelegs, Torvek S Hammers, Verin S Helm, Verin S Brassard, Verin S Plateskirt, Verin S Flail. Vaults of Xyren: Warped Buckler, Dragon Slayer Crossbow, Durn S Bulwark, Kodai Hat, Kodai Robe Top, Kodai Robe Bottom, Dragon Claws, Ancient Maul, Zaryth Vambraces, Ancestral Wand, Twisted Longbow. Tomb of Arasmus: Fang Of Osmun, Sunbearer Ring, Ward Of Elidria, Masari Mask, Masari Body, Masari Chaps, Shadow Of Tumaken. Crimson Night Theatre: Avernal Defender, Ghraxis Rapier, Sanguine Staff, Justicar Faceguard, Justicar Chestguard, Justicar Legguards, Scythe Of Vythar."
+ },
+ {
+  "id": "collection_log_minigames",
+  "title": "Collection log: Minigames slots",
+  "tags": [
+   "collection log",
+   "collection",
+   "uniques"
+  ],
+  "text": "The Minigames collection log has 12 slots. Viking Assault: Fighter Body, Fighter Helm. Fortress Clash: Halo, Decorative Top. Champion's Hall: Runeforged Defender, Dragon Defender. Deepsea Haul: Angler Net. Arcane Crucible: Imbued God Cape. Void Breach: Void King Helm, Void King Top, Void King Robe, Void King Gloves."
+ },
+ {
+  "id": "collection_log_clues",
+  "title": "Collection log: Clue Scrolls slots",
+  "tags": [
+   "collection log",
+   "collection",
+   "uniques"
+  ],
+  "text": "The Clue Scrolls collection log has 91 slots. Medium Clue: Pathfinder Boots, Spellweaver Boots, Holy Sandals, Spiked Manacles, Climbing Boots G, Lumira Mitre, Verdant Mitre, Krylth Mitre, Ancient Mitre, Zephyra Mitre, Grondar Mitre, Sacred Charm, Peace Blessing, Profane Charm, Honorable Blessing, Battle Charm, Elder Charm, Lumira Stole, Verdant Stole, Krylth Stole, Ancient Stole, Zephyra Stole, Grondar Stole, Robin Hood Hat. Hard Clue: Lumira D Hide Body, Lumira D Hide Chaps, Lumira D Hide Boots, Lumira D Hide Bracers, Lumira Coif, Verdant D Hide Body, Verdant D Hide Chaps, Verdant D Hide Boots, Verdant D Hide Bracers, Verdant Coif, Krylth D Hide Body, Krylth D Hide Chaps, Krylth D Hide Boots, Krylth D Hide Bracers, Krylth Coif, Ancient D Hide Body, Ancient D Hide Chaps, Ancient D Hide Boots, Ancient D Hide Bracers, Ancient Coif, Zephyra D Hide Body, Zephyra D Hide Chaps, Zephyra D Hide Boots, Zephyra D Hide Bracers, Zephyra Coif, Grondar D Hide Body, Grondar D Hide Chaps, Grondar D Hide Boots, Grondar D Hide Bracers, Grondar Coif, Amulet Of Glory T, 2nd Age Full Helm, 2nd Age Platebody, 2nd Age Platelegs, 2nd Age Plateskirt, 2nd Age Kiteshield, 2nd Age Range Coif, 2nd Age Range Top, 2nd Age Range Legs, 2nd Age Vambraces, 2nd Age Mage Hat, 2nd Age Robe Top, 2nd Age Robe Legs, 2nd Age Amulet, Lumira D Hide Shield, Verdant D Hide Shield, Krylth D Hide Shield, Ancient D Hide Shield, Zephyra D Hide Shield, Grondar D Hide Shield. Elite Clue: Rangers Tunic, Holy Wraps, Freminnik Kilt, 2nd Age Longsword, 2nd Age Bow, 2nd Age Wand, 2nd Age Cloak. Master Clue: 2nd Age Druidic Robe Top, 2nd Age Druidic Robe Bottoms, 2nd Age Druidic Cloak, 2nd Age Druidic Staff, 2nd Age Pickaxe, 2nd Age Axe, Gold Pickaxe, Gold Axe, Gold Spade, Fancy Tiara."
+ },
+ {
+  "id": "collection_log_skilling",
+  "title": "Collection log: Skilling slots",
+  "tags": [
+   "collection log",
+   "collection",
+   "uniques"
+  ],
+  "text": "The Skilling collection log has 13 slots. Construction Unlocks: Money Purse, Master Rejuvenation. Dungeoneering Rewards: Arcane Necklace, Chaotic Rapier, Chaotic Longsword, Chaotic Maul, Chaotic Crossbow, Chaotic Staff, Eagle Eyed Kiteshield, Arcane Kiteshield. Slayer Unlocks: Slayer Helmet, Slayer Defender, Gloves Of Slaughter."
+ },
+ {
+  "id": "collection_log_pvp",
+  "title": "Collection log: PvP slots",
+  "tags": [
+   "collection log",
+   "collection",
+   "uniques"
+  ],
+  "text": "The PvP collection log has 3 slots. Bot Rewards: Zesta Longsword, Zesta Vest, Zesta Skirt."
  }
 ]
