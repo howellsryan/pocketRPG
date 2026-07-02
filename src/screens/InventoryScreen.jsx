@@ -596,7 +596,7 @@ export default function InventoryScreen() {
                 )}
                 {selected.item.scaleCharged && !selected.slot.noted && (
                   <button onClick={() => setShowChargeModal(true)}
-                    class="py-2.5 rounded-lg bg-[#1a3a3a] text-white font-semibold text-sm active:opacity-80 border border-[var(--color-emerald)]/30">
+                    class="py-2.5 rounded-lg bg-[var(--color-emerald-mid)] text-white font-semibold text-sm active:opacity-80 border border-[var(--color-emerald)]">
                     Charge
                   </button>
                 )}
@@ -611,7 +611,7 @@ export default function InventoryScreen() {
                       onClick={handleCombine}
                       disabled={!hasTarget}
                       class={`py-2.5 rounded-lg font-semibold text-sm border ${hasTarget
-                        ? 'bg-[#2a1a3a] text-[#c084fc] border-[#c084fc]/30 active:opacity-80'
+                        ? 'bg-[var(--fm-royal)] text-white border-[var(--fm-royal)] active:opacity-80'
                         : 'bg-[var(--fm-parch-lo)] text-[var(--color-parchment)] opacity-40 border-transparent cursor-not-allowed'}`}
                     >
                       Use on {targetName}
@@ -625,7 +625,7 @@ export default function InventoryScreen() {
               </div>
               {selected.item.scaleCharged && !selected.slot.noted && (selected.slot.charges || 0) > 0 && (
                 <button onClick={handleUnchargeWeapon}
-                  class="w-full py-2.5 rounded-lg bg-[#3a1a1a] text-[var(--color-blood)] font-semibold text-sm active:opacity-80 border border-[var(--color-blood)]/30">
+                  class="w-full py-2.5 rounded-lg bg-transparent text-[var(--color-blood)] font-semibold text-sm active:opacity-80 border border-[var(--color-blood)]">
                   Uncharge ({selected.slot.charges} charge{selected.slot.charges === 1 ? '' : 's'})
                 </button>
               )}

@@ -15,7 +15,8 @@ import {
   createQuestState, checkQuestEligibility,
   getQuestPointsEarned, formatQuestDuration,
 } from '../engine/quests.js'
-import { QUEST_QUEUE_MAX } from '../utils/constants.js'
+import { QUEST_QUEUE_MAX, TICK_DURATION } from '../utils/constants.js'
+import { planJourney } from '../engine/journeys.js'
 import questsData from '../data/quests.json'
 import { getActivityKey } from '../engine/activityRegistry.js'
 import { COMPLEXITY_COLORS, COMPLEXITY_ORDER } from '../utils/complexityColors.js'
@@ -24,7 +25,7 @@ export default function QuestsScreen() {
   const {
     stats, completedQuests, activeTask, setActiveTask,
     addToast, itemsData, questQueue, addQuestToQueue, removeFromQuestQueue, updateQuestQueue,
-    getActivityProgress,
+    getActivityProgress, worldLocation,
   } = useGame()
 
   const [hideCompleted, setHideCompleted] = useState(false)
@@ -58,6 +59,35 @@ export default function QuestsScreen() {
     }
     setSelectedQuest(null)
     addToast(resuming ? `📜 Resuming: ${quest.name}` : `📜 Started: ${quest.name}`, 'info')
+  }
+
+  // Phase 5 active journey: undertake the quest as a trip across the world map —
+  // travel to and search 2–4 places; the final search completes the quest through
+  // handleQuestCompletion, exactly as the idle timer would (XP choices, queue
+  // cascade and all). The idle path above stays untouched.
+  const startQuestJourney = (quest) => {
+    if (activeTask?.type === 'travel') {
+      addToast('Finish or turn back your current journey first.', 'info')
+      return
+    }
+    const idleTicks = Math.max(1, Math.ceil((Number(quest.durationSeconds) || 0) * 1000 / TICK_DURATION))
+    const jt = planJourney({
+      kind: 'quest',
+      ref: quest.id,
+      name: quest.name,
+      icon: '📜',
+      idleTicks,
+      payload: quest,
+      from: worldLocation,
+    })
+    if (!jt) {
+      addToast('No route can be plotted from here.', 'error')
+      return
+    }
+    setActiveTask(jt)
+    if (questQueue.some(q => q.id === quest.id)) removeFromQuestQueue(quest.id)
+    setSelectedQuest(null)
+    addToast(`🗺️ Journey begun: ${quest.name} — ${jt.journey.steps.length} places to visit`, 'info')
   }
 
   const addToQueue = (quest) => {
@@ -301,6 +331,7 @@ export default function QuestsScreen() {
                 itemsData={itemsData}
                 onClose={() => setSelectedQuest(null)}
                 onStart={startQuest}
+                onStartJourney={startQuestJourney}
                 onAddToQueue={addToQueue}
                 isInQueue={questQueue.some(q => q.id === selectedQuest.id)}
                 queueFull={questQueue.length >= QUEST_QUEUE_MAX}
@@ -323,6 +354,7 @@ export default function QuestsScreen() {
           itemsData={itemsData}
           onClose={() => setSelectedQuest(null)}
           onStart={startQuest}
+          onStartJourney={startQuestJourney}
           onAddToQueue={addToQueue}
           isInQueue={questQueue.some(q => q.id === selectedQuest.id)}
           queueFull={questQueue.length >= QUEST_QUEUE_MAX}
@@ -334,7 +366,7 @@ export default function QuestsScreen() {
 
 // ──────────────────────────────────────────────────────────────────────────────
 
-function QuestDetailsModal({ quest, stats, completedQuests, itemsData, onClose, onStart, onAddToQueue, isInQueue, queueFull }) {
+function QuestDetailsModal({ quest, stats, completedQuests, itemsData, onClose, onStart, onStartJourney, onAddToQueue, isInQueue, queueFull }) {
   return (
     <Modal title={quest.name} onClose={onClose}>
       <QuestDetailsBody
@@ -344,6 +376,7 @@ function QuestDetailsModal({ quest, stats, completedQuests, itemsData, onClose, 
         itemsData={itemsData}
         onClose={onClose}
         onStart={onStart}
+        onStartJourney={onStartJourney}
         onAddToQueue={onAddToQueue}
         isInQueue={isInQueue}
         queueFull={queueFull}
@@ -353,7 +386,7 @@ function QuestDetailsModal({ quest, stats, completedQuests, itemsData, onClose, 
   )
 }
 
-function QuestDetailsBody({ quest, stats, completedQuests, itemsData, onClose, onStart, onAddToQueue, isInQueue, queueFull, showCloseButton = false }) {
+function QuestDetailsBody({ quest, stats, completedQuests, itemsData, onClose, onStart, onStartJourney, onAddToQueue, isInQueue, queueFull, showCloseButton = false }) {
   const completed = completedQuests.has(quest.id)
   const elig = checkQuestEligibility(quest, stats, completedQuests, questsData)
   const skillEntries = Object.entries(quest.skillRequirements || {})
@@ -453,6 +486,17 @@ function QuestDetailsBody({ quest, stats, completedQuests, itemsData, onClose, o
               </Button>
             )}
           </div>
+          {!completed && onStartJourney && (
+            <Button
+              variant="secondary"
+              size="lg"
+              disabled={!elig.eligible}
+              onClick={() => onStartJourney(quest)}
+              className="w-full"
+            >
+              🗺️ Quest Journey — travel the world, finish faster
+            </Button>
+          )}
           {!completed && (
             <Button
               variant={isInQueue ? 'secondary' : 'success'}

@@ -5,11 +5,18 @@
  *
  * Phase 3 of the map-driven overhaul (docs/map-driven-overhaul-plan.md). Pure logic, no
  * UI imports (engine layer — CLAUDE.md §3). The place->activity assignments are authored
- * into src/data/world.json by scripts/seedWorldContent.cjs; this module is the read/
- * reverse-index side plus the gating decision. Activity refs here MUST match the refs the
- * seed script writes and the shapes `activityRef` derives from a live activeTask.
+ * into src/data/worldActivities.json by scripts/seedWorldContent.cjs; this module is the
+ * read/reverse-index side plus the gating decision. Activity refs here MUST match the refs
+ * the seed script writes and the shapes `activityRef` derives from a live activeTask.
+ *
+ * worldActivities.json is deliberately separate from world.json: the geography (a few KB)
+ * ships in the single-file build's inline core (boot-time location/travel need it), while
+ * the heavy activities mapping (~150 KB) rides the lazily-loaded game chunk — see
+ * build_single.cjs. Core code must therefore only touch it through `placeActivities`,
+ * whose typeof guard tolerates the chunk not having loaded yet.
  */
 import worldData from '../data/world.json'
+import worldActivitiesData from '../data/worldActivities.json'
 import monstersData from '../data/monsters.json'
 import skillsData from '../data/skills.json'
 import raidsData from '../data/raids.json'
@@ -49,19 +56,34 @@ function actionInSkill(skillId, actionId) {
   return asArray(list).find((a) => a.id === actionId) || null
 }
 
+/**
+ * Activities offered at a place: `[{ kind, ref }, ...]`. In the single-file build the
+ * data global lives in the game chunk; before it loads (only reachable pre-game, where
+ * nothing gates) this returns [] — which downstream means "unmapped, never gate".
+ */
+export function placeActivities(placeId) {
+  const src = typeof worldActivitiesData !== 'undefined' ? worldActivitiesData : {}
+  return src[placeId] || []
+}
+
 // ---- reverse index: `${kind}|${ref}` -> [placeId, ...] ----------------------------
 let _index = null
 function index() {
   if (_index) return _index
-  _index = {}
-  for (const [placeId, place] of Object.entries(worldData.places)) {
-    for (const a of place.activities || []) {
+  const built = {}
+  let any = false
+  for (const placeId of Object.keys(worldData.places)) {
+    for (const a of placeActivities(placeId)) {
       if (!a || !a.kind || !a.ref) continue
+      any = true
       const key = a.kind + '|' + a.ref
-      ;(_index[key] || (_index[key] = [])).push(placeId)
+      ;(built[key] || (built[key] = [])).push(placeId)
     }
   }
-  return _index
+  // Only memoise a populated index: an empty build means the chunk data global wasn't
+  // loaded yet, and caching that would leave gating dead for the whole session.
+  if (any) _index = built
+  return built
 }
 
 /** Place ids that offer the given activity, in world order. Empty = unmapped. */

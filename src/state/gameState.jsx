@@ -28,6 +28,7 @@ import { defaultIdleCombatSetup, normaliseIdleCombatSetup } from '../engine/idle
 import { migrateLegacyItemIds } from '../engine/itemMigrations.js'
 import { WORLD_START_PLACE, normaliseLocation } from '../engine/world.js'
 import { advanceTravel, createTravelTask } from '../engine/travel.js'
+import { advanceJourneyOffline } from '../engine/journeys.js'
 import { resolveTaskStart, activityRef, autoStartFromTask } from '../engine/worldContent.js'
 import { isWorldMapEnabled } from '../utils/constants.js'
 
@@ -465,17 +466,31 @@ export function GameProvider({ children }) {
         }
         // Travel resolves offline (no rewards, no modal): advance the countdown
         // by elapsed time and either land the player at the destination or keep
-        // the reduced in-progress trip for the live tick to finish.
+        // the reduced in-progress trip for the live tick to finish. A journey
+        // (Phase 5) chains its legs/searches through the elapsed time; if it
+        // finished while away it is parked on its final search at 0 ticks and
+        // the App's first live tick completes the clue/quest (granting rewards
+        // needs App-level helpers this load path doesn't have).
         if (savedTask && savedTask.type === 'travel') {
-          const adv = advanceTravel(savedTask, elapsedMs)
-          if (adv.arrived) {
-            savedWorldLocation = savedTask.dest
-            await saveSetting('worldLocation', normaliseLocation(savedTask.dest))
-            savedTask = null
-            try { localStorage.removeItem('pocketrpg_activeTask'); localStorage.removeItem('pocketrpg_lastTick') } catch {}
-          } else {
+          if (savedTask.journey) {
+            const adv = advanceJourneyOffline(savedTask, elapsedMs)
+            if (adv.location) {
+              savedWorldLocation = normaliseLocation(adv.location)
+              await saveSetting('worldLocation', savedWorldLocation)
+            }
             savedTask = adv.task
             try { localStorage.setItem('pocketrpg_activeTask', JSON.stringify(savedTask)) } catch {}
+          } else {
+            const adv = advanceTravel(savedTask, elapsedMs)
+            if (adv.arrived) {
+              savedWorldLocation = savedTask.dest
+              await saveSetting('worldLocation', normaliseLocation(savedTask.dest))
+              savedTask = null
+              try { localStorage.removeItem('pocketrpg_activeTask'); localStorage.removeItem('pocketrpg_lastTick') } catch {}
+            } else {
+              savedTask = adv.task
+              try { localStorage.setItem('pocketrpg_activeTask', JSON.stringify(savedTask)) } catch {}
+            }
           }
         }
       }

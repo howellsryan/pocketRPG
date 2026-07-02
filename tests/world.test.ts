@@ -9,6 +9,8 @@ import {
   normaliseLocation,
   shortestPath,
 } from '../src/engine/world.js'
+import { placeActivities } from '../src/engine/worldContent.js'
+import worldActivities from '../src/data/worldActivities.json'
 
 describe('world model', () => {
   it('exposes a valid start place', () => {
@@ -29,10 +31,21 @@ describe('world model', () => {
   it('every place has a known tier and its activities have known kinds + refs', () => {
     for (const p of listPlaces()) {
       expect(getTier(p.tier), `tier ${p.tier}`).toBeTruthy()
-      for (const a of p.activities) {
+      for (const a of placeActivities(p.id)) {
         expect(getKind(a.kind), `kind ${a.kind}`).toBeTruthy()
         expect(typeof a.ref, `ref for ${a.kind}`).toBe('string')
       }
+    }
+  })
+
+  it('the activities mapping only references real places and the geography carries none', () => {
+    for (const id of Object.keys(worldActivities)) {
+      expect(getPlace(id), `activities for unknown place ${id}`).toBeTruthy()
+    }
+    for (const p of listPlaces()) {
+      // activities were split out of world.json (they ship in the game chunk)
+      expect((p as any).activities).toBeUndefined()
+      expect(Array.isArray(placeActivities(p.id))).toBe(true)
     }
   })
 

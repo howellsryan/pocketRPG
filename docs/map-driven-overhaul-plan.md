@@ -253,15 +253,31 @@ Each phase is independently shippable and reversible against the live game.
     to the owning screen so combat/skilling begins immediately, even while idling. Rides the
     persisted task (survives tab-return). Supersedes the earlier "no auto-start" decision for
     the gated-start flow only.
-- **Phase 5 — active clues/quests**: multi-step place-bound clue/quest journeys, with
-  the idle alternative preserved.
+- **Phase 5 — active clues/quests** (done): multi-step place-bound journeys, idle
+  alternative preserved. Engine: `src/engine/journeys.js` (+ `tests/journeys.test.ts`).
+  A journey is a chain of ordinary `type:'travel'` tasks carrying a `journey`
+  descriptor: travel to waypoint → *search* it (a zero-distance travel dwell) → … →
+  the final search completes the content through the same path idling uses
+  (`completeClueSolve` / `handleQuestCompletion` in `App.jsx` — server-authoritative
+  clue rewards included). 2–4 waypoints scale with idle duration; waypoints are
+  deterministic per (content, origin) and drawn from increasing distance bands; total
+  search time ≈ `JOURNEY_TIME_FACTOR` (0.5) × the idle duration, plus real road time —
+  active play finishes faster without obsoleting idling. Offline: `advanceJourneyOffline`
+  chains phases through elapsed time but never grants — a journey that finished away is
+  parked on its final search at 0 ticks and the App's first live tick completes it.
+  Entry points: 🗺️ button per clue row (`CluesScreen`), "Quest Journey" in the quest
+  detail (`QuestsScreen`); the World Map travel banner shows step/phase and "Abandon
+  journey" (scroll/quest only consumed on the final search).
 - **Later**: discovery/unlocks, teleport (reserved for a future magic level).
 
 ## 9. Open design questions (resolve before the relevant phase)
 
 1. **Discovery/unlocks** vs. every place reachable immediately. **Phase 4 decision: all
    reachable from the start** for now; progressive unlocks remain a later effort.
-2. **Partial travel on "turn back"** — snap to nearest passed node, or revert to origin?
+2. **Partial travel on "turn back"** — ~~snap to nearest passed node, or revert to
+   origin?~~ **Resolved: snap to the last node fully reached** (completed legs keep
+   their progress; a partial leg walks back — never forward). `travelCancelLocation`
+   in `src/engine/travel.js`.
 3. **On arrival** — ~~auto-start the action the player came for, or just open the hub?~~
    **Resolved (Phase 3): just open the hub.**
 4. **Travel + background skilling** — ~~mutually exclusive, or can you skill while

@@ -8,7 +8,7 @@
  * costs game time (the road tick weights) and resolves during offline catch-up —
  * decision #2 in the plan. No rewards, no ledger entry.
  */
-import { shortestPath, normaliseLocation, getPlace } from './world.js'
+import { shortestPath, normaliseLocation, getPlace, pathLegs } from './world.js'
 
 // Engine tick is 600ms. Inlined (not a top-level const) to avoid a duplicate
 // `TICK_MS` declaration in the flattened single-file bundle — other engine
@@ -64,6 +64,26 @@ export function travelFraction(task) {
   if (total <= 0) return 1
   const remaining = task.ticksRemaining ?? total
   return Math.max(0, Math.min(1, (total - remaining) / total))
+}
+
+/**
+ * Where a cancelled ("turn back") journey leaves the player: the last node fully
+ * reached along the route (plan §9 open question 2 — completed legs keep their
+ * progress; a partial leg walks back to the node it started from, never forward).
+ * Returns the origin for a fresh/invalid task.
+ */
+export function travelCancelLocation(task) {
+  if (!task || task.type !== 'travel') return null
+  let loc = normaliseLocation(task.from)
+  const total = task.totalTicks ?? 0
+  const done = total - (task.ticksRemaining ?? total)
+  let acc = 0
+  for (const leg of pathLegs(task.path)) {
+    if (done < acc + leg.ticks) break
+    acc += leg.ticks
+    loc = normaliseLocation(leg.to)
+  }
+  return loc
 }
 
 /** Human-readable destination name for toasts/UI. */

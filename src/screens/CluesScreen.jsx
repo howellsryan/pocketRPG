@@ -8,6 +8,7 @@ import SkillActionRow from '../components/SkillActionRow.jsx'
 import GameIcon from '../components/GameIcon.jsx'
 import { getActionProgress } from '../hooks/useActionTick.js'
 import { countItem } from '../engine/inventory.js'
+import { planJourney } from '../engine/journeys.js'
 import cluesData from '../data/clues.json'
 
 // Clue solving is driven by the App-level tick (see App.jsx), so it keeps
@@ -86,7 +87,7 @@ function formatClueRemaining(totalSeconds) {
 }
 
 export default function CluesScreen() {
-  const { inventory, bank, equipment, addToast, setActiveTask, activeTask, itemsData } = useGame()
+  const { inventory, bank, equipment, addToast, setActiveTask, activeTask, itemsData, worldLocation } = useGame()
   const [showPanel, setShowPanel] = useState(false)
   const [infoTask, setInfoTask] = useState(null)
 
@@ -110,6 +111,32 @@ export default function CluesScreen() {
       session: { startedAt: Date.now(), actions: 0, xp: 0, coins: 0, items: 0, seeds: 0, tokens: 0 },
     })
     setShowPanel(true)
+  }
+
+  // Phase 5 active journey: instead of idling the solve timer, follow the trail
+  // across the world map — travel to and search 2–4 places; the final search
+  // completes the clue through the same reward path as idling (scroll consumed
+  // then, not up front, so abandoning a journey costs nothing but time).
+  const startJourney = (task) => {
+    if (activeTask?.type === 'travel') {
+      addToast('Finish or turn back your current journey first.', 'info')
+      return
+    }
+    const jt = planJourney({
+      kind: 'clue',
+      ref: task.id,
+      name: `${task.name.replace(/^Complete /, '')} Trail`,
+      icon: '🗺️',
+      idleTicks: task.ticks,
+      payload: task,
+      from: worldLocation,
+    })
+    if (!jt) {
+      addToast('No trail can be plotted from here.', 'error')
+      return
+    }
+    setActiveTask(jt)
+    addToast(`🗺️ The trail begins — ${jt.journey.steps.length} places to search`, 'info')
   }
 
   // Back: leave the clue running and return to the list.
@@ -176,14 +203,28 @@ export default function CluesScreen() {
                   </span>
                 </>}
                 right={
-                  <span
-                    role="button"
-                    tabIndex={0}
-                    onClick={(e) => { e.stopPropagation(); setInfoTask(task) }}
-                    aria-label="Drop rates"
-                    class="flex-shrink-0 w-11 h-11 rounded-2xl border border-[var(--color-void-border)] bg-[var(--color-void-light)] text-[var(--color-gold)] text-[14px] font-bold flex items-center justify-center active:opacity-70"
-                  >
-                    ⓘ
+                  <span class="flex items-center gap-2 flex-shrink-0">
+                    {enabled && !isRunning && (
+                      <span
+                        role="button"
+                        tabIndex={0}
+                        onClick={(e) => { e.stopPropagation(); startJourney(task) }}
+                        aria-label="Follow the trail — an active journey across the world map"
+                        title="Follow the trail: travel to and search places on the world map to solve this faster than idling"
+                        class="w-11 h-11 rounded-2xl border border-[var(--color-void-border)] bg-[var(--color-void-light)] text-[16px] flex items-center justify-center active:opacity-70"
+                      >
+                        🗺️
+                      </span>
+                    )}
+                    <span
+                      role="button"
+                      tabIndex={0}
+                      onClick={(e) => { e.stopPropagation(); setInfoTask(task) }}
+                      aria-label="Drop rates"
+                      class="w-11 h-11 rounded-2xl border border-[var(--color-void-border)] bg-[var(--color-void-light)] text-[var(--color-gold)] text-[14px] font-bold flex items-center justify-center active:opacity-70"
+                    >
+                      ⓘ
+                    </span>
                   </span>
                 }
                 active={isRunning}

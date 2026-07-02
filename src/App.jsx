@@ -36,6 +36,7 @@ import MagicScreen from './screens/MagicScreen.jsx'
 import WorldMapScreen from './screens/WorldMapScreen.jsx'
 import TravelPrompt from './components/TravelPrompt.jsx'
 import { advanceTravel, travelDestName } from './engine/travel.js'
+import { advanceJourneyPhase, advanceJourneyOffline, journeyStatus } from './engine/journeys.js'
 import AuthScreen from './screens/AuthScreen.jsx'
 import OAuthConsentScreen from './screens/OAuthConsentScreen.jsx'
 import { SCREENS, isWorldMapEnabled } from './utils/constants.js'
@@ -451,6 +452,19 @@ function GameApp() {
     return () => window.removeEventListener('pocketrpg:pvp-active-match', onActiveMatchConflict)
   }, [addToast, pvp.enterMatch])
 
+  // A finished journey (Phase 5 active clue/quest journeys) grants its content
+  // through the exact same paths idling uses — completeClueSolve consumes the
+  // scroll + rolls/banks rewards (server-authoritative when signed in), and
+  // handleQuestCompletion awards XP/coins + cascades the queue.
+  function completeJourneyContent(journey) {
+    if (journey?.kind === 'clue' && journey.payload) {
+      completeClueSolve(journey.payload, { updateBankDirect, getSnapshot, addToast, isInPvpMatch })
+      recordGameEvent?.({ kind: 'clue_complete', tier: journey.payload.tier })
+    } else if (journey?.kind === 'quest' && journey.payload) {
+      handleQuestCompletion(journey.payload, journey.payload.xpReward, journey.payload.coinReward)
+    }
+  }
+
   // Handle quest completion with queue cascading
   function handleQuestCompletion(quest, xpReward, coinReward) {
     // Award rewards
@@ -803,19 +817,29 @@ function GameApp() {
 
           // Travel resolves offline: advance by elapsed time, then either land at
           // the destination (update location, clear task, toast) or keep the
-          // reduced trip for the live tick. No reward modal.
+          // reduced trip for the live tick. No reward modal. Journeys chain their
+          // legs/searches through the elapsed time; a journey that finished while
+          // away is parked on its final search at 0 ticks and the next live tick
+          // completes it with the full toast/reward path.
           if (savedTask.type === 'travel') {
-            const adv = advanceTravel(savedTask, elapsedMs)
-            if (adv.arrived) {
-              updateWorldLocation(savedTask.dest)
-              setActiveTask(null)
-              activeTaskRef.current = null
-              try { localStorage.removeItem('pocketrpg_activeTask') } catch {}
-              addToast(`🧭 Arrived at ${travelDestName(savedTask)}`, 'info')
-              resumeAutoStart(savedTask.autoStart)
-            } else {
+            if (savedTask.journey) {
+              const adv = advanceJourneyOffline(savedTask, elapsedMs)
+              if (adv.location) updateWorldLocation(adv.location)
               setActiveTask(adv.task)
               activeTaskRef.current = adv.task
+            } else {
+              const adv = advanceTravel(savedTask, elapsedMs)
+              if (adv.arrived) {
+                updateWorldLocation(savedTask.dest)
+                setActiveTask(null)
+                activeTaskRef.current = null
+                try { localStorage.removeItem('pocketrpg_activeTask') } catch {}
+                addToast(`🧭 Arrived at ${travelDestName(savedTask)}`, 'info')
+                resumeAutoStart(savedTask.autoStart)
+              } else {
+                setActiveTask(adv.task)
+                activeTaskRef.current = adv.task
+              }
             }
             if (!isInPvpMatch) schedulePushSave(getSnapshot())
             return
@@ -1219,17 +1243,41 @@ function GameApp() {
 
       // Travel tick — counts down the journey on any screen. Arrival updates
       // the player's location and clears the task; offline catch-up is handled
-      // separately by advanceTravel on boot / tab-return.
+      // separately by advanceTravel on boot / tab-return. A travel task carrying
+      // a `journey` (Phase 5 active clue/quest journeys) chains its next phase
+      // instead of ending: search the waypoint, walk on, or — after the final
+      // search — complete the clue/quest through the same path idling uses.
       if (task && task.type === 'travel') {
         const total = task.totalTicks ?? 0
         const remaining = (task.ticksRemaining ?? total) - 1
         if (remaining <= 0) {
-          updateWorldLocation(task.dest)
-          setActiveTask(null)
-          activeTaskRef.current = null
-          try { localStorage.removeItem('pocketrpg_activeTask') } catch {}
-          addToast(`🧭 Arrived at ${travelDestName(task)}`, 'info')
-          resumeAutoStart(task.autoStart)
+          if (task.journey) {
+            const step = advanceJourneyPhase(task)
+            if (step?.kind === 'complete') {
+              updateWorldLocation(task.dest)
+              setActiveTask(null)
+              activeTaskRef.current = null
+              try { localStorage.removeItem('pocketrpg_activeTask') } catch {}
+              completeJourneyContent(task.journey)
+            } else if (step) {
+              if (step.kind === 'search') {
+                updateWorldLocation(task.dest)
+                const s = journeyStatus(step.next)
+                addToast(`🔎 Searching ${travelDestName(task)} (${s?.step}/${s?.steps})`, 'info')
+              } else {
+                addToast(`🧭 The trail leads on to ${travelDestName(step.next)}`, 'info')
+              }
+              setActiveTask(step.next)
+              activeTaskRef.current = step.next
+            }
+          } else {
+            updateWorldLocation(task.dest)
+            setActiveTask(null)
+            activeTaskRef.current = null
+            try { localStorage.removeItem('pocketrpg_activeTask') } catch {}
+            addToast(`🧭 Arrived at ${travelDestName(task)}`, 'info')
+            resumeAutoStart(task.autoStart)
+          }
         } else {
           setActiveTask({ ...task, ticksRemaining: remaining }, { skipCloudSync: true })
         }

@@ -1,9 +1,10 @@
 import { useGame } from '../state/gameState.jsx'
 import { useState, useRef, useEffect, useCallback } from 'preact/hooks'
 import { getWorld, getPlace, listPlaces, getTier, getKind, shortestPath, pathLegs } from '../engine/world.js'
-import { describeActivity, activityGroupLabel, isPlaceVaryingSkillRef, autoStartFromTask } from '../engine/worldContent.js'
+import { describeActivity, activityGroupLabel, isPlaceVaryingSkillRef, autoStartFromTask, placeActivities } from '../engine/worldContent.js'
 import { SCREENS } from '../utils/constants.js'
-import { createTravelTask, travelFraction, travelDestName } from '../engine/travel.js'
+import { createTravelTask, travelFraction, travelDestName, travelCancelLocation } from '../engine/travel.js'
+import { journeyStatus } from '../engine/journeys.js'
 import { PlaceIcon, PlaceScene, WorldTerrain } from '../components/PlaceArt.jsx'
 import GameIcon from '../components/GameIcon.jsx'
 import WaxSeal from '../components/WaxSeal.jsx'
@@ -71,7 +72,7 @@ function fakeTaskFor(kind, ref) {
 }
 
 export default function WorldMapScreen({ onNavigate, onAutoStart } = {}) {
-  const { worldLocation, activeTask, setActiveTask, addToast, requestActivityStart } = useGame()
+  const { worldLocation, updateWorldLocation, activeTask, setActiveTask, addToast, requestActivityStart } = useGame()
   const world = getWorld()
   const here = getPlace(worldLocation) ? worldLocation : world.start
   const travel = activeTask?.type === 'travel' ? activeTask : null
@@ -97,16 +98,30 @@ export default function WorldMapScreen({ onNavigate, onAutoStart } = {}) {
       else onAutoStart?.(autoStartFromTask(task))
     }
   }
+  // Turning back keeps the legs already walked: snap to the last node fully reached
+  // (plan §9 #2) rather than reverting the whole journey to its origin. Abandoning a
+  // clue/quest journey costs nothing but the time spent — the scroll/quest is only
+  // consumed on the final search.
   const cancelTravel = () => {
     if (!travel) return
+    const journey = !!travel.journey
+    const stopAt = travelCancelLocation(travel)
     setActiveTask(null)
-    addToast('Travel cancelled', 'info')
+    if (stopAt && stopAt !== here) {
+      updateWorldLocation(stopAt)
+      addToast(`${journey ? 'Journey abandoned' : 'Travel cancelled'} — you stop at ${getPlace(stopAt)?.name || stopAt}`, 'info')
+    } else {
+      addToast(journey ? 'Journey abandoned' : 'Travel cancelled', 'info')
+    }
   }
 
   const stageRef = useRef(null)
   const boardRef = useRef(null)
   const viewRef = useRef({ x: 0, y: 0, k: 1 })
   const dragRef = useRef(null)
+  const pointersRef = useRef(new Map()) // active pointers, for two-finger pinch
+  const pinchRef = useRef(null) // { d0, k0, x0, y0, mid0 } while pinching
+  const pinchEndedAtRef = useRef(0) // suppress the trailing click on a node
   const [openId, setOpenId] = useState(null)
 
   const applyView = useCallback(() => {
@@ -158,14 +173,53 @@ export default function WorldMapScreen({ onNavigate, onAutoStart } = {}) {
     return () => ro.disconnect()
   }, [fitAll])
 
-  // ── pan ──
+  // ── pan + pinch ──
   const onPointerDown = (e) => {
-    if (e.target.closest('.wm-node')) return
+    const pts = pointersRef.current
+    pts.set(e.pointerId, { x: e.clientX, y: e.clientY })
+    // Never capture a pointer that started on a node: capture retargets the eventual
+    // click to the stage and the place tap would die. Pinch moves still reach us by
+    // bubbling — the stage fills the screen.
+    if (!e.target.closest('.wm-node')) stageRef.current?.setPointerCapture?.(e.pointerId)
+    if (pts.size === 2) {
+      // Second finger starts a pinch (even if it lands on a node): freeze the drag and
+      // remember the starting view + finger midpoint/spread.
+      const [a, b] = [...pts.values()]
+      const v = viewRef.current
+      dragRef.current = null
+      pinchRef.current = {
+        d0: Math.hypot(a.x - b.x, a.y - b.y) || 1,
+        k0: v.k, x0: v.x, y0: v.y,
+        mid0: { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 },
+      }
+      return
+    }
+    if (pts.size > 2 || e.target.closest('.wm-node')) return
     const v = viewRef.current
     dragRef.current = { x: e.clientX, y: e.clientY, vx: v.x, vy: v.y, moved: 0 }
-    stageRef.current?.setPointerCapture?.(e.pointerId)
   }
+
   const onPointerMove = (e) => {
+    const pts = pointersRef.current
+    if (pts.has(e.pointerId)) pts.set(e.pointerId, { x: e.clientX, y: e.clientY })
+    const pinch = pinchRef.current
+    if (pinch && pts.size >= 2) {
+      const stage = stageRef.current
+      if (!stage) return
+      const rect = stage.getBoundingClientRect()
+      const [a, b] = [...pts.values()]
+      const d = Math.hypot(a.x - b.x, a.y - b.y) || 1
+      const mid = { x: (a.x + b.x) / 2 - rect.left, y: (a.y + b.y) / 2 - rect.top }
+      const v = viewRef.current
+      // Keep the world point that started under the fingers glued to their midpoint.
+      const wx = (pinch.mid0.x - rect.left - pinch.x0) / pinch.k0
+      const wy = (pinch.mid0.y - rect.top - pinch.y0) / pinch.k0
+      v.k = clampK(pinch.k0 * (d / pinch.d0))
+      v.x = mid.x - wx * v.k
+      v.y = mid.y - wy * v.k
+      applyView()
+      return
+    }
     const drag = dragRef.current
     if (!drag) return
     const dx = e.clientX - drag.x
@@ -176,7 +230,16 @@ export default function WorldMapScreen({ onNavigate, onAutoStart } = {}) {
     v.y = drag.vy + dy
     applyView()
   }
-  const endDrag = () => { dragRef.current = null }
+  const endDrag = (e) => {
+    const pts = pointersRef.current
+    if (e?.pointerId != null) pts.delete(e.pointerId)
+    else pts.clear()
+    if (pinchRef.current && pts.size < 2) {
+      pinchRef.current = null
+      pinchEndedAtRef.current = Date.now()
+    }
+    if (pts.size === 0) dragRef.current = null
+  }
 
   const onWheel = (e) => {
     e.preventDefault()
@@ -195,8 +258,9 @@ export default function WorldMapScreen({ onNavigate, onAutoStart } = {}) {
   }
 
   const onNodeClick = (id) => {
-    // Suppress click that ended a drag.
+    // Suppress the click that ended a drag or a pinch.
     if (dragRef.current && dragRef.current.moved > 6) return
+    if (pinchRef.current || Date.now() - pinchEndedAtRef.current < 350) return
     setOpenId(id)
   }
 
@@ -319,18 +383,29 @@ export default function WorldMapScreen({ onNavigate, onAutoStart } = {}) {
           <button onClick={fitAll} title="Fit map" aria-label="Fit map">⤢</button>
         </div>
 
-        {/* travel banner */}
-        {travel && (
-          <div class="forge-shell wm-travelbar" role="status">
-            <div class="wm-travelbar-top">
-              <span class="wm-travelbar-lead">Travelling to <b>{travelDestName(travel)}</b></span>
-              <span class="wm-travelbar-ticks">{(travel.totalTicks ?? 0) - (travel.ticksRemaining ?? 0)} / {travel.totalTicks ?? 0} ticks</span>
+        {/* travel banner — a plain trip, or a Phase 5 clue/quest journey with steps */}
+        {travel && (() => {
+          const js = journeyStatus(travel)
+          return (
+            <div class="forge-shell wm-travelbar" role="status">
+              <div class="wm-travelbar-top">
+                <span class="wm-travelbar-lead">
+                  {js
+                    ? <>{js.icon} {js.searching ? <>Searching <b>{travelDestName(travel)}</b></> : <>Following the trail to <b>{travelDestName(travel)}</b></>}</>
+                    : <>Travelling to <b>{travelDestName(travel)}</b></>}
+                </span>
+                <span class="wm-travelbar-ticks">{(travel.totalTicks ?? 0) - (travel.ticksRemaining ?? 0)} / {travel.totalTicks ?? 0} ticks</span>
+              </div>
+              <div class="wm-track"><div class="wm-track-fill" style={{ width: Math.round(travelFraction(travel) * 100) + '%' }} /></div>
+              <div class="wm-travelbar-route">
+                {js
+                  ? `${js.name} — step ${js.step} of ${js.steps}`
+                  : `Route: ${(travel.path || []).map((id) => getPlace(id)?.name || id).join(' → ')}`}
+              </div>
+              <button class="wm-travelbar-cancel" onClick={cancelTravel}>{js ? 'Abandon journey' : 'Turn back'}</button>
             </div>
-            <div class="wm-track"><div class="wm-track-fill" style={{ width: Math.round(travelFraction(travel) * 100) + '%' }} /></div>
-            <div class="wm-travelbar-route">Route: {(travel.path || []).map((id) => getPlace(id)?.name || id).join(' → ')}</div>
-            <button class="wm-travelbar-cancel" onClick={cancelTravel}>Turn back</button>
-          </div>
-        )}
+          )
+        })()}
       </div>
 
       {/* place hub */}
@@ -396,7 +471,7 @@ function PlaceHub({ place, here, travelling, onTravel, onClose, onActivate }) {
           )}
           <div class="wm-hub-sectionhead"><span>Available here</span></div>
           <div class="wm-cat-grid">
-            {groupActivities(place.activities).map(([kind, refs]) => {
+            {groupActivities(placeActivities(place.id)).map(([kind, refs]) => {
               const k = getKind(kind)
               return (
                 <button class="wm-cat-btn" key={kind} onClick={() => setOpenCategory(kind)}>
@@ -412,7 +487,7 @@ function PlaceHub({ place, here, travelling, onTravel, onClose, onActivate }) {
       {openCategory && (
         <CategoryModal
           kind={openCategory}
-          refs={groupActivities(place.activities).find(([k]) => k === openCategory)?.[1] || []}
+          refs={groupActivities(placeActivities(place.id)).find(([k]) => k === openCategory)?.[1] || []}
           label={getKind(openCategory)?.label || openCategory}
           onClose={() => setOpenCategory(null)}
           onActivate={onActivate}

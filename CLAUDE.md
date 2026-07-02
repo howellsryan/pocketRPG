@@ -91,7 +91,7 @@ Server-authoritative under `/api/pvp/*`. Full rules (matchmaking, save-lockdown,
 - Top-level declarations must be **globally unique** across both output files; duplicate-identifier errors are release-blocking. Prefer `src/utils/helpers.js`.
 - **Code-split**: two CLASSIC scripts (not modules) — inline core in `index.html` + content-hashed `game-<hash>.js` (heavy in-game screens, `GAME_CHUNK_FILES`), loaded lazily on `cloudPhase === 'ready'` via `globalThis.__loadGameChunk`. Classic scripts share one global lexical env; cross-refs resolve by source name. Both minify with `minifyIdentifiers: false` — **do not re-enable**.
 - New in-game screen → add to `sourceFiles` **and** `GAME_CHUNK_FILES`. Landing/auth-reachable screens stay **out** of `GAME_CHUNK_FILES`; core must not reference a chunk binding at module-eval time (only inside `renderScreen`).
-- `gameIconsData` (~126 KiB) is in the chunk. Core icon code (`GameIcon`, `itemIcons`, `skillArt`) guards every access with `typeof gameIconsData !== 'undefined'` + emoji fallback — **keep those guards**.
+- `gameIconsData` (~126 KiB) and `worldActivitiesData` (~150 KiB, `src/data/worldActivities.json`) are in the chunk. Core code guards every access (`typeof gameIconsData !== 'undefined'` + emoji fallback in icon code; `placeActivities()` in `src/engine/worldContent.js`) — **keep those guards**. World geography (`src/data/world.json`) stays in core.
 
 ## 13) Agent Best Practices
 - Keep changes minimal and scoped; no unrelated refactors. Update logic tests with new gameplay logic.

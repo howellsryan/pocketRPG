@@ -7,8 +7,9 @@
  * to live at a place so it can be gated by travel. Hand-authoring ~400 assignments onto
  * the placeholder 8-place "Cinder Reach" geography is impractical and low-value (the
  * geography is throwaway — real curated geography is a later effort, decision #4). So
- * this script assigns content and writes the resulting `activities` arrays back into
- * src/data/world.json. COMMIT THE OUTPUT — world.json stays the source of truth.
+ * this script assigns content and writes the resulting `activities` mapping to
+ * src/data/worldActivities.json ({ placeId: [{ kind, ref }] }); geography stays in
+ * src/data/world.json. COMMIT THE OUTPUT — those two files are the source of truth.
  *
  * Two assignment modes:
  *  - FACILITY skills are tied to a building (bank, furnace & anvil): every action of the
@@ -198,19 +199,23 @@ for (const id of Object.keys(world.places)) {
   }
 }
 
-// Write back: activities only (geography + facilities are authored in world.json).
+// Write back: activities go to worldActivities.json ({ placeId: [{kind, ref}] }),
+// kept out of world.json so the geography can ship in the single-file build's inline
+// core while this heavy mapping rides the game chunk (see build_single.cjs).
 // Deduped, sorted for stable diffs.
+const activitiesOut = {}
 for (const id of Object.keys(world.places)) {
   const seen = new Set()
-  const acts = (out[id] || []).filter((a) => {
+  activitiesOut[id] = (out[id] || []).filter((a) => {
     const k = a.kind + '|' + a.ref
     if (seen.has(k)) return false
     seen.add(k)
     return true
   }).sort((a, b) =>
     (a.kind < b.kind ? -1 : a.kind > b.kind ? 1 : 0) || (a.ref < b.ref ? -1 : a.ref > b.ref ? 1 : 0))
-  world.places[id].activities = acts
+  delete world.places[id].activities // defensive: never let the mapping sneak back in
 }
+fs.writeFileSync(path.join(ROOT, 'src/data/worldActivities.json'), JSON.stringify(activitiesOut, null, 2) + '\n')
 
 world.kinds = Object.assign({}, world.kinds, {
   raid: { label: 'Raid', color: 'var(--color-blood-light)' },
@@ -223,9 +228,9 @@ world.kinds = Object.assign({}, world.kinds, {
 
 fs.writeFileSync(worldPath, JSON.stringify(world, null, 2) + '\n')
 
-const total = Object.values(world.places).reduce((s, p) => s + p.activities.length, 0)
+const total = Object.values(activitiesOut).reduce((s, acts) => s + acts.length, 0)
 console.log(`Seeded ${total} activities across ${Object.keys(world.places).length} places:`)
 for (const id of Object.keys(world.places)) {
   const p = world.places[id]
-  console.log(`  ${id.padEnd(12)} ${String(p.activities.length).padStart(3)}  [${p.facilities.join(', ') || '—'}]`)
+  console.log(`  ${id.padEnd(12)} ${String(activitiesOut[id].length).padStart(3)}  [${p.facilities.join(', ') || '—'}]`)
 }

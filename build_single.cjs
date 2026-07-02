@@ -36,6 +36,7 @@ const sourceFiles = [
   'engine/combatLevel.js',
   'engine/world.js',
   'engine/travel.js',
+  'engine/journeys.js',
   'engine/seedDrops.js',
   'engine/formulas.js',
   'engine/equipment.js',
@@ -103,7 +104,7 @@ const sourceFiles = [
   'state/gameState.js',
   'state/pvpState.js',
   'components/Modal.js',
-  'components/PlaceArt.js',
+  'components/PlaceArt.js', // -> game chunk (map art; only WorldMapScreen renders it)
   'components/TravelPrompt.js',
   'components/HPBar.js',
   'components/HitSplat.js',
@@ -209,6 +210,7 @@ const sourceFiles = [
 // reference a game screen at module-evaluation time (App only does so inside
 // renderScreen, which runs after the chunk has loaded).
 const GAME_CHUNK_FILES = new Set([
+  'components/PlaceArt.js',
   'screens/HomeScreen.js',
   'screens/StatsScreen.js',
   'screens/InventoryScreen.js',
@@ -282,6 +284,7 @@ const cluesJSON = readSrc('data/clues.json');
 const collectionLogJSON = readSrc('data/collectionLog.json');
 const dailyTasksJSON = readSrc('data/dailyTasks.json');
 const worldJSON = readSrc('data/world.json');
+const worldActivitiesJSON = readSrc('data/worldActivities.json');
 
 // Landing screen images. Served as external files from /public/landing/ (the
 // Cloudflare Pages output dir is the repo root) and referenced by URL rather
@@ -506,7 +509,14 @@ const SPLIT_MINIFY = {
 // desktop landing — the one place an icon renders before the player is in-game —
 // fetches the chunk on mount (see DesktopLandingScreen) and GameIcon falls back
 // to an emoji until it arrives.
-const gameChunkSource = `const gameIconsData = ${gameIconsJSON};\nconst bespokeIconsData = ${bespokeIconsJSON};\n${gameJS}`;
+//
+// worldActivitiesData (the ~150 KiB content→place mapping) also rides the chunk:
+// only in-game code reads it (activity gating via requestActivityStart, and the
+// World Map place hub — both unreachable before the chunk loads). Core keeps the
+// small world.json geography for boot-time location/travel; worldContent.js
+// guards every access with `typeof worldActivitiesData !== 'undefined'`, so a
+// pre-chunk call degrades to "unmapped, never gate".
+const gameChunkSource = `const gameIconsData = ${gameIconsJSON};\nconst bespokeIconsData = ${bespokeIconsJSON};\nconst worldActivitiesData = ${worldActivitiesJSON};\n${gameJS}`;
 const gameChunkScript = esbuild.transformSync(gameChunkSource, SPLIT_MINIFY).code.trim();
 const gameChunkBody = `"use strict";\n${gameChunkScript}\n`;
 const gameChunkHash = require('crypto').createHash('sha256').update(gameChunkBody).digest('hex').slice(0, 12);

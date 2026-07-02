@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { createTravelTask, advanceTravel, travelFraction, travelDestName } from '../src/engine/travel.js'
+import { createTravelTask, advanceTravel, travelFraction, travelDestName, travelCancelLocation } from '../src/engine/travel.js'
 import { pathLegs } from '../src/engine/world.js'
 
 describe('createTravelTask', () => {
@@ -78,6 +78,30 @@ describe('travelFraction', () => {
     expect(travelFraction(task)).toBe(0)
     expect(travelFraction({ ...task, ticksRemaining: 4 })).toBeCloseTo(0.5)
     expect(travelFraction({ ...task, ticksRemaining: 0 })).toBe(1)
+  })
+})
+
+describe('travelCancelLocation', () => {
+  // lumbright → draynar (8t) → portsarin (10t), 18 ticks total
+  const task = createTravelTask('lumbright', 'portsarin')!
+
+  it('returns the origin before the first leg completes', () => {
+    expect(travelCancelLocation(task)).toBe('lumbright')
+    expect(travelCancelLocation({ ...task, ticksRemaining: 11 })).toBe('lumbright') // 7 done
+  })
+
+  it('snaps to the last node fully reached, never forward', () => {
+    expect(travelCancelLocation({ ...task, ticksRemaining: 10 })).toBe('draynar') // 8 done, leg 1 complete
+    expect(travelCancelLocation({ ...task, ticksRemaining: 1 })).toBe('draynar') // 17 done, mid leg 2
+  })
+
+  it('returns the destination when the journey is complete', () => {
+    expect(travelCancelLocation({ ...task, ticksRemaining: 0 })).toBe('portsarin')
+  })
+
+  it('is null for non-travel tasks', () => {
+    expect(travelCancelLocation({ type: 'combat' } as any)).toBeNull()
+    expect(travelCancelLocation(null as any)).toBeNull()
   })
 })
 
