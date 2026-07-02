@@ -4,11 +4,11 @@ import { NAV_TABS } from './navTabs.js'
 export default function SideNav({ active, onNavigate, isInCombat, onDisabledClick, demo = false, lockedScreens = null, onLockedClick }) {
   return (
     <nav
-      class="hidden md:flex flex-col flex-shrink-0 w-44 lg:w-52 bg-[#111] border-r border-[var(--color-void-border)] py-3 gap-1 overflow-y-auto"
+      class="hidden md:flex flex-col flex-shrink-0 w-44 lg:w-52 fm-navrail py-3 gap-1 overflow-y-auto"
       aria-label="Primary"
     >
-      <div class="px-4 pb-3 mb-1 border-b border-[var(--color-void-border)]">
-        <div class="font-[var(--font-display)] text-[var(--color-gold)] text-base font-bold tracking-wide">
+      <div class="px-4 pb-3 mb-1 border-b border-[var(--fm-rule)]">
+        <div class="fm-navbrand text-base tracking-wide">
           PocketRPG
         </div>
       </div>
@@ -16,13 +16,13 @@ export default function SideNav({ active, onNavigate, isInCombat, onDisabledClic
       {NAV_TABS.map(tab => {
         const isActive = active === tab.id
         const isLocked = demo && lockedScreens?.has(tab.id)
-        const baseColor = isActive ? 'text-[var(--color-gold)]' : 'text-[var(--color-parchment)]'
+        const baseColor = isActive ? 'text-[var(--fm-ember-deep)]' : 'text-[var(--fm-ink-soft)]'
         const opacity = isInCombat ? 'opacity-30' : isLocked ? 'opacity-40' : isActive ? 'opacity-100' : 'opacity-80'
         const cursor = isInCombat ? 'cursor-not-allowed' : 'cursor-pointer'
-        const activeBg = isActive ? 'bg-[var(--color-void-light)]' : 'bg-transparent'
-        const hover = isInCombat || isLocked ? '' : 'hover:bg-[var(--color-void-light)] hover:opacity-100'
+        const activeBg = isActive ? 'bg-[var(--fm-parch-hi)]' : 'bg-transparent'
+        const hover = isInCombat || isLocked ? '' : 'hover:bg-[var(--fm-parch-hi)] hover:opacity-100'
         const activeBorder = isActive
-          ? 'border-l-2 border-[var(--color-gold)]'
+          ? 'border-l-2 border-[var(--fm-ember)]'
           : 'border-l-2 border-transparent'
         const label = tab.id === 'inventory' ? 'Inventory' : tab.label
         return (

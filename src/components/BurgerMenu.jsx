@@ -32,17 +32,17 @@ export default function BurgerMenu({ open, onClose, active, onNavigate, isInComb
       <aside
         role="dialog"
         aria-label="Navigation"
-        class={`absolute top-0 left-0 h-full w-[78%] max-w-[300px] bg-[#111] border-r border-[var(--color-void-border)] shadow-2xl flex flex-col transform transition-transform duration-200 ease-out ${open ? 'translate-x-0' : '-translate-x-full'}`}
+        class={`absolute top-0 left-0 h-full w-[78%] max-w-[300px] fm-navrail shadow-2xl flex flex-col transform transition-transform duration-200 ease-out ${open ? 'translate-x-0' : '-translate-x-full'}`}
         style={{ paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}
       >
-        <div class="flex items-center justify-between px-4 py-3 border-b border-[var(--color-void-border)]">
-          <div class="font-[var(--font-display)] text-[var(--color-gold)] text-lg font-bold tracking-wide">
+        <div class="flex items-center justify-between px-4 py-3 border-b border-[var(--fm-rule)]">
+          <div class="fm-navbrand text-lg tracking-wide">
             PocketRPG
           </div>
           <button
             onClick={onClose}
             aria-label="Close menu"
-            class="w-11 h-11 flex items-center justify-center bg-transparent border-0 text-[var(--color-parchment)] opacity-70 hover:opacity-100 cursor-pointer text-xl leading-none"
+            class="w-11 h-11 flex items-center justify-center bg-transparent border-0 text-[var(--fm-ink-soft)] opacity-70 hover:opacity-100 cursor-pointer text-xl leading-none"
           >
             ✕
           </button>
@@ -52,12 +52,12 @@ export default function BurgerMenu({ open, onClose, active, onNavigate, isInComb
           {NAV_TABS.map(tab => {
             const isActive = active === tab.id
             const isLocked = demo && lockedScreens?.has(tab.id)
-            const baseColor = isActive ? 'text-[var(--color-gold)]' : 'text-[var(--color-parchment)]'
+            const baseColor = isActive ? 'text-[var(--fm-ember-deep)]' : 'text-[var(--fm-ink-soft)]'
             const opacity = isInCombat ? 'opacity-30' : isLocked ? 'opacity-40' : isActive ? 'opacity-100' : 'opacity-85'
             const cursor = isInCombat ? 'cursor-not-allowed' : 'cursor-pointer'
-            const activeBg = isActive ? 'bg-[var(--color-void-light)]' : 'bg-transparent'
+            const activeBg = isActive ? 'bg-[var(--fm-parch-hi)]' : 'bg-transparent'
             const activeBorder = isActive
-              ? 'border-l-2 border-[var(--color-gold)]'
+              ? 'border-l-2 border-[var(--fm-ember)]'
               : 'border-l-2 border-transparent'
             const label = tab.id === 'inventory' ? 'Inventory' : tab.label
             return (

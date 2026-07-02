@@ -653,6 +653,11 @@ html, body, #app {
 .wm-actmodal-row__name { flex: 1; min-width: 0; color: var(--fm-ink); }
 .wm-actmodal-row__lvl { font-family: var(--fm-num); font-size: 12.5px; font-weight: 600; color: var(--fm-ember-deep); flex-shrink: 0; }
 
+/* Forgemark nav rail (desktop SideNav + mobile BurgerMenu drawer) — the app
+   chrome joins the parchment screens: vellum texture, rule border, gilt brand. */
+.fm-navrail { background-color: var(--fm-vellum); background-image: var(--fm-tex-parch); background-size: 400px; border-right: 1px solid var(--fm-rule); }
+.fm-navbrand { font-family: var(--font-display); font-weight: 800; letter-spacing: 0.02em; background: var(--fm-gilt-text); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent; }
+
 /* Emblem primitive */
 .skill-emblem { position: relative; pointer-events: none; }
 .skill-emblem__glow { position: absolute; inset: -8%; filter: blur(9px); }
