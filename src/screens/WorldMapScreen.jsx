@@ -34,6 +34,16 @@ function FacilityGlyph({ fid, fac }) {
 const MIN_K = 0.35
 const MAX_K = 2.2
 
+// Travel durations surface as wall-clock time (600ms ticks) — players never
+// see raw tick counts on this screen.
+const wmTravelTime = (ticks) => {
+  const s = Math.round((Number(ticks) || 0) * 0.6)
+  if (s < 60) return `${s}s`
+  const m = Math.floor(s / 60)
+  const r = s % 60
+  return r ? `${m}m ${r}s` : `${m}m`
+}
+
 // Group a place's `{ kind, ref }` activities into [kind, [ref, ...]] pairs in a stable
 // kind order for the hub's grouped list.
 const WM_KIND_ORDER = ['raid', 'boss', 'dungeon', 'combat', 'skill', 'gather', 'agility', 'thieving', 'hunter', 'quest', 'minigame', 'shop']
@@ -345,19 +355,6 @@ export default function WorldMapScreen({ onNavigate, onAutoStart } = {}) {
 
   return (
     <div class="h-full w-full relative overflow-hidden bg-[var(--color-void)]" style={{ touchAction: 'none' }}>
-      {/* top bar */}
-      <div class="forge-shell absolute top-0 left-0 right-0 z-30 flex items-center gap-3 px-4 py-2 bg-[var(--color-void-light)] border-b border-[var(--color-void-border)]">
-        <div class="font-[var(--font-display)] text-[var(--color-gold)] font-bold text-lg">World Map</div>
-        <div class="text-[var(--color-parchment-dark)] text-xs italic font-[var(--font-body)]">Chart of Eldermoor</div>
-        <div class="ml-auto flex items-center gap-2 px-3 py-1 rounded bg-[var(--color-void)] border border-[var(--color-void-border)]">
-          <span class="text-base" aria-hidden="true">📍</span>
-          <span class="flex flex-col leading-tight">
-            <small class="uppercase tracking-widest text-[9px] text-[var(--color-ink-light)]">{travel ? 'Travelling to' : 'You are at'}</small>
-            <b class="font-[var(--font-display)] text-[13px] text-[var(--color-gold)]">{travel ? travelDestName(travel) : getPlace(here)?.name}</b>
-          </span>
-        </div>
-      </div>
-
       {/* stage */}
       <div
         ref={stageRef}
@@ -382,7 +379,7 @@ export default function WorldMapScreen({ onNavigate, onAutoStart } = {}) {
               if (!pa || !pb) return null
               const mx = (pa.x + pb.x) / 2
               const my = (pa.y + pb.y) / 2
-              const label = `${t}t`
+              const label = wmTravelTime(t)
               const w = label.length * 8 + 12
               return (
                 <g key={`${a}-${b}`}>
@@ -455,7 +452,7 @@ export default function WorldMapScreen({ onNavigate, onAutoStart } = {}) {
                     ? <>{js.icon} {js.searching ? <>Searching <b>{travelDestName(travel)}</b></> : <>Following the trail to <b>{travelDestName(travel)}</b></>}</>
                     : <>Travelling to <b>{travelDestName(travel)}</b></>}
                 </span>
-                <span class="wm-travelbar-ticks">{(travel.totalTicks ?? 0) - (travel.ticksRemaining ?? 0)} / {travel.totalTicks ?? 0} ticks</span>
+                <span class="wm-travelbar-ticks">{wmTravelTime((travel.totalTicks ?? 0) - (travel.ticksRemaining ?? 0))} / {wmTravelTime(travel.totalTicks ?? 0)}</span>
               </div>
               <div class="wm-track"><div class="wm-track-fill" style={{ width: Math.round(travelFraction(travel) * 100) + '%' }} /></div>
               <div class="wm-travelbar-route">
@@ -543,7 +540,7 @@ function PlaceHub({ place, here, travelling, searching, tele, itemsData, onTrave
           )}
           {canTravel && (
             <button class="wm-travel-btn" onClick={() => onTravel(place.id)}>
-              Travel here · {route.ticks} ticks
+              Travel here · {wmTravelTime(route.ticks)}
             </button>
           )}
           {showTeleport && (

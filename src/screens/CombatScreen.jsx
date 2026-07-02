@@ -1850,7 +1850,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                               <span class="text-sm font-semibold text-[var(--color-parchment)]">{monster.name}</span>
                               {isOnTask && <span class="text-[9px] bg-yellow-500 text-black font-bold px-1 rounded">TASK</span>}
                             </div>
-                            <div class="text-[10px] text-[var(--color-parchment)] opacity-40">
+                            <div class="text-[10px] text-[var(--color-parchment)]">
                               HP {monster.hitpoints} · Att {monster.stats.attack} · Def {monster.stats.defence}
                             </div>
                             {slayReq && (
@@ -1889,7 +1889,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                         class="flex-shrink-0 w-9 h-9 rounded-full border border-[var(--color-void-border)] bg-[var(--color-void-light)] text-[var(--color-gold)] text-[14px] font-bold flex items-center justify-center active:opacity-70"
                         title="View Monster Info"
                       >
-                        <GameIcon iconKey="info" color="#f0c040" size={18} />
+                        <GameIcon iconKey="info" color="var(--fm-ember)" size={18} />
                       </button>
                     </div>
                     )
@@ -1934,7 +1934,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                       <SkillEmblem iconKey={getRaidArt(raid.id).icon} accent={getRaidArt(raid.id).accent} size={36} glow={0} />
                       <div>
                         <div class="text-sm font-semibold text-[var(--color-parchment)]">{raid.name}</div>
-                        <div class={`text-[10px] ${isRaidLocked ? 'text-[var(--color-blood-light)]' : 'text-[var(--color-parchment)]'} opacity-40`}>{isRaidLocked ? '🔒 ' + raidLockReason : raid.description}</div>
+                        <div class={`text-[10px] ${isRaidLocked ? 'text-[var(--color-blood-light)]' : 'text-[var(--color-parchment)]'}`}>{isRaidLocked ? '🔒 ' + raidLockReason : raid.description}</div>
                       </div>
                     </div>
                     {raidKillCounts[raid.id] > 0 && (
@@ -1947,7 +1947,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                     class="flex-shrink-0 w-9 h-9 rounded-full border border-[var(--color-void-border)] bg-[var(--color-void-light)] text-[var(--color-gold)] text-[14px] font-bold flex items-center justify-center active:opacity-70"
                     title="View Raid Info"
                   >
-                    <GameIcon iconKey="info" color="#c9b6ff" size={18} />
+                    <GameIcon iconKey="info" color="var(--fm-royal)" size={18} />
                   </button>
                 </div>
               )
@@ -1968,7 +1968,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
               <GameIcon iconKey="crossed_swords" color="var(--color-parchment)" size={18} />
               <span>Player vs Player</span>
             </button>
-            <div class="text-[9px] text-[var(--color-parchment)] opacity-40 mt-1.5 text-center px-2">
+            <div class="text-[9px] text-[var(--color-parchment)] opacity-90 mt-1.5 text-center px-2">
               On death, your tradeable inventory + equipped gear go to the winner. Untradeables stay with you.
             </div>
           </div>
@@ -2761,7 +2761,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           <div class="cb-prayhead">
             <h3>Prayers</h3>
             <button onClick={() => setShowPrayerModal(false)} class="cb-x" aria-label="Close">
-              <GameIcon iconKey="cancel" color="#cdbf9f" size={16} />
+              <GameIcon iconKey="cancel" color="var(--fm-ink-soft)" size={16} />
             </button>
           </div>
 
@@ -2888,7 +2888,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           <div class="cb-prayhead">
             <h3>Spells</h3>
             <button onClick={() => setShowSpellModal(false)} class="cb-x" aria-label="Close">
-              <GameIcon iconKey="cancel" color="#cdbf9f" size={16} />
+              <GameIcon iconKey="cancel" color="var(--fm-ink-soft)" size={16} />
             </button>
           </div>
           <div class="max-h-96 overflow-y-auto">

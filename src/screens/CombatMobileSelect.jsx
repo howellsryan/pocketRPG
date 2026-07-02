@@ -91,7 +91,7 @@ export default function CombatMobileSelect({
       <div class="cb-idlerow">
         {idleToggles.map(t => (
           <button key={t.id} class={'cb-idle' + (t.on ? ' is-on' : '')} onClick={() => onOpenIdle(t.id)}>
-            <GameIcon iconKey={t.icon} color={t.on ? '#1a1206' : '#9b978c'} size={17} />
+            <GameIcon iconKey={t.icon} color={t.on ? '#1a1206' : 'var(--fm-ink-soft)'} size={17} />
             <span>{t.label}</span>
             {t.on && <GameIcon class="cb-idle__chk" iconKey="check_mark" color="#1a1206" size={13} />}
           </button>
@@ -174,7 +174,7 @@ export default function CombatMobileSelect({
                           onClick={(e) => { e.stopPropagation(); onMonsterInfo(monster) }}
                           aria-label={`${monster.name} info`}
                         >
-                          <GameIcon iconKey="info" color="#f0c040" size={18} />
+                          <GameIcon iconKey="info" color="var(--fm-ember)" size={18} />
                         </button>
                       </div>
                     )
@@ -211,7 +211,7 @@ export default function CombatMobileSelect({
                   onClick={(e) => { e.stopPropagation(); onRaidInfo(raid) }}
                   aria-label={`${raid.name} info`}
                 >
-                  <GameIcon iconKey="info" color="#c9b6ff" size={18} />
+                  <GameIcon iconKey="info" color="var(--fm-royal)" size={18} />
                 </button>
               </div>
             </div>
