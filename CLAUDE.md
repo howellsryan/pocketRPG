@@ -38,6 +38,7 @@
 - **Combo food**: combo consumables (flagged `combo: true`, e.g. Karam, plus every potion/brew) use a **separate combo cooldown** — one combo item may be used the same tick as one normal food, never delaying the next attack. See `isComboConsumable` in `src/engine/consumables.js`; honoured by `combat.js` (PvE) + `pvpEngine.js` (PvP).
 - **Boss Slayer XP**: `BOSS_SLAYER_TASK_XP_MULTIPLIER` (×4) in `src/engine/slayerRewards.js`; avoid inflated explicit `slayerXP` on bosses (keep XP/hr ≤ ~2× best regular monster).
 - **Daily Tasks**: 5 tasks/day (one per tier: Novice → Grandmaster), reset **00:00 UTC**, **+1 credit** each. Server-authoritative grant via `/api/daily-tasks/complete` (idempotent `credited` flag + audit), **never** via `/api/save`. Issuance is lazy on `GET /api/daily-tasks`; durable table `character_daily_tasks` (migration 0025, outside the save blob). Cloud accounts only (mirrors credits pill). Event bus: `recordGameEvent(evt)` in `gameState.jsx`; matcher: `src/engine/dailyTasks.js`.
+- **Journeys & teleports**: clues/quests run **only** as world-map journeys (`src/engine/journeys.js`; content granted on the final search; auto-chains next scroll / quest queue in `App.jsx`; legacy timer tasks still tick out). Per-place Magic teleports in `src/data/world.json` `teleport` (cities low — Varrick 25 — villages up to 87; always law runes; XP = level+10; `src/engine/teleports.js`); mid-journey teleports re-plan the walking leg, searches are pinned to their waypoint.
 
 ## 5) XP & Leveling
 - Levels **1–99**. XP cap **200,000,000**.

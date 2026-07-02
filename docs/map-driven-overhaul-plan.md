@@ -253,22 +253,36 @@ Each phase is independently shippable and reversible against the live game.
     to the owning screen so combat/skilling begins immediately, even while idling. Rides the
     persisted task (survives tab-return). Supersedes the earlier "no auto-start" decision for
     the gated-start flow only.
-- **Phase 5 — active clues/quests** (done): multi-step place-bound journeys, idle
-  alternative preserved. Engine: `src/engine/journeys.js` (+ `tests/journeys.test.ts`).
+- **Phase 5 — active clues/quests** (done): multi-step place-bound journeys.
+  Engine: `src/engine/journeys.js` (+ `tests/journeys.test.ts`).
   A journey is a chain of ordinary `type:'travel'` tasks carrying a `journey`
   descriptor: travel to waypoint → *search* it (a zero-distance travel dwell) → … →
-  the final search completes the content through the same path idling uses
+  the final search completes the content through the same path idling used
   (`completeClueSolve` / `handleQuestCompletion` in `App.jsx` — server-authoritative
   clue rewards included). 2–4 waypoints scale with idle duration; waypoints are
   deterministic per (content, origin) and drawn from increasing distance bands; total
-  search time ≈ `JOURNEY_TIME_FACTOR` (0.5) × the idle duration, plus real road time —
-  active play finishes faster without obsoleting idling. Offline: `advanceJourneyOffline`
-  chains phases through elapsed time but never grants — a journey that finished away is
-  parked on its final search at 0 ticks and the App's first live tick completes it.
-  Entry points: 🗺️ button per clue row (`CluesScreen`), "Quest Journey" in the quest
-  detail (`QuestsScreen`); the World Map travel banner shows step/phase and "Abandon
-  journey" (scroll/quest only consumed on the final search).
-- **Later**: discovery/unlocks, teleport (reserved for a future magic level).
+  search time ≈ `JOURNEY_TIME_FACTOR` (0.5) × the old idle duration, plus real road time.
+  Offline: `advanceJourneyOffline` chains phases through elapsed time but never grants —
+  a journey that finished away is parked on its final search at 0 ticks and the App's
+  first live tick completes it.
+- **Phase 5b — journeys ARE the flow** (done): the stationary clue/quest timers are
+  retired; `planClueJourney`/`planQuestJourney` are the only start paths (legacy saved
+  timer tasks still tick out in `App.jsx`). Starting from `CluesScreen`/`QuestsScreen`
+  drops the player onto the World Map. Background auto-chaining keeps the idle loop:
+  finishing a clue trail with another scroll of that tier starts the next trail from
+  where it ended, and quest completion promotes the quest queue as journeys
+  (`promoteNextQueuedQuestOrClear`). The banner shows step/phase with "Abandon journey"
+  (scroll/quest only consumed on the final search).
+- **Teleports** (done, was "reserved"): every place carries `teleport: {level, xp, runes}`
+  in `world.json` — cities cheap/low (Varrick 25: 1 law/3 air/1 fire), towns 45–64,
+  villages 70–87 with nature/blood/soul runes. `src/engine/teleports.js`
+  (+ `tests/teleports.test.ts`): rune check/deduction is inventory-first-then-bank with
+  elemental-staff exemption (shared `getRunesToConsume`), casting is instant, grants
+  Magic XP (level+10), and supersedes the task slot like starting a walk. Cast from the
+  place hub or the travel banner's "Teleport ahead"; mid-journey it re-plans the walking
+  leg from the landing place (`teleportIntoJourney`) — landing on the waypoint skips
+  straight to the search. A search in progress is bound to its waypoint (finish or abandon).
+- **Later**: discovery/unlocks.
 
 ## 9. Open design questions (resolve before the relevant phase)
 
@@ -283,7 +297,8 @@ Each phase is independently shippable and reversible against the live game.
 4. **Travel + background skilling** — ~~mutually exclusive, or can you skill while
    walking?~~ **Resolved (Phase 3): mutually exclusive (single activeTask).**
 5. **Travel cost** — pure time, or also consume supplies/food/run-energy later?
-6. **Teleport** — reserved for a future magic level; out of scope for v1.
+6. **Teleport** — ~~reserved for a future magic level; out of scope for v1.~~
+   **Resolved: shipped as per-place Magic teleports** (see Teleports above).
 7. **Real world scale** — ~~how many places, and the canonical map.~~ **Resolved
    (Phase 4): 14 places, the realm of Eldermoor (OSRS-inspired). Expandable later.**
 

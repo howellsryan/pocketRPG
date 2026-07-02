@@ -719,7 +719,12 @@ html, body, #app {
   transition: border-color .14s, background .14s, transform .1s;
 }
 .cb-idle:active { transform: scale(0.97); }
-.cb-idle.is-on { border-color: rgba(60,176,67,0.5); background: linear-gradient(160deg, #122016, #0e1410); color: #cfeccb; box-shadow: inset 0 0 16px -8px rgba(60,176,67,0.5); }
+.cb-idle.is-on {
+  color: #1a1206;
+  background: linear-gradient(180deg, var(--color-gold-light), var(--color-gold) 60%, #b3851a);
+  border-color: rgba(240,192,64,0.6);
+  box-shadow: 0 6px 16px -8px rgba(212,160,23,0.6), inset 0 1px 0 rgba(255,255,255,0.4);
+}
 .cb-idle__chk { width: 13px; height: 13px; }
 
 /* Attack-style selector */
@@ -2305,10 +2310,17 @@ html, body, #app {
 .wm-track-fill { height: 100%; border-radius: inherit; background: linear-gradient(90deg, #f0742a, #ffd9a8);
   box-shadow: inset 0 1px 0 rgba(255,220,180,.5); transition: width .55s linear; }
 .wm-travelbar-route { margin-top: 8px; font-style: italic; font-size: 12px; color: var(--color-parchment-dark); }
-.wm-travelbar-cancel { margin-top: 10px; width: 100%; min-height: 44px; font-family: var(--font-display); font-weight: 600;
+.wm-travelbar-actions { margin-top: 10px; display: flex; gap: 8px; }
+.wm-travelbar-cancel { flex: 1; min-height: 44px; font-family: var(--font-display); font-weight: 600;
   font-size: 13px; color: var(--color-parchment); background: transparent; border: 1px solid var(--color-void-border);
   border-radius: 8px; cursor: pointer; }
 .wm-travelbar-cancel:hover { border-color: var(--color-gold); color: var(--color-gold-light); }
+.wm-travelbar-tele { flex: 1; min-height: 44px; font-family: var(--font-display); font-weight: 700;
+  font-size: 13px; color: #fff; cursor: pointer; border-radius: 8px;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--fm-royal) 72%, white), var(--fm-royal));
+  border: 1px solid var(--fm-royal); box-shadow: 0 2px 8px -3px #000; }
+.wm-travelbar-tele:hover { filter: brightness(1.08); }
+.wm-travelbar-tele:active { transform: translateY(1px); }
 
 .wm-travel-btn { width: 100%; min-height: 44px; margin: 0 0 16px; font-family: var(--font-display); font-weight: 700;
   font-size: 15px; color: var(--color-ink); cursor: pointer; border-radius: 8px;
@@ -2316,3 +2328,18 @@ html, body, #app {
   border: 1px solid var(--color-gold-dim); box-shadow: 0 2px 8px -3px #000; }
 .wm-travel-btn:hover { filter: brightness(1.06); }
 .wm-travel-btn:active { transform: translateY(1px); }
+
+/* Hub teleport button — arcane royal against the gold travel button; locked
+   state flattens to a vellum ghost carrying the unmet requirement. */
+.wm-tele-btn { width: 100%; min-height: 44px; margin: 0 0 16px; padding: 6px 12px; cursor: pointer; border-radius: 8px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
+  font-family: var(--font-display);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--fm-royal) 72%, white), var(--fm-royal));
+  border: 1px solid var(--fm-royal); box-shadow: 0 2px 8px -3px #000; }
+.wm-tele-btn__lead { font-weight: 700; font-size: 14px; color: #fff; }
+.wm-tele-btn__cost { font-family: var(--font-body); font-size: 11px; color: #fff; }
+.wm-tele-btn:hover { filter: brightness(1.08); }
+.wm-tele-btn:active { transform: translateY(1px); }
+.wm-tele-btn.is-locked { cursor: default; background: var(--fm-parch-hi, transparent); border-color: var(--fm-rule, var(--color-void-border)); box-shadow: none; filter: none; transform: none; }
+.wm-tele-btn.is-locked .wm-tele-btn__lead { color: var(--fm-ink-faint, var(--color-parchment)); }
+.wm-tele-btn.is-locked .wm-tele-btn__cost { color: var(--fm-ink-faint, var(--color-parchment)); }

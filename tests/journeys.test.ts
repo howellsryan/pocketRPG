@@ -1,9 +1,12 @@
 import { describe, it, expect } from 'vitest'
 import {
   planJourney,
+  planClueJourney,
+  planQuestJourney,
   journeyStepCount,
   advanceJourneyPhase,
   advanceJourneyOffline,
+  teleportIntoJourney,
   isJourneyTask,
   journeyStatus,
   JOURNEY_TIME_FACTOR,
@@ -144,6 +147,56 @@ describe('advanceJourneyOffline', () => {
     expect(res.location).toBe(leg.journey.steps[leg.journey.steps.length - 1])
     // never grants content itself: the task survives for the App tick to complete
     expect(res.task.journey.payload).toEqual(CLUE)
+  })
+})
+
+describe('canonical planners', () => {
+  it('planClueJourney names the trail after the scroll and scales from its ticks', () => {
+    const task = planClueJourney(CLUE, 'lumbright')!
+    expect(task.journey.kind).toBe('clue')
+    expect(task.journey.name).toBe('Medium Clue Trail')
+    expect(task.journey.steps.length).toBe(journeyStepCount(CLUE.ticks))
+    expect(task.journey.payload).toEqual(CLUE)
+  })
+
+  it('planQuestJourney converts durationSeconds to ticks', () => {
+    const quest = { id: 'q1', name: 'The Lost Heirloom', durationSeconds: 1200, xpReward: {}, coinReward: 50 }
+    const task = planQuestJourney(quest, 'varrick')!
+    expect(task.journey.kind).toBe('quest')
+    expect(task.journey.steps.length).toBe(journeyStepCount(2000)) // 1200s = 2000 ticks
+    expect(task.journey.payload).toEqual(quest)
+  })
+})
+
+describe('teleportIntoJourney', () => {
+  it('teleporting to the waypoint skips the walk straight into the search', () => {
+    const leg = plan()
+    const res = teleportIntoJourney(leg, leg.dest)!
+    expect(res.searching).toBe(true)
+    expect(res.task.journey.phase).toBe('search')
+    expect(res.task.from).toBe(leg.dest)
+    expect(res.task.totalTicks).toBe(leg.journey.dwellTicks)
+  })
+
+  it('teleporting elsewhere re-plans the leg from the landing place', () => {
+    const leg = plan()
+    const landing = leg.dest === 'varrick' ? 'faloden' : 'varrick'
+    const res = teleportIntoJourney(leg, landing)!
+    expect(res.searching).toBe(false)
+    expect(res.task.from).toBe(landing)
+    expect(res.task.dest).toBe(leg.dest)
+    expect(res.task.totalTicks).toBe(shortestPath(landing, leg.dest)!.ticks)
+    expect(res.task.journey).toEqual(leg.journey) // same trail, same step
+  })
+
+  it('a search in progress is bound to its waypoint', () => {
+    const leg = plan()
+    const search = advanceJourneyPhase({ ...leg, ticksRemaining: 0 })!.next
+    expect(teleportIntoJourney(search, 'varrick')).toBeNull()
+  })
+
+  it('returns null for a journey-less travel task', () => {
+    expect(teleportIntoJourney({ type: 'travel', dest: 'varrick' } as any, 'varrick')).toBeNull()
   })
 })
 

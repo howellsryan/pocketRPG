@@ -91,9 +91,9 @@ export default function CombatMobileSelect({
       <div class="cb-idlerow">
         {idleToggles.map(t => (
           <button key={t.id} class={'cb-idle' + (t.on ? ' is-on' : '')} onClick={() => onOpenIdle(t.id)}>
-            <GameIcon iconKey={t.icon} color={t.on ? '#7ce88a' : '#9b978c'} size={17} />
+            <GameIcon iconKey={t.icon} color={t.on ? '#1a1206' : '#9b978c'} size={17} />
             <span>{t.label}</span>
-            {t.on && <GameIcon class="cb-idle__chk" iconKey="check_mark" color="#7ce88a" size={13} />}
+            {t.on && <GameIcon class="cb-idle__chk" iconKey="check_mark" color="#1a1206" size={13} />}
           </button>
         ))}
       </div>

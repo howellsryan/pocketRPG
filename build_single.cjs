@@ -48,6 +48,7 @@ const sourceFiles = [
   'engine/thieving.js',
   'engine/hunter.js',
   'engine/runes.js',
+  'engine/teleports.js',
   'engine/slayerRewards.js',
   'engine/slayerTasks.js',
   'engine/slayerMasters.js',

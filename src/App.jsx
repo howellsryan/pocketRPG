@@ -36,7 +36,7 @@ import MagicScreen from './screens/MagicScreen.jsx'
 import WorldMapScreen from './screens/WorldMapScreen.jsx'
 import TravelPrompt from './components/TravelPrompt.jsx'
 import { advanceTravel, travelDestName } from './engine/travel.js'
-import { advanceJourneyPhase, advanceJourneyOffline, journeyStatus } from './engine/journeys.js'
+import { advanceJourneyPhase, advanceJourneyOffline, journeyStatus, planClueJourney, planQuestJourney } from './engine/journeys.js'
 import AuthScreen from './screens/AuthScreen.jsx'
 import OAuthConsentScreen from './screens/OAuthConsentScreen.jsx'
 import { SCREENS, isWorldMapEnabled } from './utils/constants.js'
@@ -60,7 +60,6 @@ import minigamesData from './data/minigames.json'
 import raidsData from './data/raids.json'
 import { simulateIdleThieving } from './engine/thieving.js'
 import { simulateIdleHunting } from './engine/hunter.js'
-import { createQuestState } from './engine/quests.js'
 import { simulateQuestIdleCascade, splitQuestXpRewards } from './engine/questIdleCascade.js'
 import { getLevelFromXP } from './engine/experience.js'
 import { pvpApi } from './cloud/pvp.js'
@@ -288,7 +287,7 @@ function GameApp() {
   const { loaded, loadGame, player, stats, equipment, inventory, bank, currentHP, updateHP, getMaxHP, updateInventory, updateEquipment, updateBank, updateBankDirect, grantXP, addToast, activeTask, setActiveTask, getActiveTask, itemsData, getSnapshot, unlockedFeatures, setSlayerTask, awardSlayerPoints, slayerTasksCompleted, setSlayerTasksCompleted, completeQuest, completedQuests, questQueue, removeFromQuestQueue, updateQuestQueue,
     unlockMinigameItem, unlockedMinigameItems, awardDungeoneeringTokens, farming, updateFarming, idleCombatSetup, isOneLife, updateBossKillCounts, updateRaidKillCounts, syncServerKillCounts, markKillCountsLoaded, combatSkipHandlerRef, skipHourHandlerRef, chargeSkipRef, raidSkipHandlerRef,
     gameLocked, lockGame, unlockGame, runLockedSave, awaitCombatCompletion, resolveCombatCompletion,
-    characterUnlocks, dailyTaskStates, setDailyTasks, recordGameEvent, updateWorldLocation } = useGame()
+    characterUnlocks, dailyTaskStates, setDailyTasks, recordGameEvent, updateWorldLocation, worldLocation } = useGame()
   const pvp = usePvp()
   const [screen, setScreen] = useState(SCREENS.HOME)
   const [menuOpen, setMenuOpen] = useState(false)
@@ -452,21 +451,37 @@ function GameApp() {
     return () => window.removeEventListener('pocketrpg:pvp-active-match', onActiveMatchConflict)
   }, [addToast, pvp.enterMatch])
 
-  // A finished journey (Phase 5 active clue/quest journeys) grants its content
-  // through the exact same paths idling uses — completeClueSolve consumes the
-  // scroll + rolls/banks rewards (server-authoritative when signed in), and
-  // handleQuestCompletion awards XP/coins + cascades the queue.
-  function completeJourneyContent(journey) {
+  // A finished journey grants its content through the exact same paths idling
+  // used — completeClueSolve consumes the scroll + rolls/banks rewards
+  // (server-authoritative when signed in), and handleQuestCompletion awards
+  // XP/coins. Journeys are now the only clue/quest flow, so completion also
+  // keeps the background loop rolling: another scroll of the same tier chains
+  // straight into a fresh trail from where this one ended, and quests promote
+  // the queue (as journeys) the same way.
+  function completeJourneyContent(journey, endedAt) {
     if (journey?.kind === 'clue' && journey.payload) {
-      completeClueSolve(journey.payload, { updateBankDirect, getSnapshot, addToast, isInPvpMatch })
-      recordGameEvent?.({ kind: 'clue_complete', tier: journey.payload.tier })
+      const clueTask = journey.payload
+      // Count before the solve settles (the signed-in grant debits the scroll
+      // asynchronously): ≥2 now means one is still left after this solve.
+      const snap = getSnapshot()
+      const scrollsNow = (snap.bank?.[clueTask.requiresItem]?.quantity || 0) + countItem(snap.inventory || [], clueTask.requiresItem)
+      completeClueSolve(clueTask, { updateBankDirect, getSnapshot, addToast, isInPvpMatch })
+      recordGameEvent?.({ kind: 'clue_complete', tier: clueTask.tier })
+      if (scrollsNow >= 2) {
+        const nextTask = planClueJourney(clueTask, endedAt)
+        if (nextTask) {
+          setActiveTask(nextTask)
+          activeTaskRef.current = nextTask
+          addToast(`🗺️ Another scroll — the trail continues (${nextTask.journey.steps.length} places)`, 'info')
+        }
+      }
     } else if (journey?.kind === 'quest' && journey.payload) {
-      handleQuestCompletion(journey.payload, journey.payload.xpReward, journey.payload.coinReward)
+      handleQuestCompletion(journey.payload, journey.payload.xpReward, journey.payload.coinReward, endedAt)
     }
   }
 
   // Handle quest completion with queue cascading
-  function handleQuestCompletion(quest, xpReward, coinReward) {
+  function handleQuestCompletion(quest, xpReward, coinReward, fromPlace) {
     // Award rewards
     const { fixed, choices } = splitQuestXpRewards(xpReward)
     for (const [skill, xp] of Object.entries(fixed)) grantXP(skill, xp)
@@ -475,7 +490,7 @@ function GameApp() {
     // The completed quest was already removed from the queue when it was
     // started, so the queue holds the next quests to run. Pop the next one
     // off and promote it to the active task.
-    promoteNextQueuedQuestOrClear()
+    promoteNextQueuedQuestOrClear(fromPlace)
 
     // Finalise the completed quest (show choice modal if needed)
     finaliseQuest(quest.id, quest.name, choices)
@@ -487,7 +502,10 @@ function GameApp() {
     try { localStorage.removeItem('pocketrpg_activeTask') } catch { /* best-effort */ }
   }
 
-  function promoteNextQueuedQuestOrClear() {
+  // Auto-chain the quest queue as journeys: the next queued quest sets out from
+  // wherever the player is standing (for a finished journey, its last waypoint —
+  // passed by the caller since the worldLocation state flush may lag).
+  function promoteNextQueuedQuestOrClear(fromPlace) {
     const currentQueue = questQueueRef.current || []
     if (currentQueue.length === 0) {
       clearPersistedActiveTask()
@@ -496,17 +514,15 @@ function GameApp() {
 
     const nextQuest = currentQueue[0]
     updateQuestQueue(currentQueue.slice(1))
-    const state = createQuestState(nextQuest)
-    const nextTask = {
-      type: 'quest',
-      quest: nextQuest,
-      totalTicks: state.totalTicks,
-      ticksRemaining: state.ticksRemaining,
-      startedAt: state.startedAt,
+    const nextTask = planQuestJourney(nextQuest, fromPlace || worldLocationRef.current)
+    if (!nextTask) {
+      clearPersistedActiveTask()
+      addToast(`No route can be plotted for ${nextQuest.name} — start it from the Quests screen.`, 'error')
+      return null
     }
     setActiveTask(nextTask)
     activeTaskRef.current = nextTask
-    addToast(`📜 Started: ${nextQuest.name}`, 'info')
+    addToast(`🗺️ Journey begun: ${nextQuest.name} — ${nextTask.journey.steps.length} places to visit`, 'info')
     return nextTask
   }
 
@@ -707,9 +723,11 @@ function GameApp() {
   const itemsDataRef = useRef(itemsData)
   const bankRef = useRef(bank)
   const questQueueRef = useRef(questQueue)
+  const worldLocationRef = useRef(worldLocation)
   const idleCombatSetupRef = useRef(idleCombatSetup)
   const currentHPRef = useRef(currentHP)
   useEffect(() => { bankRef.current = bank }, [bank])
+  useEffect(() => { worldLocationRef.current = worldLocation }, [worldLocation])
   useEffect(() => { idleCombatSetupRef.current = idleCombatSetup }, [idleCombatSetup])
   useEffect(() => { currentHPRef.current = currentHP }, [currentHP])
   useEffect(() => { completedQuestsRef.current = completedQuests }, [completedQuests])
@@ -1258,7 +1276,7 @@ function GameApp() {
               setActiveTask(null)
               activeTaskRef.current = null
               try { localStorage.removeItem('pocketrpg_activeTask') } catch {}
-              completeJourneyContent(task.journey)
+              completeJourneyContent(task.journey, task.dest)
             } else if (step) {
               if (step.kind === 'search') {
                 updateWorldLocation(task.dest)
@@ -2554,8 +2572,8 @@ function GameApp() {
       case SCREENS.MAGIC:       return <MagicScreen onNavigate={navigate} />
       case SCREENS.WORLD_MAP:   return isWorldMapEnabled() ? <WorldMapScreen onNavigate={navigate} onAutoStart={resumeAutoStart} /> : <HomeScreen onNavigate={navigate} onLogout={handleLogoutToCharacterSelect} onManualSave={handleManualSave} isCloudAccount={!!getToken() && !!getCharacterId()} removeAds={removeAds} identityId={identityId} characterId={getCharacterId()} stripeLinks={stripeLinks} />
       case SCREENS.STORE:       return <TradingPostScreen />
-      case SCREENS.QUESTS:         return <QuestsScreen />
-      case SCREENS.CLUES:          return <CluesScreen />
+      case SCREENS.QUESTS:         return <QuestsScreen onNavigate={navigate} />
+      case SCREENS.CLUES:          return <CluesScreen onNavigate={navigate} />
       case SCREENS.MINIGAMES:      return <MinigamesScreen initialTaskId={actionData?.minigameTaskId} />
       case SCREENS.COLLECTION_LOG: return <CollectionLogScreen />
       case SCREENS.LEADERBOARD:    return <LeaderboardScreen />

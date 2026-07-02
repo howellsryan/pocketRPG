@@ -10,10 +10,12 @@
  * stack — the live App tick, offline catch-up, save/resume, the World Map banner,
  * turn-back — works unchanged; only the arrival handler asks this module "what next".
  *
- * The idle alternative is untouched and preserved (explicit Phase 5 requirement):
- * a journey occupies the same single activeTask slot and finishes in roughly
- * JOURNEY_TIME_FACTOR of the idle duration plus real road time — a discount that
- * rewards active play without obsoleting idling.
+ * Journeys are the ONLY clue/quest flow: the old stationary timers are retired
+ * (legacy saved tasks still tick out in App.jsx, but nothing starts them). The
+ * background/idle character is preserved because a journey IS a travel task — it
+ * ticks on any screen and catches up offline — while total time is roughly
+ * JOURNEY_TIME_FACTOR of the old idle duration plus road time, and active players
+ * compress the roads further by teleporting between waypoints (engine/teleports.js).
  *
  * Pure logic, no UI imports (engine layer — CLAUDE.md §3).
  */
@@ -97,6 +99,37 @@ export function planJourney({ kind, ref, name, icon, idleTicks, payload, from })
   return journeyLegTask(start, steps[0], journey)
 }
 
+/**
+ * Canonical planners for the two journey kinds — the only way clues and quests
+ * start (the stationary idle timers are retired; journeys ARE the background
+ * flow, ticking and catching up offline like any travel task). Shared by the
+ * screens' start buttons and the App's auto-chaining (next scroll / next queued
+ * quest), so a chained journey is identical to a hand-started one.
+ */
+export function planClueJourney(clueTask, from) {
+  return planJourney({
+    kind: 'clue',
+    ref: clueTask.id,
+    name: `${(clueTask.name || '').replace(/^Complete /, '')} Trail`,
+    icon: '🗺️',
+    idleTicks: clueTask.ticks,
+    payload: clueTask,
+    from,
+  })
+}
+
+export function planQuestJourney(quest, from) {
+  return planJourney({
+    kind: 'quest',
+    ref: quest.id,
+    name: quest.name,
+    icon: '📜',
+    idleTicks: Math.max(1, Math.ceil(((Number(quest.durationSeconds) || 0) * 1000) / JOURNEY_TICK_MS)),
+    payload: quest,
+    from,
+  })
+}
+
 /** A travel leg carrying the journey. */
 function journeyLegTask(from, to, journey) {
   const res = shortestPath(from, to)
@@ -149,6 +182,23 @@ export function advanceJourneyPhase(task) {
   // A vanished route (world data change mid-save) still finishes the journey rather
   // than stranding the task forever.
   return next ? { kind: 'leg', next } : { kind: 'complete' }
+}
+
+/**
+ * The player teleported to `placeId` while a journey walking leg was underway:
+ * re-plan the leg from the landing place. Landing on the waypoint itself skips
+ * the whole walk — the search starts immediately. Returns { task, searching },
+ * or null when the teleport can't serve the journey: a search in progress is
+ * bound to its waypoint (callers should block the cast and tell the player to
+ * finish or abandon), and a landing place with no route to the waypoint can't
+ * continue the trail.
+ */
+export function teleportIntoJourney(task, placeId) {
+  const j = task?.journey
+  if (!j || j.phase === 'search') return null
+  if (placeId === task.dest) return { task: journeyDwellTask(placeId, j), searching: true }
+  const leg = journeyLegTask(placeId, task.dest, j)
+  return leg ? { task: leg, searching: false } : null
 }
 
 /**
