@@ -123,6 +123,7 @@ const sourceFiles = [
   'components/ActivityIndicator.js',
   'components/XpDropOverlay.js',
   'components/RewardRevealOverlay.js',
+  'components/ChatWidget.js',
   'components/Header.js',
   'components/navTabs.js',
   'components/BurgerMenu.js',
