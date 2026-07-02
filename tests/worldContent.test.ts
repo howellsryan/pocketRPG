@@ -97,13 +97,27 @@ describe('facility-bound skills', () => {
   const hasFacility = (id: string, f: string) => (worldData.places[id] as any).facilities?.includes(f)
   const bankPlaces = Object.keys(worldData.places).filter((id) => hasFacility(id, 'bank'))
   const furnacePlaces = Object.keys(worldData.places).filter((id) => hasFacility(id, 'furnace_anvil'))
-  const noBank = Object.keys(worldData.places).filter((id) => !hasFacility(id, 'bank'))
+  const stovePlaces = Object.keys(worldData.places).filter((id) => hasFacility(id, 'stove'))
+  const altarPlaces = Object.keys(worldData.places).filter((id) => hasFacility(id, 'altar'))
+  const noAltar = Object.keys(worldData.places).filter((id) => !hasFacility(id, 'altar'))
   const noFurnace = Object.keys(worldData.places).filter((id) => !hasFacility(id, 'furnace_anvil'))
 
-  it('places a bank skill (cooking) at every bank place and nowhere else', () => {
-    const places = placesForActivity('skill', 'cooking:cook_shrimp')
+  it('places a bank skill (crafting) at every bank place and nowhere else', () => {
+    const places = placesForActivity('skill', 'crafting:tan_cowhide')
     expect(places.length).toBeGreaterThan(0)
     expect([...places].sort()).toEqual([...bankPlaces].sort())
+  })
+
+  it('places cooking at every stove place and nowhere else', () => {
+    const places = placesForActivity('skill', 'cooking:cook_shrimp')
+    expect(places.length).toBeGreaterThan(0)
+    expect([...places].sort()).toEqual([...stovePlaces].sort())
+  })
+
+  it('places prayer at every altar place and nowhere else', () => {
+    const places = placesForActivity('skill', 'prayer:bury_bones')
+    expect(places.length).toBeGreaterThan(0)
+    expect([...places].sort()).toEqual([...altarPlaces].sort())
   })
 
   it('places smithing only at furnace & anvil places', () => {
@@ -127,7 +141,7 @@ describe('facility-bound skills', () => {
   })
 
   it('does not offer a facility skill at a place without the facility', () => {
-    for (const id of noBank) {
+    for (const id of noAltar) {
       expect(placesForActivity('skill', 'prayer:bury_bones').includes(id)).toBe(false)
     }
   })

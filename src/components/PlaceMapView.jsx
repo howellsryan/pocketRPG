@@ -1,6 +1,6 @@
 import { useState } from 'preact/hooks'
 import { getTier, getKind } from '../engine/world.js'
-import { getPlaceMap, describeSpot, spotType, BANK_TRAINING_SKILLS } from '../engine/placeMaps.js'
+import { getPlaceMap, describeSpot, spotType, BANK_TRAINING_SKILLS, facilityTrainingSkill } from '../engine/placeMaps.js'
 import { usePanZoomStage } from '../hooks/usePanZoomStage.js'
 import { useEscapeKey } from '../hooks/useEscapeKey.js'
 import { getSkillArt } from '../utils/skillArt.js'
@@ -20,8 +20,10 @@ import ActivityPickerModal from './ActivityPickerModal.jsx'
  * (the world map's activateActivity — level gate + requestActivityStart, so
  * remote refs open the travel prompt); multi-activity spots open the shared
  * picker first. A `facility: 'bank'` spot opens the bank modal (use bank +
- * every train-anywhere skill); a `screen` spot navigates via `onNavigate`.
- * Skilling screens entered from here get a `returnTo` back to this view.
+ * the bank-bound skills); other facility spots (furnace_anvil/altar/stove)
+ * open their skill's training screen; a `screen` spot navigates via
+ * `onNavigate`. Skilling screens entered from here get a `returnTo` back to
+ * this view.
  */
 export default function PlaceMapView({ place, onClose, onActivate, onNavigate }) {
   const map = getPlaceMap(place?.id)
@@ -57,7 +59,12 @@ export default function PlaceMapView({ place, onClose, onActivate, onNavigate })
   const onSpotClick = ({ spot, type, desc }) => {
     if (wasGestureClick()) return
     if (type === 'facility') {
-      if (spot.facility === 'bank') setBankSpot(spot)
+      if (spot.facility === 'bank') { setBankSpot(spot); return }
+      // Single-skill facilities (furnace & anvil / altar / stove) go straight
+      // to their skill's training screen, back button returning here.
+      const skillId = facilityTrainingSkill(spot.facility)
+      if (skillId === 'magic') onNavigate?.(SCREENS.MAGIC, { returnTo })
+      else if (skillId) onNavigate?.(SCREENS.SKILLS, { skillId, returnTo })
       return
     }
     if (type === 'screen') {
@@ -69,7 +76,13 @@ export default function PlaceMapView({ place, onClose, onActivate, onNavigate })
   }
 
   const spotGlyph = ({ spot, type, desc }) => {
-    if (type === 'facility') return <GameIcon iconKey="coins" size={20} title={spot.label || 'Bank'} />
+    if (type === 'facility') {
+      if (spot.facility === 'bank') return <GameIcon iconKey="coins" size={20} title={spot.label || 'Bank'} />
+      const skillId = facilityTrainingSkill(spot.facility)
+      return skillId
+        ? <GameIcon iconKey={getSkillArt(skillId).icon} size={20} color="#f2e4c2" />
+        : <span aria-hidden="true">{spot.icon || '🏛️'}</span>
+    }
     if (type === 'screen') {
       return spot.iconKey
         ? <GameIcon iconKey={spot.iconKey} size={20} color="#f2e4c2" />
@@ -146,10 +159,11 @@ export default function PlaceMapView({ place, onClose, onActivate, onNavigate })
 
 /**
  * The bank landmark's activities: use the bank, or train any of the
- * facility-bound skills — the ones doable at every banked settlement rather
- * than tied to a specific city (BANK_TRAINING_SKILLS ⇔ FACILITY_SKILLS).
- * Rows navigate to the owning screen; `returnTo` brings its back/stop
- * buttons home to this place map.
+ * bank-bound skills — the ones doable at every banked settlement
+ * (BANK_TRAINING_SKILLS ⇔ FACILITY_SKILL_MAP.bank; prayer/cooking/smithing
+ * belong to their altar/stove/furnace & anvil facilities instead). Rows
+ * navigate to the owning screen; `returnTo` brings its back/stop buttons
+ * home to this place map.
  */
 function PlaceBankModal({ label, onClose, onNavigate, returnTo }) {
   const skillName = (skillId) => skillsData[skillId]?.name || skillId.charAt(0).toUpperCase() + skillId.slice(1)

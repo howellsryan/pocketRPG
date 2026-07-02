@@ -63,8 +63,10 @@ for (const raid of canonicalRaids) for (const b of raid.bosses || []) raidBossId
 // Skills tied to a building. Every action of these skills is available at every place
 // that has the matching facility (not level-banded).
 const FACILITY_SKILLS = {
-  bank: ['construction', 'magic', 'prayer', 'firemaking', 'herblore', 'fletching', 'crafting', 'cooking'],
+  bank: ['construction', 'magic', 'firemaking', 'herblore', 'fletching', 'crafting'],
   furnace_anvil: ['smithing'],
+  altar: ['prayer'],
+  stove: ['cooking'],
 }
 // A place's facilities are authored directly in world.json (`place.facilities`).
 function facilitiesFor(placeId, place) {

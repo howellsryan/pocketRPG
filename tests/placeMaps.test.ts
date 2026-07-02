@@ -4,8 +4,8 @@ import path from 'node:path'
 import placeMaps from '../src/data/placeMaps.json'
 import { getWorld } from '../src/engine/world.js'
 import { SCREENS } from '../src/utils/constants.js'
-import { placeActivities, placesForActivity, isPlaceVaryingSkillRef, FACILITY_SKILLS } from '../src/engine/worldContent.js'
-import { getPlaceMap, placeHasMap, resolveSpotRefs, describeSpot, spotType, BANK_TRAINING_SKILLS } from '../src/engine/placeMaps.js'
+import { placeActivities, placesForActivity, isPlaceVaryingSkillRef, FACILITY_SKILL_MAP, FACILITY_SKILLS } from '../src/engine/worldContent.js'
+import { getPlaceMap, placeHasMap, resolveSpotRefs, describeSpot, spotType, BANK_TRAINING_SKILLS, facilityTrainingSkill } from '../src/engine/placeMaps.js'
 
 const mapped = Object.keys(placeMaps)
 const activitySpots = (id: string) => getPlaceMap(id)!.spots.filter((s: any) => spotType(s) === 'activity')
@@ -71,6 +71,26 @@ describe('placeMaps data', () => {
     }
   })
 
+  it('facility spots only appear at places that actually have the facility', () => {
+    const places = getWorld().places
+    for (const id of mapped) {
+      const has = new Set(places[id].facilities || [])
+      for (const spot of getPlaceMap(id)!.spots) {
+        if (spotType(spot) !== 'facility') continue
+        expect(has.has(spot.facility), `${id}: ${spot.facility} spot but no such facility in world.json`).toBe(true)
+        // Non-bank facility spots must train a known single skill the place offers.
+        if (spot.facility !== 'bank') {
+          const skillId = facilityTrainingSkill(spot.facility)
+          expect(skillId, `${id}: ${spot.facility} trains nothing`).toBeTruthy()
+          expect(
+            placeActivities(id).some((a) => a.kind === 'skill' && a.ref.startsWith(skillId + ':')),
+            `${id}: ${spot.facility} spot but no ${skillId} actions seeded here`
+          ).toBe(true)
+        }
+      }
+    }
+  })
+
   it('covers every activity the read-only hub list shows (nothing becomes unstartable)', () => {
     // Mapped places swap the hub's clickable list for map spots, so every
     // place-varying activity the hub lists must be reachable via some spot.
@@ -98,9 +118,18 @@ describe('placeMaps data', () => {
     }
   })
 
-  it('the bank modal trains exactly the facility-bound (train-anywhere) skills', () => {
-    expect(new Set(BANK_TRAINING_SKILLS)).toEqual(FACILITY_SKILLS)
-    expect(BANK_TRAINING_SKILLS.length).toBe(FACILITY_SKILLS.size)
+  it('the bank modal trains exactly the bank-bound facility skills', () => {
+    expect(new Set(BANK_TRAINING_SKILLS)).toEqual(new Set(FACILITY_SKILL_MAP.bank))
+    expect(BANK_TRAINING_SKILLS.length).toBe(FACILITY_SKILL_MAP.bank.length)
+    // Every facility-bound skill is reachable from exactly one facility type.
+    const all = Object.values(FACILITY_SKILL_MAP).flat()
+    expect(new Set(all).size).toBe(all.length)
+    expect(new Set(all)).toEqual(FACILITY_SKILLS)
+    // The single-skill facilities resolve as expected.
+    expect(facilityTrainingSkill('furnace_anvil')).toBe('smithing')
+    expect(facilityTrainingSkill('altar')).toBe('prayer')
+    expect(facilityTrainingSkill('stove')).toBe('cooking')
+    expect(facilityTrainingSkill('bank')).toBe(null)
   })
 
   it('placeHasMap only reports mapped places', () => {

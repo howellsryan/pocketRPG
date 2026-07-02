@@ -160,12 +160,19 @@ export function resolveTaskStart(task, { location, travel }) {
   return resolveActivityStart({ location, travel, kind: r.kind, ref: r.ref })
 }
 
-// Facility-bound skills (bank/furnace & anvil) offer the exact same actions at every
-// place that has the facility — they never vary by location, so listing them in a
-// place's World Map hub tells the player nothing about that specific place. Must stay
-// in sync with FACILITY_SKILLS in scripts/seedWorldContent.cjs. Exported so the place
-// map's bank modal (train-anywhere skills) provably lists exactly this set.
-export const FACILITY_SKILLS = new Set(['construction', 'magic', 'prayer', 'firemaking', 'herblore', 'fletching', 'crafting', 'cooking', 'smithing'])
+// Facility-bound skills offer the exact same actions at every place that has the
+// matching facility (bank, furnace & anvil, altar, stove) — they never vary by
+// location, so listing them in a place's World Map hub tells the player nothing
+// about that specific place. Must stay in sync with FACILITY_SKILLS in
+// scripts/seedWorldContent.cjs. Exported so the place map's facility spots (bank
+// modal, smithy/altar/stove markers) provably mirror the seeded reality.
+export const FACILITY_SKILL_MAP = {
+  bank: ['construction', 'magic', 'firemaking', 'herblore', 'fletching', 'crafting'],
+  furnace_anvil: ['smithing'],
+  altar: ['prayer'],
+  stove: ['cooking'],
+}
+export const FACILITY_SKILLS = new Set(Object.values(FACILITY_SKILL_MAP).flat())
 
 /**
  * True if a `skill` kind ref's skill varies by place (i.e. isn't a facility-bound skill

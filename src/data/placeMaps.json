@@ -14,6 +14,9 @@
       { "kind": "agility", "ref": "varrock", "label": "Rooftop Course", "x": 330, "y": 540 },
       { "kind": "gather", "refs": ["convert_log_to_plank", "convert_oak_log_to_plank", "convert_teak_log_to_plank", "convert_mahogany_log_to_plank"], "label": "Sawmill", "icon": "🪚", "x": 935, "y": 470 },
       { "facility": "bank", "label": "Bank of Varrick", "x": 523, "y": 487 },
+      { "facility": "furnace_anvil", "label": "Grand Smithy", "x": 825, "y": 195 },
+      { "facility": "altar", "label": "Royal Chapel", "x": 1048, "y": 262 },
+      { "facility": "stove", "label": "Market Stove", "x": 615, "y": 345 },
       { "screen": "store", "label": "Trading Post", "iconKey": "uncut_ruby", "x": 470, "y": 400 },
       { "kind": "skill", "group": "runecraft", "label": "Runic Sanctum", "x": 410, "y": 298 },
       { "kind": "skill", "group": "woodcutting", "label": "Old Forest", "x": 96, "y": 588 }

@@ -581,42 +581,6 @@
       "ref": "mining:rune_essence"
     },
     {
-      "kind": "skill",
-      "ref": "prayer:altar_big_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:altar_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:altar_dagganoth_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:altar_dragon_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:bury_big_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:bury_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:bury_dagganoth_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:bury_dragon_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:scatter_gargoyle_dust"
-    },
-    {
       "kind": "thieving",
       "ref": "villager"
     }
@@ -3238,46 +3202,6 @@
     },
     {
       "kind": "skill",
-      "ref": "cooking:cook_anglerfish"
-    },
-    {
-      "kind": "skill",
-      "ref": "cooking:cook_chicken"
-    },
-    {
-      "kind": "skill",
-      "ref": "cooking:cook_crab"
-    },
-    {
-      "kind": "skill",
-      "ref": "cooking:cook_eel"
-    },
-    {
-      "kind": "skill",
-      "ref": "cooking:cook_karam"
-    },
-    {
-      "kind": "skill",
-      "ref": "cooking:cook_manta_ray"
-    },
-    {
-      "kind": "skill",
-      "ref": "cooking:cook_meat"
-    },
-    {
-      "kind": "skill",
-      "ref": "cooking:cook_shark"
-    },
-    {
-      "kind": "skill",
-      "ref": "cooking:cook_shrimp"
-    },
-    {
-      "kind": "skill",
-      "ref": "cooking:cook_trout"
-    },
-    {
-      "kind": "skill",
       "ref": "crafting:black_d_hide_body"
     },
     {
@@ -3747,42 +3671,6 @@
     {
       "kind": "skill",
       "ref": "magic:tan_leather"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:altar_big_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:altar_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:altar_dagganoth_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:altar_dragon_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:bury_big_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:bury_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:bury_dagganoth_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:bury_dragon_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:scatter_gargoyle_dust"
     },
     {
       "kind": "skill",
@@ -4360,42 +4248,6 @@
     },
     {
       "kind": "skill",
-      "ref": "prayer:altar_big_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:altar_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:altar_dagganoth_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:altar_dragon_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:bury_big_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:bury_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:bury_dagganoth_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:bury_dragon_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:scatter_gargoyle_dust"
-    },
-    {
-      "kind": "skill",
       "ref": "runecraft:craft_chaos_rune"
     },
     {
@@ -4787,46 +4639,6 @@
     {
       "kind": "skill",
       "ref": "construction:build_teak_plank"
-    },
-    {
-      "kind": "skill",
-      "ref": "cooking:cook_anglerfish"
-    },
-    {
-      "kind": "skill",
-      "ref": "cooking:cook_chicken"
-    },
-    {
-      "kind": "skill",
-      "ref": "cooking:cook_crab"
-    },
-    {
-      "kind": "skill",
-      "ref": "cooking:cook_eel"
-    },
-    {
-      "kind": "skill",
-      "ref": "cooking:cook_karam"
-    },
-    {
-      "kind": "skill",
-      "ref": "cooking:cook_manta_ray"
-    },
-    {
-      "kind": "skill",
-      "ref": "cooking:cook_meat"
-    },
-    {
-      "kind": "skill",
-      "ref": "cooking:cook_shark"
-    },
-    {
-      "kind": "skill",
-      "ref": "cooking:cook_shrimp"
-    },
-    {
-      "kind": "skill",
-      "ref": "cooking:cook_trout"
     },
     {
       "kind": "skill",
@@ -5302,42 +5114,6 @@
     },
     {
       "kind": "skill",
-      "ref": "prayer:altar_big_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:altar_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:altar_dagganoth_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:altar_dragon_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:bury_big_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:bury_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:bury_dagganoth_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:bury_dragon_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:scatter_gargoyle_dust"
-    },
-    {
-      "kind": "skill",
       "ref": "runecraft:craft_law_rune"
     },
     {
@@ -5770,6 +5546,46 @@
     },
     {
       "kind": "skill",
+      "ref": "cooking:cook_anglerfish"
+    },
+    {
+      "kind": "skill",
+      "ref": "cooking:cook_chicken"
+    },
+    {
+      "kind": "skill",
+      "ref": "cooking:cook_crab"
+    },
+    {
+      "kind": "skill",
+      "ref": "cooking:cook_eel"
+    },
+    {
+      "kind": "skill",
+      "ref": "cooking:cook_karam"
+    },
+    {
+      "kind": "skill",
+      "ref": "cooking:cook_manta_ray"
+    },
+    {
+      "kind": "skill",
+      "ref": "cooking:cook_meat"
+    },
+    {
+      "kind": "skill",
+      "ref": "cooking:cook_shark"
+    },
+    {
+      "kind": "skill",
+      "ref": "cooking:cook_shrimp"
+    },
+    {
+      "kind": "skill",
+      "ref": "cooking:cook_trout"
+    },
+    {
+      "kind": "skill",
       "ref": "mining:iron"
     },
     {
@@ -5845,46 +5661,6 @@
     {
       "kind": "skill",
       "ref": "construction:build_teak_plank"
-    },
-    {
-      "kind": "skill",
-      "ref": "cooking:cook_anglerfish"
-    },
-    {
-      "kind": "skill",
-      "ref": "cooking:cook_chicken"
-    },
-    {
-      "kind": "skill",
-      "ref": "cooking:cook_crab"
-    },
-    {
-      "kind": "skill",
-      "ref": "cooking:cook_eel"
-    },
-    {
-      "kind": "skill",
-      "ref": "cooking:cook_karam"
-    },
-    {
-      "kind": "skill",
-      "ref": "cooking:cook_manta_ray"
-    },
-    {
-      "kind": "skill",
-      "ref": "cooking:cook_meat"
-    },
-    {
-      "kind": "skill",
-      "ref": "cooking:cook_shark"
-    },
-    {
-      "kind": "skill",
-      "ref": "cooking:cook_shrimp"
-    },
-    {
-      "kind": "skill",
-      "ref": "cooking:cook_trout"
     },
     {
       "kind": "skill",
@@ -6364,42 +6140,6 @@
     },
     {
       "kind": "skill",
-      "ref": "prayer:altar_big_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:altar_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:altar_dagganoth_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:altar_dragon_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:bury_big_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:bury_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:bury_dagganoth_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:bury_dragon_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:scatter_gargoyle_dust"
-    },
-    {
-      "kind": "skill",
       "ref": "runecraft:craft_death_rune"
     }
   ],
@@ -6447,46 +6187,6 @@
     {
       "kind": "skill",
       "ref": "construction:build_teak_plank"
-    },
-    {
-      "kind": "skill",
-      "ref": "cooking:cook_anglerfish"
-    },
-    {
-      "kind": "skill",
-      "ref": "cooking:cook_chicken"
-    },
-    {
-      "kind": "skill",
-      "ref": "cooking:cook_crab"
-    },
-    {
-      "kind": "skill",
-      "ref": "cooking:cook_eel"
-    },
-    {
-      "kind": "skill",
-      "ref": "cooking:cook_karam"
-    },
-    {
-      "kind": "skill",
-      "ref": "cooking:cook_manta_ray"
-    },
-    {
-      "kind": "skill",
-      "ref": "cooking:cook_meat"
-    },
-    {
-      "kind": "skill",
-      "ref": "cooking:cook_shark"
-    },
-    {
-      "kind": "skill",
-      "ref": "cooking:cook_shrimp"
-    },
-    {
-      "kind": "skill",
-      "ref": "cooking:cook_trout"
     },
     {
       "kind": "skill",
@@ -6966,42 +6666,6 @@
     },
     {
       "kind": "skill",
-      "ref": "prayer:altar_big_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:altar_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:altar_dagganoth_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:altar_dragon_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:bury_big_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:bury_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:bury_dagganoth_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:bury_dragon_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:scatter_gargoyle_dust"
-    },
-    {
-      "kind": "skill",
       "ref": "woodcutting:teak"
     }
   ],
@@ -7041,6 +6705,42 @@
     {
       "kind": "hunter",
       "ref": "hunt_wizard"
+    },
+    {
+      "kind": "skill",
+      "ref": "prayer:altar_big_bones"
+    },
+    {
+      "kind": "skill",
+      "ref": "prayer:altar_bones"
+    },
+    {
+      "kind": "skill",
+      "ref": "prayer:altar_dagganoth_bones"
+    },
+    {
+      "kind": "skill",
+      "ref": "prayer:altar_dragon_bones"
+    },
+    {
+      "kind": "skill",
+      "ref": "prayer:bury_big_bones"
+    },
+    {
+      "kind": "skill",
+      "ref": "prayer:bury_bones"
+    },
+    {
+      "kind": "skill",
+      "ref": "prayer:bury_dagganoth_bones"
+    },
+    {
+      "kind": "skill",
+      "ref": "prayer:bury_dragon_bones"
+    },
+    {
+      "kind": "skill",
+      "ref": "prayer:scatter_gargoyle_dust"
     },
     {
       "kind": "skill",
@@ -7115,46 +6815,6 @@
     {
       "kind": "skill",
       "ref": "construction:build_teak_plank"
-    },
-    {
-      "kind": "skill",
-      "ref": "cooking:cook_anglerfish"
-    },
-    {
-      "kind": "skill",
-      "ref": "cooking:cook_chicken"
-    },
-    {
-      "kind": "skill",
-      "ref": "cooking:cook_crab"
-    },
-    {
-      "kind": "skill",
-      "ref": "cooking:cook_eel"
-    },
-    {
-      "kind": "skill",
-      "ref": "cooking:cook_karam"
-    },
-    {
-      "kind": "skill",
-      "ref": "cooking:cook_manta_ray"
-    },
-    {
-      "kind": "skill",
-      "ref": "cooking:cook_meat"
-    },
-    {
-      "kind": "skill",
-      "ref": "cooking:cook_shark"
-    },
-    {
-      "kind": "skill",
-      "ref": "cooking:cook_shrimp"
-    },
-    {
-      "kind": "skill",
-      "ref": "cooking:cook_trout"
     },
     {
       "kind": "skill",
@@ -8245,42 +7905,6 @@
     {
       "kind": "skill",
       "ref": "mining:mithril"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:altar_big_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:altar_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:altar_dagganoth_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:altar_dragon_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:bury_big_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:bury_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:bury_dagganoth_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:bury_dragon_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:scatter_gargoyle_dust"
     },
     {
       "kind": "skill",

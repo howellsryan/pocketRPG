@@ -120,7 +120,8 @@
       "sub": "The starter town",
       "lore": "Where every adventurer's tale begins. A sleepy river town under an old castle, ringed by cabbage fields and the gentlest monsters in Eldermoor.",
       "facilities": [
-        "bank"
+        "bank",
+        "stove"
       ],
       "teleport": {
         "level": 45,
@@ -145,7 +146,9 @@
       "facilities": [
         "bank",
         "furnace_anvil",
-        "sawmill"
+        "sawmill",
+        "altar",
+        "stove"
       ],
       "teleport": {
         "level": 25,
@@ -170,7 +173,9 @@
       "facilities": [
         "bank",
         "furnace_anvil",
-        "sawmill"
+        "sawmill",
+        "altar",
+        "stove"
       ],
       "teleport": {
         "level": 31,
@@ -194,7 +199,9 @@
       "lore": "A sprawling, divided city of grand spires and crooked back-alleys — paradise for a light-fingered thief.",
       "facilities": [
         "bank",
-        "sawmill"
+        "sawmill",
+        "altar",
+        "stove"
       ],
       "teleport": {
         "level": 37,
@@ -240,7 +247,8 @@
       "lore": "A sun-baked toll town at the desert's edge, its great furnace roaring day and night for the caravans.",
       "facilities": [
         "bank",
-        "furnace_anvil"
+        "furnace_anvil",
+        "stove"
       ],
       "teleport": {
         "level": 48,
@@ -307,7 +315,9 @@
       "image": "/public/world/catherra.webp",
       "sub": "Fishing village on the bay",
       "lore": "Nets dry on every fence and the catch is always fresh. A calm coastal village beneath the northern hills.",
-      "facilities": [],
+      "facilities": [
+        "stove"
+      ],
       "teleport": {
         "level": 81,
         "xp": 91,
@@ -375,7 +385,9 @@
       "image": "/public/world/canifel.webp",
       "sub": "Hamlet of the haunted fens",
       "lore": "A shuttered village in the eastern marsh, where the fog never lifts and something always watches the road.",
-      "facilities": [],
+      "facilities": [
+        "altar"
+      ],
       "teleport": {
         "level": 87,
         "xp": 97,
@@ -397,7 +409,8 @@
       "sub": "Hall of the round table",
       "lore": "A noble hill-town of banners and knights-errant, the northernmost seat of honour in Eldermoor.",
       "facilities": [
-        "bank"
+        "bank",
+        "altar"
       ],
       "teleport": {
         "level": 61,
@@ -420,7 +433,8 @@
       "sub": "The southern port",
       "lore": "A salt-crusted harbour town of fishmongers and smugglers, where every ship south casts off from its crowded quays.",
       "facilities": [
-        "bank"
+        "bank",
+        "stove"
       ],
       "teleport": {
         "level": 51,
@@ -520,6 +534,14 @@
     "sawmill": {
       "label": "Sawmill",
       "icon": "🪚"
+    },
+    "altar": {
+      "label": "Altar",
+      "icon": "⛪"
+    },
+    "stove": {
+      "label": "Stove",
+      "icon": "🍳"
     }
   }
 }

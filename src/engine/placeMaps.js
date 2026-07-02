@@ -14,7 +14,9 @@
  *                                      travel prompt on start), e.g. a sawmill
  *                                      listing every log→plank conversion
  *   { x, y, facility: 'bank' }       — opens the place's bank modal (use bank +
- *                                      the train-anywhere facility skills)
+ *                                      the bank-bound facility skills); other
+ *                                      facilities (furnace_anvil/altar/stove)
+ *                                      open their skill's training screen
  *   { x, y, screen: '<SCREENS id>' } — navigates to an app screen (e.g. the
  *                                      trading post)
  * `label` overrides the display name; `icon` (emoji) / `iconKey` (gameIcons
@@ -27,7 +29,7 @@
  */
 import placeMapsData from '../data/placeMaps.json'
 import skillsData from '../data/skills.json'
-import { placeActivities, describeActivity } from './worldContent.js'
+import { placeActivities, describeActivity, FACILITY_SKILL_MAP } from './worldContent.js'
 
 function placeMapsSource() {
   return typeof placeMapsData !== 'undefined' ? placeMapsData : {}
@@ -49,9 +51,22 @@ export function spotType(spot) {
   return 'activity'
 }
 
-/** Skills the bank modal offers to train — the train-anywhere facility skills,
- * in display order. Kept provably in sync with FACILITY_SKILLS by test. */
-export const BANK_TRAINING_SKILLS = ['cooking', 'smithing', 'crafting', 'fletching', 'firemaking', 'herblore', 'prayer', 'magic', 'construction']
+/** Skills the bank modal offers to train — only the bank-bound facility skills
+ * (prayer/cooking/smithing live at their own altar/stove/furnace & anvil
+ * facilities), in display order. Kept provably in sync with the seeded
+ * FACILITY_SKILL_MAP by test. */
+export const BANK_TRAINING_SKILLS = ['crafting', 'fletching', 'firemaking', 'herblore', 'magic', 'construction']
+
+/**
+ * The single skill a non-bank facility spot trains (furnace_anvil → smithing,
+ * altar → prayer, stove → cooking), or null for the bank (its modal offers
+ * several) and unknown facilities.
+ */
+export function facilityTrainingSkill(facility) {
+  if (facility === 'bank') return null
+  const skills = FACILITY_SKILL_MAP[facility] || []
+  return skills.length === 1 ? skills[0] : null
+}
 
 /**
  * Activity refs a spot stands for. Implicit spots (ref/group/kind) are
