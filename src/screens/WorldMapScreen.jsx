@@ -180,16 +180,16 @@ export default function WorldMapScreen({ onNavigate, onAutoStart } = {}) {
 
   // Credit skip: the server owns the atomic 1-credit debit (/api/travel/skip);
   // the client then zeroes the countdown so the very next game tick runs the
-  // normal arrival path — journey phases chain and queued auto-starts fire
-  // exactly as if the walk finished on its own. Cloud accounts only (credits
-  // live server-side), and never mid-search — a journey's search is the time
-  // cost of the clue/quest itself, same rule as teleports.
+  // normal completion path — walking legs arrive, searches finish (final
+  // searches grant their content), journey phases chain, and queued
+  // auto-starts fire exactly as if the timer ran out on its own. Cloud
+  // accounts only (credits live server-side).
   const travelRef = useRef(travel)
   travelRef.current = travel
   const [skipBusy, setSkipBusy] = useState(false)
   const canCreditSkip = !!(getToken() && getCharacterId())
   const skipTravel = async () => {
-    if (skipBusy || !travelRef.current || travelRef.current.journey?.phase === 'search') return
+    if (skipBusy || !travelRef.current) return
     setSkipBusy(true)
     try {
       const res = await api.travelSkip()
@@ -197,10 +197,10 @@ export default function WorldMapScreen({ onNavigate, onAutoStart } = {}) {
       if (Number.isFinite(remaining)) {
         window.dispatchEvent(new CustomEvent(CREDITS_UPDATED_EVENT, { detail: { credits_remaining: remaining } }))
       }
-      // Re-read the live task: if the walk ended during the round-trip there
+      // Re-read the live task: if the leg ended during the round-trip there
       // is nothing left to finish (never resurrect a completed task).
       const cur = travelRef.current
-      if (cur && cur.journey?.phase !== 'search') setActiveTask({ ...cur, ticksRemaining: 0 })
+      if (cur) setActiveTask({ ...cur, ticksRemaining: 0 })
       addToast('💎 Skipped ahead — 1 credit', 'info')
     } catch (err) {
       if (err?.status === 402) addToast('Not enough credits to skip.', 'error')
@@ -494,8 +494,8 @@ export default function WorldMapScreen({ onNavigate, onAutoStart } = {}) {
                   : `Route: ${(travel.path || []).map((id) => getPlace(id)?.name || id).join(' → ')}`}
               </div>
               <div class="wm-travelbar-actions">
-                {canCreditSkip && !js?.searching && (
-                  <button class="wm-travelbar-skip" disabled={skipBusy} onClick={skipTravel} title="Finish this walk instantly — costs 1 credit">
+                {canCreditSkip && (
+                  <button class="wm-travelbar-skip" disabled={skipBusy} onClick={skipTravel} title={js?.searching ? 'Finish this search instantly — costs 1 credit' : 'Finish this walk instantly — costs 1 credit'}>
                     💎 Skip · 1 credit
                   </button>
                 )}
