@@ -137,7 +137,8 @@ export function captureTokenFromHash() {
 }
 
 async function request(path, options = {}) {
-  const headers = new Headers(options.headers || {})
+  const { timeoutMs = REQUEST_TIMEOUT_MS, ...fetchOptions } = options
+  const headers = new Headers(fetchOptions.headers || {})
   const token = getToken()
   if (token) headers.set('Authorization', `Bearer ${token}`)
   if (options.body && !headers.has('Content-Type')) headers.set('Content-Type', 'application/json')
@@ -148,10 +149,10 @@ async function request(path, options = {}) {
   }
 
   const controller = new AbortController()
-  const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
   let res
   try {
-    res = await fetch(apiUrl(path), { ...options, headers, signal: controller.signal })
+    res = await fetch(apiUrl(path), { ...fetchOptions, headers, signal: controller.signal })
   } catch (err) {
     if (err?.name === 'AbortError') {
       const timeoutErr = new Error('request_timeout')
@@ -285,6 +286,14 @@ export const api = {
     body: JSON.stringify({ item_id: itemId, quantity, source }),
   }),
   tradingPostListings: () => request('/api/trading-post/listings'),
+
+  // Chat answers can take several sequential reasoning-model calls, so this
+  // request gets a much longer leash than the 15s default.
+  chat: (message, history = []) => request('/api/chat', {
+    method: 'POST',
+    body: JSON.stringify({ message, history }),
+    timeoutMs: 60_000,
+  }),
 }
 
 // Fire-and-forget idle state write via navigator.sendBeacon. Survives tab

@@ -144,7 +144,9 @@ export default function WorldMapScreen({ onNavigate, onAutoStart } = {}) {
     grantXP('magic', chk.xp)
     updateWorldLocation(destId)
     setActiveTask(nextTask)
-    setOpenId(null)
+    // Landing free (not resuming a journey): open the place hub so its
+    // activities are one tap away. Mid-journey teleports keep the map clear.
+    setOpenId(nextTask ? null : destId)
     const name = getPlace(destId)?.name || destId
     addToast(searching ? `Teleported to ${name} — the search begins` : `Teleported to ${name}`, 'info')
   }
@@ -268,10 +270,12 @@ export default function WorldMapScreen({ onNavigate, onAutoStart } = {}) {
   const onPointerDown = (e) => {
     const pts = pointersRef.current
     pts.set(e.pointerId, { x: e.clientX, y: e.clientY })
-    // Never capture a pointer that started on a node: capture retargets the eventual
-    // click to the stage and the place tap would die. Pinch moves still reach us by
-    // bubbling — the stage fills the screen.
-    if (!e.target.closest('.wm-node')) stageRef.current?.setPointerCapture?.(e.pointerId)
+    // Never capture a pointer that started on a node or overlay UI (travel bar,
+    // legend, zoom controls): capture retargets the eventual click to the stage and
+    // the tap would die. Pinch moves still reach us by bubbling — the stage fills
+    // the screen.
+    const onUI = e.target.closest('.wm-node, .wm-travelbar, .wm-legend, .wm-ctl')
+    if (!onUI) stageRef.current?.setPointerCapture?.(e.pointerId)
     if (pts.size === 2) {
       // Second finger starts a pinch (even if it lands on a node): freeze the drag and
       // remember the starting view + finger midpoint/spread.
@@ -285,7 +289,7 @@ export default function WorldMapScreen({ onNavigate, onAutoStart } = {}) {
       }
       return
     }
-    if (pts.size > 2 || e.target.closest('.wm-node')) return
+    if (pts.size > 2 || onUI) return
     const v = viewRef.current
     dragRef.current = { x: e.clientX, y: e.clientY, vx: v.x, vy: v.y, moved: 0 }
   }

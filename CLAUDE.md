@@ -6,7 +6,7 @@
 - **Product**: menu-driven, tick-based, mobile-first fantasy **idle RPG**. Deterministic core; client runs the game loop locally and syncs to a server that is the source of truth for accounts, high-value grants, and competitive/social systems (§14).
 - **Code**: client in `src/`, Cloudflare server in `functions/`, content in `src/data/`, tests in `tests/`.
 - **Build**: deployed app is a generated, gitignored `index.html` + lazy `game-<hash>.js` (§12). Edit `src/**`, never the generated output.
-- Pass the §11 commit gate before committing. §16 (token discipline) applies to every session.
+- Pass the §11 commit gate before committing. §17 (token discipline) applies to every session.
 
 ## 1) Snapshot
 - Idle/sim fantasy RPG with OSRS-style combat/skilling (PocketRPG-owned fantasy naming).
@@ -118,7 +118,12 @@ Server is source of truth for everything that *can* be authoritative. The one de
 ## 15) MCP Server (`/api/mcp`)
 Stateless MCP server (JSON-RPC 2.0) at `functions/api/mcp.js` with its own OAuth 2.1 server. Architecture + how-to-add-a-tool (bridge tools vs save-intents, the `schema.js`/`tools.js`/test trio, `applyTaskResult.js` as single source of truth) live in path-scoped rule **`.claude/rules/mcp.md`** (auto-loads on `functions/api/mcp.js`, `functions/_lib/mcp/**`, OAuth paths, `src/screens/OAuthConsentScreen.jsx`, `tests/mcp*.test.ts`).
 
-## 16) Token efficiency (mandatory, every session)
+## 16) Help Chatbot (`/api/chat`)
+- In-game helper (floating 💬, `src/components/ChatWidget.jsx`) answering PocketRPG-only questions. Backend `functions/api/chat.js`: Workers AI (`env.AI`, model in `functions/_lib/chat/prompt.js`) + lexical retrieval over a generated knowledge index + **read-only** MCP tools via `callTool` (allowlist in `prompt.js`; never add write tools; `character_id` pinned server-side). No web access.
+- Zero-cost guards: 30 msgs/char/day + global daily **neuron budget** (reserve-then-settle, pinned under the free 10k neurons/day so AI spend never bills; `functions/_lib/chat/quota.js`, migration 0027); when exhausted or AI fails → retrieval-only answer.
+- Knowledge index: `npm run gen:knowledge` regenerates `functions/_lib/chat/knowledge.js` from `docs/game-guide.md` (player-facing; each `##` = one chunk) + `src/data/*.json`. Update guide + regenerate + commit when mechanics/content change.
+
+## 17) Token efficiency (mandatory, every session)
 In-session discipline mirroring Headroom's mechanical savings. Deviate only when the user asks for more detail.
 
 **A) Output shaping** (the most-violated rule — obey literally):

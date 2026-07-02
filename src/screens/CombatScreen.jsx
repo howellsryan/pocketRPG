@@ -29,7 +29,7 @@ import { onTick, pauseTicks, resumeTicks } from '../engine/tick.js'
 import { addItem, removeItem, freeSlots } from '../engine/inventory.js'
 import { getCombatType, equipItem, checkEquipRequirements } from '../engine/equipment.js'
 import { api, getToken, getCharacterId, getOneLifeMode, isDemoMode } from '../cloud/api.js'
-import { pullSave, applyCloudSave, requestCriticalPushSave, pushNow, isSaveConflict } from '../cloud/sync.js'
+import { pullSave, applyCloudSave, requestCriticalPushSave, pushNow } from '../cloud/sync.js'
 import { pvpApi } from '../cloud/pvp.js'
 import { triggerOneLifeDeath } from '../utils/oneLifeDeath.js'
 import monstersData from '../data/monsters.json'
@@ -1164,7 +1164,9 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       await claimRaidCompletion({ raidId, monster, slayerXpGained, isBossKill })
     } finally {
       raidSkipBusyRef.current = false
-      if (!isSaveConflict()) unlockGame()
+      // Pairs with this handler's lockGame — a conflict rollback re-applies
+      // the cloud copy in place under its own overlay.
+      unlockGame()
     }
   }
 
