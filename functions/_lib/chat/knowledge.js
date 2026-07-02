@@ -34,6 +34,30 @@ export const KNOWLEDGE_CHUNKS = [
   "text": "Combat is tick-based. Your max hit and accuracy come from your effective levels and equipment bonuses: melee max hit is floor(0.5 + effectiveStrength × (strengthBonus + 64) / 640), and hit chance compares your attack roll against the target's defence roll. Choose a combat style before fighting: Accurate (+3 effective Attack), Aggressive (+3 effective Strength), Defensive (+3 effective Defence), or Controlled (+1 to Attack, Strength and Defence). Auto-fight keeps killing the same monster, banking loot as you go."
  },
  {
+  "id": "guide_combat_level",
+  "title": "Combat level",
+  "tags": [
+   "guide"
+  ],
+  "text": "Your combat level summarises your fighting power for quests and PvP matchmaking. It is 0.25 × (Defence + Hitpoints + half your Prayer level) plus 0.325 × your best attack contribution — Attack + Strength for melee, or 1.5 × Ranged, or 1.5 × Magic — rounded down, with a minimum of 3. Training any combat skill (including Prayer and Hitpoints) raises it."
+ },
+ {
+  "id": "guide_equipment_and_gear",
+  "title": "Equipment and gear",
+  "tags": [
+   "guide"
+  ],
+  "text": "You have 11 equipment slots: weapon, ammo, head, body, legs, shield, neck, gloves, boots, cape and ring. Each piece adds attack, strength and defence bonuses that feed directly into the combat formulas. Metal gear progresses through tiers — Bronze, Iron, Steel, Mithril, Adamant, Rune and Dragon — with level requirements to equip. Compare an item's stats before equipping, and remember special gear effects (like dragonfire protection) only work while the item is worn."
+ },
+ {
+  "id": "guide_ranged_combat_and_ammunition",
+  "title": "Ranged combat and ammunition",
+  "tags": [
+   "guide"
+  ],
+  "text": "Ranged weapons need matching ammunition equipped in your ammo slot (for example arrows for a bow), and ammunition is consumed as you shoot — in live and idle combat alike. If you run out mid-fight your attacks stop with a warning, so stock plenty before long idle sessions. A few special weapons use built-in charges instead of ammunition."
+ },
+ {
   "id": "guide_special_attacks",
   "title": "Special attacks",
   "tags": [
@@ -74,6 +98,14 @@ export const KNOWLEDGE_CHUNKS = [
   "text": "Your hitpoints regenerate naturally at +1 HP every 60 seconds, in and out of combat. For faster healing, eat food or use potions; some weapon specials also heal."
  },
  {
+  "id": "guide_what_happens_when_you_die",
+  "title": "What happens when you die",
+  "tags": [
+   "guide"
+  ],
+  "text": "On a normal character, dying in PvE is forgiving: the fight ends, your hitpoints are restored to full, and you keep all your items and loot — nothing is dropped or lost. If you would die during idle combat or offline catch-up, the simulation stops at that point and you keep everything earned up to it; restock food and check your gear before restarting. One-life (hardcore) characters are the exception: death wipes the character permanently."
+ },
+ {
   "id": "guide_inventory_and_banking",
   "title": "Inventory and banking",
   "tags": [
@@ -95,7 +127,7 @@ export const KNOWLEDGE_CHUNKS = [
   "tags": [
    "guide"
   ],
-  "text": "Credits are a premium currency. You earn +1 credit for each daily task you complete, and can buy more in the store. Spend credits to skip an hour of your current idle activity instantly (Skip 1h), to skip straight to a boss or raid kill while fighting one, or to skip a slayer task you don't like. Credits are tracked server-side on each character."
+  "text": "Credits are a premium currency. You earn +1 credit for each daily task you complete, and can buy more in the store in packs of 10, 100 or 1,000 (real-money purchase via secure checkout). Spend credits to skip an hour of your current idle activity instantly (Skip 1h), to skip straight to a boss or raid kill while fighting one, or to skip a slayer task you don't like. Credits are tracked server-side on each character."
  },
  {
   "id": "guide_daily_tasks",
@@ -127,7 +159,7 @@ export const KNOWLEDGE_CHUNKS = [
   "tags": [
    "guide"
   ],
-  "text": "Clue scrolls come in four tiers: medium, hard, elite and master. Completing a clue takes time and rewards you from that tier's loot table — runes, coins, gear and rare cosmetic uniques that fill your collection log. Higher tiers roll rarer rewards."
+  "text": "Clue scrolls drop from monsters and come in four tiers: medium, hard, elite and master. Completing a clue takes time — about 5 minutes for medium, 15 for hard, 30 for elite and 60 for master — and rewards 1 to 4 rolls from that tier's loot table: runes, coins, gear and rare uniques (like the 2nd Age sets) that fill your collection log. Higher tiers roll rarer rewards."
  },
  {
   "id": "guide_minigames",
@@ -160,6 +192,30 @@ export const KNOWLEDGE_CHUNKS = [
    "guide"
   ],
   "text": "Magic is trained by casting combat spells, which need runes. Each spell has a level requirement, base damage, and rune cost per cast; you earn the spell's base XP plus 2 XP per damage dealt. Higher tiers (strike, bolt, blast and beyond) hit harder and cost pricier runes."
+ },
+ {
+  "id": "guide_construction",
+  "title": "Construction",
+  "tags": [
+   "guide"
+  ],
+  "text": "Construction is trained by building with planks — each build consumes one plank and grants instant XP: Plank (level 1, 29 XP), Oak Plank (level 15, 60 XP), Teak Plank (level 35, 90 XP) and Mahogany Plank (level 70, 140 XP). High Construction also unlocks two permanent perks: the Money Purse (level 70) lets you spend coins directly from your bank when shopping, and Master Rejuvenation (level 90) passively refills your special attack bar to 100% whenever it empties during a fight."
+ },
+ {
+  "id": "guide_dungeoneering",
+  "title": "Dungeoneering",
+  "tags": [
+   "guide"
+  ],
+  "text": "Dungeoneering is trained by clearing dungeons of increasing difficulty, from novice upward. Every clear grants Dungeoneering XP and also earns Dungeoneering tokens (0.15 tokens per XP, rounded up per clear). Spend tokens on exclusive rewards with level requirements — for example the Arcane Necklace at level 65 for 65,000 tokens, or the Chaotic weapons and kiteshields at level 80 for 300,000 tokens each. Dungeoneering rewards count toward your collection log."
+ },
+ {
+  "id": "guide_skill_capes_and_the_max_cape",
+  "title": "Skill capes and the Max cape",
+  "tags": [
+   "guide"
+  ],
+  "text": "Reach level 99 in a skill and you can buy that skill's cape of accomplishment from the store — a prestige item showing off your mastery. The Max cape requires being fully maxed: 2,376 total level (99 in every skill). Skill capes and the Max cape are self-obtained prestige rewards, so Ironman characters can buy them too."
  },
  {
   "id": "guide_trading_post_and_shops",
@@ -2022,5 +2078,165 @@ export const KNOWLEDGE_CHUNKS = [
    "runecraft"
   ],
   "text": "Runecrafting training options with level requirements and XP per action: Craft air rune (level 1, 10 XP), Craft mind rune (level 2, 11 XP), Craft water rune (level 5, 12 XP), Craft earth rune (level 9, 13 XP), Craft fire rune (level 14, 14 XP), Craft body rune (level 20, 15 XP), Craft cosmic rune (level 27, 16 XP), Craft chaos rune (level 35, 17 XP), Craft astral rune (level 40, 17.4 XP), Craft nature rune (level 44, 18 XP), Craft law rune (level 54, 19 XP), Craft death rune (level 65, 25 XP), Craft blood rune (level 77, 30 XP), Craft soul rune (level 90, 35 XP), Craft wrath rune (level 95, 40 XP)."
+ },
+ {
+  "id": "data_bosses",
+  "title": "Boss list: combat levels, HP and Slayer requirements",
+  "tags": [
+   "boss",
+   "bosses",
+   "slayer"
+  ],
+  "text": "All bosses with combat level, hitpoints and Slayer level requirement where one applies. Deepmaw Kraken (combat level 291, 255 HP, Slayer 87 required). Warlord Grondar (combat level 624, 255 HP). Commander Zephyra (combat level 596, 255 HP). Krylth the Defiler (combat level 650, 255 HP). Skyrender Kharra (combat level 580, 255 HP). Nagadoth Rex (combat level 303, 150 HP). Nagadoth Prime (combat level 303, 150 HP). Nagadoth Supreme (combat level 303, 150 HP). King Black Dragon (combat level 276, 150 HP). Venomcoil Matriarch (combat level 725, 500 HP). Ember Tyrant (combat level 702, 250 HP). Ashen Crucible (combat level 1400, 600 HP). Blighted Gauntlet (combat level 894, 1000 HP). The Grand Olm (combat level 1000, 800 HP). Hellbound Gorilla (combat level 275, 205 HP, Slayer 70 required). The Matron of Sugadinti (combat level 940, 2625 HP). Pestilent Blight (combat level 870, 1500 HP). Nylocas Vashilias (combat level 800, 1875 HP). Sotethseg (combat level 995, 3000 HP). Xarphus (combat level 960, 2250 HP). Verzik Vitura (combat level 1040, 2000 HP). Tecton (combat level 149, 500 HP). Vespara (combat level 202, 400 HP). Mudtadile (combat level 170, 450 HP). Khareth the Shadowbound (combat level 700, 520 HP). Gorroth, the Mountain-Ape (combat level 650, 600 HP). Khepra, the Scarab Matron (combat level 680, 500 HP). Sebakh the Devourer (combat level 720, 580 HP). Warden of Arasmus (combat level 900, 700 HP). Morvyn the Blighted (combat level 115, 100 HP). Dravok the Wretched (combat level 115, 100 HP). Gorath the Infested (combat level 115, 100 HP). Kaelor the Tainted (combat level 115, 100 HP). Torvek the Corrupted (combat level 115, 100 HP). Verin the Defiled (combat level 115, 100 HP). Threefang Cerberus (combat level 318, 600 HP, Slayer 91 required). Ashen Hydra (combat level 194, 320 HP, Slayer 95 required). Sovrathar, the Ashen Sovereign (combat level 250, 480 HP, Slayer 80 required). Gravehusk Brute (combat level 82, 60 HP). Boneclaw Revenant (combat level 98, 75 HP). Shroudwraith Specter (combat level 115, 90 HP). Stonegale Elemental (combat level 100, 80 HP). Cindermaw Serpent (combat level 120, 100 HP). Thornhide Colossus (combat level 140, 120 HP). Gravethorn Drake (combat level 110, 90 HP). Ironclad Guardian (combat level 130, 110 HP). Emberhowl Warlord (combat level 155, 150 HP). Razorwing Harpy (combat level 150, 140 HP)."
+ },
+ {
+  "id": "clue_medium",
+  "title": "Clue scroll tier: medium",
+  "tags": [
+   "clue",
+   "clues",
+   "clue scroll"
+  ],
+  "text": "A medium clue scroll takes about 5 minutes to complete and rewards 1 to 4 rolls from a table of 45 possible rewards (runes, coins and gear). Rare uniques: Pathfinder Boots, Spellweaver Boots, Holy Sandals, Spiked Manacles, Climbing Boots G, Lumira Mitre, Verdant Mitre, Krylth Mitre, Ancient Mitre, Zephyra Mitre, Grondar Mitre, Sacred Charm, Peace Blessing, Profane Charm, Honorable Blessing, Battle Charm, Elder Charm, Lumira Stole, Verdant Stole, Krylth Stole, Ancient Stole, Zephyra Stole, Grondar Stole, Robin Hood Hat."
+ },
+ {
+  "id": "clue_hard",
+  "title": "Clue scroll tier: hard",
+  "tags": [
+   "clue",
+   "clues",
+   "clue scroll"
+  ],
+  "text": "A hard clue scroll takes about 15 minutes to complete and rewards 1 to 4 rolls from a table of 70 possible rewards (runes, coins and gear). Rare uniques: Lumira D Hide Body, Lumira D Hide Chaps, Lumira D Hide Boots, Lumira D Hide Bracers, Lumira Coif, Verdant D Hide Body, Verdant D Hide Chaps, Verdant D Hide Boots, Verdant D Hide Bracers, Verdant Coif, Krylth D Hide Body, Krylth D Hide Chaps, Krylth D Hide Boots, Krylth D Hide Bracers, Krylth Coif, Ancient D Hide Body, Ancient D Hide Chaps, Ancient D Hide Boots, Ancient D Hide Bracers, Ancient Coif, Zephyra D Hide Body, Zephyra D Hide Chaps, Zephyra D Hide Boots, Zephyra D Hide Bracers, Zephyra Coif, Grondar D Hide Body, Grondar D Hide Chaps, Grondar D Hide Boots, Grondar D Hide Bracers, Grondar Coif, Amulet Of Glory T, 2nd Age Full Helm, 2nd Age Platebody, 2nd Age Platelegs, 2nd Age Plateskirt, 2nd Age Kiteshield, 2nd Age Range Coif, 2nd Age Range Top, 2nd Age Range Legs, 2nd Age Vambraces, 2nd Age Mage Hat, 2nd Age Robe Top, 2nd Age Robe Legs, 2nd Age Amulet, Lumira D Hide Shield, Verdant D Hide Shield, Krylth D Hide Shield, Ancient D Hide Shield, Zephyra D Hide Shield, Grondar D Hide Shield."
+ },
+ {
+  "id": "clue_elite",
+  "title": "Clue scroll tier: elite",
+  "tags": [
+   "clue",
+   "clues",
+   "clue scroll"
+  ],
+  "text": "A elite clue scroll takes about 30 minutes to complete and rewards 1 to 4 rolls from a table of 30 possible rewards (runes, coins and gear). Rare uniques: 2nd Age Longsword, 2nd Age Bow, 2nd Age Wand, 2nd Age Cloak."
+ },
+ {
+  "id": "clue_master",
+  "title": "Clue scroll tier: master",
+  "tags": [
+   "clue",
+   "clues",
+   "clue scroll"
+  ],
+  "text": "A master clue scroll takes about 60 minutes to complete and rewards 1 to 4 rolls from a table of 22 possible rewards (runes, coins and gear). Rare uniques: 2nd Age Druidic Robe Top, 2nd Age Druidic Robe Bottoms, 2nd Age Druidic Cloak, 2nd Age Druidic Staff, 2nd Age Pickaxe, 2nd Age Axe, Gold Pickaxe, Gold Axe, Gold Spade, Fancy Tiara."
+ },
+ {
+  "id": "daily_tasks_novice",
+  "title": "Daily tasks: Novice tier pool",
+  "tags": [
+   "daily",
+   "daily tasks",
+   "tasks"
+  ],
+  "text": "Novice daily tasks — one is assigned each day from this pool of 28: Craft Leather Gloves, Cut a Sapphire, Mine Iron Ore, Chop Oak Logs, Cook Shrimps, Catch Shrimps, Cull the Field Chickens, Rout the Cave Goblins, Smelt Bronze Bars, Craft a Leather Body, Defeat Pasture Bulls, Earn Mining XP, Earn Prayer XP, Cook Chicken, Mine Tin Ore, Chop Logs, Smith a Bronze Dagger, Craft Leather Boots, Craft a Leather Cowl, Fletch Arrow Shafts, Fletch Headless Arrows, Brew an Attack Potion, Craft Air Runes, Craft Fire Runes, Cull the Dustpaw Rats, Scatter the Bogling Sprites, Complete a Medium Clue, Hunt Cows."
+ },
+ {
+  "id": "daily_tasks_intermediate",
+  "title": "Daily tasks: Intermediate tier pool",
+  "tags": [
+   "daily",
+   "daily tasks",
+   "tasks"
+  ],
+  "text": "Intermediate daily tasks — one is assigned each day from this pool of 29: Cull the Lesser Fiends, Crack the Stoneback Crabs, Mine Mithril Ore, Cook Trout, Chop Willow Logs, Catch Trout, Smelt Iron Bars, Smith an Iron Scimitar, Craft a Hard Leather Body, Cut an Emerald, Slay the Highland Giants, Exterminate Broodfang Spiders, Complete a Slayer Task, Hunt the Duneback Crabs, Mine Coal, Mine Gold Ore, Chop Teak Logs, Chop Maple Logs, Catch Crabs, Brew Defence Potions, Brew a Prayer Potion, Craft Chaos Runes, Smelt Steel Bars, Fletch Willow Shortbows, Craft a Sapphire Amulet, Silence the Wailing Banshees, Banish Frostbite Imps, Hunt the Jeweller, Complete a Hard Clue."
+ },
+ {
+  "id": "daily_tasks_experienced",
+  "title": "Daily tasks: Experienced tier pool",
+  "tags": [
+   "daily",
+   "daily tasks",
+   "tasks"
+  ],
+  "text": "Experienced daily tasks — one is assigned each day from this pool of 29: Banish Arcane Adepts, Dispel Umbral Adepts, Mine Adamantite Ore, Cook Sharks, Chop Yew Logs, Catch Sharks, Smelt Adamant Bars, Cut a Ruby, Bind the Nether Demons, Topple the Briar Giants, Complete a Quest, Earn Agility XP, Slay the Sanguine Veld, Smith a Runeforged Scimitar, Slay the King Black Dragon, Slay the Deepmaw Kraken, Chop Mahogany Logs, Catch Raw Eels, Cook Karam, Fletch Yew Shortbows, Brew Super Strength, Brew a Ranging Potion, Craft Nature Runes, Craft Death Runes, Cut Down the Hollow Reavers, Slay Green Dragons, Complete a Minigame, Hunt the Grim Reaper, Complete an Elite Clue."
+ },
+ {
+  "id": "daily_tasks_master",
+  "title": "Daily tasks: Master tier pool",
+  "tags": [
+   "daily",
+   "daily tasks",
+   "tasks"
+  ],
+  "text": "Master daily tasks — one is assigned each day from this pool of 24: Slay Warlord Grondar, Slay Commander Zephyra, Slay Skyrender Kharra, Slay Krylth the Defiler, Conquer the Vaults of Xyren, Conquer the Cryptbound Champions, Mine Runite Ore, Chop Redwood Logs, Catch Anglerfish, Cook Anglerfish, Forge a Godsword Blade, Banish Nether Wraiths, Craft a Black D'hide Body, Catch Manta Rays, Cook Manta Rays, Fletch a Magic Shortbow, Brew a Lumira Brew, Craft Blood Runes, Craft a Dragonstone Amulet, Slay Black Dragons, Fell the Bone Wyverns, Defeat the Cinder Devils, Slay Nagadoth Rex, Smith a Runeforged Platebody."
+ },
+ {
+  "id": "daily_tasks_grandmaster",
+  "title": "Daily tasks: Grandmaster tier pool",
+  "tags": [
+   "daily",
+   "daily tasks",
+   "tasks"
+  ],
+  "text": "Grandmaster daily tasks — one is assigned each day from this pool of 24: Conquer the Crimson Night Theatre, Conquer the Tomb of Arasmus, Vanquish Warlord Grondar, Vanquish Commander Zephyra, Slay the Venomcoil Matriarch, Conquer the Blighted Gauntlet, Slay the Ember Tyrant, Slay the Ashen Crucible, Craft an Onyx Amulet, Cut a Zyrite, Craft Soul Runes, Forge a Visage Shield, Slay the Hellbound Gorilla, Brew Super Combat Potions, Craft Wrath Runes, Fletch Onyx Dragon Bolts, Hunt Master Trader, Cut an Onyx, Slay Nagadoth Prime, Slay Nagadoth Supreme, Slay the Threefang Cerberus, Conquer the Vaults of Xyren, Complete a Master Clue, Conquer the Cryptbound Champions."
+ },
+ {
+  "id": "collection_log_monsters",
+  "title": "Collection log: Monsters slots",
+  "tags": [
+   "collection log",
+   "collection",
+   "uniques"
+  ],
+  "text": "The Monsters collection log has 84 slots. Nether Demon: Nether Demon Whip. Adamant Dragon: Uncut Onyx, Dragon Visage. Vicious Black Dragon: Dragon Visage. Threefang Cerberus: Primeval Crystal, Skyfury Crystal, Evermore Crystal. Commander Zephyra: Lumira Sword, Zephyra Crossbow, Lumira Hilt. Blighted Gauntlet: Uncut Onyx, Shardglass Pickaxe, Shardglass Axe, Shardglass Helmet, Shardglass Plate Body, Shardglass Platelegs, Bow Of Faerdhinen, Blade Of Saeldor. Nagadoth Prime: Dragon Axe, Seers Ring. Nagadoth Rex: Dragon Axe, Berserker Ring, Warriors Ring. Nagadoth Supreme: Dragon Axe, Archers Ring. Nightfang Beast: Nightfang Bow. Hellbound Gorilla: Uncut Zyrite, Colossal Ballista. Runestone Gargoyle: Gargoyle Maul. Warlord Grondar: Grondar Chestplate, Grondar Tassets, Grondar Boots, Grondar Hilt. Ashen Hydra: Ashen Hydra Leather, Ashen Hydra Claw. Krylth the Defiler: Krylth Spear, Staff Of The Dead, Krylth Hilt. King Black Dragon: Dragon Pickaxe, Dragon Visage. Black Dragon: Dragon Visage, Dragon Full Helm. Deepmaw Kraken: Deepmaw Kraken Tentacle. Skyrender Kharra: Zephyra Helmet, Zephyra Chestplate, Zephyra Chainskirt, Zephyra Hilt. Marshscale Shaman: Dragon Warhammer. Runeforged Dragon: Uncut Onyx, Dragon Visage. Cinder Devil: Occult Necklace. Astral Mage: Dragon Boots. Astral Ranger: Dragon Boots. Astral Warrior: Dragon Boots. Venomcoil Matriarch: Venom Blowpipe, Trident Of Venom, Serpentine Helm, Uncut Onyx. Sovrathar, the Ashen Sovereign: Sovrathar Ashen Hilt, Cinderforged Helm, Sovereigns Cinderplate, Sovereigns Cindergreaves, Ashen Sovereigns Edge, Ashen Slayer Helm. Gravehusk Brute: Gravehusk Helm, Gravehusk Platebody. Boneclaw Revenant: Boneclaw Rapier, Boneclaw Shield. Shroudwraith Specter: Shroud Robes Top, Shroud Staff. Stonegale Elemental: Stonegale Bow, Stonegale Coif. Cindermaw Serpent: Cindermaw Maul, Cindermaw Scale Body. Thornhide Colossus: Thornhide Platelegs, Thornhide Gauntlets. Gravethorn Drake: Thornspine Shortbow, Drake Leather Body. Ironclad Guardian: Ironclad Longsword, Ironclad Helm. Emberhowl Warlord: Emberhowl Axe, Emberhowl Boots. Razorwing Harpy: Razorwing Crossbow, Razorwing Vambraces."
+ },
+ {
+  "id": "collection_log_raids",
+  "title": "Collection log: Raids slots",
+  "tags": [
+   "collection log",
+   "collection",
+   "uniques"
+  ],
+  "text": "The Raids collection log has 49 slots. Cryptbound Champions: Morvyn S Hood, Morvyn S Robetop, Morvyn S Robeskirt, Morvyn S Staff, Dravok S Helm, Dravok S Platebody, Dravok S Platelegs, Dravok S Greataxe, Gorath S Helm, Gorath S Platebody, Gorath S Chainskirt, Gorath S Warspear, Kaelor S Coif, Kaelor S Leathertop, Kaelor S Leatherskirt, Kaelor S Crossbow, Torvek S Helm, Torvek S Platebody, Torvek S Platelegs, Torvek S Hammers, Verin S Helm, Verin S Brassard, Verin S Plateskirt, Verin S Flail. Vaults of Xyren: Warped Buckler, Dragon Slayer Crossbow, Durn S Bulwark, Kodai Hat, Kodai Robe Top, Kodai Robe Bottom, Dragon Claws, Ancient Maul, Zaryth Vambraces, Ancestral Wand, Twisted Longbow. Tomb of Arasmus: Fang Of Osmun, Sunbearer Ring, Ward Of Elidria, Masari Mask, Masari Body, Masari Chaps, Shadow Of Tumaken. Crimson Night Theatre: Avernal Defender, Ghraxis Rapier, Sanguine Staff, Justicar Faceguard, Justicar Chestguard, Justicar Legguards, Scythe Of Vythar."
+ },
+ {
+  "id": "collection_log_minigames",
+  "title": "Collection log: Minigames slots",
+  "tags": [
+   "collection log",
+   "collection",
+   "uniques"
+  ],
+  "text": "The Minigames collection log has 12 slots. Viking Assault: Fighter Body, Fighter Helm. Fortress Clash: Halo, Decorative Top. Champion's Hall: Runeforged Defender, Dragon Defender. Deepsea Haul: Angler Net. Arcane Crucible: Imbued God Cape. Void Breach: Void King Helm, Void King Top, Void King Robe, Void King Gloves."
+ },
+ {
+  "id": "collection_log_clues",
+  "title": "Collection log: Clue Scrolls slots",
+  "tags": [
+   "collection log",
+   "collection",
+   "uniques"
+  ],
+  "text": "The Clue Scrolls collection log has 91 slots. Medium Clue: Pathfinder Boots, Spellweaver Boots, Holy Sandals, Spiked Manacles, Climbing Boots G, Lumira Mitre, Verdant Mitre, Krylth Mitre, Ancient Mitre, Zephyra Mitre, Grondar Mitre, Sacred Charm, Peace Blessing, Profane Charm, Honorable Blessing, Battle Charm, Elder Charm, Lumira Stole, Verdant Stole, Krylth Stole, Ancient Stole, Zephyra Stole, Grondar Stole, Robin Hood Hat. Hard Clue: Lumira D Hide Body, Lumira D Hide Chaps, Lumira D Hide Boots, Lumira D Hide Bracers, Lumira Coif, Verdant D Hide Body, Verdant D Hide Chaps, Verdant D Hide Boots, Verdant D Hide Bracers, Verdant Coif, Krylth D Hide Body, Krylth D Hide Chaps, Krylth D Hide Boots, Krylth D Hide Bracers, Krylth Coif, Ancient D Hide Body, Ancient D Hide Chaps, Ancient D Hide Boots, Ancient D Hide Bracers, Ancient Coif, Zephyra D Hide Body, Zephyra D Hide Chaps, Zephyra D Hide Boots, Zephyra D Hide Bracers, Zephyra Coif, Grondar D Hide Body, Grondar D Hide Chaps, Grondar D Hide Boots, Grondar D Hide Bracers, Grondar Coif, Amulet Of Glory T, 2nd Age Full Helm, 2nd Age Platebody, 2nd Age Platelegs, 2nd Age Plateskirt, 2nd Age Kiteshield, 2nd Age Range Coif, 2nd Age Range Top, 2nd Age Range Legs, 2nd Age Vambraces, 2nd Age Mage Hat, 2nd Age Robe Top, 2nd Age Robe Legs, 2nd Age Amulet, Lumira D Hide Shield, Verdant D Hide Shield, Krylth D Hide Shield, Ancient D Hide Shield, Zephyra D Hide Shield, Grondar D Hide Shield. Elite Clue: Rangers Tunic, Holy Wraps, Freminnik Kilt, 2nd Age Longsword, 2nd Age Bow, 2nd Age Wand, 2nd Age Cloak. Master Clue: 2nd Age Druidic Robe Top, 2nd Age Druidic Robe Bottoms, 2nd Age Druidic Cloak, 2nd Age Druidic Staff, 2nd Age Pickaxe, 2nd Age Axe, Gold Pickaxe, Gold Axe, Gold Spade, Fancy Tiara."
+ },
+ {
+  "id": "collection_log_skilling",
+  "title": "Collection log: Skilling slots",
+  "tags": [
+   "collection log",
+   "collection",
+   "uniques"
+  ],
+  "text": "The Skilling collection log has 13 slots. Construction Unlocks: Money Purse, Master Rejuvenation. Dungeoneering Rewards: Arcane Necklace, Chaotic Rapier, Chaotic Longsword, Chaotic Maul, Chaotic Crossbow, Chaotic Staff, Eagle Eyed Kiteshield, Arcane Kiteshield. Slayer Unlocks: Slayer Helmet, Slayer Defender, Gloves Of Slaughter."
+ },
+ {
+  "id": "collection_log_pvp",
+  "title": "Collection log: PvP slots",
+  "tags": [
+   "collection log",
+   "collection",
+   "uniques"
+  ],
+  "text": "The PvP collection log has 3 slots. Bot Rewards: Zesta Longsword, Zesta Vest, Zesta Skirt."
  }
 ]
