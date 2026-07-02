@@ -815,9 +815,14 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
               addToast(`💀 Slayer Task #${reward.totalTasks} Completed - ${reward.pointsEarned.toLocaleString()} points.`, 'levelup')
               recordGameEvent?.({ kind: 'slayer_task_complete' })
             } else if (slayerResult.onTask) {
+              // An on-task kill decrementing the remaining count is routine
+              // progress, not a milestone — it rides the 120s combat heartbeat
+              // (and the tab-hide/unload flush) like every other kill. Firing a
+              // critical save here made every slayer-grind kill a full
+              // /api/save PUT. Assignment/skip (SlayerScreen) and completion
+              // (above) remain critical saves.
               slayerTaskRef.current = slayerResult.task
               setSlayerTask(slayerResult.task)
-              requestCriticalPushSave(() => getSnapshot(), CRITICAL_SAVE_REASONS.SLAYER_TASK_CHANGE)
             }
           }
 
