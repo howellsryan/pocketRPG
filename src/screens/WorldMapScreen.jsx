@@ -12,6 +12,7 @@ import GameIcon from '../components/GameIcon.jsx'
 import { getSkillArt } from '../utils/skillArt.js'
 import WaxSeal from '../components/WaxSeal.jsx'
 import Modal from '../components/Modal.jsx'
+import { api, getToken, getCharacterId, CREDITS_UPDATED_EVENT } from '../cloud/api.js'
 
 // Facility chip glyph: bank reuses the existing in-game bank icon (the nav's coins
 // glyph); furnace & anvil gets its bespoke PlaceIcon; anything else falls back to its
@@ -174,6 +175,38 @@ export default function WorldMapScreen({ onNavigate, onAutoStart } = {}) {
       addToast(`${journey ? 'Journey abandoned' : 'Travel cancelled'} — you stop at ${getPlace(stopAt)?.name || stopAt}`, 'info')
     } else {
       addToast(journey ? 'Journey abandoned' : 'Travel cancelled', 'info')
+    }
+  }
+
+  // Credit skip: the server owns the atomic 1-credit debit (/api/travel/skip);
+  // the client then zeroes the countdown so the very next game tick runs the
+  // normal arrival path — journey phases chain and queued auto-starts fire
+  // exactly as if the walk finished on its own. Cloud accounts only (credits
+  // live server-side), and never mid-search — a journey's search is the time
+  // cost of the clue/quest itself, same rule as teleports.
+  const travelRef = useRef(travel)
+  travelRef.current = travel
+  const [skipBusy, setSkipBusy] = useState(false)
+  const canCreditSkip = !!(getToken() && getCharacterId())
+  const skipTravel = async () => {
+    if (skipBusy || !travelRef.current || travelRef.current.journey?.phase === 'search') return
+    setSkipBusy(true)
+    try {
+      const res = await api.travelSkip()
+      const remaining = Number(res?.credits_remaining)
+      if (Number.isFinite(remaining)) {
+        window.dispatchEvent(new CustomEvent(CREDITS_UPDATED_EVENT, { detail: { credits_remaining: remaining } }))
+      }
+      // Re-read the live task: if the walk ended during the round-trip there
+      // is nothing left to finish (never resurrect a completed task).
+      const cur = travelRef.current
+      if (cur && cur.journey?.phase !== 'search') setActiveTask({ ...cur, ticksRemaining: 0 })
+      addToast('💎 Skipped ahead — 1 credit', 'info')
+    } catch (err) {
+      if (err?.status === 402) addToast('Not enough credits to skip.', 'error')
+      else addToast(err?.message || 'Failed to skip travel.', 'error')
+    } finally {
+      setSkipBusy(false)
     }
   }
 
@@ -461,6 +494,11 @@ export default function WorldMapScreen({ onNavigate, onAutoStart } = {}) {
                   : `Route: ${(travel.path || []).map((id) => getPlace(id)?.name || id).join(' → ')}`}
               </div>
               <div class="wm-travelbar-actions">
+                {canCreditSkip && !js?.searching && (
+                  <button class="wm-travelbar-skip" disabled={skipBusy} onClick={skipTravel} title="Finish this walk instantly — costs 1 credit">
+                    💎 Skip · 1 credit
+                  </button>
+                )}
                 {tele?.ok && (
                   <button class="wm-travelbar-tele" onClick={() => castTeleport(travel.dest)} title={`Consumes ${formatRuneCost(tele.runes, itemsData)} · +${tele.xp} Magic XP`}>
                     <GameIcon iconKey={getSkillArt('magic').icon} color="#fff" size={16} /> Teleport ahead

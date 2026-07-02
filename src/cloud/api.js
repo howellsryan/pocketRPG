@@ -205,6 +205,10 @@ export const api = {
     method: 'POST',
     body: JSON.stringify({}),
   }),
+  travelSkip: () => request('/api/travel/skip', {
+    method: 'POST',
+    body: JSON.stringify({}),
+  }),
   purchaseUnlock: (unlockId) => request('/api/unlocks/purchase', {
     method: 'POST',
     body: JSON.stringify({ unlock_id: unlockId }),

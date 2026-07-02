@@ -2328,6 +2328,13 @@ html, body, #app {
   font-size: 13px; color: var(--color-parchment); background: transparent; border: 1px solid var(--color-void-border);
   border-radius: 8px; cursor: pointer; }
 .wm-travelbar-cancel:hover { border-color: var(--color-gold); color: var(--color-gold-light); }
+.wm-travelbar-skip { flex: 1; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  font-family: var(--font-display); font-weight: 700; font-size: 13px; color: var(--color-ink); cursor: pointer;
+  border-radius: 8px; background: linear-gradient(180deg, var(--color-gold-light), var(--color-gold-dim));
+  border: 1px solid var(--color-gold-dim); box-shadow: 0 2px 8px -3px #000; }
+.wm-travelbar-skip:hover { filter: brightness(1.05); }
+.wm-travelbar-skip:active { transform: translateY(1px); }
+.wm-travelbar-skip:disabled { opacity: 0.6; cursor: default; }
 .wm-travelbar-tele { flex: 1; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
   font-family: var(--font-display); font-weight: 700;
   font-size: 13px; color: #fff; cursor: pointer; border-radius: 8px;
