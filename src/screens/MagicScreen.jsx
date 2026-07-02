@@ -160,6 +160,9 @@ export default function MagicScreen({ onBack, onNavigate }) {
     setSelectedAlchemyItem(null)
     selectedAlchemyItemRef.current = null
     setActiveTask(null)
+    // Sent here from somewhere specific (the place map's bank modal): Stop &
+    // Back returns there rather than staying on the spell list.
+    if (onBack) onBack()
   }
 
   useEffect(() => {

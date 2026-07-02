@@ -163,8 +163,9 @@ export function resolveTaskStart(task, { location, travel }) {
 // Facility-bound skills (bank/furnace & anvil) offer the exact same actions at every
 // place that has the facility — they never vary by location, so listing them in a
 // place's World Map hub tells the player nothing about that specific place. Must stay
-// in sync with FACILITY_SKILLS in scripts/seedWorldContent.cjs.
-const FACILITY_SKILLS = new Set(['construction', 'magic', 'prayer', 'firemaking', 'herblore', 'fletching', 'crafting', 'cooking', 'smithing'])
+// in sync with FACILITY_SKILLS in scripts/seedWorldContent.cjs. Exported so the place
+// map's bank modal (train-anywhere skills) provably lists exactly this set.
+export const FACILITY_SKILLS = new Set(['construction', 'magic', 'prayer', 'firemaking', 'herblore', 'fletching', 'crafting', 'cooking', 'smithing'])
 
 /**
  * True if a `skill` kind ref's skill varies by place (i.e. isn't a facility-bound skill

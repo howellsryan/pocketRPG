@@ -56,7 +56,11 @@ function calculateRemainingActions(action, inventory, bank) {
   return minAvailable === Infinity ? null : minAvailable
 }
 
-export default function SkillingScreen({ initialSkillId, initialActionId, idleResult, onNavigate }) {
+// `onBack` (optional, from App's returnNav): where leaving this screen returns
+// to when the player was sent here from somewhere specific (the place map) —
+// delegates, the action-list header and Stop & Back all honour it. Without it
+// backing out walks the internal skill list as before.
+export default function SkillingScreen({ initialSkillId, initialActionId, idleResult, onNavigate, onBack }) {
   const { stats, inventory, bank, equipment, isIronman, updateInventory, updateBankDirect, grantXP, addToast, setActiveTask, requestActivityStart, activeTask, dungeoneeringTokens, awardDungeoneeringTokens, trySpendDungeoneeringTokens, loadGame, recordGameEvent } = useGame()
   const [selectedSkill, setSelectedSkill] = useState(initialSkillId || null)
   const [selectedAction, setSelectedAction] = useState(null)
@@ -78,7 +82,7 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
       <AgilityScreen
         initialActionId={initialActionId}
         idleResult={idleResult}
-        onBack={() => setSelectedSkill(null)}
+        onBack={onBack || (() => setSelectedSkill(null))}
       />
     )
   }
@@ -87,7 +91,7 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
   if (selectedSkill === 'slayer') {
     return (
       <SlayerScreen
-        onBack={() => setSelectedSkill(null)}
+        onBack={onBack || (() => setSelectedSkill(null))}
         onNavigate={onNavigate}
       />
     )
@@ -99,7 +103,7 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
       <ThievingScreen
         initialNpcId={initialActionId}
         idleResult={idleResult}
-        onBack={() => setSelectedSkill(null)}
+        onBack={onBack || (() => setSelectedSkill(null))}
       />
     )
   }
@@ -110,7 +114,7 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
       <HunterScreen
         initialActionId={initialActionId}
         idleResult={idleResult}
-        onBack={() => setSelectedSkill(null)}
+        onBack={onBack || (() => setSelectedSkill(null))}
       />
     )
   }
@@ -119,7 +123,7 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
   if (selectedSkill === 'farming') {
     return (
       <FarmingScreen
-        onBack={() => setSelectedSkill(null)}
+        onBack={onBack || (() => setSelectedSkill(null))}
       />
     )
   }
@@ -128,7 +132,7 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
   if (selectedSkill === 'construction') {
     return (
       <ConstructionScreen
-        onBack={() => setSelectedSkill(null)}
+        onBack={onBack || (() => setSelectedSkill(null))}
       />
     )
   }
@@ -137,7 +141,7 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
   if (selectedSkill === 'magic') {
     return (
       <MagicScreen
-        onBack={() => setSelectedSkill(null)}
+        onBack={onBack || (() => setSelectedSkill(null))}
       />
     )
   }
@@ -594,6 +598,7 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
     setSelectedAction(null)
     setSelectedAlchemyItem(null)
     setActiveTask(null)
+    if (onBack) onBack()
   }
 
   // Mirror the live per-action progress + session tally onto the global task so
@@ -730,7 +735,7 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
           skill={selectedSkill}
           xp={skillXP}
           level={skillLevel}
-          onBack={() => setSelectedSkill(null)}
+          onBack={onBack || (() => setSelectedSkill(null))}
           right={selectedSkill === 'dungeoneering' && (
             <div class="inline-flex rounded-full border border-[var(--color-void-border)] bg-[var(--color-void-light)] px-2.5 py-1 text-[11px] font-[var(--font-mono)] text-[var(--color-gold)]">
               {formatNumber(dungeoneeringTokens)} tokens

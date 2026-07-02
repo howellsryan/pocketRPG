@@ -12,17 +12,10 @@
       { "kind": "combat", "ref": "blighted_gauntlet", "x": 588, "y": 642 },
       { "kind": "combat", "ref": "ashen_crucible", "x": 64, "y": 330 },
       { "kind": "agility", "ref": "varrock", "label": "Rooftop Course", "x": 330, "y": 540 },
-      { "kind": "gather", "ref": "convert_mahogany_log_to_plank", "label": "Sawmill", "x": 935, "y": 470 },
-      { "kind": "skill", "group": "smithing", "label": "Grand Smithy", "x": 825, "y": 195 },
-      { "kind": "skill", "group": "crafting", "label": "Artisans' Row", "x": 930, "y": 268 },
-      { "kind": "skill", "group": "cooking", "label": "Market Kitchens", "x": 470, "y": 400 },
-      { "kind": "skill", "group": "magic", "label": "Mage Hall", "x": 152, "y": 385 },
-      { "kind": "skill", "group": "prayer", "label": "Royal Chapel", "x": 1048, "y": 262 },
-      { "kind": "skill", "group": "herblore", "label": "Apothecary", "x": 858, "y": 420 },
+      { "kind": "gather", "refs": ["convert_log_to_plank", "convert_oak_log_to_plank", "convert_teak_log_to_plank", "convert_mahogany_log_to_plank"], "label": "Sawmill", "icon": "🪚", "x": 935, "y": 470 },
+      { "facility": "bank", "label": "Bank of Varrick", "x": 523, "y": 487 },
+      { "screen": "store", "label": "Trading Post", "iconKey": "uncut_ruby", "x": 470, "y": 400 },
       { "kind": "skill", "group": "runecraft", "label": "Runic Sanctum", "x": 410, "y": 298 },
-      { "kind": "skill", "group": "fletching", "label": "Fletchers' Green", "x": 268, "y": 248 },
-      { "kind": "skill", "group": "firemaking", "label": "Bonfire Yard", "x": 588, "y": 306 },
-      { "kind": "skill", "group": "construction", "label": "Builders' Yard", "x": 700, "y": 462 },
       { "kind": "skill", "group": "woodcutting", "label": "Old Forest", "x": 96, "y": 588 }
     ]
   }

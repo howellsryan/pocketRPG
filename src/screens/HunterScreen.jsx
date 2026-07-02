@@ -160,6 +160,9 @@ export default function HunterScreen({ initialActionId, idleResult, onBack }) {
     setHunter(null)
     hunterRef.current = null
     setActiveTask(null)
+    // Stop & Back leaves the screen the way it was entered (skills list, or a
+    // place map's returnTo) — same pattern as the other delegated skills.
+    if (onBack) onBack()
   }
 
   if (!hunter) {

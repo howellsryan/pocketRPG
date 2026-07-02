@@ -85,7 +85,7 @@ function fakeTaskFor(kind, ref) {
   }
 }
 
-export default function WorldMapScreen({ onNavigate, onAutoStart } = {}) {
+export default function WorldMapScreen({ onNavigate, onAutoStart, initialView } = {}) {
   const {
     worldLocation, updateWorldLocation, activeTask, setActiveTask, addToast, requestActivityStart,
     inventory, bank, equipment, stats, itemsData, updateInventory, updateBankDirect, grantXP,
@@ -171,7 +171,9 @@ export default function WorldMapScreen({ onNavigate, onAutoStart } = {}) {
     }
     if (requestActivityStart(task)) {
       if (kind === 'minigame') onNavigate?.(SCREENS.MINIGAMES)
-      else onAutoStart?.(autoStartFromTask(task))
+      // Starts from the place map carry a returnTo so the owning screen's
+      // back/stop buttons come back to this map, not a hardcoded list.
+      else onAutoStart?.(autoStartFromTask(task), mapPlaceId ? { screen: SCREENS.WORLD_MAP, data: { view: 'place' } } : undefined)
     }
   }
   // Turning back keeps the legs already walked: snap to the last node fully reached
@@ -209,8 +211,10 @@ export default function WorldMapScreen({ onNavigate, onAutoStart } = {}) {
 
   const [openId, setOpenId] = useState(null)
   // Full-screen place map (PlaceMapView) for the place the player is at, when
-  // placeMaps.json defines one — opened instead of the hub.
-  const [mapPlaceId, setMapPlaceId] = useState(null)
+  // placeMaps.json defines one — opened instead of the hub. `initialView:
+  // 'place'` (a skilling screen's back/stop returnTo) reopens it on mount.
+  const [mapPlaceId, setMapPlaceId] = useState(() =>
+    initialView === 'place' && placeHasMap(here) ? here : null)
   // Generated map art (scripts/tripo-worldmap.mjs → world.json `mapImage`):
   // when set and loadable it replaces the painted procedural terrain; any
   // load failure falls straight back so the chart never renders blank.
@@ -388,6 +392,7 @@ export default function WorldMapScreen({ onNavigate, onAutoStart } = {}) {
           place={getPlace(mapPlaceId)}
           onClose={() => setMapPlaceId(null)}
           onActivate={activateActivity}
+          onNavigate={onNavigate}
         />
       )}
     </div>
