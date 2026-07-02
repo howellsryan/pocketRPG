@@ -658,6 +658,22 @@ html, body, #app {
 .fm-navrail { background-color: var(--fm-vellum); background-image: var(--fm-tex-parch); background-size: 400px; border-right: 1px solid var(--fm-rule); }
 .fm-navbrand { font-family: var(--font-display); font-weight: 800; letter-spacing: 0.02em; background: var(--fm-gilt-text); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent; }
 
+/* Desktop top bar joins the parchment chrome too; mobile keeps the black bar.
+   Same token remap as .forge-shell so var-based text reads as ink on vellum —
+   hardcoded dark chips (skip/credits pills, HP track) stay iron-on-parchment. */
+@media (min-width: 768px) {
+  .fm-topbar {
+    background-color: var(--fm-vellum);
+    background-image: var(--fm-tex-parch);
+    background-size: 400px;
+    border-bottom-color: var(--fm-rule);
+    --color-parchment: var(--fm-ink-soft);
+    --color-parchment-dark: var(--fm-ink-faint);
+    --color-gold: var(--fm-brass);
+    --color-gold-dim: var(--fm-brass-lo);
+  }
+}
+
 /* Emblem primitive */
 .skill-emblem { position: relative; pointer-events: none; }
 .skill-emblem__glow { position: absolute; inset: -8%; filter: blur(9px); }
