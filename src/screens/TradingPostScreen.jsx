@@ -41,7 +41,8 @@ function generalStoreSellPrice(item) {
 }
 
 // Mode is 'market' (search) or 'offers' (my 3 slots).
-export default function TradingPostScreen({ onBuyCredits }) {
+// `onBack` (from App): returns to the screen the player came from.
+export default function TradingPostScreen({ onBuyCredits, onBack }) {
   const {
     inventory,
     bank,
@@ -779,8 +780,19 @@ export default function TradingPostScreen({ onBuyCredits }) {
   return (
     <div class="forge-shell h-full flex flex-col overflow-hidden">
       <div class="px-4 pt-3 pb-3 flex-shrink-0">
-        <div class="flex justify-between items-baseline mb-3">
-          <h2 class="font-[var(--font-display)] text-[15px] font-bold text-[var(--color-gold)] m-0">{isIronman ? 'General Store' : 'Trading Post'}</h2>
+        <div class="flex justify-between items-center mb-3">
+          <div class="flex items-center gap-1 min-w-0">
+            {onBack && (
+              <button
+                onClick={onBack}
+                aria-label="Back"
+                class="flex-shrink-0 w-11 h-11 -my-2 -ml-2 flex items-center justify-center text-[var(--color-gold)] bg-transparent border-0 cursor-pointer active:opacity-70"
+              >
+                <span class="text-xl leading-none">← Back</span>
+              </button>
+            )}
+            <h2 class="font-[var(--font-display)] text-[15px] font-bold text-[var(--color-gold)] m-0">{isIronman ? 'General Store' : 'Trading Post'}</h2>
+          </div>
           <span class="inline-flex items-center gap-1 text-[11px] text-[var(--color-gold)] font-[var(--font-mono)]">
             <GameIcon iconKey="coins" size={13} color="var(--color-gold)" /> {coins.toLocaleString()}
           </span>

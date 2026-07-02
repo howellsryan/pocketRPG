@@ -42,9 +42,10 @@ function hasItemAnywhere(itemId, inventory, bank, equipment) {
   return false
 }
 
-// `onBack` (optional, from App's returnNav): where Stop & Back returns to when
-// the player was sent here from somewhere specific (the place map's sawmill).
-export default function GatherScreen({ initialTaskId, idleResult, onBack }) {
+// `onBack` (optional, from App's returnNav): the place-map origin (sawmill)
+// when the player was sent here. `onStopBack` (from App): where Stop & Back
+// returns to — that origin, or the previous screen.
+export default function GatherScreen({ initialTaskId, idleResult, onBack, onStopBack }) {
   const { inventory, bank, equipment, stats, updateInventory, updateBankDirect, addToast, setActiveTask, requestActivityStart, activeTask: globalActiveTask, itemsData, recordGameEvent } = useGame()
   const [category, setCategory] = useState('all')
   const [activeTask, setLocalTask] = useState(null)
@@ -294,7 +295,8 @@ export default function GatherScreen({ initialTaskId, idleResult, onBack }) {
     if (taskRef.current) taskRef.current = { ...taskRef.current, stopped: true }
     setLocalTask(null)
     setActiveTask(null)
-    if (onBack) onBack()
+    const back = onStopBack || onBack
+    if (back) back()
   }
 
   // Resume a gather already running in the background (navigated away & back).

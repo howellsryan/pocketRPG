@@ -62,8 +62,10 @@ function CompactToast({ toast, onDismiss }) {
 export default function ToastContainer() {
   const { toasts, dismissToast } = useGame()
 
+  // z-[1100] keeps toasts above Modal overlays (z-[1000]) — e.g. the world
+  // map / place-modal action pickers — so error feedback stays visible.
   return (
-    <div class="fixed top-14 left-0 right-0 z-[60] flex flex-col items-center gap-2.5 pointer-events-none px-4">
+    <div class="fixed top-14 left-0 right-0 z-[1100] flex flex-col items-center gap-2.5 pointer-events-none px-4">
       {toasts.map(toast => <CompactToast key={toast.id} toast={toast} onDismiss={dismissToast} />)}
     </div>
   )

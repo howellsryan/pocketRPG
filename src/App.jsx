@@ -175,7 +175,6 @@ function completeClueSolve(clueTask, { updateBankDirect, getSnapshot, addToast, 
       applyServerCollectionLogEntries(res?.collectionLogEntries || [])
       const granted = Array.isArray(res?.granted) ? res.granted : []
       if (granted.length > 0) emitRewardReveal(title, clueTask.icon || '📜', granted)
-      else addToast(`${clueTask.icon || '📜'} Clue complete — no rewards.`, 'info')
     }).catch((err) => {
       addToast(`Clue claim failed: ${err?.message || 'server_error'}`, 'error')
     })
@@ -294,6 +293,7 @@ function GameApp() {
     characterUnlocks, dailyTaskStates, setDailyTasks, recordGameEvent, updateWorldLocation, worldLocation } = useGame()
   const pvp = usePvp()
   const [screen, setScreen] = useState(SCREENS.HOME)
+  const prevScreenRef = useRef(null) // screen before the current one (set by navigate)
   const [menuOpen, setMenuOpen] = useState(false)
   const [gameReady, setGameReady] = useState(false)
   const [activity, setActivity] = useState(null)
@@ -479,7 +479,6 @@ function GameApp() {
         if (nextTask) {
           setActiveTask(nextTask)
           activeTaskRef.current = nextTask
-          addToast(`🗺️ Another scroll — the trail continues (${nextTask.journey.steps.length} places)`, 'info')
         }
       }
       return settled
@@ -1326,11 +1325,14 @@ function GameApp() {
               try { localStorage.removeItem('pocketrpg_activeTask') } catch {}
               completeJourneyContent(task.journey, task.dest)
             } else if (step) {
+              // Clue trails advance silently — per-waypoint toasts were noise.
               if (step.kind === 'search') {
                 updateWorldLocation(task.dest)
-                const s = journeyStatus(step.next)
-                addToast(`🔎 Searching ${travelDestName(task)} (${s?.step}/${s?.steps})`, 'info')
-              } else {
+                if (task.journey?.kind !== 'clue') {
+                  const s = journeyStatus(step.next)
+                  addToast(`🔎 Searching ${travelDestName(task)} (${s?.step}/${s?.steps})`, 'info')
+                }
+              } else if (task.journey?.kind !== 'clue') {
                 addToast(`🧭 The trail leads on to ${travelDestName(step.next)}`, 'info')
               }
               setActiveTask(step.next)
@@ -1419,7 +1421,6 @@ function GameApp() {
             setActiveTask(null)
             activeTaskRef.current = null
             try { localStorage.removeItem('pocketrpg_activeTask') } catch {}
-            addToast(`No ${itemsData[clueTask.requiresItem]?.name || clueTask.requiresItem} left.`, 'info')
           } else {
             setActiveTask({ ...task, ticksRemaining: total, totalTicks: total, justCompleted: false }, { skipCloudSync: true })
           }
@@ -1765,6 +1766,10 @@ function GameApp() {
       notifyDemoLocked()
       return
     }
+    // Remember where the player came from (screen id only — carrying the old
+    // actionData back could re-fire its auto-start) so back/stop buttons can
+    // return there.
+    if (scr !== screen) prevScreenRef.current = screen
     // Every activity except combat persists across screens — skills and gathering
     // keep accruing in the background. Only combat stops when the player leaves.
     const currentTask = getActiveTask()
@@ -2691,27 +2696,32 @@ function GameApp() {
     // back/stop buttons this callback — back to wherever the player came from.
     const rt = actionData?.returnTo
     const returnNav = rt?.screen ? () => navigate(rt.screen, rt.data) : undefined
+    // Fallback for screens without a returnTo: back to the previous screen.
+    const prev = prevScreenRef.current
+    const backToPrev = prev ? () => navigate(prev) : undefined
+    // Stop & Back on the skill screens: place-map origin wins, else last screen.
+    const stopBackNav = returnNav || backToPrev
     switch (screen) {
       case SCREENS.HOME:      return <HomeScreen onNavigate={navigate} onLogout={handleLogoutToCharacterSelect} onManualSave={handleManualSave} isCloudAccount={!!getToken() && !!getCharacterId()} removeAds={removeAds} identityId={identityId} characterId={getCharacterId()} stripeLinks={stripeLinks} />
       case SCREENS.STATS:     return <StatsScreen />
       case SCREENS.INVENTORY: return <InventoryScreen />
       case SCREENS.EQUIPMENT: return <EquipmentScreen />
       case SCREENS.ARMOURY:   return <ArmouryScreen />
-      case SCREENS.BANK:      return <BankScreen />
+      case SCREENS.BANK:      return <BankScreen onBack={backToPrev} />
       case SCREENS.COMBAT:    return <CombatScreen onNavigate={navigate} initialMonsterId={actionData?.monsterId} initialRaidId={actionData?.raidId} onCombatStatusChange={setIsInCombat} />
-      case SCREENS.SKILLS:    return <SkillingScreen initialSkillId={actionData?.skillId} initialActionId={actionData?.actionId} idleResult={idleResult} onNavigate={navigate} onBack={returnNav} />
-      case SCREENS.GATHER:    return <GatherScreen initialTaskId={actionData?.gatherTaskId} idleResult={idleResult} onBack={returnNav} />
-      case SCREENS.AGILITY:     return <AgilityScreen initialActionId={actionData?.actionId} idleResult={idleResult} onBack={returnNav} />
-      case SCREENS.MAGIC:       return <MagicScreen onNavigate={navigate} onBack={returnNav} />
+      case SCREENS.SKILLS:    return <SkillingScreen initialSkillId={actionData?.skillId} initialActionId={actionData?.actionId} idleResult={idleResult} onNavigate={navigate} onBack={returnNav} onStopBack={stopBackNav} />
+      case SCREENS.GATHER:    return <GatherScreen initialTaskId={actionData?.gatherTaskId} idleResult={idleResult} onBack={returnNav} onStopBack={stopBackNav} />
+      case SCREENS.AGILITY:     return <AgilityScreen initialActionId={actionData?.actionId} idleResult={idleResult} onBack={returnNav} onStopBack={stopBackNav} />
+      case SCREENS.MAGIC:       return <MagicScreen onNavigate={navigate} onBack={returnNav} onStopBack={stopBackNav} />
       case SCREENS.WORLD_MAP:   return isWorldMapEnabled() ? <WorldMapScreen onNavigate={navigate} onAutoStart={resumeAutoStart} initialView={actionData?.view} /> : <HomeScreen onNavigate={navigate} onLogout={handleLogoutToCharacterSelect} onManualSave={handleManualSave} isCloudAccount={!!getToken() && !!getCharacterId()} removeAds={removeAds} identityId={identityId} characterId={getCharacterId()} stripeLinks={stripeLinks} />
-      case SCREENS.STORE:       return <TradingPostScreen />
+      case SCREENS.STORE:       return <TradingPostScreen onBack={backToPrev} />
       case SCREENS.QUESTS:         return <QuestsScreen onNavigate={navigate} />
       case SCREENS.CLUES:          return <CluesScreen onNavigate={navigate} />
       case SCREENS.MINIGAMES:      return <MinigamesScreen initialTaskId={actionData?.minigameTaskId} />
       case SCREENS.COLLECTION_LOG: return <CollectionLogScreen />
       case SCREENS.LEADERBOARD:    return <LeaderboardScreen />
-      case SCREENS.HELP:                return <HelpScreen />
-      case SCREENS.CHARACTER_UNLOCKS:   return <CharacterUnlockScreen onBack={() => navigate(SCREENS.HOME)} />
+      case SCREENS.HELP:                return <HelpScreen onNavigate={navigate} />
+      case SCREENS.CHARACTER_UNLOCKS:   return <CharacterUnlockScreen onBack={backToPrev || (() => navigate(SCREENS.HOME))} />
       case SCREENS.CONNECT_AI:          return <ConnectAiScreen isCloudAccount={!!getToken() && !!getCharacterId()} />
       default:                  return <HomeScreen onNavigate={navigate} onLogout={handleLogoutToCharacterSelect} onManualSave={handleManualSave} isCloudAccount={!!getToken() && !!getCharacterId()} />
     }

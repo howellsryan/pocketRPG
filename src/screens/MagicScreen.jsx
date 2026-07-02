@@ -49,7 +49,7 @@ function groupActions(actions) {
   return groups
 }
 
-export default function MagicScreen({ onBack, onNavigate }) {
+export default function MagicScreen({ onBack, onNavigate, onStopBack }) {
   const {
     stats, inventory, bank, equipment, isIronman,
     grantXP, updateInventory, updateBankDirect, addToast, setActiveTask, requestActivityStart, activeTask
@@ -160,9 +160,10 @@ export default function MagicScreen({ onBack, onNavigate }) {
     setSelectedAlchemyItem(null)
     selectedAlchemyItemRef.current = null
     setActiveTask(null)
-    // Sent here from somewhere specific (the place map's bank modal): Stop &
-    // Back returns there rather than staying on the spell list.
-    if (onBack) onBack()
+    // Stop & Back returns to where the player came from — the place map's bank
+    // modal (returnTo) or the previous screen.
+    const back = onStopBack || onBack
+    if (back) back()
   }
 
   useEffect(() => {

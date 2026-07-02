@@ -13,10 +13,15 @@ export const NAV_TABS = [
   { id: SCREENS.CLUES,              label: 'Clues',          icon: '🗝️', iconKey: 'clue_scroll_hard' },
   { id: SCREENS.MINIGAMES,          label: 'Minigames',      icon: '🎮', iconKey: 'purple_sweets' },
   { id: SCREENS.GATHER,             label: 'Gather',         icon: '🌿', iconKey: 'kingsherb' },
-  { id: SCREENS.COLLECTION_LOG,     label: 'Collection Log', icon: '📖', iconKey: 'open_book', iconColor: 'var(--fm-brass-lo)', iconSize: 28 },
-  { id: SCREENS.LEADERBOARD,        label: 'Leaderboard',    icon: '🏆', iconKey: 'progression', iconSize: 22 },
-  { id: SCREENS.ARMOURY,            label: 'Armoury',        icon: '🗡️', iconKey: 'iron_longsword' },
   { id: SCREENS.HELP,               label: 'Settings',       icon: '🧭', iconKey: 'tinderbox' },
-  { id: SCREENS.CHARACTER_UNLOCKS,  label: 'Unlocks',        icon: '✨', iconKey: 'master_rejuvenation' },
-  { id: SCREENS.CONNECT_AI,         label: 'Connect AI',     icon: '🤖', iconKey: 'brain', iconColor: '#D97757', iconSize: 28 },
+]
+
+// Screens reachable from the Settings screen (HelpScreen) instead of the nav
+// rails — keeps SideNav/BurgerMenu short on mobile and desktop.
+export const SETTINGS_NAV_LINKS = [
+  { id: SCREENS.CONNECT_AI,        label: 'Connect AI',        iconKey: 'brain', iconColor: '#D97757', iconSize: 28 },
+  { id: SCREENS.CHARACTER_UNLOCKS, label: 'Character Unlocks', iconKey: 'master_rejuvenation' },
+  { id: SCREENS.ARMOURY,           label: 'Armoury',           iconKey: 'iron_longsword' },
+  { id: SCREENS.COLLECTION_LOG,    label: 'Collection Log',    iconKey: 'open_book', iconColor: 'var(--fm-brass-lo)', iconSize: 28 },
+  { id: SCREENS.LEADERBOARD,       label: 'Leaderboard',       iconKey: 'progression', iconSize: 22 },
 ]

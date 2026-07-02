@@ -16,7 +16,7 @@ import itemsData from '../data/items.json'
 import { recordCollectionLogDrop } from '../cloud/collectionLog.js'
 import { BUILDING_ACTIONS, UNLOCKABLES } from '../engine/construction.js'
 
-export default function ConstructionScreen({ onBack }) {
+export default function ConstructionScreen({ onBack, onStopBack }) {
   const {
     stats, inventory, bank,
     grantXP, updateInventory, updateBankDirect, addToast,
@@ -90,9 +90,10 @@ export default function ConstructionScreen({ onBack }) {
     }
     setSkilling(null)
     setActiveTask(null)
-    // Stop & Back leaves the screen the way it was entered (skills list, or a
-    // place map's returnTo) — same pattern as the other delegated skills.
-    if (onBack) onBack()
+    // Stop & Back returns to where the player came from — the place-map origin
+    // (onStopBack/onBack from a returnTo) or the previous screen.
+    const back = onStopBack || onBack
+    if (back) back()
   }
 
   useEffect(() => {

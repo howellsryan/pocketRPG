@@ -13,7 +13,8 @@ import { pullSave, applyCloudSave, pushNow } from '../cloud/sync.js'
 const MAX_TABS = 8
 const DEFAULT_NAMES = ['Combat', 'Skilling', 'Resources', 'Food', 'Gems', 'Runes', 'Misc', 'Extra']
 
-export default function BankScreen() {
+// `onBack` (from App): returns to the screen the player came from.
+export default function BankScreen({ onBack }) {
   const { bank, inventory, updateBank, updateInventory, addToast, itemsData, bankConfig, updateBankConfig, isIronman, loadGame, getSnapshot } = useGame()
   const [selectedId, setSelectedId] = useState(null)
   const [activeTab, setActiveTab] = useState(0)
@@ -534,6 +535,15 @@ export default function BankScreen() {
       {/* ── Header + Tab bar ─────────────────────────────────────────────── */}
       <div class="px-4 pt-4 pb-0 flex-shrink-0">
         <div class="flex items-center gap-2 mb-2">
+          {onBack && (
+            <button
+              onClick={onBack}
+              aria-label="Back"
+              class="flex-shrink-0 w-11 h-11 -my-2 -ml-2 flex items-center justify-center gap-1 text-[var(--color-gold)] bg-transparent border-0 cursor-pointer active:opacity-70"
+            >
+              <span class="text-xl leading-none">← Back</span>
+            </button>
+          )}
           <h2 class="font-[var(--font-display)] text-sm font-bold text-[var(--color-parchment)] opacity-60 uppercase tracking-wider flex-shrink-0">
             Bank ({bankItems.length})
           </h2>

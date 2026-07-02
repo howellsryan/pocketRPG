@@ -18,7 +18,7 @@ import itemsData from '../data/items.json'
 
 const hunterData = skillsData.hunter
 
-export default function HunterScreen({ initialActionId, idleResult, onBack }) {
+export default function HunterScreen({ initialActionId, idleResult, onBack, onStopBack }) {
   const { stats, inventory, updateInventory, bank, updateBankDirect, grantXP, addToast, setActiveTask, requestActivityStart, activeTask, recordGameEvent } = useGame()
 
   const hunterLevel = getLevelFromXP(stats.hunter?.xp || 0)
@@ -160,9 +160,10 @@ export default function HunterScreen({ initialActionId, idleResult, onBack }) {
     setHunter(null)
     hunterRef.current = null
     setActiveTask(null)
-    // Stop & Back leaves the screen the way it was entered (skills list, or a
-    // place map's returnTo) — same pattern as the other delegated skills.
-    if (onBack) onBack()
+    // Stop & Back returns to where the player came from — the place-map origin
+    // (onStopBack/onBack from a returnTo) or the previous screen.
+    const back = onStopBack || onBack
+    if (back) back()
   }
 
   if (!hunter) {
