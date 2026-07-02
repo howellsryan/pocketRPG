@@ -32,6 +32,7 @@ const sourceFiles = [
   'hooks/useActionTick.js',
   'hooks/useIsDesktop.js',
   'hooks/useEscapeKey.js',
+  'hooks/usePanZoomStage.js',
   'engine/experience.js',
   'engine/combatLevel.js',
   'engine/world.js',
@@ -76,6 +77,7 @@ const sourceFiles = [
   'engine/gatherTasks.js',
   'engine/construction.js',
   'engine/worldContent.js',
+  'engine/placeMaps.js',
   'engine/idleEngine.js',
   'engine/applyTaskResult.js',
   'engine/tick.js',
@@ -106,6 +108,8 @@ const sourceFiles = [
   'state/pvpState.js',
   'components/Modal.js',
   'components/PlaceArt.js', // -> game chunk (map art; only WorldMapScreen renders it)
+  'components/ActivityPickerModal.js', // -> game chunk (world map / place map only)
+  'components/PlaceMapView.js', // -> game chunk (world map / place map only)
   'components/TravelPrompt.js',
   'components/HPBar.js',
   'components/HitSplat.js',
@@ -213,6 +217,8 @@ const sourceFiles = [
 // renderScreen, which runs after the chunk has loaded).
 const GAME_CHUNK_FILES = new Set([
   'components/PlaceArt.js',
+  'components/ActivityPickerModal.js',
+  'components/PlaceMapView.js',
   'screens/HomeScreen.js',
   'screens/StatsScreen.js',
   'screens/InventoryScreen.js',
@@ -287,6 +293,7 @@ const collectionLogJSON = readSrc('data/collectionLog.json');
 const dailyTasksJSON = readSrc('data/dailyTasks.json');
 const worldJSON = readSrc('data/world.json');
 const worldActivitiesJSON = readSrc('data/worldActivities.json');
+const placeMapsJSON = readSrc('data/placeMaps.json');
 
 // Landing screen images. Served as external files from /public/landing/ (the
 // Cloudflare Pages output dir is the repo root) and referenced by URL rather
@@ -518,7 +525,7 @@ const SPLIT_MINIFY = {
 // small world.json geography for boot-time location/travel; worldContent.js
 // guards every access with `typeof worldActivitiesData !== 'undefined'`, so a
 // pre-chunk call degrades to "unmapped, never gate".
-const gameChunkSource = `const gameIconsData = ${gameIconsJSON};\nconst bespokeIconsData = ${bespokeIconsJSON};\nconst worldActivitiesData = ${worldActivitiesJSON};\n${gameJS}`;
+const gameChunkSource = `const gameIconsData = ${gameIconsJSON};\nconst bespokeIconsData = ${bespokeIconsJSON};\nconst worldActivitiesData = ${worldActivitiesJSON};\nconst placeMapsData = ${placeMapsJSON};\n${gameJS}`;
 const gameChunkScript = esbuild.transformSync(gameChunkSource, SPLIT_MINIFY).code.trim();
 const gameChunkBody = `"use strict";\n${gameChunkScript}\n`;
 const gameChunkHash = require('crypto').createHash('sha256').update(gameChunkBody).digest('hex').slice(0, 12);

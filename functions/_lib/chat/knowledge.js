@@ -82,6 +82,14 @@ export const KNOWLEDGE_CHUNKS = [
   "text": "Your inventory holds a hard maximum of 28 slots. Your bank stores everything else. While doing idle activities, loot is banked automatically when your inventory fills; the auto-bank delay scales with your Agility level, from 5 minutes at Agility 1 down to just 10 seconds at Agility 99 — a strong reason to train Agility."
  },
  {
+  "id": "guide_world_map_travel_and_town_maps",
+  "title": "World map, travel and town maps",
+  "tags": [
+   "guide"
+  ],
+  "text": "The World Map shows every settlement in Eldermoor, joined by roads. Tap a settlement to open its hub — lore, facilities, travel and teleport options, and a browsable list of what's available there. Walking follows the roads and takes real time; teleporting is instant but needs the destination's Magic level plus runes, and grants Magic XP. Some settlements (starting with Varrick) have their own illustrated town map: when you're there, tapping the settlement opens the town map instead, and you start activities by tapping the markers placed on it — the smithy for Smithing, city gates for monsters, and so on. For those places the hub's activity list is browse-only; visit the town and tap a marker on its map to begin."
+ },
+ {
   "id": "guide_idle_progress_and_offline_catch_up",
   "title": "Idle progress and offline catch-up",
   "tags": [
@@ -1933,7 +1941,7 @@ export const KNOWLEDGE_CHUNKS = [
    "training",
    "agility"
   ],
-  "text": "Agility training options with level requirements and XP per action: Spryroot Grounds (level 1, 86 XP), Brambleford Rooftop (level 10, 120 XP), Sunspire Rooftop (level 20, 175 XP), Stonewatch Rooftop (level 30, 190 XP), Duskmire Rooftop (level 40, 240 XP), Ironhold Rooftop (level 50, 440 XP), Starweaver Hamlet Rooftop (level 60, 500 XP), Dunescale Rooftop (level 70, 550 XP), Frostharbor Rooftop (level 80, 600 XP), Silverkeep Rooftop (level 90, 700 XP)."
+  "text": "Agility training options with level requirements and XP per action: Lumbright Training Course (level 1, 86 XP), Draynar Rooftop (level 10, 120 XP), Al-Karid Rooftop (level 20, 175 XP), Varrick Rooftop (level 30, 190 XP), Canifel Rooftop (level 40, 240 XP), Faloden Rooftop (level 50, 440 XP), Seerhold Rooftop (level 60, 500 XP), Brimhollow Rooftop (level 70, 550 XP), Catherra Rooftop (level 80, 600 XP), Ardounne Rooftop (level 90, 700 XP)."
  },
  {
   "id": "skill_prayer",
