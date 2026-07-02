@@ -7,6 +7,9 @@ binding = "DB"
 database_name = "pocketrpg"
 database_id = "439e810b-8dce-4697-94c2-a7392520ad8f"
 
+[ai]
+binding = "AI"
+
 [vars]
 APP_BASE_URL = "https://pocketrpg.co.uk"
 
@@ -34,6 +37,7 @@ d1_databases = [
   { binding = "DB", database_name = "pocketrpg-preview", database_id = "59233295-f492-4113-94da-90034d84a6a4" }
 ]
 vars = { APP_BASE_URL = "https://preview.pocketrpg.pages.dev" }
+ai = { binding = "AI" }
 # Secrets for preview environment (set via `wrangler pages secret put --env preview`):
 #   STRIPE_API_KEY            — Stripe secret key (sk_test_…)
 #   STRIPE_WEBHOOK_SECRET     — Stripe webhook signing secret (whsec_…), test environment
