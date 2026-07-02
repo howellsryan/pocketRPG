@@ -34,10 +34,6 @@
     },
     {
       "kind": "gather",
-      "ref": "collect_sand"
-    },
-    {
-      "kind": "gather",
       "ref": "gather_bowstring"
     },
     {
@@ -585,42 +581,6 @@
       "ref": "mining:rune_essence"
     },
     {
-      "kind": "skill",
-      "ref": "prayer:altar_big_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:altar_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:altar_dagganoth_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:altar_dragon_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:bury_big_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:bury_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:bury_dagganoth_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:bury_dragon_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:scatter_gargoyle_dust"
-    },
-    {
       "kind": "thieving",
       "ref": "villager"
     }
@@ -656,7 +616,19 @@
     },
     {
       "kind": "gather",
+      "ref": "convert_log_to_plank"
+    },
+    {
+      "kind": "gather",
       "ref": "convert_mahogany_log_to_plank"
+    },
+    {
+      "kind": "gather",
+      "ref": "convert_oak_log_to_plank"
+    },
+    {
+      "kind": "gather",
+      "ref": "convert_teak_log_to_plank"
     },
     {
       "kind": "raid",
@@ -1598,7 +1570,23 @@
     },
     {
       "kind": "gather",
+      "ref": "convert_log_to_plank"
+    },
+    {
+      "kind": "gather",
+      "ref": "convert_mahogany_log_to_plank"
+    },
+    {
+      "kind": "gather",
+      "ref": "convert_oak_log_to_plank"
+    },
+    {
+      "kind": "gather",
       "ref": "convert_teak_log_to_plank"
+    },
+    {
+      "kind": "gather",
+      "ref": "pick_limpwurt_root"
     },
     {
       "kind": "raid",
@@ -2544,7 +2532,23 @@
     },
     {
       "kind": "gather",
+      "ref": "collect_wine_of_zamorak"
+    },
+    {
+      "kind": "gather",
+      "ref": "convert_log_to_plank"
+    },
+    {
+      "kind": "gather",
+      "ref": "convert_mahogany_log_to_plank"
+    },
+    {
+      "kind": "gather",
       "ref": "convert_oak_log_to_plank"
+    },
+    {
+      "kind": "gather",
+      "ref": "convert_teak_log_to_plank"
     },
     {
       "kind": "hunter",
@@ -3174,7 +3178,7 @@
     },
     {
       "kind": "gather",
-      "ref": "pick_white_berries"
+      "ref": "catch_newts"
     },
     {
       "kind": "hunter",
@@ -3195,46 +3199,6 @@
     {
       "kind": "skill",
       "ref": "construction:build_teak_plank"
-    },
-    {
-      "kind": "skill",
-      "ref": "cooking:cook_anglerfish"
-    },
-    {
-      "kind": "skill",
-      "ref": "cooking:cook_chicken"
-    },
-    {
-      "kind": "skill",
-      "ref": "cooking:cook_crab"
-    },
-    {
-      "kind": "skill",
-      "ref": "cooking:cook_eel"
-    },
-    {
-      "kind": "skill",
-      "ref": "cooking:cook_karam"
-    },
-    {
-      "kind": "skill",
-      "ref": "cooking:cook_manta_ray"
-    },
-    {
-      "kind": "skill",
-      "ref": "cooking:cook_meat"
-    },
-    {
-      "kind": "skill",
-      "ref": "cooking:cook_shark"
-    },
-    {
-      "kind": "skill",
-      "ref": "cooking:cook_shrimp"
-    },
-    {
-      "kind": "skill",
-      "ref": "cooking:cook_trout"
     },
     {
       "kind": "skill",
@@ -3710,42 +3674,6 @@
     },
     {
       "kind": "skill",
-      "ref": "prayer:altar_big_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:altar_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:altar_dagganoth_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:altar_dragon_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:bury_big_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:bury_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:bury_dagganoth_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:bury_dragon_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:scatter_gargoyle_dust"
-    },
-    {
-      "kind": "skill",
       "ref": "runecraft:craft_body_rune"
     },
     {
@@ -3788,7 +3716,7 @@
     },
     {
       "kind": "gather",
-      "ref": "gather_snape_grass"
+      "ref": "pick_white_berries"
     },
     {
       "kind": "skill",
@@ -4320,42 +4248,6 @@
     },
     {
       "kind": "skill",
-      "ref": "prayer:altar_big_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:altar_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:altar_dagganoth_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:altar_dragon_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:bury_big_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:bury_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:bury_dagganoth_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:bury_dragon_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:scatter_gargoyle_dust"
-    },
-    {
-      "kind": "skill",
       "ref": "runecraft:craft_chaos_rune"
     },
     {
@@ -4726,7 +4618,7 @@
     },
     {
       "kind": "gather",
-      "ref": "collect_wine_of_zamorak"
+      "ref": "collect_spiders_eggs"
     },
     {
       "kind": "minigame",
@@ -4747,46 +4639,6 @@
     {
       "kind": "skill",
       "ref": "construction:build_teak_plank"
-    },
-    {
-      "kind": "skill",
-      "ref": "cooking:cook_anglerfish"
-    },
-    {
-      "kind": "skill",
-      "ref": "cooking:cook_chicken"
-    },
-    {
-      "kind": "skill",
-      "ref": "cooking:cook_crab"
-    },
-    {
-      "kind": "skill",
-      "ref": "cooking:cook_eel"
-    },
-    {
-      "kind": "skill",
-      "ref": "cooking:cook_karam"
-    },
-    {
-      "kind": "skill",
-      "ref": "cooking:cook_manta_ray"
-    },
-    {
-      "kind": "skill",
-      "ref": "cooking:cook_meat"
-    },
-    {
-      "kind": "skill",
-      "ref": "cooking:cook_shark"
-    },
-    {
-      "kind": "skill",
-      "ref": "cooking:cook_shrimp"
-    },
-    {
-      "kind": "skill",
-      "ref": "cooking:cook_trout"
     },
     {
       "kind": "skill",
@@ -5262,42 +5114,6 @@
     },
     {
       "kind": "skill",
-      "ref": "prayer:altar_big_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:altar_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:altar_dagganoth_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:altar_dragon_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:bury_big_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:bury_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:bury_dagganoth_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:bury_dragon_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:scatter_gargoyle_dust"
-    },
-    {
-      "kind": "skill",
       "ref": "runecraft:craft_law_rune"
     },
     {
@@ -5336,7 +5152,7 @@
     },
     {
       "kind": "gather",
-      "ref": "collect_seaweed"
+      "ref": "collect_sand"
     },
     {
       "kind": "minigame",
@@ -5722,11 +5538,51 @@
     },
     {
       "kind": "gather",
-      "ref": "catch_newts"
+      "ref": "burn_seaweed"
     },
     {
       "kind": "minigame",
       "ref": "fishing_trawler"
+    },
+    {
+      "kind": "skill",
+      "ref": "cooking:cook_anglerfish"
+    },
+    {
+      "kind": "skill",
+      "ref": "cooking:cook_chicken"
+    },
+    {
+      "kind": "skill",
+      "ref": "cooking:cook_crab"
+    },
+    {
+      "kind": "skill",
+      "ref": "cooking:cook_eel"
+    },
+    {
+      "kind": "skill",
+      "ref": "cooking:cook_karam"
+    },
+    {
+      "kind": "skill",
+      "ref": "cooking:cook_manta_ray"
+    },
+    {
+      "kind": "skill",
+      "ref": "cooking:cook_meat"
+    },
+    {
+      "kind": "skill",
+      "ref": "cooking:cook_shark"
+    },
+    {
+      "kind": "skill",
+      "ref": "cooking:cook_shrimp"
+    },
+    {
+      "kind": "skill",
+      "ref": "cooking:cook_trout"
     },
     {
       "kind": "skill",
@@ -5775,6 +5631,22 @@
       "ref": "convert_log_to_plank"
     },
     {
+      "kind": "gather",
+      "ref": "convert_mahogany_log_to_plank"
+    },
+    {
+      "kind": "gather",
+      "ref": "convert_oak_log_to_plank"
+    },
+    {
+      "kind": "gather",
+      "ref": "convert_teak_log_to_plank"
+    },
+    {
+      "kind": "gather",
+      "ref": "crush_birds_nest"
+    },
+    {
       "kind": "skill",
       "ref": "construction:build_mahogany_plank"
     },
@@ -5789,46 +5661,6 @@
     {
       "kind": "skill",
       "ref": "construction:build_teak_plank"
-    },
-    {
-      "kind": "skill",
-      "ref": "cooking:cook_anglerfish"
-    },
-    {
-      "kind": "skill",
-      "ref": "cooking:cook_chicken"
-    },
-    {
-      "kind": "skill",
-      "ref": "cooking:cook_crab"
-    },
-    {
-      "kind": "skill",
-      "ref": "cooking:cook_eel"
-    },
-    {
-      "kind": "skill",
-      "ref": "cooking:cook_karam"
-    },
-    {
-      "kind": "skill",
-      "ref": "cooking:cook_manta_ray"
-    },
-    {
-      "kind": "skill",
-      "ref": "cooking:cook_meat"
-    },
-    {
-      "kind": "skill",
-      "ref": "cooking:cook_shark"
-    },
-    {
-      "kind": "skill",
-      "ref": "cooking:cook_shrimp"
-    },
-    {
-      "kind": "skill",
-      "ref": "cooking:cook_trout"
     },
     {
       "kind": "skill",
@@ -6308,42 +6140,6 @@
     },
     {
       "kind": "skill",
-      "ref": "prayer:altar_big_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:altar_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:altar_dagganoth_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:altar_dragon_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:bury_big_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:bury_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:bury_dagganoth_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:bury_dragon_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:scatter_gargoyle_dust"
-    },
-    {
-      "kind": "skill",
       "ref": "runecraft:craft_death_rune"
     }
   ],
@@ -6377,10 +6173,6 @@
       "ref": "tidereaper_crab"
     },
     {
-      "kind": "gather",
-      "ref": "collect_spiders_eggs"
-    },
-    {
       "kind": "skill",
       "ref": "construction:build_mahogany_plank"
     },
@@ -6395,46 +6187,6 @@
     {
       "kind": "skill",
       "ref": "construction:build_teak_plank"
-    },
-    {
-      "kind": "skill",
-      "ref": "cooking:cook_anglerfish"
-    },
-    {
-      "kind": "skill",
-      "ref": "cooking:cook_chicken"
-    },
-    {
-      "kind": "skill",
-      "ref": "cooking:cook_crab"
-    },
-    {
-      "kind": "skill",
-      "ref": "cooking:cook_eel"
-    },
-    {
-      "kind": "skill",
-      "ref": "cooking:cook_karam"
-    },
-    {
-      "kind": "skill",
-      "ref": "cooking:cook_manta_ray"
-    },
-    {
-      "kind": "skill",
-      "ref": "cooking:cook_meat"
-    },
-    {
-      "kind": "skill",
-      "ref": "cooking:cook_shark"
-    },
-    {
-      "kind": "skill",
-      "ref": "cooking:cook_shrimp"
-    },
-    {
-      "kind": "skill",
-      "ref": "cooking:cook_trout"
     },
     {
       "kind": "skill",
@@ -6914,42 +6666,6 @@
     },
     {
       "kind": "skill",
-      "ref": "prayer:altar_big_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:altar_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:altar_dagganoth_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:altar_dragon_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:bury_big_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:bury_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:bury_dagganoth_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:bury_dragon_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:scatter_gargoyle_dust"
-    },
-    {
-      "kind": "skill",
       "ref": "woodcutting:teak"
     }
   ],
@@ -6984,11 +6700,47 @@
     },
     {
       "kind": "gather",
-      "ref": "burn_seaweed"
+      "ref": "collect_seaweed"
     },
     {
       "kind": "hunter",
       "ref": "hunt_wizard"
+    },
+    {
+      "kind": "skill",
+      "ref": "prayer:altar_big_bones"
+    },
+    {
+      "kind": "skill",
+      "ref": "prayer:altar_bones"
+    },
+    {
+      "kind": "skill",
+      "ref": "prayer:altar_dagganoth_bones"
+    },
+    {
+      "kind": "skill",
+      "ref": "prayer:altar_dragon_bones"
+    },
+    {
+      "kind": "skill",
+      "ref": "prayer:bury_big_bones"
+    },
+    {
+      "kind": "skill",
+      "ref": "prayer:bury_bones"
+    },
+    {
+      "kind": "skill",
+      "ref": "prayer:bury_dagganoth_bones"
+    },
+    {
+      "kind": "skill",
+      "ref": "prayer:bury_dragon_bones"
+    },
+    {
+      "kind": "skill",
+      "ref": "prayer:scatter_gargoyle_dust"
     },
     {
       "kind": "skill",
@@ -7038,11 +6790,7 @@
     },
     {
       "kind": "gather",
-      "ref": "crush_birds_nest"
-    },
-    {
-      "kind": "gather",
-      "ref": "harvest_potato_cactus"
+      "ref": "gather_snape_grass"
     },
     {
       "kind": "hunter",
@@ -7067,46 +6815,6 @@
     {
       "kind": "skill",
       "ref": "construction:build_teak_plank"
-    },
-    {
-      "kind": "skill",
-      "ref": "cooking:cook_anglerfish"
-    },
-    {
-      "kind": "skill",
-      "ref": "cooking:cook_chicken"
-    },
-    {
-      "kind": "skill",
-      "ref": "cooking:cook_crab"
-    },
-    {
-      "kind": "skill",
-      "ref": "cooking:cook_eel"
-    },
-    {
-      "kind": "skill",
-      "ref": "cooking:cook_karam"
-    },
-    {
-      "kind": "skill",
-      "ref": "cooking:cook_manta_ray"
-    },
-    {
-      "kind": "skill",
-      "ref": "cooking:cook_meat"
-    },
-    {
-      "kind": "skill",
-      "ref": "cooking:cook_shark"
-    },
-    {
-      "kind": "skill",
-      "ref": "cooking:cook_shrimp"
-    },
-    {
-      "kind": "skill",
-      "ref": "cooking:cook_trout"
     },
     {
       "kind": "skill",
@@ -7656,7 +7364,7 @@
     },
     {
       "kind": "gather",
-      "ref": "pick_limpwurt_root"
+      "ref": "harvest_potato_cactus"
     },
     {
       "kind": "hunter",
@@ -8197,42 +7905,6 @@
     {
       "kind": "skill",
       "ref": "mining:mithril"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:altar_big_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:altar_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:altar_dagganoth_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:altar_dragon_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:bury_big_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:bury_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:bury_dagganoth_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:bury_dragon_bones"
-    },
-    {
-      "kind": "skill",
-      "ref": "prayer:scatter_gargoyle_dust"
     },
     {
       "kind": "skill",

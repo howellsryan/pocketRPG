@@ -1786,19 +1786,23 @@ function GameApp() {
   // screen with the same actionData a home shortcut would use, so the screen's existing
   // auto-start effect fires the fight/skilling immediately — even if the player idled
   // away on another screen while travelling.
-  const resumeAutoStart = (autoStart) => {
+  // `returnTo` ({ screen, data }) rides the actionData when the start came from
+  // somewhere the player will want back to (the place map): the owning screen's
+  // back/stop buttons then return there instead of their own hardcoded list.
+  const resumeAutoStart = (autoStart, returnTo) => {
     if (!autoStart || !autoStart.kind) return
+    const extra = returnTo ? { returnTo } : {}
     switch (autoStart.kind) {
-      case 'combat':   navigate(SCREENS.COMBAT, { monsterId: autoStart.monsterId }); break
-      case 'raid':     navigate(SCREENS.COMBAT, { raidId: autoStart.raidId }); break
-      case 'agility':  navigate(SCREENS.AGILITY, { actionId: autoStart.actionId }); break
-      case 'gather':   navigate(SCREENS.GATHER, { gatherTaskId: autoStart.gatherTaskId }); break
-      case 'thieving': navigate(SCREENS.SKILLS, { skillId: 'thieving', actionId: autoStart.npcId }); break
-      case 'hunter':   navigate(SCREENS.SKILLS, { skillId: 'hunter', actionId: autoStart.actionId }); break
-      case 'minigame': navigate(SCREENS.MINIGAMES, { minigameTaskId: autoStart.taskId }); break
+      case 'combat':   navigate(SCREENS.COMBAT, { monsterId: autoStart.monsterId, ...extra }); break
+      case 'raid':     navigate(SCREENS.COMBAT, { raidId: autoStart.raidId, ...extra }); break
+      case 'agility':  navigate(SCREENS.AGILITY, { actionId: autoStart.actionId, ...extra }); break
+      case 'gather':   navigate(SCREENS.GATHER, { gatherTaskId: autoStart.gatherTaskId, ...extra }); break
+      case 'thieving': navigate(SCREENS.SKILLS, { skillId: 'thieving', actionId: autoStart.npcId, ...extra }); break
+      case 'hunter':   navigate(SCREENS.SKILLS, { skillId: 'hunter', actionId: autoStart.actionId, ...extra }); break
+      case 'minigame': navigate(SCREENS.MINIGAMES, { minigameTaskId: autoStart.taskId, ...extra }); break
       case 'skill':
-        if (autoStart.skill === 'magic') navigate(SCREENS.MAGIC)
-        else navigate(SCREENS.SKILLS, { skillId: autoStart.skill, actionId: autoStart.actionId })
+        if (autoStart.skill === 'magic') navigate(SCREENS.MAGIC, returnTo ? { ...extra } : undefined)
+        else navigate(SCREENS.SKILLS, { skillId: autoStart.skill, actionId: autoStart.actionId, ...extra })
         break
       default: break
     }
@@ -2683,6 +2687,10 @@ function GameApp() {
     if (demoMode && CLOUD_ONLY_SCREENS.has(screen)) {
       return <DemoLockedScreen screen={screen} onBack={() => navigate(SCREENS.HOME)} />
     }
+    // Screens entered with a returnTo (started from the place map) hand their
+    // back/stop buttons this callback — back to wherever the player came from.
+    const rt = actionData?.returnTo
+    const returnNav = rt?.screen ? () => navigate(rt.screen, rt.data) : undefined
     switch (screen) {
       case SCREENS.HOME:      return <HomeScreen onNavigate={navigate} onLogout={handleLogoutToCharacterSelect} onManualSave={handleManualSave} isCloudAccount={!!getToken() && !!getCharacterId()} removeAds={removeAds} identityId={identityId} characterId={getCharacterId()} stripeLinks={stripeLinks} />
       case SCREENS.STATS:     return <StatsScreen />
@@ -2691,11 +2699,11 @@ function GameApp() {
       case SCREENS.ARMOURY:   return <ArmouryScreen />
       case SCREENS.BANK:      return <BankScreen />
       case SCREENS.COMBAT:    return <CombatScreen onNavigate={navigate} initialMonsterId={actionData?.monsterId} initialRaidId={actionData?.raidId} onCombatStatusChange={setIsInCombat} />
-      case SCREENS.SKILLS:    return <SkillingScreen initialSkillId={actionData?.skillId} initialActionId={actionData?.actionId} idleResult={idleResult} onNavigate={navigate} />
-      case SCREENS.GATHER:    return <GatherScreen initialTaskId={actionData?.gatherTaskId} idleResult={idleResult} />
-      case SCREENS.AGILITY:     return <AgilityScreen initialActionId={actionData?.actionId} idleResult={idleResult} />
-      case SCREENS.MAGIC:       return <MagicScreen onNavigate={navigate} />
-      case SCREENS.WORLD_MAP:   return isWorldMapEnabled() ? <WorldMapScreen onNavigate={navigate} onAutoStart={resumeAutoStart} /> : <HomeScreen onNavigate={navigate} onLogout={handleLogoutToCharacterSelect} onManualSave={handleManualSave} isCloudAccount={!!getToken() && !!getCharacterId()} removeAds={removeAds} identityId={identityId} characterId={getCharacterId()} stripeLinks={stripeLinks} />
+      case SCREENS.SKILLS:    return <SkillingScreen initialSkillId={actionData?.skillId} initialActionId={actionData?.actionId} idleResult={idleResult} onNavigate={navigate} onBack={returnNav} />
+      case SCREENS.GATHER:    return <GatherScreen initialTaskId={actionData?.gatherTaskId} idleResult={idleResult} onBack={returnNav} />
+      case SCREENS.AGILITY:     return <AgilityScreen initialActionId={actionData?.actionId} idleResult={idleResult} onBack={returnNav} />
+      case SCREENS.MAGIC:       return <MagicScreen onNavigate={navigate} onBack={returnNav} />
+      case SCREENS.WORLD_MAP:   return isWorldMapEnabled() ? <WorldMapScreen onNavigate={navigate} onAutoStart={resumeAutoStart} initialView={actionData?.view} /> : <HomeScreen onNavigate={navigate} onLogout={handleLogoutToCharacterSelect} onManualSave={handleManualSave} isCloudAccount={!!getToken() && !!getCharacterId()} removeAds={removeAds} identityId={identityId} characterId={getCharacterId()} stripeLinks={stripeLinks} />
       case SCREENS.STORE:       return <TradingPostScreen />
       case SCREENS.QUESTS:         return <QuestsScreen onNavigate={navigate} />
       case SCREENS.CLUES:          return <CluesScreen onNavigate={navigate} />

@@ -1,0 +1,25 @@
+{
+  "varrick": {
+    "image": "/public/world/varrick-map.jpg",
+    "w": 1179,
+    "h": 678,
+    "spots": [
+      { "kind": "raid", "ref": "crimson_night_theatre", "label": "Crimson Night Theatre", "x": 468, "y": 140 },
+      { "kind": "combat", "ref": "warlord_grondar", "x": 655, "y": 58 },
+      { "kind": "combat", "ref": "ember_tyrant", "x": 888, "y": 52 },
+      { "kind": "combat", "ref": "venomcoil_matriarch", "x": 1122, "y": 300 },
+      { "kind": "combat", "ref": "krylth_the_defiler", "x": 958, "y": 588 },
+      { "kind": "combat", "ref": "blighted_gauntlet", "x": 588, "y": 642 },
+      { "kind": "combat", "ref": "ashen_crucible", "x": 64, "y": 330 },
+      { "kind": "agility", "ref": "varrock", "label": "Rooftop Course", "x": 330, "y": 540 },
+      { "kind": "gather", "refs": ["convert_log_to_plank", "convert_oak_log_to_plank", "convert_teak_log_to_plank", "convert_mahogany_log_to_plank"], "label": "Sawmill", "icon": "🪚", "x": 935, "y": 470 },
+      { "facility": "bank", "label": "Bank of Varrick", "x": 523, "y": 487 },
+      { "facility": "furnace_anvil", "label": "Grand Smithy", "x": 825, "y": 195 },
+      { "facility": "altar", "label": "Royal Chapel", "x": 1048, "y": 262 },
+      { "facility": "stove", "label": "Market Stove", "x": 615, "y": 345 },
+      { "screen": "store", "label": "Trading Post", "iconKey": "uncut_ruby", "x": 470, "y": 400 },
+      { "kind": "skill", "group": "runecraft", "label": "Runic Sanctum", "x": 410, "y": 298 },
+      { "kind": "skill", "group": "woodcutting", "label": "Old Forest", "x": 96, "y": 588 }
+    ]
+  }
+}

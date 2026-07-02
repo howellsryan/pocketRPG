@@ -2382,3 +2382,49 @@ html, body, #app {
 .wm-tele-btn.is-locked { cursor: default; background: var(--fm-parch-hi, transparent); border-color: var(--fm-rule, var(--color-void-border)); box-shadow: none; filter: none; transform: none; }
 .wm-tele-btn.is-locked .wm-tele-btn__lead { color: var(--fm-ink-faint, var(--color-parchment)); }
 .wm-tele-btn.is-locked .wm-tele-btn__cost { color: var(--fm-ink-faint, var(--color-parchment)); }
+
+/* ── Place map (PlaceMapView) — per-place interactive town map, the world map's
+   interaction model one level down. Reuses .wm-stage/.wm-board/.wm-ctl; the
+   pm- pieces are the image, activity spots, and the top bar. ── */
+.pm-root { position: absolute; inset: 0; z-index: 60; }
+.pm-map-img { position: absolute; inset: 0; width: 100%; height: 100%; border-radius: 10px;
+  pointer-events: none; user-select: none;
+  box-shadow: 0 0 0 2px rgba(50,32,8,0.65), 0 24px 70px -20px #000; }
+.pm-topbar { position: absolute; top: 12px; left: 12px; right: 12px; z-index: 20;
+  display: flex; align-items: center; gap: 12px; pointer-events: none; }
+.pm-back { pointer-events: auto; min-height: 44px; padding: 0 16px; border-radius: 10px; cursor: pointer;
+  font-family: var(--font-display); font-weight: 700; font-size: 13px; color: var(--color-parchment);
+  background: var(--color-void-light); border: 1px solid var(--color-void-border); box-shadow: 0 6px 18px -8px #000; }
+.pm-back:hover { color: var(--color-gold-light); border-color: var(--color-gold); }
+.pm-back:active { transform: translateY(1px); }
+.pm-title { display: flex; flex-direction: column; min-width: 0; padding: 6px 14px; border-radius: 10px;
+  background: var(--color-void-light); border: 1px solid var(--color-void-border); box-shadow: 0 6px 18px -8px #000; }
+.pm-title__name { font-family: var(--font-display); font-weight: 700; font-size: 17px; line-height: 1.15; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pm-title__tier { font-size: 10px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: var(--color-parchment-dark); }
+
+/* Activity spots — small medal + name plate, the wm-node recipe shrunk for a
+   town's density. The whole button is the ≥44px tap target; the medal inside
+   can stay smaller. */
+.pm-spot { position: absolute; z-index: 5; transform: translate(-50%, -50%);
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  min-width: 44px; min-height: 44px; padding: 0; background: none; border: 0; cursor: pointer; }
+.pm-spot__medal { width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center;
+  font-size: 18px; line-height: 1; color: #f2e4c2;
+  background: radial-gradient(circle at 34% 28%, #4a3620, #241708 72%);
+  border: 2px solid var(--pm-accent, var(--color-gold));
+  box-shadow: inset 0 1px 0 rgba(255,224,168,0.25), 0 4px 12px -3px #000;
+  transition: transform 0.12s ease; }
+.pm-spot:hover .pm-spot__medal { transform: translateY(-2px) scale(1.07); }
+.pm-spot:active .pm-spot__medal { transform: scale(0.96); }
+.pm-spot__plate { display: inline-flex; align-items: center; gap: 5px; max-width: 130px; padding: 2px 7px;
+  border-radius: 7px; background: rgba(20,13,6,0.85); border: 1px solid rgba(214,178,110,0.4);
+  box-shadow: 0 2px 7px -3px #000; }
+.pm-spot__name { font-size: 11px; font-weight: 700; line-height: 1.25; color: var(--color-parchment);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pm-spot__count, .pm-spot__lvl { flex-shrink: 0; font-family: var(--font-mono); font-size: 10px; font-weight: 700; color: var(--color-gold-light); }
+
+/* Read-only activity rows (place hub browse mode — starting happens on the
+   town map instead) keep the ledger look minus the affordances. */
+.wm-actmodal-row--static { cursor: default; }
+.wm-actmodal-row--static:hover, .wm-actmodal-row--static:active { background: transparent; }
+.wm-actmodal-note { margin: 0 0 12px; font-style: italic; font-size: 12.5px; color: var(--fm-ink-faint, var(--color-parchment-dark)); }

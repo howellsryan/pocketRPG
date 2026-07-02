@@ -63,8 +63,10 @@ for (const raid of canonicalRaids) for (const b of raid.bosses || []) raidBossId
 // Skills tied to a building. Every action of these skills is available at every place
 // that has the matching facility (not level-banded).
 const FACILITY_SKILLS = {
-  bank: ['construction', 'magic', 'prayer', 'firemaking', 'herblore', 'fletching', 'crafting', 'cooking'],
+  bank: ['construction', 'magic', 'firemaking', 'herblore', 'fletching', 'crafting'],
   furnace_anvil: ['smithing'],
+  altar: ['prayer'],
+  stove: ['cooking'],
 }
 // A place's facilities are authored directly in world.json (`place.facilities`).
 function facilitiesFor(placeId, place) {
@@ -186,15 +188,21 @@ distribute('thieving', thievingItems, out)
 // Hunter — own kind, level-banded.
 distribute('hunter', asArray(skills.hunter?.actions).map((a) => ({ ref: a.id, level: a.level ?? 1 })), out)
 
-// Gather tasks have no level; band them by their order so they spread.
-distribute('gather', GATHER_TASKS.map((t, i) => ({ ref: t.id, level: i })), out)
+// Gather tasks have no level; band them by their order so they spread — except
+// the sawmill's log→plank conversions, which are facility-bound: every place
+// with a `sawmill` facility (world.json) converts ALL log types.
+const isSawmillTask = (t) => /_to_plank$/.test(t.id)
+distribute('gather', GATHER_TASKS.filter((t) => !isSawmillTask(t)).map((t, i) => ({ ref: t.id, level: i })), out)
 
-// Facility skills: every action at every place that has the facility.
+// Facility skills/tasks: every action at every place that has the facility.
 for (const id of Object.keys(world.places)) {
   const facs = facilitiesFor(id, world.places[id])
   for (const facility of facs) {
     for (const skillId of FACILITY_SKILLS[facility] || []) {
       for (const act of skillActivities(skillId)) out[id].push(act)
+    }
+    if (facility === 'sawmill') {
+      for (const t of GATHER_TASKS.filter(isSawmillTask)) out[id].push({ kind: 'gather', ref: t.id })
     }
   }
 }

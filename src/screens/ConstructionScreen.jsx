@@ -90,6 +90,9 @@ export default function ConstructionScreen({ onBack }) {
     }
     setSkilling(null)
     setActiveTask(null)
+    // Stop & Back leaves the screen the way it was entered (skills list, or a
+    // place map's returnTo) — same pattern as the other delegated skills.
+    if (onBack) onBack()
   }
 
   useEffect(() => {
