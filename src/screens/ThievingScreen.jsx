@@ -18,7 +18,7 @@ import skillsData from '../data/skills.json'
 
 const thievingData = skillsData.thieving
 
-export default function ThievingScreen({ initialNpcId, idleResult, onBack }) {
+export default function ThievingScreen({ initialNpcId, idleResult, onBack, onStopBack }) {
   const { stats, inventory, updateInventory, bank, updateBankDirect, grantXP, addToast, setActiveTask, requestActivityStart, activeTask } = useGame()
 
   const thievingLevel = getLevelFromXP(stats.thieving?.xp || 0)
@@ -210,7 +210,8 @@ export default function ThievingScreen({ initialNpcId, idleResult, onBack }) {
     setThieving(null)
     thievingRef.current = null
     setActiveTask(null)
-    if (onBack) onBack()
+    const back = onStopBack || onBack
+    if (back) back()
   }
 
   // NPC picker

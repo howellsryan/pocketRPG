@@ -120,7 +120,6 @@ export default function CluesScreen({ onNavigate } = {}) {
       return
     }
     setActiveTask(jt)
-    addToast(`🗺️ The trail begins — ${jt.journey.steps.length} places to search`, 'info')
     onNavigate?.(SCREENS.WORLD_MAP)
   }
 

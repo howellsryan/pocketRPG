@@ -60,7 +60,9 @@ function calculateRemainingActions(action, inventory, bank) {
 // to when the player was sent here from somewhere specific (the place map) —
 // delegates, the action-list header and Stop & Back all honour it. Without it
 // backing out walks the internal skill list as before.
-export default function SkillingScreen({ initialSkillId, initialActionId, idleResult, onNavigate, onBack }) {
+// `onStopBack` (from App): where Stop & Back returns to — the place-map origin
+// when there is one, otherwise the previous screen.
+export default function SkillingScreen({ initialSkillId, initialActionId, idleResult, onNavigate, onBack, onStopBack }) {
   const { stats, inventory, bank, equipment, isIronman, updateInventory, updateBankDirect, grantXP, addToast, setActiveTask, requestActivityStart, activeTask, dungeoneeringTokens, awardDungeoneeringTokens, trySpendDungeoneeringTokens, loadGame, recordGameEvent } = useGame()
   const [selectedSkill, setSelectedSkill] = useState(initialSkillId || null)
   const [selectedAction, setSelectedAction] = useState(null)
@@ -83,6 +85,7 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
         initialActionId={initialActionId}
         idleResult={idleResult}
         onBack={onBack || (() => setSelectedSkill(null))}
+        onStopBack={onStopBack}
       />
     )
   }
@@ -104,6 +107,7 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
         initialNpcId={initialActionId}
         idleResult={idleResult}
         onBack={onBack || (() => setSelectedSkill(null))}
+        onStopBack={onStopBack}
       />
     )
   }
@@ -115,6 +119,7 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
         initialActionId={initialActionId}
         idleResult={idleResult}
         onBack={onBack || (() => setSelectedSkill(null))}
+        onStopBack={onStopBack}
       />
     )
   }
@@ -133,6 +138,7 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
     return (
       <ConstructionScreen
         onBack={onBack || (() => setSelectedSkill(null))}
+        onStopBack={onStopBack}
       />
     )
   }
@@ -142,6 +148,7 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
     return (
       <MagicScreen
         onBack={onBack || (() => setSelectedSkill(null))}
+        onStopBack={onStopBack}
       />
     )
   }
@@ -598,7 +605,8 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
     setSelectedAction(null)
     setSelectedAlchemyItem(null)
     setActiveTask(null)
-    if (onBack) onBack()
+    const back = onStopBack || onBack
+    if (back) back()
   }
 
   // Mirror the live per-action progress + session tally onto the global task so

@@ -1,8 +1,9 @@
 import Card from '../components/Card.jsx'
 import GameIcon from '../components/GameIcon.jsx'
 import { useGame } from '../state/gameState.jsx'
+import { SETTINGS_NAV_LINKS } from '../components/navTabs.js'
 
-export default function HelpScreen() {
+export default function HelpScreen({ onNavigate }) {
   const { showInfoToasts, updateShowInfoToasts } = useGame()
 
   return (
@@ -33,6 +34,25 @@ export default function HelpScreen() {
                 style={{ transform: showInfoToasts ? 'translateX(20px)' : 'translateX(0)' }}
               />
             </button>
+          </div>
+        </Card>
+
+        <Card className="p-2">
+          <div class="divide-y divide-[var(--color-void-border)]">
+            {SETTINGS_NAV_LINKS.map((link) => (
+              <button
+                key={link.id}
+                type="button"
+                onClick={() => onNavigate?.(link.id)}
+                class="flex items-center gap-3 w-full min-h-[48px] px-2 bg-transparent border-0 text-left cursor-pointer active:opacity-70"
+              >
+                <span class="w-11 flex justify-center items-center flex-shrink-0">
+                  <GameIcon iconKey={link.iconKey} size={link.iconSize || 40} color={link.iconColor} />
+                </span>
+                <span class="flex-1 text-sm font-semibold text-[var(--color-parchment)]">{link.label}</span>
+                <span class="text-[var(--color-parchment)] opacity-40 text-lg leading-none pr-1">›</span>
+              </button>
+            ))}
           </div>
         </Card>
       </div>

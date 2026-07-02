@@ -16,7 +16,7 @@ import skillsData from '../data/skills.json'
 
 const agilityData = skillsData.agility
 
-export default function AgilityScreen({ initialActionId, idleResult, onBack }) {
+export default function AgilityScreen({ initialActionId, idleResult, onBack, onStopBack }) {
   const { stats, inventory, updateInventory, bank, updateBankDirect, grantXP, addToast, setActiveTask, requestActivityStart, activeTask } = useGame()
 
   const agilityLevel = getLevelFromXP(stats.agility?.xp || 0)
@@ -173,7 +173,8 @@ export default function AgilityScreen({ initialActionId, idleResult, onBack }) {
     setAgility(null)
     agilityRef.current = null
     setActiveTask(null)
-    if (onBack) onBack()
+    const back = onStopBack || onBack
+    if (back) back()
   }
 
   // Back (no stop): flush progress and return to the course list; task keeps running.
