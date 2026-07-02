@@ -390,22 +390,14 @@ export default function WorldMapScreen({ onNavigate, onAutoStart } = {}) {
             ? <img class="wm-map-img" src={world.mapImage} alt="" draggable={false} onError={() => setMapArtOk(false)} />
             : <WorldTerrain />}
           <div class="wm-grunge" aria-hidden="true" />
+          {/* Roads only — travel times live in the place hub / travel banner,
+              never on the chart itself. */}
           <svg class="wm-routes" width={world.board.w} height={world.board.h} xmlns="http://www.w3.org/2000/svg">
-            {world.edges.map(([a, b, t]) => {
+            {world.edges.map(([a, b]) => {
               const pa = world.places[a]
               const pb = world.places[b]
               if (!pa || !pb) return null
-              const mx = (pa.x + pb.x) / 2
-              const my = (pa.y + pb.y) / 2
-              const label = wmTravelTime(t)
-              const w = label.length * 8 + 12
-              return (
-                <g key={`${a}-${b}`}>
-                  <line x1={pa.x} y1={pa.y} x2={pb.x} y2={pb.y} class="wm-road" />
-                  <rect x={mx - w / 2} y={my - 12} width={w} height={22} rx={4} class="wm-tickbg" />
-                  <text x={mx} y={my + 4} text-anchor="middle" class="wm-tick">{label}</text>
-                </g>
-              )
+              return <line key={`${a}-${b}`} x1={pa.x} y1={pa.y} x2={pb.x} y2={pb.y} class="wm-road" />
             })}
           </svg>
 

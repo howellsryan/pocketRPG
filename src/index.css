@@ -2204,8 +2204,6 @@ html, body, #app {
   background-size: cover, 600px; mix-blend-mode: multiply; opacity: 0.5; }
 .wm-routes { position: absolute; top: 0; left: 0; overflow: visible; }
 .wm-road { stroke: #6e4f20; stroke-width: 3; stroke-dasharray: 2 9; stroke-linecap: round; opacity: 0.9; }
-.wm-tickbg { fill: #efe4c2; opacity: 0.92; stroke: #a68d5e; stroke-width: 1; }
-.wm-tick { fill: #5a4a2a; font-family: var(--font-mono); font-size: 13px; font-weight: 600; }
 
 .wm-node { position: absolute; transform: translate(-50%, -50%); display: flex; flex-direction: column;
   align-items: center; gap: 6px; border: 0; background: none; padding: 0; cursor: pointer; min-width: 44px; min-height: 44px; }
