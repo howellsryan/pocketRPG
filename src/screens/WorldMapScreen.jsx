@@ -16,7 +16,6 @@ import PlaceMapView from '../components/PlaceMapView.jsx'
 import SlayerMasterModal from '../components/SlayerMasterModal.jsx'
 import { placeHasMap } from '../engine/placeMaps.js'
 import { usePanZoomStage } from '../hooks/usePanZoomStage.js'
-import { getToken, getCharacterId } from '../cloud/api.js'
 import questsData from '../data/quests.json'
 
 // Facility chip glyph: bank reuses the existing in-game bank icon (the nav's coins
@@ -94,7 +93,7 @@ export default function WorldMapScreen({ onNavigate, onAutoStart, initialView } 
   const {
     worldLocation, updateWorldLocation, activeTask, setActiveTask, addToast, requestActivityStart,
     inventory, bank, equipment, stats, itemsData, updateInventory, updateBankDirect, grantXP,
-    skipHourHandlerRef, completedQuests, bossKillCounts, questQueue, removeFromQuestQueue,
+    completedQuests, bossKillCounts, questQueue, removeFromQuestQueue,
   } = useGame()
   const world = getWorld()
   const here = getPlace(worldLocation) ? worldLocation : world.start
@@ -245,22 +244,6 @@ export default function WorldMapScreen({ onNavigate, onAutoStart, initialView } 
       addToast(`${journey ? 'Journey abandoned' : 'Travel cancelled'} — you stop at ${getPlace(stopAt)?.name || stopAt}`, 'info')
     } else {
       addToast(journey ? 'Journey abandoned' : 'Travel cancelled', 'info')
-    }
-  }
-
-  // Credit skip: delegates to the shared Skip-1h flow (preflight, atomic
-  // /api/skip-hour debit, then 1 hour of trail time — the current clue/quest
-  // always finishes, leftover time chains the next scroll). Cloud accounts
-  // only, same as the header skip button.
-  const [skipBusy, setSkipBusy] = useState(false)
-  const canCreditSkip = !!(getToken() && getCharacterId())
-  const skipTravel = async () => {
-    if (skipBusy) return
-    setSkipBusy(true)
-    try {
-      await skipHourHandlerRef?.current?.()
-    } finally {
-      setSkipBusy(false)
     }
   }
 
@@ -424,11 +407,6 @@ export default function WorldMapScreen({ onNavigate, onAutoStart, initialView } 
                   : `Route: ${(travel.path || []).map((id) => getPlace(id)?.name || id).join(' → ')}`}
               </div>
               <div class="wm-travelbar-actions">
-                {canCreditSkip && (
-                  <button class="wm-travelbar-skip" disabled={skipBusy} onClick={skipTravel} title="Skip 1 hour of travel — 1 credit. The current clue or quest always finishes; spare time runs the next scroll.">
-                    💎 Skip · 1 credit
-                  </button>
-                )}
                 {tele?.ok && (
                   <button class="wm-travelbar-tele" onClick={() => castTeleport(travel.dest)} title={`Consumes ${formatRuneCost(tele.runes, itemsData)} · +${tele.xp} Magic XP`}>
                     <GameIcon iconKey={getSkillArt('magic').icon} color="#fff" size={16} /> Teleport ahead
