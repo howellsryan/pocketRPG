@@ -1,29 +1,29 @@
-// Chatbot usage quotas (migration 0027). Two layers keep the chatbot at £0:
+// Chatbot usage quotas (migration 0027). Two layers bound chatbot cost:
 //   1. Per-character daily message cap — hard refusal once exhausted.
-//   2. Global daily neuron budget — Workers AI bills in neurons ($0.011/1k)
-//      and every plan includes 10,000 free per day. Each message atomically
-//      reserves its worst possible neuron cost up front and refunds the
-//      unused part once the API reports actual token usage, so the day's
-//      spend can never cross the budget mid-flight. With the budget pinned
-//      under the free allocation, the chatbot is unbillable even on Workers
-//      Paid; when the budget runs out, /api/chat degrades to retrieval-only.
+//   2. Global daily spend budget, denominated in Workers AI neurons
+//      ($0.011/1k). Each message atomically reserves its worst possible cost
+//      up front and refunds the unused part once the API reports actual token
+//      usage, so the day's spend can never cross the budget mid-flight; when
+//      the budget runs out, /api/chat degrades to retrieval-only.
 
 export const CHAT_DAILY_LIMIT = 30
 
-// GLM-4.7-flash token prices ($0.06/M input, $0.40/M output) converted to
-// milli-neurons per token at $0.011 per 1,000 neurons, rounded up. Revisit
-// when CHAT_MODEL changes.
-export const MILLI_NEURONS_PER_INPUT_TOKEN = 5.46
+// Token prices converted to milli-neurons per token at $0.011 per 1,000
+// neurons. Rated at $0.10/M input, $0.40/M output — an upper bound for both
+// gemini-2.5-flash-lite ($0.10/$0.40; free-tier keys bill $0) and the GLM
+// fallback ($0.06/$0.40) — so the budget doubles as a daily $ spend cap.
+// Revisit when CHAT_MODEL / CHAT_FALLBACK_MODEL change.
+export const MILLI_NEURONS_PER_INPUT_TOKEN = 9.1
 export const MILLI_NEURONS_PER_OUTPUT_TOKEN = 36.37
 
 // Budget + one in-flight worst-case reserve must stay ≤ the 10,000 free
 // daily neurons (10,000,000 milli); the gap also absorbs estimation drift
 // and any other Workers AI use on the account.
-export const CHAT_NEURON_BUDGET_MILLI = 9_000_000
+export const CHAT_NEURON_BUDGET_MILLI = 8_300_000
 // Worst-case message: 4 model calls with every context and output limit
 // maxed. tests/chatQuota.test.ts derives this bound from the CHAT_MAX_*
 // constants — raise it there first if a limit grows.
-export const CHAT_MESSAGE_RESERVE_MILLI = 950_000
+export const CHAT_MESSAGE_RESERVE_MILLI = 1_700_000
 
 // Atomically claim one message for the character's daily allowance.
 // Returns { allowed, remaining }.

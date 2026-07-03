@@ -130,9 +130,9 @@ describe('chat quotas', () => {
   })
 
   it('converts reported token usage to milli-neurons, rounding up', () => {
-    expect(usageMilliNeurons({ prompt_tokens: 1_000_000, completion_tokens: 0 })).toBe(5_460_000)
+    expect(usageMilliNeurons({ prompt_tokens: 1_000_000, completion_tokens: 0 })).toBe(9_100_000)
     expect(usageMilliNeurons({ prompt_tokens: 0, completion_tokens: 1_000_000 })).toBe(36_370_000)
-    expect(usageMilliNeurons({ prompt_tokens: 1, completion_tokens: 1 })).toBe(42)
+    expect(usageMilliNeurons({ prompt_tokens: 1, completion_tokens: 1 })).toBe(46)
     expect(usageMilliNeurons(undefined)).toBe(0)
   })
 

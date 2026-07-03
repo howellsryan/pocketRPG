@@ -1,7 +1,6 @@
-// In-game help chatbot endpoint. Zero-cost by design: Workers AI free
-// allocation + per-character daily quota + global circuit-breaker that
-// degrades to retrieval-only answers. Read-only — the chatbot can never
-// mutate game state (tool allowlist in _lib/chat/prompt.js).
+// In-game help chatbot endpoint. Per-character daily quota + global daily
+// spend budget, degrading to retrieval-only answers. Read-only — the chatbot
+// can never mutate game state (tool allowlist in _lib/chat/prompt.js).
 
 import { requireAuth, json } from '../_lib/auth.js'
 import { utcDayKey, nextResetMs } from '../_lib/game/dailyTasks.js'
@@ -20,6 +19,7 @@ import {
 } from '../_lib/chat/quota.js'
 import {
   CHAT_MODEL,
+  CHAT_FALLBACK_MODEL,
   CHAT_MAX_TOOL_ROUNDS,
   CHAT_MAX_ANSWER_TOKENS,
   CHAT_MAX_TOOL_RESULT_CHARS,
@@ -59,14 +59,47 @@ function toolResultText(result) {
   return result?.isError ? `Tool error: ${clipped || 'unknown error'}` : clipped || '(empty result)'
 }
 
-// GLM-4.7-flash speaks the OpenAI chat-completions shape: answers live in
-// choices[0].message. Reasoning stays on (its default) — it's most of this
-// model's quality and CHAT_MAX_ANSWER_TOKENS budgets for it; any inline
-// <think> block is stripped from the answer. Temperature sits below GLM's
-// ~1.0 default for factual consistency without starving the thinking pass.
 const CHAT_RUN_OPTS = {
   max_tokens: CHAT_MAX_ANSWER_TOKENS,
   temperature: 0.6,
+}
+
+// Gemini-backed binding with the same `run(model, payload)` shape as env.AI,
+// via Google's OpenAI-compatible endpoint — the chat-completions plumbing
+// (messages/tools/usage) works unchanged.
+export function geminiChatBinding(env) {
+  return {
+    async run(model, payload) {
+      const res = await fetch('https://generativelanguage.googleapis.com/v1beta/openai/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${env.GEMINI_API_KEY}`,
+        },
+        body: JSON.stringify({ model, ...payload }),
+      })
+      if (!res.ok) {
+        const detail = (await res.text().catch(() => '')).slice(0, 300)
+        throw new Error(`Gemini ${res.status}: ${detail}`)
+      }
+      return res.json()
+    },
+  }
+}
+
+// Ordered AI attempts for a message: primary CHAT_MODEL, then the Workers AI
+// fallback model. Empty = AI path unavailable, straight to retrieval-only.
+export function chatAttempts(env) {
+  const attempts = []
+  if (CHAT_MODEL.startsWith('@')) {
+    if (env.AI) attempts.push({ ai: env.AI, model: CHAT_MODEL })
+  } else if (env.GEMINI_API_KEY) {
+    attempts.push({ ai: geminiChatBinding(env), model: CHAT_MODEL })
+  }
+  if (env.AI && CHAT_FALLBACK_MODEL && CHAT_FALLBACK_MODEL !== CHAT_MODEL) {
+    attempts.push({ ai: env.AI, model: CHAT_FALLBACK_MODEL })
+  }
+  return attempts
 }
 
 function answerText(res) {
@@ -138,13 +171,15 @@ async function runChatTool(call, { env, authorization, identity, characterId }) 
 // Returns '' when the model produced no usable answer; throws ChatTimeoutError
 // past `deadline` — the endpoint turns both into a retrieval-only answer.
 // Exported for tests.
-export async function runAiChat(env, messages, { authorization, identity, characterId, stats, deadline }) {
+export async function runAiChat(env, messages, { authorization, identity, characterId, stats, deadline, ai, model }) {
+  const binding = ai || env.AI
+  const modelId = model || CHAT_MODEL
   const tools = chatToolDefs()
   const runModel = async (payload) => {
     // Not worth starting a reasoning call with under 1.5s left.
     if (deadline - Date.now() < 1500) throw new ChatTimeoutError()
     try {
-      const res = await raceDeadline(env.AI.run(CHAT_MODEL, payload), deadline)
+      const res = await raceDeadline(binding.run(modelId, payload), deadline)
       trackUsage(stats, res)
       return res
     } catch (err) {
@@ -222,22 +257,29 @@ export async function onRequestPost({ request, env }) {
 
   let answer = ''
   let mode = 'ai'
-  const aiAvailable = env.AI && (await reserveMessageNeurons(env, dayKey))
+  const attempts = chatAttempts(env)
+  const aiAvailable = attempts.length > 0 && (await reserveMessageNeurons(env, dayKey))
   if (aiAvailable) {
     const stats = { milliNeurons: 0, usageUnknown: false }
     const deadline = Date.now() + CHAT_TIME_BUDGET_MS
-    try {
-      const messages = buildMessages({ question, history: body?.history, chunks })
-      answer = await runAiChat(env, messages, { authorization, identity: auth.identity, characterId, stats, deadline })
-      // Swap the worst-case reserve for the actual metered usage. Skipped
-      // when any call didn't report usage — keeping the full reserve only
-      // makes the budget more conservative, never billable.
-      if (!stats.usageUnknown) {
-        await settleMessageNeurons(env, dayKey, CHAT_MESSAGE_RESERVE_MILLI, stats.milliNeurons)
+    // Each attempt gets a fresh transcript; a failed or empty attempt falls
+    // through to the next model, all under the one deadline and reserve.
+    for (const { ai, model } of attempts) {
+      try {
+        const messages = buildMessages({ question, history: body?.history, chunks })
+        answer = await runAiChat(env, messages, { authorization, identity: auth.identity, characterId, stats, deadline, ai, model })
+        if (answer) break
+      } catch (err) {
+        console.error(`[PocketRPG][chat] AI call failed (${model}):`, err?.message || err)
+        answer = ''
+        if (err instanceof ChatTimeoutError) break
       }
-    } catch (err) {
-      console.error('[PocketRPG][chat] AI call failed:', err?.message || err)
-      answer = ''
+    }
+    // Swap the worst-case reserve for the actual metered usage. Skipped
+    // when any call didn't report usage — keeping the full reserve only
+    // makes the budget more conservative, never billable.
+    if (!stats.usageUnknown) {
+      await settleMessageNeurons(env, dayKey, CHAT_MESSAGE_RESERVE_MILLI, stats.milliNeurons)
     }
   }
   // Whatever went wrong on the AI path — no budget, model error, time budget

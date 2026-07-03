@@ -1,9 +1,10 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
-import { runAiChat, ChatTimeoutError } from '../functions/api/chat.js'
-import { CHAT_MAX_TOOL_ROUNDS } from '../functions/_lib/chat/prompt.js'
+import { runAiChat, ChatTimeoutError, chatAttempts, geminiChatBinding } from '../functions/api/chat.js'
+import { CHAT_MAX_TOOL_ROUNDS, CHAT_MODEL, CHAT_FALLBACK_MODEL } from '../functions/_lib/chat/prompt.js'
 
 afterEach(() => {
   vi.useRealTimers()
+  vi.unstubAllGlobals()
 })
 
 const USAGE = { prompt_tokens: 100, completion_tokens: 50 }
@@ -121,5 +122,54 @@ describe('runAiChat', () => {
     const stats = newStats()
     await runAiChat({ AI: { run } } as any, baseMessages(), opts({ stats }))
     expect(stats.usageUnknown).toBe(true)
+  })
+})
+
+describe('chatAttempts / geminiChatBinding', () => {
+  it('orders attempts primary-then-fallback, skipping unconfigured providers', () => {
+    const AI = { run: vi.fn() }
+    const full = chatAttempts({ GEMINI_API_KEY: 'test-key', AI } as any)
+    expect(full.map((a) => a.model)).toEqual([CHAT_MODEL, CHAT_FALLBACK_MODEL])
+    expect(full[1].ai).toBe(AI)
+    // No Gemini key → straight to the Workers AI fallback; nothing → no AI path.
+    expect(chatAttempts({ AI } as any).map((a) => a.model)).toEqual([CHAT_FALLBACK_MODEL])
+    expect(chatAttempts({} as any)).toEqual([])
+  })
+
+  it('runAiChat sends the per-attempt model override to the binding', async () => {
+    const run = vi.fn().mockResolvedValue(aiResponse('Hi.'))
+    await runAiChat({ AI: { run } } as any, baseMessages(), opts({ model: CHAT_FALLBACK_MODEL }))
+    expect(run.mock.calls[0][0]).toBe(CHAT_FALLBACK_MODEL)
+  })
+
+  it("calls Google's OpenAI-compatible endpoint with the payload passed through", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => aiResponse('Hi.') })
+    vi.stubGlobal('fetch', fetchMock)
+    const binding = geminiChatBinding({ GEMINI_API_KEY: 'test-key' } as any)
+    const res = await binding.run('gemini-2.5-flash-lite', {
+      messages: baseMessages(),
+      max_tokens: 5000,
+      temperature: 0.6,
+    })
+    const [url, init] = fetchMock.mock.calls[0]
+    expect(url).toBe('https://generativelanguage.googleapis.com/v1beta/openai/chat/completions')
+    expect(init.headers.Authorization).toBe('Bearer test-key')
+    const body = JSON.parse(init.body)
+    expect(body.model).toBe('gemini-2.5-flash-lite')
+    expect(body.max_tokens).toBe(5000)
+    expect(body.temperature).toBe(0.6)
+    expect(body.messages).toHaveLength(2)
+    expect(res.choices[0].message.content).toBe('Hi.')
+  })
+
+  it('throws on a non-2xx response so the endpoint degrades to retrieval', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({ ok: false, status: 429, text: async () => 'quota exceeded' }),
+    )
+    const binding = geminiChatBinding({ GEMINI_API_KEY: 'test-key' } as any)
+    await expect(binding.run('gemini-2.5-flash-lite', { messages: [] })).rejects.toThrow(
+      'Gemini 429: quota exceeded',
+    )
   })
 })

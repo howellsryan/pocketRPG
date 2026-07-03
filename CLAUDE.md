@@ -95,6 +95,7 @@ Server-authoritative under `/api/pvp/*`. Full rules (matchmaking, save-lockdown,
 
 ## 13) Agent Best Practices
 - Keep changes minimal and scoped; no unrelated refactors. Update logic tests with new gameplay logic.
+- **Comments: write very few.** Only for a non-obvious invariant/constraint the code can't express. Never narrate what code does, restate the change, or explain reasoning in comments — they cost tokens on every future read and go stale.
 - Edit source of truth in `src/**` (+ `functions/**`); generated output follows from build scripts. Never commit `index.html` / `game-*.js`.
 - Direct user/developer/system instructions outrank this file. Update this guide in the same change when it goes stale.
 
@@ -118,8 +119,8 @@ Server is source of truth for everything that *can* be authoritative. The one de
 Stateless MCP server (JSON-RPC 2.0) at `functions/api/mcp.js` with its own OAuth 2.1 server. Architecture + how-to-add-a-tool (bridge tools vs save-intents, the `schema.js`/`tools.js`/test trio, `applyTaskResult.js` as single source of truth) live in path-scoped rule **`.claude/rules/mcp.md`** (auto-loads on `functions/api/mcp.js`, `functions/_lib/mcp/**`, OAuth paths, `src/screens/OAuthConsentScreen.jsx`, `tests/mcp*.test.ts`).
 
 ## 16) Help Chatbot (`/api/chat`)
-- In-game helper (floating 💬, `src/components/ChatWidget.jsx`) answering PocketRPG-only questions. Backend `functions/api/chat.js`: Workers AI (`env.AI`, model in `functions/_lib/chat/prompt.js`) + lexical retrieval over a generated knowledge index + **read-only** MCP tools via `callTool` (allowlist in `prompt.js`; never add write tools; `character_id` pinned server-side). No web access.
-- Zero-cost guards: 30 msgs/char/day + global daily **neuron budget** (reserve-then-settle, pinned under the free 10k neurons/day so AI spend never bills; `functions/_lib/chat/quota.js`, migration 0027); any AI-path failure — budget exhausted, model error, time budget hit (`CHAT_TIME_BUDGET_MS` 45s, under the client's 60s fetch timeout), empty answer — → retrieval-only answer, never a bare apology. Tool calls run in parallel; a failing tool degrades to a `Tool error:` message the model can route around.
+- In-game helper (floating 💬, `src/components/ChatWidget.jsx`) answering PocketRPG-only questions. Backend `functions/api/chat.js`: model set by `CHAT_MODEL` in `functions/_lib/chat/prompt.js` (`@`-prefixed = Workers AI `env.AI`; otherwise Gemini via Google's OpenAI-compatible endpoint + `GEMINI_API_KEY` secret), falling back to `CHAT_FALLBACK_MODEL` on Workers AI when the primary fails/answers empty (`chatAttempts` in `chat.js`) + lexical retrieval over a generated knowledge index + **read-only** MCP tools via `callTool` (allowlist in `prompt.js`; never add write tools; `character_id` pinned server-side). No web access.
+- Cost guards: 30 msgs/char/day + global daily **spend budget** (reserve-then-settle, neuron-denominated; `functions/_lib/chat/quota.js`, migration 0027); any AI-path failure — budget exhausted, missing key, model error, time budget hit (`CHAT_TIME_BUDGET_MS` 45s, under the client's 60s fetch timeout), empty answer — → retrieval-only answer, never a bare apology. Tool calls run in parallel; a failing tool degrades to a `Tool error:` message the model can route around.
 - Knowledge index: `npm run gen:knowledge` regenerates `functions/_lib/chat/knowledge.js` from `docs/game-guide.md` (player-facing; each `##` = one chunk) + `src/data/*.json`. Update guide + regenerate + commit when mechanics/content change.
 
 ## 17) Token efficiency (mandatory, every session)
