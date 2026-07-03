@@ -1,5 +1,5 @@
 import { useGame } from '../state/gameState.jsx'
-import { useState } from 'preact/hooks'
+import { useState, useEffect } from 'preact/hooks'
 import { getWorld, getPlace, listPlaces, getTier, getKind, shortestPath, pathLegs } from '../engine/world.js'
 import { isPlaceVaryingSkillRef, autoStartFromTask, placeActivities, activityLockReason } from '../engine/worldContent.js'
 import { SCREENS } from '../utils/constants.js'
@@ -13,9 +13,9 @@ import { getSkillArt } from '../utils/skillArt.js'
 import WaxSeal from '../components/WaxSeal.jsx'
 import ActivityPickerModal from '../components/ActivityPickerModal.jsx'
 import PlaceMapView from '../components/PlaceMapView.jsx'
+import SlayerMasterModal from '../components/SlayerMasterModal.jsx'
 import { placeHasMap } from '../engine/placeMaps.js'
 import { usePanZoomStage } from '../hooks/usePanZoomStage.js'
-import { getToken, getCharacterId } from '../cloud/api.js'
 import questsData from '../data/quests.json'
 
 // Facility chip glyph: bank reuses the existing in-game bank icon (the nav's coins
@@ -93,7 +93,7 @@ export default function WorldMapScreen({ onNavigate, onAutoStart, initialView } 
   const {
     worldLocation, updateWorldLocation, activeTask, setActiveTask, addToast, requestActivityStart,
     inventory, bank, equipment, stats, itemsData, updateInventory, updateBankDirect, grantXP,
-    skipHourHandlerRef, completedQuests, bossKillCounts, questQueue, removeFromQuestQueue,
+    completedQuests, bossKillCounts, questQueue, removeFromQuestQueue,
   } = useGame()
   const world = getWorld()
   const here = getPlace(worldLocation) ? worldLocation : world.start
@@ -143,16 +143,25 @@ export default function WorldMapScreen({ onNavigate, onAutoStart, initialView } 
       addToast('Not enough runes.', 'error')
       return
     }
+    // Teleporting straight to the place a walked action was headed for still
+    // auto-starts it on arrival — parity with walking or skipping the trail.
+    const pendingAutoStart = (travel && !travel.journey && travel.autoStart && destId === travel.dest)
+      ? travel.autoStart : null
     updateInventory(paid.inventory)
     if (Object.keys(paid.bankUpdates).length > 0) updateBankDirect(paid.bankUpdates)
     grantXP('magic', chk.xp)
     updateWorldLocation(destId)
     setActiveTask(nextTask)
-    // Landing free (not resuming a journey): open the place's own map (when it
-    // has one) or its hub so its activities are one tap away. Mid-journey
-    // teleports keep the map clear.
     setOpenId(null)
-    if (!nextTask && placeHasMap(destId)) setMapPlaceId(destId)
+    // Landing free (not resuming a journey): open the place's own map (when it
+    // has one) or its hub so its activities are one tap away. A pending action
+    // instead resumes straight into its screen; mid-journey teleports keep the
+    // map clear.
+    if (pendingAutoStart) {
+      setMapPlaceId(null)
+      setSlayerMasterId(null)
+      onAutoStart?.(pendingAutoStart)
+    } else if (!nextTask && placeHasMap(destId)) setMapPlaceId(destId)
     else if (!nextTask) setOpenId(destId)
     const name = getPlace(destId)?.name || destId
     addToast(searching ? `Teleported to ${name} — the search begins` : `Teleported to ${name}`, 'info')
@@ -173,6 +182,12 @@ export default function WorldMapScreen({ onNavigate, onAutoStart, initialView } 
       addToast(`${lock.reason}.`, lock.completed ? 'info' : 'error')
       return
     }
+    // One master per place: tapping it opens its hub (get / cancel a task)
+    // rather than assigning straight away, so an active task can't be replaced.
+    if (kind === 'slayer') {
+      setSlayerMasterId(ref)
+      return
+    }
     // Quests aren't place-bound tasks: starting one undertakes its journey from
     // wherever the player is — same flow as the quest board (QuestsScreen).
     if (kind === 'quest') {
@@ -188,6 +203,11 @@ export default function WorldMapScreen({ onNavigate, onAutoStart, initialView } 
       else onAutoStart?.(autoStartFromTask(task), mapPlaceId ? { screen: SCREENS.WORLD_MAP, data: { view: 'place' } } : undefined)
     }
   }
+
+  // "Get New Task" travel gate: returns true when the player is at the master's
+  // place (assign happens inline in the modal, so we stay on the map), false
+  // when a travel prompt was raised — arrival then auto-assigns via resumeAutoStart.
+  const startSlayerMaster = (ref) => requestActivityStart(fakeTaskFor('slayer', ref))
 
   // Start a quest journey from a place modal — the same flow as the quest board
   // (QuestsScreen.startQuestJourney): plan from the current location, dequeue it
@@ -227,23 +247,10 @@ export default function WorldMapScreen({ onNavigate, onAutoStart, initialView } 
     }
   }
 
-  // Credit skip: delegates to the shared Skip-1h flow (preflight, atomic
-  // /api/skip-hour debit, then 1 hour of trail time — the current clue/quest
-  // always finishes, leftover time chains the next scroll). Cloud accounts
-  // only, same as the header skip button.
-  const [skipBusy, setSkipBusy] = useState(false)
-  const canCreditSkip = !!(getToken() && getCharacterId())
-  const skipTravel = async () => {
-    if (skipBusy) return
-    setSkipBusy(true)
-    try {
-      await skipHourHandlerRef?.current?.()
-    } finally {
-      setSkipBusy(false)
-    }
-  }
-
   const [openId, setOpenId] = useState(null)
+  // Slayer master whose hub modal is open (get / cancel a task). Set from
+  // activateActivity; the modal's "Get New Task" runs startSlayerMaster.
+  const [slayerMasterId, setSlayerMasterId] = useState(null)
   // Full-screen place map (PlaceMapView) for the place the player is at, when
   // placeMaps.json defines one — opened instead of the hub. `initialView:
   // 'place'` (a skilling screen's back/stop returnTo) reopens it on mount.
@@ -253,6 +260,19 @@ export default function WorldMapScreen({ onNavigate, onAutoStart, initialView } 
   // when set and loadable it replaces the painted procedural terrain; any
   // load failure falls straight back so the chart never renders blank.
   const [mapArtOk, setMapArtOk] = useState(true)
+
+  // When a journey begins (an action gated behind travel was confirmed), close
+  // any open place modal so the player drops onto the map and can watch their
+  // token walk the route. Fires only on the transition into travel, so hubs
+  // opened mid-journey (e.g. to teleport) stay put.
+  const traveling = !!travel
+  useEffect(() => {
+    if (traveling) {
+      setOpenId(null)
+      setMapPlaceId(null)
+      setSlayerMasterId(null)
+    }
+  }, [traveling])
 
   const { stageRef, boardRef, stageProps, fitAll, zoomBy, wasGestureClick } = usePanZoomStage({
     boardW: world.board.w,
@@ -387,11 +407,6 @@ export default function WorldMapScreen({ onNavigate, onAutoStart, initialView } 
                   : `Route: ${(travel.path || []).map((id) => getPlace(id)?.name || id).join(' → ')}`}
               </div>
               <div class="wm-travelbar-actions">
-                {canCreditSkip && (
-                  <button class="wm-travelbar-skip" disabled={skipBusy} onClick={skipTravel} title="Skip 1 hour of travel — 1 credit. The current clue or quest always finishes; spare time runs the next scroll.">
-                    💎 Skip · 1 credit
-                  </button>
-                )}
                 {tele?.ok && (
                   <button class="wm-travelbar-tele" onClick={() => castTeleport(travel.dest)} title={`Consumes ${formatRuneCost(tele.runes, itemsData)} · +${tele.xp} Magic XP`}>
                     <GameIcon iconKey={getSkillArt('magic').icon} color="#fff" size={16} /> Teleport ahead
@@ -427,6 +442,16 @@ export default function WorldMapScreen({ onNavigate, onAutoStart, initialView } 
           onClose={() => setMapPlaceId(null)}
           onActivate={activateActivity}
           onNavigate={onNavigate}
+        />
+      )}
+
+      {/* Slayer master hub — get / cancel a task (one master per place) */}
+      {slayerMasterId && (
+        <SlayerMasterModal
+          masterId={slayerMasterId}
+          onClose={() => setSlayerMasterId(null)}
+          onGetTask={() => startSlayerMaster(slayerMasterId)}
+          onSlay={(monsterId) => { setSlayerMasterId(null); activateActivity('combat', monsterId) }}
         />
       )}
     </div>
@@ -508,8 +533,13 @@ function PlaceHub({ place, here, travelling, searching, tele, itemsData, onTrave
           <div class="wm-cat-grid">
             {groupActivities(placeActivities(place.id)).map(([kind, refs]) => {
               const k = getKind(kind)
+              // A place hosts exactly one slayer master, so skip the picker list
+              // and open its hub directly — one fewer tap.
+              const onClick = kind === 'slayer'
+                ? () => onActivate('slayer', refs[0])
+                : () => setOpenCategory(kind)
               return (
-                <button class="wm-cat-btn" key={kind} onClick={() => setOpenCategory(kind)}>
+                <button class="wm-cat-btn" key={kind} onClick={onClick}>
                   <span class="wm-cat-btn__dot" style={{ background: k?.color || 'var(--fm-brass)' }} />
                   <span class="wm-cat-btn__label">{k?.label || kind}</span>
                   <span class="wm-cat-btn__count">{refs.length}</span>

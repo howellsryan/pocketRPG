@@ -160,7 +160,7 @@ function SlayerMasterInfoSheet({ master, slayerLevel, completedQuests, onClose }
 // master on mount — set when the player picked the master from a place on the
 // world map, or just arrived at one after a travel prompt (resumeAutoStart).
 export default function SlayerScreen({ onBack, onNavigate, initialMasterId }) {
-  const { stats, slayerTask, setSlayerTask, slayerPoints, updateSlayerPoints, addToast, getSnapshot, slayerTasksCompleted, slayerPerks, updateSlayerPerk, completedQuests, requestActivityStart } = useGame()
+  const { stats, slayerTask, setSlayerTask, slayerPoints, updateSlayerPoints, addToast, getSnapshot, slayerTasksCompleted, slayerPerks, completedQuests, requestActivityStart } = useGame()
 
   const [infoMaster, setInfoMaster] = useState(null)
 
@@ -259,7 +259,12 @@ export default function SlayerScreen({ onBack, onNavigate, initialMasterId }) {
       addToast('Could not find target monster', 'error')
       return
     }
-    onNavigate(SCREENS.COMBAT, { monsterId: targetId })
+    // Travel to the monster's place first when it lives elsewhere (standard
+    // travel confirmation; combat auto-starts on arrival). Already there →
+    // straight into combat.
+    if (requestActivityStart({ type: 'combat', monster: { id: targetId } })) {
+      onNavigate(SCREENS.COMBAT, { monsterId: targetId })
+    }
   }
 
   return (
@@ -363,35 +368,7 @@ export default function SlayerScreen({ onBack, onNavigate, initialMasterId }) {
         })}
       </div>
 
-      {/* Slayer unlocks (point-purchased items) moved to the Character Unlocks screen. */}
-
-      {/* Perks — point-purchased, non-item bonuses */}
-      <SectionHeader className="mt-5 mb-2.5">Perks</SectionHeader>
-      <div class="flex flex-col gap-2.5">
-        {(() => {
-          const perkOwned = slayerPerks?.doubleQuantity === true
-          const cost = 250
-          const canAfford = slayerPoints >= cost
-          const disabled = perkOwned || !canAfford
-          return (
-            <SkillActionRow
-              icon={<span class="text-2xl">🗡️</span>}
-              title="Slayer Multitask"
-              meta="Doubles the number of monsters assigned by your Slayer Master."
-              chip={perkOwned
-                ? <span class="text-[var(--color-hp-green)]">Active</span>
-                : <span class={canAfford ? '' : 'text-[var(--color-blood-light)]'}>{cost.toLocaleString()} pts</span>}
-              disabled={disabled}
-              onClick={() => {
-                updateSlayerPoints(slayerPoints - cost)
-                updateSlayerPerk('doubleQuantity', true)
-                requestCriticalPushSave(() => getSnapshot(), CRITICAL_SAVE_REASONS.SLAYER_TASK_CHANGE)
-                addToast('🗡️ Slayer Multitask unlocked!', 'info')
-              }}
-            />
-          )
-        })()}
-      </div>
+      {/* Slayer unlocks + perks (point-purchased) moved to the Character Unlocks screen. */}
 
     </div>
 

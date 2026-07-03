@@ -349,6 +349,11 @@ html, body, #app {
 ::-webkit-scrollbar-track { background: var(--color-void-light); }
 ::-webkit-scrollbar-thumb { background: var(--color-void-border); border-radius: 2px; }
 
+/* Hide the scrollbar while keeping the element scrollable (e.g. the in-combat
+   HUD, where the thin bar reads as an artefact on mobile). */
+.no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
+.no-scrollbar::-webkit-scrollbar { width: 0; height: 0; }
+
 /* Toast animations */
 @keyframes toast-in {
   from { transform: translateY(-100%); opacity: 0; }

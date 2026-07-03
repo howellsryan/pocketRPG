@@ -11,6 +11,8 @@ import SkillActionRow from '../components/SkillActionRow.jsx'
 import { isUnlockOwned } from '../utils/completion.js'
 import { SLAYER_UNLOCKS, getSlayerUnlockPurchaseState, ownsItem } from '../engine/slayerUnlocks.js'
 
+const SLAYER_MULTITASK_COST = 250
+
 const CHARACTER_UNLOCKS_DEF = [
   {
     id: 'double_slayer_xp',
@@ -27,6 +29,7 @@ export default function CharacterUnlockScreen({ onBack }) {
   const {
     characterUnlocks, updateCharacterUnlock, addToast, getSnapshot,
     slayerPoints, updateSlayerPoints, bank, inventory, addToBank, itemsData, loadGame,
+    slayerPerks, updateSlayerPerk,
   } = useGame()
   const isCloud = Boolean(getToken() && getCharacterId())
 
@@ -82,6 +85,19 @@ export default function CharacterUnlockScreen({ onBack }) {
     recordCollectionLogDrop({ itemId: unlock.itemId, sourceType: 'skilling', sourceId: 'slayer' })
     requestCriticalPushSave(() => getSnapshot(), CRITICAL_SAVE_REASONS.PURCHASE)
     addToast(`🎉 Purchased ${item.name} — sent to bank`, 'info')
+  }
+
+  // Slayer Multitask perk — a non-item slayer-point unlock (doubles task size).
+  const handleMultitask = () => {
+    if (slayerPerks?.doubleQuantity) return
+    if (slayerPoints < SLAYER_MULTITASK_COST) {
+      addToast('Not enough slayer points.', 'error')
+      return
+    }
+    updateSlayerPoints(slayerPoints - SLAYER_MULTITASK_COST)
+    updateSlayerPerk('doubleQuantity', true)
+    requestCriticalPushSave(() => getSnapshot(), CRITICAL_SAVE_REASONS.PURCHASE)
+    addToast('🗡️ Slayer Multitask unlocked!', 'info')
   }
 
   return (
@@ -171,6 +187,22 @@ export default function CharacterUnlockScreen({ onBack }) {
             />
           )
         })}
+        {(() => {
+          const owned = slayerPerks?.doubleQuantity === true
+          const canAfford = slayerPoints >= SLAYER_MULTITASK_COST
+          return (
+            <SkillActionRow
+              icon={<span class="text-2xl">🗡️</span>}
+              title="Slayer Multitask"
+              meta="Doubles the number of monsters assigned by your Slayer Master."
+              chip={owned
+                ? <span class="text-[var(--color-hp-green)]">Active</span>
+                : <span class={canAfford ? '' : 'text-[var(--color-blood-light)]'}>{SLAYER_MULTITASK_COST.toLocaleString()} pts</span>}
+              disabled={owned || !canAfford}
+              onClick={handleMultitask}
+            />
+          )
+        })()}
       </div>
     </div>
   )
