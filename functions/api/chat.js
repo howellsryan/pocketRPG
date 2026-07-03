@@ -14,8 +14,12 @@ import {
   reserveMessageNeurons,
   settleMessageNeurons,
   usageMilliNeurons,
+  openaiPoolKey,
   CHAT_DAILY_LIMIT,
   CHAT_MESSAGE_RESERVE_MILLI,
+  CHAT_NEURON_BUDGET_MILLI,
+  CHAT_OPENAI_MESSAGE_RESERVE_TOKENS,
+  CHAT_OPENAI_TOKEN_BUDGET,
 } from '../_lib/chat/quota.js'
 import {
   CHAT_MODEL,
@@ -94,13 +98,18 @@ export function geminiChatBinding(env) {
 export function openaiChatBinding(env) {
   return {
     async run(model, payload) {
+      // gpt-5.x reasoning models 400 on `max_tokens` (want
+      // `max_completion_tokens`) and on any non-default `temperature`.
+      const { max_tokens, temperature, ...rest } = payload
+      const body = { model, ...rest }
+      if (max_tokens !== undefined) body.max_completion_tokens = max_tokens
       const res = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${env.OPENAI_API_KEY}`,
         },
-        body: JSON.stringify({ model, ...payload }),
+        body: JSON.stringify(body),
       })
       if (!res.ok) {
         const detail = (await res.text().catch(() => '')).slice(0, 300)
@@ -118,15 +127,15 @@ export function openaiChatBinding(env) {
 export function chatAttempts(env) {
   const attempts = []
   if (env.OPENAI_API_KEY && CHAT_OPENAI_MODEL) {
-    attempts.push({ ai: openaiChatBinding(env), model: CHAT_OPENAI_MODEL })
+    attempts.push({ ai: openaiChatBinding(env), model: CHAT_OPENAI_MODEL, pool: 'openai' })
   }
   if (CHAT_MODEL.startsWith('@')) {
-    if (env.AI) attempts.push({ ai: env.AI, model: CHAT_MODEL })
+    if (env.AI) attempts.push({ ai: env.AI, model: CHAT_MODEL, pool: 'neuron' })
   } else if (env.GEMINI_API_KEY) {
-    attempts.push({ ai: geminiChatBinding(env), model: CHAT_MODEL })
+    attempts.push({ ai: geminiChatBinding(env), model: CHAT_MODEL, pool: 'neuron' })
   }
   if (env.AI && CHAT_FALLBACK_MODEL && CHAT_FALLBACK_MODEL !== CHAT_MODEL) {
-    attempts.push({ ai: env.AI, model: CHAT_FALLBACK_MODEL })
+    attempts.push({ ai: env.AI, model: CHAT_FALLBACK_MODEL, pool: 'neuron' })
   }
   return attempts
 }
@@ -139,13 +148,14 @@ function answerText(res) {
   return content.replace(/<think>[\s\S]*?(?:<\/think>|$)/g, '').trim()
 }
 
-// Accumulate a call's reported token usage into per-message neuron stats.
+// Accumulate a call's reported token usage into per-pool message stats.
 // A call that doesn't report both token counts marks the message unknown so
 // the endpoint keeps its full worst-case reserve instead of refunding.
 function trackUsage(stats, res) {
   const usage = res?.usage
   if (usage && typeof usage.prompt_tokens === 'number' && typeof usage.completion_tokens === 'number') {
-    stats.milliNeurons += usageMilliNeurons(usage)
+    stats.promptTokens += usage.prompt_tokens
+    stats.completionTokens += usage.completion_tokens
   } else {
     stats.usageUnknown = true
   }
@@ -300,17 +310,43 @@ export async function onRequestPost({ request, env }) {
       '[PocketRPG][chat] no AI provider configured — OPENAI_API_KEY / GEMINI_API_KEY / Workers AI (env.AI) all unavailable to this deployment',
     )
   }
-  const aiAvailable = attempts.length > 0 && (await reserveMessageNeurons(env, dayKey))
-  if (attempts.length && !aiAvailable) reason = 'budget'
-  if (aiAvailable) {
-    const stats = { milliNeurons: 0, usageUnknown: false }
+  // Two independent daily pools: the OpenAI attempt spends the complimentary
+  // token allotment, Gemini/Workers AI attempts spend the neuron budget. Each
+  // pool is reserved lazily before its first attempt; a pool that no longer
+  // fits skips only its own attempts, so an exhausted OpenAI pool still falls
+  // through to the budget-capped paid paths. `stats` is undefined until the
+  // pool is tried, null when its reserve was refused.
+  const pools = {
+    openai: {
+      key: openaiPoolKey(dayKey),
+      reserve: CHAT_OPENAI_MESSAGE_RESERVE_TOKENS,
+      budget: CHAT_OPENAI_TOKEN_BUDGET,
+      cost: (s) => s.promptTokens + s.completionTokens,
+    },
+    neuron: {
+      key: dayKey,
+      reserve: CHAT_MESSAGE_RESERVE_MILLI,
+      budget: CHAT_NEURON_BUDGET_MILLI,
+      cost: (s) => usageMilliNeurons({ prompt_tokens: s.promptTokens, completion_tokens: s.completionTokens }),
+    },
+  }
+  if (attempts.length) {
     const deadline = Date.now() + CHAT_TIME_BUDGET_MS
     // Each attempt gets a fresh transcript; a failed or empty attempt falls
-    // through to the next model, all under the one deadline and reserve.
-    for (const { ai, model } of attempts) {
+    // through to the next model, all under the one deadline.
+    for (const { ai, model, pool: poolName } of attempts) {
+      const pool = pools[poolName]
+      if (pool.stats === undefined) {
+        const reserved = await reserveMessageNeurons(env, pool.key, pool.reserve, pool.budget)
+        pool.stats = reserved ? { promptTokens: 0, completionTokens: 0, usageUnknown: false } : null
+      }
+      if (!pool.stats) {
+        reason = 'budget'
+        continue
+      }
       try {
         const messages = buildMessages({ question, history: body?.history, chunks })
-        answer = await runAiChat(env, messages, { authorization, identity: auth.identity, characterId, stats, deadline, ai, model })
+        answer = await runAiChat(env, messages, { authorization, identity: auth.identity, characterId, stats: pool.stats, deadline, ai, model })
         if (answer) break
         reason = 'empty'
       } catch (err) {
@@ -320,12 +356,14 @@ export async function onRequestPost({ request, env }) {
         if (err instanceof ChatTimeoutError) break
       }
     }
-    // Reconcile the worst-case reserve back to actual metered usage. Always
+    // Reconcile each reserved pool back to actual metered usage. Always
     // settle — even when a call didn't report usage (a timed-out/abandoned
-    // call). Skipping it there would permanently burn the full 1.7M reserve,
-    // and a handful of those drains the day's budget and forces every later
-    // message to retrieval-only until the 00:00 UTC reset.
-    await settleMessageNeurons(env, dayKey, CHAT_MESSAGE_RESERVE_MILLI, stats.milliNeurons)
+    // call). Skipping it there would permanently burn the full worst-case
+    // reserve, and a handful of those drains the day's budget and forces
+    // every later message to retrieval-only until the 00:00 UTC reset.
+    for (const pool of Object.values(pools)) {
+      if (pool.stats) await settleMessageNeurons(env, pool.key, pool.reserve, pool.cost(pool.stats))
+    }
   }
   // Whatever went wrong on the AI path — no budget, model error, time budget
   // exceeded, empty answer — the player always gets a knowledge-index answer.

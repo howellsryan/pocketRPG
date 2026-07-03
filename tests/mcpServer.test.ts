@@ -288,6 +288,26 @@ describe('MCP reference data', () => {
     expect(JSON.parse(res.content[0].text).sources.monsters.length).toBeGreaterThan(0)
   })
 
+  it('raid uniques source from the raid reward chest, never from raid sub-bosses', async () => {
+    // rewards.unique.items is the real raids.json shape.
+    expect(itemSources('shadow_of_tumaken')?.raids).toContain('Tomb of Arasmus')
+    // Raid-only bosses' monsters.json drop tables are never rolled — they must
+    // not appear as monster sources; the raid is the only source.
+    const helm = itemSources('torvek_s_helm')
+    expect(helm?.raids).toContain('Cryptbound Champions')
+    expect(helm?.monsters).toBeUndefined()
+    // inspect_monster on a raid sub-boss hides the dead drop table and points
+    // at the raid chest instead.
+    const res = await callTool('inspect_monster', { monster_id: 'torvek_the_corrupted' }, { env: {} } as any)
+    const monster = JSON.parse(res.content[0].text)
+    expect(monster.drops).toBeUndefined()
+    expect(monster.raid).toBe('Cryptbound Champions')
+    expect(monster.lootNote).toContain('reward chest')
+    // Standalone bosses keep their drop tables.
+    const kbd = await callTool('inspect_monster', { monster_id: 'king_black_dragon' }, { env: {} } as any)
+    expect(JSON.parse(kbd.content[0].text).drops?.length).toBeGreaterThan(0)
+  })
+
   it('reads markdown mechanics and a JSON index, and rejects unknown uris', () => {
     expect(readReference('pocketrpg://reference/mechanics')?.mimeType).toBe('text/markdown')
     const items = readReference('pocketrpg://reference/items')

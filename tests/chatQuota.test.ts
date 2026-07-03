@@ -3,9 +3,12 @@ import {
   CHAT_DAILY_LIMIT,
   CHAT_MESSAGE_RESERVE_MILLI,
   CHAT_NEURON_BUDGET_MILLI,
+  CHAT_OPENAI_MESSAGE_RESERVE_TOKENS,
+  CHAT_OPENAI_TOKEN_BUDGET,
   MILLI_NEURONS_PER_INPUT_TOKEN,
   MILLI_NEURONS_PER_OUTPUT_TOKEN,
   claimCharacterMessage,
+  openaiPoolKey,
   refundCharacterMessage,
   reserveMessageNeurons,
   settleMessageNeurons,
@@ -136,7 +139,7 @@ describe('chat quotas', () => {
     expect(usageMilliNeurons(undefined)).toBe(0)
   })
 
-  it('the per-message reserve covers a worst-case message derived from the CHAT_MAX_* limits', () => {
+  it('the per-message reserves cover a worst-case message derived from the CHAT_MAX_* limits', () => {
     // Conservative token estimate: 3 chars/token (JSON-heavy content runs
     // denser than prose's ~4).
     const CHARS_PER_TOKEN = 3
@@ -167,16 +170,24 @@ describe('chat quotas', () => {
       inputTokens * MILLI_NEURONS_PER_INPUT_TOKEN + outputTokens * MILLI_NEURONS_PER_OUTPUT_TOKEN,
     )
     expect(CHAT_MESSAGE_RESERVE_MILLI).toBeGreaterThanOrEqual(worstMilli)
+    expect(CHAT_OPENAI_MESSAGE_RESERVE_TOKENS).toBeGreaterThanOrEqual(Math.ceil(inputTokens + outputTokens))
   })
 
-  it('budget invariants keep the chatbot inside the free allocation', () => {
+  it('budget invariants keep the chatbot inside the free allocations', () => {
     expect(CHAT_DAILY_LIMIT).toBe(30)
     // Budget + one in-flight worst-case reserve must stay within 10,000 free
     // neurons/day (10,000,000 milli-neurons).
     expect(CHAT_NEURON_BUDGET_MILLI + CHAT_MESSAGE_RESERVE_MILLI).toBeLessThanOrEqual(10_000_000)
+    // Same invariant for the OpenAI pool against the ~2.5M/day complimentary
+    // token allotment — overage there bills at normal rates.
+    expect(CHAT_OPENAI_TOKEN_BUDGET + CHAT_OPENAI_MESSAGE_RESERVE_TOKENS).toBeLessThanOrEqual(2_500_000)
     // Conversion rates must not undercount Cloudflare's published pricing:
     // ($ per M tokens) / ($0.011 per 1k neurons) = milli-neurons per token.
     expect(MILLI_NEURONS_PER_INPUT_TOKEN).toBeGreaterThanOrEqual(0.06 / 0.011)
     expect(MILLI_NEURONS_PER_OUTPUT_TOKEN).toBeGreaterThanOrEqual(0.4 / 0.011)
+  })
+
+  it('the OpenAI pool keys never collide with neuron-budget day keys', () => {
+    expect(openaiPoolKey('2026-07-03')).toBe('openai:2026-07-03')
   })
 })

@@ -43,6 +43,28 @@ function monsterList() {
   return Array.isArray(monstersData) ? monstersData : Object.values(monstersData)
 }
 
+// Monsters that only exist inside a raid. Their monsters.json drop tables are
+// never rolled — raid loot (uniques included) comes from the raid's reward
+// chest on completion — so they must not surface as drop sources.
+let raidBossRaidNames = null
+export function raidForBoss(monsterId) {
+  if (!raidBossRaidNames) {
+    raidBossRaidNames = new Map()
+    const seen = new Set()
+    for (const [key, r] of Object.entries(raidsData)) {
+      const raidId = r?.id || key
+      if (seen.has(raidId)) continue
+      seen.add(raidId)
+      for (const bossId of r?.bosses || []) {
+        if (typeof bossId === 'string' && bossId && !raidBossRaidNames.has(bossId)) {
+          raidBossRaidNames.set(bossId, r.name || raidId)
+        }
+      }
+    }
+  }
+  return raidBossRaidNames.get(monsterId) || null
+}
+
 // ── Compact indexes (items.json/monsters.json are large; detail via inspect_*) ─
 
 export function itemsIndex() {
@@ -135,6 +157,7 @@ function buildItemSourcesIndex() {
     return map.get(id)
   }
   for (const m of monsterList()) {
+    if (raidForBoss(m.id)) continue
     for (const d of m.drops || []) {
       const e = entry(d.itemId)
       if (!e.monsters) e.monsters = []
@@ -153,7 +176,7 @@ function buildItemSourcesIndex() {
     const raidId = r.id || key
     if (seenRaids.has(raidId)) continue
     seenRaids.add(raidId)
-    for (const u of r.rewards?.uniques || r.rewards?.rare || []) {
+    for (const u of r.rewards?.unique?.items || r.rewards?.uniques || r.rewards?.rare || []) {
       const itemId = typeof u === 'string' ? u : u?.itemId
       if (!itemId) continue
       const e = entry(itemId)

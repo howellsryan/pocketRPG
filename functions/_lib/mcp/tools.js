@@ -1,6 +1,6 @@
 import { callHandler } from './bridge.js'
 import { summarizeSave } from './summary.js'
-import { getItem, getMonster, itemName, withItemName, itemSources, REFERENCE_RESOURCES, readReference, listSkills, getSkillActions, searchItems, searchMonsters, REFERENCE_TOPICS } from './reference.js'
+import { getItem, getMonster, itemName, withItemName, itemSources, raidForBoss, REFERENCE_RESOURCES, readReference, listSkills, getSkillActions, searchItems, searchMonsters, REFERENCE_TOPICS } from './reference.js'
 import { loadCharacterWithSave, writeSave } from '../game/save.js'
 import { createDefaultSave } from '../../../src/engine/createDefaultSave.js'
 import { auditLog } from '../game/audit.js'
@@ -338,6 +338,15 @@ const TOOLS = {
     if (!monster_id) throw new Error('monster_id is required.')
     const monster = getMonster(monster_id)
     if (!monster) throw new Error(`No monster with id '${monster_id}'. Browse ids via pocketrpg://reference/monsters.`)
+    const raidName = raidForBoss(monster_id)
+    if (raidName) {
+      const { drops, ...rest } = monster
+      return ok({
+        ...rest,
+        raid: raidName,
+        lootNote: `Fought only inside the ${raidName} raid. It has no personal drop table — raid loot, including uniques, is rolled from the raid's reward chest when the raid is completed.`,
+      })
+    }
     return ok(monster)
   },
 
