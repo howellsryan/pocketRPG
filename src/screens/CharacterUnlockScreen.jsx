@@ -1,11 +1,15 @@
 import { useGame } from '../state/gameState.jsx'
 import { api, getToken, getCharacterId, CREDITS_UPDATED_EVENT } from '../cloud/api.js'
-import { requestCriticalPushSave } from '../cloud/sync.js'
+import { requestCriticalPushSave, applyCloudSave } from '../cloud/sync.js'
 import { CRITICAL_SAVE_REASONS } from '../cloud/criticalSavePolicy.js'
+import { recordCollectionLogDrop } from '../cloud/collectionLog.js'
 import GildedComplete from '../components/GildedComplete.jsx'
 import GameIcon from '../components/GameIcon.jsx'
 import BackLink from '../components/BackLink.jsx'
+import SectionHeader from '../components/SectionHeader.jsx'
+import SkillActionRow from '../components/SkillActionRow.jsx'
 import { isUnlockOwned } from '../utils/completion.js'
+import { SLAYER_UNLOCKS, getSlayerUnlockPurchaseState, ownsItem } from '../engine/slayerUnlocks.js'
 
 const CHARACTER_UNLOCKS_DEF = [
   {
@@ -20,7 +24,10 @@ const CHARACTER_UNLOCKS_DEF = [
 ]
 
 export default function CharacterUnlockScreen({ onBack }) {
-  const { characterUnlocks, updateCharacterUnlock, addToast, getSnapshot } = useGame()
+  const {
+    characterUnlocks, updateCharacterUnlock, addToast, getSnapshot,
+    slayerPoints, updateSlayerPoints, bank, inventory, addToBank, itemsData, loadGame,
+  } = useGame()
   const isCloud = Boolean(getToken() && getCharacterId())
 
   const handlePurchase = async (unlock) => {
@@ -45,6 +52,36 @@ export default function CharacterUnlockScreen({ onBack }) {
       if (err?.status === 402) addToast('Not enough credits.', 'error')
       else addToast(err?.message || 'Purchase failed.', 'error')
     }
+  }
+
+  // Slayer unlocks — one-off items bought with slayer points (moved here from
+  // the Slayer screen). Cloud accounts claim server-side (audited grant + point
+  // debit), local saves grant straight to the bank.
+  const handleSlayerUnlock = async (unlock) => {
+    const item = itemsData[unlock.itemId]
+    const purchaseState = getSlayerUnlockPurchaseState({ unlock, item, slayerPoints, bank, inventory })
+    if (!purchaseState.allowed) {
+      addToast(purchaseState.message || 'Unable to purchase unlock', 'error')
+      return
+    }
+    if (getToken() && getCharacterId()) {
+      try {
+        await api.completeSlayer('slayer', { actionNonce: `slayer:${unlock.itemId}:${Date.now()}`, rewards: [{ itemId: unlock.itemId, quantity: 1 }], slayerPoints: -unlock.cost })
+        const saveRes = await api.getSave()
+        if (saveRes?.save?.save_data) await applyCloudSave(JSON.parse(saveRes.save.save_data), saveRes.save.updatedAt, saveRes.save.save_revision)
+        await loadGame()
+        addToast(`🎉 Purchased ${item.name} — sent to bank`, 'info')
+        return
+      } catch (e) {
+        addToast(`Unlock claim failed: ${e?.message || 'server_error'}`, 'error')
+        return
+      }
+    }
+    updateSlayerPoints(slayerPoints - unlock.cost)
+    addToBank(unlock.itemId, 1)
+    recordCollectionLogDrop({ itemId: unlock.itemId, sourceType: 'skilling', sourceId: 'slayer' })
+    requestCriticalPushSave(() => getSnapshot(), CRITICAL_SAVE_REASONS.PURCHASE)
+    addToast(`🎉 Purchased ${item.name} — sent to bank`, 'info')
   }
 
   return (
@@ -99,6 +136,42 @@ export default function CharacterUnlockScreen({ onBack }) {
           Sign in with a cloud account to purchase permanent unlocks.
         </p>
       )}
+
+      {/* Slayer unlocks — purchasable with slayer points */}
+      <div class="mt-6 mb-2.5 flex justify-between items-baseline">
+        <SectionHeader>Slayer Unlocks</SectionHeader>
+        <span class="text-[11px] font-bold font-[var(--font-mono)] text-[var(--color-gold)]">
+          {slayerPoints.toLocaleString()} pts
+        </span>
+      </div>
+      <p class="text-xs text-[var(--color-parchment)] opacity-40 mb-3">
+        One-off items bought with slayer points earned from completing slayer tasks.
+      </p>
+      <div class="flex flex-col gap-2.5">
+        {SLAYER_UNLOCKS.map(unlock => {
+          const item = itemsData[unlock.itemId]
+          if (!item) return null
+          const owned = ownsItem({ itemId: unlock.itemId, bank, inventory })
+          const canAfford = slayerPoints >= unlock.cost
+          const disabled = owned || !canAfford
+          return (
+            <SkillActionRow
+              key={unlock.itemId}
+              icon={<GameIcon item={item} size={30} />}
+              title={item.name}
+              meta={<>
+                {unlock.description}
+                {item.requirements?.slayer > 0 && <span class="block mt-1 opacity-80">Requires Slayer {item.requirements.slayer} to wear</span>}
+              </>}
+              chip={owned
+                ? <span class="text-[var(--color-hp-green)]">Owned</span>
+                : <span class={canAfford ? '' : 'text-[var(--color-blood-light)]'}>{unlock.cost.toLocaleString()} pts</span>}
+              disabled={disabled}
+              onClick={() => handleSlayerUnlock(unlock)}
+            />
+          )
+        })}
+      </div>
     </div>
   )
 }

@@ -24,8 +24,10 @@ import minigamesData from '../data/minigames.json'
 import questsData from '../data/quests.json'
 import { GATHER_TASKS } from './gatherTasks.js'
 import { BUILDING_ACTIONS } from './construction.js'
+import { SLAYER_MASTERS } from './slayerMasters.js'
 import { normaliseLocation } from './world.js'
 import { getLevelFromXP } from './experience.js'
+import { combatLevelFromStats } from './combatLevel.js'
 import { checkQuestEligibility } from './quests.js'
 import { checkBossRequirementsPure, checkRaidRequirementsPure } from './combatRequirements.js'
 import { COMPLEXITY_ORDER } from '../utils/complexityColors.js'
@@ -64,14 +66,29 @@ function actionInSkill(skillId, actionId) {
   return asArray(list).find((a) => a.id === actionId) || null
 }
 
+// Slayer masters live at places directly from SLAYER_MASTERS (engine data in the
+// core bundle — not seeded into worldActivities.json). Resolved lazily so the
+// single-file concat order between engine files never matters at eval time.
+function slayerRefsAt(placeId) {
+  return SLAYER_MASTERS.filter((m) => m.placeId === placeId).map((m) => ({ kind: 'slayer', ref: m.id }))
+}
+
+function slayerMasterById(id) {
+  return SLAYER_MASTERS.find((m) => m.id === id) || null
+}
+
 /**
- * Activities offered at a place: `[{ kind, ref }, ...]`. In the single-file build the
- * data global lives in the game chunk; before it loads (only reachable pre-game, where
- * nothing gates) this returns [] — which downstream means "unmapped, never gate".
+ * Activities offered at a place: `[{ kind, ref }, ...]` — the seeded mapping
+ * (worldActivities.json) plus any slayer masters homed there. In the single-file
+ * build the seeded data global lives in the game chunk; before it loads (only
+ * reachable pre-game, where nothing gates) the seeded part is [] — which
+ * downstream means "unmapped, never gate".
  */
 export function placeActivities(placeId) {
   const src = typeof worldActivitiesData !== 'undefined' ? worldActivitiesData : {}
-  return src[placeId] || []
+  const seeded = src[placeId] || []
+  const slayer = slayerRefsAt(placeId)
+  return slayer.length ? [...seeded, ...slayer] : seeded
 }
 
 // ---- reverse index: `${kind}|${ref}` -> [placeId, ...] ----------------------------
@@ -79,18 +96,17 @@ let _index = null
 function index() {
   if (_index) return _index
   const built = {}
-  let any = false
   for (const placeId of Object.keys(worldData.places)) {
     for (const a of placeActivities(placeId)) {
       if (!a || !a.kind || !a.ref) continue
-      any = true
       const key = a.kind + '|' + a.ref
       ;(built[key] || (built[key] = [])).push(placeId)
     }
   }
-  // Only memoise a populated index: an empty build means the chunk data global wasn't
-  // loaded yet, and caching that would leave gating dead for the whole session.
-  if (any) _index = built
+  // Only memoise once the seeded data global is loaded: before the game chunk
+  // arrives the index would hold just the engine-side slayer entries, and
+  // caching that would leave the rest of the gating dead for the whole session.
+  if (typeof worldActivitiesData !== 'undefined') _index = built
   return built
 }
 
@@ -118,6 +134,9 @@ export function activityRef(task) {
     // Gated per-minigame (not per-task) — every reward task of a minigame lives at the
     // same place, so the whole minigame is the unit that's location-bound.
     case 'minigame': return task.minigameTask?.minigame ? { kind: 'minigame', ref: task.minigameTask.minigame } : null
+    // Getting a slayer task from a master (never an activeTask — the shape only
+    // rides the gating/travel-prompt flow, assignment itself is instant).
+    case 'slayermaster': return task.master?.id ? { kind: 'slayer', ref: task.master.id } : null
     default: return null
   }
 }
@@ -141,6 +160,8 @@ export function autoStartFromTask(task) {
     // Carries the specific reward task id (not just the minigame) so arrival resumes
     // exactly the task the player picked, not just any task from that minigame.
     case 'minigame': return task.minigameTask?.id ? { kind: 'minigame', taskId: task.minigameTask.id } : null
+    // Arrival auto-assigns a task from the master (via the Slayer screen).
+    case 'slayermaster': return task.master?.id ? { kind: 'slayer', masterId: task.master.id } : null
     default: return null
   }
 }
@@ -262,6 +283,11 @@ export function describeActivity(kind, ref) {
       const mg = minigamesById[ref]
       return { name: mg?.label || ref, icon: mg?.icon || '🎮', level: null }
     }
+    // Slayer masters: getting a task from the master homed at this place.
+    case 'slayer': {
+      const m = slayerMasterById(ref)
+      return { name: m ? `${m.name} — Slayer Master` : ref, icon: m?.icon || '💀', level: null }
+    }
     // Quests carry no single level; `level` is the complexity rank so pickers
     // sort Novice → Grandmaster (render `complexity`, not the rank number).
     case 'quest': {
@@ -300,6 +326,17 @@ export function activityLockReason(kind, ref, ctx = {}) {
   if (kind === 'raid') {
     const check = checkRaidRequirementsPure(raidsData[ref], { completedQuests })
     return check.locked ? { reason: check.reason } : null
+  }
+  if (kind === 'slayer') {
+    const master = slayerMasterById(ref)
+    if (!master) return { reason: 'Unknown slayer master' }
+    if (master.combatReq > 0 && combatLevelFromStats(stats) < master.combatReq) {
+      return { reason: `Requires combat level ${master.combatReq}` }
+    }
+    if (master.slayerReq > 0 && levelOf('slayer') < master.slayerReq) {
+      return { reason: `Requires Slayer level ${master.slayerReq}` }
+    }
+    return null
   }
   if (kind === 'quest') {
     const quest = questsById[ref]

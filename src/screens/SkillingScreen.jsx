@@ -62,7 +62,7 @@ function calculateRemainingActions(action, inventory, bank) {
 // backing out walks the internal skill list as before.
 // `onStopBack` (from App): where Stop & Back returns to — the place-map origin
 // when there is one, otherwise the previous screen.
-export default function SkillingScreen({ initialSkillId, initialActionId, idleResult, onNavigate, onBack, onStopBack }) {
+export default function SkillingScreen({ initialSkillId, initialActionId, initialMasterId, idleResult, onNavigate, onBack, onStopBack }) {
   const { stats, inventory, bank, equipment, isIronman, updateInventory, updateBankDirect, grantXP, addToast, setActiveTask, requestActivityStart, activeTask, dungeoneeringTokens, awardDungeoneeringTokens, trySpendDungeoneeringTokens, loadGame, recordGameEvent } = useGame()
   const [selectedSkill, setSelectedSkill] = useState(initialSkillId || null)
   const [selectedAction, setSelectedAction] = useState(null)
@@ -94,6 +94,7 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
   if (selectedSkill === 'slayer') {
     return (
       <SlayerScreen
+        initialMasterId={initialMasterId}
         onBack={onBack || (() => setSelectedSkill(null))}
         onNavigate={onNavigate}
       />

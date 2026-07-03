@@ -1,4 +1,4 @@
-import { useState } from 'preact/hooks'
+import { useState, useEffect, useRef } from 'preact/hooks'
 import { useGame } from '../state/gameState.jsx'
 import SkillScreenHeader from '../components/SkillScreenHeader.jsx'
 import SkillActionRow from '../components/SkillActionRow.jsx'
@@ -9,16 +9,12 @@ import { MultiStyleChip } from './CombatMobileSheets.jsx'
 import { getMonsterArt, getCategoryArt, getMonsterAttackStyles } from '../utils/combatArt.js'
 import { getLevelFromXP } from '../engine/experience.js'
 import monstersData from '../data/monsters.json'
-import itemsData from '../data/items.json'
 import questsData from '../data/quests.json'
-import { SLAYER_UNLOCKS, getSlayerUnlockPurchaseState, ownsItem } from '../engine/slayerUnlocks.js'
 import { requestCriticalPushSave } from '../cloud/sync.js'
 import { DAGANNOTH_KINGS_TASK_ID, SLAYER_TASK_SKIP_POINT_COST } from '../engine/slayerTasks.js'
 import { SLAYER_MASTERS, resolveTaskMonsterIds, pickSlayerMonster, buildSlayerTask, isEntryEligible } from '../engine/slayerMasters.js'
 import { api, getToken, getCharacterId, CREDITS_UPDATED_EVENT } from '../cloud/api.js'
-import { applyCloudSave } from '../cloud/sync.js'
 import { CRITICAL_SAVE_REASONS } from '../cloud/criticalSavePolicy.js'
-import { recordCollectionLogDrop } from '../cloud/collectionLog.js'
 import { SCREENS } from '../utils/constants.js'
 
 // PocketRPG combat level formula
@@ -160,8 +156,11 @@ function SlayerMasterInfoSheet({ master, slayerLevel, completedQuests, onClose }
   )
 }
 
-export default function SlayerScreen({ onBack, onNavigate }) {
-  const { stats, slayerTask, setSlayerTask, slayerPoints, updateSlayerPoints, addToast, bank, inventory, addToBank, getSnapshot, slayerTasksCompleted, loadGame, slayerPerks, updateSlayerPerk, completedQuests } = useGame()
+// `initialMasterId` (from App via SkillingScreen): assign a task from that
+// master on mount — set when the player picked the master from a place on the
+// world map, or just arrived at one after a travel prompt (resumeAutoStart).
+export default function SlayerScreen({ onBack, onNavigate, initialMasterId }) {
+  const { stats, slayerTask, setSlayerTask, slayerPoints, updateSlayerPoints, addToast, getSnapshot, slayerTasksCompleted, slayerPerks, updateSlayerPerk, completedQuests, requestActivityStart } = useGame()
 
   const [infoMaster, setInfoMaster] = useState(null)
 
@@ -182,6 +181,10 @@ export default function SlayerScreen({ onBack, onNavigate }) {
       addToast(`Need slayer level ${master.slayerReq} (you have ${slayerLevel})`, 'error')
       return
     }
+    // Masters live at world places: getting a task is a place action. Away from
+    // the master's settlement this opens the standard travel prompt; arrival
+    // re-enters this screen with initialMasterId and assigns then.
+    if (!requestActivityStart({ type: 'slayermaster', master: { id: master.id } })) return
 
     // Evenly distributed pick across the master's eligible monsters — gated by
     // both slayer level and any quest requirement so the player can always fight
@@ -194,6 +197,15 @@ export default function SlayerScreen({ onBack, onNavigate }) {
 
     assignTask(master, pick.monsterId, pick.isBoss)
   }
+
+  // Auto-assign when routed here with a master (place action / travel arrival).
+  const hasAutoAssigned = useRef(false)
+  useEffect(() => {
+    if (!initialMasterId || hasAutoAssigned.current) return
+    hasAutoAssigned.current = true
+    const master = SLAYER_MASTERS.find(m => m.id === initialMasterId)
+    if (master) handleGetTask(master)
+  }, [initialMasterId])
 
   const assignTask = (master, monsterId, isBoss) => {
     const quantityMultiplier = slayerPerks?.doubleQuantity ? 2 : 1
@@ -233,33 +245,6 @@ export default function SlayerScreen({ onBack, onNavigate }) {
       if (err?.status === 402) addToast('Not enough credits to skip.', 'error')
       else addToast(err?.message || 'Failed to skip task.', 'error')
     }
-  }
-
-  const handleUnlock = async (unlock) => {
-    const item = itemsData[unlock.itemId]
-    const purchaseState = getSlayerUnlockPurchaseState({ unlock, item, slayerPoints, bank, inventory })
-    if (!purchaseState.allowed) {
-      addToast(purchaseState.message || 'Unable to purchase unlock', 'error')
-      return
-    }
-    if (getToken() && getCharacterId()) {
-      try {
-        await api.completeSlayer('slayer', { actionNonce: `slayer:${unlock.itemId}:${Date.now()}`, rewards: [{ itemId: unlock.itemId, quantity: 1 }], slayerPoints: -unlock.cost })
-        const saveRes = await api.getSave()
-        if (saveRes?.save?.save_data) await applyCloudSave(JSON.parse(saveRes.save.save_data), saveRes.save.updatedAt, saveRes.save.save_revision)
-        await loadGame()
-        addToast(`🎉 Purchased ${item.name} — sent to bank`, 'info')
-        return
-      } catch (e) {
-        addToast(`Unlock claim failed: ${e?.message || 'server_error'}`, 'error')
-        return
-      }
-    }
-    updateSlayerPoints(slayerPoints - unlock.cost)
-    addToBank(unlock.itemId, 1)
-    recordCollectionLogDrop({ itemId: unlock.itemId, sourceType: 'skilling', sourceId: 'slayer' })
-    requestCriticalPushSave(() => getSnapshot(), CRITICAL_SAVE_REASONS.PURCHASE)
-    addToast(`🎉 Purchased ${item.name} — sent to bank`, 'info')
   }
 
   const progressPct = slayerTask
@@ -344,8 +329,12 @@ export default function SlayerScreen({ onBack, onNavigate }) {
         </div>
       )}
 
-      {/* Slayer masters */}
+      {/* Slayer masters — each lives at a world place; getting a task away from
+          it opens the standard travel prompt */}
       <SectionHeader className="mb-2.5">Slayer Masters</SectionHeader>
+      <div class="text-[11px] text-[var(--color-parchment)] opacity-50 mb-2.5">
+        Masters assign tasks at their home settlement — visit them (or tap to travel there).
+      </div>
       <div class="flex flex-col gap-2.5">
         {SLAYER_MASTERS.map(master => {
           const meetsReq = combatLevel >= master.combatReq && slayerLevel >= master.slayerReq
@@ -355,6 +344,7 @@ export default function SlayerScreen({ onBack, onNavigate }) {
                 <SkillActionRow
                   icon={<GameIcon iconKey={master.iconKey} color="var(--color-gold)" size={30} />}
                   title={master.name}
+                  meta={<>📍 {master.location}</>}
                   chip={<>{master.pointsPerTask} pts</>}
                   disabled={!meetsReq || !!slayerTask}
                   onClick={() => handleGetTask(master)}
@@ -373,33 +363,7 @@ export default function SlayerScreen({ onBack, onNavigate }) {
         })}
       </div>
 
-      {/* Unlocks — purchasable with slayer points */}
-      <SectionHeader className="mt-5 mb-2.5">Unlocks</SectionHeader>
-      <div class="flex flex-col gap-2.5">
-        {SLAYER_UNLOCKS.map(unlock => {
-          const item = itemsData[unlock.itemId]
-          if (!item) return null
-          const owned = ownsItem({ itemId: unlock.itemId, bank, inventory })
-          const canAfford = slayerPoints >= unlock.cost
-          const disabled = owned || !canAfford
-          return (
-            <SkillActionRow
-              key={unlock.itemId}
-              icon={<GameIcon item={item} size={30} />}
-              title={item.name}
-              meta={<>
-                {unlock.description}
-                {item.requirements?.slayer > 0 && <span class="block mt-1 opacity-80">Requires Slayer {item.requirements.slayer} to wear</span>}
-              </>}
-              chip={owned
-                ? <span class="text-[var(--color-hp-green)]">Owned</span>
-                : <span class={canAfford ? '' : 'text-[var(--color-blood-light)]'}>{unlock.cost.toLocaleString()} pts</span>}
-              disabled={disabled}
-              onClick={() => handleUnlock(unlock)}
-            />
-          )
-        })}
-      </div>
+      {/* Slayer unlocks (point-purchased items) moved to the Character Unlocks screen. */}
 
       {/* Perks — point-purchased, non-item bonuses */}
       <SectionHeader className="mt-5 mb-2.5">Perks</SectionHeader>

@@ -180,7 +180,7 @@ export default function QuestsScreen({ onNavigate, onBack } = {}) {
       <div class="px-4 pt-4 pb-2 flex-shrink-0">
         <BackLink onClick={onBack} className="mb-3" />
         <div class="flex justify-between items-baseline mb-2">
-          <SectionHeader size="lg"><span class="inline-flex items-center gap-2"><GameIcon iconKey="clue_scroll_medium" size={18} class="flex-shrink-0" /> Quests</span></SectionHeader>
+          <SectionHeader size="lg"><span class="inline-flex items-center gap-2"><GameIcon iconKey="clue_scroll_medium" size={18} class="flex-shrink-0" /> Quests Board</span></SectionHeader>
           <span class="text-[11px] text-[var(--color-gold)] font-[var(--font-mono)]">
             {completedCount}/{questsData.length} · {totalQp} QP
           </span>

@@ -119,7 +119,7 @@ export const KNOWLEDGE_CHUNKS = [
   "tags": [
    "guide"
   ],
-  "text": "Slayer masters assign you a task to kill a set number of a specific monster. Completing tasks earns slayer points and Slayer XP; higher-tier masters need higher combat and Slayer levels and pay more points. Killing your assigned monster is the only way to finish a task — you can also spend credits to skip a task, or slayer points to buy unlocks and rewards. Boss slayer tasks award a ×4 Slayer XP multiplier on kills."
+  "text": "Slayer masters assign you a task to kill a set number of a specific monster. Each master lives at a world place — Torvak in Lumbright, Morven in Canifel, Valdrin in Edgevale, Caelira in Seerhold, Nyra in Camlann and Druven in Brimhollow — and getting a task is an action at that settlement: visit the master (the Slayer screen or the world map offers to travel there if you're elsewhere) to be assigned. Completing tasks earns slayer points and Slayer XP; higher-tier masters need higher combat and Slayer levels and pay more points. Killing your assigned monster is the only way to finish a task — you can also spend credits to skip a task, or slayer points to buy unlocks (found on the Character Unlocks screen) and rewards. Boss slayer tasks award a ×4 Slayer XP multiplier on kills."
  },
  {
   "id": "guide_quests",
@@ -127,7 +127,7 @@ export const KNOWLEDGE_CHUNKS = [
   "tags": [
    "guide"
   ],
-  "text": "Quests are journeys across the world map: meet the requirements (skill levels, quest points, combat level or earlier quests), begin the quest, and follow its trail through several places — teleporting between waypoints finishes it faster. Quests live on the world map: every settlement offers a selection (from Novice quests in the starting hamlets up to Grandmaster quests in the cities) — tap a place to browse and begin its quests. Rewards include coins, XP (sometimes in a skill of your choice), quest points and item unlocks; longer, harder quests pay better."
+  "text": "Quests are journeys across the world map: meet the requirements (skill levels, quest points, combat level or earlier quests), begin the quest, and follow its trail through several places — teleporting between waypoints finishes it faster. Quests live on the world map: every settlement offers a selection (from Novice quests in the starting hamlets up to Grandmaster quests in the cities) — tap a place, or the Quests Board in Varrick, to browse and begin its quests; the ⓘ button beside each quest shows its full requirements and rewards. Rewards include coins, XP (sometimes in a skill of your choice), quest points and item unlocks; longer, harder quests pay better."
  },
  {
   "id": "guide_clue_scrolls",

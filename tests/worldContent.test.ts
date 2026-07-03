@@ -18,6 +18,7 @@ import raidsData from '../src/data/raids.json'
 import minigamesData from '../src/data/minigames.json'
 import questsData from '../src/data/quests.json'
 import { GATHER_TASKS } from '../src/engine/gatherTasks.js'
+import { SLAYER_MASTERS } from '../src/engine/slayerMasters.js'
 import { getXPForLevel } from '../src/engine/experience.js'
 import { COMPLEXITY_ORDER } from '../src/utils/complexityColors.js'
 
@@ -101,6 +102,41 @@ describe('content -> place coverage', () => {
     for (const q of asArray(questsData)) {
       expect(placesForActivity('quest', q.id).length, `quest ${q.id}`).toBe(1)
     }
+  })
+
+  it('maps every slayer master to exactly its home place', () => {
+    for (const m of SLAYER_MASTERS) {
+      expect(placesForActivity('slayer', m.id), `master ${m.id}`).toEqual([(m as any).placeId])
+    }
+  })
+})
+
+describe('slayer masters as place activities', () => {
+  const statsAt = (levels: Record<string, number>) =>
+    Object.fromEntries(Object.entries(levels).map(([s, l]) => [s, { xp: getXPForLevel(l) }]))
+
+  it('derives gating/resume refs from the slayermaster task shape', () => {
+    expect(activityRef({ type: 'slayermaster', master: { id: 'turael' } })).toEqual({ kind: 'slayer', ref: 'turael' })
+    expect(autoStartFromTask({ type: 'slayermaster', master: { id: 'turael' } })).toEqual({ kind: 'slayer', masterId: 'turael' })
+    expect(activityRef({ type: 'slayermaster' })).toBeNull()
+    expect(autoStartFromTask({ type: 'slayermaster' })).toBeNull()
+  })
+
+  it('describes masters by name with their icon', () => {
+    const nieve = SLAYER_MASTERS.find((m) => m.id === 'nieve')!
+    const d = describeActivity('slayer', 'nieve')
+    expect(d.name).toContain(nieve.name)
+    expect(d.icon).toBe(nieve.icon)
+    expect(describeActivity('slayer', 'no_such_master').name).toBe('no_such_master')
+  })
+
+  it('locks masters by their combat/slayer requirements', () => {
+    // duradel gates on slayer 90, vannaka on combat 40, turael on nothing
+    expect(activityLockReason('slayer', 'duradel', { stats: statsAt({ slayer: 89 }) })?.reason).toContain('Slayer level 90')
+    expect(activityLockReason('slayer', 'duradel', { stats: statsAt({ slayer: 90 }) })).toBeNull()
+    expect(activityLockReason('slayer', 'vannaka', { stats: statsAt({}) })?.reason).toContain('combat level 40')
+    expect(activityLockReason('slayer', 'turael', { stats: statsAt({}) })).toBeNull()
+    expect(activityLockReason('slayer', 'no_such_master', {})?.reason).toBe('Unknown slayer master')
   })
 })
 

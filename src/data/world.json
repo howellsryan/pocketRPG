@@ -489,6 +489,10 @@
       "label": "Combat",
       "color": "var(--color-blood-ember)"
     },
+    "slayer": {
+      "label": "Slayer Master",
+      "color": "var(--color-gold)"
+    },
     "quest": {
       "label": "Quest",
       "color": "var(--color-emerald-light)"
