@@ -106,8 +106,26 @@ function spellChunk() {
   }
 }
 
+// monsterId → raid name for monsters that only exist inside a raid. Their
+// monsters.json drop tables are never rolled — raid loot comes from the
+// raid's reward chest — so their chunks must not advertise personal drops.
+function raidBossMap() {
+  const raids = readJson('raids.json')
+  const seen = new Set()
+  const map = new Map()
+  for (const [key, r] of Object.entries(raids)) {
+    const id = r.id || key
+    if (seen.has(id)) continue
+    seen.add(id)
+    for (const bossId of r.bosses || []) if (!map.has(bossId)) map.set(bossId, r.name)
+  }
+  return map
+}
+
 function raidChunks() {
   const raids = readJson('raids.json')
+  const items = readJson('items.json')
+  const itemName = (id) => items[id]?.name || titleCaseId(id)
   const seen = new Set()
   return Object.entries(raids)
     .filter(([key, r]) => {
@@ -119,14 +137,17 @@ function raidChunks() {
     })
     .map(([key, r]) => {
     const bosses = (r.bosses || []).map(titleCaseId).join(', ')
-    const uniques = (r.rewards?.uniques || r.rewards?.rare || [])
-      .map((u) => titleCaseId(u.itemId || u))
-      .filter(Boolean)
+    const unique = r.rewards?.unique
+    const uniques = (unique?.items || []).map((u) => itemName(u.itemId || u)).filter(Boolean)
+    const chestChance = unique?.chance ? `about 1 in ${Math.round(1 / unique.chance)}` : 'a'
     const text =
-      `${r.name}: ${r.description || 'A multi-boss raid.'} Bosses: ${bosses || 'unknown'}. ` +
-      `Credit skip cost: ${r.skipCost ?? 'n/a'}.` +
-      (uniques.length ? ` Notable uniques: ${uniques.join(', ')}.` : '')
-    return { id: `raid_${r.id || key}`, title: `Raid: ${r.name}`, tags: ['raid', 'raids', 'boss'], text }
+      `${r.name}: ${r.description || 'A multi-boss raid.'} Bosses fought in sequence: ${bosses || 'unknown'}. ` +
+      `Credit skip cost: ${r.skipCost ?? 'n/a'}. ` +
+      `Completing the raid rolls its reward chest: guaranteed loot (coins, runes, supplies)` +
+      (uniques.length
+        ? ` plus ${chestChance} chance at one unique. These uniques come from the raid reward chest itself, not from any individual boss inside the raid: ${uniques.join(', ')}.`
+        : '.')
+    return { id: `raid_${r.id || key}`, title: `Raid: ${r.name} — bosses and unique rewards`, tags: ['raid', 'raids', 'boss', 'uniques', 'drops'], text }
   })
 }
 
@@ -162,30 +183,45 @@ function farmingChunks() {
 
 function bossChunk() {
   const monsters = readJson('monsters.json')
+  const raidBosses = raidBossMap()
   const lines = Object.values(monsters)
     .filter((m) => m.boss)
     .map((m) => {
       const slayer = m.slayerRequirement ? `, Slayer ${m.slayerRequirement} required` : ''
-      return `${m.name} (combat level ${m.combatLevel}, ${m.hitpoints} HP${slayer})`
+      const raid = raidBosses.get(m.id) ? `, fought inside the ${raidBosses.get(m.id)} raid` : ''
+      return `${m.name} (combat level ${m.combatLevel}, ${m.hitpoints} HP${slayer}${raid})`
     })
   return {
     id: 'data_bosses',
     title: 'Boss list: combat levels, HP and Slayer requirements',
     tags: ['boss', 'bosses', 'slayer'],
-    text: `All bosses with combat level, hitpoints and Slayer level requirement where one applies. ${lines.join('. ')}.`,
+    text: `All bosses with combat level, hitpoints and Slayer level requirement where one applies. Bosses marked as raid bosses are only fought inside their raid and have no personal drop table. ${lines.join('. ')}.`,
   }
 }
 
 function monsterChunks() {
   const monsters = readJson('monsters.json')
+  const raidBosses = raidBossMap()
   const fmtChance = (c) => (c >= 1 ? 'always' : `1 in ${Math.round(1 / c).toLocaleString('en-GB')}`)
   return Object.values(monsters).map((m) => {
+    const slayer = m.slayerRequirement ? ` Requires Slayer level ${m.slayerRequirement}.` : ''
+    const raidName = raidBosses.get(m.id)
+    if (raidName) {
+      const text =
+        `${m.name} is a boss fought only inside the ${raidName} raid, at combat level ${m.combatLevel} with ${m.hitpoints} HP, attacking with ${m.attackStyle || 'melee'}.${slayer}` +
+        ` It has no personal drop table — all raid loot, including uniques, comes from the ${raidName} reward chest when the raid is completed.`
+      return {
+        id: `monster_${m.id}`,
+        title: `Raid boss: ${m.name} (${raidName})`,
+        tags: ['monster', 'boss', 'raid'],
+        text,
+      }
+    }
     const drops = (m.drops || [])
       .slice()
       .sort((a, b) => a.chance - b.chance)
       .map((d) => `${titleCaseId(d.itemId)} (${fmtChance(d.chance)})`)
     const kind = m.boss ? 'boss' : 'monster'
-    const slayer = m.slayerRequirement ? ` Requires Slayer level ${m.slayerRequirement}.` : ''
     const text =
       `${m.name} is a ${kind} at combat level ${m.combatLevel} with ${m.hitpoints} HP, attacking with ${m.attackStyle || 'melee'}.${slayer}` +
       (drops.length ? ` Drops: ${drops.join(', ')}.` : '')

@@ -1815,43 +1815,51 @@ export const KNOWLEDGE_CHUNKS = [
  },
  {
   "id": "raid_vaults_of_xyren",
-  "title": "Raid: Vaults of Xyren",
+  "title": "Raid: Vaults of Xyren — bosses and unique rewards",
   "tags": [
    "raid",
    "raids",
-   "boss"
+   "boss",
+   "uniques",
+   "drops"
   ],
-  "text": "Vaults of Xyren: Delve into Xeric's mountain stronghold. Defeat Tecton, Vespara, the Mudtadile and the Grand Olm to claim your reward. Bosses: Tekton, Vespula, Muttadile, The Great Olm. Credit skip cost: 10."
+  "text": "Vaults of Xyren: Delve into Xeric's mountain stronghold. Defeat Tecton, Vespara, the Mudtadile and the Grand Olm to claim your reward. Bosses fought in sequence: Tekton, Vespula, Muttadile, The Great Olm. Credit skip cost: 10. Completing the raid rolls its reward chest: guaranteed loot (coins, runes, supplies) plus about 1 in 10 chance at one unique. These uniques come from the raid reward chest itself, not from any individual boss inside the raid: Warped Buckler, Dragon Slayer Crossbow, Durn's Bulwark, Kodai Hat, Kodai Robe Top, Kodai Robe Bottom, Dragon Claws, Ancient Maul, Zaryth Vambraces, Ancestral Wand, Twisted Longbow."
  },
  {
   "id": "raid_crimson_night_theatre",
-  "title": "Raid: Crimson Night Theatre",
+  "title": "Raid: Crimson Night Theatre — bosses and unique rewards",
   "tags": [
    "raid",
    "raids",
-   "boss"
+   "boss",
+   "uniques",
+   "drops"
   ],
-  "text": "Crimson Night Theatre: Fight through six deadly bosses in Verzik Vitura's theatre. Defeat them all to claim your reward. Bosses: The Maiden Of Sugadinti, Pestilent Bloat, Nylocas Vasilias, Sotetseg, Xarpus, Verzik Vitur. Credit skip cost: 10."
+  "text": "Crimson Night Theatre: Fight through six deadly bosses in Verzik Vitura's theatre. Defeat them all to claim your reward. Bosses fought in sequence: The Maiden Of Sugadinti, Pestilent Bloat, Nylocas Vasilias, Sotetseg, Xarpus, Verzik Vitur. Credit skip cost: 10. Completing the raid rolls its reward chest: guaranteed loot (coins, runes, supplies) plus about 1 in 7 chance at one unique. These uniques come from the raid reward chest itself, not from any individual boss inside the raid: Avernal Defender, Ghraxis Rapier, Sanguine Staff, Justicar Faceguard, Justicar Chestguard, Justicar Legguards, Scythe of Vythar."
  },
  {
   "id": "raid_cryptbound_champions",
-  "title": "Raid: Cryptbound Champions",
+  "title": "Raid: Cryptbound Champions — bosses and unique rewards",
   "tags": [
    "raid",
    "raids",
-   "boss"
+   "boss",
+   "uniques",
+   "drops"
   ],
-  "text": "Cryptbound Champions: Descend into the ancient crypt and defeat all six champions to claim their treasures. Bosses: Morvyn The Blighted, Dravok The Wretched, Gorath The Infested, Kaelor The Tainted, Torvek The Corrupted, Verin The Defiled. Credit skip cost: 2."
+  "text": "Cryptbound Champions: Descend into the ancient crypt and defeat all six champions to claim their treasures. Bosses fought in sequence: Morvyn The Blighted, Dravok The Wretched, Gorath The Infested, Kaelor The Tainted, Torvek The Corrupted, Verin The Defiled. Credit skip cost: 2. Completing the raid rolls its reward chest: guaranteed loot (coins, runes, supplies) plus about 1 in 4 chance at one unique. These uniques come from the raid reward chest itself, not from any individual boss inside the raid: Morvyn's Hood, Morvyn's Robetop, Morvyn's Robeskirt, Morvyn's Staff, Dravok's Helm, Dravok's Platebody, Dravok's Platelegs, Dravok's Greataxe, Gorath's Helm, Gorath's Platebody, Gorath's Chainskirt, Gorath's Warspear, Kaelor's Coif, Kaelor's Leathertop, Kaelor's Leatherskirt, Kaelor's Crossbow, Torvek's Helm, Torvek's Platebody, Torvek's Platelegs, Torvek's Hammers, Verin's Helm, Verin's Brassard, Verin's Plateskirt, Verin's Flail."
  },
  {
   "id": "raid_tomb_of_arasmus",
-  "title": "Raid: Tomb of Arasmus",
+  "title": "Raid: Tomb of Arasmus — bosses and unique rewards",
   "tags": [
    "raid",
    "raids",
-   "boss"
+   "boss",
+   "uniques",
+   "drops"
   ],
-  "text": "Tomb of Arasmus: Brave the cursed tomb of the god-king Arasmus. Defeat his four guardians and the Warden to claim the treasures within. Bosses: Khareth The Shadowbound, Gorroth The Mountain Ape, Khepra The Scarab Matron, Sebakh The Devourer, Warden Of Arasmus. Credit skip cost: 10."
+  "text": "Tomb of Arasmus: Brave the cursed tomb of the god-king Arasmus. Defeat his four guardians and the Warden to claim the treasures within. Bosses fought in sequence: Khareth The Shadowbound, Gorroth The Mountain Ape, Khepra The Scarab Matron, Sebakh The Devourer, Warden Of Arasmus. Credit skip cost: 10. Completing the raid rolls its reward chest: guaranteed loot (coins, runes, supplies) plus about 1 in 15 chance at one unique. These uniques come from the raid reward chest itself, not from any individual boss inside the raid: Fang Of Osmun, Sunbearer Ring, Ward Of Elidria, Masari Mask, Masari Body, Masari Chaps, Shadow Of Tumaken."
  },
  {
   "id": "data_minigames",
@@ -2087,7 +2095,7 @@ export const KNOWLEDGE_CHUNKS = [
    "bosses",
    "slayer"
   ],
-  "text": "All bosses with combat level, hitpoints and Slayer level requirement where one applies. Deepmaw Kraken (combat level 291, 255 HP, Slayer 87 required). Warlord Grondar (combat level 624, 255 HP). Commander Zephyra (combat level 596, 255 HP). Krylth the Defiler (combat level 650, 255 HP). Skyrender Kharra (combat level 580, 255 HP). Nagadoth Rex (combat level 303, 150 HP). Nagadoth Prime (combat level 303, 150 HP). Nagadoth Supreme (combat level 303, 150 HP). King Black Dragon (combat level 276, 150 HP). Venomcoil Matriarch (combat level 725, 500 HP). Ember Tyrant (combat level 702, 250 HP). Ashen Crucible (combat level 1400, 600 HP). Blighted Gauntlet (combat level 894, 1000 HP). The Grand Olm (combat level 1000, 800 HP). Hellbound Gorilla (combat level 275, 205 HP, Slayer 70 required). The Matron of Sugadinti (combat level 940, 2625 HP). Pestilent Blight (combat level 870, 1500 HP). Nylocas Vashilias (combat level 800, 1875 HP). Sotethseg (combat level 995, 3000 HP). Xarphus (combat level 960, 2250 HP). Verzik Vitura (combat level 1040, 2000 HP). Tecton (combat level 149, 500 HP). Vespara (combat level 202, 400 HP). Mudtadile (combat level 170, 450 HP). Khareth the Shadowbound (combat level 700, 520 HP). Gorroth, the Mountain-Ape (combat level 650, 600 HP). Khepra, the Scarab Matron (combat level 680, 500 HP). Sebakh the Devourer (combat level 720, 580 HP). Warden of Arasmus (combat level 900, 700 HP). Morvyn the Blighted (combat level 115, 100 HP). Dravok the Wretched (combat level 115, 100 HP). Gorath the Infested (combat level 115, 100 HP). Kaelor the Tainted (combat level 115, 100 HP). Torvek the Corrupted (combat level 115, 100 HP). Verin the Defiled (combat level 115, 100 HP). Threefang Cerberus (combat level 318, 600 HP, Slayer 91 required). Ashen Hydra (combat level 194, 320 HP, Slayer 95 required). Sovrathar, the Ashen Sovereign (combat level 250, 480 HP, Slayer 80 required). Gravehusk Brute (combat level 82, 60 HP). Boneclaw Revenant (combat level 98, 75 HP). Shroudwraith Specter (combat level 115, 90 HP). Stonegale Elemental (combat level 100, 80 HP). Cindermaw Serpent (combat level 120, 100 HP). Thornhide Colossus (combat level 140, 120 HP). Gravethorn Drake (combat level 110, 90 HP). Ironclad Guardian (combat level 130, 110 HP). Emberhowl Warlord (combat level 155, 150 HP). Razorwing Harpy (combat level 150, 140 HP)."
+  "text": "All bosses with combat level, hitpoints and Slayer level requirement where one applies. Bosses marked as raid bosses are only fought inside their raid and have no personal drop table. Deepmaw Kraken (combat level 291, 255 HP, Slayer 87 required). Warlord Grondar (combat level 624, 255 HP). Commander Zephyra (combat level 596, 255 HP). Krylth the Defiler (combat level 650, 255 HP). Skyrender Kharra (combat level 580, 255 HP). Nagadoth Rex (combat level 303, 150 HP). Nagadoth Prime (combat level 303, 150 HP). Nagadoth Supreme (combat level 303, 150 HP). King Black Dragon (combat level 276, 150 HP). Venomcoil Matriarch (combat level 725, 500 HP). Ember Tyrant (combat level 702, 250 HP). Ashen Crucible (combat level 1400, 600 HP). Blighted Gauntlet (combat level 894, 1000 HP). The Grand Olm (combat level 1000, 800 HP, fought inside the Vaults of Xyren raid). Hellbound Gorilla (combat level 275, 205 HP, Slayer 70 required). The Matron of Sugadinti (combat level 940, 2625 HP, fought inside the Crimson Night Theatre raid). Pestilent Blight (combat level 870, 1500 HP, fought inside the Crimson Night Theatre raid). Nylocas Vashilias (combat level 800, 1875 HP, fought inside the Crimson Night Theatre raid). Sotethseg (combat level 995, 3000 HP, fought inside the Crimson Night Theatre raid). Xarphus (combat level 960, 2250 HP, fought inside the Crimson Night Theatre raid). Verzik Vitura (combat level 1040, 2000 HP, fought inside the Crimson Night Theatre raid). Tecton (combat level 149, 500 HP, fought inside the Vaults of Xyren raid). Vespara (combat level 202, 400 HP, fought inside the Vaults of Xyren raid). Mudtadile (combat level 170, 450 HP, fought inside the Vaults of Xyren raid). Khareth the Shadowbound (combat level 700, 520 HP, fought inside the Tomb of Arasmus raid). Gorroth, the Mountain-Ape (combat level 650, 600 HP, fought inside the Tomb of Arasmus raid). Khepra, the Scarab Matron (combat level 680, 500 HP, fought inside the Tomb of Arasmus raid). Sebakh the Devourer (combat level 720, 580 HP, fought inside the Tomb of Arasmus raid). Warden of Arasmus (combat level 900, 700 HP, fought inside the Tomb of Arasmus raid). Morvyn the Blighted (combat level 115, 100 HP, fought inside the Cryptbound Champions raid). Dravok the Wretched (combat level 115, 100 HP, fought inside the Cryptbound Champions raid). Gorath the Infested (combat level 115, 100 HP, fought inside the Cryptbound Champions raid). Kaelor the Tainted (combat level 115, 100 HP, fought inside the Cryptbound Champions raid). Torvek the Corrupted (combat level 115, 100 HP, fought inside the Cryptbound Champions raid). Verin the Defiled (combat level 115, 100 HP, fought inside the Cryptbound Champions raid). Threefang Cerberus (combat level 318, 600 HP, Slayer 91 required). Ashen Hydra (combat level 194, 320 HP, Slayer 95 required). Sovrathar, the Ashen Sovereign (combat level 250, 480 HP, Slayer 80 required). Gravehusk Brute (combat level 82, 60 HP). Boneclaw Revenant (combat level 98, 75 HP). Shroudwraith Specter (combat level 115, 90 HP). Stonegale Elemental (combat level 100, 80 HP). Cindermaw Serpent (combat level 120, 100 HP). Thornhide Colossus (combat level 140, 120 HP). Gravethorn Drake (combat level 110, 90 HP). Ironclad Guardian (combat level 130, 110 HP). Emberhowl Warlord (combat level 155, 150 HP). Razorwing Harpy (combat level 150, 140 HP)."
  },
  {
   "id": "monster_field_chicken",
@@ -2428,13 +2436,13 @@ export const KNOWLEDGE_CHUNKS = [
  },
  {
   "id": "monster_the_great_olm",
-  "title": "Boss: The Grand Olm — stats and drops",
+  "title": "Raid boss: The Grand Olm (Vaults of Xyren)",
   "tags": [
    "monster",
-   "drops",
-   "boss"
+   "boss",
+   "raid"
   ],
-  "text": "The Grand Olm is a boss at combat level 1000 with 800 HP, attacking with crush. Drops: Clue Scroll Master (1 in 50)."
+  "text": "The Grand Olm is a boss fought only inside the Vaults of Xyren raid, at combat level 1000 with 800 HP, attacking with crush. It has no personal drop table — all raid loot, including uniques, comes from the Vaults of Xyren reward chest when the raid is completed."
  },
  {
   "id": "monster_hellbound_gorilla",
@@ -2448,203 +2456,203 @@ export const KNOWLEDGE_CHUNKS = [
  },
  {
   "id": "monster_the_maiden_of_sugadinti",
-  "title": "Boss: The Matron of Sugadinti — stats and drops",
+  "title": "Raid boss: The Matron of Sugadinti (Crimson Night Theatre)",
   "tags": [
    "monster",
-   "drops",
-   "boss"
+   "boss",
+   "raid"
   ],
-  "text": "The Matron of Sugadinti is a boss at combat level 940 with 2625 HP, attacking with magic. Drops: Clue Scroll Master (1 in 50)."
+  "text": "The Matron of Sugadinti is a boss fought only inside the Crimson Night Theatre raid, at combat level 940 with 2625 HP, attacking with magic. It has no personal drop table — all raid loot, including uniques, comes from the Crimson Night Theatre reward chest when the raid is completed."
  },
  {
   "id": "monster_pestilent_bloat",
-  "title": "Boss: Pestilent Blight — stats and drops",
+  "title": "Raid boss: Pestilent Blight (Crimson Night Theatre)",
   "tags": [
    "monster",
-   "drops",
-   "boss"
+   "boss",
+   "raid"
   ],
-  "text": "Pestilent Blight is a boss at combat level 870 with 1500 HP, attacking with crush. Drops: Clue Scroll Master (1 in 50)."
+  "text": "Pestilent Blight is a boss fought only inside the Crimson Night Theatre raid, at combat level 870 with 1500 HP, attacking with crush. It has no personal drop table — all raid loot, including uniques, comes from the Crimson Night Theatre reward chest when the raid is completed."
  },
  {
   "id": "monster_nylocas_vasilias",
-  "title": "Boss: Nylocas Vashilias — stats and drops",
+  "title": "Raid boss: Nylocas Vashilias (Crimson Night Theatre)",
   "tags": [
    "monster",
-   "drops",
-   "boss"
+   "boss",
+   "raid"
   ],
-  "text": "Nylocas Vashilias is a boss at combat level 800 with 1875 HP, attacking with crush. Drops: Clue Scroll Master (1 in 50)."
+  "text": "Nylocas Vashilias is a boss fought only inside the Crimson Night Theatre raid, at combat level 800 with 1875 HP, attacking with crush. It has no personal drop table — all raid loot, including uniques, comes from the Crimson Night Theatre reward chest when the raid is completed."
  },
  {
   "id": "monster_sotetseg",
-  "title": "Boss: Sotethseg — stats and drops",
+  "title": "Raid boss: Sotethseg (Crimson Night Theatre)",
   "tags": [
    "monster",
-   "drops",
-   "boss"
+   "boss",
+   "raid"
   ],
-  "text": "Sotethseg is a boss at combat level 995 with 3000 HP, attacking with crush. Drops: Clue Scroll Master (1 in 50)."
+  "text": "Sotethseg is a boss fought only inside the Crimson Night Theatre raid, at combat level 995 with 3000 HP, attacking with crush. It has no personal drop table — all raid loot, including uniques, comes from the Crimson Night Theatre reward chest when the raid is completed."
  },
  {
   "id": "monster_xarpus",
-  "title": "Boss: Xarphus — stats and drops",
+  "title": "Raid boss: Xarphus (Crimson Night Theatre)",
   "tags": [
    "monster",
-   "drops",
-   "boss"
+   "boss",
+   "raid"
   ],
-  "text": "Xarphus is a boss at combat level 960 with 2250 HP, attacking with ranged. Drops: Clue Scroll Master (1 in 50)."
+  "text": "Xarphus is a boss fought only inside the Crimson Night Theatre raid, at combat level 960 with 2250 HP, attacking with ranged. It has no personal drop table — all raid loot, including uniques, comes from the Crimson Night Theatre reward chest when the raid is completed."
  },
  {
   "id": "monster_verzik_vitur",
-  "title": "Boss: Verzik Vitura — stats and drops",
+  "title": "Raid boss: Verzik Vitura (Crimson Night Theatre)",
   "tags": [
    "monster",
-   "drops",
-   "boss"
+   "boss",
+   "raid"
   ],
-  "text": "Verzik Vitura is a boss at combat level 1040 with 2000 HP, attacking with magic. Drops: Clue Scroll Master (1 in 50)."
+  "text": "Verzik Vitura is a boss fought only inside the Crimson Night Theatre raid, at combat level 1040 with 2000 HP, attacking with magic. It has no personal drop table — all raid loot, including uniques, comes from the Crimson Night Theatre reward chest when the raid is completed."
  },
  {
   "id": "monster_tekton",
-  "title": "Boss: Tecton — stats and drops",
+  "title": "Raid boss: Tecton (Vaults of Xyren)",
   "tags": [
    "monster",
-   "drops",
-   "boss"
+   "boss",
+   "raid"
   ],
-  "text": "Tecton is a boss at combat level 149 with 500 HP, attacking with crush. Drops: Clue Scroll Master (1 in 50)."
+  "text": "Tecton is a boss fought only inside the Vaults of Xyren raid, at combat level 149 with 500 HP, attacking with crush. It has no personal drop table — all raid loot, including uniques, comes from the Vaults of Xyren reward chest when the raid is completed."
  },
  {
   "id": "monster_vespula",
-  "title": "Boss: Vespara — stats and drops",
+  "title": "Raid boss: Vespara (Vaults of Xyren)",
   "tags": [
    "monster",
-   "drops",
-   "boss"
+   "boss",
+   "raid"
   ],
-  "text": "Vespara is a boss at combat level 202 with 400 HP, attacking with ranged. Drops: Clue Scroll Master (1 in 50)."
+  "text": "Vespara is a boss fought only inside the Vaults of Xyren raid, at combat level 202 with 400 HP, attacking with ranged. It has no personal drop table — all raid loot, including uniques, comes from the Vaults of Xyren reward chest when the raid is completed."
  },
  {
   "id": "monster_muttadile",
-  "title": "Boss: Mudtadile — stats and drops",
+  "title": "Raid boss: Mudtadile (Vaults of Xyren)",
   "tags": [
    "monster",
-   "drops",
-   "boss"
+   "boss",
+   "raid"
   ],
-  "text": "Mudtadile is a boss at combat level 170 with 450 HP, attacking with crush. Drops: Clue Scroll Master (1 in 50)."
+  "text": "Mudtadile is a boss fought only inside the Vaults of Xyren raid, at combat level 170 with 450 HP, attacking with crush. It has no personal drop table — all raid loot, including uniques, comes from the Vaults of Xyren reward chest when the raid is completed."
  },
  {
   "id": "monster_khareth_the_shadowbound",
-  "title": "Boss: Khareth the Shadowbound — stats and drops",
+  "title": "Raid boss: Khareth the Shadowbound (Tomb of Arasmus)",
   "tags": [
    "monster",
-   "drops",
-   "boss"
+   "boss",
+   "raid"
   ],
-  "text": "Khareth the Shadowbound is a boss at combat level 700 with 520 HP, attacking with magic."
+  "text": "Khareth the Shadowbound is a boss fought only inside the Tomb of Arasmus raid, at combat level 700 with 520 HP, attacking with magic. It has no personal drop table — all raid loot, including uniques, comes from the Tomb of Arasmus reward chest when the raid is completed."
  },
  {
   "id": "monster_gorroth_the_mountain_ape",
-  "title": "Boss: Gorroth, the Mountain-Ape — stats and drops",
+  "title": "Raid boss: Gorroth, the Mountain-Ape (Tomb of Arasmus)",
   "tags": [
    "monster",
-   "drops",
-   "boss"
+   "boss",
+   "raid"
   ],
-  "text": "Gorroth, the Mountain-Ape is a boss at combat level 650 with 600 HP, attacking with crush."
+  "text": "Gorroth, the Mountain-Ape is a boss fought only inside the Tomb of Arasmus raid, at combat level 650 with 600 HP, attacking with crush. It has no personal drop table — all raid loot, including uniques, comes from the Tomb of Arasmus reward chest when the raid is completed."
  },
  {
   "id": "monster_khepra_the_scarab_matron",
-  "title": "Boss: Khepra, the Scarab Matron — stats and drops",
+  "title": "Raid boss: Khepra, the Scarab Matron (Tomb of Arasmus)",
   "tags": [
    "monster",
-   "drops",
-   "boss"
+   "boss",
+   "raid"
   ],
-  "text": "Khepra, the Scarab Matron is a boss at combat level 680 with 500 HP, attacking with ranged."
+  "text": "Khepra, the Scarab Matron is a boss fought only inside the Tomb of Arasmus raid, at combat level 680 with 500 HP, attacking with ranged. It has no personal drop table — all raid loot, including uniques, comes from the Tomb of Arasmus reward chest when the raid is completed."
  },
  {
   "id": "monster_sebakh_the_devourer",
-  "title": "Boss: Sebakh the Devourer — stats and drops",
+  "title": "Raid boss: Sebakh the Devourer (Tomb of Arasmus)",
   "tags": [
    "monster",
-   "drops",
-   "boss"
+   "boss",
+   "raid"
   ],
-  "text": "Sebakh the Devourer is a boss at combat level 720 with 580 HP, attacking with magic."
+  "text": "Sebakh the Devourer is a boss fought only inside the Tomb of Arasmus raid, at combat level 720 with 580 HP, attacking with magic. It has no personal drop table — all raid loot, including uniques, comes from the Tomb of Arasmus reward chest when the raid is completed."
  },
  {
   "id": "monster_warden_of_arasmus",
-  "title": "Boss: Warden of Arasmus — stats and drops",
+  "title": "Raid boss: Warden of Arasmus (Tomb of Arasmus)",
   "tags": [
    "monster",
-   "drops",
-   "boss"
+   "boss",
+   "raid"
   ],
-  "text": "Warden of Arasmus is a boss at combat level 900 with 700 HP, attacking with magic."
+  "text": "Warden of Arasmus is a boss fought only inside the Tomb of Arasmus raid, at combat level 900 with 700 HP, attacking with magic. It has no personal drop table — all raid loot, including uniques, comes from the Tomb of Arasmus reward chest when the raid is completed."
  },
  {
   "id": "monster_morvyn_the_blighted",
-  "title": "Boss: Morvyn the Blighted — stats and drops",
+  "title": "Raid boss: Morvyn the Blighted (Cryptbound Champions)",
   "tags": [
    "monster",
-   "drops",
-   "boss"
+   "boss",
+   "raid"
   ],
-  "text": "Morvyn the Blighted is a boss at combat level 115 with 100 HP, attacking with magic. Drops: Clue Scroll Master (1 in 50), Morvyn S Hood (1 in 4), Morvyn S Robetop (1 in 4), Morvyn S Robeskirt (1 in 4), Morvyn S Staff (1 in 4), Coins (always)."
+  "text": "Morvyn the Blighted is a boss fought only inside the Cryptbound Champions raid, at combat level 115 with 100 HP, attacking with magic. It has no personal drop table — all raid loot, including uniques, comes from the Cryptbound Champions reward chest when the raid is completed."
  },
  {
   "id": "monster_dravok_the_wretched",
-  "title": "Boss: Dravok the Wretched — stats and drops",
+  "title": "Raid boss: Dravok the Wretched (Cryptbound Champions)",
   "tags": [
    "monster",
-   "drops",
-   "boss"
+   "boss",
+   "raid"
   ],
-  "text": "Dravok the Wretched is a boss at combat level 115 with 100 HP, attacking with crush. Drops: Clue Scroll Master (1 in 50), Dravok S Helm (1 in 4), Dravok S Platebody (1 in 4), Dravok S Platelegs (1 in 4), Dravok S Greataxe (1 in 4), Coins (always)."
+  "text": "Dravok the Wretched is a boss fought only inside the Cryptbound Champions raid, at combat level 115 with 100 HP, attacking with crush. It has no personal drop table — all raid loot, including uniques, comes from the Cryptbound Champions reward chest when the raid is completed."
  },
  {
   "id": "monster_gorath_the_infested",
-  "title": "Boss: Gorath the Infested — stats and drops",
+  "title": "Raid boss: Gorath the Infested (Cryptbound Champions)",
   "tags": [
    "monster",
-   "drops",
-   "boss"
+   "boss",
+   "raid"
   ],
-  "text": "Gorath the Infested is a boss at combat level 115 with 100 HP, attacking with stab. Drops: Clue Scroll Master (1 in 50), Gorath S Helm (1 in 4), Gorath S Platebody (1 in 4), Gorath S Chainskirt (1 in 4), Gorath S Warspear (1 in 4), Coins (always)."
+  "text": "Gorath the Infested is a boss fought only inside the Cryptbound Champions raid, at combat level 115 with 100 HP, attacking with stab. It has no personal drop table — all raid loot, including uniques, comes from the Cryptbound Champions reward chest when the raid is completed."
  },
  {
   "id": "monster_kaelor_the_tainted",
-  "title": "Boss: Kaelor the Tainted — stats and drops",
+  "title": "Raid boss: Kaelor the Tainted (Cryptbound Champions)",
   "tags": [
    "monster",
-   "drops",
-   "boss"
+   "boss",
+   "raid"
   ],
-  "text": "Kaelor the Tainted is a boss at combat level 115 with 100 HP, attacking with ranged. Drops: Clue Scroll Master (1 in 50), Kaelor S Coif (1 in 4), Kaelor S Leathertop (1 in 4), Kaelor S Leatherskirt (1 in 4), Kaelor S Crossbow (1 in 4), Coins (always)."
+  "text": "Kaelor the Tainted is a boss fought only inside the Cryptbound Champions raid, at combat level 115 with 100 HP, attacking with ranged. It has no personal drop table — all raid loot, including uniques, comes from the Cryptbound Champions reward chest when the raid is completed."
  },
  {
   "id": "monster_torvek_the_corrupted",
-  "title": "Boss: Torvek the Corrupted — stats and drops",
+  "title": "Raid boss: Torvek the Corrupted (Cryptbound Champions)",
   "tags": [
    "monster",
-   "drops",
-   "boss"
+   "boss",
+   "raid"
   ],
-  "text": "Torvek the Corrupted is a boss at combat level 115 with 100 HP, attacking with crush. Drops: Clue Scroll Master (1 in 50), Torvek S Helm (1 in 4), Torvek S Platebody (1 in 4), Torvek S Platelegs (1 in 4), Torvek S Hammers (1 in 4), Coins (always)."
+  "text": "Torvek the Corrupted is a boss fought only inside the Cryptbound Champions raid, at combat level 115 with 100 HP, attacking with crush. It has no personal drop table — all raid loot, including uniques, comes from the Cryptbound Champions reward chest when the raid is completed."
  },
  {
   "id": "monster_verin_the_defiled",
-  "title": "Boss: Verin the Defiled — stats and drops",
+  "title": "Raid boss: Verin the Defiled (Cryptbound Champions)",
   "tags": [
    "monster",
-   "drops",
-   "boss"
+   "boss",
+   "raid"
   ],
-  "text": "Verin the Defiled is a boss at combat level 115 with 100 HP, attacking with crush. Drops: Clue Scroll Master (1 in 50), Verin S Helm (1 in 4), Verin S Brassard (1 in 4), Verin S Plateskirt (1 in 4), Verin S Flail (1 in 4), Coins (always)."
+  "text": "Verin the Defiled is a boss fought only inside the Cryptbound Champions raid, at combat level 115 with 100 HP, attacking with crush. It has no personal drop table — all raid loot, including uniques, comes from the Cryptbound Champions reward chest when the raid is completed."
  },
  {
   "id": "monster_marshscale_shaman",
