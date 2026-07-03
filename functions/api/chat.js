@@ -63,29 +63,23 @@ const CHAT_RUN_OPTS = {
   temperature: 0.6,
 }
 
-// OpenAI-backed binding with the same `run(model, payload)` shape as env.AI,
-// so runAiChat is provider-agnostic. gpt-5 models reject `max_tokens` and
-// non-default `temperature`, hence the translation.
-export function openAiChatBinding(env) {
+// Gemini-backed binding with the same `run(model, payload)` shape as env.AI,
+// via Google's OpenAI-compatible endpoint — the chat-completions plumbing
+// (messages/tools/usage) works unchanged.
+export function geminiChatBinding(env) {
   return {
     async run(model, payload) {
-      const { max_tokens, temperature: _temperature, ...rest } = payload
-      const res = await fetch('https://api.openai.com/v1/chat/completions', {
+      const res = await fetch('https://generativelanguage.googleapis.com/v1beta/openai/chat/completions', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${env.OPENAI_API_KEY}`,
+          Authorization: `Bearer ${env.GEMINI_API_KEY}`,
         },
-        body: JSON.stringify({
-          model,
-          max_completion_tokens: max_tokens,
-          reasoning_effort: 'low',
-          ...rest,
-        }),
+        body: JSON.stringify({ model, ...payload }),
       })
       if (!res.ok) {
         const detail = (await res.text().catch(() => '')).slice(0, 300)
-        throw new Error(`OpenAI ${res.status}: ${detail}`)
+        throw new Error(`Gemini ${res.status}: ${detail}`)
       }
       return res.json()
     },
@@ -96,7 +90,7 @@ export function openAiChatBinding(env) {
 // (missing binding/key), which degrades to retrieval-only.
 export function chatAiBinding(env) {
   if (CHAT_MODEL.startsWith('@')) return env.AI || null
-  return env.OPENAI_API_KEY ? openAiChatBinding(env) : null
+  return env.GEMINI_API_KEY ? geminiChatBinding(env) : null
 }
 
 function answerText(res) {

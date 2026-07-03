@@ -9,20 +9,20 @@
 export const CHAT_DAILY_LIMIT = 30
 
 // Token prices converted to milli-neurons per token at $0.011 per 1,000
-// neurons. Rated at $0.06/M input, $0.40/M output — an upper bound for
-// gpt-5-nano ($0.05/$0.40), so the budget doubles as a daily $ spend cap.
-// Revisit when CHAT_MODEL changes.
-export const MILLI_NEURONS_PER_INPUT_TOKEN = 5.46
+// neurons. Rated at $0.10/M input, $0.40/M output — gemini-2.5-flash-lite's
+// paid-tier prices (a free-tier key bills $0), so the budget doubles as a
+// daily $ spend cap. Revisit when CHAT_MODEL changes.
+export const MILLI_NEURONS_PER_INPUT_TOKEN = 9.1
 export const MILLI_NEURONS_PER_OUTPUT_TOKEN = 36.37
 
 // Budget + one in-flight worst-case reserve must stay ≤ the 10,000 free
 // daily neurons (10,000,000 milli); the gap also absorbs estimation drift
 // and any other Workers AI use on the account.
-export const CHAT_NEURON_BUDGET_MILLI = 8_600_000
+export const CHAT_NEURON_BUDGET_MILLI = 8_300_000
 // Worst-case message: 4 model calls with every context and output limit
 // maxed. tests/chatQuota.test.ts derives this bound from the CHAT_MAX_*
 // constants — raise it there first if a limit grows.
-export const CHAT_MESSAGE_RESERVE_MILLI = 1_350_000
+export const CHAT_MESSAGE_RESERVE_MILLI = 1_700_000
 
 // Atomically claim one message for the character's daily allowance.
 // Returns { allowed, remaining }.

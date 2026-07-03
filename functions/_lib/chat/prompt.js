@@ -1,8 +1,9 @@
 import { TOOL_SCHEMAS } from '../mcp/schema.js'
 
-// '@'-prefixed = Workers AI catalog model (env.AI); anything else = OpenAI
-// API model id, called with the OPENAI_API_KEY secret (see chatAiBinding).
-export const CHAT_MODEL = 'gpt-5-nano'
+// '@'-prefixed = Workers AI catalog model (env.AI); anything else = Gemini
+// model id, called via Google's OpenAI-compatible endpoint with the
+// GEMINI_API_KEY secret (see chatAiBinding).
+export const CHAT_MODEL = 'gemini-2.5-flash-lite'
 export const CHAT_MAX_TOOL_ROUNDS = 3
 export const CHAT_TIME_BUDGET_MS = 45_000
 export const CHAT_MAX_ANSWER_TOKENS = 5000
