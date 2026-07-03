@@ -456,6 +456,7 @@ export default function WorldMapScreen({ onNavigate, onAutoStart, initialView } 
           masterId={slayerMasterId}
           onClose={() => setSlayerMasterId(null)}
           onGetTask={() => startSlayerMaster(slayerMasterId)}
+          onSlay={(monsterId) => { setSlayerMasterId(null); activateActivity('combat', monsterId) }}
         />
       )}
     </div>

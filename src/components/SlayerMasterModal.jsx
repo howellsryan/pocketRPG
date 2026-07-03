@@ -4,7 +4,8 @@ import { api, getToken, getCharacterId, CREDITS_UPDATED_EVENT } from '../cloud/a
 import { requestCriticalPushSave } from '../cloud/sync.js'
 import { CRITICAL_SAVE_REASONS } from '../cloud/criticalSavePolicy.js'
 import { SLAYER_TASK_SKIP_POINT_COST } from '../engine/slayerTasks.js'
-import { SLAYER_MASTERS } from '../engine/slayerMasters.js'
+import { SLAYER_MASTERS, resolveTaskMonsterIds } from '../engine/slayerMasters.js'
+import monstersData from '../data/monsters.json'
 import GameIcon from './GameIcon.jsx'
 import Modal from './Modal.jsx'
 
@@ -13,7 +14,7 @@ import Modal from './Modal.jsx'
 // mirroring the skill-requirement gating), or cancel the current task for 1
 // credit or SLAYER_TASK_SKIP_POINT_COST slayer points. `onGetTask` runs the
 // world-map assign/travel flow; the cancel handlers own the point/credit debit.
-export default function SlayerMasterModal({ masterId, onClose, onGetTask }) {
+export default function SlayerMasterModal({ masterId, onClose, onGetTask, onSlay }) {
   const master = SLAYER_MASTERS.find(m => m.id === masterId)
   const { slayerTask, setSlayerTask, slayerPoints, updateSlayerPoints, addToast, getSnapshot } = useGame()
   const [busy, setBusy] = useState(false)
@@ -21,6 +22,19 @@ export default function SlayerMasterModal({ masterId, onClose, onGetTask }) {
 
   const hasTask = !!slayerTask
   const canAffordPoints = slayerPoints >= SLAYER_TASK_SKIP_POINT_COST
+
+  // Route to the task monster's combat (travelling there first, with the
+  // standard travel confirmation, when it lives at another place).
+  const slay = () => {
+    if (!hasTask) return
+    const ids = resolveTaskMonsterIds(slayerTask.monsterId)
+    const targetId = ids.find(id => monstersData[id]) || ids[0]
+    if (!targetId || !monstersData[targetId]) {
+      addToast('Could not find target monster', 'error')
+      return
+    }
+    onSlay?.(targetId)
+  }
 
   const cancelWithPoints = () => {
     if (!hasTask) return
@@ -80,10 +94,19 @@ export default function SlayerMasterModal({ masterId, onClose, onGetTask }) {
           </p>
         )}
 
+        {hasTask && (
+          <button
+            onClick={slay}
+            class="flex items-center justify-center gap-1.5 min-h-[52px] px-4 rounded-xl bg-[var(--color-gold)] text-black font-bold text-sm uppercase tracking-wider active:opacity-80"
+          >
+            ⚔️ Slay
+          </button>
+        )}
+
         <button
           onClick={() => onGetTask?.()}
           disabled={hasTask}
-          class="flex items-center justify-center min-h-[52px] px-4 rounded-xl bg-[var(--color-gold)] text-black font-bold text-sm uppercase tracking-wider active:opacity-80 disabled:opacity-40 disabled:pointer-events-none"
+          class={`flex items-center justify-center min-h-[52px] px-4 rounded-xl font-bold text-sm uppercase tracking-wider active:opacity-80 disabled:opacity-40 disabled:pointer-events-none ${hasTask ? 'border border-[var(--color-void-border)] bg-[var(--color-void)] text-[var(--color-parchment)]' : 'bg-[var(--color-gold)] text-black'}`}
         >
           Get New Task
         </button>

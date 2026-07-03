@@ -259,7 +259,12 @@ export default function SlayerScreen({ onBack, onNavigate, initialMasterId }) {
       addToast('Could not find target monster', 'error')
       return
     }
-    onNavigate(SCREENS.COMBAT, { monsterId: targetId })
+    // Travel to the monster's place first when it lives elsewhere (standard
+    // travel confirmation; combat auto-starts on arrival). Already there →
+    // straight into combat.
+    if (requestActivityStart({ type: 'combat', monster: { id: targetId } })) {
+      onNavigate(SCREENS.COMBAT, { monsterId: targetId })
+    }
   }
 
   return (
