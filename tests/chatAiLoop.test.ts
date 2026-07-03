@@ -186,11 +186,11 @@ describe('chatAttempts / geminiChatBinding', () => {
     )
   })
 
-  it("calls OpenAI's chat completions endpoint with the payload passed through", async () => {
+  it("calls OpenAI's chat completions endpoint, adapting params for gpt-5.x models", async () => {
     const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => aiResponse('Hi.') })
     vi.stubGlobal('fetch', fetchMock)
     const binding = openaiChatBinding({ OPENAI_API_KEY: 'test-key' } as any)
-    const res = await binding.run('gpt-4.1-mini', {
+    const res = await binding.run('gpt-5.4-mini', {
       messages: baseMessages(),
       max_tokens: 5000,
       temperature: 0.6,
@@ -199,9 +199,11 @@ describe('chatAttempts / geminiChatBinding', () => {
     expect(url).toBe('https://api.openai.com/v1/chat/completions')
     expect(init.headers.Authorization).toBe('Bearer test-key')
     const body = JSON.parse(init.body)
-    expect(body.model).toBe('gpt-4.1-mini')
-    expect(body.max_tokens).toBe(5000)
-    expect(body.temperature).toBe(0.6)
+    expect(body.model).toBe('gpt-5.4-mini')
+    // Reasoning models 400 on max_tokens and non-default temperature.
+    expect(body.max_completion_tokens).toBe(5000)
+    expect(body.max_tokens).toBeUndefined()
+    expect(body.temperature).toBeUndefined()
     expect(body.messages).toHaveLength(2)
     expect(res.choices[0].message.content).toBe('Hi.')
   })

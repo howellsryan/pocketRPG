@@ -98,13 +98,18 @@ export function geminiChatBinding(env) {
 export function openaiChatBinding(env) {
   return {
     async run(model, payload) {
+      // gpt-5.x reasoning models 400 on `max_tokens` (want
+      // `max_completion_tokens`) and on any non-default `temperature`.
+      const { max_tokens, temperature, ...rest } = payload
+      const body = { model, ...rest }
+      if (max_tokens !== undefined) body.max_completion_tokens = max_tokens
       const res = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${env.OPENAI_API_KEY}`,
         },
-        body: JSON.stringify({ model, ...payload }),
+        body: JSON.stringify(body),
       })
       if (!res.ok) {
         const detail = (await res.text().catch(() => '')).slice(0, 300)
