@@ -1,5 +1,5 @@
 import { useGame } from '../state/gameState.jsx'
-import { useState } from 'preact/hooks'
+import { useState, useEffect } from 'preact/hooks'
 import { getWorld, getPlace, listPlaces, getTier, getKind, shortestPath, pathLegs } from '../engine/world.js'
 import { isPlaceVaryingSkillRef, autoStartFromTask, placeActivities, activityLockReason } from '../engine/worldContent.js'
 import { SCREENS } from '../utils/constants.js'
@@ -144,16 +144,25 @@ export default function WorldMapScreen({ onNavigate, onAutoStart, initialView } 
       addToast('Not enough runes.', 'error')
       return
     }
+    // Teleporting straight to the place a walked action was headed for still
+    // auto-starts it on arrival — parity with walking or skipping the trail.
+    const pendingAutoStart = (travel && !travel.journey && travel.autoStart && destId === travel.dest)
+      ? travel.autoStart : null
     updateInventory(paid.inventory)
     if (Object.keys(paid.bankUpdates).length > 0) updateBankDirect(paid.bankUpdates)
     grantXP('magic', chk.xp)
     updateWorldLocation(destId)
     setActiveTask(nextTask)
-    // Landing free (not resuming a journey): open the place's own map (when it
-    // has one) or its hub so its activities are one tap away. Mid-journey
-    // teleports keep the map clear.
     setOpenId(null)
-    if (!nextTask && placeHasMap(destId)) setMapPlaceId(destId)
+    // Landing free (not resuming a journey): open the place's own map (when it
+    // has one) or its hub so its activities are one tap away. A pending action
+    // instead resumes straight into its screen; mid-journey teleports keep the
+    // map clear.
+    if (pendingAutoStart) {
+      setMapPlaceId(null)
+      setSlayerMasterId(null)
+      onAutoStart?.(pendingAutoStart)
+    } else if (!nextTask && placeHasMap(destId)) setMapPlaceId(destId)
     else if (!nextTask) setOpenId(destId)
     const name = getPlace(destId)?.name || destId
     addToast(searching ? `Teleported to ${name} — the search begins` : `Teleported to ${name}`, 'info')
@@ -268,6 +277,19 @@ export default function WorldMapScreen({ onNavigate, onAutoStart, initialView } 
   // when set and loadable it replaces the painted procedural terrain; any
   // load failure falls straight back so the chart never renders blank.
   const [mapArtOk, setMapArtOk] = useState(true)
+
+  // When a journey begins (an action gated behind travel was confirmed), close
+  // any open place modal so the player drops onto the map and can watch their
+  // token walk the route. Fires only on the transition into travel, so hubs
+  // opened mid-journey (e.g. to teleport) stay put.
+  const traveling = !!travel
+  useEffect(() => {
+    if (traveling) {
+      setOpenId(null)
+      setMapPlaceId(null)
+      setSlayerMasterId(null)
+    }
+  }, [traveling])
 
   const { stageRef, boardRef, stageProps, fitAll, zoomBy, wasGestureClick } = usePanZoomStage({
     boardW: world.board.w,
