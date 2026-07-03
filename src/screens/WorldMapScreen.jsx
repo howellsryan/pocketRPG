@@ -13,6 +13,7 @@ import { getSkillArt } from '../utils/skillArt.js'
 import WaxSeal from '../components/WaxSeal.jsx'
 import ActivityPickerModal from '../components/ActivityPickerModal.jsx'
 import PlaceMapView from '../components/PlaceMapView.jsx'
+import SlayerMasterModal from '../components/SlayerMasterModal.jsx'
 import { placeHasMap } from '../engine/placeMaps.js'
 import { usePanZoomStage } from '../hooks/usePanZoomStage.js'
 import { getToken, getCharacterId } from '../cloud/api.js'
@@ -173,6 +174,12 @@ export default function WorldMapScreen({ onNavigate, onAutoStart, initialView } 
       addToast(`${lock.reason}.`, lock.completed ? 'info' : 'error')
       return
     }
+    // One master per place: tapping it opens its hub (get / cancel a task)
+    // rather than assigning straight away, so an active task can't be replaced.
+    if (kind === 'slayer') {
+      setSlayerMasterId(ref)
+      return
+    }
     // Quests aren't place-bound tasks: starting one undertakes its journey from
     // wherever the player is — same flow as the quest board (QuestsScreen).
     if (kind === 'quest') {
@@ -186,6 +193,16 @@ export default function WorldMapScreen({ onNavigate, onAutoStart, initialView } 
       // Starts from the place map carry a returnTo so the owning screen's
       // back/stop buttons come back to this map, not a hardcoded list.
       else onAutoStart?.(autoStartFromTask(task), mapPlaceId ? { screen: SCREENS.WORLD_MAP, data: { view: 'place' } } : undefined)
+    }
+  }
+
+  // "Get New Task" from a master's hub modal: the same start flow as any other
+  // place activity (immediate assign when here, travel prompt when remote).
+  const startSlayerMaster = (ref) => {
+    setSlayerMasterId(null)
+    const task = fakeTaskFor('slayer', ref)
+    if (requestActivityStart(task)) {
+      onAutoStart?.(autoStartFromTask(task), mapPlaceId ? { screen: SCREENS.WORLD_MAP, data: { view: 'place' } } : undefined)
     }
   }
 
@@ -244,6 +261,9 @@ export default function WorldMapScreen({ onNavigate, onAutoStart, initialView } 
   }
 
   const [openId, setOpenId] = useState(null)
+  // Slayer master whose hub modal is open (get / cancel a task). Set from
+  // activateActivity; the modal's "Get New Task" runs startSlayerMaster.
+  const [slayerMasterId, setSlayerMasterId] = useState(null)
   // Full-screen place map (PlaceMapView) for the place the player is at, when
   // placeMaps.json defines one — opened instead of the hub. `initialView:
   // 'place'` (a skilling screen's back/stop returnTo) reopens it on mount.
@@ -427,6 +447,15 @@ export default function WorldMapScreen({ onNavigate, onAutoStart, initialView } 
           onClose={() => setMapPlaceId(null)}
           onActivate={activateActivity}
           onNavigate={onNavigate}
+        />
+      )}
+
+      {/* Slayer master hub — get / cancel a task (one master per place) */}
+      {slayerMasterId && (
+        <SlayerMasterModal
+          masterId={slayerMasterId}
+          onClose={() => setSlayerMasterId(null)}
+          onGetTask={() => startSlayerMaster(slayerMasterId)}
         />
       )}
     </div>

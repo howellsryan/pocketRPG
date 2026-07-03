@@ -111,6 +111,7 @@ const sourceFiles = [
   'components/PlaceArt.js', // -> game chunk (map art; only WorldMapScreen renders it)
   'components/ActivityPickerModal.js', // -> game chunk (world map / place map only)
   'components/PlaceMapView.js', // -> game chunk (world map / place map only)
+  'components/SlayerMasterModal.js', // -> game chunk (world map / place map only)
   'components/TravelPrompt.js',
   'components/HPBar.js',
   'components/HitSplat.js',
@@ -223,6 +224,7 @@ const GAME_CHUNK_FILES = new Set([
   'components/PlaceArt.js',
   'components/ActivityPickerModal.js',
   'components/PlaceMapView.js',
+  'components/SlayerMasterModal.js',
   'screens/HomeScreen.js',
   'screens/StatsScreen.js',
   'screens/InventoryScreen.js',
