@@ -48,7 +48,7 @@ const wmTravelTime = (ticks) => {
 
 // Group a place's `{ kind, ref }` activities into [kind, [ref, ...]] pairs in a stable
 // kind order for the hub's grouped list.
-const WM_KIND_ORDER = ['raid', 'boss', 'dungeon', 'combat', 'skill', 'gather', 'agility', 'thieving', 'hunter', 'quest', 'minigame', 'shop']
+const WM_KIND_ORDER = ['raid', 'boss', 'dungeon', 'combat', 'slayer', 'skill', 'gather', 'agility', 'thieving', 'hunter', 'quest', 'minigame', 'shop']
 function groupActivities(activities) {
   const byKind = {}
   for (const a of activities || []) {
@@ -82,6 +82,9 @@ function fakeTaskFor(kind, ref) {
     // No specific reward task at this level (the place hub lists the whole venue) — gate
     // by the minigame itself; arrival just opens the Minigames screen, task unpicked.
     case 'minigame': return { type: 'minigame', minigameTask: { minigame: ref } }
+    // Getting a slayer task from the master homed here — never becomes an
+    // activeTask; arrival routes to the Slayer screen which assigns it.
+    case 'slayer': return { type: 'slayermaster', master: { id: ref } }
     default: return null
   }
 }

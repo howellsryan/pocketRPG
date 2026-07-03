@@ -1832,6 +1832,8 @@ function GameApp() {
       case 'thieving': navigate(SCREENS.SKILLS, { skillId: 'thieving', actionId: autoStart.npcId, ...extra }); break
       case 'hunter':   navigate(SCREENS.SKILLS, { skillId: 'hunter', actionId: autoStart.actionId, ...extra }); break
       case 'minigame': navigate(SCREENS.MINIGAMES, { minigameTaskId: autoStart.taskId, ...extra }); break
+      // Slayer master reached: the Slayer screen assigns the master's task on mount.
+      case 'slayer':   navigate(SCREENS.SKILLS, { skillId: 'slayer', masterId: autoStart.masterId, ...extra }); break
       case 'skill':
         if (autoStart.skill === 'magic') navigate(SCREENS.MAGIC, returnTo ? { ...extra } : undefined)
         else navigate(SCREENS.SKILLS, { skillId: autoStart.skill, actionId: autoStart.actionId, ...extra })
@@ -2731,7 +2733,7 @@ function GameApp() {
       case SCREENS.ARMOURY:   return <ArmouryScreen onBack={backToPrev} />
       case SCREENS.BANK:      return <BankScreen onBack={backToPrev} />
       case SCREENS.COMBAT:    return <CombatScreen onNavigate={navigate} initialMonsterId={actionData?.monsterId} initialRaidId={actionData?.raidId} onCombatStatusChange={setIsInCombat} onBack={returnNav} onStopBack={stopBackNav} />
-      case SCREENS.SKILLS:    return <SkillingScreen initialSkillId={actionData?.skillId} initialActionId={actionData?.actionId} idleResult={idleResult} onNavigate={navigate} onBack={returnNav} onStopBack={stopBackNav} />
+      case SCREENS.SKILLS:    return <SkillingScreen initialSkillId={actionData?.skillId} initialActionId={actionData?.actionId} initialMasterId={actionData?.masterId} idleResult={idleResult} onNavigate={navigate} onBack={returnNav} onStopBack={stopBackNav} />
       case SCREENS.GATHER:    return <GatherScreen initialTaskId={actionData?.gatherTaskId} idleResult={idleResult} onBack={returnNav} onStopBack={stopBackNav} />
       case SCREENS.AGILITY:     return <AgilityScreen initialActionId={actionData?.actionId} idleResult={idleResult} onBack={returnNav} onStopBack={stopBackNav} />
       case SCREENS.MAGIC:       return <MagicScreen onNavigate={navigate} onBack={returnNav} onStopBack={stopBackNav} />
