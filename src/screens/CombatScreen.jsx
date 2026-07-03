@@ -2620,7 +2620,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       </div>
       ) : (
       /* ── Mobile combat HUD (redesign): fight header + HP bars + quick-actions ── */
-      <div class="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
+      <div class="flex-1 min-h-0 overflow-y-auto overflow-x-hidden no-scrollbar">
         {(() => {
           const m = combat.monster
           const categoryKey = COMBAT_CATEGORIES.find(c => c.ids.includes(m.id))?.key
