@@ -1,14 +1,15 @@
 import { TOOL_SCHEMAS } from '../mcp/schema.js'
 
+// OpenAI model tried first, called via OpenAI's chat completions endpoint
+// with the OPENAI_API_KEY secret (see chatAttempts). Skipped entirely if
+// OPENAI_API_KEY is unset.
+export const CHAT_OPENAI_MODEL = 'gpt-4.1-mini'
 // '@'-prefixed = Workers AI catalog model (env.AI); anything else = Gemini
 // model id, called via Google's OpenAI-compatible endpoint with the
-// GEMINI_API_KEY secret (see chatAttempts).
+// GEMINI_API_KEY secret. Tried when OpenAI is unconfigured or fails/returns
+// no answer (see chatAttempts).
 export const CHAT_MODEL = 'gemini-2.5-flash-lite'
-// OpenAI model tried when the primary (Gemini) fails or returns no answer,
-// e.g. Gemini free-tier 429 — called via OpenAI's chat completions endpoint
-// with the OPENAI_API_KEY secret (see chatAttempts).
-export const CHAT_OPENAI_MODEL = 'gpt-4.1-mini'
-// Workers AI model tried when both the primary and OpenAI fail or return no
+// Workers AI model tried when both OpenAI and the primary fail or return no
 // answer, before degrading to retrieval-only.
 export const CHAT_FALLBACK_MODEL = '@cf/zai-org/glm-4.7-flash'
 export const CHAT_MAX_TOOL_ROUNDS = 3

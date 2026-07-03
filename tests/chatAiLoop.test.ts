@@ -126,10 +126,10 @@ describe('runAiChat', () => {
 })
 
 describe('chatAttempts / geminiChatBinding', () => {
-  it('orders attempts primary-then-openai-then-fallback, skipping unconfigured providers', () => {
+  it('orders attempts openai-then-primary-then-fallback, skipping unconfigured providers', () => {
     const AI = { run: vi.fn() }
     const full = chatAttempts({ GEMINI_API_KEY: 'test-key', OPENAI_API_KEY: 'test-key', AI } as any)
-    expect(full.map((a) => a.model)).toEqual([CHAT_MODEL, CHAT_OPENAI_MODEL, CHAT_FALLBACK_MODEL])
+    expect(full.map((a) => a.model)).toEqual([CHAT_OPENAI_MODEL, CHAT_MODEL, CHAT_FALLBACK_MODEL])
     expect(full[2].ai).toBe(AI)
     // No OpenAI key → primary then straight to Workers AI fallback.
     expect(chatAttempts({ GEMINI_API_KEY: 'test-key', AI } as any).map((a) => a.model)).toEqual([

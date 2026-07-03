@@ -111,19 +111,19 @@ export function openaiChatBinding(env) {
   }
 }
 
-// Ordered AI attempts for a message: primary CHAT_MODEL, then OpenAI (if
-// configured) as a mid-tier fallback for when Gemini's free tier is
-// exhausted, then the Workers AI fallback model. Empty = AI path
-// unavailable, straight to retrieval-only.
+// Ordered AI attempts for a message: OpenAI first (if configured), then
+// CHAT_MODEL (Gemini) when OpenAI is unconfigured or fails/answers empty,
+// then the Workers AI fallback model. Empty = AI path unavailable, straight
+// to retrieval-only.
 export function chatAttempts(env) {
   const attempts = []
+  if (env.OPENAI_API_KEY && CHAT_OPENAI_MODEL) {
+    attempts.push({ ai: openaiChatBinding(env), model: CHAT_OPENAI_MODEL })
+  }
   if (CHAT_MODEL.startsWith('@')) {
     if (env.AI) attempts.push({ ai: env.AI, model: CHAT_MODEL })
   } else if (env.GEMINI_API_KEY) {
     attempts.push({ ai: geminiChatBinding(env), model: CHAT_MODEL })
-  }
-  if (env.OPENAI_API_KEY && CHAT_OPENAI_MODEL && CHAT_OPENAI_MODEL !== CHAT_MODEL) {
-    attempts.push({ ai: openaiChatBinding(env), model: CHAT_OPENAI_MODEL })
   }
   if (env.AI && CHAT_FALLBACK_MODEL && CHAT_FALLBACK_MODEL !== CHAT_MODEL) {
     attempts.push({ ai: env.AI, model: CHAT_FALLBACK_MODEL })
