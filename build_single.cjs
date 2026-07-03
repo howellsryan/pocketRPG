@@ -131,6 +131,7 @@ const sourceFiles = [
   'components/LevelUpOverlay.js',
   'components/ChatWidget.js',
   'components/Header.js',
+  'components/GameFrameBar.js',
   'components/navTabs.js',
   'components/BurgerMenu.js',
   'components/SideNav.js',

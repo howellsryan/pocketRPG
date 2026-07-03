@@ -5,6 +5,7 @@ import { PvpProvider, usePvp } from './state/pvpState.jsx'
 import BurgerMenu from './components/BurgerMenu.jsx'
 import SideNav from './components/SideNav.jsx'
 import Header from './components/Header.jsx'
+import GameFrameBar from './components/GameFrameBar.jsx'
 import ToastContainer from './components/Toast.jsx'
 import XpDropOverlay from './components/XpDropOverlay.jsx'
 import SkillIcon from './components/SkillIcon.jsx'
@@ -2759,6 +2760,10 @@ function GameApp() {
 
   const isCloudAccount = !!getToken() && !!getCharacterId()
 
+  // Skip button mode — shared by the desktop Header and the mobile frame bar.
+  const skipMode = activeTask?.type === 'combat' && (activeTask?.monster?.boss === true || activeTask?.raid === true) ? 'kill' : 'hour'
+  const raidSkipCost = activeTask?.type === 'combat' && activeTask?.raidId ? (raidsData[activeTask.raidId]?.skipCost ?? 1) : null
+
   return (
     <div class="h-full flex flex-col md:flex-row">
       <SideNav
@@ -2770,13 +2775,19 @@ function GameApp() {
         onDisabledClick={() => addToast('⚔️ Cannot navigate during PvP combat!', 'warning')}
         onLockedClick={notifyDemoLocked}
       />
-      <div class="flex-1 flex flex-col min-w-0 min-h-0">
-        <Header activity={activity} credits={credits} isCloudAccount={isCloudAccount} demo={demoMode} onLockedFeature={notifyDemoLocked} onSkip1h={isCloudAccount ? handleSkip1h : null} onBuyCredits={() => setShowBuyCreditsModal(true)} onDailyTasks={() => setShowDailyTasksModal(true)} dailyTasksCompleted={(dailyTaskStates || []).filter(t => t.completed).length} dailyTasksTotal={5} onMenuClick={() => setMenuOpen(true)} onNavigate={(s) => navigate(s)} skipMode={activeTask?.type === 'combat' && (activeTask?.monster?.boss === true || activeTask?.raid === true) ? 'kill' : 'hour'} raidSkipCost={activeTask?.type === 'combat' && activeTask?.raidId ? (raidsData[activeTask.raidId]?.skipCost ?? 1) : null} />
+      {/* gf-shell/gf-main: mobile-only carved-wood chrome around the frame
+          rails + content panel (index.css); inert at md and up. */}
+      <div class="gf-shell flex-1 flex flex-col min-w-0 min-h-0">
+        <Header activity={activity} credits={credits} isCloudAccount={isCloudAccount} demo={demoMode} onLockedFeature={notifyDemoLocked} onSkip1h={isCloudAccount ? handleSkip1h : null} onBuyCredits={() => setShowBuyCreditsModal(true)} onDailyTasks={() => setShowDailyTasksModal(true)} dailyTasksCompleted={(dailyTaskStates || []).filter(t => t.completed).length} dailyTasksTotal={5} onMenuClick={() => setMenuOpen(true)} onNavigate={(s) => navigate(s)} skipMode={skipMode} raidSkipCost={raidSkipCost} />
+        {/* OSRS-style mobile frame: icon rails above and below the content panel
+            replace the Header/SideNav/BurgerMenu chrome on small screens. */}
+        <GameFrameBar position="top" active={screen} onNavigate={(s) => navigate(s)} isInCombat={isInPvpMatch} onDisabledClick={() => addToast('⚔️ Cannot navigate during PvP combat!', 'warning')} demo={demoMode} lockedScreens={CLOUD_ONLY_SCREENS} onLockedClick={notifyDemoLocked} onLockedFeature={notifyDemoLocked} onSkip1h={isCloudAccount ? handleSkip1h : null} skipMode={skipMode} raidSkipCost={raidSkipCost} />
         <ToastContainer />
         <TravelPrompt onNavigate={navigate} />
-        <main class="flex-1 overflow-hidden">
+        <main class="gf-main flex-1 overflow-hidden">
           {renderScreen()}
         </main>
+        <GameFrameBar position="bottom" active={screen} onNavigate={(s) => navigate(s)} isInCombat={isInPvpMatch} onDisabledClick={() => addToast('⚔️ Cannot navigate during PvP combat!', 'warning')} demo={demoMode} lockedScreens={CLOUD_ONLY_SCREENS} onLockedClick={notifyDemoLocked} onLockedFeature={notifyDemoLocked} onBuyCredits={() => setShowBuyCreditsModal(true)} credits={credits} isCloudAccount={isCloudAccount} />
       </div>
       <XpDropOverlay />
       <RewardRevealOverlay />

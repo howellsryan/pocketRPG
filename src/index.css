@@ -392,6 +392,115 @@ html, body, #app {
 .pb-safe { padding-bottom: max(0.75rem, env(safe-area-inset-bottom)); }
 .mb-safe { margin-bottom: env(safe-area-inset-bottom); }
 
+/* ──────────────────────────────────────────────────────────────────────────
+   OSRS-style mobile frame (GameFrameBar) — carved-wood chrome with gold
+   medallion buttons framing the rounded parchment content panel. CSS
+   rendition of the design mock; the wood/corner artwork can be swapped for
+   image assets later. Mobile-only: everything is scoped under md so the
+   desktop SideNav + Header chrome is untouched.
+   ────────────────────────────────────────────────────────────────────────── */
+@media (max-width: 767px) {
+  /* Carved dark-wood shell behind the rails and around the content panel. */
+  .gf-shell {
+    position: relative;
+    padding-left: 12px;
+    padding-right: 12px;
+    background:
+      radial-gradient(130% 50% at 50% 0%, rgba(0, 0, 0, 0.4), transparent 62%),
+      radial-gradient(130% 50% at 50% 100%, rgba(0, 0, 0, 0.4), transparent 62%),
+      repeating-linear-gradient(92deg,
+        rgba(0, 0, 0, 0.16) 0 3px, transparent 3px 9px,
+        rgba(255, 236, 190, 0.03) 9px 12px, transparent 12px 26px),
+      repeating-linear-gradient(0deg,
+        rgba(0, 0, 0, 0.08) 0 2px, transparent 2px 7px),
+      linear-gradient(180deg, #3a2a1c, #2c1f14 42%, #241811);
+  }
+  /* Gold pinstripe inlay running just inside the frame edge. */
+  .gf-shell::after {
+    content: '';
+    position: absolute;
+    inset: 4px;
+    border: 1px solid rgba(217, 180, 90, 0.35);
+    border-radius: 14px;
+    pointer-events: none;
+  }
+  /* Rounded parchment content panel inset in the wood. */
+  .gf-main {
+    border-radius: 18px;
+    overflow: hidden;
+    border: 2px solid #171009;
+    background: var(--fm-vellum);
+    box-shadow:
+      0 0 0 1px rgba(217, 180, 90, 0.4),
+      0 4px 16px rgba(0, 0, 0, 0.55);
+  }
+
+  /* Gold-ringed medallion button set into the wood. */
+  .gf-medallion {
+    width: 58px;
+    height: 58px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    cursor: pointer;
+    background: radial-gradient(circle at 36% 28%, #55412a, #2c2013 62%, #1c130b);
+    border: 3px solid #a8853e;
+    box-shadow:
+      0 0 0 3px #191008,
+      0 0 0 4px rgba(217, 180, 90, 0.28),
+      inset 0 2px 3px rgba(255, 236, 190, 0.14),
+      inset 0 -4px 6px rgba(0, 0, 0, 0.55),
+      0 3px 6px rgba(0, 0, 0, 0.5);
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .gf-medallion--active {
+    border-color: var(--color-gold-light);
+    box-shadow:
+      0 0 0 3px #191008,
+      0 0 0 4px rgba(240, 192, 64, 0.4),
+      0 0 12px rgba(240, 192, 64, 0.45),
+      inset 0 2px 3px rgba(255, 236, 190, 0.18);
+  }
+  .gf-medallion--locked { opacity: 0.55; }
+  .gf-medallion:disabled { opacity: 0.3; cursor: not-allowed; }
+
+  /* Soft parchment inlay behind bespoke (untintable) full-color icon art so it
+     reads on the dark medallion face. */
+  .gf-icon-disc {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(circle,
+      rgba(230, 216, 182, 0.95) 0%,
+      rgba(214, 196, 156, 0.9) 52%,
+      rgba(214, 196, 156, 0) 68%);
+  }
+
+  /* Centered credits readout in the bottom rail. */
+  .gf-credits {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 44px;
+    padding: 0 12px;
+    background: transparent;
+    border: 0;
+    cursor: pointer;
+    color: #efe3c2;
+    font-family: var(--font-body);
+    font-size: 15px;
+    font-weight: 600;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
+    white-space: nowrap;
+  }
+}
+
 /* PWA standalone — push the header below the system status bar (time/battery/wifi).
    iOS Safari uses navigator.standalone (set via JS on <html>); Android/Chrome PWAs
    match the display-mode media query. env(safe-area-inset-top) equals the status
