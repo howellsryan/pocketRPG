@@ -196,15 +196,10 @@ export default function WorldMapScreen({ onNavigate, onAutoStart, initialView } 
     }
   }
 
-  // "Get New Task" from a master's hub modal: the same start flow as any other
-  // place activity (immediate assign when here, travel prompt when remote).
-  const startSlayerMaster = (ref) => {
-    setSlayerMasterId(null)
-    const task = fakeTaskFor('slayer', ref)
-    if (requestActivityStart(task)) {
-      onAutoStart?.(autoStartFromTask(task), mapPlaceId ? { screen: SCREENS.WORLD_MAP, data: { view: 'place' } } : undefined)
-    }
-  }
+  // "Get New Task" travel gate: returns true when the player is at the master's
+  // place (assign happens inline in the modal, so we stay on the map), false
+  // when a travel prompt was raised — arrival then auto-assigns via resumeAutoStart.
+  const startSlayerMaster = (ref) => requestActivityStart(fakeTaskFor('slayer', ref))
 
   // Start a quest journey from a place modal — the same flow as the quest board
   // (QuestsScreen.startQuestJourney): plan from the current location, dequeue it

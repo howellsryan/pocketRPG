@@ -4,7 +4,8 @@ import { api, getToken, getCharacterId, CREDITS_UPDATED_EVENT } from '../cloud/a
 import { requestCriticalPushSave } from '../cloud/sync.js'
 import { CRITICAL_SAVE_REASONS } from '../cloud/criticalSavePolicy.js'
 import { SLAYER_TASK_SKIP_POINT_COST } from '../engine/slayerTasks.js'
-import { SLAYER_MASTERS, resolveTaskMonsterIds } from '../engine/slayerMasters.js'
+import { SLAYER_MASTERS, resolveTaskMonsterIds, pickSlayerMonster, buildSlayerTask } from '../engine/slayerMasters.js'
+import { getLevelFromXP } from '../engine/experience.js'
 import monstersData from '../data/monsters.json'
 import GameIcon from './GameIcon.jsx'
 import Modal from './Modal.jsx'
@@ -16,12 +17,34 @@ import Modal from './Modal.jsx'
 // world-map assign/travel flow; the cancel handlers own the point/credit debit.
 export default function SlayerMasterModal({ masterId, onClose, onGetTask, onSlay }) {
   const master = SLAYER_MASTERS.find(m => m.id === masterId)
-  const { slayerTask, setSlayerTask, slayerPoints, updateSlayerPoints, addToast, getSnapshot } = useGame()
+  const {
+    stats, slayerTask, setSlayerTask, slayerPoints, updateSlayerPoints, addToast, getSnapshot,
+    slayerPerks, completedQuests,
+  } = useGame()
   const [busy, setBusy] = useState(false)
   if (!master) return null
 
   const hasTask = !!slayerTask
   const canAffordPoints = slayerPoints >= SLAYER_TASK_SKIP_POINT_COST
+
+  // Assign a task inline so we stay in this modal on the world map. onGetTask is
+  // the world-map travel gate: true → we're at the master (assign now); false →
+  // a travel prompt was raised, so close and let arrival auto-assign.
+  const getTask = () => {
+    if (hasTask) return
+    if (onGetTask?.() === false) { onClose?.(); return }
+    const slayerLevel = getLevelFromXP(stats.slayer?.xp || 0)
+    const pick = pickSlayerMonster(master, slayerLevel, { completedQuests })
+    if (!pick) {
+      addToast('No tasks available — raise your slayer level (or finish required quests) for this master.', 'error')
+      return
+    }
+    const quantityMultiplier = slayerPerks?.doubleQuantity ? 2 : 1
+    const task = buildSlayerTask(master, pick.monsterId, pick.isBoss, { quantityMultiplier })
+    setSlayerTask(task)
+    requestCriticalPushSave(() => getSnapshot(), CRITICAL_SAVE_REASONS.SLAYER_TASK_CHANGE)
+    addToast(`💀 Task: Kill ${task.totalCount} ${task.monsterName}`, 'info')
+  }
 
   // Route to the task monster's combat (travelling there first, with the
   // standard travel confirmation, when it lives at another place).
@@ -104,7 +127,7 @@ export default function SlayerMasterModal({ masterId, onClose, onGetTask, onSlay
         )}
 
         <button
-          onClick={() => onGetTask?.()}
+          onClick={getTask}
           disabled={hasTask}
           class={`flex items-center justify-center min-h-[52px] px-4 rounded-xl font-bold text-sm uppercase tracking-wider active:opacity-80 disabled:opacity-40 disabled:pointer-events-none ${hasTask ? 'border border-[var(--color-void-border)] bg-[var(--color-void)] text-[var(--color-parchment)]' : 'bg-[var(--color-gold)] text-black'}`}
         >
