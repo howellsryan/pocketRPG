@@ -3,6 +3,7 @@ import itemsData from '../data/items.json'
 import { buildArmoury, hasSpecialAttack, tierOf } from '../utils/armoury.js'
 import SharedItemModal from '../components/SharedItemModal.jsx'
 import GameIcon from '../components/GameIcon.jsx'
+import BackLink from '../components/BackLink.jsx'
 
 // Special-attack detail block injected into the shared item modal.
 function ArmourySpecial({ item }) {
@@ -21,14 +22,18 @@ function ArmourySpecial({ item }) {
   )
 }
 
-export default function ArmouryScreen() {
+// `onBack` (from App): returns to the screen the player came from.
+export default function ArmouryScreen({ onBack }) {
   const groups = useMemo(() => buildArmoury(itemsData), [])
   const [selected, setSelected] = useState(null)
 
   return (
     <div class="forge-shell h-full flex flex-col">
       <div class="px-4 pt-4 pb-2 flex-shrink-0">
-        <h1 class="font-[var(--font-display)] text-[var(--color-gold)] text-lg font-bold tracking-wide">Armoury</h1>
+        <div class="flex items-center gap-2">
+          <BackLink onClick={onBack} />
+          <h1 class="font-[var(--font-display)] text-[var(--color-gold)] text-lg font-bold tracking-wide">Armoury</h1>
+        </div>
         <p class="text-[11px] text-[var(--color-parchment)] opacity-50 mt-[2px]">
           Every weapon and piece of armour, grouped by set and ordered by tier. <span aria-hidden="true">⚔️</span> marks a special attack.
         </p>

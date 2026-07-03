@@ -1,10 +1,10 @@
 import { useGame } from '../state/gameState.jsx'
 import { useState } from 'preact/hooks'
 import { getWorld, getPlace, listPlaces, getTier, getKind, shortestPath, pathLegs } from '../engine/world.js'
-import { isPlaceVaryingSkillRef, autoStartFromTask, placeActivities, activityLevelRequirement } from '../engine/worldContent.js'
+import { isPlaceVaryingSkillRef, autoStartFromTask, placeActivities, activityLockReason } from '../engine/worldContent.js'
 import { SCREENS } from '../utils/constants.js'
 import { createTravelTask, travelFraction, travelDestName, travelCancelLocation } from '../engine/travel.js'
-import { journeyStatus, teleportIntoJourney } from '../engine/journeys.js'
+import { journeyStatus, teleportIntoJourney, planQuestJourney } from '../engine/journeys.js'
 import { teleportCheck, deductRunes, formatRuneCost } from '../engine/teleports.js'
 import { getLevelFromXP } from '../engine/experience.js'
 import { PlaceIcon, PlaceScene, WorldTerrain } from '../components/PlaceArt.jsx'
@@ -16,6 +16,7 @@ import PlaceMapView from '../components/PlaceMapView.jsx'
 import { placeHasMap } from '../engine/placeMaps.js'
 import { usePanZoomStage } from '../hooks/usePanZoomStage.js'
 import { getToken, getCharacterId } from '../cloud/api.js'
+import questsData from '../data/quests.json'
 
 // Facility chip glyph: bank reuses the existing in-game bank icon (the nav's coins
 // glyph); furnace & anvil gets its bespoke PlaceIcon; anything else falls back to its
@@ -89,7 +90,7 @@ export default function WorldMapScreen({ onNavigate, onAutoStart, initialView } 
   const {
     worldLocation, updateWorldLocation, activeTask, setActiveTask, addToast, requestActivityStart,
     inventory, bank, equipment, stats, itemsData, updateInventory, updateBankDirect, grantXP,
-    skipHourHandlerRef,
+    skipHourHandlerRef, completedQuests, bossKillCounts, questQueue, removeFromQuestQueue,
   } = useGame()
   const world = getWorld()
   const here = getPlace(worldLocation) ? worldLocation : world.start
@@ -160,21 +161,51 @@ export default function WorldMapScreen({ onNavigate, onAutoStart, initialView } 
   // handles both — this just supplies the minimal task shape and, on an immediate start,
   // navigates to the owning screen the same way arrival auto-resume does).
   const activateActivity = (kind, ref) => {
-    const task = fakeTaskFor(kind, ref)
-    if (!task) return
-    // Same level lock the owning screens enforce on their action lists — without it
-    // the hub row would start (or travel to + auto-start) an action above the level.
-    const req = activityLevelRequirement(kind, ref)
-    if (req && getLevelFromXP(stats?.[req.skill]?.xp || 0) < req.level) {
-      addToast(`Requires ${req.skill.charAt(0).toUpperCase()}${req.skill.slice(1)} level ${req.level}.`, 'error')
+    // Same locks the owning screens enforce on their action lists (levels,
+    // slayer/quest gates, quest eligibility) — without this the hub row would
+    // start (or travel to + auto-start) content above the player's level.
+    // Rows render disabled off the same check; this backstops direct calls.
+    const lock = activityLockReason(kind, ref, { stats, completedQuests, bossKillCounts })
+    if (lock) {
+      addToast(`${lock.reason}.`, lock.completed ? 'info' : 'error')
       return
     }
+    // Quests aren't place-bound tasks: starting one undertakes its journey from
+    // wherever the player is — same flow as the quest board (QuestsScreen).
+    if (kind === 'quest') {
+      startQuestFromMap(ref)
+      return
+    }
+    const task = fakeTaskFor(kind, ref)
+    if (!task) return
     if (requestActivityStart(task)) {
       if (kind === 'minigame') onNavigate?.(SCREENS.MINIGAMES)
       // Starts from the place map carry a returnTo so the owning screen's
       // back/stop buttons come back to this map, not a hardcoded list.
       else onAutoStart?.(autoStartFromTask(task), mapPlaceId ? { screen: SCREENS.WORLD_MAP, data: { view: 'place' } } : undefined)
     }
+  }
+
+  // Start a quest journey from a place modal — the same flow as the quest board
+  // (QuestsScreen.startQuestJourney): plan from the current location, dequeue it
+  // if it was queued, and stay on the map to watch the trail unfold.
+  const startQuestFromMap = (questId) => {
+    const quest = questsData.find((q) => q.id === questId)
+    if (!quest) return
+    if (activeTask?.type === 'travel') {
+      addToast('Finish or turn back your current journey first.', 'info')
+      return
+    }
+    const jt = planQuestJourney(quest, here)
+    if (!jt) {
+      addToast('No route can be plotted from here.', 'error')
+      return
+    }
+    setActiveTask(jt)
+    if (questQueue.some((q) => q.id === quest.id)) removeFromQuestQueue(quest.id)
+    setOpenId(null)
+    setMapPlaceId(null)
+    addToast(`🗺️ Journey begun: ${quest.name} — ${jt.journey.steps.length} places to visit`, 'info')
   }
   // Turning back keeps the legs already walked: snap to the last node fully reached
   // (plan §9 #2) rather than reverting the whole journey to its origin. Abandoning a
@@ -469,7 +500,7 @@ function PlaceHub({ place, here, travelling, searching, tele, itemsData, onTrave
           )}
           <div class="wm-hub-sectionhead"><span>Available here</span></div>
           {hasOwnMap && (
-            <div class="wm-hub-note">Activities in {place.name} start from its town map — travel or teleport here to open it.</div>
+            <div class="wm-hub-note">Activities in {place.name} start from its town map — travel or teleport here to open it. Quests can begin from anywhere.</div>
           )}
           <div class="wm-cat-grid">
             {groupActivities(placeActivities(place.id)).map(([kind, refs]) => {

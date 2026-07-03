@@ -8,6 +8,7 @@ import { formatNumber } from '../utils/helpers.js'
 import { isMaxedTotal } from '../utils/completion.js'
 import { getLeaderboardFilters, getLeaderboardFilterById } from '../engine/leaderboardFilters.js'
 import { getRaidArt, getMonsterArt } from '../utils/combatArt.js'
+import BackLink from '../components/BackLink.jsx'
 
 const LEADERBOARD_FILTERS = getLeaderboardFilters()
 const PAGE_SIZE = 50
@@ -87,7 +88,8 @@ function LeaderboardRow({ rank, char, metric }) {
   )
 }
 
-export default function LeaderboardScreen() {
+// `onBack` (from App): returns to the screen the player came from.
+export default function LeaderboardScreen({ onBack }) {
   const [filterId, setFilterId] = useState('total')
   const [page, setPage] = useState(0)
   const [characters, setCharacters] = useState([])
@@ -136,10 +138,13 @@ export default function LeaderboardScreen() {
   return (
     <div class="forge-shell h-full flex flex-col">
       <div class="flex-shrink-0 bg-[var(--color-void-light)] border-b border-[var(--color-void-border)] px-4 py-3">
-        <h1 class="flex items-center gap-2 font-[var(--font-display)] text-lg font-bold text-[var(--color-gold)]">
-          <GameIcon iconKey="progression" size={22} class="flex-shrink-0" />
-          Leaderboard
-        </h1>
+        <div class="flex items-center gap-2">
+          <BackLink onClick={onBack} />
+          <h1 class="flex items-center gap-2 font-[var(--font-display)] text-lg font-bold text-[var(--color-gold)]">
+            <GameIcon iconKey="progression" size={22} class="flex-shrink-0" />
+            Leaderboard
+          </h1>
+        </div>
         <div class="mt-2">
           <FilterToggleBar options={LEADERBOARD_FILTER_OPTIONS} value={filterId} onChange={handleFilterChange} />
         </div>

@@ -1,5 +1,7 @@
 import Modal from './Modal.jsx'
-import { describeActivity, activityGroupLabel } from '../engine/worldContent.js'
+import { useGame } from '../state/gameState.jsx'
+import { describeActivity, activityGroupLabel, activityLockReason } from '../engine/worldContent.js'
+import { COMPLEXITY_COLORS } from '../utils/complexityColors.js'
 
 /**
  * One activity category's actions, e.g. all "Skill" refs at a place — sub-grouped
@@ -8,8 +10,18 @@ import { describeActivity, activityGroupLabel } from '../engine/worldContent.js'
  * matching the app-wide Forgemark parchment. Shared between the world-map place
  * hub (read-only browse: `readOnly`) and the place map's spot picker (rows
  * clickable, starting via `onActivate(kind, ref)`).
+ *
+ * Rows the player can't start yet render disabled with the blocking reason
+ * (activityLockReason — level/slayer/quest gates), matching the owning screens'
+ * locks. Quests are the exception to `readOnly`: their journeys plan from
+ * wherever the player is, so quest rows stay clickable even in a browse-only
+ * hub; a completed quest renders done rather than locked.
  */
 export default function ActivityPickerModal({ kind, refs, label, onClose, onActivate, readOnly = false }) {
+  const { stats, completedQuests, bossKillCounts } = useGame()
+  const lockCtx = { stats, completedQuests, bossKillCounts }
+  const rowsReadOnly = readOnly && kind !== 'quest'
+
   // Ascending by level (unmapped/no-level entries sort last, stable otherwise) so
   // low-level skilling actions and weak monsters lead the list.
   const sortedRefs = refs
@@ -34,22 +46,28 @@ export default function ActivityPickerModal({ kind, refs, label, onClose, onActi
 
   return (
     <Modal title={label} titleRight={<span class="wm-actmodal-count">{refs.length}</span>} onClose={onClose} className="wm-actmodal-panel" contentClassName="wm-actmodal-content">
-      {readOnly && <div class="wm-actmodal-note">Offered here — start activities from the town map when you visit.</div>}
+      {rowsReadOnly && <div class="wm-actmodal-note">Offered here — start activities from the town map when you visit.</div>}
       {groups.map((g, gi) => (
         <div class="wm-actmodal-group" key={g.label || gi}>
-          {g.label && <div class="wm-actmodal-grouphead">{g.label}</div>}
+          {g.label && (
+            <div class="wm-actmodal-grouphead" style={kind === 'quest' ? { color: COMPLEXITY_COLORS[g.label] } : undefined}>{g.label}</div>
+          )}
           <div class="fm-ledger">
             {g.refs.map((ref, i) => {
               const d = describeActivity(kind, ref)
+              const lock = activityLockReason(kind, ref, lockCtx)
               const inner = (
                 <>
-                  <span class="wm-actmodal-row__icon">{d.icon}</span>
+                  <span class="wm-actmodal-row__icon">{lock?.completed ? '✅' : d.icon}</span>
                   <span class="wm-actmodal-row__name">{d.name}</span>
-                  {d.level != null && <span class="wm-actmodal-row__lvl">{d.level}</span>}
+                  {lock
+                    ? <span class="wm-actmodal-row__lock">{lock.completed ? 'Complete' : `🔒 ${lock.reason}`}</span>
+                    : kind !== 'quest' && d.level != null && <span class="wm-actmodal-row__lvl">{d.level}</span>}
                 </>
               )
-              return readOnly
-                ? <div class="wm-actmodal-row wm-actmodal-row--static" key={i}>{inner}</div>
+              if (rowsReadOnly) return <div class="wm-actmodal-row wm-actmodal-row--static" key={i}>{inner}</div>
+              return lock
+                ? <div class={`wm-actmodal-row wm-actmodal-row--static${lock.completed ? '' : ' wm-actmodal-row--locked'}`} key={i} aria-disabled="true" title={lock.reason}>{inner}</div>
                 : <button class="wm-actmodal-row" key={i} onClick={() => onActivate(kind, ref)}>{inner}</button>
             })}
           </div>

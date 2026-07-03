@@ -7,14 +7,12 @@ export const NAV_TABS = [
   { id: SCREENS.INVENTORY,          label: 'Items',          icon: '🎒', iconKey: 'money_purse' },
   { id: SCREENS.EQUIPMENT,          label: 'Equip',          icon: '🛡️', iconKey: 'iron_platebody' },
   { id: SCREENS.STORE,              label: 'Trading Post',   icon: '🪙', iconKey: 'uncut_ruby' },
-  { id: SCREENS.SKILLS,             label: 'Skills',         icon: '🔨', iconKey: 'hammer' },
-  { id: SCREENS.COMBAT,             label: 'Combat',         icon: '⚔️', iconKey: 'iron_sword' },
-  { id: SCREENS.QUESTS,             label: 'Quests',         icon: '📜', iconKey: 'clue_scroll_medium' },
   { id: SCREENS.CLUES,              label: 'Clues',          icon: '🗝️', iconKey: 'clue_scroll_hard' },
-  { id: SCREENS.MINIGAMES,          label: 'Minigames',      icon: '🎮', iconKey: 'purple_sweets' },
-  { id: SCREENS.GATHER,             label: 'Gather',         icon: '🌿', iconKey: 'kingsherb' },
   { id: SCREENS.HELP,               label: 'Settings',       icon: '🧭', iconKey: 'tinderbox' },
 ]
+
+// Skills/Combat/Quests/Minigames/Gather have no nav entry: that content starts
+// from the World Map (place hubs, town maps, quest posts).
 
 // Screens reachable from the Settings screen (HelpScreen) instead of the nav
 // rails — keeps SideNav/BurgerMenu short on mobile and desktop.

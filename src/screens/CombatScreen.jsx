@@ -8,6 +8,7 @@ import Modal from '../components/Modal.jsx'
 import LootResultModal from '../components/LootResultModal.jsx'
 import HPBar from '../components/HPBar.jsx'
 import IdleCombatSetupModal from '../components/IdleCombatSetupModal.jsx'
+import BackLink from '../components/BackLink.jsx'
 import EquipmentPaperdoll from '../components/EquipmentPaperdoll.jsx'
 import ItemSlot from '../components/ItemSlot.jsx'
 import GameIcon from '../components/GameIcon.jsx'
@@ -2183,10 +2184,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   return (
     <div class={`forge-shell h-full flex flex-col p-4 ${isDesktopCombatLayout ? 'overflow-hidden' : ''}`}>
       {/* Back button */}
-      <button onClick={stopAndBack}
-        class="text-xs text-[var(--color-gold-dim)] mb-3 flex items-center gap-1">
-        ← Back
-      </button>
+      <BackLink onClick={stopAndBack} className="mb-3" />
 
       {/* Pane container — single flex column on mobile, 3-pane grid on desktop.
           DOM order is [stats, inventory, console] so mobile flow stays

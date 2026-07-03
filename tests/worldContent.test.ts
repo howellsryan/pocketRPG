@@ -8,13 +8,18 @@ import {
   describeActivity,
   isPlaceVaryingSkillRef,
   activityLevelRequirement,
+  activityLockReason,
+  activityGroupLabel,
 } from '../src/engine/worldContent.js'
 import worldData from '../src/data/world.json'
 import monstersData from '../src/data/monsters.json'
 import skillsData from '../src/data/skills.json'
 import raidsData from '../src/data/raids.json'
 import minigamesData from '../src/data/minigames.json'
+import questsData from '../src/data/quests.json'
 import { GATHER_TASKS } from '../src/engine/gatherTasks.js'
+import { getXPForLevel } from '../src/engine/experience.js'
+import { COMPLEXITY_ORDER } from '../src/utils/complexityColors.js'
 
 const asArray = (v: any) => (Array.isArray(v) ? v : Object.values(v || {}))
 
@@ -90,6 +95,12 @@ describe('content -> place coverage', () => {
     expect(placesForActivity('combat', 'no_such_monster')).toEqual([])
     expect(placesForActivity('skill', 'magic:no_such_spell')).toEqual([]) // fake ref
     expect(placesForActivity('skill', 'dungeoneering:dungeoneering_floor_1')).toEqual([]) // skill intentionally unmapped
+  })
+
+  it('maps every quest to exactly one place', () => {
+    for (const q of asArray(questsData)) {
+      expect(placesForActivity('quest', q.id).length, `quest ${q.id}`).toBe(1)
+    }
   })
 })
 
@@ -243,5 +254,55 @@ describe('describeActivity', () => {
     expect(describeActivity('combat', 'no_such_monster').name).toBe('no_such_monster') // falls back to ref
     expect(describeActivity('raid', 'crimson_night_theatre').name).toBe('Crimson Night Theatre')
     expect(describeActivity('minigame', 'pest_control').name).toBe('Void Breach')
+  })
+
+  it('describes quests with their complexity (rank as sort level, name as group label)', () => {
+    const quest = asArray(questsData)[0]
+    const d = describeActivity('quest', quest.id)
+    expect(d.name).toBe(quest.name)
+    expect(d.complexity).toBe(quest.complexity)
+    expect(d.level).toBe(COMPLEXITY_ORDER[quest.complexity])
+    expect(activityGroupLabel('quest', quest.id)).toBe(quest.complexity)
+    expect(describeActivity('quest', 'no_such_quest').name).toBe('no_such_quest')
+  })
+})
+
+describe('activityLockReason', () => {
+  const statsAt = (levels: Record<string, number>) =>
+    Object.fromEntries(Object.entries(levels).map(([s, l]) => [s, { xp: getXPForLevel(l) }]))
+
+  it('locks levelled skill refs below the requirement and unlocks at it', () => {
+    const action = (skillsData as any).mining.actions.find((a: any) => (a.level || 1) > 1)
+    const ref = `mining:${action.id}`
+    const locked = activityLockReason('skill', ref, { stats: statsAt({ mining: action.level - 1 }) })
+    expect(locked?.reason).toContain(`Mining level ${action.level}`)
+    expect(activityLockReason('skill', ref, { stats: statsAt({ mining: action.level }) })).toBeNull()
+  })
+
+  it('locks slayer-gated monsters via the combat requirement checks', () => {
+    const gated = asArray(monstersData).find((m: any) => m.slayerRequirement > 1 && !raidBossIds.has(m.id))
+    if (!gated) return
+    const locked = activityLockReason('combat', gated.id, { stats: statsAt({ slayer: 1 }) })
+    expect(locked?.reason).toContain(`Slayer level ${gated.slayerRequirement}`)
+    expect(activityLockReason('combat', gated.id, { stats: statsAt({ slayer: gated.slayerRequirement }) })).toBeNull()
+  })
+
+  it('marks completed quests done and ineligible quests locked with the reasons', () => {
+    const quest = asArray(questsData).find((q: any) => Object.keys(q.skillRequirements || {}).length > 0 && (q.questRequirements || []).length === 0 && !q.questPointRequirement && !q.combatLevelRequirement)
+    expect(quest).toBeTruthy()
+    expect(activityLockReason('quest', quest.id, { completedQuests: new Set([quest.id]) })).toMatchObject({ completed: true })
+    const locked = activityLockReason('quest', quest.id, { stats: statsAt({}), completedQuests: new Set() })
+    expect(locked?.reason).toMatch(/^Requires /)
+    // Meeting every skill requirement unlocks it.
+    const levels = Object.fromEntries(Object.entries(quest.skillRequirements).map(([s, l]) => [s, l]))
+    expect(activityLockReason('quest', quest.id, { stats: statsAt(levels as any), completedQuests: new Set() })).toBeNull()
+    expect(activityLockReason('quest', 'no_such_quest', {})?.reason).toBe('Unknown quest')
+  })
+
+  it('leaves ungated kinds unlocked', () => {
+    expect(activityLockReason('gather', 'collect_sand', {})).toBeNull()
+    expect(activityLockReason('minigame', 'pest_control', {})).toBeNull()
+    const freeMonster = asArray(monstersData).find((m: any) => !m.slayerRequirement && !m.questRequirement && m.id !== 'ashen_crucible' && !raidBossIds.has(m.id))
+    expect(activityLockReason('combat', freeMonster.id, { stats: statsAt({}) })).toBeNull()
   })
 })

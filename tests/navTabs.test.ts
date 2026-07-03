@@ -25,4 +25,13 @@ describe('navigation tabs', () => {
     // But Settings itself must stay reachable.
     expect(navIds.has(SCREENS.HELP)).toBe(true)
   })
+
+  it('keeps world-map-only content (skills/combat/quests/minigames/gather) out of the nav', () => {
+    const navIds = new Set(NAV_TABS.map((t) => t.id))
+    for (const id of [SCREENS.SKILLS, SCREENS.COMBAT, SCREENS.QUESTS, SCREENS.MINIGAMES, SCREENS.GATHER]) {
+      expect(navIds.has(id), id).toBe(false)
+    }
+    // Their entry point — the World Map — must stay in the nav.
+    expect(navIds.has(SCREENS.WORLD_MAP)).toBe(true)
+  })
 })

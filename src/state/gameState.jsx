@@ -369,6 +369,12 @@ export function GameProvider({ children }) {
 
           // Quest sim handling: shared cascade helper for boot/load idle
           if (savedTask.type === 'quest') {
+            // Levels gained across the whole cascade, keyed by skill — `from`
+            // stays the level before the first grant, `to` follows the running
+            // total, so a skill spanning several quests reports one span. Fed
+            // into the reward-reveal card / full-screen level-up overlay
+            // instead of a toast (this boot path never shows toasts anyway).
+            const levelUpsMap = new Map()
             const applyQuestCompletionToRawState = async (quest, pendingChoices) => {
               if (!quest?.id) return
 
@@ -383,8 +389,15 @@ export function GameProvider({ children }) {
 
               for (const [skill, xp] of Object.entries(fixed)) {
                 if (xp > 0 && s[skill]) {
-                  const newXP = Math.min((s[skill].xp || 0) + Math.floor(xp), 200000000)
-                  s[skill] = { ...s[skill], xp: newXP, level: getLevelFromXP(newXP) }
+                  const before = s[skill].xp || 0
+                  const from = getLevelFromXP(before)
+                  const newXP = Math.min(before + Math.floor(xp), 200000000)
+                  const to = getLevelFromXP(newXP)
+                  s[skill] = { ...s[skill], xp: newXP, level: to }
+                  if (to > from) {
+                    const existing = levelUpsMap.get(skill)
+                    levelUpsMap.set(skill, { skill, from: existing ? existing.from : from, to })
+                  }
                 }
               }
 
@@ -445,6 +458,7 @@ export function GameProvider({ children }) {
               completedQuests: completedQuestsList,
               aggregatedXpReward: aggregatedXp,
               coinsGained: totalCoinsGained,
+              levelUps: [...levelUpsMap.values()],
               pendingChoices,
               ticksUsed: Math.floor(cascade.elapsedMsUsed / 600),
               ticksRemaining: savedTask?.ticksRemaining ?? 0,
@@ -619,7 +633,10 @@ export function GameProvider({ children }) {
 
   // ── Mutations ──
 
-  const grantXP = useCallback((skill, amount) => {
+  // `silent` (quest completions — App.jsx): skip the toast, since those flows
+  // surface level-ups through the reward-reveal card / full-screen overlay
+  // instead. Max HP still updates on a silent Hitpoints level-up.
+  const grantXP = useCallback((skill, amount, { silent = false } = {}) => {
     setStats(prev => {
       const cur = prev[skill] || { skill, xp: 0, level: 1 }
       const newXP = clampXP(cur.xp + Math.floor(amount))
@@ -627,17 +644,19 @@ export function GameProvider({ children }) {
       const oldLevel = cur.level
 
       if (newLevel > oldLevel) {
-        const skillName = skill.charAt(0).toUpperCase() + skill.slice(1)
-        const SKILL_ICONS = {
-          attack: '⚔️', strength: '💪', defence: '🛡️', hitpoints: '❤️',
-          ranged: '🏹', magic: '🔮', prayer: '🙏',
-          mining: '⛏️', woodcutting: '🪓', fishing: '🎣', farming: '🌾', hunter: '🪤',
-          smithing: '🔨', cooking: '🍳', crafting: '✂️', fletching: '🏹', herblore: '🧪', runecraft: '🔴',
-          agility: '🏃', thieving: '🗝️', slayer: '💀', firemaking: '🔥', construction: '🏠', dungeoneering: '🏰'
+        if (!silent) {
+          const skillName = skill.charAt(0).toUpperCase() + skill.slice(1)
+          const SKILL_ICONS = {
+            attack: '⚔️', strength: '💪', defence: '🛡️', hitpoints: '❤️',
+            ranged: '🏹', magic: '🔮', prayer: '🙏',
+            mining: '⛏️', woodcutting: '🪓', fishing: '🎣', farming: '🌾', hunter: '🪤',
+            smithing: '🔨', cooking: '🍳', crafting: '✂️', fletching: '🏹', herblore: '🧪', runecraft: '🔴',
+            agility: '🏃', thieving: '🗝️', slayer: '💀', firemaking: '🔥', construction: '🏠', dungeoneering: '🏰'
+          }
+          const icon = SKILL_ICONS[skill] || '⭐'
+          const msg = `Congratulations! Your ${skillName} is now ${newLevel}`
+          addToast(msg, 'levelup', icon)
         }
-        const icon = SKILL_ICONS[skill] || '⭐'
-        const msg = `Congratulations! Your ${skillName} is now ${newLevel}`
-        addToast(msg, 'levelup', icon)
         // If hitpoints levelled, update max HP
         if (skill === 'hitpoints') {
           setCurrentHP(prev => Math.min(prev + (newLevel - oldLevel), newLevel))
