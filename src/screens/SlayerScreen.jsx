@@ -20,6 +20,7 @@ import { applyCloudSave } from '../cloud/sync.js'
 import { CRITICAL_SAVE_REASONS } from '../cloud/criticalSavePolicy.js'
 import { recordCollectionLogDrop } from '../cloud/collectionLog.js'
 import { SCREENS } from '../utils/constants.js'
+import Modal from '../components/Modal.jsx'
 
 // PocketRPG combat level formula
 function getPlayerCombatLevel(stats) {
@@ -160,10 +161,47 @@ function SlayerMasterInfoSheet({ master, slayerLevel, completedQuests, onClose }
   )
 }
 
+// Modal shown when tapping a slayer master row — get a new task (blocked while
+// one is already assigned) or cancel the current task for a credit or points.
+function SlayerTaskActionModal({ master, hasTask, slayerPoints, skipPointCost, onGetTask, onCancelCredit, onCancelPoints, onClose }) {
+  const canAffordPoints = slayerPoints >= skipPointCost
+  return (
+    <Modal title={master.name} onClose={onClose}>
+      <div class="flex flex-col gap-2.5">
+        <button
+          type="button"
+          onClick={onGetTask}
+          disabled={hasTask}
+          class={`w-full text-center py-3 rounded-xl font-bold text-[13px] uppercase tracking-wide ${hasTask ? 'bg-[rgba(255,255,255,0.03)] text-[var(--color-parchment)] opacity-40 cursor-default' : 'bg-[var(--color-gold)] text-[#0f0f0f] active:opacity-80'}`}
+        >
+          Get New Task
+        </button>
+        <button
+          type="button"
+          onClick={onCancelCredit}
+          disabled={!hasTask}
+          class={`w-full text-center py-3 rounded-xl font-semibold text-[13px] border ${!hasTask ? 'border-[rgba(255,255,255,0.06)] text-[var(--color-parchment)] opacity-40 cursor-default' : 'border-[var(--color-void-border)] text-[var(--color-parchment)] active:opacity-70'}`}
+        >
+          Cancel Task: 1 Credit
+        </button>
+        <button
+          type="button"
+          onClick={onCancelPoints}
+          disabled={!hasTask || !canAffordPoints}
+          class={`w-full text-center py-3 rounded-xl font-semibold text-[13px] border ${(!hasTask || !canAffordPoints) ? 'border-[rgba(255,255,255,0.06)] text-[var(--color-parchment)] opacity-40 cursor-default' : 'border-[var(--color-void-border)] text-[var(--color-parchment)] active:opacity-70'}`}
+        >
+          Cancel Task: {skipPointCost} Slayer Points
+        </button>
+      </div>
+    </Modal>
+  )
+}
+
 export default function SlayerScreen({ onBack, onNavigate }) {
   const { stats, slayerTask, setSlayerTask, slayerPoints, updateSlayerPoints, addToast, bank, inventory, addToBank, getSnapshot, slayerTasksCompleted, loadGame, slayerPerks, updateSlayerPerk, completedQuests } = useGame()
 
   const [infoMaster, setInfoMaster] = useState(null)
+  const [taskMaster, setTaskMaster] = useState(null)
 
   const combatLevel = getPlayerCombatLevel(stats)
   const slayerLevel = getLevelFromXP(stats.slayer?.xp || 0)
@@ -349,6 +387,10 @@ export default function SlayerScreen({ onBack, onNavigate }) {
       <div class="flex flex-col gap-2.5">
         {SLAYER_MASTERS.map(master => {
           const meetsReq = combatLevel >= master.combatReq && slayerLevel >= master.slayerReq
+          const lockBadge = combatLevel < master.combatReq ? `CB ${master.combatReq}` : `LV ${master.slayerReq}`
+          const lockHint = combatLevel < master.combatReq
+            ? `Requires combat level ${master.combatReq}`
+            : `Requires Slayer level ${master.slayerReq}`
           return (
             <div key={master.id} class="flex gap-2 items-center">
               <div class="flex-1 min-w-0">
@@ -356,8 +398,10 @@ export default function SlayerScreen({ onBack, onNavigate }) {
                   icon={<GameIcon iconKey={master.iconKey} color="var(--color-gold)" size={30} />}
                   title={master.name}
                   chip={<>{master.pointsPerTask} pts</>}
-                  disabled={!meetsReq || !!slayerTask}
-                  onClick={() => handleGetTask(master)}
+                  locked={!meetsReq}
+                  lockBadge={lockBadge}
+                  lockHint={lockHint}
+                  onClick={() => setTaskMaster(master)}
                 />
               </div>
               <button
@@ -399,11 +443,6 @@ export default function SlayerScreen({ onBack, onNavigate }) {
             />
           )
         })}
-      </div>
-
-      {/* Perks — point-purchased, non-item bonuses */}
-      <SectionHeader className="mt-5 mb-2.5">Perks</SectionHeader>
-      <div class="flex flex-col gap-2.5">
         {(() => {
           const perkOwned = slayerPerks?.doubleQuantity === true
           const cost = 250
@@ -430,6 +469,20 @@ export default function SlayerScreen({ onBack, onNavigate }) {
       </div>
 
     </div>
+
+    {/* Master task action modal — get a new task or cancel the current one */}
+    {taskMaster && (
+      <SlayerTaskActionModal
+        master={taskMaster}
+        hasTask={!!slayerTask}
+        slayerPoints={slayerPoints}
+        skipPointCost={SLAYER_TASK_SKIP_POINT_COST}
+        onGetTask={() => { handleGetTask(taskMaster); setTaskMaster(null) }}
+        onCancelCredit={() => { handleSkipWithCredit(); setTaskMaster(null) }}
+        onCancelPoints={() => { handleCancelTask(); setTaskMaster(null) }}
+        onClose={() => setTaskMaster(null)}
+      />
+    )}
 
     {/* Master task info — slide-up bestiary sheet (matches combat info design) */}
     {infoMaster && (
