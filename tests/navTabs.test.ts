@@ -3,8 +3,8 @@ import {
   NAV_TABS,
   SETTINGS_NAV_LINKS,
   GAME_FRAME_TOP_TABS,
+  GAME_FRAME_TOP_LEFT_TABS,
   GAME_FRAME_BOTTOM_LEFT_TABS,
-  GAME_FRAME_BOTTOM_RIGHT_TABS,
 } from '../src/components/navTabs.js'
 import { SCREENS } from '../src/utils/constants.js'
 
@@ -50,18 +50,19 @@ describe('navigation tabs', () => {
   })
 
   it('keeps the mobile game frame rails to the agreed screens', () => {
-    // Top rail: World Map, Inventory, Equipment (plus the Skip action button,
-    // rendered by GameFrameBar itself). Bottom rail: Settings … Credits … Home.
+    // Top rail: Home (top-left), World Map, Inventory, Equipment (plus the
+    // Skip action, rendered by GameFrameBar itself). Bottom rail: Settings …
+    // Credits + Skip.
+    expect(GAME_FRAME_TOP_LEFT_TABS.map((t) => t.id)).toEqual([SCREENS.HOME])
     expect(GAME_FRAME_TOP_TABS.map((t) => t.id)).toEqual([
       SCREENS.WORLD_MAP,
       SCREENS.INVENTORY,
       SCREENS.EQUIPMENT,
     ])
     expect(GAME_FRAME_BOTTOM_LEFT_TABS.map((t) => t.id)).toEqual([SCREENS.HELP])
-    expect(GAME_FRAME_BOTTOM_RIGHT_TABS.map((t) => t.id)).toEqual([SCREENS.HOME])
     // Every frame tab must be backed by a SCREENS constant and carry an icon.
     const known = new Set(Object.values(SCREENS))
-    for (const tab of [...GAME_FRAME_TOP_TABS, ...GAME_FRAME_BOTTOM_LEFT_TABS, ...GAME_FRAME_BOTTOM_RIGHT_TABS]) {
+    for (const tab of [...GAME_FRAME_TOP_LEFT_TABS, ...GAME_FRAME_TOP_TABS, ...GAME_FRAME_BOTTOM_LEFT_TABS]) {
       expect(known.has(tab.id)).toBe(true)
       expect(typeof tab.iconKey).toBe('string')
     }

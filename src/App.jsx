@@ -2730,7 +2730,7 @@ function GameApp() {
       case SCREENS.EQUIPMENT: return <EquipmentScreen onBack={backToPrev} />
       case SCREENS.ARMOURY:   return <ArmouryScreen onBack={backToPrev} />
       case SCREENS.BANK:      return <BankScreen onBack={backToPrev} />
-      case SCREENS.COMBAT:    return <CombatScreen onNavigate={navigate} initialMonsterId={actionData?.monsterId} initialRaidId={actionData?.raidId} onCombatStatusChange={setIsInCombat} />
+      case SCREENS.COMBAT:    return <CombatScreen onNavigate={navigate} initialMonsterId={actionData?.monsterId} initialRaidId={actionData?.raidId} onCombatStatusChange={setIsInCombat} onBack={returnNav} onStopBack={stopBackNav} />
       case SCREENS.SKILLS:    return <SkillingScreen initialSkillId={actionData?.skillId} initialActionId={actionData?.actionId} idleResult={idleResult} onNavigate={navigate} onBack={returnNav} onStopBack={stopBackNav} />
       case SCREENS.GATHER:    return <GatherScreen initialTaskId={actionData?.gatherTaskId} idleResult={idleResult} onBack={returnNav} onStopBack={stopBackNav} />
       case SCREENS.AGILITY:     return <AgilityScreen initialActionId={actionData?.actionId} idleResult={idleResult} onBack={returnNav} onStopBack={stopBackNav} />
@@ -2979,6 +2979,38 @@ function GameApp() {
         }, null)
         const restLootRows = heroLoot ? lootRows.filter(r => r !== heroLoot) : lootRows
 
+        // Stopped-early / idle-death detection, hoisted so it can also feed the
+        // "did anything happen" gate below (duplicated by the card JSX further down).
+        const stoppedReason = idleResult.stoppedReason
+        const effMs = idleResult.effectiveElapsedMs ?? null
+        const showStoppedEarly = idleResult.task?.type === 'combat' && idleResult.idleSupplies &&
+          (!!(stoppedReason && stoppedReason !== 'completed_elapsed' && effMs != null && effMs < idleResult.elapsedMs) || idleResult.died)
+
+        // Clue scrolls consumed, hoisted for the same reason.
+        const clueScrollCount = Object.entries(idleResult.itemsConsumed || {}).reduce((sum, [itemId, qty]) => {
+          if (itemId.includes('clue')) return sum + qty
+          return sum
+        }, 0)
+
+        // Nothing to report — no XP/kills/loot/quests/clues and no notable
+        // event (death, boss/raid lockout, cloud override, reward/minigame
+        // progress). Skip the modal entirely instead of popping up empty.
+        const hasProgress = idleResult.died ||
+          summaryRows.length > 0 ||
+          lootRows.length > 0 ||
+          !!idleResult.cloudOverride ||
+          (idleResult.task?.type === 'combat' && (idleResult.task?.monster?.boss === true || idleResult.task?.raid === true)) ||
+          !!idleResult.minigameTimeReduced ||
+          !!idleResult.minigameCompleted ||
+          !!idleResult.rewardTimeReduced ||
+          !!idleResult.rewardCompleted ||
+          (idleResult.slayerTaskUpdate && idleResult.monstersKilledOnTask > 0) ||
+          (idleResult.completedQuests && idleResult.completedQuests.length > 0) ||
+          showStoppedEarly ||
+          clueScrollCount > 0
+
+        if (!hasProgress) return null
+
         return (
           <LootResultModal
             theme={idleResult.died ? 'blood' : (hasIdleEpicLootDrop(idleResult, itemsData) ? 'purple' : 'gold')}
@@ -3073,16 +3105,12 @@ function GameApp() {
               )}
 
               {/* Idle death / stopped early warning */}
-              {idleResult.task?.type === 'combat' && idleResult.idleSupplies && (() => {
-                const stoppedReason = idleResult.stoppedReason
-                const effMs = idleResult.effectiveElapsedMs ?? null
-                const showShortened = stoppedReason && stoppedReason !== 'completed_elapsed' && effMs != null && effMs < idleResult.elapsedMs
+              {showStoppedEarly && (() => {
                 const reasonLabel = {
                   out_of_food: 'Ran out of food', out_of_hp: 'Ran out of HP',
                   out_of_prayer: 'Ran out of prayer', out_of_potion: 'Ran out of potions',
                   resource_limited: 'Out of ammo / runes / charges', died: 'You died',
                 }[stoppedReason] || null
-                if (!showShortened && !idleResult.died) return null
                 return (
                   <div class="lm-card" style={{ borderColor: 'rgba(255, 135, 135, 0.3)', borderLeft: '3px solid #ff8787' }}>
                     <div class="lm-card__head" style={{ color: '#ff8787' }}>
@@ -3099,17 +3127,11 @@ function GameApp() {
               })()}
 
               {/* Clue scrolls completed */}
-              {(() => {
-                const clueScrollCount = Object.entries(idleResult.itemsConsumed || {}).reduce((sum, [itemId, qty]) => {
-                  if (itemId.includes('clue')) return sum + qty
-                  return sum
-                }, 0)
-                return clueScrollCount > 0 ? (
-                  <SummaryCard heading="Clue Scrolls" icon="📜" rows={[
-                    { name: 'Completed', value: `×${clueScrollCount.toLocaleString()}`, rate: perHr(clueScrollCount) },
-                  ]} />
-                ) : null
-              })()}
+              {clueScrollCount > 0 && (
+                <SummaryCard heading="Clue Scrolls" icon="📜" rows={[
+                  { name: 'Completed', value: `×${clueScrollCount.toLocaleString()}`, rate: perHr(clueScrollCount) },
+                ]} />
+              )}
             </div>
           </LootResultModal>
         )

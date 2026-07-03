@@ -223,7 +223,7 @@ class PvpCombatErrorBoundary extends Component {
   }
 }
 
-export default function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onCombatStatusChange }) {
+export default function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onCombatStatusChange, onBack, onStopBack }) {
   const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, updateEquipment, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, idleCombatSetup, updateIdleCombatSetup, homeShortcuts, updateHomeShortcuts, setActiveTask, requestActivityStart, slayerTask, setSlayerTask, awardSlayerPoints, slayerTasksCompleted, setSlayerTasksCompleted, activeCombatSpell, updateActiveCombatSpell, bossKillCounts, updateBossKillCounts, raidKillCounts, updateRaidKillCounts, unlockedFeatures, completedQuests, isOneLife, isIronman, getSnapshot, loadGame, combatSkipHandlerRef, skipHourHandlerRef, chargeSkipRef, raidSkipHandlerRef, lockGame, unlockGame, resolveCombatCompletion, characterUnlocks, killCountsLoaded, recordGameEvent } = useGame()
   const pvp = usePvp()
   // Offline demo: bosses, raids and PvP are locked (server-authoritative).
@@ -1222,6 +1222,8 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     setCombat(null)
     setLog([])
     setActiveTask(null)
+    const back = onStopBack || onBack
+    if (back) back()
   }
 
   // Drink a brew: heals immediately, wipes all active potion effects. The heal +
@@ -1743,10 +1745,12 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             showPvp={!isIronman && !isOneLife && !isDemo}
             onOpenPvp={() => setShowPvpLobby(true)}
             demoLockBosses={isDemo}
+            onBack={onStopBack || onBack}
           />
         </div>
       ) : (
       <div class="forge-shell h-full overflow-y-auto p-4">
+        <BackLink onClick={onStopBack || onBack} className="mb-2" />
         <h2 class="font-[var(--font-display)] text-sm font-bold text-[var(--color-parchment)] opacity-60 uppercase tracking-wider mb-3">
           Choose a Foe
         </h2>
