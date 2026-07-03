@@ -9,9 +9,10 @@
 export const CHAT_DAILY_LIMIT = 30
 
 // Token prices converted to milli-neurons per token at $0.011 per 1,000
-// neurons. Rated at $0.10/M input, $0.40/M output — gemini-2.5-flash-lite's
-// paid-tier prices (a free-tier key bills $0), so the budget doubles as a
-// daily $ spend cap. Revisit when CHAT_MODEL changes.
+// neurons. Rated at $0.10/M input, $0.40/M output — an upper bound for both
+// gemini-2.5-flash-lite ($0.10/$0.40; free-tier keys bill $0) and the GLM
+// fallback ($0.06/$0.40) — so the budget doubles as a daily $ spend cap.
+// Revisit when CHAT_MODEL / CHAT_FALLBACK_MODEL change.
 export const MILLI_NEURONS_PER_INPUT_TOKEN = 9.1
 export const MILLI_NEURONS_PER_OUTPUT_TOKEN = 36.37
 

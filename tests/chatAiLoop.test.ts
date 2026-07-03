@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
-import { runAiChat, ChatTimeoutError, chatAiBinding, geminiChatBinding } from '../functions/api/chat.js'
-import { CHAT_MAX_TOOL_ROUNDS, CHAT_MODEL } from '../functions/_lib/chat/prompt.js'
+import { runAiChat, ChatTimeoutError, chatAttempts, geminiChatBinding } from '../functions/api/chat.js'
+import { CHAT_MAX_TOOL_ROUNDS, CHAT_MODEL, CHAT_FALLBACK_MODEL } from '../functions/_lib/chat/prompt.js'
 
 afterEach(() => {
   vi.useRealTimers()
@@ -125,11 +125,21 @@ describe('runAiChat', () => {
   })
 })
 
-describe('chatAiBinding / geminiChatBinding', () => {
-  it('resolves a binding for the configured model, null when unconfigured', () => {
-    const env = CHAT_MODEL.startsWith('@') ? { AI: { run: vi.fn() } } : { GEMINI_API_KEY: 'test-key' }
-    expect(chatAiBinding(env as any)).toBeTruthy()
-    expect(chatAiBinding({} as any)).toBeNull()
+describe('chatAttempts / geminiChatBinding', () => {
+  it('orders attempts primary-then-fallback, skipping unconfigured providers', () => {
+    const AI = { run: vi.fn() }
+    const full = chatAttempts({ GEMINI_API_KEY: 'test-key', AI } as any)
+    expect(full.map((a) => a.model)).toEqual([CHAT_MODEL, CHAT_FALLBACK_MODEL])
+    expect(full[1].ai).toBe(AI)
+    // No Gemini key → straight to the Workers AI fallback; nothing → no AI path.
+    expect(chatAttempts({ AI } as any).map((a) => a.model)).toEqual([CHAT_FALLBACK_MODEL])
+    expect(chatAttempts({} as any)).toEqual([])
+  })
+
+  it('runAiChat sends the per-attempt model override to the binding', async () => {
+    const run = vi.fn().mockResolvedValue(aiResponse('Hi.'))
+    await runAiChat({ AI: { run } } as any, baseMessages(), opts({ model: CHAT_FALLBACK_MODEL }))
+    expect(run.mock.calls[0][0]).toBe(CHAT_FALLBACK_MODEL)
   })
 
   it("calls Google's OpenAI-compatible endpoint with the payload passed through", async () => {
