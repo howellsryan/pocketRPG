@@ -1,10 +1,12 @@
 import GameIcon from './GameIcon.jsx'
 import { GAME_FRAME_TOP_TABS, GAME_FRAME_BOTTOM_LEFT_TABS, GAME_FRAME_BOTTOM_RIGHT_TABS } from './navTabs.js'
 
-// OSRS-style mobile chrome: two icon rails framing the main content panel.
+// OSRS-style mobile chrome: gold medallion rails framing the main content
+// panel, drawn into the carved-wood shell (.gf-shell / .gf-main in index.css).
 // Top rail: Skip · World Map · Inventory · Equipment. Bottom rail: Settings ·
-// Credits · Home. Mobile-only (md:hidden) — desktop keeps SideNav + Header.
-function FrameNavButton({ label, active = false, disabled = false, locked = false, onClick, title, children }) {
+// Credits (centered) · Home. Mobile-only (md:hidden) — desktop keeps
+// SideNav + Header.
+function FrameMedallion({ label, active = false, disabled = false, locked = false, onClick, title, children }) {
   return (
     <button
       onClick={onClick}
@@ -12,16 +14,9 @@ function FrameNavButton({ label, active = false, disabled = false, locked = fals
       aria-label={label}
       aria-current={active ? 'page' : undefined}
       title={title || label}
-      class={`flex flex-col items-center justify-center gap-1 min-w-[52px] min-h-[52px] px-1 rounded-md border transition-colors ${
-        active ? 'bg-[#2a2010] border-[var(--color-gold-dim)]' : 'bg-transparent border-transparent'
-      } ${disabled ? 'opacity-30 cursor-not-allowed' : locked ? 'opacity-40 cursor-pointer' : 'cursor-pointer opacity-90 hover:opacity-100'}`}
+      class={`gf-medallion ${active ? 'gf-medallion--active' : ''} ${locked ? 'gf-medallion--locked' : ''}`}
     >
-      {/* Parchment tile behind the icon — the game icon art is drawn for light
-          surfaces and doesn't read directly on the near-black rail. */}
-      <span class={`w-10 h-[34px] flex items-center justify-center rounded border ${active ? 'bg-[#f0e2bd] border-[var(--color-gold-dim)]' : 'bg-[#e6d8b6] border-[#4a4436]'}`}>{children}</span>
-      <span class={`text-[9px] font-semibold leading-none whitespace-nowrap ${active ? 'text-[var(--color-gold-light)]' : 'text-[var(--color-parchment)]'}`}>
-        {label}
-      </span>
+      {children}
     </button>
   )
 }
@@ -43,10 +38,10 @@ export default function GameFrameBar({
   credits = 0,
   isCloudAccount = false,
 }) {
-  const navButton = (tab) => {
+  const navMedallion = (tab) => {
     const isLocked = demo && lockedScreens?.has(tab.id)
     return (
-      <FrameNavButton
+      <FrameMedallion
         key={tab.id}
         label={tab.label}
         active={active === tab.id}
@@ -55,8 +50,10 @@ export default function GameFrameBar({
         title={isLocked ? 'Available with a free account' : tab.label}
         onClick={() => { if (isInCombat) onDisabledClick?.(); else if (isLocked) onLockedClick?.(); else onNavigate?.(tab.id) }}
       >
-        <GameIcon iconKey={tab.iconKey} size={tab.iconSize || 30} color={tab.iconColor} />
-      </FrameNavButton>
+        {tab.iconDisc
+          ? <span class="gf-icon-disc"><GameIcon iconKey={tab.iconKey} size={tab.iconSize || 30} color={tab.iconColor} /></span>
+          : <GameIcon iconKey={tab.iconKey} size={tab.iconSize || 30} color={tab.iconColor} />}
+      </FrameMedallion>
     )
   }
 
@@ -65,9 +62,9 @@ export default function GameFrameBar({
     return (
       <nav
         aria-label="Quick actions"
-        class="pwa-header md:hidden flex items-center justify-around flex-shrink-0 bg-[#111] border-b border-[#333] px-2 py-1"
+        class="pwa-header md:hidden flex items-center justify-evenly flex-shrink-0 px-3 pt-2 pb-2"
       >
-        <FrameNavButton
+        <FrameMedallion
           label={skipLabel}
           locked={demo}
           title={demo
@@ -77,9 +74,11 @@ export default function GameFrameBar({
             : skipMode === 'kill' ? 'Skip to the kill (requires 1 credit)' : 'Skip 1 hour (requires 1 credit)'}
           onClick={() => { if (demo) onLockedFeature?.(); else onSkip1h?.() }}
         >
-          <span class="text-[22px] leading-none">{demo ? '🔒' : '⏭️'}</span>
-        </FrameNavButton>
-        {GAME_FRAME_TOP_TABS.map(navButton)}
+          {demo
+            ? <span class="text-[20px] leading-none">🔒</span>
+            : <GameIcon iconKey="fast_forward_button" size={30} color="#d9b45a" />}
+        </FrameMedallion>
+        {GAME_FRAME_TOP_TABS.map(navMedallion)}
       </nav>
     )
   }
@@ -87,20 +86,25 @@ export default function GameFrameBar({
   return (
     <nav
       aria-label="Menu"
-      class="md:hidden flex items-center justify-around flex-shrink-0 bg-[#111] border-t border-[#333] px-2 pt-1 pb-safe"
+      class="md:hidden flex items-center justify-between flex-shrink-0 px-5 pt-2 pb-safe"
     >
-      {GAME_FRAME_BOTTOM_LEFT_TABS.map(navButton)}
-      {(isCloudAccount || demo) && (
-        <FrameNavButton
-          label={demo ? 'Credits' : `${credits.toLocaleString()} Credits`}
-          locked={demo}
-          title={demo ? 'Credits are available with a free account' : 'Buy credits'}
-          onClick={() => { if (demo) onLockedFeature?.(); else onBuyCredits?.() }}
-        >
-          <span class="text-[22px] leading-none">{demo ? '🔒' : '💎'}</span>
-        </FrameNavButton>
-      )}
-      {GAME_FRAME_BOTTOM_RIGHT_TABS.map(navButton)}
+      {GAME_FRAME_BOTTOM_LEFT_TABS.map(navMedallion)}
+      <span class="flex-1 flex items-center justify-center">
+        {(isCloudAccount || demo) && (
+          <button
+            onClick={() => { if (demo) onLockedFeature?.(); else onBuyCredits?.() }}
+            aria-label="Credits"
+            title={demo ? 'Credits are available with a free account' : 'Buy credits'}
+            class={`gf-credits ${demo ? 'gf-medallion--locked' : ''}`}
+          >
+            {demo
+              ? <span class="text-[16px] leading-none">🔒</span>
+              : <GameIcon iconKey="cut_diamond" size={20} color="#f0c040" />}
+            <span>{demo ? 'Credits' : `${credits.toLocaleString()} Credits`}</span>
+          </button>
+        )}
+      </span>
+      {GAME_FRAME_BOTTOM_RIGHT_TABS.map(navMedallion)}
     </nav>
   )
 }
