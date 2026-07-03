@@ -127,7 +127,7 @@ export const KNOWLEDGE_CHUNKS = [
   "tags": [
    "guide"
   ],
-  "text": "Quests are timed adventures: meet the requirements (skill levels, quest points, combat level or earlier quests), start the quest, and it completes after its duration — you can queue several. Rewards include coins, XP (sometimes in a skill of your choice), quest points and item unlocks. Quest complexity ranges from Novice to Master; longer, harder quests pay better."
+  "text": "Quests are journeys across the world map: meet the requirements (skill levels, quest points, combat level or earlier quests), begin the quest, and follow its trail through several places — teleporting between waypoints finishes it faster. Quests live on the world map: every settlement offers a selection (from Novice quests in the starting hamlets up to Grandmaster quests in the cities), and any place with a Quest Post 📯 opens the full quest board where you can browse, queue and begin every quest. Rewards include coins, XP (sometimes in a skill of your choice), quest points and item unlocks; longer, harder quests pay better."
  },
  {
   "id": "guide_clue_scrolls",

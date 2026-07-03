@@ -60,6 +60,9 @@ export default function PlaceMapView({ place, onClose, onActivate, onNavigate })
     if (wasGestureClick()) return
     if (type === 'facility') {
       if (spot.facility === 'bank') { setBankSpot(spot); return }
+      // The quest post opens the full quest board (browse, queue, begin),
+      // back button returning here.
+      if (spot.facility === 'quest_post') { onNavigate?.(SCREENS.QUESTS, { returnTo }); return }
       // Single-skill facilities (furnace & anvil / altar / stove) go straight
       // to their skill's training screen, back button returning here.
       const skillId = facilityTrainingSkill(spot.facility)
@@ -78,6 +81,7 @@ export default function PlaceMapView({ place, onClose, onActivate, onNavigate })
   const spotGlyph = ({ spot, type, desc }) => {
     if (type === 'facility') {
       if (spot.facility === 'bank') return <GameIcon iconKey="coins" size={20} title={spot.label || 'Bank'} />
+      if (spot.facility === 'quest_post') return <GameIcon iconKey="clue_scroll_medium" size={20} title={spot.label || 'Quest Post'} />
       const skillId = facilityTrainingSkill(spot.facility)
       return skillId
         ? <GameIcon iconKey={getSkillArt(skillId).icon} size={20} color="#f2e4c2" />

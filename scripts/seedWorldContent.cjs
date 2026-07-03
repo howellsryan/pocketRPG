@@ -27,6 +27,7 @@ const worldPath = path.join(ROOT, 'src/data/world.json')
 const world = JSON.parse(fs.readFileSync(worldPath, 'utf8'))
 
 const monsters = require(path.join(ROOT, 'src/data/monsters.json'))
+const quests = require(path.join(ROOT, 'src/data/quests.json'))
 const skills = require(path.join(ROOT, 'src/data/skills.json'))
 const raids = require(path.join(ROOT, 'src/data/raids.json'))
 const minigames = require(path.join(ROOT, 'src/data/minigames.json'))
@@ -188,6 +189,17 @@ distribute('thieving', thievingItems, out)
 // Hunter — own kind, level-banded.
 distribute('hunter', asArray(skills.hunter?.actions).map((a) => ({ ref: a.id, level: a.level ?? 1 })), out)
 
+// Quests — own kind, banded by complexity (Novice starts near the start place,
+// Grandmaster ends up in the cities), duration as tie-break within a tier.
+// Quest journeys plan from wherever the player is, so the listing place is a
+// browse/flavour home, not a start gate. Mirror COMPLEXITY_ORDER in
+// src/utils/complexityColors.js.
+const QUEST_COMPLEXITY_ORDER = { Novice: 1, Intermediate: 2, Experienced: 3, Master: 4, Grandmaster: 5, Special: 6 }
+distribute('quest', asArray(quests).map((q) => ({
+  ref: q.id,
+  level: (QUEST_COMPLEXITY_ORDER[q.complexity] || 9) * 100000 + Math.min(99999, q.durationSeconds || 0),
+})), out)
+
 // Gather tasks have no level; band them by their order so they spread — except
 // the sawmill's log→plank conversions, which are facility-bound: every place
 // with a `sawmill` facility (world.json) converts ALL log types.
@@ -206,6 +218,19 @@ for (const id of Object.keys(world.places)) {
     }
   }
 }
+
+// Quest post: every place offering at least one quest gets the facility — the
+// landmark that opens the full quest board (browse, queue, begin any quest).
+for (const id of Object.keys(world.places)) {
+  const facs = world.places[id].facilities = Array.isArray(world.places[id].facilities) ? world.places[id].facilities : []
+  const hasQuest = (out[id] || []).some((a) => a.kind === 'quest')
+  const at = facs.indexOf('quest_post')
+  if (hasQuest && at < 0) facs.push('quest_post')
+  else if (!hasQuest && at >= 0) facs.splice(at, 1)
+}
+world.facilities = Object.assign({}, world.facilities, {
+  quest_post: { label: 'Quest Post', icon: '📯' },
+})
 
 // Write back: activities go to worldActivities.json ({ placeId: [{kind, ref}] }),
 // kept out of world.json so the geography can ship in the single-file build's inline

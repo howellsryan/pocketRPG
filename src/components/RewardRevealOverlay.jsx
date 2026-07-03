@@ -1,12 +1,16 @@
 import { useEffect, useRef, useState } from 'preact/hooks'
 import itemsData from '../data/items.json'
 import GameIcon from './GameIcon.jsx'
+import { getSkillArt } from '../utils/skillArt.js'
 
 /**
- * Reward-reveal card shown when a clue scroll or minigame completes, listing the
- * items awarded. Driven by the `pocketrpg:reward-reveal` event so any completion
- * path (background minigame tick, clue screen) can surface the same UI. Cards
- * queue one at a time, auto-dismiss, and can be tapped to dismiss early.
+ * Reward-reveal card shown when a clue scroll, minigame or quest completes,
+ * listing the rewards. Item entries are `{ itemId, quantity }`; quest XP
+ * entries are `{ skill, xp }` (rendered as a skill chip — see
+ * utils/rewardReveal.js emitQuestCompletionReveal). Driven by the
+ * `pocketrpg:reward-reveal` event so any completion path (background minigame
+ * tick, clue screen, quest cascade) can surface the same UI. Cards queue one
+ * at a time, auto-dismiss, and can be tapped to dismiss early.
  */
 const REVEAL_LIFETIME_MS = 5000
 
@@ -20,8 +24,10 @@ export default function RewardRevealOverlay() {
       const detail = event?.detail
       const rewards = Array.isArray(detail?.rewards)
         ? detail.rewards
-            .map(r => ({ itemId: r.itemId, quantity: r.quantity ?? r.qty ?? 1 }))
-            .filter(r => r.itemId && r.quantity > 0)
+            .map(r => r?.skill
+              ? { skill: r.skill, xp: Math.floor(r.xp ?? 0) }
+              : { itemId: r?.itemId, quantity: r?.quantity ?? r?.qty ?? 1 })
+            .filter(r => (r.itemId && r.quantity > 0) || (r.skill && r.xp > 0))
         : []
       if (rewards.length === 0) return
       const reveal = {
@@ -69,6 +75,17 @@ export default function RewardRevealOverlay() {
         </div>
         <div class="flex flex-wrap gap-1.5 mt-2.5">
           {current.rewards.map(r => {
+            if (r.skill) {
+              const art = getSkillArt(r.skill)
+              const name = r.skill === 'any' ? 'Any Skill' : r.skill.charAt(0).toUpperCase() + r.skill.slice(1)
+              return (
+                <div key={`xp:${r.skill}`} class="flex items-center gap-1.5 rounded-lg border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.05)] px-2 py-1">
+                  <GameIcon iconKey={art.icon} size={20} color={art.accent} />
+                  <span class="text-[12px] text-[var(--color-parchment)]">{name}</span>
+                  <span class="text-[11px] font-bold text-[var(--color-gold)]">+{r.xp.toLocaleString()} XP</span>
+                </div>
+              )
+            }
             const item = itemsData[r.itemId]
             return (
               <div key={r.itemId} class="flex items-center gap-1.5 rounded-lg border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.05)] px-2 py-1">

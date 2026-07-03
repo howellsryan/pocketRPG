@@ -121,7 +121,8 @@
       "lore": "Where every adventurer's tale begins. A sleepy river town under an old castle, ringed by cabbage fields and the gentlest monsters in Eldermoor.",
       "facilities": [
         "bank",
-        "stove"
+        "stove",
+        "quest_post"
       ],
       "teleport": {
         "level": 45,
@@ -148,7 +149,8 @@
         "furnace_anvil",
         "sawmill",
         "altar",
-        "stove"
+        "stove",
+        "quest_post"
       ],
       "teleport": {
         "level": 25,
@@ -175,7 +177,8 @@
         "furnace_anvil",
         "sawmill",
         "altar",
-        "stove"
+        "stove",
+        "quest_post"
       ],
       "teleport": {
         "level": 31,
@@ -201,7 +204,8 @@
         "bank",
         "sawmill",
         "altar",
-        "stove"
+        "stove",
+        "quest_post"
       ],
       "teleport": {
         "level": 37,
@@ -223,7 +227,8 @@
       "sub": "Willow-shaded village",
       "lore": "A quiet village of willows and a watchful bank, just down the river road from Lumbright. Pickpockets practice here before the city.",
       "facilities": [
-        "bank"
+        "bank",
+        "quest_post"
       ],
       "teleport": {
         "level": 70,
@@ -248,7 +253,8 @@
       "facilities": [
         "bank",
         "furnace_anvil",
-        "stove"
+        "stove",
+        "quest_post"
       ],
       "teleport": {
         "level": 48,
@@ -270,7 +276,8 @@
       "sub": "Last town before the wilds",
       "lore": "A rough frontier town on the edge of the lawless north. The bank stays open; the gate stays locked after dark.",
       "facilities": [
-        "bank"
+        "bank",
+        "quest_post"
       ],
       "teleport": {
         "level": 54,
@@ -293,7 +300,8 @@
       "sub": "Village of the war-clans",
       "lore": "A muddy ring of longhouses and anvils where the hill-clans mine, brawl, and hammer iron between feuds.",
       "facilities": [
-        "furnace_anvil"
+        "furnace_anvil",
+        "quest_post"
       ],
       "teleport": {
         "level": 75,
@@ -316,7 +324,8 @@
       "sub": "Fishing village on the bay",
       "lore": "Nets dry on every fence and the catch is always fresh. A calm coastal village beneath the northern hills.",
       "facilities": [
-        "stove"
+        "stove",
+        "quest_post"
       ],
       "teleport": {
         "level": 81,
@@ -340,7 +349,8 @@
       "lore": "A misty town of soothsayers and flax fields, where the crystal halls hum with quiet magic.",
       "facilities": [
         "bank",
-        "sawmill"
+        "sawmill",
+        "quest_post"
       ],
       "teleport": {
         "level": 58,
@@ -363,7 +373,8 @@
       "sub": "Tropical port of the south isle",
       "lore": "A humid harbour town under a smoking volcano, all dock-rats, rum, and ships bound for stranger shores.",
       "facilities": [
-        "bank"
+        "bank",
+        "quest_post"
       ],
       "teleport": {
         "level": 64,
@@ -386,7 +397,8 @@
       "sub": "Hamlet of the haunted fens",
       "lore": "A shuttered village in the eastern marsh, where the fog never lifts and something always watches the road.",
       "facilities": [
-        "altar"
+        "altar",
+        "quest_post"
       ],
       "teleport": {
         "level": 87,
@@ -410,7 +422,8 @@
       "lore": "A noble hill-town of banners and knights-errant, the northernmost seat of honour in Eldermoor.",
       "facilities": [
         "bank",
-        "altar"
+        "altar",
+        "quest_post"
       ],
       "teleport": {
         "level": 61,
@@ -434,7 +447,8 @@
       "lore": "A salt-crusted harbour town of fishmongers and smugglers, where every ship south casts off from its crowded quays.",
       "facilities": [
         "bank",
-        "stove"
+        "stove",
+        "quest_post"
       ],
       "teleport": {
         "level": 51,
@@ -542,6 +556,10 @@
     "stove": {
       "label": "Stove",
       "icon": "🍳"
+    },
+    "quest_post": {
+      "label": "Quest Post",
+      "icon": "📯"
     }
   }
 }

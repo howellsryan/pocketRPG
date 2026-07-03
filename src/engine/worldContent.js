@@ -21,9 +21,14 @@ import monstersData from '../data/monsters.json'
 import skillsData from '../data/skills.json'
 import raidsData from '../data/raids.json'
 import minigamesData from '../data/minigames.json'
+import questsData from '../data/quests.json'
 import { GATHER_TASKS } from './gatherTasks.js'
 import { BUILDING_ACTIONS } from './construction.js'
 import { normaliseLocation } from './world.js'
+import { getLevelFromXP } from './experience.js'
+import { checkQuestEligibility } from './quests.js'
+import { checkBossRequirementsPure, checkRaidRequirementsPure } from './combatRequirements.js'
+import { COMPLEXITY_ORDER } from '../utils/complexityColors.js'
 
 const asArray = (v) => (Array.isArray(v) ? v : Object.values(v || {}))
 
@@ -39,6 +44,9 @@ for (const a of asArray(BUILDING_ACTIONS)) buildingById[a.id] = a
 
 const minigamesById = {}
 for (const mg of asArray(minigamesData.minigames)) minigamesById[mg.id] = mg
+
+const questsById = {}
+for (const q of asArray(questsData)) questsById[q.id] = q
 
 /** Resolve a `${skillId}:${actionId}` skill ref to its action object. */
 function skillAction(skillRef) {
@@ -191,6 +199,7 @@ export function isPlaceVaryingSkillRef(ref) {
  * flat list. Returns null for kinds that aren't sub-groupable.
  */
 export function activityGroupLabel(kind, ref) {
+  if (kind === 'quest') return questsById[ref]?.complexity || null
   if (kind !== 'skill') return null
   const skillId = ref.indexOf(':') >= 0 ? ref.slice(0, ref.indexOf(':')) : null
   return skillsData[skillId]?.name || skillId
@@ -253,7 +262,51 @@ export function describeActivity(kind, ref) {
       const mg = minigamesById[ref]
       return { name: mg?.label || ref, icon: mg?.icon || '🎮', level: null }
     }
+    // Quests carry no single level; `level` is the complexity rank so pickers
+    // sort Novice → Grandmaster (render `complexity`, not the rank number).
+    case 'quest': {
+      const q = questsById[ref]
+      return { name: q?.name || ref, icon: '📜', level: q ? (COMPLEXITY_ORDER[q.complexity] || null) : null, complexity: q?.complexity || null }
+    }
     default:
       return { name: ref, icon: '•', level: null }
   }
+}
+
+/**
+ * Why the player cannot start an activity right now, or null when nothing
+ * blocks it. This is the single gate behind every clickable activity row on
+ * the World Map / place maps (disabled rows + the start-time check), mirroring
+ * the owning screens' locks: skill/agility/thieving/hunter level requirements,
+ * monster slayer/quest/kill-count gates, raid quest gates, and quest
+ * eligibility. Returns `{ reason, completed? }` — `completed: true` marks a
+ * quest that is done rather than locked.
+ *
+ * `ctx`: { stats, completedQuests, bossKillCounts } from the live game state.
+ */
+export function activityLockReason(kind, ref, ctx = {}) {
+  const { stats = {}, completedQuests = new Set(), bossKillCounts = {} } = ctx
+  const levelOf = (skill) => getLevelFromXP(stats?.[skill]?.xp || 0)
+  const req = activityLevelRequirement(kind, ref)
+  if (req && levelOf(req.skill) < req.level) {
+    return { reason: `Requires ${req.skill.charAt(0).toUpperCase()}${req.skill.slice(1)} level ${req.level}` }
+  }
+  if (kind === 'combat') {
+    const check = checkBossRequirementsPure(monstersById[ref], {
+      slayerLevel: levelOf('slayer'), completedQuests, bossKillCounts, questsData,
+    })
+    return check.locked ? { reason: check.reason } : null
+  }
+  if (kind === 'raid') {
+    const check = checkRaidRequirementsPure(raidsData[ref], { completedQuests })
+    return check.locked ? { reason: check.reason } : null
+  }
+  if (kind === 'quest') {
+    const quest = questsById[ref]
+    if (!quest) return { reason: 'Unknown quest' }
+    if (completedQuests.has(quest.id)) return { reason: 'Already complete', completed: true }
+    const elig = checkQuestEligibility(quest, stats, completedQuests, questsData)
+    return elig.eligible ? null : { reason: `Requires ${elig.reasons.join(', ')}` }
+  }
+  return null
 }

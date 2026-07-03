@@ -87,7 +87,8 @@ function LeaderboardRow({ rank, char, metric }) {
   )
 }
 
-export default function LeaderboardScreen() {
+// `onBack` (from App): returns to the screen the player came from.
+export default function LeaderboardScreen({ onBack }) {
   const [filterId, setFilterId] = useState('total')
   const [page, setPage] = useState(0)
   const [characters, setCharacters] = useState([])
@@ -136,10 +137,21 @@ export default function LeaderboardScreen() {
   return (
     <div class="forge-shell h-full flex flex-col">
       <div class="flex-shrink-0 bg-[var(--color-void-light)] border-b border-[var(--color-void-border)] px-4 py-3">
-        <h1 class="flex items-center gap-2 font-[var(--font-display)] text-lg font-bold text-[var(--color-gold)]">
-          <GameIcon iconKey="progression" size={22} class="flex-shrink-0" />
-          Leaderboard
-        </h1>
+        <div class="flex items-center gap-2">
+          {onBack && (
+            <button
+              onClick={onBack}
+              aria-label="Back"
+              class="flex-shrink-0 w-11 h-11 -my-2 -ml-2 flex items-center justify-center gap-1 text-[var(--color-gold)] bg-transparent border-0 cursor-pointer active:opacity-70"
+            >
+              <span class="text-xl leading-none">← Back</span>
+            </button>
+          )}
+          <h1 class="flex items-center gap-2 font-[var(--font-display)] text-lg font-bold text-[var(--color-gold)]">
+            <GameIcon iconKey="progression" size={22} class="flex-shrink-0" />
+            Leaderboard
+          </h1>
+        </div>
         <div class="mt-2">
           <FilterToggleBar options={LEADERBOARD_FILTER_OPTIONS} value={filterId} onChange={handleFilterChange} />
         </div>

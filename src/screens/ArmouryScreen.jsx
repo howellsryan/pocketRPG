@@ -21,14 +21,26 @@ function ArmourySpecial({ item }) {
   )
 }
 
-export default function ArmouryScreen() {
+// `onBack` (from App): returns to the screen the player came from.
+export default function ArmouryScreen({ onBack }) {
   const groups = useMemo(() => buildArmoury(itemsData), [])
   const [selected, setSelected] = useState(null)
 
   return (
     <div class="forge-shell h-full flex flex-col">
       <div class="px-4 pt-4 pb-2 flex-shrink-0">
-        <h1 class="font-[var(--font-display)] text-[var(--color-gold)] text-lg font-bold tracking-wide">Armoury</h1>
+        <div class="flex items-center gap-2">
+          {onBack && (
+            <button
+              onClick={onBack}
+              aria-label="Back"
+              class="flex-shrink-0 w-11 h-11 -my-2 -ml-2 flex items-center justify-center gap-1 text-[var(--color-gold)] bg-transparent border-0 cursor-pointer active:opacity-70"
+            >
+              <span class="text-xl leading-none">← Back</span>
+            </button>
+          )}
+          <h1 class="font-[var(--font-display)] text-[var(--color-gold)] text-lg font-bold tracking-wide">Armoury</h1>
+        </div>
         <p class="text-[11px] text-[var(--color-parchment)] opacity-50 mt-[2px]">
           Every weapon and piece of armour, grouped by set and ordered by tier. <span aria-hidden="true">⚔️</span> marks a special attack.
         </p>

@@ -41,6 +41,54 @@
       "ref": "hunt_cow"
     },
     {
+      "kind": "quest",
+      "ref": "a_boarborn_of_interest"
+    },
+    {
+      "kind": "quest",
+      "ref": "a_monk_s_ally"
+    },
+    {
+      "kind": "quest",
+      "ref": "angler_contest"
+    },
+    {
+      "kind": "quest",
+      "ref": "arcane_workshop_i"
+    },
+    {
+      "kind": "quest",
+      "ref": "beneath_ice_peak"
+    },
+    {
+      "kind": "quest",
+      "ref": "blight_city"
+    },
+    {
+      "kind": "quest",
+      "ref": "bloodline_mystery"
+    },
+    {
+      "kind": "quest",
+      "ref": "chef_s_assistant"
+    },
+    {
+      "kind": "quest",
+      "ref": "chemical_danger"
+    },
+    {
+      "kind": "quest",
+      "ref": "clock_spire"
+    },
+    {
+      "kind": "quest",
+      "ref": "creed_of_arceuus"
+    },
+    {
+      "kind": "quest",
+      "ref": "cross_marks_the_spot"
+    },
+    {
       "kind": "skill",
       "ref": "construction:build_mahogany_plank"
     },
@@ -629,6 +677,54 @@
     {
       "kind": "gather",
       "ref": "convert_teak_log_to_plank"
+    },
+    {
+      "kind": "quest",
+      "ref": "banquet_for_disaster"
+    },
+    {
+      "kind": "quest",
+      "ref": "dragon_slayer_ii"
+    },
+    {
+      "kind": "quest",
+      "ref": "gorilla_slayer_ii"
+    },
+    {
+      "kind": "quest",
+      "ref": "hymn_of_the_elves"
+    },
+    {
+      "kind": "quest",
+      "ref": "legacies_quest"
+    },
+    {
+      "kind": "quest",
+      "ref": "royal_assassination"
+    },
+    {
+      "kind": "quest",
+      "ref": "sunscar_treasure_i"
+    },
+    {
+      "kind": "quest",
+      "ref": "sunscar_treasure_ii_the_fallen_empire"
+    },
+    {
+      "kind": "quest",
+      "ref": "the_fremennik_outcasts"
+    },
+    {
+      "kind": "quest",
+      "ref": "the_heart_of_shadows"
+    },
+    {
+      "kind": "quest",
+      "ref": "vices_of_the_father"
+    },
+    {
+      "kind": "quest",
+      "ref": "when_guthix_sleeps"
     },
     {
       "kind": "raid",
@@ -1587,6 +1683,54 @@
     {
       "kind": "gather",
       "ref": "pick_limpwurt_root"
+    },
+    {
+      "kind": "quest",
+      "ref": "a_realm_divided"
+    },
+    {
+      "kind": "quest",
+      "ref": "beneath_blighted_sands"
+    },
+    {
+      "kind": "quest",
+      "ref": "desert_correspondence"
+    },
+    {
+      "kind": "quest",
+      "ref": "forging_friends_with_my_arm"
+    },
+    {
+      "kind": "quest",
+      "ref": "gloam_tales"
+    },
+    {
+      "kind": "quest",
+      "ref": "gorilla_slayer_i"
+    },
+    {
+      "kind": "quest",
+      "ref": "hazardous_moons"
+    },
+    {
+      "kind": "quest",
+      "ref": "mourning_s_finale_part_i"
+    },
+    {
+      "kind": "quest",
+      "ref": "mourning_s_finale_part_ii"
+    },
+    {
+      "kind": "quest",
+      "ref": "mysteries_of_the_north"
+    },
+    {
+      "kind": "quest",
+      "ref": "silverwing_hymn"
+    },
+    {
+      "kind": "quest",
+      "ref": "the_hex_of_arrav"
     },
     {
       "kind": "raid",
@@ -2559,6 +2703,54 @@
       "ref": "castle_wars"
     },
     {
+      "kind": "quest",
+      "ref": "a_dusk_at_the_theater"
+    },
+    {
+      "kind": "quest",
+      "ref": "champions_quest"
+    },
+    {
+      "kind": "quest",
+      "ref": "crimson_runs_deep"
+    },
+    {
+      "kind": "quest",
+      "ref": "dragon_slayer_i"
+    },
+    {
+      "kind": "quest",
+      "ref": "moon_diplomacy"
+    },
+    {
+      "kind": "quest",
+      "ref": "one_modest_favor"
+    },
+    {
+      "kind": "quest",
+      "ref": "sanctum_of_ikov"
+    },
+    {
+      "kind": "quest",
+      "ref": "shroud_village"
+    },
+    {
+      "kind": "quest",
+      "ref": "spirits_bargain"
+    },
+    {
+      "kind": "quest",
+      "ref": "the_fremennik_archipelago"
+    },
+    {
+      "kind": "quest",
+      "ref": "underpath_pass"
+    },
+    {
+      "kind": "quest",
+      "ref": "vision_mentor"
+    },
+    {
       "kind": "raid",
       "ref": "cryptbound_champions"
     },
@@ -3185,6 +3377,54 @@
       "ref": "hunt_jeweller"
     },
     {
+      "kind": "quest",
+      "ref": "a_spirit_s_bane"
+    },
+    {
+      "kind": "quest",
+      "ref": "aegis_of_arrav"
+    },
+    {
+      "kind": "quest",
+      "ref": "arcane_workshop_ii"
+    },
+    {
+      "kind": "quest",
+      "ref": "fiend_slayer"
+    },
+    {
+      "kind": "quest",
+      "ref": "heir_ali_rescue"
+    },
+    {
+      "kind": "quest",
+      "ref": "skyhawks_peak"
+    },
+    {
+      "kind": "quest",
+      "ref": "starwatch_quest"
+    },
+    {
+      "kind": "quest",
+      "ref": "warden_in_peril"
+    },
+    {
+      "kind": "quest",
+      "ref": "wild_spirit"
+    },
+    {
+      "kind": "quest",
+      "ref": "wildwood_potion"
+    },
+    {
+      "kind": "quest",
+      "ref": "wool_herder"
+    },
+    {
+      "kind": "quest",
+      "ref": "wool_shearer"
+    },
+    {
       "kind": "skill",
       "ref": "construction:build_mahogany_plank"
     },
@@ -3717,6 +3957,54 @@
     {
       "kind": "gather",
       "ref": "pick_white_berries"
+    },
+    {
+      "kind": "quest",
+      "ref": "a_trail_of_two_cats"
+    },
+    {
+      "kind": "quest",
+      "ref": "big_chompy_wing_hunting"
+    },
+    {
+      "kind": "quest",
+      "ref": "clan_totem"
+    },
+    {
+      "kind": "quest",
+      "ref": "glouphrie_s_gaze"
+    },
+    {
+      "kind": "quest",
+      "ref": "hunt_for_the_myreque"
+    },
+    {
+      "kind": "quest",
+      "ref": "illuminated_expedition"
+    },
+    {
+      "kind": "quest",
+      "ref": "olaf_s_journey"
+    },
+    {
+      "kind": "quest",
+      "ref": "slumbering_giants"
+    },
+    {
+      "kind": "quest",
+      "ref": "sting_catcher"
+    },
+    {
+      "kind": "quest",
+      "ref": "the_grove_of_doom"
+    },
+    {
+      "kind": "quest",
+      "ref": "the_thieves_queen"
+    },
+    {
+      "kind": "quest",
+      "ref": "wraiths_of_mortton"
     },
     {
       "kind": "skill",
@@ -4625,6 +4913,54 @@
       "ref": "mage_arena"
     },
     {
+      "kind": "quest",
+      "ref": "grove_of_tranquillity"
+    },
+    {
+      "kind": "quest",
+      "ref": "hunted"
+    },
+    {
+      "kind": "quest",
+      "ref": "rag_and_bone_collector_ii"
+    },
+    {
+      "kind": "quest",
+      "ref": "shadows_of_hallowvale"
+    },
+    {
+      "kind": "quest",
+      "ref": "the_rivalry"
+    },
+    {
+      "kind": "quest",
+      "ref": "the_sentinels_sword"
+    },
+    {
+      "kind": "quest",
+      "ref": "the_stone_guardian"
+    },
+    {
+      "kind": "quest",
+      "ref": "the_traveler_trap"
+    },
+    {
+      "kind": "quest",
+      "ref": "umbral_of_the_storm"
+    },
+    {
+      "kind": "quest",
+      "ref": "unforgotten_story"
+    },
+    {
+      "kind": "quest",
+      "ref": "vermin_hunters"
+    },
+    {
+      "kind": "quest",
+      "ref": "which_lies_beneath"
+    },
+    {
       "kind": "skill",
       "ref": "construction:build_mahogany_plank"
     },
@@ -5159,6 +5495,54 @@
       "ref": "warriors_guild"
     },
     {
+      "kind": "quest",
+      "ref": "doom_plateau"
+    },
+    {
+      "kind": "quest",
+      "ref": "doric_s_duty"
+    },
+    {
+      "kind": "quest",
+      "ref": "duel_arena"
+    },
+    {
+      "kind": "quest",
+      "ref": "echoes_of_guthix"
+    },
+    {
+      "kind": "quest",
+      "ref": "ernest_and_the_fowl_curse"
+    },
+    {
+      "kind": "quest",
+      "ref": "farewell_grubby"
+    },
+    {
+      "kind": "quest",
+      "ref": "gertrude_s_lost_cat"
+    },
+    {
+      "kind": "quest",
+      "ref": "gloomkin_diplomacy"
+    },
+    {
+      "kind": "quest",
+      "ref": "grove_gnome_village"
+    },
+    {
+      "kind": "quest",
+      "ref": "hazeel_conspiracy"
+    },
+    {
+      "kind": "quest",
+      "ref": "heirs_of_the_sun"
+    },
+    {
+      "kind": "quest",
+      "ref": "hex_s_house"
+    },
+    {
       "kind": "skill",
       "ref": "mining:tin"
     },
@@ -5545,6 +5929,54 @@
       "ref": "fishing_trawler"
     },
     {
+      "kind": "quest",
+      "ref": "sprite_catcher"
+    },
+    {
+      "kind": "quest",
+      "ref": "staying_ahead"
+    },
+    {
+      "kind": "quest",
+      "ref": "stone_skippers"
+    },
+    {
+      "kind": "quest",
+      "ref": "stonekin_cannon"
+    },
+    {
+      "kind": "quest",
+      "ref": "story_of_the_righteous"
+    },
+    {
+      "kind": "quest",
+      "ref": "taking_the_hound_for_a_walk"
+    },
+    {
+      "kind": "quest",
+      "ref": "the_croaking_tale_of_a_lily_pad_worker"
+    },
+    {
+      "kind": "quest",
+      "ref": "the_forsaken_spire"
+    },
+    {
+      "kind": "quest",
+      "ref": "the_wandering_spirit"
+    },
+    {
+      "kind": "quest",
+      "ref": "tide_slug"
+    },
+    {
+      "kind": "quest",
+      "ref": "twilight_s_vow"
+    },
+    {
+      "kind": "quest",
+      "ref": "verdant_ritual"
+    },
+    {
       "kind": "skill",
       "ref": "cooking:cook_anglerfish"
     },
@@ -5645,6 +6077,54 @@
     {
       "kind": "gather",
       "ref": "crush_birds_nest"
+    },
+    {
+      "kind": "quest",
+      "ref": "brute_stronghold"
+    },
+    {
+      "kind": "quest",
+      "ref": "crown_complications"
+    },
+    {
+      "kind": "quest",
+      "ref": "crown_s_ransom"
+    },
+    {
+      "kind": "quest",
+      "ref": "cursed_mine"
+    },
+    {
+      "kind": "quest",
+      "ref": "eadgar_s_gambit"
+    },
+    {
+      "kind": "quest",
+      "ref": "enakhra_s_sorrow"
+    },
+    {
+      "kind": "quest",
+      "ref": "feytale_i_growing_pains"
+    },
+    {
+      "kind": "quest",
+      "ref": "guardian_of_varrock"
+    },
+    {
+      "kind": "quest",
+      "ref": "harbor_fever"
+    },
+    {
+      "kind": "quest",
+      "ref": "kin_crest"
+    },
+    {
+      "kind": "quest",
+      "ref": "realm_of_the_goblins"
+    },
+    {
+      "kind": "quest",
+      "ref": "road_of_glouphrie"
     },
     {
       "kind": "skill",
@@ -6171,6 +6651,54 @@
     {
       "kind": "combat",
       "ref": "tidereaper_crab"
+    },
+    {
+      "kind": "quest",
+      "ref": "another_shard_of_h_a_m"
+    },
+    {
+      "kind": "quest",
+      "ref": "beast_magnetism"
+    },
+    {
+      "kind": "quest",
+      "ref": "bogre_flesh_eaters"
+    },
+    {
+      "kind": "quest",
+      "ref": "cascade_quest"
+    },
+    {
+      "kind": "quest",
+      "ref": "crown_of_miscellania"
+    },
+    {
+      "kind": "quest",
+      "ref": "doom_to_the_dorgeshuun"
+    },
+    {
+      "kind": "quest",
+      "ref": "essences_ahoy"
+    },
+    {
+      "kind": "quest",
+      "ref": "essences_of_the_elid"
+    },
+    {
+      "kind": "quest",
+      "ref": "fenkenstrain_s_creation"
+    },
+    {
+      "kind": "quest",
+      "ref": "forging_history"
+    },
+    {
+      "kind": "quest",
+      "ref": "frost_war"
+    },
+    {
+      "kind": "quest",
+      "ref": "helping_the_myreque"
     },
     {
       "kind": "skill",
@@ -6707,6 +7235,54 @@
       "ref": "hunt_wizard"
     },
     {
+      "kind": "quest",
+      "ref": "hex_s_potion"
+    },
+    {
+      "kind": "quest",
+      "ref": "misthalin_enigma"
+    },
+    {
+      "kind": "quest",
+      "ref": "mustering_drive"
+    },
+    {
+      "kind": "quest",
+      "ref": "nightborn_slayer"
+    },
+    {
+      "kind": "quest",
+      "ref": "obsidian_sentinels_fortress"
+    },
+    {
+      "kind": "quest",
+      "ref": "pirate_s_hoard"
+    },
+    {
+      "kind": "quest",
+      "ref": "present_concerns"
+    },
+    {
+      "kind": "quest",
+      "ref": "rag_and_bone_collector_i"
+    },
+    {
+      "kind": "quest",
+      "ref": "romeo_and_juliet"
+    },
+    {
+      "kind": "quest",
+      "ref": "sigil_mysteries"
+    },
+    {
+      "kind": "quest",
+      "ref": "skeletal_passage"
+    },
+    {
+      "kind": "quest",
+      "ref": "spire_of_life"
+    },
+    {
       "kind": "skill",
       "ref": "prayer:altar_big_bones"
     },
@@ -6799,6 +7375,54 @@
     {
       "kind": "minigame",
       "ref": "barbarian_assault"
+    },
+    {
+      "kind": "quest",
+      "ref": "icthlarin_s_young_aide"
+    },
+    {
+      "kind": "quest",
+      "ref": "merlin_s_shard"
+    },
+    {
+      "kind": "quest",
+      "ref": "my_arm_s_grand_expedition"
+    },
+    {
+      "kind": "quest",
+      "ref": "peak_daughter"
+    },
+    {
+      "kind": "quest",
+      "ref": "sacred_grail"
+    },
+    {
+      "kind": "quest",
+      "ref": "sanctum_of_the_eye"
+    },
+    {
+      "kind": "quest",
+      "ref": "tai_bwo_wannai_three"
+    },
+    {
+      "kind": "quest",
+      "ref": "the_forsaken_tribe"
+    },
+    {
+      "kind": "quest",
+      "ref": "the_fremennik_challenges"
+    },
+    {
+      "kind": "quest",
+      "ref": "the_giant_stonekin"
+    },
+    {
+      "kind": "quest",
+      "ref": "the_grand_grove"
+    },
+    {
+      "kind": "quest",
+      "ref": "the_palm_in_the_dunes"
     },
     {
       "kind": "skill",
@@ -7373,6 +7997,54 @@
     {
       "kind": "minigame",
       "ref": "pest_control"
+    },
+    {
+      "kind": "quest",
+      "ref": "a_savor_of_hope"
+    },
+    {
+      "kind": "quest",
+      "ref": "between_stone_and_steel"
+    },
+    {
+      "kind": "quest",
+      "ref": "brute_romance"
+    },
+    {
+      "kind": "quest",
+      "ref": "cunning_intellects"
+    },
+    {
+      "kind": "quest",
+      "ref": "dawn_s_first_oath"
+    },
+    {
+      "kind": "quest",
+      "ref": "feytale_ii_cure_a_queen"
+    },
+    {
+      "kind": "quest",
+      "ref": "forsaken_city"
+    },
+    {
+      "kind": "quest",
+      "ref": "sanctum_of_tarn_razorlor"
+    },
+    {
+      "kind": "quest",
+      "ref": "terror_from_the_deep"
+    },
+    {
+      "kind": "quest",
+      "ref": "the_excavation_grounds"
+    },
+    {
+      "kind": "quest",
+      "ref": "wandering_elves"
+    },
+    {
+      "kind": "quest",
+      "ref": "wardspire"
     },
     {
       "kind": "skill",

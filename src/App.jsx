@@ -10,7 +10,7 @@ import XpDropOverlay from './components/XpDropOverlay.jsx'
 import SkillIcon from './components/SkillIcon.jsx'
 import RewardRevealOverlay from './components/RewardRevealOverlay.jsx'
 import ChatWidget from './components/ChatWidget.jsx'
-import { emitRewardReveal } from './utils/rewardReveal.js'
+import { emitRewardReveal, emitQuestCompletionReveal } from './utils/rewardReveal.js'
 import BuyCreditsModal from './components/BuyCreditsModal.jsx'
 import DailyTasksModal from './components/DailyTasksModal.jsx'
 import HomeScreen from './screens/HomeScreen.jsx'
@@ -1019,19 +1019,10 @@ function GameApp() {
             if (!cascade.finalTask) {
               localStorage.removeItem('pocketrpg_activeTask')
               localStorage.removeItem('pocketrpg_lastTick')
-              setScreen(SCREENS.QUESTS)
             }
 
-            setIdleResult({
-              elapsedMs,
-              task: cascade.finalTask,
-              questCascade: true,
-              completedQuests,
-              aggregatedXpReward,
-              coinsGained,
-              elapsedMsUsed: cascade.elapsedMsUsed,
-              elapsedMsRemaining: cascade.elapsedMsRemaining,
-            })
+            // Quest completions reveal like clue solves (no idle-result modal).
+            emitQuestCompletionReveal(completedQuests, aggregatedXpReward, coinsGained)
             if (!isInPvpMatch) schedulePushSave(getSnapshot())
             return
           }
@@ -1591,6 +1582,16 @@ function GameApp() {
     setIdleResult(idleResult)
   }
 
+  // Boot-time offline catch-up result: quest cascades reveal like clue solves
+  // (no idle-result modal); everything else keeps the Welcome Back modal.
+  function presentBootIdleResult(idleResult) {
+    if (idleResult.questCascade) {
+      emitQuestCompletionReveal(idleResult.completedQuests, idleResult.aggregatedXpReward, idleResult.coinsGained)
+      return
+    }
+    setIdleResult(idleResult)
+  }
+
   async function checkSave() {
     const isCloudCharacter = !!getToken() && !!getCharacterId()
     try {
@@ -1602,7 +1603,7 @@ function GameApp() {
           if (idleResult.died === true) {
             handleOfflineIdleDeath(idleResult)
           } else {
-            setIdleResult(idleResult)
+            presentBootIdleResult(idleResult)
           }
           if (idleResult.pendingChoices?.length > 0) {
             setPendingXpChoices(prev => [...prev, ...idleResult.pendingChoices])
@@ -1630,7 +1631,7 @@ function GameApp() {
             if (idleResult.died === true) {
               handleOfflineIdleDeath(idleResult)
             } else {
-              setIdleResult(idleResult)
+              presentBootIdleResult(idleResult)
             }
             if (idleResult.pendingChoices?.length > 0) {
               setPendingXpChoices(prev => [...prev, ...idleResult.pendingChoices])
@@ -2202,20 +2203,13 @@ function GameApp() {
         if (!cascade.finalTask) {
           localStorage.removeItem('pocketrpg_activeTask')
           localStorage.removeItem('pocketrpg_lastTick')
-          setScreen(SCREENS.QUESTS)
         }
 
         addToast('⏭️ Skipped 1 hour', 'info')
-        await persistSkipThenReveal({
-          elapsedMs: SKIP_HOUR_MS,
-          task: cascade.finalTask,
-          questCascade: true,
-          completedQuests,
-          aggregatedXpReward,
-          coinsGained,
-          elapsedMsUsed: cascade.elapsedMsUsed,
-          elapsedMsRemaining: cascade.elapsedMsRemaining,
-        })
+        // Persist first, then reveal like a clue solve — no idle-result modal
+        // (a conflict rolls the skip back, so nothing to celebrate).
+        await persistSkipThenReveal(null)
+        if (!isSaveConflict()) emitQuestCompletionReveal(completedQuests, aggregatedXpReward, coinsGained)
         return
       }
 
@@ -2274,14 +2268,10 @@ function GameApp() {
         }
 
         addToast('⏭️ Skipped 1 hour', 'info')
-        await persistSkipThenReveal(questSummary.completedQuests.length > 0 ? {
-          elapsedMs: SKIP_HOUR_MS,
-          task: activeTaskRef.current,
-          questCascade: true,
-          completedQuests: questSummary.completedQuests,
-          aggregatedXpReward: questSummary.aggregatedXpReward,
-          coinsGained: questSummary.coinsGained,
-        } : null)
+        // Persist first, then reveal quest completions like a clue solve — no
+        // idle-result modal (a conflict rolls the skip back).
+        await persistSkipThenReveal(null)
+        if (!isSaveConflict()) emitQuestCompletionReveal(questSummary.completedQuests, questSummary.aggregatedXpReward, questSummary.coinsGained)
         return
       }
 
@@ -2706,7 +2696,7 @@ function GameApp() {
       case SCREENS.STATS:     return <StatsScreen />
       case SCREENS.INVENTORY: return <InventoryScreen />
       case SCREENS.EQUIPMENT: return <EquipmentScreen />
-      case SCREENS.ARMOURY:   return <ArmouryScreen />
+      case SCREENS.ARMOURY:   return <ArmouryScreen onBack={backToPrev} />
       case SCREENS.BANK:      return <BankScreen onBack={backToPrev} />
       case SCREENS.COMBAT:    return <CombatScreen onNavigate={navigate} initialMonsterId={actionData?.monsterId} initialRaidId={actionData?.raidId} onCombatStatusChange={setIsInCombat} />
       case SCREENS.SKILLS:    return <SkillingScreen initialSkillId={actionData?.skillId} initialActionId={actionData?.actionId} idleResult={idleResult} onNavigate={navigate} onBack={returnNav} onStopBack={stopBackNav} />
@@ -2715,14 +2705,14 @@ function GameApp() {
       case SCREENS.MAGIC:       return <MagicScreen onNavigate={navigate} onBack={returnNav} onStopBack={stopBackNav} />
       case SCREENS.WORLD_MAP:   return isWorldMapEnabled() ? <WorldMapScreen onNavigate={navigate} onAutoStart={resumeAutoStart} initialView={actionData?.view} /> : <HomeScreen onNavigate={navigate} onLogout={handleLogoutToCharacterSelect} onManualSave={handleManualSave} isCloudAccount={!!getToken() && !!getCharacterId()} removeAds={removeAds} identityId={identityId} characterId={getCharacterId()} stripeLinks={stripeLinks} />
       case SCREENS.STORE:       return <TradingPostScreen onBack={backToPrev} />
-      case SCREENS.QUESTS:         return <QuestsScreen onNavigate={navigate} />
+      case SCREENS.QUESTS:         return <QuestsScreen onNavigate={navigate} onBack={stopBackNav} />
       case SCREENS.CLUES:          return <CluesScreen onNavigate={navigate} />
       case SCREENS.MINIGAMES:      return <MinigamesScreen initialTaskId={actionData?.minigameTaskId} />
-      case SCREENS.COLLECTION_LOG: return <CollectionLogScreen />
-      case SCREENS.LEADERBOARD:    return <LeaderboardScreen />
+      case SCREENS.COLLECTION_LOG: return <CollectionLogScreen onBack={backToPrev} />
+      case SCREENS.LEADERBOARD:    return <LeaderboardScreen onBack={backToPrev} />
       case SCREENS.HELP:                return <HelpScreen onNavigate={navigate} />
       case SCREENS.CHARACTER_UNLOCKS:   return <CharacterUnlockScreen onBack={backToPrev || (() => navigate(SCREENS.HOME))} />
-      case SCREENS.CONNECT_AI:          return <ConnectAiScreen isCloudAccount={!!getToken() && !!getCharacterId()} />
+      case SCREENS.CONNECT_AI:          return <ConnectAiScreen isCloudAccount={!!getToken() && !!getCharacterId()} onBack={backToPrev} />
       default:                  return <HomeScreen onNavigate={navigate} onLogout={handleLogoutToCharacterSelect} onManualSave={handleManualSave} isCloudAccount={!!getToken() && !!getCharacterId()} />
     }
   }
@@ -2841,18 +2831,13 @@ function GameApp() {
         const hrs = idleResult.elapsedMs / 3600000
         const perHr = (n) => hrs > 0 ? Math.round(n / hrs).toLocaleString() : '—'
 
-        // Quests run via a cascade whose finalTask is nulled once the queue
-        // empties, so idleResult.task is gone by the time the modal shows —
-        // key the quest label off questCascade/completedQuests instead of task.
+        // Quest cascades reveal via the reward card, never this modal — only a
+        // cloud-override result can still carry a quest task here.
         // Clues are type 'clue' with the tier on gatherTask.clueLevel.
-        const completedQuestCount = idleResult.completedQuests?.length || 0
         const clueTier = idleResult.task?.gatherTask?.clueLevel
         const clueTierLabel = clueTier ? `${clueTier.charAt(0).toUpperCase()}${clueTier.slice(1)} Clue` : 'a Clue'
         const taskLabel = idleResult.died ? 'You died during idle combat'
-          : (idleResult.questCascade || idleResult.task?.type === 'quest') ? (
-              completedQuestCount > 1 ? `Completed ${completedQuestCount} Quests`
-              : completedQuestCount === 1 ? `Completed ${idleResult.completedQuests[0]?.name || 'Quest'}`
-              : 'Completing Quests')
+          : idleResult.task?.type === 'quest' ? 'Completing Quests'
           : (idleResult.task ? (
               idleResult.task.type === 'combat' ? `Fighting ${idleResult.task.monster?.name || ''}` :
               idleResult.task.type === 'skill' ? `Training ${idleResult.task.skill}` :
@@ -2866,8 +2851,7 @@ function GameApp() {
             ) : undefined)
 
         // Build summary rows
-        const xpSource = idleResult.aggregatedXpReward || idleResult.xpGained
-        const xpEntries = xpSource ? Object.entries(xpSource).filter(([_, xp]) => xp > 0) : []
+        const xpEntries = idleResult.xpGained ? Object.entries(idleResult.xpGained).filter(([_, xp]) => xp > 0) : []
         const hasMonstersKilled = idleResult.task?.type === 'combat' && idleResult.monstersKilled > 0
 
         const summaryRows = []
