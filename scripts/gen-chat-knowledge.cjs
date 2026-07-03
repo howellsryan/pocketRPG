@@ -181,6 +181,22 @@ function farmingChunks() {
   return [category('herbs', 'Herbs'), category('trees', 'Trees'), category('fruitTrees', 'Fruit trees')].filter(Boolean)
 }
 
+function specialAttackChunk() {
+  const items = readJson('items.json')
+  const lines = Object.values(items)
+    .filter((it) => it.specialAttack)
+    .map((it) => `${it.name} (${it.specialAttack.energyCost}% energy): ${it.specialAttack.description}`)
+  return {
+    id: 'data_special_attacks',
+    title: 'Weapon special attacks: which weapons have one and what they do',
+    tags: ['special attack', 'special', 'weapon', 'weapons'],
+    text:
+      `Every weapon with a special attack, its energy cost and effect. Special attacks are triggered manually with the ` +
+      `⚡ Special Attack button, never automatically or offline; special energy runs 0-100, starts each fight at 100, ` +
+      `drains on use and refills on a kill. ${lines.join('. ')}.`,
+  }
+}
+
 function bossChunk() {
   const monsters = readJson('monsters.json')
   const raidBosses = raidBossMap()
@@ -306,6 +322,7 @@ const chunks = [
   minigameChunk(),
   ...farmingChunks(),
   ...skillChunks(),
+  specialAttackChunk(),
   bossChunk(),
   ...monsterChunks(),
   ...clueChunks(),
