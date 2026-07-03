@@ -18,7 +18,6 @@
       { "facility": "altar", "label": "Royal Chapel", "x": 1048, "y": 262 },
       { "facility": "stove", "label": "Market Stove", "x": 615, "y": 345 },
       { "screen": "store", "label": "Trading Post", "iconKey": "uncut_ruby", "x": 470, "y": 400 },
-      { "facility": "quest_post", "label": "Quest Post", "x": 235, "y": 205 },
       { "kind": "quest", "label": "Notice Board", "icon": "📜", "x": 240, "y": 440 },
       { "kind": "skill", "group": "runecraft", "label": "Runic Sanctum", "x": 410, "y": 298 },
       { "kind": "skill", "group": "woodcutting", "label": "Old Forest", "x": 96, "y": 588 }

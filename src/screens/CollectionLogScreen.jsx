@@ -1,4 +1,5 @@
 import CollectionLogPanel from '../components/CollectionLogPanel.jsx'
+import BackLink from '../components/BackLink.jsx'
 
 // `onBack` (from App): returns to the screen the player came from.
 export default function CollectionLogScreen({ onBack }) {
@@ -9,13 +10,7 @@ export default function CollectionLogScreen({ onBack }) {
     <div class="forge-shell h-full flex flex-col">
       {onBack && (
         <div class="px-4 pt-2 flex-shrink-0">
-          <button
-            onClick={onBack}
-            aria-label="Back"
-            class="w-11 h-11 -ml-2 flex items-center justify-center gap-1 text-[var(--color-gold)] bg-transparent border-0 cursor-pointer active:opacity-70"
-          >
-            <span class="text-xl leading-none">← Back</span>
-          </button>
+          <BackLink onClick={onBack} />
         </div>
       )}
       <div class="flex-1 min-h-0">

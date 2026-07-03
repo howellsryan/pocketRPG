@@ -78,10 +78,8 @@ describe('placeMaps data', () => {
       for (const spot of getPlaceMap(id)!.spots) {
         if (spotType(spot) !== 'facility') continue
         expect(has.has(spot.facility), `${id}: ${spot.facility} spot but no such facility in world.json`).toBe(true)
-        // Non-bank facility spots must train a known single skill the place
-        // offers (the bank opens its own modal; the quest post opens the
-        // quest board screen).
-        if (spot.facility !== 'bank' && spot.facility !== 'quest_post') {
+        // Non-bank facility spots must train a known single skill the place offers.
+        if (spot.facility !== 'bank') {
           const skillId = facilityTrainingSkill(spot.facility)
           expect(skillId, `${id}: ${spot.facility} trains nothing`).toBeTruthy()
           expect(

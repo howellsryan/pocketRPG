@@ -64,4 +64,33 @@ export function clampXP(xp) {
   return Math.min(xp, MAX_XP)
 }
 
+/**
+ * Tracks level-ups across a batch of XP grants applied in one synchronous pass
+ * (e.g. a chain of quest completions during one skip) without waiting on React
+ * state — grantXP's setStats writes batch, so the state can't be read back
+ * mid-loop. `from` is the level BEFORE the first grant to that skill in the
+ * batch; `to` follows the running total across every subsequent grant, so a
+ * skill that crosses several levels across multiple quests reports one
+ * from→to span rather than one entry per quest.
+ */
+export function createLevelUpTracker(statsSnapshot) {
+  const xpBySkill = {}
+  for (const [skill, s] of Object.entries(statsSnapshot || {})) xpBySkill[skill] = s?.xp || 0
+  const levelUps = new Map()
+  return {
+    apply(skill, amount) {
+      const before = xpBySkill[skill] || 0
+      const from = getLevelFromXP(before)
+      const after = clampXP(before + Math.floor(Number(amount) || 0))
+      const to = getLevelFromXP(after)
+      xpBySkill[skill] = after
+      if (to > from) {
+        const existing = levelUps.get(skill)
+        levelUps.set(skill, { skill, from: existing ? existing.from : from, to })
+      }
+    },
+    result() { return [...levelUps.values()] },
+  }
+}
+
 export { XP_TABLE }

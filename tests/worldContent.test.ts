@@ -97,15 +97,10 @@ describe('content -> place coverage', () => {
     expect(placesForActivity('skill', 'dungeoneering:dungeoneering_floor_1')).toEqual([]) // skill intentionally unmapped
   })
 
-  it('maps every quest to exactly one place, and gives every quest place a quest post', () => {
+  it('maps every quest to exactly one place', () => {
     for (const q of asArray(questsData)) {
-      const places = placesForActivity('quest', q.id)
-      expect(places.length, `quest ${q.id}`).toBe(1)
-      const facilities = (worldData.places as any)[places[0]].facilities || []
-      expect(facilities, `${places[0]} hosts ${q.id}`).toContain('quest_post')
+      expect(placesForActivity('quest', q.id).length, `quest ${q.id}`).toBe(1)
     }
-    // The facility itself is defined for hub chips / place map glyphs.
-    expect((worldData as any).facilities.quest_post?.label).toBe('Quest Post')
   })
 })
 

@@ -2,6 +2,7 @@ import { useState } from 'preact/hooks'
 import Card from '../components/Card.jsx'
 import Button from '../components/Button.jsx'
 import GameIcon from '../components/GameIcon.jsx'
+import BackLink from '../components/BackLink.jsx'
 
 // Brand marks for the provider tabs/headers. Inline single-path SVGs (fill via
 // currentColor) so they scale crisply and inherit a Tailwind text-color class.
@@ -89,15 +90,7 @@ export default function ConnectAiScreen({ isCloudAccount, onBack }) {
     <div class="forge-shell h-full flex flex-col">
       <div class="flex-shrink-0 bg-[var(--color-void-light)] border-b border-[var(--color-void-border)] px-4 py-3">
         <div class="flex items-center gap-2">
-          {onBack && (
-            <button
-              onClick={onBack}
-              aria-label="Back"
-              class="flex-shrink-0 w-11 h-11 -my-2 -ml-2 flex items-center justify-center gap-1 text-[var(--color-gold)] bg-transparent border-0 cursor-pointer active:opacity-70"
-            >
-              <span class="text-xl leading-none">← Back</span>
-            </button>
-          )}
+          <BackLink onClick={onBack} />
           <h1 class="font-[var(--font-display)] text-lg font-bold text-[var(--color-gold)] flex items-center gap-2">
             <GameIcon iconKey="brain" size={22} color="#D97757" />
             Connect AI

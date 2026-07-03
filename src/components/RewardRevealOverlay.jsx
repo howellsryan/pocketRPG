@@ -29,12 +29,16 @@ export default function RewardRevealOverlay() {
               : { itemId: r?.itemId, quantity: r?.quantity ?? r?.qty ?? 1 })
             .filter(r => (r.itemId && r.quantity > 0) || (r.skill && r.xp > 0))
         : []
-      if (rewards.length === 0) return
+      const levelUps = Array.isArray(detail?.levelUps)
+        ? detail.levelUps.filter(l => l?.skill && l.to > l.from)
+        : []
+      if (rewards.length === 0 && levelUps.length === 0) return
       const reveal = {
         id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
         title: detail.title || 'Reward',
         icon: detail.icon || '🎁',
         rewards,
+        levelUps,
       }
       setQueue(prev => [...prev, reveal])
     }
@@ -73,6 +77,25 @@ export default function RewardRevealOverlay() {
           </div>
           <div class="flex-1 min-w-0 text-[14px] font-semibold text-[var(--color-parchment)] leading-snug">{current.title}</div>
         </div>
+        {current.levelUps.length > 0 && (
+          <div class="mt-2.5 pt-2.5 border-t border-[rgba(255,255,255,0.08)]">
+            <div class="text-[10px] font-semibold uppercase tracking-wider text-[var(--color-gold)] opacity-80 mb-1.5">Levels Gained</div>
+            <div class="flex flex-col gap-1">
+              {current.levelUps.map(l => {
+                const art = getSkillArt(l.skill)
+                const name = l.skill.charAt(0).toUpperCase() + l.skill.slice(1)
+                return (
+                  <div key={`lvl:${l.skill}`} class="flex items-center gap-1.5 text-[12px] text-[var(--color-parchment)]">
+                    <GameIcon iconKey={art.icon} size={16} color={art.accent} />
+                    <span class="flex-1 min-w-0 truncate">{name}</span>
+                    <span class="font-[var(--font-mono)] font-bold text-[var(--color-gold)]">{l.from} → {l.to}</span>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
+        {current.rewards.length > 0 && (
         <div class="flex flex-wrap gap-1.5 mt-2.5">
           {current.rewards.map(r => {
             if (r.skill) {
@@ -96,6 +119,7 @@ export default function RewardRevealOverlay() {
             )
           })}
         </div>
+        )}
         <div
           class="absolute left-0 bottom-0 h-[3px] w-full skill-toast-shrink bg-[var(--color-gold)]"
           style={{ animationDuration: `${REVEAL_LIFETIME_MS}ms` }}

@@ -19,6 +19,7 @@ import { QUEST_QUEUE_MAX, SCREENS } from '../utils/constants.js'
 import { planQuestJourney } from '../engine/journeys.js'
 import questsData from '../data/quests.json'
 import { COMPLEXITY_COLORS, COMPLEXITY_ORDER } from '../utils/complexityColors.js'
+import BackLink from '../components/BackLink.jsx'
 
 // `onBack` (from App): returns to where the quest board was opened from — a
 // quest post on the world map / a town map (the nav rail no longer links here).
@@ -123,12 +124,7 @@ export default function QuestsScreen({ onNavigate, onBack } = {}) {
     return (
       <div class="forge-shell h-full flex flex-col p-4">
         <div class="flex justify-between items-center mb-3">
-          <button
-            onClick={backFromActiveQuest}
-            class="text-[12px] text-[var(--fm-ember)] flex items-center gap-1 bg-transparent border-0 cursor-pointer"
-          >
-            ← Back
-          </button>
+          <BackLink onClick={backFromActiveQuest} />
           {questQueue.length > 0 && (
             <span class="text-[11px] text-[var(--color-gold)] font-[var(--font-mono)]">
               🔗 Queue ({questQueue.length})
@@ -184,15 +180,7 @@ export default function QuestsScreen({ onNavigate, onBack } = {}) {
       <div class="px-4 pt-4 pb-2 flex-shrink-0">
         <div class="flex justify-between items-baseline mb-2">
           <span class="inline-flex items-center gap-2">
-            {onBack && (
-              <button
-                onClick={onBack}
-                aria-label="Back"
-                class="flex-shrink-0 w-11 h-11 -my-2 -ml-2 flex items-center justify-center gap-1 text-[var(--color-gold)] bg-transparent border-0 cursor-pointer active:opacity-70"
-              >
-                <span class="text-xl leading-none">← Back</span>
-              </button>
-            )}
+            <BackLink onClick={onBack} />
             <SectionHeader size="lg"><span class="inline-flex items-center gap-2"><GameIcon iconKey="clue_scroll_medium" size={18} class="flex-shrink-0" /> Quests</span></SectionHeader>
           </span>
           <span class="text-[11px] text-[var(--color-gold)] font-[var(--font-mono)]">

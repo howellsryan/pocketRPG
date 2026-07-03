@@ -414,7 +414,6 @@ export default function WorldMapScreen({ onNavigate, onAutoStart, initialView } 
           onTeleport={castTeleport}
           onClose={() => setOpenId(null)}
           onActivate={activateActivity}
-          onNavigate={onNavigate}
         />
       )}
 
@@ -431,7 +430,7 @@ export default function WorldMapScreen({ onNavigate, onAutoStart, initialView } 
   )
 }
 
-function PlaceHub({ place, here, travelling, searching, tele, itemsData, onTravel, onTeleport, onClose, onActivate, onNavigate }) {
+function PlaceHub({ place, here, travelling, searching, tele, itemsData, onTravel, onTeleport, onClose, onActivate }) {
   const tier = getTier(place.tier)
   const isHere = place.id === here
   const route = isHere ? null : shortestPath(here, place.id)
@@ -497,11 +496,6 @@ function PlaceHub({ place, here, travelling, searching, tele, itemsData, onTrave
                 <GameIcon iconKey={getSkillArt('magic').icon} color={tele.ok ? '#fff' : 'var(--fm-ink-faint)'} size={16} /> Teleport · Magic {place.teleport.level}
               </span>
               <span class="wm-tele-btn__cost">{tele.ok ? formatRuneCost(tele.runes, itemsData) : tele.reason}</span>
-            </button>
-          )}
-          {(place.facilities || []).includes('quest_post') && (
-            <button class="wm-travel-btn" onClick={() => onNavigate?.(SCREENS.QUESTS, { returnTo: { screen: SCREENS.WORLD_MAP } })}>
-              📯 Quest Post — browse &amp; queue all quests
             </button>
           )}
           <div class="wm-hub-sectionhead"><span>Available here</span></div>

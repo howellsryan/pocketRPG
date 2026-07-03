@@ -107,6 +107,7 @@ const sourceFiles = [
   'state/gameState.js',
   'state/pvpState.js',
   'components/Modal.js',
+  'components/BackLink.js', // -> game chunk (only chunk screens use it)
   'components/PlaceArt.js', // -> game chunk (map art; only WorldMapScreen renders it)
   'components/ActivityPickerModal.js', // -> game chunk (world map / place map only)
   'components/PlaceMapView.js', // -> game chunk (world map / place map only)
@@ -127,6 +128,7 @@ const sourceFiles = [
   'components/ActivityIndicator.js',
   'components/XpDropOverlay.js',
   'components/RewardRevealOverlay.js',
+  'components/LevelUpOverlay.js',
   'components/ChatWidget.js',
   'components/Header.js',
   'components/navTabs.js',
@@ -216,6 +218,7 @@ const sourceFiles = [
 // reference a game screen at module-evaluation time (App only does so inside
 // renderScreen, which runs after the chunk has loaded).
 const GAME_CHUNK_FILES = new Set([
+  'components/BackLink.js',
   'components/PlaceArt.js',
   'components/ActivityPickerModal.js',
   'components/PlaceMapView.js',

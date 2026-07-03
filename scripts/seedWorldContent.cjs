@@ -219,19 +219,6 @@ for (const id of Object.keys(world.places)) {
   }
 }
 
-// Quest post: every place offering at least one quest gets the facility — the
-// landmark that opens the full quest board (browse, queue, begin any quest).
-for (const id of Object.keys(world.places)) {
-  const facs = world.places[id].facilities = Array.isArray(world.places[id].facilities) ? world.places[id].facilities : []
-  const hasQuest = (out[id] || []).some((a) => a.kind === 'quest')
-  const at = facs.indexOf('quest_post')
-  if (hasQuest && at < 0) facs.push('quest_post')
-  else if (!hasQuest && at >= 0) facs.splice(at, 1)
-}
-world.facilities = Object.assign({}, world.facilities, {
-  quest_post: { label: 'Quest Post', icon: '📯' },
-})
-
 // Write back: activities go to worldActivities.json ({ placeId: [{kind, ref}] }),
 // kept out of world.json so the geography can ship in the single-file build's inline
 // core while this heavy mapping rides the game chunk (see build_single.cjs).
