@@ -100,7 +100,7 @@ export default function GameFrameBar({
           onClick={() => { if (demo) onLockedFeature?.(); else onSkip1h?.() }}
           aria-label={skipLabel}
           title={skipTitle}
-          class={`gf-credits ${demo ? 'gf-medallion--locked' : ''}`}
+          class={`gf-medallion ${demo ? 'gf-medallion--locked' : ''}`}
         >
           {demo
             ? <span class="text-[16px] leading-none">🔒</span>
