@@ -3,6 +3,7 @@ import { useGame } from '../state/gameState.jsx'
 import Panel from '../components/Panel.jsx'
 import Modal from '../components/Modal.jsx'
 import SectionHeader from '../components/SectionHeader.jsx'
+import BackLink from '../components/BackLink.jsx'
 import SkillActivePanel from '../components/SkillActivePanel.jsx'
 import SkillActionRow from '../components/SkillActionRow.jsx'
 import GameIcon from '../components/GameIcon.jsx'
@@ -91,7 +92,7 @@ function formatClueRemaining(totalSeconds) {
   return `${secs}s`
 }
 
-export default function CluesScreen({ onNavigate } = {}) {
+export default function CluesScreen({ onNavigate, onBack } = {}) {
   const { inventory, bank, equipment, addToast, setActiveTask, activeTask, itemsData, worldLocation } = useGame()
   const [showPanel, setShowPanel] = useState(false)
   const [infoTask, setInfoTask] = useState(null)
@@ -165,6 +166,7 @@ export default function CluesScreen({ onNavigate } = {}) {
   return (
     <div class="forge-shell h-full flex flex-col">
       <div class="px-4 pt-4 pb-2 flex-shrink-0">
+        <BackLink onClick={onBack} className="mb-1" />
         <SectionHeader size="lg" className="mb-[10px]"><span class="inline-flex items-center gap-2"><GameIcon iconKey="clue_scroll_hard" size={18} class="flex-shrink-0" /> Clues</span></SectionHeader>
       </div>
 
