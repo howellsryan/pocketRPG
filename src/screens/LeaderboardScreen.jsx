@@ -138,13 +138,11 @@ export default function LeaderboardScreen({ onBack }) {
   return (
     <div class="forge-shell h-full flex flex-col">
       <div class="flex-shrink-0 bg-[var(--color-void-light)] border-b border-[var(--color-void-border)] px-4 py-3">
-        <div class="flex items-center gap-2">
-          <BackLink onClick={onBack} />
-          <h1 class="flex items-center gap-2 font-[var(--font-display)] text-lg font-bold text-[var(--color-gold)]">
-            <GameIcon iconKey="progression" size={22} class="flex-shrink-0" />
-            Leaderboard
-          </h1>
-        </div>
+        <BackLink onClick={onBack} className="mb-3" />
+        <h1 class="flex items-center gap-2 font-[var(--font-display)] text-lg font-bold text-[var(--color-gold)]">
+          <GameIcon iconKey="progression" size={22} class="flex-shrink-0" />
+          Leaderboard
+        </h1>
         <div class="mt-2">
           <FilterToggleBar options={LEADERBOARD_FILTER_OPTIONS} value={filterId} onChange={handleFilterChange} />
         </div>

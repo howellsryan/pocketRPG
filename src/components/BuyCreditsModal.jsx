@@ -1,10 +1,18 @@
-import { useState } from 'preact/hooks'
+import { useEffect, useState } from 'preact/hooks'
 import Modal from './Modal.jsx'
 import { api } from '../cloud/api.js'
+import { pauseTicks, resumeTicks } from '../engine/tick.js'
 
 export default function BuyCreditsModal({ onClose, characterId }) {
   const [busySku, setBusySku] = useState(null)
   const [error, setError] = useState(null)
+
+  // Pause ticks while this modal is open so combat cannot advance in the
+  // background — same treatment as an idle boss fight.
+  useEffect(() => {
+    pauseTicks()
+    return () => resumeTicks()
+  }, [])
 
   const creditOptions = [
     { label: '10 Credits',    sku: 'credits_10',   amount: 10,   color: '#a78bfa' },

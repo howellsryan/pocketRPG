@@ -201,7 +201,7 @@ export default function HomeScreen({ onNavigate, onLogout, onManualSave, isCloud
               <SkillEmblem iconKey={selArt.icon} accent={selArt.accent} size={64} glow={0} />
               <div class="skill-detail__lvl">Level <b>{selLevel}</b> / 99</div>
             </div>
-            <div class="bg-[#111] rounded-lg p-3 space-y-2">
+            <div class="bg-[var(--color-void)] rounded-lg p-3 space-y-2">
               <div class="flex justify-between text-sm">
                 <span class="text-[var(--color-parchment)] opacity-60">Total XP</span>
                 <span class="font-[var(--font-mono)] text-[var(--color-gold)]">{formatNumber(selectedSkillData.xp)}</span>
@@ -224,7 +224,7 @@ export default function HomeScreen({ onNavigate, onLogout, onManualSave, isCloud
               </div>
             )}
             {selectedSkillDetail === 'agility' && (
-              <div class="bg-[#111] rounded-lg p-3">
+              <div class="bg-[var(--color-void)] rounded-lg p-3">
                 <div class="flex justify-between text-sm">
                   <span class="text-[var(--color-parchment)] opacity-60">🏦 Bank delay</span>
                   <span class="font-[var(--font-mono)] text-[var(--color-gold)]">

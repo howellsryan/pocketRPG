@@ -89,13 +89,11 @@ export default function ConnectAiScreen({ isCloudAccount, onBack }) {
   return (
     <div class="forge-shell h-full flex flex-col">
       <div class="flex-shrink-0 bg-[var(--color-void-light)] border-b border-[var(--color-void-border)] px-4 py-3">
-        <div class="flex items-center gap-2">
-          <BackLink onClick={onBack} />
-          <h1 class="font-[var(--font-display)] text-lg font-bold text-[var(--color-gold)] flex items-center gap-2">
-            <GameIcon iconKey="brain" size={22} color="#D97757" />
-            Connect AI
-          </h1>
-        </div>
+        <BackLink onClick={onBack} className="mb-3" />
+        <h1 class="font-[var(--font-display)] text-lg font-bold text-[var(--color-gold)] flex items-center gap-2">
+          <GameIcon iconKey="brain" size={22} color="#D97757" />
+          Connect AI
+        </h1>
       </div>
 
       <div class="flex-1 overflow-y-auto px-4 py-4 space-y-4">

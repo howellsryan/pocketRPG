@@ -2726,11 +2726,11 @@ function GameApp() {
     switch (screen) {
       case SCREENS.HOME:      return <HomeScreen onNavigate={navigate} onLogout={handleLogoutToCharacterSelect} onManualSave={handleManualSave} isCloudAccount={!!getToken() && !!getCharacterId()} removeAds={removeAds} identityId={identityId} characterId={getCharacterId()} stripeLinks={stripeLinks} />
       case SCREENS.STATS:     return <StatsScreen />
-      case SCREENS.INVENTORY: return <InventoryScreen onBack={backToPrev} />
-      case SCREENS.EQUIPMENT: return <EquipmentScreen onBack={backToPrev} />
+      case SCREENS.INVENTORY: return <InventoryScreen />
+      case SCREENS.EQUIPMENT: return <EquipmentScreen />
       case SCREENS.ARMOURY:   return <ArmouryScreen onBack={backToPrev} />
       case SCREENS.BANK:      return <BankScreen onBack={backToPrev} />
-      case SCREENS.COMBAT:    return <CombatScreen onNavigate={navigate} initialMonsterId={actionData?.monsterId} initialRaidId={actionData?.raidId} onCombatStatusChange={setIsInCombat} />
+      case SCREENS.COMBAT:    return <CombatScreen onNavigate={navigate} initialMonsterId={actionData?.monsterId} initialRaidId={actionData?.raidId} onCombatStatusChange={setIsInCombat} onBack={returnNav} onStopBack={stopBackNav} />
       case SCREENS.SKILLS:    return <SkillingScreen initialSkillId={actionData?.skillId} initialActionId={actionData?.actionId} idleResult={idleResult} onNavigate={navigate} onBack={returnNav} onStopBack={stopBackNav} />
       case SCREENS.GATHER:    return <GatherScreen initialTaskId={actionData?.gatherTaskId} idleResult={idleResult} onBack={returnNav} onStopBack={stopBackNav} />
       case SCREENS.AGILITY:     return <AgilityScreen initialActionId={actionData?.actionId} idleResult={idleResult} onBack={returnNav} onStopBack={stopBackNav} />
@@ -2738,7 +2738,7 @@ function GameApp() {
       case SCREENS.WORLD_MAP:   return isWorldMapEnabled() ? <WorldMapScreen onNavigate={navigate} onAutoStart={resumeAutoStart} initialView={actionData?.view} /> : <HomeScreen onNavigate={navigate} onLogout={handleLogoutToCharacterSelect} onManualSave={handleManualSave} isCloudAccount={!!getToken() && !!getCharacterId()} removeAds={removeAds} identityId={identityId} characterId={getCharacterId()} stripeLinks={stripeLinks} />
       case SCREENS.STORE:       return <TradingPostScreen onBack={backToPrev} />
       case SCREENS.QUESTS:         return <QuestsScreen onNavigate={navigate} onBack={stopBackNav} />
-      case SCREENS.CLUES:          return <CluesScreen onNavigate={navigate} />
+      case SCREENS.CLUES:          return <CluesScreen onNavigate={navigate} onBack={backToPrev} />
       case SCREENS.MINIGAMES:      return <MinigamesScreen initialTaskId={actionData?.minigameTaskId} />
       case SCREENS.COLLECTION_LOG: return <CollectionLogScreen onBack={backToPrev} />
       case SCREENS.LEADERBOARD:    return <LeaderboardScreen onBack={backToPrev} />
@@ -2781,13 +2781,13 @@ function GameApp() {
         <Header activity={activity} credits={credits} isCloudAccount={isCloudAccount} demo={demoMode} onLockedFeature={notifyDemoLocked} onSkip1h={isCloudAccount ? handleSkip1h : null} onBuyCredits={() => setShowBuyCreditsModal(true)} onDailyTasks={() => setShowDailyTasksModal(true)} dailyTasksCompleted={(dailyTaskStates || []).filter(t => t.completed).length} dailyTasksTotal={5} onMenuClick={() => setMenuOpen(true)} onNavigate={(s) => navigate(s)} skipMode={skipMode} raidSkipCost={raidSkipCost} />
         {/* OSRS-style mobile frame: icon rails above and below the content panel
             replace the Header/SideNav/BurgerMenu chrome on small screens. */}
-        <GameFrameBar position="top" active={screen} onNavigate={(s) => navigate(s)} isInCombat={isInPvpMatch} onDisabledClick={() => addToast('⚔️ Cannot navigate during PvP combat!', 'warning')} demo={demoMode} lockedScreens={CLOUD_ONLY_SCREENS} onLockedClick={notifyDemoLocked} onLockedFeature={notifyDemoLocked} onSkip1h={isCloudAccount ? handleSkip1h : null} skipMode={skipMode} raidSkipCost={raidSkipCost} />
+        <GameFrameBar position="top" active={screen} onNavigate={(s) => navigate(s)} isInCombat={isInPvpMatch} onDisabledClick={() => addToast('⚔️ Cannot navigate during PvP combat!', 'warning')} demo={demoMode} lockedScreens={CLOUD_ONLY_SCREENS} onLockedClick={notifyDemoLocked} onLockedFeature={notifyDemoLocked} />
         <ToastContainer />
         <TravelPrompt onNavigate={navigate} />
         <main class="gf-main flex-1 overflow-hidden">
           {renderScreen()}
         </main>
-        <GameFrameBar position="bottom" active={screen} onNavigate={(s) => navigate(s)} isInCombat={isInPvpMatch} onDisabledClick={() => addToast('⚔️ Cannot navigate during PvP combat!', 'warning')} demo={demoMode} lockedScreens={CLOUD_ONLY_SCREENS} onLockedClick={notifyDemoLocked} onLockedFeature={notifyDemoLocked} onBuyCredits={() => setShowBuyCreditsModal(true)} credits={credits} isCloudAccount={isCloudAccount} />
+        <GameFrameBar position="bottom" active={screen} onNavigate={(s) => navigate(s)} isInCombat={isInPvpMatch} onDisabledClick={() => addToast('⚔️ Cannot navigate during PvP combat!', 'warning')} demo={demoMode} lockedScreens={CLOUD_ONLY_SCREENS} onLockedClick={notifyDemoLocked} onLockedFeature={notifyDemoLocked} onBuyCredits={() => setShowBuyCreditsModal(true)} credits={credits} isCloudAccount={isCloudAccount} onSkip1h={isCloudAccount ? handleSkip1h : null} skipMode={skipMode} raidSkipCost={raidSkipCost} />
       </div>
       <XpDropOverlay />
       <RewardRevealOverlay />
@@ -2979,6 +2979,38 @@ function GameApp() {
         }, null)
         const restLootRows = heroLoot ? lootRows.filter(r => r !== heroLoot) : lootRows
 
+        // Stopped-early / idle-death detection, hoisted so it can also feed the
+        // "did anything happen" gate below (duplicated by the card JSX further down).
+        const stoppedReason = idleResult.stoppedReason
+        const effMs = idleResult.effectiveElapsedMs ?? null
+        const showStoppedEarly = idleResult.task?.type === 'combat' && idleResult.idleSupplies &&
+          (!!(stoppedReason && stoppedReason !== 'completed_elapsed' && effMs != null && effMs < idleResult.elapsedMs) || idleResult.died)
+
+        // Clue scrolls consumed, hoisted for the same reason.
+        const clueScrollCount = Object.entries(idleResult.itemsConsumed || {}).reduce((sum, [itemId, qty]) => {
+          if (itemId.includes('clue')) return sum + qty
+          return sum
+        }, 0)
+
+        // Nothing to report — no XP/kills/loot/quests/clues and no notable
+        // event (death, boss/raid lockout, cloud override, reward/minigame
+        // progress). Skip the modal entirely instead of popping up empty.
+        const hasProgress = idleResult.died ||
+          summaryRows.length > 0 ||
+          lootRows.length > 0 ||
+          !!idleResult.cloudOverride ||
+          (idleResult.task?.type === 'combat' && (idleResult.task?.monster?.boss === true || idleResult.task?.raid === true)) ||
+          !!idleResult.minigameTimeReduced ||
+          !!idleResult.minigameCompleted ||
+          !!idleResult.rewardTimeReduced ||
+          !!idleResult.rewardCompleted ||
+          (idleResult.slayerTaskUpdate && idleResult.monstersKilledOnTask > 0) ||
+          (idleResult.completedQuests && idleResult.completedQuests.length > 0) ||
+          showStoppedEarly ||
+          clueScrollCount > 0
+
+        if (!hasProgress) return null
+
         return (
           <LootResultModal
             theme={idleResult.died ? 'blood' : (hasIdleEpicLootDrop(idleResult, itemsData) ? 'purple' : 'gold')}
@@ -3073,16 +3105,12 @@ function GameApp() {
               )}
 
               {/* Idle death / stopped early warning */}
-              {idleResult.task?.type === 'combat' && idleResult.idleSupplies && (() => {
-                const stoppedReason = idleResult.stoppedReason
-                const effMs = idleResult.effectiveElapsedMs ?? null
-                const showShortened = stoppedReason && stoppedReason !== 'completed_elapsed' && effMs != null && effMs < idleResult.elapsedMs
+              {showStoppedEarly && (() => {
                 const reasonLabel = {
                   out_of_food: 'Ran out of food', out_of_hp: 'Ran out of HP',
                   out_of_prayer: 'Ran out of prayer', out_of_potion: 'Ran out of potions',
                   resource_limited: 'Out of ammo / runes / charges', died: 'You died',
                 }[stoppedReason] || null
-                if (!showShortened && !idleResult.died) return null
                 return (
                   <div class="lm-card" style={{ borderColor: 'rgba(255, 135, 135, 0.3)', borderLeft: '3px solid #ff8787' }}>
                     <div class="lm-card__head" style={{ color: '#ff8787' }}>
@@ -3099,17 +3127,11 @@ function GameApp() {
               })()}
 
               {/* Clue scrolls completed */}
-              {(() => {
-                const clueScrollCount = Object.entries(idleResult.itemsConsumed || {}).reduce((sum, [itemId, qty]) => {
-                  if (itemId.includes('clue')) return sum + qty
-                  return sum
-                }, 0)
-                return clueScrollCount > 0 ? (
-                  <SummaryCard heading="Clue Scrolls" icon="📜" rows={[
-                    { name: 'Completed', value: `×${clueScrollCount.toLocaleString()}`, rate: perHr(clueScrollCount) },
-                  ]} />
-                ) : null
-              })()}
+              {clueScrollCount > 0 && (
+                <SummaryCard heading="Clue Scrolls" icon="📜" rows={[
+                  { name: 'Completed', value: `×${clueScrollCount.toLocaleString()}`, rate: perHr(clueScrollCount) },
+                ]} />
+              )}
             </div>
           </LootResultModal>
         )

@@ -1,5 +1,6 @@
 import SkillEmblem from '../components/SkillEmblem.jsx'
 import GameIcon from '../components/GameIcon.jsx'
+import BackLink from '../components/BackLink.jsx'
 import { getMonsterArt, getCategoryArt, getRaidArt } from '../utils/combatArt.js'
 import { getSkillArt } from '../utils/skillArt.js'
 
@@ -53,6 +54,7 @@ export default function CombatMobileSelect({
   showPvp,
   onOpenPvp,
   demoLockBosses = false,
+  onBack,
 }) {
   const slayerLevel = getSlayerLevel()
 
@@ -83,6 +85,7 @@ export default function CombatMobileSelect({
   return (
     <div class="cb-pad">
       <div class="cb-select__head" style={{ margin: '4px 2px 14px' }}>
+        <BackLink onClick={onBack} className="mb-3" />
         <h1 class="cb-h1">Choose a Foe</h1>
         <div class="cb-h1sub">{totalFoes} monsters · {uniqueRaids.length} {uniqueRaids.length === 1 ? 'raid' : 'raids'} await</div>
       </div>

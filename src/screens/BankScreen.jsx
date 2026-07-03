@@ -535,8 +535,8 @@ export default function BankScreen({ onBack }) {
 
       {/* ── Header + Tab bar ─────────────────────────────────────────────── */}
       <div class="px-4 pt-4 pb-0 flex-shrink-0">
+        <BackLink onClick={onBack} className="mb-3" />
         <div class="flex items-center gap-2 mb-2">
-          <BackLink onClick={onBack} />
           <h2 class="font-[var(--font-display)] text-sm font-bold text-[var(--color-parchment)] opacity-60 uppercase tracking-wider flex-shrink-0">
             Bank ({bankItems.length})
           </h2>

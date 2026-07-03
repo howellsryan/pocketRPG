@@ -14,10 +14,8 @@ import EquipmentPaperdoll, { EQ_SLOT_NAMES } from '../components/EquipmentPaperd
 import ItemSlot from '../components/ItemSlot.jsx'
 import WeaponChargePanel, { getChargeRecipe } from '../components/WeaponChargePanel.jsx'
 import { OTHER_BONUS_LABELS, OTHER_BONUS_PERCENT_KEYS } from '../utils/bonusLabels.js'
-import BackLink from '../components/BackLink.jsx'
 
-// `onBack` (from App): returns to the screen the player came from.
-export default function EquipmentScreen({ onBack } = {}) {
+export default function EquipmentScreen() {
   const { equipment, inventory, bank, stats, updateEquipment, updateInventory, updateBank, addToast, itemsData, completedQuests, equipmentPresets, updateEquipmentPresets } = useGame()
   const [selected, setSelected] = useState(null) // { slot, item }
   const [showSpecInfo, setShowSpecInfo] = useState(false)
@@ -277,7 +275,6 @@ export default function EquipmentScreen({ onBack } = {}) {
   return (
     <div class="forge-shell h-full overflow-y-auto p-4">
       <div class="flex items-center gap-2 mb-3">
-        <BackLink onClick={onBack} />
         <SectionHeader>Equipment</SectionHeader>
       </div>
 

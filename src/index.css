@@ -437,8 +437,8 @@ html, body, #app {
 
   /* Gold-ringed medallion button set into the wood. */
   .gf-medallion {
-    width: 58px;
-    height: 58px;
+    width: 48px;
+    height: 48px;
     border-radius: 50%;
     flex-shrink: 0;
     display: flex;
@@ -486,8 +486,9 @@ html, body, #app {
   .gf-credits {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 8px;
-    min-height: 44px;
+    min-height: 48px;
     padding: 0 12px;
     background: transparent;
     border: 0;
@@ -499,6 +500,34 @@ html, body, #app {
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
     white-space: nowrap;
   }
+}
+
+/* Floating chat-helper button — same carved wood-and-gold medallion styling
+   as the frame-bar nav icons, so it doesn't stand out as a flat gold circle.
+   Not scoped to the mobile-only media query above since the widget shows on
+   desktop too. */
+.chat-fab {
+  width: 48px;
+  height: 48px;
+  box-sizing: border-box;
+  padding: 0;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  background: radial-gradient(circle at 36% 28%, #55412a, #2c2013 62%, #1c130b);
+  border: 3px solid #a8853e;
+  box-shadow:
+    0 0 0 3px #191008,
+    0 0 0 4px rgba(217, 180, 90, 0.28),
+    inset 0 2px 3px rgba(255, 236, 190, 0.14),
+    inset 0 -4px 6px rgba(0, 0, 0, 0.55),
+    0 3px 6px rgba(0, 0, 0, 0.5);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.chat-fab:hover {
+  border-color: var(--color-gold-light);
 }
 
 /* PWA standalone — push the header below the system status bar (time/battery/wifi).
@@ -553,8 +582,8 @@ html, body, #app {
 }
 .welcome-card__bottom { display: flex; align-items: center; justify-content: center; gap: 12px; }
 .welcome-card__stats { display: flex; gap: 18px; align-items: center; justify-content: center; }
-.wstat { display: flex; align-items: center; gap: 7px; font-size: 13.5px; font-weight: 600; color: var(--color-parchment); opacity: 0.82; }
-.wstat__icon { width: 24px; height: 24px; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.wstat { display: flex; align-items: center; gap: 4px; font-size: 13.5px; font-weight: 600; color: var(--color-parchment); opacity: 0.82; }
+.wstat__icon { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .wstat b { margin-left: 2px; font-weight: 800; color: var(--color-gold-light); }
 .welcome-card__actions { display: flex; gap: 8px; flex-shrink: 0; }
 .welcome-card__actions--inline { display: none; }

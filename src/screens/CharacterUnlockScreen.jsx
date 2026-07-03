@@ -4,6 +4,7 @@ import { requestCriticalPushSave } from '../cloud/sync.js'
 import { CRITICAL_SAVE_REASONS } from '../cloud/criticalSavePolicy.js'
 import GildedComplete from '../components/GildedComplete.jsx'
 import GameIcon from '../components/GameIcon.jsx'
+import BackLink from '../components/BackLink.jsx'
 import { isUnlockOwned } from '../utils/completion.js'
 
 const CHARACTER_UNLOCKS_DEF = [
@@ -48,12 +49,7 @@ export default function CharacterUnlockScreen({ onBack }) {
 
   return (
     <div class="forge-shell h-full overflow-y-auto p-4">
-      <button
-        onClick={onBack}
-        class="text-xs text-[var(--color-gold-dim)] mb-3 flex items-center gap-1"
-      >
-        ← Back
-      </button>
+      <BackLink onClick={onBack} className="mb-3" />
 
       <h2 class="flex items-center gap-2 font-[var(--font-display)] text-base font-bold text-[var(--color-gold)] mb-0.5">
         <GameIcon iconKey="master_rejuvenation" size={20} class="flex-shrink-0" />

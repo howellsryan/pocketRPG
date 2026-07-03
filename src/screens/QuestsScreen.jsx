@@ -123,14 +123,14 @@ export default function QuestsScreen({ onNavigate, onBack } = {}) {
 
     return (
       <div class="forge-shell h-full flex flex-col p-4">
-        <div class="flex justify-between items-center mb-3">
-          <BackLink onClick={backFromActiveQuest} />
-          {questQueue.length > 0 && (
+        <BackLink onClick={backFromActiveQuest} className="mb-3" />
+        {questQueue.length > 0 && (
+          <div class="flex justify-end mb-3">
             <span class="text-[11px] text-[var(--color-gold)] font-[var(--font-mono)]">
               🔗 Queue ({questQueue.length})
             </span>
-          )}
-        </div>
+          </div>
+        )}
 
         <div class="flex-1 flex flex-col items-center justify-center">
           <GameIcon iconKey="clue_scroll_medium" size={48} class="mb-2" />
@@ -178,11 +178,9 @@ export default function QuestsScreen({ onNavigate, onBack } = {}) {
   return (
     <div class="forge-shell h-full flex flex-col">
       <div class="px-4 pt-4 pb-2 flex-shrink-0">
+        <BackLink onClick={onBack} className="mb-3" />
         <div class="flex justify-between items-baseline mb-2">
-          <span class="inline-flex items-center gap-2">
-            <BackLink onClick={onBack} />
-            <SectionHeader size="lg"><span class="inline-flex items-center gap-2"><GameIcon iconKey="clue_scroll_medium" size={18} class="flex-shrink-0" /> Quests</span></SectionHeader>
-          </span>
+          <SectionHeader size="lg"><span class="inline-flex items-center gap-2"><GameIcon iconKey="clue_scroll_medium" size={18} class="flex-shrink-0" /> Quests</span></SectionHeader>
           <span class="text-[11px] text-[var(--color-gold)] font-[var(--font-mono)]">
             {completedCount}/{questsData.length} · {totalQp} QP
           </span>
