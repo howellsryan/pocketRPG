@@ -30,10 +30,8 @@ export default function ArmouryScreen({ onBack }) {
   return (
     <div class="forge-shell h-full flex flex-col">
       <div class="px-4 pt-4 pb-2 flex-shrink-0">
-        <div class="flex items-center gap-2">
-          <BackLink onClick={onBack} />
-          <h1 class="font-[var(--font-display)] text-[var(--color-gold)] text-lg font-bold tracking-wide">Armoury</h1>
-        </div>
+        <BackLink onClick={onBack} className="mb-3" />
+        <h1 class="font-[var(--font-display)] text-[var(--color-gold)] text-lg font-bold tracking-wide">Armoury</h1>
         <p class="text-[11px] text-[var(--color-parchment)] opacity-50 mt-[2px]">
           Every weapon and piece of armour, grouped by set and ordered by tier. <span aria-hidden="true">⚔️</span> marks a special attack.
         </p>

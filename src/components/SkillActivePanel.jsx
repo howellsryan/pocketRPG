@@ -1,4 +1,5 @@
 import SkillIcon from './SkillIcon.jsx'
+import BackLink from './BackLink.jsx'
 
 /**
  * Shared "action in progress" screen for every idle skilling activity:
@@ -40,15 +41,7 @@ export default function SkillActivePanel({
   return (
     <div class="forge-shell h-full flex flex-col px-5 pt-2 min-h-0">
       {/* Back — leaves the task running (Stop & Back below cancels it) */}
-      {onBack && (
-        <button
-          onClick={onBack}
-          class="flex-shrink-0 mb-1 flex items-center gap-1.5 text-[var(--color-gold)] bg-transparent border-0 p-0 cursor-pointer active:opacity-70 self-start"
-        >
-          <span class="text-base leading-none">‹</span>
-          <span class="text-sm font-semibold">Back</span>
-        </button>
-      )}
+      <BackLink onClick={onBack} className="mb-3" />
 
       {/* Scrollable body so the SESSION card never gets clipped on short screens */}
       <div class="flex-1 min-h-0 overflow-y-auto">

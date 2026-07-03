@@ -781,11 +781,9 @@ export default function TradingPostScreen({ onBuyCredits, onBack }) {
   return (
     <div class="forge-shell h-full flex flex-col overflow-hidden">
       <div class="px-4 pt-3 pb-3 flex-shrink-0">
+        <BackLink onClick={onBack} className="mb-3" />
         <div class="flex justify-between items-center mb-3">
-          <div class="flex items-center gap-1 min-w-0">
-            <BackLink onClick={onBack} />
-            <h2 class="font-[var(--font-display)] text-[15px] font-bold text-[var(--color-gold)] m-0">{isIronman ? 'General Store' : 'Trading Post'}</h2>
-          </div>
+          <h2 class="font-[var(--font-display)] text-[15px] font-bold text-[var(--color-gold)] m-0">{isIronman ? 'General Store' : 'Trading Post'}</h2>
           <span class="inline-flex items-center gap-1 text-[11px] text-[var(--color-gold)] font-[var(--font-mono)]">
             <GameIcon iconKey="coins" size={13} color="var(--color-gold)" /> {coins.toLocaleString()}
           </span>

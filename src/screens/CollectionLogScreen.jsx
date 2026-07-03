@@ -10,7 +10,7 @@ export default function CollectionLogScreen({ onBack }) {
     <div class="forge-shell h-full flex flex-col">
       {onBack && (
         <div class="px-4 pt-2 flex-shrink-0">
-          <BackLink onClick={onBack} />
+          <BackLink onClick={onBack} className="mb-3" />
         </div>
       )}
       <div class="flex-1 min-h-0">

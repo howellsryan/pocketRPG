@@ -166,7 +166,7 @@ export default function CluesScreen({ onNavigate, onBack } = {}) {
   return (
     <div class="forge-shell h-full flex flex-col">
       <div class="px-4 pt-4 pb-2 flex-shrink-0">
-        <BackLink onClick={onBack} className="mb-1" />
+        <BackLink onClick={onBack} className="mb-3" />
         <SectionHeader size="lg" className="mb-[10px]"><span class="inline-flex items-center gap-2"><GameIcon iconKey="clue_scroll_hard" size={18} class="flex-shrink-0" /> Clues</span></SectionHeader>
       </div>
 
