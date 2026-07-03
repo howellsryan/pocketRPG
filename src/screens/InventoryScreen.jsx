@@ -12,10 +12,8 @@ import { equipItem, checkEquipRequirements } from '../engine/equipment.js'
 import { getLevelFromXP } from '../engine/experience.js'
 import { api, getToken, getCharacterId } from '../cloud/api.js'
 import { pullSave, applyCloudSave, pushNow } from '../cloud/sync.js'
-import BackLink from '../components/BackLink.jsx'
 
-// `onBack` (from App): returns to the screen the player came from.
-export default function InventoryScreen({ onBack } = {}) {
+export default function InventoryScreen() {
   const { inventory, equipment, stats, bank, updateInventory, updateEquipment, updateBank, updateHP, currentHP, getMaxHP, addToast, itemsData, completedQuests, isIronman, loadGame, getSnapshot } = useGame()
   const [selected, setSelected] = useState(null) // { slotIndex, slot, item }
   const [showSpecInfo, setShowSpecInfo] = useState(false)
@@ -524,7 +522,6 @@ export default function InventoryScreen({ onBack } = {}) {
     <div class="forge-shell h-full overflow-y-auto p-4">
       <div class="flex justify-between items-center mb-3">
         <div class="flex items-center gap-2">
-          <BackLink onClick={onBack} />
           <h2 class="font-[var(--font-display)] text-sm font-bold text-[var(--color-parchment)] opacity-60 uppercase tracking-wider">
             Inventory
           </h2>

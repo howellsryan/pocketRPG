@@ -5,7 +5,7 @@ export const NAV_TABS = [
   ...(isWorldMapEnabled() ? [{ id: SCREENS.WORLD_MAP, label: 'World Map', icon: '🗺️', iconKey: 'globe', iconSize: 30 }] : []),
   { id: SCREENS.BANK,               label: 'Bank',           icon: '🏦', iconKey: 'coins' },
   { id: SCREENS.INVENTORY,          label: 'Items',          icon: '🎒', iconKey: 'money_purse' },
-  { id: SCREENS.EQUIPMENT,          label: 'Equip',          icon: '🛡️', iconKey: 'iron_platebody' },
+  { id: SCREENS.EQUIPMENT,          label: 'Equip',          icon: '🛡️', iconKey: 'paperdoll' },
   { id: SCREENS.STORE,              label: 'Trading Post',   icon: '🪙', iconKey: 'uncut_ruby' },
   { id: SCREENS.CLUES,              label: 'Clues',          icon: '🗝️', iconKey: 'clue_scroll_hard' },
   { id: SCREENS.HELP,               label: 'Settings',       icon: '🧭', iconKey: 'tinderbox' },
@@ -21,17 +21,17 @@ export const NAV_TABS = [
 // are tintable game-icons glyphs so they read as brass/steel inlays on the
 // dark medallions.
 export const GAME_FRAME_TOP_LEFT_TABS = [
-  { id: SCREENS.HOME, label: 'Home', iconKey: 'home', iconSize: 30, iconColor: '#efe3c2' },
+  { id: SCREENS.HOME, label: 'Home', iconKey: 'home', iconSize: 24, iconColor: '#efe3c2' },
 ]
 export const GAME_FRAME_TOP_TABS = [
-  ...(isWorldMapEnabled() ? [{ id: SCREENS.WORLD_MAP, label: 'Map', iconKey: 'globe', iconSize: 30 }] : []),
+  ...(isWorldMapEnabled() ? [{ id: SCREENS.WORLD_MAP, label: 'Map', iconKey: 'globe', iconSize: 24 }] : []),
   // money_purse is bespoke full-color art (untintable) — iconDisc sets it on a
   // parchment inlay so it reads on the dark medallion.
-  { id: SCREENS.INVENTORY, label: 'Items', iconKey: 'money_purse', iconSize: 30, iconDisc: true },
-  { id: SCREENS.EQUIPMENT, label: 'Equip', iconKey: 'legs', iconSize: 30, iconColor: '#aebfd0' },
+  { id: SCREENS.INVENTORY, label: 'Items', iconKey: 'money_purse', iconSize: 24, iconDisc: true },
+  { id: SCREENS.EQUIPMENT, label: 'Equip', iconKey: 'paperdoll', iconSize: 24 },
 ]
 export const GAME_FRAME_BOTTOM_LEFT_TABS = [
-  { id: SCREENS.HELP, label: 'Settings', iconKey: 'gears', iconSize: 30, iconColor: '#d9b45a' },
+  { id: SCREENS.HELP, label: 'Settings', iconKey: 'gears', iconSize: 24, iconColor: '#d9b45a' },
 ]
 
 // Screens reachable from the Settings screen (HelpScreen) instead of the nav

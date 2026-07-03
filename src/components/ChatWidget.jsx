@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'preact/hooks'
 import Modal from './Modal.jsx'
 import Button from './Button.jsx'
 import { api } from '../cloud/api.js'
+import { pauseTicks, resumeTicks } from '../engine/tick.js'
 
 const GREETING = {
   role: 'assistant',
@@ -22,6 +23,14 @@ export default function ChatWidget({ isCloudAccount = false }) {
     const el = scrollRef.current
     if (el) el.scrollTop = el.scrollHeight
   }, [messages, busy, open])
+
+  // Pause ticks while the helper panel is open so combat cannot advance
+  // in the background — same treatment as an idle boss fight.
+  useEffect(() => {
+    if (!open) return
+    pauseTicks()
+    return () => resumeTicks()
+  }, [open])
 
   if (!isCloudAccount) return null
 
