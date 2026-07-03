@@ -74,6 +74,7 @@ export function itemsIndex() {
     type: it.type,
     stackable: !!it.stackable,
     shopValue: it.shopValue ?? null,
+    ...(it.specialAttack ? { hasSpecialAttack: true } : {}),
   }))
 }
 
