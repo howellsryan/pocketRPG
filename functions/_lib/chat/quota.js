@@ -25,6 +25,19 @@ export const CHAT_NEURON_BUDGET_MILLI = 8_300_000
 // constants — raise it there first if a limit grows.
 export const CHAT_MESSAGE_RESERVE_MILLI = 1_700_000
 
+// Separate daily pool for the OpenAI attempt, denominated in tokens
+// (prompt + completion) against the ~2.5M/day complimentary data-sharing
+// allotment. Metered locally because OpenAI doesn't hard-stop at the free
+// allotment — overage bills at normal rates. Budget + one in-flight reserve
+// stays under 2.5M. Rows live in chat_neuron_usage under an 'openai:'-
+// prefixed day_key; the reserve/settle statements are unit-agnostic.
+export const CHAT_OPENAI_TOKEN_BUDGET = 2_200_000
+export const CHAT_OPENAI_MESSAGE_RESERVE_TOKENS = 150_000
+
+export function openaiPoolKey(dayKey) {
+  return `openai:${dayKey}`
+}
+
 // Atomically claim one message for the character's daily allowance.
 // Returns { allowed, remaining }.
 export async function claimCharacterMessage(env, characterId, dayKey, limit = CHAT_DAILY_LIMIT) {

@@ -14,7 +14,7 @@ function aiResponse(content: string | null, toolCalls?: any[], usage: any = USAG
 }
 
 function newStats() {
-  return { milliNeurons: 0, usageUnknown: false }
+  return { promptTokens: 0, completionTokens: 0, usageUnknown: false }
 }
 
 function opts(overrides: Record<string, any> = {}) {
@@ -43,7 +43,8 @@ describe('runAiChat', () => {
     expect(answer).toBe('Use a rune scimitar.')
     expect(run).toHaveBeenCalledTimes(1)
     expect(stats.usageUnknown).toBe(false)
-    expect(stats.milliNeurons).toBeGreaterThan(0)
+    expect(stats.promptTokens).toBe(100)
+    expect(stats.completionTokens).toBe(50)
   })
 
   it('returns "" (never a hardcoded apology) when the model gives no usable answer', async () => {
@@ -130,6 +131,9 @@ describe('chatAttempts / geminiChatBinding', () => {
     const AI = { run: vi.fn() }
     const full = chatAttempts({ GEMINI_API_KEY: 'test-key', OPENAI_API_KEY: 'test-key', AI } as any)
     expect(full.map((a) => a.model)).toEqual([CHAT_OPENAI_MODEL, CHAT_MODEL, CHAT_FALLBACK_MODEL])
+    // Pool routing: only the OpenAI attempt spends the complimentary token
+    // pool; everything else meters against the neuron budget.
+    expect(full.map((a) => a.pool)).toEqual(['openai', 'neuron', 'neuron'])
     expect(full[2].ai).toBe(AI)
     // No OpenAI key → primary then straight to Workers AI fallback.
     expect(chatAttempts({ GEMINI_API_KEY: 'test-key', AI } as any).map((a) => a.model)).toEqual([
