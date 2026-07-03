@@ -1,9 +1,10 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
-import { runAiChat, ChatTimeoutError } from '../functions/api/chat.js'
-import { CHAT_MAX_TOOL_ROUNDS } from '../functions/_lib/chat/prompt.js'
+import { runAiChat, ChatTimeoutError, chatAiBinding, openAiChatBinding } from '../functions/api/chat.js'
+import { CHAT_MAX_TOOL_ROUNDS, CHAT_MODEL } from '../functions/_lib/chat/prompt.js'
 
 afterEach(() => {
   vi.useRealTimers()
+  vi.unstubAllGlobals()
 })
 
 const USAGE = { prompt_tokens: 100, completion_tokens: 50 }
@@ -121,5 +122,39 @@ describe('runAiChat', () => {
     const stats = newStats()
     await runAiChat({ AI: { run } } as any, baseMessages(), opts({ stats }))
     expect(stats.usageUnknown).toBe(true)
+  })
+})
+
+describe('chatAiBinding / openAiChatBinding', () => {
+  it('resolves a binding for the configured model, null when unconfigured', () => {
+    const env = CHAT_MODEL.startsWith('@') ? { AI: { run: vi.fn() } } : { OPENAI_API_KEY: 'sk-test' }
+    expect(chatAiBinding(env as any)).toBeTruthy()
+    expect(chatAiBinding({} as any)).toBeNull()
+  })
+
+  it('translates the payload for gpt-5: max_completion_tokens, no temperature', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => aiResponse('Hi.') })
+    vi.stubGlobal('fetch', fetchMock)
+    const binding = openAiChatBinding({ OPENAI_API_KEY: 'sk-test' } as any)
+    const res = await binding.run('gpt-5-nano', { messages: baseMessages(), max_tokens: 5000, temperature: 0.6 })
+    const [url, init] = fetchMock.mock.calls[0]
+    expect(url).toBe('https://api.openai.com/v1/chat/completions')
+    expect(init.headers.Authorization).toBe('Bearer sk-test')
+    const body = JSON.parse(init.body)
+    expect(body.model).toBe('gpt-5-nano')
+    expect(body.max_completion_tokens).toBe(5000)
+    expect(body.max_tokens).toBeUndefined()
+    expect(body.temperature).toBeUndefined()
+    expect(body.messages).toHaveLength(2)
+    expect(res.choices[0].message.content).toBe('Hi.')
+  })
+
+  it('throws on a non-2xx response so the endpoint degrades to retrieval', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({ ok: false, status: 401, text: async () => 'bad key' }),
+    )
+    const binding = openAiChatBinding({ OPENAI_API_KEY: 'sk-bad' } as any)
+    await expect(binding.run('gpt-5-nano', { messages: [] })).rejects.toThrow('OpenAI 401: bad key')
   })
 })

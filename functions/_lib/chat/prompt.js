@@ -1,6 +1,8 @@
 import { TOOL_SCHEMAS } from '../mcp/schema.js'
 
-export const CHAT_MODEL = '@openai/gpt-5-nano'
+// '@'-prefixed = Workers AI catalog model (env.AI); anything else = OpenAI
+// API model id, called with the OPENAI_API_KEY secret (see chatAiBinding).
+export const CHAT_MODEL = 'gpt-5-nano'
 export const CHAT_MAX_TOOL_ROUNDS = 3
 export const CHAT_TIME_BUDGET_MS = 45_000
 export const CHAT_MAX_ANSWER_TOKENS = 5000

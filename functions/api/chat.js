@@ -1,7 +1,6 @@
-// In-game help chatbot endpoint. Zero-cost by design: Workers AI free
-// allocation + per-character daily quota + global circuit-breaker that
-// degrades to retrieval-only answers. Read-only — the chatbot can never
-// mutate game state (tool allowlist in _lib/chat/prompt.js).
+// In-game help chatbot endpoint. Per-character daily quota + global daily
+// spend budget, degrading to retrieval-only answers. Read-only — the chatbot
+// can never mutate game state (tool allowlist in _lib/chat/prompt.js).
 
 import { requireAuth, json } from '../_lib/auth.js'
 import { utcDayKey, nextResetMs } from '../_lib/game/dailyTasks.js'
@@ -59,14 +58,45 @@ function toolResultText(result) {
   return result?.isError ? `Tool error: ${clipped || 'unknown error'}` : clipped || '(empty result)'
 }
 
-// GLM-4.7-flash speaks the OpenAI chat-completions shape: answers live in
-// choices[0].message. Reasoning stays on (its default) — it's most of this
-// model's quality and CHAT_MAX_ANSWER_TOKENS budgets for it; any inline
-// <think> block is stripped from the answer. Temperature sits below GLM's
-// ~1.0 default for factual consistency without starving the thinking pass.
 const CHAT_RUN_OPTS = {
   max_tokens: CHAT_MAX_ANSWER_TOKENS,
   temperature: 0.6,
+}
+
+// OpenAI-backed binding with the same `run(model, payload)` shape as env.AI,
+// so runAiChat is provider-agnostic. gpt-5 models reject `max_tokens` and
+// non-default `temperature`, hence the translation.
+export function openAiChatBinding(env) {
+  return {
+    async run(model, payload) {
+      const { max_tokens, temperature: _temperature, ...rest } = payload
+      const res = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${env.OPENAI_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model,
+          max_completion_tokens: max_tokens,
+          reasoning_effort: 'low',
+          ...rest,
+        }),
+      })
+      if (!res.ok) {
+        const detail = (await res.text().catch(() => '')).slice(0, 300)
+        throw new Error(`OpenAI ${res.status}: ${detail}`)
+      }
+      return res.json()
+    },
+  }
+}
+
+// Pick the model binding for CHAT_MODEL; null = AI path unavailable
+// (missing binding/key), which degrades to retrieval-only.
+export function chatAiBinding(env) {
+  if (CHAT_MODEL.startsWith('@')) return env.AI || null
+  return env.OPENAI_API_KEY ? openAiChatBinding(env) : null
 }
 
 function answerText(res) {
@@ -138,13 +168,14 @@ async function runChatTool(call, { env, authorization, identity, characterId }) 
 // Returns '' when the model produced no usable answer; throws ChatTimeoutError
 // past `deadline` — the endpoint turns both into a retrieval-only answer.
 // Exported for tests.
-export async function runAiChat(env, messages, { authorization, identity, characterId, stats, deadline }) {
+export async function runAiChat(env, messages, { authorization, identity, characterId, stats, deadline, ai }) {
+  const binding = ai || env.AI
   const tools = chatToolDefs()
   const runModel = async (payload) => {
     // Not worth starting a reasoning call with under 1.5s left.
     if (deadline - Date.now() < 1500) throw new ChatTimeoutError()
     try {
-      const res = await raceDeadline(env.AI.run(CHAT_MODEL, payload), deadline)
+      const res = await raceDeadline(binding.run(CHAT_MODEL, payload), deadline)
       trackUsage(stats, res)
       return res
     } catch (err) {
@@ -222,13 +253,14 @@ export async function onRequestPost({ request, env }) {
 
   let answer = ''
   let mode = 'ai'
-  const aiAvailable = env.AI && (await reserveMessageNeurons(env, dayKey))
+  const ai = chatAiBinding(env)
+  const aiAvailable = ai && (await reserveMessageNeurons(env, dayKey))
   if (aiAvailable) {
     const stats = { milliNeurons: 0, usageUnknown: false }
     const deadline = Date.now() + CHAT_TIME_BUDGET_MS
     try {
       const messages = buildMessages({ question, history: body?.history, chunks })
-      answer = await runAiChat(env, messages, { authorization, identity: auth.identity, characterId, stats, deadline })
+      answer = await runAiChat(env, messages, { authorization, identity: auth.identity, characterId, stats, deadline, ai })
       // Swap the worst-case reserve for the actual metered usage. Skipped
       // when any call didn't report usage — keeping the full reserve only
       // makes the budget more conservative, never billable.
