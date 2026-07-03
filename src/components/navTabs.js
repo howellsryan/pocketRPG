@@ -4,7 +4,7 @@ export const NAV_TABS = [
   { id: SCREENS.HOME,               label: 'Home',           icon: '🏠', iconKey: 'home', iconSize: 34 },
   ...(isWorldMapEnabled() ? [{ id: SCREENS.WORLD_MAP, label: 'World Map', icon: '🗺️', iconKey: 'globe', iconSize: 30 }] : []),
   { id: SCREENS.BANK,               label: 'Bank',           icon: '🏦', iconKey: 'coins' },
-  { id: SCREENS.INVENTORY,          label: 'Items',          icon: '🎒', iconKey: 'money_purse' },
+  { id: SCREENS.INVENTORY,          label: 'Items',          icon: '🎒', iconKey: 'backpack' },
   { id: SCREENS.EQUIPMENT,          label: 'Equip',          icon: '🛡️', iconKey: 'paperdoll' },
   { id: SCREENS.STORE,              label: 'Trading Post',   icon: '🪙', iconKey: 'uncut_ruby' },
   { id: SCREENS.CLUES,              label: 'Clues',          icon: '🗝️', iconKey: 'clue_scroll_hard' },
@@ -25,9 +25,7 @@ export const GAME_FRAME_TOP_LEFT_TABS = [
 ]
 export const GAME_FRAME_TOP_TABS = [
   ...(isWorldMapEnabled() ? [{ id: SCREENS.WORLD_MAP, label: 'Map', iconKey: 'globe', iconSize: 20 }] : []),
-  // money_purse is bespoke full-color art (untintable) — iconDisc sets it on a
-  // parchment inlay so it reads on the dark medallion.
-  { id: SCREENS.INVENTORY, label: 'Items', iconKey: 'money_purse', iconSize: 20, iconDisc: true },
+  { id: SCREENS.INVENTORY, label: 'Items', iconKey: 'backpack', iconSize: 20 },
   { id: SCREENS.EQUIPMENT, label: 'Equip', iconKey: 'paperdoll', iconSize: 20 },
 ]
 export const GAME_FRAME_BOTTOM_LEFT_TABS = [
