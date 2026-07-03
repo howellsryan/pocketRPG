@@ -4,8 +4,12 @@ import { TOOL_SCHEMAS } from '../mcp/schema.js'
 // model id, called via Google's OpenAI-compatible endpoint with the
 // GEMINI_API_KEY secret (see chatAttempts).
 export const CHAT_MODEL = 'gemini-2.5-flash-lite'
-// Workers AI model tried when the primary fails (e.g. Gemini free-tier 429)
-// or returns no answer, before degrading to retrieval-only.
+// OpenAI model tried when the primary (Gemini) fails or returns no answer,
+// e.g. Gemini free-tier 429 — called via OpenAI's chat completions endpoint
+// with the OPENAI_API_KEY secret (see chatAttempts).
+export const CHAT_OPENAI_MODEL = 'gpt-4.1-mini'
+// Workers AI model tried when both the primary and OpenAI fail or return no
+// answer, before degrading to retrieval-only.
 export const CHAT_FALLBACK_MODEL = '@cf/zai-org/glm-4.7-flash'
 export const CHAT_MAX_TOOL_ROUNDS = 3
 export const CHAT_TIME_BUDGET_MS = 45_000

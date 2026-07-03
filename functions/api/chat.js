@@ -19,6 +19,7 @@ import {
 } from '../_lib/chat/quota.js'
 import {
   CHAT_MODEL,
+  CHAT_OPENAI_MODEL,
   CHAT_FALLBACK_MODEL,
   CHAT_MAX_TOOL_ROUNDS,
   CHAT_MAX_ANSWER_TOKENS,
@@ -87,14 +88,42 @@ export function geminiChatBinding(env) {
   }
 }
 
-// Ordered AI attempts for a message: primary CHAT_MODEL, then the Workers AI
-// fallback model. Empty = AI path unavailable, straight to retrieval-only.
+// OpenAI-backed binding with the same `run(model, payload)` shape as env.AI,
+// via OpenAI's chat completions endpoint — the chat-completions plumbing
+// (messages/tools/usage) works unchanged.
+export function openaiChatBinding(env) {
+  return {
+    async run(model, payload) {
+      const res = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${env.OPENAI_API_KEY}`,
+        },
+        body: JSON.stringify({ model, ...payload }),
+      })
+      if (!res.ok) {
+        const detail = (await res.text().catch(() => '')).slice(0, 300)
+        throw new Error(`OpenAI ${res.status}: ${detail}`)
+      }
+      return res.json()
+    },
+  }
+}
+
+// Ordered AI attempts for a message: primary CHAT_MODEL, then OpenAI (if
+// configured) as a mid-tier fallback for when Gemini's free tier is
+// exhausted, then the Workers AI fallback model. Empty = AI path
+// unavailable, straight to retrieval-only.
 export function chatAttempts(env) {
   const attempts = []
   if (CHAT_MODEL.startsWith('@')) {
     if (env.AI) attempts.push({ ai: env.AI, model: CHAT_MODEL })
   } else if (env.GEMINI_API_KEY) {
     attempts.push({ ai: geminiChatBinding(env), model: CHAT_MODEL })
+  }
+  if (env.OPENAI_API_KEY && CHAT_OPENAI_MODEL && CHAT_OPENAI_MODEL !== CHAT_MODEL) {
+    attempts.push({ ai: openaiChatBinding(env), model: CHAT_OPENAI_MODEL })
   }
   if (env.AI && CHAT_FALLBACK_MODEL && CHAT_FALLBACK_MODEL !== CHAT_MODEL) {
     attempts.push({ ai: env.AI, model: CHAT_FALLBACK_MODEL })

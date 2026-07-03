@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
-import { runAiChat, ChatTimeoutError, chatAttempts, geminiChatBinding } from '../functions/api/chat.js'
-import { CHAT_MAX_TOOL_ROUNDS, CHAT_MODEL, CHAT_FALLBACK_MODEL } from '../functions/_lib/chat/prompt.js'
+import { runAiChat, ChatTimeoutError, chatAttempts, geminiChatBinding, openaiChatBinding } from '../functions/api/chat.js'
+import { CHAT_MAX_TOOL_ROUNDS, CHAT_MODEL, CHAT_OPENAI_MODEL, CHAT_FALLBACK_MODEL } from '../functions/_lib/chat/prompt.js'
 
 afterEach(() => {
   vi.useRealTimers()
@@ -126,12 +126,21 @@ describe('runAiChat', () => {
 })
 
 describe('chatAttempts / geminiChatBinding', () => {
-  it('orders attempts primary-then-fallback, skipping unconfigured providers', () => {
+  it('orders attempts primary-then-openai-then-fallback, skipping unconfigured providers', () => {
     const AI = { run: vi.fn() }
-    const full = chatAttempts({ GEMINI_API_KEY: 'test-key', AI } as any)
-    expect(full.map((a) => a.model)).toEqual([CHAT_MODEL, CHAT_FALLBACK_MODEL])
-    expect(full[1].ai).toBe(AI)
-    // No Gemini key → straight to the Workers AI fallback; nothing → no AI path.
+    const full = chatAttempts({ GEMINI_API_KEY: 'test-key', OPENAI_API_KEY: 'test-key', AI } as any)
+    expect(full.map((a) => a.model)).toEqual([CHAT_MODEL, CHAT_OPENAI_MODEL, CHAT_FALLBACK_MODEL])
+    expect(full[2].ai).toBe(AI)
+    // No OpenAI key → primary then straight to Workers AI fallback.
+    expect(chatAttempts({ GEMINI_API_KEY: 'test-key', AI } as any).map((a) => a.model)).toEqual([
+      CHAT_MODEL,
+      CHAT_FALLBACK_MODEL,
+    ])
+    // No Gemini key → OpenAI then Workers AI fallback; nothing → no AI path.
+    expect(chatAttempts({ OPENAI_API_KEY: 'test-key', AI } as any).map((a) => a.model)).toEqual([
+      CHAT_OPENAI_MODEL,
+      CHAT_FALLBACK_MODEL,
+    ])
     expect(chatAttempts({ AI } as any).map((a) => a.model)).toEqual([CHAT_FALLBACK_MODEL])
     expect(chatAttempts({} as any)).toEqual([])
   })
@@ -171,5 +180,34 @@ describe('chatAttempts / geminiChatBinding', () => {
     await expect(binding.run('gemini-2.5-flash-lite', { messages: [] })).rejects.toThrow(
       'Gemini 429: quota exceeded',
     )
+  })
+
+  it("calls OpenAI's chat completions endpoint with the payload passed through", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => aiResponse('Hi.') })
+    vi.stubGlobal('fetch', fetchMock)
+    const binding = openaiChatBinding({ OPENAI_API_KEY: 'test-key' } as any)
+    const res = await binding.run('gpt-4.1-mini', {
+      messages: baseMessages(),
+      max_tokens: 5000,
+      temperature: 0.6,
+    })
+    const [url, init] = fetchMock.mock.calls[0]
+    expect(url).toBe('https://api.openai.com/v1/chat/completions')
+    expect(init.headers.Authorization).toBe('Bearer test-key')
+    const body = JSON.parse(init.body)
+    expect(body.model).toBe('gpt-4.1-mini')
+    expect(body.max_tokens).toBe(5000)
+    expect(body.temperature).toBe(0.6)
+    expect(body.messages).toHaveLength(2)
+    expect(res.choices[0].message.content).toBe('Hi.')
+  })
+
+  it('throws on a non-2xx OpenAI response so the endpoint degrades further', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({ ok: false, status: 429, text: async () => 'quota exceeded' }),
+    )
+    const binding = openaiChatBinding({ OPENAI_API_KEY: 'test-key' } as any)
+    await expect(binding.run('gpt-4.1-mini', { messages: [] })).rejects.toThrow('OpenAI 429: quota exceeded')
   })
 })
