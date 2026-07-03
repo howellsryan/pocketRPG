@@ -24,9 +24,9 @@ export const GAME_FRAME_TOP_LEFT_TABS = [
   { id: SCREENS.HOME, label: 'Home', iconKey: 'home', iconSize: 20, iconColor: '#efe3c2' },
 ]
 export const GAME_FRAME_TOP_TABS = [
-  ...(isWorldMapEnabled() ? [{ id: SCREENS.WORLD_MAP, label: 'Map', iconKey: 'globe', iconSize: 20 }] : []),
-  { id: SCREENS.INVENTORY, label: 'Items', iconKey: 'backpack', iconSize: 20 },
-  { id: SCREENS.EQUIPMENT, label: 'Equip', iconKey: 'paperdoll', iconSize: 20 },
+  ...(isWorldMapEnabled() ? [{ id: SCREENS.WORLD_MAP, label: 'Map', iconKey: 'globe', iconSize: 40 }] : []),
+  { id: SCREENS.INVENTORY, label: 'Items', iconKey: 'backpack', iconSize: 40 },
+  { id: SCREENS.EQUIPMENT, label: 'Equip', iconKey: 'paperdoll', iconSize: 40 },
 ]
 export const GAME_FRAME_BOTTOM_LEFT_TABS = [
   { id: SCREENS.HELP, label: 'Settings', iconKey: 'gears', iconSize: 20, iconColor: '#d9b45a' },

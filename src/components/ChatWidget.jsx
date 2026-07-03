@@ -70,7 +70,7 @@ export default function ChatWidget({ isCloudAccount = false }) {
         onClick={() => setOpen(true)}
         class="fixed bottom-4 right-4 z-[140] chat-fab"
       >
-        <GameIcon iconKey="chat_bubble" size={20} title="Game helper" />
+        <GameIcon iconKey="chat_bubble" size={30} title="Game helper" />
       </button>
       {open && (
         <Modal
