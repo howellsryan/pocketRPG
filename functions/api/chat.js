@@ -286,8 +286,22 @@ export async function onRequestPost({ request, env }) {
 
   let answer = ''
   let mode = 'ai'
+  // Why the AI path yielded no answer (surfaced as `reason` on a degraded
+  // response so the cause is visible without server-log access).
+  let reason = null
   const attempts = chatAttempts(env)
+  if (!attempts.length) {
+    // The silent blind spot: no provider is configured from the function's
+    // view, so we never even attempt a call. Almost always a secret that
+    // isn't reaching this deployment (e.g. set for the wrong Pages
+    // environment) — log it loudly rather than degrade without a trace.
+    reason = 'ai_unconfigured'
+    console.warn(
+      '[PocketRPG][chat] no AI provider configured — OPENAI_API_KEY / GEMINI_API_KEY / Workers AI (env.AI) all unavailable to this deployment',
+    )
+  }
   const aiAvailable = attempts.length > 0 && (await reserveMessageNeurons(env, dayKey))
+  if (attempts.length && !aiAvailable) reason = 'budget'
   if (aiAvailable) {
     const stats = { milliNeurons: 0, usageUnknown: false }
     const deadline = Date.now() + CHAT_TIME_BUDGET_MS
@@ -298,18 +312,20 @@ export async function onRequestPost({ request, env }) {
         const messages = buildMessages({ question, history: body?.history, chunks })
         answer = await runAiChat(env, messages, { authorization, identity: auth.identity, characterId, stats, deadline, ai, model })
         if (answer) break
+        reason = 'empty'
       } catch (err) {
         console.error(`[PocketRPG][chat] AI call failed (${model}):`, err?.message || err)
         answer = ''
+        reason = err instanceof ChatTimeoutError ? 'timeout' : 'ai_error'
         if (err instanceof ChatTimeoutError) break
       }
     }
-    // Swap the worst-case reserve for the actual metered usage. Skipped
-    // when any call didn't report usage — keeping the full reserve only
-    // makes the budget more conservative, never billable.
-    if (!stats.usageUnknown) {
-      await settleMessageNeurons(env, dayKey, CHAT_MESSAGE_RESERVE_MILLI, stats.milliNeurons)
-    }
+    // Reconcile the worst-case reserve back to actual metered usage. Always
+    // settle — even when a call didn't report usage (a timed-out/abandoned
+    // call). Skipping it there would permanently burn the full 1.7M reserve,
+    // and a handful of those drains the day's budget and forces every later
+    // message to retrieval-only until the 00:00 UTC reset.
+    await settleMessageNeurons(env, dayKey, CHAT_MESSAGE_RESERVE_MILLI, stats.milliNeurons)
   }
   // Whatever went wrong on the AI path — no budget, model error, time budget
   // exceeded, empty answer — the player always gets a knowledge-index answer.
@@ -332,5 +348,5 @@ export async function onRequestPost({ request, env }) {
     { swallow: true },
   )
 
-  return json({ answer, sources, mode, remaining, resetInMs: nextResetMs() })
+  return json({ answer, sources, mode, remaining, resetInMs: nextResetMs(), ...(mode === 'retrieval' && reason ? { reason } : {}) })
 }
