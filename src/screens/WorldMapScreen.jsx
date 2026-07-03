@@ -538,8 +538,13 @@ function PlaceHub({ place, here, travelling, searching, tele, itemsData, onTrave
           <div class="wm-cat-grid">
             {groupActivities(placeActivities(place.id)).map(([kind, refs]) => {
               const k = getKind(kind)
+              // A place hosts exactly one slayer master, so skip the picker list
+              // and open its hub directly — one fewer tap.
+              const onClick = kind === 'slayer'
+                ? () => onActivate('slayer', refs[0])
+                : () => setOpenCategory(kind)
               return (
-                <button class="wm-cat-btn" key={kind} onClick={() => setOpenCategory(kind)}>
+                <button class="wm-cat-btn" key={kind} onClick={onClick}>
                   <span class="wm-cat-btn__dot" style={{ background: k?.color || 'var(--fm-brass)' }} />
                   <span class="wm-cat-btn__label">{k?.label || kind}</span>
                   <span class="wm-cat-btn__count">{refs.length}</span>
