@@ -3,7 +3,7 @@ import { TOOL_SCHEMAS } from '../mcp/schema.js'
 // OpenAI model tried first, called via OpenAI's chat completions endpoint
 // with the OPENAI_API_KEY secret (see chatAttempts). Skipped entirely if
 // OPENAI_API_KEY is unset.
-export const CHAT_OPENAI_MODEL = 'gpt-4.1-mini'
+export const CHAT_OPENAI_MODEL = 'gpt-5.4-mini'
 // '@'-prefixed = Workers AI catalog model (env.AI); anything else = Gemini
 // model id, called via Google's OpenAI-compatible endpoint with the
 // GEMINI_API_KEY secret. Tried when OpenAI is unconfigured or fails/returns
