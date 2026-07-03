@@ -42,6 +42,6 @@ export const SETTINGS_NAV_LINKS = [
   { id: SCREENS.CONNECT_AI,        label: 'Connect AI',        iconKey: 'brain', iconColor: '#D97757', iconSize: 28 },
   { id: SCREENS.CHARACTER_UNLOCKS, label: 'Character Unlocks', iconKey: 'master_rejuvenation' },
   { id: SCREENS.ARMOURY,           label: 'Armoury',           iconKey: 'iron_longsword' },
-  { id: SCREENS.COLLECTION_LOG,    label: 'Collection Log',    iconKey: 'open_book' },
-  { id: SCREENS.LEADERBOARD,       label: 'Leaderboard',       iconKey: 'progression', iconSize: 22 },
+  { id: SCREENS.COLLECTION_LOG,    label: 'Collection Log',    iconKey: 'open_book', iconColor: 'var(--color-parchment)' },
+  { id: SCREENS.LEADERBOARD,       label: 'Leaderboard',       iconKey: 'progression', iconSize: 22, iconColor: 'var(--color-parchment)' },
 ]
