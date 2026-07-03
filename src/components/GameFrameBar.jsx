@@ -68,7 +68,7 @@ export default function GameFrameBar({
     return (
       <nav
         aria-label="Quick actions"
-        class="pwa-header md:hidden flex items-center justify-evenly flex-shrink-0 px-3 pt-2 pb-2"
+        class="pwa-header md:hidden flex items-center justify-evenly flex-shrink-0 px-3 pt-3 pb-1"
       >
         {GAME_FRAME_TOP_LEFT_TABS.map(navMedallion)}
         {GAME_FRAME_TOP_TABS.map(navMedallion)}
@@ -100,7 +100,7 @@ export default function GameFrameBar({
           onClick={() => { if (demo) onLockedFeature?.(); else onSkip1h?.() }}
           aria-label={skipLabel}
           title={skipTitle}
-          class={`gf-medallion ${demo ? 'gf-medallion--locked' : ''}`}
+          class={`gf-credits ${demo ? 'gf-medallion--locked' : ''}`}
         >
           {demo
             ? <span class="text-[16px] leading-none">🔒</span>
