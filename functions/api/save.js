@@ -1,4 +1,5 @@
 import { requireAuth, json } from '../_lib/auth.js'
+import { verifyJWT } from '../_lib/jwt.js'
 import { assertNotInActiveMatch, sweepStaleRows } from '../_lib/pvp.js'
 import { computeSaveSummaryFromJson } from '../_lib/saveSummary.js'
 import { decodeSaveRow, gzipJsonString } from '../_lib/saveCodec.js'
@@ -98,8 +99,41 @@ export async function onRequestPut({ request, env }) {
   const ch = await getCharacterId(request, env, auth.identity.id)
   if (ch.error) return json({ error: ch.error }, ch.status)
 
+  let body
+  try { body = await request.json() } catch { return json({ error: 'Invalid JSON' }, 400) }
+  return applySaveWrite({ env, ch, identityId: auth.identity.id, body })
+}
+
+// Beacon path: navigator.sendBeacon can't set custom headers, so the session
+// token and character id ride in the body (mirrors functions/api/idle.js). Used
+// on page teardown (refresh / close / tab-hide) where a normal PUT fetch would
+// be cancelled mid-flight and progress since the last debounced push would be
+// lost. Same write semantics as PUT.
+export async function onRequestPost({ request, env }) {
+  let body
+  try { body = await request.json() } catch { return json({ error: 'Invalid JSON' }, 400) }
+
+  const token = typeof body.token === 'string' ? body.token : null
+  if (!token) return json({ error: 'Missing token' }, 401)
+  const payload = await verifyJWT(token, env.JWT_SECRET)
+  if (!payload || !payload.sub) return json({ error: 'Invalid or expired token' }, 401)
+
+  const id = Number.isFinite(body.character_id) ? body.character_id : parseInt(body.character_id, 10)
+  if (!Number.isFinite(id)) return json({ error: 'Missing character_id' }, 400)
+
+  const row = await env.DB.prepare(
+    'SELECT id, total_level, combat_level, active_match_id FROM characters WHERE id = ? AND owner_id = ? AND deleted_at IS NULL'
+  ).bind(id, payload.sub).first()
+  if (!row) return json({ error: 'Character not found' }, 404)
+  const ch = { id, total_level: row.total_level, combat_level: row.combat_level, active_match_id: row.active_match_id ?? null }
+  return applySaveWrite({ env, ch, identityId: payload.sub, body })
+}
+
+// Shared write core for PUT (header auth) and the beacon POST (body auth). The
+// caller has already resolved + ownership-checked `ch` and parsed `body`.
+async function applySaveWrite({ env, ch, identityId, body }) {
   // PvP inventory lock: refuse local-client saves while a match is active.
-  // Reuse the active_match_id already fetched by getCharacterId.
+  // Reuse the active_match_id already fetched during character resolution.
   const lock = await assertNotInActiveMatch(env, ch.id, ch.active_match_id)
   if (lock) return lock
   // Probabilistic sweep — see SAVE_SWEEP_PROBABILITY above. PvP endpoints
@@ -109,8 +143,6 @@ export async function onRequestPut({ request, env }) {
     sweepStaleRows(env).catch(() => {})
   }
 
-  let body
-  try { body = await request.json() } catch { return json({ error: 'Invalid JSON' }, 400) }
   const save_data = body.save_data
   // `touch` (PvP-lobby freshness): when the incoming blob is identical to what's
   // stored, the client can still ask us to bump updated_at so the PvP
@@ -317,7 +349,7 @@ export async function onRequestPut({ request, env }) {
                 combat_level = ?,
                 total_level_at = CASE WHEN ? > total_level THEN ? ELSE total_level_at END
           WHERE id = ? AND owner_id = ? AND deleted_at IS NULL`
-      ).bind(totalLevel, combatLevel, totalLevel, now, ch.id, auth.identity.id),
+      ).bind(totalLevel, combatLevel, totalLevel, now, ch.id, identityId),
     )
   }
   await env.DB.batch(statements)

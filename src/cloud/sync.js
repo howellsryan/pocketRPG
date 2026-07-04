@@ -2,7 +2,7 @@
 // durability between debounce windows comes from critical-save milestones
 // (level-up / boss / quest / unlock) and the visibility/unload flush.
 
-import { api, getToken, getCharacterId, setLocalCharacterId, SAVE_REVISION_EVENT } from './api.js'
+import { api, getToken, getCharacterId, setLocalCharacterId, sendSaveBeacon, SAVE_REVISION_EVENT } from './api.js'
 import { buildSavePayloadFromSnapshot, applySavePayload } from '../db/saveload.js'
 import { withTimeout } from '../utils/helpers.js'
 import { CRITICAL_SAVE_COALESCE_MS, CRITICAL_SAVE_REASONS, normaliseCriticalSaveReason } from './criticalSavePolicy.js'
@@ -378,6 +378,37 @@ export async function pushNow(snapshot, options = {}) {
   }
 
   return await flushNow()
+}
+
+// Public: durably capture the current snapshot on page teardown (refresh /
+// close / tab-hide) via navigator.sendBeacon, which survives the unload where a
+// normal fetch would be cancelled. This is the reliability guarantee behind the
+// relaxed foreground cadence: whatever the debounce hasn't pushed yet is flushed
+// here on the way out. Fire-and-forget — we can't read the response — so we skip
+// when there's nothing new (content matches the last successful push) and
+// otherwise optimistically advance the local revision/content markers assuming
+// the beacon lands (the common case). A genuine miss self-heals: the next boot
+// pulls a fresh save, and a resumed tab re-anchors the revision via the
+// visibility handler's checkCloudNewer. Returns true if a beacon was queued.
+export function beaconSaveNow(snapshot) {
+  if (!canSync()) return false
+  if (conflictPending) return false
+  if (!snapshot) return false
+  let data
+  try { data = buildSavePayloadFromSnapshot(snapshot) } catch { return false }
+  const contentKey = saveContentKey(data)
+  // Already durably stored by the last successful push — nothing to flush.
+  if (contentKey === lastPushedContentKey) return false
+  // Teardown saves are player-driven, so mark them interactive: the server then
+  // always persists them (never applies the idle write ceiling), which keeps the
+  // optimistic +1 revision bump below correct.
+  const sent = sendSaveBeacon(JSON.stringify(data), { saveRevision: lastSaveRevision, interactive: true })
+  if (!sent) return false
+  lastSaveRevision = (Number.isFinite(lastSaveRevision) ? lastSaveRevision : 0) + 1
+  lastPushedContentKey = contentKey
+  lastPushedAt = Date.now()
+  hasUnsyncedChanges = false
+  return true
 }
 
 // Public: force an immediate save attempt — used by the save-blocked modal's
