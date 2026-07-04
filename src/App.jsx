@@ -1824,9 +1824,6 @@ function GameApp() {
     }
     setActionData(data || null)
     setScreen(scr)
-    if (gameReady && isCloudAccount && !isInPvpMatch && cloudPhase === 'ready') {
-      void pushNow(getSnapshot()).catch(() => {})
-    }
   }
 
   // Resume the action a player was travelling to (a gated activity start embedded its
