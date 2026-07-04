@@ -66,8 +66,8 @@ describe('runAiChat', () => {
       )
       .mockResolvedValueOnce(aiResponse("I'll sell 100 Oak Logs — confirm?"))
     const messages = baseMessages()
-    // No env/DB needed: a write is intercepted before any tool runs.
-    const { answer, pendingWrite } = await runAiChat({} as any, messages, opts())
+    // No DB needed: a write is intercepted before any tool runs.
+    const { answer, pendingWrite } = await runAiChat({ AI: { run } } as any, messages, opts())
     expect(pendingWrite).toEqual({ tool: 'sell_item', args: { item_id: 'oak_logs', quantity: 100, character_id: 7 } })
     expect(answer).toBe("I'll sell 100 Oak Logs — confirm?")
     const toolMsg = messages.find((m: any) => m.role === 'tool') as any
@@ -77,7 +77,7 @@ describe('runAiChat', () => {
 
   it('does not gate writes when allowWrites is false (used for the summary call)', async () => {
     const run = vi.fn().mockResolvedValue(aiResponse('Sold.'))
-    const { answer, pendingWrite } = await runAiChat({} as any, baseMessages(), opts({ withTools: false }))
+    const { answer, pendingWrite } = await runAiChat({ AI: { run } } as any, baseMessages(), opts({ withTools: false }))
     expect(answer).toBe('Sold.')
     expect(pendingWrite).toBeNull()
     expect(run).toHaveBeenCalledTimes(1)

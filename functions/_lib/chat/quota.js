@@ -14,15 +14,17 @@
 export const MILLI_NEURONS_PER_INPUT_TOKEN = 9.1
 export const MILLI_NEURONS_PER_OUTPUT_TOKEN = 36.37
 
-// Budget + one in-flight worst-case reserve must stay ≤ the 10,000 free
-// daily neurons (10,000,000 milli); the gap also absorbs estimation drift
-// and any other Workers AI use on the account.
-export const CHAT_NEURON_BUDGET_MILLI = 8_200_000
-// Worst-case message: 4 model calls with every context and output limit
-// maxed (incl. the read-tool schemas the model is offered). tests/chatQuota.test.ts
-// derives this bound from the CHAT_MAX_* constants + chatToolDefs() — raise it
-// there first if a limit grows or read tools are added to the allowlist.
-export const CHAT_MESSAGE_RESERVE_MILLI = 1_800_000
+// These only cap the PAID paths (the free Gemini primary is unmetered): the
+// Workers AI fallback bills neurons, so budget + one in-flight worst-case
+// reserve must stay ≤ the 10,000 free daily neurons (10,000,000 milli); the gap
+// also absorbs estimation drift and any other Workers AI use on the account.
+export const CHAT_NEURON_BUDGET_MILLI = 7_700_000
+// Worst-case message: 4 model calls with every context and output limit maxed,
+// including the FULL MCP tool schema the model is offered (reads + gated
+// writes). tests/chatQuota.test.ts derives this bound from the CHAT_MAX_*
+// constants + chatToolDefs() — raise it there first if a limit grows or the
+// tool surface expands.
+export const CHAT_MESSAGE_RESERVE_MILLI = 2_200_000
 
 // Separate daily pool for the OpenAI attempt, denominated in tokens
 // (prompt + completion) against the ~2.5M/day complimentary data-sharing
@@ -31,7 +33,7 @@ export const CHAT_MESSAGE_RESERVE_MILLI = 1_800_000
 // stays under 2.5M. Rows live in chat_neuron_usage under an 'openai:'-
 // prefixed day_key; the reserve/settle statements are unit-agnostic.
 export const CHAT_OPENAI_TOKEN_BUDGET = 2_200_000
-export const CHAT_OPENAI_MESSAGE_RESERVE_TOKENS = 150_000
+export const CHAT_OPENAI_MESSAGE_RESERVE_TOKENS = 185_000
 
 export function openaiPoolKey(dayKey) {
   return `openai:${dayKey}`

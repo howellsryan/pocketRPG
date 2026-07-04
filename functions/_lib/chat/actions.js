@@ -6,6 +6,8 @@
 
 import { signJWT, verifyJWT } from '../jwt.js'
 import { TOOL_SCHEMAS } from '../mcp/schema.js'
+import monstersData from '../../../src/data/monsters.json' assert { type: 'json' }
+import raidsData from '../../../src/data/raids.json' assert { type: 'json' }
 
 // State-mutating tools, derived from schema annotations so the set stays in
 // lockstep as MCP tools are added (readOnlyHint:false === a write).
@@ -63,6 +65,43 @@ export function actionLabel(tool, args = {}) {
   if (!subject) return title
   const qty = Number(args.quantity)
   return qty > 1 ? `${title}: ${qty} × ${prettyId(subject)}` : `${title}: ${prettyId(subject)}`
+}
+
+// Flat credit fee charged for running ANY chatbot write action, on top of
+// whatever the underlying action spends itself. One fee per confirmed action,
+// however many game-state updates that action performs.
+export const CHAT_ACTION_FEE = 1
+
+function skipCostFor(id, table) {
+  const cost = table?.[id]?.skipCost
+  return Number.isFinite(cost) && cost > 0 ? Math.floor(cost) : 1
+}
+
+// Credits the underlying action spends server-side beyond the assistant fee —
+// i.e. skip-based actions that debit credits in their own endpoint. Surfaced in
+// the confirm prompt so the player sees the true total before approving.
+export function actionSkipCost(tool, args = {}) {
+  switch (tool) {
+    case 'kill_boss':
+      return skipCostFor(args.monster_id, monstersData)
+    case 'kill_raid':
+      return skipCostFor(args.raid_id, raidsData)
+    case 'skip_slayer_task':
+      return 1
+    case 'skip_hour':
+      if (args.raidId) return skipCostFor(args.raidId, raidsData)
+      if (args.bossId) return skipCostFor(args.bossId, monstersData)
+      return 1
+    default:
+      return 0
+  }
+}
+
+// Full credit breakdown for a proposed action: the flat assistant fee plus any
+// credits the action's own skip spends.
+export function actionCreditCost(tool, args = {}) {
+  const skip = actionSkipCost(tool, args)
+  return { fee: CHAT_ACTION_FEE, skip, total: CHAT_ACTION_FEE + skip }
 }
 
 // Sign a pending write so only an action the model actually proposed (for this

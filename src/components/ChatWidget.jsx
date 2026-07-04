@@ -9,6 +9,17 @@ const GREETING = {
     "Hi! I'm the PocketRPG helper. Ask me about game mechanics, items, monsters, quests — or your own character's progress. I can also do things for you (sell an item, get a slayer task, buy gear…) — just ask, and I'll confirm before anything changes.",
 }
 
+// One-line credit cost for a pending action's confirm card.
+function costLine(cost) {
+  if (!cost) return `Costs 1 credit`
+  const fee = cost.fee ?? 1
+  const total = cost.total ?? fee
+  if (cost.skip > 0) {
+    return `Costs ${total} credit${total === 1 ? '' : 's'} — ${fee} action fee + ${cost.skip} for the skip`
+  }
+  return `Costs ${fee} credit${fee === 1 ? '' : 's'}`
+}
+
 // Floating in-game help chatbot. Cloud accounts only (the /api/chat endpoint
 // needs an authenticated character); renders nothing in demo mode.
 export default function ChatWidget({ isCloudAccount = false }) {
@@ -113,18 +124,24 @@ export default function ChatWidget({ isCloudAccount = false }) {
                     {m.content}
                   </div>
                   {pending && (
-                    <div class="self-start flex gap-2 pl-1">
-                      <Button
-                        variant="success"
-                        size="md"
-                        disabled={busy}
-                        onClick={() => confirmAction(i, pending.token)}
-                      >
-                        ✓ Confirm{pending.label ? `: ${pending.label}` : ''}
-                      </Button>
-                      <Button variant="secondary" size="md" disabled={busy} onClick={() => cancelAction(i)}>
-                        Cancel
-                      </Button>
+                    <div class="self-start max-w-[85%] rounded-lg border border-[var(--color-gold)] bg-[var(--color-void)] p-2.5 flex flex-col gap-2">
+                      {pending.label && (
+                        <div class="text-xs font-semibold text-[var(--color-parchment)]">{pending.label}</div>
+                      )}
+                      <div class="text-xs text-[var(--color-gold)]">💳 {costLine(pending.cost)}</div>
+                      <div class="flex gap-2">
+                        <Button
+                          variant="success"
+                          size="md"
+                          disabled={busy}
+                          onClick={() => confirmAction(i, pending.token)}
+                        >
+                          ✓ Confirm
+                        </Button>
+                        <Button variant="secondary" size="md" disabled={busy} onClick={() => cancelAction(i)}>
+                          Cancel
+                        </Button>
+                      </div>
                     </div>
                   )}
                 </div>

@@ -26,6 +26,8 @@ import {
   signPendingAction,
   verifyPendingAction,
   actionLabel,
+  actionCreditCost,
+  CHAT_ACTION_FEE,
   PENDING_CONFIRMATION_NOTE,
   SECONDARY_WRITE_NOTE,
 } from '../_lib/chat/actions.js'
@@ -383,23 +385,71 @@ async function resolveAnswer(env, { buildTranscript, characterId, authorization,
   return { answer, pendingWrite, reason }
 }
 
-// Confirmation path: a previously-proposed write action, signed at propose time,
-// is verified and executed now via the same MCP bridge (auth/locks/audit run in
-// the real endpoint), then the outcome is phrased for the player.
+// Atomically debit the flat chatbot action fee (server-authoritative, same
+// credits column as skip-hour). Returns { ok, remaining }; ok:false = the
+// character can't afford it, so nothing runs.
+async function chargeActionFee(env, characterId, identityId) {
+  const debit = await env.DB.prepare(
+    `UPDATE characters
+     SET credits = credits - ?1, credits_used = credits_used + ?1
+     WHERE id = ?2 AND owner_id = ?3 AND deleted_at IS NULL AND credits >= ?1
+     RETURNING credits AS credits_remaining`,
+  )
+    .bind(CHAT_ACTION_FEE, characterId, identityId)
+    .first()
+  return debit ? { ok: true, remaining: debit.credits_remaining ?? 0 } : { ok: false }
+}
+
+// Give the fee back when the action didn't actually run (a failed tool call), so
+// a rejected attempt is free.
+async function refundActionFee(env, characterId, identityId) {
+  try {
+    await env.DB.prepare(
+      `UPDATE characters
+       SET credits = credits + ?1, credits_used = MAX(0, credits_used - ?1)
+       WHERE id = ?2 AND owner_id = ?3 AND deleted_at IS NULL`,
+    )
+      .bind(CHAT_ACTION_FEE, characterId, identityId)
+      .run()
+  } catch (err) {
+    console.error('[PocketRPG][chat] action-fee refund failed:', err?.message || err)
+  }
+}
+
+// Confirmation path: a previously-proposed write action, signed at propose time.
+// Charge the 1-credit assistant fee FIRST — before any execution or AI spend —
+// then execute it via the same MCP bridge (auth/locks/audit run in the real
+// endpoint), then phrase the outcome. A failed action refunds the fee.
 async function confirmAction({ env, authorization, identity, characterId, token }) {
   const payload = await verifyPendingAction(token, env.JWT_SECRET, characterId)
   if (!payload) {
     return json({ answer: "That action link has expired — just ask me again and I'll set it back up.", mode: 'action_expired' })
   }
+
+  // No credit, no action — and crucially, no AI spend past this point.
+  const fee = await chargeActionFee(env, characterId, identity.id)
+  if (!fee.ok) {
+    return json({
+      answer: `Running an action costs ${CHAT_ACTION_FEE} credit and you're out — top up credits in the shop, then ask me again.`,
+      mode: 'action_no_credit',
+    })
+  }
+
   let result
   try {
     result = await callTool(payload.tool, payload.args, { env, authorization, identity })
   } catch (err) {
     result = { content: [{ type: 'text', text: `Error: ${String(err?.message || err)}` }], isError: true }
   }
-  const resultText = toolResultText(result)
   const isError = !!result?.isError
+  if (isError) await refundActionFee(env, characterId, identity.id)
+
+  const resultText = toolResultText(result)
   const label = actionLabel(payload.tool, payload.args)
+  // Let the summary state the fee (and remaining balance on success).
+  const feeNote = isError
+    ? `The ${CHAT_ACTION_FEE}-credit action fee was refunded because the action failed.`
+    : `This cost ${CHAT_ACTION_FEE} credit (the assistant action fee); the player has ${fee.remaining} credit(s) left afterwards.`
 
   // Phrase the outcome with the free/unmetered AI path (no tools); fall back to
   // a deterministic line if the AI path is unavailable.
@@ -408,7 +458,7 @@ async function confirmAction({ env, authorization, identity, characterId, token 
     const out = await resolveAnswer(env, {
       buildTranscript: () => [
         { role: 'system', content: SYSTEM_PROMPT },
-        { role: 'user', content: `${ACTION_RESULT_PREFACE}\nAction: ${label}\nResult JSON: ${resultText}` },
+        { role: 'user', content: `${ACTION_RESULT_PREFACE}\n${feeNote}\nAction: ${label}\nResult JSON: ${resultText}` },
       ],
       characterId,
       authorization,
@@ -422,12 +472,22 @@ async function confirmAction({ env, authorization, identity, characterId, token 
   }
   if (!answer) {
     answer = isError
-      ? `That didn't go through: ${resultText.replace(/^(Tool error|Error):\s*/, '')}`
-      : `Done — ${label}.`
+      ? `That didn't go through (your ${CHAT_ACTION_FEE} credit was refunded): ${resultText.replace(/^(Tool error|Error):\s*/, '')}`
+      : `Done — ${label}. That cost ${CHAT_ACTION_FEE} credit; you have ${fee.remaining} left.`
   }
 
-  await auditLog(env, 'chat_action', { identityId: identity.id, characterId, tool: payload.tool, isError }, { swallow: true })
-  return json({ answer, mode: isError ? 'action_error' : 'action_done', tool: payload.tool })
+  await auditLog(
+    env,
+    'chat_action',
+    { identityId: identity.id, characterId, tool: payload.tool, isError, feeCharged: !isError },
+    { swallow: true },
+  )
+  return json({
+    answer,
+    mode: isError ? 'action_error' : 'action_done',
+    tool: payload.tool,
+    ...(isError ? {} : { creditsRemaining: fee.remaining }),
+  })
 }
 
 export async function onRequestPost({ request, env }) {
@@ -481,8 +541,9 @@ export async function onRequestPost({ request, env }) {
     // without a confirm round-trip.
     mode = 'action_pending'
     const label = actionLabel(pendingWrite.tool, pendingWrite.args)
+    const cost = actionCreditCost(pendingWrite.tool, pendingWrite.args)
     const signed = await signPendingAction({ tool: pendingWrite.tool, args: pendingWrite.args, characterId }, env.JWT_SECRET)
-    pendingAction = { token: signed, label }
+    pendingAction = { token: signed, label, cost }
     if (!answer) answer = `I can ${label.toLowerCase()} for you — confirm below and I'll do it.`
   } else if (!answer) {
     // Whatever went wrong on the AI path — the player always gets a
