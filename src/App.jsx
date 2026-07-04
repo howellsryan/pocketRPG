@@ -48,7 +48,7 @@ import { initNewGame, saveSetting, getSetting, getAllStats, getInventory, getEqu
 import { startTicks, stopTicks, onTick, pauseTicks, resumeTicks } from './engine/tick.js'
 import { wipeLocalSave } from './db/saveload.js'
 import { api, captureTokenFromHash, getToken, getCharacterId, getCharacterName, setCharacter, clearAuth, getLocalCharacterId, setLocalCharacterId, getIronmanMode, getOneLifeMode, syncAccountModeFlags, isDemoMode, setDemoMode, CREDITS_UPDATED_EVENT } from './cloud/api.js'
-import { schedulePushSave, schedulePeriodicSave, pushNow, beaconSaveNow, pullSave, applyCloudSave, checkCloudNewer, resetSyncState, requestCriticalPushSave, retrySaveNow, isSaveConflict, clearSaveConflict, CLOUD_SAVE_STATUS_EVENT } from './cloud/sync.js'
+import { schedulePushSave, schedulePeriodicSave, pushNow, beaconSaveNow, pullSave, applyCloudSave, checkCloudNewer, isLocalWriteNewerThanCloud, resetSyncState, requestCriticalPushSave, retrySaveNow, isSaveConflict, clearSaveConflict, CLOUD_SAVE_STATUS_EVENT } from './cloud/sync.js'
 import { CRITICAL_SAVE_REASONS } from './cloud/criticalSavePolicy.js'
 import { fetchIdleState, beaconIdleState, resetIdleStateSync } from './cloud/idleState.js'
 import { isBackground } from './engine/activityRegistry.js'
@@ -1540,7 +1540,15 @@ function GameApp() {
         }
         const result = await pullSave()
         if (result && result.payload) {
-          await applyCloudSave(result.payload, result.updatedAt)
+          // IDB may already hold a change (settings toggle, bank tag edit,
+          // world-map move, etc.) made just before this reload that the
+          // debounced/critical push hasn't reached the server yet. Adopting
+          // the cloud copy unconditionally would silently discard it — keep
+          // the newer local state instead and let the normal push cycle
+          // reconcile it to the cloud.
+          if (!isLocalWriteNewerThanCloud(result.updatedAt)) {
+            await applyCloudSave(result.payload, result.updatedAt)
+          }
         } else if (result && result.readFailed) {
           // The cloud read timed out or errored — we genuinely do NOT know
           // whether this character has a save. Initialising a fresh game and
