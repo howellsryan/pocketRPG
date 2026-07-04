@@ -48,6 +48,9 @@ describe('chat prompt assembly', () => {
     expect(SYSTEM_PROMPT).toMatch(/don't know/i)
     // Action-capable now, but every write must be confirmed first.
     expect(SYSTEM_PROMPT).toMatch(/confirm/i)
+    // Look data up rather than asking; make a clear recommendation.
+    expect(SYSTEM_PROMPT).toMatch(/never ask the player/i)
+    expect(SYSTEM_PROMPT).toMatch(/recommend the single best/i)
   })
 
   it('builds system + history + contextualised question', () => {
