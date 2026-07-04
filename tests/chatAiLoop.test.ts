@@ -206,6 +206,38 @@ describe('runAiChat', () => {
     expect(round1Tools).toContain('sell_item')
   })
 
+  it('recovers a write tool call leaked as literal Harmony-style text instead of tool_calls', async () => {
+    const run = vi
+      .fn()
+      .mockResolvedValueOnce(
+        aiResponse(
+          'to=functions.start_skilling <|constrain|>json\n{"skill":"agility","action":"ardougne"}I\'m starting Silverkeep Rooftop agility for you now; this uses 1 credit for the assistant action fee.',
+        ),
+      )
+      .mockResolvedValueOnce(aiResponse('Starting Silverkeep Rooftop agility — confirm below.'))
+    const messages = baseMessages()
+    const { answer, pendingWrite } = await runAiChat({ AI: { run } } as any, messages, opts())
+    expect(pendingWrite).toEqual({
+      tool: 'start_skilling',
+      args: { skill: 'agility', action: 'ardougne', character_id: 7 },
+    })
+    expect(answer).toBe('Starting Silverkeep Rooftop agility — confirm below.')
+    // The recovered call replaces the raw token soup in conversation history too.
+    const assistantMsg = messages.find((m: any) => m.role === 'assistant' && m.tool_calls?.length) as any
+    expect(assistantMsg.content).toBe("I'm starting Silverkeep Rooftop agility for you now; this uses 1 credit for the assistant action fee.")
+    expect(assistantMsg.tool_calls[0].function.name).toBe('start_skilling')
+  })
+
+  it('does not recover a leaked call for a tool name outside the allowlist', async () => {
+    const run = vi
+      .fn()
+      .mockResolvedValueOnce(aiResponse('to=functions.made_up_tool json\n{"a":1} some text'))
+      .mockResolvedValueOnce(aiResponse('Final answer.'))
+    const { answer, pendingWrite } = await runAiChat({ AI: { run } } as any, baseMessages(), opts())
+    expect(pendingWrite).toBeNull()
+    expect(answer).toBe('to=functions.made_up_tool json\n{"a":1} some text')
+  })
+
   it('marks usage unknown when a call reports no token counts', async () => {
     const run = vi.fn().mockResolvedValue({ choices: [{ message: { content: 'Answer.' } }] })
     const stats = newStats()

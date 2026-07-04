@@ -251,12 +251,55 @@ export function chatAttempts(env) {
   return attempts
 }
 
+// Strip an unterminated <think> tail: if max_tokens cuts the model off
+// mid-reasoning, the block never closes and must not leak to the player.
+function stripThink(text) {
+  return text.replace(/<think>[\s\S]*?(?:<\/think>|$)/g, '').trim()
+}
+
 function answerText(res) {
   const content = res?.choices?.[0]?.message?.content
   if (typeof content !== 'string') return ''
-  // Also strip an unterminated <think> tail: if max_tokens cuts the model off
-  // mid-reasoning, the block never closes and must not leak to the player.
-  return content.replace(/<think>[\s\S]*?(?:<\/think>|$)/g, '').trim()
+  return stripThink(content)
+}
+
+// Some models occasionally emit a tool call as a literal text fragment (a
+// Harmony-style "to=functions.NAME ...{json}" token sequence) instead of
+// populating the structured tool_calls field the chat-completions/Responses
+// APIs are meant to return it in. Recognize that shape and recover it as the
+// real call it was meant to be — otherwise it shows up as garbled text to the
+// player, the write never gets gated/confirmed, and the model can go on to
+// confidently claim (on a later turn) that an action succeeded when nothing
+// ever ran.
+const LEAKED_TOOL_CALL_RE = /to=functions\.([a-zA-Z_][\w]*)[^{]*(\{[\s\S]*)/
+function recoverLeakedToolCall(content) {
+  if (typeof content !== 'string') return null
+  const match = content.match(LEAKED_TOOL_CALL_RE)
+  if (!match) return null
+  const [, name, rest] = match
+  let depth = 0
+  let end = -1
+  for (let i = 0; i < rest.length; i++) {
+    if (rest[i] === '{') depth++
+    else if (rest[i] === '}') {
+      depth--
+      if (depth === 0) {
+        end = i
+        break
+      }
+    }
+  }
+  if (end === -1) return null
+  let args
+  try {
+    args = JSON.parse(rest.slice(0, end + 1))
+  } catch {
+    return null
+  }
+  const before = content.slice(0, match.index).trim()
+  const after = rest.slice(end + 1).trim()
+  const text = stripThink([before, after].filter(Boolean).join(' '))
+  return { name, args, text }
 }
 
 // Accumulate a call's reported token usage into per-pool message stats.
@@ -360,14 +403,20 @@ export async function runAiChat(
     const tools = [SEARCH_TOOLS_DEF, ...chatToolDefs([...activeTools])]
     const res = await runModel({ messages, tools, ...CHAT_RUN_OPTS })
     const message = res?.choices?.[0]?.message
-    const calls = (Array.isArray(message?.tool_calls) ? message.tool_calls : [])
+    let calls = (Array.isArray(message?.tool_calls) ? message.tool_calls : [])
       .filter((c) => c?.type === 'function' && c.function)
       .slice(0, 3)
       .map((c, i) => ({ ...c, id: c.id || `call_${round}_${i}` }))
     if (!calls.length) {
-      const answer = answerText(res)
-      if (answer) return { answer, pendingWrite: null }
-      break
+      const leaked = recoverLeakedToolCall(message?.content)
+      if (leaked && CHAT_TOOL_ALLOWLIST.includes(leaked.name)) {
+        calls = [{ id: `call_${round}_0`, type: 'function', function: { name: leaked.name, arguments: JSON.stringify(leaked.args) } }]
+        if (message) message.content = leaked.text || null
+      } else {
+        const answer = answerText(res)
+        if (answer) return { answer, pendingWrite: null }
+        break
+      }
     }
     messages.push({ role: 'assistant', content: message.content ?? null, tool_calls: calls })
     // A write is never executed inline. Validate the writes' ids up front:

@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'preact/hooks'
 import Modal from './Modal.jsx'
 import Button from './Button.jsx'
 import { api, CREDITS_UPDATED_EVENT } from '../cloud/api.js'
+import { applyCloudSave } from '../cloud/sync.js'
+import { useGame } from '../state/gameState.jsx'
 
 const GREETING = {
   role: 'assistant',
@@ -23,6 +25,7 @@ function costLine(cost) {
 // Floating in-game help chatbot. Cloud accounts only (the /api/chat endpoint
 // needs an authenticated character); renders nothing in demo mode.
 export default function ChatWidget({ isCloudAccount = false }) {
+  const { loadGame } = useGame()
   const [open, setOpen] = useState(false)
   const [messages, setMessages] = useState([GREETING])
   const [input, setInput] = useState('')
@@ -93,12 +96,26 @@ export default function ChatWidget({ isCloudAccount = false }) {
     setBusy(true)
     api
       .chat(null, [], { confirm: token })
-      .then((res) => {
+      .then(async (res) => {
         trackRemaining(res)
         // A multi-step ask ("skip this and get me a new one") can chain
         // straight into the next confirmable action instead of making the
         // player ask again.
         setMessages((prev) => [...prev, { role: 'assistant', content: res.answer, pendingAction: res.pendingAction || null }])
+        // The action just changed server-side state (skills, inventory, bank,
+        // an idle task, credits…) — pull the fresh save and reload so the rest
+        // of the app (and the live tick loop) picks it up without a manual reload.
+        if (res.mode === 'action_done' || res.mode === 'action_chained') {
+          try {
+            const saveRes = await api.getSave()
+            if (saveRes?.save?.save_data) {
+              await applyCloudSave(JSON.parse(saveRes.save.save_data), saveRes.save.updatedAt, saveRes.save.save_revision)
+            }
+            await loadGame()
+          } catch (err) {
+            console.warn('[PocketRPG] post-action state refresh failed:', err?.message || err)
+          }
+        }
       })
       .catch(() => {
         setMessages((prev) => [
