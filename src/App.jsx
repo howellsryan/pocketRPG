@@ -166,16 +166,28 @@ function clueRevealTitle(clueTask) {
 function completeClueSolve(clueTask, { updateBankDirect, getSnapshot, addToast, isInPvpMatch }) {
   const title = clueRevealTitle(clueTask)
   if (getToken() && getCharacterId()) {
-    // Returned (not just fired) so paid skips can await settlement: the grant
-    // bumps save_revision server-side, and pushing a save before the response's
-    // applyCloudSave lands would be a guaranteed stale-write conflict.
     return api.completeClue(clueTask.clueLevel, {
       actionNonce: `clue:${clueTask.clueLevel}:${Date.now()}`,
       consumptions: [{ itemId: clueTask.requiresItem, quantity: 1 }],
     }).then(async (res) => {
-      if (res?.save?.save_data) await applyCloudSave(JSON.parse(res.save.save_data), res.save.updatedAt, res.save.save_revision)
-      applyServerCollectionLogEntries(res?.collectionLogEntries || [])
+      // NOTE: deliberately NOT applyCloudSave(res.save.save_data) — that snapshot
+      // is whatever the server read at the START of this request, which can
+      // predate a later local-only change (e.g. travel) if the round trip is
+      // slow, silently reverting it on adoption. Apply just the granted reward
+      // (clues always auto-bank, matching the offline branch below);
+      // save_revision stays in sync generically via SAVE_REVISION_EVENT (api.js).
       const granted = Array.isArray(res?.granted) ? res.granted : []
+      if (granted.length > 0) {
+        const bankUpdates = {}
+        for (const reward of granted) {
+          const itemId = reward?.itemId
+          const quantity = Math.floor(Number(reward?.quantity) || 0)
+          if (!itemId || quantity < 1) continue
+          bankUpdates[itemId] = (bankUpdates[itemId] || 0) + quantity
+        }
+        updateBankDirect(bankUpdates)
+      }
+      applyServerCollectionLogEntries(res?.collectionLogEntries || [])
       if (granted.length > 0) emitRewardReveal(title, clueTask.icon || '📜', granted)
     }).catch((err) => {
       addToast(`Clue claim failed: ${err?.message || 'server_error'}`, 'error')
@@ -349,10 +361,13 @@ function GameApp() {
     const res = await api.completeMinigame(task.id, {
       actionNonce: `minigame:${task.id}:${Date.now()}`,
     })
-    if (res?.save?.save_data) {
-      await applyCloudSave(JSON.parse(res.save.save_data), res.save.updatedAt, res.save.save_revision)
-      await loadGame()
-    }
+    // NOTE: deliberately NOT applyCloudSave(res.save.save_data) + loadGame() here
+    // — that snapshot is whatever the server read at the START of this request,
+    // which can predate a later local-only change (e.g. travel) if the round trip
+    // is slow, silently reverting it. The unlock itself is already applied
+    // locally and pushed separately via requestCriticalPushSave at every call
+    // site above; save_revision stays in sync generically via SAVE_REVISION_EVENT
+    // (api.js).
     // Reflect the server-recorded collection-log entries immediately, the same
     // way the combat/clue completion flows do — otherwise the unlocked slot
     // doesn't appear until the next full collection-log refetch.
@@ -742,13 +757,11 @@ function GameApp() {
         // mid-session. conflictPending parks every push until the re-pull
         // adopts the server's revision; the reload survives as the fallback
         // when the pull itself fails.
-        console.warn('[PocketRPG][debug] save_revision_conflict — rolling back to cloud copy (this discards any unpushed local change)')
         setRollingBack(true)
         ;(async () => {
           try {
             const pulled = await pullSave()
             if (pulled?.payload) {
-              console.log('[PocketRPG][debug] rollback pulling cloud worldLocation=', pulled.payload?.settings?.worldLocation)
               pauseTicks()
               try {
                 await applyCloudSave(pulled.payload, pulled.updatedAt)
@@ -1544,9 +1557,7 @@ function GameApp() {
           // the cloud copy unconditionally would silently discard it — keep
           // the newer local state instead and let the normal push cycle
           // reconcile it to the cloud.
-          const skipApply = isLocalWriteNewerThanCloud(result.updatedAt)
-          console.log('[PocketRPG][debug] boot pull: cloudWorldLocation=', result.payload?.settings?.worldLocation, 'cloudUpdatedAt=', result.updatedAt, 'localWriteMarker=', (() => { try { return localStorage.getItem('pocketrpg_lastLocalWriteAt') } catch { return null } })(), 'skipApply=', skipApply)
-          if (!skipApply) {
+          if (!isLocalWriteNewerThanCloud(result.updatedAt)) {
             await applyCloudSave(result.payload, result.updatedAt)
           }
         } else if (result && result.readFailed) {

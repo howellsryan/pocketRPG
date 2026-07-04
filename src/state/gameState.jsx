@@ -566,7 +566,6 @@ export function GameProvider({ children }) {
     setIdleCombatSetupState(normalisedIdleCombatSetup)
     setAutoBankLootState(autoBankSetting !== false) // default true
     setShowInfoToastsState(savedShowInfoToasts === true) // default false
-    console.log('[PocketRPG][debug] loadGame read worldLocation from IDB:', savedWorldLocation)
     setWorldLocationState(normaliseLocation(savedWorldLocation)) // un-migrated saves → start place
     setBankConfig(savedBankConfig ?? { tabs: [], itemTabMap: {} })
     setEquipmentPresetsState(Array.isArray(savedEquipmentPresets) ? savedEquipmentPresets : [])
@@ -761,7 +760,6 @@ export function GameProvider({ children }) {
 
   const updateWorldLocation = useCallback((placeId) => {
     const next = normaliseLocation(placeId)
-    console.log('[PocketRPG][debug] updateWorldLocation ->', next, '(requested:', placeId, ')')
     worldLocationRef.current = next
     setWorldLocationState(next)
     saveSetting('worldLocation', next)

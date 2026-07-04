@@ -174,7 +174,6 @@ async function performPush() {
     // pushes skip the dirty check and the server bumps updated_at without
     // rewriting the blob (see save.js no-op branch).
     const wantsTouch = pendingSaveOptions.touch === true
-    console.log('[PocketRPG][debug] performPush: worldLocation=', data?.settings?.worldLocation, 'saveRevision=', lastSaveRevision, 'skippedAsNoop=', (!wantsTouch && contentKey === lastPushedContentKey))
     if (!wantsTouch && contentKey === lastPushedContentKey) {
       pendingSaveOptions = {}
       hasUnsyncedChanges = false
@@ -195,7 +194,7 @@ async function performPush() {
     hasUnsyncedChanges = false
     consecutiveFailures = 0
     emitCloudSaveStatus('saved', { updatedAt: res?.updatedAt || null })
-    console.log('[PocketRPG] Cloud save pushed, size:', json.length, '[debug] confirmedRevision=', res?.save_revision)
+    console.log('[PocketRPG] Cloud save pushed, size:', json.length)
     return true
   } catch (err) {
     // While a PvP match is active, /api/save intentionally returns:

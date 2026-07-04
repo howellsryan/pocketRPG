@@ -1,6 +1,6 @@
 import { useGame } from '../state/gameState.jsx'
 import { api, getToken, getCharacterId, CREDITS_UPDATED_EVENT } from '../cloud/api.js'
-import { requestCriticalPushSave, applyCloudSave } from '../cloud/sync.js'
+import { requestCriticalPushSave } from '../cloud/sync.js'
 import { CRITICAL_SAVE_REASONS } from '../cloud/criticalSavePolicy.js'
 import { recordCollectionLogDrop } from '../cloud/collectionLog.js'
 import GildedComplete from '../components/GildedComplete.jsx'
@@ -28,7 +28,7 @@ const CHARACTER_UNLOCKS_DEF = [
 export default function CharacterUnlockScreen({ onBack }) {
   const {
     characterUnlocks, updateCharacterUnlock, addToast, getSnapshot,
-    slayerPoints, updateSlayerPoints, bank, inventory, addToBank, itemsData, loadGame,
+    slayerPoints, updateSlayerPoints, bank, inventory, addToBank, itemsData,
     slayerPerks, updateSlayerPerk,
   } = useGame()
   const isCloud = Boolean(getToken() && getCharacterId())
@@ -70,9 +70,14 @@ export default function CharacterUnlockScreen({ onBack }) {
     if (getToken() && getCharacterId()) {
       try {
         await api.completeSlayer('slayer', { actionNonce: `slayer:${unlock.itemId}:${Date.now()}`, rewards: [{ itemId: unlock.itemId, quantity: 1 }], slayerPoints: -unlock.cost })
-        const saveRes = await api.getSave()
-        if (saveRes?.save?.save_data) await applyCloudSave(JSON.parse(saveRes.save.save_data), saveRes.save.updatedAt, saveRes.save.save_revision)
-        await loadGame()
+        // NOTE: deliberately NOT re-pulling + applyCloudSave/loadGame here — that
+        // would adopt whatever the cloud save looked like at fetch time, which can
+        // discard a local-only change (e.g. travel) made in the meantime. The
+        // server granted exactly the item + point debit requested above, so apply
+        // that directly; save_revision stays in sync generically via
+        // SAVE_REVISION_EVENT (api.js).
+        updateSlayerPoints(slayerPoints - unlock.cost)
+        addToBank(unlock.itemId, 1)
         addToast(`🎉 Purchased ${item.name} — sent to bank`, 'info')
         return
       } catch (e) {
