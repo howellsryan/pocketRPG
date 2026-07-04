@@ -1,5 +1,13 @@
 # MCP Read-Ability Review — Chatbot Context Gaps
 
+> **Status: implemented.** §2a (enriched `summarizeSave`: total level/XP, combat level,
+> combat type, attack speed, prayer cap, aggregated equipment bonuses, best-case max hits),
+> §2b (`get_bank`), §4 (`get_daily_tasks`), and the §3 allowlist additions
+> (`get_account`, `get_idle_combat_setup`, `search_market`, `list_market_listings`,
+> `my_offers`, `get_leaderboard`) all shipped. `get_combat_stats` was intentionally skipped
+> as redundant with the §2a enrichment. The analysis below is retained as the design record.
+
+
 Scope: what read data the in-game help chatbot (`/api/chat`, §16) can pull from the MCP
 surface to answer player questions about *their own character*, and where it falls short.
 
