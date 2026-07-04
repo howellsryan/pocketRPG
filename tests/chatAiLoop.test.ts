@@ -8,6 +8,7 @@ import {
   CHAT_OPENAI_REASONING_EFFORT,
   ALWAYS_ON_TOOL_NAMES,
   SEARCH_TOOL_NAME,
+  SEARCH_TOOLS_DEF,
 } from '../functions/_lib/chat/prompt.js'
 
 afterEach(() => {
@@ -275,8 +276,14 @@ describe('chatAttempts / geminiChatBinding', () => {
     )
   })
 
-  it("calls OpenAI's chat completions endpoint, adapting params for gpt-5.x models", async () => {
-    const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => aiResponse('Hi.') })
+  it("calls OpenAI's Responses endpoint, translating to/from the chat-completions shape", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        output: [{ type: 'message', content: [{ type: 'output_text', text: 'Hi.' }] }],
+        usage: { input_tokens: 100, output_tokens: 50 },
+      }),
+    })
     vi.stubGlobal('fetch', fetchMock)
     const binding = openaiChatBinding({ OPENAI_API_KEY: 'test-key' } as any)
     const res = await binding.run('gpt-5.4-mini', {
@@ -285,17 +292,38 @@ describe('chatAttempts / geminiChatBinding', () => {
       temperature: 0.6,
     })
     const [url, init] = fetchMock.mock.calls[0]
-    expect(url).toBe('https://api.openai.com/v1/chat/completions')
+    // Function tools + reasoning_effort 400 on /v1/chat/completions for
+    // reasoning models; OpenAI's own error points at /v1/responses instead.
+    expect(url).toBe('https://api.openai.com/v1/responses')
     expect(init.headers.Authorization).toBe('Bearer test-key')
     const body = JSON.parse(init.body)
     expect(body.model).toBe('gpt-5.4-mini')
-    // Reasoning models 400 on max_tokens and non-default temperature.
-    expect(body.max_completion_tokens).toBe(5000)
-    expect(body.max_tokens).toBeUndefined()
+    expect(body.max_output_tokens).toBe(5000)
     expect(body.temperature).toBeUndefined()
-    expect(body.reasoning_effort).toBe(CHAT_OPENAI_REASONING_EFFORT)
-    expect(body.messages).toHaveLength(2)
+    expect(body.reasoning).toEqual({ effort: CHAT_OPENAI_REASONING_EFFORT })
+    expect(body.input).toHaveLength(2)
     expect(res.choices[0].message.content).toBe('Hi.')
+    expect(res.usage).toEqual(USAGE)
+  })
+
+  it('translates OpenAI function_call output items into chat-completions tool_calls', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        output: [{ type: 'function_call', call_id: 'call_1', name: 'get_character', arguments: '{}' }],
+        usage: { input_tokens: 10, output_tokens: 5 },
+      }),
+    })
+    vi.stubGlobal('fetch', fetchMock)
+    const binding = openaiChatBinding({ OPENAI_API_KEY: 'test-key' } as any)
+    const res = await binding.run('gpt-5.4-mini', { messages: baseMessages(), tools: [SEARCH_TOOLS_DEF] })
+    const body = JSON.parse(fetchMock.mock.calls[0][1].body)
+    expect(body.tools).toEqual([
+      { type: 'function', name: SEARCH_TOOLS_DEF.function.name, description: SEARCH_TOOLS_DEF.function.description, parameters: SEARCH_TOOLS_DEF.function.parameters },
+    ])
+    expect(res.choices[0].message.tool_calls).toEqual([
+      { id: 'call_1', type: 'function', function: { name: 'get_character', arguments: '{}' } },
+    ])
   })
 
   it('throws on a non-2xx OpenAI response so the endpoint degrades further', async () => {

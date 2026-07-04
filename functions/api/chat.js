@@ -133,18 +133,70 @@ export function geminiChatBinding(env) {
   }
 }
 
-// OpenAI-backed binding with the same `run(model, payload)` shape as env.AI,
-// via OpenAI's chat completions endpoint — the chat-completions plumbing
-// (messages/tools/usage) works unchanged.
+// Chat-completions `messages` -> Responses API `input` items. Assistant tool
+// calls and tool results are distinct item types there (`function_call` /
+// `function_call_output`), not message roles.
+function toResponsesInput(messages) {
+  const input = []
+  for (const m of messages) {
+    if (m.role === 'assistant' && Array.isArray(m.tool_calls) && m.tool_calls.length) {
+      if (m.content) input.push({ role: 'assistant', content: m.content })
+      for (const call of m.tool_calls) {
+        input.push({ type: 'function_call', call_id: call.id, name: call.function.name, arguments: call.function.arguments })
+      }
+    } else if (m.role === 'tool') {
+      input.push({ type: 'function_call_output', call_id: m.tool_call_id, output: m.content })
+    } else {
+      input.push({ role: m.role, content: m.content })
+    }
+  }
+  return input
+}
+
+// Chat-completions `tools` (nested `{type:'function', function:{...}}`) ->
+// Responses API's flat `{type:'function', name, description, parameters}`.
+function toResponsesTools(tools) {
+  return tools.map((t) => ({ type: 'function', name: t.function.name, description: t.function.description, parameters: t.function.parameters }))
+}
+
+// Responses API `output` -> a chat-completions-shaped result, so the rest of
+// this file (answerText, the tool loop, trackUsage) doesn't need to know
+// OpenAI is on a different endpoint than Gemini/Workers AI.
+function fromResponsesOutput(res) {
+  const output = Array.isArray(res?.output) ? res.output : []
+  const content =
+    output
+      .filter((item) => item.type === 'message')
+      .flatMap((item) => (Array.isArray(item.content) ? item.content : []))
+      .filter((c) => c.type === 'output_text')
+      .map((c) => c.text)
+      .join('') || null
+  const toolCalls = output
+    .filter((item) => item.type === 'function_call')
+    .map((item) => ({ id: item.call_id, type: 'function', function: { name: item.name, arguments: item.arguments } }))
+  const usage = res?.usage
+    ? { prompt_tokens: res.usage.input_tokens, completion_tokens: res.usage.output_tokens }
+    : undefined
+  return { choices: [{ message: { role: 'assistant', content, tool_calls: toolCalls.length ? toolCalls : undefined } }], usage }
+}
+
+// OpenAI-backed binding with the same `run(model, payload)` shape as env.AI.
+// Reasoning models 400 on function tools + reasoning_effort via
+// /v1/chat/completions ("Please use /v1/responses instead"), so this talks to
+// the Responses API and translates to/from the chat-completions shape shared
+// with the Gemini/Workers AI bindings.
 export function openaiChatBinding(env) {
   return {
     async run(model, payload) {
-      // gpt-5.x reasoning models 400 on `max_tokens` (want
-      // `max_completion_tokens`) and on any non-default `temperature`.
-      const { max_tokens, temperature, ...rest } = payload
-      const body = { model, ...rest, reasoning_effort: CHAT_OPENAI_REASONING_EFFORT }
-      if (max_tokens !== undefined) body.max_completion_tokens = max_tokens
-      const res = await fetch('https://api.openai.com/v1/chat/completions', {
+      const { messages, tools, max_tokens } = payload
+      const body = {
+        model,
+        input: toResponsesInput(messages),
+        reasoning: { effort: CHAT_OPENAI_REASONING_EFFORT },
+      }
+      if (tools) body.tools = toResponsesTools(tools)
+      if (max_tokens !== undefined) body.max_output_tokens = max_tokens
+      const res = await fetch('https://api.openai.com/v1/responses', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -156,7 +208,7 @@ export function openaiChatBinding(env) {
         const detail = (await res.text().catch(() => '')).slice(0, 300)
         throw new Error(`OpenAI ${res.status}: ${detail}`)
       }
-      return res.json()
+      return fromResponsesOutput(await res.json())
     },
   }
 }
