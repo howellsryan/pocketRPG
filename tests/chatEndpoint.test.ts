@@ -182,6 +182,39 @@ describe('POST /api/chat — confirm a write action', () => {
     expect(feeDebits).toEqual([])
     expect(callTool).not.toHaveBeenCalled()
   })
+
+  it('chains to a second confirmable action when the original ask has more to do', async () => {
+    ;(callTool as any).mockResolvedValue({ content: [{ type: 'text', text: '{"skipped":true}' }] })
+    const token = await signPendingAction(
+      { tool: 'skip_slayer_task', args: { character_id: 42 }, characterId: 42, question: 'skip this task and get me a new one' },
+      TEST_SECRET,
+    )
+    const toolCallResponse = (name: string, args: string) => ({
+      choices: [{ message: { content: null, tool_calls: [{ id: 'c1', type: 'function', function: { name, arguments: args } }] } }],
+      usage: { prompt_tokens: 10, completion_tokens: 5 },
+    })
+    const run = vi
+      .fn()
+      // Round 1: assign_slayer_task isn't always-on, so the model looks it up first.
+      .mockResolvedValueOnce(toolCallResponse('search_tools', '{"query":"get a new slayer task"}'))
+      // Round 2: now declared, the model calls it directly.
+      .mockResolvedValueOnce(toolCallResponse('assign_slayer_task', '{"master_id":"turael"}'))
+      // Round 3: one more no-tools call to phrase the confirmation request.
+      .mockResolvedValueOnce({
+        choices: [{ message: { content: 'Skipped! I can get you a new task from Turael — confirm below.' } }],
+        usage: { prompt_tokens: 10, completion_tokens: 5 },
+      })
+    const { env, feeDebits } = confirmEnv(9)
+    ;(env as any).AI = { run }
+    const res = await onRequestPost({ request: await confirmRequest(token), env })
+    const body = (await res.json()) as any
+    expect(body.mode).toBe('action_chained')
+    expect(feeDebits).toEqual([1]) // only the first action's fee — the second isn't run yet
+    expect(callTool).toHaveBeenCalledTimes(1) // skip_slayer_task only; assign_slayer_task awaits its own confirm
+    expect(body.pendingAction?.label).toContain('Turael')
+    expect(body.pendingAction?.token).toEqual(expect.any(String))
+    expect(body.answer).toContain('Turael')
+  })
 })
 
 // D1 stand-in for the message cap + paid refill. claimAllowed drives whether the

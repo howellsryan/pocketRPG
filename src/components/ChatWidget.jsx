@@ -95,7 +95,10 @@ export default function ChatWidget({ isCloudAccount = false }) {
       .chat(null, [], { confirm: token })
       .then((res) => {
         trackRemaining(res)
-        setMessages((prev) => [...prev, { role: 'assistant', content: res.answer }])
+        // A multi-step ask ("skip this and get me a new one") can chain
+        // straight into the next confirmable action instead of making the
+        // player ask again.
+        setMessages((prev) => [...prev, { role: 'assistant', content: res.answer, pendingAction: res.pendingAction || null }])
       })
       .catch(() => {
         setMessages((prev) => [

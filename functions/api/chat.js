@@ -67,6 +67,16 @@ import {
 const ACTION_RESULT_PREFACE =
   'The player confirmed and this PocketRPG action just ran on their account. Tell them what happened in 1-2 friendly sentences using the result below. If it reports an error, explain it plainly and suggest a fix. Do not invent anything beyond the result, and do not ask for confirmation again.'
 
+// Preface used instead of ACTION_RESULT_PREFACE when the original ask is known
+// (multi-step requests like "skip this task and get me a new one"): lets the
+// model continue with the next step, same confirm gate as any other write.
+const ACTION_CHAIN_PREFACE =
+  'The player confirmed and this PocketRPG action just ran on their account — see the result below. Tell them what ' +
+  'happened in 1 short sentence. Then look at what they originally asked (below): if there is more left to do from ' +
+  "that request, call the right tool for it now — it will be held for the player's confirmation, exactly like the " +
+  "action that just ran, not executed immediately. If their original request is now fully handled, just say so. " +
+  'Do not invent extra steps beyond what they asked for.'
+
 let knowledgeIndex = null
 function getIndex() {
   if (!knowledgeIndex) knowledgeIndex = buildIndex(KNOWLEDGE_CHUNKS)
@@ -517,6 +527,17 @@ async function refundActionFee(env, characterId, identityId) {
   }
 }
 
+// Sign a model-proposed write into the confirmable shape the client renders
+// (label + credit cost + token). `question` carries the player's original ask
+// forward so a follow-up step of the same request can chain after this one
+// is confirmed (see confirmAction).
+async function buildPendingAction(pendingWrite, { characterId, question, env }) {
+  const label = actionLabel(pendingWrite.tool, pendingWrite.args)
+  const cost = actionCreditCost(pendingWrite.tool, pendingWrite.args)
+  const token = await signPendingAction({ tool: pendingWrite.tool, args: pendingWrite.args, characterId, question }, env.JWT_SECRET)
+  return { token, label, cost }
+}
+
 // Confirmation path: a previously-proposed write action, signed at propose time.
 // Charge the 1-credit assistant fee FIRST — before any execution or AI spend —
 // then execute it via the same MCP bridge (auth/locks/audit run in the real
@@ -561,22 +582,41 @@ async function confirmAction({ env, authorization, identity, characterId, token 
     ? `The ${CHAT_ACTION_FEE}-credit action fee was refunded because the action failed.`
     : `This cost ${CHAT_ACTION_FEE} credit (the assistant action fee); the player has ${creditsRemaining} credit(s) left afterwards.`
 
-  // Phrase the outcome with the free/unmetered AI path (no tools); fall back to
-  // a deterministic line if the AI path is unavailable.
+  // On success, when the original ask is known, let the model continue with
+  // the next step of that ask — still gated behind its own confirm, just
+  // without making the player type a follow-up message. A failed action never
+  // chains (nothing to build on).
+  const originalQuestion = typeof payload.question === 'string' ? payload.question.trim() : ''
+  const canChain = !isError && !!originalQuestion
+
+  // Phrase the outcome with the free/unmetered AI path; fall back to a
+  // deterministic line if the AI path is unavailable.
   let answer = ''
+  let nextPendingAction = null
   try {
     const out = await resolveAnswer(env, {
-      buildTranscript: () => [
-        { role: 'system', content: SYSTEM_PROMPT },
-        { role: 'user', content: `${ACTION_RESULT_PREFACE}\n${feeNote}\nAction: ${label}\nResult JSON: ${resultText}` },
-      ],
+      buildTranscript: () =>
+        canChain
+          ? [
+              { role: 'system', content: SYSTEM_PROMPT },
+              { role: 'user', content: `Player asked: ${originalQuestion}` },
+              { role: 'user', content: `${ACTION_CHAIN_PREFACE}\n${feeNote}\nAction just completed: ${label}\nResult JSON: ${resultText}` },
+            ]
+          : [
+              { role: 'system', content: SYSTEM_PROMPT },
+              { role: 'user', content: `${ACTION_RESULT_PREFACE}\n${feeNote}\nAction: ${label}\nResult JSON: ${resultText}` },
+            ],
       characterId,
       authorization,
       identity,
-      withTools: false,
-      allowWrites: false,
+      withTools: canChain,
+      allowWrites: canChain,
     })
     answer = out.answer
+    if (canChain && out.pendingWrite) {
+      nextPendingAction = await buildPendingAction(out.pendingWrite, { characterId, question: originalQuestion, env })
+      if (!answer) answer = `Done — ${label}. I can also ${nextPendingAction.label.toLowerCase()} next — confirm below.`
+    }
   } catch {
     /* fall through to the deterministic line */
   }
@@ -589,14 +629,15 @@ async function confirmAction({ env, authorization, identity, characterId, token 
   await auditLog(
     env,
     'chat_action',
-    { identityId: identity.id, characterId, tool: payload.tool, isError, feeCharged: !isError },
+    { identityId: identity.id, characterId, tool: payload.tool, isError, feeCharged: !isError, chained: !!nextPendingAction },
     { swallow: true },
   )
   return json({
     answer,
-    mode: isError ? 'action_error' : 'action_done',
+    mode: isError ? 'action_error' : nextPendingAction ? 'action_chained' : 'action_done',
     tool: payload.tool,
     ...(isError ? {} : { creditsRemaining }),
+    ...(nextPendingAction ? { pendingAction: nextPendingAction } : {}),
   })
 }
 
@@ -698,11 +739,8 @@ export async function onRequestPost({ request, env }) {
     // instead of running it. This is the enforcement point: no write executes
     // without a confirm round-trip.
     mode = 'action_pending'
-    const label = actionLabel(pendingWrite.tool, pendingWrite.args)
-    const cost = actionCreditCost(pendingWrite.tool, pendingWrite.args)
-    const signed = await signPendingAction({ tool: pendingWrite.tool, args: pendingWrite.args, characterId }, env.JWT_SECRET)
-    pendingAction = { token: signed, label, cost }
-    if (!answer) answer = `I can ${label.toLowerCase()} for you — confirm below and I'll do it.`
+    pendingAction = await buildPendingAction(pendingWrite, { characterId, question, env })
+    if (!answer) answer = `I can ${pendingAction.label.toLowerCase()} for you — confirm below and I'll do it.`
   } else if (!answer) {
     // Whatever went wrong on the AI path — the player always gets a
     // knowledge-index answer.
