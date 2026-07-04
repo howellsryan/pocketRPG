@@ -48,7 +48,7 @@ import { initNewGame, saveSetting, getSetting, getAllStats, getInventory, getEqu
 import { startTicks, stopTicks, onTick, pauseTicks, resumeTicks } from './engine/tick.js'
 import { wipeLocalSave } from './db/saveload.js'
 import { api, captureTokenFromHash, getToken, getCharacterId, getCharacterName, setCharacter, clearAuth, getLocalCharacterId, setLocalCharacterId, getIronmanMode, getOneLifeMode, syncAccountModeFlags, isDemoMode, setDemoMode, CREDITS_UPDATED_EVENT } from './cloud/api.js'
-import { schedulePushSave, schedulePeriodicSave, pushNow, pullSave, applyCloudSave, checkCloudNewer, resetSyncState, requestCriticalPushSave, retrySaveNow, isSaveConflict, clearSaveConflict, CLOUD_SAVE_STATUS_EVENT } from './cloud/sync.js'
+import { schedulePushSave, schedulePeriodicSave, pushNow, beaconSaveNow, pullSave, applyCloudSave, checkCloudNewer, resetSyncState, requestCriticalPushSave, retrySaveNow, isSaveConflict, clearSaveConflict, CLOUD_SAVE_STATUS_EVENT } from './cloud/sync.js'
 import { CRITICAL_SAVE_REASONS } from './cloud/criticalSavePolicy.js'
 import { fetchIdleState, beaconIdleState, resetIdleStateSync } from './cloud/idleState.js'
 import { isBackground } from './engine/activityRegistry.js'
@@ -821,9 +821,12 @@ function GameApp() {
         // delta on return and clamp elapsed to 0.
         updateMaxObservedAt(now)
         localStorage.setItem('pocketrpg_activeTask', JSON.stringify(activeTaskRef.current))
-        // Flush any pending cloud push before the tab gets suspended.
+        // Flush progress before the tab is suspended/killed. Use a sendBeacon
+        // save (survives teardown) rather than pushNow's fetch, which the browser
+        // cancels when the page actually goes away — that cancellation was
+        // silently dropping progress since the last debounced push on refresh.
         if (!isInPvpMatch) {
-          try { pushNow(getSnapshot()) } catch (e) { /* non-fatal */ }
+          try { beaconSaveNow(getSnapshot()) } catch (e) { /* non-fatal */ }
         }
         // Beacon the idle state to D1 — server stamps last_active_at on its
         // own clock so elapsed time on return is server-authoritative.
@@ -1231,15 +1234,18 @@ function GameApp() {
       }
     }
 
-    // beforeunload: safety net for mobile browsers where visibilitychange
-    // doesn't fire reliably before a hard close (iOS Safari, Android Chrome)
-    const handleBeforeUnload = () => {
+    // pagehide / beforeunload: the actual teardown path on refresh / close /
+    // navigation. A normal fetch is cancelled here, so the cloud save goes out
+    // via sendBeacon (beaconSaveNow), which the browser guarantees to deliver
+    // even as the page dies. pagehide is the reliable modern signal; beforeunload
+    // stays as a fallback for browsers where pagehide lags on hard close.
+    const handleUnload = () => {
       const now = Date.now()
       localStorage.setItem('pocketrpg_hiddenAt', String(now))
       updateMaxObservedAt(now)
       localStorage.setItem('pocketrpg_activeTask', JSON.stringify(activeTaskRef.current))
       if (!isInPvpMatch) {
-        try { pushNow(getSnapshot()) } catch { /* non-fatal */ }
+        try { beaconSaveNow(getSnapshot()) } catch { /* non-fatal */ }
       }
       // sendBeacon survives tab-close where a regular fetch would be killed.
       if (!isInPvpMatch) {
@@ -1248,10 +1254,12 @@ function GameApp() {
     }
 
     document.addEventListener('visibilitychange', handleVisibility)
-    window.addEventListener('beforeunload', handleBeforeUnload)
+    window.addEventListener('pagehide', handleUnload)
+    window.addEventListener('beforeunload', handleUnload)
     return () => {
       document.removeEventListener('visibilitychange', handleVisibility)
-      window.removeEventListener('beforeunload', handleBeforeUnload)
+      window.removeEventListener('pagehide', handleUnload)
+      window.removeEventListener('beforeunload', handleUnload)
     }
   }, [gameReady, grantXP, updateInventory, updateBankDirect, isInPvpMatch])
 
