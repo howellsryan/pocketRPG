@@ -18,7 +18,8 @@ export function tokenize(text) {
 }
 
 // Light stemmer so "prayers" matches "prayer", "healing" ~ "heal", etc.
-function stem(token) {
+// Exported for reuse by the chat tool-search ranking (prompt.js).
+export function stem(token) {
   return token
     .replace(/ies$/, 'y')
     .replace(/(?:es|s)$/, '')

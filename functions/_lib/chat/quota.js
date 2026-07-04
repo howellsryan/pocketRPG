@@ -1,45 +1,62 @@
-// Chatbot usage quotas (migration 0027). Two layers bound chatbot cost:
-//   1. Per-character daily message cap — hard refusal once exhausted.
-//   2. Global daily spend budget, denominated in Workers AI neurons
-//      ($0.011/1k). Each message atomically reserves its worst possible cost
-//      up front and refunds the unused part once the API reports actual token
-//      usage, so the day's spend can never cross the budget mid-flight; when
-//      the budget runs out, /api/chat degrades to retrieval-only.
+// Chatbot quotas (migration 0027). Two layers bound chatbot cost:
+//   1. Per-character daily message cap — hard refusal once exhausted, with a
+//      paid refill (CHAT_REFILL_CREDITS) to top it back up before the reset.
+//   2. Per-provider global daily spend budgets (reserve-then-settle): OpenAI
+//      (primary) and Gemini (paid last resort) each meter their own token pool;
+//      the free Workers AI failover meters the neuron budget. Each metered
+//      message atomically reserves its worst-case cost up front and refunds the
+//      unused part once the API reports actual usage, so the day's spend can
+//      never cross a budget mid-flight; when a pool runs out, /api/chat skips
+//      that pool (the next fallback, then retrieval-only, still answer).
 
+// One character's daily helper-message allowance, and the credit price to refill
+// it to full before the 00:00 UTC reset.
 export const CHAT_DAILY_LIMIT = 30
+export const CHAT_REFILL_CREDITS = 10
 
 // Token prices converted to milli-neurons per token at $0.011 per 1,000
 // neurons. Rated at $0.10/M input, $0.40/M output — an upper bound for both
-// gemini-2.5-flash-lite ($0.10/$0.40; free-tier keys bill $0) and the GLM
-// fallback ($0.06/$0.40) — so the budget doubles as a daily $ spend cap.
+// gemini-2.5-flash-lite ($0.10/$0.40) and the GLM fallback ($0.06/$0.40).
 // Revisit when CHAT_MODEL / CHAT_FALLBACK_MODEL change.
 export const MILLI_NEURONS_PER_INPUT_TOKEN = 9.1
 export const MILLI_NEURONS_PER_OUTPUT_TOKEN = 36.37
 
-// Budget + one in-flight worst-case reserve must stay ≤ the 10,000 free
-// daily neurons (10,000,000 milli); the gap also absorbs estimation drift
-// and any other Workers AI use on the account.
-export const CHAT_NEURON_BUDGET_MILLI = 8_200_000
-// Worst-case message: 4 model calls with every context and output limit
-// maxed (incl. the read-tool schemas the model is offered). tests/chatQuota.test.ts
-// derives this bound from the CHAT_MAX_* constants + chatToolDefs() — raise it
-// there first if a limit grows or read tools are added to the allowlist.
-export const CHAT_MESSAGE_RESERVE_MILLI = 1_800_000
+// Budget for the FREE Workers AI failover. Workers AI bills neurons past the
+// 10,000 free daily neurons, so budget + one in-flight worst-case reserve must
+// stay ≤ 10,000,000 milli; the gap also absorbs estimation drift and any other
+// Workers AI use on the account.
+export const CHAT_NEURON_BUDGET_MILLI = 7_700_000
+// Worst-case message: 4 model calls with every context and output limit maxed,
+// including the FULL MCP tool schema the model is offered (reads + gated
+// writes). tests/chatQuota.test.ts derives this bound from the CHAT_MAX_*
+// constants + chatToolDefs() — raise it there first if a limit grows or the
+// tool surface expands.
+export const CHAT_MESSAGE_RESERVE_MILLI = 2_200_000
 
-// Separate daily pool for the OpenAI attempt, denominated in tokens
-// (prompt + completion) against the ~2.5M/day complimentary data-sharing
-// allotment. Metered locally because OpenAI doesn't hard-stop at the free
-// allotment — overage bills at normal rates. Budget + one in-flight reserve
-// stays under 2.5M. Rows live in chat_neuron_usage under an 'openai:'-
+// Daily token pool for the OpenAI primary against the ~2.5M/day complimentary
+// data-sharing allotment. Metered locally because OpenAI doesn't hard-stop at
+// the free allotment — overage bills at normal rates. Budget + one in-flight
+// reserve stays under 2.5M. Rows live in chat_neuron_usage under an 'openai:'-
 // prefixed day_key; the reserve/settle statements are unit-agnostic.
 export const CHAT_OPENAI_TOKEN_BUDGET = 2_200_000
-export const CHAT_OPENAI_MESSAGE_RESERVE_TOKENS = 150_000
+export const CHAT_OPENAI_MESSAGE_RESERVE_TOKENS = 185_000
+
+// Daily token pool for the PAID Gemini last resort. No free tier, so this is a
+// pure $ cap chosen for a rarely-reached fallback: at $0.10/$0.40 per M tokens
+// this bounds Gemini spend to roughly $0.25/day. Own day_key so it never mixes
+// with the free Workers AI neuron budget.
+export const CHAT_GEMINI_TOKEN_BUDGET = 2_000_000
+export const CHAT_GEMINI_MESSAGE_RESERVE_TOKENS = 185_000
 
 export function openaiPoolKey(dayKey) {
   return `openai:${dayKey}`
 }
 
-// Atomically claim one message for the character's daily allowance.
+export function geminiPoolKey(dayKey) {
+  return `gemini:${dayKey}`
+}
+
+// Atomically claim one message from the character's daily allowance.
 // Returns { allowed, remaining }.
 export async function claimCharacterMessage(env, characterId, dayKey, limit = CHAT_DAILY_LIMIT) {
   const res = await env.DB.prepare(
@@ -55,6 +72,29 @@ export async function claimCharacterMessage(env, characterId, dayKey, limit = CH
     .bind(characterId, dayKey)
     .first()
   return { allowed: true, remaining: Math.max(0, limit - (row?.count ?? limit)) }
+}
+
+// Give back a character's daily message when the answer degraded to
+// retrieval-only — the player didn't get an AI answer, so it shouldn't count.
+export async function refundCharacterMessage(env, characterId, dayKey) {
+  try {
+    await env.DB.prepare('UPDATE chat_usage SET count = MAX(0, count - 1) WHERE character_id = ? AND day_key = ?')
+      .bind(characterId, dayKey)
+      .run()
+  } catch (err) {
+    console.error('[PocketRPG][chat] message refund failed:', err?.message || err)
+  }
+}
+
+// Reset today's message count to 0 (a paid refill), restoring the full daily
+// allowance. Upsert so a character with no row yet also lands at 0.
+export async function resetCharacterMessages(env, characterId, dayKey) {
+  await env.DB.prepare(
+    `INSERT INTO chat_usage (character_id, day_key, count) VALUES (?, ?, 0)
+     ON CONFLICT(character_id, day_key) DO UPDATE SET count = 0`,
+  )
+    .bind(characterId, dayKey)
+    .run()
 }
 
 // Estimated milli-neurons for one model call from its reported usage.
@@ -97,18 +137,5 @@ export async function settleMessageNeurons(env, dayKey, reserveMilli, actualMill
       .run()
   } catch (err) {
     console.error('[PocketRPG][chat] neuron settle failed:', err?.message || err)
-  }
-}
-
-// Give back a character's daily message when the answer degraded to
-// retrieval-only — the player didn't get an AI answer, so the question
-// shouldn't count against their allowance.
-export async function refundCharacterMessage(env, characterId, dayKey) {
-  try {
-    await env.DB.prepare('UPDATE chat_usage SET count = MAX(0, count - 1) WHERE character_id = ? AND day_key = ?')
-      .bind(characterId, dayKey)
-      .run()
-  } catch (err) {
-    console.error('[PocketRPG][chat] message refund failed:', err?.message || err)
   }
 }

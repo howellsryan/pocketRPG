@@ -5,7 +5,7 @@ import { loadCharacterWithSave, writeSave } from '../game/save.js'
 import { createDefaultSave } from '../../../src/engine/createDefaultSave.js'
 import { auditLog } from '../game/audit.js'
 import { assertNotInActiveMatch } from '../pvp.js'
-import { depositToBank, withdrawFromBank, equip, unequip, buildIdleTask, runIdleTask, isClaimableTask, buildGatherTask, buildClueTask, CLUE_LEVELS, buildMinigameTask, trainPrayer, trainConstruction, unlockConstructionPerk, farmSummary, plantSeed, harvestPatch, harvestAll, castMagic, buildQuestTask, applyQuestTask, questStatuses, buildCombatTask, runCombatTask, planDungeoneeringReward, setIdleCombatSetup, idleCombatSetupSummary, idleFoodWarning, addQuestToQueueIntent, removeQuestFromQueueIntent, dropFromQueue, assignSlayerTask, slayerStatus } from './intents.js'
+import { depositToBank, withdrawFromBank, equip, unequip, buildIdleTask, runIdleTask, isClaimableTask, buildGatherTask, buildClueTask, CLUE_LEVELS, buildMinigameTask, trainPrayer, trainConstruction, unlockConstructionPerk, farmSummary, plantSeed, harvestPatch, harvestAll, castMagic, buildQuestTask, applyQuestTask, questStatuses, buildCombatTask, runCombatTask, planDungeoneeringReward, setIdleCombatSetup, idleCombatSetupSummary, idleFoodWarning, addQuestToQueueIntent, removeQuestFromQueueIntent, dropFromQueue, assignSlayerTask, skipSlayerTask, slayerStatus } from './intents.js'
 import { getIdleRow, setIdleTask, resetIdleActiveAt, clearIdleTask, advanceIdleClock } from './idle.js'
 import { SKIP_HOUR_MS } from '../../../src/engine/skipPreflight.js'
 import { simulateBossFight, applyBossFightOutcome } from './bossFight.js'
@@ -423,13 +423,16 @@ const TOOLS = {
     return ok({ characterId: id, item: itemName(item_id), ...res.data })
   },
 
-  async skip_hour({ bossId, raidId, character_id }, { env, authorization }) {
+  async skip_hour({ boss_id, raid_id, character_id }, { env, authorization }) {
     const id = await resolveCharacterId(env, authorization, character_id)
     const res = await callHandler(postSkipHour, env, {
       method: 'POST',
       authorization,
       characterId: id,
-      body: { bossId, raidId },
+      // /api/skip-hour's own body uses bossId/raidId — translate at this
+      // boundary so the MCP-facing param stays snake_case like every other
+      // tool (item_id, monster_id, raid_id, ...).
+      body: { bossId: boss_id, raidId: raid_id },
     })
     if (!res.ok) throw httpError(res)
 
@@ -439,7 +442,7 @@ const TOOLS = {
     // on the next claim_activity. Boss/raid skips drive client-side combat and
     // have no claimable idle task to advance.
     let appliedToActivity = false
-    if (!bossId && !raidId) {
+    if (!boss_id && !raid_id) {
       const idle = await getIdleRow(env, id)
       let task = null
       try { task = idle?.active_task ? JSON.parse(idle.active_task) : null } catch { task = null }
@@ -458,11 +461,20 @@ const TOOLS = {
     })
   },
 
-  async skip_slayer_task({ character_id }, { env, authorization }) {
+  // /api/slayer/skip only spends the credit (server-authoritative); the game
+  // client normally clears the save-side task itself afterwards. There's no
+  // client here, so do that clear as a save intent right after the debit —
+  // otherwise the credit is spent but the "active task" never actually goes
+  // away (get_slayer_task/assign_slayer_task keep seeing the old one).
+  async skip_slayer_task({ character_id }, { env, authorization, identity }) {
     const id = await resolveCharacterId(env, authorization, character_id)
     const res = await callHandler(postSlayerSkip, env, { method: 'POST', authorization, characterId: id })
     if (!res.ok) throw httpError(res)
-    return ok({ characterId: id, ...res.data })
+    const { saveObject, saveRevision } = await loadCharacterWithSave(env, id, identity.id)
+    const result = skipSlayerTask(saveObject)
+    const write = await writeSave(env, id, saveObject, saveRevision)
+    await auditLog(env, 'mcp_skip_slayer_task', { characterId: id, identityId: identity.id, ...result }, { swallow: true })
+    return ok({ characterId: id, ...res.data, ...result, save_revision: write.saveRevision })
   },
 
   async get_slayer_task({ character_id }, { env, authorization }) {
