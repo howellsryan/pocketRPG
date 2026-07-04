@@ -45,12 +45,17 @@ import {
   CHAT_MODEL,
   CHAT_OPENAI_MODEL,
   CHAT_FALLBACK_MODEL,
+  CHAT_OPENAI_REASONING_EFFORT,
   CHAT_MAX_TOOL_ROUNDS,
   CHAT_MAX_ANSWER_TOKENS,
   CHAT_MAX_TOOL_RESULT_CHARS,
   CHAT_MAX_QUESTION_CHARS,
   CHAT_TIME_BUDGET_MS,
   CHAT_TOOL_ALLOWLIST,
+  ALWAYS_ON_TOOL_NAMES,
+  SEARCH_TOOL_NAME,
+  SEARCH_TOOLS_DEF,
+  searchToolsByQuery,
   SYSTEM_PROMPT,
   chatToolDefs,
   buildMessages,
@@ -137,7 +142,7 @@ export function openaiChatBinding(env) {
       // gpt-5.x reasoning models 400 on `max_tokens` (want
       // `max_completion_tokens`) and on any non-default `temperature`.
       const { max_tokens, temperature, ...rest } = payload
-      const body = { model, ...rest }
+      const body = { model, ...rest, reasoning_effort: CHAT_OPENAI_REASONING_EFFORT }
       if (max_tokens !== undefined) body.max_completion_tokens = max_tokens
       const res = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
@@ -282,9 +287,15 @@ export async function runAiChat(
     const res = await runModel({ messages, ...CHAT_RUN_OPTS })
     return { answer: answerText(res), pendingWrite: null }
   }
-  const tools = chatToolDefs()
+  // Progressive tool reveal: only ALWAYS_ON_TOOL_NAMES + search_tools are
+  // declared at first. A search_tools call adds its matches to this set so
+  // later rounds in the SAME request can declare (and call) them — keeps the
+  // per-call tool-schema payload small for the common case instead of sending
+  // all ~50 MCP tool schemas on every turn.
+  const activeTools = new Set(ALWAYS_ON_TOOL_NAMES)
   let pendingWrite = null
   for (let round = 0; round < CHAT_MAX_TOOL_ROUNDS; round++) {
+    const tools = [SEARCH_TOOLS_DEF, ...chatToolDefs([...activeTools])]
     const res = await runModel({ messages, tools, ...CHAT_RUN_OPTS })
     const message = res?.choices?.[0]?.message
     const calls = (Array.isArray(message?.tool_calls) ? message.tool_calls : [])
@@ -314,6 +325,12 @@ export async function runAiChat(
     const results = await raceDeadline(
       Promise.all(
         calls.map((call, i) => {
+          if (call.function.name === SEARCH_TOOL_NAME) {
+            const { query } = parseToolArgs(call.function.arguments)
+            const { names, text } = searchToolsByQuery(typeof query === 'string' ? query : '')
+            for (const n of names) activeTools.add(n)
+            return Promise.resolve(text)
+          }
           if (allowWrites && isWriteTool(call.function.name)) {
             if (writeErrors[i]) return Promise.resolve(`Tool error: ${writeErrors[i]}`)
             if (i === captureIdx) {

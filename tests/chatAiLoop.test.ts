@@ -1,6 +1,14 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
 import { runAiChat, ChatTimeoutError, chatAttempts, geminiChatBinding, openaiChatBinding } from '../functions/api/chat.js'
-import { CHAT_MAX_TOOL_ROUNDS, CHAT_MODEL, CHAT_OPENAI_MODEL, CHAT_FALLBACK_MODEL } from '../functions/_lib/chat/prompt.js'
+import {
+  CHAT_MAX_TOOL_ROUNDS,
+  CHAT_MODEL,
+  CHAT_OPENAI_MODEL,
+  CHAT_FALLBACK_MODEL,
+  CHAT_OPENAI_REASONING_EFFORT,
+  ALWAYS_ON_TOOL_NAMES,
+  SEARCH_TOOL_NAME,
+} from '../functions/_lib/chat/prompt.js'
 
 afterEach(() => {
   vi.useRealTimers()
@@ -165,6 +173,38 @@ describe('runAiChat', () => {
     expect(run).not.toHaveBeenCalled()
   })
 
+  it('only declares the always-on tools plus search_tools on the first round', async () => {
+    const run = vi.fn().mockResolvedValue(aiResponse('Hi.'))
+    await runAiChat({ AI: { run } } as any, baseMessages(), opts())
+    const names = run.mock.calls[0][1].tools.map((t: any) => t.function.name)
+    expect(names).toEqual(expect.arrayContaining([SEARCH_TOOL_NAME, ...ALWAYS_ON_TOOL_NAMES]))
+    expect(names.length).toBe(ALWAYS_ON_TOOL_NAMES.length + 1)
+  })
+
+  it('search_tools reveals a matched tool so a later round in the same request can call it', async () => {
+    const run = vi
+      .fn()
+      .mockResolvedValueOnce(
+        aiResponse(null, [
+          { type: 'function', function: { name: 'search_tools', arguments: JSON.stringify({ query: 'sell an item' }) } },
+        ]),
+      )
+      .mockResolvedValueOnce(
+        aiResponse(null, [
+          { type: 'function', function: { name: 'sell_item', arguments: JSON.stringify({ item_id: 'oak_logs', quantity: 5 }) } },
+        ]),
+      )
+      .mockResolvedValueOnce(aiResponse("I'll sell 5 Oak Logs — confirm?"))
+    const messages = baseMessages()
+    const { pendingWrite } = await runAiChat({ AI: { run } } as any, messages, opts())
+    expect(pendingWrite).toEqual({ tool: 'sell_item', args: { item_id: 'oak_logs', quantity: 5, character_id: 7 } })
+    // Round 0 tool result names sell_item; round 1's declared tools now include it.
+    const round0Result = messages.find((m: any) => m.role === 'tool' && m.tool_call_id?.includes('call_0'))
+    expect(round0Result.content).toContain('sell_item')
+    const round1Tools = run.mock.calls[1][1].tools.map((t: any) => t.function.name)
+    expect(round1Tools).toContain('sell_item')
+  })
+
   it('marks usage unknown when a call reports no token counts', async () => {
     const run = vi.fn().mockResolvedValue({ choices: [{ message: { content: 'Answer.' } }] })
     const stats = newStats()
@@ -253,6 +293,7 @@ describe('chatAttempts / geminiChatBinding', () => {
     expect(body.max_completion_tokens).toBe(5000)
     expect(body.max_tokens).toBeUndefined()
     expect(body.temperature).toBeUndefined()
+    expect(body.reasoning_effort).toBe(CHAT_OPENAI_REASONING_EFFORT)
     expect(body.messages).toHaveLength(2)
     expect(res.choices[0].message.content).toBe('Hi.')
   })

@@ -372,12 +372,12 @@ export const TOOL_SCHEMAS = [
   {
     name: 'skip_hour',
     description:
-      "Spend credits to skip ahead. With no boss/raid id this is a 1-credit one-hour skip that advances the running idle activity by an hour (follow with claim_activity to collect it); a bossId or raidId charges that target's skip cost for client-side combat. Debits credits server-side.",
+      "Spend credits to skip ahead. With neither boss_id nor raid_id this is a 1-credit one-hour skip that advances the running idle activity by an hour (follow with claim_activity to collect it); passing boss_id or raid_id instead charges that target's own skip cost for client-side combat (pass only one). Debits credits server-side.",
     inputSchema: {
       type: 'object',
       properties: {
-        bossId: { type: 'string' },
-        raidId: { type: 'string' },
+        boss_id: { type: 'string', description: "Boss monster id for a boss skip, e.g. 'deepmaw_kraken'. Omit for the plain hour skip." },
+        raid_id: { type: 'string', description: "Raid id for a raid skip, e.g. 'chambers_of_xeric'. Omit for the plain hour skip." },
         ...optionalCharacterId,
       },
       additionalProperties: false,

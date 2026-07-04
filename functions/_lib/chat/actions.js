@@ -52,6 +52,7 @@ export function actionLabel(tool, args = {}) {
     args.item_id ||
     args.monster_id ||
     args.raid_id ||
+    args.boss_id ||
     args.seed_id ||
     args.quest_id ||
     args.unlock_id ||
@@ -90,8 +91,8 @@ export function actionSkipCost(tool, args = {}) {
     case 'skip_slayer_task':
       return 1
     case 'skip_hour':
-      if (args.raidId) return skipCostFor(args.raidId, raidsData)
-      if (args.bossId) return skipCostFor(args.bossId, monstersData)
+      if (args.raid_id) return skipCostFor(args.raid_id, raidsData)
+      if (args.boss_id) return skipCostFor(args.boss_id, monstersData)
       return 1
     default:
       return 0

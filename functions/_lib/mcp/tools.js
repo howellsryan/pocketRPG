@@ -423,13 +423,16 @@ const TOOLS = {
     return ok({ characterId: id, item: itemName(item_id), ...res.data })
   },
 
-  async skip_hour({ bossId, raidId, character_id }, { env, authorization }) {
+  async skip_hour({ boss_id, raid_id, character_id }, { env, authorization }) {
     const id = await resolveCharacterId(env, authorization, character_id)
     const res = await callHandler(postSkipHour, env, {
       method: 'POST',
       authorization,
       characterId: id,
-      body: { bossId, raidId },
+      // /api/skip-hour's own body uses bossId/raidId — translate at this
+      // boundary so the MCP-facing param stays snake_case like every other
+      // tool (item_id, monster_id, raid_id, ...).
+      body: { bossId: boss_id, raidId: raid_id },
     })
     if (!res.ok) throw httpError(res)
 
@@ -439,7 +442,7 @@ const TOOLS = {
     // on the next claim_activity. Boss/raid skips drive client-side combat and
     // have no claimable idle task to advance.
     let appliedToActivity = false
-    if (!bossId && !raidId) {
+    if (!boss_id && !raid_id) {
       const idle = await getIdleRow(env, id)
       let task = null
       try { task = idle?.active_task ? JSON.parse(idle.active_task) : null } catch { task = null }
