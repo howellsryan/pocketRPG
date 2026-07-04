@@ -177,7 +177,7 @@ function PlaceBankModal({ label, onClose, onNavigate, returnTo }) {
   return (
     <Modal title={label} onClose={onClose} className="wm-actmodal-panel" contentClassName="wm-actmodal-content">
       <div class="fm-ledger">
-        <button class="wm-actmodal-row" onClick={() => go(SCREENS.BANK)}>
+        <button class="wm-actmodal-row" onClick={() => go(SCREENS.BANK, { returnTo })}>
           <span class="wm-actmodal-row__icon"><GameIcon iconKey="coins" size={18} /></span>
           <span class="wm-actmodal-row__name">Use Bank</span>
         </button>
