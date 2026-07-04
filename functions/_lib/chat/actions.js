@@ -164,8 +164,12 @@ export function validateWriteArgs(tool, args = {}) {
 
 // Sign a pending write so only an action the model actually proposed (for this
 // character) can later be executed. character_id is pinned into the payload.
-export function signPendingAction({ tool, args, characterId }, secret) {
-  return signJWT({ kind: 'chat_action', tool, args, characterId }, secret, ACTION_TTL_SECONDS)
+// `question` (the player's original ask) is optional and carried along so a
+// multi-step ask ("skip this task and get me a new one") can continue with
+// its next step right after this one is confirmed — see confirmAction in
+// api/chat.js.
+export function signPendingAction({ tool, args, characterId, question }, secret) {
+  return signJWT({ kind: 'chat_action', tool, args, characterId, ...(question ? { question } : {}) }, secret, ACTION_TTL_SECONDS)
 }
 
 // Verify a confirmation token: valid signature, not expired, the right kind, a
