@@ -3,12 +3,17 @@ import { TOOL_SCHEMAS } from '../functions/_lib/mcp/schema.js'
 import {
   CHAT_MAX_HISTORY_CHARS,
   CHAT_MAX_HISTORY_MESSAGES,
+  CHAT_OPENAI_REASONING_EFFORT,
   CHAT_TOOL_ALLOWLIST,
+  ALWAYS_ON_TOOL_NAMES,
+  SEARCH_TOOL_NAME,
+  SEARCH_TOOLS_DEF,
   SYSTEM_PROMPT,
   buildMessages,
   chatToolDefs,
   retrievalOnlyAnswer,
   sanitizeHistory,
+  searchToolsByQuery,
 } from '../functions/_lib/chat/prompt.js'
 
 const schemaByName = new Map(TOOL_SCHEMAS.map((t) => [t.name, t]))
@@ -37,6 +42,41 @@ describe('chat tool surface', () => {
       expect(def.function.parameters.required ?? []).not.toContain('character_id')
     }
     expect(chatToolDefs().length).toBe(CHAT_TOOL_ALLOWLIST.length)
+  })
+
+  it('progressive reveal: always-on tools are a small, valid subset; chatToolDefs(names) narrows to them', () => {
+    for (const name of ALWAYS_ON_TOOL_NAMES) {
+      expect(schemaByName.has(name), `unknown always-on tool ${name}`).toBe(true)
+    }
+    expect(ALWAYS_ON_TOOL_NAMES.length).toBeLessThan(TOOL_SCHEMAS.length / 2)
+    const defs = chatToolDefs(ALWAYS_ON_TOOL_NAMES)
+    expect(defs.length).toBe(ALWAYS_ON_TOOL_NAMES.length)
+    expect(defs.every((d) => ALWAYS_ON_TOOL_NAMES.includes(d.function.name))).toBe(true)
+  })
+
+  it('search_tools meta tool is well-formed and not itself an MCP tool', () => {
+    expect(SEARCH_TOOLS_DEF.function.name).toBe(SEARCH_TOOL_NAME)
+    expect(schemaByName.has(SEARCH_TOOL_NAME)).toBe(false)
+    expect(SEARCH_TOOLS_DEF.function.parameters.required).toContain('query')
+  })
+
+  it('searchToolsByQuery ranks relevant tools and reveals their names', () => {
+    const { names, text } = searchToolsByQuery('sell an item')
+    expect(names).toContain('sell_item')
+    expect(text).toContain('sell_item')
+    const boss = searchToolsByQuery('kill a boss with credits')
+    expect(boss.names).toContain('kill_boss')
+  })
+
+  it('searchToolsByQuery degrades gracefully on empty or no-match queries', () => {
+    expect(searchToolsByQuery('').names).toEqual([])
+    const noMatch = searchToolsByQuery('xyzzy plugh qwerty')
+    expect(noMatch.names).toEqual([])
+    expect(noMatch.text).toMatch(/No tool matched/)
+  })
+
+  it('pins an explicit OpenAI reasoning effort rather than the API default', () => {
+    expect(['minimal', 'low', 'medium', 'high']).toContain(CHAT_OPENAI_REASONING_EFFORT)
   })
 })
 
