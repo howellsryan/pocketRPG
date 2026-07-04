@@ -1823,7 +1823,14 @@ function GameApp() {
   // back/stop buttons then return there instead of their own hardcoded list.
   const resumeAutoStart = (autoStart, returnTo) => {
     if (!autoStart || !autoStart.kind) return
-    const extra = returnTo ? { returnTo } : {}
+    // Every activity/skill screen started from the world (a place-map spot, the
+    // place hub list, or auto-resumed on arrival after travelling) sends its
+    // back/stop buttons back to the place the player is standing at, not the
+    // owning skill screen's own list (a dead end when entered directly). An
+    // explicit returnTo (e.g. a specific place-map view) still wins; the default
+    // only applies when the world map is the navigation model.
+    const rt = returnTo || (isWorldMapEnabled() ? { screen: SCREENS.WORLD_MAP, data: { view: 'place' } } : undefined)
+    const extra = rt ? { returnTo: rt } : {}
     switch (autoStart.kind) {
       case 'combat':   navigate(SCREENS.COMBAT, { monsterId: autoStart.monsterId, ...extra }); break
       case 'raid':     navigate(SCREENS.COMBAT, { raidId: autoStart.raidId, ...extra }); break
@@ -1835,7 +1842,7 @@ function GameApp() {
       // Slayer master reached: the Slayer screen assigns the master's task on mount.
       case 'slayer':   navigate(SCREENS.SKILLS, { skillId: 'slayer', masterId: autoStart.masterId, ...extra }); break
       case 'skill':
-        if (autoStart.skill === 'magic') navigate(SCREENS.MAGIC, returnTo ? { ...extra } : undefined)
+        if (autoStart.skill === 'magic') navigate(SCREENS.MAGIC, rt ? { ...extra } : undefined)
         else navigate(SCREENS.SKILLS, { skillId: autoStart.skill, actionId: autoStart.actionId, ...extra })
         break
       default: break

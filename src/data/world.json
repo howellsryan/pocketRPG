@@ -201,7 +201,8 @@
         "bank",
         "sawmill",
         "altar",
-        "stove"
+        "stove",
+        "furnace_anvil"
       ],
       "teleport": {
         "level": 37,
@@ -410,7 +411,8 @@
       "lore": "A noble hill-town of banners and knights-errant, the northernmost seat of honour in Eldermoor.",
       "facilities": [
         "bank",
-        "altar"
+        "altar",
+        "furnace_anvil"
       ],
       "teleport": {
         "level": 61,
