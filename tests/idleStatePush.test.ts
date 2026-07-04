@@ -12,7 +12,6 @@ const putIdleMock = vi.fn()
 
 vi.mock('../src/cloud/api.js', () => ({
   api: { putIdle: (...args: unknown[]) => putIdleMock(...args), getIdle: vi.fn() },
-  sendIdleBeacon: vi.fn(),
   getToken: () => 'token',
   getCharacterId: () => 123,
 }))

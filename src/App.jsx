@@ -50,7 +50,7 @@ import { wipeLocalSave } from './db/saveload.js'
 import { api, captureTokenFromHash, getToken, getCharacterId, getCharacterName, setCharacter, clearAuth, getLocalCharacterId, setLocalCharacterId, getIronmanMode, getOneLifeMode, syncAccountModeFlags, isDemoMode, setDemoMode, CREDITS_UPDATED_EVENT } from './cloud/api.js'
 import { schedulePushSave, schedulePeriodicSave, pushNow, beaconSaveNow, pullSave, applyCloudSave, checkCloudNewer, isLocalWriteNewerThanCloud, resetSyncState, requestCriticalPushSave, retrySaveNow, isSaveConflict, clearSaveConflict, CLOUD_SAVE_STATUS_EVENT } from './cloud/sync.js'
 import { CRITICAL_SAVE_REASONS } from './cloud/criticalSavePolicy.js'
-import { fetchIdleState, beaconIdleState, resetIdleStateSync } from './cloud/idleState.js'
+import { fetchIdleState, resetIdleStateSync } from './cloud/idleState.js'
 import { isBackground } from './engine/activityRegistry.js'
 import { isRunnableBackgroundTask, getActionTicksForTask, getCarriedPendingTicks, simulateTaskWindow, resultActions, isScreenRecentlyDriving } from './engine/activityRunner.js'
 import { mergeSession, sessionPatchFromResult } from './engine/activitySession.js'
@@ -825,13 +825,11 @@ function GameApp() {
         // save (survives teardown) rather than pushNow's fetch, which the browser
         // cancels when the page actually goes away — that cancellation was
         // silently dropping progress since the last debounced push on refresh.
+        // /api/save folds the idle heartbeat into the same write (stamps
+        // last_active_at + active_task in character_idle_state), so no
+        // separate beacon to /api/idle is needed here.
         if (!isInPvpMatch) {
           try { beaconSaveNow(getSnapshot()) } catch (e) { /* non-fatal */ }
-        }
-        // Beacon the idle state to D1 — server stamps last_active_at on its
-        // own clock so elapsed time on return is server-authoritative.
-        if (!isInPvpMatch) {
-          try { beaconIdleState(activeTaskRef.current) } catch (e) { /* non-fatal */ }
         }
       } else {
         if (isInPvpMatch) return
@@ -1244,12 +1242,10 @@ function GameApp() {
       localStorage.setItem('pocketrpg_hiddenAt', String(now))
       updateMaxObservedAt(now)
       localStorage.setItem('pocketrpg_activeTask', JSON.stringify(activeTaskRef.current))
+      // Folds the idle heartbeat into the same /api/save write — see the
+      // visibilitychange handler above.
       if (!isInPvpMatch) {
         try { beaconSaveNow(getSnapshot()) } catch { /* non-fatal */ }
-      }
-      // sendBeacon survives tab-close where a regular fetch would be killed.
-      if (!isInPvpMatch) {
-        try { beaconIdleState(activeTaskRef.current) } catch { /* non-fatal */ }
       }
     }
 
