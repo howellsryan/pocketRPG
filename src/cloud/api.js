@@ -288,10 +288,12 @@ export const api = {
   tradingPostListings: () => request('/api/trading-post/listings'),
 
   // Chat answers can take several sequential reasoning-model calls, so this
-  // request gets a much longer leash than the 15s default.
-  chat: (message, history = []) => request('/api/chat', {
+  // request gets a much longer leash than the 15s default. Pass a `confirm`
+  // token (from a prior response's pendingAction) to run an approved write
+  // action instead of asking a new question.
+  chat: (message, history = [], confirm = null) => request('/api/chat', {
     method: 'POST',
-    body: JSON.stringify({ message, history }),
+    body: JSON.stringify(confirm ? { confirm } : { message, history }),
     timeoutMs: 60_000,
   }),
 }

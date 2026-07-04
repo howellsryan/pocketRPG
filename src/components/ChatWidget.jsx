@@ -5,7 +5,8 @@ import { api } from '../cloud/api.js'
 
 const GREETING = {
   role: 'assistant',
-  content: "Hi! I'm the PocketRPG helper. Ask me about game mechanics, items, monsters, quests — or your own character's progress.",
+  content:
+    "Hi! I'm the PocketRPG helper. Ask me about game mechanics, items, monsters, quests — or your own character's progress. I can also do things for you (sell an item, get a slayer task, buy gear…) — just ask, and I'll confirm before anything changes.",
 }
 
 // Floating in-game help chatbot. Cloud accounts only (the /api/chat endpoint
@@ -15,7 +16,6 @@ export default function ChatWidget({ isCloudAccount = false }) {
   const [messages, setMessages] = useState([GREETING])
   const [input, setInput] = useState('')
   const [busy, setBusy] = useState(false)
-  const [remaining, setRemaining] = useState(null)
   const scrollRef = useRef(null)
 
   useEffect(() => {
@@ -38,18 +38,47 @@ export default function ChatWidget({ isCloudAccount = false }) {
     api
       .chat(question, history)
       .then((res) => {
-        setMessages((prev) => [...prev, { role: 'assistant', content: res.answer }])
-        if (typeof res.remaining === 'number') setRemaining(res.remaining)
+        setMessages((prev) => [
+          ...prev,
+          { role: 'assistant', content: res.answer, pendingAction: res.pendingAction || null },
+        ])
       })
       .catch((err) => {
-        // Timeouts mean the question ran long; anything else is a real
-        // connection/server problem and shouldn't blame the question.
         const content = err?.message === 'request_timeout'
           ? 'Sorry, that question was a bit too much for me — try asking something shorter or simpler.'
           : 'Sorry, I could not reach the helper — check your connection and try again.'
         setMessages((prev) => [...prev, { role: 'assistant', content }])
       })
       .finally(() => setBusy(false))
+  }
+
+  // Mark the pending action on message `idx` resolved so its buttons disappear.
+  const resolvePending = (idx) =>
+    setMessages((prev) =>
+      prev.map((m, i) => (i === idx ? { ...m, pendingAction: { ...m.pendingAction, resolved: true } } : m)),
+    )
+
+  const confirmAction = (idx, token) => {
+    if (busy) return
+    resolvePending(idx)
+    setBusy(true)
+    api
+      .chat(null, [], token)
+      .then((res) => {
+        setMessages((prev) => [...prev, { role: 'assistant', content: res.answer }])
+      })
+      .catch(() => {
+        setMessages((prev) => [
+          ...prev,
+          { role: 'assistant', content: 'Sorry, I could not complete that — check your connection and try again.' },
+        ])
+      })
+      .finally(() => setBusy(false))
+  }
+
+  const cancelAction = (idx) => {
+    resolvePending(idx)
+    setMessages((prev) => [...prev, { role: 'assistant', content: "Okay, I won't do that. Anything else?" }])
   }
 
   return (
@@ -65,28 +94,42 @@ export default function ChatWidget({ isCloudAccount = false }) {
       {open && (
         <Modal
           title="Game Helper"
-          titleRight={
-            remaining != null ? (
-              <span class="text-xs text-[var(--color-parchment-dark)]">{remaining} questions left today</span>
-            ) : null
-          }
           onClose={() => setOpen(false)}
           fullHeight
           contentClassName="flex flex-col min-h-0"
         >
           <div ref={scrollRef} class="flex-1 overflow-y-auto flex flex-col gap-2 pb-2">
-            {messages.map((m, i) => (
-              <div
-                key={i}
-                class={
-                  m.role === 'user'
-                    ? 'self-end max-w-[85%] rounded-lg px-3 py-2 text-sm bg-[var(--color-gold)] text-[var(--color-void)]'
-                    : 'self-start max-w-[85%] rounded-lg px-3 py-2 text-sm bg-[var(--color-void)] border border-[#1a1a1a] text-[var(--color-parchment)] whitespace-pre-wrap'
-                }
-              >
-                {m.content}
-              </div>
-            ))}
+            {messages.map((m, i) => {
+              const pending = m.pendingAction && !m.pendingAction.resolved ? m.pendingAction : null
+              return (
+                <div key={i} class="flex flex-col gap-1.5">
+                  <div
+                    class={
+                      m.role === 'user'
+                        ? 'self-end max-w-[85%] rounded-lg px-3 py-2 text-sm bg-[var(--color-gold)] text-[var(--color-void)]'
+                        : 'self-start max-w-[85%] rounded-lg px-3 py-2 text-sm bg-[var(--color-void)] border border-[#1a1a1a] text-[var(--color-parchment)] whitespace-pre-wrap'
+                    }
+                  >
+                    {m.content}
+                  </div>
+                  {pending && (
+                    <div class="self-start flex gap-2 pl-1">
+                      <Button
+                        variant="success"
+                        size="md"
+                        disabled={busy}
+                        onClick={() => confirmAction(i, pending.token)}
+                      >
+                        ✓ Confirm{pending.label ? `: ${pending.label}` : ''}
+                      </Button>
+                      <Button variant="secondary" size="md" disabled={busy} onClick={() => cancelAction(i)}>
+                        Cancel
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              )
+            })}
             {busy && (
               <div class="self-start rounded-lg px-3 py-2 text-sm bg-[var(--color-void)] border border-[#1a1a1a] text-[var(--color-parchment-dark)]">
                 Thinking…
@@ -110,7 +153,7 @@ export default function ChatWidget({ isCloudAccount = false }) {
             </Button>
           </div>
           <div class="pt-1 text-[10px] text-[var(--color-parchment-dark)] text-center">
-            Answers PocketRPG questions only. AI answers can be wrong — check in game.
+            Answers PocketRPG questions and can act on your account. AI can be wrong — actions always ask first.
           </div>
         </Modal>
       )}

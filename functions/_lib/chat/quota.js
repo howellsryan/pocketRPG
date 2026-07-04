@@ -1,12 +1,10 @@
-// Chatbot usage quotas (migration 0027). Two layers bound chatbot cost:
-//   1. Per-character daily message cap — hard refusal once exhausted.
-//   2. Global daily spend budget, denominated in Workers AI neurons
-//      ($0.011/1k). Each message atomically reserves its worst possible cost
-//      up front and refunds the unused part once the API reports actual token
-//      usage, so the day's spend can never cross the budget mid-flight; when
-//      the budget runs out, /api/chat degrades to retrieval-only.
-
-export const CHAT_DAILY_LIMIT = 30
+// Chatbot spend guard (migration 0027). Messages are unlimited (the free Gemini
+// primary is unmetered here); the only cost cap is a global daily budget on the
+// PAID paths — the Workers AI fallback (neurons, $0.011/1k) and, if configured,
+// the OpenAI attempt (tokens). Each metered message atomically reserves its
+// worst possible cost up front and refunds the unused part once the API reports
+// actual usage, so the day's spend can never cross the budget mid-flight; when a
+// pool runs out, /api/chat skips that pool (Gemini/retrieval still answer).
 
 // Token prices converted to milli-neurons per token at $0.011 per 1,000
 // neurons. Rated at $0.10/M input, $0.40/M output — an upper bound for both
@@ -36,24 +34,6 @@ export const CHAT_OPENAI_MESSAGE_RESERVE_TOKENS = 150_000
 
 export function openaiPoolKey(dayKey) {
   return `openai:${dayKey}`
-}
-
-// Atomically claim one message for the character's daily allowance.
-// Returns { allowed, remaining }.
-export async function claimCharacterMessage(env, characterId, dayKey, limit = CHAT_DAILY_LIMIT) {
-  const res = await env.DB.prepare(
-    `INSERT INTO chat_usage (character_id, day_key, count) VALUES (?, ?, 1)
-     ON CONFLICT(character_id, day_key) DO UPDATE SET count = count + 1
-     WHERE chat_usage.count < ?`,
-  )
-    .bind(characterId, dayKey, limit)
-    .run()
-  const allowed = (res?.meta?.changes ?? 0) > 0
-  if (!allowed) return { allowed: false, remaining: 0 }
-  const row = await env.DB.prepare('SELECT count FROM chat_usage WHERE character_id = ? AND day_key = ?')
-    .bind(characterId, dayKey)
-    .first()
-  return { allowed: true, remaining: Math.max(0, limit - (row?.count ?? limit)) }
 }
 
 // Estimated milli-neurons for one model call from its reported usage.
@@ -96,18 +76,5 @@ export async function settleMessageNeurons(env, dayKey, reserveMilli, actualMill
       .run()
   } catch (err) {
     console.error('[PocketRPG][chat] neuron settle failed:', err?.message || err)
-  }
-}
-
-// Give back a character's daily message when the answer degraded to
-// retrieval-only — the player didn't get an AI answer, so the question
-// shouldn't count against their allowance.
-export async function refundCharacterMessage(env, characterId, dayKey) {
-  try {
-    await env.DB.prepare('UPDATE chat_usage SET count = MAX(0, count - 1) WHERE character_id = ? AND day_key = ?')
-      .bind(characterId, dayKey)
-      .run()
-  } catch (err) {
-    console.error('[PocketRPG][chat] message refund failed:', err?.message || err)
   }
 }

@@ -1,26 +1,34 @@
-// In-game help chatbot endpoint. Per-character daily quota + global daily
-// spend budget, degrading to retrieval-only answers. Read-only — the chatbot
-// can never mutate game state (tool allowlist in _lib/chat/prompt.js).
+// In-game help chatbot endpoint. Answers PocketRPG questions AND performs
+// actions (MCP write tools) on the player's behalf — but every write is gated:
+// the model's write call is captured, never run inline, and executed only after
+// the player confirms and the signed action token is verified back (see
+// _lib/chat/actions.js). Messages are unlimited; only the paid AI paths (Workers
+// AI fallback, OpenAI) are budget-capped — the free Gemini primary is unmetered.
 
 import { requireAuth, json } from '../_lib/auth.js'
-import { utcDayKey, nextResetMs } from '../_lib/game/dailyTasks.js'
+import { utcDayKey } from '../_lib/game/dailyTasks.js'
 import { auditLog } from '../_lib/game/audit.js'
 import { callTool } from '../_lib/mcp/tools.js'
 import { KNOWLEDGE_CHUNKS } from '../_lib/chat/knowledge.js'
 import { buildIndex, searchKnowledge } from '../_lib/chat/retrieval.js'
 import {
-  claimCharacterMessage,
-  refundCharacterMessage,
   reserveMessageNeurons,
   settleMessageNeurons,
   usageMilliNeurons,
   openaiPoolKey,
-  CHAT_DAILY_LIMIT,
   CHAT_MESSAGE_RESERVE_MILLI,
   CHAT_NEURON_BUDGET_MILLI,
   CHAT_OPENAI_MESSAGE_RESERVE_TOKENS,
   CHAT_OPENAI_TOKEN_BUDGET,
 } from '../_lib/chat/quota.js'
+import {
+  isWriteTool,
+  signPendingAction,
+  verifyPendingAction,
+  actionLabel,
+  PENDING_CONFIRMATION_NOTE,
+  SECONDARY_WRITE_NOTE,
+} from '../_lib/chat/actions.js'
 import {
   CHAT_MODEL,
   CHAT_OPENAI_MODEL,
@@ -31,10 +39,16 @@ import {
   CHAT_MAX_QUESTION_CHARS,
   CHAT_TIME_BUDGET_MS,
   CHAT_TOOL_ALLOWLIST,
+  SYSTEM_PROMPT,
   chatToolDefs,
   buildMessages,
   retrievalOnlyAnswer,
 } from '../_lib/chat/prompt.js'
+
+// Preface for the post-confirmation summary call: the action already ran, so the
+// model must report the outcome, not propose it again.
+const ACTION_RESULT_PREFACE =
+  'The player confirmed and this PocketRPG action just ran on their account. Tell them what happened in 1-2 friendly sentences using the result below. If it reports an error, explain it plainly and suggest a fix. Do not invent anything beyond the result, and do not ask for confirmation again.'
 
 let knowledgeIndex = null
 function getIndex() {
@@ -75,19 +89,29 @@ const CHAT_RUN_OPTS = {
 export function geminiChatBinding(env) {
   return {
     async run(model, payload) {
-      const res = await fetch('https://generativelanguage.googleapis.com/v1beta/openai/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${env.GEMINI_API_KEY}`,
-        },
-        body: JSON.stringify({ model, ...payload }),
-      })
-      if (!res.ok) {
+      const body = JSON.stringify({ model, ...payload })
+      // Free-tier Gemini is limited per minute, not per day, so a 429/503 is
+      // usually a brief burst. Retry a couple of times with a short backoff
+      // (kept small to stay inside the request time budget) before giving up and
+      // letting the endpoint fall through to the Workers AI fallback.
+      const backoffs = [500, 1200]
+      for (let attempt = 0; ; attempt++) {
+        const res = await fetch('https://generativelanguage.googleapis.com/v1beta/openai/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${env.GEMINI_API_KEY}`,
+          },
+          body,
+        })
+        if (res.ok) return res.json()
+        if ((res.status === 429 || res.status === 503) && attempt < backoffs.length) {
+          await new Promise((resolve) => setTimeout(resolve, backoffs[attempt]))
+          continue
+        }
         const detail = (await res.text().catch(() => '')).slice(0, 300)
         throw new Error(`Gemini ${res.status}: ${detail}`)
       }
-      return res.json()
     },
   }
 }
@@ -123,16 +147,20 @@ export function openaiChatBinding(env) {
 // Ordered AI attempts for a message: OpenAI first (if configured), then
 // CHAT_MODEL (Gemini) when OpenAI is unconfigured or fails/answers empty,
 // then the Workers AI fallback model. Empty = AI path unavailable, straight
-// to retrieval-only.
+// to retrieval-only. `pool` is which daily spend budget the attempt meters
+// against; null = unmetered (the free Gemini primary).
 export function chatAttempts(env) {
   const attempts = []
   if (env.OPENAI_API_KEY && CHAT_OPENAI_MODEL) {
     attempts.push({ ai: openaiChatBinding(env), model: CHAT_OPENAI_MODEL, pool: 'openai' })
   }
   if (CHAT_MODEL.startsWith('@')) {
+    // A Workers AI primary bills neurons like the fallback — meter it.
     if (env.AI) attempts.push({ ai: env.AI, model: CHAT_MODEL, pool: 'neuron' })
   } else if (env.GEMINI_API_KEY) {
-    attempts.push({ ai: geminiChatBinding(env), model: CHAT_MODEL, pool: 'neuron' })
+    // Gemini is the free primary (unlimited on this key, only per-minute rate
+    // limited) — do not meter it against the paid neuron budget.
+    attempts.push({ ai: geminiChatBinding(env), model: CHAT_MODEL, pool: null })
   }
   if (env.AI && CHAT_FALLBACK_MODEL && CHAT_FALLBACK_MODEL !== CHAT_MODEL) {
     attempts.push({ ai: env.AI, model: CHAT_FALLBACK_MODEL, pool: 'neuron' })
@@ -205,15 +233,21 @@ async function runChatTool(call, { env, authorization, identity, characterId }) 
   }
 }
 
-// Run the Workers AI tool loop. Tool calls are restricted to the read-only
-// allowlist and character_id is pinned to the authenticated character.
-// Returns '' when the model produced no usable answer; throws ChatTimeoutError
-// past `deadline` — the endpoint turns both into a retrieval-only answer.
-// Exported for tests.
-export async function runAiChat(env, messages, { authorization, identity, characterId, stats, deadline, ai, model }) {
+// Run the model tool loop. Read tools run inline; write tools are gated — the
+// first one the model calls is captured as `pendingWrite` (never executed here)
+// and the loop stops so the endpoint can turn it into a confirmation. Tool calls
+// are restricted to the allowlist and character_id is pinned to the
+// authenticated character. Returns { answer, pendingWrite }: answer is '' when
+// the model produced nothing usable; throws ChatTimeoutError past `deadline`.
+// With `withTools:false` it does a single no-tools call (used for the
+// post-confirmation summary). Exported for tests.
+export async function runAiChat(
+  env,
+  messages,
+  { authorization, identity, characterId, stats, deadline, ai, model, allowWrites = true, withTools = true },
+) {
   const binding = ai || env.AI
   const modelId = model || CHAT_MODEL
-  const tools = chatToolDefs()
   const runModel = async (payload) => {
     // Not worth starting a reasoning call with under 1.5s left.
     if (deadline - Date.now() < 1500) throw new ChatTimeoutError()
@@ -228,6 +262,12 @@ export async function runAiChat(env, messages, { authorization, identity, charac
       throw err
     }
   }
+  if (!withTools) {
+    const res = await runModel({ messages, ...CHAT_RUN_OPTS })
+    return { answer: answerText(res), pendingWrite: null }
+  }
+  const tools = chatToolDefs()
+  let pendingWrite = null
   for (let round = 0; round < CHAT_MAX_TOOL_ROUNDS; round++) {
     const res = await runModel({ messages, tools, ...CHAT_RUN_OPTS })
     const message = res?.choices?.[0]?.message
@@ -237,21 +277,157 @@ export async function runAiChat(env, messages, { authorization, identity, charac
       .map((c, i) => ({ ...c, id: c.id || `call_${round}_${i}` }))
     if (!calls.length) {
       const answer = answerText(res)
-      if (answer) return answer
+      if (answer) return { answer, pendingWrite: null }
       break
     }
     messages.push({ role: 'assistant', content: message.content ?? null, tool_calls: calls })
-    // Independent read-only lookups — run them in parallel.
+    // A write is never executed inline — capture the first one for the player to
+    // confirm; reads run in parallel. A second write this round is deferred.
+    const firstWriteIdx = allowWrites ? calls.findIndex((c) => isWriteTool(c.function.name)) : -1
     const results = await raceDeadline(
-      Promise.all(calls.map((call) => runChatTool(call, { env, authorization, identity, characterId }))),
+      Promise.all(
+        calls.map((call, i) => {
+          if (allowWrites && isWriteTool(call.function.name)) {
+            if (i === firstWriteIdx) {
+              const args = parseToolArgs(call.function.arguments)
+              args.character_id = characterId
+              pendingWrite = { tool: call.function.name, args }
+              return Promise.resolve(PENDING_CONFIRMATION_NOTE)
+            }
+            return Promise.resolve(SECONDARY_WRITE_NOTE)
+          }
+          return runChatTool(call, { env, authorization, identity, characterId })
+        }),
+      ),
       deadline,
     )
     calls.forEach((call, i) => messages.push({ role: 'tool', tool_call_id: call.id, content: results[i] }))
+    if (pendingWrite) {
+      // One more no-tools call so the model phrases the confirmation request.
+      const final = await runModel({ messages, ...CHAT_RUN_OPTS })
+      return { answer: answerText(final), pendingWrite }
+    }
   }
   // Tool budget exhausted or empty response — one last call with no tools so
   // the model must answer from what it has.
   const final = await runModel({ messages, ...CHAT_RUN_OPTS })
-  return answerText(final)
+  return { answer: answerText(final), pendingWrite: null }
+}
+
+// Walk the ordered AI attempts to produce an answer (and, on the tool path, a
+// captured pendingWrite). Handles the paid-pool reserve/settle so the day's
+// spend can never cross budget mid-flight; the free Gemini attempt (pool null)
+// is unmetered. Returns { answer, pendingWrite, reason }.
+async function resolveAnswer(env, { buildTranscript, characterId, authorization, identity, withTools = true, allowWrites = true }) {
+  const attempts = chatAttempts(env)
+  if (!attempts.length) {
+    // No provider reaches this deployment — almost always a secret set for the
+    // wrong Pages environment. Log it loudly rather than degrade silently.
+    console.warn(
+      '[PocketRPG][chat] no AI provider configured — OPENAI_API_KEY / GEMINI_API_KEY / Workers AI (env.AI) all unavailable to this deployment',
+    )
+    return { answer: '', pendingWrite: null, reason: 'ai_unconfigured' }
+  }
+  const dayKey = utcDayKey()
+  // Two paid daily pools reserved lazily on first use; a pool that no longer
+  // fits skips only its own attempts. The free Gemini attempt has no pool.
+  const pools = {
+    openai: {
+      key: openaiPoolKey(dayKey),
+      reserve: CHAT_OPENAI_MESSAGE_RESERVE_TOKENS,
+      budget: CHAT_OPENAI_TOKEN_BUDGET,
+      cost: (s) => s.promptTokens + s.completionTokens,
+    },
+    neuron: {
+      key: dayKey,
+      reserve: CHAT_MESSAGE_RESERVE_MILLI,
+      budget: CHAT_NEURON_BUDGET_MILLI,
+      cost: (s) => usageMilliNeurons({ prompt_tokens: s.promptTokens, completion_tokens: s.completionTokens }),
+    },
+  }
+  let answer = ''
+  let pendingWrite = null
+  let reason = null
+  const deadline = Date.now() + CHAT_TIME_BUDGET_MS
+  for (const { ai, model, pool: poolName } of attempts) {
+    const pool = poolName ? pools[poolName] : null
+    if (pool && pool.stats === undefined) {
+      const reserved = await reserveMessageNeurons(env, pool.key, pool.reserve, pool.budget)
+      pool.stats = reserved ? { promptTokens: 0, completionTokens: 0, usageUnknown: false } : null
+    }
+    if (pool && !pool.stats) {
+      reason = 'budget'
+      continue
+    }
+    // Unmetered attempts still need a stats sink for runAiChat; throwaway.
+    const stats = pool ? pool.stats : { promptTokens: 0, completionTokens: 0, usageUnknown: false }
+    try {
+      const messages = buildTranscript()
+      const out = await runAiChat(env, messages, { authorization, identity, characterId, stats, deadline, ai, model, allowWrites, withTools })
+      answer = out.answer
+      pendingWrite = out.pendingWrite || null
+      if (answer || pendingWrite) break
+      reason = 'empty'
+    } catch (err) {
+      console.error(`[PocketRPG][chat] AI call failed (${model}):`, err?.message || err)
+      answer = ''
+      reason = err instanceof ChatTimeoutError ? 'timeout' : 'ai_error'
+      if (err instanceof ChatTimeoutError) break
+    }
+  }
+  // Always settle a reserved pool back to actual usage — even a timed-out call
+  // that reported none — so a leaked reserve can't drain the day's budget.
+  for (const pool of Object.values(pools)) {
+    if (pool.stats) await settleMessageNeurons(env, pool.key, pool.reserve, pool.cost(pool.stats))
+  }
+  return { answer, pendingWrite, reason }
+}
+
+// Confirmation path: a previously-proposed write action, signed at propose time,
+// is verified and executed now via the same MCP bridge (auth/locks/audit run in
+// the real endpoint), then the outcome is phrased for the player.
+async function confirmAction({ env, authorization, identity, characterId, token }) {
+  const payload = await verifyPendingAction(token, env.JWT_SECRET, characterId)
+  if (!payload) {
+    return json({ answer: "That action link has expired — just ask me again and I'll set it back up.", mode: 'action_expired' })
+  }
+  let result
+  try {
+    result = await callTool(payload.tool, payload.args, { env, authorization, identity })
+  } catch (err) {
+    result = { content: [{ type: 'text', text: `Error: ${String(err?.message || err)}` }], isError: true }
+  }
+  const resultText = toolResultText(result)
+  const isError = !!result?.isError
+  const label = actionLabel(payload.tool, payload.args)
+
+  // Phrase the outcome with the free/unmetered AI path (no tools); fall back to
+  // a deterministic line if the AI path is unavailable.
+  let answer = ''
+  try {
+    const out = await resolveAnswer(env, {
+      buildTranscript: () => [
+        { role: 'system', content: SYSTEM_PROMPT },
+        { role: 'user', content: `${ACTION_RESULT_PREFACE}\nAction: ${label}\nResult JSON: ${resultText}` },
+      ],
+      characterId,
+      authorization,
+      identity,
+      withTools: false,
+      allowWrites: false,
+    })
+    answer = out.answer
+  } catch {
+    /* fall through to the deterministic line */
+  }
+  if (!answer) {
+    answer = isError
+      ? `That didn't go through: ${resultText.replace(/^(Tool error|Error):\s*/, '')}`
+      : `Done — ${label}.`
+  }
+
+  await auditLog(env, 'chat_action', { identityId: identity.id, characterId, tool: payload.tool, isError }, { swallow: true })
+  return json({ answer, mode: isError ? 'action_error' : 'action_done', tool: payload.tool })
 }
 
 export async function onRequestPost({ request, env }) {
@@ -274,19 +450,14 @@ export async function onRequestPost({ request, env }) {
   } catch {
     return json({ error: 'Invalid JSON body' }, 400)
   }
+
+  // A confirm token means "run the action I already approved" — no question.
+  if (typeof body?.confirm === 'string' && body.confirm.trim()) {
+    return confirmAction({ env, authorization, identity: auth.identity, characterId, token: body.confirm.trim() })
+  }
+
   const question = typeof body?.message === 'string' ? body.message.trim().slice(0, CHAT_MAX_QUESTION_CHARS) : ''
   if (!question) return json({ error: 'Missing message' }, 400)
-
-  const dayKey = utcDayKey()
-  const claim = await claimCharacterMessage(env, characterId, dayKey)
-  if (!claim.allowed) {
-    return json({
-      answer: `You've used all ${CHAT_DAILY_LIMIT} helper questions for today — they refresh at 00:00 UTC.`,
-      mode: 'quota',
-      remaining: 0,
-      resetInMs: nextResetMs(),
-    })
-  }
 
   // 6 chunks: guide sections average ~68 tokens, so wider retrieval is nearly
   // free and lifts answer quality more than any other input.
@@ -294,89 +465,30 @@ export async function onRequestPost({ request, env }) {
   const chunks = hits.map((h) => h.chunk)
   const sources = chunks.map((c) => ({ id: c.id, title: c.title }))
 
-  let answer = ''
+  const { answer: aiAnswer, pendingWrite, reason } = await resolveAnswer(env, {
+    buildTranscript: () => buildMessages({ question, history: body?.history, chunks }),
+    characterId,
+    authorization,
+    identity: auth.identity,
+  })
+
+  let answer = aiAnswer
   let mode = 'ai'
-  // Why the AI path yielded no answer (surfaced as `reason` on a degraded
-  // response so the cause is visible without server-log access).
-  let reason = null
-  const attempts = chatAttempts(env)
-  if (!attempts.length) {
-    // The silent blind spot: no provider is configured from the function's
-    // view, so we never even attempt a call. Almost always a secret that
-    // isn't reaching this deployment (e.g. set for the wrong Pages
-    // environment) — log it loudly rather than degrade without a trace.
-    reason = 'ai_unconfigured'
-    console.warn(
-      '[PocketRPG][chat] no AI provider configured — OPENAI_API_KEY / GEMINI_API_KEY / Workers AI (env.AI) all unavailable to this deployment',
-    )
-  }
-  // Two independent daily pools: the OpenAI attempt spends the complimentary
-  // token allotment, Gemini/Workers AI attempts spend the neuron budget. Each
-  // pool is reserved lazily before its first attempt; a pool that no longer
-  // fits skips only its own attempts, so an exhausted OpenAI pool still falls
-  // through to the budget-capped paid paths. `stats` is undefined until the
-  // pool is tried, null when its reserve was refused.
-  const pools = {
-    openai: {
-      key: openaiPoolKey(dayKey),
-      reserve: CHAT_OPENAI_MESSAGE_RESERVE_TOKENS,
-      budget: CHAT_OPENAI_TOKEN_BUDGET,
-      cost: (s) => s.promptTokens + s.completionTokens,
-    },
-    neuron: {
-      key: dayKey,
-      reserve: CHAT_MESSAGE_RESERVE_MILLI,
-      budget: CHAT_NEURON_BUDGET_MILLI,
-      cost: (s) => usageMilliNeurons({ prompt_tokens: s.promptTokens, completion_tokens: s.completionTokens }),
-    },
-  }
-  if (attempts.length) {
-    const deadline = Date.now() + CHAT_TIME_BUDGET_MS
-    // Each attempt gets a fresh transcript; a failed or empty attempt falls
-    // through to the next model, all under the one deadline.
-    for (const { ai, model, pool: poolName } of attempts) {
-      const pool = pools[poolName]
-      if (pool.stats === undefined) {
-        const reserved = await reserveMessageNeurons(env, pool.key, pool.reserve, pool.budget)
-        pool.stats = reserved ? { promptTokens: 0, completionTokens: 0, usageUnknown: false } : null
-      }
-      if (!pool.stats) {
-        reason = 'budget'
-        continue
-      }
-      try {
-        const messages = buildMessages({ question, history: body?.history, chunks })
-        answer = await runAiChat(env, messages, { authorization, identity: auth.identity, characterId, stats: pool.stats, deadline, ai, model })
-        if (answer) break
-        reason = 'empty'
-      } catch (err) {
-        console.error(`[PocketRPG][chat] AI call failed (${model}):`, err?.message || err)
-        answer = ''
-        reason = err instanceof ChatTimeoutError ? 'timeout' : 'ai_error'
-        if (err instanceof ChatTimeoutError) break
-      }
-    }
-    // Reconcile each reserved pool back to actual metered usage. Always
-    // settle — even when a call didn't report usage (a timed-out/abandoned
-    // call). Skipping it there would permanently burn the full worst-case
-    // reserve, and a handful of those drains the day's budget and forces
-    // every later message to retrieval-only until the 00:00 UTC reset.
-    for (const pool of Object.values(pools)) {
-      if (pool.stats) await settleMessageNeurons(env, pool.key, pool.reserve, pool.cost(pool.stats))
-    }
-  }
-  // Whatever went wrong on the AI path — no budget, model error, time budget
-  // exceeded, empty answer — the player always gets a knowledge-index answer.
-  if (!answer) {
+  let pendingAction = null
+  if (pendingWrite) {
+    // The model proposed a write — hand the player a signed, confirmable action
+    // instead of running it. This is the enforcement point: no write executes
+    // without a confirm round-trip.
+    mode = 'action_pending'
+    const label = actionLabel(pendingWrite.tool, pendingWrite.args)
+    const signed = await signPendingAction({ tool: pendingWrite.tool, args: pendingWrite.args, characterId }, env.JWT_SECRET)
+    pendingAction = { token: signed, label }
+    if (!answer) answer = `I can ${label.toLowerCase()} for you — confirm below and I'll do it.`
+  } else if (!answer) {
+    // Whatever went wrong on the AI path — the player always gets a
+    // knowledge-index answer.
     answer = retrievalOnlyAnswer(chunks)
     mode = 'retrieval'
-  }
-
-  // A degraded answer shouldn't cost the player one of their daily questions.
-  let remaining = claim.remaining
-  if (mode === 'retrieval') {
-    await refundCharacterMessage(env, characterId, dayKey)
-    remaining = Math.min(CHAT_DAILY_LIMIT, remaining + 1)
   }
 
   await auditLog(
@@ -386,5 +498,11 @@ export async function onRequestPost({ request, env }) {
     { swallow: true },
   )
 
-  return json({ answer, sources, mode, remaining, resetInMs: nextResetMs(), ...(mode === 'retrieval' && reason ? { reason } : {}) })
+  return json({
+    answer,
+    sources,
+    mode,
+    ...(pendingAction ? { pendingAction } : {}),
+    ...(mode === 'retrieval' && reason ? { reason } : {}),
+  })
 }

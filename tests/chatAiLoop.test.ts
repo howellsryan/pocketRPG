@@ -39,8 +39,9 @@ describe('runAiChat', () => {
   it('returns the answer with <think> reasoning stripped', async () => {
     const run = vi.fn().mockResolvedValue(aiResponse('<think>hmm</think>Use a rune scimitar.'))
     const stats = newStats()
-    const answer = await runAiChat({ AI: { run } } as any, baseMessages(), opts({ stats }))
+    const { answer, pendingWrite } = await runAiChat({ AI: { run } } as any, baseMessages(), opts({ stats }))
     expect(answer).toBe('Use a rune scimitar.')
+    expect(pendingWrite).toBeNull()
     expect(run).toHaveBeenCalledTimes(1)
     expect(stats.usageUnknown).toBe(false)
     expect(stats.promptTokens).toBe(100)
@@ -49,27 +50,55 @@ describe('runAiChat', () => {
 
   it('returns "" (never a hardcoded apology) when the model gives no usable answer', async () => {
     const run = vi.fn().mockResolvedValue(aiResponse(''))
-    const answer = await runAiChat({ AI: { run } } as any, baseMessages(), opts())
+    const { answer } = await runAiChat({ AI: { run } } as any, baseMessages(), opts())
     expect(answer).toBe('')
     // Empty first response breaks the tool loop, then one final no-tools call.
     expect(run).toHaveBeenCalledTimes(2)
   })
 
-  it('feeds a disallowed tool call back as a tool error and keeps going', async () => {
+  it('captures a write tool as a pending action instead of executing it', async () => {
     const run = vi
       .fn()
       .mockResolvedValueOnce(
-        aiResponse(null, [{ type: 'function', function: { name: 'buy_item', arguments: '{}' } }]),
+        aiResponse(null, [
+          { type: 'function', function: { name: 'sell_item', arguments: JSON.stringify({ item_id: 'oak_logs', quantity: 100 }) } },
+        ]),
+      )
+      .mockResolvedValueOnce(aiResponse("I'll sell 100 Oak Logs — confirm?"))
+    const messages = baseMessages()
+    // No env/DB needed: a write is intercepted before any tool runs.
+    const { answer, pendingWrite } = await runAiChat({} as any, messages, opts())
+    expect(pendingWrite).toEqual({ tool: 'sell_item', args: { item_id: 'oak_logs', quantity: 100, character_id: 7 } })
+    expect(answer).toBe("I'll sell 100 Oak Logs — confirm?")
+    const toolMsg = messages.find((m: any) => m.role === 'tool') as any
+    expect(toolMsg.content).toContain('PENDING_CONFIRMATION')
+    expect(run).toHaveBeenCalledTimes(2) // tool round + the phrasing call
+  })
+
+  it('does not gate writes when allowWrites is false (used for the summary call)', async () => {
+    const run = vi.fn().mockResolvedValue(aiResponse('Sold.'))
+    const { answer, pendingWrite } = await runAiChat({} as any, baseMessages(), opts({ withTools: false }))
+    expect(answer).toBe('Sold.')
+    expect(pendingWrite).toBeNull()
+    expect(run).toHaveBeenCalledTimes(1)
+    expect(run.mock.calls[0][1].tools).toBeUndefined()
+  })
+
+  it('feeds an unknown tool call back as a tool error and keeps going', async () => {
+    const run = vi
+      .fn()
+      .mockResolvedValueOnce(
+        aiResponse(null, [{ type: 'function', function: { name: 'made_up_tool', arguments: '{}' } }]),
       )
       .mockResolvedValueOnce(aiResponse('Done anyway.'))
     const messages = baseMessages()
-    const answer = await runAiChat({ AI: { run } } as any, messages, opts())
+    const { answer } = await runAiChat({ AI: { run } } as any, messages, opts())
     expect(answer).toBe('Done anyway.')
     const toolMsg = messages.find((m: any) => m.role === 'tool') as any
-    expect(toolMsg.content).toContain("Tool error: 'buy_item' is not available.")
+    expect(toolMsg.content).toContain("Tool error: 'made_up_tool' is not available.")
   })
 
-  it('a throwing allowlisted tool becomes a tool error message, not a failed request', async () => {
+  it('a throwing allowlisted read tool becomes a tool error message, not a failed request', async () => {
     const run = vi
       .fn()
       .mockResolvedValueOnce(
@@ -78,7 +107,7 @@ describe('runAiChat', () => {
       )
       .mockResolvedValueOnce(aiResponse('Answered from context instead.'))
     const messages = baseMessages()
-    const answer = await runAiChat({ AI: { run } } as any, messages, opts())
+    const { answer } = await runAiChat({ AI: { run } } as any, messages, opts())
     expect(answer).toBe('Answered from context instead.')
     const toolMsg = messages.find((m: any) => m.role === 'tool') as any
     expect(toolMsg.content).toMatch(/^Tool error: /)
@@ -93,7 +122,7 @@ describe('runAiChat', () => {
       }
       return Promise.resolve(aiResponse('Final answer.'))
     })
-    const answer = await runAiChat({ AI: { run } } as any, baseMessages(), opts())
+    const { answer } = await runAiChat({ AI: { run } } as any, baseMessages(), opts())
     expect(answer).toBe('Final answer.')
     expect(run).toHaveBeenCalledTimes(CHAT_MAX_TOOL_ROUNDS + 1)
     expect(run.mock.calls[CHAT_MAX_TOOL_ROUNDS][1].tools).toBeUndefined()
@@ -131,9 +160,9 @@ describe('chatAttempts / geminiChatBinding', () => {
     const AI = { run: vi.fn() }
     const full = chatAttempts({ GEMINI_API_KEY: 'test-key', OPENAI_API_KEY: 'test-key', AI } as any)
     expect(full.map((a) => a.model)).toEqual([CHAT_OPENAI_MODEL, CHAT_MODEL, CHAT_FALLBACK_MODEL])
-    // Pool routing: only the OpenAI attempt spends the complimentary token
-    // pool; everything else meters against the neuron budget.
-    expect(full.map((a) => a.pool)).toEqual(['openai', 'neuron', 'neuron'])
+    // Pool routing: OpenAI spends the complimentary token pool, the free Gemini
+    // primary is unmetered (null), the paid Workers AI fallback spends neurons.
+    expect(full.map((a) => a.pool)).toEqual(['openai', null, 'neuron'])
     expect(full[2].ai).toBe(AI)
     // No OpenAI key → primary then straight to Workers AI fallback.
     expect(chatAttempts({ GEMINI_API_KEY: 'test-key', AI } as any).map((a) => a.model)).toEqual([

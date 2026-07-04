@@ -1,15 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import {
-  CHAT_DAILY_LIMIT,
   CHAT_MESSAGE_RESERVE_MILLI,
   CHAT_NEURON_BUDGET_MILLI,
   CHAT_OPENAI_MESSAGE_RESERVE_TOKENS,
   CHAT_OPENAI_TOKEN_BUDGET,
   MILLI_NEURONS_PER_INPUT_TOKEN,
   MILLI_NEURONS_PER_OUTPUT_TOKEN,
-  claimCharacterMessage,
   openaiPoolKey,
-  refundCharacterMessage,
   reserveMessageNeurons,
   settleMessageNeurons,
   usageMilliNeurons,
@@ -86,33 +83,6 @@ function fakeDb() {
 }
 
 describe('chat quotas', () => {
-  it('allows up to the per-character daily limit, then refuses', async () => {
-    const env = { DB: fakeDb() }
-    for (let i = 1; i <= 3; i++) {
-      const claim = await claimCharacterMessage(env, 7, '2026-07-01', 3)
-      expect(claim.allowed).toBe(true)
-      expect(claim.remaining).toBe(3 - i)
-    }
-    const refused = await claimCharacterMessage(env, 7, '2026-07-01', 3)
-    expect(refused).toEqual({ allowed: false, remaining: 0 })
-  })
-
-  it('tracks characters and days independently', async () => {
-    const env = { DB: fakeDb() }
-    await claimCharacterMessage(env, 7, '2026-07-01', 1)
-    expect((await claimCharacterMessage(env, 7, '2026-07-01', 1)).allowed).toBe(false)
-    expect((await claimCharacterMessage(env, 8, '2026-07-01', 1)).allowed).toBe(true)
-    expect((await claimCharacterMessage(env, 7, '2026-07-02', 1)).allowed).toBe(true)
-  })
-
-  it('refunding a message frees the slot again', async () => {
-    const env = { DB: fakeDb() }
-    await claimCharacterMessage(env, 7, '2026-07-01', 1)
-    expect((await claimCharacterMessage(env, 7, '2026-07-01', 1)).allowed).toBe(false)
-    await refundCharacterMessage(env, 7, '2026-07-01')
-    expect((await claimCharacterMessage(env, 7, '2026-07-01', 1)).allowed).toBe(true)
-  })
-
   it('neuron budget: reserves until the budget no longer fits, per day', async () => {
     const env = { DB: fakeDb() }
     expect(await reserveMessageNeurons(env, '2026-07-01', 400, 1000)).toBe(true)
@@ -174,7 +144,6 @@ describe('chat quotas', () => {
   })
 
   it('budget invariants keep the chatbot inside the free allocations', () => {
-    expect(CHAT_DAILY_LIMIT).toBe(30)
     // Budget + one in-flight worst-case reserve must stay within 10,000 free
     // neurons/day (10,000,000 milli-neurons).
     expect(CHAT_NEURON_BUDGET_MILLI + CHAT_MESSAGE_RESERVE_MILLI).toBeLessThanOrEqual(10_000_000)

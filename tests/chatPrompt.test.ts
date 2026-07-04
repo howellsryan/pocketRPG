@@ -20,10 +20,14 @@ describe('chat tool surface', () => {
     }
   })
 
-  it('allowlist contains READ-ONLY tools only — the chatbot must never mutate state', () => {
-    for (const name of CHAT_TOOL_ALLOWLIST) {
-      expect(schemaByName.get(name)?.annotations?.readOnlyHint, `${name} is not read-only`).toBe(true)
-    }
+  it('allowlist exposes the full MCP surface, including write tools (gated by confirmation)', () => {
+    // Chatbot can now perform actions; every schema tool is allowlisted. Reads
+    // run inline, writes are captured for confirmation (see chat/actions.js).
+    expect(new Set(CHAT_TOOL_ALLOWLIST)).toEqual(new Set(TOOL_SCHEMAS.map((t) => t.name)))
+    const writes = CHAT_TOOL_ALLOWLIST.filter((n) => schemaByName.get(n)?.annotations?.readOnlyHint === false)
+    expect(writes).toContain('sell_item')
+    expect(writes).toContain('assign_slayer_task')
+    expect(writes.length).toBeGreaterThan(0)
   })
 
   it('exposes OpenAI-format tool defs with character_id stripped', () => {
@@ -37,11 +41,13 @@ describe('chat tool surface', () => {
 })
 
 describe('chat prompt assembly', () => {
-  it('system prompt pins scope, offline-ness and anti-guessing', () => {
-    expect(SYSTEM_PROMPT).toMatch(/PocketRPG only/i)
+  it('system prompt pins scope, offline-ness, anti-guessing and the confirm rule', () => {
+    expect(SYSTEM_PROMPT).toMatch(/only help with PocketRPG/i)
     expect(SYSTEM_PROMPT).toMatch(/refuse/i)
     expect(SYSTEM_PROMPT).toMatch(/no internet access/i)
     expect(SYSTEM_PROMPT).toMatch(/don't know/i)
+    // Action-capable now, but every write must be confirmed first.
+    expect(SYSTEM_PROMPT).toMatch(/confirm/i)
   })
 
   it('builds system + history + contextualised question', () => {
