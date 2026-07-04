@@ -2,6 +2,19 @@ import { getDB } from './database.js'
 import { ALL_SKILLS, HITPOINTS_START_XP, INVENTORY_SIZE, EQUIPMENT_SLOTS } from '../utils/constants.js'
 import { getStarterKit } from '../engine/createDefaultSave.js'
 
+// A fresh page load has no memory of what this device already pushed to the
+// cloud (lastPushedAt/lastSaveRevision in cloud/sync.js reset to zero on every
+// reload) — so without this, a boot-time cloud pull always wins over IndexedDB,
+// even when IDB holds a just-made change the debounced/critical push hasn't
+// reached the server yet. This timestamp survives the reload (localStorage,
+// unlike the in-memory sync state) so App.initCloudAndSave can tell "IDB was
+// written after the cloud's last known save" and skip clobbering it.
+export const LOCAL_WRITE_MARKER_KEY = 'pocketrpg_lastLocalWriteAt'
+
+function markLocalWrite() {
+  try { localStorage.setItem(LOCAL_WRITE_MARKER_KEY, String(Date.now())) } catch { /* non-fatal */ }
+}
+
 // ── Player Profile ──
 
 export async function getPlayer() {
@@ -11,7 +24,9 @@ export async function getPlayer() {
 
 export async function savePlayer(profile) {
   const db = await getDB()
-  return db.put('player', profile, 'profile')
+  const result = await db.put('player', profile, 'profile')
+  markLocalWrite()
+  return result
 }
 
 // ── Stats ──
@@ -33,7 +48,9 @@ export async function getAllStats() {
 
 export async function saveStat(skill, data) {
   const db = await getDB()
-  return db.put('stats', data, skill)
+  const result = await db.put('stats', data, skill)
+  markLocalWrite()
+  return result
 }
 
 export async function saveAllStats(stats) {
@@ -43,6 +60,7 @@ export async function saveAllStats(stats) {
     tx.store.put(data, skill)
   }
   await tx.done
+  markLocalWrite()
 }
 
 // ── Inventory ──
@@ -68,6 +86,7 @@ export async function saveInventory(inventory) {
     }
   }
   await tx.done
+  markLocalWrite()
 }
 
 // ── Bank ──
@@ -90,6 +109,7 @@ export async function saveBank(bank) {
     tx.store.put(data, itemId)
   }
   await tx.done
+  markLocalWrite()
 }
 
 // ── Equipment ──
@@ -115,6 +135,7 @@ export async function saveEquipment(equipment) {
     }
   }
   await tx.done
+  markLocalWrite()
 }
 
 // ── Settings ──
@@ -127,7 +148,9 @@ export async function getSetting(key) {
 
 export async function saveSetting(key, value) {
   const db = await getDB()
-  return db.put('settings', { key, value }, key)
+  const result = await db.put('settings', { key, value }, key)
+  markLocalWrite()
+  return result
 }
 
 // ── New Game Initialization ──

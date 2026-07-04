@@ -881,9 +881,11 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                 bossKillCountsRef.current = updated
                 updateBossKillCounts(updated)
               }
-              if (res?.save?.save_data) {
-                await applyCloudSave(JSON.parse(res.save.save_data), res.save.updatedAt, res.save.save_revision)
-              }
+              // NOTE: deliberately NOT applyCloudSave(res.save.save_data) here — that
+              // snapshot is whatever the server read at THIS request's start, which can
+              // predate a later local-only change (e.g. travel) if the round trip is
+              // slow, silently reverting it. The reward itself is already applied above;
+              // save_revision stays in sync generically via SAVE_REVISION_EVENT (api.js).
               setLootModal({
                 monster: defeatedMonsterData,
                 loot: granted.map(reward => ({ itemId: reward.itemId, quantity: reward.quantity })),
@@ -1101,9 +1103,8 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
         raidKillCountsRef.current = updated
         updateRaidKillCounts(updated)
       }
-      if (res?.save?.save_data) {
-        await applyCloudSave(JSON.parse(res.save.save_data), res.save.updatedAt, res.save.save_revision)
-      }
+      // NOTE: deliberately NOT applyCloudSave(res.save.save_data) here — see the
+      // monster-completion handler above for why.
       recordGameEvent?.({ kind: 'raid_complete', raidId })
       setLootModal({
         monster,

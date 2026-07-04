@@ -22,7 +22,6 @@ import { getHighAlchValue } from '../utils/itemValue.js'
 import { formatActionDuration } from '../utils/formatters.js'
 import { calculateDungeoneeringTokensForAction, getDungeoneeringRewardCost, canAffordDungeoneeringReward } from '../engine/dungeoneeringTokens.js'
 import { api, getToken, getCharacterId } from '../cloud/api.js'
-import { applyCloudSave } from '../cloud/sync.js'
 import skillsData from '../data/skills.json'
 import itemsData from '../data/items.json'
 import AgilityScreen from './AgilityScreen.jsx'
@@ -63,7 +62,7 @@ function calculateRemainingActions(action, inventory, bank) {
 // `onStopBack` (from App): where Stop & Back returns to — the place-map origin
 // when there is one, otherwise the previous screen.
 export default function SkillingScreen({ initialSkillId, initialActionId, initialMasterId, idleResult, onNavigate, onBack, onStopBack }) {
-  const { stats, inventory, bank, equipment, isIronman, updateInventory, updateBankDirect, grantXP, addToast, setActiveTask, requestActivityStart, activeTask, dungeoneeringTokens, awardDungeoneeringTokens, trySpendDungeoneeringTokens, loadGame, recordGameEvent } = useGame()
+  const { stats, inventory, bank, equipment, isIronman, updateInventory, updateBankDirect, grantXP, addToast, setActiveTask, requestActivityStart, activeTask, dungeoneeringTokens, awardDungeoneeringTokens, trySpendDungeoneeringTokens, recordGameEvent } = useGame()
   const [selectedSkill, setSelectedSkill] = useState(initialSkillId || null)
   const [selectedAction, setSelectedAction] = useState(null)
   const [skilling, setSkilling] = useState(null)
@@ -434,33 +433,26 @@ export default function SkillingScreen({ initialSkillId, initialActionId, initia
       if (getToken() && getCharacterId()) {
         try {
           const res = await api.completeDungeoneering('dungeoneering', { actionNonce: `dng:${action.id}:${Date.now()}`, rewards: [{ itemId: action.product, quantity: action.productQty || 1 }], dungeoneeringTokens: -cost })
-          if (res?.save?.save_data) {
-            const cloudSave = JSON.parse(res.save.save_data)
-            await applyCloudSave(cloudSave, res.save.updatedAt, res.save.save_revision)
-            await loadGame()
-
-            // Keep token display in sync immediately after purchase.
-            const serverTokens = Number(cloudSave?.settings?.dungeoneeringTokens ?? cloudSave?.dungeoneeringTokens)
-            if (Number.isFinite(serverTokens)) {
-              const delta = Math.floor(serverTokens) - (Number(dungeoneeringTokens) || 0)
-              if (delta > 0) awardDungeoneeringTokens(delta)
-              else if (delta < 0) trySpendDungeoneeringTokens(Math.abs(delta))
-            }
-
-            // Keep inventory UI in sync immediately after server grant.
-            if (Array.isArray(cloudSave?.inventory)) {
-              const compact = cloudSave.inventory
-                .map((slot) => {
-                  if (!slot || typeof slot !== 'object') return null
-                  const itemId = slot.itemId || slot.id
-                  const quantity = Math.floor(Number(slot.quantity) || 0)
-                  if (!itemId || quantity < 1) return null
-                  return { ...slot, itemId, quantity }
-                })
-                .filter(Boolean)
-              const nextInv = Array(28).fill(null)
-              for (let i = 0; i < compact.length && i < 28; i++) nextInv[i] = compact[i]
-              updateInventory(nextInv)
+          // NOTE: deliberately NOT applyCloudSave(res.save.save_data) + loadGame()
+          // here — that snapshot is whatever the server read at the START of this
+          // request, which can predate a later local-only change (e.g. travel) if
+          // the round trip is slow, silently reverting it on adoption. The server
+          // granted exactly the item + token debit requested above, so apply that
+          // directly; save_revision stays in sync generically via
+          // SAVE_REVISION_EVENT (api.js).
+          trySpendDungeoneeringTokens(cost)
+          const granted = Array.isArray(res?.granted) ? res.granted : []
+          for (const reward of granted) {
+            const itemId = reward?.itemId
+            const quantity = Math.floor(Number(reward?.quantity) || 0)
+            if (!itemId || quantity < 1) continue
+            if (reward?.destination === 'bank') {
+              updateBankDirect({ [itemId]: quantity })
+            } else {
+              const newInv = [...inventoryRef.current]
+              addItem(newInv, itemId, quantity, itemsData[itemId]?.stackable || false)
+              updateInventory(newInv)
+              inventoryRef.current = newInv
             }
           }
           recordCollectionLogDrop({ itemId: action.product, sourceType: 'skilling', sourceId: 'dungeoneering' })

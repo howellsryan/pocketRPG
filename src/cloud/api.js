@@ -296,11 +296,12 @@ export const api = {
   }),
 }
 
-// Fire-and-forget idle state write via navigator.sendBeacon. Survives tab
-// hide / page unload on mobile where a regular fetch would be cancelled.
-// Returns true if the beacon was queued, false otherwise (caller should fall
-// back to api.putIdle in that case).
-export function sendIdleBeacon(activeTask) {
+// Fire-and-forget save-blob write via navigator.sendBeacon. Survives page
+// teardown (refresh / close / tab-hide) where a regular PUT fetch would be
+// cancelled mid-flight, losing progress since the last debounced push. Routes
+// to POST /api/save (beacon can't set the Authorization / X-Character-Id
+// headers, so token + character_id ride in the body). Returns true if queued.
+export function sendSaveBeacon(save_data, { saveRevision = 0, interactive = true } = {}) {
   try {
     if (typeof navigator === 'undefined' || typeof navigator.sendBeacon !== 'function') return false
     const token = getToken()
@@ -309,10 +310,12 @@ export function sendIdleBeacon(activeTask) {
     const body = JSON.stringify({
       token,
       character_id: characterId,
-      active_task: activeTask == null ? null : JSON.stringify(activeTask),
+      save_data,
+      save_revision: Number.isFinite(saveRevision) ? saveRevision : 0,
+      ...(interactive === false ? { interactive: false } : {}),
     })
     const blob = new Blob([body], { type: 'application/json' })
-    return navigator.sendBeacon(apiUrl('/api/idle'), blob)
+    return navigator.sendBeacon(apiUrl('/api/save'), blob)
   } catch {
     return false
   }

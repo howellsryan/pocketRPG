@@ -48,9 +48,9 @@ import { initNewGame, saveSetting, getSetting, getAllStats, getInventory, getEqu
 import { startTicks, stopTicks, onTick, pauseTicks, resumeTicks } from './engine/tick.js'
 import { wipeLocalSave } from './db/saveload.js'
 import { api, captureTokenFromHash, getToken, getCharacterId, getCharacterName, setCharacter, clearAuth, getLocalCharacterId, setLocalCharacterId, getIronmanMode, getOneLifeMode, syncAccountModeFlags, isDemoMode, setDemoMode, CREDITS_UPDATED_EVENT } from './cloud/api.js'
-import { schedulePushSave, schedulePeriodicSave, pushNow, pullSave, applyCloudSave, checkCloudNewer, resetSyncState, requestCriticalPushSave, retrySaveNow, isSaveConflict, clearSaveConflict, CLOUD_SAVE_STATUS_EVENT } from './cloud/sync.js'
+import { schedulePushSave, schedulePeriodicSave, pushNow, beaconSaveNow, pullSave, applyCloudSave, checkCloudNewer, isLocalWriteNewerThanCloud, resetSyncState, requestCriticalPushSave, retrySaveNow, isSaveConflict, clearSaveConflict, CLOUD_SAVE_STATUS_EVENT } from './cloud/sync.js'
 import { CRITICAL_SAVE_REASONS } from './cloud/criticalSavePolicy.js'
-import { fetchIdleState, beaconIdleState, resetIdleStateSync } from './cloud/idleState.js'
+import { fetchIdleState, resetIdleStateSync } from './cloud/idleState.js'
 import { isBackground } from './engine/activityRegistry.js'
 import { isRunnableBackgroundTask, getActionTicksForTask, getCarriedPendingTicks, simulateTaskWindow, resultActions, isScreenRecentlyDriving } from './engine/activityRunner.js'
 import { mergeSession, sessionPatchFromResult } from './engine/activitySession.js'
@@ -166,16 +166,28 @@ function clueRevealTitle(clueTask) {
 function completeClueSolve(clueTask, { updateBankDirect, getSnapshot, addToast, isInPvpMatch }) {
   const title = clueRevealTitle(clueTask)
   if (getToken() && getCharacterId()) {
-    // Returned (not just fired) so paid skips can await settlement: the grant
-    // bumps save_revision server-side, and pushing a save before the response's
-    // applyCloudSave lands would be a guaranteed stale-write conflict.
     return api.completeClue(clueTask.clueLevel, {
       actionNonce: `clue:${clueTask.clueLevel}:${Date.now()}`,
       consumptions: [{ itemId: clueTask.requiresItem, quantity: 1 }],
     }).then(async (res) => {
-      if (res?.save?.save_data) await applyCloudSave(JSON.parse(res.save.save_data), res.save.updatedAt, res.save.save_revision)
-      applyServerCollectionLogEntries(res?.collectionLogEntries || [])
+      // NOTE: deliberately NOT applyCloudSave(res.save.save_data) — that snapshot
+      // is whatever the server read at the START of this request, which can
+      // predate a later local-only change (e.g. travel) if the round trip is
+      // slow, silently reverting it on adoption. Apply just the granted reward
+      // (clues always auto-bank, matching the offline branch below);
+      // save_revision stays in sync generically via SAVE_REVISION_EVENT (api.js).
       const granted = Array.isArray(res?.granted) ? res.granted : []
+      if (granted.length > 0) {
+        const bankUpdates = {}
+        for (const reward of granted) {
+          const itemId = reward?.itemId
+          const quantity = Math.floor(Number(reward?.quantity) || 0)
+          if (!itemId || quantity < 1) continue
+          bankUpdates[itemId] = (bankUpdates[itemId] || 0) + quantity
+        }
+        updateBankDirect(bankUpdates)
+      }
+      applyServerCollectionLogEntries(res?.collectionLogEntries || [])
       if (granted.length > 0) emitRewardReveal(title, clueTask.icon || '📜', granted)
     }).catch((err) => {
       addToast(`Clue claim failed: ${err?.message || 'server_error'}`, 'error')
@@ -349,10 +361,13 @@ function GameApp() {
     const res = await api.completeMinigame(task.id, {
       actionNonce: `minigame:${task.id}:${Date.now()}`,
     })
-    if (res?.save?.save_data) {
-      await applyCloudSave(JSON.parse(res.save.save_data), res.save.updatedAt, res.save.save_revision)
-      await loadGame()
-    }
+    // NOTE: deliberately NOT applyCloudSave(res.save.save_data) + loadGame() here
+    // — that snapshot is whatever the server read at the START of this request,
+    // which can predate a later local-only change (e.g. travel) if the round trip
+    // is slow, silently reverting it. The unlock itself is already applied
+    // locally and pushed separately via requestCriticalPushSave at every call
+    // site above; save_revision stays in sync generically via SAVE_REVISION_EVENT
+    // (api.js).
     // Reflect the server-recorded collection-log entries immediately, the same
     // way the combat/clue completion flows do — otherwise the unlocked slot
     // doesn't appear until the next full collection-log refetch.
@@ -821,14 +836,15 @@ function GameApp() {
         // delta on return and clamp elapsed to 0.
         updateMaxObservedAt(now)
         localStorage.setItem('pocketrpg_activeTask', JSON.stringify(activeTaskRef.current))
-        // Flush any pending cloud push before the tab gets suspended.
+        // Flush progress before the tab is suspended/killed. Use a sendBeacon
+        // save (survives teardown) rather than pushNow's fetch, which the browser
+        // cancels when the page actually goes away — that cancellation was
+        // silently dropping progress since the last debounced push on refresh.
+        // /api/save folds the idle heartbeat into the same write (stamps
+        // last_active_at + active_task in character_idle_state), so no
+        // separate beacon to /api/idle is needed here.
         if (!isInPvpMatch) {
-          try { pushNow(getSnapshot()) } catch (e) { /* non-fatal */ }
-        }
-        // Beacon the idle state to D1 — server stamps last_active_at on its
-        // own clock so elapsed time on return is server-authoritative.
-        if (!isInPvpMatch) {
-          try { beaconIdleState(activeTaskRef.current) } catch (e) { /* non-fatal */ }
+          try { beaconSaveNow(getSnapshot()) } catch (e) { /* non-fatal */ }
         }
       } else {
         if (isInPvpMatch) return
@@ -1231,27 +1247,30 @@ function GameApp() {
       }
     }
 
-    // beforeunload: safety net for mobile browsers where visibilitychange
-    // doesn't fire reliably before a hard close (iOS Safari, Android Chrome)
-    const handleBeforeUnload = () => {
+    // pagehide / beforeunload: the actual teardown path on refresh / close /
+    // navigation. A normal fetch is cancelled here, so the cloud save goes out
+    // via sendBeacon (beaconSaveNow), which the browser guarantees to deliver
+    // even as the page dies. pagehide is the reliable modern signal; beforeunload
+    // stays as a fallback for browsers where pagehide lags on hard close.
+    const handleUnload = () => {
       const now = Date.now()
       localStorage.setItem('pocketrpg_hiddenAt', String(now))
       updateMaxObservedAt(now)
       localStorage.setItem('pocketrpg_activeTask', JSON.stringify(activeTaskRef.current))
+      // Folds the idle heartbeat into the same /api/save write — see the
+      // visibilitychange handler above.
       if (!isInPvpMatch) {
-        try { pushNow(getSnapshot()) } catch { /* non-fatal */ }
-      }
-      // sendBeacon survives tab-close where a regular fetch would be killed.
-      if (!isInPvpMatch) {
-        try { beaconIdleState(activeTaskRef.current) } catch { /* non-fatal */ }
+        try { beaconSaveNow(getSnapshot()) } catch { /* non-fatal */ }
       }
     }
 
     document.addEventListener('visibilitychange', handleVisibility)
-    window.addEventListener('beforeunload', handleBeforeUnload)
+    window.addEventListener('pagehide', handleUnload)
+    window.addEventListener('beforeunload', handleUnload)
     return () => {
       document.removeEventListener('visibilitychange', handleVisibility)
-      window.removeEventListener('beforeunload', handleBeforeUnload)
+      window.removeEventListener('pagehide', handleUnload)
+      window.removeEventListener('beforeunload', handleUnload)
     }
   }, [gameReady, grantXP, updateInventory, updateBankDirect, isInPvpMatch])
 
@@ -1532,7 +1551,15 @@ function GameApp() {
         }
         const result = await pullSave()
         if (result && result.payload) {
-          await applyCloudSave(result.payload, result.updatedAt)
+          // IDB may already hold a change (settings toggle, bank tag edit,
+          // world-map move, etc.) made just before this reload that the
+          // debounced/critical push hasn't reached the server yet. Adopting
+          // the cloud copy unconditionally would silently discard it — keep
+          // the newer local state instead and let the normal push cycle
+          // reconcile it to the cloud.
+          if (!isLocalWriteNewerThanCloud(result.updatedAt)) {
+            await applyCloudSave(result.payload, result.updatedAt)
+          }
         } else if (result && result.readFailed) {
           // The cloud read timed out or errored — we genuinely do NOT know
           // whether this character has a save. Initialising a fresh game and
@@ -1808,9 +1835,6 @@ function GameApp() {
     }
     setActionData(data || null)
     setScreen(scr)
-    if (gameReady && isCloudAccount && !isInPvpMatch && cloudPhase === 'ready') {
-      void pushNow(getSnapshot()).catch(() => {})
-    }
   }
 
   // Resume the action a player was travelling to (a gated activity start embedded its
