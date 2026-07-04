@@ -6,6 +6,7 @@
 
 import { signJWT, verifyJWT } from '../jwt.js'
 import { TOOL_SCHEMAS } from '../mcp/schema.js'
+import { getItem, getMonster, getSkillActions } from '../mcp/reference.js'
 import monstersData from '../../../src/data/monsters.json' assert { type: 'json' }
 import raidsData from '../../../src/data/raids.json' assert { type: 'json' }
 
@@ -102,6 +103,62 @@ export function actionSkipCost(tool, args = {}) {
 export function actionCreditCost(tool, args = {}) {
   const skip = actionSkipCost(tool, args)
   return { fee: CHAT_ACTION_FEE, skip, total: CHAT_ACTION_FEE + skip }
+}
+
+// Recursively collect string `id` values from a reference payload (skill
+// actions come back as nested actions/courses/npcs), robust to shape.
+function collectIds(node, acc) {
+  if (Array.isArray(node)) {
+    for (const n of node) collectIds(n, acc)
+  } else if (node && typeof node === 'object') {
+    if (typeof node.id === 'string') acc.add(node.id)
+    for (const v of Object.values(node)) collectIds(v, acc)
+  }
+  return acc
+}
+
+// Best-effort propose-time validation of a write's id arguments against the
+// static game catalogs, so an obviously-invalid action (a hallucinated id like
+// a non-existent thieving option) is caught and fed back to the model to fix
+// BEFORE it ever becomes a confirmable, credit-charged action. Returns an error
+// string, or null when the args look valid / can't be checked here. Ids that
+// depend on the save (patch_id, offer_id, slayer master eligibility, …) are left
+// for execution-time validation, which refunds the fee on failure.
+export function validateWriteArgs(tool, args = {}) {
+  const item = (id) => (!id || getItem(id) ? null : `PocketRPG has no item with id '${id}'. Look it up with list_items first — don't invent ids.`)
+  const monster = (id) => (!id || getMonster(id) ? null : `PocketRPG has no monster with id '${id}'. Look it up with list_monsters first — don't invent ids.`)
+  switch (tool) {
+    case 'buy_item':
+    case 'sell_item':
+    case 'deposit_to_bank':
+    case 'withdraw_from_bank':
+    case 'equip_item':
+      return item(args.item_id)
+    case 'plant_seed':
+      return item(args.seed_id)
+    case 'cast_magic':
+      return item(args.target_item_id)
+    case 'start_fight':
+    case 'kill_boss':
+    case 'fight_boss':
+      return monster(args.monster_id)
+    case 'kill_raid':
+      return args.raid_id && !raidsData[args.raid_id]
+        ? `PocketRPG has no raid with id '${args.raid_id}'. Check get_reference topic='raids' for valid ids.`
+        : null
+    case 'start_skilling': {
+      if (!args.skill || !args.action_id) return null
+      const data = getSkillActions(args.skill)
+      if (!data) return `'${args.skill}' isn't a valid skill. Call list_skill_actions to see the skills.`
+      const ids = collectIds(data, new Set())
+      if (ids.size && !ids.has(args.action_id)) {
+        return `'${args.action_id}' isn't a valid ${args.skill} action in PocketRPG. Call list_skill_actions skill='${args.skill}' for the valid action ids, then use one of those.`
+      }
+      return null
+    }
+    default:
+      return null
+  }
 }
 
 // Sign a pending write so only an action the model actually proposed (for this

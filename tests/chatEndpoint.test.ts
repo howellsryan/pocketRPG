@@ -103,6 +103,8 @@ function confirmEnv(credits: number | null) {
           feeDebits.push(Number(args[0]))
           return credits === null ? null : { credits_remaining: credits }
         }
+        // Post-action re-read of the true balance for the realtime credits update.
+        if (sql.includes('SELECT credits FROM characters')) return { credits }
         if (sql.includes('FROM characters')) return { id: 42 }
         return null
       },

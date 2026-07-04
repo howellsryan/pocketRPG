@@ -75,6 +75,24 @@ describe('runAiChat', () => {
     expect(run).toHaveBeenCalledTimes(2) // tool round + the phrasing call
   })
 
+  it('feeds an invalid write back as an error instead of capturing it for confirmation', async () => {
+    const run = vi
+      .fn()
+      .mockResolvedValueOnce(
+        aiResponse(null, [
+          { type: 'function', function: { name: 'start_skilling', arguments: JSON.stringify({ skill: 'thieving', action_id: 'pickpocket_elf' }) } },
+        ]),
+      )
+      .mockResolvedValueOnce(aiResponse('Let me check the valid thieving options.'))
+    const messages = baseMessages()
+    const { answer, pendingWrite } = await runAiChat({ AI: { run } } as any, messages, opts())
+    expect(pendingWrite).toBeNull() // invalid id is NOT turned into a confirmable action
+    expect(answer).toBe('Let me check the valid thieving options.')
+    const toolMsg = messages.find((m: any) => m.role === 'tool') as any
+    expect(toolMsg.content).toMatch(/Tool error:/)
+    expect(toolMsg.content).toMatch(/pickpocket_elf|list_skill_actions/)
+  })
+
   it('does not gate writes when allowWrites is false (used for the summary call)', async () => {
     const run = vi.fn().mockResolvedValue(aiResponse('Sold.'))
     const { answer, pendingWrite } = await runAiChat({ AI: { run } } as any, baseMessages(), opts({ withTools: false }))

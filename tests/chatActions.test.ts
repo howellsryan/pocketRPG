@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import monstersData from '../src/data/monsters.json'
+import { getSkillActions } from '../functions/_lib/mcp/reference.js'
 import {
   CHAT_ACTION_FEE,
   CHAT_WRITE_TOOLS,
@@ -8,6 +9,7 @@ import {
   actionSkipCost,
   isWriteTool,
   signPendingAction,
+  validateWriteArgs,
   verifyPendingAction,
 } from '../functions/_lib/chat/actions.js'
 
@@ -80,5 +82,49 @@ describe('action label', () => {
     expect(actionLabel('sell_item', { item_id: 'oak_logs', quantity: 100 })).toBe('Sell item: 100 × Oak Logs')
     expect(actionLabel('assign_slayer_task', { master_id: 'turael' })).toBe('Assign slayer task: Turael')
     expect(actionLabel('harvest_all', {})).toBe('Harvest all crops')
+  })
+})
+
+describe('propose-time write validation', () => {
+  it('rejects a hallucinated item or monster id and accepts a real one', () => {
+    expect(validateWriteArgs('sell_item', { item_id: '__not_an_item__' })).toMatch(/no item/i)
+    expect(validateWriteArgs('start_fight', { monster_id: '__not_a_monster__' })).toMatch(/no monster/i)
+    const realMonster = Object.keys(monstersData as Record<string, any>)[0]
+    expect(validateWriteArgs('start_fight', { monster_id: realMonster })).toBeNull()
+  })
+
+  it('rejects an invalid skilling action id — the pickpocket_elf case', () => {
+    const err = validateWriteArgs('start_skilling', { skill: 'thieving', action_id: 'pickpocket_elf' })
+    expect(err).toBeTruthy()
+    expect(err).toMatch(/list_skill_actions|valid/i)
+  })
+
+  it('accepts a real skilling action id', () => {
+    const collect = (node: any, acc: string[]) => {
+      if (Array.isArray(node)) node.forEach((n) => collect(n, acc))
+      else if (node && typeof node === 'object') {
+        if (typeof node.id === 'string') acc.push(node.id)
+        Object.values(node).forEach((v) => collect(v, acc))
+      }
+      return acc
+    }
+    let checked = false
+    for (const skill of ['thieving', 'mining', 'fishing', 'woodcutting', 'cooking', 'smithing']) {
+      const data = getSkillActions(skill)
+      if (!data) continue
+      const ids = collect(data, [])
+      if (ids.length) {
+        expect(validateWriteArgs('start_skilling', { skill, action_id: ids[0] })).toBeNull()
+        checked = true
+        break
+      }
+    }
+    expect(checked).toBe(true)
+  })
+
+  it('passes through args it cannot statically check', () => {
+    expect(validateWriteArgs('harvest_all', {})).toBeNull()
+    expect(validateWriteArgs('skip_slayer_task', {})).toBeNull()
+    expect(validateWriteArgs('deposit_to_bank', {})).toBeNull()
   })
 })

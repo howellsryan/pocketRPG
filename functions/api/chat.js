@@ -32,6 +32,7 @@ import {
 } from '../_lib/chat/quota.js'
 import {
   isWriteTool,
+  validateWriteArgs,
   signPendingAction,
   verifyPendingAction,
   actionLabel,
@@ -296,14 +297,26 @@ export async function runAiChat(
       break
     }
     messages.push({ role: 'assistant', content: message.content ?? null, tool_calls: calls })
-    // A write is never executed inline — capture the first one for the player to
-    // confirm; reads run in parallel. A second write this round is deferred.
-    const firstWriteIdx = allowWrites ? calls.findIndex((c) => isWriteTool(c.function.name)) : -1
+    // A write is never executed inline. Validate the writes' ids up front:
+    // capture the first VALID one for the player to confirm, and feed any invalid
+    // one straight back as an error so the model corrects it — no confirm, no
+    // charge. Reads run in parallel; a second valid write this round is deferred.
+    let captureIdx = -1
+    const writeErrors = {}
+    if (allowWrites) {
+      for (let i = 0; i < calls.length; i++) {
+        if (!isWriteTool(calls[i].function.name)) continue
+        const err = validateWriteArgs(calls[i].function.name, parseToolArgs(calls[i].function.arguments))
+        if (err) writeErrors[i] = err
+        else if (captureIdx === -1) captureIdx = i
+      }
+    }
     const results = await raceDeadline(
       Promise.all(
         calls.map((call, i) => {
           if (allowWrites && isWriteTool(call.function.name)) {
-            if (i === firstWriteIdx) {
+            if (writeErrors[i]) return Promise.resolve(`Tool error: ${writeErrors[i]}`)
+            if (i === captureIdx) {
               const args = parseToolArgs(call.function.arguments)
               args.character_id = characterId
               pendingWrite = { tool: call.function.name, args }
@@ -463,12 +476,21 @@ async function confirmAction({ env, authorization, identity, characterId, token 
   const isError = !!result?.isError
   if (isError) await refundActionFee(env, characterId, identity.id)
 
+  // Re-read the true balance on success — the action may have spent more credits
+  // than the fee (a boss/hour skip) — so the client can update the credits
+  // display in real time without a page refresh.
+  let creditsRemaining = fee.remaining
+  if (!isError) {
+    const row = await env.DB.prepare('SELECT credits FROM characters WHERE id = ?').bind(characterId).first()
+    if (row && Number.isFinite(Number(row.credits))) creditsRemaining = Number(row.credits)
+  }
+
   const resultText = toolResultText(result)
   const label = actionLabel(payload.tool, payload.args)
   // Let the summary state the fee (and remaining balance on success).
   const feeNote = isError
     ? `The ${CHAT_ACTION_FEE}-credit action fee was refunded because the action failed.`
-    : `This cost ${CHAT_ACTION_FEE} credit (the assistant action fee); the player has ${fee.remaining} credit(s) left afterwards.`
+    : `This cost ${CHAT_ACTION_FEE} credit (the assistant action fee); the player has ${creditsRemaining} credit(s) left afterwards.`
 
   // Phrase the outcome with the free/unmetered AI path (no tools); fall back to
   // a deterministic line if the AI path is unavailable.
@@ -492,7 +514,7 @@ async function confirmAction({ env, authorization, identity, characterId, token 
   if (!answer) {
     answer = isError
       ? `That didn't go through (your ${CHAT_ACTION_FEE} credit was refunded): ${resultText.replace(/^(Tool error|Error):\s*/, '')}`
-      : `Done — ${label}. That cost ${CHAT_ACTION_FEE} credit; you have ${fee.remaining} left.`
+      : `Done — ${label}. That cost ${CHAT_ACTION_FEE} credit; you have ${creditsRemaining} left.`
   }
 
   await auditLog(
@@ -505,7 +527,7 @@ async function confirmAction({ env, authorization, identity, characterId, token 
     answer,
     mode: isError ? 'action_error' : 'action_done',
     tool: payload.tool,
-    ...(isError ? {} : { creditsRemaining: fee.remaining }),
+    ...(isError ? {} : { creditsRemaining }),
   })
 }
 

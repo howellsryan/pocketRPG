@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'preact/hooks'
 import Modal from './Modal.jsx'
 import Button from './Button.jsx'
-import { api } from '../cloud/api.js'
+import { api, CREDITS_UPDATED_EVENT } from '../cloud/api.js'
 
 const GREETING = {
   role: 'assistant',
@@ -39,6 +39,11 @@ export default function ChatWidget({ isCloudAccount = false }) {
 
   const trackRemaining = (res) => {
     if (res && typeof res.remaining === 'number') setRemaining(res.remaining)
+    // A chatbot action or refill changed the credit balance — update the live
+    // credits display everywhere (Header pill etc.) without a page refresh.
+    if (res && typeof res.creditsRemaining === 'number') {
+      window.dispatchEvent(new CustomEvent(CREDITS_UPDATED_EVENT, { detail: { credits_remaining: res.creditsRemaining } }))
+    }
   }
 
   const send = () => {
