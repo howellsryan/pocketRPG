@@ -29,6 +29,10 @@ export default function HunterScreen({ initialActionId, idleResult, onBack, onSt
   const hunterRef = useRef(null)
   const inventoryRef = useRef(inventory)
   const hasAutoStarted = useRef(false)
+  // True once the player has actually seen the action list. Dropping in straight
+  // from a place-map spot (initialActionId auto-start) starts false, so the
+  // active panel's Back returns to that origin instead of the list.
+  const seenList = useRef(!initialActionId)
 
   useEffect(() => { inventoryRef.current = inventory }, [inventory])
 
@@ -151,9 +155,19 @@ export default function HunterScreen({ initialActionId, idleResult, onBack, onSt
   }
 
   const backToList = () => {
+    seenList.current = true
     if (hunterRef.current) mirrorActiveTask(hunterRef.current)
     setHunter(null)
     hunterRef.current = null
+  }
+
+  // Active-panel Back: leave the task running. If we auto-started here from a
+  // place map (never saw the list), return to that origin rather than the
+  // skill's own list — a dead end under world-map navigation.
+  const backFromActive = () => {
+    const toOrigin = !seenList.current
+    backToList()
+    if (toOrigin && onBack) onBack()
   }
 
   const stopHunting = () => {
@@ -331,7 +345,7 @@ export default function HunterScreen({ initialActionId, idleResult, onBack, onSt
         { label: 'XP gained', value: formatNumber(hunter.totalXP) },
         { label: 'XP / hr', value: xpPerHr ? formatNumber(xpPerHr) : '—', accent: !!xpPerHr },
       ]}
-      onBack={backToList}
+      onBack={backFromActive}
       onStop={stopHunting}
     />
 

@@ -3328,6 +3328,338 @@
     },
     {
       "kind": "skill",
+      "ref": "smithing:forge_godsword_blade"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:make_armadyl_godsword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:make_bandos_godsword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:make_dragonfire_shield"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:make_saradomin_godsword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:make_zamorak_godsword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smelt_adamant"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smelt_bronze"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smelt_gold"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smelt_iron"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smelt_mithril"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smelt_rune"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smelt_steel"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_axe"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_bolts_unf"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_dagger"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_full_helm"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_kiteshield"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_longsword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_mace"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_pickaxe"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_platebody"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_platelegs"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_plateskirt"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_scimitar"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_sword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_bronze_axe"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_bronze_bolts_unf"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_bronze_dagger"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_bronze_pickaxe"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_bronze_scimitar"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_axe"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_bolts_unf"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_chainbody"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_dagger"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_full_helm"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_kiteshield"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_longsword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_mace"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_pickaxe"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_platebody"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_platelegs"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_scimitar"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_sword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_axe"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_bolts_unf"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_chainbody"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_dagger"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_full_helm"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_kiteshield"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_longsword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_mace"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_pickaxe"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_platebody"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_platelegs"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_plateskirt"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_scimitar"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_sword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_rune_axe"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_rune_pickaxe"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_rune_scimitar"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_runeforged_chainbody"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_runeforged_full_helm"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_runeforged_kiteshield"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_runeforged_med_helm"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_runeforged_platebody"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_runeforged_platelegs"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_runeforged_plateskirt"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_runeforged_sword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_runite_bolts_unf"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_axe"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_bolts_unf"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_chainbody"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_dagger"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_full_helm"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_kiteshield"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_longsword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_mace"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_pickaxe"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_platebody"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_platelegs"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_scimitar"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_sword"
+    },
+    {
+      "kind": "skill",
       "ref": "woodcutting:magic"
     },
     {
@@ -7951,6 +8283,338 @@
     {
       "kind": "skill",
       "ref": "runecraft:craft_nature_rune"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:forge_godsword_blade"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:make_armadyl_godsword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:make_bandos_godsword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:make_dragonfire_shield"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:make_saradomin_godsword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:make_zamorak_godsword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smelt_adamant"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smelt_bronze"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smelt_gold"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smelt_iron"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smelt_mithril"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smelt_rune"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smelt_steel"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_axe"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_bolts_unf"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_dagger"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_full_helm"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_kiteshield"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_longsword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_mace"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_pickaxe"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_platebody"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_platelegs"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_plateskirt"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_scimitar"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_sword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_bronze_axe"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_bronze_bolts_unf"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_bronze_dagger"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_bronze_pickaxe"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_bronze_scimitar"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_axe"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_bolts_unf"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_chainbody"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_dagger"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_full_helm"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_kiteshield"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_longsword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_mace"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_pickaxe"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_platebody"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_platelegs"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_scimitar"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_sword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_axe"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_bolts_unf"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_chainbody"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_dagger"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_full_helm"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_kiteshield"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_longsword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_mace"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_pickaxe"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_platebody"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_platelegs"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_plateskirt"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_scimitar"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_sword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_rune_axe"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_rune_pickaxe"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_rune_scimitar"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_runeforged_chainbody"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_runeforged_full_helm"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_runeforged_kiteshield"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_runeforged_med_helm"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_runeforged_platebody"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_runeforged_platelegs"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_runeforged_plateskirt"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_runeforged_sword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_runite_bolts_unf"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_axe"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_bolts_unf"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_chainbody"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_dagger"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_full_helm"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_kiteshield"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_longsword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_mace"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_pickaxe"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_platebody"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_platelegs"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_scimitar"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_sword"
     },
     {
       "kind": "skill",

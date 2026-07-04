@@ -51,6 +51,9 @@ export default function GatherScreen({ initialTaskId, idleResult, onBack, onStop
   const [activeTask, setLocalTask] = useState(null)
   const taskRef = useRef(null)
   const hasAutoStarted = useRef(false)
+  // True once the player has seen the task list. Auto-starting from a place map
+  // (initialTaskId) starts false so the active panel's Back returns there.
+  const seenList = useRef(!initialTaskId)
 
   // Prefer the canonical item name from itemsData; fall back to the curated
   // map and finally the raw id so display never shows a bare item id.
@@ -287,8 +290,17 @@ export default function GatherScreen({ initialTaskId, idleResult, onBack, onStop
 
   // Back (no stop): flush progress and return to the task list; task keeps running.
   const backToList = () => {
+    seenList.current = true
     if (taskRef.current) mirrorActiveTask(taskRef.current)
     setLocalTask(null)
+  }
+
+  // Active-panel Back leaves the task running; when auto-started from a place
+  // map (list never seen) it returns to that origin, not the task list.
+  const backFromActive = () => {
+    const toOrigin = !seenList.current
+    backToList()
+    if (toOrigin && onBack) onBack()
   }
 
   const stopTask = () => {
@@ -388,7 +400,7 @@ export default function GatherScreen({ initialTaskId, idleResult, onBack, onStop
         note={getLevelFromXP(stats.construction?.xp || 0) >= GATHER_AUTOBANK_CONSTRUCTION_LEVEL
           ? '🏦 Items fill your inventory, then auto-bank when full.'
           : '🎒 Items go to your inventory. Gathering stops when it\'s full.'}
-        onBack={backToList}
+        onBack={backFromActive}
         onStop={stopTask}
       />
     )
