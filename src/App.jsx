@@ -742,11 +742,13 @@ function GameApp() {
         // mid-session. conflictPending parks every push until the re-pull
         // adopts the server's revision; the reload survives as the fallback
         // when the pull itself fails.
+        console.warn('[PocketRPG][debug] save_revision_conflict — rolling back to cloud copy (this discards any unpushed local change)')
         setRollingBack(true)
         ;(async () => {
           try {
             const pulled = await pullSave()
             if (pulled?.payload) {
+              console.log('[PocketRPG][debug] rollback pulling cloud worldLocation=', pulled.payload?.settings?.worldLocation)
               pauseTicks()
               try {
                 await applyCloudSave(pulled.payload, pulled.updatedAt)
@@ -1542,7 +1544,9 @@ function GameApp() {
           // the cloud copy unconditionally would silently discard it — keep
           // the newer local state instead and let the normal push cycle
           // reconcile it to the cloud.
-          if (!isLocalWriteNewerThanCloud(result.updatedAt)) {
+          const skipApply = isLocalWriteNewerThanCloud(result.updatedAt)
+          console.log('[PocketRPG][debug] boot pull: cloudWorldLocation=', result.payload?.settings?.worldLocation, 'cloudUpdatedAt=', result.updatedAt, 'localWriteMarker=', (() => { try { return localStorage.getItem('pocketrpg_lastLocalWriteAt') } catch { return null } })(), 'skipApply=', skipApply)
+          if (!skipApply) {
             await applyCloudSave(result.payload, result.updatedAt)
           }
         } else if (result && result.readFailed) {
