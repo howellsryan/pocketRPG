@@ -2,8 +2,9 @@
 // actions (MCP write tools) on the player's behalf — but every write is gated:
 // the model's write call is captured, never run inline, and executed only after
 // the player confirms and the signed action token is verified back (see
-// _lib/chat/actions.js). Messages are unlimited; only the paid AI paths (Workers
-// AI fallback, OpenAI) are budget-capped — the free Gemini primary is unmetered.
+// _lib/chat/actions.js). OpenAI is the primary model; Gemini and the Workers AI
+// model are paid fallbacks reached only when OpenAI runs out/fails. Every AI
+// path is metered against a daily spend budget, degrading to retrieval-only.
 
 import { requireAuth, json } from '../_lib/auth.js'
 import { utcDayKey } from '../_lib/game/dailyTasks.js'
@@ -146,23 +147,23 @@ export function openaiChatBinding(env) {
   }
 }
 
-// Ordered AI attempts for a message: OpenAI first (if configured), then
-// CHAT_MODEL (Gemini) when OpenAI is unconfigured or fails/answers empty,
-// then the Workers AI fallback model. Empty = AI path unavailable, straight
-// to retrieval-only. `pool` is which daily spend budget the attempt meters
-// against; null = unmetered (the free Gemini primary).
+// Ordered AI attempts for a message: OpenAI is the primary (tried first when
+// configured); CHAT_MODEL (Gemini) is only reached when OpenAI is unconfigured
+// or fails/answers empty/runs out of budget; the Workers AI fallback model is
+// the last resort. Empty = AI path unavailable, straight to retrieval-only.
+// `pool` is the daily spend budget the attempt meters against — every path is
+// paid, so every attempt is metered.
 export function chatAttempts(env) {
   const attempts = []
   if (env.OPENAI_API_KEY && CHAT_OPENAI_MODEL) {
     attempts.push({ ai: openaiChatBinding(env), model: CHAT_OPENAI_MODEL, pool: 'openai' })
   }
   if (CHAT_MODEL.startsWith('@')) {
-    // A Workers AI primary bills neurons like the fallback — meter it.
     if (env.AI) attempts.push({ ai: env.AI, model: CHAT_MODEL, pool: 'neuron' })
   } else if (env.GEMINI_API_KEY) {
-    // Gemini is the free primary (unlimited on this key, only per-minute rate
-    // limited) — do not meter it against the paid neuron budget.
-    attempts.push({ ai: geminiChatBinding(env), model: CHAT_MODEL, pool: null })
+    // Gemini is a paid fallback — meter it against the neuron budget (the
+    // milli-neuron conversion is calibrated as an upper bound for its pricing).
+    attempts.push({ ai: geminiChatBinding(env), model: CHAT_MODEL, pool: 'neuron' })
   }
   if (env.AI && CHAT_FALLBACK_MODEL && CHAT_FALLBACK_MODEL !== CHAT_MODEL) {
     attempts.push({ ai: env.AI, model: CHAT_FALLBACK_MODEL, pool: 'neuron' })

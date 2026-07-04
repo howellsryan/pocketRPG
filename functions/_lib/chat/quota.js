@@ -1,23 +1,24 @@
-// Chatbot spend guard (migration 0027). Messages are unlimited (the free Gemini
-// primary is unmetered here); the only cost cap is a global daily budget on the
-// PAID paths — the Workers AI fallback (neurons, $0.011/1k) and, if configured,
-// the OpenAI attempt (tokens). Each metered message atomically reserves its
-// worst possible cost up front and refunds the unused part once the API reports
-// actual usage, so the day's spend can never cross the budget mid-flight; when a
-// pool runs out, /api/chat skips that pool (Gemini/retrieval still answer).
+// Chatbot spend guard (migration 0027). There is no per-character message cap;
+// every AI path is paid, so cost is bounded by two global daily budgets: the
+// OpenAI primary meters its own token pool, while the Gemini and Workers AI
+// fallbacks share the neuron budget below. Each metered message atomically
+// reserves its worst possible cost up front and refunds the unused part once the
+// API reports actual usage, so the day's spend can never cross a budget
+// mid-flight; when a pool runs out, /api/chat skips that pool (the next
+// fallback, then retrieval-only, still answer).
 
 // Token prices converted to milli-neurons per token at $0.011 per 1,000
 // neurons. Rated at $0.10/M input, $0.40/M output — an upper bound for both
-// gemini-2.5-flash-lite ($0.10/$0.40; free-tier keys bill $0) and the GLM
-// fallback ($0.06/$0.40) — so the budget doubles as a daily $ spend cap.
+// gemini-2.5-flash-lite ($0.10/$0.40) and the GLM fallback ($0.06/$0.40) — so
+// the neuron budget doubles as a daily $ spend cap for those two paid fallbacks.
 // Revisit when CHAT_MODEL / CHAT_FALLBACK_MODEL change.
 export const MILLI_NEURONS_PER_INPUT_TOKEN = 9.1
 export const MILLI_NEURONS_PER_OUTPUT_TOKEN = 36.37
 
-// These only cap the PAID paths (the free Gemini primary is unmetered): the
-// Workers AI fallback bills neurons, so budget + one in-flight worst-case
-// reserve must stay ≤ the 10,000 free daily neurons (10,000,000 milli); the gap
-// also absorbs estimation drift and any other Workers AI use on the account.
+// Shared budget for the paid Gemini + Workers AI fallbacks. Workers AI bills
+// neurons, so budget + one in-flight worst-case reserve must stay ≤ the 10,000
+// free daily neurons (10,000,000 milli); the gap also absorbs estimation drift
+// and any other Workers AI use on the account.
 export const CHAT_NEURON_BUDGET_MILLI = 7_700_000
 // Worst-case message: 4 model calls with every context and output limit maxed,
 // including the FULL MCP tool schema the model is offered (reads + gated
