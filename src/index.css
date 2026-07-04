@@ -344,13 +344,15 @@ html, body, #app {
   touch-action: manipulation;
 }
 
-/* Scrollbar styling */
-::-webkit-scrollbar { width: 4px; }
-::-webkit-scrollbar-track { background: var(--color-void-light); }
-::-webkit-scrollbar-thumb { background: var(--color-void-border); border-radius: 2px; }
+/* Scrollbars are hidden everywhere — content still scrolls, but the bar itself
+   never renders (a thin bar reads as an artefact on this mobile-first UI). The
+   universal !important overrides every per-element scrollbar rule below
+   regardless of selector specificity, so no page can surface a visible bar. */
+* { scrollbar-width: none !important; -ms-overflow-style: none !important; }
+*::-webkit-scrollbar { width: 0 !important; height: 0 !important; display: none !important; }
 
-/* Hide the scrollbar while keeping the element scrollable (e.g. the in-combat
-   HUD, where the thin bar reads as an artefact on mobile). */
+/* Legacy helper kept for existing markup; the global rule above already hides
+   scrollbars, so this is now a no-op alias. */
 .no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
 .no-scrollbar::-webkit-scrollbar { width: 0; height: 0; }
 
