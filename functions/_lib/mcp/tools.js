@@ -1,5 +1,5 @@
 import { callHandler } from './bridge.js'
-import { summarizeSave } from './summary.js'
+import { summarizeSave, bankItems } from './summary.js'
 import { getItem, getMonster, itemName, withItemName, itemSources, raidForBoss, REFERENCE_RESOURCES, readReference, listSkills, getSkillActions, searchItems, searchMonsters, REFERENCE_TOPICS } from './reference.js'
 import { loadCharacterWithSave, writeSave } from '../game/save.js'
 import { createDefaultSave } from '../../../src/engine/createDefaultSave.js'
@@ -16,6 +16,7 @@ import { onRequestGet as listCharacters, onRequestPost as createCharacter } from
 import { onRequestGet as getMe } from '../../api/auth/me.js'
 import { onRequestGet as getSave } from '../../api/save.js'
 import { onRequestGet as getCollectionLog } from '../../api/collection-log.js'
+import { onRequestGet as getDailyTasks } from '../../api/daily-tasks/index.js'
 import { onRequestGet as getKillCounts } from '../../api/kill-counts.js'
 import { onRequestGet as getLeaderboard } from '../../api/leaderboard.js'
 import { onRequestPost as postPurchase } from '../../api/purchase.js'
@@ -324,6 +325,21 @@ const TOOLS = {
     summary.inventory = summary.inventory.map(withItemName)
     for (const [slot, item] of Object.entries(summary.equipment)) summary.equipment[slot] = withItemName(item)
     return ok({ characterId: id, savedAt: res.data.save.updatedAt, ...summary })
+  },
+
+  async get_bank({ query, limit, character_id }, { env, authorization }) {
+    const id = await resolveCharacterId(env, authorization, character_id)
+    const res = await callHandler(getSave, env, { authorization, characterId: id })
+    if (!res.ok) throw httpError(res)
+    if (!res.data?.save?.save_data) return ok({ characterId: id, total: 0, returned: 0, items: [], note: 'No save yet.' })
+    return ok({ characterId: id, ...bankItems(res.data.save.save_data, { query, limit }) })
+  },
+
+  async get_daily_tasks({ character_id }, { env, authorization }) {
+    const id = await resolveCharacterId(env, authorization, character_id)
+    const res = await callHandler(getDailyTasks, env, { authorization, characterId: id })
+    if (!res.ok) throw httpError(res)
+    return ok({ characterId: id, ...res.data })
   },
 
   async inspect_item({ item_id }) {
