@@ -28,9 +28,10 @@ const ACTION_TTL_SECONDS = 600
 // was NOT performed and needs the player's confirmation. Steers the model to
 // describe the action (with its cost) and ask, instead of reporting success.
 export const PENDING_CONFIRMATION_NOTE =
-  'PENDING_CONFIRMATION: this action was NOT performed. It needs the player to confirm first. ' +
-  'In your reply, tell the player exactly what you will do — including any coins, credits or slayer ' +
-  'points it will cost and the items/quantities involved — and ask them to confirm. Do not say it is done.'
+  'PENDING_CONFIRMATION: this action was NOT performed. The app already shows the player a Confirm/Cancel ' +
+  'button below your reply — do not ask them to confirm in words or tell them to reply "confirm". ' +
+  'In your reply, briefly state what you will do — including any coins, credits or slayer ' +
+  'points it will cost and the items/quantities involved. Do not say it is done.'
 
 // A second write in the same turn: only one action is confirmed at a time.
 export const SECONDARY_WRITE_NOTE =
