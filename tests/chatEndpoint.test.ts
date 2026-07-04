@@ -181,3 +181,64 @@ describe('POST /api/chat — confirm a write action', () => {
     expect(callTool).not.toHaveBeenCalled()
   })
 })
+
+// D1 stand-in for the message cap + paid refill. claimAllowed drives whether the
+// daily claim succeeds; credits seeds the refill debit (null = can't afford).
+function quotaEnv({ claimAllowed = true, credits = 5 }: { claimAllowed?: boolean; credits?: number | null } = {}) {
+  const prepare = vi.fn((sql: string) => ({
+    bind: (..._args: unknown[]) => ({
+      async run() {
+        // The daily-claim upsert is the only statement that can be refused.
+        const refused = sql.includes('count = count + 1') && !claimAllowed
+        return { meta: { changes: refused ? 0 : 1 } }
+      },
+      async first() {
+        if (sql.includes('credits = credits - ') && sql.includes('RETURNING')) {
+          return credits === null ? null : { credits_remaining: credits }
+        }
+        if (sql.includes('FROM characters')) return { id: 42 }
+        if (sql.includes('chat_usage')) return { count: claimAllowed ? 1 : 30 }
+        return null
+      },
+    }),
+  }))
+  return { DB: { prepare }, JWT_SECRET: TEST_SECRET } as any
+}
+
+async function refillRequest() {
+  return new Request('https://example.test/api/chat', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Character-Id': '42',
+      Authorization: await authHeader(),
+    },
+    body: JSON.stringify({ refill: true }),
+  })
+}
+
+describe('POST /api/chat — daily cap and refill', () => {
+  it('refuses with a refill offer once the daily cap is spent (no AI spent)', async () => {
+    ;(callTool as any).mockClear()
+    const res = await onRequestPost({ request: await makeRequest(), env: quotaEnv({ claimAllowed: false }) })
+    const body = (await res.json()) as any
+    expect(body.mode).toBe('quota')
+    expect(body.remaining).toBe(0)
+    expect(body.refillCredits).toBe(10)
+    expect(callTool).not.toHaveBeenCalled()
+  })
+
+  it('refills the allowance for 10 credits', async () => {
+    const res = await onRequestPost({ request: await refillRequest(), env: quotaEnv({ credits: 5 }) })
+    const body = (await res.json()) as any
+    expect(body.mode).toBe('refilled')
+    expect(body.remaining).toBe(30)
+    expect(body.creditsRemaining).toBe(5)
+  })
+
+  it('refuses a refill when credits are short', async () => {
+    const res = await onRequestPost({ request: await refillRequest(), env: quotaEnv({ credits: null }) })
+    const body = (await res.json()) as any
+    expect(body.mode).toBe('refill_no_credit')
+  })
+})

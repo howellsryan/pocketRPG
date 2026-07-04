@@ -156,20 +156,22 @@ describe('runAiChat', () => {
 })
 
 describe('chatAttempts / geminiChatBinding', () => {
-  it('orders attempts openai-then-primary-then-fallback, skipping unconfigured providers', () => {
+  it('orders attempts openai → workers-ai (free) → gemini (paid), skipping unconfigured providers', () => {
     const AI = { run: vi.fn() }
     const full = chatAttempts({ GEMINI_API_KEY: 'test-key', OPENAI_API_KEY: 'test-key', AI } as any)
-    expect(full.map((a) => a.model)).toEqual([CHAT_OPENAI_MODEL, CHAT_MODEL, CHAT_FALLBACK_MODEL])
-    // Pool routing: OpenAI (primary) spends its token pool; the paid Gemini and
-    // Workers AI fallbacks both meter against the neuron budget.
-    expect(full.map((a) => a.pool)).toEqual(['openai', 'neuron', 'neuron'])
-    expect(full[2].ai).toBe(AI)
-    // No OpenAI key → primary then straight to Workers AI fallback.
+    // OpenAI primary, then the free Workers AI failover, then paid Gemini last.
+    expect(full.map((a) => a.model)).toEqual([CHAT_OPENAI_MODEL, CHAT_FALLBACK_MODEL, CHAT_MODEL])
+    // Pool routing: OpenAI its token pool, Workers AI the free neuron budget,
+    // Gemini its own paid token pool.
+    expect(full.map((a) => a.pool)).toEqual(['openai', 'neuron', 'gemini'])
+    expect(full[1].ai).toBe(AI) // Workers AI failover runs on env.AI
+    expect(full[2].ai).not.toBe(AI) // Gemini uses its own binding
+    // No OpenAI key → Workers AI then Gemini.
     expect(chatAttempts({ GEMINI_API_KEY: 'test-key', AI } as any).map((a) => a.model)).toEqual([
-      CHAT_MODEL,
       CHAT_FALLBACK_MODEL,
+      CHAT_MODEL,
     ])
-    // No Gemini key → OpenAI then Workers AI fallback; nothing → no AI path.
+    // No Gemini key → OpenAI then Workers AI (Gemini skipped); nothing → no AI.
     expect(chatAttempts({ OPENAI_API_KEY: 'test-key', AI } as any).map((a) => a.model)).toEqual([
       CHAT_OPENAI_MODEL,
       CHAT_FALLBACK_MODEL,

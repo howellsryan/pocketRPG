@@ -7,20 +7,28 @@
 // path is metered against a daily spend budget, degrading to retrieval-only.
 
 import { requireAuth, json } from '../_lib/auth.js'
-import { utcDayKey } from '../_lib/game/dailyTasks.js'
+import { utcDayKey, nextResetMs } from '../_lib/game/dailyTasks.js'
 import { auditLog } from '../_lib/game/audit.js'
 import { callTool } from '../_lib/mcp/tools.js'
 import { KNOWLEDGE_CHUNKS } from '../_lib/chat/knowledge.js'
 import { buildIndex, searchKnowledge } from '../_lib/chat/retrieval.js'
 import {
+  claimCharacterMessage,
+  refundCharacterMessage,
+  resetCharacterMessages,
   reserveMessageNeurons,
   settleMessageNeurons,
   usageMilliNeurons,
   openaiPoolKey,
+  geminiPoolKey,
+  CHAT_DAILY_LIMIT,
+  CHAT_REFILL_CREDITS,
   CHAT_MESSAGE_RESERVE_MILLI,
   CHAT_NEURON_BUDGET_MILLI,
   CHAT_OPENAI_MESSAGE_RESERVE_TOKENS,
   CHAT_OPENAI_TOKEN_BUDGET,
+  CHAT_GEMINI_MESSAGE_RESERVE_TOKENS,
+  CHAT_GEMINI_TOKEN_BUDGET,
 } from '../_lib/chat/quota.js'
 import {
   isWriteTool,
@@ -148,25 +156,29 @@ export function openaiChatBinding(env) {
 }
 
 // Ordered AI attempts for a message: OpenAI is the primary (tried first when
-// configured); CHAT_MODEL (Gemini) is only reached when OpenAI is unconfigured
-// or fails/answers empty/runs out of budget; the Workers AI fallback model is
-// the last resort. Empty = AI path unavailable, straight to retrieval-only.
-// `pool` is the daily spend budget the attempt meters against — every path is
-// paid, so every attempt is metered.
+// configured); the free Workers AI model (CHAT_FALLBACK_MODEL) is the first
+// failover; paid Gemini (CHAT_MODEL) is the last resort. Each later attempt is
+// only reached when the earlier ones are unconfigured or fail/answer empty/run
+// out of budget. Empty = AI path unavailable, straight to retrieval-only.
+// `pool` is the daily spend budget the attempt meters against.
 export function chatAttempts(env) {
   const attempts = []
+  // Primary: OpenAI.
   if (env.OPENAI_API_KEY && CHAT_OPENAI_MODEL) {
     attempts.push({ ai: openaiChatBinding(env), model: CHAT_OPENAI_MODEL, pool: 'openai' })
   }
-  if (CHAT_MODEL.startsWith('@')) {
-    if (env.AI) attempts.push({ ai: env.AI, model: CHAT_MODEL, pool: 'neuron' })
-  } else if (env.GEMINI_API_KEY) {
-    // Gemini is a paid fallback — meter it against the neuron budget (the
-    // milli-neuron conversion is calibrated as an upper bound for its pricing).
-    attempts.push({ ai: geminiChatBinding(env), model: CHAT_MODEL, pool: 'neuron' })
-  }
-  if (env.AI && CHAT_FALLBACK_MODEL && CHAT_FALLBACK_MODEL !== CHAT_MODEL) {
+  // First failover: Workers AI — free within the daily neuron allotment.
+  if (env.AI && CHAT_FALLBACK_MODEL) {
     attempts.push({ ai: env.AI, model: CHAT_FALLBACK_MODEL, pool: 'neuron' })
+  }
+  // Last resort: Gemini — paid, its own budget. (If CHAT_MODEL is itself a
+  // Workers AI model, run it on env.AI against the neuron budget instead.)
+  if (CHAT_MODEL && CHAT_MODEL !== CHAT_FALLBACK_MODEL) {
+    if (CHAT_MODEL.startsWith('@')) {
+      if (env.AI) attempts.push({ ai: env.AI, model: CHAT_MODEL, pool: 'neuron' })
+    } else if (env.GEMINI_API_KEY) {
+      attempts.push({ ai: geminiChatBinding(env), model: CHAT_MODEL, pool: 'gemini' })
+    }
   }
   return attempts
 }
@@ -347,6 +359,12 @@ async function resolveAnswer(env, { buildTranscript, characterId, authorization,
       budget: CHAT_NEURON_BUDGET_MILLI,
       cost: (s) => usageMilliNeurons({ prompt_tokens: s.promptTokens, completion_tokens: s.completionTokens }),
     },
+    gemini: {
+      key: geminiPoolKey(dayKey),
+      reserve: CHAT_GEMINI_MESSAGE_RESERVE_TOKENS,
+      budget: CHAT_GEMINI_TOKEN_BUDGET,
+      cost: (s) => s.promptTokens + s.completionTokens,
+    },
   }
   let answer = ''
   let pendingWrite = null
@@ -491,6 +509,35 @@ async function confirmAction({ env, authorization, identity, characterId, token 
   })
 }
 
+// Refill path: spend CHAT_REFILL_CREDITS to reset today's message count to 0,
+// restoring the full daily allowance. Debit first (atomic, guarded); only reset
+// on a successful charge.
+async function refillMessages({ env, characterId, identityId }) {
+  const debit = await env.DB.prepare(
+    `UPDATE characters
+     SET credits = credits - ?1, credits_used = credits_used + ?1
+     WHERE id = ?2 AND owner_id = ?3 AND deleted_at IS NULL AND credits >= ?1
+     RETURNING credits AS credits_remaining`,
+  )
+    .bind(CHAT_REFILL_CREDITS, characterId, identityId)
+    .first()
+  if (!debit) {
+    return json({
+      answer: `A refill costs ${CHAT_REFILL_CREDITS} credits and you don't have enough. Top up credits in the shop, or wait for the 00:00 UTC reset.`,
+      mode: 'refill_no_credit',
+    })
+  }
+  await resetCharacterMessages(env, characterId, utcDayKey())
+  await auditLog(env, 'chat_refill', { identityId, characterId, credits: CHAT_REFILL_CREDITS }, { swallow: true })
+  return json({
+    answer: `Refilled — you've got ${CHAT_DAILY_LIMIT} more helper messages today. That cost ${CHAT_REFILL_CREDITS} credits (${debit.credits_remaining ?? 0} left).`,
+    mode: 'refilled',
+    remaining: CHAT_DAILY_LIMIT,
+    resetInMs: nextResetMs(),
+    creditsRemaining: debit.credits_remaining ?? 0,
+  })
+}
+
 export async function onRequestPost({ request, env }) {
   const auth = await requireAuth(request, env)
   if (auth.error) return json({ error: auth.error }, auth.status)
@@ -512,13 +559,32 @@ export async function onRequestPost({ request, env }) {
     return json({ error: 'Invalid JSON body' }, 400)
   }
 
-  // A confirm token means "run the action I already approved" — no question.
+  // A confirm token means "run the action I already approved" — no question,
+  // and it doesn't consume a daily message (it has its own credit fee).
   if (typeof body?.confirm === 'string' && body.confirm.trim()) {
     return confirmAction({ env, authorization, identity: auth.identity, characterId, token: body.confirm.trim() })
   }
 
+  // A paid refill of the daily message allowance — no question either.
+  if (body?.refill === true) {
+    return refillMessages({ env, characterId, identityId: auth.identity.id })
+  }
+
   const question = typeof body?.message === 'string' ? body.message.trim().slice(0, CHAT_MAX_QUESTION_CHARS) : ''
   if (!question) return json({ error: 'Missing message' }, 400)
+
+  // Per-character daily cap. Exhausted → offer a paid refill; no AI is spent.
+  const dayKey = utcDayKey()
+  const claim = await claimCharacterMessage(env, characterId, dayKey)
+  if (!claim.allowed) {
+    return json({
+      answer: `You've used all ${CHAT_DAILY_LIMIT} helper messages for today. Refill for ${CHAT_REFILL_CREDITS} credits, or wait — they reset at 00:00 UTC.`,
+      mode: 'quota',
+      remaining: 0,
+      resetInMs: nextResetMs(),
+      refillCredits: CHAT_REFILL_CREDITS,
+    })
+  }
 
   // 6 chunks: guide sections average ~68 tokens, so wider retrieval is nearly
   // free and lifts answer quality more than any other input.
@@ -553,6 +619,13 @@ export async function onRequestPost({ request, env }) {
     mode = 'retrieval'
   }
 
+  // A degraded (retrieval-only) answer shouldn't cost the player a daily message.
+  let remaining = claim.remaining
+  if (mode === 'retrieval') {
+    await refundCharacterMessage(env, characterId, dayKey)
+    remaining = Math.min(CHAT_DAILY_LIMIT, remaining + 1)
+  }
+
   await auditLog(
     env,
     'chat_message',
@@ -564,6 +637,8 @@ export async function onRequestPost({ request, env }) {
     answer,
     sources,
     mode,
+    remaining,
+    resetInMs: nextResetMs(),
     ...(pendingAction ? { pendingAction } : {}),
     ...(mode === 'retrieval' && reason ? { reason } : {}),
   })

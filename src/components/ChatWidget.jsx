@@ -27,6 +27,7 @@ export default function ChatWidget({ isCloudAccount = false }) {
   const [messages, setMessages] = useState([GREETING])
   const [input, setInput] = useState('')
   const [busy, setBusy] = useState(false)
+  const [remaining, setRemaining] = useState(null)
   const scrollRef = useRef(null)
 
   useEffect(() => {
@@ -35,6 +36,10 @@ export default function ChatWidget({ isCloudAccount = false }) {
   }, [messages, busy, open])
 
   if (!isCloudAccount) return null
+
+  const trackRemaining = (res) => {
+    if (res && typeof res.remaining === 'number') setRemaining(res.remaining)
+  }
 
   const send = () => {
     const question = input.trim()
@@ -49,9 +54,16 @@ export default function ChatWidget({ isCloudAccount = false }) {
     api
       .chat(question, history)
       .then((res) => {
+        trackRemaining(res)
         setMessages((prev) => [
           ...prev,
-          { role: 'assistant', content: res.answer, pendingAction: res.pendingAction || null },
+          {
+            role: 'assistant',
+            content: res.answer,
+            pendingAction: res.pendingAction || null,
+            // The daily cap is spent — offer a paid refill inline.
+            refill: res.mode === 'quota' ? { credits: res.refillCredits ?? 10 } : null,
+          },
         ])
       })
       .catch((err) => {
@@ -63,19 +75,21 @@ export default function ChatWidget({ isCloudAccount = false }) {
       .finally(() => setBusy(false))
   }
 
-  // Mark the pending action on message `idx` resolved so its buttons disappear.
-  const resolvePending = (idx) =>
+  // Mark a pending action / refill offer on message `idx` resolved so its
+  // buttons disappear.
+  const resolve = (idx, key) =>
     setMessages((prev) =>
-      prev.map((m, i) => (i === idx ? { ...m, pendingAction: { ...m.pendingAction, resolved: true } } : m)),
+      prev.map((m, i) => (i === idx ? { ...m, [key]: { ...m[key], resolved: true } } : m)),
     )
 
   const confirmAction = (idx, token) => {
     if (busy) return
-    resolvePending(idx)
+    resolve(idx, 'pendingAction')
     setBusy(true)
     api
-      .chat(null, [], token)
+      .chat(null, [], { confirm: token })
       .then((res) => {
+        trackRemaining(res)
         setMessages((prev) => [...prev, { role: 'assistant', content: res.answer }])
       })
       .catch(() => {
@@ -88,8 +102,27 @@ export default function ChatWidget({ isCloudAccount = false }) {
   }
 
   const cancelAction = (idx) => {
-    resolvePending(idx)
+    resolve(idx, 'pendingAction')
     setMessages((prev) => [...prev, { role: 'assistant', content: "Okay, I won't do that. Anything else?" }])
+  }
+
+  const refill = (idx) => {
+    if (busy) return
+    resolve(idx, 'refill')
+    setBusy(true)
+    api
+      .chat(null, [], { refill: true })
+      .then((res) => {
+        trackRemaining(res)
+        setMessages((prev) => [...prev, { role: 'assistant', content: res.answer }])
+      })
+      .catch(() => {
+        setMessages((prev) => [
+          ...prev,
+          { role: 'assistant', content: 'Sorry, I could not refill just now — check your connection and try again.' },
+        ])
+      })
+      .finally(() => setBusy(false))
   }
 
   return (
@@ -105,6 +138,11 @@ export default function ChatWidget({ isCloudAccount = false }) {
       {open && (
         <Modal
           title="Game Helper"
+          titleRight={
+            remaining != null ? (
+              <span class="text-xs text-[var(--color-parchment-dark)]">{remaining} messages left today</span>
+            ) : null
+          }
           onClose={() => setOpen(false)}
           fullHeight
           contentClassName="flex flex-col min-h-0"
@@ -112,6 +150,7 @@ export default function ChatWidget({ isCloudAccount = false }) {
           <div ref={scrollRef} class="flex-1 overflow-y-auto flex flex-col gap-2 pb-2">
             {messages.map((m, i) => {
               const pending = m.pendingAction && !m.pendingAction.resolved ? m.pendingAction : null
+              const refillOffer = m.refill && !m.refill.resolved ? m.refill : null
               return (
                 <div key={i} class="flex flex-col gap-1.5">
                   <div
@@ -142,6 +181,13 @@ export default function ChatWidget({ isCloudAccount = false }) {
                           Cancel
                         </Button>
                       </div>
+                    </div>
+                  )}
+                  {refillOffer && (
+                    <div class="self-start flex gap-2 pl-1">
+                      <Button variant="primary" size="md" disabled={busy} onClick={() => refill(i)}>
+                        🔄 Refill for {refillOffer.credits} credits
+                      </Button>
                     </div>
                   )}
                 </div>
