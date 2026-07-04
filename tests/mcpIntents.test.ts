@@ -35,6 +35,7 @@ import {
   isClaimableTask,
   planDungeoneeringReward,
   assignSlayerTask,
+  skipSlayerTask,
   slayerStatus,
 } from '../functions/_lib/mcp/intents.js'
 import { getLevelFromXP } from '../src/engine/experience.js'
@@ -1099,6 +1100,19 @@ describe('slayer intents', () => {
     expect(s.nextTaskMultiplier).toBe(10) // the 5th task hits a x10 milestone
     expect(s.skipCosts).toEqual({ points: 10, credits: 1 })
     expect(s.masters.find((m: any) => m.id === 'turael')?.eligible).toBe(true)
+  })
+
+  it('clears the active task on skip', () => {
+    const save = maxedSlayer()
+    save.settings.slayerTask = { monsterId: 'broodfang_spider', monsterName: 'Broodfang Spider', monstersRemaining: 79, totalCount: 100 }
+    const r = skipSlayerTask(save)
+    expect(r.action).toBe('skip_slayer_task')
+    expect(r.skippedMonsterId).toBe('broodfang_spider')
+    expect(save.settings.slayerTask).toBeNull()
+  })
+
+  it('refuses to skip when there is no active task', () => {
+    expect(() => skipSlayerTask(maxedSlayer())).toThrow(/no active slayer task/i)
   })
 
   it('reports no current task on a fresh save', () => {

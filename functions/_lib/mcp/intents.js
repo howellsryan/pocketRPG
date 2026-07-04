@@ -1530,6 +1530,20 @@ export function assignSlayerTask(save, masterId, options = {}) {
   }
 }
 
+// Drop the active slayer task without completing it. The credit spend is
+// handled separately by /api/slayer/skip (server-authoritative credits); this
+// intent is what actually clears settings.slayerTask so a follow-up
+// assign_slayer_task isn't blocked by SLAYER_TASK_ACTIVE.
+export function skipSlayerTask(save) {
+  if (!save.settings || typeof save.settings !== 'object') save.settings = {}
+  const task = save.settings.slayerTask
+  if (!task || !task.monsterId) {
+    throw new GameApiError('NO_SLAYER_TASK', 'No active slayer task to skip.', 400)
+  }
+  save.settings.slayerTask = null
+  return { action: 'skip_slayer_task', skippedMonsterId: task.monsterId, skippedMonsterName: task.monsterName || task.monsterId }
+}
+
 // Read-only slayer summary: current task (with progress), points, tasks done,
 // the points multiplier on the next completed task, skip costs, and each
 // master's eligibility for the character.
