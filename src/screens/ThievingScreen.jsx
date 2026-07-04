@@ -28,6 +28,9 @@ export default function ThievingScreen({ initialNpcId, idleResult, onBack, onSto
   const thievingRef = useRef(null)
   const inventoryRef = useRef(inventory)
   const hasAutoStarted = useRef(false)
+  // True once the player has seen the NPC list. Auto-starting from a place map
+  // (initialNpcId) starts false so the active panel's Back returns there.
+  const seenList = useRef(!initialNpcId)
 
   // Keep inventoryRef current
   useEffect(() => { inventoryRef.current = inventory }, [inventory])
@@ -201,9 +204,18 @@ export default function ThievingScreen({ initialNpcId, idleResult, onBack, onSto
   }
 
   const backToList = () => {
+    seenList.current = true
     if (thievingRef.current) mirrorActiveTask(thievingRef.current)
     setThieving(null)
     thievingRef.current = null
+  }
+
+  // Active-panel Back leaves the task running; when auto-started from a place
+  // map (list never seen) it returns to that origin, not the NPC list.
+  const backFromActive = () => {
+    const toOrigin = !seenList.current
+    backToList()
+    if (toOrigin && onBack) onBack()
   }
 
   const stopThieving = () => {
@@ -288,7 +300,7 @@ export default function ThievingScreen({ initialNpcId, idleResult, onBack, onSto
         { label: 'XP / hr', value: xpPerHr ? formatNumber(xpPerHr) : '—', accent: !!xpPerHr },
         ...rewardStats,
       ]}
-      onBack={backToList}
+      onBack={backFromActive}
       onStop={stopThieving}
     />
   )

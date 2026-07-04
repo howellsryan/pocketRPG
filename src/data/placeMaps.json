@@ -34,7 +34,7 @@
       { "kind": "combat", "ref": "nagadoth_rex", "x": 1055, "y": 600 },
       { "kind": "combat", "ref": "nagadoth_supreme", "x": 895, "y": 645 },
       { "kind": "combat", "ref": "hellbound_gorilla", "x": 150, "y": 615 },
-      { "kind": "raid", "ref": "tomb_of_arasmus", "label": "Tomb of Arasmus", "icon": "🪦", "x": 255, "y": 210 },
+      { "kind": "raid", "ref": "tomb_of_arasmus", "label": "Tomb of Arasmus", "x": 255, "y": 210 },
       { "kind": "raid", "ref": "cryptbound_champions", "label": "Cryptbound Champions", "x": 690, "y": 645 },
       { "kind": "quest", "label": "Quests Board", "icon": "📜", "x": 390, "y": 155 },
       { "kind": "agility", "ref": "ardougne", "label": "Rooftop Course", "x": 350, "y": 270 },

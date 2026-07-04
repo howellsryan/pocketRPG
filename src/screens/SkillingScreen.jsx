@@ -71,6 +71,10 @@ export default function SkillingScreen({ initialSkillId, initialActionId, initia
   const [showAlchemyPicker, setShowAlchemyPicker] = useState(false) // Show item picker for alchemy
   const skillingRef = useRef(null)
   const hasAutoStarted = useRef(false)
+  // True once the player has seen an action list. Dropping straight into an
+  // action from a place-map spot (initialActionId auto-start) starts false, so
+  // the active panel's Back returns to that origin instead of the list.
+  const seenList = useRef(!initialActionId)
   const inventoryRef = useRef(inventory)
   const bankRef = useRef(bank)
 
@@ -636,11 +640,20 @@ export default function SkillingScreen({ initialSkillId, initialActionId, initia
   // Back (does NOT stop): flush progress and return to the action list while the
   // task keeps running in the background. "Stop & Back" still cancels the task.
   const backToList = () => {
+    seenList.current = true
     if (skillingRef.current) mirrorActiveTask(skillingRef.current)
     skillingRef.current = null
     setSkilling(null)
     setSelectedAction(null)
     setSelectedAlchemyItem(null)
+  }
+
+  // Active-panel Back leaves the task running; when auto-started from a place
+  // map (list never seen) it returns to that origin, not the action list.
+  const backFromActive = () => {
+    const toOrigin = !seenList.current
+    backToList()
+    if (toOrigin && onBack) onBack()
   }
 
   // Auto-start from home shortcut, or resume an in-progress background task when
@@ -976,7 +989,7 @@ Shop value: ×1.1
         label: 'Bank speed',
         value: `${formatBankDelay(getAgilityBankDelayMs(getLevelFromXP(stats.agility?.xp || 0)))} delay`,
       } : null}
-      onBack={backToList}
+      onBack={backFromActive}
       onStop={stopSkilling}
     />
   )

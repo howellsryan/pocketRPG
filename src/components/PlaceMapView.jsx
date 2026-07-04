@@ -4,6 +4,7 @@ import { getPlaceMap, describeSpot, spotType, BANK_TRAINING_SKILLS, facilityTrai
 import { usePanZoomStage } from '../hooks/usePanZoomStage.js'
 import { useEscapeKey } from '../hooks/useEscapeKey.js'
 import { getSkillArt } from '../utils/skillArt.js'
+import { getRaidArt } from '../utils/combatArt.js'
 import { SCREENS } from '../utils/constants.js'
 import skillsData from '../data/skills.json'
 import GameIcon from './GameIcon.jsx'
@@ -88,9 +89,14 @@ export default function PlaceMapView({ place, onClose, onActivate, onNavigate })
         ? <GameIcon iconKey={spot.iconKey} size={20} color="#f2e4c2" />
         : <span aria-hidden="true">{spot.icon || '🏛️'}</span>
     }
-    return desc.skillArtId
-      ? <GameIcon iconKey={getSkillArt(desc.skillArtId).icon} size={20} color="#f2e4c2" />
-      : <span aria-hidden="true">{desc.icon}</span>
+    if (desc.skillArtId) return <GameIcon iconKey={getSkillArt(desc.skillArtId).icon} size={20} color="#f2e4c2" />
+    // Raid spots reuse the combat screen's raid emblem (RAID_ART) so the icon
+    // matches what the player sees in the Combat screen's raids section, unless
+    // the spot carries an explicit emoji override.
+    if (!spot.icon && spot.kind === 'raid' && desc.refs.length === 1) {
+      return <GameIcon iconKey={getRaidArt(desc.refs[0]).icon} size={20} color="#f2e4c2" />
+    }
+    return <span aria-hidden="true">{desc.icon}</span>
   }
 
   return (

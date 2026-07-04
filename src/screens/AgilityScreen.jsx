@@ -26,6 +26,9 @@ export default function AgilityScreen({ initialActionId, idleResult, onBack, onS
   const agilityRef = useRef(null)
   const inventoryRef = useRef(inventory)
   const hasAutoStarted = useRef(false)
+  // True once the player has seen the course list. Auto-starting from a place
+  // map (initialActionId) starts false so the active panel's Back returns there.
+  const seenList = useRef(!initialActionId)
 
   // Keep inventoryRef current
   useEffect(() => { inventoryRef.current = inventory }, [inventory])
@@ -179,9 +182,18 @@ export default function AgilityScreen({ initialActionId, idleResult, onBack, onS
 
   // Back (no stop): flush progress and return to the course list; task keeps running.
   const backToList = () => {
+    seenList.current = true
     if (agilityRef.current) mirrorActiveTask(agilityRef.current)
     setAgility(null)
     agilityRef.current = null
+  }
+
+  // Active-panel Back leaves the task running; when auto-started from a place
+  // map (list never seen) it returns to that origin, not the course list.
+  const backFromActive = () => {
+    const toOrigin = !seenList.current
+    backToList()
+    if (toOrigin && onBack) onBack()
   }
 
   const bankDelay = getAgilityBankDelayMs(agilityLevel)
@@ -266,7 +278,7 @@ export default function AgilityScreen({ initialActionId, idleResult, onBack, onS
         label: 'Bank speed',
         value: `${formatBankDelay(bankDelay)} delay`,
       }}
-      onBack={backToList}
+      onBack={backFromActive}
       onStop={stopCourse}
     />
   )
