@@ -11458,7 +11458,7 @@
       "magicDamage": 0
     },
     "requirements": {
-      "magic": 70
+      "defence": 70
     },
     "shopValue": 337839,
     "icon": "\ud83d\udc51",
@@ -11493,7 +11493,7 @@
       "magicDamage": 0
     },
     "requirements": {
-      "magic": 70
+      "defence": 70
     },
     "shopValue": 1923000,
     "icon": "\ud83e\udd7c",
@@ -11528,7 +11528,7 @@
       "magicDamage": 0
     },
     "requirements": {
-      "magic": 70
+      "defence": 70
     },
     "shopValue": 1992430,
     "icon": "\ud83d\udc56",
@@ -11602,7 +11602,7 @@
       "magicDamage": 0
     },
     "requirements": {
-      "attack": 70
+      "defence": 70
     },
     "shopValue": 311364,
     "icon": "\ud83d\udc51",
@@ -11637,7 +11637,7 @@
       "magicDamage": 0
     },
     "requirements": {
-      "attack": 70
+      "defence": 70
     },
     "shopValue": 826212,
     "icon": "\ud83e\udd7c",
@@ -11672,7 +11672,7 @@
       "magicDamage": 0
     },
     "requirements": {
-      "attack": 70
+      "defence": 70
     },
     "shopValue": 822566,
     "icon": "\ud83d\udc56",
@@ -11746,7 +11746,7 @@
       "magicDamage": 0
     },
     "requirements": {
-      "attack": 70
+      "defence": 70
     },
     "shopValue": 139250,
     "icon": "\ud83d\udc51",
@@ -11781,7 +11781,7 @@
       "magicDamage": 0
     },
     "requirements": {
-      "attack": 70
+      "defence": 70
     },
     "shopValue": 231500,
     "icon": "\ud83e\udd7c",
@@ -11816,7 +11816,7 @@
       "magicDamage": 0
     },
     "requirements": {
-      "attack": 70
+      "defence": 70
     },
     "shopValue": 189163,
     "icon": "\ud83d\udc56",
@@ -11890,7 +11890,7 @@
       "magicDamage": 0
     },
     "requirements": {
-      "ranged": 70
+      "defence": 70
     },
     "shopValue": 70249,
     "icon": "\ud83d\udc52",
@@ -11925,7 +11925,7 @@
       "magicDamage": 0
     },
     "requirements": {
-      "ranged": 70
+      "defence": 70
     },
     "shopValue": 1077940,
     "icon": "\ud83e\udd7c",
@@ -11960,7 +11960,7 @@
       "magicDamage": 0
     },
     "requirements": {
-      "ranged": 70
+      "defence": 70
     },
     "shopValue": 464568,
     "icon": "\ud83d\udc56",
@@ -12034,7 +12034,7 @@
       "magicDamage": 0
     },
     "requirements": {
-      "attack": 70
+      "defence": 70
     },
     "shopValue": 177535,
     "icon": "\ud83d\udc51",
@@ -12069,7 +12069,7 @@
       "magicDamage": 0
     },
     "requirements": {
-      "attack": 70
+      "defence": 70
     },
     "shopValue": 375509,
     "icon": "\ud83e\udd7c",
@@ -12104,7 +12104,7 @@
       "magicDamage": 0
     },
     "requirements": {
-      "attack": 70
+      "defence": 70
     },
     "shopValue": 315686,
     "icon": "\ud83d\udc56",
@@ -12178,7 +12178,7 @@
       "magicDamage": 0
     },
     "requirements": {
-      "attack": 70
+      "defence": 70
     },
     "shopValue": 174353,
     "icon": "\ud83d\udc51",
@@ -12213,7 +12213,7 @@
       "magicDamage": 0
     },
     "requirements": {
-      "attack": 70
+      "defence": 70
     },
     "shopValue": 178649,
     "icon": "\ud83e\udd7c",
@@ -12248,7 +12248,7 @@
       "magicDamage": 0
     },
     "requirements": {
-      "attack": 70
+      "defence": 70
     },
     "shopValue": 286454,
     "icon": "\ud83d\udc56",
