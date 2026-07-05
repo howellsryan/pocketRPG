@@ -566,7 +566,9 @@ export function GameProvider({ children }) {
     setIdleCombatSetupState(normalisedIdleCombatSetup)
     setAutoBankLootState(autoBankSetting !== false) // default true
     setShowInfoToastsState(savedShowInfoToasts === true) // default false
-    setWorldLocationState(normaliseLocation(savedWorldLocation)) // un-migrated saves → start place
+    const loadedWorldLocation = normaliseLocation(savedWorldLocation) // un-migrated saves → start place
+    worldLocationRef.current = loadedWorldLocation
+    setWorldLocationState(loadedWorldLocation)
     setBankConfig(savedBankConfig ?? { tabs: [], itemTabMap: {} })
     setEquipmentPresetsState(Array.isArray(savedEquipmentPresets) ? savedEquipmentPresets : [])
     setUnlockedFeatures(new Set(savedUnlocks || []))
@@ -1062,8 +1064,15 @@ export function GameProvider({ children }) {
 
   const dismissTravelPrompt = useCallback(() => setTravelPrompt(null), [])
 
-  // Returns a fresh snapshot of all live state — always reads from refs, never stale
-  const getSnapshot = useCallback(() => ({
+  // Returns a fresh snapshot of all live state. Long-lived handlers (the
+  // pagehide/beforeunload beacon, the onTick loop) capture getSnapshot once and
+  // hold it for the session, so the exported identity must be stable while the
+  // values stay current: each render re-points getSnapshotImplRef at a closure
+  // over this render's state, and the stable wrapper delegates through the ref.
+  // worldLocation additionally reads its ref so a snapshot taken in the same
+  // tick as a travel arrival (before the re-render commits) sees the new place.
+  const getSnapshotImplRef = useRef(null)
+  getSnapshotImplRef.current = () => ({
     player: stateRef.current.player,
     stats: stateRef.current.stats,
     inventory: stateRef.current.inventory,
@@ -1077,7 +1086,7 @@ export function GameProvider({ children }) {
       equipmentPresets,
       homeShortcuts,
       combatStance,
-      worldLocation,
+      worldLocation: worldLocationRef.current,
       idleCombatSetup,
       unlockedFeatures: [...unlockedFeatures],
       activeTask,
@@ -1095,7 +1104,8 @@ export function GameProvider({ children }) {
       slayerPerks: slayerPerksRef.current,
       characterUnlocks: characterUnlocksRef.current,
     },
-  }), [currentHP, autoBankLoot, bankConfig, showInfoToasts, equipmentPresets, homeShortcuts, combatStance, worldLocation, idleCombatSetup, unlockedFeatures, activeTask, activeCombatSpell, slayerTask, slayerPoints, slayerTasksCompleted, dungeoneeringTokens, bossKillCounts, raidKillCounts, farming, completedQuests, unlockedMinigameItems, questQueue, slayerPerks, characterUnlocks])
+  })
+  const getSnapshot = useCallback(() => getSnapshotImplRef.current(), [])
 
 
   // ---- Shared game lock --------------------------------------------------
