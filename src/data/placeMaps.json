@@ -115,46 +115,46 @@
   },
   "varrick": {
     "image": "/public/world/varrick-map.jpg",
-    "w": 1024,
-    "h": 1024,
+    "w": 1179,
+    "h": 674,
     "spots": [
       {
         "facility": "bank",
         "label": "Bank of Varrick",
-        "x": 700,
-        "y": 330
+        "x": 592,
+        "y": 263
       },
       {
         "facility": "furnace_anvil",
         "label": "Grand Smithy",
-        "x": 700,
-        "y": 600
+        "x": 658,
+        "y": 230
       },
       {
         "facility": "altar",
         "label": "Royal Chapel",
-        "x": 560,
-        "y": 250
+        "x": 625,
+        "y": 395
       },
       {
         "facility": "stove",
         "label": "Market Stove",
-        "x": 280,
-        "y": 400
+        "x": 461,
+        "y": 184
       },
       {
         "screen": "store",
         "label": "Trading Post",
         "iconKey": "uncut_ruby",
-        "x": 210,
-        "y": 460
+        "x": 408,
+        "y": 220
       },
       {
         "kind": "raid",
         "ref": "crimson_night_theatre",
         "label": "Crimson Night Theatre",
-        "x": 760,
-        "y": 560
+        "x": 724,
+        "y": 197
       },
       {
         "kind": "gather",
@@ -166,71 +166,71 @@
         ],
         "label": "Sawmill",
         "icon": "🪚",
-        "x": 280,
-        "y": 700
+        "x": 197,
+        "y": 200
       },
       {
         "kind": "agility",
         "ref": "varrock",
         "label": "Rooftop Course",
-        "x": 700,
-        "y": 250
+        "x": 691,
+        "y": 132
       },
       {
         "kind": "quest",
         "label": "Quests Board",
         "icon": "📜",
         "x": 230,
-        "y": 340
+        "y": 230
       },
       {
         "kind": "skill",
         "group": "runecraft",
         "label": "Runic Sanctum",
-        "x": 350,
-        "y": 600
+        "x": 625,
+        "y": 320
       },
       {
         "kind": "skill",
         "group": "woodcutting",
         "label": "Old Forest",
-        "x": 100,
-        "y": 550
+        "x": 99,
+        "y": 300
       },
       {
         "kind": "combat",
         "ref": "warlord_grondar",
-        "x": 360,
-        "y": 150
+        "x": 461,
+        "y": 53
       },
       {
         "kind": "combat",
         "ref": "ember_tyrant",
-        "x": 650,
-        "y": 150
+        "x": 987,
+        "y": 165
       },
       {
         "kind": "combat",
         "ref": "venomcoil_matriarch",
-        "x": 910,
-        "y": 400
+        "x": 1020,
+        "y": 362
       },
       {
         "kind": "combat",
         "ref": "krylth_the_defiler",
-        "x": 700,
-        "y": 800
+        "x": 691,
+        "y": 500
       },
       {
         "kind": "combat",
         "ref": "blighted_gauntlet",
-        "x": 500,
-        "y": 830
+        "x": 494,
+        "y": 540
       },
       {
         "kind": "combat",
         "ref": "ashen_crucible",
-        "x": 110,
+        "x": 99,
         "y": 400
       }
     ]
@@ -362,94 +362,94 @@
   },
   "ardounne": {
     "image": "/public/world/ardounne-map.jpg",
-    "w": 1024,
-    "h": 1024,
+    "w": 1179,
+    "h": 674,
     "spots": [
       {
         "facility": "furnace_anvil",
         "label": "Grand Smithy",
-        "x": 400,
-        "y": 400
+        "x": 625,
+        "y": 276
       },
       {
         "facility": "bank",
         "label": "Bank of Ardounne",
-        "x": 610,
-        "y": 420
+        "x": 691,
+        "y": 316
       },
       {
         "facility": "altar",
         "label": "Cathedral Altar",
-        "x": 500,
-        "y": 320
+        "x": 645,
+        "y": 211
       },
       {
         "facility": "stove",
         "label": "Market Kitchen",
-        "x": 460,
-        "y": 490
+        "x": 592,
+        "y": 329
       },
       {
         "kind": "raid",
         "ref": "tomb_of_arasmus",
         "label": "Tomb of Arasmus",
-        "x": 290,
-        "y": 300
+        "x": 329,
+        "y": 197
       },
       {
         "kind": "raid",
         "ref": "cryptbound_champions",
         "label": "Cryptbound Champions",
-        "x": 660,
-        "y": 560
+        "x": 856,
+        "y": 329
       },
       {
         "kind": "quest",
         "label": "Quests Board",
         "icon": "📜",
-        "x": 240,
-        "y": 500
+        "x": 395,
+        "y": 362
       },
       {
         "kind": "agility",
         "ref": "ardougne",
         "label": "Rooftop Course",
-        "x": 560,
-        "y": 270
+        "x": 559,
+        "y": 145
       },
       {
         "kind": "thieving",
         "label": "Thieves' Guild",
-        "x": 400,
-        "y": 560
+        "x": 494,
+        "y": 296
       },
       {
         "kind": "hunter",
         "ref": "hunt_master_trader",
         "label": "Trader's Trail",
-        "x": 710,
-        "y": 690
+        "x": 790,
+        "y": 395
       },
       {
         "kind": "skill",
         "group": "fishing",
         "label": "Fishing Spot",
-        "x": 780,
-        "y": 590
+        "x": 889,
+        "y": 395
       },
       {
         "kind": "skill",
         "group": "runecraft",
         "label": "Runic Sanctum",
-        "x": 260,
-        "y": 420
+        "x": 263,
+        "y": 263
       },
       {
         "kind": "skill",
         "group": "woodcutting",
         "label": "Old Forest",
-        "x": 140,
-        "y": 290
+        "x": 197,
+        "y": 165
       },
       {
         "kind": "gather",
@@ -461,51 +461,51 @@
         ],
         "label": "Sawmill",
         "icon": "🪚",
-        "x": 190,
-        "y": 610
+        "x": 296,
+        "y": 362
       },
       {
         "kind": "gather",
         "ref": "collect_wine_of_zamorak",
         "label": "Chaos Temple",
-        "x": 610,
-        "y": 300
+        "x": 822,
+        "y": 230
       },
       {
         "kind": "combat",
         "ref": "king_black_dragon",
-        "x": 560,
-        "y": 110
+        "x": 461,
+        "y": 99
       },
       {
         "kind": "combat",
         "ref": "deepmaw_kraken",
-        "x": 830,
-        "y": 500
+        "x": 921,
+        "y": 296
       },
       {
         "kind": "combat",
         "ref": "nagadoth_prime",
-        "x": 690,
-        "y": 760
+        "x": 756,
+        "y": 494
       },
       {
         "kind": "combat",
         "ref": "nagadoth_rex",
-        "x": 340,
-        "y": 760
+        "x": 395,
+        "y": 494
       },
       {
         "kind": "combat",
         "ref": "nagadoth_supreme",
-        "x": 500,
-        "y": 810
+        "x": 559,
+        "y": 527
       },
       {
         "kind": "combat",
         "ref": "hellbound_gorilla",
-        "x": 120,
-        "y": 540
+        "x": 132,
+        "y": 329
       }
     ]
   },
