@@ -1,4 +1,118 @@
 {
+  "lumbright": {
+    "image": "/public/world/lumbright-map.jpg",
+    "w": 1024,
+    "h": 1024,
+    "spots": [
+      {
+        "facility": "bank",
+        "label": "Bank of Lumbright",
+        "x": 565,
+        "y": 600
+      },
+      {
+        "facility": "stove",
+        "label": "Market Stove",
+        "x": 615,
+        "y": 615
+      },
+      {
+        "kind": "hunter",
+        "ref": "hunt_cow",
+        "x": 215,
+        "y": 260
+      },
+      {
+        "kind": "slayer",
+        "ref": "turael",
+        "label": "Slayer Master",
+        "x": 420,
+        "y": 470
+      },
+      {
+        "kind": "gather",
+        "ref": "gather_bowstring",
+        "label": "Wheat Field",
+        "x": 760,
+        "y": 220
+      },
+      {
+        "kind": "skill",
+        "group": "fishing",
+        "label": "Riverside Fishing Spot",
+        "x": 705,
+        "y": 470
+      },
+      {
+        "kind": "skill",
+        "group": "mining",
+        "label": "Mine",
+        "x": 845,
+        "y": 505
+      },
+      {
+        "kind": "thieving",
+        "ref": "villager",
+        "x": 385,
+        "y": 630
+      },
+      {
+        "kind": "agility",
+        "ref": "gnome_stronghold",
+        "x": 480,
+        "y": 500
+      },
+      {
+        "kind": "quest",
+        "label": "Quests Board",
+        "icon": "📜",
+        "x": 235,
+        "y": 500
+      },
+      {
+        "kind": "combat",
+        "ref": "pasture_bull",
+        "x": 250,
+        "y": 340
+      },
+      {
+        "kind": "combat",
+        "ref": "arcane_adept",
+        "x": 545,
+        "y": 375
+      },
+      {
+        "kind": "combat",
+        "ref": "field_chicken",
+        "x": 340,
+        "y": 555
+      },
+      {
+        "kind": "combat",
+        "ref": "stoneback_crab",
+        "x": 690,
+        "y": 700
+      },
+      {
+        "kind": "combat",
+        "ref": "cave_goblin",
+        "x": 300,
+        "y": 790
+      },
+      {
+        "kind": "combat",
+        "ref": "dustpaw_rat",
+        "x": 460,
+        "y": 830
+      },
+      {
+        "kind": "combat",
+        "ref": "bogling_sprite",
+        "x": 610,
+        "y": 850
+      }
+    ]
+  },
   "varrick": {
     "image": "/public/world/varrick-map.jpg",
     "w": 1179,
@@ -267,6 +381,114 @@
         "label": "Market Kitchen",
         "x": 720,
         "y": 340
+      }
+    ]
+  },
+  "alkarid": {
+    "image": "/public/world/alkarid-map.jpg",
+    "w": 1024,
+    "h": 1024,
+    "spots": [
+      {
+        "facility": "bank",
+        "label": "Bank of Al-Karid",
+        "x": 480,
+        "y": 380
+      },
+      {
+        "facility": "furnace_anvil",
+        "label": "Great Furnace",
+        "x": 700,
+        "y": 300
+      },
+      {
+        "facility": "stove",
+        "label": "Caravan Kitchen",
+        "x": 470,
+        "y": 680
+      },
+      {
+        "kind": "thieving",
+        "ref": "baker",
+        "x": 400,
+        "y": 660
+      },
+      {
+        "kind": "agility",
+        "ref": "al_kharid",
+        "x": 340,
+        "y": 195
+      },
+      {
+        "kind": "gather",
+        "ref": "pick_white_berries",
+        "label": "Palm Grove",
+        "x": 150,
+        "y": 900
+      },
+      {
+        "kind": "skill",
+        "group": "mining",
+        "label": "Desert Mine",
+        "x": 130,
+        "y": 460
+      },
+      {
+        "kind": "skill",
+        "group": "runecraft",
+        "label": "Runic Altar",
+        "x": 560,
+        "y": 430
+      },
+      {
+        "kind": "skill",
+        "group": "woodcutting",
+        "label": "Oasis Grove",
+        "x": 860,
+        "y": 850
+      },
+      {
+        "kind": "quest",
+        "label": "Quests Board",
+        "icon": "📜",
+        "x": 560,
+        "y": 700
+      },
+      {
+        "kind": "combat",
+        "ref": "bloodmoon_stalker",
+        "x": 200,
+        "y": 450
+      },
+      {
+        "kind": "combat",
+        "ref": "ironfang_drake",
+        "x": 250,
+        "y": 540
+      },
+      {
+        "kind": "combat",
+        "ref": "pyreclaw_demon",
+        "x": 650,
+        "y": 385
+      },
+      {
+        "kind": "combat",
+        "ref": "shadeglass_golem",
+        "x": 150,
+        "y": 610
+      },
+      {
+        "kind": "combat",
+        "ref": "warped_spectre",
+        "x": 900,
+        "y": 500
+      },
+      {
+        "kind": "combat",
+        "ref": "wraithgale_specter",
+        "x": 150,
+        "y": 300
       }
     ]
   },
