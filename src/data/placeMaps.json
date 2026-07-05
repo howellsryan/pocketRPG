@@ -1,54 +1,1292 @@
 {
+  "lumbright": {
+    "image": "/public/world/lumbright-map.jpg",
+    "w": 1024,
+    "h": 1024,
+    "spots": [
+      {
+        "facility": "bank",
+        "label": "Bank of Lumbright",
+        "x": 565,
+        "y": 600
+      },
+      {
+        "facility": "stove",
+        "label": "Market Stove",
+        "x": 615,
+        "y": 615
+      },
+      {
+        "kind": "hunter",
+        "ref": "hunt_cow",
+        "x": 215,
+        "y": 260
+      },
+      {
+        "kind": "slayer",
+        "ref": "turael",
+        "label": "Slayer Master",
+        "x": 420,
+        "y": 470
+      },
+      {
+        "kind": "gather",
+        "ref": "gather_bowstring",
+        "label": "Wheat Field",
+        "x": 760,
+        "y": 220
+      },
+      {
+        "kind": "skill",
+        "group": "fishing",
+        "label": "Riverside Fishing Spot",
+        "x": 705,
+        "y": 470
+      },
+      {
+        "kind": "skill",
+        "group": "mining",
+        "label": "Mine",
+        "x": 845,
+        "y": 505
+      },
+      {
+        "kind": "thieving",
+        "ref": "villager",
+        "x": 385,
+        "y": 630
+      },
+      {
+        "kind": "agility",
+        "ref": "gnome_stronghold",
+        "x": 480,
+        "y": 500
+      },
+      {
+        "kind": "quest",
+        "label": "Quests Board",
+        "icon": "📜",
+        "x": 235,
+        "y": 500
+      },
+      {
+        "kind": "combat",
+        "ref": "pasture_bull",
+        "x": 250,
+        "y": 340
+      },
+      {
+        "kind": "combat",
+        "ref": "arcane_adept",
+        "x": 545,
+        "y": 375
+      },
+      {
+        "kind": "combat",
+        "ref": "field_chicken",
+        "x": 340,
+        "y": 555
+      },
+      {
+        "kind": "combat",
+        "ref": "stoneback_crab",
+        "x": 690,
+        "y": 700
+      },
+      {
+        "kind": "combat",
+        "ref": "cave_goblin",
+        "x": 300,
+        "y": 790
+      },
+      {
+        "kind": "combat",
+        "ref": "dustpaw_rat",
+        "x": 460,
+        "y": 830
+      },
+      {
+        "kind": "combat",
+        "ref": "bogling_sprite",
+        "x": 610,
+        "y": 850
+      }
+    ]
+  },
   "varrick": {
     "image": "/public/world/varrick-map.jpg",
     "w": 1179,
-    "h": 678,
+    "h": 674,
     "spots": [
-      { "kind": "raid", "ref": "crimson_night_theatre", "label": "Crimson Night Theatre", "x": 468, "y": 140 },
-      { "kind": "combat", "ref": "warlord_grondar", "x": 655, "y": 58 },
-      { "kind": "combat", "ref": "ember_tyrant", "x": 888, "y": 52 },
-      { "kind": "combat", "ref": "venomcoil_matriarch", "x": 1122, "y": 300 },
-      { "kind": "combat", "ref": "krylth_the_defiler", "x": 958, "y": 588 },
-      { "kind": "combat", "ref": "blighted_gauntlet", "x": 588, "y": 642 },
-      { "kind": "combat", "ref": "ashen_crucible", "x": 64, "y": 330 },
-      { "kind": "agility", "ref": "varrock", "label": "Rooftop Course", "x": 330, "y": 540 },
-      { "kind": "gather", "refs": ["convert_log_to_plank", "convert_oak_log_to_plank", "convert_teak_log_to_plank", "convert_mahogany_log_to_plank"], "label": "Sawmill", "icon": "🪚", "x": 935, "y": 470 },
-      { "facility": "bank", "label": "Bank of Varrick", "x": 523, "y": 487 },
-      { "facility": "furnace_anvil", "label": "Grand Smithy", "x": 825, "y": 195 },
-      { "facility": "altar", "label": "Royal Chapel", "x": 1048, "y": 262 },
-      { "facility": "stove", "label": "Market Stove", "x": 615, "y": 345 },
-      { "screen": "store", "label": "Trading Post", "iconKey": "uncut_ruby", "x": 470, "y": 400 },
-      { "kind": "quest", "label": "Quests Board", "icon": "📜", "x": 240, "y": 440 },
-      { "kind": "skill", "group": "runecraft", "label": "Runic Sanctum", "x": 410, "y": 298 },
-      { "kind": "skill", "group": "woodcutting", "label": "Old Forest", "x": 96, "y": 588 }
+      {
+        "facility": "bank",
+        "label": "Bank of Varrick",
+        "x": 592,
+        "y": 263
+      },
+      {
+        "facility": "furnace_anvil",
+        "label": "Grand Smithy",
+        "x": 658,
+        "y": 230
+      },
+      {
+        "facility": "altar",
+        "label": "Royal Chapel",
+        "x": 625,
+        "y": 395
+      },
+      {
+        "facility": "stove",
+        "label": "Market Stove",
+        "x": 461,
+        "y": 184
+      },
+      {
+        "screen": "store",
+        "label": "Trading Post",
+        "iconKey": "uncut_ruby",
+        "x": 408,
+        "y": 220
+      },
+      {
+        "kind": "raid",
+        "ref": "crimson_night_theatre",
+        "label": "Crimson Night Theatre",
+        "x": 724,
+        "y": 197
+      },
+      {
+        "kind": "gather",
+        "refs": [
+          "convert_log_to_plank",
+          "convert_oak_log_to_plank",
+          "convert_teak_log_to_plank",
+          "convert_mahogany_log_to_plank"
+        ],
+        "label": "Sawmill",
+        "icon": "🪚",
+        "x": 197,
+        "y": 200
+      },
+      {
+        "kind": "agility",
+        "ref": "varrock",
+        "label": "Rooftop Course",
+        "x": 691,
+        "y": 132
+      },
+      {
+        "kind": "quest",
+        "label": "Quests Board",
+        "icon": "📜",
+        "x": 230,
+        "y": 230
+      },
+      {
+        "kind": "skill",
+        "group": "runecraft",
+        "label": "Runic Sanctum",
+        "x": 625,
+        "y": 320
+      },
+      {
+        "kind": "skill",
+        "group": "woodcutting",
+        "label": "Old Forest",
+        "x": 99,
+        "y": 300
+      },
+      {
+        "kind": "combat",
+        "ref": "warlord_grondar",
+        "x": 461,
+        "y": 53
+      },
+      {
+        "kind": "combat",
+        "ref": "ember_tyrant",
+        "x": 987,
+        "y": 165
+      },
+      {
+        "kind": "combat",
+        "ref": "venomcoil_matriarch",
+        "x": 1020,
+        "y": 362
+      },
+      {
+        "kind": "combat",
+        "ref": "krylth_the_defiler",
+        "x": 691,
+        "y": 500
+      },
+      {
+        "kind": "combat",
+        "ref": "blighted_gauntlet",
+        "x": 494,
+        "y": 540
+      },
+      {
+        "kind": "combat",
+        "ref": "ashen_crucible",
+        "x": 99,
+        "y": 400
+      }
+    ]
+  },
+  "faloden": {
+    "image": "/public/world/faloden-map.jpg",
+    "w": 1179,
+    "h": 674,
+    "spots": [
+      {
+        "facility": "bank",
+        "label": "Bank of Faloden",
+        "x": 428,
+        "y": 296
+      },
+      {
+        "facility": "furnace_anvil",
+        "label": "Grand Smithy",
+        "x": 322,
+        "y": 197
+      },
+      {
+        "facility": "altar",
+        "label": "Cathedral Altar",
+        "x": 711,
+        "y": 342
+      },
+      {
+        "facility": "stove",
+        "label": "Market Kitchen",
+        "x": 592,
+        "y": 460
+      },
+      {
+        "kind": "gather",
+        "refs": [
+          "convert_log_to_plank",
+          "convert_mahogany_log_to_plank",
+          "convert_oak_log_to_plank",
+          "convert_teak_log_to_plank"
+        ],
+        "label": "Sawmill",
+        "icon": "🪚",
+        "x": 230,
+        "y": 559
+      },
+      {
+        "kind": "raid",
+        "ref": "vaults_of_xyren",
+        "x": 546,
+        "y": 180
+      },
+      {
+        "kind": "agility",
+        "ref": "falador",
+        "x": 428,
+        "y": 165
+      },
+      {
+        "kind": "thieving",
+        "ref": "elf",
+        "x": 197,
+        "y": 263
+      },
+      {
+        "kind": "gather",
+        "ref": "pick_limpwurt_root",
+        "x": 263,
+        "y": 460
+      },
+      {
+        "kind": "skill",
+        "group": "fishing",
+        "label": "Fishing Spot",
+        "x": 888,
+        "y": 260
+      },
+      {
+        "kind": "skill",
+        "group": "mining",
+        "label": "Ore Quarry",
+        "x": 987,
+        "y": 132
+      },
+      {
+        "kind": "quest",
+        "label": "Quests Board",
+        "icon": "📜",
+        "x": 750,
+        "y": 540
+      },
+      {
+        "kind": "combat",
+        "ref": "adamant_dragon",
+        "x": 987,
+        "y": 90
+      },
+      {
+        "kind": "combat",
+        "ref": "commander_zephyra",
+        "x": 1086,
+        "y": 263
+      },
+      {
+        "kind": "combat",
+        "ref": "rune_dragon",
+        "x": 987,
+        "y": 395
+      },
+      {
+        "kind": "combat",
+        "ref": "skyrender_kharra",
+        "x": 1086,
+        "y": 461
+      },
+      {
+        "kind": "combat",
+        "ref": "threefang_cerberus",
+        "x": 461,
+        "y": 620
+      },
+      {
+        "kind": "combat",
+        "ref": "vicious_black_dragon",
+        "x": 921,
+        "y": 559
+      }
     ]
   },
   "ardounne": {
     "image": "/public/world/ardounne-map.jpg",
     "w": 1179,
-    "h": 681,
+    "h": 674,
     "spots": [
-      { "kind": "combat", "ref": "king_black_dragon", "x": 1065, "y": 95 },
-      { "kind": "combat", "ref": "deepmaw_kraken", "x": 1120, "y": 330 },
-      { "kind": "combat", "ref": "nagadoth_prime", "x": 1125, "y": 480 },
-      { "kind": "combat", "ref": "nagadoth_rex", "x": 1055, "y": 600 },
-      { "kind": "combat", "ref": "nagadoth_supreme", "x": 895, "y": 645 },
-      { "kind": "combat", "ref": "hellbound_gorilla", "x": 150, "y": 615 },
-      { "kind": "raid", "ref": "tomb_of_arasmus", "label": "Tomb of Arasmus", "x": 255, "y": 210 },
-      { "kind": "raid", "ref": "cryptbound_champions", "label": "Cryptbound Champions", "x": 690, "y": 645 },
-      { "kind": "quest", "label": "Quests Board", "icon": "📜", "x": 390, "y": 155 },
-      { "kind": "agility", "ref": "ardougne", "label": "Rooftop Course", "x": 350, "y": 270 },
-      { "kind": "thieving", "label": "Thieves' Guild", "x": 640, "y": 250 },
-      { "kind": "hunter", "ref": "hunt_master_trader", "label": "Trader's Trail", "x": 470, "y": 430 },
-      { "kind": "skill", "group": "fishing", "label": "Fishing Spot", "x": 1140, "y": 160 },
-      { "kind": "skill", "group": "runecraft", "label": "Runic Sanctum", "x": 150, "y": 345 },
-      { "kind": "skill", "group": "woodcutting", "label": "Old Forest", "x": 230, "y": 130 },
-      { "kind": "gather", "refs": ["convert_log_to_plank", "convert_oak_log_to_plank", "convert_teak_log_to_plank", "convert_mahogany_log_to_plank"], "label": "Sawmill", "icon": "🪚", "x": 885, "y": 90 },
-      { "kind": "gather", "ref": "collect_wine_of_zamorak", "label": "Chaos Temple", "x": 795, "y": 495 },
-      { "facility": "furnace_anvil", "label": "Grand Smithy", "x": 588, "y": 378 },
-      { "facility": "bank", "label": "Bank of Ardounne", "x": 940, "y": 360 },
-      { "facility": "altar", "label": "Cathedral Altar", "x": 850, "y": 225 },
-      { "facility": "stove", "label": "Market Kitchen", "x": 720, "y": 340 }
+      {
+        "facility": "furnace_anvil",
+        "label": "Grand Smithy",
+        "x": 625,
+        "y": 276
+      },
+      {
+        "facility": "bank",
+        "label": "Bank of Ardounne",
+        "x": 691,
+        "y": 316
+      },
+      {
+        "facility": "altar",
+        "label": "Cathedral Altar",
+        "x": 645,
+        "y": 211
+      },
+      {
+        "facility": "stove",
+        "label": "Market Kitchen",
+        "x": 592,
+        "y": 329
+      },
+      {
+        "kind": "raid",
+        "ref": "tomb_of_arasmus",
+        "label": "Tomb of Arasmus",
+        "x": 329,
+        "y": 197
+      },
+      {
+        "kind": "raid",
+        "ref": "cryptbound_champions",
+        "label": "Cryptbound Champions",
+        "x": 856,
+        "y": 329
+      },
+      {
+        "kind": "quest",
+        "label": "Quests Board",
+        "icon": "📜",
+        "x": 395,
+        "y": 362
+      },
+      {
+        "kind": "agility",
+        "ref": "ardougne",
+        "label": "Rooftop Course",
+        "x": 559,
+        "y": 145
+      },
+      {
+        "kind": "thieving",
+        "label": "Thieves' Guild",
+        "x": 494,
+        "y": 296
+      },
+      {
+        "kind": "hunter",
+        "ref": "hunt_master_trader",
+        "label": "Trader's Trail",
+        "x": 790,
+        "y": 395
+      },
+      {
+        "kind": "skill",
+        "group": "fishing",
+        "label": "Fishing Spot",
+        "x": 889,
+        "y": 395
+      },
+      {
+        "kind": "skill",
+        "group": "runecraft",
+        "label": "Runic Sanctum",
+        "x": 263,
+        "y": 263
+      },
+      {
+        "kind": "skill",
+        "group": "woodcutting",
+        "label": "Old Forest",
+        "x": 197,
+        "y": 165
+      },
+      {
+        "kind": "gather",
+        "refs": [
+          "convert_log_to_plank",
+          "convert_oak_log_to_plank",
+          "convert_teak_log_to_plank",
+          "convert_mahogany_log_to_plank"
+        ],
+        "label": "Sawmill",
+        "icon": "🪚",
+        "x": 296,
+        "y": 362
+      },
+      {
+        "kind": "gather",
+        "ref": "collect_wine_of_zamorak",
+        "label": "Chaos Temple",
+        "x": 822,
+        "y": 230
+      },
+      {
+        "kind": "combat",
+        "ref": "king_black_dragon",
+        "x": 461,
+        "y": 99
+      },
+      {
+        "kind": "combat",
+        "ref": "deepmaw_kraken",
+        "x": 921,
+        "y": 296
+      },
+      {
+        "kind": "combat",
+        "ref": "nagadoth_prime",
+        "x": 756,
+        "y": 494
+      },
+      {
+        "kind": "combat",
+        "ref": "nagadoth_rex",
+        "x": 395,
+        "y": 494
+      },
+      {
+        "kind": "combat",
+        "ref": "nagadoth_supreme",
+        "x": 559,
+        "y": 527
+      },
+      {
+        "kind": "combat",
+        "ref": "hellbound_gorilla",
+        "x": 132,
+        "y": 329
+      }
+    ]
+  },
+  "draynar": {
+    "image": "/public/world/draynar-map.jpg",
+    "w": 1179,
+    "h": 674,
+    "spots": [
+      {
+        "facility": "bank",
+        "label": "Bank of Draynar",
+        "x": 184,
+        "y": 420
+      },
+      {
+        "kind": "agility",
+        "ref": "draynor_village",
+        "x": 329,
+        "y": 220
+      },
+      {
+        "kind": "hunter",
+        "ref": "hunt_jeweller",
+        "x": 790,
+        "y": 380
+      },
+      {
+        "kind": "thieving",
+        "ref": "gardener",
+        "x": 90,
+        "y": 300
+      },
+      {
+        "kind": "gather",
+        "ref": "catch_newts",
+        "x": 494,
+        "y": 610
+      },
+      {
+        "kind": "skill",
+        "group": "fishing",
+        "label": "Fishing Spot",
+        "x": 428,
+        "y": 400
+      },
+      {
+        "kind": "skill",
+        "group": "runecraft",
+        "label": "Runic Altar",
+        "x": 757,
+        "y": 200
+      },
+      {
+        "kind": "quest",
+        "label": "Quests Board",
+        "icon": "📜",
+        "x": 590,
+        "y": 400
+      },
+      {
+        "kind": "combat",
+        "ref": "briarheart_treant",
+        "x": 823,
+        "y": 250
+      },
+      {
+        "kind": "combat",
+        "ref": "ember_giant",
+        "x": 90,
+        "y": 480
+      },
+      {
+        "kind": "combat",
+        "ref": "frostmaw_direwolf",
+        "x": 856,
+        "y": 461
+      },
+      {
+        "kind": "combat",
+        "ref": "gravehusk_brute",
+        "x": 329,
+        "y": 610
+      },
+      {
+        "kind": "combat",
+        "ref": "green_dragon",
+        "x": 280,
+        "y": 150
+      },
+      {
+        "kind": "combat",
+        "ref": "lesser_fiend",
+        "x": 658,
+        "y": 580
+      }
+    ]
+  },
+  "alkarid": {
+    "image": "/public/world/alkarid-map.jpg",
+    "w": 1024,
+    "h": 1024,
+    "spots": [
+      {
+        "facility": "bank",
+        "label": "Bank of Al-Karid",
+        "x": 480,
+        "y": 380
+      },
+      {
+        "facility": "furnace_anvil",
+        "label": "Great Furnace",
+        "x": 700,
+        "y": 300
+      },
+      {
+        "facility": "stove",
+        "label": "Caravan Kitchen",
+        "x": 470,
+        "y": 680
+      },
+      {
+        "kind": "thieving",
+        "ref": "baker",
+        "x": 400,
+        "y": 660
+      },
+      {
+        "kind": "agility",
+        "ref": "al_kharid",
+        "x": 340,
+        "y": 195
+      },
+      {
+        "kind": "gather",
+        "ref": "pick_white_berries",
+        "label": "Palm Grove",
+        "x": 150,
+        "y": 900
+      },
+      {
+        "kind": "skill",
+        "group": "mining",
+        "label": "Desert Mine",
+        "x": 130,
+        "y": 460
+      },
+      {
+        "kind": "skill",
+        "group": "runecraft",
+        "label": "Runic Altar",
+        "x": 560,
+        "y": 430
+      },
+      {
+        "kind": "skill",
+        "group": "woodcutting",
+        "label": "Oasis Grove",
+        "x": 860,
+        "y": 850
+      },
+      {
+        "kind": "quest",
+        "label": "Quests Board",
+        "icon": "📜",
+        "x": 560,
+        "y": 700
+      },
+      {
+        "kind": "combat",
+        "ref": "bloodmoon_stalker",
+        "x": 200,
+        "y": 450
+      },
+      {
+        "kind": "combat",
+        "ref": "ironfang_drake",
+        "x": 250,
+        "y": 540
+      },
+      {
+        "kind": "combat",
+        "ref": "pyreclaw_demon",
+        "x": 650,
+        "y": 385
+      },
+      {
+        "kind": "combat",
+        "ref": "shadeglass_golem",
+        "x": 150,
+        "y": 610
+      },
+      {
+        "kind": "combat",
+        "ref": "warped_spectre",
+        "x": 900,
+        "y": 500
+      },
+      {
+        "kind": "combat",
+        "ref": "wraithgale_specter",
+        "x": 150,
+        "y": 300
+      }
+    ]
+  },
+  "edgevale": {
+    "image": "/public/world/edgevale-map.jpg",
+    "w": 1179,
+    "h": 674,
+    "spots": [
+      {
+        "facility": "bank",
+        "label": "Bank of Edgevale",
+        "x": 494,
+        "y": 275
+      },
+      {
+        "kind": "slayer",
+        "ref": "vannaka",
+        "label": "Slayer Master",
+        "x": 605,
+        "y": 250
+      },
+      {
+        "kind": "thieving",
+        "ref": "guard",
+        "x": 545,
+        "y": 460
+      },
+      {
+        "kind": "minigame",
+        "ref": "mage_arena",
+        "x": 660,
+        "y": 190
+      },
+      {
+        "kind": "gather",
+        "ref": "collect_spiders_eggs",
+        "x": 300,
+        "y": 210
+      },
+      {
+        "kind": "skill",
+        "group": "fishing",
+        "label": "Fishing Spot",
+        "x": 790,
+        "y": 395
+      },
+      {
+        "kind": "skill",
+        "group": "woodcutting",
+        "label": "Dark Woods",
+        "x": 922,
+        "y": 197
+      },
+      {
+        "kind": "skill",
+        "group": "runecraft",
+        "label": "Runic Altar",
+        "x": 130,
+        "y": 340
+      },
+      {
+        "kind": "quest",
+        "label": "Quests Board",
+        "icon": "📜",
+        "x": 494,
+        "y": 400
+      },
+      {
+        "kind": "combat",
+        "ref": "astral_mage",
+        "x": 66,
+        "y": 132
+      },
+      {
+        "kind": "combat",
+        "ref": "astral_warrior",
+        "x": 210,
+        "y": 90
+      },
+      {
+        "kind": "combat",
+        "ref": "cindermaw_serpent",
+        "x": 99,
+        "y": 263
+      },
+      {
+        "kind": "combat",
+        "ref": "ironclad_guardian",
+        "x": 230,
+        "y": 400
+      },
+      {
+        "kind": "combat",
+        "ref": "nether_demon",
+        "x": 66,
+        "y": 428
+      },
+      {
+        "kind": "combat",
+        "ref": "shroudwraith_specter",
+        "x": 200,
+        "y": 520
+      }
+    ]
+  },
+  "barlock": {
+    "image": "/public/world/barlock-map.jpg",
+    "w": 1179,
+    "h": 674,
+    "spots": [
+      {
+        "facility": "furnace_anvil",
+        "label": "Clan Forge",
+        "x": 428,
+        "y": 428
+      },
+      {
+        "kind": "minigame",
+        "ref": "warriors_guild",
+        "x": 586,
+        "y": 197
+      },
+      {
+        "kind": "thieving",
+        "ref": "cake_stall",
+        "x": 382,
+        "y": 263
+      },
+      {
+        "kind": "gather",
+        "ref": "collect_sand",
+        "x": 160,
+        "y": 380
+      },
+      {
+        "kind": "skill",
+        "group": "mining",
+        "label": "Hillside Mine",
+        "x": 250,
+        "y": 130
+      },
+      {
+        "kind": "skill",
+        "group": "woodcutting",
+        "label": "Highland Woods",
+        "x": 1020,
+        "y": 263
+      },
+      {
+        "kind": "skill",
+        "group": "runecraft",
+        "label": "Runic Altar",
+        "x": 165,
+        "y": 200
+      },
+      {
+        "kind": "quest",
+        "label": "Quests Board",
+        "icon": "📜",
+        "x": 579,
+        "y": 592
+      },
+      {
+        "kind": "combat",
+        "ref": "broodfang_spider",
+        "x": 132,
+        "y": 461
+      },
+      {
+        "kind": "combat",
+        "ref": "duneback_crab",
+        "x": 230,
+        "y": 600
+      },
+      {
+        "kind": "combat",
+        "ref": "frostbite_imp",
+        "x": 470,
+        "y": 95
+      },
+      {
+        "kind": "combat",
+        "ref": "highland_giant",
+        "x": 1053,
+        "y": 395
+      },
+      {
+        "kind": "combat",
+        "ref": "umbral_adept",
+        "x": 988,
+        "y": 494
+      },
+      {
+        "kind": "combat",
+        "ref": "wailing_banshee",
+        "x": 856,
+        "y": 296
+      }
+    ]
+  },
+  "catherra": {
+    "image": "/public/world/catherra-map.jpg",
+    "w": 1179,
+    "h": 674,
+    "spots": [
+      {
+        "facility": "stove",
+        "label": "Harbour Stove",
+        "x": 461,
+        "y": 362
+      },
+      {
+        "kind": "agility",
+        "ref": "rellekka",
+        "x": 362,
+        "y": 296
+      },
+      {
+        "kind": "minigame",
+        "ref": "fishing_trawler",
+        "x": 592,
+        "y": 428
+      },
+      {
+        "kind": "gather",
+        "ref": "burn_seaweed",
+        "x": 198,
+        "y": 559
+      },
+      {
+        "kind": "skill",
+        "group": "mining",
+        "label": "Sea Cliff Mine",
+        "x": 132,
+        "y": 461
+      },
+      {
+        "kind": "skill",
+        "group": "woodcutting",
+        "label": "Cliffside Grove",
+        "x": 99,
+        "y": 296
+      },
+      {
+        "kind": "skill",
+        "group": "runecraft",
+        "label": "Runic Altar",
+        "x": 184,
+        "y": 230
+      },
+      {
+        "kind": "quest",
+        "label": "Quests Board",
+        "icon": "📜",
+        "x": 460,
+        "y": 470
+      },
+      {
+        "kind": "combat",
+        "ref": "elder_rock_golem",
+        "x": 230,
+        "y": 165
+      },
+      {
+        "kind": "combat",
+        "ref": "elder_tree_spirit",
+        "x": 99,
+        "y": 395
+      },
+      {
+        "kind": "combat",
+        "ref": "embertongue_lizard",
+        "x": 66,
+        "y": 527
+      },
+      {
+        "kind": "combat",
+        "ref": "hollow_reaver",
+        "x": 33,
+        "y": 620
+      },
+      {
+        "kind": "combat",
+        "ref": "sanguine_veld",
+        "x": 550,
+        "y": 210
+      },
+      {
+        "kind": "combat",
+        "ref": "stoneglare_basilisk",
+        "x": 264,
+        "y": 99
+      }
+    ]
+  },
+  "seerhold": {
+    "image": "/public/world/seerhold-map.jpg",
+    "w": 1179,
+    "h": 674,
+    "spots": [
+      {
+        "facility": "bank",
+        "label": "Bank of Seerhold",
+        "x": 329,
+        "y": 230
+      },
+      {
+        "kind": "gather",
+        "refs": [
+          "convert_log_to_plank",
+          "convert_mahogany_log_to_plank",
+          "convert_oak_log_to_plank",
+          "convert_teak_log_to_plank"
+        ],
+        "label": "Sawmill",
+        "icon": "🪚",
+        "x": 592,
+        "y": 197
+      },
+      {
+        "kind": "agility",
+        "ref": "seers_village",
+        "x": 592,
+        "y": 118
+      },
+      {
+        "kind": "slayer",
+        "ref": "chaeldar",
+        "label": "Slayer Master",
+        "x": 395,
+        "y": 165
+      },
+      {
+        "kind": "gather",
+        "ref": "crush_birds_nest",
+        "x": 165,
+        "y": 197
+      },
+      {
+        "kind": "skill",
+        "group": "mining",
+        "label": "Crystal Mine",
+        "x": 99,
+        "y": 329
+      },
+      {
+        "kind": "skill",
+        "group": "runecraft",
+        "label": "Runic Altar",
+        "x": 691,
+        "y": 329
+      },
+      {
+        "kind": "quest",
+        "label": "Quests Board",
+        "icon": "📜",
+        "x": 362,
+        "y": 400
+      },
+      {
+        "kind": "combat",
+        "ref": "ashen_hydra",
+        "x": 66,
+        "y": 132
+      },
+      {
+        "kind": "combat",
+        "ref": "black_dragon",
+        "x": 724,
+        "y": 132
+      },
+      {
+        "kind": "combat",
+        "ref": "cinder_devil",
+        "x": 66,
+        "y": 461
+      },
+      {
+        "kind": "combat",
+        "ref": "crazy_archaeologist",
+        "x": 757,
+        "y": 428
+      },
+      {
+        "kind": "combat",
+        "ref": "nightfang_beast",
+        "x": 263,
+        "y": 592
+      },
+      {
+        "kind": "combat",
+        "ref": "sovrathar_the_ashen_sovereign",
+        "x": 526,
+        "y": 615
+      }
+    ]
+  },
+  "brimhollow": {
+    "image": "/public/world/brimhollow-map.jpg",
+    "w": 1179,
+    "h": 674,
+    "spots": [
+      {
+        "facility": "bank",
+        "label": "Bank of Brimhollow",
+        "x": 505,
+        "y": 260
+      },
+      {
+        "kind": "slayer",
+        "ref": "duradel",
+        "label": "Slayer Master",
+        "x": 360,
+        "y": 185
+      },
+      {
+        "kind": "agility",
+        "ref": "pollnivneach",
+        "x": 700,
+        "y": 185
+      },
+      {
+        "kind": "skill",
+        "group": "fishing",
+        "label": "Fishing Spot",
+        "x": 494,
+        "y": 362
+      },
+      {
+        "kind": "skill",
+        "group": "mining",
+        "label": "Volcanic Mine",
+        "x": 198,
+        "y": 461
+      },
+      {
+        "kind": "skill",
+        "group": "woodcutting",
+        "label": "Jungle Grove",
+        "x": 461,
+        "y": 99
+      },
+      {
+        "kind": "quest",
+        "label": "Quests Board",
+        "icon": "📜",
+        "x": 592,
+        "y": 300
+      },
+      {
+        "kind": "combat",
+        "ref": "ash_wyrm",
+        "x": 198,
+        "y": 99
+      },
+      {
+        "kind": "combat",
+        "ref": "ashen_marauder",
+        "x": 592,
+        "y": 66
+      },
+      {
+        "kind": "combat",
+        "ref": "boneclaw_revenant",
+        "x": 856,
+        "y": 119
+      },
+      {
+        "kind": "combat",
+        "ref": "bonelight_pyromancer",
+        "x": 1020,
+        "y": 165
+      },
+      {
+        "kind": "combat",
+        "ref": "cinderfang_reaver",
+        "x": 230,
+        "y": 329
+      },
+      {
+        "kind": "combat",
+        "ref": "tidereaper_crab",
+        "x": 955,
+        "y": 428
+      }
+    ]
+  },
+  "canifel": {
+    "image": "/public/world/canifel-map.jpg",
+    "w": 1179,
+    "h": 674,
+    "spots": [
+      {
+        "facility": "altar",
+        "label": "Shuttered Shrine",
+        "x": 461,
+        "y": 263
+      },
+      {
+        "kind": "slayer",
+        "ref": "mazchna",
+        "label": "Slayer Master",
+        "x": 625,
+        "y": 230
+      },
+      {
+        "kind": "agility",
+        "ref": "canifis",
+        "x": 546,
+        "y": 461
+      },
+      {
+        "kind": "hunter",
+        "ref": "hunt_wizard",
+        "x": 700,
+        "y": 165
+      },
+      {
+        "kind": "thieving",
+        "ref": "farmer",
+        "x": 395,
+        "y": 362
+      },
+      {
+        "kind": "gather",
+        "ref": "collect_seaweed",
+        "x": 922,
+        "y": 461
+      },
+      {
+        "kind": "skill",
+        "group": "runecraft",
+        "label": "Runic Altar",
+        "x": 988,
+        "y": 198
+      },
+      {
+        "kind": "quest",
+        "label": "Quests Board",
+        "icon": "📜",
+        "x": 546,
+        "y": 592
+      },
+      {
+        "kind": "combat",
+        "ref": "briar_giant",
+        "x": 99,
+        "y": 263
+      },
+      {
+        "kind": "combat",
+        "ref": "cinderpaw_cub",
+        "x": 132,
+        "y": 428
+      },
+      {
+        "kind": "combat",
+        "ref": "glaive_skeleton",
+        "x": 1086,
+        "y": 230
+      },
+      {
+        "kind": "combat",
+        "ref": "marshfen_toad",
+        "x": 889,
+        "y": 560
+      },
+      {
+        "kind": "combat",
+        "ref": "mirebound_husk",
+        "x": 198,
+        "y": 560
+      },
+      {
+        "kind": "combat",
+        "ref": "verdant_stalker",
+        "x": 1053,
+        "y": 395
+      }
     ]
   },
   "camlann": {
@@ -56,23 +1294,222 @@
     "w": 1179,
     "h": 669,
     "spots": [
-      { "kind": "combat", "ref": "stonegale_elemental", "x": 515, "y": 90 },
-      { "kind": "combat", "ref": "astral_ranger", "x": 905, "y": 120 },
-      { "kind": "combat", "ref": "drakthul_wyrmling", "x": 1095, "y": 290 },
-      { "kind": "combat", "ref": "gravethorn_drake", "x": 1080, "y": 555 },
-      { "kind": "combat", "ref": "voidweave_stalker", "x": 665, "y": 605 },
-      { "kind": "combat", "ref": "runestone_gargoyle", "x": 110, "y": 520 },
-      { "kind": "combat", "ref": "nether_wraith", "x": 110, "y": 150 },
-      { "kind": "quest", "label": "Quests Board", "icon": "📜", "x": 250, "y": 290 },
-      { "kind": "thieving", "ref": "master_farmer", "label": "Farmstead", "x": 360, "y": 555 },
-      { "kind": "hunter", "ref": "hunt_merchant", "label": "Merchant's Road", "x": 760, "y": 395 },
-      { "kind": "slayer", "ref": "nieve", "label": "Slayer Master", "x": 800, "y": 445 },
-      { "kind": "gather", "ref": "gather_snape_grass", "label": "Snape Grass Field", "x": 440, "y": 460 },
-      { "kind": "skill", "group": "runecraft", "label": "Runic Altar", "x": 660, "y": 248 },
-      { "kind": "skill", "group": "woodcutting", "label": "Old Grove", "x": 1015, "y": 480 },
-      { "facility": "furnace_anvil", "label": "Grand Smithy", "x": 590, "y": 305 },
-      { "facility": "bank", "label": "Bank of Camlann", "x": 720, "y": 320 },
-      { "facility": "altar", "label": "Chapel Altar", "x": 490, "y": 248 }
+      {
+        "kind": "combat",
+        "ref": "stonegale_elemental",
+        "x": 515,
+        "y": 90
+      },
+      {
+        "kind": "combat",
+        "ref": "astral_ranger",
+        "x": 905,
+        "y": 120
+      },
+      {
+        "kind": "combat",
+        "ref": "drakthul_wyrmling",
+        "x": 1095,
+        "y": 290
+      },
+      {
+        "kind": "combat",
+        "ref": "gravethorn_drake",
+        "x": 1080,
+        "y": 555
+      },
+      {
+        "kind": "combat",
+        "ref": "voidweave_stalker",
+        "x": 665,
+        "y": 605
+      },
+      {
+        "kind": "combat",
+        "ref": "runestone_gargoyle",
+        "x": 110,
+        "y": 520
+      },
+      {
+        "kind": "combat",
+        "ref": "nether_wraith",
+        "x": 110,
+        "y": 150
+      },
+      {
+        "kind": "quest",
+        "label": "Quests Board",
+        "icon": "📜",
+        "x": 250,
+        "y": 290
+      },
+      {
+        "kind": "thieving",
+        "ref": "master_farmer",
+        "label": "Farmstead",
+        "x": 360,
+        "y": 555
+      },
+      {
+        "kind": "hunter",
+        "ref": "hunt_merchant",
+        "label": "Merchant's Road",
+        "x": 760,
+        "y": 395
+      },
+      {
+        "kind": "slayer",
+        "ref": "nieve",
+        "label": "Slayer Master",
+        "x": 800,
+        "y": 445
+      },
+      {
+        "kind": "gather",
+        "ref": "gather_snape_grass",
+        "label": "Snape Grass Field",
+        "x": 440,
+        "y": 460
+      },
+      {
+        "kind": "skill",
+        "group": "runecraft",
+        "label": "Runic Altar",
+        "x": 660,
+        "y": 248
+      },
+      {
+        "kind": "skill",
+        "group": "woodcutting",
+        "label": "Old Grove",
+        "x": 1015,
+        "y": 480
+      },
+      {
+        "facility": "furnace_anvil",
+        "label": "Grand Smithy",
+        "x": 590,
+        "y": 305
+      },
+      {
+        "facility": "bank",
+        "label": "Bank of Camlann",
+        "x": 720,
+        "y": 320
+      },
+      {
+        "facility": "altar",
+        "label": "Chapel Altar",
+        "x": 490,
+        "y": 248
+      }
+    ]
+  },
+  "portsarin": {
+    "image": "/public/world/portsarin-map.jpg",
+    "w": 1179,
+    "h": 674,
+    "spots": [
+      {
+        "facility": "bank",
+        "label": "Bank of Port Sarin",
+        "x": 461,
+        "y": 99
+      },
+      {
+        "facility": "stove",
+        "label": "Quayside Stove",
+        "x": 592,
+        "y": 132
+      },
+      {
+        "kind": "hunter",
+        "ref": "hunt_grim_reaper",
+        "x": 990,
+        "y": 90
+      },
+      {
+        "kind": "thieving",
+        "ref": "knight",
+        "x": 263,
+        "y": 99
+      },
+      {
+        "kind": "minigame",
+        "ref": "pest_control",
+        "x": 790,
+        "y": 296
+      },
+      {
+        "kind": "gather",
+        "ref": "harvest_potato_cactus",
+        "x": 165,
+        "y": 66
+      },
+      {
+        "kind": "skill",
+        "group": "fishing",
+        "label": "Fishing Spot",
+        "x": 461,
+        "y": 329
+      },
+      {
+        "kind": "skill",
+        "group": "mining",
+        "label": "Coastal Mine",
+        "x": 99,
+        "y": 362
+      },
+      {
+        "kind": "skill",
+        "group": "woodcutting",
+        "label": "Coastal Grove",
+        "x": 1140,
+        "y": 250
+      },
+      {
+        "kind": "quest",
+        "label": "Quests Board",
+        "icon": "📜",
+        "x": 592,
+        "y": 79
+      },
+      {
+        "kind": "combat",
+        "ref": "bone_wyvern",
+        "x": 1119,
+        "y": 197
+      },
+      {
+        "kind": "combat",
+        "ref": "emberhowl_warlord",
+        "x": 66,
+        "y": 165
+      },
+      {
+        "kind": "combat",
+        "ref": "marshscale_shaman",
+        "x": 1053,
+        "y": 329
+      },
+      {
+        "kind": "combat",
+        "ref": "razorwing_harpy",
+        "x": 66,
+        "y": 296
+      },
+      {
+        "kind": "combat",
+        "ref": "red_dragon",
+        "x": 1120,
+        "y": 99
+      },
+      {
+        "kind": "combat",
+        "ref": "thornhide_colossus",
+        "x": 33,
+        "y": 99
+      }
     ]
   }
 }

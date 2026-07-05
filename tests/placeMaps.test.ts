@@ -134,7 +134,7 @@ describe('placeMaps data', () => {
 
   it('placeHasMap only reports mapped places', () => {
     expect(placeHasMap('varrick')).toBe(true)
-    expect(placeHasMap('lumbright')).toBe(false)
+    expect(placeHasMap('lumbright')).toBe(true)
     expect(placeHasMap('nowhere')).toBe(false)
   })
 })
