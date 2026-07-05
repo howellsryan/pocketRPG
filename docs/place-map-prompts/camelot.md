@@ -1,7 +1,9 @@
 # Camelot
 
-PocketRPG analogue: **Camlann** &middot; 713 characters
+PocketRPG analogue: **Camlann** &middot; 647 characters
+
+Grounded in the existing world-map illustration for this place: `public/world/camlann.webp`.
 
 ```
-Top-down fantasy castle-town map, painted tabletop-RPG battle-map style on aged parchment. A noble hill-town built around a grand stone castle with tall round towers, a wide moat, and a raised drawbridge. A round hall with banners of many colours stands within the inner courtyard, evoking a legendary round table. A stone bridge and paved road lead from the castle gate through a small town of tidy timbered houses. Manicured hedges and knightly banners line the approach. Rolling green hills surround the town. Background fades to blank aged parchment with brown vignette staining at the corners. Orthographic top-down view, warm earthy palette with cool stone accents, soft painted shadows. No text, no labels.
+Top-down fantasy castle-town map, painted tabletop-RPG battle-map style on aged parchment, lit in golden sunset tones. A round white castle keep with many towers sits at the centre, ringed by its own moat, within larger concentric city walls also studded with round towers. A formal garden with a round ornamental pond lies to one side. Tidy stone-and-timber townhouses fill the walled streets. Snow-capped mountains rise beyond rolling green hills, birds crossing the sky. Background fades to blank aged parchment with warm golden vignette staining at the corners. Orthographic top-down view, warm gold and pale stone palette. No text, no labels.
 ```

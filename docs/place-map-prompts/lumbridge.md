@@ -1,7 +1,9 @@
 # Lumbridge
 
-PocketRPG analogue: **Lumbright** &middot; 898 characters
+PocketRPG analogue: **Lumbright** &middot; 740 characters
+
+Grounded in the existing world-map illustration for this place: `public/world/lumbright.webp`.
 
 ```
-Top-down fantasy village map, painted tabletop-RPG battle-map style on aged parchment. Unwalled riverside village centred on a small square sandstone castle with a courtyard and a single tower, its own low wall and gatehouse. A stone bridge crosses a winding blue river beside the castle. To one side, a fenced cow pasture and a small farmhouse; to the other, golden wheat fields and cabbage patches. A modest stone church with a small graveyard sits near the castle. A handful of thatched cottages and a general store cluster along dirt paths radiating from the castle. South of the village, the ground turns to murky green swamp with gnarled dead trees. Sparse trees and hedgerows dot open grassland around the village. Background fades to blank aged parchment with brown vignette staining at the corners. Orthographic top-down view, warm earthy palette, soft painted shadows. No text, no labels.
+Top-down fantasy village map, painted tabletop-RPG battle-map style on aged parchment. A grey stone castle with two round corner towers, a gatehouse, and blue-and-gold banners sits on a low rise. Below it, thatched half-timbered cottages cluster around a stone church with a bell spire and small graveyard. A stone bridge crosses a winding blue river beside the village; a windmill turns on the far bank. Fenced sheep and cattle pasture lies to one side, a flower-dotted meadow and cabbage patch to the other. Sparse trees and hedgerows dot the green countryside beyond. Background fades to blank aged parchment with brown vignette staining at the corners. Orthographic top-down view, warm sunlit greens and stone greys. No text, no labels.
 ```

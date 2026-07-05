@@ -1,7 +1,9 @@
 # Draynor Village
 
-PocketRPG analogue: **Draynar** &middot; 741 characters
+PocketRPG analogue: **Draynar** &middot; 648 characters
+
+Grounded in the existing world-map illustration for this place: `public/world/draynar.webp`.
 
 ```
-Top-down fantasy village map, painted tabletop-RPG battle-map style on aged parchment. A small unwalled riverside village of willow trees and thatched cottages beside a slow brown river. A gloomy gothic manor house with pointed gables and overgrown hedges stands apart on a low rise at the village edge. A modest jail with barred windows and a general store face the village green. Drooping willow canopies line the riverbank, with reeds and a small wooden dock. Narrow dirt paths connect the scattered cottages. Open farmland stretches beyond the village. Background fades to blank aged parchment with brown vignette staining at the corners. Orthographic top-down view, muted greens and browns, soft mist over the water. No text, no labels.
+Top-down fantasy village map, painted tabletop-RPG battle-map style on aged parchment, lit by a stormy night sky with distant lightning. Cobblestone streets wind between thatched half-timbered cottages glowing with warm lantern light. Gnarled bare trees hung with faint ghostly wisps line the road, beside a market stall and barrels. On a distant misty hill, a dark gothic manor looms with lit windows. Puddled mud and cracked flagstones cover the ground. Background fades to blank aged parchment with cool dark vignette staining at the corners. Orthographic top-down view, moody blue-black night palette with warm lantern glow. No text, no labels.
 ```

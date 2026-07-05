@@ -1,7 +1,9 @@
 # Edgeville
 
-PocketRPG analogue: **Edgevale** &middot; 724 characters
+PocketRPG analogue: **Edgevale** &middot; 633 characters
+
+Grounded in the existing world-map illustration for this place: `public/world/edgevale.webp`.
 
 ```
-Top-down fantasy border-town map, painted tabletop-RPG battle-map style on aged parchment. A small, weathered unwalled town at the edge of a dark wilderness, marked by a deep ditch and broken fence along its northern boundary. A plain stone bank building and general store face a modest square. A stone monastery with a walled garden stands just south of town. A dungeon entrance, a ring of worn standing stones, sits in a clearing nearby. Sparse dark pine trees crowd the northern boundary, thinning into open grassland to the south. Background fades to blank aged parchment with grey-brown vignette staining at the corners. Orthographic top-down view, cool desaturated greens and greys, overcast light. No text, no labels.
+Top-down fantasy border-town map, painted tabletop-RPG battle-map style on aged parchment. A small stone-walled outpost with a bell-towered chapel and thatched cottages sits on a hill straddling two lands: jagged dark storm-lit badlands and mountains to one side, a lush green valley with a winding river to the other. A stone bridge crosses the river near a fenced vegetable garden; pine forest and a dirt path lead away from the walls. Background fades to blank aged parchment, storm-grey vignette on the wild side, warm green on the other. Orthographic top-down view, split moody-grey and sunlit-green palette. No text, no labels.
 ```
