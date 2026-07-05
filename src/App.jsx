@@ -1364,6 +1364,7 @@ function GameApp() {
               // Clue trails advance silently — per-waypoint toasts were noise.
               if (step.kind === 'search') {
                 updateWorldLocation(task.dest)
+                if (!isInPvpMatch) schedulePushSave(getSnapshot())
                 if (task.journey?.kind !== 'clue') {
                   const s = journeyStatus(step.next)
                   addToast(`🔎 Searching ${travelDestName(task)} (${s?.step}/${s?.steps})`, 'info')
@@ -1380,6 +1381,7 @@ function GameApp() {
             activeTaskRef.current = null
             try { localStorage.removeItem('pocketrpg_activeTask') } catch {}
             addToast(`🧭 Arrived at ${travelDestName(task)}`, 'info')
+            if (!isInPvpMatch) schedulePushSave(getSnapshot())
             resumeAutoStart(task.autoStart)
           }
         } else {
