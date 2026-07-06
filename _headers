@@ -7,7 +7,6 @@
   X-Robots-Tag: index, follow
   Content-Security-Policy: frame-ancestors *
   Cross-Origin-Resource-Policy: cross-origin
-  Cross-Origin-Embedder-policy: require-corp
 
 # Long-lived caching for static, content-stable assets (fonts + landing
 # screenshots). These are served from /public by Cloudflare Pages.
@@ -16,6 +15,17 @@
 
 /public/landing/*
   Cache-Control: public, max-age=31536000, immutable
+
+# Vendored three.js + 3D model assets — fetched lazily only when a 3D view
+# mounts. NOT immutable: these filenames are stable while their content can
+# change in place (three upgrades via sync:three, model re-exports like the
+# rigged-warrior swap), and the ES-module graph must never mix cached-old and
+# new files. Hourly revalidation is a cheap 304 via ETag when unchanged.
+/public/vendor/*
+  Cache-Control: public, max-age=3600, must-revalidate
+
+/public/3d-samples/*
+  Cache-Control: public, max-age=3600, must-revalidate
 
 # The lazily-loaded in-game code chunk is content-hashed (game-<hash>.js), so a
 # new deploy ships a new filename — safe to cache immutably.

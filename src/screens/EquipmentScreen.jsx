@@ -1,5 +1,8 @@
-import { useState } from 'preact/hooks'
+import { useState, useMemo } from 'preact/hooks'
 import { useGame } from '../state/gameState.jsx'
+import Model3DViewer from '../components/Model3DViewer.jsx'
+import { getCharacterAssetPath, getCharacterModel, getWeaponPlacement } from '../utils/equipModels.js'
+import { canRender3D } from '../utils/three3d.js'
 import { unequipSlot, getEquipmentBonuses, checkEquipRequirements, equipItem } from '../engine/equipment.js'
 import { createPreset, applyPreset, renamePreset, MAX_EQUIPMENT_PRESETS } from '../engine/equipmentPresets.js'
 import Modal from '../components/Modal.jsx'
@@ -27,6 +30,17 @@ export default function EquipmentScreen() {
 
   const presets = Array.isArray(equipmentPresets) ? equipmentPresets : []
   const nameOf = (id) => itemsData[id]?.name || id
+
+  // 3D hero preview (replaces the paper doll as the centerpiece when supported).
+  // The slot grid is still rendered beneath it for equip/unequip; when WebGL is
+  // unavailable we fall back to the paper doll alone — zero regression.
+  const heroPath = getCharacterAssetPath()
+  const [heroFailed, setHeroFailed] = useState(false)
+  const show3D = useMemo(() => Boolean(heroPath) && !heroFailed && canRender3D(), [heroPath, heroFailed])
+  const weaponSpec = useMemo(() => {
+    const wid = equipment?.weapon?.itemId
+    return wid ? getWeaponPlacement(wid) : null
+  }, [equipment?.weapon?.itemId])
 
   const handleCreatePreset = () => {
     if (presets.length >= MAX_EQUIPMENT_PRESETS) {
@@ -312,14 +326,36 @@ export default function EquipmentScreen() {
       </div>
 
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
-      <div class="w-full">
-        <EquipmentPaperdoll
-          equipment={equipment}
-          itemsData={itemsData}
-          onSelect={handleSelect}
-          size="md"
-          className="w-full"
-        />
+      <div class="w-full flex flex-col gap-3">
+        {show3D ? (
+          <>
+            <Card padding="p-2" className="w-full">
+              <Model3DViewer
+                characterPath={heroPath}
+                weapon={weaponSpec}
+                idleClip={getCharacterModel()?.idleClip || null}
+                height={360}
+                fallback={null}
+                onFail={() => setHeroFailed(true)}
+              />
+            </Card>
+            <EquipmentPaperdoll
+              equipment={equipment}
+              itemsData={itemsData}
+              onSelect={handleSelect}
+              size="sm"
+              className="w-full"
+            />
+          </>
+        ) : (
+          <EquipmentPaperdoll
+            equipment={equipment}
+            itemsData={itemsData}
+            onSelect={handleSelect}
+            size="md"
+            className="w-full"
+          />
+        )}
       </div>
 
       {/* Bonuses summary */}
