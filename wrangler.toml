@@ -9,7 +9,7 @@ database_id = "439e810b-8dce-4697-94c2-a7392520ad8f"
 
 [[r2_buckets]]
 binding = "TRIPO_ASSETS"
-bucket_name = "pocketrpg-tripo-assets"
+bucket_name = "pocketrpg-assets"
 
 [ai]
 binding = "AI"
@@ -32,8 +32,8 @@ APP_BASE_URL = "https://pocketrpg.co.uk"
 #   TRIPO_API_KEY             — Tripo AI API key (https://platform.tripo3d.ai); never commit it
 #   TRIPO_MCP_TOKEN           — random bearer secret gating /api/tripo-mcp (dev tool, not player-facing)
 #
-# pocketrpg-tripo-assets is a plain R2 bucket (no special config) — create it once with
-# `wrangler r2 bucket create pocketrpg-tripo-assets` (and the -preview one below).
+# pocketrpg-assets is a plain R2 bucket (no special config) — create it once with
+# `wrangler r2 bucket create pocketrpg-assets` (and the -preview one below).
 #
 # Pre-step-3 the four STRIPE_PAYMENT_LINK_* secrets pointed at public
 # Stripe Payment Links and clients passed ?client_reference_id=… on
@@ -46,7 +46,7 @@ d1_databases = [
   { binding = "DB", database_name = "pocketrpg-preview", database_id = "59233295-f492-4113-94da-90034d84a6a4" }
 ]
 r2_buckets = [
-  { binding = "TRIPO_ASSETS", bucket_name = "pocketrpg-tripo-assets-preview" }
+  { binding = "TRIPO_ASSETS", bucket_name = "pocketrpg-assets-preview" }
 ]
 vars = { APP_BASE_URL = "https://preview.pocketrpg.pages.dev" }
 ai = { binding = "AI" }
