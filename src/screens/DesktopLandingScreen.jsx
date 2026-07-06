@@ -3,54 +3,19 @@ import { landingImages } from './landingImages.js'
 import { landingSrcSet } from '../utils/helpers.js'
 import { homeLogo } from '../utils/homeLogo.js'
 import { getSkillArt } from '../utils/skillArt.js'
+import { LANDING_STATS, LANDING_TIERS, LANDING_PLACES, LANDING_MARKERS, LANDING_CARDS, LANDING_HUD_STATS } from './landingContent.js'
 import GameIcon from '../components/GameIcon.jsx'
 
-// Wide marketing landing for desktop (≥768px). Mirrors the Claude "Desktop
-// Landing" design, built on the real product copy, landing screenshots,
-// vendored game-icons, and the live GitHub/Google auth handlers.
+// Wide marketing landing for desktop (≥768px). Built in the game's bespoke
+// "Forgemark" identity (parchment on hammered iron, gilt blackletter, ember
+// CTAs) around the real product: the hand-painted world map, the 14 painted
+// place scenes, Forgemark UI screenshots, and the live GitHub/Google handlers.
 //
 // All top-level identifiers are DL_-prefixed and all CSS classes dl-* so the
 // single-file build (which concatenates every module at top level) stays free
 // of duplicate-identifier collisions with the mobile LandingScreen.
 
-const DL_LANDING_DIMS = {
-  'ss-stats':         { w: 560, h: 1068 },
-  'ss-combat-select': { w: 560, h: 1070 },
-  'ss-thieving':      { w: 560, h: 991  },
-  'ss-bank':          { w: 560, h: 1077 },
-  'ss-quests':        { w: 560, h: 990  },
-  'ss-inventory':     { w: 560, h: 1032 },
-  'ss-combat':        { w: 560, h: 1082 },
-  'ss-farming':       { w: 560, h: 995  },
-  'ss-collection':    { w: 560, h: 1075 },
-  'ss-trading':       { w: 560, h: 1075 },
-  'ss-minigames':     { w: 560, h: 1073 },
-  'ss-leaderboard':   { w: 560, h: 1076 },
-  'ss-connect':       { w: 560, h: 1070 },
-}
-
-const DL_FEATURES = [
-  {
-    icon: 'crossed_swords', title: 'Bosses & Raids',
-    desc: "God Wars Dungeon, Dragon's Lair, the Wilderness, and end-game Raids. Lock in your setup, then fight on autopilot while the ticks roll.",
-    img: 'ss-combat-select', tags: ['Auto-combat', 'God Wars', 'Raids'],
-  },
-  {
-    icon: 'progression', title: '24 Skills to Master',
-    desc: 'Train Attack, Thieving, Mining, Fishing, Runecraft and more from level 1 to 99. XP ticks every 600ms — even when the screen is off.',
-    img: 'ss-thieving', tags: ['1 → 99', 'Idle XP', 'Offline-first'],
-  },
-  {
-    icon: 'cash', title: 'A Deep Economy',
-    desc: 'A bank with hundreds of slots, a live player-driven Trading Post, and 221 Collection Log entries to hunt down across every corner of the game.',
-    img: 'ss-bank', tags: ['Trading Post', '221 collectibles', 'Hundreds of items'],
-  },
-  {
-    icon: 'scroll', title: '168 Quests',
-    desc: 'Quest chains from Novice to Elite, each one rewarding XP, rare items, and lore. Chase the max Quest Point cape and complete the journal.',
-    img: 'ss-quests', tags: ['Novice → Elite', 'QP cape', 'Lore'],
-  },
-]
+const DL_SHOT_DIMS = { w: 560, h: 1212 }
 
 const DL_SKILLS = [
   ['attack', 'Attack'], ['strength', 'Strength'], ['defence', 'Defence'], ['hitpoints', 'Hitpoints'],
@@ -61,21 +26,20 @@ const DL_SKILLS = [
   ['slayer', 'Slayer'], ['construction', 'Construct.'], ['fletching', 'Fletching'], ['dungeoneering', 'Dungeon.'],
 ]
 
-const DL_GALLERY = ['ss-inventory', 'ss-combat', 'ss-farming', 'ss-collection', 'ss-trading', 'ss-stats', 'ss-minigames', 'ss-leaderboard', 'ss-connect']
-
-const DL_STATS = [
-  ['600ms', 'Game tick'],
-  ['24', 'Skills to 99'],
-  ['168', 'Quests'],
-  ['221', 'Collectibles'],
-  ['∞', 'Offline progress'],
-]
+const DL_GALLERY = ['ss-home', 'ss-worldmap', 'ss-place', 'ss-townmap', 'ss-combat', 'ss-bank', 'ss-inventory', 'ss-bosses', 'ss-trading', 'ss-collection', 'ss-leaderboard', 'ss-connect']
 
 const DL_STEPS = [
-  ['Pick an activity', 'Choose a skill to train, a boss to fight, or a quest to chase. Set your loadout once.'],
+  ['Pick a place', 'Travel to a town or city and choose a foe to fight, a skill to train, or a quest to chase. Set your loadout once.'],
   ['Progress on a tick', 'The world advances on a deterministic 600ms tick — XP, drops, and rewards accrue whether the app is open or closed.'],
   ['Come back richer', 'Idle time is simulated when you return. Cloud saves keep your roster in sync across every device.'],
 ]
+
+const DL_SCENE_SRCSET = (url) => url ? `${url.replace(/\.webp$/, '-360.webp')} 360w, ${url} 560w` : undefined
+// Map medallions crop a place scene into a small circle — the 360w variant is plenty.
+const DL_MED_SRC = (url) => url ? url.replace(/\.webp$/, '-360.webp') : undefined
+const DL_MAP_SRCSET = (url) => url
+  ? `${url.replace(/\.webp$/, '-480.webp')} 480w, ${url.replace(/\.webp$/, '-760.webp')} 760w, ${url} 1108w`
+  : undefined
 
 function DlEmblem({ size }) {
   if (homeLogo) {
@@ -132,88 +96,117 @@ export default function DesktopLandingScreen({ onGitHubLogin, onGoogleLogin, onP
         <div class="dl-wrap dl-nav__inner">
           <a class="dl-brand" href="#dl-top">
             <DlEmblem size={40} />
-            <span class="dl-word dl-gold">PocketRPG</span>
+            <span class="dl-word dl-gilt">PocketRPG</span>
           </a>
           <nav class="dl-nav__links">
+            <a href="#dl-top" class="dl-nav__link--on">Home</a>
             <a href="#dl-features">Features</a>
+            <a href="#dl-world">The World</a>
             <a href="#dl-skills">Skills</a>
             <a href="#dl-gallery">Screenshots</a>
-            <a href="#dl-how">How it works</a>
           </nav>
           <div class="dl-nav__right">
             <a class="dl-signin" href="#dl-play">Sign in</a>
             {onPlayDemo
-              ? <button type="button" class="dl-btn dl-btn--gold" onClick={onPlayDemo}>Play Demo</button>
-              : <a class="dl-btn dl-btn--gold" href="#dl-play">Play Now — Free</a>}
+              ? <button type="button" class="dl-btn dl-btn--ember" onClick={onPlayDemo}>Play Demo</button>
+              : <a class="dl-btn dl-btn--ember" href="#dl-play">Play Now — Free</a>}
           </div>
         </div>
       </header>
 
       <div class="dl-main">
-        {/* HERO */}
+        {/* HERO — parchment proclamation sheet with the pinned world map */}
         <section class="dl-hero">
-          <div class="dl-wrap dl-hero__grid">
-            <div>
-              <span class="dl-eyebrow">Tick-based idle fantasy RPG</span>
-              <h1 class="dl-hero__h1"><span class="dl-gold">Level up</span><br />while you live<br />your life.</h1>
-              <p class="dl-hero__sub">Combat, skills, quests, and raids that keep progressing — whether you're watching or not.</p>
-              <div class="dl-hero__cta">
-                {onPlayDemo
-                  ? <button type="button" class="dl-btn dl-btn--gold dl-btn--lg" onClick={onPlayDemo}>Play Demo</button>
-                  : <a class="dl-btn dl-btn--gold dl-btn--lg" href="#dl-play">Play Now — Free</a>}
-                <a class="dl-btn dl-btn--ghost dl-btn--lg" href="#dl-play">Sign in — save to cloud</a>
-              </div>
-              {onPlayDemo && (
-                <p class="dl-hero__note">No account needed — the demo runs offline in your browser. Sign in for cloud saves, bosses, raids, the Trading Post and leaderboards.</p>
-              )}
-              <div class="dl-hero__proof">
-                <div class="dl-proof"><b>600ms</b><span>World tick</span></div>
-                <div class="dl-proof-div" />
-                <div class="dl-proof"><b>24</b><span>Skills</span></div>
-                <div class="dl-proof-div" />
-                <div class="dl-proof"><b>Free</b><span>To play</span></div>
+          <div class="dl-wrap">
+            <div class="dl-sheet dl-hero__sheet">
+              <span class="fm-corner fm-corner--tl" aria-hidden="true" /><span class="fm-corner fm-corner--tr" aria-hidden="true" />
+              <span class="fm-corner fm-corner--bl" aria-hidden="true" /><span class="fm-corner fm-corner--br" aria-hidden="true" />
+              <div class="dl-hero__grid">
+                <div class="dl-hero__copy">
+                  <h1 class="dl-hero__brand dl-gilt">PocketRPG</h1>
+                  <div class="dl-orntag"><i /><span>A Medieval Idle RPG</span><i /></div>
+                  <p class="dl-hero__sub">Embark on an endless adventure. Train your hero. Complete quests. Conquer raids. Be legendary.</p>
+                  {onPlayDemo
+                    ? <button type="button" class="dl-play" onClick={onPlayDemo}>Play Now</button>
+                    : <a class="dl-play" href="#dl-play">Play Now</a>}
+                  <a class="dl-hero__signin" href="#dl-play">Sign in — save to the cloud</a>
+                  {onPlayDemo && (
+                    <p class="dl-hero__note">No account needed — the demo runs offline in your browser. Sign in for cloud saves, raids, the Trading Post and leaderboards.</p>
+                  )}
+                </div>
+                <figure class="dl-hero__map">
+                  <img class="dl-hero__mapimg" src={landingImages['lp-map']} srcset={DL_MAP_SRCSET(landingImages['lp-map'])}
+                       sizes="(min-width: 1180px) 560px, 90vw" alt="The realm of Eldermoor — a hand-painted world map"
+                       width="1108" height="594" loading="eager" fetchpriority="high" decoding="async" />
+                  {LANDING_MARKERS.map(m => (
+                    <div class={`dl-mark${m.up ? ' dl-mark--up' : ''}`} style={{ left: `${m.x}%`, top: `${m.y}%` }} key={m.id}>
+                      <img src={DL_MED_SRC(landingImages[m.img])} alt="" width="72" height="72" loading="eager" decoding="async" />
+                      <span class="dl-mark__name">{m.name}</span>
+                    </div>
+                  ))}
+                </figure>
               </div>
             </div>
-            <div class="dl-cluster">
-              <div class="dl-device dl-device--back"><img src={landingImages['ss-combat']} srcset={landingSrcSet(landingImages['ss-combat'])} sizes="202px" alt="Boss fight in progress" width="560" height="1082" loading="eager" decoding="async" /></div>
-              <div class="dl-device dl-device--back2"><img src={landingImages['ss-inventory']} srcset={landingSrcSet(landingImages['ss-inventory'])} sizes="182px" alt="Full inventory grid" width="560" height="1032" loading="eager" decoding="async" /></div>
-              <div class="dl-device dl-device--main"><img src={landingImages['ss-stats']} srcset={landingSrcSet(landingImages['ss-stats'])} sizes="250px" alt="Skills overview" width="560" height="1068" loading="eager" fetchpriority="high" decoding="async" /></div>
-            </div>
+          </div>
+        </section>
+
+        {/* PROCLAMATION CARDS */}
+        <section class="dl-cards" id="dl-features">
+          <div class="dl-wrap dl-cards__grid">
+            {LANDING_CARDS.map(c => (
+              <article class="dl-card dl-reveal" key={c.id}>
+                <div class="dl-card__seal"><GameIcon iconKey={c.seal} color="#e6c878" size={26} title="" /></div>
+                <h3 class="dl-card__title">{c.title}</h3>
+                <div class="fm-divider dl-card__rule" aria-hidden="true" />
+                <div class="dl-card__art" aria-hidden="true">
+                  {c.art.map(k => <GameIcon iconKey={k} color="#7c2708" size={46} title="" key={k} />)}
+                </div>
+                <p class="dl-card__desc">{c.desc}</p>
+              </article>
+            ))}
           </div>
         </section>
 
         {/* STAT STRIP */}
         <div class="dl-strip">
           <div class="dl-wrap dl-strip__inner">
-            {DL_STATS.map(s => (
+            {LANDING_STATS.map(s => (
               <div class="dl-stat" key={s[1]}><b>{s[0]}</b><span>{s[1]}</span></div>
             ))}
           </div>
         </div>
 
-        {/* FEATURES */}
-        <section class="dl-block" id="dl-features">
+        {/* WORLD / PLACES */}
+        <section class="dl-block" id="dl-world">
           <div class="dl-wrap">
             <div class="dl-head dl-reveal">
-              <span class="dl-eyebrow">The game</span>
-              <h2 class="dl-title dl-gold">Everything in your pocket</h2>
-              <p>A full fantasy MMO-style progression loop, distilled into menus that respect your time.</p>
+              <span class="dl-eyebrow">The world</span>
+              <h2 class="dl-title dl-gilt">Explore the realm of Eldermoor</h2>
+              <p>Travel the roads between towns and cities, or teleport ahead. Every place has its own painted scene, its own facilities, and its own things to fight, gather, and plunder.</p>
             </div>
-            <div class="dl-features">
-              {DL_FEATURES.map(f => (
-                <div class="dl-feature dl-reveal" key={f.title}>
-                  <div class="dl-feature__media">
-                    <div class="dl-frame"><img src={landingImages[f.img]} srcset={landingSrcSet(landingImages[f.img])} sizes="248px" alt={f.title}
-                      width={DL_LANDING_DIMS[f.img]?.w} height={DL_LANDING_DIMS[f.img]?.h}
-                      loading="lazy" decoding="async" /></div>
-                  </div>
-                  <div class="dl-feature__copy">
-                    <div class="dl-feature__ico"><GameIcon iconKey={f.icon} color="#f0c040" size={32} title="" /></div>
-                    <h3>{f.title}</h3>
-                    <p>{f.desc}</p>
-                    <div class="dl-tags">{f.tags.map(t => <span class="dl-tag" key={t}>{t}</span>)}</div>
-                  </div>
+            <div class="dl-legend dl-reveal">
+              {LANDING_TIERS.map(t => (
+                <div class="dl-legrow" key={t.id}>
+                  <span class="dl-dot" style={{ background: t.color }} />
+                  <b>{t.label}</b><span>{t.blurb}</span>
                 </div>
+              ))}
+            </div>
+            <div class="dl-places">
+              {LANDING_PLACES.map(p => (
+                <article class="dl-place dl-reveal" key={p.id}>
+                  <div class="dl-place__art">
+                    <img src={landingImages[p.img]} srcset={DL_SCENE_SRCSET(landingImages[p.img])}
+                         sizes="(min-width: 1000px) 300px, 45vw" alt={`${p.name} — ${p.sub}`}
+                         width="560" height="313" loading="lazy" decoding="async" />
+                    <span class={`dl-tier dl-tier--${p.tier}`}>{p.tier}</span>
+                  </div>
+                  <div class="dl-place__body">
+                    <h3>{p.name}</h3>
+                    <div class="dl-place__sub">{p.sub}</div>
+                    <p>{p.blurb}</p>
+                  </div>
+                </article>
               ))}
             </div>
           </div>
@@ -224,13 +217,13 @@ export default function DesktopLandingScreen({ onGitHubLogin, onGoogleLogin, onP
           <div class="dl-wrap">
             <div class="dl-head dl-reveal">
               <span class="dl-eyebrow">Skilling</span>
-              <h2 class="dl-title dl-gold">Train 24 skills to 99</h2>
+              <h2 class="dl-title dl-gilt">Train 24 skills to 99</h2>
               <p>Every skill ticks live and idles offline. Combat, gathering, production, and utility — pick your path to the max cape.</p>
             </div>
             <div class="dl-skills__grid">
               {DL_SKILLS.map(([skill, label]) => (
                 <div class="dl-skchip dl-reveal" key={skill}>
-                  <GameIcon iconKey={getSkillArt(skill).icon} color="#e8c25a" size={30} title={label} />
+                  <GameIcon iconKey={getSkillArt(skill).icon} color="#7c2708" size={28} title={label} />
                   <span>{label}</span>
                 </div>
               ))}
@@ -243,27 +236,26 @@ export default function DesktopLandingScreen({ onGitHubLogin, onGoogleLogin, onP
           <div class="dl-wrap">
             <div class="dl-head dl-reveal">
               <span class="dl-eyebrow">Screens</span>
-              <h2 class="dl-title dl-gold">See it in action</h2>
-              <p>From the bank to the boss arena — here's what your adventure actually looks like.</p>
+              <h2 class="dl-title dl-gilt">See it in action</h2>
+              <p>From the world map to the boss arena — here's what your adventure actually looks like.</p>
             </div>
           </div>
           <div class="dl-gallery-wrap">
             <div class="dl-gallery">
               {DL_GALLERY.map(g => (
-                <div class="dl-shot" key={g}><img src={landingImages[g]} srcset={landingSrcSet(landingImages[g])} sizes="200px" alt={g}
-                  width={DL_LANDING_DIMS[g]?.w} height={DL_LANDING_DIMS[g]?.h}
-                  loading="lazy" decoding="async" /></div>
+                <div class="dl-shot" key={g}><img src={landingImages[g]} srcset={landingSrcSet(landingImages[g])} sizes="200px" alt="PocketRPG screen"
+                  width={DL_SHOT_DIMS.w} height={DL_SHOT_DIMS.h} loading="lazy" decoding="async" /></div>
               ))}
             </div>
           </div>
         </section>
 
         {/* HOW IT WORKS */}
-        <section class="dl-block dl-band" id="dl-how">
+        <section class="dl-block" id="dl-how">
           <div class="dl-wrap">
             <div class="dl-head dl-reveal">
               <span class="dl-eyebrow">The loop</span>
-              <h2 class="dl-title dl-gold">How idle progress works</h2>
+              <h2 class="dl-title dl-gilt">How idle progress works</h2>
               <p>PocketRPG is simulation-first. Set your intent, and a deterministic engine does the grinding.</p>
             </div>
             <div class="dl-steps">
@@ -284,7 +276,7 @@ export default function DesktopLandingScreen({ onGitHubLogin, onGoogleLogin, onP
           <div class="dl-wrap">
             <div class="dl-cta dl-reveal">
               <DlEmblem size={72} />
-              <h2 class="dl-gold">Start your adventure</h2>
+              <h2 class="dl-gilt">Start your adventure</h2>
               <p>Free account. Progress saved to the cloud.<br />Play across all your devices.</p>
               <div class="dl-auth">
                 <button class="dl-btn dl-btn--github dl-btn--lg" onClick={hosted ? undefined : onGitHubLogin} disabled={hosted} style={hosted ? { pointerEvents: 'none' } : undefined}>
@@ -317,20 +309,43 @@ export default function DesktopLandingScreen({ onGitHubLogin, onGoogleLogin, onP
         </section>
       </div>
 
+      {/* HUD BAND — the in-game status bar, as a footer flourish */}
+      <div class="dl-hud">
+        <div class="dl-wrap dl-hud__inner">
+          <div class="dl-hud__brand">
+            <DlEmblem size={44} />
+            <div class="dl-hud__slog">Your Adventure.<br />Anytime, Anywhere.</div>
+          </div>
+          <div class="dl-hud__stats">
+            {LANDING_HUD_STATS.map(s => (
+              <div class="dl-hudstat" key={s.label}>
+                <GameIcon iconKey="gem" color={s.color} size={22} title="" />
+                <div><b>{s.value}</b><span style={{ color: s.color }}>{s.label}</span></div>
+              </div>
+            ))}
+          </div>
+          <div class="dl-hud__links">
+            <a class="dl-hud__btn" href="#dl-world"><span class="dl-hud__ico"><GameIcon iconKey="castle" color="#e6c878" size={22} title="" /></span>World</a>
+            <a class="dl-hud__btn" href="#dl-skills"><span class="dl-hud__ico"><GameIcon iconKey="mining" color="#e6c878" size={22} title="" /></span>Skills</a>
+            <a class="dl-hud__btn" href="#dl-play"><span class="dl-hud__ico"><GameIcon iconKey="crossed_swords" color="#e6c878" size={22} title="" /></span>Play</a>
+          </div>
+        </div>
+      </div>
+
       <footer class="dl-footer">
         <div class="dl-wrap">
           <div class="dl-foot">
             <div class="dl-foot__brand">
-              <a class="dl-brand" href="#dl-top"><DlEmblem size={36} /><span class="dl-word dl-gold">PocketRPG</span></a>
+              <a class="dl-brand" href="#dl-top"><DlEmblem size={36} /><span class="dl-word dl-gilt">PocketRPG</span></a>
               <p>A menu-driven, tick-based fantasy idle RPG. Built mobile-first, offline-first, and free to play.</p>
             </div>
             <div class="dl-foot__cols">
               <div class="dl-foot__col">
                 <h5>Game</h5>
+                <a href="#dl-world">The World</a>
                 <a href="#dl-features">Features</a>
                 <a href="#dl-skills">Skills</a>
                 <a href="#dl-gallery">Screenshots</a>
-                <a href="#dl-how">How it works</a>
               </div>
               <div class="dl-foot__col">
                 <h5>Play</h5>
