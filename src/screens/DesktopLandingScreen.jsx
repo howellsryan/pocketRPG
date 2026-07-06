@@ -148,9 +148,9 @@ export default function DesktopLandingScreen({ onGitHubLogin, onGoogleLogin, onP
                   <div class="dl-orntag"><i /><span>A Medieval Idle RPG</span><i /></div>
                   <p class="dl-hero__sub">Embark on an endless adventure. Train your hero. Complete quests. Conquer raids. Be legendary.</p>
                   {onPlayDemo
-                    ? <button type="button" class="dl-play" onClick={onPlayDemo}>Play Now</button>
+                    ? <button type="button" class="dl-play" onClick={onPlayDemo}>Play Demo</button>
                     : <a class="dl-play" href="#dl-play">Play Now</a>}
-                  <a class="dl-hero__signin" href="#dl-play">Sign in — save to the cloud</a>
+                  <a class="dl-hero__signin" href="#dl-play">Sign in and play</a>
                   {onPlayDemo && (
                     <p class="dl-hero__note">No account needed — the demo runs offline in your browser. Sign in for cloud saves, raids, the Trading Post and leaderboards.</p>
                   )}
@@ -300,10 +300,10 @@ export default function DesktopLandingScreen({ onGitHubLogin, onGoogleLogin, onP
               <h2 class="dl-gilt">Start your adventure</h2>
               <p>Free account. Progress saved to the cloud.<br />Play across all your devices.</p>
               <div class="dl-auth">
-                <button class="dl-btn dl-btn--github dl-btn--lg" onClick={hosted ? undefined : onGitHubLogin} disabled={hosted} style={hosted ? { pointerEvents: 'none' } : undefined}>
+                <button class="dl-btn--github" onClick={hosted ? undefined : onGitHubLogin} disabled={hosted} style={hosted ? { pointerEvents: 'none' } : undefined}>
                   <DlGitHubMark />Continue with GitHub
                 </button>
-                <button class="dl-btn dl-btn--google dl-btn--lg" onClick={hosted ? undefined : onGoogleLogin} disabled={hosted} style={hosted ? { pointerEvents: 'none' } : undefined}>
+                <button class="dl-btn--google" onClick={hosted ? undefined : onGoogleLogin} disabled={hosted} style={hosted ? { pointerEvents: 'none' } : undefined}>
                   <span class="dl-gg">G</span>Continue with Google
                 </button>
               </div>
