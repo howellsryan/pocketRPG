@@ -526,6 +526,10 @@
     "hunter": {
       "label": "Hunter",
       "color": "var(--color-gold)"
+    },
+    "farming": {
+      "label": "Farming",
+      "color": "var(--color-emerald)"
     }
   },
   "facilities": {

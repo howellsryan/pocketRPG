@@ -91,7 +91,7 @@ export function resolveSpotRefs(placeId, spot) {
 
 // Kinds whose spot glyph is the matching skill's emblem (utils/skillArt) rather
 // than the activity's emoji.
-const SPOT_SKILL_ART_KINDS = new Set(['agility', 'thieving', 'hunter'])
+const SPOT_SKILL_ART_KINDS = new Set(['agility', 'thieving', 'hunter', 'farming'])
 
 /**
  * Display descriptor for a spot: `{ refs, label, sublabel, icon, skillArtId,

@@ -13,7 +13,7 @@ const patchViewTypeLabels = {
   fruitTree: 'Fruit Tree Patch'
 }
 
-export default function FarmPatchView({ locationId, farmingLevel, onBack }) {
+export default function FarmPatchView({ locationId, farmingLevel, onBack, backLabel = 'Farms' }) {
   const { inventory, bank, farming, updateFarming, grantXP, removeFromInventory, updateBankDirect, addToBank, addToast } = useGame()
 
   const location = farmingData.locations.find(l => l.id === locationId)
@@ -87,7 +87,7 @@ export default function FarmPatchView({ locationId, farmingLevel, onBack }) {
   return (
     <div class="forge-shell h-full overflow-y-auto p-4">
       <button onClick={onBack} class="text-xs text-[var(--color-gold-dim)] mb-3 flex items-center gap-1">
-        ← Farms
+        ← {backLabel}
       </button>
 
       <div class="flex items-center justify-between mb-1">

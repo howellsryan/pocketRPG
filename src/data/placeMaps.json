@@ -110,6 +110,12 @@
         "ref": "bogling_sprite",
         "x": 610,
         "y": 850
+      },
+      {
+        "kind": "farming",
+        "ref": "gnome",
+        "x": 165,
+        "y": 685
       }
     ]
   },
@@ -357,6 +363,12 @@
         "ref": "vicious_black_dragon",
         "x": 921,
         "y": 559
+      },
+      {
+        "kind": "farming",
+        "ref": "falador",
+        "x": 660,
+        "y": 610
       }
     ]
   },
@@ -506,6 +518,12 @@
         "ref": "hellbound_gorilla",
         "x": 132,
         "y": 329
+      },
+      {
+        "kind": "farming",
+        "ref": "ardougne",
+        "x": 700,
+        "y": 600
       }
     ]
   },
@@ -600,6 +618,12 @@
         "ref": "lesser_fiend",
         "x": 658,
         "y": 580
+      },
+      {
+        "kind": "farming",
+        "ref": "taverley",
+        "x": 1010,
+        "y": 540
       }
     ]
   },
@@ -1000,6 +1024,12 @@
         "ref": "stoneglare_basilisk",
         "x": 264,
         "y": 99
+      },
+      {
+        "kind": "farming",
+        "ref": "catherby",
+        "x": 820,
+        "y": 470
       }
     ]
   },
@@ -1102,6 +1132,12 @@
         "ref": "sovrathar_the_ashen_sovereign",
         "x": 526,
         "y": 615
+      },
+      {
+        "kind": "farming",
+        "ref": "hosidius",
+        "x": 900,
+        "y": 520
       }
     ]
   },
@@ -1192,6 +1228,12 @@
         "ref": "tidereaper_crab",
         "x": 955,
         "y": 428
+      },
+      {
+        "kind": "farming",
+        "ref": "brimhaven",
+        "x": 520,
+        "y": 570
       }
     ]
   },
