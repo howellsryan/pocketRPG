@@ -346,6 +346,62 @@ function hasFullGuthanSet(equipment, itemsData) {
 }
 
 /**
+ * Check if player is wearing full Ahrim set (Morvyn's)
+ */
+function hasFullAhrimSet(equipment, itemsData) {
+  if (!equipment || !itemsData) return false
+  const ahrimItems = ['morvyn_s_hood', 'morvyn_s_robetop', 'morvyn_s_robeskirt', 'morvyn_s_staff']
+  return ahrimItems.every(itemId => {
+    for (const [, slot] of Object.entries(equipment)) {
+      if (slot && slot.itemId === itemId) return true
+    }
+    return false
+  })
+}
+
+/**
+ * Check if player is wearing full Karil set (Kaelor's)
+ */
+function hasFullKarilSet(equipment, itemsData) {
+  if (!equipment || !itemsData) return false
+  const karilItems = ['kaelor_s_coif', 'kaelor_s_leathertop', 'kaelor_s_leatherskirt', 'kaelor_s_crossbow']
+  return karilItems.every(itemId => {
+    for (const [, slot] of Object.entries(equipment)) {
+      if (slot && slot.itemId === itemId) return true
+    }
+    return false
+  })
+}
+
+/**
+ * Check if player is wearing full Torag set (Torvek's)
+ */
+function hasFullToragSet(equipment, itemsData) {
+  if (!equipment || !itemsData) return false
+  const toragItems = ['torvek_s_helm', 'torvek_s_platebody', 'torvek_s_platelegs', 'torvek_s_hammers']
+  return toragItems.every(itemId => {
+    for (const [, slot] of Object.entries(equipment)) {
+      if (slot && slot.itemId === itemId) return true
+    }
+    return false
+  })
+}
+
+/**
+ * Check if player is wearing full Verac set (Verin's)
+ */
+function hasFullVeracSet(equipment, itemsData) {
+  if (!equipment || !itemsData) return false
+  const veracItems = ['verin_s_helm', 'verin_s_brassard', 'verin_s_plateskirt', 'verin_s_flail']
+  return veracItems.every(itemId => {
+    for (const [, slot] of Object.entries(equipment)) {
+      if (slot && slot.itemId === itemId) return true
+    }
+    return false
+  })
+}
+
+/**
  * Process one combat tick.
  * Returns { combatState, events[] }
  * events: { type: 'playerHit'|'monsterHit'|'monsterDeath'|'playerDeath'|'xp'|'levelUp', ... }
@@ -513,7 +569,8 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
       const effAtk = effectiveAttack(boostedPlayerStats.attack, 0, 1.0, styleBonuses.attackStyleBonus)
       const atkRoll = Math.floor(maxAttackRoll(effAtk, (bonuses.attackBonus[weaponStyle] || 0) + slayerEquipmentBonus.accuracyFlat) * voidMult.meleeAccuracy)
       const defRoll = maxDefenceRoll(monster.stats.defence, monster.defenceBonus[weaponStyle] || 0)
-      const acc = hitChance(atkRoll, defRoll)
+      const veracProc = hasFullVeracSet(equipment, itemsData) && Math.random() < 0.25
+      const acc = veracProc ? 1 : hitChance(atkRoll, defRoll)
       damage = rollDamage(acc, maxHit)
 
       // Scythe of vitur passive: 3 hits at 100%, 50%, 25% max hit
@@ -589,6 +646,11 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
       const acc = hitChance(atkRoll, defRoll)
       maxHit = Math.floor(maxHit + slayerEquipmentBonus.damageFlat)
       damage = rollDamage(acc, maxHit)
+
+      // ── Karil Set Bonus: 25% chance to fire an extra shot for the same damage roll ──
+      if (hasFullKarilSet(equipment, itemsData) && Math.random() < 0.25) {
+        damage += rollDamage(acc, maxHit)
+      }
 
       const equippedAmmoEntry = equipment && equipment.ammo
       const ammoItem = equippedAmmoEntry ? itemsData[equippedAmmoEntry.itemId] : null
@@ -755,6 +817,18 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
       const lostHP = maxHP - currentHP
       const dharokMultiplier = 1 + (lostHP / maxHP) * (currentHP / maxHP)
       damage = Math.floor(damage * dharokMultiplier)
+    }
+
+    // ── Ahrim Set Bonus: 25% chance on a magic hit to drain the target's Strength ──
+    // Clone monster.stats (a shallow copy of the shared monster template) rather
+    // than mutating it in place, so the drain doesn't leak into other fights.
+    if (!isImmune && damage > 0 && state.combatType === 'magic' && hasFullAhrimSet(equipment, itemsData) && Math.random() < 0.25) {
+      monster.stats = { ...monster.stats, strength: Math.max(1, (monster.stats.strength || 1) - 5) }
+    }
+
+    // ── Torag Set Bonus: 25% chance on a melee hit to stun the target's next attack ──
+    if (!isImmune && damage > 0 && state.combatType === 'melee' && hasFullToragSet(equipment, itemsData) && Math.random() < 0.25) {
+      state.monsterAttackTimer += 5
     }
 
     const actualDamage = Math.min(damage, Math.max(0, monster.currentHP))

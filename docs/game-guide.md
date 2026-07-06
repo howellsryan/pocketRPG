@@ -21,6 +21,18 @@ Every skill goes from level 1 to 99, and XP in a skill is capped at 200,000,000.
 
 Combat is tick-based. Your max hit and accuracy come from your effective levels and equipment bonuses: melee max hit is floor(0.5 + effectiveStrength × (strengthBonus + 64) / 640), and hit chance compares your attack roll against the target's defence roll. Choose a combat style before fighting: Accurate (+3 effective Attack), Aggressive (+3 effective Strength), Defensive (+3 effective Defence), or Controlled (+1 to Attack, Strength and Defence). Auto-fight keeps killing the same monster, banking loot as you go.
 
+## Combat level
+
+Your combat level summarises your fighting power for quests and PvP matchmaking. It is 0.25 × (Defence + Hitpoints + half your Prayer level) plus 0.325 × your best attack contribution — Attack + Strength for melee, or 1.5 × Ranged, or 1.5 × Magic — rounded down, with a minimum of 3. Training any combat skill (including Prayer and Hitpoints) raises it.
+
+## Equipment and gear
+
+You have 11 equipment slots: weapon, ammo, head, body, legs, shield, neck, gloves, boots, cape and ring. Each piece adds attack, strength and defence bonuses that feed directly into the combat formulas. Metal gear progresses through tiers — Bronze, Iron, Steel, Mithril, Adamant, Rune and Dragon — with level requirements to equip. Compare an item's stats before equipping, and remember special gear effects (like dragonfire protection) only work while the item is worn.
+
+## Ranged combat and ammunition
+
+Ranged weapons need matching ammunition equipped in your ammo slot (for example arrows for a bow), and ammunition is consumed as you shoot — in live and idle combat alike. If you run out mid-fight your attacks stop with a warning, so stock plenty before long idle sessions. A few special weapons use built-in charges instead of ammunition.
+
 ## Special attacks
 
 Some weapons have a special attack, triggered manually with the ⚡ Special Attack button during a fight. Special attack energy runs 0–100: each fight starts at full energy, using a special drains its energy cost, and energy refills when you get a kill. Specials never fire automatically or while offline. Each weapon's special has its own effect — stuns, heals, bonus damage and more — shown on the button.
@@ -41,6 +53,10 @@ Dragons breathe fire: dragonfire has a 33% chance to proc and can hit up to 50. 
 
 Your hitpoints regenerate naturally at +1 HP every 60 seconds, in and out of combat. For faster healing, eat food or use potions; some weapon specials also heal.
 
+## What happens when you die
+
+On a normal character, dying in PvE is forgiving: the fight ends, your hitpoints are restored to full, and you keep all your items and loot — nothing is dropped or lost. If you would die during idle combat or offline catch-up, the simulation stops at that point and you keep everything earned up to it; restock food and check your gear before restarting. One-life (hardcore) characters are the exception: death wipes the character permanently.
+
 ## Inventory and banking
 
 Your inventory holds a hard maximum of 28 slots. Your bank stores everything else. While doing idle activities, loot is banked automatically when your inventory fills; the auto-bank delay scales with your Agility level, from 5 minutes at Agility 1 down to just 10 seconds at Agility 99 — a strong reason to train Agility.
@@ -55,7 +71,7 @@ Start a skilling task, gather task or auto-fight and it keeps running while the 
 
 ## Credits and skipping time
 
-Credits are a premium currency. You earn +1 credit for each daily task you complete, and can buy more in the store. Spend credits to skip an hour of your current idle activity instantly (Skip 1h), to skip straight to a boss or raid kill while fighting one, or to skip a slayer task you don't like. Credits are tracked server-side on each character.
+Credits are a premium currency. You earn +1 credit for each daily task you complete, and can buy more in the store in packs of 10, 100 or 1,000 (real-money purchase via secure checkout). Spend credits to skip an hour of your current idle activity instantly (Skip 1h), to skip straight to a boss or raid kill while fighting one, or to skip a slayer task you don't like. Credits are tracked server-side on each character.
 
 ## Daily tasks
 
@@ -71,7 +87,7 @@ Quests are journeys across the world map: meet the requirements (skill levels, q
 
 ## Clue scrolls
 
-Clue scrolls come in four tiers: medium, hard, elite and master. Completing a clue takes time and rewards you from that tier's loot table — runes, coins, gear and rare cosmetic uniques that fill your collection log. Higher tiers roll rarer rewards.
+Clue scrolls drop from monsters and come in four tiers: medium, hard, elite and master. Completing a clue takes time — about 5 minutes for medium, 15 for hard, 30 for elite and 60 for master — and rewards 1 to 4 rolls from that tier's loot table: runes, coins, gear and rare uniques (like the 2nd Age sets) that fill your collection log. Higher tiers roll rarer rewards.
 
 ## Minigames
 
@@ -88,6 +104,18 @@ Plant seeds in farming patches (herbs, trees and fruit trees) at different locat
 ## Magic
 
 Magic is trained by casting combat spells, which need runes. Each spell has a level requirement, base damage, and rune cost per cast; you earn the spell's base XP plus 2 XP per damage dealt. Higher tiers (strike, bolt, blast and beyond) hit harder and cost pricier runes.
+
+## Construction
+
+Construction is trained by building with planks — each build consumes one plank and grants instant XP: Plank (level 1, 29 XP), Oak Plank (level 15, 60 XP), Teak Plank (level 35, 90 XP) and Mahogany Plank (level 70, 140 XP). High Construction also unlocks two permanent perks: the Money Purse (level 70) lets you spend coins directly from your bank when shopping, and Master Rejuvenation (level 90) passively refills your special attack bar to 100% whenever it empties during a fight.
+
+## Dungeoneering
+
+Dungeoneering is trained by clearing dungeons of increasing difficulty, from novice upward. Every clear grants Dungeoneering XP and also earns Dungeoneering tokens (0.15 tokens per XP, rounded up per clear). Spend tokens on exclusive rewards with level requirements — for example the Arcane Necklace at level 65 for 65,000 tokens, or the Chaotic weapons and kiteshields at level 80 for 300,000 tokens each. Dungeoneering rewards count toward your collection log.
+
+## Skill capes and the Max cape
+
+Reach level 99 in a skill and you can buy that skill's cape of accomplishment from the store — a prestige item showing off your mastery. The Max cape requires being fully maxed: 2,376 total level (99 in every skill). Skill capes and the Max cape are self-obtained prestige rewards, so Ironman characters can buy them too.
 
 ## Trading Post and shops
 

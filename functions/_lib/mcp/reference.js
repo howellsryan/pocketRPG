@@ -43,6 +43,28 @@ function monsterList() {
   return Array.isArray(monstersData) ? monstersData : Object.values(monstersData)
 }
 
+// Monsters that only exist inside a raid. Their monsters.json drop tables are
+// never rolled — raid loot (uniques included) comes from the raid's reward
+// chest on completion — so they must not surface as drop sources.
+let raidBossRaidNames = null
+export function raidForBoss(monsterId) {
+  if (!raidBossRaidNames) {
+    raidBossRaidNames = new Map()
+    const seen = new Set()
+    for (const [key, r] of Object.entries(raidsData)) {
+      const raidId = r?.id || key
+      if (seen.has(raidId)) continue
+      seen.add(raidId)
+      for (const bossId of r?.bosses || []) {
+        if (typeof bossId === 'string' && bossId && !raidBossRaidNames.has(bossId)) {
+          raidBossRaidNames.set(bossId, r.name || raidId)
+        }
+      }
+    }
+  }
+  return raidBossRaidNames.get(monsterId) || null
+}
+
 // ── Compact indexes (items.json/monsters.json are large; detail via inspect_*) ─
 
 export function itemsIndex() {
@@ -52,6 +74,7 @@ export function itemsIndex() {
     type: it.type,
     stackable: !!it.stackable,
     shopValue: it.shopValue ?? null,
+    ...(it.specialAttack ? { hasSpecialAttack: true } : {}),
   }))
 }
 
@@ -119,6 +142,77 @@ export function searchMonsters({ query, limit } = {}) {
   const cap = clampLimit(limit)
   const all = monstersIndex().filter((m) => nameMatches(m.name, m.id, query))
   return { total: all.length, returned: Math.min(all.length, cap), monsters: all.slice(0, cap) }
+}
+
+// ── Item sources (reverse lookup: where does an item come from?) ─────────────
+// Built lazily once per isolate from the static content tables. Answers the
+// single most common player question shape — "how do I get X?" — for
+// inspect_item, instead of leaving the model to scan every monster.
+
+let itemSourcesIndex = null
+
+function buildItemSourcesIndex() {
+  const map = new Map()
+  const entry = (id) => {
+    if (!map.has(id)) map.set(id, {})
+    return map.get(id)
+  }
+  for (const m of monsterList()) {
+    if (raidForBoss(m.id)) continue
+    for (const d of m.drops || []) {
+      const e = entry(d.itemId)
+      if (!e.monsters) e.monsters = []
+      e.monsters.push({ id: m.id, name: m.name, chance: d.chance, ...(m.boss ? { boss: true } : {}) })
+    }
+  }
+  for (const [tier, data] of Object.entries(cluesData)) {
+    for (const r of data.rewards || []) {
+      const e = entry(r.itemId)
+      if (!e.clues) e.clues = []
+      if (!e.clues.includes(tier)) e.clues.push(tier)
+    }
+  }
+  const seenRaids = new Set()
+  for (const [key, r] of Object.entries(raidsData)) {
+    const raidId = r.id || key
+    if (seenRaids.has(raidId)) continue
+    seenRaids.add(raidId)
+    for (const u of r.rewards?.unique?.items || r.rewards?.uniques || r.rewards?.rare || []) {
+      const itemId = typeof u === 'string' ? u : u?.itemId
+      if (!itemId) continue
+      const e = entry(itemId)
+      if (!e.raids) e.raids = []
+      if (!e.raids.includes(r.name)) e.raids.push(r.name)
+    }
+  }
+  for (const s of Object.values(skillsData)) {
+    for (const a of s.actions || []) {
+      if (!a.product) continue
+      const e = entry(a.product)
+      if (!e.skills) e.skills = []
+      e.skills.push({ skill: s.name, action: a.name, level: a.level })
+    }
+  }
+  return map
+}
+
+// Where an item comes from: monster drops (most common droppers first, capped),
+// clue tiers, raids and skilling actions that produce it, plus the General
+// Store. Returns null when nothing in the content tables grants the item.
+export function itemSources(id) {
+  if (!itemSourcesIndex) itemSourcesIndex = buildItemSourcesIndex()
+  const src = itemSourcesIndex.get(id)
+  const out = {}
+  if (src?.monsters) {
+    const sorted = [...src.monsters].sort((a, b) => b.chance - a.chance)
+    out.monsters = sorted.slice(0, 12)
+    if (sorted.length > 12) out.totalMonsterSources = sorted.length
+  }
+  if (src?.clues) out.clues = src.clues
+  if (src?.raids) out.raids = src.raids
+  if (src?.skills) out.skills = src.skills
+  if (getItem(id)?.isGeneralStore) out.shop = 'General Store'
+  return Object.keys(out).length ? out : null
 }
 
 // General Store catalogue. shopValue is the fixed store price — this curated

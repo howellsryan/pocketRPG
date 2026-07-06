@@ -1733,16 +1733,22 @@ function GameApp() {
     await initCloudAndSave()
   }
 
-  // Exit the demo back to the landing/login screen. The local demo save is left
-  // in place (it resumes if the player taps Play Demo again); only the demo flag
-  // is cleared so the next boot shows the landing page.
-  function exitDemoMode() {
+  // Exit the demo back to the landing/login screen. Wipes every local trace of
+  // the offline demo session (IDB save + the sync/idle/activity-progress module
+  // caches) so it can never bleed into whatever cloud account the player logs
+  // into next — a stale demo ledger merged into a real save is what silently
+  // overwrote cloud data before this fix.
+  async function exitDemoMode() {
     setDemoMode(false)
     setDemoModeState(false)
     setActiveTask(null)
+    resetSyncState()
+    resetIdleStateSync()
+    resetActivityProgressSync()
+    clearCollectionLogCache()
     try {
-      localStorage.removeItem('pocketrpg_activeTask')
-      localStorage.removeItem('pocketrpg_hiddenAt')
+      await wipeLocalSave()
+      setLocalCharacterId(null)
     } catch { /* best-effort */ }
     setGameReady(false)
     setCloudPhase('auth')
@@ -1750,7 +1756,7 @@ function GameApp() {
 
   async function handleLogoutToCharacterSelect({ skipSave = false } = {}) {
     if (isDemoMode()) {
-      exitDemoMode()
+      await exitDemoMode()
       return
     }
     // When leaving from the save-blocked modal the save is already failing, so

@@ -9,6 +9,10 @@ export const OTHER_BONUS_LABELS = {
   antiDragon: 'Anti-Dragonfire',
   barrowsDharokBonus: "Dravok's Set Effect",
   barrowsGuthanBonus: "Gorath's Set Effect",
+  barrowsAhrimBonus: "Morvyn's Set Effect",
+  barrowsKarilBonus: "Kaelor's Set Effect",
+  barrowsToragBonus: "Torvek's Set Effect",
+  barrowsVeracBonus: "Verin's Set Effect",
   slayerTaskAccuracyFlat: 'Slayer Task Accuracy',
   slayerTaskDamageFlat: 'Slayer Task Damage'
 }

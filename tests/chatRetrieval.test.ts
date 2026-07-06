@@ -27,6 +27,22 @@ describe('chat retrieval', () => {
     expect(topIds('what are the requirements for A Realm Divided?', 6)).toContain('quest_a_realm_divided')
   })
 
+  it('finds the monsters that drop an item ("how do I get X")', () => {
+    const ids = topIds('how do I get dragon boots?', 6)
+    expect(ids.some((id) => id.startsWith('monster_astral_'))).toBe(true)
+  })
+
+  it('ranks a named monster chunk first despite generic query words', () => {
+    expect(topIds('where do I fight the kraken', 6)[0]).toBe('monster_deepmaw_kraken')
+  })
+
+  it('drops the weak tail: every hit scores within range of the best hit', () => {
+    for (const q of ['how do I get dragon boots?', 'best food to cook', 'prayer potion restore']) {
+      const hits = searchKnowledge(q, index, 6)
+      for (const h of hits) expect(h.score).toBeGreaterThanOrEqual(hits[0].score * 0.3)
+    }
+  })
+
   it('returns nothing for queries with no game-term overlap', () => {
     expect(searchKnowledge('quantum chromodynamics homework', index)).toEqual([])
     expect(searchKnowledge('', index)).toEqual([])

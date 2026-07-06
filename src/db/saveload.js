@@ -123,6 +123,11 @@ export async function wipeLocalSave() {
   // one (which would perpetually flag legitimate progress as rolled-back).
   localStorage.removeItem('pocketrpg_maxObservedAt')
   localStorage.removeItem(LOCAL_WRITE_MARKER_KEY)
+  // Per-activity progress ledger (quests/minigames) is cached in localStorage
+  // outside IDB — must be dropped too, or a previous character's (or the
+  // offline demo's) entries survive and get merged into the next character's
+  // ledger on the next saveActivityProgress() call, overwriting their cloud copy.
+  localStorage.removeItem('pocketrpg_activityProgress')
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
