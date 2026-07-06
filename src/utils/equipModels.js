@@ -39,6 +39,27 @@ export function hasWeaponModel(itemId) {
   return Boolean(itemId && equipmentModelsData.weapons && equipmentModelsData.weapons[itemId] && equipmentModelsData.weapons[itemId].model)
 }
 
+// Public-relative path (prefix-agnostic) for the character model, e.g.
+// '3d-samples/warrior.glb'. The viewer resolves it against the probed asset
+// prefix (see three3d.js) rather than a hardcoded '/public/'.
+export function getCharacterAssetPath() {
+  const c = getCharacterModel()
+  return c ? (equipmentModelsData.modelBase || '') + c.model : null
+}
+
+// Placement spec for an equipped weapon with a public-relative `path`, or null.
+export function getWeaponPlacement(itemId) {
+  const spec = getWeaponModel(itemId)
+  if (!spec) return null
+  return {
+    path: (equipmentModelsData.modelBase || '') + spec.model,
+    bone: spec.bone,
+    position: spec.position,
+    rotationDeg: spec.rotationDeg,
+    scale: spec.scale,
+  }
+}
+
 // Deployment-root prefix for static assets. The single-file build serves
 // public/ under /public/ (build_single injects `pocketAssetBase='/public/'`);
 // Vite dev and the dist build serve it at root, where the global is undefined

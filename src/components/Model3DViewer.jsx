@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'preact/hooks'
-import { loadThree, canRender3D } from '../utils/three3d.js'
+import { loadThree, canRender3D, assetUrl } from '../utils/three3d.js'
 
 // Live 3D character viewer. Lazy-loads three.js (see three3d.js), renders a GLB
 // character, optionally attaches a weapon GLB to a named bone (or the model root
@@ -11,20 +11,20 @@ import { loadThree, canRender3D } from '../utils/three3d.js'
 // `fallback` (the icon paper-doll) instead, so 3D is always a safe enhancement.
 //
 // Props:
-//   characterUrl  resolved URL of the character GLB
-//   weapon        { url, bone, position:[x,y,z], rotationDeg:[x,y,z], scale } | null
+//   characterPath public-relative path of the character GLB (resolved via probe)
+//   weapon        { path, bone, position:[x,y,z], rotationDeg:[x,y,z], scale } | null
 //   height        CSS height for the stage (default 360px)
 //   autoRotate    turntable on/off (default true)
 //   className     extra classes on the wrapper
 //   fallback      VNode rendered when 3D can't run
-function Model3DViewer({ characterUrl, weapon = null, height = 360, autoRotate = true, className = '', fallback = null }) {
+function Model3DViewer({ characterPath, weapon = null, height = 360, autoRotate = true, className = '', fallback = null }) {
   const hostRef = useRef(null)
   const stateRef = useRef(null)      // holds three objects + disposed flag
   const [failed, setFailed] = useState(!canRender3D())
 
   // ── Scene lifecycle: (re)build when the character changes ──
   useEffect(() => {
-    if (!characterUrl || !canRender3D()) { setFailed(true); return }
+    if (!characterPath || !canRender3D()) { setFailed(true); return }
     let cancelled = false
     const host = hostRef.current
     const st = { disposed: false, raf: null, THREE: null, renderer: null, scene: null,
@@ -32,7 +32,7 @@ function Model3DViewer({ characterUrl, weapon = null, height = 360, autoRotate =
       weapon: null, weaponAnchor: null, bones: {}, ro: null }
     stateRef.current = st
 
-    loadThree().then(({ THREE, GLTFLoader, MeshoptDecoder, OrbitControls }) => {
+    loadThree().then(async ({ THREE, GLTFLoader, MeshoptDecoder, OrbitControls }) => {
       if (cancelled) return
       st.THREE = THREE
       const w = host.clientWidth || 320, h = height
@@ -63,7 +63,9 @@ function Model3DViewer({ characterUrl, weapon = null, height = 360, autoRotate =
 
       const loader = new GLTFLoader()
       loader.setMeshoptDecoder(MeshoptDecoder)
-      loader.load(characterUrl, (gltf) => {
+      const charUrl = await assetUrl(characterPath)
+      if (cancelled || st.disposed) return
+      loader.load(charUrl, (gltf) => {
         if (cancelled || st.disposed) return
         const root = gltf.scene
         // normalise to ~1.8 units tall, feet on origin
@@ -112,7 +114,7 @@ function Model3DViewer({ characterUrl, weapon = null, height = 360, autoRotate =
       teardown(st, host)
       stateRef.current = null
     }
-  }, [characterUrl, height, autoRotate])
+  }, [characterPath, height, autoRotate])
 
   // ── Weapon: attach / swap without rebuilding the scene ──
   const weaponRef = useRef(weapon)
@@ -120,7 +122,7 @@ function Model3DViewer({ characterUrl, weapon = null, height = 360, autoRotate =
     weaponRef.current = weapon
     const st = stateRef.current
     if (st && st.character) attachWeapon(st, weapon)
-  }, [weapon && weapon.url, weapon && weapon.bone])
+  }, [weapon && weapon.path, weapon && weapon.bone])
 
   if (failed) return fallback
 
@@ -133,13 +135,15 @@ function attachWeapon(st, weapon) {
   if (!st || !st.THREE || !st.character) return
   // remove any previous weapon
   if (st.weapon && st.weaponAnchor) { st.weaponAnchor.remove(st.weapon); disposeObject(st.weapon); st.weapon = null }
-  if (!weapon || !weapon.url) return
+  if (!weapon || !weapon.path) return
   const token = (st.weaponToken = (st.weaponToken || 0) + 1)
-  loadThree().then(({ THREE, GLTFLoader, MeshoptDecoder }) => {
+  loadThree().then(async ({ THREE, GLTFLoader, MeshoptDecoder }) => {
     if (st.disposed || token !== st.weaponToken) return
     const loader = new GLTFLoader()
     loader.setMeshoptDecoder(MeshoptDecoder)
-    loader.load(weapon.url, (gltf) => {
+    const wUrl = await assetUrl(weapon.path)
+    if (st.disposed || token !== st.weaponToken) return
+    loader.load(wUrl, (gltf) => {
       if (st.disposed || token !== st.weaponToken) return
       const obj = gltf.scene
       const anchor = (weapon.bone && st.bones[weapon.bone]) ? st.bones[weapon.bone] : st.character

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { getCharacterModel, getWeaponModel, hasWeaponModel, modelUrl } from '../src/utils/equipModels.js'
+import { getCharacterModel, getWeaponModel, hasWeaponModel, modelUrl, getCharacterAssetPath, getWeaponPlacement } from '../src/utils/equipModels.js'
 import registry from '../src/data/equipmentModels.json'
 
 describe('equipModels resolver', () => {
@@ -43,6 +43,16 @@ describe('equipModels resolver', () => {
     expect(modelUrl('/already/abs.glb')).toBe('/already/abs.glb')
     expect(modelUrl('https://x/y.glb')).toBe('https://x/y.glb')
     expect(modelUrl(null)).toBeNull()
+  })
+
+  it('exposes prefix-agnostic asset paths for the viewer', () => {
+    expect(getCharacterAssetPath()).toBe(registry.modelBase + registry.character.model)
+    const [id] = Object.keys(registry.weapons)
+    const placement = getWeaponPlacement(id)
+    expect(placement).toBeTruthy()
+    expect(placement!.path).toBe(registry.modelBase + registry.weapons[id].model)
+    expect(placement!.path.startsWith('/')).toBe(false) // relative, resolved at runtime
+    expect(getWeaponPlacement('bronze_dagger')).toBeNull()
   })
 
   it('every registered weapon id exists in items.json (no dangling models)', async () => {

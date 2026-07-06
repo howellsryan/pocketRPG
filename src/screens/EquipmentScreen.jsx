@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'preact/hooks'
 import { useGame } from '../state/gameState.jsx'
 import Model3DViewer from '../components/Model3DViewer.jsx'
-import { getCharacterModel, getWeaponModel, modelUrl } from '../utils/equipModels.js'
+import { getCharacterAssetPath, getWeaponPlacement } from '../utils/equipModels.js'
 import { canRender3D } from '../utils/three3d.js'
 import { unequipSlot, getEquipmentBonuses, checkEquipRequirements, equipItem } from '../engine/equipment.js'
 import { createPreset, applyPreset, renamePreset, MAX_EQUIPMENT_PRESETS } from '../engine/equipmentPresets.js'
@@ -34,14 +34,11 @@ export default function EquipmentScreen() {
   // 3D hero preview (replaces the paper doll as the centerpiece when supported).
   // The slot grid is still rendered beneath it for equip/unequip; when WebGL is
   // unavailable we fall back to the paper doll alone — zero regression.
-  const heroModel = getCharacterModel()
-  const heroUrl = heroModel ? modelUrl(heroModel.model) : null
-  const show3D = useMemo(() => Boolean(heroUrl) && canRender3D(), [heroUrl])
+  const heroPath = getCharacterAssetPath()
+  const show3D = useMemo(() => Boolean(heroPath) && canRender3D(), [heroPath])
   const weaponSpec = useMemo(() => {
     const wid = equipment?.weapon?.itemId
-    const spec = wid ? getWeaponModel(wid) : null
-    if (!spec) return null
-    return { url: modelUrl(spec.model), bone: spec.bone, position: spec.position, rotationDeg: spec.rotationDeg, scale: spec.scale }
+    return wid ? getWeaponPlacement(wid) : null
   }, [equipment?.weapon?.itemId])
 
   const handleCreatePreset = () => {
@@ -333,7 +330,7 @@ export default function EquipmentScreen() {
           <>
             <Card padding="p-2" className="w-full">
               <Model3DViewer
-                characterUrl={heroUrl}
+                characterPath={heroPath}
                 weapon={weaponSpec}
                 height={360}
                 fallback={null}

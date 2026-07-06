@@ -12,13 +12,41 @@
 // we fall back to '/'. The `@vite-ignore` hints stop Vite from trying to
 // pre-bundle a dynamic import with a computed specifier.
 
-function threeAssetBase() {
-  return (typeof pocketAssetBase !== 'undefined' && pocketAssetBase) || '/'
+// Candidate deployment prefixes for static assets under public/. The single-file
+// build injects pocketAssetBase='/public/' (Cloudflare Pages serves the repo
+// root, so public/ lives at /public/); Vite dev / dist serve public/ at '/'. We
+// don't trust a hardcoded guess though — a wrong prefix 404s to the SPA HTML and
+// a module import then dies with a "text/html" MIME error. So we PROBE the
+// candidates once and use whichever actually serves the vendored bundle.
+function assetPrefixCandidates() {
+  const injected = (typeof pocketAssetBase !== 'undefined' && pocketAssetBase) || null
+  return [...new Set([injected, '/public/', '/'].filter(Boolean))]
 }
 
-// Base URL of the vendored three.js tree (trailing slash).
-export function threeBase() {
-  return threeAssetBase() + 'vendor/three/'
+let _prefixP = null
+// Resolve to the URL prefix (trailing slash) under which public/ assets serve.
+export function detectAssetPrefix() {
+  if (_prefixP) return _prefixP
+  const fallback = (typeof pocketAssetBase !== 'undefined' && pocketAssetBase) || '/'
+  _prefixP = (async () => {
+    for (const p of assetPrefixCandidates()) {
+      try {
+        const r = await fetch(p + 'vendor/three/three.module.js', { method: 'HEAD' })
+        const ct = r.headers.get('content-type') || ''
+        if (r.ok && !ct.includes('text/html')) return p
+      } catch { /* try next */ }
+    }
+    return fallback
+  })().catch(() => fallback)
+  return _prefixP
+}
+
+// Resolve a public-relative path (e.g. '3d-samples/warrior.glb') to a fetchable
+// URL under the detected prefix.
+export async function assetUrl(relPath) {
+  if (!relPath) return null
+  if (/^(https?:)?\/\//.test(relPath) || relPath.startsWith('/')) return relPath
+  return (await detectAssetPrefix()) + relPath
 }
 
 let _modules = null
@@ -28,7 +56,7 @@ let _modules = null
 export function loadThree() {
   if (_modules) return _modules
   _modules = (async () => {
-    const base = threeBase()
+    const base = (await detectAssetPrefix()) + 'vendor/three/'
     const THREE = await import(/* @vite-ignore */ base + 'three.module.js')
     const [{ GLTFLoader }, { MeshoptDecoder }, { OrbitControls }, SkeletonUtils] = await Promise.all([
       import(/* @vite-ignore */ base + 'jsm/loaders/GLTFLoader.js'),
