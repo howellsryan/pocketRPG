@@ -39,6 +39,10 @@ function buildLowHpMonster(overrides: any = {}) {
       { itemId: 'bones', chance: 1.0, quantity: 1 }, // always drop
       { itemId: 'goblin_mail', chance: 1.0, quantity: 1 },
     ],
+    // These tests pin the monsterDeath loot *contract* (authored drops appear),
+    // not the universal 4% seed-drop roll (seedDrops.js) that every non-boss
+    // monster with combatLevel > 0 gets — opt out so the loot is deterministic.
+    noSeedDrops: true,
     ...overrides,
   }
 }
