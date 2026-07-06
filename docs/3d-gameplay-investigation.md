@@ -121,7 +121,13 @@ The current hero is the **static placeholder** warrior — it renders and rotate
 ### Update — vendor fix, real hero, minified three
 - **Root-cause fix:** the hand-vendored `three.module.js` imported `./three.core.js` which was never committed — the vendored ES-module graph had **never loaded** in a deployed build (viewer silently fell back to the paper doll). Vendoring is now generated from the pinned `three` devDependency via `npm run sync:three`, guarded by `tests/threeVendor.test.ts` (entry files exist, every import resolves, no drift from npm), and verified headless in Chromium.
 - Vendor now ships the **minified** builds (`three.module.min.js` + `three.core.min.js`, ~55% smaller pre-compression); addons stay unminified upstream and are small.
-- The equip-screen hero is the real **PocketRPG_Hero** Tripo export (`public/3d-samples/hero.glb`, 12.5 MB → 0.31 MB, 4.6k tris) — still **unrigged** (no skeleton/clips), so the weapon attaches at the model root and there's no idle/attack animation until the rig/animate re-export lands.
+- The equip-screen hero is the natural-pose warrior statue with the Dragon Dagger placed **sheathed at her left hip** via a tuned root-space transform in the registry (visually identical to a bone attach on a non-animated model).
+
+### Update — PocketRPG_Hero export findings (why the statue stayed)
+Both PocketRPG_Hero exports were evaluated headless (Chromium + the real viewer math):
+- The **unrigged** export is a clean 4.6k-tri statue but is **T-posed** — unusable as an equip-screen centerpiece.
+- The **rigged** export (31 joints incl. `L/R_Hand`, no clips) has **broken skin weights on the accessory geometry**: any rotation — even an 18° clavicle swing, or distributed clavicle+upperarm+forearm — shreds the bra/bracers/back-staff into giant stretched shards (body skin deforms fine). Verified on the raw export, so it is not our pipeline (`simplify` preserves weights; scales are uniform; 4 influences, normalized).
+- **Consequence: animation clips retargeted onto this rig would shred the same way.** What's needed from Tripo: run the hero through **rig & animate**, *check their animated preview* — if clothing shreds there too, regenerate (fewer baked accessories, especially the back-mounted weapon) — and export the version whose preview looks clean, **with idle + attack clips baked**. Then: point `character.model` at it, keep `defaults.handBone: "R_Hand"`, re-tune weapon transforms with `/3d-preview.html`.
 - Viewer pauses its render loop on `visibilitychange` and reports failure to the parent (`onFail`) so `EquipmentScreen` swaps back to the full paper-doll layout instead of an empty card.
 
 ## 10) R2 asset hosting (planned migration)
