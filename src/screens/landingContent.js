@@ -61,24 +61,24 @@ export const LANDING_MARKERS = [
 ]
 
 // The three parchment proclamation cards under the hero. `seal` / `art` key
-// game-icons glyphs (desktop); `sealEmoji` / `artEmoji` are the core-bundle
-// fallbacks used by the mobile screen, which doesn't ship gameIconsData.
+// game-icons glyphs, rendered via GameIcon on both the mobile and desktop
+// screens (mobile lazily loads the game chunk for them — see LandingScreen).
 export const LANDING_CARDS = [
   {
-    id: 'skills', seal: 'crossed_swords', sealEmoji: '⚔️',
-    art: ['combat_level', 'pointy_hat', 'mining'], artEmoji: ['🗡️', '🧙', '⛏️'],
+    id: 'skills', seal: 'crossed_swords',
+    art: ['combat_level', 'pointy_hat', 'mining'],
     title: '24 Skills',
     desc: 'Master combat, magic, gathering and more — every skill trains live and idles offline, from level 1 to 99. Build your legend.',
   },
   {
-    id: 'quests', seal: 'scroll', sealEmoji: '📜',
-    art: ['scroll_unfurled'], artEmoji: ['📜'],
+    id: 'quests', seal: 'scroll',
+    art: ['scroll_unfurled'],
     title: '168 Quests',
     desc: 'Quest chains from Novice to Grandmaster across a vast hand-painted world, each rewarding XP, rare items, and lore.',
   },
   {
-    id: 'pvp', seal: 'shield', sealEmoji: '🛡️',
-    art: ['dragon_kiteshield', 'castle'], artEmoji: ['🛡️', '🏰'],
+    id: 'pvp', seal: 'shield',
+    art: ['dragon_kiteshield', 'castle'],
     title: 'PvP, Raids & Dungeons',
     desc: 'Challenge players in ranked PvP. Conquer four end-game raids. Delve dungeons and hunt bosses. Earn glory.',
   },

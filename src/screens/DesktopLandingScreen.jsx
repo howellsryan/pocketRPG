@@ -315,11 +315,15 @@ export default function DesktopLandingScreen({ onGitHubLogin, onGoogleLogin, onP
               )}
               {embedded && (
                 <div class="dl-embed-hint">
-                  <div class="dl-embed-hint__title">⚠️ Google sign-in needs your real browser</div>
+                  <div class="dl-embed-hint__title">
+                    <GameIcon iconKey="info" color="var(--fm-ember-deep)" size={15} title="" /> Google sign-in needs your real browser
+                  </div>
                   <p>You're in an in-app browser, which Google blocks. Open this page in Safari or Chrome. GitHub works as-is.</p>
                   {showBrowserHint && (
                     <button type="button" class="dl-embed-hint__copy" onClick={onCopyLink}>
-                      {copied ? '✓ Link copied' : '🔗 Copy link to open in browser'}
+                      {copied
+                        ? <><GameIcon iconKey="check_mark" color="#4ade80" size={15} title="" /> Link copied</>
+                        : 'Copy link to open in browser'}
                     </button>
                   )}
                 </div>

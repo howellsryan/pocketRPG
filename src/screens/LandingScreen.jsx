@@ -1,9 +1,10 @@
-import { useRef } from 'preact/hooks'
+import { useRef, useState, useEffect } from 'preact/hooks'
 import { landingImages } from './landingImages.js'
 import { landingSrcSet } from '../utils/helpers.js'
 import { useIsDesktop } from '../hooks/useIsDesktop.js'
 import { LANDING_STATS, LANDING_TIERS, LANDING_PLACES, LANDING_MARKERS, LANDING_CARDS, LANDING_HUD_STATS } from './landingContent.js'
 import DesktopLandingScreen from './DesktopLandingScreen.jsx'
+import GameIcon from '../components/GameIcon.jsx'
 
 // Portrait screenshots are captured at 780×1688 and downscaled to 560w (see
 // public/landing). Painted place scenes (lp-*) are 560×313.
@@ -21,6 +22,15 @@ const mapSrcSet = (url) => url
 export default function LandingScreen({ onGitHubLogin, onGoogleLogin, onPlayDemo, embedded, hosted, showBrowserHint, copied, onCopyLink }) {
   const authRef = useRef(null)
   const isDesktop = useIsDesktop()
+
+  // The bespoke game-icons glyphs used for the proclamation cards below ship
+  // in the lazily-loaded game chunk. Fetch it on mount and re-render once it
+  // arrives so the icons swap in from GameIcon's placeholder fallback.
+  const [, bumpIcons] = useState(0)
+  useEffect(() => {
+    const load = (typeof globalThis !== 'undefined') && globalThis.__loadGameChunk
+    if (load) load().then(() => bumpIcons(n => n + 1)).catch(() => {})
+  }, [])
 
   function scrollToAuth() {
     authRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -94,11 +104,11 @@ export default function LandingScreen({ onGitHubLogin, onGoogleLogin, onPlayDemo
       <section class="lp-cards">
         {LANDING_CARDS.map(c => (
           <article class="lp-card" key={c.id}>
-            <div class="lp-card__seal" aria-hidden="true">{c.sealEmoji}</div>
+            <div class="lp-card__seal" aria-hidden="true"><GameIcon iconKey={c.seal} color="#e6c878" size={26} title="" /></div>
             <h3 class="lp-card__title">{c.title}</h3>
             <div class="fm-divider lp-card__rule" aria-hidden="true" />
             <div class="lp-card__art" aria-hidden="true">
-              {c.artEmoji.map(e => <span key={e}>{e}</span>)}
+              {c.art.map(k => <GameIcon iconKey={k} color="#7c2708" size={46} title="" key={k} />)}
             </div>
             <p class="lp-card__desc">{c.desc}</p>
           </article>
@@ -230,14 +240,18 @@ export default function LandingScreen({ onGitHubLogin, onGoogleLogin, onPlayDemo
 
           {embedded && (
             <div class="lp-embed">
-              <div class="lp-embed__title">⚠️ Google sign-in needs your real browser</div>
+              <div class="lp-embed__title">
+                <GameIcon iconKey="info" color="var(--fm-ember-deep)" size={14} title="" /> Google sign-in needs your real browser
+              </div>
               <div class="lp-embed__body">
                 You're in an in-app browser, which Google blocks. Tap ••• or Share →{' '}
                 <strong>Open in Safari</strong> / <strong>Open in Chrome</strong>. GitHub works as-is.
               </div>
               {showBrowserHint && (
                 <button type="button" onClick={onCopyLink} class="lp-embed__copy">
-                  {copied ? '✓ Link copied' : '🔗 Copy link to open in browser'}
+                  {copied
+                    ? <><GameIcon iconKey="check_mark" color="#4ade80" size={14} title="" /> Link copied</>
+                    : 'Copy link to open in browser'}
                 </button>
               )}
             </div>
