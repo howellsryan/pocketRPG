@@ -17,6 +17,15 @@ import GameIcon from '../components/GameIcon.jsx'
 
 const DL_SHOT_DIMS = { w: 560, h: 1212 }
 
+// Nav links + the section id each one scrolls to / highlights for (scroll-spy).
+const DL_NAV_SECTIONS = [
+  ['dl-top', 'Home'],
+  ['dl-features', 'Features'],
+  ['dl-world', 'The World'],
+  ['dl-skills', 'Skills'],
+  ['dl-gallery', 'Screenshots'],
+]
+
 const DL_SKILLS = [
   ['attack', 'Attack'], ['strength', 'Strength'], ['defence', 'Defence'], ['hitpoints', 'Hitpoints'],
   ['ranged', 'Ranged'], ['magic', 'Magic'], ['prayer', 'Prayer'], ['mining', 'Mining'],
@@ -75,6 +84,20 @@ export default function DesktopLandingScreen({ onGitHubLogin, onGoogleLogin, onP
     if (load) load().then(() => bumpIcons(n => n + 1)).catch(() => {})
   }, [])
 
+  // Scroll-spy: highlight whichever nav section is currently under the sticky
+  // header, so the little diamond marker under the nav text tracks scroll
+  // position instead of sitting permanently under "Home".
+  const [activeSection, setActiveSection] = useState('dl-top')
+  useEffect(() => {
+    const sections = DL_NAV_SECTIONS.map(([id]) => document.getElementById(id)).filter(Boolean)
+    if (typeof IntersectionObserver === 'undefined' || !sections.length) return undefined
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach(e => { if (e.isIntersecting) setActiveSection(e.target.id) })
+    }, { rootMargin: '-88px 0px -70% 0px', threshold: 0 })
+    sections.forEach(el => io.observe(el))
+    return () => io.disconnect()
+  }, [])
+
   useEffect(() => {
     const els = document.querySelectorAll('.dl-reveal')
     if (typeof IntersectionObserver === 'undefined') {
@@ -91,7 +114,7 @@ export default function DesktopLandingScreen({ onGitHubLogin, onGoogleLogin, onP
   }, [])
 
   return (
-    <div class="dl-root" id="dl-top">
+    <div class="dl-root">
       <header class="dl-nav">
         <div class="dl-wrap dl-nav__inner">
           <a class="dl-brand" href="#dl-top">
@@ -99,24 +122,22 @@ export default function DesktopLandingScreen({ onGitHubLogin, onGoogleLogin, onP
             <span class="dl-word dl-gilt">PocketRPG</span>
           </a>
           <nav class="dl-nav__links">
-            <a href="#dl-top" class="dl-nav__link--on">Home</a>
-            <a href="#dl-features">Features</a>
-            <a href="#dl-world">The World</a>
-            <a href="#dl-skills">Skills</a>
-            <a href="#dl-gallery">Screenshots</a>
+            {DL_NAV_SECTIONS.map(([id, label]) => (
+              <a key={id} href={`#${id}`} class={activeSection === id ? 'dl-nav__link--on' : ''}>{label}</a>
+            ))}
           </nav>
           <div class="dl-nav__right">
             <a class="dl-signin" href="#dl-play">Sign in</a>
             {onPlayDemo
-              ? <button type="button" class="dl-btn dl-btn--ember" onClick={onPlayDemo}>Play Demo</button>
-              : <a class="dl-btn dl-btn--ember" href="#dl-play">Play Now — Free</a>}
+              ? <button type="button" class="dl-play dl-play--nav" onClick={onPlayDemo}>Play Demo</button>
+              : <a class="dl-play dl-play--nav" href="#dl-play">Play Now — Free</a>}
           </div>
         </div>
       </header>
 
       <div class="dl-main">
         {/* HERO — parchment proclamation sheet with the pinned world map */}
-        <section class="dl-hero">
+        <section class="dl-hero" id="dl-top">
           <div class="dl-wrap">
             <div class="dl-sheet dl-hero__sheet">
               <span class="fm-corner fm-corner--tl" aria-hidden="true" /><span class="fm-corner fm-corner--tr" aria-hidden="true" />
@@ -351,7 +372,9 @@ export default function DesktopLandingScreen({ onGitHubLogin, onGoogleLogin, onP
                 <h5>Play</h5>
                 <a href="#dl-play">Sign in with GitHub</a>
                 <a href="#dl-play">Sign in with Google</a>
-                <a href="https://pocketrpg.co.uk" target="_blank" rel="noopener">Live build ↗</a>
+                {onPlayDemo
+                  ? <a href="#dl-top" onClick={(e) => { e.preventDefault(); onPlayDemo() }}>Play Demo</a>
+                  : <a href="#dl-play">Play Demo</a>}
               </div>
             </div>
           </div>
