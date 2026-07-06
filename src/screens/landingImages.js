@@ -27,7 +27,7 @@ export const landingImages = {
   'ss-trading':     L('ss-trading'),
   'ss-collection':  L('ss-collection'),
   'ss-leaderboard': L('ss-leaderboard'),
-  'ss-connect':     L('ss-connect'),
+  'ss-chat':        L('ss-chat'),
 
   'lp-map':        L('lp-map'),
   'lp-lumbright':  L('lp-lumbright'),

@@ -218,14 +218,6 @@ export const KNOWLEDGE_CHUNKS = [
   "text": "You sign in with GitHub or Google and can have multiple characters. Your game saves to the cloud automatically as you play; manual save is available from the Home screen. The server owns your account, credits, high-value drops and PvP results."
  },
  {
-  "id": "guide_ai_assistant_connections_mcp",
-  "title": "AI assistant connections (MCP)",
-  "tags": [
-   "guide"
-  ],
-  "text": "PocketRPG has an AI connector: from the Connect AI screen you can link AI assistants (like Claude) to your account via MCP. A connected assistant can check your stats, start activities, manage your bank and more, using the same rules as the game. Tokens expire automatically and can be revoked from your AI client."
- },
- {
   "id": "guide_getting_help",
   "title": "Getting help",
   "tags": [

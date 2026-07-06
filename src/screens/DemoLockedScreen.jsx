@@ -12,10 +12,6 @@ const FEATURE_COPY = {
     title: 'Leaderboard',
     blurb: 'Compete on the global total-level and boss kill-count rankings.',
   },
-  [SCREENS.CONNECT_AI]: {
-    title: 'Connect AI',
-    blurb: 'Play hands-free by connecting an AI assistant to your account.',
-  },
 }
 
 export default function DemoLockedScreen({ screen, onBack }) {
@@ -31,7 +27,7 @@ export default function DemoLockedScreen({ screen, onBack }) {
           {copy.blurb}
           <br />
           Create a free account to save to the cloud and unlock the Trading Post, Leaderboard,
-          Connect AI, bosses, raids, daily tasks and more.
+          bosses, raids, daily tasks and more.
         </p>
         <p class="text-xs text-[var(--color-parchment)] opacity-50 mb-5 leading-relaxed">
           You're playing the offline demo — skilling, combat, quests, clues and minigames are all

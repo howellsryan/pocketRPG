@@ -113,10 +113,6 @@ When creating a character you can pick special modes. Ironman characters are sel
 
 You sign in with GitHub or Google and can have multiple characters. Your game saves to the cloud automatically as you play; manual save is available from the Home screen. The server owns your account, credits, high-value drops and PvP results.
 
-## AI assistant connections (MCP)
-
-PocketRPG has an AI connector: from the Connect AI screen you can link AI assistants (like Claude) to your account via MCP. A connected assistant can check your stats, start activities, manage your bank and more, using the same rules as the game. Tokens expire automatically and can be revoked from your AI client.
-
 ## Getting help
 
 This assistant (the 💬 button) is the in-game help: it answers questions about PocketRPG — game mechanics, items, monsters, and your own character's progress. It can only talk about PocketRPG; it has no access to the internet and won't answer unrelated questions. The Settings screen holds game preferences, such as toggling info notifications.

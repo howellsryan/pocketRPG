@@ -1,9 +1,10 @@
-import { useRef } from 'preact/hooks'
+import { useRef, useState, useEffect } from 'preact/hooks'
 import { landingImages } from './landingImages.js'
 import { landingSrcSet } from '../utils/helpers.js'
 import { useIsDesktop } from '../hooks/useIsDesktop.js'
 import { LANDING_STATS, LANDING_TIERS, LANDING_PLACES, LANDING_MARKERS, LANDING_CARDS, LANDING_HUD_STATS } from './landingContent.js'
 import DesktopLandingScreen from './DesktopLandingScreen.jsx'
+import GameIcon from '../components/GameIcon.jsx'
 
 // Portrait screenshots are captured at 780×1688 and downscaled to 560w (see
 // public/landing). Painted place scenes (lp-*) are 560×313.
@@ -21,6 +22,15 @@ const mapSrcSet = (url) => url
 export default function LandingScreen({ onGitHubLogin, onGoogleLogin, onPlayDemo, embedded, hosted, showBrowserHint, copied, onCopyLink }) {
   const authRef = useRef(null)
   const isDesktop = useIsDesktop()
+
+  // The bespoke game-icons glyphs used for the proclamation cards below ship
+  // in the lazily-loaded game chunk. Fetch it on mount and re-render once it
+  // arrives so the icons swap in from GameIcon's placeholder fallback.
+  const [, bumpIcons] = useState(0)
+  useEffect(() => {
+    const load = (typeof globalThis !== 'undefined') && globalThis.__loadGameChunk
+    if (load) load().then(() => bumpIcons(n => n + 1)).catch(() => {})
+  }, [])
 
   function scrollToAuth() {
     authRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -57,9 +67,9 @@ export default function LandingScreen({ onGitHubLogin, onGoogleLogin, onPlayDemo
           </p>
 
           {onPlayDemo
-            ? <button onClick={onPlayDemo} class="lp-play">Play Now</button>
+            ? <button onClick={onPlayDemo} class="lp-play">Play Demo</button>
             : <button onClick={scrollToAuth} class="lp-play">Play Now</button>}
-          <button onClick={scrollToAuth} class="lp-signin">Sign in — save to the cloud</button>
+          <button onClick={scrollToAuth} class="lp-signin">Sign in</button>
           {onPlayDemo && (
             <p class="lp-note">
               The demo runs offline in your browser. Sign in for cloud saves, raids, the
@@ -94,11 +104,11 @@ export default function LandingScreen({ onGitHubLogin, onGoogleLogin, onPlayDemo
       <section class="lp-cards">
         {LANDING_CARDS.map(c => (
           <article class="lp-card" key={c.id}>
-            <div class="lp-card__seal" aria-hidden="true">{c.sealEmoji}</div>
+            <div class="lp-card__seal" aria-hidden="true"><GameIcon iconKey={c.seal} color="#e6c878" size={26} title="" /></div>
             <h3 class="lp-card__title">{c.title}</h3>
             <div class="fm-divider lp-card__rule" aria-hidden="true" />
             <div class="lp-card__art" aria-hidden="true">
-              {c.artEmoji.map(e => <span key={e}>{e}</span>)}
+              {c.art.map(k => <GameIcon iconKey={k} color="#7c2708" size={46} title="" key={k} />)}
             </div>
             <p class="lp-card__desc">{c.desc}</p>
           </article>
@@ -155,7 +165,7 @@ export default function LandingScreen({ onGitHubLogin, onGoogleLogin, onPlayDemo
           <h2 class="lp-title">See it in action</h2>
         </div>
         <div class="lp-strip">
-          {['ss-home', 'ss-worldmap', 'ss-place', 'ss-combat', 'ss-bank', 'ss-bosses', 'ss-trading', 'ss-leaderboard', 'ss-collection', 'ss-connect'].map(key => (
+          {['ss-home', 'ss-worldmap', 'ss-place', 'ss-combat', 'ss-bank', 'ss-trading', 'ss-leaderboard', 'ss-collection'].map(key => (
             <div class="lp-strip__shot" key={key}>
               <img src={landingImages[key]} srcset={landingSrcSet(landingImages[key])} sizes="150px"
                    alt="PocketRPG screen" width={SHOT_DIMS.w} height={SHOT_DIMS.h}
@@ -188,6 +198,23 @@ export default function LandingScreen({ onGitHubLogin, onGoogleLogin, onPlayDemo
         </ol>
       </section>
 
+      {/* ── AI companion ── */}
+      <section class="lp-section">
+        <div class="lp-head">
+          <div class="lp-eyebrow lp-eyebrow--brass">Your companion</div>
+          <h2 class="lp-title">Chat with the AI companion</h2>
+          <p class="lp-lead">
+            Ask any question or get advice about the game — your companion knows the mechanics,
+            the map, and your character.
+          </p>
+        </div>
+        <div class="lp-companion">
+          <img src={landingImages['ss-chat']} srcset={landingSrcSet(landingImages['ss-chat'])} sizes="280px"
+               alt="Chatting with the in-game AI companion" width={SHOT_DIMS.w} height={SHOT_DIMS.h}
+               loading="lazy" decoding="async" />
+        </div>
+      </section>
+
       {/* ── Auth CTA ── */}
       <section ref={authRef} class="lp-section lp-section--cta">
         <div class="lp-authcard">
@@ -200,7 +227,7 @@ export default function LandingScreen({ onGitHubLogin, onGoogleLogin, onPlayDemo
             onClick={hosted ? undefined : onGitHubLogin}
             disabled={hosted}
             style={hosted ? { pointerEvents: 'none' } : undefined}
-            class="lp-oauth lp-oauth--github"
+            class="lp-oauth"
           >
             <svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor" class="lp-oauth__ico" aria-hidden="true">
               <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z" />
@@ -212,7 +239,7 @@ export default function LandingScreen({ onGitHubLogin, onGoogleLogin, onPlayDemo
             onClick={hosted ? undefined : onGoogleLogin}
             disabled={hosted}
             style={hosted ? { pointerEvents: 'none' } : undefined}
-            class="lp-oauth lp-oauth--google"
+            class="lp-oauth"
           >
             <span
               class="lp-oauth__g"
@@ -230,14 +257,18 @@ export default function LandingScreen({ onGitHubLogin, onGoogleLogin, onPlayDemo
 
           {embedded && (
             <div class="lp-embed">
-              <div class="lp-embed__title">⚠️ Google sign-in needs your real browser</div>
+              <div class="lp-embed__title">
+                <GameIcon iconKey="info" color="var(--fm-ember-deep)" size={14} title="" /> Google sign-in needs your real browser
+              </div>
               <div class="lp-embed__body">
                 You're in an in-app browser, which Google blocks. Tap ••• or Share →{' '}
                 <strong>Open in Safari</strong> / <strong>Open in Chrome</strong>. GitHub works as-is.
               </div>
               {showBrowserHint && (
                 <button type="button" onClick={onCopyLink} class="lp-embed__copy">
-                  {copied ? '✓ Link copied' : '🔗 Copy link to open in browser'}
+                  {copied
+                    ? <><GameIcon iconKey="check_mark" color="#4ade80" size={14} title="" /> Link copied</>
+                    : 'Copy link to open in browser'}
                 </button>
               )}
             </div>

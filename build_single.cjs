@@ -188,7 +188,6 @@ const sourceFiles = [
   'screens/LeaderboardScreen.js',
   'screens/HelpScreen.js',
   'screens/CharacterUnlockScreen.js',
-  'screens/ConnectAiScreen.js',
   'screens/DemoLockedScreen.js',
   'screens/landingContent.js',
   'screens/DesktopLandingScreen.js',
@@ -253,7 +252,6 @@ const GAME_CHUNK_FILES = new Set([
   'screens/LeaderboardScreen.js',
   'screens/HelpScreen.js',
   'screens/CharacterUnlockScreen.js',
-  'screens/ConnectAiScreen.js',
   'screens/DemoLockedScreen.js',
 ]);
 

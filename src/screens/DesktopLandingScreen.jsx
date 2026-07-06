@@ -17,6 +17,15 @@ import GameIcon from '../components/GameIcon.jsx'
 
 const DL_SHOT_DIMS = { w: 560, h: 1212 }
 
+// Nav links + the section id each one scrolls to / highlights for (scroll-spy).
+const DL_NAV_SECTIONS = [
+  ['dl-top', 'Home'],
+  ['dl-features', 'Features'],
+  ['dl-world', 'The World'],
+  ['dl-skills', 'Skills'],
+  ['dl-gallery', 'Screenshots'],
+]
+
 const DL_SKILLS = [
   ['attack', 'Attack'], ['strength', 'Strength'], ['defence', 'Defence'], ['hitpoints', 'Hitpoints'],
   ['ranged', 'Ranged'], ['magic', 'Magic'], ['prayer', 'Prayer'], ['mining', 'Mining'],
@@ -26,7 +35,7 @@ const DL_SKILLS = [
   ['slayer', 'Slayer'], ['construction', 'Construct.'], ['fletching', 'Fletching'], ['dungeoneering', 'Dungeon.'],
 ]
 
-const DL_GALLERY = ['ss-home', 'ss-worldmap', 'ss-place', 'ss-townmap', 'ss-combat', 'ss-bank', 'ss-inventory', 'ss-bosses', 'ss-trading', 'ss-collection', 'ss-leaderboard', 'ss-connect']
+const DL_GALLERY = ['ss-home', 'ss-worldmap', 'ss-place', 'ss-townmap', 'ss-combat', 'ss-bank', 'ss-inventory', 'ss-trading', 'ss-collection', 'ss-leaderboard']
 
 const DL_STEPS = [
   ['Pick a place', 'Travel to a town or city and choose a foe to fight, a skill to train, or a quest to chase. Set your loadout once.'],
@@ -75,6 +84,20 @@ export default function DesktopLandingScreen({ onGitHubLogin, onGoogleLogin, onP
     if (load) load().then(() => bumpIcons(n => n + 1)).catch(() => {})
   }, [])
 
+  // Scroll-spy: highlight whichever nav section is currently under the sticky
+  // header, so the little diamond marker under the nav text tracks scroll
+  // position instead of sitting permanently under "Home".
+  const [activeSection, setActiveSection] = useState('dl-top')
+  useEffect(() => {
+    const sections = DL_NAV_SECTIONS.map(([id]) => document.getElementById(id)).filter(Boolean)
+    if (typeof IntersectionObserver === 'undefined' || !sections.length) return undefined
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach(e => { if (e.isIntersecting) setActiveSection(e.target.id) })
+    }, { rootMargin: '-88px 0px -70% 0px', threshold: 0 })
+    sections.forEach(el => io.observe(el))
+    return () => io.disconnect()
+  }, [])
+
   useEffect(() => {
     const els = document.querySelectorAll('.dl-reveal')
     if (typeof IntersectionObserver === 'undefined') {
@@ -91,7 +114,7 @@ export default function DesktopLandingScreen({ onGitHubLogin, onGoogleLogin, onP
   }, [])
 
   return (
-    <div class="dl-root" id="dl-top">
+    <div class="dl-root">
       <header class="dl-nav">
         <div class="dl-wrap dl-nav__inner">
           <a class="dl-brand" href="#dl-top">
@@ -99,24 +122,22 @@ export default function DesktopLandingScreen({ onGitHubLogin, onGoogleLogin, onP
             <span class="dl-word dl-gilt">PocketRPG</span>
           </a>
           <nav class="dl-nav__links">
-            <a href="#dl-top" class="dl-nav__link--on">Home</a>
-            <a href="#dl-features">Features</a>
-            <a href="#dl-world">The World</a>
-            <a href="#dl-skills">Skills</a>
-            <a href="#dl-gallery">Screenshots</a>
+            {DL_NAV_SECTIONS.map(([id, label]) => (
+              <a key={id} href={`#${id}`} class={activeSection === id ? 'dl-nav__link--on' : ''}>{label}</a>
+            ))}
           </nav>
           <div class="dl-nav__right">
-            <a class="dl-signin" href="#dl-play">Sign in</a>
+            <a class="dl-play dl-play--nav" href="#dl-play">Sign in</a>
             {onPlayDemo
-              ? <button type="button" class="dl-btn dl-btn--ember" onClick={onPlayDemo}>Play Demo</button>
-              : <a class="dl-btn dl-btn--ember" href="#dl-play">Play Now — Free</a>}
+              ? <button type="button" class="dl-play dl-play--nav" onClick={onPlayDemo}>Play Demo</button>
+              : <a class="dl-play dl-play--nav" href="#dl-play">Play Now — Free</a>}
           </div>
         </div>
       </header>
 
       <div class="dl-main">
         {/* HERO — parchment proclamation sheet with the pinned world map */}
-        <section class="dl-hero">
+        <section class="dl-hero" id="dl-top">
           <div class="dl-wrap">
             <div class="dl-sheet dl-hero__sheet">
               <span class="fm-corner fm-corner--tl" aria-hidden="true" /><span class="fm-corner fm-corner--tr" aria-hidden="true" />
@@ -126,10 +147,6 @@ export default function DesktopLandingScreen({ onGitHubLogin, onGoogleLogin, onP
                   <h1 class="dl-hero__brand dl-gilt">PocketRPG</h1>
                   <div class="dl-orntag"><i /><span>A Medieval Idle RPG</span><i /></div>
                   <p class="dl-hero__sub">Embark on an endless adventure. Train your hero. Complete quests. Conquer raids. Be legendary.</p>
-                  {onPlayDemo
-                    ? <button type="button" class="dl-play" onClick={onPlayDemo}>Play Now</button>
-                    : <a class="dl-play" href="#dl-play">Play Now</a>}
-                  <a class="dl-hero__signin" href="#dl-play">Sign in — save to the cloud</a>
                   {onPlayDemo && (
                     <p class="dl-hero__note">No account needed — the demo runs offline in your browser. Sign in for cloud saves, raids, the Trading Post and leaderboards.</p>
                   )}
@@ -271,6 +288,21 @@ export default function DesktopLandingScreen({ onGitHubLogin, onGoogleLogin, onP
           </div>
         </section>
 
+        {/* AI COMPANION */}
+        <section class="dl-block" id="dl-companion">
+          <div class="dl-wrap dl-companion">
+            <div class="dl-companion__copy dl-reveal">
+              <span class="dl-eyebrow">Your companion</span>
+              <h2 class="dl-title dl-gilt">Chat with the AI companion</h2>
+              <p>Ask any question or get advice about the game — your companion knows the mechanics, the map, and your character.</p>
+            </div>
+            <div class="dl-companion__shot dl-reveal">
+              <img src={landingImages['ss-chat']} srcset={landingSrcSet(landingImages['ss-chat'])} sizes="(min-width: 1000px) 280px, 60vw"
+                alt="Chatting with the in-game AI companion" width={DL_SHOT_DIMS.w} height={DL_SHOT_DIMS.h} loading="lazy" decoding="async" />
+            </div>
+          </div>
+        </section>
+
         {/* AUTH CTA */}
         <section class="dl-cta-band" id="dl-play">
           <div class="dl-wrap">
@@ -279,10 +311,10 @@ export default function DesktopLandingScreen({ onGitHubLogin, onGoogleLogin, onP
               <h2 class="dl-gilt">Start your adventure</h2>
               <p>Free account. Progress saved to the cloud.<br />Play across all your devices.</p>
               <div class="dl-auth">
-                <button class="dl-btn dl-btn--github dl-btn--lg" onClick={hosted ? undefined : onGitHubLogin} disabled={hosted} style={hosted ? { pointerEvents: 'none' } : undefined}>
+                <button class="dl-btn--github" onClick={hosted ? undefined : onGitHubLogin} disabled={hosted} style={hosted ? { pointerEvents: 'none' } : undefined}>
                   <DlGitHubMark />Continue with GitHub
                 </button>
-                <button class="dl-btn dl-btn--google dl-btn--lg" onClick={hosted ? undefined : onGoogleLogin} disabled={hosted} style={hosted ? { pointerEvents: 'none' } : undefined}>
+                <button class="dl-btn--google" onClick={hosted ? undefined : onGoogleLogin} disabled={hosted} style={hosted ? { pointerEvents: 'none' } : undefined}>
                   <span class="dl-gg">G</span>Continue with Google
                 </button>
               </div>
@@ -294,11 +326,15 @@ export default function DesktopLandingScreen({ onGitHubLogin, onGoogleLogin, onP
               )}
               {embedded && (
                 <div class="dl-embed-hint">
-                  <div class="dl-embed-hint__title">⚠️ Google sign-in needs your real browser</div>
+                  <div class="dl-embed-hint__title">
+                    <GameIcon iconKey="info" color="var(--fm-ember-deep)" size={15} title="" /> Google sign-in needs your real browser
+                  </div>
                   <p>You're in an in-app browser, which Google blocks. Open this page in Safari or Chrome. GitHub works as-is.</p>
                   {showBrowserHint && (
                     <button type="button" class="dl-embed-hint__copy" onClick={onCopyLink}>
-                      {copied ? '✓ Link copied' : '🔗 Copy link to open in browser'}
+                      {copied
+                        ? <><GameIcon iconKey="check_mark" color="#4ade80" size={15} title="" /> Link copied</>
+                        : 'Copy link to open in browser'}
                     </button>
                   )}
                 </div>
@@ -351,7 +387,9 @@ export default function DesktopLandingScreen({ onGitHubLogin, onGoogleLogin, onP
                 <h5>Play</h5>
                 <a href="#dl-play">Sign in with GitHub</a>
                 <a href="#dl-play">Sign in with Google</a>
-                <a href="https://pocketrpg.co.uk" target="_blank" rel="noopener">Live build ↗</a>
+                {onPlayDemo
+                  ? <a href="#dl-top" onClick={(e) => { e.preventDefault(); onPlayDemo() }}>Play Demo</a>
+                  : <a href="#dl-play">Play Demo</a>}
               </div>
             </div>
           </div>
