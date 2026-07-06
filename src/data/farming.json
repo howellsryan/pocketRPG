@@ -8,7 +8,7 @@
       "plantXp": 11,
       "harvestXp": 12.5,
       "growthTimeMs": 4800000,
-      "icon": "\ud83c\udf31"
+      "icon": "🌱"
     },
     {
       "id": "miremint_seed",
@@ -18,7 +18,7 @@
       "plantXp": 14,
       "harvestXp": 16,
       "growthTimeMs": 4800000,
-      "icon": "\ud83c\udf3f"
+      "icon": "🌿"
     },
     {
       "id": "duskroot_seed",
@@ -28,7 +28,7 @@
       "plantXp": 17,
       "harvestXp": 19.5,
       "growthTimeMs": 4800000,
-      "icon": "\ud83c\udf3f"
+      "icon": "🌿"
     },
     {
       "id": "kingsherb_seed",
@@ -38,7 +38,7 @@
       "plantXp": 23,
       "harvestXp": 26,
       "growthTimeMs": 4800000,
-      "icon": "\ud83c\udf31"
+      "icon": "🌱"
     },
     {
       "id": "graysage_seed",
@@ -48,7 +48,7 @@
       "plantXp": 30,
       "harvestXp": 34.5,
       "growthTimeMs": 4800000,
-      "icon": "\ud83c\udf3f"
+      "icon": "🌿"
     },
     {
       "id": "bogtuber_seed",
@@ -58,7 +58,7 @@
       "plantXp": 35,
       "harvestXp": 40,
       "growthTimeMs": 4800000,
-      "icon": "\ud83e\udd54"
+      "icon": "🥔"
     },
     {
       "id": "rynarr_seed",
@@ -68,7 +68,7 @@
       "plantXp": 64,
       "harvestXp": 73.5,
       "growthTimeMs": 4800000,
-      "icon": "\ud83c\udf3f"
+      "icon": "🌿"
     }
   ],
   "trees": [
@@ -80,7 +80,7 @@
       "plantXp": 14,
       "harvestXp": 4500,
       "growthTimeMs": 8800000,
-      "icon": "\ud83c\udf32"
+      "icon": "🌲"
     },
     {
       "id": "willow_sapling",
@@ -90,7 +90,7 @@
       "plantXp": 27,
       "harvestXp": 8150,
       "growthTimeMs": 8800000,
-      "icon": "\ud83c\udf33"
+      "icon": "🌳"
     },
     {
       "id": "maple_sapling",
@@ -100,7 +100,7 @@
       "plantXp": 45,
       "harvestXp": 13500,
       "growthTimeMs": 8800000,
-      "icon": "\ud83c\udf33"
+      "icon": "🌳"
     },
     {
       "id": "yew_sapling",
@@ -110,7 +110,7 @@
       "plantXp": 81,
       "harvestXp": 24000,
       "growthTimeMs": 8800000,
-      "icon": "\ud83c\udf33"
+      "icon": "🌳"
     },
     {
       "id": "magic_sapling",
@@ -120,7 +120,7 @@
       "plantXp": 145,
       "harvestXp": 43700,
       "growthTimeMs": 8800000,
-      "icon": "\ud83c\udf33"
+      "icon": "🌳"
     }
   ],
   "fruitTrees": [
@@ -134,7 +134,7 @@
       "growthTimeMs": 57600000,
       "fruitRegrowMs": 2400000,
       "fruitLimit": 6,
-      "icon": "\ud83c\udf4e"
+      "icon": "🍎"
     },
     {
       "id": "banana_sapling",
@@ -146,7 +146,7 @@
       "growthTimeMs": 7600000,
       "fruitRegrowMs": 2400000,
       "fruitLimit": 6,
-      "icon": "\ud83c\udf4c"
+      "icon": "🍌"
     },
     {
       "id": "orange_sapling",
@@ -158,7 +158,7 @@
       "growthTimeMs": 7600000,
       "fruitRegrowMs": 2400000,
       "fruitLimit": 6,
-      "icon": "\ud83c\udf4a"
+      "icon": "🍊"
     },
     {
       "id": "curry_sapling",
@@ -170,7 +170,7 @@
       "growthTimeMs": 7600000,
       "fruitRegrowMs": 2400000,
       "fruitLimit": 6,
-      "icon": "\ud83c\udf3f"
+      "icon": "🌿"
     },
     {
       "id": "papaya_sapling",
@@ -182,7 +182,7 @@
       "growthTimeMs": 7600000,
       "fruitRegrowMs": 2400000,
       "fruitLimit": 6,
-      "icon": "\ud83e\udde1"
+      "icon": "🧡"
     },
     {
       "id": "palm_sapling",
@@ -194,13 +194,13 @@
       "growthTimeMs": 7600000,
       "fruitRegrowMs": 2400000,
       "fruitLimit": 6,
-      "icon": "\ud83c\udf34"
+      "icon": "🌴"
     }
   ],
   "locations": [
     {
       "id": "falador",
-      "name": "Ironhold Farm",
+      "name": "Faloden Farm",
       "placeId": "faloden",
       "patches": [
         {
@@ -215,7 +215,7 @@
     },
     {
       "id": "taverley",
-      "name": "Mossmere Farm",
+      "name": "Draynar Farm",
       "placeId": "draynar",
       "patches": [
         {
@@ -230,7 +230,7 @@
     },
     {
       "id": "ardougne",
-      "name": "Silverkeep Farm",
+      "name": "Ardounne Farm",
       "placeId": "ardounne",
       "patches": [
         {
@@ -245,7 +245,7 @@
     },
     {
       "id": "catherby",
-      "name": "Seabloom Farm",
+      "name": "Catherra Farm",
       "placeId": "catherra",
       "patches": [
         {
@@ -264,7 +264,7 @@
     },
     {
       "id": "hosidius",
-      "name": "Sunmeadow Farm",
+      "name": "Seerhold Farm",
       "placeId": "seerhold",
       "patches": [
         {
@@ -284,7 +284,7 @@
     },
     {
       "id": "gnome",
-      "name": "Spryroot Grove",
+      "name": "Lumbright Farm",
       "placeId": "lumbright",
       "patches": [
         {
@@ -295,7 +295,7 @@
     },
     {
       "id": "brimhaven",
-      "name": "Emberbay Farm",
+      "name": "Brimhollow Farm",
       "placeId": "brimhollow",
       "patches": [
         {

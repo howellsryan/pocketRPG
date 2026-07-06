@@ -308,7 +308,7 @@ describe('describeActivity', () => {
     expect(describeActivity('combat', 'no_such_monster').name).toBe('no_such_monster') // falls back to ref
     expect(describeActivity('raid', 'crimson_night_theatre').name).toBe('Crimson Night Theatre')
     expect(describeActivity('minigame', 'pest_control').name).toBe('Void Breach')
-    expect(describeActivity('farming', 'falador').name).toBe('Ironhold Farm') // farm location name
+    expect(describeActivity('farming', 'falador').name).toBe('Faloden Farm') // farm named for its place
     expect(describeActivity('farming', 'no_such_farm').name).toBe('no_such_farm')
   })
 

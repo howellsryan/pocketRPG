@@ -114,7 +114,6 @@
       {
         "kind": "farming",
         "ref": "gnome",
-        "label": "Spryroot Grove",
         "x": 165,
         "y": 685
       }
@@ -368,7 +367,6 @@
       {
         "kind": "farming",
         "ref": "falador",
-        "label": "Ironhold Farm",
         "x": 660,
         "y": 610
       }
@@ -524,7 +522,6 @@
       {
         "kind": "farming",
         "ref": "ardougne",
-        "label": "Silverkeep Farm",
         "x": 700,
         "y": 600
       }
@@ -625,7 +622,6 @@
       {
         "kind": "farming",
         "ref": "taverley",
-        "label": "Mossmere Farm",
         "x": 1010,
         "y": 540
       }
@@ -1032,7 +1028,6 @@
       {
         "kind": "farming",
         "ref": "catherby",
-        "label": "Seabloom Farm",
         "x": 820,
         "y": 470
       }
@@ -1141,7 +1136,6 @@
       {
         "kind": "farming",
         "ref": "hosidius",
-        "label": "Sunmeadow Farm",
         "x": 900,
         "y": 520
       }
@@ -1238,7 +1232,6 @@
       {
         "kind": "farming",
         "ref": "brimhaven",
-        "label": "Emberbay Farm",
         "x": 520,
         "y": 570
       }
