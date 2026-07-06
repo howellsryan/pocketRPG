@@ -147,10 +147,6 @@ export default function DesktopLandingScreen({ onGitHubLogin, onGoogleLogin, onP
                   <h1 class="dl-hero__brand dl-gilt">PocketRPG</h1>
                   <div class="dl-orntag"><i /><span>A Medieval Idle RPG</span><i /></div>
                   <p class="dl-hero__sub">Embark on an endless adventure. Train your hero. Complete quests. Conquer raids. Be legendary.</p>
-                  {onPlayDemo
-                    ? <button type="button" class="dl-play" onClick={onPlayDemo}>Play Demo</button>
-                    : <a class="dl-play" href="#dl-play">Play Now</a>}
-                  <a class="dl-hero__signin" href="#dl-play">Sign in</a>
                   {onPlayDemo && (
                     <p class="dl-hero__note">No account needed — the demo runs offline in your browser. Sign in for cloud saves, raids, the Trading Post and leaderboards.</p>
                   )}
