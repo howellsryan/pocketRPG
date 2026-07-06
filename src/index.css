@@ -400,13 +400,12 @@ html, body, #app {
 .mb-safe { margin-bottom: env(safe-area-inset-bottom); }
 
 /* ──────────────────────────────────────────────────────────────────────────
-   OSRS-style mobile frame (GameFrameBar) — carved-wood chrome with gold
-   medallion buttons framing the rounded parchment content panel. CSS
-   rendition of the design mock; the wood/corner artwork can be swapped for
-   image assets later. Mobile-only: everything is scoped under md so the
-   desktop SideNav + Header chrome is untouched.
+   OSRS-style frame (GameFrameBar) — carved-wood chrome with gold medallion
+   buttons framing the rounded parchment content panel. CSS rendition of the
+   design mock; the wood/corner artwork can be swapped for image assets later.
+   The app chrome at every viewport width — the old desktop SideNav + Header
+   are gone; screens keep their own desktop layouts inside .gf-main.
    ────────────────────────────────────────────────────────────────────────── */
-@media (max-width: 767px) {
   /* Carved dark-wood shell behind the rails and around the content panel. */
   .gf-shell {
     position: relative;
@@ -507,12 +506,9 @@ html, body, #app {
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
     white-space: nowrap;
   }
-}
 
 /* Floating chat-helper button — same carved wood-and-gold medallion styling
-   as the frame-bar nav icons, so it doesn't stand out as a flat gold circle.
-   Not scoped to the mobile-only media query above since the widget shows on
-   desktop too. */
+   as the frame-bar nav icons, so it doesn't stand out as a flat gold circle. */
 .chat-fab {
   width: 48px;
   height: 48px;
@@ -797,31 +793,6 @@ html, body, #app {
 .wm-actmodal-row__icon { flex-shrink: 0; }
 .wm-actmodal-row__name { flex: 1; min-width: 0; color: var(--fm-ink); }
 .wm-actmodal-row__lvl { font-family: var(--fm-num); font-size: 12.5px; font-weight: 600; color: var(--fm-ember-deep); flex-shrink: 0; }
-
-/* Forgemark nav rail (desktop SideNav + mobile BurgerMenu drawer) — the app
-   chrome joins the parchment screens: vellum texture, rule border, gilt brand. */
-.fm-navrail { background-color: var(--fm-vellum); background-image: var(--fm-tex-parch); background-size: 400px; border-right: 1px solid var(--fm-rule); scrollbar-width: thin; scrollbar-color: var(--fm-rule) transparent; }
-/* The global scrollbar track (--color-void-light) resolves near-black outside
-   .forge-shell — on the vellum rail it reads as a black line. Parchment it. */
-.fm-navrail::-webkit-scrollbar-track { background: transparent; }
-.fm-navrail::-webkit-scrollbar-thumb { background: var(--fm-rule); }
-.fm-navbrand { font-family: var(--font-display); font-weight: 800; letter-spacing: 0.02em; background: var(--fm-gilt-text); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent; }
-
-/* Desktop top bar joins the parchment chrome too; mobile keeps the black bar.
-   Same token remap as .forge-shell so var-based text reads as ink on vellum —
-   hardcoded dark chips (skip/credits pills, HP track) stay iron-on-parchment. */
-@media (min-width: 768px) {
-  .fm-topbar {
-    background-color: var(--fm-vellum);
-    background-image: var(--fm-tex-parch);
-    background-size: 400px;
-    border-bottom-color: var(--fm-rule);
-    --color-parchment: var(--fm-ink-soft);
-    --color-parchment-dark: var(--fm-ink-faint);
-    --color-gold: var(--fm-brass);
-    --color-gold-dim: var(--fm-brass-lo);
-  }
-}
 
 /* Emblem primitive */
 .skill-emblem { position: relative; pointer-events: none; }

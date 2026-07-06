@@ -1,11 +1,12 @@
 import GameIcon from './GameIcon.jsx'
 import { GAME_FRAME_TOP_TABS, GAME_FRAME_TOP_LEFT_TABS, GAME_FRAME_BOTTOM_LEFT_TABS } from './navTabs.js'
 
-// OSRS-style mobile chrome: gold medallion rails framing the main content
-// panel, drawn into the carved-wood shell (.gf-shell / .gf-main in index.css).
+// OSRS-style chrome: gold medallion rails framing the main content panel,
+// drawn into the carved-wood shell (.gf-shell / .gf-main in index.css).
 // Top rail: Home · World Map · Inventory · Equipment. Bottom rail: Settings ·
-// Credits + Skip (centered). Mobile-only (md:hidden) — desktop keeps
-// SideNav + Header.
+// Daily Tasks + Credits + Skip (centered). The app's only navigation chrome at
+// every viewport width — rails cap at max-w-xl so the medallions keep their
+// phone spacing on desktop while the content panel stays full width.
 function FrameMedallion({ label, active = false, disabled = false, locked = false, onClick, title, children }) {
   return (
     <button
@@ -37,6 +38,9 @@ export default function GameFrameBar({
   onBuyCredits = null,
   credits = 0,
   isCloudAccount = false,
+  onDailyTasks = null,
+  dailyTasksCompleted = 0,
+  dailyTasksTotal = 5,
 }) {
   const navMedallion = (tab) => {
     const isLocked = demo && lockedScreens?.has(tab.id)
@@ -68,7 +72,7 @@ export default function GameFrameBar({
     return (
       <nav
         aria-label="Quick actions"
-        class="pwa-header md:hidden flex items-center justify-evenly flex-shrink-0 px-3 pt-3 pb-1"
+        class="pwa-header flex items-center justify-evenly flex-shrink-0 px-3 pt-3 pb-1 w-full max-w-xl mx-auto"
       >
         {GAME_FRAME_TOP_LEFT_TABS.map(navMedallion)}
         {GAME_FRAME_TOP_TABS.map(navMedallion)}
@@ -79,10 +83,23 @@ export default function GameFrameBar({
   return (
     <nav
       aria-label="Menu"
-      class="md:hidden flex items-center justify-between flex-shrink-0 px-5 pt-2 pb-safe"
+      class="flex items-center justify-between flex-shrink-0 px-5 pt-2 pb-safe w-full max-w-xl mx-auto"
     >
       {GAME_FRAME_BOTTOM_LEFT_TABS.map(navMedallion)}
       <span class="flex-1 flex items-center justify-center gap-2">
+        {(isCloudAccount || demo) && (
+          <button
+            onClick={() => { if (demo) onLockedFeature?.(); else onDailyTasks?.() }}
+            aria-label="Daily Tasks"
+            title={demo ? 'Daily Tasks are available with a free account' : 'Daily Tasks'}
+            class={`gf-credits ${demo ? 'gf-medallion--locked' : ''}`}
+          >
+            <span class="text-[16px] leading-none">{demo ? '🔒' : '📋'}</span>
+            <span style={demo ? undefined : { color: dailyTasksCompleted === dailyTasksTotal ? 'var(--color-gold)' : undefined }}>
+              {demo ? '—' : `${dailyTasksCompleted}/${dailyTasksTotal}`}
+            </span>
+          </button>
+        )}
         {(isCloudAccount || demo) && (
           <button
             onClick={() => { if (demo) onLockedFeature?.(); else onBuyCredits?.() }}

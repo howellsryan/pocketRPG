@@ -17,6 +17,9 @@ import SlayerMasterModal from '../components/SlayerMasterModal.jsx'
 import { placeHasMap } from '../engine/placeMaps.js'
 import { usePanZoomStage } from '../hooks/usePanZoomStage.js'
 import questsData from '../data/quests.json'
+import minigamesData from '../data/minigames.json'
+import { isMinigameItemUnlocked } from '../utils/completion.js'
+import { countItem } from '../engine/inventory.js'
 
 // Facility chip glyph: bank reuses the existing in-game bank icon (the nav's coins
 // glyph); furnace & anvil gets its bespoke PlaceIcon; anything else falls back to its
@@ -81,9 +84,8 @@ function fakeTaskFor(kind, ref) {
     case 'hunter': return { type: 'hunter', action: { id: ref } }
     // Farming: ref is the farm location id; arrival opens that farm's patch view.
     case 'farming': return { type: 'farming', location: { id: ref } }
-    // No specific reward task at this level (the place hub lists the whole venue) — gate
-    // by the minigame itself; arrival just opens the Minigames screen, task unpicked.
-    case 'minigame': return { type: 'minigame', minigameTask: { minigame: ref } }
+    // Minigames are handled in activateActivity: the venue ref alone can't start
+    // anything — a specific reward task is picked there so it can auto-start.
     // Getting a slayer task from the master homed here — never becomes an
     // activeTask; arrival routes to the Slayer screen which assigns it.
     case 'slayer': return { type: 'slayermaster', master: { id: ref } }
@@ -96,6 +98,7 @@ export default function WorldMapScreen({ onNavigate, onAutoStart, initialView } 
     worldLocation, updateWorldLocation, activeTask, setActiveTask, addToast, requestActivityStart,
     inventory, bank, equipment, stats, itemsData, updateInventory, updateBankDirect, grantXP,
     completedQuests, bossKillCounts, questQueue, removeFromQuestQueue,
+    unlockedMinigameItems,
   } = useGame()
   const world = getWorld()
   const here = getPlace(worldLocation) ? worldLocation : world.start
@@ -196,14 +199,35 @@ export default function WorldMapScreen({ onNavigate, onAutoStart, initialView } 
       startQuestFromMap(ref)
       return
     }
-    const task = fakeTaskFor(kind, ref)
+    // Minigames auto-start rather than stopping at the Minigames list: pick the
+    // venue's next reward task here so the task shape carries a specific id —
+    // an immediate start (and a travel arrival) then resumes it via the
+    // Minigames screen's initialTaskId auto-start.
+    const task = kind === 'minigame'
+      ? (() => {
+          const mgTask = pickMinigameTask(ref)
+          if (!mgTask) addToast("You're missing an item this minigame's tasks require.", 'error')
+          return mgTask ? { type: 'minigame', minigameTask: mgTask } : null
+        })()
+      : fakeTaskFor(kind, ref)
     if (!task) return
     if (requestActivityStart(task)) {
-      if (kind === 'minigame') onNavigate?.(SCREENS.MINIGAMES)
       // Starts from the place map carry a returnTo so the owning screen's
       // back/stop buttons come back to this map, not a hardcoded list.
-      else onAutoStart?.(autoStartFromTask(task), mapPlaceId ? { screen: SCREENS.WORLD_MAP, data: { view: 'place' } } : undefined)
+      onAutoStart?.(autoStartFromTask(task), mapPlaceId ? { screen: SCREENS.WORLD_MAP, data: { view: 'place' } } : undefined)
     }
+  }
+
+  // Venue → the reward task an auto-start runs: first not-yet-unlocked task whose
+  // item requirement is met (data order — the same order the Minigames screen
+  // lists), falling back to the first startable one so a finished venue can
+  // still be re-run. Null when every task needs an item the player doesn't own.
+  const pickMinigameTask = (venueId) => {
+    const owned = (itemId) => countItem(inventory, itemId) > 0
+      || (bank?.[itemId]?.quantity > 0)
+      || Object.values(equipment || {}).some((slot) => slot?.itemId === itemId)
+    const startable = minigamesData.tasks.filter((t) => t.minigame === venueId && (!t.requiresItem || owned(t.requiresItem)))
+    return startable.find((t) => !isMinigameItemUnlocked(unlockedMinigameItems, t.product)) || startable[0] || null
   }
 
   // "Get New Task" travel gate: returns true when the player is at the master's

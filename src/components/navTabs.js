@@ -1,25 +1,15 @@
 import { SCREENS, isWorldMapEnabled } from '../utils/constants.js'
 
-export const NAV_TABS = [
-  { id: SCREENS.HOME,               label: 'Home',           icon: '🏠', iconKey: 'home', iconSize: 34 },
-  ...(isWorldMapEnabled() ? [{ id: SCREENS.WORLD_MAP, label: 'World Map', icon: '🗺️', iconKey: 'globe', iconSize: 30 }] : []),
-  { id: SCREENS.BANK,               label: 'Bank',           icon: '🏦', iconKey: 'coins' },
-  { id: SCREENS.INVENTORY,          label: 'Items',          icon: '🎒', iconKey: 'backpack' },
-  { id: SCREENS.EQUIPMENT,          label: 'Equip',          icon: '🛡️', iconKey: 'paperdoll' },
-  { id: SCREENS.STORE,              label: 'Trading Post',   icon: '🪙', iconKey: 'uncut_ruby' },
-  { id: SCREENS.CLUES,              label: 'Clues',          icon: '🗝️', iconKey: 'clue_scroll_hard' },
-  { id: SCREENS.HELP,               label: 'Settings',       icon: '🧭', iconKey: 'tinderbox' },
-]
-
 // Skills/Combat/Quests/Minigames/Gather have no nav entry: that content starts
 // from the World Map (place hubs, town maps, quest posts).
 
-// Mobile OSRS-style frame (GameFrameBar): gold medallion rails above and below
-// the main content panel, set in a carved-wood chrome. Top rail carries Home
-// (top-left) then World Map/Inventory/Equipment; bottom rail carries Settings,
-// then Credits + Skip together (both rendered by GameFrameBar itself). Icons
-// are tintable game-icons glyphs so they read as brass/steel inlays on the
-// dark medallions.
+// OSRS-style frame (GameFrameBar) — the app's only navigation chrome at every
+// viewport width: gold medallion rails above and below the main content panel,
+// set in a carved-wood chrome. Top rail carries Home (top-left) then World
+// Map/Inventory/Equipment; bottom rail carries Settings, then Daily Tasks +
+// Credits + Skip together (all rendered by GameFrameBar itself). Icons are
+// tintable game-icons glyphs so they read as brass/steel inlays on the dark
+// medallions.
 export const GAME_FRAME_TOP_LEFT_TABS = [
   { id: SCREENS.HOME, label: 'Home', iconKey: 'home', iconSize: 20, iconColor: '#efe3c2' },
 ]
@@ -33,9 +23,9 @@ export const GAME_FRAME_BOTTOM_LEFT_TABS = [
 ]
 
 // Screens reachable from the Settings screen (HelpScreen) instead of the nav
-// rails — keeps SideNav/BurgerMenu short on mobile and desktop. Trading Post
-// and Clues also live here because the mobile OSRS-style frame (GameFrameBar)
-// has no rail entry for them — Settings is their only mobile entry point.
+// rails — keeps the rails short. Trading Post and Clues also live here because
+// the OSRS-style frame (GameFrameBar) has no rail entry for them — Settings is
+// their only entry point.
 export const SETTINGS_NAV_LINKS = [
   { id: SCREENS.STORE,             label: 'Trading Post',      iconKey: 'uncut_ruby' },
   { id: SCREENS.CLUES,             label: 'Clues',             iconKey: 'clue_scroll_hard' },
