@@ -107,3 +107,11 @@ A warrior + weapon + dragon scene ≈ **2.8 MB / ~120k tris** — phone-shippabl
 - **Phase 2 — Combat vs red dragon (one monster).** Warrior (rigged attack/idle) vs a **transform-faked** dragon (whole-mesh lunge/recoil/shake — no rig needed first pass). Perf/device-gated, torn down when combat closes.
 
 **Needed from product:** rigged + animated **base-body warrior** (empty hand, idle + attack, low poly) re-exported from Tripo; the dragon can stay static (transform-faked).
+
+### Landed so far (Phase 1 groundwork)
+- **Vendored three.js** at `public/vendor/three/` (core + `GLTFLoader` + `meshopt_decoder` + `OrbitControls` + `SkeletonUtils`), imports rewritten to **relative paths** so it resolves in both Vite dev (`/…`) and the deployed single-file build (`/public/…`) with **no import map**. Served as static files — not inlined into the core/concat chunk.
+- **On-device preview + weapon aligner** at `public/3d-preview.html` (standalone, not in the app bundle). Loads a character + weapon GLB, attaches the weapon to a chosen bone with live position/rotation/scale sliders, and emits the exact transform to paste into the registry. Also previews the transform-fake attack lunge. Open at `/3d-preview.html` (dev) or `/public/3d-preview.html` (prod). Sample processed GLBs in `public/3d-samples/` (throwaway placeholders — swap in the rigged warrior).
+- **Equipment model registry** `src/data/equipmentModels.json` + resolver `src/utils/equipModels.js` (+ test): maps an equipped item → optional model + placement transform; weapon-only entries now, `bone`-per-entry schema already shaped for full-slot layering. Returns null → icon-UI fallback, so 3D coverage is always partial-safe.
+
+### Still to do (Phase 1)
+Wire the viewer into `EquipmentScreen` (mobile + desktop): a lazily-loaded `Model3DViewer` Preact component (dynamic-imports vendored three, mounts a scene, attaches the equipped weapon via the registry, tears down on unmount, guards WebGL/reduced-data → paper-doll fallback), register it in `build_single.cjs` (`sourceFiles` + `GAME_CHUNK_FILES`), add a `/public/vendor/*` cache-header rule. Blocked on the rigged base-body warrior (needed to bind the hand bone + idle/attack clips) and on-device visual confirmation via the preview.

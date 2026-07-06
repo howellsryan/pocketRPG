@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "modelBase": "/public/3d-samples/",
+  "defaults": {
+    "handBone": "mixamorig:RightHand"
+  },
+  "character": {
+    "model": "warrior.glb"
+  },
+  "weapons": {
+    "dragon_dagger": {
+      "model": "crimson_dagger.glb",
+      "bone": null,
+      "position": [0, 0, 0],
+      "rotationDeg": [0, 0, 0],
+      "scale": 1
+    }
+  }
+}
