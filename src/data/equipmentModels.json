@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "modelBase": "/public/3d-samples/",
+  "modelBase": "3d-samples/",
   "defaults": {
     "handBone": "mixamorig:RightHand"
   },

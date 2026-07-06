@@ -12,7 +12,7 @@
 
 import equipmentModelsData from '../data/equipmentModels.json'
 
-const IDENTITY = { position: [0, 0, 0], rotationDeg: [0, 0, 0], scale: 1 }
+const EQUIP_IDENTITY = { position: [0, 0, 0], rotationDeg: [0, 0, 0], scale: 1 }
 
 // Character (hero) model spec, or null if none configured.
 export function getCharacterModel() {
@@ -28,9 +28,9 @@ export function getWeaponModel(itemId) {
   return {
     model: w.model,
     bone: w.bone || (equipmentModelsData.defaults && equipmentModelsData.defaults.handBone) || null,
-    position: w.position || IDENTITY.position,
-    rotationDeg: w.rotationDeg || IDENTITY.rotationDeg,
-    scale: typeof w.scale === 'number' ? w.scale : IDENTITY.scale,
+    position: w.position || EQUIP_IDENTITY.position,
+    rotationDeg: w.rotationDeg || EQUIP_IDENTITY.rotationDeg,
+    scale: typeof w.scale === 'number' ? w.scale : EQUIP_IDENTITY.scale,
   }
 }
 
@@ -39,12 +39,20 @@ export function hasWeaponModel(itemId) {
   return Boolean(itemId && equipmentModelsData.weapons && equipmentModelsData.weapons[itemId] && equipmentModelsData.weapons[itemId].model)
 }
 
-// Resolve a bare model filename to a fetchable URL. `base` defaults to the
-// registry's modelBase; callers in a non-root-served context (e.g. Vite dev)
-// can pass their own base.
+// Deployment-root prefix for static assets. The single-file build serves
+// public/ under /public/ (build_single injects `pocketAssetBase='/public/'`);
+// Vite dev and the dist build serve it at root, where the global is undefined
+// and this falls back to '/'. `typeof` guard so it's safe in Node tests too.
+function equipAssetBase() {
+  return (typeof pocketAssetBase !== 'undefined' && pocketAssetBase) || '/'
+}
+
+// Resolve a bare model filename to a fetchable URL. Defaults to
+// `<assetBase><modelBase><model>` so it works in every build; already-absolute
+// URLs pass through, and callers may override `base` explicitly.
 export function modelUrl(model, base) {
   if (!model) return null
   if (/^(https?:)?\/\//.test(model) || model.startsWith('/')) return model
-  const b = base || equipmentModelsData.modelBase || '/'
+  const b = base || equipAssetBase() + (equipmentModelsData.modelBase || '')
   return b.endsWith('/') ? b + model : b + '/' + model
 }

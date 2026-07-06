@@ -29,6 +29,8 @@ const sourceFiles = [
   'utils/armoury.js',
   'utils/oneLifeDeath.js',
   'utils/rewardReveal.js',
+  'utils/equipModels.js', // -> game chunk (equip screen 3D model registry)
+  'utils/three3d.js',     // -> game chunk (lazy three.js loader; equip/combat 3D)
   'hooks/useActionTick.js',
   'hooks/useIsDesktop.js',
   'hooks/useEscapeKey.js',
@@ -153,6 +155,7 @@ const sourceFiles = [
   'components/DailyTasksModal.js',
   'components/IdleCombatSetupModal.js',
   'components/EquipmentPaperdoll.js',
+  'components/Model3DViewer.js', // -> game chunk (equip screen 3D hero viewer)
   'components/CollectionLogPanel.js',
   'components/GildedComplete.js',
   'components/FilterToggleBar.js',
@@ -225,6 +228,9 @@ const GAME_CHUNK_FILES = new Set([
   'components/ActivityPickerModal.js',
   'components/PlaceMapView.js',
   'components/SlayerMasterModal.js',
+  'components/Model3DViewer.js',
+  'utils/equipModels.js',
+  'utils/three3d.js',
   'screens/HomeScreen.js',
   'screens/StatsScreen.js',
   'screens/InventoryScreen.js',
@@ -300,6 +306,7 @@ const dailyTasksJSON = readSrc('data/dailyTasks.json');
 const worldJSON = readSrc('data/world.json');
 const worldActivitiesJSON = readSrc('data/worldActivities.json');
 const placeMapsJSON = readSrc('data/placeMaps.json');
+const equipmentModelsJSON = readSrc('data/equipmentModels.json');
 
 // Landing screen images. Served as external files from /public/landing/ (the
 // Cloudflare Pages output dir is the repo root) and referenced by URL rather
@@ -531,7 +538,7 @@ const SPLIT_MINIFY = {
 // small world.json geography for boot-time location/travel; worldContent.js
 // guards every access with `typeof worldActivitiesData !== 'undefined'`, so a
 // pre-chunk call degrades to "unmapped, never gate".
-const gameChunkSource = `const gameIconsData = ${gameIconsJSON};\nconst bespokeIconsData = ${bespokeIconsJSON};\nconst worldActivitiesData = ${worldActivitiesJSON};\nconst placeMapsData = ${placeMapsJSON};\n${gameJS}`;
+const gameChunkSource = `const gameIconsData = ${gameIconsJSON};\nconst bespokeIconsData = ${bespokeIconsJSON};\nconst worldActivitiesData = ${worldActivitiesJSON};\nconst placeMapsData = ${placeMapsJSON};\nconst equipmentModelsData = ${equipmentModelsJSON};\nconst pocketAssetBase = '/public/';\n${gameJS}`;
 const gameChunkScript = esbuild.transformSync(gameChunkSource, SPLIT_MINIFY).code.trim();
 const gameChunkBody = `"use strict";\n${gameChunkScript}\n`;
 const gameChunkHash = require('crypto').createHash('sha256').update(gameChunkBody).digest('hex').slice(0, 12);

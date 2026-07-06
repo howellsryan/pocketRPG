@@ -36,8 +36,10 @@ describe('equipModels resolver', () => {
   })
 
   it('builds fetchable model URLs and leaves absolute ones untouched', () => {
+    // explicit base wins
     expect(modelUrl('crimson_dagger.glb', '/public/3d-samples/')).toBe('/public/3d-samples/crimson_dagger.glb')
-    expect(modelUrl('crimson_dagger.glb')).toBe(registry.modelBase + 'crimson_dagger.glb')
+    // default: assetBase ('/' in Node, no injected global) + registry.modelBase
+    expect(modelUrl('crimson_dagger.glb')).toBe('/' + registry.modelBase + 'crimson_dagger.glb')
     expect(modelUrl('/already/abs.glb')).toBe('/already/abs.glb')
     expect(modelUrl('https://x/y.glb')).toBe('https://x/y.glb')
     expect(modelUrl(null)).toBeNull()

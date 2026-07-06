@@ -17,6 +17,14 @@
 /public/landing/*
   Cache-Control: public, max-age=31536000, immutable
 
+# Vendored three.js (version-pinned) + 3D model assets — content-stable, fetched
+# lazily on demand only when a 3D view mounts.
+/public/vendor/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/public/3d-samples/*
+  Cache-Control: public, max-age=31536000, immutable
+
 # The lazily-loaded in-game code chunk is content-hashed (game-<hash>.js), so a
 # new deploy ships a new filename — safe to cache immutably.
 /game-*.js
