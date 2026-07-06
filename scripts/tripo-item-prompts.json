@@ -1,0 +1,11 @@
+{
+  "_comment": "Per-item generation presets for scripts/tripo-item-model.mjs. prompt is the Tripo text_to_model prompt; ratio/tex feed process-3d-model.mjs; scale/position/rotationDeg seed the equipmentModels.json entry (tune afterwards in public/3d-preview.html). Keep prompts styled consistently with the existing set (crimson dragon metal, bronze-brown grips, golden pommels).",
+  "dragon_scimitar": {
+    "prompt": "A single fantasy dragon scimitar weapon. Curved single-edged scimitar blade forged from deep crimson-red dragon metal, bright red-orange sheen along the cutting edge, darker maroon shading near the spine, styled to match a crimson dragon dagger from the same weapon set. Dark bronze-brown leather-wrapped grip, ornate golden pommel and small golden crossguard. Blade pointing upward, the whole weapon as one standalone prop, no hands, no character, no base, stylized fantasy MMORPG weapon.",
+    "ratio": 0.25,
+    "tex": 1024,
+    "scale": 0.32,
+    "position": [0, 0.08, 0.035],
+    "rotationDeg": [0, 0, 0]
+  }
+}
