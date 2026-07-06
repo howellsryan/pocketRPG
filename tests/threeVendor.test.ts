@@ -14,7 +14,7 @@ const VENDOR = path.resolve(__dirname, '../public/vendor/three')
 
 // Entry modules three3d.js / 3d-preview.html actually import.
 const ENTRIES = [
-  'three.module.js',
+  'three.module.min.js',
   'jsm/loaders/GLTFLoader.js',
   'jsm/libs/meshopt_decoder.module.js',
   'jsm/controls/OrbitControls.js',
@@ -58,7 +58,7 @@ describe('vendored three.js module graph', () => {
   it('vendored core build matches the pinned npm three (run npm run sync:three on drift)', () => {
     const npmBuild = path.resolve(__dirname, '../node_modules/three/build')
     if (!fs.existsSync(npmBuild)) return // devDeps not installed; graph checks above still ran
-    for (const f of ['three.module.js', 'three.core.js']) {
+    for (const f of ['three.module.min.js', 'three.core.min.js']) {
       const vendored = fs.readFileSync(path.join(VENDOR, f), 'utf8')
       const npm = fs.readFileSync(path.join(npmBuild, f), 'utf8')
       expect(vendored === npm, `${f} drifted from node_modules/three — run npm run sync:three`).toBe(true)

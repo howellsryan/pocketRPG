@@ -31,7 +31,7 @@ export function detectAssetPrefix() {
   _prefixP = (async () => {
     for (const p of assetPrefixCandidates()) {
       try {
-        const r = await fetch(p + 'vendor/three/three.module.js', { method: 'HEAD' })
+        const r = await fetch(p + 'vendor/three/three.module.min.js', { method: 'HEAD' })
         const ct = r.headers.get('content-type') || ''
         if (r.ok && !ct.includes('text/html')) return p
       } catch { /* try next */ }
@@ -57,7 +57,7 @@ export function loadThree() {
   if (_modules) return _modules
   _modules = (async () => {
     const base = (await detectAssetPrefix()) + 'vendor/three/'
-    const THREE = await import(/* @vite-ignore */ base + 'three.module.js')
+    const THREE = await import(/* @vite-ignore */ base + 'three.module.min.js')
     const [{ GLTFLoader }, { MeshoptDecoder }, { OrbitControls }, SkeletonUtils] = await Promise.all([
       import(/* @vite-ignore */ base + 'jsm/loaders/GLTFLoader.js'),
       import(/* @vite-ignore */ base + 'jsm/libs/meshopt_decoder.module.js'),

@@ -35,7 +35,8 @@ export default function EquipmentScreen() {
   // The slot grid is still rendered beneath it for equip/unequip; when WebGL is
   // unavailable we fall back to the paper doll alone — zero regression.
   const heroPath = getCharacterAssetPath()
-  const show3D = useMemo(() => Boolean(heroPath) && canRender3D(), [heroPath])
+  const [heroFailed, setHeroFailed] = useState(false)
+  const show3D = useMemo(() => Boolean(heroPath) && !heroFailed && canRender3D(), [heroPath, heroFailed])
   const weaponSpec = useMemo(() => {
     const wid = equipment?.weapon?.itemId
     return wid ? getWeaponPlacement(wid) : null
@@ -334,6 +335,7 @@ export default function EquipmentScreen() {
                 weapon={weaponSpec}
                 height={360}
                 fallback={null}
+                onFail={() => setHeroFailed(true)}
               />
             </Card>
             <EquipmentPaperdoll

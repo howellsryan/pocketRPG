@@ -5,11 +5,12 @@
 //
 //   npm run sync:three
 //
-// Copies the core build (three.module.js + three.core.js — BOTH are required;
-// three.module.js imports './three.core.js') and the addons we use, rewriting
-// the addons' bare `from 'three'` specifiers to relative paths so the graph
-// resolves without an import map in both Vite dev (/vendor/…) and the deployed
-// single-file build (/public/vendor/…).
+// Copies the MINIFIED core build (three.module.min.js + three.core.min.js —
+// BOTH are required; the module file imports './three.core.min.js') and the
+// addons we use, rewriting the addons' bare `from 'three'` specifiers to
+// relative paths so the graph resolves without an import map in both Vite dev
+// (/vendor/…) and the deployed single-file build (/public/vendor/…). Addons
+// aren't shipped minified upstream; they're small and Brotli covers them.
 
 import fs from 'fs';
 import path from 'path';
@@ -19,8 +20,8 @@ const DEST = 'public/vendor/three';
 
 // [source (relative to node_modules/three), dest (relative to DEST), rewrite bare 'three'?]
 const FILES = [
-  ['build/three.module.js', 'three.module.js', false],
-  ['build/three.core.js', 'three.core.js', false],
+  ['build/three.module.min.js', 'three.module.min.js', false],
+  ['build/three.core.min.js', 'three.core.min.js', false],
   ['examples/jsm/loaders/GLTFLoader.js', 'jsm/loaders/GLTFLoader.js', true],
   ['examples/jsm/controls/OrbitControls.js', 'jsm/controls/OrbitControls.js', true],
   ['examples/jsm/libs/meshopt_decoder.module.js', 'jsm/libs/meshopt_decoder.module.js', true],
@@ -28,11 +29,19 @@ const FILES = [
   ['examples/jsm/utils/SkeletonUtils.js', 'jsm/utils/SkeletonUtils.js', true],
 ];
 
+// Stale files from earlier syncs (e.g. the unminified builds) must not linger:
+// a mixed old/new module graph is exactly the failure mode this script exists
+// to prevent.
+for (const stale of ['three.module.js', 'three.core.js']) {
+  const p = path.join(DEST, stale);
+  if (fs.existsSync(p)) { fs.unlinkSync(p); console.log(`removed stale ${p}`); }
+}
+
 for (const [src, dest, rewrite] of FILES) {
   let code = fs.readFileSync(path.join(SRC, src), 'utf8');
   if (rewrite) {
     const depth = dest.split('/').length - 1;
-    const rel = '../'.repeat(depth) + 'three.module.js';
+    const rel = '../'.repeat(depth) + 'three.module.min.js';
     code = code.replace(/from\s+(['"])three\1/g, `from '${rel}'`);
   }
   const out = path.join(DEST, dest);

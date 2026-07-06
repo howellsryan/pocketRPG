@@ -117,3 +117,19 @@ A warrior + weapon + dragon scene ≈ **2.8 MB / ~120k tris** — phone-shippabl
 `Model3DViewer` (`src/components/Model3DViewer.jsx`) + lazy loader (`src/utils/three3d.js`) are wired into `EquipmentScreen` for both layouts: when WebGL is available it renders the 3D hero as the centerpiece with the equipped weapon attached via the registry, and keeps a compact slot grid beneath for equip/unequip; otherwise it falls back to the paper doll (zero regression). three.js dynamic-imports on mount and fully tears down on unmount (RAF cancelled, GL context released, geometries/materials disposed) — nothing runs while idle. Registered in `build_single.cjs` (`sourceFiles` + `GAME_CHUNK_FILES`); `equipmentModelsData` + `pocketAssetBase='/public/'` injected into the chunk; `/public/vendor/*` + `/public/3d-samples/*` cache-headers added. Commit gate green (2097 tests + build + rebuild + check:single).
 
 The current hero is the **static placeholder** warrior — it renders and rotates, and the Dragon Dagger's 3D model attaches at the model root (no rig yet). Dropping in the **rigged base-body warrior** unlocks the hand bone + idle/attack clips; set its hand-bone name as `defaults.handBone` in `equipmentModels.json` and tune each weapon's offset with the preview aligner.
+
+### Update — vendor fix, real hero, minified three
+- **Root-cause fix:** the hand-vendored `three.module.js` imported `./three.core.js` which was never committed — the vendored ES-module graph had **never loaded** in a deployed build (viewer silently fell back to the paper doll). Vendoring is now generated from the pinned `three` devDependency via `npm run sync:three`, guarded by `tests/threeVendor.test.ts` (entry files exist, every import resolves, no drift from npm), and verified headless in Chromium.
+- Vendor now ships the **minified** builds (`three.module.min.js` + `three.core.min.js`, ~55% smaller pre-compression); addons stay unminified upstream and are small.
+- The equip-screen hero is the real **PocketRPG_Hero** Tripo export (`public/3d-samples/hero.glb`, 12.5 MB → 0.31 MB, 4.6k tris) — still **unrigged** (no skeleton/clips), so the weapon attaches at the model root and there's no idle/attack animation until the rig/animate re-export lands.
+- Viewer pauses its render loop on `visibilitychange` and reports failure to the parent (`onFail`) so `EquipmentScreen` swaps back to the full paper-doll layout instead of an empty card.
+
+## 10) R2 asset hosting (planned migration)
+
+Committed GLBs don't scale (107 monsters × ~1 MB bloats every clone forever). Models move to the **`pocketrpg-tripo-assets`** R2 bucket; the client is already R2-ready:
+
+- `equipmentModels.json` `modelBase` (or any single entry's `model`) may be a **full URL** — `equipModels.js` skips prefix-joining for absolute values and `three3d.js#assetUrl` passes them through. Pointing `modelBase` at the bucket is the entire client change.
+- **Serving**: bind the bucket to a custom domain (e.g. `assets.pocketrpg.co.uk`) rather than the `r2.dev` public URL — r2.dev is rate-limited, uncacheable-by-rule, and not meant for production.
+- **CORS is required** (GLTFLoader fetches cross-origin): allow `GET`/`HEAD` from `https://pocketrpg.co.uk` and preview origins (`https://*.pocketrpg.pages.dev`) in the bucket's CORS policy. No CORP/COEP concerns — the app no longer sends COEP.
+- **Naming**: upload content-suffixed names (`hero.v2.glb`), never overwrite — then edge caching can be immutable and a registry bump is the atomic "deploy".
+- `scripts/upload-model-r2.sh <raw.glb> <name.glb> [flags]` runs the offline pipeline and `wrangler r2 object put`s the result under `models/`.

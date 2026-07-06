@@ -39,20 +39,32 @@ export function hasWeaponModel(itemId) {
   return Boolean(itemId && equipmentModelsData.weapons && equipmentModelsData.weapons[itemId] && equipmentModelsData.weapons[itemId].model)
 }
 
-// Public-relative path (prefix-agnostic) for the character model, e.g.
-// '3d-samples/warrior.glb'. The viewer resolves it against the probed asset
-// prefix (see three3d.js) rather than a hardcoded '/public/'.
-export function getCharacterAssetPath() {
-  const c = getCharacterModel()
-  return c ? (equipmentModelsData.modelBase || '') + c.model : null
+// Join a registry `model` with `modelBase`. Both may be a full URL: an
+// absolute `model` (e.g. a per-item R2 URL) skips the base entirely, and an
+// absolute `modelBase` (e.g. "https://assets.example.com/models/") flows
+// through untouched — three3d.js's assetUrl() passes absolute URLs through
+// without prepending the deployment prefix. This is the R2 migration seam:
+// point modelBase (or one entry) at the bucket and nothing else changes.
+function resolveModelPath(model) {
+  if (!model) return null
+  if (/^(https?:)?\/\//.test(model) || model.startsWith('/')) return model
+  return (equipmentModelsData.modelBase || '') + model
 }
 
-// Placement spec for an equipped weapon with a public-relative `path`, or null.
+// Path for the character model, e.g. '3d-samples/hero.glb' (resolved against
+// the probed asset prefix — see three3d.js) or a full URL when the registry
+// points at remote storage.
+export function getCharacterAssetPath() {
+  const c = getCharacterModel()
+  return c ? resolveModelPath(c.model) : null
+}
+
+// Placement spec for an equipped weapon with a fetchable `path`, or null.
 export function getWeaponPlacement(itemId) {
   const spec = getWeaponModel(itemId)
   if (!spec) return null
   return {
-    path: (equipmentModelsData.modelBase || '') + spec.model,
+    path: resolveModelPath(spec.model),
     bone: spec.bone,
     position: spec.position,
     rotationDeg: spec.rotationDeg,

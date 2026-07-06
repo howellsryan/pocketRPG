@@ -17,10 +17,18 @@ import { loadThree, canRender3D, assetUrl } from '../utils/three3d.js'
 //   autoRotate    turntable on/off (default true)
 //   className     extra classes on the wrapper
 //   fallback      VNode rendered when 3D can't run
-function Model3DViewer({ characterPath, weapon = null, height = 360, autoRotate = true, className = '', fallback = null }) {
+//   onFail        called once when 3D can't run/load, so the parent can swap
+//                 its whole layout (not just this slot) to the non-3D variant
+function Model3DViewer({ characterPath, weapon = null, height = 360, autoRotate = true, className = '', fallback = null, onFail = null }) {
   const hostRef = useRef(null)
   const stateRef = useRef(null)      // holds three objects + disposed flag
   const [failed, setFailed] = useState(!canRender3D())
+
+  const onFailRef = useRef(onFail)
+  onFailRef.current = onFail
+  useEffect(() => {
+    if (failed && onFailRef.current) onFailRef.current()
+  }, [failed])
 
   // ── Scene lifecycle: (re)build when the character changes ──
   useEffect(() => {
@@ -97,6 +105,21 @@ function Model3DViewer({ characterPath, weapon = null, height = 360, autoRotate 
         renderer.render(scene, camera)
       }
       renderLoop()
+
+      // Idle-game hygiene: stop the loop entirely while the tab is hidden
+      // (RAF is only throttled, not free, in background tabs) and resume
+      // cleanly on return — swallow the accumulated clock delta so the
+      // animation mixer doesn't jump-cut.
+      st.onVis = () => {
+        if (st.disposed) return
+        if (document.hidden) {
+          if (st.raf) { cancelAnimationFrame(st.raf); st.raf = null }
+        } else if (!st.raf) {
+          st.clock.getDelta()
+          renderLoop()
+        }
+      }
+      document.addEventListener('visibilitychange', st.onVis)
 
       // keep aspect on container resize
       st.ro = new ResizeObserver(() => {
@@ -175,6 +198,7 @@ function disposeObject(obj) {
 function teardown(st, host) {
   if (!st || st.disposed) return
   st.disposed = true
+  if (st.onVis) document.removeEventListener('visibilitychange', st.onVis)
   if (st.raf) cancelAnimationFrame(st.raf)
   if (st.ro) st.ro.disconnect()
   if (st.controls) st.controls.dispose()

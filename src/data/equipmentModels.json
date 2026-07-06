@@ -5,7 +5,7 @@
     "handBone": "mixamorig:RightHand"
   },
   "character": {
-    "model": "warrior.glb"
+    "model": "hero.glb"
   },
   "weapons": {
     "dragon_dagger": {
