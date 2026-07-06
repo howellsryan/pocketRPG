@@ -39,6 +39,23 @@ export function hasWeaponModel(itemId) {
   return Boolean(itemId && equipmentModelsData.weapons && equipmentModelsData.weapons[itemId] && equipmentModelsData.weapons[itemId].model)
 }
 
+// Resolve a monsterId to a combat-arena spec, or null when unregistered.
+// `height` is the target world height in scene units (hero is ~1.8) so a
+// dragon can tower without per-model scale guesswork.
+export function getMonsterModel(monsterId) {
+  const m = monsterId && equipmentModelsData.monsters && equipmentModelsData.monsters[monsterId]
+  if (!m || !m.model) return null
+  return {
+    path: resolveModelPath(m.model),
+    height: typeof m.height === 'number' ? m.height : 2,
+  }
+}
+
+// Whether a monster has a registered 3D model (gates the 3D combat arena).
+export function hasMonsterModel(monsterId) {
+  return getMonsterModel(monsterId) !== null
+}
+
 // Join a registry `model` with `modelBase`. Both may be a full URL: an
 // absolute `model` (e.g. a per-item R2 URL) skips the base entirely, and an
 // absolute `modelBase` (e.g. "https://assets.example.com/models/") flows

@@ -152,6 +152,7 @@ const sourceFiles = [
   'components/IdleCombatSetupModal.js',
   'components/EquipmentPaperdoll.js',
   'components/Model3DViewer.js', // -> game chunk (equip screen 3D hero viewer)
+  'components/CombatArena3D.js', // -> game chunk (Phase 2 3D combat modal)
   'components/CollectionLogPanel.js',
   'components/GildedComplete.js',
   'components/FilterToggleBar.js',
@@ -225,6 +226,7 @@ const GAME_CHUNK_FILES = new Set([
   'components/PlaceMapView.js',
   'components/SlayerMasterModal.js',
   'components/Model3DViewer.js',
+  'components/CombatArena3D.js',
   'utils/equipModels.js',
   'utils/three3d.js',
   'screens/HomeScreen.js',

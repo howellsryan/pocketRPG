@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { getCharacterModel, getWeaponModel, hasWeaponModel, modelUrl, getCharacterAssetPath, getWeaponPlacement } from '../src/utils/equipModels.js'
+import { getCharacterModel, getWeaponModel, hasWeaponModel, modelUrl, getCharacterAssetPath, getWeaponPlacement, getMonsterModel, hasMonsterModel } from '../src/utils/equipModels.js'
 import registry from '../src/data/equipmentModels.json'
 
 describe('equipModels resolver', () => {
@@ -53,6 +53,29 @@ describe('equipModels resolver', () => {
     expect(placement!.path).toBe(registry.modelBase + registry.weapons[id].model)
     expect(placement!.path.startsWith('/')).toBe(false) // relative, resolved at runtime
     expect(getWeaponPlacement('bronze_dagger')).toBeNull()
+  })
+
+  it('resolves a registered monster to a combat-arena spec', () => {
+    const ids = Object.keys(registry.monsters || {})
+    if (ids.length === 0) return
+    const spec = getMonsterModel(ids[0])
+    expect(spec).toBeTruthy()
+    expect(typeof spec!.path).toBe('string')
+    expect(typeof spec!.height).toBe('number')
+    expect(hasMonsterModel(ids[0])).toBe(true)
+  })
+
+  it('returns null for an unregistered monster (classic combat UI)', () => {
+    expect(getMonsterModel('goblin')).toBeNull()
+    expect(getMonsterModel(undefined)).toBeNull()
+    expect(hasMonsterModel('goblin')).toBe(false)
+  })
+
+  it('every registered monster id exists in monsters.json (no dangling models)', async () => {
+    const monsters = (await import('../src/data/monsters.json')).default as Record<string, unknown>
+    for (const id of Object.keys(registry.monsters || {})) {
+      expect(monsters[id], `monster model '${id}' has no matching monster`).toBeTruthy()
+    }
   })
 
   it('every registered weapon id exists in items.json (no dangling models)', async () => {

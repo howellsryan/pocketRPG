@@ -184,7 +184,7 @@ function attachWeapon(st, weapon) {
   }).catch(() => {})
 }
 
-function disposeObject(obj) {
+export function disposeObject(obj) {
   obj.traverse((o) => {
     if (o.geometry) o.geometry.dispose()
     if (o.material) {
