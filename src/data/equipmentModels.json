@@ -5,15 +5,16 @@
     "handBone": "R_Hand"
   },
   "character": {
-    "model": "warrior.glb"
+    "model": "hero.glb",
+    "idleClip": "Idle"
   },
   "weapons": {
     "dragon_dagger": {
       "model": "crimson_dagger.glb",
       "bone": null,
-      "position": [0, -0.1, 0.11],
-      "rotationDeg": [180, 90, -20],
-      "scale": 0.24
+      "position": [0, 0.08, 0.035],
+      "rotationDeg": [0, 0, 0],
+      "scale": 0.32
     }
   }
 }

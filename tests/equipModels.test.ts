@@ -61,4 +61,28 @@ describe('equipModels resolver', () => {
       expect(items[id], `weapon model '${id}' has no matching item`).toBeTruthy()
     }
   })
+
+  it('every registered model file exists on disk (no dangling paths)', async () => {
+    const fs = await import('node:fs')
+    const path = await import('node:path')
+    const base = path.resolve(__dirname, '../public', registry.modelBase)
+    const models = [registry.character.model, ...Object.values(registry.weapons).map((w) => w.model)]
+    for (const m of models) {
+      if (/^(https?:)?\/\//.test(m) || m.startsWith('/')) continue // remote/absolute — not repo-served
+      expect(fs.existsSync(path.join(base, m)), `${registry.modelBase}${m} missing from public/`).toBe(true)
+    }
+  })
+
+  it('the character idleClip (when set) exists in the hero GLB', async () => {
+    const idle = (registry.character as { idleClip?: string }).idleClip
+    if (!idle) return
+    const fs = await import('node:fs')
+    const path = await import('node:path')
+    const glb = path.resolve(__dirname, '../public', registry.modelBase, registry.character.model)
+    // GLB chunk 0 is JSON; animation names live in it as plain strings.
+    const buf = fs.readFileSync(glb)
+    const jsonLen = buf.readUInt32LE(12)
+    const json = buf.subarray(20, 20 + jsonLen).toString('utf8')
+    expect(json.includes(`"${idle}"`), `clip '${idle}' not found in ${registry.character.model}`).toBe(true)
+  })
 })

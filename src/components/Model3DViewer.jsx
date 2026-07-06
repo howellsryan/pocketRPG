@@ -13,13 +13,14 @@ import { loadThree, canRender3D, assetUrl } from '../utils/three3d.js'
 // Props:
 //   characterPath public-relative path of the character GLB (resolved via probe)
 //   weapon        { path, bone, position:[x,y,z], rotationDeg:[x,y,z], scale } | null
+//   idleClip      name of the animation clip to loop (default: first clip)
 //   height        CSS height for the stage (default 360px)
 //   autoRotate    turntable on/off (default true)
 //   className     extra classes on the wrapper
 //   fallback      VNode rendered when 3D can't run
 //   onFail        called once when 3D can't run/load, so the parent can swap
 //                 its whole layout (not just this slot) to the non-3D variant
-function Model3DViewer({ characterPath, weapon = null, height = 360, autoRotate = true, className = '', fallback = null, onFail = null }) {
+function Model3DViewer({ characterPath, weapon = null, idleClip = null, height = 360, autoRotate = true, className = '', fallback = null, onFail = null }) {
   const hostRef = useRef(null)
   const stateRef = useRef(null)      // holds three objects + disposed flag
   const [failed, setFailed] = useState(!canRender3D())
@@ -90,8 +91,9 @@ function Model3DViewer({ characterPath, weapon = null, height = 360, autoRotate 
         controls.target.set(0, 0.95, 0)
         controls.update()
         if (gltf.animations && gltf.animations.length) {
+          const clip = (idleClip && gltf.animations.find((c) => c.name === idleClip)) || gltf.animations[0]
           st.mixer = new THREE.AnimationMixer(root)
-          st.mixer.clipAction(gltf.animations[0]).play()
+          st.mixer.clipAction(clip).play()
         }
         attachWeapon(st, weaponRef.current)
       }, undefined, () => { if (!cancelled) setFailed(true) })
@@ -137,7 +139,7 @@ function Model3DViewer({ characterPath, weapon = null, height = 360, autoRotate 
       teardown(st, host)
       stateRef.current = null
     }
-  }, [characterPath, height, autoRotate])
+  }, [characterPath, idleClip, height, autoRotate])
 
   // ── Weapon: attach / swap without rebuilding the scene ──
   const weaponRef = useRef(weapon)

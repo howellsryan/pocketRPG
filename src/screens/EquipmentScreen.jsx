@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'preact/hooks'
 import { useGame } from '../state/gameState.jsx'
 import Model3DViewer from '../components/Model3DViewer.jsx'
-import { getCharacterAssetPath, getWeaponPlacement } from '../utils/equipModels.js'
+import { getCharacterAssetPath, getCharacterModel, getWeaponPlacement } from '../utils/equipModels.js'
 import { canRender3D } from '../utils/three3d.js'
 import { unequipSlot, getEquipmentBonuses, checkEquipRequirements, equipItem } from '../engine/equipment.js'
 import { createPreset, applyPreset, renamePreset, MAX_EQUIPMENT_PRESETS } from '../engine/equipmentPresets.js'
@@ -333,6 +333,7 @@ export default function EquipmentScreen() {
               <Model3DViewer
                 characterPath={heroPath}
                 weapon={weaponSpec}
+                idleClip={getCharacterModel()?.idleClip || null}
                 height={360}
                 fallback={null}
                 onFail={() => setHeroFailed(true)}
