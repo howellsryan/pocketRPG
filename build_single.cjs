@@ -538,7 +538,14 @@ const SPLIT_MINIFY = {
 // small world.json geography for boot-time location/travel; worldContent.js
 // guards every access with `typeof worldActivitiesData !== 'undefined'`, so a
 // pre-chunk call degrades to "unmapped, never gate".
-const gameChunkSource = `const gameIconsData = ${gameIconsJSON};\nconst bespokeIconsData = ${bespokeIconsJSON};\nconst worldActivitiesData = ${worldActivitiesJSON};\nconst placeMapsData = ${placeMapsJSON};\nconst equipmentModelsData = ${equipmentModelsJSON};\nconst pocketAssetBase = '/public/';\n${gameJS}`;
+// 3D feature flag, baked in at build time from the Pages BUILD env var
+// `Enable3dRender` (set per-environment in the dashboard: preview=true,
+// production=false/unset). Fail-safe: anything but the literal string "true"
+// disables 3D in the deployed build, so production can never pick it up by
+// accident. Vite dev is unaffected (no injected global -> three3d.js enables).
+const enable3D = process.env.Enable3dRender === 'true';
+console.log(`3D render (Enable3dRender): ${enable3D ? 'ENABLED' : 'disabled'}`);
+const gameChunkSource = `const gameIconsData = ${gameIconsJSON};\nconst bespokeIconsData = ${bespokeIconsJSON};\nconst worldActivitiesData = ${worldActivitiesJSON};\nconst placeMapsData = ${placeMapsJSON};\nconst equipmentModelsData = ${equipmentModelsJSON};\nconst pocketAssetBase = '/public/';\nconst pocketEnable3D = ${enable3D};\n${gameJS}`;
 const gameChunkScript = esbuild.transformSync(gameChunkSource, SPLIT_MINIFY).code.trim();
 const gameChunkBody = `"use strict";\n${gameChunkScript}\n`;
 const gameChunkHash = require('crypto').createHash('sha256').update(gameChunkBody).digest('hex').slice(0, 12);

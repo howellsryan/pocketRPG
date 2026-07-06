@@ -129,6 +129,10 @@ The current hero is the **static placeholder** warrior — it renders and rotate
 - Clip names arrive as Blender NLA junk (`NlaTrack.001`…) — rename to semantic names (gltf-transform `anim.setName`) when processing; the registry/viewer reference clips by name.
 - Viewer pauses its render loop on `visibilitychange` and reports failure to the parent (`onFail`) so `EquipmentScreen` swaps back to the full paper-doll layout instead of an empty card.
 
+## 9b) Deployment feature flag — `Enable3dRender`
+
+3D is gated per Pages environment by the **build-time** env var `Enable3dRender` (Pages dashboard → Build environment variables): **Preview = `"true"`, Production = `"false"`/unset**. `build_single.cjs` bakes it into the game chunk as `pocketEnable3D`; `three3d.js#is3DEnabled()` folds it into `canRender3D()`, so a disabled build never fetches three.js or any model — the equip screen just renders the paper doll. Fail-safe by design: only the literal string `"true"` enables it, so production can't pick 3D up by accident. Vite dev has no injected global and defaults to enabled. (`public/3d-preview.html` is a static dev tool and is not gated.)
+
 ## 10) R2 asset hosting (planned migration)
 
 Committed GLBs don't scale (107 monsters × ~1 MB bloats every clone forever). Models move to the **`pocketrpg-tripo-assets`** R2 bucket; the client is already R2-ready:
