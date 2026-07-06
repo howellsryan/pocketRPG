@@ -34,8 +34,8 @@ WHAT YOU CAN DO HERE (pick the tool — don't guess; the "Acting" section below 
 the details and guard rails):
 - Look things up — game data: list_items, list_monsters, inspect_item,
   inspect_monster, list_skill_actions, get_reference. This account:
-  list_characters, get_character_state, get_collection_log, get_kill_counts,
-  get_leaderboard, get_account.
+  list_characters, get_character_state, get_bank, get_collection_log,
+  get_kill_counts, get_daily_tasks, get_leaderboard, get_account.
 - Train skills — start_skilling / start_gather (idle), train_prayer /
   train_construction / cast_magic (instant), plant_seed / harvest_patch /
   harvest_all (farming); claim_activity collects idle progress.
@@ -62,8 +62,10 @@ another game.
 Getting oriented:
 - Call list_characters first; most tools take an optional character_id and
   auto-select when the account has a single character.
-- get_character_state returns coins, per-skill level + XP, current HP, worn
-  equipment and inventory (item ids include resolved names).
+- get_character_state returns coins, per-skill level + XP, total level, combat
+  level, current HP, worn equipment with aggregated bonuses, best-case max hits
+  and inventory (item ids include resolved names); get_bank lists the bank
+  contents.
 - Every skilling/combat result (claim_activity, train_prayer, train_construction,
   cast_magic, plant_seed/harvest_patch/harvest_all, and quest completions) carries
   a \`progress\` block: for each skill that gained XP it reports the resulting
@@ -211,9 +213,31 @@ export const TOOL_SCHEMAS = [
   {
     name: 'get_character_state',
     description:
-      "Get a summary of a character's current game state: coins, skill levels + XP, current HP, worn equipment, inventory contents (with item names) and bank size.",
+      "Get a summary of a character's current game state: coins, per-skill level + XP, total level, total XP, combat level, current + max HP/prayer, the equipped weapon's combat type and attack speed, worn equipment, aggregated equipment bonuses (attack/defence by style, melee/ranged/magic strength & magic damage), best-case max hits (maxHits.melee is the aggressive-stance peak; maxHits.magic is null unless a powered staff is worn since it otherwise depends on the equipped spell), inventory contents (with item names) and bank size. Use get_bank for the actual bank contents.",
     inputSchema: { type: 'object', properties: { ...optionalCharacterId }, additionalProperties: false },
     annotations: READ('Get character state'),
+  },
+  {
+    name: 'get_bank',
+    description:
+      "List the items in a character's bank (item id, name, quantity), optionally filtered by a case-insensitive name/id substring. Use this to answer \"do I have X in my bank\" / \"how many X do I have banked\" — get_character_state only reports the bank's item count, not its contents.",
+    inputSchema: {
+      type: 'object',
+      properties: {
+        query: { type: 'string', description: 'Case-insensitive substring matched against item name and id. Omit to list everything (paged by limit).' },
+        limit: { type: 'integer', minimum: 1, maximum: 200, description: 'Max rows to return (default 200).' },
+        ...optionalCharacterId,
+      },
+      additionalProperties: false,
+    },
+    annotations: READ('Get bank'),
+  },
+  {
+    name: 'get_daily_tasks',
+    description:
+      "List a character's daily tasks for the current UTC day: the 5 tasks (one per tier Novice→Grandmaster), each with its target, progress and whether it's completed, plus the date and time until the 00:00 UTC reset. Read-only.",
+    inputSchema: { type: 'object', properties: { ...optionalCharacterId }, additionalProperties: false },
+    annotations: READ('Get daily tasks'),
   },
   {
     name: 'get_collection_log',
@@ -248,7 +272,7 @@ export const TOOL_SCHEMAS = [
   {
     name: 'inspect_item',
     description:
-      'Get the full definition of a single item by id (name, type, equipment slot, combat bonuses, shop value, flags). Use pocketrpg://reference/items to find ids.',
+      'Get the full definition of a single item by id (name, type, equipment slot, combat bonuses, shop value, flags), plus a `sources` field listing where the item comes from — monster drops with chances, clue tiers, raids, skilling actions that produce it, General Store stock. Use this to answer "how do I get X". Use pocketrpg://reference/items to find ids.',
     inputSchema: {
       type: 'object',
       properties: { item_id: { type: 'string', description: "The item id, e.g. 'rune_scimitar'." } },
@@ -348,12 +372,12 @@ export const TOOL_SCHEMAS = [
   {
     name: 'skip_hour',
     description:
-      "Spend credits to skip ahead. With no boss/raid id this is a 1-credit one-hour skip that advances the running idle activity by an hour (follow with claim_activity to collect it); a bossId or raidId charges that target's skip cost for client-side combat. Debits credits server-side.",
+      "Spend credits to skip ahead. With neither boss_id nor raid_id this is a 1-credit one-hour skip that advances the running idle activity by an hour (follow with claim_activity to collect it); passing boss_id or raid_id instead charges that target's own skip cost for client-side combat (pass only one). Debits credits server-side.",
     inputSchema: {
       type: 'object',
       properties: {
-        bossId: { type: 'string' },
-        raidId: { type: 'string' },
+        boss_id: { type: 'string', description: "Boss monster id for a boss skip, e.g. 'deepmaw_kraken'. Omit for the plain hour skip." },
+        raid_id: { type: 'string', description: "Raid id for a raid skip, e.g. 'chambers_of_xeric'. Omit for the plain hour skip." },
         ...optionalCharacterId,
       },
       additionalProperties: false,

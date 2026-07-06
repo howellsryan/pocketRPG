@@ -1130,6 +1130,78 @@
         }
       },
       {
+        "id": "smith_bronze_arrowtips",
+        "name": "Smith bronze arrowtips (10)",
+        "level": 9,
+        "ticks": 4,
+        "xp": 13,
+        "product": "bronze_arrowtips",
+        "productQty": 10,
+        "materials": {
+          "bronze_bar": 1
+        }
+      },
+      {
+        "id": "smith_iron_arrowtips",
+        "name": "Smith iron arrowtips (10)",
+        "level": 18,
+        "ticks": 4,
+        "xp": 25,
+        "product": "iron_arrowtips",
+        "productQty": 10,
+        "materials": {
+          "iron_bar": 1
+        }
+      },
+      {
+        "id": "smith_steel_arrowtips",
+        "name": "Smith steel arrowtips (10)",
+        "level": 33,
+        "ticks": 4,
+        "xp": 38,
+        "product": "steel_arrowtips",
+        "productQty": 10,
+        "materials": {
+          "steel_bar": 1
+        }
+      },
+      {
+        "id": "smith_mithril_arrowtips",
+        "name": "Smith mithril arrowtips (10)",
+        "level": 53,
+        "ticks": 4,
+        "xp": 50,
+        "product": "mithril_arrowtips",
+        "productQty": 10,
+        "materials": {
+          "mithril_bar": 1
+        }
+      },
+      {
+        "id": "smith_adamant_arrowtips",
+        "name": "Smith adamant arrowtips (10)",
+        "level": 73,
+        "ticks": 4,
+        "xp": 63,
+        "product": "adamant_arrowtips",
+        "productQty": 10,
+        "materials": {
+          "adamant_bar": 1
+        }
+      },
+      {
+        "id": "smith_runeforged_arrowtips",
+        "name": "Smith runeforged arrowtips (10)",
+        "level": 76,
+        "ticks": 4,
+        "xp": 75,
+        "product": "runeforged_arrowtips",
+        "productQty": 10,
+        "materials": {
+          "runeforged_bar": 1
+        }
+      },
+      {
         "id": "forge_godsword_blade",
         "name": "Forge godsword blade",
         "level": 80,
@@ -1367,7 +1439,7 @@
         "productQty": 15,
         "materials": {
           "headless_arrow": 15,
-          "feather": 0
+          "bronze_arrowtips": 15
         }
       },
       {

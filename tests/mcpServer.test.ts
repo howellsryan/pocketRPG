@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { summarizeSave } from '../functions/_lib/mcp/summary.js'
 import { TOOL_SCHEMAS, TOOL_NAMES, SERVER_INSTRUCTIONS } from '../functions/_lib/mcp/schema.js'
-import { itemName, shopCatalog, REFERENCE_RESOURCES, readReference, getItem, listSkills, getSkillActions, searchItems, searchMonsters, REFERENCE_TOPIC_NAMES } from '../functions/_lib/mcp/reference.js'
+import { itemName, itemSources, shopCatalog, REFERENCE_RESOURCES, readReference, getItem, listSkills, getSkillActions, searchItems, searchMonsters, REFERENCE_TOPIC_NAMES } from '../functions/_lib/mcp/reference.js'
 import { callTool } from '../functions/_lib/mcp/tools.js'
 import { signJWT } from '../functions/_lib/jwt.js'
 import { gzipJsonString } from '../functions/_lib/saveCodec.js'
@@ -55,6 +55,30 @@ describe('MCP summarizeSave', () => {
     expect(out.bankUniqueItems).toBe(2)
   })
 
+  it('reports total level, total XP and combat level', () => {
+    const out = summarizeSave(save)
+    expect(out.totalLevel).toBe(11) // attack 1 + hitpoints 10
+    expect(out.totalXp).toBe(1154)
+    expect(typeof out.combatLevel).toBe('number')
+    expect(out.combatLevel).toBeGreaterThanOrEqual(3)
+  })
+
+  it('reports combat type, attack speed and prayer cap from worn gear/stats', () => {
+    const out = summarizeSave(save)
+    expect(out.combatType).toBe('melee')
+    expect(out.attackSpeedTicks).toBe(4) // bronze_dagger
+    expect(out.prayerPointsMax).toBe(1) // no prayer XP → level 1
+  })
+
+  it('aggregates equipment bonuses and best-case max hits', () => {
+    const out = summarizeSave(save)
+    expect(out.equipmentBonuses.otherBonus.meleeStrength).toBe(3) // bronze_dagger
+    expect(out.equipmentBonuses.attackBonus.stab).toBe(4)
+    expect(out.maxHits.melee).toBe(1)
+    expect(out.maxHits.ranged).toBe(1)
+    expect(out.maxHits.magic).toBeNull() // dagger is not a powered staff
+  })
+
   it('accepts a JSON string as well as an object', () => {
     expect(summarizeSave(JSON.stringify(save)).coins).toBe(12345)
   })
@@ -75,6 +99,8 @@ describe('MCP tool schema', () => {
       'get_account',
       'logout',
       'get_character_state',
+      'get_bank',
+      'get_daily_tasks',
       'get_collection_log',
       'get_kill_counts',
       'get_leaderboard',
@@ -272,6 +298,42 @@ describe('MCP reference data', () => {
     expect(uris).toContain('pocketrpg://reference/items')
   })
 
+  it('itemSources reverse-lookup answers "how do I get X"', async () => {
+    const boots = itemSources('dragon_boots')
+    expect(boots?.monsters?.length).toBeGreaterThan(0)
+    for (const m of boots!.monsters) {
+      expect(typeof m.name).toBe('string')
+      expect(m.chance).toBeGreaterThan(0)
+    }
+    // Skilling products and General Store stock are sources too.
+    expect(itemSources('tin_ore')?.skills?.[0]?.skill).toBeTruthy()
+    // Unknown/ungranted items return null, not an empty object.
+    expect(itemSources('definitely_not_an_item')).toBe(null)
+    // inspect_item surfaces the sources field to the model.
+    const res = await callTool('inspect_item', { item_id: 'dragon_boots' }, { env: {} } as any)
+    expect(JSON.parse(res.content[0].text).sources.monsters.length).toBeGreaterThan(0)
+  })
+
+  it('raid uniques source from the raid reward chest, never from raid sub-bosses', async () => {
+    // rewards.unique.items is the real raids.json shape.
+    expect(itemSources('shadow_of_tumaken')?.raids).toContain('Tomb of Arasmus')
+    // Raid-only bosses' monsters.json drop tables are never rolled — they must
+    // not appear as monster sources; the raid is the only source.
+    const helm = itemSources('torvek_s_helm')
+    expect(helm?.raids).toContain('Cryptbound Champions')
+    expect(helm?.monsters).toBeUndefined()
+    // inspect_monster on a raid sub-boss hides the dead drop table and points
+    // at the raid chest instead.
+    const res = await callTool('inspect_monster', { monster_id: 'torvek_the_corrupted' }, { env: {} } as any)
+    const monster = JSON.parse(res.content[0].text)
+    expect(monster.drops).toBeUndefined()
+    expect(monster.raid).toBe('Cryptbound Champions')
+    expect(monster.lootNote).toContain('reward chest')
+    // Standalone bosses keep their drop tables.
+    const kbd = await callTool('inspect_monster', { monster_id: 'king_black_dragon' }, { env: {} } as any)
+    expect(JSON.parse(kbd.content[0].text).drops?.length).toBeGreaterThan(0)
+  })
+
   it('reads markdown mechanics and a JSON index, and rejects unknown uris', () => {
     expect(readReference('pocketrpg://reference/mechanics')?.mimeType).toBe('text/markdown')
     const items = readReference('pocketrpg://reference/items')
@@ -358,6 +420,10 @@ describe('MCP trading-post source: inventory|bank', () => {
         first: async () => {
           if (sql.includes('active_match_id FROM characters')) return { active_match_id: null }
           if (sql.includes('FROM pvp_matches')) return null
+          // GET /api/save read (bridged by get_bank / get_character_state).
+          if (sql.includes('save_data, save_blob') && sql.includes('FROM saves')) {
+            return { save_data: null, save_blob: await blob, updated_at: 123, save_revision: 0 }
+          }
           if (sql.includes("c.credits") && sql.includes('save_blob')) {
             return {
               id: Number(args[0]),
@@ -401,6 +467,29 @@ describe('MCP trading-post source: inventory|bank', () => {
     expect(written.bank.fighter_helm).toBeUndefined()
     // Inventory copy untouched — the bank was the source.
     expect(written.inventory.find((s: any) => s.itemId === 'fighter_helm')?.quantity).toBe(1)
+  })
+
+  it('get_bank lists bank contents with names and honours the query filter', async () => {
+    const save = {
+      inventory: [],
+      bank: {
+        iron_ore: { itemId: 'iron_ore', quantity: 30 },
+        coal: { itemId: 'coal', quantity: 10 },
+        oak_logs: 5, // legacy numeric entry
+      },
+    }
+    const { env } = mockEnv(save)
+    const token = await signJWT({ sub: IDENTITY, provider: 'test' }, TEST_SECRET)
+    const ctx = { env, authorization: `Bearer ${token}`, identity: { id: IDENTITY } } as any
+
+    const all = JSON.parse((await callTool('get_bank', { character_id: 7 }, ctx)).content[0].text)
+    expect(all.total).toBe(3)
+    expect(all.items.find((i: any) => i.itemId === 'oak_logs')?.quantity).toBe(5)
+    expect(all.items.find((i: any) => i.itemId === 'iron_ore')?.name).toBeTruthy()
+
+    const filtered = JSON.parse((await callTool('get_bank', { query: 'ore', character_id: 7 }, ctx)).content[0].text)
+    expect(filtered.total).toBe(1)
+    expect(filtered.items[0].itemId).toBe('iron_ore')
   })
 })
 

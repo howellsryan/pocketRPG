@@ -3,12 +3,17 @@ import { TOOL_SCHEMAS } from '../functions/_lib/mcp/schema.js'
 import {
   CHAT_MAX_HISTORY_CHARS,
   CHAT_MAX_HISTORY_MESSAGES,
+  CHAT_OPENAI_REASONING_EFFORT,
   CHAT_TOOL_ALLOWLIST,
+  ALWAYS_ON_TOOL_NAMES,
+  SEARCH_TOOL_NAME,
+  SEARCH_TOOLS_DEF,
   SYSTEM_PROMPT,
   buildMessages,
   chatToolDefs,
   retrievalOnlyAnswer,
   sanitizeHistory,
+  searchToolsByQuery,
 } from '../functions/_lib/chat/prompt.js'
 
 const schemaByName = new Map(TOOL_SCHEMAS.map((t) => [t.name, t]))
@@ -20,10 +25,14 @@ describe('chat tool surface', () => {
     }
   })
 
-  it('allowlist contains READ-ONLY tools only — the chatbot must never mutate state', () => {
-    for (const name of CHAT_TOOL_ALLOWLIST) {
-      expect(schemaByName.get(name)?.annotations?.readOnlyHint, `${name} is not read-only`).toBe(true)
-    }
+  it('allowlist exposes the full MCP surface, including write tools (gated by confirmation)', () => {
+    // Chatbot can now perform actions; every schema tool is allowlisted. Reads
+    // run inline, writes are captured for confirmation (see chat/actions.js).
+    expect(new Set(CHAT_TOOL_ALLOWLIST)).toEqual(new Set(TOOL_SCHEMAS.map((t) => t.name)))
+    const writes = CHAT_TOOL_ALLOWLIST.filter((n) => schemaByName.get(n)?.annotations?.readOnlyHint === false)
+    expect(writes).toContain('sell_item')
+    expect(writes).toContain('assign_slayer_task')
+    expect(writes.length).toBeGreaterThan(0)
   })
 
   it('exposes OpenAI-format tool defs with character_id stripped', () => {
@@ -34,14 +43,54 @@ describe('chat tool surface', () => {
     }
     expect(chatToolDefs().length).toBe(CHAT_TOOL_ALLOWLIST.length)
   })
+
+  it('progressive reveal: always-on tools are a small, valid subset; chatToolDefs(names) narrows to them', () => {
+    for (const name of ALWAYS_ON_TOOL_NAMES) {
+      expect(schemaByName.has(name), `unknown always-on tool ${name}`).toBe(true)
+    }
+    expect(ALWAYS_ON_TOOL_NAMES.length).toBeLessThan(TOOL_SCHEMAS.length / 2)
+    const defs = chatToolDefs(ALWAYS_ON_TOOL_NAMES)
+    expect(defs.length).toBe(ALWAYS_ON_TOOL_NAMES.length)
+    expect(defs.every((d) => ALWAYS_ON_TOOL_NAMES.includes(d.function.name))).toBe(true)
+  })
+
+  it('search_tools meta tool is well-formed and not itself an MCP tool', () => {
+    expect(SEARCH_TOOLS_DEF.function.name).toBe(SEARCH_TOOL_NAME)
+    expect(schemaByName.has(SEARCH_TOOL_NAME)).toBe(false)
+    expect(SEARCH_TOOLS_DEF.function.parameters.required).toContain('query')
+  })
+
+  it('searchToolsByQuery ranks relevant tools and reveals their names', () => {
+    const { names, text } = searchToolsByQuery('sell an item')
+    expect(names).toContain('sell_item')
+    expect(text).toContain('sell_item')
+    const boss = searchToolsByQuery('kill a boss with credits')
+    expect(boss.names).toContain('kill_boss')
+  })
+
+  it('searchToolsByQuery degrades gracefully on empty or no-match queries', () => {
+    expect(searchToolsByQuery('').names).toEqual([])
+    const noMatch = searchToolsByQuery('xyzzy plugh qwerty')
+    expect(noMatch.names).toEqual([])
+    expect(noMatch.text).toMatch(/No tool matched/)
+  })
+
+  it('pins an explicit OpenAI reasoning effort rather than the API default', () => {
+    expect(['minimal', 'low', 'medium', 'high']).toContain(CHAT_OPENAI_REASONING_EFFORT)
+  })
 })
 
 describe('chat prompt assembly', () => {
-  it('system prompt pins scope, offline-ness and anti-guessing', () => {
-    expect(SYSTEM_PROMPT).toMatch(/PocketRPG only/i)
+  it('system prompt pins scope, offline-ness, anti-guessing and the confirm rule', () => {
+    expect(SYSTEM_PROMPT).toMatch(/only help with PocketRPG/i)
     expect(SYSTEM_PROMPT).toMatch(/refuse/i)
     expect(SYSTEM_PROMPT).toMatch(/no internet access/i)
     expect(SYSTEM_PROMPT).toMatch(/don't know/i)
+    // Action-capable now, but every write must be confirmed first.
+    expect(SYSTEM_PROMPT).toMatch(/confirm/i)
+    // Look data up rather than asking; make a clear recommendation.
+    expect(SYSTEM_PROMPT).toMatch(/never ask the player/i)
+    expect(SYSTEM_PROMPT).toMatch(/recommend the single best/i)
   })
 
   it('builds system + history + contextualised question', () => {

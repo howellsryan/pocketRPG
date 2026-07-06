@@ -1,11 +1,11 @@
 import { callHandler } from './bridge.js'
-import { summarizeSave } from './summary.js'
-import { getItem, getMonster, itemName, withItemName, REFERENCE_RESOURCES, readReference, listSkills, getSkillActions, searchItems, searchMonsters, REFERENCE_TOPICS } from './reference.js'
+import { summarizeSave, bankItems } from './summary.js'
+import { getItem, getMonster, itemName, withItemName, itemSources, raidForBoss, REFERENCE_RESOURCES, readReference, listSkills, getSkillActions, searchItems, searchMonsters, REFERENCE_TOPICS } from './reference.js'
 import { loadCharacterWithSave, writeSave } from '../game/save.js'
 import { createDefaultSave } from '../../../src/engine/createDefaultSave.js'
 import { auditLog } from '../game/audit.js'
 import { assertNotInActiveMatch } from '../pvp.js'
-import { depositToBank, withdrawFromBank, equip, unequip, buildIdleTask, runIdleTask, isClaimableTask, buildGatherTask, buildClueTask, CLUE_LEVELS, buildMinigameTask, trainPrayer, trainConstruction, unlockConstructionPerk, farmSummary, plantSeed, harvestPatch, harvestAll, castMagic, buildQuestTask, applyQuestTask, questStatuses, buildCombatTask, runCombatTask, planDungeoneeringReward, setIdleCombatSetup, idleCombatSetupSummary, idleFoodWarning, addQuestToQueueIntent, removeQuestFromQueueIntent, dropFromQueue, assignSlayerTask, slayerStatus } from './intents.js'
+import { depositToBank, withdrawFromBank, equip, unequip, buildIdleTask, runIdleTask, isClaimableTask, buildGatherTask, buildClueTask, CLUE_LEVELS, buildMinigameTask, trainPrayer, trainConstruction, unlockConstructionPerk, farmSummary, plantSeed, harvestPatch, harvestAll, castMagic, buildQuestTask, applyQuestTask, questStatuses, buildCombatTask, runCombatTask, planDungeoneeringReward, setIdleCombatSetup, idleCombatSetupSummary, idleFoodWarning, addQuestToQueueIntent, removeQuestFromQueueIntent, dropFromQueue, assignSlayerTask, skipSlayerTask, slayerStatus } from './intents.js'
 import { getIdleRow, setIdleTask, resetIdleActiveAt, clearIdleTask, advanceIdleClock } from './idle.js'
 import { SKIP_HOUR_MS } from '../../../src/engine/skipPreflight.js'
 import { simulateBossFight, applyBossFightOutcome } from './bossFight.js'
@@ -16,6 +16,7 @@ import { onRequestGet as listCharacters, onRequestPost as createCharacter } from
 import { onRequestGet as getMe } from '../../api/auth/me.js'
 import { onRequestGet as getSave } from '../../api/save.js'
 import { onRequestGet as getCollectionLog } from '../../api/collection-log.js'
+import { onRequestGet as getDailyTasks } from '../../api/daily-tasks/index.js'
 import { onRequestGet as getKillCounts } from '../../api/kill-counts.js'
 import { onRequestGet as getLeaderboard } from '../../api/leaderboard.js'
 import { onRequestPost as postPurchase } from '../../api/purchase.js'
@@ -326,17 +327,42 @@ const TOOLS = {
     return ok({ characterId: id, savedAt: res.data.save.updatedAt, ...summary })
   },
 
+  async get_bank({ query, limit, character_id }, { env, authorization }) {
+    const id = await resolveCharacterId(env, authorization, character_id)
+    const res = await callHandler(getSave, env, { authorization, characterId: id })
+    if (!res.ok) throw httpError(res)
+    if (!res.data?.save?.save_data) return ok({ characterId: id, total: 0, returned: 0, items: [], note: 'No save yet.' })
+    return ok({ characterId: id, ...bankItems(res.data.save.save_data, { query, limit }) })
+  },
+
+  async get_daily_tasks({ character_id }, { env, authorization }) {
+    const id = await resolveCharacterId(env, authorization, character_id)
+    const res = await callHandler(getDailyTasks, env, { authorization, characterId: id })
+    if (!res.ok) throw httpError(res)
+    return ok({ characterId: id, ...res.data })
+  },
+
   async inspect_item({ item_id }) {
     if (!item_id) throw new Error('item_id is required.')
     const item = getItem(item_id)
     if (!item) throw new Error(`No item with id '${item_id}'. Browse ids via pocketrpg://reference/items.`)
-    return ok(item)
+    const sources = itemSources(item_id)
+    return ok(sources ? { ...item, sources } : item)
   },
 
   async inspect_monster({ monster_id }) {
     if (!monster_id) throw new Error('monster_id is required.')
     const monster = getMonster(monster_id)
     if (!monster) throw new Error(`No monster with id '${monster_id}'. Browse ids via pocketrpg://reference/monsters.`)
+    const raidName = raidForBoss(monster_id)
+    if (raidName) {
+      const { drops, ...rest } = monster
+      return ok({
+        ...rest,
+        raid: raidName,
+        lootNote: `Fought only inside the ${raidName} raid. It has no personal drop table — raid loot, including uniques, is rolled from the raid's reward chest when the raid is completed.`,
+      })
+    }
     return ok(monster)
   },
 
@@ -397,13 +423,16 @@ const TOOLS = {
     return ok({ characterId: id, item: itemName(item_id), ...res.data })
   },
 
-  async skip_hour({ bossId, raidId, character_id }, { env, authorization }) {
+  async skip_hour({ boss_id, raid_id, character_id }, { env, authorization }) {
     const id = await resolveCharacterId(env, authorization, character_id)
     const res = await callHandler(postSkipHour, env, {
       method: 'POST',
       authorization,
       characterId: id,
-      body: { bossId, raidId },
+      // /api/skip-hour's own body uses bossId/raidId — translate at this
+      // boundary so the MCP-facing param stays snake_case like every other
+      // tool (item_id, monster_id, raid_id, ...).
+      body: { bossId: boss_id, raidId: raid_id },
     })
     if (!res.ok) throw httpError(res)
 
@@ -413,7 +442,7 @@ const TOOLS = {
     // on the next claim_activity. Boss/raid skips drive client-side combat and
     // have no claimable idle task to advance.
     let appliedToActivity = false
-    if (!bossId && !raidId) {
+    if (!boss_id && !raid_id) {
       const idle = await getIdleRow(env, id)
       let task = null
       try { task = idle?.active_task ? JSON.parse(idle.active_task) : null } catch { task = null }
@@ -432,11 +461,20 @@ const TOOLS = {
     })
   },
 
-  async skip_slayer_task({ character_id }, { env, authorization }) {
+  // /api/slayer/skip only spends the credit (server-authoritative); the game
+  // client normally clears the save-side task itself afterwards. There's no
+  // client here, so do that clear as a save intent right after the debit —
+  // otherwise the credit is spent but the "active task" never actually goes
+  // away (get_slayer_task/assign_slayer_task keep seeing the old one).
+  async skip_slayer_task({ character_id }, { env, authorization, identity }) {
     const id = await resolveCharacterId(env, authorization, character_id)
     const res = await callHandler(postSlayerSkip, env, { method: 'POST', authorization, characterId: id })
     if (!res.ok) throw httpError(res)
-    return ok({ characterId: id, ...res.data })
+    const { saveObject, saveRevision } = await loadCharacterWithSave(env, id, identity.id)
+    const result = skipSlayerTask(saveObject)
+    const write = await writeSave(env, id, saveObject, saveRevision)
+    await auditLog(env, 'mcp_skip_slayer_task', { characterId: id, identityId: identity.id, ...result }, { swallow: true })
+    return ok({ characterId: id, ...res.data, ...result, save_revision: write.saveRevision })
   },
 
   async get_slayer_task({ character_id }, { env, authorization }) {

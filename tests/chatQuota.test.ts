@@ -1,12 +1,20 @@
 import { describe, expect, it } from 'vitest'
 import {
   CHAT_DAILY_LIMIT,
+  CHAT_REFILL_CREDITS,
+  CHAT_GEMINI_MESSAGE_RESERVE_TOKENS,
+  CHAT_GEMINI_TOKEN_BUDGET,
   CHAT_MESSAGE_RESERVE_MILLI,
   CHAT_NEURON_BUDGET_MILLI,
+  CHAT_OPENAI_MESSAGE_RESERVE_TOKENS,
+  CHAT_OPENAI_TOKEN_BUDGET,
   MILLI_NEURONS_PER_INPUT_TOKEN,
   MILLI_NEURONS_PER_OUTPUT_TOKEN,
   claimCharacterMessage,
+  geminiPoolKey,
+  openaiPoolKey,
   refundCharacterMessage,
+  resetCharacterMessages,
   reserveMessageNeurons,
   settleMessageNeurons,
   usageMilliNeurons,
@@ -55,6 +63,11 @@ function fakeDb() {
                 return { meta: { changes: 0 } }
               }
               const key = `${args[0]}:${args[1]}`
+              if (sql.includes('SET count = 0')) {
+                // resetCharacterMessages (paid refill) binds (characterId, dayKey)
+                perChar.set(key, 0)
+                return { meta: { changes: 1 } }
+              }
               if (sql.startsWith('UPDATE')) {
                 // refundCharacterMessage binds (characterId, dayKey)
                 perChar.set(key, Math.max(0, (perChar.get(key) ?? 0) - 1))
@@ -90,8 +103,7 @@ describe('chat quotas', () => {
       expect(claim.allowed).toBe(true)
       expect(claim.remaining).toBe(3 - i)
     }
-    const refused = await claimCharacterMessage(env, 7, '2026-07-01', 3)
-    expect(refused).toEqual({ allowed: false, remaining: 0 })
+    expect(await claimCharacterMessage(env, 7, '2026-07-01', 3)).toEqual({ allowed: false, remaining: 0 })
   })
 
   it('tracks characters and days independently', async () => {
@@ -108,6 +120,17 @@ describe('chat quotas', () => {
     expect((await claimCharacterMessage(env, 7, '2026-07-01', 1)).allowed).toBe(false)
     await refundCharacterMessage(env, 7, '2026-07-01')
     expect((await claimCharacterMessage(env, 7, '2026-07-01', 1)).allowed).toBe(true)
+  })
+
+  it('a refill resets the count, restoring the full allowance', async () => {
+    const env = { DB: fakeDb() }
+    await claimCharacterMessage(env, 7, '2026-07-01', 2)
+    await claimCharacterMessage(env, 7, '2026-07-01', 2)
+    expect((await claimCharacterMessage(env, 7, '2026-07-01', 2)).allowed).toBe(false)
+    await resetCharacterMessages(env, 7, '2026-07-01')
+    const claim = await claimCharacterMessage(env, 7, '2026-07-01', 2)
+    expect(claim.allowed).toBe(true)
+    expect(claim.remaining).toBe(1)
   })
 
   it('neuron budget: reserves until the budget no longer fits, per day', async () => {
@@ -130,13 +153,13 @@ describe('chat quotas', () => {
   })
 
   it('converts reported token usage to milli-neurons, rounding up', () => {
-    expect(usageMilliNeurons({ prompt_tokens: 1_000_000, completion_tokens: 0 })).toBe(5_460_000)
+    expect(usageMilliNeurons({ prompt_tokens: 1_000_000, completion_tokens: 0 })).toBe(9_100_000)
     expect(usageMilliNeurons({ prompt_tokens: 0, completion_tokens: 1_000_000 })).toBe(36_370_000)
-    expect(usageMilliNeurons({ prompt_tokens: 1, completion_tokens: 1 })).toBe(42)
+    expect(usageMilliNeurons({ prompt_tokens: 1, completion_tokens: 1 })).toBe(46)
     expect(usageMilliNeurons(undefined)).toBe(0)
   })
 
-  it('the per-message reserve covers a worst-case message derived from the CHAT_MAX_* limits', () => {
+  it('the per-message reserves cover a worst-case message derived from the CHAT_MAX_* limits', () => {
     // Conservative token estimate: 3 chars/token (JSON-heavy content runs
     // denser than prose's ~4).
     const CHARS_PER_TOKEN = 3
@@ -166,17 +189,31 @@ describe('chat quotas', () => {
     const worstMilli = Math.ceil(
       inputTokens * MILLI_NEURONS_PER_INPUT_TOKEN + outputTokens * MILLI_NEURONS_PER_OUTPUT_TOKEN,
     )
+    const worstTokens = Math.ceil(inputTokens + outputTokens)
     expect(CHAT_MESSAGE_RESERVE_MILLI).toBeGreaterThanOrEqual(worstMilli)
+    expect(CHAT_OPENAI_MESSAGE_RESERVE_TOKENS).toBeGreaterThanOrEqual(worstTokens)
+    // Gemini meters the same token profile as OpenAI.
+    expect(CHAT_GEMINI_MESSAGE_RESERVE_TOKENS).toBeGreaterThanOrEqual(worstTokens)
   })
 
-  it('budget invariants keep the chatbot inside the free allocation', () => {
+  it('budget invariants keep the chatbot inside its allocations', () => {
     expect(CHAT_DAILY_LIMIT).toBe(30)
-    // Budget + one in-flight worst-case reserve must stay within 10,000 free
-    // neurons/day (10,000,000 milli-neurons).
+    expect(CHAT_REFILL_CREDITS).toBe(10)
+    // Free Workers AI: budget + one in-flight worst-case reserve must stay within
+    // 10,000 free neurons/day (10,000,000 milli-neurons).
     expect(CHAT_NEURON_BUDGET_MILLI + CHAT_MESSAGE_RESERVE_MILLI).toBeLessThanOrEqual(10_000_000)
+    // OpenAI pool against the ~2.5M/day complimentary token allotment.
+    expect(CHAT_OPENAI_TOKEN_BUDGET + CHAT_OPENAI_MESSAGE_RESERVE_TOKENS).toBeLessThanOrEqual(2_500_000)
+    // Gemini is a pure paid cap — it just needs to fit at least one message.
+    expect(CHAT_GEMINI_TOKEN_BUDGET).toBeGreaterThanOrEqual(CHAT_GEMINI_MESSAGE_RESERVE_TOKENS)
     // Conversion rates must not undercount Cloudflare's published pricing:
     // ($ per M tokens) / ($0.011 per 1k neurons) = milli-neurons per token.
     expect(MILLI_NEURONS_PER_INPUT_TOKEN).toBeGreaterThanOrEqual(0.06 / 0.011)
     expect(MILLI_NEURONS_PER_OUTPUT_TOKEN).toBeGreaterThanOrEqual(0.4 / 0.011)
+  })
+
+  it('the paid-pool keys never collide with neuron-budget day keys', () => {
+    expect(openaiPoolKey('2026-07-03')).toBe('openai:2026-07-03')
+    expect(geminiPoolKey('2026-07-03')).toBe('gemini:2026-07-03')
   })
 })

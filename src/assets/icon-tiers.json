@@ -192,7 +192,7 @@
       "dragonstone_bolt_tips": "dragonstone", "onyx_bolt_tips": "onyx"
     },
     "arrowtip": {
-      "iron_arrowtips": "iron", "steel_arrowtips": "steel",
+      "bronze_arrowtips": "bronze", "iron_arrowtips": "iron", "steel_arrowtips": "steel",
       "mithril_arrowtips": "mithril", "adamant_arrowtips": "adamant", "runeforged_arrowtips": "runeforged"
     },
     "charm": {
