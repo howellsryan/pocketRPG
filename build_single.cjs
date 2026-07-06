@@ -194,6 +194,7 @@ const sourceFiles = [
   'screens/CharacterUnlockScreen.js',
   'screens/ConnectAiScreen.js',
   'screens/DemoLockedScreen.js',
+  'screens/landingContent.js',
   'screens/DesktopLandingScreen.js',
   'screens/LandingScreen.js',
   'screens/AuthScreen.js',
@@ -590,12 +591,13 @@ const html = `<!DOCTYPE html>
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>PocketRPG</title>
 <meta name="description" content="PocketRPG — a tick-based idle fantasy RPG. Train 24 skills, fight bosses, and complete quests — progress continues whether the app is open or not.">
-<!-- LCP image: the hero screenshot is rendered by JS, so preload it here to
+<!-- LCP image: the hero world map is rendered by JS, so preload it here to
      make the request discoverable from the initial document and fetch it at
      high priority. Same asset is the hero on both mobile and desktop layouts.
-     Kept first (and fetchpriority="high") so it stays ahead of the font
-     preloads below in the queue. -->
-<link rel="preload" href="/public/landing/ss-stats.webp" as="image" type="image/webp" fetchpriority="high">
+     imagesrcset/imagesizes mirror the mobile <img> so the preloaded variant is
+     the one actually used (no double download). Kept first (fetchpriority high)
+     so it stays ahead of the font preloads below in the queue. -->
+<link rel="preload" as="image" href="/public/landing/lp-map.webp" imagesrcset="/public/landing/lp-map-480.webp 480w, /public/landing/lp-map-760.webp 760w, /public/landing/lp-map.webp 1108w" imagesizes="(min-width: 520px) 480px, 92vw" type="image/webp" fetchpriority="high">
 <!-- Above-the-fold fonts: discover them from the initial document so they load
      in parallel instead of trailing the critical request chain. font-display:swap
      keeps text visible in a fallback meanwhile. See FONT_FACES.preload above. -->
