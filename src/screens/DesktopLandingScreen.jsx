@@ -35,7 +35,7 @@ const DL_SKILLS = [
   ['slayer', 'Slayer'], ['construction', 'Construct.'], ['fletching', 'Fletching'], ['dungeoneering', 'Dungeon.'],
 ]
 
-const DL_GALLERY = ['ss-home', 'ss-worldmap', 'ss-place', 'ss-townmap', 'ss-combat', 'ss-bank', 'ss-inventory', 'ss-bosses', 'ss-trading', 'ss-collection', 'ss-leaderboard', 'ss-connect']
+const DL_GALLERY = ['ss-home', 'ss-worldmap', 'ss-place', 'ss-townmap', 'ss-combat', 'ss-bank', 'ss-inventory', 'ss-trading', 'ss-collection', 'ss-leaderboard']
 
 const DL_STEPS = [
   ['Pick a place', 'Travel to a town or city and choose a foe to fight, a skill to train, or a quest to chase. Set your loadout once.'],
@@ -127,7 +127,7 @@ export default function DesktopLandingScreen({ onGitHubLogin, onGoogleLogin, onP
             ))}
           </nav>
           <div class="dl-nav__right">
-            <a class="dl-signin" href="#dl-play">Sign in</a>
+            <a class="dl-play dl-play--nav" href="#dl-play">Sign in</a>
             {onPlayDemo
               ? <button type="button" class="dl-play dl-play--nav" onClick={onPlayDemo}>Play Demo</button>
               : <a class="dl-play dl-play--nav" href="#dl-play">Play Now — Free</a>}
@@ -150,7 +150,7 @@ export default function DesktopLandingScreen({ onGitHubLogin, onGoogleLogin, onP
                   {onPlayDemo
                     ? <button type="button" class="dl-play" onClick={onPlayDemo}>Play Demo</button>
                     : <a class="dl-play" href="#dl-play">Play Now</a>}
-                  <a class="dl-hero__signin" href="#dl-play">Sign in and play</a>
+                  <a class="dl-hero__signin" href="#dl-play">Sign in</a>
                   {onPlayDemo && (
                     <p class="dl-hero__note">No account needed — the demo runs offline in your browser. Sign in for cloud saves, raids, the Trading Post and leaderboards.</p>
                   )}
@@ -288,6 +288,21 @@ export default function DesktopLandingScreen({ onGitHubLogin, onGoogleLogin, onP
                   <p>{s[1]}</p>
                 </div>
               ))}
+            </div>
+          </div>
+        </section>
+
+        {/* AI COMPANION */}
+        <section class="dl-block" id="dl-companion">
+          <div class="dl-wrap dl-companion">
+            <div class="dl-companion__copy dl-reveal">
+              <span class="dl-eyebrow">Your companion</span>
+              <h2 class="dl-title dl-gilt">Chat with the AI companion</h2>
+              <p>Ask any question or get advice about the game — your companion knows the mechanics, the map, and your character.</p>
+            </div>
+            <div class="dl-companion__shot dl-reveal">
+              <img src={landingImages['ss-connect']} srcset={landingSrcSet(landingImages['ss-connect'])} sizes="(min-width: 1000px) 280px, 60vw"
+                alt="Chatting with the in-game AI companion" width={DL_SHOT_DIMS.w} height={DL_SHOT_DIMS.h} loading="lazy" decoding="async" />
             </div>
           </div>
         </section>

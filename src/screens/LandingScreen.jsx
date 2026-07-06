@@ -69,7 +69,7 @@ export default function LandingScreen({ onGitHubLogin, onGoogleLogin, onPlayDemo
           {onPlayDemo
             ? <button onClick={onPlayDemo} class="lp-play">Play Demo</button>
             : <button onClick={scrollToAuth} class="lp-play">Play Now</button>}
-          <button onClick={scrollToAuth} class="lp-signin">Sign in and play</button>
+          <button onClick={scrollToAuth} class="lp-signin">Sign in</button>
           {onPlayDemo && (
             <p class="lp-note">
               The demo runs offline in your browser. Sign in for cloud saves, raids, the
@@ -165,7 +165,7 @@ export default function LandingScreen({ onGitHubLogin, onGoogleLogin, onPlayDemo
           <h2 class="lp-title">See it in action</h2>
         </div>
         <div class="lp-strip">
-          {['ss-home', 'ss-worldmap', 'ss-place', 'ss-combat', 'ss-bank', 'ss-bosses', 'ss-trading', 'ss-leaderboard', 'ss-collection', 'ss-connect'].map(key => (
+          {['ss-home', 'ss-worldmap', 'ss-place', 'ss-combat', 'ss-bank', 'ss-trading', 'ss-leaderboard', 'ss-collection'].map(key => (
             <div class="lp-strip__shot" key={key}>
               <img src={landingImages[key]} srcset={landingSrcSet(landingImages[key])} sizes="150px"
                    alt="PocketRPG screen" width={SHOT_DIMS.w} height={SHOT_DIMS.h}
@@ -196,6 +196,23 @@ export default function LandingScreen({ onGitHubLogin, onGoogleLogin, onPlayDemo
             </li>
           ))}
         </ol>
+      </section>
+
+      {/* ── AI companion ── */}
+      <section class="lp-section">
+        <div class="lp-head">
+          <div class="lp-eyebrow lp-eyebrow--brass">Your companion</div>
+          <h2 class="lp-title">Chat with the AI companion</h2>
+          <p class="lp-lead">
+            Ask any question or get advice about the game — your companion knows the mechanics,
+            the map, and your character.
+          </p>
+        </div>
+        <div class="lp-companion">
+          <img src={landingImages['ss-connect']} srcset={landingSrcSet(landingImages['ss-connect'])} sizes="280px"
+               alt="Chatting with the in-game AI companion" width={SHOT_DIMS.w} height={SHOT_DIMS.h}
+               loading="lazy" decoding="async" />
+        </div>
       </section>
 
       {/* ── Auth CTA ── */}

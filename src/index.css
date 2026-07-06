@@ -1297,6 +1297,10 @@ html, body, #app {
 .lp-strip__shot { flex: 0 0 144px; scroll-snap-align: start; border-radius: var(--fm-r-frame); overflow: hidden; border: 1px solid #000; box-shadow: 0 10px 22px -16px #000; background: #000; }
 .lp-strip__shot img { width: 100%; display: block; }
 
+/* AI companion feature */
+.lp-companion { max-width: 220px; margin: 0 auto; border-radius: var(--fm-r-frame); overflow: hidden; border: 1px solid #000; box-shadow: 0 10px 22px -16px #000; background: #000; }
+.lp-companion img { width: 100%; display: block; }
+
 /* how-it-works steps */
 .lp-steps { display: flex; flex-direction: column; gap: 12px; max-width: 420px; margin: 0 auto; list-style: none; padding: 0; }
 .lp-step { display: flex; gap: 13px; padding: 15px 16px; border-radius: var(--fm-r-frame); background: linear-gradient(160deg, #201c16, #14110c); border: 1px solid #000; }
@@ -1350,13 +1354,6 @@ html, body, #app {
 .dl-nav__links .dl-nav__link--on { opacity: 1; color: var(--fm-brass-hi); position: relative; }
 .dl-nav__links .dl-nav__link--on::after { content: ''; position: absolute; left: 50%; bottom: -8px; transform: translateX(-50%) rotate(45deg); width: 5px; height: 5px; background: var(--fm-brass-hi); }
 .dl-nav__right { display: flex; align-items: center; gap: 14px; }
-.dl-signin {
-  font-family: var(--fm-serif); font-size: 13px; font-weight: 700; letter-spacing: 0.02em;
-  color: var(--fm-parch); opacity: 0.85; cursor: pointer;
-  padding: 9px 18px; border-radius: 999px; border: 1px solid rgba(176,136,66,0.4);
-  background: rgba(233,220,189,0.05); transition: opacity .15s, color .15s, border-color .15s, background .15s;
-}
-.dl-signin:hover { opacity: 1; color: var(--fm-brass-hi); border-color: var(--fm-brass); background: rgba(176,136,66,0.12); }
 
 /* anchor-nav targets sit behind the sticky header — offset the scroll landing spot */
 #dl-top, #dl-features, #dl-world, #dl-skills, #dl-gallery, #dl-play { scroll-margin-top: 88px; }
@@ -1450,6 +1447,12 @@ html, body, #app {
 .dl-step p { margin-top: 11px; font-size: 15px; line-height: 1.6; color: var(--fm-parch); opacity: 0.72; }
 .dl-step__line { position: absolute; top: 52px; right: -26px; width: 26px; height: 1px; background: linear-gradient(90deg, rgba(176,136,66,0.5), transparent); }
 
+/* AI companion feature */
+.dl-companion { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 52px; align-items: center; }
+.dl-companion__copy p { margin-top: 11px; font-size: 15px; line-height: 1.6; color: var(--fm-parch); opacity: 0.72; }
+.dl-companion__shot { justify-self: center; width: 100%; max-width: 260px; border-radius: var(--fm-r-frame); overflow: hidden; border: 1px solid #000; box-shadow: 0 18px 36px -22px #000; background: #000; }
+.dl-companion__shot img { width: 100%; display: block; }
+
 /* auth CTA — parchment charter in iron */
 .dl-cta-band { padding: 92px 0; }
 .dl-cta { max-width: 720px; margin: 0 auto; text-align: center; position: relative; overflow: hidden; border-radius: var(--fm-r-frame); padding: 52px 46px; background-color: #e6d8b6; background-image: var(--fm-tex-parch); background-size: cover; color: var(--fm-ink); box-shadow: var(--fm-frame-shadow), var(--fm-parch-inset); }
@@ -1507,6 +1510,8 @@ html, body, #app {
   .dl-skills__grid { grid-template-columns: repeat(4, 1fr); }
   .dl-strip__inner { grid-template-columns: repeat(3, 1fr); gap: 22px 12px; }
   .dl-hud__inner { justify-content: center; }
+  .dl-companion { grid-template-columns: 1fr; gap: 30px; text-align: center; }
+  .dl-companion__shot { order: -1; }
 }
 @media (max-width: 720px) {
   .dl-places { grid-template-columns: 1fr; }
