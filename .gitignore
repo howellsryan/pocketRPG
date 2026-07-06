@@ -10,3 +10,4 @@ www/
 /game-*.js
 .tmp/
 public/fonts/
+/tripo-output/

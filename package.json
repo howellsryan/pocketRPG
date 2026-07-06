@@ -18,6 +18,7 @@
     "check:single": "node scripts/check-single-file-build.cjs",
     "seed:bots": "node scripts/seed-pvp-bots.cjs",
     "gen:knowledge": "node scripts/gen-chat-knowledge.cjs",
+    "tripo": "node scripts/tripo-generate.cjs",
     "claude:headroom": "bash scripts/headroom-claude.sh",
     "ci": "npm run build && npm run rebuild && npm run check:single",
     "predeploy": "npm run build",
