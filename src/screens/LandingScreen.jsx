@@ -2,16 +2,17 @@ import { useRef } from 'preact/hooks'
 import { landingImages } from './landingImages.js'
 import { landingSrcSet } from '../utils/helpers.js'
 import { useIsDesktop } from '../hooks/useIsDesktop.js'
-import { LANDING_STATS, LANDING_TIERS, LANDING_PLACES, LANDING_FEATURES } from './landingContent.js'
+import { LANDING_STATS, LANDING_TIERS, LANDING_PLACES, LANDING_MARKERS, LANDING_CARDS, LANDING_HUD_STATS } from './landingContent.js'
 import DesktopLandingScreen from './DesktopLandingScreen.jsx'
 
 // Portrait screenshots are captured at 780×1688 and downscaled to 560w (see
 // public/landing). Painted place scenes (lp-*) are 560×313.
 const SHOT_DIMS = { w: 560, h: 1212 }
-const FEATURE_EMOJI = { crossed_swords: '⚔️', progression: '📈', cash: '🪙', scroll: '📜' }
 
 // Painted-scene srcset: a 360w variant plus the 560w original.
 const sceneSrcSet = (url) => url ? `${url.replace(/\.webp$/, '-360.webp')} 360w, ${url} 560w` : undefined
+// Map medallions crop a place scene into a small circle — the 360w variant is plenty.
+const medallionSrc = (url) => url ? url.replace(/\.webp$/, '-360.webp') : undefined
 // Realm map srcset: 480 / 760 / 1108 widths.
 const mapSrcSet = (url) => url
   ? `${url.replace(/\.webp$/, '-480.webp')} 480w, ${url.replace(/\.webp$/, '-760.webp')} 760w, ${url} 1108w`
@@ -43,42 +44,65 @@ export default function LandingScreen({ onGitHubLogin, onGoogleLogin, onPlayDemo
   return (
     <div class="lp-root">
 
-      {/* ── Hero ── */}
+      {/* ── Hero — parchment proclamation sheet ── */}
       <section class="lp-hero">
-        <div class="lp-eyebrow">Tick-based idle fantasy RPG</div>
-        <h1 class="lp-brand">PocketRPG</h1>
-        <p class="lp-tagline">Level up while you live your life.</p>
-        <p class="lp-sub">
-          Explore a hand-painted world of 14 settlements. Skill, quest, and raid on a
-          deterministic 600ms tick — whether you're watching or not.
-        </p>
+        <div class="lp-sheet">
+          <span class="fm-corner fm-corner--tl" aria-hidden="true" /><span class="fm-corner fm-corner--tr" aria-hidden="true" />
+          <span class="fm-corner fm-corner--bl" aria-hidden="true" /><span class="fm-corner fm-corner--br" aria-hidden="true" />
+          <h1 class="lp-brand">PocketRPG</h1>
+          <div class="lp-orntag"><i /><span>A Medieval Idle RPG</span><i /></div>
+          <p class="lp-sub">
+            Embark on an endless adventure. Train your hero. Complete quests.
+            Conquer raids. Be legendary.
+          </p>
 
-        <div class="lp-cta">
+          {onPlayDemo
+            ? <button onClick={onPlayDemo} class="lp-play">Play Now</button>
+            : <button onClick={scrollToAuth} class="lp-play">Play Now</button>}
+          <button onClick={scrollToAuth} class="lp-signin">Sign in — save to the cloud</button>
           {onPlayDemo && (
-            <button onClick={onPlayDemo} class="lp-btn lp-btn--ember">Play Demo</button>
+            <p class="lp-note">
+              The demo runs offline in your browser. Sign in for cloud saves, raids, the
+              Trading Post and leaderboards.
+            </p>
           )}
-          <button onClick={scrollToAuth} class="lp-btn lp-btn--ghost">Sign in — save to cloud</button>
-        </div>
-        <p class="lp-note">
-          The demo runs offline in your browser. Sign in for cloud saves, raids, the
-          Trading Post and leaderboards.
-        </p>
 
-        <figure class="lp-mapframe">
-          <img
-            src={landingImages['lp-map']} srcset={mapSrcSet(landingImages['lp-map'])}
-            sizes="(min-width: 520px) 480px, 92vw"
-            alt="The realm of Eldermoor — a hand-painted world map"
-            width="1108" height="594" loading="eager" fetchpriority="high" decoding="async"
-          />
-          <figcaption class="lp-mapcap">The realm of Eldermoor</figcaption>
-        </figure>
+          <figure class="lp-mapframe">
+            <img
+              src={landingImages['lp-map']} srcset={mapSrcSet(landingImages['lp-map'])}
+              sizes="(min-width: 520px) 480px, 92vw"
+              alt="The realm of Eldermoor — a hand-painted world map"
+              width="1108" height="594" loading="eager" fetchpriority="high" decoding="async"
+            />
+            {LANDING_MARKERS.map(m => (
+              <div class={`lp-mark${m.up ? ' lp-mark--up' : ''}`} style={{ left: `${m.x}%`, top: `${m.y}%` }} key={m.id}>
+                <img src={medallionSrc(landingImages[m.img])} alt="" width="44" height="44" loading="eager" decoding="async" />
+                <span class="lp-mark__name">{m.name}</span>
+              </div>
+            ))}
+          </figure>
+        </div>
 
         <div class="lp-proof">
           {LANDING_STATS.map(([v, l]) => (
             <div class="lp-proof__item" key={l}><b>{v}</b><span>{l}</span></div>
           ))}
         </div>
+      </section>
+
+      {/* ── Proclamation cards ── */}
+      <section class="lp-cards">
+        {LANDING_CARDS.map(c => (
+          <article class="lp-card" key={c.id}>
+            <div class="lp-card__seal" aria-hidden="true">{c.sealEmoji}</div>
+            <h3 class="lp-card__title">{c.title}</h3>
+            <div class="fm-divider lp-card__rule" aria-hidden="true" />
+            <div class="lp-card__art" aria-hidden="true">
+              {c.artEmoji.map(e => <span key={e}>{e}</span>)}
+            </div>
+            <p class="lp-card__desc">{c.desc}</p>
+          </article>
+        ))}
       </section>
 
       {/* ── World map / places ── */}
@@ -124,30 +148,6 @@ export default function LandingScreen({ onGitHubLogin, onGoogleLogin, onPlayDemo
         <p class="lp-swipe">Swipe to roam →</p>
       </section>
 
-      {/* ── Features ── */}
-      <section class="lp-section">
-        <div class="lp-head">
-          <div class="lp-eyebrow lp-eyebrow--brass">The game</div>
-          <h2 class="lp-title">Everything in your pocket</h2>
-        </div>
-        <div class="lp-features">
-          {LANDING_FEATURES.map(f => (
-            <div class="lp-feature" key={f.title}>
-              <div class="lp-feature__shot">
-                <img src={landingImages[f.img]} srcset={landingSrcSet(landingImages[f.img])}
-                     sizes="(min-width: 672px) 328px, 45vw" alt={f.title}
-                     width={SHOT_DIMS.w} height={SHOT_DIMS.h} loading="lazy" decoding="async" />
-              </div>
-              <div class="lp-feature__body">
-                <div class="lp-feature__ico" aria-hidden="true">{FEATURE_EMOJI[f.icon] || '✦'}</div>
-                <h3 class="lp-feature__title">{f.title}</h3>
-                <p class="lp-feature__desc">{f.desc}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
       {/* ── Screenshot strip ── */}
       <section class="lp-section">
         <div class="lp-head">
@@ -155,7 +155,7 @@ export default function LandingScreen({ onGitHubLogin, onGoogleLogin, onPlayDemo
           <h2 class="lp-title">See it in action</h2>
         </div>
         <div class="lp-strip">
-          {['ss-worldmap', 'ss-place', 'ss-combat', 'ss-bank', 'ss-bosses', 'ss-leaderboard', 'ss-collection', 'ss-connect'].map(key => (
+          {['ss-home', 'ss-worldmap', 'ss-place', 'ss-combat', 'ss-bank', 'ss-bosses', 'ss-trading', 'ss-leaderboard', 'ss-collection', 'ss-connect'].map(key => (
             <div class="lp-strip__shot" key={key}>
               <img src={landingImages[key]} srcset={landingSrcSet(landingImages[key])} sizes="150px"
                    alt="PocketRPG screen" width={SHOT_DIMS.w} height={SHOT_DIMS.h}
@@ -249,6 +249,19 @@ export default function LandingScreen({ onGitHubLogin, onGoogleLogin, onPlayDemo
           </p>
         </div>
       </section>
+
+      {/* ── HUD band — the in-game status bar, as a footer flourish ── */}
+      <div class="lp-hud">
+        <div class="lp-hud__slog">Your Adventure.<br />Anytime, Anywhere.</div>
+        <div class="lp-hud__stats">
+          {LANDING_HUD_STATS.map(s => (
+            <div class="lp-hudstat" key={s.label}>
+              <b style={{ color: s.color }}>{s.value}</b>
+              <span>{s.label}</span>
+            </div>
+          ))}
+        </div>
+      </div>
 
       <footer class="lp-footer">
         <span class="lp-footer__brand">PocketRPG</span>

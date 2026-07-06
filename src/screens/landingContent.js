@@ -45,26 +45,49 @@ export const LANDING_PLACES = [
   { id: 'canifel',    name: 'Canifel',    tier: 'village', sub: 'Village of the haunted fens',  img: 'lp-canifel',    blurb: 'A shuttered village in the eastern marsh, where something always watches the road.' },
 ]
 
-// Feature cards. `img` keys an in-game screenshot (ss-*).
-export const LANDING_FEATURES = [
+// Hero map medallions — six featured settlements pinned onto the lp-map hero
+// art. x/y are percentages of the map image, derived from each place's
+// world.json board coordinates (board is 1640×879, same art as lp-map).
+// `img` keys the painted place scene whose -360 variant fills the medallion.
+// `up` flips the name plaque above the medallion so neighbouring pins'
+// labels never collide (mid-map pins point up, away from the bottom pins).
+export const LANDING_MARKERS = [
+  { id: 'camlann',    name: 'Camlann',    img: 'lp-camlann',    x: 23.0, y: 23.5 },
+  { id: 'varrick',    name: 'Varrick',    img: 'lp-varrick',    x: 59.1, y: 38.7 },
+  { id: 'faloden',    name: 'Faloden',    img: 'lp-faloden',    x: 29.8, y: 50.5, up: true },
+  { id: 'canifel',    name: 'Canifel',    img: 'lp-canifel',    x: 71.8, y: 50.5, up: true },
+  { id: 'portsarin',  name: 'Port Sarin', img: 'lp-portsarin',  x: 33.4, y: 85.0, up: true },
+  { id: 'brimhollow', name: 'Brimhollow', img: 'lp-brimhollow', x: 76.3, y: 81.7, up: true },
+]
+
+// The three parchment proclamation cards under the hero. `seal` / `art` key
+// game-icons glyphs (desktop); `sealEmoji` / `artEmoji` are the core-bundle
+// fallbacks used by the mobile screen, which doesn't ship gameIconsData.
+export const LANDING_CARDS = [
   {
-    icon: 'crossed_swords', title: 'Bosses & Raids',
-    desc: 'God Wars generals, dragons, and four end-game raids scattered across the realm. Set your loadout, then fight on autopilot while the ticks roll.',
-    img: 'ss-combat', tags: ['Auto-combat', 'God Wars', '4 Raids'],
+    id: 'skills', seal: 'crossed_swords', sealEmoji: '⚔️',
+    art: ['combat_level', 'pointy_hat', 'mining'], artEmoji: ['🗡️', '🧙', '⛏️'],
+    title: '24 Skills',
+    desc: 'Master combat, magic, gathering and more — every skill trains live and idles offline, from level 1 to 99. Build your legend.',
   },
   {
-    icon: 'progression', title: '24 Skills to Master',
-    desc: 'Train Attack, Thieving, Mining, Runecraft and more from 1 to 99. Every skill ticks live and idles offline — even with the screen off.',
-    img: 'ss-home', tags: ['1 → 99', 'Idle XP', 'Offline-first'],
+    id: 'quests', seal: 'scroll', sealEmoji: '📜',
+    art: ['scroll_unfurled'], artEmoji: ['📜'],
+    title: '168 Quests',
+    desc: 'Quest chains from Novice to Grandmaster across a vast hand-painted world, each rewarding XP, rare items, and lore.',
   },
   {
-    icon: 'cash', title: 'A Deep Economy',
-    desc: 'A bank with hundreds of slots, a live player-driven Trading Post, and 221 Collection Log slots to hunt down across every corner of Eldermoor.',
-    img: 'ss-trading', tags: ['Trading Post', '221 collectibles', 'Hundreds of items'],
+    id: 'pvp', seal: 'shield', sealEmoji: '🛡️',
+    art: ['dragon_kiteshield', 'castle'], artEmoji: ['🛡️', '🏰'],
+    title: 'PvP, Raids & Dungeons',
+    desc: 'Challenge players in ranked PvP. Conquer four end-game raids. Delve dungeons and hunt bosses. Earn glory.',
   },
-  {
-    icon: 'scroll', title: '168 Quests',
-    desc: 'Quest chains from Novice to Grandmaster, each rewarding XP, rare items, and lore. Journeys plot their own route across the world map.',
-    img: 'ss-collection', tags: ['Novice → Grandmaster', 'QP cape', 'Lore'],
-  },
+]
+
+// The iron HUD band above the footer — proof stats dressed as the in-game
+// status pills, plus quick-link medallions. `color` tints the gem glyph.
+export const LANDING_HUD_STATS = [
+  { value: '24',  label: 'Skills',       color: '#3fa06a' },
+  { value: '168', label: 'Quests',       color: '#e6c878' },
+  { value: '221', label: 'Collectibles', color: '#6f9ad1' },
 ]
