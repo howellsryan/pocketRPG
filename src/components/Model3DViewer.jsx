@@ -180,10 +180,12 @@ function teardown(st, host) {
   if (st.controls) st.controls.dispose()
   if (st.scene) st.scene.traverse((o) => { if (o.isMesh || o.isSkinnedMesh) disposeObject(o) })
   if (st.renderer) {
+    // renderer.getContext() works for WebGL2 too — canvas.getContext('webgl')
+    // returns null once a webgl2 context exists, so don't ask the canvas.
+    const gl = st.renderer.getContext()
     st.renderer.dispose()
+    if (gl) { const ext = gl.getExtension('WEBGL_lose_context'); if (ext) ext.loseContext() }
     const el = st.renderer.domElement
-    const ctx = el && el.getContext('webgl')
-    if (ctx) { const ext = ctx.getExtension('WEBGL_lose_context'); if (ext) ext.loseContext() }
     if (el && el.parentNode) el.parentNode.removeChild(el)
   }
   if (host) { while (host.firstChild) host.removeChild(host.firstChild) }
