@@ -84,3 +84,26 @@ Pre-rendered sprites everywhere by default (Option C) **+** an opt-in live 3D in
 ## 8) Suggested first commit (if greenlit)
 
 Phase 0 pilot only: process the two existing Tripo3D models → looping WebP, add an optional `sprite` field to `combatArt.js` + a `MonsterSprite` component that renders the WebP and falls back to `SkillEmblem`, lazy-loaded on one monster in `CombatScreen`. Small, self-contained, reversible — a real thing to feel on a phone.
+
+## 9) Update — measured pipeline + agreed plan
+
+Real Tripo3D assets (warrior, red dragon, crimson dagger, map) were profiled and run through an offline pipeline (`scripts/process-3d-model.mjs`: dedup → weld → meshopt `simplify` → WebP textures → meshopt compression).
+
+**Findings:** all four are **single fused static meshes** — no rig, no skeleton, no animations — at 43–55 MB and 1.3–1.9M tris. Unshippable raw. After processing:
+
+| Asset | Raw | Processed | Tris |
+|---|---|---|---|
+| Warrior | 43.3 MB | **0.86 MB** | 38k |
+| Red dragon | 54.7 MB | **1.16 MB** | 57k |
+| Crimson dagger | 13.0 MB | **0.78 MB** | 24k |
+| Map | 1.8 MB | 0.35 MB | 15k |
+
+A warrior + weapon + dragon scene ≈ **2.8 MB / ~120k tris** — phone-shippable, lazy-loaded, torn down on screen close. `simplify` preserves skin weights, so a rigged input stays rigged.
+
+**Two consequences of "fused static mesh":** (1) animation needs a **rig** we don't have — source it from Tripo's rig/animate re-export; (2) you can't swap gear on a mesh with gear baked in — equipping needs a **base-body warrior (empty hand)** plus **separate per-item models** attached to bones.
+
+**Agreed build plan:**
+- **Phase 1 — Equip screen (mobile + desktop), replaces the paper doll.** Rigged base-body warrior (from Tripo re-export) in a lazily-loaded three.js viewer; **weapon-only** equipment for now (weapon model attaches to the hand bone; other slots keep the icon UI) but the slot registry is **architected for full layering** next. three.js loaded on demand (not in the concat chunk), torn down on unmount, never running while idle. Paper doll stays as the guaranteed fallback (no WebGL / reduced-data / unsupported).
+- **Phase 2 — Combat vs red dragon (one monster).** Warrior (rigged attack/idle) vs a **transform-faked** dragon (whole-mesh lunge/recoil/shake — no rig needed first pass). Perf/device-gated, torn down when combat closes.
+
+**Needed from product:** rigged + animated **base-body warrior** (empty hand, idle + attack, low poly) re-exported from Tripo; the dragon can stay static (transform-faked).
