@@ -209,7 +209,7 @@ export default function LandingScreen({ onGitHubLogin, onGoogleLogin, onPlayDemo
           </p>
         </div>
         <div class="lp-companion">
-          <img src={landingImages['ss-connect']} srcset={landingSrcSet(landingImages['ss-connect'])} sizes="280px"
+          <img src={landingImages['ss-chat']} srcset={landingSrcSet(landingImages['ss-chat'])} sizes="280px"
                alt="Chatting with the in-game AI companion" width={SHOT_DIMS.w} height={SHOT_DIMS.h}
                loading="lazy" decoding="async" />
         </div>

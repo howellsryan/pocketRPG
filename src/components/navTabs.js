@@ -29,7 +29,6 @@ export const GAME_FRAME_BOTTOM_LEFT_TABS = [
 export const SETTINGS_NAV_LINKS = [
   { id: SCREENS.STORE,             label: 'Trading Post',      iconKey: 'uncut_ruby' },
   { id: SCREENS.CLUES,             label: 'Clues',             iconKey: 'clue_scroll_hard' },
-  { id: SCREENS.CONNECT_AI,        label: 'Connect AI',        iconKey: 'brain', iconColor: '#D97757', iconSize: 28 },
   { id: SCREENS.CHARACTER_UNLOCKS, label: 'Character Unlocks', iconKey: 'master_rejuvenation' },
   { id: SCREENS.ARMOURY,           label: 'Armoury',           iconKey: 'iron_longsword' },
   { id: SCREENS.COLLECTION_LOG,    label: 'Collection Log',    iconKey: 'open_book', iconColor: 'var(--color-parchment)' },

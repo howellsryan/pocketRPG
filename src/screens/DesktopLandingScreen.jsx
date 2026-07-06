@@ -301,7 +301,7 @@ export default function DesktopLandingScreen({ onGitHubLogin, onGoogleLogin, onP
               <p>Ask any question or get advice about the game — your companion knows the mechanics, the map, and your character.</p>
             </div>
             <div class="dl-companion__shot dl-reveal">
-              <img src={landingImages['ss-connect']} srcset={landingSrcSet(landingImages['ss-connect'])} sizes="(min-width: 1000px) 280px, 60vw"
+              <img src={landingImages['ss-chat']} srcset={landingSrcSet(landingImages['ss-chat'])} sizes="(min-width: 1000px) 280px, 60vw"
                 alt="Chatting with the in-game AI companion" width={DL_SHOT_DIMS.w} height={DL_SHOT_DIMS.h} loading="lazy" decoding="async" />
             </div>
           </div>
