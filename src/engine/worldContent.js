@@ -22,6 +22,7 @@ import skillsData from '../data/skills.json'
 import raidsData from '../data/raids.json'
 import minigamesData from '../data/minigames.json'
 import questsData from '../data/quests.json'
+import farmingData from '../data/farming.json'
 import { GATHER_TASKS } from './gatherTasks.js'
 import { BUILDING_ACTIONS } from './construction.js'
 import { SLAYER_MASTERS } from './slayerMasters.js'
@@ -49,6 +50,12 @@ for (const mg of asArray(minigamesData.minigames)) minigamesById[mg.id] = mg
 
 const questsById = {}
 for (const q of asArray(questsData)) questsById[q.id] = q
+
+// Farm locations keyed by their own id (src/data/farming.json). Each carries a
+// `placeId` pinning it to the world place that offers it (kind 'farming' — a
+// place hosts at most one farm). Used to describe/gate the farming activity.
+const farmLocationsById = {}
+for (const loc of asArray(farmingData.locations)) farmLocationsById[loc.id] = loc
 
 /** Resolve a `${skillId}:${actionId}` skill ref to its action object. */
 function skillAction(skillRef) {
@@ -131,6 +138,8 @@ export function activityRef(task) {
     case 'agility': return task.action?.id ? { kind: 'agility', ref: task.action.id } : null
     case 'thieving': return task.npc?.id ? { kind: 'thieving', ref: task.npc.id } : null
     case 'hunter': return task.action?.id ? { kind: 'hunter', ref: task.action.id } : null
+    // Farming is place-bound by its farm location id (one farm per place).
+    case 'farming': return task.location?.id ? { kind: 'farming', ref: task.location.id } : null
     // Gated per-minigame (not per-task) — every reward task of a minigame lives at the
     // same place, so the whole minigame is the unit that's location-bound.
     case 'minigame': return task.minigameTask?.minigame ? { kind: 'minigame', ref: task.minigameTask.minigame } : null
@@ -157,6 +166,8 @@ export function autoStartFromTask(task) {
     case 'agility': return task.action?.id ? { kind: 'agility', actionId: task.action.id } : null
     case 'thieving': return task.npc?.id ? { kind: 'thieving', npcId: task.npc.id } : null
     case 'hunter': return task.action?.id ? { kind: 'hunter', actionId: task.action.id } : null
+    // Arrival opens the farm's patch view for this location.
+    case 'farming': return task.location?.id ? { kind: 'farming', locationId: task.location.id } : null
     // Carries the specific reward task id (not just the minigame) so arrival resumes
     // exactly the task the player picked, not just any task from that minigame.
     case 'minigame': return task.minigameTask?.id ? { kind: 'minigame', taskId: task.minigameTask.id } : null
@@ -278,6 +289,12 @@ export function describeActivity(kind, ref) {
     case 'hunter': {
       const a = actionInSkill('hunter', ref)
       return { name: a?.name || ref, icon: '🪤', level: a?.level ?? null }
+    }
+    // Farming: ref is the farm location id; the whole farm is the unit (no single
+    // level — patches gate their own crops), so `level` stays null.
+    case 'farming': {
+      const loc = farmLocationsById[ref]
+      return { name: loc?.name || ref, icon: '🌱', level: null }
     }
     case 'minigame': {
       const mg = minigamesById[ref]

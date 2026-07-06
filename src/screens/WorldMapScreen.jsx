@@ -48,7 +48,7 @@ const wmTravelTime = (ticks) => {
 
 // Group a place's `{ kind, ref }` activities into [kind, [ref, ...]] pairs in a stable
 // kind order for the hub's grouped list.
-const WM_KIND_ORDER = ['raid', 'boss', 'dungeon', 'combat', 'slayer', 'skill', 'gather', 'agility', 'thieving', 'hunter', 'quest', 'minigame', 'shop']
+const WM_KIND_ORDER = ['raid', 'boss', 'dungeon', 'combat', 'slayer', 'skill', 'gather', 'farming', 'agility', 'thieving', 'hunter', 'quest', 'minigame', 'shop']
 function groupActivities(activities) {
   const byKind = {}
   for (const a of activities || []) {
@@ -79,6 +79,8 @@ function fakeTaskFor(kind, ref) {
     case 'agility': return { type: 'agility', action: { id: ref } }
     case 'thieving': return { type: 'thieving', npc: { id: ref } }
     case 'hunter': return { type: 'hunter', action: { id: ref } }
+    // Farming: ref is the farm location id; arrival opens that farm's patch view.
+    case 'farming': return { type: 'farming', location: { id: ref } }
     // No specific reward task at this level (the place hub lists the whole venue) — gate
     // by the minigame itself; arrival just opens the Minigames screen, task unpicked.
     case 'minigame': return { type: 'minigame', minigameTask: { minigame: ref } }

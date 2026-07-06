@@ -201,6 +201,7 @@
     {
       "id": "falador",
       "name": "Ironhold Farm",
+      "placeId": "faloden",
       "patches": [
         {
           "type": "herb",
@@ -215,6 +216,7 @@
     {
       "id": "taverley",
       "name": "Mossmere Farm",
+      "placeId": "draynar",
       "patches": [
         {
           "type": "herb",
@@ -229,6 +231,7 @@
     {
       "id": "ardougne",
       "name": "Silverkeep Farm",
+      "placeId": "ardounne",
       "patches": [
         {
           "type": "herb",
@@ -243,6 +246,7 @@
     {
       "id": "catherby",
       "name": "Seabloom Farm",
+      "placeId": "catherra",
       "patches": [
         {
           "type": "herb",
@@ -261,6 +265,7 @@
     {
       "id": "hosidius",
       "name": "Sunmeadow Farm",
+      "placeId": "seerhold",
       "patches": [
         {
           "type": "herb",
@@ -280,6 +285,7 @@
     {
       "id": "gnome",
       "name": "Spryroot Grove",
+      "placeId": "lumbright",
       "patches": [
         {
           "type": "fruitTree",
@@ -290,6 +296,7 @@
     {
       "id": "brimhaven",
       "name": "Emberbay Farm",
+      "placeId": "brimhollow",
       "patches": [
         {
           "type": "fruitTree",

@@ -31,6 +31,7 @@ const quests = require(path.join(ROOT, 'src/data/quests.json'))
 const skills = require(path.join(ROOT, 'src/data/skills.json'))
 const raids = require(path.join(ROOT, 'src/data/raids.json'))
 const minigames = require(path.join(ROOT, 'src/data/minigames.json'))
+const farming = require(path.join(ROOT, 'src/data/farming.json'))
 const { GATHER_TASKS } = require(path.join(ROOT, 'src/engine/gatherTasks.js'))
 const { BUILDING_ACTIONS } = require(path.join(ROOT, 'src/engine/construction.js'))
 
@@ -168,6 +169,17 @@ for (const mg of asArray(minigames.minigames)) {
   out[placeId].push({ kind: 'minigame', ref: mg.id })
 }
 
+// Farming — own kind, authored 1:1 to the world place each farm sits at
+// (farming.json `placeId`). Only places with a farm get a farming activity; the
+// farm's own id is the ref (one farm per place). Not level-banded — the farm's
+// patches gate their own crops inside the farming screen.
+for (const loc of asArray(farming.locations)) {
+  const placeId = loc.placeId
+  if (!placeId || !world.places[placeId]) continue
+  out[placeId] = out[placeId] || []
+  out[placeId].push({ kind: 'farming', ref: loc.id })
+}
+
 // Thieving — own kind, level-banded (pickpocketing needs no facility, unlike the other
 // bank skills, so it isn't bundled into FACILITY_SKILLS). ardougne_knight is authored to
 // Ardounne by name, like the agility courses; every other target spreads by level, same
@@ -244,6 +256,7 @@ world.kinds = Object.assign({}, world.kinds, {
   agility: { label: 'Agility', color: 'var(--color-mana-light)' },
   thieving: { label: 'Thieving', color: 'var(--tier-bronze)' },
   hunter: { label: 'Hunter', color: 'var(--color-gold)' },
+  farming: { label: 'Farming', color: 'var(--color-emerald)' },
 })
 
 fs.writeFileSync(worldPath, JSON.stringify(world, null, 2) + '\n')

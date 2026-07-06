@@ -33,6 +33,10 @@
       "ref": "stoneback_crab"
     },
     {
+      "kind": "farming",
+      "ref": "gnome"
+    },
+    {
       "kind": "gather",
       "ref": "gather_bowstring"
     },
@@ -1665,6 +1669,10 @@
       "ref": "vicious_black_dragon"
     },
     {
+      "kind": "farming",
+      "ref": "falador"
+    },
+    {
       "kind": "gather",
       "ref": "convert_log_to_plank"
     },
@@ -2673,6 +2681,10 @@
     {
       "kind": "combat",
       "ref": "nagadoth_supreme"
+    },
+    {
+      "kind": "farming",
+      "ref": "ardougne"
     },
     {
       "kind": "gather",
@@ -3699,6 +3711,10 @@
     {
       "kind": "combat",
       "ref": "lesser_fiend"
+    },
+    {
+      "kind": "farming",
+      "ref": "taverley"
     },
     {
       "kind": "gather",
@@ -6253,6 +6269,10 @@
       "ref": "stoneglare_basilisk"
     },
     {
+      "kind": "farming",
+      "ref": "catherby"
+    },
+    {
       "kind": "gather",
       "ref": "burn_seaweed"
     },
@@ -6389,6 +6409,10 @@
     {
       "kind": "combat",
       "ref": "sovrathar_the_ashen_sovereign"
+    },
+    {
+      "kind": "farming",
+      "ref": "hosidius"
     },
     {
       "kind": "gather",
@@ -6983,6 +7007,10 @@
     {
       "kind": "combat",
       "ref": "tidereaper_crab"
+    },
+    {
+      "kind": "farming",
+      "ref": "brimhaven"
     },
     {
       "kind": "quest",

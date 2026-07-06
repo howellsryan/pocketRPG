@@ -10,8 +10,10 @@ import {
   activityLevelRequirement,
   activityLockReason,
   activityGroupLabel,
+  placeActivities,
 } from '../src/engine/worldContent.js'
 import worldData from '../src/data/world.json'
+import farmingData from '../src/data/farming.json'
 import monstersData from '../src/data/monsters.json'
 import skillsData from '../src/data/skills.json'
 import raidsData from '../src/data/raids.json'
@@ -40,6 +42,7 @@ describe('activityRef', () => {
     expect(activityRef({ type: 'hunter', action: { id: 'hunt_cow' } })).toEqual({ kind: 'hunter', ref: 'hunt_cow' })
     expect(activityRef({ type: 'raid', raid: { id: 'crimson_night_theatre' } })).toEqual({ kind: 'raid', ref: 'crimson_night_theatre' })
     expect(activityRef({ type: 'minigame', minigameTask: { id: 'pc_void_set', minigame: 'pest_control' } })).toEqual({ kind: 'minigame', ref: 'pest_control' })
+    expect(activityRef({ type: 'farming', location: { id: 'falador' } })).toEqual({ kind: 'farming', ref: 'falador' })
   })
 
   it('returns null for non-place-bound task types', () => {
@@ -107,6 +110,20 @@ describe('content -> place coverage', () => {
   it('maps every slayer master to exactly its home place', () => {
     for (const m of SLAYER_MASTERS) {
       expect(placesForActivity('slayer', m.id), `master ${m.id}`).toEqual([(m as any).placeId])
+    }
+  })
+
+  it('maps every farm to exactly the world place it names, and only farm places offer farming', () => {
+    const farmPlaces = new Set<string>()
+    for (const loc of asArray(farmingData.locations)) {
+      expect((worldData as any).places[loc.placeId], `farm ${loc.id} placeId ${loc.placeId}`).toBeTruthy()
+      expect(placesForActivity('farming', loc.id), `farm ${loc.id}`).toEqual([loc.placeId])
+      farmPlaces.add(loc.placeId)
+    }
+    // No place without a farm offers a farming activity.
+    for (const id of Object.keys((worldData as any).places)) {
+      const hasFarming = placeActivities(id).some((a: any) => a.kind === 'farming')
+      expect(hasFarming, `place ${id} farming`).toBe(farmPlaces.has(id))
     }
   })
 })
@@ -235,6 +252,7 @@ describe('autoStartFromTask', () => {
     expect(autoStartFromTask({ type: 'thieving', npc: { id: 'guard' } })).toEqual({ kind: 'thieving', npcId: 'guard' })
     expect(autoStartFromTask({ type: 'gather', gatherTask: { id: 'collect_sand' } })).toEqual({ kind: 'gather', gatherTaskId: 'collect_sand' })
     expect(autoStartFromTask({ type: 'minigame', minigameTask: { id: 'pc_void_set', minigame: 'pest_control' } })).toEqual({ kind: 'minigame', taskId: 'pc_void_set' })
+    expect(autoStartFromTask({ type: 'farming', location: { id: 'catherby' } })).toEqual({ kind: 'farming', locationId: 'catherby' })
   })
 
   it('returns null for untracked or empty tasks', () => {
@@ -290,6 +308,8 @@ describe('describeActivity', () => {
     expect(describeActivity('combat', 'no_such_monster').name).toBe('no_such_monster') // falls back to ref
     expect(describeActivity('raid', 'crimson_night_theatre').name).toBe('Crimson Night Theatre')
     expect(describeActivity('minigame', 'pest_control').name).toBe('Void Breach')
+    expect(describeActivity('farming', 'falador').name).toBe('Ironhold Farm') // farm location name
+    expect(describeActivity('farming', 'no_such_farm').name).toBe('no_such_farm')
   })
 
   it('describes quests with their complexity (rank as sort level, name as group label)', () => {

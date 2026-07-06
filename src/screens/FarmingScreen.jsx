@@ -1,4 +1,4 @@
-import { useState } from 'preact/hooks'
+import { useState, useRef } from 'preact/hooks'
 import { useGame } from '../state/gameState.jsx'
 import { getLevelFromXP } from '../engine/experience.js'
 import Modal from '../components/Modal.jsx'
@@ -10,11 +10,15 @@ import farmingData from '../data/farming.json'
 import { getItemUnitValue } from '../utils/itemValue.js'
 import { applyPlantAll, getCropDef, getPatchesForLocation, getPlantableCropOptions, harvestCrop, getEffectiveStage, initFarmingState } from '../engine/farming.ts'
 
-export default function FarmingScreen({ onBack }) {
+export default function FarmingScreen({ initialLocationId, onBack }) {
   const { stats, farming, inventory, bank, updateFarming, grantXP, addToBank, updateBankDirect, removeFromInventory, addToast, itemsData } = useGame()
   const farmingLevel = getLevelFromXP(stats.farming?.xp || 0)
 
-  const [selectedLocation, setSelectedLocation] = useState(null)
+  // Entered straight into one farm (from a place map's farming spot): drop into
+  // its patch view, and let its Back return to that origin (onBack) instead of
+  // the farm list, which was never shown.
+  const [selectedLocation, setSelectedLocation] = useState(initialLocationId || null)
+  const enteredDirect = useRef(!!initialLocationId)
   const [resultModal, setResultModal] = useState(null)
   const [plantAllOpen, setPlantAllOpen] = useState(false)
   const [plantSelections, setPlantSelections] = useState(() => farming?.plantAllSelections || {})
@@ -100,7 +104,8 @@ export default function FarmingScreen({ onBack }) {
       <FarmPatchView
         locationId={selectedLocation}
         farmingLevel={farmingLevel}
-        onBack={() => setSelectedLocation(null)}
+        onBack={enteredDirect.current && onBack ? onBack : () => setSelectedLocation(null)}
+        backLabel={enteredDirect.current && onBack ? 'Back' : 'Farms'}
       />
     )
   }
