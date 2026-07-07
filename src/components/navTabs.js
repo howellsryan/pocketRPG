@@ -29,11 +29,9 @@ export const GAME_FRAME_BOTTOM_LEFT_TABS = [
 ]
 
 // Screens reachable from the Settings screen (HelpScreen) instead of the nav
-// rails — keeps the rails short. Trading Post lives here because the OSRS-style
-// frame (GameFrameBar) has no rail entry for it — Settings is its only entry
-// point. (Combat/Quests/Clues/Minigames moved to their own rail icons.)
+// rails — keeps the rails short. (Combat/Quests/Clues/Minigames moved to
+// their own rail icons.)
 export const SETTINGS_NAV_LINKS = [
-  { id: SCREENS.STORE,             label: 'Trading Post',      iconKey: 'uncut_ruby' },
   { id: SCREENS.CHARACTER_UNLOCKS, label: 'Character Unlocks', iconKey: 'master_rejuvenation' },
   { id: SCREENS.ARMOURY,           label: 'Armoury',           iconKey: 'iron_longsword' },
   { id: SCREENS.COLLECTION_LOG,    label: 'Collection Log',    iconKey: 'open_book', iconColor: 'var(--color-parchment)' },

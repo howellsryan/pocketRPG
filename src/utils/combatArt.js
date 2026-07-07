@@ -161,12 +161,12 @@ export const MONSTER_ART = {
 // Attack style (monsters.json attackStyle) -> chip glyph + colour. The melee
 // sub-styles (stab/slash/crush) collapse to a single "Melee" chip.
 export const STYLE_ART = {
-  stab:   { icon: 'gladius',      color: '#e0564b', label: 'Melee'  },
-  slash:  { icon: 'gladius',      color: '#e0564b', label: 'Melee'  },
-  crush:  { icon: 'gladius',      color: '#e0564b', label: 'Melee'  },
-  melee:  { icon: 'gladius',      color: '#e0564b', label: 'Melee'  },
-  ranged: { icon: 'high_shot',    color: '#7bbf52', label: 'Ranged' },
-  magic:  { icon: 'crystal_ball', color: '#9b6cff', label: 'Magic'  },
+  stab:   { icon: 'gladius',      color: '#a8362c', label: 'Melee'  },
+  slash:  { icon: 'gladius',      color: '#a8362c', label: 'Melee'  },
+  crush:  { icon: 'gladius',      color: '#a8362c', label: 'Melee'  },
+  melee:  { icon: 'gladius',      color: '#a8362c', label: 'Melee'  },
+  ranged: { icon: 'high_shot',    color: '#3f6b26', label: 'Ranged' },
+  magic:  { icon: 'crystal_ball', color: '#5a35b8', label: 'Magic'  },
 }
 
 // Resolve a monster's emblem + accent, falling back to its category then default.
@@ -228,8 +228,8 @@ export function getStyleArt(style) {
 
 // Colours for multi-style chips (single-style chips use the style's own
 // colour from STYLE_ART).
-const MULTI_ALL_COLOR = '#f0c040'    // gold — all three combat styles
-const MULTI_TWO_COLOR = '#cdd6e0'    // silver — two styles
+const MULTI_ALL_COLOR = '#96650a'    // gold — all three combat styles
+const MULTI_TWO_COLOR = '#4a5568'    // silver — two styles
 
 const STYLE_LABEL = { melee: 'Melee', ranged: 'Ranged', magic: 'Magic' }
 

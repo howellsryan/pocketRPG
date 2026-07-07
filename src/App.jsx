@@ -48,7 +48,7 @@ import { api, captureTokenFromHash, getToken, getCharacterId, getCharacterName, 
 import { schedulePushSave, schedulePeriodicSave, pushNow, beaconSaveNow, pullSave, applyCloudSave, checkCloudNewer, isLocalWriteNewerThanCloud, resetSyncState, requestCriticalPushSave, retrySaveNow, isSaveConflict, clearSaveConflict, CLOUD_SAVE_STATUS_EVENT } from './cloud/sync.js'
 import { CRITICAL_SAVE_REASONS } from './cloud/criticalSavePolicy.js'
 import { fetchIdleState, resetIdleStateSync } from './cloud/idleState.js'
-import { isBackground } from './engine/activityRegistry.js'
+import { isBackground, getActivityKey } from './engine/activityRegistry.js'
 import { isRunnableBackgroundTask, getActionTicksForTask, getCarriedPendingTicks, simulateTaskWindow, resultActions, isScreenRecentlyDriving } from './engine/activityRunner.js'
 import { mergeSession, sessionPatchFromResult } from './engine/activitySession.js'
 import { resetActivityProgressSync } from './cloud/activityProgress.js'
@@ -325,7 +325,7 @@ function GameApp() {
   const { loaded, loadGame, player, stats, equipment, inventory, bank, currentHP, updateHP, getMaxHP, updateInventory, updateEquipment, updateBank, updateBankDirect, grantXP, addToast, activeTask, setActiveTask, getActiveTask, itemsData, getSnapshot, unlockedFeatures, setSlayerTask, awardSlayerPoints, slayerTasksCompleted, setSlayerTasksCompleted, completeQuest, completedQuests, questQueue, removeFromQuestQueue, updateQuestQueue,
     unlockMinigameItem, unlockedMinigameItems, awardDungeoneeringTokens, farming, updateFarming, idleCombatSetup, isOneLife, updateBossKillCounts, updateRaidKillCounts, syncServerKillCounts, markKillCountsLoaded, combatSkipHandlerRef, skipHourHandlerRef, chargeSkipRef, raidSkipHandlerRef,
     gameLocked, lockGame, unlockGame, runLockedSave, awaitCombatCompletion, resolveCombatCompletion,
-    characterUnlocks, dailyTaskStates, setDailyTasks, recordGameEvent, updateWorldLocation, worldLocation } = useGame()
+    characterUnlocks, dailyTaskStates, setDailyTasks, recordGameEvent, updateWorldLocation, worldLocation, clearActivityProgress } = useGame()
   const pvp = usePvp()
   const [screen, setScreen] = useState(SCREENS.HOME)
   const prevScreenRef = useRef(null) // screen before the current one (set by navigate)
@@ -977,6 +977,7 @@ function GameApp() {
               setActiveTask(null)
               activeTaskRef.current = null
               try { localStorage.removeItem('pocketrpg_activeTask') } catch {}
+              clearActivityProgress(getActivityKey({ type: 'gather', gatherTask: savedTask.gatherTask }))
               if (isCloudAuthoritativeMinigame(savedTask.gatherTask)) {
                 markMinigameRewardsUnlocked(savedTask.gatherTask, { unlockMinigameItem })
                 if (!isInPvpMatch) requestCriticalPushSave(() => buildMinigameCompletionSnapshot(savedTask.gatherTask), 'minigame_complete')
@@ -1002,6 +1003,7 @@ function GameApp() {
               setActiveTask(null)
               activeTaskRef.current = null
               try { localStorage.removeItem('pocketrpg_activeTask') } catch {}
+              clearActivityProgress(getActivityKey({ type: 'minigame', minigameTask: savedTask.minigameTask }))
               if (isCloudAuthoritativeMinigame(savedTask.minigameTask)) {
                 markMinigameRewardsUnlocked(savedTask.minigameTask, { unlockMinigameItem })
                 if (!isInPvpMatch) requestCriticalPushSave(() => buildMinigameCompletionSnapshot(savedTask.minigameTask), 'minigame_complete')
@@ -1419,6 +1421,7 @@ function GameApp() {
           setActiveTask(null)
           activeTaskRef.current = null
           try { localStorage.removeItem('pocketrpg_activeTask') } catch {}
+          clearActivityProgress(getActivityKey({ type: 'gather', gatherTask: task.gatherTask }))
           if (isCloudAuthoritativeMinigame(task.gatherTask)) {
             markMinigameRewardsUnlocked(task.gatherTask, { unlockMinigameItem })
             if (!isInPvpMatch) requestCriticalPushSave(() => buildMinigameCompletionSnapshot(task.gatherTask), 'minigame_complete')
@@ -1447,6 +1450,7 @@ function GameApp() {
           setActiveTask(null)
           activeTaskRef.current = null
           try { localStorage.removeItem('pocketrpg_activeTask') } catch {}
+          clearActivityProgress(getActivityKey({ type: 'minigame', minigameTask: mgTask }))
           if (isCloudAuthoritativeMinigame(mgTask)) {
             markMinigameRewardsUnlocked(mgTask, { unlockMinigameItem })
             if (!isInPvpMatch) requestCriticalPushSave(() => buildMinigameCompletionSnapshot(mgTask), 'minigame_complete')
@@ -2393,6 +2397,7 @@ function GameApp() {
             setActiveTask(null)
             activeTaskRef.current = null
             try { localStorage.removeItem('pocketrpg_activeTask') } catch {}
+            clearActivityProgress(getActivityKey({ type: 'gather', gatherTask: savedTask.gatherTask }))
             if (isCloudAuthoritativeMinigame(savedTask.gatherTask)) {
               markMinigameRewardsUnlocked(savedTask.gatherTask, { unlockMinigameItem })
               if (!isInPvpMatch) requestCriticalPushSave(() => buildMinigameCompletionSnapshot(savedTask.gatherTask), 'minigame_complete')
@@ -2426,6 +2431,7 @@ function GameApp() {
             setActiveTask(null)
             activeTaskRef.current = null
             try { localStorage.removeItem('pocketrpg_activeTask') } catch {}
+            clearActivityProgress(getActivityKey({ type: 'minigame', minigameTask: savedTask.minigameTask }))
             if (isCloudAuthoritativeMinigame(savedTask.minigameTask)) {
               markMinigameRewardsUnlocked(savedTask.minigameTask, { unlockMinigameItem })
               if (!isInPvpMatch) requestCriticalPushSave(() => buildMinigameCompletionSnapshot(savedTask.minigameTask), 'minigame_complete')

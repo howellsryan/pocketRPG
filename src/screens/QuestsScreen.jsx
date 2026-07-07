@@ -191,13 +191,9 @@ export default function QuestsScreen({ onNavigate, onBack } = {}) {
           <div class="flex gap-2">
             <button
               onClick={() => setHideCompleted(v => !v)}
-              class={`px-3 py-[5px] rounded-[20px] text-[11px] font-semibold border ${
-                hideCompleted
-                  ? 'border-[var(--color-gold)] bg-[rgba(212,175,55,0.15)] text-[var(--color-gold)]'
-                  : 'border-[var(--color-void-border)] bg-[var(--color-void-light)] text-[var(--color-parchment)] opacity-60'
-              }`}
+              class="px-3 py-[5px] rounded-[20px] text-[11px] font-semibold border border-[var(--color-void-border)] bg-[var(--color-void-light)] text-[var(--color-parchment)] opacity-60"
             >
-              {hideCompleted ? '✓ Hiding completed' : 'Show all'}
+              {hideCompleted ? 'Show All' : 'Hide Completed'}
             </button>
             {questQueue.length > 0 && (
               <button
