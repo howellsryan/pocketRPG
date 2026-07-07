@@ -2,7 +2,20 @@
   "version": 1,
   "modelBase": "3d-samples/",
   "defaults": {
-    "handBone": "R_Hand"
+    "handBone": "R_Hand",
+    "weapon": {
+      "position": [
+        0.269,
+        -0.1,
+        0.32
+      ],
+      "rotationDeg": [
+        10,
+        0,
+        71
+      ],
+      "scale": 0.399
+    }
   },
   "character": {
     "model": "hero.glb",

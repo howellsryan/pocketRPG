@@ -8,15 +8,25 @@
   Standalone dev harness (NOT part of the app bundle). It renders a character
   GLB and, optionally, a weapon GLB attached to a chosen bone/anchor, with live
   offset sliders so you can position a weapon in the hand and read off the exact
-  transform to bake into src/data/equipmentModels.json.
+  registry entry to paste into src/data/equipmentModels.json.
+
+  REGISTRY-FIRST: on load it fetches /src/data/equipmentModels.json (served on
+  Vite dev and on deployments — pages_build_output_dir is the repo root) and
+  lists every registered weapon. Picking one loads the hero AND the weapon from
+  the registry's own paths — including /api/tripo-assets/ R2 URLs on a deployed
+  preview — with the exact bone semantics the runtime resolver uses (absent
+  bone → defaults.handBone; explicit null → model root) and the entry's
+  effective transform (falling back to defaults.weapon) pre-applied to the
+  sliders. What you see is what ships. The emitted JSON is the full registry
+  entry; when the transform equals defaults.weapon it collapses to { model }
+  (a canonical import needs nothing else). File pickers remain for GLBs that
+  aren't uploaded yet (R2 URLs only resolve on a deployment, not local dev).
 
   Uses the same vendored three.js the app will use (public/vendor/three/*),
   loaded via relative paths so it works both in Vite dev (served at /) and in
   the deployed single-file build (served at /public/). Open:
-    dev:  http://localhost:5173/3d-preview.html
-    prod: /public/3d-preview.html
-  Swap in your rigged Tripo warrior + weapon by dropping GLBs in public/3d-samples/
-  (or use the file pickers). Bones only appear for a rigged model.
+    dev:      http://localhost:5173/3d-preview.html
+    deployed: /public/3d-preview.html
 -->
 <style>
   :root { --bg:#161310; --panel:#201b16; --line:#362e25; --ink:#ece4d6; --soft:#b3a894; --ember:#e08a4a; --mono:ui-monospace,Menlo,monospace; }
@@ -53,6 +63,8 @@
   <p class="sub">Position a weapon in the hand, then copy the transform into the registry.</p>
 
   <div class="grp">
+    <label>Registry item</label>
+    <select id="regItem"><option value="">(custom files)</option></select>
     <label>Character GLB</label>
     <input type="file" id="charFile" accept=".glb,.gltf">
     <label>Weapon GLB</label>
@@ -185,15 +197,74 @@ function applyOffset() {
 
 function updateXform() {
   const r = v => Math.round(v * 1000) / 1000;
-  const obj = {
+  const t = {
     bone: $('bone').value === '__root' ? null : $('bone').value,
     position: [r(+$('px').value), r(+$('py').value), r(+$('pz').value)],
     rotationDeg: [+$('rx').value, +$('ry').value, +$('rz').value],
     scale: r(+$('sc').value),
   };
-  $('xform').textContent = JSON.stringify(obj, null, 2);
-  return obj;
+  if (regItemId && registry) {
+    // Emit the full registry entry; collapse to { model } when the transform
+    // is exactly defaults.weapon + defaults.handBone (canonical import).
+    const d = registry.defaults || {}, dw = d.weapon || {};
+    const matchesDefault = t.bone === (d.handBone ?? null) &&
+      JSON.stringify(t.position) === JSON.stringify(dw.position) &&
+      JSON.stringify(t.rotationDeg) === JSON.stringify(dw.rotationDeg) &&
+      t.scale === dw.scale;
+    const model = registry.weapons?.[regItemId]?.model;
+    const entry = matchesDefault ? { model } : { model, ...t };
+    $('xform').textContent = JSON.stringify({ [regItemId]: entry }, null, 2) +
+      (matchesDefault ? '\n(matches defaults.weapon — canonical)' : '');
+    return { [regItemId]: entry };
+  }
+  $('xform').textContent = JSON.stringify(t, null, 2);
+  return t;
 }
+
+// ── Registry mode: pick a registered weapon, see exactly what ships ──
+let registry = null, regItemId = null, charFromRegistry = false;
+function registryUrl(model) {
+  if (!model) return null;
+  if (/^(https?:)?\/\//.test(model) || model.startsWith('/')) return model;
+  return './' + (registry.modelBase || '') + model; // page dir = asset root in dev AND deployed
+}
+function resolveRegistryWeapon(id) {
+  const w = registry.weapons[id], d = registry.defaults || {}, dw = d.weapon || {};
+  return {
+    model: w.model,
+    bone: w.bone === undefined ? (d.handBone || null) : w.bone,
+    position: w.position || dw.position || [0, 0, 0],
+    rotationDeg: w.rotationDeg || dw.rotationDeg || [0, 0, 0],
+    scale: typeof w.scale === 'number' ? w.scale : (typeof dw.scale === 'number' ? dw.scale : 1),
+  };
+}
+async function loadRegistry() {
+  try {
+    const res = await fetch('/src/data/equipmentModels.json', { cache: 'no-store' });
+    if (!res.ok) return;
+    registry = await res.json();
+    const sel = $('regItem');
+    for (const id of Object.keys(registry.weapons || {})) {
+      const op = document.createElement('option'); op.value = id; op.textContent = id; sel.appendChild(op);
+    }
+  } catch { /* file-picker-only mode */ }
+}
+$('regItem').addEventListener('change', async () => {
+  regItemId = $('regItem').value || null;
+  if (!regItemId || !registry) { updateXform(); return; }
+  const spec = resolveRegistryWeapon(regItemId);
+  if (!charFromRegistry && registry.character) {
+    await loadChar(registryUrl(registry.character.model));
+    charFromRegistry = true;
+  }
+  for (const [id, v] of [['px', spec.position[0]], ['py', spec.position[1]], ['pz', spec.position[2]],
+    ['rx', spec.rotationDeg[0]], ['ry', spec.rotationDeg[1]], ['rz', spec.rotationDeg[2]], ['sc', spec.scale]]) {
+    $(id).value = v; $(id + 'o').textContent = v;
+  }
+  $('bone').value = spec.bone && bones[spec.bone] ? spec.bone : '__root';
+  await loadWeapon(registryUrl(spec.model));
+  updateXform();
+});
 
 // wire sliders
 for (const id of ['px','py','pz','rx','ry','rz','sc']) {
@@ -202,12 +273,12 @@ for (const id of ['px','py','pz','rx','ry','rz','sc']) {
   out.textContent = el.value;
 }
 $('bone').addEventListener('change', () => { attachWeapon(); updateXform(); });
-$('charFile').addEventListener('change', e => { const f = e.target.files[0]; if (f) loadChar(URL.createObjectURL(f)); });
-$('weapFile').addEventListener('change', e => { const f = e.target.files[0]; if (f) loadWeapon(URL.createObjectURL(f)); });
+$('charFile').addEventListener('change', e => { const f = e.target.files[0]; if (f) { charFromRegistry = false; loadChar(URL.createObjectURL(f)); } });
+$('weapFile').addEventListener('change', e => { const f = e.target.files[0]; if (f) { regItemId = null; $('regItem').value = ''; loadWeapon(URL.createObjectURL(f)); updateXform(); } });
 $('spin').addEventListener('click', () => { controls.autoRotate = !controls.autoRotate; $('spin').classList.toggle('on', controls.autoRotate); $('spin').textContent = `⟳ Turntable: ${controls.autoRotate?'on':'off'}`; });
 $('anim').addEventListener('click', () => { if (idleAction) { idleAction.reset().play(); } });
 $('lunge').addEventListener('click', () => { lungeT = 0.0001; });
-$('copy').addEventListener('click', async () => { try { await navigator.clipboard.writeText(JSON.stringify(updateXform())); $('copy').textContent = 'Copied ✓'; setTimeout(()=>$('copy').textContent='Copy JSON', 1200); } catch {} });
+$('copy').addEventListener('click', async () => { try { updateXform(); await navigator.clipboard.writeText($('xform').textContent.replace(/\n\(matches[^)]*\)$/, '')); $('copy').textContent = 'Copied ✓'; setTimeout(()=>$('copy').textContent='Copy JSON', 1200); } catch {} });
 
 // Transform-fake attack: a quick forward lunge + recoil of the whole rig (the
 // Phase-2 approach for the un-rigged dragon; also previews warrior motion).
@@ -229,9 +300,15 @@ renderer.setAnimationLoop(() => {
   renderer.render(scene, camera);
 });
 
-// default sample (static placeholder until you load the rigged warrior)
-loadChar('./3d-samples/hero.glb');
-loadWeapon('./3d-samples/crimson_dagger.glb');
+// Boot: registry hero when available, sample fallback otherwise.
+await loadRegistry();
+if (registry?.character) {
+  charFromRegistry = true;
+  await loadChar(registryUrl(registry.character.model));
+} else {
+  await loadChar('./3d-samples/hero.glb');
+  await loadWeapon('./3d-samples/crimson_dagger.glb');
+}
 updateXform();
 </script>
 </body>

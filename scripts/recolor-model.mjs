@@ -88,14 +88,19 @@ for (const mat of doc.getRoot().listMaterials()) {
   seen.add(tex);
   const img = tex.getImage();
   const { data, info } = await sharp(Buffer.from(img)).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+  let touched = 0;
   for (let i = 0; i < data.length; i += 4) {
     const [h, s, l] = rgbToHsl(data[i], data[i + 1], data[i + 2]);
     // Greys have no meaningful hue — leave them so shading detail survives.
     if (s < 0.08 || hueDist(h, fromHue) > tol) continue;
     const [r, g, b] = hslToRgb(toHue, Math.min(1, s * satScale), Math.min(1, l * lightScale));
     data[i] = r; data[i + 1] = g; data[i + 2] = b;
-    remapped++;
+    touched++;
   }
+  remapped += touched;
+  // Untouched texture (hue band absent) → keep the original bytes; a webp
+  // re-encode would only add generation loss.
+  if (touched === 0) continue;
   const out = await sharp(data, { raw: { width: info.width, height: info.height, channels: 4 } })
     .webp({ quality: 85 })
     .toBuffer();

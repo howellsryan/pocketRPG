@@ -30,6 +30,7 @@ function CombatArena3D({
   monsterName,
   monsterPath,
   monsterHeight = 2,
+  monsterRotationDeg = [0, -90, 0],
   characterPath,
   clips = {},
   weapon = null,
@@ -61,8 +62,9 @@ function CombatArena3D({
     const host = hostRef.current
     const st = {
       disposed: false, raf: null, THREE: null, renderer: null, scene: null, camera: null,
-      mixer: null, clock: null, hero: null, monster: null, bones: {}, weapon: null,
-      idleAction: null, attackAction: null, specialAction: null, timers: new Set(),
+      mixer: null, monsterMixer: null, clock: null, hero: null, monster: null, bones: {}, weapon: null,
+      idleAction: null, attackAction: null, specialAction: null,
+      monsterIdleAction: null, monsterAttackAction: null, timers: new Set(),
       // Procedural timelines: { t, dur } advanced by the render loop.
       monsterLunge: null, monsterReact: null, heroReact: null, heroLunge: null,
       monsterFlash: null, heroFlash: null, monsterMats: [], heroMats: [],
@@ -76,7 +78,13 @@ function CombatArena3D({
       setReady(true)
       if (onReadyRef.current) onReadyRef.current()
     }
-    const readyTimer = setTimeout(fireReady, LOAD_TIMEOUT_MS)
+    // Load watchdog: if nothing mounted by now the network is too slow for
+    // 3D — fail over to the classic bars instead of an empty stage (also
+    // releases CombatScreen's tick hold via onFail → arenaClosed).
+    const readyTimer = setTimeout(() => {
+      if (st.hero) fireReady()
+      else if (!cancelled && !st.disposed) setFailed(true)
+    }, LOAD_TIMEOUT_MS)
 
     loadThree().then(async ({ THREE, GLTFLoader, MeshoptDecoder }) => {
       if (cancelled) return
@@ -148,7 +156,12 @@ function CombatArena3D({
       // The hero's clips carry a baked root orientation: animated, she faces
       // +x (east, toward the monster) with no group rotation.
       st.hero = mountActor(heroGltf, 1.8, -ARENA_GAP_X / 2, 0)
-      st.monster = mountActor(monsterGltf, monsterHeight, ARENA_GAP_X / 2, -Math.PI / 2)
+      // Monster facing is registry data (`rotationDeg`, default faces the
+      // hero) so a differently-authored GLB is a JSON fix, not a code change.
+      const [mrx, mry, mrz] = monsterRotationDeg
+      st.monster = mountActor(monsterGltf, monsterHeight, ARENA_GAP_X / 2, THREE.MathUtils.degToRad(mry))
+      st.monster.rotation.x = THREE.MathUtils.degToRad(mrx)
+      st.monsterBaseRotZ = THREE.MathUtils.degToRad(mrz)
       // Long-bodied monsters (dragons) are height-normalised but can span
       // several units — place them by their NEAREST edge so the snout starts
       // at a fixed gap from centre instead of overlapping the hero.
@@ -187,6 +200,27 @@ function CombatArena3D({
         })
       }
 
+      // Rigged monsters animate from their own clips (import convention:
+      // 'Idle' loops, 'Attack' fires on hit; unnamed single clip = idle).
+      // Clip-less monsters keep the procedural bob + lunge.
+      if (monsterGltf.animations && monsterGltf.animations.length) {
+        st.monsterMixer = new THREE.AnimationMixer(st.monster)
+        const mAnims = monsterGltf.animations
+        const idleClip = mAnims.find((c) => c.name === 'Idle') || mAnims[0]
+        st.monsterIdleAction = st.monsterMixer.clipAction(idleClip)
+        st.monsterIdleAction.play()
+        const attackClip = mAnims.find((c) => c.name === 'Attack')
+        if (attackClip) {
+          st.monsterAttackAction = st.monsterMixer.clipAction(attackClip)
+          st.monsterAttackAction.setLoop(THREE.LoopOnce, 1)
+          st.monsterMixer.addEventListener('finished', (e) => {
+            if (st.disposed || e.action !== st.monsterAttackAction) return
+            e.action.fadeOut(0.15)
+            st.monsterIdleAction.reset().fadeIn(0.15).play()
+          })
+        }
+      }
+
       attachArenaWeapon(st, weaponRef.current)
 
       const timeline = (tl, dt) => {
@@ -200,6 +234,7 @@ function CombatArena3D({
         const dt = st.clock.getDelta()
         const now = st.clock.elapsedTime
         if (st.mixer) st.mixer.update(dt)
+        if (st.monsterMixer) st.monsterMixer.update(dt)
 
         // Monster idle bob + procedural attack/reaction offsets.
         if (st.monster) {
@@ -217,7 +252,7 @@ function CombatArena3D({
           }
           st.monster.position.x = (st.monsterBaseX ?? ARENA_GAP_X / 2) + ox
           st.monster.position.y = oy
-          st.monster.rotation.z = rz
+          st.monster.rotation.z = (st.monsterBaseRotZ || 0) + rz
         }
         if (st.hero) {
           let ox = 0
@@ -275,15 +310,16 @@ function CombatArena3D({
       arenaTeardown(st, host)
       stateRef.current = null
     }
-  }, [characterPath, monsterPath, monsterHeight])
+  }, [characterPath, monsterPath, monsterHeight, monsterRotationDeg.join()])
 
-  // Weapon swaps mid-fight without a scene rebuild.
+  // Weapon swaps mid-fight without a scene rebuild. Keyed on the whole spec
+  // so registry transform edits re-apply live, not just path/bone swaps.
   const weaponRef = useRef(weapon)
   useEffect(() => {
     weaponRef.current = weapon
     const st = stateRef.current
     if (st && st.hero) attachArenaWeapon(st, weapon)
-  }, [weapon && weapon.path, weapon && weapon.bone])
+  }, [weapon && JSON.stringify(weapon)])
 
   // A hit landed this tick: hero attacks when the player dealt damage, the
   // monster lunges when it hit back. Victims react at the impact moment.
@@ -309,7 +345,12 @@ function CombatArena3D({
       st.timers.add(timer)
     }
     if (attackSignal.monster) {
-      st.monsterLunge = { t: 0, dur: 0.55 }
+      if (st.monsterAttackAction) {
+        st.monsterIdleAction && st.monsterIdleAction.fadeOut(0.1)
+        st.monsterAttackAction.reset().fadeIn(0.1).play()
+      } else {
+        st.monsterLunge = { t: 0, dur: 0.55 }
+      }
       const timer = setTimeout(() => {
         st.timers.delete(timer)
         if (st.disposed) return

@@ -2244,6 +2244,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       monsterName={combat.monster.name}
       monsterPath={arenaModel.path}
       monsterHeight={arenaModel.height}
+      monsterRotationDeg={arenaModel.rotationDeg}
       characterPath={getCharacterAssetPath()}
       clips={{ idle: heroSpec.idleClip, attack: heroSpec.attackClip, special: heroSpec.specialClip }}
       weapon={equipment?.weapon ? getWeaponPlacement(equipment.weapon.itemId) : null}

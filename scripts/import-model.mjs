@@ -9,26 +9,36 @@
  * Steps:
  *   1. Shrink the raw GLB with scripts/process-3d-model.mjs (raw exports are
  *      10-50 MB; phones want ~0.5 MB). Skip with --processed if already done.
+ *      Texture default: 512px for items, 1024px for monsters (--tex overrides).
+ *   1b. --item only: bake into the canonical grip space
+ *      (scripts/canonicalize-weapon.mjs — grip at origin, blade +Y, length 1)
+ *      so the weapon renders correctly with the shared defaults.weapon
+ *      transform and needs NO per-item tuning. --no-canonical skips (then
+ *      tune by hand in public/3d-preview.html); --flip/--grip pass through
+ *      when the grip-end heuristic guesses wrong.
  *   2. --variants: derive colour-variant GLBs for every entry in
  *      scripts/model-variants.json whose "base" is this item
- *      (scripts/recolor-model.mjs — one model becomes the whole metal tier).
- *   3. Upload each processed GLB to R2 at models/<id>.vN.glb via the Tripo
- *      bridge's upload_asset tool (N = first unused version; keys are cached
- *      immutably, never reused).
+ *      (scripts/recolor-model.mjs — one model becomes the whole metal tier;
+ *      variants inherit canonical geometry).
+ *   3. Upload each GLB to R2 at models/<id>.vN.glb via the Tripo bridge's
+ *      upload_asset tool (N = first unused version; keys are cached
+ *      immutably, never reused; probes are cache-busted).
  *   4. Register in src/data/equipmentModels.json: --item → weapons.<id>
- *      (hand-bone placement; variants inherit the base transform), --monster →
- *      monsters.<id> ({ model, height }) which unlocks the 3D combat arena for
- *      that monster.
+ *      (canonical entries carry only { model } and inherit defaults;
+ *      pre-existing per-item tuning is preserved), --monster →
+ *      monsters.<id> ({ model, height }) which unlocks the 3D combat arena.
+ *      Monster height defaults from the monster's combat level when --height
+ *      is omitted.
  *
- * Afterwards: tune weapon hand transforms in public/3d-preview.html, run the
- * commit gate, commit the registry change.
+ * Afterwards: run the commit gate, commit the registry change. Canonical
+ * imports need no transform tuning; verify once in public/3d-preview.html.
  *
- * Flags: --ratio/--tex (processing), --scale/--height (registry seed),
- * --processed (skip step 1), --no-register, --base-url (default TRIPO_MCP_URL
- * env or the preview deployment; TRIPO_MCP_TOKEN env for auth). Needs open
- * egress to the deployment — a network-restricted coding session drives the
- * same steps via the bridge MCP tools instead (upload_asset with the processed
- * file's base64).
+ * Flags: --ratio/--tex (processing), --no-canonical/--flip/--grip (step 1b),
+ * --scale/--height (registry), --processed (skip step 1), --no-register,
+ * --base-url (default TRIPO_MCP_URL env or the preview deployment;
+ * TRIPO_MCP_TOKEN env for auth). Needs open egress to the deployment — a
+ * network-restricted coding session drives the same steps via the bridge MCP
+ * tools instead (upload_asset with the processed file's base64).
  */
 
 import { readFile, writeFile, mkdtemp } from 'node:fs/promises'
@@ -62,7 +72,8 @@ if (!catalogue[id]) {
 }
 
 const ratio = Number(argOf('ratio', 0.06))
-const tex = Number(argOf('tex', 1024))
+// Weapons are small on screen — 512px textures suffice; monsters get 1024.
+const tex = Number(argOf('tex', item ? 512 : 1024))
 const baseUrl = (argOf('base-url', process.env.TRIPO_MCP_URL || 'https://preview.pocketrpg.pages.dev')).replace(/\/$/, '')
 const token = process.env.TRIPO_MCP_TOKEN
 if (!token) console.warn('TRIPO_MCP_TOKEN is not set — calling the bridge unauthenticated (only works while preview auth is disabled).')
@@ -87,12 +98,37 @@ const runScript = (script, scriptArgs) => {
   if (proc.status !== 0) process.exit(proc.status || 1)
 }
 
-// 1. Process (or take the file as-is with --processed).
+// 1. Process (or take the file as-is with --processed). --clip old=new
+// (repeatable) renames animation clips to the runtime convention.
+const clipArgs = []
+for (let i = 0; i < args.length; i++) if (args[i] === '--clip' && args[i + 1]) clipArgs.push('--clip', args[i + 1])
 const dir = await mkdtemp(join(tmpdir(), 'import-model-'))
 let processedPath = file
 if (!hasFlag('processed')) {
   processedPath = join(dir, `${id}.glb`)
-  runScript('process-3d-model.mjs', [file, processedPath, '--ratio', String(ratio), '--tex', String(tex)])
+  runScript('process-3d-model.mjs', [file, processedPath, '--ratio', String(ratio), '--tex', String(tex), ...clipArgs])
+}
+
+// Monster clips drive the arena by name — flag anything off-convention.
+if (monster) {
+  const buf = await readFile(processedPath)
+  const names = (JSON.parse(buf.subarray(20, 20 + buf.readUInt32LE(12)).toString('utf8')).animations || [])
+    .map((a, i) => a.name || `(unnamed #${i})`)
+  if (names.length && !names.includes('Idle')) {
+    console.warn(`Clips [${names.join(', ')}] have no 'Idle' — the arena will loop the first clip; rename with --clip <old>=Idle (and <old>=Attack) for full control.`)
+  }
+}
+
+// 1b. Items: bake the canonical grip space so defaults.weapon just works.
+const canonical = Boolean(item) && !hasFlag('no-canonical')
+if (canonical) {
+  const canonicalPath = join(dir, `${id}.canonical.glb`)
+  runScript('canonicalize-weapon.mjs', [
+    processedPath, canonicalPath,
+    '--grip', String(argOf('grip', 0.12)),
+    ...(hasFlag('flip') ? ['--flip'] : []),
+  ])
+  processedPath = canonicalPath
 }
 
 // 2. Colour variants derived from this base.
@@ -119,7 +155,9 @@ if (hasFlag('variants')) {
 async function upload(modelId, path) {
   let version = 1
   for (;;) {
-    const probe = await fetch(`${baseUrl}/api/tripo-assets/models/${modelId}.v${version}.glb`, { method: 'HEAD' })
+    // Cache-bust the probe: the serving route is immutably cached, and an
+    // edge-cached response could mis-claim or skip a version slot.
+    const probe = await fetch(`${baseUrl}/api/tripo-assets/models/${modelId}.v${version}.glb?probe=${Date.now()}`, { method: 'HEAD' })
     if (probe.status === 404) break
     version += 1
     if (version > 50) throw new Error('Could not find a free version slot under 50 — clean up the bucket?')
@@ -147,25 +185,32 @@ if (hasFlag('no-register')) {
   const registry = JSON.parse(await readFile(registryUrl, 'utf8'))
   if (item) {
     registry.weapons = registry.weapons || {}
-    const existing = registry.weapons[id] || {}
-    const entry = {
-      model: modelPaths[id],
-      bone: existing.bone ?? null,
-      position: existing.position || [0, 0.08, 0.035],
-      rotationDeg: existing.rotationDeg || [0, 0, 0],
-      scale: Number(argOf('scale', existing.scale ?? 0.32)),
+    // Canonical imports inherit defaults.weapon — the entry is just { model }.
+    // A re-import preserves any existing per-item tuning (and --scale wins).
+    for (const [modelId, model] of Object.entries(modelPaths)) {
+      const existing = registry.weapons[modelId] || {}
+      const entry = canonical ? { ...existing, model } : {
+        ...existing,
+        model,
+        ...(existing.position ? {} : { bone: existing.bone ?? null, position: [0, 0.08, 0.035], rotationDeg: [0, 0, 0] }),
+      }
+      if (args.includes('--scale')) entry.scale = Number(argOf('scale'))
+      registry.weapons[modelId] = entry
     }
-    registry.weapons[id] = entry
-    for (const v of variants) registry.weapons[v.id] = { ...entry, model: modelPaths[v.id] }
   } else {
     registry.monsters = registry.monsters || {}
+    // Height defaults from combat level: a CB 10 rat ≈ 1.25, CB 100 wyrm ≈ 2.5.
+    const cbHeight = Math.min(3.2, Math.max(0.8, 1.1 + (catalogue[id].combatLevel || 20) / 70))
     registry.monsters[id] = {
+      ...registry.monsters[id],
       model: modelPaths[id],
-      height: Number(argOf('height', registry.monsters[id]?.height ?? 2)),
+      height: Number(argOf('height', registry.monsters[id]?.height ?? cbHeight.toFixed(1))),
     }
   }
   await writeFile(registryUrl, JSON.stringify(registry, null, 2) + '\n')
   console.log(`Registered ${Object.keys(modelPaths).length} model(s) in src/data/equipmentModels.json.`)
 }
 
-console.log('\nNext: tune weapon transforms in public/3d-preview.html if needed, run the commit gate, commit the registry change.')
+console.log(canonical
+  ? '\nCanonical import — no transform tuning needed. Verify in public/3d-preview.html, run the commit gate, commit the registry change.'
+  : '\nNext: tune weapon transforms in public/3d-preview.html, run the commit gate, commit the registry change.')

@@ -26,13 +26,23 @@ describe('equipModels resolver', () => {
     expect(hasWeaponModel(id)).toBe(true)
   })
 
-  it('falls back to the default hand bone when an entry omits one', () => {
-    const [id] = Object.keys(registry.weapons)
-    const spec = getWeaponModel(id)
-    // sample entry has bone:null → resolver substitutes the default hand bone
-    if (registry.weapons[id].bone == null) {
-      expect(spec!.bone).toBe(registry.defaults.handBone)
+  it('distinguishes absent bone (default hand) from explicit null (model root)', () => {
+    for (const [id, w] of Object.entries(registry.weapons) as [string, { bone?: string | null }][]) {
+      const spec = getWeaponModel(id)
+      if (w.bone === undefined) expect(spec!.bone, `${id}: absent bone → default hand bone`).toBe(registry.defaults.handBone)
+      else expect(spec!.bone, `${id}: explicit bone honoured verbatim`).toBe(w.bone)
     }
+  })
+
+  it('fills omitted transform fields from defaults.weapon (canonical grip)', () => {
+    const dw = (registry.defaults as { weapon?: { position: number[]; rotationDeg: number[]; scale: number } }).weapon
+    if (!dw) return
+    const bare = Object.entries(registry.weapons).find(([, w]) => !(w as { position?: number[] }).position)
+    if (!bare) return
+    const spec = getWeaponModel(bare[0])
+    expect(spec!.position).toEqual(dw.position)
+    expect(spec!.rotationDeg).toEqual(dw.rotationDeg)
+    expect(spec!.scale).toBe(dw.scale)
   })
 
   it('builds fetchable model URLs and leaves absolute ones untouched', () => {
@@ -62,6 +72,7 @@ describe('equipModels resolver', () => {
     expect(spec).toBeTruthy()
     expect(typeof spec!.path).toBe('string')
     expect(typeof spec!.height).toBe('number')
+    expect(spec!.rotationDeg).toHaveLength(3)
     expect(hasMonsterModel(ids[0])).toBe(true)
   })
 
