@@ -23,7 +23,6 @@ import AgilityScreen from './screens/AgilityScreen.jsx'
 import TradingPostScreen from './screens/TradingPostScreen.jsx'
 import EquipmentScreen from './screens/EquipmentScreen.jsx'
 import ArmouryScreen from './screens/ArmouryScreen.jsx'
-import BestiaryScreen from './screens/BestiaryScreen.jsx'
 import QuestsScreen from './screens/QuestsScreen.jsx'
 import CluesScreen from './screens/CluesScreen.jsx'
 import MinigamesScreen from './screens/MinigamesScreen.jsx'
@@ -2767,7 +2766,6 @@ function GameApp() {
       case SCREENS.INVENTORY: return <InventoryScreen />
       case SCREENS.EQUIPMENT: return <EquipmentScreen />
       case SCREENS.ARMOURY:   return <ArmouryScreen onBack={backToPrev} />
-      case SCREENS.BESTIARY:  return <BestiaryScreen onBack={backToPrev} />
       case SCREENS.BANK:      return <BankScreen onBack={returnNav || backToPrev} />
       case SCREENS.COMBAT:    return <CombatScreen onNavigate={navigate} initialMonsterId={actionData?.monsterId} initialRaidId={actionData?.raidId} onCombatStatusChange={setIsInCombat} onBack={returnNav} onStopBack={stopBackNav} />
       case SCREENS.SKILLS:    return <SkillingScreen initialSkillId={actionData?.skillId} initialActionId={actionData?.actionId} initialMasterId={actionData?.masterId} initialLocationId={actionData?.locationId} idleResult={idleResult} onNavigate={navigate} onBack={returnNav} onStopBack={stopBackNav} />

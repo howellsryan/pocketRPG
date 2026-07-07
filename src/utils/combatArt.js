@@ -1,5 +1,8 @@
 import { meleeMaxHit, rangedMaxHit, magicMaxHit } from '../engine/formulas.js'
 import { skillEmblemMask, skillArtTreatment } from './skillArt.js'
+import raidsData from '../data/raids.json'
+import placeMapsData from '../data/placeMaps.json'
+import { getPlace } from '../engine/world.js'
 
 // ──────────────────────────────────────────────────────────────────────────
 // Combat art system for the mobile combat redesign.
@@ -11,6 +14,10 @@ import { skillEmblemMask, skillArtTreatment } from './skillArt.js'
 // Also derives the info-sheet stats the prototype showed but the data does not
 // store: a monster's weakness (from its lowest defence bonus) and its max hit
 // (from the engine's max-hit helpers, keyed off attack style).
+//
+// Monster-location lookup reads placeMapsData, a chunk-only global (build_single.cjs
+// injects it lazily, only inside the game chunk) — this file must stay listed in
+// GAME_CHUNK_FILES or its top-level index build runs before that global exists.
 // ──────────────────────────────────────────────────────────────────────────
 
 const DEFAULT_ART = { icon: 'crossed_swords', accent: '#cdd6e0' }
@@ -175,6 +182,44 @@ export function getCategoryArt(categoryKey) {
 
 export function getRaidArt(raidId) {
   return RAID_ART[raidId] || { icon: 'temple_gate', accent: '#9b6cff' }
+}
+
+// Monster/raid locations, derived from the world map's own "combat"/"raid"
+// spots (placeMaps.json) rather than a separately authored table, so they can
+// never drift out of sync with where the world map actually sends players.
+function buildMonsterLocationIndex() {
+  const byMonster = {}
+  const raidPlace = {}
+  for (const [placeId, place] of Object.entries(placeMapsData)) {
+    for (const spot of place.spots || []) {
+      if (spot.kind === 'combat' && spot.ref) {
+        (byMonster[spot.ref] ||= new Set()).add(placeId)
+      } else if (spot.kind === 'raid' && spot.ref) {
+        raidPlace[spot.ref] = placeId
+      }
+    }
+  }
+  return { byMonster, raidPlace }
+}
+const { byMonster: MONSTER_PLACES, raidPlace: RAID_PLACES } = buildMonsterLocationIndex()
+
+// Raid encounter monsters (Theatre/Vaults/Barrows/Tombs-style bosses) have no
+// standalone world-map spot — they're only reachable by entering the raid, so
+// their "location" is the raid's entry place instead.
+function raidFor(monsterId) {
+  return Object.values(raidsData).find(r => r.bosses?.includes(monsterId) && RAID_PLACES[r.id])
+}
+
+/** Where to find a monster: its own combat spot(s), or its raid's entry town. */
+export function getMonsterLocationLabel(monster) {
+  const places = MONSTER_PLACES[monster.id]
+  if (places?.size) return [...places].map(id => getPlace(id)?.name || id).join(' · ')
+  const raid = raidFor(monster.id)
+  if (raid) {
+    const placeName = getPlace(RAID_PLACES[raid.id])?.name
+    return placeName ? `${raid.name} (via ${placeName})` : raid.name
+  }
+  return null
 }
 
 export function getStyleArt(style) {

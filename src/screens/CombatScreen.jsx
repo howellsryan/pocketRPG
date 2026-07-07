@@ -17,7 +17,7 @@ import SpellSelectGrid from '../components/SpellSelectGrid.jsx'
 import SkillEmblem from '../components/SkillEmblem.jsx'
 import CombatMobileSelect from './CombatMobileSelect.jsx'
 import { CombatMonsterInfoSheet, CombatRaidInfoSheet, MultiStyleChip } from './CombatMobileSheets.jsx'
-import { getMonsterArt, getMonsterAttackStyles, getMonsterWeakness, getCategoryArt, getRaidArt } from '../utils/combatArt.js'
+import { getMonsterArt, getMonsterAttackStyles, getMonsterWeakness, getCategoryArt, getRaidArt, getMonsterLocationLabel } from '../utils/combatArt.js'
 import { getSkillArt } from '../utils/skillArt.js'
 import { getPrayerStyleIcon } from '../utils/prayerIcons.js'
 import { createCombatState, createRaidCombatState, processCombatTick, applyEat, applyCombo, applySpecialAttack, applyInstantKill } from '../engine/combat.js'
@@ -51,7 +51,7 @@ import { CRITICAL_SAVE_REASONS, hasCriticalDrop } from '../cloud/criticalSavePol
 import { recordCollectionLogDrop, applyServerCollectionLogEntries } from '../cloud/collectionLog.js'
 import { filterLoggedDrops, monsterHasLoggedDrop } from '../engine/collectionLog.js'
 
-export const COMBAT_CATEGORIES = [
+const COMBAT_CATEGORIES = [
   {
     key: 'training',
     label: 'Training',
@@ -1866,6 +1866,11 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                             <div class="text-[10px] text-[var(--color-parchment)]">
                               HP {monster.hitpoints} · Att {monster.stats.attack} · Def {monster.stats.defence}
                             </div>
+                            {getMonsterLocationLabel(monster) && (
+                              <div class="text-[9px] text-[var(--color-parchment)] opacity-50">
+                                📍 {getMonsterLocationLabel(monster)}
+                              </div>
+                            )}
                             {slayReq && (
                               <div class={`text-[9px] font-semibold ${slayLocked ? 'text-[var(--color-blood-light)]' : 'text-[var(--color-hp-green)]'}`}>
                                 💀 Slayer {slayReq}{slayLocked ? '' : ' ✓'}
@@ -2038,6 +2043,9 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             </button>
           </div>
           <div class="space-y-4 max-h-96 overflow-y-auto">
+            {getMonsterLocationLabel(selectedMonsterInfo) && (
+              <div class="text-[11px] text-[var(--color-parchment)] opacity-60">📍 {getMonsterLocationLabel(selectedMonsterInfo)}</div>
+            )}
             <div>
               <h4 class="text-xs font-semibold text-[var(--color-gold-dim)] uppercase tracking-wider mb-2 opacity-70">Combat Stats</h4>
               <div class="bg-[var(--color-void)] rounded-lg p-3 space-y-1">
@@ -3104,6 +3112,9 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           </div>
 
           <div class="space-y-4 max-h-96 overflow-y-auto">
+            {getMonsterLocationLabel(selectedMonsterInfo) && (
+              <div class="text-[11px] text-[var(--color-parchment)] opacity-60">📍 {getMonsterLocationLabel(selectedMonsterInfo)}</div>
+            )}
             {/* Combat Stats */}
             <div>
               <h4 class="text-xs font-semibold text-[var(--color-gold-dim)] uppercase tracking-wider mb-2 opacity-70">Combat Stats</h4>

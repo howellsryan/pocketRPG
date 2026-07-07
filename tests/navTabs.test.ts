@@ -17,7 +17,7 @@ describe('navigation tabs', () => {
     for (const id of ids) expect(known.has(id)).toBe(true)
   })
 
-  it('moves Trading Post, Quests, Clues, Unlocks, Armoury, Bestiary, Collection Log and Leaderboard into Settings', () => {
+  it('moves Trading Post, Quests, Clues, Unlocks, Armoury, Bestiary (Combat), Collection Log and Leaderboard into Settings', () => {
     const settingsIds = SETTINGS_NAV_LINKS.map((l) => l.id)
     expect(settingsIds).toEqual([
       SCREENS.STORE,
@@ -25,7 +25,7 @@ describe('navigation tabs', () => {
       SCREENS.CLUES,
       SCREENS.CHARACTER_UNLOCKS,
       SCREENS.ARMOURY,
-      SCREENS.BESTIARY,
+      SCREENS.COMBAT,
       SCREENS.COLLECTION_LOG,
       SCREENS.LEADERBOARD,
     ])
@@ -37,7 +37,7 @@ describe('navigation tabs', () => {
     expect(railIds.has(SCREENS.HELP)).toBe(true)
   })
 
-  it('keeps world-map-only content (skills/combat/quests/minigames/gather) out of the nav', () => {
+  it('keeps world-map-only content (skills/combat/quests/minigames/gather) out of the frame rails', () => {
     const railIds = new Set(RAIL_TABS.map((t) => t.id))
     for (const id of [SCREENS.SKILLS, SCREENS.COMBAT, SCREENS.QUESTS, SCREENS.MINIGAMES, SCREENS.GATHER]) {
       expect(railIds.has(id), id).toBe(false)

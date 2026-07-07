@@ -11,6 +11,7 @@ import {
   getMonsterWeakness,
   getMonsterAttackStyles,
   getMonsterMaxHit,
+  getMonsterLocationLabel,
 } from '../utils/combatArt.js'
 
 // Rarity colour bucket from a 0–1 drop chance (mirrors the design's tiers).
@@ -143,6 +144,7 @@ export function CombatMonsterInfoSheet({ monster, categoryKey, itemsData, onClos
     ...(monster.drops || []).filter(d => !uniques.includes(d.itemId)),
     ...getMonsterSeedDrops(monster),
   ]
+  const location = getMonsterLocationLabel(monster)
 
   const stats = [
     ['Combat', monster.combatLevel],
@@ -171,6 +173,7 @@ export function CombatMonsterInfoSheet({ monster, categoryKey, itemsData, onClos
           <button class="cb-x" onClick={onClose} aria-label="Close"><GameIcon iconKey="cancel" color="var(--fm-ink-soft)" size={16} /></button>
         </div>
         <div class="cb-sheet__scroll">
+          {location && <div class="cb-mon__location" style={{ marginBottom: '8px' }}>📍 {location}</div>}
           <div class="cb-statgrid">
             {stats.map(([k, v]) => (
               <div key={k} class="cb-stat"><span class="cb-stat__k">{k}</span><span class="cb-stat__v">{v}</span></div>
