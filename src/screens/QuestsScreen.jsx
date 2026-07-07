@@ -281,9 +281,6 @@ export default function QuestsScreen({ onNavigate, onBack } = {}) {
               return (
                 <GildedComplete key={quest.id} complete={completed} className="rounded-2xl">
                   <SkillActionRow
-                    icon={completed
-                      ? <GameIcon iconKey="check_mark" color="#4ade80" size={32} />
-                      : <GameIcon iconKey="quest_scroll_blue" size={52} />}
                     title={quest.name}
                     meta={<span class="flex items-center gap-2">
                       <span style={{ color: complexityColor }}>{quest.complexity}</span>
@@ -388,7 +385,6 @@ function QuestDetailsBody({ quest, stats, completedQuests, itemsData, worldLocat
   return (
       <div class="flex flex-col gap-3">
         <Panel className="flex items-center gap-3">
-          <span class="text-[28px]">{completed ? <GameIcon iconKey="check_mark" color="#4ade80" size={28} /> : <GameIcon iconKey="quest_scroll_blue" size={28} />}</span>
           <div class="flex-1">
             <div class="text-[13px] font-semibold text-[var(--color-parchment)]">
               {quest.complexity} · {quest.length}
@@ -492,7 +488,9 @@ function QuestDetailsBody({ quest, stats, completedQuests, itemsData, worldLocat
                 onClick={() => onStartJourney(quest)}
                 className="flex-1"
               >
-                {elig.eligible ? '🗺️ Begin Quest' : 'Locked'}
+                {elig.eligible
+                  ? <span class="inline-flex items-center justify-center gap-1.5"><GameIcon iconKey="quest_scroll_blue" size={18} /> Begin Quest</span>
+                  : 'Locked'}
               </Button>
             )}
           </div>

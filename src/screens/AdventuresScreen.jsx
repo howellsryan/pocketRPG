@@ -13,7 +13,7 @@ export default function AdventuresScreen({ onNavigate }) {
     <div class="forge-shell h-full flex flex-col">
       <div class="flex-shrink-0 bg-[var(--color-void-light)] border-b border-[var(--color-void-border)] px-4 py-3">
         <h1 class="flex items-center gap-2 font-[var(--font-display)] text-lg font-bold text-[var(--color-gold)]">
-          <GameIcon iconKey="scroll" size={22} class="flex-shrink-0" />
+          <GameIcon iconKey="adventures_scroll" size={22} class="flex-shrink-0" />
           Adventures
         </h1>
       </div>

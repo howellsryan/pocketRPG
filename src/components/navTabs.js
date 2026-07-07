@@ -22,7 +22,7 @@ export const GAME_FRAME_TOP_TABS = [
   { id: SCREENS.COMBAT, label: 'Combat', iconKey: 'combat_level', iconSize: 40 },
   { id: SCREENS.INVENTORY, label: 'Items', iconKey: 'backpack', iconSize: 40 },
   { id: SCREENS.EQUIPMENT, label: 'Equip', iconKey: 'paperdoll', iconSize: 40 },
-  { id: SCREENS.ADVENTURES, label: 'Adventures', iconKey: 'scroll', iconSize: 40 },
+  { id: SCREENS.ADVENTURES, label: 'Adventures', iconKey: 'adventures_scroll', iconSize: 40 },
 ]
 export const GAME_FRAME_BOTTOM_LEFT_TABS = [
   { id: SCREENS.HELP, label: 'Settings', iconKey: 'gears', iconSize: 20, iconColor: '#d9b45a' },

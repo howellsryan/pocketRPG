@@ -48,4 +48,16 @@ describe('skipPreflight', () => {
     expect(pre.canSkip).toBe(false)
     expect(pre.shouldStopTask).toBe(true)
   })
+  it('allows skipping a minigame grind with time remaining', () => {
+    const task = { type: 'minigame', minigameTask: { ticks: 36000 }, ticksRemaining: 6000 }
+    const pre = getSkipPreflight(task as any, baseCtx, SKIP_HOUR_MS)
+    expect(pre.canSkip).toBe(true)
+    expect(pre.kind).toBe('minigame')
+  })
+  it('rejects a minigame grind with no time remaining', () => {
+    const task = { type: 'minigame', minigameTask: { ticks: 36000 }, ticksRemaining: 0 }
+    const pre = getSkipPreflight(task as any, baseCtx, SKIP_HOUR_MS)
+    expect(pre.canSkip).toBe(false)
+    expect(pre.shouldStopTask).toBe(true)
+  })
 })

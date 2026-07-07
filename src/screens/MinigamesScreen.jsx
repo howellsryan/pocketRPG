@@ -87,7 +87,7 @@ export default function MinigamesScreen({ initialTaskId, onBack } = {}) {
         </button>
 
         <div class="flex-1 flex flex-col items-center justify-center">
-          <GameIcon iconKey={task.product} item={{ icon: task.icon }} size={96} color="var(--color-gold)" class="mb-2" />
+          <GameIcon iconKey={task.rewardItems?.[0] || task.product} item={{ icon: task.icon }} size={96} color="var(--color-gold)" class="mb-2" />
 
           <h2 class="font-[var(--font-display)] text-[18px] font-bold text-[var(--color-gold)] mb-1 text-center">
             {task.name}
@@ -147,7 +147,7 @@ export default function MinigamesScreen({ initialTaskId, onBack } = {}) {
                   return (
                     <GildedComplete key={task.id} complete={alreadyUnlocked} className="rounded-2xl">
                       <SkillActionRow
-                        icon={<GameIcon iconKey={task.product} item={{ icon: task.icon }} size={52} color="var(--color-gold)" />}
+                        icon={<GameIcon iconKey={task.rewardItems?.[0] || task.product} item={{ icon: task.icon }} size={52} color="var(--color-gold)" />}
                         title={task.name}
                         meta={<>
                           {alreadyUnlocked && <span class="text-[#7a7]">✓ </span>}

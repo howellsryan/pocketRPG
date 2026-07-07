@@ -134,16 +134,40 @@ function getMinigameRewardEntries(task) {
 }
 const VALID_SERVER_MINIGAME_IDS = new Set((minigamesData?.tasks || []).map((task) => task?.id).filter(Boolean))
 
-function grantMinigameTaskRewards(task, { updateBankDirect, unlockMinigameItem, recordCollectionLogDropForMinigame }) {
+// Inventory-first, bank-overflow — mirrors the server's settleActionCompletion
+// (functions/_lib/game/actionCompletion.js) so a cloud and a local/demo grant
+// land the same way instead of always skipping straight to the bank.
+function grantMinigameTaskRewards(task, { inventory, updateInventory, itemsData, updateBankDirect, unlockMinigameItem, recordCollectionLogDropForMinigame }) {
   const rewards = getMinigameRewardEntries(task)
   if (rewards.length === 0) return
+  const inv = [...(inventory || [])]
   const bankUpdates = {}
   for (const reward of rewards) {
-    bankUpdates[reward.itemId] = (bankUpdates[reward.itemId] || 0) + reward.qty
     unlockMinigameItem(reward.itemId)
     recordCollectionLogDropForMinigame({ ...task, product: reward.itemId })
+    const stackable = !!itemsData?.[reward.itemId]?.stackable
+    if (stackable) {
+      const idx = inv.findIndex(s => s && s.itemId === reward.itemId)
+      if (idx >= 0) {
+        inv[idx] = { ...inv[idx], quantity: inv[idx].quantity + reward.qty }
+      } else {
+        const empty = inv.indexOf(null)
+        if (empty >= 0) inv[empty] = { itemId: reward.itemId, quantity: reward.qty }
+        else bankUpdates[reward.itemId] = (bankUpdates[reward.itemId] || 0) + reward.qty
+      }
+      continue
+    }
+    let remaining = reward.qty
+    while (remaining > 0) {
+      const empty = inv.indexOf(null)
+      if (empty === -1) break
+      inv[empty] = { itemId: reward.itemId, quantity: 1 }
+      remaining--
+    }
+    if (remaining > 0) bankUpdates[reward.itemId] = (bankUpdates[reward.itemId] || 0) + remaining
   }
-  updateBankDirect(bankUpdates)
+  updateInventory(inv)
+  if (Object.keys(bankUpdates).length > 0) updateBankDirect(bankUpdates)
 }
 
 function markMinigameRewardsUnlocked(task, { unlockMinigameItem }) {
@@ -960,7 +984,7 @@ function GameApp() {
                   console.warn('[PocketRPG] minigame sync failed:', err?.message || err)
                 })
               } else {
-                grantMinigameTaskRewards(savedTask.gatherTask, { updateBankDirect, unlockMinigameItem, recordCollectionLogDropForMinigame })
+                grantMinigameTaskRewards(savedTask.gatherTask, { inventory: inventoryRef.current, updateInventory, itemsData: itemsDataRef.current, updateBankDirect, unlockMinigameItem, recordCollectionLogDropForMinigame })
                 if (!isInPvpMatch) requestCriticalPushSave(() => buildMinigameCompletionSnapshot(savedTask.gatherTask), 'minigame_complete')
               }
               recordGameEvent?.({ kind: 'minigame_complete', minigameId: savedTask.gatherTask?.id ?? 'any' })
@@ -985,7 +1009,7 @@ function GameApp() {
                   console.warn('[PocketRPG] minigame sync failed:', err?.message || err)
                 })
               } else {
-                grantMinigameTaskRewards(savedTask.minigameTask, { updateBankDirect, unlockMinigameItem, recordCollectionLogDropForMinigame })
+                grantMinigameTaskRewards(savedTask.minigameTask, { inventory: inventoryRef.current, updateInventory, itemsData: itemsDataRef.current, updateBankDirect, unlockMinigameItem, recordCollectionLogDropForMinigame })
                 if (!isInPvpMatch) requestCriticalPushSave(() => buildMinigameCompletionSnapshot(savedTask.minigameTask), 'minigame_complete')
               }
               recordGameEvent?.({ kind: 'minigame_complete', minigameId: savedTask.minigameTask?.id ?? 'any' })
@@ -1402,7 +1426,7 @@ function GameApp() {
               console.warn('[PocketRPG] minigame sync failed:', err?.message || err)
             })
           } else {
-            grantMinigameTaskRewards(task.gatherTask, { updateBankDirect, unlockMinigameItem, recordCollectionLogDropForMinigame })
+            grantMinigameTaskRewards(task.gatherTask, { inventory: inventoryRef.current, updateInventory, itemsData: itemsDataRef.current, updateBankDirect, unlockMinigameItem, recordCollectionLogDropForMinigame })
             if (!isInPvpMatch) requestCriticalPushSave(() => buildMinigameCompletionSnapshot(task.gatherTask), 'minigame_complete')
           }
           recordGameEvent?.({ kind: 'minigame_complete', minigameId: task.gatherTask?.id ?? 'any' })
@@ -1430,7 +1454,7 @@ function GameApp() {
               console.warn('[PocketRPG] minigame sync failed:', err?.message || err)
             })
           } else {
-            grantMinigameTaskRewards(mgTask, { updateBankDirect, unlockMinigameItem, recordCollectionLogDropForMinigame })
+            grantMinigameTaskRewards(mgTask, { inventory: inventoryRef.current, updateInventory, itemsData: itemsDataRef.current, updateBankDirect, unlockMinigameItem, recordCollectionLogDropForMinigame })
             if (!isInPvpMatch) requestCriticalPushSave(() => buildMinigameCompletionSnapshot(mgTask), 'minigame_complete')
           }
           recordGameEvent?.({ kind: 'minigame_complete', minigameId: mgTask?.id ?? 'any' })
@@ -2376,7 +2400,7 @@ function GameApp() {
                 console.warn('[PocketRPG] minigame sync failed:', err?.message || err)
               })
             } else {
-              grantMinigameTaskRewards(savedTask.gatherTask, { updateBankDirect, unlockMinigameItem, recordCollectionLogDropForMinigame })
+              grantMinigameTaskRewards(savedTask.gatherTask, { inventory: inventoryRef.current, updateInventory, itemsData: itemsDataRef.current, updateBankDirect, unlockMinigameItem, recordCollectionLogDropForMinigame })
               if (!isInPvpMatch) requestCriticalPushSave(() => buildMinigameCompletionSnapshot(savedTask.gatherTask), 'minigame_complete')
             }
             idleResultData = { elapsedMs, task: savedTask, minigameCompleted: true }
@@ -2409,7 +2433,7 @@ function GameApp() {
                 console.warn('[PocketRPG] minigame sync failed:', err?.message || err)
               })
             } else {
-              grantMinigameTaskRewards(savedTask.minigameTask, { updateBankDirect, unlockMinigameItem, recordCollectionLogDropForMinigame })
+              grantMinigameTaskRewards(savedTask.minigameTask, { inventory: inventoryRef.current, updateInventory, itemsData: itemsDataRef.current, updateBankDirect, unlockMinigameItem, recordCollectionLogDropForMinigame })
               if (!isInPvpMatch) requestCriticalPushSave(() => buildMinigameCompletionSnapshot(savedTask.minigameTask), 'minigame_complete')
             }
             idleResultData = { elapsedMs, task: savedTask, minigameCompleted: true }

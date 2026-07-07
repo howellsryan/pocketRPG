@@ -182,7 +182,6 @@ export default function CluesScreen({ onNavigate, onBack } = {}) {
             return (
               <SkillActionRow
                 key={task.id}
-                icon={<GameIcon iconKey={task.requiresItem} size={52} />}
                 title={task.name}
                 meta={<>
                   🗺️ trail of 2–4 places · scroll spent on the last search
