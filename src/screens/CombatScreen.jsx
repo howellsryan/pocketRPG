@@ -51,7 +51,7 @@ import { CRITICAL_SAVE_REASONS, hasCriticalDrop } from '../cloud/criticalSavePol
 import { recordCollectionLogDrop, applyServerCollectionLogEntries } from '../cloud/collectionLog.js'
 import { filterLoggedDrops, monsterHasLoggedDrop } from '../engine/collectionLog.js'
 
-const COMBAT_CATEGORIES = [
+export const COMBAT_CATEGORIES = [
   {
     key: 'training',
     label: 'Training',

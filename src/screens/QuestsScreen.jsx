@@ -17,12 +17,13 @@ import {
 } from '../engine/quests.js'
 import { QUEST_QUEUE_MAX, SCREENS } from '../utils/constants.js'
 import { planQuestJourney } from '../engine/journeys.js'
+import { getPlace } from '../engine/world.js'
 import questsData from '../data/quests.json'
 import { COMPLEXITY_COLORS, COMPLEXITY_ORDER } from '../utils/complexityColors.js'
 import BackLink from '../components/BackLink.jsx'
 
 // `onBack` (from App): returns to where the quest board was opened from — a
-// quest post on the world map / a town map (the nav rail no longer links here).
+// quest post on the world map / a town map, or Settings (its nav link).
 export default function QuestsScreen({ onNavigate, onBack } = {}) {
   const {
     stats, completedQuests, activeTask, setActiveTask,
@@ -312,6 +313,7 @@ export default function QuestsScreen({ onNavigate, onBack } = {}) {
                 stats={stats}
                 completedQuests={completedQuests}
                 itemsData={itemsData}
+                worldLocation={worldLocation}
                 onClose={() => setSelectedQuest(null)}
                 onStartJourney={startQuestJourney}
                 onAddToQueue={addToQueue}
@@ -334,6 +336,7 @@ export default function QuestsScreen({ onNavigate, onBack } = {}) {
           stats={stats}
           completedQuests={completedQuests}
           itemsData={itemsData}
+          worldLocation={worldLocation}
           onClose={() => setSelectedQuest(null)}
           onStartJourney={startQuestJourney}
           onAddToQueue={addToQueue}
@@ -347,7 +350,7 @@ export default function QuestsScreen({ onNavigate, onBack } = {}) {
 
 // ──────────────────────────────────────────────────────────────────────────────
 
-function QuestDetailsModal({ quest, stats, completedQuests, itemsData, onClose, onStartJourney, onAddToQueue, isInQueue, queueFull }) {
+function QuestDetailsModal({ quest, stats, completedQuests, itemsData, worldLocation, onClose, onStartJourney, onAddToQueue, isInQueue, queueFull }) {
   return (
     <Modal title={quest.name} onClose={onClose}>
       <QuestDetailsBody
@@ -355,6 +358,7 @@ function QuestDetailsModal({ quest, stats, completedQuests, itemsData, onClose, 
         stats={stats}
         completedQuests={completedQuests}
         itemsData={itemsData}
+        worldLocation={worldLocation}
         onClose={onClose}
         onStartJourney={onStartJourney}
         onAddToQueue={onAddToQueue}
@@ -366,13 +370,20 @@ function QuestDetailsModal({ quest, stats, completedQuests, itemsData, onClose, 
   )
 }
 
-function QuestDetailsBody({ quest, stats, completedQuests, itemsData, onClose, onStartJourney, onAddToQueue, isInQueue, queueFull, showCloseButton = false }) {
+function QuestDetailsBody({ quest, stats, completedQuests, itemsData, worldLocation, onClose, onStartJourney, onAddToQueue, isInQueue, queueFull, showCloseButton = false }) {
   const completed = completedQuests.has(quest.id)
   const elig = checkQuestEligibility(quest, stats, completedQuests, questsData)
   const skillEntries = Object.entries(quest.skillRequirements || {})
   const questPrereqs = quest.questRequirements || []
   const itemUnlockNames = (quest.itemUnlocks || [])
     .map(id => itemsData[id]?.name || id)
+
+  // The journey's trail is generated fresh from wherever the player currently
+  // stands (engine/journeys.js) — there's no single fixed "quest giver" place.
+  // Preview the first waypoint of that trail so the player knows where the
+  // journey leads off to before committing.
+  const previewLeg = !completed && elig.eligible ? planQuestJourney(quest, worldLocation) : null
+  const startPlaceName = previewLeg ? (getPlace(previewLeg.dest)?.name || previewLeg.dest) : null
 
   return (
       <div class="flex flex-col gap-3">
@@ -412,6 +423,25 @@ function QuestDetailsBody({ quest, stats, completedQuests, itemsData, onClose, o
             )}
           </div>
         </Panel>
+
+        {startPlaceName && (
+          <button
+            type="button"
+            onClick={() => onStartJourney(quest)}
+            class="text-left w-full bg-transparent border-0 p-0 cursor-pointer active:opacity-70"
+          >
+            <Panel className="flex items-center gap-3">
+              <span class="text-[20px]">🧭</span>
+              <div class="flex-1 min-w-0">
+                <SectionHeader size="sm" className="mb-1">Starting Point</SectionHeader>
+                <div class="text-[12px] text-[var(--color-parchment)]">
+                  Journey begins toward <span class="text-[var(--color-gold)] font-semibold">{startPlaceName}</span>
+                </div>
+              </div>
+              <span class="text-[var(--color-parchment)] opacity-40 text-lg leading-none">›</span>
+            </Panel>
+          </button>
+        )}
 
         {(skillEntries.length > 0 || questPrereqs.length > 0 || quest.questPointRequirement > 0 || quest.combatLevelRequirement > 0) && (
           <Panel>

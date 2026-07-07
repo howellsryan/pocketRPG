@@ -1,7 +1,8 @@
 import { SCREENS, isWorldMapEnabled } from '../utils/constants.js'
 
-// Skills/Combat/Quests/Minigames/Gather have no nav entry: that content starts
-// from the World Map (place hubs, town maps, quest posts).
+// Skills/Combat/Minigames/Gather have no nav entry: that content starts from
+// the World Map (place hubs, town maps, quest posts). Quests also start there,
+// but the full quest board (QuestsScreen) additionally lives in Settings.
 
 // OSRS-style frame (GameFrameBar) — the app's only navigation chrome at every
 // viewport width: gold medallion rails above and below the main content panel,
@@ -28,9 +29,11 @@ export const GAME_FRAME_BOTTOM_LEFT_TABS = [
 // their only entry point.
 export const SETTINGS_NAV_LINKS = [
   { id: SCREENS.STORE,             label: 'Trading Post',      iconKey: 'uncut_ruby' },
+  { id: SCREENS.QUESTS,            label: 'Quests Board',      iconKey: 'clue_scroll_medium' },
   { id: SCREENS.CLUES,             label: 'Clues',             iconKey: 'clue_scroll_hard' },
   { id: SCREENS.CHARACTER_UNLOCKS, label: 'Character Unlocks', iconKey: 'master_rejuvenation' },
   { id: SCREENS.ARMOURY,           label: 'Armoury',           iconKey: 'iron_longsword' },
+  { id: SCREENS.BESTIARY,          label: 'Bestiary',          iconKey: 'dragon_head' },
   { id: SCREENS.COLLECTION_LOG,    label: 'Collection Log',    iconKey: 'open_book', iconColor: 'var(--color-parchment)' },
   { id: SCREENS.LEADERBOARD,       label: 'Leaderboard',       iconKey: 'progression', iconSize: 22, iconColor: 'var(--color-parchment)' },
 ]
