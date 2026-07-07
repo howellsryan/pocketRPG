@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { getCharacterModel, getWeaponModel, hasWeaponModel, modelUrl, getCharacterAssetPath, getWeaponPlacement } from '../src/utils/equipModels.js'
+import { getCharacterModel, getWeaponModel, hasWeaponModel, modelUrl, getCharacterAssetPath, getWeaponPlacement, getMonsterModel, hasMonsterModel } from '../src/utils/equipModels.js'
 import registry from '../src/data/equipmentModels.json'
 
 describe('equipModels resolver', () => {
@@ -26,13 +26,23 @@ describe('equipModels resolver', () => {
     expect(hasWeaponModel(id)).toBe(true)
   })
 
-  it('falls back to the default hand bone when an entry omits one', () => {
-    const [id] = Object.keys(registry.weapons)
-    const spec = getWeaponModel(id)
-    // sample entry has bone:null → resolver substitutes the default hand bone
-    if (registry.weapons[id].bone == null) {
-      expect(spec!.bone).toBe(registry.defaults.handBone)
+  it('distinguishes absent bone (default hand) from explicit null (model root)', () => {
+    for (const [id, w] of Object.entries(registry.weapons) as [string, { bone?: string | null }][]) {
+      const spec = getWeaponModel(id)
+      if (w.bone === undefined) expect(spec!.bone, `${id}: absent bone → default hand bone`).toBe(registry.defaults.handBone)
+      else expect(spec!.bone, `${id}: explicit bone honoured verbatim`).toBe(w.bone)
     }
+  })
+
+  it('fills omitted transform fields from defaults.weapon (canonical grip)', () => {
+    const dw = (registry.defaults as { weapon?: { position: number[]; rotationDeg: number[]; scale: number } }).weapon
+    if (!dw) return
+    const bare = Object.entries(registry.weapons).find(([, w]) => !(w as { position?: number[] }).position)
+    if (!bare) return
+    const spec = getWeaponModel(bare[0])
+    expect(spec!.position).toEqual(dw.position)
+    expect(spec!.rotationDeg).toEqual(dw.rotationDeg)
+    expect(spec!.scale).toBe(dw.scale)
   })
 
   it('builds fetchable model URLs and leaves absolute ones untouched', () => {
@@ -55,6 +65,30 @@ describe('equipModels resolver', () => {
     expect(getWeaponPlacement('bronze_dagger')).toBeNull()
   })
 
+  it('resolves a registered monster to a combat-arena spec', () => {
+    const ids = Object.keys(registry.monsters || {})
+    if (ids.length === 0) return
+    const spec = getMonsterModel(ids[0])
+    expect(spec).toBeTruthy()
+    expect(typeof spec!.path).toBe('string')
+    expect(typeof spec!.height).toBe('number')
+    expect(spec!.rotationDeg).toHaveLength(3)
+    expect(hasMonsterModel(ids[0])).toBe(true)
+  })
+
+  it('returns null for an unregistered monster (classic combat UI)', () => {
+    expect(getMonsterModel('goblin')).toBeNull()
+    expect(getMonsterModel(undefined)).toBeNull()
+    expect(hasMonsterModel('goblin')).toBe(false)
+  })
+
+  it('every registered monster id exists in monsters.json (no dangling models)', async () => {
+    const monsters = (await import('../src/data/monsters.json')).default as Record<string, unknown>
+    for (const id of Object.keys(registry.monsters || {})) {
+      expect(monsters[id], `monster model '${id}' has no matching monster`).toBeTruthy()
+    }
+  })
+
   it('every registered weapon id exists in items.json (no dangling models)', async () => {
     const items = (await import('../src/data/items.json')).default as Record<string, unknown>
     for (const id of Object.keys(registry.weapons)) {
@@ -73,9 +107,10 @@ describe('equipModels resolver', () => {
     }
   })
 
-  it('the character idleClip (when set) exists in the hero GLB', async () => {
-    const idle = (registry.character as { idleClip?: string }).idleClip
-    if (!idle) return
+  it('every named character clip (idle/attack/special) exists in the hero GLB', async () => {
+    const c = registry.character as { idleClip?: string; attackClip?: string; specialClip?: string }
+    const clips = [c.idleClip, c.attackClip, c.specialClip].filter(Boolean) as string[]
+    if (clips.length === 0) return
     const fs = await import('node:fs')
     const path = await import('node:path')
     const glb = path.resolve(__dirname, '../public', registry.modelBase, registry.character.model)
@@ -83,6 +118,8 @@ describe('equipModels resolver', () => {
     const buf = fs.readFileSync(glb)
     const jsonLen = buf.readUInt32LE(12)
     const json = buf.subarray(20, 20 + jsonLen).toString('utf8')
-    expect(json.includes(`"${idle}"`), `clip '${idle}' not found in ${registry.character.model}`).toBe(true)
+    for (const clip of clips) {
+      expect(json.includes(`"${clip}"`), `clip '${clip}' not found in ${registry.character.model}`).toBe(true)
+    }
   })
 })

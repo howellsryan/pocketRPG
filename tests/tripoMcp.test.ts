@@ -6,7 +6,7 @@ import { describe, it, expect, vi, afterEach } from 'vitest'
 import { TOOL_SCHEMAS, TOOL_NAMES } from '../functions/_lib/tripo/schema.js'
 import { callTool } from '../functions/_lib/tripo/tools.js'
 import { onRequestPost, onRequestGet } from '../functions/api/tripo-mcp.js'
-import { onRequestGet as getAsset } from '../functions/api/tripo-assets/[key].js'
+import { onRequestGet as getAsset } from '../functions/api/tripo-assets/[[key]].js'
 
 function makeR2() {
   const store = new Map<string, { body: ArrayBuffer; httpMetadata?: any; customMetadata?: any }>()
@@ -14,15 +14,21 @@ function makeR2() {
     async put(key: string, body: ArrayBuffer, opts: any = {}) {
       store.set(key, { body, httpMetadata: opts.httpMetadata, customMetadata: opts.customMetadata })
     },
-    async get(key: string) {
+    async get(key: string, opts: any = {}) {
       const entry = store.get(key)
       if (!entry) return null
+      let body = entry.body
+      if (opts.range) {
+        const { offset = 0, length } = opts.range
+        body = body.slice(offset, length !== undefined ? offset + length : undefined)
+      }
       return {
         httpMetadata: entry.httpMetadata,
         httpEtag: `"${key}"`,
-        body: entry.body,
+        size: entry.body.byteLength,
+        body,
         async arrayBuffer() {
-          return entry.body
+          return body
         },
       }
     },
@@ -60,6 +66,7 @@ describe('Tripo MCP tool schema', () => {
       if (name === 'get_task') args = { task_id: 't1' }
       if (name === 'store_asset') args = { url: 'https://cdn.tripo3d.ai/x.png' }
       if (name === 'get_asset') args = { key: 'does-not-exist' }
+      if (name === 'upload_asset') args = { base64: 'AQID', content_type: 'image/webp' }
       const result = await callTool(name, args, { env, origin: 'https://x' })
       expect(result).toBeTypeOf('object')
       expect(Array.isArray(result.content)).toBe(true)
@@ -187,6 +194,73 @@ describe('store_asset + get_asset + /api/tripo-assets/:key roundtrip', () => {
     expect(res.status).toBe(404)
   })
 
+  it('store_asset honours an explicit stable key and the catch-all route serves nested keys', async () => {
+    const env = makeEnv()
+    const bytes = new Uint8Array([9, 8, 7])
+    vi.stubGlobal('fetch', async () => new Response(bytes, { status: 200, headers: { 'Content-Type': 'image/webp' } }))
+    const stored = await callTool(
+      'store_asset',
+      { url: 'https://cdn.tripo3d.ai/render.webp', key: 'images/worldmap.v2.webp' },
+      { env, origin: 'https://x' },
+    )
+    const { key, url } = JSON.parse(stored.content[0].text)
+    expect(key).toBe('images/worldmap.v2.webp')
+    expect(url).toBe('https://x/api/tripo-assets/images/worldmap.v2.webp')
+
+    // Pages catch-all routes surface multi-segment params as arrays.
+    const served = await getAsset({ params: { key: ['images', 'worldmap.v2.webp'] }, env } as any)
+    expect(served.status).toBe(200)
+    expect(new Uint8Array(await served.arrayBuffer())).toEqual(bytes)
+  })
+
+  it('store_asset rejects traversal-shaped keys', async () => {
+    const env = makeEnv()
+    vi.stubGlobal('fetch', async () => new Response(new Uint8Array([1]), { status: 200 }))
+    for (const key of ['../secrets', 'models/../x.glb', '/models/x.glb', 'models//x.glb', 'models/x.glb/']) {
+      const result = await callTool('store_asset', { url: 'https://cdn.tripo3d.ai/a.glb', key }, { env, origin: 'https://x' })
+      expect(result.isError).toBe(true)
+    }
+  })
+
+  it('upload_asset roundtrips base64 bytes into R2 under the chosen key', async () => {
+    const env = makeEnv()
+    const bytes = new Uint8Array([103, 108, 84, 70, 2, 0])
+    const uploaded = await callTool(
+      'upload_asset',
+      {
+        key: 'models/dragon_scimitar.v1.glb',
+        base64: Buffer.from(bytes).toString('base64'),
+        content_type: 'model/gltf-binary',
+        task_id: 'task_9',
+        filename: 'dragon_scimitar.glb',
+      },
+      { env, origin: 'https://x' },
+    )
+    const info = JSON.parse(uploaded.content[0].text)
+    expect(info.key).toBe('models/dragon_scimitar.v1.glb')
+    expect(info.url).toBe('https://x/api/tripo-assets/models/dragon_scimitar.v1.glb')
+    expect(info.size).toBe(bytes.length)
+
+    const served = await getAsset({ params: { key: ['models', 'dragon_scimitar.v1.glb'] }, env } as any)
+    expect(served.status).toBe(200)
+    expect(served.headers.get('Content-Type')).toBe('model/gltf-binary')
+    expect(new Uint8Array(await served.arrayBuffer())).toEqual(bytes)
+  })
+
+  it('upload_asset rejects uploads over the decoded-size cap', async () => {
+    const env = makeEnv()
+    const big = Buffer.alloc(25 * 1024 * 1024 + 1).toString('base64')
+    const result = await callTool('upload_asset', { base64: big, content_type: 'model/gltf-binary' }, { env })
+    expect(result.isError).toBe(true)
+    expect(result.content[0].text).toMatch(/cap/)
+  })
+
+  it('the catch-all route 404s traversal-shaped paths without touching R2', async () => {
+    const env = makeEnv()
+    const res = await getAsset({ params: { key: ['models', '..', 'secret'] }, env } as any)
+    expect(res.status).toBe(404)
+  })
+
   it('get_asset rejects assets over the inline size cap', async () => {
     const env = makeEnv()
     // Directly seed a stored object larger than the cap without a real 15MB fetch.
@@ -195,5 +269,20 @@ describe('store_asset + get_asset + /api/tripo-assets/:key roundtrip', () => {
     const result = await callTool('get_asset', { key: 'big-key' }, { env })
     expect(result.isError).toBe(true)
     expect(result.content[0].text).toMatch(/inline limit/)
+  })
+
+  it('get_asset serves ranged chunks of a large asset', async () => {
+    const env = makeEnv()
+    const bytes = new Uint8Array(64)
+    for (let i = 0; i < bytes.length; i++) bytes[i] = i
+    await env.TRIPO_ASSETS.put('chunky', bytes.buffer, { httpMetadata: { contentType: 'model/gltf-binary' } })
+
+    const first = JSON.parse((await callTool('get_asset', { key: 'chunky', offset: 0, length: 40 }, { env })).content[0].text)
+    const second = JSON.parse((await callTool('get_asset', { key: 'chunky', offset: 40, length: 40 }, { env })).content[0].text)
+    expect(first.size).toBe(64)
+    expect(first.length).toBe(40)
+    expect(second.length).toBe(24)
+    const joined = new Uint8Array([...Buffer.from(first.base64, 'base64'), ...Buffer.from(second.base64, 'base64')])
+    expect(joined).toEqual(bytes)
   })
 })

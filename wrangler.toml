@@ -17,11 +17,12 @@ binding = "AI"
 [vars]
 APP_BASE_URL = "https://pocketrpg.co.uk"
 
-# NOTE: the 3D-render feature flag is a BUILD-time env var, not a runtime
-# binding — set `Enable3dRender` under the Pages project's Build environment
-# variables (Preview = "true", Production = "false" or unset). build_single.cjs
-# bakes it into the game chunk as `pocketEnable3D`; anything but "true"
-# disables 3D in that deployment. Listing it under [vars] would have no effect.
+# NOTE: the 3D-render feature flag is BUILD-time, not a runtime binding.
+# build_single.cjs derives it from CF_PAGES_BRANCH (injected by Pages into
+# every build): non-main branch = preview = 3D on, main = production = off.
+# Set `Enable3dRender` ("true"/"false") in the build env only to override.
+# It bakes into the game chunk as `pocketEnable3D`; listing it under [vars]
+# would have no effect.
 
 # Secrets to set via dashboard or `wrangler pages secret put`:
 #   JWT_SECRET                — random 32+ byte string used to sign session JWTs

@@ -23,10 +23,21 @@ Workflow:
    what PocketRPG actually uses as 2D game art today; see scripts/tripo-worldmap.mjs).
 3. store_asset — download a URL from the task's output server-side and persist it to
    PocketRPG's own R2 storage. Returns a stable, fetchable url plus a storage key.
+   Pass "key" for a deliberate path (models/<item>.v1.glb, images/...); omit it for
+   a random UUID key.
 4. get_asset — pull a stored asset's raw bytes back as base64 (capped ~15 MiB — fine
    for images, likely too large for a full 3D model file; use the url from
    store_asset for those instead) so it can be written into the repo, e.g.
    public/world/map.webp with src/data/world.json's mapImage.
+5. upload_asset — push base64 bytes straight into R2 under a chosen key. This is how
+   locally-processed files (e.g. a GLB shrunk by scripts/process-3d-model.mjs) get
+   hosted without a human running wrangler.
+
+Equipment 3D models are hosted from R2: upload the PROCESSED GLB to a
+models/<item>.vN.glb key and reference "/api/tripo-assets/models/<item>.vN.glb" in
+src/data/equipmentModels.json (never bump an existing vN — the serving route caches
+immutably; add vN+1 instead). scripts/tripo-item-model.mjs automates the whole
+prompt→R2→registry pipeline.
 
 Tripo's task API evolves independently of this bridge, so create_task forwards
 "params" verbatim as the rest of the request body rather than re-validating
@@ -72,6 +83,12 @@ export const TOOL_SCHEMAS = [
       type: 'object',
       properties: {
         url: { type: 'string', description: "A URL from a Tripo task's output." },
+        key: {
+          type: 'string',
+          description:
+            'Optional stable storage key (e.g. "models/dragon_scimitar.v1.glb", "images/worldmap.v2.webp"). Served immutably at /api/tripo-assets/<key>, so never reuse a key — bump the version instead. Omit for a random UUID key.',
+        },
+        content_type: { type: 'string', description: 'Optional Content-Type override when the source URL reports a generic one.' },
         task_id: { type: 'string', description: 'Optional, recorded as metadata for traceability.' },
         filename: { type: 'string', description: 'Optional, recorded as metadata (e.g. "map.webp").' },
       },
@@ -81,12 +98,37 @@ export const TOOL_SCHEMAS = [
     annotations: WRITE('Store a Tripo asset'),
   },
   {
-    name: 'get_asset',
+    name: 'upload_asset',
     description:
-      'Fetch a previously stored asset\'s raw bytes as base64, keyed by the key returned from store_asset. Capped around 15 MiB — fine for images, likely too large for a full 3D model file (use store_asset\'s url for those instead). Use this to pull a generated image directly into a coding session for writing into the repo.',
+      'Upload raw bytes (base64) directly into PocketRPG\'s R2 asset storage — the counterpart to get_asset for the write direction. Use it to host files produced outside Tripo, e.g. a GLB optimised by scripts/process-3d-model.mjs, under a stable key like "models/<item>.v1.glb" that src/data/equipmentModels.json can reference as "/api/tripo-assets/models/<item>.v1.glb". Decoded size cap ~25 MiB; keys are served immutably, so bump the version rather than overwriting.',
     inputSchema: {
       type: 'object',
-      properties: { key: { type: 'string' } },
+      properties: {
+        base64: { type: 'string', description: 'The asset bytes, base64-encoded.' },
+        content_type: { type: 'string', description: 'Content-Type to serve, e.g. "model/gltf-binary", "image/webp".' },
+        key: {
+          type: 'string',
+          description: 'Optional stable storage key (e.g. "models/dragon_scimitar.v1.glb"). Omit for a random UUID key.',
+        },
+        task_id: { type: 'string', description: 'Optional, recorded as metadata for traceability.' },
+        filename: { type: 'string', description: 'Optional, recorded as metadata.' },
+      },
+      required: ['base64', 'content_type'],
+      additionalProperties: false,
+    },
+    annotations: WRITE('Upload an asset to R2'),
+  },
+  {
+    name: 'get_asset',
+    description:
+      'Fetch a previously stored asset\'s raw bytes as base64, keyed by the key returned from store_asset/upload_asset. Capped around 15 MiB per call; for larger files (e.g. a raw GLB) pass offset/length and reassemble the chunks, or fetch the store_asset url directly. Use this to pull a generated asset into a coding session for local processing or writing into the repo.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        key: { type: 'string' },
+        offset: { type: 'number', description: 'Byte offset to start from (chunked reads of large assets).' },
+        length: { type: 'number', description: 'Byte count to return (capped at ~15 MiB per call).' },
+      },
       required: ['key'],
       additionalProperties: false,
     },

@@ -21,22 +21,50 @@ export function getCharacterModel() {
 
 // Resolve a weapon itemId to a placement spec, or null when unregistered.
 // Shape: { model, bone, position:[x,y,z], rotationDeg:[x,y,z], scale }.
+// Omitted fields fall back to `defaults` (handBone + the canonical-grip
+// `defaults.weapon` transform, so canonicalized imports need only `model`).
+// An EXPLICIT `bone: null` means "attach at the model root" — only an absent
+// bone falls back to the default hand bone (the 3d-preview aligner emits null
+// for root-tuned transforms; coercing it to the hand bone applies a
+// root-space transform in bone space and lands the weapon somewhere else).
 export function getWeaponModel(itemId) {
   if (!itemId) return null
   const w = equipmentModelsData.weapons && equipmentModelsData.weapons[itemId]
   if (!w || !w.model) return null
+  const defaults = equipmentModelsData.defaults || {}
+  const dw = defaults.weapon || {}
   return {
     model: w.model,
-    bone: w.bone || (equipmentModelsData.defaults && equipmentModelsData.defaults.handBone) || null,
-    position: w.position || EQUIP_IDENTITY.position,
-    rotationDeg: w.rotationDeg || EQUIP_IDENTITY.rotationDeg,
-    scale: typeof w.scale === 'number' ? w.scale : EQUIP_IDENTITY.scale,
+    bone: w.bone === undefined ? (defaults.handBone || null) : w.bone,
+    position: w.position || dw.position || EQUIP_IDENTITY.position,
+    rotationDeg: w.rotationDeg || dw.rotationDeg || EQUIP_IDENTITY.rotationDeg,
+    scale: typeof w.scale === 'number' ? w.scale : (typeof dw.scale === 'number' ? dw.scale : EQUIP_IDENTITY.scale),
   }
 }
 
 // Whether an item currently has a 3D model (cheap check for UI gating).
 export function hasWeaponModel(itemId) {
   return Boolean(itemId && equipmentModelsData.weapons && equipmentModelsData.weapons[itemId] && equipmentModelsData.weapons[itemId].model)
+}
+
+// Resolve a monsterId to a combat-arena spec, or null when unregistered.
+// `height` is the target world height in scene units (hero is ~1.8) so a
+// dragon can tower without per-model scale guesswork.
+// Optional `rotationDeg` corrects a GLB not authored facing the arena's
+// assumed axis (default [0,-90,0] faces the hero from the right-hand side).
+export function getMonsterModel(monsterId) {
+  const m = monsterId && equipmentModelsData.monsters && equipmentModelsData.monsters[monsterId]
+  if (!m || !m.model) return null
+  return {
+    path: resolveModelPath(m.model),
+    height: typeof m.height === 'number' ? m.height : 2,
+    rotationDeg: m.rotationDeg || [0, -90, 0],
+  }
+}
+
+// Whether a monster has a registered 3D model (gates the 3D combat arena).
+export function hasMonsterModel(monsterId) {
+  return getMonsterModel(monsterId) !== null
 }
 
 // Join a registry `model` with `modelBase`. Both may be a full URL: an

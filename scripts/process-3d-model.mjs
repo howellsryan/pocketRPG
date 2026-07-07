@@ -45,10 +45,23 @@ await MeshoptEncoder.ready;
 const before = fs.statSync(inFile).size;
 const doc = await io.read(inFile);
 
+// --clip old=new (repeatable): rename animation clips to the semantic names
+// the runtime looks up (Idle/Attack/Box/…) — generators export NLA junk.
+for (let i = 2; i < process.argv.length; i++) {
+  if (process.argv[i] !== '--clip' || !process.argv[i + 1]) continue;
+  const [from, to] = process.argv[i + 1].split('=');
+  for (const anim of doc.getRoot().listAnimations()) if (anim.getName() === from) anim.setName(to);
+}
+
+// flatten/join can merge or re-parent nodes that animation channels target,
+// silently breaking node-transform clips — keep the node graph for animated
+// models (skinned meshes survive either way; statics still get both).
+const animated = doc.getRoot().listAnimations().length > 0;
+if (animated) console.log('animations present — keeping node graph (flatten/join skipped)');
+
 await doc.transform(
   dedup(),
-  flatten(),
-  join(),
+  ...(animated ? [] : [flatten(), join()]),
   weld({ tolerance: 0.0001 }),
   simplify({ simplifier: MeshoptSimplifier, ratio, error: 0.01 }),
   textureCompress({ encoder: sharp, targetFormat: 'webp', resize: [tex, tex], quality: 85 }),
