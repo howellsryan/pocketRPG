@@ -28,106 +28,106 @@
     },
     "dragon_scimitar": {
       "model": "/api/tripo-assets/8d068e36551445af860a636ab7bf3d37",
-      "bone": null,
+      "bone": "R_Hand",
       "position": [
-        0,
-        0.08,
-        0.035
+        0.045,
+        0.005,
+        0.17
       ],
       "rotationDeg": [
-        0,
-        0,
-        0
+        10,
+        -180,
+        109
       ],
       "scale": 0.4
     },
     "bronze_scimitar": {
       "model": "/api/tripo-assets/ffa53d0ab8634f87806b708766541a8a",
-      "bone": null,
+      "bone": "R_Hand",
       "position": [
-        0,
-        0.08,
-        0.035
+        0.045,
+        0.005,
+        0.17
       ],
       "rotationDeg": [
-        0,
-        0,
-        0
+        10,
+        -180,
+        109
       ],
       "scale": 0.4
     },
     "iron_scimitar": {
       "model": "/api/tripo-assets/76c318ad3a984bceb7f79f752c3c56b0",
-      "bone": null,
+      "bone": "R_Hand",
       "position": [
-        0,
-        0.08,
-        0.035
+        0.045,
+        0.005,
+        0.17
       ],
       "rotationDeg": [
-        0,
-        0,
-        0
+        10,
+        -180,
+        109
       ],
       "scale": 0.4
     },
     "steel_scimitar": {
       "model": "/api/tripo-assets/8d0046b826344d809264ea61e264045d",
-      "bone": null,
+      "bone": "R_Hand",
       "position": [
-        0,
-        0.08,
-        0.035
+        0.045,
+        0.005,
+        0.17
       ],
       "rotationDeg": [
-        0,
-        0,
-        0
+        10,
+        -180,
+        109
       ],
       "scale": 0.4
     },
     "mithril_scimitar": {
       "model": "/api/tripo-assets/0f9669fcdb8d47c6ac7e907176f6d67b",
-      "bone": null,
+      "bone": "R_Hand",
       "position": [
-        0,
-        0.08,
-        0.035
+        0.045,
+        0.005,
+        0.17
       ],
       "rotationDeg": [
-        0,
-        0,
-        0
+        10,
+        -180,
+        109
       ],
       "scale": 0.4
     },
     "adamant_scimitar": {
       "model": "/api/tripo-assets/de6f39041981495384d4e89fb5e2bc1c",
-      "bone": null,
+      "bone": "R_Hand",
       "position": [
-        0,
-        0.08,
-        0.035
+        0.045,
+        0.005,
+        0.17
       ],
       "rotationDeg": [
-        0,
-        0,
-        0
+        10,
+        -180,
+        109
       ],
       "scale": 0.4
     },
     "runeforged_scimitar": {
       "model": "/api/tripo-assets/ab6011631b2d45abae3fc2ea39d08335",
-      "bone": null,
+      "bone": "R_Hand",
       "position": [
-        0,
-        0.08,
-        0.035
+        0.045,
+        0.005,
+        0.17
       ],
       "rotationDeg": [
-        0,
-        0,
-        0
+        10,
+        -180,
+        109
       ],
       "scale": 0.4
     }
