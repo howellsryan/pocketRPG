@@ -201,6 +201,17 @@ distribute('thieving', thievingItems, out)
 // Hunter — own kind, level-banded.
 distribute('hunter', asArray(skills.hunter?.actions).map((a) => ({ ref: a.id, level: a.level ?? 1 })), out)
 
+// Dungeoneering — authored 1:1 to a fixed venue, like agility/minigames (dungeon
+// delving isn't tied to any city's level band): every floor lives at the same
+// place, defaulting to the flagship city (mirrors RAID_DEFAULT_CITY — the same
+// "no specific namesake" fallback raids use).
+const DUNGEONEERING_PLACE = 'varrick'
+for (const a of asArray(skills.dungeoneering?.actions)) {
+  const placeId = world.places[DUNGEONEERING_PLACE] ? DUNGEONEERING_PLACE : placesOrdered[0]
+  out[placeId] = out[placeId] || []
+  out[placeId].push({ kind: 'skill', ref: `dungeoneering:${a.id}` })
+}
+
 // Quests — own kind, banded by complexity (Novice starts near the start place,
 // Grandmaster ends up in the cities), duration as tie-break within a tier.
 // Quest journeys plan from wherever the player is, so the listing place is a

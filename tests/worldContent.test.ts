@@ -98,7 +98,12 @@ describe('content -> place coverage', () => {
   it('returns no places for unmapped content', () => {
     expect(placesForActivity('combat', 'no_such_monster')).toEqual([])
     expect(placesForActivity('skill', 'magic:no_such_spell')).toEqual([]) // fake ref
-    expect(placesForActivity('skill', 'dungeoneering:dungeoneering_floor_1')).toEqual([]) // skill intentionally unmapped
+  })
+
+  it('places every dungeoneering floor at its authored venue', () => {
+    for (const a of asArray(skillsData.dungeoneering?.actions)) {
+      expect(placesForActivity('skill', `dungeoneering:${a.id}`), a.id).toEqual(['varrick'])
+    }
   })
 
   it('maps every quest to exactly one place', () => {

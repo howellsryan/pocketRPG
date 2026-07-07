@@ -928,6 +928,78 @@
     },
     {
       "kind": "skill",
+      "ref": "dungeoneering:dungeoneering_floor_1"
+    },
+    {
+      "kind": "skill",
+      "ref": "dungeoneering:dungeoneering_floor_10"
+    },
+    {
+      "kind": "skill",
+      "ref": "dungeoneering:dungeoneering_floor_2"
+    },
+    {
+      "kind": "skill",
+      "ref": "dungeoneering:dungeoneering_floor_3"
+    },
+    {
+      "kind": "skill",
+      "ref": "dungeoneering:dungeoneering_floor_4"
+    },
+    {
+      "kind": "skill",
+      "ref": "dungeoneering:dungeoneering_floor_5"
+    },
+    {
+      "kind": "skill",
+      "ref": "dungeoneering:dungeoneering_floor_6"
+    },
+    {
+      "kind": "skill",
+      "ref": "dungeoneering:dungeoneering_floor_7"
+    },
+    {
+      "kind": "skill",
+      "ref": "dungeoneering:dungeoneering_floor_8"
+    },
+    {
+      "kind": "skill",
+      "ref": "dungeoneering:dungeoneering_floor_9"
+    },
+    {
+      "kind": "skill",
+      "ref": "dungeoneering:unlock_arcane_kiteshield"
+    },
+    {
+      "kind": "skill",
+      "ref": "dungeoneering:unlock_arcane_necklace"
+    },
+    {
+      "kind": "skill",
+      "ref": "dungeoneering:unlock_chaotic_crossbow"
+    },
+    {
+      "kind": "skill",
+      "ref": "dungeoneering:unlock_chaotic_longsword"
+    },
+    {
+      "kind": "skill",
+      "ref": "dungeoneering:unlock_chaotic_maul"
+    },
+    {
+      "kind": "skill",
+      "ref": "dungeoneering:unlock_chaotic_rapier"
+    },
+    {
+      "kind": "skill",
+      "ref": "dungeoneering:unlock_chaotic_staff"
+    },
+    {
+      "kind": "skill",
+      "ref": "dungeoneering:unlock_eagle_eyed_kiteshield"
+    },
+    {
+      "kind": "skill",
       "ref": "firemaking:magic_logs"
     },
     {
@@ -1356,6 +1428,10 @@
     },
     {
       "kind": "skill",
+      "ref": "smithing:smith_adamant_arrowtips"
+    },
+    {
+      "kind": "skill",
       "ref": "smithing:smith_adamant_axe"
     },
     {
@@ -1408,6 +1484,10 @@
     },
     {
       "kind": "skill",
+      "ref": "smithing:smith_bronze_arrowtips"
+    },
+    {
+      "kind": "skill",
       "ref": "smithing:smith_bronze_axe"
     },
     {
@@ -1425,6 +1505,10 @@
     {
       "kind": "skill",
       "ref": "smithing:smith_bronze_scimitar"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_arrowtips"
     },
     {
       "kind": "skill",
@@ -1477,6 +1561,10 @@
     {
       "kind": "skill",
       "ref": "smithing:smith_iron_sword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_arrowtips"
     },
     {
       "kind": "skill",
@@ -1548,6 +1636,10 @@
     },
     {
       "kind": "skill",
+      "ref": "smithing:smith_runeforged_arrowtips"
+    },
+    {
+      "kind": "skill",
       "ref": "smithing:smith_runeforged_chainbody"
     },
     {
@@ -1581,6 +1673,10 @@
     {
       "kind": "skill",
       "ref": "smithing:smith_runite_bolts_unf"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_arrowtips"
     },
     {
       "kind": "skill",
@@ -2370,6 +2466,10 @@
     },
     {
       "kind": "skill",
+      "ref": "smithing:smith_adamant_arrowtips"
+    },
+    {
+      "kind": "skill",
       "ref": "smithing:smith_adamant_axe"
     },
     {
@@ -2422,6 +2522,10 @@
     },
     {
       "kind": "skill",
+      "ref": "smithing:smith_bronze_arrowtips"
+    },
+    {
+      "kind": "skill",
       "ref": "smithing:smith_bronze_axe"
     },
     {
@@ -2439,6 +2543,10 @@
     {
       "kind": "skill",
       "ref": "smithing:smith_bronze_scimitar"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_arrowtips"
     },
     {
       "kind": "skill",
@@ -2491,6 +2599,10 @@
     {
       "kind": "skill",
       "ref": "smithing:smith_iron_sword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_arrowtips"
     },
     {
       "kind": "skill",
@@ -2562,6 +2674,10 @@
     },
     {
       "kind": "skill",
+      "ref": "smithing:smith_runeforged_arrowtips"
+    },
+    {
+      "kind": "skill",
       "ref": "smithing:smith_runeforged_chainbody"
     },
     {
@@ -2595,6 +2711,10 @@
     {
       "kind": "skill",
       "ref": "smithing:smith_runite_bolts_unf"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_arrowtips"
     },
     {
       "kind": "skill",
@@ -3392,6 +3512,10 @@
     },
     {
       "kind": "skill",
+      "ref": "smithing:smith_adamant_arrowtips"
+    },
+    {
+      "kind": "skill",
       "ref": "smithing:smith_adamant_axe"
     },
     {
@@ -3444,6 +3568,10 @@
     },
     {
       "kind": "skill",
+      "ref": "smithing:smith_bronze_arrowtips"
+    },
+    {
+      "kind": "skill",
       "ref": "smithing:smith_bronze_axe"
     },
     {
@@ -3461,6 +3589,10 @@
     {
       "kind": "skill",
       "ref": "smithing:smith_bronze_scimitar"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_arrowtips"
     },
     {
       "kind": "skill",
@@ -3513,6 +3645,10 @@
     {
       "kind": "skill",
       "ref": "smithing:smith_iron_sword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_arrowtips"
     },
     {
       "kind": "skill",
@@ -3584,6 +3720,10 @@
     },
     {
       "kind": "skill",
+      "ref": "smithing:smith_runeforged_arrowtips"
+    },
+    {
+      "kind": "skill",
       "ref": "smithing:smith_runeforged_chainbody"
     },
     {
@@ -3617,6 +3757,10 @@
     {
       "kind": "skill",
       "ref": "smithing:smith_runite_bolts_unf"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_arrowtips"
     },
     {
       "kind": "skill",
@@ -4940,6 +5084,10 @@
     },
     {
       "kind": "skill",
+      "ref": "smithing:smith_adamant_arrowtips"
+    },
+    {
+      "kind": "skill",
       "ref": "smithing:smith_adamant_axe"
     },
     {
@@ -4992,6 +5140,10 @@
     },
     {
       "kind": "skill",
+      "ref": "smithing:smith_bronze_arrowtips"
+    },
+    {
+      "kind": "skill",
       "ref": "smithing:smith_bronze_axe"
     },
     {
@@ -5009,6 +5161,10 @@
     {
       "kind": "skill",
       "ref": "smithing:smith_bronze_scimitar"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_arrowtips"
     },
     {
       "kind": "skill",
@@ -5061,6 +5217,10 @@
     {
       "kind": "skill",
       "ref": "smithing:smith_iron_sword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_arrowtips"
     },
     {
       "kind": "skill",
@@ -5132,6 +5292,10 @@
     },
     {
       "kind": "skill",
+      "ref": "smithing:smith_runeforged_arrowtips"
+    },
+    {
+      "kind": "skill",
       "ref": "smithing:smith_runeforged_chainbody"
     },
     {
@@ -5165,6 +5329,10 @@
     {
       "kind": "skill",
       "ref": "smithing:smith_runite_bolts_unf"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_arrowtips"
     },
     {
       "kind": "skill",
@@ -5952,6 +6120,10 @@
     },
     {
       "kind": "skill",
+      "ref": "smithing:smith_adamant_arrowtips"
+    },
+    {
+      "kind": "skill",
       "ref": "smithing:smith_adamant_axe"
     },
     {
@@ -6004,6 +6176,10 @@
     },
     {
       "kind": "skill",
+      "ref": "smithing:smith_bronze_arrowtips"
+    },
+    {
+      "kind": "skill",
       "ref": "smithing:smith_bronze_axe"
     },
     {
@@ -6021,6 +6197,10 @@
     {
       "kind": "skill",
       "ref": "smithing:smith_bronze_scimitar"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_arrowtips"
     },
     {
       "kind": "skill",
@@ -6073,6 +6253,10 @@
     {
       "kind": "skill",
       "ref": "smithing:smith_iron_sword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_arrowtips"
     },
     {
       "kind": "skill",
@@ -6144,6 +6328,10 @@
     },
     {
       "kind": "skill",
+      "ref": "smithing:smith_runeforged_arrowtips"
+    },
+    {
+      "kind": "skill",
       "ref": "smithing:smith_runeforged_chainbody"
     },
     {
@@ -6177,6 +6365,10 @@
     {
       "kind": "skill",
       "ref": "smithing:smith_runite_bolts_unf"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_arrowtips"
     },
     {
       "kind": "skill",
@@ -8366,6 +8558,10 @@
     },
     {
       "kind": "skill",
+      "ref": "smithing:smith_adamant_arrowtips"
+    },
+    {
+      "kind": "skill",
       "ref": "smithing:smith_adamant_axe"
     },
     {
@@ -8418,6 +8614,10 @@
     },
     {
       "kind": "skill",
+      "ref": "smithing:smith_bronze_arrowtips"
+    },
+    {
+      "kind": "skill",
       "ref": "smithing:smith_bronze_axe"
     },
     {
@@ -8435,6 +8635,10 @@
     {
       "kind": "skill",
       "ref": "smithing:smith_bronze_scimitar"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_arrowtips"
     },
     {
       "kind": "skill",
@@ -8487,6 +8691,10 @@
     {
       "kind": "skill",
       "ref": "smithing:smith_iron_sword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_arrowtips"
     },
     {
       "kind": "skill",
@@ -8558,6 +8766,10 @@
     },
     {
       "kind": "skill",
+      "ref": "smithing:smith_runeforged_arrowtips"
+    },
+    {
+      "kind": "skill",
       "ref": "smithing:smith_runeforged_chainbody"
     },
     {
@@ -8591,6 +8803,10 @@
     {
       "kind": "skill",
       "ref": "smithing:smith_runite_bolts_unf"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_arrowtips"
     },
     {
       "kind": "skill",

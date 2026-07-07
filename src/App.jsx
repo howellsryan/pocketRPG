@@ -954,7 +954,7 @@ function GameApp() {
                 activeTaskRef.current = null
                 try { localStorage.removeItem('pocketrpg_activeTask') } catch {}
                 addToast(`🧭 Arrived at ${travelDestName(savedTask)}`, 'info')
-                resumeAutoStart(savedTask.autoStart)
+                resumeAutoStart(savedTask.autoStart, savedTask.returnTo)
               } else {
                 setActiveTask(adv.task)
                 activeTaskRef.current = adv.task
@@ -1400,7 +1400,7 @@ function GameApp() {
             try { localStorage.removeItem('pocketrpg_activeTask') } catch {}
             addToast(`🧭 Arrived at ${travelDestName(task)}`, 'info')
             if (!isInPvpMatch) schedulePushSave(getSnapshot())
-            resumeAutoStart(task.autoStart)
+            resumeAutoStart(task.autoStart, task.returnTo)
           }
         } else {
           setActiveTask({ ...task, ticksRemaining: remaining }, { skipCloudSync: true })
@@ -1870,17 +1870,15 @@ function GameApp() {
   // screen with the same actionData a home shortcut would use, so the screen's existing
   // auto-start effect fires the fight/skilling immediately — even if the player idled
   // away on another screen while travelling.
-  // `returnTo` ({ screen, data }) rides the actionData when the start came from
-  // somewhere the player will want back to (the place map): the owning screen's
-  // back/stop buttons then return there instead of their own hardcoded list.
+  // `returnTo` ({ screen, data }) rides the actionData so the owning screen's back/stop
+  // buttons return to wherever the player actually came from, instead of a hardcoded
+  // destination: the travel task carries the screen (+ its actionData) the player was
+  // on when they confirmed travel (TravelPrompt's originScreen/originScreenData), or an
+  // explicit override from a direct place-map start (no travel needed — WorldMapScreen
+  // passes its own place view). Only truly origin-less starts (a persisted travel task
+  // from before this existed) fall back to the World Map's place view.
   const resumeAutoStart = (autoStart, returnTo) => {
     if (!autoStart || !autoStart.kind) return
-    // Every activity/skill screen started from the world (a place-map spot, the
-    // place hub list, or auto-resumed on arrival after travelling) sends its
-    // back/stop buttons back to the place the player is standing at, not the
-    // owning skill screen's own list (a dead end when entered directly). An
-    // explicit returnTo (e.g. a specific place-map view) still wins; the default
-    // only applies when the world map is the navigation model.
     const rt = returnTo || (isWorldMapEnabled() ? { screen: SCREENS.WORLD_MAP, data: { view: 'place' } } : undefined)
     const extra = rt ? { returnTo: rt } : {}
     switch (autoStart.kind) {
@@ -2325,7 +2323,7 @@ function GameApp() {
           updateWorldLocation(task.dest)
           clearPersistedActiveTask()
           addToast(`🧭 Arrived at ${travelDestName(task)}`, 'info')
-          resumeAutoStart(task.autoStart)
+          resumeAutoStart(task.autoStart, task.returnTo)
         } else {
           let budgetMs = SKIP_HOUR_MS
           let cur = task
@@ -2848,7 +2846,7 @@ function GameApp() {
             panel replace the SideNav/Header chrome on small screens. */}
         <GameFrameBar position="top" active={screen} onNavigate={(s) => navigate(s)} isInCombat={isInPvpMatch} onDisabledClick={() => addToast('⚔️ Cannot navigate during PvP combat!', 'warning')} demo={demoMode} lockedScreens={CLOUD_ONLY_SCREENS} onLockedClick={notifyDemoLocked} onLockedFeature={notifyDemoLocked} />
         <ToastContainer />
-        <TravelPrompt onNavigate={navigate} />
+        <TravelPrompt onNavigate={navigate} originScreen={screen} originScreenData={actionData} />
         <main class="gf-main flex-1 overflow-hidden">
           {renderScreen()}
         </main>

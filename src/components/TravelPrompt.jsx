@@ -8,8 +8,12 @@ import { SCREENS } from '../utils/constants.js'
  * Travel confirm / location picker. Rendered globally from App; shows itself when a gated
  * activity start (gameState.requestActivityStart) needs the player to travel. A single
  * candidate place is a confirm; multiple are a picker. Phase 3 of the map-driven overhaul.
+ *
+ * `originScreen`/`originScreenData` are the screen the player was on when the prompt
+ * fired (App's `screen`/`actionData`) — carried into the travel task as `returnTo` so
+ * arrival's back/stop buttons return there instead of a hardcoded destination.
  */
-export default function TravelPrompt({ onNavigate }) {
+export default function TravelPrompt({ onNavigate, originScreen, originScreenData }) {
   const { travelPrompt, worldLocation, startTravelTo, dismissTravelPrompt } = useGame()
   if (!travelPrompt) return null
 
@@ -26,9 +30,12 @@ export default function TravelPrompt({ onNavigate }) {
 
   // Confirming travel jumps to the World Map so the player can watch their
   // token walk the route, instead of leaving them stranded on the screen
-  // that triggered the gate (which can no longer do anything useful).
+  // that triggered the gate (which can no longer do anything useful) — but
+  // the screen they were actually on rides along as returnTo, so arrival
+  // sends them back there instead of the map.
   const chooseDestination = (placeId) => {
-    startTravelTo(placeId)
+    const returnTo = originScreen ? { screen: originScreen, data: originScreenData } : undefined
+    startTravelTo(placeId, returnTo)
     onNavigate?.(SCREENS.WORLD_MAP)
   }
 

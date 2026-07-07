@@ -198,6 +198,14 @@
       },
       {
         "kind": "skill",
+        "group": "dungeoneering",
+        "label": "Dungeoneering Guild",
+        "iconKey": "dungeon_gate",
+        "x": 850,
+        "y": 420
+      },
+      {
+        "kind": "skill",
         "group": "woodcutting",
         "label": "Old Forest",
         "x": 99,
