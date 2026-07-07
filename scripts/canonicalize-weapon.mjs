@@ -10,8 +10,18 @@
 // blades); the grip point sits --grip (default 12%) of the length in from
 // that end. --flip overrides the grip-end pick when a weapon fools the
 // heuristic (e.g. a mace with a slim head). --json prints machine-readable
-// results incl. the canonicalization matrix (used once to derive
-// defaults.weapon from an already-tuned transform).
+// results incl. the canonicalization matrix, mainly for inspection.
+//
+// Since the canonical grip point IS the mesh origin, `defaults.weapon.position`
+// should stay at (or very near) [0, 0, 0] — attaching a canonical weapon to
+// the hand bone with a zero offset already puts the grip exactly at the
+// bone. Only rotationDeg (which way +Y/blade-forward should point relative to
+// the bone's own axes) and scale need real tuning; verify with the aligner
+// (public/3d-preview.html) rather than re-deriving position algebraically —
+// composing this matrix with an old non-canonical tuned transform is an easy
+// place to introduce a scale-vs-translation-order bug that LOOKS plausible in
+// a single static screenshot but places the grip far from the hand once
+// checked numerically (getWorldPosition distance to the hand bone).
 //
 // Run on the PROCESSED (post process-3d-model.mjs) file, before recolour
 // variants — variants inherit canonical geometry for free.

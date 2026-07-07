@@ -5,16 +5,16 @@
     "handBone": "R_Hand",
     "weapon": {
       "position": [
-        0.269,
-        -0.1,
-        0.32
+        0,
+        0,
+        0
       ],
       "rotationDeg": [
         10,
         0,
-        71
+        145
       ],
-      "scale": 0.399
+      "scale": 0.3987
     }
   },
   "character": {
@@ -25,19 +25,7 @@
   },
   "weapons": {
     "dragon_dagger": {
-      "model": "crimson_dagger.glb",
-      "bone": null,
-      "position": [
-        0,
-        0.08,
-        0.035
-      ],
-      "rotationDeg": [
-        0,
-        0,
-        0
-      ],
-      "scale": 0.32
+      "model": "crimson_dagger.canonical.glb"
     },
     "dragon_scimitar": {
       "model": "/api/tripo-assets/8d068e36551445af860a636ab7bf3d37",
@@ -50,7 +38,7 @@
       "rotationDeg": [
         10,
         -180,
-        109
+        35
       ],
       "scale": 0.4
     },
@@ -65,7 +53,7 @@
       "rotationDeg": [
         10,
         -180,
-        109
+        35
       ],
       "scale": 0.4
     },
@@ -80,7 +68,7 @@
       "rotationDeg": [
         10,
         -180,
-        109
+        35
       ],
       "scale": 0.4
     },
@@ -95,7 +83,7 @@
       "rotationDeg": [
         10,
         -180,
-        109
+        35
       ],
       "scale": 0.4
     },
@@ -110,7 +98,7 @@
       "rotationDeg": [
         10,
         -180,
-        109
+        35
       ],
       "scale": 0.4
     },
@@ -125,7 +113,7 @@
       "rotationDeg": [
         10,
         -180,
-        109
+        35
       ],
       "scale": 0.4
     },
@@ -140,7 +128,7 @@
       "rotationDeg": [
         10,
         -180,
-        109
+        35
       ],
       "scale": 0.4
     }
