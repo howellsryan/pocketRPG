@@ -1,12 +1,11 @@
 import GameIcon from './GameIcon.jsx'
 import { GAME_FRAME_TOP_TABS, GAME_FRAME_TOP_LEFT_TABS, GAME_FRAME_BOTTOM_LEFT_TABS } from './navTabs.js'
 
-// OSRS-style chrome: gold medallion rails framing the main content panel,
-// drawn into the carved-wood shell (.gf-shell / .gf-main in index.css).
+// OSRS-style mobile chrome: gold medallion rails framing the main content
+// panel, drawn into the carved-wood shell (.gf-shell / .gf-main in index.css).
 // Top rail: Home · World Map · Inventory · Equipment. Bottom rail: Settings ·
-// Daily Tasks + Credits + Skip (centered). The app's only navigation chrome at
-// every viewport width — rails cap at max-w-xl so the medallions keep their
-// phone spacing on desktop while the content panel stays full width.
+// Daily Tasks + Credits + Skip (centered). Mobile-only (md:hidden) — desktop
+// uses SideNav + Header with the same destinations.
 function FrameMedallion({ label, active = false, disabled = false, locked = false, onClick, title, children }) {
   return (
     <button
@@ -72,7 +71,7 @@ export default function GameFrameBar({
     return (
       <nav
         aria-label="Quick actions"
-        class="pwa-header flex items-center justify-evenly flex-shrink-0 px-3 pt-3 pb-1 w-full max-w-xl mx-auto"
+        class="pwa-header md:hidden flex items-center justify-evenly flex-shrink-0 px-3 pt-3 pb-1 w-full max-w-xl mx-auto"
       >
         {GAME_FRAME_TOP_LEFT_TABS.map(navMedallion)}
         {GAME_FRAME_TOP_TABS.map(navMedallion)}
@@ -83,7 +82,7 @@ export default function GameFrameBar({
   return (
     <nav
       aria-label="Menu"
-      class="flex items-center justify-between flex-shrink-0 px-3 pt-2 pb-safe w-full max-w-xl mx-auto"
+      class="md:hidden flex items-center justify-between flex-shrink-0 px-3 pt-2 pb-safe w-full max-w-xl mx-auto"
     >
       {GAME_FRAME_BOTTOM_LEFT_TABS.map(navMedallion)}
       <span class="flex-1 flex items-center justify-center gap-1">

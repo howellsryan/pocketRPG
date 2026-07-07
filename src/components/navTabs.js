@@ -7,13 +7,14 @@ import { SCREENS, isWorldMapEnabled } from '../utils/constants.js'
 // player's actual location (a travel prompt covers the rest), so opening them
 // from the rail works from anywhere.
 
-// OSRS-style frame (GameFrameBar) — the app's only navigation chrome at every
-// viewport width: gold medallion rails above and below the main content panel,
-// set in a carved-wood chrome. Top rail carries Home (top-left) then World
+// OSRS-style frame (GameFrameBar) — the mobile chrome (below md): gold
+// medallion rails above and below the main content panel, set in a carved-wood
+// chrome. Top rail carries Home (top-left) then World
 // Map/Combat/Inventory/Equipment/Adventures; bottom rail carries Settings,
 // then Daily Tasks + Credits + Skip together (all rendered by GameFrameBar
 // itself). Icons are tintable game-icons glyphs so they read as brass/steel
-// inlays on the dark medallions.
+// inlays on the dark medallions. Desktop (md+) uses SideNav + Header with the
+// same destinations (DESKTOP_NAV_TABS below).
 export const GAME_FRAME_TOP_LEFT_TABS = [
   { id: SCREENS.HOME, label: 'Home', iconKey: 'home', iconSize: 20, iconColor: '#efe3c2' },
 ]
@@ -26,6 +27,19 @@ export const GAME_FRAME_TOP_TABS = [
 ]
 export const GAME_FRAME_BOTTOM_LEFT_TABS = [
   { id: SCREENS.HELP, label: 'Settings', iconKey: 'gears', iconSize: 20, iconColor: '#d9b45a' },
+]
+
+// Desktop chrome (md+): SideNav rail entries — the same destinations as the
+// frame rails' medallions. The Daily Tasks/Credits/Skip pills live in Header.
+// No iconColor: glyphs inherit the rail's ink color; bespoke art keeps its own.
+export const DESKTOP_NAV_TABS = [
+  { id: SCREENS.HOME, label: 'Home', iconKey: 'home', iconSize: 34 },
+  ...(isWorldMapEnabled() ? [{ id: SCREENS.WORLD_MAP, label: 'World Map', iconKey: 'globe', iconSize: 30 }] : []),
+  { id: SCREENS.COMBAT,     label: 'Combat',     iconKey: 'combat_level' },
+  { id: SCREENS.INVENTORY,  label: 'Inventory',  iconKey: 'backpack' },
+  { id: SCREENS.EQUIPMENT,  label: 'Equipment',  iconKey: 'paperdoll' },
+  { id: SCREENS.ADVENTURES, label: 'Adventures', iconKey: 'adventures_scroll' },
+  { id: SCREENS.HELP,       label: 'Settings',   iconKey: 'gears', iconSize: 30 },
 ]
 
 // Screens reachable from the Settings screen (HelpScreen) instead of the nav
