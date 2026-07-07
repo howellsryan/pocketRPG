@@ -2,19 +2,153 @@
   "version": 1,
   "modelBase": "3d-samples/",
   "defaults": {
-    "handBone": "R_Hand"
+    "handBone": "R_Hand",
+    "weapon": {
+      "position": [
+        0,
+        0,
+        0
+      ],
+      "rotationDeg": [
+        10,
+        0,
+        145
+      ],
+      "scale": 0.3987
+    }
   },
   "character": {
     "model": "hero.glb",
-    "idleClip": "Idle"
+    "idleClip": "Idle",
+    "attackClip": "Box",
+    "specialClip": "Run"
   },
   "weapons": {
     "dragon_dagger": {
-      "model": "crimson_dagger.glb",
-      "bone": null,
-      "position": [0, 0.08, 0.035],
-      "rotationDeg": [0, 0, 0],
-      "scale": 0.32
+      "model": "crimson_dagger.canonical.glb",
+      "bone": "R_Hand",
+      "position": [
+        0.125,
+        0.275,
+        -0.11
+      ],
+      "rotationDeg": [
+        10,
+        0,
+        145
+      ],
+      "scale": 0.4
+    },
+    "dragon_scimitar": {
+      "model": "/api/tripo-assets/8d068e36551445af860a636ab7bf3d37",
+      "bone": "R_Hand",
+      "position": [
+        -0.03,
+        0.005,
+        0.145
+      ],
+      "rotationDeg": [
+        -3,
+        -180,
+        -161
+      ],
+      "scale": 0.4
+    },
+    "bronze_scimitar": {
+      "model": "/api/tripo-assets/ffa53d0ab8634f87806b708766541a8a",
+      "bone": "R_Hand",
+      "position": [
+        -0.03,
+        0.005,
+        0.145
+      ],
+      "rotationDeg": [
+        -3,
+        -180,
+        -161
+      ],
+      "scale": 0.4
+    },
+    "iron_scimitar": {
+      "model": "/api/tripo-assets/76c318ad3a984bceb7f79f752c3c56b0",
+      "bone": "R_Hand",
+      "position": [
+        -0.03,
+        0.005,
+        0.145
+      ],
+      "rotationDeg": [
+        -3,
+        -180,
+        -161
+      ],
+      "scale": 0.4
+    },
+    "steel_scimitar": {
+      "model": "/api/tripo-assets/8d0046b826344d809264ea61e264045d",
+      "bone": "R_Hand",
+      "position": [
+        -0.03,
+        0.005,
+        0.145
+      ],
+      "rotationDeg": [
+        -3,
+        -180,
+        -161
+      ],
+      "scale": 0.4
+    },
+    "mithril_scimitar": {
+      "model": "/api/tripo-assets/0f9669fcdb8d47c6ac7e907176f6d67b",
+      "bone": "R_Hand",
+      "position": [
+        -0.03,
+        0.005,
+        0.145
+      ],
+      "rotationDeg": [
+        -3,
+        -180,
+        -161
+      ],
+      "scale": 0.4
+    },
+    "adamant_scimitar": {
+      "model": "/api/tripo-assets/de6f39041981495384d4e89fb5e2bc1c",
+      "bone": "R_Hand",
+      "position": [
+        -0.03,
+        0.005,
+        0.145
+      ],
+      "rotationDeg": [
+        -3,
+        -180,
+        -161
+      ],
+      "scale": 0.4
+    },
+    "runeforged_scimitar": {
+      "model": "/api/tripo-assets/ab6011631b2d45abae3fc2ea39d08335",
+      "bone": "R_Hand",
+      "position": [
+        -0.03,
+        0.005,
+        0.145
+      ],
+      "rotationDeg": [
+        -3,
+        -180,
+        -161
+      ],
+      "scale": 0.4
+    }
+  },
+  "monsters": {
+    "king_black_dragon": {
+      "model": "/api/tripo-assets/4aba171219df413d9be1bf36a0fff9cd",
+      "height": 2.6
     }
   }
 }

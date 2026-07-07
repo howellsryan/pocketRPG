@@ -10,6 +10,10 @@ function ok(payload) {
 // this, in which case the caller should use store_asset's url instead.
 const MAX_INLINE_BYTES = 15 * 1024 * 1024
 
+// Decoded-size cap for upload_asset. Processed GLBs are ~1 MB; raw generator
+// output should go through store_asset (URL fetch), not an inline upload.
+const MAX_UPLOAD_BYTES = 25 * 1024 * 1024
+
 function arrayBufferToBase64(buf) {
   let binary = ''
   const bytes = new Uint8Array(buf)
@@ -18,6 +22,24 @@ function arrayBufferToBase64(buf) {
     binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize))
   }
   return btoa(binary)
+}
+
+function base64ToArrayBuffer(b64) {
+  const binary = atob(b64.replace(/\s+/g, ''))
+  const bytes = new Uint8Array(binary.length)
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
+  return bytes.buffer
+}
+
+// Stable keys are served at /api/tripo-assets/<key> and cached immutably, so
+// they must be plain nested paths: models/dragon_scimitar.v1.glb.
+function validateAssetKey(key) {
+  if (typeof key !== 'string' || !key) throw new Error('key must be a non-empty string.')
+  if (key.length > 200) throw new Error('key is too long (max 200 chars).')
+  if (!/^[A-Za-z0-9][A-Za-z0-9._/-]*$/.test(key) || key.split('/').some((seg) => !seg || seg === '.' || seg === '..')) {
+    throw new Error('key must be a plain nested path like "models/dragon_scimitar.v1.glb" (letters, digits, . _ - and / separators).')
+  }
+  return key
 }
 
 const TOOLS = {
@@ -39,8 +61,8 @@ const TOOLS = {
     const res = await fetch(url)
     if (!res.ok) throw new Error(`Fetching asset failed (HTTP ${res.status}).`)
     const buf = await res.arrayBuffer()
-    const contentType = res.headers.get('Content-Type') || 'application/octet-stream'
-    const key = crypto.randomUUID().replace(/-/g, '')
+    const contentType = args.content_type || res.headers.get('Content-Type') || 'application/octet-stream'
+    const key = args.key ? validateAssetKey(args.key) : crypto.randomUUID().replace(/-/g, '')
     await env.TRIPO_ASSETS.put(key, buf, {
       httpMetadata: { contentType },
       customMetadata: { taskId: taskId || '', filename: filename || '', sourceUrl: url },
@@ -48,21 +70,52 @@ const TOOLS = {
     return ok({ key, url: `${origin}/api/tripo-assets/${key}`, size: buf.byteLength, contentType, sourceUrl: url })
   },
 
+  async upload_asset(args, { env, origin }) {
+    const { key: rawKey, base64, content_type: contentType, task_id: taskId, filename } = args
+    if (!base64) throw new Error('base64 is required (the asset bytes).')
+    if (!contentType) throw new Error('content_type is required (e.g. "model/gltf-binary").')
+    if (!env.TRIPO_ASSETS) throw new Error('TRIPO_ASSETS R2 bucket is not bound on this worker.')
+    const key = rawKey ? validateAssetKey(rawKey) : crypto.randomUUID().replace(/-/g, '')
+    let buf
+    try {
+      buf = base64ToArrayBuffer(base64)
+    } catch {
+      throw new Error('base64 could not be decoded.')
+    }
+    if (buf.byteLength > MAX_UPLOAD_BYTES) {
+      throw new Error(
+        `Decoded upload is ${buf.byteLength} bytes, over the ${MAX_UPLOAD_BYTES}-byte cap. Raw generator ` +
+          'output should be persisted with store_asset (URL fetch); upload_asset is for processed files.',
+      )
+    }
+    await env.TRIPO_ASSETS.put(key, buf, {
+      httpMetadata: { contentType },
+      customMetadata: { taskId: taskId || '', filename: filename || '', sourceUrl: '' },
+    })
+    return ok({ key, url: `${origin}/api/tripo-assets/${key}`, size: buf.byteLength, contentType })
+  },
+
   async get_asset(args, { env }) {
     if (!args.key) throw new Error('key is required (returned by store_asset).')
     if (!env.TRIPO_ASSETS) throw new Error('TRIPO_ASSETS R2 bucket is not bound on this worker.')
-    const obj = await env.TRIPO_ASSETS.get(args.key)
+    const ranged = args.offset !== undefined || args.length !== undefined
+    const offset = Math.max(0, Math.floor(args.offset || 0))
+    const obj = ranged
+      ? await env.TRIPO_ASSETS.get(args.key, { range: { offset, length: Math.min(Math.floor(args.length || MAX_INLINE_BYTES), MAX_INLINE_BYTES) } })
+      : await env.TRIPO_ASSETS.get(args.key)
     if (!obj) throw new Error(`No asset stored at key "${args.key}".`)
+    const size = obj.size ?? null
     const buf = await obj.arrayBuffer()
     if (buf.byteLength > MAX_INLINE_BYTES) {
       throw new Error(
-        `Asset is ${buf.byteLength} bytes, over the ${MAX_INLINE_BYTES}-byte inline limit. Only the ` +
-          'rendered image is currently used as game art — fetch that output instead of the full 3D model.',
+        `Asset is ${buf.byteLength} bytes, over the ${MAX_INLINE_BYTES}-byte inline limit. ` +
+          'Pass offset/length to fetch it in chunks, or use the store_asset url directly.',
       )
     }
     return ok({
       key: args.key,
-      size: buf.byteLength,
+      size,
+      ...(ranged ? { offset, length: buf.byteLength } : {}),
       contentType: obj.httpMetadata?.contentType || 'application/octet-stream',
       base64: arrayBufferToBase64(buf),
     })

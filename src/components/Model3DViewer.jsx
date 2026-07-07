@@ -142,12 +142,14 @@ function Model3DViewer({ characterPath, weapon = null, idleClip = null, height =
   }, [characterPath, idleClip, height, autoRotate])
 
   // ── Weapon: attach / swap without rebuilding the scene ──
+  // Keyed on the whole spec so registry transform edits re-apply live, not
+  // just path/bone swaps.
   const weaponRef = useRef(weapon)
   useEffect(() => {
     weaponRef.current = weapon
     const st = stateRef.current
     if (st && st.character) attachWeapon(st, weapon)
-  }, [weapon && weapon.path, weapon && weapon.bone])
+  }, [weapon && JSON.stringify(weapon)])
 
   if (failed) return fallback
 
@@ -184,7 +186,7 @@ function attachWeapon(st, weapon) {
   }).catch(() => {})
 }
 
-function disposeObject(obj) {
+export function disposeObject(obj) {
   obj.traverse((o) => {
     if (o.geometry) o.geometry.dispose()
     if (o.material) {

@@ -43,6 +43,9 @@ import { SCREENS, formatDropChance } from '../utils/constants.js'
 import { hasEpicLootDrop, getItemUnitValue, getLootTotalValue } from '../utils/itemValue.js'
 import { splatsFromCombatEvents, HIT_SPLAT_DURATION_MS } from '../utils/hitSplats.js'
 import { HitSplatLayer } from '../components/HitSplat.jsx'
+import CombatArena3D from '../components/CombatArena3D.jsx'
+import { getMonsterModel, getCharacterAssetPath, getWeaponPlacement, getCharacterModel } from '../utils/equipModels.js'
+import { canRender3D } from '../utils/three3d.js'
 import ActivePotionBadges from '../components/ActivePotionBadges.jsx'
 import { getSlayerTaskXpForKill, resolveMonsterRewardData } from '../engine/slayerRewards.js'
 import { resolveSlayerTaskKill, doesSlayerTaskMatchMonster } from '../engine/slayerTasks.js'
@@ -251,6 +254,21 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   const [isDesktopCombatLayout, setIsDesktopCombatLayout] = useState(false)
   const [monsterSplats, setMonsterSplats] = useState([])
   const [playerSplats, setPlayerSplats] = useState([])
+  // 3D combat arena (Phase 2): renders inline in place of the HP bars for
+  // monsters with a registered model; the 🎥/📊 chip swaps between the two,
+  // and the choice persists. Combat ticks are held until the arena reports
+  // ready (onReady — it self-releases on a load timeout), so a fight never
+  // starts against an invisible scene.
+  const [arenaClosed, setArenaClosed] = useState(() => {
+    try { return localStorage.getItem('pocketrpg_combat3d') === 'off' } catch { return false }
+  })
+  const [arenaSignal, setArenaSignal] = useState(null)
+  const [arenaReady, setArenaReady] = useState(false)
+  const arenaReadyRef = useRef(false)
+  const arenaClosedRef = useRef(arenaClosed)
+  useEffect(() => { arenaReadyRef.current = arenaReady }, [arenaReady])
+  useEffect(() => { arenaClosedRef.current = arenaClosed }, [arenaClosed])
+  useEffect(() => { setArenaReady(false) }, [combat?.monster?.id, arenaClosed])
   const combatRef = useRef(null)
   const hpRef = useRef(currentHP)
   const hasAutoStarted = useRef(false)
@@ -413,6 +431,11 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       const state = combatRef.current
       if (!state || !state.active) return
 
+      // Hold the fight while the 3D arena is still loading its models, so the
+      // opening hits are never invisible (arena onReady/onFail releases this).
+      if (!arenaClosedRef.current && !arenaReadyRef.current &&
+          getMonsterModel(state.monster.id) && getCharacterAssetPath() && canRender3D()) return
+
       const playerStats = {
         attack: getLevelFromXP(statsRef.current.attack?.xp || 0),
         strength: getLevelFromXP(statsRef.current.strength?.xp || 0),
@@ -436,6 +459,14 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       const tickSplats = splatsFromCombatEvents(events)
       pushSplats(setMonsterSplats, tickSplats.monster)
       pushSplats(setPlayerSplats, tickSplats.player)
+      if (tickSplats.monster.length || tickSplats.player.length) {
+        setArenaSignal(prev => ({
+          seq: (prev?.seq || 0) + 1,
+          hero: tickSplats.monster.length > 0,
+          monster: tickSplats.player.length > 0,
+          special: events.some(ev => ev.type === 'specialHit'),
+        }))
+      }
 
       for (const ev of events) {
         if (ev.type === 'specialHit') {
@@ -2186,6 +2217,47 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   }
 
   // Combat view
+  const arenaModel = combat?.active && combat.monster ? getMonsterModel(combat.monster.id) : null
+  const arenaAvailable = Boolean(arenaModel) && Boolean(getCharacterAssetPath()) && canRender3D()
+  const showArena = arenaAvailable && !arenaClosed
+  const reopenArena = () => {
+    setArenaClosed(false)
+    try { localStorage.removeItem('pocketrpg_combat3d') } catch { /* private mode */ }
+  }
+  const closeArena = () => {
+    setArenaClosed(true)
+    try { localStorage.setItem('pocketrpg_combat3d', 'off') } catch { /* private mode */ }
+  }
+  const arenaChip = arenaAvailable && (
+    <button
+      class="px-2 py-1 rounded-lg bg-[var(--color-void)] border border-[var(--color-void-border)] text-[10px] font-semibold text-[var(--color-gold)] active:bg-[var(--color-void-border)]"
+      onClick={arenaClosed ? reopenArena : closeArena}
+      aria-label={arenaClosed ? 'Switch to 3D battle view' : 'Switch to progress bars'}
+    >
+      {arenaClosed ? '🎥 3D' : '📊 Bars'}
+    </button>
+  )
+  // Inline 3D arena — replaces the HP-bar block in whichever layout renders.
+  const heroSpec = getCharacterModel() || {}
+  const arenaPanel = showArena && (
+    <CombatArena3D
+      monsterName={combat.monster.name}
+      monsterPath={arenaModel.path}
+      monsterHeight={arenaModel.height}
+      monsterRotationDeg={arenaModel.rotationDeg}
+      characterPath={getCharacterAssetPath()}
+      clips={{ idle: heroSpec.idleClip, attack: heroSpec.attackClip, special: heroSpec.specialClip }}
+      weapon={equipment?.weapon ? getWeaponPlacement(equipment.weapon.itemId) : null}
+      attackSignal={arenaSignal}
+      monsterHP={{ current: Math.max(0, Math.round(combat.monster.currentHP)), max: combat.monster.hitpoints }}
+      playerHP={{ current: Math.max(0, Math.round(currentHP)), max: getMaxHP() }}
+      monsterSplats={monsterSplats}
+      playerSplats={playerSplats}
+      onReady={() => setArenaReady(true)}
+      onFail={() => setArenaClosed(true)}
+    />
+  )
+
   return (
     <div class={`forge-shell h-full flex flex-col p-4 ${isDesktopCombatLayout ? 'overflow-hidden' : ''}`}>
       {/* Back button */}
@@ -2220,13 +2292,21 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
               )
             })()}
           </span>
-          <span class="text-[10px] font-[var(--font-mono)] text-[var(--color-blood-light)]">CB {combat.monster.combatLevel}</span>
+          <span class="flex items-center gap-2">
+            {arenaChip}
+            <span class="text-[10px] font-[var(--font-mono)] text-[var(--color-blood-light)]">CB {combat.monster.combatLevel}</span>
+          </span>
         </div>
-        <div class="relative">
-          <HPBar current={Math.max(0, combat.monster.currentHP)} max={combat.monster.hitpoints} size="large" />
-          <HitSplatLayer splats={monsterSplats} />
-        </div>
+        {!showArena && (
+          <div class="relative">
+            <HPBar current={Math.max(0, combat.monster.currentHP)} max={combat.monster.hitpoints} size="large" />
+            <HitSplatLayer splats={monsterSplats} />
+          </div>
+        )}
       </div>
+
+      {/* Inline 3D arena replaces both HP bars (its own bars ride the scene) */}
+      {arenaPanel && <div class="mb-2">{arenaPanel}</div>}
 
       {/* Raid progress indicator */}
       {combat.raid && (
@@ -2256,13 +2336,15 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       {/* Player HP */}
       <div class="mb-2">
         <div class="flex items-center justify-between mb-0.5">
-          <div class="text-[10px] text-[var(--color-parchment)] opacity-50">Your HP</div>
+          {!showArena && <div class="text-[10px] text-[var(--color-parchment)] opacity-50">Your HP</div>}
           <ActivePotionBadges activePotions={combat?.activePotions} itemsData={itemsData} />
         </div>
-        <div class="relative">
-          <HPBar current={currentHP} max={getMaxHP()} size="large" />
-          <HitSplatLayer splats={playerSplats} />
-        </div>
+        {!showArena && (
+          <div class="relative">
+            <HPBar current={currentHP} max={getMaxHP()} size="large" />
+            <HitSplatLayer splats={playerSplats} />
+          </div>
+        )}
       </div>
 
       {/* Prayer pool — drains while prayers are active; restored by prayer/super restore potions */}
@@ -2641,10 +2723,13 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                     </div>
                   </div>
                 </div>
-                <button class="cb-fight__cb" onClick={() => setSelectedMonsterInfo(m)} aria-label={`${m.name} info`}>
-                  CB {m.combatLevel}
-                  <GameIcon iconKey="info" color="#e0564b" size={13} />
-                </button>
+                <span class="flex items-center gap-1.5">
+                  {arenaChip}
+                  <button class="cb-fight__cb" onClick={() => setSelectedMonsterInfo(m)} aria-label={`${m.name} info`}>
+                    CB {m.combatLevel}
+                    <GameIcon iconKey="info" color="#e0564b" size={13} />
+                  </button>
+                </span>
               </div>
 
               {/* Raid progress */}
@@ -2662,32 +2747,43 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                 </div>
               )}
 
-              {/* Monster HP */}
-              <div class="cb-hpblock">
-                <div class="cb-hplabel">
-                  <span>{m.name}{form && <span class="ml-2 text-purple-300">{form.icon} {form.displayName}{form.immunity ? ` · 🛡 ${form.immunity}` : ''}</span>}</span>
-                  <span class="cb-hplabel__v">{Math.max(0, Math.round(m.currentHP))}/{m.hitpoints}</span>
-                </div>
-                <div class="relative">
-                  <HPBar current={Math.max(0, m.currentHP)} max={m.hitpoints} size="large" />
-                  <HitSplatLayer splats={monsterSplats} />
-                </div>
-              </div>
+              {/* Inline 3D arena replaces both HP blocks (its own bars +
+                  splats ride the scene); the 📊 chip swaps the bars back. */}
+              {showArena ? (
+                <>
+                  <div class="mb-2">{arenaPanel}</div>
+                  <ActivePotionBadges activePotions={combat?.activePotions} itemsData={itemsData} />
+                </>
+              ) : (
+                <>
+                  {/* Monster HP */}
+                  <div class="cb-hpblock">
+                    <div class="cb-hplabel">
+                      <span>{m.name}{form && <span class="ml-2 text-purple-300">{form.icon} {form.displayName}{form.immunity ? ` · 🛡 ${form.immunity}` : ''}</span>}</span>
+                      <span class="cb-hplabel__v">{Math.max(0, Math.round(m.currentHP))}/{m.hitpoints}</span>
+                    </div>
+                    <div class="relative">
+                      <HPBar current={Math.max(0, m.currentHP)} max={m.hitpoints} size="large" />
+                      <HitSplatLayer splats={monsterSplats} />
+                    </div>
+                  </div>
 
-              {/* Player HP */}
-              <div class="cb-hpblock">
-                <div class="cb-hplabel">
-                  <span>Your Hitpoints</span>
-                  <span class="cb-hplabel__right">
-                    <ActivePotionBadges activePotions={combat?.activePotions} itemsData={itemsData} />
-                    <span class="cb-hplabel__v" style={{ color: '#7ce88a' }}>{Math.max(0, Math.round(currentHP))}/{getMaxHP()}</span>
-                  </span>
-                </div>
-                <div class="relative">
-                  <HPBar current={currentHP} max={getMaxHP()} size="large" />
-                  <HitSplatLayer splats={playerSplats} />
-                </div>
-              </div>
+                  {/* Player HP */}
+                  <div class="cb-hpblock">
+                    <div class="cb-hplabel">
+                      <span>Your Hitpoints</span>
+                      <span class="cb-hplabel__right">
+                        <ActivePotionBadges activePotions={combat?.activePotions} itemsData={itemsData} />
+                        <span class="cb-hplabel__v" style={{ color: '#7ce88a' }}>{Math.max(0, Math.round(currentHP))}/{getMaxHP()}</span>
+                      </span>
+                    </div>
+                    <div class="relative">
+                      <HPBar current={currentHP} max={getMaxHP()} size="large" />
+                      <HitSplatLayer splats={playerSplats} />
+                    </div>
+                  </div>
+                </>
+              )}
 
               {/* Prayer pool */}
               {typeof combat?.maxPrayerPoints === 'number' && (
