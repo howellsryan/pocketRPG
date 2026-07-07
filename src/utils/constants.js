@@ -106,7 +106,8 @@ export const SCREENS = {
   ARMOURY: 'armoury',
   CHARACTER_UNLOCKS: 'character_unlocks',
   MAGIC: 'magic',
-  WORLD_MAP: 'world_map'
+  WORLD_MAP: 'world_map',
+  ADVENTURES: 'adventures'
 }
 
 // Phase 1 of the map-driven overhaul (docs/map-driven-overhaul-plan.md) ships the

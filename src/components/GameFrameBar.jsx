@@ -83,10 +83,10 @@ export default function GameFrameBar({
   return (
     <nav
       aria-label="Menu"
-      class="flex items-center justify-between flex-shrink-0 px-5 pt-2 pb-safe w-full max-w-xl mx-auto"
+      class="flex items-center justify-between flex-shrink-0 px-3 pt-2 pb-safe w-full max-w-xl mx-auto"
     >
       {GAME_FRAME_BOTTOM_LEFT_TABS.map(navMedallion)}
-      <span class="flex-1 flex items-center justify-center gap-2">
+      <span class="flex-1 flex items-center justify-center gap-1">
         {(isCloudAccount || demo) && (
           <button
             onClick={() => { if (demo) onLockedFeature?.(); else onDailyTasks?.() }}
@@ -124,6 +124,10 @@ export default function GameFrameBar({
             : <GameIcon iconKey="fast_forward_button" size={20} color="#d9b45a" />}
         </button>
       </span>
+      {/* Mirrors the Settings medallion's width so the centered group sits
+          equidistant from Settings and the floating chat button (fixed at the
+          same inset on the other edge) instead of drifting toward one side. */}
+      <span class="w-12 flex-shrink-0" aria-hidden="true" />
     </nav>
   )
 }

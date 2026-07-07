@@ -6,6 +6,7 @@ import SectionHeader from '../components/SectionHeader.jsx'
 import GameIcon from '../components/GameIcon.jsx'
 import GildedComplete from '../components/GildedComplete.jsx'
 import SkillActionRow from '../components/SkillActionRow.jsx'
+import BackLink from '../components/BackLink.jsx'
 import { isMinigameItemUnlocked } from '../utils/completion.js'
 import { countItem } from '../engine/inventory.js'
 import minigamesData from '../data/minigames.json'
@@ -16,7 +17,7 @@ function formatMinigameHours(hours) {
   return `${hours.toFixed(1)}h`
 }
 
-export default function MinigamesScreen({ initialTaskId } = {}) {
+export default function MinigamesScreen({ initialTaskId, onBack } = {}) {
   const {
     inventory, bank, equipment, activeTask, setActiveTask, unlockedMinigameItems,
     getActivityProgress, addToast, requestActivityStart,
@@ -86,7 +87,7 @@ export default function MinigamesScreen({ initialTaskId } = {}) {
         </button>
 
         <div class="flex-1 flex flex-col items-center justify-center">
-          <GameIcon iconKey={task.product} item={{ icon: task.icon }} size={96} color="var(--color-gold)" class="mb-2" />
+          <GameIcon iconKey={task.rewardItems?.[0] || task.product} item={{ icon: task.icon }} size={96} color="var(--color-gold)" class="mb-2" />
 
           <h2 class="font-[var(--font-display)] text-[18px] font-bold text-[var(--color-gold)] mb-1 text-center">
             {task.name}
@@ -121,7 +122,8 @@ export default function MinigamesScreen({ initialTaskId } = {}) {
   return (
     <div class="forge-shell h-full flex flex-col">
       <div class="px-4 pt-4 pb-2 flex-shrink-0">
-        <SectionHeader size="lg"><span class="inline-flex items-center gap-2"><GameIcon iconKey="purple_sweets" size={18} class="flex-shrink-0" /> Minigames</span></SectionHeader>
+        <BackLink onClick={onBack} className="mb-3" />
+        <SectionHeader size="lg"><span class="inline-flex items-center gap-2"><GameIcon iconKey="minigame_scroll_red" size={18} class="flex-shrink-0" /> Minigames</span></SectionHeader>
       </div>
 
       <div class="flex-1 overflow-y-auto px-4 pb-4">
@@ -145,7 +147,7 @@ export default function MinigamesScreen({ initialTaskId } = {}) {
                   return (
                     <GildedComplete key={task.id} complete={alreadyUnlocked} className="rounded-2xl">
                       <SkillActionRow
-                        icon={<GameIcon iconKey={task.product} item={{ icon: task.icon }} size={52} color="var(--color-gold)" />}
+                        icon={<GameIcon iconKey={task.rewardItems?.[0] || task.product} item={{ icon: task.icon }} size={52} color="var(--color-gold)" />}
                         title={task.name}
                         meta={<>
                           {alreadyUnlocked && <span class="text-[#7a7]">✓ </span>}
