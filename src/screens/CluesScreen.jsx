@@ -182,14 +182,12 @@ export default function CluesScreen({ onNavigate, onBack } = {}) {
             return (
               <SkillActionRow
                 key={task.id}
-                icon={<GameIcon iconKey="clue_scroll_purple" size={40} />}
                 title={task.name}
-                meta={<>
-                  🗺️ trail of 2–4 places · scroll spent on the last search
-                  <span class={`block mt-0.5 ${isRunning ? 'text-[var(--color-gold)]' : enabled ? 'text-[#4caf50]' : 'text-[#e57373]'}`}>
+                meta={
+                  <span class={isRunning ? 'text-[var(--color-gold)]' : enabled ? 'text-[#4caf50]' : 'text-[#e57373]'}>
                     {isOnTrail ? '● on the trail — tap to view map' : isLegacyRunning ? '● running' : enabled ? '✓ ready' : '✗ need scroll'}
                   </span>
-                </>}
+                }
                 right={
                   <span
                     role="button"
