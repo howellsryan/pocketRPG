@@ -140,3 +140,6 @@ In-session discipline mirroring Headroom's mechanical savings. Deviate only when
 **C) Intake reduction**: read narrowly (targeted `Grep`/`Glob`, `Read` with `offset`/`limit`); prefer `files_with_matches` before `content`; don't re-read files in context or re-derive known facts; batch independent calls; fetch on demand, not just-in-case.
 
 **Local sessions only**: run `npm run claude:headroom` (`scripts/headroom-claude.sh`) for actual Headroom compression + output shaping (`HEADROOM_OUTPUT_SHAPER=1`; prereq `pip install "headroom-ai[all]"`; see `HEADROOM.md`). This wraps Claude Code at launch locally — it cannot reroute Claude Code Web/cloud sessions, so the rules above carry the load there. Don't commit `ANTHROPIC_BASE_URL` to shared settings.
+
+## 18) Design Context
+`PRODUCT.md` (repo root) is the strategic design brief for `/impeccable` (register, users, brand personality, anti-references, design principles) — read it before any UI/UX design work. No `DESIGN.md` yet; run `/impeccable document` to generate one from the existing `src/index.css` tokens (parchment/gold/blood/emerald/void palette, Cinzel + Nunito).
