@@ -166,7 +166,7 @@ export default function ChatWidget({ isCloudAccount = false }) {
         type="button"
         aria-label="Game helper"
         onClick={() => setOpen(true)}
-        class="fixed bottom-[max(0.75rem,env(safe-area-inset-bottom))] right-3 z-[140] chat-fab"
+        class="fixed bottom-[max(0.75rem,env(safe-area-inset-bottom))] right-6 z-[140] chat-fab"
       >
         <GameIcon iconKey="chat_bubble" size={30} title="Game helper" />
       </button>

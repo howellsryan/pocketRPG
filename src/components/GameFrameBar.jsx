@@ -124,6 +124,10 @@ export default function GameFrameBar({
             : <GameIcon iconKey="fast_forward_button" size={20} color="#d9b45a" />}
         </button>
       </span>
+      {/* Mirrors the Settings medallion's width so the centered group sits
+          equidistant from Settings and the floating chat button (fixed at the
+          same inset on the other edge) instead of drifting toward one side. */}
+      <span class="w-12 flex-shrink-0" aria-hidden="true" />
     </nav>
   )
 }
