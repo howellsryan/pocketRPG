@@ -535,13 +535,16 @@ const SPLIT_MINIFY = {
 // small world.json geography for boot-time location/travel; worldContent.js
 // guards every access with `typeof worldActivitiesData !== 'undefined'`, so a
 // pre-chunk call degrades to "unmapped, never gate".
-// 3D feature flag, baked in at build time from the Pages BUILD env var
-// `Enable3dRender` (set per-environment in the dashboard: preview=true,
-// production=false/unset). Fail-safe: anything but the literal string "true"
-// disables 3D in the deployed build, so production can never pick it up by
-// accident. Vite dev is unaffected (no injected global -> three3d.js enables).
-const enable3D = process.env.Enable3dRender === 'true';
-console.log(`3D render (Enable3dRender): ${enable3D ? 'ENABLED' : 'disabled'}`);
+// 3D feature flag, baked in at build time. `Enable3dRender` ("true"/anything)
+// is an explicit override when set; otherwise derive from CF_PAGES_BRANCH,
+// which Pages injects into every build (wrangler.toml-managed projects can't
+// set dashboard build vars): any non-main branch = preview = enabled, main =
+// production = disabled. Fail-safe: no branch info (local rebuild) disables.
+// Vite dev is unaffected (no injected global -> three3d.js enables).
+const enable3D = process.env.Enable3dRender != null
+  ? process.env.Enable3dRender === 'true'
+  : Boolean(process.env.CF_PAGES_BRANCH) && process.env.CF_PAGES_BRANCH !== 'main';
+console.log(`3D render: ${enable3D ? 'ENABLED' : 'disabled'} (Enable3dRender=${process.env.Enable3dRender ?? 'unset'}, CF_PAGES_BRANCH=${process.env.CF_PAGES_BRANCH ?? 'unset'})`);
 const gameChunkSource = `const gameIconsData = ${gameIconsJSON};\nconst bespokeIconsData = ${bespokeIconsJSON};\nconst worldActivitiesData = ${worldActivitiesJSON};\nconst placeMapsData = ${placeMapsJSON};\nconst equipmentModelsData = ${equipmentModelsJSON};\nconst pocketAssetBase = '/public/';\nconst pocketEnable3D = ${enable3D};\n${gameJS}`;
 const gameChunkScript = esbuild.transformSync(gameChunkSource, SPLIT_MINIFY).code.trim();
 const gameChunkBody = `"use strict";\n${gameChunkScript}\n`;

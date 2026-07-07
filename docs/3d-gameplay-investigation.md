@@ -131,7 +131,7 @@ The current hero is the **static placeholder** warrior — it renders and rotate
 
 ## 9b) Deployment feature flag — `Enable3dRender`
 
-3D is gated per Pages environment by the **build-time** env var `Enable3dRender` (Pages dashboard → Build environment variables): **Preview = `"true"`, Production = `"false"`/unset**. `build_single.cjs` bakes it into the game chunk as `pocketEnable3D`; `three3d.js#is3DEnabled()` folds it into `canRender3D()`, so a disabled build never fetches three.js or any model — the equip screen just renders the paper doll. Fail-safe by design: only the literal string `"true"` enables it, so production can't pick 3D up by accident. Vite dev has no injected global and defaults to enabled. (`public/3d-preview.html` is a static dev tool and is not gated.)
+3D is gated per Pages environment at **build time**. Default is branch-derived: `build_single.cjs` reads `CF_PAGES_BRANCH` (injected by Pages into every build — no dashboard config needed, which matters because wrangler.toml-managed projects can't set dashboard build vars): **any non-`main` branch = preview = enabled, `main` = production = disabled**. Setting `Enable3dRender` explicitly overrides the branch rule (`"true"` enables, anything else disables). The flag bakes into the game chunk as `pocketEnable3D`; `three3d.js#is3DEnabled()` folds it into `canRender3D()`, so a disabled build never fetches three.js or any model — the equip screen just renders the paper doll. Fail-safe by design: local `npm run rebuild` (no branch info) disables; production can't pick 3D up by accident. Vite dev has no injected global and defaults to enabled. (`public/3d-preview.html` is a static dev tool and is not gated.)
 
 ## 10) R2 asset hosting (planned migration)
 
