@@ -6,7 +6,9 @@
   },
   "character": {
     "model": "hero.glb",
-    "idleClip": "Idle"
+    "idleClip": "Idle",
+    "attackClip": "Box",
+    "specialClip": "Run"
   },
   "weapons": {
     "dragon_dagger": {

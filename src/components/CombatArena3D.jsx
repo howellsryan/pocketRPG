@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from 'preact/hooks'
-import Modal from './Modal.jsx'
 import HPBar from './HPBar.jsx'
 import { HitSplatLayer } from './HitSplat.jsx'
 import { loadThree, canRender3D, assetUrl } from '../utils/three3d.js'
@@ -7,42 +6,51 @@ import { disposeObject } from './Model3DViewer.jsx'
 
 // Phase-2 combat arena (docs/3d-gameplay-investigation.md): the rigged hero
 // (equipped weapon on the hand bone) faces the monster's model in a side-on
-// diorama, layered as a modal above the existing combat UI. The combat engine
-// stays untouched — CombatScreen feeds this the same tick-derived hit splats
-// it already renders, plus an `attackSignal` describing who landed a hit this
-// tick; every hit plays the hero's attack clip or the monster's
-// transform-faked lunge (static meshes need no rig), with a recoil + red
-// flash on whoever got hurt. Splats float over each combatant.
+// diorama, rendered as an INLINE panel that replaces the HP-bar block of the
+// combat screen — everything below (food/potions, gear swaps, spec/spell/
+// prayer) stays interactive. The combat engine stays untouched: CombatScreen
+// feeds this the same tick-derived hit splats it already renders, plus an
+// `attackSignal` describing who landed a hit this tick; every hit plays the
+// hero's attack clip (a distinct special clip + charge on special attacks)
+// or the monster's transform-faked lunge (static meshes need no rig), with a
+// recoil + red flash on whoever got hurt. Splats float over each combatant.
 //
-// Same lifecycle hygiene as Model3DViewer: lazy three.js, teardown on
-// unmount, RAF paused while the tab is hidden. Any load/init failure calls
-// onFail so the parent drops back to the classic UI — the arena is always a
-// safe enhancement.
+// Load gate: `onReady` fires once models are mounted and the first frame is
+// queued (or after LOAD_TIMEOUT_MS, so a slow fetch can't stall the fight
+// forever) — CombatScreen holds combat ticks until then. Same lifecycle
+// hygiene as Model3DViewer: lazy three.js, teardown on unmount, RAF paused
+// while the tab is hidden. Any load/init failure calls onFail so the parent
+// drops back to the classic UI — the arena is always a safe enhancement.
 
 const ARENA_GAP_X = 2.3          // world-space distance between the two actors
 const ATTACK_IMPACT_DELAY_MS = 240 // lunge wind-up before the victim reacts
+const LOAD_TIMEOUT_MS = 12000    // release the combat hold even if loading drags
 
 function CombatArena3D({
   monsterName,
   monsterPath,
   monsterHeight = 2,
   characterPath,
+  clips = {},
   weapon = null,
   attackSignal = null,
   monsterHP,
   playerHP,
   monsterSplats,
   playerSplats,
-  onClose,
+  onReady,
   onFail,
 }) {
   const hostRef = useRef(null)
   const stateRef = useRef(null)
   const [failed, setFailed] = useState(!canRender3D())
-  const stageHeight = Math.max(240, Math.min(Math.round((typeof window !== 'undefined' ? window.innerHeight : 800) * 0.5), 430))
+  const [ready, setReady] = useState(false)
+  const stageHeight = Math.max(200, Math.min(Math.round((typeof window !== 'undefined' ? window.innerHeight : 800) * 0.34), 330))
 
   const onFailRef = useRef(onFail)
   onFailRef.current = onFail
+  const onReadyRef = useRef(onReady)
+  onReadyRef.current = onReady
   useEffect(() => {
     if (failed && onFailRef.current) onFailRef.current()
   }, [failed])
@@ -54,12 +62,21 @@ function CombatArena3D({
     const st = {
       disposed: false, raf: null, THREE: null, renderer: null, scene: null, camera: null,
       mixer: null, clock: null, hero: null, monster: null, bones: {}, weapon: null,
-      idleAction: null, attackAction: null, timers: new Set(),
+      idleAction: null, attackAction: null, specialAction: null, timers: new Set(),
       // Procedural timelines: { t, dur } advanced by the render loop.
       monsterLunge: null, monsterReact: null, heroReact: null, heroLunge: null,
       monsterFlash: null, heroFlash: null, monsterMats: [], heroMats: [],
     }
     stateRef.current = st
+
+    let readyFired = false
+    const fireReady = () => {
+      if (readyFired || cancelled || st.disposed) return
+      readyFired = true
+      setReady(true)
+      if (onReadyRef.current) onReadyRef.current()
+    }
+    const readyTimer = setTimeout(fireReady, LOAD_TIMEOUT_MS)
 
     loadThree().then(async ({ THREE, GLTFLoader, MeshoptDecoder }) => {
       if (cancelled) return
@@ -128,7 +145,9 @@ function CombatArena3D({
       const [heroGltf, monsterGltf] = await Promise.all([loadGlb(characterPath), loadGlb(monsterPath)])
       if (cancelled || st.disposed) return
 
-      st.hero = mountActor(heroGltf, 1.8, -ARENA_GAP_X / 2, Math.PI / 2)
+      // The hero's clips carry a baked root orientation: animated, she faces
+      // +x (east, toward the monster) with no group rotation.
+      st.hero = mountActor(heroGltf, 1.8, -ARENA_GAP_X / 2, 0)
       st.monster = mountActor(monsterGltf, monsterHeight, ARENA_GAP_X / 2, -Math.PI / 2)
       // Long-bodied monsters (dragons) are height-normalised but can span
       // several units — place them by their NEAREST edge so the snout starts
@@ -149,19 +168,23 @@ function CombatArena3D({
 
       if (heroGltf.animations && heroGltf.animations.length) {
         st.mixer = new THREE.AnimationMixer(st.hero)
-        const idleClip = heroGltf.animations.find((c) => c.name === 'Idle') || heroGltf.animations[0]
-        st.idleAction = st.mixer.clipAction(idleClip)
+        const anims = heroGltf.animations
+        const byName = (name) => (name ? anims.find((c) => c.name === name) : null)
+        st.idleAction = st.mixer.clipAction(byName(clips.idle || 'Idle') || anims[0])
         st.idleAction.play()
-        const attackClip = heroGltf.animations.find((c) => c.name === 'Box')
-        if (attackClip) {
-          st.attackAction = st.mixer.clipAction(attackClip)
-          st.attackAction.setLoop(THREE.LoopOnce, 1)
-          st.mixer.addEventListener('finished', (e) => {
-            if (e.action !== st.attackAction || st.disposed) return
-            st.attackAction.fadeOut(0.15)
-            st.idleAction.reset().fadeIn(0.15).play()
-          })
+        const onceAction = (clip) => {
+          if (!clip) return null
+          const action = st.mixer.clipAction(clip)
+          action.setLoop(THREE.LoopOnce, 1)
+          return action
         }
+        st.attackAction = onceAction(byName(clips.attack || 'Box'))
+        st.specialAction = onceAction(byName(clips.special))
+        st.mixer.addEventListener('finished', (e) => {
+          if (st.disposed || (e.action !== st.attackAction && e.action !== st.specialAction)) return
+          e.action.fadeOut(0.15)
+          st.idleAction.reset().fadeIn(0.15).play()
+        })
       }
 
       attachArenaWeapon(st, weaponRef.current)
@@ -199,7 +222,7 @@ function CombatArena3D({
         if (st.hero) {
           let ox = 0
           st.heroLunge = timeline(st.heroLunge, dt)
-          if (st.heroLunge) ox += Math.sin(Math.PI * (st.heroLunge.t / st.heroLunge.dur)) * 0.45
+          if (st.heroLunge) ox += Math.sin(Math.PI * (st.heroLunge.t / st.heroLunge.dur)) * (st.heroLunge.amp || 0.45)
           st.heroReact = timeline(st.heroReact, dt)
           if (st.heroReact) {
             const p = st.heroReact.t / st.heroReact.dur
@@ -208,12 +231,14 @@ function CombatArena3D({
           st.hero.position.x = -ARENA_GAP_X / 2 + ox
         }
 
-        // Damage flash: emissive red decaying over the timeline.
+        // Damage flash: emissive decaying over the timeline (red by default,
+        // gold on special-attack impacts).
         for (const [tlKey, mats] of [['monsterFlash', st.monsterMats], ['heroFlash', st.heroMats]]) {
           st[tlKey] = timeline(st[tlKey], dt)
-          const p = st[tlKey] ? 1 - st[tlKey].t / st[tlKey].dur : 0
+          const tl = st[tlKey]
+          const p = tl ? 1 - tl.t / tl.dur : 0
           for (const m of mats) {
-            if (p > 0) { m.emissive.setRGB(0.8, 0.05, 0.02); m.emissiveIntensity = p * 0.7 }
+            if (p > 0) { m.emissive.setRGB(tl.r ?? 0.8, tl.g ?? 0.05, tl.b ?? 0.02); m.emissiveIntensity = p * 0.7 }
             else if (m.emissiveIntensity) { m.emissiveIntensity = 0 }
           }
         }
@@ -221,6 +246,7 @@ function CombatArena3D({
         st.renderer.render(st.scene, st.camera)
       }
       renderLoop()
+      fireReady()
 
       st.onVis = () => {
         if (st.disposed) return
@@ -245,6 +271,7 @@ function CombatArena3D({
 
     return () => {
       cancelled = true
+      clearTimeout(readyTimer)
       arenaTeardown(st, host)
       stateRef.current = null
     }
@@ -264,17 +291,20 @@ function CombatArena3D({
     const st = stateRef.current
     if (!attackSignal || !st || st.disposed || !st.THREE) return
     if (attackSignal.hero) {
-      if (st.attackAction) {
+      const special = Boolean(attackSignal.special)
+      const action = (special && st.specialAction) || st.attackAction
+      if (action) {
         st.idleAction && st.idleAction.fadeOut(0.1)
-        st.attackAction.reset().fadeIn(0.1).play()
-      } else {
-        st.heroLunge = { t: 0, dur: 0.5 }
+        action.reset().fadeIn(0.1).play()
       }
+      // Specials read as a charge: a bigger lunge on top of (or instead of)
+      // the clip, and a gold impact flash instead of the usual red.
+      if (special || !action) st.heroLunge = { t: 0, dur: special ? 0.6 : 0.5, amp: special ? 0.9 : 0.45 }
       const timer = setTimeout(() => {
         st.timers.delete(timer)
         if (st.disposed) return
         st.monsterReact = { t: 0, dur: 0.45 }
-        st.monsterFlash = { t: 0, dur: 0.4 }
+        st.monsterFlash = special ? { t: 0, dur: 0.55, r: 1, g: 0.72, b: 0.08 } : { t: 0, dur: 0.4 }
       }, ATTACK_IMPACT_DELAY_MS)
       st.timers.add(timer)
     }
@@ -293,32 +323,36 @@ function CombatArena3D({
   if (failed) return null
 
   return (
-    <Modal title={`⚔️ ${monsterName}`} onClose={onClose} contentClassName="!p-2">
-      <div class="relative">
-        <div
-          ref={hostRef}
-          class="w-full overflow-hidden rounded-[14px] bg-[var(--color-void)]"
-          style={{ height: stageHeight + 'px' }}
-          aria-label={`3D battle: you versus ${monsterName}`}
-        />
-        {/* HP readouts pinned over each combatant's corner */}
-        <div class="absolute top-2 left-2 w-[38%]">
-          <div class="text-[10px] font-semibold text-[var(--color-parchment)] mb-0.5 drop-shadow">You</div>
-          <HPBar current={playerHP.current} max={playerHP.max} />
-        </div>
-        <div class="absolute top-2 right-2 w-[38%]">
-          <div class="text-[10px] font-semibold text-[var(--color-parchment)] mb-0.5 text-right drop-shadow">{monsterName}</div>
-          <HPBar current={monsterHP.current} max={monsterHP.max} />
-        </div>
-        {/* Hit splats float over the models themselves */}
-        <div class="absolute pointer-events-none" style={{ left: '8%', bottom: '18%', width: '30%', height: '42%' }}>
-          <HitSplatLayer splats={playerSplats} />
-        </div>
-        <div class="absolute pointer-events-none" style={{ right: '8%', bottom: '22%', width: '32%', height: '46%' }}>
-          <HitSplatLayer splats={monsterSplats} />
-        </div>
+    <div class="relative">
+      <div
+        ref={hostRef}
+        class="w-full overflow-hidden rounded-[14px] bg-[var(--color-void)] border border-[var(--color-void-border)]"
+        style={{ height: stageHeight + 'px' }}
+        aria-label={`3D battle: you versus ${monsterName}`}
+      />
+      {/* HP readouts pinned over each combatant's corner */}
+      <div class="absolute top-2 left-2 w-[38%]">
+        <div class="text-[10px] font-semibold text-[var(--color-parchment)] mb-0.5 drop-shadow">You</div>
+        <HPBar current={playerHP.current} max={playerHP.max} />
       </div>
-    </Modal>
+      <div class="absolute top-2 right-2 w-[38%]">
+        <div class="text-[10px] font-semibold text-[var(--color-parchment)] mb-0.5 text-right drop-shadow">{monsterName}</div>
+        <HPBar current={monsterHP.current} max={monsterHP.max} />
+      </div>
+      {/* Hit splats float over the models themselves */}
+      <div class="absolute pointer-events-none" style={{ left: '8%', bottom: '18%', width: '30%', height: '42%' }}>
+        <HitSplatLayer splats={playerSplats} />
+      </div>
+      <div class="absolute pointer-events-none" style={{ right: '8%', bottom: '22%', width: '32%', height: '46%' }}>
+        <HitSplatLayer splats={monsterSplats} />
+      </div>
+      {/* Loading veil — combat is held until onReady, so make the wait visible */}
+      {!ready && (
+        <div class="absolute inset-0 flex items-center justify-center rounded-[14px] bg-[var(--color-void)]">
+          <span class="text-xs font-semibold text-[var(--color-gold-dim)] animate-pulse">⚔️ Entering the arena…</span>
+        </div>
+      )}
+    </div>
   )
 }
 

@@ -96,9 +96,10 @@ describe('equipModels resolver', () => {
     }
   })
 
-  it('the character idleClip (when set) exists in the hero GLB', async () => {
-    const idle = (registry.character as { idleClip?: string }).idleClip
-    if (!idle) return
+  it('every named character clip (idle/attack/special) exists in the hero GLB', async () => {
+    const c = registry.character as { idleClip?: string; attackClip?: string; specialClip?: string }
+    const clips = [c.idleClip, c.attackClip, c.specialClip].filter(Boolean) as string[]
+    if (clips.length === 0) return
     const fs = await import('node:fs')
     const path = await import('node:path')
     const glb = path.resolve(__dirname, '../public', registry.modelBase, registry.character.model)
@@ -106,6 +107,8 @@ describe('equipModels resolver', () => {
     const buf = fs.readFileSync(glb)
     const jsonLen = buf.readUInt32LE(12)
     const json = buf.subarray(20, 20 + jsonLen).toString('utf8')
-    expect(json.includes(`"${idle}"`), `clip '${idle}' not found in ${registry.character.model}`).toBe(true)
+    for (const clip of clips) {
+      expect(json.includes(`"${clip}"`), `clip '${clip}' not found in ${registry.character.model}`).toBe(true)
+    }
   })
 })
