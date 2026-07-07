@@ -1,11 +1,11 @@
 import { SCREENS, isWorldMapEnabled } from '../utils/constants.js'
 
-// Skills/Gather have no nav entry: that content starts from the World Map
-// (place hubs, town maps). Quests/Clues/Minigames also start there, but their
-// full boards additionally live behind the "Adventures" rail icon; Combat's
-// monster picker gets its own rail icon. Both gate their actions by the
-// player's actual location (a travel prompt covers the rest), so opening them
-// from the rail works from anywhere.
+// Gather has no nav entry: that content starts from the World Map (place
+// hubs, town maps). Quests/Clues/Minigames also start there, but their full
+// boards additionally live behind the "Adventures" rail icon; Combat's
+// monster picker and Skills' skill picker get their own rail icons. All of
+// these gate their actions by the player's actual location (a travel prompt
+// covers the rest), so opening them from the rail works from anywhere.
 
 // OSRS-style frame (GameFrameBar) — the mobile chrome (below md): gold
 // medallion rails above and below the main content panel, set in a carved-wood
@@ -21,6 +21,7 @@ export const GAME_FRAME_TOP_LEFT_TABS = [
 export const GAME_FRAME_TOP_TABS = [
   ...(isWorldMapEnabled() ? [{ id: SCREENS.WORLD_MAP, label: 'Map', iconKey: 'globe', iconSize: 40 }] : []),
   { id: SCREENS.COMBAT, label: 'Combat', iconKey: 'combat_level', iconSize: 40 },
+  { id: SCREENS.SKILLS, label: 'Skills', iconKey: 'anvil', iconSize: 40 },
   { id: SCREENS.INVENTORY, label: 'Items', iconKey: 'backpack', iconSize: 40 },
   { id: SCREENS.EQUIPMENT, label: 'Equip', iconKey: 'paperdoll', iconSize: 40 },
   { id: SCREENS.ADVENTURES, label: 'Adventures', iconKey: 'adventures_scroll', iconSize: 40 },
@@ -36,6 +37,7 @@ export const DESKTOP_NAV_TABS = [
   { id: SCREENS.HOME, label: 'Home', iconKey: 'home', iconSize: 34 },
   ...(isWorldMapEnabled() ? [{ id: SCREENS.WORLD_MAP, label: 'World Map', iconKey: 'globe', iconSize: 30 }] : []),
   { id: SCREENS.COMBAT,     label: 'Combat',     iconKey: 'combat_level' },
+  { id: SCREENS.SKILLS,     label: 'Skills',     iconKey: 'anvil' },
   { id: SCREENS.INVENTORY,  label: 'Inventory',  iconKey: 'backpack' },
   { id: SCREENS.EQUIPMENT,  label: 'Equipment',  iconKey: 'paperdoll' },
   { id: SCREENS.ADVENTURES, label: 'Adventures', iconKey: 'adventures_scroll' },

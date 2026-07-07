@@ -20,12 +20,12 @@ export default function Header({ credits = 0, isCloudAccount = false, demo = fal
             onClick={() => { if (demo) onLockedFeature?.(); else onDailyTasks?.() }}
             aria-label="Daily Tasks"
             title={demo ? 'Daily Tasks are available with a free account' : 'Daily Tasks'}
-            class={`flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#0f1a10] border border-[#2a5a2a] whitespace-nowrap transition-colors cursor-pointer ${demo ? 'opacity-40' : 'hover:border-[#3a7a3a]'}`}
+            class={`flex items-center gap-1 px-2 py-0.5 rounded-full bg-[var(--fm-parch-hi)] border border-[var(--fm-rule)] whitespace-nowrap transition-colors cursor-pointer ${demo ? 'opacity-40' : 'hover:border-[var(--fm-verdigris)]'}`}
           >
             <span class="text-[11px]">{demo ? '🔒' : '📋'}</span>
             <span
               class="text-[11px] font-[var(--font-mono)] font-bold"
-              style={{ color: dailyTasksCompleted === dailyTasksTotal ? 'var(--color-gold)' : 'var(--color-parchment)' }}
+              style={{ color: dailyTasksCompleted === dailyTasksTotal ? 'var(--fm-verdigris)' : 'var(--fm-ink-soft)' }}
             >
               {demo ? '—' : `${dailyTasksCompleted}/${dailyTasksTotal}`}
             </span>
@@ -37,12 +37,12 @@ export default function Header({ credits = 0, isCloudAccount = false, demo = fal
           <button
             onClick={() => { if (demo) onLockedFeature?.(); else onBuyCredits?.() }}
             title={demo ? 'Credits are available with a free account' : 'Buy credits'}
-            class={`flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#1a1030] border border-[#5a2a7a] whitespace-nowrap transition-colors cursor-pointer ${demo ? 'opacity-40' : 'hover:border-[#7a3a9a]'}`}
+            class={`flex items-center gap-1 px-2 py-0.5 rounded-full bg-[var(--fm-parch-hi)] border border-[var(--fm-rule)] whitespace-nowrap transition-colors cursor-pointer ${demo ? 'opacity-40' : 'hover:border-[var(--fm-royal)]'}`}
           >
             {demo
               ? <span class="text-[11px]">🔒</span>
-              : <GameIcon iconKey="cut_diamond" size={14} color="#f0c040" />}
-            <span class="text-[11px] font-[var(--font-mono)] font-bold text-[#e879f9]">
+              : <GameIcon iconKey="cut_diamond" size={14} color="var(--fm-royal)" />}
+            <span class="text-[11px] font-[var(--font-mono)] font-bold text-[var(--fm-royal)]">
               {demo ? '—' : credits.toLocaleString()}
             </span>
           </button>
@@ -50,7 +50,7 @@ export default function Header({ credits = 0, isCloudAccount = false, demo = fal
 
         <button
           onClick={handleSkip}
-          class={`flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#2a2010] border border-[var(--color-gold-dim)] transition-colors text-[11px] font-semibold text-[var(--color-gold-light)] whitespace-nowrap cursor-pointer ${demo ? 'opacity-40' : 'hover:border-[var(--color-gold)]'}`}
+          class={`flex items-center gap-1 px-2 py-0.5 rounded-full bg-[var(--fm-parch-hi)] border border-[var(--fm-rule)] transition-colors text-[11px] font-semibold text-[var(--color-gold-dim)] whitespace-nowrap cursor-pointer ${demo ? 'opacity-40' : 'hover:border-[var(--fm-brass)]'}`}
           title={demo
             ? 'Skip is available with a free account'
             : raidSkipCost != null

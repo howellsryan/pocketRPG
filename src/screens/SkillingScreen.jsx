@@ -974,7 +974,7 @@ Shop value: ×1.1
       producing={producedItem && <>
         <GameIcon item={producedItem} size={32} />
         <span class="text-[12px] font-semibold text-[var(--color-parchment)] opacity-60">Producing</span>
-        <span class="text-[13px] font-semibold text-[var(--color-gold-light)]">{producedItem.name}</span>
+        <span class="text-[13px] font-semibold text-[var(--color-gold-dim)]">{producedItem.name}</span>
       </>}
       stats={sessionStats}
       footer={isGathering ? {

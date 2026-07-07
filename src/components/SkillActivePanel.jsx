@@ -53,7 +53,7 @@ export default function SkillActivePanel({
             {glyph}
           </div>
         </div>
-        <div class="font-[var(--font-display)] text-[22px] font-bold text-[var(--color-gold-light)] mt-5 text-center">
+        <div class="font-[var(--font-display)] text-[22px] font-bold text-[var(--color-gold-dim)] mt-5 text-center">
           {title}
         </div>
         {subtitle && (
@@ -98,7 +98,7 @@ export default function SkillActivePanel({
                     class={`flex items-center justify-between py-2.5 ${i < stats.length - 1 ? 'border-b border-[var(--color-void-border)]' : ''}`}
                   >
                     <span class="text-[14px] font-medium text-[var(--color-parchment)] opacity-75">{row.label}</span>
-                    <span class={`text-[14px] font-bold font-[var(--font-mono)] flex items-center gap-1 ${row.accent === false ? 'text-[var(--color-parchment)] opacity-50' : 'text-[var(--color-gold-light)]'}`}>
+                    <span class={`text-[14px] font-bold font-[var(--font-mono)] flex items-center gap-1 ${row.accent === false ? 'text-[var(--color-parchment)] opacity-50' : 'text-[var(--color-gold-dim)]'}`}>
                       {row.value}
                     </span>
                   </div>
@@ -114,7 +114,7 @@ export default function SkillActivePanel({
                   {footer.icon}
                   {footer.label}
                 </span>
-                <span class="text-[14px] font-bold font-[var(--font-mono)] text-[var(--color-gold-light)]">{footer.value}</span>
+                <span class="text-[14px] font-bold font-[var(--font-mono)] text-[var(--color-gold-dim)]">{footer.value}</span>
               </div>
             </>
           )}

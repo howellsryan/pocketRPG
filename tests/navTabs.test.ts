@@ -33,25 +33,28 @@ describe('navigation tabs', () => {
     expect(railIds.has(SCREENS.HELP)).toBe(true)
   })
 
-  it('keeps world-map-only content (skills/quests/clues/minigames/gather) out of the frame rails', () => {
+  it('keeps world-map-only content (quests/clues/minigames/gather) out of the frame rails', () => {
     const railIds = new Set(RAIL_TABS.map((t) => t.id))
-    for (const id of [SCREENS.SKILLS, SCREENS.QUESTS, SCREENS.CLUES, SCREENS.MINIGAMES, SCREENS.GATHER]) {
+    for (const id of [SCREENS.QUESTS, SCREENS.CLUES, SCREENS.MINIGAMES, SCREENS.GATHER]) {
       expect(railIds.has(id), id).toBe(false)
     }
     // Their entry points — the World Map and the Adventures rail icon — must
-    // stay in the nav.
+    // stay in the nav. Skills also gets its own rail icon: like Combat, its
+    // actions gate by location and fall back to a travel prompt.
     expect(railIds.has(SCREENS.WORLD_MAP)).toBe(true)
     expect(railIds.has(SCREENS.ADVENTURES)).toBe(true)
+    expect(railIds.has(SCREENS.SKILLS)).toBe(true)
   })
 
   it('keeps the game frame rails to the agreed screens', () => {
-    // Top rail: Home (top-left), World Map, Combat, Inventory, Equipment,
-    // Adventures. Bottom rail: Settings … Daily Tasks + Credits + Skip
-    // (rendered by GameFrameBar itself).
+    // Top rail: Home (top-left), World Map, Combat, Skills, Inventory,
+    // Equipment, Adventures. Bottom rail: Settings … Daily Tasks + Credits +
+    // Skip (rendered by GameFrameBar itself).
     expect(GAME_FRAME_TOP_LEFT_TABS.map((t) => t.id)).toEqual([SCREENS.HOME])
     expect(GAME_FRAME_TOP_TABS.map((t) => t.id)).toEqual([
       SCREENS.WORLD_MAP,
       SCREENS.COMBAT,
+      SCREENS.SKILLS,
       SCREENS.INVENTORY,
       SCREENS.EQUIPMENT,
       SCREENS.ADVENTURES,
