@@ -17,11 +17,9 @@ describe('navigation tabs', () => {
     for (const id of ids) expect(known.has(id)).toBe(true)
   })
 
-  it('moves Trading Post, Clues, Unlocks, Armoury, Collection Log and Leaderboard into Settings', () => {
+  it('moves Unlocks, Armoury, Collection Log and Leaderboard into Settings', () => {
     const settingsIds = SETTINGS_NAV_LINKS.map((l) => l.id)
     expect(settingsIds).toEqual([
-      SCREENS.STORE,
-      SCREENS.CLUES,
       SCREENS.CHARACTER_UNLOCKS,
       SCREENS.ARMOURY,
       SCREENS.COLLECTION_LOG,
@@ -35,23 +33,28 @@ describe('navigation tabs', () => {
     expect(railIds.has(SCREENS.HELP)).toBe(true)
   })
 
-  it('keeps world-map-only content (skills/combat/quests/minigames/gather) out of the nav', () => {
+  it('keeps world-map-only content (skills/quests/clues/minigames/gather) out of the frame rails', () => {
     const railIds = new Set(RAIL_TABS.map((t) => t.id))
-    for (const id of [SCREENS.SKILLS, SCREENS.COMBAT, SCREENS.QUESTS, SCREENS.MINIGAMES, SCREENS.GATHER]) {
+    for (const id of [SCREENS.SKILLS, SCREENS.QUESTS, SCREENS.CLUES, SCREENS.MINIGAMES, SCREENS.GATHER]) {
       expect(railIds.has(id), id).toBe(false)
     }
-    // Their entry point — the World Map — must stay in the nav.
+    // Their entry points — the World Map and the Adventures rail icon — must
+    // stay in the nav.
     expect(railIds.has(SCREENS.WORLD_MAP)).toBe(true)
+    expect(railIds.has(SCREENS.ADVENTURES)).toBe(true)
   })
 
   it('keeps the game frame rails to the agreed screens', () => {
-    // Top rail: Home (top-left), World Map, Inventory, Equipment. Bottom rail:
-    // Settings … Daily Tasks + Credits + Skip (rendered by GameFrameBar itself).
+    // Top rail: Home (top-left), World Map, Combat, Inventory, Equipment,
+    // Adventures. Bottom rail: Settings … Daily Tasks + Credits + Skip
+    // (rendered by GameFrameBar itself).
     expect(GAME_FRAME_TOP_LEFT_TABS.map((t) => t.id)).toEqual([SCREENS.HOME])
     expect(GAME_FRAME_TOP_TABS.map((t) => t.id)).toEqual([
       SCREENS.WORLD_MAP,
+      SCREENS.COMBAT,
       SCREENS.INVENTORY,
       SCREENS.EQUIPMENT,
+      SCREENS.ADVENTURES,
     ])
     expect(GAME_FRAME_BOTTOM_LEFT_TABS.map((t) => t.id)).toEqual([SCREENS.HELP])
     // Every frame tab must be backed by a SCREENS constant and carry an icon.

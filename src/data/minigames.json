@@ -108,8 +108,8 @@
     {
       "id": "pc_void_set",
       "name": "Grind for Void King Set",
-      "icon": "🛡️",
-      "iconKey": "body",
+      "icon": "🪖",
+      "iconKey": "void_king_helm",
       "description": "Play Void Breach until you earn the full Void King set.",
       "hours": 6,
       "ticks": 36000,

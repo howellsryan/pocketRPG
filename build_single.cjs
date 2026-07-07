@@ -185,6 +185,7 @@ const sourceFiles = [
   'screens/TradingPostScreen.js',
   'screens/EquipmentScreen.js',
   'screens/ArmouryScreen.js',
+  'screens/AdventuresScreen.js',
   'screens/QuestsScreen.js',
   'screens/CluesScreen.js',
   'screens/MinigamesScreen.js',
@@ -226,6 +227,7 @@ const GAME_CHUNK_FILES = new Set([
   'components/PlaceMapView.js',
   'components/SlayerMasterModal.js',
   'components/Model3DViewer.js',
+  'utils/combatArt.js', // -> game chunk (reads placeMapsData for monster locations; only combat/place-map screens use it)
   'components/CombatArena3D.js',
   'utils/equipModels.js',
   'utils/three3d.js',
@@ -253,6 +255,7 @@ const GAME_CHUNK_FILES = new Set([
   'screens/TradingPostScreen.js',
   'screens/EquipmentScreen.js',
   'screens/ArmouryScreen.js',
+  'screens/AdventuresScreen.js',
   'screens/QuestsScreen.js',
   'screens/CluesScreen.js',
   'screens/MinigamesScreen.js',

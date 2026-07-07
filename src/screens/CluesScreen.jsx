@@ -167,7 +167,7 @@ export default function CluesScreen({ onNavigate, onBack } = {}) {
     <div class="forge-shell h-full flex flex-col">
       <div class="px-4 pt-4 pb-2 flex-shrink-0">
         <BackLink onClick={onBack} className="mb-3" />
-        <SectionHeader size="lg" className="mb-[10px]"><span class="inline-flex items-center gap-2"><GameIcon iconKey="clue_scroll_hard" size={18} class="flex-shrink-0" /> Clues</span></SectionHeader>
+        <SectionHeader size="lg" className="mb-[10px]"><span class="inline-flex items-center gap-2"><GameIcon iconKey="clue_scroll_purple" size={18} class="flex-shrink-0" /> Clues</span></SectionHeader>
       </div>
 
       <div class="flex-1 overflow-y-auto px-4 pb-4">
@@ -182,14 +182,12 @@ export default function CluesScreen({ onNavigate, onBack } = {}) {
             return (
               <SkillActionRow
                 key={task.id}
-                icon={<GameIcon iconKey={task.requiresItem} size={52} />}
                 title={task.name}
-                meta={<>
-                  🗺️ trail of 2–4 places · scroll spent on the last search
-                  <span class={`block mt-0.5 ${isRunning ? 'text-[var(--color-gold)]' : enabled ? 'text-[#4caf50]' : 'text-[#e57373]'}`}>
+                meta={
+                  <span class={isRunning ? 'text-[var(--color-gold)]' : enabled ? 'text-[#4caf50]' : 'text-[#e57373]'}>
                     {isOnTrail ? '● on the trail — tap to view map' : isLegacyRunning ? '● running' : enabled ? '✓ ready' : '✗ need scroll'}
                   </span>
-                </>}
+                }
                 right={
                   <span
                     role="button"

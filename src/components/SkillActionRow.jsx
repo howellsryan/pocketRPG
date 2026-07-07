@@ -7,7 +7,8 @@
  * (lock glyph + requirement), disabled (dimmed, non-interactive).
  *
  * Props:
- *   icon     — node for the icon tile (GameIcon / SkillIcon / emoji span)
+ *   icon     — node for the icon tile (GameIcon / SkillIcon / emoji span); the
+ *              tile is omitted entirely when falsy (unless locked)
  *   title    — primary label
  *   meta     — secondary node (level · xp · time …)
  *   chip     — optional node rendered as the gold output chip on the right
@@ -65,9 +66,11 @@ export default function SkillActionRow({
       class={`w-full text-left flex flex-col gap-2 px-3.5 py-3 rounded-2xl transition-colors ${frameClass} ${interactive ? 'cursor-pointer' : 'cursor-default'} ${className}`}
     >
       <div class="flex items-center gap-3 w-full">
-      <div class={`w-[46px] h-[46px] flex-shrink-0 rounded-xl flex items-center justify-center ${tileClass}`}>
-        {locked ? <LockGlyph /> : icon}
-      </div>
+      {(locked || icon) && (
+        <div class={`w-[46px] h-[46px] flex-shrink-0 rounded-xl flex items-center justify-center ${tileClass}`}>
+          {locked ? <LockGlyph /> : icon}
+        </div>
+      )}
 
       <div class="flex-1 min-w-0">
         <div class="flex items-center gap-2">

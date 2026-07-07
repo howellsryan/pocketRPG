@@ -17,12 +17,13 @@ import {
 } from '../engine/quests.js'
 import { QUEST_QUEUE_MAX, SCREENS } from '../utils/constants.js'
 import { planQuestJourney } from '../engine/journeys.js'
+import { getPlace } from '../engine/world.js'
 import questsData from '../data/quests.json'
 import { COMPLEXITY_COLORS, COMPLEXITY_ORDER } from '../utils/complexityColors.js'
 import BackLink from '../components/BackLink.jsx'
 
 // `onBack` (from App): returns to where the quest board was opened from — a
-// quest post on the world map / a town map (the nav rail no longer links here).
+// quest post on the world map / a town map, or Settings (its nav link).
 export default function QuestsScreen({ onNavigate, onBack } = {}) {
   const {
     stats, completedQuests, activeTask, setActiveTask,
@@ -133,7 +134,7 @@ export default function QuestsScreen({ onNavigate, onBack } = {}) {
         )}
 
         <div class="flex-1 flex flex-col items-center justify-center">
-          <GameIcon iconKey="clue_scroll_medium" size={48} class="mb-2" />
+          <GameIcon iconKey="quest_scroll_blue" size={48} class="mb-2" />
           <h2 class="font-[var(--font-display)] text-[18px] font-bold text-[var(--color-gold)] mb-1 text-center">
             {quest.name}
           </h2>
@@ -180,7 +181,7 @@ export default function QuestsScreen({ onNavigate, onBack } = {}) {
       <div class="px-4 pt-4 pb-2 flex-shrink-0">
         <BackLink onClick={onBack} className="mb-3" />
         <div class="flex justify-between items-baseline mb-2">
-          <SectionHeader size="lg"><span class="inline-flex items-center gap-2"><GameIcon iconKey="clue_scroll_medium" size={18} class="flex-shrink-0" /> Quests Board</span></SectionHeader>
+          <SectionHeader size="lg"><span class="inline-flex items-center gap-2"><GameIcon iconKey="quest_scroll_blue" size={18} class="flex-shrink-0" /> Quests Board</span></SectionHeader>
           <span class="text-[11px] text-[var(--color-gold)] font-[var(--font-mono)]">
             {completedCount}/{questsData.length} · {totalQp} QP
           </span>
@@ -190,13 +191,9 @@ export default function QuestsScreen({ onNavigate, onBack } = {}) {
           <div class="flex gap-2">
             <button
               onClick={() => setHideCompleted(v => !v)}
-              class={`px-3 py-[5px] rounded-[20px] text-[11px] font-semibold border ${
-                hideCompleted
-                  ? 'border-[var(--color-gold)] bg-[rgba(212,175,55,0.15)] text-[var(--color-gold)]'
-                  : 'border-[var(--color-void-border)] bg-[var(--color-void-light)] text-[var(--color-parchment)] opacity-60'
-              }`}
+              class="px-3 py-[5px] rounded-[20px] text-[11px] font-semibold border border-[var(--color-void-border)] bg-[var(--color-void-light)] text-[var(--color-parchment)] opacity-60"
             >
-              {hideCompleted ? '✓ Hiding completed' : 'Show all'}
+              {hideCompleted ? 'Show All' : 'Hide Completed'}
             </button>
             {questQueue.length > 0 && (
               <button
@@ -280,9 +277,6 @@ export default function QuestsScreen({ onNavigate, onBack } = {}) {
               return (
                 <GildedComplete key={quest.id} complete={completed} className="rounded-2xl">
                   <SkillActionRow
-                    icon={completed
-                      ? <GameIcon iconKey="check_mark" color="#4ade80" size={32} />
-                      : <GameIcon iconKey="clue_scroll_medium" size={52} />}
                     title={quest.name}
                     meta={<span class="flex items-center gap-2">
                       <span style={{ color: complexityColor }}>{quest.complexity}</span>
@@ -312,6 +306,7 @@ export default function QuestsScreen({ onNavigate, onBack } = {}) {
                 stats={stats}
                 completedQuests={completedQuests}
                 itemsData={itemsData}
+                worldLocation={worldLocation}
                 onClose={() => setSelectedQuest(null)}
                 onStartJourney={startQuestJourney}
                 onAddToQueue={addToQueue}
@@ -334,6 +329,7 @@ export default function QuestsScreen({ onNavigate, onBack } = {}) {
           stats={stats}
           completedQuests={completedQuests}
           itemsData={itemsData}
+          worldLocation={worldLocation}
           onClose={() => setSelectedQuest(null)}
           onStartJourney={startQuestJourney}
           onAddToQueue={addToQueue}
@@ -347,7 +343,7 @@ export default function QuestsScreen({ onNavigate, onBack } = {}) {
 
 // ──────────────────────────────────────────────────────────────────────────────
 
-function QuestDetailsModal({ quest, stats, completedQuests, itemsData, onClose, onStartJourney, onAddToQueue, isInQueue, queueFull }) {
+function QuestDetailsModal({ quest, stats, completedQuests, itemsData, worldLocation, onClose, onStartJourney, onAddToQueue, isInQueue, queueFull }) {
   return (
     <Modal title={quest.name} onClose={onClose}>
       <QuestDetailsBody
@@ -355,6 +351,7 @@ function QuestDetailsModal({ quest, stats, completedQuests, itemsData, onClose, 
         stats={stats}
         completedQuests={completedQuests}
         itemsData={itemsData}
+        worldLocation={worldLocation}
         onClose={onClose}
         onStartJourney={onStartJourney}
         onAddToQueue={onAddToQueue}
@@ -366,7 +363,7 @@ function QuestDetailsModal({ quest, stats, completedQuests, itemsData, onClose, 
   )
 }
 
-function QuestDetailsBody({ quest, stats, completedQuests, itemsData, onClose, onStartJourney, onAddToQueue, isInQueue, queueFull, showCloseButton = false }) {
+function QuestDetailsBody({ quest, stats, completedQuests, itemsData, worldLocation, onClose, onStartJourney, onAddToQueue, isInQueue, queueFull, showCloseButton = false }) {
   const completed = completedQuests.has(quest.id)
   const elig = checkQuestEligibility(quest, stats, completedQuests, questsData)
   const skillEntries = Object.entries(quest.skillRequirements || {})
@@ -374,10 +371,16 @@ function QuestDetailsBody({ quest, stats, completedQuests, itemsData, onClose, o
   const itemUnlockNames = (quest.itemUnlocks || [])
     .map(id => itemsData[id]?.name || id)
 
+  // The journey's trail is generated fresh from wherever the player currently
+  // stands (engine/journeys.js) — there's no single fixed "quest giver" place.
+  // Preview the first waypoint of that trail so the player knows where the
+  // journey leads off to before committing.
+  const previewLeg = !completed && elig.eligible ? planQuestJourney(quest, worldLocation) : null
+  const startPlaceName = previewLeg ? (getPlace(previewLeg.dest)?.name || previewLeg.dest) : null
+
   return (
       <div class="flex flex-col gap-3">
         <Panel className="flex items-center gap-3">
-          <span class="text-[28px]">{completed ? <GameIcon iconKey="check_mark" color="#4ade80" size={28} /> : <GameIcon iconKey="clue_scroll_medium" size={28} />}</span>
           <div class="flex-1">
             <div class="text-[13px] font-semibold text-[var(--color-parchment)]">
               {quest.complexity} · {quest.length}
@@ -412,6 +415,25 @@ function QuestDetailsBody({ quest, stats, completedQuests, itemsData, onClose, o
             )}
           </div>
         </Panel>
+
+        {startPlaceName && (
+          <button
+            type="button"
+            onClick={() => onStartJourney(quest)}
+            class="text-left w-full bg-transparent border-0 p-0 cursor-pointer active:opacity-70"
+          >
+            <Panel className="flex items-center gap-3">
+              <span class="text-[20px]">🧭</span>
+              <div class="flex-1 min-w-0">
+                <SectionHeader size="sm" className="mb-1">Starting Point</SectionHeader>
+                <div class="text-[12px] text-[var(--color-parchment)]">
+                  Journey begins toward <span class="text-[var(--color-gold)] font-semibold">{startPlaceName}</span>
+                </div>
+              </div>
+              <span class="text-[var(--color-parchment)] opacity-40 text-lg leading-none">›</span>
+            </Panel>
+          </button>
+        )}
 
         {(skillEntries.length > 0 || questPrereqs.length > 0 || quest.questPointRequirement > 0 || quest.combatLevelRequirement > 0) && (
           <Panel>
@@ -462,7 +484,9 @@ function QuestDetailsBody({ quest, stats, completedQuests, itemsData, onClose, o
                 onClick={() => onStartJourney(quest)}
                 className="flex-1"
               >
-                {elig.eligible ? '🗺️ Begin Quest' : 'Locked'}
+                {elig.eligible
+                  ? <span class="inline-flex items-center justify-center gap-1.5"><GameIcon iconKey="quest_scroll_blue" size={18} /> Begin Quest</span>
+                  : 'Locked'}
               </Button>
             )}
           </div>

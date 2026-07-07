@@ -1,7 +1,7 @@
 import SkillEmblem from '../components/SkillEmblem.jsx'
 import GameIcon from '../components/GameIcon.jsx'
 import BackLink from '../components/BackLink.jsx'
-import { getMonsterArt, getCategoryArt, getRaidArt } from '../utils/combatArt.js'
+import { getMonsterArt, getCategoryArt, getRaidArt, getMonsterLocationLabel } from '../utils/combatArt.js'
 import { getSkillArt } from '../utils/skillArt.js'
 
 // Mobile section display order (desktop keeps the COMBAT_CATEGORIES order).
@@ -163,6 +163,9 @@ export default function CombatMobileSelect({
                           <div class="cb-mon__stats">
                             <span>HP {monster.hitpoints}</span><i /><span>Att {monster.stats.attack}</span><i /><span>Def {monster.stats.defence}</span>
                           </div>
+                          {getMonsterLocationLabel(monster) && (
+                            <div class="cb-mon__location">📍 {getMonsterLocationLabel(monster)}</div>
+                          )}
                           {lockText && <div class="cb-mon__lock">🔒 {lockText}</div>}
                         </div>
                         <div class="cb-mon__meta">
