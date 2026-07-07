@@ -123,7 +123,7 @@ export default function MinigamesScreen({ initialTaskId, onBack } = {}) {
     <div class="forge-shell h-full flex flex-col">
       <div class="px-4 pt-4 pb-2 flex-shrink-0">
         <BackLink onClick={onBack} className="mb-3" />
-        <SectionHeader size="lg"><span class="inline-flex items-center gap-2"><GameIcon iconKey="purple_sweets" size={18} class="flex-shrink-0" /> Minigames</span></SectionHeader>
+        <SectionHeader size="lg"><span class="inline-flex items-center gap-2"><GameIcon iconKey="minigame_scroll_red" size={18} class="flex-shrink-0" /> Minigames</span></SectionHeader>
       </div>
 
       <div class="flex-1 overflow-y-auto px-4 pb-4">

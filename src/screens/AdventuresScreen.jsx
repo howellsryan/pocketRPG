@@ -3,9 +3,9 @@ import GameIcon from '../components/GameIcon.jsx'
 import { SCREENS } from '../utils/constants.js'
 
 const ADVENTURE_LINKS = [
-  { id: SCREENS.QUESTS,    label: 'Quests Board', iconKey: 'clue_scroll_medium' },
-  { id: SCREENS.CLUES,     label: 'Clues',        iconKey: 'clue_scroll_hard' },
-  { id: SCREENS.MINIGAMES, label: 'Minigames',    iconKey: 'purple_sweets' },
+  { id: SCREENS.QUESTS,    label: 'Quests Board', iconKey: 'quest_scroll_blue' },
+  { id: SCREENS.CLUES,     label: 'Clues',        iconKey: 'clue_scroll_purple' },
+  { id: SCREENS.MINIGAMES, label: 'Minigames',    iconKey: 'minigame_scroll_red' },
 ]
 
 export default function AdventuresScreen({ onNavigate }) {
