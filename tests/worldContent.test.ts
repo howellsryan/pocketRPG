@@ -101,8 +101,14 @@ describe('content -> place coverage', () => {
   })
 
   it('places every dungeoneering floor at its authored venue', () => {
-    for (const a of asArray(skillsData.dungeoneering?.actions)) {
+    for (const a of asArray(skillsData.dungeoneering?.actions).filter((a: any) => a.category !== 'reward')) {
       expect(placesForActivity('skill', `dungeoneering:${a.id}`), a.id).toEqual(['varrick'])
+    }
+  })
+
+  it('leaves dungeoneering reward actions unmapped (an instant token spend, never location-gated)', () => {
+    for (const a of asArray(skillsData.dungeoneering?.actions).filter((a: any) => a.category === 'reward')) {
+      expect(placesForActivity('skill', `dungeoneering:${a.id}`), a.id).toEqual([])
     }
   })
 

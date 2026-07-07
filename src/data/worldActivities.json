@@ -968,38 +968,6 @@
     },
     {
       "kind": "skill",
-      "ref": "dungeoneering:unlock_arcane_kiteshield"
-    },
-    {
-      "kind": "skill",
-      "ref": "dungeoneering:unlock_arcane_necklace"
-    },
-    {
-      "kind": "skill",
-      "ref": "dungeoneering:unlock_chaotic_crossbow"
-    },
-    {
-      "kind": "skill",
-      "ref": "dungeoneering:unlock_chaotic_longsword"
-    },
-    {
-      "kind": "skill",
-      "ref": "dungeoneering:unlock_chaotic_maul"
-    },
-    {
-      "kind": "skill",
-      "ref": "dungeoneering:unlock_chaotic_rapier"
-    },
-    {
-      "kind": "skill",
-      "ref": "dungeoneering:unlock_chaotic_staff"
-    },
-    {
-      "kind": "skill",
-      "ref": "dungeoneering:unlock_eagle_eyed_kiteshield"
-    },
-    {
-      "kind": "skill",
       "ref": "firemaking:magic_logs"
     },
     {

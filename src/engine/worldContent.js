@@ -225,6 +225,22 @@ export function isPlaceVaryingSkillRef(ref) {
 }
 
 /**
+ * Human-readable place name(s) where an activity actually happens — the same
+ * "you'll find this at X" label combat shows per monster, generalised to any
+ * kind via the same worldActivities.json index `placesForActivity` reads (so
+ * it can never drift from what actually gates the start). Facility-bound skill
+ * refs (smithing/cooking/prayer/magic/firemaking/herblore/fletching/crafting/
+ * construction) return null — they're offered at every place with the matching
+ * building, so no single location would be accurate.
+ */
+export function activityLocationLabel(kind, ref) {
+  if (kind === 'skill' && !isPlaceVaryingSkillRef(ref)) return null
+  const places = placesForActivity(kind, ref)
+  if (!places.length) return null
+  return places.map((id) => worldData.places[id]?.name || id).join(' · ')
+}
+
+/**
  * Sub-group label for an activity within its kind — currently only meaningful for
  * `skill` (refs are `skillId:actionId`, e.g. `cooking:cook_eel`), used to break the
  * "Skill" category up by skill (Cooking / Crafting / Fletching / ...) instead of one

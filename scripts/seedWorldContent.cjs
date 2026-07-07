@@ -204,9 +204,11 @@ distribute('hunter', asArray(skills.hunter?.actions).map((a) => ({ ref: a.id, le
 // Dungeoneering — authored 1:1 to a fixed venue, like agility/minigames (dungeon
 // delving isn't tied to any city's level band): every floor lives at the same
 // place, defaulting to the flagship city (mirrors RAID_DEFAULT_CITY — the same
-// "no specific namesake" fallback raids use).
+// "no specific namesake" fallback raids use). Reward actions (spending tokens on
+// gear) are excluded — SkillingScreen resolves those as an instant token spend
+// before it ever calls requestActivityStart, so they're never location-gated.
 const DUNGEONEERING_PLACE = 'varrick'
-for (const a of asArray(skills.dungeoneering?.actions)) {
+for (const a of asArray(skills.dungeoneering?.actions).filter((a) => a.category !== 'reward')) {
   const placeId = world.places[DUNGEONEERING_PLACE] ? DUNGEONEERING_PLACE : placesOrdered[0]
   out[placeId] = out[placeId] || []
   out[placeId].push({ kind: 'skill', ref: `dungeoneering:${a.id}` })

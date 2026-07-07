@@ -21,6 +21,7 @@ import { formatNumber } from '../utils/helpers.js'
 import { getHighAlchValue } from '../utils/itemValue.js'
 import { formatActionDuration } from '../utils/formatters.js'
 import { calculateDungeoneeringTokensForAction, getDungeoneeringRewardCost, canAffordDungeoneeringReward } from '../engine/dungeoneeringTokens.js'
+import { activityLocationLabel } from '../engine/worldContent.js'
 import { api, getToken, getCharacterId } from '../cloud/api.js'
 import skillsData from '../data/skills.json'
 import itemsData from '../data/items.json'
@@ -806,6 +807,10 @@ export default function SkillingScreen({ initialSkillId, initialActionId, initia
             // missing materials/runes/items/tokens (the row still explains why).
             const levelLocked = action.level > skillLevel
             const remaining = calculateRemainingActions(action, inventory, bank)
+            // Facility-bound skills (smithing/cooking/prayer/magic/etc.) return null —
+            // they're offered at every place with the matching building, so no single
+            // location would be accurate.
+            const locationLabel = activityLocationLabel('skill', `${selectedSkill}:${action.id}`)
             const meta = isDungeoneeringReward
               ? <><span class="text-[var(--color-gold)] font-bold opacity-100">Lv {action.level}</span> · Cost: {formatNumber(rewardCost)} tokens
                   {rowEnabled === false && skillLevel >= action.level && <span class="block text-[var(--color-blood-ember)] mt-1">Need {formatNumber(rewardCost)} tokens</span>}
@@ -818,6 +823,7 @@ export default function SkillingScreen({ initialSkillId, initialActionId, initia
                     : formatActionDuration(action.ticks)}
                   {remaining !== null && <span class="text-[var(--color-gold)]"> · {remaining.toLocaleString()} actions</span>}
                   {action.runeReq && <span> · Runes: {Object.entries(action.runeReq).map(([id, qty]) => `${itemsData[id]?.name || id} ×${qty}`).join(', ')}</span>}
+                  {locationLabel && <span class="block opacity-60 mt-1">📍 {locationLabel}</span>}
                   {action.itemReq && !hasItems && <span class="block text-[var(--color-blood-ember)] mt-1">✨ Needs: {action.itemReq.map(id => itemsData[id]?.name || id).join(' or ')}</span>}
                   {action.runeReq && !hasRunes && <span class="block text-[var(--color-blood-ember)] mt-1">🔮 Missing runes (or equip staff)</span>}
                   {requiresGildedAltarConstruction && !meetsGildedAltarConstruction && <span class="block text-[var(--color-blood-ember)] mt-1">🏠 Requires Construction level 75</span>}
