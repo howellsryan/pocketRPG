@@ -23,6 +23,7 @@ import AgilityScreen from './screens/AgilityScreen.jsx'
 import TradingPostScreen from './screens/TradingPostScreen.jsx'
 import EquipmentScreen from './screens/EquipmentScreen.jsx'
 import ArmouryScreen from './screens/ArmouryScreen.jsx'
+import AdventuresScreen from './screens/AdventuresScreen.jsx'
 import QuestsScreen from './screens/QuestsScreen.jsx'
 import CluesScreen from './screens/CluesScreen.jsx'
 import MinigamesScreen from './screens/MinigamesScreen.jsx'
@@ -2776,7 +2777,8 @@ function GameApp() {
       case SCREENS.STORE:       return <TradingPostScreen onBack={backToPrev} />
       case SCREENS.QUESTS:         return <QuestsScreen onNavigate={navigate} onBack={stopBackNav} />
       case SCREENS.CLUES:          return <CluesScreen onNavigate={navigate} onBack={backToPrev} />
-      case SCREENS.MINIGAMES:      return <MinigamesScreen initialTaskId={actionData?.minigameTaskId} />
+      case SCREENS.MINIGAMES:      return <MinigamesScreen initialTaskId={actionData?.minigameTaskId} onBack={backToPrev} />
+      case SCREENS.ADVENTURES:     return <AdventuresScreen onNavigate={navigate} />
       case SCREENS.COLLECTION_LOG: return <CollectionLogScreen onBack={backToPrev} />
       case SCREENS.LEADERBOARD:    return <LeaderboardScreen onBack={backToPrev} />
       case SCREENS.HELP:                return <HelpScreen onNavigate={navigate} />

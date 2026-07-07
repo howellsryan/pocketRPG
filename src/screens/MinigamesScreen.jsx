@@ -6,6 +6,7 @@ import SectionHeader from '../components/SectionHeader.jsx'
 import GameIcon from '../components/GameIcon.jsx'
 import GildedComplete from '../components/GildedComplete.jsx'
 import SkillActionRow from '../components/SkillActionRow.jsx'
+import BackLink from '../components/BackLink.jsx'
 import { isMinigameItemUnlocked } from '../utils/completion.js'
 import { countItem } from '../engine/inventory.js'
 import minigamesData from '../data/minigames.json'
@@ -16,7 +17,7 @@ function formatMinigameHours(hours) {
   return `${hours.toFixed(1)}h`
 }
 
-export default function MinigamesScreen({ initialTaskId } = {}) {
+export default function MinigamesScreen({ initialTaskId, onBack } = {}) {
   const {
     inventory, bank, equipment, activeTask, setActiveTask, unlockedMinigameItems,
     getActivityProgress, addToast, requestActivityStart,
@@ -121,6 +122,7 @@ export default function MinigamesScreen({ initialTaskId } = {}) {
   return (
     <div class="forge-shell h-full flex flex-col">
       <div class="px-4 pt-4 pb-2 flex-shrink-0">
+        <BackLink onClick={onBack} className="mb-3" />
         <SectionHeader size="lg"><span class="inline-flex items-center gap-2"><GameIcon iconKey="purple_sweets" size={18} class="flex-shrink-0" /> Minigames</span></SectionHeader>
       </div>
 

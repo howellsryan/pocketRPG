@@ -493,9 +493,9 @@ html, body, #app {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
+    gap: 4px;
     min-height: 48px;
-    padding: 0 12px;
+    padding: 0 4px;
     background: transparent;
     border: 0;
     cursor: pointer;
