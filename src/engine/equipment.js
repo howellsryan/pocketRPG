@@ -158,6 +158,37 @@ export function equipItem(equipment, itemData, itemsData, sourceSlot) {
 }
 
 /**
+ * Place items displaced by equipItem() back into inventory (merging into an
+ * existing stack when stackable, else into an empty slot). Equipping a 2H
+ * weapon can displace both the old weapon AND a shield — two items freed by
+ * only one inventory slot (the one the newly-equipped item came from) — so
+ * placement can fail even though the immediate slot was freed. Returns
+ * `{ ok: false }` without mutating `inventory` if any item has nowhere to
+ * go, so the caller can abort the whole equip rather than silently
+ * dropping the item that didn't fit.
+ */
+export function placeUnequippedItems(unequipped, inventory, itemsData) {
+  const newInv = [...inventory]
+  for (const item of unequipped) {
+    if (!item) continue
+    const itemData = itemsData?.[item.itemId]
+    if (itemData?.stackable) {
+      const existingIdx = newInv.findIndex(s => s && s.itemId === item.itemId)
+      if (existingIdx !== -1) {
+        newInv[existingIdx] = { ...newInv[existingIdx], quantity: (newInv[existingIdx].quantity || 1) + (item.quantity || 1) }
+        continue
+      }
+    }
+    const emptyIdx = newInv.indexOf(null)
+    if (emptyIdx === -1) return { ok: false, inventory }
+    const invEntry = { itemId: item.itemId, quantity: item.quantity || 1 }
+    if (item.charges && item.charges > 0) invEntry.charges = item.charges
+    newInv[emptyIdx] = invEntry
+  }
+  return { ok: true, inventory: newInv }
+}
+
+/**
  * Unequip a slot. Returns the item that was removed (or null).
  */
 export function unequipSlot(equipment, slot) {
