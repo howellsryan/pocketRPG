@@ -101,6 +101,15 @@ Calibrate against the ANIMATED idle pose, not the bind pose — a bone-attached
 piece looks right in bind but the app plays the idle clip, so tune what the app
 actually shows.
 
+Like a closed helm hides the head (`hideHead`), a platebody hides the torso so
+the bare chest/bikini can't poke through the shell — `defaults.gear.body` sets
+`hideBody: true`, inherited by every platebody. The mechanism is the shared
+per-vertex `setupBoneMasks` in `Model3DViewer.jsx`: the `body` region masks
+vertices weighted to `Spine01`+`Spine02` (chest/back core; arms and hips stay
+visible) and the fragment shader discards them while a `hideBody` piece is
+equipped. Add a bone to `MASK_REGIONS.body` if a future torso piece leaves a
+gap; it's exact in every pose since it never touches the skeleton.
+
 The authored dark Tripo texture is lightened once into a neutral steel base
 (`steel_platebody`) and every metal/barrows tier derives from it via
 `recolor-model.mjs --grey` (recipes in `scripts/model-variants.json`), same as

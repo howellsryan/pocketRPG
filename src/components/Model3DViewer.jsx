@@ -41,7 +41,7 @@ function Model3DViewer({ characterPath, weapon = null, gear = null, idleClip = n
     const st = { disposed: false, raf: null, THREE: null, renderer: null, scene: null,
       camera: null, controls: null, mixer: null, clock: null, character: null,
       weapon: null, weaponAnchor: null, gear: [], gearToken: 0, bones: {}, ro: null,
-      headMaskCtl: null }
+      partMasks: null }
     stateRef.current = st
 
     loadThree().then(async ({ THREE, GLTFLoader, MeshoptDecoder, OrbitControls }) => {
@@ -94,7 +94,7 @@ function Model3DViewer({ characterPath, weapon = null, gear = null, idleClip = n
         })
         scene.add(root)
         st.character = root
-        st.headMaskCtl = setupHeadMask(THREE, skinnedMesh)
+        st.partMasks = setupBoneMasks(THREE, skinnedMesh)
         camera.position.set(0, 1.15, 4.2)
         controls.target.set(0, 0.95, 0)
         controls.update()
@@ -216,39 +216,71 @@ function attachWeapon(st, weapon) {
 // fragment shader discards any fragment whose interpolated mask says it's
 // dominantly part of that bone's region — the neck geometry is never
 // transformed, so it's never distorted.
-export function setupHeadMask(THREE, skinnedMesh, boneName = 'Head') {
+// The hero regions a fully-enclosing piece can cut away, each defined by the
+// skeleton bones its skin is weighted to: a closed helm (`hideHead`) removes
+// the head, a platebody (`hideBody`) removes the torso so the bare chest/bikini
+// can't poke through the shell. Torso = Spine01+Spine02 (chest/back core);
+// arms (clavicle/upperarm) and hips (pelvis/thigh) are excluded so they stay.
+const MASK_REGIONS = [
+  { key: 'head', bones: ['Head'], attr: 'maskHead', uni: 'uHideHead' },
+  { key: 'body', bones: ['Spine01', 'Spine02'], attr: 'maskBody', uni: 'uHideBody' },
+]
+
+export function setupBoneMasks(THREE, skinnedMesh) {
   if (!skinnedMesh || !skinnedMesh.skeleton) return null
-  const headIdx = skinnedMesh.skeleton.bones.findIndex((b) => b.name === boneName)
-  if (headIdx < 0) return null
   const geo = skinnedMesh.geometry
   const si = geo.attributes.skinIndex, sw = geo.attributes.skinWeight
   const n = geo.attributes.position.count
-  const mask = new Float32Array(n)
-  for (let i = 0; i < n; i++) {
-    let w = 0
-    for (let k = 0; k < 4; k++) if (si.getComponent(i, k) === headIdx) w += sw.getComponent(i, k)
-    mask[i] = w
+  const active = []
+  for (const region of MASK_REGIONS) {
+    const idxs = region.bones
+      .map((b) => skinnedMesh.skeleton.bones.findIndex((x) => x.name === b))
+      .filter((i) => i >= 0)
+    if (!idxs.length) continue
+    const mask = new Float32Array(n)
+    for (let i = 0; i < n; i++) {
+      let w = 0
+      for (let k = 0; k < 4; k++) if (idxs.includes(si.getComponent(i, k))) w += sw.getComponent(i, k)
+      mask[i] = w
+    }
+    geo.setAttribute(region.attr, new THREE.BufferAttribute(mask, 1))
+    active.push(region)
   }
-  geo.setAttribute('headMask', new THREE.BufferAttribute(mask, 1))
+  if (!active.length) return null
   const mats = Array.isArray(skinnedMesh.material) ? skinnedMesh.material : [skinnedMesh.material]
   const shaders = []
-  let hidden = false // onBeforeCompile fires lazily on first render, so the
-  // desired state must be the shader's INITIAL uniform value, not just
-  // applied after — a set-then-compile ordering silently no-ops otherwise.
+  const hidden = {} // initial uniform values — onBeforeCompile fires lazily on
+  // first render, so a hide requested before then must be the shader's INITIAL
+  // uniform value, not merely applied after (set-then-compile silently no-ops).
   for (const mat of mats) {
     mat.onBeforeCompile = (shader) => {
-      shader.uniforms.uHideHead = { value: hidden }
+      let vCommon = '#include <common>', vBegin = '#include <begin_vertex>'
+      let fCommon = '#include <common>', fClip = '#include <clipping_planes_fragment>'
+      for (const region of active) {
+        shader.uniforms[region.uni] = { value: Boolean(hidden[region.key]) }
+        vCommon += `\nattribute float ${region.attr};\nvarying float v_${region.attr};`
+        vBegin += `\nv_${region.attr} = ${region.attr};`
+        fCommon += `\nuniform bool ${region.uni};\nvarying float v_${region.attr};`
+        fClip += `\nif (${region.uni} && v_${region.attr} > 0.5) discard;`
+      }
       shader.vertexShader = shader.vertexShader
-        .replace('#include <common>', '#include <common>\nattribute float headMask;\nvarying float vHeadMask;')
-        .replace('#include <begin_vertex>', '#include <begin_vertex>\nvHeadMask = headMask;')
+        .replace('#include <common>', vCommon)
+        .replace('#include <begin_vertex>', vBegin)
       shader.fragmentShader = shader.fragmentShader
-        .replace('#include <common>', '#include <common>\nuniform bool uHideHead;\nvarying float vHeadMask;')
-        .replace('#include <clipping_planes_fragment>', '#include <clipping_planes_fragment>\nif (uHideHead && vHeadMask > 0.5) discard;')
+        .replace('#include <common>', fCommon)
+        .replace('#include <clipping_planes_fragment>', fClip)
       shaders.push(shader)
     }
     mat.needsUpdate = true
   }
-  return { setHidden(v) { hidden = v; for (const s of shaders) s.uniforms.uHideHead.value = v } }
+  return {
+    setHidden(key, v) {
+      hidden[key] = v
+      const region = active.find((r) => r.key === key)
+      if (!region) return
+      for (const s of shaders) if (s.uniforms[region.uni]) s.uniforms[region.uni].value = v
+    },
+  }
 }
 
 // Load + attach the equipped armour GLBs (helmet on Head, etc.) — same cheap
@@ -260,7 +292,10 @@ export function attachGearList(st, gear, fallbackAnchor) {
   st.gear = []
   const token = (st.gearToken = (st.gearToken || 0) + 1)
   const list = (gear || []).filter((p) => p && p.path)
-  if (st.headMaskCtl) st.headMaskCtl.setHidden(list.some((p) => p.hideHead))
+  if (st.partMasks) {
+    st.partMasks.setHidden('head', list.some((p) => p.hideHead))
+    st.partMasks.setHidden('body', list.some((p) => p.hideBody))
+  }
   if (!list.length) return
   loadThree().then(async ({ THREE, GLTFLoader, MeshoptDecoder }) => {
     if (st.disposed || token !== st.gearToken) return

@@ -43,7 +43,8 @@
           90,
           0
         ],
-        "scale": 0.35
+        "scale": 0.35,
+        "hideBody": true
       }
     }
   },
