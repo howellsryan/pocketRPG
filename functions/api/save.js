@@ -3,8 +3,9 @@ import { verifyJWT } from '../_lib/jwt.js'
 import { assertNotInActiveMatch, sweepStaleRows } from '../_lib/pvp.js'
 import { computeSaveSummaryFromJson } from '../_lib/saveSummary.js'
 import { decodeSaveRow, gzipJsonString } from '../_lib/saveCodec.js'
-import { detectTotalLevelRegression } from '../_lib/game/saveValidation.js'
+import { detectTotalLevelRegression, detectBankWipe } from '../_lib/game/saveValidation.js'
 import { stampIdleActive, stampIdleActiveStatement } from '../_lib/game/idleStamp.js'
+import { auditLog } from '../_lib/game/audit.js'
 
 const MAX_SAVE_BYTES = 256 * 1024 // 256 KB ceiling — current saves are well under this
 
@@ -250,6 +251,29 @@ async function applySaveWrite({ env, ch, identityId, body }) {
       code: 'TOTAL_LEVEL_REGRESSION',
       previous_total_level: regression.previousTotalLevel,
       next_total_level: regression.nextTotalLevel,
+    }, 409)
+  }
+
+  // Bank-wipe guard — a substantial bank collapsing to (near) nothing, with the
+  // vanished items not reappearing in inventory/equipment, is the signature of
+  // a client load/migration bug overwriting a real bank (see detectBankWipe).
+  // The bank rides the trusted save blob, so this is the only place we can catch
+  // it. Reject like the total-level regression: the client treats the 409 as a
+  // conflict and rolls back to the intact cloud copy, restoring the bank.
+  const bankWipe = detectBankWipe(previousSave, parsedNext || {})
+  if (bankWipe.wiped) {
+    await auditLog(env, 'bank_wipe_rejected', {
+      characterId: ch.id,
+      identityId,
+      previousBankItems: bankWipe.previousCount,
+      nextBankItems: bankWipe.nextBankCount,
+      vanishedCount: bankWipe.vanishedCount,
+    }, { swallow: true })
+    return json({
+      error: 'bank_wipe_rejected',
+      code: 'BANK_WIPE_REJECTED',
+      previous_bank_items: bankWipe.previousCount,
+      next_bank_items: bankWipe.nextBankCount,
     }, 409)
   }
 

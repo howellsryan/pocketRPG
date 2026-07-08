@@ -218,7 +218,13 @@ async function performPush() {
     // (a fresh GET on the next boot). This is NOT a transient network failure,
     // so it must NOT count toward the failure streak that escalates to the
     // blocking modal, and we must NOT schedule a retry.
-    if (err?.status === 409 && (err?.body?.code === 'SAVE_REVISION_CONFLICT' || err?.body?.error === 'save_revision_conflict' || err?.message === 'save_revision_conflict')) {
+    // BANK_WIPE_REJECTED: the server refused a save whose bank collapsed to
+    // (near) nothing — our local state is corrupt (a load/migration bug wiped
+    // the bank). Re-pushing repeats the 409, so we route it through the SAME
+    // rollback path as a revision conflict: flag it, drop the bad snapshot, and
+    // emit 'conflict' so the app re-pulls and re-applies the intact cloud copy,
+    // restoring the bank instead of retrying the wipe.
+    if (err?.status === 409 && (err?.body?.code === 'SAVE_REVISION_CONFLICT' || err?.body?.error === 'save_revision_conflict' || err?.message === 'save_revision_conflict' || err?.body?.code === 'BANK_WIPE_REJECTED' || err?.body?.error === 'bank_wipe_rejected')) {
       conflictPending = true
       pendingSnapshot = null
       pendingSaveOptions = {}
