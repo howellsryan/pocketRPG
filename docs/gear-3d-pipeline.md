@@ -23,16 +23,29 @@ node scripts/recolor-model.mjs helm.glb <tier>.glb --grey 0.35 --to <hue> --sat 
 ```
 
 Then register each item in `src/data/equipmentModels.json` under `gear` —
-`{ "model": "<file>", "slot": "head" }` is the whole entry; the shared
-`defaults.gear.head` transform (bone `Head`, measured from the hero's skull
-vertices) places every canonically-fitted piece. `tests/equipModels.test.ts`
-enforces registry ↔ items.json ↔ file-on-disk consistency.
+`{ "model": "<file>", "slot": "head", "hideHead": true }` is the whole entry;
+the shared `defaults.gear.head` transform (bone `Head`, measured from the
+hero's skull vertices) places every canonically-fitted piece.
+`tests/equipModels.test.ts` enforces registry ↔ items.json ↔ file-on-disk
+consistency.
 
-Fit notes: the default margins are the snug full-helm fit (a few % clearance,
-front shifted so the hair fringe can't poke through). Open headwear that
-shouldn't hug the skull (hats, hoods) may want `--margins`/`--shift`
-overrides. Verify with a render before committing — clip-through shows up
-most in the `hit_head` and `sword_attack` clips.
+Fit notes — two regimes, pick per shape:
+
+- **Fully-enclosing helms** (full helm, great helm, closed bascinet): use the
+  fit tool's defaults (knight-snug, sized to the skull) **and set
+  `"hideHead": true`** on the registry entry. The hero's hairstyle is far
+  bigger than the skull and can't be hidden by material (single-mesh Tripo
+  rig), so `attachGearList` shrinks the Head bone to 0.3 and counter-scales
+  the helm — hair tucks inside the shell, the visor shows the (double-sided)
+  shell interior, and the neck tapers naturally into the rim. Full collapse
+  (scale ≈ 0) is wrong: upper-neck vertices share Head weights, so the neck
+  severs during `hit_head`.
+- **Open headwear** (hats, hoods, circlets — head stays visible): no
+  `hideHead`; the piece must contain the hair, so bake with hair-sized
+  margins, e.g. `--margins 1.25,1.12,1.06 --shift 0.06 --lift 0`.
+
+Verify with a render before committing — clip-through and neck artifacts show
+up most in the `hit_head` and `sword_attack` clips.
 
 ## Other slots (when the first assets arrive)
 

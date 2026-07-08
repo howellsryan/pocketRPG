@@ -4,14 +4,18 @@
 // tuning. Companion to canonicalize-weapon.mjs; full flow in
 // docs/gear-3d-pipeline.md.
 //
-//   node scripts/fit-headgear.mjs <in.glb> <out.glb> [--margins 1.25,1.12,1.06] [--shift 0.06]
+//   node scripts/fit-headgear.mjs <in.glb> <out.glb> [--margins 0.78,0.80,0.78] [--shift 0.05] [--lift 0.05]
 //
 // It recenters the mesh on the origin, then scales each axis so the piece
 // wraps the hero's head with the given margins (x depth, y height, z width —
-// measured against the hero skull's world-space bbox), and shifts it forward
-// so the front shell clears the hair fringe. Margins are the snug full-helm
-// fit; open shapes that shouldn't hug the skull (hats, hoods) may want
-// larger ones. Output is raw — run process-3d-model.mjs on it afterwards.
+// fractions of the hero head's world-space bbox, which INCLUDES the hair),
+// then shifts it forward/up. The defaults are the snug knight fit for
+// fully-enclosing helms, sized to the skull rather than the hair — they only
+// work together with `"hideHead": true` on the registry entry (the runtime
+// shrinks the Head bone so hair can't clip through the shell). Open headwear
+// that leaves the head visible needs hair-containing margins >1 (e.g.
+// 1.25,1.12,1.06 with --shift 0.06 --lift 0) and no hideHead.
+// Output is raw — run process-3d-model.mjs on it afterwards.
 //
 // The head constants were measured from public/3d-samples/hero.glb (animated
 // rest frame, vertices dominant-weighted to the Head bone). Re-measure if the
@@ -35,11 +39,12 @@ const argOf = (name, def) => {
   return i >= 0 && args[i + 1] !== undefined ? args[i + 1] : def;
 };
 if (!inFile || !outFile) {
-  console.error('usage: node scripts/fit-headgear.mjs <in.glb> <out.glb> [--margins x,y,z] [--shift 0.06]');
+  console.error('usage: node scripts/fit-headgear.mjs <in.glb> <out.glb> [--margins x,y,z] [--shift 0.05] [--lift 0.05]');
   process.exit(1);
 }
-const margins = String(argOf('margins', '1.25,1.12,1.06')).split(',').map(Number);
-const shiftFrac = Number(argOf('shift', 0.06)); // forward shift as a fraction of head depth
+const margins = String(argOf('margins', '0.78,0.80,0.78')).split(',').map(Number);
+const shiftFrac = Number(argOf('shift', 0.05)); // forward shift as a fraction of head depth
+const liftFrac = Number(argOf('lift', 0.05)); // upward shift as a fraction of head height
 
 const io = new NodeIO()
   .registerExtensions(ALL_EXTENSIONS)
@@ -58,15 +63,16 @@ const size = min.map((v, i) => max[i] - v);
 const center = min.map((v, i) => (v + max[i]) / 2);
 const scale = size.map((s, i) => (HEAD_WORLD[i] * margins[i]) / (REGISTRY_SCALE * (s || 1)));
 const tx = (HEAD_WORLD[0] * shiftFrac) / REGISTRY_SCALE;
+const ty = (HEAD_WORLD[1] * liftFrac) / REGISTRY_SCALE;
 
-// recenter → per-axis scale → forward shift, in one baked matrix
+// recenter → per-axis scale → forward/up shift, in one baked matrix
 const m = [
   scale[0], 0, 0, 0,
   0, scale[1], 0, 0,
   0, 0, scale[2], 0,
-  -center[0] * scale[0] + tx, -center[1] * scale[1], -center[2] * scale[2], 1,
+  -center[0] * scale[0] + tx, -center[1] * scale[1] + ty, -center[2] * scale[2], 1,
 ];
 for (const mesh of doc.getRoot().listMeshes()) transformMesh(mesh, m);
 await io.write(outFile, doc);
-console.log(`${outFile}  scale ${scale.map((s) => s.toFixed(3)).join('/')} shift +x ${tx.toFixed(3)}`);
+console.log(`${outFile}  scale ${scale.map((s) => s.toFixed(3)).join('/')} shift +x ${tx.toFixed(3)} +y ${ty.toFixed(3)}`);
 console.log(`next: node scripts/process-3d-model.mjs ${outFile} <final.glb> --ratio 1.0 --tex 512`);

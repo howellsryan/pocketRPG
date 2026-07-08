@@ -76,6 +76,14 @@ describe('equipModels resolver', () => {
       expect(spec!.position).toHaveLength(3)
       expect(spec!.rotationDeg).toHaveLength(3)
       expect(typeof spec!.scale).toBe('number')
+      expect(spec!.hideHead).toBe(Boolean((g as { hideHead?: boolean }).hideHead))
+      expect(getGearPlacement(id)!.hideHead).toBe(spec!.hideHead)
+    }
+  })
+
+  it('fully-enclosing head gear hides the head (snug fit relies on it)', () => {
+    for (const [id, g] of Object.entries(registry.gear || {}) as [string, { slot: string; hideHead?: boolean }][]) {
+      if (g.slot === 'head' && /full_helm/.test(id)) expect(g.hideHead, `${id} must set hideHead`).toBe(true)
     }
   })
 

@@ -58,6 +58,8 @@ export function getGearModel(itemId) {
     position: g.position || d.position || EQUIP_IDENTITY.position,
     rotationDeg: g.rotationDeg || d.rotationDeg || EQUIP_IDENTITY.rotationDeg,
     scale: typeof g.scale === 'number' ? g.scale : (typeof d.scale === 'number' ? d.scale : EQUIP_IDENTITY.scale),
+    // fully-enclosing pieces shrink their anchor bone so hair/head can't clip
+    hideHead: Boolean(g.hideHead),
   }
 }
 
@@ -72,6 +74,7 @@ export function getGearPlacement(itemId) {
     position: spec.position,
     rotationDeg: spec.rotationDeg,
     scale: spec.scale,
+    hideHead: spec.hideHead,
   }
 }
 

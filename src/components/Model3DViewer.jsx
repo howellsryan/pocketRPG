@@ -197,13 +197,22 @@ function attachWeapon(st, weapon) {
   }).catch(() => {})
 }
 
+// Shrink factor for bones hidden under fully-enclosing gear (hideHead helms).
+// Partial, not zero: the hero's upper neck shares Head-bone weights, so a full
+// collapse severs the neck mid-animation; 0.3 tucks the hair inside the shell
+// while the neck tapers naturally into the helm. No clip animates bone scale,
+// so the override persists across the mixer.
+const HIDE_BONE_SCALE = 0.3
+
 // Load + attach the equipped armour GLBs (helmet on Head, etc.) — same cheap
 // swap + token-guard discipline as attachWeapon, shared by the equip-screen
 // viewer and the combat arena (their `st` both carry gear/gearToken/bones).
 export function attachGearList(st, gear, fallbackAnchor) {
   if (!st || !st.THREE) return
   for (const g of st.gear || []) { g.anchor.remove(g.obj); disposeObject(g.obj) }
+  for (const b of st.gearShrunkBones || []) b.scale.setScalar(1)
   st.gear = []
+  st.gearShrunkBones = []
   const token = (st.gearToken = (st.gearToken || 0) + 1)
   const list = (gear || []).filter((p) => p && p.path)
   if (!list.length) return
@@ -217,13 +226,25 @@ export function attachGearList(st, gear, fallbackAnchor) {
       loader.load(url, (gltf) => {
         if (st.disposed || token !== st.gearToken) return
         const obj = gltf.scene
-        const anchor = (piece.bone && st.bones[piece.bone]) ? st.bones[piece.bone] : fallbackAnchor
+        const boneAnchor = piece.bone ? st.bones[piece.bone] : null
+        const anchor = boneAnchor || fallbackAnchor
         if (!anchor) return
+        const shrink = piece.hideHead && boneAnchor ? HIDE_BONE_SCALE : 1
+        if (shrink !== 1) {
+          boneAnchor.scale.setScalar(shrink)
+          st.gearShrunkBones.push(boneAnchor)
+          // double-side so the visor slit shows the shell interior, not a hole
+          obj.traverse((o) => {
+            if (!o.isMesh || !o.material) return
+            for (const m of Array.isArray(o.material) ? o.material : [o.material]) m.side = THREE.DoubleSide
+          })
+        }
         const [px, py, pz] = piece.position || [0, 0, 0]
         const [rx, ry, rz] = piece.rotationDeg || [0, 0, 0]
-        obj.position.set(px, py, pz)
+        // counter the anchor bone's shrink so the piece keeps its world transform
+        obj.position.set(px / shrink, py / shrink, pz / shrink)
         obj.rotation.set(THREE.MathUtils.degToRad(rx), THREE.MathUtils.degToRad(ry), THREE.MathUtils.degToRad(rz))
-        obj.scale.setScalar(typeof piece.scale === 'number' ? piece.scale : 1)
+        obj.scale.setScalar((typeof piece.scale === 'number' ? piece.scale : 1) / shrink)
         anchor.add(obj)
         st.gear.push({ obj, anchor })
       })
