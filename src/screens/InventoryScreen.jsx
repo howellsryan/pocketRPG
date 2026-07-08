@@ -8,7 +8,7 @@ import TradingPostSellForm from '../components/TradingPostSellForm.jsx'
 import { freeSlots, countItem } from '../engine/inventory.js'
 import { isOrderBookItem } from '../engine/storeRules.js'
 import { getIronmanShopValue } from '../utils/itemValue.js'
-import { equipItem, checkEquipRequirements } from '../engine/equipment.js'
+import { equipItem, checkEquipRequirements, placeUnequippedItems } from '../engine/equipment.js'
 import { getLevelFromXP } from '../engine/experience.js'
 import { api, getToken, getCharacterId } from '../cloud/api.js'
 import { pullSave, applyCloudSave, pushNow } from '../cloud/sync.js'
@@ -77,16 +77,14 @@ export default function InventoryScreen() {
 
     const result = equipItem(newEquip, item, itemsData, sourceSlot)
     if (result.equipped) {
-      for (const unequipped of result.unequipped) {
-        const empty = newInv.indexOf(null)
-        if (empty !== -1 && unequipped) {
-          const invEntry = { itemId: unequipped.itemId, quantity: unequipped.quantity || 1 }
-          if (unequipped.charges && unequipped.charges > 0) invEntry.charges = unequipped.charges
-          newInv[empty] = invEntry
-        }
+      const placed = placeUnequippedItems(result.unequipped, newInv, itemsData)
+      if (!placed.ok) {
+        addToast('Inventory full', 'error')
+        setSelected(null)
+        return
       }
       updateEquipment(newEquip)
-      updateInventory(newInv)
+      updateInventory(placed.inventory)
     }
     setSelected(null)
   }
