@@ -5,6 +5,10 @@
       "ref": "gnome_stronghold"
     },
     {
+      "kind": "bank",
+      "ref": "use"
+    },
+    {
       "kind": "combat",
       "ref": "arcane_adept"
     },
@@ -645,6 +649,10 @@
     {
       "kind": "agility",
       "ref": "varrock"
+    },
+    {
+      "kind": "bank",
+      "ref": "use"
     },
     {
       "kind": "combat",
@@ -1671,6 +1679,10 @@
     {
       "kind": "agility",
       "ref": "falador"
+    },
+    {
+      "kind": "bank",
+      "ref": "use"
     },
     {
       "kind": "combat",
@@ -2713,6 +2725,10 @@
     {
       "kind": "agility",
       "ref": "ardougne"
+    },
+    {
+      "kind": "bank",
+      "ref": "use"
     },
     {
       "kind": "combat",
@@ -3773,6 +3789,10 @@
       "ref": "draynor_village"
     },
     {
+      "kind": "bank",
+      "ref": "use"
+    },
+    {
       "kind": "combat",
       "ref": "briarheart_treant"
     },
@@ -4365,6 +4385,10 @@
     {
       "kind": "agility",
       "ref": "al_kharid"
+    },
+    {
+      "kind": "bank",
+      "ref": "use"
     },
     {
       "kind": "combat",
@@ -5344,6 +5368,10 @@
     }
   ],
   "edgevale": [
+    {
+      "kind": "bank",
+      "ref": "use"
+    },
     {
       "kind": "combat",
       "ref": "astral_mage"
@@ -6535,6 +6563,10 @@
       "ref": "seers_village"
     },
     {
+      "kind": "bank",
+      "ref": "use"
+    },
+    {
       "kind": "combat",
       "ref": "ashen_hydra"
     },
@@ -7131,6 +7163,10 @@
     {
       "kind": "agility",
       "ref": "pollnivneach"
+    },
+    {
+      "kind": "bank",
+      "ref": "use"
     },
     {
       "kind": "combat",
@@ -7848,6 +7884,10 @@
     }
   ],
   "camlann": [
+    {
+      "kind": "bank",
+      "ref": "use"
+    },
     {
       "kind": "combat",
       "ref": "astral_ranger"
@@ -8838,6 +8878,10 @@
     }
   ],
   "portsarin": [
+    {
+      "kind": "bank",
+      "ref": "use"
+    },
     {
       "kind": "combat",
       "ref": "bone_wyvern"

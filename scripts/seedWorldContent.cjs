@@ -245,6 +245,12 @@ for (const id of Object.keys(world.places)) {
     if (facility === 'sawmill') {
       for (const t of GATHER_TASKS.filter(isSawmillTask)) out[id].push({ kind: 'gather', ref: t.id })
     }
+    // Bank — own kind, one ref ('use'): every bank is functionally identical,
+    // so this just gates the nav bar's Bank button the same way a bank-bound
+    // skill (magic, crafting, ...) already gates on the same facility. Kept
+    // out of the World Map hub's "Available here" grid (WorldMapScreen's
+    // groupActivities) since place.facilities already surfaces it there.
+    if (facility === 'bank') out[id].push({ kind: 'bank', ref: 'use' })
   }
 }
 
@@ -274,6 +280,7 @@ world.kinds = Object.assign({}, world.kinds, {
   thieving: { label: 'Thieving', color: 'var(--tier-bronze)' },
   hunter: { label: 'Hunter', color: 'var(--color-gold)' },
   farming: { label: 'Farming', color: 'var(--color-emerald)' },
+  bank: { label: 'Bank', color: 'var(--color-gold)' },
 })
 
 fs.writeFileSync(worldPath, JSON.stringify(world, null, 2) + '\n')

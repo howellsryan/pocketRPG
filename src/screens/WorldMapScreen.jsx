@@ -57,6 +57,10 @@ function groupActivities(activities) {
   for (const a of activities || []) {
     if (!a || !a.kind || !a.ref) continue
     if (a.kind === 'skill' && !isPlaceVaryingSkillRef(a.ref)) continue
+    // Bank is already shown via the place.facilities badges above this grid —
+    // a "Bank 1" category button here would just be a redundant second glyph
+    // for the same thing (same reasoning as the skill exclusion above).
+    if (a.kind === 'bank') continue
     ;(byKind[a.kind] || (byKind[a.kind] = [])).push(a.ref)
   }
   return Object.keys(byKind)

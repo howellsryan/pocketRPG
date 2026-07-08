@@ -103,6 +103,7 @@ describe('placeMaps data', () => {
       for (const a of placeActivities(id)) {
         if (a.kind === 'skill' && !isPlaceVaryingSkillRef(a.ref)) continue
         if (a.kind === 'minigame') continue // minigames screen handles its own venue list
+        if (a.kind === 'bank') continue // covered by the facility-type "Bank of X" spot instead
         expect(covered.has(`${a.kind}|${a.ref}`), `${id}: ${a.kind}|${a.ref} has no map spot`).toBe(true)
       }
     }

@@ -1,11 +1,12 @@
 import GameIcon from './GameIcon.jsx'
-import { GAME_FRAME_TOP_TABS, GAME_FRAME_TOP_LEFT_TABS, GAME_FRAME_BOTTOM_LEFT_TABS } from './navTabs.js'
+import { GAME_FRAME_TOP_TABS, GAME_FRAME_BOTTOM_LEFT_TABS, GAME_FRAME_BOTTOM_RIGHT_TABS } from './navTabs.js'
 
 // OSRS-style mobile chrome: gold medallion rails framing the main content
 // panel, drawn into the carved-wood shell (.gf-shell / .gf-main in index.css).
-// Top rail: Home · World Map · Inventory · Equipment. Bottom rail: Settings ·
-// Daily Tasks + Credits + Skip (centered). Mobile-only (md:hidden) — desktop
-// uses SideNav + Header with the same destinations.
+// Top rail: World Map · Bank · Combat · Inventory · Equipment. Bottom rail:
+// Settings + Adventures (left) · Daily Tasks + Credits + Skip (centered) ·
+// Home (right, next to the floating chat button). Mobile-only (md:hidden) —
+// desktop uses SideNav + Header with the same destinations.
 function FrameMedallion({ label, active = false, disabled = false, locked = false, onClick, title, children }) {
   return (
     <button
@@ -73,7 +74,6 @@ export default function GameFrameBar({
         aria-label="Quick actions"
         class="pwa-header md:hidden flex items-center justify-evenly flex-shrink-0 px-3 pt-3 pb-1 w-full max-w-xl mx-auto"
       >
-        {GAME_FRAME_TOP_LEFT_TABS.map(navMedallion)}
         {GAME_FRAME_TOP_TABS.map(navMedallion)}
       </nav>
     )
@@ -123,10 +123,7 @@ export default function GameFrameBar({
             : <GameIcon iconKey="fast_forward_button" size={20} color="#d9b45a" />}
         </button>
       </span>
-      {/* Mirrors the Settings medallion's width so the centered group sits
-          equidistant from Settings and the floating chat button (fixed at the
-          same inset on the other edge) instead of drifting toward one side. */}
-      <span class="w-12 flex-shrink-0" aria-hidden="true" />
+      {GAME_FRAME_BOTTOM_RIGHT_TABS.map(navMedallion)}
     </nav>
   )
 }

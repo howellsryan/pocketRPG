@@ -530,6 +530,10 @@
     "farming": {
       "label": "Farming",
       "color": "var(--color-emerald)"
+    },
+    "bank": {
+      "label": "Bank",
+      "color": "var(--color-gold)"
     }
   },
   "facilities": {

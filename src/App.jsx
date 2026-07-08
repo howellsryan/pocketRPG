@@ -322,7 +322,7 @@ function GameApp() {
   const { loaded, loadGame, player, stats, equipment, inventory, bank, currentHP, updateHP, getMaxHP, updateInventory, updateEquipment, updateBank, updateBankDirect, grantXP, addToast, activeTask, setActiveTask, getActiveTask, itemsData, getSnapshot, unlockedFeatures, setSlayerTask, awardSlayerPoints, slayerTasksCompleted, setSlayerTasksCompleted, completeQuest, completedQuests, questQueue, removeFromQuestQueue, updateQuestQueue,
     unlockMinigameItem, unlockedMinigameItems, awardDungeoneeringTokens, farming, updateFarming, idleCombatSetup, isOneLife, updateBossKillCounts, updateRaidKillCounts, syncServerKillCounts, markKillCountsLoaded, combatSkipHandlerRef, skipHourHandlerRef, chargeSkipRef, raidSkipHandlerRef,
     gameLocked, lockGame, unlockGame, runLockedSave, awaitCombatCompletion, resolveCombatCompletion,
-    characterUnlocks, dailyTaskStates, setDailyTasks, recordGameEvent, updateWorldLocation, worldLocation, clearActivityProgress } = useGame()
+    characterUnlocks, dailyTaskStates, setDailyTasks, recordGameEvent, updateWorldLocation, worldLocation, clearActivityProgress, requestActivityStart } = useGame()
   const pvp = usePvp()
   const [screen, setScreen] = useState(SCREENS.HOME)
   const prevScreenRef = useRef(null) // screen before the current one (set by navigate)
@@ -1848,6 +1848,12 @@ function GameApp() {
       notifyDemoLocked()
       return
     }
+    // Bank is location-gated like any other skill/combat start: a bank-less
+    // place opens the standard travel prompt instead of the screen. Safe to
+    // run on every navigate(BANK, ...) call, including the PlaceBankModal/
+    // resumeAutoStart ones that already know the player is standing at a
+    // bank — requestActivityStart is a no-op location check when so.
+    if (scr === SCREENS.BANK && !requestActivityStart({ type: 'bank' })) return
     // Remember where the player came from (screen id only — carrying the old
     // actionData back could re-fire its auto-start) so back/stop buttons can
     // return there.
@@ -1893,6 +1899,7 @@ function GameApp() {
       case 'minigame': navigate(SCREENS.MINIGAMES, { minigameTaskId: autoStart.taskId, ...extra }); break
       // Slayer master reached: the Slayer screen assigns the master's task on mount.
       case 'slayer':   navigate(SCREENS.SKILLS, { skillId: 'slayer', masterId: autoStart.masterId, ...extra }); break
+      case 'bank':     navigate(SCREENS.BANK, rt ? { ...extra } : undefined); break
       case 'skill':
         if (autoStart.skill === 'magic') navigate(SCREENS.MAGIC, rt ? { ...extra } : undefined)
         else navigate(SCREENS.SKILLS, { skillId: autoStart.skill, actionId: autoStart.actionId, ...extra })

@@ -146,6 +146,9 @@ export function activityRef(task) {
     // Getting a slayer task from a master (never an activeTask — the shape only
     // rides the gating/travel-prompt flow, assignment itself is instant).
     case 'slayermaster': return task.master?.id ? { kind: 'slayer', ref: task.master.id } : null
+    // Opening the bank (never an activeTask — same instant-assignment shape as
+    // slayermaster above). One ref: every bank is functionally identical.
+    case 'bank': return { kind: 'bank', ref: 'use' }
     default: return null
   }
 }
@@ -173,6 +176,8 @@ export function autoStartFromTask(task) {
     case 'minigame': return task.minigameTask?.id ? { kind: 'minigame', taskId: task.minigameTask.id } : null
     // Arrival auto-assigns a task from the master (via the Slayer screen).
     case 'slayermaster': return task.master?.id ? { kind: 'slayer', masterId: task.master.id } : null
+    // Arrival opens the bank screen directly.
+    case 'bank': return { kind: 'bank' }
     default: return null
   }
 }
@@ -323,6 +328,9 @@ export function describeActivity(kind, ref) {
     case 'slayer': {
       const m = slayerMasterById(ref)
       return { name: m ? `${m.name} — Slayer Master` : ref, icon: m?.icon || '💀', level: null, iconKey: m?.iconKey || null }
+    }
+    case 'bank': {
+      return { name: 'Bank', icon: '🏦', level: null, iconKey: 'coins' }
     }
     // Quests carry no single level; `level` is the complexity rank so pickers
     // sort Novice → Grandmaster (render `complexity`, not the rank number).

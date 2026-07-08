@@ -3,7 +3,7 @@ import { useGame } from '../state/gameState.jsx'
 import { calcCombatLevel, formatNumber } from '../utils/helpers.js'
 import { getLevelFromXP, getLevelProgress, getXPToNextLevel } from '../engine/experience.js'
 import { getAgilityBankDelayMs, formatBankDelay } from '../engine/agility.js'
-import { COMBAT_SKILLS, GATHERING_SKILLS, PRODUCTION_SKILLS, UTILITY_SKILLS, STUB_SKILLS } from '../utils/constants.js'
+import { COMBAT_SKILLS, GATHERING_SKILLS, PRODUCTION_SKILLS, UTILITY_SKILLS, STUB_SKILLS, SCREENS } from '../utils/constants.js'
 import { getSkillArt } from '../utils/skillArt.js'
 import Modal from '../components/Modal.jsx'
 import GameIcon from '../components/GameIcon.jsx'
@@ -17,6 +17,10 @@ const SKILL_GROUPS = [
   { title: 'Production', skills: PRODUCTION_SKILLS },
   { title: 'Utility', skills: UTILITY_SKILLS },
 ]
+
+// Pure combat stats — trained only by fighting, never by a dedicated
+// skilling screen (no action list exists for them).
+const NO_SKILL_ACTIONS = new Set(['attack', 'strength', 'defence', 'ranged', 'hitpoints'])
 
 function titleCase(skill) {
   return skill.charAt(0).toUpperCase() + skill.slice(1)
@@ -235,6 +239,18 @@ export default function HomeScreen({ onNavigate, onLogout, onManualSave, isCloud
                   Time to bank a full inventory during combat
                 </div>
               </div>
+            )}
+            {!NO_SKILL_ACTIONS.has(selectedSkillDetail) && !STUB_SKILLS.has(selectedSkillDetail) && (
+              <button
+                onClick={() => {
+                  setSelectedSkillDetail(null)
+                  if (selectedSkillDetail === 'magic') onNavigate?.(SCREENS.MAGIC)
+                  else onNavigate?.(SCREENS.SKILLS, { skillId: selectedSkillDetail })
+                }}
+                class="w-full py-2.5 rounded-lg bg-[var(--color-gold)] text-[#111] font-semibold text-sm active:opacity-80 flex items-center justify-center gap-2"
+              >
+                <GameIcon iconKey={selArt.icon} size={16} color="#111" /> Skill Actions
+              </button>
             )}
           </div>
         </Modal>
