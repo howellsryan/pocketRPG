@@ -83,15 +83,78 @@ are raw — run `process-3d-model.mjs` (and `fit-headgear.mjs` /
 `canonicalize-weapon.mjs`, if the slot needs it) on each afterwards, same as
 any authored asset.
 
-## Other slots (when the first assets arrive)
+## Body / legs slots (live)
+
+Unlike the helmet, a torso/legs piece can't just ride one bone — it has to
+bend at the shoulder, elbow, hip and knee along with the body, so it needs to
+be a **skinned mesh sharing the hero's own skeleton**, not a rigid
+bone-attach. `scripts/canonicalize-armour.mjs` does the whole thing in one
+pass, against `public/3d-samples/hero.glb` as the fixed reference:
+
+```bash
+node scripts/canonicalize-armour.mjs raw.glb platebody.raw.glb --slot body   # or --slot legs
+node scripts/process-3d-model.mjs platebody.raw.glb platebody.glb --ratio 1.0 --tex 512
+```
+
+Then register with `{ "model": "<file>", "slot": "body" }` (or `"legs"`) —
+no transform fields at all; alignment is baked into the mesh, and
+`attachGearList` detects a skinned piece (its geometry carries JOINTS_0/
+WEIGHTS_0) automatically and rebinds it, rather than parenting it to a bone
+like the rigid slots. `tests/equipModels.test.ts` asserts every body/legs
+model actually has a skin with all 41 joints, so a future asset that's
+accidentally exported static (no skin) fails CI instead of silently
+rigid-attaching.
+
+Two things happen inside `canonicalize-armour.mjs`, both measured live from
+hero's bind-pose vertices (no hardcoded constants, unlike the head):
+
+1. **Align** — recenter the piece on its own bbox, then scale it uniformly
+   (one factor on all 3 axes, from matching its own height to hero's
+   torso/legs region height). Uniform, not per-axis: a differently-
+   proportioned source mannequin stretched independently per axis squashes
+   the shape (a pauldron sized for a stockier build flares out sideways if
+   X scales less than Y) — matching height and trusting the source piece's
+   own proportions for width/depth reads far more natural.
+2. **Weight transfer** — each aligned vertex binds to its k nearest hero
+   *surface* vertices (inverse-distance blend), but the candidate pool is
+   pre-filtered to hero vertices dominantly weighted to the relevant
+   torso/arm or hip/leg bone chain. Two cheaper approaches were tried and
+   discarded: an unrestricted nearest-vertex search happily matches a
+   chest-plate hem to the nearest THIGH skin vertex once the piece is scaled
+   into place, and the plate tears the moment legs and torso move
+   independently; collapsing each candidate bone to a single centroid point
+   stops that but loses the real shape of each bone's region, so a broad
+   bone (Waist) "wins" nearest-point for a wide swath of vertices that are
+   visually much closer to a neighbouring bone (Spine02). Restricting
+   candidate *vertices*, not bones, keeps the real per-point surface detail
+   while still ruling out anatomically unrelated matches.
+
+The output mesh is built inside `hero.glb`'s own document, sharing its
+actual skin/joint hierarchy (so the copied joint indices are correct by
+construction) with the original hero mesh, its 84 animation clips, and any
+now-orphaned material/texture explicitly disposed before writing — a
+gltf-transform `prune()` alone left some of that behind as zero-referrer
+orphans (confirmed by inspection) in the version this project pins, which
+silently bloated the file and could leave stale `extensionsRequired` entries
+a downstream reader refuses to open.
+
+**Runtime rebind gotcha** (`attachGearList` in `Model3DViewer.jsx`): a piece
+must bind with `heroSkinned.bindMatrix` — its ORIGINAL matrixWorld, frozen
+the moment `GLTFLoader` first constructed it — not `heroSkinned.matrixWorld`
+(current). Every viewer normalises the loaded hero to a fixed on-screen
+height, which changes `matrixWorld` after load; binding a second skinned
+mesh against that later, divergent value desyncs it from the skeleton's own
+`boneInverses` (which are still relative to the original bind pose) and
+tears the mesh on any pose where different bones rotate by different
+amounts. Confirmed by binding a mesh built from hero's OWN geometry/weights
+via each matrix — `matrixWorld` teared identically to a genuinely bad
+weight-transfer result, `bindMatrix` was pixel-identical to the hero itself.
 
 - **Cape**: rigid attach like the helmet — needs a `defaults.gear.cape` bone +
   transform (chest/spine bone) measured the same way.
-- **Body / legs**: rigid attach clips during animation; these need skinned
-  meshes sharing the hero skeleton (weight transfer from the nearest hero
-  vertices — planned as `canonicalize-armour.mjs`, not built yet).
 
 The runtime side is already slot-generic: `getGearPlacements()` in
 `src/utils/equipModels.js` resolves whatever is equipped, and
 `attachGearList` (shared by `Model3DViewer` and `CombatArena3D`) attaches any
-number of pieces to their bones.
+number of pieces — rigid bone-attach or skinned rebind, whichever the
+piece's geometry calls for.

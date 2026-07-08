@@ -179,4 +179,18 @@ describe('equipModels resolver', () => {
       expect(json.includes(`"${clip}"`), `clip '${clip}' not found in ${registry.character.model}`).toBe(true)
     }
   })
+
+  it('every body/legs gear model is skinned (deforms with the hero, not a rigid bone-attach)', async () => {
+    const fs = await import('node:fs')
+    const path = await import('node:path')
+    const base = path.resolve(__dirname, '../public', registry.modelBase)
+    for (const [id, g] of Object.entries(registry.gear || {}) as [string, { model: string; slot: string }][]) {
+      if (g.slot !== 'body' && g.slot !== 'legs') continue
+      const buf = fs.readFileSync(path.join(base, g.model))
+      const jsonLen = buf.readUInt32LE(12)
+      const json = JSON.parse(buf.subarray(20, 20 + jsonLen).toString('utf8'))
+      expect(json.skins?.length, `${id} (${g.model}) has no skin — attachGearList rigid-attaches it to one bone instead of deforming with the body`).toBeGreaterThan(0)
+      expect(json.skins[0].joints?.length, `${id} skin has no joints`).toBe(41)
+    }
+  })
 })

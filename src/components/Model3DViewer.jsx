@@ -41,7 +41,7 @@ function Model3DViewer({ characterPath, weapon = null, gear = null, idleClip = n
     const st = { disposed: false, raf: null, THREE: null, renderer: null, scene: null,
       camera: null, controls: null, mixer: null, clock: null, character: null,
       weapon: null, weaponAnchor: null, gear: [], gearToken: 0, bones: {}, ro: null,
-      headMaskCtl: null }
+      headMaskCtl: null, heroSkinned: null }
     stateRef.current = st
 
     loadThree().then(async ({ THREE, GLTFLoader, MeshoptDecoder, OrbitControls }) => {
@@ -94,6 +94,7 @@ function Model3DViewer({ characterPath, weapon = null, gear = null, idleClip = n
         })
         scene.add(root)
         st.character = root
+        st.heroSkinned = skinnedMesh
         st.headMaskCtl = setupHeadMask(THREE, skinnedMesh)
         camera.position.set(0, 1.15, 4.2)
         controls.target.set(0, 0.95, 0)
@@ -271,6 +272,26 @@ export function attachGearList(st, gear, fallbackAnchor) {
       if (st.disposed || token !== st.gearToken) return
       loader.load(url, (gltf) => {
         if (st.disposed || token !== st.gearToken) return
+        let pieceSkinned = null
+        gltf.scene.traverse((o) => { if (o.isSkinnedMesh && !pieceSkinned) pieceSkinned = o })
+        if (pieceSkinned && st.heroSkinned) {
+          // body/legs slot: canonicalize-armour.mjs baked this mesh's vertices
+          // into hero's own raw local mesh space and gave it a skin mirroring
+          // hero's own skeleton, so it needs no position/rotation/scale — just
+          // rebind onto the hero's LIVE skeleton (discarding the file's own
+          // loaded one) and add it as a sibling of the hero's own mesh so it
+          // inherits the same ancestor scale/position. Must rebind with
+          // heroSkinned.bindMatrix (its ORIGINAL, frozen-at-load matrixWorld),
+          // not heroSkinned.matrixWorld (which reflects whatever runtime
+          // scale/position got applied to the hero's ancestors since load) —
+          // those two diverge once the viewer normalises the hero to a fixed
+          // height, and binding against the wrong one tears the mesh apart on
+          // any pose where different bones rotate by different amounts.
+          pieceSkinned.bind(st.heroSkinned.skeleton, st.heroSkinned.bindMatrix)
+          st.heroSkinned.parent.add(pieceSkinned)
+          st.gear.push({ obj: pieceSkinned, anchor: st.heroSkinned.parent })
+          return
+        }
         const obj = gltf.scene
         const boneAnchor = piece.bone ? st.bones[piece.bone] : null
         const anchor = boneAnchor || fallbackAnchor

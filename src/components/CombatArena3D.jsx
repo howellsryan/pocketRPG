@@ -64,7 +64,7 @@ function CombatArena3D({
     const st = {
       disposed: false, raf: null, THREE: null, renderer: null, scene: null, camera: null,
       mixer: null, monsterMixer: null, clock: null, hero: null, monster: null, bones: {}, weapon: null,
-      gear: [], gearToken: 0, headMaskCtl: null,
+      gear: [], gearToken: 0, headMaskCtl: null, heroSkinned: null,
       idleAction: null, attackAction: null, specialAction: null,
       monsterIdleAction: null, monsterAttackAction: null, timers: new Set(),
       // Procedural timelines: { t, dur } advanced by the render loop.
@@ -177,6 +177,7 @@ function CombatArena3D({
         if (o.isBone) st.bones[o.name] = o
         if (o.isSkinnedMesh && !heroSkinnedMesh) heroSkinnedMesh = o
       })
+      st.heroSkinned = heroSkinnedMesh
       st.headMaskCtl = setupHeadMask(THREE, heroSkinnedMesh)
 
       // Frame both actors whatever the monster's bulk.

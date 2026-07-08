@@ -14,11 +14,16 @@
 // Skin weights + joints survive `simplify`, so a rigged character stays rigged.
 // Tune --ratio per asset: heroes/bosses seen close up want more (0.05-0.1),
 // background props less. Deps are devDependencies (pipeline only, never shipped).
+//
+// Reader registers meshopt.decoder (not just encoder) because input can
+// itself be meshopt-compressed — canonicalize-armour.mjs's output shares
+// hero.glb's own (compressed) buffers, so extensionsRequired still lists
+// EXT_meshopt_compression even though the new accessors it adds aren't.
 
 import { NodeIO } from '@gltf-transform/core';
 import { EXTMeshoptCompression, KHRMaterialsVolume, KHRTextureBasisu } from '@gltf-transform/extensions';
 import { weld, simplify, dedup, prune, textureCompress, flatten, join } from '@gltf-transform/functions';
-import { MeshoptSimplifier, MeshoptEncoder } from 'meshoptimizer';
+import { MeshoptSimplifier, MeshoptEncoder, MeshoptDecoder } from 'meshoptimizer';
 import sharp from 'sharp';
 import fs from 'fs';
 
@@ -37,10 +42,11 @@ const tex = arg('--tex', 1024);
 
 const io = new NodeIO()
   .registerExtensions([EXTMeshoptCompression, KHRMaterialsVolume, KHRTextureBasisu])
-  .registerDependencies({ 'meshopt.encoder': MeshoptEncoder, 'meshopt.simplifier': MeshoptSimplifier });
+  .registerDependencies({ 'meshopt.encoder': MeshoptEncoder, 'meshopt.decoder': MeshoptDecoder, 'meshopt.simplifier': MeshoptSimplifier });
 
 await MeshoptSimplifier.ready;
 await MeshoptEncoder.ready;
+await MeshoptDecoder.ready;
 
 const before = fs.statSync(inFile).size;
 const doc = await io.read(inFile);
