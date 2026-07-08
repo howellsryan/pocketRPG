@@ -47,13 +47,44 @@ Fit notes — two regimes, pick per shape:
   `CombatArena3D`) cancels this by re-deriving the bone's position every
   frame from its own attach point (the same head-local center the helm sits
   at) rotated by the *current* quaternion, so that point stays visually
-  fixed under any pose — not just the frame it was baked at.
+  fixed under any pose — not just the frame it was baked at. Currently
+  **disabled** (`HIDE_BONE_SCALE = 1` in `Model3DViewer.jsx`) by product
+  choice — the hero keeps her full-size head/hair under enclosing helms; flip
+  the constant back to a fraction like `0.3` to re-enable hiding, everything
+  else (registry flag, `updateHiddenGear`, double-sided visor material)
+  stays wired.
 - **Open headwear** (hats, hoods, circlets — head stays visible): no
   `hideHead`; the piece must contain the hair, so bake with hair-sized
   margins, e.g. `--margins 1.25,1.12,1.06 --shift 0.06 --lift 0`.
 
 Verify with a render before committing — clip-through and neck artifacts show
 up most in the `hit_head` and `sword_attack` clips.
+
+## Multi-part uploads (one GLB, several pieces)
+
+Some generations batch several items into one file for efficiency (e.g. a
+torso + two legs + a pauldron all in one mesh, worn together on a preview
+mannequin). `scripts/split-gear-glb.mjs` pulls them apart:
+
+```bash
+node scripts/split-gear-glb.mjs raw.glb --list                 # rank every welded island by vertex count + Y-range
+node scripts/split-gear-glb.mjs raw.glb \
+  --extract platebody.raw.glb=0:clip=0.10,10 \                 # island 0, only y in [0.10, +inf) — trims an integrated skirt/legs off a torso
+  --extract platelegs.raw.glb=1,2                               # islands 1+2 merged into one file (e.g. matched L/R legs)
+```
+
+Tripo output is rarely welded at panel seams, so a naive shared-index
+connected-components pass over-fragments into hundreds of micro-islands
+(rivets, straps, each unwelded plate) — the tool first welds vertices that
+are merely close in space (`--eps`, default 0.0015) before flood-filling, so
+`--list` shows the real pieces. Two pieces that visually touch in the source
+scene (a coat whose hem overlaps its own built-in skirt) still weld into one
+island; there's no seam to split on then, so pick a Y-band with `:clip=` after
+eyeballing the `--list` Y-ranges (or rendering a couple of candidate cuts —
+see the render-and-iterate pattern used throughout this doc). Extracted files
+are raw — run `process-3d-model.mjs` (and `fit-headgear.mjs` /
+`canonicalize-weapon.mjs`, if the slot needs it) on each afterwards, same as
+any authored asset.
 
 ## Other slots (when the first assets arrive)
 
