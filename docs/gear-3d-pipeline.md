@@ -86,14 +86,20 @@ any authored asset.
 ## Body slot (live — platebodies)
 
 A platebody is authored as a standalone worn shell (upright, facing +x, no body
-inside, a few thousand tris) exactly like headgear. It is **rigid-attached at
-the hero model root** (`defaults.gear.body`, `"bone": null`) rather than to a
-spine bone: the torso barely deforms in the idle/attack clips, and a root anchor
-keeps the plate steady over the chest without per-bone-space rotation. The
-`defaults.gear.body` transform (`position [0, 0.64, 0]`, `rotationDeg [0,-90,0]`
-to turn the +x-authored front to the hero's facing, `scale 0.35`) was measured
-from `public/3d-samples/hero.glb`'s torso; a canonical entry is just
-`{ "model": …, "slot": "body" }`. Re-measure if the hero model changes.
+inside, a few thousand tris) exactly like headgear. It is **rigid-attached to
+the `Spine02` (chest) bone** (`defaults.gear.body`), the same way the helmet
+bolts to `Head` — so it rides the animated torso. It must NOT anchor to the
+model root: the idle/attack clips rotate the whole body relative to bind, so a
+root-anchored plate visibly separates from the torso and faces the wrong way (it
+stays in bind orientation while the body turns). The `defaults.gear.body`
+transform (`bone "Spine02"`, `rotationDeg [0,90,0]` to turn the +x-authored
+front to the chest bone's local frame, `scale 0.35`, no offset) was tuned
+against `public/3d-samples/hero.glb` in its posed idle frame; a canonical entry
+is just `{ "model": …, "slot": "body" }`. Re-tune if the hero rig changes.
+
+Calibrate against the ANIMATED idle pose, not the bind pose — a bone-attached
+piece looks right in bind but the app plays the idle clip, so tune what the app
+actually shows.
 
 The authored dark Tripo texture is lightened once into a neutral steel base
 (`steel_platebody`) and every metal/barrows tier derives from it via

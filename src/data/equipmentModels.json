@@ -32,15 +32,15 @@
         "scale": 0.242
       },
       "body": {
-        "bone": null,
+        "bone": "Spine02",
         "position": [
           0,
-          0.64,
+          0,
           0
         ],
         "rotationDeg": [
           0,
-          -90,
+          90,
           0
         ],
         "scale": 0.35
