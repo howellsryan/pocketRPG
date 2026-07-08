@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { simulateIdleSkilling } from '../src/engine/idleEngine.js'
+import { getLevelFromXP } from '../src/engine/experience.js'
+import skillsData from '../src/data/skills.json'
+import itemsData from '../src/data/items.json'
 
 describe('simulateIdleSkilling (alchemy)', () => {
   it('returns null when there are no selected alchemy items in inventory', () => {
@@ -146,5 +149,39 @@ describe('simulateIdleSkilling (enchant bolts)', () => {
     expect(sim?.finalInventory[0]).toEqual({ itemId: 'ruby_bolt_e', quantity: 50 })
     const totalProduced = (sim?.itemsGained.ruby_bolt_e || 0) + (sim?.itemsBanked.ruby_bolt_e || 0)
     expect(totalProduced).toBe(50)
+  })
+})
+
+describe('simulateIdleSkilling (bank-trip material loss regression)', () => {
+  // Bars/ores are non-stackable, so a long smithing skip fills the 28-slot
+  // inventory and forces repeated agility-scaled bank trips. Those trips eat
+  // into the elapsed-time budget, so fewer actions can complete than the
+  // initial time/material estimate — materials/XP must track the real count,
+  // not the estimate, or the shortfall is silently destroyed.
+  function xpForLevel(target: number) {
+    let xp = 0
+    while (getLevelFromXP(xp) < target) xp += 100
+    return xp
+  }
+
+  it('never consumes more ore than bars actually produced when bank trips truncate the session', () => {
+    const action = (skillsData as any).smithing.actions.find((a: any) => a.id === 'smelt_iron')
+    const task: any = { type: 'skill', skill: 'smithing', action, bankingEnabled: true }
+    const bank: any = { iron_ore: { quantity: 2830 } }
+    const inventory: any = new Array(28).fill(null)
+    const stats: any = { smithing: { xp: 300000 }, agility: { xp: xpForLevel(1) } }
+
+    const sim = simulateIdleSkilling(task, 2 * 60 * 60 * 1000, bank, {}, stats, itemsData as any, inventory, {})
+
+    expect(sim).toBeTruthy()
+    const invBars = sim!.finalInventory.filter((s: any) => s?.itemId === 'iron_bar').reduce((a: number, s: any) => a + s.quantity, 0)
+    const totalBars = (sim!.itemsBanked.iron_bar || 0) + invBars
+    // Fewer than the full 2830 ore complete within 2 hours at agility 1 (long
+    // bank-trip delay) — the point is that whatever *did* consume ore must
+    // have produced exactly that many bars, XP, and a matching action count.
+    expect(sim!.actions).toBeLessThan(2830)
+    expect(totalBars).toBe(sim!.actions)
+    expect(sim!.itemsConsumed.iron_ore || 0).toBe(sim!.actions)
+    expect(sim!.xpGained.smithing).toBe(sim!.actions * action.xp)
   })
 })

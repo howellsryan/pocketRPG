@@ -3,7 +3,7 @@ import { useGame } from '../state/gameState.jsx'
 import Model3DViewer from '../components/Model3DViewer.jsx'
 import { getCharacterAssetPath, getCharacterModel, getWeaponPlacement } from '../utils/equipModels.js'
 import { canRender3D } from '../utils/three3d.js'
-import { unequipSlot, getEquipmentBonuses, checkEquipRequirements, equipItem } from '../engine/equipment.js'
+import { unequipSlot, getEquipmentBonuses, checkEquipRequirements, equipItem, placeUnequippedItems } from '../engine/equipment.js'
 import { createPreset, applyPreset, renamePreset, MAX_EQUIPMENT_PRESETS } from '../engine/equipmentPresets.js'
 import Modal from '../components/Modal.jsx'
 import { hasFullVoidKingSet } from '../engine/combatSetBonuses.js'
@@ -121,16 +121,14 @@ export default function EquipmentScreen() {
 
     const result = equipItem(newEquip, item, itemsData, sourceSlot)
     if (result.equipped) {
-      for (const unequipped of result.unequipped) {
-        const empty = newInv.indexOf(null)
-        if (empty !== -1 && unequipped) {
-          const invEntry = { itemId: unequipped.itemId, quantity: unequipped.quantity || 1 }
-          if (unequipped.charges && unequipped.charges > 0) invEntry.charges = unequipped.charges
-          newInv[empty] = invEntry
-        }
+      const placed = placeUnequippedItems(result.unequipped, newInv, itemsData)
+      if (!placed.ok) {
+        addToast('Inventory full', 'error')
+        setInvSelected(null)
+        return
       }
       updateEquipment(newEquip)
-      updateInventory(newInv)
+      updateInventory(placed.inventory)
       addToast(`Equipped ${item.name}`, 'info')
     }
     setInvSelected(null)
