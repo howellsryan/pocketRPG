@@ -108,6 +108,14 @@ describe('placeMaps data', () => {
     }
   })
 
+  it('every Quests Board spot uses the shared blue quest-scroll icon, not the plain 📜 emoji', () => {
+    for (const id of mapped) {
+      for (const spot of getPlaceMap(id)!.spots) {
+        if (spot.kind === 'quest') expect(spot.iconKey, `${id}: quest spot`).toBe('quest_scroll_blue')
+      }
+    }
+  })
+
   it('single-ref gather/slayer/minigame spots resolve a data-authored iconKey, not just the generic per-kind emoji', () => {
     // PlaceMapView's ActivityIcon renders desc.iconKey (gather tasks/slayer
     // masters/minigames each carry their own game-icons key) ahead of the

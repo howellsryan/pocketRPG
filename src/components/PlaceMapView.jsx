@@ -78,6 +78,9 @@ export default function PlaceMapView({ place, onClose, onActivate, onNavigate })
   }
 
   const spotGlyph = ({ spot, type, desc }) => {
+    // An explicit iconKey always wins, regardless of spot type or ref count
+    // (e.g. the Quests Board landmark — many refs, one deliberate glyph).
+    if (spot.iconKey) return <GameIcon iconKey={spot.iconKey} size={20} color="#f2e4c2" />
     if (type === 'facility') {
       if (spot.facility === 'bank') return <GameIcon iconKey="coins" size={20} title={spot.label || 'Bank'} />
       const skillId = facilityTrainingSkill(spot.facility)
@@ -86,9 +89,7 @@ export default function PlaceMapView({ place, onClose, onActivate, onNavigate })
         : <span aria-hidden="true">{spot.icon || '🏛️'}</span>
     }
     if (type === 'screen') {
-      return spot.iconKey
-        ? <GameIcon iconKey={spot.iconKey} size={20} color="#f2e4c2" />
-        : <span aria-hidden="true">{spot.icon || '🏛️'}</span>
+      return <span aria-hidden="true">{spot.icon || '🏛️'}</span>
     }
     if (desc.skillArtId) return <GameIcon iconKey={getSkillArt(desc.skillArtId).icon} size={20} color="#f2e4c2" />
     // Raid spots reuse the combat screen's raid emblem (RAID_ART) so the icon
@@ -97,12 +98,13 @@ export default function PlaceMapView({ place, onClose, onActivate, onNavigate })
     if (!spot.icon && spot.kind === 'raid' && desc.refs.length === 1) {
       return <GameIcon iconKey={getRaidArt(desc.refs[0]).icon} size={20} color="#f2e4c2" />
     }
-    // Single-ref spots without a group/raid shortcut above (individual mining
-    // veins, dungeoneering floors, gather tasks, slayer masters, ...) resolve a
-    // themed icon instead of the generic per-kind emoji — see ActivityIcon
-    // (its own fallback already honours an explicit spot.icon via desc.icon).
+    // A single-ref spot without a group/raid shortcut above (individual mining
+    // veins, dungeoneering floors, gather tasks, slayer masters, ...) resolves
+    // the specific activity's own icon instead of the generic per-kind emoji —
+    // see ActivityIcon (its fallback still honours an explicit spot.icon via
+    // desc.icon). Multi-ref spots with no group/iconKey (rare) keep that emoji.
     if (desc.refs.length === 1) {
-      return <ActivityIcon kind={spot.kind} actionRef={desc.refs[0]} desc={desc} iconKey={spot.iconKey} size={20} color="#f2e4c2" />
+      return <ActivityIcon kind={spot.kind} actionRef={desc.refs[0]} desc={desc} size={20} color="#f2e4c2" />
     }
     return <span aria-hidden="true">{desc.icon}</span>
   }

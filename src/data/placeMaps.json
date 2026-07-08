@@ -65,7 +65,7 @@
       {
         "kind": "quest",
         "label": "Quests Board",
-        "icon": "📜",
+        "iconKey": "quest_scroll_blue",
         "x": 235,
         "y": 500
       },
@@ -192,7 +192,7 @@
       {
         "kind": "quest",
         "label": "Quests Board",
-        "icon": "📜",
+        "iconKey": "quest_scroll_blue",
         "x": 230,
         "y": 230
       },
@@ -331,7 +331,7 @@
       {
         "kind": "quest",
         "label": "Quests Board",
-        "icon": "📜",
+        "iconKey": "quest_scroll_blue",
         "x": 750,
         "y": 540
       },
@@ -432,7 +432,7 @@
       {
         "kind": "quest",
         "label": "Quests Board",
-        "icon": "📜",
+        "iconKey": "quest_scroll_blue",
         "x": 583,
         "y": 342
       },
@@ -600,7 +600,7 @@
       {
         "kind": "quest",
         "label": "Quests Board",
-        "icon": "📜",
+        "iconKey": "quest_scroll_blue",
         "x": 590,
         "y": 400
       },
@@ -721,7 +721,7 @@
       {
         "kind": "quest",
         "label": "Quests Board",
-        "icon": "📜",
+        "iconKey": "quest_scroll_blue",
         "x": 560,
         "y": 700
       },
@@ -830,7 +830,7 @@
       {
         "kind": "quest",
         "label": "Quests Board",
-        "icon": "📜",
+        "iconKey": "quest_scroll_blue",
         "x": 494,
         "y": 400
       },
@@ -932,7 +932,7 @@
       {
         "kind": "quest",
         "label": "Quests Board",
-        "icon": "📜",
+        "iconKey": "quest_scroll_blue",
         "x": 579,
         "y": 592
       },
@@ -1034,7 +1034,7 @@
       {
         "kind": "quest",
         "label": "Quests Board",
-        "icon": "📜",
+        "iconKey": "quest_scroll_blue",
         "x": 460,
         "y": 470
       },
@@ -1142,7 +1142,7 @@
       {
         "kind": "quest",
         "label": "Quests Board",
-        "icon": "📜",
+        "iconKey": "quest_scroll_blue",
         "x": 362,
         "y": 400
       },
@@ -1238,7 +1238,7 @@
       {
         "kind": "quest",
         "label": "Quests Board",
-        "icon": "📜",
+        "iconKey": "quest_scroll_blue",
         "x": 592,
         "y": 300
       },
@@ -1338,7 +1338,7 @@
       {
         "kind": "quest",
         "label": "Quests Board",
-        "icon": "📜",
+        "iconKey": "quest_scroll_blue",
         "x": 546,
         "y": 592
       },
@@ -1437,7 +1437,7 @@
       {
         "kind": "quest",
         "label": "Quests Board",
-        "icon": "📜",
+        "iconKey": "quest_scroll_blue",
         "x": 488,
         "y": 391
       },
@@ -1582,7 +1582,7 @@
       {
         "kind": "quest",
         "label": "Quests Board",
-        "icon": "📜",
+        "iconKey": "quest_scroll_blue",
         "x": 592,
         "y": 79
       },
