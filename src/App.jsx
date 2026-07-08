@@ -357,6 +357,7 @@ function GameApp() {
   const [credits, setCredits] = useState(0)
   const [showBuyCreditsModal, setShowBuyCreditsModal] = useState(false)
   const [showDailyTasksModal, setShowDailyTasksModal] = useState(false)
+  const [chatOpen, setChatOpen] = useState(false)
   const [dailyTaskDate, setDailyTaskDate] = useState(null)
   const [dailyTaskResetInMs, setDailyTaskResetInMs] = useState(0)
   // Set on mount if Stripe redirected back with a payment query/path — drives the
@@ -2857,12 +2858,12 @@ function GameApp() {
         <main class="gf-main flex-1 overflow-hidden">
           {renderScreen()}
         </main>
-        <GameFrameBar position="bottom" active={screen} onNavigate={(s) => navigate(s)} isInCombat={isInPvpMatch} onDisabledClick={() => addToast('⚔️ Cannot navigate during PvP combat!', 'warning')} demo={demoMode} lockedScreens={CLOUD_ONLY_SCREENS} onLockedClick={notifyDemoLocked} onLockedFeature={notifyDemoLocked} onBuyCredits={() => setShowBuyCreditsModal(true)} credits={credits} isCloudAccount={isCloudAccount} onSkip1h={isCloudAccount ? handleSkip1h : null} skipMode={skipMode} raidSkipCost={raidSkipCost} onDailyTasks={() => setShowDailyTasksModal(true)} dailyTasksCompleted={(dailyTaskStates || []).filter(t => t.completed).length} dailyTasksTotal={5} />
+        <GameFrameBar position="bottom" active={screen} onNavigate={(s) => navigate(s)} isInCombat={isInPvpMatch} onDisabledClick={() => addToast('⚔️ Cannot navigate during PvP combat!', 'warning')} demo={demoMode} lockedScreens={CLOUD_ONLY_SCREENS} onLockedClick={notifyDemoLocked} onLockedFeature={notifyDemoLocked} onBuyCredits={() => setShowBuyCreditsModal(true)} credits={credits} isCloudAccount={isCloudAccount} onSkip1h={isCloudAccount ? handleSkip1h : null} skipMode={skipMode} raidSkipCost={raidSkipCost} onDailyTasks={() => setShowDailyTasksModal(true)} dailyTasksCompleted={(dailyTaskStates || []).filter(t => t.completed).length} dailyTasksTotal={5} onOpenChat={() => setChatOpen(true)} />
       </div>
       <XpDropOverlay />
       <RewardRevealOverlay />
       <LevelUpOverlay />
-      <ChatWidget isCloudAccount={isCloudAccount && !demoMode} />
+      <ChatWidget isCloudAccount={isCloudAccount && !demoMode} open={chatOpen} onOpenChange={setChatOpen} />
 
       {/* Game-lock overlay — shown for the WHOLE of any durable-save operation
           (manual save, skip-hour/quest, boss skip, raid skip), not just the

@@ -536,14 +536,13 @@ html, body, #app {
 .chat-fab:hover {
   border-color: var(--color-gold-light);
 }
-/* Mobile bottom rail (GameFrameBar position="bottom") sits flush against the
-   viewport bottom at the same right-edge inset as the fab (pb-safe/pt-2/48px
-   medallion), so below the md breakpoint the fab must float above the rail
-   instead of stacking on top of its Home medallion. */
+/* Below the md breakpoint the game-helper trigger lives inside GameFrameBar's
+   bottom nav rail instead (its own .gf-medallion, next to Home), so the
+   floating fab (which used to sit at nearly the same fixed coordinates as
+   the rail's Home medallion and cover it) is hidden entirely on mobile. */
 @media (max-width: 767px) {
   .chat-fab {
-    right: 0.75rem;
-    bottom: calc(56px + max(0.75rem, env(safe-area-inset-bottom)) + 10px);
+    display: none;
   }
 }
 

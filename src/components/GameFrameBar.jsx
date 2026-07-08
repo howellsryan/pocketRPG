@@ -5,8 +5,11 @@ import { GAME_FRAME_TOP_TABS, GAME_FRAME_BOTTOM_LEFT_TABS, GAME_FRAME_BOTTOM_RIG
 // panel, drawn into the carved-wood shell (.gf-shell / .gf-main in index.css).
 // Top rail: World Map · Bank · Combat · Inventory · Equipment. Bottom rail:
 // Settings + Adventures (left) · Daily Tasks + Credits + Skip (centered) ·
-// Home (right, next to the floating chat button). Mobile-only (md:hidden) —
-// desktop uses SideNav + Header with the same destinations.
+// Home + Game Helper (right, cloud accounts only). `justify-evenly` (matching
+// the top rail) with two medallions on each flank keeps the centered group
+// exactly centered regardless of container width. Mobile-only (md:hidden) —
+// desktop uses SideNav + Header with the same destinations, and the chat
+// helper keeps its own floating button there (see ChatWidget.jsx).
 function FrameMedallion({ label, active = false, disabled = false, locked = false, onClick, title, children }) {
   return (
     <button
@@ -41,6 +44,7 @@ export default function GameFrameBar({
   onDailyTasks = null,
   dailyTasksCompleted = 0,
   dailyTasksTotal = 5,
+  onOpenChat = null,
 }) {
   const navMedallion = (tab) => {
     const isLocked = demo && lockedScreens?.has(tab.id)
@@ -79,13 +83,15 @@ export default function GameFrameBar({
     )
   }
 
+  const chatVisible = isCloudAccount && !demo
+
   return (
     <nav
       aria-label="Menu"
-      class="md:hidden flex items-center justify-between flex-shrink-0 px-3 pt-2 pb-safe w-full max-w-xl mx-auto"
+      class="md:hidden flex items-center justify-evenly flex-shrink-0 px-3 pt-2 pb-safe w-full max-w-xl mx-auto"
     >
       {GAME_FRAME_BOTTOM_LEFT_TABS.map(navMedallion)}
-      <span class="flex-1 flex items-center justify-center gap-1">
+      <span class="flex items-center justify-center gap-1">
         {(isCloudAccount || demo) && (
           <button
             onClick={() => { if (demo) onLockedFeature?.(); else onDailyTasks?.() }}
@@ -125,6 +131,11 @@ export default function GameFrameBar({
         </button>
       </span>
       {GAME_FRAME_BOTTOM_RIGHT_TABS.map(navMedallion)}
+      {chatVisible && (
+        <FrameMedallion label="Game Helper" onClick={onOpenChat} title="Game Helper">
+          <GameIcon iconKey="chat_bubble" size={20} color="#efe3c2" />
+        </FrameMedallion>
+      )}
     </nav>
   )
 }

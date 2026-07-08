@@ -13,10 +13,11 @@ import { SCREENS, isWorldMapEnabled } from '../utils/constants.js'
 // medallion rails above and below the main content panel, set in a carved-wood
 // chrome. Top rail: World Map/Bank/Combat/Inventory/Equipment. Bottom rail:
 // Settings + Adventures (left), Daily Tasks + Credits + Skip (centered), Home
-// (right, next to the floating chat button). Icons are tintable game-icons
-// glyphs so they read as brass/steel inlays on the dark medallions. Desktop
-// (md+) uses SideNav + Header with the same destinations (DESKTOP_NAV_TABS
-// below) — Home/Adventures keep their desktop positions; only mobile moves.
+// + Game Helper (right — Game Helper is a GameFrameBar-only extra tab, cloud
+// accounts only, not listed here). Icons are tintable game-icons glyphs so
+// they read as brass/steel inlays on the dark medallions. Desktop (md+) uses
+// SideNav + Header with the same destinations (DESKTOP_NAV_TABS below) —
+// Home/Adventures keep their desktop positions; only mobile moves.
 export const GAME_FRAME_TOP_TABS = [
   ...(isWorldMapEnabled() ? [{ id: SCREENS.WORLD_MAP, label: 'Map', iconKey: 'globe', iconSize: 40 }] : []),
   { id: SCREENS.BANK, label: 'Bank', iconKey: 'coins', iconSize: 40 },
