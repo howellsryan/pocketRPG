@@ -19,9 +19,9 @@
   },
   "character": {
     "model": "hero.glb",
-    "idleClip": "Idle",
-    "attackClip": "Box",
-    "specialClip": "Run"
+    "idleClip": "idle",
+    "attackClip": "sword_attack",
+    "specialClip": "sword_regular_combo"
   },
   "weapons": {
     "dragon_dagger": {

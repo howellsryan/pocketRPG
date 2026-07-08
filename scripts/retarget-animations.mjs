@@ -8,11 +8,14 @@
 // Usage:
 //   node scripts/retarget-animations.mjs --target hero.glb --source ual.glb --out hero.animated.glb
 //     [--clips Idle_Loop,Sword_Attack] [--map bonemap.json] [--preview out-frames-dir]
+//     [--rename names.json] [--lowercase]
 //
 // Prereqs: `npm i -D playwright` and (locally) `npx playwright install chromium`.
 // The default bone map covers the Tripo rig -> UAL/UE "Manny" skeleton; pass
 // --map with {"TargetBone": "sourceBone", ...} for other rig pairs. Unmapped
 // bones (twist/finger bones) keep their rest pose and ride their parents.
+// Clip names default to the source names; --rename takes {"SourceClip":"new_name"}
+// overrides and --lowercase lowercases every other clip name.
 
 import http from 'http';
 import fs from 'fs';
@@ -39,6 +42,8 @@ const outPath = arg('out', 'retargeted.glb');
 const clipFilter = arg('clips', '');
 const previewDir = arg('preview', '');
 const mapPath = arg('map', '');
+const renamePath = arg('rename', '');
+const lowercase = process.argv.includes('--lowercase');
 if (!targetPath || !sourcePath) {
   console.error('Usage: node scripts/retarget-animations.mjs --target hero.glb --source anims.glb --out out.glb');
   process.exit(1);
@@ -65,6 +70,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from '/node_modules/three/examples/jsm/loaders/GLTFLoader.js';
 import * as SkeletonUtils from '/node_modules/three/examples/jsm/utils/SkeletonUtils.js';
 import { GLTFExporter } from '/node_modules/three/examples/jsm/exporters/GLTFExporter.js';
+import { MeshoptDecoder } from '/node_modules/three/examples/jsm/libs/meshopt_decoder.module.js';
 
 const CFG = JSON.parse(document.getElementById('cfg').textContent);
 const log = (...a) => window.__log(a.join(' '));
@@ -85,7 +91,8 @@ function facingAngle(skinned, lName, rName) {
 }
 
 async function main() {
-  const loader = new GLTFLoader();
+  await MeshoptDecoder.ready;
+  const loader = new GLTFLoader().setMeshoptDecoder(MeshoptDecoder);
   const [tgt, src] = await Promise.all([loader.loadAsync('/target.glb'), loader.loadAsync('/source.glb')]);
   const tgtMesh = findSkinned(tgt.scene);
   const srcMesh = findSkinned(src.scene);
@@ -136,9 +143,13 @@ async function main() {
     });
     for (const track of ret.tracks) track.name = track.name.replace(/^\\.bones\\[(.+?)\\]/, '$1');
     ret.resetDuration();
+    ret.name = CFG.rename[clip.name] || (CFG.lowercase ? clip.name.toLowerCase() : clip.name);
     clips.push(ret);
-    log('retargeted', clip.name, ret.duration.toFixed(2) + 's');
+    log('retargeted', clip.name, '->', ret.name, ret.duration.toFixed(2) + 's');
   }
+  const names = clips.map((c) => c.name);
+  const dupes = names.filter((n, i) => names.indexOf(n) !== i);
+  if (dupes.length) log('WARNING duplicate clip names:', JSON.stringify([...new Set(dupes)]));
 
   tgt.scene.rotation.y = 0;
   tgtMesh.skeleton.pose();
@@ -194,6 +205,8 @@ const cfg = {
   targetHands: [arg('target-hand-l', 'L_Hand'), arg('target-hand-r', 'R_Hand')],
   sourceHands: [arg('source-hand-l', 'hand_l'), arg('source-hand-r', 'hand_r')],
   clips: clipFilter ? clipFilter.split(',').map((s) => s.trim()).filter(Boolean) : [],
+  rename: renamePath ? JSON.parse(fs.readFileSync(renamePath, 'utf8')) : {},
+  lowercase,
   preview: Boolean(previewDir),
   previewMax: Number(arg('preview-max', '8')),
 };

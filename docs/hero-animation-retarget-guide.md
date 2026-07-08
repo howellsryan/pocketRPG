@@ -45,6 +45,9 @@ Useful options:
 - `--clips Idle_Loop,Sword_Attack,Walk_Loop` — only convert the clips you want (smaller file).
 - `--preview frames/` — also renders PNG snapshots of the first clips so you can eyeball the result without opening a 3D tool.
 - `--map mymap.json` — swap in a different bone-name map (JSON of `{"TargetBone": "sourceBone"}`) for other rig pairs; the built-in default covers Tripo-rig → UAL/UE-style skeletons.
+- `--rename names.json` — rename clips on the way out (JSON of `{"SourceClip": "new_name"}`), e.g. to give the game the exact `idleClip`/`attackClip`/`specialClip` names it references. `--lowercase` lowercases every other clip name for a clean, consistent set.
+
+The `--target` can be the game's live `public/3d-samples/hero.glb` (Meshopt-compressed) — the tool decodes it automatically. The GLB it writes is uncompressed; re-apply Meshopt with gltf-transform (`meshopt()` + `MeshoptEncoder`, as `scripts/canonicalize-weapon.mjs` does) to shrink it back to ~0.6 MB before committing.
 
 This works for **any future animation pack that uses the same UAL/UE-style skeleton**
 (Quaternius sells/gives more packs on the same rig) — just point `--source` at the new pack.
@@ -57,13 +60,14 @@ viewer) and pick clips from the animation dropdown. Or use `--preview` and look 
 ### Wiring it into PocketRPG
 
 1. Replace the hero model: copy the output over `public/3d-samples/hero.glb`.
-2. Point the game at the new clip names in `src/data/equipmentModels.json` (`character` block):
+2. Point the game at the new clip names in `src/data/equipmentModels.json` (`character` block).
+   The live hero uses UAL 2 clips (renamed via `--rename`):
    ```json
    "character": {
      "model": "hero.glb",
-     "idleClip": "Idle_Loop",
-     "attackClip": "Sword_Attack",
-     "specialClip": "Spell_Simple_Shoot"
+     "idleClip": "idle",
+     "attackClip": "sword_attack",
+     "specialClip": "sword_regular_combo"
    }
    ```
 3. Nothing else changes: the skeleton is untouched, so weapon attachment (`R_Hand` bone,
