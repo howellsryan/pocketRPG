@@ -1486,7 +1486,7 @@
       },
       {
         "kind": "skill",
-        "group": "woodcutting",
+        "refs": ["woodcutting:maple"],
         "label": "Old Grove",
         "x": 908,
         "y": 459
@@ -1494,9 +1494,9 @@
       {
         "kind": "skill",
         "ref": "woodcutting:magic",
-        "label": "Blue Forest",
-        "x": 830,
-        "y": 500
+        "label": "Magical Forest",
+        "x": 600,
+        "y": 700
       },
       {
         "facility": "furnace_anvil",
