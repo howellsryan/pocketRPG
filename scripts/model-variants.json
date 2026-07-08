@@ -10,5 +10,6 @@
   "iron_full_helm": { "base": "steel_full_helm", "grey": 0.35, "to": 218, "sat": 0.1, "light": 0.72 },
   "mithril_full_helm": { "base": "steel_full_helm", "grey": 0.35, "to": 229, "sat": 0.5, "light": 0.95 },
   "adamant_full_helm": { "base": "steel_full_helm", "grey": 0.35, "to": 142, "sat": 0.45, "light": 0.8 },
-  "runeforged_full_helm": { "base": "steel_full_helm", "grey": 0.35, "to": 174, "sat": 0.55, "light": 0.95 }
+  "runeforged_full_helm": { "base": "steel_full_helm", "grey": 0.35, "to": 174, "sat": 0.55, "light": 0.95 },
+  "dragon_full_helm": { "base": "steel_full_helm", "grey": 0.35, "to": 6, "sat": 0.6, "light": 0.75 }
 }

@@ -185,6 +185,10 @@
     "runeforged_full_helm": {
       "model": "runeforged_full_helm.glb",
       "slot": "head"
+    },
+    "dragon_full_helm": {
+      "model": "dragon_full_helm.glb",
+      "slot": "head"
     }
   },
   "monsters": {
