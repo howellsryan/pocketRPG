@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { getCharacterModel, getWeaponModel, hasWeaponModel, modelUrl, getCharacterAssetPath, getWeaponPlacement, getMonsterModel, hasMonsterModel } from '../src/utils/equipModels.js'
+import { getCharacterModel, getWeaponModel, hasWeaponModel, modelUrl, getCharacterAssetPath, getWeaponPlacement, getMonsterModel, hasMonsterModel, getGearModel, getGearPlacement, getGearPlacements } from '../src/utils/equipModels.js'
 import registry from '../src/data/equipmentModels.json'
 
 describe('equipModels resolver', () => {
@@ -65,6 +65,51 @@ describe('equipModels resolver', () => {
     expect(getWeaponPlacement('bronze_dagger')).toBeNull()
   })
 
+  it('resolves registered gear with slot defaults filled in', () => {
+    for (const [id, g] of Object.entries(registry.gear || {}) as [string, { model: string; slot: string; scale?: number }][]) {
+      const spec = getGearModel(id)
+      expect(spec).toBeTruthy()
+      expect(spec!.model).toBe(g.model)
+      expect(spec!.slot).toBe(g.slot)
+      const d = (registry.defaults as { gear?: Record<string, { bone?: string }> }).gear?.[g.slot]
+      if (d?.bone) expect(spec!.bone).toBe(d.bone)
+      expect(spec!.position).toHaveLength(3)
+      expect(spec!.rotationDeg).toHaveLength(3)
+      expect(typeof spec!.scale).toBe('number')
+    }
+  })
+
+  it('returns null for unregistered gear (icon-UI fallback)', () => {
+    expect(getGearModel('bronze_full_helm')).toBeNull()
+    expect(getGearModel(undefined)).toBeNull()
+    expect(getGearPlacement('bronze_full_helm')).toBeNull()
+  })
+
+  it('collects placements for equipped registered gear, skipping the rest', () => {
+    const [id] = Object.keys(registry.gear || {})
+    if (!id) return
+    const slot = (registry.gear as Record<string, { slot: string }>)[id].slot
+    const equipment = {
+      [slot]: { itemId: id },
+      weapon: { itemId: id },        // weapon slot ignored even if id matches
+      cape: { itemId: 'no_such_item' },
+      legs: null,
+    }
+    const placements = getGearPlacements(equipment)
+    expect(placements).toHaveLength(1)
+    expect(placements[0].slot).toBe(slot)
+    expect(typeof placements[0].path).toBe('string')
+    expect(getGearPlacements(null)).toEqual([])
+  })
+
+  it('every registered gear id exists in items.json with a matching slot', async () => {
+    const items = (await import('../src/data/items.json')).default as Record<string, { slot?: string }>
+    for (const [id, g] of Object.entries(registry.gear || {}) as [string, { slot: string }][]) {
+      expect(items[id], `gear model '${id}' has no matching item`).toBeTruthy()
+      expect(items[id].slot, `gear model '${id}' slot mismatch`).toBe(g.slot)
+    }
+  })
+
   it('resolves a registered monster to a combat-arena spec', () => {
     const ids = Object.keys(registry.monsters || {})
     if (ids.length === 0) return
@@ -100,7 +145,11 @@ describe('equipModels resolver', () => {
     const fs = await import('node:fs')
     const path = await import('node:path')
     const base = path.resolve(__dirname, '../public', registry.modelBase)
-    const models = [registry.character.model, ...Object.values(registry.weapons).map((w) => w.model)]
+    const models = [
+      registry.character.model,
+      ...Object.values(registry.weapons).map((w) => w.model),
+      ...Object.values(registry.gear || {}).map((g) => g.model),
+    ]
     for (const m of models) {
       if (/^(https?:)?\/\//.test(m) || m.startsWith('/')) continue // remote/absolute — not repo-served
       expect(fs.existsSync(path.join(base, m)), `${registry.modelBase}${m} missing from public/`).toBe(true)

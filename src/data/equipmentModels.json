@@ -15,6 +15,22 @@
         145
       ],
       "scale": 0.3987
+    },
+    "gear": {
+      "head": {
+        "bone": "Head",
+        "position": [
+          0.0137,
+          0.0794,
+          -0.0259
+        ],
+        "rotationDeg": [
+          -177.9,
+          87.5,
+          178.2
+        ],
+        "scale": 0.247
+      }
     }
   },
   "character": {
@@ -143,6 +159,12 @@
         -161
       ],
       "scale": 0.4
+    }
+  },
+  "gear": {
+    "steel_full_helm": {
+      "model": "full_helm.glb",
+      "slot": "head"
     }
   },
   "monsters": {

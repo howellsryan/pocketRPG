@@ -42,6 +42,54 @@ export function getWeaponModel(itemId) {
   }
 }
 
+// Resolve a gear (armour) itemId to a placement spec, or null when
+// unregistered. Same shape as weapons plus `slot`; omitted transform fields
+// fall back to the slot's entry in `defaults.gear` so a canonically-authored
+// piece needs only { model, slot }.
+export function getGearModel(itemId) {
+  if (!itemId) return null
+  const g = equipmentModelsData.gear && equipmentModelsData.gear[itemId]
+  if (!g || !g.model || !g.slot) return null
+  const d = ((equipmentModelsData.defaults || {}).gear || {})[g.slot] || {}
+  return {
+    model: g.model,
+    slot: g.slot,
+    bone: g.bone === undefined ? (d.bone || null) : g.bone,
+    position: g.position || d.position || EQUIP_IDENTITY.position,
+    rotationDeg: g.rotationDeg || d.rotationDeg || EQUIP_IDENTITY.rotationDeg,
+    scale: typeof g.scale === 'number' ? g.scale : (typeof d.scale === 'number' ? d.scale : EQUIP_IDENTITY.scale),
+  }
+}
+
+// Placement spec for one gear item with a fetchable `path`, or null.
+export function getGearPlacement(itemId) {
+  const spec = getGearModel(itemId)
+  if (!spec) return null
+  return {
+    path: resolveModelPath(spec.model),
+    slot: spec.slot,
+    bone: spec.bone,
+    position: spec.position,
+    rotationDeg: spec.rotationDeg,
+    scale: spec.scale,
+  }
+}
+
+// Placement specs for every registered piece the character has equipped
+// (weapon excluded — it has its own attach path). Unregistered items are
+// simply skipped, so 3D gear coverage is partial-safe like everything else.
+export function getGearPlacements(equipment) {
+  const out = []
+  if (!equipment) return out
+  for (const slot of Object.keys(equipment)) {
+    if (slot === 'weapon') continue
+    const itemId = equipment[slot] && equipment[slot].itemId
+    const p = itemId ? getGearPlacement(itemId) : null
+    if (p) out.push(p)
+  }
+  return out
+}
+
 // Whether an item currently has a 3D model (cheap check for UI gating).
 export function hasWeaponModel(itemId) {
   return Boolean(itemId && equipmentModelsData.weapons && equipmentModelsData.weapons[itemId] && equipmentModelsData.weapons[itemId].model)

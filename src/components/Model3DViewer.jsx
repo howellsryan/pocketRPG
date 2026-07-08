@@ -13,6 +13,8 @@ import { loadThree, canRender3D, assetUrl } from '../utils/three3d.js'
 // Props:
 //   characterPath public-relative path of the character GLB (resolved via probe)
 //   weapon        { path, bone, position:[x,y,z], rotationDeg:[x,y,z], scale } | null
+//   gear          array of the same spec shape (equipped armour pieces, each
+//                 rigid-attached to its bone — helmet on Head, etc.) | null
 //   idleClip      name of the animation clip to loop (default: first clip)
 //   height        CSS height for the stage (default 360px)
 //   autoRotate    turntable on/off (default true)
@@ -20,7 +22,7 @@ import { loadThree, canRender3D, assetUrl } from '../utils/three3d.js'
 //   fallback      VNode rendered when 3D can't run
 //   onFail        called once when 3D can't run/load, so the parent can swap
 //                 its whole layout (not just this slot) to the non-3D variant
-function Model3DViewer({ characterPath, weapon = null, idleClip = null, height = 360, autoRotate = true, className = '', fallback = null, onFail = null }) {
+function Model3DViewer({ characterPath, weapon = null, gear = null, idleClip = null, height = 360, autoRotate = true, className = '', fallback = null, onFail = null }) {
   const hostRef = useRef(null)
   const stateRef = useRef(null)      // holds three objects + disposed flag
   const [failed, setFailed] = useState(!canRender3D())
@@ -38,7 +40,7 @@ function Model3DViewer({ characterPath, weapon = null, idleClip = null, height =
     const host = hostRef.current
     const st = { disposed: false, raf: null, THREE: null, renderer: null, scene: null,
       camera: null, controls: null, mixer: null, clock: null, character: null,
-      weapon: null, weaponAnchor: null, bones: {}, ro: null }
+      weapon: null, weaponAnchor: null, gear: [], gearToken: 0, bones: {}, ro: null }
     stateRef.current = st
 
     loadThree().then(async ({ THREE, GLTFLoader, MeshoptDecoder, OrbitControls }) => {
@@ -96,6 +98,7 @@ function Model3DViewer({ characterPath, weapon = null, idleClip = null, height =
           st.mixer.clipAction(clip).play()
         }
         attachWeapon(st, weaponRef.current)
+        attachGearList(st, gearRef.current, root)
       }, undefined, () => { if (!cancelled) setFailed(true) })
 
       const renderLoop = () => {
@@ -151,6 +154,14 @@ function Model3DViewer({ characterPath, weapon = null, idleClip = null, height =
     if (st && st.character) attachWeapon(st, weapon)
   }, [weapon && JSON.stringify(weapon)])
 
+  // ── Gear: attach / swap armour pieces without rebuilding the scene ──
+  const gearRef = useRef(gear)
+  useEffect(() => {
+    gearRef.current = gear
+    const st = stateRef.current
+    if (st && st.character) attachGearList(st, gear, st.character)
+  }, [gear && JSON.stringify(gear)])
+
   if (failed) return fallback
 
   return <div ref={hostRef} class={`w-full overflow-hidden rounded-[14px] ${className}`} style={{ height: height + 'px' }} aria-label="3D character preview" />
@@ -183,6 +194,40 @@ function attachWeapon(st, weapon) {
       st.weapon = obj
       st.weaponAnchor = anchor
     })
+  }).catch(() => {})
+}
+
+// Load + attach the equipped armour GLBs (helmet on Head, etc.) — same cheap
+// swap + token-guard discipline as attachWeapon, shared by the equip-screen
+// viewer and the combat arena (their `st` both carry gear/gearToken/bones).
+export function attachGearList(st, gear, fallbackAnchor) {
+  if (!st || !st.THREE) return
+  for (const g of st.gear || []) { g.anchor.remove(g.obj); disposeObject(g.obj) }
+  st.gear = []
+  const token = (st.gearToken = (st.gearToken || 0) + 1)
+  const list = (gear || []).filter((p) => p && p.path)
+  if (!list.length) return
+  loadThree().then(async ({ THREE, GLTFLoader, MeshoptDecoder }) => {
+    if (st.disposed || token !== st.gearToken) return
+    const loader = new GLTFLoader()
+    loader.setMeshoptDecoder(MeshoptDecoder)
+    for (const piece of list) {
+      const url = await assetUrl(piece.path)
+      if (st.disposed || token !== st.gearToken) return
+      loader.load(url, (gltf) => {
+        if (st.disposed || token !== st.gearToken) return
+        const obj = gltf.scene
+        const anchor = (piece.bone && st.bones[piece.bone]) ? st.bones[piece.bone] : fallbackAnchor
+        if (!anchor) return
+        const [px, py, pz] = piece.position || [0, 0, 0]
+        const [rx, ry, rz] = piece.rotationDeg || [0, 0, 0]
+        obj.position.set(px, py, pz)
+        obj.rotation.set(THREE.MathUtils.degToRad(rx), THREE.MathUtils.degToRad(ry), THREE.MathUtils.degToRad(rz))
+        obj.scale.setScalar(typeof piece.scale === 'number' ? piece.scale : 1)
+        anchor.add(obj)
+        st.gear.push({ obj, anchor })
+      })
+    }
   }).catch(() => {})
 }
 
