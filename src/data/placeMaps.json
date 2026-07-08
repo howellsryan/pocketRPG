@@ -65,7 +65,7 @@
       {
         "kind": "quest",
         "label": "Quests Board",
-        "icon": "📜",
+        "iconKey": "quest_scroll_blue",
         "x": 235,
         "y": 500
       },
@@ -116,6 +116,13 @@
         "ref": "gnome",
         "x": 165,
         "y": 685
+      },
+      {
+        "kind": "skill",
+        "ref": "dungeoneering:dungeoneering_floor_1",
+        "label": "Dungeon Entrance",
+        "x": 880,
+        "y": 780
       }
     ]
   },
@@ -185,7 +192,7 @@
       {
         "kind": "quest",
         "label": "Quests Board",
-        "icon": "📜",
+        "iconKey": "quest_scroll_blue",
         "x": 230,
         "y": 230
       },
@@ -324,7 +331,7 @@
       {
         "kind": "quest",
         "label": "Quests Board",
-        "icon": "📜",
+        "iconKey": "quest_scroll_blue",
         "x": 750,
         "y": 540
       },
@@ -369,6 +376,13 @@
         "ref": "falador",
         "x": 660,
         "y": 610
+      },
+      {
+        "kind": "skill",
+        "ref": "dungeoneering:dungeoneering_floor_10",
+        "label": "Dungeon Entrance",
+        "x": 80,
+        "y": 420
       }
     ]
   },
@@ -418,7 +432,7 @@
       {
         "kind": "quest",
         "label": "Quests Board",
-        "icon": "📜",
+        "iconKey": "quest_scroll_blue",
         "x": 583,
         "y": 342
       },
@@ -524,6 +538,13 @@
         "ref": "ardougne",
         "x": 1105,
         "y": 522
+      },
+      {
+        "kind": "skill",
+        "ref": "dungeoneering:dungeoneering_floor_9",
+        "label": "Dungeon Entrance",
+        "x": 150,
+        "y": 480
       }
     ]
   },
@@ -579,7 +600,7 @@
       {
         "kind": "quest",
         "label": "Quests Board",
-        "icon": "📜",
+        "iconKey": "quest_scroll_blue",
         "x": 590,
         "y": 400
       },
@@ -624,6 +645,13 @@
         "ref": "taverley",
         "x": 1010,
         "y": 540
+      },
+      {
+        "kind": "skill",
+        "ref": "dungeoneering:dungeoneering_floor_4",
+        "label": "Dungeon Entrance",
+        "x": 980,
+        "y": 150
       }
     ]
   },
@@ -693,7 +721,7 @@
       {
         "kind": "quest",
         "label": "Quests Board",
-        "icon": "📜",
+        "iconKey": "quest_scroll_blue",
         "x": 560,
         "y": 700
       },
@@ -732,6 +760,13 @@
         "ref": "wraithgale_specter",
         "x": 150,
         "y": 300
+      },
+      {
+        "kind": "skill",
+        "ref": "dungeoneering:dungeoneering_floor_5",
+        "label": "Dungeon Entrance",
+        "x": 750,
+        "y": 780
       }
     ]
   },
@@ -795,7 +830,7 @@
       {
         "kind": "quest",
         "label": "Quests Board",
-        "icon": "📜",
+        "iconKey": "quest_scroll_blue",
         "x": 494,
         "y": 400
       },
@@ -834,6 +869,13 @@
         "ref": "shroudwraith_specter",
         "x": 200,
         "y": 520
+      },
+      {
+        "kind": "skill",
+        "ref": "dungeoneering:dungeoneering_floor_7",
+        "label": "Dungeon Entrance",
+        "x": 950,
+        "y": 550
       }
     ]
   },
@@ -890,7 +932,7 @@
       {
         "kind": "quest",
         "label": "Quests Board",
-        "icon": "📜",
+        "iconKey": "quest_scroll_blue",
         "x": 579,
         "y": 592
       },
@@ -929,6 +971,13 @@
         "ref": "wailing_banshee",
         "x": 856,
         "y": 296
+      },
+      {
+        "kind": "skill",
+        "ref": "dungeoneering:dungeoneering_floor_2",
+        "label": "Dungeon Entrance",
+        "x": 700,
+        "y": 450
       }
     ]
   },
@@ -985,7 +1034,7 @@
       {
         "kind": "quest",
         "label": "Quests Board",
-        "icon": "📜",
+        "iconKey": "quest_scroll_blue",
         "x": 460,
         "y": 470
       },
@@ -1093,7 +1142,7 @@
       {
         "kind": "quest",
         "label": "Quests Board",
-        "icon": "📜",
+        "iconKey": "quest_scroll_blue",
         "x": 362,
         "y": 400
       },
@@ -1189,7 +1238,7 @@
       {
         "kind": "quest",
         "label": "Quests Board",
-        "icon": "📜",
+        "iconKey": "quest_scroll_blue",
         "x": 592,
         "y": 300
       },
@@ -1289,7 +1338,7 @@
       {
         "kind": "quest",
         "label": "Quests Board",
-        "icon": "📜",
+        "iconKey": "quest_scroll_blue",
         "x": 546,
         "y": 592
       },
@@ -1328,6 +1377,13 @@
         "ref": "verdant_stalker",
         "x": 1053,
         "y": 395
+      },
+      {
+        "kind": "skill",
+        "ref": "dungeoneering:dungeoneering_floor_3",
+        "label": "Dungeon Entrance",
+        "x": 780,
+        "y": 330
       }
     ]
   },
@@ -1381,7 +1437,7 @@
       {
         "kind": "quest",
         "label": "Quests Board",
-        "icon": "📜",
+        "iconKey": "quest_scroll_blue",
         "x": 488,
         "y": 391
       },
@@ -1422,10 +1478,17 @@
       },
       {
         "kind": "skill",
-        "group": "woodcutting",
+        "refs": ["woodcutting:maple"],
         "label": "Old Grove",
         "x": 908,
         "y": 459
+      },
+      {
+        "kind": "skill",
+        "ref": "woodcutting:magic",
+        "label": "Magical Forest",
+        "x": 600,
+        "y": 700
       },
       {
         "facility": "furnace_anvil",
@@ -1444,6 +1507,13 @@
         "label": "Chapel Altar",
         "x": 630,
         "y": 420
+      },
+      {
+        "kind": "skill",
+        "ref": "dungeoneering:dungeoneering_floor_6",
+        "label": "Dungeon Entrance",
+        "x": 750,
+        "y": 650
       }
     ]
   },
@@ -1512,7 +1582,7 @@
       {
         "kind": "quest",
         "label": "Quests Board",
-        "icon": "📜",
+        "iconKey": "quest_scroll_blue",
         "x": 592,
         "y": 79
       },
@@ -1551,6 +1621,13 @@
         "ref": "thornhide_colossus",
         "x": 33,
         "y": 99
+      },
+      {
+        "kind": "skill",
+        "ref": "dungeoneering:dungeoneering_floor_8",
+        "label": "Dungeon Entrance",
+        "x": 400,
+        "y": 500
       }
     ]
   }

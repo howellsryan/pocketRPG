@@ -263,7 +263,7 @@ export default function AgilityScreen({ initialActionId, idleResult, onBack, onS
       producing={<>
         {coinIcon}
         <span class="text-[12px] font-semibold text-[var(--color-parchment)] opacity-60">Earning</span>
-        <span class="text-[13px] font-semibold text-[var(--color-gold-light)]">{agility.action.coinReward.toLocaleString()} / lap</span>
+        <span class="text-[13px] font-semibold text-[var(--color-gold-dim)]">{agility.action.coinReward.toLocaleString()} / lap</span>
       </>}
       stats={[
         { label: 'Laps completed', value: agility.totalLaps },

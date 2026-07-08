@@ -1053,11 +1053,14 @@ export function GameProvider({ children }) {
   // Confirm a travel prompt: begin travelling to the chosen place. The action that
   // triggered the prompt is embedded in the travel task as `autoStart` so arrival can
   // resume it automatically (start combat/skilling on reaching the place, even while
-  // idling). Manual map travel goes through WorldMapScreen's own createTravelTask call
-  // with no autoStart, so it still just lands at the destination.
-  const startTravelTo = useCallback((placeId) => {
+  // idling). `returnTo` ({ screen, data }) is the screen the player was on when they
+  // confirmed travel — carried the same way so arrival's back/stop buttons return
+  // there instead of a hardcoded destination. Manual map travel goes through
+  // WorldMapScreen's own createTravelTask call with no autoStart, so it still just
+  // lands at the destination.
+  const startTravelTo = useCallback((placeId, returnTo) => {
     const autoStart = autoStartFromTask(travelPromptRef.current?.task)
-    const task = createTravelTask(worldLocationRef.current, placeId, autoStart)
+    const task = createTravelTask(worldLocationRef.current, placeId, autoStart, returnTo)
     if (task) setActiveTask(task)
     setTravelPrompt(null)
   }, [setActiveTask])

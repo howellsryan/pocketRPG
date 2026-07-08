@@ -3,6 +3,8 @@ import { useState, useEffect, useRef } from 'preact/hooks'
 import { GameProvider, useGame } from './state/gameState.jsx'
 import { PvpProvider, usePvp } from './state/pvpState.jsx'
 import GameFrameBar from './components/GameFrameBar.jsx'
+import SideNav from './components/SideNav.jsx'
+import Header from './components/Header.jsx'
 import ToastContainer from './components/Toast.jsx'
 import XpDropOverlay from './components/XpDropOverlay.jsx'
 import SkillIcon from './components/SkillIcon.jsx'
@@ -320,7 +322,7 @@ function GameApp() {
   const { loaded, loadGame, player, stats, equipment, inventory, bank, currentHP, updateHP, getMaxHP, updateInventory, updateEquipment, updateBank, updateBankDirect, grantXP, addToast, activeTask, setActiveTask, getActiveTask, itemsData, getSnapshot, unlockedFeatures, setSlayerTask, awardSlayerPoints, slayerTasksCompleted, setSlayerTasksCompleted, completeQuest, completedQuests, questQueue, removeFromQuestQueue, updateQuestQueue,
     unlockMinigameItem, unlockedMinigameItems, awardDungeoneeringTokens, farming, updateFarming, idleCombatSetup, isOneLife, updateBossKillCounts, updateRaidKillCounts, syncServerKillCounts, markKillCountsLoaded, combatSkipHandlerRef, skipHourHandlerRef, chargeSkipRef, raidSkipHandlerRef,
     gameLocked, lockGame, unlockGame, runLockedSave, awaitCombatCompletion, resolveCombatCompletion,
-    characterUnlocks, dailyTaskStates, setDailyTasks, recordGameEvent, updateWorldLocation, worldLocation, clearActivityProgress } = useGame()
+    characterUnlocks, dailyTaskStates, setDailyTasks, recordGameEvent, updateWorldLocation, worldLocation, clearActivityProgress, requestActivityStart } = useGame()
   const pvp = usePvp()
   const [screen, setScreen] = useState(SCREENS.HOME)
   const prevScreenRef = useRef(null) // screen before the current one (set by navigate)
@@ -355,6 +357,7 @@ function GameApp() {
   const [credits, setCredits] = useState(0)
   const [showBuyCreditsModal, setShowBuyCreditsModal] = useState(false)
   const [showDailyTasksModal, setShowDailyTasksModal] = useState(false)
+  const [chatOpen, setChatOpen] = useState(false)
   const [dailyTaskDate, setDailyTaskDate] = useState(null)
   const [dailyTaskResetInMs, setDailyTaskResetInMs] = useState(0)
   // Set on mount if Stripe redirected back with a payment query/path — drives the
@@ -952,7 +955,7 @@ function GameApp() {
                 activeTaskRef.current = null
                 try { localStorage.removeItem('pocketrpg_activeTask') } catch {}
                 addToast(`🧭 Arrived at ${travelDestName(savedTask)}`, 'info')
-                resumeAutoStart(savedTask.autoStart)
+                resumeAutoStart(savedTask.autoStart, savedTask.returnTo)
               } else {
                 setActiveTask(adv.task)
                 activeTaskRef.current = adv.task
@@ -1398,7 +1401,7 @@ function GameApp() {
             try { localStorage.removeItem('pocketrpg_activeTask') } catch {}
             addToast(`🧭 Arrived at ${travelDestName(task)}`, 'info')
             if (!isInPvpMatch) schedulePushSave(getSnapshot())
-            resumeAutoStart(task.autoStart)
+            resumeAutoStart(task.autoStart, task.returnTo)
           }
         } else {
           setActiveTask({ ...task, ticksRemaining: remaining }, { skipCloudSync: true })
@@ -1846,6 +1849,12 @@ function GameApp() {
       notifyDemoLocked()
       return
     }
+    // Bank is location-gated like any other skill/combat start: a bank-less
+    // place opens the standard travel prompt instead of the screen. Safe to
+    // run on every navigate(BANK, ...) call, including the PlaceBankModal/
+    // resumeAutoStart ones that already know the player is standing at a
+    // bank — requestActivityStart is a no-op location check when so.
+    if (scr === SCREENS.BANK && !requestActivityStart({ type: 'bank' })) return
     // Remember where the player came from (screen id only — carrying the old
     // actionData back could re-fire its auto-start) so back/stop buttons can
     // return there.
@@ -1868,17 +1877,15 @@ function GameApp() {
   // screen with the same actionData a home shortcut would use, so the screen's existing
   // auto-start effect fires the fight/skilling immediately — even if the player idled
   // away on another screen while travelling.
-  // `returnTo` ({ screen, data }) rides the actionData when the start came from
-  // somewhere the player will want back to (the place map): the owning screen's
-  // back/stop buttons then return there instead of their own hardcoded list.
+  // `returnTo` ({ screen, data }) rides the actionData so the owning screen's back/stop
+  // buttons return to wherever the player actually came from, instead of a hardcoded
+  // destination: the travel task carries the screen (+ its actionData) the player was
+  // on when they confirmed travel (TravelPrompt's originScreen/originScreenData), or an
+  // explicit override from a direct place-map start (no travel needed — WorldMapScreen
+  // passes its own place view). Only truly origin-less starts (a persisted travel task
+  // from before this existed) fall back to the World Map's place view.
   const resumeAutoStart = (autoStart, returnTo) => {
     if (!autoStart || !autoStart.kind) return
-    // Every activity/skill screen started from the world (a place-map spot, the
-    // place hub list, or auto-resumed on arrival after travelling) sends its
-    // back/stop buttons back to the place the player is standing at, not the
-    // owning skill screen's own list (a dead end when entered directly). An
-    // explicit returnTo (e.g. a specific place-map view) still wins; the default
-    // only applies when the world map is the navigation model.
     const rt = returnTo || (isWorldMapEnabled() ? { screen: SCREENS.WORLD_MAP, data: { view: 'place' } } : undefined)
     const extra = rt ? { returnTo: rt } : {}
     switch (autoStart.kind) {
@@ -1893,6 +1900,7 @@ function GameApp() {
       case 'minigame': navigate(SCREENS.MINIGAMES, { minigameTaskId: autoStart.taskId, ...extra }); break
       // Slayer master reached: the Slayer screen assigns the master's task on mount.
       case 'slayer':   navigate(SCREENS.SKILLS, { skillId: 'slayer', masterId: autoStart.masterId, ...extra }); break
+      case 'bank':     navigate(SCREENS.BANK, rt ? { ...extra } : undefined); break
       case 'skill':
         if (autoStart.skill === 'magic') navigate(SCREENS.MAGIC, rt ? { ...extra } : undefined)
         else navigate(SCREENS.SKILLS, { skillId: autoStart.skill, actionId: autoStart.actionId, ...extra })
@@ -2323,7 +2331,7 @@ function GameApp() {
           updateWorldLocation(task.dest)
           clearPersistedActiveTask()
           addToast(`🧭 Arrived at ${travelDestName(task)}`, 'info')
-          resumeAutoStart(task.autoStart)
+          resumeAutoStart(task.autoStart, task.returnTo)
         } else {
           let budgetMs = SKIP_HOUR_MS
           let cur = task
@@ -2793,11 +2801,11 @@ function GameApp() {
       case SCREENS.EQUIPMENT: return <EquipmentScreen />
       case SCREENS.ARMOURY:   return <ArmouryScreen onBack={backToPrev} />
       case SCREENS.BANK:      return <BankScreen onBack={returnNav || backToPrev} />
-      case SCREENS.COMBAT:    return <CombatScreen onNavigate={navigate} initialMonsterId={actionData?.monsterId} initialRaidId={actionData?.raidId} onCombatStatusChange={setIsInCombat} onBack={returnNav} onStopBack={stopBackNav} />
-      case SCREENS.SKILLS:    return <SkillingScreen initialSkillId={actionData?.skillId} initialActionId={actionData?.actionId} initialMasterId={actionData?.masterId} initialLocationId={actionData?.locationId} idleResult={idleResult} onNavigate={navigate} onBack={returnNav} onStopBack={stopBackNav} />
-      case SCREENS.GATHER:    return <GatherScreen initialTaskId={actionData?.gatherTaskId} idleResult={idleResult} onBack={returnNav} onStopBack={stopBackNav} />
-      case SCREENS.AGILITY:     return <AgilityScreen initialActionId={actionData?.actionId} idleResult={idleResult} onBack={returnNav} onStopBack={stopBackNav} />
-      case SCREENS.MAGIC:       return <MagicScreen onNavigate={navigate} onBack={returnNav} onStopBack={stopBackNav} />
+      case SCREENS.COMBAT:    return <CombatScreen onNavigate={navigate} initialMonsterId={actionData?.monsterId} initialRaidId={actionData?.raidId} onCombatStatusChange={setIsInCombat} onBack={stopBackNav} onStopBack={stopBackNav} />
+      case SCREENS.SKILLS:    return <SkillingScreen initialSkillId={actionData?.skillId} initialActionId={actionData?.actionId} initialMasterId={actionData?.masterId} initialLocationId={actionData?.locationId} idleResult={idleResult} onNavigate={navigate} onBack={stopBackNav} onStopBack={stopBackNav} />
+      case SCREENS.GATHER:    return <GatherScreen initialTaskId={actionData?.gatherTaskId} idleResult={idleResult} onBack={stopBackNav} onStopBack={stopBackNav} />
+      case SCREENS.AGILITY:     return <AgilityScreen initialActionId={actionData?.actionId} idleResult={idleResult} onBack={stopBackNav} onStopBack={stopBackNav} />
+      case SCREENS.MAGIC:       return <MagicScreen onNavigate={navigate} onBack={stopBackNav} onStopBack={stopBackNav} />
       case SCREENS.WORLD_MAP:   return isWorldMapEnabled() ? <WorldMapScreen onNavigate={navigate} onAutoStart={resumeAutoStart} initialView={actionData?.view} /> : <HomeScreen onNavigate={navigate} onLogout={handleLogoutToCharacterSelect} onManualSave={handleManualSave} isCloudAccount={!!getToken() && !!getCharacterId()} removeAds={removeAds} identityId={identityId} characterId={getCharacterId()} stripeLinks={stripeLinks} />
       case SCREENS.STORE:       return <TradingPostScreen onBack={backToPrev} />
       case SCREENS.QUESTS:         return <QuestsScreen onNavigate={navigate} onBack={stopBackNav} />
@@ -2823,29 +2831,39 @@ function GameApp() {
 
   const isCloudAccount = !!getToken() && !!getCharacterId()
 
-  // Skip button mode for the frame bar's skip button.
+  // Skip button mode — shared by the desktop Header and the mobile frame bar.
   const skipMode = activeTask?.type === 'combat' && (activeTask?.monster?.boss === true || activeTask?.raid === true) ? 'kill' : 'hour'
   const raidSkipCost = activeTask?.type === 'combat' && activeTask?.raidId ? (raidsData[activeTask.raidId]?.skipCost ?? 1) : null
 
   return (
-    <div class="h-full flex flex-col">
-      {/* gf-shell/gf-main: carved-wood chrome around the frame rails + content
-          panel (index.css) — the app chrome at every viewport width. */}
+    <div class="h-full flex flex-col md:flex-row">
+      <SideNav
+        active={screen}
+        onNavigate={(s) => navigate(s)}
+        isInCombat={isInPvpMatch}
+        demo={demoMode}
+        lockedScreens={CLOUD_ONLY_SCREENS}
+        onDisabledClick={() => addToast('⚔️ Cannot navigate during PvP combat!', 'warning')}
+        onLockedClick={notifyDemoLocked}
+      />
+      {/* gf-shell/gf-main: mobile-only carved-wood chrome around the frame
+          rails + content panel (index.css); inert at md and up. */}
       <div class="gf-shell flex-1 flex flex-col min-w-0 min-h-0">
-        {/* OSRS-style frame: icon rails above and below the content panel are
-            the whole navigation chrome — screens keep their own desktop layouts. */}
+        <Header credits={credits} isCloudAccount={isCloudAccount} demo={demoMode} onLockedFeature={notifyDemoLocked} onSkip1h={isCloudAccount ? handleSkip1h : null} onBuyCredits={() => setShowBuyCreditsModal(true)} onDailyTasks={() => setShowDailyTasksModal(true)} dailyTasksCompleted={(dailyTaskStates || []).filter(t => t.completed).length} dailyTasksTotal={5} skipMode={skipMode} raidSkipCost={raidSkipCost} />
+        {/* OSRS-style mobile frame: icon rails above and below the content
+            panel replace the SideNav/Header chrome on small screens. */}
         <GameFrameBar position="top" active={screen} onNavigate={(s) => navigate(s)} isInCombat={isInPvpMatch} onDisabledClick={() => addToast('⚔️ Cannot navigate during PvP combat!', 'warning')} demo={demoMode} lockedScreens={CLOUD_ONLY_SCREENS} onLockedClick={notifyDemoLocked} onLockedFeature={notifyDemoLocked} />
         <ToastContainer />
-        <TravelPrompt onNavigate={navigate} />
+        <TravelPrompt onNavigate={navigate} originScreen={screen} originScreenData={actionData} />
         <main class="gf-main flex-1 overflow-hidden">
           {renderScreen()}
         </main>
-        <GameFrameBar position="bottom" active={screen} onNavigate={(s) => navigate(s)} isInCombat={isInPvpMatch} onDisabledClick={() => addToast('⚔️ Cannot navigate during PvP combat!', 'warning')} demo={demoMode} lockedScreens={CLOUD_ONLY_SCREENS} onLockedClick={notifyDemoLocked} onLockedFeature={notifyDemoLocked} onBuyCredits={() => setShowBuyCreditsModal(true)} credits={credits} isCloudAccount={isCloudAccount} onSkip1h={isCloudAccount ? handleSkip1h : null} skipMode={skipMode} raidSkipCost={raidSkipCost} onDailyTasks={() => setShowDailyTasksModal(true)} dailyTasksCompleted={(dailyTaskStates || []).filter(t => t.completed).length} dailyTasksTotal={5} />
+        <GameFrameBar position="bottom" active={screen} onNavigate={(s) => navigate(s)} isInCombat={isInPvpMatch} onDisabledClick={() => addToast('⚔️ Cannot navigate during PvP combat!', 'warning')} demo={demoMode} lockedScreens={CLOUD_ONLY_SCREENS} onLockedClick={notifyDemoLocked} onLockedFeature={notifyDemoLocked} onBuyCredits={() => setShowBuyCreditsModal(true)} credits={credits} isCloudAccount={isCloudAccount} onSkip1h={isCloudAccount ? handleSkip1h : null} skipMode={skipMode} raidSkipCost={raidSkipCost} onDailyTasks={() => setShowDailyTasksModal(true)} dailyTasksCompleted={(dailyTaskStates || []).filter(t => t.completed).length} dailyTasksTotal={5} onOpenChat={() => setChatOpen(true)} />
       </div>
       <XpDropOverlay />
       <RewardRevealOverlay />
       <LevelUpOverlay />
-      <ChatWidget isCloudAccount={isCloudAccount && !demoMode} />
+      <ChatWidget isCloudAccount={isCloudAccount && !demoMode} open={chatOpen} onOpenChange={setChatOpen} />
 
       {/* Game-lock overlay — shown for the WHOLE of any durable-save operation
           (manual save, skip-hour/quest, boss skip, raid skip), not just the
@@ -3185,6 +3203,7 @@ function GameApp() {
           identityId={identityId}
           characterId={getCharacterId()}
           stripeLinks={stripeLinks}
+          credits={credits}
         />
       )}
 

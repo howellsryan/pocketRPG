@@ -1,12 +1,15 @@
 import GameIcon from './GameIcon.jsx'
-import { GAME_FRAME_TOP_TABS, GAME_FRAME_TOP_LEFT_TABS, GAME_FRAME_BOTTOM_LEFT_TABS } from './navTabs.js'
+import { GAME_FRAME_TOP_TABS, GAME_FRAME_BOTTOM_LEFT_TABS, GAME_FRAME_BOTTOM_RIGHT_TABS } from './navTabs.js'
 
-// OSRS-style chrome: gold medallion rails framing the main content panel,
-// drawn into the carved-wood shell (.gf-shell / .gf-main in index.css).
-// Top rail: Home · World Map · Inventory · Equipment. Bottom rail: Settings ·
-// Daily Tasks + Credits + Skip (centered). The app's only navigation chrome at
-// every viewport width — rails cap at max-w-xl so the medallions keep their
-// phone spacing on desktop while the content panel stays full width.
+// OSRS-style mobile chrome: gold medallion rails framing the main content
+// panel, drawn into the carved-wood shell (.gf-shell / .gf-main in index.css).
+// Top rail: World Map · Bank · Combat · Inventory · Equipment. Bottom rail:
+// Settings + Adventures (left) · Daily Tasks + Credits + Skip (centered) ·
+// Home + Game Helper (right, cloud accounts only). `justify-evenly` (matching
+// the top rail) with two medallions on each flank keeps the centered group
+// exactly centered regardless of container width. Mobile-only (md:hidden) —
+// desktop uses SideNav + Header with the same destinations, and the chat
+// helper keeps its own floating button there (see ChatWidget.jsx).
 function FrameMedallion({ label, active = false, disabled = false, locked = false, onClick, title, children }) {
   return (
     <button
@@ -41,6 +44,7 @@ export default function GameFrameBar({
   onDailyTasks = null,
   dailyTasksCompleted = 0,
   dailyTasksTotal = 5,
+  onOpenChat = null,
 }) {
   const navMedallion = (tab) => {
     const isLocked = demo && lockedScreens?.has(tab.id)
@@ -72,21 +76,22 @@ export default function GameFrameBar({
     return (
       <nav
         aria-label="Quick actions"
-        class="pwa-header flex items-center justify-evenly flex-shrink-0 px-3 pt-3 pb-1 w-full max-w-xl mx-auto"
+        class="pwa-header md:hidden flex items-center justify-evenly flex-shrink-0 px-3 pt-3 pb-1 w-full max-w-xl mx-auto"
       >
-        {GAME_FRAME_TOP_LEFT_TABS.map(navMedallion)}
         {GAME_FRAME_TOP_TABS.map(navMedallion)}
       </nav>
     )
   }
 
+  const chatVisible = isCloudAccount && !demo
+
   return (
     <nav
       aria-label="Menu"
-      class="flex items-center justify-between flex-shrink-0 px-3 pt-2 pb-safe w-full max-w-xl mx-auto"
+      class="md:hidden flex items-center justify-evenly flex-shrink-0 px-3 pt-2 pb-safe w-full max-w-xl mx-auto"
     >
       {GAME_FRAME_BOTTOM_LEFT_TABS.map(navMedallion)}
-      <span class="flex-1 flex items-center justify-center gap-1">
+      <span class="flex items-center justify-center gap-1">
         {(isCloudAccount || demo) && (
           <button
             onClick={() => { if (demo) onLockedFeature?.(); else onDailyTasks?.() }}
@@ -94,9 +99,11 @@ export default function GameFrameBar({
             title={demo ? 'Daily Tasks are available with a free account' : 'Daily Tasks'}
             class={`gf-credits ${demo ? 'gf-medallion--locked' : ''}`}
           >
-            <span class="text-[16px] leading-none">{demo ? '🔒' : '📋'}</span>
-            <span style={demo ? undefined : { color: dailyTasksCompleted === dailyTasksTotal ? 'var(--color-gold)' : undefined }}>
-              {demo ? '—' : `${dailyTasksCompleted}/${dailyTasksTotal}`}
+            <span
+              class="text-[16px] leading-none"
+              style={demo ? undefined : { color: dailyTasksCompleted === dailyTasksTotal ? 'var(--color-gold)' : undefined }}
+            >
+              {demo ? '🔒' : '📋'}
             </span>
           </button>
         )}
@@ -104,13 +111,12 @@ export default function GameFrameBar({
           <button
             onClick={() => { if (demo) onLockedFeature?.(); else onBuyCredits?.() }}
             aria-label="Credits"
-            title={demo ? 'Credits are available with a free account' : 'Buy credits'}
+            title={demo ? 'Credits are available with a free account' : `Buy credits (current: ${credits.toLocaleString()})`}
             class={`gf-credits ${demo ? 'gf-medallion--locked' : ''}`}
           >
             {demo
               ? <span class="text-[16px] leading-none">🔒</span>
               : <GameIcon iconKey="cut_diamond" size={20} color="#f0c040" />}
-            <span>{demo ? '—' : credits.toLocaleString()}</span>
           </button>
         )}
         <button
@@ -124,10 +130,12 @@ export default function GameFrameBar({
             : <GameIcon iconKey="fast_forward_button" size={20} color="#d9b45a" />}
         </button>
       </span>
-      {/* Mirrors the Settings medallion's width so the centered group sits
-          equidistant from Settings and the floating chat button (fixed at the
-          same inset on the other edge) instead of drifting toward one side. */}
-      <span class="w-12 flex-shrink-0" aria-hidden="true" />
+      {GAME_FRAME_BOTTOM_RIGHT_TABS.map(navMedallion)}
+      {chatVisible && (
+        <FrameMedallion label="Game Helper" onClick={onOpenChat} title="Game Helper">
+          <GameIcon iconKey="chat_bubble" size={20} color="#efe3c2" />
+        </FrameMedallion>
+      )}
     </nav>
   )
 }

@@ -21,6 +21,7 @@ import { formatNumber } from '../utils/helpers.js'
 import { getHighAlchValue } from '../utils/itemValue.js'
 import { formatActionDuration } from '../utils/formatters.js'
 import { calculateDungeoneeringTokensForAction, getDungeoneeringRewardCost, canAffordDungeoneeringReward } from '../engine/dungeoneeringTokens.js'
+import { activityLocationLabel } from '../engine/worldContent.js'
 import { api, getToken, getCharacterId } from '../cloud/api.js'
 import skillsData from '../data/skills.json'
 import itemsData from '../data/items.json'
@@ -259,20 +260,21 @@ export default function SkillingScreen({ initialSkillId, initialActionId, initia
               const fromBank = qty - fromInv
               if (fromInv > 0) removeItem(newInv, matId, fromInv)
               if (fromBank > 0) bankUpdates[matId] = -fromBank
-              // Track consumed materials
-              skillingState.consumedMaterials[matId] = (skillingState.consumedMaterials[matId] || 0) + qty
             }
             if (Object.keys(bankUpdates).length > 0) updateBankDirect(bankUpdates)
 
-            // After consuming, check if we can do ANOTHER action
+            // After consuming, check if we can do ANOTHER action. Use the
+            // post-consumption inventory/bank directly — newInv already
+            // reflects this action's consumption, and bankUpdates holds this
+            // tick's pending bank deltas, so there's no need to (and must
+            // not) also subtract the cumulative consumedMaterials total on
+            // top of that, which double-counts past consumption and stops
+            // the action at roughly half the true available materials.
             let canContinue = true
             for (const [matId, qtyNeeded] of Object.entries(action.materials)) {
               const invCount = countItem(newInv, matId)
-              const bankCount = bankRef.current[matId]?.quantity || 0
-              const totalConsumed = skillingState.consumedMaterials[matId] || 0
-              const totalAvailable = inventoryRef.current.reduce((sum, slot) => sum + (slot?.itemId === matId ? (slot?.quantity || 0) : 0), 0) + (bankRef.current[matId]?.quantity || 0)
-              const projectedAfterConsume = totalAvailable - totalConsumed - qtyNeeded
-              if (projectedAfterConsume < 0) {
+              const bankCount = (bankRef.current[matId]?.quantity || 0) + (bankUpdates[matId] || 0)
+              if (invCount + bankCount < qtyNeeded) {
                 canContinue = false
                 break
               }
@@ -806,6 +808,10 @@ export default function SkillingScreen({ initialSkillId, initialActionId, initia
             // missing materials/runes/items/tokens (the row still explains why).
             const levelLocked = action.level > skillLevel
             const remaining = calculateRemainingActions(action, inventory, bank)
+            // Facility-bound skills (smithing/cooking/prayer/magic/etc.) return null —
+            // they're offered at every place with the matching building, so no single
+            // location would be accurate.
+            const locationLabel = activityLocationLabel('skill', `${selectedSkill}:${action.id}`)
             const meta = isDungeoneeringReward
               ? <><span class="text-[var(--color-gold)] font-bold opacity-100">Lv {action.level}</span> · Cost: {formatNumber(rewardCost)} tokens
                   {rowEnabled === false && skillLevel >= action.level && <span class="block text-[var(--color-blood-ember)] mt-1">Need {formatNumber(rewardCost)} tokens</span>}
@@ -818,6 +824,7 @@ export default function SkillingScreen({ initialSkillId, initialActionId, initia
                     : formatActionDuration(action.ticks)}
                   {remaining !== null && <span class="text-[var(--color-gold)]"> · {remaining.toLocaleString()} actions</span>}
                   {action.runeReq && <span> · Runes: {Object.entries(action.runeReq).map(([id, qty]) => `${itemsData[id]?.name || id} ×${qty}`).join(', ')}</span>}
+                  {locationLabel && <span class="block opacity-60 mt-1">📍 {locationLabel}</span>}
                   {action.itemReq && !hasItems && <span class="block text-[var(--color-blood-ember)] mt-1">✨ Needs: {action.itemReq.map(id => itemsData[id]?.name || id).join(' or ')}</span>}
                   {action.runeReq && !hasRunes && <span class="block text-[var(--color-blood-ember)] mt-1">🔮 Missing runes (or equip staff)</span>}
                   {requiresGildedAltarConstruction && !meetsGildedAltarConstruction && <span class="block text-[var(--color-blood-ember)] mt-1">🏠 Requires Construction level 75</span>}
@@ -974,7 +981,7 @@ Shop value: ×1.1
       producing={producedItem && <>
         <GameIcon item={producedItem} size={32} />
         <span class="text-[12px] font-semibold text-[var(--color-parchment)] opacity-60">Producing</span>
-        <span class="text-[13px] font-semibold text-[var(--color-gold-light)]">{producedItem.name}</span>
+        <span class="text-[13px] font-semibold text-[var(--color-gold-dim)]">{producedItem.name}</span>
       </>}
       stats={sessionStats}
       footer={isGathering ? {

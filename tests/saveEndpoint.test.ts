@@ -404,4 +404,20 @@ describe('PUT /api/save existing guards stay intact', () => {
     expect(body.code).toBe('TOTAL_LEVEL_REGRESSION')
     expect(batches).toHaveLength(0)
   })
+
+  it('rejects a bank wipe (substantial bank → empty, total level unchanged)', async () => {
+    const bigBank: Record<string, { itemId: string; quantity: number }> = {}
+    for (let i = 0; i < 20; i++) bigBank[`item_${i}`] = { itemId: `item_${i}`, quantity: i + 1 }
+    const stored = JSON.stringify(baseSave({ bank: bigBank }))
+    // Same stats (total level unchanged, so the level guard passes), bank gone.
+    const incoming = JSON.stringify(baseSave({ bank: {} }))
+    const { env, batches } = makeEnv({ existingSaveData: stored })
+    const res = await onRequestPut({ request: makePut({ save_data: incoming, save_revision: 7 }), env } as any)
+    expect(res.status).toBe(409)
+    const body = await res.json()
+    expect(body.code).toBe('BANK_WIPE_REJECTED')
+    expect(body.previous_bank_items).toBe(20)
+    expect(body.next_bank_items).toBe(0)
+    expect(batches).toHaveLength(0)
+  })
 })

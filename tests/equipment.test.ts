@@ -8,7 +8,8 @@ import {
   getEquipmentBonuses,
   getAttackSpeed,
   getAttackStyle,
-  getCombatType
+  getCombatType,
+  placeUnequippedItems
 } from '../src/engine/equipment.js'
 
 // Mock items data structure
@@ -226,6 +227,63 @@ describe('Equipment System', () => {
       const invalidItem = { id: 'invalid', slot: 'nonexistent' }
       const result = equipItem(equipment, invalidItem, mockItemsData)
       expect(result.equipped).toBe(false)
+    })
+  })
+
+  describe('placeUnequippedItems (full-inventory weapon switch)', () => {
+    it('places a single displaced weapon into the slot the newly-equipped item vacated', () => {
+      equipItem(equipment, mockItemsData['sword'], mockItemsData)
+      // Inventory is completely full except the slot the new weapon came from.
+      const inventory = new Array(28).fill({ itemId: 'helmet', quantity: 1 })
+      inventory[5] = null
+
+      const result = equipItem(equipment, mockItemsData['2h_sword'], mockItemsData)
+      // Only the old sword is displaced (no shield was worn), so it fits in the one freed slot.
+      const placed = placeUnequippedItems(result.unequipped, inventory, mockItemsData)
+
+      expect(placed.ok).toBe(true)
+      expect(placed.inventory.some(s => s && s.itemId === 'sword')).toBe(true)
+    })
+
+    it('fails without mutating inventory when a 2H weapon swap displaces both a shield and the old weapon and only one slot is free', () => {
+      // Regression test: switching to a 2H weapon while a 1H weapon + shield are
+      // both worn displaces TWO items, but only one inventory slot is freed (the
+      // slot the new weapon itself came from) — production bug where the second
+      // displaced item (the old weapon) was silently deleted.
+      equipItem(equipment, mockItemsData['sword'], mockItemsData)
+      equipItem(equipment, mockItemsData['shield'], mockItemsData)
+
+      const inventory = new Array(28).fill({ itemId: 'helmet', quantity: 1 })
+      inventory[10] = null // the only free slot, vacated by the 2H sword being equipped
+
+      const result = equipItem(equipment, mockItemsData['2h_sword'], mockItemsData)
+      expect(result.equipped).toBe(true)
+      expect(result.unequipped.length).toBe(2) // shield + old sword
+
+      const placed = placeUnequippedItems(result.unequipped, inventory, mockItemsData)
+
+      expect(placed.ok).toBe(false)
+      // Caller must abort the whole swap on failure — verify the helper never
+      // mutates the array it was handed, so nothing is lost if the caller bails.
+      expect(inventory[10]).toBeNull()
+      expect(inventory.filter(s => s && s.itemId === 'sword').length).toBe(0)
+      expect(inventory.filter(s => s && s.itemId === 'shield').length).toBe(0)
+    })
+
+    it('merges a displaced stackable item into an existing stack without consuming a free slot', () => {
+      const stackableAmmo = { ...mockItemsData['arrow'], stackable: true }
+      const itemsWithStackable = { ...mockItemsData, arrow: stackableAmmo }
+      equipment.ammo = { itemId: 'arrow', quantity: 5 }
+
+      const inventory = new Array(28).fill({ itemId: 'helmet', quantity: 1 })
+      inventory[0] = { itemId: 'arrow', quantity: 10 }
+      // no null slots at all — a merge must not require one
+
+      const unequipped = [{ itemId: 'arrow', quantity: 5 }]
+      const placed = placeUnequippedItems(unequipped, inventory, itemsWithStackable)
+
+      expect(placed.ok).toBe(true)
+      expect(placed.inventory[0].quantity).toBe(15)
     })
   })
 

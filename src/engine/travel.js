@@ -19,7 +19,7 @@ const TRAVEL_TICK_MS = 600
  * Build a travel task from `from` to `to`, or null if the trip is impossible /
  * pointless (unknown/unreachable destination, or already there).
  */
-export function createTravelTask(from, to, autoStart = null) {
+export function createTravelTask(from, to, autoStart = null, returnTo = null) {
   const start = normaliseLocation(from)
   if (start === to) return null
   const res = shortestPath(start, to)
@@ -35,6 +35,10 @@ export function createTravelTask(from, to, autoStart = null) {
   // Optional resumable action to fire on arrival (set when a gated activity start sent
   // the player travelling). Rides the persisted task so it survives idle/tab-return.
   if (autoStart) task.autoStart = autoStart
+  // Screen the player was on when this trip started (`{ screen, data }`) — arrival
+  // hands it to the resumed screen's back/stop buttons instead of a hardcoded
+  // destination, so they return to wherever the player actually came from.
+  if (returnTo) task.returnTo = returnTo
   return task
 }
 

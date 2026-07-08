@@ -1,6 +1,7 @@
 import { useState } from 'preact/hooks'
 import Modal from './Modal.jsx'
 import GameIcon from './GameIcon.jsx'
+import ActivityIcon from './ActivityIcon.jsx'
 import { useGame } from '../state/gameState.jsx'
 import { describeActivity, activityGroupLabel, activityLockReason } from '../engine/worldContent.js'
 import { checkQuestEligibility, formatQuestDuration } from '../engine/quests.js'
@@ -8,7 +9,8 @@ import { COMPLEXITY_COLORS } from '../utils/complexityColors.js'
 import questsData from '../data/quests.json'
 
 // Quest/minigame rows use the real scroll art (matches the Adventures screens)
-// instead of an emoji glyph — every other kind keeps its plain emoji.
+// instead of a per-instance icon — every other kind shows the specific
+// action's own icon (ActivityIcon: reward item / data iconKey / skill emblem).
 const KIND_ICON_KEY = { quest: 'quest_scroll_blue', minigame: 'minigame_scroll_red' }
 
 /**
@@ -79,7 +81,7 @@ export default function ActivityPickerModal({ kind, refs, label, onClose, onActi
                   <span class="wm-actmodal-row__icon">
                     {lock?.completed
                       ? '✅'
-                      : kindIconKey ? <GameIcon iconKey={kindIconKey} size={20} /> : d.icon}
+                      : kindIconKey ? <GameIcon iconKey={kindIconKey} size={20} /> : <ActivityIcon kind={kind} actionRef={ref} desc={d} size={20} />}
                   </span>
                   <span class="wm-actmodal-row__name">{d.name}</span>
                   {lockChip
