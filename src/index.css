@@ -2657,7 +2657,7 @@ html, body, #app {
   background: var(--color-void); border: 1px solid var(--color-gold-dim); color: var(--color-parchment); }
 .wm-tp-option:hover { border-color: var(--color-gold); background: var(--color-void-border); }
 .wm-tp-place { font-family: var(--font-display); font-weight: 600; font-size: 15px; }
-.wm-tp-ticks { font-family: var(--font-mono); font-size: 13px; color: var(--color-gold-light); }
+.wm-tp-ticks { font-family: var(--font-mono); font-size: 13px; color: var(--color-gold-dim); }
 .wm-tp-cancel { min-height: 44px; padding: 10px 14px; border-radius: 8px; cursor: pointer;
   background: transparent; border: 1px solid var(--color-void-border); color: var(--color-parchment-dark); }
 .wm-tp-cancel:hover { color: var(--color-parchment); border-color: var(--color-parchment-dark); }

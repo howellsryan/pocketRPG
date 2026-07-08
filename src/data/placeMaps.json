@@ -116,6 +116,14 @@
         "ref": "gnome",
         "x": 165,
         "y": 685
+      },
+      {
+        "kind": "skill",
+        "ref": "dungeoneering:dungeoneering_floor_1",
+        "label": "Dungeon Entrance",
+        "iconKey": "dungeon_gate",
+        "x": 880,
+        "y": 780
       }
     ]
   },
@@ -195,14 +203,6 @@
         "label": "Runic Sanctum",
         "x": 625,
         "y": 320
-      },
-      {
-        "kind": "skill",
-        "group": "dungeoneering",
-        "label": "Dungeoneering Guild",
-        "iconKey": "dungeon_gate",
-        "x": 850,
-        "y": 420
       },
       {
         "kind": "skill",
@@ -377,6 +377,14 @@
         "ref": "falador",
         "x": 660,
         "y": 610
+      },
+      {
+        "kind": "skill",
+        "ref": "dungeoneering:dungeoneering_floor_10",
+        "label": "Dungeon Entrance",
+        "iconKey": "dungeon_gate",
+        "x": 80,
+        "y": 420
       }
     ]
   },
@@ -532,6 +540,14 @@
         "ref": "ardougne",
         "x": 1105,
         "y": 522
+      },
+      {
+        "kind": "skill",
+        "ref": "dungeoneering:dungeoneering_floor_9",
+        "label": "Dungeon Entrance",
+        "iconKey": "dungeon_gate",
+        "x": 150,
+        "y": 480
       }
     ]
   },
@@ -632,6 +648,14 @@
         "ref": "taverley",
         "x": 1010,
         "y": 540
+      },
+      {
+        "kind": "skill",
+        "ref": "dungeoneering:dungeoneering_floor_4",
+        "label": "Dungeon Entrance",
+        "iconKey": "dungeon_gate",
+        "x": 980,
+        "y": 150
       }
     ]
   },
@@ -740,6 +764,14 @@
         "ref": "wraithgale_specter",
         "x": 150,
         "y": 300
+      },
+      {
+        "kind": "skill",
+        "ref": "dungeoneering:dungeoneering_floor_5",
+        "label": "Dungeon Entrance",
+        "iconKey": "dungeon_gate",
+        "x": 750,
+        "y": 780
       }
     ]
   },
@@ -842,6 +874,14 @@
         "ref": "shroudwraith_specter",
         "x": 200,
         "y": 520
+      },
+      {
+        "kind": "skill",
+        "ref": "dungeoneering:dungeoneering_floor_7",
+        "label": "Dungeon Entrance",
+        "iconKey": "dungeon_gate",
+        "x": 950,
+        "y": 550
       }
     ]
   },
@@ -937,6 +977,14 @@
         "ref": "wailing_banshee",
         "x": 856,
         "y": 296
+      },
+      {
+        "kind": "skill",
+        "ref": "dungeoneering:dungeoneering_floor_2",
+        "label": "Dungeon Entrance",
+        "iconKey": "dungeon_gate",
+        "x": 700,
+        "y": 450
       }
     ]
   },
@@ -1336,6 +1384,14 @@
         "ref": "verdant_stalker",
         "x": 1053,
         "y": 395
+      },
+      {
+        "kind": "skill",
+        "ref": "dungeoneering:dungeoneering_floor_3",
+        "label": "Dungeon Entrance",
+        "iconKey": "dungeon_gate",
+        "x": 780,
+        "y": 330
       }
     ]
   },
@@ -1436,6 +1492,13 @@
         "y": 459
       },
       {
+        "kind": "skill",
+        "ref": "woodcutting:magic",
+        "label": "Blue Forest",
+        "x": 830,
+        "y": 500
+      },
+      {
         "facility": "furnace_anvil",
         "label": "Grand Smithy",
         "x": 322,
@@ -1452,6 +1515,14 @@
         "label": "Chapel Altar",
         "x": 630,
         "y": 420
+      },
+      {
+        "kind": "skill",
+        "ref": "dungeoneering:dungeoneering_floor_6",
+        "label": "Dungeon Entrance",
+        "iconKey": "dungeon_gate",
+        "x": 750,
+        "y": 650
       }
     ]
   },
@@ -1559,6 +1630,14 @@
         "ref": "thornhide_colossus",
         "x": 33,
         "y": 99
+      },
+      {
+        "kind": "skill",
+        "ref": "dungeoneering:dungeoneering_floor_8",
+        "label": "Dungeon Entrance",
+        "iconKey": "dungeon_gate",
+        "x": 400,
+        "y": 500
       }
     ]
   }

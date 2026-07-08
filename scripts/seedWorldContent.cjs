@@ -132,6 +132,13 @@ for (const skillId of LEVEL_BAND_SKILLS) {
 }
 distribute('skill', skillItems, out)
 
+// Magic trees also grow in Camlann's own blue forest, alongside wherever the
+// level-band distribution above placed them — a deliberate second grove, not
+// a replacement (worldActivities.json lists a ref at every place that offers
+// it, so both stay startable).
+out.camlann = out.camlann || []
+out.camlann.push({ kind: 'skill', ref: 'woodcutting:magic' })
+
 // Agility — authored 1:1 to its namesake world city (rooftop courses are renamed to
 // match the city they sit above), matching OSRS course levels. Not level-banded.
 const AGILITY_PLACEMENT = {
@@ -201,18 +208,15 @@ distribute('thieving', thievingItems, out)
 // Hunter — own kind, level-banded.
 distribute('hunter', asArray(skills.hunter?.actions).map((a) => ({ ref: a.id, level: a.level ?? 1 })), out)
 
-// Dungeoneering — authored 1:1 to a fixed venue, like agility/minigames (dungeon
-// delving isn't tied to any city's level band): every floor lives at the same
-// place, defaulting to the flagship city (mirrors RAID_DEFAULT_CITY — the same
-// "no specific namesake" fallback raids use). Reward actions (spending tokens on
+// Dungeoneering — level-banded like mining/woodcutting/fishing/runecraft: each
+// floor is its own dungeon entrance, spread across places by level so low
+// floors sit near the start and the deepest ones land in the cities, instead
+// of piling the whole skill onto one venue. Reward actions (spending tokens on
 // gear) are excluded — SkillingScreen resolves those as an instant token spend
 // before it ever calls requestActivityStart, so they're never location-gated.
-const DUNGEONEERING_PLACE = 'varrick'
-for (const a of asArray(skills.dungeoneering?.actions).filter((a) => a.category !== 'reward')) {
-  const placeId = world.places[DUNGEONEERING_PLACE] ? DUNGEONEERING_PLACE : placesOrdered[0]
-  out[placeId] = out[placeId] || []
-  out[placeId].push({ kind: 'skill', ref: `dungeoneering:${a.id}` })
-}
+distribute('skill', asArray(skills.dungeoneering?.actions)
+  .filter((a) => a.category !== 'reward')
+  .map((a) => ({ ref: `dungeoneering:${a.id}`, level: a.level ?? 1 })), out)
 
 // Quests — own kind, banded by complexity (Novice starts near the start place,
 // Grandmaster ends up in the cities), duration as tie-break within a tier.

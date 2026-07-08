@@ -286,6 +286,10 @@
     },
     {
       "kind": "skill",
+      "ref": "dungeoneering:dungeoneering_floor_1"
+    },
+    {
+      "kind": "skill",
       "ref": "firemaking:magic_logs"
     },
     {
@@ -925,46 +929,6 @@
     {
       "kind": "skill",
       "ref": "crafting:zyrite_ring"
-    },
-    {
-      "kind": "skill",
-      "ref": "dungeoneering:dungeoneering_floor_1"
-    },
-    {
-      "kind": "skill",
-      "ref": "dungeoneering:dungeoneering_floor_10"
-    },
-    {
-      "kind": "skill",
-      "ref": "dungeoneering:dungeoneering_floor_2"
-    },
-    {
-      "kind": "skill",
-      "ref": "dungeoneering:dungeoneering_floor_3"
-    },
-    {
-      "kind": "skill",
-      "ref": "dungeoneering:dungeoneering_floor_4"
-    },
-    {
-      "kind": "skill",
-      "ref": "dungeoneering:dungeoneering_floor_5"
-    },
-    {
-      "kind": "skill",
-      "ref": "dungeoneering:dungeoneering_floor_6"
-    },
-    {
-      "kind": "skill",
-      "ref": "dungeoneering:dungeoneering_floor_7"
-    },
-    {
-      "kind": "skill",
-      "ref": "dungeoneering:dungeoneering_floor_8"
-    },
-    {
-      "kind": "skill",
-      "ref": "dungeoneering:dungeoneering_floor_9"
     },
     {
       "kind": "skill",
@@ -1999,6 +1963,10 @@
     {
       "kind": "skill",
       "ref": "crafting:zyrite_ring"
+    },
+    {
+      "kind": "skill",
+      "ref": "dungeoneering:dungeoneering_floor_10"
     },
     {
       "kind": "skill",
@@ -3052,6 +3020,10 @@
     },
     {
       "kind": "skill",
+      "ref": "dungeoneering:dungeoneering_floor_9"
+    },
+    {
+      "kind": "skill",
       "ref": "firemaking:magic_logs"
     },
     {
@@ -4038,6 +4010,10 @@
     },
     {
       "kind": "skill",
+      "ref": "dungeoneering:dungeoneering_floor_4"
+    },
+    {
+      "kind": "skill",
       "ref": "firemaking:magic_logs"
     },
     {
@@ -4657,6 +4633,10 @@
     {
       "kind": "skill",
       "ref": "crafting:zyrite_ring"
+    },
+    {
+      "kind": "skill",
+      "ref": "dungeoneering:dungeoneering_floor_5"
     },
     {
       "kind": "skill",
@@ -5598,6 +5578,10 @@
     },
     {
       "kind": "skill",
+      "ref": "dungeoneering:dungeoneering_floor_7"
+    },
+    {
+      "kind": "skill",
       "ref": "firemaking:magic_logs"
     },
     {
@@ -6025,6 +6009,10 @@
     {
       "kind": "quest",
       "ref": "hex_s_house"
+    },
+    {
+      "kind": "skill",
+      "ref": "dungeoneering:dungeoneering_floor_2"
     },
     {
       "kind": "skill",
@@ -7804,6 +7792,10 @@
     },
     {
       "kind": "skill",
+      "ref": "dungeoneering:dungeoneering_floor_3"
+    },
+    {
+      "kind": "skill",
       "ref": "prayer:altar_big_bones"
     },
     {
@@ -8095,6 +8087,10 @@
     {
       "kind": "skill",
       "ref": "crafting:zyrite_ring"
+    },
+    {
+      "kind": "skill",
+      "ref": "dungeoneering:dungeoneering_floor_6"
     },
     {
       "kind": "skill",
@@ -8830,6 +8826,10 @@
     },
     {
       "kind": "skill",
+      "ref": "woodcutting:magic"
+    },
+    {
+      "kind": "skill",
       "ref": "woodcutting:maple"
     },
     {
@@ -9113,6 +9113,10 @@
     {
       "kind": "skill",
       "ref": "crafting:zyrite_ring"
+    },
+    {
+      "kind": "skill",
+      "ref": "dungeoneering:dungeoneering_floor_8"
     },
     {
       "kind": "skill",

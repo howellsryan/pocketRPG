@@ -3,6 +3,7 @@ import { useGame } from '../state/gameState.jsx'
 import { getPlace, shortestPath } from '../engine/world.js'
 import { describeActivity } from '../engine/worldContent.js'
 import { SCREENS } from '../utils/constants.js'
+import { formatActionDuration } from '../utils/formatters.js'
 
 /**
  * Travel confirm / location picker. Rendered globally from App; shows itself when a gated
@@ -50,7 +51,7 @@ export default function TravelPrompt({ onNavigate, originScreen, originScreenDat
           {options.map((o) => (
             <button class="wm-tp-option" key={o.id} onClick={() => chooseDestination(o.id)}>
               <span class="wm-tp-place">{o.place?.icon} {o.place?.name || o.id}</span>
-              <span class="wm-tp-ticks">{o.ticks != null ? `${o.ticks} ticks` : '—'}</span>
+              <span class="wm-tp-ticks">{o.ticks != null ? formatActionDuration(o.ticks) : '—'}</span>
             </button>
           ))}
         </div>
