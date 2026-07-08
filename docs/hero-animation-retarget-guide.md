@@ -46,8 +46,10 @@ Useful options:
 - `--preview frames/` — also renders PNG snapshots of the first clips so you can eyeball the result without opening a 3D tool.
 - `--map mymap.json` — swap in a different bone-name map (JSON of `{"TargetBone": "sourceBone"}`) for other rig pairs; the built-in default covers Tripo-rig → UAL/UE-style skeletons.
 - `--rename names.json` — rename clips on the way out (JSON of `{"SourceClip": "new_name"}`), e.g. to give the game the exact `idleClip`/`attackClip`/`specialClip` names it references. `--lowercase` lowercases every other clip name for a clean, consistent set.
+- `--source a.glb,b.glb` — pass **several packs at once** (comma-separated); every clip from every pack is merged onto the one hero, so a single `hero.glb` can carry a big animation library (e.g. UAL 1 + UAL 2 = 84 clips).
+- `--face-yaw 90` — rotate the baked result about Y so the animated hero faces the direction the game expects. The combat arena places the hero facing **+x** (east, toward the monster); the raw UAL clips face the camera, so `--face-yaw 90` turns them to face the monster. Skip it (or use `0`) and the hero faces the camera.
 
-The `--target` can be the game's live `public/3d-samples/hero.glb` (Meshopt-compressed) — the tool decodes it automatically. The GLB it writes is uncompressed; re-apply Meshopt with gltf-transform (`meshopt()` + `MeshoptEncoder`, as `scripts/canonicalize-weapon.mjs` does) to shrink it back to ~0.6 MB before committing.
+Always retarget onto the **pristine** hero, never a previously-animated export (re-processing drifts the mesh scale). The `--target` can be the game's live `public/3d-samples/hero.glb` (Meshopt-compressed) — the tool decodes it automatically — but restore the original first if you've already overwritten it (`git show <commit>:public/3d-samples/hero.glb`). The GLB it writes is uncompressed; re-apply Meshopt with gltf-transform (`meshopt()` + `MeshoptEncoder`, as `scripts/canonicalize-weapon.mjs` does) to shrink it back to ~1 MB before committing.
 
 This works for **any future animation pack that uses the same UAL/UE-style skeleton**
 (Quaternius sells/gives more packs on the same rig) — just point `--source` at the new pack.
@@ -61,11 +63,11 @@ viewer) and pick clips from the animation dropdown. Or use `--preview` and look 
 
 1. Replace the hero model: copy the output over `public/3d-samples/hero.glb`.
 2. Point the game at the new clip names in `src/data/equipmentModels.json` (`character` block).
-   The live hero uses UAL 2 clips (renamed via `--rename`):
+   The live hero carries UAL 1 + UAL 2 (84 clips, lowercased names):
    ```json
    "character": {
      "model": "hero.glb",
-     "idleClip": "idle",
+     "idleClip": "idle_loop",
      "attackClip": "sword_attack",
      "specialClip": "sword_regular_combo"
    }

@@ -19,7 +19,7 @@
   },
   "character": {
     "model": "hero.glb",
-    "idleClip": "idle",
+    "idleClip": "idle_loop",
     "attackClip": "sword_attack",
     "specialClip": "sword_regular_combo"
   },

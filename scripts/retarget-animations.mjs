@@ -6,9 +6,13 @@
 // GLTFExporter need browser APIs (images, FileReader).
 //
 // Usage:
-//   node scripts/retarget-animations.mjs --target hero.glb --source ual.glb --out hero.animated.glb
+//   node scripts/retarget-animations.mjs --target hero.glb --source ual.glb[,ual2.glb] --out hero.animated.glb
 //     [--clips Idle_Loop,Sword_Attack] [--map bonemap.json] [--preview out-frames-dir]
-//     [--rename names.json] [--lowercase]
+//     [--rename names.json] [--lowercase] [--face-yaw 90]
+//
+// --source takes one or more comma-separated packs; all their clips are merged
+// onto the one target skeleton. --face-yaw rotates the baked result (degrees
+// about Y) so the animated character faces the direction the game expects.
 //
 // Prereqs: `npm i -D playwright` and (locally) `npx playwright install chromium`.
 // The default bone map covers the Tripo rig -> UAL/UE "Manny" skeleton; pass
@@ -37,15 +41,16 @@ function arg(name, fallback) {
 }
 
 const targetPath = arg('target');
-const sourcePath = arg('source');
+const sourcePaths = (arg('source') || '').split(',').map((s) => s.trim()).filter(Boolean);
 const outPath = arg('out', 'retargeted.glb');
+const faceYawDeg = Number(arg('face-yaw', '0'));
 const clipFilter = arg('clips', '');
 const previewDir = arg('preview', '');
 const mapPath = arg('map', '');
 const renamePath = arg('rename', '');
 const lowercase = process.argv.includes('--lowercase');
-if (!targetPath || !sourcePath) {
-  console.error('Usage: node scripts/retarget-animations.mjs --target hero.glb --source anims.glb --out out.glb');
+if (!targetPath || !sourcePaths.length) {
+  console.error('Usage: node scripts/retarget-animations.mjs --target hero.glb --source anims.glb[,more.glb] --out out.glb');
   process.exit(1);
 }
 const boneMap = mapPath ? JSON.parse(fs.readFileSync(mapPath, 'utf8')) : DEFAULT_MAP;
@@ -93,66 +98,78 @@ function facingAngle(skinned, lName, rName) {
 async function main() {
   await MeshoptDecoder.ready;
   const loader = new GLTFLoader().setMeshoptDecoder(MeshoptDecoder);
-  const [tgt, src] = await Promise.all([loader.loadAsync('/target.glb'), loader.loadAsync('/source.glb')]);
+  const tgt = await loader.loadAsync('/target.glb');
   const tgtMesh = findSkinned(tgt.scene);
-  const srcMesh = findSkinned(src.scene);
-  tgtMesh.skeleton.pose();
-  srcMesh.skeleton.pose();
-  tgt.scene.updateMatrixWorld(true);
-  src.scene.updateMatrixWorld(true);
-
-  const map = CFG.boneMap;
   const tgtBones = tgtMesh.skeleton.bones;
-  const srcByName = {};
-  srcMesh.skeleton.bones.forEach((b) => { srcByName[b.name] = b; });
-  const missing = Object.entries(map).filter(([t, s]) =>
-    !tgtBones.some((b) => b.name === t) || !srcByName[s]);
-  if (missing.length) log('WARNING unmatched map entries:', JSON.stringify(missing));
-
-  // Yaw-align target to source so world-space deltas transfer correctly.
+  const map = CFG.boneMap;
+  const wanted = CFG.clips.length ? new Set(CFG.clips) : null;
   const [tHandL, tHandR] = CFG.targetHands;
   const [sHandL, sHandR] = CFG.sourceHands;
-  tgt.scene.rotation.y = facingAngle(srcMesh, sHandL, sHandR) - facingAngle(tgtMesh, tHandL, tHandR);
-  tgt.scene.updateMatrixWorld(true);
 
-  const hipTgtName = Object.keys(map).find((k) => map[k] === CFG.hip);
-  const hipScale = tgtBones.find((b) => b.name === hipTgtName).getWorldPosition(new THREE.Vector3()).y
-    / srcByName[CFG.hip].getWorldPosition(new THREE.Vector3()).y;
-  log('rotY', tgt.scene.rotation.y.toFixed(3), 'hipScale', hipScale.toFixed(4));
-
-  // Per-bone rest-pose rotation offsets: srcRestWorld^-1 * tgtRestWorld.
-  const localOffsets = {};
-  for (const bone of tgtBones) {
-    const srcBone = srcByName[map[bone.name]];
-    if (!srcBone) continue;
-    const qSrc = srcBone.getWorldQuaternion(new THREE.Quaternion());
-    const qTgt = bone.getWorldQuaternion(new THREE.Quaternion());
-    localOffsets[bone.name] = new THREE.Matrix4().makeRotationFromQuaternion(qSrc.invert().multiply(qTgt));
-  }
-
-  const wanted = CFG.clips.length ? new Set(CFG.clips) : null;
+  // Each source pack is retargeted independently, then all clips are merged
+  // onto the one target skeleton.
   const clips = [];
-  for (const clip of src.animations) {
-    if (wanted ? !wanted.has(clip.name) : clip.name === 'A_TPose') continue;
-    const ret = SkeletonUtils.retargetClip(tgtMesh, srcMesh, clip, {
-      names: { ...map },
-      hip: CFG.hip,
-      scale: hipScale,
-      localOffsets,
-      useFirstFramePosition: false,
-    });
-    for (const track of ret.tracks) track.name = track.name.replace(/^\\.bones\\[(.+?)\\]/, '$1');
-    ret.resetDuration();
-    ret.name = CFG.rename[clip.name] || (CFG.lowercase ? clip.name.toLowerCase() : clip.name);
-    clips.push(ret);
-    log('retargeted', clip.name, '->', ret.name, ret.duration.toFixed(2) + 's');
+  for (let si = 0; si < CFG.sourceCount; si++) {
+    const src = await loader.loadAsync('/source' + si + '.glb');
+    const srcMesh = findSkinned(src.scene);
+    tgtMesh.skeleton.pose();
+    srcMesh.skeleton.pose();
+    tgt.scene.rotation.y = 0;
+    tgt.scene.updateMatrixWorld(true);
+    src.scene.updateMatrixWorld(true);
+
+    const srcByName = {};
+    srcMesh.skeleton.bones.forEach((b) => { srcByName[b.name] = b; });
+    const missing = Object.entries(map).filter(([t, s]) =>
+      !tgtBones.some((b) => b.name === t) || !srcByName[s]);
+    if (missing.length) log('WARNING src' + si + ' unmatched map entries:', JSON.stringify(missing));
+
+    // Yaw-align target to source so world-space deltas transfer correctly.
+    tgt.scene.rotation.y = facingAngle(srcMesh, sHandL, sHandR) - facingAngle(tgtMesh, tHandL, tHandR);
+    tgt.scene.updateMatrixWorld(true);
+
+    const hipTgtName = Object.keys(map).find((k) => map[k] === CFG.hip);
+    const hipScale = tgtBones.find((b) => b.name === hipTgtName).getWorldPosition(new THREE.Vector3()).y
+      / srcByName[CFG.hip].getWorldPosition(new THREE.Vector3()).y;
+    log('src' + si, 'rotY', tgt.scene.rotation.y.toFixed(3), 'hipScale', hipScale.toFixed(4));
+
+    // Per-bone rest-pose rotation offsets: srcRestWorld^-1 * tgtRestWorld.
+    const localOffsets = {};
+    for (const bone of tgtBones) {
+      const srcBone = srcByName[map[bone.name]];
+      if (!srcBone) continue;
+      const qSrc = srcBone.getWorldQuaternion(new THREE.Quaternion());
+      const qTgt = bone.getWorldQuaternion(new THREE.Quaternion());
+      localOffsets[bone.name] = new THREE.Matrix4().makeRotationFromQuaternion(qSrc.invert().multiply(qTgt));
+    }
+
+    for (const clip of src.animations) {
+      if (wanted ? !wanted.has(clip.name) : clip.name === 'A_TPose') continue;
+      const ret = SkeletonUtils.retargetClip(tgtMesh, srcMesh, clip, {
+        names: { ...map },
+        hip: CFG.hip,
+        scale: hipScale,
+        localOffsets,
+        useFirstFramePosition: false,
+      });
+      for (const track of ret.tracks) track.name = track.name.replace(/^\\.bones\\[(.+?)\\]/, '$1');
+      ret.resetDuration();
+      ret.name = CFG.rename[clip.name] || (CFG.lowercase ? clip.name.toLowerCase() : clip.name);
+      clips.push(ret);
+      log('retargeted', clip.name, '->', ret.name, ret.duration.toFixed(2) + 's');
+    }
   }
   const names = clips.map((c) => c.name);
   const dupes = names.filter((n, i) => names.indexOf(n) !== i);
   if (dupes.length) log('WARNING duplicate clip names:', JSON.stringify([...new Set(dupes)]));
+  log('total clips', clips.length);
 
   tgt.scene.rotation.y = 0;
   tgtMesh.skeleton.pose();
+  // Bake a facing correction into the skeleton root so animated clips face the
+  // game's expected +x (the arena places the hero facing the monster with no
+  // per-instance rotation). Rotating the armature offsets rest + every clip.
+  if (CFG.faceYaw) tgtBones[0].parent.rotation.y += CFG.faceYaw;
   tgt.scene.updateMatrixWorld(true);
 
   const glb = await new GLTFExporter().parseAsync(tgt.scene, { binary: true, animations: clips });
@@ -207,6 +224,8 @@ const cfg = {
   clips: clipFilter ? clipFilter.split(',').map((s) => s.trim()).filter(Boolean) : [],
   rename: renamePath ? JSON.parse(fs.readFileSync(renamePath, 'utf8')) : {},
   lowercase,
+  sourceCount: sourcePaths.length,
+  faceYaw: (faceYawDeg * Math.PI) / 180,
   preview: Boolean(previewDir),
   previewMax: Number(arg('preview-max', '8')),
 };
@@ -219,7 +238,7 @@ const server = http.createServer((req, res) => {
     let data;
     if (url === '/retarget.html') data = html;
     else if (url === '/target.glb') data = fs.readFileSync(targetPath);
-    else if (url === '/source.glb') data = fs.readFileSync(sourcePath);
+    else if (/^\/source\d+\.glb$/.test(url)) data = fs.readFileSync(sourcePaths[Number(url.match(/\d+/)[0])]);
     else if (url.startsWith('/node_modules/')) data = fs.readFileSync(path.join(repoRoot, url));
     else throw new Error('nope');
     res.writeHead(200, { 'content-type': MIME[path.extname(url)] || 'text/html' });
