@@ -93,9 +93,11 @@ export default function GameFrameBar({
             title={demo ? 'Daily Tasks are available with a free account' : 'Daily Tasks'}
             class={`gf-credits ${demo ? 'gf-medallion--locked' : ''}`}
           >
-            <span class="text-[16px] leading-none">{demo ? '🔒' : '📋'}</span>
-            <span style={demo ? undefined : { color: dailyTasksCompleted === dailyTasksTotal ? 'var(--color-gold)' : undefined }}>
-              {demo ? '—' : `${dailyTasksCompleted}/${dailyTasksTotal}`}
+            <span
+              class="text-[16px] leading-none"
+              style={demo ? undefined : { color: dailyTasksCompleted === dailyTasksTotal ? 'var(--color-gold)' : undefined }}
+            >
+              {demo ? '🔒' : '📋'}
             </span>
           </button>
         )}
@@ -103,13 +105,12 @@ export default function GameFrameBar({
           <button
             onClick={() => { if (demo) onLockedFeature?.(); else onBuyCredits?.() }}
             aria-label="Credits"
-            title={demo ? 'Credits are available with a free account' : 'Buy credits'}
+            title={demo ? 'Credits are available with a free account' : `Buy credits (current: ${credits.toLocaleString()})`}
             class={`gf-credits ${demo ? 'gf-medallion--locked' : ''}`}
           >
             {demo
               ? <span class="text-[16px] leading-none">🔒</span>
               : <GameIcon iconKey="cut_diamond" size={20} color="#f0c040" />}
-            <span>{demo ? '—' : credits.toLocaleString()}</span>
           </button>
         )}
         <button
