@@ -6,6 +6,7 @@ import { getWorld } from '../src/engine/world.js'
 import { SCREENS } from '../src/utils/constants.js'
 import { placeActivities, placesForActivity, isPlaceVaryingSkillRef, FACILITY_SKILL_MAP, FACILITY_SKILLS } from '../src/engine/worldContent.js'
 import { getPlaceMap, placeHasMap, resolveSpotRefs, describeSpot, spotType, BANK_TRAINING_SKILLS, facilityTrainingSkill } from '../src/engine/placeMaps.js'
+import { SKILL_ART } from '../src/utils/skillArt.js'
 
 const mapped = Object.keys(placeMaps)
 const activitySpots = (id: string) => getPlaceMap(id)!.spots.filter((s: any) => spotType(s) === 'activity')
@@ -103,6 +104,39 @@ describe('placeMaps data', () => {
         if (a.kind === 'skill' && !isPlaceVaryingSkillRef(a.ref)) continue
         if (a.kind === 'minigame') continue // minigames screen handles its own venue list
         expect(covered.has(`${a.kind}|${a.ref}`), `${id}: ${a.kind}|${a.ref} has no map spot`).toBe(true)
+      }
+    }
+  })
+
+  it('single-ref gather/slayer/minigame spots resolve a data-authored iconKey, not just the generic per-kind emoji', () => {
+    // PlaceMapView's ActivityIcon renders desc.iconKey (gather tasks/slayer
+    // masters/minigames each carry their own game-icons key) ahead of the
+    // generic '🌿'/'💀'/'🎮' fallback baked into describeActivity. A spot with
+    // no group/explicit refs list describes exactly one activity, so it must
+    // resolve that activity's own iconKey for the map badge to look distinct.
+    for (const id of mapped) {
+      for (const spot of activitySpots(id)) {
+        if (spot.group || Array.isArray(spot.refs)) continue
+        if (!['gather', 'slayer', 'minigame'].includes(spot.kind)) continue
+        const desc = describeSpot(id, spot)
+        if (desc.refs.length !== 1) continue
+        expect(desc.iconKey, `${id}: ${spot.kind} ${spot.ref} has no iconKey`).toBeTruthy()
+      }
+    }
+  })
+
+  it('single-ref skill spots with no product resolve a real (non-default) skill emblem', () => {
+    // Skill actions with an item output (mining/woodcutting/smithing/...) show
+    // that item's own icon; actions with none (dungeoneering floors) fall back
+    // to the skill's own emblem — which only works if the ref's skill id is a
+    // real SKILL_ART entry, not silently landing on the generic default icon.
+    for (const id of mapped) {
+      for (const spot of activitySpots(id)) {
+        if (spot.kind !== 'skill' || spot.group || Array.isArray(spot.refs)) continue
+        const desc = describeSpot(id, spot)
+        if (desc.refs.length !== 1 || desc.product) continue
+        const skillId = desc.refs[0].split(':')[0]
+        expect(SKILL_ART[skillId], `${id}: skill ${desc.refs[0]} has no SKILL_ART entry`).toBeTruthy()
       }
     }
   })

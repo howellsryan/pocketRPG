@@ -10,6 +10,7 @@ import skillsData from '../data/skills.json'
 import GameIcon from './GameIcon.jsx'
 import Modal from './Modal.jsx'
 import ActivityPickerModal from './ActivityPickerModal.jsx'
+import ActivityIcon from './ActivityIcon.jsx'
 
 /**
  * PlaceMapView — full-screen interactive map of one place (town/settlement),
@@ -95,6 +96,13 @@ export default function PlaceMapView({ place, onClose, onActivate, onNavigate })
     // the spot carries an explicit emoji override.
     if (!spot.icon && spot.kind === 'raid' && desc.refs.length === 1) {
       return <GameIcon iconKey={getRaidArt(desc.refs[0]).icon} size={20} color="#f2e4c2" />
+    }
+    // Single-ref spots without a group/raid shortcut above (individual mining
+    // veins, dungeoneering floors, gather tasks, slayer masters, ...) resolve a
+    // themed icon instead of the generic per-kind emoji — see ActivityIcon
+    // (its own fallback already honours an explicit spot.icon via desc.icon).
+    if (desc.refs.length === 1) {
+      return <ActivityIcon kind={spot.kind} actionRef={desc.refs[0]} desc={desc} iconKey={spot.iconKey} size={20} color="#f2e4c2" />
     }
     return <span aria-hidden="true">{desc.icon}</span>
   }

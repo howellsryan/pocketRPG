@@ -286,13 +286,16 @@ export function describeActivity(kind, ref) {
       const r = raidsData[ref]
       return { name: r?.name || ref, icon: r?.icon || '🩸', level: null }
     }
+    // `product` (an item id, or null for actions with no item output — e.g.
+    // dungeoneering floors) lets map-spot rendering show the actual item's
+    // icon instead of a generic tool glyph; see placeMaps.js describeSpot.
     case 'skill': {
       const a = skillAction(ref)
-      return { name: a?.name || ref, icon: a?.icon || '🛠️', level: a?.level ?? null }
+      return { name: a?.name || ref, icon: a?.icon || '🛠️', level: a?.level ?? null, product: a?.product || null }
     }
     case 'gather': {
       const t = gatherById[ref]
-      return { name: t?.name || ref, icon: t?.icon || '🌿', level: null }
+      return { name: t?.name || ref, icon: t?.icon || '🌿', level: null, iconKey: t?.iconKey || null }
     }
     case 'agility': {
       const a = actionInSkill('agility', ref)
@@ -314,12 +317,12 @@ export function describeActivity(kind, ref) {
     }
     case 'minigame': {
       const mg = minigamesById[ref]
-      return { name: mg?.label || ref, icon: mg?.icon || '🎮', level: null }
+      return { name: mg?.label || ref, icon: mg?.icon || '🎮', level: null, iconKey: mg?.iconKey || null }
     }
     // Slayer masters: getting a task from the master homed at this place.
     case 'slayer': {
       const m = slayerMasterById(ref)
-      return { name: m ? `${m.name} — Slayer Master` : ref, icon: m?.icon || '💀', level: null }
+      return { name: m ? `${m.name} — Slayer Master` : ref, icon: m?.icon || '💀', level: null, iconKey: m?.iconKey || null }
     }
     // Quests carry no single level; `level` is the complexity rank so pickers
     // sort Novice → Grandmaster (render `complexity`, not the rank number).

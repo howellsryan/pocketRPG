@@ -121,7 +121,6 @@
         "kind": "skill",
         "ref": "dungeoneering:dungeoneering_floor_1",
         "label": "Dungeon Entrance",
-        "iconKey": "dungeon_gate",
         "x": 880,
         "y": 780
       }
@@ -382,7 +381,6 @@
         "kind": "skill",
         "ref": "dungeoneering:dungeoneering_floor_10",
         "label": "Dungeon Entrance",
-        "iconKey": "dungeon_gate",
         "x": 80,
         "y": 420
       }
@@ -545,7 +543,6 @@
         "kind": "skill",
         "ref": "dungeoneering:dungeoneering_floor_9",
         "label": "Dungeon Entrance",
-        "iconKey": "dungeon_gate",
         "x": 150,
         "y": 480
       }
@@ -653,7 +650,6 @@
         "kind": "skill",
         "ref": "dungeoneering:dungeoneering_floor_4",
         "label": "Dungeon Entrance",
-        "iconKey": "dungeon_gate",
         "x": 980,
         "y": 150
       }
@@ -769,7 +765,6 @@
         "kind": "skill",
         "ref": "dungeoneering:dungeoneering_floor_5",
         "label": "Dungeon Entrance",
-        "iconKey": "dungeon_gate",
         "x": 750,
         "y": 780
       }
@@ -879,7 +874,6 @@
         "kind": "skill",
         "ref": "dungeoneering:dungeoneering_floor_7",
         "label": "Dungeon Entrance",
-        "iconKey": "dungeon_gate",
         "x": 950,
         "y": 550
       }
@@ -982,7 +976,6 @@
         "kind": "skill",
         "ref": "dungeoneering:dungeoneering_floor_2",
         "label": "Dungeon Entrance",
-        "iconKey": "dungeon_gate",
         "x": 700,
         "y": 450
       }
@@ -1389,7 +1382,6 @@
         "kind": "skill",
         "ref": "dungeoneering:dungeoneering_floor_3",
         "label": "Dungeon Entrance",
-        "iconKey": "dungeon_gate",
         "x": 780,
         "y": 330
       }
@@ -1520,7 +1512,6 @@
         "kind": "skill",
         "ref": "dungeoneering:dungeoneering_floor_6",
         "label": "Dungeon Entrance",
-        "iconKey": "dungeon_gate",
         "x": 750,
         "y": 650
       }
@@ -1635,7 +1626,6 @@
         "kind": "skill",
         "ref": "dungeoneering:dungeoneering_floor_8",
         "label": "Dungeon Entrance",
-        "iconKey": "dungeon_gate",
         "x": 400,
         "y": 500
       }
