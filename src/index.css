@@ -912,6 +912,15 @@ html, body, #app {
 }
 .cb-idle__chk { width: 13px; height: 13px; }
 
+/* Prayer quick-tiles (desktop combat column) toggled ON — same gold fill as
+   the idle-toggle buttons (.cb-idle.is-on) so an active prayer reads clearly
+   as ON rather than a near-invisible border swap. */
+.cb-prayon {
+  background: linear-gradient(180deg, var(--color-gold-light), var(--color-gold) 60%, #b3851a);
+  border-color: rgba(240,192,64,0.6);
+  box-shadow: 0 6px 16px -8px rgba(212,160,23,0.6), inset 0 1px 0 rgba(255,255,255,0.4);
+}
+
 /* Attack-style selector */
 .cb-styles { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 18px; }
 .cb-styleseg {
