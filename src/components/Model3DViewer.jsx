@@ -210,7 +210,13 @@ function attachWeapon(st, weapon) {
 // point (piece.position, the same head-local center the helm is placed at)
 // rotated by the CURRENT quaternion — so that point stays visually fixed
 // regardless of pose, and the shrink happens invisibly around it.
-const HIDE_BONE_SCALE = 0.3
+//
+// Disabled for now (1 = no shrink): the hero keeps her full-size head under
+// enclosing helms, at the cost of the head/hair showing through the shell.
+// Flip back to a fraction like 0.3 to re-enable hiding — the rest of the
+// mechanism (registry `hideHead` flag, updateHiddenGear, double-sided visor
+// material) stays wired and ready.
+const HIDE_BONE_SCALE = 1
 
 // Load + attach the equipped armour GLBs (helmet on Head, etc.) — same cheap
 // swap + token-guard discipline as attachWeapon, shared by the equip-screen
