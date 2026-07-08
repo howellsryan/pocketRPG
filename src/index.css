@@ -536,6 +536,16 @@ html, body, #app {
 .chat-fab:hover {
   border-color: var(--color-gold-light);
 }
+/* Mobile bottom rail (GameFrameBar position="bottom") sits flush against the
+   viewport bottom at the same right-edge inset as the fab (pb-safe/pt-2/48px
+   medallion), so below the md breakpoint the fab must float above the rail
+   instead of stacking on top of its Home medallion. */
+@media (max-width: 767px) {
+  .chat-fab {
+    right: 0.75rem;
+    bottom: calc(56px + max(0.75rem, env(safe-area-inset-bottom)) + 10px);
+  }
+}
 
 /* PWA standalone — push the header below the system status bar (time/battery/wifi).
    iOS Safari uses navigator.standalone (set via JS on <html>); Android/Chrome PWAs
