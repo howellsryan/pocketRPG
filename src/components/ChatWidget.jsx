@@ -24,11 +24,15 @@ function costLine(cost) {
   return `Costs ${fee} credit${fee === 1 ? '' : 's'}`
 }
 
-// Floating in-game help chatbot. Cloud accounts only (the /api/chat endpoint
-// needs an authenticated character); renders nothing in demo mode.
-export default function ChatWidget({ isCloudAccount = false }) {
+// In-game help chatbot. Cloud accounts only (the /api/chat endpoint needs an
+// authenticated character); renders nothing in demo mode. On mobile the
+// trigger lives inside GameFrameBar's bottom nav rail (its own medallion,
+// next to Home) so `open`/`onOpenChange` are controlled from there; this
+// component still renders its own floating trigger for desktop, where there
+// is no bottom rail to house it.
+export default function ChatWidget({ isCloudAccount = false, open = false, onOpenChange = () => {} }) {
   const { loadGame } = useGame()
-  const [open, setOpen] = useState(false)
+  const setOpen = onOpenChange
   const [messages, setMessages] = useState([GREETING])
   const [input, setInput] = useState('')
   const [busy, setBusy] = useState(false)

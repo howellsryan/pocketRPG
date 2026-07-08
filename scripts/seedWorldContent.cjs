@@ -132,6 +132,13 @@ for (const skillId of LEVEL_BAND_SKILLS) {
 }
 distribute('skill', skillItems, out)
 
+// Magic trees also grow in Camlann's own blue forest, alongside wherever the
+// level-band distribution above placed them — a deliberate second grove, not
+// a replacement (worldActivities.json lists a ref at every place that offers
+// it, so both stay startable).
+out.camlann = out.camlann || []
+out.camlann.push({ kind: 'skill', ref: 'woodcutting:magic' })
+
 // Agility — authored 1:1 to its namesake world city (rooftop courses are renamed to
 // match the city they sit above), matching OSRS course levels. Not level-banded.
 const AGILITY_PLACEMENT = {
@@ -201,6 +208,16 @@ distribute('thieving', thievingItems, out)
 // Hunter — own kind, level-banded.
 distribute('hunter', asArray(skills.hunter?.actions).map((a) => ({ ref: a.id, level: a.level ?? 1 })), out)
 
+// Dungeoneering — level-banded like mining/woodcutting/fishing/runecraft: each
+// floor is its own dungeon entrance, spread across places by level so low
+// floors sit near the start and the deepest ones land in the cities, instead
+// of piling the whole skill onto one venue. Reward actions (spending tokens on
+// gear) are excluded — SkillingScreen resolves those as an instant token spend
+// before it ever calls requestActivityStart, so they're never location-gated.
+distribute('skill', asArray(skills.dungeoneering?.actions)
+  .filter((a) => a.category !== 'reward')
+  .map((a) => ({ ref: `dungeoneering:${a.id}`, level: a.level ?? 1 })), out)
+
 // Quests — own kind, banded by complexity (Novice starts near the start place,
 // Grandmaster ends up in the cities), duration as tie-break within a tier.
 // Quest journeys plan from wherever the player is, so the listing place is a
@@ -228,6 +245,12 @@ for (const id of Object.keys(world.places)) {
     if (facility === 'sawmill') {
       for (const t of GATHER_TASKS.filter(isSawmillTask)) out[id].push({ kind: 'gather', ref: t.id })
     }
+    // Bank — own kind, one ref ('use'): every bank is functionally identical,
+    // so this just gates the nav bar's Bank button the same way a bank-bound
+    // skill (magic, crafting, ...) already gates on the same facility. Kept
+    // out of the World Map hub's "Available here" grid (WorldMapScreen's
+    // groupActivities) since place.facilities already surfaces it there.
+    if (facility === 'bank') out[id].push({ kind: 'bank', ref: 'use' })
   }
 }
 
@@ -257,6 +280,7 @@ world.kinds = Object.assign({}, world.kinds, {
   thieving: { label: 'Thieving', color: 'var(--tier-bronze)' },
   hunter: { label: 'Hunter', color: 'var(--color-gold)' },
   farming: { label: 'Farming', color: 'var(--color-emerald)' },
+  bank: { label: 'Bank', color: 'var(--color-gold)' },
 })
 
 fs.writeFileSync(worldPath, JSON.stringify(world, null, 2) + '\n')

@@ -400,12 +400,13 @@ html, body, #app {
 .mb-safe { margin-bottom: env(safe-area-inset-bottom); }
 
 /* ──────────────────────────────────────────────────────────────────────────
-   OSRS-style frame (GameFrameBar) — carved-wood chrome with gold medallion
-   buttons framing the rounded parchment content panel. CSS rendition of the
-   design mock; the wood/corner artwork can be swapped for image assets later.
-   The app chrome at every viewport width — the old desktop SideNav + Header
-   are gone; screens keep their own desktop layouts inside .gf-main.
+   OSRS-style mobile frame (GameFrameBar) — carved-wood chrome with gold
+   medallion buttons framing the rounded parchment content panel. CSS
+   rendition of the design mock; the wood/corner artwork can be swapped for
+   image assets later. Mobile-only: everything is scoped under md so the
+   desktop SideNav + Header chrome is untouched.
    ────────────────────────────────────────────────────────────────────────── */
+@media (max-width: 767px) {
   /* Carved dark-wood shell behind the rails and around the content panel. */
   .gf-shell {
     position: relative;
@@ -506,9 +507,12 @@ html, body, #app {
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
     white-space: nowrap;
   }
+}
 
 /* Floating chat-helper button — same carved wood-and-gold medallion styling
-   as the frame-bar nav icons, so it doesn't stand out as a flat gold circle. */
+   as the frame-bar nav icons, so it doesn't stand out as a flat gold circle.
+   Not scoped to the mobile-only media query above since the widget shows on
+   desktop too. */
 .chat-fab {
   width: 48px;
   height: 48px;
@@ -531,6 +535,15 @@ html, body, #app {
 }
 .chat-fab:hover {
   border-color: var(--color-gold-light);
+}
+/* Below the md breakpoint the game-helper trigger lives inside GameFrameBar's
+   bottom nav rail instead (its own .gf-medallion, next to Home), so the
+   floating fab (which used to sit at nearly the same fixed coordinates as
+   the rail's Home medallion and cover it) is hidden entirely on mobile. */
+@media (max-width: 767px) {
+  .chat-fab {
+    display: none;
+  }
 }
 
 /* PWA standalone — push the header below the system status bar (time/battery/wifi).
@@ -793,6 +806,29 @@ html, body, #app {
 .wm-actmodal-row__icon { flex-shrink: 0; }
 .wm-actmodal-row__name { flex: 1; min-width: 0; color: var(--fm-ink); }
 .wm-actmodal-row__lvl { font-family: var(--fm-num); font-size: 12.5px; font-weight: 600; color: var(--fm-ember-deep); flex-shrink: 0; }
+
+/* Forgemark nav rail (desktop SideNav) — the app chrome joins the parchment
+   screens: vellum texture, rule border, gilt brand. */
+.fm-navrail { background-color: var(--fm-vellum); background-image: var(--fm-tex-parch); background-size: 400px; border-right: 1px solid var(--fm-rule); scrollbar-width: thin; scrollbar-color: var(--fm-rule) transparent; }
+/* The global scrollbar track (--color-void-light) resolves near-black outside
+   .forge-shell — on the vellum rail it reads as a black line. Parchment it. */
+.fm-navrail::-webkit-scrollbar-track { background: transparent; }
+.fm-navrail::-webkit-scrollbar-thumb { background: var(--fm-rule); }
+.fm-navbrand { font-family: var(--font-display); font-weight: 800; letter-spacing: 0.02em; background: var(--fm-gilt-text); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent; }
+
+/* Desktop top bar joins the parchment chrome too (the bar is md+ only).
+   Same token remap as .forge-shell so var-based text reads as ink on vellum —
+   hardcoded dark chips (skip/credits/daily pills) stay iron-on-parchment. */
+.fm-topbar {
+  background-color: var(--fm-vellum);
+  background-image: var(--fm-tex-parch);
+  background-size: 400px;
+  border-bottom-color: var(--fm-rule);
+  --color-parchment: var(--fm-ink-soft);
+  --color-parchment-dark: var(--fm-ink-faint);
+  --color-gold: var(--fm-brass);
+  --color-gold-dim: var(--fm-brass-lo);
+}
 
 /* Emblem primitive */
 .skill-emblem { position: relative; pointer-events: none; }
@@ -2630,7 +2666,7 @@ html, body, #app {
   background: var(--color-void); border: 1px solid var(--color-gold-dim); color: var(--color-parchment); }
 .wm-tp-option:hover { border-color: var(--color-gold); background: var(--color-void-border); }
 .wm-tp-place { font-family: var(--font-display); font-weight: 600; font-size: 15px; }
-.wm-tp-ticks { font-family: var(--font-mono); font-size: 13px; color: var(--color-gold-light); }
+.wm-tp-ticks { font-family: var(--font-mono); font-size: 13px; color: var(--color-gold-dim); }
 .wm-tp-cancel { min-height: 44px; padding: 10px 14px; border-radius: 8px; cursor: pointer;
   background: transparent; border: 1px solid var(--color-void-border); color: var(--color-parchment-dark); }
 .wm-tp-cancel:hover { color: var(--color-parchment); border-color: var(--color-parchment-dark); }

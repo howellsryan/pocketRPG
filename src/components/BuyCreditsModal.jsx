@@ -3,7 +3,7 @@ import Modal from './Modal.jsx'
 import { api } from '../cloud/api.js'
 import { pauseTicks, resumeTicks } from '../engine/tick.js'
 
-export default function BuyCreditsModal({ onClose, characterId }) {
+export default function BuyCreditsModal({ onClose, characterId, credits = 0 }) {
   const [busySku, setBusySku] = useState(null)
   const [error, setError] = useState(null)
 
@@ -43,6 +43,9 @@ export default function BuyCreditsModal({ onClose, characterId }) {
       <div class="space-y-3">
         <p class="text-[var(--color-parchment)] text-sm opacity-70 text-center">
           Get more credits to unlock premium features
+        </p>
+        <p class="text-[var(--color-gold)] text-sm font-semibold text-center">
+          Current Credits: {credits.toLocaleString()}
         </p>
         <div class="grid grid-cols-1 gap-2">
           {creditOptions.map((opt) => (

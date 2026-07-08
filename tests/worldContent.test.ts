@@ -10,6 +10,7 @@ import {
   activityLevelRequirement,
   activityLockReason,
   activityGroupLabel,
+  activityLocationLabel,
   placeActivities,
 } from '../src/engine/worldContent.js'
 import worldData from '../src/data/world.json'
@@ -98,7 +99,32 @@ describe('content -> place coverage', () => {
   it('returns no places for unmapped content', () => {
     expect(placesForActivity('combat', 'no_such_monster')).toEqual([])
     expect(placesForActivity('skill', 'magic:no_such_spell')).toEqual([]) // fake ref
-    expect(placesForActivity('skill', 'dungeoneering:dungeoneering_floor_1')).toEqual([]) // skill intentionally unmapped
+  })
+
+  it('places every dungeoneering floor at exactly one place, spread by level like mining/woodcutting', () => {
+    for (const a of asArray(skillsData.dungeoneering?.actions).filter((a: any) => a.category !== 'reward')) {
+      expect(placesForActivity('skill', `dungeoneering:${a.id}`).length, a.id).toBe(1)
+    }
+  })
+
+  it('leaves dungeoneering reward actions unmapped (an instant token spend, never location-gated)', () => {
+    for (const a of asArray(skillsData.dungeoneering?.actions).filter((a: any) => a.category === 'reward')) {
+      expect(placesForActivity('skill', `dungeoneering:${a.id}`), a.id).toEqual([])
+    }
+  })
+
+  it('grows magic trees at Camlann in addition to wherever the level band placed them', () => {
+    const places = placesForActivity('skill', 'woodcutting:magic')
+    expect(places).toContain('camlann')
+    expect(places.length).toBeGreaterThan(1)
+  })
+
+  it('activityLocationLabel names the place(s) for place-varying activities, null for facility skills', () => {
+    expect(activityLocationLabel('skill', 'smithing:smith_bronze_dagger')).toBeNull()
+    expect(activityLocationLabel('skill', 'woodcutting:magic')).toBe('Ardounne · Camlann')
+    const dngLabel = activityLocationLabel('skill', 'dungeoneering:dungeoneering_floor_1')
+    expect(typeof dngLabel).toBe('string')
+    expect(dngLabel).not.toBe('')
   })
 
   it('maps every quest to exactly one place', () => {

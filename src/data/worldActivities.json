@@ -5,6 +5,10 @@
       "ref": "gnome_stronghold"
     },
     {
+      "kind": "bank",
+      "ref": "use"
+    },
+    {
       "kind": "combat",
       "ref": "arcane_adept"
     },
@@ -283,6 +287,10 @@
     {
       "kind": "skill",
       "ref": "crafting:zyrite_ring"
+    },
+    {
+      "kind": "skill",
+      "ref": "dungeoneering:dungeoneering_floor_1"
     },
     {
       "kind": "skill",
@@ -641,6 +649,10 @@
     {
       "kind": "agility",
       "ref": "varrock"
+    },
+    {
+      "kind": "bank",
+      "ref": "use"
     },
     {
       "kind": "combat",
@@ -1356,6 +1368,10 @@
     },
     {
       "kind": "skill",
+      "ref": "smithing:smith_adamant_arrowtips"
+    },
+    {
+      "kind": "skill",
       "ref": "smithing:smith_adamant_axe"
     },
     {
@@ -1408,6 +1424,10 @@
     },
     {
       "kind": "skill",
+      "ref": "smithing:smith_bronze_arrowtips"
+    },
+    {
+      "kind": "skill",
       "ref": "smithing:smith_bronze_axe"
     },
     {
@@ -1425,6 +1445,10 @@
     {
       "kind": "skill",
       "ref": "smithing:smith_bronze_scimitar"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_arrowtips"
     },
     {
       "kind": "skill",
@@ -1477,6 +1501,10 @@
     {
       "kind": "skill",
       "ref": "smithing:smith_iron_sword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_arrowtips"
     },
     {
       "kind": "skill",
@@ -1548,6 +1576,10 @@
     },
     {
       "kind": "skill",
+      "ref": "smithing:smith_runeforged_arrowtips"
+    },
+    {
+      "kind": "skill",
       "ref": "smithing:smith_runeforged_chainbody"
     },
     {
@@ -1581,6 +1613,10 @@
     {
       "kind": "skill",
       "ref": "smithing:smith_runite_bolts_unf"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_arrowtips"
     },
     {
       "kind": "skill",
@@ -1643,6 +1679,10 @@
     {
       "kind": "agility",
       "ref": "falador"
+    },
+    {
+      "kind": "bank",
+      "ref": "use"
     },
     {
       "kind": "combat",
@@ -1935,6 +1975,10 @@
     {
       "kind": "skill",
       "ref": "crafting:zyrite_ring"
+    },
+    {
+      "kind": "skill",
+      "ref": "dungeoneering:dungeoneering_floor_10"
     },
     {
       "kind": "skill",
@@ -2370,6 +2414,10 @@
     },
     {
       "kind": "skill",
+      "ref": "smithing:smith_adamant_arrowtips"
+    },
+    {
+      "kind": "skill",
       "ref": "smithing:smith_adamant_axe"
     },
     {
@@ -2422,6 +2470,10 @@
     },
     {
       "kind": "skill",
+      "ref": "smithing:smith_bronze_arrowtips"
+    },
+    {
+      "kind": "skill",
       "ref": "smithing:smith_bronze_axe"
     },
     {
@@ -2439,6 +2491,10 @@
     {
       "kind": "skill",
       "ref": "smithing:smith_bronze_scimitar"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_arrowtips"
     },
     {
       "kind": "skill",
@@ -2491,6 +2547,10 @@
     {
       "kind": "skill",
       "ref": "smithing:smith_iron_sword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_arrowtips"
     },
     {
       "kind": "skill",
@@ -2562,6 +2622,10 @@
     },
     {
       "kind": "skill",
+      "ref": "smithing:smith_runeforged_arrowtips"
+    },
+    {
+      "kind": "skill",
       "ref": "smithing:smith_runeforged_chainbody"
     },
     {
@@ -2595,6 +2659,10 @@
     {
       "kind": "skill",
       "ref": "smithing:smith_runite_bolts_unf"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_arrowtips"
     },
     {
       "kind": "skill",
@@ -2657,6 +2725,10 @@
     {
       "kind": "agility",
       "ref": "ardougne"
+    },
+    {
+      "kind": "bank",
+      "ref": "use"
     },
     {
       "kind": "combat",
@@ -2961,6 +3033,10 @@
     {
       "kind": "skill",
       "ref": "crafting:zyrite_ring"
+    },
+    {
+      "kind": "skill",
+      "ref": "dungeoneering:dungeoneering_floor_9"
     },
     {
       "kind": "skill",
@@ -3392,6 +3468,10 @@
     },
     {
       "kind": "skill",
+      "ref": "smithing:smith_adamant_arrowtips"
+    },
+    {
+      "kind": "skill",
       "ref": "smithing:smith_adamant_axe"
     },
     {
@@ -3444,6 +3524,10 @@
     },
     {
       "kind": "skill",
+      "ref": "smithing:smith_bronze_arrowtips"
+    },
+    {
+      "kind": "skill",
       "ref": "smithing:smith_bronze_axe"
     },
     {
@@ -3461,6 +3545,10 @@
     {
       "kind": "skill",
       "ref": "smithing:smith_bronze_scimitar"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_arrowtips"
     },
     {
       "kind": "skill",
@@ -3513,6 +3601,10 @@
     {
       "kind": "skill",
       "ref": "smithing:smith_iron_sword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_arrowtips"
     },
     {
       "kind": "skill",
@@ -3584,6 +3676,10 @@
     },
     {
       "kind": "skill",
+      "ref": "smithing:smith_runeforged_arrowtips"
+    },
+    {
+      "kind": "skill",
       "ref": "smithing:smith_runeforged_chainbody"
     },
     {
@@ -3617,6 +3713,10 @@
     {
       "kind": "skill",
       "ref": "smithing:smith_runite_bolts_unf"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_arrowtips"
     },
     {
       "kind": "skill",
@@ -3687,6 +3787,10 @@
     {
       "kind": "agility",
       "ref": "draynor_village"
+    },
+    {
+      "kind": "bank",
+      "ref": "use"
     },
     {
       "kind": "combat",
@@ -3923,6 +4027,10 @@
     {
       "kind": "skill",
       "ref": "crafting:zyrite_ring"
+    },
+    {
+      "kind": "skill",
+      "ref": "dungeoneering:dungeoneering_floor_4"
     },
     {
       "kind": "skill",
@@ -4279,6 +4387,10 @@
       "ref": "al_kharid"
     },
     {
+      "kind": "bank",
+      "ref": "use"
+    },
+    {
       "kind": "combat",
       "ref": "bloodmoon_stalker"
     },
@@ -4545,6 +4657,10 @@
     {
       "kind": "skill",
       "ref": "crafting:zyrite_ring"
+    },
+    {
+      "kind": "skill",
+      "ref": "dungeoneering:dungeoneering_floor_5"
     },
     {
       "kind": "skill",
@@ -4940,6 +5056,10 @@
     },
     {
       "kind": "skill",
+      "ref": "smithing:smith_adamant_arrowtips"
+    },
+    {
+      "kind": "skill",
       "ref": "smithing:smith_adamant_axe"
     },
     {
@@ -4992,6 +5112,10 @@
     },
     {
       "kind": "skill",
+      "ref": "smithing:smith_bronze_arrowtips"
+    },
+    {
+      "kind": "skill",
       "ref": "smithing:smith_bronze_axe"
     },
     {
@@ -5009,6 +5133,10 @@
     {
       "kind": "skill",
       "ref": "smithing:smith_bronze_scimitar"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_arrowtips"
     },
     {
       "kind": "skill",
@@ -5061,6 +5189,10 @@
     {
       "kind": "skill",
       "ref": "smithing:smith_iron_sword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_arrowtips"
     },
     {
       "kind": "skill",
@@ -5132,6 +5264,10 @@
     },
     {
       "kind": "skill",
+      "ref": "smithing:smith_runeforged_arrowtips"
+    },
+    {
+      "kind": "skill",
       "ref": "smithing:smith_runeforged_chainbody"
     },
     {
@@ -5165,6 +5301,10 @@
     {
       "kind": "skill",
       "ref": "smithing:smith_runite_bolts_unf"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_arrowtips"
     },
     {
       "kind": "skill",
@@ -5228,6 +5368,10 @@
     }
   ],
   "edgevale": [
+    {
+      "kind": "bank",
+      "ref": "use"
+    },
     {
       "kind": "combat",
       "ref": "astral_mage"
@@ -5459,6 +5603,10 @@
     {
       "kind": "skill",
       "ref": "crafting:zyrite_ring"
+    },
+    {
+      "kind": "skill",
+      "ref": "dungeoneering:dungeoneering_floor_7"
     },
     {
       "kind": "skill",
@@ -5892,6 +6040,10 @@
     },
     {
       "kind": "skill",
+      "ref": "dungeoneering:dungeoneering_floor_2"
+    },
+    {
+      "kind": "skill",
       "ref": "mining:tin"
     },
     {
@@ -5952,6 +6104,10 @@
     },
     {
       "kind": "skill",
+      "ref": "smithing:smith_adamant_arrowtips"
+    },
+    {
+      "kind": "skill",
       "ref": "smithing:smith_adamant_axe"
     },
     {
@@ -6004,6 +6160,10 @@
     },
     {
       "kind": "skill",
+      "ref": "smithing:smith_bronze_arrowtips"
+    },
+    {
+      "kind": "skill",
       "ref": "smithing:smith_bronze_axe"
     },
     {
@@ -6021,6 +6181,10 @@
     {
       "kind": "skill",
       "ref": "smithing:smith_bronze_scimitar"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_arrowtips"
     },
     {
       "kind": "skill",
@@ -6073,6 +6237,10 @@
     {
       "kind": "skill",
       "ref": "smithing:smith_iron_sword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_arrowtips"
     },
     {
       "kind": "skill",
@@ -6144,6 +6312,10 @@
     },
     {
       "kind": "skill",
+      "ref": "smithing:smith_runeforged_arrowtips"
+    },
+    {
+      "kind": "skill",
       "ref": "smithing:smith_runeforged_chainbody"
     },
     {
@@ -6177,6 +6349,10 @@
     {
       "kind": "skill",
       "ref": "smithing:smith_runite_bolts_unf"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_arrowtips"
     },
     {
       "kind": "skill",
@@ -6385,6 +6561,10 @@
     {
       "kind": "agility",
       "ref": "seers_village"
+    },
+    {
+      "kind": "bank",
+      "ref": "use"
     },
     {
       "kind": "combat",
@@ -6983,6 +7163,10 @@
     {
       "kind": "agility",
       "ref": "pollnivneach"
+    },
+    {
+      "kind": "bank",
+      "ref": "use"
     },
     {
       "kind": "combat",
@@ -7644,6 +7828,10 @@
     },
     {
       "kind": "skill",
+      "ref": "dungeoneering:dungeoneering_floor_3"
+    },
+    {
+      "kind": "skill",
       "ref": "prayer:altar_big_bones"
     },
     {
@@ -7696,6 +7884,10 @@
     }
   ],
   "camlann": [
+    {
+      "kind": "bank",
+      "ref": "use"
+    },
     {
       "kind": "combat",
       "ref": "astral_ranger"
@@ -7935,6 +8127,10 @@
     {
       "kind": "skill",
       "ref": "crafting:zyrite_ring"
+    },
+    {
+      "kind": "skill",
+      "ref": "dungeoneering:dungeoneering_floor_6"
     },
     {
       "kind": "skill",
@@ -8366,6 +8562,10 @@
     },
     {
       "kind": "skill",
+      "ref": "smithing:smith_adamant_arrowtips"
+    },
+    {
+      "kind": "skill",
       "ref": "smithing:smith_adamant_axe"
     },
     {
@@ -8418,6 +8618,10 @@
     },
     {
       "kind": "skill",
+      "ref": "smithing:smith_bronze_arrowtips"
+    },
+    {
+      "kind": "skill",
       "ref": "smithing:smith_bronze_axe"
     },
     {
@@ -8435,6 +8639,10 @@
     {
       "kind": "skill",
       "ref": "smithing:smith_bronze_scimitar"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_arrowtips"
     },
     {
       "kind": "skill",
@@ -8487,6 +8695,10 @@
     {
       "kind": "skill",
       "ref": "smithing:smith_iron_sword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_arrowtips"
     },
     {
       "kind": "skill",
@@ -8558,6 +8770,10 @@
     },
     {
       "kind": "skill",
+      "ref": "smithing:smith_runeforged_arrowtips"
+    },
+    {
+      "kind": "skill",
       "ref": "smithing:smith_runeforged_chainbody"
     },
     {
@@ -8591,6 +8807,10 @@
     {
       "kind": "skill",
       "ref": "smithing:smith_runite_bolts_unf"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_arrowtips"
     },
     {
       "kind": "skill",
@@ -8646,6 +8866,10 @@
     },
     {
       "kind": "skill",
+      "ref": "woodcutting:magic"
+    },
+    {
+      "kind": "skill",
       "ref": "woodcutting:maple"
     },
     {
@@ -8654,6 +8878,10 @@
     }
   ],
   "portsarin": [
+    {
+      "kind": "bank",
+      "ref": "use"
+    },
     {
       "kind": "combat",
       "ref": "bone_wyvern"
@@ -8929,6 +9157,10 @@
     {
       "kind": "skill",
       "ref": "crafting:zyrite_ring"
+    },
+    {
+      "kind": "skill",
+      "ref": "dungeoneering:dungeoneering_floor_8"
     },
     {
       "kind": "skill",
