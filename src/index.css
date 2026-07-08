@@ -677,7 +677,13 @@ html, body, #app {
    text/border colors need overriding here since the *screen* background
    (--color-void) stays dark under .forge-shell, so anything not on one of
    these parchment surfaces already reads fine unchanged. */
-.forge-shell .welcome-card { background: var(--fm-parch-face); border-color: var(--fm-rule); box-shadow: var(--fm-parch-inset); }
+/* Split into background-color + background-image (rather than `background:
+   var(--fm-parch-face)`): the token is a multi-radial-gradient, and engines
+   that reject any layer collapse the whole shorthand to transparent, so the
+   dark shell shows through and washes out the text. As separate longhands an
+   unsupported gradient drops to background-image:none, leaving the solid
+   parchment fallback. */
+.forge-shell .welcome-card { background-color: #ece0c2; background-image: var(--fm-parch-face); border-color: var(--fm-rule); box-shadow: var(--fm-parch-inset); }
 .forge-shell .welcome-card::after { display: none; }
 .forge-shell .welcome-card__title { background-image: var(--fm-gilt-text); }
 .forge-shell .wstat { color: var(--fm-ink-soft); }
