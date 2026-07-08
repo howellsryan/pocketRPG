@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'preact/hooks'
 import HPBar from './HPBar.jsx'
 import { HitSplatLayer } from './HitSplat.jsx'
 import { loadThree, canRender3D, assetUrl } from '../utils/three3d.js'
-import { disposeObject, attachGearList } from './Model3DViewer.jsx'
+import { disposeObject, attachGearList, updateHiddenGear } from './Model3DViewer.jsx'
 
 // Phase-2 combat arena (docs/3d-gameplay-investigation.md): the rigged hero
 // (equipped weapon on the hand bone) faces the monster's model in a side-on
@@ -238,6 +238,7 @@ function CombatArena3D({
         const now = st.clock.elapsedTime
         if (st.mixer) st.mixer.update(dt)
         if (st.monsterMixer) st.monsterMixer.update(dt)
+        updateHiddenGear(st)
 
         // Monster idle bob + procedural attack/reaction offsets.
         if (st.monster) {

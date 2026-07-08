@@ -39,7 +39,15 @@ Fit notes — two regimes, pick per shape:
   the helm — hair tucks inside the shell, the visor shows the (double-sided)
   shell interior, and the neck tapers naturally into the rim. Full collapse
   (scale ≈ 0) is wrong: upper-neck vertices share Head weights, so the neck
-  severs during `hit_head`.
+  severs during `hit_head`. Shrinking the bone in place isn't enough on its
+  own — every clip animates Head's rotation, and rotating a shrunk-in-place
+  bone drags the head down toward its joint origin near the neck, leaving a
+  tiny head hanging out below the shell. `updateHiddenGear()` (called once
+  per render frame, after the mixer updates, from both `Model3DViewer` and
+  `CombatArena3D`) cancels this by re-deriving the bone's position every
+  frame from its own attach point (the same head-local center the helm sits
+  at) rotated by the *current* quaternion, so that point stays visually
+  fixed under any pose — not just the frame it was baked at.
 - **Open headwear** (hats, hoods, circlets — head stays visible): no
   `hideHead`; the piece must contain the hair, so bake with hair-sized
   margins, e.g. `--margins 1.25,1.12,1.06 --shift 0.06 --lift 0`.

@@ -106,6 +106,7 @@ function Model3DViewer({ characterPath, weapon = null, gear = null, idleClip = n
         st.raf = requestAnimationFrame(renderLoop)
         const dt = st.clock.getDelta()
         if (st.mixer) st.mixer.update(dt)
+        updateHiddenGear(st)
         controls.update()
         renderer.render(scene, camera)
       }
@@ -201,7 +202,14 @@ function attachWeapon(st, weapon) {
 // Partial, not zero: the hero's upper neck shares Head-bone weights, so a full
 // collapse severs the neck mid-animation; 0.3 tucks the hair inside the shell
 // while the neck tapers naturally into the helm. No clip animates bone scale,
-// so the override persists across the mixer.
+// so the scale override persists across the mixer — but ROTATION is animated
+// (every clip keys Head.quaternion), so shrinking the bone in place would drag
+// the head toward the bone's joint origin (down near the neck) each frame,
+// leaving a tiny head hanging out below the shell. updateHiddenGear() cancels
+// that every frame by re-deriving the bone's position from its own attach
+// point (piece.position, the same head-local center the helm is placed at)
+// rotated by the CURRENT quaternion — so that point stays visually fixed
+// regardless of pose, and the shrink happens invisibly around it.
 const HIDE_BONE_SCALE = 0.3
 
 // Load + attach the equipped armour GLBs (helmet on Head, etc.) — same cheap
@@ -210,7 +218,7 @@ const HIDE_BONE_SCALE = 0.3
 export function attachGearList(st, gear, fallbackAnchor) {
   if (!st || !st.THREE) return
   for (const g of st.gear || []) { g.anchor.remove(g.obj); disposeObject(g.obj) }
-  for (const b of st.gearShrunkBones || []) b.scale.setScalar(1)
+  for (const h of st.gearShrunkBones || []) { h.bone.scale.setScalar(1); h.bone.position.copy(h.origPos) }
   st.gear = []
   st.gearShrunkBones = []
   const token = (st.gearToken = (st.gearToken || 0) + 1)
@@ -229,20 +237,29 @@ export function attachGearList(st, gear, fallbackAnchor) {
         const boneAnchor = piece.bone ? st.bones[piece.bone] : null
         const anchor = boneAnchor || fallbackAnchor
         if (!anchor) return
+        const [px, py, pz] = piece.position || [0, 0, 0]
         const shrink = piece.hideHead && boneAnchor ? HIDE_BONE_SCALE : 1
         if (shrink !== 1) {
           boneAnchor.scale.setScalar(shrink)
-          st.gearShrunkBones.push(boneAnchor)
+          st.gearShrunkBones.push({
+            bone: boneAnchor,
+            origPos: boneAnchor.position.clone(),
+            center: new THREE.Vector3(px, py, pz),
+            shrink,
+            tmp: new THREE.Vector3(),
+          })
           // double-side so the visor slit shows the shell interior, not a hole
           obj.traverse((o) => {
             if (!o.isMesh || !o.material) return
             for (const m of Array.isArray(o.material) ? o.material : [o.material]) m.side = THREE.DoubleSide
           })
         }
-        const [px, py, pz] = piece.position || [0, 0, 0]
         const [rx, ry, rz] = piece.rotationDeg || [0, 0, 0]
-        // counter the anchor bone's shrink so the piece keeps its world transform
-        obj.position.set(px / shrink, py / shrink, pz / shrink)
+        // position is the bone's own attach point — unscaled: the per-frame
+        // bone-position compensation (updateHiddenGear) already cancels the
+        // bone's shrink at exactly this point, so the piece needs no counter-
+        // translation, only a counter-scale for its own size.
+        obj.position.set(px, py, pz)
         obj.rotation.set(THREE.MathUtils.degToRad(rx), THREE.MathUtils.degToRad(ry), THREE.MathUtils.degToRad(rz))
         obj.scale.setScalar((typeof piece.scale === 'number' ? piece.scale : 1) / shrink)
         anchor.add(obj)
@@ -250,6 +267,19 @@ export function attachGearList(st, gear, fallbackAnchor) {
       })
     }
   }).catch(() => {})
+}
+
+// Per-frame follow-up for attachGearList's hidden bones — call once per
+// render frame, after the mixer updates and before rendering. Must be exact
+// every frame (not baked once at attach time) because the anchor bone's
+// rotation is animated; see the HIDE_BONE_SCALE comment above.
+export function updateHiddenGear(st) {
+  const list = st && st.gearShrunkBones
+  if (!list || !list.length) return
+  for (const h of list) {
+    h.tmp.copy(h.center).applyQuaternion(h.bone.quaternion).multiplyScalar(1 - h.shrink)
+    h.bone.position.copy(h.origPos).add(h.tmp)
+  }
 }
 
 export function disposeObject(obj) {
