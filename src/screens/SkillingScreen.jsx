@@ -243,20 +243,21 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
               const fromBank = qty - fromInv
               if (fromInv > 0) removeItem(newInv, matId, fromInv)
               if (fromBank > 0) bankUpdates[matId] = -fromBank
-              // Track consumed materials
-              skillingState.consumedMaterials[matId] = (skillingState.consumedMaterials[matId] || 0) + qty
             }
             if (Object.keys(bankUpdates).length > 0) updateBankDirect(bankUpdates)
 
-            // After consuming, check if we can do ANOTHER action
+            // After consuming, check if we can do ANOTHER action. Use the
+            // post-consumption inventory/bank directly — newInv already
+            // reflects this action's consumption, and bankUpdates holds this
+            // tick's pending bank deltas, so there's no need to (and must
+            // not) also subtract the cumulative consumedMaterials total on
+            // top of that, which double-counts past consumption and stops
+            // the action at roughly half the true available materials.
             let canContinue = true
             for (const [matId, qtyNeeded] of Object.entries(action.materials)) {
               const invCount = countItem(newInv, matId)
-              const bankCount = bankRef.current[matId]?.quantity || 0
-              const totalConsumed = skillingState.consumedMaterials[matId] || 0
-              const totalAvailable = inventoryRef.current.reduce((sum, slot) => sum + (slot?.itemId === matId ? (slot?.quantity || 0) : 0), 0) + (bankRef.current[matId]?.quantity || 0)
-              const projectedAfterConsume = totalAvailable - totalConsumed - qtyNeeded
-              if (projectedAfterConsume < 0) {
+              const bankCount = (bankRef.current[matId]?.quantity || 0) + (bankUpdates[matId] || 0)
+              if (invCount + bankCount < qtyNeeded) {
                 canContinue = false
                 break
               }
