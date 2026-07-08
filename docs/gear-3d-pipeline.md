@@ -83,13 +83,36 @@ are raw — run `process-3d-model.mjs` (and `fit-headgear.mjs` /
 `canonicalize-weapon.mjs`, if the slot needs it) on each afterwards, same as
 any authored asset.
 
+## Body slot (live — platebodies)
+
+A platebody is authored as a standalone worn shell (upright, facing +x, no body
+inside, a few thousand tris) exactly like headgear. It is **rigid-attached at
+the hero model root** (`defaults.gear.body`, `"bone": null`) rather than to a
+spine bone: the torso barely deforms in the idle/attack clips, and a root anchor
+keeps the plate steady over the chest without per-bone-space rotation. The
+`defaults.gear.body` transform (`position [0, 0.64, 0]`, `rotationDeg [0,-90,0]`
+to turn the +x-authored front to the hero's facing, `scale 0.35`) was measured
+from `public/3d-samples/hero.glb`'s torso; a canonical entry is just
+`{ "model": …, "slot": "body" }`. Re-measure if the hero model changes.
+
+The authored dark Tripo texture is lightened once into a neutral steel base
+(`steel_platebody`) and every metal/barrows tier derives from it via
+`recolor-model.mjs --grey` (recipes in `scripts/model-variants.json`), same as
+the helm tier. Processed GLBs are committed to `public/3d-samples/` (like the
+helms) and referenced by filename. Verify a couple of tiers with a front + back
+render before committing — clip-through shows most at the collar and waist.
+
+Caveat: rigid attach does not skin-deform, so extreme clips (death, hard hit
+reactions) can show slight torso clipping. Full weight-transfer skinning
+(`canonicalize-armour.mjs`) is still the eventual fix.
+
 ## Other slots (when the first assets arrive)
 
 - **Cape**: rigid attach like the helmet — needs a `defaults.gear.cape` bone +
   transform (chest/spine bone) measured the same way.
-- **Body / legs**: rigid attach clips during animation; these need skinned
-  meshes sharing the hero skeleton (weight transfer from the nearest hero
-  vertices — planned as `canonicalize-armour.mjs`, not built yet).
+- **Legs**: rigid attach clips more than the torso during animation; these need
+  skinned meshes sharing the hero skeleton (weight transfer from the nearest
+  hero vertices — planned as `canonicalize-armour.mjs`, not built yet).
 
 The runtime side is already slot-generic: `getGearPlacements()` in
 `src/utils/equipModels.js` resolves whatever is equipped, and

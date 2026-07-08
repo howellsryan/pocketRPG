@@ -11,5 +11,17 @@
   "mithril_full_helm": { "base": "steel_full_helm", "grey": 0.35, "to": 229, "sat": 0.5, "light": 0.95 },
   "adamant_full_helm": { "base": "steel_full_helm", "grey": 0.35, "to": 142, "sat": 0.45, "light": 0.8 },
   "runeforged_full_helm": { "base": "steel_full_helm", "grey": 0.35, "to": 174, "sat": 0.55, "light": 0.95 },
-  "dragon_full_helm": { "base": "steel_full_helm", "grey": 0.35, "to": 6, "sat": 0.6, "light": 0.75 }
+  "dragon_full_helm": { "base": "steel_full_helm", "grey": 0.35, "to": 6, "sat": 0.6, "light": 0.75 },
+
+  "_platebody_comment": "Body slot. steel_platebody is the authored base (the dark Tripo texture lightened once to a neutral steel: recolor-model.mjs --grey 1.0 --to 210 --sat 0.12 --light 1.8); every other tier derives from it below.",
+  "bronze_platebody": { "base": "steel_platebody", "grey": 0.35, "to": 29, "sat": 0.5, "light": 0.85 },
+  "iron_platebody": { "base": "steel_platebody", "grey": 0.35, "to": 218, "sat": 0.1, "light": 0.72 },
+  "mithril_platebody": { "base": "steel_platebody", "grey": 0.35, "to": 229, "sat": 0.5, "light": 0.95 },
+  "adamant_platebody": { "base": "steel_platebody", "grey": 0.35, "to": 142, "sat": 0.45, "light": 0.8 },
+  "runeforged_platebody": { "base": "steel_platebody", "grey": 0.35, "to": 174, "sat": 0.55, "light": 0.95 },
+  "gravehusk_platebody": { "base": "steel_platebody", "grey": 0.35, "to": 84, "sat": 0.12, "light": 0.7 },
+  "2nd_age_platebody": { "base": "steel_platebody", "grey": 0.35, "to": 46, "sat": 0.85, "light": 1.15 },
+  "dravok_s_platebody": { "base": "steel_platebody", "grey": 0.35, "to": 8, "sat": 0.6, "light": 0.85 },
+  "gorath_s_platebody": { "base": "steel_platebody", "grey": 0.35, "to": 85, "sat": 0.35, "light": 0.85 },
+  "torvek_s_platebody": { "base": "steel_platebody", "grey": 0.35, "to": 212, "sat": 0.22, "light": 0.9 }
 }
