@@ -25,7 +25,11 @@ export const CHAT_OPENAI_REASONING_EFFORT = 'medium'
 // CHAT_MESSAGE_RESERVE_MILLI in quota.js is tuned against this exact bound
 // (see the comment there) and the free-tier neuron budget has little headroom.
 export const CHAT_MAX_TOOL_ROUNDS = 3
-export const CHAT_TIME_BUDGET_MS = 45_000
+// Wall-clock budget for a single chat turn. Reasoning-model turns with a few
+// tool rounds can run long; kept comfortably under the client's 90s fetch
+// timeout (src/cloud/api.js) so an overrun degrades to a retrieval-only answer
+// here rather than the client aborting and showing a "too much for me" error.
+export const CHAT_TIME_BUDGET_MS = 75_000
 export const CHAT_MAX_ANSWER_TOKENS = 5000
 export const CHAT_MAX_TOOL_RESULT_CHARS = 4000
 export const CHAT_MAX_QUESTION_CHARS = 500
