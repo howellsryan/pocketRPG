@@ -2504,14 +2504,14 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                       title={`${prayer.name} · Lv ${prayer.level}`}
                       class={`px-1 py-1.5 rounded-md border text-center transition-colors ${
                         isActive
-                          ? 'bg-[var(--fm-parch-hi)] border-[var(--color-gold)]'
+                          ? 'cb-prayon'
                           : canUse
                             ? 'bg-[var(--fm-parch-hi)] border-[var(--color-emerald)] active:bg-[var(--fm-parch)]'
                             : 'bg-[var(--color-void)] border-[var(--color-void-light)] opacity-30 cursor-default'
                       }`}
                     >
                       <div class="text-[12px] leading-none">{prayer.icon}</div>
-                      <div class="text-[8px] text-[var(--color-parchment)] opacity-70 mt-0.5">{protectType}</div>
+                      <div class={`text-[8px] opacity-70 mt-0.5 ${isActive ? 'text-[#1a1206]' : 'text-[var(--color-parchment)]'}`}>{protectType}</div>
                     </button>
                   )
                 })}
@@ -2529,20 +2529,20 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                       title={`${prayer.name} · Lv ${prayer.level}\n${prayer.description}`}
                       class={`px-1 py-1 rounded-md border text-center transition-colors ${
                         isActive
-                          ? 'bg-[var(--fm-parch-hi)] border-[var(--color-gold)]'
+                          ? 'cb-prayon'
                           : canUse
                             ? 'bg-[var(--fm-parch-hi)] border-[var(--color-emerald)] active:bg-[var(--fm-parch)]'
                             : 'bg-[var(--color-void)] border-[var(--color-void-light)] opacity-30 cursor-default'
                       }`}
                     >
                       {styled ? (
-                        <div class="text-[10px] font-[var(--font-mono)] text-[var(--color-parchment)] leading-none whitespace-nowrap">
+                        <div class={`text-[10px] font-[var(--font-mono)] leading-none whitespace-nowrap ${isActive ? 'text-[#1a1206]' : 'text-[var(--color-parchment)]'}`}>
                           +{styled.boostPercent}% {styled.icon}
                         </div>
                       ) : (
                         <div class="text-[12px] leading-none">{prayer.icon}</div>
                       )}
-                      <div class="text-[8px] text-[var(--color-gold-dim)] opacity-70 mt-0.5">Lv {prayer.level}</div>
+                      <div class={`text-[8px] opacity-70 mt-0.5 ${isActive ? 'text-[#1a1206]' : 'text-[var(--color-gold-dim)]'}`}>Lv {prayer.level}</div>
                     </button>
                   )
                 })}

@@ -677,7 +677,13 @@ html, body, #app {
    text/border colors need overriding here since the *screen* background
    (--color-void) stays dark under .forge-shell, so anything not on one of
    these parchment surfaces already reads fine unchanged. */
-.forge-shell .welcome-card { background: var(--fm-parch-face); border-color: var(--fm-rule); box-shadow: var(--fm-parch-inset); }
+/* Split into background-color + background-image (rather than `background:
+   var(--fm-parch-face)`): the token is a multi-radial-gradient, and engines
+   that reject any layer collapse the whole shorthand to transparent, so the
+   dark shell shows through and washes out the text. As separate longhands an
+   unsupported gradient drops to background-image:none, leaving the solid
+   parchment fallback. */
+.forge-shell .welcome-card { background-color: #ece0c2; background-image: var(--fm-parch-face); border-color: var(--fm-rule); box-shadow: var(--fm-parch-inset); }
 .forge-shell .welcome-card::after { display: none; }
 .forge-shell .welcome-card__title { background-image: var(--fm-gilt-text); }
 .forge-shell .wstat { color: var(--fm-ink-soft); }
@@ -905,6 +911,15 @@ html, body, #app {
   box-shadow: 0 6px 16px -8px rgba(212,160,23,0.6), inset 0 1px 0 rgba(255,255,255,0.4);
 }
 .cb-idle__chk { width: 13px; height: 13px; }
+
+/* Prayer quick-tiles (desktop combat column) toggled ON — same gold fill as
+   the idle-toggle buttons (.cb-idle.is-on) so an active prayer reads clearly
+   as ON rather than a near-invisible border swap. */
+.cb-prayon {
+  background: linear-gradient(180deg, var(--color-gold-light), var(--color-gold) 60%, #b3851a);
+  border-color: rgba(240,192,64,0.6);
+  box-shadow: 0 6px 16px -8px rgba(212,160,23,0.6), inset 0 1px 0 rgba(255,255,255,0.4);
+}
 
 /* Attack-style selector */
 .cb-styles { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 18px; }
