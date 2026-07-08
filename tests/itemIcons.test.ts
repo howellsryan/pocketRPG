@@ -1,12 +1,14 @@
 import { describe, expect, it } from 'vitest'
 import items from '../src/data/items.json'
 import gameIcons from '../src/data/gameIcons.json'
+import bespokeIcons from '../src/data/bespokeIcons.json'
 import minigames from '../src/data/minigames.json'
 import { getItemIconKey, getItemIconTint } from '../src/utils/itemIcons.js'
 import { SKILL_ART } from '../src/utils/skillArt.js'
 
 const itemsData = items as Record<string, any>
 const gameIconsData = gameIcons as Record<string, { body: string; viewBox: string | null }>
+const bespokeIconsData = bespokeIcons as Record<string, { body: string; viewBox: string | null }>
 
 describe('itemIcons', () => {
   it('every item resolves to a present glyph', () => {
@@ -270,13 +272,16 @@ describe('itemIcons', () => {
   })
 
   it('every minigame iconKey resolves to a present glyph', () => {
+    // GameIcon checks bespokeIconsData before falling back to the shared
+    // gameIcons.json library — mirror that resolution order here.
     const mg = minigames as { tasks: any[]; minigames: any[] }
+    const resolves = (key: string) => !!(bespokeIconsData[key] || gameIconsData[key])
     const bad: string[] = []
     for (const t of mg.tasks) {
-      if (t.iconKey && !gameIconsData[t.iconKey]) bad.push(`task ${t.id} → "${t.iconKey}"`)
+      if (t.iconKey && !resolves(t.iconKey)) bad.push(`task ${t.id} → "${t.iconKey}"`)
     }
     for (const m of mg.minigames) {
-      if (m.iconKey && !gameIconsData[m.iconKey]) bad.push(`minigame ${m.id} → "${m.iconKey}"`)
+      if (m.iconKey && !resolves(m.iconKey)) bad.push(`minigame ${m.id} → "${m.iconKey}"`)
     }
     expect(bad).toEqual([])
   })

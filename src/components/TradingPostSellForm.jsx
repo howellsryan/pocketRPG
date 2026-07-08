@@ -24,7 +24,7 @@ export default function TradingPostSellForm({
           min="1"
           value={safePrice}
           onInput={(e) => setPrice(Math.max(1, Math.floor(Number(e.target.value) || 1)))}
-          class="h-9 rounded-md bg-[#111] border border-[var(--color-void-border)] text-[var(--color-parchment)] text-[13px] font-[var(--font-mono)] text-center px-2 outline-none"
+          class="h-9 rounded-md bg-[var(--color-void-light)] border border-[var(--color-void-border)] text-[var(--color-parchment)] text-[13px] font-[var(--font-mono)] text-center px-2 outline-none"
         />
       </div>
 
@@ -38,7 +38,7 @@ export default function TradingPostSellForm({
             max={maxQty}
             value={safeQty}
             onInput={(e) => setQty(Math.max(1, Math.min(maxQty, Math.floor(Number(e.target.value) || 1))))}
-            class="flex-1 h-9 rounded-md bg-[#111] border border-[var(--color-void-border)] text-[var(--color-parchment)] text-[13px] font-[var(--font-mono)] text-center outline-none"
+            class="flex-1 h-9 rounded-md bg-[var(--color-void-light)] border border-[var(--color-void-border)] text-[var(--color-parchment)] text-[13px] font-[var(--font-mono)] text-center outline-none"
           />
           <Button variant="secondary" size="md" onClick={() => setQty(Math.min(maxQty, safeQty + 1))} className="w-8 h-8 p-0 flex items-center justify-center text-base">+</Button>
         </div>

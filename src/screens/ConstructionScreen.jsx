@@ -16,11 +16,11 @@ import itemsData from '../data/items.json'
 import { recordCollectionLogDrop } from '../cloud/collectionLog.js'
 import { BUILDING_ACTIONS, UNLOCKABLES } from '../engine/construction.js'
 
-export default function ConstructionScreen({ onBack }) {
+export default function ConstructionScreen({ onBack, onStopBack }) {
   const {
     stats, inventory, bank,
     grantXP, updateInventory, updateBankDirect, addToast,
-    unlockedFeatures, unlockFeature, setActiveTask, activeTask
+    unlockedFeatures, unlockFeature, setActiveTask, requestActivityStart, activeTask
   } = useGame()
 
   const constructionLevel = getLevelFromXP(stats.construction?.xp || 0)
@@ -69,6 +69,8 @@ export default function ConstructionScreen({ onBack }) {
       const resumed = buildResumedState(activeTask)
       if (resumed) { setSkilling(resumed); skillingRef.current = resumed; return }
     }
+    // Map-driven gating (Phase 3): must be at a place that offers this build.
+    if (!requestActivityStart({ type: 'skill', skill: 'construction', action })) return
     const startedAt = Date.now()
     const state = { ...createSkillingState('construction', action), startedAt }
     setSkilling(state)
@@ -88,6 +90,10 @@ export default function ConstructionScreen({ onBack }) {
     }
     setSkilling(null)
     setActiveTask(null)
+    // Stop & Back returns to where the player came from — the place-map origin
+    // (onStopBack/onBack from a returnTo) or the previous screen.
+    const back = onStopBack || onBack
+    if (back) back()
   }
 
   useEffect(() => {
@@ -171,7 +177,7 @@ export default function ConstructionScreen({ onBack }) {
   }
 
   return (
-    <div class="h-full overflow-y-auto p-4">
+    <div class="forge-shell h-full overflow-y-auto p-4">
       <SkillScreenHeader
         skill="construction"
         title="Construction"
@@ -225,10 +231,10 @@ export default function ConstructionScreen({ onBack }) {
               key={unlockable.id}
               class={`p-3 rounded-xl border ${
                 alreadyDone
-                  ? 'bg-[#0a1a0a] border-[#1a3a1a]'
+                  ? 'bg-[var(--fm-parch-hi)] border-[var(--color-emerald)]'
                   : available
-                    ? 'bg-[#1a1a1a] border-[#2a2a2a]'
-                    : 'bg-[#111] border-[#1a1a1a] opacity-40'
+                    ? 'bg-[var(--color-void-light)] border-[var(--color-void-border)]'
+                    : 'bg-[var(--color-void)] border-[var(--color-void-border)] opacity-40'
               }`}
             >
               <div class="flex items-start justify-between gap-2">
@@ -250,7 +256,7 @@ export default function ConstructionScreen({ onBack }) {
                     class={`shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
                       available
                         ? 'bg-[var(--color-gold)] text-[#0f0f0f] active:opacity-80'
-                        : 'bg-[#222] text-[#666] cursor-not-allowed'
+                        : 'bg-[var(--color-void-light)] text-[var(--fm-ink-faint)] cursor-not-allowed'
                     }`}
                   >
                     {available ? 'Create' : `Lv ${unlockable.level}`}
@@ -269,7 +275,7 @@ export default function ConstructionScreen({ onBack }) {
         {(() => {
           const unlocked = constructionLevel >= GATHER_AUTOBANK_CONSTRUCTION_LEVEL
           return (
-            <div class={`p-3 rounded-xl border ${unlocked ? 'bg-[#0a1a0a] border-[#1a3a1a]' : 'bg-[#111] border-[#1a1a1a] opacity-40'}`}>
+            <div class={`p-3 rounded-xl border ${unlocked ? 'bg-[var(--fm-parch-hi)] border-[var(--color-emerald)]' : 'bg-[var(--color-void)] border-[var(--color-void-border)] opacity-40'}`}>
               <div class="flex items-start justify-between gap-2">
                 <div class="flex-1 min-w-0">
                   <div class="flex items-center gap-1.5 mb-0.5">
@@ -280,7 +286,7 @@ export default function ConstructionScreen({ onBack }) {
                     Lv 80 required · Gathered resources auto-bank when your inventory fills, so gathering never stops.
                   </div>
                 </div>
-                <span class={`text-xs font-semibold shrink-0 pt-0.5 ${unlocked ? 'text-green-400' : 'text-[#666]'}`}>
+                <span class={`text-xs font-semibold shrink-0 pt-0.5 ${unlocked ? 'text-green-400' : 'text-[var(--fm-ink-faint)]'}`}>
                   {unlocked ? '✓ Unlocked' : 'Lv 80'}
                 </span>
               </div>

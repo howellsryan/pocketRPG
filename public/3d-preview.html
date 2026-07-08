@@ -1,0 +1,315 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>PocketRPG · 3D Preview & Weapon Aligner</title>
+<!--
+  Standalone dev harness (NOT part of the app bundle). It renders a character
+  GLB and, optionally, a weapon GLB attached to a chosen bone/anchor, with live
+  offset sliders so you can position a weapon in the hand and read off the exact
+  registry entry to paste into src/data/equipmentModels.json.
+
+  REGISTRY-FIRST: on load it fetches /src/data/equipmentModels.json (served on
+  Vite dev and on deployments — pages_build_output_dir is the repo root) and
+  lists every registered weapon. Picking one loads the hero AND the weapon from
+  the registry's own paths — including /api/tripo-assets/ R2 URLs on a deployed
+  preview — with the exact bone semantics the runtime resolver uses (absent
+  bone → defaults.handBone; explicit null → model root) and the entry's
+  effective transform (falling back to defaults.weapon) pre-applied to the
+  sliders. What you see is what ships. The emitted JSON is the full registry
+  entry; when the transform equals defaults.weapon it collapses to { model }
+  (a canonical import needs nothing else). File pickers remain for GLBs that
+  aren't uploaded yet (R2 URLs only resolve on a deployment, not local dev).
+
+  Uses the same vendored three.js the app will use (public/vendor/three/*),
+  loaded via relative paths so it works both in Vite dev (served at /) and in
+  the deployed single-file build (served at /public/). Open:
+    dev:      http://localhost:5173/3d-preview.html
+    deployed: /public/3d-preview.html
+-->
+<style>
+  :root { --bg:#161310; --panel:#201b16; --line:#362e25; --ink:#ece4d6; --soft:#b3a894; --ember:#e08a4a; --mono:ui-monospace,Menlo,monospace; }
+  * { box-sizing:border-box; }
+  html,body { margin:0; height:100%; background:var(--bg); color:var(--ink); font-family:system-ui,sans-serif; overflow:hidden; }
+  #stage { position:fixed; inset:0; }
+  canvas { display:block; width:100%; height:100%; touch-action:none; }
+  #panel { position:fixed; top:0; right:0; width:min(340px,90vw); max-height:100vh; overflow-y:auto;
+    background:color-mix(in srgb, var(--panel) 92%, transparent); border-left:1px solid var(--line);
+    padding:14px 16px calc(14px + env(safe-area-inset-bottom)); font-size:13px; backdrop-filter:blur(6px); }
+  h1 { font-size:14px; letter-spacing:.04em; margin:0 0 2px; }
+  .sub { color:var(--soft); font-size:11px; margin:0 0 12px; }
+  .grp { border-top:1px solid var(--line); padding:11px 0; }
+  label { display:block; color:var(--soft); font-size:11px; text-transform:uppercase; letter-spacing:.06em; margin:0 0 5px; }
+  select, input[type=file], button { width:100%; background:var(--bg); color:var(--ink); border:1px solid var(--line);
+    border-radius:8px; padding:7px 9px; font-size:12px; margin-bottom:8px; }
+  button { cursor:pointer; }
+  button.on { border-color:var(--ember); color:var(--ember); }
+  .row { display:flex; align-items:center; gap:8px; margin-bottom:6px; }
+  .row span { width:14px; color:var(--ember); font-family:var(--mono); }
+  .row input[type=range] { flex:1; accent-color:var(--ember); }
+  .row output { width:52px; text-align:right; font-family:var(--mono); font-size:11px; color:var(--ink); }
+  #xform { font-family:var(--mono); font-size:10.5px; color:var(--soft); white-space:pre-wrap; word-break:break-all;
+    background:var(--bg); border:1px solid var(--line); border-radius:8px; padding:8px; margin-top:4px; }
+  #info { font-family:var(--mono); font-size:10.5px; color:var(--soft); line-height:1.5; }
+  .err { color:#e0564b; }
+  #copy { background:var(--ember); color:#161310; border:none; font-weight:700; }
+</style>
+</head>
+<body>
+<div id="stage"><canvas id="c"></canvas></div>
+<div id="panel">
+  <h1>3D Preview · Weapon Aligner</h1>
+  <p class="sub">Position a weapon in the hand, then copy the transform into the registry.</p>
+
+  <div class="grp">
+    <label>Registry item</label>
+    <select id="regItem"><option value="">(custom files)</option></select>
+    <label>Character GLB</label>
+    <input type="file" id="charFile" accept=".glb,.gltf">
+    <label>Weapon GLB</label>
+    <input type="file" id="weapFile" accept=".glb,.gltf">
+    <label>Attach weapon to</label>
+    <select id="bone"><option value="__root">(model root)</option></select>
+  </div>
+
+  <div class="grp">
+    <label>Position offset</label>
+    <div class="row"><span>x</span><input type="range" id="px" min="-1" max="1" step="0.005" value="0"><output id="pxo">0</output></div>
+    <div class="row"><span>y</span><input type="range" id="py" min="-1" max="1" step="0.005" value="0"><output id="pyo">0</output></div>
+    <div class="row"><span>z</span><input type="range" id="pz" min="-1" max="1" step="0.005" value="0"><output id="pzo">0</output></div>
+    <label>Rotation (deg)</label>
+    <div class="row"><span>x</span><input type="range" id="rx" min="-180" max="180" step="1" value="0"><output id="rxo">0</output></div>
+    <div class="row"><span>y</span><input type="range" id="ry" min="-180" max="180" step="1" value="0"><output id="ryo">0</output></div>
+    <div class="row"><span>z</span><input type="range" id="rz" min="-180" max="180" step="1" value="0"><output id="rzo">0</output></div>
+    <label>Scale</label>
+    <div class="row"><span>s</span><input type="range" id="sc" min="0.05" max="5" step="0.01" value="1"><output id="sco">1</output></div>
+  </div>
+
+  <div class="grp">
+    <button id="spin" class="on">⟳ Turntable: on</button>
+    <button id="anim">▶ Play idle clip</button>
+    <button id="lunge">⚔ Test attack lunge</button>
+  </div>
+
+  <div class="grp">
+    <label>Registry transform</label>
+    <div id="xform">—</div>
+    <button id="copy">Copy JSON</button>
+  </div>
+
+  <div class="grp"><div id="info">loading…</div></div>
+</div>
+
+<script type="module">
+import * as THREE from './vendor/three/three.module.min.js';
+import { GLTFLoader } from './vendor/three/jsm/loaders/GLTFLoader.js';
+import { MeshoptDecoder } from './vendor/three/jsm/libs/meshopt_decoder.module.js';
+import { OrbitControls } from './vendor/three/jsm/controls/OrbitControls.js';
+
+const $ = id => document.getElementById(id);
+const info = $('info');
+const canvas = $('c');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias:true, alpha:true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+
+const scene = new THREE.Scene();
+scene.add(new THREE.HemisphereLight(0xfff2e0, 0x2a1c10, 2.0));
+const key = new THREE.DirectionalLight(0xfff2e0, 2.4); key.position.set(3, 5, 4); scene.add(key);
+const rim = new THREE.DirectionalLight(0x88bbff, 1.0); rim.position.set(-4, 2, -3); scene.add(rim);
+
+const camera = new THREE.PerspectiveCamera(35, 1, 0.01, 100);
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.autoRotate = true; controls.autoRotateSpeed = 1.8;
+
+const rig = new THREE.Group(); scene.add(rig);         // holds character, normalised to ~1.8 units tall
+const loader = new GLTFLoader(); loader.setMeshoptDecoder(MeshoptDecoder);
+let mixer = null, idleAction = null, clock = new THREE.Clock();
+let charRoot = null, weapon = null, weaponAnchor = null, bones = {};
+let lungeT = 0;
+
+function resize() {
+  const w = stage.clientWidth, h = stage.clientHeight;
+  renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix();
+}
+const stage = $('stage');
+addEventListener('resize', resize); resize();
+
+function frameCharacter(obj) {
+  const box = new THREE.Box3().setFromObject(obj);
+  const size = box.getSize(new THREE.Vector3()), center = box.getCenter(new THREE.Vector3());
+  const scale = 1.8 / (size.y || 1);
+  obj.scale.setScalar(scale);
+  obj.position.set(-center.x * scale, -box.min.y * scale, -center.z * scale);
+  camera.position.set(0, 1.1, 4.2); controls.target.set(0, 0.95, 0); controls.update();
+}
+
+async function loadChar(url) {
+  if (charRoot) { rig.remove(charRoot); }
+  bones = {}; weaponAnchor = null; mixer = null; idleAction = null;
+  const boneSel = $('bone'); boneSel.innerHTML = '<option value="__root">(model root)</option>';
+  try {
+    const gltf = await loader.loadAsync(url);
+    charRoot = gltf.scene; rig.add(charRoot); frameCharacter(charRoot);
+    let tris = 0, skinned = 0;
+    charRoot.traverse(o => {
+      if (o.isMesh) { const g = o.geometry; tris += (g.index ? g.index.count : g.attributes.position.count) / 3; }
+      if (o.isSkinnedMesh) skinned++;
+      if (o.isBone) { bones[o.name] = o; const op = document.createElement('option'); op.value = o.name; op.textContent = o.name; boneSel.appendChild(op); }
+    });
+    if (gltf.animations.length) {
+      mixer = new THREE.AnimationMixer(charRoot);
+      idleAction = mixer.clipAction(gltf.animations[0]);
+    }
+    info.innerHTML = `char: ${Math.round(tris).toLocaleString()} tris · skinned:${skinned}` +
+      `\nbones: ${Object.keys(bones).length}` +
+      `\nclips: ${gltf.animations.map(a=>a.name).join(', ') || 'none'}` +
+      (skinned ? '' : '\n<span class="err">no rig — bones/anim need the rigged Tripo export</span>');
+    if (weapon) attachWeapon();
+  } catch (e) { info.innerHTML = '<span class="err">char load failed: ' + e.message + '</span>'; }
+}
+
+async function loadWeapon(url) {
+  if (weapon && weaponAnchor) weaponAnchor.remove(weapon);
+  try {
+    const gltf = await loader.loadAsync(url);
+    weapon = gltf.scene; attachWeapon(); updateXform();
+  } catch (e) { info.innerHTML += '<br><span class="err">weapon load failed: ' + e.message + '</span>'; }
+}
+
+function attachWeapon() {
+  if (!weapon) return;
+  if (weaponAnchor) weaponAnchor.remove(weapon);
+  const boneName = $('bone').value;
+  weaponAnchor = (boneName !== '__root' && bones[boneName]) ? bones[boneName] : charRoot;
+  weaponAnchor.add(weapon);
+  applyOffset();
+}
+
+function applyOffset() {
+  if (!weapon) return;
+  weapon.position.set(+$('px').value, +$('py').value, +$('pz').value);
+  weapon.rotation.set(THREE.MathUtils.degToRad(+$('rx').value), THREE.MathUtils.degToRad(+$('ry').value), THREE.MathUtils.degToRad(+$('rz').value));
+  weapon.scale.setScalar(+$('sc').value);
+}
+
+function updateXform() {
+  const r = v => Math.round(v * 1000) / 1000;
+  const t = {
+    bone: $('bone').value === '__root' ? null : $('bone').value,
+    position: [r(+$('px').value), r(+$('py').value), r(+$('pz').value)],
+    rotationDeg: [+$('rx').value, +$('ry').value, +$('rz').value],
+    scale: r(+$('sc').value),
+  };
+  if (regItemId && registry) {
+    // Emit the full registry entry; collapse to { model } when the transform
+    // is exactly defaults.weapon + defaults.handBone (canonical import).
+    const d = registry.defaults || {}, dw = d.weapon || {};
+    const matchesDefault = t.bone === (d.handBone ?? null) &&
+      JSON.stringify(t.position) === JSON.stringify(dw.position) &&
+      JSON.stringify(t.rotationDeg) === JSON.stringify(dw.rotationDeg) &&
+      t.scale === dw.scale;
+    const model = registry.weapons?.[regItemId]?.model;
+    const entry = matchesDefault ? { model } : { model, ...t };
+    $('xform').textContent = JSON.stringify({ [regItemId]: entry }, null, 2) +
+      (matchesDefault ? '\n(matches defaults.weapon — canonical)' : '');
+    return { [regItemId]: entry };
+  }
+  $('xform').textContent = JSON.stringify(t, null, 2);
+  return t;
+}
+
+// ── Registry mode: pick a registered weapon, see exactly what ships ──
+let registry = null, regItemId = null, charFromRegistry = false;
+function registryUrl(model) {
+  if (!model) return null;
+  if (/^(https?:)?\/\//.test(model) || model.startsWith('/')) return model;
+  return './' + (registry.modelBase || '') + model; // page dir = asset root in dev AND deployed
+}
+function resolveRegistryWeapon(id) {
+  const w = registry.weapons[id], d = registry.defaults || {}, dw = d.weapon || {};
+  return {
+    model: w.model,
+    bone: w.bone === undefined ? (d.handBone || null) : w.bone,
+    position: w.position || dw.position || [0, 0, 0],
+    rotationDeg: w.rotationDeg || dw.rotationDeg || [0, 0, 0],
+    scale: typeof w.scale === 'number' ? w.scale : (typeof dw.scale === 'number' ? dw.scale : 1),
+  };
+}
+async function loadRegistry() {
+  try {
+    const res = await fetch('/src/data/equipmentModels.json', { cache: 'no-store' });
+    if (!res.ok) return;
+    registry = await res.json();
+    const sel = $('regItem');
+    for (const id of Object.keys(registry.weapons || {})) {
+      const op = document.createElement('option'); op.value = id; op.textContent = id; sel.appendChild(op);
+    }
+  } catch { /* file-picker-only mode */ }
+}
+$('regItem').addEventListener('change', async () => {
+  regItemId = $('regItem').value || null;
+  if (!regItemId || !registry) { updateXform(); return; }
+  const spec = resolveRegistryWeapon(regItemId);
+  if (!charFromRegistry && registry.character) {
+    await loadChar(registryUrl(registry.character.model));
+    charFromRegistry = true;
+  }
+  for (const [id, v] of [['px', spec.position[0]], ['py', spec.position[1]], ['pz', spec.position[2]],
+    ['rx', spec.rotationDeg[0]], ['ry', spec.rotationDeg[1]], ['rz', spec.rotationDeg[2]], ['sc', spec.scale]]) {
+    $(id).value = v; $(id + 'o').textContent = v;
+  }
+  $('bone').value = spec.bone && bones[spec.bone] ? spec.bone : '__root';
+  await loadWeapon(registryUrl(spec.model));
+  updateXform();
+});
+
+// wire sliders
+for (const id of ['px','py','pz','rx','ry','rz','sc']) {
+  const el = $(id), out = $(id + 'o');
+  el.addEventListener('input', () => { out.textContent = el.value; applyOffset(); updateXform(); });
+  out.textContent = el.value;
+}
+$('bone').addEventListener('change', () => { attachWeapon(); updateXform(); });
+$('charFile').addEventListener('change', e => { const f = e.target.files[0]; if (f) { charFromRegistry = false; loadChar(URL.createObjectURL(f)); } });
+$('weapFile').addEventListener('change', e => { const f = e.target.files[0]; if (f) { regItemId = null; $('regItem').value = ''; loadWeapon(URL.createObjectURL(f)); updateXform(); } });
+$('spin').addEventListener('click', () => { controls.autoRotate = !controls.autoRotate; $('spin').classList.toggle('on', controls.autoRotate); $('spin').textContent = `⟳ Turntable: ${controls.autoRotate?'on':'off'}`; });
+$('anim').addEventListener('click', () => { if (idleAction) { idleAction.reset().play(); } });
+$('lunge').addEventListener('click', () => { lungeT = 0.0001; });
+$('copy').addEventListener('click', async () => { try { updateXform(); await navigator.clipboard.writeText($('xform').textContent.replace(/\n\(matches[^)]*\)$/, '')); $('copy').textContent = 'Copied ✓'; setTimeout(()=>$('copy').textContent='Copy JSON', 1200); } catch {} });
+
+// Transform-fake attack: a quick forward lunge + recoil of the whole rig (the
+// Phase-2 approach for the un-rigged dragon; also previews warrior motion).
+function stepLunge(dt) {
+  if (!lungeT) return;
+  lungeT += dt * 2.6;
+  const t = lungeT;
+  const p = t < 1 ? Math.sin(Math.min(t, 1) * Math.PI) : 0;     // 0→1→0 ease
+  rig.position.z = p * 0.5;
+  rig.rotation.x = -p * 0.12;
+  if (t >= 1) { lungeT = 0; rig.position.z = 0; rig.rotation.x = 0; }
+}
+
+renderer.setAnimationLoop(() => {
+  const dt = clock.getDelta();
+  if (mixer) mixer.update(dt);
+  stepLunge(dt);
+  controls.update();
+  renderer.render(scene, camera);
+});
+
+// Boot: registry hero when available, sample fallback otherwise.
+await loadRegistry();
+if (registry?.character) {
+  charFromRegistry = true;
+  await loadChar(registryUrl(registry.character.model));
+} else {
+  await loadChar('./3d-samples/hero.glb');
+  await loadWeapon('./3d-samples/crimson_dagger.glb');
+}
+updateXform();
+</script>
+</body>
+</html>

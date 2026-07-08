@@ -81,7 +81,7 @@ describe('combatArt', () => {
     const w = getMonsterWeakness({ defenceBonus: { stab: -42, slash: -42, crush: -42, magic: -42, ranged: -42 } } as any)
     expect(w.tier).toBe('all')
     expect(w.label).toBe('All')
-    expect(w.color).toBe('#f0c040')
+    expect(w.color).toBe('#96650a')
     expect(w.styles).toEqual(['melee', 'ranged', 'magic'])
   })
 
@@ -91,7 +91,7 @@ describe('combatArt', () => {
     expect(w.tier).toBe('multi')
     expect(w.styles).toEqual(['melee', 'ranged'])
     expect(w.label).toBe('Melee & Ranged')
-    expect(w.color).toBe('#cdd6e0')
+    expect(w.color).toBe('#4a5568')
   })
 
   it('derives attack styles for single-form monsters (one chip)', () => {
@@ -107,13 +107,13 @@ describe('combatArt', () => {
     const venom = getMonsterAttackStyles((monsters as any).venomcoil_matriarch)
     expect(venom.tier).toBe('all')
     expect(venom.label).toBe('All')
-    expect(venom.color).toBe('#f0c040')
+    expect(venom.color).toBe('#96650a')
     expect(venom.styles).toEqual(['melee', 'ranged', 'magic'])
 
     // 2 distinct styles -> silver
     const muttadile = getMonsterAttackStyles((monsters as any).muttadile)
     expect(muttadile.tier).toBe('multi')
-    expect(muttadile.color).toBe('#cdd6e0')
+    expect(muttadile.color).toBe('#4a5568')
     expect(muttadile.label).toBe('Melee & Magic')
 
     // forms that all collapse to melee -> single chip

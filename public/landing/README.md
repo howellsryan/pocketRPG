@@ -1,25 +1,30 @@
 # Landing screen images
 
-These images are referenced by `src/screens/LandingScreen.jsx`. Drop the files
-here with the exact names below. `.webp` is preferred for size, but `.png` /
-`.jpg` also work — if you use a different extension, update the matching `src`
-paths in `LandingScreen.jsx` (the `FEATURES` array, `STRIP` array, and the hero
-`<img>`).
+These images back the marketing landing pages (`src/screens/LandingScreen.jsx`
+and `DesktopLandingScreen.jsx`) via `src/screens/landingImages.js`. Two families
+live here, each generated (not hand-dropped) — regenerate them when the UI or
+world art changes:
 
-Target: each file < ~100 KB, phone-portrait aspect ratio.
+## `ss-*` — in-game screenshots (Forgemark UI)
 
-| Screenshot                                | Required filename       |
-| ----------------------------------------- | ----------------------- |
-| Stats screen (Combat 126, Total 2,376)    | `ss-stats.webp`         |
-| Choose a Monster (boss list)              | `ss-combat-select.webp` |
-| Pickpocket Knight thieving activity       | `ss-thieving.webp`      |
-| Bank (item grid)                          | `ss-bank.webp`          |
-| Quests (115/168)                          | `ss-quests.webp`        |
-| Inventory (full 28-slot grid)             | `ss-inventory.webp`     |
-| Lesser Fiend monster combat               | `ss-combat.webp`        |
-| Collection Log                            | `ss-collection.webp`    |
-| Trading Post market                       | `ss-trading.webp`       |
-| Farming Locations                         | `ss-farming.webp`       |
-| Minigames reward grinds                   | `ss-minigames.webp`     |
-| Global leaderboard (Total Level)          | `ss-leaderboard.webp`   |
-| Connect AI (MCP server)                   | `ss-connect.webp`       |
+Captured from a running dev build in demo/mock-cloud mode, then downscaled to
+widths `240 / 360 / 480 / 560` (`ss-x-240.webp` … `ss-x.webp`; `srcset` built by
+`landingSrcSet` in `src/utils/helpers.js`). Full size is 560×1212 (phone
+portrait). Current keys:
+
+`ss-home` · `ss-worldmap` · `ss-place` · `ss-townmap` · `ss-combat` ·
+`ss-bosses` · `ss-bank` · `ss-inventory` · `ss-trading` · `ss-collection` ·
+`ss-leaderboard` · `ss-connect`
+
+## `lp-*` — world-map art
+
+Downscaled from the shipped painted art in `public/world/`:
+
+- `lp-map` — the realm map (`public/world/map.webp`), widths `480 / 760 / 1108`.
+- `lp-<placeId>` — the 14 painted place scenes (`public/world/<placeId>.webp`),
+  widths `360 / 560` (560×313). Place ids match `src/data/world.json`.
+
+Keep every key referenced by `landingImages.js` present as a full-size `.webp`
+here — the single-file build (`build_single.cjs`) scans this folder to inject
+the `landingImages` global (responsive `-NNN.webp` variants are skipped and
+reached via `srcset`).

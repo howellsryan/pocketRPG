@@ -1,10 +1,18 @@
-import { useState } from 'preact/hooks'
+import { useEffect, useState } from 'preact/hooks'
 import Modal from './Modal.jsx'
 import { api } from '../cloud/api.js'
+import { pauseTicks, resumeTicks } from '../engine/tick.js'
 
-export default function BuyCreditsModal({ onClose, characterId }) {
+export default function BuyCreditsModal({ onClose, characterId, credits = 0 }) {
   const [busySku, setBusySku] = useState(null)
   const [error, setError] = useState(null)
+
+  // Pause ticks while this modal is open so combat cannot advance in the
+  // background — same treatment as an idle boss fight.
+  useEffect(() => {
+    pauseTicks()
+    return () => resumeTicks()
+  }, [])
 
   const creditOptions = [
     { label: '10 Credits',    sku: 'credits_10',   amount: 10,   color: '#a78bfa' },
@@ -36,6 +44,9 @@ export default function BuyCreditsModal({ onClose, characterId }) {
         <p class="text-[var(--color-parchment)] text-sm opacity-70 text-center">
           Get more credits to unlock premium features
         </p>
+        <p class="text-[var(--color-gold)] text-sm font-semibold text-center">
+          Current Credits: {credits.toLocaleString()}
+        </p>
         <div class="grid grid-cols-1 gap-2">
           {creditOptions.map((opt) => (
             <button
@@ -43,7 +54,7 @@ export default function BuyCreditsModal({ onClose, characterId }) {
               type="button"
               disabled={busySku !== null}
               onClick={() => startCheckout(opt.sku)}
-              class="block w-full p-3 rounded-lg border border-[#2a2a5a] bg-gradient-to-br from-[#0f0f1f] to-[#1a1a2f] hover:border-[#4a4a7a] transition-colors text-center disabled:opacity-50"
+              class="block w-full p-3 rounded-lg border border-[var(--color-void-border)] bg-[var(--color-void-light)] hover:border-[var(--color-gold-dim)] transition-colors text-center disabled:opacity-50"
             >
               <div class="font-bold text-lg" style={{ color: opt.color }}>
                 {opt.amount.toLocaleString()}
@@ -60,7 +71,7 @@ export default function BuyCreditsModal({ onClose, characterId }) {
         <button
           onClick={onClose}
           disabled={busySku !== null}
-          class="w-full py-2.5 rounded-lg bg-[#222] text-[var(--color-parchment)] font-semibold text-sm border border-[#333] mt-4 disabled:opacity-50"
+          class="w-full py-2.5 rounded-lg bg-[var(--color-void-light)] text-[var(--color-parchment)] font-semibold text-sm border border-[var(--color-void-border)] mt-4 disabled:opacity-50"
         >
           Close
         </button>

@@ -2465,93 +2465,93 @@
     "actions": [
       {
         "id": "gnome_stronghold",
-        "name": "Spryroot Grounds",
+        "name": "Lumbright Training Course",
         "level": 1,
         "ticks": 40,
         "xp": 86,
         "coinReward": 10,
-        "description": "Beginner agility route through the Spryroot training grounds"
+        "description": "Beginner agility route through the Lumbright training grounds"
       },
       {
         "id": "draynor_village",
-        "name": "Brambleford Rooftop",
+        "name": "Draynar Rooftop",
         "level": 10,
         "ticks": 38,
         "xp": 120,
         "coinReward": 25,
-        "description": "Rooftop agility route across Brambleford"
+        "description": "Rooftop agility route across Draynar"
       },
       {
         "id": "al_kharid",
-        "name": "Sunspire Rooftop",
+        "name": "Al-Karid Rooftop",
         "level": 20,
         "ticks": 35,
         "xp": 175,
         "coinReward": 50,
-        "description": "Desert rooftop agility route in Sunspire"
+        "description": "Desert rooftop agility route in Al-Karid"
       },
       {
         "id": "varrock",
-        "name": "Stonewatch Rooftop",
+        "name": "Varrick Rooftop",
         "level": 30,
         "ticks": 33,
         "xp": 190,
         "coinReward": 90,
-        "description": "Urban rooftop agility route through Stonewatch"
+        "description": "Urban rooftop agility route through Varrick"
       },
       {
         "id": "canifis",
-        "name": "Duskmire Rooftop",
+        "name": "Canifel Rooftop",
         "level": 40,
         "ticks": 30,
         "xp": 240,
         "coinReward": 140,
-        "description": "Rooftop agility route through the eerie village of Duskmire"
+        "description": "Rooftop agility route through the eerie village of Canifel"
       },
       {
         "id": "falador",
-        "name": "Ironhold Rooftop",
+        "name": "Faloden Rooftop",
         "level": 50,
         "ticks": 28,
         "xp": 440,
         "coinReward": 200,
-        "description": "High-speed rooftop agility route above Ironhold"
+        "description": "High-speed rooftop agility route above Faloden"
       },
       {
         "id": "seers_village",
-        "name": "Starweaver Hamlet Rooftop",
+        "name": "Seerhold Rooftop",
         "level": 60,
         "ticks": 25,
         "xp": 500,
         "coinReward": 300,
-        "description": "Agility route above the rooftops of Starweaver Hamlet"
+        "description": "Agility route above the rooftops of Seerhold"
       },
       {
         "id": "pollnivneach",
-        "name": "Dunescale Rooftop",
+        "name": "Brimhollow Rooftop",
         "level": 70,
         "ticks": 23,
         "xp": 550,
         "coinReward": 350,
-        "description": "Challenging desert rooftop agility route in Dunescale"
+        "description": "Challenging rooftop agility route in Brimhollow"
       },
       {
         "id": "rellekka",
-        "name": "Frostharbor Rooftop",
+        "name": "Catherra Rooftop",
         "level": 80,
         "ticks": 20,
         "xp": 600,
         "coinReward": 400,
-        "description": "Rugged northern rooftop agility route in Frostharbor"
+        "description": "Rugged coastal rooftop agility route in Catherra"
       },
       {
         "id": "ardougne",
-        "name": "Silverkeep Rooftop",
+        "name": "Ardounne Rooftop",
         "level": 90,
         "ticks": 18,
         "xp": 700,
         "coinReward": 500,
-        "description": "Elite rooftop agility route in the grand city of Silverkeep"
+        "description": "Elite rooftop agility route in the grand city of Ardounne"
       }
     ]
   },
@@ -3110,7 +3110,7 @@
       },
       {
         "id": "ardougne_knight",
-        "name": "Pickpocket Silverkeep Knight",
+        "name": "Pickpocket Ardounne Knight",
         "level": 65,
         "xp": 100,
         "coins": 75,

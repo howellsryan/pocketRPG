@@ -26,6 +26,11 @@ import {
 import { getSlayerTaskReward } from '../engine/slayerRewards.js'
 import { defaultIdleCombatSetup, normaliseIdleCombatSetup } from '../engine/idleSupplies.js'
 import { migrateLegacyItemIds } from '../engine/itemMigrations.js'
+import { WORLD_START_PLACE, normaliseLocation } from '../engine/world.js'
+import { advanceTravel, createTravelTask } from '../engine/travel.js'
+import { advanceJourneyOffline } from '../engine/journeys.js'
+import { resolveTaskStart, activityRef, autoStartFromTask } from '../engine/worldContent.js'
+import { isWorldMapEnabled } from '../utils/constants.js'
 
 const normalisePointCurrency = (value) => {
   const n = Math.floor(Number(value) || 0)
@@ -50,11 +55,15 @@ export function GameProvider({ children }) {
   const [currentHP, setCurrentHP] = useState(10)
   const [homeShortcuts, setHomeShortcuts] = useState(null) // null = not loaded yet
   const [combatStance, setCombatStanceState] = useState('accurate')
+  const [worldLocation, setWorldLocationState] = useState(WORLD_START_PLACE) // map-driven overhaul (phase 1)
   const [idleCombatSetup, setIdleCombatSetupState] = useState(() => defaultIdleCombatSetup())
   const [autoBankLoot, setAutoBankLootState] = useState(true)
   const [showInfoToasts, setShowInfoToastsState] = useState(false)
   const [activeTask, setActiveTaskState] = useState(null)
   const activeTaskInternalRef = useRef(null) // tracks latest active task for flush in setActiveTask
+  const worldLocationRef = useRef(WORLD_START_PLACE) // latest location for gating in callbacks
+  const [travelPrompt, setTravelPrompt] = useState(null) // {task,kind,ref,places} when a start needs travel
+  const travelPromptRef = useRef(null) // latest travelPrompt for startTravelTo's auto-start capture
   const [bankConfig, setBankConfig] = useState({ tabs: [], itemTabMap: {} })
   const [equipmentPresets, setEquipmentPresetsState] = useState([])
   const [unlockedFeatures, setUnlockedFeatures] = useState(new Set())
@@ -118,6 +127,12 @@ export function GameProvider({ children }) {
   // Keep activeTaskInternalRef in sync with state (handles setActiveTaskState calls that bypass setActiveTask)
   useEffect(() => { activeTaskInternalRef.current = activeTask }, [activeTask])
 
+  // Keep worldLocationRef in sync (load, travel arrival, updateWorldLocation all set state)
+  useEffect(() => { worldLocationRef.current = worldLocation }, [worldLocation])
+
+  // Keep travelPromptRef in sync so startTravelTo can read the prompt's originating task.
+  useEffect(() => { travelPromptRef.current = travelPrompt }, [travelPrompt])
+
   // Keep refs in sync with state
   useEffect(() => { stateRef.current.stats = stats }, [stats])
   useEffect(() => { stateRef.current.inventory = inventory }, [inventory])
@@ -133,14 +148,14 @@ export function GameProvider({ children }) {
 
   // Load all state from IndexedDB — runs idle simulation inline, returns idleResult
   const loadGame = useCallback(async () => {
-    let [p, s, inv, eq, b, shortcuts, stance, savedHP, autoBankSetting, savedBankConfig, savedEquipmentPresets, savedUnlocks, savedSlayerTask, savedSlayerPoints, savedSlayerTasksCompleted, savedDungeoneeringTokens, savedBossKillCounts, savedRaidKillCounts, savedFarming, savedCompletedQuests, savedQuestQueue, savedActiveCombatSpell, savedUnlockedMinigameItems, savedIdleCombatSetup, savedSlayerPerks, savedCharacterUnlocks, savedShowInfoToasts] = await Promise.all([
+    let [p, s, inv, eq, b, shortcuts, stance, savedHP, autoBankSetting, savedBankConfig, savedEquipmentPresets, savedUnlocks, savedSlayerTask, savedSlayerPoints, savedSlayerTasksCompleted, savedDungeoneeringTokens, savedBossKillCounts, savedRaidKillCounts, savedFarming, savedCompletedQuests, savedQuestQueue, savedActiveCombatSpell, savedUnlockedMinigameItems, savedIdleCombatSetup, savedSlayerPerks, savedCharacterUnlocks, savedShowInfoToasts, savedWorldLocation] = await Promise.all([
       getPlayer(), getAllStats(), getInventory(), getEquipment(), getBank(),
       getSetting('homeShortcuts'), getSetting('combatStance'), getSetting('currentHP'),
       getSetting('autoBankLoot'), getSetting('bankConfig'), getSetting('equipmentPresets'), getSetting('unlockedFeatures'),
       getSetting('slayerTask'), getSetting('slayerPoints'), getSetting('slayerTasksCompleted'), getSetting('dungeoneeringTokens'), getSetting('bossKillCounts'), getSetting('raidKillCounts'), getSetting('farming'),
       getSetting('completedQuests'), getSetting('questQueue'), getSetting('activeCombatSpell'), getSetting('unlockedMinigameItems'),
       getSetting('idleCombatSetup'), getSetting('slayerPerks'), getSetting('characterUnlocks'),
-      getSetting('showInfoToasts')
+      getSetting('showInfoToasts'), getSetting('worldLocation')
     ])
     const normalisedIdleCombatSetup = normaliseIdleCombatSetup(savedIdleCombatSetup)
     // Rewrite legacy item ids (e.g. void_knight_* → void_king_*) before the
@@ -354,6 +369,12 @@ export function GameProvider({ children }) {
 
           // Quest sim handling: shared cascade helper for boot/load idle
           if (savedTask.type === 'quest') {
+            // Levels gained across the whole cascade, keyed by skill — `from`
+            // stays the level before the first grant, `to` follows the running
+            // total, so a skill spanning several quests reports one span. Fed
+            // into the reward-reveal card / full-screen level-up overlay
+            // instead of a toast (this boot path never shows toasts anyway).
+            const levelUpsMap = new Map()
             const applyQuestCompletionToRawState = async (quest, pendingChoices) => {
               if (!quest?.id) return
 
@@ -368,8 +389,15 @@ export function GameProvider({ children }) {
 
               for (const [skill, xp] of Object.entries(fixed)) {
                 if (xp > 0 && s[skill]) {
-                  const newXP = Math.min((s[skill].xp || 0) + Math.floor(xp), 200000000)
-                  s[skill] = { ...s[skill], xp: newXP, level: getLevelFromXP(newXP) }
+                  const before = s[skill].xp || 0
+                  const from = getLevelFromXP(before)
+                  const newXP = Math.min(before + Math.floor(xp), 200000000)
+                  const to = getLevelFromXP(newXP)
+                  s[skill] = { ...s[skill], xp: newXP, level: to }
+                  if (to > from) {
+                    const existing = levelUpsMap.get(skill)
+                    levelUpsMap.set(skill, { skill, from: existing ? existing.from : from, to })
+                  }
                 }
               }
 
@@ -430,6 +458,7 @@ export function GameProvider({ children }) {
               completedQuests: completedQuestsList,
               aggregatedXpReward: aggregatedXp,
               coinsGained: totalCoinsGained,
+              levelUps: [...levelUpsMap.values()],
               pendingChoices,
               ticksUsed: Math.floor(cascade.elapsedMsUsed / 600),
               ticksRemaining: savedTask?.ticksRemaining ?? 0,
@@ -448,6 +477,35 @@ export function GameProvider({ children }) {
           // active task afterwards.
           if (diedDuringIdle) savedTask = null
           idleResult = { elapsedMs, task: savedTask, ...sim }
+        }
+        // Travel resolves offline (no rewards, no modal): advance the countdown
+        // by elapsed time and either land the player at the destination or keep
+        // the reduced in-progress trip for the live tick to finish. A journey
+        // (Phase 5) chains its legs/searches through the elapsed time; if it
+        // finished while away it is parked on its final search at 0 ticks and
+        // the App's first live tick completes the clue/quest (granting rewards
+        // needs App-level helpers this load path doesn't have).
+        if (savedTask && savedTask.type === 'travel') {
+          if (savedTask.journey) {
+            const adv = advanceJourneyOffline(savedTask, elapsedMs)
+            if (adv.location) {
+              savedWorldLocation = normaliseLocation(adv.location)
+              await saveSetting('worldLocation', savedWorldLocation)
+            }
+            savedTask = adv.task
+            try { localStorage.setItem('pocketrpg_activeTask', JSON.stringify(savedTask)) } catch {}
+          } else {
+            const adv = advanceTravel(savedTask, elapsedMs)
+            if (adv.arrived) {
+              savedWorldLocation = savedTask.dest
+              await saveSetting('worldLocation', normaliseLocation(savedTask.dest))
+              savedTask = null
+              try { localStorage.removeItem('pocketrpg_activeTask'); localStorage.removeItem('pocketrpg_lastTick') } catch {}
+            } else {
+              savedTask = adv.task
+              try { localStorage.setItem('pocketrpg_activeTask', JSON.stringify(savedTask)) } catch {}
+            }
+          }
         }
       }
     }
@@ -508,6 +566,9 @@ export function GameProvider({ children }) {
     setIdleCombatSetupState(normalisedIdleCombatSetup)
     setAutoBankLootState(autoBankSetting !== false) // default true
     setShowInfoToastsState(savedShowInfoToasts === true) // default false
+    const loadedWorldLocation = normaliseLocation(savedWorldLocation) // un-migrated saves → start place
+    worldLocationRef.current = loadedWorldLocation
+    setWorldLocationState(loadedWorldLocation)
     setBankConfig(savedBankConfig ?? { tabs: [], itemTabMap: {} })
     setEquipmentPresetsState(Array.isArray(savedEquipmentPresets) ? savedEquipmentPresets : [])
     setUnlockedFeatures(new Set(savedUnlocks || []))
@@ -574,7 +635,10 @@ export function GameProvider({ children }) {
 
   // ── Mutations ──
 
-  const grantXP = useCallback((skill, amount) => {
+  // `silent` (quest completions — App.jsx): skip the toast, since those flows
+  // surface level-ups through the reward-reveal card / full-screen overlay
+  // instead. Max HP still updates on a silent Hitpoints level-up.
+  const grantXP = useCallback((skill, amount, { silent = false } = {}) => {
     setStats(prev => {
       const cur = prev[skill] || { skill, xp: 0, level: 1 }
       const newXP = clampXP(cur.xp + Math.floor(amount))
@@ -582,17 +646,19 @@ export function GameProvider({ children }) {
       const oldLevel = cur.level
 
       if (newLevel > oldLevel) {
-        const skillName = skill.charAt(0).toUpperCase() + skill.slice(1)
-        const SKILL_ICONS = {
-          attack: '⚔️', strength: '💪', defence: '🛡️', hitpoints: '❤️',
-          ranged: '🏹', magic: '🔮', prayer: '🙏',
-          mining: '⛏️', woodcutting: '🪓', fishing: '🎣', farming: '🌾', hunter: '🪤',
-          smithing: '🔨', cooking: '🍳', crafting: '✂️', fletching: '🏹', herblore: '🧪', runecraft: '🔴',
-          agility: '🏃', thieving: '🗝️', slayer: '💀', firemaking: '🔥', construction: '🏠', dungeoneering: '🏰'
+        if (!silent) {
+          const skillName = skill.charAt(0).toUpperCase() + skill.slice(1)
+          const SKILL_ICONS = {
+            attack: '⚔️', strength: '💪', defence: '🛡️', hitpoints: '❤️',
+            ranged: '🏹', magic: '🔮', prayer: '🙏',
+            mining: '⛏️', woodcutting: '🪓', fishing: '🎣', farming: '🌾', hunter: '🪤',
+            smithing: '🔨', cooking: '🍳', crafting: '✂️', fletching: '🏹', herblore: '🧪', runecraft: '🔴',
+            agility: '🏃', thieving: '🗝️', slayer: '💀', firemaking: '🔥', construction: '🏠', dungeoneering: '🏰'
+          }
+          const icon = SKILL_ICONS[skill] || '⭐'
+          const msg = `Congratulations! Your ${skillName} is now ${newLevel}`
+          addToast(msg, 'levelup', icon)
         }
-        const icon = SKILL_ICONS[skill] || '⭐'
-        const msg = `Congratulations! Your ${skillName} is now ${newLevel}`
-        addToast(msg, 'levelup', icon)
         // If hitpoints levelled, update max HP
         if (skill === 'hitpoints') {
           setCurrentHP(prev => Math.min(prev + (newLevel - oldLevel), newLevel))
@@ -693,6 +759,14 @@ export function GameProvider({ children }) {
     setCombatStanceState(next)
     saveSetting('combatStance', next)
   }, [])
+
+  const updateWorldLocation = useCallback((placeId) => {
+    const next = normaliseLocation(placeId)
+    worldLocationRef.current = next
+    setWorldLocationState(next)
+    saveSetting('worldLocation', next)
+  }, [])
+
 
   const updateIdleCombatSetup = useCallback((setup) => {
     const next = normaliseIdleCombatSetup(setup)
@@ -957,8 +1031,51 @@ export function GameProvider({ children }) {
     setToasts(prev => prev.filter(t => t.id !== id))
   }, [])
 
-  // Returns a fresh snapshot of all live state — always reads from refs, never stale
-  const getSnapshot = useCallback(() => ({
+  // Phase 3 activity gating: a pure gate the activity screens call before starting a
+  // fresh action. Returns true if the caller may start now (it keeps its own
+  // setActiveTask call), false if the start was blocked (travelling) or deferred to a
+  // travel prompt. When the world map is off, always allow (menu-driven fallback).
+  // `task` only needs the shape `activityRef` reads (type + the relevant id).
+  // Defined after addToast so its dependency closure isn't in the TDZ at render time.
+  const requestActivityStart = useCallback((task) => {
+    if (!isWorldMapEnabled()) return true
+    const travelActive = activeTaskInternalRef.current?.type === 'travel'
+    const res = resolveTaskStart(task, { location: worldLocationRef.current, travel: travelActive })
+    if (res.status === 'start') return true
+    if (res.status === 'blocked-transit') {
+      addToast("You can't start that while travelling.", 'info')
+      return false
+    }
+    setTravelPrompt({ task, ...(activityRef(task) || {}), places: res.places })
+    return false
+  }, [addToast, setActiveTask])
+
+  // Confirm a travel prompt: begin travelling to the chosen place. The action that
+  // triggered the prompt is embedded in the travel task as `autoStart` so arrival can
+  // resume it automatically (start combat/skilling on reaching the place, even while
+  // idling). `returnTo` ({ screen, data }) is the screen the player was on when they
+  // confirmed travel — carried the same way so arrival's back/stop buttons return
+  // there instead of a hardcoded destination. Manual map travel goes through
+  // WorldMapScreen's own createTravelTask call with no autoStart, so it still just
+  // lands at the destination.
+  const startTravelTo = useCallback((placeId, returnTo) => {
+    const autoStart = autoStartFromTask(travelPromptRef.current?.task)
+    const task = createTravelTask(worldLocationRef.current, placeId, autoStart, returnTo)
+    if (task) setActiveTask(task)
+    setTravelPrompt(null)
+  }, [setActiveTask])
+
+  const dismissTravelPrompt = useCallback(() => setTravelPrompt(null), [])
+
+  // Returns a fresh snapshot of all live state. Long-lived handlers (the
+  // pagehide/beforeunload beacon, the onTick loop) capture getSnapshot once and
+  // hold it for the session, so the exported identity must be stable while the
+  // values stay current: each render re-points getSnapshotImplRef at a closure
+  // over this render's state, and the stable wrapper delegates through the ref.
+  // worldLocation additionally reads its ref so a snapshot taken in the same
+  // tick as a travel arrival (before the re-render commits) sees the new place.
+  const getSnapshotImplRef = useRef(null)
+  getSnapshotImplRef.current = () => ({
     player: stateRef.current.player,
     stats: stateRef.current.stats,
     inventory: stateRef.current.inventory,
@@ -972,6 +1089,7 @@ export function GameProvider({ children }) {
       equipmentPresets,
       homeShortcuts,
       combatStance,
+      worldLocation: worldLocationRef.current,
       idleCombatSetup,
       unlockedFeatures: [...unlockedFeatures],
       activeTask,
@@ -989,7 +1107,8 @@ export function GameProvider({ children }) {
       slayerPerks: slayerPerksRef.current,
       characterUnlocks: characterUnlocksRef.current,
     },
-  }), [currentHP, autoBankLoot, bankConfig, showInfoToasts, equipmentPresets, homeShortcuts, combatStance, idleCombatSetup, unlockedFeatures, activeTask, activeCombatSpell, slayerTask, slayerPoints, slayerTasksCompleted, dungeoneeringTokens, bossKillCounts, raidKillCounts, farming, completedQuests, unlockedMinigameItems, questQueue, slayerPerks, characterUnlocks])
+  })
+  const getSnapshot = useCallback(() => getSnapshotImplRef.current(), [])
 
 
   // ---- Shared game lock --------------------------------------------------
@@ -1032,8 +1151,9 @@ export function GameProvider({ children }) {
   // Run an operation behind the game lock and persist its result durably before
   // unlocking — the lock is held until the save SUCCESSFULLY RESPONDS, not just
   // until the operation completes. Returns true if the save landed. On a
-  // save-revision conflict we leave the lock up (the app is rolling back to the
-  // authoritative cloud copy via a reload). Used by the manual Save button.
+  // save-revision conflict the push loop stops (the app rolls back to the
+  // authoritative cloud copy in place, behind its own overlay). Used by the
+  // manual Save button.
   const runLockedSave = useCallback(async (operation) => {
     lockGame()
     try {
@@ -1046,7 +1166,7 @@ export function GameProvider({ children }) {
       }
       return saved
     } finally {
-      if (!isSaveConflict()) unlockGame()
+      unlockGame()
     }
   }, [lockGame, unlockGame, getSnapshot])
 
@@ -1192,6 +1312,14 @@ export function GameProvider({ children }) {
   const value = {
     loaded, player, stats, inventory, equipment, bank, currentHP, toasts, isSaving,
     homeShortcuts, combatStance, idleCombatSetup, updateIdleCombatSetup,
+    worldLocation, updateWorldLocation,
+    requestActivityStart, travelPrompt, startTravelTo, dismissTravelPrompt,
+    // Synchronous read of the latest task — activeTaskInternalRef updates the
+    // instant setActiveTask runs, unlike the `activeTask` state value below
+    // which only reflects it after React's next render. Callers that set a
+    // task and immediately need to branch on it in the same tick (e.g. a
+    // travel confirm that then navigates) should use this, not `activeTask`.
+    getActiveTask: () => activeTaskInternalRef.current,
     activeTask, autoBankLoot, bankConfig, showInfoToasts, updateShowInfoToasts,
     equipmentPresets, updateEquipmentPresets,
     unlockedFeatures, unlockFeature,

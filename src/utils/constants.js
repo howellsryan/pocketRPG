@@ -104,7 +104,23 @@ export const SCREENS = {
   LEADERBOARD: 'leaderboard',
   HELP: 'help',
   ARMOURY: 'armoury',
-  CONNECT_AI: 'connect_ai',
   CHARACTER_UNLOCKS: 'character_unlocks',
-  MAGIC: 'magic'
+  MAGIC: 'magic',
+  WORLD_MAP: 'world_map',
+  ADVENTURES: 'adventures'
+}
+
+// Phase 1 of the map-driven overhaul (docs/map-driven-overhaul-plan.md) ships the
+// World Map as a read-only screen behind this flag. Off by default in prod; flip
+// the const for a build, or set localStorage `prpg.worldmap` = '1' for a no-rebuild
+// dev preview. When off the nav tab is hidden and the route falls through to Home.
+export const WORLD_MAP_ENABLED = true
+
+export function isWorldMapEnabled() {
+  if (WORLD_MAP_ENABLED) return true
+  try {
+    return typeof localStorage !== 'undefined' && localStorage.getItem('prpg.worldmap') === '1'
+  } catch {
+    return false
+  }
 }

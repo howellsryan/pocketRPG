@@ -16,8 +16,8 @@ import skillsData from '../data/skills.json'
 
 const agilityData = skillsData.agility
 
-export default function AgilityScreen({ initialActionId, idleResult, onBack }) {
-  const { stats, inventory, updateInventory, bank, updateBankDirect, grantXP, addToast, setActiveTask, activeTask } = useGame()
+export default function AgilityScreen({ initialActionId, idleResult, onBack, onStopBack }) {
+  const { stats, inventory, updateInventory, bank, updateBankDirect, grantXP, addToast, setActiveTask, requestActivityStart, activeTask } = useGame()
 
   const agilityLevel = getLevelFromXP(stats.agility?.xp || 0)
   const agilityXP = stats.agility?.xp || 0
@@ -26,6 +26,9 @@ export default function AgilityScreen({ initialActionId, idleResult, onBack }) {
   const agilityRef = useRef(null)
   const inventoryRef = useRef(inventory)
   const hasAutoStarted = useRef(false)
+  // True once the player has seen the course list. Auto-starting from a place
+  // map (initialActionId) starts false so the active panel's Back returns there.
+  const seenList = useRef(!initialActionId)
 
   // Keep inventoryRef current
   useEffect(() => { inventoryRef.current = inventory }, [inventory])
@@ -153,6 +156,8 @@ export default function AgilityScreen({ initialActionId, idleResult, onBack }) {
       const resumed = buildResumedState(activeTask)
       if (resumed) { setAgility(resumed); agilityRef.current = resumed; return }
     }
+    // Map-driven gating (Phase 3): must be at a place that offers this course.
+    if (!requestActivityStart({ type: 'agility', action })) return
     const startedAt = Date.now()
     const state = {
       ...createAgilityState(action),
@@ -171,14 +176,24 @@ export default function AgilityScreen({ initialActionId, idleResult, onBack }) {
     setAgility(null)
     agilityRef.current = null
     setActiveTask(null)
-    if (onBack) onBack()
+    const back = onStopBack || onBack
+    if (back) back()
   }
 
   // Back (no stop): flush progress and return to the course list; task keeps running.
   const backToList = () => {
+    seenList.current = true
     if (agilityRef.current) mirrorActiveTask(agilityRef.current)
     setAgility(null)
     agilityRef.current = null
+  }
+
+  // Active-panel Back leaves the task running; when auto-started from a place
+  // map (list never seen) it returns to that origin, not the course list.
+  const backFromActive = () => {
+    const toOrigin = !seenList.current
+    backToList()
+    if (toOrigin && onBack) onBack()
   }
 
   const bankDelay = getAgilityBankDelayMs(agilityLevel)
@@ -186,7 +201,7 @@ export default function AgilityScreen({ initialActionId, idleResult, onBack }) {
   // Course picker
   if (!agility) {
     return (
-      <div class="h-full overflow-y-auto p-4">
+      <div class="forge-shell h-full overflow-y-auto p-4">
         <SkillScreenHeader
           skill="agility"
           title="Agility Courses"
@@ -248,7 +263,7 @@ export default function AgilityScreen({ initialActionId, idleResult, onBack }) {
       producing={<>
         {coinIcon}
         <span class="text-[12px] font-semibold text-[var(--color-parchment)] opacity-60">Earning</span>
-        <span class="text-[13px] font-semibold text-[var(--color-gold-light)]">{agility.action.coinReward.toLocaleString()} / lap</span>
+        <span class="text-[13px] font-semibold text-[var(--color-gold-dim)]">{agility.action.coinReward.toLocaleString()} / lap</span>
       </>}
       stats={[
         { label: 'Laps completed', value: agility.totalLaps },
@@ -263,7 +278,7 @@ export default function AgilityScreen({ initialActionId, idleResult, onBack }) {
         label: 'Bank speed',
         value: `${formatBankDelay(bankDelay)} delay`,
       }}
-      onBack={backToList}
+      onBack={backFromActive}
       onStop={stopCourse}
     />
   )

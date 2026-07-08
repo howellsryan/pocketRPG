@@ -13,7 +13,7 @@ const patchViewTypeLabels = {
   fruitTree: 'Fruit Tree Patch'
 }
 
-export default function FarmPatchView({ locationId, farmingLevel, onBack }) {
+export default function FarmPatchView({ locationId, farmingLevel, onBack, backLabel = 'Farms' }) {
   const { inventory, bank, farming, updateFarming, grantXP, removeFromInventory, updateBankDirect, addToBank, addToast } = useGame()
 
   const location = farmingData.locations.find(l => l.id === locationId)
@@ -85,9 +85,9 @@ export default function FarmPatchView({ locationId, farmingLevel, onBack }) {
   const plantableOptions = isEmpty ? getPlantableCropOptions(selectedPatch.type, farmingLevel, inventory, bank) : []
 
   return (
-    <div class="h-full overflow-y-auto p-4">
+    <div class="forge-shell h-full overflow-y-auto p-4">
       <button onClick={onBack} class="text-xs text-[var(--color-gold-dim)] mb-3 flex items-center gap-1">
-        ← Farms
+        ← {backLabel}
       </button>
 
       <div class="flex items-center justify-between mb-1">
@@ -117,7 +117,7 @@ export default function FarmPatchView({ locationId, farmingLevel, onBack }) {
         >
           {isEmpty ? (
             <>
-              <div class="mb-3 bg-[#111] rounded-lg px-3 py-2 text-[11px] text-[var(--color-parchment)] opacity-60 flex items-center gap-2">
+              <div class="mb-3 bg-[var(--color-void)] rounded-lg px-3 py-2 text-[11px] text-[var(--color-parchment)] opacity-60 flex items-center gap-2">
                 <span>🌱</span>
                 <span>Select a seed to plant in this patch</span>
               </div>
@@ -126,10 +126,10 @@ export default function FarmPatchView({ locationId, farmingLevel, onBack }) {
                   <button
                     key={crop.id}
                     onClick={() => handlePlantCrop(crop.id)}
-                    class={`w-full flex items-center justify-between p-3 rounded-xl border transition-colors text-left active:bg-[#222] ${
+                    class={`w-full flex items-center justify-between p-3 rounded-xl border transition-colors text-left active:bg-[var(--color-void-light)] ${
                       canPlant
-                        ? 'bg-[#201a08] border-[var(--color-gold)]'
-                        : 'bg-[#1a1a1a] border-[#2a2a2a]'
+                        ? 'bg-[var(--fm-parch-hi)] border-[var(--color-gold)]'
+                        : 'bg-[var(--color-void-light)] border-[var(--color-void-border)]'
                     }`}
                   >
                     <div class="flex-1">
@@ -143,7 +143,7 @@ export default function FarmPatchView({ locationId, farmingLevel, onBack }) {
                         Growth: {formatGrowthTime(crop.growthTimeMs)}
                       </div>
                     </div>
-                    <div class={`ml-3 px-2 py-1 rounded text-[10px] font-semibold ${canPlant ? 'bg-[var(--color-gold)] text-[#111]' : 'bg-[#111] text-[var(--color-parchment)] opacity-60'}`}>
+                    <div class={`ml-3 px-2 py-1 rounded text-[10px] font-semibold ${canPlant ? 'bg-[var(--color-gold)] text-[#111]' : 'bg-[var(--color-void)] text-[var(--color-parchment)] opacity-60'}`}>
                       {ownedQuantity} owned
                     </div>
                   </button>
@@ -194,8 +194,8 @@ function PatchCard({ patchData, onClick }) {
   return (
     <button
       onClick={onClick}
-      class={`w-full p-3 rounded-xl border transition-colors text-left active:bg-[#222] ${
-        ready ? 'bg-[#201a08] border-[var(--color-gold)]' : 'bg-[#1a1a1a] border-[#2a2a2a]'
+      class={`w-full p-3 rounded-xl border transition-colors text-left active:bg-[var(--color-void-light)] ${
+        ready ? 'bg-[var(--fm-parch-hi)] border-[var(--color-gold)]' : 'bg-[var(--color-void-light)] border-[var(--color-void-border)]'
       }`}
     >
       <div class="flex items-center justify-between">
@@ -203,7 +203,9 @@ function PatchCard({ patchData, onClick }) {
           <div class="text-sm font-semibold text-[var(--color-parchment)] capitalize">
             {crop ? `${crop.icon} ${crop.name}` : typeLabel}
           </div>
-          <div class={`text-[10px] mt-0.5 ${statusColor}`}>{statusText}</div>
+          {/* Ready patches skip the status line — the gold border/background
+              already says "ready"; repeating it in text is just noise. */}
+          {!ready && <div class={`text-[10px] mt-0.5 ${statusColor}`}>{statusText}</div>}
         </div>
       </div>
       {patch && crop && (
@@ -228,7 +230,7 @@ function PatchDetails({ patch, onHarvest }) {
 
   return (
     <div class="space-y-3">
-      <div class="bg-[#111] rounded-lg p-3 space-y-1.5">
+      <div class="bg-[var(--color-void)] rounded-lg p-3 space-y-1.5">
         <div class="flex justify-between text-sm">
           <span class="text-[var(--color-parchment)] opacity-60">Crop</span>
           <span class="font-semibold text-[var(--color-gold)]">{crop.icon} {crop.name}</span>
@@ -248,7 +250,7 @@ function PatchDetails({ patch, onHarvest }) {
       </div>
 
       {!ready ? (
-        <div class="bg-[#111] rounded-lg p-3 space-y-2">
+        <div class="bg-[var(--color-void)] rounded-lg p-3 space-y-2">
           <div class="flex justify-between text-sm">
             <span class="text-[var(--color-parchment)] opacity-60">Time remaining</span>
             <span class="font-[var(--font-mono)] text-[var(--color-gold)]">{minutes}m {seconds}s</span>

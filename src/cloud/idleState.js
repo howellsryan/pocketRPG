@@ -9,18 +9,14 @@
 // place as an offline-mode fallback and as a belt-and-braces backup if the
 // D1 fetch fails. Reads prefer D1; writes go to both.
 
-import { api, sendIdleBeacon, getToken, getCharacterId } from './api.js'
+import { api, getToken, getCharacterId } from './api.js'
 import { withTimeout } from '../utils/helpers.js'
 
-const HEARTBEAT_THROTTLE_MS = 5_000 // don't PUT more than once per 5s
 // Hard cap for the blocking boot-time idle fetch. If D1 is slow / the table
 // doesn't exist yet / the Pages Function hangs, we don't want to trap the
 // user on the loading screen — fall back to the localStorage mirror instead.
 const FETCH_TIMEOUT_MS = 3_000
 
-let lastHeartbeatAt = 0
-let heartbeatInFlight = false
-let pendingHeartbeatTask = undefined // `undefined` = none pending, otherwise holds latest task
 // Identity of the last task successfully pushed. setActiveTask fires on every
 // task (re)start — including the per-kill "Fight again" restart of the SAME
 // monster and re-tapping the same skilling action — and each push is a D1
@@ -91,53 +87,12 @@ export async function pushIdleState(task) {
   try {
     await api.putIdle(task ?? null)
     lastPushedTaskIdentity = identity
-    lastHeartbeatAt = Date.now()
   } catch (err) {
     console.warn('[PocketRPG] Idle push failed:', err.message)
   }
 }
 
-// Throttled heartbeat — called from the 30s tick. Skips the write if a
-// successful write happened very recently (e.g. a setActiveTask-triggered
-// push just landed) so we don't thrash the DB.
-export async function heartbeatIdleState(task) {
-  if (!canUseCloud()) return
-  const now = Date.now()
-  if (now - lastHeartbeatAt < HEARTBEAT_THROTTLE_MS) return
-  if (heartbeatInFlight) {
-    // Coalesce — the in-flight write will be followed by one more with the
-    // latest task once it settles.
-    pendingHeartbeatTask = task ?? null
-    return
-  }
-  heartbeatInFlight = true
-  try {
-    await api.putIdle(task ?? null)
-    lastHeartbeatAt = Date.now()
-  } catch (err) {
-    console.warn('[PocketRPG] Idle heartbeat failed:', err.message)
-  } finally {
-    heartbeatInFlight = false
-    if (pendingHeartbeatTask !== undefined) {
-      const queued = pendingHeartbeatTask
-      pendingHeartbeatTask = undefined
-      // Fire and forget; don't block the caller on the follow-up.
-      heartbeatIdleState(queued)
-    }
-  }
-}
-
-// Tab-hide / beforeunload path — uses navigator.sendBeacon so the write
-// survives even when the browser is about to kill the page.
-export function beaconIdleState(task) {
-  if (!canUseCloud()) return false
-  return sendIdleBeacon(task ?? null)
-}
-
-// Reset in-memory throttle state — call on logout / character switch.
+// Reset in-memory dedupe state — call on logout / character switch.
 export function resetIdleStateSync() {
-  lastHeartbeatAt = 0
-  heartbeatInFlight = false
-  pendingHeartbeatTask = undefined
   lastPushedTaskIdentity = null
 }

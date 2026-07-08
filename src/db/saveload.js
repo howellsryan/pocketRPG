@@ -1,5 +1,6 @@
 import { getDB, clearAllStores } from './database.js'
 import { INVENTORY_SIZE } from '../utils/constants.js'
+import { LOCAL_WRITE_MARKER_KEY } from './stores.js'
 
 const SAVE_VERSION = 1
 
@@ -121,6 +122,7 @@ export async function wipeLocalSave() {
   // character doesn't inherit a future-looking timestamp from the previous
   // one (which would perpetually flag legitimate progress as rolled-back).
   localStorage.removeItem('pocketrpg_maxObservedAt')
+  localStorage.removeItem(LOCAL_WRITE_MARKER_KEY)
   // Per-activity progress ledger (quests/minigames) is cached in localStorage
   // outside IDB — must be dropped too, or a previous character's (or the
   // offline demo's) entries survive and get merged into the next character's

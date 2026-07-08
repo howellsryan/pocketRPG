@@ -3,6 +3,11 @@ import { DAGANNOTH_KINGS_TASK_ID } from './slayerTasks.js'
 
 // PocketRPG slayer masters — requirements and monster pools from PocketRPG design references.
 //
+// Each master lives at a world place (`placeId` — must exist in world.json;
+// `location` is its display name). Getting a task from a master is a place
+// action: the world map / place hubs list masters via worldContent's `slayer`
+// activity kind, and the Slayer screen gates assignment on being there.
+//
 // Monster pools are distributed across masters by combat level so that every
 // assignable monster (excluding boss and raid monsters) appears on at least one
 // master, with deliberate overlap between adjacent tiers. Selection within a
@@ -11,7 +16,8 @@ export const SLAYER_MASTERS = [
   {
     id: 'turael',
     name: 'Torvak',
-    location: 'Brighthome',
+    location: 'Lumbright',
+    placeId: 'lumbright',
     icon: '👴',
     iconKey: 'hood',
     combatReq: 0,
@@ -30,7 +36,8 @@ export const SLAYER_MASTERS = [
   {
     id: 'mazchna',
     name: 'Morven',
-    location: 'Duskmire',
+    location: 'Canifel',
+    placeId: 'canifel',
     icon: '🧙',
     iconKey: 'pointy_hat',
     combatReq: 20,
@@ -49,7 +56,8 @@ export const SLAYER_MASTERS = [
   {
     id: 'vannaka',
     name: 'Valdrin',
-    location: 'Deepgate Caverns',
+    location: 'Edgevale',
+    placeId: 'edgevale',
     icon: '⚔️',
     iconKey: 'wizard_staff',
     combatReq: 40,
@@ -69,7 +77,8 @@ export const SLAYER_MASTERS = [
   {
     id: 'chaeldar',
     name: 'Caelira',
-    location: 'Moonglade',
+    location: 'Seerhold',
+    placeId: 'seerhold',
     icon: '🧝',
     iconKey: 'crystal_ball',
     combatReq: 70,
@@ -89,7 +98,8 @@ export const SLAYER_MASTERS = [
   {
     id: 'nieve',
     name: 'Nyra',
-    location: 'Spryroot Grove',
+    location: 'Camlann',
+    placeId: 'camlann',
     icon: '🌿',
     iconKey: 'magic_swirl',
     combatReq: 0,
@@ -115,7 +125,8 @@ export const SLAYER_MASTERS = [
   {
     id: 'duradel',
     name: 'Druven',
-    location: 'Silverkeep Quarter',
+    location: 'Brimhollow',
+    placeId: 'brimhollow',
     icon: '💀',
     iconKey: 'queen_crown',
     combatReq: 0,

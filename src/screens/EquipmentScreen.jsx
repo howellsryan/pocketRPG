@@ -1,5 +1,8 @@
-import { useState } from 'preact/hooks'
+import { useState, useMemo } from 'preact/hooks'
 import { useGame } from '../state/gameState.jsx'
+import Model3DViewer from '../components/Model3DViewer.jsx'
+import { getCharacterAssetPath, getCharacterModel, getWeaponPlacement } from '../utils/equipModels.js'
+import { canRender3D } from '../utils/three3d.js'
 import { unequipSlot, getEquipmentBonuses, checkEquipRequirements, equipItem, placeUnequippedItems } from '../engine/equipment.js'
 import { createPreset, applyPreset, renamePreset, MAX_EQUIPMENT_PRESETS } from '../engine/equipmentPresets.js'
 import Modal from '../components/Modal.jsx'
@@ -27,6 +30,17 @@ export default function EquipmentScreen() {
 
   const presets = Array.isArray(equipmentPresets) ? equipmentPresets : []
   const nameOf = (id) => itemsData[id]?.name || id
+
+  // 3D hero preview (replaces the paper doll as the centerpiece when supported).
+  // The slot grid is still rendered beneath it for equip/unequip; when WebGL is
+  // unavailable we fall back to the paper doll alone — zero regression.
+  const heroPath = getCharacterAssetPath()
+  const [heroFailed, setHeroFailed] = useState(false)
+  const show3D = useMemo(() => Boolean(heroPath) && !heroFailed && canRender3D(), [heroPath, heroFailed])
+  const weaponSpec = useMemo(() => {
+    const wid = equipment?.weapon?.itemId
+    return wid ? getWeaponPlacement(wid) : null
+  }, [equipment?.weapon?.itemId])
 
   const handleCreatePreset = () => {
     if (presets.length >= MAX_EQUIPMENT_PRESETS) {
@@ -271,8 +285,10 @@ export default function EquipmentScreen() {
   const bonuses = getEquipmentBonuses(equipment, itemsData)
 
   return (
-    <div class="h-full overflow-y-auto p-4">
-      <SectionHeader className="mb-3">Equipment</SectionHeader>
+    <div class="forge-shell h-full overflow-y-auto p-4">
+      <div class="flex items-center gap-2 mb-3">
+        <SectionHeader>Equipment</SectionHeader>
+      </div>
 
       {/* Loadout presets — save/load the full equipment + inventory state, the
           gear analogue of bank tabs. Loading re-arranges items the character
@@ -283,13 +299,13 @@ export default function EquipmentScreen() {
           <div key={p.id} class="flex items-stretch rounded-md overflow-hidden">
             <button
               onClick={() => handleLoadPreset(p)}
-              class="px-3 py-1.5 bg-[#222] text-[var(--color-parchment)] text-xs font-bold max-w-[110px] truncate active:opacity-80"
+              class="px-3 py-1.5 bg-[var(--color-void-light)] text-[var(--color-parchment)] text-xs font-bold max-w-[110px] truncate active:opacity-80"
             >
               {p.name}
             </button>
             <button
               onClick={() => { setManagePreset(p); setManageName(p.name) }}
-              class="px-2 py-1.5 bg-[#1a1a1a] text-[var(--color-parchment)] opacity-40 text-xs active:opacity-70"
+              class="px-2 py-1.5 bg-[var(--color-void-light)] text-[var(--color-parchment)] opacity-40 text-xs active:opacity-70"
               aria-label={`Edit preset ${p.name}`}
             >
               ✏️
@@ -299,7 +315,7 @@ export default function EquipmentScreen() {
         {presets.length < MAX_EQUIPMENT_PRESETS && (
           <button
             onClick={() => { setCreateOpen(true); setCreateName('') }}
-            class="px-2.5 py-1.5 rounded-md bg-[#222] text-[var(--color-parchment)] opacity-50 text-sm font-bold active:opacity-80"
+            class="px-2.5 py-1.5 rounded-md bg-[var(--color-void-light)] text-[var(--color-parchment)] opacity-50 text-sm font-bold active:opacity-80"
             aria-label="Save current loadout as a preset"
           >
             +
@@ -308,14 +324,36 @@ export default function EquipmentScreen() {
       </div>
 
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
-      <div class="w-full">
-        <EquipmentPaperdoll
-          equipment={equipment}
-          itemsData={itemsData}
-          onSelect={handleSelect}
-          size="md"
-          className="w-full"
-        />
+      <div class="w-full flex flex-col gap-3">
+        {show3D ? (
+          <>
+            <Card padding="p-2" className="w-full">
+              <Model3DViewer
+                characterPath={heroPath}
+                weapon={weaponSpec}
+                idleClip={getCharacterModel()?.idleClip || null}
+                height={360}
+                fallback={null}
+                onFail={() => setHeroFailed(true)}
+              />
+            </Card>
+            <EquipmentPaperdoll
+              equipment={equipment}
+              itemsData={itemsData}
+              onSelect={handleSelect}
+              size="sm"
+              className="w-full"
+            />
+          </>
+        ) : (
+          <EquipmentPaperdoll
+            equipment={equipment}
+            itemsData={itemsData}
+            onSelect={handleSelect}
+            size="md"
+            className="w-full"
+          />
+        )}
       </div>
 
       {/* Bonuses summary */}
@@ -351,7 +389,7 @@ export default function EquipmentScreen() {
         </div>
 
         {/* Other bonuses */}
-        <div class="border-t border-[#222] mt-3 pt-3">
+        <div class="border-t border-[var(--color-void-border)] mt-3 pt-3">
           <SectionHeader size="sm" className="mb-1 opacity-40">Other</SectionHeader>
           <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-1 md:gap-3 text-[11px] md:text-[13px]">
             {Object.entries(bonuses.otherBonus).map(([k, v]) => {
@@ -370,7 +408,7 @@ export default function EquipmentScreen() {
 
         {/* Set bonuses — render only when active */}
         {hasFullVoidKingSet(equipment) && (
-          <div class="border-t border-[#222] mt-3 pt-3">
+          <div class="border-t border-[var(--color-void-border)] mt-3 pt-3">
             <SectionHeader size="sm" className="mb-1 opacity-40">Void King Set Bonus</SectionHeader>
             <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-1 md:gap-3 text-[11px] md:text-[13px]">
               {[
@@ -391,7 +429,7 @@ export default function EquipmentScreen() {
         )}
 
         {/* Inventory display — desktop only */}
-        <div class="hidden lg:block border-t border-[#222] mt-3 pt-3">
+        <div class="hidden lg:block border-t border-[var(--color-void-border)] mt-3 pt-3">
           <SectionHeader size="sm" className="mb-2 opacity-50">Inventory</SectionHeader>
           <div class="grid grid-cols-7 gap-1">
             {inventory.map((slot, i) => (
@@ -486,7 +524,7 @@ export default function EquipmentScreen() {
                 value={createName}
                 onInput={(e) => setCreateName(e.target.value)}
                 maxLength={24}
-                class="w-full bg-[#1a1a1a] border border-[#333] rounded-lg px-3 py-2 text-sm text-[var(--color-parchment)] outline-none focus:border-[var(--color-gold)]"
+                class="w-full bg-[var(--color-void-light)] border border-[var(--color-void-border)] rounded-lg px-3 py-2 text-sm text-[var(--color-parchment)] outline-none focus:border-[var(--color-gold)]"
                 placeholder={`Preset ${presets.length + 1}`}
               />
             </div>
@@ -511,7 +549,7 @@ export default function EquipmentScreen() {
                 value={manageName}
                 onInput={(e) => setManageName(e.target.value)}
                 maxLength={24}
-                class="w-full bg-[#1a1a1a] border border-[#333] rounded-lg px-3 py-2 text-sm text-[var(--color-parchment)] outline-none focus:border-[var(--color-gold)]"
+                class="w-full bg-[var(--color-void-light)] border border-[var(--color-void-border)] rounded-lg px-3 py-2 text-sm text-[var(--color-parchment)] outline-none focus:border-[var(--color-gold)]"
                 placeholder="Enter preset name"
               />
             </div>

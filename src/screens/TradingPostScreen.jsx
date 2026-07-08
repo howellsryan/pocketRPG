@@ -10,6 +10,7 @@ import GameIcon from '../components/GameIcon.jsx'
 import SharedItemModal from '../components/SharedItemModal.jsx'
 import ItemDetailPanel from '../components/ItemDetailPanel.jsx'
 import TwoPaneLayout from '../components/TwoPaneLayout.jsx'
+import BackLink from '../components/BackLink.jsx'
 import Button from '../components/Button.jsx'
 import { useIsDesktop } from '../hooks/useIsDesktop.js'
 import { pullSave, applyCloudSave, pushNow, checkCloudNewer } from '../cloud/sync.js'
@@ -41,7 +42,8 @@ function generalStoreSellPrice(item) {
 }
 
 // Mode is 'market' (search) or 'offers' (my 3 slots).
-export default function TradingPostScreen({ onBuyCredits }) {
+// `onBack` (from App): returns to the screen the player came from.
+export default function TradingPostScreen({ onBuyCredits, onBack }) {
   const {
     inventory,
     bank,
@@ -218,7 +220,7 @@ export default function TradingPostScreen({ onBuyCredits }) {
 
   if (!getToken() || !getCharacterId()) {
     return (
-      <div class="h-full flex flex-col items-center justify-center p-8 text-center">
+      <div class="forge-shell h-full flex flex-col items-center justify-center p-8 text-center">
         <div class="text-[var(--color-gold)] text-[15px] font-bold mb-2">☁️ Cloud Account Required</div>
         <div class="text-[12px] text-[var(--color-parchment)] opacity-70 max-w-md">
           The trading post is a shared marketplace and requires a cloud-synced character. Sign in to access it.
@@ -439,19 +441,19 @@ export default function TradingPostScreen({ onBuyCredits }) {
       ? (m?.bestBuy ? `Best buy ${m.bestBuy.price.toLocaleString()} gp` : 'No buyers')
       : null
     return (
-      <div key={item.id} class="p-3 rounded-lg bg-[var(--color-void-light)] border border-[#2a2a2a] flex items-center gap-3">
+      <div key={item.id} class="p-3 rounded-lg bg-[var(--color-void-light)] border border-[var(--color-void-border)] flex items-center gap-3">
         <GameIcon item={item} size={48} class="shrink-0" />
         <div class="flex-1 min-w-0">
           <div class="text-[13px] font-semibold text-[var(--color-parchment)]">{item.name}</div>
-          <div class="text-[10px] text-[#888] mt-1">
+          <div class="text-[10px] text-[var(--fm-ink-faint)] mt-1">
             {orderBook ? 'Order book' : 'General store'}
             {owned > 0 && <span class="ml-2">· You have {owned}</span>}
           </div>
-          {buyDisabledReason && <div class="text-[10px] text-[#a77] mt-1">{buyDisabledReason}</div>}
+          {buyDisabledReason && <div class="text-[10px] text-[var(--fm-blood)] mt-1">{buyDisabledReason}</div>}
         </div>
         <div class="text-right shrink-0">
           <div class="text-[11px] font-[var(--font-mono)] text-[var(--color-gold)]">{priceLabel}</div>
-          {buyLabel && <div class="text-[10px] text-[#8fb0d1]">{buyLabel}</div>}
+          {buyLabel && <div class="text-[10px] text-[var(--fm-woad)]">{buyLabel}</div>}
           <div class="flex gap-1 mt-1">
             <Button variant="primary" size="sm" onClick={() => openItem(item, 'buy')} disabled={!!buyDisabledReason}>Buy</Button>
             <Button variant="secondary" size="sm" onClick={() => openItem(item, 'sell')} disabled={owned <= 0}>Sell</Button>
@@ -493,7 +495,7 @@ export default function TradingPostScreen({ onBuyCredits }) {
           ? `${coinsPending.toLocaleString()} gp ready`
           : null
       })()
-      const accentBorder = isReady ? 'border-[var(--color-gold)]' : 'border-[#2a2a2a]'
+      const accentBorder = isReady ? 'border-[var(--color-gold)]' : 'border-[var(--color-void-border)]'
       return (
         <Panel key={key} className={`text-[12px] border ${accentBorder}`}>
           <div class="flex items-center gap-3">
@@ -502,7 +504,7 @@ export default function TradingPostScreen({ onBuyCredits }) {
               <div class="text-[13px] font-semibold text-[var(--color-parchment)]">
                 {offer.offer_type === 'buy' ? 'Buy' : 'Sell'} {item?.name || offer.item_id}
               </div>
-              <div class="text-[10px] text-[#888]">
+              <div class="text-[10px] text-[var(--fm-ink-faint)]">
                 {executedUnitPrice.toLocaleString()} gp · {filled}/{offer.quantity_total} filled
               </div>
               {isReady && (
@@ -543,12 +545,12 @@ export default function TradingPostScreen({ onBuyCredits }) {
             <div class="h-2" />
           </>
         )}
-        <div class="text-[11px] text-[#888] mb-1">Slots: {slotsUsed}/{MAX_SLOTS} active</div>
+        <div class="text-[11px] text-[var(--fm-ink-faint)] mb-1">Slots: {slotsUsed}/{MAX_SLOTS} active</div>
         {Array.from({ length: MAX_SLOTS }).map((_, idx) => {
           const offer = activeOffers[idx]
           if (!offer) {
             return (
-              <Panel key={`empty-${idx}`} className="text-center text-[12px] text-[#666] py-4">
+              <Panel key={`empty-${idx}`} className="text-center text-[12px] text-[var(--fm-ink-faint)] py-4">
                 Empty slot
               </Panel>
             )
@@ -568,15 +570,15 @@ export default function TradingPostScreen({ onBuyCredits }) {
         <div class="h-full flex flex-col overflow-hidden">
           <button
             onClick={() => setActiveStoreSection(null)}
-            class="flex-shrink-0 flex items-center gap-2 px-4 py-3 border-b border-[#2a2a2a] bg-[var(--color-void-light)] text-left"
+            class="flex-shrink-0 flex items-center gap-2 px-4 py-3 border-b border-[var(--color-void-border)] bg-[var(--color-void-light)] text-left"
           >
             <span class="text-[var(--color-gold)] text-[14px]">‹</span>
             <span class="text-[13px] font-semibold text-[var(--color-parchment)]">{activeStoreSection}</span>
-            <span class="ml-auto text-[11px] text-[#888]">{rows.length} item{rows.length !== 1 ? 's' : ''}</span>
+            <span class="ml-auto text-[11px] text-[var(--fm-ink-faint)]">{rows.length} item{rows.length !== 1 ? 's' : ''}</span>
           </button>
           <div class="flex-1 overflow-y-auto px-4 pt-3 pb-20 md:pb-4">
             {rows.length === 0 ? (
-              <div class="py-10 px-4 text-center text-[#888] text-[12px]">No items in this section.</div>
+              <div class="py-10 px-4 text-center text-[var(--fm-ink-faint)] text-[12px]">No items in this section.</div>
             ) : (
               <div class="flex flex-col gap-2">
                 {rows.map((row) => renderListRow({ ...row.item, id: row.id }))}
@@ -596,10 +598,10 @@ export default function TradingPostScreen({ onBuyCredits }) {
             <button
               key={section}
               onClick={() => setActiveStoreSection(section)}
-              class="w-full flex items-center justify-between px-4 py-4 rounded-lg border border-[#2a2a2a] bg-[var(--color-void-light)] text-left"
+              class="w-full flex items-center justify-between px-4 py-4 rounded-lg border border-[var(--color-void-border)] bg-[var(--color-void-light)] text-left"
             >
               <span class="text-[14px] font-semibold text-[var(--color-parchment)]">{section}</span>
-              <span class="text-[11px] text-[#888] flex items-center gap-2">
+              <span class="text-[11px] text-[var(--fm-ink-faint)] flex items-center gap-2">
                 <span>{rows.length} item{rows.length !== 1 ? 's' : ''}</span>
                 <span class="text-[var(--color-gold)] text-[14px]">›</span>
               </span>
@@ -616,11 +618,11 @@ export default function TradingPostScreen({ onBuyCredits }) {
       const hasAnyOffer = listing.bestBuy !== null || listing.bestSell !== null
       if (!hasAnyOffer) return null
       return (
-        <div key={listing.item_id} class="p-3 rounded-lg bg-[var(--color-void-light)] border border-[#2a2a2a] flex items-center gap-3">
+        <div key={listing.item_id} class="p-3 rounded-lg bg-[var(--color-void-light)] border border-[var(--color-void-border)] flex items-center gap-3">
           <GameIcon item={item} size={48} class="shrink-0" />
           <div class="flex-1 min-w-0">
             <div class="text-[13px] font-semibold text-[var(--color-parchment)]">{item?.name || listing.item_id}</div>
-            <div class="text-[10px] text-[#888] mt-1">
+            <div class="text-[10px] text-[var(--fm-ink-faint)] mt-1">
               {listing.buyOfferCount > 0 && <span>Buyers: {listing.buyOfferCount}</span>}
               {listing.buyOfferCount > 0 && listing.sellOfferCount > 0 && <span class="mx-1">·</span>}
               {listing.sellOfferCount > 0 && <span>Sellers: {listing.sellOfferCount}</span>}
@@ -628,7 +630,7 @@ export default function TradingPostScreen({ onBuyCredits }) {
           </div>
           <div class="text-right shrink-0">
             {listing.bestBuy !== null && (
-              <div class="text-[11px] font-[var(--font-mono)] text-[#8fb0d1]">Buy: {listing.bestBuy.toLocaleString()} gp</div>
+              <div class="text-[11px] font-[var(--font-mono)] text-[var(--fm-woad)]">Buy: {listing.bestBuy.toLocaleString()} gp</div>
             )}
             {listing.bestSell !== null && (
               <div class="text-[11px] font-[var(--font-mono)] text-[var(--color-gold)]">Sell: {listing.bestSell.toLocaleString()} gp</div>
@@ -646,9 +648,9 @@ export default function TradingPostScreen({ onBuyCredits }) {
     return (
       <div class="h-full overflow-y-auto px-4 pb-20 md:pb-4">
         {!listingsLoaded ? (
-          <div class="py-10 px-4 text-center text-[#888] text-[12px]">Loading listings…</div>
+          <div class="py-10 px-4 text-center text-[var(--fm-ink-faint)] text-[12px]">Loading listings…</div>
         ) : activeListings.length === 0 ? (
-          <div class="py-10 px-4 text-center text-[#888] text-[12px]">No active listings.</div>
+          <div class="py-10 px-4 text-center text-[var(--fm-ink-faint)] text-[12px]">No active listings.</div>
         ) : (
           <>
             <div class="flex flex-col gap-2 pt-3">
@@ -664,7 +666,7 @@ export default function TradingPostScreen({ onBuyCredits }) {
                 >
                   ‹ Prev
                 </Button>
-                <span class="text-[11px] text-[#888]">
+                <span class="text-[11px] text-[var(--fm-ink-faint)]">
                   {safePage + 1} / {totalPages}
                 </span>
                 <Button
@@ -690,7 +692,7 @@ export default function TradingPostScreen({ onBuyCredits }) {
     const isBuy = pendingAction === 'buy'
     const summary = orderBook
       ? (
-        <div class="text-[11px] text-[#888] space-y-1">
+        <div class="text-[11px] text-[var(--fm-ink-faint)] space-y-1">
           <div>Best sell: {m.bestSell ? `${m.bestSell.price.toLocaleString()} gp × ${m.bestSell.quantity}` : '—'}</div>
           <div>Best buy: {m.bestBuy ? `${m.bestBuy.price.toLocaleString()} gp × ${m.bestBuy.quantity}` : '—'}</div>
           <div>Total listed: {m.totalListedQuantity || 0}</div>
@@ -705,10 +707,10 @@ export default function TradingPostScreen({ onBuyCredits }) {
       <div class="space-y-3">
         {summary && <Panel>{summary}</Panel>}
         {!isBuy && ownedQty < 1 && (
-          <Panel className="text-[11px] text-[#a77]">You don't own any of this item to sell.</Panel>
+          <Panel className="text-[11px] text-[var(--fm-blood)]">You don't own any of this item to sell.</Panel>
         )}
         {buyLocked && (
-          <Panel className="text-[11px] text-[#a77]">
+          <Panel className="text-[11px] text-[var(--fm-blood)]">
             {isQuestLocked
               ? `🔒 Complete ${questMap[selected.questUnlock]} to unlock this item.`
               : isMinigameLocked
@@ -718,18 +720,18 @@ export default function TradingPostScreen({ onBuyCredits }) {
         )}
         {orderBook && (
           <div class="flex flex-col gap-2">
-            <div class="text-[12px] text-[#888]">Price per item (gp)</div>
+            <div class="text-[12px] text-[var(--fm-ink-faint)]">Price per item (gp)</div>
             <input
               type="number"
               min="1"
               value={bidPrice}
               onInput={(e) => setBidPrice(Math.max(1, Math.floor(Number(e.target.value) || 1)))}
-              class="h-9 rounded-md bg-[#111] border border-[var(--color-void-border)] text-[var(--color-parchment)] text-[13px] font-[var(--font-mono)] text-center px-2 outline-none"
+              class="h-9 rounded-md bg-[var(--color-void)] border border-[var(--color-void-border)] text-[var(--color-parchment)] text-[13px] font-[var(--font-mono)] text-center px-2 outline-none"
             />
           </div>
         )}
         <div class="flex flex-col gap-2">
-          <div class="text-[12px] text-[#888]">Quantity</div>
+          <div class="text-[12px] text-[var(--fm-ink-faint)]">Quantity</div>
           <div class="flex gap-2 items-center">
             <Button variant="secondary" size="md" onClick={() => setQty(Math.max(1, qty - 1))} className="w-8 h-8 p-0 flex items-center justify-center text-base">−</Button>
             <input
@@ -737,16 +739,16 @@ export default function TradingPostScreen({ onBuyCredits }) {
               min="1"
               value={qty}
               onInput={(e) => setQty(Math.max(1, Math.floor(Number(e.target.value) || 1)))}
-              class="flex-1 h-9 rounded-md bg-[#111] border border-[var(--color-void-border)] text-[var(--color-parchment)] text-[13px] font-[var(--font-mono)] text-center outline-none"
+              class="flex-1 h-9 rounded-md bg-[var(--color-void)] border border-[var(--color-void-border)] text-[var(--color-parchment)] text-[13px] font-[var(--font-mono)] text-center outline-none"
             />
             <Button variant="secondary" size="md" onClick={() => setQty(qty + 1)} className="w-8 h-8 p-0 flex items-center justify-center text-base">+</Button>
           </div>
           {!isBuy && (
-            <button class="text-[10px] text-[#888] underline self-start" onClick={() => setQty(Math.max(1, ownedQty))}>Use max ({ownedQty})</button>
+            <button class="text-[10px] text-[var(--fm-ink-faint)] underline self-start" onClick={() => setQty(Math.max(1, ownedQty))}>Use max ({ownedQty})</button>
           )}
         </div>
         <Panel className="text-[12px] flex justify-between">
-          <span class="text-[#888]">Total {isBuy ? 'cost' : 'payout'}</span>
+          <span class="text-[var(--fm-ink-faint)]">Total {isBuy ? 'cost' : 'payout'}</span>
           <span class="text-[var(--color-gold)] font-[var(--font-mono)] font-bold">
             {orderBook
               ? `≤ ${(bidPrice * qty).toLocaleString()} gp`
@@ -756,7 +758,7 @@ export default function TradingPostScreen({ onBuyCredits }) {
           </span>
         </Panel>
         {!orderBook && isBuy && (
-          <div class="text-[10px] text-[#888] -mt-1">
+          <div class="text-[10px] text-[var(--fm-ink-faint)] -mt-1">
             This item is sold at its shop value.
           </div>
         )}
@@ -777,9 +779,10 @@ export default function TradingPostScreen({ onBuyCredits }) {
   })() : null
 
   return (
-    <div class="h-full flex flex-col overflow-hidden">
+    <div class="forge-shell h-full flex flex-col overflow-hidden">
       <div class="px-4 pt-3 pb-3 flex-shrink-0">
-        <div class="flex justify-between items-baseline mb-3">
+        <BackLink onClick={onBack} className="mb-3" />
+        <div class="flex justify-between items-center mb-3">
           <h2 class="font-[var(--font-display)] text-[15px] font-bold text-[var(--color-gold)] m-0">{isIronman ? 'General Store' : 'Trading Post'}</h2>
           <span class="inline-flex items-center gap-1 text-[11px] text-[var(--color-gold)] font-[var(--font-mono)]">
             <GameIcon iconKey="coins" size={13} color="var(--color-gold)" /> {coins.toLocaleString()}
@@ -792,7 +795,7 @@ export default function TradingPostScreen({ onBuyCredits }) {
             class={`px-3 py-[5px] rounded-[20px] text-[11px] font-semibold border ${
               mode === 'market'
                 ? 'border-[var(--color-gold)] bg-[rgba(212,175,55,0.15)] text-[var(--color-gold)]'
-                : 'border-[#2a2a2a] bg-[var(--color-void-light)] text-[var(--color-parchment)] opacity-60'
+                : 'border-[var(--color-void-border)] bg-[var(--color-void-light)] text-[var(--color-parchment)] opacity-60'
             } inline-flex items-center gap-1`}
           ><GameIcon iconKey="search" size={13} color="currentColor" /> Market</button>
           <button
@@ -800,7 +803,7 @@ export default function TradingPostScreen({ onBuyCredits }) {
             class={`px-3 py-[5px] rounded-[20px] text-[11px] font-semibold border ${
               mode === 'store'
                 ? 'border-[var(--color-gold)] bg-[rgba(212,175,55,0.15)] text-[var(--color-gold)]'
-                : 'border-[#2a2a2a] bg-[var(--color-void-light)] text-[var(--color-parchment)] opacity-60'
+                : 'border-[var(--color-void-border)] bg-[var(--color-void-light)] text-[var(--color-parchment)] opacity-60'
             } inline-flex items-center gap-1`}
           ><GameIcon iconKey="coins" size={13} color="currentColor" /> Store</button>
           <button
@@ -808,7 +811,7 @@ export default function TradingPostScreen({ onBuyCredits }) {
             class={`px-3 py-[5px] rounded-[20px] text-[11px] font-semibold border ${
               mode === 'offers'
                 ? 'border-[var(--color-gold)] bg-[rgba(212,175,55,0.15)] text-[var(--color-gold)]'
-                : 'border-[#2a2a2a] bg-[var(--color-void-light)] text-[var(--color-parchment)] opacity-60'
+                : 'border-[var(--color-void-border)] bg-[var(--color-void-light)] text-[var(--color-parchment)] opacity-60'
             } inline-flex items-center gap-1`}
           ><GameIcon iconKey="offers" size={13} color="currentColor" /> Offers
             {offersLoaded && myOffers.some((o) => isReadyToCollectOffer(o)) && (
@@ -822,7 +825,7 @@ export default function TradingPostScreen({ onBuyCredits }) {
             class={`px-3 py-[5px] rounded-[20px] text-[11px] font-semibold border ${
               mode === 'listings'
                 ? 'border-[var(--color-gold)] bg-[rgba(212,175,55,0.15)] text-[var(--color-gold)]'
-                : 'border-[#2a2a2a] bg-[var(--color-void-light)] text-[var(--color-parchment)] opacity-60'
+                : 'border-[var(--color-void-border)] bg-[var(--color-void-light)] text-[var(--color-parchment)] opacity-60'
             } inline-flex items-center gap-1`}
           ><GameIcon iconKey="search" size={13} color="currentColor" /> Listings</button>
         </div>
@@ -833,22 +836,22 @@ export default function TradingPostScreen({ onBuyCredits }) {
             placeholder="Search for an item to buy or sell…"
             value={searchTerm}
             onInput={(e) => setSearchTerm(e.target.value)}
-            class="w-full px-3 py-2 rounded-lg border border-[#2a2a2a] bg-[#111] text-[var(--color-parchment)] text-[13px] outline-none"
+            class="w-full px-3 py-2 rounded-lg border border-[var(--color-void-border)] bg-[var(--color-void)] text-[var(--color-parchment)] text-[13px] outline-none"
           />
         )}
         {mode === 'listings' && (
-          <div class="text-[11px] text-[#888]">Browse all active market listings</div>
+          <div class="text-[11px] text-[var(--fm-ink-faint)]">Browse all active market listings</div>
         )}
       </div>
 
       {mode === 'market' ? (
         <div class="h-full overflow-y-auto px-4 pb-20 md:pb-4">
           {!searchTerm.trim() ? (
-            <div class="py-10 px-4 text-center text-[#888] text-[12px]">
+            <div class="py-10 px-4 text-center text-[var(--fm-ink-faint)] text-[12px]">
               Search by item name to view market prices and listings.
             </div>
           ) : searchResults.length === 0 ? (
-            <div class="py-10 px-4 text-center text-[#888] text-[12px]">No items match "{searchTerm}".</div>
+            <div class="py-10 px-4 text-center text-[var(--fm-ink-faint)] text-[12px]">No items match "{searchTerm}".</div>
           ) : (
             <div class="flex flex-col gap-2 pt-3">
               {searchResults.map(renderListRow)}

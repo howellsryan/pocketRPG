@@ -21,8 +21,8 @@ import { formatNumber } from '../utils/helpers.js'
 import { getHighAlchValue } from '../utils/itemValue.js'
 import { formatActionDuration } from '../utils/formatters.js'
 import { calculateDungeoneeringTokensForAction, getDungeoneeringRewardCost, canAffordDungeoneeringReward } from '../engine/dungeoneeringTokens.js'
+import { activityLocationLabel } from '../engine/worldContent.js'
 import { api, getToken, getCharacterId } from '../cloud/api.js'
-import { applyCloudSave } from '../cloud/sync.js'
 import skillsData from '../data/skills.json'
 import itemsData from '../data/items.json'
 import AgilityScreen from './AgilityScreen.jsx'
@@ -56,8 +56,14 @@ function calculateRemainingActions(action, inventory, bank) {
   return minAvailable === Infinity ? null : minAvailable
 }
 
-export default function SkillingScreen({ initialSkillId, initialActionId, idleResult, onNavigate }) {
-  const { stats, inventory, bank, equipment, isIronman, updateInventory, updateBankDirect, grantXP, addToast, setActiveTask, activeTask, dungeoneeringTokens, awardDungeoneeringTokens, trySpendDungeoneeringTokens, loadGame, recordGameEvent } = useGame()
+// `onBack` (optional, from App's returnNav): where leaving this screen returns
+// to when the player was sent here from somewhere specific (the place map) —
+// delegates, the action-list header and Stop & Back all honour it. Without it
+// backing out walks the internal skill list as before.
+// `onStopBack` (from App): where Stop & Back returns to — the place-map origin
+// when there is one, otherwise the previous screen.
+export default function SkillingScreen({ initialSkillId, initialActionId, initialMasterId, initialLocationId, idleResult, onNavigate, onBack, onStopBack }) {
+  const { stats, inventory, bank, equipment, isIronman, updateInventory, updateBankDirect, grantXP, addToast, setActiveTask, requestActivityStart, activeTask, dungeoneeringTokens, awardDungeoneeringTokens, trySpendDungeoneeringTokens, recordGameEvent } = useGame()
   const [selectedSkill, setSelectedSkill] = useState(initialSkillId || null)
   const [selectedAction, setSelectedAction] = useState(null)
   const [skilling, setSkilling] = useState(null)
@@ -65,6 +71,10 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
   const [showAlchemyPicker, setShowAlchemyPicker] = useState(false) // Show item picker for alchemy
   const skillingRef = useRef(null)
   const hasAutoStarted = useRef(false)
+  // True once the player has seen an action list. Dropping straight into an
+  // action from a place-map spot (initialActionId auto-start) starts false, so
+  // the active panel's Back returns to that origin instead of the list.
+  const seenList = useRef(!initialActionId)
   const inventoryRef = useRef(inventory)
   const bankRef = useRef(bank)
 
@@ -78,7 +88,8 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
       <AgilityScreen
         initialActionId={initialActionId}
         idleResult={idleResult}
-        onBack={() => setSelectedSkill(null)}
+        onBack={onBack || (() => setSelectedSkill(null))}
+        onStopBack={onStopBack}
       />
     )
   }
@@ -87,7 +98,8 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
   if (selectedSkill === 'slayer') {
     return (
       <SlayerScreen
-        onBack={() => setSelectedSkill(null)}
+        initialMasterId={initialMasterId}
+        onBack={onBack || (() => setSelectedSkill(null))}
         onNavigate={onNavigate}
       />
     )
@@ -99,7 +111,8 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
       <ThievingScreen
         initialNpcId={initialActionId}
         idleResult={idleResult}
-        onBack={() => setSelectedSkill(null)}
+        onBack={onBack || (() => setSelectedSkill(null))}
+        onStopBack={onStopBack}
       />
     )
   }
@@ -110,7 +123,8 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
       <HunterScreen
         initialActionId={initialActionId}
         idleResult={idleResult}
-        onBack={() => setSelectedSkill(null)}
+        onBack={onBack || (() => setSelectedSkill(null))}
+        onStopBack={onStopBack}
       />
     )
   }
@@ -119,7 +133,8 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
   if (selectedSkill === 'farming') {
     return (
       <FarmingScreen
-        onBack={() => setSelectedSkill(null)}
+        initialLocationId={initialLocationId}
+        onBack={onBack || (() => setSelectedSkill(null))}
       />
     )
   }
@@ -128,7 +143,8 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
   if (selectedSkill === 'construction') {
     return (
       <ConstructionScreen
-        onBack={() => setSelectedSkill(null)}
+        onBack={onBack || (() => setSelectedSkill(null))}
+        onStopBack={onStopBack}
       />
     )
   }
@@ -137,7 +153,8 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
   if (selectedSkill === 'magic') {
     return (
       <MagicScreen
-        onBack={() => setSelectedSkill(null)}
+        onBack={onBack || (() => setSelectedSkill(null))}
+        onStopBack={onStopBack}
       />
     )
   }
@@ -419,33 +436,26 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
       if (getToken() && getCharacterId()) {
         try {
           const res = await api.completeDungeoneering('dungeoneering', { actionNonce: `dng:${action.id}:${Date.now()}`, rewards: [{ itemId: action.product, quantity: action.productQty || 1 }], dungeoneeringTokens: -cost })
-          if (res?.save?.save_data) {
-            const cloudSave = JSON.parse(res.save.save_data)
-            await applyCloudSave(cloudSave, res.save.updatedAt, res.save.save_revision)
-            await loadGame()
-
-            // Keep token display in sync immediately after purchase.
-            const serverTokens = Number(cloudSave?.settings?.dungeoneeringTokens ?? cloudSave?.dungeoneeringTokens)
-            if (Number.isFinite(serverTokens)) {
-              const delta = Math.floor(serverTokens) - (Number(dungeoneeringTokens) || 0)
-              if (delta > 0) awardDungeoneeringTokens(delta)
-              else if (delta < 0) trySpendDungeoneeringTokens(Math.abs(delta))
-            }
-
-            // Keep inventory UI in sync immediately after server grant.
-            if (Array.isArray(cloudSave?.inventory)) {
-              const compact = cloudSave.inventory
-                .map((slot) => {
-                  if (!slot || typeof slot !== 'object') return null
-                  const itemId = slot.itemId || slot.id
-                  const quantity = Math.floor(Number(slot.quantity) || 0)
-                  if (!itemId || quantity < 1) return null
-                  return { ...slot, itemId, quantity }
-                })
-                .filter(Boolean)
-              const nextInv = Array(28).fill(null)
-              for (let i = 0; i < compact.length && i < 28; i++) nextInv[i] = compact[i]
-              updateInventory(nextInv)
+          // NOTE: deliberately NOT applyCloudSave(res.save.save_data) + loadGame()
+          // here — that snapshot is whatever the server read at the START of this
+          // request, which can predate a later local-only change (e.g. travel) if
+          // the round trip is slow, silently reverting it on adoption. The server
+          // granted exactly the item + token debit requested above, so apply that
+          // directly; save_revision stays in sync generically via
+          // SAVE_REVISION_EVENT (api.js).
+          trySpendDungeoneeringTokens(cost)
+          const granted = Array.isArray(res?.granted) ? res.granted : []
+          for (const reward of granted) {
+            const itemId = reward?.itemId
+            const quantity = Math.floor(Number(reward?.quantity) || 0)
+            if (!itemId || quantity < 1) continue
+            if (reward?.destination === 'bank') {
+              updateBankDirect({ [itemId]: quantity })
+            } else {
+              const newInv = [...inventoryRef.current]
+              addItem(newInv, itemId, quantity, itemsData[itemId]?.stackable || false)
+              updateInventory(newInv)
+              inventoryRef.current = newInv
             }
           }
           recordCollectionLogDrop({ itemId: action.product, sourceType: 'skilling', sourceId: 'dungeoneering' })
@@ -468,6 +478,9 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
       setShowAlchemyPicker(true)
       return
     }
+
+    // Map-driven gating (Phase 3): must be at a place that offers this skill action.
+    if (!requestActivityStart({ type: 'skill', skill: selectedSkill, action })) return
 
     const effectiveTicks = getEffectiveToolActionTicks(selectedSkill, action.ticks, equipment, itemsData, stats, inventory)
     const adjustedAction = effectiveTicks !== action.ticks
@@ -522,6 +535,7 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
 
   const startAlchemy = (item) => {
     if (!selectedAction) return
+    if (!requestActivityStart({ type: 'skill', skill: selectedSkill, action: selectedAction })) return
     setShowAlchemyPicker(false)
     setSelectedAlchemyItem(item)
 
@@ -591,6 +605,8 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
     setSelectedAction(null)
     setSelectedAlchemyItem(null)
     setActiveTask(null)
+    const back = onStopBack || onBack
+    if (back) back()
   }
 
   // Mirror the live per-action progress + session tally onto the global task so
@@ -619,11 +635,20 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
   // Back (does NOT stop): flush progress and return to the action list while the
   // task keeps running in the background. "Stop & Back" still cancels the task.
   const backToList = () => {
+    seenList.current = true
     if (skillingRef.current) mirrorActiveTask(skillingRef.current)
     skillingRef.current = null
     setSkilling(null)
     setSelectedAction(null)
     setSelectedAlchemyItem(null)
+  }
+
+  // Active-panel Back leaves the task running; when auto-started from a place
+  // map (list never seen) it returns to that origin, not the action list.
+  const backFromActive = () => {
+    const toOrigin = !seenList.current
+    backToList()
+    if (toOrigin && onBack) onBack()
   }
 
   // Auto-start from home shortcut, or resume an in-progress background task when
@@ -638,6 +663,12 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
         const action = skill.actions.find(a => a.id === initialActionId)
         if (action) {
           setSelectedSkill(initialSkillId)
+          // Auto-starts (world-map arrival, home shortcuts) must respect the same
+          // level lock as the action list — land on the list instead of starting.
+          if ((action.level || 1) > getLevelFromXP(stats[initialSkillId]?.xp || 0)) {
+            addToast(`Requires ${skill.name || initialSkillId} level ${action.level}.`, 'error')
+            return
+          }
           const effectiveTicks = getEffectiveToolActionTicks(initialSkillId, action.ticks, equipment, itemsData, stats, inventory)
           const adjustedAction = effectiveTicks !== action.ticks
             ? { ...action, ticks: effectiveTicks }
@@ -679,7 +710,7 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
   // Skill picker
   if (!selectedSkill) {
     return (
-      <div class="h-full overflow-y-auto p-4">
+      <div class="forge-shell h-full overflow-y-auto p-4">
         <h2 class="font-[var(--font-display)] text-sm font-bold text-[var(--color-parchment)] opacity-60 uppercase tracking-wider mb-3">
           Train a Skill
         </h2>
@@ -691,7 +722,7 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
               <button
                 key={skill}
                 onClick={() => setSelectedSkill(skill)}
-                class="flex items-center gap-2.5 p-3 rounded-xl border transition-colors bg-[#1a1a1a] border-[#2a2a2a] active:bg-[#222]"
+                class="flex items-center gap-2.5 p-3 rounded-xl border transition-colors bg-[var(--color-void-light)] border-[var(--color-void-border)] active:bg-[var(--color-void-lighter)]"
               >
                 <SkillIcon skill={skill} size={24} />
                 <div class="text-left">
@@ -716,12 +747,12 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
 
   if (!skilling) {
     return (
-      <div class="h-full overflow-y-auto p-4">
+      <div class="forge-shell h-full overflow-y-auto p-4">
         <SkillScreenHeader
           skill={selectedSkill}
           xp={skillXP}
           level={skillLevel}
-          onBack={() => setSelectedSkill(null)}
+          onBack={onBack || (() => setSelectedSkill(null))}
           right={selectedSkill === 'dungeoneering' && (
             <div class="inline-flex rounded-full border border-[var(--color-void-border)] bg-[var(--color-void-light)] px-2.5 py-1 text-[11px] font-[var(--font-mono)] text-[var(--color-gold)]">
               {formatNumber(dungeoneeringTokens)} tokens
@@ -777,6 +808,10 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
             // missing materials/runes/items/tokens (the row still explains why).
             const levelLocked = action.level > skillLevel
             const remaining = calculateRemainingActions(action, inventory, bank)
+            // Facility-bound skills (smithing/cooking/prayer/magic/etc.) return null —
+            // they're offered at every place with the matching building, so no single
+            // location would be accurate.
+            const locationLabel = activityLocationLabel('skill', `${selectedSkill}:${action.id}`)
             const meta = isDungeoneeringReward
               ? <><span class="text-[var(--color-gold)] font-bold opacity-100">Lv {action.level}</span> · Cost: {formatNumber(rewardCost)} tokens
                   {rowEnabled === false && skillLevel >= action.level && <span class="block text-[var(--color-blood-ember)] mt-1">Need {formatNumber(rewardCost)} tokens</span>}
@@ -789,6 +824,7 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
                     : formatActionDuration(action.ticks)}
                   {remaining !== null && <span class="text-[var(--color-gold)]"> · {remaining.toLocaleString()} actions</span>}
                   {action.runeReq && <span> · Runes: {Object.entries(action.runeReq).map(([id, qty]) => `${itemsData[id]?.name || id} ×${qty}`).join(', ')}</span>}
+                  {locationLabel && <span class="block opacity-60 mt-1">📍 {locationLabel}</span>}
                   {action.itemReq && !hasItems && <span class="block text-[var(--color-blood-ember)] mt-1">✨ Needs: {action.itemReq.map(id => itemsData[id]?.name || id).join(' or ')}</span>}
                   {action.runeReq && !hasRunes && <span class="block text-[var(--color-blood-ember)] mt-1">🔮 Missing runes (or equip staff)</span>}
                   {requiresGildedAltarConstruction && !meetsGildedAltarConstruction && <span class="block text-[var(--color-blood-ember)] mt-1">🏠 Requires Construction level 75</span>}
@@ -863,7 +899,7 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
               <h3 class="font-[var(--font-display)] text-base font-bold text-[var(--color-gold)]">Select item to Alchemize</h3>
               <button
                 onClick={() => { setShowAlchemyPicker(false); setSelectedAction(null); }}
-                class="w-6 h-6 flex items-center justify-center rounded-lg bg-[#222] text-[var(--color-parchment)] hover:bg-[#333] active:bg-[#444] transition-colors"
+                class="w-6 h-6 flex items-center justify-center rounded-lg bg-[var(--color-void-light)] text-[var(--color-parchment)] hover:bg-[var(--color-void-lighter)] active:bg-[var(--color-void-lighter)] transition-colors"
                 title="Close"
               >
                 ✕
@@ -887,7 +923,7 @@ Shop value: ×1.1
                   <button
                     key={`${idx}-${slot.itemId}`}
                     onClick={() => startAlchemy(slot)}
-                    class="w-full p-3 rounded-lg border bg-[#1a1a1a] border-[#2a4a2a] active:bg-[#2a3a2a] transition-colors text-left"
+                    class="w-full p-3 rounded-lg border bg-[var(--color-void-light)] border-[var(--color-emerald)] active:bg-[var(--fm-parch-hi)] transition-colors text-left"
                   >
                     <div class="flex items-center justify-between">
                       <div class="flex items-center gap-2 flex-1">
@@ -945,7 +981,7 @@ Shop value: ×1.1
       producing={producedItem && <>
         <GameIcon item={producedItem} size={32} />
         <span class="text-[12px] font-semibold text-[var(--color-parchment)] opacity-60">Producing</span>
-        <span class="text-[13px] font-semibold text-[var(--color-gold-light)]">{producedItem.name}</span>
+        <span class="text-[13px] font-semibold text-[var(--color-gold-dim)]">{producedItem.name}</span>
       </>}
       stats={sessionStats}
       footer={isGathering ? {
@@ -953,7 +989,7 @@ Shop value: ×1.1
         label: 'Bank speed',
         value: `${formatBankDelay(getAgilityBankDelayMs(getLevelFromXP(stats.agility?.xp || 0)))} delay`,
       } : null}
-      onBack={backToList}
+      onBack={backFromActive}
       onStop={stopSkilling}
     />
   )

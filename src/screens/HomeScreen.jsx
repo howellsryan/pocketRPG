@@ -3,7 +3,7 @@ import { useGame } from '../state/gameState.jsx'
 import { calcCombatLevel, formatNumber } from '../utils/helpers.js'
 import { getLevelFromXP, getLevelProgress, getXPToNextLevel } from '../engine/experience.js'
 import { getAgilityBankDelayMs, formatBankDelay } from '../engine/agility.js'
-import { COMBAT_SKILLS, GATHERING_SKILLS, PRODUCTION_SKILLS, UTILITY_SKILLS, STUB_SKILLS } from '../utils/constants.js'
+import { COMBAT_SKILLS, GATHERING_SKILLS, PRODUCTION_SKILLS, UTILITY_SKILLS, STUB_SKILLS, SCREENS } from '../utils/constants.js'
 import { getSkillArt } from '../utils/skillArt.js'
 import Modal from '../components/Modal.jsx'
 import GameIcon from '../components/GameIcon.jsx'
@@ -17,6 +17,10 @@ const SKILL_GROUPS = [
   { title: 'Production', skills: PRODUCTION_SKILLS },
   { title: 'Utility', skills: UTILITY_SKILLS },
 ]
+
+// Pure combat stats — trained only by fighting, never by a dedicated
+// skilling screen (no action list exists for them).
+const NO_SKILL_ACTIONS = new Set(['attack', 'strength', 'defence', 'ranged', 'hitpoints'])
 
 function titleCase(skill) {
   return skill.charAt(0).toUpperCase() + skill.slice(1)
@@ -87,7 +91,7 @@ export default function HomeScreen({ onNavigate, onLogout, onManualSave, isCloud
   const saveDisabled = saving || loggingOut || !onManualSave
 
   return (
-    <div class="h-full flex flex-col">
+    <div class="forge-shell h-full flex flex-col">
       {/* Welcome card with rune save/logout buttons */}
       <div class="px-4 pt-4 pb-2 flex-shrink-0">
         <div class="welcome-card">
@@ -102,7 +106,7 @@ export default function HomeScreen({ onNavigate, onLogout, onManualSave, isCloud
                   aria-label="Save to cloud"
                   title={saving ? 'Saving…' : 'Force cloud save'}
                 >
-                  <GameIcon iconKey="save" color="#f0c040" size={24} title="Save" />
+                  <GameIcon iconKey="save" color="var(--fm-ember-deep)" size={24} title="Save" />
                 </button>
               )}
               <button
@@ -112,7 +116,7 @@ export default function HomeScreen({ onNavigate, onLogout, onManualSave, isCloud
                 aria-label="Log out"
                 title={isCloudAccount && loggingOut ? 'Saving…' : 'Log out'}
               >
-                <GameIcon iconKey="door" color="#e8d5a8" size={24} title="Log out" />
+                <GameIcon iconKey="door" color="var(--fm-ink-soft)" size={24} title="Log out" />
               </button>
             </div>
           </div>
@@ -131,7 +135,7 @@ export default function HomeScreen({ onNavigate, onLogout, onManualSave, isCloud
                     aria-label="Save to cloud"
                     title={saving ? 'Saving…' : 'Force cloud save'}
                   >
-                    <GameIcon iconKey="save" color="#f0c040" size={24} title="Save" />
+                    <GameIcon iconKey="save" color="var(--fm-ember-deep)" size={24} title="Save" />
                   </button>
                 )}
                 <button
@@ -141,7 +145,7 @@ export default function HomeScreen({ onNavigate, onLogout, onManualSave, isCloud
                   aria-label="Log out"
                   title={isCloudAccount && loggingOut ? 'Saving…' : 'Log out'}
                 >
-                  <GameIcon iconKey="door" color="#e8d5a8" size={24} title="Log out" />
+                  <GameIcon iconKey="door" color="var(--fm-ink-soft)" size={24} title="Log out" />
                 </button>
               </div>
               <span class="wstat">
@@ -201,7 +205,7 @@ export default function HomeScreen({ onNavigate, onLogout, onManualSave, isCloud
               <SkillEmblem iconKey={selArt.icon} accent={selArt.accent} size={64} glow={0} />
               <div class="skill-detail__lvl">Level <b>{selLevel}</b> / 99</div>
             </div>
-            <div class="bg-[#111] rounded-lg p-3 space-y-2">
+            <div class="bg-[var(--color-void)] rounded-lg p-3 space-y-2">
               <div class="flex justify-between text-sm">
                 <span class="text-[var(--color-parchment)] opacity-60">Total XP</span>
                 <span class="font-[var(--font-mono)] text-[var(--color-gold)]">{formatNumber(selectedSkillData.xp)}</span>
@@ -224,7 +228,7 @@ export default function HomeScreen({ onNavigate, onLogout, onManualSave, isCloud
               </div>
             )}
             {selectedSkillDetail === 'agility' && (
-              <div class="bg-[#111] rounded-lg p-3">
+              <div class="bg-[var(--color-void)] rounded-lg p-3">
                 <div class="flex justify-between text-sm">
                   <span class="text-[var(--color-parchment)] opacity-60">🏦 Bank delay</span>
                   <span class="font-[var(--font-mono)] text-[var(--color-gold)]">
@@ -235,6 +239,18 @@ export default function HomeScreen({ onNavigate, onLogout, onManualSave, isCloud
                   Time to bank a full inventory during combat
                 </div>
               </div>
+            )}
+            {!NO_SKILL_ACTIONS.has(selectedSkillDetail) && !STUB_SKILLS.has(selectedSkillDetail) && (
+              <button
+                onClick={() => {
+                  setSelectedSkillDetail(null)
+                  if (selectedSkillDetail === 'magic') onNavigate?.(SCREENS.MAGIC)
+                  else onNavigate?.(SCREENS.SKILLS, { skillId: selectedSkillDetail })
+                }}
+                class="w-full py-2.5 rounded-lg bg-[var(--color-gold)] text-[#111] font-semibold text-sm active:opacity-80 flex items-center justify-center gap-2"
+              >
+                <GameIcon iconKey={selArt.icon} size={16} color="#111" /> Skill Actions
+              </button>
             )}
           </div>
         </Modal>

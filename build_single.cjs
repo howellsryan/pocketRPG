@@ -29,11 +29,17 @@ const sourceFiles = [
   'utils/armoury.js',
   'utils/oneLifeDeath.js',
   'utils/rewardReveal.js',
+  'utils/equipModels.js', // -> game chunk (equip screen 3D model registry)
+  'utils/three3d.js',     // -> game chunk (lazy three.js loader; equip/combat 3D)
   'hooks/useActionTick.js',
   'hooks/useIsDesktop.js',
   'hooks/useEscapeKey.js',
+  'hooks/usePanZoomStage.js',
   'engine/experience.js',
   'engine/combatLevel.js',
+  'engine/world.js',
+  'engine/travel.js',
+  'engine/journeys.js',
   'engine/seedDrops.js',
   'engine/formulas.js',
   'engine/equipment.js',
@@ -45,6 +51,7 @@ const sourceFiles = [
   'engine/thieving.js',
   'engine/hunter.js',
   'engine/runes.js',
+  'engine/teleports.js',
   'engine/slayerRewards.js',
   'engine/slayerTasks.js',
   'engine/slayerMasters.js',
@@ -71,6 +78,8 @@ const sourceFiles = [
   'engine/idleSupplies.js',
   'engine/gatherTasks.js',
   'engine/construction.js',
+  'engine/worldContent.js',
+  'engine/placeMaps.js',
   'engine/idleEngine.js',
   'engine/applyTaskResult.js',
   'engine/tick.js',
@@ -100,6 +109,13 @@ const sourceFiles = [
   'state/gameState.js',
   'state/pvpState.js',
   'components/Modal.js',
+  'components/BackLink.js', // -> game chunk (only chunk screens use it)
+  'components/PlaceArt.js', // -> game chunk (map art; only WorldMapScreen renders it)
+  'components/ActivityPickerModal.js', // -> game chunk (world map / place map only)
+  'components/ActivityIcon.js', // -> game chunk (world map / place map only)
+  'components/PlaceMapView.js', // -> game chunk (world map / place map only)
+  'components/SlayerMasterModal.js', // -> game chunk (world map / place map only)
+  'components/TravelPrompt.js',
   'components/HPBar.js',
   'components/HitSplat.js',
   'components/ActivePotionBadges.js',
@@ -113,17 +129,19 @@ const sourceFiles = [
   'components/SkillIcon.js',
   'components/ItemSlot.js',
   'components/Toast.js',
-  'components/ActivityIndicator.js',
   'components/XpDropOverlay.js',
   'components/RewardRevealOverlay.js',
+  'components/LevelUpOverlay.js',
   'components/ChatWidget.js',
   'components/Header.js',
+  'components/GameFrameBar.js',
   'components/navTabs.js',
-  'components/BurgerMenu.js',
   'components/SideNav.js',
   'components/Card.js',
   'components/Panel.js',
   'components/Button.js',
+  'components/IronFrame.js',
+  'components/WaxSeal.js',
   'components/WeaponChargePanel.js',
   'components/SectionHeader.js',
   'components/BonusDisplay.js',
@@ -136,6 +154,8 @@ const sourceFiles = [
   'components/DailyTasksModal.js',
   'components/IdleCombatSetupModal.js',
   'components/EquipmentPaperdoll.js',
+  'components/Model3DViewer.js', // -> game chunk (equip screen 3D hero viewer)
+  'components/CombatArena3D.js', // -> game chunk (Phase 2 3D combat modal)
   'components/CollectionLogPanel.js',
   'components/GildedComplete.js',
   'components/FilterToggleBar.js',
@@ -162,11 +182,13 @@ const sourceFiles = [
   'screens/SkillingScreen.js',
   'screens/ConstructionScreen.js',
   'screens/MagicScreen.js',
+  'screens/WorldMapScreen.js',
   'screens/SlayerScreen.js',
   'screens/GatherScreen.js',
   'screens/TradingPostScreen.js',
   'screens/EquipmentScreen.js',
   'screens/ArmouryScreen.js',
+  'screens/AdventuresScreen.js',
   'screens/QuestsScreen.js',
   'screens/CluesScreen.js',
   'screens/MinigamesScreen.js',
@@ -174,8 +196,8 @@ const sourceFiles = [
   'screens/LeaderboardScreen.js',
   'screens/HelpScreen.js',
   'screens/CharacterUnlockScreen.js',
-  'screens/ConnectAiScreen.js',
   'screens/DemoLockedScreen.js',
+  'screens/landingContent.js',
   'screens/DesktopLandingScreen.js',
   'screens/LandingScreen.js',
   'screens/AuthScreen.js',
@@ -202,6 +224,17 @@ const sourceFiles = [
 // reference a game screen at module-evaluation time (App only does so inside
 // renderScreen, which runs after the chunk has loaded).
 const GAME_CHUNK_FILES = new Set([
+  'components/BackLink.js',
+  'components/PlaceArt.js',
+  'components/ActivityPickerModal.js',
+  'components/ActivityIcon.js',
+  'components/PlaceMapView.js',
+  'components/SlayerMasterModal.js',
+  'components/Model3DViewer.js',
+  'utils/combatArt.js', // -> game chunk (reads placeMapsData for monster locations; only combat/place-map screens use it)
+  'components/CombatArena3D.js',
+  'utils/equipModels.js',
+  'utils/three3d.js',
   'screens/HomeScreen.js',
   'screens/StatsScreen.js',
   'screens/InventoryScreen.js',
@@ -220,11 +253,13 @@ const GAME_CHUNK_FILES = new Set([
   'screens/SkillingScreen.js',
   'screens/ConstructionScreen.js',
   'screens/MagicScreen.js',
+  'screens/WorldMapScreen.js',
   'screens/SlayerScreen.js',
   'screens/GatherScreen.js',
   'screens/TradingPostScreen.js',
   'screens/EquipmentScreen.js',
   'screens/ArmouryScreen.js',
+  'screens/AdventuresScreen.js',
   'screens/QuestsScreen.js',
   'screens/CluesScreen.js',
   'screens/MinigamesScreen.js',
@@ -232,7 +267,6 @@ const GAME_CHUNK_FILES = new Set([
   'screens/LeaderboardScreen.js',
   'screens/HelpScreen.js',
   'screens/CharacterUnlockScreen.js',
-  'screens/ConnectAiScreen.js',
   'screens/DemoLockedScreen.js',
 ]);
 
@@ -273,6 +307,10 @@ const minigamesJSON = readSrc('data/minigames.json');
 const cluesJSON = readSrc('data/clues.json');
 const collectionLogJSON = readSrc('data/collectionLog.json');
 const dailyTasksJSON = readSrc('data/dailyTasks.json');
+const worldJSON = readSrc('data/world.json');
+const worldActivitiesJSON = readSrc('data/worldActivities.json');
+const placeMapsJSON = readSrc('data/placeMaps.json');
+const equipmentModelsJSON = readSrc('data/equipmentModels.json');
 
 // Landing screen images. Served as external files from /public/landing/ (the
 // Cloudflare Pages output dir is the repo root) and referenced by URL rather
@@ -383,19 +421,29 @@ const compiledTailwindCSS = fs.readFileSync(path.join(__dirname, '.tmp', 'app.cs
 // the document, shortening the chain. Below-the-fold / in-app-only weights
 // (Nunito 600/700, all JetBrains Mono) are intentionally NOT preloaded so they
 // don't compete with the LCP image for early bandwidth.
+// Forgemark (in-game only, loaded inside the lazy game chunk — never preloaded):
+//   Grenze Gotisch    — display / headings
+//   Spectral          — body serif (needs italic for the "ledger" emphasis voice)
+//   IM Fell English   — lore/flavour italic (its only real use is italic)
+//   Spline Sans Mono  — numerics
 const FONT_FACES = [
-  { pkg: '@fontsource/cinzel',         family: 'Cinzel',         weights: [400, 700, 900], preload: [400, 700, 900] },
-  { pkg: '@fontsource/nunito',          family: 'Nunito',         weights: [400, 600, 700], preload: [400]           },
-  { pkg: '@fontsource/jetbrains-mono', family: 'JetBrains Mono', weights: [400, 700],      preload: []              },
+  { pkg: '@fontsource/cinzel',           family: 'Cinzel',           weights: [400, 700, 900], preload: [400, 700, 900] },
+  { pkg: '@fontsource/nunito',            family: 'Nunito',           weights: [400, 600, 700], preload: [400]           },
+  { pkg: '@fontsource/jetbrains-mono',   family: 'JetBrains Mono',   weights: [400, 700],      preload: []              },
+  { pkg: '@fontsource/grenze-gotisch',   family: 'Grenze Gotisch',   weights: [400, 700, 900], preload: []              },
+  { pkg: '@fontsource/spectral',         family: 'Spectral',         weights: [400, 600, 700], italics: [400, 600],    preload: [] },
+  { pkg: '@fontsource/im-fell-english',  family: 'IM Fell English',  weights: [400],           italics: [400],         preload: [] },
+  { pkg: '@fontsource/spline-sans-mono', family: 'Spline Sans Mono', weights: [400, 500, 600, 700], preload: []        },
 ];
 const fontsOutDir = path.join(__dirname, 'public', 'fonts');
 fs.mkdirSync(fontsOutDir, { recursive: true });
 let fontFaceCSS = '';
 let fontPreloadTags = '';
-for (const { pkg, family, weights, preload } of FONT_FACES) {
+for (const { pkg, family, weights, italics, preload } of FONT_FACES) {
   const fontName = pkg.split('/')[1];
-  for (const weight of weights) {
-    const fname = `${fontName}-latin-${weight}-normal.woff2`;
+  const styles = weights.map((weight) => [weight, 'normal']).concat((italics || []).map((weight) => [weight, 'italic']));
+  for (const [weight, style] of styles) {
+    const fname = `${fontName}-latin-${weight}-${style}.woff2`;
     const fpath = path.join(__dirname, 'node_modules', pkg, 'files', fname);
     if (!fs.existsSync(fpath)) {
       console.error(`Missing font: ${fpath}`);
@@ -403,7 +451,7 @@ for (const { pkg, family, weights, preload } of FONT_FACES) {
     }
     fs.copyFileSync(fpath, path.join(fontsOutDir, fname));
     fontFaceCSS +=
-      `@font-face{font-family:'${family}';font-style:normal;font-weight:${weight};` +
+      `@font-face{font-family:'${family}';font-style:${style};font-weight:${weight};` +
       `font-display:swap;src:url('/public/fonts/${fname}') format('woff2')}\n`;
     // `crossorigin` is required even for same-origin fonts: woff2 is always
     // fetched in CORS-anonymous mode, so a preload without it would be a
@@ -487,7 +535,24 @@ const SPLIT_MINIFY = {
 // desktop landing — the one place an icon renders before the player is in-game —
 // fetches the chunk on mount (see DesktopLandingScreen) and GameIcon falls back
 // to an emoji until it arrives.
-const gameChunkSource = `const gameIconsData = ${gameIconsJSON};\nconst bespokeIconsData = ${bespokeIconsJSON};\n${gameJS}`;
+//
+// worldActivitiesData (the ~150 KiB content→place mapping) also rides the chunk:
+// only in-game code reads it (activity gating via requestActivityStart, and the
+// World Map place hub — both unreachable before the chunk loads). Core keeps the
+// small world.json geography for boot-time location/travel; worldContent.js
+// guards every access with `typeof worldActivitiesData !== 'undefined'`, so a
+// pre-chunk call degrades to "unmapped, never gate".
+// 3D feature flag, baked in at build time. `Enable3dRender` ("true"/anything)
+// is an explicit override when set; otherwise derive from CF_PAGES_BRANCH,
+// which Pages injects into every build (wrangler.toml-managed projects can't
+// set dashboard build vars): any non-main branch = preview = enabled, main =
+// production = disabled. Fail-safe: no branch info (local rebuild) disables.
+// Vite dev is unaffected (no injected global -> three3d.js enables).
+const enable3D = process.env.Enable3dRender != null
+  ? process.env.Enable3dRender === 'true'
+  : Boolean(process.env.CF_PAGES_BRANCH) && process.env.CF_PAGES_BRANCH !== 'main';
+console.log(`3D render: ${enable3D ? 'ENABLED' : 'disabled'} (Enable3dRender=${process.env.Enable3dRender ?? 'unset'}, CF_PAGES_BRANCH=${process.env.CF_PAGES_BRANCH ?? 'unset'})`);
+const gameChunkSource = `const gameIconsData = ${gameIconsJSON};\nconst bespokeIconsData = ${bespokeIconsJSON};\nconst worldActivitiesData = ${worldActivitiesJSON};\nconst placeMapsData = ${placeMapsJSON};\nconst equipmentModelsData = ${equipmentModelsJSON};\nconst pocketAssetBase = '/public/';\nconst pocketEnable3D = ${enable3D};\n${gameJS}`;
 const gameChunkScript = esbuild.transformSync(gameChunkSource, SPLIT_MINIFY).code.trim();
 const gameChunkBody = `"use strict";\n${gameChunkScript}\n`;
 const gameChunkHash = require('crypto').createHash('sha256').update(gameChunkBody).digest('hex').slice(0, 12);
@@ -525,6 +590,7 @@ const minigamesData = ${minigamesJSON};
 const cluesData = ${cluesJSON};
 const collectionLogData = ${collectionLogJSON};
 const dailyTasksData = ${dailyTasksJSON};
+const worldData = ${worldJSON};
 const landingImages = ${landingImagesJSON};
 const homeLogo = ${homeLogoJSON};
 
@@ -545,12 +611,13 @@ const html = `<!DOCTYPE html>
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>PocketRPG</title>
 <meta name="description" content="PocketRPG — a tick-based idle fantasy RPG. Train 24 skills, fight bosses, and complete quests — progress continues whether the app is open or not.">
-<!-- LCP image: the hero screenshot is rendered by JS, so preload it here to
+<!-- LCP image: the hero world map is rendered by JS, so preload it here to
      make the request discoverable from the initial document and fetch it at
      high priority. Same asset is the hero on both mobile and desktop layouts.
-     Kept first (and fetchpriority="high") so it stays ahead of the font
-     preloads below in the queue. -->
-<link rel="preload" href="/public/landing/ss-stats.webp" as="image" type="image/webp" fetchpriority="high">
+     imagesrcset/imagesizes mirror the mobile <img> so the preloaded variant is
+     the one actually used (no double download). Kept first (fetchpriority high)
+     so it stays ahead of the font preloads below in the queue. -->
+<link rel="preload" as="image" href="/public/landing/lp-map.webp" imagesrcset="/public/landing/lp-map-480.webp 480w, /public/landing/lp-map-760.webp 760w, /public/landing/lp-map.webp 1108w" imagesizes="(min-width: 520px) 480px, 92vw" type="image/webp" fetchpriority="high">
 <!-- Above-the-fold fonts: discover them from the initial document so they load
      in parallel instead of trailing the critical request chain. font-display:swap
      keeps text visible in a fallback meanwhile. See FONT_FACES.preload above. -->

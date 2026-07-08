@@ -13,6 +13,11 @@ vi.mock('../functions/_lib/auth.js', () => ({
     new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } }),
 }))
 
+// Beacon path auth: token → identity id. `bad-token` simulates a rejected JWT.
+vi.mock('../functions/_lib/jwt.js', () => ({
+  verifyJWT: async (token: string) => (token === 'bad-token' ? null : { sub: 1 }),
+}))
+
 // Mutable so a test can simulate the PvP inventory lock (active match → 409).
 let pvpLockResponse: Response | null = null
 vi.mock('../functions/_lib/pvp.js', () => ({
@@ -20,7 +25,7 @@ vi.mock('../functions/_lib/pvp.js', () => ({
   sweepStaleRows: async () => {},
 }))
 
-import { onRequestPut } from '../functions/api/save.js'
+import { onRequestPut, onRequestPost } from '../functions/api/save.js'
 
 // Minimal save bodies. stats → totalLevel 1 (one skill at level 1), CB 3.
 const baseSave = (extra: Record<string, unknown> = {}) => ({
@@ -318,6 +323,64 @@ describe('PUT /api/save idle write ceiling', () => {
   })
 })
 
+function makeBeacon(body: Record<string, unknown>) {
+  return new Request('https://example.com/api/save', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  })
+}
+
+describe('POST /api/save (sendBeacon teardown path)', () => {
+  it('persists the blob when authed via body token + character_id', async () => {
+    const stored = JSON.stringify(baseSave())
+    const incoming = JSON.stringify(baseSave({ bank: { shrimps: { itemId: 'shrimps', quantity: 6 } }, timestamp: 99999 }))
+    const { env, batches } = makeEnv({ existingSaveData: stored })
+
+    const res = await onRequestPost({ request: makeBeacon({ token: 'ok', character_id: 42, save_data: incoming, save_revision: 7 }), env } as any)
+    expect(res.status).toBe(200)
+    const body = await res.json()
+    expect(body.ok).toBe(true)
+    expect(body.save_revision).toBe(8)
+    expect(batches).toHaveLength(1)
+  })
+
+  it('rejects an invalid token', async () => {
+    const { env, batches } = makeEnv({ existingSaveData: JSON.stringify(baseSave()) })
+    const res = await onRequestPost({ request: makeBeacon({ token: 'bad-token', character_id: 42, save_data: JSON.stringify(baseSave()), save_revision: 7 }), env } as any)
+    expect(res.status).toBe(401)
+    expect(batches).toHaveLength(0)
+  })
+
+  it('requires a character_id', async () => {
+    const { env } = makeEnv({ existingSaveData: JSON.stringify(baseSave()) })
+    const res = await onRequestPost({ request: makeBeacon({ token: 'ok', save_data: JSON.stringify(baseSave()), save_revision: 7 }), env } as any)
+    expect(res.status).toBe(400)
+  })
+
+  it('shares the no-op detection with PUT (content-identical → zero blob writes)', async () => {
+    const stored = JSON.stringify(baseSave({ timestamp: 1111 }))
+    const incoming = JSON.stringify(baseSave({ timestamp: 99999 }))
+    const { env, batches, runs } = makeEnv({ existingSaveData: stored })
+
+    const res = await onRequestPost({ request: makeBeacon({ token: 'ok', character_id: 42, save_data: incoming, save_revision: 7 }), env } as any)
+    const body = await res.json()
+    expect(body.noop).toBe(true)
+    expect(batches).toHaveLength(0)
+    expect(runs.some(r => /UPDATE saves/.test(r.sql))).toBe(false)
+  })
+
+  it('enforces the stale-revision guard on the beacon path', async () => {
+    const stored = JSON.stringify(baseSave())
+    const { env, batches } = makeEnv({ existingSaveData: stored })
+    const res = await onRequestPost({ request: makeBeacon({ token: 'ok', character_id: 42, save_data: stored, save_revision: 3 }), env } as any)
+    expect(res.status).toBe(409)
+    const body = await res.json()
+    expect(body.code).toBe('SAVE_REVISION_CONFLICT')
+    expect(batches).toHaveLength(0)
+  })
+})
+
 describe('PUT /api/save existing guards stay intact', () => {
   it('rejects a stale save_revision', async () => {
     const stored = JSON.stringify(baseSave())
@@ -339,6 +402,22 @@ describe('PUT /api/save existing guards stay intact', () => {
     expect(res.status).toBe(409)
     const body = await res.json()
     expect(body.code).toBe('TOTAL_LEVEL_REGRESSION')
+    expect(batches).toHaveLength(0)
+  })
+
+  it('rejects a bank wipe (substantial bank → empty, total level unchanged)', async () => {
+    const bigBank: Record<string, { itemId: string; quantity: number }> = {}
+    for (let i = 0; i < 20; i++) bigBank[`item_${i}`] = { itemId: `item_${i}`, quantity: i + 1 }
+    const stored = JSON.stringify(baseSave({ bank: bigBank }))
+    // Same stats (total level unchanged, so the level guard passes), bank gone.
+    const incoming = JSON.stringify(baseSave({ bank: {} }))
+    const { env, batches } = makeEnv({ existingSaveData: stored })
+    const res = await onRequestPut({ request: makePut({ save_data: incoming, save_revision: 7 }), env } as any)
+    expect(res.status).toBe(409)
+    const body = await res.json()
+    expect(body.code).toBe('BANK_WIPE_REJECTED')
+    expect(body.previous_bank_items).toBe(20)
+    expect(body.next_bank_items).toBe(0)
     expect(batches).toHaveLength(0)
   })
 })

@@ -1,0 +1,9514 @@
+{
+  "lumbright": [
+    {
+      "kind": "agility",
+      "ref": "gnome_stronghold"
+    },
+    {
+      "kind": "bank",
+      "ref": "use"
+    },
+    {
+      "kind": "combat",
+      "ref": "arcane_adept"
+    },
+    {
+      "kind": "combat",
+      "ref": "bogling_sprite"
+    },
+    {
+      "kind": "combat",
+      "ref": "cave_goblin"
+    },
+    {
+      "kind": "combat",
+      "ref": "dustpaw_rat"
+    },
+    {
+      "kind": "combat",
+      "ref": "field_chicken"
+    },
+    {
+      "kind": "combat",
+      "ref": "pasture_bull"
+    },
+    {
+      "kind": "combat",
+      "ref": "stoneback_crab"
+    },
+    {
+      "kind": "farming",
+      "ref": "gnome"
+    },
+    {
+      "kind": "gather",
+      "ref": "gather_bowstring"
+    },
+    {
+      "kind": "hunter",
+      "ref": "hunt_cow"
+    },
+    {
+      "kind": "quest",
+      "ref": "a_boarborn_of_interest"
+    },
+    {
+      "kind": "quest",
+      "ref": "a_monk_s_ally"
+    },
+    {
+      "kind": "quest",
+      "ref": "angler_contest"
+    },
+    {
+      "kind": "quest",
+      "ref": "arcane_workshop_i"
+    },
+    {
+      "kind": "quest",
+      "ref": "beneath_ice_peak"
+    },
+    {
+      "kind": "quest",
+      "ref": "blight_city"
+    },
+    {
+      "kind": "quest",
+      "ref": "bloodline_mystery"
+    },
+    {
+      "kind": "quest",
+      "ref": "chef_s_assistant"
+    },
+    {
+      "kind": "quest",
+      "ref": "chemical_danger"
+    },
+    {
+      "kind": "quest",
+      "ref": "clock_spire"
+    },
+    {
+      "kind": "quest",
+      "ref": "creed_of_arceuus"
+    },
+    {
+      "kind": "quest",
+      "ref": "cross_marks_the_spot"
+    },
+    {
+      "kind": "skill",
+      "ref": "construction:build_mahogany_plank"
+    },
+    {
+      "kind": "skill",
+      "ref": "construction:build_oak_plank"
+    },
+    {
+      "kind": "skill",
+      "ref": "construction:build_plank"
+    },
+    {
+      "kind": "skill",
+      "ref": "construction:build_teak_plank"
+    },
+    {
+      "kind": "skill",
+      "ref": "cooking:cook_anglerfish"
+    },
+    {
+      "kind": "skill",
+      "ref": "cooking:cook_chicken"
+    },
+    {
+      "kind": "skill",
+      "ref": "cooking:cook_crab"
+    },
+    {
+      "kind": "skill",
+      "ref": "cooking:cook_eel"
+    },
+    {
+      "kind": "skill",
+      "ref": "cooking:cook_karam"
+    },
+    {
+      "kind": "skill",
+      "ref": "cooking:cook_manta_ray"
+    },
+    {
+      "kind": "skill",
+      "ref": "cooking:cook_meat"
+    },
+    {
+      "kind": "skill",
+      "ref": "cooking:cook_shark"
+    },
+    {
+      "kind": "skill",
+      "ref": "cooking:cook_shrimp"
+    },
+    {
+      "kind": "skill",
+      "ref": "cooking:cook_trout"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:black_d_hide_body"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:black_d_hide_chaps"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:cut_diamond"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:cut_dragonstone"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:cut_emerald"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:cut_onyx"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:cut_ruby"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:cut_sapphire"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:cut_zenyte"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:diamond_amulet"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:dragonstone_amulet"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:emerald_amulet"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:ferocious_gloves"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:green_d_hide_body"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:green_d_hide_chaps"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:hard_leather_body"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:leather_body"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:leather_boots"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:leather_chaps"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:leather_cowl"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:leather_gloves"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:molten_glass"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:onyx_amulet"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:red_d_hide_body"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:red_d_hide_chaps"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:ruby_amulet"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:sapphire_amulet"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:tan_cowhide"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:tan_cowhide_hard"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:tan_green_dhide"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:zyrite_amulet"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:zyrite_bracelet"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:zyrite_necklace"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:zyrite_ring"
+    },
+    {
+      "kind": "skill",
+      "ref": "dungeoneering:dungeoneering_floor_1"
+    },
+    {
+      "kind": "skill",
+      "ref": "firemaking:magic_logs"
+    },
+    {
+      "kind": "skill",
+      "ref": "firemaking:maple_logs"
+    },
+    {
+      "kind": "skill",
+      "ref": "firemaking:normal_logs"
+    },
+    {
+      "kind": "skill",
+      "ref": "firemaking:oak_logs"
+    },
+    {
+      "kind": "skill",
+      "ref": "firemaking:redwood_logs"
+    },
+    {
+      "kind": "skill",
+      "ref": "firemaking:willow_logs"
+    },
+    {
+      "kind": "skill",
+      "ref": "firemaking:yew_logs"
+    },
+    {
+      "kind": "skill",
+      "ref": "fishing:shrimps"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:adamant_arrows"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:arrow_shafts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:bronze_arrows"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:cut_diamond_bolt_tips"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:cut_dragonstone_bolt_tips"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:cut_onyx_bolt_tips"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:cut_ruby_bolt_tips"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:cut_wooden_stocks"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:headless_arrows"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:iron_arrows"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:magic_shortbow_string"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:magic_shortbow_u_cut"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:make_adamant_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:make_bronze_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:make_dragon_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:make_iron_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:make_mithril_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:make_runite_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:make_steel_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:maple_shortbow_string"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:maple_shortbow_u_cut"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:mithril_arrows"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:oak_shortbow_string"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:oak_shortbow_u_cut"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:rune_arrows"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:shortbow_string"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:shortbow_u_cut"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:steel_arrows"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:tip_diamond_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:tip_diamond_dragon_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:tip_dragonstone_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:tip_dragonstone_dragon_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:tip_onyx_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:tip_onyx_dragon_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:tip_ruby_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:tip_ruby_dragon_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:willow_shortbow_string"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:willow_shortbow_u_cut"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:yew_shortbow_string"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:yew_shortbow_u_cut"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:attack_potion"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:combat_potion"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:defence_potion"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:lumira_brew"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:magic_potion"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:prayer_potion"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:ranging_potion"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:strength_potion"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:super_attack"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:super_combat"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:super_defence"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:super_restore"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:super_strength"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:curse"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_diamond"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_diamond_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_diamond_dragon_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_dragonstone"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_dragonstone_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_dragonstone_dragon_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_onyx"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_onyx_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_onyx_dragon_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_ruby"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_ruby_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_ruby_dragon_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_sapphire"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_zenyte_amulet"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_zenyte_bracelet"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_zenyte_necklace"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_zenyte_ring"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:high_alch"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:plank_make"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:stun"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:superheat"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:tan_leather"
+    },
+    {
+      "kind": "skill",
+      "ref": "mining:clay"
+    },
+    {
+      "kind": "skill",
+      "ref": "mining:copper"
+    },
+    {
+      "kind": "skill",
+      "ref": "mining:rune_essence"
+    },
+    {
+      "kind": "thieving",
+      "ref": "villager"
+    }
+  ],
+  "varrick": [
+    {
+      "kind": "agility",
+      "ref": "varrock"
+    },
+    {
+      "kind": "bank",
+      "ref": "use"
+    },
+    {
+      "kind": "combat",
+      "ref": "ashen_crucible"
+    },
+    {
+      "kind": "combat",
+      "ref": "blighted_gauntlet"
+    },
+    {
+      "kind": "combat",
+      "ref": "ember_tyrant"
+    },
+    {
+      "kind": "combat",
+      "ref": "krylth_the_defiler"
+    },
+    {
+      "kind": "combat",
+      "ref": "venomcoil_matriarch"
+    },
+    {
+      "kind": "combat",
+      "ref": "warlord_grondar"
+    },
+    {
+      "kind": "gather",
+      "ref": "convert_log_to_plank"
+    },
+    {
+      "kind": "gather",
+      "ref": "convert_mahogany_log_to_plank"
+    },
+    {
+      "kind": "gather",
+      "ref": "convert_oak_log_to_plank"
+    },
+    {
+      "kind": "gather",
+      "ref": "convert_teak_log_to_plank"
+    },
+    {
+      "kind": "quest",
+      "ref": "banquet_for_disaster"
+    },
+    {
+      "kind": "quest",
+      "ref": "dragon_slayer_ii"
+    },
+    {
+      "kind": "quest",
+      "ref": "gorilla_slayer_ii"
+    },
+    {
+      "kind": "quest",
+      "ref": "hymn_of_the_elves"
+    },
+    {
+      "kind": "quest",
+      "ref": "legacies_quest"
+    },
+    {
+      "kind": "quest",
+      "ref": "royal_assassination"
+    },
+    {
+      "kind": "quest",
+      "ref": "sunscar_treasure_i"
+    },
+    {
+      "kind": "quest",
+      "ref": "sunscar_treasure_ii_the_fallen_empire"
+    },
+    {
+      "kind": "quest",
+      "ref": "the_fremennik_outcasts"
+    },
+    {
+      "kind": "quest",
+      "ref": "the_heart_of_shadows"
+    },
+    {
+      "kind": "quest",
+      "ref": "vices_of_the_father"
+    },
+    {
+      "kind": "quest",
+      "ref": "when_guthix_sleeps"
+    },
+    {
+      "kind": "raid",
+      "ref": "crimson_night_theatre"
+    },
+    {
+      "kind": "skill",
+      "ref": "construction:build_mahogany_plank"
+    },
+    {
+      "kind": "skill",
+      "ref": "construction:build_oak_plank"
+    },
+    {
+      "kind": "skill",
+      "ref": "construction:build_plank"
+    },
+    {
+      "kind": "skill",
+      "ref": "construction:build_teak_plank"
+    },
+    {
+      "kind": "skill",
+      "ref": "cooking:cook_anglerfish"
+    },
+    {
+      "kind": "skill",
+      "ref": "cooking:cook_chicken"
+    },
+    {
+      "kind": "skill",
+      "ref": "cooking:cook_crab"
+    },
+    {
+      "kind": "skill",
+      "ref": "cooking:cook_eel"
+    },
+    {
+      "kind": "skill",
+      "ref": "cooking:cook_karam"
+    },
+    {
+      "kind": "skill",
+      "ref": "cooking:cook_manta_ray"
+    },
+    {
+      "kind": "skill",
+      "ref": "cooking:cook_meat"
+    },
+    {
+      "kind": "skill",
+      "ref": "cooking:cook_shark"
+    },
+    {
+      "kind": "skill",
+      "ref": "cooking:cook_shrimp"
+    },
+    {
+      "kind": "skill",
+      "ref": "cooking:cook_trout"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:black_d_hide_body"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:black_d_hide_chaps"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:cut_diamond"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:cut_dragonstone"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:cut_emerald"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:cut_onyx"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:cut_ruby"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:cut_sapphire"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:cut_zenyte"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:diamond_amulet"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:dragonstone_amulet"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:emerald_amulet"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:ferocious_gloves"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:green_d_hide_body"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:green_d_hide_chaps"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:hard_leather_body"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:leather_body"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:leather_boots"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:leather_chaps"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:leather_cowl"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:leather_gloves"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:molten_glass"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:onyx_amulet"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:red_d_hide_body"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:red_d_hide_chaps"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:ruby_amulet"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:sapphire_amulet"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:tan_cowhide"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:tan_cowhide_hard"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:tan_green_dhide"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:zyrite_amulet"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:zyrite_bracelet"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:zyrite_necklace"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:zyrite_ring"
+    },
+    {
+      "kind": "skill",
+      "ref": "firemaking:magic_logs"
+    },
+    {
+      "kind": "skill",
+      "ref": "firemaking:maple_logs"
+    },
+    {
+      "kind": "skill",
+      "ref": "firemaking:normal_logs"
+    },
+    {
+      "kind": "skill",
+      "ref": "firemaking:oak_logs"
+    },
+    {
+      "kind": "skill",
+      "ref": "firemaking:redwood_logs"
+    },
+    {
+      "kind": "skill",
+      "ref": "firemaking:willow_logs"
+    },
+    {
+      "kind": "skill",
+      "ref": "firemaking:yew_logs"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:adamant_arrows"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:arrow_shafts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:bronze_arrows"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:cut_diamond_bolt_tips"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:cut_dragonstone_bolt_tips"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:cut_onyx_bolt_tips"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:cut_ruby_bolt_tips"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:cut_wooden_stocks"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:headless_arrows"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:iron_arrows"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:magic_shortbow_string"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:magic_shortbow_u_cut"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:make_adamant_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:make_bronze_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:make_dragon_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:make_iron_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:make_mithril_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:make_runite_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:make_steel_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:maple_shortbow_string"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:maple_shortbow_u_cut"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:mithril_arrows"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:oak_shortbow_string"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:oak_shortbow_u_cut"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:rune_arrows"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:shortbow_string"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:shortbow_u_cut"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:steel_arrows"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:tip_diamond_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:tip_diamond_dragon_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:tip_dragonstone_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:tip_dragonstone_dragon_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:tip_onyx_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:tip_onyx_dragon_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:tip_ruby_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:tip_ruby_dragon_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:willow_shortbow_string"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:willow_shortbow_u_cut"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:yew_shortbow_string"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:yew_shortbow_u_cut"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:attack_potion"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:combat_potion"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:defence_potion"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:lumira_brew"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:magic_potion"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:prayer_potion"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:ranging_potion"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:strength_potion"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:super_attack"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:super_combat"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:super_defence"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:super_restore"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:super_strength"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:curse"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_diamond"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_diamond_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_diamond_dragon_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_dragonstone"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_dragonstone_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_dragonstone_dragon_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_onyx"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_onyx_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_onyx_dragon_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_ruby"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_ruby_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_ruby_dragon_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_sapphire"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_zenyte_amulet"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_zenyte_bracelet"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_zenyte_necklace"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_zenyte_ring"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:high_alch"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:plank_make"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:stun"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:superheat"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:tan_leather"
+    },
+    {
+      "kind": "skill",
+      "ref": "prayer:altar_big_bones"
+    },
+    {
+      "kind": "skill",
+      "ref": "prayer:altar_bones"
+    },
+    {
+      "kind": "skill",
+      "ref": "prayer:altar_dagganoth_bones"
+    },
+    {
+      "kind": "skill",
+      "ref": "prayer:altar_dragon_bones"
+    },
+    {
+      "kind": "skill",
+      "ref": "prayer:bury_big_bones"
+    },
+    {
+      "kind": "skill",
+      "ref": "prayer:bury_bones"
+    },
+    {
+      "kind": "skill",
+      "ref": "prayer:bury_dagganoth_bones"
+    },
+    {
+      "kind": "skill",
+      "ref": "prayer:bury_dragon_bones"
+    },
+    {
+      "kind": "skill",
+      "ref": "prayer:scatter_gargoyle_dust"
+    },
+    {
+      "kind": "skill",
+      "ref": "runecraft:craft_soul_rune"
+    },
+    {
+      "kind": "skill",
+      "ref": "runecraft:craft_wrath_rune"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:forge_godsword_blade"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:make_armadyl_godsword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:make_bandos_godsword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:make_dragonfire_shield"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:make_saradomin_godsword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:make_zamorak_godsword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smelt_adamant"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smelt_bronze"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smelt_gold"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smelt_iron"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smelt_mithril"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smelt_rune"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smelt_steel"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_arrowtips"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_axe"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_bolts_unf"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_dagger"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_full_helm"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_kiteshield"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_longsword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_mace"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_pickaxe"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_platebody"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_platelegs"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_plateskirt"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_scimitar"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_sword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_bronze_arrowtips"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_bronze_axe"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_bronze_bolts_unf"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_bronze_dagger"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_bronze_pickaxe"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_bronze_scimitar"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_arrowtips"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_axe"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_bolts_unf"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_chainbody"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_dagger"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_full_helm"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_kiteshield"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_longsword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_mace"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_pickaxe"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_platebody"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_platelegs"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_scimitar"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_sword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_arrowtips"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_axe"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_bolts_unf"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_chainbody"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_dagger"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_full_helm"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_kiteshield"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_longsword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_mace"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_pickaxe"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_platebody"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_platelegs"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_plateskirt"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_scimitar"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_sword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_rune_axe"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_rune_pickaxe"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_rune_scimitar"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_runeforged_arrowtips"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_runeforged_chainbody"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_runeforged_full_helm"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_runeforged_kiteshield"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_runeforged_med_helm"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_runeforged_platebody"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_runeforged_platelegs"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_runeforged_plateskirt"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_runeforged_sword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_runite_bolts_unf"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_arrowtips"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_axe"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_bolts_unf"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_chainbody"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_dagger"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_full_helm"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_kiteshield"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_longsword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_mace"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_pickaxe"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_platebody"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_platelegs"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_scimitar"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_sword"
+    },
+    {
+      "kind": "skill",
+      "ref": "woodcutting:redwood"
+    }
+  ],
+  "faloden": [
+    {
+      "kind": "agility",
+      "ref": "falador"
+    },
+    {
+      "kind": "bank",
+      "ref": "use"
+    },
+    {
+      "kind": "combat",
+      "ref": "adamant_dragon"
+    },
+    {
+      "kind": "combat",
+      "ref": "commander_zephyra"
+    },
+    {
+      "kind": "combat",
+      "ref": "rune_dragon"
+    },
+    {
+      "kind": "combat",
+      "ref": "skyrender_kharra"
+    },
+    {
+      "kind": "combat",
+      "ref": "threefang_cerberus"
+    },
+    {
+      "kind": "combat",
+      "ref": "vicious_black_dragon"
+    },
+    {
+      "kind": "farming",
+      "ref": "falador"
+    },
+    {
+      "kind": "gather",
+      "ref": "convert_log_to_plank"
+    },
+    {
+      "kind": "gather",
+      "ref": "convert_mahogany_log_to_plank"
+    },
+    {
+      "kind": "gather",
+      "ref": "convert_oak_log_to_plank"
+    },
+    {
+      "kind": "gather",
+      "ref": "convert_teak_log_to_plank"
+    },
+    {
+      "kind": "gather",
+      "ref": "pick_limpwurt_root"
+    },
+    {
+      "kind": "quest",
+      "ref": "a_realm_divided"
+    },
+    {
+      "kind": "quest",
+      "ref": "beneath_blighted_sands"
+    },
+    {
+      "kind": "quest",
+      "ref": "desert_correspondence"
+    },
+    {
+      "kind": "quest",
+      "ref": "forging_friends_with_my_arm"
+    },
+    {
+      "kind": "quest",
+      "ref": "gloam_tales"
+    },
+    {
+      "kind": "quest",
+      "ref": "gorilla_slayer_i"
+    },
+    {
+      "kind": "quest",
+      "ref": "hazardous_moons"
+    },
+    {
+      "kind": "quest",
+      "ref": "mourning_s_finale_part_i"
+    },
+    {
+      "kind": "quest",
+      "ref": "mourning_s_finale_part_ii"
+    },
+    {
+      "kind": "quest",
+      "ref": "mysteries_of_the_north"
+    },
+    {
+      "kind": "quest",
+      "ref": "silverwing_hymn"
+    },
+    {
+      "kind": "quest",
+      "ref": "the_hex_of_arrav"
+    },
+    {
+      "kind": "raid",
+      "ref": "vaults_of_xyren"
+    },
+    {
+      "kind": "skill",
+      "ref": "construction:build_mahogany_plank"
+    },
+    {
+      "kind": "skill",
+      "ref": "construction:build_oak_plank"
+    },
+    {
+      "kind": "skill",
+      "ref": "construction:build_plank"
+    },
+    {
+      "kind": "skill",
+      "ref": "construction:build_teak_plank"
+    },
+    {
+      "kind": "skill",
+      "ref": "cooking:cook_anglerfish"
+    },
+    {
+      "kind": "skill",
+      "ref": "cooking:cook_chicken"
+    },
+    {
+      "kind": "skill",
+      "ref": "cooking:cook_crab"
+    },
+    {
+      "kind": "skill",
+      "ref": "cooking:cook_eel"
+    },
+    {
+      "kind": "skill",
+      "ref": "cooking:cook_karam"
+    },
+    {
+      "kind": "skill",
+      "ref": "cooking:cook_manta_ray"
+    },
+    {
+      "kind": "skill",
+      "ref": "cooking:cook_meat"
+    },
+    {
+      "kind": "skill",
+      "ref": "cooking:cook_shark"
+    },
+    {
+      "kind": "skill",
+      "ref": "cooking:cook_shrimp"
+    },
+    {
+      "kind": "skill",
+      "ref": "cooking:cook_trout"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:black_d_hide_body"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:black_d_hide_chaps"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:cut_diamond"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:cut_dragonstone"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:cut_emerald"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:cut_onyx"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:cut_ruby"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:cut_sapphire"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:cut_zenyte"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:diamond_amulet"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:dragonstone_amulet"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:emerald_amulet"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:ferocious_gloves"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:green_d_hide_body"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:green_d_hide_chaps"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:hard_leather_body"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:leather_body"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:leather_boots"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:leather_chaps"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:leather_cowl"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:leather_gloves"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:molten_glass"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:onyx_amulet"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:red_d_hide_body"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:red_d_hide_chaps"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:ruby_amulet"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:sapphire_amulet"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:tan_cowhide"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:tan_cowhide_hard"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:tan_green_dhide"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:zyrite_amulet"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:zyrite_bracelet"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:zyrite_necklace"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:zyrite_ring"
+    },
+    {
+      "kind": "skill",
+      "ref": "dungeoneering:dungeoneering_floor_10"
+    },
+    {
+      "kind": "skill",
+      "ref": "firemaking:magic_logs"
+    },
+    {
+      "kind": "skill",
+      "ref": "firemaking:maple_logs"
+    },
+    {
+      "kind": "skill",
+      "ref": "firemaking:normal_logs"
+    },
+    {
+      "kind": "skill",
+      "ref": "firemaking:oak_logs"
+    },
+    {
+      "kind": "skill",
+      "ref": "firemaking:redwood_logs"
+    },
+    {
+      "kind": "skill",
+      "ref": "firemaking:willow_logs"
+    },
+    {
+      "kind": "skill",
+      "ref": "firemaking:yew_logs"
+    },
+    {
+      "kind": "skill",
+      "ref": "fishing:anglerfish"
+    },
+    {
+      "kind": "skill",
+      "ref": "fishing:manta_ray"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:adamant_arrows"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:arrow_shafts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:bronze_arrows"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:cut_diamond_bolt_tips"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:cut_dragonstone_bolt_tips"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:cut_onyx_bolt_tips"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:cut_ruby_bolt_tips"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:cut_wooden_stocks"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:headless_arrows"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:iron_arrows"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:magic_shortbow_string"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:magic_shortbow_u_cut"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:make_adamant_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:make_bronze_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:make_dragon_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:make_iron_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:make_mithril_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:make_runite_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:make_steel_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:maple_shortbow_string"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:maple_shortbow_u_cut"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:mithril_arrows"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:oak_shortbow_string"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:oak_shortbow_u_cut"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:rune_arrows"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:shortbow_string"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:shortbow_u_cut"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:steel_arrows"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:tip_diamond_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:tip_diamond_dragon_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:tip_dragonstone_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:tip_dragonstone_dragon_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:tip_onyx_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:tip_onyx_dragon_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:tip_ruby_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:tip_ruby_dragon_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:willow_shortbow_string"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:willow_shortbow_u_cut"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:yew_shortbow_string"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:yew_shortbow_u_cut"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:attack_potion"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:combat_potion"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:defence_potion"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:lumira_brew"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:magic_potion"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:prayer_potion"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:ranging_potion"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:strength_potion"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:super_attack"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:super_combat"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:super_defence"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:super_restore"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:super_strength"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:curse"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_diamond"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_diamond_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_diamond_dragon_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_dragonstone"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_dragonstone_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_dragonstone_dragon_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_onyx"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_onyx_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_onyx_dragon_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_ruby"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_ruby_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_ruby_dragon_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_sapphire"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_zenyte_amulet"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_zenyte_bracelet"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_zenyte_necklace"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_zenyte_ring"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:high_alch"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:plank_make"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:stun"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:superheat"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:tan_leather"
+    },
+    {
+      "kind": "skill",
+      "ref": "mining:runite"
+    },
+    {
+      "kind": "skill",
+      "ref": "prayer:altar_big_bones"
+    },
+    {
+      "kind": "skill",
+      "ref": "prayer:altar_bones"
+    },
+    {
+      "kind": "skill",
+      "ref": "prayer:altar_dagganoth_bones"
+    },
+    {
+      "kind": "skill",
+      "ref": "prayer:altar_dragon_bones"
+    },
+    {
+      "kind": "skill",
+      "ref": "prayer:bury_big_bones"
+    },
+    {
+      "kind": "skill",
+      "ref": "prayer:bury_bones"
+    },
+    {
+      "kind": "skill",
+      "ref": "prayer:bury_dagganoth_bones"
+    },
+    {
+      "kind": "skill",
+      "ref": "prayer:bury_dragon_bones"
+    },
+    {
+      "kind": "skill",
+      "ref": "prayer:scatter_gargoyle_dust"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:forge_godsword_blade"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:make_armadyl_godsword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:make_bandos_godsword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:make_dragonfire_shield"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:make_saradomin_godsword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:make_zamorak_godsword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smelt_adamant"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smelt_bronze"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smelt_gold"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smelt_iron"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smelt_mithril"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smelt_rune"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smelt_steel"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_arrowtips"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_axe"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_bolts_unf"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_dagger"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_full_helm"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_kiteshield"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_longsword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_mace"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_pickaxe"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_platebody"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_platelegs"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_plateskirt"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_scimitar"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_sword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_bronze_arrowtips"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_bronze_axe"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_bronze_bolts_unf"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_bronze_dagger"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_bronze_pickaxe"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_bronze_scimitar"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_arrowtips"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_axe"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_bolts_unf"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_chainbody"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_dagger"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_full_helm"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_kiteshield"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_longsword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_mace"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_pickaxe"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_platebody"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_platelegs"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_scimitar"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_sword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_arrowtips"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_axe"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_bolts_unf"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_chainbody"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_dagger"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_full_helm"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_kiteshield"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_longsword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_mace"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_pickaxe"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_platebody"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_platelegs"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_plateskirt"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_scimitar"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_sword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_rune_axe"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_rune_pickaxe"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_rune_scimitar"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_runeforged_arrowtips"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_runeforged_chainbody"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_runeforged_full_helm"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_runeforged_kiteshield"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_runeforged_med_helm"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_runeforged_platebody"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_runeforged_platelegs"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_runeforged_plateskirt"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_runeforged_sword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_runite_bolts_unf"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_arrowtips"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_axe"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_bolts_unf"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_chainbody"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_dagger"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_full_helm"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_kiteshield"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_longsword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_mace"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_pickaxe"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_platebody"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_platelegs"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_scimitar"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_sword"
+    },
+    {
+      "kind": "thieving",
+      "ref": "elf"
+    }
+  ],
+  "ardounne": [
+    {
+      "kind": "agility",
+      "ref": "ardougne"
+    },
+    {
+      "kind": "bank",
+      "ref": "use"
+    },
+    {
+      "kind": "combat",
+      "ref": "deepmaw_kraken"
+    },
+    {
+      "kind": "combat",
+      "ref": "hellbound_gorilla"
+    },
+    {
+      "kind": "combat",
+      "ref": "king_black_dragon"
+    },
+    {
+      "kind": "combat",
+      "ref": "nagadoth_prime"
+    },
+    {
+      "kind": "combat",
+      "ref": "nagadoth_rex"
+    },
+    {
+      "kind": "combat",
+      "ref": "nagadoth_supreme"
+    },
+    {
+      "kind": "farming",
+      "ref": "ardougne"
+    },
+    {
+      "kind": "gather",
+      "ref": "collect_wine_of_zamorak"
+    },
+    {
+      "kind": "gather",
+      "ref": "convert_log_to_plank"
+    },
+    {
+      "kind": "gather",
+      "ref": "convert_mahogany_log_to_plank"
+    },
+    {
+      "kind": "gather",
+      "ref": "convert_oak_log_to_plank"
+    },
+    {
+      "kind": "gather",
+      "ref": "convert_teak_log_to_plank"
+    },
+    {
+      "kind": "hunter",
+      "ref": "hunt_master_trader"
+    },
+    {
+      "kind": "minigame",
+      "ref": "castle_wars"
+    },
+    {
+      "kind": "quest",
+      "ref": "a_dusk_at_the_theater"
+    },
+    {
+      "kind": "quest",
+      "ref": "champions_quest"
+    },
+    {
+      "kind": "quest",
+      "ref": "crimson_runs_deep"
+    },
+    {
+      "kind": "quest",
+      "ref": "dragon_slayer_i"
+    },
+    {
+      "kind": "quest",
+      "ref": "moon_diplomacy"
+    },
+    {
+      "kind": "quest",
+      "ref": "one_modest_favor"
+    },
+    {
+      "kind": "quest",
+      "ref": "sanctum_of_ikov"
+    },
+    {
+      "kind": "quest",
+      "ref": "shroud_village"
+    },
+    {
+      "kind": "quest",
+      "ref": "spirits_bargain"
+    },
+    {
+      "kind": "quest",
+      "ref": "the_fremennik_archipelago"
+    },
+    {
+      "kind": "quest",
+      "ref": "underpath_pass"
+    },
+    {
+      "kind": "quest",
+      "ref": "vision_mentor"
+    },
+    {
+      "kind": "raid",
+      "ref": "cryptbound_champions"
+    },
+    {
+      "kind": "raid",
+      "ref": "tomb_of_arasmus"
+    },
+    {
+      "kind": "skill",
+      "ref": "construction:build_mahogany_plank"
+    },
+    {
+      "kind": "skill",
+      "ref": "construction:build_oak_plank"
+    },
+    {
+      "kind": "skill",
+      "ref": "construction:build_plank"
+    },
+    {
+      "kind": "skill",
+      "ref": "construction:build_teak_plank"
+    },
+    {
+      "kind": "skill",
+      "ref": "cooking:cook_anglerfish"
+    },
+    {
+      "kind": "skill",
+      "ref": "cooking:cook_chicken"
+    },
+    {
+      "kind": "skill",
+      "ref": "cooking:cook_crab"
+    },
+    {
+      "kind": "skill",
+      "ref": "cooking:cook_eel"
+    },
+    {
+      "kind": "skill",
+      "ref": "cooking:cook_karam"
+    },
+    {
+      "kind": "skill",
+      "ref": "cooking:cook_manta_ray"
+    },
+    {
+      "kind": "skill",
+      "ref": "cooking:cook_meat"
+    },
+    {
+      "kind": "skill",
+      "ref": "cooking:cook_shark"
+    },
+    {
+      "kind": "skill",
+      "ref": "cooking:cook_shrimp"
+    },
+    {
+      "kind": "skill",
+      "ref": "cooking:cook_trout"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:black_d_hide_body"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:black_d_hide_chaps"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:cut_diamond"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:cut_dragonstone"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:cut_emerald"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:cut_onyx"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:cut_ruby"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:cut_sapphire"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:cut_zenyte"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:diamond_amulet"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:dragonstone_amulet"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:emerald_amulet"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:ferocious_gloves"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:green_d_hide_body"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:green_d_hide_chaps"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:hard_leather_body"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:leather_body"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:leather_boots"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:leather_chaps"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:leather_cowl"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:leather_gloves"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:molten_glass"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:onyx_amulet"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:red_d_hide_body"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:red_d_hide_chaps"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:ruby_amulet"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:sapphire_amulet"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:tan_cowhide"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:tan_cowhide_hard"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:tan_green_dhide"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:zyrite_amulet"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:zyrite_bracelet"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:zyrite_necklace"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:zyrite_ring"
+    },
+    {
+      "kind": "skill",
+      "ref": "dungeoneering:dungeoneering_floor_9"
+    },
+    {
+      "kind": "skill",
+      "ref": "firemaking:magic_logs"
+    },
+    {
+      "kind": "skill",
+      "ref": "firemaking:maple_logs"
+    },
+    {
+      "kind": "skill",
+      "ref": "firemaking:normal_logs"
+    },
+    {
+      "kind": "skill",
+      "ref": "firemaking:oak_logs"
+    },
+    {
+      "kind": "skill",
+      "ref": "firemaking:redwood_logs"
+    },
+    {
+      "kind": "skill",
+      "ref": "firemaking:willow_logs"
+    },
+    {
+      "kind": "skill",
+      "ref": "firemaking:yew_logs"
+    },
+    {
+      "kind": "skill",
+      "ref": "fishing:shark"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:adamant_arrows"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:arrow_shafts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:bronze_arrows"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:cut_diamond_bolt_tips"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:cut_dragonstone_bolt_tips"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:cut_onyx_bolt_tips"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:cut_ruby_bolt_tips"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:cut_wooden_stocks"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:headless_arrows"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:iron_arrows"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:magic_shortbow_string"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:magic_shortbow_u_cut"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:make_adamant_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:make_bronze_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:make_dragon_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:make_iron_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:make_mithril_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:make_runite_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:make_steel_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:maple_shortbow_string"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:maple_shortbow_u_cut"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:mithril_arrows"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:oak_shortbow_string"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:oak_shortbow_u_cut"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:rune_arrows"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:shortbow_string"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:shortbow_u_cut"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:steel_arrows"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:tip_diamond_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:tip_diamond_dragon_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:tip_dragonstone_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:tip_dragonstone_dragon_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:tip_onyx_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:tip_onyx_dragon_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:tip_ruby_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:tip_ruby_dragon_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:willow_shortbow_string"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:willow_shortbow_u_cut"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:yew_shortbow_string"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:yew_shortbow_u_cut"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:attack_potion"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:combat_potion"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:defence_potion"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:lumira_brew"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:magic_potion"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:prayer_potion"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:ranging_potion"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:strength_potion"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:super_attack"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:super_combat"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:super_defence"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:super_restore"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:super_strength"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:curse"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_diamond"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_diamond_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_diamond_dragon_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_dragonstone"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_dragonstone_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_dragonstone_dragon_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_onyx"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_onyx_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_onyx_dragon_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_ruby"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_ruby_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_ruby_dragon_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_sapphire"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_zenyte_amulet"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_zenyte_bracelet"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_zenyte_necklace"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_zenyte_ring"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:high_alch"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:plank_make"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:stun"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:superheat"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:tan_leather"
+    },
+    {
+      "kind": "skill",
+      "ref": "prayer:altar_big_bones"
+    },
+    {
+      "kind": "skill",
+      "ref": "prayer:altar_bones"
+    },
+    {
+      "kind": "skill",
+      "ref": "prayer:altar_dagganoth_bones"
+    },
+    {
+      "kind": "skill",
+      "ref": "prayer:altar_dragon_bones"
+    },
+    {
+      "kind": "skill",
+      "ref": "prayer:bury_big_bones"
+    },
+    {
+      "kind": "skill",
+      "ref": "prayer:bury_bones"
+    },
+    {
+      "kind": "skill",
+      "ref": "prayer:bury_dagganoth_bones"
+    },
+    {
+      "kind": "skill",
+      "ref": "prayer:bury_dragon_bones"
+    },
+    {
+      "kind": "skill",
+      "ref": "prayer:scatter_gargoyle_dust"
+    },
+    {
+      "kind": "skill",
+      "ref": "runecraft:craft_blood_rune"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:forge_godsword_blade"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:make_armadyl_godsword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:make_bandos_godsword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:make_dragonfire_shield"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:make_saradomin_godsword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:make_zamorak_godsword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smelt_adamant"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smelt_bronze"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smelt_gold"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smelt_iron"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smelt_mithril"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smelt_rune"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smelt_steel"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_arrowtips"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_axe"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_bolts_unf"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_dagger"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_full_helm"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_kiteshield"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_longsword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_mace"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_pickaxe"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_platebody"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_platelegs"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_plateskirt"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_scimitar"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_sword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_bronze_arrowtips"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_bronze_axe"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_bronze_bolts_unf"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_bronze_dagger"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_bronze_pickaxe"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_bronze_scimitar"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_arrowtips"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_axe"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_bolts_unf"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_chainbody"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_dagger"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_full_helm"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_kiteshield"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_longsword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_mace"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_pickaxe"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_platebody"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_platelegs"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_scimitar"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_sword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_arrowtips"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_axe"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_bolts_unf"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_chainbody"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_dagger"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_full_helm"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_kiteshield"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_longsword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_mace"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_pickaxe"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_platebody"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_platelegs"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_plateskirt"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_scimitar"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_sword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_rune_axe"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_rune_pickaxe"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_rune_scimitar"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_runeforged_arrowtips"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_runeforged_chainbody"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_runeforged_full_helm"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_runeforged_kiteshield"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_runeforged_med_helm"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_runeforged_platebody"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_runeforged_platelegs"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_runeforged_plateskirt"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_runeforged_sword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_runite_bolts_unf"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_arrowtips"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_axe"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_bolts_unf"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_chainbody"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_dagger"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_full_helm"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_kiteshield"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_longsword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_mace"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_pickaxe"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_platebody"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_platelegs"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_scimitar"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_sword"
+    },
+    {
+      "kind": "skill",
+      "ref": "woodcutting:magic"
+    },
+    {
+      "kind": "thieving",
+      "ref": "ardougne_knight"
+    },
+    {
+      "kind": "thieving",
+      "ref": "vyre"
+    }
+  ],
+  "draynar": [
+    {
+      "kind": "agility",
+      "ref": "draynor_village"
+    },
+    {
+      "kind": "bank",
+      "ref": "use"
+    },
+    {
+      "kind": "combat",
+      "ref": "briarheart_treant"
+    },
+    {
+      "kind": "combat",
+      "ref": "ember_giant"
+    },
+    {
+      "kind": "combat",
+      "ref": "frostmaw_direwolf"
+    },
+    {
+      "kind": "combat",
+      "ref": "gravehusk_brute"
+    },
+    {
+      "kind": "combat",
+      "ref": "green_dragon"
+    },
+    {
+      "kind": "combat",
+      "ref": "lesser_fiend"
+    },
+    {
+      "kind": "farming",
+      "ref": "taverley"
+    },
+    {
+      "kind": "gather",
+      "ref": "catch_newts"
+    },
+    {
+      "kind": "hunter",
+      "ref": "hunt_jeweller"
+    },
+    {
+      "kind": "quest",
+      "ref": "a_spirit_s_bane"
+    },
+    {
+      "kind": "quest",
+      "ref": "aegis_of_arrav"
+    },
+    {
+      "kind": "quest",
+      "ref": "arcane_workshop_ii"
+    },
+    {
+      "kind": "quest",
+      "ref": "fiend_slayer"
+    },
+    {
+      "kind": "quest",
+      "ref": "heir_ali_rescue"
+    },
+    {
+      "kind": "quest",
+      "ref": "skyhawks_peak"
+    },
+    {
+      "kind": "quest",
+      "ref": "starwatch_quest"
+    },
+    {
+      "kind": "quest",
+      "ref": "warden_in_peril"
+    },
+    {
+      "kind": "quest",
+      "ref": "wild_spirit"
+    },
+    {
+      "kind": "quest",
+      "ref": "wildwood_potion"
+    },
+    {
+      "kind": "quest",
+      "ref": "wool_herder"
+    },
+    {
+      "kind": "quest",
+      "ref": "wool_shearer"
+    },
+    {
+      "kind": "skill",
+      "ref": "construction:build_mahogany_plank"
+    },
+    {
+      "kind": "skill",
+      "ref": "construction:build_oak_plank"
+    },
+    {
+      "kind": "skill",
+      "ref": "construction:build_plank"
+    },
+    {
+      "kind": "skill",
+      "ref": "construction:build_teak_plank"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:black_d_hide_body"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:black_d_hide_chaps"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:cut_diamond"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:cut_dragonstone"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:cut_emerald"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:cut_onyx"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:cut_ruby"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:cut_sapphire"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:cut_zenyte"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:diamond_amulet"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:dragonstone_amulet"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:emerald_amulet"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:ferocious_gloves"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:green_d_hide_body"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:green_d_hide_chaps"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:hard_leather_body"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:leather_body"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:leather_boots"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:leather_chaps"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:leather_cowl"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:leather_gloves"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:molten_glass"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:onyx_amulet"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:red_d_hide_body"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:red_d_hide_chaps"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:ruby_amulet"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:sapphire_amulet"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:tan_cowhide"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:tan_cowhide_hard"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:tan_green_dhide"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:zyrite_amulet"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:zyrite_bracelet"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:zyrite_necklace"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:zyrite_ring"
+    },
+    {
+      "kind": "skill",
+      "ref": "dungeoneering:dungeoneering_floor_4"
+    },
+    {
+      "kind": "skill",
+      "ref": "firemaking:magic_logs"
+    },
+    {
+      "kind": "skill",
+      "ref": "firemaking:maple_logs"
+    },
+    {
+      "kind": "skill",
+      "ref": "firemaking:normal_logs"
+    },
+    {
+      "kind": "skill",
+      "ref": "firemaking:oak_logs"
+    },
+    {
+      "kind": "skill",
+      "ref": "firemaking:redwood_logs"
+    },
+    {
+      "kind": "skill",
+      "ref": "firemaking:willow_logs"
+    },
+    {
+      "kind": "skill",
+      "ref": "firemaking:yew_logs"
+    },
+    {
+      "kind": "skill",
+      "ref": "fishing:trout"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:adamant_arrows"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:arrow_shafts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:bronze_arrows"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:cut_diamond_bolt_tips"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:cut_dragonstone_bolt_tips"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:cut_onyx_bolt_tips"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:cut_ruby_bolt_tips"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:cut_wooden_stocks"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:headless_arrows"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:iron_arrows"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:magic_shortbow_string"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:magic_shortbow_u_cut"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:make_adamant_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:make_bronze_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:make_dragon_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:make_iron_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:make_mithril_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:make_runite_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:make_steel_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:maple_shortbow_string"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:maple_shortbow_u_cut"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:mithril_arrows"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:oak_shortbow_string"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:oak_shortbow_u_cut"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:rune_arrows"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:shortbow_string"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:shortbow_u_cut"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:steel_arrows"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:tip_diamond_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:tip_diamond_dragon_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:tip_dragonstone_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:tip_dragonstone_dragon_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:tip_onyx_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:tip_onyx_dragon_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:tip_ruby_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:tip_ruby_dragon_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:willow_shortbow_string"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:willow_shortbow_u_cut"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:yew_shortbow_string"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:yew_shortbow_u_cut"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:attack_potion"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:combat_potion"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:defence_potion"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:lumira_brew"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:magic_potion"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:prayer_potion"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:ranging_potion"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:strength_potion"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:super_attack"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:super_combat"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:super_defence"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:super_restore"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:super_strength"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:curse"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_diamond"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_diamond_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_diamond_dragon_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_dragonstone"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_dragonstone_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_dragonstone_dragon_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_onyx"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_onyx_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_onyx_dragon_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_ruby"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_ruby_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_ruby_dragon_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_sapphire"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_zenyte_amulet"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_zenyte_bracelet"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_zenyte_necklace"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_zenyte_ring"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:high_alch"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:plank_make"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:stun"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:superheat"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:tan_leather"
+    },
+    {
+      "kind": "skill",
+      "ref": "runecraft:craft_body_rune"
+    },
+    {
+      "kind": "skill",
+      "ref": "runecraft:craft_cosmic_rune"
+    },
+    {
+      "kind": "thieving",
+      "ref": "gardener"
+    }
+  ],
+  "alkarid": [
+    {
+      "kind": "agility",
+      "ref": "al_kharid"
+    },
+    {
+      "kind": "bank",
+      "ref": "use"
+    },
+    {
+      "kind": "combat",
+      "ref": "bloodmoon_stalker"
+    },
+    {
+      "kind": "combat",
+      "ref": "ironfang_drake"
+    },
+    {
+      "kind": "combat",
+      "ref": "pyreclaw_demon"
+    },
+    {
+      "kind": "combat",
+      "ref": "shadeglass_golem"
+    },
+    {
+      "kind": "combat",
+      "ref": "warped_spectre"
+    },
+    {
+      "kind": "combat",
+      "ref": "wraithgale_specter"
+    },
+    {
+      "kind": "gather",
+      "ref": "pick_white_berries"
+    },
+    {
+      "kind": "quest",
+      "ref": "a_trail_of_two_cats"
+    },
+    {
+      "kind": "quest",
+      "ref": "big_chompy_wing_hunting"
+    },
+    {
+      "kind": "quest",
+      "ref": "clan_totem"
+    },
+    {
+      "kind": "quest",
+      "ref": "glouphrie_s_gaze"
+    },
+    {
+      "kind": "quest",
+      "ref": "hunt_for_the_myreque"
+    },
+    {
+      "kind": "quest",
+      "ref": "illuminated_expedition"
+    },
+    {
+      "kind": "quest",
+      "ref": "olaf_s_journey"
+    },
+    {
+      "kind": "quest",
+      "ref": "slumbering_giants"
+    },
+    {
+      "kind": "quest",
+      "ref": "sting_catcher"
+    },
+    {
+      "kind": "quest",
+      "ref": "the_grove_of_doom"
+    },
+    {
+      "kind": "quest",
+      "ref": "the_thieves_queen"
+    },
+    {
+      "kind": "quest",
+      "ref": "wraiths_of_mortton"
+    },
+    {
+      "kind": "skill",
+      "ref": "construction:build_mahogany_plank"
+    },
+    {
+      "kind": "skill",
+      "ref": "construction:build_oak_plank"
+    },
+    {
+      "kind": "skill",
+      "ref": "construction:build_plank"
+    },
+    {
+      "kind": "skill",
+      "ref": "construction:build_teak_plank"
+    },
+    {
+      "kind": "skill",
+      "ref": "cooking:cook_anglerfish"
+    },
+    {
+      "kind": "skill",
+      "ref": "cooking:cook_chicken"
+    },
+    {
+      "kind": "skill",
+      "ref": "cooking:cook_crab"
+    },
+    {
+      "kind": "skill",
+      "ref": "cooking:cook_eel"
+    },
+    {
+      "kind": "skill",
+      "ref": "cooking:cook_karam"
+    },
+    {
+      "kind": "skill",
+      "ref": "cooking:cook_manta_ray"
+    },
+    {
+      "kind": "skill",
+      "ref": "cooking:cook_meat"
+    },
+    {
+      "kind": "skill",
+      "ref": "cooking:cook_shark"
+    },
+    {
+      "kind": "skill",
+      "ref": "cooking:cook_shrimp"
+    },
+    {
+      "kind": "skill",
+      "ref": "cooking:cook_trout"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:black_d_hide_body"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:black_d_hide_chaps"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:cut_diamond"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:cut_dragonstone"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:cut_emerald"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:cut_onyx"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:cut_ruby"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:cut_sapphire"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:cut_zenyte"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:diamond_amulet"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:dragonstone_amulet"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:emerald_amulet"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:ferocious_gloves"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:green_d_hide_body"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:green_d_hide_chaps"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:hard_leather_body"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:leather_body"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:leather_boots"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:leather_chaps"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:leather_cowl"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:leather_gloves"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:molten_glass"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:onyx_amulet"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:red_d_hide_body"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:red_d_hide_chaps"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:ruby_amulet"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:sapphire_amulet"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:tan_cowhide"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:tan_cowhide_hard"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:tan_green_dhide"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:zyrite_amulet"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:zyrite_bracelet"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:zyrite_necklace"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:zyrite_ring"
+    },
+    {
+      "kind": "skill",
+      "ref": "dungeoneering:dungeoneering_floor_5"
+    },
+    {
+      "kind": "skill",
+      "ref": "firemaking:magic_logs"
+    },
+    {
+      "kind": "skill",
+      "ref": "firemaking:maple_logs"
+    },
+    {
+      "kind": "skill",
+      "ref": "firemaking:normal_logs"
+    },
+    {
+      "kind": "skill",
+      "ref": "firemaking:oak_logs"
+    },
+    {
+      "kind": "skill",
+      "ref": "firemaking:redwood_logs"
+    },
+    {
+      "kind": "skill",
+      "ref": "firemaking:willow_logs"
+    },
+    {
+      "kind": "skill",
+      "ref": "firemaking:yew_logs"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:adamant_arrows"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:arrow_shafts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:bronze_arrows"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:cut_diamond_bolt_tips"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:cut_dragonstone_bolt_tips"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:cut_onyx_bolt_tips"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:cut_ruby_bolt_tips"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:cut_wooden_stocks"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:headless_arrows"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:iron_arrows"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:magic_shortbow_string"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:magic_shortbow_u_cut"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:make_adamant_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:make_bronze_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:make_dragon_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:make_iron_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:make_mithril_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:make_runite_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:make_steel_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:maple_shortbow_string"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:maple_shortbow_u_cut"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:mithril_arrows"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:oak_shortbow_string"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:oak_shortbow_u_cut"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:rune_arrows"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:shortbow_string"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:shortbow_u_cut"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:steel_arrows"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:tip_diamond_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:tip_diamond_dragon_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:tip_dragonstone_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:tip_dragonstone_dragon_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:tip_onyx_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:tip_onyx_dragon_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:tip_ruby_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:tip_ruby_dragon_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:willow_shortbow_string"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:willow_shortbow_u_cut"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:yew_shortbow_string"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:yew_shortbow_u_cut"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:attack_potion"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:combat_potion"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:defence_potion"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:lumira_brew"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:magic_potion"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:prayer_potion"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:ranging_potion"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:strength_potion"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:super_attack"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:super_combat"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:super_defence"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:super_restore"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:super_strength"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:curse"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_diamond"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_diamond_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_diamond_dragon_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_dragonstone"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_dragonstone_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_dragonstone_dragon_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_onyx"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_onyx_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_onyx_dragon_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_ruby"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_ruby_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_ruby_dragon_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_sapphire"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_zenyte_amulet"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_zenyte_bracelet"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_zenyte_necklace"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_zenyte_ring"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:high_alch"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:plank_make"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:stun"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:superheat"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:tan_leather"
+    },
+    {
+      "kind": "skill",
+      "ref": "mining:coal"
+    },
+    {
+      "kind": "skill",
+      "ref": "runecraft:craft_chaos_rune"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:forge_godsword_blade"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:make_armadyl_godsword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:make_bandos_godsword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:make_dragonfire_shield"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:make_saradomin_godsword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:make_zamorak_godsword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smelt_adamant"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smelt_bronze"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smelt_gold"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smelt_iron"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smelt_mithril"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smelt_rune"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smelt_steel"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_arrowtips"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_axe"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_bolts_unf"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_dagger"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_full_helm"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_kiteshield"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_longsword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_mace"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_pickaxe"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_platebody"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_platelegs"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_plateskirt"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_scimitar"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_sword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_bronze_arrowtips"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_bronze_axe"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_bronze_bolts_unf"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_bronze_dagger"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_bronze_pickaxe"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_bronze_scimitar"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_arrowtips"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_axe"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_bolts_unf"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_chainbody"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_dagger"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_full_helm"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_kiteshield"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_longsword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_mace"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_pickaxe"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_platebody"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_platelegs"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_scimitar"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_sword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_arrowtips"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_axe"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_bolts_unf"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_chainbody"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_dagger"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_full_helm"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_kiteshield"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_longsword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_mace"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_pickaxe"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_platebody"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_platelegs"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_plateskirt"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_scimitar"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_sword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_rune_axe"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_rune_pickaxe"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_rune_scimitar"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_runeforged_arrowtips"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_runeforged_chainbody"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_runeforged_full_helm"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_runeforged_kiteshield"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_runeforged_med_helm"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_runeforged_platebody"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_runeforged_platelegs"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_runeforged_plateskirt"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_runeforged_sword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_runite_bolts_unf"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_arrowtips"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_axe"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_bolts_unf"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_chainbody"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_dagger"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_full_helm"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_kiteshield"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_longsword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_mace"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_pickaxe"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_platebody"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_platelegs"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_scimitar"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_sword"
+    },
+    {
+      "kind": "skill",
+      "ref": "woodcutting:willow"
+    },
+    {
+      "kind": "thieving",
+      "ref": "baker"
+    }
+  ],
+  "edgevale": [
+    {
+      "kind": "bank",
+      "ref": "use"
+    },
+    {
+      "kind": "combat",
+      "ref": "astral_mage"
+    },
+    {
+      "kind": "combat",
+      "ref": "astral_warrior"
+    },
+    {
+      "kind": "combat",
+      "ref": "cindermaw_serpent"
+    },
+    {
+      "kind": "combat",
+      "ref": "ironclad_guardian"
+    },
+    {
+      "kind": "combat",
+      "ref": "nether_demon"
+    },
+    {
+      "kind": "combat",
+      "ref": "shroudwraith_specter"
+    },
+    {
+      "kind": "gather",
+      "ref": "collect_spiders_eggs"
+    },
+    {
+      "kind": "minigame",
+      "ref": "mage_arena"
+    },
+    {
+      "kind": "quest",
+      "ref": "grove_of_tranquillity"
+    },
+    {
+      "kind": "quest",
+      "ref": "hunted"
+    },
+    {
+      "kind": "quest",
+      "ref": "rag_and_bone_collector_ii"
+    },
+    {
+      "kind": "quest",
+      "ref": "shadows_of_hallowvale"
+    },
+    {
+      "kind": "quest",
+      "ref": "the_rivalry"
+    },
+    {
+      "kind": "quest",
+      "ref": "the_sentinels_sword"
+    },
+    {
+      "kind": "quest",
+      "ref": "the_stone_guardian"
+    },
+    {
+      "kind": "quest",
+      "ref": "the_traveler_trap"
+    },
+    {
+      "kind": "quest",
+      "ref": "umbral_of_the_storm"
+    },
+    {
+      "kind": "quest",
+      "ref": "unforgotten_story"
+    },
+    {
+      "kind": "quest",
+      "ref": "vermin_hunters"
+    },
+    {
+      "kind": "quest",
+      "ref": "which_lies_beneath"
+    },
+    {
+      "kind": "skill",
+      "ref": "construction:build_mahogany_plank"
+    },
+    {
+      "kind": "skill",
+      "ref": "construction:build_oak_plank"
+    },
+    {
+      "kind": "skill",
+      "ref": "construction:build_plank"
+    },
+    {
+      "kind": "skill",
+      "ref": "construction:build_teak_plank"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:black_d_hide_body"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:black_d_hide_chaps"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:cut_diamond"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:cut_dragonstone"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:cut_emerald"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:cut_onyx"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:cut_ruby"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:cut_sapphire"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:cut_zenyte"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:diamond_amulet"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:dragonstone_amulet"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:emerald_amulet"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:ferocious_gloves"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:green_d_hide_body"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:green_d_hide_chaps"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:hard_leather_body"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:leather_body"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:leather_boots"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:leather_chaps"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:leather_cowl"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:leather_gloves"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:molten_glass"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:onyx_amulet"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:red_d_hide_body"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:red_d_hide_chaps"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:ruby_amulet"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:sapphire_amulet"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:tan_cowhide"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:tan_cowhide_hard"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:tan_green_dhide"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:zyrite_amulet"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:zyrite_bracelet"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:zyrite_necklace"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:zyrite_ring"
+    },
+    {
+      "kind": "skill",
+      "ref": "dungeoneering:dungeoneering_floor_7"
+    },
+    {
+      "kind": "skill",
+      "ref": "firemaking:magic_logs"
+    },
+    {
+      "kind": "skill",
+      "ref": "firemaking:maple_logs"
+    },
+    {
+      "kind": "skill",
+      "ref": "firemaking:normal_logs"
+    },
+    {
+      "kind": "skill",
+      "ref": "firemaking:oak_logs"
+    },
+    {
+      "kind": "skill",
+      "ref": "firemaking:redwood_logs"
+    },
+    {
+      "kind": "skill",
+      "ref": "firemaking:willow_logs"
+    },
+    {
+      "kind": "skill",
+      "ref": "firemaking:yew_logs"
+    },
+    {
+      "kind": "skill",
+      "ref": "fishing:eel"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:adamant_arrows"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:arrow_shafts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:bronze_arrows"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:cut_diamond_bolt_tips"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:cut_dragonstone_bolt_tips"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:cut_onyx_bolt_tips"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:cut_ruby_bolt_tips"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:cut_wooden_stocks"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:headless_arrows"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:iron_arrows"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:magic_shortbow_string"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:magic_shortbow_u_cut"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:make_adamant_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:make_bronze_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:make_dragon_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:make_iron_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:make_mithril_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:make_runite_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:make_steel_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:maple_shortbow_string"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:maple_shortbow_u_cut"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:mithril_arrows"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:oak_shortbow_string"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:oak_shortbow_u_cut"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:rune_arrows"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:shortbow_string"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:shortbow_u_cut"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:steel_arrows"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:tip_diamond_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:tip_diamond_dragon_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:tip_dragonstone_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:tip_dragonstone_dragon_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:tip_onyx_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:tip_onyx_dragon_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:tip_ruby_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:tip_ruby_dragon_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:willow_shortbow_string"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:willow_shortbow_u_cut"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:yew_shortbow_string"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:yew_shortbow_u_cut"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:attack_potion"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:combat_potion"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:defence_potion"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:lumira_brew"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:magic_potion"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:prayer_potion"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:ranging_potion"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:strength_potion"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:super_attack"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:super_combat"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:super_defence"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:super_restore"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:super_strength"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:curse"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_diamond"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_diamond_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_diamond_dragon_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_dragonstone"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_dragonstone_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_dragonstone_dragon_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_onyx"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_onyx_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_onyx_dragon_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_ruby"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_ruby_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_ruby_dragon_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_sapphire"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_zenyte_amulet"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_zenyte_bracelet"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_zenyte_necklace"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_zenyte_ring"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:high_alch"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:plank_make"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:stun"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:superheat"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:tan_leather"
+    },
+    {
+      "kind": "skill",
+      "ref": "runecraft:craft_law_rune"
+    },
+    {
+      "kind": "skill",
+      "ref": "woodcutting:mahogany"
+    },
+    {
+      "kind": "thieving",
+      "ref": "guard"
+    }
+  ],
+  "barlock": [
+    {
+      "kind": "combat",
+      "ref": "broodfang_spider"
+    },
+    {
+      "kind": "combat",
+      "ref": "duneback_crab"
+    },
+    {
+      "kind": "combat",
+      "ref": "frostbite_imp"
+    },
+    {
+      "kind": "combat",
+      "ref": "highland_giant"
+    },
+    {
+      "kind": "combat",
+      "ref": "umbral_adept"
+    },
+    {
+      "kind": "combat",
+      "ref": "wailing_banshee"
+    },
+    {
+      "kind": "gather",
+      "ref": "collect_sand"
+    },
+    {
+      "kind": "minigame",
+      "ref": "warriors_guild"
+    },
+    {
+      "kind": "quest",
+      "ref": "doom_plateau"
+    },
+    {
+      "kind": "quest",
+      "ref": "doric_s_duty"
+    },
+    {
+      "kind": "quest",
+      "ref": "duel_arena"
+    },
+    {
+      "kind": "quest",
+      "ref": "echoes_of_guthix"
+    },
+    {
+      "kind": "quest",
+      "ref": "ernest_and_the_fowl_curse"
+    },
+    {
+      "kind": "quest",
+      "ref": "farewell_grubby"
+    },
+    {
+      "kind": "quest",
+      "ref": "gertrude_s_lost_cat"
+    },
+    {
+      "kind": "quest",
+      "ref": "gloomkin_diplomacy"
+    },
+    {
+      "kind": "quest",
+      "ref": "grove_gnome_village"
+    },
+    {
+      "kind": "quest",
+      "ref": "hazeel_conspiracy"
+    },
+    {
+      "kind": "quest",
+      "ref": "heirs_of_the_sun"
+    },
+    {
+      "kind": "quest",
+      "ref": "hex_s_house"
+    },
+    {
+      "kind": "skill",
+      "ref": "dungeoneering:dungeoneering_floor_2"
+    },
+    {
+      "kind": "skill",
+      "ref": "mining:tin"
+    },
+    {
+      "kind": "skill",
+      "ref": "runecraft:craft_air_rune"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:forge_godsword_blade"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:make_armadyl_godsword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:make_bandos_godsword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:make_dragonfire_shield"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:make_saradomin_godsword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:make_zamorak_godsword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smelt_adamant"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smelt_bronze"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smelt_gold"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smelt_iron"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smelt_mithril"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smelt_rune"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smelt_steel"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_arrowtips"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_axe"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_bolts_unf"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_dagger"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_full_helm"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_kiteshield"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_longsword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_mace"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_pickaxe"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_platebody"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_platelegs"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_plateskirt"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_scimitar"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_sword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_bronze_arrowtips"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_bronze_axe"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_bronze_bolts_unf"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_bronze_dagger"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_bronze_pickaxe"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_bronze_scimitar"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_arrowtips"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_axe"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_bolts_unf"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_chainbody"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_dagger"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_full_helm"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_kiteshield"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_longsword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_mace"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_pickaxe"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_platebody"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_platelegs"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_scimitar"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_sword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_arrowtips"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_axe"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_bolts_unf"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_chainbody"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_dagger"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_full_helm"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_kiteshield"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_longsword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_mace"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_pickaxe"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_platebody"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_platelegs"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_plateskirt"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_scimitar"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_sword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_rune_axe"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_rune_pickaxe"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_rune_scimitar"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_runeforged_arrowtips"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_runeforged_chainbody"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_runeforged_full_helm"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_runeforged_kiteshield"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_runeforged_med_helm"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_runeforged_platebody"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_runeforged_platelegs"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_runeforged_plateskirt"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_runeforged_sword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_runite_bolts_unf"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_arrowtips"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_axe"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_bolts_unf"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_chainbody"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_dagger"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_full_helm"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_kiteshield"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_longsword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_mace"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_pickaxe"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_platebody"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_platelegs"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_scimitar"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_sword"
+    },
+    {
+      "kind": "skill",
+      "ref": "woodcutting:normal"
+    },
+    {
+      "kind": "thieving",
+      "ref": "cake_stall"
+    }
+  ],
+  "catherra": [
+    {
+      "kind": "agility",
+      "ref": "rellekka"
+    },
+    {
+      "kind": "combat",
+      "ref": "elder_rock_golem"
+    },
+    {
+      "kind": "combat",
+      "ref": "elder_tree_spirit"
+    },
+    {
+      "kind": "combat",
+      "ref": "embertongue_lizard"
+    },
+    {
+      "kind": "combat",
+      "ref": "hollow_reaver"
+    },
+    {
+      "kind": "combat",
+      "ref": "sanguine_veld"
+    },
+    {
+      "kind": "combat",
+      "ref": "stoneglare_basilisk"
+    },
+    {
+      "kind": "farming",
+      "ref": "catherby"
+    },
+    {
+      "kind": "gather",
+      "ref": "burn_seaweed"
+    },
+    {
+      "kind": "minigame",
+      "ref": "fishing_trawler"
+    },
+    {
+      "kind": "quest",
+      "ref": "sprite_catcher"
+    },
+    {
+      "kind": "quest",
+      "ref": "staying_ahead"
+    },
+    {
+      "kind": "quest",
+      "ref": "stone_skippers"
+    },
+    {
+      "kind": "quest",
+      "ref": "stonekin_cannon"
+    },
+    {
+      "kind": "quest",
+      "ref": "story_of_the_righteous"
+    },
+    {
+      "kind": "quest",
+      "ref": "taking_the_hound_for_a_walk"
+    },
+    {
+      "kind": "quest",
+      "ref": "the_croaking_tale_of_a_lily_pad_worker"
+    },
+    {
+      "kind": "quest",
+      "ref": "the_forsaken_spire"
+    },
+    {
+      "kind": "quest",
+      "ref": "the_wandering_spirit"
+    },
+    {
+      "kind": "quest",
+      "ref": "tide_slug"
+    },
+    {
+      "kind": "quest",
+      "ref": "twilight_s_vow"
+    },
+    {
+      "kind": "quest",
+      "ref": "verdant_ritual"
+    },
+    {
+      "kind": "skill",
+      "ref": "cooking:cook_anglerfish"
+    },
+    {
+      "kind": "skill",
+      "ref": "cooking:cook_chicken"
+    },
+    {
+      "kind": "skill",
+      "ref": "cooking:cook_crab"
+    },
+    {
+      "kind": "skill",
+      "ref": "cooking:cook_eel"
+    },
+    {
+      "kind": "skill",
+      "ref": "cooking:cook_karam"
+    },
+    {
+      "kind": "skill",
+      "ref": "cooking:cook_manta_ray"
+    },
+    {
+      "kind": "skill",
+      "ref": "cooking:cook_meat"
+    },
+    {
+      "kind": "skill",
+      "ref": "cooking:cook_shark"
+    },
+    {
+      "kind": "skill",
+      "ref": "cooking:cook_shrimp"
+    },
+    {
+      "kind": "skill",
+      "ref": "cooking:cook_trout"
+    },
+    {
+      "kind": "skill",
+      "ref": "mining:iron"
+    },
+    {
+      "kind": "skill",
+      "ref": "runecraft:craft_fire_rune"
+    },
+    {
+      "kind": "skill",
+      "ref": "woodcutting:oak"
+    }
+  ],
+  "seerhold": [
+    {
+      "kind": "agility",
+      "ref": "seers_village"
+    },
+    {
+      "kind": "bank",
+      "ref": "use"
+    },
+    {
+      "kind": "combat",
+      "ref": "ashen_hydra"
+    },
+    {
+      "kind": "combat",
+      "ref": "black_dragon"
+    },
+    {
+      "kind": "combat",
+      "ref": "cinder_devil"
+    },
+    {
+      "kind": "combat",
+      "ref": "crazy_archaeologist"
+    },
+    {
+      "kind": "combat",
+      "ref": "nightfang_beast"
+    },
+    {
+      "kind": "combat",
+      "ref": "sovrathar_the_ashen_sovereign"
+    },
+    {
+      "kind": "farming",
+      "ref": "hosidius"
+    },
+    {
+      "kind": "gather",
+      "ref": "convert_log_to_plank"
+    },
+    {
+      "kind": "gather",
+      "ref": "convert_mahogany_log_to_plank"
+    },
+    {
+      "kind": "gather",
+      "ref": "convert_oak_log_to_plank"
+    },
+    {
+      "kind": "gather",
+      "ref": "convert_teak_log_to_plank"
+    },
+    {
+      "kind": "gather",
+      "ref": "crush_birds_nest"
+    },
+    {
+      "kind": "quest",
+      "ref": "brute_stronghold"
+    },
+    {
+      "kind": "quest",
+      "ref": "crown_complications"
+    },
+    {
+      "kind": "quest",
+      "ref": "crown_s_ransom"
+    },
+    {
+      "kind": "quest",
+      "ref": "cursed_mine"
+    },
+    {
+      "kind": "quest",
+      "ref": "eadgar_s_gambit"
+    },
+    {
+      "kind": "quest",
+      "ref": "enakhra_s_sorrow"
+    },
+    {
+      "kind": "quest",
+      "ref": "feytale_i_growing_pains"
+    },
+    {
+      "kind": "quest",
+      "ref": "guardian_of_varrock"
+    },
+    {
+      "kind": "quest",
+      "ref": "harbor_fever"
+    },
+    {
+      "kind": "quest",
+      "ref": "kin_crest"
+    },
+    {
+      "kind": "quest",
+      "ref": "realm_of_the_goblins"
+    },
+    {
+      "kind": "quest",
+      "ref": "road_of_glouphrie"
+    },
+    {
+      "kind": "skill",
+      "ref": "construction:build_mahogany_plank"
+    },
+    {
+      "kind": "skill",
+      "ref": "construction:build_oak_plank"
+    },
+    {
+      "kind": "skill",
+      "ref": "construction:build_plank"
+    },
+    {
+      "kind": "skill",
+      "ref": "construction:build_teak_plank"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:black_d_hide_body"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:black_d_hide_chaps"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:cut_diamond"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:cut_dragonstone"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:cut_emerald"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:cut_onyx"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:cut_ruby"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:cut_sapphire"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:cut_zenyte"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:diamond_amulet"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:dragonstone_amulet"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:emerald_amulet"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:ferocious_gloves"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:green_d_hide_body"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:green_d_hide_chaps"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:hard_leather_body"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:leather_body"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:leather_boots"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:leather_chaps"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:leather_cowl"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:leather_gloves"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:molten_glass"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:onyx_amulet"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:red_d_hide_body"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:red_d_hide_chaps"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:ruby_amulet"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:sapphire_amulet"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:tan_cowhide"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:tan_cowhide_hard"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:tan_green_dhide"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:zyrite_amulet"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:zyrite_bracelet"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:zyrite_necklace"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:zyrite_ring"
+    },
+    {
+      "kind": "skill",
+      "ref": "firemaking:magic_logs"
+    },
+    {
+      "kind": "skill",
+      "ref": "firemaking:maple_logs"
+    },
+    {
+      "kind": "skill",
+      "ref": "firemaking:normal_logs"
+    },
+    {
+      "kind": "skill",
+      "ref": "firemaking:oak_logs"
+    },
+    {
+      "kind": "skill",
+      "ref": "firemaking:redwood_logs"
+    },
+    {
+      "kind": "skill",
+      "ref": "firemaking:willow_logs"
+    },
+    {
+      "kind": "skill",
+      "ref": "firemaking:yew_logs"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:adamant_arrows"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:arrow_shafts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:bronze_arrows"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:cut_diamond_bolt_tips"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:cut_dragonstone_bolt_tips"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:cut_onyx_bolt_tips"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:cut_ruby_bolt_tips"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:cut_wooden_stocks"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:headless_arrows"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:iron_arrows"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:magic_shortbow_string"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:magic_shortbow_u_cut"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:make_adamant_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:make_bronze_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:make_dragon_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:make_iron_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:make_mithril_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:make_runite_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:make_steel_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:maple_shortbow_string"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:maple_shortbow_u_cut"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:mithril_arrows"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:oak_shortbow_string"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:oak_shortbow_u_cut"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:rune_arrows"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:shortbow_string"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:shortbow_u_cut"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:steel_arrows"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:tip_diamond_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:tip_diamond_dragon_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:tip_dragonstone_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:tip_dragonstone_dragon_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:tip_onyx_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:tip_onyx_dragon_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:tip_ruby_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:tip_ruby_dragon_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:willow_shortbow_string"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:willow_shortbow_u_cut"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:yew_shortbow_string"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:yew_shortbow_u_cut"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:attack_potion"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:combat_potion"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:defence_potion"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:lumira_brew"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:magic_potion"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:prayer_potion"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:ranging_potion"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:strength_potion"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:super_attack"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:super_combat"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:super_defence"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:super_restore"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:super_strength"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:curse"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_diamond"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_diamond_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_diamond_dragon_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_dragonstone"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_dragonstone_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_dragonstone_dragon_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_onyx"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_onyx_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_onyx_dragon_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_ruby"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_ruby_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_ruby_dragon_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_sapphire"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_zenyte_amulet"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_zenyte_bracelet"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_zenyte_necklace"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_zenyte_ring"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:high_alch"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:plank_make"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:stun"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:superheat"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:tan_leather"
+    },
+    {
+      "kind": "skill",
+      "ref": "mining:adamantite"
+    },
+    {
+      "kind": "skill",
+      "ref": "mining:gem_mining"
+    },
+    {
+      "kind": "skill",
+      "ref": "runecraft:craft_death_rune"
+    }
+  ],
+  "brimhollow": [
+    {
+      "kind": "agility",
+      "ref": "pollnivneach"
+    },
+    {
+      "kind": "bank",
+      "ref": "use"
+    },
+    {
+      "kind": "combat",
+      "ref": "ash_wyrm"
+    },
+    {
+      "kind": "combat",
+      "ref": "ashen_marauder"
+    },
+    {
+      "kind": "combat",
+      "ref": "boneclaw_revenant"
+    },
+    {
+      "kind": "combat",
+      "ref": "bonelight_pyromancer"
+    },
+    {
+      "kind": "combat",
+      "ref": "cinderfang_reaver"
+    },
+    {
+      "kind": "combat",
+      "ref": "tidereaper_crab"
+    },
+    {
+      "kind": "farming",
+      "ref": "brimhaven"
+    },
+    {
+      "kind": "quest",
+      "ref": "another_shard_of_h_a_m"
+    },
+    {
+      "kind": "quest",
+      "ref": "beast_magnetism"
+    },
+    {
+      "kind": "quest",
+      "ref": "bogre_flesh_eaters"
+    },
+    {
+      "kind": "quest",
+      "ref": "cascade_quest"
+    },
+    {
+      "kind": "quest",
+      "ref": "crown_of_miscellania"
+    },
+    {
+      "kind": "quest",
+      "ref": "doom_to_the_dorgeshuun"
+    },
+    {
+      "kind": "quest",
+      "ref": "essences_ahoy"
+    },
+    {
+      "kind": "quest",
+      "ref": "essences_of_the_elid"
+    },
+    {
+      "kind": "quest",
+      "ref": "fenkenstrain_s_creation"
+    },
+    {
+      "kind": "quest",
+      "ref": "forging_history"
+    },
+    {
+      "kind": "quest",
+      "ref": "frost_war"
+    },
+    {
+      "kind": "quest",
+      "ref": "helping_the_myreque"
+    },
+    {
+      "kind": "skill",
+      "ref": "construction:build_mahogany_plank"
+    },
+    {
+      "kind": "skill",
+      "ref": "construction:build_oak_plank"
+    },
+    {
+      "kind": "skill",
+      "ref": "construction:build_plank"
+    },
+    {
+      "kind": "skill",
+      "ref": "construction:build_teak_plank"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:black_d_hide_body"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:black_d_hide_chaps"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:cut_diamond"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:cut_dragonstone"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:cut_emerald"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:cut_onyx"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:cut_ruby"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:cut_sapphire"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:cut_zenyte"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:diamond_amulet"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:dragonstone_amulet"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:emerald_amulet"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:ferocious_gloves"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:green_d_hide_body"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:green_d_hide_chaps"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:hard_leather_body"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:leather_body"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:leather_boots"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:leather_chaps"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:leather_cowl"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:leather_gloves"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:molten_glass"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:onyx_amulet"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:red_d_hide_body"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:red_d_hide_chaps"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:ruby_amulet"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:sapphire_amulet"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:tan_cowhide"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:tan_cowhide_hard"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:tan_green_dhide"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:zyrite_amulet"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:zyrite_bracelet"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:zyrite_necklace"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:zyrite_ring"
+    },
+    {
+      "kind": "skill",
+      "ref": "firemaking:magic_logs"
+    },
+    {
+      "kind": "skill",
+      "ref": "firemaking:maple_logs"
+    },
+    {
+      "kind": "skill",
+      "ref": "firemaking:normal_logs"
+    },
+    {
+      "kind": "skill",
+      "ref": "firemaking:oak_logs"
+    },
+    {
+      "kind": "skill",
+      "ref": "firemaking:redwood_logs"
+    },
+    {
+      "kind": "skill",
+      "ref": "firemaking:willow_logs"
+    },
+    {
+      "kind": "skill",
+      "ref": "firemaking:yew_logs"
+    },
+    {
+      "kind": "skill",
+      "ref": "fishing:crab"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:adamant_arrows"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:arrow_shafts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:bronze_arrows"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:cut_diamond_bolt_tips"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:cut_dragonstone_bolt_tips"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:cut_onyx_bolt_tips"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:cut_ruby_bolt_tips"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:cut_wooden_stocks"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:headless_arrows"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:iron_arrows"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:magic_shortbow_string"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:magic_shortbow_u_cut"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:make_adamant_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:make_bronze_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:make_dragon_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:make_iron_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:make_mithril_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:make_runite_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:make_steel_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:maple_shortbow_string"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:maple_shortbow_u_cut"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:mithril_arrows"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:oak_shortbow_string"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:oak_shortbow_u_cut"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:rune_arrows"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:shortbow_string"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:shortbow_u_cut"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:steel_arrows"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:tip_diamond_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:tip_diamond_dragon_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:tip_dragonstone_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:tip_dragonstone_dragon_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:tip_onyx_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:tip_onyx_dragon_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:tip_ruby_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:tip_ruby_dragon_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:willow_shortbow_string"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:willow_shortbow_u_cut"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:yew_shortbow_string"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:yew_shortbow_u_cut"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:attack_potion"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:combat_potion"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:defence_potion"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:lumira_brew"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:magic_potion"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:prayer_potion"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:ranging_potion"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:strength_potion"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:super_attack"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:super_combat"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:super_defence"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:super_restore"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:super_strength"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:curse"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_diamond"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_diamond_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_diamond_dragon_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_dragonstone"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_dragonstone_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_dragonstone_dragon_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_onyx"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_onyx_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_onyx_dragon_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_ruby"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_ruby_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_ruby_dragon_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_sapphire"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_zenyte_amulet"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_zenyte_bracelet"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_zenyte_necklace"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_zenyte_ring"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:high_alch"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:plank_make"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:stun"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:superheat"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:tan_leather"
+    },
+    {
+      "kind": "skill",
+      "ref": "mining:gold"
+    },
+    {
+      "kind": "skill",
+      "ref": "woodcutting:teak"
+    }
+  ],
+  "canifel": [
+    {
+      "kind": "agility",
+      "ref": "canifis"
+    },
+    {
+      "kind": "combat",
+      "ref": "briar_giant"
+    },
+    {
+      "kind": "combat",
+      "ref": "cinderpaw_cub"
+    },
+    {
+      "kind": "combat",
+      "ref": "glaive_skeleton"
+    },
+    {
+      "kind": "combat",
+      "ref": "marshfen_toad"
+    },
+    {
+      "kind": "combat",
+      "ref": "mirebound_husk"
+    },
+    {
+      "kind": "combat",
+      "ref": "verdant_stalker"
+    },
+    {
+      "kind": "gather",
+      "ref": "collect_seaweed"
+    },
+    {
+      "kind": "hunter",
+      "ref": "hunt_wizard"
+    },
+    {
+      "kind": "quest",
+      "ref": "hex_s_potion"
+    },
+    {
+      "kind": "quest",
+      "ref": "misthalin_enigma"
+    },
+    {
+      "kind": "quest",
+      "ref": "mustering_drive"
+    },
+    {
+      "kind": "quest",
+      "ref": "nightborn_slayer"
+    },
+    {
+      "kind": "quest",
+      "ref": "obsidian_sentinels_fortress"
+    },
+    {
+      "kind": "quest",
+      "ref": "pirate_s_hoard"
+    },
+    {
+      "kind": "quest",
+      "ref": "present_concerns"
+    },
+    {
+      "kind": "quest",
+      "ref": "rag_and_bone_collector_i"
+    },
+    {
+      "kind": "quest",
+      "ref": "romeo_and_juliet"
+    },
+    {
+      "kind": "quest",
+      "ref": "sigil_mysteries"
+    },
+    {
+      "kind": "quest",
+      "ref": "skeletal_passage"
+    },
+    {
+      "kind": "quest",
+      "ref": "spire_of_life"
+    },
+    {
+      "kind": "skill",
+      "ref": "dungeoneering:dungeoneering_floor_3"
+    },
+    {
+      "kind": "skill",
+      "ref": "prayer:altar_big_bones"
+    },
+    {
+      "kind": "skill",
+      "ref": "prayer:altar_bones"
+    },
+    {
+      "kind": "skill",
+      "ref": "prayer:altar_dagganoth_bones"
+    },
+    {
+      "kind": "skill",
+      "ref": "prayer:altar_dragon_bones"
+    },
+    {
+      "kind": "skill",
+      "ref": "prayer:bury_big_bones"
+    },
+    {
+      "kind": "skill",
+      "ref": "prayer:bury_bones"
+    },
+    {
+      "kind": "skill",
+      "ref": "prayer:bury_dagganoth_bones"
+    },
+    {
+      "kind": "skill",
+      "ref": "prayer:bury_dragon_bones"
+    },
+    {
+      "kind": "skill",
+      "ref": "prayer:scatter_gargoyle_dust"
+    },
+    {
+      "kind": "skill",
+      "ref": "runecraft:craft_earth_rune"
+    },
+    {
+      "kind": "skill",
+      "ref": "runecraft:craft_mind_rune"
+    },
+    {
+      "kind": "skill",
+      "ref": "runecraft:craft_water_rune"
+    },
+    {
+      "kind": "thieving",
+      "ref": "farmer"
+    }
+  ],
+  "camlann": [
+    {
+      "kind": "bank",
+      "ref": "use"
+    },
+    {
+      "kind": "combat",
+      "ref": "astral_ranger"
+    },
+    {
+      "kind": "combat",
+      "ref": "drakthul_wyrmling"
+    },
+    {
+      "kind": "combat",
+      "ref": "gravethorn_drake"
+    },
+    {
+      "kind": "combat",
+      "ref": "nether_wraith"
+    },
+    {
+      "kind": "combat",
+      "ref": "runestone_gargoyle"
+    },
+    {
+      "kind": "combat",
+      "ref": "stonegale_elemental"
+    },
+    {
+      "kind": "combat",
+      "ref": "voidweave_stalker"
+    },
+    {
+      "kind": "gather",
+      "ref": "gather_snape_grass"
+    },
+    {
+      "kind": "hunter",
+      "ref": "hunt_merchant"
+    },
+    {
+      "kind": "minigame",
+      "ref": "barbarian_assault"
+    },
+    {
+      "kind": "quest",
+      "ref": "icthlarin_s_young_aide"
+    },
+    {
+      "kind": "quest",
+      "ref": "merlin_s_shard"
+    },
+    {
+      "kind": "quest",
+      "ref": "my_arm_s_grand_expedition"
+    },
+    {
+      "kind": "quest",
+      "ref": "peak_daughter"
+    },
+    {
+      "kind": "quest",
+      "ref": "sacred_grail"
+    },
+    {
+      "kind": "quest",
+      "ref": "sanctum_of_the_eye"
+    },
+    {
+      "kind": "quest",
+      "ref": "tai_bwo_wannai_three"
+    },
+    {
+      "kind": "quest",
+      "ref": "the_forsaken_tribe"
+    },
+    {
+      "kind": "quest",
+      "ref": "the_fremennik_challenges"
+    },
+    {
+      "kind": "quest",
+      "ref": "the_giant_stonekin"
+    },
+    {
+      "kind": "quest",
+      "ref": "the_grand_grove"
+    },
+    {
+      "kind": "quest",
+      "ref": "the_palm_in_the_dunes"
+    },
+    {
+      "kind": "skill",
+      "ref": "construction:build_mahogany_plank"
+    },
+    {
+      "kind": "skill",
+      "ref": "construction:build_oak_plank"
+    },
+    {
+      "kind": "skill",
+      "ref": "construction:build_plank"
+    },
+    {
+      "kind": "skill",
+      "ref": "construction:build_teak_plank"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:black_d_hide_body"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:black_d_hide_chaps"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:cut_diamond"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:cut_dragonstone"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:cut_emerald"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:cut_onyx"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:cut_ruby"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:cut_sapphire"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:cut_zenyte"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:diamond_amulet"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:dragonstone_amulet"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:emerald_amulet"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:ferocious_gloves"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:green_d_hide_body"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:green_d_hide_chaps"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:hard_leather_body"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:leather_body"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:leather_boots"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:leather_chaps"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:leather_cowl"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:leather_gloves"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:molten_glass"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:onyx_amulet"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:red_d_hide_body"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:red_d_hide_chaps"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:ruby_amulet"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:sapphire_amulet"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:tan_cowhide"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:tan_cowhide_hard"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:tan_green_dhide"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:zyrite_amulet"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:zyrite_bracelet"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:zyrite_necklace"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:zyrite_ring"
+    },
+    {
+      "kind": "skill",
+      "ref": "dungeoneering:dungeoneering_floor_6"
+    },
+    {
+      "kind": "skill",
+      "ref": "firemaking:magic_logs"
+    },
+    {
+      "kind": "skill",
+      "ref": "firemaking:maple_logs"
+    },
+    {
+      "kind": "skill",
+      "ref": "firemaking:normal_logs"
+    },
+    {
+      "kind": "skill",
+      "ref": "firemaking:oak_logs"
+    },
+    {
+      "kind": "skill",
+      "ref": "firemaking:redwood_logs"
+    },
+    {
+      "kind": "skill",
+      "ref": "firemaking:willow_logs"
+    },
+    {
+      "kind": "skill",
+      "ref": "firemaking:yew_logs"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:adamant_arrows"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:arrow_shafts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:bronze_arrows"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:cut_diamond_bolt_tips"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:cut_dragonstone_bolt_tips"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:cut_onyx_bolt_tips"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:cut_ruby_bolt_tips"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:cut_wooden_stocks"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:headless_arrows"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:iron_arrows"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:magic_shortbow_string"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:magic_shortbow_u_cut"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:make_adamant_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:make_bronze_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:make_dragon_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:make_iron_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:make_mithril_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:make_runite_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:make_steel_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:maple_shortbow_string"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:maple_shortbow_u_cut"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:mithril_arrows"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:oak_shortbow_string"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:oak_shortbow_u_cut"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:rune_arrows"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:shortbow_string"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:shortbow_u_cut"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:steel_arrows"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:tip_diamond_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:tip_diamond_dragon_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:tip_dragonstone_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:tip_dragonstone_dragon_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:tip_onyx_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:tip_onyx_dragon_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:tip_ruby_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:tip_ruby_dragon_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:willow_shortbow_string"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:willow_shortbow_u_cut"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:yew_shortbow_string"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:yew_shortbow_u_cut"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:attack_potion"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:combat_potion"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:defence_potion"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:lumira_brew"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:magic_potion"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:prayer_potion"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:ranging_potion"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:strength_potion"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:super_attack"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:super_combat"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:super_defence"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:super_restore"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:super_strength"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:curse"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_diamond"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_diamond_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_diamond_dragon_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_dragonstone"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_dragonstone_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_dragonstone_dragon_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_onyx"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_onyx_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_onyx_dragon_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_ruby"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_ruby_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_ruby_dragon_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_sapphire"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_zenyte_amulet"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_zenyte_bracelet"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_zenyte_necklace"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_zenyte_ring"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:high_alch"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:plank_make"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:stun"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:superheat"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:tan_leather"
+    },
+    {
+      "kind": "skill",
+      "ref": "prayer:altar_big_bones"
+    },
+    {
+      "kind": "skill",
+      "ref": "prayer:altar_bones"
+    },
+    {
+      "kind": "skill",
+      "ref": "prayer:altar_dagganoth_bones"
+    },
+    {
+      "kind": "skill",
+      "ref": "prayer:altar_dragon_bones"
+    },
+    {
+      "kind": "skill",
+      "ref": "prayer:bury_big_bones"
+    },
+    {
+      "kind": "skill",
+      "ref": "prayer:bury_bones"
+    },
+    {
+      "kind": "skill",
+      "ref": "prayer:bury_dagganoth_bones"
+    },
+    {
+      "kind": "skill",
+      "ref": "prayer:bury_dragon_bones"
+    },
+    {
+      "kind": "skill",
+      "ref": "prayer:scatter_gargoyle_dust"
+    },
+    {
+      "kind": "skill",
+      "ref": "runecraft:craft_astral_rune"
+    },
+    {
+      "kind": "skill",
+      "ref": "runecraft:craft_nature_rune"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:forge_godsword_blade"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:make_armadyl_godsword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:make_bandos_godsword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:make_dragonfire_shield"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:make_saradomin_godsword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:make_zamorak_godsword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smelt_adamant"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smelt_bronze"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smelt_gold"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smelt_iron"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smelt_mithril"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smelt_rune"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smelt_steel"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_arrowtips"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_axe"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_bolts_unf"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_dagger"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_full_helm"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_kiteshield"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_longsword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_mace"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_pickaxe"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_platebody"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_platelegs"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_plateskirt"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_scimitar"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_adamant_sword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_bronze_arrowtips"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_bronze_axe"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_bronze_bolts_unf"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_bronze_dagger"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_bronze_pickaxe"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_bronze_scimitar"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_arrowtips"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_axe"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_bolts_unf"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_chainbody"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_dagger"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_full_helm"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_kiteshield"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_longsword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_mace"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_pickaxe"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_platebody"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_platelegs"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_scimitar"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_iron_sword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_arrowtips"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_axe"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_bolts_unf"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_chainbody"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_dagger"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_full_helm"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_kiteshield"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_longsword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_mace"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_pickaxe"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_platebody"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_platelegs"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_plateskirt"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_scimitar"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_mithril_sword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_rune_axe"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_rune_pickaxe"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_rune_scimitar"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_runeforged_arrowtips"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_runeforged_chainbody"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_runeforged_full_helm"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_runeforged_kiteshield"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_runeforged_med_helm"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_runeforged_platebody"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_runeforged_platelegs"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_runeforged_plateskirt"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_runeforged_sword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_runite_bolts_unf"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_arrowtips"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_axe"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_bolts_unf"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_chainbody"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_dagger"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_full_helm"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_kiteshield"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_longsword"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_mace"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_pickaxe"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_platebody"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_platelegs"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_scimitar"
+    },
+    {
+      "kind": "skill",
+      "ref": "smithing:smith_steel_sword"
+    },
+    {
+      "kind": "skill",
+      "ref": "woodcutting:magic"
+    },
+    {
+      "kind": "skill",
+      "ref": "woodcutting:maple"
+    },
+    {
+      "kind": "thieving",
+      "ref": "master_farmer"
+    }
+  ],
+  "portsarin": [
+    {
+      "kind": "bank",
+      "ref": "use"
+    },
+    {
+      "kind": "combat",
+      "ref": "bone_wyvern"
+    },
+    {
+      "kind": "combat",
+      "ref": "emberhowl_warlord"
+    },
+    {
+      "kind": "combat",
+      "ref": "marshscale_shaman"
+    },
+    {
+      "kind": "combat",
+      "ref": "razorwing_harpy"
+    },
+    {
+      "kind": "combat",
+      "ref": "red_dragon"
+    },
+    {
+      "kind": "combat",
+      "ref": "thornhide_colossus"
+    },
+    {
+      "kind": "gather",
+      "ref": "harvest_potato_cactus"
+    },
+    {
+      "kind": "hunter",
+      "ref": "hunt_grim_reaper"
+    },
+    {
+      "kind": "minigame",
+      "ref": "pest_control"
+    },
+    {
+      "kind": "quest",
+      "ref": "a_savor_of_hope"
+    },
+    {
+      "kind": "quest",
+      "ref": "between_stone_and_steel"
+    },
+    {
+      "kind": "quest",
+      "ref": "brute_romance"
+    },
+    {
+      "kind": "quest",
+      "ref": "cunning_intellects"
+    },
+    {
+      "kind": "quest",
+      "ref": "dawn_s_first_oath"
+    },
+    {
+      "kind": "quest",
+      "ref": "feytale_ii_cure_a_queen"
+    },
+    {
+      "kind": "quest",
+      "ref": "forsaken_city"
+    },
+    {
+      "kind": "quest",
+      "ref": "sanctum_of_tarn_razorlor"
+    },
+    {
+      "kind": "quest",
+      "ref": "terror_from_the_deep"
+    },
+    {
+      "kind": "quest",
+      "ref": "the_excavation_grounds"
+    },
+    {
+      "kind": "quest",
+      "ref": "wandering_elves"
+    },
+    {
+      "kind": "quest",
+      "ref": "wardspire"
+    },
+    {
+      "kind": "skill",
+      "ref": "construction:build_mahogany_plank"
+    },
+    {
+      "kind": "skill",
+      "ref": "construction:build_oak_plank"
+    },
+    {
+      "kind": "skill",
+      "ref": "construction:build_plank"
+    },
+    {
+      "kind": "skill",
+      "ref": "construction:build_teak_plank"
+    },
+    {
+      "kind": "skill",
+      "ref": "cooking:cook_anglerfish"
+    },
+    {
+      "kind": "skill",
+      "ref": "cooking:cook_chicken"
+    },
+    {
+      "kind": "skill",
+      "ref": "cooking:cook_crab"
+    },
+    {
+      "kind": "skill",
+      "ref": "cooking:cook_eel"
+    },
+    {
+      "kind": "skill",
+      "ref": "cooking:cook_karam"
+    },
+    {
+      "kind": "skill",
+      "ref": "cooking:cook_manta_ray"
+    },
+    {
+      "kind": "skill",
+      "ref": "cooking:cook_meat"
+    },
+    {
+      "kind": "skill",
+      "ref": "cooking:cook_shark"
+    },
+    {
+      "kind": "skill",
+      "ref": "cooking:cook_shrimp"
+    },
+    {
+      "kind": "skill",
+      "ref": "cooking:cook_trout"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:black_d_hide_body"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:black_d_hide_chaps"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:cut_diamond"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:cut_dragonstone"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:cut_emerald"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:cut_onyx"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:cut_ruby"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:cut_sapphire"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:cut_zenyte"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:diamond_amulet"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:dragonstone_amulet"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:emerald_amulet"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:ferocious_gloves"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:green_d_hide_body"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:green_d_hide_chaps"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:hard_leather_body"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:leather_body"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:leather_boots"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:leather_chaps"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:leather_cowl"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:leather_gloves"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:molten_glass"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:onyx_amulet"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:red_d_hide_body"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:red_d_hide_chaps"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:ruby_amulet"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:sapphire_amulet"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:tan_cowhide"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:tan_cowhide_hard"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:tan_green_dhide"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:zyrite_amulet"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:zyrite_bracelet"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:zyrite_necklace"
+    },
+    {
+      "kind": "skill",
+      "ref": "crafting:zyrite_ring"
+    },
+    {
+      "kind": "skill",
+      "ref": "dungeoneering:dungeoneering_floor_8"
+    },
+    {
+      "kind": "skill",
+      "ref": "firemaking:magic_logs"
+    },
+    {
+      "kind": "skill",
+      "ref": "firemaking:maple_logs"
+    },
+    {
+      "kind": "skill",
+      "ref": "firemaking:normal_logs"
+    },
+    {
+      "kind": "skill",
+      "ref": "firemaking:oak_logs"
+    },
+    {
+      "kind": "skill",
+      "ref": "firemaking:redwood_logs"
+    },
+    {
+      "kind": "skill",
+      "ref": "firemaking:willow_logs"
+    },
+    {
+      "kind": "skill",
+      "ref": "firemaking:yew_logs"
+    },
+    {
+      "kind": "skill",
+      "ref": "fishing:karam"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:adamant_arrows"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:arrow_shafts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:bronze_arrows"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:cut_diamond_bolt_tips"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:cut_dragonstone_bolt_tips"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:cut_onyx_bolt_tips"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:cut_ruby_bolt_tips"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:cut_wooden_stocks"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:headless_arrows"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:iron_arrows"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:magic_shortbow_string"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:magic_shortbow_u_cut"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:make_adamant_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:make_bronze_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:make_dragon_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:make_iron_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:make_mithril_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:make_runite_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:make_steel_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:maple_shortbow_string"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:maple_shortbow_u_cut"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:mithril_arrows"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:oak_shortbow_string"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:oak_shortbow_u_cut"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:rune_arrows"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:shortbow_string"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:shortbow_u_cut"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:steel_arrows"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:tip_diamond_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:tip_diamond_dragon_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:tip_dragonstone_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:tip_dragonstone_dragon_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:tip_onyx_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:tip_onyx_dragon_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:tip_ruby_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:tip_ruby_dragon_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:willow_shortbow_string"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:willow_shortbow_u_cut"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:yew_shortbow_string"
+    },
+    {
+      "kind": "skill",
+      "ref": "fletching:yew_shortbow_u_cut"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:attack_potion"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:combat_potion"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:defence_potion"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:lumira_brew"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:magic_potion"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:prayer_potion"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:ranging_potion"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:strength_potion"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:super_attack"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:super_combat"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:super_defence"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:super_restore"
+    },
+    {
+      "kind": "skill",
+      "ref": "herblore:super_strength"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:curse"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_diamond"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_diamond_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_diamond_dragon_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_dragonstone"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_dragonstone_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_dragonstone_dragon_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_onyx"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_onyx_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_onyx_dragon_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_ruby"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_ruby_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_ruby_dragon_bolts"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_sapphire"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_zenyte_amulet"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_zenyte_bracelet"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_zenyte_necklace"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:enchant_zenyte_ring"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:high_alch"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:plank_make"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:stun"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:superheat"
+    },
+    {
+      "kind": "skill",
+      "ref": "magic:tan_leather"
+    },
+    {
+      "kind": "skill",
+      "ref": "mining:mithril"
+    },
+    {
+      "kind": "skill",
+      "ref": "woodcutting:yew"
+    },
+    {
+      "kind": "thieving",
+      "ref": "knight"
+    }
+  ]
+}

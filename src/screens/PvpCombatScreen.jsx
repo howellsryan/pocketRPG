@@ -75,9 +75,9 @@ function CompactHpBadge({ label, combatant, align = 'left', splats = null, showP
       </div>
       {showPrayer && prayerMax > 0 && (
         <>
-          <div class="text-[10px] font-[var(--font-mono)] text-[#7ec8ff] mt-1">🙏 {prayerPts}/{prayerMax}</div>
+          <div class="text-[10px] font-[var(--font-mono)] text-[var(--color-mana)] mt-1">🙏 {prayerPts}/{prayerMax}</div>
           <div class="h-1.5 rounded bg-[var(--color-void)] overflow-hidden mt-0.5">
-            <div class="h-full bg-[#5aa0e0]" style={{ width: `${prayerPct}%` }} />
+            <div class="h-full bg-[var(--color-mana)]" style={{ width: `${prayerPct}%` }} />
           </div>
         </>
       )}
@@ -806,7 +806,7 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
 
   return (
     <div
-      class="h-full min-h-0 overflow-y-auto overscroll-contain p-3 space-y-3 pb-24 md:max-w-6xl md:mx-auto md:px-6"
+      class="forge-shell h-full min-h-0 overflow-y-auto overscroll-contain p-3 space-y-3 pb-24 md:max-w-6xl md:mx-auto md:px-6"
       style={{ maxHeight: 'calc(100vh - 72px)' }}
     >
       {loading && (
@@ -818,7 +818,7 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
       {bootstrapError && (
         <Card className="border-[var(--color-blood)] bg-[#2a1010]">
           <div class="text-xs font-semibold text-[var(--color-blood-light)]">PvP connection error</div>
-          <div class="text-[11px] text-[var(--color-parchment)] opacity-80 mt-1">{bootstrapError}</div>
+          <div class="text-[11px] text-[#f5e6c8] opacity-80 mt-1">{bootstrapError}</div>
           <div class="flex flex-wrap gap-2 mt-3">
             <Button variant="primary" size="sm" onClick={() => { setLoading(true); refreshFromServer().catch((err) => {
               console.error('[PocketRPG][PvP] recovery retry failed:', err?.body || err)
@@ -910,10 +910,10 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
                       title={`${prayer.name} · Lv ${prayer.level}${prayer.description ? `\n${prayer.description}` : ''}`}
                       class={`px-1 py-1 rounded-md border text-center transition-colors ${
                         active
-                          ? 'bg-[#2a3a1a] border-[var(--color-gold)]'
+                          ? 'bg-[var(--fm-parch-hi)] border-[var(--color-gold)]'
                           : canUse
-                            ? 'bg-[#1a2a1a] border-[#2a4a2a] active:bg-[#2a3a2a]'
-                            : 'bg-[#111] border-[#1a1a1a] opacity-30 cursor-default'
+                            ? 'bg-[var(--fm-parch-hi)] border-[var(--color-emerald)] active:bg-[var(--fm-parch)]'
+                            : 'bg-[var(--color-void)] border-[var(--color-void-light)] opacity-30 cursor-default'
                       }`}
                     >
                       {styled ? (
@@ -1120,7 +1120,7 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
           >
             {/* Writeback warning */}
             {!endModal.writebackOk && (
-              <div class="mx-4 mb-3 rounded-2xl border border-[var(--color-blood)] bg-[#2a1010] p-3 text-sm text-[var(--color-parchment)]">
+              <div class="mx-4 mb-3 rounded-2xl border border-[var(--color-blood)] bg-[#2a1010] p-3 text-sm text-[#f5e6c8]">
                 <div class="font-semibold text-[var(--color-blood-light)]">PvP result saved with a warning</div>
                 <div class="mt-1 text-xs opacity-80">
                   The match ended, but the reward writeback did not complete. Please refresh before starting another PvP match.

@@ -42,12 +42,18 @@ function hasItemAnywhere(itemId, inventory, bank, equipment) {
   return false
 }
 
-export default function GatherScreen({ initialTaskId, idleResult }) {
-  const { inventory, bank, equipment, stats, updateInventory, updateBankDirect, addToast, setActiveTask, activeTask: globalActiveTask, itemsData, recordGameEvent } = useGame()
+// `onBack` (optional, from App's returnNav): the place-map origin (sawmill)
+// when the player was sent here. `onStopBack` (from App): where Stop & Back
+// returns to — that origin, or the previous screen.
+export default function GatherScreen({ initialTaskId, idleResult, onBack, onStopBack }) {
+  const { inventory, bank, equipment, stats, updateInventory, updateBankDirect, addToast, setActiveTask, requestActivityStart, activeTask: globalActiveTask, itemsData, recordGameEvent } = useGame()
   const [category, setCategory] = useState('all')
   const [activeTask, setLocalTask] = useState(null)
   const taskRef = useRef(null)
   const hasAutoStarted = useRef(false)
+  // True once the player has seen the task list. Auto-starting from a place map
+  // (initialTaskId) starts false so the active panel's Back returns there.
+  const seenList = useRef(!initialTaskId)
 
   // Prefer the canonical item name from itemsData; fall back to the curated
   // map and finally the raw id so display never shows a bare item id.
@@ -261,6 +267,8 @@ export default function GatherScreen({ initialTaskId, idleResult }) {
       const resumed = buildResumedState(globalActiveTask)
       if (resumed) { taskRef.current = resumed; setLocalTask(resumed); return }
     }
+    // Map-driven gating (Phase 3): fresh starts must be at a place that offers this task.
+    if (!seedFromIdle && !requestActivityStart({ type: 'gather', gatherTask: task })) return
     const idleActions = seedFromIdle && idleResult?.actions ? idleResult.actions : 0
     const idleItems = seedFromIdle && idleResult?.itemsGained
       ? Object.values(idleResult.itemsGained).reduce((s, v) => s + v, 0)
@@ -282,14 +290,25 @@ export default function GatherScreen({ initialTaskId, idleResult }) {
 
   // Back (no stop): flush progress and return to the task list; task keeps running.
   const backToList = () => {
+    seenList.current = true
     if (taskRef.current) mirrorActiveTask(taskRef.current)
     setLocalTask(null)
+  }
+
+  // Active-panel Back leaves the task running; when auto-started from a place
+  // map (list never seen) it returns to that origin, not the task list.
+  const backFromActive = () => {
+    const toOrigin = !seenList.current
+    backToList()
+    if (toOrigin && onBack) onBack()
   }
 
   const stopTask = () => {
     if (taskRef.current) taskRef.current = { ...taskRef.current, stopped: true }
     setLocalTask(null)
     setActiveTask(null)
+    const back = onStopBack || onBack
+    if (back) back()
   }
 
   // Resume a gather already running in the background (navigated away & back).
@@ -372,7 +391,7 @@ export default function GatherScreen({ initialTaskId, idleResult }) {
         producing={<>
           <GameIcon iconKey={task.product} item={{ icon: task.icon }} size={32} color="var(--color-gold-light)" />
           <span class="text-[12px] font-semibold text-[var(--color-parchment)] opacity-60">Producing</span>
-          <span class="text-[13px] font-semibold text-[var(--color-gold-light)]">{nameOf(task.product)}</span>
+          <span class="text-[13px] font-semibold text-[var(--color-gold-dim)]">{nameOf(task.product)}</span>
         </>}
         stats={[
           { label: 'Items gathered', value: activeTask.totalItems },
@@ -381,7 +400,7 @@ export default function GatherScreen({ initialTaskId, idleResult }) {
         note={getLevelFromXP(stats.construction?.xp || 0) >= GATHER_AUTOBANK_CONSTRUCTION_LEVEL
           ? '🏦 Items fill your inventory, then auto-bank when full.'
           : '🎒 Items go to your inventory. Gathering stops when it\'s full.'}
-        onBack={backToList}
+        onBack={backFromActive}
         onStop={stopTask}
       />
     )
@@ -389,7 +408,7 @@ export default function GatherScreen({ initialTaskId, idleResult }) {
 
   // Task picker
   return (
-    <div class="h-full flex flex-col">
+    <div class="forge-shell h-full flex flex-col">
       {/* Header */}
       <div class="px-4 pt-4 pb-2 flex-shrink-0">
         <SectionHeader size="lg" className="mb-[10px]">
@@ -406,7 +425,7 @@ export default function GatherScreen({ initialTaskId, idleResult }) {
             const isActive = category === cat.id
             const pillClass = isActive
               ? 'border-[var(--color-gold)] bg-[rgba(212,175,55,0.15)] text-[var(--color-gold)] opacity-100'
-              : 'border-[#2a2a2a] bg-[var(--color-void-light)] text-[var(--color-parchment)] opacity-60'
+              : 'border-[var(--color-void-border)] bg-[var(--color-void-light)] text-[var(--color-parchment)] opacity-60'
             return (
               <button
                 key={cat.id}

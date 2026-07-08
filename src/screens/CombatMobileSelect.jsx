@@ -1,6 +1,7 @@
 import SkillEmblem from '../components/SkillEmblem.jsx'
 import GameIcon from '../components/GameIcon.jsx'
-import { getMonsterArt, getCategoryArt, getRaidArt } from '../utils/combatArt.js'
+import BackLink from '../components/BackLink.jsx'
+import { getMonsterArt, getCategoryArt, getRaidArt, getMonsterLocationLabel } from '../utils/combatArt.js'
 import { getSkillArt } from '../utils/skillArt.js'
 
 // Mobile section display order (desktop keeps the COMBAT_CATEGORIES order).
@@ -53,6 +54,7 @@ export default function CombatMobileSelect({
   showPvp,
   onOpenPvp,
   demoLockBosses = false,
+  onBack,
 }) {
   const slayerLevel = getSlayerLevel()
 
@@ -83,6 +85,7 @@ export default function CombatMobileSelect({
   return (
     <div class="cb-pad">
       <div class="cb-select__head" style={{ margin: '4px 2px 14px' }}>
+        <BackLink onClick={onBack} className="mb-3" />
         <h1 class="cb-h1">Choose a Foe</h1>
         <div class="cb-h1sub">{totalFoes} monsters · {uniqueRaids.length} {uniqueRaids.length === 1 ? 'raid' : 'raids'} await</div>
       </div>
@@ -91,9 +94,9 @@ export default function CombatMobileSelect({
       <div class="cb-idlerow">
         {idleToggles.map(t => (
           <button key={t.id} class={'cb-idle' + (t.on ? ' is-on' : '')} onClick={() => onOpenIdle(t.id)}>
-            <GameIcon iconKey={t.icon} color={t.on ? '#7ce88a' : '#9b978c'} size={17} />
+            <GameIcon iconKey={t.icon} color={t.on ? '#1a1206' : 'var(--fm-ink-soft)'} size={17} />
             <span>{t.label}</span>
-            {t.on && <GameIcon class="cb-idle__chk" iconKey="check_mark" color="#7ce88a" size={13} />}
+            {t.on && <GameIcon class="cb-idle__chk" iconKey="check_mark" color="#1a1206" size={13} />}
           </button>
         ))}
       </div>
@@ -160,6 +163,9 @@ export default function CombatMobileSelect({
                           <div class="cb-mon__stats">
                             <span>HP {monster.hitpoints}</span><i /><span>Att {monster.stats.attack}</span><i /><span>Def {monster.stats.defence}</span>
                           </div>
+                          {getMonsterLocationLabel(monster) && (
+                            <div class="cb-mon__location">📍 {getMonsterLocationLabel(monster)}</div>
+                          )}
                           {lockText && <div class="cb-mon__lock">🔒 {lockText}</div>}
                         </div>
                         <div class="cb-mon__meta">
@@ -174,7 +180,7 @@ export default function CombatMobileSelect({
                           onClick={(e) => { e.stopPropagation(); onMonsterInfo(monster) }}
                           aria-label={`${monster.name} info`}
                         >
-                          <GameIcon iconKey="info" color="#f0c040" size={18} />
+                          <GameIcon iconKey="info" color="var(--fm-ember)" size={18} />
                         </button>
                       </div>
                     )
@@ -211,7 +217,7 @@ export default function CombatMobileSelect({
                   onClick={(e) => { e.stopPropagation(); onRaidInfo(raid) }}
                   aria-label={`${raid.name} info`}
                 >
-                  <GameIcon iconKey="info" color="#c9b6ff" size={18} />
+                  <GameIcon iconKey="info" color="var(--fm-royal)" size={18} />
                 </button>
               </div>
             </div>
@@ -221,7 +227,7 @@ export default function CombatMobileSelect({
 
       {/* PvP entry — hidden for ironman / one-life accounts */}
       {showPvp && (
-        <button class="cb-raid__enter" style={{ marginTop: 18, background: 'linear-gradient(180deg,#c0392b,#8b1a1a)', color: 'var(--color-parchment)' }} onClick={onOpenPvp}>
+        <button class="cb-raid__enter" style={{ marginTop: 18, background: 'linear-gradient(180deg,#c0392b,#8b1a1a)', color: '#f5e6c8' }} onClick={onOpenPvp}>
           ⚔ Player vs Player
         </button>
       )}

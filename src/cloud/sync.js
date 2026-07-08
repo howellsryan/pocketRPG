@@ -1,9 +1,13 @@
 // Cloud-save push/pull. Pushes are debounced to once per 120s per character;
 // durability between debounce windows comes from critical-save milestones
-// (level-up / boss / quest / unlock) and the visibility/unload flush.
+// (level-up / boss / quest / unlock) and the visibility/unload flush. Every
+// mutation still lands in IndexedDB immediately regardless (src/db/stores.js)
+// — the boot-time pull below must not clobber that with a stale cloud copy;
+// see isLocalWriteNewerThanCloud.
 
-import { api, getToken, getCharacterId, setLocalCharacterId, SAVE_REVISION_EVENT } from './api.js'
+import { api, getToken, getCharacterId, setLocalCharacterId, sendSaveBeacon, SAVE_REVISION_EVENT } from './api.js'
 import { buildSavePayloadFromSnapshot, applySavePayload } from '../db/saveload.js'
+import { LOCAL_WRITE_MARKER_KEY } from '../db/stores.js'
 import { withTimeout } from '../utils/helpers.js'
 import { CRITICAL_SAVE_COALESCE_MS, CRITICAL_SAVE_REASONS, normaliseCriticalSaveReason } from './criticalSavePolicy.js'
 
@@ -214,7 +218,13 @@ async function performPush() {
     // (a fresh GET on the next boot). This is NOT a transient network failure,
     // so it must NOT count toward the failure streak that escalates to the
     // blocking modal, and we must NOT schedule a retry.
-    if (err?.status === 409 && (err?.body?.code === 'SAVE_REVISION_CONFLICT' || err?.body?.error === 'save_revision_conflict' || err?.message === 'save_revision_conflict')) {
+    // BANK_WIPE_REJECTED: the server refused a save whose bank collapsed to
+    // (near) nothing — our local state is corrupt (a load/migration bug wiped
+    // the bank). Re-pushing repeats the 409, so we route it through the SAME
+    // rollback path as a revision conflict: flag it, drop the bad snapshot, and
+    // emit 'conflict' so the app re-pulls and re-applies the intact cloud copy,
+    // restoring the bank instead of retrying the wipe.
+    if (err?.status === 409 && (err?.body?.code === 'SAVE_REVISION_CONFLICT' || err?.body?.error === 'save_revision_conflict' || err?.message === 'save_revision_conflict' || err?.body?.code === 'BANK_WIPE_REJECTED' || err?.body?.error === 'bank_wipe_rejected')) {
       conflictPending = true
       pendingSnapshot = null
       pendingSaveOptions = {}
@@ -340,6 +350,10 @@ export function resumeSaves() { savesSuspended = false }
 // Public: has the server rejected our state as diverged? The app uses this to
 // short-circuit its own save retry loops and trigger a cloud rollback.
 export function isSaveConflict() { return conflictPending }
+// Public: the app finished rolling back to the authoritative cloud copy
+// (pullSave + applyCloudSave re-adopted the server's revision) — pushes may
+// resume. Only the rollback path should call this.
+export function clearSaveConflict() { conflictPending = false }
 
 // Public: bypass the debounce — used on tab-hide / page-unload so we don't
 // lose a pending push. Also drains any pending critical save inline, so
@@ -378,6 +392,37 @@ export async function pushNow(snapshot, options = {}) {
   }
 
   return await flushNow()
+}
+
+// Public: durably capture the current snapshot on page teardown (refresh /
+// close / tab-hide) via navigator.sendBeacon, which survives the unload where a
+// normal fetch would be cancelled. This is the reliability guarantee behind the
+// relaxed foreground cadence: whatever the debounce hasn't pushed yet is flushed
+// here on the way out. Fire-and-forget — we can't read the response — so we skip
+// when there's nothing new (content matches the last successful push) and
+// otherwise optimistically advance the local revision/content markers assuming
+// the beacon lands (the common case). A genuine miss self-heals: the next boot
+// pulls a fresh save, and a resumed tab re-anchors the revision via the
+// visibility handler's checkCloudNewer. Returns true if a beacon was queued.
+export function beaconSaveNow(snapshot) {
+  if (!canSync()) return false
+  if (conflictPending) return false
+  if (!snapshot) return false
+  let data
+  try { data = buildSavePayloadFromSnapshot(snapshot) } catch { return false }
+  const contentKey = saveContentKey(data)
+  // Already durably stored by the last successful push — nothing to flush.
+  if (contentKey === lastPushedContentKey) return false
+  // Teardown saves are player-driven, so mark them interactive: the server then
+  // always persists them (never applies the idle write ceiling), which keeps the
+  // optimistic +1 revision bump below correct.
+  const sent = sendSaveBeacon(JSON.stringify(data), { saveRevision: lastSaveRevision, interactive: true })
+  if (!sent) return false
+  lastSaveRevision = (Number.isFinite(lastSaveRevision) ? lastSaveRevision : 0) + 1
+  lastPushedContentKey = contentKey
+  lastPushedAt = Date.now()
+  hasUnsyncedChanges = false
+  return true
 }
 
 // Public: force an immediate save attempt — used by the save-blocked modal's
@@ -453,6 +498,11 @@ export async function pullSave() {
   if (!res || !res.save) return { applied: false, readFailed: false }
   const { save_data, updatedAt, save_revision } = res.save
   if (Number.isFinite(save_revision)) lastSaveRevision = save_revision
+  // Record that we've now seen this cloud state even if the caller ends up
+  // skipping applyCloudSave (isLocalWriteNewerThanCloud) — otherwise a later
+  // checkCloudNewer() would compare against a stale lastPushedAt of 0 and
+  // wrongly treat this same save as a newer concurrent-session write.
+  if (Number.isFinite(updatedAt)) lastPushedAt = updatedAt
   return { applied: false, payload: JSON.parse(save_data), updatedAt, readFailed: false }
 }
 
@@ -493,6 +543,25 @@ export async function applyCloudSave(payload, updatedAt, saveRevision) {
   // knows which character these rows belong to.
   const charId = getCharacterId()
   if (charId) setLocalCharacterId(charId)
+  // IDB content now matches this adopted copy — reset the local-write marker
+  // so a subsequent boot doesn't mistake this adoption itself for an unsynced
+  // local change (see isLocalWriteNewerThanCloud below).
+  try { localStorage.setItem(LOCAL_WRITE_MARKER_KEY, String(Date.now())) } catch { /* non-fatal */ }
+}
+
+// Public: does IndexedDB hold a local write made after the cloud's last known
+// save? A fresh page load has no memory of what this device already pushed
+// (the lastPushedAt/lastSaveRevision above reset to zero on every reload), so
+// without this a boot-time cloud pull always wins over IDB — even when IDB
+// holds a just-made change (a settings toggle, a bank tag edit, a world-map
+// move) that the debounced/critical push hasn't reached the server yet. The
+// local-write marker lives in localStorage, which (unlike the module state
+// here) survives the reload. Same clock-skew grace as checkCloudNewer.
+export function isLocalWriteNewerThanCloud(cloudUpdatedAt) {
+  let localWriteAt = 0
+  try { localWriteAt = parseInt(localStorage.getItem(LOCAL_WRITE_MARKER_KEY) || '0', 10) } catch { localWriteAt = 0 }
+  if (!Number.isFinite(localWriteAt) || localWriteAt <= 0) return false
+  return localWriteAt > (Number(cloudUpdatedAt) || 0) + FRESHNESS_GRACE_MS
 }
 
 // Reset cached state — call on logout / character switch.

@@ -12,7 +12,7 @@ export default function SkillBadge({ skill, xp, level, onClick, compact = false 
     return (
       <button
         onClick={() => onClick?.(skill)}
-        class="flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-[#1a1a1a] border border-[#2a2a2a] active:bg-[#222] w-full"
+        class="flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-[var(--color-void-light)] border border-[var(--color-void-border)] active:bg-[var(--color-void-lighter)] w-full"
       >
         <SkillIcon skill={skill} size={18} />
         <span class="text-xs text-[var(--color-parchment)] flex-1 text-left truncate">{name}</span>
@@ -24,7 +24,7 @@ export default function SkillBadge({ skill, xp, level, onClick, compact = false 
   return (
     <button
       onClick={() => onClick?.(skill)}
-      class="flex flex-col p-2.5 rounded-lg bg-[#1a1a1a] border border-[#2a2a2a] active:bg-[#222] transition-colors"
+      class="flex flex-col p-2.5 rounded-lg bg-[var(--color-void-light)] border border-[var(--color-void-border)] active:bg-[var(--color-void-lighter)] transition-colors"
     >
       <div class="flex items-center justify-between mb-1.5">
         <div class="flex items-center gap-1.5">

@@ -1,4 +1,5 @@
 import SkillIcon from './SkillIcon.jsx'
+import BackLink from './BackLink.jsx'
 import { getLevelFromXP, getXPToNextLevel, getLevelProgress } from '../engine/experience.js'
 import { MAX_LEVEL } from '../utils/constants.js'
 import { formatNumber } from '../utils/helpers.js'
@@ -15,7 +16,6 @@ import { formatNumber } from '../utils/helpers.js'
  *   xp        — total XP in the skill (drives level + next-level progress)
  *   level     — explicit level override (defaults to deriving from xp)
  *   onBack    — back handler; renders the back link when provided
- *   backLabel — back link text, default "Back"
  *   right     — optional node rendered at the top-right (e.g. token count)
  *   showXpBar — show the next-level progress bar, default true
  */
@@ -25,7 +25,6 @@ export default function SkillScreenHeader({
   xp = 0,
   level,
   onBack,
-  backLabel = 'Back',
   right = null,
   showXpBar = true,
 }) {
@@ -37,15 +36,7 @@ export default function SkillScreenHeader({
 
   return (
     <div class="mb-4">
-      {onBack && (
-        <button
-          onClick={onBack}
-          class="mb-4 flex items-center gap-1.5 text-[var(--color-gold)] bg-transparent border-0 p-0 cursor-pointer active:opacity-70"
-        >
-          <span class="text-base leading-none">‹</span>
-          <span class="text-sm font-semibold">{backLabel}</span>
-        </button>
-      )}
+      <BackLink onClick={onBack} className="mb-3" />
 
       <div class="flex items-center gap-3.5">
         <div class="w-[52px] h-[52px] flex-shrink-0 rounded-2xl flex items-center justify-center bg-gradient-to-br from-[rgba(212,160,23,0.16)] to-[rgba(212,160,23,0.03)] border border-[rgba(212,160,23,0.28)]">

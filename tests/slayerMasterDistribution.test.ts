@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import monstersData from '../src/data/monsters.json'
+import worldData from '../src/data/world.json'
 import {
   SLAYER_MASTERS,
   resolveTaskMonsterIds,
@@ -67,6 +68,14 @@ describe('Slayer master monster coverage', () => {
       const prevGate = prev.combatReq + prev.slayerReq
       const curGate = cur.combatReq + cur.slayerReq
       expect(curGate).toBeGreaterThanOrEqual(prevGate)
+    }
+  })
+
+  it('homes every master at a real world place whose name matches its display location', () => {
+    for (const master of SLAYER_MASTERS) {
+      const place = (worldData.places as any)[(master as any).placeId]
+      expect(place, `master ${master.id} placeId ${(master as any).placeId}`).toBeTruthy()
+      expect(place.name).toBe((master as any).location)
     }
   })
 

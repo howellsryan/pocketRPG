@@ -72,7 +72,7 @@ export default function Modal({
 
   const modal = (
     <div
-      class="fixed inset-x-0 top-0 z-[1000] isolate flex items-end justify-center overflow-hidden sm:items-center"
+      class="forge-shell fixed inset-x-0 top-0 z-[1000] isolate flex items-end justify-center overflow-hidden sm:items-center"
       role="dialog"
       aria-modal="true"
       style={{
@@ -91,12 +91,12 @@ export default function Modal({
       />
 
       <div
-        class={`relative z-[1] flex w-full max-w-lg md:max-w-2xl flex-col overflow-hidden rounded-2xl border border-[#333] bg-[var(--color-void-light)] ${className}`}
+        class={`relative z-[1] flex w-full max-w-lg md:max-w-2xl flex-col overflow-hidden rounded-2xl border border-[var(--color-void-border)] bg-[var(--color-void-light)] ${className}`}
         style={dialogSizeStyle}
         onClick={(e) => e.stopPropagation()}
       >
         {(title || titleRight) && (
-          <div class="flex flex-shrink-0 items-center justify-between gap-2 border-b border-[#333] px-4 py-3">
+          <div class="flex flex-shrink-0 items-center justify-between gap-2 border-b border-[var(--color-void-border)] px-4 py-3">
             <div class="flex min-w-0 items-center gap-2">
               <h2 class="font-[var(--font-display)] text-base font-bold text-[var(--color-gold)]">
                 {title}
@@ -106,7 +106,7 @@ export default function Modal({
             {onClose && (
               <button
                 onClick={onClose}
-                class="flex h-8 w-8 items-center justify-center rounded-full bg-[#222] text-[var(--color-parchment)] opacity-60 hover:opacity-100 active:bg-[#333]"
+                class="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--color-void)] text-[var(--color-parchment)] opacity-60 hover:opacity-100 active:bg-[var(--color-void-border)]"
                 aria-label="Close modal"
               >
                 ✕

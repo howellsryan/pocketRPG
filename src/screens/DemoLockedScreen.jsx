@@ -12,16 +12,12 @@ const FEATURE_COPY = {
     title: 'Leaderboard',
     blurb: 'Compete on the global total-level and boss kill-count rankings.',
   },
-  [SCREENS.CONNECT_AI]: {
-    title: 'Connect AI',
-    blurb: 'Play hands-free by connecting an AI assistant to your account.',
-  },
 }
 
 export default function DemoLockedScreen({ screen, onBack }) {
   const copy = FEATURE_COPY[screen] || { title: 'This feature', blurb: 'This feature needs a free account.' }
   return (
-    <div class="h-full overflow-y-auto flex items-center justify-center p-6 bg-[var(--color-void)]">
+    <div class="forge-shell h-full overflow-y-auto flex items-center justify-center p-6 bg-[var(--color-void)]">
       <div class="max-w-sm w-full text-center bg-[var(--color-void-light)] border border-[var(--color-void-border)] rounded-2xl p-6">
         <div class="text-4xl mb-3" aria-hidden="true">🔒</div>
         <h1 class="font-[var(--font-display)] text-xl font-bold text-[var(--color-gold)] mb-2">
@@ -31,7 +27,7 @@ export default function DemoLockedScreen({ screen, onBack }) {
           {copy.blurb}
           <br />
           Create a free account to save to the cloud and unlock the Trading Post, Leaderboard,
-          Connect AI, bosses, raids, daily tasks and more.
+          bosses, raids, daily tasks and more.
         </p>
         <p class="text-xs text-[var(--color-parchment)] opacity-50 mb-5 leading-relaxed">
           You're playing the offline demo — skilling, combat, quests, clues and minigames are all

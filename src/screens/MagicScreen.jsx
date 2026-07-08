@@ -49,10 +49,10 @@ function groupActions(actions) {
   return groups
 }
 
-export default function MagicScreen({ onBack, onNavigate }) {
+export default function MagicScreen({ onBack, onNavigate, onStopBack }) {
   const {
     stats, inventory, bank, equipment, isIronman,
-    grantXP, updateInventory, updateBankDirect, addToast, setActiveTask, activeTask
+    grantXP, updateInventory, updateBankDirect, addToast, setActiveTask, requestActivityStart, activeTask
   } = useGame()
 
   const magicLevel = getLevelFromXP(stats.magic?.xp || 0)
@@ -117,6 +117,8 @@ export default function MagicScreen({ onBack, onNavigate }) {
       const resumed = buildResumedState(activeTask)
       if (resumed) { setSkilling(resumed); skillingRef.current = resumed; markScreenTick(); return }
     }
+    // Map-driven gating (Phase 3): magic trains at a bank — must be at a place that has one.
+    if (!requestActivityStart({ type: 'skill', skill: 'magic', action })) return
     const startedAt = Date.now()
     const state = { ...createSkillingState('magic', action), startedAt }
     setSkilling(state)
@@ -158,6 +160,10 @@ export default function MagicScreen({ onBack, onNavigate }) {
     setSelectedAlchemyItem(null)
     selectedAlchemyItemRef.current = null
     setActiveTask(null)
+    // Stop & Back returns to where the player came from — the place map's bank
+    // modal (returnTo) or the previous screen.
+    const back = onStopBack || onBack
+    if (back) back()
   }
 
   useEffect(() => {
@@ -296,7 +302,7 @@ export default function MagicScreen({ onBack, onNavigate }) {
   const grouped = groupActions(allActions)
 
   return (
-    <div class="h-full overflow-y-auto p-4">
+    <div class="forge-shell h-full overflow-y-auto p-4">
       <SkillScreenHeader
         skill="magic"
         title="Magic"
@@ -376,7 +382,7 @@ export default function MagicScreen({ onBack, onNavigate }) {
                 <button
                   key={`${idx}-${slot.itemId}`}
                   onClick={() => handleAlchemyPick(slot)}
-                  class="w-full p-3 rounded-lg border bg-[#1a1a1a] border-[#2a4a2a] active:bg-[#2a3a2a] transition-colors text-left"
+                  class="w-full p-3 rounded-lg border bg-[var(--color-void-light)] border-[var(--color-emerald)] active:bg-[var(--fm-parch-hi)] transition-colors text-left"
                 >
                   <div class="flex items-center justify-between">
                     <div class="flex items-center gap-2 flex-1">

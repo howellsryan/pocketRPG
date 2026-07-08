@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120">
+  
+  <defs>
+    <radialGradient id="wax" cx="38%" cy="30%" r="82%">
+      <stop offset="0%" stop-color="#bf3e30"></stop>
+      <stop offset="46%" stop-color="#8a1f1d"></stop>
+      <stop offset="100%" stop-color="#490d0d"></stop>
+    </radialGradient>
+    <radialGradient id="waxhi" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ff9a7a" stop-opacity="0.55"></stop>
+      <stop offset="100%" stop-color="#ff9a7a" stop-opacity="0"></stop>
+    </radialGradient>
+  </defs>
+  <path fill="url(#wax)" d="M60 8&#xA;    c14 -2 22 6 30 12 c10 7 24 8 22 24 c-2 13 8 20 4 33&#xA;    c-4 12 -16 12 -25 20 c-9 8 -16 4 -31 3 c-13 -1 -22 4 -31 -6&#xA;    c-9 -10 -2 -21 -7 -33 c-5 -12 -4 -24 6 -33 c9 -8 8 -20 22 -22&#xA;    c4 -1 8 0 10 0Z"></path>
+  <ellipse cx="44" cy="36" rx="22" ry="15" fill="url(#waxhi)"></ellipse>
+  <g transform="translate(60 60)">
+    <circle r="31" fill="none" stroke="#3f0c0c" stroke-width="1.6" opacity="0.5" stroke-dasharray="2 5"></circle>
+    <g stroke="#3f0c0c" stroke-width="3.6" stroke-linecap="round" fill="#3f0c0c" opacity="0.82">
+      <path d="M-20 -20 L18 18" fill="none"></path><path d="M20 -20 L-18 18" fill="none"></path>
+      <path d="M-25 -17 L-17 -25 L-12 -20 L-20 -12 Z" stroke="none"></path>
+      <path d="M25 -17 L17 -25 L12 -20 L20 -12 Z" stroke="none"></path>
+      <circle cx="-19" cy="19" r="3.4" stroke="none"></circle><circle cx="19" cy="19" r="3.4" stroke="none"></circle>
+    </g>
+    <g stroke="#e08a78" stroke-width="1" stroke-linecap="round" fill="none" opacity="0.55" transform="translate(-1 -1)">
+      <path d="M-20 -20 L18 18"></path><path d="M20 -20 L-18 18"></path>
+    </g>
+  </g>
+</svg>

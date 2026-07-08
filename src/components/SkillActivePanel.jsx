@@ -1,4 +1,5 @@
 import SkillIcon from './SkillIcon.jsx'
+import BackLink from './BackLink.jsx'
 
 /**
  * Shared "action in progress" screen for every idle skilling activity:
@@ -38,17 +39,9 @@ export default function SkillActivePanel({
   const glyph = icon || <SkillIcon skill={skill} size={50} />
 
   return (
-    <div class="h-full flex flex-col px-5 pt-2 min-h-0">
+    <div class="forge-shell h-full flex flex-col px-5 pt-2 min-h-0">
       {/* Back — leaves the task running (Stop & Back below cancels it) */}
-      {onBack && (
-        <button
-          onClick={onBack}
-          class="flex-shrink-0 mb-1 flex items-center gap-1.5 text-[var(--color-gold)] bg-transparent border-0 p-0 cursor-pointer active:opacity-70 self-start"
-        >
-          <span class="text-base leading-none">‹</span>
-          <span class="text-sm font-semibold">Back</span>
-        </button>
-      )}
+      <BackLink onClick={onBack} className="mb-3" />
 
       {/* Scrollable body so the SESSION card never gets clipped on short screens */}
       <div class="flex-1 min-h-0 overflow-y-auto">
@@ -60,7 +53,7 @@ export default function SkillActivePanel({
             {glyph}
           </div>
         </div>
-        <div class="font-[var(--font-display)] text-[22px] font-bold text-[var(--color-gold-light)] mt-5 text-center">
+        <div class="font-[var(--font-display)] text-[22px] font-bold text-[var(--color-gold-dim)] mt-5 text-center">
           {title}
         </div>
         {subtitle && (
@@ -89,7 +82,7 @@ export default function SkillActivePanel({
 
       {/* Session stats card */}
       {(stats.length > 0 || footer) && (
-        <div class="mt-5 rounded-[22px] bg-[rgba(255,255,255,0.025)] border border-[rgba(255,255,255,0.06)] overflow-hidden">
+        <div class="mt-5 rounded-[22px] bg-[var(--color-void-light)] border border-[var(--color-void-border)] overflow-hidden">
           {stats.length > 0 && (
             <>
               <div class="px-[18px] pt-3.5 pb-3">
@@ -97,15 +90,15 @@ export default function SkillActivePanel({
                   {statsTitle}
                 </span>
               </div>
-              <div class="h-px bg-[rgba(255,255,255,0.06)] mx-[18px]" />
+              <div class="h-px bg-[var(--color-void-border)] mx-[18px]" />
               <div class="px-[18px] py-1">
                 {stats.map((row, i) => (
                   <div
                     key={row.label}
-                    class={`flex items-center justify-between py-2.5 ${i < stats.length - 1 ? 'border-b border-[rgba(255,255,255,0.05)]' : ''}`}
+                    class={`flex items-center justify-between py-2.5 ${i < stats.length - 1 ? 'border-b border-[var(--color-void-border)]' : ''}`}
                   >
                     <span class="text-[14px] font-medium text-[var(--color-parchment)] opacity-75">{row.label}</span>
-                    <span class={`text-[14px] font-bold font-[var(--font-mono)] flex items-center gap-1 ${row.accent === false ? 'text-[var(--color-parchment)] opacity-50' : 'text-[var(--color-gold-light)]'}`}>
+                    <span class={`text-[14px] font-bold font-[var(--font-mono)] flex items-center gap-1 ${row.accent === false ? 'text-[var(--color-parchment)] opacity-50' : 'text-[var(--color-gold-dim)]'}`}>
                       {row.value}
                     </span>
                   </div>
@@ -115,13 +108,13 @@ export default function SkillActivePanel({
           )}
           {footer && (
             <>
-              <div class="h-px bg-[rgba(255,255,255,0.06)] mx-[18px]" />
+              <div class="h-px bg-[var(--color-void-border)] mx-[18px]" />
               <div class="flex items-center justify-between px-[18px] py-3">
                 <span class="flex items-center gap-2 text-[14px] font-medium text-[var(--color-parchment)] opacity-75">
                   {footer.icon}
                   {footer.label}
                 </span>
-                <span class="text-[14px] font-bold font-[var(--font-mono)] text-[var(--color-gold-light)]">{footer.value}</span>
+                <span class="text-[14px] font-bold font-[var(--font-mono)] text-[var(--color-gold-dim)]">{footer.value}</span>
               </div>
             </>
           )}

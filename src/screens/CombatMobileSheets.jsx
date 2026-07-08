@@ -11,6 +11,7 @@ import {
   getMonsterWeakness,
   getMonsterAttackStyles,
   getMonsterMaxHit,
+  getMonsterLocationLabel,
 } from '../utils/combatArt.js'
 
 // Rarity colour bucket from a 0–1 drop chance (mirrors the design's tiers).
@@ -82,7 +83,7 @@ function UniquePanel({ items, itemsData, sharedChance, drops }) {
         <span>Unique Drops</span>
         {hasRates && (
           <button class="cb-unique__info" onClick={() => setShowRates(true)} aria-label="View drop rates">
-            <GameIcon iconKey="info" color="#e7c97e" size={16} />
+            <GameIcon iconKey="info" color="var(--fm-ember-deep)" size={16} />
           </button>
         )}
       </div>
@@ -104,7 +105,7 @@ function UniquePanel({ items, itemsData, sharedChance, drops }) {
             <div class="cb-rates__head">
               <span>Drop Rates</span>
               <button class="cb-x" onClick={() => setShowRates(false)} aria-label="Close">
-                <GameIcon iconKey="cancel" color="#cdbf9f" size={14} />
+                <GameIcon iconKey="cancel" color="var(--fm-ink-soft)" size={14} />
               </button>
             </div>
             {sharedChance != null && (
@@ -143,6 +144,7 @@ export function CombatMonsterInfoSheet({ monster, categoryKey, itemsData, onClos
     ...(monster.drops || []).filter(d => !uniques.includes(d.itemId)),
     ...getMonsterSeedDrops(monster),
   ]
+  const location = getMonsterLocationLabel(monster)
 
   const stats = [
     ['Combat', monster.combatLevel],
@@ -168,9 +170,10 @@ export function CombatMonsterInfoSheet({ monster, categoryKey, itemsData, onClos
               <MultiStyleChip chip={weakness} prefix="Weak: " kind="!" />
             </div>
           </div>
-          <button class="cb-x" onClick={onClose} aria-label="Close"><GameIcon iconKey="cancel" color="#cdbf9f" size={16} /></button>
+          <button class="cb-x" onClick={onClose} aria-label="Close"><GameIcon iconKey="cancel" color="var(--fm-ink-soft)" size={16} /></button>
         </div>
         <div class="cb-sheet__scroll">
+          {location && <div class="cb-mon__location" style={{ marginBottom: '8px' }}>📍 {location}</div>}
           <div class="cb-statgrid">
             {stats.map(([k, v]) => (
               <div key={k} class="cb-stat"><span class="cb-stat__k">{k}</span><span class="cb-stat__v">{v}</span></div>
@@ -182,7 +185,7 @@ export function CombatMonsterInfoSheet({ monster, categoryKey, itemsData, onClos
             {['stab', 'slash', 'crush', 'magic', 'ranged'].map(s => (
               <div key={s} class="cb-stat">
                 <span class="cb-stat__k">{s}</span>
-                <span class="cb-stat__v" style={{ color: (monster.defenceBonus?.[s] ?? 0) >= 0 ? '#7ce88a' : '#e8857e' }}>
+                <span class="cb-stat__v" style={{ color: (monster.defenceBonus?.[s] ?? 0) >= 0 ? '#2e7d32' : '#a93226' }}>
                   {(monster.defenceBonus?.[s] ?? 0) >= 0 ? '+' : ''}{monster.defenceBonus?.[s] ?? 0}
                 </span>
               </div>
@@ -231,7 +234,7 @@ export function CombatRaidInfoSheet({ raid, monstersData, itemsData, raidKillCou
             <h2 class="cb-sheet__name">{raid.name}</h2>
             <div class="cb-sheet__sub">{raid.bosses.length} chambers</div>
           </div>
-          <button class="cb-x" onClick={onClose} aria-label="Close"><GameIcon iconKey="cancel" color="#cdbf9f" size={16} /></button>
+          <button class="cb-x" onClick={onClose} aria-label="Close"><GameIcon iconKey="cancel" color="var(--fm-ink-soft)" size={16} /></button>
         </div>
         <div class="cb-sheet__scroll">
           <p class="cb-idledesc" style={{ margin: '0 2px 8px' }}>{raid.description}</p>

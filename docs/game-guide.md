@@ -61,6 +61,10 @@ On a normal character, dying in PvE is forgiving: the fight ends, your hitpoints
 
 Your inventory holds a hard maximum of 28 slots. Your bank stores everything else. While doing idle activities, loot is banked automatically when your inventory fills; the auto-bank delay scales with your Agility level, from 5 minutes at Agility 1 down to just 10 seconds at Agility 99 — a strong reason to train Agility.
 
+## World map, travel and town maps
+
+The World Map shows every settlement in Eldermoor, joined by roads. Tap a settlement to open its hub — lore, facilities, travel and teleport options, and a browsable list of what's available there. Walking follows the roads and takes real time; teleporting is instant but needs the destination's Magic level plus runes, and grants Magic XP. Some settlements (starting with Varrick) have their own illustrated town map: when you're there, tapping the settlement opens the town map instead, and you start activities by tapping the markers placed on it — city gates for monsters, the rooftop course for Agility, and so on. The bank marker opens banking plus training for the crafts doable at any banked settlement (Crafting, Fletching, Firemaking, Herblore, Magic, Construction). Prayer, Cooking and Smithing are tied to their own facilities — an altar, a stove, and a furnace & anvil — found only in some settlements; on a town map each facility is its own marker (in Varrick: the Royal Chapel, the Market Stove, the Grand Smithy). Every settlement with a sawmill (Varrick, Faloden, Ardounne, Seerhold) converts all log types to planks — its sawmill marker lists every conversion; the trading post marker opens the Trading Post. For mapped places the hub's activity list is browse-only — visit the town and tap a marker to begin — and backing out of a skilling screen you entered from the town map returns you to that map.
+
 ## Idle progress and offline catch-up
 
 Start a skilling task, gather task or auto-fight and it keeps running while the app is closed. When you come back, PocketRPG simulates the time you were away and awards the XP, loot and coins you earned. Supplies (food, potions, runes, ammunition) are consumed during idle combat exactly as they would be live — stock up before long sessions.
@@ -75,11 +79,11 @@ You get 5 daily tasks per day, one per difficulty tier from Novice up to Grandma
 
 ## Slayer
 
-Slayer masters assign you a task to kill a set number of a specific monster. Completing tasks earns slayer points and Slayer XP; higher-tier masters need higher combat and Slayer levels and pay more points. Killing your assigned monster is the only way to finish a task — you can also spend credits to skip a task, or slayer points to buy unlocks and rewards. Boss slayer tasks award a ×4 Slayer XP multiplier on kills.
+Slayer masters assign you a task to kill a set number of a specific monster. Each master lives at a world place — Torvak in Lumbright, Morven in Canifel, Valdrin in Edgevale, Caelira in Seerhold, Nyra in Camlann and Druven in Brimhollow — and getting a task is an action at that settlement: visit the master (the Slayer screen or the world map offers to travel there if you're elsewhere) to be assigned. Completing tasks earns slayer points and Slayer XP; higher-tier masters need higher combat and Slayer levels and pay more points. Killing your assigned monster is the only way to finish a task — you can also spend credits to skip a task, or slayer points to buy unlocks (found on the Character Unlocks screen) and rewards. Boss slayer tasks award a ×4 Slayer XP multiplier on kills.
 
 ## Quests
 
-Quests are timed adventures: meet the requirements (skill levels, quest points, combat level or earlier quests), start the quest, and it completes after its duration — you can queue several. Rewards include coins, XP (sometimes in a skill of your choice), quest points and item unlocks. Quest complexity ranges from Novice to Master; longer, harder quests pay better.
+Quests are journeys across the world map: meet the requirements (skill levels, quest points, combat level or earlier quests), begin the quest, and follow its trail through several places — teleporting between waypoints finishes it faster. Quests live on the world map: every settlement offers a selection (from Novice quests in the starting hamlets up to Grandmaster quests in the cities) — tap a place, or the Quests Board in Varrick, to browse and begin its quests; the ⓘ button beside each quest shows its full requirements and rewards. Rewards include coins, XP (sometimes in a skill of your choice), quest points and item unlocks; longer, harder quests pay better.
 
 ## Clue scrolls
 
@@ -136,10 +140,6 @@ When creating a character you can pick special modes. Ironman characters are sel
 ## Account, characters and saving
 
 You sign in with GitHub or Google and can have multiple characters. Your game saves to the cloud automatically as you play; manual save is available from the Home screen. The server owns your account, credits, high-value drops and PvP results.
-
-## AI assistant connections (MCP)
-
-PocketRPG has an AI connector: from the Connect AI screen you can link AI assistants (like Claude) to your account via MCP. A connected assistant can check your stats, start activities, manage your bank and more, using the same rules as the game. Tokens expire automatically and can be revoked from your AI client.
 
 ## Getting help
 

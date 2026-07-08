@@ -7,11 +7,22 @@ binding = "DB"
 database_name = "pocketrpg"
 database_id = "439e810b-8dce-4697-94c2-a7392520ad8f"
 
+[[r2_buckets]]
+binding = "TRIPO_ASSETS"
+bucket_name = "pocketrpg-assets"
+
 [ai]
 binding = "AI"
 
 [vars]
 APP_BASE_URL = "https://pocketrpg.co.uk"
+
+# NOTE: the 3D-render feature flag is BUILD-time, not a runtime binding.
+# build_single.cjs derives it from CF_PAGES_BRANCH (injected by Pages into
+# every build): non-main branch = preview = 3D on, main = production = off.
+# Set `Enable3dRender` ("true"/"false") in the build env only to override.
+# It bakes into the game chunk as `pocketEnable3D`; listing it under [vars]
+# would have no effect.
 
 # Secrets to set via dashboard or `wrangler pages secret put`:
 #   JWT_SECRET                — random 32+ byte string used to sign session JWTs
@@ -25,6 +36,11 @@ APP_BASE_URL = "https://pocketrpg.co.uk"
 #   STRIPE_PRICE_CREDITS_10   — Stripe Price ID for 10 credits
 #   STRIPE_PRICE_CREDITS_100  — Stripe Price ID for 100 credits
 #   STRIPE_PRICE_CREDITS_1000 — Stripe Price ID for 1000 credits
+#   TRIPO_API_KEY             — Tripo AI API key (https://platform.tripo3d.ai); never commit it
+#   TRIPO_MCP_TOKEN           — random bearer secret gating /api/tripo-mcp (dev tool, not player-facing)
+#
+# pocketrpg-assets is a plain R2 bucket (no special config) — create it once with
+# `wrangler r2 bucket create pocketrpg-assets` (and the -preview one below).
 #
 # Pre-step-3 the four STRIPE_PAYMENT_LINK_* secrets pointed at public
 # Stripe Payment Links and clients passed ?client_reference_id=… on
@@ -36,6 +52,9 @@ APP_BASE_URL = "https://pocketrpg.co.uk"
 d1_databases = [
   { binding = "DB", database_name = "pocketrpg-preview", database_id = "59233295-f492-4113-94da-90034d84a6a4" }
 ]
+r2_buckets = [
+  { binding = "TRIPO_ASSETS", bucket_name = "pocketrpg-assets-preview" }
+]
 vars = { APP_BASE_URL = "https://preview.pocketrpg.pages.dev" }
 ai = { binding = "AI" }
 # Secrets for preview environment (set via `wrangler pages secret put --env preview`):
@@ -45,3 +64,5 @@ ai = { binding = "AI" }
 #   STRIPE_PRICE_CREDITS_10   — test Stripe Price ID
 #   STRIPE_PRICE_CREDITS_100  — test Stripe Price ID
 #   STRIPE_PRICE_CREDITS_1000 — test Stripe Price ID
+#   TRIPO_API_KEY             — Tripo AI API key (can reuse the same key as production)
+#   TRIPO_MCP_TOKEN           — random bearer secret gating /api/tripo-mcp on preview

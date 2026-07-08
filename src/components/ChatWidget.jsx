@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'preact/hooks'
 import Modal from './Modal.jsx'
 import Button from './Button.jsx'
 import { api, CREDITS_UPDATED_EVENT } from '../cloud/api.js'
+import { pauseTicks, resumeTicks } from '../engine/tick.js'
+import GameIcon from './GameIcon.jsx'
 import { applyCloudSave } from '../cloud/sync.js'
 import { useGame } from '../state/gameState.jsx'
 
@@ -22,11 +24,15 @@ function costLine(cost) {
   return `Costs ${fee} credit${fee === 1 ? '' : 's'}`
 }
 
-// Floating in-game help chatbot. Cloud accounts only (the /api/chat endpoint
-// needs an authenticated character); renders nothing in demo mode.
-export default function ChatWidget({ isCloudAccount = false }) {
+// In-game help chatbot. Cloud accounts only (the /api/chat endpoint needs an
+// authenticated character); renders nothing in demo mode. On mobile the
+// trigger lives inside GameFrameBar's bottom nav rail (its own medallion,
+// next to Home) so `open`/`onOpenChange` are controlled from there; this
+// component still renders its own floating trigger for desktop, where there
+// is no bottom rail to house it.
+export default function ChatWidget({ isCloudAccount = false, open = false, onOpenChange = () => {} }) {
   const { loadGame } = useGame()
-  const [open, setOpen] = useState(false)
+  const setOpen = onOpenChange
   const [messages, setMessages] = useState([GREETING])
   const [input, setInput] = useState('')
   const [busy, setBusy] = useState(false)
@@ -37,6 +43,14 @@ export default function ChatWidget({ isCloudAccount = false }) {
     const el = scrollRef.current
     if (el) el.scrollTop = el.scrollHeight
   }, [messages, busy, open])
+
+  // Pause ticks while the helper panel is open so combat cannot advance
+  // in the background — same treatment as an idle boss fight.
+  useEffect(() => {
+    if (!open) return
+    pauseTicks()
+    return () => resumeTicks()
+  }, [open])
 
   if (!isCloudAccount) return null
 
@@ -156,9 +170,9 @@ export default function ChatWidget({ isCloudAccount = false }) {
         type="button"
         aria-label="Game helper"
         onClick={() => setOpen(true)}
-        class="fixed bottom-4 right-4 z-[140] w-12 h-12 rounded-full bg-[var(--color-gold)] text-[var(--color-void)] text-xl shadow-lg border border-[var(--color-void-border)] hover:bg-[var(--color-gold-light)] flex items-center justify-center"
+        class="fixed bottom-[max(0.75rem,env(safe-area-inset-bottom))] right-6 z-[140] chat-fab"
       >
-        💬
+        <GameIcon iconKey="chat_bubble" size={30} title="Game helper" />
       </button>
       {open && (
         <Modal

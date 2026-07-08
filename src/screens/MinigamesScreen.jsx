@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'preact/hooks'
 import { useGame } from '../state/gameState.jsx'
 import Panel from '../components/Panel.jsx'
 import ProgressBar from '../components/ProgressBar.jsx'
@@ -5,6 +6,7 @@ import SectionHeader from '../components/SectionHeader.jsx'
 import GameIcon from '../components/GameIcon.jsx'
 import GildedComplete from '../components/GildedComplete.jsx'
 import SkillActionRow from '../components/SkillActionRow.jsx'
+import BackLink from '../components/BackLink.jsx'
 import { isMinigameItemUnlocked } from '../utils/completion.js'
 import { countItem } from '../engine/inventory.js'
 import minigamesData from '../data/minigames.json'
@@ -15,13 +17,17 @@ function formatMinigameHours(hours) {
   return `${hours.toFixed(1)}h`
 }
 
-export default function MinigamesScreen() {
+export default function MinigamesScreen({ initialTaskId, onBack } = {}) {
   const {
     inventory, bank, equipment, activeTask, setActiveTask, unlockedMinigameItems,
-    getActivityProgress, addToast,
+    getActivityProgress, addToast, requestActivityStart,
   } = useGame()
+  const hasAutoStarted = useRef(false)
 
-  const startMinigame = (task) => {
+  const startMinigame = (task, seedFromTravel = false) => {
+    // Map-driven gating (Phase 3): fresh starts must be at a place that offers this
+    // minigame. Arrivals via travel/home-shortcut skip the check — they're already there.
+    if (!seedFromTravel && !requestActivityStart({ type: 'minigame', minigameTask: task })) return
     const key = getActivityKey({ type: 'minigame', minigameTask: task })
     const savedProgress = key ? getActivityProgress(key) : null
     const ticksRemaining = savedProgress?.progressTicks > 0
@@ -38,6 +44,16 @@ export default function MinigamesScreen() {
     })
     if (resuming) addToast(`🎮 Resuming: ${task.name}`, 'info')
   }
+
+  // Auto-start on arrival: a travel prompt sent the player here (autoStart), or a home
+  // shortcut launched this task directly.
+  useEffect(() => {
+    if (initialTaskId && !hasAutoStarted.current && activeTask?.type !== 'minigame') {
+      hasAutoStarted.current = true
+      const task = minigamesData.tasks.find(t => t.id === initialTaskId)
+      if (task) startMinigame(task, true)
+    }
+  }, [initialTaskId])
 
   const stopMinigame = () => {
     setActiveTask(null)
@@ -62,16 +78,16 @@ export default function MinigamesScreen() {
     const remainingSeconds = ticksRemaining * 0.6
 
     return (
-      <div class="h-full flex flex-col p-4">
+      <div class="forge-shell h-full flex flex-col p-4">
         <button
           onClick={stopMinigame}
-          class="text-[12px] text-[#c4af7a] mb-3 flex items-center gap-1 bg-transparent border-0 cursor-pointer"
+          class="text-[12px] text-[var(--fm-ember)] mb-3 flex items-center gap-1 bg-transparent border-0 cursor-pointer"
         >
           ← Abandon
         </button>
 
         <div class="flex-1 flex flex-col items-center justify-center">
-          <GameIcon iconKey={task.product} item={{ icon: task.icon }} size={96} color="var(--color-gold)" class="mb-2" />
+          <GameIcon iconKey={task.rewardItems?.[0] || task.product} item={{ icon: task.icon }} size={96} color="var(--color-gold)" class="mb-2" />
 
           <h2 class="font-[var(--font-display)] text-[18px] font-bold text-[var(--color-gold)] mb-1 text-center">
             {task.name}
@@ -104,9 +120,10 @@ export default function MinigamesScreen() {
   }
 
   return (
-    <div class="h-full flex flex-col">
+    <div class="forge-shell h-full flex flex-col">
       <div class="px-4 pt-4 pb-2 flex-shrink-0">
-        <SectionHeader size="lg"><span class="inline-flex items-center gap-2"><GameIcon iconKey="purple_sweets" size={18} class="flex-shrink-0" /> Minigames</span></SectionHeader>
+        <BackLink onClick={onBack} className="mb-3" />
+        <SectionHeader size="lg"><span class="inline-flex items-center gap-2"><GameIcon iconKey="minigame_scroll_red" size={18} class="flex-shrink-0" /> Minigames</span></SectionHeader>
       </div>
 
       <div class="flex-1 overflow-y-auto px-4 pb-4">
@@ -130,7 +147,7 @@ export default function MinigamesScreen() {
                   return (
                     <GildedComplete key={task.id} complete={alreadyUnlocked} className="rounded-2xl">
                       <SkillActionRow
-                        icon={<GameIcon iconKey={task.product} item={{ icon: task.icon }} size={52} color="var(--color-gold)" />}
+                        icon={<GameIcon iconKey={task.rewardItems?.[0] || task.product} item={{ icon: task.icon }} size={52} color="var(--color-gold)" />}
                         title={task.name}
                         meta={<>
                           {alreadyUnlocked && <span class="text-[#7a7]">✓ </span>}
