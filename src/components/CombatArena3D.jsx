@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'preact/hooks'
 import HPBar from './HPBar.jsx'
 import { HitSplatLayer } from './HitSplat.jsx'
 import { loadThree, canRender3D, assetUrl } from '../utils/three3d.js'
-import { disposeObject, attachGearList, updateHiddenGear } from './Model3DViewer.jsx'
+import { disposeObject, attachGearList, setupHeadMask } from './Model3DViewer.jsx'
 
 // Phase-2 combat arena (docs/3d-gameplay-investigation.md): the rigged hero
 // (equipped weapon on the hand bone) faces the monster's model in a side-on
@@ -64,7 +64,7 @@ function CombatArena3D({
     const st = {
       disposed: false, raf: null, THREE: null, renderer: null, scene: null, camera: null,
       mixer: null, monsterMixer: null, clock: null, hero: null, monster: null, bones: {}, weapon: null,
-      gear: [], gearToken: 0,
+      gear: [], gearToken: 0, headMaskCtl: null,
       idleAction: null, attackAction: null, specialAction: null,
       monsterIdleAction: null, monsterAttackAction: null, timers: new Set(),
       // Procedural timelines: { t, dur } advanced by the render loop.
@@ -172,7 +172,12 @@ function CombatArena3D({
       st.monster.position.x = st.monsterBaseX
       st.heroMats = collectMats(st.hero)
       st.monsterMats = collectMats(st.monster)
-      st.hero.traverse((o) => { if (o.isBone) st.bones[o.name] = o })
+      let heroSkinnedMesh = null
+      st.hero.traverse((o) => {
+        if (o.isBone) st.bones[o.name] = o
+        if (o.isSkinnedMesh && !heroSkinnedMesh) heroSkinnedMesh = o
+      })
+      st.headMaskCtl = setupHeadMask(THREE, heroSkinnedMesh)
 
       // Frame both actors whatever the monster's bulk.
       const allBox = new THREE.Box3().setFromObject(st.monster).union(new THREE.Box3().setFromObject(st.hero))
@@ -238,7 +243,6 @@ function CombatArena3D({
         const now = st.clock.elapsedTime
         if (st.mixer) st.mixer.update(dt)
         if (st.monsterMixer) st.monsterMixer.update(dt)
-        updateHiddenGear(st)
 
         // Monster idle bob + procedural attack/reaction offsets.
         if (st.monster) {

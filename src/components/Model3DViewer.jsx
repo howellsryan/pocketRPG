@@ -40,7 +40,8 @@ function Model3DViewer({ characterPath, weapon = null, gear = null, idleClip = n
     const host = hostRef.current
     const st = { disposed: false, raf: null, THREE: null, renderer: null, scene: null,
       camera: null, controls: null, mixer: null, clock: null, character: null,
-      weapon: null, weaponAnchor: null, gear: [], gearToken: 0, bones: {}, ro: null }
+      weapon: null, weaponAnchor: null, gear: [], gearToken: 0, bones: {}, ro: null,
+      headMaskCtl: null }
     stateRef.current = st
 
     loadThree().then(async ({ THREE, GLTFLoader, MeshoptDecoder, OrbitControls }) => {
@@ -86,9 +87,14 @@ function Model3DViewer({ characterPath, weapon = null, gear = null, idleClip = n
         const scale = 1.8 / (size.y || 1)
         root.scale.setScalar(scale)
         root.position.set(-center.x * scale, -box.min.y * scale, -center.z * scale)
-        root.traverse((o) => { if (o.isBone) st.bones[o.name] = o })
+        let skinnedMesh = null
+        root.traverse((o) => {
+          if (o.isBone) st.bones[o.name] = o
+          if (o.isSkinnedMesh && !skinnedMesh) skinnedMesh = o
+        })
         scene.add(root)
         st.character = root
+        st.headMaskCtl = setupHeadMask(THREE, skinnedMesh)
         camera.position.set(0, 1.15, 4.2)
         controls.target.set(0, 0.95, 0)
         controls.update()
@@ -106,7 +112,6 @@ function Model3DViewer({ characterPath, weapon = null, gear = null, idleClip = n
         st.raf = requestAnimationFrame(renderLoop)
         const dt = st.clock.getDelta()
         if (st.mixer) st.mixer.update(dt)
-        updateHiddenGear(st)
         controls.update()
         renderer.render(scene, camera)
       }
@@ -198,25 +203,53 @@ function attachWeapon(st, weapon) {
   }).catch(() => {})
 }
 
-// Shrink factor for bones hidden under fully-enclosing gear (hideHead helms).
-// Partial, not zero: the hero's upper neck shares Head-bone weights, so a full
-// collapse severs the neck mid-animation; 0.3 tucks the hair inside the shell
-// while the neck tapers naturally into the helm. No clip animates bone scale,
-// so the scale override persists across the mixer — but ROTATION is animated
-// (every clip keys Head.quaternion), so shrinking the bone in place would drag
-// the head toward the bone's joint origin (down near the neck) each frame,
-// leaving a tiny head hanging out below the shell. updateHiddenGear() cancels
-// that every frame by re-deriving the bone's position from its own attach
-// point (piece.position, the same head-local center the helm is placed at)
-// rotated by the CURRENT quaternion — so that point stays visually fixed
-// regardless of pose, and the shrink happens invisibly around it.
-//
-// Disabled for now (1 = no shrink): the hero keeps her full-size head under
-// enclosing helms, at the cost of the head/hair showing through the shell.
-// Flip back to a fraction like 0.3 to re-enable hiding — the rest of the
-// mechanism (registry `hideHead` flag, updateHiddenGear, double-sided visor
-// material) stays wired and ready.
-const HIDE_BONE_SCALE = 1
+// Per-vertex mask so a fully-enclosing helmet (registry `hideHead: true`) can
+// cut the hero's head out of the render entirely, rather than trying to hide
+// it by shrinking/moving the Head bone. A bone-transform approach was tried
+// first and discarded: Head and Neck share skin weights at the collar, so
+// scaling the bone always leaves some pinch, and since every clip animates
+// Head's rotation the hidden bone's position had to be re-derived every
+// frame to avoid drift — still only approximately right in extreme poses
+// (death, hit reactions). This is exact in every pose because it never
+// touches the skeleton: `mask[i]` is vertex i's total skin weight on the
+// named bone (computed once from the existing skinning data), and the
+// fragment shader discards any fragment whose interpolated mask says it's
+// dominantly part of that bone's region — the neck geometry is never
+// transformed, so it's never distorted.
+export function setupHeadMask(THREE, skinnedMesh, boneName = 'Head') {
+  if (!skinnedMesh || !skinnedMesh.skeleton) return null
+  const headIdx = skinnedMesh.skeleton.bones.findIndex((b) => b.name === boneName)
+  if (headIdx < 0) return null
+  const geo = skinnedMesh.geometry
+  const si = geo.attributes.skinIndex, sw = geo.attributes.skinWeight
+  const n = geo.attributes.position.count
+  const mask = new Float32Array(n)
+  for (let i = 0; i < n; i++) {
+    let w = 0
+    for (let k = 0; k < 4; k++) if (si.getComponent(i, k) === headIdx) w += sw.getComponent(i, k)
+    mask[i] = w
+  }
+  geo.setAttribute('headMask', new THREE.BufferAttribute(mask, 1))
+  const mats = Array.isArray(skinnedMesh.material) ? skinnedMesh.material : [skinnedMesh.material]
+  const shaders = []
+  let hidden = false // onBeforeCompile fires lazily on first render, so the
+  // desired state must be the shader's INITIAL uniform value, not just
+  // applied after — a set-then-compile ordering silently no-ops otherwise.
+  for (const mat of mats) {
+    mat.onBeforeCompile = (shader) => {
+      shader.uniforms.uHideHead = { value: hidden }
+      shader.vertexShader = shader.vertexShader
+        .replace('#include <common>', '#include <common>\nattribute float headMask;\nvarying float vHeadMask;')
+        .replace('#include <begin_vertex>', '#include <begin_vertex>\nvHeadMask = headMask;')
+      shader.fragmentShader = shader.fragmentShader
+        .replace('#include <common>', '#include <common>\nuniform bool uHideHead;\nvarying float vHeadMask;')
+        .replace('#include <clipping_planes_fragment>', '#include <clipping_planes_fragment>\nif (uHideHead && vHeadMask > 0.5) discard;')
+      shaders.push(shader)
+    }
+    mat.needsUpdate = true
+  }
+  return { setHidden(v) { hidden = v; for (const s of shaders) s.uniforms.uHideHead.value = v } }
+}
 
 // Load + attach the equipped armour GLBs (helmet on Head, etc.) — same cheap
 // swap + token-guard discipline as attachWeapon, shared by the equip-screen
@@ -224,11 +257,10 @@ const HIDE_BONE_SCALE = 1
 export function attachGearList(st, gear, fallbackAnchor) {
   if (!st || !st.THREE) return
   for (const g of st.gear || []) { g.anchor.remove(g.obj); disposeObject(g.obj) }
-  for (const h of st.gearShrunkBones || []) { h.bone.scale.setScalar(1); h.bone.position.copy(h.origPos) }
   st.gear = []
-  st.gearShrunkBones = []
   const token = (st.gearToken = (st.gearToken || 0) + 1)
   const list = (gear || []).filter((p) => p && p.path)
+  if (st.headMaskCtl) st.headMaskCtl.setHidden(list.some((p) => p.hideHead))
   if (!list.length) return
   loadThree().then(async ({ THREE, GLTFLoader, MeshoptDecoder }) => {
     if (st.disposed || token !== st.gearToken) return
@@ -244,48 +276,15 @@ export function attachGearList(st, gear, fallbackAnchor) {
         const anchor = boneAnchor || fallbackAnchor
         if (!anchor) return
         const [px, py, pz] = piece.position || [0, 0, 0]
-        const shrink = piece.hideHead && boneAnchor ? HIDE_BONE_SCALE : 1
-        if (shrink !== 1) {
-          boneAnchor.scale.setScalar(shrink)
-          st.gearShrunkBones.push({
-            bone: boneAnchor,
-            origPos: boneAnchor.position.clone(),
-            center: new THREE.Vector3(px, py, pz),
-            shrink,
-            tmp: new THREE.Vector3(),
-          })
-          // double-side so the visor slit shows the shell interior, not a hole
-          obj.traverse((o) => {
-            if (!o.isMesh || !o.material) return
-            for (const m of Array.isArray(o.material) ? o.material : [o.material]) m.side = THREE.DoubleSide
-          })
-        }
         const [rx, ry, rz] = piece.rotationDeg || [0, 0, 0]
-        // position is the bone's own attach point — unscaled: the per-frame
-        // bone-position compensation (updateHiddenGear) already cancels the
-        // bone's shrink at exactly this point, so the piece needs no counter-
-        // translation, only a counter-scale for its own size.
         obj.position.set(px, py, pz)
         obj.rotation.set(THREE.MathUtils.degToRad(rx), THREE.MathUtils.degToRad(ry), THREE.MathUtils.degToRad(rz))
-        obj.scale.setScalar((typeof piece.scale === 'number' ? piece.scale : 1) / shrink)
+        obj.scale.setScalar(typeof piece.scale === 'number' ? piece.scale : 1)
         anchor.add(obj)
         st.gear.push({ obj, anchor })
       })
     }
   }).catch(() => {})
-}
-
-// Per-frame follow-up for attachGearList's hidden bones — call once per
-// render frame, after the mixer updates and before rendering. Must be exact
-// every frame (not baked once at attach time) because the anchor bone's
-// rotation is animated; see the HIDE_BONE_SCALE comment above.
-export function updateHiddenGear(st) {
-  const list = st && st.gearShrunkBones
-  if (!list || !list.length) return
-  for (const h of list) {
-    h.tmp.copy(h.center).applyQuaternion(h.bone.quaternion).multiplyScalar(1 - h.shrink)
-    h.bone.position.copy(h.origPos).add(h.tmp)
-  }
 }
 
 export function disposeObject(obj) {

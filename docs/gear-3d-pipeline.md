@@ -34,25 +34,22 @@ Fit notes — two regimes, pick per shape:
 - **Fully-enclosing helms** (full helm, great helm, closed bascinet): use the
   fit tool's defaults (knight-snug, sized to the skull) **and set
   `"hideHead": true`** on the registry entry. The hero's hairstyle is far
-  bigger than the skull and can't be hidden by material (single-mesh Tripo
-  rig), so `attachGearList` shrinks the Head bone to 0.3 and counter-scales
-  the helm — hair tucks inside the shell, the visor shows the (double-sided)
-  shell interior, and the neck tapers naturally into the rim. Full collapse
-  (scale ≈ 0) is wrong: upper-neck vertices share Head weights, so the neck
-  severs during `hit_head`. Shrinking the bone in place isn't enough on its
-  own — every clip animates Head's rotation, and rotating a shrunk-in-place
-  bone drags the head down toward its joint origin near the neck, leaving a
-  tiny head hanging out below the shell. `updateHiddenGear()` (called once
-  per render frame, after the mixer updates, from both `Model3DViewer` and
-  `CombatArena3D`) cancels this by re-deriving the bone's position every
-  frame from its own attach point (the same head-local center the helm sits
-  at) rotated by the *current* quaternion, so that point stays visually
-  fixed under any pose — not just the frame it was baked at. Currently
-  **disabled** (`HIDE_BONE_SCALE = 1` in `Model3DViewer.jsx`) by product
-  choice — the hero keeps her full-size head/hair under enclosing helms; flip
-  the constant back to a fraction like `0.3` to re-enable hiding, everything
-  else (registry flag, `updateHiddenGear`, double-sided visor material)
-  stays wired.
+  bigger than the skull and can't be hidden by geometry (single-mesh Tripo
+  rig, no separable hair mesh), so the head is hidden with a **per-vertex
+  shader mask** rather than a bone transform. `setupHeadMask()` in
+  `Model3DViewer.jsx` computes, once per hero load, each vertex's total skin
+  weight on the Head bone and stores it as a `headMask` attribute; a patched
+  material (`onBeforeCompile`) discards any fragment whose interpolated mask
+  says it's dominantly part of that bone's region. `attachGearList` flips the
+  mask on/off (`st.headMaskCtl.setHidden(...)`) based on whether any equipped
+  piece has `hideHead: true`. This is exact in every pose — it never touches
+  the skeleton, so the neck geometry is never distorted and there's no
+  per-frame drift to chase. An earlier bone-scale-and-reposition approach was
+  tried and discarded: Head and Neck share skin weights at the collar, so
+  scaling the bone always left some pinch, and it was only ever
+  *approximately* right in extreme poses (death, hit reactions) since the
+  hidden bone's position had to be re-derived every frame from the
+  currently-animated rotation.
 - **Open headwear** (hats, hoods, circlets — head stays visible): no
   `hideHead`; the piece must contain the hair, so bake with hair-sized
   margins, e.g. `--margins 1.25,1.12,1.06 --shift 0.06 --lift 0`.
