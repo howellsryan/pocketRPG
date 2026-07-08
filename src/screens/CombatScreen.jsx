@@ -28,7 +28,7 @@ import { getMonsterSeedDrops } from '../engine/seedDrops.js'
 import { getAgilityBankDelayMs, formatBankDelay } from '../engine/agility.js'
 import { onTick, pauseTicks, resumeTicks } from '../engine/tick.js'
 import { addItem, removeItem, freeSlots } from '../engine/inventory.js'
-import { getCombatType, equipItem, checkEquipRequirements } from '../engine/equipment.js'
+import { getCombatType, equipItem, checkEquipRequirements, placeUnequippedItems } from '../engine/equipment.js'
 import { api, getToken, getCharacterId, getOneLifeMode, isDemoMode } from '../cloud/api.js'
 import { pullSave, applyCloudSave, requestCriticalPushSave, pushNow } from '../cloud/sync.js'
 import { pvpApi } from '../cloud/pvp.js'
@@ -1512,26 +1512,18 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       newInv[itemIdx] = null
     }
 
-    // Add any unequipped items back to inventory
-    for (const unequipped of result.unequipped) {
-      if (itemsData[unequipped.itemId]?.stackable) {
-        const existingIdx = newInv.findIndex(s => s && s.itemId === unequipped.itemId)
-        if (existingIdx !== -1) {
-          newInv[existingIdx] = { ...newInv[existingIdx], quantity: newInv[existingIdx].quantity + (unequipped.quantity || 1) }
-          continue
-        }
-      }
-      // Add to empty slot, preserving any charges the unequipped item had
-      const emptyIdx = newInv.findIndex(s => s === null)
-      if (emptyIdx !== -1) {
-        const invEntry = { itemId: unequipped.itemId, quantity: unequipped.quantity || 1 }
-        if (unequipped.charges && unequipped.charges > 0) invEntry.charges = unequipped.charges
-        newInv[emptyIdx] = invEntry
-      }
+    // Add any unequipped items back to inventory. If there's nowhere to put
+    // one (e.g. switching to a 2H weapon displaces both the old weapon and a
+    // shield, but only one slot was freed above), abort the whole swap rather
+    // than silently dropping the item that didn't fit.
+    const placed = placeUnequippedItems(result.unequipped, newInv, itemsData)
+    if (!placed.ok) {
+      addToast('Inventory full', 'error')
+      return false
     }
 
-    updateInventory(newInv)
-    inventoryRef.current = newInv
+    updateInventory(placed.inventory)
+    inventoryRef.current = placed.inventory
     updateEquipment(newEq)
     equipmentRef.current = newEq
 
