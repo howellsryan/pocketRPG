@@ -253,6 +253,11 @@ export function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, st
           remaining -= consumed
         }
       }
+      if (remaining > 0) {
+        itemsConsumed[runeId] = remaining
+      } else {
+        delete itemsConsumed[runeId]
+      }
     }
   }
 
@@ -273,6 +278,41 @@ export function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, st
       } else {
         delete itemsConsumed[itemId]
       }
+    }
+  }
+
+  // The initial `actions` estimate above is capped by elapsed time and raw
+  // material/rune availability, and materials/XP were charged for that many
+  // actions right away. A banking-enabled production loop below can still
+  // complete fewer actions than that estimate whenever a non-stackable
+  // product (bars, ores, etc.) forces repeated bank trips that eat into the
+  // elapsed-time budget. `refundUnusedActions` below undoes the charge for
+  // whatever shortfall shows up, so materials/XP always match what was
+  // actually produced instead of silently vanishing.
+  const refundUnusedActions = (actionsCompleted) => {
+    const shortfall = actions - actionsCompleted
+    if (shortfall <= 0) return
+    if (xpPer > 0 && task.skill) {
+      const refundedXp = xpPer * shortfall
+      xpGained[task.skill] = Math.max(0, (xpGained[task.skill] || 0) - refundedXp)
+      if (xpGained[task.skill] <= 0) delete xpGained[task.skill]
+    }
+    const refundQty = (itemId, qtyPerAction) => {
+      let refund = qtyPerAction * shortfall
+      const bankPortion = Math.min(refund, itemsConsumed[itemId] || 0)
+      if (bankPortion > 0) {
+        itemsConsumed[itemId] -= bankPortion
+        if (itemsConsumed[itemId] <= 0) delete itemsConsumed[itemId]
+        refund -= bankPortion
+      }
+      if (refund > 0) addItem(newInv, itemId, refund, itemsData[itemId]?.stackable || false)
+    }
+    if (task.action.materials) {
+      for (const [itemId, qtyPerAction] of Object.entries(task.action.materials)) refundQty(itemId, qtyPerAction)
+    }
+    if (task.action.runeReq) {
+      const runesToConsume = getRunesToConsume(task.action.runeReq, equipment, itemsData)
+      for (const [runeId, qtyPerAction] of Object.entries(runesToConsume)) refundQty(runeId, qtyPerAction)
     }
   }
 
@@ -361,10 +401,7 @@ export function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, st
     }
 
     // XP is only earned for actions actually completed before the inventory filled.
-    if (xpPer > 0 && task.skill) {
-      if (actionsCompleted > 0) xpGained[task.skill] = xpPer * actionsCompleted
-      else delete xpGained[task.skill]
-    }
+    refundUnusedActions(actionsCompleted)
     actions = actionsCompleted
     if (inventoryFull) gatheringStoppedReason = 'inventory_full'
   }
@@ -440,6 +477,11 @@ export function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, st
         const netGain = qty - (startingInvState[itemId] || 0)
         if (netGain > 0) itemsGained[itemId] = netGain
       }
+      // Bank trips (forced by a full inventory) cost time, so fewer actions may
+      // have completed than the time/material estimate that XP/materials were
+      // already charged against above — refund the shortfall.
+      refundUnusedActions(actionsCompleted)
+      actions = actionsCompleted
     } else {
       // Banking disabled: items fill inventory, excess is dropped
       for (let a = 0; a < actions; a++) {
@@ -550,6 +592,13 @@ export function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, st
         const netGain = qty - (startingInvState[itemId] || 0)
         if (netGain > 0) itemsGained[itemId] = netGain
       }
+      // Bank trips (forced by a full inventory, e.g. a non-stackable product like
+      // bars) cost time, so fewer actions may have completed than the time/material
+      // estimate that XP/materials were already charged against above — refund
+      // the shortfall so materials never get consumed for output that was never
+      // actually produced.
+      refundUnusedActions(actionsCompleted)
+      actions = actionsCompleted
     } else {
       // Banking disabled: items fill inventory, excess is dropped (preserves XP/hr, limits items/hr)
       const item = itemsData[product]
