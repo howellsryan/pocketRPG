@@ -80,9 +80,9 @@ describe('equipModels resolver', () => {
   })
 
   it('returns null for unregistered gear (icon-UI fallback)', () => {
-    expect(getGearModel('bronze_full_helm')).toBeNull()
+    expect(getGearModel('horned_full_helm')).toBeNull()
     expect(getGearModel(undefined)).toBeNull()
-    expect(getGearPlacement('bronze_full_helm')).toBeNull()
+    expect(getGearPlacement('horned_full_helm')).toBeNull()
   })
 
   it('collects placements for equipped registered gear, skipping the rest', () => {

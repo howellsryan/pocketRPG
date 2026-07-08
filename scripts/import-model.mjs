@@ -142,11 +142,13 @@ if (hasFlag('variants')) {
       continue
     }
     const variantPath = join(dir, `${variantId}.glb`)
-    runScript('recolor-model.mjs', [
+    const recolorArgs = [
       processedPath, variantPath,
-      '--from', String(spec.from ?? 0), '--tol', String(spec.tol ?? 30),
       '--to', String(spec.to), '--sat', String(spec.sat ?? 1), '--light', String(spec.light ?? 1),
-    ])
+    ]
+    if (spec.grey !== undefined) recolorArgs.push('--grey', String(spec.grey))
+    else recolorArgs.push('--from', String(spec.from ?? 0), '--tol', String(spec.tol ?? 30))
+    runScript('recolor-model.mjs', recolorArgs)
     variants.push({ id: variantId, path: variantPath })
   }
 }

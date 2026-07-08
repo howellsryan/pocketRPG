@@ -29,7 +29,7 @@
           87.5,
           178.2
         ],
-        "scale": 0.247
+        "scale": 0.242
       }
     }
   },
@@ -164,6 +164,26 @@
   "gear": {
     "steel_full_helm": {
       "model": "full_helm.glb",
+      "slot": "head"
+    },
+    "bronze_full_helm": {
+      "model": "bronze_full_helm.glb",
+      "slot": "head"
+    },
+    "iron_full_helm": {
+      "model": "iron_full_helm.glb",
+      "slot": "head"
+    },
+    "mithril_full_helm": {
+      "model": "mithril_full_helm.glb",
+      "slot": "head"
+    },
+    "adamant_full_helm": {
+      "model": "adamant_full_helm.glb",
+      "slot": "head"
+    },
+    "runeforged_full_helm": {
+      "model": "runeforged_full_helm.glb",
       "slot": "head"
     }
   },
