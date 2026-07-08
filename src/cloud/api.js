@@ -288,8 +288,10 @@ export const api = {
   tradingPostListings: () => request('/api/trading-post/listings'),
 
   // Chat answers can take several sequential reasoning-model calls, so this
-  // request gets a much longer leash than the 15s default. The optional `action`
-  // switches the request type: { confirm: token } runs an approved write action,
+  // request gets a much longer leash than the 15s default. Kept above the
+  // server's CHAT_TIME_BUDGET_MS (75s) so a slow turn returns a degraded
+  // retrieval answer rather than aborting here. The optional `action` switches
+  // the request type: { confirm: token } runs an approved write action,
   // { refill: true } buys back the daily message allowance — otherwise it's a
   // normal question.
   chat: (message, history = [], action = null) => request('/api/chat', {
@@ -297,7 +299,7 @@ export const api = {
     body: JSON.stringify(
       action?.refill ? { refill: true } : action?.confirm ? { confirm: action.confirm } : { message, history },
     ),
-    timeoutMs: 60_000,
+    timeoutMs: 90_000,
   }),
 }
 
