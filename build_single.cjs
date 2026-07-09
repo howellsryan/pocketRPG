@@ -116,6 +116,7 @@ const sourceFiles = [
   'components/PlaceMapView.js', // -> game chunk (world map / place map only)
   'components/SlayerMasterModal.js', // -> game chunk (world map / place map only)
   'components/TravelPrompt.js',
+  'components/InventoryFullPrompt.js',
   'components/HPBar.js',
   'components/HitSplat.js',
   'components/ActivePotionBadges.js',
@@ -128,6 +129,7 @@ const sourceFiles = [
   'components/SkillEmblem.js',
   'components/SkillIcon.js',
   'components/ItemSlot.js',
+  'components/InventoryGrid.js',
   'components/Toast.js',
   'components/XpDropOverlay.js',
   'components/RewardRevealOverlay.js',

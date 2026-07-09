@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'preact/hooks'
 import { useGame } from '../state/gameState.jsx'
-import ItemSlot from '../components/ItemSlot.jsx'
+import InventoryGrid from '../components/InventoryGrid.jsx'
 import Modal from '../components/Modal.jsx'
 import SharedItemModal from '../components/SharedItemModal.jsx'
 import WeaponChargePanel, { getChargeRecipe } from '../components/WeaponChargePanel.jsx'
@@ -473,6 +473,17 @@ export default function InventoryScreen() {
     setBankQuantityInput('')
   }
 
+  // Inventory is a positional 28-slot array persisted in the save blob, so
+  // reordering is a plain swap of two slots — the new ordering rides the normal
+  // /api/save path with no extra plumbing. (Drag mechanics live in InventoryGrid.)
+  const moveItem = (fromIdx, toIdx) => {
+    const newInv = [...inventory]
+    const tmp = newInv[toIdx]
+    newInv[toIdx] = newInv[fromIdx]
+    newInv[fromIdx] = tmp
+    updateInventory(newInv)
+  }
+
   const free = freeSlots(inventory)
 
   // Deposit all inventory items to bank
@@ -537,17 +548,11 @@ export default function InventoryScreen() {
         </div>
       </div>
 
-      <div class="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7 xl:grid-cols-7 gap-2 md:gap-3 justify-items-center">
-        {inventory.map((slot, i) => (
-          <ItemSlot
-            key={i}
-            slot={slot}
-            onClick={(s, item) => handleSlotClick(s, item, i)}
-            size="inventory"
-            showName
-          />
-        ))}
-      </div>
+      <InventoryGrid
+        inventory={inventory}
+        onReorder={moveItem}
+        onSlotClick={(s, item, i) => handleSlotClick(s, item, i)}
+      />
 
       {/* Item action modal */}
       {selected && (

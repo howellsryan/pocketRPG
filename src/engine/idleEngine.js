@@ -343,6 +343,11 @@ export function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, st
   // Gathering skills (mining/woodcutting/fishing) deposit into the inventory and
   // stop when it fills. With the Construction unlock, a full inventory triggers
   // an agility-scaled bank trip so gathering keeps going.
+  // Real-time active play (the App-level background runner) passes autoBank:false
+  // so a full inventory pauses the action and reports inventory_full for the
+  // global prompt instead of silently auto-banking. Offline catch-up / skip-hour
+  // leave it unset (auto-bank as before).
+  const autoBankEnabled = options.autoBank !== false
   const isGatheringSkill = GATHERING_SKILLS.includes(task.skill)
   let gatheringStoppedReason
 
@@ -350,7 +355,7 @@ export function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, st
     // Mining/woodcutting/fishing always auto-bank during idle/skip so the
     // inventory cap can't stall the session; other gatherers (farming) still
     // require the Construction auto-bank unlock.
-    const bankWhenFull = hasGatherAutoBankUnlock(stats) || IDLE_AUTOBANK_GATHERING_SKILLS.includes(task.skill)
+    const bankWhenFull = autoBankEnabled && (hasGatherAutoBankUnlock(stats) || IDLE_AUTOBANK_GATHERING_SKILLS.includes(task.skill))
     const bankDelayTicks = Math.ceil(getAgilityBankDelayFromStats(stats) / TICK_MS)
     const productQty = task.action.productQty || 1
 
@@ -407,7 +412,7 @@ export function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, st
   }
   // Handle drop table (for actions with multiple possible products like gem mining)
   else if (task.action.dropTable) {
-    const bankingEnabled = task.bankingEnabled || false
+    const bankingEnabled = (task.bankingEnabled || false) && autoBankEnabled
 
     // Track starting inventory state
     const startingInvState = {}
@@ -521,7 +526,7 @@ export function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, st
   }
   // Handle product placement based on bankingEnabled
   else if (task.action.product) {
-    const bankingEnabled = task.bankingEnabled || false
+    const bankingEnabled = (task.bankingEnabled || false) && autoBankEnabled
     const product = task.action.product
     const qtyPerAction = task.action.productQty || 1
 
@@ -600,45 +605,46 @@ export function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, st
       refundUnusedActions(actionsCompleted)
       actions = actionsCompleted
     } else {
-      // Banking disabled: items fill inventory, excess is dropped (preserves XP/hr, limits items/hr)
+      // Banking disabled: produce into the inventory until it fills, then stop —
+      // matching live skilling (you can't smith with a full inventory). The
+      // product is NEVER dropped: a material-consuming skill dropping its output
+      // while still charging the ingredients silently drained the bank (e.g.
+      // smithing 28 bars but consuming ore for hundreds of un-kept ones). Refund
+      // the unused actions so materials/XP track what was actually produced.
       const item = itemsData[product]
       const stackable = item?.stackable || false
-      let remainingQty = (task.action.productQty || 1) * actions
+      let actionsCompleted = 0
+      let inventoryFull = false
 
       for (let a = 0; a < actions; a++) {
-        const qtyThisAction = qtyPerAction
-        let addedQty = 0
-
+        let added = false
         if (stackable) {
           const existingIdx = newInv.findIndex(s => s && s.itemId === product)
           if (existingIdx !== -1) {
-            newInv[existingIdx] = { ...newInv[existingIdx], quantity: newInv[existingIdx].quantity + qtyThisAction }
-            addedQty = qtyThisAction
+            newInv[existingIdx] = { ...newInv[existingIdx], quantity: newInv[existingIdx].quantity + qtyPerAction }
+            added = true
           } else {
             const emptyIdx = newInv.indexOf(null)
             if (emptyIdx !== -1) {
-              newInv[emptyIdx] = { itemId: product, quantity: qtyThisAction }
-              addedQty = qtyThisAction
+              newInv[emptyIdx] = { itemId: product, quantity: qtyPerAction }
+              added = true
             }
           }
         } else {
-          // Non-stackable
-          for (let q = 0; q < qtyThisAction; q++) {
-            const emptyIdx = newInv.indexOf(null)
-            if (emptyIdx !== -1) {
-              newInv[emptyIdx] = { itemId: product, quantity: 1 }
-              addedQty++
+          // Non-stackable needs `qtyPerAction` free slots or the action can't complete.
+          const freeCount = newInv.reduce((n, s) => n + (s ? 0 : 1), 0)
+          if (freeCount >= qtyPerAction) {
+            for (let q = 0; q < qtyPerAction; q++) {
+              newInv[newInv.indexOf(null)] = { itemId: product, quantity: 1 }
             }
+            added = true
           }
         }
-
-        const droppedQty = qtyThisAction - addedQty
-        if (droppedQty > 0) {
-          itemsDropped[product] = (itemsDropped[product] || 0) + droppedQty
-        }
+        if (!added) { inventoryFull = true; break }
+        actionsCompleted++
       }
 
-      // Items still in inventory go to itemsGained
+      // Compute gains before the refund so refunded materials don't count as product.
       for (const slot of newInv) {
         if (!slot) continue
         const startingQty = startingInvState[slot.itemId] || 0
@@ -647,6 +653,10 @@ export function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, st
           itemsGained[slot.itemId] = (itemsGained[slot.itemId] || 0) + deltaQty
         }
       }
+
+      refundUnusedActions(actionsCompleted)
+      actions = actionsCompleted
+      if (inventoryFull) gatheringStoppedReason = 'inventory_full'
     }
   }
 
@@ -671,7 +681,7 @@ export function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, st
  * stats: player stats for agility-based bank delay
  * itemsData: items lookup for stackable/non-stackable determination
  */
-export function simulateIdleGather(task, elapsedMs, inventory = [], stats = {}, itemsData = {}, bank = {}) {
+export function simulateIdleGather(task, elapsedMs, inventory = [], stats = {}, itemsData = {}, bank = {}, options = {}) {
   if (!task || !task.gatherTask) return null
   if (task.gatherTask.requiresItem && !task.gatherTask.isClue) {
     const requiredItem = task.gatherTask.requiresItem
@@ -762,7 +772,7 @@ export function simulateIdleGather(task, elapsedMs, inventory = [], stats = {}, 
   // Gathered items land in the inventory by default. Once full, the action
   // stops — unless the player has the Construction unlock, which turns a full
   // inventory into an agility-scaled bank trip so gathering can continue.
-  const bankWhenFull = hasGatherAutoBankUnlock(stats)
+  const bankWhenFull = hasGatherAutoBankUnlock(stats) && options.autoBank !== false
   const bankDelayTicks = Math.ceil(getAgilityBankDelayFromStats(stats) / TICK_MS)
 
   const itemsGained = {}

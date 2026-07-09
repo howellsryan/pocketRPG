@@ -101,9 +101,9 @@ export function resultActions(result) {
 export function simulateTaskWindow(task, elapsedMs, ctx = {}) {
   switch (task.type) {
     case 'skill':
-      return simulateIdleSkilling(task, elapsedMs, ctx.bank, ctx.equipment, ctx.stats, ctx.itemsData, ctx.inventory, { isIronman: ctx.isIronman })
+      return simulateIdleSkilling(task, elapsedMs, ctx.bank, ctx.equipment, ctx.stats, ctx.itemsData, ctx.inventory, { isIronman: ctx.isIronman, autoBank: ctx.autoBank })
     case 'gather':
-      return simulateIdleGather(task, elapsedMs, ctx.inventory, ctx.stats, ctx.itemsData, ctx.bank)
+      return simulateIdleGather(task, elapsedMs, ctx.inventory, ctx.stats, ctx.itemsData, ctx.bank, { autoBank: ctx.autoBank })
     case 'agility':
       return simulateIdleAgility(task, elapsedMs)
     case 'thieving':
