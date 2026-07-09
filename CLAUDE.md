@@ -149,3 +149,10 @@ Separate from, and unrelated to, the player-facing MCP server in §15: a develop
 
 ## 19) Design Context
 `PRODUCT.md` (repo root) is the strategic design brief for `/impeccable` (register, users, brand personality, anti-references, design principles) — read it before any UI/UX design work. No `DESIGN.md` yet; run `/impeccable document` to generate one from the existing `src/index.css` tokens (parchment/gold/blood/emerald/void palette, Cinzel + Nunito).
+
+## 20) PR titles & bodies are the public changelog
+Merging to `main` deploys to production and auto-posts the merged **PR title + body** to the Discord `#changelog` channel (`.github/workflows/discord-changelog.yml` → `DISCORD_CHANGELOG_WEBHOOK`). **Write every PR for players, not just reviewers** — the whole body publishes (first ~3900 chars; `<!-- -->` HTML comments are stripped, nothing else is).
+- **Title**: one player-facing line in the game's voice — what changed, present tense, no branch/ticket/file jargon (e.g. "Prayer now drains in PvP" not "fix: prayerDrain PvP pool wiring"). The `(#123)` number is appended automatically.
+- **Body**: lead with player impact; 1–5 short bullets of what's new/changed/fixed. Group as **New / Changed / Fixed** when it helps. Plain language — no file paths, function names, or internal mechanics unless a player would care.
+- **Keep it clean**: no secrets, tokens, hostnames, or internal-only notes in the body — it's public the moment it merges. Reviewer-only detail goes in PR review comments or an HTML comment, not the visible body.
+- Pure chores with no player-visible effect (deps, refactors, CI) — keep the body one honest line; it still posts.
