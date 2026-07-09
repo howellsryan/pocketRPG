@@ -2,7 +2,9 @@ export type WorldSession = { token: string; character: { id: number; name: strin
 
 const STORAGE_KEY = 'world_session'
 const MIN_VIEWPORT_WIDTH = 768
-const POCKETRPG_URL = 'https://pocketrpg.co.uk'
+const POCKETRPG_PROD_HOSTNAME = 'world.pocketrpg.co.uk'
+const POCKETRPG_PROD_URL = 'https://pocketrpg.co.uk'
+const POCKETRPG_PREVIEW_URL = 'https://preview.pocketrpg.pages.dev'
 
 export function getStoredSession(): WorldSession | null {
   const raw = localStorage.getItem(STORAGE_KEY)
@@ -46,6 +48,12 @@ export async function exchangeHandoff(handoff: string): Promise<WorldSession> {
   return session
 }
 
+/** Which PocketRPG deployment "Go to PocketRPG" should point at, based on which
+ * world deployment is currently being viewed. Pure — testable without a DOM. */
+export function pocketRpgUrlForHost(hostname: string): string {
+  return hostname === POCKETRPG_PROD_HOSTNAME ? POCKETRPG_PROD_URL : POCKETRPG_PREVIEW_URL
+}
+
 export function pocketRpgUrl(): string {
-  return POCKETRPG_URL
+  return pocketRpgUrlForHost(window.location.hostname)
 }

@@ -4,9 +4,8 @@ import { useGame } from '../state/gameState.jsx'
 import { SETTINGS_NAV_LINKS } from '../components/navTabs.js'
 import { api } from '../cloud/api.js'
 
-// Placeholder until STEP 0.12's deploy task pastes the real workers.dev URL
-// back in (or the world.pocketrpg.co.uk custom domain, once DNS is set).
-const WORLD_ORIGIN = 'https://pocketrpg-world.workers.dev'
+// Update to world.pocketrpg.co.uk once that custom domain is live.
+const WORLD_ORIGIN = 'https://pocketrpg-world.rlh.workers.dev'
 
 export default function HelpScreen({ onNavigate }) {
   const { showInfoToasts, updateShowInfoToasts } = useGame()

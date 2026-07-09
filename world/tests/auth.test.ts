@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { isViewportTooNarrow, parseHandoffFromHash } from '../client/src/auth'
+import { isViewportTooNarrow, parseHandoffFromHash, pocketRpgUrlForHost } from '../client/src/auth'
 
 describe('parseHandoffFromHash', () => {
   it('extracts the token from a #handoff=<jwt> hash', () => {
@@ -28,5 +28,16 @@ describe('isViewportTooNarrow', () => {
   it('is false at or above the threshold on both dimensions', () => {
     expect(isViewportTooNarrow(768, 768)).toBe(false)
     expect(isViewportTooNarrow(1920, 1080)).toBe(false)
+  })
+})
+
+describe('pocketRpgUrlForHost', () => {
+  it('points at production only on the production custom domain', () => {
+    expect(pocketRpgUrlForHost('world.pocketrpg.co.uk')).toBe('https://pocketrpg.co.uk')
+  })
+
+  it('points at preview for the workers.dev host, localhost, and anything else', () => {
+    expect(pocketRpgUrlForHost('pocketrpg-world.rlh.workers.dev')).toBe('https://preview.pocketrpg.pages.dev')
+    expect(pocketRpgUrlForHost('localhost')).toBe('https://preview.pocketrpg.pages.dev')
   })
 })

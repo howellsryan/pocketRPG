@@ -40,7 +40,7 @@ function runWrangler(args) {
 // `ALTER TABLE ADD COLUMN`. `migrations_dir` in wrangler.jsonc points this
 // at the repo-root `migrations/` folder shared with the main Pages project.
 console.log('dev-seed: applying migrations to local D1...')
-runWrangler(['d1', 'migrations', 'apply', 'pocketrpg', '--local'])
+runWrangler(['d1', 'migrations', 'apply', 'pocketrpg-preview', '--local'])
 
 const SKILL_IDS = [
   'mining', 'woodcutting', 'fishing', 'smithing', 'cooking', 'fletching', 'crafting',
@@ -75,7 +75,7 @@ INSERT INTO saves (character_id, save_blob, save_data, updated_at, save_revision
 `.trim()
 
 console.log('dev-seed: seeding identity + character + save...')
-runWrangler(['d1', 'execute', 'pocketrpg', '--local', `--command=${seedSql}`])
+runWrangler(['d1', 'execute', 'pocketrpg-preview', '--local', `--command=${seedSql}`])
 
 const jwtSecret = readJwtSecret()
 const { signJWT } = await import(path.join(repoRoot, 'functions', '_lib', 'jwt.js'))

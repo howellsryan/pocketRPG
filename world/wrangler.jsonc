@@ -8,8 +8,8 @@
   "d1_databases": [
     {
       "binding": "DB",
-      "database_name": "pocketrpg",
-      "database_id": "439e810b-8dce-4697-94c2-a7392520ad8f",
+      "database_name": "pocketrpg-preview",
+      "database_id": "59233295-f492-4113-94da-90034d84a6a4",
       "migrations_dir": "../migrations"
     }
   ]
