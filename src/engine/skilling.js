@@ -1,4 +1,5 @@
 import { getLevelFromXP } from './experience.js'
+import { freeSlots, findItem, countItem } from './inventory.js'
 import { COOKING_BURN_BASE_CHANCE } from '../utils/constants.js'
 
 /**
@@ -156,6 +157,33 @@ export function createSkillingState(skill, action) {
     stopped: false,
     justCompleted: false,  // flag to delay reset to next tick
   }
+}
+
+/**
+ * True when a full inventory blocks this action from completing during active
+ * (live/background) play — i.e. its next output has nowhere to go. When true the
+ * driver holds the action and raises the global "inventory full" prompt instead
+ * of completing it; the check is re-evaluated each tick so the action resumes on
+ * its own once a slot frees up.
+ *
+ * Not blocked when: the action has no inventory-bound output (alchemy banks
+ * coins; material-only actions produce nothing), any free slot exists, the
+ * product stacks onto an existing slot, or a consumed material sits in the
+ * inventory (using it frees a slot for the product).
+ */
+export function skillingActionBlockedByFullInventory(action, inventory = [], itemsData = {}) {
+  if (!action) return false
+  if (action.type === 'alchemy') return false
+  const producesToInventory = !!(action.product || action.dropTable)
+  if (!producesToInventory) return false
+  if (freeSlots(inventory) > 0) return false
+  if (action.product && itemsData[action.product]?.stackable && findItem(inventory, action.product) !== -1) return false
+  if (action.materials) {
+    for (const matId of Object.keys(action.materials)) {
+      if (countItem(inventory, matId) > 0) return false
+    }
+  }
+  return true
 }
 
 /**

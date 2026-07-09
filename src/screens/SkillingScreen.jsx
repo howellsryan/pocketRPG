@@ -10,10 +10,10 @@ import SkillActivePanel from '../components/SkillActivePanel.jsx'
 import { getAgilityBankDelayMs, formatBankDelay } from '../engine/agility.js'
 import { emptySession, ratePerHour } from '../engine/activitySession.js'
 import { getActionProgress } from '../hooks/useActionTick.js'
-import { STUB_SKILLS, GATHERING_SKILLS, PRODUCTION_SKILLS, UTILITY_SKILLS, SCREENS, formatDropChance, GATHER_AUTOBANK_CONSTRUCTION_LEVEL } from '../utils/constants.js'
+import { STUB_SKILLS, GATHERING_SKILLS, PRODUCTION_SKILLS, UTILITY_SKILLS, SCREENS, formatDropChance } from '../utils/constants.js'
 import { getLevelFromXP } from '../engine/experience.js'
-import { createSkillingState, processSkillingTick, getAvailableActions, checkBurn, getEffectiveToolActionTicks, hasToolForSkill, getEquippedSkillXpMultiplier, rollGatherBonusDrops, TOOL_SKILLS } from '../engine/skilling.js'
-import { addItem, removeItem, countItem, canFit } from '../engine/inventory.js'
+import { createSkillingState, processSkillingTick, getAvailableActions, checkBurn, getEffectiveToolActionTicks, hasToolForSkill, getEquippedSkillXpMultiplier, rollGatherBonusDrops, TOOL_SKILLS, skillingActionBlockedByFullInventory } from '../engine/skilling.js'
+import { addItem, removeItem, countItem } from '../engine/inventory.js'
 import { hasRequiredRunes, getRunesToConsume } from '../engine/runes.js'
 import { onTick } from '../engine/tick.js'
 import { markScreenTick } from '../engine/activityRunner.js'
@@ -63,7 +63,7 @@ function calculateRemainingActions(action, inventory, bank) {
 // `onStopBack` (from App): where Stop & Back returns to — the place-map origin
 // when there is one, otherwise the previous screen.
 export default function SkillingScreen({ initialSkillId, initialActionId, initialMasterId, initialLocationId, idleResult, onNavigate, onBack, onStopBack }) {
-  const { stats, inventory, bank, equipment, isIronman, updateInventory, updateBankDirect, grantXP, addToast, setActiveTask, requestActivityStart, activeTask, dungeoneeringTokens, awardDungeoneeringTokens, trySpendDungeoneeringTokens, recordGameEvent } = useGame()
+  const { stats, inventory, bank, equipment, isIronman, updateInventory, updateBankDirect, grantXP, addToast, setActiveTask, requestActivityStart, activeTask, dungeoneeringTokens, awardDungeoneeringTokens, trySpendDungeoneeringTokens, recordGameEvent, signalInventoryFull, resolveInventoryFull } = useGame()
   const [selectedSkill, setSelectedSkill] = useState(initialSkillId || null)
   const [selectedAction, setSelectedAction] = useState(null)
   const [skilling, setSkilling] = useState(null)
@@ -170,6 +170,17 @@ export default function SkillingScreen({ initialSkillId, initialActionId, initia
       if (!state || !state.active || state.stopped) return
       markScreenTick()
 
+      // A full inventory pauses the action and raises the global prompt; the
+      // check re-runs every tick so it resumes on its own once a slot frees.
+      // Long-form reward grinds (dungeoneering unlocks) produce only on the
+      // final tick, so they never pause mid-grind.
+      if (state.action?.category !== 'reward'
+        && skillingActionBlockedByFullInventory(state.action, inventoryRef.current, itemsData)) {
+        signalInventoryFull()
+        return
+      }
+      resolveInventoryFull()
+
       const { skillingState, events } = processSkillingTick(state)
       skillingRef.current = skillingState
 
@@ -179,34 +190,12 @@ export default function SkillingScreen({ initialSkillId, initialActionId, initia
           const action = ev.action
           const newInv = [...inventoryRef.current]
 
-          // Gathering skills (mining/woodcutting/fishing) deposit into the
-          // inventory. When full, stop unless the Construction unlock enables
-          // bank trips. Returns false when gathering stopped (caller must bail).
+          // Output flows into the inventory. The tick-top full-inventory guard
+          // already ensured there's room, so this only adds items.
           const isGatheringSkill = GATHERING_SKILLS.includes(state.skill)
-          const bankWhenFull = getLevelFromXP(stats.construction?.xp || 0) >= GATHER_AUTOBANK_CONSTRUCTION_LEVEL
-          const depositGathered = (inv, drops) => {
-            if (!canFit(inv, drops, itemsData)) {
-              if (bankWhenFull) {
-                const bankUpdates = {}
-                for (let i = 0; i < inv.length; i++) {
-                  if (!inv[i]) continue
-                  bankUpdates[inv[i].itemId] = (bankUpdates[inv[i].itemId] || 0) + inv[i].quantity
-                  inv[i] = null
-                }
-                if (Object.keys(bankUpdates).length > 0) updateBankDirect(bankUpdates)
-              } else {
-                updateInventory(inv)
-                skillingRef.current = { ...skillingState, active: false, stopped: true }
-                setSkilling(null)
-                setSelectedAction(null)
-                setSelectedAlchemyItem(null)
-                setActiveTask(null)
-                addToast('Inventory full!', 'error')
-                return false
-              }
-            }
+          const deposit = (inv, drops) => {
             for (const [itemId, qty] of Object.entries(drops)) {
-              addItem(inv, itemId, qty, itemsData[itemId]?.stackable || false)
+              if (qty > 0) addItem(inv, itemId, qty, itemsData[itemId]?.stackable || false)
             }
             return true
           }
@@ -286,10 +275,10 @@ export default function SkillingScreen({ initialSkillId, initialActionId, initia
           if (action.burnStopLevel) {
             const cookLevel = getLevelFromXP(stats.cooking?.xp || 0)
             if (checkBurn(cookLevel, { level: action.level, burnStopLevel: action.burnStopLevel })) {
-              addItem(newInv, 'burnt_food', 1, false)
+              if (!deposit(newInv, { burnt_food: 1 })) return
               updateInventory(newInv)
               grantXP(state.skill, 1) // Tiny XP for burn
-              setSkilling({ ...skillingState })
+              setSkilling({ ...skillingRef.current })
               return
             }
           }
@@ -329,22 +318,18 @@ export default function SkillingScreen({ initialSkillId, initialActionId, initia
             }
           } else if (action.product) {
             const qty = action.productQty || 1
+            // Output (gathered resources or produced goods) fills the inventory;
+            // a full inventory triggers a bank trip or stops the action.
+            const drops = { [action.product]: qty }
             if (isGatheringSkill) {
-              // Gathered resources fill the inventory; stop or bank-trip on full.
-              const drops = { [action.product]: qty }
               const bonus = rollGatherBonusDrops(state.skill)
               for (const [itemId, bonusQty] of Object.entries(bonus)) {
                 drops[itemId] = (drops[itemId] || 0) + bonusQty
               }
-              if (!depositGathered(newInv, drops)) return
-              updateInventory(newInv)
-              recordGameEvent?.({ kind: 'skill_gather', skill: state.skill, itemId: action.product, count: qty })
-            } else {
-              // Production output goes to the bank directly.
-              updateBankDirect({ [action.product]: qty })
-              if (action.materials) updateInventory(newInv)
-              recordGameEvent?.({ kind: 'skill_produce', skill: state.skill, itemId: action.product, count: qty })
             }
+            if (!deposit(newInv, drops)) return
+            updateInventory(newInv)
+            recordGameEvent?.({ kind: isGatheringSkill ? 'skill_gather' : 'skill_produce', skill: state.skill, itemId: action.product, count: qty })
           } else if (action.dropTable) {
             // Roll drops from drop table
             const drops = {}
@@ -356,15 +341,10 @@ export default function SkillingScreen({ initialSkillId, initialActionId, initia
                 drops[drop.itemId] = (drops[drop.itemId] || 0) + qty
               }
             }
-            if (isGatheringSkill) {
-              if (Object.keys(drops).length > 0) {
-                if (!depositGathered(newInv, drops)) return
-              }
-              updateInventory(newInv)
-            } else {
-              if (Object.keys(drops).length > 0) updateBankDirect(drops)
-              if (action.materials) updateInventory(newInv)
+            if (Object.keys(drops).length > 0) {
+              if (!deposit(newInv, drops)) return
             }
+            updateInventory(newInv)
           } else if (action.materials) {
             // Still update inventory if materials were consumed
             updateInventory(newInv)
@@ -973,10 +953,14 @@ Shop value: ×1.1
     sessionStats.push({ label: 'Tokens gained', value: formatNumber(skilling.totalDungeoneeringTokens || 0) })
   }
 
+  const inventoryBlocked = skilling.action?.category !== 'reward'
+    && skillingActionBlockedByFullInventory(skilling.action, inventory, itemsData)
+
   return (
     <SkillActivePanel
       skill={selectedSkill}
       title={skilling.action.name}
+      subtitle={inventoryBlocked ? 'Inventory full — paused' : null}
       progress={progress}
       producing={producedItem && <>
         <GameIcon item={producedItem} size={32} />

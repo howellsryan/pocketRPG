@@ -116,6 +116,7 @@ const sourceFiles = [
   'components/PlaceMapView.js', // -> game chunk (world map / place map only)
   'components/SlayerMasterModal.js', // -> game chunk (world map / place map only)
   'components/TravelPrompt.js',
+  'components/InventoryFullPrompt.js',
   'components/HPBar.js',
   'components/HitSplat.js',
   'components/ActivePotionBadges.js',

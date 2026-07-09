@@ -6,10 +6,9 @@ import SkillActionRow from '../components/SkillActionRow.jsx'
 import SkillActivePanel from '../components/SkillActivePanel.jsx'
 import { getActionProgress } from '../hooks/useActionTick.js'
 import { countItem, addItem } from '../engine/inventory.js'
-import { getLevelFromXP } from '../engine/experience.js'
+import { skillingActionBlockedByFullInventory } from '../engine/skilling.js'
 import { onTick } from '../engine/tick.js'
 import { markScreenTick } from '../engine/activityRunner.js'
-import { GATHER_AUTOBANK_CONSTRUCTION_LEVEL } from '../utils/constants.js'
 import minigamesData from '../data/minigames.json'
 import { GATHER_TASKS } from '../engine/gatherTasks.js'
 
@@ -46,7 +45,7 @@ function hasItemAnywhere(itemId, inventory, bank, equipment) {
 // when the player was sent here. `onStopBack` (from App): where Stop & Back
 // returns to — that origin, or the previous screen.
 export default function GatherScreen({ initialTaskId, idleResult, onBack, onStopBack }) {
-  const { inventory, bank, equipment, stats, updateInventory, updateBankDirect, addToast, setActiveTask, requestActivityStart, activeTask: globalActiveTask, itemsData, recordGameEvent } = useGame()
+  const { inventory, bank, equipment, stats, updateInventory, updateBankDirect, addToast, setActiveTask, requestActivityStart, activeTask: globalActiveTask, itemsData, recordGameEvent, signalInventoryFull, resolveInventoryFull } = useGame()
   const [category, setCategory] = useState('all')
   const [activeTask, setLocalTask] = useState(null)
   const taskRef = useRef(null)
@@ -76,6 +75,14 @@ export default function GatherScreen({ initialTaskId, idleResult, onBack, onStop
       if (!state || state.stopped) return
       markScreenTick()
 
+      // A full inventory pauses the gather and raises the global prompt; the
+      // check re-runs each tick so it resumes on its own once a slot frees.
+      if (skillingActionBlockedByFullInventory({ product: state.task.product, materials: state.task.materials }, inventory, itemsData)) {
+        signalInventoryFull()
+        return
+      }
+      resolveInventoryFull()
+
       // Handle reset from previous completion tick
       let ticksRemaining = state.ticksRemaining
       let justCompleted = state.justCompleted || false
@@ -94,7 +101,6 @@ export default function GatherScreen({ initialTaskId, idleResult, onBack, onStop
         const task = next.task
         const newInv = [...inventory]
         const bankUpdates = {}
-        let inventoryModified = false
 
         // Check if there are enough coins for GP cost
         if (task.gpCost) {
@@ -143,7 +149,6 @@ export default function GatherScreen({ initialTaskId, idleResult, onBack, onStop
                 newInv[i] = { ...slot, quantity: slot.quantity - take }
                 rem -= take
                 if (newInv[i].quantity <= 0) newInv[i] = null
-                inventoryModified = true
               }
               // Noted second
               for (let i = 0; i < newInv.length && rem > 0; i++) {
@@ -153,7 +158,6 @@ export default function GatherScreen({ initialTaskId, idleResult, onBack, onStop
                 newInv[i] = { ...slot, quantity: slot.quantity - take }
                 rem -= take
                 if (newInv[i].quantity <= 0) newInv[i] = null
-                inventoryModified = true
               }
             }
             if (fromBank > 0) bankUpdates[id] = -fromBank
@@ -173,44 +177,20 @@ export default function GatherScreen({ initialTaskId, idleResult, onBack, onStop
                 newInv[i] = { ...newInv[i], quantity: newInv[i].quantity - take }
                 rem -= take
                 if (newInv[i].quantity <= 0) newInv[i] = null
-                inventoryModified = true
               }
             }
           }
           if (fromBank > 0) bankUpdates.coins = (bankUpdates.coins || 0) - fromBank
         }
 
-        // Gathered items go to the inventory by default. When it fills, the
-        // Construction unlock turns a full inventory into a bank trip; without
-        // it, gathering stops so the player can manage their items.
+        // Gathered items go to the inventory. The tick-top full-inventory guard
+        // already ensured there's room, so this only adds the item.
         const product = task.product
         const qty = task.qty || 1
         const stackable = itemsData[product]?.stackable || false
-        const constructionLevel = getLevelFromXP(stats.construction?.xp || 0)
-        const bankWhenFull = constructionLevel >= GATHER_AUTOBANK_CONSTRUCTION_LEVEL
+        addItem(newInv, product, qty, stackable)
 
-        if (!addItem(newInv, product, qty, stackable)) {
-          if (bankWhenFull) {
-            // Bank trip: empty the inventory to the bank, then deposit.
-            for (let i = 0; i < newInv.length; i++) {
-              if (!newInv[i]) continue
-              bankUpdates[newInv[i].itemId] = (bankUpdates[newInv[i].itemId] || 0) + newInv[i].quantity
-              newInv[i] = null
-            }
-            addItem(newInv, product, qty, stackable)
-          } else {
-            // Inventory full — flush deductions, stop the action, and notify.
-            if (Object.keys(bankUpdates).length > 0) updateBankDirect(bankUpdates)
-            if (inventoryModified) updateInventory(newInv)
-            taskRef.current = { ...next, stopped: true }
-            setLocalTask(null)
-            setActiveTask(null)
-            addToast('Inventory full!', 'error')
-            return
-          }
-        }
-
-        // Update bank (material/gp deductions + any bank trip) and inventory.
+        // Update bank (material/gp deductions) and inventory.
         if (Object.keys(bankUpdates).length > 0) updateBankDirect(bankUpdates)
         updateInventory(newInv)
         recordGameEvent?.({ kind: 'skill_gather', itemId: product, count: qty })
@@ -397,9 +377,7 @@ export default function GatherScreen({ initialTaskId, idleResult, onBack, onStop
           { label: 'Items gathered', value: activeTask.totalItems },
           { label: 'Items / hr', value: elapsedHrs > 0 ? perHour.toLocaleString() : '—', accent: elapsedHrs > 0 },
         ]}
-        note={getLevelFromXP(stats.construction?.xp || 0) >= GATHER_AUTOBANK_CONSTRUCTION_LEVEL
-          ? '🏦 Items fill your inventory, then auto-bank when full.'
-          : '🎒 Items go to your inventory. Gathering stops when it\'s full.'}
+        note={'🎒 Items fill your inventory. When it\'s full you can bank and keep going.'}
         onBack={backFromActive}
         onStop={stopTask}
       />
