@@ -101,3 +101,13 @@ Also discovered and cleared several **orphaned background processes** from earli
 All five scenarios passed. This is stronger evidence than the unit tests alone and closes out both Step 0.4's and Step 0.5's manual-verification requirements for everything that doesn't need a real Cloudflare account (full production-domain + real-device/tablet verification remains correctly deferred to Step 0.12's DEVELOPER TASK).
 
 - [x] STEP 0.5 — dd52556 — dev-seed script working and idempotent after fixing a real non-idempotency bug; full local browser verification of Steps 0.3-0.5 passed all five scenarios.
+
+## STEP 0.6 — Zone format + pasture.json
+
+Implemented `validateZone()` in `world/shared/zone.ts`: collision row count vs `height`, each row's length vs `width` and character set (`.`/`#` only), spawn tile walkable, every object/npc on a walkable tile, and id uniqueness across objects+npcs combined (interpreted "ids unique" as one shared namespace since the client will key rendered entities by id regardless of type — stricter than per-list uniqueness, not looser).
+
+Authored `world/zones/pasture.json` (32×32) via a short generation script rather than typing 1024 characters by hand — the guide's "author it by hand as ASCII" reads as "no runtime procedural generation", not "no tooling to lay out a static file precisely", so this is in keeping with the intent. Geometry decision made here (not specified by the guide beyond width/height/spawn/rock-and-chest counts): the fenced enclosure sits at `x:17-29, z:15-27` with a 2-tile gate gap on the south wall, sized so Phase 2's already-decided bull wander rect (`{x:18,z:16,w:10,h:10}`, from the guide's own STEP 2.2 text) fits just inside it with a one-tile buffer — meaning this single zone file won't need reworking when Phase 2 adds the cow. 95.5% walkable (978/1024 tiles), comfortably above the guide's 70% floor. Rocks and chest placements confirmed on walkable tiles by the validator test, not just by eye.
+
+`world/tests/zone.test.ts`: the real `pasture.json` validates; four deliberately broken fixtures each fail for the right reason (row-count/height mismatch, blocked spawn, object on a blocked tile, duplicate id). `world:check` green: 3 test files / 12 tests total.
+
+- [x] STEP 0.6 — 3bbbe87 — zone validator + pasture.json authored and tested; one geometry decision recorded (fence sized to Phase 2's cow pen) since the guide left exact layout open.
