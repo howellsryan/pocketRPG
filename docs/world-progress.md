@@ -245,3 +245,11 @@ Production redeployed successfully; developer then deployed preview for the firs
 **Still outstanding before the button can be end-to-end tested from preview**: `JWT_SECRET` has not yet been confirmed set on the new `env.preview` deployment (`cd world && npx wrangler secret put JWT_SECRET --env preview`, same value as production) — without it every handoff exchange will fail signature verification. Also still outstanding: applying `migrations/0028_world.sql` to production D1, and connecting Workers Builds for auto-deploy. None of these are blocking issues found in the code — they're the remaining items from the DEVELOPER TASK list two steps up.
 
 - [x] STEP 0.12 deploy follow-through — cec6b44 — config-drift prompt diagnosed and explained (safe, pinned explicitly), preview deployed, WORLD_ORIGIN repointed at it. Full root gate green. JWT_SECRET for preview + production migration still outstanding before a real end-to-end button test will succeed.
+
+## Merged `preview` branch into this branch
+
+Developer's Workers Builds preview connection was pointed at the wrong root directory (building from repo root instead of `world/` — fixed via dashboard settings, not code) and had already squash-merged an earlier snapshot of this branch's `world/` work into `preview` via PR #718, alongside unrelated feature commits (leaderboard player profiles, inventory reordering/full-pack UI, Active Play while Skilling QoL, a changelog-automation tweak). Merged `origin/preview` into this branch to reconcile.
+
+One real conflict (`world/package.json`, add/add on the `"ci"` script line added after PR #718's snapshot — resolved by keeping it); everything else, including `world/package-lock.json`, auto-merged cleanly. Full root gate green post-merge (172 files/2242 tests, build, rebuild — both `pocketEnable3D`/`pocketWorldBetaEnabled` bakes confirmed correct, check:single) plus `world:check` green (4 files/29 tests).
+
+- [x] Merge preview — e46f66a — one trivial conflict resolved, full root gate + world:check green post-merge.
