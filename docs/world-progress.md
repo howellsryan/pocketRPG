@@ -46,3 +46,13 @@ Deviations from the guide (routine dependency/tooling fixes, not product decisio
 Files touched outside `world/`: `.gitignore` (added `world/node_modules/`, `world/client/dist/`, `world/.dev.vars` — technically already covered by the existing unanchored patterns, but kept explicit per the guide's literal instruction and for self-documentation), root `package.json` (`world:check` script).
 
 - [x] STEP 0.1 — a1b2f81 — scaffold complete, world:check + wrangler dev both verified locally; four routine tooling deviations recorded above, no product decisions involved.
+
+## STEP 0.2 — Migration for world tables
+
+Added `migrations/0028_world.sql`: `world_positions` (per-character checkpointed tile position) and `world_grants` (idempotency ledger for Phase 1's grant flush), plus its index. Matched the repo's existing migration style (`CREATE TABLE IF NOT EXISTS`, `REFERENCES characters(id)` FKs) rather than the guide's bare prose SQL, since the guide doesn't lock exact syntax — only table/column names, which are preserved exactly.
+
+Since `migrations/` was touched this required the FULL root CLAUDE.md §11 commit gate, not just `world:check`. Note: this sandbox had never had root `npm install` run — that was a one-time environment setup step, not a guide deviation. All four gate steps passed clean: `npm test` (170 files / 2228 tests), `npm run build`, `npm run rebuild`, `npm run check:single`.
+
+Per the guide, applying this migration to local or production D1 is deferred to the developer (DT-class A, bundled into STEP 0.12's deploy task) — not run in this session.
+
+- [x] STEP 0.2 — b09e7f2 — migration added, full root gate green, no discrepancies. D1 apply deferred to developer at deploy time.
