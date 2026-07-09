@@ -27,7 +27,6 @@
    - Never change gameplay semantics of existing `src/engine/*` code. Extraction/refactor commits must keep every existing test green and add equivalence tests.
    - Never modify the existing Pages deployment config, `build_single.cjs`, or `wrangler.toml` at repo root (adding a root npm script is allowed only where a step says so).
    - Never commit secrets, `.dev.vars`, `world/node_modules`, `world/client/dist`.
-   - Never add code paths for phone-sized screens; the product decision is desktop + tablet only.
 
 ---
 
@@ -35,8 +34,8 @@
 
 | Topic | Decision |
 |---|---|
-| Product | Point-and-click open-world companion client. **Desktop + tablet only.** Viewports narrower than 768px get a full-screen "Play on desktop or tablet" block page. |
-| Input | OSRS-style: **left-click = default action** on the thing under the cursor; **right-click (desktop) / long-press ≥500 ms (tablet)** opens a context menu of all actions. Spec in §8. |
+| Product | Point-and-click open-world companion client. **All viewport sizes, including mobile** (reversed 2026-07 — the original desktop/tablet-only gate and its block page have been removed by developer decision). Known gap: `updateCamera`'s zoom only responds to `wheel`, which mobile browsers never fire — no pinch/gesture zoom exists yet. |
+| Input | OSRS-style: **left-click = default action** on the thing under the cursor; **right-click (desktop) / long-press ≥500 ms (touch)** opens a context menu of all actions. Spec in §8. |
 | Client stack | Vite + TypeScript + **three.js (npm package, pinned to the same version as `public/vendor/three/`)** . No React/Preact in the world client — plain TS + DOM for UI panels. |
 | Server stack | One Cloudflare **Worker** (`pocketrpg-world`) serving static client assets + `/api/world/*` HTTP + a **Durable Object class `WorldZone`** built on **`partyserver`** (npm, MIT, Cloudflare-maintained). Client WS via **`partysocket`**. |
 | Tick | 600 ms, same as PocketRPG. In-memory `setInterval` in the DO while ≥1 player connected; interval stopped when zone empties. |

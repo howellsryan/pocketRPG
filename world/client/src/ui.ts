@@ -20,16 +20,6 @@ export function hideOverlay(): void {
   if (scene) scene.style.display = 'block'
 }
 
-export function showMessage(text: string): void {
-  const el = appEl()
-  if (el) el.textContent = text
-  showOverlay()
-}
-
-export function showViewportBlock(): void {
-  showMessage('PocketRPG World needs a desktop or tablet.')
-}
-
 export function showLoginRequired(pocketRpgUrl: string): void {
   const el = appEl()
   if (el) {

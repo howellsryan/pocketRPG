@@ -1,12 +1,5 @@
-import {
-  exchangeHandoff,
-  getStoredSession,
-  isViewportTooNarrow,
-  parseHandoffFromHash,
-  pocketRpgUrl,
-  type WorldSession,
-} from './auth'
-import { hideOverlay, showLoginRequired, showViewportBlock } from './ui'
+import { exchangeHandoff, getStoredSession, parseHandoffFromHash, pocketRpgUrl, type WorldSession } from './auth'
+import { hideOverlay, showLoginRequired } from './ui'
 import { connect, onMessage, send } from './net'
 import { clampZoom, createCamera, createGround, createLights, createRenderer, createScene, updateCamera } from './scene'
 import { createEntity, createHeroMesh, setEntityTarget, updateEntity, type Entity } from './entities'
@@ -14,14 +7,6 @@ import { createClickMarker, setupClickToMove, showClickMarker, updateClickMarker
 import type { ServerMessage } from '../../shared/protocol'
 
 const ZONE_ID = 'pasture'
-
-function checkViewport(): boolean {
-  if (isViewportTooNarrow(screen.width, window.innerWidth)) {
-    showViewportBlock()
-    return false
-  }
-  return true
-}
 
 function enterWorld(session: WorldSession): void {
   const socket = connect(window.location.host, ZONE_ID)
@@ -98,8 +83,6 @@ function enterWorld(session: WorldSession): void {
 }
 
 async function boot(): Promise<void> {
-  if (!checkViewport()) return
-
   const handoff = parseHandoffFromHash(window.location.hash)
   if (handoff) {
     history.replaceState(null, '', window.location.pathname + window.location.search)
@@ -122,7 +105,5 @@ async function boot(): Promise<void> {
 
   showLoginRequired(pocketRpgUrl())
 }
-
-window.addEventListener('resize', checkViewport)
 
 boot()

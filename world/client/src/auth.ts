@@ -1,7 +1,6 @@
 export type WorldSession = { token: string; character: { id: number; name: string } }
 
 const STORAGE_KEY = 'world_session'
-const MIN_VIEWPORT_WIDTH = 768
 const POCKETRPG_PROD_HOSTNAME = 'world.pocketrpg.co.uk'
 const POCKETRPG_PROD_URL = 'https://pocketrpg.co.uk'
 const POCKETRPG_PREVIEW_URL = 'https://preview.pocketrpg.pages.dev'
@@ -28,11 +27,6 @@ export function storeSession(session: WorldSession): void {
 export function parseHandoffFromHash(hash: string): string | null {
   const match = /^#handoff=(.+)$/.exec(hash)
   return match ? decodeURIComponent(match[1]) : null
-}
-
-/** Whether the current viewport is too narrow for the point-and-click client. Pure — takes the two widths as args. */
-export function isViewportTooNarrow(screenWidth: number, innerWidth: number): boolean {
-  return Math.min(screenWidth, innerWidth) < MIN_VIEWPORT_WIDTH
 }
 
 export async function exchangeHandoff(handoff: string): Promise<WorldSession> {

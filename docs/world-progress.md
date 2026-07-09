@@ -253,3 +253,13 @@ Developer's Workers Builds preview connection was pointed at the wrong root dire
 One real conflict (`world/package.json`, add/add on the `"ci"` script line added after PR #718's snapshot — resolved by keeping it); everything else, including `world/package-lock.json`, auto-merged cleanly. Full root gate green post-merge (172 files/2242 tests, build, rebuild — both `pocketEnable3D`/`pocketWorldBetaEnabled` bakes confirmed correct, check:single) plus `world:check` green (4 files/29 tests).
 
 - [x] Merge preview — e46f66a — one trivial conflict resolved, full root gate + world:check green post-merge.
+
+## Product decision reversed: mobile unlocked
+
+Developer explicitly reversed the guide's original "desktop + tablet only" decision ("Can you please unlock world for mobile"). Removed the viewport gate entirely rather than lowering its threshold, since the ask was to unlock mobile, not to admit slightly-narrower tablets: deleted `isViewportTooNarrow`/`MIN_VIEWPORT_WIDTH` from `auth.ts`, `checkViewport()` and its `resize` listener from `main.ts`, and `showViewportBlock`/`showMessage` from `ui.ts` (the latter had no other caller once `showViewportBlock` was gone, so it was dead code, not just the gate itself — removed per the same "delete completely if unused" rule this guide already follows elsewhere). Updated `world/tests/auth.test.ts` (27 tests now, -2) and struck the corresponding hard-prohibition line and DECIDED row in `docs/open-world-build-guide.md` §0/§1 so the guide doesn't contradict a decision the developer already made — future phases should treat "all viewport sizes" as the live product decision, not desktop/tablet-only.
+
+**Flagged, not silently fixed**: `updateCamera`'s zoom only responds to a `wheel` event listener (`main.ts`), which mobile browsers never fire under normal touch input — there is currently no pinch/gesture zoom, so mobile users can pan (click-to-move already works via Pointer Events, which unify touch/mouse/pen) but cannot zoom at all. Left this as a known gap rather than adding multi-touch gesture handling unprompted — that's materially more scope than "remove the gate" and should be a separate ask if wanted. Phase 2's right-click-equivalent (long-press ≥500ms) was already speced as touch-generic, not tablet-specific, so no change needed there — it just wasn't built yet (Phase 2 hasn't started).
+
+`world:check` green (4 test files / 27 tests). Only `world/` + this guide touched — no `src/`/`functions/`/`migrations/` changes, so `world:check` alone satisfies the commit gate.
+
+- [x] Mobile unlocked — viewport gate and its dead-code dependents removed, guide updated to match, pinch-zoom gap flagged as a known follow-up (not fixed). `world:check` green.
