@@ -24,6 +24,7 @@
     "sync:three": "node scripts/sync-three-vendor.mjs",
     "claude:headroom": "bash scripts/headroom-claude.sh",
     "ci": "npm run build && npm run rebuild && npm run check:single",
+    "world:check": "cd world && npm run typecheck && npm test && npm run build",
     "predeploy": "npm run build",
     "deploy": "gh-pages -d dist"
   },

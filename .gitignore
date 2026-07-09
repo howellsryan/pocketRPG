@@ -10,3 +10,6 @@ www/
 /game-*.js
 .tmp/
 public/fonts/
+world/node_modules/
+world/client/dist/
+world/.dev.vars
