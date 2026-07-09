@@ -2,15 +2,38 @@
   "name": "pocketrpg-world",
   "main": "server/index.ts",
   "compatibility_date": "2026-07-01",
+  // Production (top-level, deployed by plain `wrangler deploy`). `migrations`
+  // (the Durable Object class migration tag) is a top-level-only key — it
+  // must NOT be repeated inside env.preview below, or wrangler rejects it.
   "assets": { "directory": "client/dist", "binding": "ASSETS" },
   "durable_objects": { "bindings": [{ "name": "WorldZone", "class_name": "WorldZone" }] },
   "migrations": [{ "tag": "v1", "new_sqlite_classes": ["WorldZone"] }],
   "d1_databases": [
     {
       "binding": "DB",
-      "database_name": "pocketrpg-preview",
-      "database_id": "59233295-f492-4113-94da-90034d84a6a4",
+      "database_name": "pocketrpg",
+      "database_id": "439e810b-8dce-4697-94c2-a7392520ad8f",
       "migrations_dir": "../migrations"
     }
-  ]
+  ],
+  // Preview environment, deployed with `wrangler deploy --env preview` (its
+  // own Worker service, `pocketrpg-world-preview`, with its own workers.dev
+  // URL — Cloudflare does not auto-suffix custom domains, only the default
+  // workers.dev one). Bindings (assets/durable_objects/d1_databases) are
+  // NOT inherited from the top level in wrangler — every binding must be
+  // redeclared here even though only the D1 target actually differs.
+  "env": {
+    "preview": {
+      "assets": { "directory": "client/dist", "binding": "ASSETS" },
+      "durable_objects": { "bindings": [{ "name": "WorldZone", "class_name": "WorldZone" }] },
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "pocketrpg-preview",
+          "database_id": "59233295-f492-4113-94da-90034d84a6a4",
+          "migrations_dir": "../migrations"
+        }
+      ]
+    }
+  }
 }

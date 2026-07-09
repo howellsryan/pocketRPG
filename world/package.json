@@ -4,13 +4,14 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "wrangler dev",
+    "dev": "wrangler dev --env preview",
     "dev:client": "vite --config client/vite.config.ts",
     "dev:seed": "node scripts/dev-seed.mjs",
     "build": "vite build --config client/vite.config.ts",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "deploy": "wrangler deploy"
+    "deploy": "wrangler deploy",
+    "deploy:preview": "wrangler deploy --env preview"
   },
   "dependencies": {
     "partyserver": "0.5.8",

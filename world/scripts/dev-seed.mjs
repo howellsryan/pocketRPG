@@ -39,8 +39,11 @@ function runWrangler(args) {
 // this script is safe even though several migrations use non-idempotent
 // `ALTER TABLE ADD COLUMN`. `migrations_dir` in wrangler.jsonc points this
 // at the repo-root `migrations/` folder shared with the main Pages project.
+// `--env preview` is required now that pocketrpg-preview only exists inside
+// wrangler.jsonc's env.preview block (D1 bindings aren't inherited from the
+// top-level/production config) — this is local-only dev seeding, never prod.
 console.log('dev-seed: applying migrations to local D1...')
-runWrangler(['d1', 'migrations', 'apply', 'pocketrpg-preview', '--local'])
+runWrangler(['d1', 'migrations', 'apply', 'pocketrpg-preview', '--env', 'preview', '--local'])
 
 const SKILL_IDS = [
   'mining', 'woodcutting', 'fishing', 'smithing', 'cooking', 'fletching', 'crafting',
@@ -75,7 +78,7 @@ INSERT INTO saves (character_id, save_blob, save_data, updated_at, save_revision
 `.trim()
 
 console.log('dev-seed: seeding identity + character + save...')
-runWrangler(['d1', 'execute', 'pocketrpg-preview', '--local', `--command=${seedSql}`])
+runWrangler(['d1', 'execute', 'pocketrpg-preview', '--env', 'preview', '--local', `--command=${seedSql}`])
 
 const jwtSecret = readJwtSecret()
 const { signJWT } = await import(path.join(repoRoot, 'functions', '_lib', 'jwt.js'))
