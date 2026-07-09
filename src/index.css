@@ -2686,6 +2686,7 @@ html, body, #app {
   border: 1px solid var(--fm-royal); box-shadow: 0 2px 8px -3px #000; }
 .wm-travelbar-tele:hover { filter: brightness(1.08); }
 .wm-travelbar-tele:active { transform: translateY(1px); }
+.wm-travelbar-tele.is-locked { cursor: default; color: var(--fm-ink-faint, var(--color-parchment)); background: var(--fm-parch-hi, transparent); border-color: var(--fm-rule, var(--color-void-border)); box-shadow: none; filter: none; transform: none; }
 
 .wm-travel-btn { width: 100%; min-height: 44px; margin: 0 0 16px; font-family: var(--font-display); font-weight: 700;
   font-size: 15px; color: var(--color-ink); cursor: pointer; border-radius: 8px;

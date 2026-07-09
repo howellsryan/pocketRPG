@@ -9,8 +9,8 @@ describe('createTravelTask', () => {
     expect(task.from).toBe('lumbright')
     expect(task.dest).toBe('portsarin')
     expect(task.path).toEqual(['lumbright', 'draynar', 'portsarin'])
-    expect(task.totalTicks).toBe(18)
-    expect(task.ticksRemaining).toBe(18)
+    expect(task.totalTicks).toBe(90)
+    expect(task.ticksRemaining).toBe(90)
   })
 
   it('returns null for travelling to the place you are already at', () => {
@@ -21,7 +21,7 @@ describe('createTravelTask', () => {
     const task = createTravelTask('atlantis', 'draynar')!
     expect(task.from).toBe('lumbright')
     expect(task.dest).toBe('draynar')
-    expect(task.totalTicks).toBe(8)
+    expect(task.totalTicks).toBe(40)
   })
 
   it('returns null for an unreachable destination', () => {
@@ -37,19 +37,19 @@ describe('createTravelTask', () => {
 })
 
 describe('advanceTravel', () => {
-  const task = createTravelTask('lumbright', 'draynar')! // 8 ticks
+  const task = createTravelTask('lumbright', 'draynar')! // 40 ticks
 
   it('decrements ticksRemaining by elapsed ticks (600ms each)', () => {
     const res = advanceTravel(task, 3 * 600)
     expect(res.arrived).toBe(false)
-    expect(res.ticksRemaining).toBe(5)
-    expect(res.task.ticksRemaining).toBe(5)
+    expect(res.ticksRemaining).toBe(37)
+    expect(res.task.ticksRemaining).toBe(37)
     // original task is not mutated
-    expect(task.ticksRemaining).toBe(8)
+    expect(task.ticksRemaining).toBe(40)
   })
 
   it('arrives once elapsed meets or exceeds the remaining ticks', () => {
-    const res = advanceTravel(task, 8 * 600)
+    const res = advanceTravel(task, 40 * 600)
     expect(res.arrived).toBe(true)
     expect(res.ticksRemaining).toBe(0)
   })
@@ -63,7 +63,7 @@ describe('advanceTravel', () => {
   it('partial-tick elapsed does not advance', () => {
     const res = advanceTravel(task, 599)
     expect(res.arrived).toBe(false)
-    expect(res.ticksRemaining).toBe(8)
+    expect(res.ticksRemaining).toBe(40)
   })
 
   it('is a no-op for non-travel tasks', () => {
@@ -74,25 +74,25 @@ describe('advanceTravel', () => {
 
 describe('travelFraction', () => {
   it('reports progress 0..1 from ticksRemaining', () => {
-    const task = createTravelTask('lumbright', 'draynar')! // 8 ticks
+    const task = createTravelTask('lumbright', 'draynar')! // 40 ticks
     expect(travelFraction(task)).toBe(0)
-    expect(travelFraction({ ...task, ticksRemaining: 4 })).toBeCloseTo(0.5)
+    expect(travelFraction({ ...task, ticksRemaining: 20 })).toBeCloseTo(0.5)
     expect(travelFraction({ ...task, ticksRemaining: 0 })).toBe(1)
   })
 })
 
 describe('travelCancelLocation', () => {
-  // lumbright → draynar (8t) → portsarin (10t), 18 ticks total
+  // lumbright → draynar (40t) → portsarin (50t), 90 ticks total
   const task = createTravelTask('lumbright', 'portsarin')!
 
   it('returns the origin before the first leg completes', () => {
     expect(travelCancelLocation(task)).toBe('lumbright')
-    expect(travelCancelLocation({ ...task, ticksRemaining: 11 })).toBe('lumbright') // 7 done
+    expect(travelCancelLocation({ ...task, ticksRemaining: 55 })).toBe('lumbright') // 35 done
   })
 
   it('snaps to the last node fully reached, never forward', () => {
-    expect(travelCancelLocation({ ...task, ticksRemaining: 10 })).toBe('draynar') // 8 done, leg 1 complete
-    expect(travelCancelLocation({ ...task, ticksRemaining: 1 })).toBe('draynar') // 17 done, mid leg 2
+    expect(travelCancelLocation({ ...task, ticksRemaining: 50 })).toBe('draynar') // 40 done, leg 1 complete
+    expect(travelCancelLocation({ ...task, ticksRemaining: 5 })).toBe('draynar') // 85 done, mid leg 2
   })
 
   it('returns the destination when the journey is complete', () => {
@@ -116,8 +116,8 @@ describe('pathLegs', () => {
   it('splits a path into legs with their edge tick weights', () => {
     const legs = pathLegs(['lumbright', 'draynar', 'portsarin'])
     expect(legs).toEqual([
-      { from: 'lumbright', to: 'draynar', ticks: 8 },
-      { from: 'draynar', to: 'portsarin', ticks: 10 },
+      { from: 'lumbright', to: 'draynar', ticks: 40 },
+      { from: 'draynar', to: 'portsarin', ticks: 50 },
     ])
   })
   it('returns an empty array for a single-node or invalid path', () => {

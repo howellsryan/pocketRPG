@@ -74,14 +74,14 @@ describe('shortestPath', () => {
 
   it('uses a direct edge when it is cheapest', () => {
     const res = shortestPath('lumbright', 'draynar')
-    expect(res).toEqual({ path: ['lumbright', 'draynar'], ticks: 8 })
+    expect(res).toEqual({ path: ['lumbright', 'draynar'], ticks: 40 })
   })
 
   it('composes a multi-leg route via the cheapest path', () => {
-    // lumbright→draynar (8) + draynar→portsarin (10) = 18, cheaper than routing
-    // through faloden (lumbright→draynar→faloden→portsarin = 8+14+12 = 34).
+    // lumbright→draynar (40) + draynar→portsarin (50) = 90, cheaper than routing
+    // through faloden (lumbright→draynar→faloden→portsarin = 40+70+60 = 170).
     const res = shortestPath('lumbright', 'portsarin')
-    expect(res).toEqual({ path: ['lumbright', 'draynar', 'portsarin'], ticks: 18 })
+    expect(res).toEqual({ path: ['lumbright', 'draynar', 'portsarin'], ticks: 90 })
   })
 
   it('is symmetric (undirected graph)', () => {

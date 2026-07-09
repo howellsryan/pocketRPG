@@ -3,7 +3,17 @@ import { useGame } from '../state/gameState.jsx'
 import { getPlace, shortestPath } from '../engine/world.js'
 import { describeActivity } from '../engine/worldContent.js'
 import { SCREENS } from '../utils/constants.js'
-import { formatActionDuration } from '../utils/formatters.js'
+
+// Travel durations round to the nearest whole second (unlike the decimal-second
+// formatActionDuration used for skilling/magic actions) — ticks never divide
+// evenly into 600ms, and fractional seconds read as noise on a travel ETA.
+const formatTravelDuration = (ticks) => {
+  const s = Math.round((Number(ticks) || 0) * 0.6)
+  if (s < 60) return `${s}s`
+  const m = Math.floor(s / 60)
+  const r = s % 60
+  return r ? `${m}m ${r}s` : `${m}m`
+}
 
 /**
  * Travel confirm / location picker. Rendered globally from App; shows itself when a gated
@@ -51,7 +61,7 @@ export default function TravelPrompt({ onNavigate, originScreen, originScreenDat
           {options.map((o) => (
             <button class="wm-tp-option" key={o.id} onClick={() => chooseDestination(o.id)}>
               <span class="wm-tp-place">{o.place?.icon} {o.place?.name || o.id}</span>
-              <span class="wm-tp-ticks">{o.ticks != null ? formatActionDuration(o.ticks) : '—'}</span>
+              <span class="wm-tp-ticks">{o.ticks != null ? formatTravelDuration(o.ticks) : '—'}</span>
             </button>
           ))}
         </div>
