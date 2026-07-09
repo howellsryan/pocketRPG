@@ -1,0 +1,18 @@
+Source verification
+===================
+
+Asset: Nature Kit
+Creator/distributor: Kenney
+Source URL: https://kenney.nl/assets/nature-kit
+Source download URL: https://kenney.nl/media/pages/assets/nature-kit/8334871c74-1677698939/kenney_nature-kit.zip
+Source page category: 3D
+Source page file count: 330
+GLB model count found in source download: 329
+Source page license: Creative Commons CC0
+Included source license file: License_Kenney.txt
+Checked date: 2026-05-09 JST
+
+Eclair Assets note:
+This package reorganizes the source download into a GLB-first folder structure with
+a model list, source notes, and one reference render per GLB model. It does not
+claim to be an official Kenney release.
