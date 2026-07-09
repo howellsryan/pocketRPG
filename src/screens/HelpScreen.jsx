@@ -2,9 +2,24 @@ import Card from '../components/Card.jsx'
 import GameIcon from '../components/GameIcon.jsx'
 import { useGame } from '../state/gameState.jsx'
 import { SETTINGS_NAV_LINKS } from '../components/navTabs.js'
+import { api } from '../cloud/api.js'
+
+// Placeholder until STEP 0.12's deploy task pastes the real workers.dev URL
+// back in (or the world.pocketrpg.co.uk custom domain, once DNS is set).
+const WORLD_ORIGIN = 'https://pocketrpg-world.workers.dev'
 
 export default function HelpScreen({ onNavigate }) {
   const { showInfoToasts, updateShowInfoToasts } = useGame()
+  const worldBetaEnabled = localStorage.getItem('pocketWorldBeta') === '1'
+
+  async function handleEnterWorld() {
+    try {
+      const { handoff } = await api.requestWorldHandoff()
+      window.open(`${WORLD_ORIGIN}/#handoff=${handoff}`, '_blank')
+    } catch (err) {
+      console.error('[PocketRPG][World] failed to get handoff token', err)
+    }
+  }
 
   return (
     <div class="forge-shell h-full flex flex-col">
@@ -55,6 +70,22 @@ export default function HelpScreen({ onNavigate }) {
             ))}
           </div>
         </Card>
+
+        {worldBetaEnabled && (
+          <Card className="p-2">
+            <button
+              type="button"
+              onClick={handleEnterWorld}
+              class="flex items-center gap-3 w-full min-h-[48px] px-2 bg-transparent border-0 text-left cursor-pointer active:opacity-70"
+            >
+              <span class="w-11 flex justify-center items-center flex-shrink-0">
+                <GameIcon iconKey="globe" size={40} />
+              </span>
+              <span class="flex-1 text-sm font-semibold text-[var(--color-parchment)]">Enter World (beta)</span>
+              <span class="text-[var(--color-parchment)] opacity-40 text-lg leading-none pr-1">›</span>
+            </button>
+          </Card>
+        )}
       </div>
     </div>
   )
