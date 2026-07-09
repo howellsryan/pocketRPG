@@ -2906,7 +2906,7 @@ function GameApp() {
       {/* gf-shell/gf-main: mobile-only carved-wood chrome around the frame
           rails + content panel (index.css); inert at md and up. */}
       <div class="gf-shell flex-1 flex flex-col min-w-0 min-h-0">
-        <Header credits={credits} isCloudAccount={isCloudAccount} demo={demoMode} onLockedFeature={notifyDemoLocked} onSkip1h={isCloudAccount ? handleSkip1h : null} onBuyCredits={() => setShowBuyCreditsModal(true)} onDailyTasks={() => setShowDailyTasksModal(true)} dailyTasksCompleted={(dailyTaskStates || []).filter(t => t.completed).length} dailyTasksTotal={5} skipMode={skipMode} raidSkipCost={raidSkipCost} />
+        <Header credits={credits} isCloudAccount={isCloudAccount} demo={demoMode} onLockedFeature={notifyDemoLocked} onSkip1h={isCloudAccount ? handleSkip1h : null} onBuyCredits={() => setShowBuyCreditsModal(true)} onDailyTasks={() => setShowDailyTasksModal(true)} dailyTasksCompleted={(dailyTaskStates || []).filter(t => t.completed).length} dailyTasksTotal={5} skipMode={skipMode} raidSkipCost={raidSkipCost} onNavigate={navigate} />
         {/* OSRS-style mobile frame: icon rails above and below the content
             panel replace the SideNav/Header chrome on small screens. */}
         <GameFrameBar position="top" active={screen} onNavigate={(s) => navigate(s)} isInCombat={isInPvpMatch} onDisabledClick={() => addToast('⚔️ Cannot navigate during PvP combat!', 'warning')} demo={demoMode} lockedScreens={CLOUD_ONLY_SCREENS} onLockedClick={notifyDemoLocked} onLockedFeature={notifyDemoLocked} />

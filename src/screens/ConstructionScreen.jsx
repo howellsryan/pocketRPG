@@ -11,16 +11,14 @@ import { emptySession } from '../engine/activitySession.js'
 import { countItem, removeItemUnnotedFirst } from '../engine/inventory.js'
 import { onTick } from '../engine/tick.js'
 import { formatNumber } from '../utils/helpers.js'
-import { GATHER_AUTOBANK_CONSTRUCTION_LEVEL } from '../utils/constants.js'
 import itemsData from '../data/items.json'
-import { recordCollectionLogDrop } from '../cloud/collectionLog.js'
-import { BUILDING_ACTIONS, UNLOCKABLES } from '../engine/construction.js'
+import { BUILDING_ACTIONS } from '../engine/construction.js'
 
 export default function ConstructionScreen({ onBack, onStopBack }) {
   const {
     stats, inventory, bank,
     grantXP, updateInventory, updateBankDirect, addToast,
-    unlockedFeatures, unlockFeature, setActiveTask, requestActivityStart, activeTask
+    setActiveTask, requestActivityStart, activeTask
   } = useGame()
 
   const constructionLevel = getLevelFromXP(stats.construction?.xp || 0)
@@ -149,12 +147,6 @@ export default function ConstructionScreen({ onBack, onStopBack }) {
     return unsub
   }, [skilling?.active])
 
-  const handleUnlock = (unlockable) => {
-    unlockFeature(unlockable.id)
-    recordCollectionLogDrop({ itemId: unlockable.id, sourceType: 'skilling', sourceId: 'construction' })
-    addToast(`${unlockable.icon} ${unlockable.name} complete!`, 'success')
-  }
-
   if (skilling && skilling.active) {
     const progress = 1 - (skilling.ticksRemaining / skilling.action.ticks)
     const xpPerHr = skilling.startedAt && (Date.now() - skilling.startedAt) > 5000
@@ -219,81 +211,9 @@ export default function ConstructionScreen({ onBack, onStopBack }) {
         })}
       </div>
 
-      <h3 class="font-[var(--font-display)] text-xs font-bold text-[var(--color-parchment)] opacity-60 uppercase tracking-wider mb-2">
-        Unlockables
-      </h3>
-      <div class="space-y-2">
-        {UNLOCKABLES.map(unlockable => {
-          const available = constructionLevel >= unlockable.level
-          const alreadyDone = unlockedFeatures.has(unlockable.id)
-          return (
-            <div
-              key={unlockable.id}
-              class={`p-3 rounded-xl border ${
-                alreadyDone
-                  ? 'bg-[var(--fm-parch-hi)] border-[var(--color-emerald)]'
-                  : available
-                    ? 'bg-[var(--color-void-light)] border-[var(--color-void-border)]'
-                    : 'bg-[var(--color-void)] border-[var(--color-void-border)] opacity-40'
-              }`}
-            >
-              <div class="flex items-start justify-between gap-2">
-                <div class="flex-1 min-w-0">
-                  <div class="flex items-center gap-1.5 mb-0.5">
-                    <span class="text-base">{unlockable.icon}</span>
-                    <div class="text-sm font-semibold text-[var(--color-parchment)]">{unlockable.name}</div>
-                  </div>
-                  <div class="text-[10px] text-[var(--color-parchment)] opacity-50">
-                    Lv {unlockable.level} required · {unlockable.description}
-                  </div>
-                </div>
-                {alreadyDone ? (
-                  <span class="text-xs text-green-400 font-semibold shrink-0 pt-0.5">✓ Unlocked</span>
-                ) : (
-                  <button
-                    onClick={() => available && handleUnlock(unlockable)}
-                    disabled={!available}
-                    class={`shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
-                      available
-                        ? 'bg-[var(--color-gold)] text-[#0f0f0f] active:opacity-80'
-                        : 'bg-[var(--color-void-light)] text-[var(--fm-ink-faint)] cursor-not-allowed'
-                    }`}
-                  >
-                    {available ? 'Create' : `Lv ${unlockable.level}`}
-                  </button>
-                )}
-              </div>
-            </div>
-          )
-        })}
-      </div>
-
-      <h3 class="font-[var(--font-display)] text-xs font-bold text-[var(--color-parchment)] opacity-60 uppercase tracking-wider mb-2 mt-4">
-        Passive Perks
-      </h3>
-      <div class="space-y-2">
-        {(() => {
-          const unlocked = constructionLevel >= GATHER_AUTOBANK_CONSTRUCTION_LEVEL
-          return (
-            <div class={`p-3 rounded-xl border ${unlocked ? 'bg-[var(--fm-parch-hi)] border-[var(--color-emerald)]' : 'bg-[var(--color-void)] border-[var(--color-void-border)] opacity-40'}`}>
-              <div class="flex items-start justify-between gap-2">
-                <div class="flex-1 min-w-0">
-                  <div class="flex items-center gap-1.5 mb-0.5">
-                    <span class="text-base">🏦</span>
-                    <div class="text-sm font-semibold text-[var(--color-parchment)]">Auto-bank Gathering</div>
-                  </div>
-                  <div class="text-[10px] text-[var(--color-parchment)] opacity-50">
-                    Lv 80 required · Gathered resources auto-bank when your inventory fills, so gathering never stops.
-                  </div>
-                </div>
-                <span class={`text-xs font-semibold shrink-0 pt-0.5 ${unlocked ? 'text-green-400' : 'text-[var(--fm-ink-faint)]'}`}>
-                  {unlocked ? '✓ Unlocked' : 'Lv 80'}
-                </span>
-              </div>
-            </div>
-          )
-        })()}
-      </div>
+      <p class="text-[10px] text-[var(--color-parchment)] opacity-40 text-center mt-2">
+        Construction unlockables and passive perks have moved to Character Unlocks.
+      </p>
     </div>
   )
 }
