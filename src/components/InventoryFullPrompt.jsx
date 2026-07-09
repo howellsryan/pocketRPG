@@ -19,8 +19,7 @@ export default function InventoryFullPrompt({ open, onBank, onGoToInventory, onC
           onClick={onBank}
           class="w-full min-h-[44px] py-3 rounded-xl flex items-center justify-center gap-2 cursor-pointer bg-[rgba(212,160,23,0.12)] border-[1.5px] border-[var(--color-gold)] active:opacity-80"
         >
-          <span class="text-[14px]">🏦</span>
-          <span class="text-[15px] font-semibold text-[var(--color-gold)]">Auto Deposit</span>
+          <span class="text-[15px] font-semibold text-[var(--color-parchment)]">Auto Deposit</span>
         </button>
         <button
           type="button"
