@@ -44,7 +44,7 @@ import { hasEpicLootDrop, getItemUnitValue, getLootTotalValue } from '../utils/i
 import { splatsFromCombatEvents, HIT_SPLAT_DURATION_MS } from '../utils/hitSplats.js'
 import { HitSplatLayer } from '../components/HitSplat.jsx'
 import CombatArena3D from '../components/CombatArena3D.jsx'
-import { getMonsterModel, getCharacterAssetPath, getWeaponPlacement, getCharacterModel } from '../utils/equipModels.js'
+import { getMonsterModel, getCharacterAssetPath, getWeaponPlacement, getGearPlacements, getCharacterModel } from '../utils/equipModels.js'
 import { canRender3D } from '../utils/three3d.js'
 import ActivePotionBadges from '../components/ActivePotionBadges.jsx'
 import { getSlayerTaskXpForKill, resolveMonsterRewardData } from '../engine/slayerRewards.js'
@@ -2248,6 +2248,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       characterPath={getCharacterAssetPath()}
       clips={{ idle: heroSpec.idleClip, attack: heroSpec.attackClip, special: heroSpec.specialClip }}
       weapon={equipment?.weapon ? getWeaponPlacement(equipment.weapon.itemId) : null}
+      gear={getGearPlacements(equipment)}
       attackSignal={arenaSignal}
       monsterHP={{ current: Math.max(0, Math.round(combat.monster.currentHP)), max: combat.monster.hitpoints }}
       playerHP={{ current: Math.max(0, Math.round(currentHP)), max: getMaxHP() }}

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'preact/hooks'
 import HPBar from './HPBar.jsx'
 import { HitSplatLayer } from './HitSplat.jsx'
 import { loadThree, canRender3D, assetUrl } from '../utils/three3d.js'
-import { disposeObject } from './Model3DViewer.jsx'
+import { disposeObject, attachGearList, setupHideMask } from './Model3DViewer.jsx'
 
 // Phase-2 combat arena (docs/3d-gameplay-investigation.md): the rigged hero
 // (equipped weapon on the hand bone) faces the monster's model in a side-on
@@ -34,6 +34,7 @@ function CombatArena3D({
   characterPath,
   clips = {},
   weapon = null,
+  gear = null,
   attackSignal = null,
   monsterHP,
   playerHP,
@@ -63,6 +64,7 @@ function CombatArena3D({
     const st = {
       disposed: false, raf: null, THREE: null, renderer: null, scene: null, camera: null,
       mixer: null, monsterMixer: null, clock: null, hero: null, monster: null, bones: {}, weapon: null,
+      gear: [], gearToken: 0, headMaskCtl: null, heroSkinned: null,
       idleAction: null, attackAction: null, specialAction: null,
       monsterIdleAction: null, monsterAttackAction: null, timers: new Set(),
       // Procedural timelines: { t, dur } advanced by the render loop.
@@ -170,7 +172,13 @@ function CombatArena3D({
       st.monster.position.x = st.monsterBaseX
       st.heroMats = collectMats(st.hero)
       st.monsterMats = collectMats(st.monster)
-      st.hero.traverse((o) => { if (o.isBone) st.bones[o.name] = o })
+      let heroSkinnedMesh = null
+      st.hero.traverse((o) => {
+        if (o.isBone) st.bones[o.name] = o
+        if (o.isSkinnedMesh && !heroSkinnedMesh) heroSkinnedMesh = o
+      })
+      st.heroSkinned = heroSkinnedMesh
+      st.headMaskCtl = setupHideMask(THREE, heroSkinnedMesh)
 
       // Frame both actors whatever the monster's bulk.
       const allBox = new THREE.Box3().setFromObject(st.monster).union(new THREE.Box3().setFromObject(st.hero))
@@ -222,6 +230,7 @@ function CombatArena3D({
       }
 
       attachArenaWeapon(st, weaponRef.current)
+      attachGearList(st, gearRef.current, st.hero)
 
       const timeline = (tl, dt) => {
         if (!tl) return null
@@ -320,6 +329,14 @@ function CombatArena3D({
     const st = stateRef.current
     if (st && st.hero) attachArenaWeapon(st, weapon)
   }, [weapon && JSON.stringify(weapon)])
+
+  // Gear (armour) swaps mid-fight the same way.
+  const gearRef = useRef(gear)
+  useEffect(() => {
+    gearRef.current = gear
+    const st = stateRef.current
+    if (st && st.hero) attachGearList(st, gear, st.hero)
+  }, [gear && JSON.stringify(gear)])
 
   // A hit landed this tick: hero attacks when the player dealt damage, the
   // monster lunges when it hit back. Victims react at the impact moment.

@@ -5,11 +5,17 @@
 // --to, so leather grips and gold pommels (different hue bands) survive.
 //
 //   node scripts/recolor-model.mjs <in.glb> <out.glb> --from 6 --to 174 [--tol 30] [--sat 1.0] [--light 1.0]
+//   node scripts/recolor-model.mjs <in.glb> <out.glb> --grey 0.35 --to 142 --sat 0.45 [--light 0.8]
 //
 // --from/--to : source/target hue in degrees (0-360)
 // --tol       : half-width of the hue band to remap (default 30)
 // --sat       : saturation multiplier for remapped pixels (iron/steel want <1)
 // --light     : lightness multiplier for remapped pixels
+// --grey      : colourize mode for a grey/desaturated base (e.g. a steel
+//               helm): select pixels with saturation <= this value instead of
+//               a hue band, and treat --sat as the ABSOLUTE saturation to set
+//               (a multiplier would leave grey grey). Lightness still carries
+//               the shading detail.
 //
 // Run on the PROCESSED (post process-3d-model.mjs) file: textures are already
 // webp and small, so variants stay cheap. Normal/roughness maps are untouched.
@@ -34,6 +40,8 @@ const toHue = arg('--to', NaN);
 const tol = arg('--tol', 30);
 const satScale = arg('--sat', 1.0);
 const lightScale = arg('--light', 1.0);
+const greyMax = arg('--grey', NaN);
+const greyMode = !Number.isNaN(greyMax);
 if (Number.isNaN(toHue)) {
   console.error('--to <hue> is required.');
   process.exit(1);
@@ -91,9 +99,10 @@ for (const mat of doc.getRoot().listMaterials()) {
   let touched = 0;
   for (let i = 0; i < data.length; i += 4) {
     const [h, s, l] = rgbToHsl(data[i], data[i + 1], data[i + 2]);
-    // Greys have no meaningful hue — leave them so shading detail survives.
-    if (s < 0.08 || hueDist(h, fromHue) > tol) continue;
-    const [r, g, b] = hslToRgb(toHue, Math.min(1, s * satScale), Math.min(1, l * lightScale));
+    // Hue-band mode leaves greys so shading detail survives; grey mode
+    // selects exactly those and sets saturation absolutely.
+    if (greyMode ? s > greyMax : (s < 0.08 || hueDist(h, fromHue) > tol)) continue;
+    const [r, g, b] = hslToRgb(toHue, Math.min(1, greyMode ? satScale : s * satScale), Math.min(1, l * lightScale));
     data[i] = r; data[i + 1] = g; data[i + 2] = b;
     touched++;
   }
@@ -108,4 +117,6 @@ for (const mat of doc.getRoot().listMaterials()) {
 }
 
 await io.write(outFile, doc);
-console.log(`${outFile}  hue ${fromHue}→${toHue} (±${tol}, sat×${satScale}, light×${lightScale})  ${remapped.toLocaleString()} px remapped`);
+console.log(greyMode
+  ? `${outFile}  grey(≤${greyMax})→hue ${toHue} (sat=${satScale}, light×${lightScale})  ${remapped.toLocaleString()} px remapped`
+  : `${outFile}  hue ${fromHue}→${toHue} (±${tol}, sat×${satScale}, light×${lightScale})  ${remapped.toLocaleString()} px remapped`);
