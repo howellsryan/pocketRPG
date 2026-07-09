@@ -29,3 +29,20 @@ Confirmed against the live repo (2026-07-09):
 No discrepancies found that block Phase 0. Proceeding to STEP 0.1.
 
 - [x] STEP 0.0 — see commit introducing this file — ground-truth confirmed, no blocking discrepancies; two non-blocking notes recorded above (party name casing, rollDrops non-exported). Next migration number: 0028.
+
+## STEP 0.1 — Scaffold `world/`
+
+Created the full §4 skeleton (self-contained package, own `package.json`/lockfile, not an npm workspace). Placeholder implementations compile and the full acceptance bar passed:
+- `npm run world:check` (typecheck + vitest + vite build) green from repo root.
+- `cd world && npx wrangler dev` starts, resolves all four bindings (`WorldZone` DO, `DB` local D1, `ASSETS`, `JWT_SECRET`), and `curl localhost:8787/` returns the built `index.html` showing "World placeholder". Stopped the dev server and deleted the local `.dev.vars` afterward (never committed).
+
+Deviations from the guide (routine dependency/tooling fixes, not product decisions — no DEVELOPER TASK needed):
+- `@cloudflare/workers-types` pinned to **`4.20260702.1`** (latest 4.x), not the current 5.x major — `partyserver@0.5.8` peer-depends on `^4.20260424.1` and `npm install` hard-fails on the 5.x line with an ERESOLVE conflict.
+- Added `@types/three@0.185.1` as a devDependency — the `three` npm package ships no bundled `.d.ts` (confirmed: no `types`/`typings` field in its `package.json`), so bare `tsc --noEmit` fails on `import * as THREE from 'three'` without it.
+- `world/client/vite.config.ts` computes `root` as an absolute path from `fileURLToPath(new URL('.', import.meta.url))` rather than the literal `root: '.'` shown in the guide's prose — Vite resolved `'.'` against `process.cwd()` (`world/`) when invoked as `vite build --config client/vite.config.ts` from the `world/` package script, not against the config file's own directory, so the bare relative root couldn't find `client/index.html`. Confirmed fixed: `npm run build` now correctly outputs to `world/client/dist/`, matching the `wrangler.jsonc` assets directory.
+- Confirmed and applied the party-name-casing note from Step 0.0: `client/src/net.ts`'s `connect()` passes `party: 'world-zone'` explicitly (not relying on any default), matching the kebab-case of the `WorldZone` binding.
+- Added `world/vitest.config.ts` (not explicitly listed in §4's tree but necessary): without it, running `vitest run` from `world/` risks Vitest resolving the repo ROOT's `vitest.config.ts` instead (its `include` glob wouldn't match `world/tests/**`), which would silently report zero relevant tests rather than running `world/tests/placeholder.test.ts`. Confirmed the world vitest run now targets only `world/tests/**/*.test.ts`.
+
+Files touched outside `world/`: `.gitignore` (added `world/node_modules/`, `world/client/dist/`, `world/.dev.vars` — technically already covered by the existing unanchored patterns, but kept explicit per the guide's literal instruction and for self-documentation), root `package.json` (`world:check` script).
+
+- [x] STEP 0.1 — a1b2f81 — scaffold complete, world:check + wrangler dev both verified locally; four routine tooling deviations recorded above, no product decisions involved.
