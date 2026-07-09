@@ -1,15 +1,10 @@
 import { routePartykitRequest } from 'partyserver'
 import { WorldZone } from './WorldZone'
 import { handleWorldSession } from './session'
+import type { Env } from './env'
 
 export { WorldZone }
-
-export interface Env {
-  DB: D1Database
-  ASSETS: Fetcher
-  WorldZone: DurableObjectNamespace
-  JWT_SECRET: string
-}
+export type { Env }
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
