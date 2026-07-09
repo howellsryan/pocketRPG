@@ -183,3 +183,7 @@ Confirmed via `build_single.cjs` that `HelpScreen.js` is listed in `GAME_CHUNK_F
 Full root CLAUDE.md §11 gate (src/ touched): `npm test` (171 files / 2231 tests), `npm run build`, `npm run rebuild`, `npm run check:single` — all green.
 
 - [x] STEP 0.11 — 98fadfd — entry button added to the real Settings screen (HelpScreen.jsx, not the guide's assumed filename); full root gate green.
+
+## Phase 0 status: code-complete, STEP 0.12 blocked on DEVELOPER TASK
+
+Steps 0.0-0.11 are done, tested (`world:check` and/or the full root gate as each step required), and pushed. STEP 0.12 (deploy + acceptance) is entirely DT-class A/B — first `wrangler deploy`, production `JWT_SECRET`, remote D1 migration, and a real-device manual pass — none of which this session can perform. Stopping here per the guide's rule 1: Phase 1 does not start until the developer confirms "PHASE 0 ACCEPTED".
