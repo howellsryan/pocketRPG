@@ -10,102 +10,102 @@
     [
       "lumbright",
       "varrick",
-      16
+      80
     ],
     [
       "lumbright",
       "draynar",
-      8
+      40
     ],
     [
       "lumbright",
       "alkarid",
-      12
+      60
     ],
     [
       "varrick",
       "edgevale",
-      10
+      50
     ],
     [
       "varrick",
       "barlock",
-      12
+      60
     ],
     [
       "varrick",
       "canifel",
-      22
+      110
     ],
     [
       "edgevale",
       "barlock",
-      9
+      45
     ],
     [
       "barlock",
       "faloden",
-      10
+      50
     ],
     [
       "faloden",
       "draynar",
-      14
+      70
     ],
     [
       "faloden",
       "portsarin",
-      12
+      60
     ],
     [
       "faloden",
       "seerhold",
-      16
+      80
     ],
     [
       "faloden",
       "ardounne",
-      20
+      100
     ],
     [
       "draynar",
       "portsarin",
-      10
+      50
     ],
     [
       "portsarin",
       "brimhollow",
-      20
+      100
     ],
     [
       "alkarid",
       "brimhollow",
-      24
+      120
     ],
     [
       "seerhold",
       "catherra",
-      8
+      40
     ],
     [
       "seerhold",
       "camlann",
-      12
+      60
     ],
     [
       "catherra",
       "camlann",
-      10
+      50
     ],
     [
       "camlann",
       "ardounne",
-      16
+      80
     ],
     [
       "ardounne",
       "seerhold",
-      18
+      90
     ]
   ],
   "places": {

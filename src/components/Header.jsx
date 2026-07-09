@@ -1,9 +1,10 @@
 import GameIcon from './GameIcon.jsx'
+import ActivityIndicator from './ActivityIndicator.jsx'
 
 // Desktop-only top bar (mobile chrome is the GameFrameBar rails). Carries the
 // same actions as the mobile bottom rail's centre group: Daily Tasks, Credits
-// and Skip. Nav destinations live in SideNav.
-export default function Header({ credits = 0, isCloudAccount = false, demo = false, onLockedFeature = null, onSkip1h = null, onBuyCredits = null, onDailyTasks = null, dailyTasksCompleted = 0, dailyTasksTotal = 5, skipMode = 'hour', raidSkipCost = null }) {
+// and Skip, plus the current background activity. Nav destinations live in SideNav.
+export default function Header({ credits = 0, isCloudAccount = false, demo = false, onLockedFeature = null, onSkip1h = null, onBuyCredits = null, onDailyTasks = null, dailyTasksCompleted = 0, dailyTasksTotal = 5, skipMode = 'hour', raidSkipCost = null, onNavigate = null }) {
   const handleSkip = () => {
     if (demo) { onLockedFeature?.(); return }
     onSkip1h?.()
@@ -61,6 +62,10 @@ export default function Header({ credits = 0, isCloudAccount = false, demo = fal
           <span>{raidSkipCost != null ? `Skip (${raidSkipCost})` : skipMode === 'kill' ? 'Skip' : 'Skip 1h'}</span>
         </button>
       </div>
+
+      <div class="flex-1" />
+
+      <ActivityIndicator onNavigate={onNavigate} />
     </header>
   )
 }
