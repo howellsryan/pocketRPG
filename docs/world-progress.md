@@ -141,3 +141,15 @@ Auth flow: 5s timeout closes unauthenticated connections; `hello` is verified (J
 (Minor housekeeping note: this step's own commit message accidentally let bash expand backtick-quoted code spans as command substitution, silently dropping two words from one sentence — cosmetic only, the diff/tests/behavior are unaffected. Switching to the quoted-heredoc commit pattern for every commit from here on to prevent recurrence.)
 
 - [x] STEP 0.8 — d311b97 — WorldZone DO + tick loop implemented and verified end-to-end with a real WebSocket client against a live wrangler dev instance; one real cross-step bug found and fixed (seed script FK ordering).
+
+## STEP 0.9 — three.js scene, click-to-move, placeholder avatar
+
+Built `scene.ts` (renderer/camera/lights/ground), `entities.ts` (capsule + 600ms lerp between reported tiles), `input.ts` (raycast-to-tile + fading click marker), and wired it all together in `main.ts`'s `enterWorld()`: on the `welcome` message, build the scene and start rendering; on `diff`, feed the self entity's new tile into the interpolator; on click, send `walk` and show the marker. `ui.ts` now toggles `#scene` vs `#app` visibility instead of only ever showing text.
+
+One implementation choice made here, not specified by the guide beyond "blocked tiles get darker overlay quads": baked the walkable/blocked checker pattern into a single `CanvasTexture` rather than instantiating one overlay mesh per blocked tile. Same visual result, far fewer draw calls on a 32×32+ grid — this reads as an implementation detail of achieving the stated visual effect, not a deviation from anything DECIDED.
+
+**Verification**: local `wrangler dev` + Playwright, using its WebSocket frame-monitoring API rather than adding any debug hooks to the shipped client. Confirmed: (1) the overlay correctly hides and the scene shows once `welcome` arrives; (2) clicking the canvas sends a real `{t:'walk', x, z}` frame with tile coordinates computed from an actual raycast hit against the ground mesh (click at canvas (500,400) → `{x:14,z:16}`, a real tile two steps west of spawn); (3) `diff` frames arrive afterward tracing the resulting server-driven movement; (4) before/after screenshots (attached to this session, not committed — the fence corner from `pasture.json` visibly shifts in frame between them, confirming both the capsule and the camera-follow moved correctly, not just the wire messages). Reconnect-resumes-at-checkpoint itself was already rigorously proven in Step 0.8 with dedicated tests and is unchanged by this purely-additive rendering layer — a reload during this step's testing showed the same live DO continuing its tick counter, consistent with (not a new proof of) that already-established behavior.
+
+`world:check` green: 4 test files / 26 tests, unchanged from Step 0.8 — this step is almost entirely client rendering/input code with no new pure logic warranting unit tests beyond what pathfinding/tick already cover.
+
+- [x] STEP 0.9 — 48a4687 — three.js scene, camera-follow, click-to-move, and interpolated placeholder avatar implemented and verified end-to-end (protocol frames + visual screenshots) against a live local instance.
