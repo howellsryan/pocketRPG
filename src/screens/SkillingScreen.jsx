@@ -683,7 +683,7 @@ export default function SkillingScreen({ initialSkillId, initialActionId, initia
           setSelectedAction(action)
           setSkilling(state)
           // Store original action in task — idle engine will apply tool multiplier separately
-          setActiveTask({ type: 'skill', skill: initialSkillId, action, session: emptySession(state.startedAt) })
+          setActiveTask({ type: 'skill', skill: initialSkillId, action, bankingEnabled: true, session: emptySession(state.startedAt) })
         }
       }
       return

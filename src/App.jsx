@@ -2845,6 +2845,8 @@ function GameApp() {
         lockedScreens={CLOUD_ONLY_SCREENS}
         onDisabledClick={() => addToast('⚔️ Cannot navigate during PvP combat!', 'warning')}
         onLockedClick={notifyDemoLocked}
+        isCloudAccount={isCloudAccount && !demoMode}
+        onOpenChat={() => setChatOpen(true)}
       />
       {/* gf-shell/gf-main: mobile-only carved-wood chrome around the frame
           rails + content panel (index.css); inert at md and up. */}

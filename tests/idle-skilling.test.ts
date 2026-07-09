@@ -184,4 +184,26 @@ describe('simulateIdleSkilling (bank-trip material loss regression)', () => {
     expect(sim!.itemsConsumed.iron_ore || 0).toBe(sim!.actions)
     expect(sim!.xpGained.smithing).toBe(sim!.actions * action.xp)
   })
+
+  it('banking-disabled production stops at a full inventory and never drains materials for un-kept output', () => {
+    const action = (skillsData as any).smithing.actions.find((a: any) => a.id === 'smelt_iron')
+    // No bankingEnabled flag → the banking-disabled branch. Previously this
+    // consumed ore for every time-budgeted action while silently dropping the
+    // bars that couldn't fit, draining the bank.
+    const task: any = { type: 'skill', skill: 'smithing', action }
+    const bank: any = { iron_ore: { quantity: 5000 } }
+    const inventory: any = new Array(28).fill(null)
+    const stats: any = { smithing: { xp: 300000 }, agility: { xp: xpForLevel(1) } }
+
+    const sim = simulateIdleSkilling(task, 2 * 60 * 60 * 1000, bank, {}, stats, itemsData as any, inventory, {})
+
+    expect(sim).toBeTruthy()
+    const invBars = sim!.finalInventory.filter((s: any) => s?.itemId === 'iron_bar').reduce((a: number, s: any) => a + s.quantity, 0)
+    // iron_bar is non-stackable, so exactly one 28-slot inventory can be filled.
+    expect(invBars).toBe(28)
+    expect(sim!.actions).toBe(28)
+    expect(sim!.itemsConsumed.iron_ore || 0).toBe(28)
+    expect(sim!.xpGained.smithing).toBe(28 * action.xp)
+    expect(sim!.stoppedReason).toBe('inventory_full')
+  })
 })
