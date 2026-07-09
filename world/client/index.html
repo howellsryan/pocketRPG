@@ -4,9 +4,19 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>PocketRPG World</title>
+  <style>
+    html, body { margin: 0; height: 100%; overflow: hidden; background: #000; }
+    #scene { position: fixed; inset: 0; }
+    #app {
+      position: fixed; inset: 0; display: none; align-items: center; justify-content: center;
+      color: #eee; font-family: sans-serif; text-align: center; padding: 2rem; box-sizing: border-box;
+    }
+    #app a { color: #ffe066; }
+  </style>
 </head>
 <body>
-  <div id="app">World placeholder</div>
+  <div id="scene"></div>
+  <div id="app"></div>
   <script type="module" src="/src/main.ts"></script>
 </body>
 </html>
