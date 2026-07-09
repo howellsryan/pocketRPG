@@ -4,7 +4,9 @@ import SkillIcon from '../components/SkillIcon.jsx'
 import { getActionProgress } from '../hooks/useActionTick.js'
 import { getLevelFromXP } from '../engine/experience.js'
 import { createThievingState, processThievingTick } from '../engine/thieving.js'
+import { skillingActionBlockedByFullInventory } from '../engine/skilling.js'
 import { emptySession } from '../engine/activitySession.js'
+import itemsData from '../data/items.json'
 import { rollMasterFarmerSeed } from '../engine/seedDrops.js'
 import { onTick } from '../engine/tick.js'
 import { markScreenTick } from '../engine/activityRunner.js'
@@ -19,7 +21,11 @@ import skillsData from '../data/skills.json'
 const thievingData = skillsData.thieving
 
 export default function ThievingScreen({ initialNpcId, idleResult, onBack, onStopBack }) {
-  const { stats, inventory, updateInventory, bank, updateBankDirect, grantXP, addToast, setActiveTask, requestActivityStart, activeTask } = useGame()
+  const { stats, inventory, updateInventory, bank, updateBankDirect, grantXP, addToast, setActiveTask, requestActivityStart, activeTask, signalInventoryFull, resolveInventoryFull } = useGame()
+
+  // Pickpocket output that lands in the inventory: coins (stackable) for most
+  // targets, a random seed (needs a free slot) for the Master Farmer.
+  const rewardFitCheck = (npc) => npc?.seedReward ? { dropTable: true } : { product: 'coins' }
 
   const thievingLevel = getLevelFromXP(stats.thieving?.xp || 0)
   const thievingXP = stats.thieving?.xp || 0
@@ -83,6 +89,14 @@ export default function ThievingScreen({ initialNpcId, idleResult, onBack, onSto
       const state = thievingRef.current
       if (!state || !state.active) return
       markScreenTick()
+
+      // A full inventory pauses the pickpocket and raises the global prompt;
+      // the check re-runs each tick so it resumes once a slot frees.
+      if (skillingActionBlockedByFullInventory(rewardFitCheck(state.npc), inventoryRef.current, itemsData)) {
+        signalInventoryFull()
+        return
+      }
+      resolveInventoryFull()
 
       const { thievingState, events } = processThievingTick(state)
       thievingRef.current = thievingState
@@ -287,11 +301,12 @@ export default function ThievingScreen({ initialNpcId, idleResult, onBack, onSto
         { label: 'Coins earned', value: <>{coinIcon} {thieving.totalCoins.toLocaleString()}</> },
         { label: 'Coins / hr', value: xpPerHr ? <>{coinIcon} {Math.round(thieving.totalCoins / (elapsed / 3_600_000)).toLocaleString()}</> : '—', accent: !!xpPerHr },
       ]
+  const inventoryBlocked = skillingActionBlockedByFullInventory(rewardFitCheck(thieving.npc), inventory, itemsData)
   return (
     <SkillActivePanel
       skill="thieving"
       title={thieving.npc.name}
-      subtitle={thieving.npc.description}
+      subtitle={inventoryBlocked ? 'Inventory full — paused' : thieving.npc.description}
       progress={progress}
       stats={[
         { label: 'Pickpockets', value: thieving.totalPickpockets },

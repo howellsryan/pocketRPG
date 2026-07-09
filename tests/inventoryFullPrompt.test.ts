@@ -37,6 +37,12 @@ describe('skillingActionBlockedByFullInventory', () => {
     expect(skillingActionBlockedByFullInventory({ product: 'coins' }, inv, itemsData)).toBe(false)
   })
 
+  it('handles dropTable-style output (hunter catches, Master Farmer seeds)', () => {
+    // A random-item reward needs a free slot: blocked only when the bag is full.
+    expect(skillingActionBlockedByFullInventory({ dropTable: true }, full(), itemsData)).toBe(true)
+    expect(skillingActionBlockedByFullInventory({ dropTable: true }, withFree(), itemsData)).toBe(false)
+  })
+
   it('never blocks actions with no inventory-bound output', () => {
     expect(skillingActionBlockedByFullInventory({ type: 'alchemy', product: 'coins' }, full(), itemsData)).toBe(false)
     expect(skillingActionBlockedByFullInventory({ materials: { copper_ore: 1 } }, full(), itemsData)).toBe(false)

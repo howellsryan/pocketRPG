@@ -78,7 +78,8 @@ import { fetchKillCounts } from './cloud/killCounts.js'
 import { isLoggedDrop, collectIdleCombatLoggedDrops } from './engine/collectionLog.js'
 import { rollClueRewards } from './engine/clueScrolls.js'
 import dailyTasksData from './data/dailyTasks.json'
-import { countItem } from './engine/inventory.js'
+import { countItem, addItem } from './engine/inventory.js'
+import { skillingActionBlockedByFullInventory } from './engine/skilling.js'
 
 // ── Lazy in-game code chunk ──────────────────────────────────────────────────
 // The single-file production build (build_single.cjs) splits the heavy in-game
@@ -1999,17 +2000,34 @@ function GameApp() {
         updateBankDirect(negated)
       }
     }
-    // Coin rewards: alchemy (skill), agility and thieving.
-    if (result.coinsGained > 0) updateBankDirect({ coins: result.coinsGained })
-    // Thieving seed rewards (Master Farmer) go straight to the bank.
-    if (result.itemsGained && Object.keys(result.itemsGained).length > 0) {
-      updateBankDirect(result.itemsGained)
+    // Thieving and hunter loot fills the inventory during active play (mirroring
+    // their own screens); a full inventory pauses them before this runs (below),
+    // and a rare multi-item overflow falls back to the bank.
+    const depositLootToInventory = (loot) => {
+      const inv = [...inventoryRef.current]
+      const overflow = {}
+      for (const [itemId, qty] of Object.entries(loot)) {
+        if (qty <= 0) continue
+        if (!addItem(inv, itemId, qty, itemsDataRef.current[itemId]?.stackable || false)) overflow[itemId] = qty
+      }
+      updateInventory(inv)
+      if (Object.keys(overflow).length > 0) updateBankDirect(overflow)
     }
-    // Hunter loot goes straight to the bank.
+    // Coin rewards: thieving fills the inventory; alchemy (skill) and agility bank.
+    if (result.coinsGained > 0) {
+      if (task.type === 'thieving') depositLootToInventory({ coins: result.coinsGained })
+      else updateBankDirect({ coins: result.coinsGained })
+    }
+    // Thieving seed rewards (Master Farmer) fill the inventory.
+    if (result.itemsGained && Object.keys(result.itemsGained).length > 0) {
+      if (task.type === 'thieving') depositLootToInventory(result.itemsGained)
+      else updateBankDirect(result.itemsGained)
+    }
+    // Hunter catches fill the inventory.
     if (task.type === 'hunter' && Array.isArray(result.rewards) && result.rewards.length > 0) {
-      const banked = {}
-      for (const r of result.rewards) banked[r.itemId] = (banked[r.itemId] || 0) + r.quantity
-      updateBankDirect(banked)
+      const loot = {}
+      for (const r of result.rewards) loot[r.itemId] = (loot[r.itemId] || 0) + r.quantity
+      depositLootToInventory(loot)
     }
     if (task.type === 'hunter' && (result.actions ?? 0) > 0 && task.action?.id) {
       recordGameEvent?.({ kind: 'hunter_hunt', actionId: task.action.id, count: result.actions })
@@ -2099,7 +2117,20 @@ function GameApp() {
         return
       }
 
-      const result = simulateTaskWindow(task, pending * 600, ctx)
+      // Thieving and hunter loot fills the inventory but their sims aren't
+      // inventory-aware, so guard here: pause behind the global prompt when full,
+      // and run one action at a time so nothing overflows silently.
+      const fillsInventory = task.type === 'thieving' || task.type === 'hunter'
+      if (fillsInventory) {
+        const fit = task.type === 'thieving' && !task.npc?.seedReward ? { product: 'coins' } : { dropTable: true }
+        if (skillingActionBlockedByFullInventory(fit, ctx.inventory, ctx.itemsData)) {
+          signalInventoryFull()
+          commit(totalTicks)
+          return
+        }
+      }
+
+      const result = simulateTaskWindow(task, (fillsInventory ? totalTicks : pending) * 600, ctx)
       const actions = resultActions(result)
       if (result && actions > 0) applyBackgroundActionResult(task, result)
       // Keep the session tally counting while the background runner drives, so

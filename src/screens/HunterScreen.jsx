@@ -9,6 +9,8 @@ import SkillActivePanel from '../components/SkillActivePanel.jsx'
 import { getActionProgress } from '../hooks/useActionTick.js'
 import { getLevelFromXP } from '../engine/experience.js'
 import { createHunterState, processHunterTick } from '../engine/hunter.js'
+import { skillingActionBlockedByFullInventory } from '../engine/skilling.js'
+import { addItem } from '../engine/inventory.js'
 import { emptySession } from '../engine/activitySession.js'
 import { onTick } from '../engine/tick.js'
 import { markScreenTick } from '../engine/activityRunner.js'
@@ -19,7 +21,10 @@ import itemsData from '../data/items.json'
 const hunterData = skillsData.hunter
 
 export default function HunterScreen({ initialActionId, idleResult, onBack, onStopBack }) {
-  const { stats, inventory, updateInventory, bank, updateBankDirect, grantXP, addToast, setActiveTask, requestActivityStart, activeTask, recordGameEvent } = useGame()
+  const { stats, inventory, updateInventory, bank, updateBankDirect, grantXP, addToast, setActiveTask, requestActivityStart, activeTask, recordGameEvent, signalInventoryFull, resolveInventoryFull } = useGame()
+
+  // Hunter catches land in the inventory (each needs a free slot).
+  const HUNTER_FIT_CHECK = { dropTable: true }
 
   const hunterLevel = getLevelFromXP(stats.hunter?.xp || 0)
   const hunterXP = stats.hunter?.xp || 0
@@ -77,6 +82,14 @@ export default function HunterScreen({ initialActionId, idleResult, onBack, onSt
       if (!state || !state.active) return
       markScreenTick()
 
+      // A full inventory pauses the hunt and raises the global prompt; the
+      // check re-runs each tick so it resumes once a slot frees.
+      if (skillingActionBlockedByFullInventory(HUNTER_FIT_CHECK, inventoryRef.current, itemsData)) {
+        signalInventoryFull()
+        return
+      }
+      resolveInventoryFull()
+
       const { hunterState, events } = processHunterTick(state)
       hunterRef.current = hunterState
 
@@ -84,9 +97,16 @@ export default function HunterScreen({ initialActionId, idleResult, onBack, onSt
         if (ev.type === 'hunterSuccess') {
           grantXP('hunter', ev.xp)
 
+          // Catches fill the inventory (banked as a fallback if a rare multi-item
+          // drop overflows the slot the tick-top guard reserved).
+          const newInv = [...inventoryRef.current]
           for (const reward of ev.rewards) {
-            updateBankDirect({ [reward.itemId]: reward.quantity })
+            const stackable = itemsData[reward.itemId]?.stackable || false
+            if (!addItem(newInv, reward.itemId, reward.quantity, stackable)) {
+              updateBankDirect({ [reward.itemId]: reward.quantity })
+            }
           }
+          updateInventory(newInv)
 
           hunterRef.current = {
             ...hunterRef.current,
@@ -332,12 +352,13 @@ export default function HunterScreen({ initialActionId, idleResult, onBack, onSt
     ? Math.round(hunter.totalXP / (elapsed / 3_600_000))
     : null
 
+  const inventoryBlocked = skillingActionBlockedByFullInventory(HUNTER_FIT_CHECK, inventory, itemsData)
   return (
     <>
     <SkillActivePanel
       skill="hunter"
       title={hunter.action.name}
-      subtitle={hunter.action.description}
+      subtitle={inventoryBlocked ? 'Inventory full — paused' : hunter.action.description}
       progress={progress}
       stats={[
         { label: 'Actions completed', value: hunter.totalActions },
