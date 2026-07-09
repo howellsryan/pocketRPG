@@ -68,3 +68,15 @@ New test `tests/worldToken.test.ts` follows the existing direct-handler-invocati
 Gate: full root CLAUDE.md §11 gate (functions/ touched) — `npm test` (171 files / 2231 tests, up one file for the new test), `npm run build`, `npm run rebuild`, `npm run check:single` all green. `world:check` also green (`world/server/session.ts` typechecks against the real `functions/_lib/jwt.js` import).
 
 - [x] STEP 0.3 — 8beff6b — both handoff endpoints implemented and tested; one non-blocking schema-naming discrepancy resolved (username vs name), one structural fix (env.ts extraction) to avoid a circular import.
+
+## STEP 0.4 — Client boot, auth, platform gate
+
+Implemented `client/src/auth.ts` (hash parsing, viewport-too-narrow check, handoff exchange + localStorage persistence — pure logic split out from side effects for testability), `client/src/ui.ts` (viewport-block / login-required / welcome DOM states), and `client/src/main.ts` (boot orchestration: viewport gate first — re-checked on `resize` — then hash vs stored-session vs login-required).
+
+One typecheck-only fix: `Response.json()` resolves to `unknown` under this TS/DOM-lib combination (not `any`), so `exchangeHandoff` needed an explicit `as WorldSession` cast on the parsed body — routine, not a design change.
+
+Unit tests added (`world/tests/auth.test.ts`, 6 cases) cover `parseHandoffFromHash` (plain, URL-encoded, empty, unrelated hash) and `isViewportTooNarrow` (below/at/above the 768px threshold on either dimension) — these are the guide's required "unit tests for hash parsing + gate logic". `world:check` green (2 test files / 7 tests total, typecheck clean, client build succeeds). No `functions/`/`src/`/`migrations/` touched, so the full root gate doesn't apply per §4's rule.
+
+**Manual local run deferred to STEP 0.5**: the guide's own acceptance line for this step requires a handoff token minted by the dev-seed script, which doesn't exist yet — proceeding to STEP 0.5 next, then running the manual check for both steps together.
+
+- [x] STEP 0.4 — c9a64a0 — auth/platform-gate logic implemented and unit tested; one routine TS cast fix. Manual verification (needs Step 0.5's seed script) still outstanding.
