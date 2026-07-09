@@ -119,6 +119,8 @@ The tick loop must never translate into per-tick durable writes. Three different
 
 ## 7) Phased plan (each phase ships something playable)
 
+> **Superseded for execution (2026-07-09):** the authoritative, step-by-step build spec is **`docs/open-world-build-guide.md`**. Key changes decided there: combat (one monster — Pasture Bull — with floor loot and pickup) moves up to **Phase 2**, immediately after Phase 0 (auth+movement) and Phase 1 (Mining reflected in PocketRPG); input is OSRS-style left/right-click point-and-click, **desktop + tablet only** (no mobile in v1). The outline below is kept for the longer-horizon phases only.
+
 **Phase 0 — Walking skeleton (the risk-killer).** Second deployable live at `world.pocketrpg.co.uk`: token handoff from PocketRPG, load your character (name + stats from D1), walk your existing `hero.glb` around one small hand-authored zone (tile grid, click/tap-to-move, A* path, fixed RS-style camera, run/walk animations already retargeted). Server: one DO zone, WebSocket connect, server-validated movement on the 600 ms tick. *Everything risky — auth handoff, DO tick loop, GLB on mobile, deploy split — is proven here before any gameplay exists.*
 
 **Phase 1 — First skill: Mining.** Rock nodes placed in the zone (reuse ore/pickaxe defs from `src/data/items.json` + existing mining tables in `src/engine/`). Tap rock → walk over → mining animation → server rolls success per tick with the same formulas the idle game uses → `/api/world/grant` adds XP + ore to the shared character. **Milestone: mine in the world, watch the Mining level move in PocketRPG.** Inventory cap 28 applies; full inventory → "deposit" at a bank chest (grants to shared bank).

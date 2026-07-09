@@ -1,0 +1,368 @@
+# Open-World Client — Step-by-Step Build Guide for the Builder Agent
+
+> This document is the **authoritative build spec** for the PocketRPG open-world companion game. It is written for an AI builder agent working inside this repo with a human developer (the repo owner) available asynchronously. Strategy/rationale live in `docs/open-world-companion-game-plan.md`; where the two differ on phasing or scope, **this guide wins**.
+
+---
+
+## 0) Rules for the builder agent — read first, obey always
+
+1. **Execute steps in order.** Do not skip, merge, reorder, or parallelize steps unless a step explicitly says so. Do not start a phase until the previous phase's acceptance checklist is confirmed by the developer.
+2. **Anything marked `DECIDED` is final.** Do not redesign it, "improve" it, or substitute libraries/patterns. If a DECIDED item appears impossible (API removed, file missing, version conflict), **STOP and raise a DEVELOPER TASK** (format below) instead of improvising.
+3. **Do not assume — verify in-repo.** Every step lists the exact files to read before writing code. If a referenced function/file doesn't match what this guide says, stop and report the discrepancy; do not guess an alternative.
+4. **Scope is frozen.** No minimap, no chat, no other players rendered, no mobile support, no sound, no extra skills/monsters/zones, no settings screens beyond what a step names. If you notice something "missing", it is out of scope on purpose.
+5. **CLAUDE.md still applies** (token discipline, minimal comments, never commit `index.html`/`game-*.js`, commit gate for `src/**`/`functions/**` changes).
+6. **Maintain a progress log** at `docs/world-progress.md`. After completing each step append one line: `- [x] STEP <id> — <commit sha> — <one-line note / deviations>`. Sessions resume from this log; never re-do a step marked done without developer instruction.
+7. **DEVELOPER TASK protocol.** When you hit anything in §2's "developer-only" list, output a block in your reply exactly like this, then continue with any steps that don't depend on it (or end the turn if blocked):
+
+   ```
+   ── DEVELOPER TASK DT-<n> ──────────────────────
+   Blocking: STEP <id>
+   What I need you to do: <numbered, copy-pasteable instructions>
+   How I'll know it's done: <observable check the agent can run>
+   ───────────────────────────────────────────────
+   ```
+8. **Hard prohibitions** (never do these, no exceptions):
+   - Never copy code, data, assets, maps, models, or names from Jagex games, OSRS wikis, or Lost City/2004Scape **content**. (Reading Lost City's MIT server *code* for reference is allowed; copying its game *content* is not.) All mechanics numbers come from this repo's `src/data/*.json` and `src/engine/*`.
+   - Never write to D1 or DO storage inside the per-tick loop. Durable writes happen only at the checkpoint/flush points this guide names.
+   - Never change gameplay semantics of existing `src/engine/*` code. Extraction/refactor commits must keep every existing test green and add equivalence tests.
+   - Never modify the existing Pages deployment config, `build_single.cjs`, or `wrangler.toml` at repo root (adding a root npm script is allowed only where a step says so).
+   - Never commit secrets, `.dev.vars`, `world/node_modules`, `world/client/dist`.
+   - Never add code paths for phone-sized screens; the product decision is desktop + tablet only.
+
+---
+
+## 1) DECIDED — fixed decisions table
+
+| Topic | Decision |
+|---|---|
+| Product | Point-and-click open-world companion client. **Desktop + tablet only.** Viewports narrower than 768px get a full-screen "Play on desktop or tablet" block page. |
+| Input | OSRS-style: **left-click = default action** on the thing under the cursor; **right-click (desktop) / long-press ≥500 ms (tablet)** opens a context menu of all actions. Spec in §8. |
+| Client stack | Vite + TypeScript + **three.js (npm package, pinned to the same version as `public/vendor/three/`)** . No React/Preact in the world client — plain TS + DOM for UI panels. |
+| Server stack | One Cloudflare **Worker** (`pocketrpg-world`) serving static client assets + `/api/world/*` HTTP + a **Durable Object class `WorldZone`** built on **`partyserver`** (npm, MIT, Cloudflare-maintained). Client WS via **`partysocket`**. |
+| Tick | 600 ms, same as PocketRPG. In-memory `setInterval` in the DO while ≥1 player connected; interval stopped when zone empties. |
+| Data | Same D1 database as PocketRPG (binding `DB`, `database_id 439e810b-8dce-4697-94c2-a7392520ad8f`). World-only tables via new migrations. Character progression lives in the existing save blob; the world touches it **only** through the grant-flush path (§7.6). |
+| Auth | Existing session JWT + `JWT_SECRET`. Handoff: PocketRPG calls `POST /api/world-token` → 60 s single-purpose JWT → world app exchanges it at `POST /api/world/session` for a 24 h world-session JWT (§6.3). |
+| Shared code | Import `src/engine/*`, `src/data/*.json`, `functions/_lib/jwt.js`, `functions/_lib/game/*` via **relative paths** from `world/`. Never duplicate a formula or a data table. |
+| Movement | Tile grid, 1 three.js unit = 1 tile. 8-directional, no corner-cutting through blocked tiles. **Walk only in v1** (1 tile/tick). Server-side BFS pathfinding, max path length 64. Client interpolates between tick positions. |
+| Phase 1 skill | **Mining** — rocks `tin` and `copper` from `src/data/skills.json` → `mining.actions` (level 1, 4 ticks/ore, 17 XP, products `tin_ore`/`copper_ore`). PocketRPG semantics: deterministic ticks-per-ore, **no success RNG**. |
+| Phase 2 monster | **`pasture_bull` only** (PocketRPG's cow: `legacy_id: "cow"`, 8 HP, attackSpeed 4, drops Bones + Raw Beef + Cowhide @100%, medium clue @2%). Combat runs `createCombatState` + `processCombatTick` from `src/engine/combat.js` — **no reimplemented combat math**. |
+| Floor loot | On kill: drops become ground items at the death tile. Owner-only for 100 ticks, visible to everyone after, despawn at 300 ticks. `Take` adds to the 28-slot session inventory. |
+| Grants | Batched per player in DO memory `{xpBySkill, items[]}`; flushed to the save blob on: bank-chest deposit, disconnect, zone leave, or 60 s timer. Idempotency row per flush + audit event. Items go to the **bank** (not inventory) on flush. |
+| Zone | One hand-authored zone `pasture` (32×32 tiles) for all three phases. Format in §6.5. |
+| Domain | `world.pocketrpg.co.uk` (custom domain on the Worker; workers.dev URL until DNS is set). |
+| Deploys | Manual by developer: `cd world && npx wrangler deploy`. No CI wiring in v1. |
+| Entry point | A "Enter World (beta)" button in PocketRPG's Settings screen, hidden unless `localStorage.pocketWorldBeta === '1'`, so it can merge to main without player exposure. |
+| Branch/PRs | All work on branches named `world/<phase>-<topic>`. Developer opens/merges PRs. PR bodies follow CLAUDE.md §20 — for pre-release world work use one honest chore line ("Internal: experimental world client groundwork, not yet player-visible"). |
+
+---
+
+## 2) Capability boundaries — what the agent must hand to the developer
+
+The builder agent runs in a sandboxed cloud session. It **can**: edit files, run `npm`/`vitest`/`tsc`/`vite build`, run `wrangler dev` locally (Miniflare simulates the DO + a *local* D1), run headless Chromium via Playwright (best-effort — WebGL in headless is flaky; treat failures as "needs manual check", not as code bugs), commit, and push.
+
+It **cannot** (always a DEVELOPER TASK):
+- **DT-class A — Cloudflare account actions**: first `wrangler deploy` of the new Worker, setting the `JWT_SECRET` secret (`cd world && npx wrangler secret put JWT_SECRET` — must be the **same value** as the Pages project's), adding the `world.pocketrpg.co.uk` custom domain, applying D1 migrations to production (`npx wrangler d1 migrations apply pocketrpg --remote` from repo root), confirming the Workers paid plan is active.
+- **DT-class B — Real-device verification**: every phase ends with a manual test script the developer runs in a real browser (desktop + one tablet). The agent must never mark a phase accepted on its own.
+- **DT-class C — Asset acquisition**: downloading CC0 packs from itch.io/quaternius.com (agent network is proxied/limited). The developer downloads and drops files where the step says; the agent then processes them.
+- **DT-class D — Product judgement calls**: anything this guide leaves open (it tries to leave nothing open). When in doubt → DEVELOPER TASK, not a guess.
+
+---
+
+## 3) Architecture on one page
+
+```
+┌────────────────────────────┐        ┌─────────────────────────────────────┐
+│ pocketrpg (existing Pages) │        │ pocketrpg-world (new Worker)        │
+│  pocketrpg.co.uk           │        │  world.pocketrpg.co.uk              │
+│                            │        │                                     │
+│  Settings screen ──────────┼──────► │  GET /            → client assets   │
+│   POST /api/world-token    │ #hand  │  POST /api/world/session (handoff)  │
+│   (new Pages Function,     │  off   │  GET  /parties/zone/pasture  ─ WS ─►│
+│    60s handoff JWT)        │        │   ┌──────────────────────────────┐  │
+│                            │        │   │ WorldZone (Durable Object,   │  │
+│  save blob in D1 ◄─────────┼────────┼───│  partyserver Server class)   │  │
+│   (grant flush writes      │        │   │  in-memory: players, npcs,   │  │
+│    XP→stats, items→bank    │        │   │  rocks, loot, 600ms interval │  │
+│    via _lib/game/save.js)  │        │   └──────────────────────────────┘  │
+└────────────────────────────┘        │  bindings: DB (same D1), JWT_SECRET │
+                                      └─────────────────────────────────────┘
+Shared by relative import from world/: src/engine/*, src/data/*.json,
+functions/_lib/jwt.js, functions/_lib/game/{save,inventory,audit}.js
+```
+
+Key verified facts (re-verify in step 0.0, they are the guide's ground truth):
+- `functions/_lib/jwt.js` exports `signJWT(payload, secret, expiresInSeconds)` and `verifyJWT(token, secret)` (HS256, Web Crypto, no deps).
+- `functions/_lib/game/save.js` exports `loadCharacterWithSave(env, characterId, identityId)` and `writeSave(env, characterId, saveObject, expectedRevision)` (optimistic concurrency).
+- `functions/_lib/game/inventory.js` exports `addItemToBank`, `addItemToInventory`, `getInventory`, `bankQuantity`, ….
+- Save blob shape: `save.stats[skillId] = { xp, level }` (see `functions/_lib/saveSummary.js`); bank/inventory mutated only via the inventory helpers.
+- `src/engine/combat.js` exports `createCombatState(monster, combatType, stance, spell)` and `processCombatTick(combatState, playerStats, equipment, itemsData, prayersData, inventory, slayerTask)`.
+- `src/data/skills.json → mining.actions[]`: `{ id:'tin', level:1, ticks:4, xp:17, product:'tin_ore' }`, same for `copper`.
+- `src/data/monsters.json → pasture_bull` as described in §1.
+
+---
+
+## 4) Repo layout to create (Phase 0, exact)
+
+```
+world/
+├─ package.json          # self-contained package: NOT an npm workspace of root
+├─ tsconfig.json
+├─ wrangler.jsonc
+├─ .dev.vars.example     # documents JWT_SECRET for local dev (real .dev.vars is gitignored)
+├─ shared/
+│  ├─ protocol.ts        # every WS message type (single source of truth, §5)
+│  └─ zone.ts            # zone JSON types + loader/validator
+├─ zones/
+│  └─ pasture.json       # the one zone (§6.5)
+├─ server/
+│  ├─ index.ts           # Worker entry: routes /api/world/*, /parties/* → partyserver, else assets
+│  ├─ session.ts         # POST /api/world/session handler
+│  ├─ WorldZone.ts       # the Durable Object (partyserver Server subclass)
+│  ├─ tick.ts            # pure per-tick simulation functions (unit-testable, no I/O)
+│  ├─ pathfind.ts        # grid BFS (pure, unit-testable)
+│  └─ grants.ts          # flushGrants(): the ONLY code that touches the save blob
+├─ client/
+│  ├─ index.html
+│  ├─ vite.config.ts     # outDir dist, server.fs.allow ['../..'] for ../src imports
+│  ├─ public/models/     # hero.glb (copied), later cow.glb (developer-provided)
+│  └─ src/
+│     ├─ main.ts         # boot: auth → connect → scene
+│     ├─ auth.ts         # handoff exchange, token storage, block-page gate
+│     ├─ net.ts          # partysocket wrapper, typed send/receive from shared/protocol.ts
+│     ├─ scene.ts        # three.js scene, camera, ground, lights
+│     ├─ entities.ts     # player/npc/loot mesh management + tick interpolation
+│     ├─ input.ts        # raycasting, left/right click, long-press, context menu
+│     └─ ui.ts           # DOM panels: inventory, xp drops, hover text, messages
+└─ tests/                # vitest for pathfind, tick logic, protocol guards, grants
+```
+
+Root-repo touches (only these, each named in a step): `functions/api/world-token.js`, one new migration in `migrations/`, the Settings-screen button, `docs/world-progress.md`, and `tests/` additions if a step says so. Add `world/node_modules`, `world/client/dist`, `world/.dev.vars` to root `.gitignore`.
+
+Add to root `package.json` scripts (allowed): `"world:check": "cd world && npm run typecheck && npm test && npm run build"`.
+
+**Commit gates.** Changes under `world/` only → run `npm run world:check`. Any change touching `src/**` or `functions/**` or `migrations/**` → ALSO run the full CLAUDE.md §11 gate (`npm test && npm run build && npm run rebuild && npm run check:single`).
+
+---
+
+## 5) Wire protocol (DECIDED — implement exactly, all in `world/shared/protocol.ts`)
+
+JSON text frames over one WebSocket. Every message has `t`. Unknown `t` from client → close connection code 1008. Client messages are rate-limited server-side: >10 messages/sec → close 1008.
+
+**Client → server**
+```ts
+{ t:'hello', token:string }                       // MUST be first frame; world-session JWT
+{ t:'walk', x:number, z:number }                  // tile coords, integers
+{ t:'interact', kind:'rock'|'npc'|'loot'|'object', id:string, action:string }
+                                                  // actions: rock:'mine' object:'deposit' npc:'attack' loot:'take'
+{ t:'cancel' }                                    // stop current path/action
+{ t:'ping', n:number }
+```
+
+**Server → client**
+```ts
+{ t:'welcome', selfId:string, tick:number,
+  zone:{ id:string, w:number, h:number, collision:string[] },   // collision: h strings of w chars, '#'=blocked '.'=walkable
+  statics:[{ id, type:'rock'|'bank_chest', rock?:string, x, z }],
+  you:{ x, z, stats:Record<string,{xp:number,level:number}>, inventory:InvSlot[] } }
+{ t:'diff', tick:number,
+  ents?: [{ id, kind:'player'|'npc', x, z, anim:'idle'|'walk'|'mine'|'attack'|'die', hp?:number, maxHp?:number, monsterId?:string, name?:string }],
+  removed?: string[],
+  rocks?: [{ id, depleted:boolean }],
+  loot?:  [{ id, itemId:string, qty:number, x, z }],       // full loot list visible to THIS client (owner filtering server-side)
+  lootRemoved?: string[],
+  events?: [ { e:'hit', targetId:string, dmg:number }      // 0 dmg = block splat
+           | { e:'xp', skill:string, amount:number }
+           | { e:'msg', text:string }                      // "Your pack is full." etc.
+           | { e:'inv', inventory:InvSlot[] } ],           // full session-inventory replace
+  }
+{ t:'dead', respawn:{x:number,z:number} }
+{ t:'error', code:string, msg:string }
+{ t:'pong', n:number }
+```
+`InvSlot = { itemId:string, quantity:number } | null` — array length always 28.
+
+Rules: exactly **one `diff` broadcast per tick per client**, containing only what changed for that client (position moves, anim changes, rock state, loot add/remove, events). No diffs are sent for ticks where nothing changed and nobody moved. `events` are per-recipient (your XP drops go only to you; hitsplats go to everyone in the zone).
+
+---
+
+## 6) PHASE 0 — Auth handoff, deployable, movement (no gameplay)
+
+**Definition of done**: developer clicks "Enter World (beta)" in PocketRPG on desktop, lands on `world.pocketrpg.co.uk`, sees their character name, and walks the hero model around the pasture zone by clicking; movement is server-authoritative and survives a reconnect at the same position; a second browser tab does NOT show the other player (rendering others is Phase 2+; the server may track them, the client renders only self in Phase 0).
+
+### STEP 0.0 — Ground-truth preflight (no code)
+Read, in full: `functions/_lib/jwt.js`, `functions/_lib/auth.js`, `functions/_lib/game/save.js`, `functions/_lib/game/inventory.js`, `functions/api/save.js` (GET+PUT), `functions/api/actions/_completeShared.js`, `src/data/skills.json` (mining), `src/data/monsters.json` (pasture_bull), root `wrangler.toml`, `build_single.cjs` top comments, and the `partyserver` README (https://github.com/threepointone/partyserver — packages/partyserver and packages/partysocket). Confirm every "verified fact" in §3. Record confirmations (or discrepancies → DEVELOPER TASK) in `docs/world-progress.md`. Also run `ls migrations/ | sort | tail -3` and note the next migration number `NNNN`.
+
+### STEP 0.1 — Scaffold `world/`
+Create the §4 skeleton with placeholder implementations that compile. `world/package.json` deps (pin exact versions; check `public/vendor/three/` version by reading its build banner or `package.json` at root if three is listed — else pin the latest r1xx and note it): `three`, `partyserver`, `partysocket`; dev: `typescript`, `vite`, `wrangler`, `vitest`, `@types/node`, `@cloudflare/workers-types`. Scripts: `dev:client` (vite), `dev` (wrangler dev), `build` (vite build), `typecheck` (tsc --noEmit), `test` (vitest run).
+`world/wrangler.jsonc` (adjust key names to current wrangler schema if it complains — schema drift is an allowed deviation, record it):
+```jsonc
+{
+  "name": "pocketrpg-world",
+  "main": "server/index.ts",
+  "compatibility_date": "2026-07-01",
+  "assets": { "directory": "client/dist", "binding": "ASSETS" },
+  "durable_objects": { "bindings": [{ "name": "WorldZone", "class_name": "WorldZone" }] },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["WorldZone"] }],
+  "d1_databases": [{ "binding": "DB", "database_name": "pocketrpg", "database_id": "439e810b-8dce-4697-94c2-a7392520ad8f" }]
+}
+```
+Acceptance: `npm run world:check` passes (tests may be a single placeholder), `cd world && npx wrangler dev` starts and serves a "world placeholder" index page locally.
+
+### STEP 0.2 — Migration for world tables
+New file `migrations/NNNN_world.sql` (NNNN from step 0.0):
+```sql
+CREATE TABLE world_positions (
+  character_id INTEGER PRIMARY KEY,
+  zone_id TEXT NOT NULL,
+  x INTEGER NOT NULL,
+  z INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+CREATE TABLE world_grants (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  character_id INTEGER NOT NULL,
+  idempotency_key TEXT NOT NULL UNIQUE,
+  payload_json TEXT NOT NULL,
+  created_at INTEGER NOT NULL
+);
+CREATE INDEX idx_world_grants_char ON world_grants (character_id, created_at);
+```
+Run the root commit gate (migrations/ touched). DEVELOPER TASK: apply to local AND production D1 when deploying (`npx wrangler d1 migrations apply pocketrpg` / `--remote`), per this repo's usual migration flow.
+
+### STEP 0.3 — Auth handoff endpoints
+**(a)** `functions/api/world-token.js` — copy the auth + character-ownership pattern from `functions/api/save.js` (`requireAuth`, `getCharacterId`-style ownership SELECT). On `POST`: return `json({ handoff: await signJWT({ sub: auth.identity.id, character_id: ch.id, scope: 'world_handoff' }, env.JWT_SECRET, 60) })`. No D1 writes. Add a vitest under `tests/` mirroring how existing function tests are structured (find one with `grep -rl "onRequestPost" tests/` and mimic; if none test functions directly, unit-test only the payload shape via `signJWT`/`verifyJWT` round-trip and note it).
+**(b)** `world/server/session.ts` — `POST /api/world/session`, body `{ handoff }`: `verifyJWT(handoff, env.JWT_SECRET)`; require `scope === 'world_handoff'`; then SELECT the character row from D1 (id + name, ensure not deleted, owner matches `sub`); reply `{ token: await signJWT({ sub, character_id, scope:'world' }, env.JWT_SECRET, 86400), character: { id, name } }`. Wrong/expired/mis-scoped token → 401 `{ error }`. The 30-day default expiry of `signJWT` must NOT be used — pass explicit expiries (60, 86400).
+Root gate (functions/ touched) + `world:check`.
+
+### STEP 0.4 — Client boot, auth, platform gate
+`client/src/auth.ts`: on load, if `location.hash` matches `#handoff=<jwt>` → strip it from the URL via `history.replaceState`, POST to `/api/world/session`, store `{token, character}` in `localStorage['world_session']`. Else use stored session. No/invalid session → full-page message with a link to `https://pocketrpg.co.uk`. Viewport gate: if `Math.min(screen.width, innerWidth) < 768` → full-page "PocketRPG World needs a desktop or tablet." block; re-check on resize. No 3D yet: after auth, render "Welcome, <name>" in DOM.
+Acceptance: unit tests for hash parsing + gate logic; manual local run with a token minted by the dev-seed script (step 0.5).
+
+### STEP 0.5 — Local dev seed + `.dev.vars`
+`world/.dev.vars.example` containing `JWT_SECRET=dev-secret-change-me`. `world/scripts/dev-seed.mjs`: creates the local D1 tables it needs (`identities`? — **read the earliest migrations to learn exact table names/columns for identities, characters, saves**; use the real schema, inserting one identity + one character + one minimal gzipped save blob via `functions/_lib/saveCodec.js` helpers if usable from Node, else store whatever format `loadCharacterWithSave` reads — verify by reading `functions/_lib/game/save.js` + `saveCodec.js`) and prints a ready `#handoff=` URL signed with the dev secret. Wire: `npm run dev:seed`. This script is dev-only; it must refuse to run if `CLOUDFLARE_ENV`/`CF_PAGES` env suggests production.
+Acceptance: `wrangler dev` + seeded URL → step 0.4 welcome screen shows the seeded character's name.
+
+### STEP 0.6 — Zone format + pasture.json
+`world/shared/zone.ts` types + `validateZone()` (dimensions match collision strings, spawn walkable, objects/npcs on walkable tiles, ids unique). `world/zones/pasture.json`, 32×32: grassy open field, a fenced pasture area (fences are `#` tiles) with a gate gap, 3 tin rocks + 2 copper rocks clustered near the north-west corner, 1 `bank_chest` near spawn, spawn at (16,16). Author it by hand as ASCII; keep ≥70% walkable. NPC list: empty for now (cow added in Phase 2 — but include the `npcs` field as `[]`).
+```jsonc
+{ "id":"pasture", "name":"Verdant Pasture", "width":32, "height":32,
+  "spawn":{"x":16,"z":16},
+  "collision":[ "32 strings of 32 chars, '#' or '.'" ],
+  "objects":[ {"id":"rock_tin_1","type":"rock","rock":"tin","x":4,"z":5}, {"id":"chest_1","type":"bank_chest","x":14,"z":15} ],
+  "npcs":[] }
+```
+Vitest: zone validates; a deliberately broken fixture fails.
+
+### STEP 0.7 — Pathfinding (pure)
+`world/server/pathfind.ts`: `findPath(collision, from, to, maxLen=64): {x,z}[] | null`. BFS over 8 neighbours; a diagonal step is legal only if **both** adjacent cardinal tiles are walkable (no corner cutting). If target blocked, path to the nearest walkable tile adjacent to it (for interactions) or return null for plain walks. Exhaustive vitest: straight line, around wall, corner-cut refusal, unreachable, maxLen truncation.
+
+### STEP 0.8 — WorldZone DO + movement tick
+`world/server/WorldZone.ts` extends partyserver's `Server`. Follow the partyserver README exactly for: export from `server/index.ts`, `routePartykitRequest`-style routing of `/parties/...`, and hibernation options — **set hibernation OFF for now** (the zone ticks while occupied; empty zones have no connections). Connection lifecycle:
+- On WS connect: mark connection "unauthed"; first frame must be `hello` within 5 s → `verifyJWT(token)`; require `scope==='world'`; reject → close 1008. On auth: load position from `world_positions` (fall back to zone spawn), add to in-memory `players` map keyed by `character_id` (a second connection for the same character closes the first), send `welcome`, ensure the tick interval is running.
+- In-memory player: `{ charId, name, conn, x, z, path:{x,z}[], anim, queued:Intent|null, lastMsgTimes:number[] }`.
+- `onMessage`: validate against §5; `walk` → compute path from current tile, store (replaces existing), clear queued intent; `cancel` → clear both; `ping` → `pong` immediately (not tick-gated).
+- Tick (`setInterval(…, 600)` started when first player joins, `clearInterval` when last leaves): advance every player 1 step along `path`; collect changes; build per-client `diff` with ONE `send` per client; skip send when that client's view changed nothing.
+- Checkpoints (the ONLY durable writes in this phase): on disconnect and every 100 ticks (60 s), write each dirty player's `world_positions` row (single `INSERT … ON CONFLICT(character_id) DO UPDATE`). Batch with `env.DB.batch`.
+`world/server/tick.ts` holds the pure "advance movement / build diff" functions; vitest them (players move 1 tile/tick, diffs minimal, disconnect persists position — mock the DB).
+
+### STEP 0.9 — three.js scene, click-to-move, placeholder avatar
+`scene.ts`: renderer (`antialias:true`, `setPixelRatio(min(devicePixelRatio,2))`), hemisphere + directional light, ground: one `PlaneGeometry(w,h)` with a repeating grass-green checker `CanvasTexture` (two greens, e.g. #4a7c3a/#568c44) — blocked tiles get darker overlay quads. Camera DECIDED: `PerspectiveCamera(fov 40)`, position = player + `(0, 12, 9) * zoom`, `lookAt(player)`, `zoom` clamped 0.6–1.8 via wheel / two-finger pinch. No rotation in v1.
+`entities.ts`: self = a capsule (`CapsuleGeometry`) placeholder; store `prev`/`next` tile positions and interpolate `prev→next` over 600 ms each diff (`performance.now()`-based lerp).
+`input.ts`: `pointerdown` → `Raycaster` against ground plane → tile coords → send `walk`. Show a small click marker (fading yellow ring mesh) at the target.
+Acceptance: local run — click moves the capsule smoothly tile-to-tile; refresh reconnects at the same tile (checkpoint write on disconnect).
+
+### STEP 0.10 — Hero model + animations
+Copy `public/3d-samples/hero.glb` → `world/client/public/models/hero.glb` (git-committed; if >5 MB, DEVELOPER TASK to approve or supply a slimmer export instead of committing). Write `world/scripts/list-anims.mjs` (Node + three's GLTFLoader or `@gltf-transform/core`) printing clip names; append output to the progress log. Load hero in `entities.ts` replacing the capsule; map clips by name: prefer exact `Idle`/`Walk` (case-insensitive substring match), else DEVELOPER TASK listing found names and proposed mapping. Crossfade 150 ms between idle/walk based on whether the entity moved this tick.
+Acceptance: hero idles when still, walks when moving, no T-pose flashes.
+
+### STEP 0.11 — PocketRPG entry button
+In the Settings screen component (locate via `grep -ril "settings" src/screens/`), add a "Enter World (beta)" button rendered only when `localStorage.pocketWorldBeta === '1'`: onClick → `POST /api/world-token` (reuse the client API helper pattern in `src/cloud/api.js`), then `window.open('https://world.pocketrpg.co.uk/#handoff=' + res.handoff)`. Make the world origin a constant that falls back to the workers.dev URL until DNS exists (read it from a new export in the same file, developer fills the value in DT below). Follow CLAUDE.md §9/§12 (44px target, screen already in chunk — verify which bundle the Settings screen is in before editing). **Full root commit gate.**
+
+### STEP 0.12 — Phase 0 deploy + acceptance
+DEVELOPER TASK (single block): 1) `cd world && npm i && npm run build && npx wrangler deploy`; 2) `npx wrangler secret put JWT_SECRET` (same value as Pages); 3) apply migration `--remote`; 4) paste the workers.dev URL back (agent commits it into the 0.11 constant); 5) optionally add the custom domain; 6) run the manual script: log into PocketRPG → set `localStorage.pocketWorldBeta='1'` → Settings → Enter World → verify name, click-walking, reconnect position, block page on a phone-width window, and that a wrong/expired handoff shows the login-required page. Developer replies "PHASE 0 ACCEPTED" (or issues) before Phase 1 begins.
+
+---
+
+## 7) PHASE 1 — Mining, session inventory, grant flush into PocketRPG
+
+**Definition of done**: developer mines 5 tin in the world (watching the pick animation, XP drops, ore entering the 28-slot panel), deposits at the chest, opens PocketRPG, and sees Mining XP +85 and 5 Tin Ore in the bank. Disconnecting mid-session with undeposited ore also lands the ore/XP in PocketRPG (disconnect flush).
+
+### STEP 1.1 — Rocks in zone + statics protocol
+Server: load zone objects into DO memory `{ id, rock:'tin'|'copper', x, z, depletedUntilTick:0 }`. `welcome.statics` includes them; `diff.rocks` broadcasts depleted/respawned transitions. Client: render rocks as low-poly boulders (`IcosahedronGeometry` detail 0, grey; copper tinted #b87333, tin #9aa5ad), scale 0.8 tile; depleted → scale 0.45 + darker grey.
+
+### STEP 1.2 — Mining loop (server, PocketRPG semantics — DECIDED)
+`interact {kind:'rock', action:'mine'}`: path the player to the nearest tile adjacent (8-dir) to the rock; on arrival start mining. Look up the action in `src/data/skills.json → mining.actions` by rock id: require `level ≤` player's Mining level (from session stats; on refusal send `events:[{e:'msg', text:'You need Mining level N to mine this rock.'}]`). While mining: `anim:'mine'`; every `action.ticks` ticks, if the rock is not depleted: +1 product to session inventory, +`action.xp` Mining XP to the session tally, emit `{e:'xp'}` + `{e:'inv'}`, deplete the rock for **8 ticks**, and stop (one ore per interaction, OSRS-style: the player re-clicks or — DECIDED — auto-continues on the same rock when it respawns if the player hasn't moved/acted; implement auto-continue). Moving/other intents cancel mining. Session inventory full → `{e:'msg', text:'Your pack is full.'}` and stop.
+Session stats: seeded at `hello` time by reading the save blob once — add `loadCharacterWithSave` call in the DO's auth step; derive `{xp, level}` per skill from `save.stats` (level via `getLevelFromXP` from `src/engine/experience.js` when the stored level is missing). XP earned in-world updates session stats immediately (so level-ups apply in-session; send `{e:'msg', text:"Congratulations, you've reached Mining level N!"}`).
+All of this lives in pure functions in `tick.ts` + a new `world/server/mining.ts`; vitest: full mine cycle, depletion, level gate, pack-full, auto-continue.
+
+### STEP 1.3 — Session inventory UI
+`ui.ts`: fixed right-side panel, 4×7 grid of 40px cells (28 slots), rendered from the last `{e:'inv'}`; item icon = the `icon` emoji from `src/data/items.json` (import the JSON in the client) + quantity badge for stacks. XP drops: floating `+17 Mining` text rising from the avatar (DOM overlay, 1.2 s fade). Message events → a 3-line message strip bottom-left.
+
+### STEP 1.4 — Grant flush (`world/server/grants.ts`) — the only save-blob writer
+`flushGrants(env, player, reason)`, called on: bank-chest `deposit` interact (flushes inventory + XP, empties session inventory), disconnect, and a 100-tick timer (flushes XP only — items stay in the session pack until deposit/disconnect).
+Algorithm (DECIDED):
+1. Build payload `{ xpBySkill, items:[{itemId,quantity}], reason }`; skip if empty.
+2. `idempotency_key = "wg:" + charId + ":" + sessionId + ":" + flushSeq++` (`sessionId` = crypto.randomUUID() minted at hello). `INSERT INTO world_grants … ON CONFLICT DO NOTHING`; if no row inserted → already applied → return.
+3. Up to 3 attempts: `loadCharacterWithSave` → for each skill: `save.stats[skill].xp += amount` (clamp to the 200M cap from `src/engine/experience.js`), `save.stats[skill].level = getLevelFromXP(xp)`; for each item: `addItemToBank(save, itemId, qty)` → `writeSave(env, charId, save, expectedRevision)`. On revision-conflict error re-read and retry; after 3 failures, log, delete the idempotency row, and re-queue the payload in memory for the next flush.
+4. Mirror `/api/save` PUT's denormalized-summary update (total_level/combat_level on `characters`) — read that code and reuse/extract its helper rather than re-implementing; if extraction is needed, do it as a separate refactor commit with the root gate.
+5. `auditLog(env, …)` — match the exact signature/usage in `functions/_lib/game/audit.js` with event type `world_grant` and the payload.
+Vitest with a mocked env/DB covering: idempotent replay, revision-conflict retry, XP cap clamp, pack contents → bank.
+**Do not** add any save-blob validation/policing here (CLAUDE.md §14 — grants are additive server-side writes, the trusted-blob model is unchanged).
+
+### STEP 1.5 — Bank chest interact + Phase 1 acceptance
+Chest default action `Deposit` (left-click) → path adjacent → flush(reason 'deposit') → `{e:'inv'}` empty + `{e:'msg','You deposit your items into your bank.'}`. Chest mesh: brown box + darker lid, 0.9 tile.
+DEVELOPER TASK — manual script: fresh session → mine tin ×5 (watch xp drops, inventory fills) → deposit → PocketRPG shows +85 Mining XP and +5 Tin Ore in bank; mine 2 copper, close the tab without depositing → PocketRPG shows the copper too (disconnect flush); confirm an idle-game save afterwards doesn't roll any of it back (play a few idle minutes, reload). Reply "PHASE 1 ACCEPTED".
+
+---
+
+## 8) PHASE 2 — Cow combat, floor loot, OSRS click model
+
+**Definition of done**: developer left-clicks the Pasture Bull, walks over, fights it with hitsplats and an overhead HP bar, it dies and sinks/fades, loot appears on the floor at the death tile, right-click on the pile lists each item as `Take <Item Name>`, taking Bones/Raw Beef/Cowhide fills the pack, deposit lands them in the PocketRPG bank, Attack/Strength/Defence/HP XP appear per §5 rules, and the cow respawns. Right-click menus work everywhere (rock, chest, cow, loot, ground) on desktop; long-press does the same on a tablet.
+
+### STEP 2.1 — Context menu + hover text (input layer, DECIDED spec)
+Implement in `input.ts`/`ui.ts` before any combat:
+- Maintain a hover pick every pointermove (throttled to animation frames): topmost entity under cursor with priority `loot > npc > rock/object > ground`. Top-left hover line, OSRS-style: `<default action> <Name>` in pale yellow, e.g. `Mine Tin Rock`, `Attack Pasture Bull (level-8)`, `Walk here`.
+- Left-click: perform the default action of the picked thing — loot: `Take` top item; npc: `Attack`; rock: `Mine`; bank_chest: `Deposit`; ground: `Walk here`.
+- Right-click / long-press ≥500 ms: DOM context menu at the pointer: header `Choose Option`; one row per action for **every** pickable thing under the cursor (ray hits sorted near-to-far), then `Walk here`, then `Cancel`. Rows: white text, target name in cyan for npcs/objects, `(level-8)` in green when player's combat level ≥ monster's else red (combat level via `src/engine/combatLevel.js`). Click outside or `Cancel` closes. Menu rows are min 32 px tall (tablet-friendly).
+- `Examine` row for npc/rock/loot (last before Walk here) → `{e:'msg'}`-style local text; examine strings live in a small map in `ui.ts` (write original flavour text, e.g. bull: "A hefty highland bull. Prime cowhide on the hoof.").
+Vitest the pick-priority and menu-composition logic (pure functions, mock ray hits).
+
+### STEP 2.2 — Cow NPC: spawn + wander
+Add to `pasture.json` `npcs`: `{ "id":"bull_1", "monsterId":"pasture_bull", "x":22, "z":20, "wander":{"x":18,"z":16,"w":10,"h":10} }`. Server: NPC in-memory `{ id, monsterId, x, z, hp, maxHp, state:'idle'|'combat'|'dead', respawnAtTick }`; when idle, every 5–13 ticks (random) step 1 walkable tile staying inside the wander rect. Broadcast via `diff.ents` (kind 'npc', include `monsterId`, hp/maxHp only while in combat). Client renders it as a brown box 1.4×0.9×0.9 placeholder with the name from `monsters.json`.
+DEVELOPER TASK (non-blocking, DT-class C): download a CC0 cow GLB (Quaternius animals or KayKit) into `world/client/public/models/cow.glb`; when present, the client auto-uses it (feature-detect file with a HEAD request at boot) with clips mapped like step 0.10 (idle/walk/die; attack optional).
+
+### STEP 2.3 — Combat via the real engine (server)
+On `interact {kind:'npc', action:'attack'}`: path adjacent, then start combat — **build it as a thin adapter around `src/engine/combat.js`, written test-first**:
+1. First commit: `world/tests/combat-adapter.test.ts` that, WITHOUT the DO, drives `createCombatState(monstersData.pasture_bull, 'melee', playerStanceDefault)` + repeated `processCombatTick(state, playerStats, equipment, itemsData, prayersData, inventory, null)` until the bull dies. **Read `processCombatTick` (src/engine/combat.js:409) end-to-end first** to learn its exact return/mutation contract (hits dealt/taken, xp awards, kill signal, monster hp field names) — encode that contract in the test's assertions, including §5 XP rules (4 XP/damage to the style skill, 1.33 XP/damage to HP). Stance DECIDED: fixed `'accurate'` in v1 (no stance UI).
+2. Player inputs to the engine: `playerStats` and `equipment` exactly as stored in the save blob (loaded at hello, already in session state — pass through untransformed; empty/missing equipment = unarmed, which the engine already handles); `inventory: []` and `prayersData: {}` (no eating/prayer in world v1); `slayerTask: null`.
+3. Adapter (`world/server/combatSession.ts`): one combat session per player; each zone tick advances it; hits → `events {e:'hit'}` to all clients + hp in `diff.ents`; XP → session tally (same pipeline as mining — flush rules unchanged) + `{e:'xp'}`. Player moving/cancelling ends combat (bull returns to idle, hp persists until it leaves combat 17 ticks with no attacker → full heal). Bull fights back through the same `processCombatTick` flow — do not write your own monster-attack math; if the engine's state machine needs the player "in combat" to process retaliation, that's what the test in (1) establishes.
+4. Player death (bull max hit is 1; only possible at 1 HP): on HP ≤ 0 send `{t:'dead'}`, respawn at zone spawn full HP, no item loss, combat ends. Session HP: track current HP in session (seeded from blob HP level, i.e. max HP; regen +1 per 100 ticks to mirror §4's +1/60 s).
+
+### STEP 2.4 — Death, floor loot, pickup
+On bull death: `state:'dead'`, anim 'die', removed from `ents` after 3 ticks, `respawnAtTick = now + 25`; roll drops from `monsters.json → pasture_bull.drops` (chance-gated rolls, `quantity` ranges as `[min,max]` — mirror how the idle engine rolls drops: find and reuse/extract the existing drop-roll helper from `src/engine/` via `grep -rn "drops" src/engine/loot* src/engine/*.js | head`; reuse it, don't re-roll your own). Each dropped item → loot entity at the death tile `{ id, itemId, qty, x, z, ownerCharId, spawnTick }`. Visibility filtering happens **server-side when building each client's diff**: owner-only until `spawnTick+100`, everyone until `spawnTick+300`, then `lootRemoved`. Multiple items on one tile are all listed in that tile's context menu (`Take Bones`, `Take Cowhide`, …); left-click takes the most recently dropped.
+`interact {kind:'loot', action:'take'}`: path to the tile, verify still present + visible to this player, add to session pack (full → pack-full message), `lootRemoved` broadcast. Client: loot rendered as a small spinning item marker per tile (flat plane with the item's emoji drawn to a CanvasTexture — one shared texture cache).
+Vitest: drop rolling uses the shared helper, owner-window filtering, take-vs-despawn races, stack quantities.
+
+### STEP 2.5 — Combat presentation
+HP bar: DOM overlay div above the bull (project entity position → screen each frame), green/red ratio, visible while in combat and for 10 ticks after. Hitsplats: red square with white number (blue square for 0) at the target's screen position, 900 ms fade, both from `{e:'hit'}`. Player attack anim: reuse a hero attack clip if `list-anims.mjs` found one (else reuse 'mine' swing and log a note). Bull hurt flash: material emissive pulse.
+
+### STEP 2.6 — Phase 2 acceptance
+Full root + world gates green, then DEVELOPER TASK — manual script: desktop: hover texts correct on ground/rock/chest/bull/loot; right-click menus everywhere per §8.1; kill the bull twice (hitsplats, hp bar, death anim, respawn ~15 s); loot appears at death tile, second account/browser cannot see it for 60 s but can after; take all three drops, deposit, verify PocketRPG bank + Attack/HP XP moved consistently with §5 math; tablet: tap-to-act + long-press menus. Reply "PHASE 2 ACCEPTED".
+
+---
+
+## 9) After Phase 2 (do not build — listed so the agent doesn't "prepare" for them)
+
+Other players rendered, run energy, more zones, food/prayer in world, ranged/magic, stances UI, PvP, mobile — all explicitly out of scope. When Phase 2 is accepted, stop and await the developer's next instruction.
+
+## 10) Quick reference — repo facts the agent will need constantly
+
+- Tick: 600 ms. Inventory: 28. XP curve/cap: `src/engine/experience.js` (`getLevelFromXP`, 200M cap). Combat XP: 4/dmg style, 1.33/dmg HP (§5 CLAUDE.md).
+- Mining data: `src/data/skills.json → mining.actions` (`tin`, `copper`: level 1, ticks 4, xp 17).
+- The cow: `src/data/monsters.json → pasture_bull` (name "Pasture Bull", hp 8, attackSpeed 4, drops bones/raw_beef/cowhide @1.0, clue_scroll_medium @0.02).
+- Items: `src/data/items.json` (Title Case names, `icon` emoji, `stackable` flag).
+- JWT: `functions/_lib/jwt.js` — `signJWT(payload, secret, expiresInSeconds)`, `verifyJWT(token, secret)`.
+- Save access: `functions/_lib/game/save.js` — `loadCharacterWithSave(env, characterId, identityId)`, `writeSave(env, characterId, saveObject, expectedRevision)`; blob: `save.stats[skill] = {xp, level}`; items via `functions/_lib/game/inventory.js` only.
+- Audit: `functions/_lib/game/audit.js` — every grant flush emits one event.
+- Combat engine: `src/engine/combat.js` — `createCombatState` (line ~29), `processCombatTick` (line ~409).
+- Anti-pattern reminder: PvP's HTTP-poll-per-tick (`functions/api/pvp/match/[id]/tick.js`) is correct for PvP and **forbidden** here — the world never does per-tick durable writes or per-tick HTTP.
