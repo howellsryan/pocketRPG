@@ -391,7 +391,7 @@ export default function GatherScreen({ initialTaskId, idleResult, onBack, onStop
         producing={<>
           <GameIcon iconKey={task.product} item={{ icon: task.icon }} size={32} color="var(--color-gold-light)" />
           <span class="text-[12px] font-semibold text-[var(--color-parchment)] opacity-60">Producing</span>
-          <span class="text-[13px] font-semibold text-[var(--color-gold-light)]">{nameOf(task.product)}</span>
+          <span class="text-[13px] font-semibold text-[var(--color-gold-dim)]">{nameOf(task.product)}</span>
         </>}
         stats={[
           { label: 'Items gathered', value: activeTask.totalItems },

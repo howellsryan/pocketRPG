@@ -74,7 +74,7 @@ export default function SkillActionRow({
 
       <div class="flex-1 min-w-0">
         <div class="flex items-center gap-2">
-          <span class={`text-[16px] font-semibold truncate ${locked || disabled ? 'text-[var(--color-parchment)] opacity-60' : 'text-[var(--color-parchment)]'}`}>
+          <span class={`text-[16px] font-semibold ${locked || disabled ? 'text-[var(--color-parchment)] opacity-60' : 'text-[var(--color-parchment)]'}`}>
             {title}
           </span>
           {active && (

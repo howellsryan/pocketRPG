@@ -95,9 +95,13 @@ const SPOT_SKILL_ART_KINDS = new Set(['agility', 'thieving', 'hunter', 'farming'
 
 /**
  * Display descriptor for a spot: `{ refs, label, sublabel, icon, skillArtId,
- * level }`. Single-activity spots describe that activity (name/emoji/level);
- * group spots use the group's skill name and emblem. `skillArtId` (a skill id
- * for utils/skillArt, or null) wins over the emoji `icon` when set.
+ * level, product, iconKey }`. Single-activity spots describe that activity
+ * (name/emoji/level); group spots use the group's skill name and emblem.
+ * `skillArtId` (a skill id for utils/skillArt, or null) wins over the emoji
+ * `icon` when set. `product`/`iconKey` pass a single-ref activity's own
+ * describeActivity() result through untouched — ActivityIcon (components/)
+ * uses them to render the actual item/data-authored glyph instead of the
+ * generic per-kind emoji `icon` falls back to.
  */
 export function describeSpot(placeId, spot) {
   const refs = resolveSpotRefs(placeId, spot)
@@ -114,5 +118,8 @@ export function describeSpot(placeId, spot) {
     ? spot.group
     : SPOT_SKILL_ART_KINDS.has(spot.kind) ? spot.kind : null
   const icon = spot.icon || single?.icon || (refs.length ? describeActivity(spot.kind, refs[0]).icon : '❔')
-  return { refs, label, sublabel, icon, skillArtId: spot.icon ? null : skillArtId, level: single?.level ?? null }
+  return {
+    refs, label, sublabel, icon, skillArtId: spot.icon ? null : skillArtId, level: single?.level ?? null,
+    product: single?.product ?? null, iconKey: single?.iconKey ?? null,
+  }
 }

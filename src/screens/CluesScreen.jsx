@@ -150,7 +150,7 @@ export default function CluesScreen({ onNavigate, onBack } = {}) {
         producing={<>
           <GameIcon iconKey={task.requiresItem} size={14} />
           <span class="text-[12px] font-semibold text-[var(--color-parchment)] opacity-60">Solving</span>
-          <span class="text-[13px] font-semibold text-[var(--color-gold-light)]">{CLUE_ITEM_NAMES[task.requiresItem] || task.requiresItem}</span>
+          <span class="text-[13px] font-semibold text-[var(--color-gold-dim)]">{CLUE_ITEM_NAMES[task.requiresItem] || task.requiresItem}</span>
         </>}
         stats={[
           { label: 'Clues solved', value: completed },

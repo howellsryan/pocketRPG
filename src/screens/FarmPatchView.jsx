@@ -203,7 +203,9 @@ function PatchCard({ patchData, onClick }) {
           <div class="text-sm font-semibold text-[var(--color-parchment)] capitalize">
             {crop ? `${crop.icon} ${crop.name}` : typeLabel}
           </div>
-          <div class={`text-[10px] mt-0.5 ${statusColor}`}>{statusText}</div>
+          {/* Ready patches skip the status line — the gold border/background
+              already says "ready"; repeating it in text is just noise. */}
+          {!ready && <div class={`text-[10px] mt-0.5 ${statusColor}`}>{statusText}</div>}
         </div>
       </div>
       {patch && crop && (

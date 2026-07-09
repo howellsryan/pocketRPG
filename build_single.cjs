@@ -112,6 +112,7 @@ const sourceFiles = [
   'components/BackLink.js', // -> game chunk (only chunk screens use it)
   'components/PlaceArt.js', // -> game chunk (map art; only WorldMapScreen renders it)
   'components/ActivityPickerModal.js', // -> game chunk (world map / place map only)
+  'components/ActivityIcon.js', // -> game chunk (world map / place map only)
   'components/PlaceMapView.js', // -> game chunk (world map / place map only)
   'components/SlayerMasterModal.js', // -> game chunk (world map / place map only)
   'components/TravelPrompt.js',
@@ -132,8 +133,10 @@ const sourceFiles = [
   'components/RewardRevealOverlay.js',
   'components/LevelUpOverlay.js',
   'components/ChatWidget.js',
+  'components/Header.js',
   'components/GameFrameBar.js',
   'components/navTabs.js',
+  'components/SideNav.js',
   'components/Card.js',
   'components/Panel.js',
   'components/Button.js',
@@ -224,6 +227,7 @@ const GAME_CHUNK_FILES = new Set([
   'components/BackLink.js',
   'components/PlaceArt.js',
   'components/ActivityPickerModal.js',
+  'components/ActivityIcon.js',
   'components/PlaceMapView.js',
   'components/SlayerMasterModal.js',
   'components/Model3DViewer.js',

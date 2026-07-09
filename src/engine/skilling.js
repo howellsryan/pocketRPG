@@ -155,7 +155,6 @@ export function createSkillingState(skill, action) {
     totalDungeoneeringTokens: 0,
     stopped: false,
     justCompleted: false,  // flag to delay reset to next tick
-    consumedMaterials: {}  // track consumed materials locally
   }
 }
 

@@ -77,6 +77,23 @@ describe('migrateLegacyItemIds', () => {
     expect(result.bank.void_king_top.quantity).toBe(3)
   })
 
+  it('preserves pooled charges when merging legacy and new-id bank entries for a scale-charged weapon', () => {
+    // Regression: venom_blowpipe (legacy toxic_blowpipe), trident_of_venom
+    // (legacy trident_of_the_swamp), shadow_of_tumaken (legacy tumekens_shadow)
+    // and scythe_of_vythar (legacy scythe_of_vitur) were all renamed. A player
+    // holding a charged copy banked under the old id plus another copy banked
+    // under the new id used to have the old copy's charge pool silently
+    // dropped by the merge (only quantity was summed).
+    const bank = {
+      toxic_blowpipe: { itemId: 'toxic_blowpipe', quantity: 1, charges: 500 },
+      venom_blowpipe: { itemId: 'venom_blowpipe', quantity: 1, charges: 120 },
+    }
+    const result = migrateLegacyItemIds({ equipment: {}, inventory: [], bank })
+    expect(result.changed).toBe(true)
+    expect(result.bank.toxic_blowpipe).toBeUndefined()
+    expect(result.bank.venom_blowpipe).toEqual({ itemId: 'venom_blowpipe', quantity: 2, charges: 620 })
+  })
+
   it('reports changed=false when nothing legacy is present (idempotent on already-migrated saves)', () => {
     const equipment = { head: { itemId: 'void_king_helm' } }
     const inventory = [{ itemId: 'void_king_top', quantity: 1 }]

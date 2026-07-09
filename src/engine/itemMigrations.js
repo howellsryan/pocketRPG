@@ -74,11 +74,19 @@ function rewriteBank(bank) {
   for (const oldId of Object.keys(LEGACY_ITEM_ID_MAP)) {
     if (!next[oldId]) continue
     const newId = LEGACY_ITEM_ID_MAP[oldId]
-    const oldQty = next[oldId].quantity || 0
+    const oldEntry = next[oldId]
+    const oldQty = oldEntry.quantity || 0
     const existingNew = next[newId]
-    next[newId] = existingNew
-      ? { ...existingNew, quantity: (existingNew.quantity || 0) + oldQty }
-      : { ...next[oldId], itemId: newId }
+    if (existingNew) {
+      const mergedCharges = (existingNew.charges || 0) + (oldEntry.charges || 0)
+      next[newId] = {
+        ...existingNew,
+        quantity: (existingNew.quantity || 0) + oldQty,
+        ...(mergedCharges > 0 ? { charges: mergedCharges } : {}),
+      }
+    } else {
+      next[newId] = { ...oldEntry, itemId: newId }
+    }
     delete next[oldId]
     changed = true
   }

@@ -146,6 +146,9 @@ export function activityRef(task) {
     // Getting a slayer task from a master (never an activeTask — the shape only
     // rides the gating/travel-prompt flow, assignment itself is instant).
     case 'slayermaster': return task.master?.id ? { kind: 'slayer', ref: task.master.id } : null
+    // Opening the bank (never an activeTask — same instant-assignment shape as
+    // slayermaster above). One ref: every bank is functionally identical.
+    case 'bank': return { kind: 'bank', ref: 'use' }
     default: return null
   }
 }
@@ -173,6 +176,8 @@ export function autoStartFromTask(task) {
     case 'minigame': return task.minigameTask?.id ? { kind: 'minigame', taskId: task.minigameTask.id } : null
     // Arrival auto-assigns a task from the master (via the Slayer screen).
     case 'slayermaster': return task.master?.id ? { kind: 'slayer', masterId: task.master.id } : null
+    // Arrival opens the bank screen directly.
+    case 'bank': return { kind: 'bank' }
     default: return null
   }
 }
@@ -225,6 +230,22 @@ export function isPlaceVaryingSkillRef(ref) {
 }
 
 /**
+ * Human-readable place name(s) where an activity actually happens — the same
+ * "you'll find this at X" label combat shows per monster, generalised to any
+ * kind via the same worldActivities.json index `placesForActivity` reads (so
+ * it can never drift from what actually gates the start). Facility-bound skill
+ * refs (smithing/cooking/prayer/magic/firemaking/herblore/fletching/crafting/
+ * construction) return null — they're offered at every place with the matching
+ * building, so no single location would be accurate.
+ */
+export function activityLocationLabel(kind, ref) {
+  if (kind === 'skill' && !isPlaceVaryingSkillRef(ref)) return null
+  const places = placesForActivity(kind, ref)
+  if (!places.length) return null
+  return places.map((id) => worldData.places[id]?.name || id).join(' · ')
+}
+
+/**
  * Sub-group label for an activity within its kind — currently only meaningful for
  * `skill` (refs are `skillId:actionId`, e.g. `cooking:cook_eel`), used to break the
  * "Skill" category up by skill (Cooking / Crafting / Fletching / ...) instead of one
@@ -270,13 +291,16 @@ export function describeActivity(kind, ref) {
       const r = raidsData[ref]
       return { name: r?.name || ref, icon: r?.icon || '🩸', level: null }
     }
+    // `product` (an item id, or null for actions with no item output — e.g.
+    // dungeoneering floors) lets map-spot rendering show the actual item's
+    // icon instead of a generic tool glyph; see placeMaps.js describeSpot.
     case 'skill': {
       const a = skillAction(ref)
-      return { name: a?.name || ref, icon: a?.icon || '🛠️', level: a?.level ?? null }
+      return { name: a?.name || ref, icon: a?.icon || '🛠️', level: a?.level ?? null, product: a?.product || null }
     }
     case 'gather': {
       const t = gatherById[ref]
-      return { name: t?.name || ref, icon: t?.icon || '🌿', level: null }
+      return { name: t?.name || ref, icon: t?.icon || '🌿', level: null, iconKey: t?.iconKey || null }
     }
     case 'agility': {
       const a = actionInSkill('agility', ref)
@@ -298,12 +322,15 @@ export function describeActivity(kind, ref) {
     }
     case 'minigame': {
       const mg = minigamesById[ref]
-      return { name: mg?.label || ref, icon: mg?.icon || '🎮', level: null }
+      return { name: mg?.label || ref, icon: mg?.icon || '🎮', level: null, iconKey: mg?.iconKey || null }
     }
     // Slayer masters: getting a task from the master homed at this place.
     case 'slayer': {
       const m = slayerMasterById(ref)
-      return { name: m ? `${m.name} — Slayer Master` : ref, icon: m?.icon || '💀', level: null }
+      return { name: m ? `${m.name} — Slayer Master` : ref, icon: m?.icon || '💀', level: null, iconKey: m?.iconKey || null }
+    }
+    case 'bank': {
+      return { name: 'Bank', icon: '🏦', level: null, iconKey: 'coins' }
     }
     // Quests carry no single level; `level` is the complexity rank so pickers
     // sort Novice → Grandmaster (render `complexity`, not the rank number).
