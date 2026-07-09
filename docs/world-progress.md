@@ -123,3 +123,21 @@ One test-authoring correction caught by actually running the suite (not just eye
 `world:check` green: 3 test files / 22 tests.
 
 - [x] STEP 0.7 — e907a06 — pathfinding implemented with two entry points (direct + adjacent-to-target), stale placeholder test removed and replaced, one test-fixture bug found and fixed during verification.
+
+## STEP 0.8 — WorldZone Durable Object + movement tick
+
+Implemented `WorldZone.ts` as a `partyserver` `Server` subclass following its confirmed API (`onConnect`/`onMessage`/`onClose`, `this.env`/`this.name`, `Connection<TState>` generic for per-connection state, `static options.hibernate` left unset = off per the guide). Connection state (`{charId}`) lives in partyserver's small per-connection `state` (documented ~2KB cap — fine for just an id); actual game state (position, path, anim, rate-limit timestamps) lives in an in-memory `players: Map<charId, Player>`, per the guide's explicit spec — never in `connection.state`, which would be the wrong place once Phase 1 adds inventory/stats.
+
+Auth flow: 5s timeout closes unauthenticated connections; `hello` is verified (JWT scope `world`, D1 ownership re-check independent of the token's claims); a second connection for the same character closes the first. Movement: `walk` computes a path via `findPath` from Step 0.7 and stores it (minus the current tile) on the player; the 600ms tick (`setInterval`, started on first join / cleared on last leave) advances every player one step via the pure `tick.ts` functions and broadcasts one `diff` per connection only when something changed zone-wide that tick. Checkpoints — the only durable writes — fire on disconnect (immediate, single row) and every 100 ticks (batched via `env.DB.batch`), matching the guide's write-amplification design from the original research doc.
+
+`tick.ts` grew from a placeholder into `advanceMovement` (pure single-step state transition) and `toEntityDiff` (wire-format mapping), both unit tested in `tick.test.ts` (7 cases).
+
+**Real bug found via integration testing, not unit tests**: `dev-seed.mjs`'s cleanup deleted `characters` before clearing `world_positions`, which passed every previous run only because no `world_positions` row existed yet — the very first checkpoint this step's code ever wrote surfaced a `FOREIGN KEY constraint failed` on the next re-seed. Fixed by adding the missing `DELETE FROM world_positions` before the `characters` delete. This is exactly the kind of bug that unit tests (which mock the DB) cannot catch and only a real end-to-end run against live D1 surfaces.
+
+**Verification method**: rather than only unit-testing the pure functions (which was already done) or mocking the Durable Object (awkward and low-value for connection-lifecycle logic), ran a full local `wrangler dev` + real `WebSocket` client against the live DO and confirmed, by direct observation of the actual wire messages and a direct D1 query: (1) `hello`→`welcome` with correct zone/character data, (2) `walk` produces tick-by-tick `diff` messages tracing a real BFS-routed path, (3) `ping`→`pong` answered immediately, (4) disconnect writes the exact final tile to `world_positions`, (5) reconnecting with a fresh session token resumes from that persisted tile rather than zone spawn, (6) a message sent before `hello` closes the connection with code 1008/`not_authed`, (7) a second connection for the same character closes the first with 1008/`duplicate_connection`. All seven passed.
+
+`world:check` green: 4 test files / 26 tests.
+
+(Minor housekeeping note: this step's own commit message accidentally let bash expand backtick-quoted code spans as command substitution, silently dropping two words from one sentence — cosmetic only, the diff/tests/behavior are unaffected. Switching to the quoted-heredoc commit pattern for every commit from here on to prevent recurrence.)
+
+- [x] STEP 0.8 — d311b97 — WorldZone DO + tick loop implemented and verified end-to-end with a real WebSocket client against a live wrangler dev instance; one real cross-step bug found and fixed (seed script FK ordering).
