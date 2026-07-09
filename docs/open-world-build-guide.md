@@ -62,8 +62,20 @@ The builder agent runs in a sandboxed cloud session. It **can**: edit files, run
 It **cannot** (always a DEVELOPER TASK):
 - **DT-class A — Cloudflare account actions**: first `wrangler deploy` of the new Worker, setting the `JWT_SECRET` secret (`cd world && npx wrangler secret put JWT_SECRET` — must be the **same value** as the Pages project's), adding the `world.pocketrpg.co.uk` custom domain, applying D1 migrations to production (`npx wrangler d1 migrations apply pocketrpg --remote` from repo root), confirming the Workers paid plan is active.
 - **DT-class B — Real-device verification**: every phase ends with a manual test script the developer runs in a real browser (desktop + one tablet). The agent must never mark a phase accepted on its own.
-- **DT-class C — Asset acquisition**: downloading CC0 packs from itch.io/quaternius.com (agent network is proxied/limited). The developer downloads and drops files where the step says; the agent then processes them.
+- **DT-class C — Asset acquisition**: downloading NEW packs the in-repo library (§2.1) doesn't already cover (agent network is proxied/limited). The developer downloads and drops files; the agent processes them. Check §2.1 first — most needs are already met.
 - **DT-class D — Product judgement calls**: anything this guide leaves open (it tries to leave nothing open). When in doubt → DEVELOPER TASK, not a guess.
+
+### 2.1 Asset library — `assets/open-world/` (git-tracked, ~13k files / 1.2 GB)
+
+Source 3D assets from here FIRST; DT-class C is only for gaps. Nothing under `assets/` ships to players directly — process/copy what a step needs into `world/client/public/models/` (small, committed) or R2. Prefer `gltf`/`glb` variants; `fbx` folders are Unity/Blender sources. KayKit + Kenney packs are CC0; Quaternius `[Standard]` packs are paid-license (fine to use in the game, don't redistribute as raw assets).
+
+| Vendor | Packs | Use for |
+|---|---|---|
+| `kaykit/` | Adventurers 2.0 (Knight/Barbarian/Ranger/Rogue/Mage, rigged `Rig_Medium`), Character Animations 1.1 (General/MovementBasic/MovementAdvanced/Tools/CombatMelee/CombatRanged/Simulation/Special clip GLBs for Rig_Small/Medium/Large + mannequins), Skeletons, Halloween Bits, Dungeon Remastered (chests, props, dungeon kit), Medieval Hexagon + Medieval Builder (buildings, hex terrain), Forest Nature Pack, ResourceBits (ore nuggets, bars, logs) | Player/NPC characters, all character animations, dungeon/town props |
+| `Kenney/` | Fantasy Town Kit, Nature Kit ×2 (rocks, trees, cliffs, plants), Castle Kit, Graveyard Kit | Scenery, terrain dressing, buildings |
+| `Quaternius/` | Farm Animal Pack (cow!), Ultimate Monsters Bundle, Ultimate RPG Items (weapons, armour, potions, loot), Ultimate Nature, Medieval Village MegaKit, Universal Base Characters + Modular Fantasy Outfits, Universal Animation Library ×2 | Monsters (Phase 2 cow), items/weapons/armour props, alternative characters/animations |
+
+Tooling: `world/scripts/inspect-glb.mjs <files…>` prints bounds/rig/clips/textures of any GLB; `world/scripts/build-hero.mjs` rebuilds `hero.glb` from the library (Knight + retargeted Rig_Medium clips renamed to the protocol's `idle`/`walk`/`mine`/`attack`/`die`). KayKit animation GLBs share joint names across all same-rig characters — retarget by node name, the same way `build-hero.mjs` does, for any future character.
 
 ---
 
@@ -123,7 +135,7 @@ world/
 ├─ client/
 │  ├─ index.html
 │  ├─ vite.config.ts     # outDir dist, server.fs.allow ['../..'] for ../src imports
-│  ├─ public/models/     # hero.glb (copied), later cow.glb (developer-provided)
+│  ├─ public/models/     # hero.glb (built by scripts/build-hero.mjs), rock.glb, chest.glb — all from assets/open-world (§2.1)
 │  └─ src/
 │     ├─ main.ts         # boot: auth → connect → scene
 │     ├─ auth.ts         # handoff exchange, token storage, block-page gate
@@ -271,8 +283,8 @@ Vitest: zone validates; a deliberately broken fixture fails.
 Acceptance: local run — click moves the capsule smoothly tile-to-tile; refresh reconnects at the same tile (checkpoint write on disconnect).
 
 ### STEP 0.10 — Hero model + animations
-Copy `public/3d-samples/hero.glb` → `world/client/public/models/hero.glb` (git-committed; if >5 MB, DEVELOPER TASK to approve or supply a slimmer export instead of committing). Write `world/scripts/list-anims.mjs` (Node + three's GLTFLoader or `@gltf-transform/core`) printing clip names; append output to the progress log. Load hero in `entities.ts` replacing the capsule; map clips by name: prefer exact `Idle`/`Walk` (case-insensitive substring match), else DEVELOPER TASK listing found names and proposed mapping. Crossfade 150 ms between idle/walk based on whether the entity moved this tick.
-Acceptance: hero idles when still, walks when moving, no T-pose flashes.
+**Superseded (2026-07, developer decision)**: the main game's `public/3d-samples/hero.glb` is no longer used in the world client. The hero is now the KayKit Adventurers **Knight** built by `world/scripts/build-hero.mjs` from the §2.1 library — Rig_Medium clips retargeted by joint name and renamed to the protocol anims (`idle`, `walk`, `mine`, `attack`, `die`). Client (`entities.ts`) queues one waypoint per diff (catch-up at 440 ms/segment when behind, snap when ≥4 queued), rotates the model toward its walk direction, and derives walk/idle from actual traversal (server anims drive `mine`/`attack`/`die`). Crossfade 150 ms. `world/scripts/list-anims.mjs` prints the built hero's clips.
+Acceptance: hero idles when still, walks when moving, faces its direction, no T-pose flashes.
 
 ### STEP 0.11 — PocketRPG entry button
 In the Settings screen component (locate via `grep -ril "settings" src/screens/`), add a "Enter World (beta)" button rendered only when `localStorage.pocketWorldBeta === '1'`: onClick → `POST /api/world-token` (reuse the client API helper pattern in `src/cloud/api.js`), then `window.open('https://world.pocketrpg.co.uk/#handoff=' + res.handoff)`. Make the world origin a constant that falls back to the workers.dev URL until DNS exists (read it from a new export in the same file, developer fills the value in DT below). Follow CLAUDE.md §9/§12 (44px target, screen already in chunk — verify which bundle the Settings screen is in before editing). **Full root commit gate.**
@@ -287,7 +299,7 @@ DEVELOPER TASK (single block): 1) `cd world && npm i && npm run build && npx wra
 **Definition of done**: developer mines 5 tin in the world (watching the pick animation, XP drops, ore entering the 28-slot panel), deposits at the chest, opens PocketRPG, and sees Mining XP +85 and 5 Tin Ore in the bank. Disconnecting mid-session with undeposited ore also lands the ore/XP in PocketRPG (disconnect flush).
 
 ### STEP 1.1 — Rocks in zone + statics protocol
-Server: load zone objects into DO memory `{ id, rock:'tin'|'copper', x, z, depletedUntilTick:0 }`. `welcome.statics` includes them; `diff.rocks` broadcasts depleted/respawned transitions. Client: render rocks as low-poly boulders (`IcosahedronGeometry` detail 0, grey; copper tinted #b87333, tin #9aa5ad), scale 0.8 tile; depleted → scale 0.45 + darker grey.
+Server: load zone objects into DO memory `{ id, rock:'tin'|'copper', x, z, depletedUntilTick:0 }`. `welcome.statics` includes them; `diff.rocks` broadcasts depleted/respawned transitions. Client: render rocks with the §2.1 library boulder (`world/client/public/models/rock.glb`, Kenney nature kit) tinted per ore (copper #b87333, tin #9aa5ad); depleted → smaller scale + darkened. `IcosahedronGeometry` grey boulder stays as the load-failure fallback.
 
 ### STEP 1.2 — Mining loop (server, PocketRPG semantics — DECIDED)
 `interact {kind:'rock', action:'mine'}`: path the player to the nearest tile adjacent (8-dir) to the rock; on arrival start mining. Look up the action in `src/data/skills.json → mining.actions` by rock id: require `level ≤` player's Mining level (from session stats; on refusal send `events:[{e:'msg', text:'You need Mining level N to mine this rock.'}]`). While mining: `anim:'mine'`; every `action.ticks` ticks, if the rock is not depleted: +1 product to session inventory, +`action.xp` Mining XP to the session tally, emit `{e:'xp'}` + `{e:'inv'}`, deplete the rock for **8 ticks**, and stop (one ore per interaction, OSRS-style: the player re-clicks or — DECIDED — auto-continues on the same rock when it respawns if the player hasn't moved/acted; implement auto-continue). Moving/other intents cancel mining. Session inventory full → `{e:'msg', text:'Your pack is full.'}` and stop.
@@ -309,7 +321,7 @@ Vitest with a mocked env/DB covering: idempotent replay, revision-conflict retry
 **Do not** add any save-blob validation/policing here (CLAUDE.md §14 — grants are additive server-side writes, the trusted-blob model is unchanged).
 
 ### STEP 1.5 — Bank chest interact + Phase 1 acceptance
-Chest default action `Deposit` (left-click) → path adjacent → flush(reason 'deposit') → `{e:'inv'}` empty + `{e:'msg','You deposit your items into your bank.'}`. Chest mesh: brown box + darker lid, 0.9 tile.
+Chest default action `Deposit` (left-click) → path adjacent → flush(reason 'deposit') → `{e:'inv'}` empty + `{e:'msg','You deposit your items into your bank.'}`. Chest mesh: §2.1 library chest (`world/client/public/models/chest.glb`, KayKit dungeon), brown-box fallback.
 DEVELOPER TASK — manual script: fresh session → mine tin ×5 (watch xp drops, inventory fills) → deposit → PocketRPG shows +85 Mining XP and +5 Tin Ore in bank; mine 2 copper, close the tab without depositing → PocketRPG shows the copper too (disconnect flush); confirm an idle-game save afterwards doesn't roll any of it back (play a few idle minutes, reload). Reply "PHASE 1 ACCEPTED".
 
 ---
@@ -328,7 +340,7 @@ Vitest the pick-priority and menu-composition logic (pure functions, mock ray hi
 
 ### STEP 2.2 — Cow NPC: spawn + wander
 Add to `pasture.json` `npcs`: `{ "id":"bull_1", "monsterId":"pasture_bull", "x":22, "z":20, "wander":{"x":18,"z":16,"w":10,"h":10} }`. Server: NPC in-memory `{ id, monsterId, x, z, hp, maxHp, state:'idle'|'combat'|'dead', respawnAtTick }`; when idle, every 5–13 ticks (random) step 1 walkable tile staying inside the wander rect. Broadcast via `diff.ents` (kind 'npc', include `monsterId`, hp/maxHp only while in combat). Client renders it as a brown box 1.4×0.9×0.9 placeholder with the name from `monsters.json`.
-DEVELOPER TASK (non-blocking, DT-class C): download a CC0 cow GLB (Quaternius animals or KayKit) into `world/client/public/models/cow.glb`; when present, the client auto-uses it (feature-detect file with a HEAD request at boot) with clips mapped like step 0.10 (idle/walk/die; attack optional).
+Cow model: process one from the §2.1 library (Quaternius Farm Animal Pack has a rigged cow) into `world/client/public/models/cow.glb` — no DT needed; clips mapped like the hero (idle/walk/die; attack optional).
 
 ### STEP 2.3 — Combat via the real engine (server)
 On `interact {kind:'npc', action:'attack'}`: path adjacent, then start combat — **build it as a thin adapter around `src/engine/combat.js`, written test-first**:

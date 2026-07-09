@@ -1,5 +1,6 @@
 import * as THREE from 'three'
 import { worldToTile } from './scene'
+import { pickTargetOf, type PickTarget } from './statics'
 
 export type Tile = { x: number; z: number }
 
@@ -33,13 +34,16 @@ export function updateClickMarker(marker: THREE.Mesh, now: number): void {
   material.opacity = 1 - elapsed / MARKER_FADE_MS
 }
 
-/** Attaches a pointerdown handler that raycasts against `ground` and reports
- * the tile under the cursor. Returns an unsubscribe function. */
+/** Attaches a pointerdown handler. Interactables (rocks, chest) are raycast
+ * first — a hit reports their default action; otherwise the ground hit reports
+ * the tile to walk to. Returns an unsubscribe function. */
 export function setupClickToMove(
   canvas: HTMLCanvasElement,
   camera: THREE.Camera,
   ground: THREE.Object3D,
-  onTile: (tile: Tile) => void
+  pickables: THREE.Object3D[],
+  onTile: (tile: Tile) => void,
+  onInteract: (target: PickTarget) => void
 ): () => void {
   const raycaster = new THREE.Raycaster()
   const pointer = new THREE.Vector2()
@@ -49,6 +53,16 @@ export function setupClickToMove(
     pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1
     pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1
     raycaster.setFromCamera(pointer, camera)
+
+    const pickHits = raycaster.intersectObjects(pickables, true)
+    if (pickHits.length > 0) {
+      const target = pickTargetOf(pickHits[0].object)
+      if (target) {
+        onInteract(target)
+        return
+      }
+    }
+
     const hits = raycaster.intersectObject(ground, false)
     if (hits.length === 0) return
     onTile(worldToTile(hits[0].point))

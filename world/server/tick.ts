@@ -1,7 +1,18 @@
+// Pure per-tick simulation. Mutates the passed player/rock records but does no
+// I/O — the DO owns the objects, calls tickPlayer once per player per tick, and
+// decides what to broadcast/flush from the results.
 import type { Tile } from './pathfind'
-import type { EntityDiff } from '../shared/protocol'
+import type { EntityDiff, InvSlot, ZoneEvent } from '../shared/protocol'
+import { MINING_ACTIONS, ROCK_DEPLETED_TICKS, addToInventory, inventoryIsFull, type MiningAction } from './mining'
+import { getLevelFromXP, clampXP } from '../../src/engine/experience.js'
 
 export type TickAnim = EntityDiff['anim']
+
+export type SessionStats = Record<string, { xp: number; level: number }>
+
+export type RockState = { id: string; rock: string; x: number; z: number; depletedUntilTick: number }
+
+export type PendingInteract = { kind: 'rock' | 'object'; id: string; action: string }
 
 export type TickPlayer = {
   charId: string
@@ -10,22 +21,163 @@ export type TickPlayer = {
   z: number
   path: Tile[]
   anim: TickAnim
+  stats: SessionStats
+  inventory: InvSlot[]
+  pendingXp: Record<string, number>
+  mining: { rockId: string; progress: number } | null
+  pendingInteract: PendingInteract | null
 }
 
-export type AdvanceResult = { next: TickPlayer; changed: boolean }
+export type TickContext = {
+  tick: number
+  rocks: Map<string, RockState>
+  actions?: Record<string, MiningAction>
+}
 
-/** Pure single-tick movement step: consumes one tile off `path`, or settles
- * to idle once the path is empty. No I/O — the DO calls this once per
- * connected player per tick and decides what to broadcast from the result. */
-export function advanceMovement(player: TickPlayer): AdvanceResult {
-  if (player.path.length === 0) {
-    if (player.anim === 'idle') return { next: player, changed: false }
-    return { next: { ...player, anim: 'idle' }, changed: true }
+export type TickResult = {
+  entChanged: boolean
+  events: ZoneEvent[]
+  rockChanges: { id: string; depleted: boolean }[]
+  deposit: boolean
+}
+
+/** Seeds session stats from the save blob once at hello. Missing levels are
+ * derived from XP (mirrors how the save summary derives them). */
+export function sessionStatsFromSave(save: Record<string, unknown>): SessionStats {
+  const out: SessionStats = {}
+  const stats = (save?.stats ?? {}) as Record<string, { xp?: number; level?: number }>
+  for (const [skill, entry] of Object.entries(stats)) {
+    const xp = Number(entry?.xp) || 0
+    const level = Number(entry?.level) || getLevelFromXP(xp)
+    out[skill] = { xp, level }
   }
-  const [step, ...rest] = player.path
-  return { next: { ...player, x: step.x, z: step.z, path: rest, anim: 'walk' }, changed: true }
+  return out
+}
+
+function adjacent(a: { x: number; z: number }, b: { x: number; z: number }): boolean {
+  return Math.max(Math.abs(a.x - b.x), Math.abs(a.z - b.z)) === 1
+}
+
+function ensureSkill(stats: SessionStats, skill: string): { xp: number; level: number } {
+  if (!stats[skill]) stats[skill] = { xp: 0, level: 1 }
+  return stats[skill]
+}
+
+/** Applies an in-session XP gain: session stats (level-ups apply live) plus the
+ * pending flush tally. Returns the events to send to this player. */
+export function grantSessionXp(player: TickPlayer, skill: string, amount: number): ZoneEvent[] {
+  const events: ZoneEvent[] = [{ e: 'xp', skill, amount }]
+  const entry = ensureSkill(player.stats, skill)
+  entry.xp = clampXP(entry.xp + amount)
+  const newLevel = getLevelFromXP(entry.xp)
+  if (newLevel > entry.level) {
+    entry.level = newLevel
+    const skillName = skill.charAt(0).toUpperCase() + skill.slice(1)
+    events.push({ e: 'msg', text: `Congratulations, you've reached ${skillName} level ${newLevel}!` })
+  }
+  player.pendingXp[skill] = (player.pendingXp[skill] ?? 0) + amount
+  return events
+}
+
+function startInteract(player: TickPlayer, ctx: TickContext, result: TickResult): void {
+  const intent = player.pendingInteract
+  player.pendingInteract = null
+  if (!intent) return
+
+  if (intent.kind === 'object' && intent.action === 'deposit') {
+    result.deposit = true
+    return
+  }
+
+  if (intent.kind === 'rock' && intent.action === 'mine') {
+    const rock = ctx.rocks.get(intent.id)
+    if (!rock || !adjacent(player, rock)) return
+    const action = (ctx.actions ?? MINING_ACTIONS)[rock.rock]
+    if (!action) return
+    const level = ensureSkill(player.stats, 'mining').level
+    if (level < action.level) {
+      result.events.push({ e: 'msg', text: `You need Mining level ${action.level} to mine this rock.` })
+      return
+    }
+    if (inventoryIsFull(player.inventory, action.product)) {
+      result.events.push({ e: 'msg', text: 'Your pack is full.' })
+      return
+    }
+    player.mining = { rockId: rock.id, progress: 0 }
+  }
+}
+
+function tickMining(player: TickPlayer, ctx: TickContext, result: TickResult): void {
+  const mining = player.mining
+  if (!mining) return
+  const rock = ctx.rocks.get(mining.rockId)
+  const action = rock ? (ctx.actions ?? MINING_ACTIONS)[rock.rock] : undefined
+  if (!rock || !action || !adjacent(player, rock)) {
+    player.mining = null
+    player.anim = 'idle'
+    return
+  }
+  if (rock.depletedUntilTick > ctx.tick) {
+    // Auto-continue: stay latched onto the rock and resume when it respawns.
+    player.anim = 'idle'
+    mining.progress = 0
+    return
+  }
+  player.anim = 'mine'
+  mining.progress += 1
+  if (mining.progress < action.ticks) return
+  mining.progress = 0
+
+  if (!addToInventory(player.inventory, action.product, 1)) {
+    result.events.push({ e: 'msg', text: 'Your pack is full.' })
+    player.mining = null
+    player.anim = 'idle'
+    return
+  }
+  result.events.push(...grantSessionXp(player, 'mining', action.xp))
+  result.events.push({ e: 'inv', inventory: player.inventory })
+  rock.depletedUntilTick = ctx.tick + ROCK_DEPLETED_TICKS
+  result.rockChanges.push({ id: rock.id, depleted: true })
+}
+
+/** One tick for one player: movement first, then interaction arrival, then
+ * mining progress. Exactly one of walk/mine/idle claims the anim each tick. */
+export function tickPlayer(player: TickPlayer, ctx: TickContext): TickResult {
+  const result: TickResult = { entChanged: false, events: [], rockChanges: [], deposit: false }
+  const before = { x: player.x, z: player.z, anim: player.anim }
+
+  if (player.path.length > 0) {
+    const [step, ...rest] = player.path
+    player.x = step.x
+    player.z = step.z
+    player.path = rest
+    player.anim = 'walk'
+    if (rest.length === 0 && player.pendingInteract) startInteract(player, ctx, result)
+  } else if (player.pendingInteract) {
+    startInteract(player, ctx, result)
+    if (player.mining) tickMining(player, ctx, result)
+    else if (!result.deposit) player.anim = 'idle'
+  } else if (player.mining) {
+    tickMining(player, ctx, result)
+  } else {
+    player.anim = 'idle'
+  }
+
+  result.entChanged = player.x !== before.x || player.z !== before.z || player.anim !== before.anim
+  return result
 }
 
 export function toEntityDiff(player: TickPlayer): EntityDiff {
   return { id: player.charId, kind: 'player', x: player.x, z: player.z, anim: player.anim, name: player.name }
+}
+
+/** Rocks whose depletion window ends exactly this tick → respawn broadcasts. */
+export function respawnedRocks(rocks: Map<string, RockState>, tick: number): { id: string; depleted: boolean }[] {
+  const changes: { id: string; depleted: boolean }[] = []
+  for (const rock of rocks.values()) {
+    if (rock.depletedUntilTick !== 0 && rock.depletedUntilTick === tick) {
+      changes.push({ id: rock.id, depleted: false })
+    }
+  }
+  return changes
 }
