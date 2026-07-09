@@ -30,13 +30,11 @@ jobs:
           title=$(echo "$pr_json"  | jq -r '.[0].title    // empty')
           body=$(echo "$pr_json"   | jq -r '.[0].body     // empty')
           number=$(echo "$pr_json" | jq -r '.[0].number   // empty')
-          url=$(echo "$pr_json"    | jq -r '.[0].html_url // empty')
 
           # Fall back to the commit itself when no PR is associated.
           if [ -z "$title" ]; then
             title=$(printf '%s' "$COMMIT_MSG" | head -n1)
             body=$(printf '%s' "$COMMIT_MSG" | tail -n +2)
-            url="https://github.com/$REPO/commit/$SHA"
           fi
 
           # Drop PR-template HTML comment hints before publishing.
@@ -46,7 +44,6 @@ jobs:
           payload=$(jq -n \
             --arg title "$title" \
             --arg desc "$body" \
-            --arg url "$url" \
             --arg ts "$(date -u +%Y-%m-%dT%H:%M:%S.000Z)" \
             '{
               embeds: [
@@ -54,7 +51,6 @@ jobs:
                   title: ($title[0:256]),
                   description: (if ($desc | gsub("^\\s+|\\s+$";"") | length) > 0
                                then ($desc[0:3900]) else null end),
-                  url: (if ($url | length) > 0 then $url else null end),
                   color: 3447003,
                   timestamp: $ts,
                   footer: { text: "Now live on pocketrpg.co.uk" }
