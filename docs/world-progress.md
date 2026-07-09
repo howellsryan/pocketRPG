@@ -56,3 +56,15 @@ Since `migrations/` was touched this required the FULL root CLAUDE.md §11 commi
 Per the guide, applying this migration to local or production D1 is deferred to the developer (DT-class A, bundled into STEP 0.12's deploy task) — not run in this session.
 
 - [x] STEP 0.2 — b09e7f2 — migration added, full root gate green, no discrepancies. D1 apply deferred to developer at deploy time.
+
+## STEP 0.3 — Auth handoff endpoints
+
+**(a)** `functions/api/world-token.js` — new Pages Function mirroring `save.js`'s `requireAuth` + ownership-SELECT pattern exactly. One discrepancy caught here: the `characters` table (confirmed via `migrations/0001_init.sql`) has a `username` column, not `name` — the guide's §6.3 prose used `name`. Not a blocking discrepancy: the DB column and the JSON field returned to clients are independent, so `world/server/session.ts` selects `username` and maps it to the `name` key in its response, matching the guide's wire-level intent without needing a schema change. Confirmed `sub` in the login JWT is the numeric `oauth_identities.id` (from `functions/api/auth/{github,google}/callback.js`), consistent with `owner_id` comparisons used throughout — no coercion needed.
+
+New test `tests/worldToken.test.ts` follows the existing direct-handler-invocation pattern used by `tests/dailyTasksComplete.test.ts` (construct a `Request`, mock `env.DB.prepare`, call `onRequestPost` directly). Covers: no/invalid bearer token → 401, character not owned by caller → 404, happy path → verifies the returned JWT decodes with `scope: 'world_handoff'` and exactly 60s (`exp - iat`) lifetime.
+
+**(b)** `world/server/session.ts` — real implementation of `POST /api/world/session`: verifies the handoff JWT's signature, scope, and expiry; re-checks character ownership against D1 independently (never trusts the handoff payload's character id without a fresh ownership check); issues a 24h `scope: 'world'` session JWT. Extracted a small `world/server/env.ts` holding the `Env` interface — the guide's `index.ts`/`session.ts` split would otherwise need a circular import (`index.ts` importing `handleWorldSession` from `session.ts`, `session.ts` needing `Env` which was originally declared in `index.ts`); this is a routine structural fix, not a decision reversal.
+
+Gate: full root CLAUDE.md §11 gate (functions/ touched) — `npm test` (171 files / 2231 tests, up one file for the new test), `npm run build`, `npm run rebuild`, `npm run check:single` all green. `world:check` also green (`world/server/session.ts` typechecks against the real `functions/_lib/jwt.js` import).
+
+- [x] STEP 0.3 — 8beff6b — both handoff endpoints implemented and tested; one non-blocking schema-naming discrepancy resolved (username vs name), one structural fix (env.ts extraction) to avoid a circular import.
