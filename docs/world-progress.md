@@ -169,3 +169,17 @@ Copied `public/3d-samples/hero.glb` (942 KB — under the 5MB threshold, no deve
 `world:check` green: 4 test files / 26 tests, unchanged — this step is asset/rendering wiring with no new pure logic to unit test.
 
 - [x] STEP 0.10 — d81d268 — hero model with idle/walk animation crossfade implemented and verified visually; two real y-offset bugs found and fixed before they could surface as a rendering regression on the capsule fallback path.
+
+## STEP 0.11 — PocketRPG entry button
+
+**Real discrepancy from the guide's assumed file layout**: there is no `SettingsScreen.jsx` anywhere in `src/screens/`. The "Settings" label in the in-game nav (`navTabs.js`'s `GAME_FRAME_BOTTOM_LEFT_TABS`/`DESKTOP_NAV_TABS`) routes to `SCREENS.HELP`, which renders `HelpScreen.jsx` — confirmed by tracing the nav tab's `id` through to the screen registry rather than guessing from the filename. This is exactly the kind of thing the guide's "locate via grep" instruction anticipates; not a blocker, just the real target file.
+
+`src/cloud/api.js`: added `requestWorldHandoff()` to the existing `api` object, matching the exact call shape of `resetOneLife` (zero-payload POST) so it inherits the shared `request()` wrapper's auth header, `X-Character-Id` header, timeout, and 401-handling for free — no new fetch logic.
+
+`src/screens/HelpScreen.jsx`: the button is gated on `localStorage.pocketWorldBeta === '1'` and styled identically to the existing `SETTINGS_NAV_LINKS` buttons (48px min-height, `GameIcon` + label + chevron), so the 44px tap target requirement is inherited from an already-correct pattern rather than re-derived. `WORLD_ORIGIN` is a clearly-commented placeholder workers.dev URL pending STEP 0.12's deploy task.
+
+Confirmed via `build_single.cjs` that `HelpScreen.js` is listed in `GAME_CHUNK_FILES`, not core — consistent with it being reachable only from in-game navigation. The one new import this step adds (`src/cloud/api.js`) is itself a core-level module, so a chunk file importing it is the safe direction under CLAUDE.md §12 (core must never reference a chunk-only binding; the reverse is fine).
+
+Full root CLAUDE.md §11 gate (src/ touched): `npm test` (171 files / 2231 tests), `npm run build`, `npm run rebuild`, `npm run check:single` — all green.
+
+- [x] STEP 0.11 — 98fadfd — entry button added to the real Settings screen (HelpScreen.jsx, not the guide's assumed filename); full root gate green.
