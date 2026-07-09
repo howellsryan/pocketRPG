@@ -128,6 +128,7 @@ const sourceFiles = [
   'components/SkillEmblem.js',
   'components/SkillIcon.js',
   'components/ItemSlot.js',
+  'components/InventoryGrid.js',
   'components/Toast.js',
   'components/XpDropOverlay.js',
   'components/RewardRevealOverlay.js',

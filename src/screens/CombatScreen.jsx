@@ -10,7 +10,7 @@ import HPBar from '../components/HPBar.jsx'
 import IdleCombatSetupModal from '../components/IdleCombatSetupModal.jsx'
 import BackLink from '../components/BackLink.jsx'
 import EquipmentPaperdoll from '../components/EquipmentPaperdoll.jsx'
-import ItemSlot from '../components/ItemSlot.jsx'
+import InventoryGrid from '../components/InventoryGrid.jsx'
 import GameIcon from '../components/GameIcon.jsx'
 import CombatQuickActions from '../components/CombatQuickActions.jsx'
 import SpellSelectGrid from '../components/SpellSelectGrid.jsx'
@@ -2433,26 +2433,25 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
         </span>
       </div>
 
-      <div class="grid grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 justify-items-center">
-        {inventory.map((slot, i) => {
-          const item = slot ? itemsData[slot.itemId] : null
+      <InventoryGrid
+        inventory={inventory}
+        size="normal"
+        gridClass="grid grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 justify-items-center"
+        onReorder={(from, to) => {
+          const newInv = [...inventory]
+          const tmp = newInv[to]
+          newInv[to] = newInv[from]
+          newInv[from] = tmp
+          updateInventory(newInv)
+        }}
+        onSlotClick={(slot, item) => {
           // Notes can't be equipped/eaten/drunk, so they fall through to no-op.
-          let onClick = undefined
-          if (item && !slot.noted) {
-            if (item.slot) onClick = () => handleEquipItem(slot.itemId)
-            else if (item.type === 'food') onClick = () => handleEatItem(slot.itemId)
-            else if (item.type === 'potion') onClick = () => handlePotion(slot.itemId)
-          }
-          return (
-            <ItemSlot
-              key={i}
-              slot={slot}
-              onClick={onClick}
-              showName
-            />
-          )
-        })}
-      </div>
+          if (!item || slot.noted) return
+          if (item.slot) handleEquipItem(slot.itemId)
+          else if (item.type === 'food') handleEatItem(slot.itemId)
+          else if (item.type === 'potion') handlePotion(slot.itemId)
+        }}
+      />
 
       {/* Inline prayer toggles — desktop only. Mirrors the prayer modal's
           activeProtectionPrayer / activeCombatPrayer toggles, but inline so

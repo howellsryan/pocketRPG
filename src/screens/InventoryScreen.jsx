@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef } from 'preact/hooks'
+import { useState, useEffect } from 'preact/hooks'
 import { useGame } from '../state/gameState.jsx'
-import ItemSlot from '../components/ItemSlot.jsx'
+import InventoryGrid from '../components/InventoryGrid.jsx'
 import Modal from '../components/Modal.jsx'
 import SharedItemModal from '../components/SharedItemModal.jsx'
 import WeaponChargePanel, { getChargeRecipe } from '../components/WeaponChargePanel.jsx'
@@ -24,14 +24,7 @@ export default function InventoryScreen() {
   const [sellBusy, setSellBusy] = useState(false)
   const [listQtyInput, setListQtyInput] = useState(1)
   const [listPriceInput, setListPriceInput] = useState(1)
-  const [draggingIndex, setDraggingIndex] = useState(null)
-  const [overIndex, setOverIndex] = useState(null)
   const hasCloudAccount = Boolean(getToken() && getCharacterId())
-
-  const dragRef = useRef(null)
-  const overRef = useRef(null)
-  const scrollRef = useRef(null)
-  const autoScrollRef = useRef(null)
 
   useEffect(() => {
     if (!selected) return
@@ -480,141 +473,16 @@ export default function InventoryScreen() {
     setBankQuantityInput('')
   }
 
-  // ── Drag reorder ────────────────────────────────────────────────────────
   // Inventory is a positional 28-slot array persisted in the save blob, so
-  // moving items is just a swap of two slots — the new ordering rides the
-  // normal /api/save path with no extra plumbing. Dropping onto an empty slot
-  // relocates the item there; onto a filled slot swaps the two.
+  // reordering is a plain swap of two slots — the new ordering rides the normal
+  // /api/save path with no extra plumbing. (Drag mechanics live in InventoryGrid.)
   const moveItem = (fromIdx, toIdx) => {
-    if (fromIdx === toIdx || fromIdx == null || toIdx == null) return
     const newInv = [...inventory]
     const tmp = newInv[toIdx]
     newInv[toIdx] = newInv[fromIdx]
     newInv[fromIdx] = tmp
     updateInventory(newInv)
   }
-
-  const EDGE_ZONE = 56
-  const MAX_SCROLL_SPEED = 14
-
-  const stopAutoScroll = () => {
-    if (autoScrollRef.current != null) {
-      cancelAnimationFrame(autoScrollRef.current)
-      autoScrollRef.current = null
-    }
-  }
-
-  const updateAutoScroll = (clientY) => {
-    const el = scrollRef.current
-    if (!el) return
-    const rect = el.getBoundingClientRect()
-    let velocity = 0
-    if (clientY < rect.top + EDGE_ZONE) {
-      velocity = -MAX_SCROLL_SPEED * Math.min(1, (rect.top + EDGE_ZONE - clientY) / EDGE_ZONE)
-    } else if (clientY > rect.bottom - EDGE_ZONE) {
-      velocity = MAX_SCROLL_SPEED * Math.min(1, (clientY - (rect.bottom - EDGE_ZONE)) / EDGE_ZONE)
-    }
-    if (velocity === 0) { stopAutoScroll(); return }
-    if (autoScrollRef.current == null) {
-      const step = () => {
-        const d = dragRef.current
-        const target = scrollRef.current
-        if (!d || !d.isDragging || !target) { autoScrollRef.current = null; return }
-        target.scrollTop += d.scrollVelocity || 0
-        autoScrollRef.current = requestAnimationFrame(step)
-      }
-      autoScrollRef.current = requestAnimationFrame(step)
-    }
-    if (dragRef.current) dragRef.current.scrollVelocity = velocity
-  }
-
-  const handleDragStart = (e, index) => {
-    e.preventDefault()
-    e.stopPropagation()
-    const itemEl = e.currentTarget.parentElement
-    const rect = itemEl.getBoundingClientRect()
-    dragRef.current = {
-      index,
-      itemEl,
-      startX: e.clientX,
-      startY: e.clientY,
-      offsetX: e.clientX - rect.left,
-      offsetY: e.clientY - rect.top,
-      isDragging: false,
-      ghostEl: null,
-    }
-    e.currentTarget.setPointerCapture(e.pointerId)
-    setDraggingIndex(index)
-  }
-
-  const handleDragMove = (e, index) => {
-    const d = dragRef.current
-    if (!d || d.index !== index) return
-    const dx = e.clientX - d.startX
-    const dy = e.clientY - d.startY
-    if (!d.isDragging && Math.sqrt(dx * dx + dy * dy) > 6) {
-      d.isDragging = true
-      const ghost = d.itemEl.cloneNode(true)
-      ghost.removeAttribute('style')
-      ghost.style.cssText = [
-        'position:fixed',
-        `width:${d.itemEl.offsetWidth}px`,
-        `height:${d.itemEl.offsetHeight}px`,
-        'pointer-events:none',
-        'z-index:9999',
-        'opacity:0.85',
-        'border:2px solid var(--color-gold)',
-        'border-radius:8px',
-        'transform:scale(1.06)',
-        'box-shadow:0 8px 20px rgba(0,0,0,0.6)',
-        'overflow:hidden',
-      ].join(';')
-      document.body.appendChild(ghost)
-      d.ghostEl = ghost
-    }
-    if (d.isDragging && d.ghostEl) {
-      d.ghostEl.style.left = (e.clientX - d.offsetX) + 'px'
-      d.ghostEl.style.top = (e.clientY - d.offsetY) + 'px'
-      d.ghostEl.style.display = 'none'
-      const topEl = document.elementFromPoint(e.clientX, e.clientY)
-      d.ghostEl.style.display = ''
-      let target = topEl
-      while (target && target.dataset?.invSlotIndex == null) target = target.parentElement
-      const raw = target?.dataset.invSlotIndex
-      const newOver = raw != null && Number(raw) !== index ? Number(raw) : null
-      overRef.current = newOver
-      if (newOver !== overIndex) setOverIndex(newOver)
-      updateAutoScroll(e.clientY)
-    }
-  }
-
-  const handleDragEnd = (e, index) => {
-    const d = dragRef.current
-    if (!d || d.index !== index) return
-    stopAutoScroll()
-    if (d.ghostEl) d.ghostEl.remove()
-    if (d.isDragging && overRef.current != null) moveItem(index, overRef.current)
-    setDraggingIndex(null)
-    setOverIndex(null)
-    overRef.current = null
-    dragRef.current = null
-  }
-
-  const handleDragCancel = (e, index) => {
-    const d = dragRef.current
-    if (!d || d.index !== index) return
-    stopAutoScroll()
-    if (d.ghostEl) d.ghostEl.remove()
-    setDraggingIndex(null)
-    setOverIndex(null)
-    overRef.current = null
-    dragRef.current = null
-  }
-
-  useEffect(() => () => {
-    if (dragRef.current?.ghostEl) dragRef.current.ghostEl.remove()
-    if (autoScrollRef.current != null) cancelAnimationFrame(autoScrollRef.current)
-  }, [])
 
   const free = freeSlots(inventory)
 
@@ -660,7 +528,7 @@ export default function InventoryScreen() {
   const selectedListingMaxQty = selected ? getListingMaxQty(selected.slot, selected.item) : 1
 
   return (
-    <div ref={scrollRef} class="forge-shell h-full overflow-y-auto p-4">
+    <div class="forge-shell h-full overflow-y-auto p-4">
       <div class="flex justify-between items-center mb-3">
         <div class="flex items-center gap-2">
           <h2 class="font-[var(--font-display)] text-sm font-bold text-[var(--color-parchment)] opacity-60 uppercase tracking-wider">
@@ -680,39 +548,11 @@ export default function InventoryScreen() {
         </div>
       </div>
 
-      <div class="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7 xl:grid-cols-7 gap-2 md:gap-3 justify-items-center">
-        {inventory.map((slot, i) => {
-          const isDragging = draggingIndex === i
-          const isOver = overIndex === i && draggingIndex != null
-          return (
-            <div
-              key={i}
-              data-inv-slot-index={i}
-              class={`relative ${isDragging ? 'opacity-30' : ''}`}
-            >
-              <ItemSlot
-                slot={slot}
-                onClick={(s, item) => handleSlotClick(s, item, i)}
-                size="inventory"
-                showName
-                highlight={isOver}
-              />
-              {slot && (
-                <span
-                  class="absolute bottom-0.5 right-0.5 text-[10px] text-[var(--color-parchment)] opacity-25 leading-none select-none z-10 px-0.5 cursor-grab"
-                  style={{ touchAction: 'none' }}
-                  onPointerDown={(e) => handleDragStart(e, i)}
-                  onPointerMove={(e) => handleDragMove(e, i)}
-                  onPointerUp={(e) => handleDragEnd(e, i)}
-                  onPointerCancel={(e) => handleDragCancel(e, i)}
-                >
-                  ⠿
-                </span>
-              )}
-            </div>
-          )
-        })}
-      </div>
+      <InventoryGrid
+        inventory={inventory}
+        onReorder={moveItem}
+        onSlotClick={(s, item, i) => handleSlotClick(s, item, i)}
+      />
 
       {/* Item action modal */}
       {selected && (
