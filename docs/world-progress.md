@@ -80,3 +80,24 @@ Unit tests added (`world/tests/auth.test.ts`, 6 cases) cover `parseHandoffFromHa
 **Manual local run deferred to STEP 0.5**: the guide's own acceptance line for this step requires a handoff token minted by the dev-seed script, which doesn't exist yet — proceeding to STEP 0.5 next, then running the manual check for both steps together.
 
 - [x] STEP 0.4 — c9a64a0 — auth/platform-gate logic implemented and unit tested; one routine TS cast fix. Manual verification (needs Step 0.5's seed script) still outstanding.
+
+## STEP 0.5 — Local dev seed + manual verification of Steps 0.3–0.4
+
+Root `node_modules` had never been installed in this sandbox before this session (unrelated to any guide step — one-time environment setup, done once and not re-noted per step from here on).
+
+**Real bug found and fixed**: my first `dev-seed.mjs` draft replayed every `migrations/*.sql` file individually via `wrangler d1 execute --file=...` on each run. This is NOT idempotent — several migrations use bare `ALTER TABLE ... ADD COLUMN` (no `IF NOT EXISTS` support in SQLite for that statement), so a second run failed with `duplicate column name: save_data` on `0002_save_json.sql`. Fixed by using the real `wrangler d1 migrations apply pocketrpg --local` command instead, which tracks already-applied migrations in its own bookkeeping table — confirmed idempotent (second run: "✅ No migrations to apply!"). This required discovering D1's `migrations_dir` config key (distinct from the Durable Object `migrations` array already in `wrangler.jsonc` — same word, unrelated mechanism) and adding `"migrations_dir": "../migrations"` to the `d1_databases` entry so it points at the repo-root migrations folder shared with the main Pages project, rather than a nonexistent `world/migrations/`.
+
+Also discovered and cleared several **orphaned background processes** from earlier steps' manual `wrangler dev` tests in this session — backgrounded shell jobs do not persist across separate tool invocations in this environment, so a `kill %1` in one call doesn't reach a process started in an earlier call. Killed all stray `workerd`/`wrangler` processes by explicit PID before the final clean verification run, and confirmed no state directory corruption resulted (redid the seed against a fully wiped `.wrangler/state`).
+
+`world/scripts/dev-seed.mjs`: applies migrations, deletes/reinserts a fixed identity (id 1) + character (id 1, username `WorldTester`) + a minimal save (all 17 `skills.json` skill ids + 4 combat stats at level 1, hitpoints at level 10/1154xp per CLAUDE.md §5 — real gzip via Node's `zlib.gzipSync`, matching what `saveCodec.js`'s `isGzipBuffer`/`DecompressionStream('gzip')` expect), then mints a 60s handoff JWT via a direct import of `functions/_lib/jwt.js`. Refuses to run if `CF_PAGES`/`CLOUDFLARE_ENV` are set.
+
+**Manual verification performed** (this is normally DT-class B, but the guide's own Step 0.4 acceptance text ties it to this step and none of it required a Cloudflare account action, so it was done here with the pre-installed Chromium via Playwright — found via the global npm install at `/opt/node22/lib/node_modules/playwright`, launched with `executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome'`):
+- Handoff hash → exchange → **"Welcome, WorldTester"** rendered, URL hash correctly stripped.
+- Reload with no hash → stored session used, same welcome text.
+- Resize to 500px width → **"PocketRPG World needs a desktop or tablet."** block shown.
+- Resize back to 1280px + reload → welcome recovers correctly (gate doesn't wrongly latch).
+- `localStorage.clear()` + reload, no hash → login-required page with a working link to pocketrpg.co.uk.
+
+All five scenarios passed. This is stronger evidence than the unit tests alone and closes out both Step 0.4's and Step 0.5's manual-verification requirements for everything that doesn't need a real Cloudflare account (full production-domain + real-device/tablet verification remains correctly deferred to Step 0.12's DEVELOPER TASK).
+
+- [x] STEP 0.5 — dd52556 — dev-seed script working and idempotent after fixing a real non-idempotency bug; full local browser verification of Steps 0.3-0.5 passed all five scenarios.
