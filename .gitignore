@@ -1,6 +1,7 @@
 .claude/*
 !.claude/rules/
 !.claude/skills/
+!.claude/settings.json
 node_modules/
 dist/
 dist_tmp/
