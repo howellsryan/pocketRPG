@@ -41,19 +41,43 @@ export async function exchangeHandoff(handoff: string): Promise<WorldSession> {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ handoff }),
   })
-  if (!res.ok) throw new Error('world_session_exchange_failed')
+  if (!res.ok) {
+    let detail: unknown = null
+    try {
+      detail = await res.json()
+    } catch {
+      // non-JSON error body — leave detail null
+    }
+    console.error('[World][auth] handoff exchange failed', { status: res.status, detail })
+    throw new Error(`world_session_exchange_failed: ${res.status} ${JSON.stringify(detail)}`)
+  }
   const body = (await res.json()) as WorldSession
   const session: WorldSession = { token: body.token, character: body.character }
   storeSession(session)
   return session
 }
 
-/** Which PocketRPG deployment "Go to PocketRPG" should point at, based on which
- * world deployment is currently being viewed. Pure — testable without a DOM. */
-export function pocketRpgUrlForHost(hostname: string): string {
-  return hostname === POCKETRPG_PROD_HOSTNAME ? POCKETRPG_PROD_URL : POCKETRPG_PREVIEW_URL
+const KNOWN_POCKETRPG_ORIGINS = [POCKETRPG_PROD_URL, POCKETRPG_PREVIEW_URL]
+
+/** Resolves which PocketRPG deployment "Go to PocketRPG" should return to.
+ * Prefers the referring page — wherever the "Enter World" button was
+ * actually clicked from — over the world app's own hostname, since the same
+ * world deployment can be reached from either PocketRPG site. Only trusts
+ * the referrer when it's one of the two known PocketRPG origins (never an
+ * open redirect to an arbitrary referrer). Falls back to the world app's own
+ * hostname (the production custom domain vs anything else) when the
+ * referrer is missing/unrecognized — a bookmarked or reloaded world tab has
+ * no referrer at all. Pure — testable without a DOM. */
+export function resolvePocketRpgUrl(referrer: string, worldHostname: string): string {
+  try {
+    const referrerOrigin = referrer ? new URL(referrer).origin : ''
+    if (KNOWN_POCKETRPG_ORIGINS.includes(referrerOrigin)) return referrerOrigin
+  } catch {
+    // malformed referrer — fall through to the hostname heuristic
+  }
+  return worldHostname === POCKETRPG_PROD_HOSTNAME ? POCKETRPG_PROD_URL : POCKETRPG_PREVIEW_URL
 }
 
 export function pocketRpgUrl(): string {
-  return pocketRpgUrlForHost(window.location.hostname)
+  return resolvePocketRpgUrl(document.referrer, window.location.hostname)
 }

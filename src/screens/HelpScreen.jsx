@@ -7,9 +7,16 @@ import { api } from '../cloud/api.js'
 // Update to world.pocketrpg.co.uk once that custom domain is live.
 const WORLD_ORIGIN = 'https://pocketrpg-world.rlh.workers.dev'
 
+// `pocketWorldBetaEnabled` is baked in at build time by build_single.cjs
+// (same CF_PAGES_BRANCH-derived pattern as pocketEnable3D — preview on,
+// production off; override with EnableWorldBeta). Guarded because Vite dev
+// never defines it (no single-file build step runs there).
+function worldBetaEnabled() {
+  return typeof pocketWorldBetaEnabled !== 'undefined' ? Boolean(pocketWorldBetaEnabled) : true
+}
+
 export default function HelpScreen({ onNavigate }) {
   const { showInfoToasts, updateShowInfoToasts } = useGame()
-  const worldBetaEnabled = localStorage.getItem('pocketWorldBeta') === '1'
 
   async function handleEnterWorld() {
     try {
@@ -70,7 +77,7 @@ export default function HelpScreen({ onNavigate }) {
           </div>
         </Card>
 
-        {worldBetaEnabled && (
+        {worldBetaEnabled() && (
           <Card className="p-2">
             <button
               type="button"

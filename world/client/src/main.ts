@@ -107,7 +107,8 @@ async function boot(): Promise<void> {
       const session = await exchangeHandoff(handoff)
       enterWorld(session)
       return
-    } catch {
+    } catch (err) {
+      console.error('[World][boot] handoff exchange failed, showing login-required', err)
       showLoginRequired(pocketRpgUrl())
       return
     }

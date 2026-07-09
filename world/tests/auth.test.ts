@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { isViewportTooNarrow, parseHandoffFromHash, pocketRpgUrlForHost } from '../client/src/auth'
+import { isViewportTooNarrow, parseHandoffFromHash, resolvePocketRpgUrl } from '../client/src/auth'
 
 describe('parseHandoffFromHash', () => {
   it('extracts the token from a #handoff=<jwt> hash', () => {
@@ -31,13 +31,26 @@ describe('isViewportTooNarrow', () => {
   })
 })
 
-describe('pocketRpgUrlForHost', () => {
-  it('points at production only on the production custom domain', () => {
-    expect(pocketRpgUrlForHost('world.pocketrpg.co.uk')).toBe('https://pocketrpg.co.uk')
+describe('resolvePocketRpgUrl', () => {
+  it('prefers the referring PocketRPG site over the world hostname', () => {
+    expect(resolvePocketRpgUrl('https://preview.pocketrpg.pages.dev/help', 'world.pocketrpg.co.uk')).toBe(
+      'https://preview.pocketrpg.pages.dev'
+    )
+    expect(resolvePocketRpgUrl('https://pocketrpg.co.uk/', 'pocketrpg-world.rlh.workers.dev')).toBe(
+      'https://pocketrpg.co.uk'
+    )
   })
 
-  it('points at preview for the workers.dev host, localhost, and anything else', () => {
-    expect(pocketRpgUrlForHost('pocketrpg-world.rlh.workers.dev')).toBe('https://preview.pocketrpg.pages.dev')
-    expect(pocketRpgUrlForHost('localhost')).toBe('https://preview.pocketrpg.pages.dev')
+  it('ignores an unrecognized referrer and falls back to the hostname heuristic', () => {
+    expect(resolvePocketRpgUrl('https://evil.example.com/', 'world.pocketrpg.co.uk')).toBe('https://pocketrpg.co.uk')
+    expect(resolvePocketRpgUrl('https://evil.example.com/', 'pocketrpg-world.rlh.workers.dev')).toBe(
+      'https://preview.pocketrpg.pages.dev'
+    )
+  })
+
+  it('falls back to the hostname heuristic when there is no referrer at all', () => {
+    expect(resolvePocketRpgUrl('', 'world.pocketrpg.co.uk')).toBe('https://pocketrpg.co.uk')
+    expect(resolvePocketRpgUrl('', 'pocketrpg-world.rlh.workers.dev')).toBe('https://preview.pocketrpg.pages.dev')
+    expect(resolvePocketRpgUrl('', 'localhost')).toBe('https://preview.pocketrpg.pages.dev')
   })
 })
