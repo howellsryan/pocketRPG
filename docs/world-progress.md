@@ -111,3 +111,15 @@ Authored `world/zones/pasture.json` (32×32) via a short generation script rathe
 `world/tests/zone.test.ts`: the real `pasture.json` validates; four deliberately broken fixtures each fail for the right reason (row-count/height mismatch, blocked spawn, object on a blocked tile, duplicate id). `world:check` green: 3 test files / 12 tests total.
 
 - [x] STEP 0.6 — 3bbbe87 — zone validator + pasture.json authored and tested; one geometry decision recorded (fence sized to Phase 2's cow pen) since the guide left exact layout open.
+
+## STEP 0.7 — Pathfinding
+
+Implemented BFS shortest-path over 8-directional movement in `world/server/pathfind.ts`, with the corner-cutting rule as a hard gate (a diagonal step from A to B is only legal when both cardinal tiles adjacent to that step are walkable). Two exported functions, not one — the guide's prose describes a single `findPath`, but Steps 1.2 ("path the player to the nearest tile adjacent to the rock") and 2.3 ("path adjacent, then start combat") both need pathing to a tile *next to* an inherently-unwalkable target (a rock/npc), which is a distinct algorithm from a direct walk. Added `findPathAdjacent` for that case (tries all 8 neighbours of the target, returns the shortest reachable one) rather than overloading `findPath` with a mode flag — this is implementing what the guide's own later steps require, not adding scope.
+
+**Removed the stale `tests/placeholder.test.ts`** from Step 0.1 — it asserted the placeholder stub's fake `return [from]` behavior unconditionally, which the real BFS correctly does not reproduce (an empty collision grid has no walkable target, so it now correctly returns `null`). Replaced with `tests/pathfind.test.ts` (9 cases): straight line, no-op path when already there, routing around a wall, corner-cut refusal, unreachable target, blocked target, out-of-bounds target, `maxLen` truncation, and both `findPathAdjacent` cases.
+
+One test-authoring correction caught by actually running the suite (not just eyeballing the grid): the first corner-cut fixture placed the blocked pair at the grid's absolute corner, which isolates that tile with zero legal moves at all (no detour room), so the test asserted a path exists when the correct answer was `null` — the test's premise was wrong, not the implementation. Fixed by moving the fixture inland so a legal (longer) detour genuinely exists, and strengthened the assertion to check every step of the returned path against the corner-cut rule directly rather than only checking length.
+
+`world:check` green: 3 test files / 22 tests.
+
+- [x] STEP 0.7 — e907a06 — pathfinding implemented with two entry points (direct + adjacent-to-target), stale placeholder test removed and replaced, one test-fixture bug found and fixed during verification.
