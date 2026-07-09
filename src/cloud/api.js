@@ -247,6 +247,7 @@ export const api = {
   deleteAccount: () => request('/api/auth/account', { method: 'DELETE' }),
   deleteIdle: () => request('/api/idle', { method: 'DELETE' }),
   resetOneLife: () => request('/api/characters/reset-one-life', { method: 'POST', body: JSON.stringify({}) }),
+  requestWorldHandoff: () => request('/api/world-token', { method: 'POST', body: JSON.stringify({}) }),
 
   completeRaid: (sourceId, payload = {}) => request('/api/actions/raid/complete', { method: 'POST', body: JSON.stringify({ sourceId, ...payload }) }),
   completeClue: (sourceId, payload = {}) => request('/api/actions/clue/complete', { method: 'POST', body: JSON.stringify({ sourceId, ...payload }) }),
