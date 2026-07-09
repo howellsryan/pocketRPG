@@ -123,7 +123,36 @@ pocketRPG/
 
 Sequencing note: Phases 0–2 are effectively single-player online (one player per zone instance is fine at first — spin the DO per character if simpler, then merge into shared zones in Phase 4). That keeps early phases small without ever building throwaway architecture, because the DO/WebSocket/tick shape is identical either way.
 
-## 8) Risks & mitigations
+## 8) Build on existing open source — don't start from scratch
+
+> Decision update (2026-07-09): the C# constraint is dropped; the stack is TypeScript end-to-end. Option E is dead. What follows is the reuse strategy that replaces "recreate everything".
+
+Adopting a whole framework (RPG JS, Kaetram, Colyseus-hosted-Node) is the wrong kind of reuse here — each owns its own server runtime, world format, and account model, and the entire point of this project is that *PocketRPG's* engine, content, auth, and D1 are the platform. So reuse happens at three tiers:
+
+### Tier 1 — Direct dependencies (code we install and ship)
+- **[partyserver](https://github.com/threepointone/partyserver) + [partysocket](https://www.npmjs.com/package/partyserver)** (MIT, maintained by Cloudflare — [PartyKit was acquired by Cloudflare](https://blog.cloudflare.com/cloudflare-acquires-partykit/)). This is PartyKit's core rebuilt as plain libraries for your own Workers account: a `Server` class on Durable Objects with WebSocket lifecycle, **hibernation support, broadcast, per-room routing**, and a client socket with auto-reconnection and buffering. It deletes the lowest-level ~2–3 weeks of plumbing (connection management, room addressing, reconnect edge cases) and is exactly the "rooms = zones" shape we designed. The world `ZoneObject` becomes a `partyserver` subclass; the game tick and rules stay ours.
+- **three.js** (already vendored) + its loaders; **`pathfinding`** npm (or ~100 lines of grid A* — tile-grid pathfinding is deliberately trivial in this design).
+- **Existing repo code**: `src/engine/*` (combat, XP, consumables, drops), `src/data/*.json` (items, monsters, prayers), `src/utils/three3d.js` loading patterns, the R2 model pipeline + `scripts/retarget-animations.mjs`.
+
+### Tier 2 — Reference implementations (read and adapt, don't depend on)
+- **[LostCityRS / 2004Scape Server](https://github.com/2004Scape/Server) — MIT licensed, written from scratch in TypeScript.** This is the single most valuable resource found: a complete, running RS-2004 server in our exact language with the exact architecture we're building — 600 ms tick engine, action/interaction queues, player+NPC info (interest management), tile pathfinding, zone/region partitioning. MIT means we can study it freely and lift isolated algorithms with attribution. Its matching **[Client2](https://github.com/2004Scape/Client2)** (Java→TS/WASM port) shows browser-side tick interpolation and input handling. **Hard boundary: code only.** Their *content* — caches, maps, models, item/NPC data — is Jagex IP recovered for preservation and must never enter this repo; PocketRPG's own fantasy content and CC0 art fill that role (we already practice this discipline with naming).
+- **[Kaetram-Open](https://github.com/Kaetram/Kaetram-Open)** (2D BrowserQuest descendant, actively maintained): clean, readable full-MMO loop in TS — regions, combat, multi-server hub — good second reference where Lost City is too RS-specific.
+- **[Colyseus](https://docs.colyseus.io/)** (MIT): not adopted (it requires stateful Node hosting, off our Cloudflare path), but its [state-sync docs](https://docs.colyseus.io/state) are the best written material on delta-sync patterns if our zone snapshots ever need to get smarter than "send what changed each tick".
+
+### Tier 3 — Content: CC0 art packs (the biggest "from scratch" saving of all)
+The environment/NPC art for entire zones exists ready-made, license-free, in exactly the low-poly style that suits an RS-like and mobile GPUs:
+- **[KayKit packs](https://kaylousberg.itch.io/kaykit-adventurers)** (CC0, glTF): rigged characters (Adventurers, [Skeletons](https://kaylousberg.itch.io/kaykit-skeletons)), a **[75-animation character pack](https://kaylousberg.itch.io/kaykit-character-animations)** (idle/walk/run/melee/death — the whole Phase 0–3 animation budget), dungeon/village/nature environment sets. Single small atlas textures, explicitly mobile-friendly.
+- **[Quaternius](https://quaternius.com/)** (CC0): enormous rigged monster/character/nature/RPG-item libraries in glTF.
+- **[Kenney](https://kenney.nl/)** (CC0): props, UI, effects.
+These flow through the existing import pipeline (`npm run import:model`, retargeting, R2) — and CC0 means no attribution/licensing bookkeeping ever. The Tripo bridge (§18 of CLAUDE.md) remains available for bespoke hero/boss pieces.
+
+### What's genuinely left to build (the thin custom core)
+1. Zone data format + one authoring script (tile grid, walkability, node/NPC placements — JSON, same authoring style as `world.json`).
+2. The tick resolver inside `ZoneObject`: apply queued intents → run `src/engine` rules → emit zone diff (this *is* the game; Lost City is the worked example).
+3. `/api/world/grant` + world-token handoff (small, mirrors existing `/api/actions/**` + daily-tasks patterns).
+4. The Three.js scene shell: camera, tap-to-move, entity meshes, animation switching (repo already contains working versions of most of these pieces in the equip viewer / combat arena).
+
+## 9) Risks & mitigations
 
 | Risk | Mitigation |
 |---|---|
@@ -135,11 +164,11 @@ Sequencing note: Phases 0–2 are effectively single-player online (one player p
 | DO limits (CPU per tick, zone population) | RSPS-scale ticks are cheap; shard per zone; hibernation for idle zones; proven pattern (Lost City on one Node thread). |
 | Solo dev bandwidth | Agent-first stack (all TS, all text), same repo conventions, CLAUDE.md §-style rules for `world/**` once Phase 0 lands. |
 
-## 9) What about C#?
+## 10) What about C#? (resolved)
 
-Deliberately not in the build: Godot can't ship C# to the web, Unity walls the game off from the shared engine/data and from agent-driven development, and a standalone .NET server (Option E) forks the game rules into a second language at the exact seam that must never drift. Where your C# background *does* pay off is the part that matters most here — the world server is a classic authoritative backend (tick loop, message protocol, state ownership, idempotent grants, audit), and those design instincts transfer 1:1 to the TypeScript Durable Object while agents handle the syntax.
+Dropped by decision on 2026-07-09 — the stack is TypeScript end-to-end. For the record: Godot can't ship C# to the web, Unity walls the game off from the shared engine/data and from agent-driven development, and a standalone .NET server (Option E) forks the game rules into a second language at the exact seam that must never drift. Backend design instincts (tick loop, protocol, state ownership, idempotent grants, audit) transfer 1:1 to the TypeScript Durable Object.
 
-## 10) Sources
+## 11) Sources
 
 - [RuneScape Wiki — NXT (HTML5 client history)](https://runescape.wiki/w/NXT) · [Dev blog: NXT platforms](https://runescape.wiki/w/Update:Dev_Blog_-_NXT_-_Platforms_for_RuneScape)
 - [2004Scape/Server (TS server)](https://github.com/2004Scape/Server) · [2004Scape/Client2 (Java→TS/WASM client)](https://github.com/2004Scape/Client2) · [Lost City](https://2004.lostcity.rs/) · [Rune-Server: TS/WASM webclient](https://rune-server.org/threads/rs2-webclients-typescript-webassembly.706021/)
@@ -149,3 +178,5 @@ Deliberately not in the build: Godot can't ship C# to the web, Unity walls the g
 - [Godot: C# platform state](https://godotengine.org/article/platform-state-in-csharp-for-godot-4-2/) · [Godot forum: C# web export status](https://forum.godotengine.org/t/is-there-an-update-on-exporting-c-projects-to-web/128821)
 - [Unity web runtime updates (mobile browsers)](https://unity.com/blog/engine-platform/web-runtime-updates-enhance-browser-experience) · [Unity forum: 50 MB phone build ceiling](https://discussions.unity.com/t/unity-6-webgl-build-size-limit-for-phones-is-50mb/948431)
 - [Engine comparison: Three.js/Babylon/PlayCanvas](https://www.utsubo.com/blog/threejs-vs-babylonjs-vs-playcanvas-comparison) · [Melvor Idle](https://melvoridle.com/)
+- [partyserver (MIT, Cloudflare)](https://github.com/threepointone/partyserver) · [Cloudflare acquires PartyKit](https://blog.cloudflare.com/cloudflare-acquires-partykit/) · [Colyseus state sync docs](https://docs.colyseus.io/state) · [Kaetram-Open](https://github.com/Kaetram/Kaetram-Open) · [RPG JS](https://rpgjs.dev/)
+- [KayKit Adventurers (CC0)](https://kaylousberg.itch.io/kaykit-adventurers) · [KayKit Character Animations (CC0)](https://kaylousberg.itch.io/kaykit-character-animations) · [Quaternius (CC0)](https://quaternius.com/) · [2004Scape open-source-code thread (MIT licensing)](https://lostcity.rs/t/open-source-code/8472)
