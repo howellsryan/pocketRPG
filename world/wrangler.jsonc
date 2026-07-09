@@ -1,0 +1,11 @@
+{
+  "name": "pocketrpg-world",
+  "main": "server/index.ts",
+  "compatibility_date": "2026-07-01",
+  "assets": { "directory": "client/dist", "binding": "ASSETS" },
+  "durable_objects": { "bindings": [{ "name": "WorldZone", "class_name": "WorldZone" }] },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["WorldZone"] }],
+  "d1_databases": [
+    { "binding": "DB", "database_name": "pocketrpg", "database_id": "439e810b-8dce-4697-94c2-a7392520ad8f" }
+  ]
+}
