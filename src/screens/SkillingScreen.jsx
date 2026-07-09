@@ -7,12 +7,12 @@ import SkillScreenHeader from '../components/SkillScreenHeader.jsx'
 import SkillInfoBanner from '../components/SkillInfoBanner.jsx'
 import SkillActionRow from '../components/SkillActionRow.jsx'
 import SkillActivePanel from '../components/SkillActivePanel.jsx'
-import { getAgilityBankDelayMs, formatBankDelay, getAgilityBankDelayTicks } from '../engine/agility.js'
+import { getAgilityBankDelayMs, formatBankDelay } from '../engine/agility.js'
 import { emptySession, ratePerHour } from '../engine/activitySession.js'
 import { getActionProgress } from '../hooks/useActionTick.js'
 import { STUB_SKILLS, GATHERING_SKILLS, PRODUCTION_SKILLS, UTILITY_SKILLS, SCREENS, formatDropChance } from '../utils/constants.js'
 import { getLevelFromXP } from '../engine/experience.js'
-import { createSkillingState, processSkillingTick, getAvailableActions, checkBurn, getEffectiveToolActionTicks, hasToolForSkill, getEquippedSkillXpMultiplier, rollGatherBonusDrops, TOOL_SKILLS, skillAutoBanksWhenFull, depositSkillingOutput } from '../engine/skilling.js'
+import { createSkillingState, processSkillingTick, getAvailableActions, checkBurn, getEffectiveToolActionTicks, hasToolForSkill, getEquippedSkillXpMultiplier, rollGatherBonusDrops, TOOL_SKILLS, skillingActionBlockedByFullInventory } from '../engine/skilling.js'
 import { addItem, removeItem, countItem } from '../engine/inventory.js'
 import { hasRequiredRunes, getRunesToConsume } from '../engine/runes.js'
 import { onTick } from '../engine/tick.js'
@@ -63,7 +63,7 @@ function calculateRemainingActions(action, inventory, bank) {
 // `onStopBack` (from App): where Stop & Back returns to — the place-map origin
 // when there is one, otherwise the previous screen.
 export default function SkillingScreen({ initialSkillId, initialActionId, initialMasterId, initialLocationId, idleResult, onNavigate, onBack, onStopBack }) {
-  const { stats, inventory, bank, equipment, isIronman, updateInventory, updateBankDirect, grantXP, addToast, setActiveTask, requestActivityStart, activeTask, dungeoneeringTokens, awardDungeoneeringTokens, trySpendDungeoneeringTokens, recordGameEvent } = useGame()
+  const { stats, inventory, bank, equipment, isIronman, updateInventory, updateBankDirect, grantXP, addToast, setActiveTask, requestActivityStart, activeTask, dungeoneeringTokens, awardDungeoneeringTokens, trySpendDungeoneeringTokens, recordGameEvent, signalInventoryFull, resolveInventoryFull } = useGame()
   const [selectedSkill, setSelectedSkill] = useState(initialSkillId || null)
   const [selectedAction, setSelectedAction] = useState(null)
   const [skilling, setSkilling] = useState(null)
@@ -170,6 +170,17 @@ export default function SkillingScreen({ initialSkillId, initialActionId, initia
       if (!state || !state.active || state.stopped) return
       markScreenTick()
 
+      // A full inventory pauses the action and raises the global prompt; the
+      // check re-runs every tick so it resumes on its own once a slot frees.
+      // Long-form reward grinds (dungeoneering unlocks) produce only on the
+      // final tick, so they never pause mid-grind.
+      if (state.action?.category !== 'reward'
+        && skillingActionBlockedByFullInventory(state.action, inventoryRef.current, itemsData)) {
+        signalInventoryFull()
+        return
+      }
+      resolveInventoryFull()
+
       const { skillingState, events } = processSkillingTick(state)
       skillingRef.current = skillingState
 
@@ -179,28 +190,12 @@ export default function SkillingScreen({ initialSkillId, initialActionId, initia
           const action = ev.action
           const newInv = [...inventoryRef.current]
 
-          // All skilling output flows into the inventory. When it can't fit, a
-          // full inventory triggers an agility-scaled bank trip (auto-bank) or
-          // stops the action when auto-bank is unavailable — mirroring idle
-          // skilling. Returns false when the action stopped (caller must bail).
+          // Output flows into the inventory. The tick-top full-inventory guard
+          // already ensured there's room, so this only adds items.
           const isGatheringSkill = GATHERING_SKILLS.includes(state.skill)
-          const autoBank = skillAutoBanksWhenFull(state.skill, stats)
           const deposit = (inv, drops) => {
-            const res = depositSkillingOutput(inv, drops, itemsData, autoBank)
-            if (res.stopped) {
-              updateInventory(inv)
-              skillingRef.current = { ...skillingState, active: false, stopped: true }
-              setSkilling(null)
-              setSelectedAction(null)
-              setSelectedAlchemyItem(null)
-              setActiveTask(null)
-              addToast('Inventory full!', 'error')
-              return false
-            }
-            if (res.bankTrip) {
-              if (res.banked && Object.keys(res.banked).length > 0) updateBankDirect(res.banked)
-              // Hold the action for the agility-scaled bank delay before resuming.
-              skillingRef.current = { ...skillingRef.current, bankDelayTicksRemaining: getAgilityBankDelayTicks(stats) }
+            for (const [itemId, qty] of Object.entries(drops)) {
+              if (qty > 0) addItem(inv, itemId, qty, itemsData[itemId]?.stackable || false)
             }
             return true
           }
@@ -958,17 +953,14 @@ Shop value: ×1.1
     sessionStats.push({ label: 'Tokens gained', value: formatNumber(skilling.totalDungeoneeringTokens || 0) })
   }
 
-  const bankTicksLeft = skilling.bankDelayTicksRemaining || 0
-  const isBanking = bankTicksLeft > 0
-  // Both gathering and production fill the inventory and bank on full, so the
-  // agility bank-speed footer applies to every non-reward skilling action.
-  const showsBankSpeed = isGathering || PRODUCTION_SKILLS.includes(selectedSkill)
+  const inventoryBlocked = skilling.action?.category !== 'reward'
+    && skillingActionBlockedByFullInventory(skilling.action, inventory, itemsData)
 
   return (
     <SkillActivePanel
       skill={selectedSkill}
       title={skilling.action.name}
-      subtitle={isBanking ? `Banking inventory… ${Math.ceil(bankTicksLeft * 600 / 1000)}s` : null}
+      subtitle={inventoryBlocked ? 'Inventory full — paused' : null}
       progress={progress}
       producing={producedItem && <>
         <GameIcon item={producedItem} size={32} />
@@ -976,7 +968,7 @@ Shop value: ×1.1
         <span class="text-[13px] font-semibold text-[var(--color-gold-dim)]">{producedItem.name}</span>
       </>}
       stats={sessionStats}
-      footer={showsBankSpeed ? {
+      footer={isGathering ? {
         icon: <span class="text-[14px]">🏦</span>,
         label: 'Bank speed',
         value: `${formatBankDelay(getAgilityBankDelayMs(getLevelFromXP(stats.agility?.xp || 0)))} delay`,

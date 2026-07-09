@@ -26,17 +26,6 @@ export function getAgilityBankDelayFromStats(stats) {
   return getAgilityBankDelayMs(agilityLevel)
 }
 
-const AGILITY_BANK_DELAY_TICK_MS = 600
-
-/**
- * Agility-scaled bank delay expressed in game ticks (600ms each). Used by both
- * idle skilling and live skilling so a full-inventory bank trip costs the same
- * amount of time whether the player is present or away.
- */
-export function getAgilityBankDelayTicks(stats) {
-  return Math.ceil(getAgilityBankDelayFromStats(stats) / AGILITY_BANK_DELAY_TICK_MS)
-}
-
 /**
  * Format the bank delay into a human-readable string (e.g. "2m 30s", "45s").
  */

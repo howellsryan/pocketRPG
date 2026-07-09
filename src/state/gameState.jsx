@@ -52,6 +52,12 @@ export function GameProvider({ children }) {
   const [equipment, setEquipment] = useState({})
   const [bank, setBank] = useState({})
   const [toasts, setToasts] = useState([])
+  // Global "inventory full" prompt for active skilling/gathering:
+  //   'none'      — inventory has room (or no blocked activity)
+  //   'prompt'    — full; show the Bank & continue confirmation
+  //   'dismissed' — full but the player dismissed the prompt; keep the action
+  //                 paused and silently retrying without re-showing the prompt
+  const [inventoryFull, setInventoryFull] = useState('none')
   const [currentHP, setCurrentHP] = useState(10)
   const [homeShortcuts, setHomeShortcuts] = useState(null) // null = not loaded yet
   const [combatStance, setCombatStanceState] = useState('accurate')
@@ -1031,6 +1037,22 @@ export function GameProvider({ children }) {
     setToasts(prev => prev.filter(t => t.id !== id))
   }, [])
 
+  // ── Inventory-full prompt (active skilling/gathering) ──
+  // Drivers (the activity screens and the App-level background runner) call
+  // these each tick. `signal` raises the prompt the first time an action is
+  // blocked by a full inventory; once the player dismisses it, it stays paused
+  // without re-prompting. `resolve` clears the state the moment a slot frees so
+  // a later fill starts a fresh prompt.
+  const signalInventoryFull = useCallback(() => {
+    setInventoryFull(v => (v === 'none' ? 'prompt' : v))
+  }, [])
+  const dismissInventoryFullPrompt = useCallback(() => {
+    setInventoryFull(v => (v === 'none' ? v : 'dismissed'))
+  }, [])
+  const resolveInventoryFull = useCallback(() => {
+    setInventoryFull(v => (v === 'none' ? v : 'none'))
+  }, [])
+
   // Phase 3 activity gating: a pure gate the activity screens call before starting a
   // fresh action. Returns true if the caller may start now (it keeps its own
   // setActiveTask call), false if the start was blocked (travelling) or deferred to a
@@ -1351,6 +1373,7 @@ export function GameProvider({ children }) {
     loadGame, grantXP, updateInventory, updateEquipment, updateBank,
     removeFromInventory, addToBank,
     updateHP, getMaxHP, getSkillLevel, addToast, dismissToast, setPlayer,
+    inventoryFull, signalInventoryFull, dismissInventoryFullPrompt, resolveInventoryFull,
     markDirty, itemsData, updateHomeShortcuts, updateCombatStance,
     setActiveTask, updateBankDirect, getSnapshot, updateAutoBankLoot, updateBankConfig,
     getActivityProgress, clearActivityProgress,

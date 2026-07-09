@@ -37,6 +37,7 @@ import DemoLockedScreen from './screens/DemoLockedScreen.jsx'
 import MagicScreen from './screens/MagicScreen.jsx'
 import WorldMapScreen from './screens/WorldMapScreen.jsx'
 import TravelPrompt from './components/TravelPrompt.jsx'
+import InventoryFullPrompt from './components/InventoryFullPrompt.jsx'
 import { advanceTravel, travelDestName } from './engine/travel.js'
 import { advanceJourneyPhase, advanceJourneyOffline, journeyStatus, planClueJourney, planQuestJourney } from './engine/journeys.js'
 import AuthScreen from './screens/AuthScreen.jsx'
@@ -322,7 +323,8 @@ function GameApp() {
   const { loaded, loadGame, player, stats, equipment, inventory, bank, currentHP, updateHP, getMaxHP, updateInventory, updateEquipment, updateBank, updateBankDirect, grantXP, addToast, activeTask, setActiveTask, getActiveTask, itemsData, getSnapshot, unlockedFeatures, setSlayerTask, awardSlayerPoints, slayerTasksCompleted, setSlayerTasksCompleted, completeQuest, completedQuests, questQueue, removeFromQuestQueue, updateQuestQueue,
     unlockMinigameItem, unlockedMinigameItems, awardDungeoneeringTokens, farming, updateFarming, idleCombatSetup, isOneLife, updateBossKillCounts, updateRaidKillCounts, syncServerKillCounts, markKillCountsLoaded, combatSkipHandlerRef, skipHourHandlerRef, chargeSkipRef, raidSkipHandlerRef,
     gameLocked, lockGame, unlockGame, runLockedSave, awaitCombatCompletion, resolveCombatCompletion,
-    characterUnlocks, dailyTaskStates, setDailyTasks, recordGameEvent, updateWorldLocation, worldLocation, clearActivityProgress, requestActivityStart } = useGame()
+    characterUnlocks, dailyTaskStates, setDailyTasks, recordGameEvent, updateWorldLocation, worldLocation, clearActivityProgress, requestActivityStart,
+    inventoryFull, signalInventoryFull, dismissInventoryFullPrompt, resolveInventoryFull } = useGame()
   const pvp = usePvp()
   const [screen, setScreen] = useState(SCREENS.HOME)
   const prevScreenRef = useRef(null) // screen before the current one (set by navigate)
@@ -2016,20 +2018,34 @@ function GameApp() {
   }
 
   // A background task that can no longer make progress (out of materials /
-  // missing input, or inventory full with no auto-bank unlock) is cleared with
-  // a reason. A full inventory while auto-bank IS unlocked is NOT a stop — the
-  // runner keeps banking, so the sim never reports 'inventory_full' in that case.
+  // missing input) is cleared with a reason. A full inventory is NOT a stop
+  // during active play — the action pauses behind the global inventory-full
+  // prompt and resumes on its own once a slot frees (see the runner below).
   function applyBackgroundStop(task, reason) {
     setActiveTask(null)
     activeTaskRef.current = null
     try { localStorage.removeItem('pocketrpg_activeTask') } catch { /* non-fatal */ }
-    if (reason === 'inventory_full') {
-      addToast('Inventory full — gathering stopped.', 'error')
-    } else if (reason === 'missing_input') {
+    if (reason === 'missing_input') {
       addToast('Out of supplies for gathering.', 'error')
     } else {
       addToast('Out of materials!', 'error')
     }
+  }
+
+  // "Bank & continue" from the inventory-full prompt: deposit the whole
+  // inventory and let the paused action resume on the next tick.
+  function bankFullInventory() {
+    const inv = inventoryRef.current
+    const updates = {}
+    for (const slot of inv) {
+      if (!slot) continue
+      updates[slot.itemId] = (updates[slot.itemId] || 0) + slot.quantity
+    }
+    if (Object.keys(updates).length > 0) {
+      updateBankDirect(updates)
+      updateInventory(new Array(28).fill(null))
+    }
+    resolveInventoryFull()
   }
 
   // App-level background activity runner: progresses the active skill / gather /
@@ -2057,6 +2073,9 @@ function GameApp() {
         equipment: equipmentRef.current,
         itemsData: itemsDataRef.current,
         isIronman: getIronmanMode(),
+        // Active real-time play never silently auto-banks: a full inventory
+        // pauses the action behind the global prompt instead.
+        autoBank: false,
       }
       const totalTicks = getActionTicksForTask(task, ctx)
       // Resume the current action where it left off. While an activity screen is
@@ -2094,7 +2113,10 @@ function GameApp() {
         return
       }
       if (result.stoppedReason === 'inventory_full') {
-        applyBackgroundStop(task, 'inventory_full')
+        // Not a stop: pause behind the global prompt and keep retrying so the
+        // action resumes the moment a slot frees (via the prompt or manually).
+        signalInventoryFull()
+        commit(totalTicks, nextSession)
         return
       }
       if (result.stoppedReason === 'out_of_materials') {
@@ -2102,8 +2124,10 @@ function GameApp() {
         return
       }
 
+      // Progressed this window — clear any lingering inventory-full prompt.
+      resolveInventoryFull()
       // actions > 0 → reset and refill toward the next action; actions === 0
-      // means a bank trip is still pending, so keep the accumulated ticks.
+      // keeps the accumulated ticks.
       commit(actions > 0 ? 0 : pending, nextSession)
     })
     return unsub
@@ -2857,6 +2881,12 @@ function GameApp() {
         <GameFrameBar position="top" active={screen} onNavigate={(s) => navigate(s)} isInCombat={isInPvpMatch} onDisabledClick={() => addToast('⚔️ Cannot navigate during PvP combat!', 'warning')} demo={demoMode} lockedScreens={CLOUD_ONLY_SCREENS} onLockedClick={notifyDemoLocked} onLockedFeature={notifyDemoLocked} />
         <ToastContainer />
         <TravelPrompt onNavigate={navigate} originScreen={screen} originScreenData={actionData} />
+        <InventoryFullPrompt
+          open={inventoryFull === 'prompt'}
+          onBank={bankFullInventory}
+          onGoToInventory={() => { dismissInventoryFullPrompt(); navigate(SCREENS.INVENTORY) }}
+          onClose={dismissInventoryFullPrompt}
+        />
         <main class="gf-main flex-1 overflow-hidden">
           {renderScreen()}
         </main>

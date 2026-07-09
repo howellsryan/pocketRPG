@@ -1,9 +1,6 @@
 import { getLevelFromXP } from './experience.js'
-import { addItem, canFit } from './inventory.js'
-import {
-  COOKING_BURN_BASE_CHANCE, GATHERING_SKILLS, IDLE_AUTOBANK_GATHERING_SKILLS,
-  GATHER_AUTOBANK_CONSTRUCTION_LEVEL,
-} from '../utils/constants.js'
+import { freeSlots, findItem, countItem } from './inventory.js'
+import { COOKING_BURN_BASE_CHANCE } from '../utils/constants.js'
 
 /**
  * Gathering skills that can use a tool. These actions can always be performed —
@@ -159,53 +156,34 @@ export function createSkillingState(skill, action) {
     totalDungeoneeringTokens: 0,
     stopped: false,
     justCompleted: false,  // flag to delay reset to next tick
-    bankDelayTicksRemaining: 0, // >0 while an auto-bank trip holds the action
   }
 }
 
 /**
- * Whether a skill auto-banks its output when the inventory fills during live or
- * idle skilling (vs. stopping the action). Mirrors idleEngine's rule so live and
- * idle behave identically: production skills always bank; mining/woodcutting/
- * fishing always bank; other gatherers (farming) require the Construction unlock.
- */
-export function skillAutoBanksWhenFull(skill, stats = {}) {
-  if (!GATHERING_SKILLS.includes(skill)) return true
-  if (IDLE_AUTOBANK_GATHERING_SKILLS.includes(skill)) return true
-  return getLevelFromXP(stats?.construction?.xp || 0) >= GATHER_AUTOBANK_CONSTRUCTION_LEVEL
-}
-
-/**
- * Deposit a completed action's output ({ itemId: qty }) into the inventory,
- * banking the whole inventory first when it can't fit. Mutates `inventory`.
+ * True when a full inventory blocks this action from completing during active
+ * (live/background) play — i.e. its next output has nowhere to go. When true the
+ * driver holds the action and raises the global "inventory full" prompt instead
+ * of completing it; the check is re-evaluated each tick so the action resumes on
+ * its own once a slot frees up.
  *
- * Returns:
- *   - { stopped: true } when the inventory is full and auto-bank is disabled —
- *     nothing was deposited; the caller must stop the action.
- *   - { bankTrip: true, banked } when a bank trip cleared the inventory; `banked`
- *     is the { itemId: qty } map moved to the bank. The caller applies the
- *     agility-scaled delay.
- *   - {} on a normal deposit with room to spare.
+ * Not blocked when: the action has no inventory-bound output (alchemy banks
+ * coins; material-only actions produce nothing), any free slot exists, the
+ * product stacks onto an existing slot, or a consumed material sits in the
+ * inventory (using it frees a slot for the product).
  */
-export function depositSkillingOutput(inventory, drops, itemsData = {}, autoBank = true) {
-  if (canFit(inventory, drops, itemsData)) {
-    for (const [itemId, qty] of Object.entries(drops)) {
-      if (qty > 0) addItem(inventory, itemId, qty, itemsData[itemId]?.stackable || false)
+export function skillingActionBlockedByFullInventory(action, inventory = [], itemsData = {}) {
+  if (!action) return false
+  if (action.type === 'alchemy') return false
+  const producesToInventory = !!(action.product || action.dropTable)
+  if (!producesToInventory) return false
+  if (freeSlots(inventory) > 0) return false
+  if (action.product && itemsData[action.product]?.stackable && findItem(inventory, action.product) !== -1) return false
+  if (action.materials) {
+    for (const matId of Object.keys(action.materials)) {
+      if (countItem(inventory, matId) > 0) return false
     }
-    return {}
   }
-  if (!autoBank) return { stopped: true }
-
-  const banked = {}
-  for (let i = 0; i < inventory.length; i++) {
-    if (!inventory[i]) continue
-    banked[inventory[i].itemId] = (banked[inventory[i].itemId] || 0) + inventory[i].quantity
-    inventory[i] = null
-  }
-  for (const [itemId, qty] of Object.entries(drops)) {
-    if (qty > 0) addItem(inventory, itemId, qty, itemsData[itemId]?.stackable || false)
-  }
-  return { bankTrip: true, banked }
+  return true
 }
 
 /**
@@ -218,15 +196,6 @@ export function processSkillingTick(skillingState) {
   const events = []
 
   if (!state.active || state.stopped) return { skillingState: state, events }
-
-  // Bank-trip pause: after an auto-bank on a full inventory, the action is held
-  // for an agility-scaled delay (mirrors idle skilling's bank-trip time cost)
-  // before the next action resumes.
-  if (state.bankDelayTicksRemaining > 0) {
-    state.bankDelayTicksRemaining--
-    if (state.bankDelayTicksRemaining <= 0) events.push({ type: 'bankTripComplete', skill: state.skill })
-    return { skillingState: state, events }
-  }
 
   // Check justCompleted FIRST to reset before checking for new completion
   if (state.justCompleted) {
