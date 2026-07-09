@@ -1,7 +1,7 @@
 import GameIcon from './GameIcon.jsx'
 import { DESKTOP_NAV_TABS } from './navTabs.js'
 
-export default function SideNav({ active, onNavigate, isInCombat, onDisabledClick, demo = false, lockedScreens = null, onLockedClick }) {
+export default function SideNav({ active, onNavigate, isInCombat, onDisabledClick, demo = false, lockedScreens = null, onLockedClick, isCloudAccount = false, onOpenChat = null }) {
   return (
     <nav
       class="hidden md:flex flex-col flex-shrink-0 w-44 lg:w-52 fm-navrail pb-3 gap-1 overflow-y-auto"
@@ -43,6 +43,23 @@ export default function SideNav({ active, onNavigate, isInCombat, onDisabledClic
           </button>
         )
       })}
+
+      {/* Game Helper — desktop trigger for the chat panel (cloud accounts only;
+          mobile houses it in GameFrameBar's bottom rail instead). Pinned to the
+          rail's foot, below the primary destinations. */}
+      {isCloudAccount && !demo && onOpenChat && (
+        <button
+          onClick={() => { if (!isInCombat) onOpenChat() }}
+          disabled={isInCombat}
+          title="Game Helper"
+          class={`mt-auto flex items-center gap-3 w-full px-4 py-2 mx-0 border-0 border-l-2 border-transparent text-left text-[var(--fm-ink-soft)] transition-colors ${isInCombat ? 'opacity-30 cursor-not-allowed' : 'opacity-80 cursor-pointer hover:bg-[var(--fm-parch-hi)] hover:opacity-100'}`}
+        >
+          <span class="w-11 flex justify-center items-center flex-shrink-0">
+            <GameIcon iconKey="chat_bubble" size={30} />
+          </span>
+          <span class="text-sm font-semibold font-[var(--font-body)]">Game Helper</span>
+        </button>
+      )}
     </nav>
   )
 }

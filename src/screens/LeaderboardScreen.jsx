@@ -4,9 +4,12 @@ import FilterToggleBar from '../components/FilterToggleBar.jsx'
 import GameIcon from '../components/GameIcon.jsx'
 import GildedComplete from '../components/GildedComplete.jsx'
 import Pagination from '../components/Pagination.jsx'
+import Modal from '../components/Modal.jsx'
+import SkillBadge from '../components/SkillBadge.jsx'
 import { formatNumber } from '../utils/helpers.js'
 import { isMaxedTotal } from '../utils/completion.js'
 import { getLeaderboardFilters, getLeaderboardFilterById } from '../engine/leaderboardFilters.js'
+import { COMBAT_SKILLS, GATHERING_SKILLS, PRODUCTION_SKILLS, UTILITY_SKILLS } from '../utils/constants.js'
 import { getRaidArt, getMonsterArt } from '../utils/combatArt.js'
 import BackLink from '../components/BackLink.jsx'
 
@@ -49,7 +52,16 @@ function buildLeaderboardUrl(filter, page, pageSize) {
   return `/api/leaderboard?${params}`
 }
 
-function LeaderboardRow({ rank, char, metric }) {
+function AccountBadge({ char, size = 26 }) {
+  if (char.isIronman && char.isOneLife) {
+    return <GameIcon item={DRAGON_HELM_ITEM} size={size} class="flex-shrink-0" title="Ironman · One Life" />
+  }
+  if (char.isIronman) return <GameIcon item={IRON_HELM_ITEM} size={size} class="flex-shrink-0" title="Ironman" />
+  if (char.isOneLife) return <span class="flex-shrink-0 leading-none" style={{ fontSize: `${size - 6}px` }} title="One Life">☠️</span>
+  return null
+}
+
+function LeaderboardRow({ rank, char, metric, onSelect }) {
   const isKc = metric === 'kc'
   const primaryValue = isKc ? char.killCount : char.totalLevel
   const primaryLabel = isKc ? 'Kill Count' : 'Total Level'
@@ -58,33 +70,109 @@ function LeaderboardRow({ rank, char, metric }) {
   const maxed = !isKc && isMaxedTotal(char.totalLevel)
   return (
     <GildedComplete complete={maxed} className="rounded-xl">
-      <Card className="p-3">
-        <div class="flex items-center justify-between">
-          <div class="flex items-center gap-3 flex-1">
-            <div class="text-lg font-semibold text-[var(--color-gold)] min-w-[2rem]">#{rank}</div>
-            <div class="flex-1 min-w-0">
-              <div class="flex items-center gap-2 text-sm font-semibold text-[var(--color-parchment)] min-w-0">
-                {char.isIronman && char.isOneLife ? (
-                  <GameIcon item={DRAGON_HELM_ITEM} size={26} class="flex-shrink-0" title="Ironman · One Life" />
-                ) : char.isIronman ? (
-                  <GameIcon item={IRON_HELM_ITEM} size={26} class="flex-shrink-0" title="Ironman" />
-                ) : char.isOneLife ? (
-                  <span class="flex-shrink-0 text-xl leading-none" title="One Life">☠️</span>
-                ) : null}
-                <span class="truncate">{char.username}</span>
+      <button
+        type="button"
+        onClick={() => onSelect?.(char.username)}
+        class="w-full text-left"
+        aria-label={`View ${char.username}'s stats`}
+      >
+        <Card className="p-3 active:opacity-80">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3 flex-1 min-w-0">
+              <div class="text-lg font-semibold text-[var(--color-gold)] min-w-[2rem]">#{rank}</div>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2 text-sm font-semibold text-[var(--color-parchment)] min-w-0">
+                  <AccountBadge char={char} />
+                  <span class="truncate">{char.username}</span>
+                </div>
+              </div>
+            </div>
+            <div class="text-right flex-shrink-0 ml-2">
+              <div class="text-sm font-semibold text-[var(--color-gold)]">{formatNumber(primaryValue ?? 0)}</div>
+              <div class="text-[10px] text-[var(--color-parchment)] opacity-60">{primaryLabel}</div>
+              <div class="text-[10px] font-[var(--font-mono)] text-[var(--color-blood-light)] mt-1">
+                Combat {formatNumber(char.combatLevel ?? 3)}
               </div>
             </div>
           </div>
-          <div class="text-right flex-shrink-0 ml-2">
-            <div class="text-sm font-semibold text-[var(--color-gold)]">{formatNumber(primaryValue ?? 0)}</div>
-            <div class="text-[10px] text-[var(--color-parchment)] opacity-60">{primaryLabel}</div>
-            <div class="text-[10px] font-[var(--font-mono)] text-[var(--color-blood-light)] mt-1">
-              Combat {formatNumber(char.combatLevel ?? 3)}
-            </div>
-          </div>
-        </div>
-      </Card>
+        </Card>
+      </button>
     </GildedComplete>
+  )
+}
+
+const PROFILE_GROUPS = [
+  ['Combat', COMBAT_SKILLS],
+  ['Gathering', GATHERING_SKILLS],
+  ['Production', PRODUCTION_SKILLS],
+  ['Utility', UTILITY_SKILLS],
+]
+
+function PlayerStatsModal({ username, onClose }) {
+  const [profile, setProfile] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+
+  useEffect(() => {
+    let cancelled = false
+    setLoading(true)
+    setProfile(null)
+    setError(null)
+    fetch(`/api/profile?username=${encodeURIComponent(username)}`)
+      .then(res => {
+        if (!res.ok) throw new Error('Failed to load stats')
+        return res.json()
+      })
+      .then(data => { if (!cancelled) setProfile(data) })
+      .catch(err => { if (!cancelled) setError(err.message || 'Failed to load stats') })
+      .finally(() => { if (!cancelled) setLoading(false) })
+    return () => { cancelled = true }
+  }, [username])
+
+  const bySkill = {}
+  for (const s of profile?.skills || []) bySkill[s.skill] = s
+
+  const title = (
+    <span class="flex items-center gap-2 min-w-0">
+      {profile && <AccountBadge char={profile} size={22} />}
+      <span class="truncate">{username}</span>
+    </span>
+  )
+
+  return (
+    <Modal title={title} onClose={onClose}>
+      {loading && (
+        <div class="text-center py-8 text-[var(--color-parchment)] opacity-60 text-sm">Loading stats…</div>
+      )}
+      {error && !loading && (
+        <div class="text-center py-8 text-[#e57373] text-sm">{error}</div>
+      )}
+      {profile && !loading && (
+        <div class="space-y-4">
+          <div class="flex justify-between items-center px-1">
+            <span class="text-xs text-[var(--color-parchment)] opacity-60">
+              Total Level: <span class="font-[var(--font-mono)] font-bold text-[var(--color-gold)]">{formatNumber(profile.totalLevel)}</span>
+            </span>
+            <span class="text-xs text-[var(--color-parchment)] opacity-60">
+              Combat: <span class="font-[var(--font-mono)] font-bold text-[var(--color-blood-light)]">{formatNumber(profile.combatLevel)}</span>
+            </span>
+          </div>
+          {PROFILE_GROUPS.map(([groupTitle, skills]) => (
+            <div key={groupTitle}>
+              <h3 class="text-[10px] font-bold text-[var(--color-parchment)] opacity-40 uppercase tracking-widest mb-1.5">
+                {groupTitle}
+              </h3>
+              <div class="grid grid-cols-2 gap-1.5">
+                {skills.map(skill => {
+                  const entry = bySkill[skill] || { level: 1, xp: 0 }
+                  return <SkillBadge key={skill} skill={skill} level={entry.level} xp={entry.xp} compact />
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </Modal>
   )
 }
 
@@ -96,6 +184,7 @@ export default function LeaderboardScreen({ onBack }) {
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [selectedUsername, setSelectedUsername] = useState(null)
 
   const filter = getLeaderboardFilterById(filterId) || LEADERBOARD_FILTERS[0]
   const metric = filter.type === 'kc' ? 'kc' : 'total'
@@ -160,7 +249,7 @@ export default function LeaderboardScreen({ onBack }) {
         {!loading && !error && characters.length > 0 && (
           <div class="space-y-2">
             {characters.map((char, idx) => (
-              <LeaderboardRow key={`${filterId}:${page}:${idx}`} rank={offset + idx + 1} char={char} metric={metric} />
+              <LeaderboardRow key={`${filterId}:${page}:${idx}`} rank={offset + idx + 1} char={char} metric={metric} onSelect={setSelectedUsername} />
             ))}
           </div>
         )}
@@ -168,6 +257,9 @@ export default function LeaderboardScreen({ onBack }) {
           <Pagination page={page} totalPages={totalPages} totalCount={total} onPageChange={setPage} />
         )}
       </div>
+      {selectedUsername && (
+        <PlayerStatsModal username={selectedUsername} onClose={() => setSelectedUsername(null)} />
+      )}
     </div>
   )
 }

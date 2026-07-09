@@ -3,7 +3,6 @@ import Modal from './Modal.jsx'
 import Button from './Button.jsx'
 import { api, CREDITS_UPDATED_EVENT } from '../cloud/api.js'
 import { pauseTicks, resumeTicks } from '../engine/tick.js'
-import GameIcon from './GameIcon.jsx'
 import { applyCloudSave } from '../cloud/sync.js'
 import { useGame } from '../state/gameState.jsx'
 
@@ -25,11 +24,10 @@ function costLine(cost) {
 }
 
 // In-game help chatbot. Cloud accounts only (the /api/chat endpoint needs an
-// authenticated character); renders nothing in demo mode. On mobile the
-// trigger lives inside GameFrameBar's bottom nav rail (its own medallion,
-// next to Home) so `open`/`onOpenChange` are controlled from there; this
-// component still renders its own floating trigger for desktop, where there
-// is no bottom rail to house it.
+// authenticated character); renders nothing in demo mode. The trigger lives in
+// the chrome, not here: GameFrameBar's bottom nav rail on mobile, SideNav's
+// rail on desktop — both drive `open`/`onOpenChange`. This component only owns
+// the panel itself.
 export default function ChatWidget({ isCloudAccount = false, open = false, onOpenChange = () => {} }) {
   const { loadGame } = useGame()
   const setOpen = onOpenChange
@@ -166,14 +164,6 @@ export default function ChatWidget({ isCloudAccount = false, open = false, onOpe
 
   return (
     <>
-      <button
-        type="button"
-        aria-label="Game helper"
-        onClick={() => setOpen(true)}
-        class="fixed bottom-[max(0.75rem,env(safe-area-inset-bottom))] right-6 z-[140] chat-fab"
-      >
-        <GameIcon iconKey="chat_bubble" size={30} title="Game helper" />
-      </button>
       {open && (
         <Modal
           title="Game Helper"
