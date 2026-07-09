@@ -2018,8 +2018,11 @@ function GameApp() {
       if (task.type === 'thieving') depositLootToInventory({ coins: result.coinsGained })
       else updateBankDirect({ coins: result.coinsGained })
     }
-    // Thieving seed rewards (Master Farmer) fill the inventory.
-    if (result.itemsGained && Object.keys(result.itemsGained).length > 0) {
+    // Thieving seed rewards (Master Farmer) fill the inventory. Skill/gather
+    // tasks already applied their itemsGained above via finalInventory +
+    // itemsBanked — itemsGained there is the net total of both, so re-applying
+    // it here would double-credit the bank.
+    if (task.type !== 'skill' && task.type !== 'gather' && result.itemsGained && Object.keys(result.itemsGained).length > 0) {
       if (task.type === 'thieving') depositLootToInventory(result.itemsGained)
       else updateBankDirect(result.itemsGained)
     }
