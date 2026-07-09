@@ -10,7 +10,7 @@ import SectionHeader from '../components/SectionHeader.jsx'
 import SkillActionRow from '../components/SkillActionRow.jsx'
 import { isUnlockOwned } from '../utils/completion.js'
 import { SLAYER_UNLOCKS, getSlayerUnlockPurchaseState, ownsItem } from '../engine/slayerUnlocks.js'
-import { UNLOCKABLES as CONSTRUCTION_UNLOCKABLES } from '../engine/construction.js'
+import { UNLOCKABLES } from '../engine/construction.js'
 import { getLevelFromXP } from '../engine/experience.js'
 import { GATHER_AUTOBANK_CONSTRUCTION_LEVEL } from '../utils/constants.js'
 
@@ -231,7 +231,7 @@ export default function CharacterUnlockScreen({ onBack }) {
         Unlockables
       </h3>
       <div class="space-y-2">
-        {CONSTRUCTION_UNLOCKABLES.map(unlockable => {
+        {UNLOCKABLES.map(unlockable => {
           const available = constructionLevel >= unlockable.level
           const alreadyDone = unlockedFeatures.has(unlockable.id)
           return (
