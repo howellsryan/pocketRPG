@@ -14,16 +14,21 @@ function describeTask(task) {
   if (!task) return null
   switch (task.type) {
     case 'skill':
-      return { skill: task.skill, icon: SKILL_ICONS[task.skill] || '🔨', screen: SCREENS.SKILLS, label: task.skill }
+      // Magic has its own top-level screen; every other skill (including the
+      // ones SkillingScreen itself delegates to, e.g. farming/construction)
+      // resumes via SCREENS.SKILLS + skillId, same as autoStart routing.
+      return task.skill === 'magic'
+        ? { skill: 'magic', icon: SKILL_ICONS.magic || '🔮', screen: SCREENS.MAGIC, label: 'Magic' }
+        : { skill: task.skill, icon: SKILL_ICONS[task.skill] || '🔨', screen: SCREENS.SKILLS, data: { skillId: task.skill }, label: task.skill }
     case 'gather':
       if (task.gatherTask?.oneShot || task.gatherTask?.isClue) return null
       return { iconKey: task.gatherTask?.product, icon: task.gatherTask?.icon || '🌿', screen: SCREENS.GATHER, label: task.gatherTask?.name || 'Gathering' }
     case 'agility':
       return { skill: 'agility', icon: SKILL_ICONS.agility || '🏃', screen: SCREENS.AGILITY, label: 'Agility' }
     case 'thieving':
-      return { skill: 'thieving', icon: SKILL_ICONS.thieving || '🗝️', screen: SCREENS.SKILLS, label: 'Thieving' }
+      return { skill: 'thieving', icon: SKILL_ICONS.thieving || '🗝️', screen: SCREENS.SKILLS, data: { skillId: 'thieving' }, label: 'Thieving' }
     case 'hunter':
-      return { skill: 'hunter', icon: SKILL_ICONS.hunter || '🪤', screen: SCREENS.SKILLS, label: 'Hunter' }
+      return { skill: 'hunter', icon: SKILL_ICONS.hunter || '🪤', screen: SCREENS.SKILLS, data: { skillId: 'hunter' }, label: 'Hunter' }
     case 'quest':
       return { iconKey: 'clue_scroll_medium', icon: '📜', screen: SCREENS.QUESTS, label: task.quest?.name || 'Quest' }
     case 'minigame':
@@ -59,7 +64,7 @@ export default function ActivityIndicator({ onNavigate }) {
   return (
     <button
       type="button"
-      onClick={() => onNavigate && onNavigate(info.screen)}
+      onClick={() => onNavigate && onNavigate(info.screen, info.data)}
       title={`Running: ${info.label}`}
       aria-label={`Active task: ${info.label}`}
       class="relative flex items-center justify-center bg-transparent border-0 p-0 cursor-pointer"
