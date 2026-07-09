@@ -83,84 +83,88 @@ are raw — run `process-3d-model.mjs` (and `fit-headgear.mjs` /
 `canonicalize-weapon.mjs`, if the slot needs it) on each afterwards, same as
 any authored asset.
 
-## Body / legs slots (live)
+## Body / legs / boots / gloves / cape slots (skinned; fit is manual)
 
-Unlike the helmet, a torso/legs piece can't just ride one bone — it has to
-bend at the shoulder, elbow, hip and knee along with the body, so it needs to
-be a **skinned mesh sharing the hero's own skeleton**, not a rigid
-bone-attach. `scripts/canonicalize-armour.mjs` does the whole thing in one
-pass, against `public/3d-samples/hero.glb` as the fixed reference:
+Unlike the helmet, these pieces can't ride one bone — they have to bend at
+the shoulder, hip, knee, ankle or spine along with the body, so each needs
+to be a **skinned mesh sharing the hero's own skeleton**, not a rigid
+bone-attach.
+
+**The fit is a one-time manual Blender step per base asset** (~10–15 min):
+import `public/3d-samples/hero.glb`, arrange the piece on the body, export
+the piece alone — full walkthrough in `docs/gear-asset-process.md`. This is
+a deliberate design decision, not a gap. Automatic fitting was attempted
+three ways and each failed structurally:
+
+- *uniform height-match scaling* keeps the source mannequin's proportions —
+  the platelegs came out ~3x wider-stanced than the hero's legs and the
+  platebody stuck ~2/3 of a body depth out of the hero's back. The
+  transferred weights were CORRECT, so the suit deformed plausibly while
+  hovering beside/behind the hero; every per-vertex diagnostic (posed drift
+  vs nearest hero skin vertex) looked healthy while the render was obviously
+  wrong. If a piece "deforms right but floats", suspect the geometry's
+  bind-pose placement, not the weights.
+- *per-vertex shrinkwrap* (nearest-surface projection + clamped clearance +
+  smoothed displacement field) shatters plates — neighbouring vertices
+  project onto different hero regions and the field tears coherent panels.
+- *per-bone affine blends* (cluster centroid translate + radial girth scale,
+  blended by skin weights) keep panels coherent but crumple the authored
+  silhouette and still read as a bad fit.
+
+A human eye + Blender does in minutes what those can't; everything on either
+side of the fit is scripted:
 
 ```bash
-node scripts/canonicalize-armour.mjs raw.glb platebody.raw.glb --slot body   # or --slot legs
-node scripts/process-3d-model.mjs platebody.raw.glb platebody.glb --ratio 1.0 --tex 512
+node scripts/canonicalize-armour.mjs <item>.fitted.glb <item>.raw.glb --slot body   # legs|boots|gloves|cape
+node scripts/process-3d-model.mjs <item>.raw.glb <item>.glb --ratio 1.0 --tex 512
 ```
 
-Then register with `{ "model": "<file>", "slot": "body", "hideBody": true }`
-(or `"legs"` + `hideLegs`) — no transform fields at all; alignment is baked
-into the mesh, and `attachGearList` detects a skinned piece (its geometry
-carries JOINTS_0/WEIGHTS_0) automatically and rebinds it, rather than
-parenting it to a bone like the rigid slots. `tests/equipModels.test.ts`
-asserts every body/legs model actually has a skin with all 41 joints, so a
-future asset that's accidentally exported static (no skin) fails CI instead
-of silently rigid-attaching.
+`canonicalize-armour.mjs` (against `public/3d-samples/hero.glb` as the fixed
+reference — re-run if the hero model or rig ever changes):
 
-Four stages happen inside `canonicalize-armour.mjs`, all measured live from
-hero's bind-pose vertices (no hardcoded constants, unlike the head):
-
-1. **Strip mannequin skin** — Tripo suits are generated worn, and split
+1. **Fit sanity check** — refuses input whose vertices don't hug the hero's
+   surface for the slot (p90 distance > 0.15 hero units ≈ 13cm), the usual
+   symptom of exporting in the wrong space or skipping the fit step.
+2. **Strip mannequin skin** — generated suits are made worn, and split
    pieces routinely keep welded scraps of the mannequin (a neck stub in a
    chest piece, bare toes poking out of sabatons). They're skin-coloured
    texels on the armour's own atlas, so each triangle is sampled at 7 UV
    points (corners, edge midpoints, centroid) and dropped when most read as
-   flesh tones; `--keep-skin` disables it for a piece that legitimately
-   uses skin-like colours. A corners-only test was tried first and kept
-   every boundary triangle where skin meets armour texels.
-2. **Align** — recenter the piece on its own bbox, then scale it uniformly
-   (one factor on all 3 axes, from matching its own height to hero's
-   torso/legs region height). Ballpark only — stage 4 does the real fit.
+   flesh tones; `--keep-skin` disables it. A corners-only test was tried
+   first and kept every boundary triangle where skin meets armour texels.
 3. **Weight transfer** — each vertex binds to its k nearest hero *surface*
    vertices (inverse-distance blend), with the candidate pool pre-filtered
-   to hero vertices dominantly weighted to the relevant torso/arm or
-   hip/leg bone chain, grouped L/R/C by bone-name prefix so a left plate
-   only searches left-side (+centre) candidates. Two cheaper approaches
-   were tried and discarded: an unrestricted nearest-vertex search happily
-   matches a chest-plate hem to the nearest THIGH skin vertex once the
-   piece is scaled into place, and the plate tears the moment legs and
-   torso move independently; collapsing each candidate bone to a single
+   to hero vertices dominantly weighted to the slot's bone chain, grouped
+   L/R/C by bone-name prefix so a left plate only searches left-side
+   (+centre) candidates. Two cheaper approaches were tried and discarded:
+   an unrestricted nearest-vertex search happily matches a chest-plate hem
+   to the nearest THIGH skin vertex, and the plate tears the moment legs
+   and torso move independently; collapsing each candidate bone to a single
    centroid point stops that but loses the real shape of each bone's
    region, so a broad bone (Waist) "wins" nearest-point for a wide swath of
    vertices that are visually much closer to a neighbouring bone (Spine02).
    Restricting candidate *vertices*, not bones, keeps the real per-point
    surface detail while still ruling out anatomically unrelated matches.
-4. **Bone-anchored warp** — the fit stage, and the hardest-won lesson here.
-   A global similarity transform can never fit a multi-limb piece: height
-   matching alone left the platelegs ~3x wider-stanced than the hero's legs
-   and the platebody sticking ~2/3 of the hero's whole body depth out of
-   its back. The transferred weights were *correct*, so the suit deformed
-   plausibly while hovering beside/behind the hero — the first shipped cut
-   did exactly this, and per-vertex diagnostics (posed drift vs the nearest
-   hero skin vertex) all looked healthy while the render was obviously
-   wrong; only comparing the piece's bounds against the hero's *limb*
-   positions exposed it. A per-vertex shrinkwrap (nearest-surface projection
-   + clamped clearance + smoothed displacement field) was tried next and
-   shattered the plates — neighbouring vertices project onto different hero
-   regions and the field tears coherent panels apart. What ships: ONE
-   affine map per bone (translate the armour's per-bone vertex cluster
-   centroid onto the hero's cluster; scale RADIALLY, perpendicular to the
-   bone axis only, so plate girth becomes hero girth + `--clear`), blended
-   per vertex by the transferred skin weights — the same smoothness class
-   as skinning itself, so plates move near-rigidly, seams blend, nothing
-   shatters. Normals are recomputed from the warped triangles afterwards.
+   The output mesh is built inside hero.glb's OWN document sharing its OWN
+   skin/joint hierarchy, so joint indices are correct by construction.
 
-Even a perfect snug bake clips in extreme poses (the plate is ~1k tris
-against the hero's 7k — a flat triangle chords across a curved thigh), so
-every platebody/platelegs registry entry also sets **`hideBody` /
-`hideLegs`**: the same per-vertex shader mask that hides the head under a
-full helm (now `setupHideMask` in `Model3DViewer.jsx`, a vec3 of
+Register with `{ "model": "<file>", "slot": "body", "hideBody": true }`
+(legs → `hideLegs`) — no transform fields at all; the fit is baked into the
+mesh, and `attachGearList` detects a skinned piece (its geometry carries
+JOINTS_0/WEIGHTS_0) automatically and rebinds it, rather than parenting it
+to a bone like the rigid slots. `tests/equipModels.test.ts` asserts every
+body/legs model actually has a skin with all 41 joints, so an asset that's
+accidentally exported static fails CI instead of silently rigid-attaching.
+
+**Hide masks**: even a well-fitted plate clips in extreme poses (a ~1k-tri
+plate triangle chords across a curved 7k-tri thigh), so covering pieces set
+`hideBody`/`hideLegs`: the same per-vertex shader mask that hides the head
+under a full helm (`setupHideMask` in `Model3DViewer.jsx`, a vec3 of
 head/torso/legs region weights with per-channel thresholds) discards the
-hero's covered anatomy, so skin can never bulge through the plate in any
-pose, while bare arms/neck/hips still show around the piece's edges.
+hero's covered anatomy, so skin can never bulge through in any pose while
+bare arms/neck/hips still show around the piece's edges. Boots/gloves/cape
+have no mask region yet — the first such asset adds its bone list to
+`HIDE_REGION_BONES`.
 
 The output mesh is built inside `hero.glb`'s own document, sharing its
 actual skin/joint hierarchy (so the copied joint indices are correct by
@@ -183,8 +187,9 @@ amounts. Confirmed by binding a mesh built from hero's OWN geometry/weights
 via each matrix — `matrixWorld` teared identically to a genuinely bad
 weight-transfer result, `bindMatrix` was pixel-identical to the hero itself.
 
-- **Cape**: rigid attach like the helmet — needs a `defaults.gear.cape` bone +
-  transform (chest/spine bone) measured the same way.
+- **Shield / amulet**: rigid attach like the helmet — the first asset needs a
+  `defaults.gear.<slot>` bone (`L_Hand` / `NeckTwist01`) + transform measured
+  the same way.
 
 The runtime side is already slot-generic: `getGearPlacements()` in
 `src/utils/equipModels.js` resolves whatever is equipped, and

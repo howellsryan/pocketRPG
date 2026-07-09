@@ -196,30 +196,7 @@
       "model": "dragon_full_helm.glb",
       "slot": "head",
       "hideHead": true
-    },
-    "steel_platebody": { "model": "platebody.glb", "slot": "body", "hideBody": true },
-    "bronze_platebody": { "model": "bronze_platebody.glb", "slot": "body", "hideBody": true },
-    "iron_platebody": { "model": "iron_platebody.glb", "slot": "body", "hideBody": true },
-    "mithril_platebody": { "model": "mithril_platebody.glb", "slot": "body", "hideBody": true },
-    "adamant_platebody": { "model": "adamant_platebody.glb", "slot": "body", "hideBody": true },
-    "runeforged_platebody": { "model": "runeforged_platebody.glb", "slot": "body", "hideBody": true },
-    "gravehusk_platebody": { "model": "gravehusk_platebody.glb", "slot": "body", "hideBody": true },
-    "2nd_age_platebody": { "model": "2nd_age_platebody.glb", "slot": "body", "hideBody": true },
-    "dravok_s_platebody": { "model": "dravok_s_platebody.glb", "slot": "body", "hideBody": true },
-    "gorath_s_platebody": { "model": "gorath_s_platebody.glb", "slot": "body", "hideBody": true },
-    "torvek_s_platebody": { "model": "torvek_s_platebody.glb", "slot": "body", "hideBody": true },
-    "steel_platelegs": { "model": "platelegs.glb", "slot": "legs", "hideLegs": true },
-    "bronze_platelegs": { "model": "bronze_platelegs.glb", "slot": "legs", "hideLegs": true },
-    "iron_platelegs": { "model": "iron_platelegs.glb", "slot": "legs", "hideLegs": true },
-    "mithril_platelegs": { "model": "mithril_platelegs.glb", "slot": "legs", "hideLegs": true },
-    "adamant_platelegs": { "model": "adamant_platelegs.glb", "slot": "legs", "hideLegs": true },
-    "runeforged_platelegs": { "model": "runeforged_platelegs.glb", "slot": "legs", "hideLegs": true },
-    "dragon_platelegs": { "model": "dragon_platelegs.glb", "slot": "legs", "hideLegs": true },
-    "thornhide_platelegs": { "model": "thornhide_platelegs.glb", "slot": "legs", "hideLegs": true },
-    "2nd_age_platelegs": { "model": "2nd_age_platelegs.glb", "slot": "legs", "hideLegs": true },
-    "dravok_s_platelegs": { "model": "dravok_s_platelegs.glb", "slot": "legs", "hideLegs": true },
-    "shardglass_platelegs": { "model": "shardglass_platelegs.glb", "slot": "legs", "hideLegs": true },
-    "torvek_s_platelegs": { "model": "torvek_s_platelegs.glb", "slot": "legs", "hideLegs": true }
+    }
   },
   "monsters": {
     "king_black_dragon": {
