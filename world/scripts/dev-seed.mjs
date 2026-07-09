@@ -62,6 +62,7 @@ const now = Date.now()
 const escapedSaveData = saveData.replace(/'/g, "''")
 
 const seedSql = `
+DELETE FROM world_positions WHERE character_id = 1;
 DELETE FROM saves WHERE character_id = 1;
 DELETE FROM characters WHERE id = 1;
 DELETE FROM oauth_identities WHERE id = 1;
