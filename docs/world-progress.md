@@ -153,3 +153,19 @@ One implementation choice made here, not specified by the guide beyond "blocked 
 `world:check` green: 4 test files / 26 tests, unchanged from Step 0.8 — this step is almost entirely client rendering/input code with no new pure logic warranting unit tests beyond what pathfinding/tick already cover.
 
 - [x] STEP 0.9 — 48a4687 — three.js scene, camera-follow, click-to-move, and interpolated placeholder avatar implemented and verified end-to-end (protocol frames + visual screenshots) against a live local instance.
+
+## STEP 0.10 — Hero model + animations
+
+Copied `public/3d-samples/hero.glb` (942 KB — under the 5MB threshold, no developer approval needed per the guide). `world/scripts/list-anims.mjs` needed the exact NodeIO extension-registration pattern already established in this repo's own `scripts/process-3d-model.mjs` (`EXT_meshopt_compression`, `EXT_texture_webp` — simplified to `ALL_EXTENSIONS` from `@gltf-transform/extensions` rather than discovering each required extension one at a time via trial and error) — added `@gltf-transform/core`/`extensions` + `meshoptimizer` to `world`'s own devDependencies, pinned to match root's versions.
+
+84 clips found. No clip is literally named "Idle" or "Walk" (the guide's preferred exact match), but `idle_loop`/`walk_loop` are unambiguous — they're the plain base cycles, distinct from context-specific variants like `walk_formal_loop`/`walk_carry_loop`. Judged this confident enough to map directly rather than raise a DEVELOPER TASK: the guide's escape hatch is for genuine ambiguity, and picking between "the obviously-plain clip" and "clips with additional qualifying words" isn't that.
+
+`createHeroMesh()` in `entities.ts` loads the GLB via three's own `GLTFLoader`/`meshopt_decoder.module.js` (the *npm* three.js's example loaders — not the vendored single-file-build loaders elsewhere in the repo, since `world/` is a separate Vite/ESM app with no relationship to that pipeline), clones the skeleton per entity via `SkeletonUtils.clone` so the parsed template can eventually back multiple on-screen entities, and binds a per-clone `AnimationMixer` with idle/walk actions and a 150ms crossfade.
+
+**Two real y-offset bugs found and fixed while wiring this in**: `createEntity` and `setEntityTarget` were overwriting the mesh's y-position with the ground plane's y (0) instead of preserving whatever y-offset the mesh itself needs (0.6 for the capsule fallback, 0 for the hero's feet-at-origin rig) — without the fix, the capsule fallback path would sink into the ground after its very first movement. Caught by re-reading the code against both fallback paths, not by running it (the hero model itself doesn't need a y-offset so this wouldn't have shown up testing only the happy path).
+
+**Verification**: local `wrangler dev` + Playwright. Idle screenshots show a natural standing pose — no T-pose ever appeared. A click that resolved to a blocked (fence) tile correctly produced zero movement (this was almost mistaken for a bug — re-tested with frame monitoring and a click on confirmed-open ground, which did send `walk` and produced tick-by-tick diffs, showing the first click's "non-movement" was correct rejection of a wall-tile target, not broken input handling). The resulting walk screenshot shows a clear mid-stride pose with the camera still correctly following. The only console 404 (`/favicon.ico`) was confirmed via direct `curl` to be unrelated to the model pipeline.
+
+`world:check` green: 4 test files / 26 tests, unchanged — this step is asset/rendering wiring with no new pure logic to unit test.
+
+- [x] STEP 0.10 — d81d268 — hero model with idle/walk animation crossfade implemented and verified visually; two real y-offset bugs found and fixed before they could surface as a rendering regression on the capsule fallback path.
