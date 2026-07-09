@@ -437,9 +437,14 @@ export default function WorldMapScreen({ onNavigate, onAutoStart, initialView } 
                   : `Route: ${(travel.path || []).map((id) => getPlace(id)?.name || id).join(' → ')}`}
               </div>
               <div class="wm-travelbar-actions">
-                {tele?.ok && (
-                  <button class="wm-travelbar-tele" onClick={() => castTeleport(travel.dest)} title={`Consumes ${formatRuneCost(tele.runes, itemsData)} · +${tele.xp} Magic XP`}>
-                    <GameIcon iconKey={getSkillArt('magic').icon} color="#fff" size={16} /> Teleport ahead
+                {tele && (
+                  <button
+                    class={`wm-travelbar-tele${tele.ok ? '' : ' is-locked'}`}
+                    onClick={() => tele.ok ? castTeleport(travel.dest) : null}
+                    disabled={!tele.ok}
+                    title={tele.ok ? `Consumes ${formatRuneCost(tele.runes, itemsData)} · +${tele.xp} Magic XP` : tele.reason}
+                  >
+                    <GameIcon iconKey={getSkillArt('magic').icon} color={tele.ok ? '#fff' : 'var(--fm-ink-faint)'} size={16} /> Teleport ahead
                   </button>
                 )}
                 <button class="wm-travelbar-cancel" onClick={cancelTravel}>{js ? 'Abandon journey' : 'Turn back'}</button>

@@ -14,7 +14,7 @@ import Panel from '../components/Panel.jsx'
 import Button from '../components/Button.jsx'
 import SectionHeader from '../components/SectionHeader.jsx'
 import EquipmentPaperdoll, { EQ_SLOT_NAMES } from '../components/EquipmentPaperdoll.jsx'
-import ItemSlot from '../components/ItemSlot.jsx'
+import InventoryGrid from '../components/InventoryGrid.jsx'
 import WeaponChargePanel, { getChargeRecipe } from '../components/WeaponChargePanel.jsx'
 import { OTHER_BONUS_LABELS, OTHER_BONUS_PERCENT_KEYS } from '../utils/bonusLabels.js'
 
@@ -433,16 +433,20 @@ export default function EquipmentScreen() {
         {/* Inventory display — desktop only */}
         <div class="hidden lg:block border-t border-[var(--color-void-border)] mt-3 pt-3">
           <SectionHeader size="sm" className="mb-2 opacity-50">Inventory</SectionHeader>
-          <div class="grid grid-cols-7 gap-1">
-            {inventory.map((slot, i) => (
-              <ItemSlot
-                key={i}
-                slot={slot}
-                onClick={(s, item) => handleInvSlotClick(s, item, i)}
-                size="small"
-              />
-            ))}
-          </div>
+          <InventoryGrid
+            inventory={inventory}
+            size="small"
+            gridClass="grid grid-cols-7 gap-1"
+            showName={false}
+            onReorder={(from, to) => {
+              const newInv = [...inventory]
+              const tmp = newInv[to]
+              newInv[to] = newInv[from]
+              newInv[from] = tmp
+              updateInventory(newInv)
+            }}
+            onSlotClick={(s, item, i) => handleInvSlotClick(s, item, i)}
+          />
         </div>
       </Card>
 
