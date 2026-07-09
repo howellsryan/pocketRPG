@@ -1,0 +1,21 @@
+# 3D asset files: pin line-ending/diff behavior so cross-platform contributors
+# don't get CRLF/LF churn or noisy diffs on vendored binary formats.
+assets/** -text
+
+assets/**/*.gltf text eol=lf
+assets/**/*.dae text eol=lf
+assets/**/*.obj text eol=lf
+assets/**/*.mtl text eol=lf
+assets/**/*.json text eol=lf
+assets/**/*.txt text eol=lf
+assets/**/*.md text eol=lf
+
+assets/**/*.glb binary
+assets/**/*.bin binary
+assets/**/*.fbx binary
+assets/**/*.blend binary
+assets/**/*.png binary
+assets/**/*.jpg binary
+assets/**/*.jpeg binary
+assets/**/*.ktx2 binary
+assets/**/*.basis binary
