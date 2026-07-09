@@ -600,45 +600,46 @@ export function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, st
       refundUnusedActions(actionsCompleted)
       actions = actionsCompleted
     } else {
-      // Banking disabled: items fill inventory, excess is dropped (preserves XP/hr, limits items/hr)
+      // Banking disabled: produce into the inventory until it fills, then stop —
+      // matching live skilling (you can't smith with a full inventory). The
+      // product is NEVER dropped: a material-consuming skill dropping its output
+      // while still charging the ingredients silently drained the bank (e.g.
+      // smithing 28 bars but consuming ore for hundreds of un-kept ones). Refund
+      // the unused actions so materials/XP track what was actually produced.
       const item = itemsData[product]
       const stackable = item?.stackable || false
-      let remainingQty = (task.action.productQty || 1) * actions
+      let actionsCompleted = 0
+      let inventoryFull = false
 
       for (let a = 0; a < actions; a++) {
-        const qtyThisAction = qtyPerAction
-        let addedQty = 0
-
+        let added = false
         if (stackable) {
           const existingIdx = newInv.findIndex(s => s && s.itemId === product)
           if (existingIdx !== -1) {
-            newInv[existingIdx] = { ...newInv[existingIdx], quantity: newInv[existingIdx].quantity + qtyThisAction }
-            addedQty = qtyThisAction
+            newInv[existingIdx] = { ...newInv[existingIdx], quantity: newInv[existingIdx].quantity + qtyPerAction }
+            added = true
           } else {
             const emptyIdx = newInv.indexOf(null)
             if (emptyIdx !== -1) {
-              newInv[emptyIdx] = { itemId: product, quantity: qtyThisAction }
-              addedQty = qtyThisAction
+              newInv[emptyIdx] = { itemId: product, quantity: qtyPerAction }
+              added = true
             }
           }
         } else {
-          // Non-stackable
-          for (let q = 0; q < qtyThisAction; q++) {
-            const emptyIdx = newInv.indexOf(null)
-            if (emptyIdx !== -1) {
-              newInv[emptyIdx] = { itemId: product, quantity: 1 }
-              addedQty++
+          // Non-stackable needs `qtyPerAction` free slots or the action can't complete.
+          const freeCount = newInv.reduce((n, s) => n + (s ? 0 : 1), 0)
+          if (freeCount >= qtyPerAction) {
+            for (let q = 0; q < qtyPerAction; q++) {
+              newInv[newInv.indexOf(null)] = { itemId: product, quantity: 1 }
             }
+            added = true
           }
         }
-
-        const droppedQty = qtyThisAction - addedQty
-        if (droppedQty > 0) {
-          itemsDropped[product] = (itemsDropped[product] || 0) + droppedQty
-        }
+        if (!added) { inventoryFull = true; break }
+        actionsCompleted++
       }
 
-      // Items still in inventory go to itemsGained
+      // Compute gains before the refund so refunded materials don't count as product.
       for (const slot of newInv) {
         if (!slot) continue
         const startingQty = startingInvState[slot.itemId] || 0
@@ -647,6 +648,10 @@ export function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, st
           itemsGained[slot.itemId] = (itemsGained[slot.itemId] || 0) + deltaQty
         }
       }
+
+      refundUnusedActions(actionsCompleted)
+      actions = actionsCompleted
+      if (inventoryFull) gatheringStoppedReason = 'inventory_full'
     }
   }
 
