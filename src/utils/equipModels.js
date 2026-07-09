@@ -58,8 +58,11 @@ export function getGearModel(itemId) {
     position: g.position || d.position || EQUIP_IDENTITY.position,
     rotationDeg: g.rotationDeg || d.rotationDeg || EQUIP_IDENTITY.rotationDeg,
     scale: typeof g.scale === 'number' ? g.scale : (typeof d.scale === 'number' ? d.scale : EQUIP_IDENTITY.scale),
-    // fully-enclosing pieces shrink their anchor bone so hair/head can't clip
+    // covering pieces hide the body region beneath them (shader mask in
+    // Model3DViewer) so skin can't clip through in any pose
     hideHead: Boolean(g.hideHead),
+    hideBody: Boolean(g.hideBody),
+    hideLegs: Boolean(g.hideLegs),
   }
 }
 
@@ -75,6 +78,8 @@ export function getGearPlacement(itemId) {
     rotationDeg: spec.rotationDeg,
     scale: spec.scale,
     hideHead: spec.hideHead,
+    hideBody: spec.hideBody,
+    hideLegs: spec.hideLegs,
   }
 }
 

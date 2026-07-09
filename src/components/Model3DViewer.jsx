@@ -95,7 +95,7 @@ function Model3DViewer({ characterPath, weapon = null, gear = null, idleClip = n
         scene.add(root)
         st.character = root
         st.heroSkinned = skinnedMesh
-        st.headMaskCtl = setupHeadMask(THREE, skinnedMesh)
+        st.headMaskCtl = setupHideMask(THREE, skinnedMesh)
         camera.position.set(0, 1.15, 4.2)
         controls.target.set(0, 0.95, 0)
         controls.update()
@@ -204,52 +204,70 @@ function attachWeapon(st, weapon) {
   }).catch(() => {})
 }
 
-// Per-vertex mask so a fully-enclosing helmet (registry `hideHead: true`) can
-// cut the hero's head out of the render entirely, rather than trying to hide
-// it by shrinking/moving the Head bone. A bone-transform approach was tried
-// first and discarded: Head and Neck share skin weights at the collar, so
-// scaling the bone always leaves some pinch, and since every clip animates
-// Head's rotation the hidden bone's position had to be re-derived every
-// frame to avoid drift — still only approximately right in extreme poses
-// (death, hit reactions). This is exact in every pose because it never
-// touches the skeleton: `mask[i]` is vertex i's total skin weight on the
-// named bone (computed once from the existing skinning data), and the
-// fragment shader discards any fragment whose interpolated mask says it's
-// dominantly part of that bone's region — the neck geometry is never
-// transformed, so it's never distorted.
-export function setupHeadMask(THREE, skinnedMesh, boneName = 'Head') {
+// Per-vertex region masks so a covering piece can cut the hero's hidden
+// anatomy out of the render entirely (registry `hideHead`/`hideBody`/
+// `hideLegs`), rather than trying to hide it by transforming bones. A
+// bone-transform approach was tried first for the head and discarded: Head
+// and Neck share skin weights at the collar, so scaling the bone always
+// leaves some pinch, and since every clip animates the bones the hidden
+// bone's position had to be re-derived every frame — still only
+// approximately right in extreme poses. The mask is exact in every pose
+// because it never touches the skeleton: each channel of `hideMask` is the
+// vertex's total skin weight on that region's bones (computed once from the
+// existing skinning data), and the fragment shader discards any fragment
+// whose interpolated mask says it's dominantly inside a hidden region.
+// Body/legs plates need this even more than helms: they're baked snug
+// against the bind-pose body (canonicalize-armour.mjs), so posed skin would
+// otherwise bulge through the plate at every animation extreme.
+const HIDE_REGION_BONES = {
+  head: ['Head'],
+  torso: ['Spine01', 'Spine02', 'Waist', 'L_Clavicle', 'R_Clavicle'],
+  legs: [
+    'Hip', 'Pelvis',
+    'L_Thigh', 'L_ThighTwist01', 'L_ThighTwist02', 'L_Calf', 'L_CalfTwist01', 'L_CalfTwist02', 'L_Foot', 'L_ToeBase',
+    'R_Thigh', 'R_ThighTwist01', 'R_ThighTwist02', 'R_Calf', 'R_CalfTwist01', 'R_CalfTwist02', 'R_Foot', 'R_ToeBase',
+  ],
+}
+export function setupHideMask(THREE, skinnedMesh) {
   if (!skinnedMesh || !skinnedMesh.skeleton) return null
-  const headIdx = skinnedMesh.skeleton.bones.findIndex((b) => b.name === boneName)
-  if (headIdx < 0) return null
+  const regionIdx = ['head', 'torso', 'legs'].map((r) => {
+    const wanted = new Set(HIDE_REGION_BONES[r])
+    return new Set(skinnedMesh.skeleton.bones.map((b, i) => (wanted.has(b.name) ? i : -1)).filter((i) => i >= 0))
+  })
   const geo = skinnedMesh.geometry
   const si = geo.attributes.skinIndex, sw = geo.attributes.skinWeight
   const n = geo.attributes.position.count
-  const mask = new Float32Array(n)
+  const mask = new Float32Array(n * 3)
   for (let i = 0; i < n; i++) {
-    let w = 0
-    for (let k = 0; k < 4; k++) if (si.getComponent(i, k) === headIdx) w += sw.getComponent(i, k)
-    mask[i] = w
+    for (let k = 0; k < 4; k++) {
+      const j = si.getComponent(i, k), w = sw.getComponent(i, k)
+      for (let r = 0; r < 3; r++) if (regionIdx[r].has(j)) mask[i * 3 + r] += w
+    }
   }
-  geo.setAttribute('headMask', new THREE.BufferAttribute(mask, 1))
+  geo.setAttribute('hideMask', new THREE.BufferAttribute(mask, 3))
   const mats = Array.isArray(skinnedMesh.material) ? skinnedMesh.material : [skinnedMesh.material]
   const shaders = []
-  let hidden = false // onBeforeCompile fires lazily on first render, so the
-  // desired state must be the shader's INITIAL uniform value, not just
-  // applied after — a set-then-compile ordering silently no-ops otherwise.
+  const hidden = new THREE.Vector3(0, 0, 0) // onBeforeCompile fires lazily on
+  // first render, so the desired state must be the shader's INITIAL uniform
+  // value — a set-then-compile ordering silently no-ops otherwise.
   for (const mat of mats) {
     mat.onBeforeCompile = (shader) => {
-      shader.uniforms.uHideHead = { value: hidden }
+      shader.uniforms.uHideMask = { value: hidden }
       shader.vertexShader = shader.vertexShader
-        .replace('#include <common>', '#include <common>\nattribute float headMask;\nvarying float vHeadMask;')
-        .replace('#include <begin_vertex>', '#include <begin_vertex>\nvHeadMask = headMask;')
+        .replace('#include <common>', '#include <common>\nattribute vec3 hideMask;\nvarying vec3 vHideMask;')
+        .replace('#include <begin_vertex>', '#include <begin_vertex>\nvHideMask = hideMask;')
       shader.fragmentShader = shader.fragmentShader
-        .replace('#include <common>', '#include <common>\nuniform bool uHideHead;\nvarying float vHeadMask;')
-        .replace('#include <clipping_planes_fragment>', '#include <clipping_planes_fragment>\nif (uHideHead && vHeadMask > 0.5) discard;')
+        .replace('#include <common>', '#include <common>\nuniform vec3 uHideMask;\nvarying vec3 vHideMask;')
+        .replace('#include <clipping_planes_fragment>', '#include <clipping_planes_fragment>\nif (dot(uHideMask, step(vec3(0.5, 0.35, 0.35), vHideMask)) > 0.0) discard;')
       shaders.push(shader)
     }
     mat.needsUpdate = true
   }
-  return { setHidden(v) { hidden = v; for (const s of shaders) s.uniforms.uHideHead.value = v } }
+  return {
+    setHidden({ head = false, torso = false, legs = false } = {}) {
+      hidden.set(head ? 1 : 0, torso ? 1 : 0, legs ? 1 : 0)
+    },
+  }
 }
 
 // Load + attach the equipped armour GLBs (helmet on Head, etc.) — same cheap
@@ -261,7 +279,11 @@ export function attachGearList(st, gear, fallbackAnchor) {
   st.gear = []
   const token = (st.gearToken = (st.gearToken || 0) + 1)
   const list = (gear || []).filter((p) => p && p.path)
-  if (st.headMaskCtl) st.headMaskCtl.setHidden(list.some((p) => p.hideHead))
+  if (st.headMaskCtl) st.headMaskCtl.setHidden({
+    head: list.some((p) => p.hideHead),
+    torso: list.some((p) => p.hideBody),
+    legs: list.some((p) => p.hideLegs),
+  })
   if (!list.length) return
   loadThree().then(async ({ THREE, GLTFLoader, MeshoptDecoder }) => {
     if (st.disposed || token !== st.gearToken) return

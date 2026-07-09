@@ -78,12 +78,23 @@ describe('equipModels resolver', () => {
       expect(typeof spec!.scale).toBe('number')
       expect(spec!.hideHead).toBe(Boolean((g as { hideHead?: boolean }).hideHead))
       expect(getGearPlacement(id)!.hideHead).toBe(spec!.hideHead)
+      expect(spec!.hideBody).toBe(Boolean((g as { hideBody?: boolean }).hideBody))
+      expect(getGearPlacement(id)!.hideBody).toBe(spec!.hideBody)
+      expect(spec!.hideLegs).toBe(Boolean((g as { hideLegs?: boolean }).hideLegs))
+      expect(getGearPlacement(id)!.hideLegs).toBe(spec!.hideLegs)
     }
   })
 
   it('fully-enclosing head gear hides the head (snug fit relies on it)', () => {
     for (const [id, g] of Object.entries(registry.gear || {}) as [string, { slot: string; hideHead?: boolean }][]) {
       if (g.slot === 'head' && /full_helm/.test(id)) expect(g.hideHead, `${id} must set hideHead`).toBe(true)
+    }
+  })
+
+  it('covering plate gear hides the body region beneath it (snug bake relies on it)', () => {
+    for (const [id, g] of Object.entries(registry.gear || {}) as [string, { slot: string; hideBody?: boolean; hideLegs?: boolean }][]) {
+      if (g.slot === 'body' && /platebody/.test(id)) expect(g.hideBody, `${id} must set hideBody`).toBe(true)
+      if (g.slot === 'legs' && /platelegs/.test(id)) expect(g.hideLegs, `${id} must set hideLegs`).toBe(true)
     }
   })
 

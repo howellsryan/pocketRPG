@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'preact/hooks'
 import HPBar from './HPBar.jsx'
 import { HitSplatLayer } from './HitSplat.jsx'
 import { loadThree, canRender3D, assetUrl } from '../utils/three3d.js'
-import { disposeObject, attachGearList, setupHeadMask } from './Model3DViewer.jsx'
+import { disposeObject, attachGearList, setupHideMask } from './Model3DViewer.jsx'
 
 // Phase-2 combat arena (docs/3d-gameplay-investigation.md): the rigged hero
 // (equipped weapon on the hand bone) faces the monster's model in a side-on
@@ -178,7 +178,7 @@ function CombatArena3D({
         if (o.isSkinnedMesh && !heroSkinnedMesh) heroSkinnedMesh = o
       })
       st.heroSkinned = heroSkinnedMesh
-      st.headMaskCtl = setupHeadMask(THREE, heroSkinnedMesh)
+      st.headMaskCtl = setupHideMask(THREE, heroSkinnedMesh)
 
       // Frame both actors whatever the monster's bulk.
       const allBox = new THREE.Box3().setFromObject(st.monster).union(new THREE.Box3().setFromObject(st.hero))
