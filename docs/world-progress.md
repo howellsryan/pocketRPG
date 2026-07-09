@@ -263,3 +263,11 @@ Developer explicitly reversed the guide's original "desktop + tablet only" decis
 `world:check` green (4 test files / 27 tests). Only `world/` + this guide touched — no `src/`/`functions/`/`migrations/` changes, so `world:check` alone satisfies the commit gate.
 
 - [x] Mobile unlocked — viewport gate and its dead-code dependents removed, guide updated to match, pinch-zoom gap flagged as a known follow-up (not fixed). `world:check` green.
+
+## Merged `main` into this branch
+
+Developer asked to pull `main` in ahead of opening a PR against it. Two commits on `main` not yet on this branch: `9a7bd14` (travel/teleport/activity-indicator changes — gameplay, no overlap with `world/`) and `b096418` (agent-skills restructure touching `CLAUDE.md`/adds `DESIGN.md`/`SKILLS.md`/`.claude/skills/`). Merged `origin/main` in — **zero conflicts**, including in `build_single.cjs` (main added one `sourceFiles` entry for the new `ActivityIndicator.js`; this branch's `pocketEnable3D`/`pocketWorldBetaEnabled` bake lines sit elsewhere in the file, so both merged cleanly).
+
+Full root gate run given the breadth of files touched (`src/**`, `CLAUDE.md`, `build_single.cjs`, `tests/**`): `npm test` (172 files / 2242 tests), `npm run build`, `npm run rebuild` (confirmed both bake lines: `3D render: disabled`, `World beta button: disabled` — correct local defaults, unaffected by the merge), `npm run check:single` — all green.
+
+- [x] Merge main — see commit introducing this entry — zero conflicts, full root gate green post-merge. Branch is now current with `main` and ready for a PR.
