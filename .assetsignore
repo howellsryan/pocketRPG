@@ -1,0 +1,5 @@
+# Cloudflare Pages asset upload exclusions (pages_build_output_dir = "." in wrangler.toml,
+# so the whole repo root is the deploy asset manifest by default). Gitignore-style syntax.
+# Source-only asset library for the open-world client (docs/open-world-asset-research.md) —
+# never served by the live site, not referenced by build_single.cjs or vite.config.js.
+/assets/open-world/
