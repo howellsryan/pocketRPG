@@ -5,6 +5,11 @@
   // Production (top-level, deployed by plain `wrangler deploy`). `migrations`
   // (the Durable Object class migration tag) is a top-level-only key — it
   // must NOT be repeated inside env.preview below, or wrangler rejects it.
+  // workers_dev explicitly off: production is reached only via the
+  // world.pocketrpg.co.uk custom domain (Cloudflare's own recommendation),
+  // not the workers.dev URL — that's env.preview's job below. Explicit
+  // rather than relying on wrangler's default, which has changed before.
+  "workers_dev": false,
   "assets": { "directory": "client/dist", "binding": "ASSETS" },
   "durable_objects": { "bindings": [{ "name": "WorldZone", "class_name": "WorldZone" }] },
   "migrations": [{ "tag": "v1", "new_sqlite_classes": ["WorldZone"] }],
@@ -24,6 +29,7 @@
   // redeclared here even though only the D1 target actually differs.
   "env": {
     "preview": {
+      "workers_dev": true,
       "assets": { "directory": "client/dist", "binding": "ASSETS" },
       "durable_objects": { "bindings": [{ "name": "WorldZone", "class_name": "WorldZone" }] },
       "d1_databases": [
