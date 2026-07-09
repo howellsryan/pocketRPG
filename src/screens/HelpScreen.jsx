@@ -4,8 +4,10 @@ import { useGame } from '../state/gameState.jsx'
 import { SETTINGS_NAV_LINKS } from '../components/navTabs.js'
 import { api } from '../cloud/api.js'
 
-// Update to world.pocketrpg.co.uk once that custom domain is live.
-const WORLD_ORIGIN = 'https://pocketrpg-world.rlh.workers.dev'
+// The world beta button only ever renders on preview (pocketWorldBetaEnabled
+// below), so this must be the preview world deployment, not production —
+// production is reached at world.pocketrpg.co.uk and never shows this button.
+const WORLD_ORIGIN = 'https://pocketrpg-world-preview.rlh.workers.dev'
 
 // `pocketWorldBetaEnabled` is baked in at build time by build_single.cjs
 // (same CF_PAGES_BRANCH-derived pattern as pocketEnable3D — preview on,
