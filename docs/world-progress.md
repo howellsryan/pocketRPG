@@ -391,3 +391,15 @@ Developer greenlit Phase 5 immediately after Phase 4 (will test both together). 
 `world:check` green (14 files / 115 tests). Only `world/` + `docs/` touched — no root gate required.
 
 - [x] STEP 5.1–5.5 — see commit introducing this entry — Phase 5 code-complete + self-verified; acceptance is the combined DT-P4+P5 manual script (guide §10 STEP 4.4 + §11 STEP 5.5).
+
+## Phase 5 grip fixes (developer device feedback)
+
+Developer's zoomed screenshot showed the sword clipping through the character, and daggers/axes/wands "not appearing". Root cause was one mistake with two symptoms: the grip was tuned against the **T-pose**, but when the idle pose drops the arm the palm rotates ~90°, so blades pointed across the body — long weapons clipped through the legs, and short ones (dagger, axe head, wand) sat entirely INSIDE the mesh, i.e. they were attaching fine and just invisible.
+
+Fixes:
+1. **Idle-pose grip retune.** The probe page now plays the actual `idle` clip before rendering and labels every candidate (the unlabeled first pass mis-identified which candidate looked right — labels are not optional). New default `[-π/2, π/2, π/2]`: blade vertical at the side, tip down, clear of the body. Verified across ALL ten archetypes in one labeled render: dagger/axe/wand clearly visible, bow vertical at the side (`[π/2,0,0]`), crossbow carried level (`[0,0,0]`), staff keeps its planted grip, blunt gets a per-archetype 0.5 scale (the Quaternius hammer is oversized). Wand no longer has an override (default carry reads right).
+2. **Scimitars → curved-blade asset** (developer decision): `scimitar` moved from the sword rule to the dagger rule in `shared/appearance.ts`, so every scimitar tier shares the KayKit curved blade with its tier tint — same asset dragon_claws resolves to (pinned by a test comparing the two).
+
+In-game screenshots re-verified: runeforged scimitar (curved model, teal tint) held at the side without clipping; staff unchanged. `world:check` green (14 files / 116 tests). Only `world/` + `docs/` touched.
+
+- [x] Phase 5 grip fixes — see commit introducing this entry — idle-pose grips for all archetypes, scimitar asset swap; DT-P5 manual pass still owns final look/feel sign-off.

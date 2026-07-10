@@ -65,8 +65,8 @@ Policy (decided 2026-07-10): reuse assets maximally — one model per **archetyp
 
 | Archetype | Covers (examples) | Asset | Status |
 |---|---|---|---|
-| Sword (1h + 2h) | sword, longsword, scimitar, rapier, godswords | KayKit `sword_1handed/2handed` | **In world** (Phase 5) |
-| Dagger | dagger | KayKit `dagger` | **In world** (Phase 5) |
+| Sword (1h + 2h) | sword, longsword, rapier, godswords | KayKit `sword_1handed/2handed` | **In world** (Phase 5) |
+| Dagger (curved blade) | dagger, **scimitar** (developer decision 2026-07-10: scimitars share this asset, tier-tinted), claws | KayKit `dagger` | **In world** (Phase 5) |
 | Axe (1h + 2h) | axe, pickaxe, battleaxe, greataxe, scythe | KayKit `axe_1handed/2handed` | **In world** (Phase 5) |
 | Blunt | mace, maul, warhammer, flail | Quaternius `Hammer_Double` (obj2gltf) | **In world** (Phase 5) |
 | Bow | shortbow, longbow | KayKit `bow_withString` | **In world** (Phase 5; grip pending visual tune) |

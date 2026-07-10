@@ -18,8 +18,10 @@ const ARCHETYPE_RULES: [RegExp, string][] = [
   [/godsword|2h_sword/, 'sword2h'],
   [/crossbow|ballista|blowpipe/, 'crossbow'],
   [/shortbow|longbow|bow/, 'bow'],
-  [/scimitar|longsword|sword|rapier|blade|edge/, 'sword'],
-  [/dagger|claws|whip|tentacle|fang/, 'dagger'],
+  // Scimitars share the curved-blade (dagger) asset by developer decision
+  // (2026-07-10) — the straight sword model reads wrong for them.
+  [/scimitar|dagger|claws|whip|tentacle|fang/, 'dagger'],
+  [/longsword|sword|rapier|blade|edge/, 'sword'],
   [/mace|maul|warhammer|hammer|flail|bulwark/, 'blunt'],
   [/wand/, 'wand'],
   [/battlestaff|staff|trident|tumaken/, 'staff'],

@@ -9,9 +9,14 @@ const withWeapon = (itemId: string) => ({ weapon: { itemId } })
 describe('gearFromEquipment', () => {
   it('maps tiered melee weapons with their tier tint', () => {
     expect(gearFromEquipment(withWeapon('bronze_sword'))).toEqual({ weapon: { archetype: 'sword', tint: '#c07a3d' } })
-    expect(gearFromEquipment(withWeapon('runeforged_scimitar'))).toEqual({ weapon: { archetype: 'sword', tint: '#5aa7bd' } })
     expect(gearFromEquipment(withWeapon('adamant_dagger'))).toEqual({ weapon: { archetype: 'dagger', tint: '#57a05c' } })
     expect(gearFromEquipment(withWeapon('dragon_mace'))).toEqual({ weapon: { archetype: 'blunt', tint: '#c94a3b' } })
+  })
+
+  it('scimitars share the curved-blade asset with dragon claws (developer decision)', () => {
+    expect(gearFromEquipment(withWeapon('runeforged_scimitar'))).toEqual({ weapon: { archetype: 'dagger', tint: '#5aa7bd' } })
+    expect(gearFromEquipment(withWeapon('bronze_scimitar'))).toEqual({ weapon: { archetype: 'dagger', tint: '#c07a3d' } })
+    expect(gearFromEquipment(withWeapon('dragon_scimitar'))?.weapon?.archetype).toBe(gearFromEquipment(withWeapon('dragon_claws'))?.weapon?.archetype)
   })
 
   it('routes specific tokens before the generic ones they contain', () => {

@@ -144,13 +144,17 @@ export async function createCowMesh(): Promise<{ mesh: THREE.Object3D; animator:
 // rig's palm (tuned visually — see docs/world-progress.md Phase 5 entry).
 const WEAPON_HOLDER = '__weapon'
 const WEAPON_SCALE = 0.7
-const DEFAULT_GRIP = { rotation: [-Math.PI / 2, 0, Math.PI / 2] as [number, number, number], position: [0, 0.05, 0.03] as [number, number, number] }
-const GRIP_OVERRIDES: Record<string, { rotation: [number, number, number]; position: [number, number, number] }> = {
-  // Poles read planted-vertical at rest: shaft along the hanging forearm, head up.
+// Tuned against the IDLE pose (not the T-pose — the palm rotates ~90° when the
+// arm drops, which is how the first pass ended up clipping blades through the
+// body). Default carry: blade vertical at the character's side, tip down.
+type Grip = { rotation: [number, number, number]; position: [number, number, number]; scale?: number }
+const DEFAULT_GRIP: Grip = { rotation: [-Math.PI / 2, Math.PI / 2, Math.PI / 2], position: [0, 0.05, 0.03] }
+const GRIP_OVERRIDES: Record<string, Grip> = {
+  // Staff reads planted-vertical: shaft along the hanging forearm, head up.
   staff: { rotation: [Math.PI, 0, 0], position: [0, 0.1, 0] },
-  wand: { rotation: [Math.PI, 0, 0], position: [0, 0.05, 0] },
-  bow: { rotation: [0, Math.PI / 2, Math.PI / 2], position: [0, 0.05, 0.03] },
-  crossbow: { rotation: [Math.PI / 2, Math.PI, 0], position: [0, 0.05, 0.03] },
+  bow: { rotation: [Math.PI / 2, 0, 0], position: [0, 0.05, 0.03] },
+  crossbow: { rotation: [0, 0, 0], position: [0, 0.05, 0.03] },
+  blunt: { rotation: [-Math.PI / 2, Math.PI / 2, Math.PI / 2], position: [0, 0.05, 0.03], scale: 0.5 },
 }
 
 function gearKey(weapon: GearDescriptor['weapon']): string {
@@ -198,7 +202,7 @@ export async function applyWeapon(heroMesh: THREE.Object3D, gear: GearDescriptor
     holder.userData.key = key
     model.rotation.set(...grip.rotation)
     model.position.set(...grip.position)
-    model.scale.setScalar(WEAPON_SCALE)
+    model.scale.setScalar(grip.scale ?? WEAPON_SCALE)
     holder.add(model)
     hand.add(holder)
   } catch {
