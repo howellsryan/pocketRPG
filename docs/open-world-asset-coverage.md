@@ -65,16 +65,18 @@ Policy (decided 2026-07-10): reuse assets maximally — one model per **archetyp
 
 | Archetype | Covers (examples) | Asset | Status |
 |---|---|---|---|
-| Sword | sword, longsword, scimitar, rapier | Quaternius RPG Items `Sword` / `Sword_big`; KayKit `sword_1handed/2handed` | — |
-| Dagger | dagger | Quaternius `Dagger`; KayKit `dagger` | — |
-| Axe | axe, battleaxe, greataxe | Quaternius `Axe_small` / `Axe_Double`; KayKit `axe_1handed/2handed` | — |
-| Blunt | mace, maul, warhammer, flail | Quaternius `Hammer_Double` (2h); no true 1h mace — nearest-model fallback | — |
-| Bow | shortbow, longbow | Quaternius `Bow_Wooden`; KayKit `bow_withString` + `quiver` | — |
-| Crossbow | crossbow, ballista | KayKit `crossbow_1handed/2handed` | — |
-| Staff | staff, battlestaff, elemental staves | KayKit `staff`, Skeletons `Skeleton_Staff` | — |
-| Wand | wand | KayKit `wand` | — |
-| Whip/claws/spear/exotics | whip, claws, tentacle, spear, lance, harpoon | **No asset** — fallback to nearest archetype (spear→staff silhouette, whip/claws→dagger) until sourced | — |
-| Pickaxe (tool) | pickaxes (also the mining-anim prop) | **No asset** | — |
+| Sword (1h + 2h) | sword, longsword, scimitar, rapier, godswords | KayKit `sword_1handed/2handed` | **In world** (Phase 5) |
+| Dagger | dagger | KayKit `dagger` | **In world** (Phase 5) |
+| Axe (1h + 2h) | axe, pickaxe, battleaxe, greataxe, scythe | KayKit `axe_1handed/2handed` | **In world** (Phase 5) |
+| Blunt | mace, maul, warhammer, flail | Quaternius `Hammer_Double` (obj2gltf) | **In world** (Phase 5) |
+| Bow | shortbow, longbow | KayKit `bow_withString` | **In world** (Phase 5; grip pending visual tune) |
+| Crossbow | crossbow, ballista, blowpipe | KayKit `crossbow_2handed` | **In world** (Phase 5; grip pending visual tune) |
+| Staff | staff, battlestaff, elemental staves, spear/lance/harpoon silhouette | KayKit `staff` | **In world** (Phase 5) |
+| Wand | wand | KayKit `wand` | **In world** (Phase 5) |
+| Whip/claws/tentacle | exotics | **No bespoke asset** — render as dagger silhouette | In world via fallback |
+| Spear (true model) | spear, lance, harpoon | **No asset** — rendered as staff pole for now | In world via fallback |
+
+Registry: `world/shared/appearance.ts` (item id → archetype + tier tint); models built by `world/scripts/build-weapons.mjs`. Note: hand-held props came from KayKit rather than the vendor-steering Quaternius default — they only parent to a joint, no rig sharing, and KayKit ships ready-to-use glTF where Quaternius RPG Items is OBJ/FBX (accepted deviation, recorded in the guide §11).
 
 Vendor-steering note: guide §2.1 routes rig-attached visuals to Quaternius, but hand-held props only parent to a joint — KayKit weapons work fine there. Recorded as an accepted deviation for the gap archetypes (staff, wand, crossbow, dagger alt, shields).
 

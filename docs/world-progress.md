@@ -371,3 +371,23 @@ Developer confirmed the Phase 4+ roadmap decisions (recorded in `docs/open-world
 `world:check` green (13 files / 109 tests). Only `world/` + `docs/` touched — no root gate required.
 
 - [x] STEP 4.1–4.4 — see commit introducing this entry — Phase 4 code-complete + self-verified; acceptance is the DT-P4 two-device manual script (guide §10 STEP 4.4).
+
+## PHASE 5 — Equipment visuals v1: weapons in hand (STEP 5.1–5.5)
+
+Developer greenlit Phase 5 immediately after Phase 4 (will test both together). Guide §11 spec written, then built in the same session.
+
+**STEP 5.1 — models**: `scripts/build-weapons.mjs` → 10 archetype GLBs (22–101 KiB) in `client/public/models/weapons/`. Nine from KayKit Adventurers glTF (grips at origin, blade +Y — confirmed via inspect-glb before writing any attach code); `blunt` from Quaternius Hammer_Double OBJ via `obj2gltf` (`--no-save` install; script exits non-zero with instructions if it's missing). KayKit-over-Quaternius for held props is an accepted vendor-steering deviation: held weapons only parent to a joint (no rig sharing), and Quaternius RPG Items ships OBJ/FBX, not glTF.
+
+**STEP 5.2 — registry**: `shared/appearance.ts` maps all 139 weapon items by ordered token rules + `twoHanded` upgrade + tier-prefix tints. Pattern-order traps (crossbow/bow, battleaxe/axe, godsword/sword, boneclaw_rapier NOT matching /claws/) pinned in `tests/appearance.test.ts`. Tools (fishing rod/net/spade) deliberately unmapped → bare hands.
+
+**STEP 5.3 — protocol/server**: `GearDescriptor` on `EntityDiff.gear` + `welcome.you.gear`; computed once at hello, fixed per session. One typecheck fix: items.json has `slot: null` entries so the registry's Items type needed `string | null`.
+
+**STEP 5.4 — client**: `applyWeapon` in `entities.ts` (template-cached, tinted clone under `hand_r`, idempotent per archetype+tint key, post-await race re-check, silent bare-hands on failure). **Grip tuning method worth reusing**: a standalone probe page (three.js import-map + file server over `node_modules`) rendered 8 candidate rotations side-by-side in ONE screenshot — picked `[-π/2, 0, π/2]` (blade upright in palm) in a single iteration instead of rebuild-per-guess. Staff/wand then flipped to a planted-vertical pole look (`[π, 0, 0]`) after the in-game shot showed a horizontal staff reading wrong. Bow/crossbow overrides are by-analogy, untested visually (no seeded character equips one) — flagged for the DT-P5 eyeball.
+
+**Gotcha rediscovered**: `wrangler dev` serves the BUILT `client/dist` — a stale build silently shows old client code; rebuild before any visual verification. Also: piping a background `npm run dev` through `head` kills the server when head exits.
+
+**Verified**: dev-seed now equips char 1 with `runeforged_scimitar`, char 2 with `magic_staff` (distinct saves per character — previously shared one blob). Screenshots: tinted sword held upright in-hand; staff planted vertical, orb up. Two-client WS e2e 4/4: both welcomes carry own gear; B sees A's sword archetype+tint in ent diffs; A sees B's staff.
+
+`world:check` green (14 files / 115 tests). Only `world/` + `docs/` touched — no root gate required.
+
+- [x] STEP 5.1–5.5 — see commit introducing this entry — Phase 5 code-complete + self-verified; acceptance is the combined DT-P4+P5 manual script (guide §10 STEP 4.4 + §11 STEP 5.5).

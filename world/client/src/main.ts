@@ -2,7 +2,7 @@ import { exchangeHandoff, getStoredSession, parseHandoffFromHash, pocketRpgUrl, 
 import { hideOverlay, initChatInput, initHud, pushMessage, removeHpBar, removeNameplate, removeOverheadChat, renderInventory, showHitsplat, showLoginRequired, showXpDrop, updateHpBar, updateNameplate, updateOverheadChat, npcExamine } from './ui'
 import { connect, onMessage, send } from './net'
 import { clampZoom, createCamera, createGround, createLights, createRenderer, createScene, tileToWorld, updateCamera } from './scene'
-import { applyEntityDiff, createCowMesh, createEntity, createHeroMesh, updateEntity, type Entity } from './entities'
+import { applyEntityDiff, applyWeapon, createCowMesh, createEntity, createHeroMesh, updateEntity, type Entity } from './entities'
 import { createClickMarker, setupInput, showClickMarker, updateClickMarker } from './input'
 import { createStatics, type Statics } from './statics'
 import { createLootLayer, type LootLayer } from './loot'
@@ -122,6 +122,7 @@ function enterWorld(session: WorldSession): void {
     const existing = others.get(diff.id)
     if (existing) {
       applyEntityDiff(existing, diff)
+      if (diff.gear) void applyWeapon(existing.mesh, diff.gear)
       return
     }
     pendingOtherDiff.set(diff.id, diff)
@@ -133,6 +134,7 @@ function enterWorld(session: WorldSession): void {
       const entity = createEntity(diff.id, d.x, d.z, mesh, animator)
       entity.serverAnim = d.anim
       entity.name = d.name
+      if (d.gear) void applyWeapon(entity.mesh, d.gear)
       scene.add(entity.mesh)
       others.set(diff.id, entity)
       otherLoading.delete(diff.id)
@@ -191,6 +193,7 @@ function enterWorld(session: WorldSession): void {
         statics = staticsResult
         for (const [id, depleted] of rockStates) staticsResult.setRockDepleted(id, depleted)
         self = createEntity(message.selfId, message.you.x, message.you.z, heroResult.mesh, heroResult.animator)
+        if (message.you.gear) void applyWeapon(self.mesh, message.you.gear)
         scene.add(self.mesh)
 
         setupInput(renderer.domElement, camera, ground, {

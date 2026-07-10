@@ -20,6 +20,7 @@ import { getLevelFromXP } from '../../src/engine/experience.js'
 import { flushGrants, isEmptyPayload, type GrantPayload, type ItemStack } from './grants'
 import { loadCharacterWithSave } from '../../functions/_lib/game/save.js'
 import { validateZone, type ZoneDef } from '../shared/zone'
+import { gearFromEquipment } from '../shared/appearance'
 import type { ClientMessage, EntityDiff, LootItem, ServerMessage, StaticObject, ZoneEvent } from '../shared/protocol'
 import { parseClientMessage } from '../shared/protocol'
 import type { Env } from './env'
@@ -253,6 +254,7 @@ export class WorldZone extends Server<Env> {
       hp: maxHp,
       maxHp,
       equipment,
+      gear: gearFromEquipment(equipment),
       combat: null,
       conn: connection,
       lastMsgTimes: [],
@@ -272,7 +274,7 @@ export class WorldZone extends Server<Env> {
       tick: this.tickCount,
       zone: { id: this.zone.id, w: this.zone.width, h: this.zone.height, collision: this.zone.collision },
       statics,
-      you: { x, z, stats: player.stats, inventory: player.inventory },
+      you: { x, z, stats: player.stats, inventory: player.inventory, ...(player.gear.weapon ? { gear: player.gear } : {}) },
     })
 
     const depleted = [...this.ensureRocks().values()]

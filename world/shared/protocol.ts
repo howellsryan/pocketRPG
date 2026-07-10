@@ -5,6 +5,10 @@
 
 export type InvSlot = { itemId: string; quantity: number } | null
 
+/** Server-computed visual appearance (equipped-gear mapping lives in
+ * shared/appearance.ts). Server → client only; clients never send gear. */
+export type GearDescriptor = { weapon?: { archetype: string; tint?: string } }
+
 export type ClientMessage =
   | { t: 'hello'; token: string }
   | { t: 'walk'; x: number; z: number }
@@ -31,6 +35,7 @@ export type EntityDiff = {
   maxHp?: number
   monsterId?: string
   name?: string
+  gear?: GearDescriptor
 }
 
 export type StaticObject = {
@@ -50,7 +55,7 @@ export type ServerMessage =
       tick: number
       zone: { id: string; w: number; h: number; collision: string[] }
       statics: StaticObject[]
-      you: { x: number; z: number; stats: Record<string, { xp: number; level: number }>; inventory: InvSlot[] }
+      you: { x: number; z: number; stats: Record<string, { xp: number; level: number }>; inventory: InvSlot[]; gear?: GearDescriptor }
     }
   | {
       t: 'diff'

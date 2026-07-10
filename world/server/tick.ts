@@ -2,7 +2,7 @@
 // I/O — the DO owns the objects, calls tickPlayer once per player per tick, and
 // decides what to broadcast/flush from the results.
 import type { Tile } from './pathfind'
-import type { EntityDiff, InvSlot, ZoneEvent } from '../shared/protocol'
+import type { EntityDiff, GearDescriptor, InvSlot, ZoneEvent } from '../shared/protocol'
 import { MINING_ACTIONS, ROCK_DEPLETED_TICKS, addToInventory, inventoryIsFull, type MiningAction } from './mining'
 import { getLevelFromXP, clampXP } from '../../src/engine/experience.js'
 import { startCombat, stepCombat, type CombatSession } from './combat'
@@ -38,6 +38,9 @@ export type TickPlayer = {
   maxHp: number
   /** Equipment from the save blob, passed straight to the combat engine. */
   equipment: Record<string, unknown>
+  /** Visual descriptor derived from equipment at hello (shared/appearance.ts);
+   * fixed for the session — the world has no equip UI yet. */
+  gear: GearDescriptor
   combat: CombatSession | null
 }
 
@@ -245,7 +248,9 @@ export function tickPlayer(player: TickPlayer, ctx: TickContext): TickResult {
 }
 
 export function toEntityDiff(player: TickPlayer): EntityDiff {
-  return { id: player.charId, kind: 'player', x: player.x, z: player.z, anim: player.anim, name: player.name }
+  const diff: EntityDiff = { id: player.charId, kind: 'player', x: player.x, z: player.z, anim: player.anim, name: player.name }
+  if (player.gear.weapon) diff.gear = player.gear
+  return diff
 }
 
 /** Rocks whose depletion window ends exactly this tick → respawn broadcasts. */

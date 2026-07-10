@@ -429,11 +429,32 @@ Vitest (extend `combat-adapter.test.ts` / `tick.test.ts` / `mining.test.ts`): tw
 Agent e2e (two WS clients against `wrangler dev`): both attack the bull, assert one shared HP trajectory in both clients' diffs, exactly one target receiving hitsplats, and the loot visible only to the top-damage client during the owner window. `moveInv` round-trip: swap two slots, assert next tick's `{e:'inv'}`.
 DEVELOPER TASK — manual script (DT-P4): two devices on the pasture; fight the same bull from both; verify one HP bar, sensible hitsplats, top-damage player sees the drop first; drag-reorder the pack on desktop and phone; mine → deposit → PocketRPG bank unchanged by reordering. Reply "PHASE 4 ACCEPTED".
 
-## 10b) After Phase 4 (do not build ahead)
+## 11) PHASE 5 — Equipment visuals v1: weapons in hand (added 2026-07-10 on developer instruction)
 
-The Phase 5+ roadmap (equipment visuals, zones/transitions, Woodcutting, town, boss) lives in `docs/open-world-next-phases-scope.md` — each later phase gets its own guide section here before build starts. Run energy, food/prayer in world, ranged/magic, stances UI, trading, PvP, raids remain out of scope. When Phase 4 is accepted, stop and await the developer's next instruction.
+Decision D3 (docs/open-world-next-phases-scope.md): archetype × tier tint, maximum asset reuse; per-archetype coverage tracked in `docs/open-world-asset-coverage.md`.
 
-## 11) Quick reference — repo facts the agent will need constantly
+**Definition of done**: a character's PocketRPG-equipped weapon appears in their hero's right hand (correct archetype silhouette, tier tint), other players see it too, unmapped/absent weapons render bare-handed, and none of Phases 0–4 regresses.
+
+### STEP 5.1 — Archetype models
+`world/scripts/build-weapons.mjs` → `world/client/public/models/weapons/<archetype>.glb` for `sword, sword2h, dagger, axe, axe2h, blunt, bow, crossbow, staff, wand` (KayKit Adventurers glTFs — grips authored at the origin, blade +Y; `blunt` from the Quaternius Hammer_Double OBJ via `obj2gltf`, installed `--no-save` when regenerating). 22–101 KiB each.
+
+### STEP 5.2 — Mapping registry (shared)
+`world/shared/appearance.ts`: `gearFromEquipment(save.equipment)` → `GearDescriptor` (`{ weapon?: { archetype, tint? } }`). Pattern rules ordered specific-before-generic (crossbow>bow, battleaxe>axe, godsword>sword); `twoHanded` upgrades sword/axe to the 2h model; tier prefixes map to tint hexes; unmapped → `{}` (bare hands, never blocks). Exotics ride nearest silhouettes (whip/claws/tentacle→dagger, spear/lance/harpoon→staff pole) until bespoke models exist.
+
+### STEP 5.3 — Protocol + server
+`GearDescriptor` on `EntityDiff.gear` and `welcome.you.gear` (server→client only). Computed once at hello (`Player.gear`), fixed for the session (no world equip UI; a reconnect re-reads the save). `toEntityDiff` carries it whenever a weapon is mapped.
+
+### STEP 5.4 — Client rendering
+`entities.ts` `applyWeapon(heroMesh, gear)`: cached GLB template → clone → tint (material color) → grip transform → attach under the rig's `hand_r` joint (idempotent per archetype+tint key, race-guarded across awaits, silent bare-hands fallback). Grip transforms: default `[-π/2, 0, π/2]` (blade upright in the palm); staff/wand flipped vertical (planted-pole look); bow/crossbow have provisional overrides pending visual tuning when a seeded character equips one. Hooked at self-create (welcome gear), other-create, and other-diff (no-op unless the key changes).
+
+### STEP 5.5 — Acceptance
+Agent-verified: appearance unit tests (pattern-order traps pinned); two-client WS e2e (each client's welcome carries own gear; each sees the other's archetype+tint in ent diffs); headless screenshots of the tinted sword and planted staff in-game. DEVELOPER TASK — manual script (DT-P5): equip different weapons in PocketRPG (a tiered melee weapon, a bow, a staff; then unequip), enter the world after each, verify the hand model + tint changes and other players see it; confirm bare hands for no weapon/fishing rod; eyeball bow/crossbow grips and report if they need tuning. Reply "PHASE 5 ACCEPTED".
+
+## 12) After Phase 5 (do not build ahead)
+
+The Phase 6+ roadmap (zones/transitions, Woodcutting, town, processing skills, armour outfits, green_dragon boss) lives in `docs/open-world-next-phases-scope.md` — each later phase gets its own guide section here before build starts. Run energy, food/prayer in world, ranged/magic combat, stances UI, trading, PvP, raids remain out of scope. When Phase 5 is accepted, stop and await the developer's next instruction.
+
+## 13) Quick reference — repo facts the agent will need constantly
 
 - Tick: 600 ms. Inventory: 28. XP curve/cap: `src/engine/experience.js` (`getLevelFromXP`, 200M cap). Combat XP: 4/dmg style, 1.33/dmg HP (§5 CLAUDE.md).
 - Mining data: `src/data/skills.json → mining.actions` (`tin`, `copper`: level 1, ticks 4, xp 17).

@@ -19,7 +19,7 @@ function makePlayer(overrides: Partial<TickPlayer> = {}): TickPlayer {
       magic: { xp: 0, level: 1 }, hitpoints: { xp: 100000, level: 40 },
     },
     inventory: emptyInventory(), pendingXp: {}, minted: {}, mining: null, pendingInteract: null,
-    hp: 40, maxHp: 40, equipment: {}, combat: null, ...overrides,
+    hp: 40, maxHp: 40, equipment: {}, gear: {}, combat: null, ...overrides,
   }
 }
 

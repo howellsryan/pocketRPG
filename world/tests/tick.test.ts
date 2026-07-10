@@ -28,6 +28,7 @@ function makePlayer(overrides: Partial<TickPlayer> = {}): TickPlayer {
     hp: 10,
     maxHp: 10,
     equipment: {},
+    gear: {},
     combat: null,
     ...overrides,
   }
