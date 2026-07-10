@@ -84,7 +84,7 @@ export default function HelpScreen({ onNavigate, onShowIntroTour }) {
                 class="flex items-center gap-3 w-full min-h-[48px] px-2 bg-transparent border-0 text-left cursor-pointer active:opacity-70"
               >
                 <span class="w-11 flex justify-center items-center flex-shrink-0">
-                  <GameIcon iconKey="open_book" size={40} color="var(--color-parchment)" />
+                  <GameIcon iconKey="info" size={40} color="var(--color-parchment)" />
                 </span>
                 <span class="flex-1 text-sm font-semibold text-[var(--color-parchment)]">View Intro Tour</span>
                 <span class="text-[var(--color-parchment)] opacity-40 text-lg leading-none pr-1">›</span>
