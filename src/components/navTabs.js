@@ -11,7 +11,8 @@ import { SCREENS, isWorldMapEnabled } from '../utils/constants.js'
 
 // OSRS-style frame (GameFrameBar) — the mobile chrome (below md): gold
 // medallion rails above and below the main content panel, set in a carved-wood
-// chrome. Top rail: World Map/Bank/Combat/Inventory/Equipment. Bottom rail:
+// chrome. Top rail: World Map/Bank/Combat/Inventory/Equipment — the Bank
+// medallion opens the Bank & Trading Post hub (BankHubScreen). Bottom rail:
 // Settings + Adventures (left), Daily Tasks + Credits + Skip (centered), Home
 // + Game Helper (right — Game Helper is a GameFrameBar-only extra tab, cloud
 // accounts only, not listed here). Icons are tintable game-icons glyphs so
@@ -20,7 +21,7 @@ import { SCREENS, isWorldMapEnabled } from '../utils/constants.js'
 // Home/Adventures keep their desktop positions; only mobile moves.
 export const GAME_FRAME_TOP_TABS = [
   ...(isWorldMapEnabled() ? [{ id: SCREENS.WORLD_MAP, label: 'Map', iconKey: 'globe', iconSize: 40 }] : []),
-  { id: SCREENS.BANK, label: 'Bank', iconKey: 'coins', iconSize: 40 },
+  { id: SCREENS.BANK_HUB, label: 'Bank', iconKey: 'coins', iconSize: 40 },
   { id: SCREENS.COMBAT, label: 'Combat', iconKey: 'combat_level', iconSize: 40 },
   { id: SCREENS.INVENTORY, label: 'Items', iconKey: 'backpack', iconSize: 40 },
   { id: SCREENS.EQUIPMENT, label: 'Equip', iconKey: 'paperdoll', iconSize: 40 },
@@ -41,6 +42,7 @@ export const DESKTOP_NAV_TABS = [
   { id: SCREENS.HOME, label: 'Home', iconKey: 'home', iconSize: 34 },
   ...(isWorldMapEnabled() ? [{ id: SCREENS.WORLD_MAP, label: 'World Map', iconKey: 'globe', iconSize: 30 }] : []),
   { id: SCREENS.BANK,       label: 'Bank',       iconKey: 'coins' },
+  { id: SCREENS.STORE,      label: 'Trading Post', iconKey: 'offers', iconSize: 30 },
   { id: SCREENS.COMBAT,     label: 'Combat',     iconKey: 'combat_level' },
   { id: SCREENS.INVENTORY,  label: 'Inventory',  iconKey: 'backpack' },
   { id: SCREENS.EQUIPMENT,  label: 'Equipment',  iconKey: 'paperdoll' },

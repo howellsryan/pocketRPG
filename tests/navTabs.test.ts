@@ -42,21 +42,21 @@ describe('navigation tabs', () => {
       expect(railIds.has(id), id).toBe(false)
     }
     // Their entry points — the World Map and the Adventures rail icon — must
-    // stay in the nav, alongside Bank and Combat (both gate by location and
-    // fall back to a travel prompt).
+    // stay in the nav, alongside the Bank & Trading Post hub and Combat.
     expect(railIds.has(SCREENS.WORLD_MAP)).toBe(true)
     expect(railIds.has(SCREENS.ADVENTURES)).toBe(true)
-    expect(railIds.has(SCREENS.BANK)).toBe(true)
+    expect(railIds.has(SCREENS.BANK_HUB)).toBe(true)
     expect(railIds.has(SCREENS.COMBAT)).toBe(true)
   })
 
   it('keeps the game frame rails to the agreed screens', () => {
-    // Top rail: World Map, Bank, Combat, Inventory, Equipment. Bottom rail:
-    // Settings + Adventures (left) … Daily Tasks + Credits + Skip (rendered
-    // by GameFrameBar itself) … Home (right, next to the floating chat button).
+    // Top rail: World Map, Bank & Trading Post hub, Combat, Inventory,
+    // Equipment. Bottom rail: Settings + Adventures (left) … Daily Tasks +
+    // Credits + Skip (rendered by GameFrameBar itself) … Home (right, next to
+    // the floating chat button).
     expect(GAME_FRAME_TOP_TABS.map((t) => t.id)).toEqual([
       SCREENS.WORLD_MAP,
-      SCREENS.BANK,
+      SCREENS.BANK_HUB,
       SCREENS.COMBAT,
       SCREENS.INVENTORY,
       SCREENS.EQUIPMENT,
@@ -78,6 +78,7 @@ describe('navigation tabs', () => {
       SCREENS.HOME,
       SCREENS.WORLD_MAP,
       SCREENS.BANK,
+      SCREENS.STORE,
       SCREENS.COMBAT,
       SCREENS.INVENTORY,
       SCREENS.EQUIPMENT,

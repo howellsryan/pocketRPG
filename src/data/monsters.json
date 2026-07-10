@@ -1632,6 +1632,36 @@
         "itemId": "clue_scroll_hard",
         "quantity": 1,
         "chance": 0.02
+      },
+      {
+        "itemId": "bogtuber_seed",
+        "quantity": 1,
+        "chance": 0.03
+      },
+      {
+        "itemId": "papaya_sapling",
+        "quantity": 1,
+        "chance": 0.02
+      },
+      {
+        "itemId": "rynarr_seed",
+        "quantity": 1,
+        "chance": 0.008
+      },
+      {
+        "itemId": "yew_sapling",
+        "quantity": 1,
+        "chance": 0.006
+      },
+      {
+        "itemId": "palm_sapling",
+        "quantity": 1,
+        "chance": 0.006
+      },
+      {
+        "itemId": "magic_sapling",
+        "quantity": 1,
+        "chance": 0.0015
       }
     ],
     "legacy_id": "abyssal_demon"
@@ -1746,6 +1776,41 @@
         "itemId": "clue_scroll_hard",
         "quantity": 1,
         "chance": 0.01
+      },
+      {
+        "itemId": "kingsherb_seed",
+        "quantity": 1,
+        "chance": 0.04
+      },
+      {
+        "itemId": "graysage_seed",
+        "quantity": 1,
+        "chance": 0.03
+      },
+      {
+        "itemId": "bogtuber_seed",
+        "quantity": 1,
+        "chance": 0.03
+      },
+      {
+        "itemId": "banana_sapling",
+        "quantity": 1,
+        "chance": 0.02
+      },
+      {
+        "itemId": "orange_sapling",
+        "quantity": 1,
+        "chance": 0.02
+      },
+      {
+        "itemId": "maple_sapling",
+        "quantity": 1,
+        "chance": 0.01
+      },
+      {
+        "itemId": "rynarr_seed",
+        "quantity": 1,
+        "chance": 0.002
       }
     ],
     "legacy_id": "blood_veld"
@@ -1849,6 +1914,36 @@
         "itemId": "clue_scroll_hard",
         "quantity": 1,
         "chance": 0.012
+      },
+      {
+        "itemId": "bogtuber_seed",
+        "quantity": 1,
+        "chance": 0.03
+      },
+      {
+        "itemId": "papaya_sapling",
+        "quantity": 1,
+        "chance": 0.02
+      },
+      {
+        "itemId": "rynarr_seed",
+        "quantity": 1,
+        "chance": 0.008
+      },
+      {
+        "itemId": "yew_sapling",
+        "quantity": 1,
+        "chance": 0.006
+      },
+      {
+        "itemId": "palm_sapling",
+        "quantity": 1,
+        "chance": 0.006
+      },
+      {
+        "itemId": "magic_sapling",
+        "quantity": 1,
+        "chance": 0.0015
       }
     ],
     "legacy_id": "nechryael"
@@ -1957,6 +2052,36 @@
         "itemId": "clue_scroll_elite",
         "quantity": 1,
         "chance": 0.018
+      },
+      {
+        "itemId": "bogtuber_seed",
+        "quantity": 1,
+        "chance": 0.04
+      },
+      {
+        "itemId": "curry_sapling",
+        "quantity": 1,
+        "chance": 0.02
+      },
+      {
+        "itemId": "maple_sapling",
+        "quantity": 1,
+        "chance": 0.015
+      },
+      {
+        "itemId": "papaya_sapling",
+        "quantity": 1,
+        "chance": 0.012
+      },
+      {
+        "itemId": "rynarr_seed",
+        "quantity": 1,
+        "chance": 0.005
+      },
+      {
+        "itemId": "yew_sapling",
+        "quantity": 1,
+        "chance": 0.004
       }
     ],
     "legacy_id": "skeletal_wyvern"
@@ -2063,6 +2188,36 @@
         "itemId": "clue_scroll_elite",
         "quantity": 1,
         "chance": 0.015
+      },
+      {
+        "itemId": "bogtuber_seed",
+        "quantity": 1,
+        "chance": 0.03
+      },
+      {
+        "itemId": "papaya_sapling",
+        "quantity": 1,
+        "chance": 0.02
+      },
+      {
+        "itemId": "rynarr_seed",
+        "quantity": 1,
+        "chance": 0.008
+      },
+      {
+        "itemId": "yew_sapling",
+        "quantity": 1,
+        "chance": 0.006
+      },
+      {
+        "itemId": "palm_sapling",
+        "quantity": 1,
+        "chance": 0.006
+      },
+      {
+        "itemId": "magic_sapling",
+        "quantity": 1,
+        "chance": 0.0015
       }
     ],
     "legacy_id": "smoke_devil"
@@ -2160,6 +2315,34 @@
         "itemId": "clue_scroll_elite",
         "quantity": 1,
         "chance": 0.02
+      },
+      {
+        "itemId": "rynarr_seed",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.04
+      },
+      {
+        "itemId": "papaya_sapling",
+        "quantity": 1,
+        "chance": 0.03
+      },
+      {
+        "itemId": "yew_sapling",
+        "quantity": 1,
+        "chance": 0.02
+      },
+      {
+        "itemId": "palm_sapling",
+        "quantity": 1,
+        "chance": 0.02
+      },
+      {
+        "itemId": "magic_sapling",
+        "quantity": 1,
+        "chance": 0.008
       }
     ],
     "legacy_id": "kraken"
@@ -5216,6 +5399,34 @@
         "itemId": "clue_scroll_master",
         "quantity": 1,
         "chance": 0.02
+      },
+      {
+        "itemId": "rynarr_seed",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.04
+      },
+      {
+        "itemId": "papaya_sapling",
+        "quantity": 1,
+        "chance": 0.03
+      },
+      {
+        "itemId": "yew_sapling",
+        "quantity": 1,
+        "chance": 0.02
+      },
+      {
+        "itemId": "palm_sapling",
+        "quantity": 1,
+        "chance": 0.02
+      },
+      {
+        "itemId": "magic_sapling",
+        "quantity": 1,
+        "chance": 0.008
       }
     ],
     "slayerRequirement": 70,
@@ -6508,6 +6719,36 @@
         "itemId": "dragon_warhammer",
         "quantity": 1,
         "chance": 0.0003333333333333333
+      },
+      {
+        "itemId": "bogtuber_seed",
+        "quantity": 1,
+        "chance": 0.03
+      },
+      {
+        "itemId": "papaya_sapling",
+        "quantity": 1,
+        "chance": 0.02
+      },
+      {
+        "itemId": "rynarr_seed",
+        "quantity": 1,
+        "chance": 0.008
+      },
+      {
+        "itemId": "yew_sapling",
+        "quantity": 1,
+        "chance": 0.006
+      },
+      {
+        "itemId": "palm_sapling",
+        "quantity": 1,
+        "chance": 0.006
+      },
+      {
+        "itemId": "magic_sapling",
+        "quantity": 1,
+        "chance": 0.0015
       }
     ],
     "legacy_id": "lizardman_shaman"
@@ -6610,6 +6851,26 @@
         "itemId": "clue_scroll_medium",
         "quantity": 1,
         "chance": 0.015
+      },
+      {
+        "itemId": "greenthorn_seed",
+        "quantity": 1,
+        "chance": 0.05
+      },
+      {
+        "itemId": "miremint_seed",
+        "quantity": 1,
+        "chance": 0.03
+      },
+      {
+        "itemId": "duskroot_seed",
+        "quantity": 1,
+        "chance": 0.025
+      },
+      {
+        "itemId": "oak_sapling",
+        "quantity": 1,
+        "chance": 0.02
       }
     ],
     "legacy_id": "banshee"
@@ -6743,6 +7004,31 @@
         "itemId": "clue_scroll_hard",
         "quantity": 1,
         "chance": 0.015
+      },
+      {
+        "itemId": "bogtuber_seed",
+        "quantity": 1,
+        "chance": 0.04
+      },
+      {
+        "itemId": "curry_sapling",
+        "quantity": 1,
+        "chance": 0.02
+      },
+      {
+        "itemId": "maple_sapling",
+        "quantity": 1,
+        "chance": 0.015
+      },
+      {
+        "itemId": "papaya_sapling",
+        "quantity": 1,
+        "chance": 0.012
+      },
+      {
+        "itemId": "yew_sapling",
+        "quantity": 1,
+        "chance": 0.004
       }
     ],
     "legacy_id": "aberrant_spectre"
@@ -6852,6 +7138,36 @@
         "itemId": "clue_scroll_hard",
         "quantity": 1,
         "chance": 0.015
+      },
+      {
+        "itemId": "bogtuber_seed",
+        "quantity": 1,
+        "chance": 0.04
+      },
+      {
+        "itemId": "curry_sapling",
+        "quantity": 1,
+        "chance": 0.02
+      },
+      {
+        "itemId": "maple_sapling",
+        "quantity": 1,
+        "chance": 0.015
+      },
+      {
+        "itemId": "papaya_sapling",
+        "quantity": 1,
+        "chance": 0.012
+      },
+      {
+        "itemId": "rynarr_seed",
+        "quantity": 1,
+        "chance": 0.005
+      },
+      {
+        "itemId": "yew_sapling",
+        "quantity": 1,
+        "chance": 0.004
       }
     ],
     "legacy_id": "wyrm"
@@ -6955,6 +7271,36 @@
         "itemId": "clue_scroll_elite",
         "quantity": 1,
         "chance": 0.012
+      },
+      {
+        "itemId": "bogtuber_seed",
+        "quantity": 1,
+        "chance": 0.04
+      },
+      {
+        "itemId": "curry_sapling",
+        "quantity": 1,
+        "chance": 0.02
+      },
+      {
+        "itemId": "maple_sapling",
+        "quantity": 1,
+        "chance": 0.015
+      },
+      {
+        "itemId": "papaya_sapling",
+        "quantity": 1,
+        "chance": 0.012
+      },
+      {
+        "itemId": "rynarr_seed",
+        "quantity": 1,
+        "chance": 0.005
+      },
+      {
+        "itemId": "yew_sapling",
+        "quantity": 1,
+        "chance": 0.004
       }
     ],
     "legacy_id": "spiritual_warrior"
@@ -7063,6 +7409,36 @@
         "itemId": "clue_scroll_elite",
         "quantity": 1,
         "chance": 0.012
+      },
+      {
+        "itemId": "bogtuber_seed",
+        "quantity": 1,
+        "chance": 0.03
+      },
+      {
+        "itemId": "papaya_sapling",
+        "quantity": 1,
+        "chance": 0.02
+      },
+      {
+        "itemId": "rynarr_seed",
+        "quantity": 1,
+        "chance": 0.008
+      },
+      {
+        "itemId": "yew_sapling",
+        "quantity": 1,
+        "chance": 0.006
+      },
+      {
+        "itemId": "palm_sapling",
+        "quantity": 1,
+        "chance": 0.006
+      },
+      {
+        "itemId": "magic_sapling",
+        "quantity": 1,
+        "chance": 0.0015
       }
     ],
     "legacy_id": "spiritual_mage"
@@ -7172,6 +7548,36 @@
         "itemId": "clue_scroll_elite",
         "quantity": 1,
         "chance": 0.012
+      },
+      {
+        "itemId": "bogtuber_seed",
+        "quantity": 1,
+        "chance": 0.04
+      },
+      {
+        "itemId": "curry_sapling",
+        "quantity": 1,
+        "chance": 0.02
+      },
+      {
+        "itemId": "maple_sapling",
+        "quantity": 1,
+        "chance": 0.015
+      },
+      {
+        "itemId": "papaya_sapling",
+        "quantity": 1,
+        "chance": 0.012
+      },
+      {
+        "itemId": "rynarr_seed",
+        "quantity": 1,
+        "chance": 0.005
+      },
+      {
+        "itemId": "yew_sapling",
+        "quantity": 1,
+        "chance": 0.004
       }
     ],
     "legacy_id": "spiritual_ranger"
@@ -7275,6 +7681,36 @@
         "itemId": "clue_scroll_hard",
         "quantity": 1,
         "chance": 0.015
+      },
+      {
+        "itemId": "bogtuber_seed",
+        "quantity": 1,
+        "chance": 0.03
+      },
+      {
+        "itemId": "papaya_sapling",
+        "quantity": 1,
+        "chance": 0.02
+      },
+      {
+        "itemId": "rynarr_seed",
+        "quantity": 1,
+        "chance": 0.008
+      },
+      {
+        "itemId": "yew_sapling",
+        "quantity": 1,
+        "chance": 0.006
+      },
+      {
+        "itemId": "palm_sapling",
+        "quantity": 1,
+        "chance": 0.006
+      },
+      {
+        "itemId": "magic_sapling",
+        "quantity": 1,
+        "chance": 0.0015
       }
     ],
     "legacy_id": "gargoyle"
@@ -7403,6 +7839,36 @@
         "itemId": "clue_scroll_elite",
         "quantity": 1,
         "chance": 0.018
+      },
+      {
+        "itemId": "bogtuber_seed",
+        "quantity": 1,
+        "chance": 0.03
+      },
+      {
+        "itemId": "papaya_sapling",
+        "quantity": 1,
+        "chance": 0.02
+      },
+      {
+        "itemId": "rynarr_seed",
+        "quantity": 1,
+        "chance": 0.008
+      },
+      {
+        "itemId": "yew_sapling",
+        "quantity": 1,
+        "chance": 0.006
+      },
+      {
+        "itemId": "palm_sapling",
+        "quantity": 1,
+        "chance": 0.006
+      },
+      {
+        "itemId": "magic_sapling",
+        "quantity": 1,
+        "chance": 0.0015
       }
     ],
     "legacy_id": "brutal_black_dragon"
@@ -7517,6 +7983,36 @@
         "itemId": "clue_scroll_elite",
         "quantity": 1,
         "chance": 0.018
+      },
+      {
+        "itemId": "bogtuber_seed",
+        "quantity": 1,
+        "chance": 0.03
+      },
+      {
+        "itemId": "papaya_sapling",
+        "quantity": 1,
+        "chance": 0.02
+      },
+      {
+        "itemId": "rynarr_seed",
+        "quantity": 1,
+        "chance": 0.008
+      },
+      {
+        "itemId": "yew_sapling",
+        "quantity": 1,
+        "chance": 0.006
+      },
+      {
+        "itemId": "palm_sapling",
+        "quantity": 1,
+        "chance": 0.006
+      },
+      {
+        "itemId": "magic_sapling",
+        "quantity": 1,
+        "chance": 0.0015
       }
     ],
     "legacy_id": "dark_beast"
@@ -7637,6 +8133,34 @@
         "itemId": "clue_scroll_elite",
         "quantity": 1,
         "chance": 0.025
+      },
+      {
+        "itemId": "rynarr_seed",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.04
+      },
+      {
+        "itemId": "papaya_sapling",
+        "quantity": 1,
+        "chance": 0.03
+      },
+      {
+        "itemId": "yew_sapling",
+        "quantity": 1,
+        "chance": 0.02
+      },
+      {
+        "itemId": "palm_sapling",
+        "quantity": 1,
+        "chance": 0.02
+      },
+      {
+        "itemId": "magic_sapling",
+        "quantity": 1,
+        "chance": 0.008
       }
     ],
     "legacy_id": "cerberus"
@@ -7755,6 +8279,34 @@
         "itemId": "clue_scroll_elite",
         "quantity": 1,
         "chance": 0.02
+      },
+      {
+        "itemId": "rynarr_seed",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.04
+      },
+      {
+        "itemId": "papaya_sapling",
+        "quantity": 1,
+        "chance": 0.03
+      },
+      {
+        "itemId": "yew_sapling",
+        "quantity": 1,
+        "chance": 0.02
+      },
+      {
+        "itemId": "palm_sapling",
+        "quantity": 1,
+        "chance": 0.02
+      },
+      {
+        "itemId": "magic_sapling",
+        "quantity": 1,
+        "chance": 0.008
       }
     ],
     "legacy_id": "hydra"
@@ -7776,7 +8328,27 @@
       { "itemId": "bones", "quantity": 1, "chance": 1 },
       { "itemId": "coins", "quantity": [1, 8], "chance": 0.6 },
       { "itemId": "raw_chicken", "quantity": 1, "chance": 0.05 },
-      { "itemId": "clue_scroll_medium", "quantity": 1, "chance": 0.005 }
+      { "itemId": "clue_scroll_medium", "quantity": 1, "chance": 0.005 },
+      {
+        "itemId": "greenthorn_seed",
+        "quantity": 1,
+        "chance": 0.05
+      },
+      {
+        "itemId": "miremint_seed",
+        "quantity": 1,
+        "chance": 0.03
+      },
+      {
+        "itemId": "duskroot_seed",
+        "quantity": 1,
+        "chance": 0.025
+      },
+      {
+        "itemId": "oak_sapling",
+        "quantity": 1,
+        "chance": 0.02
+      }
     ]
   },
   "bogling_sprite": {
@@ -7800,7 +8372,27 @@
       { "itemId": "air_rune", "quantity": [5, 15], "chance": 0.3 },
       { "itemId": "greenthorn_leaf", "quantity": 1, "chance": 0.06 },
       { "itemId": "iron_dagger", "quantity": 1, "chance": 0.04 },
-      { "itemId": "clue_scroll_medium", "quantity": 1, "chance": 0.01 }
+      { "itemId": "clue_scroll_medium", "quantity": 1, "chance": 0.01 },
+      {
+        "itemId": "greenthorn_seed",
+        "quantity": 1,
+        "chance": 0.05
+      },
+      {
+        "itemId": "miremint_seed",
+        "quantity": 1,
+        "chance": 0.03
+      },
+      {
+        "itemId": "duskroot_seed",
+        "quantity": 1,
+        "chance": 0.025
+      },
+      {
+        "itemId": "oak_sapling",
+        "quantity": 1,
+        "chance": 0.02
+      }
     ]
   },
   "frostbite_imp": {
@@ -7824,7 +8416,27 @@
       { "itemId": "duskroot", "quantity": [1, 2], "chance": 0.1 },
       { "itemId": "bronze_full_helm", "quantity": 1, "chance": 0.05 },
       { "itemId": "bronze_kiteshield", "quantity": 1, "chance": 0.04 },
-      { "itemId": "clue_scroll_medium", "quantity": 1, "chance": 0.01 }
+      { "itemId": "clue_scroll_medium", "quantity": 1, "chance": 0.01 },
+      {
+        "itemId": "greenthorn_seed",
+        "quantity": 1,
+        "chance": 0.05
+      },
+      {
+        "itemId": "miremint_seed",
+        "quantity": 1,
+        "chance": 0.03
+      },
+      {
+        "itemId": "duskroot_seed",
+        "quantity": 1,
+        "chance": 0.025
+      },
+      {
+        "itemId": "oak_sapling",
+        "quantity": 1,
+        "chance": 0.02
+      }
     ]
   },
   "marshfen_toad": {
@@ -7848,7 +8460,27 @@
       { "itemId": "rynarr_weed", "quantity": [1, 2], "chance": 0.1 },
       { "itemId": "iron_arrow", "quantity": [10, 25], "chance": 0.15 },
       { "itemId": "nature_rune", "quantity": [1, 3], "chance": 0.1 },
-      { "itemId": "clue_scroll_medium", "quantity": 1, "chance": 0.015 }
+      { "itemId": "clue_scroll_medium", "quantity": 1, "chance": 0.015 },
+      {
+        "itemId": "greenthorn_seed",
+        "quantity": 1,
+        "chance": 0.05
+      },
+      {
+        "itemId": "miremint_seed",
+        "quantity": 1,
+        "chance": 0.03
+      },
+      {
+        "itemId": "duskroot_seed",
+        "quantity": 1,
+        "chance": 0.025
+      },
+      {
+        "itemId": "oak_sapling",
+        "quantity": 1,
+        "chance": 0.02
+      }
     ]
   },
   "cinderpaw_cub": {
@@ -7872,7 +8504,32 @@
       { "itemId": "sunblossom", "quantity": [1, 2], "chance": 0.12 },
       { "itemId": "iron_full_helm", "quantity": 1, "chance": 0.05 },
       { "itemId": "steel_dagger", "quantity": 1, "chance": 0.04 },
-      { "itemId": "clue_scroll_medium", "quantity": 1, "chance": 0.015 }
+      { "itemId": "clue_scroll_medium", "quantity": 1, "chance": 0.015 },
+      {
+        "itemId": "duskroot_seed",
+        "quantity": 1,
+        "chance": 0.04
+      },
+      {
+        "itemId": "kingsherb_seed",
+        "quantity": 1,
+        "chance": 0.03
+      },
+      {
+        "itemId": "graysage_seed",
+        "quantity": 1,
+        "chance": 0.02
+      },
+      {
+        "itemId": "willow_sapling",
+        "quantity": 1,
+        "chance": 0.02
+      },
+      {
+        "itemId": "apple_sapling",
+        "quantity": 1,
+        "chance": 0.015
+      }
     ]
   },
   "glaive_skeleton": {
@@ -7896,7 +8553,32 @@
       { "itemId": "iron_bar", "quantity": 1, "chance": 0.1 },
       { "itemId": "mind_rune", "quantity": [10, 25], "chance": 0.2 },
       { "itemId": "chaos_rune", "quantity": [3, 10], "chance": 0.15 },
-      { "itemId": "clue_scroll_medium", "quantity": 1, "chance": 0.02 }
+      { "itemId": "clue_scroll_medium", "quantity": 1, "chance": 0.02 },
+      {
+        "itemId": "duskroot_seed",
+        "quantity": 1,
+        "chance": 0.04
+      },
+      {
+        "itemId": "kingsherb_seed",
+        "quantity": 1,
+        "chance": 0.03
+      },
+      {
+        "itemId": "graysage_seed",
+        "quantity": 1,
+        "chance": 0.02
+      },
+      {
+        "itemId": "willow_sapling",
+        "quantity": 1,
+        "chance": 0.02
+      },
+      {
+        "itemId": "apple_sapling",
+        "quantity": 1,
+        "chance": 0.015
+      }
     ]
   },
   "mirebound_husk": {
@@ -7920,7 +8602,32 @@
       { "itemId": "rynarr_weed", "quantity": [1, 3], "chance": 0.18 },
       { "itemId": "snapdrake", "quantity": [1, 2], "chance": 0.1 },
       { "itemId": "duskroot", "quantity": [1, 3], "chance": 0.15 },
-      { "itemId": "clue_scroll_medium", "quantity": 1, "chance": 0.02 }
+      { "itemId": "clue_scroll_medium", "quantity": 1, "chance": 0.02 },
+      {
+        "itemId": "duskroot_seed",
+        "quantity": 1,
+        "chance": 0.04
+      },
+      {
+        "itemId": "kingsherb_seed",
+        "quantity": 1,
+        "chance": 0.03
+      },
+      {
+        "itemId": "graysage_seed",
+        "quantity": 1,
+        "chance": 0.02
+      },
+      {
+        "itemId": "willow_sapling",
+        "quantity": 1,
+        "chance": 0.02
+      },
+      {
+        "itemId": "apple_sapling",
+        "quantity": 1,
+        "chance": 0.015
+      }
     ]
   },
   "verdant_stalker": {
@@ -7944,7 +8651,32 @@
       { "itemId": "greenthorn_leaf", "quantity": [1, 2], "chance": 0.2 },
       { "itemId": "emberleaf", "quantity": [1, 2], "chance": 0.15 },
       { "itemId": "shortbow", "quantity": 1, "chance": 0.05 },
-      { "itemId": "clue_scroll_medium", "quantity": 1, "chance": 0.02 }
+      { "itemId": "clue_scroll_medium", "quantity": 1, "chance": 0.02 },
+      {
+        "itemId": "duskroot_seed",
+        "quantity": 1,
+        "chance": 0.04
+      },
+      {
+        "itemId": "kingsherb_seed",
+        "quantity": 1,
+        "chance": 0.03
+      },
+      {
+        "itemId": "graysage_seed",
+        "quantity": 1,
+        "chance": 0.02
+      },
+      {
+        "itemId": "willow_sapling",
+        "quantity": 1,
+        "chance": 0.02
+      },
+      {
+        "itemId": "apple_sapling",
+        "quantity": 1,
+        "chance": 0.015
+      }
     ]
   },
   "stoneglare_basilisk": {
@@ -7968,7 +8700,32 @@
       { "itemId": "uncut_sapphire", "quantity": 1, "chance": 0.05 },
       { "itemId": "uncut_emerald", "quantity": 1, "chance": 0.03 },
       { "itemId": "mithril_bar", "quantity": 1, "chance": 0.05 },
-      { "itemId": "clue_scroll_hard", "quantity": 1, "chance": 0.012 }
+      { "itemId": "clue_scroll_hard", "quantity": 1, "chance": 0.012 },
+      {
+        "itemId": "duskroot_seed",
+        "quantity": 1,
+        "chance": 0.04
+      },
+      {
+        "itemId": "kingsherb_seed",
+        "quantity": 1,
+        "chance": 0.03
+      },
+      {
+        "itemId": "graysage_seed",
+        "quantity": 1,
+        "chance": 0.02
+      },
+      {
+        "itemId": "willow_sapling",
+        "quantity": 1,
+        "chance": 0.02
+      },
+      {
+        "itemId": "apple_sapling",
+        "quantity": 1,
+        "chance": 0.015
+      }
     ]
   },
   "embertongue_lizard": {
@@ -7993,7 +8750,32 @@
       { "itemId": "wyrmspice", "quantity": [1, 2], "chance": 0.12 },
       { "itemId": "sunblossom", "quantity": [1, 2], "chance": 0.12 },
       { "itemId": "uncut_ruby", "quantity": 1, "chance": 0.04 },
-      { "itemId": "clue_scroll_hard", "quantity": 1, "chance": 0.015 }
+      { "itemId": "clue_scroll_hard", "quantity": 1, "chance": 0.015 },
+      {
+        "itemId": "duskroot_seed",
+        "quantity": 1,
+        "chance": 0.04
+      },
+      {
+        "itemId": "kingsherb_seed",
+        "quantity": 1,
+        "chance": 0.03
+      },
+      {
+        "itemId": "graysage_seed",
+        "quantity": 1,
+        "chance": 0.02
+      },
+      {
+        "itemId": "willow_sapling",
+        "quantity": 1,
+        "chance": 0.02
+      },
+      {
+        "itemId": "apple_sapling",
+        "quantity": 1,
+        "chance": 0.015
+      }
     ]
   },
   "hollow_reaver": {
@@ -8017,7 +8799,42 @@
       { "itemId": "rynarr_weed", "quantity": [2, 4], "chance": 0.18 },
       { "itemId": "snapdrake", "quantity": [1, 3], "chance": 0.12 },
       { "itemId": "adamant_scimitar", "quantity": 1, "chance": 0.04 },
-      { "itemId": "clue_scroll_hard", "quantity": 1, "chance": 0.018 }
+      { "itemId": "clue_scroll_hard", "quantity": 1, "chance": 0.018 },
+      {
+        "itemId": "kingsherb_seed",
+        "quantity": 1,
+        "chance": 0.04
+      },
+      {
+        "itemId": "graysage_seed",
+        "quantity": 1,
+        "chance": 0.03
+      },
+      {
+        "itemId": "bogtuber_seed",
+        "quantity": 1,
+        "chance": 0.03
+      },
+      {
+        "itemId": "banana_sapling",
+        "quantity": 1,
+        "chance": 0.02
+      },
+      {
+        "itemId": "orange_sapling",
+        "quantity": 1,
+        "chance": 0.02
+      },
+      {
+        "itemId": "maple_sapling",
+        "quantity": 1,
+        "chance": 0.01
+      },
+      {
+        "itemId": "rynarr_seed",
+        "quantity": 1,
+        "chance": 0.002
+      }
     ]
   },
   "briarheart_treant": {
@@ -8043,7 +8860,42 @@
       { "itemId": "greenthorn_leaf", "quantity": [1, 3], "chance": 0.2 },
       { "itemId": "rynarr_weed", "quantity": [1, 3], "chance": 0.15 },
       { "itemId": "uncut_emerald", "quantity": 1, "chance": 0.04 },
-      { "itemId": "clue_scroll_hard", "quantity": 1, "chance": 0.02 }
+      { "itemId": "clue_scroll_hard", "quantity": 1, "chance": 0.02 },
+      {
+        "itemId": "kingsherb_seed",
+        "quantity": 1,
+        "chance": 0.04
+      },
+      {
+        "itemId": "graysage_seed",
+        "quantity": 1,
+        "chance": 0.03
+      },
+      {
+        "itemId": "bogtuber_seed",
+        "quantity": 1,
+        "chance": 0.03
+      },
+      {
+        "itemId": "banana_sapling",
+        "quantity": 1,
+        "chance": 0.02
+      },
+      {
+        "itemId": "orange_sapling",
+        "quantity": 1,
+        "chance": 0.02
+      },
+      {
+        "itemId": "maple_sapling",
+        "quantity": 1,
+        "chance": 0.01
+      },
+      {
+        "itemId": "rynarr_seed",
+        "quantity": 1,
+        "chance": 0.002
+      }
     ]
   },
   "frostmaw_direwolf": {
@@ -8068,7 +8920,42 @@
       { "itemId": "adamant_bar", "quantity": 1, "chance": 0.08 },
       { "itemId": "uncut_ruby", "quantity": 1, "chance": 0.04 },
       { "itemId": "adamant_scimitar", "quantity": 1, "chance": 0.05 },
-      { "itemId": "clue_scroll_hard", "quantity": 1, "chance": 0.02 }
+      { "itemId": "clue_scroll_hard", "quantity": 1, "chance": 0.02 },
+      {
+        "itemId": "kingsherb_seed",
+        "quantity": 1,
+        "chance": 0.04
+      },
+      {
+        "itemId": "graysage_seed",
+        "quantity": 1,
+        "chance": 0.03
+      },
+      {
+        "itemId": "bogtuber_seed",
+        "quantity": 1,
+        "chance": 0.03
+      },
+      {
+        "itemId": "banana_sapling",
+        "quantity": 1,
+        "chance": 0.02
+      },
+      {
+        "itemId": "orange_sapling",
+        "quantity": 1,
+        "chance": 0.02
+      },
+      {
+        "itemId": "maple_sapling",
+        "quantity": 1,
+        "chance": 0.01
+      },
+      {
+        "itemId": "rynarr_seed",
+        "quantity": 1,
+        "chance": 0.002
+      }
     ]
   },
   "pyreclaw_demon": {
@@ -8093,7 +8980,42 @@
       { "itemId": "emberleaf", "quantity": [2, 4], "chance": 0.18 },
       { "itemId": "wyrmspice", "quantity": [1, 3], "chance": 0.15 },
       { "itemId": "runeforged_ore", "quantity": [1, 2], "chance": 0.08 },
-      { "itemId": "clue_scroll_hard", "quantity": 1, "chance": 0.022 }
+      { "itemId": "clue_scroll_hard", "quantity": 1, "chance": 0.022 },
+      {
+        "itemId": "kingsherb_seed",
+        "quantity": 1,
+        "chance": 0.04
+      },
+      {
+        "itemId": "graysage_seed",
+        "quantity": 1,
+        "chance": 0.03
+      },
+      {
+        "itemId": "bogtuber_seed",
+        "quantity": 1,
+        "chance": 0.03
+      },
+      {
+        "itemId": "banana_sapling",
+        "quantity": 1,
+        "chance": 0.02
+      },
+      {
+        "itemId": "orange_sapling",
+        "quantity": 1,
+        "chance": 0.02
+      },
+      {
+        "itemId": "maple_sapling",
+        "quantity": 1,
+        "chance": 0.01
+      },
+      {
+        "itemId": "rynarr_seed",
+        "quantity": 1,
+        "chance": 0.002
+      }
     ]
   },
   "wraithgale_specter": {
@@ -8119,7 +9041,37 @@
       { "itemId": "rynarr_weed", "quantity": [2, 4], "chance": 0.2 },
       { "itemId": "snapdrake", "quantity": [1, 3], "chance": 0.15 },
       { "itemId": "uncut_diamond", "quantity": 1, "chance": 0.03 },
-      { "itemId": "clue_scroll_hard", "quantity": 1, "chance": 0.022 }
+      { "itemId": "clue_scroll_hard", "quantity": 1, "chance": 0.022 },
+      {
+        "itemId": "bogtuber_seed",
+        "quantity": 1,
+        "chance": 0.04
+      },
+      {
+        "itemId": "curry_sapling",
+        "quantity": 1,
+        "chance": 0.02
+      },
+      {
+        "itemId": "maple_sapling",
+        "quantity": 1,
+        "chance": 0.015
+      },
+      {
+        "itemId": "papaya_sapling",
+        "quantity": 1,
+        "chance": 0.012
+      },
+      {
+        "itemId": "rynarr_seed",
+        "quantity": 1,
+        "chance": 0.005
+      },
+      {
+        "itemId": "yew_sapling",
+        "quantity": 1,
+        "chance": 0.004
+      }
     ]
   },
   "bloodmoon_stalker": {
@@ -8144,7 +9096,37 @@
       { "itemId": "runeforged_ore", "quantity": [1, 3], "chance": 0.1 },
       { "itemId": "uncut_dragonstone", "quantity": 1, "chance": 0.025 },
       { "itemId": "magic_shortbow", "quantity": 1, "chance": 0.05 },
-      { "itemId": "clue_scroll_hard", "quantity": 1, "chance": 0.022 }
+      { "itemId": "clue_scroll_hard", "quantity": 1, "chance": 0.022 },
+      {
+        "itemId": "bogtuber_seed",
+        "quantity": 1,
+        "chance": 0.04
+      },
+      {
+        "itemId": "curry_sapling",
+        "quantity": 1,
+        "chance": 0.02
+      },
+      {
+        "itemId": "maple_sapling",
+        "quantity": 1,
+        "chance": 0.015
+      },
+      {
+        "itemId": "papaya_sapling",
+        "quantity": 1,
+        "chance": 0.012
+      },
+      {
+        "itemId": "rynarr_seed",
+        "quantity": 1,
+        "chance": 0.005
+      },
+      {
+        "itemId": "yew_sapling",
+        "quantity": 1,
+        "chance": 0.004
+      }
     ]
   },
   "ironfang_drake": {
@@ -8169,7 +9151,37 @@
       { "itemId": "dragon_visage", "quantity": 1, "chance": 0.0002 },
       { "itemId": "wyrmspice", "quantity": [1, 3], "chance": 0.15 },
       { "itemId": "thornspire", "quantity": [1, 2], "chance": 0.1 },
-      { "itemId": "clue_scroll_elite", "quantity": 1, "chance": 0.018 }
+      { "itemId": "clue_scroll_elite", "quantity": 1, "chance": 0.018 },
+      {
+        "itemId": "bogtuber_seed",
+        "quantity": 1,
+        "chance": 0.04
+      },
+      {
+        "itemId": "curry_sapling",
+        "quantity": 1,
+        "chance": 0.02
+      },
+      {
+        "itemId": "maple_sapling",
+        "quantity": 1,
+        "chance": 0.015
+      },
+      {
+        "itemId": "papaya_sapling",
+        "quantity": 1,
+        "chance": 0.012
+      },
+      {
+        "itemId": "rynarr_seed",
+        "quantity": 1,
+        "chance": 0.005
+      },
+      {
+        "itemId": "yew_sapling",
+        "quantity": 1,
+        "chance": 0.004
+      }
     ]
   },
   "shadeglass_golem": {
@@ -8194,7 +9206,37 @@
       { "itemId": "uncut_diamond", "quantity": 1, "chance": 0.03 },
       { "itemId": "runeforged_bar", "quantity": [1, 2], "chance": 0.1 },
       { "itemId": "runeforged_med_helm", "quantity": 1, "chance": 0.04 },
-      { "itemId": "clue_scroll_elite", "quantity": 1, "chance": 0.018 }
+      { "itemId": "clue_scroll_elite", "quantity": 1, "chance": 0.018 },
+      {
+        "itemId": "bogtuber_seed",
+        "quantity": 1,
+        "chance": 0.04
+      },
+      {
+        "itemId": "curry_sapling",
+        "quantity": 1,
+        "chance": 0.02
+      },
+      {
+        "itemId": "maple_sapling",
+        "quantity": 1,
+        "chance": 0.015
+      },
+      {
+        "itemId": "papaya_sapling",
+        "quantity": 1,
+        "chance": 0.012
+      },
+      {
+        "itemId": "rynarr_seed",
+        "quantity": 1,
+        "chance": 0.005
+      },
+      {
+        "itemId": "yew_sapling",
+        "quantity": 1,
+        "chance": 0.004
+      }
     ]
   },
   "tidereaper_crab": {
@@ -8219,7 +9261,37 @@
       { "itemId": "uncut_dragonstone", "quantity": 1, "chance": 0.025 },
       { "itemId": "runeforged_ore", "quantity": [1, 3], "chance": 0.1 },
       { "itemId": "thornspire", "quantity": [1, 2], "chance": 0.08 },
-      { "itemId": "clue_scroll_elite", "quantity": 1, "chance": 0.02 }
+      { "itemId": "clue_scroll_elite", "quantity": 1, "chance": 0.02 },
+      {
+        "itemId": "bogtuber_seed",
+        "quantity": 1,
+        "chance": 0.04
+      },
+      {
+        "itemId": "curry_sapling",
+        "quantity": 1,
+        "chance": 0.02
+      },
+      {
+        "itemId": "maple_sapling",
+        "quantity": 1,
+        "chance": 0.015
+      },
+      {
+        "itemId": "papaya_sapling",
+        "quantity": 1,
+        "chance": 0.012
+      },
+      {
+        "itemId": "rynarr_seed",
+        "quantity": 1,
+        "chance": 0.005
+      },
+      {
+        "itemId": "yew_sapling",
+        "quantity": 1,
+        "chance": 0.004
+      }
     ]
   },
   "voidweave_stalker": {
@@ -8245,7 +9317,37 @@
       { "itemId": "rynarr_weed", "quantity": [2, 4], "chance": 0.2 },
       { "itemId": "snapdrake", "quantity": [1, 3], "chance": 0.15 },
       { "itemId": "uncut_diamond", "quantity": 1, "chance": 0.04 },
-      { "itemId": "clue_scroll_elite", "quantity": 1, "chance": 0.02 }
+      { "itemId": "clue_scroll_elite", "quantity": 1, "chance": 0.02 },
+      {
+        "itemId": "bogtuber_seed",
+        "quantity": 1,
+        "chance": 0.04
+      },
+      {
+        "itemId": "curry_sapling",
+        "quantity": 1,
+        "chance": 0.02
+      },
+      {
+        "itemId": "maple_sapling",
+        "quantity": 1,
+        "chance": 0.015
+      },
+      {
+        "itemId": "papaya_sapling",
+        "quantity": 1,
+        "chance": 0.012
+      },
+      {
+        "itemId": "rynarr_seed",
+        "quantity": 1,
+        "chance": 0.005
+      },
+      {
+        "itemId": "yew_sapling",
+        "quantity": 1,
+        "chance": 0.004
+      }
     ]
   },
   "drakthul_wyrmling": {
@@ -8271,7 +9373,37 @@
       { "itemId": "wyrmspice", "quantity": [1, 3], "chance": 0.18 },
       { "itemId": "thornspire", "quantity": [1, 2], "chance": 0.12 },
       { "itemId": "runeforged_chainbody", "quantity": 1, "chance": 0.04 },
-      { "itemId": "clue_scroll_elite", "quantity": 1, "chance": 0.022 }
+      { "itemId": "clue_scroll_elite", "quantity": 1, "chance": 0.022 },
+      {
+        "itemId": "bogtuber_seed",
+        "quantity": 1,
+        "chance": 0.04
+      },
+      {
+        "itemId": "curry_sapling",
+        "quantity": 1,
+        "chance": 0.02
+      },
+      {
+        "itemId": "maple_sapling",
+        "quantity": 1,
+        "chance": 0.015
+      },
+      {
+        "itemId": "papaya_sapling",
+        "quantity": 1,
+        "chance": 0.012
+      },
+      {
+        "itemId": "rynarr_seed",
+        "quantity": 1,
+        "chance": 0.005
+      },
+      {
+        "itemId": "yew_sapling",
+        "quantity": 1,
+        "chance": 0.004
+      }
     ]
   },
   "bonelight_pyromancer": {
@@ -8297,7 +9429,37 @@
       { "itemId": "rynarr_weed", "quantity": [2, 4], "chance": 0.2 },
       { "itemId": "snapdrake", "quantity": [1, 3], "chance": 0.15 },
       { "itemId": "uncut_diamond", "quantity": 1, "chance": 0.035 },
-      { "itemId": "clue_scroll_elite", "quantity": 1, "chance": 0.022 }
+      { "itemId": "clue_scroll_elite", "quantity": 1, "chance": 0.022 },
+      {
+        "itemId": "bogtuber_seed",
+        "quantity": 1,
+        "chance": 0.03
+      },
+      {
+        "itemId": "papaya_sapling",
+        "quantity": 1,
+        "chance": 0.02
+      },
+      {
+        "itemId": "rynarr_seed",
+        "quantity": 1,
+        "chance": 0.008
+      },
+      {
+        "itemId": "yew_sapling",
+        "quantity": 1,
+        "chance": 0.006
+      },
+      {
+        "itemId": "palm_sapling",
+        "quantity": 1,
+        "chance": 0.006
+      },
+      {
+        "itemId": "magic_sapling",
+        "quantity": 1,
+        "chance": 0.0015
+      }
     ]
   },
   "cinderfang_reaver": {
@@ -8322,7 +9484,37 @@
       { "itemId": "wyrmspice", "quantity": [1, 3], "chance": 0.15 },
       { "itemId": "uncut_dragonstone", "quantity": 1, "chance": 0.03 },
       { "itemId": "runeforged_scimitar", "quantity": 1, "chance": 0.045 },
-      { "itemId": "clue_scroll_elite", "quantity": 1, "chance": 0.022 }
+      { "itemId": "clue_scroll_elite", "quantity": 1, "chance": 0.022 },
+      {
+        "itemId": "bogtuber_seed",
+        "quantity": 1,
+        "chance": 0.03
+      },
+      {
+        "itemId": "papaya_sapling",
+        "quantity": 1,
+        "chance": 0.02
+      },
+      {
+        "itemId": "rynarr_seed",
+        "quantity": 1,
+        "chance": 0.008
+      },
+      {
+        "itemId": "yew_sapling",
+        "quantity": 1,
+        "chance": 0.006
+      },
+      {
+        "itemId": "palm_sapling",
+        "quantity": 1,
+        "chance": 0.006
+      },
+      {
+        "itemId": "magic_sapling",
+        "quantity": 1,
+        "chance": 0.0015
+      }
     ]
   },
   "ashen_marauder": {
@@ -8348,7 +9540,37 @@
       { "itemId": "uncut_dragonstone", "quantity": 1, "chance": 0.035 },
       { "itemId": "runeforged_2h_sword", "quantity": 1, "chance": 0.04 },
       { "itemId": "amulet_of_strength", "quantity": 1, "chance": 0.06 },
-      { "itemId": "clue_scroll_elite", "quantity": 1, "chance": 0.022 }
+      { "itemId": "clue_scroll_elite", "quantity": 1, "chance": 0.022 },
+      {
+        "itemId": "bogtuber_seed",
+        "quantity": 1,
+        "chance": 0.03
+      },
+      {
+        "itemId": "papaya_sapling",
+        "quantity": 1,
+        "chance": 0.02
+      },
+      {
+        "itemId": "rynarr_seed",
+        "quantity": 1,
+        "chance": 0.008
+      },
+      {
+        "itemId": "yew_sapling",
+        "quantity": 1,
+        "chance": 0.006
+      },
+      {
+        "itemId": "palm_sapling",
+        "quantity": 1,
+        "chance": 0.006
+      },
+      {
+        "itemId": "magic_sapling",
+        "quantity": 1,
+        "chance": 0.0015
+      }
     ]
   },
   "sovrathar_the_ashen_sovereign": {
@@ -8407,7 +9629,35 @@
       { "itemId": "sovereigns_cinderplate", "quantity": 1, "chance": 0.006666666666666667 },
       { "itemId": "sovereigns_cindergreaves", "quantity": 1, "chance": 0.006666666666666667 },
       { "itemId": "ashen_sovereigns_edge", "quantity": 1, "chance": 0.004 },
-      { "itemId": "clue_scroll_master", "quantity": 1, "chance": 0.03 }
+      { "itemId": "clue_scroll_master", "quantity": 1, "chance": 0.03 },
+      {
+        "itemId": "rynarr_seed",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.04
+      },
+      {
+        "itemId": "papaya_sapling",
+        "quantity": 1,
+        "chance": 0.03
+      },
+      {
+        "itemId": "yew_sapling",
+        "quantity": 1,
+        "chance": 0.02
+      },
+      {
+        "itemId": "palm_sapling",
+        "quantity": 1,
+        "chance": 0.02
+      },
+      {
+        "itemId": "magic_sapling",
+        "quantity": 1,
+        "chance": 0.008
+      }
     ]
   },
   "gravehusk_brute": {
