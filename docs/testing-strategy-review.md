@@ -25,14 +25,14 @@ The default coverage report says **74.8% lines**, but it only counts files some 
 | `src/utils` | 659 | 76.3% | |
 | `src/cloud` | 637 | **46.3%** | `api.js` 12.7% — the sync/save transport |
 | `src/db` | 204 | **22.5%** | IndexedDB save/load — data-loss bug class |
-| `src/App.jsx` + `gameState.jsx` | 2,374 | **0%** | orchestration: task completion, idle claim, skip-hour wiring |
+| `src/App.jsx` + `src/state` | 2,374 | **0%** | orchestration: task completion, idle claim, skip-hour wiring |
 | `src/screens` + `components` + `hooks` | 7,758 | ~0% | UI — mostly fine to leave, but logic hides here |
 
 Server endpoints at or near zero that sit **on the §14 integrity boundary** (server-authoritative money/progression — exactly where CLAUDE.md says correctness must live): `purchase.js` **6.7%**, `idle.js` **0%**, `activity-progress.js` **0%**, `pvp/match/[id]/tick.js` **4.9%**, `pvp/invitations/*` **0%**, `stripe/create-session.js` **0%**, both OAuth login callbacks **0%**, `_lib/oauth/store.js` **0%**.
 
 Ten server files are not referenced by any test at all (also: `admin/backfill-levels.js`, `trading-post/my-offers.js`, `_lib/pvpLobby.js`, `_lib/game/monsterRewards.js`, `api/_middleware.js`).
 
-Discipline is not the problem — 29 of the last 30 code commits touching `src/engine`/`functions` also touched `tests/`. The problem is that nothing *measures or enforces* whether those tests exercise the changed lines, and that whole layers are structurally untestable.
+Discipline is not the problem — of the last 30 commits, 11 of the 12 touching `src/engine`/`functions` also touched `tests/`. The problem is that nothing *measures or enforces* whether those tests exercise the changed lines, and that whole layers are structurally untestable.
 
 ## 3. Crucial gaps, ranked
 
