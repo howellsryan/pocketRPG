@@ -261,7 +261,8 @@ Each phase is independently shippable and reversible against the live game.
   (`completeClueSolve` / `handleQuestCompletion` in `App.jsx` — server-authoritative
   clue rewards included). 2–4 waypoints scale with idle duration; waypoints are
   deterministic per (content, origin) and drawn from increasing distance bands; total
-  search time ≈ `JOURNEY_TIME_FACTOR` (0.5) × the old idle duration, plus real road time.
+  search time ≈ `JOURNEY_TIME_FACTOR` (1 — the content's full advertised duration;
+  teleports save road time only) × the idle duration, plus real road time.
   Offline: `advanceJourneyOffline` chains phases through elapsed time but never grants —
   a journey that finished away is parked on its final search at 0 ticks and the App's
   first live tick completes it.

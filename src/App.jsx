@@ -2375,12 +2375,13 @@ function GameApp() {
         return
       }
 
-      // Travel & journeys: 1 credit = 1 hour of trail time. A plain walk just
-      // arrives (roads are seconds long). A journey always finishes its CURRENT
-      // clue/quest in full — a master trail longer than the hour still completes,
-      // it simply consumes the whole budget — and any time left over chains
-      // through the next scroll / queued quest exactly as idling would (a stack
-      // of medium scrolls burns several per credit).
+      // Travel & journeys: 1 credit = exactly 1 hour of trail time. A plain
+      // walk just arrives (roads are seconds long). A journey longer than the
+      // hour parks mid-trail for the live tick to carry on — it does NOT
+      // complete in full (that let one credit finish a 10h Grandmaster quest).
+      // Anything that finishes inside the hour chains leftover time through
+      // the next scroll / queued quest exactly as idling would (a stack of
+      // medium scrolls burns several per credit).
       if (task?.type === 'travel') {
         const skipResult = await api.skipHour()
         setCredits(skipResult?.credits_remaining ?? credits)
@@ -2398,19 +2399,12 @@ function GameApp() {
         } else {
           let budgetMs = SKIP_HOUR_MS
           let cur = task
-          let first = true
           for (let guard = 0; cur?.journey && guard < 30; guard++) {
-            let adv = advanceJourneyOffline(cur, budgetMs)
-            if (!adv.completedPending && first) {
-              adv = advanceJourneyOffline(cur, Number.MAX_SAFE_INTEGER)
-              budgetMs = 0
-            } else {
-              budgetMs = adv.completedPending ? Math.max(0, adv.msRemaining ?? 0) : 0
-            }
-            first = false
+            const adv = advanceJourneyOffline(cur, budgetMs)
+            budgetMs = adv.completedPending ? Math.max(0, adv.msRemaining ?? 0) : 0
             if (!adv.completedPending) {
-              // Hour spent mid-journey (only possible on a chained trail):
-              // park the advanced task for the live tick to carry on.
+              // Hour spent mid-journey: park the advanced task for the live
+              // tick to carry on.
               if (adv.location) updateWorldLocation(adv.location)
               setActiveTask(adv.task)
               activeTaskRef.current = adv.task

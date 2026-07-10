@@ -13,9 +13,9 @@
  * Journeys are the ONLY clue/quest flow: the old stationary timers are retired
  * (legacy saved tasks still tick out in App.jsx, but nothing starts them). The
  * background/idle character is preserved because a journey IS a travel task — it
- * ticks on any screen and catches up offline — while total time is roughly
- * JOURNEY_TIME_FACTOR of the old idle duration plus road time, and active players
- * compress the roads further by teleporting between waypoints (engine/teleports.js).
+ * ticks on any screen and catches up offline — while total time is the content's
+ * advertised idle duration plus road time, and active players compress the roads
+ * by teleporting between waypoints (engine/teleports.js).
  *
  * Pure logic, no UI imports (engine layer — CLAUDE.md §3).
  */
@@ -26,8 +26,12 @@ import { advanceTravel } from './travel.js'
 // single-file bundle (see build_single.cjs duplicate guard).
 const JOURNEY_TICK_MS = 600
 
-/** Fraction of the idle duration a journey spends searching (travel comes on top). */
-export const JOURNEY_TIME_FACTOR = 0.5
+/**
+ * Fraction of the idle duration a journey spends searching (travel comes on
+ * top). 1 = a journey takes the content's full advertised duration — active
+ * players save only the road time by teleporting ahead, never search time.
+ */
+export const JOURNEY_TIME_FACTOR = 1
 
 // ── deterministic seeding ───────────────────────────────────────────────────
 // The same clue tier started from the same place always walks the same trail, so
