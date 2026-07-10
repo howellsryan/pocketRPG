@@ -14,6 +14,7 @@ import {
 } from './tick'
 import { npcsFromZone, tickNpc, toNpcDiff, type NpcState } from './npc'
 import { isExpired, isVisibleTo, takeLoot, visibleLootFor, type LootEntity } from './loot'
+import { sanitizeChat } from '../shared/chat'
 import { emptyInventory } from './mining'
 import { getLevelFromXP } from '../../src/engine/experience.js'
 import { flushGrants, isEmptyPayload, type GrantPayload, type ItemStack } from './grants'
@@ -78,6 +79,10 @@ export class WorldZone extends Server<Env> {
   rocks: Map<string, RockState> | null = null
   npcs: Map<string, NpcState> | null = null
   loot = new Map<string, LootEntity>()
+  /** Presence edges + chat queued between ticks; drained by tick(). */
+  pendingJoins = new Set<string>()
+  pendingLeaves = new Set<string>()
+  pendingChat: Extract<ZoneEvent, { e: 'chat' }>[] = []
 
   get zone(): ZoneDef {
     return ZONES[this.name] ?? pastureZone as ZoneDef
@@ -141,21 +146,29 @@ export class WorldZone extends Server<Env> {
     this.handleAuthedMessage(player, message)
   }
 
-  onClose(connection: Connection): void {
+  // Async so the runtime keeps the DO alive until the disconnect flush and
+  // position checkpoint land — fire-and-forget writes here can be lost when
+  // the last player leaves and the instance idles out.
+  async onClose(connection: Connection): Promise<void> {
     this.clearAuthTimer(connection.id)
     const charId = connection.state?.charId ?? null
     if (!charId) return
     const player = this.players.get(charId)
     if (!player) return
+    // A duplicate-connection kick closes the old socket after the charId has
+    // been re-registered on a new one — that close must not tear down the
+    // live player.
+    if (player.conn !== connection) return
     if (player.combat) {
       const npc = this.npcs?.get(player.combat.npcId)
       if (npc && npc.attackerId === charId) npc.attackerId = null
     }
     this.players.delete(charId)
     this.dirty.delete(charId)
-    void this.flush(player, 'disconnect')
-    void this.checkpointPlayer(player)
+    this.pendingLeaves.add(charId)
     this.maybeStopTicking()
+    await this.flush(player, 'disconnect')
+    await this.checkpointPlayer(player)
   }
 
   private clearAuthTimer(connectionId: string): void {
@@ -265,14 +278,18 @@ export class WorldZone extends Server<Env> {
     const npcEnts = [...this.ensureNpcs().values()]
       .filter((n) => n.state !== 'dead')
       .map((n) => toNpcDiff(n))
+    const otherEnts = [...this.players.values()]
+      .filter((p) => p.charId !== charId)
+      .map((p) => toEntityDiff(p))
     const visibleLoot = visibleLootFor(this.loot.values(), charId, this.tickCount)
     player.lootView = new Set(visibleLoot.map((l) => l.id))
     const intro: Extract<ServerMessage, { t: 'diff' }> = { t: 'diff', tick: this.tickCount }
     if (depleted.length > 0) intro.rocks = depleted
-    if (npcEnts.length > 0) intro.ents = npcEnts
+    if (npcEnts.length > 0 || otherEnts.length > 0) intro.ents = [...otherEnts, ...npcEnts]
     if (visibleLoot.length > 0) intro.loot = visibleLoot
     if (intro.rocks || intro.ents || intro.loot) send(connection, intro)
 
+    this.pendingJoins.add(charId)
     this.ensureTicking()
   }
 
@@ -291,6 +308,11 @@ export class WorldZone extends Server<Env> {
       case 'ping':
         send(player.conn, { t: 'pong', n: message.n })
         break
+      case 'chat': {
+        const text = sanitizeChat(message.text)
+        if (text) this.pendingChat.push({ e: 'chat', charId: player.charId, name: player.name, text })
+        break
+      }
       case 'interact':
         this.handleInteract(player, message)
         break
@@ -380,6 +402,18 @@ export class WorldZone extends Server<Env> {
     // Player ents deduped by id (last write wins — e.g. a death-tick respawn).
     const playerEnts = new Map<string, EntityDiff>()
 
+    // Presence edges queued since the last tick. A leave only broadcasts if
+    // the player is really gone (a same-tick rejoin keeps them present).
+    for (const id of this.pendingJoins) {
+      const joined = this.players.get(id)
+      if (joined) playerEnts.set(id, toEntityDiff(joined))
+    }
+    this.pendingJoins.clear()
+    const playersRemoved = [...this.pendingLeaves].filter((id) => !this.players.has(id))
+    this.pendingLeaves.clear()
+    const chatEvents = this.pendingChat
+    this.pendingChat = []
+
     // NPCs first (wander/respawn/heal) so player combat this tick reads fresh state.
     const npcResult = emptyResult()
     for (const npc of npcs.values()) tickNpc(npc, ctx, npcResult)
@@ -417,7 +451,7 @@ export class WorldZone extends Server<Env> {
       if (npc && !npcRemoved.has(id)) npcEnts.push(toNpcDiff(npc))
     }
     const ents = [...playerEnts.values(), ...npcEnts]
-    this.broadcastDiffs(ents, rockChanges, [...npcRemoved], hits, eventsByChar)
+    this.broadcastDiffs(ents, rockChanges, [...npcRemoved, ...playersRemoved], hits, chatEvents, eventsByChar)
 
     if (this.tickCount % HP_REGEN_EVERY_TICKS === 0) {
       for (const player of this.players.values()) if (player.hp < player.maxHp) player.hp += 1
@@ -468,6 +502,7 @@ export class WorldZone extends Server<Env> {
     rockChanges: { id: string; depleted: boolean }[],
     removed: string[],
     hits: { targetId: string; dmg: number }[],
+    chatEvents: ZoneEvent[],
     eventsByChar: Map<string, ZoneEvent[]>
   ): void {
     const hitEvents: ZoneEvent[] = hits.map((h) => ({ e: 'hit', targetId: h.targetId, dmg: h.dmg }))
@@ -482,6 +517,7 @@ export class WorldZone extends Server<Env> {
       const own = eventsByChar.get(player.charId)
       if (own) events.push(...own)
       if (hitEvents.length > 0) events.push(...hitEvents)
+      if (chatEvents.length > 0) events.push(...chatEvents)
 
       const message: Extract<ServerMessage, { t: 'diff' }> = { t: 'diff', tick: this.tickCount }
       if (ents.length > 0) message.ents = ents

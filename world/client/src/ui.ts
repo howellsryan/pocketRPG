@@ -27,10 +27,28 @@ const HUD_CSS = `
   text-shadow: 0 1px 2px #000;
 }
 #msg-strip {
-  position: fixed; left: 8px; bottom: 8px; z-index: 10; font-family: sans-serif;
+  position: fixed; left: 8px; bottom: 40px; z-index: 10; font-family: sans-serif;
   font-size: 13px; color: #f4e9c8; text-shadow: 0 1px 2px #000; pointer-events: none;
 }
 #msg-strip div { margin-top: 2px; }
+#chat-input {
+  position: fixed; left: 8px; bottom: 8px; z-index: 10; width: min(280px, 60vw);
+  padding: 5px 8px; font-family: sans-serif; font-size: 13px;
+  background: rgba(20, 16, 10, 0.82); color: #f4e9c8;
+  border: 1px solid #5a4a30; border-radius: 6px; outline: none;
+  -webkit-user-select: text; user-select: text; touch-action: auto;
+}
+#chat-input::placeholder { color: #8a7a5a; }
+.nameplate {
+  position: absolute; transform: translate(-50%, -100%); pointer-events: none;
+  font-family: sans-serif; font-size: 12px; color: #ffffff; text-shadow: 0 1px 2px #000;
+  white-space: nowrap;
+}
+.overhead-chat {
+  position: absolute; transform: translate(-50%, -100%); pointer-events: none;
+  font-family: sans-serif; font-size: 13px; color: #ffe850; text-shadow: 0 1px 2px #000;
+  white-space: nowrap; max-width: 60vw; overflow: hidden; text-overflow: ellipsis;
+}
 #xp-drops {
   position: fixed; left: 50%; top: 38%; z-index: 10; pointer-events: none;
   font-family: sans-serif; font-weight: bold; color: #ffe066; text-shadow: 0 1px 3px #000;
@@ -154,6 +172,74 @@ export function updateHpBar(id: string, screenX: number, screenY: number, ratio:
 export function removeHpBar(id: string): void {
   hpBars.get(id)?.remove()
   hpBars.delete(id)
+}
+
+function trackedLabel(store: Map<string, HTMLElement>, id: string, className: string): HTMLElement | null {
+  const layer = document.getElementById('fx-layer')
+  if (!layer) return null
+  let el = store.get(id)
+  if (!el) {
+    el = document.createElement('div')
+    el.className = className
+    layer.appendChild(el)
+    store.set(id, el)
+  }
+  return el
+}
+
+function removeTracked(store: Map<string, HTMLElement>, id: string): void {
+  store.get(id)?.remove()
+  store.delete(id)
+}
+
+const nameplates = new Map<string, HTMLElement>()
+
+export function updateNameplate(id: string, screenX: number, screenY: number, name: string): void {
+  const el = trackedLabel(nameplates, id, 'nameplate')
+  if (!el) return
+  el.textContent = name
+  el.style.left = `${screenX}px`
+  el.style.top = `${screenY}px`
+}
+
+export function removeNameplate(id: string): void {
+  removeTracked(nameplates, id)
+}
+
+const overheadChats = new Map<string, HTMLElement>()
+
+export function updateOverheadChat(id: string, screenX: number, screenY: number, text: string): void {
+  const el = trackedLabel(overheadChats, id, 'overhead-chat')
+  if (!el) return
+  el.textContent = text
+  el.style.left = `${screenX}px`
+  el.style.top = `${screenY}px`
+}
+
+export function removeOverheadChat(id: string): void {
+  removeTracked(overheadChats, id)
+}
+
+/** Chat input pinned under the message log. Enter sends (and blurs on mobile
+ * so the keyboard drops), Escape blurs. Player text only ever goes through
+ * textContent on the way back out. */
+export function initChatInput(onSend: (text: string) => void): void {
+  if (document.getElementById('chat-input')) return
+  const input = document.createElement('input')
+  input.id = 'chat-input'
+  input.type = 'text'
+  input.placeholder = 'Say something…'
+  input.maxLength = 120
+  input.autocomplete = 'off'
+  input.addEventListener('keydown', (e) => {
+    e.stopPropagation()
+    if (e.key === 'Escape') input.blur()
+    if (e.key !== 'Enter') return
+    const text = input.value.trim()
+    input.value = ''
+    if (text) onSend(text)
+  })
+  document.body.appendChild(input)
 }
 
 const NAME_CYAN = '#61d0d8'

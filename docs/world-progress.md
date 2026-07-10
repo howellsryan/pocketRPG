@@ -337,3 +337,21 @@ Developer tested on iOS and reported five issues; all fixed:
 Combat→loot→deposit e2e re-run clean after the refactors (bank gets tin×5 + bones + raw_beef + cowhide, §5 XP). `world:check` green (11 files / 89 tests). Only `world/` + `docs/` touched.
 
 - [x] Phase 2 mobile fixes — see commit introducing this entry — cow position, native-selection, menu spacing, loot tap target, unified SVG icons; verified via headless screenshots + WS/D1 e2e.
+
+## Phase 3 — Other players, presence, local chat (STEP 3.0–3.4)
+
+Built per the new guide §9 (authored this phase on developer instruction — master plan §7 "Phase 4 — Other players", scoped: shared hero model for every player, equipment-driven appearance deferred; players are ghosts, no pick target).
+
+**STEP 3.0 — right-click walk bug (carried in from Phase 2 device feedback)**: `pointerup` ran the default action for every button, so a desktop right-click both opened the menu AND walked. Gated on `event.button === 0` (`input.ts`). Verified in-browser with a WS observer: right-click produced zero movement diffs (menu open), left-click still walks.
+
+**STEP 3.1 — presence protocol** (`server/WorldZone.ts`): welcome's intro diff now lists every other player's ent (never self); joins queue into the next tick's ents; leaves broadcast via the existing `removed` field, suppressed if the player is still present (same-tick rejoin). Player diffs stay hp-free (other players' HP is private). **Two hardenings surfaced by e2e**: (1) `onClose` now ignores a stale socket whose charId was re-registered on a new connection — a late duplicate-kick close must not tear down the live player; (2) `onClose` is async and awaits the disconnect grant-flush + position checkpoint — they were fire-and-forget, and the write can be lost when the last player leaves and the DO idles out (observed: a walked position silently not persisting; checkpoint round-trip now passes repeatedly).
+
+**STEP 3.2 — client rendering** (`client/src/main.ts`, `ui.ts`): `others` map mirrors the npc pattern (async hero-mesh clone with pending-diff buffering; template cached so N players = 1 GLB fetch), DOM name plates projected per frame, `removed` routes to the right map, no `userData.pick` (rays pass through to loot/npcs/ground). Other players also get hitsplats via the zone-wide hit events.
+
+**STEP 3.3 — local chat** (`shared/chat.ts` + protocol + `ui.ts`): client `{t:'chat',text}` → server sanitises (`sanitizeChat`: strip control chars, trim, cap 120; unit-tested) → zone event `{e:'chat',charId,name,text}`. Existing per-connection rate limiter covers flooding. Client: input pinned under the message log (`user-select:text` override on the input — the global mobile-fix `user-select:none` would break the caret), chat renders as `Name: text` in the log + overhead yellow text above the speaker (self included) for 4 s. All player text rendered via `textContent` only. `dev-seed.mjs` now seeds a second character (WorldFriend, id 2) and prints both handoffs for two-device testing.
+
+**Verified end-to-end** (wrangler dev + two WS clients + two headless Chromium pages): B's intro lists A (name WorldTester); A receives B's join ent (WorldFriend) within a tick; B streams A's walk diffs; a chat sent with surrounding junk arrives sanitised with the right name; A's disconnect broadcasts `removed:["1"]` — 5/5 PASS, re-run clean after the onClose hardening. Two-page screenshots show both heroes in one frame with the WorldFriend name plate and `WorldFriend: Hello WorldTester!` in the log; overhead text verified via DOM position/text on both pages (the 4 s TTL kept expiring before swiftshader finished screenshotting). Right-click regression PASS.
+
+`world:check` green (12 files / 97 tests). Only `world/` + `docs/` touched — no root gate required.
+
+- [x] STEP 3.0–3.4 — see commit introducing this entry — Phase 3 code-complete + self-verified; acceptance is the DT-P3 two-device manual script (guide §9 STEP 3.4).

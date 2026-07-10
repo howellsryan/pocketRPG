@@ -1,5 +1,5 @@
 import { exchangeHandoff, getStoredSession, parseHandoffFromHash, pocketRpgUrl, type WorldSession } from './auth'
-import { hideOverlay, initHud, pushMessage, removeHpBar, renderInventory, showHitsplat, showLoginRequired, showXpDrop, updateHpBar, npcExamine } from './ui'
+import { hideOverlay, initChatInput, initHud, pushMessage, removeHpBar, removeNameplate, removeOverheadChat, renderInventory, showHitsplat, showLoginRequired, showXpDrop, updateHpBar, updateNameplate, updateOverheadChat, npcExamine } from './ui'
 import { connect, onMessage, send } from './net'
 import { clampZoom, createCamera, createGround, createLights, createRenderer, createScene, tileToWorld, updateCamera } from './scene'
 import { applyEntityDiff, createCowMesh, createEntity, createHeroMesh, updateEntity, type Entity } from './entities'
@@ -39,6 +39,10 @@ function enterWorld(session: WorldSession): void {
   const npcs = new Map<string, Entity>()
   const npcLoading = new Set<string>()
   const pendingNpcDiff = new Map<string, EntityDiff>()
+  const others = new Map<string, Entity>()
+  const otherLoading = new Set<string>()
+  const pendingOtherDiff = new Map<string, EntityDiff>()
+  const overheads = new Map<string, { text: string; until: number }>()
   const rockStates = new Map<string, boolean>()
   let playerCombatLevel = 3
   let zoom = 1
@@ -52,7 +56,7 @@ function enterWorld(session: WorldSession): void {
 
   function meshOf(id: string): THREE.Object3D | null {
     if (self && id === self.id) return self.mesh
-    return npcs.get(id)?.mesh ?? null
+    return npcs.get(id)?.mesh ?? others.get(id)?.mesh ?? null
   }
 
   function handleEvent(event: ZoneEvent): void {
@@ -65,6 +69,9 @@ function enterWorld(session: WorldSession): void {
         const s = toScreen(mesh.position, 0.9)
         showHitsplat(s.x, s.y, event.dmg)
       }
+    } else if (event.e === 'chat') {
+      pushMessage(`${event.name}: ${event.text}`)
+      overheads.set(event.charId, { text: event.text, until: performance.now() + 4000 })
     }
   }
 
@@ -104,6 +111,42 @@ function enterWorld(session: WorldSession): void {
     removeHpBar(id)
   }
 
+  // Other players are ghosts: shared hero model, name plate, no pick target.
+  function ensureOther(scene: THREE.Scene, diff: EntityDiff): void {
+    const existing = others.get(diff.id)
+    if (existing) {
+      applyEntityDiff(existing, diff)
+      return
+    }
+    pendingOtherDiff.set(diff.id, diff)
+    if (otherLoading.has(diff.id)) return
+    otherLoading.add(diff.id)
+    void createHeroMesh().then(({ mesh, animator }) => {
+      const d = pendingOtherDiff.get(diff.id) ?? diff
+      if (!otherLoading.has(diff.id)) return
+      const entity = createEntity(diff.id, d.x, d.z, mesh, animator)
+      entity.serverAnim = d.anim
+      entity.name = d.name
+      scene.add(entity.mesh)
+      others.set(diff.id, entity)
+      otherLoading.delete(diff.id)
+      pendingOtherDiff.delete(diff.id)
+    })
+  }
+
+  function removeOther(id: string): void {
+    const entity = others.get(id)
+    if (entity) {
+      entity.mesh.parent?.remove(entity.mesh)
+      others.delete(id)
+    }
+    otherLoading.delete(id)
+    pendingOtherDiff.delete(id)
+    overheads.delete(id)
+    removeNameplate(id)
+    removeOverheadChat(id)
+  }
+
   socket.addEventListener('open', () => {
     send(socket, { t: 'hello', token: session.token })
   })
@@ -121,6 +164,7 @@ function enterWorld(session: WorldSession): void {
         const renderer = createRenderer(container)
 
         initHud()
+        initChatInput((text) => send(socket, { t: 'chat', text }))
         playerCombatLevel = combatLevelFromStats(message.you.stats)
         lootLayer = createLootLayer(scene)
 
@@ -185,6 +229,21 @@ function enterWorld(session: WorldSession): void {
               removeHpBar(npc.id)
             }
           }
+          for (const other of others.values()) {
+            updateEntity(other, now, deltaSeconds)
+            const s = toScreen(other.mesh.position, 2.0)
+            updateNameplate(other.id, s.x, s.y, other.name ?? 'Adventurer')
+          }
+          for (const [id, overhead] of overheads) {
+            const mesh = id === self?.id ? self.mesh : others.get(id)?.mesh
+            if (!mesh || now > overhead.until) {
+              overheads.delete(id)
+              removeOverheadChat(id)
+              continue
+            }
+            const s = toScreen(mesh.position, 2.35)
+            updateOverheadChat(id, s.x, s.y, overhead.text)
+          }
           lootLayer?.update(deltaSeconds)
           updateClickMarker(marker, now)
           renderer.render(scene, camera!)
@@ -239,8 +298,12 @@ function enterWorld(session: WorldSession): void {
     for (const ent of message.ents ?? []) {
       if (self && ent.id === self.id) applyEntityDiff(self, ent)
       else if (ent.kind === 'npc') ensureNpc(scene, ent)
+      else if (ent.kind === 'player') ensureOther(scene, ent)
     }
-    for (const id of message.removed ?? []) removeNpc(id)
+    for (const id of message.removed ?? []) {
+      if (others.has(id) || otherLoading.has(id)) removeOther(id)
+      else removeNpc(id)
+    }
     if (message.rocks) {
       for (const rock of message.rocks) {
         rockStates.set(rock.id, rock.depleted)

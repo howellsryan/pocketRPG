@@ -10,6 +10,7 @@ export type ClientMessage =
   | { t: 'walk'; x: number; z: number }
   | { t: 'interact'; kind: 'rock' | 'npc' | 'loot' | 'object'; id: string; action: string }
   | { t: 'cancel' }
+  | { t: 'chat'; text: string }
   | { t: 'ping'; n: number }
 
 export type ZoneEvent =
@@ -17,6 +18,7 @@ export type ZoneEvent =
   | { e: 'xp'; skill: string; amount: number }
   | { e: 'msg'; text: string }
   | { e: 'inv'; inventory: InvSlot[] }
+  | { e: 'chat'; charId: string; name: string; text: string }
 
 export type EntityDiff = {
   id: string
@@ -95,6 +97,10 @@ export function parseClientMessage(raw: unknown): ClientMessage | null {
     }
     case 'cancel':
       return { t: 'cancel' }
+    case 'chat': {
+      const text = (raw as Record<string, unknown>).text
+      return typeof text === 'string' ? { t: 'chat', text } : null
+    }
     case 'ping': {
       const n = (raw as Record<string, unknown>).n
       return typeof n === 'number' ? { t: 'ping', n } : null

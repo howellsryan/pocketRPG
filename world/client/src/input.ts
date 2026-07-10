@@ -155,6 +155,7 @@ export function setupInput(canvas: HTMLCanvasElement, camera: THREE.Camera, grou
       longPressFired = false
       return
     }
+    if (event.button !== 0) return
     setPointer(event)
     performDefault()
   }

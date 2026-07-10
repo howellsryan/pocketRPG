@@ -371,11 +371,41 @@ Full root + world gates green, then DEVELOPER TASK — manual script: desktop: h
 
 ---
 
-## 9) After Phase 2 (do not build — listed so the agent doesn't "prepare" for them)
+## 9) PHASE 3 — Other players, presence, local chat (added 2026-07 on developer instruction)
 
-Other players rendered, run energy, more zones, food/prayer in world, ranged/magic, stances UI, PvP, mobile — all explicitly out of scope. When Phase 2 is accepted, stop and await the developer's next instruction.
+Master plan `docs/open-world-companion-game-plan.md` §7 "Phase 4 — Other players", scoped for v1: players in the same zone see each other move with name plates and can talk in local chat. Players are **ghosts** — no collision (pathfinding already ignores players), no trading, no interactions, no pick target. **Scope cut (DECIDED)**: every player renders as the shared `hero.glb`; equipment-driven appearance is deferred to a later phase.
 
-## 10) Quick reference — repo facts the agent will need constantly
+**Definition of done**: two accounts in the pasture see each other walking/mining/fighting with the correct name plate, a player already in the zone is visible immediately on join, joins/leaves add/remove the other hero within a tick, chat lines appear in both the message log (`Name: text`) and as overhead text above the speaker, and none of Phase 0–2 regresses.
+
+### STEP 3.0 — Carried-in bugfix: right-click must not walk
+Phase 2 device feedback: on desktop a right-click both opened the menu AND walked (pointerup fired `performDefault` for every button). Gate the default action on `event.button === 0` in `input.ts`. Verify with the two-client e2e in 3.4 (right-click in browser A produces no ent diff for A at observer B).
+
+### STEP 3.1 — Presence protocol (server)
+The tick loop already broadcasts `kind:'player'` ents zone-wide when a player changes; what's missing is the edges:
+- Welcome: after the intro diff's npcs/loot, include ents for every OTHER player currently in the zone (never self — the client owns self from `welcome.you`).
+- Join: queue the new player's charId at hello; the next tick emits its `toEntityDiff` to everyone (one-tick latency is fine).
+- Leave: on close/duplicate-connection kick, broadcast `removed: [charId]` (reuse the existing `removed` field — ids are disjoint from npc ids).
+Keep `toEntityDiff` as-is (id/kind/x/z/anim/name — no hp: other players' HP is private).
+
+### STEP 3.2 — Other players on the client
+`main.ts`: a `others` map mirroring the npc pattern (async `createHeroMesh()` with pending-diff buffering, template already cached so N players = 1 GLB fetch). `ents` routing: self → self, `kind:'npc'` → npcs, other `kind:'player'` → others. `removed` must route to the right map. No `userData.pick` (ghosts — the ray passes through to loot/npcs/ground beneath). Name plate: DOM overlay per other player (same projection helper as HP bars), white name, small, `pointer-events:none`; self gets none (you know who you are).
+
+### STEP 3.3 — Local chat
+- Protocol: client `{t:'chat', text}`; server sanitises (trim, strip control chars, cap 120 chars, drop empty) — sanitiser is a pure function in `world/shared/chat.ts` with Vitest — then broadcasts zone event `{e:'chat', charId, name, text}` (existing rate limiter covers flooding).
+- Client: an input row pinned under the message log (Enter sends, Escape blurs; clicking the canvas never focuses it). The global `user-select:none`/`touch-action:none` from the mobile fixes must be overridden ON THE INPUT (`user-select:text`) or typing/caret breaks on mobile. Render received chat as `Name: text` in the message log AND as overhead text above the speaker's head (or self) for ~4 s (DOM overlay, same projection).
+- All chat rendering uses `textContent` (player-authored strings — no innerHTML, ever).
+
+### STEP 3.4 — Phase 3 acceptance
+Two-connection WS e2e (agent-runnable): B joins after A → A gets B's ent + B's intro lists A; A walks → B streams A's diffs; A chats → B receives `{e:'chat'}` with A's name; A right-clicks (browser) → B sees no movement; A disconnects → B gets `removed:[A]`. Needs a second seeded character in `world/scripts/dev-seed.mjs`. Playwright: two pages, screenshot shows both heroes + name plate + overhead chat. Full world gate green; root gate only if `src/**`/`functions/**` touched.
+DEVELOPER TASK — manual script: two devices/browsers, both enter the pasture; verify you see each other walk/mine/fight, name plates correct, chat works both ways (log + overhead), right-click no longer walks on desktop, and a page close removes the other hero. Reply "PHASE 3 ACCEPTED".
+
+---
+
+## 10) After Phase 3 (do not build — listed so the agent doesn't "prepare" for them)
+
+Equipment-driven player appearance, run energy, more zones, food/prayer in world, ranged/magic, stances UI, trading, PvP — all explicitly out of scope. When Phase 3 is accepted, stop and await the developer's next instruction.
+
+## 11) Quick reference — repo facts the agent will need constantly
 
 - Tick: 600 ms. Inventory: 28. XP curve/cap: `src/engine/experience.js` (`getLevelFromXP`, 200M cap). Combat XP: 4/dmg style, 1.33/dmg HP (§5 CLAUDE.md).
 - Mining data: `src/data/skills.json → mining.actions` (`tin`, `copper`: level 1, ticks 4, xp 17).
