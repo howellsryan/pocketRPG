@@ -57,7 +57,12 @@
 
 ## 2) Capability boundaries — what the agent must hand to the developer
 
-The builder agent runs in a sandboxed cloud session. It **can**: edit files, run `npm`/`vitest`/`tsc`/`vite build`, run `wrangler dev` locally (Miniflare simulates the DO + a *local* D1), run headless Chromium via Playwright (best-effort — WebGL in headless is flaky; treat failures as "needs manual check", not as code bugs), commit, and push.
+The builder agent runs in a sandboxed cloud session. It **can**: edit files, run `npm`/`vitest`/`tsc`/`vite build`, run `wrangler dev` locally (Miniflare simulates the DO + a *local* D1), run headless Chromium via Playwright, commit, and push.
+
+**Agent self-verification (proven 2026-07 — do this before every hand-off, it catches real bugs):**
+- **Protocol/E2E**: `npm run dev:seed` + `wrangler dev`, then drive the WS protocol from a plain Node script (`hello` → `walk`/`interact` → assert diffs/events) and assert final state with `wrangler d1 execute … --local --json`. This validated the whole mine→flush→save pipeline without a browser and is the primary acceptance path for server work; DT-class B manual scripts then only need to cover look/feel and real-device input.
+- **Visual**: headless Chromium WebGL works reliably with `chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] })` (install Playwright with `npm i --no-save playwright` — keep it out of package.json). Screenshots through the real client found the Phase 0 mirrored-ground bug that code review missed. Playwright's `page.on('websocket')` frame logging shows exactly what a click sent.
+- **Gotcha**: the local D1 sqlite is locked while `wrangler dev` runs — stop it (`pkill -f '[w]rangler dev'; pkill -f '[w]orkerd'`; plain patterns match your own shell) before `dev:seed` or any `d1 execute`, then restart.
 
 It **cannot** (always a DEVELOPER TASK):
 - **DT-class A — Cloudflare account actions**: first `wrangler deploy` of the new Worker, setting the `JWT_SECRET` secret (`cd world && npx wrangler secret put JWT_SECRET` — must be the **same value** as the Pages project's), adding the `world.pocketrpg.co.uk` custom domain, applying D1 migrations to production (`npx wrangler d1 migrations apply pocketrpg --remote` from repo root), confirming the Workers paid plan is active.
@@ -68,6 +73,8 @@ It **cannot** (always a DEVELOPER TASK):
 ### 2.1 Asset library — `assets/open-world/` (git-tracked, ~13k files / 1.2 GB)
 
 Source 3D assets from here FIRST; DT-class C is only for gaps. Nothing under `assets/` ships to players directly — process/copy what a step needs into `world/client/public/models/` (small, committed) or R2. Prefer `gltf`/`glb` variants; `fbx` folders are Unity/Blender sources. KayKit + Kenney packs are CC0; Quaternius `[Standard]` packs are paid-license (fine to use in the game, don't redistribute as raw assets).
+
+**Vendor steering (developer decision 2026-07)**: anything that must attach to or share a rig with the hero (outfits, equipment visuals, future player characters) comes from **Quaternius** — the hero is on the Quaternius universal rig precisely so those packs layer on. KayKit/Kenney are for props, scenery, buildings, and standalone NPCs. Quaternius `[Standard]` packs ship 4K PBR textures — always strip/shrink like `build-hero.mjs` does before committing a processed model. The pre-assembled `Outfits/*.gltf` exports are complete outfitted characters; the `Modular Parts/` folder has the same pieces separately for mix-and-match later.
 
 | Vendor | Packs | Use for |
 |---|---|---|
@@ -315,7 +322,7 @@ Algorithm (DECIDED):
 1. Build payload `{ xpBySkill, items:[{itemId,quantity}], reason }`; skip if empty.
 2. `idempotency_key = "wg:" + charId + ":" + sessionId + ":" + flushSeq++` (`sessionId` = crypto.randomUUID() minted at hello). `INSERT INTO world_grants … ON CONFLICT DO NOTHING`; if no row inserted → already applied → return.
 3. Up to 3 attempts: `loadCharacterWithSave` → for each skill: `save.stats[skill].xp += amount` (clamp to the 200M cap from `src/engine/experience.js`), `save.stats[skill].level = getLevelFromXP(xp)`; for each item: `addItemToBank(save, itemId, qty)` → `writeSave(env, charId, save, expectedRevision)`. On revision-conflict error re-read and retry; after 3 failures, log, delete the idempotency row, and re-queue the payload in memory for the next flush.
-4. Mirror `/api/save` PUT's denormalized-summary update (total_level/combat_level on `characters`) — read that code and reuse/extract its helper rather than re-implementing; if extraction is needed, do it as a separate refactor commit with the root gate.
+4. ~~Mirror `/api/save` PUT's denormalized-summary update~~ — verified 2026-07: `writeSave` itself already refreshes total_level/combat_level on every call; no extra code needed.
 5. `auditLog(env, …)` — match the exact signature/usage in `functions/_lib/game/audit.js` with event type `world_grant` and the payload.
 Vitest with a mocked env/DB covering: idempotent replay, revision-conflict retry, XP cap clamp, pack contents → bank.
 **Do not** add any save-blob validation/policing here (CLAUDE.md §14 — grants are additive server-side writes, the trusted-blob model is unchanged).
@@ -331,6 +338,7 @@ DEVELOPER TASK — manual script: fresh session → mine tin ×5 (watch xp drops
 **Definition of done**: developer left-clicks the Pasture Bull, walks over, fights it with hitsplats and an overhead HP bar, it dies and sinks/fades, loot appears on the floor at the death tile, right-click on the pile lists each item as `Take <Item Name>`, taking Bones/Raw Beef/Cowhide fills the pack, deposit lands them in the PocketRPG bank, Attack/Strength/Defence/HP XP appear per §5 rules, and the cow respawns. Right-click menus work everywhere (rock, chest, cow, loot, ground) on desktop; long-press does the same on a tablet.
 
 ### STEP 2.1 — Context menu + hover text (input layer, DECIDED spec)
+Already built during Phase 1 (extend, don't rebuild): left-click default actions work via `input.ts` raycasting the `statics.ts` pickables list before the ground — each pickable wrapper carries `userData.pick = { kind, id, action }` and `pickTargetOf()` walks hits up to it. Add npcs/loot to that same pickables pattern. Still missing from this step: hover text, right-click/long-press context menu, pick-priority ordering, Examine.
 Implement in `input.ts`/`ui.ts` before any combat:
 - Maintain a hover pick every pointermove (throttled to animation frames): topmost entity under cursor with priority `loot > npc > rock/object > ground`. Top-left hover line, OSRS-style: `<default action> <Name>` in pale yellow, e.g. `Mine Tin Rock`, `Attack Pasture Bull (level-8)`, `Walk here`.
 - Left-click: perform the default action of the picked thing — loot: `Take` top item; npc: `Attack`; rock: `Mine`; bank_chest: `Deposit`; ground: `Walk here`.
@@ -351,11 +359,11 @@ On `interact {kind:'npc', action:'attack'}`: path adjacent, then start combat �
 
 ### STEP 2.4 — Death, floor loot, pickup
 On bull death: `state:'dead'`, anim 'die', removed from `ents` after 3 ticks, `respawnAtTick = now + 25`; roll drops from `monsters.json → pasture_bull.drops` (chance-gated rolls, `quantity` ranges as `[min,max]` — mirror how the idle engine rolls drops: find and reuse/extract the existing drop-roll helper from `src/engine/` via `grep -rn "drops" src/engine/loot* src/engine/*.js | head`; reuse it, don't re-roll your own). Each dropped item → loot entity at the death tile `{ id, itemId, qty, x, z, ownerCharId, spawnTick }`. Visibility filtering happens **server-side when building each client's diff**: owner-only until `spawnTick+100`, everyone until `spawnTick+300`, then `lootRemoved`. Multiple items on one tile are all listed in that tile's context menu (`Take Bones`, `Take Cowhide`, …); left-click takes the most recently dropped.
-`interact {kind:'loot', action:'take'}`: path to the tile, verify still present + visible to this player, add to session pack (full → pack-full message), `lootRemoved` broadcast. Client: loot rendered as a small spinning item marker per tile (flat plane with the item's emoji drawn to a CanvasTexture — one shared texture cache).
+`interact {kind:'loot', action:'take'}`: path to the tile, verify still present + visible to this player, add to session pack (full → pack-full message), `lootRemoved` broadcast. **Inventory-first requirement (2026-07 semantics change)**: every Take MUST also increment `player.minted[itemId]` — an item in the session pack that is neither save-backed nor minted is invisible to every flush and silently evaporates on deposit/disconnect. Add a test asserting picked-up loot survives a disconnect flush into the save inventory. Client: loot rendered as a small spinning item marker per tile (flat plane with the item's emoji drawn to a CanvasTexture — one shared texture cache).
 Vitest: drop rolling uses the shared helper, owner-window filtering, take-vs-despawn races, stack quantities.
 
 ### STEP 2.5 — Combat presentation
-HP bar: DOM overlay div above the bull (project entity position → screen each frame), green/red ratio, visible while in combat and for 10 ticks after. Hitsplats: red square with white number (blue square for 0) at the target's screen position, 900 ms fade, both from `{e:'hit'}`. Player attack anim: reuse a hero attack clip if `list-anims.mjs` found one (else reuse 'mine' swing and log a note). Bull hurt flash: material emissive pulse.
+HP bar: DOM overlay div above the bull (project entity position → screen each frame), green/red ratio, visible while in combat and for 10 ticks after. Hitsplats: red square with white number (blue square for 0) at the target's screen position, 900 ms fade, both from `{e:'hit'}`. Player attack anim: already done — hero.glb ships an `attack` clip (UAL1 `Sword_Attack`) and the client animator plays whatever anim the server broadcasts (`die` too, LoopOnce+clamp); the server just has to set `anim:'attack'` during combat ticks. Bull hurt flash: material emissive pulse.
 
 ### STEP 2.6 — Phase 2 acceptance
 Full root + world gates green, then DEVELOPER TASK — manual script: desktop: hover texts correct on ground/rock/chest/bull/loot; right-click menus everywhere per §8.1; kill the bull twice (hitsplats, hp bar, death anim, respawn ~15 s); loot appears at death tile, second account/browser cannot see it for 60 s but can after; take all three drops, deposit, verify PocketRPG bank + Attack/HP XP moved consistently with §5 math; tablet: tap-to-act + long-press menus. Reply "PHASE 2 ACCEPTED".
