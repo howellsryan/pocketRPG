@@ -46,7 +46,7 @@
 | Phase 1 skill | **Mining** — rocks `tin` and `copper` from `src/data/skills.json` → `mining.actions` (level 1, 4 ticks/ore, 17 XP, products `tin_ore`/`copper_ore`). PocketRPG semantics: deterministic ticks-per-ore, **no success RNG**. |
 | Phase 2 monster | **`pasture_bull` only** (PocketRPG's cow: `legacy_id: "cow"`, 8 HP, attackSpeed 4, drops Bones + Raw Beef + Cowhide @100%, medium clue @2%). Combat runs `createCombatState` + `processCombatTick` from `src/engine/combat.js` — **no reimplemented combat math**. |
 | Floor loot | On kill: drops become ground items at the death tile. Owner-only for 100 ticks, visible to everyone after, despawn at 300 ticks. `Take` adds to the 28-slot session inventory. |
-| Grants | Batched per player in DO memory `{xpBySkill, items[]}`; flushed to the save blob on: bank-chest deposit, disconnect, zone leave, or 60 s timer. Idempotency row per flush + audit event. Items go to the **bank** (not inventory) on flush. |
+| Grants | Batched per player in DO memory; flushed to the save blob on: bank-chest deposit, disconnect, zone leave, or 60 s timer (timer = XP only). Idempotency row per flush + audit event. **Inventory-first (reversed 2026-07)**: the session pack seeds from the character's PocketRPG inventory at hello; world-minted items land in the save **inventory** on disconnect (overflow → bank); a chest deposit banks the whole pack (moving save-backed units inventory→bank, minting the rest straight to bank). |
 | Zone | One hand-authored zone `pasture` (32×32 tiles) for all three phases. Format in §6.5. |
 | Domain | `world.pocketrpg.co.uk` (custom domain on the Worker; workers.dev URL until DNS is set). |
 | Deploys | Manual by developer: `cd world && npx wrangler deploy`. No CI wiring in v1. |
@@ -75,7 +75,7 @@ Source 3D assets from here FIRST; DT-class C is only for gaps. Nothing under `as
 | `Kenney/` | Fantasy Town Kit, Nature Kit ×2 (rocks, trees, cliffs, plants), Castle Kit, Graveyard Kit | Scenery, terrain dressing, buildings |
 | `Quaternius/` | Farm Animal Pack (cow!), Ultimate Monsters Bundle, Ultimate RPG Items (weapons, armour, potions, loot), Ultimate Nature, Medieval Village MegaKit, Universal Base Characters + Modular Fantasy Outfits, Universal Animation Library ×2 | Monsters (Phase 2 cow), items/weapons/armour props, alternative characters/animations |
 
-Tooling: `world/scripts/inspect-glb.mjs <files…>` prints bounds/rig/clips/textures of any GLB; `world/scripts/build-hero.mjs` rebuilds `hero.glb` from the library (Knight + retargeted Rig_Medium clips renamed to the protocol's `idle`/`walk`/`mine`/`attack`/`die`). KayKit animation GLBs share joint names across all same-rig characters — retarget by node name, the same way `build-hero.mjs` does, for any future character.
+Tooling: `world/scripts/inspect-glb.mjs <files…>` prints bounds/rig/clips/textures of any GLB; `world/scripts/build-hero.mjs` rebuilds `hero.glb` from the library (Quaternius Male Ranger + retargeted UAL clips renamed to the protocol's `idle`/`walk`/`mine`/`attack`/`die`, textures shrunk to 1K webp). Both vendors' animation packs share joint names across all same-rig characters (Quaternius universal rig ↔ UAL1/UAL2; KayKit Rig_Medium ↔ Character Animations) — retarget by node name, the same way `build-hero.mjs` does, for any future character.
 
 ---
 
@@ -283,7 +283,7 @@ Vitest: zone validates; a deliberately broken fixture fails.
 Acceptance: local run — click moves the capsule smoothly tile-to-tile; refresh reconnects at the same tile (checkpoint write on disconnect).
 
 ### STEP 0.10 — Hero model + animations
-**Superseded (2026-07, developer decision)**: the main game's `public/3d-samples/hero.glb` is no longer used in the world client. The hero is now the KayKit Adventurers **Knight** built by `world/scripts/build-hero.mjs` from the §2.1 library — Rig_Medium clips retargeted by joint name and renamed to the protocol anims (`idle`, `walk`, `mine`, `attack`, `die`). Client (`entities.ts`) queues one waypoint per diff (catch-up at 440 ms/segment when behind, snap when ≥4 queued), rotates the model toward its walk direction, and derives walk/idle from actual traversal (server anims drive `mine`/`attack`/`die`). Crossfade 150 ms. `world/scripts/list-anims.mjs` prints the built hero's clips.
+**Superseded (2026-07, developer decision)**: the main game's `public/3d-samples/hero.glb` is no longer used in the world client. The hero is the Quaternius **Male Ranger** (Modular Fantasy outfit pre-fitted on the Universal Base Character body, 65-joint universal rig — chosen over KayKit so Quaternius outfits/items layer onto it later) built by `world/scripts/build-hero.mjs` from the §2.1 library — UAL1/UAL2 clips (`Idle_Loop`, `Walk_Loop`, `TreeChopping_Loop`, `Sword_Attack`, `Death01`) retargeted by joint name and renamed to the protocol anims (`idle`, `walk`, `mine`, `attack`, `die`); 4K PBR maps stripped to 1K webp base color (66 MiB → 1.9 MiB — when editing the script, dispose unwanted clips' channels+samplers before `mergeDocuments` or every clip's data comes along). Client (`entities.ts`) queues one waypoint per diff (catch-up at 440 ms/segment when behind, snap when ≥4 queued), rotates the model toward its walk direction, and derives walk/idle from actual traversal (server anims drive `mine`/`attack`/`die`). Crossfade 150 ms. `world/scripts/list-anims.mjs` prints the built hero's clips.
 Acceptance: hero idles when still, walks when moving, faces its direction, no T-pose flashes.
 
 ### STEP 0.11 — PocketRPG entry button
@@ -296,7 +296,7 @@ DEVELOPER TASK (single block): 1) `cd world && npm i && npm run build && npx wra
 
 ## 7) PHASE 1 — Mining, session inventory, grant flush into PocketRPG
 
-**Definition of done**: developer mines 5 tin in the world (watching the pick animation, XP drops, ore entering the 28-slot panel), deposits at the chest, opens PocketRPG, and sees Mining XP +85 and 5 Tin Ore in the bank. Disconnecting mid-session with undeposited ore also lands the ore/XP in PocketRPG (disconnect flush).
+**Definition of done**: developer's carried PocketRPG inventory appears in the world's 28-slot panel at login (same items/icons); they mine 5 tin (pick animation, XP drops, ore joining the pack), deposit at the chest, open PocketRPG, and see Mining XP +85 and everything deposited in the bank. Disconnecting mid-session with undeposited ore lands that ore in the PocketRPG **inventory** (e.g. carried 5 tin in + mined 5 more = 10 in the inventory), never silently in the bank.
 
 ### STEP 1.1 — Rocks in zone + statics protocol
 Server: load zone objects into DO memory `{ id, rock:'tin'|'copper', x, z, depletedUntilTick:0 }`. `welcome.statics` includes them; `diff.rocks` broadcasts depleted/respawned transitions. Client: render rocks with the §2.1 library boulder (`world/client/public/models/rock.glb`, Kenney nature kit) tinted per ore (copper #b87333, tin #9aa5ad); depleted → smaller scale + darkened. `IcosahedronGeometry` grey boulder stays as the load-failure fallback.
@@ -310,7 +310,7 @@ All of this lives in pure functions in `tick.ts` + a new `world/server/mining.ts
 `ui.ts`: fixed right-side panel, 4×7 grid of 40px cells (28 slots), rendered from the last `{e:'inv'}`; item icon = the `icon` emoji from `src/data/items.json` (import the JSON in the client) + quantity badge for stacks. XP drops: floating `+17 Mining` text rising from the avatar (DOM overlay, 1.2 s fade). Message events → a 3-line message strip bottom-left.
 
 ### STEP 1.4 — Grant flush (`world/server/grants.ts`) — the only save-blob writer
-`flushGrants(env, player, reason)`, called on: bank-chest `deposit` interact (flushes inventory + XP, empties session inventory), disconnect, and a 100-tick timer (flushes XP only — items stay in the session pack until deposit/disconnect).
+`flushGrants(env, who, payload)`, called on: bank-chest `deposit` interact (banks the whole pack: save-backed units move inventory→bank, world-minted units grant to bank; empties session inventory), disconnect (world-minted units grant to the save **inventory**, overflow to bank; XP), and a 100-tick timer (XP only — items stay in the session pack until deposit/disconnect). The session pack seeds from the save inventory at hello (`sessionInventoryFromSave`), with save-backed vs minted unit counts tracked separately so seeded items are never re-granted.
 Algorithm (DECIDED):
 1. Build payload `{ xpBySkill, items:[{itemId,quantity}], reason }`; skip if empty.
 2. `idempotency_key = "wg:" + charId + ":" + sessionId + ":" + flushSeq++` (`sessionId` = crypto.randomUUID() minted at hello). `INSERT INTO world_grants … ON CONFLICT DO NOTHING`; if no row inserted → already applied → return.

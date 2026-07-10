@@ -57,7 +57,9 @@ for (const id of SKILL_IDS) stats[id] = { xp: 0, level: 1 }
 for (const id of COMBAT_STAT_IDS) stats[id] = { xp: 0, level: 1 }
 stats.hitpoints = { xp: 1154, level: 10 } // CLAUDE.md §5: starting HP level 10
 
-const saveObject = { stats, inventory: [], bank: {}, settings: {} }
+// 5 tin ore in the pack exercises inventory pull-through into the world.
+const inventory = Array.from({ length: 5 }, () => ({ itemId: 'tin_ore', quantity: 1 }))
+const saveObject = { stats, inventory, bank: {}, settings: {} }
 const saveData = JSON.stringify(saveObject)
 const saveBlobHex = gzipSync(Buffer.from(saveData, 'utf8')).toString('hex')
 

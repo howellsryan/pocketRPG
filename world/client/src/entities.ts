@@ -7,9 +7,9 @@ import { segmentDurationMs, shouldSnap, stepYaw, yawToward } from './motion'
 
 const ANIM_CROSSFADE_S = 0.15
 const TURN_SPEED_RAD_PER_S = 14
-// hero.glb (KayKit Knight, built by scripts/build-hero.mjs) is ~2.5 units
-// tall at unit scale; scaled to read right against 1-unit tiles.
-const HERO_SCALE = 0.5
+// hero.glb (Quaternius Male Ranger, built by scripts/build-hero.mjs) is
+// ~1.9 units tall at unit scale; scaled to read right against 1-unit tiles.
+const HERO_SCALE = 0.85
 
 export type AnimName = EntityDiff['anim']
 

@@ -25,6 +25,10 @@ function makeDb(insertChanges = 1) {
   return { env: { DB: db as unknown as D1Database }, calls }
 }
 
+class FullError extends Error {
+  code = 'INVENTORY_FULL'
+}
+
 function makeIO(save: Record<string, unknown>, overrides: Partial<GrantIO> = {}): GrantIO & {
   written: Record<string, unknown>[]
   audits: Record<string, unknown>[]
@@ -43,6 +47,33 @@ function makeIO(save: Record<string, unknown>, overrides: Partial<GrantIO> = {})
       const cur = bank[itemId]?.quantity ?? 0
       bank[itemId] = { itemId, quantity: cur + quantity }
     },
+    addItemToInventory: (saveObject, itemId, quantity, { stackable }) => {
+      const inv = ((saveObject.inventory ??= []) as { itemId: string; quantity: number }[])
+      if (stackable) {
+        const existing = inv.find((s) => s.itemId === itemId)
+        if (existing) {
+          existing.quantity += quantity
+          return
+        }
+        if (inv.length >= 28) throw new FullError()
+        inv.push({ itemId, quantity })
+        return
+      }
+      if (inv.length + quantity > 28) throw new FullError()
+      for (let i = 0; i < quantity; i++) inv.push({ itemId, quantity: 1 })
+    },
+    removeItemFromInventory: (saveObject, itemId, quantity) => {
+      const inv = (saveObject.inventory ?? []) as { itemId: string; quantity: number }[]
+      let remaining = quantity
+      for (let i = inv.length - 1; i >= 0 && remaining > 0; i--) {
+        if (inv[i].itemId !== itemId) continue
+        const take = Math.min(inv[i].quantity, remaining)
+        inv[i].quantity -= take
+        remaining -= take
+        if (inv[i].quantity === 0) inv.splice(i, 1)
+      }
+      if (remaining > 0) throw new Error('INSUFFICIENT_SUPPLIES')
+    },
     auditLog: vi.fn(async (_env, _type, payload: Record<string, unknown>) => {
       audits.push(payload)
     }),
@@ -53,11 +84,18 @@ function makeIO(save: Record<string, unknown>, overrides: Partial<GrantIO> = {})
 const who = { charId: 42, identityId: 'id-1', sessionId: 'sess-1', flushSeq: 1 }
 
 function payload(overrides: Partial<GrantPayload> = {}): GrantPayload {
-  return { xpBySkill: { mining: 85 }, items: [{ itemId: 'tin_ore', quantity: 5 }], reason: 'deposit', ...overrides }
+  return {
+    xpBySkill: { mining: 85 },
+    items: [{ itemId: 'tin_ore', quantity: 5 }],
+    itemsTo: 'bank',
+    moveToBank: [],
+    reason: 'deposit',
+    ...overrides,
+  }
 }
 
 describe('flushGrants', () => {
-  it('applies xp (level re-derived) and banks items, then audits', async () => {
+  it('applies xp (level re-derived) and banks minted items, then audits', async () => {
     const { env, calls } = makeDb()
     const io = makeIO({ stats: { mining: { xp: 0, level: 1 } } })
     const ok = await flushGrants(env, who, payload(), io)
@@ -69,6 +107,53 @@ describe('flushGrants', () => {
     expect(saveObject.bank.tin_ore).toEqual({ itemId: 'tin_ore', quantity: 5 })
     expect(io.audits[0]).toMatchObject({ characterId: 42, reason: 'deposit', idempotencyKey: 'wg:42:sess-1:1' })
     expect(calls.some((c) => c.sql.includes('INSERT INTO world_grants'))).toBe(true)
+  })
+
+  it('lands minted items in the inventory on a disconnect flush', async () => {
+    const { env } = makeDb()
+    const io = makeIO({ stats: {}, inventory: [{ itemId: 'tin_ore', quantity: 1 }] })
+    await flushGrants(env, who, payload({ items: [{ itemId: 'tin_ore', quantity: 5 }], itemsTo: 'inventory', reason: 'disconnect' }), io)
+    const { saveObject } = io.written[0] as { saveObject: any }
+    // tin ore is non-stackable: 1 seeded slot + 5 new single-unit slots
+    expect(saveObject.inventory).toHaveLength(6)
+    expect(saveObject.bank ?? {}).toEqual({})
+  })
+
+  it('spills to the bank when the inventory cannot hold everything', async () => {
+    const { env } = makeDb()
+    const fullInv = Array.from({ length: 26 }, () => ({ itemId: 'logs', quantity: 1 }))
+    const io = makeIO({ stats: {}, inventory: fullInv })
+    await flushGrants(env, who, payload({ items: [{ itemId: 'tin_ore', quantity: 5 }], itemsTo: 'inventory', reason: 'disconnect' }), io)
+    const { saveObject } = io.written[0] as { saveObject: any }
+    expect(saveObject.inventory).toHaveLength(28)
+    expect(saveObject.bank.tin_ore.quantity).toBe(3)
+  })
+
+  it('moves save-backed units from inventory to bank on deposit', async () => {
+    const { env } = makeDb()
+    const io = makeIO({ stats: {}, inventory: [
+      { itemId: 'tin_ore', quantity: 1 },
+      { itemId: 'tin_ore', quantity: 1 },
+      { itemId: 'logs', quantity: 1 },
+    ] })
+    await flushGrants(env, who, payload({
+      items: [{ itemId: 'tin_ore', quantity: 3 }],
+      itemsTo: 'bank',
+      moveToBank: [{ itemId: 'tin_ore', quantity: 2 }],
+    }), io)
+    const { saveObject } = io.written[0] as { saveObject: any }
+    expect(saveObject.inventory).toEqual([{ itemId: 'logs', quantity: 1 }])
+    expect(saveObject.bank.tin_ore.quantity).toBe(5)
+  })
+
+  it('moves only what the save inventory still holds', async () => {
+    const { env } = makeDb()
+    // Session thinks 5 are save-backed but the main game consumed 3 meanwhile.
+    const io = makeIO({ stats: {}, inventory: [{ itemId: 'tin_ore', quantity: 2 }] })
+    await flushGrants(env, who, payload({ items: [], moveToBank: [{ itemId: 'tin_ore', quantity: 5 }] }), io)
+    const { saveObject } = io.written[0] as { saveObject: any }
+    expect(saveObject.inventory).toEqual([])
+    expect(saveObject.bank.tin_ore.quantity).toBe(2)
   })
 
   it('clamps xp at the 200M cap', async () => {
@@ -101,9 +186,9 @@ describe('flushGrants', () => {
     const base = makeIO({ stats: {} })
     let failures = 2
     const io = makeIO({ stats: {} }, {
-      writeSave: vi.fn(async (env, charId, saveObject: Record<string, unknown>, expectedRevision: number) => {
+      writeSave: vi.fn(async (env2, charId, saveObject: Record<string, unknown>, expectedRevision: number) => {
         if (failures-- > 0) throw Object.assign(new Error('conflict'), { code: 'SAVE_REVISION_CONFLICT' })
-        return base.writeSave(env, charId, saveObject, expectedRevision)
+        return base.writeSave(env2, charId, saveObject, expectedRevision)
       }),
     })
     const ok = await flushGrants(env, who, payload(), io)
@@ -127,7 +212,7 @@ describe('flushGrants', () => {
   it('short-circuits an empty payload without touching the DB', async () => {
     const { env, calls } = makeDb()
     const io = makeIO({ stats: {} })
-    const empty: GrantPayload = { xpBySkill: { mining: 0 }, items: [], reason: 'timer' }
+    const empty: GrantPayload = { xpBySkill: { mining: 0 }, items: [], itemsTo: 'bank', moveToBank: [], reason: 'timer' }
     expect(isEmptyPayload(empty)).toBe(true)
     expect(await flushGrants(env, who, empty, io)).toBe(true)
     expect(calls).toHaveLength(0)

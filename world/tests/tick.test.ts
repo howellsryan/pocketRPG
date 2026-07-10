@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   respawnedRocks,
+  sessionInventoryFromSave,
   sessionStatsFromSave,
   tickPlayer,
   toEntityDiff,
@@ -21,6 +22,7 @@ function makePlayer(overrides: Partial<TickPlayer> = {}): TickPlayer {
     stats: { mining: { xp: 0, level: 1 } },
     inventory: emptyInventory(),
     pendingXp: {},
+    minted: {},
     mining: null,
     pendingInteract: null,
     ...overrides,
@@ -70,6 +72,7 @@ describe('mining', () => {
     }
 
     expect(player.inventory.filter((s) => s?.itemId === 'tin_ore')).toHaveLength(1)
+    expect(player.minted.tin_ore).toBe(1)
     expect(player.stats.mining.xp).toBe(17)
     expect(player.pendingXp.mining).toBe(17)
     expect(events).toContainEqual({ e: 'xp', skill: 'mining', amount: 17 })
@@ -164,6 +167,33 @@ describe('respawnedRocks', () => {
     ])
     expect(respawnedRocks(rocks, 10)).toEqual([{ id: 'a', depleted: false }])
     expect(respawnedRocks(rocks, 11)).toEqual([])
+  })
+})
+
+describe('sessionInventoryFromSave', () => {
+  it('seeds the pack from the save inventory and tallies save-backed units', () => {
+    const { inventory, saveBacked } = sessionInventoryFromSave({
+      inventory: [
+        { itemId: 'tin_ore', quantity: 1 },
+        { itemId: 'tin_ore', quantity: 1 },
+        { itemId: 'coins', quantity: 250 },
+        null,
+        { itemId: '', quantity: 3 },
+      ],
+    })
+    expect(inventory.filter(Boolean)).toEqual([
+      { itemId: 'tin_ore', quantity: 1 },
+      { itemId: 'tin_ore', quantity: 1 },
+      { itemId: 'coins', quantity: 250 },
+    ])
+    expect(inventory).toHaveLength(28)
+    expect(saveBacked).toEqual({ tin_ore: 2, coins: 250 })
+  })
+
+  it('returns an empty pack for a save with no inventory', () => {
+    const { inventory, saveBacked } = sessionInventoryFromSave({})
+    expect(inventory.every((s) => s === null)).toBe(true)
+    expect(saveBacked).toEqual({})
   })
 })
 

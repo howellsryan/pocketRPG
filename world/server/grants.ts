@@ -3,13 +3,22 @@
 // writeSave() already refreshes the denormalized total_level/combat_level
 // summary columns, so no extra mirroring of /api/save's PUT is needed.
 import { loadCharacterWithSave, writeSave } from '../../functions/_lib/game/save.js'
-import { addItemToBank } from '../../functions/_lib/game/inventory.js'
+import { addItemToBank, addItemToInventory, removeItemFromInventory } from '../../functions/_lib/game/inventory.js'
 import { auditLog } from '../../functions/_lib/game/audit.js'
 import { getLevelFromXP, clampXP } from '../../src/engine/experience.js'
+import { isStackable } from './mining'
+
+export type ItemStack = { itemId: string; quantity: number }
 
 export type GrantPayload = {
   xpBySkill: Record<string, number>
-  items: { itemId: string; quantity: number }[]
+  /** World-minted units (mined this session, not yet in the save). */
+  items: ItemStack[]
+  /** Where minted units land: the pack on disconnect, the bank on deposit. */
+  itemsTo: 'inventory' | 'bank'
+  /** Save-backed units to move from the save's inventory into the bank
+   * (chest deposit of items the player carried into the world). */
+  moveToBank: ItemStack[]
   reason: 'deposit' | 'disconnect' | 'timer'
 }
 
@@ -21,18 +30,55 @@ export type GrantIdentity = {
 }
 
 type SaveStats = Record<string, { xp?: number; level?: number }>
+type Save = Record<string, unknown>
 
 export type GrantIO = {
-  loadCharacterWithSave: (env: unknown, characterId: number, identityId: string) => Promise<{ saveObject: Record<string, unknown>; saveRevision: number }>
-  writeSave: (env: unknown, characterId: number, saveObject: Record<string, unknown>, expectedRevision: number) => Promise<unknown>
-  addItemToBank: (save: Record<string, unknown>, itemId: string, quantity: number) => void
+  loadCharacterWithSave: (env: unknown, characterId: number, identityId: string) => Promise<{ saveObject: Save; saveRevision: number }>
+  writeSave: (env: unknown, characterId: number, saveObject: Save, expectedRevision: number) => Promise<unknown>
+  addItemToBank: (save: Save, itemId: string, quantity: number) => void
+  addItemToInventory: (save: Save, itemId: string, quantity: number, opts: { stackable: boolean }) => void
+  removeItemFromInventory: (save: Save, itemId: string, quantity: number) => void
   auditLog: (env: unknown, eventType: string, payload: Record<string, unknown>) => Promise<void>
 }
 
-const defaultIO: GrantIO = { loadCharacterWithSave, writeSave, addItemToBank, auditLog }
+const defaultIO: GrantIO = { loadCharacterWithSave, writeSave, addItemToBank, addItemToInventory, removeItemFromInventory, auditLog }
 
 export function isEmptyPayload(payload: GrantPayload): boolean {
-  return payload.items.length === 0 && Object.values(payload.xpBySkill).every((v) => !v)
+  return (
+    payload.items.length === 0 &&
+    payload.moveToBank.length === 0 &&
+    Object.values(payload.xpBySkill).every((v) => !v)
+  )
+}
+
+function inventoryCount(save: Save, itemId: string): number {
+  const slots = Array.isArray(save.inventory) ? (save.inventory as { itemId?: string; quantity?: number }[]) : []
+  let total = 0
+  for (const slot of slots) {
+    if (slot?.itemId === itemId) total += Math.floor(Number(slot.quantity) || 0)
+  }
+  return total
+}
+
+/** Adds minted units to the save's inventory, spilling whatever doesn't fit
+ * into the bank — mirroring the main game's auto-bank-on-full behaviour. */
+function grantToInventory(save: Save, itemId: string, quantity: number, io: GrantIO): void {
+  const stackable = isStackable(itemId)
+  const slots = Array.isArray(save.inventory) ? save.inventory : []
+  let toInventory = quantity
+  if (!stackable) {
+    toInventory = Math.min(quantity, Math.max(0, 28 - slots.length))
+  }
+  if (toInventory > 0) {
+    try {
+      io.addItemToInventory(save, itemId, toInventory, { stackable })
+    } catch (err) {
+      if ((err as { code?: string })?.code !== 'INVENTORY_FULL') throw err
+      toInventory = 0
+    }
+  }
+  const overflow = quantity - toInventory
+  if (overflow > 0) io.addItemToBank(save, itemId, overflow)
 }
 
 /** Applies a grant payload to the character's save blob, exactly once per
@@ -65,7 +111,18 @@ export async function flushGrants(
         entry.level = getLevelFromXP(entry.xp)
         stats[skill] = entry
       }
-      for (const item of payload.items) io.addItemToBank(saveObject, item.itemId, item.quantity)
+      for (const item of payload.moveToBank) {
+        // Only move what is actually still in the save's inventory — the main
+        // game may have consumed some units since the session seeded them.
+        const take = Math.min(item.quantity, inventoryCount(saveObject, item.itemId))
+        if (take < 1) continue
+        io.removeItemFromInventory(saveObject, item.itemId, take)
+        io.addItemToBank(saveObject, item.itemId, take)
+      }
+      for (const item of payload.items) {
+        if (payload.itemsTo === 'inventory') grantToInventory(saveObject, item.itemId, item.quantity, io)
+        else io.addItemToBank(saveObject, item.itemId, item.quantity)
+      }
       await io.writeSave(env, who.charId, saveObject, saveRevision)
       await io.auditLog(env, 'world_grant', {
         characterId: who.charId,
@@ -74,6 +131,8 @@ export async function flushGrants(
         reason: payload.reason,
         xpBySkill: payload.xpBySkill,
         items: payload.items,
+        itemsTo: payload.itemsTo,
+        moveToBank: payload.moveToBank,
       })
       return true
     } catch (err) {

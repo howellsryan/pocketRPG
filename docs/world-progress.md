@@ -289,3 +289,17 @@ Developer decisions this session: stop using `public/3d-samples/hero.glb` in the
 `world:check` green (6 files / 50 tests). Only `world/` + `docs/` touched — no root gate required.
 
 - [x] Hero + walking + STEP 1.1–1.5 — see commit introducing this entry — Phase 1 code complete; acceptance is the DEVELOPER TASK in the PR (real-browser script incl. PocketRPG-side bank/XP check).
+
+## Hero reversed to Quaternius Ranger; inventory-first item flow
+
+Developer reversed the hero choice ("Quaternius will have a better job rendering assets onto it") and reworked item semantics: the world pack must mirror the character's PocketRPG inventory (5 tin in + 5 mined = 10 back), and mined items must land in the inventory — the bank only on an explicit chest deposit.
+
+**Hero**: `build-hero.mjs` now builds from Quaternius `Outfits/Male_Ranger.gltf` — the Universal Base Character body with the Modular Fantasy ranger outfit pre-fitted (hood/tunic/bracers/boots), 65-joint universal rig — plus UAL1 `Idle_Loop`/`Walk_Loop`/`Sword_Attack`/`Death01` and UAL2 `TreeChopping_Loop` (mine), retargeted by joint name as before. Two size traps fixed in the script: disposing an Animation does NOT dispose its channels/samplers (mergeDocuments dragged all 43 clips' accessors in — 40k orphans / 27 MB; dispose channels+samplers, prune src first), and the pack ships 4K PBR maps (66 MiB → strip normal/ORM/roughness, 1K webp base color via sharp devDep → 1.9 MiB). `HERO_SCALE` 0.85.
+
+**Inventory-first flow**: `sessionInventoryFromSave` seeds the 28-slot pack + a `saveBacked` per-item tally at hello (welcome carries it; client icons come from items.json as before). `TickPlayer.minted` tracks world-created units. `GrantPayload` gains `itemsTo: 'inventory'|'bank'` + `moveToBank[]`: deposit banks the pack (save-backed units are MOVED inventory→bank, capped at what the save actually still holds — the main game may have consumed some; minted units grant straight to bank), disconnect grants minted units to the save inventory via `addItemToInventory` with bank spill-over on `INVENTORY_FULL` (mirrors the main game's auto-bank), timer stays XP-only. Seeded units are never re-granted.
+
+**Verified end-to-end** (local wrangler + D1, seed now carries 5 tin ore): session A seeded 5 → mined 2 → pack showed 7 → disconnected undeposited → save.inventory = 7 tin, bank empty; session B seeded 7 → chest deposit → save.inventory empty, bank 7 tin; both world_grants payloads + audit rows correct. Zoomed headless screenshots confirm the ranger's outfit, facing, mine anim, and ore icons. `dev-seed.mjs` FK fix from last entry still holds.
+
+`world:check` green (6 files / 56 tests). Only `world/` + `docs/` touched.
+
+- [x] Quaternius hero + inventory-first flow — see commit introducing this entry — pushed to PR #727; DT-P1 acceptance script updated for inventory semantics.

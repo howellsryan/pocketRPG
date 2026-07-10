@@ -1,33 +1,40 @@
 #!/usr/bin/env node
-// Builds world/client/public/models/hero.glb from the CC0 KayKit library in
-// assets/open-world: the Adventurers 2.0 Knight mesh + Rig_Medium clips from
-// the Character Animations pack, retargeted onto the Knight's skeleton by
+// Builds world/client/public/models/hero.glb from the Quaternius library in
+// assets/open-world: the Modular Fantasy "Male_Ranger" outfit character (the
+// Universal Base Character body with the ranger outfit pre-fitted, 65-joint
+// universal rig) + Universal Animation Library clips retargeted onto it by
 // joint name and renamed to the protocol's anim states (§5 EntityDiff.anim).
 import { NodeIO } from '@gltf-transform/core'
 import { ALL_EXTENSIONS } from '@gltf-transform/extensions'
-import { mergeDocuments, prune, dedup, resample, unpartition } from '@gltf-transform/functions'
+import { mergeDocuments, prune, dedup, resample, unpartition, textureCompress } from '@gltf-transform/functions'
 import { MeshoptDecoder } from 'meshoptimizer'
+import sharp from 'sharp'
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const worldDir = fileURLToPath(new URL('..', import.meta.url))
 const repoRoot = path.join(worldDir, '..')
-const assetRoot = path.join(repoRoot, 'assets', 'open-world', 'kaykit')
+const qRoot = path.join(repoRoot, 'assets', 'open-world', 'Quaternius')
 const CHARACTER = path.join(
-  assetRoot, 'KayKit_Adventurers_2.0_FREE', 'KayKit_Adventurers_2.0_FREE', 'Characters', 'gltf', 'Knight.glb'
+  qRoot,
+  'Modular Character Outfits - Fantasy[Standard]', 'Modular Character Outfits - Fantasy[Standard]',
+  'Exports', 'glTF (Godot-Unreal)', 'Outfits', 'Male_Ranger.gltf'
 )
-const ANIM_DIR = path.join(
-  assetRoot, 'KayKit_Character_Animations_1.1', 'KayKit_Character_Animations_1.1', 'Animations', 'gltf', 'Rig_Medium'
+const UAL1 = path.join(
+  qRoot, 'Universal Animation Library[Standard] (1)', 'Universal Animation Library[Standard]', 'Unreal-Godot', 'UAL1_Standard.glb'
+)
+const UAL2 = path.join(
+  qRoot, 'Universal Animation Library 2[Standard]', 'Universal Animation Library 2[Standard]', 'Unreal-Godot', 'UAL2_Standard.glb'
 )
 const OUT = path.join(worldDir, 'client', 'public', 'models', 'hero.glb')
 
 const CLIPS = [
-  { file: 'Rig_Medium_General.glb', clip: 'Idle_A', as: 'idle' },
-  { file: 'Rig_Medium_MovementBasic.glb', clip: 'Walking_A', as: 'walk' },
-  { file: 'Rig_Medium_Tools.glb', clip: 'Pickaxing', as: 'mine' },
-  { file: 'Rig_Medium_CombatMelee.glb', clip: 'Melee_1H_Attack_Slice_Diagonal', as: 'attack' },
-  { file: 'Rig_Medium_General.glb', clip: 'Death_A', as: 'die' },
+  { file: UAL1, clip: 'Idle_Loop', as: 'idle' },
+  { file: UAL1, clip: 'Walk_Loop', as: 'walk' },
+  { file: UAL2, clip: 'TreeChopping_Loop', as: 'mine' },
+  { file: UAL1, clip: 'Sword_Attack', as: 'attack' },
+  { file: UAL1, clip: 'Death01', as: 'die' },
 ]
 
 await MeshoptDecoder.ready
@@ -38,10 +45,16 @@ const baseNodes = new Map(doc.getRoot().listNodes().map((n) => [n.getName(), n])
 const baseScene = doc.getRoot().listScenes()[0]
 
 for (const spec of CLIPS) {
-  const src = await io.read(path.join(ANIM_DIR, spec.file))
+  const src = await io.read(spec.file)
   for (const anim of src.getRoot().listAnimations()) {
-    if (anim.getName() !== spec.clip) anim.dispose()
+    if (anim.getName() === spec.clip) continue
+    // Channels + samplers must go too — disposing only the animation leaves
+    // them (and their accessors) reachable, and mergeDocuments copies it all.
+    for (const channel of anim.listChannels()) channel.dispose()
+    for (const sampler of anim.listSamplers()) sampler.dispose()
+    anim.dispose()
   }
+  await src.transform(prune())
   mergeDocuments(doc, src)
   const merged = doc.getRoot().listAnimations().find((a) => a.getName() === spec.clip)
   if (!merged) throw new Error(`clip ${spec.clip} not found in ${spec.file}`)
@@ -50,7 +63,7 @@ for (const spec of CLIPS) {
     const target = channel.getTargetNode()
     if (!target) continue
     const baseNode = baseNodes.get(target.getName())
-    if (!baseNode) throw new Error(`clip ${spec.as}: no Knight joint named '${target.getName()}'`)
+    if (!baseNode) throw new Error(`clip ${spec.as}: no hero joint named '${target.getName()}'`)
     channel.setTargetNode(baseNode)
   }
 }
@@ -63,7 +76,22 @@ for (const scene of doc.getRoot().listScenes()) {
   for (const n of nodes) n.dispose()
 }
 
-await doc.transform(resample(), dedup(), prune(), unpartition())
+// The pack ships 4K PBR maps (~66 MiB total). At this game's camera distance
+// only base color matters: drop normal/ORM/roughness maps and shrink the rest.
+for (const material of doc.getRoot().listMaterials()) {
+  material.setNormalTexture(null)
+  material.setOcclusionTexture(null)
+  material.setMetallicRoughnessTexture(null)
+  material.setRoughnessFactor(1)
+  material.setMetallicFactor(0)
+}
+await doc.transform(
+  resample(),
+  dedup(),
+  prune(),
+  textureCompress({ encoder: sharp, targetFormat: 'webp', resize: [1024, 1024] }),
+  unpartition()
+)
 await io.write(OUT, doc)
 
 const clips = doc.getRoot().listAnimations().map((a) => a.getName()).join(', ')

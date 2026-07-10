@@ -24,6 +24,9 @@ export type TickPlayer = {
   stats: SessionStats
   inventory: InvSlot[]
   pendingXp: Record<string, number>
+  /** Units created in-world this session (mined ore, …) — the grant delta.
+   * Save-backed units seeded from the character's inventory are NOT here. */
+  minted: Record<string, number>
   mining: { rockId: string; progress: number } | null
   pendingInteract: PendingInteract | null
 }
@@ -39,6 +42,30 @@ export type TickResult = {
   events: ZoneEvent[]
   rockChanges: { id: string; depleted: boolean }[]
   deposit: boolean
+}
+
+/** Seeds the 28-slot session pack from the character's PocketRPG inventory at
+ * hello, and tallies those save-backed units per item so flushes can tell them
+ * apart from world-minted ones (seeded units are already in the save — they
+ * must never be re-granted, only moved to the bank on deposit). */
+export function sessionInventoryFromSave(save: Record<string, unknown>): {
+  inventory: InvSlot[]
+  saveBacked: Record<string, number>
+} {
+  const inventory: InvSlot[] = new Array<InvSlot>(28).fill(null)
+  const saveBacked: Record<string, number> = {}
+  const slots = Array.isArray(save?.inventory) ? save.inventory : []
+  let next = 0
+  for (const slot of slots) {
+    if (next >= inventory.length) break
+    if (!slot || typeof slot !== 'object') continue
+    const itemId = typeof slot.itemId === 'string' && slot.itemId ? slot.itemId : null
+    const quantity = Math.floor(Number(slot.quantity) || 0)
+    if (!itemId || quantity < 1) continue
+    inventory[next++] = { itemId, quantity }
+    saveBacked[itemId] = (saveBacked[itemId] ?? 0) + quantity
+  }
+  return { inventory, saveBacked }
 }
 
 /** Seeds session stats from the save blob once at hello. Missing levels are
@@ -134,6 +161,7 @@ function tickMining(player: TickPlayer, ctx: TickContext, result: TickResult): v
     player.anim = 'idle'
     return
   }
+  player.minted[action.product] = (player.minted[action.product] ?? 0) + 1
   result.events.push(...grantSessionXp(player, 'mining', action.xp))
   result.events.push({ e: 'inv', inventory: player.inventory })
   rock.depletedUntilTick = ctx.tick + ROCK_DEPLETED_TICKS

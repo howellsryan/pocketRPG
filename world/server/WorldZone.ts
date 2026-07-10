@@ -3,14 +3,15 @@ import { verifyJWT } from '../../functions/_lib/jwt.js'
 import { findPath, findPathAdjacent } from './pathfind'
 import {
   respawnedRocks,
+  sessionInventoryFromSave,
   sessionStatsFromSave,
   tickPlayer,
   toEntityDiff,
   type RockState,
   type TickPlayer,
 } from './tick'
-import { emptyInventory, inventoryToItems } from './mining'
-import { flushGrants, isEmptyPayload, type GrantPayload } from './grants'
+import { emptyInventory } from './mining'
+import { flushGrants, isEmptyPayload, type GrantPayload, type ItemStack } from './grants'
 import { loadCharacterWithSave } from '../../functions/_lib/game/save.js'
 import { validateZone, type ZoneDef } from '../shared/zone'
 import type { ClientMessage, EntityDiff, ServerMessage, StaticObject, ZoneEvent } from '../shared/protocol'
@@ -39,7 +40,19 @@ type Player = TickPlayer & {
   identityId: string
   sessionId: string
   flushSeq: number
-  pendingItems: { itemId: string; quantity: number }[]
+  /** Units seeded from the character's PocketRPG inventory at hello — already
+   * in the save, so a deposit MOVES them to the bank rather than granting. */
+  saveBacked: Record<string, number>
+}
+
+function toItemList(record: Record<string, number>): ItemStack[] {
+  return Object.entries(record)
+    .filter(([, quantity]) => quantity > 0)
+    .map(([itemId, quantity]) => ({ itemId, quantity }))
+}
+
+function mergeInto(target: Record<string, number>, items: ItemStack[]): void {
+  for (const item of items) target[item.itemId] = (target[item.itemId] ?? 0) + item.quantity
 }
 
 function send(conn: Connection, message: ServerMessage): void {
@@ -119,7 +132,7 @@ export class WorldZone extends Server<Env> {
     if (!player) return
     this.players.delete(charId)
     this.dirty.delete(charId)
-    void this.flush(player, 'disconnect', true)
+    void this.flush(player, 'disconnect')
     void this.checkpointPlayer(player)
     this.maybeStopTicking()
   }
@@ -155,9 +168,11 @@ export class WorldZone extends Server<Env> {
     }
 
     let stats
+    let seeded
     try {
       const { saveObject } = await loadCharacterWithSave(this.env, row.id, payload.sub)
       stats = sessionStatsFromSave(saveObject)
+      seeded = sessionInventoryFromSave(saveObject)
     } catch {
       connection.close(1008, 'character_not_found')
       return
@@ -188,8 +203,9 @@ export class WorldZone extends Server<Env> {
       path: [],
       anim: 'idle',
       stats,
-      inventory: emptyInventory(),
+      inventory: seeded.inventory,
       pendingXp: {},
+      minted: {},
       mining: null,
       pendingInteract: null,
       conn: connection,
@@ -197,7 +213,7 @@ export class WorldZone extends Server<Env> {
       identityId: String(payload.sub),
       sessionId: crypto.randomUUID(),
       flushSeq: 0,
-      pendingItems: [],
+      saveBacked: seeded.saveBacked,
     }
     this.players.set(charId, player)
 
@@ -298,7 +314,7 @@ export class WorldZone extends Server<Env> {
       if (result.deposit) {
         // flush() empties the pack synchronously before its first await, so
         // the events below already show the post-deposit state.
-        void this.flush(player, 'deposit', true)
+        void this.flush(player, 'deposit')
         result.events.push({ e: 'inv', inventory: player.inventory })
         result.events.push({ e: 'msg', text: 'You deposit your items into your bank.' })
       }
@@ -319,22 +335,31 @@ export class WorldZone extends Server<Env> {
 
     if (this.tickCount % CHECKPOINT_EVERY_TICKS === 0) {
       if (this.dirty.size > 0) void this.flushCheckpoints()
-      for (const player of this.players.values()) void this.flush(player, 'timer', false)
+      for (const player of this.players.values()) void this.flush(player, 'timer')
     }
   }
 
   /** Snapshots and clears the player's pending grant tallies, then applies
-   * them to the save blob. On failure the snapshot is merged back so the next
-   * flush (or the disconnect flush) retries it. */
-  private async flush(player: Player, reason: GrantPayload['reason'], includeItems: boolean): Promise<void> {
-    if (includeItems) {
-      player.pendingItems.push(...inventoryToItems(player.inventory))
-      player.inventory = emptyInventory()
-    }
-    const payload: GrantPayload = { xpBySkill: player.pendingXp, items: player.pendingItems, reason }
-    if (isEmptyPayload(payload)) return
+   * them to the save blob. Items follow "inventory first, bank on deposit":
+   * a chest deposit banks everything in the pack (moving save-backed units,
+   * granting minted ones); a disconnect lands minted units in the character's
+   * inventory; the periodic timer flushes XP only. On failure the snapshot is
+   * merged back so the next flush retries it. */
+  private async flush(player: Player, reason: GrantPayload['reason']): Promise<void> {
+    const payload: GrantPayload = { xpBySkill: player.pendingXp, items: [], itemsTo: 'bank', moveToBank: [], reason }
     player.pendingXp = {}
-    player.pendingItems = []
+    if (reason === 'deposit') {
+      payload.items = toItemList(player.minted)
+      payload.moveToBank = toItemList(player.saveBacked)
+      player.minted = {}
+      player.saveBacked = {}
+      player.inventory = emptyInventory()
+    } else if (reason === 'disconnect') {
+      payload.items = toItemList(player.minted)
+      payload.itemsTo = 'inventory'
+      player.minted = {}
+    }
+    if (isEmptyPayload(payload)) return
     player.flushSeq += 1
 
     const ok = await flushGrants(this.env, {
@@ -347,7 +372,8 @@ export class WorldZone extends Server<Env> {
       for (const [skill, amount] of Object.entries(payload.xpBySkill)) {
         player.pendingXp[skill] = (player.pendingXp[skill] ?? 0) + amount
       }
-      player.pendingItems.push(...payload.items)
+      mergeInto(player.minted, payload.items)
+      mergeInto(player.saveBacked, payload.moveToBank)
     }
   }
 
