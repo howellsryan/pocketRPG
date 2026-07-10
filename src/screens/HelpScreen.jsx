@@ -1,5 +1,6 @@
 import Card from '../components/Card.jsx'
 import GameIcon from '../components/GameIcon.jsx'
+import { DiscordMark, DISCORD_INVITE_URL } from '../components/DiscordButton.jsx'
 import { useGame } from '../state/gameState.jsx'
 import { SETTINGS_NAV_LINKS } from '../components/navTabs.js'
 import { api } from '../cloud/api.js'
@@ -60,22 +61,6 @@ export default function HelpScreen({ onNavigate, onShowIntroTour }) {
           </div>
         </Card>
 
-        {onShowIntroTour && (
-          <Card className="p-2">
-            <button
-              type="button"
-              onClick={onShowIntroTour}
-              class="flex items-center gap-3 w-full min-h-[48px] px-2 bg-transparent border-0 text-left cursor-pointer active:opacity-70"
-            >
-              <span class="w-11 flex justify-center items-center flex-shrink-0">
-                <GameIcon iconKey="open_book" size={40} color="var(--color-parchment)" />
-              </span>
-              <span class="flex-1 text-sm font-semibold text-[var(--color-parchment)]">View Intro Tour</span>
-              <span class="text-[var(--color-parchment)] opacity-40 text-lg leading-none pr-1">›</span>
-            </button>
-          </Card>
-        )}
-
         <Card className="p-2">
           <div class="divide-y divide-[var(--color-void-border)]">
             {SETTINGS_NAV_LINKS.map((link) => (
@@ -92,6 +77,19 @@ export default function HelpScreen({ onNavigate, onShowIntroTour }) {
                 <span class="text-[var(--color-parchment)] opacity-40 text-lg leading-none pr-1">›</span>
               </button>
             ))}
+            {onShowIntroTour && (
+              <button
+                type="button"
+                onClick={onShowIntroTour}
+                class="flex items-center gap-3 w-full min-h-[48px] px-2 bg-transparent border-0 text-left cursor-pointer active:opacity-70"
+              >
+                <span class="w-11 flex justify-center items-center flex-shrink-0">
+                  <GameIcon iconKey="info" size={40} color="var(--color-parchment)" />
+                </span>
+                <span class="flex-1 text-sm font-semibold text-[var(--color-parchment)]">View Intro Tour</span>
+                <span class="text-[var(--color-parchment)] opacity-40 text-lg leading-none pr-1">›</span>
+              </button>
+            )}
           </div>
         </Card>
 
@@ -110,6 +108,21 @@ export default function HelpScreen({ onNavigate, onShowIntroTour }) {
             </button>
           </Card>
         )}
+
+        <Card className="p-2">
+          <a
+            href={DISCORD_INVITE_URL}
+            target="_blank"
+            rel="noreferrer"
+            class="flex items-center gap-3 w-full min-h-[48px] px-2 no-underline cursor-pointer active:opacity-70"
+          >
+            <span class="w-11 flex justify-center items-center flex-shrink-0 text-[#5865F2]">
+              <DiscordMark size={28} />
+            </span>
+            <span class="flex-1 text-sm font-semibold text-[var(--color-parchment)]">Come join the community</span>
+            <span class="text-[var(--color-parchment)] opacity-40 text-lg leading-none pr-1">›</span>
+          </a>
+        </Card>
       </div>
     </div>
   )

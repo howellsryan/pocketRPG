@@ -158,7 +158,7 @@
       {
         "screen": "store",
         "label": "Trading Post",
-        "iconKey": "uncut_ruby",
+        "iconKey": "offers",
         "x": 408,
         "y": 220
       },
