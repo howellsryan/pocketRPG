@@ -14,6 +14,7 @@ import ChatWidget from './components/ChatWidget.jsx'
 import { emitRewardReveal, emitQuestCompletionReveal, emitLevelUpReveal } from './utils/rewardReveal.js'
 import BuyCreditsModal from './components/BuyCreditsModal.jsx'
 import DailyTasksModal from './components/DailyTasksModal.jsx'
+import IntroTourModal from './components/IntroTourModal.jsx'
 import HomeScreen from './screens/HomeScreen.jsx'
 import StatsScreen from './screens/StatsScreen.jsx'
 import InventoryScreen from './screens/InventoryScreen.jsx'
@@ -360,6 +361,7 @@ function GameApp() {
   const [credits, setCredits] = useState(0)
   const [showBuyCreditsModal, setShowBuyCreditsModal] = useState(false)
   const [showDailyTasksModal, setShowDailyTasksModal] = useState(false)
+  const [showIntroTour, setShowIntroTour] = useState(false)
   const [chatOpen, setChatOpen] = useState(false)
   const [dailyTaskDate, setDailyTaskDate] = useState(null)
   const [dailyTaskResetInMs, setDailyTaskResetInMs] = useState(0)
@@ -1744,6 +1746,9 @@ function GameApp() {
     if (charId) setLocalCharacterId(charId)
     await loadGame()
     setGameReady(true)
+    // Fresh save = brand-new character (cloud or demo) — greet them with the
+    // first-run tour. Replayable later from Settings.
+    setShowIntroTour(true)
   }
 
 
@@ -2872,7 +2877,7 @@ function GameApp() {
       case SCREENS.ADVENTURES:     return <AdventuresScreen onNavigate={navigate} />
       case SCREENS.COLLECTION_LOG: return <CollectionLogScreen onBack={backToPrev} />
       case SCREENS.LEADERBOARD:    return <LeaderboardScreen onBack={backToPrev} />
-      case SCREENS.HELP:                return <HelpScreen onNavigate={navigate} />
+      case SCREENS.HELP:                return <HelpScreen onNavigate={navigate} onShowIntroTour={() => setShowIntroTour(true)} />
       case SCREENS.CHARACTER_UNLOCKS:   return <CharacterUnlockScreen onBack={backToPrev || (() => navigate(SCREENS.HOME))} />
       default:                  return <HomeScreen onNavigate={navigate} onLogout={handleLogoutToCharacterSelect} onManualSave={handleManualSave} isCloudAccount={!!getToken() && !!getCharacterId()} />
     }
@@ -3279,6 +3284,13 @@ function GameApp() {
           tasks={dailyTaskStates || []}
           resetInMs={dailyTaskResetInMs}
           taskPool={dailyTasksData}
+        />
+      )}
+
+      {showIntroTour && (
+        <IntroTourModal
+          onClose={() => setShowIntroTour(false)}
+          isCloudAccount={isCloudAccount && !demoMode}
         />
       )}
 
