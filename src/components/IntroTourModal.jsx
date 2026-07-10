@@ -195,6 +195,7 @@ function buildSteps({ playerName, isCloudAccount, desktop, worldMap }) {
         <NavRow iconKey="paperdoll" label="Equipment" note="What you're wearing" />
         <NavRow iconKey="adventures_scroll" label="Adventures" note="Quests, clues and minigames" />
         <NavRow iconKey="gears" label="Settings" note="Options, unlocks, leaderboards and the collection log" />
+        {isCloudAccount && <NavRow iconKey="chat_bubble" label="Game Helper" note="Chat for help, or ask it to act for you" />}
         <RailLabel>Top bar</RailLabel>
         {isCloudAccount ? (
           <>
@@ -227,6 +228,7 @@ function buildSteps({ playerName, isCloudAccount, desktop, worldMap }) {
           <NavRow emoji="🔒" label="Cloud extras" note="Daily Tasks, Credits and Skip unlock with a free account" />
         )}
         <NavRow iconKey="home" label="Home" note="Back to your skills" />
+        {isCloudAccount && <NavRow iconKey="chat_bubble" label="Game Helper" note="Chat for help, or ask it to act for you" />}
       </div>
     ),
   })
