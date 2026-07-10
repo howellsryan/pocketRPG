@@ -1,26 +1,107 @@
 import { exchangeHandoff, getStoredSession, parseHandoffFromHash, pocketRpgUrl, type WorldSession } from './auth'
-import { hideOverlay, initHud, pushMessage, renderInventory, showLoginRequired, showXpDrop } from './ui'
+import { hideOverlay, initHud, pushMessage, removeHpBar, renderInventory, showHitsplat, showLoginRequired, showXpDrop, updateHpBar, npcExamine } from './ui'
 import { connect, onMessage, send } from './net'
-import { clampZoom, createCamera, createGround, createLights, createRenderer, createScene, updateCamera } from './scene'
-import { applyEntityDiff, createEntity, createHeroMesh, updateEntity, type Entity } from './entities'
-import { createClickMarker, setupClickToMove, showClickMarker, updateClickMarker } from './input'
+import { clampZoom, createCamera, createGround, createLights, createRenderer, createScene, tileToWorld, updateCamera } from './scene'
+import { applyEntityDiff, createCowMesh, createEntity, createHeroMesh, updateEntity, type Entity } from './entities'
+import { createClickMarker, setupInput, showClickMarker, updateClickMarker } from './input'
 import { createStatics, type Statics } from './statics'
-import type { ServerMessage, ZoneEvent } from '../../shared/protocol'
+import { createLootLayer, type LootLayer } from './loot'
+import { combatLevelFromStats } from '../../../src/engine/combatLevel.js'
+import monstersData from '../../../src/data/monsters.json'
+import * as THREE from 'three'
+import type { EntityDiff, ServerMessage, ZoneEvent } from '../../shared/protocol'
+import type { Pickable } from './picking'
 
 const ZONE_ID = 'pasture'
 
-function handleEvent(event: ZoneEvent): void {
-  if (event.e === 'inv') renderInventory(event.inventory)
-  else if (event.e === 'xp') showXpDrop(event.skill, event.amount)
-  else if (event.e === 'msg') pushMessage(event.text)
+type Monsters = Record<string, { name?: string; combatLevel?: number } | undefined>
+const monsters = monstersData as unknown as Monsters
+
+function buildNpcPickable(diff: EntityDiff): Pickable {
+  const monster = diff.monsterId ? monsters[diff.monsterId] : undefined
+  return {
+    kind: 'npc',
+    id: diff.id,
+    name: diff.name ?? monster?.name ?? 'Monster',
+    actions: [{ label: 'Attack', action: 'attack' }],
+    monsterLevel: monster?.combatLevel,
+    examine: npcExamine(diff.monsterId ?? ''),
+  }
 }
 
 function enterWorld(session: WorldSession): void {
   const socket = connect(window.location.host, ZONE_ID)
   let self: Entity | null = null
   let statics: Statics | null = null
+  let lootLayer: LootLayer | null = null
+  let camera: THREE.PerspectiveCamera | null = null
+  const npcs = new Map<string, Entity>()
+  const npcLoading = new Set<string>()
+  const pendingNpcDiff = new Map<string, EntityDiff>()
   const rockStates = new Map<string, boolean>()
+  let playerCombatLevel = 3
   let zoom = 1
+
+  function toScreen(pos: THREE.Vector3, yOffset: number): { x: number; y: number } {
+    const v = pos.clone()
+    v.y += yOffset
+    if (camera) v.project(camera)
+    return { x: (v.x * 0.5 + 0.5) * window.innerWidth, y: (-v.y * 0.5 + 0.5) * window.innerHeight }
+  }
+
+  function meshOf(id: string): THREE.Object3D | null {
+    if (self && id === self.id) return self.mesh
+    return npcs.get(id)?.mesh ?? null
+  }
+
+  function handleEvent(event: ZoneEvent): void {
+    if (event.e === 'inv') renderInventory(event.inventory)
+    else if (event.e === 'xp') showXpDrop(event.skill, event.amount)
+    else if (event.e === 'msg') pushMessage(event.text)
+    else if (event.e === 'hit') {
+      const mesh = meshOf(event.targetId)
+      if (mesh) {
+        const s = toScreen(mesh.position, 0.9)
+        showHitsplat(s.x, s.y, event.dmg)
+      }
+    }
+  }
+
+  function ensureNpc(scene: THREE.Scene, diff: EntityDiff): void {
+    const existing = npcs.get(diff.id)
+    if (existing) {
+      applyEntityDiff(existing, diff)
+      return
+    }
+    pendingNpcDiff.set(diff.id, diff)
+    if (npcLoading.has(diff.id)) return
+    npcLoading.add(diff.id)
+    void createCowMesh().then(({ mesh, animator }) => {
+      const d = pendingNpcDiff.get(diff.id) ?? diff
+      const entity = createEntity(diff.id, d.x, d.z, mesh, animator)
+      entity.serverAnim = d.anim
+      entity.name = d.name
+      entity.monsterId = d.monsterId
+      entity.hp = d.hp
+      entity.maxHp = d.maxHp
+      mesh.userData.pick = buildNpcPickable(d)
+      scene.add(entity.mesh)
+      npcs.set(diff.id, entity)
+      npcLoading.delete(diff.id)
+      pendingNpcDiff.delete(diff.id)
+    })
+  }
+
+  function removeNpc(id: string): void {
+    const entity = npcs.get(id)
+    if (entity) {
+      entity.mesh.parent?.remove(entity.mesh)
+      npcs.delete(id)
+    }
+    npcLoading.delete(id)
+    pendingNpcDiff.delete(id)
+    removeHpBar(id)
+  }
 
   socket.addEventListener('open', () => {
     send(socket, { t: 'hello', token: session.token })
@@ -34,35 +115,37 @@ function enterWorld(session: WorldSession): void {
         createLights(scene)
         const ground = createGround(scene, message.zone.collision, message.zone.w, message.zone.h)
         const marker = createClickMarker(scene)
-        const camera = createCamera()
+        camera = createCamera()
         const container = document.getElementById('scene')!
         const renderer = createRenderer(container)
 
         initHud()
         renderInventory(message.you.inventory)
+        playerCombatLevel = combatLevelFromStats(message.you.stats)
+        lootLayer = createLootLayer(scene)
 
-        const [heroResult, staticsResult] = await Promise.all([
-          createHeroMesh(),
-          createStatics(scene, message.statics),
-        ])
+        const [heroResult, staticsResult] = await Promise.all([createHeroMesh(), createStatics(scene, message.statics)])
         statics = staticsResult
         for (const [id, depleted] of rockStates) staticsResult.setRockDepleted(id, depleted)
         self = createEntity(message.selfId, message.you.x, message.you.z, heroResult.mesh, heroResult.animator)
         scene.add(self.mesh)
 
-        setupClickToMove(
-          renderer.domElement,
-          camera,
-          ground,
-          staticsResult.pickables,
-          (tile) => {
+        setupInput(renderer.domElement, camera, ground, {
+          onWalk: (tile) => {
             send(socket, { t: 'walk', x: tile.x, z: tile.z })
             showClickMarker(marker, tile.x, tile.z)
           },
-          (target) => {
-            send(socket, { t: 'interact', kind: target.kind, id: target.id, action: target.action })
-          }
-        )
+          onInteract: (interact) => {
+            send(socket, { t: 'interact', kind: interact.kind, id: interact.id, action: interact.action })
+          },
+          onMessage: (text) => pushMessage(text),
+          getPickables: () => [
+            ...(statics?.pickables ?? []),
+            ...[...npcs.values()].filter((e) => e.serverAnim !== 'die').map((e) => e.mesh),
+            ...(lootLayer?.pickables ?? []),
+          ],
+          getPlayerCombatLevel: () => playerCombatLevel,
+        })
 
         renderer.domElement.addEventListener(
           'wheel',
@@ -74,6 +157,7 @@ function enterWorld(session: WorldSession): void {
         )
 
         window.addEventListener('resize', () => {
+          if (!camera) return
           camera.aspect = window.innerWidth / window.innerHeight
           camera.updateProjectionMatrix()
           renderer.setSize(window.innerWidth, window.innerHeight)
@@ -83,31 +167,47 @@ function enterWorld(session: WorldSession): void {
         function frame(now: number): void {
           const deltaSeconds = (now - lastFrameTime) / 1000
           lastFrameTime = now
-          if (self) {
+          if (self && camera) {
             updateEntity(self, now, deltaSeconds)
             updateCamera(camera, self.mesh.position, zoom)
           }
+          for (const npc of npcs.values()) {
+            updateEntity(npc, now, deltaSeconds)
+            if (npc.hp != null && npc.maxHp && npc.hp < npc.maxHp && npc.serverAnim !== 'die') {
+              const s = toScreen(npc.mesh.position, 1.4)
+              updateHpBar(npc.id, s.x, s.y, npc.hp / npc.maxHp)
+            } else {
+              removeHpBar(npc.id)
+            }
+          }
+          lootLayer?.update(deltaSeconds)
           updateClickMarker(marker, now)
-          renderer.render(scene, camera)
+          renderer.render(scene, camera!)
           requestAnimationFrame(frame)
         }
         requestAnimationFrame(frame)
+
+        // Any ents/rocks/loot that arrived before the scene was ready.
+        applyDeferred(scene)
       })()
       return
     }
 
     if (message.t === 'diff') {
+      applyDiff(message)
+      return
+    }
+
+    if (message.t === 'dead') {
       if (self) {
-        const mine = message.ents?.find((e) => e.id === self!.id)
-        if (mine) applyEntityDiff(self, mine)
+        const pos = tileToWorld(message.respawn.x, message.respawn.z)
+        self.queue.length = 0
+        self.mesh.position.copy(pos)
+        self.fromPos.copy(pos)
+        self.toPos.copy(pos)
+        self.moving = false
       }
-      if (message.rocks) {
-        for (const rock of message.rocks) {
-          rockStates.set(rock.id, rock.depleted)
-          statics?.setRockDepleted(rock.id, rock.depleted)
-        }
-      }
-      message.events?.forEach(handleEvent)
+      pushMessage('Oh dear, you are dead! You wake back at the entrance.')
       return
     }
 
@@ -115,6 +215,36 @@ function enterWorld(session: WorldSession): void {
       showLoginRequired(pocketRpgUrl())
     }
   })
+
+  // Diffs can arrive before the async scene setup finishes; buffer until then.
+  const deferred: Extract<ServerMessage, { t: 'diff' }>[] = []
+  function applyDeferred(scene: THREE.Scene): void {
+    for (const msg of deferred) applyDiffTo(scene, msg)
+    deferred.length = 0
+  }
+  function applyDiff(message: Extract<ServerMessage, { t: 'diff' }>): void {
+    const scene = self?.mesh.parent as THREE.Scene | undefined
+    if (!scene) {
+      deferred.push(message)
+      return
+    }
+    applyDiffTo(scene, message)
+  }
+  function applyDiffTo(scene: THREE.Scene, message: Extract<ServerMessage, { t: 'diff' }>): void {
+    for (const ent of message.ents ?? []) {
+      if (self && ent.id === self.id) applyEntityDiff(self, ent)
+      else if (ent.kind === 'npc') ensureNpc(scene, ent)
+    }
+    for (const id of message.removed ?? []) removeNpc(id)
+    if (message.rocks) {
+      for (const rock of message.rocks) {
+        rockStates.set(rock.id, rock.depleted)
+        statics?.setRockDepleted(rock.id, rock.depleted)
+      }
+    }
+    if (message.loot || message.lootRemoved) lootLayer?.apply(message.loot, message.lootRemoved)
+    message.events?.forEach(handleEvent)
+  }
 }
 
 async function boot(): Promise<void> {

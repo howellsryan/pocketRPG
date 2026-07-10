@@ -10,6 +10,9 @@ const TURN_SPEED_RAD_PER_S = 14
 // hero.glb (Quaternius Male Ranger, built by scripts/build-hero.mjs) is
 // ~1.9 units tall at unit scale; scaled to read right against 1-unit tiles.
 const HERO_SCALE = 0.85
+// cow.glb (Quaternius Farm Animal Pack) is authored large and off-origin; the
+// mesh is centred + floored + scaled to this body length from its bbox below.
+const COW_TARGET_LENGTH = 1.6
 
 export type AnimName = EntityDiff['anim']
 
@@ -33,6 +36,10 @@ export type Entity = {
   serverAnim: AnimName
   targetYaw: number
   animator: Animator | null
+  hp?: number
+  maxHp?: number
+  monsterId?: string
+  name?: string
 }
 
 export function createCapsulePlaceholder(): THREE.Object3D {
@@ -45,41 +52,88 @@ export function createCapsulePlaceholder(): THREE.Object3D {
   return group
 }
 
-let heroTemplate: Promise<GLTF> | null = null
+const templates = new Map<string, Promise<GLTF>>()
 
-function loadHeroTemplate(): Promise<GLTF> {
-  if (!heroTemplate) heroTemplate = new GLTFLoader().loadAsync('/models/hero.glb')
-  return heroTemplate
+function loadTemplate(url: string): Promise<GLTF> {
+  let t = templates.get(url)
+  if (!t) {
+    t = new GLTFLoader().loadAsync(url)
+    templates.set(url, t)
+  }
+  return t
 }
 
-/** Loads (once) and clones the hero model with a mixer whose actions are named
- * exactly after the protocol's anim states (scripts/build-hero.mjs guarantees
- * the clip names). Falls back to the capsule placeholder on any load failure. */
+/** Binds a mixer to a freshly-cloned model, mapping the GLB's clips (named after
+ * the protocol anim states by the build scripts) to actions; `die` plays once
+ * and clamps. Returns null when the essential idle/walk clips are missing. */
+function makeAnimator(model: THREE.Object3D, gltf: GLTF, names: readonly AnimName[]): Animator | null {
+  const mixer = new THREE.AnimationMixer(model)
+  const actions: Animator['actions'] = {}
+  for (const name of names) {
+    const clip = gltf.animations.find((c) => c.name === name)
+    if (!clip) continue
+    const action = mixer.clipAction(clip)
+    if (name === 'die') {
+      action.setLoop(THREE.LoopOnce, 1)
+      action.clampWhenFinished = true
+    }
+    actions[name] = action
+  }
+  if (!actions.idle || !actions.walk) return null
+  const animator: Animator = { mixer, actions, current: null }
+  playAnim(animator, 'idle')
+  return animator
+}
+
+/** Loads (once) and clones the hero model. Falls back to the capsule
+ * placeholder on any load failure. */
 export async function createHeroMesh(): Promise<{ mesh: THREE.Object3D; animator: Animator | null }> {
   try {
-    const gltf = await loadHeroTemplate()
+    const gltf = await loadTemplate('/models/hero.glb')
     const model = cloneSkeleton(gltf.scene)
     const group = new THREE.Group()
     group.add(model)
     group.scale.setScalar(HERO_SCALE)
-    const mixer = new THREE.AnimationMixer(model)
-    const actions: Animator['actions'] = {}
-    for (const name of ['idle', 'walk', 'mine', 'attack', 'die'] as const) {
-      const clip = gltf.animations.find((c) => c.name === name)
-      if (!clip) continue
-      const action = mixer.clipAction(clip)
-      if (name === 'die') {
-        action.setLoop(THREE.LoopOnce, 1)
-        action.clampWhenFinished = true
-      }
-      actions[name] = action
-    }
-    if (!actions.idle || !actions.walk) return { mesh: group, animator: null }
-    const animator: Animator = { mixer, actions, current: null }
-    playAnim(animator, 'idle')
+    const animator = makeAnimator(model, gltf, ['idle', 'walk', 'mine', 'attack', 'die'])
     return { mesh: group, animator }
   } catch {
     return { mesh: createCapsulePlaceholder(), animator: null }
+  }
+}
+
+function boxPlaceholder(): THREE.Object3D {
+  const mesh = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.9, 1.4), new THREE.MeshStandardMaterial({ color: 0x8a5a3a }))
+  mesh.position.y = 0.45
+  const group = new THREE.Group()
+  group.add(mesh)
+  return group
+}
+
+/** Loads the cow model (its own rig/clips), centring it on x/z and flooring it
+ * at y=0, then scaling to a fixed body length from its bounding box — the asset
+ * is authored large and off-origin. Brown-box placeholder on load failure. */
+export async function createCowMesh(): Promise<{ mesh: THREE.Object3D; animator: Animator | null }> {
+  try {
+    const gltf = await loadTemplate('/models/cow.glb')
+    const model = cloneSkeleton(gltf.scene)
+    // The Farm Animal pack is authored with the body length along the vertical
+    // axis (unlike the character packs), so stand it on its feet first, then
+    // measure/centre/scale in the corrected orientation.
+    model.rotation.x = -Math.PI / 2
+    model.updateMatrixWorld(true)
+    const box = new THREE.Box3().setFromObject(model)
+    const size = new THREE.Vector3()
+    const center = new THREE.Vector3()
+    box.getSize(size)
+    box.getCenter(center)
+    model.position.set(-center.x, -box.min.y, -center.z)
+    const group = new THREE.Group()
+    group.add(model)
+    group.scale.setScalar(COW_TARGET_LENGTH / Math.max(size.z, 0.001))
+    const animator = makeAnimator(model, gltf, ['idle', 'walk', 'die'])
+    return { mesh: group, animator }
+  } catch {
+    return { mesh: boxPlaceholder(), animator: null }
   }
 }
 
@@ -114,6 +168,10 @@ function playAnim(animator: Animator, name: AnimName): void {
  * client has fallen hopelessly behind (hidden tab, long GC pause). */
 export function applyEntityDiff(entity: Entity, diff: EntityDiff): void {
   entity.serverAnim = diff.anim
+  if (diff.hp != null) entity.hp = diff.hp
+  if (diff.maxHp != null) entity.maxHp = diff.maxHp
+  if (diff.monsterId != null) entity.monsterId = diff.monsterId
+  if (diff.name != null) entity.name = diff.name
   entity.queue.push({ x: diff.x, z: diff.z })
   if (shouldSnap(entity.queue.length)) {
     const latest = entity.queue[entity.queue.length - 1]

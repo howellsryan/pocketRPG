@@ -56,6 +56,11 @@ const stats = {}
 for (const id of SKILL_IDS) stats[id] = { xp: 0, level: 1 }
 for (const id of COMBAT_STAT_IDS) stats[id] = { xp: 0, level: 1 }
 stats.hitpoints = { xp: 1154, level: 10 } // CLAUDE.md §5: starting HP level 10
+// Modest melee stats so the Phase 2 bull fight resolves quickly in manual/e2e
+// testing (level 1 unarmed takes ~40s to grind through 8 HP).
+stats.attack = { xp: 4470, level: 20 }
+stats.strength = { xp: 4470, level: 20 }
+stats.defence = { xp: 4470, level: 20 }
 
 // 5 tin ore in the pack exercises inventory pull-through into the world.
 const inventory = Array.from({ length: 5 }, () => ({ itemId: 'tin_ore', quantity: 1 }))

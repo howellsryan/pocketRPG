@@ -25,6 +25,10 @@ function makePlayer(overrides: Partial<TickPlayer> = {}): TickPlayer {
     minted: {},
     mining: null,
     pendingInteract: null,
+    hp: 10,
+    maxHp: 10,
+    equipment: {},
+    combat: null,
     ...overrides,
   }
 }

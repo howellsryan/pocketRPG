@@ -84,5 +84,7 @@
       "z": 15
     }
   ],
-  "npcs": []
+  "npcs": [
+    { "id": "bull_1", "monsterId": "pasture_bull", "x": 22, "z": 20, "wander": { "x": 18, "z": 16, "w": 10, "h": 10 } }
+  ]
 }

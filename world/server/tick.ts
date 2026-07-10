@@ -5,6 +5,9 @@ import type { Tile } from './pathfind'
 import type { EntityDiff, InvSlot, ZoneEvent } from '../shared/protocol'
 import { MINING_ACTIONS, ROCK_DEPLETED_TICKS, addToInventory, inventoryIsFull, type MiningAction } from './mining'
 import { getLevelFromXP, clampXP } from '../../src/engine/experience.js'
+import { startCombat, stepCombat, type CombatSession } from './combat'
+import type { NpcState } from './npc'
+import type { LootEntity } from './loot'
 
 export type TickAnim = EntityDiff['anim']
 
@@ -12,7 +15,7 @@ export type SessionStats = Record<string, { xp: number; level: number }>
 
 export type RockState = { id: string; rock: string; x: number; z: number; depletedUntilTick: number }
 
-export type PendingInteract = { kind: 'rock' | 'object'; id: string; action: string }
+export type PendingInteract = { kind: 'rock' | 'object' | 'npc'; id: string; action: string }
 
 export type TickPlayer = {
   charId: string
@@ -24,17 +27,29 @@ export type TickPlayer = {
   stats: SessionStats
   inventory: InvSlot[]
   pendingXp: Record<string, number>
-  /** Units created in-world this session (mined ore, …) — the grant delta.
-   * Save-backed units seeded from the character's inventory are NOT here. */
+  /** Units created in-world this session (mined ore, killed-for loot, …) — the
+   * grant delta. Save-backed units seeded from the character's inventory are
+   * NOT here. */
   minted: Record<string, number>
   mining: { rockId: string; progress: number } | null
   pendingInteract: PendingInteract | null
+  /** Current HP (seeded from the hitpoints level at hello, regenerated slowly). */
+  hp: number
+  maxHp: number
+  /** Equipment from the save blob, passed straight to the combat engine. */
+  equipment: Record<string, unknown>
+  combat: CombatSession | null
 }
 
 export type TickContext = {
   tick: number
   rocks: Map<string, RockState>
   actions?: Record<string, MiningAction>
+  npcs?: Map<string, NpcState>
+  collision?: string[]
+  /** Re-path to a tile adjacent to a (possibly moving) target — used to chase a
+   * wandering npc that stepped away before the player finished approaching. */
+  pathAdjacent?: (from: Tile, to: Tile) => Tile[] | null
 }
 
 export type TickResult = {
@@ -42,6 +57,19 @@ export type TickResult = {
   events: ZoneEvent[]
   rockChanges: { id: string; depleted: boolean }[]
   deposit: boolean
+  /** Zone-wide hitsplats ({dmg:0} = block/miss). */
+  hits: { targetId: string; dmg: number }[]
+  /** This player's HP hit 0 this tick → respawn + {t:'dead'}. */
+  died: boolean
+  /** Loot to add to the zone (rolled on a kill this player landed). */
+  newLoot: LootEntity[]
+  /** NPC ids whose broadcast state changed / that should be removed. */
+  npcChanged: string[]
+  npcRemoved: string[]
+}
+
+export function emptyResult(): TickResult {
+  return { entChanged: false, events: [], rockChanges: [], deposit: false, hits: [], died: false, newLoot: [], npcChanged: [], npcRemoved: [] }
 }
 
 /** Seeds the 28-slot session pack from the character's PocketRPG inventory at
@@ -81,7 +109,7 @@ export function sessionStatsFromSave(save: Record<string, unknown>): SessionStat
   return out
 }
 
-function adjacent(a: { x: number; z: number }, b: { x: number; z: number }): boolean {
+export function adjacent(a: { x: number; z: number }, b: { x: number; z: number }): boolean {
   return Math.max(Math.abs(a.x - b.x), Math.abs(a.z - b.z)) === 1
 }
 
@@ -113,6 +141,23 @@ function startInteract(player: TickPlayer, ctx: TickContext, result: TickResult)
 
   if (intent.kind === 'object' && intent.action === 'deposit') {
     result.deposit = true
+    return
+  }
+
+  if (intent.kind === 'npc' && intent.action === 'attack') {
+    const npc = ctx.npcs?.get(intent.id)
+    if (!npc || npc.state === 'dead') return
+    if (adjacent(player, npc)) {
+      startCombat(player, npc)
+      return
+    }
+    // The bull wandered off before we arrived — re-approach and keep the intent
+    // so we try again on the next arrival (it stops moving once combat starts).
+    const path = ctx.pathAdjacent?.(player, npc)
+    if (path && path.length > 1) {
+      player.path = path.slice(1)
+      player.pendingInteract = intent
+    }
     return
   }
 
@@ -171,7 +216,7 @@ function tickMining(player: TickPlayer, ctx: TickContext, result: TickResult): v
 /** One tick for one player: movement first, then interaction arrival, then
  * mining progress. Exactly one of walk/mine/idle claims the anim each tick. */
 export function tickPlayer(player: TickPlayer, ctx: TickContext): TickResult {
-  const result: TickResult = { entChanged: false, events: [], rockChanges: [], deposit: false }
+  const result = emptyResult()
   const before = { x: player.x, z: player.z, anim: player.anim }
 
   if (player.path.length > 0) {
@@ -181,10 +226,14 @@ export function tickPlayer(player: TickPlayer, ctx: TickContext): TickResult {
     player.path = rest
     player.anim = 'walk'
     if (rest.length === 0 && player.pendingInteract) startInteract(player, ctx, result)
+    if (rest.length === 0 && player.combat) stepCombat(player, ctx, result)
   } else if (player.pendingInteract) {
     startInteract(player, ctx, result)
-    if (player.mining) tickMining(player, ctx, result)
+    if (player.combat) stepCombat(player, ctx, result)
+    else if (player.mining) tickMining(player, ctx, result)
     else if (!result.deposit) player.anim = 'idle'
+  } else if (player.combat) {
+    stepCombat(player, ctx, result)
   } else if (player.mining) {
     tickMining(player, ctx, result)
   } else {

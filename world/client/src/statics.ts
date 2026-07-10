@@ -2,6 +2,7 @@ import * as THREE from 'three'
 import { GLTFLoader, type GLTF } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { tileToWorld } from './scene'
 import type { StaticObject } from '../../shared/protocol'
+import type { Pickable } from './picking'
 
 // Kenney nature-kit boulder tinted per ore; KayKit dungeon chest (both CC0,
 // copied from assets/open-world by hand — see the build guide's asset section).
@@ -12,7 +13,11 @@ const ROCK_DEPLETED_SCALE = 0.85
 const DEPLETED_DARKEN = 0.45
 const CHEST_SCALE = 0.55
 
-export type PickTarget = { kind: 'rock' | 'object'; id: string; action: string }
+const ROCK_INFO: Record<string, { name: string; examine: string }> = {
+  tin: { name: 'Tin Rock', examine: 'A rock streaked with dull grey tin ore.' },
+  copper: { name: 'Copper Rock', examine: 'A rock veined with ruddy copper ore.' },
+}
+const DEFAULT_ROCK_INFO = { name: 'Rock', examine: 'A rugged, ore-bearing rock.' }
 
 export type Statics = {
   pickables: THREE.Object3D[]
@@ -80,11 +85,18 @@ export async function createStatics(scene: THREE.Scene, statics: StaticObject[])
       }
       wrapper.scale.setScalar(ROCK_SCALE)
       rocks.set(s.id, { obj: wrapper, materials })
-      wrapper.userData.pick = { kind: 'rock', id: s.id, action: 'mine' } satisfies PickTarget
+      const info = ROCK_INFO[s.rock ?? ''] ?? DEFAULT_ROCK_INFO
+      wrapper.userData.pick = {
+        kind: 'rock', id: s.id, name: info.name,
+        actions: [{ label: 'Mine', action: 'mine' }], examine: info.examine,
+      } satisfies Pickable
     } else {
       wrapper.add(chestGltf ? chestGltf.scene.clone(true) : chestFallback())
       wrapper.scale.setScalar(CHEST_SCALE)
-      wrapper.userData.pick = { kind: 'object', id: s.id, action: 'deposit' } satisfies PickTarget
+      wrapper.userData.pick = {
+        kind: 'object', id: s.id, name: 'Bank Chest',
+        actions: [{ label: 'Deposit', action: 'deposit' }],
+      } satisfies Pickable
     }
 
     wrapper.position.copy(tileToWorld(s.x, s.z))
@@ -107,10 +119,10 @@ export async function createStatics(scene: THREE.Scene, statics: StaticObject[])
 }
 
 /** Walks up from a raycast hit to the wrapper that carries pick metadata. */
-export function pickTargetOf(object: THREE.Object3D): PickTarget | null {
+export function pickTargetOf(object: THREE.Object3D): Pickable | null {
   let current: THREE.Object3D | null = object
   while (current) {
-    const pick = current.userData?.pick as PickTarget | undefined
+    const pick = current.userData?.pick as Pickable | undefined
     if (pick) return pick
     current = current.parent
   }
