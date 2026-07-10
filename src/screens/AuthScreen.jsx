@@ -269,47 +269,6 @@ export default function AuthScreen({ onCloudReady, onPlayDemo }) {
             </div>
           )}
 
-          {showCreate && (
-            <details style={{ marginBottom: '14px', padding: '12px', borderRadius: '12px', background: '#1a1a1a', border: '1px solid #333' }} open>
-              <summary style={{ cursor: 'pointer', fontSize: '13px', color: '#d4af37', fontWeight: 'bold' }}>🧭 New to PocketRPG?</summary>
-
-              <div style={{ marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                <div>
-                  <div style={{ fontSize: '11px', color: '#d4af37', fontWeight: 'bold', marginBottom: '4px' }}>Recommended first character</div>
-                  <ul style={{ margin: 0, paddingLeft: '16px', fontSize: '10px', color: '#e8d5b0', opacity: 0.9, lineHeight: 1.45 }}>
-                    <li>Normal mode is recommended for your first character.</li>
-                    <li>One Life is extreme: death permanently deletes that character.</li>
-                  </ul>
-                </div>
-
-                <div>
-                  <div style={{ fontSize: '11px', color: '#d4af37', fontWeight: 'bold', marginBottom: '4px' }}>Starter kit</div>
-                  <ul style={{ margin: 0, paddingLeft: '16px', fontSize: '10px', color: '#e8d5b0', opacity: 0.9, lineHeight: 1.45 }}>
-                    <li>Bronze dagger, bronze scimitar, and full bronze armor + kiteshield.</li>
-                    <li>Shrimp for healing and a small amount of starting coins.</li>
-                  </ul>
-                </div>
-
-                <div>
-                  <div style={{ fontSize: '11px', color: '#d4af37', fontWeight: 'bold', marginBottom: '4px' }}>First steps</div>
-                  <ul style={{ margin: 0, paddingLeft: '16px', fontSize: '10px', color: '#e8d5b0', opacity: 0.9, lineHeight: 1.45 }}>
-                    <li>Create your character and equip your bronze gear from Items.</li>
-                    <li>Open Combat and train on early monsters.</li>
-                    <li>Eat shrimp when low HP, then bank or sell loot.</li>
-                    <li>Upgrade gear, then try skilling and quests.</li>
-                  </ul>
-                </div>
-
-                <div>
-                  <div style={{ fontSize: '11px', color: '#d4af37', fontWeight: 'bold', marginBottom: '4px' }}>Need more help?</div>
-                  <ul style={{ margin: 0, paddingLeft: '16px', fontSize: '10px', color: '#e8d5b0', opacity: 0.9, lineHeight: 1.45 }}>
-                    <li>Please read the help and guides section for more information in the Settings screen once you have started your adventure.</li>
-                  </ul>
-                </div>
-              </div>
-            </details>
-          )}
-
           <button type="submit" disabled={busy || newName.trim().length < 3 || (isOneLife && !oneLifeAck)} style={primaryBtn}>
             {busy ? 'Creating…' : 'Create Character'}
           </button>
