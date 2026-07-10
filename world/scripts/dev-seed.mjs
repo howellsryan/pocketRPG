@@ -62,12 +62,20 @@ stats.attack = { xp: 4470, level: 20 }
 stats.strength = { xp: 4470, level: 20 }
 stats.defence = { xp: 4470, level: 20 }
 
-// 5 tin ore in the pack exercises inventory pull-through into the world.
-const inventory = Array.from({ length: 5 }, () => ({ itemId: 'tin_ore', quantity: 1 }))
+// Pack fixture: ore (inventory pull-through), food + bones (invAction eat/
+// bury), a spare weapon (equip swap). Bank fixture exercises withdraw.
+const inventory = [
+  ...Array.from({ length: 5 }, () => ({ itemId: 'tin_ore', quantity: 1 })),
+  { itemId: 'trout', quantity: 1 },
+  { itemId: 'trout', quantity: 1 },
+  { itemId: 'bones', quantity: 1 },
+  { itemId: 'bronze_sword', quantity: 1 },
+]
+const bank = { trout: { itemId: 'trout', quantity: 5 }, copper_ore: { itemId: 'copper_ore', quantity: 7 } }
 // Distinct equipped weapons exercise the Phase 5 gear pipeline: char 1 a
 // tier-tinted sword, char 2 a staff (and each sees the other's on screen).
 const makeSave = (weaponItemId) => {
-  const saveObject = { stats, inventory, bank: {}, settings: {}, equipment: { weapon: { itemId: weaponItemId, quantity: 1 } } }
+  const saveObject = { stats, inventory, bank, settings: {}, equipment: { weapon: { itemId: weaponItemId, quantity: 1 } } }
   const saveData = JSON.stringify(saveObject)
   return { saveData, saveBlobHex: gzipSync(Buffer.from(saveData, 'utf8')).toString('hex') }
 }

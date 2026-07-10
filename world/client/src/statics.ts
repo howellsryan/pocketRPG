@@ -95,7 +95,8 @@ export async function createStatics(scene: THREE.Scene, statics: StaticObject[])
       wrapper.scale.setScalar(CHEST_SCALE)
       wrapper.userData.pick = {
         kind: 'object', id: s.id, name: 'Bank Chest',
-        actions: [{ label: 'Deposit', action: 'deposit' }],
+        actions: [{ label: 'Use', action: 'bank' }],
+        examine: 'A sturdy chest. Your bank, wherever you roam.',
       } satisfies Pickable
     }
 

@@ -151,14 +151,14 @@ describe('mining', () => {
   })
 })
 
-describe('deposit', () => {
-  it('signals a deposit on arrival at the chest', () => {
+describe('bank chest', () => {
+  it('signals a bank-open on arrival at the chest', () => {
     const player = makePlayer({
       path: [{ x: 1, z: 1 }],
-      pendingInteract: { kind: 'object', id: 'chest_1', action: 'deposit' },
+      pendingInteract: { kind: 'object', id: 'chest_1', action: 'bank' },
     })
     const result = tickPlayer(player, makeCtx(makeRock()))
-    expect(result.deposit).toBe(true)
+    expect(result.bankOpen).toBe(true)
     expect(player.pendingInteract).toBeNull()
   })
 })
@@ -213,8 +213,9 @@ describe('sessionStatsFromSave', () => {
 describe('toEntityDiff', () => {
   it('maps a player to a wire-format entity diff', () => {
     const player = makePlayer({ x: 3, z: 4, anim: 'walk' })
+    // gear always rides player diffs (even empty) so unequips propagate.
     expect(toEntityDiff(player)).toEqual({
-      id: '1', kind: 'player', x: 3, z: 4, anim: 'walk', name: 'WorldTester',
+      id: '1', kind: 'player', x: 3, z: 4, anim: 'walk', name: 'WorldTester', gear: {},
     })
   })
 })

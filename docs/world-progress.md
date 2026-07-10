@@ -438,3 +438,19 @@ The reconnect banner exposed how often the server was CLOSING connections on hea
 **Verified e2e**: 25 taps/s → no disconnect; ping answered mid-flood; 60-message burst → 1008/rate_limited kick and the reconnect still resumes the live session; 45s idle soak with heartbeat only → zero closes, pongs flowing. `world:check` green (14 files / 116 tests). Only `world/` + `docs/` touched.
 
 - [x] Connection stability — see commit introducing this entry — soft-drop rate limiting, hello-time auth-timer clear, saner watchdog thresholds, tap dedupe; flood + soak e2e green. DT: redeploy preview, re-test two devices.
+
+## Phase 5.5 — pathing fix, pack item actions, real banking (developer feedback bundle)
+
+Three requests: fix zig-zag pathing, make the chest open a real bank (not deposit-all), and give the pack main-game left-click/right-click actions incl. Drop.
+
+**Pathing root cause**: BFS with uniform step cost treats a 10-tile diagonal arc as "equal" to the straight line (same step count), and the neighbour ordering made it pick the arc — a straight 26-tile walk visibly bulged 10 tiles north. Replaced with A\*: steps remain the primary cost (tick model unchanged — same arrival times), a tiny per-diagonal epsilon breaks ties toward the straightest route, pinning paths inside the start→destination rectangle. Shape regression tests added (straight line stays on its row; bounding box; minimal diagonal count).
+
+**Pack actions**: `{t:'invAction'}` with shared client/server verb derivation (`world/shared/itemActions.ts` — driven by items.json/skills.json, no hand-authored tables): Wield/Wear (real `src/engine/equipment.js` equip incl. 2H/shield rules + requirements), Eat (heals, new HP pill + `{e:'hp'}` events), Bury (skills.json prayer XP), Drink (deferred with a message — potion boosts need decay infra), Drop (floor loot at the player's tile, owner-only ~10s / 17 ticks, then public, 3min despawn). Equip re-gears the 3D weapon live for everyone (`gear` now rides every player diff so unequips propagate; the killed client-side bug: slot presses landing on the icon's SVG were ignored — `indexOfCell` required HTMLElement).
+
+**Banking**: chest → walk adjacent → bank modal (bank + pack grids); tap moves 1, hold/right-click offers 1/5/10/X/All; server clamps everything and requires adjacency per op. Bank view seeds from the save at hello (charge-carrying entries excluded — charges can't survive the session model).
+
+**Accounting**: new provenance pools (`sessionItems.ts`): minted / saveBacked / bankSourced + consumed/deposited tallies; flush payload extended (removeFromInventory, removeFromBank, mintedToBank, bankToInventory, equipment snapshot), all clamped against the live save; debounced 3s durability flush after bank/equip/consume. Unit-tested invariant: pack count = minted + saveBacked + bankSourced.
+
+**Verified**: 24/24 WS e2e checks (straight-line walk rows, eat/bury/equip incl. observer seeing the re-gear, mismatched-action rejection, drop hidden from the observer at 4s and public by ~10s, bank open/withdraw/deposit with clamps, away-from-chest ops ignored, and a disconnect flush audited in real D1: equipment snapshot, eaten save-backed + bank-sourced units removed from the right stores, withdrawals returned, deposits banked, drops gone). 12/12 headless UI checks (HP pill, chest hover→modal, tap-withdraw, 1/5/10/X/All menu, X prompt, item menu Eat/Drop, tap-to-eat). `world:check` green (16 files / 133 tests).
+
+- [x] Phase 5.5 — see commit introducing this entry — pathing A\*, invActions, bank UI, provenance pools; DT: on-device pass (pathing feel, bank modal on mobile, long-press menus, drop visibility between two devices).

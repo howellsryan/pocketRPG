@@ -9,6 +9,10 @@ export type InvSlot = { itemId: string; quantity: number } | null
  * shared/appearance.ts). Server → client only; clients never send gear. */
 export type GearDescriptor = { weapon?: { archetype: string; tint?: string } }
 
+export type InvActionWire = 'equip' | 'eat' | 'drink' | 'bury' | 'drop'
+
+export type BankSlot = { itemId: string; quantity: number }
+
 export type ClientMessage =
   | { t: 'hello'; token: string }
   | { t: 'walk'; x: number; z: number }
@@ -16,6 +20,8 @@ export type ClientMessage =
   | { t: 'cancel' }
   | { t: 'chat'; text: string }
   | { t: 'moveInv'; from: number; to: number }
+  | { t: 'invAction'; slot: number; action: InvActionWire }
+  | { t: 'bank'; op: 'deposit' | 'withdraw'; itemId: string; qty: number }
   | { t: 'ping'; n: number }
 
 export type ZoneEvent =
@@ -23,6 +29,10 @@ export type ZoneEvent =
   | { e: 'xp'; skill: string; amount: number }
   | { e: 'msg'; text: string }
   | { e: 'inv'; inventory: InvSlot[] }
+  | { e: 'hp'; hp: number; maxHp: number }
+  /** Bank contents after an op; `open: true` on arrival at a chest tells the
+   * client to show the bank modal. */
+  | { e: 'bank'; bank: BankSlot[]; open?: boolean }
   | { e: 'chat'; charId: string; name: string; text: string }
 
 export type EntityDiff = {
@@ -55,7 +65,7 @@ export type ServerMessage =
       tick: number
       zone: { id: string; w: number; h: number; collision: string[] }
       statics: StaticObject[]
-      you: { x: number; z: number; stats: Record<string, { xp: number; level: number }>; inventory: InvSlot[]; gear?: GearDescriptor }
+      you: { x: number; z: number; hp: number; maxHp: number; stats: Record<string, { xp: number; level: number }>; inventory: InvSlot[]; gear?: GearDescriptor }
     }
   | {
       t: 'diff'
@@ -112,6 +122,23 @@ export function parseClientMessage(raw: unknown): ClientMessage | null {
       const to = (raw as Record<string, unknown>).to
       const inRange = (n: unknown): n is number => Number.isInteger(n) && (n as number) >= 0 && (n as number) < 28
       return inRange(from) && inRange(to) ? { t: 'moveInv', from, to } : null
+    }
+    case 'invAction': {
+      const slot = (raw as Record<string, unknown>).slot
+      const action = (raw as Record<string, unknown>).action
+      const validSlot = Number.isInteger(slot) && (slot as number) >= 0 && (slot as number) < 28
+      const validAction = action === 'equip' || action === 'eat' || action === 'drink' || action === 'bury' || action === 'drop'
+      return validSlot && validAction ? { t: 'invAction', slot: slot as number, action } : null
+    }
+    case 'bank': {
+      const op = (raw as Record<string, unknown>).op
+      const itemId = (raw as Record<string, unknown>).itemId
+      const qty = (raw as Record<string, unknown>).qty
+      const validOp = op === 'deposit' || op === 'withdraw'
+      const validQty = Number.isInteger(qty) && (qty as number) >= 1 && (qty as number) <= 1_000_000_000
+      return validOp && typeof itemId === 'string' && itemId.length > 0 && itemId.length <= 64 && validQty
+        ? { t: 'bank', op, itemId, qty: qty as number }
+        : null
     }
     case 'ping': {
       const n = (raw as Record<string, unknown>).n

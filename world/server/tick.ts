@@ -59,7 +59,8 @@ export type TickResult = {
   entChanged: boolean
   events: ZoneEvent[]
   rockChanges: { id: string; depleted: boolean }[]
-  deposit: boolean
+  /** The player arrived at a bank chest → open the bank UI. */
+  bankOpen: boolean
   /** Zone-wide hitsplats ({dmg:0} = block/miss). */
   hits: { targetId: string; dmg: number }[]
   /** This player's HP hit 0 this tick → respawn + {t:'dead'}. */
@@ -72,7 +73,7 @@ export type TickResult = {
 }
 
 export function emptyResult(): TickResult {
-  return { entChanged: false, events: [], rockChanges: [], deposit: false, hits: [], died: false, newLoot: [], npcChanged: [], npcRemoved: [] }
+  return { entChanged: false, events: [], rockChanges: [], bankOpen: false, hits: [], died: false, newLoot: [], npcChanged: [], npcRemoved: [] }
 }
 
 /** Seeds the 28-slot session pack from the character's PocketRPG inventory at
@@ -142,8 +143,8 @@ function startInteract(player: TickPlayer, ctx: TickContext, result: TickResult)
   player.pendingInteract = null
   if (!intent) return
 
-  if (intent.kind === 'object' && intent.action === 'deposit') {
-    result.deposit = true
+  if (intent.kind === 'object' && intent.action === 'bank') {
+    result.bankOpen = true
     return
   }
 
@@ -234,7 +235,7 @@ export function tickPlayer(player: TickPlayer, ctx: TickContext): TickResult {
     startInteract(player, ctx, result)
     if (player.combat) stepCombat(player, ctx, result)
     else if (player.mining) tickMining(player, ctx, result)
-    else if (!result.deposit) player.anim = 'idle'
+    else if (!result.bankOpen) player.anim = 'idle'
   } else if (player.combat) {
     stepCombat(player, ctx, result)
   } else if (player.mining) {
@@ -248,8 +249,9 @@ export function tickPlayer(player: TickPlayer, ctx: TickContext): TickResult {
 }
 
 export function toEntityDiff(player: TickPlayer): EntityDiff {
-  const diff: EntityDiff = { id: player.charId, kind: 'player', x: player.x, z: player.z, anim: player.anim, name: player.name }
-  if (player.gear.weapon) diff.gear = player.gear
+  // Gear rides every player diff (even empty) so an in-world unequip
+  // propagates — omitting it would leave stale weapons on observers.
+  const diff: EntityDiff = { id: player.charId, kind: 'player', x: player.x, z: player.z, anim: player.anim, name: player.name, gear: player.gear }
   return diff
 }
 

@@ -60,6 +60,13 @@ const HUD_CSS = `
   position: fixed; left: 8px; top: 6px; z-index: 10; pointer-events: none;
   font-family: sans-serif; font-size: 15px; color: #ffe066; text-shadow: 0 1px 2px #000;
 }
+#hp-pill {
+  position: fixed; right: 8px; top: 8px; z-index: 10; padding: 4px 10px;
+  background: rgba(20, 16, 10, 0.82); border: 1px solid #5a4a30; border-radius: 12px;
+  font-family: sans-serif; font-size: 13px; font-weight: bold; color: #5fd35f;
+  text-shadow: 0 1px 2px #000; pointer-events: none;
+}
+#hp-pill.low { color: #e05a5a; }
 #ctx-menu {
   position: fixed; z-index: 30; min-width: 120px; padding: 0 0 2px;
   background: rgba(20, 16, 10, 0.95); border: 1px solid #6a5636; border-radius: 4px;
@@ -96,16 +103,28 @@ let hudReady = false
 const slotFilled: boolean[] = new Array(INVENTORY_COLS * INVENTORY_ROWS).fill(false)
 
 const DRAG_THRESHOLD_PX = 6
+const LONG_PRESS_MS = 500
 
-/** Pointer-based drag-to-reorder on the pack grid (desktop drag and touch use
- * the same path). Mirrors the main game's InventoryGrid: a ghost follows the
- * pointer past a small threshold, the hovered cell highlights, and dropping on
- * a different slot commits the move. */
-function setupInvDrag(panel: HTMLElement, onMove: (from: number, to: number) => void): void {
-  let drag: { from: number; startX: number; startY: number; ghost: HTMLElement | null; over: number | null } | null = null
+export type InvHandlers = {
+  onMoveInv: (from: number, to: number) => void
+  /** Tap on a filled slot → the item's primary action (Wield/Eat/Bury/…). */
+  onSlotTap: (index: number) => void
+  /** Long-press / right-click on a filled slot → the item menu. */
+  onSlotMenu: (index: number, x: number, y: number) => void
+}
+
+/** Pointer-based pack-grid input (desktop and touch share the path):
+ * press-and-move past a small threshold drags to reorder (ghost + highlight,
+ * mirroring the main game's InventoryGrid), a plain tap fires the item's
+ * primary action, a stationary long-press or right-click opens the item menu. */
+function setupInvDrag(panel: HTMLElement, handlers: InvHandlers): void {
+  const onMove = handlers.onMoveInv
+  let drag: { from: number; startX: number; startY: number; ghost: HTMLElement | null; over: number | null; menuFired: boolean; timer: ReturnType<typeof setTimeout> | null } | null = null
 
   const indexOfCell = (el: Element | null): number | null => {
-    const cell = el instanceof HTMLElement ? el.closest('.inv-slot') : null
+    // Element, not HTMLElement — the press usually lands on the icon's inline
+    // SVG (an SVGElement), and closest() must still walk up to the slot.
+    const cell = el instanceof Element ? el.closest('.inv-slot') : null
     if (!cell || cell.parentElement !== panel) return null
     return Array.prototype.indexOf.call(panel.children, cell)
   }
@@ -119,24 +138,42 @@ function setupInvDrag(panel: HTMLElement, onMove: (from: number, to: number) => 
 
   const finish = (commit: boolean): void => {
     if (!drag) return
+    if (drag.timer) clearTimeout(drag.timer)
     drag.ghost?.remove()
     if (drag.over != null) panel.children[drag.over]?.classList.remove('drag-over')
     if (commit && drag.ghost && drag.over != null && drag.over !== drag.from) onMove(drag.from, drag.over)
+    else if (commit && !drag.ghost && !drag.menuFired) handlers.onSlotTap(drag.from)
     drag = null
   }
 
   panel.addEventListener('pointerdown', (e) => {
+    if (e.button === 2) return // right-click goes through contextmenu below
     const index = indexOfCell(e.target as Element)
     if (index == null || !slotFilled[index]) return
-    drag = { from: index, startX: e.clientX, startY: e.clientY, ghost: null, over: null }
+    const timer = setTimeout(() => {
+      // Stationary long-press: open the menu instead of tapping or dragging.
+      if (!drag || drag.ghost) return
+      drag.menuFired = true
+      handlers.onSlotMenu(drag.from, drag.startX, drag.startY)
+    }, LONG_PRESS_MS)
+    drag = { from: index, startX: e.clientX, startY: e.clientY, ghost: null, over: null, menuFired: false, timer }
     ;(panel.children[index] as HTMLElement).setPointerCapture(e.pointerId)
   })
+  panel.addEventListener('contextmenu', (e) => {
+    e.preventDefault()
+    const index = indexOfCell(e.target as Element)
+    if (index == null || !slotFilled[index]) return
+    if (drag?.timer) clearTimeout(drag.timer)
+    drag = null
+    handlers.onSlotMenu(index, e.clientX, e.clientY)
+  })
   panel.addEventListener('pointermove', (e) => {
-    if (!drag) return
+    if (!drag || drag.menuFired) return
     if (!drag.ghost) {
       const dx = e.clientX - drag.startX
       const dy = e.clientY - drag.startY
       if (dx * dx + dy * dy < DRAG_THRESHOLD_PX * DRAG_THRESHOLD_PX) return
+      if (drag.timer) clearTimeout(drag.timer)
       const ghost = (panel.children[drag.from] as HTMLElement).cloneNode(true) as HTMLElement
       ghost.style.cssText =
         'position:fixed;width:40px;height:40px;pointer-events:none;z-index:40;opacity:0.85;' +
@@ -159,9 +196,9 @@ function setupInvDrag(panel: HTMLElement, onMove: (from: number, to: number) => 
   panel.addEventListener('pointercancel', () => finish(false))
 }
 
-/** Creates the in-game HUD (inventory grid, message strip, xp-drop layer).
- * Call once after the welcome message. */
-export function initHud(onMoveInv?: (from: number, to: number) => void): void {
+/** Creates the in-game HUD (inventory grid, message strip, xp-drop layer, HP
+ * pill). Call once after the welcome message. */
+export function initHud(handlers?: InvHandlers): void {
   if (hudReady) return
   hudReady = true
   const style = document.createElement('style')
@@ -176,7 +213,11 @@ export function initHud(onMoveInv?: (from: number, to: number) => void): void {
     inv.appendChild(slot)
   }
   document.body.appendChild(inv)
-  if (onMoveInv) setupInvDrag(inv, onMoveInv)
+  if (handlers) setupInvDrag(inv, handlers)
+
+  const hpPill = document.createElement('div')
+  hpPill.id = 'hp-pill'
+  document.body.appendChild(hpPill)
 
   const msgs = document.createElement('div')
   msgs.id = 'msg-strip'
@@ -409,6 +450,13 @@ export function renderInventory(inventory: InvSlot[]): void {
       cell.appendChild(qty)
     }
   }
+}
+
+export function updateHpPill(hp: number, maxHp: number): void {
+  const el = document.getElementById('hp-pill')
+  if (!el) return
+  el.textContent = `❤ ${hp}/${maxHp}`
+  el.classList.toggle('low', maxHp > 0 && hp / maxHp <= 0.3)
 }
 
 export function showXpDrop(skill: string, amount: number): void {

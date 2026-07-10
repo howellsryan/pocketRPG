@@ -66,6 +66,45 @@ export function moveInventorySlot(inventory: InvSlot[], from: number, to: number
   return true
 }
 
+export function countItem(inventory: InvSlot[], itemId: string): number {
+  let total = 0
+  for (const slot of inventory) if (slot?.itemId === itemId) total += slot.quantity
+  return total
+}
+
+export function freeSlotCount(inventory: InvSlot[]): number {
+  let free = 0
+  for (const slot of inventory) if (slot === null) free += 1
+  return free
+}
+
+/** Removes qty units of an item across slots (back-to-front, splitting stacks).
+ * Returns false without changes when the pack holds fewer than qty. */
+export function removeItems(inventory: InvSlot[], itemId: string, qty: number): boolean {
+  if (countItem(inventory, itemId) < qty) return false
+  let remaining = qty
+  for (let i = inventory.length - 1; i >= 0 && remaining > 0; i--) {
+    const slot = inventory[i]
+    if (!slot || slot.itemId !== itemId) continue
+    if (slot.quantity <= remaining) {
+      remaining -= slot.quantity
+      inventory[i] = null
+    } else {
+      slot.quantity -= remaining
+      remaining = 0
+    }
+  }
+  return true
+}
+
+/** Removes one unit from a specific slot (a stack decrements, a single clears). */
+export function removeOneAt(inventory: InvSlot[], index: number): void {
+  const slot = inventory[index]
+  if (!slot) return
+  if (slot.quantity > 1) slot.quantity -= 1
+  else inventory[index] = null
+}
+
 /** Aggregates the pack into {itemId, quantity} rows for a grant flush. */
 export function inventoryToItems(inventory: InvSlot[]): { itemId: string; quantity: number }[] {
   const byId = new Map<string, number>()

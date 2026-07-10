@@ -1,17 +1,19 @@
 import { exchangeHandoff, getStoredSession, parseHandoffFromHash, pocketRpgUrl, type WorldSession } from './auth'
-import { hideConnBanner, hideOverlay, initChatInput, initHud, pushMessage, removeHpBar, removeNameplate, removeOverheadChat, renderInventory, showConnBanner, showHitsplat, showLoginRequired, showXpDrop, updateHpBar, updateNameplate, updateOverheadChat, npcExamine } from './ui'
+import { hideConnBanner, hideOverlay, initChatInput, initHud, pushMessage, removeHpBar, removeNameplate, removeOverheadChat, renderInventory, showConnBanner, showContextMenu, showHitsplat, showLoginRequired, showXpDrop, updateHpBar, updateHpPill, updateNameplate, updateOverheadChat, npcExamine } from './ui'
+import { closeBankUI, isBankOpen, openBankUI, updateBankInventory, updateBankUI } from './bank'
 import { connect, onMessage, send } from './net'
 import { clampZoom, createCamera, createGround, createLights, createRenderer, createScene, tileToWorld, updateCamera } from './scene'
 import { applyEntityDiff, applyWeapon, createCowMesh, createEntity, createHeroMesh, updateEntity, type Entity } from './entities'
 import { createClickMarker, setupInput, showClickMarker, updateClickMarker } from './input'
 import { createStatics, type Statics } from './statics'
 import { createLootLayer, type LootLayer } from './loot'
-import { loadItemIcons } from './itemIcon'
+import { itemName, loadItemIcons } from './itemIcon'
+import { primaryInvAction } from '../../shared/itemActions'
 import { combatLevelFromStats } from '../../../src/engine/combatLevel.js'
 import monstersData from '../../../src/data/monsters.json'
 import * as THREE from 'three'
-import type { EntityDiff, InvSlot, ServerMessage, ZoneEvent } from '../../shared/protocol'
-import type { Pickable } from './picking'
+import type { EntityDiff, InvActionWire, InvSlot, ServerMessage, ZoneEvent } from '../../shared/protocol'
+import type { MenuRow, Pickable } from './picking'
 
 const ZONE_ID = 'pasture'
 
@@ -72,6 +74,12 @@ function enterWorld(session: WorldSession): void {
     if (event.e === 'inv') {
       inventory = event.inventory
       renderInventory(inventory)
+      updateBankInventory(inventory)
+    }
+    else if (event.e === 'hp') updateHpPill(event.hp, event.maxHp)
+    else if (event.e === 'bank') {
+      if (event.open) openBankUI(event.bank, inventory, (op, itemId, qty) => send(socket, { t: 'bank', op, itemId, qty }))
+      else if (isBankOpen()) updateBankUI(event.bank)
     }
     else if (event.e === 'xp') showXpDrop(event.skill, event.amount)
     else if (event.e === 'msg') pushMessage(event.text)
@@ -197,6 +205,8 @@ function enterWorld(session: WorldSession): void {
   function resyncFromWelcome(message: Extract<ServerMessage, { t: 'welcome' }>): void {
     inventory = message.you.inventory
     renderInventory(inventory)
+    updateHpPill(message.you.hp, message.you.maxHp)
+    closeBankUI()
     playerCombatLevel = combatLevelFromStats(message.you.stats)
     if (self) {
       const pos = tileToWorld(message.you.x, message.you.z)
@@ -236,13 +246,44 @@ function enterWorld(session: WorldSession): void {
         const container = document.getElementById('scene')!
         const renderer = createRenderer(container)
 
-        initHud((from, to) => {
-          const moved = inventory[from]
-          if (!moved) return
-          inventory[from] = inventory[to] ?? null
-          inventory[to] = moved
-          renderInventory(inventory)
-          send(socket, { t: 'moveInv', from, to })
+        const sendInvAction = (slot: number, action: InvActionWire): void => {
+          send(socket, { t: 'invAction', slot, action })
+        }
+        initHud({
+          onMoveInv: (from, to) => {
+            const moved = inventory[from]
+            if (!moved) return
+            inventory[from] = inventory[to] ?? null
+            inventory[to] = moved
+            renderInventory(inventory)
+            send(socket, { t: 'moveInv', from, to })
+          },
+          onSlotTap: (index) => {
+            const slot = inventory[index]
+            if (!slot) return
+            const primary = primaryInvAction(slot.itemId)
+            if (primary) sendInvAction(index, primary.action)
+          },
+          onSlotMenu: (index, x, y) => {
+            const slot = inventory[index]
+            if (!slot) return
+            const name = itemName(slot.itemId)
+            const primary = primaryInvAction(slot.itemId)
+            const rows: MenuRow[] = []
+            const actions: (InvActionWire | null)[] = []
+            if (primary) {
+              rows.push({ text: `${primary.label} ${name}`, targetName: name })
+              actions.push(primary.action)
+            }
+            rows.push({ text: `Drop ${name}`, targetName: name })
+            actions.push('drop')
+            rows.push({ text: 'Cancel', local: 'cancel' })
+            actions.push(null)
+            showContextMenu(rows, x, y, (row) => {
+              const action = actions[rows.indexOf(row)]
+              if (action) sendInvAction(index, action)
+            })
+          },
         })
         initChatInput((text) => send(socket, { t: 'chat', text }))
         playerCombatLevel = combatLevelFromStats(message.you.stats)
@@ -255,6 +296,7 @@ function enterWorld(session: WorldSession): void {
         ])
         inventory = message.you.inventory
         renderInventory(inventory)
+        updateHpPill(message.you.hp, message.you.maxHp)
         statics = staticsResult
         for (const [id, depleted] of rockStates) staticsResult.setRockDepleted(id, depleted)
         self = createEntity(message.selfId, message.you.x, message.you.z, heroResult.mesh, heroResult.animator)
@@ -266,6 +308,7 @@ function enterWorld(session: WorldSession): void {
         let lastWalk = { x: -1, z: -1, at: 0 }
         setupInput(renderer.domElement, camera, ground, {
           onWalk: (tile) => {
+            closeBankUI()
             showClickMarker(marker, tile.x, tile.z)
             const now = performance.now()
             if (tile.x === lastWalk.x && tile.z === lastWalk.z && now - lastWalk.at < 400) return
@@ -384,7 +427,10 @@ function enterWorld(session: WorldSession): void {
   }
   function applyDiffTo(scene: THREE.Scene, message: Extract<ServerMessage, { t: 'diff' }>): void {
     for (const ent of message.ents ?? []) {
-      if (self && ent.id === self.id) applyEntityDiff(self, ent)
+      if (self && ent.id === self.id) {
+        applyEntityDiff(self, ent)
+        if (ent.gear) void applyWeapon(self.mesh, ent.gear)
+      }
       else if (ent.kind === 'npc') ensureNpc(scene, ent)
       else if (ent.kind === 'player') ensureOther(scene, ent)
     }
