@@ -42,13 +42,13 @@ function buildSteps({ playerName, isCloudAccount, desktop, worldMap }) {
     body: (
       <>
         <p>
-          PocketRPG is an idle RPG — your character keeps training, fighting and gathering
-          even while you're away.
+          PocketRPG is an idle RPG. Start training a skill or fighting a monster, and your
+          character keeps at it after you close the app. Come back later to collect
+          everything you earned while away.
         </p>
         <p>
-          Here's a quick tour of where everything lives. Flick through with{' '}
-          <b class="text-[var(--color-gold)]">Next</b>, or close this any time — you can
-          replay the tour from the Settings screen.
+          This short tour shows where everything is. You can replay it any time from
+          Settings.
         </p>
       </>
     ),
@@ -60,12 +60,12 @@ function buildSteps({ playerName, isCloudAccount, desktop, worldMap }) {
     body: (
       <>
         <p>
-          The Home screen lists every skill, grouped into Combat, Gathering, Production and
-          Utility.
+          Home shows all your skills, grouped into Combat, Gathering, Production and
+          Utility. Every skill levels from 1 to 99.
         </p>
         <p>
-          Tap any skill card to see its level and XP and jump straight into its actions —
-          chop trees, catch fish, smith bars and much more.
+          Tap a skill card to see its actions and start training: chop trees, catch fish,
+          smith bars, brew potions.
         </p>
       </>
     ),
@@ -77,12 +77,13 @@ function buildSteps({ playerName, isCloudAccount, desktop, worldMap }) {
     body: (
       <>
         <p>
-          Browse monsters and pick a fight to earn XP and loot. Start with the easiest
-          monsters and work your way up as your levels grow.
+          Pick a monster and fight it for XP and loot. Start small and work up as your
+          levels grow.
         </p>
         <p>
-          Keep food in your inventory — your starter shrimps heal you mid-fight — and equip
-          your bronze gear before your first battle.
+          Your starter kit covers all three combat styles: bronze melee gear, a shortbow
+          with arrows, and runes for spells. Keep your shrimps handy — eating heals you
+          mid-fight.
         </p>
       </>
     ),
@@ -94,12 +95,13 @@ function buildSteps({ playerName, isCloudAccount, desktop, worldMap }) {
     body: (
       <>
         <p>
-          Your inventory holds <b class="text-[var(--color-gold)]">28 slots</b> of items
-          you're actively using. Tap an item to eat, equip, bank or sell it.
+          Your inventory is what you carry:{' '}
+          <b class="text-[var(--color-gold)]">28 slots</b>. Tap an item to eat, equip, bank
+          or sell it.
         </p>
         <p>
-          The Equipment screen shows what you're wearing and how it changes your combat
-          stats.
+          Equipment shows what you're wearing and the stats it gives you. Put your bronze
+          gear on before your first fight.
         </p>
       </>
     ),
@@ -111,12 +113,12 @@ function buildSteps({ playerName, isCloudAccount, desktop, worldMap }) {
     body: (
       <>
         <p>
-          The Bank stores everything you're not carrying — with far more room than your
+          The Bank holds everything you're not carrying, with far more room than your
           inventory. Deposit loot to keep your 28 slots free.
         </p>
         <p>
-          If your inventory fills up while gathering, your character heads to the bank
-          automatically.
+          Fill your inventory while gathering and your character walks to the bank on
+          their own.
         </p>
       </>
     ),
@@ -129,13 +131,13 @@ function buildSteps({ playerName, isCloudAccount, desktop, worldMap }) {
       <>
         {worldMap && (
           <p>
-            Travel the world from the World Map — each place holds its own gathering spots,
-            monsters, quests and more.
+            The world is split into places, each with its own monsters, gathering spots
+            and activities. Travel between them on the World Map.
           </p>
         )}
         <p>
-          The Adventures screen gathers your quests, clue scrolls and minigames in one
-          place — great for XP, coins and unique rewards.
+          Adventures holds your quests, clue scrolls and minigames. Quests pay out big XP;
+          clues and minigames drop items you can't get anywhere else.
         </p>
       </>
     ),
@@ -147,20 +149,20 @@ function buildSteps({ playerName, isCloudAccount, desktop, worldMap }) {
     body: desktop ? (
       <div class="space-y-1.5">
         <RailLabel>Left sidebar</RailLabel>
-        <NavRow iconKey="home" label="Home" note="Your skills at a glance" />
+        <NavRow iconKey="home" label="Home" note="Your skills" />
         {worldMap && <NavRow iconKey="globe" label="World Map" note="Travel between places" />}
-        <NavRow iconKey="coins" label="Bank" note="Store your items" />
-        <NavRow iconKey="combat_level" label="Combat" note="Fight monsters for XP and loot" />
-        <NavRow iconKey="backpack" label="Inventory" note="Your 28 carried items" />
+        <NavRow iconKey="coins" label="Bank" note="Your stored items" />
+        <NavRow iconKey="combat_level" label="Combat" note="Fight monsters" />
+        <NavRow iconKey="backpack" label="Inventory" note="What you're carrying" />
         <NavRow iconKey="paperdoll" label="Equipment" note="What you're wearing" />
         <NavRow iconKey="adventures_scroll" label="Adventures" note="Quests, clues and minigames" />
-        <NavRow iconKey="gears" label="Settings" note="Options, unlocks, collection log" />
+        <NavRow iconKey="gears" label="Settings" note="Options, unlocks and the collection log" />
         <RailLabel>Top bar</RailLabel>
         {isCloudAccount ? (
           <>
-            <NavRow emoji="📋" label="Daily Tasks" note="5 fresh tasks a day — each earns a credit" />
-            <NavRow iconKey="cut_diamond" label="Credits" note="Your credit balance" />
-            <NavRow iconKey="fast_forward_button" label="Skip 1h" note="Spend a credit to skip an hour instantly" />
+            <NavRow emoji="📋" label="Daily Tasks" note="Five a day, each worth a credit" />
+            <NavRow iconKey="cut_diamond" label="Credits" note="Your balance — tap to top up" />
+            <NavRow iconKey="fast_forward_button" label="Skip 1h" note="Skip an hour of any activity for one credit" />
           </>
         ) : (
           <NavRow emoji="🔒" label="Cloud extras" note="Daily Tasks, Credits and Skip unlock with a free account" />
@@ -170,18 +172,18 @@ function buildSteps({ playerName, isCloudAccount, desktop, worldMap }) {
       <div class="space-y-1.5">
         <RailLabel>Top rail</RailLabel>
         {worldMap && <NavRow iconKey="globe" label="Map" note="Travel between places" />}
-        <NavRow iconKey="coins" label="Bank" note="Store your items" />
-        <NavRow iconKey="combat_level" label="Combat" note="Fight monsters for XP and loot" />
-        <NavRow iconKey="backpack" label="Items" note="Your 28 carried items" />
+        <NavRow iconKey="coins" label="Bank" note="Your stored items" />
+        <NavRow iconKey="combat_level" label="Combat" note="Fight monsters" />
+        <NavRow iconKey="backpack" label="Items" note="What you're carrying" />
         <NavRow iconKey="paperdoll" label="Equip" note="What you're wearing" />
         <RailLabel>Bottom rail</RailLabel>
-        <NavRow iconKey="gears" label="Settings" note="Options, unlocks, collection log" />
+        <NavRow iconKey="gears" label="Settings" note="Options, unlocks and the collection log" />
         <NavRow iconKey="adventures_scroll" label="Adventures" note="Quests, clues and minigames" />
         {isCloudAccount ? (
           <>
-            <NavRow emoji="📋" label="Daily Tasks" note="5 fresh tasks a day — each earns a credit" />
-            <NavRow iconKey="cut_diamond" label="Credits" note="Your credit balance" />
-            <NavRow iconKey="fast_forward_button" label="Skip 1h" note="Spend a credit to skip an hour instantly" />
+            <NavRow emoji="📋" label="Daily Tasks" note="Five a day, each worth a credit" />
+            <NavRow iconKey="cut_diamond" label="Credits" note="Your balance — tap to top up" />
+            <NavRow iconKey="fast_forward_button" label="Skip 1h" note="Skip an hour of any activity for one credit" />
           </>
         ) : (
           <NavRow emoji="🔒" label="Cloud extras" note="Daily Tasks, Credits and Skip unlock with a free account" />
@@ -197,27 +199,27 @@ function buildSteps({ playerName, isCloudAccount, desktop, worldMap }) {
     body: isCloudAccount ? (
       <>
         <p>
-          If you have questions or difficulties, tap the{' '}
+          Questions? Stuck? Open the{' '}
           <b class="text-[var(--color-gold)]">💬 Game Helper</b>{' '}
-          {desktop ? 'at the bottom of the sidebar' : 'in the bottom rail'} and ask the AI
-          helper — it can answer most questions about items, monsters, quests and your own
-          progress.
+          {desktop ? 'at the bottom of the sidebar' : 'from the bottom rail'} and ask. It
+          can answer most questions about items, monsters and quests, and it can see your
+          own character's progress.
         </p>
         <p>
-          It can even do things for you — sell an item, get a slayer task, buy gear — and
-          always confirms before anything changes.
+          It can also act for you: sell an item, fetch a slayer task, buy gear. It always
+          asks before it changes anything.
         </p>
-        <p>That's the tour — good luck out there, adventurer!</p>
       </>
     ) : (
       <>
         <p>
-          Create a free account to unlock the{' '}
-          <b class="text-[var(--color-gold)]">💬 Game Helper</b> — an AI chat that answers
-          questions about items, monsters, quests and your own progress, and can even do
-          things for you.
+          The <b class="text-[var(--color-gold)]">💬 Game Helper</b> is an in-game chat
+          that answers questions about items, monsters, quests and your own progress, and
+          can handle jobs like selling items for you.
         </p>
-        <p>That's the tour — good luck out there, adventurer!</p>
+        <p>
+          It unlocks with a free account, along with cloud saves, daily tasks and credits.
+        </p>
       </>
     ),
   })
