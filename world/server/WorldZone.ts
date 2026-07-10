@@ -35,6 +35,9 @@ const CHECKPOINT_EVERY_TICKS = 100
 const HP_REGEN_EVERY_TICKS = 100
 const RATE_LIMIT_WINDOW_MS = 1000
 const RATE_LIMIT_MAX_MESSAGES = 10
+// Every player's ent re-broadcasts on this cadence even when idle, so a client
+// that missed a join edge (reconnect gap, suspended tab) self-heals within 30s.
+const PRESENCE_KEYFRAME_TICKS = 50
 
 const ZONES: Record<string, ZoneDef> = { pasture: pastureZone as ZoneDef }
 for (const zone of Object.values(ZONES)) {
@@ -205,6 +208,34 @@ export class WorldZone extends Server<Env> {
       return
     }
 
+    // Reconnect while the session is still live (mobile socket drop, second
+    // tab): carry the in-memory session over to the new socket. Re-seeding
+    // from D1 here would teleport the player to a checkpoint up to 60s stale
+    // and silently drop unflushed minted items/XP — the live session is the
+    // source of truth until it disconnect-flushes.
+    const liveCharId = String(row.id)
+    const existing = this.players.get(liveCharId)
+    if (existing) {
+      this.clearAuthTimer(connection.id)
+      existing.conn.close(1008, 'duplicate_connection')
+      if (existing.combat) {
+        const npc = this.ensureNpcs().get(existing.combat.npcId)
+        if (npc && npc.attackerId === liveCharId) npc.attackerId = null
+      }
+      existing.path = []
+      existing.pendingInteract = null
+      existing.mining = null
+      existing.combat = null
+      existing.pendingLoot = null
+      existing.anim = 'idle'
+      existing.conn = connection
+      existing.lastMsgTimes = []
+      connection.setState({ charId: liveCharId })
+      this.sendWelcome(existing)
+      this.ensureTicking()
+      return
+    }
+
     let stats
     let seeded
     let equipment: Record<string, unknown> = {}
@@ -223,12 +254,6 @@ export class WorldZone extends Server<Env> {
 
     const charId = String(row.id)
     this.clearAuthTimer(connection.id)
-
-    const existing = this.players.get(charId)
-    if (existing) {
-      existing.conn.close(1008, 'duplicate_connection')
-      this.players.delete(charId)
-    }
 
     const posRow = await this.env.DB.prepare(
       'SELECT x, z FROM world_positions WHERE character_id = ? AND zone_id = ?'
@@ -266,15 +291,23 @@ export class WorldZone extends Server<Env> {
       lootView: new Set(),
     }
     this.players.set(charId, player)
+    this.sendWelcome(player)
+    this.pendingJoins.add(charId)
+    this.ensureTicking()
+  }
 
+  /** Welcome + intro snapshot (depleted rocks, npcs, other players, visible
+   * loot) for the player's CURRENT connection, resetting their loot view.
+   * Shared by fresh joins and live-session reconnects. */
+  private sendWelcome(player: Player): void {
     const statics: StaticObject[] = this.zone.objects
-    send(connection, {
+    send(player.conn, {
       t: 'welcome',
-      selfId: charId,
+      selfId: player.charId,
       tick: this.tickCount,
       zone: { id: this.zone.id, w: this.zone.width, h: this.zone.height, collision: this.zone.collision },
       statics,
-      you: { x, z, stats: player.stats, inventory: player.inventory, ...(player.gear.weapon ? { gear: player.gear } : {}) },
+      you: { x: player.x, z: player.z, stats: player.stats, inventory: player.inventory, ...(player.gear.weapon ? { gear: player.gear } : {}) },
     })
 
     const depleted = [...this.ensureRocks().values()]
@@ -284,18 +317,15 @@ export class WorldZone extends Server<Env> {
       .filter((n) => n.state !== 'dead')
       .map((n) => toNpcDiff(n))
     const otherEnts = [...this.players.values()]
-      .filter((p) => p.charId !== charId)
+      .filter((p) => p.charId !== player.charId)
       .map((p) => toEntityDiff(p))
-    const visibleLoot = visibleLootFor(this.loot.values(), charId, this.tickCount)
+    const visibleLoot = visibleLootFor(this.loot.values(), player.charId, this.tickCount)
     player.lootView = new Set(visibleLoot.map((l) => l.id))
     const intro: Extract<ServerMessage, { t: 'diff' }> = { t: 'diff', tick: this.tickCount }
     if (depleted.length > 0) intro.rocks = depleted
     if (npcEnts.length > 0 || otherEnts.length > 0) intro.ents = [...otherEnts, ...npcEnts]
     if (visibleLoot.length > 0) intro.loot = visibleLoot
-    if (intro.rocks || intro.ents || intro.loot) send(connection, intro)
-
-    this.pendingJoins.add(charId)
-    this.ensureTicking()
+    if (intro.rocks || intro.ents || intro.loot) send(player.conn, intro)
   }
 
   private handleAuthedMessage(player: Player, message: ClientMessage): void {
@@ -417,6 +447,9 @@ export class WorldZone extends Server<Env> {
       if (joined) playerEnts.set(id, toEntityDiff(joined))
     }
     this.pendingJoins.clear()
+    if (this.tickCount % PRESENCE_KEYFRAME_TICKS === 0) {
+      for (const p of this.players.values()) playerEnts.set(p.charId, toEntityDiff(p))
+    }
     const playersRemoved = [...this.pendingLeaves].filter((id) => !this.players.has(id))
     this.pendingLeaves.clear()
     const chatEvents = this.pendingChat

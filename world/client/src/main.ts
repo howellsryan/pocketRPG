@@ -1,5 +1,5 @@
 import { exchangeHandoff, getStoredSession, parseHandoffFromHash, pocketRpgUrl, type WorldSession } from './auth'
-import { hideOverlay, initChatInput, initHud, pushMessage, removeHpBar, removeNameplate, removeOverheadChat, renderInventory, showHitsplat, showLoginRequired, showXpDrop, updateHpBar, updateNameplate, updateOverheadChat, npcExamine } from './ui'
+import { hideConnBanner, hideOverlay, initChatInput, initHud, pushMessage, removeHpBar, removeNameplate, removeOverheadChat, renderInventory, showConnBanner, showHitsplat, showLoginRequired, showXpDrop, updateHpBar, updateNameplate, updateOverheadChat, npcExamine } from './ui'
 import { connect, onMessage, send } from './net'
 import { clampZoom, createCamera, createGround, createLights, createRenderer, createScene, tileToWorld, updateCamera } from './scene'
 import { applyEntityDiff, applyWeapon, createCowMesh, createEntity, createHeroMesh, updateEntity, type Entity } from './entities'
@@ -49,6 +49,12 @@ function enterWorld(session: WorldSession): void {
   // Local pack copy so a drag-reorder can apply optimistically; every server
   // {e:'inv'} (including the reorder echo) replaces it wholesale.
   let inventory: InvSlot[] = []
+  // partysocket reconnects silently and re-fires 'open'; a repeat welcome must
+  // RESYNC the existing scene, never rebuild it (a second renderer/loop breaks
+  // everything until a hard refresh).
+  let sceneBuilt = false
+  let authed = false
+  let lastServerMsg = performance.now()
 
   function toScreen(pos: THREE.Vector3, yOffset: number): { x: number; y: number } {
     const v = pos.clone()
@@ -92,6 +98,7 @@ function enterWorld(session: WorldSession): void {
     npcLoading.add(diff.id)
     void createCowMesh().then(({ mesh, animator }) => {
       const d = pendingNpcDiff.get(diff.id) ?? diff
+      if (!npcLoading.has(diff.id)) return
       const entity = createEntity(diff.id, d.x, d.z, mesh, animator)
       entity.serverAnim = d.anim
       entity.name = d.name
@@ -156,11 +163,67 @@ function enterWorld(session: WorldSession): void {
   }
 
   socket.addEventListener('open', () => {
+    hideConnBanner()
     send(socket, { t: 'hello', token: session.token })
   })
+  socket.addEventListener('close', () => {
+    authed = false
+    showConnBanner()
+  })
+
+  // Heartbeat keeps mobile networks/NATs from silently killing the socket, and
+  // the watchdog force-reconnects one that looks open but has gone deaf —
+  // otherwise taps get buffered into a dead socket and burst seconds later.
+  let pingN = 0
+  setInterval(() => {
+    if (authed && socket.readyState === WebSocket.OPEN) send(socket, { t: 'ping', n: ++pingN })
+    if (document.visibilityState === 'visible' && performance.now() - lastServerMsg > 20000) {
+      lastServerMsg = performance.now()
+      socket.reconnect()
+    }
+  }, 10000)
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && performance.now() - lastServerMsg > 5000) {
+      lastServerMsg = performance.now()
+      socket.reconnect()
+    }
+  })
+
+  /** Repeat welcome after a reconnect: snap self to the server's position,
+   * replace pack/stats, and drop every other entity — the intro diff that
+   * follows the welcome repopulates npcs/others/loot/rock states. */
+  function resyncFromWelcome(message: Extract<ServerMessage, { t: 'welcome' }>): void {
+    inventory = message.you.inventory
+    renderInventory(inventory)
+    playerCombatLevel = combatLevelFromStats(message.you.stats)
+    if (self) {
+      const pos = tileToWorld(message.you.x, message.you.z)
+      self.queue.length = 0
+      self.mesh.position.copy(pos)
+      self.fromPos.copy(pos)
+      self.toPos.copy(pos)
+      self.moving = false
+      self.serverAnim = 'idle'
+      void applyWeapon(self.mesh, message.you.gear)
+    }
+    for (const id of [...others.keys(), ...otherLoading]) removeOther(id)
+    for (const id of [...npcs.keys(), ...npcLoading]) removeNpc(id)
+    for (const id of rockStates.keys()) {
+      rockStates.set(id, false)
+      statics?.setRockDepleted(id, false)
+    }
+    lootLayer?.clear()
+  }
 
   onMessage(socket, (message: ServerMessage) => {
+    lastServerMsg = performance.now()
     if (message.t === 'welcome') {
+      authed = true
+      if (sceneBuilt) {
+        resyncFromWelcome(message)
+        return
+      }
+      sceneBuilt = true
       void (async () => {
         hideOverlay()
         const scene = createScene()

@@ -453,6 +453,27 @@ export function hideOverlay(): void {
   if (scene) scene.style.display = 'block'
 }
 
+/** Connection banner — standalone (not part of initHud) so it can show before
+ * the first welcome or while the HUD isn't built. */
+export function showConnBanner(): void {
+  let el = document.getElementById('conn-banner')
+  if (!el) {
+    el = document.createElement('div')
+    el.id = 'conn-banner'
+    el.textContent = 'Reconnecting…'
+    el.style.cssText =
+      'position:fixed;top:8px;left:50%;transform:translateX(-50%);z-index:40;padding:6px 14px;' +
+      'background:rgba(140,40,40,0.92);color:#fff;font-family:sans-serif;font-size:13px;border-radius:6px;'
+    document.body.appendChild(el)
+  }
+  el.style.display = 'block'
+}
+
+export function hideConnBanner(): void {
+  const el = document.getElementById('conn-banner')
+  if (el) el.style.display = 'none'
+}
+
 export function showLoginRequired(pocketRpgUrl: string): void {
   const el = appEl()
   if (el) {

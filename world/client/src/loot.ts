@@ -13,6 +13,8 @@ export type LootLayer = {
   pickables: THREE.Object3D[]
   apply: (added?: LootItem[], removed?: string[]) => void
   update: (deltaSeconds: number) => void
+  /** Drops every marker (reconnect resync — the intro diff repopulates). */
+  clear: () => void
 }
 
 function lootOrder(id: string): number {
@@ -131,5 +133,14 @@ export function createLootLayer(scene: THREE.Scene): LootLayer {
     }
   }
 
-  return { pickables, apply, update }
+  function clear(): void {
+    const keys = [...tiles.keys()]
+    byId.clear()
+    for (const k of keys) {
+      const [x, z] = k.split(',').map(Number)
+      rebuildTile(x, z)
+    }
+  }
+
+  return { pickables, apply, update, clear }
 }

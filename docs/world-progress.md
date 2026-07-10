@@ -403,3 +403,26 @@ Fixes:
 In-game screenshots re-verified: runeforged scimitar (curved model, teal tint) held at the side without clipping; staff unchanged. `world:check` green (14 files / 116 tests). Only `world/` + `docs/` touched.
 
 - [x] Phase 5 grip fixes — see commit introducing this entry — idle-pose grips for all archetypes, scimitar asset swap; DT-P5 manual pass still owns final look/feel sign-off.
+
+## Multiplayer connectivity fixes (developer device feedback: misplacement, lag, invisible players)
+
+Developer videos showed: characters misplaced after play, 1–2s observer delay bursts, taps doing nothing, and a joining player invisible until refresh. All four trace to one unhandled reality: **mobile sockets die and reconnect constantly**, and neither side handled it.
+
+Root causes found in review:
+1. **Client rebuilt the whole scene on every reconnect.** partysocket silently reconnects and re-fires `open`; the client re-sent `hello` (correct) but the welcome handler unconditionally re-ran the full scene build — second canvas, second render loop, duplicated listeners. Everything after the first silent reconnect was undefined behaviour until a hard refresh (the "invisible second player").
+2. **Server discarded the live session on duplicate connection.** The old kick path deleted the in-memory player and re-seeded from D1: position from a checkpoint up to 60s stale (the misplacement), and **unflushed minted items/pending XP silently lost** (the old socket's `onClose` early-returns for a stale conn, so no disconnect flush ever ran).
+3. **No heartbeat, no dead-socket detection.** iOS/mobile networks kill idle WebSockets without a close frame; partysocket only notices on TCP timeout. Meanwhile taps were buffered into the dead socket and burst on reconnect (the "click does nothing" + "1–2s delay" spikes).
+
+Fixes (all verified e2e):
+- **Server session carry-over** (`WorldZone.handleHello`): a hello for an already-live character swaps the connection onto the existing in-memory player (intents/combat cleared, aggro released), kicks the old socket, and replays welcome+intro from LIVE state via a new shared `sendWelcome()`. No D1 reads, no grant loss, no teleport. Fresh joins unchanged.
+- **Client resync** (`main.ts`): repeat welcome → `resyncFromWelcome` (snap self, replace pack/stats, drop all npcs/others/loot/rock state and let the intro diff repopulate) — never rebuilds the scene. `ensureNpc`'s load promise gained the same abort guard `ensureOther` already had.
+- **Heartbeat + watchdog**: authed ping every 10s (keeps NATs alive); force `socket.reconnect()` when nothing has been heard for 20s while visible, and on `visibilitychange` resume after >5s silence (the phone-lock case). A standalone "Reconnecting…" banner shows between close and re-welcome so buffered input is no longer a mystery.
+- **Presence keyframe** (server, every 50 ticks): all player ents re-broadcast even when idle, so any client that missed a join edge self-heals ≤30s.
+
+**Verified**: WS driver e2e 7/7 — reconnect welcome resumes the exact live tile (not spawn/checkpoint) with the mined ore still in the pack, old socket closed 1008/duplicate_connection, observer never sees a leave, keyframes flow, post-reconnect input reaches the observer. Browser e2e: duplicate-kick the page's socket → partysocket reconnects → ONE canvas, zero page errors, banner cleared, hero at the live position.
+
+**Scalability review notes** (asked for; no code churn): per-tick cost is O(players × loot) with zero per-tick durable writes — sound at zone scale (the §6 cost model holds). Baseline observer latency of ~1.2s is inherent to the design (600ms server tick + 600ms client playback per tile, the OSRS model) — the *spikes* were the dead-socket buffering above, now bounded by the watchdog. Deferred as micro-optimisations: pre-serialising the shared ents array once per tick instead of per player, and per-player interest filtering (only relevant once zones hold many players).
+
+`world:check` green (14 files / 116 tests). Only `world/` + `docs/` touched.
+
+- [x] Connectivity fixes — see commit introducing this entry — reconnect carry-over + client resync + heartbeat/watchdog + presence keyframe, all e2e-verified; DT: redeploy preview and re-test on devices.
