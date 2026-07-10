@@ -139,6 +139,14 @@ describe('advanceJourneyOffline', () => {
     expect(res.task.ticksRemaining).toBe(leg.journey.dwellTicks - 3)
   })
 
+  it('a single hour into a long quest journey advances only the hour — never completes it', () => {
+    const quest = { id: 'gm_quest', name: 'Sunscar Treasure II', durationSeconds: 36000 } // 10h
+    const leg = planQuestJourney(quest, 'lumbright')!
+    const res = advanceJourneyOffline(leg, 60 * 60 * 1000)
+    expect(res.completedPending).toBe(false)
+    expect(res.msRemaining).toBe(0)
+  })
+
   it('a journey that finishes while away parks on its final search at 0 ticks', () => {
     const leg = plan()
     const res = advanceJourneyOffline(leg, 24 * 60 * 60 * 1000) // a day away
