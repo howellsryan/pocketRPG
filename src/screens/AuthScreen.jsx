@@ -2,6 +2,7 @@ import { useState, useEffect } from 'preact/hooks'
 import { api, startGitHubLogin, startGoogleLogin, isEmbeddedBrowser, isHosted, setCharacter, getToken, clearAuth } from '../cloud/api.js'
 import { resetSyncState } from '../cloud/sync.js'
 import LandingScreen from './LandingScreen.jsx'
+import IronFrame from '../components/IronFrame.jsx'
 // Inline the iron full helm SVG so it renders on the auth screen before the
 // game chunk (which carries gameIconsData) has loaded.
 function IronHelmIcon({ size = 16 }) {
@@ -151,11 +152,17 @@ export default function AuthScreen({ onCloudReady, onPlayDemo }) {
   // type="button" keeps them from submitting the create <form>.
   const accountActions = (
     <>
-      <button type="button" onClick={handleSignOut} style={ghostBtn}>
-        🚪 Log out{identity?.provider ? ` of ${providerLabel(identity.provider)}` : ''}
+      <div class="fm-divider my-4" aria-hidden="true" />
+      <button type="button" onClick={handleSignOut} class="fm-btn fm-btn--ghost fm-btn--sm w-full mb-2">
+        Log out{identity?.provider ? ` of ${providerLabel(identity.provider)}` : ''}
       </button>
-      <button type="button" onClick={handleDeleteAccount} style={dangerBtn} disabled={busy}>
-        🗑️ Delete account
+      <button
+        type="button"
+        onClick={handleDeleteAccount}
+        disabled={busy}
+        class="fm-btn fm-btn--ghost fm-btn--sm w-full text-[var(--fm-blood)]! border-[var(--fm-blood)]! disabled:opacity-40 disabled:cursor-not-allowed"
+      >
+        Delete account
       </button>
     </>
   )
@@ -163,207 +170,174 @@ export default function AuthScreen({ onCloudReady, onPlayDemo }) {
   return (
     <Wrap>
       <Title />
-      {identity && (
-        <p style={subtitle}>
-          Signed in as <strong style={{ color: '#d4af37' }}>{identity.displayName}</strong>
-        </p>
-      )}
-
-      {busy && !characters && <p style={subtitle}>Loading…</p>}
-
-      {!showCreate && characters && characters.length > 0 && (
-        <>
-          <SectionLabel>Choose a character</SectionLabel>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '16px' }}>
-            {characters.map(ch => (
-              <button key={ch.id} onClick={() => selectCharacter(ch)} style={charRowBtn}>
-                <div style={{ fontFamily: 'Cinzel, serif', fontWeight: 'bold', fontSize: '15px', color: '#d4af37' }}>{ch.username}</div>
-                <div style={{ fontSize: '11px', color: '#e8d5b0', opacity: 0.5, marginTop: '2px' }}>
-                  {ch.save_updated_at ? `Last saved ${new Date(ch.save_updated_at).toLocaleString()}` : 'No cloud save yet'}
-                </div>
-              </button>
-            ))}
-          </div>
-          <button onClick={() => { setMode('create'); setNewName('') }} style={secondaryBtn}>
-            ➕ Create New Character
-          </button>
-          {accountActions}
-        </>
-      )}
-
-      {showCreate && (
-        <>
-        <form onSubmit={handleCreate}>
-          <SectionLabel>Create a character</SectionLabel>
-          <input
-            type="text"
-            value={newName}
-            onInput={(e) => setNewName(e.target.value)}
-            placeholder="Username (3–16 chars)"
-            maxLength={16}
-            autoFocus
-            style={input}
-          />
-          <p style={{ fontSize: '10px', color: '#e8d5b0', opacity: 0.45, margin: '6px 0 14px' }}>
-            Letters, numbers, _ and - only. Names are unique forever and cannot be changed.
+      <IronFrame class="w-full" parchStyle={{ padding: '20px 16px' }}>
+        {identity && (
+          <p class="text-center text-[12px] text-[var(--fm-ink-soft)] mb-4">
+            Signed in as <b class="text-[var(--fm-ink)]">{identity.displayName}</b>
           </p>
+        )}
 
-          {/* Ironman Mode Toggle */}
-          <div style={{ marginBottom: '14px', padding: '12px', borderRadius: '12px', background: '#1a1a1a', border: '1px solid #333' }}>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', margin: 0 }}>
-              <input
-                type="checkbox"
-                checked={isIronman}
-                onChange={(e) => setIsIronman(e.target.checked)}
-                style={{ width: '18px', height: '18px', cursor: 'pointer' }}
-              />
-              <div>
-                <div style={{ fontSize: '13px', color: '#d4af37', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <IronHelmIcon size={16} /> Ironman Mode
-                </div>
-                <div style={{ fontSize: '10px', color: '#e8d5b0', opacity: 0.6, marginTop: '2px' }}>
-                  Fully self-sufficient: no PvP and no trading post offers with other players. You can still use the general store. Permanent once set.
-                </div>
-              </div>
-            </label>
-          </div>
+        {busy && !characters && <p class="fm-lore text-center text-sm py-6">Fetching your characters…</p>}
 
-          {/* One Life Mode Toggle */}
-          <div style={{ marginBottom: '14px', padding: '12px', borderRadius: '12px', background: '#1a1a1a', border: '1px solid #333' }}>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', margin: 0 }}>
-              <input
-                type="checkbox"
-                checked={isOneLife}
-                onChange={(e) => {
-                  const checked = e.target.checked
-                  setIsOneLife(checked)
-                  if (!checked) setOneLifeAck(false)
-                }}
-                style={{ width: '18px', height: '18px', cursor: 'pointer' }}
-              />
-              <div>
-                <div style={{ fontSize: '13px', color: '#d4af37', fontWeight: 'bold' }}>☠️ One Life Mode</div>
-                <div style={{ fontSize: '10px', color: '#e8d5b0', opacity: 0.6, marginTop: '2px' }}>
-                  Die once and your account is permanently deleted.
-                </div>
-              </div>
-            </label>
-          </div>
-          {isOneLife && (
-            <div style={{ marginBottom: '14px', padding: '12px', borderRadius: '12px', background: '#2a1616', border: '1px solid #7a2d2d' }}>
-              <div style={{ fontSize: '12px', color: '#ff9b9b', fontWeight: 'bold', marginBottom: '6px' }}>
-                ⚠️ One Life Warning
-              </div>
-              <div style={{ fontSize: '11px', color: '#ffd4d4', lineHeight: 1.45, marginBottom: '8px' }}>
-                Death permanently deletes this character. Not recommended for first-time players.
-              </div>
-              <label style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', cursor: 'pointer', fontSize: '11px', color: '#ffd4d4' }}>
+        {!showCreate && characters && characters.length > 0 && (
+          <>
+            <SectionLabel>Choose a character</SectionLabel>
+            <div class="fm-ledger mb-4">
+              {characters.map(ch => (
+                <button
+                  key={ch.id}
+                  onClick={() => selectCharacter(ch)}
+                  class="fm-row w-full min-h-[56px] text-left bg-transparent cursor-pointer hover:bg-[var(--fm-parch-hi)] active:opacity-80"
+                >
+                  <div class="flex-1 min-w-0">
+                    <div class="font-[var(--fm-display)] font-bold text-[15px] text-[var(--fm-ink)]">{ch.username}</div>
+                    <div class="fm-num text-[11px] text-[var(--fm-ink-faint)] mt-0.5">
+                      {ch.save_updated_at ? `Last saved ${new Date(ch.save_updated_at).toLocaleString()}` : 'No cloud save yet'}
+                    </div>
+                  </div>
+                  <span class="text-[var(--fm-ink-faint)] text-lg leading-none" aria-hidden="true">›</span>
+                </button>
+              ))}
+            </div>
+            <button onClick={() => { setMode('create'); setNewName('') }} class="fm-btn fm-btn--ember w-full">
+              Create New Character
+            </button>
+            {accountActions}
+          </>
+        )}
+
+        {showCreate && (
+          <>
+          <form onSubmit={handleCreate}>
+            <SectionLabel>Create a character</SectionLabel>
+            <input
+              type="text"
+              value={newName}
+              onInput={(e) => setNewName(e.target.value)}
+              placeholder="Username (3–16 chars)"
+              maxLength={16}
+              autoFocus
+              class="w-full box-border rounded-[var(--fm-r-sm)] border border-[var(--fm-rule)] bg-[var(--fm-parch-hi)] px-4 py-3 text-[14px] text-[var(--fm-ink)] placeholder:text-[var(--fm-ink-faint)] outline-none focus:border-[var(--fm-brass)]"
+            />
+            <p class="text-[11px] text-[var(--fm-ink-faint)] mt-1.5 mb-4">
+              Letters, numbers, _ and - only. Names are unique forever and cannot be changed.
+            </p>
+
+            {/* Ironman Mode Toggle */}
+            <div class="rounded-[var(--fm-r-sm)] border border-[var(--fm-rule)] bg-[var(--fm-parch-lo)] p-3 mb-3">
+              <label class="flex items-start gap-2.5 cursor-pointer m-0">
                 <input
                   type="checkbox"
-                  checked={oneLifeAck}
-                  onChange={(e) => setOneLifeAck(e.target.checked)}
-                  style={{ marginTop: '1px', width: '14px', height: '14px', cursor: 'pointer' }}
+                  checked={isIronman}
+                  onChange={(e) => setIsIronman(e.target.checked)}
+                  class="w-[18px] h-[18px] mt-0.5 flex-shrink-0 cursor-pointer accent-[var(--fm-ember)]"
                 />
-                I understand this character is permanently deleted on death.
+                <div>
+                  <div class="flex items-center gap-1.5 text-[13px] font-bold text-[var(--fm-ink)]">
+                    <IronHelmIcon size={16} /> Ironman Mode
+                  </div>
+                  <div class="text-[11px] text-[var(--fm-ink-soft)] mt-0.5 leading-snug">
+                    Fully self-sufficient: no PvP and no trading post offers with other players. You can still use the general store. Permanent once set.
+                  </div>
+                </div>
               </label>
             </div>
-          )}
 
-          {showCreate && (
-            <details style={{ marginBottom: '14px', padding: '12px', borderRadius: '12px', background: '#1a1a1a', border: '1px solid #333' }} open>
-              <summary style={{ cursor: 'pointer', fontSize: '13px', color: '#d4af37', fontWeight: 'bold' }}>🧭 New to PocketRPG?</summary>
-
-              <div style={{ marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {/* One Life Mode Toggle */}
+            <div class="rounded-[var(--fm-r-sm)] border border-[var(--fm-rule)] bg-[var(--fm-parch-lo)] p-3 mb-3">
+              <label class="flex items-start gap-2.5 cursor-pointer m-0">
+                <input
+                  type="checkbox"
+                  checked={isOneLife}
+                  onChange={(e) => {
+                    const checked = e.target.checked
+                    setIsOneLife(checked)
+                    if (!checked) setOneLifeAck(false)
+                  }}
+                  class="w-[18px] h-[18px] mt-0.5 flex-shrink-0 cursor-pointer accent-[var(--fm-ember)]"
+                />
                 <div>
-                  <div style={{ fontSize: '11px', color: '#d4af37', fontWeight: 'bold', marginBottom: '4px' }}>Recommended first character</div>
-                  <ul style={{ margin: 0, paddingLeft: '16px', fontSize: '10px', color: '#e8d5b0', opacity: 0.9, lineHeight: 1.45 }}>
-                    <li>Normal mode is recommended for your first character.</li>
-                    <li>One Life is extreme: death permanently deletes that character.</li>
-                  </ul>
+                  <div class="text-[13px] font-bold text-[var(--fm-ink)]">☠️ One Life Mode</div>
+                  <div class="text-[11px] text-[var(--fm-ink-soft)] mt-0.5 leading-snug">
+                    Die once and your account is permanently deleted.
+                  </div>
                 </div>
-
-                <div>
-                  <div style={{ fontSize: '11px', color: '#d4af37', fontWeight: 'bold', marginBottom: '4px' }}>Starter kit</div>
-                  <ul style={{ margin: 0, paddingLeft: '16px', fontSize: '10px', color: '#e8d5b0', opacity: 0.9, lineHeight: 1.45 }}>
-                    <li>Bronze dagger, bronze scimitar, and full bronze armor + kiteshield.</li>
-                    <li>Shrimp for healing and a small amount of starting coins.</li>
-                  </ul>
+              </label>
+            </div>
+            {isOneLife && (
+              <div class="rounded-[var(--fm-r-sm)] border border-[var(--fm-blood)] bg-[var(--fm-parch-lo)] p-3 mb-3">
+                <div class="text-[12px] font-bold text-[var(--fm-blood)] mb-1.5">⚠️ One Life Warning</div>
+                <div class="text-[11px] text-[var(--fm-ink-soft)] leading-relaxed mb-2">
+                  Death permanently deletes this character. Not recommended for first-time players.
                 </div>
-
-                <div>
-                  <div style={{ fontSize: '11px', color: '#d4af37', fontWeight: 'bold', marginBottom: '4px' }}>First steps</div>
-                  <ul style={{ margin: 0, paddingLeft: '16px', fontSize: '10px', color: '#e8d5b0', opacity: 0.9, lineHeight: 1.45 }}>
-                    <li>Create your character and equip your bronze gear from Items.</li>
-                    <li>Open Combat and train on early monsters.</li>
-                    <li>Eat shrimp when low HP, then bank or sell loot.</li>
-                    <li>Upgrade gear, then try skilling and quests.</li>
-                  </ul>
-                </div>
-
-                <div>
-                  <div style={{ fontSize: '11px', color: '#d4af37', fontWeight: 'bold', marginBottom: '4px' }}>Need more help?</div>
-                  <ul style={{ margin: 0, paddingLeft: '16px', fontSize: '10px', color: '#e8d5b0', opacity: 0.9, lineHeight: 1.45 }}>
-                    <li>Please read the help and guides section for more information in the Settings screen once you have started your adventure.</li>
-                  </ul>
-                </div>
+                <label class="flex items-start gap-2 cursor-pointer text-[11px] text-[var(--fm-ink)]">
+                  <input
+                    type="checkbox"
+                    checked={oneLifeAck}
+                    onChange={(e) => setOneLifeAck(e.target.checked)}
+                    class="w-3.5 h-3.5 mt-px flex-shrink-0 cursor-pointer accent-[var(--fm-blood)]"
+                  />
+                  I understand this character is permanently deleted on death.
+                </label>
               </div>
-            </details>
-          )}
+            )}
 
-          <button type="submit" disabled={busy || newName.trim().length < 3 || (isOneLife && !oneLifeAck)} style={primaryBtn}>
-            {busy ? 'Creating…' : 'Create Character'}
-          </button>
-          {characters && characters.length > 0 && (
-            <button type="button" onClick={() => setMode('characters')} style={ghostBtn}>
-              Back
+            <button
+              type="submit"
+              disabled={busy || newName.trim().length < 3 || (isOneLife && !oneLifeAck)}
+              class="fm-btn fm-btn--ember w-full disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              {busy ? 'Creating…' : 'Create Character'}
             </button>
-          )}
-        </form>
-        {accountActions}
-        </>
-      )}
+            {characters && characters.length > 0 && (
+              <button type="button" onClick={() => setMode('characters')} class="fm-btn fm-btn--ghost fm-btn--sm w-full mt-2.5">
+                Back
+              </button>
+            )}
+          </form>
+          {accountActions}
+          </>
+        )}
 
-      {error && <p style={errorText}>{error}</p>}
+        {error && <p class="text-[12px] font-semibold text-[var(--fm-blood)] text-center mt-3">{error}</p>}
+      </IronFrame>
     </Wrap>
   )
 }
 
-// ── Styled helpers (kept inline to avoid coupling to component library during boot) ──
+// ── Styled helpers — Forgemark (DESIGN.md): soot backdrop + gilt brand,
+// matching the landing page this screen follows. ──
 
 function Wrap({ children }) {
-  // height:100% + overflowY:auto makes the panel a scroll container; margin:auto
-  // (instead of justify-content:center) vertically centers short content without
-  // clipping the top when the character list is taller than the viewport.
+  // Scroll container with margin:auto centering — vertically centers short
+  // content without clipping the top when the character list is taller than
+  // the viewport.
   return (
-    <div style={{ height: '100%', overflowY: 'auto', display: 'flex', flexDirection: 'column', padding: '24px', background: '#0f0f0f', boxSizing: 'border-box' }}>
-      <div style={{ width: '100%', maxWidth: '380px', margin: 'auto' }}>{children}</div>
+    <div class="h-full overflow-y-auto flex flex-col p-6 box-border bg-[var(--fm-soot)]">
+      <div class="w-full max-w-[380px] m-auto">{children}</div>
     </div>
   )
 }
 
 function Title() {
   return (
-    <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-      <h1 style={{ fontFamily: 'Cinzel, serif', fontSize: '28px', fontWeight: '900', color: '#d4af37', letterSpacing: '0.05em' }}>PocketRPG</h1>
-      <p style={{ fontSize: '11px', color: '#e8d5b0', opacity: 0.35, marginTop: '4px', fontFamily: 'Nunito, sans-serif' }}>A mobile tick-based idle fantasy RPG</p>
+    <div class="text-center mb-5">
+      <h1 class="fm-banner fm-banner--gilt text-[38px]">PocketRPG</h1>
+      <div class="fm-eyebrow fm-eyebrow--light text-[10px] mt-2">A Medieval Idle RPG</div>
     </div>
   )
 }
 
 function SectionLabel({ children }) {
-  return <div style={{ fontSize: '11px', color: '#e8d5b0', opacity: 0.5, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: '700', marginBottom: '8px' }}>{children}</div>
+  return (
+    <div class="fm-rule-head mb-3">
+      <span class="fm-eyebrow text-[10px]">{children}</span>
+    </div>
+  )
 }
 
-const subtitle = { fontSize: '12px', color: '#e8d5b0', opacity: 0.7, textAlign: 'center', marginBottom: '16px', lineHeight: 1.5 }
-const primaryBtn = { width: '100%', padding: '14px', borderRadius: '12px', background: 'linear-gradient(135deg, #b8940e, #d4af37)', color: '#0f0f0f', fontFamily: 'Cinzel, serif', fontWeight: 'bold', fontSize: '14px', letterSpacing: '0.05em', border: 'none', cursor: 'pointer', marginBottom: '10px' }
 function providerLabel(provider) {
   if (provider === 'github') return 'GitHub'
   if (provider === 'google') return 'Google'
   return provider.charAt(0).toUpperCase() + provider.slice(1)
 }
-const secondaryBtn = { width: '100%', padding: '13px', borderRadius: '12px', background: '#2a2a2a', border: '1px solid #3a3a3a', color: '#e8d5b0', fontSize: '13px', fontWeight: '600', cursor: 'pointer', marginBottom: '10px' }
-const ghostBtn = { width: '100%', padding: '12px', borderRadius: '12px', background: 'transparent', border: '1px solid #2a2a2a', color: '#e8d5b0', opacity: 0.7, fontSize: '13px', cursor: 'pointer' }
-const dangerBtn = { width: '100%', padding: '12px', borderRadius: '12px', background: 'transparent', border: '1px solid var(--color-blood)', color: 'var(--color-blood-light)', fontSize: '13px', cursor: 'pointer', marginTop: '8px' }
-const charRowBtn = { width: '100%', padding: '12px 14px', borderRadius: '10px', background: '#1a1a1a', border: '1px solid #2a2a2a', color: '#e8d5b0', textAlign: 'left', cursor: 'pointer' }
-const input = { width: '100%', padding: '12px 16px', borderRadius: '12px', background: '#1a1a1a', border: '1px solid #333', color: '#e8d5b0', fontSize: '14px', fontFamily: 'Nunito, sans-serif', boxSizing: 'border-box', outline: 'none' }
-const errorText = { color: '#ff6b6b', fontSize: '12px', marginTop: '12px', textAlign: 'center' }

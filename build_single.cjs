@@ -155,6 +155,7 @@ const sourceFiles = [
   'components/QuestXpChoiceModal.js',
   'components/BuyCreditsModal.js',
   'components/DailyTasksModal.js',
+  'components/IntroTourModal.js',
   'components/IdleCombatSetupModal.js',
   'components/EquipmentPaperdoll.js',
   'components/Model3DViewer.js', // -> game chunk (equip screen 3D hero viewer)
