@@ -6,6 +6,7 @@ import { applyEntityDiff, createCowMesh, createEntity, createHeroMesh, updateEnt
 import { createClickMarker, setupInput, showClickMarker, updateClickMarker } from './input'
 import { createStatics, type Statics } from './statics'
 import { createLootLayer, type LootLayer } from './loot'
+import { loadItemIcons } from './itemIcon'
 import { combatLevelFromStats } from '../../../src/engine/combatLevel.js'
 import monstersData from '../../../src/data/monsters.json'
 import * as THREE from 'three'
@@ -120,11 +121,15 @@ function enterWorld(session: WorldSession): void {
         const renderer = createRenderer(container)
 
         initHud()
-        renderInventory(message.you.inventory)
         playerCombatLevel = combatLevelFromStats(message.you.stats)
         lootLayer = createLootLayer(scene)
 
-        const [heroResult, staticsResult] = await Promise.all([createHeroMesh(), createStatics(scene, message.statics)])
+        const [heroResult, staticsResult] = await Promise.all([
+          createHeroMesh(),
+          createStatics(scene, message.statics),
+          loadItemIcons(),
+        ])
+        renderInventory(message.you.inventory)
         statics = staticsResult
         for (const [id, depleted] of rockStates) staticsResult.setRockDepleted(id, depleted)
         self = createEntity(message.selfId, message.you.x, message.you.z, heroResult.mesh, heroResult.animator)

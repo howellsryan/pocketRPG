@@ -10,9 +10,15 @@ const TURN_SPEED_RAD_PER_S = 14
 // hero.glb (Quaternius Male Ranger, built by scripts/build-hero.mjs) is
 // ~1.9 units tall at unit scale; scaled to read right against 1-unit tiles.
 const HERO_SCALE = 0.85
-// cow.glb (Quaternius Farm Animal Pack) is authored large and off-origin; the
-// mesh is centred + floored + scaled to this body length from its bbox below.
+// cow.glb (Quaternius Farm Animal Pack) is authored Y-up-standing but large and
+// off-origin. Its skeleton carries a baked −90°X + ×100 transform, so it renders
+// upright with NO extra rotation — the earlier rotation was wrong. These are the
+// asset's static world bounds from `node scripts/build-cow.mjs` / inspect-glb;
+// they're stable because build-cow.mjs is deterministic. THREE.Box3.setFromObject
+// is unreliable for skinned meshes (ignores the skinned pose), so we scale/floor
+// from these constants instead of measuring at load.
 const COW_TARGET_LENGTH = 1.6
+const COW_BOUNDS = { minX: -1.12, minY: -0.07, minZ: -3.78, maxX: 1.12, maxY: 5.08, maxZ: 5.4 }
 
 export type AnimName = EntityDiff['anim']
 
@@ -116,20 +122,15 @@ export async function createCowMesh(): Promise<{ mesh: THREE.Object3D; animator:
   try {
     const gltf = await loadTemplate('/models/cow.glb')
     const model = cloneSkeleton(gltf.scene)
-    // The Farm Animal pack is authored with the body length along the vertical
-    // axis (unlike the character packs), so stand it on its feet first, then
-    // measure/centre/scale in the corrected orientation.
-    model.rotation.x = -Math.PI / 2
-    model.updateMatrixWorld(true)
-    const box = new THREE.Box3().setFromObject(model)
-    const size = new THREE.Vector3()
-    const center = new THREE.Vector3()
-    box.getSize(size)
-    box.getCenter(center)
-    model.position.set(-center.x, -box.min.y, -center.z)
+    const b = COW_BOUNDS
+    const centerX = (b.minX + b.maxX) / 2
+    const centerZ = (b.minZ + b.maxZ) / 2
+    // Centre x/z on the tile and drop feet (min.y) to y=0, in the model's own
+    // (pre-group-scale) space; the group scale then applies uniformly.
+    model.position.set(-centerX, -b.minY, -centerZ)
     const group = new THREE.Group()
     group.add(model)
-    group.scale.setScalar(COW_TARGET_LENGTH / Math.max(size.z, 0.001))
+    group.scale.setScalar(COW_TARGET_LENGTH / (b.maxZ - b.minZ))
     const animator = makeAnimator(model, gltf, ['idle', 'walk', 'die'])
     return { mesh: group, animator }
   } catch {

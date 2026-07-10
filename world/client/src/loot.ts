@@ -1,12 +1,9 @@
 import * as THREE from 'three'
-import itemsData from '../../../src/data/items.json'
 import { tileToWorld } from './scene'
 import { lootExamine } from './ui'
+import { iconSvgString, itemEmoji, itemName } from './itemIcon'
 import type { LootItem } from '../../shared/protocol'
 import type { Pickable } from './picking'
-
-type Items = Record<string, { name?: string; icon?: string } | undefined>
-const items = itemsData as unknown as Items
 
 const MARKER_SIZE = 0.5
 const MARKER_Y = 0.5
@@ -16,10 +13,6 @@ export type LootLayer = {
   pickables: THREE.Object3D[]
   apply: (added?: LootItem[], removed?: string[]) => void
   update: (deltaSeconds: number) => void
-}
-
-function itemName(itemId: string): string {
-  return items[itemId]?.name ?? itemId
 }
 
 function lootOrder(id: string): number {
@@ -43,12 +36,22 @@ export function createLootLayer(scene: THREE.Scene): LootLayer {
     canvas.width = 64
     canvas.height = 64
     const ctx = canvas.getContext('2d')!
-    ctx.font = '48px sans-serif'
-    ctx.textAlign = 'center'
-    ctx.textBaseline = 'middle'
-    ctx.fillText(items[itemId]?.icon ?? '❔', 32, 36)
     tex = new THREE.CanvasTexture(canvas)
     tex.colorSpace = THREE.SRGBColorSpace
+    const svg = iconSvgString(itemId, 64)
+    if (svg) {
+      // Rasterise the same bespoke art the DOM uses; inline SVG data URIs don't
+      // taint the canvas, so the CanvasTexture stays readable.
+      const img = new Image()
+      img.onload = () => { ctx.clearRect(0, 0, 64, 64); ctx.drawImage(img, 0, 0, 64, 64); tex!.needsUpdate = true }
+      img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg)
+    } else {
+      ctx.font = '48px sans-serif'
+      ctx.textAlign = 'center'
+      ctx.textBaseline = 'middle'
+      ctx.fillText(itemEmoji(itemId), 32, 36)
+      tex.needsUpdate = true
+    }
     textures.set(itemId, tex)
     return tex
   }
@@ -77,6 +80,17 @@ export function createLootLayer(scene: THREE.Scene): LootLayer {
     )
     plane.position.y = MARKER_Y
     marker.add(plane)
+    marker.userData.spin = plane
+    // Invisible full-tile hit pad so a tap anywhere on the tile picks the pile
+    // (the thin spinning icon alone is hard to hit on touch). `visible:false`
+    // is skipped by the raycaster, so use an opacity-0 material instead.
+    const pad = new THREE.Mesh(
+      new THREE.PlaneGeometry(1, 1),
+      new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false })
+    )
+    pad.rotation.x = -Math.PI / 2
+    pad.position.y = 0.05
+    marker.add(pad)
     marker.position.copy(tileToWorld(x, z))
     marker.userData.pick = {
       kind: 'loot',
@@ -110,7 +124,11 @@ export function createLootLayer(scene: THREE.Scene): LootLayer {
   }
 
   function update(deltaSeconds: number): void {
-    for (const marker of tiles.values()) marker.rotation.y += SPIN_SPEED * deltaSeconds
+    // Spin only the icon, not the whole marker, so the hit pad stays aligned.
+    for (const marker of tiles.values()) {
+      const icon = marker.userData.spin as THREE.Object3D | undefined
+      if (icon) icon.rotation.y += SPIN_SPEED * deltaSeconds
+    }
   }
 
   return { pickables, apply, update }

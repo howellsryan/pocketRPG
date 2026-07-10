@@ -1,11 +1,8 @@
-import itemsData from '../../../src/data/items.json'
 import type { InvSlot } from '../../shared/protocol'
 import type { MenuRow } from './picking'
+import { iconMarkup, itemName } from './itemIcon'
 
 export type MenuDispatch = (row: MenuRow) => void
-
-type ItemsData = Record<string, { name?: string; icon?: string } | undefined>
-const items = itemsData as unknown as ItemsData
 
 const INVENTORY_COLS = 4
 const INVENTORY_ROWS = 7
@@ -54,6 +51,7 @@ const HUD_CSS = `
 }
 #ctx-menu .ctx-row {
   min-height: 32px; display: flex; align-items: center; padding: 0 8px; color: #ffffff; cursor: pointer;
+  white-space: pre;
 }
 #ctx-menu .ctx-row:hover { background: #46618a; }
 #fx-layer { position: fixed; inset: 0; z-index: 20; pointer-events: none; font-family: sans-serif; }
@@ -178,12 +176,14 @@ function renderMenuRow(row: MenuRow): HTMLElement {
   const el = document.createElement('div')
   el.className = 'ctx-row'
   if (row.targetName && row.text.endsWith(row.targetName)) {
-    const verb = row.text.slice(0, row.text.length - row.targetName.length)
-    if (verb) el.appendChild(span(verb))
+    // A trailing space inside an inline span collapses against the next span
+    // ("TakeCowhide"), so bind verb→name with a non-breaking space.
+    const verb = row.text.slice(0, row.text.length - row.targetName.length).trimEnd()
+    if (verb) el.appendChild(span(`${verb} `))
     const nameColor = row.targetKind === 'npc' || row.targetKind === 'object' ? NAME_CYAN : undefined
     el.appendChild(span(row.targetName, nameColor))
     if (row.monsterLevel != null) {
-      el.appendChild(span(` (level-${row.monsterLevel})`, row.levelFavourable ? LEVEL_GREEN : LEVEL_RED))
+      el.appendChild(span(` (level-${row.monsterLevel})`, row.levelFavourable ? LEVEL_GREEN : LEVEL_RED))
     }
   } else {
     el.textContent = row.text
@@ -240,12 +240,11 @@ export function renderInventory(inventory: InvSlot[]): void {
   for (let i = 0; i < slots.length; i++) {
     const cell = slots[i] as HTMLElement
     const slot = inventory[i] ?? null
-    cell.textContent = ''
+    cell.innerHTML = ''
     cell.title = ''
     if (!slot) continue
-    const item = items[slot.itemId]
-    cell.textContent = item?.icon ?? '❔'
-    cell.title = item?.name ?? slot.itemId
+    cell.innerHTML = iconMarkup(slot.itemId, 32)
+    cell.title = itemName(slot.itemId)
     if (slot.quantity > 1) {
       const qty = document.createElement('span')
       qty.className = 'qty'

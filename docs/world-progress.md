@@ -323,3 +323,17 @@ Developer directed Phase 2 to begin ("build the cow & combat") — treated as gr
 `world:check` green (11 files / 89 tests). Only `world/` + `docs/` touched — no root gate required.
 
 - [x] STEP 2.1–2.5 — see commit introducing this entry — Phase 2 code-complete + self-verified; acceptance is the DT-P2 manual script (real-device tap/long-press + combat-FX look/feel).
+
+## Phase 2 mobile-test fixes (developer real-device feedback)
+
+Developer tested on iOS and reported five issues; all fixed:
+
+1. **Cow floating in the air** — the Farm-pack cow's skeleton already carries a baked −90°X + ×100 transform, so it renders upright with NO client rotation. The earlier client-side −π/2 rotation tipped it, and `THREE.Box3.setFromObject` is unreliable for skinned meshes (ignores the skinned pose), so the bbox-derived Y-floor lifted it off the ground. `createCowMesh` now uses the asset's known static bounds (`COW_BOUNDS`, from inspect-glb) to scale/centre/floor with no rotation and no runtime bbox. Verified: cow stands on the grass.
+2. **Long-press opened the iOS "Copy / Find Selection" menu** instead of the game context menu — added global `-webkit-user-select:none` + `-webkit-touch-callout:none` + `touch-action:none` (index.html). Standard iOS fix; not observable in headless Chromium.
+3. **Menu text had no spaces ("TakeCowhide")** — verb/name are rendered as separate coloured spans and the separating space collapsed. Fixed with `white-space: pre` on `.ctx-row`. Verified: "Attack Pasture Bull (level-8)" / "Take Cowhide" now render with spaces.
+4. **Left-click loot should take the top item** — the spinning icon plane was a hard tap target, so taps fell through to the ground (Walk here). Added an invisible full-tile hit pad under each pile (opacity-0 material — `visible:false` is skipped by the raycaster) and spin only the icon so the pad stays put. Left-click default already resolves to `actions[0]` = the most-recently-dropped (top of the menu list).
+5. **Unify item icons with the game** — replaced the emoji icons with the game's bespoke full-colour SVG art (`src/data/bespokeIcons.json`, all current world items covered). New `client/src/itemIcon.ts` lazy-loads the ~940 KiB icon data as its own chunk during world entry (initial bundle unchanged at 998 KiB). DOM inventory renders the SVG inline; loot markers rasterise the same SVG to their CanvasTexture. Verified: inventory shows the game's ore glyph, loot marker shows the bespoke drop art.
+
+Combat→loot→deposit e2e re-run clean after the refactors (bank gets tin×5 + bones + raw_beef + cowhide, §5 XP). `world:check` green (11 files / 89 tests). Only `world/` + `docs/` touched.
+
+- [x] Phase 2 mobile fixes — see commit introducing this entry — cow position, native-selection, menu spacing, loot tap target, unified SVG icons; verified via headless screenshots + WS/D1 e2e.
