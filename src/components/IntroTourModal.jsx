@@ -144,6 +144,24 @@ function buildSteps({ playerName, isCloudAccount, desktop, worldMap }) {
   })
 
   steps.push({
+    iconKey: 'offers',
+    title: 'Trading Post',
+    body: (
+      <>
+        <p>
+          Buy and sell items on the market for coins — a fast way to gear up or cash in
+          loot you don't need.
+        </p>
+        <p>
+          {desktop
+            ? "It has its own icon in the sidebar, right next to Bank."
+            : 'Open it from the Bank medallion — it now opens the Bank & Trading Post hub, with both a tap away.'}
+        </p>
+      </>
+    ),
+  })
+
+  steps.push({
     iconKey: worldMap ? 'globe' : 'adventures_scroll',
     title: worldMap ? 'World Map & Adventures' : 'Adventures',
     body: (
@@ -171,6 +189,7 @@ function buildSteps({ playerName, isCloudAccount, desktop, worldMap }) {
         <NavRow iconKey="home" label="Home" note="Your skills" />
         {worldMap && <NavRow iconKey="globe" label="World Map" note="Travel between places" />}
         <NavRow iconKey="coins" label="Bank" note="Your stored items" />
+        <NavRow iconKey="offers" label="Trading Post" note="Buy and sell on the market" />
         <NavRow iconKey="combat_level" label="Combat" note="Fight monsters" />
         <NavRow iconKey="backpack" label="Inventory" note="What you're carrying" />
         <NavRow iconKey="paperdoll" label="Equipment" note="What you're wearing" />
@@ -191,7 +210,7 @@ function buildSteps({ playerName, isCloudAccount, desktop, worldMap }) {
       <div class="space-y-1.5">
         <RailLabel>Top rail</RailLabel>
         {worldMap && <NavRow iconKey="globe" label="Map" note="Travel between places" />}
-        <NavRow iconKey="coins" label="Bank" note="Your stored items" />
+        <NavRow iconKey="coins" label="Bank" note="Your stored items — also opens the Trading Post" />
         <NavRow iconKey="combat_level" label="Combat" note="Fight monsters" />
         <NavRow iconKey="backpack" label="Items" note="What you're carrying" />
         <NavRow iconKey="paperdoll" label="Equip" note="What you're wearing" />
