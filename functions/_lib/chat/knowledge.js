@@ -111,7 +111,7 @@ export const KNOWLEDGE_CHUNKS = [
   "tags": [
    "guide"
   ],
-  "text": "Your inventory holds a hard maximum of 28 slots. Your bank stores everything else. While doing idle activities, loot is banked automatically when your inventory fills; the auto-bank delay scales with your Agility level, from 5 minutes at Agility 1 down to just 10 seconds at Agility 99 — a strong reason to train Agility."
+  "text": "Your inventory holds a hard maximum of 28 slots, and you can drag items to rearrange it. Your bank stores everything else. While doing idle activities, loot is banked automatically when your inventory fills; the auto-bank delay scales with your Agility level, from 5 minutes at Agility 1 down to just 10 seconds at Agility 99 — a strong reason to train Agility. On mobile, the Bank button opens a hub with both the Bank and the Trading Post; on desktop each has its own entry in the navigation rail."
  },
  {
   "id": "guide_world_map_travel_and_town_maps",
@@ -135,7 +135,7 @@ export const KNOWLEDGE_CHUNKS = [
   "tags": [
    "guide"
   ],
-  "text": "Credits are a premium currency. You earn +1 credit for each daily task you complete, and can buy more in the store in packs of 10, 100 or 1,000 (real-money purchase via secure checkout). Spend credits to skip an hour of your current idle activity instantly (Skip 1h), to skip straight to a boss or raid kill while fighting one, or to skip a slayer task you don't like. Credits are tracked server-side on each character."
+  "text": "Credits are a premium currency. You earn +1 credit for each daily task you complete, and can buy more in the store in packs of 10, 100 or 1,000 (real-money purchase via secure checkout). Spend credits to skip an hour of your current idle activity instantly (Skip 1h), to skip straight to a boss or raid kill while fighting one, or to skip a slayer task you don't like. Skip 1h also works on travel and journeys: it advances exactly one hour of trail time, so a longer journey continues from partway along. Credits are tracked server-side on each character."
  },
  {
   "id": "guide_daily_tasks",
@@ -151,7 +151,7 @@ export const KNOWLEDGE_CHUNKS = [
   "tags": [
    "guide"
   ],
-  "text": "Slayer masters assign you a task to kill a set number of a specific monster. Each master lives at a world place — Torvak in Lumbright, Morven in Canifel, Valdrin in Edgevale, Caelira in Seerhold, Nyra in Camlann and Druven in Brimhollow — and getting a task is an action at that settlement: visit the master (the Slayer screen or the world map offers to travel there if you're elsewhere) to be assigned. Completing tasks earns slayer points and Slayer XP; higher-tier masters need higher combat and Slayer levels and pay more points. Killing your assigned monster is the only way to finish a task — you can also spend credits to skip a task, or slayer points to buy unlocks (found on the Character Unlocks screen) and rewards. Boss slayer tasks award a ×4 Slayer XP multiplier on kills."
+  "text": "Slayer masters assign you a task to kill a set number of a specific monster. Each master lives at a world place — Torvak in Lumbright, Morven in Canifel, Valdrin in Edgevale, Caelira in Seerhold, Nyra in Camlann and Druven in Brimhollow — and getting a task is an action at that settlement: visit the master (the Slayer screen or the world map offers to travel there if you're elsewhere) to be assigned. Completing tasks earns slayer points and Slayer XP; higher-tier masters need higher combat and Slayer levels and pay more points. Killing your assigned monster is the only way to finish a task — you can also spend credits to skip a task, or slayer points to buy unlocks (found on the Character Unlocks screen) and rewards. Boss slayer tasks award a ×4 Slayer XP multiplier on kills. Every slayer monster also drops farming seeds and saplings, tiered by its Slayer requirement: low-level tasks drop basic herb seeds and oak saplings, while the toughest monsters and slayer bosses rarely drop rynarr seeds and yew, palm and magic saplings."
  },
  {
   "id": "guide_quests",
@@ -167,7 +167,7 @@ export const KNOWLEDGE_CHUNKS = [
   "tags": [
    "guide"
   ],
-  "text": "Clue scrolls drop from monsters and come in four tiers: medium, hard, elite and master. Completing a clue takes time — about 5 minutes for medium, 15 for hard, 30 for elite and 60 for master — and rewards 1 to 4 rolls from that tier's loot table: runes, coins, gear and rare uniques (like the 2nd Age sets) that fill your collection log. Higher tiers roll rarer rewards."
+  "text": "Clue scrolls drop from monsters and come in four tiers: medium, hard, elite and master. Solving a clue is a journey across the world map: follow the trail to 2–4 waypoints, searching each one, and the final search grants the reward. Searching takes about 5 minutes total for medium, 15 for hard, 30 for elite and 60 for master, plus road time — teleporting between waypoints finishes the trail faster, and if you have another scroll of the same tier the next journey starts automatically. Rewards are 1 to 4 rolls from that tier's loot table: runes, coins, gear and rare uniques (like the 2nd Age sets) that fill your collection log. Higher tiers roll rarer rewards."
  },
  {
   "id": "guide_minigames",
@@ -191,7 +191,7 @@ export const KNOWLEDGE_CHUNKS = [
   "tags": [
    "guide"
   ],
-  "text": "Plant seeds in farming patches (herbs, trees and fruit trees) at different locations, wait for them to grow in real time, then harvest for crops and Farming XP. Higher Farming levels unlock better seeds. Harvest everything at once with Harvest All."
+  "text": "Plant seeds in farming patches (herbs, trees and fruit trees) at different locations, wait for them to grow in real time, then harvest for crops and Farming XP. Higher Farming levels unlock better seeds. Harvest everything at once with Harvest All. Seeds and saplings come from the General Store (basics), the Trading Post, and slayer monsters — the higher a monster's Slayer requirement, the better the seeds it drops."
  },
  {
   "id": "guide_magic",
@@ -207,7 +207,7 @@ export const KNOWLEDGE_CHUNKS = [
   "tags": [
    "guide"
   ],
-  "text": "Construction is trained by building with planks — each build consumes one plank and grants instant XP: Plank (level 1, 29 XP), Oak Plank (level 15, 60 XP), Teak Plank (level 35, 90 XP) and Mahogany Plank (level 70, 140 XP). High Construction also unlocks two permanent perks: the Money Purse (level 70) lets you spend coins directly from your bank when shopping, and Master Rejuvenation (level 90) passively refills your special attack bar to 100% whenever it empties during a fight."
+  "text": "Construction is trained by building with planks — each build consumes one plank and grants instant XP: Plank (level 1, 29 XP), Oak Plank (level 15, 60 XP), Teak Plank (level 35, 90 XP) and Mahogany Plank (level 70, 140 XP). High Construction also unlocks permanent perks: the Money Purse (level 70) lets you spend coins directly from your bank when shopping; at level 80 gathered loot banks automatically when your inventory fills during idle and offline play, so long gathering sessions never stall; and Master Rejuvenation (level 90) passively refills your special attack bar to 100% whenever it empties during a fight. Perks are managed on the Character Unlocks screen."
  },
  {
   "id": "guide_dungeoneering",
@@ -255,7 +255,7 @@ export const KNOWLEDGE_CHUNKS = [
   "tags": [
    "guide"
   ],
-  "text": "The public leaderboard ranks characters by total level, and separately by kill counts for each boss and raid. It is a fun comparison, not a competition with prizes."
+  "text": "The public leaderboard ranks characters by total level, and separately by kill counts for each boss and raid. Tap any player to view their profile and skill levels. It is a fun comparison, not a competition with prizes."
  },
  {
   "id": "guide_ironman_and_one_life_modes",
@@ -1942,7 +1942,7 @@ export const KNOWLEDGE_CHUNKS = [
    "training",
    "smithing"
   ],
-  "text": "Smithing training options with level requirements and XP per action: Smelt bronze bar (level 1, 6 XP), Smith bronze dagger (level 1, 12 XP), Smith bronze axe (level 4, 12 XP), Smith bronze pickaxe (level 4, 12 XP), Smith bronze scimitar (level 4, 25 XP), Smelt iron bar (level 15, 12 XP), Smith iron axe (level 16, 25 XP), Smith iron pickaxe (level 16, 25 XP), Smith iron scimitar (level 19, 50 XP), Smelt steel bar (level 30, 17 XP), Smith steel axe (level 31, 37 XP), Smith steel pickaxe (level 31, 37 XP), Smith steel scimitar (level 34, 75 XP), Smelt gold bar (level 40, 22 XP), Smelt mithril bar (level 50, 30 XP), Smith mithril axe (level 51, 50 XP), Smith mithril pickaxe (level 51, 50 XP), Smith mithril scimitar (level 54, 100 XP), Smelt adamant bar (level 70, 37 XP), Smith adamant axe (level 71, 62 XP), Smith adamant pickaxe (level 71, 62 XP), Smith adamant scimitar (level 74, 125 XP), Smelt runeforged bar (level 75, 50 XP), Smith runeforged axe (level 76, 75 XP), Smith runeforged pickaxe (level 76, 75 XP), Smith runeforged scimitar (level 79, 150 XP), Smith iron dagger (level 15, 25 XP), Smith iron mace (level 16, 25 XP), Smith iron sword (level 18, 25 XP), Smith iron longsword (level 20, 50 XP), Smith iron full helm (level 21, 50 XP), Smith iron chainbody (level 25, 75 XP), Smith iron kiteshield (level 26, 75 XP), Smith iron platelegs (level 30, 75 XP), Smith iron platebody (level 32, 125 XP), Smith steel dagger (level 30, 37 XP), Smith steel mace (level 31, 37 XP), Smith steel sword (level 33, 37 XP), Smith steel longsword (level 35, 75 XP), Smith steel full helm (level 36, 75 XP) …and 43 more."
+  "text": "Smithing training options with level requirements and XP per action: Smelt bronze bar (level 1, 6 XP), Smith bronze dagger (level 1, 12 XP), Smith bronze axe (level 4, 12 XP), Smith bronze pickaxe (level 4, 12 XP), Smith bronze scimitar (level 4, 25 XP), Smelt iron bar (level 15, 12 XP), Smith iron axe (level 16, 25 XP), Smith iron pickaxe (level 16, 25 XP), Smith iron scimitar (level 19, 50 XP), Smelt steel bar (level 30, 17 XP), Smith steel axe (level 31, 37 XP), Smith steel pickaxe (level 31, 37 XP), Smith steel scimitar (level 34, 75 XP), Smelt gold bar (level 40, 22 XP), Smelt mithril bar (level 50, 30 XP), Smith mithril axe (level 51, 50 XP), Smith mithril pickaxe (level 51, 50 XP), Smith mithril scimitar (level 54, 100 XP), Smelt adamant bar (level 70, 37 XP), Smith adamant axe (level 71, 62 XP), Smith adamant pickaxe (level 71, 62 XP), Smith adamant scimitar (level 74, 125 XP), Smelt runeforged bar (level 75, 50 XP), Smith runeforged axe (level 76, 75 XP), Smith runeforged pickaxe (level 76, 75 XP), Smith runeforged scimitar (level 79, 150 XP), Smith iron dagger (level 15, 25 XP), Smith iron mace (level 16, 25 XP), Smith iron sword (level 18, 25 XP), Smith iron longsword (level 20, 50 XP), Smith iron full helm (level 21, 50 XP), Smith iron chainbody (level 25, 75 XP), Smith iron kiteshield (level 26, 75 XP), Smith iron platelegs (level 30, 75 XP), Smith iron platebody (level 32, 125 XP), Smith steel dagger (level 30, 37 XP), Smith steel mace (level 31, 37 XP), Smith steel sword (level 33, 37 XP), Smith steel longsword (level 35, 75 XP), Smith steel full helm (level 36, 75 XP) …and 49 more."
  },
  {
   "id": "skill_cooking",
@@ -2223,7 +2223,7 @@ export const KNOWLEDGE_CHUNKS = [
    "monster",
    "drops"
   ],
-  "text": "Nether Demon is a monster at combat level 124 with 150 HP, attacking with slash. Requires Slayer level 85. Drops: Nether Demon Whip (1 in 500), Marshflax (1 in 200), Runeforged Platelegs (1 in 100), Mistvine (1 in 100), Clue Scroll Hard (1 in 50), Adamant Platelegs (1 in 33), Stonefern (1 in 33), Cinderbloom (1 in 25), Runeforged Chainbody (1 in 20), Runeforged Med Helm (1 in 20), Snapdrake (1 in 20), Wyrmspice (1 in 17), Emberleaf (1 in 13), Blood Rune (1 in 10), Sunblossom (1 in 10), Rynarr Weed (1 in 8), Duskroot (1 in 7), Death Rune (1 in 5), Chaos Rune (1 in 5), Greenthorn Leaf (1 in 5), Coins (1 in 1), Bones (always)."
+  "text": "Nether Demon is a monster at combat level 124 with 150 HP, attacking with slash. Requires Slayer level 85. Drops: Magic Sapling (1 in 667), Nether Demon Whip (1 in 500), Marshflax (1 in 200), Yew Sapling (1 in 167), Palm Sapling (1 in 167), Rynarr Seed (1 in 125), Runeforged Platelegs (1 in 100), Mistvine (1 in 100), Clue Scroll Hard (1 in 50), Papaya Sapling (1 in 50), Adamant Platelegs (1 in 33), Stonefern (1 in 33), Bogtuber Seed (1 in 33), Cinderbloom (1 in 25), Runeforged Chainbody (1 in 20), Runeforged Med Helm (1 in 20), Snapdrake (1 in 20), Wyrmspice (1 in 17), Emberleaf (1 in 13), Blood Rune (1 in 10), Sunblossom (1 in 10), Rynarr Weed (1 in 8), Duskroot (1 in 7), Death Rune (1 in 5), Chaos Rune (1 in 5), Greenthorn Leaf (1 in 5), Coins (1 in 1), Bones (always)."
  },
  {
   "id": "monster_sanguine_veld",
@@ -2232,7 +2232,7 @@ export const KNOWLEDGE_CHUNKS = [
    "monster",
    "drops"
   ],
-  "text": "Sanguine Veld is a monster at combat level 76 with 75 HP, attacking with stab. Requires Slayer level 50. Drops: Runeforged Med Helm (1 in 125), Clue Scroll Hard (1 in 100), Emberleaf (1 in 25), Rynarr Weed (1 in 20), Sunblossom (1 in 17), Blood Rune (1 in 13), Duskroot (1 in 13), Greenthorn Leaf (1 in 10), Death Rune (1 in 8), Fire Rune (1 in 7), Chaos Rune (1 in 6), Coins (1 in 1), Bones (always)."
+  "text": "Sanguine Veld is a monster at combat level 76 with 75 HP, attacking with stab. Requires Slayer level 50. Drops: Rynarr Seed (1 in 500), Runeforged Med Helm (1 in 125), Clue Scroll Hard (1 in 100), Maple Sapling (1 in 100), Banana Sapling (1 in 50), Orange Sapling (1 in 50), Graysage Seed (1 in 33), Bogtuber Seed (1 in 33), Emberleaf (1 in 25), Kingsherb Seed (1 in 25), Rynarr Weed (1 in 20), Sunblossom (1 in 17), Blood Rune (1 in 13), Duskroot (1 in 13), Greenthorn Leaf (1 in 10), Death Rune (1 in 8), Fire Rune (1 in 7), Chaos Rune (1 in 6), Coins (1 in 1), Bones (always)."
  },
  {
   "id": "monster_nether_wraith",
@@ -2241,7 +2241,7 @@ export const KNOWLEDGE_CHUNKS = [
    "monster",
    "drops"
   ],
-  "text": "Nether Wraith is a monster at combat level 115 with 105 HP, attacking with slash. Requires Slayer level 80. Drops: Runeforged Chainbody (1 in 83), Clue Scroll Hard (1 in 83), Adamant Platelegs (1 in 40), Cinderbloom (1 in 33), Snapdrake (1 in 25), Wyrmspice (1 in 20), Rynarr Weed (1 in 13), Blood Rune (1 in 8), Chaos Rune (1 in 7), Death Rune (1 in 6), Coins (1 in 1), Bones (always)."
+  "text": "Nether Wraith is a monster at combat level 115 with 105 HP, attacking with slash. Requires Slayer level 80. Drops: Magic Sapling (1 in 667), Yew Sapling (1 in 167), Palm Sapling (1 in 167), Rynarr Seed (1 in 125), Runeforged Chainbody (1 in 83), Clue Scroll Hard (1 in 83), Papaya Sapling (1 in 50), Adamant Platelegs (1 in 40), Cinderbloom (1 in 33), Bogtuber Seed (1 in 33), Snapdrake (1 in 25), Wyrmspice (1 in 20), Rynarr Weed (1 in 13), Blood Rune (1 in 8), Chaos Rune (1 in 7), Death Rune (1 in 6), Coins (1 in 1), Bones (always)."
  },
  {
   "id": "monster_bone_wyvern",
@@ -2250,7 +2250,7 @@ export const KNOWLEDGE_CHUNKS = [
    "monster",
    "drops"
   ],
-  "text": "Bone Wyvern is a monster at combat level 140 with 130 HP, attacking with stab. Requires Slayer level 72. Drops: Runeforged Chainbody (1 in 100), Runeforged Platelegs (1 in 67), Clue Scroll Elite (1 in 56), Adamant Platelegs (1 in 33), Mistvine (1 in 33), Stonefern (1 in 25), Snapdrake (1 in 20), Rynarr Weed (1 in 13), Blood Rune (1 in 7), Death Rune (1 in 6), Chaos Rune (1 in 6), Coins (1 in 1), Dragon Bones (always)."
+  "text": "Bone Wyvern is a monster at combat level 140 with 130 HP, attacking with stab. Requires Slayer level 72. Drops: Yew Sapling (1 in 250), Rynarr Seed (1 in 200), Runeforged Chainbody (1 in 100), Papaya Sapling (1 in 83), Runeforged Platelegs (1 in 67), Maple Sapling (1 in 67), Clue Scroll Elite (1 in 56), Curry Sapling (1 in 50), Adamant Platelegs (1 in 33), Mistvine (1 in 33), Stonefern (1 in 25), Bogtuber Seed (1 in 25), Snapdrake (1 in 20), Rynarr Weed (1 in 13), Blood Rune (1 in 7), Death Rune (1 in 6), Chaos Rune (1 in 6), Coins (1 in 1), Dragon Bones (always)."
  },
  {
   "id": "monster_cinder_devil",
@@ -2259,7 +2259,7 @@ export const KNOWLEDGE_CHUNKS = [
    "monster",
    "drops"
   ],
-  "text": "Cinder Devil is a monster at combat level 160 with 95 HP, attacking with ranged. Requires Slayer level 85. Drops: Occult Necklace (1 in 667), Runeforged Chainbody (1 in 83), Clue Scroll Elite (1 in 67), Snapdrake (1 in 25), Wyrmspice (1 in 20), Rynarr Weed (1 in 13), Blood Rune (1 in 7), Fire Rune (1 in 7), Death Rune (1 in 5), Chaos Rune (1 in 5), Coins (1 in 1), Bones (always)."
+  "text": "Cinder Devil is a monster at combat level 160 with 95 HP, attacking with ranged. Requires Slayer level 85. Drops: Occult Necklace (1 in 667), Magic Sapling (1 in 667), Yew Sapling (1 in 167), Palm Sapling (1 in 167), Rynarr Seed (1 in 125), Runeforged Chainbody (1 in 83), Clue Scroll Elite (1 in 67), Papaya Sapling (1 in 50), Bogtuber Seed (1 in 33), Snapdrake (1 in 25), Wyrmspice (1 in 20), Rynarr Weed (1 in 13), Blood Rune (1 in 7), Fire Rune (1 in 7), Death Rune (1 in 5), Chaos Rune (1 in 5), Coins (1 in 1), Bones (always)."
  },
  {
   "id": "monster_deepmaw_kraken",
@@ -2269,7 +2269,7 @@ export const KNOWLEDGE_CHUNKS = [
    "drops",
    "boss"
   ],
-  "text": "Deepmaw Kraken is a boss at combat level 291 with 255 HP, attacking with magic. Requires Slayer level 87. Drops: Deepmaw Kraken Tentacle (1 in 303), Clue Scroll Elite (1 in 50), Mistvine (1 in 25), Snapdrake (1 in 17), Rynarr Weed (1 in 13), Chaos Rune (1 in 6), Blood Rune (1 in 5), Death Rune (1 in 4), Big Bones (always), Coins (always)."
+  "text": "Deepmaw Kraken is a boss at combat level 291 with 255 HP, attacking with magic. Requires Slayer level 87. Drops: Deepmaw Kraken Tentacle (1 in 303), Magic Sapling (1 in 125), Clue Scroll Elite (1 in 50), Yew Sapling (1 in 50), Palm Sapling (1 in 50), Papaya Sapling (1 in 33), Mistvine (1 in 25), Rynarr Seed (1 in 25), Snapdrake (1 in 17), Rynarr Weed (1 in 13), Chaos Rune (1 in 6), Blood Rune (1 in 5), Death Rune (1 in 4), Big Bones (always), Coins (always)."
  },
  {
   "id": "monster_warlord_grondar",
@@ -2463,7 +2463,7 @@ export const KNOWLEDGE_CHUNKS = [
    "drops",
    "boss"
   ],
-  "text": "Hellbound Gorilla is a boss at combat level 275 with 205 HP, attacking with crush. Requires Slayer level 70. Drops: Uncut Zyrite (1 in 300), Colossal Ballista (1 in 200), Clue Scroll Master (1 in 50), Snapdrake (1 in 7), Soul Rune (1 in 7), Dragon Javelin (1 in 7), Blood Rune (1 in 5), Death Rune (1 in 3), Rynarr Weed (1 in 3), Coins (always), Dragon Bones (always)."
+  "text": "Hellbound Gorilla is a boss at combat level 275 with 205 HP, attacking with crush. Requires Slayer level 70. Drops: Uncut Zyrite (1 in 300), Colossal Ballista (1 in 200), Magic Sapling (1 in 125), Clue Scroll Master (1 in 50), Yew Sapling (1 in 50), Palm Sapling (1 in 50), Papaya Sapling (1 in 33), Rynarr Seed (1 in 25), Snapdrake (1 in 7), Soul Rune (1 in 7), Dragon Javelin (1 in 7), Blood Rune (1 in 5), Death Rune (1 in 3), Rynarr Weed (1 in 3), Coins (always), Dragon Bones (always)."
  },
  {
   "id": "monster_the_maiden_of_sugadinti",
@@ -2672,7 +2672,7 @@ export const KNOWLEDGE_CHUNKS = [
    "monster",
    "drops"
   ],
-  "text": "Marshscale Shaman is a monster at combat level 150 with 150 HP, attacking with ranged. Requires Slayer level 80. Drops: Dragon Warhammer (1 in 3,000), Runeforged Chainbody (1 in 20), Rynarr Weed (1 in 10), Snapdrake (1 in 10), Wyrmspice (1 in 10), Runeforged Arrow (1 in 7), Chaos Rune (1 in 7), Death Rune (1 in 7), Blood Rune (1 in 7), Coins (1 in 4), Big Bones (always)."
+  "text": "Marshscale Shaman is a monster at combat level 150 with 150 HP, attacking with ranged. Requires Slayer level 80. Drops: Dragon Warhammer (1 in 3,000), Magic Sapling (1 in 667), Yew Sapling (1 in 167), Palm Sapling (1 in 167), Rynarr Seed (1 in 125), Papaya Sapling (1 in 50), Bogtuber Seed (1 in 33), Runeforged Chainbody (1 in 20), Rynarr Weed (1 in 10), Snapdrake (1 in 10), Wyrmspice (1 in 10), Runeforged Arrow (1 in 7), Chaos Rune (1 in 7), Death Rune (1 in 7), Blood Rune (1 in 7), Coins (1 in 4), Big Bones (always)."
  },
  {
   "id": "monster_wailing_banshee",
@@ -2681,7 +2681,7 @@ export const KNOWLEDGE_CHUNKS = [
    "monster",
    "drops"
   ],
-  "text": "Wailing Banshee is a monster at combat level 23 with 22 HP, attacking with magic. Requires Slayer level 1. Drops: Clue Scroll Medium (1 in 67), Emberleaf (1 in 50), Steel Dagger (1 in 50), Rynarr Weed (1 in 33), Sunblossom (1 in 25), Death Rune (1 in 20), Duskroot (1 in 20), Iron Dagger (1 in 20), Greenthorn Leaf (1 in 17), Chaos Rune (1 in 10), Mind Rune (1 in 5), Coins (1 in 2), Bones (always)."
+  "text": "Wailing Banshee is a monster at combat level 23 with 22 HP, attacking with magic. Requires Slayer level 1. Drops: Clue Scroll Medium (1 in 67), Emberleaf (1 in 50), Steel Dagger (1 in 50), Oak Sapling (1 in 50), Duskroot Seed (1 in 40), Rynarr Weed (1 in 33), Miremint Seed (1 in 33), Sunblossom (1 in 25), Death Rune (1 in 20), Duskroot (1 in 20), Iron Dagger (1 in 20), Greenthorn Seed (1 in 20), Greenthorn Leaf (1 in 17), Chaos Rune (1 in 10), Mind Rune (1 in 5), Coins (1 in 2), Bones (always)."
  },
  {
   "id": "monster_warped_spectre",
@@ -2690,7 +2690,7 @@ export const KNOWLEDGE_CHUNKS = [
    "monster",
    "drops"
   ],
-  "text": "Warped Spectre is a monster at combat level 96 with 90 HP, attacking with magic. Requires Slayer level 60. Drops: Arcanist Robe Top (1 in 500), Arcanist Robe Bottom (1 in 333), Arcanist Hat (1 in 200), Arcanist Gloves (1 in 200), Arcanist Boots (1 in 200), Clue Scroll Hard (1 in 67), Mistvine (1 in 50), Stonefern (1 in 50), Rynarr Seed (1 in 25), Cinderbloom (1 in 25), Snapdrake (1 in 20), Wyrmspice (1 in 20), Rynarr Weed (1 in 13), Blood Rune (1 in 8), Death Rune (1 in 6), Chaos Rune (1 in 6), Coins (1 in 1), Bones (always)."
+  "text": "Warped Spectre is a monster at combat level 96 with 90 HP, attacking with magic. Requires Slayer level 60. Drops: Arcanist Robe Top (1 in 500), Arcanist Robe Bottom (1 in 333), Yew Sapling (1 in 250), Arcanist Hat (1 in 200), Arcanist Gloves (1 in 200), Arcanist Boots (1 in 200), Papaya Sapling (1 in 83), Clue Scroll Hard (1 in 67), Maple Sapling (1 in 67), Mistvine (1 in 50), Stonefern (1 in 50), Curry Sapling (1 in 50), Rynarr Seed (1 in 25), Cinderbloom (1 in 25), Bogtuber Seed (1 in 25), Snapdrake (1 in 20), Wyrmspice (1 in 20), Rynarr Weed (1 in 13), Blood Rune (1 in 8), Death Rune (1 in 6), Chaos Rune (1 in 6), Coins (1 in 1), Bones (always)."
  },
  {
   "id": "monster_ash_wyrm",
@@ -2699,7 +2699,7 @@ export const KNOWLEDGE_CHUNKS = [
    "monster",
    "drops"
   ],
-  "text": "Ash Wyrm is a monster at combat level 99 with 130 HP, attacking with magic. Requires Slayer level 62. Drops: Arcanist Robe Top (1 in 667), Clue Scroll Hard (1 in 67), Mistvine (1 in 33), Snapdrake (1 in 25), Rynarr Weed (1 in 17), Death Rune (1 in 8), Chaos Rune (1 in 7), Earth Rune (1 in 6), Fire Rune (1 in 6), Coins (1 in 1), Bones (always), Gargoyle Dust (always)."
+  "text": "Ash Wyrm is a monster at combat level 99 with 130 HP, attacking with magic. Requires Slayer level 62. Drops: Arcanist Robe Top (1 in 667), Yew Sapling (1 in 250), Rynarr Seed (1 in 200), Papaya Sapling (1 in 83), Clue Scroll Hard (1 in 67), Maple Sapling (1 in 67), Curry Sapling (1 in 50), Mistvine (1 in 33), Snapdrake (1 in 25), Bogtuber Seed (1 in 25), Rynarr Weed (1 in 17), Death Rune (1 in 8), Chaos Rune (1 in 7), Earth Rune (1 in 6), Fire Rune (1 in 6), Coins (1 in 1), Bones (always), Gargoyle Dust (always)."
  },
  {
   "id": "monster_astral_warrior",
@@ -2708,7 +2708,7 @@ export const KNOWLEDGE_CHUNKS = [
    "monster",
    "drops"
   ],
-  "text": "Astral Warrior is a monster at combat level 134 with 145 HP, attacking with stab. Requires Slayer level 68. Drops: Dragon Boots (1 in 250), Runeforged Platelegs (1 in 125), Runeforged Full Helm (1 in 100), Runeforged Chainbody (1 in 83), Clue Scroll Elite (1 in 83), Snapdrake (1 in 20), Rynarr Weed (1 in 14), Shark (1 in 10), Blood Rune (1 in 7), Death Rune (1 in 6), Coins (1 in 1), Bones (always)."
+  "text": "Astral Warrior is a monster at combat level 134 with 145 HP, attacking with stab. Requires Slayer level 68. Drops: Dragon Boots (1 in 250), Yew Sapling (1 in 250), Rynarr Seed (1 in 200), Runeforged Platelegs (1 in 125), Runeforged Full Helm (1 in 100), Runeforged Chainbody (1 in 83), Clue Scroll Elite (1 in 83), Papaya Sapling (1 in 83), Maple Sapling (1 in 67), Curry Sapling (1 in 50), Bogtuber Seed (1 in 25), Snapdrake (1 in 20), Rynarr Weed (1 in 14), Shark (1 in 10), Blood Rune (1 in 7), Death Rune (1 in 6), Coins (1 in 1), Bones (always)."
  },
  {
   "id": "monster_astral_mage",
@@ -2717,7 +2717,7 @@ export const KNOWLEDGE_CHUNKS = [
    "monster",
    "drops"
   ],
-  "text": "Astral Mage is a monster at combat level 120 with 115 HP, attacking with magic. Requires Slayer level 83. Drops: Arcanist Robe Top (1 in 667), Arcanist Robe Bottom (1 in 500), Arcanist Hat (1 in 333), Dragon Boots (1 in 250), Clue Scroll Elite (1 in 83), Mistvine (1 in 33), Snapdrake (1 in 25), Rynarr Weed (1 in 17), Blood Rune (1 in 6), Chaos Rune (1 in 6), Death Rune (1 in 5), Coins (1 in 1), Bones (always)."
+  "text": "Astral Mage is a monster at combat level 120 with 115 HP, attacking with magic. Requires Slayer level 83. Drops: Arcanist Robe Top (1 in 667), Magic Sapling (1 in 667), Arcanist Robe Bottom (1 in 500), Arcanist Hat (1 in 333), Dragon Boots (1 in 250), Yew Sapling (1 in 167), Palm Sapling (1 in 167), Rynarr Seed (1 in 125), Clue Scroll Elite (1 in 83), Papaya Sapling (1 in 50), Mistvine (1 in 33), Bogtuber Seed (1 in 33), Snapdrake (1 in 25), Rynarr Weed (1 in 17), Blood Rune (1 in 6), Chaos Rune (1 in 6), Death Rune (1 in 5), Coins (1 in 1), Bones (always)."
  },
  {
   "id": "monster_astral_ranger",
@@ -2726,7 +2726,7 @@ export const KNOWLEDGE_CHUNKS = [
    "monster",
    "drops"
   ],
-  "text": "Astral Ranger is a monster at combat level 113 with 105 HP, attacking with ranged. Requires Slayer level 63. Drops: Dragon Boots (1 in 250), Clue Scroll Elite (1 in 83), Snapdrake (1 in 25), Blue Dragon Leather (1 in 20), Rynarr Weed (1 in 17), Green Dragon Leather (1 in 10), Blood Rune (1 in 8), Runeforged Arrow (1 in 7), Death Rune (1 in 7), Chaos Rune (1 in 7), Coins (1 in 1), Bones (always)."
+  "text": "Astral Ranger is a monster at combat level 113 with 105 HP, attacking with ranged. Requires Slayer level 63. Drops: Dragon Boots (1 in 250), Yew Sapling (1 in 250), Rynarr Seed (1 in 200), Clue Scroll Elite (1 in 83), Papaya Sapling (1 in 83), Maple Sapling (1 in 67), Curry Sapling (1 in 50), Snapdrake (1 in 25), Bogtuber Seed (1 in 25), Blue Dragon Leather (1 in 20), Rynarr Weed (1 in 17), Green Dragon Leather (1 in 10), Blood Rune (1 in 8), Runeforged Arrow (1 in 7), Death Rune (1 in 7), Chaos Rune (1 in 7), Coins (1 in 1), Bones (always)."
  },
  {
   "id": "monster_runestone_gargoyle",
@@ -2735,7 +2735,7 @@ export const KNOWLEDGE_CHUNKS = [
    "monster",
    "drops"
   ],
-  "text": "Runestone Gargoyle is a monster at combat level 111 with 105 HP, attacking with crush. Requires Slayer level 75. Drops: Gargoyle Maul (1 in 1,333), Runeforged Full Helm (1 in 125), Runeforged Chainbody (1 in 83), Clue Scroll Hard (1 in 67), Snapdrake (1 in 25), Wyrmspice (1 in 20), Rynarr Weed (1 in 14), Blood Rune (1 in 8), Death Rune (1 in 7), Chaos Rune (1 in 7), Coins (1 in 1), Bones (always)."
+  "text": "Runestone Gargoyle is a monster at combat level 111 with 105 HP, attacking with crush. Requires Slayer level 75. Drops: Gargoyle Maul (1 in 1,333), Magic Sapling (1 in 667), Yew Sapling (1 in 167), Palm Sapling (1 in 167), Runeforged Full Helm (1 in 125), Rynarr Seed (1 in 125), Runeforged Chainbody (1 in 83), Clue Scroll Hard (1 in 67), Papaya Sapling (1 in 50), Bogtuber Seed (1 in 33), Snapdrake (1 in 25), Wyrmspice (1 in 20), Rynarr Weed (1 in 14), Blood Rune (1 in 8), Death Rune (1 in 7), Chaos Rune (1 in 7), Coins (1 in 1), Bones (always)."
  },
  {
   "id": "monster_vicious_black_dragon",
@@ -2744,7 +2744,7 @@ export const KNOWLEDGE_CHUNKS = [
    "monster",
    "drops"
   ],
-  "text": "Vicious Black Dragon is a monster at combat level 318 with 315 HP, attacking with ranged. Requires Slayer level 77. Drops: Dragon Visage (1 in 1,000), Clue Scroll Elite (1 in 56), Thornspire (1 in 33), Dragon Arrow (1 in 20), Snapdrake (1 in 17), Rynarr Weed (1 in 13), Soul Rune (1 in 8), Runeforged Ore (1 in 7), Runeforged Arrow (1 in 6), Blood Rune (1 in 6), Death Rune (1 in 5), Coins (1 in 2), Dragon Bones (always), Black Dragon Leather (always)."
+  "text": "Vicious Black Dragon is a monster at combat level 318 with 315 HP, attacking with ranged. Requires Slayer level 77. Drops: Dragon Visage (1 in 1,000), Magic Sapling (1 in 667), Yew Sapling (1 in 167), Palm Sapling (1 in 167), Rynarr Seed (1 in 125), Clue Scroll Elite (1 in 56), Papaya Sapling (1 in 50), Thornspire (1 in 33), Bogtuber Seed (1 in 33), Dragon Arrow (1 in 20), Snapdrake (1 in 17), Rynarr Weed (1 in 13), Soul Rune (1 in 8), Runeforged Ore (1 in 7), Runeforged Arrow (1 in 6), Blood Rune (1 in 6), Death Rune (1 in 5), Coins (1 in 2), Dragon Bones (always), Black Dragon Leather (always)."
  },
  {
   "id": "monster_nightfang_beast",
@@ -2753,7 +2753,7 @@ export const KNOWLEDGE_CHUNKS = [
    "monster",
    "drops"
   ],
-  "text": "Nightfang Beast is a monster at combat level 182 with 220 HP, attacking with ranged. Requires Slayer level 90. Drops: Nightfang Bow (1 in 1,250), Runeforged Chainbody (1 in 83), Clue Scroll Elite (1 in 56), Thornspire (1 in 25), Snapdrake (1 in 17), Rynarr Weed (1 in 13), Runeforged Ore (1 in 8), Blood Rune (1 in 7), Chaos Rune (1 in 7), Runeforged Arrow (1 in 6), Death Rune (1 in 5), Coins (1 in 1), Bones (always)."
+  "text": "Nightfang Beast is a monster at combat level 182 with 220 HP, attacking with ranged. Requires Slayer level 90. Drops: Nightfang Bow (1 in 1,250), Magic Sapling (1 in 667), Yew Sapling (1 in 167), Palm Sapling (1 in 167), Rynarr Seed (1 in 125), Runeforged Chainbody (1 in 83), Clue Scroll Elite (1 in 56), Papaya Sapling (1 in 50), Bogtuber Seed (1 in 33), Thornspire (1 in 25), Snapdrake (1 in 17), Rynarr Weed (1 in 13), Runeforged Ore (1 in 8), Blood Rune (1 in 7), Chaos Rune (1 in 7), Runeforged Arrow (1 in 6), Death Rune (1 in 5), Coins (1 in 1), Bones (always)."
  },
  {
   "id": "monster_threefang_cerberus",
@@ -2763,7 +2763,7 @@ export const KNOWLEDGE_CHUNKS = [
    "drops",
    "boss"
   ],
-  "text": "Threefang Cerberus is a boss at combat level 318 with 600 HP, attacking with crush. Requires Slayer level 91. Drops: Primeval Crystal (1 in 650), Skyfury Crystal (1 in 650), Evermore Crystal (1 in 650), Runeforged Platebody (1 in 83), Runeforged 2h Sword (1 in 83), Clue Scroll Elite (1 in 40), Thornspire (1 in 20), Snapdrake (1 in 13), Rynarr Weed (1 in 10), Soul Rune (1 in 8), Death Rune (1 in 5), Blood Rune (1 in 5), Coins (1 in 2), Dragon Bones (always)."
+  "text": "Threefang Cerberus is a boss at combat level 318 with 600 HP, attacking with crush. Requires Slayer level 91. Drops: Primeval Crystal (1 in 650), Skyfury Crystal (1 in 650), Evermore Crystal (1 in 650), Magic Sapling (1 in 125), Runeforged Platebody (1 in 83), Runeforged 2h Sword (1 in 83), Yew Sapling (1 in 50), Palm Sapling (1 in 50), Clue Scroll Elite (1 in 40), Papaya Sapling (1 in 33), Rynarr Seed (1 in 25), Thornspire (1 in 20), Snapdrake (1 in 13), Rynarr Weed (1 in 10), Soul Rune (1 in 8), Death Rune (1 in 5), Blood Rune (1 in 5), Coins (1 in 2), Dragon Bones (always)."
  },
  {
   "id": "monster_ashen_hydra",
@@ -2773,7 +2773,7 @@ export const KNOWLEDGE_CHUNKS = [
    "drops",
    "boss"
   ],
-  "text": "Ashen Hydra is a boss at combat level 194 with 320 HP, attacking with slash. Requires Slayer level 95. Drops: Ashen Hydra Claw (1 in 500), Ashen Hydra Leather (1 in 200), Clue Scroll Elite (1 in 50), Thornspire (1 in 25), Snapdrake (1 in 17), Rynarr Weed (1 in 13), Runeforged Ore (1 in 10), Soul Rune (1 in 8), Runeforged Arrow (1 in 7), Blood Rune (1 in 6), Death Rune (1 in 5), Coins (1 in 1), Ashen Hydra Bones (always)."
+  "text": "Ashen Hydra is a boss at combat level 194 with 320 HP, attacking with slash. Requires Slayer level 95. Drops: Ashen Hydra Claw (1 in 500), Ashen Hydra Leather (1 in 200), Magic Sapling (1 in 125), Clue Scroll Elite (1 in 50), Yew Sapling (1 in 50), Palm Sapling (1 in 50), Papaya Sapling (1 in 33), Thornspire (1 in 25), Rynarr Seed (1 in 25), Snapdrake (1 in 17), Rynarr Weed (1 in 13), Runeforged Ore (1 in 10), Soul Rune (1 in 8), Runeforged Arrow (1 in 7), Blood Rune (1 in 6), Death Rune (1 in 5), Coins (1 in 1), Ashen Hydra Bones (always)."
  },
  {
   "id": "monster_dustpaw_rat",
@@ -2782,7 +2782,7 @@ export const KNOWLEDGE_CHUNKS = [
    "monster",
    "drops"
   ],
-  "text": "Dustpaw Rat is a monster at combat level 4 with 6 HP, attacking with stab. Requires Slayer level 1. Drops: Clue Scroll Medium (1 in 200), Raw Chicken (1 in 20), Coins (1 in 2), Bones (always)."
+  "text": "Dustpaw Rat is a monster at combat level 4 with 6 HP, attacking with stab. Requires Slayer level 1. Drops: Clue Scroll Medium (1 in 200), Oak Sapling (1 in 50), Duskroot Seed (1 in 40), Miremint Seed (1 in 33), Raw Chicken (1 in 20), Greenthorn Seed (1 in 20), Coins (1 in 2), Bones (always)."
  },
  {
   "id": "monster_bogling_sprite",
@@ -2791,7 +2791,7 @@ export const KNOWLEDGE_CHUNKS = [
    "monster",
    "drops"
   ],
-  "text": "Bogling Sprite is a monster at combat level 12 with 14 HP, attacking with magic. Requires Slayer level 3. Drops: Clue Scroll Medium (1 in 100), Iron Dagger (1 in 25), Greenthorn Leaf (1 in 17), Water Rune (1 in 3), Air Rune (1 in 3), Mind Rune (1 in 3), Coins (1 in 1), Bones (always)."
+  "text": "Bogling Sprite is a monster at combat level 12 with 14 HP, attacking with magic. Requires Slayer level 3. Drops: Clue Scroll Medium (1 in 100), Oak Sapling (1 in 50), Duskroot Seed (1 in 40), Miremint Seed (1 in 33), Iron Dagger (1 in 25), Greenthorn Seed (1 in 20), Greenthorn Leaf (1 in 17), Water Rune (1 in 3), Air Rune (1 in 3), Mind Rune (1 in 3), Coins (1 in 1), Bones (always)."
  },
  {
   "id": "monster_frostbite_imp",
@@ -2800,7 +2800,7 @@ export const KNOWLEDGE_CHUNKS = [
    "monster",
    "drops"
   ],
-  "text": "Frostbite Imp is a monster at combat level 25 with 22 HP, attacking with magic. Requires Slayer level 8. Drops: Clue Scroll Medium (1 in 100), Bronze Kiteshield (1 in 25), Bronze Full Helm (1 in 20), Duskroot (1 in 10), Chaos Rune (1 in 7), Water Rune (1 in 3), Coins (1 in 1), Bones (always)."
+  "text": "Frostbite Imp is a monster at combat level 25 with 22 HP, attacking with magic. Requires Slayer level 8. Drops: Clue Scroll Medium (1 in 100), Oak Sapling (1 in 50), Duskroot Seed (1 in 40), Miremint Seed (1 in 33), Bronze Kiteshield (1 in 25), Bronze Full Helm (1 in 20), Greenthorn Seed (1 in 20), Duskroot (1 in 10), Chaos Rune (1 in 7), Water Rune (1 in 3), Coins (1 in 1), Bones (always)."
  },
  {
   "id": "monster_marshfen_toad",
@@ -2809,7 +2809,7 @@ export const KNOWLEDGE_CHUNKS = [
    "monster",
    "drops"
   ],
-  "text": "Marshfen Toad is a monster at combat level 30 with 35 HP, attacking with crush. Requires Slayer level 12. Drops: Clue Scroll Medium (1 in 67), Rynarr Weed (1 in 10), Nature Rune (1 in 10), Duskroot (1 in 7), Iron Arrow (1 in 7), Greenthorn Leaf (1 in 5), Coins (1 in 2), Bones (always)."
+  "text": "Marshfen Toad is a monster at combat level 30 with 35 HP, attacking with crush. Requires Slayer level 12. Drops: Clue Scroll Medium (1 in 67), Oak Sapling (1 in 50), Duskroot Seed (1 in 40), Miremint Seed (1 in 33), Greenthorn Seed (1 in 20), Rynarr Weed (1 in 10), Nature Rune (1 in 10), Duskroot (1 in 7), Iron Arrow (1 in 7), Greenthorn Leaf (1 in 5), Coins (1 in 2), Bones (always)."
  },
  {
   "id": "monster_cinderpaw_cub",
@@ -2818,7 +2818,7 @@ export const KNOWLEDGE_CHUNKS = [
    "monster",
    "drops"
   ],
-  "text": "Cinderpaw Cub is a monster at combat level 36 with 40 HP, attacking with slash. Requires Slayer level 15. Drops: Clue Scroll Medium (1 in 67), Steel Dagger (1 in 25), Iron Full Helm (1 in 20), Sunblossom (1 in 8), Emberleaf (1 in 7), Fire Rune (1 in 3), Coins (1 in 1), Bones (always)."
+  "text": "Cinderpaw Cub is a monster at combat level 36 with 40 HP, attacking with slash. Requires Slayer level 15. Drops: Clue Scroll Medium (1 in 67), Apple Sapling (1 in 67), Graysage Seed (1 in 50), Willow Sapling (1 in 50), Kingsherb Seed (1 in 33), Steel Dagger (1 in 25), Duskroot Seed (1 in 25), Iron Full Helm (1 in 20), Sunblossom (1 in 8), Emberleaf (1 in 7), Fire Rune (1 in 3), Coins (1 in 1), Bones (always)."
  },
  {
   "id": "monster_glaive_skeleton",
@@ -2827,7 +2827,7 @@ export const KNOWLEDGE_CHUNKS = [
    "monster",
    "drops"
   ],
-  "text": "Glaive Skeleton is a monster at combat level 45 with 48 HP, attacking with slash. Requires Slayer level 20. Drops: Clue Scroll Medium (1 in 50), Steel Scimitar (1 in 40), Iron Scimitar (1 in 20), Iron Bar (1 in 10), Chaos Rune (1 in 7), Mind Rune (1 in 5), Coins (1 in 1), Bones (always)."
+  "text": "Glaive Skeleton is a monster at combat level 45 with 48 HP, attacking with slash. Requires Slayer level 20. Drops: Apple Sapling (1 in 67), Clue Scroll Medium (1 in 50), Graysage Seed (1 in 50), Willow Sapling (1 in 50), Steel Scimitar (1 in 40), Kingsherb Seed (1 in 33), Duskroot Seed (1 in 25), Iron Scimitar (1 in 20), Iron Bar (1 in 10), Chaos Rune (1 in 7), Mind Rune (1 in 5), Coins (1 in 1), Bones (always)."
  },
  {
   "id": "monster_mirebound_husk",
@@ -2836,7 +2836,7 @@ export const KNOWLEDGE_CHUNKS = [
    "monster",
    "drops"
   ],
-  "text": "Mirebound Husk is a monster at combat level 52 with 60 HP, attacking with magic. Requires Slayer level 22. Drops: Clue Scroll Medium (1 in 50), Snapdrake (1 in 10), Duskroot (1 in 7), Rynarr Weed (1 in 6), Chaos Rune (1 in 5), Nature Rune (1 in 4), Coins (1 in 2), Bones (always)."
+  "text": "Mirebound Husk is a monster at combat level 52 with 60 HP, attacking with magic. Requires Slayer level 22. Drops: Apple Sapling (1 in 67), Clue Scroll Medium (1 in 50), Graysage Seed (1 in 50), Willow Sapling (1 in 50), Kingsherb Seed (1 in 33), Duskroot Seed (1 in 25), Snapdrake (1 in 10), Duskroot (1 in 7), Rynarr Weed (1 in 6), Chaos Rune (1 in 5), Nature Rune (1 in 4), Coins (1 in 2), Bones (always)."
  },
  {
   "id": "monster_verdant_stalker",
@@ -2845,7 +2845,7 @@ export const KNOWLEDGE_CHUNKS = [
    "monster",
    "drops"
   ],
-  "text": "Verdant Stalker is a monster at combat level 58 with 55 HP, attacking with ranged. Requires Slayer level 25. Drops: Clue Scroll Medium (1 in 50), Shortbow (1 in 20), Emberleaf (1 in 7), Greenthorn Leaf (1 in 5), Iron Arrow (1 in 3), Feather (1 in 3), Coins (1 in 2), Bones (always)."
+  "text": "Verdant Stalker is a monster at combat level 58 with 55 HP, attacking with ranged. Requires Slayer level 25. Drops: Apple Sapling (1 in 67), Clue Scroll Medium (1 in 50), Graysage Seed (1 in 50), Willow Sapling (1 in 50), Kingsherb Seed (1 in 33), Duskroot Seed (1 in 25), Shortbow (1 in 20), Emberleaf (1 in 7), Greenthorn Leaf (1 in 5), Iron Arrow (1 in 3), Feather (1 in 3), Coins (1 in 2), Bones (always)."
  },
  {
   "id": "monster_stoneglare_basilisk",
@@ -2854,7 +2854,7 @@ export const KNOWLEDGE_CHUNKS = [
    "monster",
    "drops"
   ],
-  "text": "Stoneglare Basilisk is a monster at combat level 62 with 70 HP, attacking with slash. Requires Slayer level 28. Drops: Clue Scroll Hard (1 in 83), Uncut Emerald (1 in 33), Uncut Sapphire (1 in 20), Mithril Bar (1 in 20), Nature Rune (1 in 5), Earth Rune (1 in 3), Coins (1 in 1), Bones (always)."
+  "text": "Stoneglare Basilisk is a monster at combat level 62 with 70 HP, attacking with slash. Requires Slayer level 28. Drops: Clue Scroll Hard (1 in 83), Apple Sapling (1 in 67), Graysage Seed (1 in 50), Willow Sapling (1 in 50), Uncut Emerald (1 in 33), Kingsherb Seed (1 in 33), Duskroot Seed (1 in 25), Uncut Sapphire (1 in 20), Mithril Bar (1 in 20), Nature Rune (1 in 5), Earth Rune (1 in 3), Coins (1 in 1), Bones (always)."
  },
  {
   "id": "monster_embertongue_lizard",
@@ -2863,7 +2863,7 @@ export const KNOWLEDGE_CHUNKS = [
    "monster",
    "drops"
   ],
-  "text": "Embertongue Lizard is a monster at combat level 68 with 75 HP, attacking with magic. Requires Slayer level 32. Drops: Clue Scroll Hard (1 in 67), Uncut Ruby (1 in 25), Wyrmspice (1 in 8), Sunblossom (1 in 8), Emberleaf (1 in 6), Nature Rune (1 in 5), Fire Rune (1 in 3), Coins (1 in 1), Bones (always)."
+  "text": "Embertongue Lizard is a monster at combat level 68 with 75 HP, attacking with magic. Requires Slayer level 32. Drops: Clue Scroll Hard (1 in 67), Apple Sapling (1 in 67), Graysage Seed (1 in 50), Willow Sapling (1 in 50), Kingsherb Seed (1 in 33), Uncut Ruby (1 in 25), Duskroot Seed (1 in 25), Wyrmspice (1 in 8), Sunblossom (1 in 8), Emberleaf (1 in 6), Nature Rune (1 in 5), Fire Rune (1 in 3), Coins (1 in 1), Bones (always)."
  },
  {
   "id": "monster_hollow_reaver",
@@ -2872,7 +2872,7 @@ export const KNOWLEDGE_CHUNKS = [
    "monster",
    "drops"
   ],
-  "text": "Hollow Reaver is a monster at combat level 75 with 85 HP, attacking with slash. Requires Slayer level 38. Drops: Clue Scroll Hard (1 in 56), Adamant Scimitar (1 in 25), Snapdrake (1 in 8), Death Rune (1 in 6), Rynarr Weed (1 in 6), Chaos Rune (1 in 5), Coins (1 in 1), Big Bones (always)."
+  "text": "Hollow Reaver is a monster at combat level 75 with 85 HP, attacking with slash. Requires Slayer level 38. Drops: Rynarr Seed (1 in 500), Maple Sapling (1 in 100), Clue Scroll Hard (1 in 56), Banana Sapling (1 in 50), Orange Sapling (1 in 50), Graysage Seed (1 in 33), Bogtuber Seed (1 in 33), Adamant Scimitar (1 in 25), Kingsherb Seed (1 in 25), Snapdrake (1 in 8), Death Rune (1 in 6), Rynarr Weed (1 in 6), Chaos Rune (1 in 5), Coins (1 in 1), Big Bones (always)."
  },
  {
   "id": "monster_briarheart_treant",
@@ -2881,7 +2881,7 @@ export const KNOWLEDGE_CHUNKS = [
    "monster",
    "drops"
   ],
-  "text": "Briarheart Treant is a monster at combat level 82 with 110 HP, attacking with crush. Requires Slayer level 42. Drops: Clue Scroll Hard (1 in 50), Uncut Emerald (1 in 25), Yew Logs (1 in 10), Rynarr Weed (1 in 7), Maple Logs (1 in 5), Greenthorn Leaf (1 in 5), Willow Logs (1 in 3), Oak Logs (1 in 3), Coins (1 in 1), Big Bones (always)."
+  "text": "Briarheart Treant is a monster at combat level 82 with 110 HP, attacking with crush. Requires Slayer level 42. Drops: Rynarr Seed (1 in 500), Maple Sapling (1 in 100), Clue Scroll Hard (1 in 50), Banana Sapling (1 in 50), Orange Sapling (1 in 50), Graysage Seed (1 in 33), Bogtuber Seed (1 in 33), Uncut Emerald (1 in 25), Kingsherb Seed (1 in 25), Yew Logs (1 in 10), Rynarr Weed (1 in 7), Maple Logs (1 in 5), Greenthorn Leaf (1 in 5), Willow Logs (1 in 3), Oak Logs (1 in 3), Coins (1 in 1), Big Bones (always)."
  },
  {
   "id": "monster_frostmaw_direwolf",
@@ -2890,7 +2890,7 @@ export const KNOWLEDGE_CHUNKS = [
    "monster",
    "drops"
   ],
-  "text": "Frostmaw Direwolf is a monster at combat level 85 with 95 HP, attacking with slash. Requires Slayer level 45. Drops: Clue Scroll Hard (1 in 50), Uncut Ruby (1 in 25), Adamant Scimitar (1 in 20), Adamant Bar (1 in 13), Iron Bar (1 in 7), Raw Beef (1 in 5), Cowhide (1 in 4), Coins (1 in 1), Bones (always)."
+  "text": "Frostmaw Direwolf is a monster at combat level 85 with 95 HP, attacking with slash. Requires Slayer level 45. Drops: Rynarr Seed (1 in 500), Maple Sapling (1 in 100), Clue Scroll Hard (1 in 50), Banana Sapling (1 in 50), Orange Sapling (1 in 50), Graysage Seed (1 in 33), Bogtuber Seed (1 in 33), Uncut Ruby (1 in 25), Kingsherb Seed (1 in 25), Adamant Scimitar (1 in 20), Adamant Bar (1 in 13), Iron Bar (1 in 7), Raw Beef (1 in 5), Cowhide (1 in 4), Coins (1 in 1), Bones (always)."
  },
  {
   "id": "monster_pyreclaw_demon",
@@ -2899,7 +2899,7 @@ export const KNOWLEDGE_CHUNKS = [
    "monster",
    "drops"
   ],
-  "text": "Pyreclaw Demon is a monster at combat level 88 with 100 HP, attacking with magic. Requires Slayer level 50. Drops: Clue Scroll Hard (1 in 45), Runeforged Ore (1 in 13), Wyrmspice (1 in 7), Emberleaf (1 in 6), Death Rune (1 in 5), Chaos Rune (1 in 4), Fire Rune (1 in 3), Coins (1 in 1), Big Bones (always)."
+  "text": "Pyreclaw Demon is a monster at combat level 88 with 100 HP, attacking with magic. Requires Slayer level 50. Drops: Rynarr Seed (1 in 500), Maple Sapling (1 in 100), Banana Sapling (1 in 50), Orange Sapling (1 in 50), Clue Scroll Hard (1 in 45), Graysage Seed (1 in 33), Bogtuber Seed (1 in 33), Kingsherb Seed (1 in 25), Runeforged Ore (1 in 13), Wyrmspice (1 in 7), Emberleaf (1 in 6), Death Rune (1 in 5), Chaos Rune (1 in 4), Fire Rune (1 in 3), Coins (1 in 1), Big Bones (always)."
  },
  {
   "id": "monster_wraithgale_specter",
@@ -2908,7 +2908,7 @@ export const KNOWLEDGE_CHUNKS = [
    "monster",
    "drops"
   ],
-  "text": "Wraithgale Specter is a monster at combat level 92 with 95 HP, attacking with magic. Requires Slayer level 55. Drops: Clue Scroll Hard (1 in 45), Uncut Diamond (1 in 33), Blood Rune (1 in 7), Snapdrake (1 in 7), Death Rune (1 in 5), Nature Rune (1 in 5), Rynarr Weed (1 in 5), Chaos Rune (1 in 4), Coins (1 in 1), Bones (always)."
+  "text": "Wraithgale Specter is a monster at combat level 92 with 95 HP, attacking with magic. Requires Slayer level 55. Drops: Yew Sapling (1 in 250), Rynarr Seed (1 in 200), Papaya Sapling (1 in 83), Maple Sapling (1 in 67), Curry Sapling (1 in 50), Clue Scroll Hard (1 in 45), Uncut Diamond (1 in 33), Bogtuber Seed (1 in 25), Blood Rune (1 in 7), Snapdrake (1 in 7), Death Rune (1 in 5), Nature Rune (1 in 5), Rynarr Weed (1 in 5), Chaos Rune (1 in 4), Coins (1 in 1), Bones (always)."
  },
  {
   "id": "monster_bloodmoon_stalker",
@@ -2917,7 +2917,7 @@ export const KNOWLEDGE_CHUNKS = [
    "monster",
    "drops"
   ],
-  "text": "Bloodmoon Stalker is a monster at combat level 93 with 90 HP, attacking with ranged. Requires Slayer level 58. Drops: Clue Scroll Hard (1 in 45), Uncut Dragonstone (1 in 40), Magic Shortbow (1 in 20), Thornspire (1 in 10), Runeforged Ore (1 in 10), Runeforged Arrow (1 in 3), Feather (1 in 3), Coins (1 in 1), Bones (always)."
+  "text": "Bloodmoon Stalker is a monster at combat level 93 with 90 HP, attacking with ranged. Requires Slayer level 58. Drops: Yew Sapling (1 in 250), Rynarr Seed (1 in 200), Papaya Sapling (1 in 83), Maple Sapling (1 in 67), Curry Sapling (1 in 50), Clue Scroll Hard (1 in 45), Uncut Dragonstone (1 in 40), Bogtuber Seed (1 in 25), Magic Shortbow (1 in 20), Thornspire (1 in 10), Runeforged Ore (1 in 10), Runeforged Arrow (1 in 3), Feather (1 in 3), Coins (1 in 1), Bones (always)."
  },
  {
   "id": "monster_ironfang_drake",
@@ -2926,7 +2926,7 @@ export const KNOWLEDGE_CHUNKS = [
    "monster",
    "drops"
   ],
-  "text": "Ironfang Drake is a monster at combat level 96 with 130 HP, attacking with slash. Requires Slayer level 60. Drops: Dragon Visage (1 in 5,000), Clue Scroll Elite (1 in 56), Uncut Dragonstone (1 in 29), Thornspire (1 in 10), Runeforged Ore (1 in 7), Wyrmspice (1 in 7), Runeforged Arrow (1 in 4), Coins (1 in 1), Dragon Bones (always)."
+  "text": "Ironfang Drake is a monster at combat level 96 with 130 HP, attacking with slash. Requires Slayer level 60. Drops: Dragon Visage (1 in 5,000), Yew Sapling (1 in 250), Rynarr Seed (1 in 200), Papaya Sapling (1 in 83), Maple Sapling (1 in 67), Clue Scroll Elite (1 in 56), Curry Sapling (1 in 50), Uncut Dragonstone (1 in 29), Bogtuber Seed (1 in 25), Thornspire (1 in 10), Runeforged Ore (1 in 7), Wyrmspice (1 in 7), Runeforged Arrow (1 in 4), Coins (1 in 1), Dragon Bones (always)."
  },
  {
   "id": "monster_shadeglass_golem",
@@ -2935,7 +2935,7 @@ export const KNOWLEDGE_CHUNKS = [
    "monster",
    "drops"
   ],
-  "text": "Shadeglass Golem is a monster at combat level 97 with 140 HP, attacking with crush. Requires Slayer level 65. Drops: Clue Scroll Elite (1 in 56), Uncut Diamond (1 in 33), Runeforged Med Helm (1 in 25), Runeforged Bar (1 in 10), Runeforged Ore (1 in 7), Soft Clay (1 in 4), Molten Glass (1 in 3), Coins (1 in 1), Big Bones (always)."
+  "text": "Shadeglass Golem is a monster at combat level 97 with 140 HP, attacking with crush. Requires Slayer level 65. Drops: Yew Sapling (1 in 250), Rynarr Seed (1 in 200), Papaya Sapling (1 in 83), Maple Sapling (1 in 67), Clue Scroll Elite (1 in 56), Curry Sapling (1 in 50), Uncut Diamond (1 in 33), Runeforged Med Helm (1 in 25), Bogtuber Seed (1 in 25), Runeforged Bar (1 in 10), Runeforged Ore (1 in 7), Soft Clay (1 in 4), Molten Glass (1 in 3), Coins (1 in 1), Big Bones (always)."
  },
  {
   "id": "monster_tidereaper_crab",
@@ -2944,7 +2944,7 @@ export const KNOWLEDGE_CHUNKS = [
    "monster",
    "drops"
   ],
-  "text": "Tidereaper Crab is a monster at combat level 98 with 130 HP, attacking with crush. Requires Slayer level 68. Drops: Clue Scroll Elite (1 in 50), Uncut Dragonstone (1 in 40), Thornspire (1 in 13), Runeforged Ore (1 in 10), Uncut Sapphire (1 in 7), Raw Eel (1 in 4), Raw Crab (1 in 3), Coins (1 in 1), Big Bones (always)."
+  "text": "Tidereaper Crab is a monster at combat level 98 with 130 HP, attacking with crush. Requires Slayer level 68. Drops: Yew Sapling (1 in 250), Rynarr Seed (1 in 200), Papaya Sapling (1 in 83), Maple Sapling (1 in 67), Clue Scroll Elite (1 in 50), Curry Sapling (1 in 50), Uncut Dragonstone (1 in 40), Bogtuber Seed (1 in 25), Thornspire (1 in 13), Runeforged Ore (1 in 10), Uncut Sapphire (1 in 7), Raw Eel (1 in 4), Raw Crab (1 in 3), Coins (1 in 1), Big Bones (always)."
  },
  {
   "id": "monster_voidweave_stalker",
@@ -2953,7 +2953,7 @@ export const KNOWLEDGE_CHUNKS = [
    "monster",
    "drops"
   ],
-  "text": "Voidweave Stalker is a monster at combat level 99 with 120 HP, attacking with magic. Requires Slayer level 70. Drops: Clue Scroll Elite (1 in 50), Uncut Diamond (1 in 25), Snapdrake (1 in 7), Soul Rune (1 in 6), Rynarr Weed (1 in 5), Blood Rune (1 in 4), Chaos Rune (1 in 4), Death Rune (1 in 3), Coins (1 in 1), Bones (always)."
+  "text": "Voidweave Stalker is a monster at combat level 99 with 120 HP, attacking with magic. Requires Slayer level 70. Drops: Yew Sapling (1 in 250), Rynarr Seed (1 in 200), Papaya Sapling (1 in 83), Maple Sapling (1 in 67), Clue Scroll Elite (1 in 50), Curry Sapling (1 in 50), Uncut Diamond (1 in 25), Bogtuber Seed (1 in 25), Snapdrake (1 in 7), Soul Rune (1 in 6), Rynarr Weed (1 in 5), Blood Rune (1 in 4), Chaos Rune (1 in 4), Death Rune (1 in 3), Coins (1 in 1), Bones (always)."
  },
  {
   "id": "monster_drakthul_wyrmling",
@@ -2962,7 +2962,7 @@ export const KNOWLEDGE_CHUNKS = [
    "monster",
    "drops"
   ],
-  "text": "Drakthul Wyrmling is a monster at combat level 99 with 135 HP, attacking with magic. Requires Slayer level 73. Drops: Dragon Visage (1 in 5,000), Clue Scroll Elite (1 in 45), Uncut Dragonstone (1 in 25), Runeforged Chainbody (1 in 25), Thornspire (1 in 8), Runeforged Ore (1 in 7), Wyrmspice (1 in 6), Fire Rune (1 in 3), Coins (1 in 1), Dragon Bones (always)."
+  "text": "Drakthul Wyrmling is a monster at combat level 99 with 135 HP, attacking with magic. Requires Slayer level 73. Drops: Dragon Visage (1 in 5,000), Yew Sapling (1 in 250), Rynarr Seed (1 in 200), Papaya Sapling (1 in 83), Maple Sapling (1 in 67), Curry Sapling (1 in 50), Clue Scroll Elite (1 in 45), Uncut Dragonstone (1 in 25), Runeforged Chainbody (1 in 25), Bogtuber Seed (1 in 25), Thornspire (1 in 8), Runeforged Ore (1 in 7), Wyrmspice (1 in 6), Fire Rune (1 in 3), Coins (1 in 1), Dragon Bones (always)."
  },
  {
   "id": "monster_bonelight_pyromancer",
@@ -2971,7 +2971,7 @@ export const KNOWLEDGE_CHUNKS = [
    "monster",
    "drops"
   ],
-  "text": "Bonelight Pyromancer is a monster at combat level 99 with 110 HP, attacking with magic. Requires Slayer level 75. Drops: Clue Scroll Elite (1 in 45), Uncut Diamond (1 in 29), Snapdrake (1 in 7), Soul Rune (1 in 6), Nature Rune (1 in 5), Rynarr Weed (1 in 5), Death Rune (1 in 4), Fire Rune (1 in 3), Coins (1 in 1), Big Bones (always)."
+  "text": "Bonelight Pyromancer is a monster at combat level 99 with 110 HP, attacking with magic. Requires Slayer level 75. Drops: Magic Sapling (1 in 667), Yew Sapling (1 in 167), Palm Sapling (1 in 167), Rynarr Seed (1 in 125), Papaya Sapling (1 in 50), Clue Scroll Elite (1 in 45), Bogtuber Seed (1 in 33), Uncut Diamond (1 in 29), Snapdrake (1 in 7), Soul Rune (1 in 6), Nature Rune (1 in 5), Rynarr Weed (1 in 5), Death Rune (1 in 4), Fire Rune (1 in 3), Coins (1 in 1), Big Bones (always)."
  },
  {
   "id": "monster_cinderfang_reaver",
@@ -2980,7 +2980,7 @@ export const KNOWLEDGE_CHUNKS = [
    "monster",
    "drops"
   ],
-  "text": "Cinderfang Reaver is a monster at combat level 99 with 130 HP, attacking with slash. Requires Slayer level 77. Drops: Clue Scroll Elite (1 in 45), Uncut Dragonstone (1 in 33), Runeforged Scimitar (1 in 22), Runeforged Ore (1 in 7), Wyrmspice (1 in 7), Emberleaf (1 in 6), Runeforged Arrow (1 in 4), Coins (1 in 1), Big Bones (always)."
+  "text": "Cinderfang Reaver is a monster at combat level 99 with 130 HP, attacking with slash. Requires Slayer level 77. Drops: Magic Sapling (1 in 667), Yew Sapling (1 in 167), Palm Sapling (1 in 167), Rynarr Seed (1 in 125), Papaya Sapling (1 in 50), Clue Scroll Elite (1 in 45), Uncut Dragonstone (1 in 33), Bogtuber Seed (1 in 33), Runeforged Scimitar (1 in 22), Runeforged Ore (1 in 7), Wyrmspice (1 in 7), Emberleaf (1 in 6), Runeforged Arrow (1 in 4), Coins (1 in 1), Big Bones (always)."
  },
  {
   "id": "monster_ashen_marauder",
@@ -2989,7 +2989,7 @@ export const KNOWLEDGE_CHUNKS = [
    "monster",
    "drops"
   ],
-  "text": "Ashen Marauder is a monster at combat level 99 with 140 HP, attacking with crush. Requires Slayer level 79. Drops: Clue Scroll Elite (1 in 45), Uncut Dragonstone (1 in 29), Runeforged 2h Sword (1 in 25), Amulet Of Strength (1 in 17), Runeforged Bar (1 in 8), Wyrmspice (1 in 7), Runeforged Ore (1 in 6), Emberleaf (1 in 5), Coins (1 in 1), Big Bones (always)."
+  "text": "Ashen Marauder is a monster at combat level 99 with 140 HP, attacking with crush. Requires Slayer level 79. Drops: Magic Sapling (1 in 667), Yew Sapling (1 in 167), Palm Sapling (1 in 167), Rynarr Seed (1 in 125), Papaya Sapling (1 in 50), Clue Scroll Elite (1 in 45), Bogtuber Seed (1 in 33), Uncut Dragonstone (1 in 29), Runeforged 2h Sword (1 in 25), Amulet Of Strength (1 in 17), Runeforged Bar (1 in 8), Wyrmspice (1 in 7), Runeforged Ore (1 in 6), Emberleaf (1 in 5), Coins (1 in 1), Big Bones (always)."
  },
  {
   "id": "monster_sovrathar_the_ashen_sovereign",
@@ -2999,7 +2999,7 @@ export const KNOWLEDGE_CHUNKS = [
    "drops",
    "boss"
   ],
-  "text": "Sovrathar, the Ashen Sovereign is a boss at combat level 250 with 480 HP, attacking with slash. Requires Slayer level 80. Drops: Ashen Sovereigns Edge (1 in 250), Sovereigns Cinderplate (1 in 150), Sovereigns Cindergreaves (1 in 150), Cinderforged Helm (1 in 125), Sovrathar Ashen Hilt (1 in 45), Clue Scroll Master (1 in 33), Thornspire (1 in 8), Runeforged Bar (1 in 7), Snapdrake (1 in 7), Runeforged Ore (1 in 5), Rynarr Weed (1 in 5), Soul Rune (1 in 5), Blood Rune (1 in 4), Death Rune (1 in 3), Coins (1 in 1), Dragon Bones (always)."
+  "text": "Sovrathar, the Ashen Sovereign is a boss at combat level 250 with 480 HP, attacking with slash. Requires Slayer level 80. Drops: Ashen Sovereigns Edge (1 in 250), Sovereigns Cinderplate (1 in 150), Sovereigns Cindergreaves (1 in 150), Cinderforged Helm (1 in 125), Magic Sapling (1 in 125), Yew Sapling (1 in 50), Palm Sapling (1 in 50), Sovrathar Ashen Hilt (1 in 45), Clue Scroll Master (1 in 33), Papaya Sapling (1 in 33), Rynarr Seed (1 in 25), Thornspire (1 in 8), Runeforged Bar (1 in 7), Snapdrake (1 in 7), Runeforged Ore (1 in 5), Rynarr Weed (1 in 5), Soul Rune (1 in 5), Blood Rune (1 in 4), Death Rune (1 in 3), Coins (1 in 1), Dragon Bones (always)."
  },
  {
   "id": "monster_gravehusk_brute",

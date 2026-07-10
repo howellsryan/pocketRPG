@@ -138,8 +138,12 @@
   --fm-ease: cubic-bezier(0.2, 0.9, 0.3, 1);
   --fm-dur: 0.16s;
 
-  --fm-tex-parch: url('/public/forge/parchment.svg');
-  --fm-tex-iron: url('/public/forge/iron.svg');
+  /* Pre-baked bitmaps of the SVG noise sources (scripts/gen-forge-textures.mjs).
+     The SVGs' feTurbulence filters re-evaluate per pixel at raster time and cost
+     seconds of RasterTask as tiled page backgrounds on mobile — never point
+     these vars back at the .svg files. */
+  --fm-tex-parch: url('/public/forge/parchment.webp');
+  --fm-tex-iron: url('/public/forge/iron.webp');
   --fm-orn-corner: url('/public/forge/corner.svg');
   --fm-orn-divider: url('/public/forge/divider.svg');
 }
