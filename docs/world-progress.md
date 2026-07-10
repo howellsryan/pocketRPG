@@ -355,3 +355,19 @@ Built per the new guide §9 (authored this phase on developer instruction — ma
 `world:check` green (12 files / 97 tests). Only `world/` + `docs/` touched — no root gate required.
 
 - [x] STEP 3.0–3.4 — see commit introducing this entry — Phase 3 code-complete + self-verified; acceptance is the DT-P3 two-device manual script (guide §9 STEP 3.4).
+
+## PHASE 4 — Shared-kill loot attribution + pack reordering (STEP 4.1–4.4)
+
+Developer confirmed the Phase 4+ roadmap decisions (recorded in `docs/open-world-next-phases-scope.md`; asset tracking in `docs/open-world-asset-coverage.md`) and greenlit the build. Guide §10 rewritten from "do not build" into the Phase 4 spec.
+
+**STEP 4.1 — damage attribution + shared HP** (`npc.ts`, `combat.ts`): `NpcState.damageByChar` (per-attacker total + last-increase tick), `recordDamage`/`topDamageContributor` pure + unit-tested (tie → whoever reached the total first). Each attacker's engine session syncs `state.monster.currentHP` from the shared npc record before its tick — players tick sequentially, so concurrent damage serializes and the existing dead-npc guard stops a same-tick double-kill. `killNpc` spawns loot with `ownerCharId = topDamageContributor ?? killer`, then clears the map; out-of-combat full heal also clears it.
+
+**STEP 4.2 — single retaliation target**: `npc.attackerId` is now claim-if-null (was unconditionally overwritten each tick by every attacker — with two attackers the bull would have hit both every swing). Only the target's session applies monster-sourced events; others discard them. Release on walk-away/kill/disconnect already existed; **player death now releases it too** (was a pre-existing latent leak: a dead target left `attackerId` pointing at a respawned-away player, pinning the npc in combat forever; only reachable at 1 HP vs the bull, so masked until now). A surviving attacker claims the vacancy next tick.
+
+**STEP 4.3 — pack reordering**: protocol `{t:'moveInv', from, to}` (integers in [0,28) or close 1008); pure `moveInventorySlot` in `mining.ts` (swap/relocate, same semantics as the main game's `InventoryGrid`); `WorldZone` queues an `{e:'inv'}` echo for the next tick (one-diff-per-client-per-tick preserved). Client: pointer-drag with 6px threshold + ghost + target highlight on `#inv-panel` (desktop and touch share the path), optimistic local swap, server echo authoritative. Flushes read minted/saveBacked tallies, so slot order is provably cosmetic — pinned by a test.
+
+**Verified end-to-end** (wrangler dev + two WS clients): identical shared HP trajectory on both clients (8→4→2→0), all player-targeted hitsplats at exactly one charId, loot visible to only the top-damage client during the owner window, moveInv echo round-trip (slot 0 → 27), out-of-range moveInv closed 1008. Environment note for future sessions: `curl` probes of localhost must use `--noproxy '*'` here (the sandbox proxy blackholes localhost otherwise), and wrangler picks the next free port (8788) if a stale workerd holds 8787.
+
+`world:check` green (13 files / 109 tests). Only `world/` + `docs/` touched — no root gate required.
+
+- [x] STEP 4.1–4.4 — see commit introducing this entry — Phase 4 code-complete + self-verified; acceptance is the DT-P4 two-device manual script (guide §10 STEP 4.4).

@@ -20,8 +20,9 @@ const HUD_CSS = `
 .inv-slot {
   background: rgba(60, 50, 34, 0.55); border-radius: 4px; position: relative;
   display: flex; align-items: center; justify-content: center; font-size: 22px;
-  user-select: none;
+  user-select: none; touch-action: none;
 }
+.inv-slot.drag-over { outline: 2px solid #ffe066; }
 .inv-slot .qty {
   position: absolute; top: 0; right: 2px; font-size: 10px; color: #ffe066;
   text-shadow: 0 1px 2px #000;
@@ -90,9 +91,77 @@ const HUD_CSS = `
 
 let hudReady = false
 
+// Filled state per slot, kept by renderInventory so the drag layer knows which
+// cells can start a drag without owning a copy of the inventory itself.
+const slotFilled: boolean[] = new Array(INVENTORY_COLS * INVENTORY_ROWS).fill(false)
+
+const DRAG_THRESHOLD_PX = 6
+
+/** Pointer-based drag-to-reorder on the pack grid (desktop drag and touch use
+ * the same path). Mirrors the main game's InventoryGrid: a ghost follows the
+ * pointer past a small threshold, the hovered cell highlights, and dropping on
+ * a different slot commits the move. */
+function setupInvDrag(panel: HTMLElement, onMove: (from: number, to: number) => void): void {
+  let drag: { from: number; startX: number; startY: number; ghost: HTMLElement | null; over: number | null } | null = null
+
+  const indexOfCell = (el: Element | null): number | null => {
+    const cell = el instanceof HTMLElement ? el.closest('.inv-slot') : null
+    if (!cell || cell.parentElement !== panel) return null
+    return Array.prototype.indexOf.call(panel.children, cell)
+  }
+
+  const cellUnderPointer = (x: number, y: number): number | null => {
+    if (drag?.ghost) drag.ghost.style.display = 'none'
+    const el = document.elementFromPoint(x, y)
+    if (drag?.ghost) drag.ghost.style.display = ''
+    return indexOfCell(el)
+  }
+
+  const finish = (commit: boolean): void => {
+    if (!drag) return
+    drag.ghost?.remove()
+    if (drag.over != null) panel.children[drag.over]?.classList.remove('drag-over')
+    if (commit && drag.ghost && drag.over != null && drag.over !== drag.from) onMove(drag.from, drag.over)
+    drag = null
+  }
+
+  panel.addEventListener('pointerdown', (e) => {
+    const index = indexOfCell(e.target as Element)
+    if (index == null || !slotFilled[index]) return
+    drag = { from: index, startX: e.clientX, startY: e.clientY, ghost: null, over: null }
+    ;(panel.children[index] as HTMLElement).setPointerCapture(e.pointerId)
+  })
+  panel.addEventListener('pointermove', (e) => {
+    if (!drag) return
+    if (!drag.ghost) {
+      const dx = e.clientX - drag.startX
+      const dy = e.clientY - drag.startY
+      if (dx * dx + dy * dy < DRAG_THRESHOLD_PX * DRAG_THRESHOLD_PX) return
+      const ghost = (panel.children[drag.from] as HTMLElement).cloneNode(true) as HTMLElement
+      ghost.style.cssText =
+        'position:fixed;width:40px;height:40px;pointer-events:none;z-index:40;opacity:0.85;' +
+        'display:flex;align-items:center;justify-content:center;' +
+        'border:2px solid #ffe066;border-radius:6px;background:rgba(20,16,10,0.9);'
+      document.body.appendChild(ghost)
+      drag.ghost = ghost
+    }
+    drag.ghost.style.left = `${e.clientX - 20}px`
+    drag.ghost.style.top = `${e.clientY - 20}px`
+    const over = cellUnderPointer(e.clientX, e.clientY)
+    const target = over === drag.from ? null : over
+    if (target !== drag.over) {
+      if (drag.over != null) panel.children[drag.over]?.classList.remove('drag-over')
+      if (target != null) panel.children[target]?.classList.add('drag-over')
+      drag.over = target
+    }
+  })
+  panel.addEventListener('pointerup', () => finish(true))
+  panel.addEventListener('pointercancel', () => finish(false))
+}
+
 /** Creates the in-game HUD (inventory grid, message strip, xp-drop layer).
  * Call once after the welcome message. */
-export function initHud(): void {
+export function initHud(onMoveInv?: (from: number, to: number) => void): void {
   if (hudReady) return
   hudReady = true
   const style = document.createElement('style')
@@ -107,6 +176,7 @@ export function initHud(): void {
     inv.appendChild(slot)
   }
   document.body.appendChild(inv)
+  if (onMoveInv) setupInvDrag(inv, onMoveInv)
 
   const msgs = document.createElement('div')
   msgs.id = 'msg-strip'
@@ -326,6 +396,7 @@ export function renderInventory(inventory: InvSlot[]): void {
   for (let i = 0; i < slots.length; i++) {
     const cell = slots[i] as HTMLElement
     const slot = inventory[i] ?? null
+    slotFilled[i] = slot !== null
     cell.innerHTML = ''
     cell.title = ''
     if (!slot) continue

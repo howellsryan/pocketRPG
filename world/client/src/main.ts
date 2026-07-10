@@ -10,7 +10,7 @@ import { loadItemIcons } from './itemIcon'
 import { combatLevelFromStats } from '../../../src/engine/combatLevel.js'
 import monstersData from '../../../src/data/monsters.json'
 import * as THREE from 'three'
-import type { EntityDiff, ServerMessage, ZoneEvent } from '../../shared/protocol'
+import type { EntityDiff, InvSlot, ServerMessage, ZoneEvent } from '../../shared/protocol'
 import type { Pickable } from './picking'
 
 const ZONE_ID = 'pasture'
@@ -46,6 +46,9 @@ function enterWorld(session: WorldSession): void {
   const rockStates = new Map<string, boolean>()
   let playerCombatLevel = 3
   let zoom = 1
+  // Local pack copy so a drag-reorder can apply optimistically; every server
+  // {e:'inv'} (including the reorder echo) replaces it wholesale.
+  let inventory: InvSlot[] = []
 
   function toScreen(pos: THREE.Vector3, yOffset: number): { x: number; y: number } {
     const v = pos.clone()
@@ -60,7 +63,10 @@ function enterWorld(session: WorldSession): void {
   }
 
   function handleEvent(event: ZoneEvent): void {
-    if (event.e === 'inv') renderInventory(event.inventory)
+    if (event.e === 'inv') {
+      inventory = event.inventory
+      renderInventory(inventory)
+    }
     else if (event.e === 'xp') showXpDrop(event.skill, event.amount)
     else if (event.e === 'msg') pushMessage(event.text)
     else if (event.e === 'hit') {
@@ -163,7 +169,14 @@ function enterWorld(session: WorldSession): void {
         const container = document.getElementById('scene')!
         const renderer = createRenderer(container)
 
-        initHud()
+        initHud((from, to) => {
+          const moved = inventory[from]
+          if (!moved) return
+          inventory[from] = inventory[to] ?? null
+          inventory[to] = moved
+          renderInventory(inventory)
+          send(socket, { t: 'moveInv', from, to })
+        })
         initChatInput((text) => send(socket, { t: 'chat', text }))
         playerCombatLevel = combatLevelFromStats(message.you.stats)
         lootLayer = createLootLayer(scene)
@@ -173,7 +186,8 @@ function enterWorld(session: WorldSession): void {
           createStatics(scene, message.statics),
           loadItemIcons(),
         ])
-        renderInventory(message.you.inventory)
+        inventory = message.you.inventory
+        renderInventory(inventory)
         statics = staticsResult
         for (const [id, depleted] of rockStates) staticsResult.setRockDepleted(id, depleted)
         self = createEntity(message.selfId, message.you.x, message.you.z, heroResult.mesh, heroResult.animator)

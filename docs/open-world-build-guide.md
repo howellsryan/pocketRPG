@@ -401,9 +401,37 @@ DEVELOPER TASK — manual script: two devices/browsers, both enter the pasture; 
 
 ---
 
-## 10) After Phase 3 (do not build — listed so the agent doesn't "prepare" for them)
+## 10) PHASE 4 — Shared-kill loot attribution + pack reordering (added 2026-07-10 on developer decision)
 
-Equipment-driven player appearance, run energy, more zones, food/prayer in world, ranged/magic, stances UI, trading, PvP — all explicitly out of scope. When Phase 3 is accepted, stop and await the developer's next instruction.
+Roadmap context: `docs/open-world-next-phases-scope.md` (Phases 4–8, decisions confirmed 2026-07-10); asset tracking: `docs/open-world-asset-coverage.md`. This phase is server-heavy with one client UI feature; no new assets, no new zones.
+
+**Definition of done**: two players fight the same bull — its HP is genuinely shared (both see one bar drain), it retaliates against exactly one of them, and on death the drop's owner window belongs to whoever dealt the **most damage** (tie → first to reach that total). Reordering the pack by dragging works on desktop and touch, survives a mine/deposit round-trip, and slot order has no effect on flush semantics.
+
+### STEP 4.1 — Damage attribution + shared monster HP (server)
+`world/server/npc.ts`: `NpcState` gains `damageByChar: Map<string, { dmg: number; tick: number }>` (`tick` = when that total last increased, for the tie-break). Cleared on respawn AND on out-of-combat full heal. Export pure `topDamageContributor(npc): string | null` — max `dmg`, tie → smaller `tick`.
+`world/server/combat.ts` (`stepCombat`):
+- Before `processCombatTick`, sync the session's engine state from the shared record: `combat.state.monster.currentHP = npc.hp`. Players tick sequentially inside the zone tick, so damage serializes correctly; a same-tick second attacker on an already-dead npc is stopped by the existing `state === 'dead'` guard.
+- On `playerHit` with damage > 0, accumulate into `damageByChar`.
+- `killNpc`: loot `ownerCharId = topDamageContributor(npc) ?? killer.charId`.
+
+### STEP 4.2 — Single retaliation target (server)
+With N concurrent attackers, each player's engine session also processes monster attacks — untouched, the monster would swing N times per tick. Fix in the adapter, not the engine:
+- `npc.attackerId` becomes the retaliation target: **claim-if-null** in `stepCombat` (replace the unconditional assignment). Monster-sourced events (`monsterHit`/`monsterMiss`/`dragonfireHit`) are applied ONLY by the session whose player is the current target; other sessions discard them (no HP change, no hitsplat).
+- Release the target on: walk-away (exists), npc death (exists), disconnect (exists in `onClose`), and **player death** (missing today — clear it in the `player.hp <= 0` branch). A surviving attacker's session claims the vacancy next tick, so aggro hands over automatically.
+
+### STEP 4.3 — Pack reordering (protocol + server + client)
+- `world/shared/protocol.ts`: client message `{ t:'moveInv', from:number, to:number }`; parse requires integers in `[0,28)`, else invalid (close 1008). `from === to` parses fine and no-ops.
+- Server: pure `moveInventorySlot(inventory, from, to)` in `world/server/mining.ts` (plain swap — dropping onto a filled slot swaps, onto an empty slot relocates; identical semantics to `src/components/InventoryGrid.jsx`). `WorldZone` queues the player for an `{e:'inv'}` event on the **next tick** (one diff per client per tick stays intact). Slot order is irrelevant to every flush (they read the `minted`/`saveBacked` tallies), so reorder needs no grant/deposit coupling — assert that in a test, don't "fix" it.
+- Client: drag from any filled cell of `#inv-panel` (pointer events, ~6 px threshold before it counts as a drag, ghost clone follows the pointer, target cell highlights). On drop over a different slot: swap the local copy immediately (optimistic), re-render, send `moveInv`; the server's next-tick `{e:'inv'}` is the authoritative echo. Touch works through the same pointer path (the global `touch-action:none` already prevents scroll interference).
+
+### STEP 4.4 — Tests + acceptance
+Vitest (extend `combat-adapter.test.ts` / `tick.test.ts` / `mining.test.ts`): two attackers drain one shared HP pool; only the target takes monster hits; aggro hands over when the target dies/leaves; top-damage owns the drop; equal damage → earlier contributor owns it; `damageByChar` resets on respawn and full heal; `moveInventorySlot` swap/relocate/bounds; reordered pack flushes identically.
+Agent e2e (two WS clients against `wrangler dev`): both attack the bull, assert one shared HP trajectory in both clients' diffs, exactly one target receiving hitsplats, and the loot visible only to the top-damage client during the owner window. `moveInv` round-trip: swap two slots, assert next tick's `{e:'inv'}`.
+DEVELOPER TASK — manual script (DT-P4): two devices on the pasture; fight the same bull from both; verify one HP bar, sensible hitsplats, top-damage player sees the drop first; drag-reorder the pack on desktop and phone; mine → deposit → PocketRPG bank unchanged by reordering. Reply "PHASE 4 ACCEPTED".
+
+## 10b) After Phase 4 (do not build ahead)
+
+The Phase 5+ roadmap (equipment visuals, zones/transitions, Woodcutting, town, boss) lives in `docs/open-world-next-phases-scope.md` — each later phase gets its own guide section here before build starts. Run energy, food/prayer in world, ranged/magic, stances UI, trading, PvP, raids remain out of scope. When Phase 4 is accepted, stop and await the developer's next instruction.
 
 ## 11) Quick reference — repo facts the agent will need constantly
 

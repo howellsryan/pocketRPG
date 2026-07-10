@@ -42,7 +42,7 @@ The enabler phase. Three pieces of infrastructure, then the first real environme
 2. **Scenery layer.** Zone JSON gains `props: [{model, x, z, rot?, scale?}]` — non-interactive dressing (trees, fences, buildings, rocks) rendered from a shared prop catalogue (GLBs processed once from KayKit/Kenney/Quaternius kits, template-cached, instanced where repeated). Collision stays in the ASCII grid; props are visual only, so authoring stays "place a `#`, place a prop on it".
 3. **Zone authoring script.** A small generator/validator so 64×64 zones don't mean hand-typing 4,096 characters; the pasture's validator already covers correctness.
 
-**Forest zone + Woodcutting**: normal and oak trees as depleting nodes driven by `skills.json → woodcutting.actions` — the identical interact → ticks → product → deplete → respawn loop as mining, and the hero's `mine` anim is already a tree-chopping clip (rename to a shared `gather`). Logs flow through the existing grant flush untouched. Place 2–3 monsters from the matched list (D4) in the forest.
+**Forest zone + Woodcutting**: normal and oak trees as depleting nodes driven by `skills.json → woodcutting.actions` — the identical interact → ticks → product → deplete → respawn loop as mining, and the hero's `mine` anim is already a tree-chopping clip (rename to a shared `gather`). Logs flow through the existing grant flush untouched. Place 2–3 monsters from the coverage doc's matched list in the forest.
 
 **Geography (recommended): hybrid anchor.** The Phase 7 town is canonically a `world.json` place — Lumbright, the starter town — and resource zones around it (this forest, the existing pasture, a future riverbank) are freeform wilderness. One shared mental model with the idle game, future deep-linking from idle-game travel into world zones, without forcing every zone to match a 14-place gazetteer authored for a menu game (see D2).
 
@@ -58,28 +58,21 @@ The enabler phase. Three pieces of infrastructure, then the first real environme
 - **Fishing + riverbank zone**: water tiles (visual + blocked), fishing spots as node objects, `fishing.actions` data. Needs one new anim decision (UAL has usable candidates).
 - **More monsters**: by Phase 8 the per-monster cost is a model build script run + a zone npc entry + examine text.
 
-## Monsters — matched to models already in `assets/open-world/`
+## Monsters and equipment — asset coverage
 
-The combat adapter is monster-agnostic (any `monsters.json` entry works today); the cost is purely model processing per the `build-cow.mjs` pattern. Strong matches for the first waves, spanning early levels:
+Model↔content matching, per-model status, and gaps live in **`docs/open-world-asset-coverage.md`** (living tracker, updated in the same PR as each shipped asset). Headlines: chicken/goblin/wizard/imp/toad/skeleton all have strong matches for the early waves; dustpaw_rat, spiders, wolves, crabs and treants have **no** asset (Halloween Bits turned out to be graveyard props only) — skip rather than force a bad match. All monsters stay **passive** for now (decided; aggression radius revisited later).
 
-| Monster (level) | Model source |
-|---|---|
-| field_chicken (1) | Quaternius Farm Animal Pack |
-| cave_goblin (5) | Quaternius Goleling / Orc |
-| arcane_adept (9) | Quaternius Wizard |
-| broodfang_spider (27) | KayKit Halloween Bits spider |
-| glaive_skeleton (45) | KayKit Skeletons pack |
-| green_dragon (79) | Quaternius Dragon — later, as a destination boss |
+## First boss (decided: yes — one boss; raids deferred entirely)
 
-dustpaw_rat has no good model match; skip rather than force it. **Aggression (recommended)**: keep all monsters passive in v1 except one aggressive type per wilderness zone (e.g. the spider) so zones carry risk — aggression radius is a small server addition (see D5).
+**green_dragon (level 79)** as the first world boss, in its own lair zone off the wilderness (Phase 8 track): `Dragon.glb` is ready, and dragonfire (33% proc, max 50, blocked by `otherBonus.antiDragon`) already lives in the shared combat engine — making it the world's first genuine gear-check ("bring an anti-dragon shield") and the first fight where the Phase 4 shared-kill damage attribution matters. Drops ride the existing engine loot roll like the bull's. King Black Dragon (`Dragon Evolved`) follows later — as a collection-log boss its kill must emit the same server-side collection-log/kill-count side-effects as `/api/actions/**`, which is exactly the integrity pattern the world server was built for. Raids are out of scope indefinitely.
 
-## Decisions needed before build specs are written
+## Decisions (confirmed by developer, 2026-07-10)
 
-| # | Decision | Recommendation |
+| # | Decision | Outcome |
 |---|---|---|
-| D1 | Loot rule: most damage dealt vs literal count of successful hits | Most damage dealt (OSRS-standard, weapon-speed-fair). Tie → first to reach the total. |
-| D2 | Geography: mirror `world.json` places, fully independent map, or hybrid | Hybrid: town hubs are canonical places (start with Lumbright), resource/wilderness zones freeform. |
-| D3 | Equipment fidelity: archetype × tier tints vs distinct model per item family | Archetype × tier. Per-item fidelity is weeks of asset processing before any gameplay. |
-| D4 | First skills wave | Woodcutting (Phase 6) → Smithing + Cooking (Phase 7) → Fishing (Phase 8). Thieving deferred — most new mechanics, least asset reuse. |
-| D5 | Any aggressive monsters in v1 | Yes, one per wilderness zone; rest passive. |
-| D6 | Phase order confirmation | 4 (loot+inventory) → 5 (weapons) → 6 (forest) → 7 (town) → 8 (parallel). Defensible alternative: swap 5 and 6 if new places matter more than gear visuals. |
+| D1 | Loot rule | **Most damage dealt.** Tie → first to reach the total. |
+| D2 | Geography | **Consistent with `world.json` where practical, never a blocker** — when matching a place is awkward, raise it and diverge deliberately. Town hubs canonical (start with Lumbright); wilderness freeform. |
+| D3 | Equipment fidelity | **Maximum asset reuse**: archetype × tier tints; coverage tracked per-archetype in `docs/open-world-asset-coverage.md`. |
+| D4 | First skills wave | **Woodcutting → Smithing + Cooking → Fishing.** Thieving deferred. |
+| D5 | Aggressive monsters | **None yet.** All passive; revisit later. |
+| D6 | Phase order | **4 → 5 → 6 → 7 → 8** as tabled above, plus the green_dragon boss on the Phase 8 track. |

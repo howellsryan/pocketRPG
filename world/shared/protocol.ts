@@ -11,6 +11,7 @@ export type ClientMessage =
   | { t: 'interact'; kind: 'rock' | 'npc' | 'loot' | 'object'; id: string; action: string }
   | { t: 'cancel' }
   | { t: 'chat'; text: string }
+  | { t: 'moveInv'; from: number; to: number }
   | { t: 'ping'; n: number }
 
 export type ZoneEvent =
@@ -100,6 +101,12 @@ export function parseClientMessage(raw: unknown): ClientMessage | null {
     case 'chat': {
       const text = (raw as Record<string, unknown>).text
       return typeof text === 'string' ? { t: 'chat', text } : null
+    }
+    case 'moveInv': {
+      const from = (raw as Record<string, unknown>).from
+      const to = (raw as Record<string, unknown>).to
+      const inRange = (n: unknown): n is number => Number.isInteger(n) && (n as number) >= 0 && (n as number) < 28
+      return inRange(from) && inRange(to) ? { t: 'moveInv', from, to } : null
     }
     case 'ping': {
       const n = (raw as Record<string, unknown>).n

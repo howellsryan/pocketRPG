@@ -53,6 +53,19 @@ export function inventoryIsFull(inventory: InvSlot[], itemId: string): boolean {
   return !inventory.some((s) => s === null)
 }
 
+/** Reorders the pack: dropping onto a filled slot swaps the two, onto an empty
+ * slot relocates (same semantics as the main game's InventoryGrid). Slot order
+ * never affects flushes — they read the minted/saveBacked tallies, not slots. */
+export function moveInventorySlot(inventory: InvSlot[], from: number, to: number): boolean {
+  if (!Number.isInteger(from) || !Number.isInteger(to)) return false
+  if (from < 0 || to < 0 || from >= inventory.length || to >= inventory.length) return false
+  if (from === to || inventory[from] === null) return false
+  const moved = inventory[from]
+  inventory[from] = inventory[to]
+  inventory[to] = moved
+  return true
+}
+
 /** Aggregates the pack into {itemId, quantity} rows for a grant flush. */
 export function inventoryToItems(inventory: InvSlot[]): { itemId: string; quantity: number }[] {
   const byId = new Map<string, number>()

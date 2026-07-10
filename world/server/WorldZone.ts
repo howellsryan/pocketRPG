@@ -15,7 +15,7 @@ import {
 import { npcsFromZone, tickNpc, toNpcDiff, type NpcState } from './npc'
 import { isExpired, isVisibleTo, takeLoot, visibleLootFor, type LootEntity } from './loot'
 import { sanitizeChat } from '../shared/chat'
-import { emptyInventory } from './mining'
+import { emptyInventory, moveInventorySlot } from './mining'
 import { getLevelFromXP } from '../../src/engine/experience.js'
 import { flushGrants, isEmptyPayload, type GrantPayload, type ItemStack } from './grants'
 import { loadCharacterWithSave } from '../../functions/_lib/game/save.js'
@@ -83,6 +83,9 @@ export class WorldZone extends Server<Env> {
   pendingJoins = new Set<string>()
   pendingLeaves = new Set<string>()
   pendingChat: Extract<ZoneEvent, { e: 'chat' }>[] = []
+  /** Players whose pack was reordered since the last tick — the next tick's
+   * diff carries the authoritative {e:'inv'} echo (client swaps optimistically). */
+  pendingInvEcho = new Set<string>()
 
   get zone(): ZoneDef {
     return ZONES[this.name] ?? pastureZone as ZoneDef
@@ -313,6 +316,9 @@ export class WorldZone extends Server<Env> {
         if (text) this.pendingChat.push({ e: 'chat', charId: player.charId, name: player.name, text })
         break
       }
+      case 'moveInv':
+        if (moveInventorySlot(player.inventory, message.from, message.to)) this.pendingInvEcho.add(player.charId)
+        break
       case 'interact':
         this.handleInteract(player, message)
         break
@@ -443,6 +449,16 @@ export class WorldZone extends Server<Env> {
 
     // Loot pickups resolve after movement (the player may have just arrived).
     for (const player of this.players.values()) this.tryTakeLoot(player, eventsByChar)
+
+    // Authoritative pack-order echo for reorders received since the last tick.
+    for (const charId of this.pendingInvEcho) {
+      const player = this.players.get(charId)
+      if (!player) continue
+      const events = eventsByChar.get(charId) ?? []
+      events.push({ e: 'inv', inventory: player.inventory })
+      eventsByChar.set(charId, events)
+    }
+    this.pendingInvEcho.clear()
     for (const [id, loot] of this.loot) if (isExpired(loot, this.tickCount)) this.loot.delete(id)
 
     const npcEnts: EntityDiff[] = []
