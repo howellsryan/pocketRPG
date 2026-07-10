@@ -46,7 +46,7 @@
 | Phase 1 skill | **Mining** — rocks `tin` and `copper` from `src/data/skills.json` → `mining.actions` (level 1, 4 ticks/ore, 17 XP, products `tin_ore`/`copper_ore`). PocketRPG semantics: deterministic ticks-per-ore, **no success RNG**. |
 | Phase 2 monster | **`pasture_bull` only** (PocketRPG's cow: `legacy_id: "cow"`, 8 HP, attackSpeed 4, drops Bones + Raw Beef + Cowhide @100%, medium clue @2%). Combat runs `createCombatState` + `processCombatTick` from `src/engine/combat.js` — **no reimplemented combat math**. |
 | Floor loot | On kill: drops become ground items at the death tile. Owner-only for 100 ticks, visible to everyone after, despawn at 300 ticks. `Take` adds to the 28-slot session inventory. |
-| Grants | Batched per player in DO memory `{xpBySkill, items[]}`; flushed to the save blob on: bank-chest deposit, disconnect, zone leave, or 60 s timer. Idempotency row per flush + audit event. Items go to the **bank** (not inventory) on flush. |
+| Grants | Batched per player in DO memory; flushed to the save blob on: bank-chest deposit, disconnect, zone leave, or 60 s timer (timer = XP only). Idempotency row per flush + audit event. **Inventory-first (reversed 2026-07)**: the session pack seeds from the character's PocketRPG inventory at hello; world-minted items land in the save **inventory** on disconnect (overflow → bank); a chest deposit banks the whole pack (moving save-backed units inventory→bank, minting the rest straight to bank). |
 | Zone | One hand-authored zone `pasture` (32×32 tiles) for all three phases. Format in §6.5. |
 | Domain | `world.pocketrpg.co.uk` (custom domain on the Worker; workers.dev URL until DNS is set). |
 | Deploys | Manual by developer: `cd world && npx wrangler deploy`. No CI wiring in v1. |
@@ -57,13 +57,32 @@
 
 ## 2) Capability boundaries — what the agent must hand to the developer
 
-The builder agent runs in a sandboxed cloud session. It **can**: edit files, run `npm`/`vitest`/`tsc`/`vite build`, run `wrangler dev` locally (Miniflare simulates the DO + a *local* D1), run headless Chromium via Playwright (best-effort — WebGL in headless is flaky; treat failures as "needs manual check", not as code bugs), commit, and push.
+The builder agent runs in a sandboxed cloud session. It **can**: edit files, run `npm`/`vitest`/`tsc`/`vite build`, run `wrangler dev` locally (Miniflare simulates the DO + a *local* D1), run headless Chromium via Playwright, commit, and push.
+
+**Agent self-verification (proven 2026-07 — do this before every hand-off, it catches real bugs):**
+- **Protocol/E2E**: `npm run dev:seed` + `wrangler dev`, then drive the WS protocol from a plain Node script (`hello` → `walk`/`interact` → assert diffs/events) and assert final state with `wrangler d1 execute … --local --json`. This validated the whole mine→flush→save pipeline without a browser and is the primary acceptance path for server work; DT-class B manual scripts then only need to cover look/feel and real-device input.
+- **Visual**: headless Chromium WebGL works reliably with `chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] })` (install Playwright with `npm i --no-save playwright` — keep it out of package.json). Screenshots through the real client found the Phase 0 mirrored-ground bug that code review missed. Playwright's `page.on('websocket')` frame logging shows exactly what a click sent.
+- **Gotcha**: the local D1 sqlite is locked while `wrangler dev` runs — stop it (`pkill -f '[w]rangler dev'; pkill -f '[w]orkerd'`; plain patterns match your own shell) before `dev:seed` or any `d1 execute`, then restart.
 
 It **cannot** (always a DEVELOPER TASK):
 - **DT-class A — Cloudflare account actions**: first `wrangler deploy` of the new Worker, setting the `JWT_SECRET` secret (`cd world && npx wrangler secret put JWT_SECRET` — must be the **same value** as the Pages project's), adding the `world.pocketrpg.co.uk` custom domain, applying D1 migrations to production (`npx wrangler d1 migrations apply pocketrpg --remote` from repo root), confirming the Workers paid plan is active.
 - **DT-class B — Real-device verification**: every phase ends with a manual test script the developer runs in a real browser (desktop + one tablet). The agent must never mark a phase accepted on its own.
-- **DT-class C — Asset acquisition**: downloading CC0 packs from itch.io/quaternius.com (agent network is proxied/limited). The developer downloads and drops files where the step says; the agent then processes them.
+- **DT-class C — Asset acquisition**: downloading NEW packs the in-repo library (§2.1) doesn't already cover (agent network is proxied/limited). The developer downloads and drops files; the agent processes them. Check §2.1 first — most needs are already met.
 - **DT-class D — Product judgement calls**: anything this guide leaves open (it tries to leave nothing open). When in doubt → DEVELOPER TASK, not a guess.
+
+### 2.1 Asset library — `assets/open-world/` (git-tracked, ~13k files / 1.2 GB)
+
+Source 3D assets from here FIRST; DT-class C is only for gaps. Nothing under `assets/` ships to players directly — process/copy what a step needs into `world/client/public/models/` (small, committed) or R2. Prefer `gltf`/`glb` variants; `fbx` folders are Unity/Blender sources. KayKit + Kenney packs are CC0; Quaternius `[Standard]` packs are paid-license (fine to use in the game, don't redistribute as raw assets).
+
+**Vendor steering (developer decision 2026-07)**: anything that must attach to or share a rig with the hero (outfits, equipment visuals, future player characters) comes from **Quaternius** — the hero is on the Quaternius universal rig precisely so those packs layer on. KayKit/Kenney are for props, scenery, buildings, and standalone NPCs. Quaternius `[Standard]` packs ship 4K PBR textures — always strip/shrink like `build-hero.mjs` does before committing a processed model. The pre-assembled `Outfits/*.gltf` exports are complete outfitted characters; the `Modular Parts/` folder has the same pieces separately for mix-and-match later.
+
+| Vendor | Packs | Use for |
+|---|---|---|
+| `kaykit/` | Adventurers 2.0 (Knight/Barbarian/Ranger/Rogue/Mage, rigged `Rig_Medium`), Character Animations 1.1 (General/MovementBasic/MovementAdvanced/Tools/CombatMelee/CombatRanged/Simulation/Special clip GLBs for Rig_Small/Medium/Large + mannequins), Skeletons, Halloween Bits, Dungeon Remastered (chests, props, dungeon kit), Medieval Hexagon + Medieval Builder (buildings, hex terrain), Forest Nature Pack, ResourceBits (ore nuggets, bars, logs) | Player/NPC characters, all character animations, dungeon/town props |
+| `Kenney/` | Fantasy Town Kit, Nature Kit ×2 (rocks, trees, cliffs, plants), Castle Kit, Graveyard Kit | Scenery, terrain dressing, buildings |
+| `Quaternius/` | Farm Animal Pack (cow!), Ultimate Monsters Bundle, Ultimate RPG Items (weapons, armour, potions, loot), Ultimate Nature, Medieval Village MegaKit, Universal Base Characters + Modular Fantasy Outfits, Universal Animation Library ×2 | Monsters (Phase 2 cow), items/weapons/armour props, alternative characters/animations |
+
+Tooling: `world/scripts/inspect-glb.mjs <files…>` prints bounds/rig/clips/textures of any GLB; `world/scripts/build-hero.mjs` rebuilds `hero.glb` from the library (Quaternius Male Ranger + retargeted UAL clips renamed to the protocol's `idle`/`walk`/`mine`/`attack`/`die`, textures shrunk to 1K webp). Both vendors' animation packs share joint names across all same-rig characters (Quaternius universal rig ↔ UAL1/UAL2; KayKit Rig_Medium ↔ Character Animations) — retarget by node name, the same way `build-hero.mjs` does, for any future character.
 
 ---
 
@@ -123,7 +142,7 @@ world/
 ├─ client/
 │  ├─ index.html
 │  ├─ vite.config.ts     # outDir dist, server.fs.allow ['../..'] for ../src imports
-│  ├─ public/models/     # hero.glb (copied), later cow.glb (developer-provided)
+│  ├─ public/models/     # hero.glb (built by scripts/build-hero.mjs), rock.glb, chest.glb — all from assets/open-world (§2.1)
 │  └─ src/
 │     ├─ main.ts         # boot: auth → connect → scene
 │     ├─ auth.ts         # handoff exchange, token storage, block-page gate
@@ -271,8 +290,8 @@ Vitest: zone validates; a deliberately broken fixture fails.
 Acceptance: local run — click moves the capsule smoothly tile-to-tile; refresh reconnects at the same tile (checkpoint write on disconnect).
 
 ### STEP 0.10 — Hero model + animations
-Copy `public/3d-samples/hero.glb` → `world/client/public/models/hero.glb` (git-committed; if >5 MB, DEVELOPER TASK to approve or supply a slimmer export instead of committing). Write `world/scripts/list-anims.mjs` (Node + three's GLTFLoader or `@gltf-transform/core`) printing clip names; append output to the progress log. Load hero in `entities.ts` replacing the capsule; map clips by name: prefer exact `Idle`/`Walk` (case-insensitive substring match), else DEVELOPER TASK listing found names and proposed mapping. Crossfade 150 ms between idle/walk based on whether the entity moved this tick.
-Acceptance: hero idles when still, walks when moving, no T-pose flashes.
+**Superseded (2026-07, developer decision)**: the main game's `public/3d-samples/hero.glb` is no longer used in the world client. The hero is the Quaternius **Male Ranger** (Modular Fantasy outfit pre-fitted on the Universal Base Character body, 65-joint universal rig — chosen over KayKit so Quaternius outfits/items layer onto it later) built by `world/scripts/build-hero.mjs` from the §2.1 library — UAL1/UAL2 clips (`Idle_Loop`, `Walk_Loop`, `TreeChopping_Loop`, `Sword_Attack`, `Death01`) retargeted by joint name and renamed to the protocol anims (`idle`, `walk`, `mine`, `attack`, `die`); 4K PBR maps stripped to 1K webp base color (66 MiB → 1.9 MiB — when editing the script, dispose unwanted clips' channels+samplers before `mergeDocuments` or every clip's data comes along). Client (`entities.ts`) queues one waypoint per diff (catch-up at 440 ms/segment when behind, snap when ≥4 queued), rotates the model toward its walk direction, and derives walk/idle from actual traversal (server anims drive `mine`/`attack`/`die`). Crossfade 150 ms. `world/scripts/list-anims.mjs` prints the built hero's clips.
+Acceptance: hero idles when still, walks when moving, faces its direction, no T-pose flashes.
 
 ### STEP 0.11 — PocketRPG entry button
 In the Settings screen component (locate via `grep -ril "settings" src/screens/`), add a "Enter World (beta)" button rendered only when `localStorage.pocketWorldBeta === '1'`: onClick → `POST /api/world-token` (reuse the client API helper pattern in `src/cloud/api.js`), then `window.open('https://world.pocketrpg.co.uk/#handoff=' + res.handoff)`. Make the world origin a constant that falls back to the workers.dev URL until DNS exists (read it from a new export in the same file, developer fills the value in DT below). Follow CLAUDE.md §9/§12 (44px target, screen already in chunk — verify which bundle the Settings screen is in before editing). **Full root commit gate.**
@@ -284,10 +303,10 @@ DEVELOPER TASK (single block): 1) `cd world && npm i && npm run build && npx wra
 
 ## 7) PHASE 1 — Mining, session inventory, grant flush into PocketRPG
 
-**Definition of done**: developer mines 5 tin in the world (watching the pick animation, XP drops, ore entering the 28-slot panel), deposits at the chest, opens PocketRPG, and sees Mining XP +85 and 5 Tin Ore in the bank. Disconnecting mid-session with undeposited ore also lands the ore/XP in PocketRPG (disconnect flush).
+**Definition of done**: developer's carried PocketRPG inventory appears in the world's 28-slot panel at login (same items/icons); they mine 5 tin (pick animation, XP drops, ore joining the pack), deposit at the chest, open PocketRPG, and see Mining XP +85 and everything deposited in the bank. Disconnecting mid-session with undeposited ore lands that ore in the PocketRPG **inventory** (e.g. carried 5 tin in + mined 5 more = 10 in the inventory), never silently in the bank.
 
 ### STEP 1.1 — Rocks in zone + statics protocol
-Server: load zone objects into DO memory `{ id, rock:'tin'|'copper', x, z, depletedUntilTick:0 }`. `welcome.statics` includes them; `diff.rocks` broadcasts depleted/respawned transitions. Client: render rocks as low-poly boulders (`IcosahedronGeometry` detail 0, grey; copper tinted #b87333, tin #9aa5ad), scale 0.8 tile; depleted → scale 0.45 + darker grey.
+Server: load zone objects into DO memory `{ id, rock:'tin'|'copper', x, z, depletedUntilTick:0 }`. `welcome.statics` includes them; `diff.rocks` broadcasts depleted/respawned transitions. Client: render rocks with the §2.1 library boulder (`world/client/public/models/rock.glb`, Kenney nature kit) tinted per ore (copper #b87333, tin #9aa5ad); depleted → smaller scale + darkened. `IcosahedronGeometry` grey boulder stays as the load-failure fallback.
 
 ### STEP 1.2 — Mining loop (server, PocketRPG semantics — DECIDED)
 `interact {kind:'rock', action:'mine'}`: path the player to the nearest tile adjacent (8-dir) to the rock; on arrival start mining. Look up the action in `src/data/skills.json → mining.actions` by rock id: require `level ≤` player's Mining level (from session stats; on refusal send `events:[{e:'msg', text:'You need Mining level N to mine this rock.'}]`). While mining: `anim:'mine'`; every `action.ticks` ticks, if the rock is not depleted: +1 product to session inventory, +`action.xp` Mining XP to the session tally, emit `{e:'xp'}` + `{e:'inv'}`, deplete the rock for **8 ticks**, and stop (one ore per interaction, OSRS-style: the player re-clicks or — DECIDED — auto-continues on the same rock when it respawns if the player hasn't moved/acted; implement auto-continue). Moving/other intents cancel mining. Session inventory full → `{e:'msg', text:'Your pack is full.'}` and stop.
@@ -298,18 +317,18 @@ All of this lives in pure functions in `tick.ts` + a new `world/server/mining.ts
 `ui.ts`: fixed right-side panel, 4×7 grid of 40px cells (28 slots), rendered from the last `{e:'inv'}`; item icon = the `icon` emoji from `src/data/items.json` (import the JSON in the client) + quantity badge for stacks. XP drops: floating `+17 Mining` text rising from the avatar (DOM overlay, 1.2 s fade). Message events → a 3-line message strip bottom-left.
 
 ### STEP 1.4 — Grant flush (`world/server/grants.ts`) — the only save-blob writer
-`flushGrants(env, player, reason)`, called on: bank-chest `deposit` interact (flushes inventory + XP, empties session inventory), disconnect, and a 100-tick timer (flushes XP only — items stay in the session pack until deposit/disconnect).
+`flushGrants(env, who, payload)`, called on: bank-chest `deposit` interact (banks the whole pack: save-backed units move inventory→bank, world-minted units grant to bank; empties session inventory), disconnect (world-minted units grant to the save **inventory**, overflow to bank; XP), and a 100-tick timer (XP only — items stay in the session pack until deposit/disconnect). The session pack seeds from the save inventory at hello (`sessionInventoryFromSave`), with save-backed vs minted unit counts tracked separately so seeded items are never re-granted.
 Algorithm (DECIDED):
 1. Build payload `{ xpBySkill, items:[{itemId,quantity}], reason }`; skip if empty.
 2. `idempotency_key = "wg:" + charId + ":" + sessionId + ":" + flushSeq++` (`sessionId` = crypto.randomUUID() minted at hello). `INSERT INTO world_grants … ON CONFLICT DO NOTHING`; if no row inserted → already applied → return.
 3. Up to 3 attempts: `loadCharacterWithSave` → for each skill: `save.stats[skill].xp += amount` (clamp to the 200M cap from `src/engine/experience.js`), `save.stats[skill].level = getLevelFromXP(xp)`; for each item: `addItemToBank(save, itemId, qty)` → `writeSave(env, charId, save, expectedRevision)`. On revision-conflict error re-read and retry; after 3 failures, log, delete the idempotency row, and re-queue the payload in memory for the next flush.
-4. Mirror `/api/save` PUT's denormalized-summary update (total_level/combat_level on `characters`) — read that code and reuse/extract its helper rather than re-implementing; if extraction is needed, do it as a separate refactor commit with the root gate.
+4. ~~Mirror `/api/save` PUT's denormalized-summary update~~ — verified 2026-07: `writeSave` itself already refreshes total_level/combat_level on every call; no extra code needed.
 5. `auditLog(env, …)` — match the exact signature/usage in `functions/_lib/game/audit.js` with event type `world_grant` and the payload.
 Vitest with a mocked env/DB covering: idempotent replay, revision-conflict retry, XP cap clamp, pack contents → bank.
 **Do not** add any save-blob validation/policing here (CLAUDE.md §14 — grants are additive server-side writes, the trusted-blob model is unchanged).
 
 ### STEP 1.5 — Bank chest interact + Phase 1 acceptance
-Chest default action `Deposit` (left-click) → path adjacent → flush(reason 'deposit') → `{e:'inv'}` empty + `{e:'msg','You deposit your items into your bank.'}`. Chest mesh: brown box + darker lid, 0.9 tile.
+Chest default action `Deposit` (left-click) → path adjacent → flush(reason 'deposit') → `{e:'inv'}` empty + `{e:'msg','You deposit your items into your bank.'}`. Chest mesh: §2.1 library chest (`world/client/public/models/chest.glb`, KayKit dungeon), brown-box fallback.
 DEVELOPER TASK — manual script: fresh session → mine tin ×5 (watch xp drops, inventory fills) → deposit → PocketRPG shows +85 Mining XP and +5 Tin Ore in bank; mine 2 copper, close the tab without depositing → PocketRPG shows the copper too (disconnect flush); confirm an idle-game save afterwards doesn't roll any of it back (play a few idle minutes, reload). Reply "PHASE 1 ACCEPTED".
 
 ---
@@ -319,6 +338,7 @@ DEVELOPER TASK — manual script: fresh session → mine tin ×5 (watch xp drops
 **Definition of done**: developer left-clicks the Pasture Bull, walks over, fights it with hitsplats and an overhead HP bar, it dies and sinks/fades, loot appears on the floor at the death tile, right-click on the pile lists each item as `Take <Item Name>`, taking Bones/Raw Beef/Cowhide fills the pack, deposit lands them in the PocketRPG bank, Attack/Strength/Defence/HP XP appear per §5 rules, and the cow respawns. Right-click menus work everywhere (rock, chest, cow, loot, ground) on desktop; long-press does the same on a tablet.
 
 ### STEP 2.1 — Context menu + hover text (input layer, DECIDED spec)
+Already built during Phase 1 (extend, don't rebuild): left-click default actions work via `input.ts` raycasting the `statics.ts` pickables list before the ground — each pickable wrapper carries `userData.pick = { kind, id, action }` and `pickTargetOf()` walks hits up to it. Add npcs/loot to that same pickables pattern. Still missing from this step: hover text, right-click/long-press context menu, pick-priority ordering, Examine.
 Implement in `input.ts`/`ui.ts` before any combat:
 - Maintain a hover pick every pointermove (throttled to animation frames): topmost entity under cursor with priority `loot > npc > rock/object > ground`. Top-left hover line, OSRS-style: `<default action> <Name>` in pale yellow, e.g. `Mine Tin Rock`, `Attack Pasture Bull (level-8)`, `Walk here`.
 - Left-click: perform the default action of the picked thing — loot: `Take` top item; npc: `Attack`; rock: `Mine`; bank_chest: `Deposit`; ground: `Walk here`.
@@ -328,33 +348,64 @@ Vitest the pick-priority and menu-composition logic (pure functions, mock ray hi
 
 ### STEP 2.2 — Cow NPC: spawn + wander
 Add to `pasture.json` `npcs`: `{ "id":"bull_1", "monsterId":"pasture_bull", "x":22, "z":20, "wander":{"x":18,"z":16,"w":10,"h":10} }`. Server: NPC in-memory `{ id, monsterId, x, z, hp, maxHp, state:'idle'|'combat'|'dead', respawnAtTick }`; when idle, every 5–13 ticks (random) step 1 walkable tile staying inside the wander rect. Broadcast via `diff.ents` (kind 'npc', include `monsterId`, hp/maxHp only while in combat). Client renders it as a brown box 1.4×0.9×0.9 placeholder with the name from `monsters.json`.
-DEVELOPER TASK (non-blocking, DT-class C): download a CC0 cow GLB (Quaternius animals or KayKit) into `world/client/public/models/cow.glb`; when present, the client auto-uses it (feature-detect file with a HEAD request at boot) with clips mapped like step 0.10 (idle/walk/die; attack optional).
+Cow model: process one from the §2.1 library (Quaternius Farm Animal Pack has a rigged cow) into `world/client/public/models/cow.glb` — no DT needed; clips mapped like the hero (idle/walk/die; attack optional). **Built 2026-07** via `scripts/build-cow.mjs` (clip-rename only, own rig, no textures). Gotcha: the Farm pack authors the body length along the vertical axis (unlike the character packs) — `createCowMesh` rotates the model **−π/2 about X** to stand it up before centring/scaling; and `Box3.setFromObject` is unreliable for skinned meshes (ignores node rotation), so trust the render, not the bbox.
 
 ### STEP 2.3 — Combat via the real engine (server)
 On `interact {kind:'npc', action:'attack'}`: path adjacent, then start combat — **build it as a thin adapter around `src/engine/combat.js`, written test-first**:
 1. First commit: `world/tests/combat-adapter.test.ts` that, WITHOUT the DO, drives `createCombatState(monstersData.pasture_bull, 'melee', playerStanceDefault)` + repeated `processCombatTick(state, playerStats, equipment, itemsData, prayersData, inventory, null)` until the bull dies. **Read `processCombatTick` (src/engine/combat.js:409) end-to-end first** to learn its exact return/mutation contract (hits dealt/taken, xp awards, kill signal, monster hp field names) — encode that contract in the test's assertions, including §5 XP rules (4 XP/damage to the style skill, 1.33 XP/damage to HP). Stance DECIDED: fixed `'accurate'` in v1 (no stance UI).
-2. Player inputs to the engine: `playerStats` and `equipment` exactly as stored in the save blob (loaded at hello, already in session state — pass through untransformed; empty/missing equipment = unarmed, which the engine already handles); `inventory: []` and `prayersData: {}` (no eating/prayer in world v1); `slayerTask: null`.
+2. Player inputs to the engine: `playerStats` and `equipment` from the save blob (loaded at hello). **Correction (built 2026-07)**: `playerStats` is NOT passed untransformed — the engine wants flat skill LEVELS plus `currentHP`/`maxHP`/`hitpoints`, so flatten `save.stats[skill] = {xp,level}` to `getLevelFromXP(xp)` exactly as `functions/_lib/mcp/bossFight.js` does. `equipment` does pass through (empty/missing = unarmed, handled by the engine); `inventory: []` and `prayersData: {}` (no eating/prayer in world v1); `slayerTask: null`.
+   - **Wandering-target gotcha (built 2026-07)**: a bull moves between ticks, so the single path computed on the attack interact lands on an empty tile by the time the player arrives and combat never starts. The npc-attack intent must PERSIST and re-approach (a `pathAdjacent` closure on the tick context) until adjacent — the bull stops wandering once combat begins, so it converges.
 3. Adapter (`world/server/combatSession.ts`): one combat session per player; each zone tick advances it; hits → `events {e:'hit'}` to all clients + hp in `diff.ents`; XP → session tally (same pipeline as mining — flush rules unchanged) + `{e:'xp'}`. Player moving/cancelling ends combat (bull returns to idle, hp persists until it leaves combat 17 ticks with no attacker → full heal). Bull fights back through the same `processCombatTick` flow — do not write your own monster-attack math; if the engine's state machine needs the player "in combat" to process retaliation, that's what the test in (1) establishes.
 4. Player death (bull max hit is 1; only possible at 1 HP): on HP ≤ 0 send `{t:'dead'}`, respawn at zone spawn full HP, no item loss, combat ends. Session HP: track current HP in session (seeded from blob HP level, i.e. max HP; regen +1 per 100 ticks to mirror §4's +1/60 s).
 
 ### STEP 2.4 — Death, floor loot, pickup
 On bull death: `state:'dead'`, anim 'die', removed from `ents` after 3 ticks, `respawnAtTick = now + 25`; roll drops from `monsters.json → pasture_bull.drops` (chance-gated rolls, `quantity` ranges as `[min,max]` — mirror how the idle engine rolls drops: find and reuse/extract the existing drop-roll helper from `src/engine/` via `grep -rn "drops" src/engine/loot* src/engine/*.js | head`; reuse it, don't re-roll your own). Each dropped item → loot entity at the death tile `{ id, itemId, qty, x, z, ownerCharId, spawnTick }`. Visibility filtering happens **server-side when building each client's diff**: owner-only until `spawnTick+100`, everyone until `spawnTick+300`, then `lootRemoved`. Multiple items on one tile are all listed in that tile's context menu (`Take Bones`, `Take Cowhide`, …); left-click takes the most recently dropped.
-`interact {kind:'loot', action:'take'}`: path to the tile, verify still present + visible to this player, add to session pack (full → pack-full message), `lootRemoved` broadcast. Client: loot rendered as a small spinning item marker per tile (flat plane with the item's emoji drawn to a CanvasTexture — one shared texture cache).
+`interact {kind:'loot', action:'take'}`: path to the tile, verify still present + visible to this player, add to session pack (full → pack-full message), `lootRemoved` broadcast. **Inventory-first requirement (2026-07 semantics change)**: every Take MUST also increment `player.minted[itemId]` — an item in the session pack that is neither save-backed nor minted is invisible to every flush and silently evaporates on deposit/disconnect. Add a test asserting picked-up loot survives a disconnect flush into the save inventory. Client: loot rendered as a small spinning item marker per tile (flat plane with the item's emoji drawn to a CanvasTexture — one shared texture cache).
 Vitest: drop rolling uses the shared helper, owner-window filtering, take-vs-despawn races, stack quantities.
 
 ### STEP 2.5 — Combat presentation
-HP bar: DOM overlay div above the bull (project entity position → screen each frame), green/red ratio, visible while in combat and for 10 ticks after. Hitsplats: red square with white number (blue square for 0) at the target's screen position, 900 ms fade, both from `{e:'hit'}`. Player attack anim: reuse a hero attack clip if `list-anims.mjs` found one (else reuse 'mine' swing and log a note). Bull hurt flash: material emissive pulse.
+HP bar: DOM overlay div above the bull (project entity position → screen each frame), green/red ratio, visible while in combat and for 10 ticks after. Hitsplats: red square with white number (blue square for 0) at the target's screen position, 900 ms fade, both from `{e:'hit'}`. Player attack anim: already done — hero.glb ships an `attack` clip (UAL1 `Sword_Attack`) and the client animator plays whatever anim the server broadcasts (`die` too, LoopOnce+clamp); the server just has to set `anim:'attack'` during combat ticks. Bull hurt flash: material emissive pulse.
 
 ### STEP 2.6 — Phase 2 acceptance
 Full root + world gates green, then DEVELOPER TASK — manual script: desktop: hover texts correct on ground/rock/chest/bull/loot; right-click menus everywhere per §8.1; kill the bull twice (hitsplats, hp bar, death anim, respawn ~15 s); loot appears at death tile, second account/browser cannot see it for 60 s but can after; take all three drops, deposit, verify PocketRPG bank + Attack/HP XP moved consistently with §5 math; tablet: tap-to-act + long-press menus. Reply "PHASE 2 ACCEPTED".
 
 ---
 
-## 9) After Phase 2 (do not build — listed so the agent doesn't "prepare" for them)
+## 9) PHASE 3 — Other players, presence, local chat (added 2026-07 on developer instruction)
 
-Other players rendered, run energy, more zones, food/prayer in world, ranged/magic, stances UI, PvP, mobile — all explicitly out of scope. When Phase 2 is accepted, stop and await the developer's next instruction.
+Master plan `docs/open-world-companion-game-plan.md` §7 "Phase 4 — Other players", scoped for v1: players in the same zone see each other move with name plates and can talk in local chat. Players are **ghosts** — no collision (pathfinding already ignores players), no trading, no interactions, no pick target. **Scope cut (DECIDED)**: every player renders as the shared `hero.glb`; equipment-driven appearance is deferred to a later phase.
 
-## 10) Quick reference — repo facts the agent will need constantly
+**Definition of done**: two accounts in the pasture see each other walking/mining/fighting with the correct name plate, a player already in the zone is visible immediately on join, joins/leaves add/remove the other hero within a tick, chat lines appear in both the message log (`Name: text`) and as overhead text above the speaker, and none of Phase 0–2 regresses.
+
+### STEP 3.0 — Carried-in bugfix: right-click must not walk
+Phase 2 device feedback: on desktop a right-click both opened the menu AND walked (pointerup fired `performDefault` for every button). Gate the default action on `event.button === 0` in `input.ts`. Verify with the two-client e2e in 3.4 (right-click in browser A produces no ent diff for A at observer B).
+
+### STEP 3.1 — Presence protocol (server)
+The tick loop already broadcasts `kind:'player'` ents zone-wide when a player changes; what's missing is the edges:
+- Welcome: after the intro diff's npcs/loot, include ents for every OTHER player currently in the zone (never self — the client owns self from `welcome.you`).
+- Join: queue the new player's charId at hello; the next tick emits its `toEntityDiff` to everyone (one-tick latency is fine).
+- Leave: on close/duplicate-connection kick, broadcast `removed: [charId]` (reuse the existing `removed` field — ids are disjoint from npc ids).
+Keep `toEntityDiff` as-is (id/kind/x/z/anim/name — no hp: other players' HP is private).
+
+### STEP 3.2 — Other players on the client
+`main.ts`: a `others` map mirroring the npc pattern (async `createHeroMesh()` with pending-diff buffering, template already cached so N players = 1 GLB fetch). `ents` routing: self → self, `kind:'npc'` → npcs, other `kind:'player'` → others. `removed` must route to the right map. No `userData.pick` (ghosts — the ray passes through to loot/npcs/ground beneath). Name plate: DOM overlay per other player (same projection helper as HP bars), white name, small, `pointer-events:none`; self gets none (you know who you are).
+
+### STEP 3.3 — Local chat
+- Protocol: client `{t:'chat', text}`; server sanitises (trim, strip control chars, cap 120 chars, drop empty) — sanitiser is a pure function in `world/shared/chat.ts` with Vitest — then broadcasts zone event `{e:'chat', charId, name, text}` (existing rate limiter covers flooding).
+- Client: an input row pinned under the message log (Enter sends, Escape blurs; clicking the canvas never focuses it). The global `user-select:none`/`touch-action:none` from the mobile fixes must be overridden ON THE INPUT (`user-select:text`) or typing/caret breaks on mobile. Render received chat as `Name: text` in the message log AND as overhead text above the speaker's head (or self) for ~4 s (DOM overlay, same projection).
+- All chat rendering uses `textContent` (player-authored strings — no innerHTML, ever).
+
+### STEP 3.4 — Phase 3 acceptance
+Two-connection WS e2e (agent-runnable): B joins after A → A gets B's ent + B's intro lists A; A walks → B streams A's diffs; A chats → B receives `{e:'chat'}` with A's name; A right-clicks (browser) → B sees no movement; A disconnects → B gets `removed:[A]`. Needs a second seeded character in `world/scripts/dev-seed.mjs`. Playwright: two pages, screenshot shows both heroes + name plate + overhead chat. Full world gate green; root gate only if `src/**`/`functions/**` touched.
+DEVELOPER TASK — manual script: two devices/browsers, both enter the pasture; verify you see each other walk/mine/fight, name plates correct, chat works both ways (log + overhead), right-click no longer walks on desktop, and a page close removes the other hero. Reply "PHASE 3 ACCEPTED".
+
+---
+
+## 10) After Phase 3 (do not build — listed so the agent doesn't "prepare" for them)
+
+Equipment-driven player appearance, run energy, more zones, food/prayer in world, ranged/magic, stances UI, trading, PvP — all explicitly out of scope. When Phase 3 is accepted, stop and await the developer's next instruction.
+
+## 11) Quick reference — repo facts the agent will need constantly
 
 - Tick: 600 ms. Inventory: 28. XP curve/cap: `src/engine/experience.js` (`getLevelFromXP`, 200M cap). Combat XP: 4/dmg style, 1.33/dmg HP (§5 CLAUDE.md).
 - Mining data: `src/data/skills.json → mining.actions` (`tin`, `copper`: level 1, ticks 4, xp 17).

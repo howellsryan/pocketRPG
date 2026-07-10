@@ -5,8 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>PocketRPG World</title>
   <style>
-    html, body { margin: 0; height: 100%; overflow: hidden; background: #000; }
-    #scene { position: fixed; inset: 0; }
+    /* Kill the mobile long-press text-selection / callout menu so a long-press
+       opens the in-game context menu instead of iOS "Copy / Find Selection". */
+    * {
+      -webkit-user-select: none; user-select: none;
+      -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent;
+    }
+    html, body { margin: 0; height: 100%; overflow: hidden; background: #000; touch-action: none; }
+    #scene { position: fixed; inset: 0; touch-action: none; }
+    #scene canvas { touch-action: none; }
     #app {
       position: fixed; inset: 0; display: none; align-items: center; justify-content: center;
       color: #eee; font-family: sans-serif; text-align: center; padding: 2rem; box-sizing: border-box;

@@ -56,8 +56,15 @@ const stats = {}
 for (const id of SKILL_IDS) stats[id] = { xp: 0, level: 1 }
 for (const id of COMBAT_STAT_IDS) stats[id] = { xp: 0, level: 1 }
 stats.hitpoints = { xp: 1154, level: 10 } // CLAUDE.md §5: starting HP level 10
+// Modest melee stats so the Phase 2 bull fight resolves quickly in manual/e2e
+// testing (level 1 unarmed takes ~40s to grind through 8 HP).
+stats.attack = { xp: 4470, level: 20 }
+stats.strength = { xp: 4470, level: 20 }
+stats.defence = { xp: 4470, level: 20 }
 
-const saveObject = { stats, inventory: [], bank: {}, settings: {} }
+// 5 tin ore in the pack exercises inventory pull-through into the world.
+const inventory = Array.from({ length: 5 }, () => ({ itemId: 'tin_ore', quantity: 1 }))
+const saveObject = { stats, inventory, bank: {}, settings: {} }
 const saveData = JSON.stringify(saveObject)
 const saveBlobHex = gzipSync(Buffer.from(saveData, 'utf8')).toString('hex')
 
@@ -65,16 +72,24 @@ const now = Date.now()
 const escapedSaveData = saveData.replace(/'/g, "''")
 
 const seedSql = `
-DELETE FROM world_positions WHERE character_id = 1;
-DELETE FROM saves WHERE character_id = 1;
-DELETE FROM characters WHERE id = 1;
-DELETE FROM oauth_identities WHERE id = 1;
+DELETE FROM world_grants WHERE character_id IN (1, 2);
+DELETE FROM audit_events WHERE character_id IN (1, 2);
+DELETE FROM world_positions WHERE character_id IN (1, 2);
+DELETE FROM saves WHERE character_id IN (1, 2);
+DELETE FROM characters WHERE id IN (1, 2);
+DELETE FROM oauth_identities WHERE id IN (1, 2);
 INSERT INTO oauth_identities (id, provider, provider_user_id, email, display_name, created_at)
   VALUES (1, 'dev', 'dev-user', NULL, 'Dev Tester', ${now});
 INSERT INTO characters (id, owner_id, username, created_at, deleted_at)
   VALUES (1, 1, 'WorldTester', ${now}, NULL);
 INSERT INTO saves (character_id, save_blob, save_data, updated_at, save_revision)
   VALUES (1, X'${saveBlobHex}', '${escapedSaveData}', ${now}, 1);
+INSERT INTO oauth_identities (id, provider, provider_user_id, email, display_name, created_at)
+  VALUES (2, 'dev', 'dev-user-2', NULL, 'Dev Tester 2', ${now});
+INSERT INTO characters (id, owner_id, username, created_at, deleted_at)
+  VALUES (2, 2, 'WorldFriend', ${now}, NULL);
+INSERT INTO saves (character_id, save_blob, save_data, updated_at, save_revision)
+  VALUES (2, X'${saveBlobHex}', '${escapedSaveData}', ${now}, 1);
 `.trim()
 
 console.log('dev-seed: seeding identity + character + save...')
@@ -83,8 +98,10 @@ runWrangler(['d1', 'execute', 'pocketrpg-preview', '--env', 'preview', '--local'
 const jwtSecret = readJwtSecret()
 const { signJWT } = await import(path.join(repoRoot, 'functions', '_lib', 'jwt.js'))
 const handoff = await signJWT({ sub: 1, character_id: 1, scope: 'world_handoff' }, jwtSecret, 60)
+const handoff2 = await signJWT({ sub: 2, character_id: 2, scope: 'world_handoff' }, jwtSecret, 60)
 
 console.log('')
 console.log('dev-seed: done. Start `npm run dev` (wrangler dev) then visit:')
 console.log(`  http://localhost:8787/#handoff=${handoff}`)
-console.log('(the handoff token expires in 60s — mint a fresh one by re-running this script if it goes stale)')
+console.log(`second character (presence testing): http://localhost:8787/#handoff=${handoff2}`)
+console.log('(the handoff tokens expire in 60s — mint fresh ones by re-running this script if they go stale)')

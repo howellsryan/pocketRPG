@@ -1,9 +1,26 @@
 import { Server, type Connection as PartyConnection } from 'partyserver'
 import { verifyJWT } from '../../functions/_lib/jwt.js'
-import { findPath } from './pathfind'
-import { advanceMovement, toEntityDiff, type TickPlayer } from './tick'
+import { findPath, findPathAdjacent } from './pathfind'
+import {
+  emptyResult,
+  respawnedRocks,
+  sessionInventoryFromSave,
+  sessionStatsFromSave,
+  tickPlayer,
+  toEntityDiff,
+  type RockState,
+  type TickContext,
+  type TickPlayer,
+} from './tick'
+import { npcsFromZone, tickNpc, toNpcDiff, type NpcState } from './npc'
+import { isExpired, isVisibleTo, takeLoot, visibleLootFor, type LootEntity } from './loot'
+import { sanitizeChat } from '../shared/chat'
+import { emptyInventory } from './mining'
+import { getLevelFromXP } from '../../src/engine/experience.js'
+import { flushGrants, isEmptyPayload, type GrantPayload, type ItemStack } from './grants'
+import { loadCharacterWithSave } from '../../functions/_lib/game/save.js'
 import { validateZone, type ZoneDef } from '../shared/zone'
-import type { ClientMessage, ServerMessage, StaticObject } from '../shared/protocol'
+import type { ClientMessage, EntityDiff, LootItem, ServerMessage, StaticObject, ZoneEvent } from '../shared/protocol'
 import { parseClientMessage } from '../shared/protocol'
 import type { Env } from './env'
 
@@ -14,6 +31,7 @@ import pastureZone from '../zones/pasture.json'
 const TICK_MS = 600
 const AUTH_TIMEOUT_MS = 5000
 const CHECKPOINT_EVERY_TICKS = 100
+const HP_REGEN_EVERY_TICKS = 100
 const RATE_LIMIT_WINDOW_MS = 1000
 const RATE_LIMIT_MAX_MESSAGES = 10
 
@@ -26,6 +44,26 @@ for (const zone of Object.values(ZONES)) {
 type Player = TickPlayer & {
   conn: Connection
   lastMsgTimes: number[]
+  identityId: string
+  sessionId: string
+  flushSeq: number
+  /** Units seeded from the character's PocketRPG inventory at hello — already
+   * in the save, so a deposit MOVES them to the bank rather than granting. */
+  saveBacked: Record<string, number>
+  /** Loot the player has walked over to pick up, resolved on arrival. */
+  pendingLoot: { id: string; x: number; z: number } | null
+  /** Loot ids this client currently sees — diffed each tick for add/remove. */
+  lootView: Set<string>
+}
+
+function toItemList(record: Record<string, number>): ItemStack[] {
+  return Object.entries(record)
+    .filter(([, quantity]) => quantity > 0)
+    .map(([itemId, quantity]) => ({ itemId, quantity }))
+}
+
+function mergeInto(target: Record<string, number>, items: ItemStack[]): void {
+  for (const item of items) target[item.itemId] = (target[item.itemId] ?? 0) + item.quantity
 }
 
 function send(conn: Connection, message: ServerMessage): void {
@@ -38,9 +76,32 @@ export class WorldZone extends Server<Env> {
   tickCount = 0
   tickTimer: ReturnType<typeof setInterval> | null = null
   authTimers = new Map<string, ReturnType<typeof setTimeout>>()
+  rocks: Map<string, RockState> | null = null
+  npcs: Map<string, NpcState> | null = null
+  loot = new Map<string, LootEntity>()
+  /** Presence edges + chat queued between ticks; drained by tick(). */
+  pendingJoins = new Set<string>()
+  pendingLeaves = new Set<string>()
+  pendingChat: Extract<ZoneEvent, { e: 'chat' }>[] = []
 
   get zone(): ZoneDef {
     return ZONES[this.name] ?? pastureZone as ZoneDef
+  }
+
+  private ensureRocks(): Map<string, RockState> {
+    if (!this.rocks) {
+      this.rocks = new Map(
+        this.zone.objects
+          .filter((o) => o.type === 'rock' && o.rock)
+          .map((o) => [o.id, { id: o.id, rock: o.rock!, x: o.x, z: o.z, depletedUntilTick: 0 }])
+      )
+    }
+    return this.rocks
+  }
+
+  private ensureNpcs(): Map<string, NpcState> {
+    if (!this.npcs) this.npcs = npcsFromZone(this.zone.npcs)
+    return this.npcs
   }
 
   onConnect(connection: Connection): void {
@@ -85,16 +146,29 @@ export class WorldZone extends Server<Env> {
     this.handleAuthedMessage(player, message)
   }
 
-  onClose(connection: Connection): void {
+  // Async so the runtime keeps the DO alive until the disconnect flush and
+  // position checkpoint land — fire-and-forget writes here can be lost when
+  // the last player leaves and the instance idles out.
+  async onClose(connection: Connection): Promise<void> {
     this.clearAuthTimer(connection.id)
     const charId = connection.state?.charId ?? null
     if (!charId) return
     const player = this.players.get(charId)
     if (!player) return
+    // A duplicate-connection kick closes the old socket after the charId has
+    // been re-registered on a new one — that close must not tear down the
+    // live player.
+    if (player.conn !== connection) return
+    if (player.combat) {
+      const npc = this.npcs?.get(player.combat.npcId)
+      if (npc && npc.attackerId === charId) npc.attackerId = null
+    }
     this.players.delete(charId)
     this.dirty.delete(charId)
-    void this.checkpointPlayer(player)
+    this.pendingLeaves.add(charId)
     this.maybeStopTicking()
+    await this.flush(player, 'disconnect')
+    await this.checkpointPlayer(player)
   }
 
   private clearAuthTimer(connectionId: string): void {
@@ -127,6 +201,22 @@ export class WorldZone extends Server<Env> {
       return
     }
 
+    let stats
+    let seeded
+    let equipment: Record<string, unknown> = {}
+    let maxHp = 10
+    try {
+      const { saveObject } = await loadCharacterWithSave(this.env, row.id, payload.sub)
+      stats = sessionStatsFromSave(saveObject)
+      seeded = sessionInventoryFromSave(saveObject)
+      equipment = (saveObject.equipment ?? {}) as Record<string, unknown>
+      const hpEntry = (saveObject.stats as Record<string, { xp?: number; level?: number }> | undefined)?.hitpoints
+      maxHp = Number(hpEntry?.level) || getLevelFromXP(Number(hpEntry?.xp) || 0) || 10
+    } catch {
+      connection.close(1008, 'character_not_found')
+      return
+    }
+
     const charId = String(row.id)
     this.clearAuthTimer(connection.id)
 
@@ -144,7 +234,32 @@ export class WorldZone extends Server<Env> {
     const z = posRow?.z ?? spawn.z
 
     connection.setState({ charId })
-    const player: Player = { charId, name: row.username, x, z, path: [], anim: 'idle', conn: connection, lastMsgTimes: [] }
+    const player: Player = {
+      charId,
+      name: row.username,
+      x,
+      z,
+      path: [],
+      anim: 'idle',
+      stats,
+      inventory: seeded.inventory,
+      pendingXp: {},
+      minted: {},
+      mining: null,
+      pendingInteract: null,
+      hp: maxHp,
+      maxHp,
+      equipment,
+      combat: null,
+      conn: connection,
+      lastMsgTimes: [],
+      identityId: String(payload.sub),
+      sessionId: crypto.randomUUID(),
+      flushSeq: 0,
+      saveBacked: seeded.saveBacked,
+      pendingLoot: null,
+      lootView: new Set(),
+    }
     this.players.set(charId, player)
 
     const statics: StaticObject[] = this.zone.objects
@@ -154,9 +269,27 @@ export class WorldZone extends Server<Env> {
       tick: this.tickCount,
       zone: { id: this.zone.id, w: this.zone.width, h: this.zone.height, collision: this.zone.collision },
       statics,
-      you: { x, z, stats: {}, inventory: [] },
+      you: { x, z, stats: player.stats, inventory: player.inventory },
     })
 
+    const depleted = [...this.ensureRocks().values()]
+      .filter((r) => r.depletedUntilTick > this.tickCount)
+      .map((r) => ({ id: r.id, depleted: true }))
+    const npcEnts = [...this.ensureNpcs().values()]
+      .filter((n) => n.state !== 'dead')
+      .map((n) => toNpcDiff(n))
+    const otherEnts = [...this.players.values()]
+      .filter((p) => p.charId !== charId)
+      .map((p) => toEntityDiff(p))
+    const visibleLoot = visibleLootFor(this.loot.values(), charId, this.tickCount)
+    player.lootView = new Set(visibleLoot.map((l) => l.id))
+    const intro: Extract<ServerMessage, { t: 'diff' }> = { t: 'diff', tick: this.tickCount }
+    if (depleted.length > 0) intro.rocks = depleted
+    if (npcEnts.length > 0 || otherEnts.length > 0) intro.ents = [...otherEnts, ...npcEnts]
+    if (visibleLoot.length > 0) intro.loot = visibleLoot
+    if (intro.rocks || intro.ents || intro.loot) send(connection, intro)
+
+    this.pendingJoins.add(charId)
     this.ensureTicking()
   }
 
@@ -165,20 +298,76 @@ export class WorldZone extends Server<Env> {
       case 'walk': {
         const path = findPath(this.zone.collision, { x: player.x, z: player.z }, { x: message.x, z: message.z })
         player.path = path ? path.slice(1) : []
+        this.clearIntents(player)
         break
       }
       case 'cancel':
         player.path = []
+        this.clearIntents(player)
         break
       case 'ping':
         send(player.conn, { t: 'pong', n: message.n })
         break
+      case 'chat': {
+        const text = sanitizeChat(message.text)
+        if (text) this.pendingChat.push({ e: 'chat', charId: player.charId, name: player.name, text })
+        break
+      }
       case 'interact':
-        // Rocks/npcs/loot arrive in Phase 1/2 — no interactables exist yet.
+        this.handleInteract(player, message)
         break
       case 'hello':
         break
     }
+  }
+
+  private clearIntents(player: Player): void {
+    player.pendingInteract = null
+    player.mining = null
+    player.combat = null
+    player.pendingLoot = null
+  }
+
+  private handleInteract(player: Player, message: Extract<ClientMessage, { t: 'interact' }>): void {
+    // Loot pickup paths ONTO the tile (not adjacent) and resolves on arrival.
+    if (message.kind === 'loot' && message.action === 'take') {
+      const loot = this.loot.get(message.id)
+      if (!loot) return
+      const path = findPath(this.zone.collision, { x: player.x, z: player.z }, { x: loot.x, z: loot.z })
+      if (!path) return
+      player.path = path.slice(1)
+      this.clearIntents(player)
+      player.pendingLoot = { id: loot.id, x: loot.x, z: loot.z }
+      return
+    }
+
+    let target: { x: number; z: number } | null = null
+    let intent: Player['pendingInteract'] = null
+
+    if (message.kind === 'rock' && message.action === 'mine') {
+      const rock = this.ensureRocks().get(message.id)
+      if (!rock) return
+      target = rock
+      intent = { kind: 'rock', id: rock.id, action: 'mine' }
+    } else if (message.kind === 'npc' && message.action === 'attack') {
+      const npc = this.ensureNpcs().get(message.id)
+      if (!npc || npc.state === 'dead') return
+      target = npc
+      intent = { kind: 'npc', id: npc.id, action: 'attack' }
+    } else if (message.kind === 'object' && message.action === 'deposit') {
+      const chest = this.zone.objects.find((o) => o.id === message.id && o.type === 'bank_chest')
+      if (!chest) return
+      target = chest
+      intent = { kind: 'object', id: chest.id, action: 'deposit' }
+    } else {
+      return
+    }
+
+    const path = findPathAdjacent(this.zone.collision, { x: player.x, z: player.z }, target)
+    if (!path) return
+    player.path = path.slice(1)
+    this.clearIntents(player)
+    player.pendingInteract = intent
   }
 
   private ensureTicking(): void {
@@ -195,26 +384,190 @@ export class WorldZone extends Server<Env> {
 
   private tick(): void {
     this.tickCount += 1
-    const changed: Player[] = []
+    const rocks = this.ensureRocks()
+    const npcs = this.ensureNpcs()
+    const ctx: TickContext = {
+      tick: this.tickCount,
+      rocks,
+      npcs,
+      collision: this.zone.collision,
+      pathAdjacent: (from, to) => findPathAdjacent(this.zone.collision, from, to),
+    }
+
+    const rockChanges = respawnedRocks(rocks, this.tickCount)
+    const npcChanged = new Set<string>()
+    const npcRemoved = new Set<string>()
+    const hits: { targetId: string; dmg: number }[] = []
+    const eventsByChar = new Map<string, ZoneEvent[]>()
+    // Player ents deduped by id (last write wins — e.g. a death-tick respawn).
+    const playerEnts = new Map<string, EntityDiff>()
+
+    // Presence edges queued since the last tick. A leave only broadcasts if
+    // the player is really gone (a same-tick rejoin keeps them present).
+    for (const id of this.pendingJoins) {
+      const joined = this.players.get(id)
+      if (joined) playerEnts.set(id, toEntityDiff(joined))
+    }
+    this.pendingJoins.clear()
+    const playersRemoved = [...this.pendingLeaves].filter((id) => !this.players.has(id))
+    this.pendingLeaves.clear()
+    const chatEvents = this.pendingChat
+    this.pendingChat = []
+
+    // NPCs first (wander/respawn/heal) so player combat this tick reads fresh state.
+    const npcResult = emptyResult()
+    for (const npc of npcs.values()) tickNpc(npc, ctx, npcResult)
+    for (const id of npcResult.npcChanged) npcChanged.add(id)
+    for (const id of npcResult.npcRemoved) npcRemoved.add(id)
 
     for (const player of this.players.values()) {
-      const result = advanceMovement(player)
-      if (result.changed) {
-        Object.assign(player, result.next)
+      const result = tickPlayer(player, ctx)
+      if (result.entChanged) {
         this.dirty.add(player.charId)
-        changed.push(player)
+        playerEnts.set(player.charId, toEntityDiff(player))
+      }
+      rockChanges.push(...result.rockChanges)
+      for (const id of result.npcChanged) npcChanged.add(id)
+      hits.push(...result.hits)
+      for (const loot of result.newLoot) this.loot.set(loot.id, loot)
+      if (result.deposit) {
+        // flush() empties the pack synchronously before its first await, so
+        // the events below already show the post-deposit state.
+        void this.flush(player, 'deposit')
+        result.events.push({ e: 'inv', inventory: player.inventory })
+        result.events.push({ e: 'msg', text: 'You deposit your items into your bank.' })
+      }
+      if (result.events.length > 0) eventsByChar.set(player.charId, result.events)
+      if (result.died) this.respawnPlayer(player, playerEnts)
+    }
+
+    // Loot pickups resolve after movement (the player may have just arrived).
+    for (const player of this.players.values()) this.tryTakeLoot(player, eventsByChar)
+    for (const [id, loot] of this.loot) if (isExpired(loot, this.tickCount)) this.loot.delete(id)
+
+    const npcEnts: EntityDiff[] = []
+    for (const id of npcChanged) {
+      const npc = npcs.get(id)
+      if (npc && !npcRemoved.has(id)) npcEnts.push(toNpcDiff(npc))
+    }
+    const ents = [...playerEnts.values(), ...npcEnts]
+    this.broadcastDiffs(ents, rockChanges, [...npcRemoved, ...playersRemoved], hits, chatEvents, eventsByChar)
+
+    if (this.tickCount % HP_REGEN_EVERY_TICKS === 0) {
+      for (const player of this.players.values()) if (player.hp < player.maxHp) player.hp += 1
+    }
+    if (this.tickCount % CHECKPOINT_EVERY_TICKS === 0) {
+      if (this.dirty.size > 0) void this.flushCheckpoints()
+      for (const player of this.players.values()) void this.flush(player, 'timer')
+    }
+  }
+
+  private respawnPlayer(player: Player, playerEnts: Map<string, EntityDiff>): void {
+    const spawn = this.zone.spawn
+    player.x = spawn.x
+    player.z = spawn.z
+    player.hp = player.maxHp
+    player.path = []
+    this.clearIntents(player)
+    player.anim = 'idle'
+    send(player.conn, { t: 'dead', respawn: { x: spawn.x, z: spawn.z } })
+    this.dirty.add(player.charId)
+    playerEnts.set(player.charId, toEntityDiff(player))
+  }
+
+  /** Resolves a walked-over loot pickup: adds it to the pack, records it as a
+   * world-minted unit (so it survives every flush — the inventory-first rule),
+   * and removes the entity. Full pack → message, loot stays. */
+  private tryTakeLoot(player: Player, eventsByChar: Map<string, ZoneEvent[]>): void {
+    const pending = player.pendingLoot
+    if (!pending || player.path.length > 0) return
+    const loot = this.loot.get(pending.id)
+    if (!loot || !isVisibleTo(loot, player.charId, this.tickCount) || player.x !== loot.x || player.z !== loot.z) {
+      player.pendingLoot = null
+      return
+    }
+    const events = eventsByChar.get(player.charId) ?? []
+    if (takeLoot(player.inventory, player.minted, loot.itemId, loot.qty)) {
+      this.loot.delete(loot.id)
+      events.push({ e: 'inv', inventory: player.inventory })
+    } else {
+      events.push({ e: 'msg', text: 'Your pack is full.' })
+    }
+    player.pendingLoot = null
+    if (!eventsByChar.has(player.charId)) eventsByChar.set(player.charId, events)
+  }
+
+  private broadcastDiffs(
+    ents: EntityDiff[],
+    rockChanges: { id: string; depleted: boolean }[],
+    removed: string[],
+    hits: { targetId: string; dmg: number }[],
+    chatEvents: ZoneEvent[],
+    eventsByChar: Map<string, ZoneEvent[]>
+  ): void {
+    const hitEvents: ZoneEvent[] = hits.map((h) => ({ e: 'hit', targetId: h.targetId, dmg: h.dmg }))
+    for (const player of this.players.values()) {
+      const visible = visibleLootFor(this.loot.values(), player.charId, this.tickCount)
+      const visibleIds = new Set(visible.map((l) => l.id))
+      const lootAdded: LootItem[] = visible.filter((l) => !player.lootView.has(l.id))
+      const lootRemoved: string[] = [...player.lootView].filter((id) => !visibleIds.has(id))
+      player.lootView = visibleIds
+
+      const events: ZoneEvent[] = []
+      const own = eventsByChar.get(player.charId)
+      if (own) events.push(...own)
+      if (hitEvents.length > 0) events.push(...hitEvents)
+      if (chatEvents.length > 0) events.push(...chatEvents)
+
+      const message: Extract<ServerMessage, { t: 'diff' }> = { t: 'diff', tick: this.tickCount }
+      if (ents.length > 0) message.ents = ents
+      if (rockChanges.length > 0) message.rocks = rockChanges
+      if (removed.length > 0) message.removed = removed
+      if (lootAdded.length > 0) message.loot = lootAdded
+      if (lootRemoved.length > 0) message.lootRemoved = lootRemoved
+      if (events.length > 0) message.events = events
+
+      if (message.ents || message.rocks || message.removed || message.loot || message.lootRemoved || message.events) {
+        send(player.conn, message)
       }
     }
+  }
 
-    if (changed.length > 0) {
-      const ents = changed.map((p) => toEntityDiff(p))
-      const message: ServerMessage = { t: 'diff', tick: this.tickCount, ents }
-      const body = JSON.stringify(message)
-      for (const player of this.players.values()) player.conn.send(body)
+  /** Snapshots and clears the player's pending grant tallies, then applies
+   * them to the save blob. Items follow "inventory first, bank on deposit":
+   * a chest deposit banks everything in the pack (moving save-backed units,
+   * granting minted ones); a disconnect lands minted units in the character's
+   * inventory; the periodic timer flushes XP only. On failure the snapshot is
+   * merged back so the next flush retries it. */
+  private async flush(player: Player, reason: GrantPayload['reason']): Promise<void> {
+    const payload: GrantPayload = { xpBySkill: player.pendingXp, items: [], itemsTo: 'bank', moveToBank: [], reason }
+    player.pendingXp = {}
+    if (reason === 'deposit') {
+      payload.items = toItemList(player.minted)
+      payload.moveToBank = toItemList(player.saveBacked)
+      player.minted = {}
+      player.saveBacked = {}
+      player.inventory = emptyInventory()
+    } else if (reason === 'disconnect') {
+      payload.items = toItemList(player.minted)
+      payload.itemsTo = 'inventory'
+      player.minted = {}
     }
+    if (isEmptyPayload(payload)) return
+    player.flushSeq += 1
 
-    if (this.tickCount % CHECKPOINT_EVERY_TICKS === 0 && this.dirty.size > 0) {
-      void this.flushCheckpoints()
+    const ok = await flushGrants(this.env, {
+      charId: Number(player.charId),
+      identityId: player.identityId,
+      sessionId: player.sessionId,
+      flushSeq: player.flushSeq,
+    }, payload)
+    if (!ok) {
+      for (const [skill, amount] of Object.entries(payload.xpBySkill)) {
+        player.pendingXp[skill] = (player.pendingXp[skill] ?? 0) + amount
+      }
+      mergeInto(player.minted, payload.items)
+      mergeInto(player.saveBacked, payload.moveToBank)
     }
   }
 

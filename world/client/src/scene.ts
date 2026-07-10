@@ -58,7 +58,11 @@ function buildGroundTexture(collision: string[], width: number, height: number):
       const blocked = collision[z]?.[x] === '#'
       const even = (x + z) % 2 === 0
       ctx.fillStyle = blocked ? (even ? blockedA : blockedB) : (even ? walkableA : walkableB)
-      ctx.fillRect(x * TILE_PIXELS, (height - 1 - z) * TILE_PIXELS, TILE_PIXELS, TILE_PIXELS)
+      // Canvas row 0 lands on the plane's v=1 edge, which sits at world z=0
+      // after the rotateX/translate below — so tile z maps to canvas row z
+      // directly. (The old height-1-z flip mirrored blocked tiles north-south:
+      // clicks on visually open grass hit the real, invisible fence.)
+      ctx.fillRect(x * TILE_PIXELS, z * TILE_PIXELS, TILE_PIXELS, TILE_PIXELS)
     }
   }
   const texture = new THREE.CanvasTexture(canvas)
