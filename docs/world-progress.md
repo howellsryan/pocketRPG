@@ -426,3 +426,15 @@ Fixes (all verified e2e):
 `world:check` green (14 files / 116 tests). Only `world/` + `docs/` touched.
 
 - [x] Connectivity fixes — see commit introducing this entry — reconnect carry-over + client resync + heartbeat/watchdog + presence keyframe, all e2e-verified; DT: redeploy preview and re-test on devices.
+
+## Connection stability: stop kicking legitimate players (developer feedback: "reconnecting every couple of seconds")
+
+The reconnect banner exposed how often the server was CLOSING connections on healthy WiFi. Review found three server/client behaviours that punished normal play:
+
+1. **The rate limiter kicked at >10 msg/s — but OSRS-style tap-to-move easily exceeds that.** Every burst of eager tapping closed the socket (this was also the likely original source of the pre-carry-over "misplaced character" reports — each silent kick teleported the player to a stale checkpoint). Now: pings bypass the limiter entirely (they're the keepalive — dropping them starves the watchdog), messages above a **15/s soft limit are silently dropped** (a dropped walk is harmless; the next tap replaces it), and only a **>40/s hard flood** (buggy/abusive client) closes the connection — and even then the carry-over path makes the reconnect lossless.
+2. **The 5s auth timeout ran while `handleHello` did its D1 work** — a cold-start hello could be kicked mid-handshake (`auth_timeout` → reconnect loop). The timer now clears the moment hello arrives; auth failures still close explicitly.
+3. **The visibility-resume check reconnected after 5s of silence while pings only flow every 10s** — a quick app switch on a healthy connection forced a needless reconnect. Threshold raised to 15s (above the ping cadence). Client also collapses rapid same-tile taps (<400ms) into one walk message.
+
+**Verified e2e**: 25 taps/s → no disconnect; ping answered mid-flood; 60-message burst → 1008/rate_limited kick and the reconnect still resumes the live session; 45s idle soak with heartbeat only → zero closes, pongs flowing. `world:check` green (14 files / 116 tests). Only `world/` + `docs/` touched.
+
+- [x] Connection stability — see commit introducing this entry — soft-drop rate limiting, hello-time auth-timer clear, saner watchdog thresholds, tap dedupe; flood + soak e2e green. DT: redeploy preview, re-test two devices.

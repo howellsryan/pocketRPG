@@ -33,8 +33,15 @@ const TICK_MS = 600
 const AUTH_TIMEOUT_MS = 5000
 const CHECKPOINT_EVERY_TICKS = 100
 const HP_REGEN_EVERY_TICKS = 100
+// Rate limiting must NEVER kick a legitimate player — tap-to-move spam on a
+// phone easily exceeds 10 msg/s, and closing the socket there caused constant
+// visible reconnects. Above the soft limit messages are silently dropped (a
+// dropped walk is harmless — the next tap replaces it); only a hard flood
+// (buggy/abusive client) closes the connection. Pings bypass the limiter —
+// they're the keepalive.
 const RATE_LIMIT_WINDOW_MS = 1000
-const RATE_LIMIT_MAX_MESSAGES = 10
+const RATE_LIMIT_SOFT_DROP = 15
+const RATE_LIMIT_HARD_KICK = 40
 // Every player's ent re-broadcasts on this cadence even when idle, so a client
 // that missed a join edge (reconnect gap, suspended tab) self-heals within 30s.
 const PRESENCE_KEYFRAME_TICKS = 50
@@ -146,10 +153,16 @@ export class WorldZone extends Server<Env> {
       connection.close(1008, 'unknown_player')
       return
     }
-    if (!this.withinRateLimit(player)) {
+    if (message.t === 'ping') {
+      send(player.conn, { t: 'pong', n: message.n })
+      return
+    }
+    const verdict = this.rateLimitVerdict(player)
+    if (verdict === 'kick') {
       connection.close(1008, 'rate_limited')
       return
     }
+    if (verdict === 'drop') return
     this.handleAuthedMessage(player, message)
   }
 
@@ -186,14 +199,20 @@ export class WorldZone extends Server<Env> {
     }
   }
 
-  private withinRateLimit(player: Player): boolean {
+  private rateLimitVerdict(player: Player): 'ok' | 'drop' | 'kick' {
     const now = Date.now()
     player.lastMsgTimes = player.lastMsgTimes.filter((t) => now - t < RATE_LIMIT_WINDOW_MS)
     player.lastMsgTimes.push(now)
-    return player.lastMsgTimes.length <= RATE_LIMIT_MAX_MESSAGES
+    if (player.lastMsgTimes.length > RATE_LIMIT_HARD_KICK) return 'kick'
+    if (player.lastMsgTimes.length > RATE_LIMIT_SOFT_DROP) return 'drop'
+    return 'ok'
   }
 
   private async handleHello(connection: Connection, message: Extract<ClientMessage, { t: 'hello' }>): Promise<void> {
+    // Clear the auth timeout as soon as hello ARRIVES — the D1 reads below can
+    // outlive the 5s timer on a cold start, which would kick a valid login
+    // mid-handshake. Auth failures below still close the connection themselves.
+    this.clearAuthTimer(connection.id)
     const payload = await verifyJWT(message.token, this.env.JWT_SECRET)
     if (!payload || payload.scope !== 'world' || !payload.sub || !payload.character_id) {
       connection.close(1008, 'invalid_token')
@@ -216,7 +235,6 @@ export class WorldZone extends Server<Env> {
     const liveCharId = String(row.id)
     const existing = this.players.get(liveCharId)
     if (existing) {
-      this.clearAuthTimer(connection.id)
       existing.conn.close(1008, 'duplicate_connection')
       if (existing.combat) {
         const npc = this.ensureNpcs().get(existing.combat.npcId)
@@ -253,7 +271,6 @@ export class WorldZone extends Server<Env> {
     }
 
     const charId = String(row.id)
-    this.clearAuthTimer(connection.id)
 
     const posRow = await this.env.DB.prepare(
       'SELECT x, z FROM world_positions WHERE character_id = ? AND zone_id = ?'
@@ -341,8 +358,7 @@ export class WorldZone extends Server<Env> {
         this.clearIntents(player)
         break
       case 'ping':
-        send(player.conn, { t: 'pong', n: message.n })
-        break
+        break // answered upstream, before the rate limiter — it's the keepalive
       case 'chat': {
         const text = sanitizeChat(message.text)
         if (text) this.pendingChat.push({ e: 'chat', charId: player.charId, name: player.name, text })

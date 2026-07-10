@@ -182,8 +182,10 @@ function enterWorld(session: WorldSession): void {
       socket.reconnect()
     }
   }, 10000)
+  // Threshold sits above the 10s ping cadence — a quick app switch on a
+  // healthy connection must never trigger a reconnect.
   document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible' && performance.now() - lastServerMsg > 5000) {
+    if (document.visibilityState === 'visible' && performance.now() - lastServerMsg > 15000) {
       lastServerMsg = performance.now()
       socket.reconnect()
     }
@@ -259,10 +261,16 @@ function enterWorld(session: WorldSession): void {
         if (message.you.gear) void applyWeapon(self.mesh, message.you.gear)
         scene.add(self.mesh)
 
+        // Rapid taps on the same tile collapse to one walk — the server path
+        // wouldn't change, and it keeps tap-spam inside the rate budget.
+        let lastWalk = { x: -1, z: -1, at: 0 }
         setupInput(renderer.domElement, camera, ground, {
           onWalk: (tile) => {
-            send(socket, { t: 'walk', x: tile.x, z: tile.z })
             showClickMarker(marker, tile.x, tile.z)
+            const now = performance.now()
+            if (tile.x === lastWalk.x && tile.z === lastWalk.z && now - lastWalk.at < 400) return
+            lastWalk = { x: tile.x, z: tile.z, at: now }
+            send(socket, { t: 'walk', x: tile.x, z: tile.z })
           },
           onInteract: (interact) => {
             send(socket, { t: 'interact', kind: interact.kind, id: interact.id, action: interact.action })
