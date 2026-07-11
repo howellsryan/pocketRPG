@@ -2880,16 +2880,16 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                 const prayerActive = !!(combat?.activeProtectionPrayer || combat?.activeCombatPrayer)
                 return (
                   <div class="cb-actions" style={{ marginBottom: 4 }}>
-                    <button class={'cb-act cb-act--gold' + (canSpec ? ' is-on' : '')} disabled={!canSpec} onClick={canSpec ? handleSpecialAttack : undefined}>
-                      <GameIcon iconKey="lightning_arc" color={canSpec ? '#1a1206' : '#9b978c'} size={18} />
+                    <button class="cb-act" disabled={!canSpec} onClick={canSpec ? handleSpecialAttack : undefined}>
+                      <GameIcon iconKey="lightning_arc" color="currentColor" size={18} />
                       <span>Special{hasSpec ? ` ${energy}%` : ''}</span>
                     </button>
-                    <button class={'cb-act cb-act--violet' + (isMagic ? ' is-on' : '')} disabled={!isMagic} onClick={isMagic ? () => setShowSpellModal(true) : undefined}>
-                      <GameIcon iconKey="crystal_ball" color={isMagic ? '#c9b6ff' : '#9b978c'} size={18} />
+                    <button class="cb-act" disabled={!isMagic} onClick={isMagic ? () => setShowSpellModal(true) : undefined}>
+                      <GameIcon iconKey="crystal_ball" color="currentColor" size={18} />
                       <span>Cast Spell</span>
                     </button>
-                    <button class={'cb-act cb-act--green' + (prayerActive ? ' is-on' : '')} onClick={() => setShowPrayerModal(true)}>
-                      <GameIcon iconKey="prayer" color={prayerActive ? '#cfeccb' : '#9b978c'} size={18} />
+                    <button class={'cb-act' + (prayerActive ? ' is-on' : '')} onClick={() => setShowPrayerModal(true)}>
+                      <GameIcon iconKey="prayer" color="currentColor" size={18} />
                       <span>Prayer</span>
                     </button>
                   </div>
