@@ -7,9 +7,11 @@ import { AMBIENCE_PRESETS, DEFAULT_AMBIENCE, DEFAULT_PALETTE, PALETTE_PRESETS, m
 import { PROP_MODELS } from './propManifest'
 import { coordsOf, deleteItem, findItemAt, moveItem, placeEntry, placeExit, type Selection } from './placement'
 import { openArrivalPicker } from './picker'
+import { extractRegion, loadPrefabs, savePrefab, stampPrefab, type Prefab } from './stamps'
 
 const TOKEN_KEY = 'world_editor_token'
-type Tool = 'paintWalkable' | 'paintBlocked' | 'rect' | 'fill' | 'spawn' | 'select' | 'portal' | 'pan'
+const PROD_KEY = 'world_editor_prod'
+type Tool = 'paintWalkable' | 'paintBlocked' | 'rect' | 'fill' | 'spawn' | 'select' | 'portal' | 'scatter' | 'stamp' | 'pan'
 
 const $ = <T = HTMLElement>(id: string) => document.getElementById(id) as T
 
@@ -22,6 +24,8 @@ let catalog: CatalogGroup[] = []
 let placementEntry: CatalogEntry | null = null
 let draggedEntry: CatalogEntry | null = null
 let selection: Selection | null = null
+let clipboard: Prefab | null = null
+let env: 'preview' | 'production' = 'preview'
 
 // ---- toast ------------------------------------------------------------------
 let toastTimer: ReturnType<typeof setTimeout> | null = null
@@ -99,6 +103,9 @@ async function boot(): Promise<void> {
   wirePlaytest()
   wireLibrary()
   wireCanvasDrop()
+  wireEnv()
+  wireHistoryAnd3D()
+  wireStampSave()
   wireKeyboard()
   window.addEventListener('beforeunload', (e) => {
     if (state.isDirty()) {
@@ -222,8 +229,9 @@ let rectBlocked = false
 let movingSelection = false
 
 function onTile(p: TilePointer): void {
-  // Placement mode (a library asset is armed) takes priority over the tool.
-  if (placementEntry && p.phase === 'down' && p.inside) {
+  // Placement mode (a library asset is armed) takes priority over the tool —
+  // except the scatter tool, which sprinkles the armed prop across a drag.
+  if (placementEntry && activeTool !== 'scatter' && p.phase === 'down' && p.inside) {
     const entry = placementEntry
     state.mutate((d) => (selection = placeEntry(d, entry, p.x, p.z)))
     refreshInspector()
@@ -260,6 +268,16 @@ function onTile(p: TilePointer): void {
       // Pick a destination in the inspector, then the arrival tile — placeExit
       // defaults to a valid self-target so the zone is never left invalid.
     }
+    return
+  }
+
+  if (activeTool === 'scatter') {
+    handleScatter(p)
+    return
+  }
+
+  if (activeTool === 'stamp') {
+    handleStamp(p, rightHeld)
     return
   }
 
@@ -333,6 +351,8 @@ function setTool(tool: Tool): void {
   for (const b of document.querySelectorAll('#toolGroup [data-tool]')) {
     b.classList.toggle('active', (b as HTMLElement).dataset.tool === tool)
   }
+  $('scatterControls').style.display = tool === 'scatter' ? 'flex' : 'none'
+  $('stampControls').style.display = tool === 'stamp' ? 'block' : 'none'
 }
 
 function clearPlacement(): void {
@@ -462,6 +482,29 @@ function renderLibrary(query: string): void {
     head.textContent = group.title
     host.appendChild(head)
     for (const entry of entries) host.appendChild(libItem(entry))
+  }
+  renderPrefabLibrary(host, query)
+}
+
+function renderPrefabLibrary(host: HTMLElement, query: string): void {
+  const prefabs = Object.values(loadPrefabs()).filter((p) => !query || p.name.toLowerCase().includes(query))
+  if (prefabs.length === 0) return
+  const head = document.createElement('div')
+  head.className = 'cat'
+  head.textContent = 'Prefabs'
+  host.appendChild(head)
+  for (const prefab of prefabs) {
+    const count = prefab.objects.length + prefab.npcs.length + prefab.exits.length + prefab.props.length
+    const el = document.createElement('div')
+    el.className = 'libitem'
+    el.innerHTML = `<span class="ic">▦</span><span class="lbl">${escapeHtml(prefab.name)}</span><span class="meta">${count}</span>`
+    el.addEventListener('click', () => {
+      clipboard = prefab
+      setTool('stamp')
+      updateStampInfo()
+      toast(`Prefab "${prefab.name}" armed — click the map to stamp it.`, '')
+    })
+    host.appendChild(el)
   }
 }
 
@@ -703,6 +746,211 @@ function openArrivalPickerForSelection(): void {
     })
     refreshInspector()
   })
+}
+
+// ---- scatter brush ----------------------------------------------------------
+function handleScatter(p: TilePointer): void {
+  if (!placementEntry || placementEntry.kind !== 'prop') {
+    if (p.phase === 'down') toast('Pick a prop in the library, then scatter.', '')
+    return
+  }
+  const entry = placementEntry
+  const density = Number($<HTMLInputElement>('scatterDensity').value)
+  const sprinkle = () => {
+    if (!p.inside) return
+    state.applyStroke((d) => {
+      d.props ??= []
+      d.props.push({ model: entry.model, x: p.x, z: p.z, rot: Math.random() * Math.PI * 2, scale: 0.8 + Math.random() * 0.5 })
+    })
+  }
+  if (p.phase === 'down') {
+    state.beginStroke()
+    sprinkle()
+  } else if (p.phase === 'move' && (p.buttons & 1)) {
+    if (Math.random() < density) sprinkle()
+  } else if (p.phase === 'up') {
+    state.endStroke()
+  }
+}
+
+// ---- stamps (marquee select / copy-paste prefabs) ---------------------------
+let stampStart: { x: number; z: number } | null = null
+
+function handleStamp(p: TilePointer, _right: boolean): void {
+  if (p.phase === 'down') {
+    stampStart = { x: p.x, z: p.z }
+    grid.setDragPreview({ x0: p.x, z0: p.z, x1: p.x, z1: p.z })
+  } else if (p.phase === 'move' && stampStart) {
+    grid.setDragPreview({ x0: stampStart.x, z0: stampStart.z, x1: p.x, z1: p.z })
+  } else if (p.phase === 'up' && stampStart) {
+    const s = stampStart
+    stampStart = null
+    grid.setDragPreview(null)
+    if (s.x === p.x && s.z === p.z) {
+      if (clipboard) state.mutate((d) => stampPrefab(d, clipboard!, p.x, p.z))
+      return
+    }
+    const prefab = extractRegion(state.getDef(), s.x, s.z, p.x, p.z)
+    if (prefab) {
+      clipboard = prefab
+      updateStampInfo()
+    } else {
+      toast('No placed items in that box.', '')
+    }
+  }
+}
+
+function updateStampInfo(): void {
+  const n = clipboard ? clipboard.objects.length + clipboard.npcs.length + clipboard.exits.length + clipboard.props.length : 0
+  $('stampInfo').textContent = clipboard
+    ? `${n} items copied — click the map to stamp a copy.`
+    : 'Drag a box to select items, then click to stamp copies.'
+  $<HTMLButtonElement>('stampSaveBtn').disabled = !clipboard
+}
+
+function wireStampSave(): void {
+  $('stampSaveBtn').addEventListener('click', () => {
+    if (!clipboard) return
+    const name = prompt('Prefab name:')?.trim()
+    if (!name) return
+    savePrefab({ ...clipboard, name })
+    toast(`Saved prefab "${name}".`, 'ok')
+    renderLibrary($<HTMLInputElement>('librarySearch').value.trim().toLowerCase())
+  })
+}
+
+// ---- environments + publish -------------------------------------------------
+function wireEnv(): void {
+  $('envSelect').addEventListener('change', (e) => void switchEnv((e.target as HTMLSelectElement).value as typeof env))
+  $('publishBtn').addEventListener('click', () => void publishToProduction())
+}
+
+async function envApi(target: 'preview' | 'production'): Promise<EditorApi | null> {
+  if (target === 'preview') return new EditorApi('', localStorage.getItem(TOKEN_KEY) ?? '')
+  const cfg = await prodConfig()
+  return cfg ? new EditorApi(cfg.base, cfg.token) : null
+}
+
+type ProdCfg = { base: string; token: string }
+async function prodConfig(): Promise<ProdCfg | null> {
+  const stored = localStorage.getItem(PROD_KEY)
+  if (stored) {
+    try {
+      return JSON.parse(stored) as ProdCfg
+    } catch {
+      /* reconfigure */
+    }
+  }
+  const base = prompt('Production world URL (e.g. https://world.pocketrpg.co.uk):')?.trim()
+  if (!base) return null
+  const token = prompt('Production editor token:')?.trim()
+  if (!token) return null
+  const cfg = { base: base.replace(/\/$/, ''), token }
+  const trial = new EditorApi(cfg.base, cfg.token)
+  try {
+    await trial.listZones()
+  } catch {
+    toast('Could not reach production with those details.', 'err')
+    return null
+  }
+  localStorage.setItem(PROD_KEY, JSON.stringify(cfg))
+  return cfg
+}
+
+async function switchEnv(target: 'preview' | 'production'): Promise<void> {
+  const next = await envApi(target)
+  if (!next) {
+    $<HTMLSelectElement>('envSelect').value = env
+    return
+  }
+  api = next
+  env = target
+  await refreshZoneList()
+  toast(`Editing ${target}.`, target === 'production' ? 'err' : 'ok')
+}
+
+async function publishToProduction(): Promise<void> {
+  const def = state.getDef()
+  if (!validateZone(def).valid) {
+    toast('Fix validation errors before publishing.', 'err')
+    return
+  }
+  if (!confirm(`Publish "${def.name}" (${def.id}) to PRODUCTION? This overwrites the production copy.`)) return
+  const prod = await envApi('production')
+  if (!prod) return
+  try {
+    const res = await prod.saveZone(def)
+    toast(`Published ${def.id} to production (revision ${res.revision}).`, 'ok')
+  } catch (e) {
+    const err = e as Error & { errors?: string[] }
+    toast(`Publish rejected: ${err.message}`, 'err')
+    if (err.errors) renderValidation(err.errors)
+  }
+}
+
+// ---- revision history + 3D preview -----------------------------------------
+function wireHistoryAnd3D(): void {
+  $('historyBtn').addEventListener('click', () => void openHistory())
+  $('historyClose').addEventListener('click', () => ($('historyModal').style.display = 'none'))
+  $('preview3dBtn').addEventListener('click', () => void openPreview())
+  $('preview3dClose').addEventListener('click', () => void closePreview())
+}
+
+async function openHistory(): Promise<void> {
+  const id = state.getDef().id
+  const list = $('historyList')
+  list.innerHTML = '<div class="hint">Loading…</div>'
+  $('historyModal').style.display = 'flex'
+  let revisions: { revision: number; createdAt: number }[] = []
+  try {
+    revisions = (await api.listRevisions(id)).revisions
+  } catch {
+    list.innerHTML = '<div class="hint">No stored history for this zone yet.</div>'
+    return
+  }
+  if (revisions.length === 0) {
+    list.innerHTML = '<div class="hint">No stored history for this zone yet (save it first).</div>'
+    return
+  }
+  list.innerHTML = ''
+  for (const r of revisions) {
+    const row = document.createElement('div')
+    row.className = 'rev'
+    const when = new Date(r.createdAt).toLocaleString()
+    row.innerHTML = `<span>Revision ${r.revision} <span class="when">${when}</span></span>`
+    const btn = document.createElement('button')
+    btn.textContent = 'Restore'
+    btn.addEventListener('click', () => void restoreRevision(id, r.revision))
+    row.appendChild(btn)
+    list.appendChild(row)
+  }
+}
+
+async function restoreRevision(id: string, revision: number): Promise<void> {
+  if (!confirm(`Restore revision ${revision}? This saves it as a new revision.`)) return
+  try {
+    await api.restoreRevision(id, revision)
+    const { def } = await api.getZone(id)
+    state.load(def, null)
+    grid.setDef(state.getDef())
+    grid.fit()
+    await refreshZoneList()
+    refreshAll()
+    $('historyModal').style.display = 'none'
+    toast(`Restored revision ${revision}.`, 'ok')
+  } catch (e) {
+    toast(`Restore failed: ${(e as Error).message}`, 'err')
+  }
+}
+
+async function openPreview(): Promise<void> {
+  const { openPreview3D } = await import('./preview3d')
+  await openPreview3D(state.getDef())
+}
+
+async function closePreview(): Promise<void> {
+  const { closePreview3D } = await import('./preview3d')
+  closePreview3D()
 }
 
 // ---- refresh ----------------------------------------------------------------

@@ -133,10 +133,15 @@
       #inspector .field { margin-bottom: 6px; }
       #inspector .del { color: var(--danger); border-color: var(--danger); width: 100%; margin-top: 4px; }
 
-      #pickerModal {
+      #pickerModal, #historyModal, #preview3dModal {
         position: fixed; inset: 0; background: rgba(6,8,10,0.9);
         display: flex; align-items: center; justify-content: center; z-index: 45;
       }
+      #historyList .rev {
+        display: flex; justify-content: space-between; align-items: center; gap: 10px;
+        padding: 7px 6px; border-bottom: 1px solid var(--line);
+      }
+      #historyList .rev .when { color: var(--muted); font-size: 11px; }
       .pickerBox {
         background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
         padding: 14px; display: flex; flex-direction: column; gap: 10px; max-width: 90vw; max-height: 90vh;
@@ -147,14 +152,21 @@
   <body>
     <div id="topbar">
       <strong>World Editor</strong>
+      <select id="envSelect" title="Environment the editor reads and writes">
+        <option value="preview">Preview (this server)</option>
+        <option value="production">Production</option>
+      </select>
       <select id="zoneSelect" title="Open a zone"></select>
       <button id="newBtn">New</button>
       <button id="dupBtn" title="Duplicate the open zone under a new id">Duplicate</button>
+      <button id="historyBtn" title="Revision history">History</button>
+      <button id="preview3dBtn" title="3D preview — what players see">3D</button>
       <span class="spacer"></span>
       <button id="undoBtn" title="Undo (Ctrl+Z)">↶</button>
       <button id="redoBtn" title="Redo (Ctrl+Shift+Z)">↷</button>
       <span id="dirtyDot" title="Unsaved changes"></span>
       <span id="status"></span>
+      <button id="publishBtn" title="Copy the open zone to Production">Publish →</button>
       <button id="saveBtn" class="primary" title="Save to this environment (Ctrl+S)">Save</button>
     </div>
 
@@ -169,7 +181,16 @@
           <button class="toolbtn" data-tool="spawn">◎ Set spawn</button>
           <button class="toolbtn" data-tool="select">➤ Select / move</button>
           <button class="toolbtn" data-tool="portal">🚪 Portal</button>
+          <button class="toolbtn" data-tool="scatter">✨ Scatter prop</button>
+          <button class="toolbtn" data-tool="stamp">▦ Stamp select</button>
           <button class="toolbtn" data-tool="pan">✋ Pan</button>
+          <div class="row tight" id="scatterControls" style="display:none">
+            <label>Density</label><input id="scatterDensity" type="range" min="0.05" max="1" step="0.05" value="0.35" />
+          </div>
+          <div id="stampControls" style="display:none">
+            <div class="hint" id="stampInfo">Drag a box to select items, then click to stamp copies. Press S to save as a prefab.</div>
+            <button id="stampSaveBtn" style="width:100%" disabled>Save prefab…</button>
+          </div>
           <div class="hint">Rectangle/fill paint blocked with right-drag, grass with left. Space+drag or middle-drag pans; wheel zooms. Select tool: click to pick, drag to move, Delete to remove.</div>
         </div>
         <div class="group" id="libraryGroup">
@@ -253,6 +274,27 @@
         </div>
         <canvas id="pickerCanvas"></canvas>
         <div class="hint">Click the tile the player arrives on in the destination zone.</div>
+      </div>
+    </div>
+
+    <div id="historyModal" style="display:none">
+      <div class="pickerBox">
+        <div class="row" style="justify-content:space-between">
+          <strong>Revision history</strong>
+          <button id="historyClose">Close</button>
+        </div>
+        <div id="historyList" style="min-width:280px; max-height:60vh; overflow-y:auto"></div>
+      </div>
+    </div>
+
+    <div id="preview3dModal" style="display:none">
+      <div class="pickerBox">
+        <div class="row" style="justify-content:space-between">
+          <strong id="preview3dTitle">3D preview</strong>
+          <button id="preview3dClose">Close</button>
+        </div>
+        <div id="preview3dHost" style="width:70vw; height:70vh; max-width:900px; background:#0d0f0c; border-radius:6px; position:relative"></div>
+        <div class="hint">Drag to orbit · wheel to zoom. This is the real game renderer.</div>
       </div>
     </div>
 
