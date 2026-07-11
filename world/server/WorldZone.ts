@@ -19,7 +19,9 @@ import { addToInventory, countItem, freeSlotCount, inventoryIsFull, isStackable,
 import { getLevelFromXP } from '../../src/engine/experience.js'
 import { flushGrants, isEmptyPayload, type GrantPayload, type ItemStack } from './grants'
 import { loadCharacterWithSave } from '../../functions/_lib/game/save.js'
-import { validateZone, type ZoneDef, type ZoneExitDef } from '../shared/zone'
+import { type ZoneDef, type ZoneExitDef } from '../shared/zone'
+import { ZONES } from './zones'
+import { loadStoredZone } from './zoneStore'
 import { gearFromEquipment } from '../shared/appearance'
 import { BURY_XP, healAmount, primaryInvAction } from '../shared/itemActions'
 import { checkEquipRequirements, equipItem, placeUnequippedItems } from '../../src/engine/equipment.js'
@@ -33,7 +35,6 @@ import type { Env } from './env'
 type ConnState = { charId: string | null }
 type Connection = PartyConnection<ConnState>
 import pastureZone from '../zones/pasture.json'
-import forestZone from '../zones/forest.json'
 
 const TICK_MS = 600
 const AUTH_TIMEOUT_MS = 5000
@@ -51,15 +52,6 @@ const RATE_LIMIT_HARD_KICK = 40
 // Every player's ent re-broadcasts on this cadence even when idle, so a client
 // that missed a join edge (reconnect gap, suspended tab) self-heals within 30s.
 const PRESENCE_KEYFRAME_TICKS = 50
-
-export const ZONES: Record<string, ZoneDef> = {
-  pasture: pastureZone as ZoneDef,
-  forest: forestZone as ZoneDef,
-}
-for (const zone of Object.values(ZONES)) {
-  const result = validateZone(zone)
-  if (!result.valid) throw new Error(`invalid zone '${zone.id}': ${result.errors.join('; ')}`)
-}
 
 type Player = TickPlayer & {
   conn: Connection
@@ -146,9 +138,31 @@ export class WorldZone extends Server<Env> {
   /** Players whose pack was reordered since the last tick — the next tick's
    * diff carries the authoritative {e:'inv'} echo (client swaps optimistically). */
   pendingInvEcho = new Set<string>()
+  /** Resolved zone def for this DO's lifetime: a stored D1 def (world editor)
+   * overriding the bundled one, else bundled. Populated once, before the first
+   * connect completes, so the synchronous `zone` getter always has it. Edits to
+   * an occupied zone take effect the next time the DO spins up empty. */
+  loadedZone: ZoneDef | null = null
+  private zoneLoadPromise: Promise<ZoneDef | null> | null = null
 
   get zone(): ZoneDef {
-    return ZONES[this.name] ?? pastureZone as ZoneDef
+    return this.loadedZone ?? ZONES[this.name] ?? (pastureZone as ZoneDef)
+  }
+
+  /** Resolves and caches this DO's zone def once: stored D1 def first, else the
+   * bundled def, else null (unknown zone → connection rejected). Concurrent
+   * connects share one in-flight load. */
+  private async resolveZone(): Promise<ZoneDef | null> {
+    if (this.loadedZone) return this.loadedZone
+    if (!this.zoneLoadPromise) {
+      this.zoneLoadPromise = (async () => {
+        const stored = await loadStoredZone(this.env.DB, this.name).catch(() => null)
+        return stored ?? ZONES[this.name] ?? null
+      })()
+    }
+    const zone = await this.zoneLoadPromise
+    if (zone) this.loadedZone = zone
+    return zone
   }
 
   /** All gather nodes — ore rocks and trees share one state machine. */
@@ -175,8 +189,9 @@ export class WorldZone extends Server<Env> {
     return this.npcs
   }
 
-  onConnect(connection: Connection): void {
-    if (!ZONES[this.name]) {
+  async onConnect(connection: Connection): Promise<void> {
+    const zone = await this.resolveZone()
+    if (!zone) {
       connection.close(1008, 'unknown_zone')
       return
     }
@@ -274,6 +289,12 @@ export class WorldZone extends Server<Env> {
     // outlive the 5s timer on a cold start, which would kick a valid login
     // mid-handshake. Auth failures below still close the connection themselves.
     this.clearAuthTimer(connection.id)
+    // Guarantees the zone def is resolved before sendWelcome/first tick, even if
+    // a hello somehow raced ahead of onConnect's resolution.
+    if (!(await this.resolveZone())) {
+      connection.close(1008, 'unknown_zone')
+      return
+    }
     const payload = await verifyJWT(message.token, this.env.JWT_SECRET)
     if (!payload || payload.scope !== 'world' || !payload.sub || !payload.character_id) {
       connection.close(1008, 'invalid_token')
