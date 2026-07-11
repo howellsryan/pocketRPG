@@ -9,6 +9,8 @@ import {
   isSkillCape,
   hasSpecialAttack,
   hasPositiveCombatBonus,
+  typeFilterOf,
+  describeObtainment,
   SKILL_CAPES_GROUP_KEY,
 } from '../src/utils/armoury.js'
 
@@ -70,12 +72,37 @@ describe('armoury classifier', () => {
     expect(groupKeyOf({ slot: 'cape', name: 'Thieving Cape', requirements: { thieving: 99 } })).toBe(SKILL_CAPES_GROUP_KEY)
   })
 
-  it('only includes items with a positive attack or defence bonus', () => {
+  it('includes items with a positive attack, defence or combat other-bonus', () => {
     expect(hasPositiveCombatBonus({ attackBonus: { stab: 5 } })).toBe(true)
     expect(hasPositiveCombatBonus({ defenceBonus: { magic: 3 } })).toBe(true)
+    // strength / ranged-strength / magic-damage are combat stats too.
+    expect(hasPositiveCombatBonus({ otherBonus: { meleeStrength: 9 } })).toBe(true)
+    expect(hasPositiveCombatBonus({ otherBonus: { rangedStrength: 7 } })).toBe(true)
+    expect(hasPositiveCombatBonus({ otherBonus: { magicDamage: 4 } })).toBe(true)
+    // non-combat other-bonuses (skilling XP, prayer) do not qualify.
+    expect(hasPositiveCombatBonus({ otherBonus: { fishingXpPercent: 10 } })).toBe(false)
+    expect(hasPositiveCombatBonus({ otherBonus: { prayer: 3 } })).toBe(false)
     expect(hasPositiveCombatBonus({ attackBonus: { stab: 0, slash: -2 } })).toBe(false)
-    expect(hasPositiveCombatBonus({ otherBonus: { meleeStrength: 9 } })).toBe(false)
     expect(hasPositiveCombatBonus({})).toBe(false)
+  })
+
+  it('type filter files skilling tools apart from combat styles', () => {
+    // A skilling requirement (mining/woodcutting) wins over the melee attack style.
+    expect(typeFilterOf({ type: 'weapon', attackStyle: 'stab', requirements: { attack: 60, mining: 60 } })).toBe('skilling')
+    expect(typeFilterOf({ type: 'weapon', attackStyle: 'slash', requirements: { attack: 60, woodcutting: 60 } })).toBe('skilling')
+    // Pure combat gear falls back to its combat category.
+    expect(typeFilterOf({ type: 'weapon', attackStyle: 'stab', requirements: { attack: 60 } })).toBe('melee')
+    expect(typeFilterOf({ type: 'weapon', attackStyle: 'ranged' })).toBe('ranged')
+    expect(typeFilterOf({ type: 'weapon', attackStyle: 'magic' })).toBe('magic')
+  })
+
+  it('describes how an item is obtained from the live data', () => {
+    // Bronze dagger is smithed.
+    const dagger = describeObtainment(items['bronze_dagger'])
+    expect(dagger.some((s) => /Made with Smithing/.test(s))).toBe(true)
+    // A gem stolen from Tzraar surfaces the thieving source.
+    const sapphire = describeObtainment(items['sapphire'])
+    expect(sapphire.some((s) => /Stolen from/.test(s))).toBe(true)
   })
 
   it('flags weapons that have a special attack (25 canonical items)', () => {

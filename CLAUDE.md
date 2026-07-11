@@ -60,6 +60,7 @@
 
 ## 8) Drops & Data Authoring
 Full authoring checklist (items, drops, specials, collection log, monsters) → skill **`add-content`**. Non-negotiables: every referenced item must exist in `src/data/items.json`; item names **Title Case**; new boss/raid/minigame/clue unique needs its `src/data/collectionLog.json` slot + regression test in the same change.
+- **Armoury auto-listing**: the Armoury (`src/utils/armoury.js` → `ArmouryScreen`) lists every item with a **positive combat stat** — an `attackBonus`/`defenceBonus` line, or `otherBonus` `meleeStrength`/`rangedStrength`/`magicDamage`. New combat gear surfaces automatically once those bonuses are set (no registration), grouped by kind and filed under the type filter (Skilling/Melee/Magic/Ranged) via `typeFilterOf` — a non-combat skill requirement (Mining, etc.) files it under Skilling. The item modal's "How to obtain" comes from `describeObtainment` (skill product / thieving / hunter / monster drops), so wiring a new item into a skill recipe or drop table makes its source show up for free.
 
 ## 9) UI/Styling
 - Min tap target **44×44px**. Prefer Tailwind utilities + `:root` CSS variables.

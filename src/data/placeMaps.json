@@ -309,6 +309,12 @@
         "y": 263
       },
       {
+        "kind": "thieving",
+        "ref": "tzraar",
+        "x": 120,
+        "y": 340
+      },
+      {
         "kind": "gather",
         "ref": "pick_limpwurt_root",
         "x": 263,

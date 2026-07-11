@@ -9,12 +9,23 @@
 // Everything is presented as one flat list of kind groups, ordered alphabetically
 // (Skill Capes last), with items inside each group ordered by tier.
 import itemsData from '../data/items.json'
+import monstersData from '../data/monsters.json'
+import skillsData from '../data/skills.json'
 
 const hasPositive = (obj) => !!obj && Object.values(obj).some(v => typeof v === 'number' && v > 0)
 
-// An item belongs in the Armoury if it grants any positive attack or defence bonus.
+// The combat-relevant keys of otherBonus. fishingXpPercent, prayer, etc. are
+// skilling/utility bonuses, not combat stats, so they don't qualify an item.
+const COMBAT_OTHER_BONUS = ['meleeStrength', 'rangedStrength', 'magicDamage']
+const hasPositiveCombatOther = (obj) =>
+  !!obj && COMBAT_OTHER_BONUS.some(k => typeof obj[k] === 'number' && obj[k] > 0)
+
+// An item belongs in the Armoury if it grants any positive combat stat: an
+// attack or defence bonus, or a strength / ranged-strength / magic-damage bonus
+// (so strength amulets, combat rings and ammunition are included, not just
+// items with an attack/defence line).
 export function hasPositiveCombatBonus(item) {
-  return hasPositive(item?.attackBonus) || hasPositive(item?.defenceBonus)
+  return hasPositive(item?.attackBonus) || hasPositive(item?.defenceBonus) || hasPositiveCombatOther(item?.otherBonus)
 }
 
 export function hasSpecialAttack(item) {
@@ -46,6 +57,75 @@ export function categoryOf(item) {
 export function tierOf(item) {
   const reqs = Object.values(item?.requirements || {}).filter(v => typeof v === 'number')
   return reqs.length ? Math.min(...reqs) : 0
+}
+
+// Non-combat skills. An armoury item that requires one of these (a pickaxe's
+// Mining req, a hatchet's Woodcutting req, …) is filed under "Skilling" rather
+// than by its attack style, so tools group together in the type filter.
+const SKILLING_SKILLS = new Set([
+  'mining', 'woodcutting', 'fishing', 'cooking', 'smithing', 'fletching', 'crafting',
+  'herblore', 'agility', 'thieving', 'firemaking', 'farming', 'hunter', 'dungeoneering',
+  'runecraft', 'slayer', 'construction',
+])
+
+// The four Armoury type-filter buckets: 'skilling' | 'melee' | 'magic' | 'ranged'.
+// Skilling (a non-combat requirement) wins over the combat style, so a Dragon
+// Pickaxe files under Skilling even though it swings as a melee weapon.
+export function typeFilterOf(item) {
+  const reqs = item?.requirements || {}
+  if (Object.keys(reqs).some(k => SKILLING_SKILLS.has(k))) return 'skilling'
+  return categoryOf(item)
+}
+
+export const TYPE_FILTERS = [
+  { value: 'all', label: 'All gear' },
+  { value: 'skilling', label: 'Skilling' },
+  { value: 'melee', label: 'Melee' },
+  { value: 'magic', label: 'Magic' },
+  { value: 'ranged', label: 'Ranged' },
+]
+
+// How a player can obtain an item — a short list of source lines for the item
+// modal (crafted via a skill, dropped by monsters, stolen/hunted, clue/raid
+// reward). Empty when no source is found in the data.
+export function describeObtainment(item, data = {}) {
+  const id = item?.id
+  if (!id) return []
+  const items = data.items || itemsData
+  const skills = data.skills || skillsData
+  const monsters = data.monsters || monstersData
+  const out = []
+
+  // Made with a production skill (action.product === id).
+  for (const skill of Object.values(skills)) {
+    const action = (skill.actions || []).find(a => a.product === id)
+    if (action) { out.push(`Made with ${skill.name} (level ${action.level})`); break }
+  }
+
+  // Stolen from a Thieving target (npc drops or gem/seed reward tables).
+  for (const npc of skills.thieving?.npcs || []) {
+    const ids = [...(npc.drops || []).map(d => d.itemId), ...(npc.gems || []).map(g => g.itemId)]
+    if (ids.includes(id)) { out.push(`Stolen from ${npc.name}`); break }
+  }
+
+  // Caught via a Hunter action reward table.
+  for (const action of skills.hunter?.actions || []) {
+    const hit = (action.rewardTables || []).some(t => (t.rewards || []).some(r => (r.itemId || r) === id))
+    if (hit) { out.push(`Hunted via ${action.name}`); break }
+  }
+
+  // Dropped by monsters.
+  const droppers = []
+  for (const m of Object.values(monsters)) {
+    if ((m.drops || []).some(d => d.itemId === id)) droppers.push(m.name)
+  }
+  if (droppers.length) {
+    const shown = droppers.slice(0, 6).join(', ')
+    out.push(`Dropped by ${shown}${droppers.length > 6 ? `, and ${droppers.length - 6} more` : ''}`)
+  }
+
+  if (!out.length && items[id]?.shopValue > 0) out.push('Bought from shops or traded for coins')
+  return out
 }
 
 export const SKILL_CAPES_GROUP_KEY = 'skill_capes'

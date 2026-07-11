@@ -298,15 +298,27 @@ function collectionLogChunks() {
 
 function skillChunks() {
   const skills = readJson('skills.json')
+  const items = readJson('items.json')
+  const itemName = (id) => items[id]?.name || titleCaseId(id)
+  // Recipe/ingredient line for a production action: "needs 1 Marshflax + 1
+  // Crushed Bird's Nest → Lumira Brew". Only emitted when the action lists
+  // materials, so the chat helper can answer "how do I make X?" precisely.
+  const recipeOf = (a) => {
+    const mats = a.materials && typeof a.materials === 'object' ? Object.entries(a.materials) : []
+    if (!mats.length) return ''
+    const needs = mats.map(([id, qty]) => `${qty} ${itemName(id)}`).join(' + ')
+    const product = a.product ? ` → ${itemName(a.product)}` : ''
+    return `; needs ${needs}${product}`
+  }
   return Object.values(skills).map((s) => {
     const actions = (s.actions || []).slice(0, 40)
-    const lines = actions.map((a) => `${a.name} (level ${a.level}, ${a.xp} XP)`)
+    const lines = actions.map((a) => `${a.name} (level ${a.level}, ${a.xp} XP${recipeOf(a)})`)
     const more = (s.actions || []).length > 40 ? ` …and ${(s.actions || []).length - 40} more` : ''
     return {
       id: `skill_${s.id}`,
       title: `Skill training options: ${s.name}`,
-      tags: ['skill', 'skills', 'training', s.id],
-      text: `${s.name} training options with level requirements and XP per action: ${lines.join(', ')}${more}.`,
+      tags: ['skill', 'skills', 'training', 'ingredients', 'materials', 'recipe', s.id],
+      text: `${s.name} training options with level requirements, XP per action and any ingredients required to make each item: ${lines.join(', ')}${more}.`,
     }
   })
 }
