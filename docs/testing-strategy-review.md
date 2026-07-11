@@ -1,6 +1,6 @@
 # Testing Framework Review & Hardening Plan
 
-**Status: plan, not yet implemented.** A full review of PocketRPG's testing framework: what it covers, what it structurally cannot cover, which tests carry no value, and the mechanics needed so future logic ships proven by tests. Written for the implementing agent; measurements verified 2026-07-10 on `main` (e4f9020).
+**Status: plan, not yet implemented** — PR-by-PR execution playbook in `docs/testing-strategy-delivery-plan.md`. A full review of PocketRPG's testing framework: what it covers, what it structurally cannot cover, which tests carry no value, and the mechanics needed so future logic ships proven by tests. Written for the implementing agent; measurements verified 2026-07-10 on `main` (e4f9020).
 
 ## Method
 
