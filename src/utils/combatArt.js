@@ -95,6 +95,7 @@ export const MONSTER_ART = {
   "runestone_gargoyle": { icon: "gargoyle", accent: "#c0453b" },
   "bonelight_pyromancer": { icon: "pyromaniac", accent: "#c0453b" },
   "vicious_black_dragon": { icon: "dragon_head", accent: "#7a7f88" },
+  "black_dragon": { icon: "dragon_head", accent: "#7a7f88" },
   "cinderfang_reaver": { icon: "orc_head", accent: "#c0453b" },
   "ashen_marauder": { icon: "barbute", accent: "#c0453b" },
   "marshscale_shaman": { icon: "totem_head", accent: "#c0453b" },

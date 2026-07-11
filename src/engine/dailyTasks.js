@@ -1,4 +1,5 @@
 import dailyTasksData from '../data/dailyTasks.json'
+import { GATHERING_SKILLS } from '../utils/constants.js'
 
 export function taskById(id) {
   return dailyTasksData.find(t => t.id === id) ?? null
@@ -69,4 +70,19 @@ export function matchTaskProgress(task, event) {
 
 export function isComplete(taskState) {
   return (taskState.progress ?? 0) >= (taskState.target ?? 1)
+}
+
+// Builds daily-task events for skilling gains applied outside the live
+// SkillingScreen loop (idle catch-up, paid skips, background runner).
+// `task` is the saved active task ({ type: 'skill', skill } from SkillingScreen,
+// or { type: 'gather' } from GatherScreen); `itemsGained` is an itemId → qty map.
+export function skillingGainEvents(task, itemsGained) {
+  if (!itemsGained) return []
+  const skill = task?.type === 'skill' ? task.skill : undefined
+  const kind = skill && !GATHERING_SKILLS.includes(skill) ? 'skill_produce' : 'skill_gather'
+  const events = []
+  for (const [itemId, qty] of Object.entries(itemsGained)) {
+    if (qty > 0) events.push({ kind, skill, itemId, count: qty })
+  }
+  return events
 }
