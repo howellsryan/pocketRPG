@@ -86,14 +86,21 @@ describe('armoury classifier', () => {
     expect(hasPositiveCombatBonus({})).toBe(false)
   })
 
-  it('type filter files skilling tools apart from combat styles', () => {
-    // A skilling requirement (mining/woodcutting) wins over the melee attack style.
+  it('type filter files only gathering-tool weapons under Skilling', () => {
+    // A weapon that requires a gathering skill is a tool → Skilling.
     expect(typeFilterOf({ type: 'weapon', attackStyle: 'stab', requirements: { attack: 60, mining: 60 } })).toBe('skilling')
     expect(typeFilterOf({ type: 'weapon', attackStyle: 'slash', requirements: { attack: 60, woodcutting: 60 } })).toBe('skilling')
     // Pure combat gear falls back to its combat category.
     expect(typeFilterOf({ type: 'weapon', attackStyle: 'stab', requirements: { attack: 60 } })).toBe('melee')
     expect(typeFilterOf({ type: 'weapon', attackStyle: 'ranged' })).toBe('ranged')
     expect(typeFilterOf({ type: 'weapon', attackStyle: 'magic' })).toBe('magic')
+    // Slayer/Dungeoneering gate combat gear, not tools — never Skilling.
+    expect(typeFilterOf({ type: 'weapon', attackStyle: 'stab', requirements: { attack: 80, strength: 90, dungeoneering: 80 } })).toBe('melee')
+    expect(typeFilterOf({ type: 'weapon', attackStyle: 'magic', requirements: { magic: 90, dungeoneering: 80 } })).toBe('magic')
+    expect(typeFilterOf({ type: 'armour', slot: 'shield', requirements: { slayer: 85, attack: 50, strength: 85 } })).toBe('melee')
+    expect(typeFilterOf({ type: 'armour', slot: 'gloves', requirements: { attack: 80, strength: 80, defence: 80, slayer: 95 } })).toBe('melee')
+    // A skill cape is armour, not a tool — filed by combat category, not Skilling.
+    expect(typeFilterOf({ type: 'armour', slot: 'cape', requirements: { mining: 99 } })).toBe('melee')
   })
 
   it('describes how an item is obtained from the live data', () => {

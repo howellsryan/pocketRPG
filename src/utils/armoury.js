@@ -59,21 +59,24 @@ export function tierOf(item) {
   return reqs.length ? Math.min(...reqs) : 0
 }
 
-// Non-combat skills. An armoury item that requires one of these (a pickaxe's
-// Mining req, a hatchet's Woodcutting req, …) is filed under "Skilling" rather
-// than by its attack style, so tools group together in the type filter.
-const SKILLING_SKILLS = new Set([
-  'mining', 'woodcutting', 'fishing', 'cooking', 'smithing', 'fletching', 'crafting',
-  'herblore', 'agility', 'thieving', 'firemaking', 'farming', 'hunter', 'dungeoneering',
-  'runecraft', 'slayer', 'construction',
+// Gathering skills whose training uses an equipped tool-weapon (an axe for
+// Woodcutting, a pickaxe for Mining, a harpoon for Fishing, …). A weapon that
+// requires one of these is a skilling tool. Slayer, Dungeoneering and Agility
+// gate *combat* gear rather than tools, so they are deliberately excluded — a
+// Slayer-gated defender or gloves, or a Dungeoneering chaotic weapon, stays in
+// its Melee/Magic/Ranged bucket.
+const SKILLING_TOOL_SKILLS = new Set([
+  'woodcutting', 'mining', 'fishing', 'farming', 'hunter', 'firemaking',
 ])
 
 // The four Armoury type-filter buckets: 'skilling' | 'melee' | 'magic' | 'ranged'.
-// Skilling (a non-combat requirement) wins over the combat style, so a Dragon
-// Pickaxe files under Skilling even though it swings as a melee weapon.
+// Only a *weapon* that is a gathering tool counts as Skilling (a Dragon Axe,
+// used for Woodcutting); everything else — combat weapons, all armour — files
+// by its combat style even when a skill gates equipping it.
 export function typeFilterOf(item) {
+  const isWeapon = item?.type === 'weapon' || item?.slot === 'weapon'
   const reqs = item?.requirements || {}
-  if (Object.keys(reqs).some(k => SKILLING_SKILLS.has(k))) return 'skilling'
+  if (isWeapon && Object.keys(reqs).some(k => SKILLING_TOOL_SKILLS.has(k))) return 'skilling'
   return categoryOf(item)
 }
 
