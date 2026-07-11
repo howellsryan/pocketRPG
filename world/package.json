@@ -5,9 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "wrangler dev --env preview",
-    "dev:client": "vite --config client/vite.config.ts",
+    "dev:client": "node scripts/gen-prop-manifest.mjs && vite --config client/vite.config.ts",
     "dev:seed": "node scripts/dev-seed.mjs",
-    "build": "vite build --config client/vite.config.ts",
+    "gen:props": "node scripts/gen-prop-manifest.mjs",
+    "build": "node scripts/gen-prop-manifest.mjs && vite build --config client/vite.config.ts",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "ci": "npm run typecheck && npm run test && npm run build",

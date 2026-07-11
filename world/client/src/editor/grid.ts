@@ -19,6 +19,7 @@ export class GridView {
   private originX = 0
   private originZ = 0
   private hover: { x: number; z: number } | null = null
+  private selection: { x: number; z: number } | null = null
   private dragPreview: { x0: number; z0: number; x1: number; z1: number } | null = null
   private panning = false
   private panStart = { x: 0, y: 0, ox: 0, oz: 0 }
@@ -40,6 +41,16 @@ export class GridView {
   setDragPreview(p: { x0: number; z0: number; x1: number; z1: number } | null): void {
     this.dragPreview = p
     this.render()
+  }
+
+  setSelection(sel: { x: number; z: number } | null): void {
+    this.selection = sel
+    this.render()
+  }
+
+  /** Public tile lookup for external drop handlers (HTML5 drag-and-drop). */
+  tileAt(clientX: number, clientY: number): { x: number; z: number } {
+    return this.screenToTile(clientX, clientY)
   }
 
   /** Centres the grid and picks a zoom that fits it in the viewport. */
@@ -197,6 +208,13 @@ export class GridView {
       ctx.strokeStyle = '#ffffff'
       ctx.lineWidth = 2
       ctx.strokeRect(this.originX + xa * t, this.originZ + za * t, w * t, h * t)
+    }
+
+    // Selected item cell.
+    if (this.selection) {
+      ctx.strokeStyle = '#ffd24a'
+      ctx.lineWidth = 2.5
+      ctx.strokeRect(this.originX + this.selection.x * t + 1, this.originZ + this.selection.z * t + 1, t - 2, t - 2)
     }
 
     // Hover cell.

@@ -116,6 +116,32 @@
       #toast.show { opacity: 1; }
       #toast.err { border-color: var(--danger); color: var(--danger); }
       #toast.ok { border-color: var(--ok); }
+
+      #library { display: flex; flex-direction: column; gap: 3px; max-height: 42vh; overflow-y: auto; }
+      #library .cat { font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); margin-top: 6px; }
+      .libitem {
+        display: flex; align-items: center; gap: 7px; padding: 5px 7px; border-radius: 6px;
+        border: 1px solid transparent; cursor: grab; user-select: none;
+      }
+      .libitem:hover { background: var(--panel-2); border-color: var(--line); }
+      .libitem.active { background: var(--accent-2); border-color: var(--accent); }
+      .libitem .ic { font-size: 15px; width: 18px; text-align: center; }
+      .libitem .lbl { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .libitem .meta { color: var(--muted); font-size: 10px; }
+      .libitem .nomodel { color: var(--warn); font-size: 10px; }
+
+      #inspector .field { margin-bottom: 6px; }
+      #inspector .del { color: var(--danger); border-color: var(--danger); width: 100%; margin-top: 4px; }
+
+      #pickerModal {
+        position: fixed; inset: 0; background: rgba(6,8,10,0.9);
+        display: flex; align-items: center; justify-content: center; z-index: 45;
+      }
+      .pickerBox {
+        background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
+        padding: 14px; display: flex; flex-direction: column; gap: 10px; max-width: 90vw; max-height: 90vh;
+      }
+      #pickerCanvas { background: #0d0f0c; border-radius: 6px; cursor: crosshair; }
     </style>
   </head>
   <body>
@@ -141,10 +167,17 @@
           <button class="toolbtn" data-tool="rect">▭ Rectangle</button>
           <button class="toolbtn" data-tool="fill">🪣 Flood fill</button>
           <button class="toolbtn" data-tool="spawn">◎ Set spawn</button>
+          <button class="toolbtn" data-tool="select">➤ Select / move</button>
+          <button class="toolbtn" data-tool="portal">🚪 Portal</button>
           <button class="toolbtn" data-tool="pan">✋ Pan</button>
-          <div class="hint">Rectangle/fill paint blocked with right-drag, grass with left. Space+drag or middle-drag pans; wheel zooms.</div>
+          <div class="hint">Rectangle/fill paint blocked with right-drag, grass with left. Space+drag or middle-drag pans; wheel zooms. Select tool: click to pick, drag to move, Delete to remove.</div>
         </div>
-        <div class="group" id="libraryGroup" style="display:none"></div>
+        <div class="group" id="libraryGroup">
+          <h3>Library</h3>
+          <input id="librarySearch" class="full" placeholder="Search assets…" />
+          <div id="library"></div>
+          <div class="hint">Click an asset then click the map to place it, or drag it onto the map. Place repeatedly; press Esc to stop.</div>
+        </div>
       </div>
 
       <div id="center"><canvas id="grid"></canvas></div>
@@ -211,6 +244,17 @@
     </div>
 
     <div id="toast"></div>
+
+    <div id="pickerModal" style="display:none">
+      <div class="pickerBox">
+        <div class="row" style="justify-content:space-between">
+          <strong id="pickerTitle">Pick arrival tile</strong>
+          <button id="pickerCancel">Cancel</button>
+        </div>
+        <canvas id="pickerCanvas"></canvas>
+        <div class="hint">Click the tile the player arrives on in the destination zone.</div>
+      </div>
+    </div>
 
     <script type="module" src="/src/editor/main.ts"></script>
   </body>

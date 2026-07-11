@@ -1,11 +1,15 @@
 import { validateZone, type ZoneDef, type ZonePalette, type ZoneAmbience } from '../../../shared/zone'
+import { buildCatalog, type CatalogEntry, type CatalogGroup } from '../../../shared/catalog'
 import { EditorApi, type ZoneListEntry } from './api'
 import { EditorState, blankZone, paintTile, paintRect, floodFill, resizeZone } from './state'
 import { GridView, type TilePointer } from './grid'
 import { AMBIENCE_PRESETS, DEFAULT_AMBIENCE, DEFAULT_PALETTE, PALETTE_PRESETS, matchAmbience, matchPalette } from './presets'
+import { PROP_MODELS } from './propManifest'
+import { coordsOf, deleteItem, findItemAt, moveItem, placeEntry, placeExit, type Selection } from './placement'
+import { openArrivalPicker } from './picker'
 
 const TOKEN_KEY = 'world_editor_token'
-type Tool = 'paintWalkable' | 'paintBlocked' | 'rect' | 'fill' | 'spawn' | 'pan'
+type Tool = 'paintWalkable' | 'paintBlocked' | 'rect' | 'fill' | 'spawn' | 'select' | 'portal' | 'pan'
 
 const $ = <T = HTMLElement>(id: string) => document.getElementById(id) as T
 
@@ -14,6 +18,10 @@ let state: EditorState
 let grid: GridView
 let activeTool: Tool = 'paintWalkable'
 let zoneList: ZoneListEntry[] = []
+let catalog: CatalogGroup[] = []
+let placementEntry: CatalogEntry | null = null
+let draggedEntry: CatalogEntry | null = null
+let selection: Selection | null = null
 
 // ---- toast ------------------------------------------------------------------
 let toastTimer: ReturnType<typeof setTimeout> | null = null
@@ -83,11 +91,14 @@ async function boot(): Promise<void> {
   canvas.addEventListener('contextmenu', (e) => e.preventDefault())
 
   state.onChange(scheduleRefresh)
+  catalog = buildCatalog(PROP_MODELS)
   wireTopbar()
   wireTools()
   wireMeta()
   wirePresets()
   wirePlaytest()
+  wireLibrary()
+  wireCanvasDrop()
   wireKeyboard()
   window.addEventListener('beforeunload', (e) => {
     if (state.isDirty()) {
@@ -208,9 +219,49 @@ let paintValue: boolean | null = null
 let rectStart: { x: number; z: number } | null = null
 let rectBlocked = false
 
+let movingSelection = false
+
 function onTile(p: TilePointer): void {
+  // Placement mode (a library asset is armed) takes priority over the tool.
+  if (placementEntry && p.phase === 'down' && p.inside) {
+    const entry = placementEntry
+    state.mutate((d) => (selection = placeEntry(d, entry, p.x, p.z)))
+    refreshInspector()
+    return
+  }
+
   if (activeTool === 'pan') return
   const rightHeld = (p.buttons & 2) !== 0
+
+  if (activeTool === 'select') {
+    if (p.phase === 'down') {
+      selection = p.inside ? findItemAt(state.getDef(), p.x, p.z) : null
+      movingSelection = selection !== null
+      if (movingSelection) state.beginStroke()
+      refreshInspector()
+      refreshSelectionHighlight()
+    } else if (p.phase === 'move' && movingSelection && selection && (p.buttons & 1)) {
+      const sel = selection
+      state.applyStroke((d) => moveItem(d, sel, p.x, p.z))
+      refreshSelectionHighlight()
+    } else if (p.phase === 'up' && movingSelection) {
+      movingSelection = false
+      state.endStroke()
+      refreshInspector()
+    }
+    return
+  }
+
+  if (activeTool === 'portal') {
+    if (p.phase === 'down' && p.inside) {
+      state.mutate((d) => (selection = placeExit(d, p.x, p.z)))
+      refreshInspector()
+      refreshSelectionHighlight()
+      // Pick a destination in the inspector, then the arrival tile — placeExit
+      // defaults to a valid self-target so the zone is never left invalid.
+    }
+    return
+  }
 
   if (activeTool === 'spawn') {
     if (p.phase === 'down' && p.inside) state.mutate((d) => (d.spawn = { x: p.x, z: p.z }))
@@ -265,11 +316,28 @@ function wireTopbar(): void {
 function wireTools(): void {
   for (const btn of document.querySelectorAll<HTMLButtonElement>('#toolGroup [data-tool]')) {
     btn.addEventListener('click', () => {
-      activeTool = btn.dataset.tool as Tool
-      for (const b of document.querySelectorAll('#toolGroup [data-tool]')) b.classList.toggle('active', b === btn)
+      setTool(btn.dataset.tool as Tool)
     })
   }
   document.querySelector<HTMLButtonElement>('[data-tool="paintWalkable"]')!.classList.add('active')
+}
+
+function setTool(tool: Tool): void {
+  activeTool = tool
+  clearPlacement()
+  if (tool !== 'select') {
+    selection = null
+    refreshInspector()
+    refreshSelectionHighlight()
+  }
+  for (const b of document.querySelectorAll('#toolGroup [data-tool]')) {
+    b.classList.toggle('active', (b as HTMLElement).dataset.tool === tool)
+  }
+}
+
+function clearPlacement(): void {
+  placementEntry = null
+  for (const el of document.querySelectorAll('.libitem.active')) el.classList.remove('active')
 }
 
 function wireMeta(): void {
@@ -354,6 +422,18 @@ function wireKeyboard(): void {
       e.preventDefault()
       if (e.shiftKey) state.redo()
       else state.undo()
+      return
+    }
+    if (e.key === 'Escape') {
+      clearPlacement()
+      selection = null
+      refreshInspector()
+      refreshSelectionHighlight()
+      return
+    }
+    if ((e.key === 'Delete' || e.key === 'Backspace') && selection) {
+      e.preventDefault()
+      deleteSelection()
     }
   })
 }
@@ -362,6 +442,267 @@ function clampInt(raw: string, min: number, max: number): number {
   const n = Math.floor(Number(raw))
   if (!Number.isFinite(n)) return min
   return Math.max(min, Math.min(max, n))
+}
+
+// ---- library (drag-and-drop palette) ---------------------------------------
+function wireLibrary(): void {
+  const search = $<HTMLInputElement>('librarySearch')
+  search.addEventListener('input', () => renderLibrary(search.value.trim().toLowerCase()))
+  renderLibrary('')
+}
+
+function renderLibrary(query: string): void {
+  const host = $('library')
+  host.innerHTML = ''
+  for (const group of catalog) {
+    const entries = group.entries.filter((e) => !query || e.label.toLowerCase().includes(query))
+    if (entries.length === 0) continue
+    const head = document.createElement('div')
+    head.className = 'cat'
+    head.textContent = group.title
+    host.appendChild(head)
+    for (const entry of entries) host.appendChild(libItem(entry))
+  }
+}
+
+function libItem(entry: CatalogEntry): HTMLElement {
+  const el = document.createElement('div')
+  el.className = 'libitem'
+  el.draggable = true
+  const meta =
+    entry.kind === 'rock' || entry.kind === 'tree' ? `lvl ${entry.level}`
+    : entry.kind === 'npc' ? `cb ${entry.combatLevel}` : ''
+  el.innerHTML = `<span class="ic">${entry.icon}</span><span class="lbl">${escapeHtml(entry.label)}</span>` +
+    (meta ? `<span class="meta">${meta}</span>` : '') +
+    (entry.kind === 'npc' && !entry.hasModel ? '<span class="nomodel" title="No 3D model — renders as a placeholder box">◻</span>' : '')
+  el.addEventListener('click', () => {
+    const armed = placementEntry === entry
+    clearPlacement()
+    if (!armed) {
+      placementEntry = entry
+      el.classList.add('active')
+    }
+  })
+  el.addEventListener('dragstart', (e) => {
+    draggedEntry = entry
+    e.dataTransfer?.setData('text/plain', JSON.stringify(entry))
+  })
+  el.addEventListener('dragend', () => (draggedEntry = null))
+  return el
+}
+
+function wireCanvasDrop(): void {
+  const canvas = $<HTMLCanvasElement>('grid')
+  canvas.addEventListener('dragover', (e) => e.preventDefault())
+  canvas.addEventListener('drop', (e) => {
+    e.preventDefault()
+    // Prefer the same-page dragged entry (survives regardless of dataTransfer
+    // quirks); fall back to the serialized payload.
+    let entry = draggedEntry
+    if (!entry) {
+      const raw = e.dataTransfer?.getData('text/plain')
+      if (!raw) return
+      try {
+        entry = JSON.parse(raw) as CatalogEntry
+      } catch {
+        return
+      }
+    }
+    const placed = entry
+    const { x, z } = grid.tileAt(e.clientX, e.clientY)
+    if (x < 0 || z < 0 || x >= state.getDef().width || z >= state.getDef().height) return
+    state.mutate((d) => (selection = placeEntry(d, placed, x, z)))
+    refreshInspector()
+    refreshSelectionHighlight()
+  })
+}
+
+// ---- inspector --------------------------------------------------------------
+function refreshSelectionHighlight(): void {
+  grid.setSelection(selection ? coordsOf(state.getDef(), selection) : null)
+}
+
+function refreshInspector(): void {
+  const host = $('inspector')
+  const def = state.getDef()
+  if (!selection) {
+    host.innerHTML = '<div class="hint">Select a placed item to edit it.</div>'
+    return
+  }
+  const { group, index } = selection
+  host.innerHTML = ''
+
+  if (group === 'objects') {
+    const obj = def.objects[index]
+    if (!obj) return void (selection = null)
+    if (obj.type === 'rock') host.appendChild(dropdownField('Ore', obj.rock ?? '', gatherOptions('rock'), (v) => state.mutate((d) => (d.objects[index] as { rock?: string }).rock = v)))
+    else if (obj.type === 'tree') host.appendChild(dropdownField('Tree', obj.tree ?? '', gatherOptions('tree'), (v) => state.mutate((d) => (d.objects[index] as { tree?: string }).tree = v)))
+    else host.appendChild(textLine(`Bank chest`))
+    host.appendChild(coordLine(obj.x, obj.z))
+    host.appendChild(idLine(obj.id))
+  } else if (group === 'npcs') {
+    const npc = def.npcs[index]
+    if (!npc) return void (selection = null)
+    host.appendChild(dropdownField('Monster', npc.monsterId, monsterOptions(), (v) => state.mutate((d) => (d.npcs[index].monsterId = v))))
+    host.appendChild(coordLine(npc.x, npc.z))
+    host.appendChild(wanderFields(index))
+    host.appendChild(idLine(npc.id))
+  } else if (group === 'exits') {
+    const exit = (def.exits ?? [])[index]
+    if (!exit) return void (selection = null)
+    host.appendChild(inputField('Label', exit.label, (v) => state.mutate((d) => (d.exits![index].label = v))))
+    host.appendChild(dropdownField('To zone', exit.toZone, zoneOptions(), (v) => void retargetExit(index, v)))
+    const arrival = document.createElement('button')
+    arrival.textContent = `Arrival: (${exit.toX}, ${exit.toZ}) — pick…`
+    arrival.style.width = '100%'
+    arrival.addEventListener('click', openArrivalPickerForSelection)
+    host.appendChild(arrival)
+    host.appendChild(coordLine(exit.x, exit.z))
+    host.appendChild(idLine(exit.id))
+  } else {
+    const prop = (def.props ?? [])[index]
+    if (!prop) return void (selection = null)
+    host.appendChild(textLine(`Prop: ${prop.model}`))
+    host.appendChild(sliderField('Rotation', prop.rot ?? 0, 0, Math.PI * 2, 0.05, (v) => state.mutate((d) => (d.props![index].rot = v))))
+    host.appendChild(sliderField('Scale', prop.scale ?? 1, 0.3, 3, 0.05, (v) => state.mutate((d) => (d.props![index].scale = v))))
+    host.appendChild(coordLine(prop.x, prop.z))
+  }
+
+  const del = document.createElement('button')
+  del.className = 'del'
+  del.textContent = 'Delete (Del)'
+  del.addEventListener('click', deleteSelection)
+  host.appendChild(del)
+}
+
+function deleteSelection(): void {
+  if (!selection) return
+  const sel = selection
+  state.mutate((d) => deleteItem(d, sel))
+  selection = null
+  refreshInspector()
+  refreshSelectionHighlight()
+}
+
+function gatherOptions(kind: 'rock' | 'tree'): { value: string; label: string }[] {
+  const group = catalog.find((g) => g.title === 'Gathering nodes')
+  return (group?.entries ?? [])
+    .filter((e) => e.kind === kind)
+    .map((e) => ({ value: kind === 'rock' ? (e as { rock: string }).rock : (e as { tree: string }).tree, label: e.label }))
+}
+
+function monsterOptions(): { value: string; label: string }[] {
+  const group = catalog.find((g) => g.title === 'Monsters')
+  return (group?.entries ?? []).map((e) => ({ value: (e as { monsterId: string }).monsterId, label: e.label }))
+}
+
+function zoneOptions(): { value: string; label: string }[] {
+  return zoneList.map((z) => ({ value: z.id, label: `${z.name} (${z.id})` }))
+}
+
+function fieldRow(label: string, control: Node): HTMLElement {
+  const row = document.createElement('div')
+  row.className = 'field'
+  const l = document.createElement('label')
+  l.textContent = label
+  row.appendChild(l)
+  row.appendChild(control)
+  return row
+}
+
+function inputField(label: string, value: string, onChange: (v: string) => void): HTMLElement {
+  const input = document.createElement('input')
+  input.value = value
+  input.addEventListener('input', () => onChange(input.value))
+  return fieldRow(label, input)
+}
+
+function dropdownField(label: string, value: string, options: { value: string; label: string }[], onChange: (v: string) => void): HTMLElement {
+  const sel = document.createElement('select')
+  for (const o of options) {
+    const opt = document.createElement('option')
+    opt.value = o.value
+    opt.textContent = o.label
+    sel.appendChild(opt)
+  }
+  sel.value = value
+  sel.addEventListener('change', () => onChange(sel.value))
+  return fieldRow(label, sel)
+}
+
+function sliderField(label: string, value: number, min: number, max: number, step: number, onChange: (v: number) => void): HTMLElement {
+  const input = document.createElement('input')
+  input.type = 'range'
+  input.min = String(min)
+  input.max = String(max)
+  input.step = String(step)
+  input.value = String(value)
+  input.addEventListener('input', () => onChange(Number(input.value)))
+  return fieldRow(label, input)
+}
+
+function wanderFields(index: number): HTMLElement {
+  const wrap = document.createElement('div')
+  const npc = state.getDef().npcs[index]
+  const mk = (key: 'x' | 'z' | 'w' | 'h', label: string) => {
+    const input = document.createElement('input')
+    input.type = 'number'
+    input.value = String(npc.wander[key])
+    input.addEventListener('input', () => state.mutate((d) => (d.npcs[index].wander[key] = clampInt(input.value, 0, 256))))
+    return fieldRow(`Wander ${label}`, input)
+  }
+  for (const row of [mk('x', 'x'), mk('z', 'z'), mk('w', 'w'), mk('h', 'h')]) wrap.appendChild(row)
+  return wrap
+}
+
+function coordLine(x: number, z: number): HTMLElement {
+  return textLine(`Tile: (${x}, ${z})`)
+}
+
+function idLine(id: string): HTMLElement {
+  return textLine(`Id: ${id}`)
+}
+
+function textLine(text: string): HTMLElement {
+  const el = document.createElement('div')
+  el.className = 'hint'
+  el.textContent = text
+  return el
+}
+
+/** Retargets an exit to a new destination zone: sets a valid arrival (the
+ * target's spawn) so the def never goes invalid, then opens the picker to refine
+ * it. */
+async function retargetExit(index: number, toZone: string): Promise<void> {
+  let spawn = { x: 0, z: 0 }
+  try {
+    spawn = (await api.getZone(toZone)).def.spawn
+  } catch {
+    /* keep 0,0 — picker will correct it */
+  }
+  state.mutate((d) => {
+    const e = d.exits![index]
+    e.toZone = toZone
+    e.toX = spawn.x
+    e.toZ = spawn.z
+  })
+  refreshInspector()
+  openArrivalPickerForSelection()
+}
+
+function openArrivalPickerForSelection(): void {
+  if (!selection || selection.group !== 'exits') return
+  const sel = selection
+  const exit = (state.getDef().exits ?? [])[sel.index]
+  if (!exit) return
+  void openArrivalPicker(api, exit.toZone, (x, z) => {
+    state.mutate((d) => {
+      const e = d.exits![sel.index]
+      e.toX = x
+      e.toZ = z
+    })
+    refreshInspector()
+  })
 }
 
 // ---- refresh ----------------------------------------------------------------
@@ -376,10 +717,14 @@ function scheduleRefresh(): void {
 }
 
 function refreshAll(): void {
+  // A structural change (undo/redo/load) can invalidate the selection index.
+  if (selection && !coordsOf(state.getDef(), selection)) selection = null
   grid.setDef(state.getDef())
   refreshMeta()
   refreshValidation()
   refreshStatus()
+  refreshInspector()
+  refreshSelectionHighlight()
 }
 
 function setIfBlurred(id: string, value: string): void {
