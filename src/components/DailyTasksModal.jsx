@@ -3,17 +3,20 @@ import Modal from './Modal.jsx'
 import GameIcon from './GameIcon.jsx'
 import GildedComplete from './GildedComplete.jsx'
 import { COMPLEXITY_COLORS, COMPLEXITY_ORDER } from '../utils/complexityColors.js'
-import { getMonsterArt } from '../utils/combatArt.js'
+import { getMonsterArt, getRaidArt } from '../utils/combatArt.js'
 
-// Kill tasks store the raw monster id as `icon`, which is not a glyph key —
-// resolve their emblem + accent through the combat art table instead.
-// combatArt.js lives in the lazy game chunk while this modal is core, so the
-// single-file build must guard the binding (same pattern as gameIconsData).
+// Kill/raid tasks store a raw monster or raid id as `icon`, which is not a
+// glyph key — resolve their emblem + accent through the combat art table
+// instead. combatArt.js lives in the lazy game chunk while this modal is
+// core, so the single-file build must guard the binding (same pattern as
+// gameIconsData).
 function taskIconArt(def) {
   const trigger = def?.trigger
-  if ((trigger?.type === 'monster_kill' || trigger?.type === 'boss_kill') &&
-      typeof getMonsterArt === 'function') {
-    return getMonsterArt({ id: trigger.monsterId })
+  if (trigger?.type === 'monster_kill' || trigger?.type === 'boss_kill') {
+    return typeof getMonsterArt === 'function' ? getMonsterArt({ id: trigger.monsterId }) : null
+  }
+  if (trigger?.type === 'raid_complete' && trigger.raidId !== 'any') {
+    return typeof getRaidArt === 'function' ? getRaidArt(trigger.raidId) : null
   }
   return null
 }

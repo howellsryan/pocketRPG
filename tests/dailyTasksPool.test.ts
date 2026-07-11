@@ -5,7 +5,7 @@ import itemsData from '../src/data/items.json'
 import raidsData from '../src/data/raids.json'
 import gameIcons from '../src/data/gameIcons.json'
 import bespokeIcons from '../src/data/bespokeIcons.json'
-import { MONSTER_ART, getMonsterArt } from '../src/utils/combatArt.js'
+import { MONSTER_ART, RAID_ART, getMonsterArt, getRaidArt } from '../src/utils/combatArt.js'
 
 const TIERS = ['Novice', 'Intermediate', 'Experienced', 'Master', 'Grandmaster']
 
@@ -80,9 +80,24 @@ describe('dailyTasks.json pool integrity', () => {
     }
   })
 
-  // Non-kill tasks render `icon` directly as a GameIcon glyph key.
-  it('every non-kill task icon resolves to a glyph', () => {
-    const rest = pool.filter(t => t.trigger?.type !== 'monster_kill' && t.trigger?.type !== 'boss_kill')
+  // Raid tasks render their icon via getRaidArt (DailyTasksModal), same as
+  // kill tasks; every raid_complete task needs a curated RAID_ART entry.
+  it('every raid task raidId has combat art with a real glyph', () => {
+    const raidTasks = pool.filter(t => t.trigger?.type === 'raid_complete' && t.trigger.raidId !== 'any')
+    for (const task of raidTasks) {
+      const id = task.trigger.raidId
+      expect(RAID_ART, `${task.id}: raidId "${id}" has no RAID_ART entry`).toHaveProperty(id)
+      const art = getRaidArt(id)
+      const hasGlyph = art.icon in gameIcons || art.icon in bespokeIcons
+      expect(hasGlyph, `${task.id}: art icon "${art.icon}" not in gameIcons/bespokeIcons`).toBe(true)
+    }
+  })
+
+  // Every other task (skills, clues, minigames, etc.) renders `icon` directly
+  // as a GameIcon glyph key.
+  it('every remaining task icon resolves to a glyph', () => {
+    const rest = pool.filter(t =>
+      t.trigger?.type !== 'monster_kill' && t.trigger?.type !== 'boss_kill' && t.trigger?.type !== 'raid_complete')
     for (const task of rest) {
       const hasGlyph = task.icon in gameIcons || task.icon in bespokeIcons
       expect(hasGlyph, `${task.id}: icon "${task.icon}" not in gameIcons/bespokeIcons`).toBe(true)
