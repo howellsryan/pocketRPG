@@ -13,8 +13,7 @@ HARD BAN — NEVER put any of these in the title or body (no exceptions):
   - GitHub URLs, secrets, tokens, hostnames, or internal-only notes
 
 These are commit-message trailers. Keep them in commits ONLY — never let them
-reach the PR title/body. The Discord workflow now strips and then hard-fails on
-any that slip through (.github/workflows/discord-changelog.yml), so a leak
-blocks the changelog post entirely. Don't rely on it — keep them out.
+reach the PR title/body. Nothing strips them automatically: whatever is left in
+this body publishes verbatim to Discord. Check before you merge.
 ================================================================================
 -->
