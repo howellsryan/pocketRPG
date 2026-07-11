@@ -2877,6 +2877,7 @@ function GameApp() {
       case SCREENS.BANK:      return <BankScreen onBack={returnNav || backToPrev} />
       case SCREENS.BANK_HUB:  return <BankHubScreen onNavigate={navigate} />
       case SCREENS.COMBAT:    return <CombatScreen onNavigate={navigate} initialMonsterId={actionData?.monsterId} initialRaidId={actionData?.raidId} onCombatStatusChange={setIsInCombat} onBack={stopBackNav} onStopBack={stopBackNav} />
+      case SCREENS.DUNGEONS:  return <CombatScreen onNavigate={navigate} dungeonPlaceId={actionData?.placeId} onCombatStatusChange={setIsInCombat} onBack={stopBackNav} onStopBack={stopBackNav} />
       case SCREENS.SKILLS:    return <SkillingScreen initialSkillId={actionData?.skillId} initialActionId={actionData?.actionId} initialMasterId={actionData?.masterId} initialLocationId={actionData?.locationId} idleResult={idleResult} onNavigate={navigate} onBack={stopBackNav} onStopBack={stopBackNav} />
       case SCREENS.GATHER:    return <GatherScreen initialTaskId={actionData?.gatherTaskId} idleResult={idleResult} onBack={stopBackNav} onStopBack={stopBackNav} />
       case SCREENS.AGILITY:     return <AgilityScreen initialActionId={actionData?.actionId} idleResult={idleResult} onBack={stopBackNav} onStopBack={stopBackNav} />

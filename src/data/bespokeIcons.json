@@ -3130,5 +3130,9 @@
   "zyrite_shard": {
     "body": "<defs><linearGradient id=\"zyrite_shard_body\" x1=\"0.2\" y1=\"0\" x2=\"0.75\" y2=\"1\"><stop offset=\"0\" stop-color=\"#6a3040\"/><stop offset=\"0.5\" stop-color=\"#3a2028\"/><stop offset=\"1\" stop-color=\"#1a1014\"/></linearGradient></defs><g stroke=\"#1a1410\" stroke-width=\"13\" stroke-linejoin=\"round\" stroke-linecap=\"round\"><path d=\"M 256 76 L 308 174 L 340 306 L 256 452 L 172 306 L 204 174 Z\" fill=\"url(#zyrite_shard_body)\"/><path d=\"M 256 76 L 204 174 L 256 210 Z\" fill=\"#6a3040\" stroke=\"#1a1014\" stroke-width=\"8\" opacity=\"0.6\"/><path d=\"M 256 76 L 308 174 L 256 210 Z\" fill=\"#1a1014\" stroke=\"#1a1014\" stroke-width=\"8\" opacity=\"0.5\"/><path d=\"M 228 96 C 222 140 224 196 228 250\" stroke=\"#6a3040\" stroke-width=\"9\" fill=\"none\" opacity=\"0.65\"/><path d=\"M 338 148 L 360 196 L 374 270 L 338 356 L 316 270 L 324 196 Z\" fill=\"url(#zyrite_shard_body)\" stroke=\"#1a1410\" stroke-width=\"10\"/></g>",
     "viewBox": null
+  },
+  "dungeon": {
+    "body": "<g stroke=\"#20242a\" stroke-width=\"16\" stroke-linejoin=\"round\" stroke-linecap=\"round\"><g fill=\"#bcc2cb\"><path d=\"M96 168 H176 V104 H96 Z\"/><path d=\"M216 168 H296 V104 H216 Z\"/><path d=\"M336 168 H416 V104 H336 Z\"/></g><path d=\"M96 168 H416 V452 H96 Z\" fill=\"#bcc2cb\"/><path d=\"M186 452 L186 306 A70 70 0 0 1 326 306 L326 452 Z\" fill=\"#23282e\" stroke=\"#20242a\" stroke-width=\"12\"/></g><g fill=\"#c7ccd4\"><path d=\"M210 258 H222 V452 H210 Z\"/><path d=\"M250 246 H262 V452 H250 Z\"/><path d=\"M290 258 H302 V452 H290 Z\"/><path d=\"M190 318 H322 V330 H190 Z\"/><path d=\"M190 388 H322 V400 H190 Z\"/></g>",
+    "viewBox": null
   }
 }

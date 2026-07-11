@@ -37,6 +37,10 @@ export const CATEGORY_ART = {
   "ashveil_highlands": { icon: "cut_palm", accent: "#8db04a", blurb: "Beasts of the ashen wilds" },
   "ironhold_fortress": { icon: "anvil", accent: "#9aa3ac", blurb: "Guardians of the iron keep" },
   "verdant_wilds": { icon: "wolf_trap", accent: "#5fae5f", blurb: "Predators of the deep wood" },
+  // Dungeon-screen sections (per-place foe groups) — the Dungeons view groups a
+  // place's foes into Monsters / Bosses rather than the world-wide categories above.
+  "monsters": { icon: "death_skull", accent: "#cdd6e0", blurb: "Beasts that prowl these grounds" },
+  "bosses": { icon: "crowned_skull", accent: "#d8b13a", blurb: "The mighty rulers of this place" },
 }
 
 // Raid id -> emblem + accent.

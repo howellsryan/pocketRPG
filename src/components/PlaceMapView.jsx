@@ -70,7 +70,9 @@ export default function PlaceMapView({ place, onClose, onActivate, onNavigate })
       return
     }
     if (type === 'screen') {
-      onNavigate?.(spot.screen)
+      // The Dungeon spot needs to know which place's foes to show, and a
+      // returnTo so its back button comes home to this map.
+      onNavigate?.(spot.screen, spot.screen === SCREENS.DUNGEONS ? { placeId: place.id, returnTo } : undefined)
       return
     }
     if (desc.refs.length === 1) onActivate?.(spot.kind, desc.refs[0])
