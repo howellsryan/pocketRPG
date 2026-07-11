@@ -133,6 +133,12 @@ describe('editor API auth', () => {
     expect(res.status).toBe(401)
   })
 
+  it('tolerates a trailing newline in the stored secret (wrangler paste footgun)', async () => {
+    const { env } = makeEnv({ WORLD_EDITOR_TOKEN: 'secret\n' })
+    const res = await handleEditorRequest(req('GET', undefined, 'secret'), env, '/zones')
+    expect(res.status).toBe(200)
+  })
+
   it('answers a CORS preflight for a workers.dev origin', async () => {
     const { env } = makeEnv()
     const res = await handleEditorRequest(req('OPTIONS', undefined, null, 'https://x.preview.workers.dev'), env, '/zones')

@@ -54,10 +54,12 @@ function json(request: Request, body: unknown, status = 200): Response {
 }
 
 function authorized(request: Request, env: Env): 'ok' | 'disabled' | 'denied' {
-  const secret = env.WORLD_EDITOR_TOKEN
+  // Trim both sides: `wrangler secret put` commonly stores a trailing newline
+  // (piped/pasted value), which the browser-trimmed token would never match.
+  const secret = env.WORLD_EDITOR_TOKEN?.trim()
   if (!secret) return 'disabled'
   const header = request.headers.get('Authorization') ?? ''
-  const token = header.startsWith('Bearer ') ? header.slice(7) : ''
+  const token = (header.startsWith('Bearer ') ? header.slice(7) : '').trim()
   return token && token === secret ? 'ok' : 'denied'
 }
 
