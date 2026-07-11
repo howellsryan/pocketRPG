@@ -3,8 +3,8 @@
 The checklist for taking any equippable asset from "I have a GLB / I want to
 generate one" to "live on the hero in game". Follow the steps in order; each
 one says which tool to run and what you should see. Deep technical detail
-lives in `docs/gear-3d-pipeline.md` (armour), `.claude/rules/tripo-mcp.md`
-(weapons/asset hosting), `docs/hero-animation-retarget-guide.md` (animations).
+lives in `docs/gear-3d-pipeline.md` (armour, weapons, R2 asset hosting) and
+`docs/hero-animation-retarget-guide.md` (animations).
 
 **The one manual step is the fit.** Automatic fitting was tried hard (three
 different algorithms over two days) and fails structurally: an asset authored
@@ -93,9 +93,11 @@ node scripts/process-3d-model.mjs <item>.raw.glb <item>.glb --ratio 1.0 --tex 51
 ## Step 6 — Host the file
 
 - Small/base items: copy into `public/3d-samples/` (served from the repo).
-- Or upload to R2 via `npm run import:model` / the tripo bridge and use the
-  `/api/tripo-assets/<id>` path in the registry; run `npm run promote:assets`
-  after merge to copy preview-bucket assets to production.
+- Or upload the processed GLB to R2 directly (`wrangler r2 object put
+  pocketrpg-assets/models/<id>.vN.glb --file <id>.glb`) and reference the
+  `/api/tripo-assets/models/<id>.vN.glb` path in the registry. Preview and
+  production buckets are separate — upload to each (`pocketrpg-assets-preview`
+  vs `pocketrpg-assets`) before the entry works in that environment.
 
 ## Step 7 — Tier recolours (metal lines)
 
@@ -144,5 +146,5 @@ same slot — a test enforces it):
 ## Step 10 — Ship
 
 Commit gate (`npm test && npm run ci`), push, check the branch preview
-deploy, then merge. If assets were uploaded to R2, `npm run promote:assets`
-after the merge.
+deploy, then merge. R2-hosted assets must be uploaded to the production
+bucket (`pocketrpg-assets`) as well as preview before they resolve in prod.

@@ -44,7 +44,6 @@ Fires when adding/editing game content in `src/data`. Items/drops (referenced it
 |---|---|---|
 | `.claude/rules/pvp.md` | `functions/api/pvp/**`, `functions/_lib/pvp*`, `src/engine/pvp*`, `src/data/pvpBots.json`, `functions/api/leaderboard.js` | Matchmaking, save-lockdown, special-energy/equip-swap timing, magic parity, bot system |
 | `.claude/rules/mcp.md` | `functions/api/mcp.js`, `functions/_lib/mcp/**`, OAuth paths, consent screen, MCP tests | MCP architecture, bridge tools vs save-intents, schema/tools/test trio |
-| `.claude/rules/tripo-mcp.md` | `functions/api/tripo-mcp.js`, `functions/api/tripo-assets/**`, `functions/_lib/tripo/**` | Tripo bridge architecture, tool surface, R2 bucket |
 | `.claude/rules/chat.md` | `functions/api/chat.js`, `functions/_lib/chat/**`, `ChatWidget.jsx`, `docs/game-guide.md`, `scripts/gen-chat-knowledge.cjs` | Chatbot model chain, progressive tool exposure, write gating + action fee, spend budgets, knowledge index |
 
 ## 4) Authoring practices (for new skills/rules)
