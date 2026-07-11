@@ -96,9 +96,43 @@ Shared step for PR 6, spent by the rest: **`tests/helpers/d1.ts`** — a fake D1
 
 Create `tests/spec/`, one file per invariant domain (`skipHour`, `prayerDrain`, `comboFood`, `inventoryCap`, `journeys`, `dailyTasks`, `dragonfire`, `specialAttacks`). Mostly **move + rename** existing tests; write new ones only for CLAUDE.md §4–§7 invariants with no current test. Header comment per file: the invariant, its CLAUDE.md section, the source-of-truth module. Update `TESTING.md`'s map. Optional afterwards, out-of-band: a monthly Stryker mutation run over `src/engine` — never in the PR gate.
 
+## PR 16 — Drop-table audit script for new monsters / bosses / raids (on-demand, not a build gate)
+
+**Why this is separate from the suite.** `tests/data-contracts.test.ts` already validates drops *structurally* — item exists, `chance ∈ [0,1]`, `quantity` ordered — and that runs in the build. It cannot answer "are these drop **rates** what we expect?", because that's a judgement call against economy/XP thresholds, not a binary. Baking those thresholds into the build would either be too loose to help or fire false failures on every unrelated PR. So this is an **author-run audit**: run it when you add or edit a monster/boss/raid, read the report, decide. It is deliberately **excluded from `npm run ci` and the `prebuild` hook**.
+
+**Scope**: new `scripts/check-drops.cjs`, `package.json` script, one line in the `add-content` skill. No change to `logic-regression.yml`.
+
+**Data shapes it reads** (`src/data/monsters.json`, `raids.json`, `items.json`, `collectionLog.json`):
+- Monster/`always` drop: `{ itemId, quantity: number | [min,max], chance: 0..1 }`. Bosses are `monsters.json` entries flagged `boss: true`.
+- Raid unique: `rewards.unique = { chance, items: [{ itemId, weight }] }`; per-item effective rate = `unique.chance × weight / Σweight`.
+
+**Invocation**:
+```
+npm run check:drops -- <monsterId|raidId>   # audit one new/edited entry (the normal case)
+npm run check:drops -- --all                 # sweep everything (spot-check the whole economy)
+```
+Exit non-zero **only on hard errors** (below) so it *can* be wired into a pre-content hook later if wanted; warnings print and exit 0.
+
+**Hard errors (exit 1)** — these are correctness, and belong here rather than the build only because they're cheap to co-locate with the economic checks:
+- Dangling `itemId` (not in `items.json`), `chance` outside `(0,1]`, malformed `quantity`.
+- A boss/raid **unique** drop with no matching slot in `src/data/collectionLog.json` (mirrors the `add-content` collection-log invariant; today only enforced by a hand-written regression test).
+- Boss estimated **Slayer XP/hr > 2× the best regular monster** (CLAUDE.md §8 invariant — uses `BOSS_SLAYER_TASK_XP_MULTIPLIER` from `src/engine/slayerRewards.js`; flags inflated explicit `slayerXP`).
+
+**Warnings (exit 0, author reviews)** — the "are the rates what we expect" report:
+- **Expected value per kill**: `Σ(chance × avgQty × item.shopValue)`; derive gp/hr from an estimated kill time (HP / assumed DPS band) and flag outliers vs monsters of similar `combatLevel`.
+- **Rarest unique rate** as `1/N` kills (monster) or `1/N` completions (raid); flag uniques rarer than the rarest existing comparable, or common enough to devalue the drop.
+- **Drop-table sanity**: chances summing implausibly, a `[min,max]` band an order of magnitude off its tier, a unique whose `shopValue` sits outside the band of that boss/raid's other uniques.
+- **Combat XP/hr** for the monster vs its tier, to catch an accidental XP piñata.
+
+Output is a compact per-entry table (value/kill, gp/hr, XP/hr, rarest-unique 1/N, pass/warn/fail per check) the author eyeballs against neighbours in the same tier. Keep the comparison cohort automatic (same `combatLevel` band / same raid group) so the author needn't supply baselines.
+
+**Wire-up**: add one line to `.claude/skills/add-content/SKILL.md` under "After the change" — "New/edited monster/boss/raid → run `npm run check:drops -- <id>` and review the economy report" — so the audit is part of the authoring workflow, not a forgotten script. This is the only edit outside `scripts/` and `package.json`.
+
+**Acceptance**: running `--all` on current `main` exits 0 (today's content is the baseline — if it surfaces a real existing outlier, note it in the PR, don't "fix" the content in this PR); a deliberately broken fixture (dangling item; a unique with no log slot) exits 1; the `add-content` skill references it.
+
 ## Sequencing summary
 
-PR 1 is independent — ship immediately. PRs 2 → 3 → 4 → 5 build the framework, in order. PRs 6–11 are parallelisable once 2–3 land (they're what makes the ratchet numbers fall). PRs 12–14 in order, after 11. PR 15 last. Flip the PR 2 ratchet and PR 3 gate to blocking one release after they've run quietly.
+PR 1 is independent — ship immediately. PRs 2 → 3 → 4 → 5 build the framework, in order. PRs 6–11 are parallelisable once 2–3 land (they're what makes the ratchet numbers fall). PRs 12–14 in order, after 11. PR 15 last. PR 16 is independent of the whole series — it touches only `scripts/`, `package.json`, and the `add-content` skill, so it can land any time. Flip the PR 2 ratchet and PR 3 gate to blocking one release after they've run quietly.
 
 ## Definition of done
 
