@@ -1,5 +1,5 @@
 import { Component } from 'preact'
-import { useState, useEffect, useRef } from 'preact/hooks'
+import { useState, useEffect, useRef, useMemo } from 'preact/hooks'
 import { useGame } from '../state/gameState.jsx'
 import { usePvp } from '../state/pvpState.jsx'
 import PvpLobbyModal from './PvpLobbyModal.jsx'
@@ -34,6 +34,8 @@ import { pullSave, applyCloudSave, requestCriticalPushSave, pushNow } from '../c
 import { pvpApi } from '../cloud/pvp.js'
 import { triggerOneLifeDeath } from '../utils/oneLifeDeath.js'
 import monstersData from '../data/monsters.json'
+import worldData from '../data/world.json'
+import { placeActivities } from '../engine/worldContent.js'
 import questsData from '../data/quests.json'
 import itemsData from '../data/items.json'
 import prayersData from '../data/prayers.json'
@@ -156,6 +158,25 @@ function getMonsterCategoryKey(monsterId) {
   return MONSTER_CATEGORY_KEY[monsterId]
 }
 
+// Dungeon mode (per-place foe list): the place's combat monsters split into
+// Monsters / Bosses plus its raids — the same rows the world-wide picker shows,
+// filtered to one place and re-grouped. Refs come from the same
+// worldActivities.json index that gates a fight's start, so a dungeon can never
+// list a foe the place doesn't actually offer.
+function buildDungeonData(placeId) {
+  const acts = placeActivities(placeId)
+  const combatIds = acts.filter(a => a.kind === 'combat').map(a => a.ref).filter(id => monstersData[id])
+  const raidIds = acts.filter(a => a.kind === 'raid').map(a => a.ref).filter(id => raidsData[id])
+  const categories = []
+  const monsters = combatIds.filter(id => !monstersData[id].boss)
+  const bosses = combatIds.filter(id => monstersData[id].boss)
+  if (monsters.length) categories.push({ key: 'monsters', label: 'Monsters', icon: '⚔️', ids: monsters })
+  if (bosses.length) categories.push({ key: 'bosses', label: 'Bosses', icon: '👑', ids: bosses })
+  const raids = {}
+  for (const id of raidIds) raids[id] = raidsData[id]
+  return { categories, raids }
+}
+
 const MONSTER_ICONS = {
   field_chicken: '🐔', cave_goblin: '👺', pasture_bull: '🐄', broodfang_spider: '🕷️',
   stoneback_crab: '🦀', duneback_crab: '🦀', highland_giant: '👊', briar_giant: '🌿', ember_giant: '🔥',
@@ -226,12 +247,24 @@ class PvpCombatErrorBoundary extends Component {
   }
 }
 
-export default function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onCombatStatusChange, onBack, onStopBack }) {
+export default function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onCombatStatusChange, onBack, onStopBack, dungeonPlaceId }) {
   const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, updateEquipment, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, idleCombatSetup, updateIdleCombatSetup, homeShortcuts, updateHomeShortcuts, setActiveTask, requestActivityStart, slayerTask, setSlayerTask, awardSlayerPoints, slayerTasksCompleted, setSlayerTasksCompleted, activeCombatSpell, updateActiveCombatSpell, bossKillCounts, updateBossKillCounts, raidKillCounts, updateRaidKillCounts, unlockedFeatures, completedQuests, isOneLife, isIronman, getSnapshot, loadGame, combatSkipHandlerRef, skipHourHandlerRef, chargeSkipRef, raidSkipHandlerRef, lockGame, unlockGame, resolveCombatCompletion, characterUnlocks, killCountsLoaded, recordGameEvent } = useGame()
   const pvp = usePvp()
   // Offline demo: bosses, raids and PvP are locked (server-authoritative).
   const isDemo = isDemoMode() && !(getToken() && getCharacterId())
   const [showPvpLobby, setShowPvpLobby] = useState(false)
+
+  // Dungeon mode: this screen renders one place's foes (Monsters / Bosses /
+  // Raids) instead of the world-wide picker. PvP is hidden (not place-bound);
+  // starting a fight still routes through the same gating, and the player is at
+  // the place, so it starts immediately. The picker + its info sheets are reused
+  // verbatim, only the section list and header change.
+  const dungeonPlace = dungeonPlaceId ? worldData.places[dungeonPlaceId] : null
+  const isDungeon = !!dungeonPlace
+  const dungeon = useMemo(() => (isDungeon ? buildDungeonData(dungeonPlaceId) : null), [dungeonPlaceId, isDungeon])
+  const pickerCategories = isDungeon ? dungeon.categories : COMBAT_CATEGORIES
+  const pickerRaids = isDungeon ? dungeon.raids : raidsData
+  const pickerTitle = isDungeon ? `${dungeonPlace.name} Dungeon` : 'Choose a Foe'
 
   const [combat, setCombat] = useState(null)
   const [log, setLog] = useState([])
@@ -245,8 +278,11 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   const [showSpellModal, setShowSpellModal] = useState(false)
   const [selectedMonsterInfo, setSelectedMonsterInfo] = useState(null)
   const [selectedRaidInfo, setSelectedRaidInfo] = useState(null)
+  // Section collapse state. Read sites default an unset key to collapsed in the
+  // world-wide picker and expanded in dungeon mode (few sections, so open reads
+  // better) via `?? !isDungeon`. `raids` is intentionally not seeded so that
+  // default can apply to it too.
   const [collapsedSections, setCollapsedSections] = useState(() => ({
-    raids: true,
     ...Object.fromEntries(COMBAT_CATEGORIES.map(category => [category.key, true])),
   }))
   const [lootModal, setLootModal] = useState(null)
@@ -1746,10 +1782,12 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       {!isDesktopCombatLayout ? (
         <div class="forge-shell h-full overflow-y-auto">
           <CombatMobileSelect
-            categories={COMBAT_CATEGORIES}
+            categories={pickerCategories}
             monstersData={monstersData}
-            raidsData={raidsData}
+            raidsData={pickerRaids}
             collapsedSections={collapsedSections}
+            defaultCollapsed={!isDungeon}
+            title={isDungeon ? pickerTitle : undefined}
             onToggleSection={toggleSection}
             onFight={startFight}
             onMonsterInfo={setSelectedMonsterInfo}
@@ -1766,7 +1804,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             onStance={updateCombatStance}
             idleSetup={idleCombatSetup}
             onOpenIdle={setIdleSetupMode}
-            showPvp={!isIronman && !isOneLife && !isDemo}
+            showPvp={!isIronman && !isOneLife && !isDemo && !isDungeon}
             onOpenPvp={() => setShowPvpLobby(true)}
             demoLockBosses={isDemo}
             onBack={onStopBack || onBack}
@@ -1776,7 +1814,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       <div class="forge-shell h-full overflow-y-auto p-4">
         <BackLink onClick={onStopBack || onBack} className="mb-3" />
         <h2 class="font-[var(--font-display)] text-sm font-bold text-[var(--color-parchment)] opacity-60 uppercase tracking-wider mb-3">
-          Choose a Foe
+          {pickerTitle}
         </h2>
 
         {/* Idle setup buttons */}
@@ -1832,7 +1870,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
         </div>
 
         <div class="space-y-4">
-          {COMBAT_CATEGORIES.map(category => {
+          {pickerCategories.map(category => {
             const monsters = category.ids
               .map(id => monstersData[id])
               .filter(Boolean)
@@ -1842,7 +1880,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                 }
                 return a.combatLevel - b.combatLevel
               })
-            const isCollapsed = collapsedSections[category.key] ?? true
+            const isCollapsed = collapsedSections[category.key] ?? !isDungeon
             const categoryArt = getCategoryArt(category.key)
             return (
               <div key={category.key}>
@@ -1942,7 +1980,8 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           })}
         </div>
 
-        {/* Raids Section */}
+        {/* Raids Section — hidden in a dungeon with no raids. */}
+        {(!isDungeon || Object.keys(pickerRaids).length > 0) && (
         <div class="mt-6">
           <button
             type="button"
@@ -1951,11 +1990,11 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           >
             <SkillEmblem iconKey="temple_gate" accent="#9b6cff" size={24} glow={0} />
             <span class="text-xs font-semibold text-[var(--color-gold)] uppercase tracking-wider">Raids</span>
-            <span class="ml-auto text-[10px] text-[var(--color-parchment)] opacity-60">{(collapsedSections.raids ?? true) ? '▶' : '▼'}</span>
+            <span class="ml-auto text-[10px] text-[var(--color-parchment)] opacity-60">{(collapsedSections.raids ?? !isDungeon) ? '▶' : '▼'}</span>
           </button>
-          {!(collapsedSections.raids ?? true) && (
+          {!(collapsedSections.raids ?? !isDungeon) && (
             <div class="space-y-2">
-            {Object.values(raidsData).filter((raid, index, allRaids) =>
+            {Object.values(pickerRaids).filter((raid, index, allRaids) =>
               allRaids.findIndex(candidate => candidate.id === raid.id) === index
             ).map(raid => {
               const raidReq = checkRaidRequirements(raid)
@@ -1996,9 +2035,10 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             </div>
           )}
         </div>
+        )}
 
-        {/* PvP entry — hidden for ironman / one-life accounts and the demo. */}
-        {!isIronman && !isOneLife && !isDemo && (
+        {/* PvP entry — hidden for ironman / one-life accounts, the demo, and dungeons. */}
+        {!isIronman && !isOneLife && !isDemo && !isDungeon && (
           <div class="mt-6 pb-2">
             <button
               onClick={() => setShowPvpLobby(true)}

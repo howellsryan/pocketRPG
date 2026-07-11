@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <g stroke="#20242a" stroke-width="16" stroke-linejoin="round" stroke-linecap="round">
+    <!-- Battlements -->
+    <g fill="#bcc2cb">
+      <path d="M96 168 H176 V104 H96 Z"/>
+      <path d="M216 168 H296 V104 H216 Z"/>
+      <path d="M336 168 H416 V104 H336 Z"/>
+    </g>
+    <!-- Fortress body -->
+    <path d="M96 168 H416 V452 H96 Z" fill="#bcc2cb"/>
+    <!-- Arched doorway (dark) -->
+    <path d="M186 452 L186 306 A70 70 0 0 1 326 306 L326 452 Z" fill="#23282e" stroke="#20242a" stroke-width="12"/>
+  </g>
+  <!-- Portcullis bars — light, over the dark doorway -->
+  <g fill="#c7ccd4">
+    <path d="M210 258 H222 V452 H210 Z"/>
+    <path d="M250 246 H262 V452 H250 Z"/>
+    <path d="M290 258 H302 V452 H290 Z"/>
+    <path d="M190 318 H322 V330 H190 Z"/>
+    <path d="M190 388 H322 V400 H190 Z"/>
+  </g>
+</svg>
