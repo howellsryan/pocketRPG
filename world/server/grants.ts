@@ -31,7 +31,9 @@ export type GrantPayload = {
    * save's equipment — a world session and the main game are never played
    * simultaneously by design). */
   equipment?: Record<string, unknown>
-  reason: 'deposit' | 'disconnect' | 'timer'
+  /** 'transition' (zone change) drains pools exactly like 'disconnect' — the
+   * pack re-seeds from the save in the destination zone. */
+  reason: 'deposit' | 'disconnect' | 'timer' | 'transition'
 }
 
 export type GrantIdentity = {

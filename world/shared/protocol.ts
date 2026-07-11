@@ -50,11 +50,16 @@ export type EntityDiff = {
 
 export type StaticObject = {
   id: string
-  type: 'rock' | 'bank_chest'
+  type: 'rock' | 'bank_chest' | 'tree'
   rock?: string
+  tree?: string
   x: number
   z: number
 }
+
+export type ExitMarker = { id: string; x: number; z: number; label: string }
+export type PropPlacement = { model: string; x: number; z: number; rot?: number; scale?: number }
+export type GroundPalette = { walkableA: string; walkableB: string; blockedA: string; blockedB: string }
 
 export type LootItem = { id: string; itemId: string; qty: number; x: number; z: number }
 
@@ -63,7 +68,7 @@ export type ServerMessage =
       t: 'welcome'
       selfId: string
       tick: number
-      zone: { id: string; w: number; h: number; collision: string[] }
+      zone: { id: string; name?: string; w: number; h: number; collision: string[]; exits?: ExitMarker[]; props?: PropPlacement[]; palette?: GroundPalette }
       statics: StaticObject[]
       you: { x: number; z: number; hp: number; maxHp: number; stats: Record<string, { xp: number; level: number }>; inventory: InvSlot[]; gear?: GearDescriptor }
     }
@@ -78,6 +83,9 @@ export type ServerMessage =
       events?: ZoneEvent[]
     }
   | { t: 'dead'; respawn: { x: number; z: number } }
+  /** Player stepped on an exit tile; save + position are already durable.
+   * The client reconnects to the target zone's DO (full reload). */
+  | { t: 'transition'; zone: string; x: number; z: number }
   | { t: 'error'; code: string; msg: string }
   | { t: 'pong'; n: number }
 

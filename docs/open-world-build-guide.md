@@ -459,11 +459,47 @@ Three developer requests in one phase: natural pathing, a real bank UI, and main
 - **Banking** (`{t:'bank', op, itemId, qty}` + `{e:'bank', bank, open?}`): using a chest walks adjacent and opens the bank modal (`world/client/src/bank.ts`) — bank grid + pack grid, tap = move 1, long-press/right-click = Deposit/Withdraw 1/5/10/X/All (X prompts for an amount). The server clamps every quantity (held count, bank count, pack space) and requires chest adjacency per op; the modal closes on walk-away client-side. Charge-carrying bank entries are EXCLUDED from the world's bank view (charges can't be preserved through the session model). The old deposit-all chest action is gone.
 - **Session accounting** (`world/server/sessionItems.ts`): every pack unit belongs to one pool — `minted` (world-created), `saveBacked` (seeded from save inventory), `bankSourced` (withdrawn). Consuming (eat/bury/drop/equip) drains minted→bankSourced→saveBacked, recording removals; deposits cancel bankSourced first, then bank minted, then move saveBacked. `GrantPayload` grew `removeFromInventory`/`removeFromBank`/`mintedToBank`/`bankToInventory`/`equipment` (snapshot when the player re-geared); all removals clamp to what the save still holds. Bank/equip/consume mutations schedule a debounced durability flush (5 ticks) on top of the 60s timer + disconnect flushes. Invariant (unit-tested): pack count per item === minted + saveBacked + bankSourced.
 
-## 13) After Phase 5.5 (do not build ahead)
+## 13) PHASE 6 — World expansion v1: zones, transitions, forest + Woodcutting (added 2026-07-11 on developer instruction)
 
-The Phase 6+ roadmap (zones/transitions, Woodcutting, town, processing skills, armour outfits, green_dragon boss) lives in `docs/open-world-next-phases-scope.md` — each later phase gets its own guide section here before build starts. Run energy, potion boosts in world, prayer in world, ranged/magic combat, stances UI, trading, PvP, raids remain out of scope. When Phase 5.5 is accepted, stop and await the developer's next instruction.
+Scope source: `docs/open-world-next-phases-scope.md` Phase 6 (decisions D2/D4/D5 apply: hybrid geography, Woodcutting first, all monsters passive). Testing is bundled — the DT-class B manual script at the end covers Phases 4, 5, 5.5 and 6 in one pass, per developer instruction 2026-07-11.
 
-## 14) Quick reference — repo facts the agent will need constantly
+**Definition of done**: the pasture has a marked exit that walks you into a second zone (The Whisperwood, 48×48 forest) with its own ground palette, scenery props, chopable normal + oak trees (real `skills.json → woodcutting.actions` semantics), a bank chest, and three passive monsters (Field Chicken, Cave Goblin, Arcane Adept) rendered with their own models; walking back through the forest's exit returns you to the pasture; XP/logs/loot flush to the PocketRPG save exactly like mining/bull drops; disconnecting in the forest reconnects you to the forest; nothing from Phases 0–5.5 regresses.
+
+### STEP 6.1 — Zone registry + validation
+- `ZONES` in `WorldZone.ts` registers every `world/zones/*.json` (pasture + forest). `onConnect` closes 1008 `unknown_zone` when the room name isn't registered (today an unknown room silently becomes a second pasture).
+- Zone JSON gains optional fields (types + validation in `shared/zone.ts`):
+  - `objects[]` may have `type:'tree'` with `tree:'<woodcutting action id>'` (same placement rules as rocks).
+  - `exits: [{id, x, z, toZone, toX, toZ, label}]` — exit tile and arrival tile walkable, ids unique, `toZone` registered, and the arrival tile must NOT itself be an exit tile in the target zone (no ping-pong). Cross-zone checks run in vitest over the real zone files (the runtime validator stays single-zone).
+  - `props: [{model, x, z, rot?, scale?}]` — visual dressing only, allowed on blocked tiles (that's the point: author `#`, place a prop on it). Optional `palette: {walkableA, walkableB, blockedA, blockedB}` recolours the ground checker per zone.
+
+### STEP 6.2 — Gather-node generalisation (Woodcutting)
+- `mining.ts`: `WOODCUTTING_ACTIONS` from `skills.json → woodcutting.actions`; a `GATHER_SKILLS` table maps node skill → actions + verb/messages. `RockState` gains `skill: 'mining' | 'woodcutting'` (the `rock` field stays the action id — for a tree it holds `'normal'`/`'oak'`).
+- `tick.ts` `startInteract`/`tickMining` read the action table from the node's skill; the level gate says "You need Woodcutting level 15 to chop this tree."; XP and product go to the node's skill/item. Anim stays `'mine'` (the hero clip is literally tree-chopping). Depletion/respawn reuse `ROCK_DEPLETED_TICKS` (8) and the existing `diff.rocks` wire field (semantic: gather-node state changes).
+- Wire: trees ride `interact {kind:'rock', action:'chop'}`; the server validates the verb against the node's skill (mine↔mining, chop↔woodcutting).
+
+### STEP 6.3 — Zone transitions
+- Protocol: `welcome.zone` gains `name`, `exits` (positions + labels), `props`, `palette`; new server message `{t:'transition', zone, x, z}`.
+- Server (in `tick()`, after movement): a player standing on an exit tile transitions — remove from `players` + `pendingLeaves`, **await** a flush with reason `'transition'` (drains pools exactly like `'disconnect'`: minted → save inventory, bankSourced → back to inventory, equipment snapshot — the pack re-seeds from the save in the next zone), **await** a `world_positions` checkpoint written with the TARGET zone/tile, then send `transition` and close (code 1000). The ordering is the correctness: save + position row must be durable before the client's next hello reads them. Known accepted risk (same as disconnect): a flush that fails all 3 retries loses the merge-back because the player object is discarded.
+- Client: `{t:'transition'}` → store the target zone in `localStorage['world_zone']`, show the loading overlay ("Entering …"), `location.reload()` — boot connects to the stored zone. Every welcome also writes `zone.id` to that key, and `/api/world/session` returns the character's current `zone` from `world_positions` (stored at exchange time) so a fresh device lands in the right zone. A reload guarantees a clean scene/renderer; in-place rebuild is deliberately NOT attempted (leak-prone: renderer, RAF loop, intervals, listeners).
+- Client rendering: each exit is a pulsing marker mesh + pickable — hover `Go-to the Whisperwood`, left-click walks to the exit tile (plain `walk`; stepping on it transitions server-side).
+
+### STEP 6.4 — Scenery props
+- `client/src/props.ts`: loads each distinct model once from `/models/props/<model>.glb` (template cache), clones per instance at `tileToWorld(x,z)` with optional Y-rotation/scale, no pick data. `world/scripts/build-props.mjs` processes the chosen Kenney nature-kit GLBs (CC0, already tiny — prune/resample only) into `client/public/models/props/`.
+- Tree statics (interactive) get their own models the same way: healthy tree + `stump_old` in one wrapper; depleted toggles visibility (rocks keep their scale+darken treatment).
+
+### STEP 6.5 — The Whisperwood + monsters
+- `world/zones/forest.json`: id `forest`, name "The Whisperwood", 48×48, darker ground palette, ≥70% walkable, tree-line borders authored as `#` with pine props on top. Content: 6 normal trees + 3 oaks, 1 bank chest near the west entrance, exits west edge ↔ pasture east edge. NPCs (all passive, D5): 2× `field_chicken`, 2× `cave_goblin`, 1× `arcane_adept` — combat/loot/attribution ride the existing monster-agnostic adapter untouched.
+- Models from the Quaternius Ultimate Monsters Bundle via a generic `world/scripts/build-monster.mjs` (clip-rename like `build-cow.mjs`; goleling maps `Flying_Idle`→idle, `Fast_Flying`→walk): `chicken.glb`, `goblin.glb`, `wizard.glb`. Client `createMonsterMesh(monsterId)` generalises `createCowMesh` with a per-monster `{url, bounds, targetSize}` registry (bounds printed by the build script — `Box3.setFromObject` is unreliable on skinned meshes) and keeps the box placeholder fallback. Examine strings added to `NPC_EXAMINE`. Update `docs/open-world-asset-coverage.md` statuses in the same PR.
+
+### STEP 6.6 — Verification + bundled acceptance
+Agent-verified before hand-off: full `world:check`; WS e2e — walk onto the pasture exit → `transition` received → reconnect to `forest` → welcome carries forest zone/statics → chop a tree (xp + logs) → kill a chicken (drops) → walk back through the forest exit → pasture welcome; D1 assertions that the transition flush landed items/XP and `world_positions.zone_id` flipped. Headless screenshots: forest ground palette, props, trees (healthy + stump), all three monsters, exit marker.
+DEVELOPER TASK — **bundled manual script (DT-P4→P6, one pass, two devices where noted)**: covers the outstanding DT-P4 (shared bull kill, drag-reorder), DT-P5 (weapon visuals incl. bow/crossbow grip eyeball), Phase 5.5 (pathing feel, bank modal, pack actions, drop visibility between two devices), and Phase 6 (exit walk both ways, forest gathering at Woodcutting <15 and ≥15, monster kills + loot, reconnect-in-forest, PocketRPG save shows logs/XP/loot after). Reply "PHASES 4–6 ACCEPTED" (or itemised issues).
+
+## 14) After Phase 6 (do not build ahead)
+
+The Phase 7+ roadmap (Lumbright town hub, Smithing + Cooking processing, armour outfits, Fishing, green_dragon boss) lives in `docs/open-world-next-phases-scope.md` — each later phase gets its own guide section here before build starts. Run energy, potion boosts in world, prayer in world, ranged/magic combat, stances UI, trading, PvP, raids remain out of scope. When Phase 6 is accepted, stop and await the developer's next instruction.
+
+## 15) Quick reference — repo facts the agent will need constantly
 
 - Tick: 600 ms. Inventory: 28. XP curve/cap: `src/engine/experience.js` (`getLevelFromXP`, 200M cap). Combat XP: 4/dmg style, 1.33/dmg HP (§5 CLAUDE.md).
 - Mining data: `src/data/skills.json → mining.actions` (`tin`, `copper`: level 1, ticks 4, xp 17).

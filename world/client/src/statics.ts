@@ -19,12 +19,21 @@ const ROCK_INFO: Record<string, { name: string; examine: string }> = {
 }
 const DEFAULT_ROCK_INFO = { name: 'Rock', examine: 'A rugged, ore-bearing rock.' }
 
+const TREE_INFO: Record<string, { name: string; model: string; scale: number; examine: string }> = {
+  normal: { name: 'Tree', model: '/models/tree_normal.glb', scale: 1.3, examine: 'A leafy tree, good for beginner axes.' },
+  oak: { name: 'Oak', model: '/models/tree_oak.glb', scale: 1.5, examine: 'A broad old oak. Its wood is sturdier than most.' },
+}
+const DEFAULT_TREE_INFO = { name: 'Tree', model: '/models/tree_normal.glb', scale: 1.3, examine: 'A tree of the deep wood.' }
+const TREE_STUMP_SCALE = 2.2
+
 export type Statics = {
   pickables: THREE.Object3D[]
   setRockDepleted: (id: string, depleted: boolean) => void
 }
 
 type RockEntry = { obj: THREE.Object3D; materials: THREE.MeshStandardMaterial[] }
+/** Depleted trees swap the healthy canopy for the stump (no tint games). */
+type TreeEntry = { tree: THREE.Object3D; stump: THREE.Object3D }
 
 async function tryLoad(url: string): Promise<GLTF | null> {
   try {
@@ -61,16 +70,51 @@ function cloneTinted(template: THREE.Object3D, tint: number | null): { obj: THRE
   return { obj, materials }
 }
 
+function treeFallback(): THREE.Object3D {
+  const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.16, 0.8), new THREE.MeshStandardMaterial({ color: 0x6b4a2b }))
+  trunk.position.y = 0.4
+  const canopy = new THREE.Mesh(new THREE.IcosahedronGeometry(0.55, 0), new THREE.MeshStandardMaterial({ color: 0x2f6b2f }))
+  canopy.position.y = 1.1
+  const group = new THREE.Group()
+  group.add(trunk, canopy)
+  return group
+}
+
 export async function createStatics(scene: THREE.Scene, statics: StaticObject[]): Promise<Statics> {
-  const [rockGltf, chestGltf] = await Promise.all([tryLoad('/models/rock.glb'), tryLoad('/models/chest.glb')])
+  const treeModels = [...new Set(statics.filter((s) => s.type === 'tree').map((s) => (TREE_INFO[s.tree ?? ''] ?? DEFAULT_TREE_INFO).model))]
+  const needStump = treeModels.length > 0
+  const [rockGltf, chestGltf, stumpGltf, ...treeGltfs] = await Promise.all([
+    tryLoad('/models/rock.glb'),
+    tryLoad('/models/chest.glb'),
+    needStump ? tryLoad('/models/stump.glb') : Promise.resolve(null),
+    ...treeModels.map((url) => tryLoad(url)),
+  ])
+  const treeTemplates = new Map(treeModels.map((url, i) => [url, treeGltfs[i]]))
   const pickables: THREE.Object3D[] = []
   const rocks = new Map<string, RockEntry>()
+  const trees = new Map<string, TreeEntry>()
 
   for (const s of statics) {
     const wrapper = new THREE.Group()
     let materials: THREE.MeshStandardMaterial[] = []
 
-    if (s.type === 'rock') {
+    if (s.type === 'tree') {
+      const info = TREE_INFO[s.tree ?? ''] ?? DEFAULT_TREE_INFO
+      const gltf = treeTemplates.get(info.model)
+      const tree = new THREE.Group()
+      tree.add(gltf ? gltf.scene.clone(true) : treeFallback())
+      tree.scale.setScalar(info.scale)
+      const stump = new THREE.Group()
+      if (stumpGltf) stump.add(stumpGltf.scene.clone(true))
+      stump.scale.setScalar(TREE_STUMP_SCALE)
+      stump.visible = false
+      wrapper.add(tree, stump)
+      trees.set(s.id, { tree, stump })
+      wrapper.userData.pick = {
+        kind: 'rock', id: s.id, name: info.name,
+        actions: [{ label: 'Chop', action: 'chop' }], examine: info.examine,
+      } satisfies Pickable
+    } else if (s.type === 'rock') {
       const tint = ROCK_TINTS[s.rock ?? ''] ?? DEFAULT_ROCK_TINT
       if (rockGltf) {
         const cloned = cloneTinted(rockGltf.scene, tint)
@@ -106,6 +150,12 @@ export async function createStatics(scene: THREE.Scene, statics: StaticObject[])
   }
 
   function setRockDepleted(id: string, depleted: boolean): void {
+    const treeEntry = trees.get(id)
+    if (treeEntry) {
+      treeEntry.tree.visible = !depleted
+      treeEntry.stump.visible = depleted
+      return
+    }
     const entry = rocks.get(id)
     if (!entry) return
     entry.obj.scale.setScalar(depleted ? ROCK_DEPLETED_SCALE : ROCK_SCALE)

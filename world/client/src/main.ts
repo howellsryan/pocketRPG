@@ -1,11 +1,13 @@
-import { exchangeHandoff, getStoredSession, parseHandoffFromHash, pocketRpgUrl, type WorldSession } from './auth'
-import { hideConnBanner, hideOverlay, initChatInput, initHud, pushMessage, removeHpBar, removeNameplate, removeOverheadChat, renderInventory, showConnBanner, showContextMenu, showHitsplat, showLoginRequired, showXpDrop, updateHpBar, updateHpPill, updateNameplate, updateOverheadChat, npcExamine } from './ui'
+import { exchangeHandoff, getStoredSession, getStoredZone, parseHandoffFromHash, pocketRpgUrl, storeZone, type WorldSession } from './auth'
+import { hideConnBanner, hideOverlay, initChatInput, initHud, pushMessage, removeHpBar, removeNameplate, removeOverheadChat, renderInventory, showConnBanner, showContextMenu, showHitsplat, showLoginRequired, showTransitionOverlay, showXpDrop, updateHpBar, updateHpPill, updateNameplate, updateOverheadChat, npcExamine } from './ui'
 import { closeBankUI, isBankOpen, openBankUI, updateBankInventory, updateBankUI } from './bank'
 import { connect, onMessage, send } from './net'
 import { clampZoom, createCamera, createGround, createLights, createRenderer, createScene, tileToWorld, updateCamera } from './scene'
-import { applyEntityDiff, applyWeapon, createCowMesh, createEntity, createHeroMesh, updateEntity, type Entity } from './entities'
+import { applyEntityDiff, applyWeapon, createEntity, createHeroMesh, createMonsterMesh, updateEntity, type Entity } from './entities'
 import { createClickMarker, setupInput, showClickMarker, updateClickMarker } from './input'
 import { createStatics, type Statics } from './statics'
+import { createProps } from './props'
+import { createExitMarkers, type ExitLayer } from './exits'
 import { createLootLayer, type LootLayer } from './loot'
 import { itemName, loadItemIcons } from './itemIcon'
 import { primaryInvAction } from '../../shared/itemActions'
@@ -14,8 +16,6 @@ import monstersData from '../../../src/data/monsters.json'
 import * as THREE from 'three'
 import type { EntityDiff, InvActionWire, InvSlot, ServerMessage, ZoneEvent } from '../../shared/protocol'
 import type { MenuRow, Pickable } from './picking'
-
-const ZONE_ID = 'pasture'
 
 type Monsters = Record<string, { name?: string; combatLevel?: number } | undefined>
 const monsters = monstersData as unknown as Monsters
@@ -33,10 +33,12 @@ function buildNpcPickable(diff: EntityDiff): Pickable {
 }
 
 function enterWorld(session: WorldSession): void {
-  const socket = connect(window.location.host, ZONE_ID)
+  const socket = connect(window.location.host, getStoredZone())
   let self: Entity | null = null
   let statics: Statics | null = null
   let lootLayer: LootLayer | null = null
+  let exitLayer: ExitLayer | null = null
+  let transitioning = false
   let camera: THREE.PerspectiveCamera | null = null
   const npcs = new Map<string, Entity>()
   const npcLoading = new Set<string>()
@@ -104,7 +106,7 @@ function enterWorld(session: WorldSession): void {
     pendingNpcDiff.set(diff.id, diff)
     if (npcLoading.has(diff.id)) return
     npcLoading.add(diff.id)
-    void createCowMesh().then(({ mesh, animator }) => {
+    void createMonsterMesh(diff.monsterId).then(({ mesh, animator }) => {
       const d = pendingNpcDiff.get(diff.id) ?? diff
       if (!npcLoading.has(diff.id)) return
       const entity = createEntity(diff.id, d.x, d.z, mesh, animator)
@@ -175,6 +177,7 @@ function enterWorld(session: WorldSession): void {
     send(socket, { t: 'hello', token: session.token })
   })
   socket.addEventListener('close', () => {
+    if (transitioning) return
     authed = false
     showConnBanner()
   })
@@ -231,6 +234,7 @@ function enterWorld(session: WorldSession): void {
     lastServerMsg = performance.now()
     if (message.t === 'welcome') {
       authed = true
+      storeZone(message.zone.id)
       if (sceneBuilt) {
         resyncFromWelcome(message)
         return
@@ -240,7 +244,9 @@ function enterWorld(session: WorldSession): void {
         hideOverlay()
         const scene = createScene()
         createLights(scene)
-        const ground = createGround(scene, message.zone.collision, message.zone.w, message.zone.h)
+        const ground = createGround(scene, message.zone.collision, message.zone.w, message.zone.h, message.zone.palette)
+        exitLayer = createExitMarkers(scene, message.zone.exits ?? [])
+        void createProps(scene, message.zone.props ?? [])
         const marker = createClickMarker(scene)
         camera = createCamera()
         const container = document.getElementById('scene')!
@@ -316,11 +322,22 @@ function enterWorld(session: WorldSession): void {
             send(socket, { t: 'walk', x: tile.x, z: tile.z })
           },
           onInteract: (interact) => {
+            if (interact.kind === 'exit') {
+              // Client-side sugar: walking onto the tile is what transitions.
+              const tile = exitLayer?.tiles.get(interact.id)
+              if (tile) {
+                closeBankUI()
+                showClickMarker(marker, tile.x, tile.z)
+                send(socket, { t: 'walk', x: tile.x, z: tile.z })
+              }
+              return
+            }
             send(socket, { t: 'interact', kind: interact.kind, id: interact.id, action: interact.action })
           },
           onMessage: (text) => pushMessage(text),
           getPickables: () => [
             ...(statics?.pickables ?? []),
+            ...(exitLayer?.pickables ?? []),
             ...[...npcs.values()].filter((e) => e.serverAnim !== 'die').map((e) => e.mesh),
             ...(lootLayer?.pickables ?? []),
           ],
@@ -376,6 +393,7 @@ function enterWorld(session: WorldSession): void {
             updateOverheadChat(id, s.x, s.y, overhead.text)
           }
           lootLayer?.update(deltaSeconds)
+          exitLayer?.update(now)
           updateClickMarker(marker, now)
           renderer.render(scene, camera!)
           requestAnimationFrame(frame)
@@ -390,6 +408,17 @@ function enterWorld(session: WorldSession): void {
 
     if (message.t === 'diff') {
       applyDiff(message)
+      return
+    }
+
+    if (message.t === 'transition') {
+      // Save + position row are already durable server-side. A full reload
+      // guarantees a clean scene/renderer for the new zone.
+      transitioning = true
+      storeZone(message.zone)
+      showTransitionOverlay('Entering…')
+      socket.close()
+      window.location.reload()
       return
     }
 

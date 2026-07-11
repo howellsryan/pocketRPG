@@ -6,12 +6,34 @@ import type { InvSlot } from '../shared/protocol'
 
 export type MiningAction = { id: string; name: string; level: number; ticks: number; xp: number; product: string }
 
-type SkillsData = { mining: { actions: MiningAction[] } }
+type SkillsData = { mining: { actions: MiningAction[] }; woodcutting: { actions: MiningAction[] } }
 type ItemsData = Record<string, { stackable?: boolean } | undefined>
 
 export const MINING_ACTIONS: Record<string, MiningAction> = Object.fromEntries(
   (skillsData as unknown as SkillsData).mining.actions.map((a) => [a.id, a])
 )
+
+export const WOODCUTTING_ACTIONS: Record<string, MiningAction> = Object.fromEntries(
+  (skillsData as unknown as SkillsData).woodcutting.actions.map((a) => [a.id, a])
+)
+
+export type GatherSkill = 'mining' | 'woodcutting'
+
+/** Per-skill gather config: real skills.json actions, the interact verb the
+ * wire uses, and the level-gate message. Trees are a mining reskin — one state
+ * machine (tick.ts) drives both. */
+export const GATHER_SKILLS: Record<GatherSkill, { actions: Record<string, MiningAction>; verb: string; levelMsg: (level: number) => string }> = {
+  mining: {
+    actions: MINING_ACTIONS,
+    verb: 'mine',
+    levelMsg: (level) => `You need Mining level ${level} to mine this rock.`,
+  },
+  woodcutting: {
+    actions: WOODCUTTING_ACTIONS,
+    verb: 'chop',
+    levelMsg: (level) => `You need Woodcutting level ${level} to chop this tree.`,
+  },
+}
 
 export const ROCK_DEPLETED_TICKS = 8
 export const INVENTORY_SLOTS = 28

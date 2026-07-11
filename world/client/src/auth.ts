@@ -1,6 +1,17 @@
 export type WorldSession = { token: string; character: { id: number; name: string } }
 
 const STORAGE_KEY = 'world_session'
+const ZONE_KEY = 'world_zone'
+
+/** The zone the client should connect to: last known (welcome/transition
+ * updates it), 'pasture' for a fresh browser. */
+export function getStoredZone(): string {
+  return localStorage.getItem(ZONE_KEY) ?? 'pasture'
+}
+
+export function storeZone(zone: string): void {
+  localStorage.setItem(ZONE_KEY, zone)
+}
 const POCKETRPG_PROD_HOSTNAME = 'world.pocketrpg.co.uk'
 const POCKETRPG_PROD_URL = 'https://pocketrpg.co.uk'
 const POCKETRPG_PREVIEW_URL = 'https://preview.pocketrpg.pages.dev'
@@ -45,9 +56,10 @@ export async function exchangeHandoff(handoff: string): Promise<WorldSession> {
     console.error('[World][auth] handoff exchange failed', { status: res.status, detail })
     throw new Error(`world_session_exchange_failed: ${res.status} ${JSON.stringify(detail)}`)
   }
-  const body = (await res.json()) as WorldSession
+  const body = (await res.json()) as WorldSession & { zone?: string }
   const session: WorldSession = { token: body.token, character: body.character }
   storeSession(session)
+  if (typeof body.zone === 'string' && body.zone) storeZone(body.zone)
   return session
 }
 

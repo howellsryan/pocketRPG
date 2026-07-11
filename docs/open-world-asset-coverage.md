@@ -14,9 +14,9 @@ Model-first: every usable creature model we own, its best `monsters.json` match,
 
 | Model | Match in `monsters.json` (level) | Status | Notes |
 |---|---|---|---|
-| Chicken | field_chicken (1) | Matched | First-kill monster for new players |
-| Goleling | cave_goblin (5) | Matched | |
-| Wizard | arcane_adept (9) / umbral_adept (20) | Matched | One model, two tints |
+| Chicken | field_chicken (1) | **In world** (Phase 6) | `build-monster.mjs`; the Whisperwood |
+| Goleling | cave_goblin (5) | **In world** (Phase 6) | Flyer — clips are `Flying_Idle`/`Fast_Flying`; hovers off the ground |
+| Wizard | arcane_adept (9) / umbral_adept (20) | **In world** (Phase 6, arcane_adept) | Living-hat creature; umbral tint still pending |
 | Green/Pink/Spiky Blob | bogling_sprite (12) | Candidate | |
 | Ghost | wailing_banshee (23) / wraith-type specters | Candidate | |
 | Blue Demon | frostbite_imp (25) | Matched | Scale down |

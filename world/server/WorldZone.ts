@@ -19,7 +19,7 @@ import { addToInventory, countItem, freeSlotCount, inventoryIsFull, isStackable,
 import { getLevelFromXP } from '../../src/engine/experience.js'
 import { flushGrants, isEmptyPayload, type GrantPayload, type ItemStack } from './grants'
 import { loadCharacterWithSave } from '../../functions/_lib/game/save.js'
-import { validateZone, type ZoneDef } from '../shared/zone'
+import { validateZone, type ZoneDef, type ZoneExitDef } from '../shared/zone'
 import { gearFromEquipment } from '../shared/appearance'
 import { BURY_XP, healAmount, primaryInvAction } from '../shared/itemActions'
 import { checkEquipRequirements, equipItem, placeUnequippedItems } from '../../src/engine/equipment.js'
@@ -33,6 +33,7 @@ import type { Env } from './env'
 type ConnState = { charId: string | null }
 type Connection = PartyConnection<ConnState>
 import pastureZone from '../zones/pasture.json'
+import forestZone from '../zones/forest.json'
 
 const TICK_MS = 600
 const AUTH_TIMEOUT_MS = 5000
@@ -51,7 +52,10 @@ const RATE_LIMIT_HARD_KICK = 40
 // that missed a join edge (reconnect gap, suspended tab) self-heals within 30s.
 const PRESENCE_KEYFRAME_TICKS = 50
 
-const ZONES: Record<string, ZoneDef> = { pasture: pastureZone as ZoneDef }
+export const ZONES: Record<string, ZoneDef> = {
+  pasture: pastureZone as ZoneDef,
+  forest: forestZone as ZoneDef,
+}
 for (const zone of Object.values(ZONES)) {
   const result = validateZone(zone)
   if (!result.valid) throw new Error(`invalid zone '${zone.id}': ${result.errors.join('; ')}`)
@@ -147,12 +151,20 @@ export class WorldZone extends Server<Env> {
     return ZONES[this.name] ?? pastureZone as ZoneDef
   }
 
+  /** All gather nodes — ore rocks and trees share one state machine. */
   private ensureRocks(): Map<string, RockState> {
     if (!this.rocks) {
       this.rocks = new Map(
         this.zone.objects
-          .filter((o) => o.type === 'rock' && o.rock)
-          .map((o) => [o.id, { id: o.id, rock: o.rock!, x: o.x, z: o.z, depletedUntilTick: 0 }])
+          .filter((o) => (o.type === 'rock' && o.rock) || (o.type === 'tree' && o.tree))
+          .map((o) => [o.id, {
+            id: o.id,
+            rock: o.type === 'tree' ? o.tree! : o.rock!,
+            skill: o.type === 'tree' ? 'woodcutting' as const : 'mining' as const,
+            x: o.x,
+            z: o.z,
+            depletedUntilTick: 0,
+          }])
       )
     }
     return this.rocks
@@ -164,6 +176,10 @@ export class WorldZone extends Server<Env> {
   }
 
   onConnect(connection: Connection): void {
+    if (!ZONES[this.name]) {
+      connection.close(1008, 'unknown_zone')
+      return
+    }
     connection.setState({ charId: null })
     const timer = setTimeout(() => {
       if (!connection.state?.charId) connection.close(1008, 'auth_timeout')
@@ -379,7 +395,16 @@ export class WorldZone extends Server<Env> {
       t: 'welcome',
       selfId: player.charId,
       tick: this.tickCount,
-      zone: { id: this.zone.id, w: this.zone.width, h: this.zone.height, collision: this.zone.collision },
+      zone: {
+        id: this.zone.id,
+        name: this.zone.name,
+        w: this.zone.width,
+        h: this.zone.height,
+        collision: this.zone.collision,
+        ...(this.zone.exits?.length ? { exits: this.zone.exits.map((e) => ({ id: e.id, x: e.x, z: e.z, label: e.label })) } : {}),
+        ...(this.zone.props?.length ? { props: this.zone.props } : {}),
+        ...(this.zone.palette ? { palette: this.zone.palette } : {}),
+      },
       statics,
       you: { x: player.x, z: player.z, hp: player.hp, maxHp: player.maxHp, stats: player.stats, inventory: player.inventory, ...(player.gear.weapon ? { gear: player.gear } : {}) },
     })
@@ -621,11 +646,12 @@ export class WorldZone extends Server<Env> {
     let target: { x: number; z: number } | null = null
     let intent: Player['pendingInteract'] = null
 
-    if (message.kind === 'rock' && message.action === 'mine') {
+    if (message.kind === 'rock' && (message.action === 'mine' || message.action === 'chop')) {
+      // startInteract re-validates the verb against the node's skill.
       const rock = this.ensureRocks().get(message.id)
       if (!rock) return
       target = rock
-      intent = { kind: 'rock', id: rock.id, action: 'mine' }
+      intent = { kind: 'rock', id: rock.id, action: message.action }
     } else if (message.kind === 'npc' && message.action === 'attack') {
       const npc = this.ensureNpcs().get(message.id)
       if (!npc || npc.state === 'dead') return
@@ -720,6 +746,15 @@ export class WorldZone extends Server<Env> {
     // Loot pickups resolve after movement (the player may have just arrived).
     for (const player of this.players.values()) this.tryTakeLoot(player, eventsByChar)
 
+    // Zone exits: standing on an exit tile (even mid-path) leaves this zone.
+    const exits = this.zone.exits ?? []
+    if (exits.length > 0) {
+      for (const player of [...this.players.values()]) {
+        const exit = exits.find((e) => e.x === player.x && e.z === player.z)
+        if (exit) void this.transitionPlayer(player, exit)
+      }
+    }
+
     // Events queued outside the tick (bank ops, item actions), then the
     // authoritative pack echo for anything that changed the pack, then an HP
     // echo whenever the value this client last saw is stale.
@@ -768,6 +803,27 @@ export class WorldZone extends Server<Env> {
       if (this.dirty.size > 0) void this.flushCheckpoints()
       for (const player of this.players.values()) void this.flush(player, 'timer')
     }
+  }
+
+  /** Hands the player to another zone. The save flush and the position row
+   * (written with the TARGET zone/tile) must both be durable before the client
+   * hears `transition` — its next hello reads them from D1. */
+  private async transitionPlayer(player: Player, exit: ZoneExitDef): Promise<void> {
+    this.players.delete(player.charId)
+    this.dirty.delete(player.charId)
+    this.pendingLeaves.add(player.charId)
+    if (player.combat) {
+      const npc = this.npcs?.get(player.combat.npcId)
+      if (npc && npc.attackerId === player.charId) npc.attackerId = null
+    }
+    this.maybeStopTicking()
+    await this.flush(player, 'transition')
+    await this.env.DB.prepare(
+      `INSERT INTO world_positions (character_id, zone_id, x, z, updated_at) VALUES (?, ?, ?, ?, ?)
+       ON CONFLICT(character_id) DO UPDATE SET zone_id = excluded.zone_id, x = excluded.x, z = excluded.z, updated_at = excluded.updated_at`
+    ).bind(Number(player.charId), exit.toZone, exit.toX, exit.toZ, Date.now()).run()
+    send(player.conn, { t: 'transition', zone: exit.toZone, x: exit.toX, z: exit.toZ })
+    player.conn.close(1000, 'transition')
   }
 
   private respawnPlayer(player: Player, playerEnts: Map<string, EntityDiff>): void {
@@ -872,7 +928,7 @@ export class WorldZone extends Server<Env> {
       payload.equipment = { ...player.equipment }
       player.equipmentDirty = false
     }
-    if (reason === 'disconnect') {
+    if (reason === 'disconnect' || reason === 'transition') {
       payload.items = toItemList(pools.minted)
       payload.bankToInventory = toItemList(pools.bankSourced)
       // pools.minted is aliased by player.minted (mining/loot write through

@@ -238,10 +238,13 @@ export function initHud(handlers?: InvHandlers): void {
 
 const NPC_EXAMINE: Record<string, string> = {
   pasture_bull: 'A hefty highland bull. Prime cowhide on the hoof.',
+  field_chicken: 'A plump forest fowl. Braver than it looks, which is not very.',
+  cave_goblin: 'A wiry little menace, a long way from any cave.',
+  arcane_adept: 'A robed student of the arcane, practising where the trees can’t complain.',
 }
 
 export function npcExamine(monsterId: string): string {
-  return NPC_EXAMINE[monsterId] ?? 'A creature of the pasture, minding its own business.'
+  return NPC_EXAMINE[monsterId] ?? 'A creature of the wilds, minding its own business.'
 }
 
 export function lootExamine(itemName: string): string {
@@ -520,6 +523,13 @@ export function showConnBanner(): void {
 export function hideConnBanner(): void {
   const el = document.getElementById('conn-banner')
   if (el) el.style.display = 'none'
+}
+
+/** Full-page cover for the ~1s zone-transition reload. */
+export function showTransitionOverlay(text: string): void {
+  const el = appEl()
+  if (el) el.textContent = text
+  showOverlay()
 }
 
 export function showLoginRequired(pocketRpgUrl: string): void {

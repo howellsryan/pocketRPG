@@ -219,3 +219,52 @@ describe('toEntityDiff', () => {
     })
   })
 })
+
+describe('woodcutting', () => {
+  function makeTree(overrides: Partial<RockState> = {}): RockState {
+    return { id: 'tree_normal_1', rock: 'normal', skill: 'woodcutting', x: 1, z: 0, depletedUntilTick: 0, ...overrides }
+  }
+  function chopIntent(id = 'tree_normal_1'): TickPlayer['pendingInteract'] {
+    return { kind: 'rock', id, action: 'chop' }
+  }
+
+  it('runs a full cycle: 4 ticks -> logs + 25 Woodcutting xp + depleted tree', () => {
+    const tree = makeTree()
+    const player = makePlayer({ stats: { woodcutting: { xp: 0, level: 1 } }, pendingInteract: chopIntent() })
+    const ctx = makeCtx(tree)
+    for (let i = 0; i < 4; i++) tickPlayer(player, ctx)
+    expect(player.inventory[0]).toEqual({ itemId: 'logs', quantity: 1 })
+    expect(player.minted.logs).toBe(1)
+    expect(player.pendingXp.woodcutting).toBe(25)
+    expect(tree.depletedUntilTick).toBe(1 + ROCK_DEPLETED_TICKS)
+  })
+
+  it('gates oak behind Woodcutting 15 with the chop message', () => {
+    const tree = makeTree({ id: 'tree_oak_1', rock: 'oak' })
+    const player = makePlayer({ stats: { woodcutting: { xp: 0, level: 1 } }, pendingInteract: chopIntent('tree_oak_1') })
+    const result = tickPlayer(player, makeCtx(tree))
+    expect(result.events).toContainEqual({ e: 'msg', text: 'You need Woodcutting level 15 to chop this tree.' })
+    expect(player.mining).toBeNull()
+  })
+
+  it('refuses the wrong verb for the node skill', () => {
+    const tree = makeTree()
+    const player = makePlayer({ stats: { woodcutting: { xp: 0, level: 99 } }, pendingInteract: mineIntent('tree_normal_1') })
+    tickPlayer(player, makeCtx(tree))
+    expect(player.mining).toBeNull()
+
+    const rock = makeRock()
+    const miner = makePlayer({ pendingInteract: { kind: 'rock', id: rock.id, action: 'chop' } })
+    tickPlayer(miner, makeCtx(rock))
+    expect(miner.mining).toBeNull()
+  })
+
+  it('oak at level 15 yields oak logs + 37 xp', () => {
+    const tree = makeTree({ id: 'tree_oak_1', rock: 'oak' })
+    const player = makePlayer({ stats: { woodcutting: { xp: 0, level: 15 } }, pendingInteract: chopIntent('tree_oak_1') })
+    const ctx = makeCtx(tree)
+    for (let i = 0; i < 5; i++) tickPlayer(player, ctx)
+    expect(player.inventory[0]).toEqual({ itemId: 'oak_logs', quantity: 1 })
+    expect(player.pendingXp.woodcutting).toBe(37)
+  })
+})

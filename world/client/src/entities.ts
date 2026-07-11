@@ -20,6 +20,34 @@ const HERO_SCALE = 0.85
 const COW_TARGET_LENGTH = 1.6
 const COW_BOUNDS = { minX: -1.12, minY: -0.07, minZ: -3.78, maxX: 1.12, maxY: 5.08, maxZ: 5.4 }
 
+// Per-monster model registry. Bounds are baked from each build script's output
+// (Box3.setFromObject is unreliable for skinned meshes); `targetHeight` scales
+// the model against 1-unit tiles; `hover` lifts flyers off the ground.
+type MonsterModel = {
+  url: string
+  bounds: { minX: number; minY: number; minZ: number; maxX: number; maxY: number; maxZ: number }
+  targetHeight: number
+  hover?: number
+}
+const MONSTER_MODELS: Record<string, MonsterModel> = {
+  field_chicken: {
+    url: '/models/chicken.glb',
+    bounds: { minX: -1.17, minY: -0.01, minZ: -0.8, maxX: 1.17, maxY: 2.34, maxZ: 1.3 },
+    targetHeight: 0.9,
+  },
+  cave_goblin: {
+    url: '/models/goblin.glb',
+    bounds: { minX: -2.19, minY: 1.49, minZ: -1.43, maxX: 2.19, maxY: 3.04, maxZ: 0.51 },
+    targetHeight: 1.0,
+    hover: 0.25,
+  },
+  arcane_adept: {
+    url: '/models/wizard.glb',
+    bounds: { minX: -1.16, minY: 0, minZ: -1.23, maxX: 1.17, maxY: 2.6, maxZ: 1.08 },
+    targetHeight: 1.5,
+  },
+}
+
 export type AnimName = EntityDiff['anim']
 
 export type Animator = {
@@ -131,6 +159,27 @@ export async function createCowMesh(): Promise<{ mesh: THREE.Object3D; animator:
     const group = new THREE.Group()
     group.add(model)
     group.scale.setScalar(COW_TARGET_LENGTH / (b.maxZ - b.minZ))
+    const animator = makeAnimator(model, gltf, ['idle', 'walk', 'die'])
+    return { mesh: group, animator }
+  } catch {
+    return { mesh: boxPlaceholder(), animator: null }
+  }
+}
+
+/** Loads the registered model for a monster (centred, floored — or hovering,
+ * for flyers — and scaled to its target height). Unregistered monsters get the
+ * cow path (the Phase 2 default); any load failure gets the box placeholder. */
+export async function createMonsterMesh(monsterId: string | undefined): Promise<{ mesh: THREE.Object3D; animator: Animator | null }> {
+  const spec = monsterId ? MONSTER_MODELS[monsterId] : undefined
+  if (!spec) return createCowMesh()
+  try {
+    const gltf = await loadTemplate(spec.url)
+    const model = cloneSkeleton(gltf.scene)
+    const b = spec.bounds
+    model.position.set(-(b.minX + b.maxX) / 2, -b.minY + (spec.hover ?? 0), -(b.minZ + b.maxZ) / 2)
+    const group = new THREE.Group()
+    group.add(model)
+    group.scale.setScalar(spec.targetHeight / (b.maxY - b.minY))
     const animator = makeAnimator(model, gltf, ['idle', 'walk', 'die'])
     return { mesh: group, animator }
   } catch {
