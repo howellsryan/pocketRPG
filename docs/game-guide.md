@@ -59,7 +59,7 @@ On a normal character, dying in PvE is forgiving: the fight ends, your hitpoints
 
 ## Inventory and banking
 
-Your inventory holds a hard maximum of 28 slots. Your bank stores everything else. While doing idle activities, loot is banked automatically when your inventory fills; the auto-bank delay scales with your Agility level, from 5 minutes at Agility 1 down to just 10 seconds at Agility 99 — a strong reason to train Agility.
+Your inventory holds a hard maximum of 28 slots, and you can drag items to rearrange it. Your bank stores everything else. While doing idle activities, loot is banked automatically when your inventory fills; the auto-bank delay scales with your Agility level, from 5 minutes at Agility 1 down to just 10 seconds at Agility 99 — a strong reason to train Agility. On mobile, the Bank button opens a hub with both the Bank and the Trading Post; on desktop each has its own entry in the navigation rail.
 
 ## World map, travel and town maps
 
@@ -71,7 +71,7 @@ Start a skilling task, gather task or auto-fight and it keeps running while the 
 
 ## Credits and skipping time
 
-Credits are a premium currency. You earn +1 credit for each daily task you complete, and can buy more in the store in packs of 10, 100 or 1,000 (real-money purchase via secure checkout). Spend credits to skip an hour of your current idle activity instantly (Skip 1h), to skip straight to a boss or raid kill while fighting one, or to skip a slayer task you don't like. Credits are tracked server-side on each character.
+Credits are a premium currency. You earn +1 credit for each daily task you complete, and can buy more in the store in packs of 10, 100 or 1,000 (real-money purchase via secure checkout). Spend credits to skip an hour of your current idle activity instantly (Skip 1h), to skip straight to a boss or raid kill while fighting one, or to skip a slayer task you don't like. Skip 1h also works on travel and journeys: it advances exactly one hour of trail time, so a longer journey continues from partway along. Credits are tracked server-side on each character.
 
 ## Daily tasks
 
@@ -79,7 +79,7 @@ You get 5 daily tasks per day, one per difficulty tier from Novice up to Grandma
 
 ## Slayer
 
-Slayer masters assign you a task to kill a set number of a specific monster. Each master lives at a world place — Torvak in Lumbright, Morven in Canifel, Valdrin in Edgevale, Caelira in Seerhold, Nyra in Camlann and Druven in Brimhollow — and getting a task is an action at that settlement: visit the master (the Slayer screen or the world map offers to travel there if you're elsewhere) to be assigned. Completing tasks earns slayer points and Slayer XP; higher-tier masters need higher combat and Slayer levels and pay more points. Killing your assigned monster is the only way to finish a task — you can also spend credits to skip a task, or slayer points to buy unlocks (found on the Character Unlocks screen) and rewards. Boss slayer tasks award a ×4 Slayer XP multiplier on kills.
+Slayer masters assign you a task to kill a set number of a specific monster. Each master lives at a world place — Torvak in Lumbright, Morven in Canifel, Valdrin in Edgevale, Caelira in Seerhold, Nyra in Camlann and Druven in Brimhollow — and getting a task is an action at that settlement: visit the master (the Slayer screen or the world map offers to travel there if you're elsewhere) to be assigned. Completing tasks earns slayer points and Slayer XP; higher-tier masters need higher combat and Slayer levels and pay more points. Killing your assigned monster is the only way to finish a task — you can also spend credits to skip a task, or slayer points to buy unlocks (found on the Character Unlocks screen) and rewards. Boss slayer tasks award a ×4 Slayer XP multiplier on kills. Every slayer monster also drops farming seeds and saplings, tiered by its Slayer requirement: low-level tasks drop basic herb seeds and oak saplings, while the toughest monsters and slayer bosses rarely drop rynarr seeds and yew, palm and magic saplings.
 
 ## Quests
 
@@ -87,7 +87,7 @@ Quests are journeys across the world map: meet the requirements (skill levels, q
 
 ## Clue scrolls
 
-Clue scrolls drop from monsters and come in four tiers: medium, hard, elite and master. Completing a clue takes time — about 5 minutes for medium, 15 for hard, 30 for elite and 60 for master — and rewards 1 to 4 rolls from that tier's loot table: runes, coins, gear and rare uniques (like the 2nd Age sets) that fill your collection log. Higher tiers roll rarer rewards.
+Clue scrolls drop from monsters and come in four tiers: medium, hard, elite and master. Solving a clue is a journey across the world map: follow the trail to 2–4 waypoints, searching each one, and the final search grants the reward. Searching takes about 5 minutes total for medium, 15 for hard, 30 for elite and 60 for master, plus road time — teleporting between waypoints finishes the trail faster, and if you have another scroll of the same tier the next journey starts automatically. Rewards are 1 to 4 rolls from that tier's loot table: runes, coins, gear and rare uniques (like the 2nd Age sets) that fill your collection log. Higher tiers roll rarer rewards.
 
 ## Minigames
 
@@ -99,7 +99,7 @@ Raids are multi-boss gauntlets (for example the Vaults of Xyren) with big reward
 
 ## Farming
 
-Plant seeds in farming patches (herbs, trees and fruit trees) at different locations, wait for them to grow in real time, then harvest for crops and Farming XP. Higher Farming levels unlock better seeds. Harvest everything at once with Harvest All.
+Plant seeds in farming patches (herbs, trees and fruit trees) at different locations, wait for them to grow in real time, then harvest for crops and Farming XP. Higher Farming levels unlock better seeds. Harvest everything at once with Harvest All. Seeds and saplings come from the General Store (basics), the Trading Post, and slayer monsters — the higher a monster's Slayer requirement, the better the seeds it drops.
 
 ## Magic
 
@@ -107,7 +107,7 @@ Magic is trained by casting combat spells, which need runes. Each spell has a le
 
 ## Construction
 
-Construction is trained by building with planks — each build consumes one plank and grants instant XP: Plank (level 1, 29 XP), Oak Plank (level 15, 60 XP), Teak Plank (level 35, 90 XP) and Mahogany Plank (level 70, 140 XP). High Construction also unlocks two permanent perks: the Money Purse (level 70) lets you spend coins directly from your bank when shopping, and Master Rejuvenation (level 90) passively refills your special attack bar to 100% whenever it empties during a fight.
+Construction is trained by building with planks — each build consumes one plank and grants instant XP: Plank (level 1, 29 XP), Oak Plank (level 15, 60 XP), Teak Plank (level 35, 90 XP) and Mahogany Plank (level 70, 140 XP). High Construction also unlocks permanent perks: the Money Purse (level 70) lets you spend coins directly from your bank when shopping; at level 80 gathered loot banks automatically when your inventory fills during idle and offline play, so long gathering sessions never stall; and Master Rejuvenation (level 90) passively refills your special attack bar to 100% whenever it empties during a fight. Perks are managed on the Character Unlocks screen.
 
 ## Dungeoneering
 
@@ -131,7 +131,7 @@ The collection log tracks every rare unique in the game — boss drops, raid uni
 
 ## Leaderboard
 
-The public leaderboard ranks characters by total level, and separately by kill counts for each boss and raid. It is a fun comparison, not a competition with prizes.
+The public leaderboard ranks characters by total level, and separately by kill counts for each boss and raid. Tap any player to view their profile and skill levels. It is a fun comparison, not a competition with prizes.
 
 ## Ironman and one-life modes
 

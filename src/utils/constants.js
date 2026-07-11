@@ -90,6 +90,7 @@ export const SCREENS = {
   HOME: 'home',
   STATS: 'stats',
   BANK: 'bank',
+  BANK_HUB: 'bank_hub',
   INVENTORY: 'inventory',
   EQUIPMENT: 'equipment',
   COMBAT: 'combat',
@@ -107,7 +108,8 @@ export const SCREENS = {
   CHARACTER_UNLOCKS: 'character_unlocks',
   MAGIC: 'magic',
   WORLD_MAP: 'world_map',
-  ADVENTURES: 'adventures'
+  ADVENTURES: 'adventures',
+  DUNGEONS: 'dungeons'
 }
 
 // Phase 1 of the map-driven overhaul (docs/map-driven-overhaul-plan.md) ships the

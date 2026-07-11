@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { matchTaskProgress, isComplete, taskById } from '../src/engine/dailyTasks.js'
+import { matchTaskProgress, isComplete, taskById, skillingGainEvents } from '../src/engine/dailyTasks.js'
 
 function makeTask(overrides = {}) {
   return {
@@ -118,6 +118,52 @@ describe('matchTaskProgress', () => {
     })
   })
 
+  describe('clue_complete', () => {
+    it('increments on matching tier', () => {
+      const task = makeTask({ trigger: { type: 'clue_complete', tier: 'elite', target: 1 } })
+      expect(matchTaskProgress(task, { kind: 'clue_complete', tier: 'elite' })).toBe(1)
+    })
+    it('returns 0 for a different tier', () => {
+      const task = makeTask({ trigger: { type: 'clue_complete', tier: 'elite', target: 1 } })
+      expect(matchTaskProgress(task, { kind: 'clue_complete', tier: 'hard' })).toBe(0)
+    })
+    // Regression: clue task objects carry `clueLevel`, not `tier` — emitting
+    // `tier: clueTask.tier` (undefined) silently matched nothing in production.
+    it('returns 0 when the event tier is missing', () => {
+      const task = makeTask({ trigger: { type: 'clue_complete', tier: 'elite', target: 1 } })
+      expect(matchTaskProgress(task, { kind: 'clue_complete', tier: undefined })).toBe(0)
+      expect(matchTaskProgress(task, { kind: 'clue_complete' })).toBe(0)
+    })
+    it('matches any tier when the trigger has no tier filter', () => {
+      const task = makeTask({ trigger: { type: 'clue_complete', target: 1 } })
+      expect(matchTaskProgress(task, { kind: 'clue_complete', tier: 'master' })).toBe(1)
+    })
+    it('matches every clue daily in the pool from its clueLevel event', () => {
+      for (const [taskId, tier] of [
+        ['complete_medium_clue', 'medium'],
+        ['complete_hard_clue', 'hard'],
+        ['complete_elite_clue', 'elite'],
+        ['complete_master_clue', 'master'],
+      ] as const) {
+        const def = taskById(taskId)
+        expect(def, taskId).not.toBeNull()
+        // The event App.jsx emits on clue completion: tier comes from clueLevel.
+        expect(matchTaskProgress(def!, { kind: 'clue_complete', tier }), taskId).toBe(1)
+      }
+    })
+  })
+
+  describe('hunter_hunt', () => {
+    it('increments on matching actionId', () => {
+      const task = makeTask({ trigger: { type: 'hunter_hunt', actionId: 'hunt_cow', target: 10 } })
+      expect(matchTaskProgress(task, { kind: 'hunter_hunt', actionId: 'hunt_cow', count: 3 })).toBe(3)
+    })
+    it('returns 0 for a different actionId', () => {
+      const task = makeTask({ trigger: { type: 'hunter_hunt', actionId: 'hunt_cow', target: 10 } })
+      expect(matchTaskProgress(task, { kind: 'hunter_hunt', actionId: 'hunt_jeweller' })).toBe(0)
+    })
+  })
+
   describe('minigame_complete', () => {
     it('matches any minigame when not restricted', () => {
       const task = makeTask({ trigger: { type: 'minigame_complete', minigameId: 'any', target: 1 } })
@@ -150,6 +196,36 @@ describe('taskById + matchTaskProgress integration', () => {
     const bareState = { taskId: 'craft_leather_body', tier: 'Novice', target: 1, progress: 0, completed: false, slot: 0 }
     // Without the trigger, matchTaskProgress correctly returns 0 (caller must do the lookup)
     expect(matchTaskProgress(bareState as any, { kind: 'skill_produce', skill: 'crafting', itemId: 'leather_body' })).toBe(0)
+  })
+})
+
+// skillingGainEvents shapes idle/skip/background gains into events the matcher
+// accepts — production skills must emit skill_produce with the skill attached,
+// gathering skills skill_gather (previously everything was emitted as a
+// skill-less skill_gather, matching no task in the pool).
+describe('skillingGainEvents', () => {
+  it('emits skill_produce for a production skill task and matches the pool', () => {
+    const events = skillingGainEvents({ type: 'skill', skill: 'cooking' }, { shrimps: 12 })
+    expect(events).toEqual([{ kind: 'skill_produce', skill: 'cooking', itemId: 'shrimps', count: 12 }])
+    const def = taskById('cook_shrimps')
+    expect(def).not.toBeNull()
+    expect(matchTaskProgress(def!, events[0])).toBe(12)
+  })
+  it('emits skill_gather for a gathering skill task and matches the pool', () => {
+    const events = skillingGainEvents({ type: 'skill', skill: 'mining' }, { iron_ore: 7 })
+    expect(events).toEqual([{ kind: 'skill_gather', skill: 'mining', itemId: 'iron_ore', count: 7 }])
+    const def = taskById('mine_iron_ore')
+    expect(def).not.toBeNull()
+    expect(matchTaskProgress(def!, events[0])).toBe(7)
+  })
+  it('emits skill-less skill_gather for GatherScreen chore tasks', () => {
+    const events = skillingGainEvents({ type: 'gather' }, { bowstring: 5 })
+    expect(events).toEqual([{ kind: 'skill_gather', skill: undefined, itemId: 'bowstring', count: 5 }])
+  })
+  it('skips zero/negative quantities and handles missing gains', () => {
+    expect(skillingGainEvents({ type: 'skill', skill: 'mining' }, { iron_ore: 0, coal: -2 })).toEqual([])
+    expect(skillingGainEvents({ type: 'skill', skill: 'mining' }, null)).toEqual([])
+    expect(skillingGainEvents({ type: 'skill', skill: 'mining' }, undefined)).toEqual([])
   })
 })
 
