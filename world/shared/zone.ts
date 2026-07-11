@@ -40,6 +40,15 @@ export type ZonePropDef = {
 
 export type ZonePalette = { walkableA: string; walkableB: string; blockedA: string; blockedB: string }
 
+/** Sky/lighting mood for a zone — the "dark or light world" control. `sky` is
+ * the background hex; the two intensities scale the hemisphere fill and the sun.
+ * All optional; absent fields fall back to the default daytime look. */
+export type ZoneAmbience = {
+  sky?: string
+  hemiIntensity?: number
+  sunIntensity?: number
+}
+
 export type ZoneDef = {
   id: string
   name: string
@@ -52,6 +61,7 @@ export type ZoneDef = {
   exits?: ZoneExitDef[]
   props?: ZonePropDef[]
   palette?: ZonePalette
+  ambience?: ZoneAmbience
 }
 
 function isWalkable(zone: ZoneDef, x: number, z: number): boolean {
@@ -105,6 +115,16 @@ export function validateZone(zone: ZoneDef): ZoneValidationResult {
     seenIds.add(exit.id)
     if (!isWalkable(zone, exit.x, exit.z)) {
       errors.push(`exit '${exit.id}' at (${exit.x},${exit.z}) is not walkable`)
+    }
+  }
+
+  if (zone.ambience) {
+    const { sky, hemiIntensity, sunIntensity } = zone.ambience
+    if (sky != null && !/^#[0-9a-fA-F]{6}$/.test(sky)) errors.push(`ambience.sky '${sky}' is not a #rrggbb hex colour`)
+    for (const [key, val] of [['hemiIntensity', hemiIntensity], ['sunIntensity', sunIntensity]] as const) {
+      if (val != null && (typeof val !== 'number' || val < 0 || val > 4)) {
+        errors.push(`ambience.${key} must be a number in 0..4`)
+      }
     }
   }
 

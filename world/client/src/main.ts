@@ -242,8 +242,8 @@ function enterWorld(session: WorldSession): void {
       sceneBuilt = true
       void (async () => {
         hideOverlay()
-        const scene = createScene()
-        createLights(scene)
+        const scene = createScene(message.zone.ambience)
+        createLights(scene, message.zone.ambience)
         const ground = createGround(scene, message.zone.collision, message.zone.w, message.zone.h, message.zone.palette)
         exitLayer = createExitMarkers(scene, message.zone.exits ?? [])
         void createProps(scene, message.zone.props ?? [])

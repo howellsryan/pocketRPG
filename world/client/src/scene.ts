@@ -5,9 +5,12 @@ export const ZOOM_MIN = 0.6
 export const ZOOM_MAX = 1.8
 const TILE_PIXELS = 16
 
-export function createScene(): THREE.Scene {
+export type ZoneAmbience = { sky?: string; hemiIntensity?: number; sunIntensity?: number }
+const DEFAULT_SKY = 0x87ceeb
+
+export function createScene(ambience?: ZoneAmbience): THREE.Scene {
   const scene = new THREE.Scene()
-  scene.background = new THREE.Color(0x87ceeb)
+  scene.background = new THREE.Color(ambience?.sky ?? DEFAULT_SKY)
   return scene
 }
 
@@ -33,10 +36,10 @@ export function clampZoom(zoom: number): number {
   return Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, zoom))
 }
 
-export function createLights(scene: THREE.Scene): void {
-  const hemi = new THREE.HemisphereLight(0xffffff, 0x3a3a2a, 1.1)
+export function createLights(scene: THREE.Scene, ambience?: ZoneAmbience): void {
+  const hemi = new THREE.HemisphereLight(0xffffff, 0x3a3a2a, ambience?.hemiIntensity ?? 1.1)
   scene.add(hemi)
-  const dir = new THREE.DirectionalLight(0xffffff, 1.4)
+  const dir = new THREE.DirectionalLight(0xffffff, ambience?.sunIntensity ?? 1.4)
   dir.position.set(6, 12, 4)
   scene.add(dir)
 }

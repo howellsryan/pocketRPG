@@ -60,6 +60,7 @@ export type StaticObject = {
 export type ExitMarker = { id: string; x: number; z: number; label: string }
 export type PropPlacement = { model: string; x: number; z: number; rot?: number; scale?: number }
 export type GroundPalette = { walkableA: string; walkableB: string; blockedA: string; blockedB: string }
+export type ZoneAmbience = { sky?: string; hemiIntensity?: number; sunIntensity?: number }
 
 export type LootItem = { id: string; itemId: string; qty: number; x: number; z: number }
 
@@ -68,7 +69,7 @@ export type ServerMessage =
       t: 'welcome'
       selfId: string
       tick: number
-      zone: { id: string; name?: string; w: number; h: number; collision: string[]; exits?: ExitMarker[]; props?: PropPlacement[]; palette?: GroundPalette }
+      zone: { id: string; name?: string; w: number; h: number; collision: string[]; exits?: ExitMarker[]; props?: PropPlacement[]; palette?: GroundPalette; ambience?: ZoneAmbience }
       statics: StaticObject[]
       you: { x: number; z: number; hp: number; maxHp: number; stats: Record<string, { xp: number; level: number }>; inventory: InvSlot[]; gear?: GearDescriptor }
     }

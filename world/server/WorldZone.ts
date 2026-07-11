@@ -425,6 +425,7 @@ export class WorldZone extends Server<Env> {
         ...(this.zone.exits?.length ? { exits: this.zone.exits.map((e) => ({ id: e.id, x: e.x, z: e.z, label: e.label })) } : {}),
         ...(this.zone.props?.length ? { props: this.zone.props } : {}),
         ...(this.zone.palette ? { palette: this.zone.palette } : {}),
+        ...(this.zone.ambience ? { ambience: this.zone.ambience } : {}),
       },
       statics,
       you: { x: player.x, z: player.z, hp: player.hp, maxHp: player.maxHp, stats: player.stats, inventory: player.inventory, ...(player.gear.weapon ? { gear: player.gear } : {}) },

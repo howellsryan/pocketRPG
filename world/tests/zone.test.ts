@@ -112,6 +112,29 @@ describe('Phase 6 zones', () => {
     if (!result.valid) expect(result.errors[0]).toContain('lands on an exit tile')
   })
 
+  it('accepts a valid ambience block', () => {
+    const zone: ZoneDef = {
+      id: 'a', name: 'A', width: 3, height: 3, spawn: { x: 0, z: 0 },
+      collision: ['...', '...', '...'], objects: [], npcs: [],
+      ambience: { sky: '#0e1626', hemiIntensity: 0.35, sunIntensity: 1.4 },
+    }
+    expect(validateZone(zone)).toEqual({ valid: true })
+  })
+
+  it('rejects a malformed ambience sky colour and out-of-range intensity', () => {
+    const zone: ZoneDef = {
+      id: 'a', name: 'A', width: 3, height: 3, spawn: { x: 0, z: 0 },
+      collision: ['...', '...', '...'], objects: [], npcs: [],
+      ambience: { sky: 'blue', hemiIntensity: 99 },
+    }
+    const result = validateZone(zone)
+    expect(result.valid).toBe(false)
+    if (!result.valid) {
+      expect(result.errors.some((e) => e.includes('ambience.sky'))).toBe(true)
+      expect(result.errors.some((e) => e.includes('ambience.hemiIntensity'))).toBe(true)
+    }
+  })
+
   it('rejects a tree without its action id', () => {
     const zone: ZoneDef = {
       id: 'a', name: 'A', width: 3, height: 3, spawn: { x: 0, z: 0 },
