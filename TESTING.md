@@ -31,6 +31,10 @@ How PocketRPG stays regression-resistant. Deep rationale: `docs/testing-strategy
 | PvP | `pvp*` | `functions/_lib/pvp*`, `src/engine/pvp*` |
 | MCP / chat | `mcp*`, `chat*` | `functions/api/mcp.js`, `functions/_lib/chat/**` |
 
+## Invariant specs (`tests/spec/`)
+
+`tests/spec/` is a curated, greppable index of the CLAUDE.md §4–§7 gameplay invariants, one file per domain, each headed with the invariant and its source module (see `tests/spec/README.md`). It's the on-demand "how this should behave in depth" context for a hard bug — precise where CLAUDE.md is terse. Seeded with `inventoryCap` and `comboFood`; existing domain tests (`prayerDrain`, `journeys`, `consumables`, …) are the spec for their areas and migrate in incrementally. New invariants start here.
+
 ## Adding tests
 
 Follow `.claude/rules/testing.md`: bug fix => failing test first in the same PR; new behaviour => test in the same diff; logic that can't be tested where you write it moves to `src/engine`/`functions/_lib`. New CLAUDE.md gameplay invariant (§4-§7) => a matching test in the same change.
