@@ -3,6 +3,9 @@ import pool from '../src/data/dailyTasks.json'
 import monstersData from '../src/data/monsters.json'
 import itemsData from '../src/data/items.json'
 import raidsData from '../src/data/raids.json'
+import gameIcons from '../src/data/gameIcons.json'
+import bespokeIcons from '../src/data/bespokeIcons.json'
+import { MONSTER_ART, getMonsterArt } from '../src/utils/combatArt.js'
 
 const TIERS = ['Novice', 'Intermediate', 'Experienced', 'Master', 'Grandmaster']
 
@@ -60,6 +63,29 @@ describe('dailyTasks.json pool integrity', () => {
     for (const task of pool) {
       const t = task.trigger?.target ?? 1
       expect(Number.isInteger(t) && t > 0, `${task.id}: target "${t}" not positive integer`).toBe(true)
+    }
+  })
+
+  // Kill tasks render their icon via getMonsterArt (DailyTasksModal); every
+  // targeted monster needs a curated MONSTER_ART entry with a real glyph, or
+  // the modal falls back to the 📦 default.
+  it('every kill task monster has combat art with a real glyph', () => {
+    const killTasks = pool.filter(t => t.trigger?.type === 'monster_kill' || t.trigger?.type === 'boss_kill')
+    for (const task of killTasks) {
+      const id = task.trigger.monsterId
+      expect(MONSTER_ART, `${task.id}: monsterId "${id}" has no MONSTER_ART entry`).toHaveProperty(id)
+      const art = getMonsterArt({ id })
+      const hasGlyph = art.icon in gameIcons || art.icon in bespokeIcons
+      expect(hasGlyph, `${task.id}: art icon "${art.icon}" not in gameIcons/bespokeIcons`).toBe(true)
+    }
+  })
+
+  // Non-kill tasks render `icon` directly as a GameIcon glyph key.
+  it('every non-kill task icon resolves to a glyph', () => {
+    const rest = pool.filter(t => t.trigger?.type !== 'monster_kill' && t.trigger?.type !== 'boss_kill')
+    for (const task of rest) {
+      const hasGlyph = task.icon in gameIcons || task.icon in bespokeIcons
+      expect(hasGlyph, `${task.id}: icon "${task.icon}" not in gameIcons/bespokeIcons`).toBe(true)
     }
   })
 

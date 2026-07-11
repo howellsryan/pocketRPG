@@ -3,6 +3,20 @@ import Modal from './Modal.jsx'
 import GameIcon from './GameIcon.jsx'
 import GildedComplete from './GildedComplete.jsx'
 import { COMPLEXITY_COLORS, COMPLEXITY_ORDER } from '../utils/complexityColors.js'
+import { getMonsterArt } from '../utils/combatArt.js'
+
+// Kill tasks store the raw monster id as `icon`, which is not a glyph key —
+// resolve their emblem + accent through the combat art table instead.
+// combatArt.js lives in the lazy game chunk while this modal is core, so the
+// single-file build must guard the binding (same pattern as gameIconsData).
+function taskIconArt(def) {
+  const trigger = def?.trigger
+  if ((trigger?.type === 'monster_kill' || trigger?.type === 'boss_kill') &&
+      typeof getMonsterArt === 'function') {
+    return getMonsterArt({ id: trigger.monsterId })
+  }
+  return null
+}
 
 function formatCountdown(ms) {
   if (!ms || ms <= 0) return '00:00:00'
@@ -60,7 +74,8 @@ export default function DailyTasksModal({ onClose, tasks = [], resetInMs = 0, ta
             const def = poolById[task.taskId]
             const name = def?.name ?? task.taskId
             const description = def?.description ?? ''
-            const icon = def?.icon ?? task.taskId
+            const art = taskIconArt(def)
+            const icon = art?.icon ?? def?.icon ?? task.taskId
             const target = task.target ?? 1
             const progress = task.progress ?? 0
             const done = task.completed || progress >= target
@@ -73,7 +88,7 @@ export default function DailyTasksModal({ onClose, tasks = [], resetInMs = 0, ta
                   style={{ borderLeft: `3px solid ${color}` }}
                 >
                   <span class="text-[28px] shrink-0">
-                    <GameIcon iconKey={icon} size={28} />
+                    <GameIcon iconKey={icon} size={28} color={art?.accent} />
                   </span>
                   <div class="flex-1 min-w-0">
                     <div class="flex items-center justify-between gap-2">
