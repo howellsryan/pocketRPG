@@ -20,12 +20,21 @@ const COMBAT_OTHER_BONUS = ['meleeStrength', 'rangedStrength', 'magicDamage']
 const hasPositiveCombatOther = (obj) =>
   !!obj && COMBAT_OTHER_BONUS.some(k => typeof obj[k] === 'number' && obj[k] > 0)
 
-// An item belongs in the Armoury if it grants any positive combat stat: an
-// attack or defence bonus, or a strength / ranged-strength / magic-damage bonus
-// (so strength amulets, combat rings and ammunition are included, not just
-// items with an attack/defence line).
+// True when the item grants any positive combat stat (attack/defence bonus, or
+// strength / ranged-strength / magic-damage). Retained as the canonical
+// "is this combat gear" rule; the Armoury includes items regardless (below).
 export function hasPositiveCombatBonus(item) {
   return hasPositive(item?.attackBonus) || hasPositive(item?.defenceBonus) || hasPositiveCombatOther(item?.otherBonus)
+}
+
+// The eleven equipment slots (mirrors EQUIPMENT_SLOTS in utils/constants.js).
+const EQUIP_SLOTS = new Set(['head', 'body', 'legs', 'weapon', 'shield', 'gloves', 'boots', 'cape', 'neck', 'ring', 'ammo'])
+
+// An item belongs in the Armoury if it can be equipped — it occupies one of the
+// eleven equipment slots. Everything wieldable/wearable is listed, combat gear
+// or not (fishing rods, spades, cosmetics, prayer ammo included).
+export function isEquippable(item) {
+  return !!item && EQUIP_SLOTS.has(item.slot)
 }
 
 export function hasSpecialAttack(item) {
@@ -69,14 +78,37 @@ const SKILLING_TOOL_SKILLS = new Set([
   'woodcutting', 'mining', 'fishing', 'farming', 'hunter', 'firemaking',
 ])
 
+// Non-combat otherBonus keys that mark a skilling tool (an XP boost or a
+// gathering-level requirement), e.g. the Angler Net's fishingXpPercent.
+const SKILLING_OTHER_BONUS = new Set(['fishingXpPercent', 'miningLevel', 'woodcuttingLevel'])
+
+// Item kinds (name noun) that are unambiguously gathering tools even without a
+// skill requirement — Gold Spade, Angler Net, etc. "Axe"/"Pickaxe" are omitted:
+// real ones carry a Woodcutting/Mining requirement, and the kind alone would
+// misfile combat weapons like the Emberhowl Axe.
+const SKILLING_TOOL_KINDS = new Set(['harpoon', 'net', 'rod', 'cage', 'spade', 'tinderbox', 'secateurs'])
+
+// A weapon/tool used to train a gathering skill (not a combat weapon). Detected
+// from the strongest signal down: an explicit `tool` type, a gathering-skill
+// requirement, a skilling bonus, or an unambiguous tool kind.
+export function isSkillingTool(item) {
+  if (!item) return false
+  const isToolLike = item.type === 'tool' || item.type === 'weapon' || item.slot === 'weapon'
+  if (!isToolLike) return false
+  if (item.type === 'tool') return true
+  const reqs = item.requirements || {}
+  if (Object.keys(reqs).some(k => SKILLING_TOOL_SKILLS.has(k))) return true
+  const other = item.otherBonus || {}
+  if (Object.keys(other).some(k => SKILLING_OTHER_BONUS.has(k) && other[k])) return true
+  return SKILLING_TOOL_KINDS.has(kindOf(item).toLowerCase())
+}
+
 // The four Armoury type-filter buckets: 'skilling' | 'melee' | 'magic' | 'ranged'.
-// Only a *weapon* that is a gathering tool counts as Skilling (a Dragon Axe,
-// used for Woodcutting); everything else — combat weapons, all armour — files
-// by its combat style even when a skill gates equipping it.
+// Skilling holds skill capes and gathering-tool weapons (a Dragon Axe used for
+// Woodcutting, a fishing rod, a spade); everything else — combat weapons, all
+// other armour — files by its combat style even when a skill gates equipping it.
 export function typeFilterOf(item) {
-  const isWeapon = item?.type === 'weapon' || item?.slot === 'weapon'
-  const reqs = item?.requirements || {}
-  if (isWeapon && Object.keys(reqs).some(k => SKILLING_TOOL_SKILLS.has(k))) return 'skilling'
+  if (isSkillCape(item) || isSkillingTool(item)) return 'skilling'
   return categoryOf(item)
 }
 
@@ -174,7 +206,7 @@ export function buildArmoury(items = itemsData) {
   const groups = new Map()
   const seenIds = new Set()
   for (const item of Object.values(items)) {
-    if (!hasPositiveCombatBonus(item)) continue
+    if (!isEquippable(item)) continue
     // Defensive: never list the same canonical id twice (e.g. if a legacy
     // duplicate ever re-enters the data).
     if (seenIds.has(item.id)) continue
