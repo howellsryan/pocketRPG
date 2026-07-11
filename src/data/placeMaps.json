@@ -922,8 +922,8 @@
       {
         "kind": "farming",
         "ref": "brimhaven",
-        "x": 520,
-        "y": 570
+        "x": 200,
+        "y": 200
       },
       {
         "screen": "dungeons",
