@@ -80,6 +80,7 @@ import { fetchKillCounts } from './cloud/killCounts.js'
 import { isLoggedDrop, collectIdleCombatLoggedDrops } from './engine/collectionLog.js'
 import { rollClueRewards } from './engine/clueScrolls.js'
 import dailyTasksData from './data/dailyTasks.json'
+import { skillingGainEvents } from './engine/dailyTasks.js'
 import { countItem, addItem } from './engine/inventory.js'
 import { skillingActionBlockedByFullInventory } from './engine/skilling.js'
 
@@ -513,7 +514,7 @@ function GameApp() {
       const snap = getSnapshot()
       const scrollsNow = (snap.bank?.[clueTask.requiresItem]?.quantity || 0) + countItem(snap.inventory || [], clueTask.requiresItem)
       const settled = completeClueSolve(clueTask, { updateBankDirect, getSnapshot, addToast, isInPvpMatch })
-      recordGameEvent?.({ kind: 'clue_complete', tier: clueTask.tier })
+      recordGameEvent?.({ kind: 'clue_complete', tier: clueTask.clueLevel })
       if (scrollsNow >= 2) {
         const nextTask = planClueJourney(clueTask, endedAt)
         if (nextTask) {
@@ -1251,9 +1252,7 @@ function GameApp() {
             recordGameEvent?.({ kind, monsterId: savedTask.monster.id, count: sim.monstersKilled })
           }
           if ((savedTask.type === 'skill' || savedTask.type === 'gather') && sim.itemsGained) {
-            for (const [itemId, qty] of Object.entries(sim.itemsGained)) {
-              if (qty > 0) recordGameEvent?.({ kind: 'skill_gather', itemId, count: qty })
-            }
+            for (const evt of skillingGainEvents(savedTask, sim.itemsGained)) recordGameEvent?.(evt)
           }
           if (savedTask.type === 'combat' && sim.slayerTaskUpdate?.completed) {
             recordGameEvent?.({ kind: 'slayer_task_complete' })
@@ -1493,7 +1492,7 @@ function GameApp() {
           const remaining = (task.ticksRemaining ?? total) - 1
           if (remaining <= 0) {
             completeClueSolve(clueTask, { updateBankDirect, getSnapshot, addToast, isInPvpMatch })
-            recordGameEvent?.({ kind: 'clue_complete', tier: clueTask.tier })
+            recordGameEvent?.({ kind: 'clue_complete', tier: clueTask.clueLevel })
             const session = mergeSession(task.session, { actions: 1 })
             setActiveTask({ ...task, ticksRemaining: 0, totalTicks: total, justCompleted: true, session }, { skipCloudSync: true })
           } else {
@@ -1998,6 +1997,7 @@ function GameApp() {
     }
     if ((task.type === 'skill' || task.type === 'gather') && result.finalInventory) {
       updateInventory(result.finalInventory)
+      for (const evt of skillingGainEvents(task, result.itemsGained)) recordGameEvent?.(evt)
       const banked = result.itemsBanked || {}
       if (Object.keys(banked).length > 0) updateBankDirect(banked)
       if (result.itemsConsumed && Object.keys(result.itemsConsumed).length > 0) {
@@ -2691,6 +2691,22 @@ function GameApp() {
             } else {
               setSlayerTask(sim.slayerTaskUpdate)
             }
+          }
+
+          // Feed skipped-hour gains into the daily task tracker (mirrors the
+          // visibility idle catch-up feed).
+          if (savedTask.type === 'combat' && sim.monstersKilled > 0 && savedTask.monster?.id) {
+            const kind = savedTask.monster?.boss === true ? 'boss_kill' : 'monster_kill'
+            recordGameEvent?.({ kind, monsterId: savedTask.monster.id, count: sim.monstersKilled })
+          }
+          if ((savedTask.type === 'skill' || savedTask.type === 'gather') && sim.itemsGained) {
+            for (const evt of skillingGainEvents(savedTask, sim.itemsGained)) recordGameEvent?.(evt)
+          }
+          if (savedTask.type === 'combat' && sim.slayerTaskUpdate?.completed) {
+            recordGameEvent?.({ kind: 'slayer_task_complete' })
+          }
+          if (savedTask.type === 'hunter' && sim.actions > 0 && savedTask.action?.id) {
+            recordGameEvent?.({ kind: 'hunter_hunt', actionId: savedTask.action.id, count: sim.actions })
           }
 
           // Update HP from regen if applicable
