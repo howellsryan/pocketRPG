@@ -2886,7 +2886,7 @@ function GameApp() {
       case SCREENS.STORE:       return <TradingPostScreen onBack={backToPrev} />
       case SCREENS.QUESTS:         return <QuestsScreen onNavigate={navigate} onBack={stopBackNav} />
       case SCREENS.CLUES:          return <CluesScreen onNavigate={navigate} onBack={backToPrev} />
-      case SCREENS.MINIGAMES:      return <MinigamesScreen initialTaskId={actionData?.minigameTaskId} onBack={backToPrev} />
+      case SCREENS.MINIGAMES:      return <MinigamesScreen initialTaskId={actionData?.minigameTaskId} onBack={backToPrev} onStopBack={stopBackNav} />
       case SCREENS.ADVENTURES:     return <AdventuresScreen onNavigate={navigate} />
       case SCREENS.COLLECTION_LOG: return <CollectionLogScreen onBack={backToPrev} />
       case SCREENS.LEADERBOARD:    return <LeaderboardScreen onBack={backToPrev} />

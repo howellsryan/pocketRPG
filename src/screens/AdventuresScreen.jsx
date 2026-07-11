@@ -6,6 +6,7 @@ const ADVENTURE_LINKS = [
   { id: SCREENS.QUESTS,    label: 'Quests Board', iconKey: 'quest_scroll_blue' },
   { id: SCREENS.CLUES,     label: 'Clues',        iconKey: 'clue_scroll_purple' },
   { id: SCREENS.MINIGAMES, label: 'Minigames',    iconKey: 'minigame_scroll_red' },
+  { id: SCREENS.GATHER,    label: 'Gather',       iconKey: 'kingsherb' },
 ]
 
 export default function AdventuresScreen({ onNavigate }) {
