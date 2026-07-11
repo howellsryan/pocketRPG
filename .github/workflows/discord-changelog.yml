@@ -39,6 +39,41 @@ jobs:
 
           # Drop PR-template HTML comment hints before publishing.
           body=$(printf '%s' "$body" | perl -0pe 's/<!--.*?-->//gs')
+
+          # HARD STOP: strip any attribution/session trailer that slipped into
+          # the title or body. This is the last gate before the public post —
+          # nothing matching these patterns may ever reach Discord, regardless
+          # of how it got into the PR. Delete offending lines, then collapse the
+          # blank runs and trailing whitespace they leave behind.
+          sanitize() {
+            perl -0777 -pe '
+              my @drop = (
+                qr/^\s*Co-?authored-by:.*$/im,
+                qr/^\s*Claude-Session:.*$/im,
+                qr/^\s*(?:Generated (?:with|by)|🤖 Generated).*Claude.*$/im,
+                qr/^.*claude\.ai\/code.*$/im,
+                qr/^.*noreply\@anthropic\.com.*$/im,
+                qr/^\s*session_[A-Za-z0-9_-]+\s*$/im,
+                qr/^.*\b(?:made|written|authored|created|generated)\s+by\s+(?:Claude|an?\s+AI(?:\s+agent)?|Anthropic).*$/im,
+              );
+              foreach my $re (@drop) { s/$re//g; }
+              s/[ \t]+$//mg;      # trailing spaces
+              s/\n{3,}/\n\n/g;    # collapse blank-line runs
+              s/^\s+|\s+$//g;     # trim ends
+            '
+          }
+          title=$(printf '%s' "$title" | sanitize)
+          body=$(printf '%s' "$body" | sanitize)
+
+          # HARD STOP (fail-closed): if any banned token survived sanitizing,
+          # abort the post rather than leak it. Better a missing changelog
+          # entry than one carrying attribution into the public channel.
+          if printf '%s\n%s' "$title" "$body" \
+               | grep -iEq 'co-?authored-by|claude[- ]?session|claude\.ai/code|noreply@anthropic\.com|generated (with|by) .*claude|\bsession_[A-Za-z0-9_-]{6,}'; then
+            echo "::error::Attribution/session token survived sanitizing; refusing to post changelog." >&2
+            exit 1
+          fi
+
           [ -n "$number" ] && title="$title (#$number)"
 
           payload=$(jq -n \
