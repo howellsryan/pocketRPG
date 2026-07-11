@@ -86,8 +86,8 @@
         "screen": "dungeons",
         "iconKey": "dungeon",
         "label": "Lumbright Dungeon",
-        "x": 456,
-        "y": 634
+        "x": 610,
+        "y": 850
       }
     ]
   },
@@ -172,8 +172,8 @@
         "screen": "dungeons",
         "iconKey": "dungeon",
         "label": "Varrick Dungeon",
-        "x": 639,
-        "y": 317
+        "x": 1020,
+        "y": 362
       }
     ]
   },
@@ -275,8 +275,8 @@
         "screen": "dungeons",
         "iconKey": "dungeon",
         "label": "Faloden Dungeon",
-        "x": 868,
-        "y": 367
+        "x": 1086,
+        "y": 461
       }
     ]
   },
@@ -394,8 +394,8 @@
         "screen": "dungeons",
         "iconKey": "dungeon",
         "label": "Ardounne Dungeon",
-        "x": 831,
-        "y": 220
+        "x": 1105,
+        "y": 201
       }
     ]
   },
@@ -472,8 +472,8 @@
         "screen": "dungeons",
         "iconKey": "dungeon",
         "label": "Draynar Dungeon",
-        "x": 506,
-        "y": 422
+        "x": 658,
+        "y": 580
       }
     ]
   },
@@ -558,8 +558,8 @@
         "screen": "dungeons",
         "iconKey": "dungeon",
         "label": "Al-Karid Dungeon",
-        "x": 383,
-        "y": 464
+        "x": 900,
+        "y": 500
       }
     ]
   },
@@ -638,8 +638,8 @@
         "screen": "dungeons",
         "iconKey": "dungeon",
         "label": "Edgevale Dungeon",
-        "x": 145,
-        "y": 306
+        "x": 66,
+        "y": 132
       }
     ]
   },
@@ -711,8 +711,8 @@
         "screen": "dungeons",
         "iconKey": "dungeon",
         "label": "Barlock Dungeon",
-        "x": 622,
-        "y": 390
+        "x": 988,
+        "y": 494
       }
     ]
   },
@@ -783,8 +783,8 @@
         "screen": "dungeons",
         "iconKey": "dungeon",
         "label": "Catherra Dungeon",
-        "x": 207,
-        "y": 336
+        "x": 550,
+        "y": 210
       }
     ]
   },
@@ -862,8 +862,8 @@
         "screen": "dungeons",
         "iconKey": "dungeon",
         "label": "Seerhold Dungeon",
-        "x": 400,
-        "y": 393
+        "x": 526,
+        "y": 615
       }
     ]
   },
@@ -929,8 +929,8 @@
         "screen": "dungeons",
         "iconKey": "dungeon",
         "label": "Brimhollow Dungeon",
-        "x": 642,
-        "y": 201
+        "x": 955,
+        "y": 428
       }
     ]
   },
@@ -1001,8 +1001,8 @@
         "screen": "dungeons",
         "iconKey": "dungeon",
         "label": "Canifel Dungeon",
-        "x": 576,
-        "y": 406
+        "x": 99,
+        "y": 263
       }
     ]
   },
@@ -1098,8 +1098,8 @@
         "screen": "dungeons",
         "iconKey": "dungeon",
         "label": "Camlann Dungeon",
-        "x": 620,
-        "y": 363
+        "x": 137,
+        "y": 176
       }
     ]
   },
@@ -1183,8 +1183,8 @@
         "screen": "dungeons",
         "iconKey": "dungeon",
         "label": "Port Sarin Dungeon",
-        "x": 576,
-        "y": 198
+        "x": 66,
+        "y": 165
       }
     ]
   }
