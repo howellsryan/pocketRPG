@@ -20,6 +20,7 @@
     "seed:bots": "node scripts/seed-pvp-bots.cjs",
     "gen:knowledge": "node scripts/gen-chat-knowledge.cjs",
     "gen:model": "node scripts/process-3d-model.mjs",
+    "check:drops": "node scripts/check-drops.cjs",
     "sync:three": "node scripts/sync-three-vendor.mjs",
     "claude:headroom": "bash scripts/headroom-claude.sh",
     "ci": "npm run typecheck && npm run build && npm run rebuild && npm run check:single",
