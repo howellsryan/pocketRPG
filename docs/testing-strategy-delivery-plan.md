@@ -62,10 +62,11 @@ Execution playbook for the phased plan in `docs/testing-strategy-review.md`. One
 **Scope**: JSDoc in ≤3 engine files, new tsconfig, `package.json`, test-file type fixes.
 
 1. First: JSDoc typedefs for the **`TaskResult` contract** in `src/engine/applyTaskResult.js` (fields per task type; net vs additive semantics in the doc comments) + `// @ts-check` pragma on that file only. Fix in-file errors. This is the highest-value contract and shrinks downstream test-file errors.
-2. Then `tsconfig.tests.json`: `include: ["tests/**/*.ts"]`, `strict: true`, **`strictNullChecks: false`** initially (the peer-review sample showed null-checks dominate the one-off cost). Script `"typecheck": "tsc -p tsconfig.tests.json --noEmit"`.
-3. Fix errors file-by-file, committing green batches. Budget: ~200 errors expected across ~half the files, mostly `{}`-inference from untyped engine imports — fix by typing fixtures/builders in `tests/helpers/builders.ts`, not by casting (ground rule 4). If the count exceeds ~400, invoke ground rule 6.
-4. Add `typecheck` to `npm run ci` once green.
-5. Follow-ups (separate PRs, opportunistic): `// @ts-check` per engine file as files gain JSDoc; enable `strictNullChecks` when error count permits. Never tsconfig-level `checkJs` — measured too expensive (transitive imports).
+**DELIVERED (this pass):** step 1 — `TaskResult` JSDoc contract + `// @ts-check` on `src/engine/applyTaskResult.js` (0 errors). `tsconfig.typecheck.json` uses **`checkJs: false` + per-file `// @ts-check`** so only annotated files are checked and untyped imports are inferred, not reported — a green, enforceable allowlist that grows one pragma at a time. `npm run typecheck` is wired into `npm run ci`.
+
+**MEASURED & DEFERRED (ground rule 6):** the alternative — strict-checking all of `tests/**` — was scaffolded and measured at **423 errors across 67 files** (dominant `TS2339`/`TS7018`, the `{}`-inference-from-untyped-JS the peer review predicted). That is at the 2× budget ceiling and most fixes would need forbidden `as any` casts, so the tests/** strict pass is deferred until the engine files it imports are annotated. It must be sequenced AFTER the engine-JSDoc follow-up, not before.
+
+**Follow-ups (separate PRs, opportunistic):** add JSDoc + `// @ts-check` to the next engine contracts (the simulators, `experience.js`, `constants.js` — the latter two are `applyTaskResult`'s only transitive gaps), each joining `npm run typecheck` automatically; then revisit the tests/** pass; enable `strictNullChecks` when annotated files can bear it. Never tsconfig-level `checkJs` — measured too expensive via transitive imports (12 errors from `applyTaskResult`'s deps alone).
 
 ## PR 5 — Agent working rules: `.claude/rules/testing.md` + `TESTING.md`
 
