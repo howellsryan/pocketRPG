@@ -4,6 +4,7 @@ import SectionHeader from '../components/SectionHeader.jsx'
 import GameIcon from '../components/GameIcon.jsx'
 import SkillActionRow from '../components/SkillActionRow.jsx'
 import SkillActivePanel from '../components/SkillActivePanel.jsx'
+import BackLink from '../components/BackLink.jsx'
 import { getActionProgress } from '../hooks/useActionTick.js'
 import { countItem, addItem } from '../engine/inventory.js'
 import { skillingActionBlockedByFullInventory } from '../engine/skilling.js'
@@ -389,6 +390,7 @@ export default function GatherScreen({ initialTaskId, idleResult, onBack, onStop
     <div class="forge-shell h-full flex flex-col">
       {/* Header */}
       <div class="px-4 pt-4 pb-2 flex-shrink-0">
+        <BackLink onClick={onBack} className="mb-3" />
         <SectionHeader size="lg" className="mb-[10px]">
           <span class="inline-flex items-center gap-2">
             <GameIcon iconKey="kingsherb" size={22} />
