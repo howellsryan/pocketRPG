@@ -11,6 +11,14 @@
 import itemsData from '../data/items.json'
 import monstersData from '../data/monsters.json'
 import skillsData from '../data/skills.json'
+import cluesData from '../data/clues.json'
+import raidsData from '../data/raids.json'
+import minigamesData from '../data/minigames.json'
+import { isOrderBookItem } from '../engine/storeRules.js'
+import { SLAYER_UNLOCKS } from '../engine/slayerUnlocks.js'
+import { isZestaUnique } from '../engine/pvpBotRewards.js'
+
+const SLAYER_UNLOCK_IDS = new Set(SLAYER_UNLOCKS.map(u => u.itemId))
 
 const hasPositive = (obj) => !!obj && Object.values(obj).some(v => typeof v === 'number' && v > 0)
 
@@ -120,46 +128,136 @@ export const TYPE_FILTERS = [
   { value: 'ranged', label: 'Ranged' },
 ]
 
-// How a player can obtain an item — a short list of source lines for the item
-// modal (crafted via a skill, dropped by monsters, stolen/hunted, clue/raid
-// reward). Empty when no source is found in the data.
+const titleCaseId = (id) => String(id || '').split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+
+const CLUE_TIER_ORDER = ['medium', 'hard', 'elite', 'master']
+
+// Reverse indexes mapping an itemId to each place it can come from. Built once
+// and cached — the tables are static content. Keyed by data identity so tests
+// passing custom data get their own index.
+const _sourceIndexCache = new WeakMap()
+function sourceIndex(items, skills, monsters, clues, raids, minigames) {
+  const cached = _sourceIndexCache.get(items)
+  if (cached) return cached
+  const name = (id) => items[id]?.name || titleCaseId(id)
+
+  const crafted = new Map() // id -> { skill, level }
+  for (const skill of Object.values(skills)) {
+    for (const a of skill.actions || []) if (a.product && !crafted.has(a.product)) crafted.set(a.product, { skill: skill.name, level: a.level })
+  }
+
+  const combine = new Map() // result id -> "combine A with B" text
+  for (const it of Object.values(items)) {
+    if (it.combineResult && !combine.has(it.combineResult)) combine.set(it.combineResult, `Forged by combining ${it.name} with ${name(it.combineWith)}`)
+  }
+
+  const clueTiers = new Map() // id -> Set(tier)
+  for (const [tier, data] of Object.entries(clues)) {
+    for (const r of data.rewards || []) {
+      if (!clueTiers.has(r.itemId)) clueTiers.set(r.itemId, new Set())
+      clueTiers.get(r.itemId).add(tier)
+    }
+  }
+
+  const raid = new Map() // id -> raid name (uniques come from the raid chest)
+  const seenRaid = new Set()
+  for (const [key, r] of Object.entries(raids)) {
+    const rid = r.id || key
+    if (seenRaid.has(rid)) continue
+    seenRaid.add(rid)
+    for (const u of (r.rewards?.unique?.items) || []) {
+      const iid = u.itemId || u
+      if (!raid.has(iid)) raid.set(iid, r.name)
+    }
+  }
+
+  const minigame = new Map() // reward item id -> minigame label
+  const mgLabels = Object.fromEntries((minigames.minigames || []).map(m => [m.id, m.label]))
+  for (const t of minigames.tasks || []) {
+    const label = mgLabels[t.minigame] || t.minigame || 'a minigame'
+    // A task grants either a single `product` or a set via `rewardItems`.
+    for (const iid of [t.product, ...(t.rewardItems || [])]) if (iid && !minigame.has(iid)) minigame.set(iid, label)
+  }
+
+  const drops = new Map() // id -> [monster names]
+  for (const m of Object.values(monsters)) {
+    for (const d of m.drops || []) {
+      if (!drops.has(d.itemId)) drops.set(d.itemId, [])
+      drops.get(d.itemId).push(m.name)
+    }
+  }
+
+  const thieving = new Map() // id -> npc name
+  for (const npc of skills.thieving?.npcs || []) {
+    for (const iid of [...(npc.drops || []).map(d => d.itemId), ...(npc.gems || []).map(g => g.itemId)]) {
+      if (!thieving.has(iid)) thieving.set(iid, npc.name)
+    }
+  }
+
+  const hunter = new Map() // id -> hunter action name
+  for (const a of skills.hunter?.actions || []) {
+    for (const t of a.rewardTables || []) for (const r of t.rewards || []) {
+      const iid = r.itemId || r
+      if (!hunter.has(iid)) hunter.set(iid, a.name)
+    }
+  }
+
+  const idx = { crafted, combine, clueTiers, raid, minigame, drops, thieving, hunter }
+  _sourceIndexCache.set(items, idx)
+  return idx
+}
+
+// How a player can obtain an item — the full set of source lines for the item
+// modal, ordered from most specific (combine recipe, craft) to broad. Every
+// equippable item resolves to at least one line.
 export function describeObtainment(item, data = {}) {
   const id = item?.id
   if (!id) return []
   const items = data.items || itemsData
-  const skills = data.skills || skillsData
-  const monsters = data.monsters || monstersData
+  const idx = sourceIndex(
+    items, data.skills || skillsData, data.monsters || monstersData,
+    data.clues || cluesData, data.raids || raidsData, data.minigames || minigamesData,
+  )
   const out = []
 
-  // Made with a production skill (action.product === id).
-  for (const skill of Object.values(skills)) {
-    const action = (skill.actions || []).find(a => a.product === id)
-    if (action) { out.push(`Made with ${skill.name} (level ${action.level})`); break }
+  if (idx.combine.has(id)) out.push(idx.combine.get(id))
+  if (idx.crafted.has(id)) { const c = idx.crafted.get(id); out.push(`Made with ${c.skill} (level ${c.level})`) }
+
+  const raidName = idx.raid.get(id)
+  if (raidName) out.push(`Reward from the ${raidName} raid`)
+
+  if (idx.clueTiers.has(id)) {
+    const tiers = [...idx.clueTiers.get(id)].sort((a, b) => CLUE_TIER_ORDER.indexOf(a) - CLUE_TIER_ORDER.indexOf(b))
+    out.push(`Found in ${tiers.join(', ')} clue scrolls`)
+  } else if (item.isClueReward) {
+    out.push('Found in clue scroll rewards')
   }
 
-  // Stolen from a Thieving target (npc drops or gem/seed reward tables).
-  for (const npc of skills.thieving?.npcs || []) {
-    const ids = [...(npc.drops || []).map(d => d.itemId), ...(npc.gems || []).map(g => g.itemId)]
-    if (ids.includes(id)) { out.push(`Stolen from ${npc.name}`); break }
-  }
+  if (idx.minigame.has(id)) out.push(`Earned from ${idx.minigame.get(id)}`)
+  if (idx.thieving.has(id)) out.push(`Stolen from ${idx.thieving.get(id)}`)
+  if (idx.hunter.has(id)) out.push(`Hunted via ${idx.hunter.get(id)}`)
 
-  // Caught via a Hunter action reward table.
-  for (const action of skills.hunter?.actions || []) {
-    const hit = (action.rewardTables || []).some(t => (t.rewards || []).some(r => (r.itemId || r) === id))
-    if (hit) { out.push(`Hunted via ${action.name}`); break }
-  }
+  if (SLAYER_UNLOCK_IDS.has(id)) out.push('Bought with Slayer points on the Character Unlocks screen')
+  if (isZestaUnique(id)) out.push('A rare drop from winning PvP bot matches')
+  if (item.isSkillCape) out.push('Bought once you reach level 99 in its skill')
+  else if (item.isMaxCape) out.push('Bought once every skill reaches level 99')
 
-  // Dropped by monsters.
-  const droppers = []
-  for (const m of Object.values(monsters)) {
-    if ((m.drops || []).some(d => d.itemId === id)) droppers.push(m.name)
-  }
-  if (droppers.length) {
+  // Monster drops — skipped for raid uniques (their raid-boss drop table is
+  // never rolled; the loot comes from the raid chest, already noted above).
+  const droppers = idx.drops.get(id)
+  if (droppers?.length && !raidName) {
     const shown = droppers.slice(0, 6).join(', ')
     out.push(`Dropped by ${shown}${droppers.length > 6 ? `, and ${droppers.length - 6} more` : ''}`)
   }
 
-  if (!out.length && items[id]?.shopValue > 0) out.push('Bought from shops or traded for coins')
+  if (item.isGeneralStore) out.push('Bought from the general store')
+  else if (item.questUnlock) out.push('Unlocked through a quest')
+
+  if (!out.length) {
+    if (item.isBossUnique) out.push('Dropped by a boss')
+    else if (isOrderBookItem(item)) out.push('Traded from other players on the Trading Post')
+    else out.push('Obtained through gameplay')
+  }
   return out
 }
 

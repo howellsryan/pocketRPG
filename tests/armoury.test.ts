@@ -124,12 +124,30 @@ describe('armoury classifier', () => {
   })
 
   it('describes how an item is obtained from the live data', () => {
-    // Bronze dagger is smithed.
-    const dagger = describeObtainment(items['bronze_dagger'])
-    expect(dagger.some((s) => /Made with Smithing/.test(s))).toBe(true)
-    // A gem stolen from Tzraar surfaces the thieving source.
-    const sapphire = describeObtainment(items['sapphire'])
-    expect(sapphire.some((s) => /Stolen from/.test(s))).toBe(true)
+    const has = (id: string, re: RegExp) => describeObtainment(items[id]).some((s) => re.test(s))
+    // Smithed / crafted product.
+    expect(has('bronze_dagger', /Made with Smithing/)).toBe(true)
+    // Gem stolen from Tzraar.
+    expect(has('sapphire', /Stolen from/)).toBe(true)
+    // Combine recipe names both parts (crystal + base boots).
+    expect(describeObtainment(items['skyfury_boots'])).toContain('Forged by combining Skyfury Crystal with Pathfinder Boots')
+    // Clue-reward items say clue scrolls, never "bought from a shop".
+    const pathfinder = describeObtainment(items['pathfinder_boots'])
+    expect(pathfinder.some((s) => /clue scrolls/.test(s))).toBe(true)
+    expect(pathfinder.some((s) => /shop/i.test(s))).toBe(false)
+    // Raid uniques credit the raid, not a boss drop table.
+    expect(has('fang_of_osmun', /Reward from the .* raid/)).toBe(true)
+    expect(has('fang_of_osmun', /Dropped by/)).toBe(false)
+    // Minigame set (rewardItems), slayer-point unlock, skill cape.
+    expect(has('void_king_helm', /Earned from/)).toBe(true)
+    expect(has('slayer_helmet', /Slayer points/)).toBe(true)
+    expect(has('attack_cape', /level 99/)).toBe(true)
+  })
+
+  it('gives every equippable item at least one obtainment source', () => {
+    for (const item of Object.values(items).filter(isEquippable)) {
+      expect(describeObtainment(item).length, `no source for ${item.name}`).toBeGreaterThan(0)
+    }
   })
 
   it('flags weapons that have a special attack (25 canonical items)', () => {
