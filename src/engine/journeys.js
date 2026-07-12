@@ -214,6 +214,9 @@ export function teleportIntoJourney(task, placeId) {
  * `location` is the last waypoint reached (null if still on the first leg);
  * `msRemaining` is the unspent elapsed time when the journey finished early
  * (0 unless completedPending) — the credit skip uses it to chain further clues.
+ * The parked task also carries that unspent time as `catchupMs`, so the live
+ * tick that completes it can spend the leftover on the next scroll / queued
+ * quest journey instead of dropping it.
  */
 export function advanceJourneyOffline(task, elapsedMs) {
   let cur = task
@@ -227,7 +230,8 @@ export function advanceJourneyOffline(task, elapsedMs) {
     const step = advanceJourneyPhase(adv.task)
     if (!step || step.kind === 'complete') {
       location = adv.task.dest
-      return { task: { ...adv.task, ticksRemaining: 0 }, location, completedPending: true, msRemaining: Math.max(0, ms) }
+      const msRemaining = Math.max(0, ms)
+      return { task: { ...adv.task, ticksRemaining: 0, catchupMs: msRemaining }, location, completedPending: true, msRemaining }
     }
     if (step.kind === 'search') location = adv.task.dest
     cur = step.next
