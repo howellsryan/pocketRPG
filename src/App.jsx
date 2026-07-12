@@ -540,23 +540,31 @@ function GameApp() {
   // only completion UI — toasts are silenced (grantXP `silent`, finaliseQuest
   // `quiet`) so nothing else fires alongside it.
   function handleQuestCompletion(quest, xpReward, coinReward, fromPlace, summary = null) {
-    // Award rewards
+    // Idempotency guard for the paid-skip cascade: a quest can be completed at
+    // most once per cascade. If a re-pop ever routes the same quest through here
+    // twice (a stale queue promoting an already-finished quest), skip the reward
+    // and the summary entry so the reveal never counts — or grants — it twice.
+    // Still advance the queue so the loop makes progress and terminates.
+    const alreadyCounted = !!summary && summary.completedQuests.some(q => q.id === quest.id)
     const { fixed, choices } = splitQuestXpRewards(xpReward)
-    const tracker = summary?.levelTracker || createLevelUpTracker(stats)
-    for (const [skill, xp] of Object.entries(fixed)) {
-      tracker.apply(skill, xp)
-      grantXP(skill, xp, { silent: true })
-    }
-    if (coinReward > 0) updateBankDirect({ coins: coinReward })
-    if (summary) {
-      summary.completedQuests.push(quest)
-      if (coinReward > 0) summary.coinsGained += coinReward
-      for (const [skill, xp] of Object.entries(xpReward || {})) {
-        const amount = Math.floor(Number(xp) || 0)
-        if (amount > 0) summary.aggregatedXpReward[skill] = (summary.aggregatedXpReward[skill] || 0) + amount
+    if (!alreadyCounted) {
+      // Award rewards
+      const tracker = summary?.levelTracker || createLevelUpTracker(stats)
+      for (const [skill, xp] of Object.entries(fixed)) {
+        tracker.apply(skill, xp)
+        grantXP(skill, xp, { silent: true })
       }
-    } else {
-      emitQuestCompletionReveal([quest], xpReward, coinReward, tracker.result())
+      if (coinReward > 0) updateBankDirect({ coins: coinReward })
+      if (summary) {
+        summary.completedQuests.push(quest)
+        if (coinReward > 0) summary.coinsGained += coinReward
+        for (const [skill, xp] of Object.entries(xpReward || {})) {
+          const amount = Math.floor(Number(xp) || 0)
+          if (amount > 0) summary.aggregatedXpReward[skill] = (summary.aggregatedXpReward[skill] || 0) + amount
+        }
+      } else {
+        emitQuestCompletionReveal([quest], xpReward, coinReward, tracker.result())
+      }
     }
 
     // The completed quest was already removed from the queue when it was
@@ -2334,6 +2342,14 @@ function GameApp() {
       const [freshStats, freshInv, freshEq, freshBank, freshSlayerTask] = await Promise.all([
         getAllStats(), getInventory(), getEquipment(), getBank(), getSetting('slayerTask'),
       ])
+      // Re-sync the quest queue from the authoritative snapshot before the
+      // cascade reads it. The questQueue state-sync effect is frozen for the
+      // duration of the skip (isSkippingRef), so a queue change still pending
+      // when the skip began (e.g. the started quest's dequeue) would otherwise
+      // leave questQueueRef stale — re-running that quest and inflating the
+      // completed count. getSnapshot().settings.questQueue is updated
+      // synchronously by every queue mutation, so it is always current.
+      questQueueRef.current = getSnapshot().settings?.questQueue || []
       const context = { inventory: freshInv, bank: freshBank, equipment: freshEq, stats: freshStats, itemsData: itemsDataRef.current, slayerTask: freshSlayerTask, questQueue: questQueueRef.current || [], now: Date.now() }
       const preflight = getSkipPreflight(task, context, SKIP_HOUR_MS)
       if (!preflight.canSkip) {
