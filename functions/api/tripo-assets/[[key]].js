@@ -1,9 +1,9 @@
-// Serves assets stored by the store_asset / upload_asset Tripo MCP tools
-// (functions/_lib/tripo/tools.js). Keys are either random UUIDs (unguessable)
-// or deliberate stable paths like models/<item>.v1.glb, so reads are public —
-// these are generated concept art / model files, not player or account data,
-// and the point of storing them is a stable url the game (equipmentModels.json)
-// or a reviewing human can fetch directly.
+// Serves 3D model / art assets from the TRIPO_ASSETS R2 bucket (uploaded via
+// `wrangler r2 object put`). Keys are either random UUIDs (unguessable) or
+// deliberate stable paths like models/<item>.v1.glb, so reads are public —
+// these are model / concept-art files, not player or account data, and the
+// point of storing them is a stable url the game (equipmentModels.json) or a
+// reviewing human can fetch directly.
 
 export async function onRequestGet({ params, env }) {
   if (!env.TRIPO_ASSETS) return new Response('R2 bucket not configured', { status: 500 })

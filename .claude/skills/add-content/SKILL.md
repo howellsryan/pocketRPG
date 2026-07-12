@@ -39,5 +39,6 @@ PvE special energy (`combatState.specialAttackEnergy`) is 0–100: starts each f
 ## After the change
 
 - Update logic tests alongside new gameplay logic (§13).
+- New/edited monster, boss, or raid → run `npm run check:drops -- <id>` and review the economy report (dangling items, chances, missing collection-log slots are hard errors; gp/hr and XP/hr estimates are for eyeballing vs tier peers). It is not part of the build gate.
 - Player-visible mechanics/content change → update `docs/game-guide.md`, run `npm run gen:knowledge`, commit the regenerated index (chat rule).
 - Run the §11 commit gate.
