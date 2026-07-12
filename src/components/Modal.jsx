@@ -90,7 +90,7 @@ export default function Modal({
       <div
         class="absolute inset-0"
         aria-hidden="true"
-        style={{ background: 'rgba(4, 3, 2, 0.55)', backdropFilter: 'blur(3px)' }}
+        style={{ background: 'rgba(4, 3, 2, 0.55)' }}
         onClick={() => onClose?.()}
       />
 

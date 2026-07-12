@@ -28,7 +28,7 @@ export default function QuestXpChoiceModal({ rewards, questName, stats, onComple
 
   return (
     <div class="forge-shell fixed inset-0 z-[300] flex items-end sm:items-center justify-center" style={{ background: 'transparent' }}>
-      <div class="absolute inset-0" style={{ background: 'rgba(4, 3, 2, 0.55)', backdropFilter: 'blur(3px)' }} />
+      <div class="absolute inset-0" style={{ background: 'rgba(4, 3, 2, 0.55)' }} />
       <div class="relative w-full sm:max-w-lg bg-[var(--color-void-light)] border border-[var(--color-void-border)] rounded-t-2xl sm:rounded-2xl overflow-hidden max-h-[90vh] flex flex-col">
 
         {/* Header — no close button, must choose */}
