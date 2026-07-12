@@ -38,6 +38,9 @@ Fires on every PR title/body write. Encodes CLAUDE.md §20: merged PRs auto-publ
 ### `add-content` — content authoring checklist *(PocketRPG-native)*
 Fires when adding/editing game content in `src/data`. Items/drops (referenced items must exist; Title Case; stackable quantity conventions; collection-log slot + regression test for uniques; server-side loot table for high-value grants), the five-step weapon special-attack recipe (moved here from CLAUDE.md §7), monster/boss conventions (boss Slayer XP multiplier, dragonfire, 3D arena auto-enable), and the after-change tail (logic tests, game-guide + `gen:knowledge`, §11 commit gate).
 
+### `threejs-*` — Three.js game-dev skill suite *(vendored, MIT)*
+Nine-skill orchestration bundle vendored verbatim from [`majidmanzarpour/threejs-game-skills`](https://github.com/majidmanzarpour/threejs-game-skills) (MIT; `threejs-game-director/UPSTREAM_LICENSE`). Entrypoint is `threejs-game-director` (routes build-a-game / polish / AAA / release requests through the others). Phase skills: `threejs-gameplay-systems` (scaffold, core loop, game feel), `threejs-aaa-graphics-builder` (materials/shaders/VFX/scorecard), `threejs-game-ui-designer` (HUD/menus/touch UI), `threejs-debug-profiler` (render/perf/mobile fixes), `threejs-qa-release` (playtest/bot QA/prod build). Asset generators (external APIs): `threejs-3d-generator` (Tripo — same provider as our `/api/tripo-assets/` §12), `threejs-image-generator` (Gemini), `threejs-audio-generator` (ElevenLabs). Unlike the four adapted upstream skills below, these are unmodified copies — re-sync by re-cloning upstream. Their assumed scaffold (standalone Vite/TS/Three.js game) differs from PocketRPG's single-file build (§12), so treat their build/scaffold steps as reference, not literal instructions here.
+
 ## 3) Path-scoped rule inventory
 
 | Rule | Scope (`paths:`) | Contents |
