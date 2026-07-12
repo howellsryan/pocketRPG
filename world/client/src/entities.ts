@@ -49,6 +49,17 @@ export type Entity = {
   name?: string
 }
 
+/** Skinned characters animate far from their bind-pose bounds, so three.js can
+ * frustum-cull them incorrectly — most visibly after a background/resume snaps
+ * the mesh to a new tile, leaving the player invisible to themselves. Disabling
+ * per-object culling on characters is the standard fix (they're always near the
+ * camera anyway). */
+function disableFrustumCulling(root: THREE.Object3D): void {
+  root.traverse((obj) => {
+    obj.frustumCulled = false
+  })
+}
+
 export function createCapsulePlaceholder(): THREE.Object3D {
   const geometry = new THREE.CapsuleGeometry(0.3, 0.6, 4, 8)
   const material = new THREE.MeshStandardMaterial({ color: 0xd8b06a })
@@ -98,6 +109,7 @@ export async function createHeroMesh(): Promise<{ mesh: THREE.Object3D; animator
   try {
     const gltf = await loadTemplate('/models/hero.glb')
     const model = cloneSkeleton(gltf.scene)
+    disableFrustumCulling(model)
     const group = new THREE.Group()
     group.add(model)
     group.scale.setScalar(HERO_SCALE)
@@ -123,6 +135,7 @@ export async function createCowMesh(): Promise<{ mesh: THREE.Object3D; animator:
   try {
     const gltf = await loadTemplate('/models/cow.glb')
     const model = cloneSkeleton(gltf.scene)
+    disableFrustumCulling(model)
     const b = COW_BOUNDS
     const centerX = (b.minX + b.maxX) / 2
     const centerZ = (b.minZ + b.maxZ) / 2
@@ -148,6 +161,7 @@ export async function createMonsterMesh(monsterId: string | undefined): Promise<
   try {
     const gltf = await loadTemplate(spec.url)
     const model = cloneSkeleton(gltf.scene)
+    disableFrustumCulling(model)
     const b = spec.bounds
     model.position.set(-(b.minX + b.maxX) / 2, -b.minY + (spec.hover ?? 0), -(b.minZ + b.maxZ) / 2)
     const group = new THREE.Group()

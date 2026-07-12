@@ -52,6 +52,10 @@ const RATE_LIMIT_HARD_KICK = 40
 // Every player's ent re-broadcasts on this cadence even when idle, so a client
 // that missed a join edge (reconnect gap, suspended tab) self-heals within 30s.
 const PRESENCE_KEYFRAME_TICKS = 50
+// A dropped socket lingers this long before the player really leaves the zone.
+// Backgrounding a browser tab drops the socket in ~10s; without a grace period
+// others would see the player vanish that fast. 100 ticks ≈ 60s.
+const LINGER_TICKS = 100
 
 type Player = TickPlayer & {
   conn: Connection
@@ -79,6 +83,10 @@ type Player = TickPlayer & {
   pendingLoot: { id: string; x: number; z: number } | null
   /** Loot ids this client currently sees — diffed each tick for add/remove. */
   lootView: Set<string>
+  /** Set when the socket drops: the player lingers in-world (visible to others,
+   * frozen) until this tick, then is really removed + flushed. Cleared on
+   * reconnect. Null = connected. Backgrounding a tab must not kick you instantly. */
+  lingerUntilTick: number | null
 }
 
 type Items = Record<string, { name?: string; slot?: string | null; type?: string } | undefined>
@@ -119,7 +127,23 @@ function bankViewFromSave(save: Record<string, unknown>): Tally {
 }
 
 function send(conn: Connection, message: ServerMessage): void {
-  conn.send(JSON.stringify(message))
+  try {
+    conn.send(JSON.stringify(message))
+  } catch {
+    // A lingering (backgrounded) player's socket is closed — dropping the frame
+    // is fine; they get a fresh welcome if/when they reconnect.
+  }
+}
+
+type EquipmentEntry = { itemId?: unknown } | undefined
+/** Worn equipment as slot → itemId, for the client's Equipment tab. */
+function equipmentMap(equipment: Record<string, unknown>): Record<string, string> {
+  const out: Record<string, string> = {}
+  for (const [slot, entry] of Object.entries(equipment)) {
+    const itemId = (entry as EquipmentEntry)?.itemId
+    if (typeof itemId === 'string' && itemId) out[slot] = itemId
+  }
+  return out
 }
 
 export class WorldZone extends Server<Env> {
@@ -245,7 +269,7 @@ export class WorldZone extends Server<Env> {
   // Async so the runtime keeps the DO alive until the disconnect flush and
   // position checkpoint land — fire-and-forget writes here can be lost when
   // the last player leaves and the instance idles out.
-  async onClose(connection: Connection): Promise<void> {
+  onClose(connection: Connection): void {
     this.clearAuthTimer(connection.id)
     const charId = connection.state?.charId ?? null
     if (!charId) return
@@ -255,6 +279,31 @@ export class WorldZone extends Server<Env> {
     // been re-registered on a new one — that close must not tear down the
     // live player.
     if (player.conn !== connection) return
+    // Linger instead of removing now: the player stays in-world (visible to
+    // others, frozen and idle) for a grace period so a backgrounded tab or a
+    // brief mobile socket drop doesn't kick them out for everyone. A reconnect
+    // (handleHello carry-over) clears the linger; otherwise the tick loop
+    // removes + flushes them once it expires. Combat/aggro is released now so
+    // a frozen player can't hold a monster.
+    if (player.combat) {
+      const npc = this.npcs?.get(player.combat.npcId)
+      if (npc && npc.attackerId === charId) npc.attackerId = null
+    }
+    player.path = []
+    this.clearIntents(player)
+    player.anim = 'idle'
+    player.running = false
+    player.lingerUntilTick = this.tickCount + LINGER_TICKS
+    // Keep ticking so the linger timer advances even if this was the last
+    // connected player.
+    this.ensureTicking()
+  }
+
+  /** Really removes a player from the zone: releases aggro, broadcasts the
+   * leave, disconnect-flushes the pack/XP and checkpoints the position. Used by
+   * linger expiry and explicit logout. */
+  private async removeAndFlush(player: Player): Promise<void> {
+    const charId = player.charId
     if (player.combat) {
       const npc = this.npcs?.get(player.combat.npcId)
       if (npc && npc.attackerId === charId) npc.attackerId = null
@@ -330,8 +379,10 @@ export class WorldZone extends Server<Env> {
       existing.anim = 'idle'
       existing.conn = connection
       existing.lastMsgTimes = []
+      existing.lingerUntilTick = null
       connection.setState({ charId: liveCharId })
       this.sendWelcome(existing)
+      this.pendingJoins.add(liveCharId)
       this.ensureTicking()
       return
     }
@@ -400,6 +451,13 @@ export class WorldZone extends Server<Env> {
       pendingEvents: [],
       pendingLoot: null,
       lootView: new Set(),
+      running: false,
+      runEnergy: 100,
+      lastRunSent: 100,
+      stance: 'accurate',
+      specialEnergy: 100,
+      lastSpecSent: 100,
+      lingerUntilTick: null,
     }
     this.players.set(charId, player)
     this.sendWelcome(player)
@@ -428,7 +486,20 @@ export class WorldZone extends Server<Env> {
         ...(this.zone.ambience ? { ambience: this.zone.ambience } : {}),
       },
       statics,
-      you: { x: player.x, z: player.z, hp: player.hp, maxHp: player.maxHp, stats: player.stats, inventory: player.inventory, ...(player.gear.weapon ? { gear: player.gear } : {}) },
+      you: {
+        x: player.x,
+        z: player.z,
+        hp: player.hp,
+        maxHp: player.maxHp,
+        stats: player.stats,
+        inventory: player.inventory,
+        ...(player.gear.weapon ? { gear: player.gear } : {}),
+        runEnergy: Math.round(player.runEnergy),
+        running: player.running,
+        stance: player.stance,
+        specialEnergy: Math.round(player.specialEnergy),
+        equipment: equipmentMap(player.equipment),
+      },
     })
 
     const depleted = [...this.ensureRocks().values()]
@@ -480,9 +551,64 @@ export class WorldZone extends Server<Env> {
       case 'interact':
         this.handleInteract(player, message)
         break
+      case 'setRun':
+        player.running = message.run
+        player.pendingEvents.push({ e: 'run', energy: Math.round(player.runEnergy), running: player.running })
+        break
+      case 'setStance':
+        player.stance = message.stance
+        // Apply mid-fight too — the engine reads stance each tick.
+        if (player.combat) player.combat.state.stance = message.stance
+        break
+      case 'special':
+        // Queue the weapon's special for the next combat tick (engine checks
+        // energy + weapon and drains on fire). Ignored out of combat.
+        if (player.combat) player.combat.state.specialAttackQueued = true
+        else player.pendingEvents.push({ e: 'msg', text: 'You need to be fighting to use a special attack.' })
+        break
+      case 'unequip':
+        this.handleUnequip(player, message.slot)
+        break
+      case 'logout':
+        void this.logout(player)
+        break
       case 'hello':
         break
     }
+  }
+
+  /** Explicit logout: remove the player now (no linger), flush + checkpoint, tell
+   * others they left, and close the socket. The client clears its session. */
+  private async logout(player: Player): Promise<void> {
+    const conn = player.conn
+    await this.removeAndFlush(player)
+    send(conn, { t: 'error', code: 'logged_out', msg: 'You have left the world.' })
+    conn.close(1000, 'logout')
+  }
+
+  /** Takes an equipped item off, returning it to the pack (reverse of equip):
+   * mints the returned unit, updates gear, marks equipment dirty, re-announces. */
+  private handleUnequip(player: Player, slot: string): void {
+    const entry = (player.equipment as Record<string, { itemId?: string; quantity?: number }>)[slot]
+    const itemId = entry?.itemId
+    if (!itemId) return
+    const qty = Math.max(1, Math.floor(Number(entry.quantity) || 1))
+    if (freeSlotCount(player.inventory) < 1 && !(isStackable(itemId) && countItem(player.inventory, itemId) > 0)) {
+      player.pendingEvents.push({ e: 'msg', text: 'Your pack is full.' })
+      return
+    }
+    const equipment = { ...player.equipment }
+    delete equipment[slot]
+    addToInventory(player.inventory, itemId, qty)
+    mintUnits(player.pools, itemId, qty)
+    player.equipment = equipment
+    player.gear = gearFromEquipment(player.equipment)
+    player.equipmentDirty = true
+    this.pendingJoins.add(player.charId)
+    player.pendingEvents.push({ e: 'equip', equipment: equipmentMap(player.equipment) })
+    player.pendingEvents.push({ e: 'msg', text: `You remove the ${itemNameOf(itemId)}.` })
+    this.pendingInvEcho.add(player.charId)
+    this.scheduleDirtyFlush(player)
   }
 
   /** A pack-slot action: the primary verb (equip/eat/drink/bury, validated
@@ -580,6 +706,7 @@ export class WorldZone extends Server<Env> {
     player.equipmentDirty = true
     // Re-announce the ent so everyone sees the new weapon immediately.
     this.pendingJoins.add(player.charId)
+    player.pendingEvents.push({ e: 'equip', equipment: equipmentMap(player.equipment) })
     player.pendingEvents.push({ e: 'msg', text: `You ${verb.toLowerCase()} the ${itemNameOf(itemId)}.` })
     this.pendingInvEcho.add(player.charId)
     this.scheduleDirtyFlush(player)
@@ -709,6 +836,16 @@ export class WorldZone extends Server<Env> {
 
   private tick(): void {
     this.tickCount += 1
+
+    // Expire lingering (disconnected) players whose grace period is up: remove
+    // them for real, flush their pack/XP, and broadcast the leave. Done first
+    // so the tick below never processes an already-gone player.
+    for (const player of [...this.players.values()]) {
+      if (player.lingerUntilTick !== null && this.tickCount >= player.lingerUntilTick) {
+        void this.removeAndFlush(player)
+      }
+    }
+
     const rocks = this.ensureRocks()
     const npcs = this.ensureNpcs()
     const ctx: TickContext = {
@@ -893,6 +1030,9 @@ export class WorldZone extends Server<Env> {
   ): void {
     const hitEvents: ZoneEvent[] = hits.map((h) => ({ e: 'hit', targetId: h.targetId, dmg: h.dmg }))
     for (const player of this.players.values()) {
+      // Lingering players have a closed socket — their ent still rides `ents` to
+      // everyone else, but there's nobody to receive a diff here.
+      if (player.lingerUntilTick !== null) continue
       const visible = visibleLootFor(this.loot.values(), player.charId, this.tickCount)
       const visibleIds = new Set(visible.map((l) => l.id))
       const lootAdded: LootItem[] = visible.filter((l) => !player.lootView.has(l.id))
