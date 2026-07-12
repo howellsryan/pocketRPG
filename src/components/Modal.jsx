@@ -76,6 +76,9 @@ export default function Modal({
       role="dialog"
       aria-modal="true"
       style={{
+        // .forge-shell paints an opaque vellum background — clear it so the
+        // screen behind stays visible; only the scrim below should dim it.
+        background: 'transparent',
         height: viewportHeightValue,
         minHeight: '100svh',
         paddingTop: 'max(8px, env(safe-area-inset-top))',
