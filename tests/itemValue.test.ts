@@ -74,6 +74,16 @@ describe('epic loot threshold (purple fireworks)', () => {
     expect(isLegendaryItem('rune_sword', items)).toBe(false)
     expect(isLegendaryItem('shrimps', items)).toBe(false)
   })
+
+  it('isLegendaryItem is false for missing / zero-value / quantity-inflated items', () => {
+    expect(isLegendaryItem('not_an_item', items)).toBe(false) // unknown id
+    expect(isLegendaryItem('fire_cape', items)).toBe(false)   // shopValue 0
+    // Unit value only — a 700k item is never legendary no matter how many drop
+    // (the old stack-based behaviour would have turned a stack worth >1m purple).
+    expect(isLegendaryItem('rune_sword', items)).toBe(false)
+    // Coins (unit value 1) are never legendary, even an enormous pile.
+    expect(isLegendaryItem('coins', items)).toBe(false)
+  })
 })
 
 describe('getIronmanShopValue (Ironman vendor value)', () => {

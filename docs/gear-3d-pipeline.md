@@ -1,8 +1,8 @@
 # 3D armour (gear) pipeline
 
-How an armour piece goes from a Tripo generation to an equippable 3D model on
-the hero. Weapons have their own flow (`canonicalize-weapon.mjs`, see
-`.claude/rules/tripo-mcp.md`); animations have `docs/hero-animation-retarget-guide.md`.
+How an armour piece goes from an authored GLB to an equippable 3D model on
+the hero. Weapons have their own flow (`canonicalize-weapon.mjs`); animations
+have `docs/hero-animation-retarget-guide.md`.
 
 ## Authoring spec (what to generate in Tripo)
 
@@ -18,7 +18,7 @@ the hero. Weapons have their own flow (`canonicalize-weapon.mjs`, see
 ```bash
 node scripts/fit-headgear.mjs raw.glb fitted.glb          # snug-fit bake (canonical head space)
 node scripts/process-3d-model.mjs fitted.glb helm.glb --ratio 1.0 --tex 512
-cp helm.glb public/3d-samples/<name>.glb                  # or upload to R2 via import:model / the bridge
+cp helm.glb public/3d-samples/<name>.glb                  # or: wrangler r2 object put pocketrpg-assets/models/<name>.v1.glb --file helm.glb
 node scripts/recolor-model.mjs helm.glb <tier>.glb --grey 0.35 --to <hue> --sat <s> --light <l>  # per tier, params in scripts/model-variants.json
 ```
 

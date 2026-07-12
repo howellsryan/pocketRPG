@@ -3,7 +3,7 @@ import Modal from './Modal.jsx'
 /**
  * Global confirmation shown while an active skilling/gathering action is paused
  * because the inventory is full. Two actions plus a dismiss (X):
- *   - Auto Deposit: bank everything and resume immediately.
+ *   - Deposit All: bank everything and resume immediately.
  *   - Manual Deposit: open the inventory; the action stays paused and resumes on
  *     its own once a slot frees up.
  * The X (Modal's close) dismisses without banking — the action keeps silently
@@ -19,7 +19,7 @@ export default function InventoryFullPrompt({ open, onBank, onGoToInventory, onC
           onClick={onBank}
           class="w-full min-h-[44px] py-3 rounded-xl flex items-center justify-center gap-2 cursor-pointer bg-[rgba(212,160,23,0.12)] border-[1.5px] border-[var(--color-gold)] active:opacity-80"
         >
-          <span class="text-[15px] font-semibold text-[var(--color-parchment)]">Auto Deposit</span>
+          <span class="text-[15px] font-semibold text-[var(--color-parchment)]">Deposit All</span>
         </button>
         <button
           type="button"

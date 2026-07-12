@@ -1907,9 +1907,12 @@ export const KNOWLEDGE_CHUNKS = [
    "skill",
    "skills",
    "training",
+   "ingredients",
+   "materials",
+   "recipe",
    "mining"
   ],
-  "text": "Mining training options with level requirements and XP per action: Mine tin ore (level 1, 17 XP), Mine copper ore (level 1, 17 XP), Mine clay (level 1, 5 XP), Mine rune essence (level 1, 5 XP), Mine iron ore (level 15, 35 XP), Mine coal (level 30, 50 XP), Mine gold ore (level 40, 65 XP), Mine mithril ore (level 55, 80 XP), Mine adamantite ore (level 70, 95 XP), Mine runeforged ore (level 85, 420 XP), Mine gems (level 75, 65 XP)."
+  "text": "Mining training options with level requirements, XP per action and any ingredients required to make each item: Mine tin ore (level 1, 17 XP), Mine copper ore (level 1, 17 XP), Mine clay (level 1, 5 XP), Mine rune essence (level 1, 5 XP), Mine iron ore (level 15, 35 XP), Mine coal (level 30, 50 XP), Mine gold ore (level 40, 65 XP), Mine mithril ore (level 55, 80 XP), Mine adamantite ore (level 70, 95 XP), Mine runeforged ore (level 85, 420 XP), Mine gems (level 75, 65 XP)."
  },
  {
   "id": "skill_woodcutting",
@@ -1918,9 +1921,12 @@ export const KNOWLEDGE_CHUNKS = [
    "skill",
    "skills",
    "training",
+   "ingredients",
+   "materials",
+   "recipe",
    "woodcutting"
   ],
-  "text": "Woodcutting training options with level requirements and XP per action: Chop tree (level 1, 25 XP), Chop oak (level 15, 37 XP), Chop willow (level 30, 67 XP), Chop maple (level 45, 100 XP), Chop yew (level 60, 175 XP), Chop teak (level 35, 85 XP), Chop mahogany (level 50, 157 XP), Chop magic (level 75, 250 XP), Chop redwood (level 90, 300 XP)."
+  "text": "Woodcutting training options with level requirements, XP per action and any ingredients required to make each item: Chop tree (level 1, 25 XP), Chop oak (level 15, 37 XP), Chop willow (level 30, 67 XP), Chop maple (level 45, 100 XP), Chop yew (level 60, 175 XP), Chop teak (level 35, 85 XP), Chop mahogany (level 50, 157 XP), Chop magic (level 75, 250 XP), Chop redwood (level 90, 300 XP)."
  },
  {
   "id": "skill_fishing",
@@ -1929,9 +1935,12 @@ export const KNOWLEDGE_CHUNKS = [
    "skill",
    "skills",
    "training",
+   "ingredients",
+   "materials",
+   "recipe",
    "fishing"
   ],
-  "text": "Fishing training options with level requirements and XP per action: Fish Shrimps (level 1, 10 XP), Fish Trout (level 20, 50 XP), Fish Crab (level 40, 90 XP), Fish Eel (level 50, 100 XP), Fish Karam (level 65, 105 XP), Fish Shark (level 76, 110 XP), Fish Manta Ray (level 85, 180 XP), Fish Anglerfish (level 90, 200 XP)."
+  "text": "Fishing training options with level requirements, XP per action and any ingredients required to make each item: Fish Shrimps (level 1, 10 XP), Fish Trout (level 20, 50 XP), Fish Crab (level 40, 90 XP), Fish Eel (level 50, 100 XP), Fish Karam (level 65, 105 XP), Fish Shark (level 76, 110 XP), Fish Manta Ray (level 85, 180 XP), Fish Anglerfish (level 90, 200 XP)."
  },
  {
   "id": "skill_smithing",
@@ -1940,9 +1949,12 @@ export const KNOWLEDGE_CHUNKS = [
    "skill",
    "skills",
    "training",
+   "ingredients",
+   "materials",
+   "recipe",
    "smithing"
   ],
-  "text": "Smithing training options with level requirements and XP per action: Smelt bronze bar (level 1, 6 XP), Smith bronze dagger (level 1, 12 XP), Smith bronze axe (level 4, 12 XP), Smith bronze pickaxe (level 4, 12 XP), Smith bronze scimitar (level 4, 25 XP), Smelt iron bar (level 15, 12 XP), Smith iron axe (level 16, 25 XP), Smith iron pickaxe (level 16, 25 XP), Smith iron scimitar (level 19, 50 XP), Smelt steel bar (level 30, 17 XP), Smith steel axe (level 31, 37 XP), Smith steel pickaxe (level 31, 37 XP), Smith steel scimitar (level 34, 75 XP), Smelt gold bar (level 40, 22 XP), Smelt mithril bar (level 50, 30 XP), Smith mithril axe (level 51, 50 XP), Smith mithril pickaxe (level 51, 50 XP), Smith mithril scimitar (level 54, 100 XP), Smelt adamant bar (level 70, 37 XP), Smith adamant axe (level 71, 62 XP), Smith adamant pickaxe (level 71, 62 XP), Smith adamant scimitar (level 74, 125 XP), Smelt runeforged bar (level 75, 50 XP), Smith runeforged axe (level 76, 75 XP), Smith runeforged pickaxe (level 76, 75 XP), Smith runeforged scimitar (level 79, 150 XP), Smith iron dagger (level 15, 25 XP), Smith iron mace (level 16, 25 XP), Smith iron sword (level 18, 25 XP), Smith iron longsword (level 20, 50 XP), Smith iron full helm (level 21, 50 XP), Smith iron chainbody (level 25, 75 XP), Smith iron kiteshield (level 26, 75 XP), Smith iron platelegs (level 30, 75 XP), Smith iron platebody (level 32, 125 XP), Smith steel dagger (level 30, 37 XP), Smith steel mace (level 31, 37 XP), Smith steel sword (level 33, 37 XP), Smith steel longsword (level 35, 75 XP), Smith steel full helm (level 36, 75 XP) …and 49 more."
+  "text": "Smithing training options with level requirements, XP per action and any ingredients required to make each item: Smelt bronze bar (level 1, 6 XP; needs 1 Tin Ore + 1 Copper Ore → Bronze Bar), Smith bronze dagger (level 1, 12 XP; needs 1 Bronze Bar → Bronze Dagger), Smith bronze axe (level 4, 12 XP; needs 1 Bronze Bar → Bronze Axe), Smith bronze pickaxe (level 4, 12 XP; needs 1 Bronze Bar → Bronze Pickaxe), Smith bronze scimitar (level 4, 25 XP; needs 2 Bronze Bar → Bronze Scimitar), Smelt iron bar (level 15, 12 XP; needs 1 Iron Ore → Iron Bar), Smith iron axe (level 16, 25 XP; needs 1 Iron Bar → Iron Axe), Smith iron pickaxe (level 16, 25 XP; needs 1 Iron Bar → Iron Pickaxe), Smith iron scimitar (level 19, 50 XP; needs 2 Iron Bar → Iron Scimitar), Smelt steel bar (level 30, 17 XP; needs 1 Iron Ore + 2 Coal → Steel Bar), Smith steel axe (level 31, 37 XP; needs 1 Steel Bar → Steel Axe), Smith steel pickaxe (level 31, 37 XP; needs 1 Steel Bar → Steel Pickaxe), Smith steel scimitar (level 34, 75 XP; needs 2 Steel Bar → Steel Scimitar), Smelt gold bar (level 40, 22 XP; needs 1 Gold Ore → Gold Bar), Smelt mithril bar (level 50, 30 XP; needs 1 Mithril Ore + 4 Coal → Mithril Bar), Smith mithril axe (level 51, 50 XP; needs 1 Mithril Bar → Mithril Axe), Smith mithril pickaxe (level 51, 50 XP; needs 1 Mithril Bar → Mithril Pickaxe), Smith mithril scimitar (level 54, 100 XP; needs 2 Mithril Bar → Mithril Scimitar), Smelt adamant bar (level 70, 37 XP; needs 1 Adamantite Ore + 6 Coal → Adamant Bar), Smith adamant axe (level 71, 62 XP; needs 1 Adamant Bar → Adamant Axe), Smith adamant pickaxe (level 71, 62 XP; needs 1 Adamant Bar → Adamant Pickaxe), Smith adamant scimitar (level 74, 125 XP; needs 2 Adamant Bar → Adamant Scimitar), Smelt runeforged bar (level 75, 50 XP; needs 1 Runeforged Ore + 8 Coal → Runeforged Bar), Smith runeforged axe (level 76, 75 XP; needs 1 Runeforged Bar → Runeforged Axe), Smith runeforged pickaxe (level 76, 75 XP; needs 1 Runeforged Bar → Runeforged Pickaxe), Smith runeforged scimitar (level 79, 150 XP; needs 2 Runeforged Bar → Runeforged Scimitar), Smith iron dagger (level 15, 25 XP; needs 1 Iron Bar → Iron Dagger), Smith iron mace (level 16, 25 XP; needs 1 Iron Bar → Iron Mace), Smith iron sword (level 18, 25 XP; needs 1 Iron Bar → Iron Sword), Smith iron longsword (level 20, 50 XP; needs 2 Iron Bar → Iron Longsword), Smith iron full helm (level 21, 50 XP; needs 2 Iron Bar → Iron Full Helm), Smith iron chainbody (level 25, 75 XP; needs 3 Iron Bar → Iron Chainbody), Smith iron kiteshield (level 26, 75 XP; needs 3 Iron Bar → Iron Kiteshield), Smith iron platelegs (level 30, 75 XP; needs 3 Iron Bar → Iron Platelegs), Smith iron platebody (level 32, 125 XP; needs 5 Iron Bar → Iron Platebody), Smith steel dagger (level 30, 37 XP; needs 1 Steel Bar → Steel Dagger), Smith steel mace (level 31, 37 XP; needs 1 Steel Bar → Steel Mace), Smith steel sword (level 33, 37 XP; needs 1 Steel Bar → Steel Sword), Smith steel longsword (level 35, 75 XP; needs 2 Steel Bar → Steel Longsword), Smith steel full helm (level 36, 75 XP; needs 2 Steel Bar → Steel Full Helm) …and 49 more."
  },
  {
   "id": "skill_cooking",
@@ -1951,9 +1963,12 @@ export const KNOWLEDGE_CHUNKS = [
    "skill",
    "skills",
    "training",
+   "ingredients",
+   "materials",
+   "recipe",
    "cooking"
   ],
-  "text": "Cooking training options with level requirements and XP per action: Cook Shrimps (level 1, 30 XP), Cook Chicken (level 1, 30 XP), Cook Meat (level 1, 30 XP), Cook Trout (level 15, 70 XP), Cook Crab (level 40, 120 XP), Cook Eel (level 45, 140 XP), Cook Karam (level 65, 190 XP), Cook Shark (level 80, 210 XP), Cook Manta Ray (level 91, 250 XP), Cook Anglerfish (level 93, 270 XP)."
+  "text": "Cooking training options with level requirements, XP per action and any ingredients required to make each item: Cook Shrimps (level 1, 30 XP; needs 1 Raw Shrimps → Shrimps), Cook Chicken (level 1, 30 XP; needs 1 Raw Chicken → Cooked Chicken), Cook Meat (level 1, 30 XP; needs 1 Raw Beef → Cooked Meat), Cook Trout (level 15, 70 XP; needs 1 Raw Trout → Trout), Cook Crab (level 40, 120 XP; needs 1 Raw Crab → Crab), Cook Eel (level 45, 140 XP; needs 1 Raw Eel → Eel), Cook Karam (level 65, 190 XP; needs 1 Raw Karam → Karam), Cook Shark (level 80, 210 XP; needs 1 Raw Shark → Shark), Cook Manta Ray (level 91, 250 XP; needs 1 Raw Manta Ray → Manta Ray), Cook Anglerfish (level 93, 270 XP; needs 1 Raw Anglerfish → Anglerfish)."
  },
  {
   "id": "skill_fletching",
@@ -1962,9 +1977,12 @@ export const KNOWLEDGE_CHUNKS = [
    "skill",
    "skills",
    "training",
+   "ingredients",
+   "materials",
+   "recipe",
    "fletching"
   ],
-  "text": "Fletching training options with level requirements and XP per action: Cut arrow shafts (15) (level 1, 5 XP), Attach feather (15) (level 1, 15 XP), Make bronze arrows (15) (level 1, 20 XP), Cut shortbow (u) (level 5, 5 XP), String shortbow (level 5, 10 XP), Make iron arrows (15) (level 15, 37 XP), Cut oak shortbow (u) (level 20, 16 XP), String oak shortbow (level 20, 25 XP), Make steel arrows (15) (level 30, 55 XP), Cut willow shortbow (u) (level 35, 33 XP), String willow shortbow (level 35, 50 XP), Make mithril arrows (15) (level 45, 75 XP), Cut maple shortbow (u) (level 50, 50 XP), String maple shortbow (level 50, 75 XP), Make adamant arrows (15) (level 60, 105 XP), Cut yew shortbow (u) (level 65, 67 XP), String yew shortbow (level 65, 100 XP), Make runeforged arrows (15) (level 75, 150 XP), Cut magic shortbow (u) (level 80, 83 XP), String magic shortbow (level 80, 125 XP), Cut wooden stocks (10) (level 9, 6 XP), Make bronze bolts (10) (level 9, 25 XP), Make iron bolts (10) (level 39, 50 XP), Make steel bolts (10) (level 46, 175 XP), Make mithril bolts (10) (level 54, 250 XP), Make adamant bolts (10) (level 61, 350 XP), Make runeforged bolts (10) (level 69, 500 XP), Make dragon bolts (10) (level 84, 600 XP), Cut ruby bolt tips (12) (level 63, 6 XP), Cut diamond bolt tips (12) (level 65, 7 XP), Cut dragonstone bolt tips (12) (level 71, 8 XP), Cut onyx bolt tips (12) (level 73, 9 XP), Tip ruby bolts (10) (level 63, 630 XP), Tip diamond bolts (10) (level 65, 700 XP), Tip dragonstone bolts (10) (level 71, 820 XP), Tip onyx bolts (10) (level 73, 940 XP), Tip ruby dragon bolts (10) (level 84, 700 XP), Tip diamond dragon bolts (10) (level 84, 750 XP), Tip dragonstone dragon bolts (10) (level 84, 900 XP), Tip onyx dragon bolts (10) (level 84, 1000 XP)."
+  "text": "Fletching training options with level requirements, XP per action and any ingredients required to make each item: Cut arrow shafts (15) (level 1, 5 XP; needs 1 Logs → Arrow Shaft), Attach feather (15) (level 1, 15 XP; needs 15 Arrow Shaft + 15 Feather → Headless Arrow), Make bronze arrows (15) (level 1, 20 XP; needs 15 Headless Arrow + 15 Bronze Arrowtips → Bronze Arrow), Cut shortbow (u) (level 5, 5 XP; needs 1 Logs → Shortbow (U)), String shortbow (level 5, 10 XP; needs 1 Shortbow (U) + 1 Bowstring → Shortbow), Make iron arrows (15) (level 15, 37 XP; needs 15 Headless Arrow + 15 Iron Arrowtips → Iron Arrow), Cut oak shortbow (u) (level 20, 16 XP; needs 1 Oak Logs → Oak Shortbow (U)), String oak shortbow (level 20, 25 XP; needs 1 Oak Shortbow (U) + 1 Bowstring → Oak Shortbow), Make steel arrows (15) (level 30, 55 XP; needs 15 Headless Arrow + 15 Steel Arrowtips → Steel Arrow), Cut willow shortbow (u) (level 35, 33 XP; needs 1 Willow Logs → Willow Shortbow (U)), String willow shortbow (level 35, 50 XP; needs 1 Willow Shortbow (U) + 1 Bowstring → Willow Shortbow), Make mithril arrows (15) (level 45, 75 XP; needs 15 Headless Arrow + 15 Mithril Arrowtips → Mithril Arrow), Cut maple shortbow (u) (level 50, 50 XP; needs 1 Maple Logs → Maple Shortbow (U)), String maple shortbow (level 50, 75 XP; needs 1 Maple Shortbow (U) + 1 Bowstring → Maple Shortbow), Make adamant arrows (15) (level 60, 105 XP; needs 15 Headless Arrow + 15 Adamant Arrowtips → Adamant Arrow), Cut yew shortbow (u) (level 65, 67 XP; needs 1 Yew Logs → Yew Shortbow (U)), String yew shortbow (level 65, 100 XP; needs 1 Yew Shortbow (U) + 1 Bowstring → Yew Shortbow), Make runeforged arrows (15) (level 75, 150 XP; needs 15 Headless Arrow + 15 Runeforged Arrowtips → Runeforged Arrow), Cut magic shortbow (u) (level 80, 83 XP; needs 1 Magic Logs → Magic Shortbow (U)), String magic shortbow (level 80, 125 XP; needs 1 Magic Shortbow (U) + 1 Bowstring → Magic Shortbow), Cut wooden stocks (10) (level 9, 6 XP; needs 1 Logs → Wooden Stock), Make bronze bolts (10) (level 9, 25 XP; needs 10 Feather + 10 Bronze Bolt (Unf) → Bronze Bolt), Make iron bolts (10) (level 39, 50 XP; needs 10 Feather + 10 Iron Bolt (Unf) → Iron Bolt), Make steel bolts (10) (level 46, 175 XP; needs 10 Feather + 10 Steel Bolt (Unf) → Steel Bolt), Make mithril bolts (10) (level 54, 250 XP; needs 10 Feather + 10 Mithril Bolt (Unf) → Mithril Bolt), Make adamant bolts (10) (level 61, 350 XP; needs 10 Feather + 10 Adamant Bolt (Unf) → Adamant Bolt), Make runeforged bolts (10) (level 69, 500 XP; needs 10 Feather + 10 Runeforged Bolt (Unf) → Runeforged Bolt), Make dragon bolts (10) (level 84, 600 XP; needs 10 Feather + 10 Dragon Bolt (Unf) → Dragon Bolt), Cut ruby bolt tips (12) (level 63, 6 XP; needs 1 Ruby → Ruby Bolt Tips), Cut diamond bolt tips (12) (level 65, 7 XP; needs 1 Diamond → Diamond Bolt Tips), Cut dragonstone bolt tips (12) (level 71, 8 XP; needs 1 Dragonstone → Dragonstone Bolt Tips), Cut onyx bolt tips (12) (level 73, 9 XP; needs 1 Onyx → Onyx Bolt Tips), Tip ruby bolts (10) (level 63, 630 XP; needs 10 Adamant Bolt + 10 Ruby Bolt Tips → Ruby Bolt), Tip diamond bolts (10) (level 65, 700 XP; needs 10 Adamant Bolt + 10 Diamond Bolt Tips → Diamond Bolt), Tip dragonstone bolts (10) (level 71, 820 XP; needs 10 Runeforged Bolt + 10 Dragonstone Bolt Tips → Dragonstone Bolt), Tip onyx bolts (10) (level 73, 940 XP; needs 10 Runeforged Bolt + 10 Onyx Bolt Tips → Onyx Bolt), Tip ruby dragon bolts (10) (level 84, 700 XP; needs 10 Dragon Bolt + 10 Ruby Bolt Tips → Ruby Dragon Bolt), Tip diamond dragon bolts (10) (level 84, 750 XP; needs 10 Dragon Bolt + 10 Diamond Bolt Tips → Diamond Dragon Bolt), Tip dragonstone dragon bolts (10) (level 84, 900 XP; needs 10 Dragon Bolt + 10 Dragonstone Bolt Tips → Dragonstone Dragon Bolt), Tip onyx dragon bolts (10) (level 84, 1000 XP; needs 10 Dragon Bolt + 10 Onyx Bolt Tips → Onyx Dragon Bolt)."
  },
  {
   "id": "skill_crafting",
@@ -1973,9 +1991,12 @@ export const KNOWLEDGE_CHUNKS = [
    "skill",
    "skills",
    "training",
+   "ingredients",
+   "materials",
+   "recipe",
    "crafting"
   ],
-  "text": "Crafting training options with level requirements and XP per action: Tan cowhide (level 1, 1 XP), Tan cowhide (hard) (level 1, 1 XP), Tan green dragon hide (level 55, 25 XP), Craft leather gloves (level 1, 14 XP), Make molten glass (level 1, 20 XP), Craft leather boots (level 7, 16 XP), Craft leather cowl (level 9, 18 XP), Craft leather body (level 14, 25 XP), Craft leather chaps (level 18, 27 XP), Cut sapphire (level 20, 50 XP), String sapphire amulet (level 24, 65 XP), Cut emerald (level 27, 67 XP), Craft hard leather body (level 28, 35 XP), String emerald amulet (level 31, 80 XP), Cut ruby (level 34, 85 XP), Cut diamond (level 43, 107 XP), Cut dragonstone (level 55, 137 XP), Cut onyx (level 72, 167 XP), Cut zyrite (level 89, 200 XP), String ruby amulet (level 50, 100 XP), Craft green d'hide chaps (level 57, 62 XP), Craft green d'hide body (level 63, 186 XP), Craft red d'hide body (level 75, 225 XP), Craft red d'hide chaps (level 73, 124 XP), Craft black d'hide chaps (level 79, 172 XP), Craft black d'hide body (level 84, 258 XP), String diamond amulet (level 70, 130 XP), String dragonstone amulet (level 80, 150 XP), String onyx amulet (level 90, 165 XP), String zyrite amulet (level 98, 200 XP), Craft zyrite bracelet (level 98, 200 XP), String zyrite necklace (level 98, 200 XP), Craft zyrite ring (level 98, 200 XP), Craft ferocious gloves (level 80, 250 XP)."
+  "text": "Crafting training options with level requirements, XP per action and any ingredients required to make each item: Tan cowhide (level 1, 1 XP; needs 1 Cowhide → Leather), Tan cowhide (hard) (level 1, 1 XP; needs 1 Cowhide → Hard Leather), Tan green dragon hide (level 55, 25 XP; needs 1 Green Dragonhide → Green Dragon Leather), Craft leather gloves (level 1, 14 XP; needs 1 Leather → Leather Gloves), Make molten glass (level 1, 20 XP; needs 1 Soda Ash + 1 Bucket of Sand → Molten Glass), Craft leather boots (level 7, 16 XP; needs 1 Leather → Leather Boots), Craft leather cowl (level 9, 18 XP; needs 1 Leather → Leather Cowl), Craft leather body (level 14, 25 XP; needs 1 Leather → Leather Body), Craft leather chaps (level 18, 27 XP; needs 1 Leather → Leather Chaps), Cut sapphire (level 20, 50 XP; needs 1 Uncut Sapphire → Sapphire), String sapphire amulet (level 24, 65 XP; needs 1 Sapphire + 1 Gold Bar → Sapphire Amulet), Cut emerald (level 27, 67 XP; needs 1 Uncut Emerald → Emerald), Craft hard leather body (level 28, 35 XP; needs 1 Hard Leather → Hard Leather Body), String emerald amulet (level 31, 80 XP; needs 1 Emerald + 1 Gold Bar → Emerald Amulet), Cut ruby (level 34, 85 XP; needs 1 Uncut Ruby → Ruby), Cut diamond (level 43, 107 XP; needs 1 Uncut Diamond → Diamond), Cut dragonstone (level 55, 137 XP; needs 1 Uncut Dragonstone → Dragonstone), Cut onyx (level 72, 167 XP; needs 1 Uncut Onyx → Onyx), Cut zyrite (level 89, 200 XP; needs 1 Uncut Zyrite → Zyrite), String ruby amulet (level 50, 100 XP; needs 1 Ruby + 1 Gold Bar → Ruby Amulet), Craft green d'hide chaps (level 57, 62 XP; needs 2 Green Dragon Leather → Green D'Hide Chaps), Craft green d'hide body (level 63, 186 XP; needs 3 Green Dragon Leather → Green D'Hide Body), Craft red d'hide body (level 75, 225 XP; needs 4 Red Dragon Leather → Red D'Hide Body), Craft red d'hide chaps (level 73, 124 XP; needs 2 Red Dragon Leather → Red D'Hide Chaps), Craft black d'hide chaps (level 79, 172 XP; needs 2 Black Dragon Leather → Black D'Hide Chaps), Craft black d'hide body (level 84, 258 XP; needs 3 Black Dragon Leather → Black D'Hide Body), String diamond amulet (level 70, 130 XP; needs 1 Diamond + 1 Gold Bar → Diamond Amulet), String dragonstone amulet (level 80, 150 XP; needs 1 Dragonstone + 1 Gold Bar → Dragonstone Amulet), String onyx amulet (level 90, 165 XP; needs 1 Onyx + 1 Gold Bar → Onyx Amulet), String zyrite amulet (level 98, 200 XP; needs 1 Zyrite + 1 Gold Bar → Zyrite Amulet), Craft zyrite bracelet (level 98, 200 XP; needs 1 Zyrite + 1 Gold Bar → Zyrite Bracelet), String zyrite necklace (level 98, 200 XP; needs 1 Zyrite + 1 Gold Bar → Zyrite Necklace), Craft zyrite ring (level 98, 200 XP; needs 1 Zyrite + 1 Gold Bar → Zyrite Ring), Craft ferocious gloves (level 80, 250 XP; needs 1 Ashen Hydra Leather → Ferocious Gloves)."
  },
  {
   "id": "skill_herblore",
@@ -1984,9 +2005,12 @@ export const KNOWLEDGE_CHUNKS = [
    "skill",
    "skills",
    "training",
+   "ingredients",
+   "materials",
+   "recipe",
    "herblore"
   ],
-  "text": "Herblore training options with level requirements and XP per action: Make attack potion (level 1, 25 XP), Make strength potion (level 12, 40 XP), Make defence potion (level 30, 55 XP), Make combat potion (level 36, 70 XP), Make prayer potion (level 38, 75 XP), Make super attack (level 45, 90 XP), Make super strength (level 55, 110 XP), Make super restore (level 63, 130 XP), Make super defence (level 66, 140 XP), Make ranging potion (level 72, 160 XP), Make magic potion (level 76, 180 XP), Make Lumira Brew (level 81, 200 XP), Make super combat potion (level 90, 500 XP)."
+  "text": "Herblore training options with level requirements, XP per action and any ingredients required to make each item: Make attack potion (level 1, 25 XP; needs 1 Greenthorn Leaf + 1 Eye of Newt → Attack Potion), Make strength potion (level 12, 40 XP; needs 1 Duskroot + 1 Limpwurt Root → Strength Potion), Make defence potion (level 30, 55 XP; needs 1 Rynarr Weed + 1 White Berries → Defence Potion), Make combat potion (level 36, 70 XP; needs 1 Sunblossom + 1 Goat Horn Dust → Combat Potion), Make prayer potion (level 38, 75 XP; needs 1 Rynarr Weed + 1 Snape Grass → Prayer Potion), Make super attack (level 45, 90 XP; needs 1 Emberleaf + 1 Eye of Newt → Super Attack), Make super strength (level 55, 110 XP; needs 1 Wyrmspice + 1 Limpwurt Root → Super Strength), Make super restore (level 63, 130 XP; needs 1 Snapdrake + 1 Red Spiders' Eggs → Super Restore), Make super defence (level 66, 140 XP; needs 1 Cinderbloom + 1 White Berries → Super Defence), Make ranging potion (level 72, 160 XP; needs 1 Stonefern + 1 Wine of Krylth → Ranging Potion), Make magic potion (level 76, 180 XP; needs 1 Mistvine + 1 Potato Cactus → Magic Potion), Make Lumira Brew (level 81, 200 XP; needs 1 Marshflax + 1 Crushed Bird's Nest → Lumira Brew), Make super combat potion (level 90, 500 XP; needs 1 Thornspire + 1 Super Attack + 1 Super Strength + 1 Super Defence + 1 Ranging Potion + 1 Magic Potion → Super Combat)."
  },
  {
   "id": "skill_agility",
@@ -1995,9 +2019,12 @@ export const KNOWLEDGE_CHUNKS = [
    "skill",
    "skills",
    "training",
+   "ingredients",
+   "materials",
+   "recipe",
    "agility"
   ],
-  "text": "Agility training options with level requirements and XP per action: Lumbright Training Course (level 1, 86 XP), Draynar Rooftop (level 10, 120 XP), Al-Karid Rooftop (level 20, 175 XP), Varrick Rooftop (level 30, 190 XP), Canifel Rooftop (level 40, 240 XP), Faloden Rooftop (level 50, 440 XP), Seerhold Rooftop (level 60, 500 XP), Brimhollow Rooftop (level 70, 550 XP), Catherra Rooftop (level 80, 600 XP), Ardounne Rooftop (level 90, 700 XP)."
+  "text": "Agility training options with level requirements, XP per action and any ingredients required to make each item: Lumbright Training Course (level 1, 86 XP), Draynar Rooftop (level 10, 120 XP), Al-Karid Rooftop (level 20, 175 XP), Varrick Rooftop (level 30, 190 XP), Canifel Rooftop (level 40, 240 XP), Faloden Rooftop (level 50, 440 XP), Seerhold Rooftop (level 60, 500 XP), Brimhollow Rooftop (level 70, 550 XP), Catherra Rooftop (level 80, 600 XP), Ardounne Rooftop (level 90, 700 XP)."
  },
  {
   "id": "skill_prayer",
@@ -2006,9 +2033,12 @@ export const KNOWLEDGE_CHUNKS = [
    "skill",
    "skills",
    "training",
+   "ingredients",
+   "materials",
+   "recipe",
    "prayer"
   ],
-  "text": "Prayer training options with level requirements and XP per action: Bury bones (level 1, 5 XP), Bury big bones (level 5, 15 XP), Bury dragon bones (level 35, 72 XP), Use gilded altar (bones) (level 1, 17 XP), Use gilded altar (big bones) (level 5, 52 XP), Use gilded altar (dragon bones) (level 35, 252 XP), Bury nagadoth bones (level 40, 125 XP), Use gilded altar (nagadoth bones) (level 40, 437 XP), Scatter Gargoyle Dust (level 20, 125 XP)."
+  "text": "Prayer training options with level requirements, XP per action and any ingredients required to make each item: Bury bones (level 1, 5 XP; needs 1 Bones), Bury big bones (level 5, 15 XP; needs 1 Big Bones), Bury dragon bones (level 35, 72 XP; needs 1 Dragon Bones), Use gilded altar (bones) (level 1, 17 XP; needs 1 Bones), Use gilded altar (big bones) (level 5, 52 XP; needs 1 Big Bones), Use gilded altar (dragon bones) (level 35, 252 XP; needs 1 Dragon Bones), Bury nagadoth bones (level 40, 125 XP; needs 1 Nagadoth Bones), Use gilded altar (nagadoth bones) (level 40, 437 XP; needs 1 Nagadoth Bones), Scatter Gargoyle Dust (level 20, 125 XP; needs 1 Gargoyle Dust)."
  },
  {
   "id": "skill_magic",
@@ -2017,9 +2047,12 @@ export const KNOWLEDGE_CHUNKS = [
    "skill",
    "skills",
    "training",
+   "ingredients",
+   "materials",
+   "recipe",
    "magic"
   ],
-  "text": "Magic training options with level requirements and XP per action: Curse (level 19, 29 XP), High Alchemy (level 55, 65 XP), Superheat Item (iron ore) (level 43, 53 XP), Enchant Sapphire (level 7, 170 XP), Enchant Ruby (level 49, 590 XP), Enchant Diamond (level 57, 670 XP), Enchant Dragonstone (level 68, 780 XP), Stun (level 80, 90 XP), Enchant Onyx (level 87, 970 XP), Enchant Zyrite Amulet (level 93, 1100 XP), Enchant Zyrite Bracelet (level 93, 1100 XP), Enchant Zyrite Necklace (level 93, 1100 XP), Enchant Zyrite Ring (level 93, 1100 XP), Enchant Ruby Bolts (10) (level 49, 590 XP), Enchant Ruby Dragon Bolts (10) (level 49, 590 XP), Enchant Diamond Bolts (10) (level 57, 670 XP), Enchant Diamond Dragon Bolts (10) (level 57, 670 XP), Enchant Dragonstone Bolts (10) (level 68, 780 XP), Enchant Dragonstone Dragon Bolts (10) (level 68, 780 XP), Enchant Onyx Bolts (10) (level 87, 970 XP), Enchant Onyx Dragon Bolts (10) (level 87, 970 XP), Tan Leather (level 78, 81 XP), Plank Make (level 86, 90 XP)."
+  "text": "Magic training options with level requirements, XP per action and any ingredients required to make each item: Curse (level 19, 29 XP), High Alchemy (level 55, 65 XP), Superheat Item (iron ore) (level 43, 53 XP; needs 1 Iron Ore + 1 Coal → Iron Bar), Enchant Sapphire (level 7, 170 XP; needs 1 Sapphire Amulet → Amulet of Magic), Enchant Ruby (level 49, 590 XP; needs 1 Ruby Amulet → Amulet of Strength), Enchant Diamond (level 57, 670 XP; needs 1 Diamond Amulet → Amulet of Power), Enchant Dragonstone (level 68, 780 XP; needs 1 Dragonstone Amulet → Amulet of Glory), Stun (level 80, 90 XP), Enchant Onyx (level 87, 970 XP; needs 1 Onyx Amulet → Amulet of Fury), Enchant Zyrite Amulet (level 93, 1100 XP; needs 1 Zyrite Amulet → Amulet of Torment), Enchant Zyrite Bracelet (level 93, 1100 XP; needs 1 Zyrite Bracelet → Afflicted Bracelet), Enchant Zyrite Necklace (level 93, 1100 XP; needs 1 Zyrite Necklace → Necklace of Agony), Enchant Zyrite Ring (level 93, 1100 XP; needs 1 Zyrite Ring → Ring of Affliction), Enchant Ruby Bolts (10) (level 49, 590 XP; needs 10 Ruby Bolt → Ruby Bolt (E)), Enchant Ruby Dragon Bolts (10) (level 49, 590 XP; needs 10 Ruby Dragon Bolt → Ruby Dragon Bolt (E)), Enchant Diamond Bolts (10) (level 57, 670 XP; needs 10 Diamond Bolt → Diamond Bolt (E)), Enchant Diamond Dragon Bolts (10) (level 57, 670 XP; needs 10 Diamond Dragon Bolt → Diamond Dragon Bolt (E)), Enchant Dragonstone Bolts (10) (level 68, 780 XP; needs 10 Dragonstone Bolt → Dragonstone Bolt (E)), Enchant Dragonstone Dragon Bolts (10) (level 68, 780 XP; needs 10 Dragonstone Dragon Bolt → Dragonstone Dragon Bolt (E)), Enchant Onyx Bolts (10) (level 87, 970 XP; needs 10 Onyx Bolt → Onyx Bolt (E)), Enchant Onyx Dragon Bolts (10) (level 87, 970 XP; needs 10 Onyx Dragon Bolt → Onyx Dragon Bolt (E)), Tan Leather (level 78, 81 XP; needs 1 Cowhide → Leather), Plank Make (level 86, 90 XP; needs 1 Logs → Plank)."
  },
  {
   "id": "skill_thieving",
@@ -2028,9 +2061,12 @@ export const KNOWLEDGE_CHUNKS = [
    "skill",
    "skills",
    "training",
+   "ingredients",
+   "materials",
+   "recipe",
    "thieving"
   ],
-  "text": "Thieving training options with level requirements and XP per action: ."
+  "text": "Thieving training options with level requirements, XP per action and any ingredients required to make each item: ."
  },
  {
   "id": "skill_firemaking",
@@ -2039,9 +2075,12 @@ export const KNOWLEDGE_CHUNKS = [
    "skill",
    "skills",
    "training",
+   "ingredients",
+   "materials",
+   "recipe",
    "firemaking"
   ],
-  "text": "Firemaking training options with level requirements and XP per action: Burn logs (level 1, 40 XP), Burn oak logs (level 15, 60 XP), Burn willow logs (level 30, 90 XP), Burn maple logs (level 45, 135 XP), Burn yew logs (level 60, 203 XP), Burn magic logs (level 75, 304 XP), Burn redwood logs (level 90, 350 XP)."
+  "text": "Firemaking training options with level requirements, XP per action and any ingredients required to make each item: Burn logs (level 1, 40 XP; needs 1 Logs), Burn oak logs (level 15, 60 XP; needs 1 Oak Logs), Burn willow logs (level 30, 90 XP; needs 1 Willow Logs), Burn maple logs (level 45, 135 XP; needs 1 Maple Logs), Burn yew logs (level 60, 203 XP; needs 1 Yew Logs), Burn magic logs (level 75, 304 XP; needs 1 Magic Logs), Burn redwood logs (level 90, 350 XP; needs 1 Redwood Logs)."
  },
  {
   "id": "skill_farming",
@@ -2050,9 +2089,12 @@ export const KNOWLEDGE_CHUNKS = [
    "skill",
    "skills",
    "training",
+   "ingredients",
+   "materials",
+   "recipe",
    "farming"
   ],
-  "text": "Farming training options with level requirements and XP per action: ."
+  "text": "Farming training options with level requirements, XP per action and any ingredients required to make each item: ."
  },
  {
   "id": "skill_hunter",
@@ -2061,9 +2103,12 @@ export const KNOWLEDGE_CHUNKS = [
    "skill",
    "skills",
    "training",
+   "ingredients",
+   "materials",
+   "recipe",
    "hunter"
   ],
-  "text": "Hunter training options with level requirements and XP per action: Hunt Cow (level 1, 150 XP), Hunt Wizard (level 15, 300 XP), Hunt Jeweller (level 35, 500 XP), Hunt Merchant (level 50, 800 XP), Hunt Grim Reaper (level 60, 1000 XP), Hunt Master Trader (level 85, 1500 XP)."
+  "text": "Hunter training options with level requirements, XP per action and any ingredients required to make each item: Hunt Cow (level 1, 150 XP), Hunt Wizard (level 15, 300 XP), Hunt Jeweller (level 35, 500 XP), Hunt Merchant (level 50, 800 XP), Hunt Grim Reaper (level 60, 1000 XP), Hunt Master Trader (level 85, 1500 XP)."
  },
  {
   "id": "skill_dungeoneering",
@@ -2072,9 +2117,12 @@ export const KNOWLEDGE_CHUNKS = [
    "skill",
    "skills",
    "training",
+   "ingredients",
+   "materials",
+   "recipe",
    "dungeoneering"
   ],
-  "text": "Dungeoneering training options with level requirements and XP per action: Clear novice dungeon (level 1, 1000 XP), Clear apprentice dungeon (level 10, 2000 XP), Clear adept dungeon (level 20, 3000 XP), Clear journeyman dungeon (level 30, 4000 XP), Clear expert dungeon (level 40, 5000 XP), Clear veteran dungeon (level 50, 6000 XP), Clear master dungeon (level 60, 7000 XP), Clear grandmaster dungeon (level 70, 8000 XP), Clear legendary dungeon (level 80, 9000 XP), Clear mythic dungeon (level 90, 10000 XP), Claim arcane necklace (level 65, 0 XP), Claim chaotic rapier (level 80, 0 XP), Claim chaotic longsword (level 80, 0 XP), Claim chaotic maul (level 80, 0 XP), Claim chaotic crossbow (level 80, 0 XP), Claim chaotic staff (level 80, 0 XP), Claim eagle eyed kiteshield (level 80, 0 XP), Claim arcane kiteshield (level 80, 0 XP)."
+  "text": "Dungeoneering training options with level requirements, XP per action and any ingredients required to make each item: Clear novice dungeon (level 1, 1000 XP), Clear apprentice dungeon (level 10, 2000 XP), Clear adept dungeon (level 20, 3000 XP), Clear journeyman dungeon (level 30, 4000 XP), Clear expert dungeon (level 40, 5000 XP), Clear veteran dungeon (level 50, 6000 XP), Clear master dungeon (level 60, 7000 XP), Clear grandmaster dungeon (level 70, 8000 XP), Clear legendary dungeon (level 80, 9000 XP), Clear mythic dungeon (level 90, 10000 XP), Claim arcane necklace (level 65, 0 XP), Claim chaotic rapier (level 80, 0 XP), Claim chaotic longsword (level 80, 0 XP), Claim chaotic maul (level 80, 0 XP), Claim chaotic crossbow (level 80, 0 XP), Claim chaotic staff (level 80, 0 XP), Claim eagle eyed kiteshield (level 80, 0 XP), Claim arcane kiteshield (level 80, 0 XP)."
  },
  {
   "id": "skill_runecraft",
@@ -2083,9 +2131,12 @@ export const KNOWLEDGE_CHUNKS = [
    "skill",
    "skills",
    "training",
+   "ingredients",
+   "materials",
+   "recipe",
    "runecraft"
   ],
-  "text": "Runecrafting training options with level requirements and XP per action: Craft air rune (level 1, 10 XP), Craft mind rune (level 2, 11 XP), Craft water rune (level 5, 12 XP), Craft earth rune (level 9, 13 XP), Craft fire rune (level 14, 14 XP), Craft body rune (level 20, 15 XP), Craft cosmic rune (level 27, 16 XP), Craft chaos rune (level 35, 17 XP), Craft astral rune (level 40, 17.4 XP), Craft nature rune (level 44, 18 XP), Craft law rune (level 54, 19 XP), Craft death rune (level 65, 25 XP), Craft blood rune (level 77, 30 XP), Craft soul rune (level 90, 35 XP), Craft wrath rune (level 95, 40 XP)."
+  "text": "Runecrafting training options with level requirements, XP per action and any ingredients required to make each item: Craft air rune (level 1, 10 XP; needs 1 Rune Essence → Air Rune), Craft mind rune (level 2, 11 XP; needs 1 Rune Essence → Mind Rune), Craft water rune (level 5, 12 XP; needs 1 Rune Essence → Water Rune), Craft earth rune (level 9, 13 XP; needs 1 Rune Essence → Earth Rune), Craft fire rune (level 14, 14 XP; needs 1 Rune Essence → Fire Rune), Craft body rune (level 20, 15 XP; needs 1 Rune Essence → Body Rune), Craft cosmic rune (level 27, 16 XP; needs 1 Rune Essence → Cosmic Rune), Craft chaos rune (level 35, 17 XP; needs 1 Rune Essence → Chaos Rune), Craft astral rune (level 40, 17.4 XP; needs 1 Rune Essence → Astral Rune), Craft nature rune (level 44, 18 XP; needs 1 Rune Essence → Nature Rune), Craft law rune (level 54, 19 XP; needs 1 Rune Essence → Law Rune), Craft death rune (level 65, 25 XP; needs 1 Rune Essence → Death Rune), Craft blood rune (level 77, 30 XP; needs 1 Rune Essence → Blood Rune), Craft soul rune (level 90, 35 XP; needs 1 Rune Essence → Soul Rune), Craft wrath rune (level 95, 40 XP; needs 1 Rune Essence → Wrath Rune)."
  },
  {
   "id": "data_special_attacks",

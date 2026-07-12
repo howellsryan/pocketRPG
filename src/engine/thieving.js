@@ -7,6 +7,32 @@ import { getLevelFromXP } from './experience.js'
 import { rollMasterFarmerSeeds } from './seedDrops.js'
 
 /**
+ * Roll a single gem from an NPC's gem table (e.g. Tzraar). Each entry is an
+ * independent cumulative slice, mirroring the hunter main-table roll so gems
+ * land at the same absolute rate as the Jeweller. Returns an itemId or null
+ * (the leftover probability yields nothing).
+ */
+export function rollGemReward(gems, rng = Math.random) {
+  if (!Array.isArray(gems) || !gems.length) return null
+  let roll = rng()
+  for (const gem of gems) {
+    roll -= gem.chance || 0
+    if (roll <= 0) return gem.itemId
+  }
+  return null
+}
+
+/** Roll `count` gems, aggregated into { itemId: quantity } (skips misses). */
+export function rollGemRewards(count, gems, rng = Math.random) {
+  const out = {}
+  for (let i = 0; i < count; i++) {
+    const id = rollGemReward(gems, rng)
+    if (id) out[id] = (out[id] || 0) + 1
+  }
+  return out
+}
+
+/**
  * Create a thieving state object for a pickpocketing session.
  */
 export function createThievingState(npc) {
@@ -89,6 +115,18 @@ export function simulateIdleThieving(task, elapsedMs) {
       xpGained,
       coinsGained: 0,
       itemsGained: rollMasterFarmerSeeds(actions),
+      actions,
+      skill: 'thieving',
+      actionName: task.npc.name,
+    }
+  }
+
+  // Tzraar and other gem targets reward gems (at the Jeweller's rate) not coins.
+  if (task.npc.gemReward) {
+    return {
+      xpGained,
+      coinsGained: 0,
+      itemsGained: rollGemRewards(actions, task.npc.gems),
       actions,
       skill: 'thieving',
       actionName: task.npc.name,
