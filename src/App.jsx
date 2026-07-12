@@ -63,6 +63,7 @@ import { defaultIdleCombatSetup } from './engine/idleSupplies.js'
 import prayersData from './data/prayers.json'
 import minigamesData from './data/minigames.json'
 import raidsData from './data/raids.json'
+import monstersData from './data/monsters.json'
 import { simulateIdleThieving } from './engine/thieving.js'
 import { simulateIdleHunting } from './engine/hunter.js'
 import { simulateQuestIdleCascade, splitQuestXpRewards } from './engine/questIdleCascade.js'
@@ -70,6 +71,8 @@ import { getLevelFromXP, createLevelUpTracker } from './engine/experience.js'
 import { pvpApi } from './cloud/pvp.js'
 import { SKIP_HOUR_MS, getSkipPreflight, isChargeableSkipOutcome } from './engine/skipPreflight.js'
 import { buildAutoStartTask } from './engine/autoStartTask.js'
+import { resolveMagicSpell } from './engine/equipment.js'
+import spellsData from './data/spells.json'
 import { getSlayerTaskReward } from './engine/slayerRewards.js'
 import { hasEpicLootDrop, getItemUnitValue } from './utils/itemValue.js'
 import LootResultModal, { SummaryCard, SuppliesCard } from './components/LootResultModal.jsx'
@@ -329,7 +332,7 @@ function GameApp() {
     unlockMinigameItem, unlockedMinigameItems, awardDungeoneeringTokens, farming, updateFarming, idleCombatSetup, isOneLife, updateBossKillCounts, updateRaidKillCounts, syncServerKillCounts, markKillCountsLoaded, combatSkipHandlerRef, skipHourHandlerRef, chargeSkipRef, raidSkipHandlerRef,
     gameLocked, lockGame, unlockGame, runLockedSave, awaitCombatCompletion, resolveCombatCompletion,
     characterUnlocks, dailyTaskStates, setDailyTasks, recordGameEvent, updateWorldLocation, worldLocation, clearActivityProgress, requestActivityStart,
-    inventoryFull, signalInventoryFull, dismissInventoryFullPrompt, resolveInventoryFull } = useGame()
+    inventoryFull, signalInventoryFull, dismissInventoryFullPrompt, resolveInventoryFull, combatStance, activeCombatSpell } = useGame()
   const pvp = usePvp()
   const [screen, setScreen] = useState(SCREENS.HOME)
   const prevScreenRef = useRef(null) // screen before the current one (set by navigate)
@@ -2301,6 +2304,10 @@ function GameApp() {
     // spends the hour on `resumedFromTravel` instead of re-charging.
     let skipAlreadyCharged = false
     let resumedFromTravel = null
+    // Set when a Skip-1h walk to a combat spot simulated the hour of fighting
+    // and should drop the player back into the live fight on arrival (combat
+    // can't ride the save as a background task — see the arrival handling below).
+    let resumeCombatLive = null
     try {
       const task = activeTaskRef.current
       const [freshStats, freshInv, freshEq, freshBank, freshSlayerTask] = await Promise.all([
@@ -2408,7 +2415,21 @@ function GameApp() {
           // generic simulation below (which does NOT re-charge). The activity is a
           // background one, so it keeps accruing wherever the player is; types we
           // can't simulate here (combat/raid/farming) resume live as before.
-          const resumedTask = buildAutoStartTask(task.autoStart)
+          let resumedTask = buildAutoStartTask(task.autoStart)
+          // Combat can't persist as a background task (it stops when the player
+          // leaves the screen), so buildAutoStartTask skips it — but a normal
+          // (non-boss) fight can still be idle-simulated for the skipped hour and
+          // then resumed live on arrival. That spends the credit on the fight the
+          // trip was launched for instead of evaporating it on the walk. Bosses
+          // and raids can't be idle-simulated, so they resume live as before.
+          if (!resumedTask && task.autoStart?.kind === 'combat') {
+            const monster = monstersData?.[task.autoStart.monsterId]
+            if (monster && monster.boss !== true) {
+              const { spell } = resolveMagicSpell(freshEq, itemsDataRef.current, activeCombatSpell, spellsData)
+              resumedTask = { type: 'combat', monster, stance: combatStance, spell: spell || null, bankingEnabled: true }
+              resumeCombatLive = task.autoStart
+            }
+          }
           if (resumedTask) {
             setActiveTask(resumedTask)
             activeTaskRef.current = resumedTask
@@ -2772,6 +2793,18 @@ function GameApp() {
       // can't lose progress the player spent a credit on.
       await persistSkipThenReveal(idleResultData)
       didShowIdleModal = !!idleResultData
+
+      // The skipped hour of fighting is settled — drop the player back into the
+      // live fight so combat carries on where the trip was headed. Skip this on
+      // a save conflict (the skip rolled back) or a death during the hour (don't
+      // re-engage the monster that just killed the player). Clearing the task
+      // first avoids the "You fled combat" toast navigate() shows otherwise.
+      if (resumeCombatLive && !isSaveConflict() && !idleResultData?.died) {
+        setActiveTask(null)
+        activeTaskRef.current = null
+        try { localStorage.removeItem('pocketrpg_activeTask') } catch {}
+        resumeAutoStart(resumeCombatLive, task.returnTo)
+      }
     } catch (err) {
       console.error('[PocketRPG] Skip 1h error:', err)
       if (err?.status === 402) {
