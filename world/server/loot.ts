@@ -13,10 +13,14 @@ export type LootEntity = {
   z: number
   ownerCharId: string
   spawnTick: number
+  /** Owner-only window override (player drops go public faster than kill loot). */
+  ownerTicks?: number
 }
 
 export const LOOT_OWNER_TICKS = 100
 export const LOOT_DESPAWN_TICKS = 300
+/** A player-dropped item shows for everyone after ~10s (spec: drop visibility). */
+export const PLAYER_DROP_OWNER_TICKS = 17
 
 let lootSeq = 0
 
@@ -27,12 +31,15 @@ export function spawnDrops(
   x: number,
   z: number,
   ownerCharId: string,
-  tick: number
+  tick: number,
+  ownerTicks?: number
 ): LootEntity[] {
   const out: LootEntity[] = []
   for (const drop of drops) {
     if (!drop.itemId || drop.quantity < 1) continue
-    out.push({ id: `loot_${++lootSeq}`, itemId: drop.itemId, qty: drop.quantity, x, z, ownerCharId, spawnTick: tick })
+    const loot: LootEntity = { id: `loot_${++lootSeq}`, itemId: drop.itemId, qty: drop.quantity, x, z, ownerCharId, spawnTick: tick }
+    if (ownerTicks !== undefined) loot.ownerTicks = ownerTicks
+    out.push(loot)
   }
   return out
 }
@@ -45,7 +52,7 @@ export function isExpired(loot: LootEntity, tick: number): boolean {
  * despawn, which the caller removes separately). */
 export function isVisibleTo(loot: LootEntity, charId: string, tick: number): boolean {
   if (isExpired(loot, tick)) return false
-  if (tick - loot.spawnTick < LOOT_OWNER_TICKS) return loot.ownerCharId === charId
+  if (tick - loot.spawnTick < (loot.ownerTicks ?? LOOT_OWNER_TICKS)) return loot.ownerCharId === charId
   return true
 }
 

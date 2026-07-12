@@ -70,48 +70,6 @@
         "y": 500
       },
       {
-        "kind": "combat",
-        "ref": "pasture_bull",
-        "x": 250,
-        "y": 340
-      },
-      {
-        "kind": "combat",
-        "ref": "arcane_adept",
-        "x": 545,
-        "y": 375
-      },
-      {
-        "kind": "combat",
-        "ref": "field_chicken",
-        "x": 340,
-        "y": 555
-      },
-      {
-        "kind": "combat",
-        "ref": "stoneback_crab",
-        "x": 690,
-        "y": 700
-      },
-      {
-        "kind": "combat",
-        "ref": "cave_goblin",
-        "x": 300,
-        "y": 790
-      },
-      {
-        "kind": "combat",
-        "ref": "dustpaw_rat",
-        "x": 460,
-        "y": 830
-      },
-      {
-        "kind": "combat",
-        "ref": "bogling_sprite",
-        "x": 610,
-        "y": 850
-      },
-      {
         "kind": "farming",
         "ref": "gnome",
         "x": 165,
@@ -123,6 +81,13 @@
         "label": "Dungeon Entrance",
         "x": 880,
         "y": 780
+      },
+      {
+        "screen": "dungeons",
+        "iconKey": "dungeon",
+        "label": "Lumbright Dungeon",
+        "x": 610,
+        "y": 850
       }
     ]
   },
@@ -161,13 +126,6 @@
         "iconKey": "offers",
         "x": 408,
         "y": 220
-      },
-      {
-        "kind": "raid",
-        "ref": "crimson_night_theatre",
-        "label": "Crimson Night Theatre",
-        "x": 724,
-        "y": 197
       },
       {
         "kind": "gather",
@@ -211,40 +169,11 @@
         "y": 300
       },
       {
-        "kind": "combat",
-        "ref": "warlord_grondar",
-        "x": 461,
-        "y": 53
-      },
-      {
-        "kind": "combat",
-        "ref": "ember_tyrant",
-        "x": 987,
-        "y": 165
-      },
-      {
-        "kind": "combat",
-        "ref": "venomcoil_matriarch",
+        "screen": "dungeons",
+        "iconKey": "dungeon",
+        "label": "Varrick Dungeon",
         "x": 1020,
         "y": 362
-      },
-      {
-        "kind": "combat",
-        "ref": "krylth_the_defiler",
-        "x": 691,
-        "y": 500
-      },
-      {
-        "kind": "combat",
-        "ref": "blighted_gauntlet",
-        "x": 494,
-        "y": 540
-      },
-      {
-        "kind": "combat",
-        "ref": "ashen_crucible",
-        "x": 99,
-        "y": 400
       }
     ]
   },
@@ -291,12 +220,6 @@
         "y": 559
       },
       {
-        "kind": "raid",
-        "ref": "vaults_of_xyren",
-        "x": 546,
-        "y": 180
-      },
-      {
         "kind": "agility",
         "ref": "falador",
         "x": 428,
@@ -307,6 +230,12 @@
         "ref": "elf",
         "x": 197,
         "y": 263
+      },
+      {
+        "kind": "thieving",
+        "ref": "tzraar",
+        "x": 120,
+        "y": 340
       },
       {
         "kind": "gather",
@@ -336,42 +265,6 @@
         "y": 540
       },
       {
-        "kind": "combat",
-        "ref": "adamant_dragon",
-        "x": 987,
-        "y": 90
-      },
-      {
-        "kind": "combat",
-        "ref": "commander_zephyra",
-        "x": 1086,
-        "y": 263
-      },
-      {
-        "kind": "combat",
-        "ref": "rune_dragon",
-        "x": 987,
-        "y": 395
-      },
-      {
-        "kind": "combat",
-        "ref": "skyrender_kharra",
-        "x": 1086,
-        "y": 461
-      },
-      {
-        "kind": "combat",
-        "ref": "threefang_cerberus",
-        "x": 461,
-        "y": 620
-      },
-      {
-        "kind": "combat",
-        "ref": "vicious_black_dragon",
-        "x": 921,
-        "y": 559
-      },
-      {
         "kind": "farming",
         "ref": "falador",
         "x": 660,
@@ -383,6 +276,13 @@
         "label": "Dungeon Entrance",
         "x": 80,
         "y": 420
+      },
+      {
+        "screen": "dungeons",
+        "iconKey": "dungeon",
+        "label": "Faloden Dungeon",
+        "x": 1086,
+        "y": 461
       }
     ]
   },
@@ -414,20 +314,6 @@
         "label": "Market Kitchen",
         "x": 650,
         "y": 348
-      },
-      {
-        "kind": "raid",
-        "ref": "tomb_of_arasmus",
-        "label": "Tomb of Arasmus",
-        "x": 790,
-        "y": 147
-      },
-      {
-        "kind": "raid",
-        "ref": "cryptbound_champions",
-        "label": "Cryptbound Champions",
-        "x": 837,
-        "y": 228
       },
       {
         "kind": "quest",
@@ -498,42 +384,6 @@
         "y": 569
       },
       {
-        "kind": "combat",
-        "ref": "king_black_dragon",
-        "x": 603,
-        "y": 27
-      },
-      {
-        "kind": "combat",
-        "ref": "deepmaw_kraken",
-        "x": 100,
-        "y": 67
-      },
-      {
-        "kind": "combat",
-        "ref": "nagadoth_prime",
-        "x": 1071,
-        "y": 321
-      },
-      {
-        "kind": "combat",
-        "ref": "nagadoth_rex",
-        "x": 1038,
-        "y": 368
-      },
-      {
-        "kind": "combat",
-        "ref": "nagadoth_supreme",
-        "x": 1105,
-        "y": 402
-      },
-      {
-        "kind": "combat",
-        "ref": "hellbound_gorilla",
-        "x": 1105,
-        "y": 201
-      },
-      {
         "kind": "farming",
         "ref": "ardougne",
         "x": 1105,
@@ -545,6 +395,13 @@
         "label": "Dungeon Entrance",
         "x": 150,
         "y": 480
+      },
+      {
+        "screen": "dungeons",
+        "iconKey": "dungeon",
+        "label": "Ardounne Dungeon",
+        "x": 1105,
+        "y": 201
       }
     ]
   },
@@ -605,42 +462,6 @@
         "y": 400
       },
       {
-        "kind": "combat",
-        "ref": "briarheart_treant",
-        "x": 823,
-        "y": 250
-      },
-      {
-        "kind": "combat",
-        "ref": "ember_giant",
-        "x": 90,
-        "y": 480
-      },
-      {
-        "kind": "combat",
-        "ref": "frostmaw_direwolf",
-        "x": 856,
-        "y": 461
-      },
-      {
-        "kind": "combat",
-        "ref": "gravehusk_brute",
-        "x": 329,
-        "y": 610
-      },
-      {
-        "kind": "combat",
-        "ref": "green_dragon",
-        "x": 280,
-        "y": 150
-      },
-      {
-        "kind": "combat",
-        "ref": "lesser_fiend",
-        "x": 658,
-        "y": 580
-      },
-      {
         "kind": "farming",
         "ref": "taverley",
         "x": 1010,
@@ -652,6 +473,13 @@
         "label": "Dungeon Entrance",
         "x": 980,
         "y": 150
+      },
+      {
+        "screen": "dungeons",
+        "iconKey": "dungeon",
+        "label": "Draynar Dungeon",
+        "x": 658,
+        "y": 580
       }
     ]
   },
@@ -726,47 +554,18 @@
         "y": 700
       },
       {
-        "kind": "combat",
-        "ref": "bloodmoon_stalker",
-        "x": 200,
-        "y": 450
-      },
-      {
-        "kind": "combat",
-        "ref": "ironfang_drake",
-        "x": 250,
-        "y": 540
-      },
-      {
-        "kind": "combat",
-        "ref": "pyreclaw_demon",
-        "x": 650,
-        "y": 385
-      },
-      {
-        "kind": "combat",
-        "ref": "shadeglass_golem",
-        "x": 150,
-        "y": 610
-      },
-      {
-        "kind": "combat",
-        "ref": "warped_spectre",
-        "x": 900,
-        "y": 500
-      },
-      {
-        "kind": "combat",
-        "ref": "wraithgale_specter",
-        "x": 150,
-        "y": 300
-      },
-      {
         "kind": "skill",
         "ref": "dungeoneering:dungeoneering_floor_5",
         "label": "Dungeon Entrance",
         "x": 750,
         "y": 780
+      },
+      {
+        "screen": "dungeons",
+        "iconKey": "dungeon",
+        "label": "Al-Karid Dungeon",
+        "x": 900,
+        "y": 500
       }
     ]
   },
@@ -835,47 +634,18 @@
         "y": 400
       },
       {
-        "kind": "combat",
-        "ref": "astral_mage",
-        "x": 66,
-        "y": 132
-      },
-      {
-        "kind": "combat",
-        "ref": "astral_warrior",
-        "x": 210,
-        "y": 90
-      },
-      {
-        "kind": "combat",
-        "ref": "cindermaw_serpent",
-        "x": 99,
-        "y": 263
-      },
-      {
-        "kind": "combat",
-        "ref": "ironclad_guardian",
-        "x": 230,
-        "y": 400
-      },
-      {
-        "kind": "combat",
-        "ref": "nether_demon",
-        "x": 66,
-        "y": 428
-      },
-      {
-        "kind": "combat",
-        "ref": "shroudwraith_specter",
-        "x": 200,
-        "y": 520
-      },
-      {
         "kind": "skill",
         "ref": "dungeoneering:dungeoneering_floor_7",
         "label": "Dungeon Entrance",
         "x": 950,
         "y": 550
+      },
+      {
+        "screen": "dungeons",
+        "iconKey": "dungeon",
+        "label": "Edgevale Dungeon",
+        "x": 66,
+        "y": 132
       }
     ]
   },
@@ -937,47 +707,18 @@
         "y": 592
       },
       {
-        "kind": "combat",
-        "ref": "broodfang_spider",
-        "x": 132,
-        "y": 461
-      },
-      {
-        "kind": "combat",
-        "ref": "duneback_crab",
-        "x": 230,
-        "y": 600
-      },
-      {
-        "kind": "combat",
-        "ref": "frostbite_imp",
-        "x": 470,
-        "y": 95
-      },
-      {
-        "kind": "combat",
-        "ref": "highland_giant",
-        "x": 1053,
-        "y": 395
-      },
-      {
-        "kind": "combat",
-        "ref": "umbral_adept",
-        "x": 988,
-        "y": 494
-      },
-      {
-        "kind": "combat",
-        "ref": "wailing_banshee",
-        "x": 856,
-        "y": 296
-      },
-      {
         "kind": "skill",
         "ref": "dungeoneering:dungeoneering_floor_2",
         "label": "Dungeon Entrance",
         "x": 700,
         "y": 450
+      },
+      {
+        "screen": "dungeons",
+        "iconKey": "dungeon",
+        "label": "Barlock Dungeon",
+        "x": 988,
+        "y": 494
       }
     ]
   },
@@ -1039,46 +780,17 @@
         "y": 470
       },
       {
-        "kind": "combat",
-        "ref": "elder_rock_golem",
-        "x": 230,
-        "y": 165
-      },
-      {
-        "kind": "combat",
-        "ref": "elder_tree_spirit",
-        "x": 99,
-        "y": 395
-      },
-      {
-        "kind": "combat",
-        "ref": "embertongue_lizard",
-        "x": 66,
-        "y": 527
-      },
-      {
-        "kind": "combat",
-        "ref": "hollow_reaver",
-        "x": 33,
-        "y": 620
-      },
-      {
-        "kind": "combat",
-        "ref": "sanguine_veld",
-        "x": 550,
-        "y": 210
-      },
-      {
-        "kind": "combat",
-        "ref": "stoneglare_basilisk",
-        "x": 264,
-        "y": 99
-      },
-      {
         "kind": "farming",
         "ref": "catherby",
         "x": 820,
         "y": 470
+      },
+      {
+        "screen": "dungeons",
+        "iconKey": "dungeon",
+        "label": "Catherra Dungeon",
+        "x": 550,
+        "y": 210
       }
     ]
   },
@@ -1147,46 +859,17 @@
         "y": 400
       },
       {
-        "kind": "combat",
-        "ref": "ashen_hydra",
-        "x": 66,
-        "y": 132
-      },
-      {
-        "kind": "combat",
-        "ref": "black_dragon",
-        "x": 724,
-        "y": 132
-      },
-      {
-        "kind": "combat",
-        "ref": "cinder_devil",
-        "x": 66,
-        "y": 461
-      },
-      {
-        "kind": "combat",
-        "ref": "crazy_archaeologist",
-        "x": 757,
-        "y": 428
-      },
-      {
-        "kind": "combat",
-        "ref": "nightfang_beast",
-        "x": 263,
-        "y": 592
-      },
-      {
-        "kind": "combat",
-        "ref": "sovrathar_the_ashen_sovereign",
-        "x": 526,
-        "y": 615
-      },
-      {
         "kind": "farming",
         "ref": "hosidius",
         "x": 900,
         "y": 520
+      },
+      {
+        "screen": "dungeons",
+        "iconKey": "dungeon",
+        "label": "Seerhold Dungeon",
+        "x": 526,
+        "y": 615
       }
     ]
   },
@@ -1243,46 +926,17 @@
         "y": 300
       },
       {
-        "kind": "combat",
-        "ref": "ash_wyrm",
-        "x": 198,
-        "y": 99
-      },
-      {
-        "kind": "combat",
-        "ref": "ashen_marauder",
-        "x": 592,
-        "y": 66
-      },
-      {
-        "kind": "combat",
-        "ref": "boneclaw_revenant",
-        "x": 856,
-        "y": 119
-      },
-      {
-        "kind": "combat",
-        "ref": "bonelight_pyromancer",
-        "x": 1020,
-        "y": 165
-      },
-      {
-        "kind": "combat",
-        "ref": "cinderfang_reaver",
-        "x": 230,
-        "y": 329
-      },
-      {
-        "kind": "combat",
-        "ref": "tidereaper_crab",
-        "x": 955,
-        "y": 428
-      },
-      {
         "kind": "farming",
         "ref": "brimhaven",
-        "x": 520,
-        "y": 570
+        "x": 200,
+        "y": 200
+      },
+      {
+        "screen": "dungeons",
+        "iconKey": "dungeon",
+        "label": "Brimhollow Dungeon",
+        "x": 955,
+        "y": 428
       }
     ]
   },
@@ -1343,47 +997,18 @@
         "y": 592
       },
       {
-        "kind": "combat",
-        "ref": "briar_giant",
-        "x": 99,
-        "y": 263
-      },
-      {
-        "kind": "combat",
-        "ref": "cinderpaw_cub",
-        "x": 132,
-        "y": 428
-      },
-      {
-        "kind": "combat",
-        "ref": "glaive_skeleton",
-        "x": 1086,
-        "y": 230
-      },
-      {
-        "kind": "combat",
-        "ref": "marshfen_toad",
-        "x": 889,
-        "y": 560
-      },
-      {
-        "kind": "combat",
-        "ref": "mirebound_husk",
-        "x": 198,
-        "y": 560
-      },
-      {
-        "kind": "combat",
-        "ref": "verdant_stalker",
-        "x": 1053,
-        "y": 395
-      },
-      {
         "kind": "skill",
         "ref": "dungeoneering:dungeoneering_floor_3",
         "label": "Dungeon Entrance",
         "x": 780,
         "y": 330
+      },
+      {
+        "screen": "dungeons",
+        "iconKey": "dungeon",
+        "label": "Canifel Dungeon",
+        "x": 99,
+        "y": 263
       }
     ]
   },
@@ -1392,48 +1017,6 @@
     "w": 1000,
     "h": 1000,
     "spots": [
-      {
-        "kind": "combat",
-        "ref": "stonegale_elemental",
-        "x": 508,
-        "y": 78
-      },
-      {
-        "kind": "combat",
-        "ref": "astral_ranger",
-        "x": 879,
-        "y": 137
-      },
-      {
-        "kind": "combat",
-        "ref": "drakthul_wyrmling",
-        "x": 918,
-        "y": 312
-      },
-      {
-        "kind": "combat",
-        "ref": "gravethorn_drake",
-        "x": 908,
-        "y": 586
-      },
-      {
-        "kind": "combat",
-        "ref": "voidweave_stalker",
-        "x": 850,
-        "y": 703
-      },
-      {
-        "kind": "combat",
-        "ref": "runestone_gargoyle",
-        "x": 137,
-        "y": 547
-      },
-      {
-        "kind": "combat",
-        "ref": "nether_wraith",
-        "x": 137,
-        "y": 176
-      },
       {
         "kind": "quest",
         "label": "Quests Board",
@@ -1478,7 +1061,9 @@
       },
       {
         "kind": "skill",
-        "refs": ["woodcutting:maple"],
+        "refs": [
+          "woodcutting:maple"
+        ],
         "label": "Old Grove",
         "x": 908,
         "y": 459
@@ -1514,6 +1099,13 @@
         "label": "Dungeon Entrance",
         "x": 750,
         "y": 650
+      },
+      {
+        "screen": "dungeons",
+        "iconKey": "dungeon",
+        "label": "Camlann Dungeon",
+        "x": 137,
+        "y": 176
       }
     ]
   },
@@ -1587,47 +1179,18 @@
         "y": 79
       },
       {
-        "kind": "combat",
-        "ref": "bone_wyvern",
-        "x": 1119,
-        "y": 197
-      },
-      {
-        "kind": "combat",
-        "ref": "emberhowl_warlord",
-        "x": 66,
-        "y": 165
-      },
-      {
-        "kind": "combat",
-        "ref": "marshscale_shaman",
-        "x": 1053,
-        "y": 329
-      },
-      {
-        "kind": "combat",
-        "ref": "razorwing_harpy",
-        "x": 66,
-        "y": 296
-      },
-      {
-        "kind": "combat",
-        "ref": "red_dragon",
-        "x": 1120,
-        "y": 99
-      },
-      {
-        "kind": "combat",
-        "ref": "thornhide_colossus",
-        "x": 33,
-        "y": 99
-      },
-      {
         "kind": "skill",
         "ref": "dungeoneering:dungeoneering_floor_8",
         "label": "Dungeon Entrance",
         "x": 400,
         "y": 500
+      },
+      {
+        "screen": "dungeons",
+        "iconKey": "dungeon",
+        "label": "Port Sarin Dungeon",
+        "x": 66,
+        "y": 165
       }
     ]
   }

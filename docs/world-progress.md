@@ -355,3 +355,116 @@ Built per the new guide §9 (authored this phase on developer instruction — ma
 `world:check` green (12 files / 97 tests). Only `world/` + `docs/` touched — no root gate required.
 
 - [x] STEP 3.0–3.4 — see commit introducing this entry — Phase 3 code-complete + self-verified; acceptance is the DT-P3 two-device manual script (guide §9 STEP 3.4).
+
+## PHASE 4 — Shared-kill loot attribution + pack reordering (STEP 4.1–4.4)
+
+Developer confirmed the Phase 4+ roadmap decisions (recorded in `docs/open-world-next-phases-scope.md`; asset tracking in `docs/open-world-asset-coverage.md`) and greenlit the build. Guide §10 rewritten from "do not build" into the Phase 4 spec.
+
+**STEP 4.1 — damage attribution + shared HP** (`npc.ts`, `combat.ts`): `NpcState.damageByChar` (per-attacker total + last-increase tick), `recordDamage`/`topDamageContributor` pure + unit-tested (tie → whoever reached the total first). Each attacker's engine session syncs `state.monster.currentHP` from the shared npc record before its tick — players tick sequentially, so concurrent damage serializes and the existing dead-npc guard stops a same-tick double-kill. `killNpc` spawns loot with `ownerCharId = topDamageContributor ?? killer`, then clears the map; out-of-combat full heal also clears it.
+
+**STEP 4.2 — single retaliation target**: `npc.attackerId` is now claim-if-null (was unconditionally overwritten each tick by every attacker — with two attackers the bull would have hit both every swing). Only the target's session applies monster-sourced events; others discard them. Release on walk-away/kill/disconnect already existed; **player death now releases it too** (was a pre-existing latent leak: a dead target left `attackerId` pointing at a respawned-away player, pinning the npc in combat forever; only reachable at 1 HP vs the bull, so masked until now). A surviving attacker claims the vacancy next tick.
+
+**STEP 4.3 — pack reordering**: protocol `{t:'moveInv', from, to}` (integers in [0,28) or close 1008); pure `moveInventorySlot` in `mining.ts` (swap/relocate, same semantics as the main game's `InventoryGrid`); `WorldZone` queues an `{e:'inv'}` echo for the next tick (one-diff-per-client-per-tick preserved). Client: pointer-drag with 6px threshold + ghost + target highlight on `#inv-panel` (desktop and touch share the path), optimistic local swap, server echo authoritative. Flushes read minted/saveBacked tallies, so slot order is provably cosmetic — pinned by a test.
+
+**Verified end-to-end** (wrangler dev + two WS clients): identical shared HP trajectory on both clients (8→4→2→0), all player-targeted hitsplats at exactly one charId, loot visible to only the top-damage client during the owner window, moveInv echo round-trip (slot 0 → 27), out-of-range moveInv closed 1008. Environment note for future sessions: `curl` probes of localhost must use `--noproxy '*'` here (the sandbox proxy blackholes localhost otherwise), and wrangler picks the next free port (8788) if a stale workerd holds 8787.
+
+`world:check` green (13 files / 109 tests). Only `world/` + `docs/` touched — no root gate required.
+
+- [x] STEP 4.1–4.4 — see commit introducing this entry — Phase 4 code-complete + self-verified; acceptance is the DT-P4 two-device manual script (guide §10 STEP 4.4).
+
+## PHASE 5 — Equipment visuals v1: weapons in hand (STEP 5.1–5.5)
+
+Developer greenlit Phase 5 immediately after Phase 4 (will test both together). Guide §11 spec written, then built in the same session.
+
+**STEP 5.1 — models**: `scripts/build-weapons.mjs` → 10 archetype GLBs (22–101 KiB) in `client/public/models/weapons/`. Nine from KayKit Adventurers glTF (grips at origin, blade +Y — confirmed via inspect-glb before writing any attach code); `blunt` from Quaternius Hammer_Double OBJ via `obj2gltf` (`--no-save` install; script exits non-zero with instructions if it's missing). KayKit-over-Quaternius for held props is an accepted vendor-steering deviation: held weapons only parent to a joint (no rig sharing), and Quaternius RPG Items ships OBJ/FBX, not glTF.
+
+**STEP 5.2 — registry**: `shared/appearance.ts` maps all 139 weapon items by ordered token rules + `twoHanded` upgrade + tier-prefix tints. Pattern-order traps (crossbow/bow, battleaxe/axe, godsword/sword, boneclaw_rapier NOT matching /claws/) pinned in `tests/appearance.test.ts`. Tools (fishing rod/net/spade) deliberately unmapped → bare hands.
+
+**STEP 5.3 — protocol/server**: `GearDescriptor` on `EntityDiff.gear` + `welcome.you.gear`; computed once at hello, fixed per session. One typecheck fix: items.json has `slot: null` entries so the registry's Items type needed `string | null`.
+
+**STEP 5.4 — client**: `applyWeapon` in `entities.ts` (template-cached, tinted clone under `hand_r`, idempotent per archetype+tint key, post-await race re-check, silent bare-hands on failure). **Grip tuning method worth reusing**: a standalone probe page (three.js import-map + file server over `node_modules`) rendered 8 candidate rotations side-by-side in ONE screenshot — picked `[-π/2, 0, π/2]` (blade upright in palm) in a single iteration instead of rebuild-per-guess. Staff/wand then flipped to a planted-vertical pole look (`[π, 0, 0]`) after the in-game shot showed a horizontal staff reading wrong. Bow/crossbow overrides are by-analogy, untested visually (no seeded character equips one) — flagged for the DT-P5 eyeball.
+
+**Gotcha rediscovered**: `wrangler dev` serves the BUILT `client/dist` — a stale build silently shows old client code; rebuild before any visual verification. Also: piping a background `npm run dev` through `head` kills the server when head exits.
+
+**Verified**: dev-seed now equips char 1 with `runeforged_scimitar`, char 2 with `magic_staff` (distinct saves per character — previously shared one blob). Screenshots: tinted sword held upright in-hand; staff planted vertical, orb up. Two-client WS e2e 4/4: both welcomes carry own gear; B sees A's sword archetype+tint in ent diffs; A sees B's staff.
+
+`world:check` green (14 files / 115 tests). Only `world/` + `docs/` touched — no root gate required.
+
+- [x] STEP 5.1–5.5 — see commit introducing this entry — Phase 5 code-complete + self-verified; acceptance is the combined DT-P4+P5 manual script (guide §10 STEP 4.4 + §11 STEP 5.5).
+
+## Phase 5 grip fixes (developer device feedback)
+
+Developer's zoomed screenshot showed the sword clipping through the character, and daggers/axes/wands "not appearing". Root cause was one mistake with two symptoms: the grip was tuned against the **T-pose**, but when the idle pose drops the arm the palm rotates ~90°, so blades pointed across the body — long weapons clipped through the legs, and short ones (dagger, axe head, wand) sat entirely INSIDE the mesh, i.e. they were attaching fine and just invisible.
+
+Fixes:
+1. **Idle-pose grip retune.** The probe page now plays the actual `idle` clip before rendering and labels every candidate (the unlabeled first pass mis-identified which candidate looked right — labels are not optional). New default `[-π/2, π/2, π/2]`: blade vertical at the side, tip down, clear of the body. Verified across ALL ten archetypes in one labeled render: dagger/axe/wand clearly visible, bow vertical at the side (`[π/2,0,0]`), crossbow carried level (`[0,0,0]`), staff keeps its planted grip, blunt gets a per-archetype 0.5 scale (the Quaternius hammer is oversized). Wand no longer has an override (default carry reads right).
+2. **Scimitars → curved-blade asset** (developer decision): `scimitar` moved from the sword rule to the dagger rule in `shared/appearance.ts`, so every scimitar tier shares the KayKit curved blade with its tier tint — same asset dragon_claws resolves to (pinned by a test comparing the two).
+
+In-game screenshots re-verified: runeforged scimitar (curved model, teal tint) held at the side without clipping; staff unchanged. `world:check` green (14 files / 116 tests). Only `world/` + `docs/` touched.
+
+- [x] Phase 5 grip fixes — see commit introducing this entry — idle-pose grips for all archetypes, scimitar asset swap; DT-P5 manual pass still owns final look/feel sign-off.
+
+## Multiplayer connectivity fixes (developer device feedback: misplacement, lag, invisible players)
+
+Developer videos showed: characters misplaced after play, 1–2s observer delay bursts, taps doing nothing, and a joining player invisible until refresh. All four trace to one unhandled reality: **mobile sockets die and reconnect constantly**, and neither side handled it.
+
+Root causes found in review:
+1. **Client rebuilt the whole scene on every reconnect.** partysocket silently reconnects and re-fires `open`; the client re-sent `hello` (correct) but the welcome handler unconditionally re-ran the full scene build — second canvas, second render loop, duplicated listeners. Everything after the first silent reconnect was undefined behaviour until a hard refresh (the "invisible second player").
+2. **Server discarded the live session on duplicate connection.** The old kick path deleted the in-memory player and re-seeded from D1: position from a checkpoint up to 60s stale (the misplacement), and **unflushed minted items/pending XP silently lost** (the old socket's `onClose` early-returns for a stale conn, so no disconnect flush ever ran).
+3. **No heartbeat, no dead-socket detection.** iOS/mobile networks kill idle WebSockets without a close frame; partysocket only notices on TCP timeout. Meanwhile taps were buffered into the dead socket and burst on reconnect (the "click does nothing" + "1–2s delay" spikes).
+
+Fixes (all verified e2e):
+- **Server session carry-over** (`WorldZone.handleHello`): a hello for an already-live character swaps the connection onto the existing in-memory player (intents/combat cleared, aggro released), kicks the old socket, and replays welcome+intro from LIVE state via a new shared `sendWelcome()`. No D1 reads, no grant loss, no teleport. Fresh joins unchanged.
+- **Client resync** (`main.ts`): repeat welcome → `resyncFromWelcome` (snap self, replace pack/stats, drop all npcs/others/loot/rock state and let the intro diff repopulate) — never rebuilds the scene. `ensureNpc`'s load promise gained the same abort guard `ensureOther` already had.
+- **Heartbeat + watchdog**: authed ping every 10s (keeps NATs alive); force `socket.reconnect()` when nothing has been heard for 20s while visible, and on `visibilitychange` resume after >5s silence (the phone-lock case). A standalone "Reconnecting…" banner shows between close and re-welcome so buffered input is no longer a mystery.
+- **Presence keyframe** (server, every 50 ticks): all player ents re-broadcast even when idle, so any client that missed a join edge self-heals ≤30s.
+
+**Verified**: WS driver e2e 7/7 — reconnect welcome resumes the exact live tile (not spawn/checkpoint) with the mined ore still in the pack, old socket closed 1008/duplicate_connection, observer never sees a leave, keyframes flow, post-reconnect input reaches the observer. Browser e2e: duplicate-kick the page's socket → partysocket reconnects → ONE canvas, zero page errors, banner cleared, hero at the live position.
+
+**Scalability review notes** (asked for; no code churn): per-tick cost is O(players × loot) with zero per-tick durable writes — sound at zone scale (the §6 cost model holds). Baseline observer latency of ~1.2s is inherent to the design (600ms server tick + 600ms client playback per tile, the OSRS model) — the *spikes* were the dead-socket buffering above, now bounded by the watchdog. Deferred as micro-optimisations: pre-serialising the shared ents array once per tick instead of per player, and per-player interest filtering (only relevant once zones hold many players).
+
+`world:check` green (14 files / 116 tests). Only `world/` + `docs/` touched.
+
+- [x] Connectivity fixes — see commit introducing this entry — reconnect carry-over + client resync + heartbeat/watchdog + presence keyframe, all e2e-verified; DT: redeploy preview and re-test on devices.
+
+## Connection stability: stop kicking legitimate players (developer feedback: "reconnecting every couple of seconds")
+
+The reconnect banner exposed how often the server was CLOSING connections on healthy WiFi. Review found three server/client behaviours that punished normal play:
+
+1. **The rate limiter kicked at >10 msg/s — but OSRS-style tap-to-move easily exceeds that.** Every burst of eager tapping closed the socket (this was also the likely original source of the pre-carry-over "misplaced character" reports — each silent kick teleported the player to a stale checkpoint). Now: pings bypass the limiter entirely (they're the keepalive — dropping them starves the watchdog), messages above a **15/s soft limit are silently dropped** (a dropped walk is harmless; the next tap replaces it), and only a **>40/s hard flood** (buggy/abusive client) closes the connection — and even then the carry-over path makes the reconnect lossless.
+2. **The 5s auth timeout ran while `handleHello` did its D1 work** — a cold-start hello could be kicked mid-handshake (`auth_timeout` → reconnect loop). The timer now clears the moment hello arrives; auth failures still close explicitly.
+3. **The visibility-resume check reconnected after 5s of silence while pings only flow every 10s** — a quick app switch on a healthy connection forced a needless reconnect. Threshold raised to 15s (above the ping cadence). Client also collapses rapid same-tile taps (<400ms) into one walk message.
+
+**Verified e2e**: 25 taps/s → no disconnect; ping answered mid-flood; 60-message burst → 1008/rate_limited kick and the reconnect still resumes the live session; 45s idle soak with heartbeat only → zero closes, pongs flowing. `world:check` green (14 files / 116 tests). Only `world/` + `docs/` touched.
+
+- [x] Connection stability — see commit introducing this entry — soft-drop rate limiting, hello-time auth-timer clear, saner watchdog thresholds, tap dedupe; flood + soak e2e green. DT: redeploy preview, re-test two devices.
+
+## Phase 5.5 — pathing fix, pack item actions, real banking (developer feedback bundle)
+
+Three requests: fix zig-zag pathing, make the chest open a real bank (not deposit-all), and give the pack main-game left-click/right-click actions incl. Drop.
+
+**Pathing root cause**: BFS with uniform step cost treats a 10-tile diagonal arc as "equal" to the straight line (same step count), and the neighbour ordering made it pick the arc — a straight 26-tile walk visibly bulged 10 tiles north. Replaced with A\*: steps remain the primary cost (tick model unchanged — same arrival times), a tiny per-diagonal epsilon breaks ties toward the straightest route, pinning paths inside the start→destination rectangle. Shape regression tests added (straight line stays on its row; bounding box; minimal diagonal count).
+
+**Pack actions**: `{t:'invAction'}` with shared client/server verb derivation (`world/shared/itemActions.ts` — driven by items.json/skills.json, no hand-authored tables): Wield/Wear (real `src/engine/equipment.js` equip incl. 2H/shield rules + requirements), Eat (heals, new HP pill + `{e:'hp'}` events), Bury (skills.json prayer XP), Drink (deferred with a message — potion boosts need decay infra), Drop (floor loot at the player's tile, owner-only ~10s / 17 ticks, then public, 3min despawn). Equip re-gears the 3D weapon live for everyone (`gear` now rides every player diff so unequips propagate; the killed client-side bug: slot presses landing on the icon's SVG were ignored — `indexOfCell` required HTMLElement).
+
+**Banking**: chest → walk adjacent → bank modal (bank + pack grids); tap moves 1, hold/right-click offers 1/5/10/X/All; server clamps everything and requires adjacency per op. Bank view seeds from the save at hello (charge-carrying entries excluded — charges can't survive the session model).
+
+**Accounting**: new provenance pools (`sessionItems.ts`): minted / saveBacked / bankSourced + consumed/deposited tallies; flush payload extended (removeFromInventory, removeFromBank, mintedToBank, bankToInventory, equipment snapshot), all clamped against the live save; debounced 3s durability flush after bank/equip/consume. Unit-tested invariant: pack count = minted + saveBacked + bankSourced.
+
+**Verified**: 24/24 WS e2e checks (straight-line walk rows, eat/bury/equip incl. observer seeing the re-gear, mismatched-action rejection, drop hidden from the observer at 4s and public by ~10s, bank open/withdraw/deposit with clamps, away-from-chest ops ignored, and a disconnect flush audited in real D1: equipment snapshot, eaten save-backed + bank-sourced units removed from the right stores, withdrawals returned, deposits banked, drops gone). 12/12 headless UI checks (HP pill, chest hover→modal, tap-withdraw, 1/5/10/X/All menu, X prompt, item menu Eat/Drop, tap-to-eat). `world:check` green (16 files / 133 tests).
+
+- [x] Phase 5.5 — see commit introducing this entry — pathing A\*, invActions, bank UI, provenance pools; DT: on-device pass (pathing feel, bank modal on mobile, long-press menus, drop visibility between two devices).
+
+## Phase 6 — zones, transitions, The Whisperwood, Woodcutting, three monsters (guide §13)
+
+The world grows a second zone. Infrastructure first, then content:
+
+**Zone registry + transitions**: `ZONES` registers every `world/zones/*.json`; unknown DO room names are refused (previously any room silently became a second pasture). Zone JSON gained `exits`, `props`, `palette`, and `tree` objects; `validateExitGraph` (vitest, over the real files) checks cross-zone arrival tiles — walkable, and never on an exit tile (no ping-pong). Standing on an exit tile (even mid-path) transitions: the server awaits a `'transition'`-reason flush (drains pools exactly like disconnect — the pack re-seeds from the save in the next zone), awaits the `world_positions` checkpoint written with the TARGET zone/tile, then sends `{t:'transition'}` and closes. The client stores the target zone and reloads — a clean scene/renderer beats leak-prone in-place teardown; `/api/world/session` now returns the character's current zone so fresh devices land right. Exits render as pulsing gold pads ("Go-to the Whisperwood"); clicking one is client-side sugar for walking to its tile.
+
+**Gather generalisation**: trees are a mining reskin, as scoped — `RockState` gained `skill`, `GATHER_SKILLS` maps skill → real `skills.json` actions + verb ('mine'/'chop', validated server-side against the node), one state machine drives both. Woodcutting XP/products/levels all come from `skills.json → woodcutting.actions` (normal 25xp/logs, oak level 15/37xp). Depleted trees swap to a stump model; respawn reuses the 8-tick window and the `diff.rocks` wire field.
+
+**The Whisperwood** (`forest.json`, 48×48, generated by a deterministic seeded script, 75% walkable): darker ground palette, ~250 Kenney nature-kit props (pines on the `#` tree-line borders and thickets, bushes/mushrooms/flowers/moss-boulders scattered), 6 normal trees + 3 oaks, a bank chest by the west entrance, exits west↔pasture-east. Monsters (all passive, D5): 2× field_chicken, 2× cave_goblin, 1× arcane_adept — the combat adapter needed zero changes. Models from the Quaternius Ultimate Monsters Bundle via the new generic `scripts/build-monster.mjs` (clip-rename; the goleling is a flyer — `Flying_Idle`/`Fast_Flying` — and hovers); client `createMonsterMesh` registry with baked bounds; box placeholder stays the fallback. Props/trees/stump built by `scripts/build-props.mjs` (CC0 Kenney, prune-only).
+
+**Verified**: 27/27 WS e2e — pasture welcome carries the exit; mine tin → walk onto the exit → transition(forest,2,24) + server-closed socket + `world_positions` flipped BEFORE the client reconnects; forest welcome (name/palette/props/9 tree statics/arrival tile, mined tin still in pack); chop → 25xp + logs + depletion; oak gated at level 1; chicken dies + drops + combat XP; return transition; pasture at (29,8) with logs intact; save blob absorbed both transition flushes (woodcutting 25xp, mining 17xp, logs + 6 tin in inventory) with audited grants. Headless screenshots: forest palette/props/trees, chop → stump + "+25 Woodcutting", chicken/goblin/wizard models, both exit pads, bank chest. `world:check` green (143 tests). Only `world/` + `docs/` touched.
+
+- [x] Phase 6 — see commit introducing this entry — zone registry/transitions, prop layer, The Whisperwood + Woodcutting + chicken/goblin/wizard; DT: bundled DT-P4→P6 manual pass (see guide §13 STEP 6.6).

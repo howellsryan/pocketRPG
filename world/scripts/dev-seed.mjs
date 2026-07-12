@@ -62,14 +62,29 @@ stats.attack = { xp: 4470, level: 20 }
 stats.strength = { xp: 4470, level: 20 }
 stats.defence = { xp: 4470, level: 20 }
 
-// 5 tin ore in the pack exercises inventory pull-through into the world.
-const inventory = Array.from({ length: 5 }, () => ({ itemId: 'tin_ore', quantity: 1 }))
-const saveObject = { stats, inventory, bank: {}, settings: {} }
-const saveData = JSON.stringify(saveObject)
-const saveBlobHex = gzipSync(Buffer.from(saveData, 'utf8')).toString('hex')
+// Pack fixture: ore (inventory pull-through), food + bones (invAction eat/
+// bury), a spare weapon (equip swap). Bank fixture exercises withdraw.
+const inventory = [
+  ...Array.from({ length: 5 }, () => ({ itemId: 'tin_ore', quantity: 1 })),
+  { itemId: 'trout', quantity: 1 },
+  { itemId: 'trout', quantity: 1 },
+  { itemId: 'bones', quantity: 1 },
+  { itemId: 'bronze_sword', quantity: 1 },
+]
+const bank = { trout: { itemId: 'trout', quantity: 5 }, copper_ore: { itemId: 'copper_ore', quantity: 7 } }
+// Distinct equipped weapons exercise the Phase 5 gear pipeline: char 1 a
+// tier-tinted sword, char 2 a staff (and each sees the other's on screen).
+const makeSave = (weaponItemId) => {
+  const saveObject = { stats, inventory, bank, settings: {}, equipment: { weapon: { itemId: weaponItemId, quantity: 1 } } }
+  const saveData = JSON.stringify(saveObject)
+  return { saveData, saveBlobHex: gzipSync(Buffer.from(saveData, 'utf8')).toString('hex') }
+}
+const save1 = makeSave('runeforged_scimitar')
+const save2 = makeSave('magic_staff')
 
 const now = Date.now()
-const escapedSaveData = saveData.replace(/'/g, "''")
+const escaped1 = save1.saveData.replace(/'/g, "''")
+const escaped2 = save2.saveData.replace(/'/g, "''")
 
 const seedSql = `
 DELETE FROM world_grants WHERE character_id IN (1, 2);
@@ -83,13 +98,13 @@ INSERT INTO oauth_identities (id, provider, provider_user_id, email, display_nam
 INSERT INTO characters (id, owner_id, username, created_at, deleted_at)
   VALUES (1, 1, 'WorldTester', ${now}, NULL);
 INSERT INTO saves (character_id, save_blob, save_data, updated_at, save_revision)
-  VALUES (1, X'${saveBlobHex}', '${escapedSaveData}', ${now}, 1);
+  VALUES (1, X'${save1.saveBlobHex}', '${escaped1}', ${now}, 1);
 INSERT INTO oauth_identities (id, provider, provider_user_id, email, display_name, created_at)
   VALUES (2, 'dev', 'dev-user-2', NULL, 'Dev Tester 2', ${now});
 INSERT INTO characters (id, owner_id, username, created_at, deleted_at)
   VALUES (2, 2, 'WorldFriend', ${now}, NULL);
 INSERT INTO saves (character_id, save_blob, save_data, updated_at, save_revision)
-  VALUES (2, X'${saveBlobHex}', '${escapedSaveData}', ${now}, 1);
+  VALUES (2, X'${save2.saveBlobHex}', '${escaped2}', ${now}, 1);
 `.trim()
 
 console.log('dev-seed: seeding identity + character + save...')

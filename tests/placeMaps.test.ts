@@ -104,6 +104,7 @@ describe('placeMaps data', () => {
         if (a.kind === 'skill' && !isPlaceVaryingSkillRef(a.ref)) continue
         if (a.kind === 'minigame') continue // minigames screen handles its own venue list
         if (a.kind === 'bank') continue // covered by the facility-type "Bank of X" spot instead
+        if (a.kind === 'combat' || a.kind === 'raid') continue // covered by the place's Dungeon screen (screen spot)
         expect(covered.has(`${a.kind}|${a.ref}`), `${id}: ${a.kind}|${a.ref} has no map spot`).toBe(true)
       }
     }
@@ -173,6 +174,27 @@ describe('placeMaps data', () => {
     expect(facilityTrainingSkill('altar')).toBe('prayer')
     expect(facilityTrainingSkill('stove')).toBe('cooking')
     expect(facilityTrainingSkill('bank')).toBe(null)
+  })
+
+  it('foes live in the Dungeon screen: no combat/raid spots, one dungeon spot where foes are offered', () => {
+    // Monsters/bosses/raids were moved off the map into a per-place Dungeon
+    // screen. A map must therefore carry no combat/raid activity spots, and any
+    // place that offers combat or raids must surface exactly one dungeon spot
+    // (a `screen: 'dungeons'` landmark) as the way in.
+    for (const id of mapped) {
+      const spots = getPlaceMap(id)!.spots
+      for (const spot of spots) {
+        expect(spot.kind === 'combat' || spot.kind === 'raid', `${id}: stray ${spot.kind} spot`).toBe(false)
+      }
+      const dungeonSpots = spots.filter((s: any) => s.screen === SCREENS.DUNGEONS)
+      const offersFoes = placeActivities(id).some((a) => a.kind === 'combat' || a.kind === 'raid')
+      if (offersFoes) {
+        expect(dungeonSpots.length, `${id}: offers foes but has no single dungeon spot`).toBe(1)
+        expect(dungeonSpots[0].iconKey, `${id}: dungeon spot icon`).toBe('dungeon')
+      } else {
+        expect(dungeonSpots.length, `${id}: no foes offered but has a dungeon spot`).toBe(0)
+      }
+    }
   })
 
   it('placeHasMap only reports mapped places', () => {

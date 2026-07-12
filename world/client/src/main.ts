@@ -1,19 +1,21 @@
-import { exchangeHandoff, getStoredSession, parseHandoffFromHash, pocketRpgUrl, type WorldSession } from './auth'
-import { hideOverlay, initChatInput, initHud, pushMessage, removeHpBar, removeNameplate, removeOverheadChat, renderInventory, showHitsplat, showLoginRequired, showXpDrop, updateHpBar, updateNameplate, updateOverheadChat, npcExamine } from './ui'
+import { exchangeHandoff, getStoredSession, getStoredZone, parseHandoffFromHash, pocketRpgUrl, storeZone, type WorldSession } from './auth'
+import { hideConnBanner, hideOverlay, initChatInput, initHud, pushMessage, removeHpBar, removeNameplate, removeOverheadChat, renderInventory, showConnBanner, showContextMenu, showHitsplat, showLoginRequired, showTransitionOverlay, showXpDrop, updateHpBar, updateHpPill, updateNameplate, updateOverheadChat, npcExamine } from './ui'
+import { closeBankUI, isBankOpen, openBankUI, updateBankInventory, updateBankUI } from './bank'
 import { connect, onMessage, send } from './net'
 import { clampZoom, createCamera, createGround, createLights, createRenderer, createScene, tileToWorld, updateCamera } from './scene'
-import { applyEntityDiff, createCowMesh, createEntity, createHeroMesh, updateEntity, type Entity } from './entities'
+import { applyEntityDiff, applyWeapon, createEntity, createHeroMesh, createMonsterMesh, updateEntity, type Entity } from './entities'
 import { createClickMarker, setupInput, showClickMarker, updateClickMarker } from './input'
 import { createStatics, type Statics } from './statics'
+import { createProps } from './props'
+import { createExitMarkers, type ExitLayer } from './exits'
 import { createLootLayer, type LootLayer } from './loot'
-import { loadItemIcons } from './itemIcon'
+import { itemName, loadItemIcons } from './itemIcon'
+import { primaryInvAction } from '../../shared/itemActions'
 import { combatLevelFromStats } from '../../../src/engine/combatLevel.js'
 import monstersData from '../../../src/data/monsters.json'
 import * as THREE from 'three'
-import type { EntityDiff, ServerMessage, ZoneEvent } from '../../shared/protocol'
-import type { Pickable } from './picking'
-
-const ZONE_ID = 'pasture'
+import type { EntityDiff, InvActionWire, InvSlot, ServerMessage, ZoneEvent } from '../../shared/protocol'
+import type { MenuRow, Pickable } from './picking'
 
 type Monsters = Record<string, { name?: string; combatLevel?: number } | undefined>
 const monsters = monstersData as unknown as Monsters
@@ -31,10 +33,12 @@ function buildNpcPickable(diff: EntityDiff): Pickable {
 }
 
 function enterWorld(session: WorldSession): void {
-  const socket = connect(window.location.host, ZONE_ID)
+  const socket = connect(window.location.host, getStoredZone())
   let self: Entity | null = null
   let statics: Statics | null = null
   let lootLayer: LootLayer | null = null
+  let exitLayer: ExitLayer | null = null
+  let transitioning = false
   let camera: THREE.PerspectiveCamera | null = null
   const npcs = new Map<string, Entity>()
   const npcLoading = new Set<string>()
@@ -46,6 +50,15 @@ function enterWorld(session: WorldSession): void {
   const rockStates = new Map<string, boolean>()
   let playerCombatLevel = 3
   let zoom = 1
+  // Local pack copy so a drag-reorder can apply optimistically; every server
+  // {e:'inv'} (including the reorder echo) replaces it wholesale.
+  let inventory: InvSlot[] = []
+  // partysocket reconnects silently and re-fires 'open'; a repeat welcome must
+  // RESYNC the existing scene, never rebuild it (a second renderer/loop breaks
+  // everything until a hard refresh).
+  let sceneBuilt = false
+  let authed = false
+  let lastServerMsg = performance.now()
 
   function toScreen(pos: THREE.Vector3, yOffset: number): { x: number; y: number } {
     const v = pos.clone()
@@ -60,7 +73,16 @@ function enterWorld(session: WorldSession): void {
   }
 
   function handleEvent(event: ZoneEvent): void {
-    if (event.e === 'inv') renderInventory(event.inventory)
+    if (event.e === 'inv') {
+      inventory = event.inventory
+      renderInventory(inventory)
+      updateBankInventory(inventory)
+    }
+    else if (event.e === 'hp') updateHpPill(event.hp, event.maxHp)
+    else if (event.e === 'bank') {
+      if (event.open) openBankUI(event.bank, inventory, (op, itemId, qty) => send(socket, { t: 'bank', op, itemId, qty }))
+      else if (isBankOpen()) updateBankUI(event.bank)
+    }
     else if (event.e === 'xp') showXpDrop(event.skill, event.amount)
     else if (event.e === 'msg') pushMessage(event.text)
     else if (event.e === 'hit') {
@@ -84,8 +106,9 @@ function enterWorld(session: WorldSession): void {
     pendingNpcDiff.set(diff.id, diff)
     if (npcLoading.has(diff.id)) return
     npcLoading.add(diff.id)
-    void createCowMesh().then(({ mesh, animator }) => {
+    void createMonsterMesh(diff.monsterId).then(({ mesh, animator }) => {
       const d = pendingNpcDiff.get(diff.id) ?? diff
+      if (!npcLoading.has(diff.id)) return
       const entity = createEntity(diff.id, d.x, d.z, mesh, animator)
       entity.serverAnim = d.anim
       entity.name = d.name
@@ -116,6 +139,7 @@ function enterWorld(session: WorldSession): void {
     const existing = others.get(diff.id)
     if (existing) {
       applyEntityDiff(existing, diff)
+      if (diff.gear) void applyWeapon(existing.mesh, diff.gear)
       return
     }
     pendingOtherDiff.set(diff.id, diff)
@@ -127,6 +151,7 @@ function enterWorld(session: WorldSession): void {
       const entity = createEntity(diff.id, d.x, d.z, mesh, animator)
       entity.serverAnim = d.anim
       entity.name = d.name
+      if (d.gear) void applyWeapon(entity.mesh, d.gear)
       scene.add(entity.mesh)
       others.set(diff.id, entity)
       otherLoading.delete(diff.id)
@@ -148,22 +173,124 @@ function enterWorld(session: WorldSession): void {
   }
 
   socket.addEventListener('open', () => {
+    hideConnBanner()
     send(socket, { t: 'hello', token: session.token })
   })
+  socket.addEventListener('close', () => {
+    if (transitioning) return
+    authed = false
+    showConnBanner()
+  })
+
+  // Heartbeat keeps mobile networks/NATs from silently killing the socket, and
+  // the watchdog force-reconnects one that looks open but has gone deaf —
+  // otherwise taps get buffered into a dead socket and burst seconds later.
+  let pingN = 0
+  setInterval(() => {
+    if (authed && socket.readyState === WebSocket.OPEN) send(socket, { t: 'ping', n: ++pingN })
+    if (document.visibilityState === 'visible' && performance.now() - lastServerMsg > 20000) {
+      lastServerMsg = performance.now()
+      socket.reconnect()
+    }
+  }, 10000)
+  // Threshold sits above the 10s ping cadence — a quick app switch on a
+  // healthy connection must never trigger a reconnect.
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && performance.now() - lastServerMsg > 15000) {
+      lastServerMsg = performance.now()
+      socket.reconnect()
+    }
+  })
+
+  /** Repeat welcome after a reconnect: snap self to the server's position,
+   * replace pack/stats, and drop every other entity — the intro diff that
+   * follows the welcome repopulates npcs/others/loot/rock states. */
+  function resyncFromWelcome(message: Extract<ServerMessage, { t: 'welcome' }>): void {
+    inventory = message.you.inventory
+    renderInventory(inventory)
+    updateHpPill(message.you.hp, message.you.maxHp)
+    closeBankUI()
+    playerCombatLevel = combatLevelFromStats(message.you.stats)
+    if (self) {
+      const pos = tileToWorld(message.you.x, message.you.z)
+      self.queue.length = 0
+      self.mesh.position.copy(pos)
+      self.fromPos.copy(pos)
+      self.toPos.copy(pos)
+      self.moving = false
+      self.serverAnim = 'idle'
+      void applyWeapon(self.mesh, message.you.gear)
+    }
+    for (const id of [...others.keys(), ...otherLoading]) removeOther(id)
+    for (const id of [...npcs.keys(), ...npcLoading]) removeNpc(id)
+    for (const id of rockStates.keys()) {
+      rockStates.set(id, false)
+      statics?.setRockDepleted(id, false)
+    }
+    lootLayer?.clear()
+  }
 
   onMessage(socket, (message: ServerMessage) => {
+    lastServerMsg = performance.now()
     if (message.t === 'welcome') {
+      authed = true
+      storeZone(message.zone.id)
+      if (sceneBuilt) {
+        resyncFromWelcome(message)
+        return
+      }
+      sceneBuilt = true
       void (async () => {
         hideOverlay()
-        const scene = createScene()
-        createLights(scene)
-        const ground = createGround(scene, message.zone.collision, message.zone.w, message.zone.h)
+        const scene = createScene(message.zone.ambience)
+        createLights(scene, message.zone.ambience)
+        const ground = createGround(scene, message.zone.collision, message.zone.w, message.zone.h, message.zone.palette)
+        exitLayer = createExitMarkers(scene, message.zone.exits ?? [])
+        void createProps(scene, message.zone.props ?? [])
         const marker = createClickMarker(scene)
         camera = createCamera()
         const container = document.getElementById('scene')!
         const renderer = createRenderer(container)
 
-        initHud()
+        const sendInvAction = (slot: number, action: InvActionWire): void => {
+          send(socket, { t: 'invAction', slot, action })
+        }
+        initHud({
+          onMoveInv: (from, to) => {
+            const moved = inventory[from]
+            if (!moved) return
+            inventory[from] = inventory[to] ?? null
+            inventory[to] = moved
+            renderInventory(inventory)
+            send(socket, { t: 'moveInv', from, to })
+          },
+          onSlotTap: (index) => {
+            const slot = inventory[index]
+            if (!slot) return
+            const primary = primaryInvAction(slot.itemId)
+            if (primary) sendInvAction(index, primary.action)
+          },
+          onSlotMenu: (index, x, y) => {
+            const slot = inventory[index]
+            if (!slot) return
+            const name = itemName(slot.itemId)
+            const primary = primaryInvAction(slot.itemId)
+            const rows: MenuRow[] = []
+            const actions: (InvActionWire | null)[] = []
+            if (primary) {
+              rows.push({ text: `${primary.label} ${name}`, targetName: name })
+              actions.push(primary.action)
+            }
+            rows.push({ text: `Drop ${name}`, targetName: name })
+            actions.push('drop')
+            rows.push({ text: 'Cancel', local: 'cancel' })
+            actions.push(null)
+            showContextMenu(rows, x, y, (row) => {
+              const action = actions[rows.indexOf(row)]
+              if (action) sendInvAction(index, action)
+            })
+          },
+        })
         initChatInput((text) => send(socket, { t: 'chat', text }))
         playerCombatLevel = combatLevelFromStats(message.you.stats)
         lootLayer = createLootLayer(scene)
@@ -173,23 +300,44 @@ function enterWorld(session: WorldSession): void {
           createStatics(scene, message.statics),
           loadItemIcons(),
         ])
-        renderInventory(message.you.inventory)
+        inventory = message.you.inventory
+        renderInventory(inventory)
+        updateHpPill(message.you.hp, message.you.maxHp)
         statics = staticsResult
         for (const [id, depleted] of rockStates) staticsResult.setRockDepleted(id, depleted)
         self = createEntity(message.selfId, message.you.x, message.you.z, heroResult.mesh, heroResult.animator)
+        if (message.you.gear) void applyWeapon(self.mesh, message.you.gear)
         scene.add(self.mesh)
 
+        // Rapid taps on the same tile collapse to one walk — the server path
+        // wouldn't change, and it keeps tap-spam inside the rate budget.
+        let lastWalk = { x: -1, z: -1, at: 0 }
         setupInput(renderer.domElement, camera, ground, {
           onWalk: (tile) => {
-            send(socket, { t: 'walk', x: tile.x, z: tile.z })
+            closeBankUI()
             showClickMarker(marker, tile.x, tile.z)
+            const now = performance.now()
+            if (tile.x === lastWalk.x && tile.z === lastWalk.z && now - lastWalk.at < 400) return
+            lastWalk = { x: tile.x, z: tile.z, at: now }
+            send(socket, { t: 'walk', x: tile.x, z: tile.z })
           },
           onInteract: (interact) => {
+            if (interact.kind === 'exit') {
+              // Client-side sugar: walking onto the tile is what transitions.
+              const tile = exitLayer?.tiles.get(interact.id)
+              if (tile) {
+                closeBankUI()
+                showClickMarker(marker, tile.x, tile.z)
+                send(socket, { t: 'walk', x: tile.x, z: tile.z })
+              }
+              return
+            }
             send(socket, { t: 'interact', kind: interact.kind, id: interact.id, action: interact.action })
           },
           onMessage: (text) => pushMessage(text),
           getPickables: () => [
             ...(statics?.pickables ?? []),
+            ...(exitLayer?.pickables ?? []),
             ...[...npcs.values()].filter((e) => e.serverAnim !== 'die').map((e) => e.mesh),
             ...(lootLayer?.pickables ?? []),
           ],
@@ -245,6 +393,7 @@ function enterWorld(session: WorldSession): void {
             updateOverheadChat(id, s.x, s.y, overhead.text)
           }
           lootLayer?.update(deltaSeconds)
+          exitLayer?.update(now)
           updateClickMarker(marker, now)
           renderer.render(scene, camera!)
           requestAnimationFrame(frame)
@@ -259,6 +408,17 @@ function enterWorld(session: WorldSession): void {
 
     if (message.t === 'diff') {
       applyDiff(message)
+      return
+    }
+
+    if (message.t === 'transition') {
+      // Save + position row are already durable server-side. A full reload
+      // guarantees a clean scene/renderer for the new zone.
+      transitioning = true
+      storeZone(message.zone)
+      showTransitionOverlay('Entering…')
+      socket.close()
+      window.location.reload()
       return
     }
 
@@ -296,7 +456,10 @@ function enterWorld(session: WorldSession): void {
   }
   function applyDiffTo(scene: THREE.Scene, message: Extract<ServerMessage, { t: 'diff' }>): void {
     for (const ent of message.ents ?? []) {
-      if (self && ent.id === self.id) applyEntityDiff(self, ent)
+      if (self && ent.id === self.id) {
+        applyEntityDiff(self, ent)
+        if (ent.gear) void applyWeapon(self.mesh, ent.gear)
+      }
       else if (ent.kind === 'npc') ensureNpc(scene, ent)
       else if (ent.kind === 'player') ensureOther(scene, ent)
     }

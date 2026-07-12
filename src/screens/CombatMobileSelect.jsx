@@ -35,6 +35,8 @@ export default function CombatMobileSelect({
   monstersData,
   raidsData,
   collapsedSections,
+  defaultCollapsed = true,
+  title,
   onToggleSection,
   onFight,
   onMonsterInfo,
@@ -86,7 +88,7 @@ export default function CombatMobileSelect({
     <div class="cb-pad">
       <div class="cb-select__head" style={{ margin: '4px 2px 14px' }}>
         <BackLink onClick={onBack} className="mb-3" />
-        <h1 class="cb-h1">Choose a Foe</h1>
+        <h1 class="cb-h1">{title || 'Choose a Foe'}</h1>
         <div class="cb-h1sub">{totalFoes} monsters · {uniqueRaids.length} {uniqueRaids.length === 1 ? 'raid' : 'raids'} await</div>
       </div>
 
@@ -118,7 +120,7 @@ export default function CombatMobileSelect({
       <div class="cb-arealist">
         {orderedCategories.map(category => {
           const monsters = sortedMonsters(category)
-          const isCollapsed = collapsedSections[category.key] ?? true
+          const isCollapsed = collapsedSections[category.key] ?? defaultCollapsed
           const art = getCategoryArt(category.key)
           const empty = monsters.length === 0
           return (

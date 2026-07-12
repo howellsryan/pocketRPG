@@ -17,7 +17,7 @@ function formatMinigameHours(hours) {
   return `${hours.toFixed(1)}h`
 }
 
-export default function MinigamesScreen({ initialTaskId, onBack } = {}) {
+export default function MinigamesScreen({ initialTaskId, onBack, onStopBack } = {}) {
   const {
     inventory, bank, equipment, activeTask, setActiveTask, unlockedMinigameItems,
     getActivityProgress, addToast, requestActivityStart,
@@ -57,6 +57,8 @@ export default function MinigamesScreen({ initialTaskId, onBack } = {}) {
 
   const stopMinigame = () => {
     setActiveTask(null)
+    const back = onStopBack || onBack
+    if (back) back()
   }
 
   const hasItemAnywhere = (itemId) => {

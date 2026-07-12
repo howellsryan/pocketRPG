@@ -3131,6 +3131,23 @@
         "xp": 150,
         "coins": 150,
         "description": "Magical forest dwellers. Ultimate pickpocketing challenge with massive rewards."
+      },
+      {
+        "id": "tzraar",
+        "name": "Steal from Tzraar",
+        "level": 90,
+        "xp": 175,
+        "coins": 0,
+        "pickpocketTicks": 10,
+        "gemReward": true,
+        "gems": [
+          { "itemId": "sapphire", "chance": 0.2 },
+          { "itemId": "emerald", "chance": 0.2 },
+          { "itemId": "ruby", "chance": 0.2 },
+          { "itemId": "diamond", "chance": 0.2 },
+          { "itemId": "dragonstone", "chance": 0.05 }
+        ],
+        "description": "A gem-hoarding merchant. Steal cut gems at the Jeweller's rate — the ultimate high-level thieving target."
       }
     ]
   },

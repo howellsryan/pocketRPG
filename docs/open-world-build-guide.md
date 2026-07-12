@@ -401,11 +401,105 @@ DEVELOPER TASK — manual script: two devices/browsers, both enter the pasture; 
 
 ---
 
-## 10) After Phase 3 (do not build — listed so the agent doesn't "prepare" for them)
+## 10) PHASE 4 — Shared-kill loot attribution + pack reordering (added 2026-07-10 on developer decision)
 
-Equipment-driven player appearance, run energy, more zones, food/prayer in world, ranged/magic, stances UI, trading, PvP — all explicitly out of scope. When Phase 3 is accepted, stop and await the developer's next instruction.
+Roadmap context: `docs/open-world-next-phases-scope.md` (Phases 4–8, decisions confirmed 2026-07-10); asset tracking: `docs/open-world-asset-coverage.md`. This phase is server-heavy with one client UI feature; no new assets, no new zones.
 
-## 11) Quick reference — repo facts the agent will need constantly
+**Definition of done**: two players fight the same bull — its HP is genuinely shared (both see one bar drain), it retaliates against exactly one of them, and on death the drop's owner window belongs to whoever dealt the **most damage** (tie → first to reach that total). Reordering the pack by dragging works on desktop and touch, survives a mine/deposit round-trip, and slot order has no effect on flush semantics.
+
+### STEP 4.1 — Damage attribution + shared monster HP (server)
+`world/server/npc.ts`: `NpcState` gains `damageByChar: Map<string, { dmg: number; tick: number }>` (`tick` = when that total last increased, for the tie-break). Cleared on respawn AND on out-of-combat full heal. Export pure `topDamageContributor(npc): string | null` — max `dmg`, tie → smaller `tick`.
+`world/server/combat.ts` (`stepCombat`):
+- Before `processCombatTick`, sync the session's engine state from the shared record: `combat.state.monster.currentHP = npc.hp`. Players tick sequentially inside the zone tick, so damage serializes correctly; a same-tick second attacker on an already-dead npc is stopped by the existing `state === 'dead'` guard.
+- On `playerHit` with damage > 0, accumulate into `damageByChar`.
+- `killNpc`: loot `ownerCharId = topDamageContributor(npc) ?? killer.charId`.
+
+### STEP 4.2 — Single retaliation target (server)
+With N concurrent attackers, each player's engine session also processes monster attacks — untouched, the monster would swing N times per tick. Fix in the adapter, not the engine:
+- `npc.attackerId` becomes the retaliation target: **claim-if-null** in `stepCombat` (replace the unconditional assignment). Monster-sourced events (`monsterHit`/`monsterMiss`/`dragonfireHit`) are applied ONLY by the session whose player is the current target; other sessions discard them (no HP change, no hitsplat).
+- Release the target on: walk-away (exists), npc death (exists), disconnect (exists in `onClose`), and **player death** (missing today — clear it in the `player.hp <= 0` branch). A surviving attacker's session claims the vacancy next tick, so aggro hands over automatically.
+
+### STEP 4.3 — Pack reordering (protocol + server + client)
+- `world/shared/protocol.ts`: client message `{ t:'moveInv', from:number, to:number }`; parse requires integers in `[0,28)`, else invalid (close 1008). `from === to` parses fine and no-ops.
+- Server: pure `moveInventorySlot(inventory, from, to)` in `world/server/mining.ts` (plain swap — dropping onto a filled slot swaps, onto an empty slot relocates; identical semantics to `src/components/InventoryGrid.jsx`). `WorldZone` queues the player for an `{e:'inv'}` event on the **next tick** (one diff per client per tick stays intact). Slot order is irrelevant to every flush (they read the `minted`/`saveBacked` tallies), so reorder needs no grant/deposit coupling — assert that in a test, don't "fix" it.
+- Client: drag from any filled cell of `#inv-panel` (pointer events, ~6 px threshold before it counts as a drag, ghost clone follows the pointer, target cell highlights). On drop over a different slot: swap the local copy immediately (optimistic), re-render, send `moveInv`; the server's next-tick `{e:'inv'}` is the authoritative echo. Touch works through the same pointer path (the global `touch-action:none` already prevents scroll interference).
+
+### STEP 4.4 — Tests + acceptance
+Vitest (extend `combat-adapter.test.ts` / `tick.test.ts` / `mining.test.ts`): two attackers drain one shared HP pool; only the target takes monster hits; aggro hands over when the target dies/leaves; top-damage owns the drop; equal damage → earlier contributor owns it; `damageByChar` resets on respawn and full heal; `moveInventorySlot` swap/relocate/bounds; reordered pack flushes identically.
+Agent e2e (two WS clients against `wrangler dev`): both attack the bull, assert one shared HP trajectory in both clients' diffs, exactly one target receiving hitsplats, and the loot visible only to the top-damage client during the owner window. `moveInv` round-trip: swap two slots, assert next tick's `{e:'inv'}`.
+DEVELOPER TASK — manual script (DT-P4): two devices on the pasture; fight the same bull from both; verify one HP bar, sensible hitsplats, top-damage player sees the drop first; drag-reorder the pack on desktop and phone; mine → deposit → PocketRPG bank unchanged by reordering. Reply "PHASE 4 ACCEPTED".
+
+## 11) PHASE 5 — Equipment visuals v1: weapons in hand (added 2026-07-10 on developer instruction)
+
+Decision D3 (docs/open-world-next-phases-scope.md): archetype × tier tint, maximum asset reuse; per-archetype coverage tracked in `docs/open-world-asset-coverage.md`.
+
+**Definition of done**: a character's PocketRPG-equipped weapon appears in their hero's right hand (correct archetype silhouette, tier tint), other players see it too, unmapped/absent weapons render bare-handed, and none of Phases 0–4 regresses.
+
+### STEP 5.1 — Archetype models
+`world/scripts/build-weapons.mjs` → `world/client/public/models/weapons/<archetype>.glb` for `sword, sword2h, dagger, axe, axe2h, blunt, bow, crossbow, staff, wand` (KayKit Adventurers glTFs — grips authored at the origin, blade +Y; `blunt` from the Quaternius Hammer_Double OBJ via `obj2gltf`, installed `--no-save` when regenerating). 22–101 KiB each.
+
+### STEP 5.2 — Mapping registry (shared)
+`world/shared/appearance.ts`: `gearFromEquipment(save.equipment)` → `GearDescriptor` (`{ weapon?: { archetype, tint? } }`). Pattern rules ordered specific-before-generic (crossbow>bow, battleaxe>axe, godsword>sword); `twoHanded` upgrades sword/axe to the 2h model; tier prefixes map to tint hexes; unmapped → `{}` (bare hands, never blocks). Exotics ride nearest silhouettes (whip/claws/tentacle→dagger, spear/lance/harpoon→staff pole) until bespoke models exist.
+
+### STEP 5.3 — Protocol + server
+`GearDescriptor` on `EntityDiff.gear` and `welcome.you.gear` (server→client only). Computed once at hello (`Player.gear`), fixed for the session (no world equip UI; a reconnect re-reads the save). `toEntityDiff` carries it whenever a weapon is mapped.
+
+### STEP 5.4 — Client rendering
+`entities.ts` `applyWeapon(heroMesh, gear)`: cached GLB template → clone → tint (material color) → grip transform → attach under the rig's `hand_r` joint (idempotent per archetype+tint key, race-guarded across awaits, silent bare-hands fallback). Grip transforms: default `[-π/2, 0, π/2]` (blade upright in the palm); staff/wand flipped vertical (planted-pole look); bow/crossbow have provisional overrides pending visual tuning when a seeded character equips one. Hooked at self-create (welcome gear), other-create, and other-diff (no-op unless the key changes).
+
+### STEP 5.5 — Acceptance
+Agent-verified: appearance unit tests (pattern-order traps pinned); two-client WS e2e (each client's welcome carries own gear; each sees the other's archetype+tint in ent diffs); headless screenshots of the tinted sword and planted staff in-game. DEVELOPER TASK — manual script (DT-P5): equip different weapons in PocketRPG (a tiered melee weapon, a bow, a staff; then unequip), enter the world after each, verify the hand model + tint changes and other players see it; confirm bare hands for no weapon/fishing rod; eyeball bow/crossbow grips and report if they need tuning. Reply "PHASE 5 ACCEPTED".
+
+## 12) PHASE 5.5 — Item interactions & banking (added 2026-07-10 on developer instruction)
+
+Three developer requests in one phase: natural pathing, a real bank UI, and main-game item actions on the pack.
+
+- **Pathing**: `world/server/pathfind.ts` is A\*, not BFS. Step count stays the primary cost (1 tick per step, diagonal or cardinal) but diagonals carry a tiny secondary cost (`DIAG_EPS`), so among equal-step routes the straightest wins and paths stay inside the start→destination rectangle. BFS's equal-step arcs (10 tiles off a straight line) are pinned by regression tests in `pathfind.test.ts`.
+- **Pack actions** (`{t:'invAction', slot, action}`): left-click/tap fires the item's primary verb; long-press/right-click menu = primary verb + Drop. The verb derivation is shared client/server in `world/shared/itemActions.ts` (items.json slot → Wield/Wear, food → Eat, potion → Drink, skills.json `bury_*` → Bury) and the server re-derives + validates, so the client can't invent actions. Eat heals `item.heals` (HP pill + `{e:'hp'}` event, sent only on change). Bury grants the skills.json prayer XP. Equip runs the REAL engine (`checkEquipRequirements`/`equipItem`/`placeUnequippedItems` from `src/engine/equipment.js`), updates `player.gear` and re-announces the ent — `toEntityDiff` now always includes `gear` (even empty) so unequips propagate. Drink is deferred (message only; combat stat boosts need decay infra). Drop spawns floor loot at the player's tile with a **17-tick (~10s) owner window** (`PLAYER_DROP_OWNER_TICKS`), then it's public to everyone until the normal 300-tick despawn.
+- **Banking** (`{t:'bank', op, itemId, qty}` + `{e:'bank', bank, open?}`): using a chest walks adjacent and opens the bank modal (`world/client/src/bank.ts`) — bank grid + pack grid, tap = move 1, long-press/right-click = Deposit/Withdraw 1/5/10/X/All (X prompts for an amount). The server clamps every quantity (held count, bank count, pack space) and requires chest adjacency per op; the modal closes on walk-away client-side. Charge-carrying bank entries are EXCLUDED from the world's bank view (charges can't be preserved through the session model). The old deposit-all chest action is gone.
+- **Session accounting** (`world/server/sessionItems.ts`): every pack unit belongs to one pool — `minted` (world-created), `saveBacked` (seeded from save inventory), `bankSourced` (withdrawn). Consuming (eat/bury/drop/equip) drains minted→bankSourced→saveBacked, recording removals; deposits cancel bankSourced first, then bank minted, then move saveBacked. `GrantPayload` grew `removeFromInventory`/`removeFromBank`/`mintedToBank`/`bankToInventory`/`equipment` (snapshot when the player re-geared); all removals clamp to what the save still holds. Bank/equip/consume mutations schedule a debounced durability flush (5 ticks) on top of the 60s timer + disconnect flushes. Invariant (unit-tested): pack count per item === minted + saveBacked + bankSourced.
+
+## 13) PHASE 6 — World expansion v1: zones, transitions, forest + Woodcutting (added 2026-07-11 on developer instruction)
+
+Scope source: `docs/open-world-next-phases-scope.md` Phase 6 (decisions D2/D4/D5 apply: hybrid geography, Woodcutting first, all monsters passive). Testing is bundled — the DT-class B manual script at the end covers Phases 4, 5, 5.5 and 6 in one pass, per developer instruction 2026-07-11.
+
+**Definition of done**: the pasture has a marked exit that walks you into a second zone (The Whisperwood, 48×48 forest) with its own ground palette, scenery props, chopable normal + oak trees (real `skills.json → woodcutting.actions` semantics), a bank chest, and three passive monsters (Field Chicken, Cave Goblin, Arcane Adept) rendered with their own models; walking back through the forest's exit returns you to the pasture; XP/logs/loot flush to the PocketRPG save exactly like mining/bull drops; disconnecting in the forest reconnects you to the forest; nothing from Phases 0–5.5 regresses.
+
+### STEP 6.1 — Zone registry + validation
+- `ZONES` in `WorldZone.ts` registers every `world/zones/*.json` (pasture + forest). `onConnect` closes 1008 `unknown_zone` when the room name isn't registered (today an unknown room silently becomes a second pasture).
+- Zone JSON gains optional fields (types + validation in `shared/zone.ts`):
+  - `objects[]` may have `type:'tree'` with `tree:'<woodcutting action id>'` (same placement rules as rocks).
+  - `exits: [{id, x, z, toZone, toX, toZ, label}]` — exit tile and arrival tile walkable, ids unique, `toZone` registered, and the arrival tile must NOT itself be an exit tile in the target zone (no ping-pong). Cross-zone checks run in vitest over the real zone files (the runtime validator stays single-zone).
+  - `props: [{model, x, z, rot?, scale?}]` — visual dressing only, allowed on blocked tiles (that's the point: author `#`, place a prop on it). Optional `palette: {walkableA, walkableB, blockedA, blockedB}` recolours the ground checker per zone.
+
+### STEP 6.2 — Gather-node generalisation (Woodcutting)
+- `mining.ts`: `WOODCUTTING_ACTIONS` from `skills.json → woodcutting.actions`; a `GATHER_SKILLS` table maps node skill → actions + verb/messages. `RockState` gains `skill: 'mining' | 'woodcutting'` (the `rock` field stays the action id — for a tree it holds `'normal'`/`'oak'`).
+- `tick.ts` `startInteract`/`tickMining` read the action table from the node's skill; the level gate says "You need Woodcutting level 15 to chop this tree."; XP and product go to the node's skill/item. Anim stays `'mine'` (the hero clip is literally tree-chopping). Depletion/respawn reuse `ROCK_DEPLETED_TICKS` (8) and the existing `diff.rocks` wire field (semantic: gather-node state changes).
+- Wire: trees ride `interact {kind:'rock', action:'chop'}`; the server validates the verb against the node's skill (mine↔mining, chop↔woodcutting).
+
+### STEP 6.3 — Zone transitions
+- Protocol: `welcome.zone` gains `name`, `exits` (positions + labels), `props`, `palette`; new server message `{t:'transition', zone, x, z}`.
+- Server (in `tick()`, after movement): a player standing on an exit tile transitions — remove from `players` + `pendingLeaves`, **await** a flush with reason `'transition'` (drains pools exactly like `'disconnect'`: minted → save inventory, bankSourced → back to inventory, equipment snapshot — the pack re-seeds from the save in the next zone), **await** a `world_positions` checkpoint written with the TARGET zone/tile, then send `transition` and close (code 1000). The ordering is the correctness: save + position row must be durable before the client's next hello reads them. Known accepted risk (same as disconnect): a flush that fails all 3 retries loses the merge-back because the player object is discarded.
+- Client: `{t:'transition'}` → store the target zone in `localStorage['world_zone']`, show the loading overlay ("Entering …"), `location.reload()` — boot connects to the stored zone. Every welcome also writes `zone.id` to that key, and `/api/world/session` returns the character's current `zone` from `world_positions` (stored at exchange time) so a fresh device lands in the right zone. A reload guarantees a clean scene/renderer; in-place rebuild is deliberately NOT attempted (leak-prone: renderer, RAF loop, intervals, listeners).
+- Client rendering: each exit is a pulsing marker mesh + pickable — hover `Go-to the Whisperwood`, left-click walks to the exit tile (plain `walk`; stepping on it transitions server-side).
+
+### STEP 6.4 — Scenery props
+- `client/src/props.ts`: loads each distinct model once from `/models/props/<model>.glb` (template cache), clones per instance at `tileToWorld(x,z)` with optional Y-rotation/scale, no pick data. `world/scripts/build-props.mjs` processes the chosen Kenney nature-kit GLBs (CC0, already tiny — prune/resample only) into `client/public/models/props/`.
+- Tree statics (interactive) get their own models the same way: healthy tree + `stump_old` in one wrapper; depleted toggles visibility (rocks keep their scale+darken treatment).
+
+### STEP 6.5 — The Whisperwood + monsters
+- `world/zones/forest.json`: id `forest`, name "The Whisperwood", 48×48, darker ground palette, ≥70% walkable, tree-line borders authored as `#` with pine props on top. Content: 6 normal trees + 3 oaks, 1 bank chest near the west entrance, exits west edge ↔ pasture east edge. NPCs (all passive, D5): 2× `field_chicken`, 2× `cave_goblin`, 1× `arcane_adept` — combat/loot/attribution ride the existing monster-agnostic adapter untouched.
+- Models from the Quaternius Ultimate Monsters Bundle via a generic `world/scripts/build-monster.mjs` (clip-rename like `build-cow.mjs`; goleling maps `Flying_Idle`→idle, `Fast_Flying`→walk): `chicken.glb`, `goblin.glb`, `wizard.glb`. Client `createMonsterMesh(monsterId)` generalises `createCowMesh` with a per-monster `{url, bounds, targetSize}` registry (bounds printed by the build script — `Box3.setFromObject` is unreliable on skinned meshes) and keeps the box placeholder fallback. Examine strings added to `NPC_EXAMINE`. Update `docs/open-world-asset-coverage.md` statuses in the same PR.
+
+### STEP 6.6 — Verification + bundled acceptance
+Agent-verified before hand-off: full `world:check`; WS e2e — walk onto the pasture exit → `transition` received → reconnect to `forest` → welcome carries forest zone/statics → chop a tree (xp + logs) → kill a chicken (drops) → walk back through the forest exit → pasture welcome; D1 assertions that the transition flush landed items/XP and `world_positions.zone_id` flipped. Headless screenshots: forest ground palette, props, trees (healthy + stump), all three monsters, exit marker.
+DEVELOPER TASK — **bundled manual script (DT-P4→P6, one pass, two devices where noted)**: covers the outstanding DT-P4 (shared bull kill, drag-reorder), DT-P5 (weapon visuals incl. bow/crossbow grip eyeball), Phase 5.5 (pathing feel, bank modal, pack actions, drop visibility between two devices), and Phase 6 (exit walk both ways, forest gathering at Woodcutting <15 and ≥15, monster kills + loot, reconnect-in-forest, PocketRPG save shows logs/XP/loot after). Reply "PHASES 4–6 ACCEPTED" (or itemised issues).
+
+## 14) After Phase 6 (do not build ahead)
+
+The Phase 7+ roadmap (Lumbright town hub, Smithing + Cooking processing, armour outfits, Fishing, green_dragon boss) lives in `docs/open-world-next-phases-scope.md` — each later phase gets its own guide section here before build starts. Run energy, potion boosts in world, prayer in world, ranged/magic combat, stances UI, trading, PvP, raids remain out of scope. When Phase 6 is accepted, stop and await the developer's next instruction.
+
+## 15) Quick reference — repo facts the agent will need constantly
 
 - Tick: 600 ms. Inventory: 28. XP curve/cap: `src/engine/experience.js` (`getLevelFromXP`, 200M cap). Combat XP: 4/dmg style, 1.33/dmg HP (§5 CLAUDE.md).
 - Mining data: `src/data/skills.json → mining.actions` (`tin`, `copper`: level 1, ticks 4, xp 17).

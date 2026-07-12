@@ -74,6 +74,17 @@ function makeIO(save: Record<string, unknown>, overrides: Partial<GrantIO> = {})
       }
       if (remaining > 0) throw new Error('INSUFFICIENT_SUPPLIES')
     },
+    removeItemFromBank: (saveObject, itemId, quantity) => {
+      const bank = (saveObject.bank ?? {}) as Record<string, { itemId: string; quantity: number }>
+      const cur = bank[itemId]?.quantity ?? 0
+      if (cur < quantity) throw new Error('INSUFFICIENT_SUPPLIES')
+      if (cur === quantity) delete bank[itemId]
+      else bank[itemId] = { itemId, quantity: cur - quantity }
+    },
+    bankQuantity: (saveObject, itemId) => {
+      const bank = (saveObject.bank ?? {}) as Record<string, { quantity?: number }>
+      return Math.floor(Number(bank[itemId]?.quantity) || 0)
+    },
     auditLog: vi.fn(async (_env, _type, payload: Record<string, unknown>) => {
       audits.push(payload)
     }),
@@ -154,6 +165,66 @@ describe('flushGrants', () => {
     const { saveObject } = io.written[0] as { saveObject: any }
     expect(saveObject.inventory).toEqual([])
     expect(saveObject.bank.tin_ore.quantity).toBe(2)
+  })
+
+  it('removes consumed units from inventory and bank, clamped to what remains', async () => {
+    const { env } = makeDb()
+    const io = makeIO({
+      stats: {},
+      inventory: [{ itemId: 'trout', quantity: 2 }],
+      bank: { bones: { itemId: 'bones', quantity: 3 } },
+    })
+    await flushGrants(env, who, payload({
+      xpBySkill: {}, items: [],
+      removeFromInventory: [{ itemId: 'trout', quantity: 5 }], // ate 5, save only has 2
+      removeFromBank: [{ itemId: 'bones', quantity: 2 }],
+      reason: 'timer',
+    }), io)
+    const { saveObject } = io.written[0] as { saveObject: any }
+    expect(saveObject.inventory).toEqual([])
+    expect(saveObject.bank.bones.quantity).toBe(1)
+  })
+
+  it('returns withdrawn-but-held units bank→inventory on disconnect', async () => {
+    const { env } = makeDb()
+    const io = makeIO({ stats: {}, inventory: [], bank: { trout: { itemId: 'trout', quantity: 4 } } })
+    await flushGrants(env, who, payload({
+      xpBySkill: {}, items: [],
+      bankToInventory: [{ itemId: 'trout', quantity: 3 }],
+      reason: 'disconnect',
+    }), io)
+    const { saveObject } = io.written[0] as { saveObject: any }
+    expect(saveObject.bank.trout.quantity).toBe(1)
+    expect(saveObject.inventory.filter((s: any) => s.itemId === 'trout')).toHaveLength(3)
+  })
+
+  it('grants mid-session bank deposits of minted units straight to the bank', async () => {
+    const { env } = makeDb()
+    const io = makeIO({ stats: {}, inventory: [] })
+    await flushGrants(env, who, payload({
+      xpBySkill: {}, items: [],
+      mintedToBank: [{ itemId: 'tin_ore', quantity: 4 }],
+      reason: 'timer',
+    }), io)
+    const { saveObject } = io.written[0] as { saveObject: any }
+    expect(saveObject.bank.tin_ore.quantity).toBe(4)
+  })
+
+  it('snapshots re-geared equipment onto the save', async () => {
+    const { env } = makeDb()
+    const io = makeIO({ stats: {}, equipment: { weapon: { itemId: 'bronze_sword' } } })
+    await flushGrants(env, who, payload({
+      xpBySkill: {}, items: [],
+      equipment: { weapon: { itemId: 'runeforged_scimitar' } },
+      reason: 'timer',
+    }), io)
+    const { saveObject } = io.written[0] as { saveObject: any }
+    expect(saveObject.equipment).toEqual({ weapon: { itemId: 'runeforged_scimitar' } })
+  })
+
+  it('an equipment-only payload is not empty', () => {
+    expect(isEmptyPayload({ xpBySkill: {}, items: [], itemsTo: 'bank', moveToBank: [], equipment: {}, reason: 'timer' })).toBe(false)
+    expect(isEmptyPayload({ xpBySkill: {}, items: [], itemsTo: 'bank', moveToBank: [], removeFromBank: [{ itemId: 'x', quantity: 1 }], reason: 'timer' })).toBe(false)
   })
 
   it('clamps xp at the 200M cap', async () => {

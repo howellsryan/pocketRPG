@@ -983,9 +983,16 @@ html, body, #app {
 .cb-actions { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 9px; }
 .cb-act { display: flex; align-items: center; justify-content: center; gap: 7px; min-height: 48px; padding: 13px 6px; border-radius: 13px; cursor: pointer; font-family: var(--font-body); font-weight: 800; font-size: 14px; color: var(--color-parchment); background: linear-gradient(160deg, #16140e, #100d09); border: 1px solid rgba(255,255,255,0.08); transition: transform .1s; }
 .cb-act:active { transform: scale(0.96); }
-.cb-act--green.is-on { border-color: rgba(60,176,67,0.5); color: #cfeccb; background: linear-gradient(160deg, #122016, #0e1410); }
-.cb-act--violet.is-on { border-color: rgba(155,108,255,0.45); color: #c9b6ff; background: linear-gradient(160deg, #1a1626, #110e1a); }
-.cb-act--gold.is-on { border-color: rgba(240,192,64,0.5); color: #1a1206; background: linear-gradient(180deg, var(--color-gold-light), var(--color-gold) 60%, #b3851a); }
+/* Active/toggled action (an active prayer) reuses the screen's gold-fill "on"
+   language — same as .cb-idle.is-on / .cb-styleseg.is-on — so state reads
+   consistently. Special/Cast are plain buttons: normal by default, dimmed when
+   unavailable, pressed on tap. */
+.cb-act.is-on {
+  color: #1a1206;
+  background: linear-gradient(180deg, var(--color-gold-light), var(--color-gold) 60%, #b3851a);
+  border-color: rgba(240,192,64,0.6);
+  box-shadow: 0 6px 16px -8px rgba(212,160,23,0.6), inset 0 1px 0 rgba(255,255,255,0.4);
+}
 .cb-act:disabled, .cb-act--dim { opacity: 0.4; cursor: default; }
 
 .cb-killflash { position: absolute; inset: 0; pointer-events: none; z-index: 5; background: radial-gradient(circle at 50% 38%, rgba(240,192,64,0.18), transparent 55%); animation: cbKF .5s ease-out forwards; }
@@ -993,14 +1000,14 @@ html, body, #app {
 
 /* ── Quick-actions inventory (replaces the combat log + Eat/Potion/Gear) ── */
 .cb-qa { margin-top: 4px; border-radius: 16px; padding: 11px; background: linear-gradient(180deg, rgba(0,0,0,0.32), rgba(0,0,0,0.18)); border: 1px solid rgba(255,255,255,0.07); box-shadow: inset 0 2px 8px rgba(0,0,0,0.4); }
-.cb-qa__tabs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin-bottom: 11px; }
+.cb-qa__tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; margin-bottom: 11px; }
 .cb-qa__tab { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-height: 44px; padding: 7px 4px; border-radius: 10px; cursor: pointer; font-family: var(--font-body); font-weight: 800; font-size: 11.5px; color: var(--color-parchment); opacity: 0.55; background: rgba(255,255,255,0.03); border: 1px solid transparent; transition: all .14s; }
 .cb-qa__tab:active { transform: scale(0.96); }
 .cb-qa__tab.is-on { opacity: 1; color: var(--color-gold-light); background: linear-gradient(160deg, rgba(240,192,64,0.14), rgba(240,192,64,0.04)); border-color: rgba(240,192,64,0.4); }
 .cb-qa__tabn { font-family: var(--font-mono); font-size: 9px; font-weight: 700; opacity: 0.6; }
 .cb-qa__empty { grid-column: 1 / -1; text-align: center; font-size: 12px; font-weight: 600; color: var(--color-parchment); opacity: 0.4; padding: 20px 8px; }
-.cb-qa__grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
-.cb-slot { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-height: 46px; padding: 6px 3px 5px; border-radius: 10px; cursor: pointer; background: linear-gradient(160deg, #1b1810, #120f0a); border: 1px solid rgba(255,255,255,0.07); transition: border-color .14s, transform .1s, background .14s; }
+.cb-qa__grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.cb-slot { position: relative; min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-height: 46px; padding: 6px 3px 5px; border-radius: 10px; cursor: pointer; background: linear-gradient(160deg, #1b1810, #120f0a); border: 1px solid rgba(255,255,255,0.07); transition: border-color .14s, transform .1s, background .14s; }
 .cb-slot:active { transform: scale(0.95); }
 .cb-slot.is-active { border-color: rgba(240,192,64,0.55); background: radial-gradient(120% 90% at 50% 0%, rgba(240,192,64,0.12), transparent 62%), linear-gradient(160deg, #1f1a10, #130f09); box-shadow: inset 0 0 18px -8px rgba(240,192,64,0.5); }
 .cb-slot__ring { position: absolute; inset: -1px; border-radius: 10px; pointer-events: none; box-shadow: 0 0 0 1.5px rgba(240,192,64,0.5), 0 0 14px -3px rgba(240,192,64,0.5); }

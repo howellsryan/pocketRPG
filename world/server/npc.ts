@@ -22,13 +22,42 @@ export type NpcState = {
   respawnAtTick: number
   removeAtTick: number
   anim: 'idle' | 'die'
+  /** Retaliation target: the one player whose combat session applies this npc's
+   * attacks. First attacker claims it; released on leave/death/disconnect and
+   * re-claimed by a surviving attacker the next tick. */
   attackerId: string | null
   lastCombatTick: number
+  /** Damage per attacker for loot attribution; `tick` = when that total last
+   * increased (tie-break: first to reach the total). */
+  damageByChar: Map<string, { dmg: number; tick: number }>
 }
 
 const WANDER_MIN_TICKS = 5
 const WANDER_MAX_TICKS = 13
 const OUT_OF_COMBAT_HEAL_TICKS = 17
+
+export function recordDamage(npc: NpcState, charId: string, dmg: number, tick: number): void {
+  if (dmg <= 0) return
+  const entry = npc.damageByChar.get(charId)
+  if (entry) {
+    entry.dmg += dmg
+    entry.tick = tick
+  } else {
+    npc.damageByChar.set(charId, { dmg, tick })
+  }
+}
+
+/** Loot owner on a kill: most total damage; equal totals → whoever reached the
+ * total first (smaller last-increase tick). */
+export function topDamageContributor(npc: NpcState): string | null {
+  let best: { charId: string; dmg: number; tick: number } | null = null
+  for (const [charId, { dmg, tick }] of npc.damageByChar) {
+    if (!best || dmg > best.dmg || (dmg === best.dmg && tick < best.tick)) {
+      best = { charId, dmg, tick }
+    }
+  }
+  return best?.charId ?? null
+}
 
 function randInt(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min
@@ -54,6 +83,7 @@ export function npcsFromZone(npcs: ZoneNpcDef[]): Map<string, NpcState> {
       anim: 'idle',
       attackerId: null,
       lastCombatTick: 0,
+      damageByChar: new Map(),
     })
   }
   return map
@@ -106,6 +136,7 @@ export function tickNpc(npc: NpcState, ctx: TickContext, result: TickResult): vo
     if (!npc.attackerId && ctx.tick - npc.lastCombatTick >= OUT_OF_COMBAT_HEAL_TICKS) {
       npc.state = 'idle'
       npc.hp = npc.maxHp
+      npc.damageByChar.clear()
       result.npcChanged.push(npc.id)
     }
     return

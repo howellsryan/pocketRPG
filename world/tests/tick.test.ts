@@ -28,6 +28,7 @@ function makePlayer(overrides: Partial<TickPlayer> = {}): TickPlayer {
     hp: 10,
     maxHp: 10,
     equipment: {},
+    gear: {},
     combat: null,
     ...overrides,
   }
@@ -150,14 +151,14 @@ describe('mining', () => {
   })
 })
 
-describe('deposit', () => {
-  it('signals a deposit on arrival at the chest', () => {
+describe('bank chest', () => {
+  it('signals a bank-open on arrival at the chest', () => {
     const player = makePlayer({
       path: [{ x: 1, z: 1 }],
-      pendingInteract: { kind: 'object', id: 'chest_1', action: 'deposit' },
+      pendingInteract: { kind: 'object', id: 'chest_1', action: 'bank' },
     })
     const result = tickPlayer(player, makeCtx(makeRock()))
-    expect(result.deposit).toBe(true)
+    expect(result.bankOpen).toBe(true)
     expect(player.pendingInteract).toBeNull()
   })
 })
@@ -212,8 +213,58 @@ describe('sessionStatsFromSave', () => {
 describe('toEntityDiff', () => {
   it('maps a player to a wire-format entity diff', () => {
     const player = makePlayer({ x: 3, z: 4, anim: 'walk' })
+    // gear always rides player diffs (even empty) so unequips propagate.
     expect(toEntityDiff(player)).toEqual({
-      id: '1', kind: 'player', x: 3, z: 4, anim: 'walk', name: 'WorldTester',
+      id: '1', kind: 'player', x: 3, z: 4, anim: 'walk', name: 'WorldTester', gear: {},
     })
+  })
+})
+
+describe('woodcutting', () => {
+  function makeTree(overrides: Partial<RockState> = {}): RockState {
+    return { id: 'tree_normal_1', rock: 'normal', skill: 'woodcutting', x: 1, z: 0, depletedUntilTick: 0, ...overrides }
+  }
+  function chopIntent(id = 'tree_normal_1'): TickPlayer['pendingInteract'] {
+    return { kind: 'rock', id, action: 'chop' }
+  }
+
+  it('runs a full cycle: 4 ticks -> logs + 25 Woodcutting xp + depleted tree', () => {
+    const tree = makeTree()
+    const player = makePlayer({ stats: { woodcutting: { xp: 0, level: 1 } }, pendingInteract: chopIntent() })
+    const ctx = makeCtx(tree)
+    for (let i = 0; i < 4; i++) tickPlayer(player, ctx)
+    expect(player.inventory[0]).toEqual({ itemId: 'logs', quantity: 1 })
+    expect(player.minted.logs).toBe(1)
+    expect(player.pendingXp.woodcutting).toBe(25)
+    expect(tree.depletedUntilTick).toBe(1 + ROCK_DEPLETED_TICKS)
+  })
+
+  it('gates oak behind Woodcutting 15 with the chop message', () => {
+    const tree = makeTree({ id: 'tree_oak_1', rock: 'oak' })
+    const player = makePlayer({ stats: { woodcutting: { xp: 0, level: 1 } }, pendingInteract: chopIntent('tree_oak_1') })
+    const result = tickPlayer(player, makeCtx(tree))
+    expect(result.events).toContainEqual({ e: 'msg', text: 'You need Woodcutting level 15 to chop this tree.' })
+    expect(player.mining).toBeNull()
+  })
+
+  it('refuses the wrong verb for the node skill', () => {
+    const tree = makeTree()
+    const player = makePlayer({ stats: { woodcutting: { xp: 0, level: 99 } }, pendingInteract: mineIntent('tree_normal_1') })
+    tickPlayer(player, makeCtx(tree))
+    expect(player.mining).toBeNull()
+
+    const rock = makeRock()
+    const miner = makePlayer({ pendingInteract: { kind: 'rock', id: rock.id, action: 'chop' } })
+    tickPlayer(miner, makeCtx(rock))
+    expect(miner.mining).toBeNull()
+  })
+
+  it('oak at level 15 yields oak logs + 37 xp', () => {
+    const tree = makeTree({ id: 'tree_oak_1', rock: 'oak' })
+    const player = makePlayer({ stats: { woodcutting: { xp: 0, level: 15 } }, pendingInteract: chopIntent('tree_oak_1') })
+    const ctx = makeCtx(tree)
+    for (let i = 0; i < 5; i++) tickPlayer(player, ctx)
+    expect(player.inventory[0]).toEqual({ itemId: 'oak_logs', quantity: 1 })
+    expect(player.pendingXp.woodcutting).toBe(37)
   })
 })

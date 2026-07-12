@@ -80,6 +80,8 @@ describe('picked-up loot survives a disconnect flush', () => {
         for (let i = 0; i < qty; i++) inv.push({ itemId, quantity: 1 })
       },
       removeItemFromInventory: () => {},
+      removeItemFromBank: () => {},
+      bankQuantity: () => 0,
       auditLog: async () => {},
     }
   }
