@@ -23,6 +23,7 @@ function makePlayer(overrides: Partial<TickPlayer> = {}): TickPlayer {
     minted: {},
     mining: null,
     crafting: null,
+    spell: null,
     pendingInteract: null,
     hp: 10,
     maxHp: 10,
@@ -150,11 +151,11 @@ describe('tickCrafting via tickPlayer', () => {
     player.crafting = { station: 'furnace', stationId: FURNACE.id, recipeId: 'smelt_bronze', remaining: 2, progress: 0 }
     const ctx = stationCtx(FURNACE)
 
-    const crafted: Record<string, number>[] = []
+    const consumed: Record<string, number>[] = []
     let xpEvents = 0
     for (let i = 0; i < SMELT_BRONZE.ticks * 2; i++) {
       const result = tickPlayer(player, ctx)
-      crafted.push(...result.crafted)
+      consumed.push(...result.consumed)
       xpEvents += result.events.filter((e) => e.e === 'xp').length
       if (i < SMELT_BRONZE.ticks * 2 - 1) expect(player.anim).toBe('mine')
     }
@@ -162,7 +163,7 @@ describe('tickCrafting via tickPlayer', () => {
     expect(player.crafting).toBeNull()
     expect(countItem(player.inventory, 'bronze_bar')).toBe(2)
     expect(player.minted.bronze_bar).toBe(2)
-    expect(crafted).toEqual([{ tin_ore: 1, copper_ore: 1 }, { tin_ore: 1, copper_ore: 1 }])
+    expect(consumed).toEqual([{ tin_ore: 1, copper_ore: 1 }, { tin_ore: 1, copper_ore: 1 }])
     expect(xpEvents).toBe(2)
     expect(player.stats.smithing.xp).toBe(SMELT_BRONZE.xp * 2)
     expect(player.pendingXp.smithing).toBe(SMELT_BRONZE.xp * 2)

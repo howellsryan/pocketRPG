@@ -37,8 +37,9 @@ function ensureStyle(): void {
 }
 
 /** Bakes the zone collision to an offscreen canvas once; each update() blits it
- * and draws the live dots on top. The whole zone is scaled to fit the square. */
-export function createMinimap(collision: string[], width: number, height: number, palette?: GroundPalette): Minimap {
+ * and draws the live dots on top. The whole zone is scaled to fit the square.
+ * A click/tap walks the player to the tapped tile via `onClickTile`. */
+export function createMinimap(collision: string[], width: number, height: number, palette?: GroundPalette, onClickTile?: (tile: { x: number; z: number }) => void): Minimap {
   ensureStyle()
   const container = document.createElement('div')
   container.id = 'minimap'
@@ -52,6 +53,20 @@ export function createMinimap(collision: string[], width: number, height: number
   const cell = SIZE_PX / Math.max(width, height)
   const offsetX = (SIZE_PX - width * cell) / 2
   const offsetZ = (SIZE_PX - height * cell) / 2
+
+  if (onClickTile) {
+    canvas.addEventListener('pointerdown', (e) => {
+      const rect = canvas.getBoundingClientRect()
+      // The canvas is styled to 100% of the container — map through its CSS size.
+      const px = ((e.clientX - rect.left) / rect.width) * SIZE_PX
+      const pz = ((e.clientY - rect.top) / rect.height) * SIZE_PX
+      const x = Math.floor((px - offsetX) / cell)
+      const z = Math.floor((pz - offsetZ) / cell)
+      if (x < 0 || z < 0 || x >= width || z >= height) return
+      if (collision[z]?.[x] === '#') return
+      onClickTile({ x, z })
+    })
+  }
   const walkable = palette?.walkableA ?? DEFAULT_WALKABLE
   const blocked = palette?.blockedA ?? DEFAULT_BLOCKED
 

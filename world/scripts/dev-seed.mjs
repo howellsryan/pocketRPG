@@ -73,6 +73,9 @@ const inventory = [
   { itemId: 'trout', quantity: 1 },
   { itemId: 'bones', quantity: 1 },
   { itemId: 'bronze_sword', quantity: 1 },
+  // Strike-spell runes so char 2's magic_staff can actually cast in tests.
+  { itemId: 'air_rune', quantity: 100 },
+  { itemId: 'mind_rune', quantity: 100 },
 ]
 const bank = { trout: { itemId: 'trout', quantity: 5 }, copper_ore: { itemId: 'copper_ore', quantity: 7 } }
 // Distinct equipped weapons exercise the Phase 5 gear pipeline: char 1 a

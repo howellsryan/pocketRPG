@@ -15,6 +15,8 @@ import {
 } from './tick'
 import { STATIONS, recipeFor, stationTypeForVerb, isStationType } from '../shared/recipes'
 import { hasMaterials, maxCraftable } from './crafting'
+import { resolveCombatSetup } from './combat'
+import spellsJson from '../../src/data/spells.json'
 import { npcsFromZone, tickNpc, toNpcDiff, type NpcState } from './npc'
 import { PLAYER_DROP_OWNER_TICKS, isExpired, isVisibleTo, spawnDrops, takeLoot, visibleLootFor, type LootEntity } from './loot'
 import { sanitizeChat } from '../shared/chat'
@@ -472,6 +474,7 @@ export class WorldZone extends Server<Env> {
       runEnergy: 100,
       lastRunSent: 100,
       stance: 'accurate',
+      spell: null,
       specialEnergy: 100,
       lastSpecSent: 100,
       lingerUntilTick: null,
@@ -514,6 +517,7 @@ export class WorldZone extends Server<Env> {
         runEnergy: Math.round(player.runEnergy),
         running: player.running,
         stance: player.stance,
+        ...(player.spell ? { spell: player.spell } : {}),
         specialEnergy: Math.round(player.specialEnergy),
         equipment: equipmentMap(player.equipment),
       },
@@ -579,6 +583,9 @@ export class WorldZone extends Server<Env> {
         player.stance = message.stance
         // Apply mid-fight too — the engine reads stance each tick.
         if (player.combat) player.combat.state.stance = message.stance
+        break
+      case 'setSpell':
+        this.handleSetSpell(player, message.spell)
         break
       case 'special':
         // Queue the weapon's special for the next combat tick (engine checks
@@ -730,6 +737,34 @@ export class WorldZone extends Server<Env> {
     player.pendingEvents.push({ e: 'msg', text: `You ${verb.toLowerCase()} the ${itemNameOf(itemId)}.` })
     this.pendingInvEcho.add(player.charId)
     this.scheduleDirtyFlush(player)
+  }
+
+  /** Sets (or clears) the session's combat spell. Level-gated against the
+   * session's Magic level; applies to an active magic fight immediately. */
+  private handleSetSpell(player: Player, spellId: string | null): void {
+    if (spellId !== null) {
+      const spell = (spellsJson as Record<string, { name?: string; levelReq?: number } | undefined>)[spellId]
+      if (!spell) return
+      const magicLevel = player.stats.magic?.level ?? 1
+      if (magicLevel < (spell.levelReq ?? 1)) {
+        player.pendingEvents.push({ e: 'msg', text: `You need Magic level ${spell.levelReq} to cast ${spell.name ?? spellId}.` })
+        return
+      }
+    }
+    player.spell = spellId
+    if (player.combat) {
+      const setup = resolveCombatSetup(player)
+      if (setup.needsSpell) {
+        // Cleared the spell mid-magic-fight: the engine would splash 0s forever.
+        player.pendingEvents.push({ e: 'msg', text: 'You stop fighting — no spell selected.' })
+        const npc = this.ensureNpcs().get(player.combat.npcId)
+        if (npc && npc.attackerId === player.charId) npc.attackerId = null
+        player.combat = null
+      } else {
+        player.combat.state.combatType = setup.combatType
+        player.combat.state.spell = setup.spell
+      }
+    }
   }
 
   /** Starts a craft run from the recipe panel. Everything re-validates
@@ -961,11 +996,11 @@ export class WorldZone extends Server<Env> {
       if (result.stationOpen) {
         result.events.push({ e: 'station', station: result.stationOpen, open: true })
       }
-      if (result.crafted.length > 0) {
-        // Crafting consumed materials — drain the provenance pools to match the
-        // pack, and debounce a durability flush (a consumed save-backed unit
-        // must not resurrect on a DO eviction).
-        for (const consumed of result.crafted) {
+      if (result.consumed.length > 0) {
+        // Items left the pack this tick (craft materials, spell runes) — drain
+        // the provenance pools to match, and debounce a durability flush (a
+        // consumed save-backed unit must not resurrect on a DO eviction).
+        for (const consumed of result.consumed) {
           for (const [itemId, qty] of Object.entries(consumed)) consumeUnits(player.pools, itemId, qty)
         }
         this.scheduleDirtyFlush(player)

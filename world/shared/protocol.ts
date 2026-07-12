@@ -33,6 +33,8 @@ export type ClientMessage =
   | { t: 'craft'; station: StationType; recipeId: string; qty: number }
   | { t: 'setRun'; run: boolean }
   | { t: 'setStance'; stance: CombatStance }
+  /** Select the combat spell for magic weapons (null = no spell). */
+  | { t: 'setSpell'; spell: string | null }
   | { t: 'special' }
   | { t: 'unequip'; slot: string }
   | { t: 'logout' }
@@ -104,6 +106,8 @@ export type ServerMessage =
         runEnergy: number
         running: boolean
         stance: CombatStance
+        /** Selected combat-spell id, when one is set this session. */
+        spell?: string
         specialEnergy: number
         equipment: EquipmentMap
       }
@@ -204,6 +208,11 @@ export function parseClientMessage(raw: unknown): ClientMessage | null {
       return stance === 'accurate' || stance === 'aggressive' || stance === 'defensive'
         ? { t: 'setStance', stance }
         : null
+    }
+    case 'setSpell': {
+      const spell = (raw as Record<string, unknown>).spell
+      if (spell === null) return { t: 'setSpell', spell: null }
+      return typeof spell === 'string' && spell.length > 0 && spell.length <= 64 ? { t: 'setSpell', spell } : null
     }
     case 'special':
       return { t: 'special' }

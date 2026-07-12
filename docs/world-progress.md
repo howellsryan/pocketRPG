@@ -504,3 +504,17 @@ Developer instruction "continue" after the merged HUD batch → next roadmap pha
 `world:check` green (20 files / 196 tests). Only `world/` + `docs/` touched — no root gate required.
 
 - [x] Phase 7 — see commit introducing this entry — guide §14 authored + STEPs 7.1–7.6 built and self-verified; acceptance is the DT-P7 manual script (guide §14 STEP 7.6) + the open station-model DT.
+
+## Minimap click-to-walk + magic spell selection (developer requests 2026-07-12)
+
+Three requests; one withdrawn (bank scrolling already works on mobile — reported change reverted, zero diff).
+
+**Minimap click-to-walk**: `createMinimap` gained an `onClickTile` callback — pixel→tile via the inverse of the dot projection, blocked tiles and out-of-map clicks ignored; `main.ts` routes it through the same `walkTo` the ground click uses (modal close + click marker + tap dedupe). A far click walks as far as the server's 64-tile path cap allows.
+
+**Magic weapons cast real magic now** (was: a staff fought with melee math). `startCombat` resolves the fight through the REAL `resolveMagicSpell`/`getCombatType` (`src/engine/equipment.js`): magic weapon + selected spell → `createCombatState(..., 'magic', stance, spell)`; powered staffs use the engine's own no-spell path; a magic weapon with NO castable spell refuses the fight ("You need to select a spell…") — the engine would splash 0s forever. `stepCombat` now passes the session pack as the engine's inventory (rune checks) and applies the live-game rune contract: consume `state.runesConsumed` on a landed hit, clear it, drain provenance pools (`TickResult.crafted` generalised to `consumed`), inv echo + debounced flush; `noRunesForSpell` → message + fight ends. `{t:'setSpell', spell|null}` is level-gated server-side against session Magic and applies mid-fight (clearing the spell mid-magic-fight stops the fight). Ranged weapons stay on the melee path — ranged combat remains out of scope.
+
+**Spell picker UI (developer decision: REPLACES the stances)**: with a magic weapon equipped the Combat tab swaps Accurate/Aggressive/Defensive for a `Spell: <name>` button; tapping it opens a context menu of castable spells (level-gated client-side from session stats, re-validated server-side) + "No spell". Bare fists/melee restore the stances. Seed chars: runes added so char 2's staff can cast.
+
+**Verified**: `world:check` green (199 tests — +3 magic combat-flow tests: real-magic kill with per-cast rune consumption, out-of-runes stop, spell-less refusal). WS e2e 4/4 (char 2: spell-less attack refused, `fire_strike` level-gated at Magic 1, wind-strike bull kill +46 Magic xp with 1:1 rune drain). Playwright 5/5: minimap 40%,40% click → walk (12,12); melee shows stances/hides button; staff hides stances/shows button; picker lists Wind Strike; selection sends `{t:'setSpell'}` + relabels. **Env gotcha recorded**: `.dev.vars` must be written to `world/.dev.vars` — a shell whose cwd silently reset to repo root wrote it there and every hello failed signature verification.
+
+- [x] Minimap walk + magic spells — see commit introducing this entry — DT: on-device pass (minimap tap accuracy, spell picker on mobile, a real staff fight incl. running out of runes).

@@ -20,7 +20,7 @@ function makePlayer(overrides: Partial<TickPlayer> = {}): TickPlayer {
     },
     inventory: emptyInventory(), pendingXp: {}, minted: {}, mining: null, crafting: null, pendingInteract: null,
     hp: 40, maxHp: 40, equipment: {}, gear: {}, combat: null,
-    running: false, runEnergy: 100, lastRunSent: 100, stance: 'accurate', specialEnergy: 100, lastSpecSent: 100,
+    running: false, runEnergy: 100, lastRunSent: 100, stance: 'accurate', spell: null, specialEnergy: 100, lastSpecSent: 100,
     ...overrides,
   }
 }
@@ -141,6 +141,70 @@ describe('combat via tickPlayer', () => {
     expect(bull.attackerId).toBeNull()
     tickPlayer(b, ctx(2, npcs))
     expect(bull.attackerId).toBe('2')
+  })
+
+  it('a magic weapon with a spell fights with real magic: spell XP and rune consumption', () => {
+    const { npcs, bull } = bullAt(5, 5)
+    const player = makePlayer({
+      x: 5, z: 6,
+      stats: { magic: { xp: 100000, level: 40 }, hitpoints: { xp: 100000, level: 40 } },
+      equipment: { weapon: { itemId: 'magic_staff' } },
+      spell: 'wind_strike',
+      pendingInteract: { kind: 'npc', id: 'bull_1', action: 'attack' },
+    })
+    player.inventory[0] = { itemId: 'air_rune', quantity: 30 }
+    player.inventory[1] = { itemId: 'mind_rune', quantity: 30 }
+
+    const consumed: Record<string, number>[] = []
+    let magicXp = 0
+    let tick = 0
+    while (bull.state !== 'dead' && tick < 1000) {
+      tick++
+      const r = tickPlayer(player, ctx(tick, npcs))
+      consumed.push(...r.consumed)
+      for (const e of r.events) if (e.e === 'xp' && e.skill === 'magic') magicXp += e.amount
+    }
+
+    expect(bull.state).toBe('dead')
+    expect(magicXp).toBeGreaterThan(0)
+    // Every landed cast consumed one set of wind-strike runes from the pack.
+    expect(consumed.length).toBeGreaterThan(0)
+    expect(consumed[0]).toEqual({ air_rune: 1, mind_rune: 1 })
+    const airLeft = player.inventory.find((s) => s?.itemId === 'air_rune')?.quantity ?? 0
+    expect(airLeft).toBeLessThan(30)
+  })
+
+  it('a magic fight stops with a message when the runes run out', () => {
+    const { npcs, bull } = bullAt(5, 5)
+    const player = makePlayer({
+      x: 5, z: 6,
+      stats: { magic: { xp: 100000, level: 40 }, hitpoints: { xp: 100000, level: 40 } },
+      equipment: { weapon: { itemId: 'magic_staff' } },
+      spell: 'wind_strike',
+      pendingInteract: { kind: 'npc', id: 'bull_1', action: 'attack' },
+    })
+    // No runes at all: the first cast must refuse and end the fight.
+    let sawMsg = false
+    for (let tick = 1; tick <= 10 && !sawMsg; tick++) {
+      const r = tickPlayer(player, ctx(tick, npcs))
+      sawMsg = r.events.some((e) => e.e === 'msg' && e.text.includes('enough runes'))
+    }
+    expect(sawMsg).toBe(true)
+    expect(player.combat).toBeNull()
+    expect(bull.attackerId).toBeNull()
+  })
+
+  it('a magic weapon with NO spell selected refuses to start the fight', () => {
+    const { npcs, bull } = bullAt(5, 5)
+    const player = makePlayer({
+      x: 5, z: 6,
+      equipment: { weapon: { itemId: 'magic_staff' } },
+      pendingInteract: { kind: 'npc', id: 'bull_1', action: 'attack' },
+    })
+    const r = tickPlayer(player, ctx(1, npcs))
+    expect(player.combat).toBeNull()
+    expect(bull.state).toBe('idle')
+    expect(r.events.some((e) => e.e === 'msg' && e.text.includes('select a spell'))).toBe(true)
   })
 
   it('walking out of range ends the fight (bull left in combat until it heals)', () => {

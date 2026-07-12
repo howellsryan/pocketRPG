@@ -61,6 +61,8 @@ export type TickPlayer = {
   lastRunSent: number
   /** Melee stance driving new fights (accurate/aggressive/defensive). */
   stance: CombatStance
+  /** Selected combat-spell id (magic weapons); session-local, null = none. */
+  spell: string | null
   /** Special-attack energy readout (0-100); mirrors the engine's per-fight value
    * during combat, 100 between fights. `lastSpecSent` gates the {e:'spec'} echo. */
   specialEnergy: number
@@ -92,9 +94,9 @@ export type TickResult = {
   bankOpen: boolean
   /** The player arrived at a processing station → open its recipe panel. */
   stationOpen: StationType | null
-  /** Materials consumed by craft completions this tick — the DO drains the
-   * provenance pools with these (tick.ts has no pools access). */
-  crafted: Record<string, number>[]
+  /** Items consumed out of the pack this tick (craft materials, spell runes) —
+   * the DO drains the provenance pools with these (tick.ts has no pools access). */
+  consumed: Record<string, number>[]
   /** Zone-wide hitsplats ({dmg:0} = block/miss). */
   hits: { targetId: string; dmg: number }[]
   /** This player's HP hit 0 this tick → respawn + {t:'dead'}. */
@@ -107,7 +109,7 @@ export type TickResult = {
 }
 
 export function emptyResult(): TickResult {
-  return { entChanged: false, events: [], rockChanges: [], bankOpen: false, stationOpen: null, crafted: [], hits: [], died: false, newLoot: [], npcChanged: [], npcRemoved: [] }
+  return { entChanged: false, events: [], rockChanges: [], bankOpen: false, stationOpen: null, consumed: [], hits: [], died: false, newLoot: [], npcChanged: [], npcRemoved: [] }
 }
 
 /** Seeds the 28-slot session pack from the character's PocketRPG inventory at
@@ -194,7 +196,7 @@ function startInteract(player: TickPlayer, ctx: TickContext, result: TickResult)
     const npc = ctx.npcs?.get(intent.id)
     if (!npc || npc.state === 'dead') return
     if (adjacent(player, npc)) {
-      startCombat(player, npc)
+      startCombat(player, npc, result)
       return
     }
     // The bull wandered off before we arrived — re-approach and keep the intent
@@ -297,7 +299,7 @@ function tickCrafting(player: TickPlayer, ctx: TickContext, result: TickResult):
     return
   }
   player.minted[outcome.product] = (player.minted[outcome.product] ?? 0) + 1
-  result.crafted.push(outcome.consumed)
+  result.consumed.push(outcome.consumed)
   if (outcome.burnt) result.events.push({ e: 'msg', text: 'You accidentally burn the food.' })
   result.events.push(...grantSessionXp(player, skill, outcome.xp))
   result.events.push({ e: 'inv', inventory: player.inventory })

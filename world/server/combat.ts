@@ -5,13 +5,16 @@
 // funnels XP through the same grant pipeline mining uses. Contract pinned by
 // world/tests/combat-adapter.test.ts.
 import { createCombatState, processCombatTick } from '../../src/engine/combat.js'
+import { resolveMagicSpell } from '../../src/engine/equipment.js'
 import itemsData from '../../src/data/items.json'
 import monstersData from '../../src/data/monsters.json'
+import spellsData from '../../src/data/spells.json'
 import { adjacent, grantSessionXp, type TickPlayer } from './tick'
 import { recordDamage, topDamageContributor, type NpcState } from './npc'
 import type { TickContext, TickResult } from './tick'
 import type { ZoneEvent } from '../shared/protocol'
 import { spawnDrops } from './loot'
+import { removeItems } from './mining'
 
 /** Special energy between fights is always full (each fight seeds 100, refills
  * on kill) — mirror the main game's PvE special model. */
@@ -31,7 +34,12 @@ function resetSpecial(player: TickPlayer, result: TickResult): void {
   emitSpecIfChanged(player, result.events)
 }
 
-type EngineState = ReturnType<typeof createCombatState>
+// The engine's inferred state types `spell`/`runesConsumed` from their `null`
+// initialisers — widen them to what magic combat actually stores there.
+type EngineState = Omit<ReturnType<typeof createCombatState>, 'spell'> & {
+  spell: unknown
+  runesConsumed?: Record<string, number> | null
+}
 export type CombatSession = { npcId: string; state: EngineState }
 
 const RESPAWN_TICKS = 25
@@ -53,13 +61,31 @@ function playerStatsFor(player: TickPlayer): Record<string, number> {
   }
 }
 
+/** Resolves how this player fights: real magic when a magic weapon is equipped
+ * (selected spell, or the engine's powered-staff path), melee otherwise.
+ * Ranged weapons stay on the melee path — ranged combat is out of scope in v1.
+ * `needsSpell` means a magic weapon with no castable spell: the engine would
+ * splash 0s forever, so the fight must be refused. */
+export function resolveCombatSetup(player: TickPlayer): { combatType: 'melee' | 'magic'; spell: unknown; needsSpell: boolean } {
+  const activeSpell = player.spell ? { id: player.spell } : null
+  const { combatType, isPoweredStaff, spell, needsSpell } = resolveMagicSpell(player.equipment, itemsData, activeSpell, spellsData)
+  if (combatType !== 'magic') return { combatType: 'melee', spell: null, needsSpell: false }
+  if (needsSpell) return { combatType: 'magic', spell: null, needsSpell: true }
+  return { combatType: 'magic', spell: isPoweredStaff ? null : spell, needsSpell: false }
+}
+
 /** Begins a fight between the player and an npc. The engine state seeds from the
  * npc's CURRENT hp (a bull half-killed by an abandoned fight resumes there, not
  * at full), while `hitpoints` stays the true max. */
-export function startCombat(player: TickPlayer, npc: NpcState): void {
+export function startCombat(player: TickPlayer, npc: NpcState, result?: TickResult): void {
   const monster = (monstersData as Monsters)[npc.monsterId]
   if (!monster) return
-  const state = createCombatState(monster, 'melee', player.stance)
+  const setup = resolveCombatSetup(player)
+  if (setup.needsSpell) {
+    result?.events.push({ e: 'msg', text: 'You need to select a spell to fight with that weapon.' })
+    return
+  }
+  const state = createCombatState(monster, setup.combatType, player.stance, setup.spell as null) as EngineState
   state.monster.currentHP = npc.hp
   player.combat = { npcId: npc.id, state }
   player.specialEnergy = state.specialAttackEnergy
@@ -112,18 +138,44 @@ export function stepCombat(player: TickPlayer, ctx: TickContext, result: TickRes
   if (!npc.attackerId) npc.attackerId = player.charId
   const isTarget = npc.attackerId === player.charId
 
-  const { combatState, events } = processCombatTick(combat.state, playerStatsFor(player), player.equipment, itemsData, {}, [], null)
+  // The pack rides in as the engine's inventory so magic can check runes;
+  // consumption is applied below from state.runesConsumed (live-game contract:
+  // consume on a landed hit, then clear so the same cast never double-charges).
+  const { combatState, events } = processCombatTick(combat.state, playerStatsFor(player), player.equipment, itemsData, {}, player.inventory, null)
   combat.state = combatState
   player.anim = 'attack'
   npc.state = 'combat'
   npc.lastCombatTick = ctx.tick
   result.npcChanged.push(npc.id)
 
-  for (const ev of events as { type: string; damage?: number; hits?: number[]; totalDamage?: number; loot?: { itemId: string; quantity: number }[]; xpSkills?: Record<string, number> }[]) {
+  const consumeRunes = (): void => {
+    const runes = combat.state.runesConsumed as Record<string, number> | null | undefined
+    if (!runes) return
+    combat.state.runesConsumed = null
+    const consumed: Record<string, number> = {}
+    for (const [runeId, qty] of Object.entries(runes)) {
+      const n = Math.max(0, Math.floor(Number(qty) || 0))
+      if (n > 0 && removeItems(player.inventory, runeId, n)) consumed[runeId] = n
+    }
+    if (Object.keys(consumed).length > 0) {
+      result.consumed.push(consumed)
+      result.events.push({ e: 'inv', inventory: player.inventory })
+    }
+  }
+
+  for (const ev of events as { type: string; damage?: number; hits?: number[]; totalDamage?: number; loot?: { itemId: string; quantity: number }[]; xpSkills?: Record<string, number>; spellName?: string }[]) {
     if (ev.type === 'playerHit') {
       npc.hp = Math.max(0, combatState.monster.currentHP)
       recordDamage(npc, player.charId, ev.damage ?? 0, ctx.tick)
       result.hits.push({ targetId: npc.id, dmg: ev.damage ?? 0 })
+      if ((ev.damage ?? 0) > 0) consumeRunes()
+    } else if (ev.type === 'noRunesForSpell') {
+      result.events.push({ e: 'msg', text: `You don't have enough runes to cast ${ev.spellName ?? 'that spell'}.` })
+      player.combat = null
+      if (npc.attackerId === player.charId) npc.attackerId = null
+      player.anim = 'idle'
+      resetSpecial(player, result)
+      return
     } else if (ev.type === 'specialHit') {
       // A fired special: one or more hits, monster HP already applied on state.
       npc.hp = Math.max(0, combatState.monster.currentHP)
