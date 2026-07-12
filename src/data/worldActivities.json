@@ -2719,6 +2719,10 @@
     {
       "kind": "thieving",
       "ref": "elf"
+    },
+    {
+      "kind": "thieving",
+      "ref": "tzraar"
     }
   ],
   "ardounne": [

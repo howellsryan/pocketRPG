@@ -56,6 +56,7 @@ const sourceFiles = [
   'engine/slayerTasks.js',
   'engine/slayerMasters.js',
   'engine/slayerUnlocks.js',
+  'engine/pvpBotRewards.js',
   'engine/slayerCombatBonuses.js',
   'engine/itemSources.js',
   'engine/combatSetBonuses.js',

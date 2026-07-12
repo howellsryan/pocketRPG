@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { createThievingState, processThievingTick, simulateIdleThieving } from '../src/engine/thieving.js'
+import { createThievingState, processThievingTick, simulateIdleThieving, rollGemReward, rollGemRewards } from '../src/engine/thieving.js'
 
 const npc = { name: 'Man', xp: 8, coins: 3, drops: [{ itemId: 'bread', chance: 1 }] }
 
@@ -75,5 +75,38 @@ describe('thieving engine', () => {
 
     // createThievingState reflects the slower cadence.
     expect(createThievingState(farmer as any).ticksRemaining).toBe(8)
+  })
+
+  const gems = [
+    { itemId: 'sapphire', chance: 0.2 },
+    { itemId: 'emerald', chance: 0.2 },
+    { itemId: 'ruby', chance: 0.2 },
+    { itemId: 'diamond', chance: 0.2 },
+    { itemId: 'dragonstone', chance: 0.05 },
+  ]
+
+  it('rolls a single gem from the table by cumulative slice, or nothing past the total', () => {
+    expect(rollGemReward(gems, () => 0.0)).toBe('sapphire')
+    expect(rollGemReward(gems, () => 0.5)).toBe('ruby')
+    expect(rollGemReward(gems, () => 0.83)).toBe('dragonstone')
+    // The leftover 15% probability yields no gem.
+    expect(rollGemReward(gems, () => 0.99)).toBeNull()
+    expect(rollGemReward([], () => 0.1)).toBeNull()
+  })
+
+  it('aggregates gem rolls and skips misses', () => {
+    const out = rollGemRewards(3, gems, () => 0.0)
+    expect(out).toEqual({ sapphire: 3 })
+    expect(rollGemRewards(5, gems, () => 0.99)).toEqual({})
+  })
+
+  it('idle-simulates a gem thieving target (Tzraar) as itemsGained, not coins', () => {
+    const tzraar = { name: 'Steal from Tzraar', xp: 175, coins: 0, gemReward: true, gems, pickpocketTicks: 10 }
+    // 10 ticks/action → 6000ms each. 6000ms = one action.
+    const one = simulateIdleThieving({ npc: tzraar } as any, 6000) as any
+    expect(one.actions).toBe(1)
+    expect(one.coinsGained).toBe(0)
+    expect(one.xpGained).toEqual({ thieving: 175 })
+    expect(one.itemsGained).toBeDefined()
   })
 })
