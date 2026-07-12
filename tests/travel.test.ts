@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { createTravelTask, advanceTravel, travelFraction, travelDestName, travelCancelLocation } from '../src/engine/travel.js'
+import { createTravelTask, advanceTravel, travelFraction, travelDestName, travelCancelLocation, travelLeftoverMs } from '../src/engine/travel.js'
 import { pathLegs } from '../src/engine/world.js'
 
 describe('createTravelTask', () => {
@@ -69,6 +69,29 @@ describe('advanceTravel', () => {
   it('is a no-op for non-travel tasks', () => {
     const res = advanceTravel({ type: 'combat' } as any, 10000)
     expect(res.arrived).toBe(false)
+  })
+})
+
+describe('travelLeftoverMs', () => {
+  const task = createTravelTask('lumbright', 'draynar')! // 40 ticks = 24000ms
+
+  it('is zero when the trip did not finish within the elapsed window', () => {
+    expect(travelLeftoverMs(task, 10 * 600)).toBe(0)
+    expect(travelLeftoverMs(task, 40 * 600)).toBe(0)
+  })
+
+  it('returns the time left over after arrival to spend on the autoStart activity', () => {
+    // Away for 100 ticks, trip cost 40 → 60 ticks of fighting after arrival.
+    expect(travelLeftoverMs(task, 100 * 600)).toBe(60 * 600)
+  })
+
+  it('measures from ticksRemaining, so a half-done trip leaves more over', () => {
+    expect(travelLeftoverMs({ ...task, ticksRemaining: 10 }, 100 * 600)).toBe(90 * 600)
+  })
+
+  it('is zero for non-travel or missing tasks', () => {
+    expect(travelLeftoverMs({ type: 'combat' } as any, 100000)).toBe(0)
+    expect(travelLeftoverMs(null as any, 100000)).toBe(0)
   })
 })
 

@@ -40,7 +40,7 @@ import MagicScreen from './screens/MagicScreen.jsx'
 import WorldMapScreen from './screens/WorldMapScreen.jsx'
 import TravelPrompt from './components/TravelPrompt.jsx'
 import InventoryFullPrompt from './components/InventoryFullPrompt.jsx'
-import { advanceTravel, travelDestName } from './engine/travel.js'
+import { advanceTravel, travelDestName, travelLeftoverMs } from './engine/travel.js'
 import { advanceJourneyPhase, advanceJourneyOffline, journeyStatus, planClueJourney, planQuestJourney } from './engine/journeys.js'
 import AuthScreen from './screens/AuthScreen.jsx'
 import OAuthConsentScreen from './screens/OAuthConsentScreen.jsx'
@@ -962,6 +962,11 @@ function GameApp() {
           ])
 
           let sim = null
+          // A travel task that finishes mid-inactivity converts its leftover time
+          // into an idle fight (see below); these carry that across the fall-through.
+          let simElapsedMs = elapsedMs
+          let resumeCombatLive = null
+          let resumeCombatReturnTo = null
 
           // Travel resolves offline: advance by elapsed time, then either land at
           // the destination (update location, clear task, toast) or keep the
@@ -975,22 +980,42 @@ function GameApp() {
               if (adv.location) updateWorldLocation(adv.location)
               setActiveTask(adv.task)
               activeTaskRef.current = adv.task
-            } else {
-              const adv = advanceTravel(savedTask, elapsedMs)
-              if (adv.arrived) {
-                updateWorldLocation(savedTask.dest)
-                setActiveTask(null)
-                activeTaskRef.current = null
-                try { localStorage.removeItem('pocketrpg_activeTask') } catch {}
-                addToast(`🧭 Arrived at ${travelDestName(savedTask)}`, 'info')
-                resumeAutoStart(savedTask.autoStart, savedTask.returnTo)
-              } else {
-                setActiveTask(adv.task)
-                activeTaskRef.current = adv.task
-              }
+              if (!isInPvpMatch) schedulePushSave(getSnapshot())
+              return
             }
-            if (!isInPvpMatch) schedulePushSave(getSnapshot())
-            return
+            const adv = advanceTravel(savedTask, elapsedMs)
+            if (!adv.arrived) {
+              setActiveTask(adv.task)
+              activeTaskRef.current = adv.task
+              if (!isInPvpMatch) schedulePushSave(getSnapshot())
+              return
+            }
+            updateWorldLocation(savedTask.dest)
+            try { localStorage.removeItem('pocketrpg_activeTask') } catch {}
+            addToast(`🧭 Arrived at ${travelDestName(savedTask)}`, 'info')
+            // The trip finished while the player was away, so spend the leftover
+            // time fighting the monster the trip was launched for — kills should
+            // accrue during inactivity, not wait for the player to return (matches
+            // Skip-1h). Non-boss combat only; bosses/raids can't be idle-simulated
+            // and just resume live. Fall through to the combat sim + resume below.
+            const auto = savedTask.autoStart
+            const arrivalMonster = auto?.kind === 'combat' ? monstersData?.[auto.monsterId] : null
+            const leftoverMs = travelLeftoverMs(savedTask, elapsedMs)
+            if (arrivalMonster && arrivalMonster.boss !== true && leftoverMs >= 2000) {
+              const { spell } = resolveMagicSpell(freshEq, itemsDataRef.current, activeCombatSpell, spellsData)
+              resumeCombatLive = auto
+              resumeCombatReturnTo = savedTask.returnTo
+              savedTask = { type: 'combat', monster: arrivalMonster, stance: combatStance, spell: spell || null, bankingEnabled: true }
+              simElapsedMs = leftoverMs
+              setActiveTask(savedTask)
+              activeTaskRef.current = savedTask
+            } else {
+              setActiveTask(null)
+              activeTaskRef.current = null
+              resumeAutoStart(savedTask.autoStart, savedTask.returnTo)
+              if (!isInPvpMatch) schedulePushSave(getSnapshot())
+              return
+            }
           }
 
           // OneShot minigames — reduce remaining time while away; complete if timer reached 0.
@@ -1058,7 +1083,7 @@ function GameApp() {
             setActiveTask(restarted)
             activeTaskRef.current = restarted
           }
-          else if (savedTask.type === 'combat')  sim = simulateIdleCombat(savedTask, elapsedMs, freshStats, freshEq, freshInv, itemsDataRef.current, freshSlayerTask, freshBank, {
+          else if (savedTask.type === 'combat')  sim = simulateIdleCombat(savedTask, simElapsedMs, freshStats, freshEq, freshInv, itemsDataRef.current, freshSlayerTask, freshBank, {
             currentHP: currentHPRef.current ?? getMaxHP(),
             idleFood: idleCombatSetupRef.current?.food || [],
             idlePotions: idleCombatSetupRef.current?.potions || [],
@@ -1120,6 +1145,15 @@ function GameApp() {
           if (!sim) {
             if (savedTask.type === 'skill' && (savedTask.action?.type === 'alchemy' || savedTask.action?.materials || savedTask.action?.runeReq)) {
               setActiveTask(null)
+            }
+            // A travel-converted fight that produced nothing still resumes live.
+            if (resumeCombatLive) {
+              setActiveTask(null)
+              activeTaskRef.current = null
+              try { localStorage.removeItem('pocketrpg_activeTask') } catch {}
+              resumeAutoStart(resumeCombatLive, resumeCombatReturnTo)
+              if (!isInPvpMatch) schedulePushSave(getSnapshot())
+              return
             }
             setIdleResult({ elapsedMs, task: savedTask })
             return
@@ -1280,6 +1314,17 @@ function GameApp() {
           }
           if (savedTask.type === 'hunter' && sim.actions > 0 && savedTask.action?.id) {
             recordGameEvent?.({ kind: 'hunter_hunt', actionId: savedTask.action.id, count: sim.actions })
+          }
+
+          // The away time after arrival has been credited — drop the player into
+          // the live fight the trip was headed for (unless they died mid-idle),
+          // so combat carries on. Clearing the task first avoids the "You fled
+          // combat" toast navigate() shows otherwise.
+          if (resumeCombatLive && !idleDeath) {
+            setActiveTask(null)
+            activeTaskRef.current = null
+            try { localStorage.removeItem('pocketrpg_activeTask') } catch {}
+            resumeAutoStart(resumeCombatLive, resumeCombatReturnTo)
           }
 
           // Push the post-idle state to the cloud (debounced + hash-skipped).
