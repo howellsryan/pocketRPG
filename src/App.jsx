@@ -2294,15 +2294,6 @@ function GameApp() {
       return
     }
 
-    // Skip 1h is not allowed mid-journey: it only ever moved trail time, never
-    // the activity the trip was launched for. Block it with a clear error rather
-    // than burning the hour on travel.
-    if (activeTaskRef.current.type === 'travel') {
-      addToast('You cannot skip while travelling — wait until you arrive.', 'error')
-      isSkippingRef.current = false
-      return
-    }
-
     let didShowIdleModal = false
     // Set when a Skip-1h during a plain walk rolls the leftover hour into the
     // activity the trip was launched to start (see the travel branch below):
