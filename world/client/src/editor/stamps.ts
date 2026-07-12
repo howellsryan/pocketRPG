@@ -6,7 +6,7 @@ import { genId } from './placement'
 // fresh ids. Prefabs persist in localStorage so set-pieces (a camp, a grove, a
 // mine) can be reused across zones. Pure helpers; the editor wires the UI.
 
-type RelObject = { type: 'rock' | 'bank_chest' | 'tree'; rock?: string; tree?: string; dx: number; dz: number }
+type RelObject = { type: ZoneDef['objects'][number]['type']; rock?: string; tree?: string; dx: number; dz: number }
 type RelNpc = { monsterId: string; dx: number; dz: number; wander: { x: number; z: number; w: number; h: number } }
 type RelExit = { dx: number; dz: number; toZone: string; toX: number; toZ: number; label: string }
 type RelProp = { model: string; dx: number; dz: number; rot?: number; scale?: number }

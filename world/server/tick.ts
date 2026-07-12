@@ -2,8 +2,10 @@
 // I/O — the DO owns the objects, calls tickPlayer once per player per tick, and
 // decides what to broadcast/flush from the results.
 import type { Tile } from './pathfind'
-import type { CombatStance, EntityDiff, GearDescriptor, InvSlot, ZoneEvent } from '../shared/protocol'
+import type { CombatStance, EntityDiff, GearDescriptor, InvSlot, StationType, ZoneEvent } from '../shared/protocol'
 import { GATHER_SKILLS, ROCK_DEPLETED_TICKS, addToInventory, inventoryIsFull, type GatherSkill, type MiningAction } from './mining'
+import { STATIONS, recipeFor, stationTypeForVerb } from '../shared/recipes'
+import { craftOnce, hasMaterials } from './crafting'
 import { getLevelFromXP, clampXP } from '../../src/engine/experience.js'
 import { startCombat, stepCombat, type CombatSession } from './combat'
 import type { NpcState } from './npc'
@@ -20,6 +22,11 @@ export type RockState = { id: string; rock: string; skill?: GatherSkill; x: numb
 
 export type PendingInteract = { kind: 'rock' | 'object' | 'npc'; id: string; action: string }
 
+/** A processing station object (furnace/anvil/range) in DO memory. */
+export type StationState = { id: string; type: StationType; x: number; z: number }
+
+export type CraftingState = { station: StationType; stationId: string; recipeId: string; remaining: number; progress: number }
+
 export type TickPlayer = {
   charId: string
   name: string
@@ -35,6 +42,8 @@ export type TickPlayer = {
    * NOT here. */
   minted: Record<string, number>
   mining: { rockId: string; progress: number } | null
+  /** Active station craft (set by {t:'craft'}, cleared by movement/intents). */
+  crafting: CraftingState | null
   pendingInteract: PendingInteract | null
   /** Current HP (seeded from the hitpoints level at hello, regenerated slowly). */
   hp: number
@@ -68,6 +77,7 @@ export type TickContext = {
   rocks: Map<string, RockState>
   actions?: Record<string, MiningAction>
   npcs?: Map<string, NpcState>
+  stations?: Map<string, StationState>
   collision?: string[]
   /** Re-path to a tile adjacent to a (possibly moving) target — used to chase a
    * wandering npc that stepped away before the player finished approaching. */
@@ -80,6 +90,11 @@ export type TickResult = {
   rockChanges: { id: string; depleted: boolean }[]
   /** The player arrived at a bank chest → open the bank UI. */
   bankOpen: boolean
+  /** The player arrived at a processing station → open its recipe panel. */
+  stationOpen: StationType | null
+  /** Materials consumed by craft completions this tick — the DO drains the
+   * provenance pools with these (tick.ts has no pools access). */
+  crafted: Record<string, number>[]
   /** Zone-wide hitsplats ({dmg:0} = block/miss). */
   hits: { targetId: string; dmg: number }[]
   /** This player's HP hit 0 this tick → respawn + {t:'dead'}. */
@@ -92,7 +107,7 @@ export type TickResult = {
 }
 
 export function emptyResult(): TickResult {
-  return { entChanged: false, events: [], rockChanges: [], bankOpen: false, hits: [], died: false, newLoot: [], npcChanged: [], npcRemoved: [] }
+  return { entChanged: false, events: [], rockChanges: [], bankOpen: false, stationOpen: null, crafted: [], hits: [], died: false, newLoot: [], npcChanged: [], npcRemoved: [] }
 }
 
 /** Seeds the 28-slot session pack from the character's PocketRPG inventory at
@@ -165,6 +180,14 @@ function startInteract(player: TickPlayer, ctx: TickContext, result: TickResult)
   if (intent.kind === 'object' && intent.action === 'bank') {
     result.bankOpen = true
     return
+  }
+
+  if (intent.kind === 'object') {
+    const stationType = stationTypeForVerb(intent.action)
+    if (stationType) {
+      result.stationOpen = stationType
+      return
+    }
   }
 
   if (intent.kind === 'npc' && intent.action === 'attack') {
@@ -246,6 +269,46 @@ function tickMining(player: TickPlayer, ctx: TickContext, result: TickResult): v
   result.rockChanges.push({ id: rock.id, depleted: true })
 }
 
+function stopCrafting(player: TickPlayer): void {
+  player.crafting = null
+  player.anim = 'idle'
+}
+
+function tickCrafting(player: TickPlayer, ctx: TickContext, result: TickResult): void {
+  const crafting = player.crafting
+  if (!crafting) return
+  const station = ctx.stations?.get(crafting.stationId)
+  const recipe = recipeFor(crafting.station, crafting.recipeId)
+  if (!station || !recipe || !adjacent(player, station)) {
+    stopCrafting(player)
+    return
+  }
+  player.anim = 'mine'
+  crafting.progress += 1
+  if (crafting.progress < recipe.ticks) return
+  crafting.progress = 0
+
+  const skill = STATIONS[crafting.station].skill
+  const level = ensureSkill(player.stats, skill).level
+  const outcome = craftOnce(player.inventory, recipe, level)
+  if (!outcome.ok) {
+    result.events.push({ e: 'msg', text: outcome.reason === 'space' ? 'Your pack is full.' : 'You have run out of materials.' })
+    stopCrafting(player)
+    return
+  }
+  player.minted[outcome.product] = (player.minted[outcome.product] ?? 0) + 1
+  result.crafted.push(outcome.consumed)
+  if (outcome.burnt) result.events.push({ e: 'msg', text: 'You accidentally burn the food.' })
+  result.events.push(...grantSessionXp(player, skill, outcome.xp))
+  result.events.push({ e: 'inv', inventory: player.inventory })
+  crafting.remaining -= 1
+  if (crafting.remaining <= 0) stopCrafting(player)
+  else if (!hasMaterials(player.inventory, recipe)) {
+    result.events.push({ e: 'msg', text: 'You have run out of materials.' })
+    stopCrafting(player)
+  }
+}
+
 /** Advances the player along its path: one tile normally, a second tile when
  * running with energy to spare. Drains run energy per running tile. Returns
  * whether the player ran this tick (drives regen). */
@@ -291,11 +354,13 @@ export function tickPlayer(player: TickPlayer, ctx: TickContext): TickResult {
     startInteract(player, ctx, result)
     if (player.combat) stepCombat(player, ctx, result)
     else if (player.mining) tickMining(player, ctx, result)
-    else if (!result.bankOpen) player.anim = 'idle'
+    else if (!result.bankOpen && !result.stationOpen) player.anim = 'idle'
   } else if (player.combat) {
     stepCombat(player, ctx, result)
   } else if (player.mining) {
     tickMining(player, ctx, result)
+  } else if (player.crafting) {
+    tickCrafting(player, ctx, result)
   } else {
     player.anim = 'idle'
   }

@@ -36,7 +36,8 @@ export function placeEntry(def: ZoneDef, entry: CatalogEntry, x: number, z: numb
     return { group: 'objects', index: def.objects.length - 1 }
   }
   if (entry.kind === 'object') {
-    def.objects.push({ id: genId(def, 'chest'), type: 'bank_chest', x, z })
+    const prefix = entry.objectType === 'bank_chest' ? 'chest' : entry.objectType
+    def.objects.push({ id: genId(def, prefix), type: entry.objectType, x, z })
     return { group: 'objects', index: def.objects.length - 1 }
   }
   if (entry.kind === 'npc') {

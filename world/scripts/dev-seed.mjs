@@ -62,10 +62,13 @@ stats.attack = { xp: 4470, level: 20 }
 stats.strength = { xp: 4470, level: 20 }
 stats.defence = { xp: 4470, level: 20 }
 
-// Pack fixture: ore (inventory pull-through), food + bones (invAction eat/
-// bury), a spare weapon (equip swap). Bank fixture exercises withdraw.
+// Pack fixture: ore (inventory pull-through + Phase 7 smelting), raw beef
+// (Phase 7 cooking), food + bones (invAction eat/bury), a spare weapon (equip
+// swap). Bank fixture exercises withdraw.
 const inventory = [
   ...Array.from({ length: 5 }, () => ({ itemId: 'tin_ore', quantity: 1 })),
+  ...Array.from({ length: 3 }, () => ({ itemId: 'copper_ore', quantity: 1 })),
+  { itemId: 'raw_beef', quantity: 1 },
   { itemId: 'trout', quantity: 1 },
   { itemId: 'trout', quantity: 1 },
   { itemId: 'bones', quantity: 1 },

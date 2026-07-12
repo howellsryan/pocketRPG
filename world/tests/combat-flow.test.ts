@@ -18,7 +18,7 @@ function makePlayer(overrides: Partial<TickPlayer> = {}): TickPlayer {
       defence: { xp: 100000, level: 40 }, ranged: { xp: 0, level: 1 },
       magic: { xp: 0, level: 1 }, hitpoints: { xp: 100000, level: 40 },
     },
-    inventory: emptyInventory(), pendingXp: {}, minted: {}, mining: null, pendingInteract: null,
+    inventory: emptyInventory(), pendingXp: {}, minted: {}, mining: null, crafting: null, pendingInteract: null,
     hp: 40, maxHp: 40, equipment: {}, gear: {}, combat: null,
     running: false, runEnergy: 100, lastRunSent: 100, stance: 'accurate', specialEnergy: 100, lastSpecSent: 100,
     ...overrides,

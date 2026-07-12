@@ -3,8 +3,18 @@
 export const PROP_MODELS: string[] = [
   "boulder",
   "bush",
+  "cart",
   "flowers",
+  "house",
+  "lantern",
+  "lumbermill",
+  "market",
+  "mill",
   "mushrooms",
   "pine_a",
-  "pine_b"
+  "pine_b",
+  "town_tower",
+  "town_wall",
+  "watchtower",
+  "well"
 ]

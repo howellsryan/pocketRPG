@@ -507,6 +507,9 @@ const NPC_EXAMINE: Record<string, string> = {
   field_chicken: 'A plump forest fowl. Braver than it looks, which is not very.',
   cave_goblin: 'A wiry little menace, a long way from any cave.',
   arcane_adept: 'A robed student of the arcane, practising where the trees can’t complain.',
+  bogling_sprite: 'A wobbling dollop of bog-magic. Mostly harmless, entirely gelatinous.',
+  frostbite_imp: 'A small blue troublemaker radiating a distinctly unfriendly chill.',
+  marshfen_toad: 'A toad the size of a dog. The marsh smell arrives before it does.',
 }
 
 export function npcExamine(monsterId: string): string {

@@ -1,6 +1,6 @@
 export type ZoneObjectDef = {
   id: string
-  type: 'rock' | 'bank_chest' | 'tree'
+  type: 'rock' | 'bank_chest' | 'tree' | 'furnace' | 'anvil' | 'range'
   rock?: string
   /** Woodcutting action id ('normal', 'oak', …) for type 'tree'. */
   tree?: string

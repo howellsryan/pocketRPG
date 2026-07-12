@@ -2,6 +2,8 @@ import { clearStoredSession, exchangeHandoff, getStoredSession, getStoredZone, p
 import { hideConnBanner, hideOverlay, initChatInput, initHud, paintHudIcons, pushMessage, removeHpBar, removeNameplate, removeOverheadChat, renderEquipment, renderInventory, setRunState, setSpecialEnergy, setStanceActive, showConnBanner, showContextMenu, showHitsplat, showLoginRequired, showTransitionOverlay, showXpDrop, updateHpBar, updateHpPill, updateNameplate, updateOverheadChat, npcExamine } from './ui'
 import { createMinimap, type Minimap, type MinimapDot } from './minimap'
 import { closeBankUI, isBankOpen, openBankUI, updateBankInventory, updateBankUI } from './bank'
+import { closeCraftUI, openCraftUI, updateCraftInventory, updateCraftStats, type SkillLevels } from './crafting'
+import { getLevelFromXP } from '../../../src/engine/experience.js'
 import { connect, onMessage, send } from './net'
 import { clampZoom, createCamera, createGround, createLights, createRenderer, createScene, tileToWorld, updateCamera } from './scene'
 import { applyEntityDiff, applyWeapon, createEntity, createHeroMesh, createMonsterMesh, updateEntity, type Entity } from './entities'
@@ -59,6 +61,9 @@ function enterWorld(session: WorldSession): void {
   // Local pack copy so a drag-reorder can apply optimistically; every server
   // {e:'inv'} (including the reorder echo) replaces it wholesale.
   let inventory: InvSlot[] = []
+  // Session skill levels for the recipe panel's gates: seeded from the welcome,
+  // advanced by {e:'xp'} events (level derived the same way the server does).
+  let stats: SkillLevels = {}
   // partysocket reconnects silently and re-fires 'open'; a repeat welcome must
   // RESYNC the existing scene, never rebuild it (a second renderer/loop breaks
   // everything until a hard refresh).
@@ -83,6 +88,7 @@ function enterWorld(session: WorldSession): void {
       inventory = event.inventory
       renderInventory(inventory)
       updateBankInventory(inventory)
+      updateCraftInventory(inventory)
     }
     else if (event.e === 'hp') updateHpPill(event.hp, event.maxHp)
     else if (event.e === 'run') {
@@ -95,7 +101,16 @@ function enterWorld(session: WorldSession): void {
       if (event.open) openBankUI(event.bank, inventory, (op, itemId, qty) => send(socket, { t: 'bank', op, itemId, qty }))
       else if (isBankOpen()) updateBankUI(event.bank)
     }
-    else if (event.e === 'xp') showXpDrop(event.skill, event.amount)
+    else if (event.e === 'station') {
+      openCraftUI(event.station, inventory, stats, (station, recipeId, qty) => send(socket, { t: 'craft', station, recipeId, qty }))
+    }
+    else if (event.e === 'xp') {
+      const entry = stats[event.skill] ?? (stats[event.skill] = { xp: 0, level: 1 })
+      entry.xp += event.amount
+      entry.level = Math.max(entry.level, getLevelFromXP(entry.xp))
+      updateCraftStats(stats)
+      showXpDrop(event.skill, event.amount)
+    }
     else if (event.e === 'msg') pushMessage(event.text)
     else if (event.e === 'hit') {
       const mesh = meshOf(event.targetId)
@@ -227,6 +242,8 @@ function enterWorld(session: WorldSession): void {
     setSpecialEnergy(message.you.specialEnergy)
     renderEquipment(message.you.equipment)
     closeBankUI()
+    closeCraftUI()
+    stats = message.you.stats
     playerCombatLevel = combatLevelFromStats(message.you.stats)
     if (self) {
       const pos = tileToWorld(message.you.x, message.you.z)
@@ -331,6 +348,7 @@ function enterWorld(session: WorldSession): void {
           },
         })
         initChatInput((text) => send(socket, { t: 'chat', text }))
+        stats = message.you.stats
         playerCombatLevel = combatLevelFromStats(message.you.stats)
         lootLayer = createLootLayer(scene)
 
@@ -360,6 +378,7 @@ function enterWorld(session: WorldSession): void {
         setupInput(renderer.domElement, camera, ground, {
           onWalk: (tile) => {
             closeBankUI()
+            closeCraftUI()
             showClickMarker(marker, tile.x, tile.z)
             const now = performance.now()
             if (tile.x === lastWalk.x && tile.z === lastWalk.z && now - lastWalk.at < 400) return
@@ -372,6 +391,7 @@ function enterWorld(session: WorldSession): void {
               const tile = exitLayer?.tiles.get(interact.id)
               if (tile) {
                 closeBankUI()
+                closeCraftUI()
                 showClickMarker(marker, tile.x, tile.z)
                 send(socket, { t: 'walk', x: tile.x, z: tile.z })
               }

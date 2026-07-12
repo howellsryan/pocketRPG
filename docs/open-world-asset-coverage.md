@@ -17,11 +17,11 @@ Model-first: every usable creature model we own, its best `monsters.json` match,
 | Chicken | field_chicken (1) | **In world** (Phase 6) | `build-monster.mjs`; the Whisperwood |
 | Goleling | cave_goblin (5) | **In world** (Phase 6) | Flyer — clips are `Flying_Idle`/`Fast_Flying`; hovers off the ground |
 | Wizard | arcane_adept (9) / umbral_adept (20) | **In world** (Phase 6, arcane_adept) | Living-hat creature; umbral tint still pending |
-| Green/Pink/Spiky Blob | bogling_sprite (12) | Candidate | |
+| Green/Pink/Spiky Blob | bogling_sprite (12) | **In world** (Phase 7, Green Blob) | Outside Lumbright's walls |
 | Ghost | wailing_banshee (23) / wraith-type specters | Candidate | |
-| Blue Demon | frostbite_imp (25) | Matched | Scale down |
+| Blue Demon | frostbite_imp (25) | **In world** (Phase 7) | Scaled down; outside Lumbright's walls |
 | Orc / Orc Enemy | highland_giant (28) | Candidate | Scale up; or briar_giant (42) green-tinted |
-| Frog | marshfen_toad (30) | Matched | |
+| Frog | marshfen_toad (30) | **In world** (Phase 7) | Outside Lumbright's walls |
 | Cat | cinderpaw_cub (36) | Candidate | Ember tint |
 | Dino | stoneglare_basilisk (62) / embertongue_lizard (68) | Candidate | |
 | Goleling Evolved | elder_rock_golem (70) | Matched | |
