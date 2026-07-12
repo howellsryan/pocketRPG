@@ -328,7 +328,7 @@ function GameApp() {
   const { loaded, loadGame, player, stats, equipment, inventory, bank, currentHP, updateHP, getMaxHP, updateInventory, updateEquipment, updateBank, updateBankDirect, grantXP, addToast, activeTask, setActiveTask, getActiveTask, itemsData, getSnapshot, unlockedFeatures, setSlayerTask, awardSlayerPoints, slayerTasksCompleted, setSlayerTasksCompleted, completeQuest, completedQuests, questQueue, removeFromQuestQueue, updateQuestQueue,
     unlockMinigameItem, unlockedMinigameItems, awardDungeoneeringTokens, farming, updateFarming, idleCombatSetup, isOneLife, updateBossKillCounts, updateRaidKillCounts, syncServerKillCounts, markKillCountsLoaded, combatSkipHandlerRef, skipHourHandlerRef, chargeSkipRef, raidSkipHandlerRef,
     gameLocked, lockGame, unlockGame, runLockedSave, awaitCombatCompletion, resolveCombatCompletion,
-    characterUnlocks, dailyTaskStates, setDailyTasks, recordGameEvent, updateWorldLocation, worldLocation, clearActivityProgress, requestActivityStart,
+    characterUnlocks, dailyTaskStates, setDailyTasks, recordGameEvent, updateWorldLocation, worldLocation, clearActivityProgress, getActivityProgress, requestActivityStart,
     inventoryFull, signalInventoryFull, dismissInventoryFullPrompt, resolveInventoryFull } = useGame()
   const pvp = usePvp()
   const [screen, setScreen] = useState(SCREENS.HOME)
@@ -2405,10 +2405,20 @@ function GameApp() {
           // A walk is seconds long, so a Skip-1h to a gated activity should spend
           // the (near-)full hour on that activity rather than evaporating the
           // credit on the trip. Rebuild the activity task and fall through to the
-          // generic simulation below (which does NOT re-charge). The activity is a
-          // background one, so it keeps accruing wherever the player is; types we
-          // can't simulate here (combat/raid/farming) resume live as before.
-          const resumedTask = buildAutoStartTask(task.autoStart)
+          // generic simulation below (which does NOT re-charge). Covers skilling,
+          // gathering, agility, thieving, hunter, minigames and regular-monster
+          // combat; only per-kill-skip types (boss/raid) and instant place
+          // actions (slayer/farming/bank) still resume live on arrival.
+          const [savedStance, savedSpell] = await Promise.all([
+            getSetting('combatStance'), getSetting('activeCombatSpell'),
+          ])
+          const resumedTask = buildAutoStartTask(task.autoStart, {
+            equipment: freshEq,
+            itemsData: itemsDataRef.current,
+            stance: savedStance,
+            activeSpellId: savedSpell?.id || null,
+            getProgressTicks: (key) => getActivityProgress(key)?.progressTicks || 0,
+          })
           if (resumedTask) {
             setActiveTask(resumedTask)
             activeTaskRef.current = resumedTask
@@ -2762,6 +2772,17 @@ function GameApp() {
       if (!resumedFromTravel && !isChargeableSkipOutcome(task, idleResultData)) {
         clearExhaustedActiveTask(preflight?.reason || 'No remaining actions available for this activity.')
         return
+      }
+
+      // Combat is modal — it can't keep accruing in the background like the
+      // other resumed activities, so after the simulated hour clear the task
+      // and drop the player into the live fight (skipped if the hour ended in
+      // a death — that branch already cleared the task and toasted).
+      if (resumedFromTravel?.type === 'combat' && activeTaskRef.current?.type === 'combat') {
+        setActiveTask(null)
+        activeTaskRef.current = null
+        try { localStorage.removeItem('pocketrpg_activeTask') } catch {}
+        if (!idleResultData?.died) resumeAutoStart(task.autoStart, task.returnTo)
       }
 
       updateFarming(advanceFarmingState(farming, SKIP_HOUR_MS))
