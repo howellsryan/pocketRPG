@@ -238,10 +238,10 @@ export function createProcCreature(THREE, spec) {
       } else if (archetype === 'serpent') {
         rootScaleY = 1 - 0.45 * e
       } else if (archetype === 'humanoid') {
-        // crumple forward: knees give (squash), torso pitches face-down
-        rootEuler.x += 1.35 * e
-        rootPos.y -= 0.12 * S * e
-        rootScaleY = 1 - 0.15 * e
+        // crumple forward: knees give (squash), torso slumps face-down
+        rootEuler.x += 1.05 * e
+        rootPos.y -= 0.16 * S * e
+        rootScaleY = 1 - 0.2 * e
       } else {
         rootEuler.z += 0.95 * e
         rootPos.y -= 0.22 * S * e
