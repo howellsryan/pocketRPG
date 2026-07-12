@@ -160,6 +160,46 @@ describe('advanceJourneyOffline', () => {
     // never grants content itself: the task survives for the App tick to complete
     expect(res.task.journey.payload).toEqual(CLUE)
   })
+
+  it('a parked journey carries its unspent catch-up time on the task for the live tick to chain', () => {
+    const leg = plan()
+    const res = advanceJourneyOffline(leg, 24 * 60 * 60 * 1000)
+    expect(res.completedPending).toBe(true)
+    expect(res.task.catchupMs).toBe(res.msRemaining)
+  })
+
+  it('leftover catch-up time fast-forwards the next queued quest journey and re-parks its remainder', () => {
+    const questA = { id: 'qa', name: 'Quest A', durationSeconds: 300 }
+    const questB = { id: 'qb', name: 'Quest B', durationSeconds: 300 }
+    const legA = planQuestJourney(questA, 'lumbright')!
+    const first = advanceJourneyOffline(legA, 6 * 60 * 60 * 1000) // 6h covers both quests
+    expect(first.completedPending).toBe(true)
+    expect(first.task.catchupMs).toBeGreaterThan(0)
+    // The live tick completes quest A, promotes quest B from where A ended,
+    // then spends the carried time on B's journey.
+    const legB = planQuestJourney(questB, first.location!)!
+    const second = advanceJourneyOffline(legB, first.task.catchupMs)
+    expect(second.completedPending).toBe(true)
+    expect(second.task.catchupMs).toBe(second.msRemaining)
+    expect(second.msRemaining).toBeLessThan(first.msRemaining)
+  })
+
+  it('a chained journey the carry cannot finish is left mid-trail with no carry', () => {
+    const questA = { id: 'qa2', name: 'Quest A', durationSeconds: 300 }
+    const questB = { id: 'qb2', name: 'Quest B', durationSeconds: 36000 } // 10h — far beyond the carry
+    const legA = planQuestJourney(questA, 'lumbright')!
+    const first = advanceJourneyOffline(legA, 60 * 60 * 1000) // 1h finishes A with time to spare
+    expect(first.completedPending).toBe(true)
+    const legB = planQuestJourney(questB, first.location!)!
+    const second = advanceJourneyOffline(legB, first.task.catchupMs)
+    expect(second.completedPending).toBe(false)
+    expect(second.task.catchupMs ?? 0).toBe(0)
+    // The carry actually progressed B rather than evaporating: ~55 minutes
+    // covers the short road to the first waypoint but not its 2.5h search.
+    expect(second.task.journey.phase).toBe('search')
+    expect(second.task.journey.step).toBe(0)
+    expect(second.task.ticksRemaining).toBeLessThan(second.task.totalTicks)
+  })
 })
 
 describe('canonical planners', () => {
