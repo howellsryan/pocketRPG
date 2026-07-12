@@ -18,7 +18,15 @@ import { isOrderBookItem } from '../engine/storeRules.js'
 import { SLAYER_UNLOCKS } from '../engine/slayerUnlocks.js'
 import { isZestaUnique } from '../engine/pvpBotRewards.js'
 
-const SLAYER_UNLOCK_IDS = new Set(SLAYER_UNLOCKS.map(u => u.itemId))
+// Lazily built the first time it's needed — never at module-eval time. In the
+// single-file build this module is concatenated ahead of slayerUnlocks.js, so
+// touching SLAYER_UNLOCKS at top level throws a temporal-dead-zone ReferenceError
+// that takes the whole app down (§12). Deferring the access to call time avoids it.
+let _slayerUnlockIds = null
+function slayerUnlockIds() {
+  if (!_slayerUnlockIds) _slayerUnlockIds = new Set(SLAYER_UNLOCKS.map(u => u.itemId))
+  return _slayerUnlockIds
+}
 
 const hasPositive = (obj) => !!obj && Object.values(obj).some(v => typeof v === 'number' && v > 0)
 
@@ -237,7 +245,7 @@ export function describeObtainment(item, data = {}) {
   if (idx.thieving.has(id)) out.push(`Stolen from ${idx.thieving.get(id)}`)
   if (idx.hunter.has(id)) out.push(`Hunted via ${idx.hunter.get(id)}`)
 
-  if (SLAYER_UNLOCK_IDS.has(id)) out.push('Bought with Slayer points on the Character Unlocks screen')
+  if (slayerUnlockIds().has(id)) out.push('Bought with Slayer points on the Character Unlocks screen')
   if (isZestaUnique(id)) out.push('A rare drop from winning PvP bot matches')
   if (item.isSkillCape) out.push('Bought once you reach level 99 in its skill')
   else if (item.isMaxCape) out.push('Bought once every skill reaches level 99')
