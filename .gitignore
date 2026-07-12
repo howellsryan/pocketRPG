@@ -15,3 +15,6 @@ public/fonts/
 world/node_modules/
 world/client/dist/
 world/.dev.vars
+
+# Coverage output
+/coverage

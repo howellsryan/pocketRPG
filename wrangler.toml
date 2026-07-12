@@ -36,8 +36,6 @@ APP_BASE_URL = "https://pocketrpg.co.uk"
 #   STRIPE_PRICE_CREDITS_10   — Stripe Price ID for 10 credits
 #   STRIPE_PRICE_CREDITS_100  — Stripe Price ID for 100 credits
 #   STRIPE_PRICE_CREDITS_1000 — Stripe Price ID for 1000 credits
-#   TRIPO_API_KEY             — Tripo AI API key (https://platform.tripo3d.ai); never commit it
-#   TRIPO_MCP_TOKEN           — random bearer secret gating /api/tripo-mcp (dev tool, not player-facing)
 #
 # pocketrpg-assets is a plain R2 bucket (no special config) — create it once with
 # `wrangler r2 bucket create pocketrpg-assets` (and the -preview one below).
@@ -64,5 +62,3 @@ ai = { binding = "AI" }
 #   STRIPE_PRICE_CREDITS_10   — test Stripe Price ID
 #   STRIPE_PRICE_CREDITS_100  — test Stripe Price ID
 #   STRIPE_PRICE_CREDITS_1000 — test Stripe Price ID
-#   TRIPO_API_KEY             — Tripo AI API key (can reuse the same key as production)
-#   TRIPO_MCP_TOKEN           — random bearer secret gating /api/tripo-mcp on preview

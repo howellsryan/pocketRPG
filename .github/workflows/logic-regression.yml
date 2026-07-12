@@ -10,6 +10,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          # Full history so the changed-lines gate can find the PR merge-base.
+          fetch-depth: 0
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -20,5 +23,46 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run logic regression pack and build checks
-        run: npm run ci
+      # Runs the full suite once, with coverage. Everything below reuses this
+      # run — we deliberately DO NOT call `npm run ci` (its build prebuild would
+      # execute the suite a second time). See docs/testing-strategy-review.md.
+      - name: Test with coverage
+        run: npm run test:coverage
+
+      - name: Coverage ratchet (report-only)
+        run: node scripts/check-coverage-ratchet.cjs
+
+      # PR-only: gates that need a merge-base. Report-only until the *_BLOCKING
+      # envs are set (one release after landing — see the review doc).
+      - name: Changed-lines coverage gate
+        if: github.event_name == 'pull_request'
+        run: node scripts/check-diff-coverage.cjs
+
+      - name: Untestable-zone ratchet
+        if: github.event_name == 'pull_request'
+        run: node scripts/check-ui-ratchet.cjs
+
+      - name: Build (suite already ran above)
+        run: npx vite build
+
+      - name: Single-file rebuild + safety check
+        run: npm run rebuild && npm run check:single
+
+  world-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: world/package-lock.json
+
+      - name: Install world dependencies
+        run: cd world && npm ci
+
+      - name: Typecheck and test the world subproject
+        run: cd world && npm run typecheck && npm test

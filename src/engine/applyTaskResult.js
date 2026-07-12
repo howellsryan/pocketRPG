@@ -1,4 +1,36 @@
+// @ts-check
 import { getLevelFromXP } from './experience.js'
+
+/**
+ * The result of a task simulation (idle/offline/skip-hour/live-completion),
+ * consumed by applyTaskResult. NOT every field applies to every task type;
+ * the per-type rules live in applyTaskResult's branches.
+ *
+ * NET vs ADDITIVE — the distinction that caused the #725 double-loot bug:
+ *  - `itemsBanked` / `lootBanked` are ADDITIVE: items to add to the bank.
+ *  - `itemsGained` is NET for `skill`/`gather` (it already equals the
+ *    inventory delta + itemsBanked, so it must NOT be re-applied on top of
+ *    finalInventory) but ADDITIVE for other types (thieving/hunter/etc).
+ *  - `finalInventory` REPLACES the inventory wholesale for
+ *    skill/gather/clue/combat.
+ *
+ * @typedef {Object} TaskResult
+ * @property {Record<string, number>} [xpGained]        XP per skill id.
+ * @property {number} [dungeoneeringTokensGained]
+ * @property {boolean} [died]                            combat only.
+ * @property {number} [finalHP]                          combat only.
+ * @property {{itemId: string, quantity: number}} [ammoConsumed] combat only.
+ * @property {number} [chargesConsumed]                  combat only.
+ * @property {Record<string, number>} [itemsConsumed]    bank items spent.
+ * @property {Array<any>} [finalInventory]               replaces inventory (skill/gather/clue/combat).
+ * @property {Record<string, number>} [lootBanked]       ADDITIVE bank loot.
+ * @property {Record<string, number>} [itemsBanked]      ADDITIVE bank loot (alias).
+ * @property {Record<string, number>} [itemsGained]      NET for skill/gather, ADDITIVE otherwise.
+ * @property {number} [coinsGained]                      agility/thieving.
+ * @property {Array<{itemId: string, quantity: number}>} [rewards] hunter.
+ * @property {string|null} [stoppedReason]
+ * @property {number} [monstersKilled]                   combat only.
+ */
 
 // Single source of truth for "apply idle simulation result → save state".
 // Used by both the MCP (functions/_lib/mcp/intents.js) and the browser
@@ -20,6 +52,7 @@ import { getLevelFromXP } from './experience.js'
 
 const XP_CAP = 200_000_000
 
+/** @param {Record<string, any>} bank @param {string} itemId @param {number} qty */
 function bankAdd(bank, itemId, qty) {
   if (qty <= 0) return
   const existing = bank[itemId]
@@ -30,6 +63,7 @@ function bankAdd(bank, itemId, qty) {
 
 // Coins from agility/thieving land in the inventory (stackable, coalescing),
 // falling back to the bank when the inventory is full — matching the client.
+/** @param {any[]} inventory @param {Record<string, any>} bank @param {number} qty */
 function addCoinsInventoryFirst(inventory, bank, qty) {
   if (qty <= 0) return
   // Coalesce into the unnoted coins stack. The `!s.noted` guard is defensive
@@ -48,6 +82,11 @@ function addCoinsInventoryFirst(inventory, bank, qty) {
   bankAdd(bank, 'coins', qty)
 }
 
+/**
+ * @param {{stats?: any, inventory?: any[], bank?: any, equipment?: any, settings?: any}} state
+ * @param {TaskResult} sim
+ * @param {string} type
+ */
 export function applyTaskResult(state, sim, type) {
   if (!state.stats || typeof state.stats !== 'object') state.stats = {}
   if (!state.bank || typeof state.bank !== 'object') state.bank = {}
@@ -75,7 +114,7 @@ export function applyTaskResult(state, sim, type) {
 
   // Dungeoneering tokens
   if ((sim.dungeoneeringTokensGained || 0) > 0) {
-    settings.dungeoneeringTokens = (Number(settings.dungeoneeringTokens) || 0) + Math.floor(sim.dungeoneeringTokensGained)
+    settings.dungeoneeringTokens = (Number(settings.dungeoneeringTokens) || 0) + Math.floor(sim.dungeoneeringTokensGained || 0)
   }
 
   // Combat-specific: HP and equipment drain
@@ -91,8 +130,9 @@ export function applyTaskResult(state, sim, type) {
       const remaining = Math.max(0, (Number(equipment.ammo.quantity) || 0) - sim.ammoConsumed.quantity)
       equipment.ammo = remaining > 0 ? { ...equipment.ammo, quantity: remaining } : null
     }
-    if (sim.chargesConsumed > 0 && equipment.weapon) {
-      const remaining = Math.max(0, (Number(equipment.weapon.charges) || 0) - sim.chargesConsumed)
+    const chargesConsumed = Number(sim.chargesConsumed) || 0
+    if (chargesConsumed > 0 && equipment.weapon) {
+      const remaining = Math.max(0, (Number(equipment.weapon.charges) || 0) - chargesConsumed)
       equipment.weapon = { ...equipment.weapon, charges: remaining }
     }
   }

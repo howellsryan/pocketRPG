@@ -1,0 +1,23 @@
+// Second net: type-checks JS source WITHOUT emitting. checkJs is OFF, so only
+// files with a `// @ts-check` pragma are actually checked — imports from
+// un-annotated files are inferred, never error-reported. This is deliberate:
+// it grows strict typing file-by-file (add JSDoc + `// @ts-check` and the file
+// joins `npm run typecheck` automatically) instead of a ~400-error big bang.
+// See docs/testing-strategy-review.md (Phase B) and -delivery-plan.md (PR 4).
+// strictNullChecks is off for now; enable it once annotated files can bear it.
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "ES2020",
+    "moduleResolution": "bundler",
+    "allowJs": true,
+    "checkJs": false,
+    "strict": true,
+    "strictNullChecks": false,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "resolveJsonModule": true
+  },
+  "include": ["src/**/*.js"]
+}
