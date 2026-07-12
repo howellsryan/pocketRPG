@@ -18163,5 +18163,441 @@
     "icon": "\ud83d\udc56",
     "isGeneralStore": false,
     "isUntradeable": true
+  },
+  "boundless_hat": {
+    "id": "boundless_hat",
+    "name": "Boundless Hat",
+    "type": "armour",
+    "slot": "head",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 8,
+      "ranged": -3
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 6,
+      "ranged": -3
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "magic": 50,
+      "defence": 25
+    },
+    "shopValue": 500000,
+    "icon": "🎓",
+    "isGeneralStore": false,
+    "isUntradeable": true
+  },
+  "boundless_robe_top": {
+    "id": "boundless_robe_top",
+    "name": "Boundless Robe Top",
+    "type": "armour",
+    "slot": "body",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 24,
+      "ranged": -10
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 14,
+      "ranged": -10
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "magic": 50,
+      "defence": 25
+    },
+    "shopValue": 500000,
+    "icon": "👘",
+    "isGeneralStore": false,
+    "isUntradeable": true
+  },
+  "boundless_robe_bottom": {
+    "id": "boundless_robe_bottom",
+    "name": "Boundless Robe Bottom",
+    "type": "armour",
+    "slot": "legs",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 18,
+      "ranged": -7
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 11,
+      "ranged": -7
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "magic": 50,
+      "defence": 25
+    },
+    "shopValue": 500000,
+    "icon": "👖",
+    "isGeneralStore": false,
+    "isUntradeable": true
+  },
+  "boundless_boots": {
+    "id": "boundless_boots",
+    "name": "Boundless Boots",
+    "type": "armour",
+    "slot": "boots",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 5,
+      "ranged": -2
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 5,
+      "ranged": -2
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "magic": 50,
+      "defence": 25
+    },
+    "shopValue": 500000,
+    "icon": "👢",
+    "isGeneralStore": false,
+    "isUntradeable": true
+  },
+  "boundless_gloves": {
+    "id": "boundless_gloves",
+    "name": "Boundless Gloves",
+    "type": "armour",
+    "slot": "gloves",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 6,
+      "ranged": -2
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 6,
+      "ranged": -2
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "magic": 50,
+      "defence": 25
+    },
+    "shopValue": 500000,
+    "icon": "🧤",
+    "isGeneralStore": false,
+    "isUntradeable": true
+  },
+  "arcane_grimoire": {
+    "id": "arcane_grimoire",
+    "name": "Arcane Grimoire",
+    "type": "armour",
+    "slot": "shield",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 12,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 8,
+      "ranged": 3
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 3
+    },
+    "requirements": {
+      "magic": 50
+    },
+    "shopValue": 1000000,
+    "icon": "📖",
+    "isGeneralStore": false,
+    "isUntradeable": true
+  },
+  "archmage_wand": {
+    "id": "archmage_wand",
+    "name": "Archmage Wand",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": false,
+    "stackable": false,
+    "attackSpeed": 4,
+    "attackStyle": "magic",
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 25,
+      "ranged": -3
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 12,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 5
+    },
+    "requirements": {
+      "magic": 50
+    },
+    "shopValue": 1000000,
+    "icon": "🪄",
+    "isGeneralStore": false,
+    "isUntradeable": true
+  },
+  "duskmare_staff": {
+    "id": "duskmare_staff",
+    "name": "Duskmare Staff",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": true,
+    "stackable": false,
+    "attackSpeed": 5,
+    "attackStyle": "magic",
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 16,
+      "ranged": -3
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 12,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 10
+    },
+    "requirements": {
+      "magic": 65
+    },
+    "shopValue": 8000000,
+    "icon": "🌑",
+    "isGeneralStore": false,
+    "isBossUnique": true,
+    "description": "A hollow staff torn from the Duskmare. Attune an orb to unlock its true power."
+  },
+  "umbral_orb": {
+    "id": "umbral_orb",
+    "name": "Umbral Orb",
+    "type": "material",
+    "stackable": false,
+    "shopValue": 6000000,
+    "icon": "🔮",
+    "isGeneralStore": false,
+    "isBossUnique": true,
+    "description": "Attunes to the Duskmare Staff, forging the Umbral Duskmare Staff.",
+    "combineWith": "duskmare_staff",
+    "combineResult": "umbral_duskmare_staff"
+  },
+  "attuned_orb": {
+    "id": "attuned_orb",
+    "name": "Attuned Orb",
+    "type": "material",
+    "stackable": false,
+    "shopValue": 6000000,
+    "icon": "🟣",
+    "isGeneralStore": false,
+    "isBossUnique": true,
+    "description": "Attunes to the Duskmare Staff, forging the Attuned Duskmare Staff.",
+    "combineWith": "duskmare_staff",
+    "combineResult": "attuned_duskmare_staff"
+  },
+  "volatile_orb": {
+    "id": "volatile_orb",
+    "name": "Volatile Orb",
+    "type": "material",
+    "stackable": false,
+    "shopValue": 6000000,
+    "icon": "🟠",
+    "isGeneralStore": false,
+    "isBossUnique": true,
+    "description": "Attunes to the Duskmare Staff, forging the Volatile Duskmare Staff.",
+    "combineWith": "duskmare_staff",
+    "combineResult": "volatile_duskmare_staff"
+  },
+  "umbral_duskmare_staff": {
+    "id": "umbral_duskmare_staff",
+    "name": "Umbral Duskmare Staff",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": true,
+    "stackable": false,
+    "attackSpeed": 5,
+    "attackStyle": "magic",
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 20,
+      "ranged": -3
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 15,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 15
+    },
+    "requirements": {
+      "magic": 75
+    },
+    "shopValue": 14000000,
+    "icon": "🌑",
+    "isGeneralStore": false,
+    "isUntradeable": true,
+    "description": "Casts standard spells. Its Soul Drain special deals magic damage and restores your Prayer pool.",
+    "specialAttack": {
+      "type": "soul_drain",
+      "energyCost": 55,
+      "description": "Soul Drain: a magic blast that restores Prayer points equal to half the damage dealt."
+    }
+  },
+  "attuned_duskmare_staff": {
+    "id": "attuned_duskmare_staff",
+    "name": "Attuned Duskmare Staff",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": true,
+    "stackable": false,
+    "attackSpeed": 4,
+    "attackStyle": "magic",
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 22,
+      "ranged": -3
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 15,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 15
+    },
+    "requirements": {
+      "magic": 75
+    },
+    "shopValue": 14000000,
+    "icon": "🌑",
+    "isGeneralStore": false,
+    "isUntradeable": true,
+    "description": "Casts standard spells one tick faster than any other staff — the highest sustained magic DPS."
+  },
+  "volatile_duskmare_staff": {
+    "id": "volatile_duskmare_staff",
+    "name": "Volatile Duskmare Staff",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": true,
+    "stackable": false,
+    "attackSpeed": 5,
+    "attackStyle": "magic",
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 20,
+      "ranged": -3
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 15,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 15
+    },
+    "requirements": {
+      "magic": 75
+    },
+    "shopValue": 14000000,
+    "icon": "🌑",
+    "isGeneralStore": false,
+    "isUntradeable": true,
+    "description": "Casts standard spells. Its Volatile Surge special hits harder the higher your Magic level.",
+    "specialAttack": {
+      "type": "volatile_surge",
+      "energyCost": 55,
+      "description": "Volatile Surge: a high-accuracy blast whose max hit scales with your Magic level."
+    }
   }
 }

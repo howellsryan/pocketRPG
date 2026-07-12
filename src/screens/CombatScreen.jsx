@@ -146,6 +146,12 @@ const COMBAT_CATEGORIES = [
     icon: '🌲',
     ids: ['gravethorn_drake', 'razorwing_harpy'],
   },
+  {
+    key: 'duskmare',
+    label: 'The Duskmare',
+    icon: '🌑',
+    ids: ['duskmare'],
+  },
 ]
 
 // Resolve which combat category a monster id belongs to (for art accent fallback).
@@ -205,7 +211,7 @@ const MONSTER_ICONS = {
   gravehusk_brute: '💀', boneclaw_revenant: '🦴', shroudwraith_specter: '👻',
   stonegale_elemental: '🪨', cindermaw_serpent: '🐍', thornhide_colossus: '🌳',
   ironclad_guardian: '⚙️', emberhowl_warlord: '🪓',
-  gravethorn_drake: '🦎', razorwing_harpy: '🦅'
+  gravethorn_drake: '🦎', razorwing_harpy: '🦅', duskmare: '🌑'
 }
 
 class PvpCombatErrorBoundary extends Component {
@@ -530,7 +536,9 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             soul_leech: `🩸 Soul Leech (+${ev.healAmount || 0} HP)`,
             gale_shot: ev.stunned ? '💨 Gale Shot (staggered!)' : '💨 Gale Shot',
             molten_crush: ev.defenceReducedBy > 0 ? `🌋 Molten Crush (-${ev.defenceReducedBy} Defence)` : '🌋 Molten Crush',
-            volley: '🌿🌿🌿 Volley'
+            volley: '🌿🌿🌿 Volley',
+            soul_drain: ev.prayerRestored > 0 ? `🌑 Soul Drain (+${ev.prayerRestored} Prayer)` : '🌑 Soul Drain',
+            volatile_surge: '🌩️ Volatile Surge'
           }
           const label = specLabels[ev.specType] || '⚡ Special Attack'
           setLog(prev => [...prev.slice(-20), {
@@ -2755,7 +2763,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
               <div class="cb-fight__head">
                 <div class="cb-fight__id">
                   <SkillEmblem iconKey={mArt.icon} accent={mArt.accent} size={34} glow={0} />
-                  <div>
+                  <div class="min-w-0">
                     <div class="cb-fight__name">{m.name}</div>
                     <div class="cb-fight__chips">
                       <MultiStyleChip chip={getMonsterAttackStyles(m)} />
@@ -2763,7 +2771,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                     </div>
                   </div>
                 </div>
-                <span class="flex items-center gap-1.5">
+                <span class="flex items-center gap-1.5 flex-shrink-0">
                   {arenaChip}
                   <button class="cb-fight__cb" onClick={() => setSelectedMonsterInfo(m)} aria-label={`${m.name} info`}>
                     CB {m.combatLevel}

@@ -22,6 +22,8 @@ export const PVP_SPECIAL_ATTACK_LABELS = {
   gale_shot: '💨 Gale Shot',
   molten_crush: '🌋 Molten Crush',
   volley: '🌿🌿🌿 Volley',
+  soul_drain: '🌑 Soul Drain',
+  volatile_surge: '🌩️ Volatile Surge',
 }
 
 export const SUPPORTED_PVP_SPECIAL_ATTACK_TYPES = new Set(Object.keys(PVP_SPECIAL_ATTACK_LABELS))

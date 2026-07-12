@@ -9951,5 +9951,104 @@
       { "itemId": "runeforged_pickaxe", "quantity": 1, "chance": 0.015625 },
       { "itemId": "clue_scroll_medium", "quantity": 1, "chance": 0.02 }
     ]
+  },
+  "duskmare": {
+    "id": "duskmare",
+    "name": "The Duskmare",
+    "boss": true,
+    "combatLevel": 470,
+    "hitpoints": 240,
+    "stats": {
+      "attack": 220,
+      "strength": 230,
+      "defence": 260,
+      "magic": 300,
+      "ranged": 1
+    },
+    "attackSpeed": 4,
+    "attackStyle": "magic",
+    "attackBonus": 130,
+    "strengthBonus": 0,
+    "defenceBonus": {
+      "stab": 150,
+      "slash": 150,
+      "crush": 130,
+      "magic": 100,
+      "ranged": 140
+    },
+    "skipCost": 8,
+    "dropRolls": 1,
+    "drops": [
+      {
+        "itemId": "big_bones",
+        "quantity": 1,
+        "chance": 1
+      },
+      {
+        "itemId": "coins",
+        "quantity": [
+          18000,
+          24000
+        ],
+        "chance": 1
+      },
+      {
+        "itemId": "death_rune",
+        "quantity": [
+          30,
+          60
+        ],
+        "chance": 0.2
+      },
+      {
+        "itemId": "blood_rune",
+        "quantity": [
+          20,
+          40
+        ],
+        "chance": 0.15
+      },
+      {
+        "itemId": "soul_rune",
+        "quantity": [
+          15,
+          30
+        ],
+        "chance": 0.1
+      },
+      {
+        "itemId": "wrath_rune",
+        "quantity": [
+          5,
+          12
+        ],
+        "chance": 0.06
+      },
+      {
+        "itemId": "duskmare_staff",
+        "quantity": 1,
+        "chance": 0.0222
+      },
+      {
+        "itemId": "umbral_orb",
+        "quantity": 1,
+        "chance": 0.01
+      },
+      {
+        "itemId": "attuned_orb",
+        "quantity": 1,
+        "chance": 0.01
+      },
+      {
+        "itemId": "volatile_orb",
+        "quantity": 1,
+        "chance": 0.01
+      },
+      {
+        "itemId": "clue_scroll_master",
+        "quantity": 1,
+        "chance": 0.02
+      }
+    ]
   }
 }
