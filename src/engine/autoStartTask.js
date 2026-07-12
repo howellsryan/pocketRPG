@@ -6,16 +6,24 @@
  * hour on that activity rather than burning the credit on the trip itself.
  *
  * Returns a task shaped exactly like the owning screen would set, or null for
- * descriptors that can't be idle-simulated here (combat/raid/slayer/farming,
+ * descriptors that can't be idle-simulated here (boss combat/raid/slayer/farming,
  * one-shot/clue gathers, alchemy, long-form reward unlocks) — those resume live.
  */
 import skillsData from '../data/skills.json'
 import minigamesData from '../data/minigames.json'
+import monstersData from '../data/monsters.json'
 import { findGatherTask } from './gatherTasks.js'
 
 export function buildAutoStartTask(autoStart) {
   if (!autoStart?.kind) return null
   switch (autoStart.kind) {
+    case 'combat': {
+      const monster = monstersData?.[autoStart.monsterId]
+      // Bosses/raids aren't idle-simulated (simulateIdleCombat blocks them); they
+      // resume live so the instant-kill skip flow can handle them.
+      if (!monster || monster.boss === true) return null
+      return { type: 'combat', monster, bankingEnabled: true }
+    }
     case 'skill': {
       const skill = autoStart.skill
       const action = skillsData?.[skill]?.actions?.find(a => a.id === autoStart.actionId)
