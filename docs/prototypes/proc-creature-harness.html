@@ -13,10 +13,19 @@ import * as THREE from '/public/vendor/three/three.module.min.js'
 import { createProcCreature } from '/src/3d/rigs.js'
 
 const Q = new URLSearchParams(location.search)
-const monsterId = Q.get('monster') || 'pasture_bull'
-const data = await (await fetch('/src/data/creatures3d.json')).json()
-const spec = data.monsters[monsterId]
-if (!spec) throw new Error('no spec for ' + monsterId)
+let spec
+if (Q.get('hero') != null) {
+  // ?hero&equip=bronze_scimitar,bronze_full_helm — composed procedural hero
+  const { heroComposeSpec } = await import('/src/3d/heroCompose.js')
+  const data = await (await fetch('/src/data/hero3d.json')).json()
+  spec = heroComposeSpec(data, (Q.get('equip') || '').split(',').filter(Boolean))
+  if (!spec) throw new Error('no hero spec in hero3d.json')
+} else {
+  const monsterId = Q.get('monster') || 'pasture_bull'
+  const data = await (await fetch('/src/data/creatures3d.json')).json()
+  spec = data.monsters[monsterId]
+  if (!spec) throw new Error('no spec for ' + monsterId)
+}
 
 const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true })
 renderer.setSize(innerWidth, innerHeight)
@@ -27,7 +36,12 @@ const scene = new THREE.Scene()
 scene.background = new THREE.Color(0xefe6d3)
 scene.fog = new THREE.Fog(0xefe6d3, 6, 12)
 const camera = new THREE.PerspectiveCamera(38, innerWidth / innerHeight, 0.1, 50)
-camera.position.set(2.1, 1.25, 2.9); camera.lookAt(0, 0.62, 0)
+if (Q.get('hero') != null) {
+  // ?front — face-on view for judging faces and gear
+  if (Q.get('front') != null) camera.position.set(0.6, 1.45, 3.4)
+  else camera.position.set(2.2, 1.55, 3.0)
+  camera.lookAt(0, 1.0, 0)
+} else { camera.position.set(2.1, 1.25, 2.9); camera.lookAt(0, 0.62, 0) }
 
 const gc = document.createElement('canvas'); gc.width = gc.height = 256
 const ctx = gc.getContext('2d')

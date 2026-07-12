@@ -6,6 +6,8 @@
 // before commit (docs/procedural-3d-plan.md Phase 3).
 //
 // Run: node scripts/render-proc.mjs <monsterId> [more ids...] [--out dir]
+// Hero: node scripts/render-proc.mjs --hero [equipId,equipId,...] — renders
+// the composed procedural hero from src/data/hero3d.json instead.
 // Needs playwright-core (`npm i --no-save playwright-core`) + a Chromium
 // (auto-detects /opt/pw-browsers/chromium; override with PLAYWRIGHT_CHROMIUM).
 // WebGL runs on SwiftShader, so this works headless on CPU-only machines.
@@ -27,9 +29,12 @@ const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..')
 const args = process.argv.slice(2)
 const outFlag = args.indexOf('--out')
 const outDir = outFlag >= 0 ? args.splice(outFlag, 2)[1] : 'proc-renders'
+const heroFlag = args.indexOf('--hero')
+const heroMode = heroFlag >= 0
+const heroEquip = heroMode ? (args[heroFlag + 1] && !args[heroFlag + 1].startsWith('-') ? args.splice(heroFlag, 2)[1] : (args.splice(heroFlag, 1), '')) : ''
 const ids = args.filter((a) => !a.startsWith('-'))
-if (!ids.length) {
-  console.error('usage: node scripts/render-proc.mjs <monsterId> [more ids...] [--out dir]')
+if (!ids.length && !heroMode) {
+  console.error('usage: node scripts/render-proc.mjs <monsterId> [more ids...] [--out dir] | --hero [equipId,...]')
   process.exit(1)
 }
 const registry = JSON.parse(fs.readFileSync(path.join(ROOT, 'src/data/creatures3d.json'), 'utf8'))
@@ -37,6 +42,15 @@ for (const id of ids) {
   if (!registry.monsters[id]) {
     console.error(`no creatures3d.json entry for "${id}" (have: ${Object.keys(registry.monsters).join(', ')})`)
     process.exit(1)
+  }
+}
+if (heroMode) {
+  const heroData = JSON.parse(fs.readFileSync(path.join(ROOT, 'src/data/hero3d.json'), 'utf8'))
+  for (const e of heroEquip.split(',').filter(Boolean)) {
+    if (!heroData.equipment || !heroData.equipment[e]) {
+      console.error(`no hero3d.json equipment entry for "${e}" (have: ${Object.keys(heroData.equipment || {}).join(', ')})`)
+      process.exit(1)
+    }
   }
 }
 
@@ -73,10 +87,14 @@ const SHOTS = [
 ]
 
 fs.mkdirSync(path.join(ROOT, outDir), { recursive: true })
-for (const id of ids) {
+const frontFlag = args.indexOf('--front')
+const front = frontFlag >= 0 ? (args.splice(frontFlag, 1), '&front') : ''
+const targets = ids.map((id) => ({ id, query: `monster=${id}` }))
+if (heroMode) targets.push({ id: heroEquip ? 'hero-equipped' : 'hero', query: `hero&equip=${encodeURIComponent(heroEquip)}${front}` })
+for (const { id, query } of targets) {
   const page = await browser.newPage({ viewport: { width: 720, height: 560 } })
   page.on('pageerror', (e) => { console.error(`[${id}] page error:`, e.message); process.exitCode = 1 })
-  await page.goto(`http://127.0.0.1:${port}/docs/prototypes/proc-creature-harness.html?monster=${id}`)
+  await page.goto(`http://127.0.0.1:${port}/docs/prototypes/proc-creature-harness.html?${query}`)
   await page.waitForFunction('window.__ready === true', null, { timeout: 15000 })
 
   let t = 0.8

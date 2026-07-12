@@ -12,6 +12,17 @@ Phase 1: Phase 0 (spike at `docs/prototypes/blend-shell-spike.html`): seam-free 
 
 Reference: community-proven approach (procedural creature apps on r/threejs), grounded in standard SDF math ([Quilez, distance functions](https://iquilezles.org/articles/raymarchingdf/)).
 
+### Quality bar (first pass — monsters, hero, all assets)
+
+Reference screenshot: `docs/reference/proc-creature-quality-bar.png` (from the r/threejs critter demo; commit the image at that path — it arrived via chat and only the author holds the bytes). What it demonstrates, and what every first-pass asset is judged against:
+
+- **Clean, seam-free skin**: one smooth matte fill per region, soft broad shading, zero surface noise/grain, no visible primitive joints or outline break-up anywhere — including mid-stride.
+- **Crisp single-weight ink outline** hugging the silhouette, even at thin parts (legs, antennae).
+- **Simple, instantly readable silhouettes**: a critter is 5–10 visible masses, not 20; details (ears, horns, tails) are few and bold.
+- **Face minimalism sells it**: tiny white dot-eyes, nothing else.
+- **Fully grounded**: feet plant convincingly, soft blob shadow under each body.
+- Our palette stays DESIGN.md-warm (their pastel-candy hues do **not** carry over — Warm Dark / No Candy rules stand), but their *cleanliness* is the bar: when a spec needs mottle patches to hide a muddy read, fix the shapes instead.
+
 A creature is a list of **SDF primitives** (capsules, cones, spheres — each with position/orientation, radii, color, blend radius). Rendering avoids both raymarching (per-pixel, mobile-hostile) and marching cubes (CPU, chunky):
 
 1. **Coarse proxy meshes** — one low-poly `CapsuleGeometry`/`ConeGeometry` per primitive, merged into a single `BufferGeometry` (one draw call) with a per-vertex `primIndex` attribute.

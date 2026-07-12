@@ -99,6 +99,26 @@ export function createProcCreature(THREE, spec) {
 
   const headParts = spec.head ? spec.head.parts.map((id) => byId[id]) : []
   const headAnchor = spec.head ? new THREE.Vector3(...spec.head.anchor) : null
+
+  // ── arms (humanoid) ── two-segment chains: upper rotates about the
+  // shoulder anchor, lower (forearm + anything gripped, e.g. composed weapon
+  // parts) additionally about the elbow. The right arm carries the weapon
+  // swing on attack.
+  const armSides = []
+  if (spec.arms) {
+    for (const side of ['left', 'right']) {
+      const g = spec.arms[side]
+      if (!g) continue
+      armSides.push({
+        right: side === 'right',
+        upper: (g.upper || []).map((id) => byId[id]),
+        lower: (g.lower || []).map((id) => byId[id]),
+        anchor: new THREE.Vector3(...g.anchor),
+        elbow: g.elbow ? new THREE.Vector3(...g.elbow) : null,
+        phase: side === 'right' ? 0 : 1.7,
+      })
+    }
+  }
   const breatheParts = spec.breathe ? spec.breathe.parts.map((id) => byId[id]) : []
   const wingParts = spec.wings ? spec.wings.parts.map((id) => byId[id]) : []
   const spineParts = spec.spine ? spec.spine.parts.map((id) => byId[id]) : []
@@ -117,6 +137,7 @@ export function createProcCreature(THREE, spec) {
 
   const tmpM = new THREE.Matrix4()
   const tmpM2 = new THREE.Matrix4()
+  const tmpM3 = new THREE.Matrix4()
   const tmpV = new THREE.Vector3()
   const tmpV2 = new THREE.Vector3()
   const tmpE = new THREE.Euler()
@@ -186,6 +207,16 @@ export function createProcCreature(THREE, spec) {
         // strike: coil back then whip forward, nose down
         if (p < 0.3) { const e = rigEase(p / 0.3); rootPos.z -= 0.14 * S * e }
         else { const e = (p - 0.3) / 0.7; rootPos.z += 0.55 * S * Math.sin(Math.PI * e) - 0.14 * S * (1 - rigEaseOut(rigClamp(e * 2, 0, 1))); rootEuler.x += 0.18 * Math.sin(Math.PI * e) }
+      } else if (archetype === 'humanoid') {
+        // the sword arm carries the action: a modest step-in plus hip twist
+        // into the slash, no quadruped-style body lunge
+        if (p < 0.25) { const e = rigEase(p / 0.25); rootPos.z -= 0.05 * S * e; rootPos.y -= 0.02 * S * e }
+        else {
+          const e = (p - 0.25) / 0.75
+          rootPos.z += 0.16 * S * Math.sin(Math.PI * e) - 0.05 * S * (1 - rigEaseOut(rigClamp(e * 2, 0, 1)))
+          rootEuler.y -= 0.35 * Math.sin(Math.PI * e)
+          rootEuler.x += 0.08 * Math.sin(Math.PI * e)
+        }
       } else {
         // ground/flyer lunge with anticipation crouch
         if (p < 0.25) { const e = rigEase(p / 0.25); rootPos.z -= 0.08 * S * e; if (!flying) rootPos.y -= 0.045 * S * e }
@@ -206,6 +237,11 @@ export function createProcCreature(THREE, spec) {
         rootPos.y -= 0.16 * S * rigEase(rigClamp(p * 1.4 - 0.3, 0, 1))
       } else if (archetype === 'serpent') {
         rootScaleY = 1 - 0.45 * e
+      } else if (archetype === 'humanoid') {
+        // crumple forward: knees give (squash), torso pitches face-down
+        rootEuler.x += 1.35 * e
+        rootPos.y -= 0.12 * S * e
+        rootScaleY = 1 - 0.15 * e
       } else {
         rootEuler.z += 0.95 * e
         rootPos.y -= 0.22 * S * e
@@ -369,6 +405,41 @@ export function createProcCreature(THREE, spec) {
       }
       rotAboutInto(tmpM, headAnchor, pitch, yaw, 0)
       for (const i of headParts) mats[i].premultiply(tmpM)
+    }
+
+    if (armSides.length && !dead) {
+      const hitP = state === 'hit' ? rigClamp(stateT / RIG_DURATIONS.hit, 0, 1) : -1
+      const atkP = state === 'attack' ? rigClamp(stateT / RIG_DURATIONS.attack, 0, 1) : -1
+      for (const arm of armSides) {
+        // idle: slow incommensurate sway so arms never look pinned
+        let pitch = 0.05 * Math.sin(t * 0.83 + arm.phase) + 0.02 * Math.sin(t * 1.31 + arm.phase)
+        let roll = 0.03 * Math.sin(t * 1.07 + arm.phase)
+        let bend = -0.12
+        if (atkP >= 0 && arm.right) {
+          // sword swing: raise back over the shoulder, slash down across,
+          // recover — the blade is mid-slash at the arena's 240ms impact.
+          const wind = rigEase(rigClamp(atkP / 0.3, 0, 1))
+          const strike = rigEase(rigClamp((atkP - 0.28) / 0.18, 0, 1))
+          const recover = rigEase(rigClamp((atkP - 0.55) / 0.45, 0, 1))
+          pitch += 1.25 * wind - 2.95 * strike + 1.7 * recover
+          roll += -0.35 * Math.sin(Math.PI * atkP)
+          bend += -0.85 * wind + 1.0 * strike - 0.15 * recover
+        } else if (hitP >= 0) {
+          // guard: both forearms snap up in front, then relax
+          const g = Math.sin(Math.PI * rigClamp(hitP * 1.15, 0, 1))
+          pitch += -0.5 * g
+          bend += -0.7 * g
+        }
+        rotAboutInto(tmpM, arm.anchor, pitch, 0, roll)
+        for (const i of arm.upper) mats[i].premultiply(tmpM)
+        if (arm.elbow) {
+          rotAboutInto(tmpM3, arm.elbow, bend, 0, 0)
+          tmpM3.premultiply(tmpM)
+        } else {
+          tmpM3.copy(tmpM)
+        }
+        for (const i of arm.lower) mats[i].premultiply(tmpM3)
+      }
     }
 
     if (wingParts.length) {

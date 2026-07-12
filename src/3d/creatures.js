@@ -31,7 +31,7 @@ export function listCreatureSpecIds() {
   return Object.keys((creatures3dData && creatures3dData.monsters) || {})
 }
 
-const CREATURE_ARCHETYPES = new Set(['quadruped', 'biped', 'multileg', 'hopper', 'flyer', 'serpent'])
+const CREATURE_ARCHETYPES = new Set(['quadruped', 'biped', 'multileg', 'hopper', 'flyer', 'serpent', 'humanoid'])
 const CREATURE_MAX_PARTS = 24
 
 function isVec3(v) {
@@ -96,6 +96,23 @@ export function validateCreatureSpec(spec) {
     checkPartList(key, g.parts)
     checkNums(key, g, ['amp', 'rate', 'wave'])
     if (key === 'head' && !isVec3(g.anchor)) errors.push('head needs an [x,y,z] anchor')
+  }
+  if (spec.arms !== undefined) {
+    if (!spec.arms || typeof spec.arms !== 'object') errors.push('arms must be an object')
+    else for (const side of ['left', 'right']) {
+      const g = spec.arms[side]
+      if (g === undefined) continue
+      const tag = `arms.${side}`
+      if (!g || typeof g !== 'object') { errors.push(`${tag}: must be an object`); continue }
+      for (const seg of ['upper', 'lower']) {
+        if (g[seg] === undefined) continue
+        if (!Array.isArray(g[seg])) { errors.push(`${tag}.${seg}: must be an array`); continue }
+        for (const id of g[seg]) if (!ids.has(id)) errors.push(`${tag}.${seg}: references unknown part ${JSON.stringify(id)}`)
+      }
+      if (!isVec3(g.anchor)) errors.push(`${tag}: needs an [x,y,z] anchor`)
+      if (g.elbow !== undefined && !isVec3(g.elbow)) errors.push(`${tag}: elbow must be [x,y,z]`)
+      if (g.grip !== undefined && !isVec3(g.grip)) errors.push(`${tag}: grip must be [x,y,z]`)
+    }
   }
   if (spec.legs !== undefined) {
     if (!Array.isArray(spec.legs)) errors.push('legs must be an array')
