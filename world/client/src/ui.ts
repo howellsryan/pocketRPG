@@ -20,8 +20,9 @@ const HUD_CSS = `
 .inv-slot {
   background: rgba(60, 50, 34, 0.55); border-radius: 4px; position: relative;
   display: flex; align-items: center; justify-content: center; font-size: 22px;
-  user-select: none;
+  user-select: none; touch-action: none;
 }
+.inv-slot.drag-over { outline: 2px solid #ffe066; }
 .inv-slot .qty {
   position: absolute; top: 0; right: 2px; font-size: 10px; color: #ffe066;
   text-shadow: 0 1px 2px #000;
@@ -59,6 +60,13 @@ const HUD_CSS = `
   position: fixed; left: 8px; top: 6px; z-index: 10; pointer-events: none;
   font-family: sans-serif; font-size: 15px; color: #ffe066; text-shadow: 0 1px 2px #000;
 }
+#hp-pill {
+  position: fixed; right: 8px; top: 8px; z-index: 10; padding: 4px 10px;
+  background: rgba(20, 16, 10, 0.82); border: 1px solid #5a4a30; border-radius: 12px;
+  font-family: sans-serif; font-size: 13px; font-weight: bold; color: #5fd35f;
+  text-shadow: 0 1px 2px #000; pointer-events: none;
+}
+#hp-pill.low { color: #e05a5a; }
 #ctx-menu {
   position: fixed; z-index: 30; min-width: 120px; padding: 0 0 2px;
   background: rgba(20, 16, 10, 0.95); border: 1px solid #6a5636; border-radius: 4px;
@@ -90,9 +98,107 @@ const HUD_CSS = `
 
 let hudReady = false
 
-/** Creates the in-game HUD (inventory grid, message strip, xp-drop layer).
- * Call once after the welcome message. */
-export function initHud(): void {
+// Filled state per slot, kept by renderInventory so the drag layer knows which
+// cells can start a drag without owning a copy of the inventory itself.
+const slotFilled: boolean[] = new Array(INVENTORY_COLS * INVENTORY_ROWS).fill(false)
+
+const DRAG_THRESHOLD_PX = 6
+const LONG_PRESS_MS = 500
+
+export type InvHandlers = {
+  onMoveInv: (from: number, to: number) => void
+  /** Tap on a filled slot → the item's primary action (Wield/Eat/Bury/…). */
+  onSlotTap: (index: number) => void
+  /** Long-press / right-click on a filled slot → the item menu. */
+  onSlotMenu: (index: number, x: number, y: number) => void
+}
+
+/** Pointer-based pack-grid input (desktop and touch share the path):
+ * press-and-move past a small threshold drags to reorder (ghost + highlight,
+ * mirroring the main game's InventoryGrid), a plain tap fires the item's
+ * primary action, a stationary long-press or right-click opens the item menu. */
+function setupInvDrag(panel: HTMLElement, handlers: InvHandlers): void {
+  const onMove = handlers.onMoveInv
+  let drag: { from: number; startX: number; startY: number; ghost: HTMLElement | null; over: number | null; menuFired: boolean; timer: ReturnType<typeof setTimeout> | null } | null = null
+
+  const indexOfCell = (el: Element | null): number | null => {
+    // Element, not HTMLElement — the press usually lands on the icon's inline
+    // SVG (an SVGElement), and closest() must still walk up to the slot.
+    const cell = el instanceof Element ? el.closest('.inv-slot') : null
+    if (!cell || cell.parentElement !== panel) return null
+    return Array.prototype.indexOf.call(panel.children, cell)
+  }
+
+  const cellUnderPointer = (x: number, y: number): number | null => {
+    if (drag?.ghost) drag.ghost.style.display = 'none'
+    const el = document.elementFromPoint(x, y)
+    if (drag?.ghost) drag.ghost.style.display = ''
+    return indexOfCell(el)
+  }
+
+  const finish = (commit: boolean): void => {
+    if (!drag) return
+    if (drag.timer) clearTimeout(drag.timer)
+    drag.ghost?.remove()
+    if (drag.over != null) panel.children[drag.over]?.classList.remove('drag-over')
+    if (commit && drag.ghost && drag.over != null && drag.over !== drag.from) onMove(drag.from, drag.over)
+    else if (commit && !drag.ghost && !drag.menuFired) handlers.onSlotTap(drag.from)
+    drag = null
+  }
+
+  panel.addEventListener('pointerdown', (e) => {
+    if (e.button === 2) return // right-click goes through contextmenu below
+    const index = indexOfCell(e.target as Element)
+    if (index == null || !slotFilled[index]) return
+    const timer = setTimeout(() => {
+      // Stationary long-press: open the menu instead of tapping or dragging.
+      if (!drag || drag.ghost) return
+      drag.menuFired = true
+      handlers.onSlotMenu(drag.from, drag.startX, drag.startY)
+    }, LONG_PRESS_MS)
+    drag = { from: index, startX: e.clientX, startY: e.clientY, ghost: null, over: null, menuFired: false, timer }
+    ;(panel.children[index] as HTMLElement).setPointerCapture(e.pointerId)
+  })
+  panel.addEventListener('contextmenu', (e) => {
+    e.preventDefault()
+    const index = indexOfCell(e.target as Element)
+    if (index == null || !slotFilled[index]) return
+    if (drag?.timer) clearTimeout(drag.timer)
+    drag = null
+    handlers.onSlotMenu(index, e.clientX, e.clientY)
+  })
+  panel.addEventListener('pointermove', (e) => {
+    if (!drag || drag.menuFired) return
+    if (!drag.ghost) {
+      const dx = e.clientX - drag.startX
+      const dy = e.clientY - drag.startY
+      if (dx * dx + dy * dy < DRAG_THRESHOLD_PX * DRAG_THRESHOLD_PX) return
+      if (drag.timer) clearTimeout(drag.timer)
+      const ghost = (panel.children[drag.from] as HTMLElement).cloneNode(true) as HTMLElement
+      ghost.style.cssText =
+        'position:fixed;width:40px;height:40px;pointer-events:none;z-index:40;opacity:0.85;' +
+        'display:flex;align-items:center;justify-content:center;' +
+        'border:2px solid #ffe066;border-radius:6px;background:rgba(20,16,10,0.9);'
+      document.body.appendChild(ghost)
+      drag.ghost = ghost
+    }
+    drag.ghost.style.left = `${e.clientX - 20}px`
+    drag.ghost.style.top = `${e.clientY - 20}px`
+    const over = cellUnderPointer(e.clientX, e.clientY)
+    const target = over === drag.from ? null : over
+    if (target !== drag.over) {
+      if (drag.over != null) panel.children[drag.over]?.classList.remove('drag-over')
+      if (target != null) panel.children[target]?.classList.add('drag-over')
+      drag.over = target
+    }
+  })
+  panel.addEventListener('pointerup', () => finish(true))
+  panel.addEventListener('pointercancel', () => finish(false))
+}
+
+/** Creates the in-game HUD (inventory grid, message strip, xp-drop layer, HP
+ * pill). Call once after the welcome message. */
+export function initHud(handlers?: InvHandlers): void {
   if (hudReady) return
   hudReady = true
   const style = document.createElement('style')
@@ -107,6 +213,11 @@ export function initHud(): void {
     inv.appendChild(slot)
   }
   document.body.appendChild(inv)
+  if (handlers) setupInvDrag(inv, handlers)
+
+  const hpPill = document.createElement('div')
+  hpPill.id = 'hp-pill'
+  document.body.appendChild(hpPill)
 
   const msgs = document.createElement('div')
   msgs.id = 'msg-strip'
@@ -127,10 +238,13 @@ export function initHud(): void {
 
 const NPC_EXAMINE: Record<string, string> = {
   pasture_bull: 'A hefty highland bull. Prime cowhide on the hoof.',
+  field_chicken: 'A plump forest fowl. Braver than it looks, which is not very.',
+  cave_goblin: 'A wiry little menace, a long way from any cave.',
+  arcane_adept: 'A robed student of the arcane, practising where the trees can’t complain.',
 }
 
 export function npcExamine(monsterId: string): string {
-  return NPC_EXAMINE[monsterId] ?? 'A creature of the pasture, minding its own business.'
+  return NPC_EXAMINE[monsterId] ?? 'A creature of the wilds, minding its own business.'
 }
 
 export function lootExamine(itemName: string): string {
@@ -326,6 +440,7 @@ export function renderInventory(inventory: InvSlot[]): void {
   for (let i = 0; i < slots.length; i++) {
     const cell = slots[i] as HTMLElement
     const slot = inventory[i] ?? null
+    slotFilled[i] = slot !== null
     cell.innerHTML = ''
     cell.title = ''
     if (!slot) continue
@@ -338,6 +453,13 @@ export function renderInventory(inventory: InvSlot[]): void {
       cell.appendChild(qty)
     }
   }
+}
+
+export function updateHpPill(hp: number, maxHp: number): void {
+  const el = document.getElementById('hp-pill')
+  if (!el) return
+  el.textContent = `❤ ${hp}/${maxHp}`
+  el.classList.toggle('low', maxHp > 0 && hp / maxHp <= 0.3)
 }
 
 export function showXpDrop(skill: string, amount: number): void {
@@ -380,6 +502,34 @@ export function hideOverlay(): void {
   const scene = sceneEl()
   if (app) app.style.display = 'none'
   if (scene) scene.style.display = 'block'
+}
+
+/** Connection banner — standalone (not part of initHud) so it can show before
+ * the first welcome or while the HUD isn't built. */
+export function showConnBanner(): void {
+  let el = document.getElementById('conn-banner')
+  if (!el) {
+    el = document.createElement('div')
+    el.id = 'conn-banner'
+    el.textContent = 'Reconnecting…'
+    el.style.cssText =
+      'position:fixed;top:8px;left:50%;transform:translateX(-50%);z-index:40;padding:6px 14px;' +
+      'background:rgba(140,40,40,0.92);color:#fff;font-family:sans-serif;font-size:13px;border-radius:6px;'
+    document.body.appendChild(el)
+  }
+  el.style.display = 'block'
+}
+
+export function hideConnBanner(): void {
+  const el = document.getElementById('conn-banner')
+  if (el) el.style.display = 'none'
+}
+
+/** Full-page cover for the ~1s zone-transition reload. */
+export function showTransitionOverlay(text: string): void {
+  const el = appEl()
+  if (el) el.textContent = text
+  showOverlay()
 }
 
 export function showLoginRequired(pocketRpgUrl: string): void {

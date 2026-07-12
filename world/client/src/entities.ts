@@ -2,8 +2,9 @@ import * as THREE from 'three'
 import { GLTFLoader, type GLTF } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { clone as cloneSkeleton } from 'three/examples/jsm/utils/SkeletonUtils.js'
 import { tileToWorld } from './scene'
-import type { EntityDiff } from '../../shared/protocol'
+import type { EntityDiff, GearDescriptor } from '../../shared/protocol'
 import { segmentDurationMs, shouldSnap, stepYaw, yawToward } from './motion'
+import { MONSTER_MODELS } from '../../shared/monsterModels'
 
 const ANIM_CROSSFADE_S = 0.15
 const TURN_SPEED_RAD_PER_S = 14
@@ -135,6 +136,99 @@ export async function createCowMesh(): Promise<{ mesh: THREE.Object3D; animator:
     return { mesh: group, animator }
   } catch {
     return { mesh: boxPlaceholder(), animator: null }
+  }
+}
+
+/** Loads the registered model for a monster (centred, floored — or hovering,
+ * for flyers — and scaled to its target height). Unregistered monsters get the
+ * cow path (the Phase 2 default); any load failure gets the box placeholder. */
+export async function createMonsterMesh(monsterId: string | undefined): Promise<{ mesh: THREE.Object3D; animator: Animator | null }> {
+  const spec = monsterId ? MONSTER_MODELS[monsterId] : undefined
+  if (!spec) return createCowMesh()
+  try {
+    const gltf = await loadTemplate(spec.url)
+    const model = cloneSkeleton(gltf.scene)
+    const b = spec.bounds
+    model.position.set(-(b.minX + b.maxX) / 2, -b.minY + (spec.hover ?? 0), -(b.minZ + b.maxZ) / 2)
+    const group = new THREE.Group()
+    group.add(model)
+    group.scale.setScalar(spec.targetHeight / (b.maxY - b.minY))
+    const animator = makeAnimator(model, gltf, ['idle', 'walk', 'die'])
+    return { mesh: group, animator }
+  } catch {
+    return { mesh: boxPlaceholder(), animator: null }
+  }
+}
+
+// Weapon-in-hand (Phase 5): archetype models built by scripts/build-weapons.mjs
+// attach under the hero rig's hand_r joint. Grips are authored at the model
+// origin, blade along +Y; the transform below orients that into the Quaternius
+// rig's palm (tuned visually — see docs/world-progress.md Phase 5 entry).
+const WEAPON_HOLDER = '__weapon'
+const WEAPON_SCALE = 0.7
+// Tuned against the IDLE pose (not the T-pose — the palm rotates ~90° when the
+// arm drops, which is how the first pass ended up clipping blades through the
+// body). Default carry: blade vertical at the character's side, tip down.
+type Grip = { rotation: [number, number, number]; position: [number, number, number]; scale?: number }
+const DEFAULT_GRIP: Grip = { rotation: [-Math.PI / 2, Math.PI / 2, Math.PI / 2], position: [0, 0.05, 0.03] }
+const GRIP_OVERRIDES: Record<string, Grip> = {
+  // Staff reads planted-vertical: shaft along the hanging forearm, head up.
+  staff: { rotation: [Math.PI, 0, 0], position: [0, 0.1, 0] },
+  bow: { rotation: [Math.PI / 2, 0, 0], position: [0, 0.05, 0.03] },
+  crossbow: { rotation: [0, 0, 0], position: [0, 0.05, 0.03] },
+  blunt: { rotation: [-Math.PI / 2, Math.PI / 2, Math.PI / 2], position: [0, 0.05, 0.03], scale: 0.5 },
+}
+
+function gearKey(weapon: GearDescriptor['weapon']): string {
+  return weapon ? `${weapon.archetype}|${weapon.tint ?? ''}` : ''
+}
+
+/** Attaches (or replaces/removes) the weapon model matching `gear` on a hero
+ * mesh. Idempotent per archetype+tint; missing hand bone (capsule fallback) or
+ * a failed model load leaves the hero bare-handed. */
+export async function applyWeapon(heroMesh: THREE.Object3D, gear: GearDescriptor | undefined): Promise<void> {
+  const hand = heroMesh.getObjectByName('hand_r')
+  if (!hand) return
+  const weapon = gear?.weapon
+  const key = gearKey(weapon)
+  const existing = hand.getObjectByName(WEAPON_HOLDER)
+  if ((existing?.userData.key ?? '') === key) return
+  existing?.removeFromParent()
+  if (!weapon) return
+
+  try {
+    const gltf = await loadTemplate(`/models/weapons/${weapon.archetype}.glb`)
+    // Re-check after the await: a newer applyWeapon may have won the race.
+    const current = hand.getObjectByName(WEAPON_HOLDER)
+    if (current) {
+      if (current.userData.key === key) return
+      current.removeFromParent()
+    }
+    const model = gltf.scene.clone(true)
+    if (weapon.tint) {
+      const tint = new THREE.Color(weapon.tint)
+      model.traverse((obj) => {
+        if (obj instanceof THREE.Mesh) {
+          const tintOne = (m: THREE.Material): THREE.Material => {
+            const mat = m.clone() as THREE.MeshStandardMaterial
+            if (mat.color) mat.color.copy(tint)
+            return mat
+          }
+          obj.material = Array.isArray(obj.material) ? obj.material.map(tintOne) : tintOne(obj.material)
+        }
+      })
+    }
+    const grip = GRIP_OVERRIDES[weapon.archetype] ?? DEFAULT_GRIP
+    const holder = new THREE.Group()
+    holder.name = WEAPON_HOLDER
+    holder.userData.key = key
+    model.rotation.set(...grip.rotation)
+    model.position.set(...grip.position)
+    model.scale.setScalar(grip.scale ?? WEAPON_SCALE)
+    holder.add(model)
+    hand.add(holder)
+  } catch {
+    // Bare hands on any load failure — appearance never blocks play.
   }
 }
 

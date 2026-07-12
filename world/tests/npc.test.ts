@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { npcsFromZone, tickNpc, toNpcDiff, type NpcState } from '../server/npc'
+import { npcsFromZone, recordDamage, tickNpc, toNpcDiff, topDamageContributor, type NpcState } from '../server/npc'
 import { emptyResult, type TickContext } from '../server/tick'
 
 const WANDER = { x: 4, z: 4, w: 4, h: 4 } // tiles 4..7 in each axis
@@ -64,12 +64,39 @@ describe('death + respawn', () => {
   })
 })
 
+describe('damage attribution', () => {
+  it('accumulates damage per attacker; zero-damage hits contribute nothing', () => {
+    const bull = makeBull()
+    recordDamage(bull, '1', 3, 10)
+    recordDamage(bull, '1', 2, 12)
+    recordDamage(bull, '2', 4, 11)
+    recordDamage(bull, '2', 0, 13)
+    expect(bull.damageByChar.get('1')).toEqual({ dmg: 5, tick: 12 })
+    expect(bull.damageByChar.get('2')).toEqual({ dmg: 4, tick: 11 })
+    expect(topDamageContributor(bull)).toBe('1')
+  })
+
+  it('breaks a damage tie in favour of whoever reached the total first', () => {
+    const bull = makeBull()
+    recordDamage(bull, '2', 4, 11) // reached 4 at tick 11
+    recordDamage(bull, '1', 4, 14) // reached 4 at tick 14
+    expect(topDamageContributor(bull)).toBe('2')
+  })
+
+  it('returns null with no recorded damage', () => {
+    expect(topDamageContributor(makeBull())).toBeNull()
+  })
+})
+
 describe('out-of-combat heal', () => {
   it('an abandoned bull (no attacker) heals to full and returns to idle', () => {
     const bull = makeBull({ state: 'combat', hp: 2, attackerId: null, lastCombatTick: 0 })
+    recordDamage(bull, '1', 6, 5)
     tickNpc(bull, ctx(17), emptyResult())
     expect(bull.state).toBe('idle')
     expect(bull.hp).toBe(8)
+    // A healed bull forgets old contributions — the next kill starts clean.
+    expect(bull.damageByChar.size).toBe(0)
   })
 
   it('keeps fighting while an attacker is engaged', () => {

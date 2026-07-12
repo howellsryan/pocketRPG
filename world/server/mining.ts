@@ -6,12 +6,34 @@ import type { InvSlot } from '../shared/protocol'
 
 export type MiningAction = { id: string; name: string; level: number; ticks: number; xp: number; product: string }
 
-type SkillsData = { mining: { actions: MiningAction[] } }
+type SkillsData = { mining: { actions: MiningAction[] }; woodcutting: { actions: MiningAction[] } }
 type ItemsData = Record<string, { stackable?: boolean } | undefined>
 
 export const MINING_ACTIONS: Record<string, MiningAction> = Object.fromEntries(
   (skillsData as unknown as SkillsData).mining.actions.map((a) => [a.id, a])
 )
+
+export const WOODCUTTING_ACTIONS: Record<string, MiningAction> = Object.fromEntries(
+  (skillsData as unknown as SkillsData).woodcutting.actions.map((a) => [a.id, a])
+)
+
+export type GatherSkill = 'mining' | 'woodcutting'
+
+/** Per-skill gather config: real skills.json actions, the interact verb the
+ * wire uses, and the level-gate message. Trees are a mining reskin — one state
+ * machine (tick.ts) drives both. */
+export const GATHER_SKILLS: Record<GatherSkill, { actions: Record<string, MiningAction>; verb: string; levelMsg: (level: number) => string }> = {
+  mining: {
+    actions: MINING_ACTIONS,
+    verb: 'mine',
+    levelMsg: (level) => `You need Mining level ${level} to mine this rock.`,
+  },
+  woodcutting: {
+    actions: WOODCUTTING_ACTIONS,
+    verb: 'chop',
+    levelMsg: (level) => `You need Woodcutting level ${level} to chop this tree.`,
+  },
+}
 
 export const ROCK_DEPLETED_TICKS = 8
 export const INVENTORY_SLOTS = 28
@@ -51,6 +73,58 @@ export function addToInventory(inventory: InvSlot[], itemId: string, qty: number
 export function inventoryIsFull(inventory: InvSlot[], itemId: string): boolean {
   if (isStackable(itemId) && inventory.some((s) => s?.itemId === itemId)) return false
   return !inventory.some((s) => s === null)
+}
+
+/** Reorders the pack: dropping onto a filled slot swaps the two, onto an empty
+ * slot relocates (same semantics as the main game's InventoryGrid). Slot order
+ * never affects flushes — they read the minted/saveBacked tallies, not slots. */
+export function moveInventorySlot(inventory: InvSlot[], from: number, to: number): boolean {
+  if (!Number.isInteger(from) || !Number.isInteger(to)) return false
+  if (from < 0 || to < 0 || from >= inventory.length || to >= inventory.length) return false
+  if (from === to || inventory[from] === null) return false
+  const moved = inventory[from]
+  inventory[from] = inventory[to]
+  inventory[to] = moved
+  return true
+}
+
+export function countItem(inventory: InvSlot[], itemId: string): number {
+  let total = 0
+  for (const slot of inventory) if (slot?.itemId === itemId) total += slot.quantity
+  return total
+}
+
+export function freeSlotCount(inventory: InvSlot[]): number {
+  let free = 0
+  for (const slot of inventory) if (slot === null) free += 1
+  return free
+}
+
+/** Removes qty units of an item across slots (back-to-front, splitting stacks).
+ * Returns false without changes when the pack holds fewer than qty. */
+export function removeItems(inventory: InvSlot[], itemId: string, qty: number): boolean {
+  if (countItem(inventory, itemId) < qty) return false
+  let remaining = qty
+  for (let i = inventory.length - 1; i >= 0 && remaining > 0; i--) {
+    const slot = inventory[i]
+    if (!slot || slot.itemId !== itemId) continue
+    if (slot.quantity <= remaining) {
+      remaining -= slot.quantity
+      inventory[i] = null
+    } else {
+      slot.quantity -= remaining
+      remaining = 0
+    }
+  }
+  return true
+}
+
+/** Removes one unit from a specific slot (a stack decrements, a single clears). */
+export function removeOneAt(inventory: InvSlot[], index: number): void {
+  const slot = inventory[index]
+  if (!slot) return
+  if (slot.quantity > 1) slot.quantity -= 1
+  else inventory[index] = null
 }
 
 /** Aggregates the pack into {itemId, quantity} rows for a grant flush. */

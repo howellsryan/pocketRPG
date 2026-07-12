@@ -3,7 +3,7 @@
 // the right-click menu, so the ordering rules are unit-testable in isolation.
 // Spec: docs/open-world-build-guide.md §8 STEP 2.1.
 
-export type PickKind = 'rock' | 'object' | 'npc' | 'loot'
+export type PickKind = 'rock' | 'object' | 'npc' | 'loot' | 'exit'
 
 /** One selectable action on a pickable. `action` is the wire verb sent in an
  * `interact` message ('mine'/'deposit'/'attack'/'take'); `id` overrides the
@@ -24,7 +24,7 @@ export type Pickable = {
 
 // Hover picks the highest-priority thing under the cursor; the context menu
 // lists everything in ray order (near-to-far), which the caller preserves.
-const HOVER_PRIORITY: Record<PickKind, number> = { loot: 0, npc: 1, rock: 2, object: 2 }
+const HOVER_PRIORITY: Record<PickKind, number> = { loot: 0, npc: 1, rock: 2, object: 2, exit: 3 }
 
 /** The thing a left-click acts on: highest hover-priority, ties broken by the
  * caller's near-to-far order. Null when only the ground is under the cursor. */

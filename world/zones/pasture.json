@@ -85,6 +85,28 @@
     }
   ],
   "npcs": [
-    { "id": "bull_1", "monsterId": "pasture_bull", "x": 22, "z": 20, "wander": { "x": 18, "z": 16, "w": 10, "h": 10 } }
+    {
+      "id": "bull_1",
+      "monsterId": "pasture_bull",
+      "x": 22,
+      "z": 20,
+      "wander": {
+        "x": 18,
+        "z": 16,
+        "w": 10,
+        "h": 10
+      }
+    }
+  ],
+  "exits": [
+    {
+      "id": "exit_forest",
+      "x": 31,
+      "z": 8,
+      "toZone": "forest",
+      "toX": 2,
+      "toZ": 24,
+      "label": "the Whisperwood"
+    }
   ]
 }

@@ -1,1 +1,4 @@
 JWT_SECRET=dev-secret-change-me
+# Static bearer secret for the developer-only world editor API. Unset = editor
+# disabled. Set the same value in the browser editor's token prompt.
+WORLD_EDITOR_TOKEN=dev-editor-token-change-me

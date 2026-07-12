@@ -2,8 +2,8 @@
 // I/O — the DO owns the objects, calls tickPlayer once per player per tick, and
 // decides what to broadcast/flush from the results.
 import type { Tile } from './pathfind'
-import type { EntityDiff, InvSlot, ZoneEvent } from '../shared/protocol'
-import { MINING_ACTIONS, ROCK_DEPLETED_TICKS, addToInventory, inventoryIsFull, type MiningAction } from './mining'
+import type { EntityDiff, GearDescriptor, InvSlot, ZoneEvent } from '../shared/protocol'
+import { GATHER_SKILLS, ROCK_DEPLETED_TICKS, addToInventory, inventoryIsFull, type GatherSkill, type MiningAction } from './mining'
 import { getLevelFromXP, clampXP } from '../../src/engine/experience.js'
 import { startCombat, stepCombat, type CombatSession } from './combat'
 import type { NpcState } from './npc'
@@ -13,7 +13,10 @@ export type TickAnim = EntityDiff['anim']
 
 export type SessionStats = Record<string, { xp: number; level: number }>
 
-export type RockState = { id: string; rock: string; x: number; z: number; depletedUntilTick: number }
+/** A gather node (ore rock or tree). `rock` holds the skill's action id —
+ * 'tin'/'copper' for mining, 'normal'/'oak' for woodcutting. Missing skill
+ * means 'mining' (pre-Phase-6 fixtures). */
+export type RockState = { id: string; rock: string; skill?: GatherSkill; x: number; z: number; depletedUntilTick: number }
 
 export type PendingInteract = { kind: 'rock' | 'object' | 'npc'; id: string; action: string }
 
@@ -38,6 +41,9 @@ export type TickPlayer = {
   maxHp: number
   /** Equipment from the save blob, passed straight to the combat engine. */
   equipment: Record<string, unknown>
+  /** Visual descriptor derived from equipment at hello (shared/appearance.ts);
+   * fixed for the session — the world has no equip UI yet. */
+  gear: GearDescriptor
   combat: CombatSession | null
 }
 
@@ -56,7 +62,8 @@ export type TickResult = {
   entChanged: boolean
   events: ZoneEvent[]
   rockChanges: { id: string; depleted: boolean }[]
-  deposit: boolean
+  /** The player arrived at a bank chest → open the bank UI. */
+  bankOpen: boolean
   /** Zone-wide hitsplats ({dmg:0} = block/miss). */
   hits: { targetId: string; dmg: number }[]
   /** This player's HP hit 0 this tick → respawn + {t:'dead'}. */
@@ -69,7 +76,7 @@ export type TickResult = {
 }
 
 export function emptyResult(): TickResult {
-  return { entChanged: false, events: [], rockChanges: [], deposit: false, hits: [], died: false, newLoot: [], npcChanged: [], npcRemoved: [] }
+  return { entChanged: false, events: [], rockChanges: [], bankOpen: false, hits: [], died: false, newLoot: [], npcChanged: [], npcRemoved: [] }
 }
 
 /** Seeds the 28-slot session pack from the character's PocketRPG inventory at
@@ -139,8 +146,8 @@ function startInteract(player: TickPlayer, ctx: TickContext, result: TickResult)
   player.pendingInteract = null
   if (!intent) return
 
-  if (intent.kind === 'object' && intent.action === 'deposit') {
-    result.deposit = true
+  if (intent.kind === 'object' && intent.action === 'bank') {
+    result.bankOpen = true
     return
   }
 
@@ -161,14 +168,17 @@ function startInteract(player: TickPlayer, ctx: TickContext, result: TickResult)
     return
   }
 
-  if (intent.kind === 'rock' && intent.action === 'mine') {
+  if (intent.kind === 'rock') {
     const rock = ctx.rocks.get(intent.id)
     if (!rock || !adjacent(player, rock)) return
-    const action = (ctx.actions ?? MINING_ACTIONS)[rock.rock]
+    const skill = rock.skill ?? 'mining'
+    const gather = GATHER_SKILLS[skill]
+    if (intent.action !== gather.verb) return
+    const action = actionFor(rock, ctx)
     if (!action) return
-    const level = ensureSkill(player.stats, 'mining').level
+    const level = ensureSkill(player.stats, skill).level
     if (level < action.level) {
-      result.events.push({ e: 'msg', text: `You need Mining level ${action.level} to mine this rock.` })
+      result.events.push({ e: 'msg', text: gather.levelMsg(action.level) })
       return
     }
     if (inventoryIsFull(player.inventory, action.product)) {
@@ -179,11 +189,18 @@ function startInteract(player: TickPlayer, ctx: TickContext, result: TickResult)
   }
 }
 
+/** ctx.actions (test override) only ever substitutes the mining table. */
+function actionFor(rock: RockState, ctx: TickContext): MiningAction | undefined {
+  const skill = rock.skill ?? 'mining'
+  const table = skill === 'mining' && ctx.actions ? ctx.actions : GATHER_SKILLS[skill].actions
+  return table[rock.rock]
+}
+
 function tickMining(player: TickPlayer, ctx: TickContext, result: TickResult): void {
   const mining = player.mining
   if (!mining) return
   const rock = ctx.rocks.get(mining.rockId)
-  const action = rock ? (ctx.actions ?? MINING_ACTIONS)[rock.rock] : undefined
+  const action = rock ? actionFor(rock, ctx) : undefined
   if (!rock || !action || !adjacent(player, rock)) {
     player.mining = null
     player.anim = 'idle'
@@ -207,7 +224,7 @@ function tickMining(player: TickPlayer, ctx: TickContext, result: TickResult): v
     return
   }
   player.minted[action.product] = (player.minted[action.product] ?? 0) + 1
-  result.events.push(...grantSessionXp(player, 'mining', action.xp))
+  result.events.push(...grantSessionXp(player, rock.skill ?? 'mining', action.xp))
   result.events.push({ e: 'inv', inventory: player.inventory })
   rock.depletedUntilTick = ctx.tick + ROCK_DEPLETED_TICKS
   result.rockChanges.push({ id: rock.id, depleted: true })
@@ -231,7 +248,7 @@ export function tickPlayer(player: TickPlayer, ctx: TickContext): TickResult {
     startInteract(player, ctx, result)
     if (player.combat) stepCombat(player, ctx, result)
     else if (player.mining) tickMining(player, ctx, result)
-    else if (!result.deposit) player.anim = 'idle'
+    else if (!result.bankOpen) player.anim = 'idle'
   } else if (player.combat) {
     stepCombat(player, ctx, result)
   } else if (player.mining) {
@@ -245,7 +262,10 @@ export function tickPlayer(player: TickPlayer, ctx: TickContext): TickResult {
 }
 
 export function toEntityDiff(player: TickPlayer): EntityDiff {
-  return { id: player.charId, kind: 'player', x: player.x, z: player.z, anim: player.anim, name: player.name }
+  // Gear rides every player diff (even empty) so an in-world unequip
+  // propagates — omitting it would leave stale weapons on observers.
+  const diff: EntityDiff = { id: player.charId, kind: 'player', x: player.x, z: player.z, anim: player.anim, name: player.name, gear: player.gear }
+  return diff
 }
 
 /** Rocks whose depletion window ends exactly this tick → respawn broadcasts. */

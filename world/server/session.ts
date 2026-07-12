@@ -48,5 +48,8 @@ export async function handleWorldSession(request: Request, env: Env): Promise<Re
     env.JWT_SECRET,
     WORLD_SESSION_EXPIRES_SECONDS
   )
-  return jsonResponse({ token, character: { id: row.id, name: row.username } })
+  // The character's current zone, so a fresh device connects to the right DO.
+  const pos = await env.DB.prepare('SELECT zone_id FROM world_positions WHERE character_id = ?')
+    .bind(row.id).first<{ zone_id: string }>()
+  return jsonResponse({ token, character: { id: row.id, name: row.username }, zone: pos?.zone_id ?? 'pasture' })
 }

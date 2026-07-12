@@ -65,6 +65,40 @@ describe('findPath', () => {
     expect(findPath(open5x5, { x: 0, z: 0 }, { x: 99, z: 99 })).toBeNull()
   })
 
+  // Regression: BFS used to return equal-STEP-count paths that arced tiles
+  // away from the straight line (diagonals cost the same as cardinals, so a
+  // triangle detour "cost" nothing). Paths must stay inside the bounding
+  // rectangle of start→destination on open ground.
+  it('keeps a long straight-line walk perfectly straight', () => {
+    const grid = Array.from({ length: 21 }, () => '.'.repeat(30))
+    const path = findPath(grid, { x: 2, z: 10 }, { x: 28, z: 10 })
+    expect(path).toHaveLength(27)
+    for (const step of path!) expect(step.z).toBe(10)
+  })
+
+  it('never leaves the start→destination bounding box on open ground', () => {
+    const grid = Array.from({ length: 21 }, () => '.'.repeat(30))
+    const path = findPath(grid, { x: 3, z: 18 }, { x: 25, z: 4 })
+    expect(path).toHaveLength(23) // Chebyshev-optimal: max(22, 14) + 1
+    for (const step of path!) {
+      expect(step.x).toBeGreaterThanOrEqual(3)
+      expect(step.x).toBeLessThanOrEqual(25)
+      expect(step.z).toBeGreaterThanOrEqual(4)
+      expect(step.z).toBeLessThanOrEqual(18)
+    }
+  })
+
+  it('uses no more diagonal steps than the short axis requires', () => {
+    const grid = Array.from({ length: 10 }, () => '.'.repeat(20))
+    const path = findPath(grid, { x: 1, z: 2 }, { x: 15, z: 6 })
+    expect(path).toHaveLength(15) // max(14, 4) + 1
+    let diagonals = 0
+    for (let i = 1; i < path!.length; i++) {
+      if (path![i].x !== path![i - 1].x && path![i].z !== path![i - 1].z) diagonals += 1
+    }
+    expect(diagonals).toBe(4)
+  })
+
   it('truncates a path longer than maxLen', () => {
     const grid = Array.from({ length: 1 }, () => '.'.repeat(20))
     const path = findPath(grid, { x: 0, z: 0 }, { x: 19, z: 0 }, 5)
