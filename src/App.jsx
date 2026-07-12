@@ -835,6 +835,9 @@ function GameApp() {
   const itemsDataRef = useRef(itemsData)
   const bankRef = useRef(bank)
   const questQueueRef = useRef(questQueue)
+  // Guards the skip handler (one skip at a time) and, below, freezes the
+  // questQueueRef state-sync while a skip's quest cascade drains the queue.
+  const isSkippingRef = useRef(false)
   const worldLocationRef = useRef(worldLocation)
   const idleCombatSetupRef = useRef(idleCombatSetup)
   const currentHPRef = useRef(currentHP)
@@ -847,7 +850,13 @@ function GameApp() {
   useEffect(() => { statsRef.current = stats }, [stats])
   useEffect(() => { equipmentRef.current = equipment }, [equipment])
   useEffect(() => { inventoryRef.current = inventory }, [inventory])
-  useEffect(() => { questQueueRef.current = questQueue }, [questQueue])
+  // While a skip's quest cascade is draining the queue, promoteNextQueuedQuestOrClear
+  // owns questQueueRef and advances it synchronously between completions. This
+  // state-sync must NOT fire mid-cascade: the `questQueue` state lags the ref
+  // (its setState hasn't committed), so re-running it would reset the ref to the
+  // pre-skip queue and re-pop already-completed quests (a 1h skip reporting 7
+  // completions from a 3-slot queue). It resumes syncing once the skip ends.
+  useEffect(() => { if (!isSkippingRef.current) questQueueRef.current = questQueue }, [questQueue])
 
   // visibilitychange: stamp on hide, run idle on return
   useEffect(() => {
@@ -1935,7 +1944,6 @@ function GameApp() {
   }
 
 
-  const isSkippingRef = useRef(false)
   // Pending boss-skip confirmation: { bossId, monsterName, cost } | null
   const [skipConfirm, setSkipConfirm] = useState(null)
 
