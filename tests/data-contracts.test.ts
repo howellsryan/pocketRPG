@@ -22,6 +22,10 @@ for (const raid of Object.values(raids as Record<string, any>)) {
 
 const EXPECTED_BOSS_UNIQUE_ITEM_IDS = new Set([
   ...EXPECTED_RAID_UNIQUE_ITEM_IDS,
+  'duskmare_staff',
+  'umbral_orb',
+  'attuned_orb',
+  'volatile_orb',
   'blade_of_saeldor',
   'bow_of_faerdhinen',
   'shardglass_axe',

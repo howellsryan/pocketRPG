@@ -11,6 +11,10 @@ import { isMinigameItemUnlocked } from '../utils/completion.js'
 import { countItem } from '../engine/inventory.js'
 import minigamesData from '../data/minigames.json'
 import { getActivityKey } from '../engine/activityRegistry.js'
+import { getLevelFromXP } from '../engine/experience.js'
+
+const minigameReqOf = (task) => minigamesData.minigames.find(m => m.id === task?.minigame)?.req || null
+const capitalizeSkill = (s) => s ? s.charAt(0).toUpperCase() + s.slice(1) : s
 
 function formatMinigameHours(hours) {
   if (hours === Math.floor(hours)) return `${hours}h`
@@ -19,12 +23,25 @@ function formatMinigameHours(hours) {
 
 export default function MinigamesScreen({ initialTaskId, onBack, onStopBack } = {}) {
   const {
-    inventory, bank, equipment, activeTask, setActiveTask, unlockedMinigameItems,
+    inventory, bank, equipment, stats, activeTask, setActiveTask, unlockedMinigameItems,
     getActivityProgress, addToast, requestActivityStart,
   } = useGame()
   const hasAutoStarted = useRef(false)
 
+  const meetsMinigameReq = (task) => {
+    const req = minigameReqOf(task)
+    if (!req?.skill) return true
+    return getLevelFromXP(stats?.[req.skill]?.xp || 0) >= req.level
+  }
+
   const startMinigame = (task, seedFromTravel = false) => {
+    // Skill-level gate (e.g. Arcane Proving Grounds needs Magic 50). Enforced here
+    // too so travel-arrival / home-shortcut starts can't bypass the requirement.
+    const req = minigameReqOf(task)
+    if (req?.skill && !meetsMinigameReq(task)) {
+      addToast(`Requires ${capitalizeSkill(req.skill)} level ${req.level}.`, 'error')
+      return
+    }
     // Map-driven gating (Phase 3): fresh starts must be at a place that offers this
     // minigame. Arrivals via travel/home-shortcut skip the check — they're already there.
     if (!seedFromTravel && !requestActivityStart({ type: 'minigame', minigameTask: task })) return
@@ -143,8 +160,10 @@ export default function MinigamesScreen({ initialTaskId, onBack, onStopBack } = 
                 </SectionHeader>
                 {tasks.map(task => {
                   const missingReq = task.requiresItem && !hasItemAnywhere(task.requiresItem)
+                  const levelReq = minigameReqOf(task)
+                  const missingLevel = !!levelReq?.skill && !meetsMinigameReq(task)
                   const alreadyUnlocked = isMinigameItemUnlocked(unlockedMinigameItems, task.product)
-                  const enabled = !missingReq
+                  const enabled = !missingReq && !missingLevel
 
                   return (
                     <GildedComplete key={task.id} complete={alreadyUnlocked} className="rounded-2xl">
@@ -154,6 +173,9 @@ export default function MinigamesScreen({ initialTaskId, onBack, onStopBack } = 
                         meta={<>
                           {alreadyUnlocked && <span class="text-[#7a7]">✓ </span>}
                           ⏱ {formatMinigameHours(task.hours)} total
+                          {missingLevel && (
+                            <span class="text-[#e57373]">{' · '}🔒 {capitalizeSkill(levelReq.skill)} {levelReq.level}</span>
+                          )}
                           {task.requiresItem && (
                             <span class={missingReq ? 'text-[#e57373]' : ''}>
                               {' · '}Needs: {minigamesData.itemNames[task.requiresItem] || task.requiresItem}

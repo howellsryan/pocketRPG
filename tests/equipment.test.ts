@@ -9,6 +9,7 @@ import {
   getAttackSpeed,
   getAttackStyle,
   getCombatType,
+  resolveMagicSpell,
   placeUnequippedItems
 } from '../src/engine/equipment.js'
 
@@ -451,6 +452,51 @@ describe('Equipment System', () => {
     it('should handle null equipment gracefully', () => {
       const type = getCombatType(null, mockItemsData)
       expect(type).toBe('melee')
+    })
+  })
+
+  describe('resolveMagicSpell (magic fights must never run without a castable spell)', () => {
+    const items: any = {
+      ...mockItemsData,
+      powered_staff: { id: 'powered_staff', slot: 'weapon', attackStyle: 'magic', attackSpeed: 4, poweredStaff: true },
+    }
+    const spellsData: any = { wind_strike: { id: 'wind_strike', name: 'Wind Strike', baseDamage: 2 } }
+
+    it('resolves the selected spell for a magic staff', () => {
+      const eq: any = { weapon: { itemId: 'staff' } }
+      const r = resolveMagicSpell(eq, items, { id: 'wind_strike' }, spellsData)
+      expect(r.combatType).toBe('magic')
+      expect(r.spell?.id).toBe('wind_strike')
+      expect(r.needsSpell).toBe(false)
+    })
+
+    it('flags needsSpell when a magic weapon has no spell selected', () => {
+      const eq: any = { weapon: { itemId: 'staff' } }
+      const r = resolveMagicSpell(eq, items, null, spellsData)
+      expect(r.spell).toBeNull()
+      expect(r.needsSpell).toBe(true)
+    })
+
+    it('flags needsSpell when the stored spell id no longer exists (renamed content)', () => {
+      const eq: any = { weapon: { itemId: 'staff' } }
+      const r = resolveMagicSpell(eq, items, { id: 'deleted_spell' }, spellsData)
+      expect(r.spell).toBeNull()
+      expect(r.needsSpell).toBe(true)
+    })
+
+    it('does not require a spell for a powered staff', () => {
+      const eq: any = { weapon: { itemId: 'powered_staff' } }
+      const r = resolveMagicSpell(eq, items, null, spellsData)
+      expect(r.isPoweredStaff).toBe(true)
+      expect(r.needsSpell).toBe(false)
+      expect(r.spell).toBeNull()
+    })
+
+    it('never flags needsSpell for non-magic combat', () => {
+      const eq: any = { weapon: { itemId: 'sword' } }
+      const r = resolveMagicSpell(eq, items, null, spellsData)
+      expect(r.combatType).toBe('melee')
+      expect(r.needsSpell).toBe(false)
     })
   })
 

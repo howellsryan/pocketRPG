@@ -95,6 +95,7 @@ const sourceFiles = [
   'engine/activitySession.js',
   'engine/activityRunner.js',
   'engine/skipPreflight.js',
+  'engine/autoStartTask.js',
   'db/database.js',
   'db/stores.js',
   'db/saveload.js',

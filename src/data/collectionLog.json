@@ -13,6 +13,17 @@
       "icon": "\u2694\ufe0f",
       "sections": [
         {
+          "id": "duskmare",
+          "label": "The Duskmare",
+          "icon": "\ud83c\udf11",
+          "items": [
+            "duskmare_staff",
+            "umbral_orb",
+            "attuned_orb",
+            "volatile_orb"
+          ]
+        },
+        {
           "id": "nether_demon",
           "label": "Nether Demon",
           "icon": "\u2694\ufe0f",
@@ -446,6 +457,20 @@
       "label": "Minigames",
       "icon": "\ud83c\udfae",
       "sections": [
+        {
+          "id": "arcane_proving_grounds",
+          "label": "Arcane Proving Grounds",
+          "icon": "\ud83e\ude84",
+          "items": [
+            "boundless_hat",
+            "boundless_robe_top",
+            "boundless_robe_bottom",
+            "boundless_boots",
+            "boundless_gloves",
+            "arcane_grimoire",
+            "archmage_wand"
+          ]
+        },
         {
           "id": "barbarian_assault",
           "label": "Viking Assault",

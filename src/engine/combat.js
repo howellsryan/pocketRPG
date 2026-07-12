@@ -1655,6 +1655,55 @@ export function applySpecialAttack(combatState, playerStats, equipment, itemsDat
       break
     }
 
+    case 'soul_drain': {
+      // Umbral Duskmare Staff — a magic blast that restores Prayer points equal
+      // to half the damage dealt (up to the pool cap). Damage scales with Magic.
+      const magicLevel = playerStats.magic || 1
+      const effMag = effectiveMagic(magicLevel)
+      const atkRoll = maxAttackRoll(effMag, bonuses.attackBonus.magic || 0)
+      const defRoll = monsterMagicDefenceRoll(monster.stats.magic, monster.stats.defence, monster.defenceBonus.magic || 0)
+      const acc = hitChance(atkRoll, defRoll)
+      const wornMagicDamage = getEffectiveWornMagicDamage(bonuses.otherBonus.magicDamage, equipment, itemsData)
+      const baseDamage = Math.max(1, Math.floor(magicLevel / 3) + 12)
+      const maxHit = magicMaxHit(baseDamage, wornMagicDamage)
+      const damage = rollDamage(acc, Math.max(1, maxHit))
+      const actual = Math.min(damage, Math.max(0, monster.currentHP))
+      monster.currentHP -= actual
+      let prayerRestored = 0
+      if (actual > 0 && Number.isFinite(state.maxPrayerPoints)) {
+        const cur = Number(state.prayerPoints) || 0
+        const restored = Math.min(state.maxPrayerPoints, cur + Math.floor(actual / 2))
+        prayerRestored = restored - cur
+        state.prayerPoints = restored
+      }
+      const xpSkills = { magic: actual * MAGIC_XP_PER_DAMAGE, hitpoints: Math.floor(actual * HP_XP_PER_DAMAGE) }
+      _accXP(state, xpSkills)
+      events.push({ type: 'xp', xpSkills })
+      events.push({ type: 'specialHit', hits: [damage], totalDamage: actual, specType: 'soul_drain', prayerRestored, monsterHP: monster.currentHP })
+      break
+    }
+
+    case 'volatile_surge': {
+      // Volatile Duskmare Staff — high-accuracy magic blast whose max hit scales
+      // directly with Magic level (a maxed mage hits far above a normal spell).
+      const magicLevel = playerStats.magic || 1
+      const effMag = effectiveMagic(magicLevel)
+      const atkRoll = Math.floor(maxAttackRoll(effMag, bonuses.attackBonus.magic || 0) * 1.25)
+      const defRoll = monsterMagicDefenceRoll(monster.stats.magic, monster.stats.defence, monster.defenceBonus.magic || 0)
+      const acc = hitChance(atkRoll, defRoll)
+      const wornMagicDamage = getEffectiveWornMagicDamage(bonuses.otherBonus.magicDamage, equipment, itemsData)
+      const baseDamage = Math.max(1, Math.floor(magicLevel * 0.6))
+      const maxHit = magicMaxHit(baseDamage, wornMagicDamage)
+      const damage = rollDamage(acc, Math.max(1, maxHit))
+      const actual = Math.min(damage, Math.max(0, monster.currentHP))
+      monster.currentHP -= actual
+      const xpSkills = { magic: actual * MAGIC_XP_PER_DAMAGE, hitpoints: Math.floor(actual * HP_XP_PER_DAMAGE) }
+      _accXP(state, xpSkills)
+      events.push({ type: 'xp', xpSkills })
+      events.push({ type: 'specialHit', hits: [damage], totalDamage: actual, specType: 'volatile_surge', monsterHP: monster.currentHP })
+      break
+    }
+
     default:
       return { combatState, events: [] }
   }

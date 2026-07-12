@@ -274,6 +274,10 @@ export function activityLevelRequirement(kind, ref) {
     const level = Number(actionInSkill(kind, ref)?.level) || 0
     return level > 1 ? { skill: kind, level } : null
   }
+  if (kind === 'minigame') {
+    const req = minigamesById[ref]?.req
+    return req?.skill && Number(req.level) > 1 ? { skill: req.skill, level: Number(req.level) } : null
+  }
   return null
 }
 
