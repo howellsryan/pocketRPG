@@ -61,6 +61,19 @@ export function advanceTravel(task, elapsedMs) {
   }
 }
 
+/**
+ * Milliseconds left over after a travel task arrives within `elapsedMs`. Offline
+ * catch-up spends this remainder on the activity the trip was launched for (its
+ * `autoStart`) instead of stranding the player idle at the destination — the walk
+ * costs `ticksRemaining` ticks, everything past that is time to fight/skill.
+ * Zero if the trip didn't finish inside the window.
+ */
+export function travelLeftoverMs(task, elapsedMs) {
+  if (!task || task.type !== 'travel') return 0
+  const travelTicks = task.ticksRemaining ?? task.totalTicks ?? 0
+  return Math.max(0, (Number(elapsedMs) || 0) - travelTicks * TRAVEL_TICK_MS)
+}
+
 /** Fraction of the journey completed, 0..1. */
 export function travelFraction(task) {
   if (!task || task.type !== 'travel') return 0
