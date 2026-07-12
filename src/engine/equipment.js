@@ -306,3 +306,24 @@ export function getCombatType(equipment, itemsData) {
   if (attackStyle === 'magic') return 'magic'
   return 'melee'
 }
+
+/**
+ * Resolve the spell object a magic fight will actually cast, and flag when a
+ * magic fight is missing one. `combat.js` deals 0 damage every tick if a magic
+ * fight runs with no spell and no powered staff (neither cast branch fires), so
+ * callers MUST refuse to start/continue the fight when `needsSpell` is true.
+ *
+ * `spell` is resolved from `spellsData` by the stored spell id, so a persisted
+ * id that no longer exists (e.g. renamed in a content update) resolves to null
+ * and is treated as "no spell" rather than silently splashing forever.
+ */
+export function resolveMagicSpell(equipment, itemsData, activeCombatSpell, spellsData) {
+  const combatType = getCombatType(equipment, itemsData)
+  const weaponItem = equipment?.weapon ? itemsData?.[equipment.weapon.itemId] : null
+  const isPoweredStaff = !!weaponItem?.poweredStaff
+  const spell = combatType === 'magic' && activeCombatSpell && !isPoweredStaff
+    ? (spellsData?.[activeCombatSpell.id] || null)
+    : null
+  const needsSpell = combatType === 'magic' && !spell && !isPoweredStaff
+  return { combatType, weaponItem, isPoweredStaff, spell, needsSpell }
+}

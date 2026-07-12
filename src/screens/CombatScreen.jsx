@@ -28,7 +28,7 @@ import { getMonsterSeedDrops } from '../engine/seedDrops.js'
 import { getAgilityBankDelayMs, formatBankDelay } from '../engine/agility.js'
 import { onTick, pauseTicks, resumeTicks } from '../engine/tick.js'
 import { addItem, removeItem, freeSlots } from '../engine/inventory.js'
-import { getCombatType, equipItem, checkEquipRequirements, placeUnequippedItems } from '../engine/equipment.js'
+import { getCombatType, resolveMagicSpell, equipItem, checkEquipRequirements, placeUnequippedItems } from '../engine/equipment.js'
 import { api, getToken, getCharacterId, getOneLifeMode, isDemoMode } from '../cloud/api.js'
 import { pullSave, applyCloudSave, requestCriticalPushSave, pushNow } from '../cloud/sync.js'
 import { pvpApi } from '../cloud/pvp.js'
@@ -399,10 +399,16 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   // Update spell in active combat if changed mid-fight
   useEffect(() => {
     if (!combatRef.current || !combatRef.current.active) return
-    const newCombatType = getCombatType(equipmentRef.current, itemsData)
-    const weaponItem = equipmentRef.current?.weapon ? itemsData[equipmentRef.current.weapon.itemId] : null
-    const isPoweredStaff = !!weaponItem?.poweredStaff
-    const newSpell = newCombatType === 'magic' && activeCombatSpell && !isPoweredStaff ? spellsData[activeCombatSpell.id] : null
+    const { combatType: newCombatType, isPoweredStaff, spell: newSpell, needsSpell } = resolveMagicSpell(equipmentRef.current, itemsData, activeCombatSpell, spellsData)
+    // Swapping to magic with no castable spell mid-fight would splash 0s forever
+    // (see resolveMagicSpell) — stop cleanly instead of applying a broken state.
+    if (needsSpell) {
+      addToast('No spell selected — magic auto-fight stopped.', 'error')
+      setCombat(null)
+      combatRef.current = null
+      setActiveTask(null)
+      return
+    }
     const effectiveSpellId = isPoweredStaff ? null : activeCombatSpell?.id
     // Update combat state to use the new spell/combat type
     if (combatRef.current.combatType !== newCombatType ||
@@ -1055,12 +1061,10 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     }
     // Map-driven gating (Phase 3): must be at a place that offers this monster.
     if (!requestActivityStart({ type: 'combat', monster })) return
-    const combatType = getCombatType(equipment, itemsData)
-    const weaponItem = equipment?.weapon ? itemsData[equipment.weapon.itemId] : null
-    const isPoweredStaff = !!weaponItem?.poweredStaff
-    const spell = combatType === 'magic' && activeCombatSpell && !isPoweredStaff ? spellsData[activeCombatSpell.id] : null
-    if (combatType === 'magic' && !spell && !isPoweredStaff) {
+    const { combatType, weaponItem, isPoweredStaff, spell, needsSpell } = resolveMagicSpell(equipment, itemsData, activeCombatSpell, spellsData)
+    if (needsSpell) {
       addToast('No spell selected! Use the 🔮 Cast Spell button to pick a spell.', 'error')
+      return
     }
     const state = createCombatState(monster, combatType, combatStance, spell)
     // Reset special attack energy on new fight; preserve active potions so they last their full 5 minutes
@@ -1092,12 +1096,10 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     // their own activity kind — gate on the raid, not its first boss (which is raid-only
     // content and not a standalone monster on the map).
     if (!requestActivityStart({ type: 'raid', raid: raidData })) return
-    const combatType = getCombatType(equipment, itemsData)
-    const weaponItem = equipment?.weapon ? itemsData[equipment.weapon.itemId] : null
-    const isPoweredStaff = !!weaponItem?.poweredStaff
-    const spell = combatType === 'magic' && activeCombatSpell && !isPoweredStaff ? spellsData[activeCombatSpell.id] : null
-    if (combatType === 'magic' && !spell && !isPoweredStaff) {
+    const { combatType, spell, needsSpell } = resolveMagicSpell(equipment, itemsData, activeCombatSpell, spellsData)
+    if (needsSpell) {
       addToast('No spell selected! Use the 🔮 Cast Spell button to pick a spell.', 'error')
+      return
     }
     const state = createRaidCombatState(raidData, monstersData, combatType, combatStance, spell)
     if (!state) {
@@ -1122,10 +1124,16 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   }
 
   const continueFight = (monster) => {
-    const combatType = getCombatType(equipment, itemsData)
-    const weaponItem = equipment?.weapon ? itemsData[equipment.weapon.itemId] : null
-    const isPoweredStaff = !!weaponItem?.poweredStaff
-    const spell = combatType === 'magic' && activeCombatSpell && !isPoweredStaff ? spellsData[activeCombatSpell.id] : null
+    const { combatType, spell, needsSpell } = resolveMagicSpell(equipment, itemsData, activeCombatSpell, spellsData)
+    if (needsSpell) {
+      // Never restart a magic auto-fight without a castable spell — it would just
+      // splash 0s forever (see resolveMagicSpell). Stop cleanly instead.
+      addToast('No spell selected — magic auto-fight stopped.', 'error')
+      setCombat(null)
+      combatRef.current = null
+      setActiveTask(null)
+      return
+    }
     const state = createCombatState(monster, combatType, combatStance, spell)
     // Reset special attack energy on kill; preserve active potions and prayers so they last their full duration
     state.specialAttackEnergy = 100
