@@ -2,7 +2,7 @@
 // I/O — the DO owns the objects, calls tickPlayer once per player per tick, and
 // decides what to broadcast/flush from the results.
 import type { Tile } from './pathfind'
-import type { EntityDiff, GearDescriptor, InvSlot, ZoneEvent } from '../shared/protocol'
+import type { CombatStance, EntityDiff, GearDescriptor, InvSlot, ZoneEvent } from '../shared/protocol'
 import { GATHER_SKILLS, ROCK_DEPLETED_TICKS, addToInventory, inventoryIsFull, type GatherSkill, type MiningAction } from './mining'
 import { getLevelFromXP, clampXP } from '../../src/engine/experience.js'
 import { startCombat, stepCombat, type CombatSession } from './combat'
@@ -41,11 +41,27 @@ export type TickPlayer = {
   maxHp: number
   /** Equipment from the save blob, passed straight to the combat engine. */
   equipment: Record<string, unknown>
-  /** Visual descriptor derived from equipment at hello (shared/appearance.ts);
-   * fixed for the session — the world has no equip UI yet. */
+  /** Visual descriptor derived from equipment (shared/appearance.ts); updated
+   * live when the player equips/unequips in-world. */
   gear: GearDescriptor
   combat: CombatSession | null
+  /** Run toggle + energy (0-100). Running moves 2 tiles/tick and drains energy;
+   * walking/idle regenerates it. `lastRunSent` gates the {e:'run'} echo. */
+  running: boolean
+  runEnergy: number
+  lastRunSent: number
+  /** Melee stance driving new fights (accurate/aggressive/defensive). */
+  stance: CombatStance
+  /** Special-attack energy readout (0-100); mirrors the engine's per-fight value
+   * during combat, 100 between fights. `lastSpecSent` gates the {e:'spec'} echo. */
+  specialEnergy: number
+  lastSpecSent: number
 }
+
+// Running: 2 tiles/tick, ~100 energy drained over ~1 min of continuous running;
+// regenerates while walking/idle. Tunable — not an engine formula.
+export const RUN_DRAIN_PER_TILE = 0.6
+export const RUN_REGEN_PER_TICK = 0.45
 
 export type TickContext = {
   tick: number
@@ -230,20 +246,47 @@ function tickMining(player: TickPlayer, ctx: TickContext, result: TickResult): v
   result.rockChanges.push({ id: rock.id, depleted: true })
 }
 
+/** Advances the player along its path: one tile normally, a second tile when
+ * running with energy to spare. Drains run energy per running tile. Returns
+ * whether the player ran this tick (drives regen). */
+function takeSteps(player: TickPlayer): boolean {
+  if (player.path.length === 0) return false
+  const first = player.path.shift()!
+  player.x = first.x
+  player.z = first.z
+  if (!player.running || player.runEnergy <= 0) return false
+  let ranTiles = 1
+  if (player.path.length > 0) {
+    const second = player.path.shift()!
+    player.x = second.x
+    player.z = second.z
+    ranTiles = 2
+  }
+  player.runEnergy = Math.max(0, player.runEnergy - RUN_DRAIN_PER_TILE * ranTiles)
+  return true
+}
+
+/** Emits a {e:'run'} echo when the integer energy readout or the toggle changed
+ * since the last one this player saw. */
+export function emitRunIfChanged(player: TickPlayer, events: ZoneEvent[]): void {
+  const rounded = Math.round(player.runEnergy)
+  if (rounded === player.lastRunSent) return
+  player.lastRunSent = rounded
+  events.push({ e: 'run', energy: rounded, running: player.running })
+}
+
 /** One tick for one player: movement first, then interaction arrival, then
  * mining progress. Exactly one of walk/mine/idle claims the anim each tick. */
 export function tickPlayer(player: TickPlayer, ctx: TickContext): TickResult {
   const result = emptyResult()
   const before = { x: player.x, z: player.z, anim: player.anim }
 
+  let ran = false
   if (player.path.length > 0) {
-    const [step, ...rest] = player.path
-    player.x = step.x
-    player.z = step.z
-    player.path = rest
+    ran = takeSteps(player)
     player.anim = 'walk'
-    if (rest.length === 0 && player.pendingInteract) startInteract(player, ctx, result)
-    if (rest.length === 0 && player.combat) stepCombat(player, ctx, result)
+    if (player.path.length === 0 && player.pendingInteract) startInteract(player, ctx, result)
+    if (player.path.length === 0 && player.combat) stepCombat(player, ctx, result)
   } else if (player.pendingInteract) {
     startInteract(player, ctx, result)
     if (player.combat) stepCombat(player, ctx, result)
@@ -256,6 +299,10 @@ export function tickPlayer(player: TickPlayer, ctx: TickContext): TickResult {
   } else {
     player.anim = 'idle'
   }
+
+  // Regenerate run energy on any tick the player didn't run (walking or idle).
+  if (!ran && player.runEnergy < 100) player.runEnergy = Math.min(100, player.runEnergy + RUN_REGEN_PER_TICK)
+  emitRunIfChanged(player, result.events)
 
   result.entChanged = player.x !== before.x || player.z !== before.z || player.anim !== before.anim
   return result

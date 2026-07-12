@@ -34,6 +34,12 @@ export function storeSession(session: WorldSession): void {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(session))
 }
 
+/** Explicit logout: drop the stored world session so the next load shows the
+ * login-required screen. Leaves the last-zone hint alone (harmless). */
+export function clearStoredSession(): void {
+  localStorage.removeItem(STORAGE_KEY)
+}
+
 /** Extracts the handoff JWT from a `#handoff=<jwt>` URL hash, if present. Pure — testable without a DOM. */
 export function parseHandoffFromHash(hash: string): string | null {
   const match = /^#handoff=(.+)$/.exec(hash)

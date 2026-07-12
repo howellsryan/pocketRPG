@@ -1,6 +1,6 @@
-import type { InvSlot } from '../../shared/protocol'
+import type { CombatStance, EquipmentMap, InvSlot } from '../../shared/protocol'
 import type { MenuRow } from './picking'
-import { iconMarkup, itemName } from './itemIcon'
+import { iconMarkup, itemName, uiIconMarkup } from './itemIcon'
 
 export type MenuDispatch = (row: MenuRow) => void
 
@@ -10,13 +10,70 @@ const XP_DROP_MS = 1200
 const MAX_MESSAGES = 3
 
 const HUD_CSS = `
-#inv-panel {
-  position: fixed; right: 8px; top: 50%; transform: translateY(-50%);
-  display: grid; grid-template-columns: repeat(${INVENTORY_COLS}, 40px);
-  grid-auto-rows: 40px; gap: 3px; padding: 6px;
-  background: rgba(20, 16, 10, 0.82); border: 1px solid #5a4a30; border-radius: 8px;
-  font-family: sans-serif; z-index: 10;
+#hud-panel {
+  position: fixed; right: 8px; top: 148px;
+  z-index: 10; font-family: sans-serif; display: flex; flex-direction: column; gap: 4px;
+  width: 181px;
 }
+.hud-tabs { display: flex; gap: 3px; }
+.hud-tab {
+  flex: 1; min-height: 44px; min-width: 44px;
+  background: rgba(20, 16, 10, 0.82); border: 1px solid #5a4a30; border-radius: 6px;
+  color: #c9b892; font-size: 20px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; user-select: none;
+}
+.hud-tab.active { background: rgba(70, 58, 36, 0.92); color: #ffe066; border-color: #6a5636; }
+.hud-tab.logout { color: #e0a05a; }
+.hud-tab svg, #run-orb svg { display: block; }
+#run-orb .run-ico { display: flex; align-items: center; }
+.hud-body {
+  background: rgba(20, 16, 10, 0.82); border: 1px solid #5a4a30; border-radius: 8px; padding: 6px;
+}
+.hud-pane { display: none; }
+.hud-pane.active { display: block; }
+#inv-panel {
+  display: grid; grid-template-columns: repeat(${INVENTORY_COLS}, 40px);
+  grid-auto-rows: 40px; gap: 3px;
+}
+#equip-panel {
+  display: grid; grid-template-columns: repeat(3, 40px); grid-auto-rows: 40px; gap: 3px;
+}
+.equip-slot {
+  background: rgba(60, 50, 34, 0.55); border-radius: 4px; position: relative;
+  display: flex; align-items: center; justify-content: center; font-size: 9px; color: #7a6a4a;
+  user-select: none; touch-action: none; text-align: center; cursor: pointer;
+}
+.equip-slot.filled { cursor: pointer; }
+.equip-slot.empty-cell { background: transparent; cursor: default; }
+#combat-panel { display: flex; flex-direction: column; gap: 6px; }
+.stance-row { display: flex; gap: 3px; }
+.stance-btn {
+  flex: 1; min-height: 44px; border-radius: 6px; cursor: pointer; user-select: none;
+  background: rgba(60, 50, 34, 0.55); border: 1px solid #5a4a30; color: #d8c9a2;
+  font-size: 11px; display: flex; align-items: center; justify-content: center; text-align: center;
+}
+.stance-btn.active { background: rgba(70, 58, 36, 0.92); color: #ffe066; border-color: #ffe066; }
+#spec-bar {
+  position: relative; height: 22px; border-radius: 6px; overflow: hidden;
+  background: rgba(60, 50, 34, 0.55); border: 1px solid #5a4a30;
+}
+#spec-bar > .fill { position: absolute; inset: 0 auto 0 0; background: #3f7fae; transition: width 0.2s; }
+#spec-bar > .label {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: bold; color: #fff; text-shadow: 0 1px 2px #000;
+}
+#spec-btn {
+  min-height: 44px; border-radius: 6px; cursor: pointer; user-select: none;
+  background: rgba(70, 58, 36, 0.9); border: 1px solid #6a5636; color: #ffe066;
+  font-size: 13px; font-weight: bold; display: flex; align-items: center; justify-content: center;
+}
+#run-orb {
+  position: fixed; right: 148px; top: 52px; z-index: 10; min-width: 44px; min-height: 44px;
+  padding: 4px 8px; background: rgba(20, 16, 10, 0.82); border: 1px solid #5a4a30; border-radius: 22px;
+  font-family: sans-serif; font-size: 12px; font-weight: bold; color: #c9b892; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 3px; user-select: none;
+}
+#run-orb.running { color: #ffe066; border-color: #ffe066; background: rgba(70, 58, 36, 0.92); }
 .inv-slot {
   background: rgba(60, 50, 34, 0.55); border-radius: 4px; position: relative;
   display: flex; align-items: center; justify-content: center; font-size: 22px;
@@ -61,7 +118,7 @@ const HUD_CSS = `
   font-family: sans-serif; font-size: 15px; color: #ffe066; text-shadow: 0 1px 2px #000;
 }
 #hp-pill {
-  position: fixed; right: 8px; top: 8px; z-index: 10; padding: 4px 10px;
+  position: fixed; right: 148px; top: 8px; z-index: 10; padding: 4px 10px;
   background: rgba(20, 16, 10, 0.82); border: 1px solid #5a4a30; border-radius: 12px;
   font-family: sans-serif; font-size: 13px; font-weight: bold; color: #5fd35f;
   text-shadow: 0 1px 2px #000; pointer-events: none;
@@ -112,6 +169,32 @@ export type InvHandlers = {
   /** Long-press / right-click on a filled slot → the item menu. */
   onSlotMenu: (index: number, x: number, y: number) => void
 }
+
+export type HudHandlers = InvHandlers & {
+  onRunToggle: () => void
+  onStance: (stance: CombatStance) => void
+  onSpecial: () => void
+  onUnequip: (slot: string) => void
+  onLogout: () => void
+}
+
+// Paperdoll layout for the Equipment tab (3 columns). null = spacer cell.
+const EQUIP_LAYOUT: (string | null)[] = [
+  null, 'head', null,
+  'cape', 'neck', 'ammo',
+  'weapon', 'body', 'shield',
+  null, 'legs', null,
+  'hands', 'feet', 'ring',
+]
+const EQUIP_SLOT_LABEL: Record<string, string> = {
+  head: 'Head', cape: 'Cape', neck: 'Neck', ammo: 'Ammo', weapon: 'Weapon',
+  body: 'Body', shield: 'Shield', legs: 'Legs', hands: 'Hands', feet: 'Feet', ring: 'Ring',
+}
+const STANCES: { stance: CombatStance; label: string }[] = [
+  { stance: 'accurate', label: 'Accurate' },
+  { stance: 'aggressive', label: 'Aggressive' },
+  { stance: 'defensive', label: 'Defensive' },
+]
 
 /** Pointer-based pack-grid input (desktop and touch share the path):
  * press-and-move past a small threshold drags to reorder (ghost + highlight,
@@ -196,15 +279,66 @@ function setupInvDrag(panel: HTMLElement, handlers: InvHandlers): void {
   panel.addEventListener('pointercancel', () => finish(false))
 }
 
-/** Creates the in-game HUD (inventory grid, message strip, xp-drop layer, HP
- * pill). Call once after the welcome message. */
-export function initHud(handlers?: InvHandlers): void {
+// PocketRPG's own bespoke nav icons (src/data/bespokeIcons.json), matching the
+// main game's tab bar; painted by paintHudIcons() once the icon data loads.
+const TABS: { id: string; iconKey: string; title: string }[] = [
+  { id: 'inventory', iconKey: 'backpack', title: 'Inventory' },
+  { id: 'equipment', iconKey: 'paperdoll', title: 'Equipment' },
+  { id: 'combat', iconKey: 'combat_level', title: 'Combat' },
+]
+const LOGOUT_COLOR = '#e0a05a'
+const HUD_TAB_ICON_PX = 26
+const RUN_ICON_PX = 20
+
+function selectTab(id: string): void {
+  for (const tab of document.querySelectorAll('.hud-tab[data-tab]')) {
+    tab.classList.toggle('active', tab.getAttribute('data-tab') === id)
+  }
+  for (const pane of document.querySelectorAll('.hud-pane')) {
+    pane.classList.toggle('active', pane.getAttribute('data-pane') === id)
+  }
+}
+
+/** Builds the tabbed HUD panel (Inventory / Equipment / Combat + Logout), the run
+ * orb, message strip, xp-drop layer and HP pill. Call once after welcome. */
+export function initHud(handlers?: HudHandlers): void {
   if (hudReady) return
   hudReady = true
   const style = document.createElement('style')
   style.textContent = HUD_CSS
   document.head.appendChild(style)
 
+  const panel = document.createElement('div')
+  panel.id = 'hud-panel'
+
+  const tabs = document.createElement('div')
+  tabs.className = 'hud-tabs'
+  for (const tab of TABS) {
+    const btn = document.createElement('div')
+    btn.className = 'hud-tab' + (tab.id === 'inventory' ? ' active' : '')
+    btn.setAttribute('data-tab', tab.id)
+    btn.setAttribute('data-icon', tab.iconKey)
+    btn.setAttribute('data-icon-size', String(HUD_TAB_ICON_PX))
+    btn.title = tab.title
+    btn.addEventListener('click', () => selectTab(tab.id))
+    tabs.appendChild(btn)
+  }
+  const logout = document.createElement('div')
+  logout.className = 'hud-tab logout'
+  logout.title = 'Logout'
+  logout.setAttribute('data-icon', 'door')
+  logout.setAttribute('data-icon-size', String(HUD_TAB_ICON_PX))
+  logout.setAttribute('data-icon-color', LOGOUT_COLOR)
+  logout.addEventListener('click', () => handlers?.onLogout())
+  tabs.appendChild(logout)
+  panel.appendChild(tabs)
+
+  const body = document.createElement('div')
+  body.className = 'hud-body'
+
+  const invPane = document.createElement('div')
+  invPane.className = 'hud-pane active'
+  invPane.setAttribute('data-pane', 'inventory')
   const inv = document.createElement('div')
   inv.id = 'inv-panel'
   for (let i = 0; i < INVENTORY_COLS * INVENTORY_ROWS; i++) {
@@ -212,8 +346,84 @@ export function initHud(handlers?: InvHandlers): void {
     slot.className = 'inv-slot'
     inv.appendChild(slot)
   }
-  document.body.appendChild(inv)
+  invPane.appendChild(inv)
+  body.appendChild(invPane)
+
+  const equipPane = document.createElement('div')
+  equipPane.className = 'hud-pane'
+  equipPane.setAttribute('data-pane', 'equipment')
+  const equip = document.createElement('div')
+  equip.id = 'equip-panel'
+  for (const slotId of EQUIP_LAYOUT) {
+    const cell = document.createElement('div')
+    if (slotId === null) {
+      cell.className = 'equip-slot empty-cell'
+    } else {
+      cell.className = 'equip-slot'
+      cell.setAttribute('data-slot', slotId)
+      cell.textContent = EQUIP_SLOT_LABEL[slotId] ?? slotId
+      cell.addEventListener('click', () => {
+        if (cell.classList.contains('filled')) handlers?.onUnequip(slotId)
+      })
+    }
+    equip.appendChild(cell)
+  }
+  equipPane.appendChild(equip)
+  body.appendChild(equipPane)
+
+  const combatPane = document.createElement('div')
+  combatPane.className = 'hud-pane'
+  combatPane.setAttribute('data-pane', 'combat')
+  const combat = document.createElement('div')
+  combat.id = 'combat-panel'
+  const stanceRow = document.createElement('div')
+  stanceRow.className = 'stance-row'
+  for (const s of STANCES) {
+    const btn = document.createElement('div')
+    btn.className = 'stance-btn' + (s.stance === 'accurate' ? ' active' : '')
+    btn.setAttribute('data-stance', s.stance)
+    btn.textContent = s.label
+    btn.addEventListener('click', () => handlers?.onStance(s.stance))
+    stanceRow.appendChild(btn)
+  }
+  combat.appendChild(stanceRow)
+  const specBar = document.createElement('div')
+  specBar.id = 'spec-bar'
+  const specFill = document.createElement('div')
+  specFill.className = 'fill'
+  specFill.style.width = '100%'
+  const specLabel = document.createElement('div')
+  specLabel.className = 'label'
+  specLabel.textContent = 'Special 100%'
+  specBar.appendChild(specFill)
+  specBar.appendChild(specLabel)
+  combat.appendChild(specBar)
+  const specBtn = document.createElement('div')
+  specBtn.id = 'spec-btn'
+  specBtn.textContent = '⚡ Special Attack'
+  specBtn.addEventListener('click', () => handlers?.onSpecial())
+  combat.appendChild(specBtn)
+  combatPane.appendChild(combat)
+  body.appendChild(combatPane)
+
+  panel.appendChild(body)
+  document.body.appendChild(panel)
   if (handlers) setupInvDrag(inv, handlers)
+
+  const runOrb = document.createElement('div')
+  runOrb.id = 'run-orb'
+  runOrb.title = 'Toggle run'
+  const runIco = document.createElement('span')
+  runIco.className = 'run-ico'
+  runIco.setAttribute('data-icon', 'sprint')
+  runIco.setAttribute('data-icon-size', String(RUN_ICON_PX))
+  const runPct = document.createElement('span')
+  runPct.className = 'run-pct'
+  runPct.textContent = '100%'
+  runOrb.appendChild(runIco)
+  runOrb.appendChild(runPct)
+  runOrb.addEventListener('click', () => handlers?.onRunToggle())
+  document.body.appendChild(runOrb)
 
   const hpPill = document.createElement('div')
   hpPill.id = 'hp-pill'
@@ -234,6 +444,62 @@ export function initHud(handlers?: InvHandlers): void {
   const fx = document.createElement('div')
   fx.id = 'fx-layer'
   document.body.appendChild(fx)
+}
+
+/** Renders worn equipment into the Equipment tab; empty slots show their label. */
+export function renderEquipment(equipment: EquipmentMap): void {
+  const panel = document.getElementById('equip-panel')
+  if (!panel) return
+  for (const cell of panel.querySelectorAll<HTMLElement>('.equip-slot[data-slot]')) {
+    const slotId = cell.getAttribute('data-slot')!
+    const itemId = equipment[slotId]
+    cell.innerHTML = ''
+    if (itemId) {
+      cell.classList.add('filled')
+      cell.innerHTML = iconMarkup(itemId, 32)
+      cell.title = `Remove ${itemName(itemId)}`
+    } else {
+      cell.classList.remove('filled')
+      cell.textContent = EQUIP_SLOT_LABEL[slotId] ?? slotId
+      cell.title = ''
+    }
+  }
+}
+
+export function setStanceActive(stance: CombatStance): void {
+  for (const btn of document.querySelectorAll('.stance-btn')) {
+    btn.classList.toggle('active', btn.getAttribute('data-stance') === stance)
+  }
+}
+
+export function setRunState(energy: number, running: boolean): void {
+  const orb = document.getElementById('run-orb')
+  if (!orb) return
+  const pct = orb.querySelector('.run-pct')
+  if (pct) pct.textContent = `${Math.round(energy)}%`
+  orb.classList.toggle('running', running)
+}
+
+/** Paints the bespoke SVG art into every HUD icon slot (tabs, logout, run orb).
+ * Call once the icon data has loaded (loadItemIcons) — the elements carry their
+ * key/size/colour in data-attributes so this can run after they're built. */
+export function paintHudIcons(): void {
+  for (const el of document.querySelectorAll<HTMLElement>('[data-icon]')) {
+    const key = el.getAttribute('data-icon')!
+    const size = Number(el.getAttribute('data-icon-size')) || 24
+    const color = el.getAttribute('data-icon-color') ?? 'currentColor'
+    const markup = uiIconMarkup(key, size, color)
+    if (markup) el.innerHTML = markup
+  }
+}
+
+export function setSpecialEnergy(energy: number): void {
+  const bar = document.getElementById('spec-bar')
+  if (!bar) return
+  const pct = Math.max(0, Math.min(100, Math.round(energy)))
+  ;(bar.querySelector('.fill') as HTMLElement | null)?.style.setProperty('width', `${pct}%`)
+  const label = bar.querySelector('.label') as HTMLElement | null
+  if (label) label.textContent = `Special ${pct}%`
 }
 
 const NPC_EXAMINE: Record<string, string> = {

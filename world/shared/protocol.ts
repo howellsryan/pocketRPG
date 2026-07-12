@@ -11,6 +11,12 @@ export type GearDescriptor = { weapon?: { archetype: string; tint?: string } }
 
 export type InvActionWire = 'equip' | 'eat' | 'drink' | 'bury' | 'drop'
 
+export type CombatStance = 'accurate' | 'aggressive' | 'defensive'
+
+/** Equipment slot → equipped itemId, surfaced to the client for the Equipment
+ * tab. Server → client only; clients drive equip/unequip through invAction/unequip. */
+export type EquipmentMap = Record<string, string>
+
 export type BankSlot = { itemId: string; quantity: number }
 
 export type ClientMessage =
@@ -22,6 +28,11 @@ export type ClientMessage =
   | { t: 'moveInv'; from: number; to: number }
   | { t: 'invAction'; slot: number; action: InvActionWire }
   | { t: 'bank'; op: 'deposit' | 'withdraw'; itemId: string; qty: number }
+  | { t: 'setRun'; run: boolean }
+  | { t: 'setStance'; stance: CombatStance }
+  | { t: 'special' }
+  | { t: 'unequip'; slot: string }
+  | { t: 'logout' }
   | { t: 'ping'; n: number }
 
 export type ZoneEvent =
@@ -34,6 +45,12 @@ export type ZoneEvent =
    * client to show the bank modal. */
   | { e: 'bank'; bank: BankSlot[]; open?: boolean }
   | { e: 'chat'; charId: string; name: string; text: string }
+  /** Run-energy readout (0-100) and whether run is toggled on. */
+  | { e: 'run'; energy: number; running: boolean }
+  /** Special-attack energy readout (0-100). */
+  | { e: 'spec'; energy: number }
+  /** Worn equipment changed (equip/unequip) — the Equipment tab re-renders. */
+  | { e: 'equip'; equipment: EquipmentMap }
 
 export type EntityDiff = {
   id: string
@@ -71,7 +88,20 @@ export type ServerMessage =
       tick: number
       zone: { id: string; name?: string; w: number; h: number; collision: string[]; exits?: ExitMarker[]; props?: PropPlacement[]; palette?: GroundPalette; ambience?: ZoneAmbience }
       statics: StaticObject[]
-      you: { x: number; z: number; hp: number; maxHp: number; stats: Record<string, { xp: number; level: number }>; inventory: InvSlot[]; gear?: GearDescriptor }
+      you: {
+        x: number
+        z: number
+        hp: number
+        maxHp: number
+        stats: Record<string, { xp: number; level: number }>
+        inventory: InvSlot[]
+        gear?: GearDescriptor
+        runEnergy: number
+        running: boolean
+        stance: CombatStance
+        specialEnergy: number
+        equipment: EquipmentMap
+      }
     }
   | {
       t: 'diff'
@@ -149,6 +179,24 @@ export function parseClientMessage(raw: unknown): ClientMessage | null {
         ? { t: 'bank', op, itemId, qty: qty as number }
         : null
     }
+    case 'setRun': {
+      const run = (raw as Record<string, unknown>).run
+      return typeof run === 'boolean' ? { t: 'setRun', run } : null
+    }
+    case 'setStance': {
+      const stance = (raw as Record<string, unknown>).stance
+      return stance === 'accurate' || stance === 'aggressive' || stance === 'defensive'
+        ? { t: 'setStance', stance }
+        : null
+    }
+    case 'special':
+      return { t: 'special' }
+    case 'unequip': {
+      const slot = (raw as Record<string, unknown>).slot
+      return typeof slot === 'string' && slot.length > 0 && slot.length <= 32 ? { t: 'unequip', slot } : null
+    }
+    case 'logout':
+      return { t: 'logout' }
     case 'ping': {
       const n = (raw as Record<string, unknown>).n
       return typeof n === 'number' ? { t: 'ping', n } : null

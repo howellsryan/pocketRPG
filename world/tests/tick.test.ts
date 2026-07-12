@@ -30,6 +30,12 @@ function makePlayer(overrides: Partial<TickPlayer> = {}): TickPlayer {
     equipment: {},
     gear: {},
     combat: null,
+    running: false,
+    runEnergy: 100,
+    lastRunSent: 100,
+    stance: 'accurate',
+    specialEnergy: 100,
+    lastSpecSent: 100,
     ...overrides,
   }
 }

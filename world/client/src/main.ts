@@ -1,5 +1,6 @@
-import { exchangeHandoff, getStoredSession, getStoredZone, parseHandoffFromHash, pocketRpgUrl, storeZone, type WorldSession } from './auth'
-import { hideConnBanner, hideOverlay, initChatInput, initHud, pushMessage, removeHpBar, removeNameplate, removeOverheadChat, renderInventory, showConnBanner, showContextMenu, showHitsplat, showLoginRequired, showTransitionOverlay, showXpDrop, updateHpBar, updateHpPill, updateNameplate, updateOverheadChat, npcExamine } from './ui'
+import { clearStoredSession, exchangeHandoff, getStoredSession, getStoredZone, parseHandoffFromHash, pocketRpgUrl, storeZone, type WorldSession } from './auth'
+import { hideConnBanner, hideOverlay, initChatInput, initHud, paintHudIcons, pushMessage, removeHpBar, removeNameplate, removeOverheadChat, renderEquipment, renderInventory, setRunState, setSpecialEnergy, setStanceActive, showConnBanner, showContextMenu, showHitsplat, showLoginRequired, showTransitionOverlay, showXpDrop, updateHpBar, updateHpPill, updateNameplate, updateOverheadChat, npcExamine } from './ui'
+import { createMinimap, type Minimap, type MinimapDot } from './minimap'
 import { closeBankUI, isBankOpen, openBankUI, updateBankInventory, updateBankUI } from './bank'
 import { connect, onMessage, send } from './net'
 import { clampZoom, createCamera, createGround, createLights, createRenderer, createScene, tileToWorld, updateCamera } from './scene'
@@ -14,7 +15,7 @@ import { primaryInvAction } from '../../shared/itemActions'
 import { combatLevelFromStats } from '../../../src/engine/combatLevel.js'
 import monstersData from '../../../src/data/monsters.json'
 import * as THREE from 'three'
-import type { EntityDiff, InvActionWire, InvSlot, ServerMessage, ZoneEvent } from '../../shared/protocol'
+import type { EntityDiff, ExitMarker, InvActionWire, InvSlot, ServerMessage, ZoneEvent } from '../../shared/protocol'
 import type { MenuRow, Pickable } from './picking'
 
 type Monsters = Record<string, { name?: string; combatLevel?: number } | undefined>
@@ -50,6 +51,11 @@ function enterWorld(session: WorldSession): void {
   const rockStates = new Map<string, boolean>()
   let playerCombatLevel = 3
   let zoom = 1
+  let minimap: Minimap | null = null
+  let exitMarkers: ExitMarker[] = []
+  // Local run state so the toggle button sends the opposite; server {e:'run'}
+  // events keep it authoritative.
+  let running = false
   // Local pack copy so a drag-reorder can apply optimistically; every server
   // {e:'inv'} (including the reorder echo) replaces it wholesale.
   let inventory: InvSlot[] = []
@@ -79,6 +85,12 @@ function enterWorld(session: WorldSession): void {
       updateBankInventory(inventory)
     }
     else if (event.e === 'hp') updateHpPill(event.hp, event.maxHp)
+    else if (event.e === 'run') {
+      running = event.running
+      setRunState(event.energy, event.running)
+    }
+    else if (event.e === 'spec') setSpecialEnergy(event.energy)
+    else if (event.e === 'equip') renderEquipment(event.equipment)
     else if (event.e === 'bank') {
       if (event.open) openBankUI(event.bank, inventory, (op, itemId, qty) => send(socket, { t: 'bank', op, itemId, qty }))
       else if (isBankOpen()) updateBankUI(event.bank)
@@ -209,6 +221,11 @@ function enterWorld(session: WorldSession): void {
     inventory = message.you.inventory
     renderInventory(inventory)
     updateHpPill(message.you.hp, message.you.maxHp)
+    running = message.you.running
+    setRunState(message.you.runEnergy, message.you.running)
+    setStanceActive(message.you.stance)
+    setSpecialEnergy(message.you.specialEnergy)
+    renderEquipment(message.you.equipment)
     closeBankUI()
     playerCombatLevel = combatLevelFromStats(message.you.stats)
     if (self) {
@@ -219,6 +236,9 @@ function enterWorld(session: WorldSession): void {
       self.toPos.copy(pos)
       self.moving = false
       self.serverAnim = 'idle'
+      // A background/resume can leave the self mesh hidden (culling/context
+      // churn) — make sure it's shown again on every resync.
+      self.mesh.visible = true
       void applyWeapon(self.mesh, message.you.gear)
     }
     for (const id of [...others.keys(), ...otherLoading]) removeOther(id)
@@ -246,6 +266,8 @@ function enterWorld(session: WorldSession): void {
         createLights(scene, message.zone.ambience)
         const ground = createGround(scene, message.zone.collision, message.zone.w, message.zone.h, message.zone.palette)
         exitLayer = createExitMarkers(scene, message.zone.exits ?? [])
+        exitMarkers = message.zone.exits ?? []
+        minimap = createMinimap(message.zone.collision, message.zone.w, message.zone.h, message.zone.palette)
         void createProps(scene, message.zone.props ?? [])
         const marker = createClickMarker(scene)
         camera = createCamera()
@@ -290,6 +312,23 @@ function enterWorld(session: WorldSession): void {
               if (action) sendInvAction(index, action)
             })
           },
+          onRunToggle: () => send(socket, { t: 'setRun', run: !running }),
+          onStance: (stance) => {
+            setStanceActive(stance)
+            send(socket, { t: 'setStance', stance })
+          },
+          onSpecial: () => send(socket, { t: 'special' }),
+          onUnequip: (slot) => send(socket, { t: 'unequip', slot }),
+          onLogout: () => {
+            // Reload rather than close(): partysocket auto-reconnects on a bare
+            // close and would re-enter the world. A reload with the session
+            // cleared lands on the login screen with no reconnect loop. (The
+            // server also linger-flushes on the dropped socket, so no data is
+            // lost even if the logout frame doesn't flush before unload.)
+            send(socket, { t: 'logout' })
+            clearStoredSession()
+            window.location.reload()
+          },
         })
         initChatInput((text) => send(socket, { t: 'chat', text }))
         playerCombatLevel = combatLevelFromStats(message.you.stats)
@@ -303,6 +342,12 @@ function enterWorld(session: WorldSession): void {
         inventory = message.you.inventory
         renderInventory(inventory)
         updateHpPill(message.you.hp, message.you.maxHp)
+        running = message.you.running
+        setRunState(message.you.runEnergy, message.you.running)
+        setStanceActive(message.you.stance)
+        setSpecialEnergy(message.you.specialEnergy)
+        renderEquipment(message.you.equipment)
+        paintHudIcons() // icon data is loaded by now (Promise.all above)
         statics = staticsResult
         for (const [id, depleted] of rockStates) staticsResult.setRockDepleted(id, depleted)
         self = createEntity(message.selfId, message.you.x, message.you.z, heroResult.mesh, heroResult.animator)
@@ -361,6 +406,7 @@ function enterWorld(session: WorldSession): void {
         })
 
         let lastFrameTime = performance.now()
+        let lastMinimap = 0
         function frame(now: number): void {
           const deltaSeconds = (now - lastFrameTime) / 1000
           lastFrameTime = now
@@ -395,10 +441,24 @@ function enterWorld(session: WorldSession): void {
           lootLayer?.update(deltaSeconds)
           exitLayer?.update(now)
           updateClickMarker(marker, now)
+          if (minimap && self && now - lastMinimap > 150) {
+            lastMinimap = now
+            const tile = (o: THREE.Object3D): { x: number; z: number } => ({ x: Math.floor(o.position.x), z: Math.floor(o.position.z) })
+            const dots: MinimapDot[] = exitMarkers.map((m) => ({ x: m.x, z: m.z, kind: 'exit' as const }))
+            for (const npc of npcs.values()) if (npc.serverAnim !== 'die') dots.push({ ...tile(npc.mesh), kind: 'npc' })
+            for (const other of others.values()) dots.push({ ...tile(other.mesh), kind: 'other' })
+            minimap.update(tile(self.mesh), dots)
+          }
           renderer.render(scene, camera!)
           requestAnimationFrame(frame)
         }
         requestAnimationFrame(frame)
+
+        // WebGL contexts get dropped when a mobile tab is backgrounded; without
+        // handling the loss three.js re-uploads on restore, but the default
+        // event cancels that — preventDefault re-enables automatic recovery so
+        // the scene (and self) comes back instead of staying blank.
+        renderer.domElement.addEventListener('webglcontextlost', (e) => e.preventDefault(), false)
 
         // Any ents/rocks/loot that arrived before the scene was ready.
         applyDeferred(scene)
