@@ -10,7 +10,7 @@
 <body>
 <script type="module">
 import * as THREE from '/public/vendor/three/three.module.min.js'
-import { createBlendShellCreature } from '/src/3d/blendShell.js'
+import { createProcCreature } from '/src/3d/rigs.js'
 
 const Q = new URLSearchParams(location.search)
 const monsterId = Q.get('monster') || 'pasture_bull'
@@ -41,16 +41,21 @@ const ground = new THREE.Mesh(
 ground.rotation.x = -Math.PI / 2; ground.position.y = 0.001
 scene.add(ground)
 
-const creature = createBlendShellCreature(THREE, spec)
+const creature = createProcCreature(THREE, spec)
 scene.add(creature.group)
 
 let last = 0
 function renderAt(t) {
-  creature.update(t - last); last = t
+  // step in small fixed slices so big __setTime jumps still animate the rig
+  let dt = Math.max(0, t - last)
+  last = t
+  while (dt > 0) { creature.update(Math.min(dt, 1 / 30)); dt -= 1 / 30 }
   renderer.render(scene, camera)
 }
 
 window.__setTime = (t) => renderAt(t)
+window.__trigger = (name) => creature.trigger(name)
+window.__creatureGroup = creature.group
 window.__setFlash = (amt) => creature.setFlash(0.8, 0.05, 0.02, amt)
 window.__measureFps = (frames = 150) => new Promise((res) => {
   let n = 0; const t0 = performance.now()

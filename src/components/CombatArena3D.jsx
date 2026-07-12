@@ -3,7 +3,7 @@ import HPBar from './HPBar.jsx'
 import { HitSplatLayer } from './HitSplat.jsx'
 import { loadThree, canRender3D, assetUrl } from '../utils/three3d.js'
 import { disposeObject, attachGearList, setupHideMask } from './Model3DViewer.jsx'
-import { createBlendShellCreature } from '../3d/blendShell.js'
+import { createProcCreature } from '../3d/rigs.js'
 
 // Phase-2 combat arena (docs/3d-gameplay-investigation.md): the rigged hero
 // (equipped weapon on the hand bone) faces the monster's model in a side-on
@@ -166,9 +166,10 @@ function CombatArena3D({
       // Monster facing is registry data (`rotationDeg`, default faces the
       // hero) so a differently-authored GLB is a JSON fix, not a code change.
       const [mrx, mry, mrz] = monsterRotationDeg
-      // Procedural monsters build a blend-shell creature in place of a GLB;
-      // everything downstream (mount, offsets, camera framing) is shared.
-      if (monsterProc) st.monsterCreature = createBlendShellCreature(THREE, monsterProc)
+      // Procedural monsters build a rigged blend-shell creature in place of a
+      // GLB; mount and camera framing are shared, but motion (idle, lunge,
+      // flinch, death) comes from the rig, not the group offsets below.
+      if (monsterProc) st.monsterCreature = createProcCreature(THREE, monsterProc)
       st.monster = mountActor(
         st.monsterCreature ? { scene: st.monsterCreature.group } : monsterGltf,
         monsterHeight, ARENA_GAP_X / 2, THREE.MathUtils.degToRad(mry),
@@ -257,8 +258,9 @@ function CombatArena3D({
         if (st.monsterMixer) st.monsterMixer.update(dt)
         if (st.monsterCreature) st.monsterCreature.update(dt)
 
-        // Monster idle bob + procedural attack/reaction offsets.
-        if (st.monster) {
+        // Monster idle bob + procedural attack/reaction offsets (GLB path
+        // only — rigged creatures own all of their motion).
+        if (st.monster && !st.monsterCreature) {
           let ox = 0, oy = Math.sin(now * 1.6) * 0.02 * monsterHeight, rz = 0
           st.monsterLunge = timeline(st.monsterLunge, dt)
           if (st.monsterLunge) {
@@ -355,6 +357,20 @@ function CombatArena3D({
     if (st && st.hero) attachGearList(st, gear, st.hero)
   }, [gear && JSON.stringify(gear)])
 
+  // Rigged creatures die on-screen: HP hitting 0 plays the death collapse,
+  // and the auto-fight respawn (HP back above 0 on the same monster) stands
+  // it back up. GLB monsters keep their existing behaviour.
+  const wasDeadRef = useRef(false)
+  useEffect(() => {
+    const st = stateRef.current
+    const hp = monsterHP && monsterHP.current
+    const dead = hp <= 0
+    if (st && st.monsterCreature && dead !== wasDeadRef.current) {
+      st.monsterCreature.trigger(dead ? 'death' : 'respawn')
+    }
+    wasDeadRef.current = dead
+  }, [monsterHP && monsterHP.current <= 0])
+
   // A hit landed this tick: hero attacks when the player dealt damage, the
   // monster lunges when it hit back. Victims react at the impact moment.
   useEffect(() => {
@@ -373,13 +389,16 @@ function CombatArena3D({
       const timer = setTimeout(() => {
         st.timers.delete(timer)
         if (st.disposed) return
-        st.monsterReact = { t: 0, dur: 0.45 }
+        if (st.monsterCreature) st.monsterCreature.trigger('hit')
+        else st.monsterReact = { t: 0, dur: 0.45 }
         st.monsterFlash = special ? { t: 0, dur: 0.55, r: 1, g: 0.72, b: 0.08 } : { t: 0, dur: 0.4 }
       }, ATTACK_IMPACT_DELAY_MS)
       st.timers.add(timer)
     }
     if (attackSignal.monster) {
-      if (st.monsterAttackAction) {
+      if (st.monsterCreature) {
+        st.monsterCreature.trigger('attack')
+      } else if (st.monsterAttackAction) {
         st.monsterIdleAction && st.monsterIdleAction.fadeOut(0.1)
         st.monsterAttackAction.reset().fadeIn(0.1).play()
       } else {

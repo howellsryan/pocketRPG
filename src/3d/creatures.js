@@ -31,7 +31,7 @@ export function listCreatureSpecIds() {
   return Object.keys((creatures3dData && creatures3dData.monsters) || {})
 }
 
-const CREATURE_IDLE_KINDS = new Set(['breathe', 'sway', 'twitch', 'chain'])
+const CREATURE_ARCHETYPES = new Set(['quadruped', 'biped', 'multileg', 'hopper', 'flyer', 'serpent'])
 const CREATURE_MAX_PARTS = 24
 
 function isVec3(v) {
@@ -73,21 +73,46 @@ export function validateCreatureSpec(spec) {
       errors.push(`${tag}: color must index into palette`)
     }
     if (p.blend !== undefined && !(Number.isFinite(p.blend) && p.blend > 0)) errors.push(`${tag}: blend must be a positive number`)
-    if (!p.buried) visible++
+    if (!p.buried && !p.colorOnly) visible++
   }
-  if (!visible) errors.push('every part is buried — at least one part must build proxy geometry')
+  if (!visible) errors.push('every part is buried/colorOnly — at least one part must build proxy geometry')
 
-  if (spec.idle !== undefined) {
-    if (!Array.isArray(spec.idle)) errors.push('idle must be an array of behaviors')
-    else for (const [bi, bh] of spec.idle.entries()) {
-      const tag = `idle[${bi}]`
-      if (!bh || !CREATURE_IDLE_KINDS.has(bh.kind)) { errors.push(`${tag}: kind must be one of ${[...CREATURE_IDLE_KINDS].join('/')}`); continue }
-      if (!Array.isArray(bh.parts) || !bh.parts.length) errors.push(`${tag}: parts must be a non-empty array`)
-      else for (const id of bh.parts) if (!ids.has(id)) errors.push(`${tag}: references unknown part ${JSON.stringify(id)}`)
-      if (bh.kind === 'sway' && !isVec3(bh.anchor)) errors.push(`${tag}: sway needs an [x,y,z] anchor`)
-      for (const k of ['amp', 'rate', 'pitch', 'yaw', 'lag']) {
-        if (bh[k] !== undefined && !Number.isFinite(bh[k])) errors.push(`${tag}: ${k} must be a number`)
-      }
+  if (spec.archetype !== undefined && !CREATURE_ARCHETYPES.has(spec.archetype)) {
+    errors.push(`archetype must be one of ${[...CREATURE_ARCHETYPES].join('/')}`)
+  }
+
+  // Rig groups: every referenced part must exist, numeric tunables numeric.
+  const checkPartList = (tag, list) => {
+    if (!Array.isArray(list) || !list.length) { errors.push(`${tag}: parts must be a non-empty array`); return }
+    for (const id of list) if (!ids.has(id)) errors.push(`${tag}: references unknown part ${JSON.stringify(id)}`)
+  }
+  const checkNums = (tag, obj, keys) => {
+    for (const k of keys) if (obj[k] !== undefined && !Number.isFinite(obj[k])) errors.push(`${tag}: ${k} must be a number`)
+  }
+  for (const key of ['breathe', 'head', 'wings', 'spine']) {
+    const g = spec[key]
+    if (g === undefined) continue
+    if (!g || typeof g !== 'object') { errors.push(`${key} must be an object`); continue }
+    checkPartList(key, g.parts)
+    checkNums(key, g, ['amp', 'rate', 'wave'])
+    if (key === 'head' && !isVec3(g.anchor)) errors.push('head needs an [x,y,z] anchor')
+  }
+  if (spec.legs !== undefined) {
+    if (!Array.isArray(spec.legs)) errors.push('legs must be an array')
+    else for (const [li, leg] of spec.legs.entries()) {
+      const tag = `legs[${li}]`
+      if (!leg || !ids.has(leg.part)) errors.push(`${tag}: part must name an existing part`)
+      if (leg && leg.foot !== undefined && !ids.has(leg.foot)) errors.push(`${tag}: foot references unknown part ${JSON.stringify(leg.foot)}`)
+    }
+  }
+  if (spec.ropes !== undefined) {
+    if (!Array.isArray(spec.ropes)) errors.push('ropes must be an array')
+    else for (const [ri, rope] of spec.ropes.entries()) {
+      const tag = `ropes[${ri}]`
+      if (!rope || typeof rope !== 'object') { errors.push(`${tag}: must be an object`); continue }
+      checkPartList(tag, rope.parts)
+      if (rope.anchorTo !== undefined && !ids.has(rope.anchorTo)) errors.push(`${tag}: anchorTo references unknown part ${JSON.stringify(rope.anchorTo)}`)
+      checkNums(tag, rope, ['gravity', 'sway', 'stiffness'])
     }
   }
   return errors

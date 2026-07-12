@@ -8,12 +8,23 @@
 // primitive's endpoints (the "bones") keeps the skin fused. One draw call for
 // the skin plus one for the ink outline (offset isosurface, back faces).
 //
+// Part flags: `buried` = shapes the field but builds no proxy geometry (fully
+// inside the body, neighbours' vertices converge onto the blended surface);
+// `colorOnly` = contributes color but no shape at all (paint patches — cow
+// spots, muzzle tints — that ride the surface without bulging it).
+//
+// This module owns geometry, shaders, and uniform upload. Motion lives in
+// rigs.js, which drives the pose API here: per-part matrices (`mats`), a
+// whole-creature `rootMat`, absolute endpoint overrides for planted feet and
+// rope segments (`overrideA/B` — root motion deliberately does NOT move
+// these), and per-part `radiusScale`, then calls `commit()`.
+//
 // three.js is passed in by the caller (lazy-loaded via utils/three3d.js) so
 // this module never touches the vendored bundle at eval time.
 
 export const BLEND_SHELL_MAX_PARTS = 24
 
-const BLEND_SHELL_ITERS = 8
+const BLEND_SHELL_ITERS = 10
 const BLEND_SHELL_DEFAULT_BLEND = 0.1
 
 export function buildBlendShellShaders(n) {
@@ -23,6 +34,7 @@ uniform vec4 uA[N];      // a.xyz, r1
 uniform vec4 uB[N];      // b.xyz, r2
 uniform vec3 uCol[N];
 uniform float uK[N];
+uniform float uShape[N]; // 0 = colorOnly (paint patch), 1 = shapes the field
 
 float sdRoundCone(vec3 p, vec3 a, vec3 b, float r1, float r2){
   vec3 ba = b - a; float l2 = dot(ba,ba);
@@ -43,6 +55,7 @@ float sminP(float d1, float d2, float k){
 float field(vec3 p){
   float d = 1e5;
   for (int i=0;i<N;i++){
+    if (uShape[i] < 0.5) continue;
     float di = sdRoundCone(p, uA[i].xyz, uB[i].xyz, uA[i].w, uB[i].w);
     d = sminP(di, d, uK[i]);
   }
@@ -61,7 +74,9 @@ vec3 fieldColor(vec3 p){
   vec3 acc = vec3(0.0); float wsum = 0.0;
   for (int i=0;i<N;i++){
     float di = sdRoundCone(p, uA[i].xyz, uB[i].xyz, uA[i].w, uB[i].w);
-    float w = exp(-max(di,0.0)*18.0);
+    float w = exp(-max(di,0.0)*42.0);
+    // paint patches tint harder so they read as markings, not haze
+    if (uShape[i] < 0.5) w *= 3.0;
     acc += uCol[i]*w; wsum += w;
   }
   return acc/max(wsum,1e-4);
@@ -71,25 +86,49 @@ vec3 fieldColor(vec3 p){
 attribute float primIndex;
 uniform mat4 uXf[N];
 uniform float uOffset;   // 0 = skin, >0 = outline shell
-varying vec3 vN; varying vec3 vC; varying vec3 vW;
+varying vec3 vN; varying vec3 vW;
 void main(){
   int pi = int(primIndex + 0.5);
   vec3 q = (uXf[pi] * vec4(position,1.0)).xyz;
+  // Newton-style projection with oscillation damping: at concave creases the
+  // gradient flips side-to-side; halving the step on a sign flip settles the
+  // vertex onto the crease instead of streaking across it.
+  float s = 0.7; float dPrev = 0.0;
   for (int it=0; it<${BLEND_SHELL_ITERS}; it++){
     float d = field(q) - uOffset;
-    q -= fieldGrad(q) * clamp(d, -0.5, 0.5) * 0.75;
+    if (it > 0 && d * dPrev < 0.0) s *= 0.5;
+    q -= fieldGrad(q) * clamp(d, -0.5, 0.5) * s;
+    dPrev = d;
   }
   vN = fieldGrad(q);
-  vC = fieldColor(q);
+  // Buried tuck: when this vertex's own primitive is buried beneath another
+  // part here, sink it under the skin so its sliver triangles never poke
+  // through or leave pixel gaps at deep folds.
+  float dSelf = sdRoundCone(q, uA[pi].xyz, uB[pi].xyz, uA[pi].w, uB[pi].w);
+  q -= vN * smoothstep(0.02, 0.06, dSelf - uOffset) * 0.015;
   vW = q;
   gl_Position = projectionMatrix * modelViewMatrix * vec4(q,1.0);
 }`
 
   const fragmentShader = `
 precision highp float;
+` + common + `
 uniform float uToon; uniform float uOutlinePass;
 uniform vec3 uFlashCol; uniform float uFlashAmt;
-varying vec3 vN; varying vec3 vC; varying vec3 vW;
+varying vec3 vN; varying vec3 vW;
+
+float bsHash(vec3 p){ return fract(sin(dot(p, vec3(127.1,311.7,74.7)))*43758.5453); }
+float bsNoise(vec3 p){
+  vec3 i = floor(p), f = fract(p);
+  f = f*f*(3.0-2.0*f);
+  float n000 = bsHash(i), n100 = bsHash(i+vec3(1.,0.,0.));
+  float n010 = bsHash(i+vec3(0.,1.,0.)), n110 = bsHash(i+vec3(1.,1.,0.));
+  float n001 = bsHash(i+vec3(0.,0.,1.)), n101 = bsHash(i+vec3(1.,0.,1.));
+  float n011 = bsHash(i+vec3(0.,1.,1.)), n111 = bsHash(i+vec3(1.,1.,1.));
+  return mix(mix(mix(n000,n100,f.x), mix(n010,n110,f.x), f.y),
+             mix(mix(n001,n101,f.x), mix(n011,n111,f.x), f.y), f.z);
+}
+
 void main(){
   if (uOutlinePass > 0.5){ gl_FragColor = vec4(0.20,0.14,0.09,1.0); return; }
   vec3 n = normalize(vN);
@@ -98,10 +137,15 @@ void main(){
   float d1 = max(dot(n,l1),0.0), d2 = max(dot(n,l2),0.0);
   if (uToon > 0.5){ d1 = floor(d1*3.0+0.5)/3.0; d2 = floor(d2*2.0+0.5)/2.0; }
   float hemi = 0.5 + 0.5*n.y;
-  vec3 col = vC * (0.28 + 0.30*hemi + 0.55*d1 + 0.18*d2);
+  // hide grain: two octaves of value noise so the skin reads matte, not clay
+  float grain = 0.94 + 0.09*bsNoise(vW*16.0) + 0.05*bsNoise(vW*47.0);
+  // per-pixel: per-vertex color dissolves markings smaller than the proxy
+  // tessellation (cow patches fall between body vertices)
+  vec3 base = fieldColor(vW);
+  vec3 col = base * grain * (0.3 + 0.3*hemi + 0.55*d1 + 0.15*d2);
   vec3 v = normalize(cameraPosition - vW);
   float rim = pow(1.0 - max(dot(v,n),0.0), 3.0);
-  col += vec3(0.9,0.75,0.5) * rim * 0.18;
+  col += vec3(0.9,0.75,0.5) * rim * 0.1;
   col += uFlashCol * uFlashAmt * 0.8;
   gl_FragColor = vec4(col, 1.0);
 }`
@@ -109,10 +153,8 @@ void main(){
   return { vertexShader, fragmentShader }
 }
 
-// One low-poly tapered capsule per non-buried part, merged into a single
-// geometry with a per-vertex primIndex. Buried parts (fully inside the body)
-// contribute to the SDF field but need no proxy — the neighbours' vertices
-// converge onto the blended surface anyway.
+// One low-poly tapered capsule per solid part, merged into a single geometry
+// with a per-vertex primIndex. Buried and colorOnly parts build no proxy.
 function buildBlendShellProxy(THREE, parts) {
   const pos = []
   const idx = []
@@ -121,7 +163,7 @@ function buildBlendShellProxy(THREE, parts) {
   const quat = new THREE.Quaternion()
   const m = new THREE.Matrix4()
   parts.forEach((p, i) => {
-    if (p.buried) return
+    if (p.buried || p.colorOnly) return
     const a = new THREE.Vector3(...p.a)
     const b = new THREE.Vector3(...p.b)
     dir.subVectors(b, a)
@@ -129,7 +171,7 @@ function buildBlendShellProxy(THREE, parts) {
     if (len > 1e-6) dir.divideScalar(len)
     else dir.copy(Y)
     const big = Math.max(p.r1, p.r2)
-    const segs = big > 0.2 ? [6, 18] : [4, 12]
+    const segs = big > 0.2 ? [9, 26] : [5, 14]
     const g = new THREE.CapsuleGeometry(1, len, segs[0], segs[1]).toNonIndexed()
     // Taper the unit-radius capsule to the rounded cone's radii so every
     // vertex starts near the true surface (a = -Y end, b = +Y end).
@@ -158,25 +200,37 @@ function buildBlendShellProxy(THREE, parts) {
   return geo
 }
 
-// Spec (validated by validateCreatureSpec in creatures.js) → living creature:
-// { group, update(dt), setFlash(r,g,b,amount), dispose() }.
+// Spec (validated by validateCreatureSpec in creatures.js) → posable shell.
 // The group is authored facing +z with feet near y=0; the caller places,
-// rotates, and height-normalises it like any other actor.
+// rotates, and height-normalises it like any other actor. Motion comes from
+// a rig (rigs.js) writing the pose fields and calling commit().
 export function createBlendShellCreature(THREE, spec) {
   const parts = spec.parts
   const n = parts.length
-  const palette = (spec.palette || []).map((hex) => new THREE.Color(hex))
+  // Authored hex goes to the shader verbatim — default color management
+  // would linearize it and the raw-GLSL lighting would render everything
+  // darker and muddier than the palette says.
+  const palette = (spec.palette || []).map((hex) =>
+    new THREE.Color().setHex(parseInt(hex.slice(1), 16), THREE.NoColorSpace))
 
   const baseA = parts.map((p) => new THREE.Vector3(...p.a))
   const baseB = parts.map((p) => new THREE.Vector3(...p.b))
   const uA = parts.map((p, i) => new THREE.Vector4(baseA[i].x, baseA[i].y, baseA[i].z, p.r1))
   const uB = parts.map((p, i) => new THREE.Vector4(baseB[i].x, baseB[i].y, baseB[i].z, p.r2))
   const uXf = parts.map(() => new THREE.Matrix4())
+  // Thin parts (horns, ears, antennae) cap their blend radius so they join
+  // the body without dissolving into it. The cap must only bite genuinely
+  // thin parts — clamping medium parts sharpens their joints into creases.
+  const uK = parts.map((p) => {
+    const k = typeof p.blend === 'number' ? p.blend : BLEND_SHELL_DEFAULT_BLEND
+    return Math.min(k, Math.max(0.02, Math.min(p.r1, p.r2) * 1.4))
+  })
   const uniforms = {
     uA: { value: uA },
     uB: { value: uB },
     uCol: { value: parts.map((p) => palette[p.color] || new THREE.Color(0xffffff)) },
-    uK: { value: parts.map((p) => (typeof p.blend === 'number' ? p.blend : BLEND_SHELL_DEFAULT_BLEND)) },
+    uK: { value: uK },
+    uShape: { value: parts.map((p) => (p.colorOnly ? 0 : 1)) },
     uXf: { value: uXf },
     uOffset: { value: 0 },
     uToon: { value: spec.toon ? 1 : 0 },
@@ -214,77 +268,66 @@ export function createBlendShellCreature(THREE, spec) {
 
   const byId = Object.fromEntries(parts.map((p, i) => [p.id, i]))
   const mats = parts.map(() => new THREE.Matrix4())
-  const r1s = new Array(n)
-  const r2s = new Array(n)
+  const rootMat = new THREE.Matrix4()
+  const overrideA = parts.map(() => null)
+  const overrideB = parts.map(() => null)
+  const radiusScale = parts.map(() => 1)
+
   const tmpM = new THREE.Matrix4()
-  const tmpR = new THREE.Matrix4()
-  const tmpT1 = new THREE.Matrix4()
-  const tmpT2 = new THREE.Matrix4()
   const tmpV = new THREE.Vector3()
-  const tmpE = new THREE.Euler()
-  const chainPrev = new THREE.Matrix4()
-  const rotAbout = (out, ax, ay, az, ex, ey, ez) => {
-    tmpT1.makeTranslation(-ax, -ay, -az)
-    tmpR.makeRotationFromEuler(tmpE.set(ex, ey, ez))
-    tmpT2.makeTranslation(ax, ay, az)
-    return out.copy(tmpT2).multiply(tmpR).multiply(tmpT1)
-  }
+  const tmpV2 = new THREE.Vector3()
+  const tmpQ = new THREE.Quaternion()
+  const tmpMid = new THREE.Vector3()
 
-  let t = 0
-  const behaviors = spec.idle || []
-
-  const update = (dt) => {
-    t += dt
+  const commit = () => {
     for (let i = 0; i < n; i++) {
-      mats[i].identity()
-      r1s[i] = parts[i].r1
-      r2s[i] = parts[i].r2
-    }
-    for (const bh of behaviors) {
-      if (bh.kind === 'breathe') {
-        const s = 1 + (bh.amp ?? 0.03) * Math.sin(t * (bh.rate ?? 2))
-        for (const id of bh.parts) { r1s[byId[id]] *= s; r2s[byId[id]] *= s }
-      } else if (bh.kind === 'sway') {
-        const rate = bh.rate ?? 1
-        rotAbout(tmpM, bh.anchor[0], bh.anchor[1], bh.anchor[2],
-          (bh.pitch ?? 0) * Math.sin(t * rate * 2.33), (bh.yaw ?? 0) * Math.sin(t * rate), 0)
-        for (const id of bh.parts) mats[byId[id]].premultiply(tmpM)
-      } else if (bh.kind === 'twitch') {
-        const w = Math.max(0, Math.sin(t * (bh.rate ?? 7))) ** 8 * (bh.amp ?? 0.5)
-        if (w > 0.01) {
-          for (const id of bh.parts) {
-            const i = byId[id]
-            rotAbout(tmpM, baseA[i].x, baseA[i].y, baseA[i].z, 0, 0, w)
-            mats[i].premultiply(tmpM)
-          }
-        }
-      } else if (bh.kind === 'chain') {
-        // Sequential segments (tails, tentacles) wag with a phase lag; each
-        // link rotates about its anchor as moved by the links before it.
-        chainPrev.identity()
-        bh.parts.forEach((id, k) => {
-          const i = byId[id]
-          tmpV.copy(baseA[i]).applyMatrix4(chainPrev)
-          const angle = (bh.yaw ?? 0.5) * Math.sin(t * (bh.rate ?? 3) - k * (bh.lag ?? 0.7))
-          rotAbout(tmpM, tmpV.x, tmpV.y, tmpV.z, 0, angle, 0)
-          chainPrev.premultiply(tmpM)
-          mats[i].premultiply(chainPrev)
-        })
+      const r1 = parts[i].r1 * radiusScale[i]
+      const r2 = parts[i].r2 * radiusScale[i]
+      if (overrideA[i]) {
+        const oa = overrideA[i]
+        const ob = overrideB[i] || overrideA[i]
+        uA[i].set(oa.x, oa.y, oa.z, r1)
+        uB[i].set(ob.x, ob.y, ob.z, r2)
+        // Rigid transform aligning the base segment onto the override —
+        // approximate is fine: it only seeds the proxy verts, projection
+        // converges them onto the surface.
+        tmpV.subVectors(baseB[i], baseA[i]).normalize()
+        tmpV2.subVectors(ob, oa)
+        const len = tmpV2.length()
+        if (len > 1e-6) tmpV2.divideScalar(len)
+        else tmpV2.copy(tmpV)
+        tmpQ.setFromUnitVectors(tmpV, tmpV2)
+        tmpMid.addVectors(baseA[i], baseB[i]).multiplyScalar(0.5).applyQuaternion(tmpQ)
+        uXf[i].makeRotationFromQuaternion(tmpQ)
+        uXf[i].setPosition(
+          (oa.x + ob.x) / 2 - tmpMid.x,
+          (oa.y + ob.y) / 2 - tmpMid.y,
+          (oa.z + ob.z) / 2 - tmpMid.z,
+        )
+      } else {
+        tmpM.multiplyMatrices(rootMat, mats[i])
+        uXf[i].copy(tmpM)
+        tmpV.copy(baseA[i]).applyMatrix4(tmpM)
+        uA[i].set(tmpV.x, tmpV.y, tmpV.z, r1)
+        tmpV.copy(baseB[i]).applyMatrix4(tmpM)
+        uB[i].set(tmpV.x, tmpV.y, tmpV.z, r2)
       }
     }
-    for (let i = 0; i < n; i++) {
-      uXf[i].copy(mats[i])
-      tmpV.copy(baseA[i]).applyMatrix4(mats[i])
-      uA[i].set(tmpV.x, tmpV.y, tmpV.z, r1s[i])
-      tmpV.copy(baseB[i]).applyMatrix4(mats[i])
-      uB[i].set(tmpV.x, tmpV.y, tmpV.z, r2s[i])
-    }
   }
-  update(0)
+  commit()
 
   return {
     group,
-    update,
+    parts,
+    byId,
+    baseA,
+    baseB,
+    mats,
+    rootMat,
+    overrideA,
+    overrideB,
+    radiusScale,
+    commit,
     setFlash: (r, g, b, amount) => {
       uniforms.uFlashCol.value.set(r, g, b)
       uniforms.uFlashAmt.value = amount

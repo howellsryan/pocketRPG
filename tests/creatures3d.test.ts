@@ -6,15 +6,19 @@ import monstersData from '../src/data/monsters.json'
 
 const validSpec = () => ({
   height: 1.2,
+  archetype: 'quadruped',
   palette: ['#8a5a34', '#c9a86a'],
   parts: [
     { id: 'body', a: [0, 0.5, -0.3], b: [0, 0.5, 0.3], r1: 0.3, r2: 0.25, color: 0, blend: 0.15 },
+    { id: 'legL', a: [-0.1, 0.4, 0], b: [-0.1, 0.05, 0], r1: 0.06, r2: 0.04, color: 0, blend: 0.05 },
+    { id: 'legR', a: [0.1, 0.4, 0], b: [0.1, 0.05, 0], r1: 0.06, r2: 0.04, color: 0, blend: 0.05 },
     { id: 'tail', a: [0, 0.5, -0.35], b: [0, 0.6, -0.6], r1: 0.08, r2: 0.03, color: 1, blend: 0.08 },
+    { id: 'patch', a: [0, 0.7, 0], b: [0, 0.68, 0.1], r1: 0.1, r2: 0.08, color: 1, colorOnly: true },
   ],
-  idle: [
-    { kind: 'breathe', parts: ['body'], amp: 0.03, rate: 2 },
-    { kind: 'chain', parts: ['tail'], yaw: 0.5, rate: 3, lag: 0.7 },
-  ],
+  breathe: { parts: ['body'], amp: 0.03, rate: 2 },
+  head: { parts: ['body'], anchor: [0, 0.5, 0.3], amp: 0.1 },
+  legs: [{ part: 'legL' }, { part: 'legR' }],
+  ropes: [{ parts: ['tail'], gravity: 2, sway: 0.3 }],
 })
 
 describe('creatures3d registry', () => {
@@ -40,9 +44,9 @@ describe('creatures3d registry', () => {
   })
 
   it('returns null for unregistered monsters (GLB/classic fallback)', () => {
-    expect(getCreatureSpec('field_chicken')).toBeNull()
+    expect(getCreatureSpec('cave_goblin')).toBeNull()
     expect(getCreatureSpec(undefined)).toBeNull()
-    expect(hasCreatureSpec('field_chicken')).toBe(false)
+    expect(hasCreatureSpec('cave_goblin')).toBe(false)
   })
 })
 
@@ -82,19 +86,33 @@ describe('validateCreatureSpec', () => {
     expect(validateCreatureSpec(s).some((e) => e.includes('budget'))).toBe(true)
   })
 
-  it('rejects a spec where every part is buried', () => {
+  it('rejects a spec where every part is buried or colorOnly', () => {
     const s = validSpec()
     for (const p of s.parts) (p as { buried?: boolean }).buried = true
     expect(validateCreatureSpec(s).some((e) => e.includes('buried'))).toBe(true)
   })
 
-  it('rejects idle behaviors with unknown kinds or dangling part refs', () => {
+  it('rejects unknown archetypes', () => {
     const s = validSpec()
-    s.idle.push({ kind: 'moonwalk', parts: ['body'] } as never)
-    s.idle.push({ kind: 'sway', parts: ['ghost'], anchor: [0, 0, 0] } as never)
+    ;(s as { archetype: string }).archetype = 'centaur'
+    expect(validateCreatureSpec(s).some((e) => e.includes('archetype must be one of'))).toBe(true)
+  })
+
+  it('rejects rig groups with dangling part references', () => {
+    const s = validSpec()
+    s.breathe.parts.push('ghost')
+    s.legs.push({ part: 'phantomLeg' })
+    s.ropes.push({ parts: ['tail'], anchorTo: 'nowhere' } as never)
     const errors = validateCreatureSpec(s)
-    expect(errors.some((e) => e.includes('kind must be one of'))).toBe(true)
-    expect(errors.some((e) => e.includes('unknown part "ghost"'))).toBe(true)
+    expect(errors.some((e) => e.includes('breathe: references unknown part "ghost"'))).toBe(true)
+    expect(errors.some((e) => e.includes('legs[2]: part must name an existing part'))).toBe(true)
+    expect(errors.some((e) => e.includes('anchorTo references unknown part "nowhere"'))).toBe(true)
+  })
+
+  it('requires a head anchor when a head group is present', () => {
+    const s = validSpec()
+    delete (s.head as { anchor?: number[] }).anchor
+    expect(validateCreatureSpec(s).some((e) => e.includes('head needs an [x,y,z] anchor'))).toBe(true)
   })
 })
 
