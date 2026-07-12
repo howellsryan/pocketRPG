@@ -314,6 +314,9 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   const combatRef = useRef(null)
   const hpRef = useRef(currentHP)
   const hasAutoStarted = useRef(false)
+  // Timestamp-throttles the "out of runes" error toast so a spell that splashes
+  // every tick for lack of runes raises one toast, not one per 600ms tick.
+  const noRunesToastRef = useRef(0)
   const inventoryRef = useRef(inventory)
   const bankRef = useRef(bank)
   const statsRef = useRef(stats)
@@ -613,9 +616,14 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
         if (ev.type === 'noRunesForSpell') {
           setLog(prev => [...prev.slice(-20), {
             text: `Not enough runes for ${ev.spellName}`,
-            type: 'miss',
+            type: 'error',
             time: Date.now()
           }])
+          const now = Date.now()
+          if (now - noRunesToastRef.current > 3500) {
+            noRunesToastRef.current = now
+            addToast(`Out of runes for ${ev.spellName}!`, 'error')
+          }
         }
         if (ev.type === 'consumeCharge') {
           // Decrement weapon charges on the equipped weapon
@@ -2651,6 +2659,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
               entry.type === 'special' ? 'text-yellow-300' :
               entry.type === 'formChange' ? 'text-purple-300' :
               entry.type === 'victory' ? 'text-[var(--color-gold)]' :
+              entry.type === 'error' ? 'text-[var(--color-blood-light)]' :
               'text-[var(--color-parchment)] opacity-50'}`}
           >
             {entry.text}

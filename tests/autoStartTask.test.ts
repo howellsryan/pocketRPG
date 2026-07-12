@@ -18,16 +18,8 @@ describe('buildAutoStartTask (Skip-1h rolls the walk into the activity)', () => 
     expect(buildAutoStartTask({ kind: 'hunter', actionId: 'hunt_cow' })?.type).toBe('hunter')
   })
 
-  it('rebuilds a regular combat task so Skip-1h fights the monster travelled to', () => {
-    const t: any = buildAutoStartTask({ kind: 'combat', monsterId: 'field_chicken' })
-    expect(t?.type).toBe('combat')
-    expect(t.monster?.id).toBe('field_chicken')
-    expect(t.bankingEnabled).toBe(true)
-  })
-
-  it('returns null for boss combat and other live-resume types (raid/farming/slayer)', () => {
-    expect(buildAutoStartTask({ kind: 'combat', monsterId: 'deepmaw_kraken' })).toBeNull()
-    expect(buildAutoStartTask({ kind: 'combat', monsterId: 'nope' })).toBeNull()
+  it('returns null for live-resume types (combat/raid/farming/slayer)', () => {
+    expect(buildAutoStartTask({ kind: 'combat', monsterId: 'goblin' })).toBeNull()
     expect(buildAutoStartTask({ kind: 'raid', raidId: 'anything' })).toBeNull()
     expect(buildAutoStartTask({ kind: 'farming', locationId: 'anywhere' })).toBeNull()
     expect(buildAutoStartTask({ kind: 'slayer', masterId: 'anyone' })).toBeNull()
