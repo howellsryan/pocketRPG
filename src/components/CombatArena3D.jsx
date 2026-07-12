@@ -3,6 +3,7 @@ import HPBar from './HPBar.jsx'
 import { HitSplatLayer } from './HitSplat.jsx'
 import { loadThree, canRender3D, assetUrl } from '../utils/three3d.js'
 import { disposeObject, attachGearList, setupHideMask } from './Model3DViewer.jsx'
+import { createBlendShellCreature } from '../3d/blendShell.js'
 
 // Phase-2 combat arena (docs/3d-gameplay-investigation.md): the rigged hero
 // (equipped weapon on the hand bone) faces the monster's model in a side-on
@@ -29,6 +30,7 @@ const LOAD_TIMEOUT_MS = 12000    // release the combat hold even if loading drag
 function CombatArena3D({
   monsterName,
   monsterPath,
+  monsterProc = null,
   monsterHeight = 2,
   monsterRotationDeg = [0, -90, 0],
   characterPath,
@@ -58,12 +60,12 @@ function CombatArena3D({
   }, [failed])
 
   useEffect(() => {
-    if (!characterPath || !monsterPath || !canRender3D()) { setFailed(true); return }
+    if (!characterPath || (!monsterPath && !monsterProc) || !canRender3D()) { setFailed(true); return }
     let cancelled = false
     const host = hostRef.current
     const st = {
       disposed: false, raf: null, THREE: null, renderer: null, scene: null, camera: null,
-      mixer: null, monsterMixer: null, clock: null, hero: null, monster: null, bones: {}, weapon: null,
+      mixer: null, monsterMixer: null, clock: null, hero: null, monster: null, monsterCreature: null, bones: {}, weapon: null,
       gear: [], gearToken: 0, headMaskCtl: null, heroSkinned: null,
       idleAction: null, attackAction: null, specialAction: null,
       monsterIdleAction: null, monsterAttackAction: null, timers: new Set(),
@@ -152,7 +154,10 @@ function CombatArena3D({
         return mats
       }
 
-      const [heroGltf, monsterGltf] = await Promise.all([loadGlb(characterPath), loadGlb(monsterPath)])
+      const [heroGltf, monsterGltf] = await Promise.all([
+        loadGlb(characterPath),
+        monsterProc ? Promise.resolve(null) : loadGlb(monsterPath),
+      ])
       if (cancelled || st.disposed) return
 
       // The hero's clips carry a baked root orientation: animated, she faces
@@ -161,7 +166,13 @@ function CombatArena3D({
       // Monster facing is registry data (`rotationDeg`, default faces the
       // hero) so a differently-authored GLB is a JSON fix, not a code change.
       const [mrx, mry, mrz] = monsterRotationDeg
-      st.monster = mountActor(monsterGltf, monsterHeight, ARENA_GAP_X / 2, THREE.MathUtils.degToRad(mry))
+      // Procedural monsters build a blend-shell creature in place of a GLB;
+      // everything downstream (mount, offsets, camera framing) is shared.
+      if (monsterProc) st.monsterCreature = createBlendShellCreature(THREE, monsterProc)
+      st.monster = mountActor(
+        st.monsterCreature ? { scene: st.monsterCreature.group } : monsterGltf,
+        monsterHeight, ARENA_GAP_X / 2, THREE.MathUtils.degToRad(mry),
+      )
       st.monster.rotation.x = THREE.MathUtils.degToRad(mrx)
       st.monsterBaseRotZ = THREE.MathUtils.degToRad(mrz)
       // Long-bodied monsters (dragons) are height-normalised but can span
@@ -211,7 +222,7 @@ function CombatArena3D({
       // Rigged monsters animate from their own clips (import convention:
       // 'Idle' loops, 'Attack' fires on hit; unnamed single clip = idle).
       // Clip-less monsters keep the procedural bob + lunge.
-      if (monsterGltf.animations && monsterGltf.animations.length) {
+      if (monsterGltf && monsterGltf.animations && monsterGltf.animations.length) {
         st.monsterMixer = new THREE.AnimationMixer(st.monster)
         const mAnims = monsterGltf.animations
         const idleClip = mAnims.find((c) => c.name === 'Idle') || mAnims[0]
@@ -244,6 +255,7 @@ function CombatArena3D({
         const now = st.clock.elapsedTime
         if (st.mixer) st.mixer.update(dt)
         if (st.monsterMixer) st.monsterMixer.update(dt)
+        if (st.monsterCreature) st.monsterCreature.update(dt)
 
         // Monster idle bob + procedural attack/reaction offsets.
         if (st.monster) {
@@ -285,6 +297,11 @@ function CombatArena3D({
             if (p > 0) { m.emissive.setRGB(tl.r ?? 0.8, tl.g ?? 0.05, tl.b ?? 0.02); m.emissiveIntensity = p * 0.7 }
             else if (m.emissiveIntensity) { m.emissiveIntensity = 0 }
           }
+          // Blend-shell materials have no emissive — the flash rides a shader
+          // uniform instead.
+          if (tlKey === 'monsterFlash' && st.monsterCreature) {
+            st.monsterCreature.setFlash(tl ? (tl.r ?? 0.8) : 0.8, tl ? (tl.g ?? 0.05) : 0.05, tl ? (tl.b ?? 0.02) : 0.02, p * 0.7)
+          }
         }
 
         st.renderer.render(st.scene, st.camera)
@@ -319,7 +336,7 @@ function CombatArena3D({
       arenaTeardown(st, host)
       stateRef.current = null
     }
-  }, [characterPath, monsterPath, monsterHeight, monsterRotationDeg.join()])
+  }, [characterPath, monsterPath, monsterProc && JSON.stringify(monsterProc), monsterHeight, monsterRotationDeg.join()])
 
   // Weapon swaps mid-fight without a scene rebuild. Keyed on the whole spec
   // so registry transform edits re-apply live, not just path/bone swaps.
@@ -451,6 +468,7 @@ function arenaTeardown(st, host) {
   if (st.onVis) document.removeEventListener('visibilitychange', st.onVis)
   if (st.raf) cancelAnimationFrame(st.raf)
   if (st.ro) st.ro.disconnect()
+  if (st.monsterCreature) { st.monsterCreature.dispose(); st.monsterCreature = null }
   if (st.scene) st.scene.traverse((o) => { if (o.isMesh || o.isSkinnedMesh) disposeObject(o) })
   if (st.renderer) {
     const gl = st.renderer.getContext()

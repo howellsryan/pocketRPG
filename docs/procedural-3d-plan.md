@@ -2,7 +2,7 @@
 
 Goal: generate monsters, bosses, environments, weapons, armour, and animations as **pure three.js code driven by small JSON specs** — no external asset files. End state: an AI (or dev) writes a ~15-line spec, and a seamless, animated, hand-sculpted-looking creature appears in `CombatArena3D`. Coexists with the Tripo GLB pipeline (`equipmentModels.json`); replaces it per-entry as quality allows.
 
-Status: **plan only** — nothing built. Each phase passes plan-gate separately before its first edit.
+Status: **Phase 1 complete.** Phase 0 (spike at `docs/prototypes/blend-shell-spike.html`): seam-free skin across animated poses, fused animation, toon + ink-outline variants, `MAX_VERTEX_UNIFORM_VECTORS` well above budget on tested contexts; look-dev verdict **pass** — warm carved-figurine read on parchment fits the Blacksmith's Ledger direction (default look: ink outline + rim light). Phase 1: runtime `src/3d/blendShell.js` (spec → living creature, data-driven idle behaviors) + registry `src/3d/creatures.js` over `src/data/creatures3d.json` (validator + tests), first live monster **Pasture Bull** in `CombatArena3D` (GLB entries win per-monster; procedural covers the rest), dev harness `docs/prototypes/proc-creature-harness.html`. Deviation: `procWorld.js` (standalone scene owner) deferred to Phase 2 — the creature mounts into the arena's existing scene, which met Phase 1's exit without duplicating hero-GLB mounting; the authoring harness in Phase 2/3 is where a standalone world earns its keep. Each remaining phase passes plan-gate separately before its first edit.
 
 ## 1) The core technique: SDF blend-shell
 

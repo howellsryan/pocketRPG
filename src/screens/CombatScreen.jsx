@@ -46,6 +46,7 @@ import { hasEpicLootDrop, getItemUnitValue, getLootTotalValue } from '../utils/i
 import { splatsFromCombatEvents, HIT_SPLAT_DURATION_MS } from '../utils/hitSplats.js'
 import { HitSplatLayer } from '../components/HitSplat.jsx'
 import CombatArena3D from '../components/CombatArena3D.jsx'
+import { getCreatureSpec } from '../3d/creatures.js'
 import { getMonsterModel, getCharacterAssetPath, getWeaponPlacement, getGearPlacements, getCharacterModel } from '../utils/equipModels.js'
 import { canRender3D } from '../utils/three3d.js'
 import ActivePotionBadges from '../components/ActivePotionBadges.jsx'
@@ -2280,9 +2281,11 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     )
   }
 
-  // Combat view
+  // Combat view — GLB registry entry wins per-monster; a procedural
+  // blend-shell spec (creatures3d.json) covers the rest.
   const arenaModel = combat?.active && combat.monster ? getMonsterModel(combat.monster.id) : null
-  const arenaAvailable = Boolean(arenaModel) && Boolean(getCharacterAssetPath()) && canRender3D()
+  const arenaProc = combat?.active && combat.monster && !arenaModel ? getCreatureSpec(combat.monster.id) : null
+  const arenaAvailable = Boolean(arenaModel || arenaProc) && Boolean(getCharacterAssetPath()) && canRender3D()
   const showArena = arenaAvailable && !arenaClosed
   const reopenArena = () => {
     setArenaClosed(false)
@@ -2306,9 +2309,10 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   const arenaPanel = showArena && (
     <CombatArena3D
       monsterName={combat.monster.name}
-      monsterPath={arenaModel.path}
-      monsterHeight={arenaModel.height}
-      monsterRotationDeg={arenaModel.rotationDeg}
+      monsterPath={arenaModel ? arenaModel.path : null}
+      monsterProc={arenaProc}
+      monsterHeight={(arenaModel || arenaProc).height}
+      monsterRotationDeg={(arenaModel || arenaProc).rotationDeg}
       characterPath={getCharacterAssetPath()}
       clips={{ idle: heroSpec.idleClip, attack: heroSpec.attackClip, special: heroSpec.specialClip }}
       weapon={equipment?.weapon ? getWeaponPlacement(equipment.weapon.itemId) : null}
