@@ -1385,6 +1385,19 @@ function GameApp() {
               activeTaskRef.current = null
               try { localStorage.removeItem('pocketrpg_activeTask') } catch {}
               completeJourneyContent(task.journey, task.dest)
+              // Offline catch-up parks a finished journey with its unspent
+              // elapsed time (`catchupMs`). Completion above promoted the next
+              // scroll / queued quest, so spend that leftover on the new
+              // journey — a re-parked one is completed by the next tick the
+              // same way, draining the whole queue through the time away.
+              const carryMs = Math.max(0, Number(task.catchupMs) || 0)
+              const promoted = activeTaskRef.current
+              if (carryMs > 0 && promoted?.journey) {
+                const adv = advanceJourneyOffline(promoted, carryMs)
+                if (adv.location) updateWorldLocation(adv.location)
+                setActiveTask(adv.task)
+                activeTaskRef.current = adv.task
+              }
             } else if (step) {
               // Clue trails advance silently — per-waypoint toasts were noise.
               if (step.kind === 'search') {
