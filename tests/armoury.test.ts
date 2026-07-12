@@ -150,9 +150,9 @@ describe('armoury classifier', () => {
     }
   })
 
-  it('flags weapons that have a special attack (25 canonical items)', () => {
+  it('flags weapons that have a special attack (27 canonical items)', () => {
     const specials = Object.values(items).filter(hasSpecialAttack)
-    expect(specials.length).toBe(25)
+    expect(specials.length).toBe(27)
   })
 
   describe('buildArmoury over the live data', () => {

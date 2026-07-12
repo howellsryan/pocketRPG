@@ -69,6 +69,7 @@ import { simulateQuestIdleCascade, splitQuestXpRewards } from './engine/questIdl
 import { getLevelFromXP, createLevelUpTracker } from './engine/experience.js'
 import { pvpApi } from './cloud/pvp.js'
 import { SKIP_HOUR_MS, getSkipPreflight, isChargeableSkipOutcome } from './engine/skipPreflight.js'
+import { buildAutoStartTask } from './engine/autoStartTask.js'
 import { getSlayerTaskReward } from './engine/slayerRewards.js'
 import { hasEpicLootDrop, getItemUnitValue } from './utils/itemValue.js'
 import LootResultModal, { SummaryCard, SuppliesCard } from './components/LootResultModal.jsx'
@@ -2293,7 +2294,22 @@ function GameApp() {
       return
     }
 
+    // Skip 1h is not allowed mid-journey: it only ever moved trail time, never
+    // the activity the trip was launched for. Block it with a clear error rather
+    // than burning the hour on travel.
+    if (activeTaskRef.current.type === 'travel') {
+      addToast('You cannot skip while travelling — wait until you arrive.', 'error')
+      isSkippingRef.current = false
+      return
+    }
+
     let didShowIdleModal = false
+    // Set when a Skip-1h during a plain walk rolls the leftover hour into the
+    // activity the trip was launched to start (see the travel branch below):
+    // the credit is charged once for the walk, then the generic simulation
+    // spends the hour on `resumedFromTravel` instead of re-charging.
+    let skipAlreadyCharged = false
+    let resumedFromTravel = null
     try {
       const task = activeTaskRef.current
       const [freshStats, freshInv, freshEq, freshBank, freshSlayerTask] = await Promise.all([
@@ -2394,9 +2410,27 @@ function GameApp() {
         const questSummary = { completedQuests: [], aggregatedXpReward: {}, coinsGained: 0, levelTracker: createLevelUpTracker(stats) }
         if (!task.journey) {
           updateWorldLocation(task.dest)
-          clearPersistedActiveTask()
           addToast(`🧭 Arrived at ${travelDestName(task)}`, 'info')
-          resumeAutoStart(task.autoStart, task.returnTo)
+          // A walk is seconds long, so a Skip-1h to a gated activity should spend
+          // the (near-)full hour on that activity rather than evaporating the
+          // credit on the trip. Rebuild the activity task and fall through to the
+          // generic simulation below (which does NOT re-charge). The activity is a
+          // background one, so it keeps accruing wherever the player is; types we
+          // can't simulate here (combat/raid/farming) resume live as before.
+          const resumedTask = buildAutoStartTask(task.autoStart)
+          if (resumedTask) {
+            setActiveTask(resumedTask)
+            activeTaskRef.current = resumedTask
+            resumedFromTravel = resumedTask
+            skipAlreadyCharged = true
+            // Do not return — continue into the generic simulation.
+          } else {
+            clearPersistedActiveTask()
+            resumeAutoStart(task.autoStart, task.returnTo)
+            addToast('⏭️ Skipped 1 hour', 'info')
+            await persistSkipThenReveal(null)
+            return
+          }
         } else {
           let budgetMs = SKIP_HOUR_MS
           let cur = task
@@ -2426,16 +2460,23 @@ function GameApp() {
           }
         }
 
-        addToast('⏭️ Skipped 1 hour', 'info')
-        // Persist first, then reveal quest completions like a clue solve — no
-        // idle-result modal (a conflict rolls the skip back).
-        await persistSkipThenReveal(null)
-        if (!isSaveConflict()) emitQuestCompletionReveal(questSummary.completedQuests, questSummary.aggregatedXpReward, questSummary.coinsGained, questSummary.levelTracker.result())
-        return
+        // A plain walk that rolled its leftover hour into a resumed activity
+        // falls through to the generic simulation below; everything else
+        // (journeys, non-simulatable arrivals) settles here.
+        if (!resumedFromTravel) {
+          addToast('⏭️ Skipped 1 hour', 'info')
+          // Persist first, then reveal quest completions like a clue solve — no
+          // idle-result modal (a conflict rolls the skip back).
+          await persistSkipThenReveal(null)
+          if (!isSaveConflict()) emitQuestCompletionReveal(questSummary.completedQuests, questSummary.aggregatedXpReward, questSummary.coinsGained, questSummary.levelTracker.result())
+          return
+        }
       }
 
-      const result = await api.skipHour()
-      setCredits(result?.credits_remaining ?? credits)
+      if (!skipAlreadyCharged) {
+        const result = await api.skipHour()
+        setCredits(result?.credits_remaining ?? credits)
+      }
 
       const elapsedMs = SKIP_HOUR_MS
       let idleResultData = { elapsedMs, task: activeTaskRef.current }
@@ -2724,7 +2765,10 @@ function GameApp() {
         }
       }
 
-      if (!isChargeableSkipOutcome(task, idleResultData)) {
+      // A travel-resumed skip already paid for the trip (and arrival is real
+      // progress), so it always settles — even if the resumed activity happened
+      // to produce nothing this hour.
+      if (!resumedFromTravel && !isChargeableSkipOutcome(task, idleResultData)) {
         clearExhaustedActiveTask(preflight?.reason || 'No remaining actions available for this activity.')
         return
       }

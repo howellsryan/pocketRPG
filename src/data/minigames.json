@@ -123,6 +123,97 @@
       "qty": 1,
       "minigame": "pest_control",
       "oneShot": true
+    },
+    {
+      "id": "apg_boundless_hat",
+      "name": "Enchant the Boundless Hat",
+      "icon": "🎓",
+      "iconKey": "arcanist_hat",
+      "description": "Run Arcane Proving Grounds trials until you earn the Boundless Hat.",
+      "hours": 2,
+      "ticks": 12000,
+      "product": "boundless_hat",
+      "qty": 1,
+      "minigame": "arcane_proving_grounds",
+      "oneShot": true
+    },
+    {
+      "id": "apg_boundless_top",
+      "name": "Enchant the Boundless Robe Top",
+      "icon": "👘",
+      "iconKey": "magic_robe",
+      "description": "Run Arcane Proving Grounds trials until you earn the Boundless Robe Top.",
+      "hours": 2,
+      "ticks": 12000,
+      "product": "boundless_robe_top",
+      "qty": 1,
+      "minigame": "arcane_proving_grounds",
+      "oneShot": true
+    },
+    {
+      "id": "apg_boundless_bottom",
+      "name": "Enchant the Boundless Robe Bottom",
+      "icon": "👖",
+      "iconKey": "magic_robe_bottom",
+      "description": "Run Arcane Proving Grounds trials until you earn the Boundless Robe Bottom.",
+      "hours": 2,
+      "ticks": 12000,
+      "product": "boundless_robe_bottom",
+      "qty": 1,
+      "minigame": "arcane_proving_grounds",
+      "oneShot": true
+    },
+    {
+      "id": "apg_boundless_boots",
+      "name": "Enchant the Boundless Boots",
+      "icon": "👢",
+      "iconKey": "arcanist_boots",
+      "description": "Run Arcane Proving Grounds trials until you earn the Boundless Boots.",
+      "hours": 2,
+      "ticks": 12000,
+      "product": "boundless_boots",
+      "qty": 1,
+      "minigame": "arcane_proving_grounds",
+      "oneShot": true
+    },
+    {
+      "id": "apg_boundless_gloves",
+      "name": "Enchant the Boundless Gloves",
+      "icon": "🧤",
+      "iconKey": "arcanist_gloves",
+      "description": "Run Arcane Proving Grounds trials until you earn the Boundless Gloves.",
+      "hours": 2,
+      "ticks": 12000,
+      "product": "boundless_gloves",
+      "qty": 1,
+      "minigame": "arcane_proving_grounds",
+      "oneShot": true
+    },
+    {
+      "id": "apg_arcane_grimoire",
+      "name": "Bind the Arcane Grimoire",
+      "icon": "📖",
+      "iconKey": "open_book",
+      "description": "Run Arcane Proving Grounds trials until you can bind the Arcane Grimoire.",
+      "hours": 4,
+      "ticks": 24000,
+      "product": "arcane_grimoire",
+      "qty": 1,
+      "minigame": "arcane_proving_grounds",
+      "oneShot": true
+    },
+    {
+      "id": "apg_archmage_wand",
+      "name": "Forge the Archmage Wand",
+      "icon": "🪄",
+      "iconKey": "wand",
+      "description": "Run Arcane Proving Grounds trials until you can forge the Archmage Wand.",
+      "hours": 4,
+      "ticks": 24000,
+      "product": "archmage_wand",
+      "qty": 1,
+      "minigame": "arcane_proving_grounds",
+      "oneShot": true
     }
   ],
   "minigames": [
@@ -161,6 +252,13 @@
       "label": "Void Breach",
       "icon": "🛡️",
       "iconKey": "shield"
+    },
+    {
+      "id": "arcane_proving_grounds",
+      "label": "Arcane Proving Grounds",
+      "icon": "🪄",
+      "iconKey": "magic_swirl",
+      "req": { "skill": "magic", "level": 50 }
     }
   ],
   "itemNames": {
@@ -176,6 +274,13 @@
     "void_king_helm": "Void King Helm",
     "void_king_top": "Void King Top",
     "void_king_robe": "Void King Robe",
-    "void_king_gloves": "Void King Gloves"
+    "void_king_gloves": "Void King Gloves",
+    "boundless_hat": "Boundless Hat",
+    "boundless_robe_top": "Boundless Robe Top",
+    "boundless_robe_bottom": "Boundless Robe Bottom",
+    "boundless_boots": "Boundless Boots",
+    "boundless_gloves": "Boundless Gloves",
+    "arcane_grimoire": "Arcane Grimoire",
+    "archmage_wand": "Archmage Wand"
   }
 }

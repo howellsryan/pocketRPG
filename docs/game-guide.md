@@ -105,6 +105,8 @@ Plant seeds in farming patches (herbs, trees and fruit trees) at different locat
 
 Magic is trained by casting combat spells, which need runes. Each spell has a level requirement, base damage, and rune cost per cast; you earn the spell's base XP plus 2 XP per damage dealt. Higher tiers (strike, bolt, blast and beyond) hit harder and cost pricier runes.
 
+The Arcane Proving Grounds minigame (Edgevale, unlocked at Magic 50) is a timed grind for magic gear: the Boundless hat, robe top, robe bottom, boots and gloves (2 hours each), the Arcane Grimoire off-hand (4 hours) and the Archmage Wand (4 hours). The Duskmare boss (Canifel) drops the Duskmare Staff plus three orbs — Umbral, Attuned and Volatile. Attaching an orb to a Duskmare Staff forges a unique staff: Umbral's special restores Prayer points, Attuned casts standard spells one tick faster for the highest sustained DPS, and Volatile's special hits harder the higher your Magic level.
+
 ## Construction
 
 Construction is trained by building with planks — each build consumes one plank and grants instant XP: Plank (level 1, 29 XP), Oak Plank (level 15, 60 XP), Teak Plank (level 35, 90 XP) and Mahogany Plank (level 70, 140 XP). High Construction also unlocks permanent perks: the Money Purse (level 70) lets you spend coins directly from your bank when shopping; at level 80 gathered loot banks automatically when your inventory fills during idle and offline play, so long gathering sessions never stall; and Master Rejuvenation (level 90) passively refills your special attack bar to 100% whenever it empties during a fight. Perks are managed on the Character Unlocks screen.

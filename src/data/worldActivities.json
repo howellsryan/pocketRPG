@@ -5373,6 +5373,10 @@
   ],
   "edgevale": [
     {
+      "kind": "minigame",
+      "ref": "arcane_proving_grounds"
+    },
+    {
       "kind": "bank",
       "ref": "use"
     },
@@ -7746,6 +7750,10 @@
     }
   ],
   "canifel": [
+    {
+      "kind": "combat",
+      "ref": "duskmare"
+    },
     {
       "kind": "agility",
       "ref": "canifis"

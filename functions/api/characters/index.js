@@ -19,7 +19,7 @@ export async function onRequestGet({ request, env }) {
      FROM characters c
      LEFT JOIN saves s ON s.character_id = c.id
      WHERE c.owner_id = ? AND c.deleted_at IS NULL
-     ORDER BY c.created_at ASC`
+     ORDER BY COALESCE(s.updated_at, c.created_at) DESC`
   ).bind(auth.identity.id).all()
 
   return json({ characters: rows.results || [] })
