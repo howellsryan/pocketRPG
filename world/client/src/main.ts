@@ -1,5 +1,5 @@
 import { clearStoredSession, exchangeHandoff, getStoredSession, getStoredZone, parseHandoffFromHash, pocketRpgUrl, storeZone, type WorldSession } from './auth'
-import { hideConnBanner, hideOverlay, initChatInput, initHud, pushMessage, removeHpBar, removeNameplate, removeOverheadChat, renderEquipment, renderInventory, setRunState, setSpecialEnergy, setStanceActive, showConnBanner, showContextMenu, showHitsplat, showLoginRequired, showTransitionOverlay, showXpDrop, updateHpBar, updateHpPill, updateNameplate, updateOverheadChat, npcExamine } from './ui'
+import { hideConnBanner, hideOverlay, initChatInput, initHud, paintHudIcons, pushMessage, removeHpBar, removeNameplate, removeOverheadChat, renderEquipment, renderInventory, setRunState, setSpecialEnergy, setStanceActive, showConnBanner, showContextMenu, showHitsplat, showLoginRequired, showTransitionOverlay, showXpDrop, updateHpBar, updateHpPill, updateNameplate, updateOverheadChat, npcExamine } from './ui'
 import { createMinimap, type Minimap, type MinimapDot } from './minimap'
 import { closeBankUI, isBankOpen, openBankUI, updateBankInventory, updateBankUI } from './bank'
 import { connect, onMessage, send } from './net'
@@ -347,6 +347,7 @@ function enterWorld(session: WorldSession): void {
         setStanceActive(message.you.stance)
         setSpecialEnergy(message.you.specialEnergy)
         renderEquipment(message.you.equipment)
+        paintHudIcons() // icon data is loaded by now (Promise.all above)
         statics = staticsResult
         for (const [id, depleted] of rockStates) staticsResult.setRockDepleted(id, depleted)
         self = createEntity(message.selfId, message.you.x, message.you.z, heroResult.mesh, heroResult.animator)

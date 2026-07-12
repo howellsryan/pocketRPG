@@ -10,11 +10,36 @@ import itemsData from '../../../src/data/items.json'
 type IconEntry = { body: string; viewBox?: string | null }
 const items = itemsData as unknown as Record<string, { icon?: string; name?: string } | undefined>
 let bespoke: Record<string, IconEntry> | null = null
+// game-icons glyphs (currentColor line art) — used for HUD icons that have no
+// bespoke art (e.g. the logout door). Lazy-loaded with the bespoke set.
+let glyphs: Record<string, IconEntry> | null = null
 
 export async function loadItemIcons(): Promise<void> {
   if (bespoke) return
-  const mod = await import('../../../src/data/bespokeIcons.json')
-  bespoke = ((mod as { default?: unknown }).default ?? mod) as Record<string, IconEntry>
+  const [b, g] = await Promise.all([
+    import('../../../src/data/bespokeIcons.json'),
+    import('../../../src/data/gameIcons.json'),
+  ])
+  bespoke = ((b as { default?: unknown }).default ?? b) as Record<string, IconEntry>
+  glyphs = ((g as { default?: unknown }).default ?? g) as Record<string, IconEntry>
+}
+
+/** Markup for a HUD/nav icon by its icon key (not an itemId): the bespoke
+ * full-colour art if present, else the tinted game-icons glyph, else ''. Used
+ * for the panel tabs (backpack/paperdoll/combat_level), the run orb (sprint)
+ * and the logout door. */
+export function uiIconMarkup(key: string, sizePx: number, color = 'currentColor'): string {
+  const b = bespoke?.[key]
+  if (b) {
+    const vb = b.viewBox || '0 0 512 512'
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${vb}" width="${sizePx}" height="${sizePx}">${b.body}</svg>`
+  }
+  const g = glyphs?.[key]
+  if (g) {
+    const vb = g.viewBox || '0 0 512 512'
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${vb}" width="${sizePx}" height="${sizePx}" fill="${color}" style="color:${color}">${g.body}</svg>`
+  }
+  return ''
 }
 
 export function itemEmoji(itemId: string): string {

@@ -1,6 +1,6 @@
 import type { CombatStance, EquipmentMap, InvSlot } from '../../shared/protocol'
 import type { MenuRow } from './picking'
-import { iconMarkup, itemName } from './itemIcon'
+import { iconMarkup, itemName, uiIconMarkup } from './itemIcon'
 
 export type MenuDispatch = (row: MenuRow) => void
 
@@ -24,6 +24,8 @@ const HUD_CSS = `
 }
 .hud-tab.active { background: rgba(70, 58, 36, 0.92); color: #ffe066; border-color: #6a5636; }
 .hud-tab.logout { color: #e0a05a; }
+.hud-tab svg, #run-orb svg { display: block; }
+#run-orb .run-ico { display: flex; align-items: center; }
 .hud-body {
   background: rgba(20, 16, 10, 0.82); border: 1px solid #5a4a30; border-radius: 8px; padding: 6px;
 }
@@ -277,11 +279,16 @@ function setupInvDrag(panel: HTMLElement, handlers: InvHandlers): void {
   panel.addEventListener('pointercancel', () => finish(false))
 }
 
-const TABS: { id: string; icon: string; title: string }[] = [
-  { id: 'inventory', icon: '🎒', title: 'Inventory' },
-  { id: 'equipment', icon: '🛡️', title: 'Equipment' },
-  { id: 'combat', icon: '⚔️', title: 'Combat' },
+// PocketRPG's own bespoke nav icons (src/data/bespokeIcons.json), matching the
+// main game's tab bar; painted by paintHudIcons() once the icon data loads.
+const TABS: { id: string; iconKey: string; title: string }[] = [
+  { id: 'inventory', iconKey: 'backpack', title: 'Inventory' },
+  { id: 'equipment', iconKey: 'paperdoll', title: 'Equipment' },
+  { id: 'combat', iconKey: 'combat_level', title: 'Combat' },
 ]
+const LOGOUT_COLOR = '#e0a05a'
+const HUD_TAB_ICON_PX = 26
+const RUN_ICON_PX = 20
 
 function selectTab(id: string): void {
   for (const tab of document.querySelectorAll('.hud-tab[data-tab]')) {
@@ -310,15 +317,18 @@ export function initHud(handlers?: HudHandlers): void {
     const btn = document.createElement('div')
     btn.className = 'hud-tab' + (tab.id === 'inventory' ? ' active' : '')
     btn.setAttribute('data-tab', tab.id)
+    btn.setAttribute('data-icon', tab.iconKey)
+    btn.setAttribute('data-icon-size', String(HUD_TAB_ICON_PX))
     btn.title = tab.title
-    btn.textContent = tab.icon
     btn.addEventListener('click', () => selectTab(tab.id))
     tabs.appendChild(btn)
   }
   const logout = document.createElement('div')
   logout.className = 'hud-tab logout'
   logout.title = 'Logout'
-  logout.textContent = '🚪'
+  logout.setAttribute('data-icon', 'door')
+  logout.setAttribute('data-icon-size', String(HUD_TAB_ICON_PX))
+  logout.setAttribute('data-icon-color', LOGOUT_COLOR)
   logout.addEventListener('click', () => handlers?.onLogout())
   tabs.appendChild(logout)
   panel.appendChild(tabs)
@@ -403,7 +413,15 @@ export function initHud(handlers?: HudHandlers): void {
   const runOrb = document.createElement('div')
   runOrb.id = 'run-orb'
   runOrb.title = 'Toggle run'
-  runOrb.textContent = '🏃 100%'
+  const runIco = document.createElement('span')
+  runIco.className = 'run-ico'
+  runIco.setAttribute('data-icon', 'sprint')
+  runIco.setAttribute('data-icon-size', String(RUN_ICON_PX))
+  const runPct = document.createElement('span')
+  runPct.className = 'run-pct'
+  runPct.textContent = '100%'
+  runOrb.appendChild(runIco)
+  runOrb.appendChild(runPct)
   runOrb.addEventListener('click', () => handlers?.onRunToggle())
   document.body.appendChild(runOrb)
 
@@ -457,8 +475,22 @@ export function setStanceActive(stance: CombatStance): void {
 export function setRunState(energy: number, running: boolean): void {
   const orb = document.getElementById('run-orb')
   if (!orb) return
-  orb.textContent = `🏃 ${Math.round(energy)}%`
+  const pct = orb.querySelector('.run-pct')
+  if (pct) pct.textContent = `${Math.round(energy)}%`
   orb.classList.toggle('running', running)
+}
+
+/** Paints the bespoke SVG art into every HUD icon slot (tabs, logout, run orb).
+ * Call once the icon data has loaded (loadItemIcons) — the elements carry their
+ * key/size/colour in data-attributes so this can run after they're built. */
+export function paintHudIcons(): void {
+  for (const el of document.querySelectorAll<HTMLElement>('[data-icon]')) {
+    const key = el.getAttribute('data-icon')!
+    const size = Number(el.getAttribute('data-icon-size')) || 24
+    const color = el.getAttribute('data-icon-color') ?? 'currentColor'
+    const markup = uiIconMarkup(key, size, color)
+    if (markup) el.innerHTML = markup
+  }
 }
 
 export function setSpecialEnergy(energy: number): void {
