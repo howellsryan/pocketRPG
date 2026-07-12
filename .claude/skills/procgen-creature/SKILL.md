@@ -1,6 +1,6 @@
 ---
 name: procgen-creature
-description: Use when authoring or editing procedural 3D creature specs in src/data/creatures3d.json - blend-shell monsters for the combat arena. Covers spec conventions, the 24-primitive budget, palette rules, rig field reference, shader gotchas, and the mandatory screenshot review via scripts/render-proc.mjs. Do not use for GLB/Tripo assets (threejs-3d-generator) or generic three.js work.
+description: Use when authoring or editing procedural 3D specs in src/data/creatures3d.json (blend-shell arena monsters) or src/data/hero3d.json (the procedural hero and its composable equipment). Covers spec conventions, the 24-primitive budget, palette rules, rig field reference, shader gotchas, and the mandatory screenshot review via scripts/render-proc.mjs. Do not use for GLB/Tripo assets (threejs-3d-generator) or generic three.js work.
 ---
 
 # procgen-creature: authoring blend-shell creatures
@@ -58,7 +58,17 @@ The target read is a **warm carved figurine on parchment** — ink outline, rim 
 - `wings { parts, rate 7–10, amp 0.22–0.55 }` — flap about each part's `a`; side inferred from sign of `a.x`.
 - `spine { parts front-to-back, amp ~0.05, wave 1.5, rate 2.2 }` — serpent lateral wave; `amp` is in **local units, not height-relative**.
 
-**Archetypes** pick attack/death root motion: `quadruped`/`biped`/`multileg` (crouch-lunge; death keels over), `hopper` (idle hop + pounce, squash-stretch, needs no `legs`), `flyer` (hover; death falls then keels), `serpent` (coil-strike; death flattens).
+**Archetypes** pick attack/death root motion: `quadruped`/`biped`/`multileg` (crouch-lunge; death keels over), `hopper` (idle hop + pounce, squash-stretch, needs no `legs`), `flyer` (hover; death falls then keels), `serpent` (coil-strike; death flattens), `humanoid` (step-in + hip-twist sword swing on the right arm; death slumps forward — hero only so far).
+- `arms { left/right: { upper: [...], lower: [...], anchor, elbow, grip? } }` (humanoid) — two-segment chains rotating about `anchor` then `elbow`; the right arm carries the weapon swing, so held-weapon parts belong in `right.lower`. `grip` is authoring metadata: where a weapon's hilt sits.
+
+## Hero + equipment (src/data/hero3d.json)
+
+Same primitives and rig, different registry: `hero` is one humanoid spec (proportions derived from the GLB via `node scripts/derive-hero-spec.mjs`; re-run if hero.glb changes); `equipment` maps **itemIds** to patches composed on top by `src/3d/heroCompose.js`:
+- `palette`: appended; the entry's parts/overrides index into its OWN palette (remapped at compose).
+- `add`: new parts; `rig: "head" | "armL" | "armR" | "handL" | "handR"` joins that group (`handR` = rides the sword swing), omitted = rides the root (pauldrons, belts).
+- `override`: heroPartId → `{ color/r1/r2/blend/a/b }` field patch (keeps rig membership — how platebody/platelegs recolor the body), or `{ remove: true }` (purged from every rig group — hair/eyes under a full helm).
+- Validate via `npx vitest run tests/hero3d.test.ts`; render via `node scripts/render-proc.mjs --hero bronze_scimitar,bronze_full_helm --front` (and without `--front`). Review all four states BOTH bare and equipped.
+- Hard-won: tiny `colorOnly` details on head-sized parts smear into haze — make dot-eyes/visor-slits small SOLID parts instead. All-metal outfits need per-piece value separation (helm lightest, legs darkest) and a dark rim/belt part to break the mass.
 
 ## Gotchas (hard-won in Phase 2 — do not "fix" these)
 

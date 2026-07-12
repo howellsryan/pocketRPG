@@ -47,6 +47,7 @@ import { splatsFromCombatEvents, HIT_SPLAT_DURATION_MS } from '../utils/hitSplat
 import { HitSplatLayer } from '../components/HitSplat.jsx'
 import CombatArena3D from '../components/CombatArena3D.jsx'
 import { getCreatureSpec } from '../3d/creatures.js'
+import { composeHeroSpec3D } from '../3d/heroCreature.js'
 import { getMonsterModel, getCharacterAssetPath, getWeaponPlacement, getGearPlacements, getCharacterModel } from '../utils/equipModels.js'
 import { canRender3D } from '../utils/three3d.js'
 import ActivePotionBadges from '../components/ActivePotionBadges.jsx'
@@ -2285,7 +2286,13 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   // blend-shell spec (creatures3d.json) covers the rest.
   const arenaModel = combat?.active && combat.monster ? getMonsterModel(combat.monster.id) : null
   const arenaProc = combat?.active && combat.monster && !arenaModel ? getCreatureSpec(combat.monster.id) : null
-  const arenaAvailable = Boolean(arenaModel || arenaProc) && Boolean(getCharacterAssetPath()) && canRender3D()
+  // Procedural hero wearing whatever is equipped (unregistered items simply
+  // don't render); null falls back to the GLB hero + bone-attached gear.
+  const arenaHeroProc = useMemo(
+    () => composeHeroSpec3D(Object.values(equipment || {}).map((s) => s && s.itemId).filter(Boolean)),
+    [equipment],
+  )
+  const arenaAvailable = Boolean(arenaModel || arenaProc) && Boolean(arenaHeroProc || getCharacterAssetPath()) && canRender3D()
   const showArena = arenaAvailable && !arenaClosed
   const reopenArena = () => {
     setArenaClosed(false)
@@ -2314,6 +2321,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       monsterHeight={(arenaModel || arenaProc).height}
       monsterRotationDeg={(arenaModel || arenaProc).rotationDeg}
       characterPath={getCharacterAssetPath()}
+      heroProc={arenaHeroProc}
       clips={{ idle: heroSpec.idleClip, attack: heroSpec.attackClip, special: heroSpec.specialClip }}
       weapon={equipment?.weapon ? getWeaponPlacement(equipment.weapon.itemId) : null}
       gear={getGearPlacements(equipment)}
