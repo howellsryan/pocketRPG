@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const vm = require('vm');
 const { spawnSync } = require('child_process');
 
 const root = process.cwd();
@@ -94,6 +95,54 @@ function checkEngineModulesRegistered() {
   }
 }
 
+// The core script and game chunk are CLASSIC scripts sharing one lexical scope,
+// executed top-to-bottom at page load. A top-level statement that reads another
+// module's `const`/`let` before its declaration is concatenated (e.g. a util
+// module ordered ahead of the engine module it imports) throws a "Cannot access
+// X before initialization" temporal-dead-zone ReferenceError — which aborts the
+// WHOLE inline script and leaves a blank white screen in production. `node
+// --check` only parses, so it can't see this; execute the script far enough to
+// surface any eval-time TDZ. Browser globals are stubbed by a permissive Proxy
+// so real DOM/network access doesn't throw; we fail ONLY on the TDZ signature.
+function checkNoEvalTimeTDZ(scripts) {
+  // A permissive stub for browser globals: callable, constructable, iterable
+  // (empty), number-coercible, and every property access returns itself — so DOM
+  // and network access flows without throwing, letting execution reach later
+  // top-level statements. Real JS built-ins (Object, Array, JSON, …) are left
+  // untouched, so only genuinely-missing browser globals resolve to the stub.
+  const stub = new Proxy(function () {}, {
+    get: (t, k) => (k === Symbol.iterator ? function* () {} : k === Symbol.toPrimitive ? () => 0 : k === 'then' ? undefined : stub),
+    apply: () => stub, construct: () => stub, has: () => true, set: () => true,
+  });
+  for (const { name, code } of scripts) {
+    const sandbox = {};
+    let tdz = null;
+    // Run, and each time a browser global is missing, define it as the stub and
+    // retry — separating "undefined global" (benign here) from the TDZ signature
+    // ("Cannot access X before initialization"), which is the real outage class.
+    for (let attempt = 0; attempt < 500; attempt++) {
+      try {
+        vm.runInNewContext(code, sandbox, { timeout: 8000 });
+        break; // ran to completion — no eval-time TDZ
+      } catch (err) {
+        // Errors thrown inside the vm belong to the sandbox realm, so
+        // `instanceof` fails across the boundary — match on the message instead.
+        const msg = (err && err.message) || '';
+        if (/before initialization/.test(msg)) { tdz = err; break; } // the outage signature
+        const missing = /(\w+) is not defined/.exec(msg);
+        if (missing) { sandbox[missing[1]] = stub; continue; } // stub a missing global and retry
+        break; // an unrelated runtime throw under the stubs — inconclusive, stop
+      }
+    }
+    if (tdz) {
+      console.error(`Eval-time temporal-dead-zone error in ${name}: ${tdz.message}\n` +
+        `A top-level statement reads a binding declared later in the concatenated bundle. ` +
+        `Defer the access into a function (lazy init) so it runs after every module is defined.`);
+      process.exit(1);
+    }
+  }
+}
+
 try {
   checkJsonImportNames();
   checkEngineModulesRegistered();
@@ -147,6 +196,10 @@ try {
       process.exit(combined.status || 1);
     }
   }
+
+  // Execute each script (and, for the core, itself alone as it loads before the
+  // chunk) to catch eval-time temporal-dead-zone errors the syntax check misses.
+  checkNoEvalTimeTDZ(scripts);
 } finally {
   cleanup();
 }
