@@ -1,0 +1,35 @@
+name: World Check
+
+# The world subproject changes rarely, so only run when it actually changes.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'world/**'
+  pull_request:
+    paths:
+      - 'world/**'
+
+concurrency:
+  group: world-check-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  world-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: world/package-lock.json
+
+      - name: Install world dependencies
+        run: cd world && npm ci
+
+      - name: Typecheck and test the world subproject
+        run: cd world && npm run typecheck && npm test
