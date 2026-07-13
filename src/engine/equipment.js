@@ -293,6 +293,17 @@ export function getAttackStyle(equipment, itemsData) {
 }
 
 /**
+ * Attack-style key for a MELEE swing with the equipped weapon: a magic
+ * weapon (e.g. a staff fighting with no spell selected — see
+ * resolveMagicSpell) swings as crush rather than indexing the nonexistent
+ * melee entry under the raw 'magic' style key.
+ */
+export function getMeleeAttackStyle(equipment, itemsData) {
+  const style = getAttackStyle(equipment, itemsData)
+  return style === 'magic' ? 'crush' : style
+}
+
+/**
  * Get the combat type based on the equipped weapon's attack style
  * Returns 'melee', 'ranged', or 'magic'
  */
@@ -309,9 +320,12 @@ export function getCombatType(equipment, itemsData) {
 
 /**
  * Resolve the spell object a magic fight will actually cast, and flag when a
- * magic fight is missing one. `combat.js` deals 0 damage every tick if a magic
- * fight runs with no spell and no powered staff (neither cast branch fires), so
- * callers MUST refuse to start/continue the fight when `needsSpell` is true.
+ * magic fight is missing one (`needsSpell`). `combatType` here is the RAW
+ * weapon-driven type — still 'magic' when `needsSpell` is true. Callers that
+ * run an actual fight (`combat.js`, `idleEngine.js`) fall back to melee (with
+ * the weapon's melee bonuses) whenever `needsSpell` is true, rather than
+ * splashing 0s forever with no spell to cast; the fallback switches back to
+ * real magic the instant a spell is selected.
  *
  * `spell` is resolved from `spellsData` by the stored spell id, so a persisted
  * id that no longer exists (e.g. renamed in a content update) resolves to null

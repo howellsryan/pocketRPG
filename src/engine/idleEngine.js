@@ -10,7 +10,7 @@ import {
   effectiveRanged, rangedMaxHit, getRangedStyleBonus,
   effectiveMagic, monsterMagicDefenceRoll, magicMaxHit
 } from './formulas.js'
-import { getEquipmentBonuses, getAttackSpeed, getAttackStyle, getCombatType, getRangedAmmoRequirementFailure, getEffectiveWornMagicDamage } from './equipment.js'
+import { getEquipmentBonuses, getAttackSpeed, getMeleeAttackStyle, getCombatType, getRangedAmmoRequirementFailure, getEffectiveWornMagicDamage } from './equipment.js'
 import { getEffectiveToolActionTicks, getEquippedSkillXpMultiplier, rollGatherBonusDrops } from './skilling.js'
 import { hasRequiredRunes, getRunesToConsume } from './runes.js'
 import { getHighAlchValue } from '../utils/itemValue.js'
@@ -932,7 +932,14 @@ function avgHitStats(playerStats, equipment, monster, stance, itemsData, spell =
   const slayerEquipmentBonus = getSlayerTaskEquipmentBonuses({ equipment, itemsData, slayerTask, monsterId: monster.id })
   const weaponSpeed = getAttackSpeed(equipment, itemsData)
   const voidMult = getCombatSetMultipliers(equipment)
-  const combatType = getCombatType(equipment, itemsData)
+  const weaponEntry = equipment?.weapon
+  const weaponItem = weaponEntry ? itemsData[weaponEntry.itemId] : null
+  const isPoweredStaff = !!weaponItem?.poweredStaff
+  let combatType = getCombatType(equipment, itemsData)
+  // A magic weapon with no castable spell (and no built-in powered-staff
+  // attack) can't cast — fight with melee until a spell is selected, instead
+  // of dealing 0 damage forever.
+  if (combatType === 'magic' && !spell && !isPoweredStaff) combatType = 'melee'
 
   let maxHit, atkRoll, defRoll, acc
 
@@ -943,10 +950,6 @@ function avgHitStats(playerStats, equipment, monster, stance, itemsData, spell =
     atkRoll = Math.floor(maxAttackRoll(effRng, bonuses.attackBonus.ranged || 0) * voidMult.rangedAccuracy)
     defRoll = maxDefenceRoll(monster.stats.defence, monster.defenceBonus?.ranged || 0)
   } else if (combatType === 'magic') {
-    const weaponEntry = equipment?.weapon
-    const weaponItem = weaponEntry ? itemsData[weaponEntry.itemId] : null
-    const isPoweredStaff = !!weaponItem?.poweredStaff
-    if (!spell && !isPoweredStaff) return { avgDmgPerHit: 0, weaponSpeed, acc: 0, combatType }
     const effMag = effectiveMagic(playerStats.magic || 1)
     // Powered staffs (Sanguinesti, Trident) scale max hit with magic level: floor(magic/3)+9.
     const baseDamage = spell ? spell.baseDamage : Math.max(1, Math.floor((playerStats.magic || 1) / 3) + 9)
@@ -956,7 +959,7 @@ function avgHitStats(playerStats, equipment, monster, stance, itemsData, spell =
     defRoll = monsterMagicDefenceRoll(monster.stats.magic || 1, monster.stats.defence, monster.defenceBonus?.magic || 0)
   } else {
     // Melee (default)
-    const weaponStyle = getAttackStyle(equipment, itemsData)
+    const weaponStyle = getMeleeAttackStyle(equipment, itemsData)
     const styleBonuses = getMeleeStyleBonuses(stance)
     const effStr = effectiveStrength(playerStats.strength, 0, 1.0, styleBonuses.strengthStyleBonus)
     maxHit = Math.floor(meleeMaxHit(effStr, bonuses.otherBonus.meleeStrength) * voidMult.meleeDamage)

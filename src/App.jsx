@@ -58,7 +58,6 @@ import { isRunnableBackgroundTask, getActionTicksForTask, getCarriedPendingTicks
 import { mergeSession, sessionPatchFromResult } from './engine/activitySession.js'
 import { resetActivityProgressSync } from './cloud/activityProgress.js'
 import { formatIdleTime, simulateIdleSkilling, simulateIdleGather, simulateIdleCombat, simulateIdleAgility, simulateIdleHPRegen } from './engine/idleEngine.js'
-import { triggerOneLifeDeath } from './utils/oneLifeDeath.js'
 import { defaultIdleCombatSetup } from './engine/idleSupplies.js'
 import prayersData from './data/prayers.json'
 import minigamesData from './data/minigames.json'
@@ -329,7 +328,7 @@ const DEMO_LOCKED_MESSAGE = '🔒 Sign in to use this — not available in the d
 
 function GameApp() {
   const { loaded, loadGame, player, stats, equipment, inventory, bank, currentHP, updateHP, getMaxHP, updateInventory, updateEquipment, updateBank, updateBankDirect, grantXP, addToast, activeTask, setActiveTask, getActiveTask, itemsData, getSnapshot, unlockedFeatures, setSlayerTask, awardSlayerPoints, slayerTasksCompleted, setSlayerTasksCompleted, completeQuest, completedQuests, questQueue, removeFromQuestQueue, updateQuestQueue,
-    unlockMinigameItem, unlockedMinigameItems, awardDungeoneeringTokens, farming, updateFarming, idleCombatSetup, isOneLife, updateBossKillCounts, updateRaidKillCounts, syncServerKillCounts, markKillCountsLoaded, combatSkipHandlerRef, skipHourHandlerRef, chargeSkipRef, raidSkipHandlerRef,
+    unlockMinigameItem, unlockedMinigameItems, awardDungeoneeringTokens, farming, updateFarming, idleCombatSetup, isOneLife, revertOneLifeMode, updateBossKillCounts, updateRaidKillCounts, syncServerKillCounts, markKillCountsLoaded, combatSkipHandlerRef, skipHourHandlerRef, chargeSkipRef, raidSkipHandlerRef,
     gameLocked, lockGame, unlockGame, runLockedSave, awaitCombatCompletion, resolveCombatCompletion,
     characterUnlocks, dailyTaskStates, setDailyTasks, recordGameEvent, updateWorldLocation, worldLocation, clearActivityProgress, requestActivityStart,
     inventoryFull, signalInventoryFull, dismissInventoryFullPrompt, resolveInventoryFull, combatStance, activeCombatSpell } = useGame()
@@ -1160,19 +1159,16 @@ function GameApp() {
           }
 
           // Idle/skip combat is high-risk: if supplies didn't keep the
-          // character alive, the engine reports `died`. For one-life
-          // accounts we trigger the wipe + redirect immediately; everyone
-          // else respawns at full HP with the active combat task cleared.
+          // character alive, the engine reports `died`. Everyone respawns at
+          // full HP with the active combat task cleared; one-life accounts
+          // additionally lose their one-life flag.
           const idleDeath = savedTask.type === 'combat' && sim?.died === true
           if (idleDeath) {
             setActiveTask(null)
             activeTaskRef.current = null
             try { localStorage.removeItem('pocketrpg_activeTask') } catch {}
             const oneLifeMode = isOneLife || getOneLifeMode()
-            if (oneLifeMode) {
-              void triggerOneLifeDeath(addToast)
-              return
-            }
+            if (oneLifeMode) revertOneLifeAfterDeath()
             addToast('You died during idle combat!', 'error')
             sim.hpAfterRegen = getMaxHP()
             sim.hpRestored = 0
@@ -1728,16 +1724,28 @@ function GameApp() {
     await checkSave()
   }
 
-  // Offline catch-up reported a death during the time we were away.
-  // For One-Life accounts the account is wiped immediately; otherwise the
-  // player respawns (HP/task already reset by loadGame) and we show the
-  // idle-results modal flagged with the death so the cause is visible.
+  // One-life death: the character revives like any other death (below) — this
+  // just reverts the account's is_one_life flag in the background and
+  // surfaces the mode change once the server confirms it.
+  function revertOneLifeAfterDeath() {
+    void revertOneLifeMode().then(({ ok, isIronman }) => {
+      if (!ok) {
+        addToast('Connection issue confirming your account change — will retry on your next death.', 'error')
+        return
+      }
+      addToast(isIronman
+        ? 'One-life protection lost — you are now a standard Ironman.'
+        : 'One-life protection lost — you are now a standard account.', 'error')
+    })
+  }
+
+  // Offline catch-up reported a death during the time we were away. The
+  // player respawns (HP/task already reset by loadGame); One-Life accounts
+  // additionally lose their one-life flag. We show the idle-results modal
+  // flagged with the death so the cause is visible either way.
   function handleOfflineIdleDeath(idleResult) {
     const oneLifeMode = isOneLife || getOneLifeMode()
-    if (oneLifeMode) {
-      void triggerOneLifeDeath(addToast)
-      return
-    }
+    if (oneLifeMode) revertOneLifeAfterDeath()
     addToast('You died while you were away!', 'error')
     setIdleResult(idleResult)
   }
@@ -2682,18 +2690,16 @@ function GameApp() {
           }
         } else {
           // Skipping is now high-risk: handle death-during-skip before
-          // applying anything else. One-life triggers the account wipe;
-          // everyone else respawns at full HP and the combat task clears.
+          // applying anything else. Everyone respawns at full HP and the
+          // combat task clears; one-life accounts additionally lose their
+          // one-life flag.
           const skipDeath = savedTask.type === 'combat' && sim?.died === true
           if (skipDeath) {
             setActiveTask(null)
             activeTaskRef.current = null
             try { localStorage.removeItem('pocketrpg_activeTask') } catch {}
             const oneLifeMode = isOneLife || getOneLifeMode()
-            if (oneLifeMode) {
-              void triggerOneLifeDeath(addToast)
-              return
-            }
+            if (oneLifeMode) revertOneLifeAfterDeath()
             addToast('You died during the skipped hour!', 'error')
             sim.hpAfterRegen = getMaxHP()
             sim.hpRestored = 0

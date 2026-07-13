@@ -32,7 +32,6 @@ import { getCombatType, resolveMagicSpell, equipItem, checkEquipRequirements, pl
 import { api, getToken, getCharacterId, getOneLifeMode, isDemoMode } from '../cloud/api.js'
 import { pullSave, applyCloudSave, requestCriticalPushSave, pushNow } from '../cloud/sync.js'
 import { pvpApi } from '../cloud/pvp.js'
-import { triggerOneLifeDeath } from '../utils/oneLifeDeath.js'
 import monstersData from '../data/monsters.json'
 import worldData from '../data/world.json'
 import { placeActivities } from '../engine/worldContent.js'
@@ -257,7 +256,7 @@ class PvpCombatErrorBoundary extends Component {
 }
 
 export default function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onCombatStatusChange, onBack, onStopBack, dungeonPlaceId }) {
-  const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, updateEquipment, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, idleCombatSetup, updateIdleCombatSetup, homeShortcuts, updateHomeShortcuts, setActiveTask, requestActivityStart, slayerTask, setSlayerTask, awardSlayerPoints, slayerTasksCompleted, setSlayerTasksCompleted, activeCombatSpell, updateActiveCombatSpell, bossKillCounts, updateBossKillCounts, raidKillCounts, updateRaidKillCounts, unlockedFeatures, completedQuests, isOneLife, isIronman, getSnapshot, loadGame, combatSkipHandlerRef, skipHourHandlerRef, chargeSkipRef, raidSkipHandlerRef, lockGame, unlockGame, resolveCombatCompletion, characterUnlocks, killCountsLoaded, recordGameEvent, worldLocation } = useGame()
+  const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, updateEquipment, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, idleCombatSetup, updateIdleCombatSetup, homeShortcuts, updateHomeShortcuts, setActiveTask, requestActivityStart, slayerTask, setSlayerTask, awardSlayerPoints, slayerTasksCompleted, setSlayerTasksCompleted, activeCombatSpell, updateActiveCombatSpell, bossKillCounts, updateBossKillCounts, raidKillCounts, updateRaidKillCounts, unlockedFeatures, completedQuests, isOneLife, isIronman, revertOneLifeMode, getSnapshot, loadGame, combatSkipHandlerRef, skipHourHandlerRef, chargeSkipRef, raidSkipHandlerRef, lockGame, unlockGame, resolveCombatCompletion, characterUnlocks, killCountsLoaded, recordGameEvent, worldLocation } = useGame()
   const pvp = usePvp()
   // Offline demo: bosses, raids and PvP are locked (server-authoritative).
   const isDemo = isDemoMode() && !(getToken() && getCharacterId())
@@ -327,6 +326,23 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   const slayerTaskRef = useRef(slayerTask)
   const pvpCrashHandledRef = useRef(false)
   const oneLifeModeRef = useRef(isOneLife || getOneLifeMode())
+
+  // One-life death: the character already revives at full HP like any other
+  // death (see the call sites below) — this just reverts the account's
+  // is_one_life flag in the background and surfaces the mode change.
+  function revertOneLifeAfterDeath() {
+    oneLifeModeRef.current = false
+    void revertOneLifeMode().then(({ ok, isIronman }) => {
+      if (!ok) {
+        addToast('Connection issue confirming your account change — will retry on your next death.', 'error')
+        oneLifeModeRef.current = true
+        return
+      }
+      addToast(isIronman
+        ? 'One-life protection lost — you are now a standard Ironman.'
+        : 'One-life protection lost — you are now a standard account.', 'error')
+    })
+  }
   const bossKillCountsRef = useRef(bossKillCounts)
   const raidKillCountsRef = useRef(raidKillCounts)
   const unlockedFeaturesRef = useRef(unlockedFeatures)
@@ -405,20 +421,18 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   // Update spell in active combat if changed mid-fight
   useEffect(() => {
     if (!combatRef.current || !combatRef.current.active) return
-    const { combatType: newCombatType, isPoweredStaff, spell: newSpell, needsSpell } = resolveMagicSpell(equipmentRef.current, itemsData, activeCombatSpell, spellsData)
-    // Swapping to magic with no castable spell mid-fight would splash 0s forever
-    // (see resolveMagicSpell) — stop cleanly instead of applying a broken state.
-    if (needsSpell) {
-      addToast('No spell selected — magic auto-fight stopped.', 'error')
-      setCombat(null)
-      combatRef.current = null
-      setActiveTask(null)
-      return
-    }
+    const { combatType: weaponCombatType, isPoweredStaff, spell: newSpell, needsSpell } = resolveMagicSpell(equipmentRef.current, itemsData, activeCombatSpell, spellsData)
+    // A magic weapon with no castable spell (e.g. a staff just equipped with
+    // no spell picked) fights with melee instead of splashing 0s forever —
+    // stay in the fight; switch back to real magic once a spell is selected.
+    const newCombatType = needsSpell ? 'melee' : weaponCombatType
     const effectiveSpellId = isPoweredStaff ? null : activeCombatSpell?.id
     // Update combat state to use the new spell/combat type
     if (combatRef.current.combatType !== newCombatType ||
         (newCombatType === 'magic' && combatRef.current.spell?.id !== effectiveSpellId)) {
+      if (needsSpell && combatRef.current.combatType !== 'melee') {
+        addToast('No spell selected — attacking with melee until you pick one.', 'info')
+      }
       combatRef.current = {
         ...combatRef.current,
         combatType: newCombatType,
@@ -572,13 +586,10 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           if (newHP <= 0) {
             setCombat(prev => ({ ...prev, active: false }))
             setActiveTask(null)
-            if (oneLifeModeRef.current) {
-              void triggerOneLifeDeath(addToast)
-            } else {
-              updateHP(getMaxHP())
-              hpRef.current = getMaxHP()
-              setDeathModal({ monsterName: state.monster?.name || 'the monster', cause: 'slain' })
-            }
+            updateHP(getMaxHP())
+            hpRef.current = getMaxHP()
+            setDeathModal({ monsterName: state.monster?.name || 'the monster', cause: 'slain' })
+            if (oneLifeModeRef.current) revertOneLifeAfterDeath()
           }
         }
         if (ev.type === 'dragonfireHit') {
@@ -593,13 +604,10 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           if (newHP <= 0) {
             setCombat(prev => ({ ...prev, active: false }))
             setActiveTask(null)
-            if (oneLifeModeRef.current) {
-              void triggerOneLifeDeath(addToast)
-            } else {
-              updateHP(getMaxHP())
-              hpRef.current = getMaxHP()
-              setDeathModal({ monsterName: state.monster?.name || 'the dragon', cause: 'incinerated' })
-            }
+            updateHP(getMaxHP())
+            hpRef.current = getMaxHP()
+            setDeathModal({ monsterName: state.monster?.name || 'the dragon', cause: 'incinerated' })
+            if (oneLifeModeRef.current) revertOneLifeAfterDeath()
           }
         }
         if (ev.type === 'dragonfireBlocked') {
@@ -1072,11 +1080,9 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     }
     // Map-driven gating (Phase 3): must be at a place that offers this monster.
     if (!requestActivityStart({ type: 'combat', monster })) return
-    const { combatType, weaponItem, isPoweredStaff, spell, needsSpell } = resolveMagicSpell(equipment, itemsData, activeCombatSpell, spellsData)
-    if (needsSpell) {
-      addToast('No spell selected! Use the 🔮 Cast Spell button to pick a spell.', 'error')
-      return
-    }
+    const { combatType: weaponCombatType, weaponItem, isPoweredStaff, spell, needsSpell } = resolveMagicSpell(equipment, itemsData, activeCombatSpell, spellsData)
+    const combatType = needsSpell ? 'melee' : weaponCombatType
+    if (needsSpell) addToast('No spell selected — attacking with melee. Use the 🔮 Cast Spell button to fight with magic.', 'info')
     const state = createCombatState(monster, combatType, combatStance, spell)
     // Reset special attack energy on new fight; preserve active potions so they last their full 5 minutes
     state.specialAttackEnergy = 100
@@ -1107,11 +1113,9 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     // their own activity kind — gate on the raid, not its first boss (which is raid-only
     // content and not a standalone monster on the map).
     if (!requestActivityStart({ type: 'raid', raid: raidData })) return
-    const { combatType, spell, needsSpell } = resolveMagicSpell(equipment, itemsData, activeCombatSpell, spellsData)
-    if (needsSpell) {
-      addToast('No spell selected! Use the 🔮 Cast Spell button to pick a spell.', 'error')
-      return
-    }
+    const { combatType: weaponCombatType, spell, needsSpell } = resolveMagicSpell(equipment, itemsData, activeCombatSpell, spellsData)
+    const combatType = needsSpell ? 'melee' : weaponCombatType
+    if (needsSpell) addToast('No spell selected — attacking with melee. Use the 🔮 Cast Spell button to fight with magic.', 'info')
     const state = createRaidCombatState(raidData, monstersData, combatType, combatStance, spell)
     if (!state) {
       addToast('Failed to start raid — missing boss data', 'error')
@@ -1135,16 +1139,10 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   }
 
   const continueFight = (monster) => {
-    const { combatType, spell, needsSpell } = resolveMagicSpell(equipment, itemsData, activeCombatSpell, spellsData)
-    if (needsSpell) {
-      // Never restart a magic auto-fight without a castable spell — it would just
-      // splash 0s forever (see resolveMagicSpell). Stop cleanly instead.
-      addToast('No spell selected — magic auto-fight stopped.', 'error')
-      setCombat(null)
-      combatRef.current = null
-      setActiveTask(null)
-      return
-    }
+    const { combatType: weaponCombatType, spell, needsSpell } = resolveMagicSpell(equipment, itemsData, activeCombatSpell, spellsData)
+    // A magic weapon with no castable spell fights with melee instead of
+    // stopping the auto-fight — see resolveMagicSpell.
+    const combatType = needsSpell ? 'melee' : weaponCombatType
     const state = createCombatState(monster, combatType, combatStance, spell)
     // Reset special attack energy on kill; preserve active potions and prayers so they last their full duration
     state.specialAttackEnergy = 100

@@ -55,7 +55,7 @@ Your hitpoints regenerate naturally at +1 HP every 60 seconds, in and out of com
 
 ## What happens when you die
 
-On a normal character, dying in PvE is forgiving: the fight ends, your hitpoints are restored to full, and you keep all your items and loot — nothing is dropped or lost. If you would die during idle combat or offline catch-up, the simulation stops at that point and you keep everything earned up to it; restock food and check your gear before restarting. One-life (hardcore) characters are the exception: death wipes the character permanently.
+Dying in PvE is forgiving: the fight ends, your hitpoints are restored to full, and you keep all your items and loot — nothing is dropped or lost. If you would die during idle combat or offline catch-up, the simulation stops at that point and you keep everything earned up to it; restock food and check your gear before restarting. One-life (hardcore) characters are the exception: death permanently revokes the one-life badge — an Ironman one-life character becomes a standard Ironman, and a non-Ironman one-life character becomes a standard account. The character itself, its level and all its items are untouched.
 
 ## Inventory and banking
 
@@ -137,7 +137,7 @@ The public leaderboard ranks characters by total level, and separately by kill c
 
 ## Ironman and one-life modes
 
-When creating a character you can pick special modes. Ironman characters are self-sufficient: no Trading Post trading with other players. One-life characters are hardcore — death is permanent (the character can be reset). Both modes are badges of honour on the leaderboard.
+When creating a character you can pick special modes. Ironman characters are self-sufficient: no Trading Post trading with other players. One-life characters are hardcore — dying loses the one-life badge for good, reverting the character to a standard account (or a standard Ironman, if it was also an Ironman). Both modes are badges of honour on the leaderboard.
 
 ## Account, characters and saving
 

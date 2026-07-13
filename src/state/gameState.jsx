@@ -11,6 +11,7 @@ import { debounce } from '../utils/helpers.js'
 import { mergeKillCounts } from '../utils/killCountMerge.js'
 import { fetchIdleState, pushIdleState } from '../cloud/idleState.js'
 import { api, getToken, getCharacterId, getIronmanMode, getOneLifeMode, syncAccountModeFlags, CREDITS_UPDATED_EVENT } from '../cloud/api.js'
+import { resetOneLifeWithRetry } from '../utils/oneLifeDeath.js'
 import { matchTaskProgress, taskById } from '../engine/dailyTasks.js'
 import { requestCriticalPushSave, schedulePeriodicSave, pushNow, suspendSaves, resumeSaves, isSaveConflict } from '../cloud/sync.js'
 import { CRITICAL_SAVE_REASONS, detectCountIncreases, detectLevelUps, detectSetGrowth, didNumberIncrease, extractSkillLevels } from '../cloud/criticalSavePolicy.js'
@@ -640,6 +641,26 @@ export function GameProvider({ children }) {
   }, [autoSave])
 
   // ── Mutations ──
+
+  // One-life death: revert the character's is_one_life flag (server first,
+  // then mirror locally) instead of wiping it. Ironman one-life reverts to
+  // plain Ironman; normal one-life reverts to a plain normal account — either
+  // way the save, level and progress are untouched, only the flag flips.
+  // Offline/local-only play has no cloud character, so the local flag (the
+  // save's only source of truth in that mode) is flipped directly.
+  const revertOneLifeMode = useCallback(async () => {
+    const isIronman = !!stateRef.current.player?.is_ironman
+    try {
+      if (getToken()) await resetOneLifeWithRetry()
+    } catch (err) {
+      console.error('One-life revert failed; will retry on the next death:', err)
+      return { ok: false, isIronman }
+    }
+    setPlayer(prev => (prev ? { ...prev, is_one_life: false } : prev))
+    syncAccountModeFlags({ is_ironman: isIronman, is_one_life: false })
+    markDirty('player')
+    return { ok: true, isIronman }
+  }, [markDirty])
 
   // `silent` (quest completions — App.jsx): skip the toast, since those flows
   // surface level-ups through the reward-reveal card / full-screen overlay
@@ -1381,6 +1402,7 @@ export function GameProvider({ children }) {
     characterUnlocks, updateCharacterUnlock,
     isIronman: player?.is_ironman || false,
     isOneLife: player?.is_one_life || false,
+    revertOneLifeMode,
     dailyTaskStates, setDailyTasks, recordGameEvent,
   }
 

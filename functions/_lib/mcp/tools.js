@@ -102,8 +102,9 @@ async function claimIdleCore(env, characterId, identityId, authorization) {
   const elapsedMs = Math.max(0, Math.min(now - (Number(idle.last_active_at) || now), MAX_IDLE_MS))
   if (elapsedMs < MIN_IDLE_MS) return { claimed: false, reason: 'too_soon', elapsedMs }
 
-  // Combat can kill the character. We never wipe via MCP, so One-Life accounts
-  // are deferred to the game client where death is handled explicitly.
+  // Combat can kill the character, and death on a One-Life account reverts
+  // its one-life flag — that needs the game client's revive + toast UX, so
+  // One-Life combat is deferred to the client rather than claimed here.
   if (task.type === 'combat' && (await isOneLifeCharacter(env, characterId))) {
     return { claimed: false, reason: 'one_life_combat' }
   }
