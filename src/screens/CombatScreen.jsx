@@ -2293,7 +2293,8 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     () => composeHeroSpec3D(Object.values(equipment || {}).map((s) => s && s.itemId).filter(Boolean)),
     [equipment],
   )
-  const arenaBiome = useMemo(() => getArenaBiomeSpec(worldLocation), [worldLocation])
+  const arenaMonsterId = combat?.active && combat.monster ? combat.monster.id : null
+  const arenaBiome = useMemo(() => getArenaBiomeSpec(worldLocation, arenaMonsterId), [worldLocation, arenaMonsterId])
   const arenaAvailable = Boolean(arenaModel || arenaProc) && Boolean(arenaHeroProc || getCharacterAssetPath()) && canRender3D()
   const showArena = arenaAvailable && !arenaClosed
   const reopenArena = () => {

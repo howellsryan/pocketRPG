@@ -483,6 +483,13 @@ export function createProcCreature(THREE, spec) {
     if (steps === 4) acc = 0
     commitRopes()
 
+    // boss VFX: glow parts pulse on the shared clock; dissolve ramps once
+    // the death collapse has settled (spec.dissolve), respawn resets it
+    const dissolve = spec.dissolve && state === 'death'
+      ? rigClamp((stateT - 0.9) / 0.8, 0, 0.96)
+      : 0
+    shell.setEffects(t, dissolve)
+
     shell.commit()
   }
   update(0)

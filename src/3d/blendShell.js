@@ -35,6 +35,7 @@ uniform vec4 uB[N];      // b.xyz, r2
 uniform vec3 uCol[N];
 uniform float uK[N];
 uniform float uShape[N]; // 0 = colorOnly (paint patch), 1 = shapes the field
+uniform float uGlow[N];  // 1 = part pulses bright (boss accents)
 
 float sdRoundCone(vec3 p, vec3 a, vec3 b, float r1, float r2){
   vec3 ba = b - a; float l2 = dot(ba,ba);
@@ -115,9 +116,35 @@ precision highp float;
 ` + common + `
 uniform float uToon; uniform float uOutlinePass;
 uniform vec3 uFlashCol; uniform float uFlashAmt;
+uniform float uTime; uniform float uDissolve;
 varying vec3 vN; varying vec3 vW;
 
+float dsHash(vec3 p){ return fract(sin(dot(p, vec3(127.1, 311.7, 74.7))) * 43758.5453); }
+float dsNoise(vec3 p){
+  vec3 i = floor(p); vec3 f = fract(p); f = f*f*(3.0-2.0*f);
+  return mix(
+    mix(mix(dsHash(i), dsHash(i+vec3(1.,0.,0.)), f.x), mix(dsHash(i+vec3(0.,1.,0.)), dsHash(i+vec3(1.,1.,0.)), f.x), f.y),
+    mix(mix(dsHash(i+vec3(0.,0.,1.)), dsHash(i+vec3(1.,0.,1.)), f.x), mix(dsHash(i+vec3(0.,1.,1.)), dsHash(i+vec3(1.,1.,1.)), f.x), f.y),
+    f.z);
+}
+float glowWeight(vec3 p){
+  float acc = 0.0; float wsum = 0.0;
+  for (int i=0;i<N;i++){
+    float di = sdRoundCone(p, uA[i].xyz, uB[i].xyz, uA[i].w, uB[i].w);
+    float w = exp(-max(di,0.0)*42.0);
+    acc += uGlow[i]*w; wsum += w;
+  }
+  return acc/max(wsum,1e-4);
+}
+
 void main(){
+  // Dissolve death: noise-thresholded discard with a hot ember edge; cuts
+  // the outline pass too so no ghost shell survives the body.
+  float dn = 0.0;
+  if (uDissolve > 0.0){
+    dn = dsNoise(vW * 9.0) * 0.75 + dsNoise(vW * 27.0) * 0.25;
+    if (dn < uDissolve) discard;
+  }
   if (uOutlinePass > 0.5){ gl_FragColor = vec4(0.20,0.14,0.09,1.0); return; }
   vec3 n = normalize(vN);
   // Quality bar (plan §1): bright high-key fill, ONE soft shade ramp, clean
@@ -130,6 +157,9 @@ void main(){
   // per-pixel: per-vertex color dissolves markings smaller than the proxy
   // tessellation (cow patches fall between body vertices)
   vec3 col = fieldColor(vW) * shade;
+  float gw = glowWeight(vW);
+  if (gw > 0.001) col *= 1.0 + gw * (0.5 + 0.3 * sin(uTime * 2.6));
+  if (uDissolve > 0.0) col = mix(vec3(0.95, 0.55, 0.22), col, smoothstep(uDissolve, uDissolve + 0.09, dn));
   col += uFlashCol * uFlashAmt * 0.8;
   gl_FragColor = vec4(col, 1.0);
 }`
@@ -215,12 +245,15 @@ export function createBlendShellCreature(THREE, spec) {
     uCol: { value: parts.map((p) => palette[p.color] || new THREE.Color(0xffffff)) },
     uK: { value: uK },
     uShape: { value: parts.map((p) => (p.colorOnly ? 0 : 1)) },
+    uGlow: { value: parts.map((p) => (p.glow ? 1 : 0)) },
     uXf: { value: uXf },
     uOffset: { value: 0 },
     uToon: { value: spec.toon ? 1 : 0 },
     uOutlinePass: { value: 0 },
     uFlashCol: { value: new THREE.Vector3(0.8, 0.05, 0.02) },
     uFlashAmt: { value: 0 },
+    uTime: { value: 0 },
+    uDissolve: { value: 0 },
   }
 
   const { vertexShader, fragmentShader } = buildBlendShellShaders(n)
@@ -315,6 +348,10 @@ export function createBlendShellCreature(THREE, spec) {
     setFlash: (r, g, b, amount) => {
       uniforms.uFlashCol.value.set(r, g, b)
       uniforms.uFlashAmt.value = amount
+    },
+    setEffects: (time, dissolve) => {
+      uniforms.uTime.value = time
+      uniforms.uDissolve.value = dissolve
     },
     dispose: () => {
       geo.dispose()
