@@ -76,11 +76,29 @@ function buildGroundTexture(collision: string[], width: number, height: number, 
 }
 
 /** Ground plane spanning tile (0,0)-(width,height) with its corner at the world
- * origin, so tile (tx,tz)'s center is world position (tx+0.5, 0, tz+0.5). */
-export function createGround(scene: THREE.Scene, collision: string[], width: number, height: number, palette?: GroundPalette): THREE.Mesh {
-  const geometry = new THREE.PlaneGeometry(width, height)
+ * origin, so tile (tx,tz)'s center is world position (tx+0.5, y, tz+0.5).
+ *
+ * With `corners` (a (width+1)×(height+1) row-major grid of per-corner heights)
+ * the plane is subdivided one segment per tile and each vertex is lifted to its
+ * corner height — so mesh vertices coincide exactly with the HeightField's
+ * corner grid. Without it (editor preview, T0) the plane stays flat. */
+export function createGround(scene: THREE.Scene, collision: string[], width: number, height: number, palette?: GroundPalette, corners?: Float32Array | null): THREE.Mesh {
+  const geometry = corners
+    ? new THREE.PlaneGeometry(width, height, width, height)
+    : new THREE.PlaneGeometry(width, height)
   geometry.rotateX(-Math.PI / 2)
   geometry.translate(width / 2, 0, height / 2)
+  if (corners) {
+    const stride = width + 1
+    const pos = geometry.attributes.position
+    for (let i = 0; i < pos.count; i++) {
+      const cx = Math.min(width, Math.max(0, Math.round(pos.getX(i))))
+      const cz = Math.min(height, Math.max(0, Math.round(pos.getZ(i))))
+      pos.setY(i, corners[cz * stride + cx])
+    }
+    pos.needsUpdate = true
+    geometry.computeVertexNormals()
+  }
   const material = new THREE.MeshStandardMaterial({ map: buildGroundTexture(collision, width, height, palette ?? DEFAULT_PALETTE) })
   const mesh = new THREE.Mesh(geometry, material)
   scene.add(mesh)

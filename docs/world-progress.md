@@ -544,3 +544,29 @@ proven by tests and ready for T1 to fill the grid.
 vite build succeeds.
 
 - [x] TERRAIN T0 — height seam landed; flat sampler, pixel-identical, tests green.
+
+### TERRAIN T1 — displaced terrain mesh (procedural source)
+Zones can now carry a `terrain` block; the ground becomes a displaced, lit mesh
+and every placed thing rides it via the T0 sampler.
+- `shared/zone.ts` + `shared/protocol.ts`: `ZoneTerrain` type (`relief`,
+  `procedural{seed,frequency}`, `heightmap?`, `material?`); `validateZone`
+  bounds relief 0..1.5 and the procedural params; welcome payload forwards it;
+  `server/WorldZone.ts` includes it when present.
+- `client/src/terrain.ts`: deterministic seeded value-noise fBm
+  (`proceduralCorners`) → corner grid; `createTerrain` registers the sampler and
+  builds the mesh. `scene.createGround` gains an optional `corners` arg —
+  subdivided one segment/tile, vertices lifted to corner heights,
+  `computeVertexNormals` for lighting. Editor preview stays flat (no corners).
+- `main.ts` uses `createTerrain` (returns the ground mesh picking raycasts).
+- `zones/pasture.json`: reference `terrain` block (seed 1337, relief 0.8).
+- Tests: procedural determinism (same seed identical, different seed differs),
+  grid size, [0,relief] + 1.5 cap, and the field lifts tileToWorld.
+
+Deviation from plan ordering: procedural is wired first (fully testable
+headless, no assets); authored heightmap PNGs land with the editor brush in T4.
+Picking still resolves the right tile (height only moves Y; worldToTile floors
+x/z). Material blend (T2) still uses the checker texture this phase.
+
+**Verified**: `world:check` green — typecheck clean, 210 tests (+5), build ok.
+
+- [x] TERRAIN T1 — displaced procedural terrain; DT: on-device visual pass (relief readability, pick accuracy on slopes).
