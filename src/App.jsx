@@ -331,7 +331,8 @@ function GameApp() {
     unlockMinigameItem, unlockedMinigameItems, awardDungeoneeringTokens, farming, updateFarming, idleCombatSetup, isOneLife, revertOneLifeMode, updateBossKillCounts, updateRaidKillCounts, syncServerKillCounts, markKillCountsLoaded, combatSkipHandlerRef, skipHourHandlerRef, chargeSkipRef, raidSkipHandlerRef,
     gameLocked, lockGame, unlockGame, runLockedSave, awaitCombatCompletion, resolveCombatCompletion,
     characterUnlocks, dailyTaskStates, setDailyTasks, recordGameEvent, updateWorldLocation, worldLocation, clearActivityProgress, requestActivityStart,
-    inventoryFull, signalInventoryFull, dismissInventoryFullPrompt, resolveInventoryFull, combatStance, activeCombatSpell } = useGame()
+    inventoryFull, signalInventoryFull, dismissInventoryFullPrompt, resolveInventoryFull, combatStance, activeCombatSpell,
+    autoBankExcludedItems } = useGame()
   const pvp = usePvp()
   const [screen, setScreen] = useState(SCREENS.HOME)
   const prevScreenRef = useRef(null) // screen before the current one (set by navigate)
@@ -1070,10 +1071,10 @@ function GameApp() {
               setActiveTask({ ...savedTask, totalTicks, ticksRemaining: newRemaining })
               sim = { minigameTimeReduced: true, hoursRemaining: Math.ceil(newRemaining / 6000) }
             }
-          } else if (savedTask.type === 'skill')   sim = simulateIdleSkilling(savedTask, elapsedMs, freshBank, freshEq, freshStats, itemsDataRef.current, freshInv, { isIronman: getIronmanMode() })
-          else if (savedTask.type === 'gather')  sim = simulateIdleGather(savedTask, elapsedMs, freshInv, freshStats, itemsDataRef.current, freshBank)
+          } else if (savedTask.type === 'skill')   sim = simulateIdleSkilling(savedTask, elapsedMs, freshBank, freshEq, freshStats, itemsDataRef.current, freshInv, { isIronman: getIronmanMode(), autoBankExcludedItemIds: autoBankExcludedItems })
+          else if (savedTask.type === 'gather')  sim = simulateIdleGather(savedTask, elapsedMs, freshInv, freshStats, itemsDataRef.current, freshBank, { autoBankExcludedItemIds: autoBankExcludedItems })
           else if (savedTask.type === 'clue') {
-            sim = simulateIdleGather(savedTask, elapsedMs, freshInv, freshStats, itemsDataRef.current, freshBank)
+            sim = simulateIdleGather(savedTask, elapsedMs, freshInv, freshStats, itemsDataRef.current, freshBank, { autoBankExcludedItemIds: autoBankExcludedItems })
             // Offline catch-up already settled whole solves over the elapsed
             // window; restart the in-progress solve so the live App-tick loop
             // (which drives clues on every screen) doesn't re-grant a partial.
@@ -1088,6 +1089,7 @@ function GameApp() {
             idlePotions: idleCombatSetupRef.current?.potions || [],
             idlePrayers: idleCombatSetupRef.current?.prayers || {},
             prayersData,
+            autoBankExcludedItemIds: autoBankExcludedItems,
           })
           else if (savedTask.type === 'agility') sim = simulateIdleAgility(savedTask, elapsedMs)
           else if (savedTask.type === 'thieving') sim = simulateIdleThieving(savedTask, elapsedMs)
@@ -2660,10 +2662,10 @@ function GameApp() {
             sim = { minigameTimeReduced: true }
           }
         } else {
-          if (savedTask.type === 'skill')   sim = simulateIdleSkilling(savedTask, elapsedMs, freshBank, freshEq, freshStats, itemsDataRef.current, freshInv, { isIronman: getIronmanMode() })
-          if (savedTask.type === 'gather')  sim = simulateIdleGather(savedTask, elapsedMs, freshInv, freshStats, itemsDataRef.current, freshBank)
+          if (savedTask.type === 'skill')   sim = simulateIdleSkilling(savedTask, elapsedMs, freshBank, freshEq, freshStats, itemsDataRef.current, freshInv, { isIronman: getIronmanMode(), autoBankExcludedItemIds: autoBankExcludedItems })
+          if (savedTask.type === 'gather')  sim = simulateIdleGather(savedTask, elapsedMs, freshInv, freshStats, itemsDataRef.current, freshBank, { autoBankExcludedItemIds: autoBankExcludedItems })
           if (savedTask.type === 'clue') {
-            sim = simulateIdleGather(savedTask, elapsedMs, freshInv, freshStats, itemsDataRef.current, freshBank)
+            sim = simulateIdleGather(savedTask, elapsedMs, freshInv, freshStats, itemsDataRef.current, freshBank, { autoBankExcludedItemIds: autoBankExcludedItems })
             // Restart the partial solve so the live App-tick clue loop doesn't
             // re-grant what the skip catch-up already settled.
             const clueTotal = savedTask.totalTicks ?? savedTask.gatherTask?.ticks
@@ -2678,6 +2680,7 @@ function GameApp() {
             idlePrayers: idleCombatSetupRef.current?.prayers || {},
             prayersData,
             doubleSlayerXp: !!(characterUnlocks?.doubleSlayerXp),
+            autoBankExcludedItemIds: autoBankExcludedItems,
           })
           if (savedTask.type === 'agility') sim = simulateIdleAgility(savedTask, elapsedMs)
           if (savedTask.type === 'thieving') sim = simulateIdleThieving(savedTask, elapsedMs)

@@ -4502,9 +4502,9 @@
     "attackBonus": 50,
     "strengthBonus": 50,
     "defenceBonus": {
-      "stab": 1000,
-      "slash": 1000,
-      "crush": 1000,
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
       "magic": 0,
       "ranged": 50
     },
@@ -4522,9 +4522,9 @@
         "attackBonus": 50,
         "strengthBonus": 50,
         "defenceBonus": {
-          "stab": 1000,
-          "slash": 1000,
-          "crush": 1000,
+          "stab": 0,
+          "slash": 0,
+          "crush": 0,
           "magic": 200,
           "ranged": 50
         }
@@ -4542,7 +4542,7 @@
           "slash": 1000,
           "crush": 1000,
           "magic": 300,
-          "ranged": -45
+          "ranged": 0
         }
       },
       "melee": {
@@ -4557,7 +4557,7 @@
           "stab": 1000,
           "slash": 1000,
           "crush": 1000,
-          "magic": -45,
+          "magic": 0,
           "ranged": 300
         }
       }

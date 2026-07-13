@@ -886,10 +886,11 @@ export function runIdleTask(save, task, elapsedMs, { isIronman = false } = {}) {
   if (!save.equipment || typeof save.equipment !== 'object') save.equipment = {}
   if (!save.settings || typeof save.settings !== 'object') save.settings = {}
   const inv28 = toSlotArray(save)
+  const autoBankExcludedItemIds = new Set(save.settings.autoBankExcludedItems || [])
   let sim = null
   switch (task.type) {
     case 'skill':
-      sim = simulateIdleSkilling(task, elapsedMs, save.bank, save.equipment, save.stats, itemsData, inv28, { isIronman })
+      sim = simulateIdleSkilling(task, elapsedMs, save.bank, save.equipment, save.stats, itemsData, inv28, { isIronman, autoBankExcludedItemIds })
       break
     case 'agility':
       sim = simulateIdleAgility(task, elapsedMs)
@@ -901,7 +902,7 @@ export function runIdleTask(save, task, elapsedMs, { isIronman = false } = {}) {
       sim = simulateIdleHunting(task, elapsedMs)
       break
     case 'gather':
-      sim = simulateIdleGather(task, elapsedMs, inv28, save.stats || {}, itemsData, save.bank || {})
+      sim = simulateIdleGather(task, elapsedMs, inv28, save.stats || {}, itemsData, save.bank || {}, { autoBankExcludedItemIds })
       break
     default:
       return { applied: false, reason: 'unsupported_type' }
@@ -1394,6 +1395,7 @@ export function runCombatTask(save, task, elapsedMs) {
     idlePotions: setup.potions,
     idlePrayers: setup.prayers,
     prayersData,
+    autoBankExcludedItemIds: new Set(save.settings.autoBankExcludedItems || []),
   })
   if (!sim) return { applied: false, reason: 'no_progress' }
   const state = { stats, inventory: inv28, bank: save.bank, equipment: save.equipment, settings: save.settings }

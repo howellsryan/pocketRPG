@@ -31,7 +31,7 @@
 
 ## 4) Gameplay Invariants
 - Round with `Math.floor()`. Inventory cap = **28** slots. HP regen **+1/60s**.
-- Auto-bank on full inventory; delay **5m (Agility 1) → 10s (Agility 99)**.
+- Auto-bank on full inventory; delay **5m (Agility 1) → 10s (Agility 99)**. Players can flag item *types* as excluded from auto-bank (toggle in the Inventory item modal; `autoBankExcludedItems` setting, `src/engine/idleEngine.js` `bankEverything`/`hasBankableItems`) — excluded items are skipped on every full-inventory bank trip (idle/offline/skip-hour/MCP) and never trigger an unproductive trip on their own.
 - Combat style: Accurate/Aggressive/Defensive **+3** relevant effective level; Controlled **+1** to attack/strength/defence.
 - Dragonfire: **33% proc, max 50**, fully blocked by `otherBonus.antiDragon: true`.
 - **Prayer (live PvE+PvP)**: drains a pool maxing at Prayer level; each prayer drains over time, higher tiers faster (`drainPerMinute` in `src/data/prayers.json`). Empty pool → prayers off. Pool starts full per session, persists across auto-fight kills. Prayer potion restores 20, super restore 22 (live+idle). PvP keeps protection prayers off (v1) so only offensive prayers drain. **Source of truth: `src/engine/prayerDrain.js`** (idle keeps its own pool in `src/engine/idleSupplies.js`).
