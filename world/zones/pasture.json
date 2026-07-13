@@ -13,7 +13,12 @@
       "seed": 1337,
       "frequency": 0.12
     },
-    "material": "meadow"
+    "material": "meadow",
+    "scatter": [
+      { "model": "bush", "density": 4, "scaleRange": [0.7, 1.2] },
+      { "model": "flowers", "density": 3, "scaleRange": [0.8, 1.1] },
+      { "model": "boulder", "density": 1, "scaleRange": [0.6, 1.0] }
+    ]
   },
   "collision": [
     "................................",

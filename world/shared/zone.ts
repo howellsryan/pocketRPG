@@ -54,11 +54,22 @@ export type ZoneAmbience = {
  * `relief` is peak height in tiles (≤1.5). A `procedural` block seeds
  * deterministic noise; `heightmap` (a grayscale PNG, editor-authored, Phase T4)
  * takes precedence when present. `material` names a T2 blend preset. */
+export type ScatterLayer = {
+  model: string
+  density: number
+  jitter?: number
+  scaleRange?: [number, number]
+  minSlope?: number
+  maxSlope?: number
+}
 export type ZoneTerrain = {
   relief: number
   procedural?: { seed: number; frequency: number }
   heightmap?: string
   material?: string
+  /** Decorative-only instanced flora — never gameplay, never on blocked/occupied
+   * tiles. Interactive nodes stay in `objects[]`. */
+  scatter?: ScatterLayer[]
 }
 
 export type ZoneDef = {
@@ -139,6 +150,11 @@ export function validateZone(zone: ZoneDef): ZoneValidationResult {
     if (t.procedural) {
       if (typeof t.procedural.seed !== 'number' || !Number.isFinite(t.procedural.seed)) errors.push(`terrain.procedural.seed must be a finite number`)
       if (typeof t.procedural.frequency !== 'number' || t.procedural.frequency <= 0) errors.push(`terrain.procedural.frequency must be a positive number`)
+    }
+    for (const [i, layer] of (t.scatter ?? []).entries()) {
+      if (!layer.model || typeof layer.model !== 'string') errors.push(`terrain.scatter[${i}].model must be a non-empty string`)
+      if (typeof layer.density !== 'number' || layer.density <= 0 || layer.density > 100) errors.push(`terrain.scatter[${i}].density must be in 0..100`)
+      if (layer.scaleRange && (layer.scaleRange.length !== 2 || layer.scaleRange[0] > layer.scaleRange[1])) errors.push(`terrain.scatter[${i}].scaleRange must be [min,max] with min<=max`)
     }
   }
 

@@ -88,11 +88,21 @@ export type ZoneAmbience = { sky?: string; hemiIntensity?: number; sunIntensity?
 /** Client-render-only terrain height for a zone (docs/open-world-terrain-plan.md).
  * `relief` is peak height in tiles (≤~1.5); `procedural` seeds deterministic
  * noise. Absent => flat ground. `material` names a T2 blend preset. */
+export type ScatterLayer = {
+  model: string
+  /** Instances per 100 eligible (walkable, unoccupied) tiles. */
+  density: number
+  jitter?: number
+  scaleRange?: [number, number]
+  minSlope?: number
+  maxSlope?: number
+}
 export type ZoneTerrain = {
   relief: number
   procedural?: { seed: number; frequency: number }
   heightmap?: string
   material?: string
+  scatter?: ScatterLayer[]
 }
 
 export type LootItem = { id: string; itemId: string; qty: number; x: number; z: number }

@@ -570,3 +570,45 @@ x/z). Material blend (T2) still uses the checker texture this phase.
 **Verified**: `world:check` green — typecheck clean, 210 tests (+5), build ok.
 
 - [x] TERRAIN T1 — displaced procedural terrain; DT: on-device visual pass (relief readability, pick accuracy on slopes).
+
+### TERRAIN T2 — blended terrain material
+Replaced the checker on displaced zones with a natural elevation/slope colour
+blend per biome.
+- `client/src/terrainMaterials.ts`: 7 presets (meadow/woodland/highland/desert/
+  marsh/volcanic/coastal), colours mirroring `src/data/biomes3d.json`.
+  `createTerrainMaterial` injects an elevation (low→mid→high over [0,relief]) +
+  slope colour ramp into `MeshStandardMaterial` via `onBeforeCompile` — keeps PBR
+  lighting/shadows, no external texture assets, negligible mobile cost. Adapts
+  THREE.Terrain's `generateBlendedMaterial` (blend by elevation+slope), texture-
+  free. Injection anchor verified present in three r185 `meshphysical.glsl.js`.
+- `scene.createGround` gains a `materialOverride`; `createTerrain` uses the
+  blended material when `terrain.material` names a preset and the ground is
+  displaced, else the checker (flat/no-preset fallback).
+- Tests: preset ranges, coverage of every §6 material name, factory fallback.
+
+**Verified**: `world:check` green — 213 tests (+3), typecheck + build ok.
+
+- [x] TERRAIN T2 — blended biome material; DT: on-device visual pass per preset.
+
+### TERRAIN T3 — decorative scatter
+Seeded, mask-aware instanced flora across the terrain, reusing existing prop GLBs
+(bush/flowers/boulder/pine) — no new assets.
+- `client/src/scatter.ts`: `scatterPositions` (pure) — mulberry32-seeded
+  Fisher-Yates over walkable, unoccupied, slope-eligible tiles; density scales
+  the subset; jitter/rotation/scale per instance. `createScatterLayers` renders
+  one `InstancedMesh` per layer (one draw call each), snapped to `heightAt`,
+  first-mesh-of-GLB, skip-on-load-failure. Adapts THREE.Terrain `ScatterMeshes`.
+- `shared/{protocol,zone}.ts`: `ScatterLayer` type + `terrain.scatter[]`;
+  `validateZone` bounds model/density/scaleRange.
+- `main.ts`: builds the occupied set from statics + exits (blocked tiles skipped
+  in the placer; NPCs move so aren't masked) and spawns layers post-terrain.
+- `zones/pasture.json`: bush/flowers/boulder scatter layers.
+- Tests (`tests/scatter.test.ts`): determinism, seed variance, blocked-tile and
+  occupied-tile masks, density scaling, max-slope filter, in-tile jitter bounds.
+
+Guardrail held: scatter is decoration only — no collision, no pick target;
+interactive nodes stay server-authored `objects[]`.
+
+**Verified**: `world:check` green — 220 tests (+7), typecheck + build ok.
+
+- [x] TERRAIN T3 — decorative scatter; DT: on-device density/perf pass (draw calls, frame time on a mid phone).

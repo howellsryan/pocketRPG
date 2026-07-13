@@ -7,6 +7,7 @@ import { getLevelFromXP } from '../../../src/engine/experience.js'
 import { connect, onMessage, send } from './net'
 import { clampZoom, createCamera, createLights, createRenderer, createScene, tileToWorld, updateCamera } from './scene'
 import { createTerrain } from './terrain'
+import { createScatterLayers } from './scatter'
 import { applyEntityDiff, applyWeapon, createEntity, createHeroMesh, createMonsterMesh, updateEntity, type Entity } from './entities'
 import { createClickMarker, setupInput, showClickMarker, updateClickMarker } from './input'
 import { createStatics, type Statics } from './statics'
@@ -308,7 +309,16 @@ function enterWorld(session: WorldSession): void {
         // Build terrain first: registers the zone height sampler so every
         // tileToWorld call rides the surface, and returns the ground mesh that
         // picking raycasts. Flat when the zone has no `terrain` block.
-        const { mesh: ground } = createTerrain(scene, message.zone.collision, message.zone.w, message.zone.h, message.zone.palette, message.zone.terrain)
+        const { heightField, mesh: ground } = createTerrain(scene, message.zone.collision, message.zone.w, message.zone.h, message.zone.palette, message.zone.terrain)
+        // Decorative scatter: avoid static-object and exit tiles (blocked tiles
+        // are skipped by the placer). NPCs move, so their spawn tiles aren't masked.
+        if (message.zone.terrain?.scatter?.length) {
+          const occupied = new Set<string>([
+            ...message.statics.map((s) => `${s.x},${s.z}`),
+            ...(message.zone.exits ?? []).map((e) => `${e.x},${e.z}`),
+          ])
+          void createScatterLayers(scene, message.zone.terrain.scatter, message.zone.w, message.zone.h, message.zone.collision, occupied, (message.zone.terrain.procedural?.seed ?? 1) | 0, heightField.heightAt)
+        }
         exitLayer = createExitMarkers(scene, message.zone.exits ?? [])
         exitMarkers = message.zone.exits ?? []
         void createProps(scene, message.zone.props ?? [])
