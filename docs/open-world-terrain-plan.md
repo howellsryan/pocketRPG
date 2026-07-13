@@ -10,6 +10,20 @@
 - Terrain is authored **per zone as data** (a grayscale PNG + a small `terrain` block in the zone JSON), so it fits the existing data-authored zone model and the world editor.
 - Delivered in six additive phases (T0–T5); every phase ships and the game stays playable throughout. Phase T4 is the per-place authoring pass that gives all 14 Eldermoor destinations bespoke terrain.
 
+## 0.5) Implementation status (2026-07-13)
+
+Landed on `claude/three-terrain-review-9214m7`, each phase gated by `world:check`
+(see `docs/world-progress.md` "TERRAIN TRACK"):
+
+- **T0 — height seam**: ✅ `scene.tileToWorld` consults a module-level sampler; flat until registered.
+- **T1 — displaced mesh**: ✅ seeded procedural height (`terrain.ts`), displaced normal-lit ground. *(Deviation: procedural wired first — fully testable headless; authored heightmap PNGs land with the editor in T4.)*
+- **T2 — blended material**: ✅ 7-preset elevation/slope colour blend (`terrainMaterials.ts`), texture-free. *(Texture-based blend with CC0 art is a later upgrade.)*
+- **T3 — scatter**: ✅ seeded, mask-aware `InstancedMesh` flora (`scatter.ts`), reusing existing prop GLBs.
+- **T4 — author places**: 🟡 partial — the 3 existing world zones (pasture/forest/lumbright) have terrain blocks; the other 11 places author once their zones exist.
+- **T5 — editor/LOD/PNG import/water**: ⬜ not started (needs editor work + on-device perf).
+
+Everything below is the original plan; §0.5 is the live checklist.
+
 ## 1) Where we are now
 
 `world/client/src/scene.ts`:

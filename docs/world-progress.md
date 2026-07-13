@@ -612,3 +612,17 @@ interactive nodes stay server-authored `objects[]`.
 **Verified**: `world:check` green — 220 tests (+7), typecheck + build ok.
 
 - [x] TERRAIN T3 — decorative scatter; DT: on-device density/perf pass (draw calls, frame time on a mid phone).
+
+### TERRAIN T4 (partial) — terrain on existing zones
+Applied terrain blocks to the two remaining shipped zones (pasture already done
+in T1):
+- `zones/forest.json`: `woodland`, relief 1.0, pine/bush/mushroom scatter.
+- `zones/lumbright.json`: `meadow`, relief 0.6 (gentle starter town), flowers/bush.
+The other 11 §6 places (Varrick, Al-Karid, Draynar, Brimhollow, …) get terrain
+when their world zones are built. Full per-place heightmap authoring waits on the
+T5 editor brush + PNG import.
+
+**Verified**: `world:check` green — 220 tests, zone validation accepts all three
+terrain blocks, build ok.
+
+- [x] TERRAIN T4 (partial) — pasture/forest/lumbright terraformed; remaining places pending their zones.
