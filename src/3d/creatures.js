@@ -73,6 +73,7 @@ export function validateCreatureSpec(spec) {
       errors.push(`${tag}: color must index into palette`)
     }
     if (p.blend !== undefined && !(Number.isFinite(p.blend) && p.blend > 0)) errors.push(`${tag}: blend must be a positive number`)
+    if (p.glow !== undefined && typeof p.glow !== 'boolean') errors.push(`${tag}: glow must be a boolean`)
     if (!p.buried && !p.colorOnly) visible++
   }
   if (!visible) errors.push('every part is buried/colorOnly — at least one part must build proxy geometry')
@@ -80,6 +81,7 @@ export function validateCreatureSpec(spec) {
   if (spec.archetype !== undefined && !CREATURE_ARCHETYPES.has(spec.archetype)) {
     errors.push(`archetype must be one of ${[...CREATURE_ARCHETYPES].join('/')}`)
   }
+  if (spec.dissolve !== undefined && typeof spec.dissolve !== 'boolean') errors.push('dissolve must be a boolean')
 
   // Rig groups: every referenced part must exist, numeric tunables numeric.
   const checkPartList = (tag, list) => {

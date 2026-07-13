@@ -49,6 +49,7 @@ The target read is a **warm carved figurine on parchment** — bold ink outline,
 **Parts** (max **24**, including patches): rounded cone from `a` (radius `r1`) to `b` (radius `r2`); `color` indexes `palette` (3–5 entries: base coat, marking, dark hooves/claws, accent); `blend` is the smooth-min radius to neighbours (default 0.1 — bigger fuses softer). Flags:
 - `buried: true` — shapes the field but builds no proxy geometry (interior filler mass).
 - `colorOnly: true` — paint patch: tints the skin (weighted ×3) without bulging it. Place its axis on the surface; per-pixel color means patches smaller than the mesh tessellation still render.
+- `glow: true` — boss accent: the part's skin pulses bright on a shared clock (eyes, mane, runes; combines with `colorOnly` for painted glow). Spec-level `dissolve: true` = death VFX: after the collapse settles the body burns away (noise discard + ember edge) and un-dissolves on respawn. Both boss-tier — don't sprinkle on pasture animals.
 
 **Rig groups** (all optional; every referenced id must exist):
 - `breathe { parts, amp 0.03–0.05, rate 1.6–2.8 }` — radius swell.
@@ -68,7 +69,9 @@ Same primitives and rig, different registry: `hero` is one humanoid spec (propor
 - `add`: new parts; `rig: "head" | "armL" | "armR" | "handL" | "handR"` joins that group (`handR` = rides the sword swing), omitted = rides the root (pauldrons, belts).
 - `override`: heroPartId → `{ color/r1/r2/blend/a/b }` field patch (keeps rig membership — how platebody/platelegs recolor the body), or `{ remove: true }` (purged from every rig group — hair/eyes under a full helm).
 - `variantOf`: itemId of a base entry — inherits its add/override geometry with this entry's own palette (metal tiers ARE palette data: author the shape once at bronze, recolor per tier; keep the helm > body > legs value order within a tier). One level, no chains.
-- Validate via `npx vitest run tests/hero3d.test.ts`; render via `node scripts/render-proc.mjs --hero bronze_scimitar,bronze_full_helm --front` (and without `--front`). Review all four states BOTH bare and equipped.
+- Validate via `npx vitest run tests/hero3d.test.ts`; render via `node scripts/render-proc.mjs --hero bronze_scimitar,bronze_full_helm --front` (and without `--front`). Review all four states BOTH bare and equipped. Harness hero cameras sit on the hero's RIGHT (weapon side) because that's the side the arena shows players — a weapon that reads from the left profile can be invisible in game.
+- Held-weapon shape: angle the blade clearly away from the forearm line (near-vertical at rest) or the two fuse into one silhouette; hilt reads only with its own dark grip + accent guard/pommel parts.
+- Arena set dressing (biomes) is its own registry: `src/data/biomes3d.json` + `src/3d/biomes.js` (validator) — same author-render-review loop via `--biome <id>` and harness `?biome=<id>&cam=arena`; a `monsters` map overrides the place biome for boss lairs. Trim bands painted onto a big torso smear — value-separate whole pieces instead.
 - Hard-won: tiny `colorOnly` details on head-sized parts smear into haze — make dot-eyes/visor-slits small SOLID parts instead. All-metal outfits need per-piece value separation (helm lightest, legs darkest) and a dark rim/belt part to break the mass.
 
 ## Gotchas (hard-won in Phase 2 — do not "fix" these)

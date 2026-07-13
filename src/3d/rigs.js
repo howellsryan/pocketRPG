@@ -129,6 +129,7 @@ export function createProcCreature(THREE, spec) {
   let stateT = 0
   let dead = false
   let hopT = Math.random() * 2 // hopper idle timer
+  let idleT = 0 // time since combat motion ended (drives leg re-homing)
   let acc = 0
 
   const rootPos = new THREE.Vector3()
@@ -295,16 +296,21 @@ export function createProcCreature(THREE, spec) {
         leg.plant.y = leg.footBase.y + Math.sin(Math.PI * p) * 0.07 * S
         if (p >= 1) { leg.plant.copy(st.to); leg.step = null }
       } else if (!dead) {
-        // step when the root has dragged the hip too far from the plant
+        // step when the root has dragged the hip too far from the plant;
+        // once combat motion has been over for a beat, tighten the threshold
+        // so plants scrambled by hit/attack knockback re-home to the stance
         tmpV2.set(leg.footBase.x + rootPos.x, leg.footBase.y, leg.footBase.z + rootPos.z)
         const dx = tmpV2.x - leg.plant.x
         const dz = tmpV2.z - leg.plant.z
         const drift = Math.hypot(dx, dz)
-        if (drift > 0.09 * S && !stepping.has(1 - leg.group)) {
+        const threshold = (idleT > 0.5 ? 0.025 : 0.09) * S
+        if (drift > threshold && !stepping.has(1 - leg.group)) {
           leg.step = {
             from: leg.plant.clone(),
-            // overshoot slightly in the drift direction so gaits read alive
-            to: tmpV2.clone().add(tmpV.set(dx, 0, dz).multiplyScalar(0.25 / Math.max(drift, 1e-5))),
+            // overshoot proportionally (25% of drift) so gaits read alive; a
+            // fixed-length overshoot lands past the re-step threshold and the
+            // legs flail forever after the first combat root motion
+            to: tmpV2.clone().add(tmpV.set(dx, 0, dz).multiplyScalar(0.25)),
             t: 0,
             dur: 0.16,
           }
@@ -378,7 +384,10 @@ export function createProcCreature(THREE, spec) {
     t += dt
     if (state !== 'idle') {
       stateT += dt
+      idleT = 0
       if (stateT >= RIG_DURATIONS[state] && state !== 'death') { state = 'idle'; stateT = 0 }
+    } else {
+      idleT += dt
     }
 
     applyRootMotion()
@@ -473,6 +482,13 @@ export function createProcCreature(THREE, spec) {
     while (acc >= RIG_SUBSTEP && steps < 4) { updateRopes(RIG_SUBSTEP); acc -= RIG_SUBSTEP; steps++ }
     if (steps === 4) acc = 0
     commitRopes()
+
+    // boss VFX: glow parts pulse on the shared clock; dissolve ramps once
+    // the death collapse has settled (spec.dissolve), respawn resets it
+    const dissolve = spec.dissolve && state === 'death'
+      ? rigClamp((stateT - 0.9) / 0.8, 0, 0.96)
+      : 0
+    shell.setEffects(t, dissolve)
 
     shell.commit()
   }
