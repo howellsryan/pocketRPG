@@ -29,6 +29,8 @@ const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..')
 const args = process.argv.slice(2)
 const outFlag = args.indexOf('--out')
 const outDir = outFlag >= 0 ? args.splice(outFlag, 2)[1] : 'proc-renders'
+const biomeFlag = args.indexOf('--biome')
+const biomeId = biomeFlag >= 0 ? args.splice(biomeFlag, 2)[1] : ''
 const heroFlag = args.indexOf('--hero')
 const heroMode = heroFlag >= 0
 const heroEquip = heroMode ? (args[heroFlag + 1] && !args[heroFlag + 1].startsWith('-') ? args.splice(heroFlag, 2)[1] : (args.splice(heroFlag, 1), '')) : ''
@@ -51,6 +53,13 @@ if (heroMode) {
       console.error(`no hero3d.json equipment entry for "${e}" (have: ${Object.keys(heroData.equipment || {}).join(', ')})`)
       process.exit(1)
     }
+  }
+}
+if (biomeId) {
+  const biomeData = JSON.parse(fs.readFileSync(path.join(ROOT, 'src/data/biomes3d.json'), 'utf8'))
+  if (!biomeData.biomes[biomeId]) {
+    console.error(`no biomes3d.json entry for "${biomeId}" (have: ${Object.keys(biomeData.biomes).join(', ')})`)
+    process.exit(1)
   }
 }
 
@@ -89,8 +98,9 @@ const SHOTS = [
 fs.mkdirSync(path.join(ROOT, outDir), { recursive: true })
 const frontFlag = args.indexOf('--front')
 const front = frontFlag >= 0 ? (args.splice(frontFlag, 1), '&front') : ''
-const targets = ids.map((id) => ({ id, query: `monster=${id}` }))
-if (heroMode) targets.push({ id: heroEquip ? 'hero-equipped' : 'hero', query: `hero&equip=${encodeURIComponent(heroEquip)}${front}` })
+const biomeQ = biomeId ? `&biome=${encodeURIComponent(biomeId)}` : ''
+const targets = ids.map((id) => ({ id: biomeId ? `${id}-${biomeId}` : id, query: `monster=${id}${biomeQ}` }))
+if (heroMode) targets.push({ id: (heroEquip ? 'hero-equipped' : 'hero') + (biomeId ? `-${biomeId}` : ''), query: `hero&equip=${encodeURIComponent(heroEquip)}${front}${biomeQ}` })
 for (const { id, query } of targets) {
   const page = await browser.newPage({ viewport: { width: 720, height: 560 } })
   page.on('pageerror', (e) => { console.error(`[${id}] page error:`, e.message); process.exitCode = 1 })

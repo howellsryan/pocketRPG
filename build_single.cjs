@@ -36,6 +36,8 @@ const sourceFiles = [
   '3d/creatures.js',      // -> game chunk (creatures3d.json registry resolver)
   '3d/heroCompose.js',    // -> game chunk (pure hero + equipment spec composition)
   '3d/heroCreature.js',   // -> game chunk (hero3d.json resolver over heroCompose)
+  '3d/biomes.js',         // -> game chunk (arena set dressing: ground/sky/props from a biome spec)
+  '3d/biomeRegistry.js',  // -> game chunk (biomes3d.json resolver: placeId -> biome spec)
   'hooks/useActionTick.js',
   'hooks/useIsDesktop.js',
   'hooks/useEscapeKey.js',
@@ -253,6 +255,8 @@ const GAME_CHUNK_FILES = new Set([
   '3d/creatures.js',
   '3d/heroCompose.js',
   '3d/heroCreature.js',
+  '3d/biomes.js',
+  '3d/biomeRegistry.js',
   'screens/HomeScreen.js',
   'screens/StatsScreen.js',
   'screens/InventoryScreen.js',

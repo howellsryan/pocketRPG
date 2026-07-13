@@ -4,6 +4,7 @@ import { HitSplatLayer } from './HitSplat.jsx'
 import { loadThree, canRender3D, assetUrl } from '../utils/three3d.js'
 import { disposeObject, attachGearList, setupHideMask } from './Model3DViewer.jsx'
 import { createProcCreature } from '../3d/rigs.js'
+import { mountArenaBiome } from '../3d/biomes.js'
 
 // Phase-2 combat arena (docs/3d-gameplay-investigation.md): the rigged hero
 // (equipped weapon on the hand bone) faces the monster's model in a side-on
@@ -35,6 +36,7 @@ function CombatArena3D({
   monsterRotationDeg = [0, -90, 0],
   characterPath,
   heroProc = null,
+  biome = null,
   clips = {},
   weapon = null,
   gear = null,
@@ -63,6 +65,8 @@ function CombatArena3D({
   // The procedural hero swaps in place on equipment changes (see the effect
   // below), so the mount effect reads it through a ref instead of re-running.
   const heroProcRef = useRef(heroProc)
+  const biomeRef = useRef(biome)
+  biomeRef.current = biome
 
   useEffect(() => {
     if ((!characterPath && !heroProcRef.current) || (!monsterPath && !monsterProc) || !canRender3D()) { setFailed(true); return }
@@ -109,15 +113,21 @@ function CombatArena3D({
       host.appendChild(renderer.domElement)
 
       const scene = new THREE.Scene()
-      scene.add(new THREE.HemisphereLight(0xfff2e0, 0x2a1c10, 1.9))
-      const key = new THREE.DirectionalLight(0xfff2e0, 2.2); key.position.set(3, 5, 4); scene.add(key)
-      const rim = new THREE.DirectionalLight(0x88bbff, 0.9); rim.position.set(-4, 2, -3); scene.add(rim)
-      const ground = new THREE.Mesh(
-        new THREE.CircleGeometry(3.4, 40),
-        new THREE.MeshStandardMaterial({ color: 0x1c1410, roughness: 1, metalness: 0 }),
-      )
-      ground.rotation.x = -Math.PI / 2
-      scene.add(ground)
+      // Biome set dressing owns lights/ground/backdrop when the fight's place
+      // has one (Phase 4); the classic dark disc stays as the null fallback.
+      if (biomeRef.current) {
+        st.biome = mountArenaBiome(THREE, scene, biomeRef.current)
+      } else {
+        scene.add(new THREE.HemisphereLight(0xfff2e0, 0x2a1c10, 1.9))
+        const key = new THREE.DirectionalLight(0xfff2e0, 2.2); key.position.set(3, 5, 4); scene.add(key)
+        const rim = new THREE.DirectionalLight(0x88bbff, 0.9); rim.position.set(-4, 2, -3); scene.add(rim)
+        const ground = new THREE.Mesh(
+          new THREE.CircleGeometry(3.4, 40),
+          new THREE.MeshStandardMaterial({ color: 0x1c1410, roughness: 1, metalness: 0 }),
+        )
+        ground.rotation.x = -Math.PI / 2
+        scene.add(ground)
+      }
 
       const camera = new THREE.PerspectiveCamera(38, w / h, 0.01, 100)
       camera.position.set(0, 1.7, 4.8)
@@ -187,6 +197,10 @@ function CombatArena3D({
       const mBox = new THREE.Box3().setFromObject(st.monster)
       st.monsterBaseX = Math.max(0.6, st.monster.position.x + (0.35 - mBox.min.x))
       st.monster.position.x = st.monsterBaseX
+      if (st.biome) {
+        st.biome.addShadowBlob(-ARENA_GAP_X / 2, 0, 0.55)
+        st.biome.addShadowBlob(st.monsterBaseX, 0, Math.max(0.5, (mBox.max.x - mBox.min.x) * 0.42))
+      }
       st.heroMats = collectMats(st.hero)
       st.monsterMats = collectMats(st.monster)
       if (!st.heroCreature) {
@@ -351,7 +365,7 @@ function CombatArena3D({
       arenaTeardown(st, host)
       stateRef.current = null
     }
-  }, [characterPath, monsterPath, monsterProc && JSON.stringify(monsterProc), monsterHeight, monsterRotationDeg.join()])
+  }, [characterPath, monsterPath, monsterProc && JSON.stringify(monsterProc), monsterHeight, monsterRotationDeg.join(), biome && biome.id])
 
   // Weapon swaps mid-fight without a scene rebuild. Keyed on the whole spec
   // so registry transform edits re-apply live, not just path/bone swaps.
@@ -549,6 +563,7 @@ function arenaTeardown(st, host) {
   if (st.ro) st.ro.disconnect()
   if (st.monsterCreature) { st.monsterCreature.dispose(); st.monsterCreature = null }
   if (st.heroCreature) { st.heroCreature.dispose(); st.heroCreature = null }
+  if (st.biome) { st.biome.dispose(); st.biome = null }
   if (st.scene) st.scene.traverse((o) => { if (o.isMesh || o.isSkinnedMesh) disposeObject(o) })
   if (st.renderer) {
     const gl = st.renderer.getContext()
