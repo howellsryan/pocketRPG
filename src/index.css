@@ -1085,6 +1085,20 @@ html, body, #app {
 .cb-stat__k { font-size: 9.5px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; color: var(--fm-ink-faint); }
 .cb-stat__v { font-family: var(--font-mono); font-weight: 700; font-size: 17px; color: var(--fm-ember-deep); }
 
+/* Multi-form boss phase breakdown (attack/defence per form) */
+.cb-phases { display: flex; flex-direction: column; gap: 10px; }
+.cb-phase { padding: 11px 12px; border-radius: 12px; background: var(--fm-parch-hi); border: 1px solid var(--fm-rule); }
+.cb-phase__head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+.cb-phase__name { font-size: 13px; font-weight: 700; }
+.cb-phase__maxhit { font-family: var(--font-mono); font-size: 10px; color: var(--fm-ink-faint); }
+.cb-phase__bonuses { display: flex; justify-content: space-between; font-size: 10.5px; font-weight: 700; color: var(--fm-ink-soft); margin-bottom: 8px; }
+.cb-phase__v { font-family: var(--font-mono); color: var(--fm-ember-deep); }
+.cb-phase__weak { font-size: 10px; color: var(--fm-ink-faint); text-transform: capitalize; margin-top: 6px; }
+.cb-statgrid--tight { grid-template-columns: repeat(5, 1fr); gap: 5px; }
+.cb-statgrid--tight .cb-stat { padding: 6px 4px; gap: 1px; border-radius: 8px; }
+.cb-statgrid--tight .cb-stat__k { font-size: 8px; }
+.cb-statgrid--tight .cb-stat__v { font-size: 12px; }
+
 /* Slide-up sheet (mobile only; desktop keeps <Modal>) */
 .cb-overlay { position: absolute; inset: 0; z-index: 100; display: flex; align-items: flex-end; justify-content: center; background: rgba(4,3,2,0.74); backdrop-filter: blur(3px); animation: cbFade .2s ease; }
 @keyframes cbFade { from { opacity: 0; } }

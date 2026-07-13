@@ -254,6 +254,49 @@ class PvpCombatErrorBoundary extends Component {
   }
 }
 
+const DEFENCE_STYLES = ['stab', 'slash', 'crush', 'magic', 'ranged']
+
+// Per-phase attack/defence breakdown for multiForm bosses (e.g. Venomcoil
+// Matriarch) — the monster's own top-level stats/defenceBonus only mirror its
+// initial form, so a full picture needs every entry in `forms`.
+function MonsterPhaseStats({ monster }) {
+  if (!monster?.multiForm || !monster.forms) return null
+  return (
+    <div>
+      <h4 class="text-xs font-semibold text-[var(--color-gold-dim)] uppercase tracking-wider mb-2 opacity-70">Phases</h4>
+      <div class="space-y-2">
+        {Object.entries(monster.forms).map(([formKey, form]) => (
+          <div key={formKey} class="bg-[var(--color-void)] rounded-lg p-3 space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-[11px] font-semibold" style={{ color: getStyleArt(form.attackStyle).color }}>
+                {form.icon} {form.displayName || formKey}
+              </span>
+              <span class="text-[9px] text-[var(--color-parchment)] opacity-50 font-[var(--font-mono)]">Max Hit {form.maxHit ?? '—'}</span>
+            </div>
+            <div class="flex justify-between text-[10px] text-[var(--color-parchment)] opacity-80">
+              <span>Attack Bonus <span class="font-[var(--font-mono)]">{form.attackBonus ?? 0}</span></span>
+              <span>Strength Bonus <span class="font-[var(--font-mono)]">{form.strengthBonus ?? 0}</span></span>
+            </div>
+            <div class="grid grid-cols-5 gap-1 text-[9px] text-[var(--color-parchment)] pt-1 border-t border-[var(--fm-rule)]">
+              {DEFENCE_STYLES.map(style => (
+                <div key={style} class="text-center">
+                  <div class="opacity-50 capitalize">{style}</div>
+                  <div class={(form.defenceBonus?.[style] ?? 0) >= 0 ? 'text-green-400' : 'text-red-400'}>
+                    {(form.defenceBonus?.[style] ?? 0) >= 0 ? '+' : ''}{form.defenceBonus?.[style] ?? 0}
+                  </div>
+                </div>
+              ))}
+            </div>
+            {form.weakness && (
+              <div class="text-[9px] text-[var(--color-parchment)] opacity-50 capitalize">Weak to: {form.weakness}</div>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 export default function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onCombatStatusChange, onBack, onStopBack, dungeonPlaceId }) {
   const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, updateEquipment, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, idleCombatSetup, updateIdleCombatSetup, homeShortcuts, updateHomeShortcuts, setActiveTask, requestActivityStart, slayerTask, setSlayerTask, awardSlayerPoints, slayerTasksCompleted, setSlayerTasksCompleted, activeCombatSpell, updateActiveCombatSpell, bossKillCounts, updateBossKillCounts, raidKillCounts, updateRaidKillCounts, unlockedFeatures, completedQuests, isOneLife, isIronman, revertOneLifeMode, getSnapshot, loadGame, combatSkipHandlerRef, skipHourHandlerRef, chargeSkipRef, raidSkipHandlerRef, lockGame, unlockGame, resolveCombatCompletion, characterUnlocks, killCountsLoaded, recordGameEvent, worldLocation } = useGame()
   const pvp = usePvp()
@@ -2158,6 +2201,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                 ))}
               </div>
             </div>
+            <MonsterPhaseStats monster={selectedMonsterInfo} />
             {selectedMonsterInfo.drops && selectedMonsterInfo.drops.length > 0 && (
               <div>
                 <h4 class="text-xs font-semibold text-[var(--color-gold-dim)] uppercase tracking-wider mb-2 opacity-70">Drops</h4>
@@ -2201,8 +2245,8 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       {selectedRaidInfo && isDesktopCombatLayout && (
         <Modal onClose={() => setSelectedRaidInfo(null)}>
           <div class="flex items-center justify-between mb-3">
-            <h3 class="font-[var(--font-display)] text-base font-bold text-[var(--color-gold)]">
-              {selectedRaidInfo.icon} {selectedRaidInfo.name}
+            <h3 class="font-[var(--font-display)] text-base font-bold text-[var(--color-gold)] flex items-center gap-2">
+              <SkillEmblem iconKey={getRaidArt(selectedRaidInfo.id).icon} accent={getRaidArt(selectedRaidInfo.id).accent} size={28} glow={0} /> {selectedRaidInfo.name}
             </h3>
             <button
               onClick={() => setSelectedRaidInfo(null)}
@@ -2222,10 +2266,11 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                 {selectedRaidInfo.bosses.map((bossId, i) => {
                   const boss = monstersData[bossId]
                   if (!boss) return null
+                  const bossArt = getMonsterArt(boss)
                   return (
                     <div key={bossId} class="bg-[var(--color-void)] rounded-lg p-2 flex items-center justify-between">
                       <div class="flex items-center gap-2">
-                        <span class="text-base">{MONSTER_ICONS[bossId] || '👹'}</span>
+                        <SkillEmblem iconKey={bossArt.icon} accent={bossArt.accent} size={22} glow={0} />
                         <div>
                           <div class="text-[11px] font-semibold text-[var(--color-parchment)]">{i + 1}. {boss.name}</div>
                           <div class="text-[9px] text-[var(--color-parchment)] opacity-50">HP {boss.hitpoints} · CB {boss.combatLevel}</div>
@@ -3355,6 +3400,8 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                 </div>
               </div>
             </div>
+
+            <MonsterPhaseStats monster={selectedMonsterInfo} />
 
             {/* Drops */}
             {selectedMonsterInfo.drops && selectedMonsterInfo.drops.length > 0 && (

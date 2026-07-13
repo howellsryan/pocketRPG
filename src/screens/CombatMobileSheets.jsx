@@ -192,6 +192,39 @@ export function CombatMonsterInfoSheet({ monster, categoryKey, itemsData, onClos
             ))}
           </div>
 
+          {monster.multiForm && monster.forms && (
+            <>
+              <div class="cb-sheet__sec">Phases</div>
+              <div class="cb-phases">
+                {Object.entries(monster.forms).map(([formKey, form]) => (
+                  <div key={formKey} class="cb-phase">
+                    <div class="cb-phase__head">
+                      <span class="cb-phase__name" style={{ color: getStyleArt(form.attackStyle).color }}>
+                        {form.icon} {form.displayName || formKey}
+                      </span>
+                      <span class="cb-phase__maxhit">Max Hit {form.maxHit ?? '—'}</span>
+                    </div>
+                    <div class="cb-phase__bonuses">
+                      <span>ATK <span class="cb-phase__v">{form.attackBonus ?? 0}</span></span>
+                      <span>STR <span class="cb-phase__v">{form.strengthBonus ?? 0}</span></span>
+                    </div>
+                    <div class="cb-statgrid cb-statgrid--tight">
+                      {['stab', 'slash', 'crush', 'magic', 'ranged'].map(s => (
+                        <div key={s} class="cb-stat">
+                          <span class="cb-stat__k">{s}</span>
+                          <span class="cb-stat__v" style={{ color: (form.defenceBonus?.[s] ?? 0) >= 0 ? '#2e7d32' : '#a93226' }}>
+                            {(form.defenceBonus?.[s] ?? 0) >= 0 ? '+' : ''}{form.defenceBonus?.[s] ?? 0}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                    {form.weakness && <div class="cb-phase__weak">Weak to: {form.weakness}</div>}
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+
           {regularDrops.length > 0 && (
             <>
               <div class="cb-sheet__sec">Drop Table</div>
