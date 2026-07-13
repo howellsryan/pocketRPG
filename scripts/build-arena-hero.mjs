@@ -47,6 +47,11 @@ const OUT = path.join(ROOT, 'public', '3d-samples', 'hero.glb')
 
 const CLIPS = [
   { file: UAL1, clip: 'Idle_Loop', as: 'idle_loop' },
+  // Weapon-drawn ready stance (blade held forward) — used instead of
+  // idle_loop's relaxed fists-at-side pose whenever the hero has a weapon
+  // equipped, so an attached weapon reads as "in hand, ready" rather than
+  // resting oddly against a relaxed arm.
+  { file: UAL1, clip: 'Sword_Idle', as: 'combat_idle' },
   { file: UAL1, clip: 'Sword_Attack', as: 'sword_attack' },
   { file: UAL2, clip: 'Sword_Regular_Combo', as: 'sword_regular_combo' },
   { file: UAL1, clip: 'Hit_Chest', as: 'hit_chest' },

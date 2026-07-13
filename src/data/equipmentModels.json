@@ -10,7 +10,7 @@
         0
       ],
       "rotationDeg": [
-        165,
+        110,
         0,
         -15
       ],
@@ -36,6 +36,7 @@
   "character": {
     "model": "hero.glb",
     "idleClip": "idle_loop",
+    "combatIdleClip": "combat_idle",
     "attackClip": "sword_attack",
     "specialClip": "sword_regular_combo",
     "hitClip": "hit_chest",

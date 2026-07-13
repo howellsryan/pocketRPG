@@ -152,25 +152,31 @@ export function attachGearList(st, gear, fallbackAnchor) {
       if (st.disposed || token !== st.gearToken) return
       loader.load(url, (gltf) => {
         if (st.disposed || token !== st.gearToken) return
-        let pieceSkinned = null
-        gltf.scene.traverse((o) => { if (o.isSkinnedMesh && !pieceSkinned) pieceSkinned = o })
-        if (pieceSkinned && st.heroSkinned) {
-          // body/legs slot: the outfit build (build-quaternius-outfits.mjs)
-          // gave this mesh a skin mirroring hero's own skeleton (same joint
-          // order), so it needs no position/rotation/scale — just rebind onto
-          // the hero's LIVE skeleton (discarding the file's own loaded one)
-          // and add it as a sibling of the hero's own mesh so it inherits the
-          // same ancestor scale/position. Must rebind with
-          // heroSkinned.bindMatrix (its ORIGINAL, frozen-at-load matrixWorld),
-          // not heroSkinned.matrixWorld (which reflects whatever runtime
-          // scale/position got applied to the hero's ancestors since load) —
-          // those two diverge once the viewer normalises the hero to a fixed
-          // height, and binding against the wrong one tears the mesh apart on
-          // any pose where different bones rotate by different amounts.
-          pieceSkinned.bind(st.heroSkinned.skeleton, st.heroSkinned.bindMatrix)
-          applyEquipTint(THREE, pieceSkinned, piece.tint, true)
-          st.heroSkinned.parent.add(pieceSkinned)
-          st.gear.push({ obj: pieceSkinned, anchor: st.heroSkinned.parent })
+        // Quaternius outfit exports keep each sub-part (body/belt/belt/arms,
+        // legs/boots, ...) as its own skinned mesh node rather than one merged
+        // mesh, so a piece can carry several — collect all of them, not just
+        // the first, or whole sub-parts (boots, pauldrons) silently vanish.
+        const pieceSkinnedList = []
+        gltf.scene.traverse((o) => { if (o.isSkinnedMesh) pieceSkinnedList.push(o) })
+        if (pieceSkinnedList.length && st.heroSkinned) {
+          for (const pieceSkinned of pieceSkinnedList) {
+            // body/legs slot: the outfit build (build-quaternius-outfits.mjs)
+            // gave this mesh a skin mirroring hero's own skeleton (same joint
+            // order), so it needs no position/rotation/scale — just rebind onto
+            // the hero's LIVE skeleton (discarding the file's own loaded one)
+            // and add it as a sibling of the hero's own mesh so it inherits the
+            // same ancestor scale/position. Must rebind with
+            // heroSkinned.bindMatrix (its ORIGINAL, frozen-at-load matrixWorld),
+            // not heroSkinned.matrixWorld (which reflects whatever runtime
+            // scale/position got applied to the hero's ancestors since load) —
+            // those two diverge once the viewer normalises the hero to a fixed
+            // height, and binding against the wrong one tears the mesh apart on
+            // any pose where different bones rotate by different amounts.
+            pieceSkinned.bind(st.heroSkinned.skeleton, st.heroSkinned.bindMatrix)
+            applyEquipTint(THREE, pieceSkinned, piece.tint, true)
+            st.heroSkinned.parent.add(pieceSkinned)
+            st.gear.push({ obj: pieceSkinned, anchor: st.heroSkinned.parent })
+          }
           return
         }
         const obj = gltf.scene

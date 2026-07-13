@@ -175,9 +175,9 @@ describe('equipModels resolver', () => {
     }
   })
 
-  it('every named character clip (idle/attack/special/hit/death) exists in the hero GLB', async () => {
-    const c = registry.character as { idleClip?: string; attackClip?: string; specialClip?: string; hitClip?: string; deathClip?: string }
-    const clips = [c.idleClip, c.attackClip, c.specialClip, c.hitClip, c.deathClip].filter(Boolean) as string[]
+  it('every named character clip (idle/combatIdle/attack/special/hit/death) exists in the hero GLB', async () => {
+    const c = registry.character as { idleClip?: string; combatIdleClip?: string; attackClip?: string; specialClip?: string; hitClip?: string; deathClip?: string }
+    const clips = [c.idleClip, c.combatIdleClip, c.attackClip, c.specialClip, c.hitClip, c.deathClip].filter(Boolean) as string[]
     if (clips.length === 0) return
     const fs = await import('node:fs')
     const path = await import('node:path')
