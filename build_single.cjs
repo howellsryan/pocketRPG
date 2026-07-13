@@ -32,6 +32,7 @@ const sourceFiles = [
   'utils/equipModels.js', // -> game chunk (equip screen 3D model registry)
   'utils/three3d.js',     // -> game chunk (lazy three.js loader; equip/combat 3D)
   '3d/blendShell.js',     // -> game chunk (procedural blend-shell creature runtime)
+  '3d/rigs.js',           // -> game chunk (procedural animation rigs + combat state machine)
   '3d/creatures.js',      // -> game chunk (creatures3d.json registry resolver)
   'hooks/useActionTick.js',
   'hooks/useIsDesktop.js',
@@ -246,6 +247,7 @@ const GAME_CHUNK_FILES = new Set([
   'utils/equipModels.js',
   'utils/three3d.js',
   '3d/blendShell.js',
+  '3d/rigs.js',
   '3d/creatures.js',
   'screens/HomeScreen.js',
   'screens/StatsScreen.js',
@@ -362,6 +364,48 @@ for (const f of sourceFiles) {
     else coreJS += out;
   } catch(e) {
     console.error(`Error: ${f}: ${e.message}`);
+    process.exit(1);
+  }
+}
+
+// ── Guard: imports of unregistered modules ──
+// processFile strips every `import` line and relies on the imported bindings
+// existing as top-level declarations elsewhere in the concatenated bundle. If
+// a module imports a src file that is NOT in sourceFiles, its bindings are
+// simply undefined at runtime — and when the reference lives inside a
+// function (a lazily-mounted component), check:single's eval smoke-run never
+// executes it, so the break only surfaces in production (e.g. 3d/rigs.js
+// missing → the combat arena silently fails over for procedural monsters).
+// JSON imports are exempt: they resolve to data globals injected below, and
+// a missing injection dies at eval time where check:single catches it.
+{
+  const stripExt = (p) => p.replace(/\.(jsx?|tsx?)$/, '');
+  const registered = new Set(sourceFiles.map(stripExt));
+  // deliberately unregistered: replaced by globals injected into the core
+  // script below (landingImages/homeLogo), like the JSON data files
+  registered.add('screens/landingImages');
+  registered.add('utils/homeLogo');
+  const offenders = [];
+  for (const f of sourceFiles) {
+    const src = readDist(f);
+    const re = /^import\s+(?:[\w{},*\s]+?\s+from\s+)?['"]([^'"]+)['"]/gm;
+    let m;
+    while ((m = re.exec(src))) {
+      const spec = m[1];
+      if (!spec.startsWith('.') || spec.endsWith('.json') || spec.endsWith('.css')) continue;
+      const resolved = stripExt(path.posix.join(path.posix.dirname(f), spec));
+      if (!registered.has(resolved)) offenders.push(`${f} imports ${spec} → '${resolved}.js' is not in sourceFiles`);
+    }
+  }
+  if (offenders.length) {
+    console.error(
+      'build_single: module(s) imported but not registered in sourceFiles.\n' +
+      'The single-file bundle strips imports and depends on concatenation, so these\n' +
+      "bindings would be undefined at runtime (and check:single can't see references\n" +
+      'made inside functions). Add the module to sourceFiles (and GAME_CHUNK_FILES if\n' +
+      'only in-game code uses it):\n  ' +
+      [...new Set(offenders)].join('\n  ')
+    );
     process.exit(1);
   }
 }
