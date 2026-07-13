@@ -14,7 +14,7 @@ import { api, getToken, getCharacterId } from '../cloud/api.js'
 import { pullSave, applyCloudSave, pushNow } from '../cloud/sync.js'
 
 export default function InventoryScreen() {
-  const { inventory, equipment, stats, bank, updateInventory, updateEquipment, updateBank, updateHP, currentHP, getMaxHP, addToast, itemsData, completedQuests, isIronman, loadGame, getSnapshot } = useGame()
+  const { inventory, equipment, stats, bank, updateInventory, updateEquipment, updateBank, updateHP, currentHP, getMaxHP, addToast, itemsData, completedQuests, isIronman, loadGame, getSnapshot, autoBankExcludedItems, toggleAutoBankExclusion } = useGame()
   const [selected, setSelected] = useState(null) // { slotIndex, slot, item }
   const [showSpecInfo, setShowSpecInfo] = useState(false)
   const [bankQuantityMode, setBankQuantityMode] = useState(null) // 'stackable' | 'nonStackable' | null
@@ -561,6 +561,16 @@ export default function InventoryScreen() {
               {selected.item.scaleCharged && (
                 <p class="mt-1">⚡ Charges: <span class="text-[var(--color-emerald)] font-bold">{selected.slot.charges || 0}</span></p>
               )}
+            {/* Auto-bank exclusion toggle — excluded items stay in the inventory when a full inventory auto-banks during idle/offline play */}
+            <button
+              onClick={() => toggleAutoBankExclusion(selected.item.id)}
+              class={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold border ${autoBankExcludedItems.has(selected.item.id)
+                ? 'bg-[var(--color-gold-dim)] text-white border-[var(--color-gold-dim)]'
+                : 'bg-[var(--fm-parch-lo)] text-[var(--color-parchment)] opacity-70 border-[var(--fm-rule)]'}`}
+            >
+              <span>{autoBankExcludedItems.has(selected.item.id) ? '🔒 Excluded from auto-bank' : '🔓 Keep out of auto-bank'}</span>
+              <span class="text-[10px] opacity-70">{autoBankExcludedItems.has(selected.item.id) ? 'ON' : 'OFF'}</span>
+            </button>
             {/* Special attack info — shown for weapons with a spec */}
             {selected.item.specialAttack && (
               <div class="bg-[var(--fm-parch-lo)] rounded-lg border border-yellow-900 overflow-hidden">

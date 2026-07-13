@@ -65,6 +65,7 @@ export function GameProvider({ children }) {
   const [worldLocation, setWorldLocationState] = useState(WORLD_START_PLACE) // map-driven overhaul (phase 1)
   const [idleCombatSetup, setIdleCombatSetupState] = useState(() => defaultIdleCombatSetup())
   const [autoBankLoot, setAutoBankLootState] = useState(true)
+  const [autoBankExcludedItems, setAutoBankExcludedItemsState] = useState(new Set())
   const [showInfoToasts, setShowInfoToastsState] = useState(false)
   const [activeTask, setActiveTaskState] = useState(null)
   const activeTaskInternalRef = useRef(null) // tracks latest active task for flush in setActiveTask
@@ -155,16 +156,17 @@ export function GameProvider({ children }) {
 
   // Load all state from IndexedDB — runs idle simulation inline, returns idleResult
   const loadGame = useCallback(async () => {
-    let [p, s, inv, eq, b, shortcuts, stance, savedHP, autoBankSetting, savedBankConfig, savedEquipmentPresets, savedUnlocks, savedSlayerTask, savedSlayerPoints, savedSlayerTasksCompleted, savedDungeoneeringTokens, savedBossKillCounts, savedRaidKillCounts, savedFarming, savedCompletedQuests, savedQuestQueue, savedActiveCombatSpell, savedUnlockedMinigameItems, savedIdleCombatSetup, savedSlayerPerks, savedCharacterUnlocks, savedShowInfoToasts, savedWorldLocation] = await Promise.all([
+    let [p, s, inv, eq, b, shortcuts, stance, savedHP, autoBankSetting, savedBankConfig, savedEquipmentPresets, savedUnlocks, savedSlayerTask, savedSlayerPoints, savedSlayerTasksCompleted, savedDungeoneeringTokens, savedBossKillCounts, savedRaidKillCounts, savedFarming, savedCompletedQuests, savedQuestQueue, savedActiveCombatSpell, savedUnlockedMinigameItems, savedIdleCombatSetup, savedSlayerPerks, savedCharacterUnlocks, savedShowInfoToasts, savedWorldLocation, savedAutoBankExcludedItems] = await Promise.all([
       getPlayer(), getAllStats(), getInventory(), getEquipment(), getBank(),
       getSetting('homeShortcuts'), getSetting('combatStance'), getSetting('currentHP'),
       getSetting('autoBankLoot'), getSetting('bankConfig'), getSetting('equipmentPresets'), getSetting('unlockedFeatures'),
       getSetting('slayerTask'), getSetting('slayerPoints'), getSetting('slayerTasksCompleted'), getSetting('dungeoneeringTokens'), getSetting('bossKillCounts'), getSetting('raidKillCounts'), getSetting('farming'),
       getSetting('completedQuests'), getSetting('questQueue'), getSetting('activeCombatSpell'), getSetting('unlockedMinigameItems'),
       getSetting('idleCombatSetup'), getSetting('slayerPerks'), getSetting('characterUnlocks'),
-      getSetting('showInfoToasts'), getSetting('worldLocation')
+      getSetting('showInfoToasts'), getSetting('worldLocation'), getSetting('autoBankExcludedItems')
     ])
     const normalisedIdleCombatSetup = normaliseIdleCombatSetup(savedIdleCombatSetup)
+    const autoBankExcludedItemIdsSet = new Set(savedAutoBankExcludedItems || [])
     // Rewrite legacy item ids (e.g. void_knight_* → void_king_*) before the
     // idle simulator or set-bonus checks read the equipment/inventory/bank.
     const migration = migrateLegacyItemIds({ equipment: eq, inventory: inv, bank: b })
@@ -248,9 +250,9 @@ export function GameProvider({ children }) {
         let sim = null
         try {
           if (savedTask.type === 'skill') {
-            sim = simulateIdleSkilling(savedTask, elapsedMs, b, eq, s, itemsData, inv, { isIronman: getIronmanMode() })
+            sim = simulateIdleSkilling(savedTask, elapsedMs, b, eq, s, itemsData, inv, { isIronman: getIronmanMode(), autoBankExcludedItemIds: autoBankExcludedItemIdsSet })
           } else if (savedTask.type === 'gather' || savedTask.type === 'clue') {
-            sim = simulateIdleGather(savedTask, elapsedMs, inv, s, itemsData, b)
+            sim = simulateIdleGather(savedTask, elapsedMs, inv, s, itemsData, b, { autoBankExcludedItemIds: autoBankExcludedItemIdsSet })
           } else if (savedTask.type === 'combat') {
             const idleHpForLoad = savedHP != null ? savedHP : (s.hitpoints ? getLevelFromXP(s.hitpoints.xp) : 10)
             sim = simulateIdleCombat(savedTask, elapsedMs, s, eq, inv, itemsData, savedSlayerTask, b, {
@@ -260,6 +262,7 @@ export function GameProvider({ children }) {
               idlePrayers: normalisedIdleCombatSetup.prayers,
               prayersData,
               doubleSlayerXp: !!(savedCharacterUnlocks?.doubleSlayerXp),
+              autoBankExcludedItemIds: autoBankExcludedItemIdsSet,
             })
           } else if (savedTask.type === 'agility') {
             sim = simulateIdleAgility(savedTask, elapsedMs)
@@ -572,6 +575,7 @@ export function GameProvider({ children }) {
     }
     setIdleCombatSetupState(normalisedIdleCombatSetup)
     setAutoBankLootState(autoBankSetting !== false) // default true
+    setAutoBankExcludedItemsState(autoBankExcludedItemIdsSet)
     setShowInfoToastsState(savedShowInfoToasts === true) // default false
     const loadedWorldLocation = normaliseLocation(savedWorldLocation) // un-migrated saves → start place
     worldLocationRef.current = loadedWorldLocation
@@ -809,6 +813,16 @@ export function GameProvider({ children }) {
   const updateAutoBankLoot = useCallback((enabled) => {
     setAutoBankLootState(enabled)
     saveSetting('autoBankLoot', enabled)
+  }, [])
+
+  const toggleAutoBankExclusion = useCallback((itemId) => {
+    setAutoBankExcludedItemsState(prev => {
+      const next = new Set(prev)
+      if (next.has(itemId)) next.delete(itemId)
+      else next.add(itemId)
+      saveSetting('autoBankExcludedItems', [...next])
+      return next
+    })
   }, [])
 
   const updateShowInfoToasts = useCallback((enabled) => {
@@ -1127,6 +1141,7 @@ export function GameProvider({ children }) {
     settings: {
       currentHP,
       autoBankLoot,
+      autoBankExcludedItems: [...autoBankExcludedItems],
       bankConfig,
       showInfoToasts,
       equipmentPresets,
@@ -1363,7 +1378,7 @@ export function GameProvider({ children }) {
     // task and immediately need to branch on it in the same tick (e.g. a
     // travel confirm that then navigates) should use this, not `activeTask`.
     getActiveTask: () => activeTaskInternalRef.current,
-    activeTask, autoBankLoot, bankConfig, showInfoToasts, updateShowInfoToasts,
+    activeTask, autoBankLoot, autoBankExcludedItems, toggleAutoBankExclusion, bankConfig, showInfoToasts, updateShowInfoToasts,
     equipmentPresets, updateEquipmentPresets,
     unlockedFeatures, unlockFeature,
     slayerTask, setSlayerTask, slayerPoints, updateSlayerPoints, awardSlayerPoints,

@@ -42,13 +42,20 @@ function hasGatherAutoBankUnlock(stats) {
   return getLevelFromXP(stats?.construction?.xp || 0) >= GATHER_AUTOBANK_CONSTRUCTION_LEVEL
 }
 
-/** Move every inventory slot into the banked totals and clear the inventory. */
-function bankEverything(inv, itemsBanked) {
+/** Move every inventory slot into the banked totals and clear the inventory, skipping excludedItemIds. */
+function bankEverything(inv, itemsBanked, excludedItemIds) {
   for (let i = 0; i < inv.length; i++) {
     if (!inv[i]) continue
+    if (excludedItemIds && excludedItemIds.has(inv[i].itemId)) continue
     itemsBanked[inv[i].itemId] = (itemsBanked[inv[i].itemId] || 0) + inv[i].quantity
     inv[i] = null
   }
+}
+
+/** True if a bank trip would actually free a slot (i.e. not every occupied slot is excluded). */
+function hasBankableItems(inv, excludedItemIds) {
+  if (!excludedItemIds || excludedItemIds.size === 0) return inv.some(Boolean)
+  return inv.some(slot => slot && !excludedItemIds.has(slot.itemId))
 }
 
 /**
@@ -112,6 +119,7 @@ export function formatIdleTime(ms) {
 export function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, stats = {}, itemsData = {}, inventory = [], options = {}) {
   if (!task || !task.action) return null
   const isIronman = !!options.isIronman
+  const excludedItemIds = options.autoBankExcludedItemIds || null
 
   const totalTicks = Math.floor(elapsedMs / TICK_MS)
 
@@ -379,10 +387,10 @@ export function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, st
       }
 
       if (!canFit(newInv, drops, itemsData)) {
-        if (bankWhenFull) {
+        if (bankWhenFull && hasBankableItems(newInv, excludedItemIds)) {
           if (remainingTicks < bankDelayTicks + actionTicks) break
           remainingTicks -= bankDelayTicks
-          bankEverything(newInv, itemsBanked)
+          bankEverything(newInv, itemsBanked, excludedItemIds)
         } else {
           inventoryFull = true
           break
@@ -461,14 +469,10 @@ export function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, st
         }
 
         // Auto-bank trip if inventory full
-        if (newInv.indexOf(null) === -1) {
+        if (newInv.indexOf(null) === -1 && hasBankableItems(newInv, excludedItemIds)) {
           if (remainingTicks < bankDelayTicks) break
           remainingTicks -= bankDelayTicks
-          for (let i = 0; i < newInv.length; i++) {
-            if (!newInv[i]) continue
-            itemsBanked[newInv[i].itemId] = (itemsBanked[newInv[i].itemId] || 0) + newInv[i].quantity
-            newInv[i] = null
-          }
+          bankEverything(newInv, itemsBanked, excludedItemIds)
         }
       }
 
@@ -576,14 +580,10 @@ export function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, st
         }
 
         // Auto-bank trip if inventory full — bank EVERYTHING (like a real trip)
-        if (newInv.indexOf(null) === -1) {
+        if (newInv.indexOf(null) === -1 && hasBankableItems(newInv, excludedItemIds)) {
           if (remainingTicks < bankDelayTicks) break
           remainingTicks -= bankDelayTicks
-          for (let i = 0; i < newInv.length; i++) {
-            if (!newInv[i]) continue
-            itemsBanked[newInv[i].itemId] = (itemsBanked[newInv[i].itemId] || 0) + newInv[i].quantity
-            newInv[i] = null
-          }
+          bankEverything(newInv, itemsBanked, excludedItemIds)
         }
       }
 
@@ -683,6 +683,7 @@ export function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, st
  */
 export function simulateIdleGather(task, elapsedMs, inventory = [], stats = {}, itemsData = {}, bank = {}, options = {}) {
   if (!task || !task.gatherTask) return null
+  const excludedItemIds = options.autoBankExcludedItemIds || null
   if (task.gatherTask.requiresItem && !task.gatherTask.isClue) {
     const requiredItem = task.gatherTask.requiresItem
     const invCount = inventory.reduce((sum, slot) => sum + (slot?.itemId === requiredItem ? (slot.quantity || 1) : 0), 0)
@@ -796,11 +797,11 @@ export function simulateIdleGather(task, elapsedMs, inventory = [], stats = {}, 
 
   while (remainingTicks >= actionTicks && actionsCompleted < actions) {
     if (!canFit(newInv, { [product]: qtyPerAction }, itemsData)) {
-      if (bankWhenFull) {
+      if (bankWhenFull && hasBankableItems(newInv, excludedItemIds)) {
         // Bank trip: need time for the trip plus the next action.
         if (remainingTicks < bankDelayTicks + actionTicks) break
         remainingTicks -= bankDelayTicks
-        bankEverything(newInv, itemsBanked)
+        bankEverything(newInv, itemsBanked, excludedItemIds)
       } else {
         inventoryFull = true
         break
@@ -1013,6 +1014,7 @@ function idleRollDrops(monster) {
  */
 export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory, itemsData, slayerTask = null, bank = {}, options = {}) {
   if (!task || !task.monster) return null
+  const excludedItemIds = options.autoBankExcludedItemIds || null
 
   const monster = task.monster
   // Block boss and raid fights; allow normal monsters to idle
@@ -1431,14 +1433,10 @@ export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory,
 
     // Auto-bank trip: if inventory is full and banking is enabled, deduct travel
     // time and clear inventory into lootBanked. Stop if no time remains.
-    if (bankingEnabled && newInv.indexOf(null) === -1) {
+    if (bankingEnabled && newInv.indexOf(null) === -1 && hasBankableItems(newInv, excludedItemIds)) {
       if (remainingTicks < bankDelayTicks) break
       remainingTicks -= bankDelayTicks
-      for (let i = 0; i < newInv.length; i++) {
-        if (!newInv[i]) continue
-        lootBanked[newInv[i].itemId] = (lootBanked[newInv[i].itemId] || 0) + newInv[i].quantity
-        newInv[i] = null
-      }
+      bankEverything(newInv, lootBanked, excludedItemIds)
     }
   }
 
