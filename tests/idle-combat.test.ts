@@ -50,6 +50,45 @@ describe('simulateIdleCombat', () => {
     expect(sim!.xpGained.strength).toBeUndefined()
   })
 
+  it('fights with melee (not 0 damage) when a magic weapon has no spell selected', () => {
+    const task: any = {
+      stance: 'accurate',
+      monster: {
+        id: 'test_monster',
+        name: 'Test Monster',
+        hitpoints: 20,
+        stats: { defence: 1, magic: 1 },
+        defenceBonus: { crush: 0, magic: 0 },
+        drops: []
+      }
+      // No `spell` on the task — the weapon is a staff with nothing selected.
+    }
+
+    const stats: any = {
+      attack: { xp: 13034431 }, // 99 attack
+      strength: { xp: 13034431 }, // 99 strength
+      defence: { xp: 0 },
+      ranged: { xp: 0 },
+      magic: { xp: 0 },
+    }
+
+    const equipment: any = { weapon: { itemId: 'staff' } }
+    const itemsData: any = {
+      staff: {
+        id: 'staff', slot: 'weapon', attackStyle: 'magic', attackSpeed: 5,
+        attackBonus: { stab: 2, slash: -1, crush: 50, magic: 10, ranged: 0 },
+        defenceBonus: { stab: 2, slash: 3, crush: 1, magic: 10, ranged: 0 },
+        otherBonus: { meleeStrength: 50, rangedStrength: 0, magicDamage: 0 },
+      }
+    }
+
+    const sim = simulateIdleCombat(task, 60_000, stats, equipment, Array(28).fill(null), itemsData)
+    expect(sim).toBeTruthy()
+    expect(sim!.monstersKilled).toBeGreaterThan(0)
+    expect(sim!.xpGained.attack).toBeGreaterThan(0)
+    expect(sim!.xpGained.magic).toBeUndefined()
+  })
+
   it('returns completed slayerTaskUpdate with capped task kills and points on idle overkill', () => {
     const task: any = {
       stance: 'accurate',

@@ -4,7 +4,7 @@ import {
   getMeleeXPSkill, effectiveRanged, rangedMaxHit, getRangedStyleBonus,
   effectiveMagic, monsterMagicDefenceRoll, magicMaxHit
 } from './formulas.js'
-import { getEquipmentBonuses, getAttackSpeed, getAttackStyle, getRangedAmmoRequirementFailure, getEffectiveWornMagicDamage } from './equipment.js'
+import { getEquipmentBonuses, getAttackSpeed, getMeleeAttackStyle, getRangedAmmoRequirementFailure, getEffectiveWornMagicDamage } from './equipment.js'
 import { getLevelFromXP } from './experience.js'
 import { hasRequiredRunes, getRunesToConsume } from './runes.js'
 import { MELEE_XP_PER_DAMAGE, RANGED_XP_PER_DAMAGE, MAGIC_XP_PER_DAMAGE, HP_XP_PER_DAMAGE, EAT_TICK_COST } from '../utils/constants.js'
@@ -457,7 +457,7 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
 
   const bonuses = getEquipmentBonuses(equipment, itemsData)
   const weaponSpeed = getAttackSpeed(equipment, itemsData)
-  const weaponStyle = getAttackStyle(equipment, itemsData)
+  const weaponStyle = getMeleeAttackStyle(equipment, itemsData)
   const monster = state.monster
 
   // Look up equipped weapon + scale-charge info for this tick
@@ -1185,7 +1185,7 @@ export function applySpecialAttack(combatState, playerStats, equipment, itemsDat
   }
   const events = []
   const bonuses = getEquipmentBonuses(equipment, itemsData)
-  const weaponStyle = getAttackStyle(equipment, itemsData)
+  const weaponStyle = getMeleeAttackStyle(equipment, itemsData)
   const monster = state.monster
 
   switch (spec.type) {

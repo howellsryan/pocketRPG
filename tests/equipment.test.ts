@@ -8,6 +8,7 @@ import {
   getEquipmentBonuses,
   getAttackSpeed,
   getAttackStyle,
+  getMeleeAttackStyle,
   getCombatType,
   resolveMagicSpell,
   placeUnequippedItems
@@ -415,6 +416,25 @@ describe('Equipment System', () => {
     it('should default to crush for unknown weapons', () => {
       equipment.weapon = { itemId: 'unknown' }
       const style = getAttackStyle(equipment, mockItemsData)
+      expect(style).toBe('crush')
+    })
+  })
+
+  describe('getMeleeAttackStyle (a magic weapon fighting in melee swings as crush)', () => {
+    it('falls back to crush for a magic weapon', () => {
+      equipItem(equipment, mockItemsData['staff'], mockItemsData)
+      const style = getMeleeAttackStyle(equipment, mockItemsData)
+      expect(style).toBe('crush')
+    })
+
+    it('passes through the raw style for a non-magic weapon', () => {
+      equipItem(equipment, mockItemsData['sword'], mockItemsData)
+      const style = getMeleeAttackStyle(equipment, mockItemsData)
+      expect(style).toBe('slash')
+    })
+
+    it('defaults to crush unarmed', () => {
+      const style = getMeleeAttackStyle(equipment, mockItemsData)
       expect(style).toBe('crush')
     })
   })
