@@ -2324,9 +2324,10 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       monsterHeight={(arenaModel || arenaProc).height}
       monsterRotationDeg={(arenaModel || arenaProc).rotationDeg}
       characterPath={getCharacterAssetPath()}
+      characterRotationDeg={heroSpec.rotationDeg}
       heroProc={arenaHeroProc}
       biome={arenaBiome}
-      clips={{ idle: heroSpec.idleClip, attack: heroSpec.attackClip, special: heroSpec.specialClip }}
+      clips={{ idle: heroSpec.idleClip, attack: heroSpec.attackClip, special: heroSpec.specialClip, hit: heroSpec.hitClip, death: heroSpec.deathClip }}
       weapon={equipment?.weapon ? getWeaponPlacement(equipment.weapon.itemId) : null}
       gear={getGearPlacements(equipment)}
       attackSignal={arenaSignal}

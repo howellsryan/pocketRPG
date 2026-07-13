@@ -31,6 +31,7 @@ const sourceFiles = [
   'utils/rewardReveal.js',
   'utils/equipModels.js', // -> game chunk (equip screen 3D model registry)
   'utils/three3d.js',     // -> game chunk (lazy three.js loader; equip/combat 3D)
+  '3d/heroAttach.js',     // -> game chunk (hero weapon/gear attach + hide-mask runtime)
   '3d/blendShell.js',     // -> game chunk (procedural blend-shell creature runtime)
   '3d/rigs.js',           // -> game chunk (procedural animation rigs over blendShell)
   '3d/creatures.js',      // -> game chunk (creatures3d.json registry resolver)
@@ -250,6 +251,7 @@ const GAME_CHUNK_FILES = new Set([
   'components/CombatArena3D.js',
   'utils/equipModels.js',
   'utils/three3d.js',
+  '3d/heroAttach.js',
   '3d/blendShell.js',
   '3d/rigs.js',
   '3d/creatures.js',

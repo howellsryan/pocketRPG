@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'preact/hooks'
 import HPBar from './HPBar.jsx'
 import { HitSplatLayer } from './HitSplat.jsx'
 import { loadThree, canRender3D, assetUrl } from '../utils/three3d.js'
-import { disposeObject, attachGearList, setupHideMask } from './Model3DViewer.jsx'
+import { disposeObject, attachWeapon, attachGearList, setupHideMask } from '../3d/heroAttach.js'
 import { createProcCreature } from '../3d/rigs.js'
 import { mountArenaBiome } from '../3d/biomes.js'
 
@@ -35,6 +35,7 @@ function CombatArena3D({
   monsterHeight = 2,
   monsterRotationDeg = [0, -90, 0],
   characterPath,
+  characterRotationDeg = [0, 0, 0],
   heroProc = null,
   biome = null,
   clips = {},
@@ -174,13 +175,15 @@ function CombatArena3D({
 
       // Procedural hero: a rigged blend-shell creature wearing the composed
       // equipment (fit + animation come from the shared rig, so there is no
-      // weapon/gear attach path). GLB hero: clips carry a baked root
-      // orientation — animated, she faces +x (east) with no group rotation.
+      // weapon/gear attach path). GLB hero: authored facing is registry data
+      // (character `rotationDeg`, [0,90,0] turns the +z-facing Quaternius
+      // build toward the monster) so a differently-authored GLB is a JSON
+      // fix, not a code change.
       if (heroSpecNow) st.heroCreature = createProcCreature(THREE, heroSpecNow)
       st.hero = st.heroCreature
         ? mountActor({ scene: st.heroCreature.group }, heroSpecNow.height || 1.8, -ARENA_GAP_X / 2,
             THREE.MathUtils.degToRad((heroSpecNow.rotationDeg || [0, 90, 0])[1]))
-        : mountActor(heroGltf, 1.8, -ARENA_GAP_X / 2, 0)
+        : mountActor(heroGltf, 1.8, -ARENA_GAP_X / 2, THREE.MathUtils.degToRad((characterRotationDeg || [0, 0, 0])[1]))
       // Monster facing is registry data (`rotationDeg`, default faces the
       // hero) so a differently-authored GLB is a JSON fix, not a code change.
       const [mrx, mry, mrz] = monsterSpecNow ? (monsterSpecNow.rotationDeg || [0, -90, 0]) : monsterRotationDeg
@@ -225,13 +228,15 @@ function CombatArena3D({
       st.heroMats = collectMats(st.hero)
       st.monsterMats = collectMats(st.monster)
       if (!st.heroCreature) {
-        let heroSkinnedMesh = null
+        const skinnedMeshes = []
         st.hero.traverse((o) => {
           if (o.isBone) st.bones[o.name] = o
-          if (o.isSkinnedMesh && !heroSkinnedMesh) heroSkinnedMesh = o
+          if (o.isSkinnedMesh) skinnedMeshes.push(o)
         })
-        st.heroSkinned = heroSkinnedMesh
-        st.headMaskCtl = setupHideMask(THREE, heroSkinnedMesh)
+        // rebind target for skinned gear: the body (largest mesh — the hero
+        // also carries small hair/eye meshes on the same skeleton)
+        st.heroSkinned = skinnedMeshes.sort((a, b) => b.geometry.attributes.position.count - a.geometry.attributes.position.count)[0] || null
+        st.headMaskCtl = setupHideMask(THREE, skinnedMeshes)
       }
 
       if (heroGltf && heroGltf.animations && heroGltf.animations.length) {
@@ -248,8 +253,11 @@ function CombatArena3D({
         }
         st.attackAction = onceAction(byName(clips.attack || 'Box'))
         st.specialAction = onceAction(byName(clips.special))
+        st.hitAction = onceAction(byName(clips.hit))
+        st.deathAction = onceAction(byName(clips.death))
+        if (st.deathAction) st.deathAction.clampWhenFinished = true // stay collapsed
         st.mixer.addEventListener('finished', (e) => {
-          if (st.disposed || (e.action !== st.attackAction && e.action !== st.specialAction)) return
+          if (st.disposed || (e.action !== st.attackAction && e.action !== st.specialAction && e.action !== st.hitAction)) return
           e.action.fadeOut(0.15)
           st.idleAction.reset().fadeIn(0.15).play()
         })
@@ -277,7 +285,7 @@ function CombatArena3D({
       }
 
       if (!st.heroCreature) {
-        attachArenaWeapon(st, weaponRef.current)
+        attachWeapon(st, weaponRef.current, st.hero)
         attachGearList(st, gearRef.current, st.hero)
       }
 
@@ -391,7 +399,7 @@ function CombatArena3D({
   useEffect(() => {
     weaponRef.current = weapon
     const st = stateRef.current
-    if (st && st.hero && !st.heroCreature) attachArenaWeapon(st, weapon)
+    if (st && st.hero && !st.heroCreature) attachWeapon(st, weapon, st.hero)
   }, [weapon && JSON.stringify(weapon)])
 
   // Gear (armour) swaps mid-fight the same way.
@@ -416,13 +424,25 @@ function CombatArena3D({
     wasDeadRef.current = dead
   }, [monsterHP && monsterHP.current <= 0])
 
-  // The procedural hero dies and respawns on-screen the same way.
+  // The hero dies and respawns on-screen the same way — the GLB hero plays
+  // its death clip and stays collapsed (clampWhenFinished) until HP recovers.
   const heroWasDeadRef = useRef(false)
   useEffect(() => {
     const st = stateRef.current
     const dead = playerHP && playerHP.current <= 0
-    if (st && st.heroCreature && dead !== heroWasDeadRef.current) {
-      st.heroCreature.trigger(dead ? 'death' : 'respawn')
+    if (st && dead !== heroWasDeadRef.current) {
+      if (st.heroCreature) {
+        st.heroCreature.trigger(dead ? 'death' : 'respawn')
+      } else if (st.deathAction) {
+        if (dead) {
+          st.idleAction && st.idleAction.fadeOut(0.1)
+          st.hitAction && st.hitAction.stop()
+          st.deathAction.reset().fadeIn(0.1).play()
+        } else {
+          st.deathAction.fadeOut(0.2)
+          st.idleAction && st.idleAction.reset().fadeIn(0.2).play()
+        }
+      }
     }
     heroWasDeadRef.current = dead
   }, [playerHP && playerHP.current <= 0])
@@ -510,8 +530,20 @@ function CombatArena3D({
       const timer = setTimeout(() => {
         st.timers.delete(timer)
         if (st.disposed) return
-        if (st.heroCreature) st.heroCreature.trigger('hit')
-        else st.heroReact = { t: 0, dur: 0.45 }
+        if (st.heroCreature) {
+          st.heroCreature.trigger('hit')
+        } else if (st.hitAction && !(st.deathAction && st.deathAction.isRunning())) {
+          // flinch clip (dying hero keeps the collapse); mid-swing hits keep
+          // the attack clip and settle for the procedural recoil
+          if (st.attackAction && st.attackAction.isRunning()) {
+            st.heroReact = { t: 0, dur: 0.45 }
+          } else {
+            st.idleAction && st.idleAction.fadeOut(0.1)
+            st.hitAction.reset().fadeIn(0.1).play()
+          }
+        } else {
+          st.heroReact = { t: 0, dur: 0.45 }
+        }
         st.heroFlash = { t: 0, dur: 0.4 }
       }, ATTACK_IMPACT_DELAY_MS)
       st.timers.add(timer)
@@ -564,35 +596,6 @@ function arenaNormalizeInto(THREE, group, model, targetHeight) {
   model.scale.setScalar(scale)
   model.position.set(-center.x * scale, -box.min.y * scale, -center.z * scale)
   group.add(model)
-}
-
-// Attach/replace the hero's weapon GLB on its bone (mirrors the equip-screen
-// attach; arena-prefixed so top-level names stay unique across the build).
-function attachArenaWeapon(st, weapon) {
-  if (!st || !st.THREE || !st.hero) return
-  if (st.weapon && st.weaponAnchor) { st.weaponAnchor.remove(st.weapon); disposeObject(st.weapon); st.weapon = null }
-  if (!weapon || !weapon.path) return
-  const token = (st.weaponToken = (st.weaponToken || 0) + 1)
-  loadThree().then(async ({ THREE, GLTFLoader, MeshoptDecoder }) => {
-    if (st.disposed || token !== st.weaponToken) return
-    const loader = new GLTFLoader()
-    loader.setMeshoptDecoder(MeshoptDecoder)
-    const wUrl = await assetUrl(weapon.path)
-    if (st.disposed || token !== st.weaponToken) return
-    loader.load(wUrl, (gltf) => {
-      if (st.disposed || token !== st.weaponToken) return
-      const obj = gltf.scene
-      const anchor = (weapon.bone && st.bones[weapon.bone]) ? st.bones[weapon.bone] : st.hero
-      const [px, py, pz] = weapon.position || [0, 0, 0]
-      const [rx, ry, rz] = weapon.rotationDeg || [0, 0, 0]
-      obj.position.set(px, py, pz)
-      obj.rotation.set(THREE.MathUtils.degToRad(rx), THREE.MathUtils.degToRad(ry), THREE.MathUtils.degToRad(rz))
-      obj.scale.setScalar(typeof weapon.scale === 'number' ? weapon.scale : 1)
-      anchor.add(obj)
-      st.weapon = obj
-      st.weaponAnchor = anchor
-    })
-  }).catch(() => {})
 }
 
 function arenaTeardown(st, host) {

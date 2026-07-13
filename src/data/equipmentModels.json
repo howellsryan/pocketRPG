@@ -2,7 +2,7 @@
   "version": 1,
   "modelBase": "3d-samples/",
   "defaults": {
-    "handBone": "R_Hand",
+    "handBone": "hand_r",
     "weapon": {
       "position": [
         0,
@@ -10,26 +10,26 @@
         0
       ],
       "rotationDeg": [
-        10,
+        165,
         0,
-        145
+        -15
       ],
-      "scale": 0.3987
+      "scale": 1
     },
     "gear": {
       "head": {
         "bone": "Head",
         "position": [
-          0.0137,
-          0.0794,
-          -0.0259
+          0,
+          0.09,
+          0.01
         ],
         "rotationDeg": [
-          -177.9,
-          87.5,
-          178.2
+          0,
+          -90,
+          0
         ],
-        "scale": 0.242
+        "scale": 0.44
       }
     }
   },
@@ -37,165 +37,396 @@
     "model": "hero.glb",
     "idleClip": "idle_loop",
     "attackClip": "sword_attack",
-    "specialClip": "sword_regular_combo"
+    "specialClip": "sword_regular_combo",
+    "hitClip": "hit_chest",
+    "deathClip": "death01",
+    "rotationDeg": [
+      0,
+      90,
+      0
+    ]
   },
   "weapons": {
-    "dragon_dagger": {
-      "model": "crimson_dagger.canonical.glb",
-      "bone": "R_Hand",
-      "position": [
-        0.125,
-        0.275,
-        -0.11
-      ],
-      "rotationDeg": [
-        10,
-        0,
-        145
-      ],
-      "scale": 0.4
+    "adamant_axe": {
+      "model": "weapons/q_axe_small.glb",
+      "tint": "#3f8a5a"
     },
-    "dragon_scimitar": {
-      "model": "/api/tripo-assets/8d068e36551445af860a636ab7bf3d37",
-      "bone": "R_Hand",
-      "position": [
-        -0.03,
-        0.005,
-        0.145
-      ],
-      "rotationDeg": [
-        -3,
-        -180,
-        -161
-      ],
-      "scale": 0.4
+    "adamant_dagger": {
+      "model": "weapons/q_dagger.glb",
+      "tint": "#3f8a5a"
     },
-    "bronze_scimitar": {
-      "model": "/api/tripo-assets/ffa53d0ab8634f87806b708766541a8a",
-      "bone": "R_Hand",
-      "position": [
-        -0.03,
-        0.005,
-        0.145
-      ],
-      "rotationDeg": [
-        -3,
-        -180,
-        -161
-      ],
-      "scale": 0.4
+    "adamant_longsword": {
+      "model": "weapons/q_sword_big.glb",
+      "tint": "#3f8a5a"
     },
-    "iron_scimitar": {
-      "model": "/api/tripo-assets/76c318ad3a984bceb7f79f752c3c56b0",
-      "bone": "R_Hand",
-      "position": [
-        -0.03,
-        0.005,
-        0.145
-      ],
-      "rotationDeg": [
-        -3,
-        -180,
-        -161
-      ],
-      "scale": 0.4
-    },
-    "steel_scimitar": {
-      "model": "/api/tripo-assets/8d0046b826344d809264ea61e264045d",
-      "bone": "R_Hand",
-      "position": [
-        -0.03,
-        0.005,
-        0.145
-      ],
-      "rotationDeg": [
-        -3,
-        -180,
-        -161
-      ],
-      "scale": 0.4
-    },
-    "mithril_scimitar": {
-      "model": "/api/tripo-assets/0f9669fcdb8d47c6ac7e907176f6d67b",
-      "bone": "R_Hand",
-      "position": [
-        -0.03,
-        0.005,
-        0.145
-      ],
-      "rotationDeg": [
-        -3,
-        -180,
-        -161
-      ],
-      "scale": 0.4
+    "adamant_mace": {
+      "model": "weapons/q_hammer_double.glb",
+      "tint": "#3f8a5a",
+      "scale": 0.72
     },
     "adamant_scimitar": {
-      "model": "/api/tripo-assets/de6f39041981495384d4e89fb5e2bc1c",
-      "bone": "R_Hand",
-      "position": [
-        -0.03,
-        0.005,
-        0.145
-      ],
-      "rotationDeg": [
-        -3,
-        -180,
-        -161
-      ],
-      "scale": 0.4
+      "model": "weapons/q_sword.glb",
+      "tint": "#3f8a5a"
+    },
+    "adamant_sword": {
+      "model": "weapons/q_sword.glb",
+      "tint": "#3f8a5a"
+    },
+    "bronze_axe": {
+      "model": "weapons/q_axe_small.glb",
+      "tint": "#b87333"
+    },
+    "bronze_dagger": {
+      "model": "weapons/q_dagger.glb",
+      "tint": "#b87333"
+    },
+    "bronze_longsword": {
+      "model": "weapons/q_sword_big.glb",
+      "tint": "#b87333"
+    },
+    "bronze_mace": {
+      "model": "weapons/q_hammer_double.glb",
+      "tint": "#b87333",
+      "scale": 0.72
+    },
+    "bronze_scimitar": {
+      "model": "weapons/q_sword.glb",
+      "tint": "#b87333"
+    },
+    "bronze_sword": {
+      "model": "weapons/q_sword.glb",
+      "tint": "#b87333"
+    },
+    "dragon_axe": {
+      "model": "weapons/q_axe_small.glb",
+      "tint": "#c0392b"
+    },
+    "dragon_battleaxe": {
+      "model": "weapons/q_axe_double.glb",
+      "tint": "#c0392b"
+    },
+    "dragon_dagger": {
+      "model": "weapons/q_dagger.glb",
+      "tint": "#c0392b"
+    },
+    "dragon_longsword": {
+      "model": "weapons/q_sword_big.glb",
+      "tint": "#c0392b"
+    },
+    "dragon_mace": {
+      "model": "weapons/q_hammer_double.glb",
+      "tint": "#c0392b",
+      "scale": 0.72
+    },
+    "dragon_scimitar": {
+      "model": "weapons/q_sword.glb",
+      "tint": "#c0392b"
+    },
+    "dragon_warhammer": {
+      "model": "weapons/q_hammer_double.glb",
+      "tint": "#c0392b"
+    },
+    "iron_axe": {
+      "model": "weapons/q_axe_small.glb",
+      "tint": "#6e747e"
+    },
+    "iron_dagger": {
+      "model": "weapons/q_dagger.glb",
+      "tint": "#6e747e"
+    },
+    "iron_longsword": {
+      "model": "weapons/q_sword_big.glb",
+      "tint": "#6e747e"
+    },
+    "iron_mace": {
+      "model": "weapons/q_hammer_double.glb",
+      "tint": "#6e747e",
+      "scale": 0.72
+    },
+    "iron_scimitar": {
+      "model": "weapons/q_sword.glb",
+      "tint": "#6e747e"
+    },
+    "iron_sword": {
+      "model": "weapons/q_sword.glb",
+      "tint": "#6e747e"
+    },
+    "longbow": {
+      "model": "weapons/q_bow.glb"
+    },
+    "magic_shortbow": {
+      "model": "weapons/q_bow.glb"
+    },
+    "maple_longbow": {
+      "model": "weapons/q_bow.glb"
+    },
+    "maple_shortbow": {
+      "model": "weapons/q_bow.glb"
+    },
+    "mithril_axe": {
+      "model": "weapons/q_axe_small.glb",
+      "tint": "#3f57c4"
+    },
+    "mithril_dagger": {
+      "model": "weapons/q_dagger.glb",
+      "tint": "#3f57c4"
+    },
+    "mithril_longsword": {
+      "model": "weapons/q_sword_big.glb",
+      "tint": "#3f57c4"
+    },
+    "mithril_mace": {
+      "model": "weapons/q_hammer_double.glb",
+      "tint": "#3f57c4",
+      "scale": 0.72
+    },
+    "mithril_scimitar": {
+      "model": "weapons/q_sword.glb",
+      "tint": "#3f57c4"
+    },
+    "mithril_sword": {
+      "model": "weapons/q_sword.glb",
+      "tint": "#3f57c4"
+    },
+    "oak_longbow": {
+      "model": "weapons/q_bow.glb"
+    },
+    "oak_shortbow": {
+      "model": "weapons/q_bow.glb"
+    },
+    "runeforged_2h_sword": {
+      "model": "weapons/q_sword_big.glb",
+      "tint": "#2fd0c0"
+    },
+    "runeforged_axe": {
+      "model": "weapons/q_axe_small.glb",
+      "tint": "#2fd0c0"
     },
     "runeforged_scimitar": {
-      "model": "/api/tripo-assets/ab6011631b2d45abae3fc2ea39d08335",
-      "bone": "R_Hand",
-      "position": [
-        -0.03,
-        0.005,
-        0.145
-      ],
-      "rotationDeg": [
-        -3,
-        -180,
-        -161
-      ],
-      "scale": 0.4
+      "model": "weapons/q_sword.glb",
+      "tint": "#2fd0c0"
+    },
+    "runeforged_sword": {
+      "model": "weapons/q_sword.glb",
+      "tint": "#2fd0c0"
+    },
+    "shortbow": {
+      "model": "weapons/q_bow.glb"
+    },
+    "steel_axe": {
+      "model": "weapons/q_axe_small.glb",
+      "tint": "#bcc6d2"
+    },
+    "steel_dagger": {
+      "model": "weapons/q_dagger.glb",
+      "tint": "#bcc6d2"
+    },
+    "steel_longsword": {
+      "model": "weapons/q_sword_big.glb",
+      "tint": "#bcc6d2"
+    },
+    "steel_mace": {
+      "model": "weapons/q_hammer_double.glb",
+      "tint": "#bcc6d2",
+      "scale": 0.72
+    },
+    "steel_scimitar": {
+      "model": "weapons/q_sword.glb",
+      "tint": "#bcc6d2"
+    },
+    "steel_sword": {
+      "model": "weapons/q_sword.glb",
+      "tint": "#bcc6d2"
+    },
+    "thornspine_shortbow": {
+      "model": "weapons/q_bow.glb"
+    },
+    "twisted_longbow": {
+      "model": "weapons/q_bow.glb"
+    },
+    "willow_longbow": {
+      "model": "weapons/q_bow.glb"
+    },
+    "willow_shortbow": {
+      "model": "weapons/q_bow.glb"
+    },
+    "yew_shortbow": {
+      "model": "weapons/q_bow.glb"
     }
   },
   "gear": {
-    "steel_full_helm": {
-      "model": "full_helm.glb",
+    "adamant_full_helm": {
+      "model": "adamant_full_helm.glb",
       "slot": "head",
       "hideHead": true
+    },
+    "adamant_platebody": {
+      "model": "outfits/ranger_body.glb",
+      "slot": "body",
+      "tint": "#8cb99c",
+      "hideBody": true
+    },
+    "adamant_platelegs": {
+      "model": "outfits/ranger_legs.glb",
+      "slot": "legs",
+      "tint": "#8cb99c",
+      "hideLegs": true
+    },
+    "adamant_plateskirt": {
+      "model": "outfits/ranger_legs.glb",
+      "slot": "legs",
+      "tint": "#8cb99c",
+      "hideLegs": true
+    },
+    "bronze_chainbody": {
+      "model": "outfits/ranger_body.glb",
+      "slot": "body",
+      "tint": "#d4ab85",
+      "hideBody": true
     },
     "bronze_full_helm": {
       "model": "bronze_full_helm.glb",
       "slot": "head",
       "hideHead": true
     },
+    "bronze_platebody": {
+      "model": "outfits/ranger_body.glb",
+      "slot": "body",
+      "tint": "#d4ab85",
+      "hideBody": true
+    },
+    "bronze_platelegs": {
+      "model": "outfits/ranger_legs.glb",
+      "slot": "legs",
+      "tint": "#d4ab85",
+      "hideLegs": true
+    },
+    "dragon_chainbody": {
+      "model": "outfits/ranger_body.glb",
+      "slot": "body",
+      "tint": "#d98880",
+      "hideBody": true
+    },
+    "dragon_full_helm": {
+      "model": "dragon_full_helm.glb",
+      "slot": "head",
+      "hideHead": true
+    },
+    "dragon_platelegs": {
+      "model": "outfits/ranger_legs.glb",
+      "slot": "legs",
+      "tint": "#d98880",
+      "hideLegs": true
+    },
+    "dragon_plateskirt": {
+      "model": "outfits/ranger_legs.glb",
+      "slot": "legs",
+      "tint": "#d98880",
+      "hideLegs": true
+    },
+    "iron_chainbody": {
+      "model": "outfits/ranger_body.glb",
+      "slot": "body",
+      "tint": "#a8acb2",
+      "hideBody": true
+    },
     "iron_full_helm": {
       "model": "iron_full_helm.glb",
       "slot": "head",
       "hideHead": true
+    },
+    "iron_platebody": {
+      "model": "outfits/ranger_body.glb",
+      "slot": "body",
+      "tint": "#a8acb2",
+      "hideBody": true
+    },
+    "iron_platelegs": {
+      "model": "outfits/ranger_legs.glb",
+      "slot": "legs",
+      "tint": "#a8acb2",
+      "hideLegs": true
+    },
+    "mithril_chainbody": {
+      "model": "outfits/ranger_body.glb",
+      "slot": "body",
+      "tint": "#8c9adc",
+      "hideBody": true
     },
     "mithril_full_helm": {
       "model": "mithril_full_helm.glb",
       "slot": "head",
       "hideHead": true
     },
-    "adamant_full_helm": {
-      "model": "adamant_full_helm.glb",
-      "slot": "head",
-      "hideHead": true
+    "mithril_platebody": {
+      "model": "outfits/ranger_body.glb",
+      "slot": "body",
+      "tint": "#8c9adc",
+      "hideBody": true
+    },
+    "mithril_platelegs": {
+      "model": "outfits/ranger_legs.glb",
+      "slot": "legs",
+      "tint": "#8c9adc",
+      "hideLegs": true
+    },
+    "mithril_plateskirt": {
+      "model": "outfits/ranger_legs.glb",
+      "slot": "legs",
+      "tint": "#8c9adc",
+      "hideLegs": true
+    },
+    "runeforged_chainbody": {
+      "model": "outfits/ranger_body.glb",
+      "slot": "body",
+      "tint": "#82e3d9",
+      "hideBody": true
     },
     "runeforged_full_helm": {
       "model": "runeforged_full_helm.glb",
       "slot": "head",
       "hideHead": true
     },
-    "dragon_full_helm": {
-      "model": "dragon_full_helm.glb",
+    "runeforged_platebody": {
+      "model": "outfits/ranger_body.glb",
+      "slot": "body",
+      "tint": "#82e3d9",
+      "hideBody": true
+    },
+    "runeforged_platelegs": {
+      "model": "outfits/ranger_legs.glb",
+      "slot": "legs",
+      "tint": "#82e3d9",
+      "hideLegs": true
+    },
+    "runeforged_plateskirt": {
+      "model": "outfits/ranger_legs.glb",
+      "slot": "legs",
+      "tint": "#82e3d9",
+      "hideLegs": true
+    },
+    "steel_chainbody": {
+      "model": "outfits/ranger_body.glb",
+      "slot": "body",
+      "tint": "#d7dde4",
+      "hideBody": true
+    },
+    "steel_full_helm": {
+      "model": "full_helm.glb",
       "slot": "head",
       "hideHead": true
+    },
+    "steel_platebody": {
+      "model": "outfits/ranger_body.glb",
+      "slot": "body",
+      "tint": "#d7dde4",
+      "hideBody": true
+    },
+    "steel_platelegs": {
+      "model": "outfits/ranger_legs.glb",
+      "slot": "legs",
+      "tint": "#d7dde4",
+      "hideLegs": true
     }
   },
   "monsters": {

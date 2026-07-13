@@ -1,0 +1,149 @@
+<!doctype html>
+<!-- Dev harness: renders the GLB arena hero (public/3d-samples/hero.glb) with
+     registry-resolved weapon/gear through the REAL runtime attach module
+     (src/3d/heroAttach.js), so grip/fit transforms tuned here are exactly what
+     ships. Driven headless by scripts/render-arena-hero.mjs; also loadable by
+     hand (`npx serve .` from the repo root).
+
+     Query params:
+       weapon=<itemId>   registry weapon to attach (src/data/equipmentModels.json)
+       gear=<id,id,...>  registry gear pieces to attach
+       clip=<name>       looping clip (default idle_loop)
+       front             camera from the front instead of the arena's side-on view
+
+     Window hooks (mirrors proc-creature-harness):
+       __ready           true once hero + attachments are mounted
+       __setTime(t)      advance the animation clock to absolute t seconds
+       __trigger(name)   play a one-shot clip by name (sword_attack, hit_chest, death01…)
+-->
+<html>
+<head><meta charset="utf-8"><style>html,body{margin:0;background:#191512}canvas{display:block}</style></head>
+<body>
+<script type="module">
+import * as THREE from '/public/vendor/three/three.module.min.js'
+import { GLTFLoader } from '/public/vendor/three/jsm/loaders/GLTFLoader.js'
+import { setupHideMask, attachWeapon, attachGearList } from '/src/3d/heroAttach.js'
+
+const q = new URLSearchParams(location.search)
+const registry = await (await fetch('/src/data/equipmentModels.json')).json()
+
+// Minimal mirror of equipModels.js resolution (that module imports JSON via
+// bundler syntax a browser can't) — defaults merging only, keep in sync.
+const modelPath = (m) => (/^(https?:)?\/\//.test(m) || m.startsWith('/')) ? m : '/public/' + (registry.modelBase || '') + m
+function weaponSpec(itemId) {
+  const w = registry.weapons && registry.weapons[itemId]
+  if (!w || !w.model) return null
+  const dw = (registry.defaults || {}).weapon || {}
+  return {
+    path: modelPath(w.model),
+    bone: w.bone === undefined ? (registry.defaults.handBone || null) : w.bone,
+    position: w.position || dw.position, rotationDeg: w.rotationDeg || dw.rotationDeg,
+    scale: typeof w.scale === 'number' ? w.scale : dw.scale, tint: w.tint || null,
+  }
+}
+function gearSpec(itemId) {
+  const g = registry.gear && registry.gear[itemId]
+  if (!g || !g.model || !g.slot) return null
+  const d = ((registry.defaults || {}).gear || {})[g.slot] || {}
+  return {
+    path: modelPath(g.model), slot: g.slot,
+    bone: g.bone === undefined ? (d.bone || null) : g.bone,
+    position: g.position || d.position, rotationDeg: g.rotationDeg || d.rotationDeg,
+    scale: typeof g.scale === 'number' ? g.scale : d.scale, tint: g.tint || null,
+    hideHead: Boolean(g.hideHead), hideBody: Boolean(g.hideBody), hideLegs: Boolean(g.hideLegs),
+  }
+}
+
+const W = innerWidth, H = innerHeight
+const renderer = new THREE.WebGLRenderer({ antialias: true })
+renderer.setSize(W, H)
+renderer.outputColorSpace = THREE.SRGBColorSpace
+document.body.appendChild(renderer.domElement)
+
+const scene = new THREE.Scene()
+scene.background = new THREE.Color(0x191512)
+scene.add(new THREE.HemisphereLight(0xfff2e0, 0x2a1c10, 1.9))
+const key = new THREE.DirectionalLight(0xfff2e0, 2.2); key.position.set(3, 5, 4); scene.add(key)
+const rim = new THREE.DirectionalLight(0x88bbff, 0.9); rim.position.set(-4, 2, -3); scene.add(rim)
+const ground = new THREE.Mesh(new THREE.CircleGeometry(3.4, 40), new THREE.MeshStandardMaterial({ color: 0x1c1410, roughness: 1 }))
+ground.rotation.x = -Math.PI / 2
+scene.add(ground)
+
+const camera = new THREE.PerspectiveCamera(38, W / H, 0.01, 100)
+if (q.has('front')) { camera.position.set(0, 1.2, 3.4); camera.lookAt(0, 0.95, 0) }
+else { camera.position.set(0.4, 1.5, 3.6); camera.lookAt(0, 0.95, 0) }
+
+const st = { disposed: false, THREE, bones: {}, gear: [], headMaskCtl: null, heroSkinned: null }
+let mixer = null, actions = {}, clockT = 0
+
+const gltf = await new Promise((res, rej) => new GLTFLoader().load('/public/3d-samples/hero.glb', res, undefined, rej))
+const root = gltf.scene
+// arena normalisation: ~1.8 units tall, feet on origin (CombatArena3D.arenaNormalizeInto)
+const box = new THREE.Box3().setFromObject(root)
+const size = box.getSize(new THREE.Vector3())
+const center = box.getCenter(new THREE.Vector3())
+const scale = 1.8 / (size.y || 1)
+root.scale.setScalar(scale)
+root.position.set(-center.x * scale, -box.min.y * scale, -center.z * scale)
+const skinnedMeshes = []
+root.traverse((o) => {
+  if (o.isBone) st.bones[o.name] = o
+  if (o.isSkinnedMesh) skinnedMeshes.push(o)
+})
+st.heroSkinned = skinnedMeshes.slice().sort((a, b) => b.geometry.attributes.position.count - a.geometry.attributes.position.count)[0] || null
+st.headMaskCtl = setupHideMask(THREE, skinnedMeshes)
+scene.add(root)
+
+mixer = new THREE.AnimationMixer(root)
+for (const clip of gltf.animations) actions[clip.name] = mixer.clipAction(clip)
+const loopName = q.get('clip') || 'idle_loop'
+if (actions[loopName]) actions[loopName].play()
+
+const weaponId = q.get('weapon')
+const gearIds = (q.get('gear') || '').split(',').filter(Boolean)
+const wSpec = weaponId ? weaponSpec(weaponId) : null
+if (weaponId && !wSpec) throw new Error(`no registry weapon '${weaponId}'`)
+const gSpecs = gearIds.map((id) => {
+  const s = gearSpec(id)
+  if (!s) throw new Error(`no registry gear '${id}'`)
+  return s
+})
+if (wSpec) attachWeapon(st, wSpec, root)
+if (gSpecs.length) attachGearList(st, gSpecs, root)
+
+const render = () => renderer.render(scene, camera)
+window.__setTime = (t) => {
+  const dt = Math.max(0, t - clockT)
+  clockT = t
+  mixer.update(dt)
+  render()
+}
+window.__trigger = (name) => {
+  const a = actions[name]
+  if (!a) throw new Error(`no clip '${name}' (have: ${Object.keys(actions).join(', ')})`)
+  a.setLoop(THREE.LoopOnce, 1)
+  a.clampWhenFinished = true
+  for (const other of Object.values(actions)) if (other !== a) other.stop()
+  a.reset().play()
+  render()
+}
+
+// attaches resolve asynchronously without callbacks — wait until everything
+// requested is mounted (weapon set + one gear entry per requested piece)
+const t0 = performance.now()
+const settle = () => {
+  const weaponReady = !wSpec || st.weapon
+  const gearReady = st.gear.length >= gSpecs.length
+  if ((weaponReady && gearReady) || performance.now() - t0 > 10000) {
+    if (!weaponReady || !gearReady) console.error('attach timeout', { weapon: !!st.weapon, gear: st.gear.length })
+    mixer.update(0)
+    render()
+    window.__ready = true
+    return
+  }
+  requestAnimationFrame(settle)
+}
+settle()
+</script>
+</body>
+</html>
