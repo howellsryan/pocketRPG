@@ -67,6 +67,7 @@ Same primitives and rig, different registry: `hero` is one humanoid spec (propor
 - `palette`: appended; the entry's parts/overrides index into its OWN palette (remapped at compose).
 - `add`: new parts; `rig: "head" | "armL" | "armR" | "handL" | "handR"` joins that group (`handR` = rides the sword swing), omitted = rides the root (pauldrons, belts).
 - `override`: heroPartId → `{ color/r1/r2/blend/a/b }` field patch (keeps rig membership — how platebody/platelegs recolor the body), or `{ remove: true }` (purged from every rig group — hair/eyes under a full helm).
+- `variantOf`: itemId of a base entry — inherits its add/override geometry with this entry's own palette (metal tiers ARE palette data: author the shape once at bronze, recolor per tier; keep the helm > body > legs value order within a tier). One level, no chains.
 - Validate via `npx vitest run tests/hero3d.test.ts`; render via `node scripts/render-proc.mjs --hero bronze_scimitar,bronze_full_helm --front` (and without `--front`). Review all four states BOTH bare and equipped.
 - Hard-won: tiny `colorOnly` details on head-sized parts smear into haze — make dot-eyes/visor-slits small SOLID parts instead. All-metal outfits need per-piece value separation (helm lightest, legs darkest) and a dark rim/belt part to break the mass.
 

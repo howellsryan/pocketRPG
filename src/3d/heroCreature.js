@@ -4,7 +4,7 @@
 // back to the GLB hero / icon UI.
 
 import hero3dData from '../data/hero3d.json'
-import { heroComposeSpec } from './heroCompose.js'
+import { heroComposeSpec, heroResolveEquipEntry } from './heroCompose.js'
 
 // Composed hero spec wearing the given equipped itemIds (unregistered ids are
 // skipped, so partial 3D equipment coverage is safe), or null when no hero
@@ -24,4 +24,11 @@ export function hasHeroEquip3D(itemId) {
 
 export function listHeroEquip3DIds() {
   return Object.keys((hero3dData && hero3dData.equipment) || {})
+}
+
+// Registry entry with any variantOf resolved against its base (tests and
+// tooling want the effective add/override/palette, not the raw variant stub).
+export function getHeroEquipEntry(itemId) {
+  const equipment = (hero3dData && hero3dData.equipment) || {}
+  return heroResolveEquipEntry(equipment, equipment[itemId])
 }

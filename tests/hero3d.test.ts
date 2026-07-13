@@ -2,12 +2,14 @@ import { describe, it, expect } from 'vitest'
 import { validateCreatureSpec } from '../src/3d/creatures.js'
 import { BLEND_SHELL_MAX_PARTS } from '../src/3d/blendShell.js'
 import { heroComposeSpec } from '../src/3d/heroCompose.js'
-import { composeHeroSpec3D, hasHeroSpec3D, hasHeroEquip3D, listHeroEquip3DIds } from '../src/3d/heroCreature.js'
+import { composeHeroSpec3D, hasHeroSpec3D, hasHeroEquip3D, listHeroEquip3DIds, getHeroEquipEntry } from '../src/3d/heroCreature.js'
 import hero3d from '../src/data/hero3d.json'
 import itemsData from '../src/data/items.json'
 
 const HERO_RIG_TARGETS = new Set(['head', 'armL', 'armR', 'handL', 'handR'])
 const allEquipIds = () => Object.keys(hero3d.equipment || {})
+// resolved entries: variantOf stubs expanded to their effective add/override
+const resolvedEntries = () => allEquipIds().map((id) => [id, getHeroEquipEntry(id)] as const)
 
 describe('hero3d registry', () => {
   it('the bare hero spec passes creature validation', () => {
@@ -22,8 +24,19 @@ describe('hero3d registry', () => {
     }
   })
 
-  it('every added equipment part targets a known rig group when it declares one', () => {
+  it('every variant entry names an existing non-variant base and resolves', () => {
     for (const [id, entry] of Object.entries(hero3d.equipment)) {
+      if (!(entry as { variantOf?: string }).variantOf) continue
+      const base = hero3d.equipment[(entry as { variantOf: string }).variantOf]
+      expect(base, `equipment ${id} variantOf names a missing base`).toBeTruthy()
+      expect((base as { variantOf?: string }).variantOf, `equipment ${id} chains variants`).toBeUndefined()
+      expect(getHeroEquipEntry(id), `equipment ${id} must resolve`).toBeTruthy()
+      expect(Array.isArray((entry as { palette?: string[] }).palette), `variant ${id} exists to recolor — it needs its own palette`).toBe(true)
+    }
+  })
+
+  it('every added equipment part targets a known rig group when it declares one', () => {
+    for (const [id, entry] of resolvedEntries()) {
       for (const p of entry.add || []) {
         if (p.rig !== undefined) {
           expect(HERO_RIG_TARGETS.has(p.rig), `equipment ${id} part ${p.id} rig ${p.rig}`).toBe(true)
@@ -34,7 +47,7 @@ describe('hero3d registry', () => {
 
   it('every override targets an existing hero part', () => {
     const heroIds = new Set(hero3d.hero.parts.map((p) => p.id))
-    for (const [id, entry] of Object.entries(hero3d.equipment)) {
+    for (const [id, entry] of resolvedEntries()) {
       for (const partId of Object.keys(entry.override || {})) {
         expect(heroIds.has(partId), `equipment ${id} overrides unknown hero part ${partId}`).toBe(true)
       }
@@ -48,10 +61,48 @@ describe('hero3d registry', () => {
     }
   })
 
-  it('the hero wearing every registered item validates and fits the shader part budget', () => {
-    const spec = composeHeroSpec3D(allEquipIds())
-    expect(validateCreatureSpec(spec)).toEqual([])
-    expect(spec.parts.length).toBeLessThanOrEqual(BLEND_SHELL_MAX_PARTS)
+  // One item per slot is the wearable reality — stacking every registered
+  // item (7 scimitars at once) is not a state the game can produce, so the
+  // budget is asserted per full loadout instead.
+  it('every full one-item-per-slot loadout validates and fits the shader part budget', () => {
+    const bySlot = new Map<string, string[]>()
+    for (const [id, entry] of resolvedEntries()) {
+      const list = bySlot.get(entry.slot) || []
+      list.push(id)
+      bySlot.set(entry.slot, list)
+    }
+    const slots = [...bySlot.keys()]
+    // worst case per slot = the entry adding the most parts; if that fits,
+    // every other combination fits too
+    const worst = slots.map((slot) => {
+      const ids = bySlot.get(slot)!
+      return ids.reduce((a, b) => ((getHeroEquipEntry(a)!.add || []).length >= (getHeroEquipEntry(b)!.add || []).length ? a : b))
+    })
+    const spec = composeHeroSpec3D(worst)
+    expect(validateCreatureSpec(spec), `loadout ${worst.join(', ')}`).toEqual([])
+    expect(spec.parts.length, `loadout ${worst.join(', ')}`).toBeLessThanOrEqual(BLEND_SHELL_MAX_PARTS)
+  })
+
+  it('every metal tier composes as a full matching set', () => {
+    for (const tier of ['bronze', 'iron', 'steel', 'mithril', 'adamant', 'runeforged', 'dragon']) {
+      const set = [`${tier}_scimitar`, `${tier}_full_helm`, `${tier}_platebody`, `${tier}_platelegs`].filter(hasHeroEquip3D)
+      expect(set.length, `${tier} set is registered`).toBeGreaterThanOrEqual(3)
+      const spec = composeHeroSpec3D(set)
+      expect(validateCreatureSpec(spec), `${tier} set`).toEqual([])
+      expect(spec.parts.length).toBeLessThanOrEqual(BLEND_SHELL_MAX_PARTS)
+    }
+  })
+
+  it('a variant recolors its base geometry without reshaping it', () => {
+    const bronze = composeHeroSpec3D(['bronze_scimitar'])
+    const dragon = composeHeroSpec3D(['dragon_scimitar'])
+    const bladeB = bronze.parts.find((p) => p.id === 'scimBlade')
+    const bladeD = dragon.parts.find((p) => p.id === 'scimBlade')
+    expect(bladeD).toBeTruthy()
+    expect(bladeD.a).toEqual(bladeB.a)
+    expect(bladeD.r1).toEqual(bladeB.r1)
+    expect(bronze.palette[bladeB.color]).toBe('#c8934f')
+    expect(dragon.palette[bladeD.color]).toBe('#c0473a')
   })
 })
 

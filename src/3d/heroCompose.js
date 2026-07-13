@@ -13,6 +13,10 @@
 // - override: heroPartId → field patch ({ color, r1, r2, blend, a, b } — the
 //   part keeps its rig membership) or { remove: true } (part dropped and
 //   purged from every rig group, e.g. hair under a full helm).
+// - variantOf: itemId of a base entry — inherits its add/override geometry
+//   with this entry's own palette (metal tiers are palette data, not new
+//   shapes). One level only; a variant may still declare add/override to
+//   replace the base's wholesale.
 
 export function heroComposeSpec(data, itemIds = []) {
   const hero = data && data.hero
@@ -22,10 +26,21 @@ export function heroComposeSpec(data, itemIds = []) {
   spec.rotationDeg = spec.rotationDeg || [0, 90, 0]
   const equipment = (data && data.equipment) || {}
   for (const itemId of itemIds || []) {
-    const entry = equipment[itemId]
+    const entry = heroResolveEquipEntry(equipment, equipment[itemId])
     if (entry) heroApplyEquipEntry(spec, entry)
   }
   return spec
+}
+
+// Resolve a variantOf entry against its base. Returns the entry as-is when it
+// is not a variant; null when the entry is missing or its base is invalid
+// (absent, or itself a variant — chains are not supported).
+export function heroResolveEquipEntry(equipment, entry) {
+  if (!entry) return null
+  if (!entry.variantOf) return entry
+  const base = (equipment || {})[entry.variantOf]
+  if (!base || base.variantOf) return null
+  return { ...base, ...entry }
 }
 
 function heroApplyEquipEntry(spec, entry) {
