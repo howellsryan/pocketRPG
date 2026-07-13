@@ -101,8 +101,8 @@ describe('hero3d registry', () => {
     expect(bladeD).toBeTruthy()
     expect(bladeD.a).toEqual(bladeB.a)
     expect(bladeD.r1).toEqual(bladeB.r1)
-    expect(bronze.palette[bladeB.color]).toBe('#c8934f')
-    expect(dragon.palette[bladeD.color]).toBe('#c0473a')
+    expect(bronze.palette[bladeB.color]).toBe('#dfa85c')
+    expect(dragon.palette[bladeD.color]).toBe('#c8503f')
   })
 })
 

@@ -37,9 +37,11 @@ scene.background = new THREE.Color(0xefe6d3)
 scene.fog = new THREE.Fog(0xefe6d3, 6, 12)
 const camera = new THREE.PerspectiveCamera(38, innerWidth / innerHeight, 0.1, 50)
 if (Q.get('hero') != null) {
-  // ?front — face-on view for judging faces and gear
-  if (Q.get('front') != null) camera.position.set(0.6, 1.45, 3.4)
-  else camera.position.set(2.2, 1.55, 3.0)
+  // ?front — face-on view for judging faces and gear. Cameras sit on the
+  // hero's RIGHT (-x): the arena's 90° rotation shows players that side,
+  // which is also where the weapon rides.
+  if (Q.get('front') != null) camera.position.set(-0.6, 1.45, 3.4)
+  else camera.position.set(-2.2, 1.55, 3.0)
   camera.lookAt(0, 1.0, 0)
 } else if (Q.get('cam') === 'arena') {
   // straight-on arena framing (CombatArena3D camera) for judging biome set
