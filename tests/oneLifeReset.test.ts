@@ -1,56 +1,24 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 
 const resetOneLifeMock = vi.fn()
-const deleteSaveMock = vi.fn()
-const deleteIdleMock = vi.fn()
-const clearAuthMock = vi.fn()
-const closeDBMock = vi.fn()
-const wipeLocalSaveMock = vi.fn()
-const setLocalCharacterIdMock = vi.fn()
-const clearCollectionLogCacheMock = vi.fn()
-let tokenValue: string | null = 'token'
 
 vi.mock('../src/cloud/api.js', () => ({
-  api: {
-    resetOneLife: (...a: unknown[]) => resetOneLifeMock(...a),
-    deleteSave: (...a: unknown[]) => deleteSaveMock(...a),
-    deleteIdle: (...a: unknown[]) => deleteIdleMock(...a),
-  },
-  clearAuth: () => clearAuthMock(),
-  getToken: () => tokenValue,
-  setLocalCharacterId: (...a: unknown[]) => setLocalCharacterIdMock(...a),
+  api: { resetOneLife: (...a: unknown[]) => resetOneLifeMock(...a) },
 }))
 
-vi.mock('../src/db/database.js', () => ({ closeDB: () => closeDBMock() }))
-vi.mock('../src/db/saveload.js', () => ({ wipeLocalSave: () => wipeLocalSaveMock() }))
-vi.mock('../src/cloud/collectionLog.js', () => ({ clearCollectionLogCache: () => clearCollectionLogCacheMock() }))
-
-import {
-  isAlreadyReset,
-  resetOneLifeWithRetry,
-  performOneLifeReset,
-} from '../src/utils/oneLifeDeath.js'
+import { isAlreadyReset, resetOneLifeWithRetry } from '../src/utils/oneLifeDeath.js'
 
 const instantSleep = () => Promise.resolve()
 
-beforeEach(() => {
-  vi.clearAllMocks()
-  tokenValue = 'token'
-  // jsdom-free env: provide the globals the reset touches.
-  ;(globalThis as any).localStorage = { removeItem: vi.fn() }
-})
-
 describe('isAlreadyReset', () => {
-  it('treats 404 and "not found" / "not one-life" as already reset', () => {
+  it('treats 404 and "not found" / "not one-life" as already reverted', () => {
     expect(isAlreadyReset({ status: 404 })).toBe(true)
     expect(isAlreadyReset(new Error('Character not found'))).toBe(true)
     expect(isAlreadyReset(new Error('Character is not one-life'))).toBe(true)
     expect(isAlreadyReset({ status: 400, message: 'Character is not one-life' })).toBe(true)
   })
 
-  it('does NOT treat a bare 400 (missing X-Character-Id header) as already reset', () => {
-    // This 400 is a transient/client error, not proof the atomic reset ran —
-    // accepting it would wipe the device while the cloud character survives.
+  it('does NOT treat a bare 400 (missing X-Character-Id header) as already reverted', () => {
     expect(isAlreadyReset({ status: 400 })).toBe(false)
     expect(isAlreadyReset({ status: 400, message: 'Missing X-Character-Id header' })).toBe(false)
   })
@@ -77,7 +45,7 @@ describe('resetOneLifeWithRetry', () => {
     expect(doReset).toHaveBeenCalledTimes(3)
   })
 
-  it('stops immediately when the server reports the reset already happened', async () => {
+  it('stops immediately when the server reports the flag was already reverted', async () => {
     const doReset = vi.fn().mockRejectedValue({ status: 404, message: 'Character not found' })
     await resetOneLifeWithRetry({ doReset, sleep: instantSleep })
     expect(doReset).toHaveBeenCalledTimes(1)
@@ -88,42 +56,10 @@ describe('resetOneLifeWithRetry', () => {
     await expect(resetOneLifeWithRetry({ doReset, sleep: instantSleep, attempts: 3 })).rejects.toBeTruthy()
     expect(doReset).toHaveBeenCalledTimes(3)
   })
-})
 
-describe('performOneLifeReset', () => {
-  it('uses the atomic reset and NEVER the partial deleteSave/deleteIdle fallback', async () => {
+  it('defaults to calling api.resetOneLife()', async () => {
     resetOneLifeMock.mockResolvedValue(undefined)
-    await performOneLifeReset()
+    await resetOneLifeWithRetry({ sleep: instantSleep })
     expect(resetOneLifeMock).toHaveBeenCalledTimes(1)
-    expect(deleteSaveMock).not.toHaveBeenCalled()
-    expect(deleteIdleMock).not.toHaveBeenCalled()
-  })
-
-  it('wipes local state, clears the collection-log cache, and clears auth only after the server reset succeeds', async () => {
-    resetOneLifeMock.mockResolvedValue(undefined)
-    await performOneLifeReset()
-    expect(closeDBMock).toHaveBeenCalled()
-    expect(wipeLocalSaveMock).toHaveBeenCalled()
-    expect(clearCollectionLogCacheMock).toHaveBeenCalled()
-    expect(clearAuthMock).toHaveBeenCalled()
-  })
-
-  it('does not wipe local state when the server reset can never complete', async () => {
-    vi.useFakeTimers()
-    resetOneLifeMock.mockRejectedValue({ status: 500 })
-    const assertion = expect(performOneLifeReset()).rejects.toBeTruthy()
-    await vi.runAllTimersAsync() // flush the exponential backoff sleeps
-    await assertion
-    expect(wipeLocalSaveMock).not.toHaveBeenCalled()
-    expect(clearAuthMock).not.toHaveBeenCalled()
-    vi.useRealTimers()
-  })
-
-  it('skips the server call for offline/local-only players (no token)', async () => {
-    tokenValue = null
-    await performOneLifeReset()
-    expect(resetOneLifeMock).not.toHaveBeenCalled()
-    expect(wipeLocalSaveMock).toHaveBeenCalled()
-    expect(clearAuthMock).toHaveBeenCalled()
   })
 })

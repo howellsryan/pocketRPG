@@ -21,7 +21,7 @@ describe('syncAccountModeFlags', () => {
     expect(getIronmanMode()).toBe(false)
   })
 
-  it('re-anchors a stale one_life=false to a one-life loaded profile (death now wipes)', () => {
+  it('re-anchors a stale one_life=false to a one-life loaded profile (death now reverts the flag)', () => {
     installLocalStorage({ pocketrpg_one_life_mode: 'false' })
     syncAccountModeFlags({ is_ironman: true, is_one_life: true })
     expect(getOneLifeMode()).toBe(true)

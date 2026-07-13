@@ -32,7 +32,6 @@ import { getCombatType, resolveMagicSpell, equipItem, checkEquipRequirements, pl
 import { api, getToken, getCharacterId, getOneLifeMode, isDemoMode } from '../cloud/api.js'
 import { pullSave, applyCloudSave, requestCriticalPushSave, pushNow } from '../cloud/sync.js'
 import { pvpApi } from '../cloud/pvp.js'
-import { triggerOneLifeDeath } from '../utils/oneLifeDeath.js'
 import monstersData from '../data/monsters.json'
 import worldData from '../data/world.json'
 import { placeActivities } from '../engine/worldContent.js'
@@ -257,7 +256,7 @@ class PvpCombatErrorBoundary extends Component {
 }
 
 export default function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onCombatStatusChange, onBack, onStopBack, dungeonPlaceId }) {
-  const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, updateEquipment, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, idleCombatSetup, updateIdleCombatSetup, homeShortcuts, updateHomeShortcuts, setActiveTask, requestActivityStart, slayerTask, setSlayerTask, awardSlayerPoints, slayerTasksCompleted, setSlayerTasksCompleted, activeCombatSpell, updateActiveCombatSpell, bossKillCounts, updateBossKillCounts, raidKillCounts, updateRaidKillCounts, unlockedFeatures, completedQuests, isOneLife, isIronman, getSnapshot, loadGame, combatSkipHandlerRef, skipHourHandlerRef, chargeSkipRef, raidSkipHandlerRef, lockGame, unlockGame, resolveCombatCompletion, characterUnlocks, killCountsLoaded, recordGameEvent, worldLocation } = useGame()
+  const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, updateEquipment, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, idleCombatSetup, updateIdleCombatSetup, homeShortcuts, updateHomeShortcuts, setActiveTask, requestActivityStart, slayerTask, setSlayerTask, awardSlayerPoints, slayerTasksCompleted, setSlayerTasksCompleted, activeCombatSpell, updateActiveCombatSpell, bossKillCounts, updateBossKillCounts, raidKillCounts, updateRaidKillCounts, unlockedFeatures, completedQuests, isOneLife, isIronman, revertOneLifeMode, getSnapshot, loadGame, combatSkipHandlerRef, skipHourHandlerRef, chargeSkipRef, raidSkipHandlerRef, lockGame, unlockGame, resolveCombatCompletion, characterUnlocks, killCountsLoaded, recordGameEvent, worldLocation } = useGame()
   const pvp = usePvp()
   // Offline demo: bosses, raids and PvP are locked (server-authoritative).
   const isDemo = isDemoMode() && !(getToken() && getCharacterId())
@@ -327,6 +326,23 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   const slayerTaskRef = useRef(slayerTask)
   const pvpCrashHandledRef = useRef(false)
   const oneLifeModeRef = useRef(isOneLife || getOneLifeMode())
+
+  // One-life death: the character already revives at full HP like any other
+  // death (see the call sites below) — this just reverts the account's
+  // is_one_life flag in the background and surfaces the mode change.
+  function revertOneLifeAfterDeath() {
+    oneLifeModeRef.current = false
+    void revertOneLifeMode().then(({ ok, isIronman }) => {
+      if (!ok) {
+        addToast('Connection issue confirming your account change — will retry on your next death.', 'error')
+        oneLifeModeRef.current = true
+        return
+      }
+      addToast(isIronman
+        ? 'One-life protection lost — you are now a standard Ironman.'
+        : 'One-life protection lost — you are now a standard account.', 'error')
+    })
+  }
   const bossKillCountsRef = useRef(bossKillCounts)
   const raidKillCountsRef = useRef(raidKillCounts)
   const unlockedFeaturesRef = useRef(unlockedFeatures)
@@ -572,13 +588,10 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           if (newHP <= 0) {
             setCombat(prev => ({ ...prev, active: false }))
             setActiveTask(null)
-            if (oneLifeModeRef.current) {
-              void triggerOneLifeDeath(addToast)
-            } else {
-              updateHP(getMaxHP())
-              hpRef.current = getMaxHP()
-              setDeathModal({ monsterName: state.monster?.name || 'the monster', cause: 'slain' })
-            }
+            updateHP(getMaxHP())
+            hpRef.current = getMaxHP()
+            setDeathModal({ monsterName: state.monster?.name || 'the monster', cause: 'slain' })
+            if (oneLifeModeRef.current) revertOneLifeAfterDeath()
           }
         }
         if (ev.type === 'dragonfireHit') {
@@ -593,13 +606,10 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           if (newHP <= 0) {
             setCombat(prev => ({ ...prev, active: false }))
             setActiveTask(null)
-            if (oneLifeModeRef.current) {
-              void triggerOneLifeDeath(addToast)
-            } else {
-              updateHP(getMaxHP())
-              hpRef.current = getMaxHP()
-              setDeathModal({ monsterName: state.monster?.name || 'the dragon', cause: 'incinerated' })
-            }
+            updateHP(getMaxHP())
+            hpRef.current = getMaxHP()
+            setDeathModal({ monsterName: state.monster?.name || 'the dragon', cause: 'incinerated' })
+            if (oneLifeModeRef.current) revertOneLifeAfterDeath()
           }
         }
         if (ev.type === 'dragonfireBlocked') {
