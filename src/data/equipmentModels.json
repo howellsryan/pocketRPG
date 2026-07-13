@@ -30,6 +30,20 @@
           0
         ],
         "scale": 0.44
+      },
+      "shield": {
+        "bone": "hand_l",
+        "position": [
+          0,
+          0.05,
+          0
+        ],
+        "rotationDeg": [
+          0,
+          0,
+          0
+        ],
+        "scale": 1.2
       }
     }
   },
@@ -256,6 +270,116 @@
     }
   },
   "gear": {
+    "bronze_kiteshield": {
+      "model": "shields/q_shield.gltf",
+      "slot": "shield",
+      "tint": "#b87333"
+    },
+    "iron_kiteshield": {
+      "model": "shields/q_shield.gltf",
+      "slot": "shield",
+      "tint": "#6e747e"
+    },
+    "steel_kiteshield": {
+      "model": "shields/q_shield.gltf",
+      "slot": "shield",
+      "tint": "#bcc6d2"
+    },
+    "mithril_kiteshield": {
+      "model": "shields/q_shield.gltf",
+      "slot": "shield",
+      "tint": "#3f57c4"
+    },
+    "adamant_kiteshield": {
+      "model": "shields/q_shield.gltf",
+      "slot": "shield",
+      "tint": "#3f8a5a"
+    },
+    "runeforged_kiteshield": {
+      "model": "shields/q_shield.gltf",
+      "slot": "shield",
+      "tint": "#2fd0c0"
+    },
+    "dragon_kiteshield": {
+      "model": "shields/q_shield.gltf",
+      "slot": "shield",
+      "tint": "#c0392b"
+    },
+    "anti_dragon_shield": {
+      "model": "shields/q_shield.gltf",
+      "slot": "shield",
+      "tint": "#7d8a99"
+    },
+    "visage_shield": {
+      "model": "shields/q_shield.gltf",
+      "slot": "shield",
+      "tint": "#8f5a3c"
+    },
+    "shardglass_shield": {
+      "model": "shields/q_shield.gltf",
+      "slot": "shield",
+      "tint": "#7fd6d0"
+    },
+    "2nd_age_kiteshield": {
+      "model": "shields/q_shield.gltf",
+      "slot": "shield",
+      "tint": "#c9a94a"
+    },
+    "arcane_kiteshield": {
+      "model": "shields/q_shield.gltf",
+      "slot": "shield",
+      "tint": "#5566cc"
+    },
+    "eagle_eyed_kiteshield": {
+      "model": "shields/q_shield.gltf",
+      "slot": "shield",
+      "tint": "#8a9a5b"
+    },
+    "boneclaw_shield": {
+      "model": "shields/q_shield.gltf",
+      "slot": "shield",
+      "tint": "#d8cdb0"
+    },
+    "warped_buckler": {
+      "model": "shields/q_shield.gltf",
+      "slot": "shield",
+      "tint": "#6f5b8e"
+    },
+    "ward_of_elidria": {
+      "model": "shields/q_shield.gltf",
+      "slot": "shield",
+      "tint": "#e0d7a8"
+    },
+    "lumira_d_hide_shield": {
+      "model": "shields/q_shield.gltf",
+      "slot": "shield",
+      "tint": "#b58fb0"
+    },
+    "verdant_d_hide_shield": {
+      "model": "shields/q_shield.gltf",
+      "slot": "shield",
+      "tint": "#4a7a3a"
+    },
+    "krylth_d_hide_shield": {
+      "model": "shields/q_shield.gltf",
+      "slot": "shield",
+      "tint": "#4a4a55"
+    },
+    "ancient_d_hide_shield": {
+      "model": "shields/q_shield.gltf",
+      "slot": "shield",
+      "tint": "#b09060"
+    },
+    "zephyra_d_hide_shield": {
+      "model": "shields/q_shield.gltf",
+      "slot": "shield",
+      "tint": "#7fa8c0"
+    },
+    "grondar_d_hide_shield": {
+      "model": "shields/q_shield.gltf",
+      "slot": "shield",
+      "tint": "#8a4b32"
+    },
     "adamant_full_helm": {
       "model": "adamant_full_helm.glb",
       "slot": "head",
