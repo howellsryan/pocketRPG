@@ -2,7 +2,20 @@ name: Logic Regression Pack
 
 on:
   push:
+    branches: [main]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
   pull_request:
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+
+# Newer commits on the same ref supersede in-flight runs — only the latest
+# result matters, so cancel the ones we no longer care about.
+concurrency:
+  group: logic-regression-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   logic-regression:
