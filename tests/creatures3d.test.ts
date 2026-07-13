@@ -22,9 +22,28 @@ const validSpec = () => ({
 })
 
 describe('creatures3d registry', () => {
-  it('every registry entry passes validation', () => {
-    for (const [id, spec] of Object.entries(registry.monsters)) {
-      expect(validateCreatureSpec(spec), `creatures3d.json entry ${id}`).toEqual([])
+  it('every registry entry passes validation (each form of a multiForm entry)', () => {
+    for (const [id, entry] of Object.entries(registry.monsters) as [string, Record<string, unknown>][]) {
+      if (entry.forms && !entry.parts) {
+        const forms = Object.entries(entry.forms as Record<string, unknown>)
+        expect(forms.length, `creatures3d.json entry ${id} has empty forms`).toBeGreaterThan(0)
+        for (const [formKey, spec] of forms) {
+          expect(validateCreatureSpec(spec), `creatures3d.json entry ${id} form ${formKey}`).toEqual([])
+        }
+      } else {
+        expect(validateCreatureSpec(entry), `creatures3d.json entry ${id}`).toEqual([])
+      }
+    }
+  })
+
+  it('multiForm form keys match the monster combat forms so currentForm always resolves', () => {
+    for (const [id, entry] of Object.entries(registry.monsters) as [string, Record<string, unknown>][]) {
+      if (!entry.forms || entry.parts) continue
+      const monster = (monstersData as Record<string, Record<string, unknown>>)[id]
+      expect(monster?.multiForm, `creatures3d.json ${id} has forms but the monster is not multiForm`).toBe(true)
+      for (const key of Object.keys(monster.forms as Record<string, unknown>)) {
+        expect((entry.forms as Record<string, unknown>)[key], `creatures3d.json ${id} is missing combat form ${key}`).toBeTruthy()
+      }
     }
   })
 
@@ -47,6 +66,18 @@ describe('creatures3d registry', () => {
     expect(getCreatureSpec('cave_goblin')).toBeNull()
     expect(getCreatureSpec(undefined)).toBeNull()
     expect(hasCreatureSpec('cave_goblin')).toBe(false)
+  })
+
+  it('resolves multiForm entries per form, falling back to the initial form', () => {
+    const p1 = getCreatureSpec('verzik_vitur', 'phase1')
+    const p2 = getCreatureSpec('verzik_vitur', 'phase2')
+    expect(p1).toBeTruthy()
+    expect(p2).toBeTruthy()
+    expect(JSON.stringify(p1)).not.toEqual(JSON.stringify(p2))
+    // form-less and unknown-form callers get the initial form
+    expect(JSON.stringify(getCreatureSpec('verzik_vitur'))).toEqual(JSON.stringify(p1))
+    expect(JSON.stringify(getCreatureSpec('verzik_vitur', 'nope'))).toEqual(JSON.stringify(p1))
+    expect(hasCreatureSpec('verzik_vitur')).toBe(true)
   })
 })
 

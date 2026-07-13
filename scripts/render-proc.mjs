@@ -99,7 +99,15 @@ fs.mkdirSync(path.join(ROOT, outDir), { recursive: true })
 const frontFlag = args.indexOf('--front')
 const front = frontFlag >= 0 ? (args.splice(frontFlag, 1), '&front') : ''
 const biomeQ = biomeId ? `&biome=${encodeURIComponent(biomeId)}` : ''
-const targets = ids.map((id) => ({ id: biomeId ? `${id}-${biomeId}` : id, query: `monster=${id}${biomeQ}` }))
+// multiForm entries (registry `forms`) render every form: <id>-<form>-*.png.
+const targets = ids.flatMap((id) => {
+  const entry = registry.monsters[id]
+  const forms = entry.forms && !entry.parts ? Object.keys(entry.forms) : [null]
+  return forms.map((f) => ({
+    id: `${id}${f ? `-${f}` : ''}${biomeId ? `-${biomeId}` : ''}`,
+    query: `monster=${id}${f ? `&form=${encodeURIComponent(f)}` : ''}${biomeQ}`,
+  }))
+})
 if (heroMode) targets.push({ id: (heroEquip ? 'hero-equipped' : 'hero') + (biomeId ? `-${biomeId}` : ''), query: `hero&equip=${encodeURIComponent(heroEquip)}${front}${biomeQ}` })
 for (const { id, query } of targets) {
   const page = await browser.newPage({ viewport: { width: 720, height: 560 } })

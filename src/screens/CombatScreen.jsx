@@ -2285,7 +2285,9 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   // Combat view — GLB registry entry wins per-monster; a procedural
   // blend-shell spec (creatures3d.json) covers the rest.
   const arenaModel = combat?.active && combat.monster ? getMonsterModel(combat.monster.id) : null
-  const arenaProc = combat?.active && combat.monster && !arenaModel ? getCreatureSpec(combat.monster.id) : null
+  // currentForm keys multiForm bosses to their per-phase spec (creatures3d
+  // `forms`); the arena swaps the creature in place on form transitions.
+  const arenaProc = combat?.active && combat.monster && !arenaModel ? getCreatureSpec(combat.monster.id, combat.monster.currentForm) : null
   // Hero realism (2026-07 re-scope): the arena hero is the GLB human — the
   // blend-shell hero capped out at a mannequin read (docs/hero-realism-plan.md).
   // Passing null here falls back to the GLB hero + bone-attach/skinned gear;
