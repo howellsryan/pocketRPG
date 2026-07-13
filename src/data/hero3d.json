@@ -1,0 +1,797 @@
+{
+  "version": 1,
+  "hero": {
+    "height": 1.8,
+    "archetype": "humanoid",
+    "rotationDeg": [
+      0,
+      90,
+      0
+    ],
+    "palette": [
+      "#d4a97a",
+      "#362317",
+      "#8a4f32",
+      "#453425",
+      "#241b12",
+      "#efe6d0"
+    ],
+    "parts": [
+      {
+        "id": "hips",
+        "a": [
+          0,
+          1.04,
+          0.01
+        ],
+        "b": [
+          0,
+          1.18,
+          0.01
+        ],
+        "r1": 0.125,
+        "r2": 0.145,
+        "color": 3,
+        "blend": 0.06
+      },
+      {
+        "id": "chest",
+        "a": [
+          0,
+          1.18,
+          0.01
+        ],
+        "b": [
+          0,
+          1.5,
+          0.01
+        ],
+        "r1": 0.15,
+        "r2": 0.175,
+        "color": 2,
+        "blend": 0.06
+      },
+      {
+        "id": "head",
+        "a": [
+          0,
+          1.63,
+          0.02
+        ],
+        "b": [
+          0,
+          1.82,
+          0.03
+        ],
+        "r1": 0.07,
+        "r2": 0.13,
+        "color": 0,
+        "blend": 0.07
+      },
+      {
+        "id": "hair",
+        "a": [
+          0,
+          1.865,
+          0.005
+        ],
+        "b": [
+          0,
+          1.88,
+          -0.055
+        ],
+        "r1": 0.138,
+        "r2": 0.105,
+        "color": 1,
+        "blend": 0.025
+      },
+      {
+        "id": "armL",
+        "a": [
+          0.185,
+          1.56,
+          -0.02
+        ],
+        "b": [
+          0.255,
+          1.33,
+          -0.01
+        ],
+        "r1": 0.06,
+        "r2": 0.046,
+        "color": 2,
+        "blend": 0.045
+      },
+      {
+        "id": "foreL",
+        "a": [
+          0.255,
+          1.33,
+          -0.01
+        ],
+        "b": [
+          0.285,
+          1.09,
+          0.05
+        ],
+        "r1": 0.046,
+        "r2": 0.042,
+        "color": 0,
+        "blend": 0.04
+      },
+      {
+        "id": "armR",
+        "a": [
+          -0.185,
+          1.56,
+          -0.02
+        ],
+        "b": [
+          -0.255,
+          1.33,
+          -0.01
+        ],
+        "r1": 0.06,
+        "r2": 0.046,
+        "color": 2,
+        "blend": 0.045
+      },
+      {
+        "id": "foreR",
+        "a": [
+          -0.255,
+          1.33,
+          -0.01
+        ],
+        "b": [
+          -0.285,
+          1.09,
+          0.05
+        ],
+        "r1": 0.046,
+        "r2": 0.042,
+        "color": 0,
+        "blend": 0.04
+      },
+      {
+        "id": "legL",
+        "a": [
+          0.105,
+          1.02,
+          0.01
+        ],
+        "b": [
+          0.14,
+          0.1,
+          -0.02
+        ],
+        "r1": 0.075,
+        "r2": 0.05,
+        "color": 3,
+        "blend": 0.045
+      },
+      {
+        "id": "legR",
+        "a": [
+          -0.105,
+          1.02,
+          0.01
+        ],
+        "b": [
+          -0.14,
+          0.1,
+          -0.02
+        ],
+        "r1": 0.075,
+        "r2": 0.05,
+        "color": 3,
+        "blend": 0.045
+      },
+      {
+        "id": "footL",
+        "a": [
+          0.14,
+          0.065,
+          -0.05
+        ],
+        "b": [
+          0.14,
+          0.06,
+          0.13
+        ],
+        "r1": 0.068,
+        "r2": 0.056,
+        "color": 4,
+        "blend": 0.03
+      },
+      {
+        "id": "footR",
+        "a": [
+          -0.14,
+          0.065,
+          -0.05
+        ],
+        "b": [
+          -0.14,
+          0.06,
+          0.13
+        ],
+        "r1": 0.068,
+        "r2": 0.056,
+        "color": 4,
+        "blend": 0.03
+      },
+      {
+        "id": "eyeL",
+        "a": [
+          0.06,
+          1.8,
+          0.15
+        ],
+        "b": [
+          0.06,
+          1.8,
+          0.168
+        ],
+        "r1": 0.022,
+        "r2": 0.022,
+        "color": 5,
+        "blend": 0.02
+      },
+      {
+        "id": "eyeR",
+        "a": [
+          -0.06,
+          1.8,
+          0.15
+        ],
+        "b": [
+          -0.06,
+          1.8,
+          0.168
+        ],
+        "r1": 0.022,
+        "r2": 0.022,
+        "color": 5,
+        "blend": 0.02
+      }
+    ],
+    "breathe": {
+      "parts": [
+        "chest"
+      ],
+      "amp": 0.025,
+      "rate": 2
+    },
+    "head": {
+      "parts": [
+        "head",
+        "hair",
+        "eyeL",
+        "eyeR"
+      ],
+      "anchor": [
+        0,
+        1.6,
+        0.01
+      ],
+      "amp": 0.07
+    },
+    "legs": [
+      {
+        "part": "legL",
+        "foot": "footL"
+      },
+      {
+        "part": "legR",
+        "foot": "footR"
+      }
+    ],
+    "arms": {
+      "left": {
+        "upper": [
+          "armL"
+        ],
+        "lower": [
+          "foreL"
+        ],
+        "anchor": [
+          0.19,
+          1.58,
+          -0.02
+        ],
+        "elbow": [
+          0.26,
+          1.33,
+          -0.01
+        ]
+      },
+      "right": {
+        "upper": [
+          "armR"
+        ],
+        "lower": [
+          "foreR"
+        ],
+        "anchor": [
+          -0.19,
+          1.58,
+          -0.02
+        ],
+        "elbow": [
+          -0.26,
+          1.33,
+          -0.01
+        ],
+        "grip": [
+          -0.29,
+          1.09,
+          0.05
+        ]
+      }
+    }
+  },
+  "equipment": {
+    "bronze_scimitar": {
+      "slot": "weapon",
+      "palette": [
+        "#dfa85c",
+        "#33210f",
+        "#8a5a26"
+      ],
+      "add": [
+        {
+          "id": "scimPommel",
+          "a": [
+            -0.29,
+            1.175,
+            0.012
+          ],
+          "b": [
+            -0.29,
+            1.155,
+            0.022
+          ],
+          "r1": 0.02,
+          "r2": 0.035,
+          "color": 2,
+          "blend": 0.014,
+          "rig": "handR"
+        },
+        {
+          "id": "scimGrip",
+          "a": [
+            -0.29,
+            1.15,
+            0.025
+          ],
+          "b": [
+            -0.29,
+            1.045,
+            0.075
+          ],
+          "r1": 0.027,
+          "r2": 0.027,
+          "color": 1,
+          "blend": 0.014,
+          "rig": "handR"
+        },
+        {
+          "id": "scimGuard",
+          "a": [
+            -0.34,
+            1.035,
+            0.09
+          ],
+          "b": [
+            -0.24,
+            1.035,
+            0.09
+          ],
+          "r1": 0.023,
+          "r2": 0.023,
+          "color": 2,
+          "blend": 0.014,
+          "rig": "handR"
+        },
+        {
+          "id": "scimBlade",
+          "a": [
+            -0.29,
+            1.0,
+            0.1
+          ],
+          "b": [
+            -0.29,
+            0.62,
+            0.33
+          ],
+          "r1": 0.036,
+          "r2": 0.026,
+          "color": 0,
+          "blend": 0.015,
+          "rig": "handR"
+        },
+        {
+          "id": "scimTip",
+          "a": [
+            -0.29,
+            0.62,
+            0.33
+          ],
+          "b": [
+            -0.29,
+            0.7,
+            0.5
+          ],
+          "r1": 0.026,
+          "r2": 0.008,
+          "color": 0,
+          "blend": 0.018,
+          "rig": "handR"
+        }
+      ]
+    },
+    "bronze_full_helm": {
+      "slot": "head",
+      "palette": [
+        "#d99a55",
+        "#33210f"
+      ],
+      "override": {
+        "hair": {
+          "remove": true
+        },
+        "eyeL": {
+          "remove": true
+        },
+        "eyeR": {
+          "remove": true
+        },
+        "head": {
+          "color": 0
+        }
+      },
+      "add": [
+        {
+          "id": "helmDome",
+          "a": [
+            0,
+            1.7,
+            0.02
+          ],
+          "b": [
+            0,
+            1.85,
+            0.028
+          ],
+          "r1": 0.148,
+          "r2": 0.118,
+          "color": 0,
+          "blend": 0.02,
+          "rig": "head"
+        },
+        {
+          "id": "helmRim",
+          "a": [
+            0,
+            1.64,
+            0.02
+          ],
+          "b": [
+            0,
+            1.7,
+            0.02
+          ],
+          "r1": 0.118,
+          "r2": 0.152,
+          "color": 1,
+          "blend": 0.012,
+          "rig": "head"
+        },
+        {
+          "id": "helmSlit",
+          "a": [
+            -0.062,
+            1.788,
+            0.147
+          ],
+          "b": [
+            0.062,
+            1.788,
+            0.147
+          ],
+          "r1": 0.02,
+          "r2": 0.02,
+          "color": 1,
+          "blend": 0.012,
+          "rig": "head"
+        }
+      ]
+    },
+    "bronze_platebody": {
+      "slot": "body",
+      "palette": [
+        "#c1803f",
+        "#33210f",
+        "#d4a97a",
+        "#dfa661"
+      ],
+      "override": {
+        "chest": {
+          "color": 0,
+          "r1": 0.175,
+          "r2": 0.19,
+          "b": [
+            0,
+            1.49,
+            0.01
+          ],
+          "blend": 0.045
+        },
+        "armL": {
+          "color": 2
+        },
+        "armR": {
+          "color": 2
+        }
+      },
+      "add": [
+        {
+          "id": "pauldronL",
+          "a": [
+            0.14,
+            1.64,
+            -0.02
+          ],
+          "b": [
+            0.285,
+            1.485,
+            0.005
+          ],
+          "r1": 0.095,
+          "r2": 0.05,
+          "color": 3,
+          "blend": 0.015
+        },
+        {
+          "id": "pauldronR",
+          "a": [
+            -0.14,
+            1.64,
+            -0.02
+          ],
+          "b": [
+            -0.285,
+            1.485,
+            0.005
+          ],
+          "r1": 0.095,
+          "r2": 0.05,
+          "color": 3,
+          "blend": 0.015
+        }
+      ]
+    },
+    "bronze_platelegs": {
+      "slot": "legs",
+      "palette": [
+        "#8f5526",
+        "#33210f"
+      ],
+      "override": {
+        "hips": {
+          "color": 0
+        },
+        "legL": {
+          "color": 0,
+          "blend": 0.04
+        },
+        "legR": {
+          "color": 0,
+          "blend": 0.04
+        }
+      }
+    },
+    "iron_scimitar": {
+      "slot": "weapon",
+      "variantOf": "bronze_scimitar",
+      "palette": [
+        "#b9b2a6",
+        "#33251a",
+        "#6e5f4d"
+      ]
+    },
+    "steel_scimitar": {
+      "slot": "weapon",
+      "variantOf": "bronze_scimitar",
+      "palette": [
+        "#dcded6",
+        "#3c352b",
+        "#8b8577"
+      ]
+    },
+    "mithril_scimitar": {
+      "slot": "weapon",
+      "variantOf": "bronze_scimitar",
+      "palette": [
+        "#7382c4",
+        "#242c4a",
+        "#3d4a80"
+      ]
+    },
+    "adamant_scimitar": {
+      "slot": "weapon",
+      "variantOf": "bronze_scimitar",
+      "palette": [
+        "#5ea87a",
+        "#1f3a2b",
+        "#31654a"
+      ]
+    },
+    "runeforged_scimitar": {
+      "slot": "weapon",
+      "variantOf": "bronze_scimitar",
+      "palette": [
+        "#a3ccdb",
+        "#2b444d",
+        "#54808f"
+      ]
+    },
+    "dragon_scimitar": {
+      "slot": "weapon",
+      "variantOf": "bronze_scimitar",
+      "palette": [
+        "#c8503f",
+        "#3a1410",
+        "#6e211a"
+      ]
+    },
+    "iron_full_helm": {
+      "slot": "head",
+      "variantOf": "bronze_full_helm",
+      "palette": [
+        "#b6afa4",
+        "#33251a"
+      ]
+    },
+    "steel_full_helm": {
+      "slot": "head",
+      "variantOf": "bronze_full_helm",
+      "palette": [
+        "#d6d8d0",
+        "#3c352b"
+      ]
+    },
+    "mithril_full_helm": {
+      "slot": "head",
+      "variantOf": "bronze_full_helm",
+      "palette": [
+        "#6d7cbd",
+        "#242c4a"
+      ]
+    },
+    "adamant_full_helm": {
+      "slot": "head",
+      "variantOf": "bronze_full_helm",
+      "palette": [
+        "#5aa374",
+        "#1f3a2b"
+      ]
+    },
+    "runeforged_full_helm": {
+      "slot": "head",
+      "variantOf": "bronze_full_helm",
+      "palette": [
+        "#9cc7d6",
+        "#2b444d"
+      ]
+    },
+    "dragon_full_helm": {
+      "slot": "head",
+      "variantOf": "bronze_full_helm",
+      "palette": [
+        "#c14b3b",
+        "#3a1410"
+      ]
+    },
+    "iron_platebody": {
+      "slot": "body",
+      "variantOf": "bronze_platebody",
+      "palette": [
+        "#9d968b",
+        "#33251a",
+        "#d4a97a",
+        "#b6afa4"
+      ]
+    },
+    "steel_platebody": {
+      "slot": "body",
+      "variantOf": "bronze_platebody",
+      "palette": [
+        "#bfc1b9",
+        "#3c352b",
+        "#d4a97a",
+        "#d6d8d0"
+      ]
+    },
+    "mithril_platebody": {
+      "slot": "body",
+      "variantOf": "bronze_platebody",
+      "palette": [
+        "#5765a8",
+        "#242c4a",
+        "#d4a97a",
+        "#6d7cbd"
+      ]
+    },
+    "adamant_platebody": {
+      "slot": "body",
+      "variantOf": "bronze_platebody",
+      "palette": [
+        "#478760",
+        "#1f3a2b",
+        "#d4a97a",
+        "#5aa374"
+      ]
+    },
+    "runeforged_platebody": {
+      "slot": "body",
+      "variantOf": "bronze_platebody",
+      "palette": [
+        "#7fb0c2",
+        "#2b444d",
+        "#d4a97a",
+        "#9cc7d6"
+      ]
+    },
+    "iron_platelegs": {
+      "slot": "legs",
+      "variantOf": "bronze_platelegs",
+      "palette": [
+        "#837c72",
+        "#33251a"
+      ]
+    },
+    "steel_platelegs": {
+      "slot": "legs",
+      "variantOf": "bronze_platelegs",
+      "palette": [
+        "#a3a59d",
+        "#3c352b"
+      ]
+    },
+    "mithril_platelegs": {
+      "slot": "legs",
+      "variantOf": "bronze_platelegs",
+      "palette": [
+        "#46538c",
+        "#242c4a"
+      ]
+    },
+    "adamant_platelegs": {
+      "slot": "legs",
+      "variantOf": "bronze_platelegs",
+      "palette": [
+        "#38704e",
+        "#1f3a2b"
+      ]
+    },
+    "runeforged_platelegs": {
+      "slot": "legs",
+      "variantOf": "bronze_platelegs",
+      "palette": [
+        "#63929f",
+        "#2b444d"
+      ]
+    },
+    "dragon_platelegs": {
+      "slot": "legs",
+      "variantOf": "bronze_platelegs",
+      "palette": [
+        "#8f3227",
+        "#3a1410"
+      ]
+    }
+  }
+}

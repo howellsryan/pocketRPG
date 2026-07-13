@@ -31,6 +31,13 @@ const sourceFiles = [
   'utils/rewardReveal.js',
   'utils/equipModels.js', // -> game chunk (equip screen 3D model registry)
   'utils/three3d.js',     // -> game chunk (lazy three.js loader; equip/combat 3D)
+  '3d/blendShell.js',     // -> game chunk (procedural blend-shell creature runtime)
+  '3d/rigs.js',           // -> game chunk (procedural animation rigs over blendShell)
+  '3d/creatures.js',      // -> game chunk (creatures3d.json registry resolver)
+  '3d/heroCompose.js',    // -> game chunk (pure hero + equipment spec composition)
+  '3d/heroCreature.js',   // -> game chunk (hero3d.json resolver over heroCompose)
+  '3d/biomes.js',         // -> game chunk (arena set dressing: ground/sky/props from a biome spec)
+  '3d/biomeRegistry.js',  // -> game chunk (biomes3d.json resolver: placeId -> biome spec)
   'hooks/useActionTick.js',
   'hooks/useIsDesktop.js',
   'hooks/useEscapeKey.js',
@@ -243,6 +250,13 @@ const GAME_CHUNK_FILES = new Set([
   'components/CombatArena3D.js',
   'utils/equipModels.js',
   'utils/three3d.js',
+  '3d/blendShell.js',
+  '3d/rigs.js',
+  '3d/creatures.js',
+  '3d/heroCompose.js',
+  '3d/heroCreature.js',
+  '3d/biomes.js',
+  '3d/biomeRegistry.js',
   'screens/HomeScreen.js',
   'screens/StatsScreen.js',
   'screens/InventoryScreen.js',
@@ -320,6 +334,9 @@ const worldJSON = readSrc('data/world.json');
 const worldActivitiesJSON = readSrc('data/worldActivities.json');
 const placeMapsJSON = readSrc('data/placeMaps.json');
 const equipmentModelsJSON = readSrc('data/equipmentModels.json');
+const creatures3dJSON = readSrc('data/creatures3d.json');
+const hero3dJSON = readSrc('data/hero3d.json');
+const biomes3dJSON = readSrc('data/biomes3d.json');
 
 // Landing screen images. Served as external files from /public/landing/ (the
 // Cloudflare Pages output dir is the repo root) and referenced by URL rather
@@ -357,6 +374,48 @@ for (const f of sourceFiles) {
     else coreJS += out;
   } catch(e) {
     console.error(`Error: ${f}: ${e.message}`);
+    process.exit(1);
+  }
+}
+
+// ── Guard: imports of unregistered modules ──
+// processFile strips every `import` line and relies on the imported bindings
+// existing as top-level declarations elsewhere in the concatenated bundle. If
+// a module imports a src file that is NOT in sourceFiles, its bindings are
+// simply undefined at runtime — and when the reference lives inside a
+// function (a lazily-mounted component), check:single's eval smoke-run never
+// executes it, so the break only surfaces in production (e.g. 3d/rigs.js
+// missing → the combat arena silently fails over for procedural monsters).
+// JSON imports are exempt: they resolve to data globals injected below, and
+// a missing injection dies at eval time where check:single catches it.
+{
+  const stripExt = (p) => p.replace(/\.(jsx?|tsx?)$/, '');
+  const registered = new Set(sourceFiles.map(stripExt));
+  // deliberately unregistered: replaced by globals injected into the core
+  // script below (landingImages/homeLogo), like the JSON data files
+  registered.add('screens/landingImages');
+  registered.add('utils/homeLogo');
+  const offenders = [];
+  for (const f of sourceFiles) {
+    const src = readDist(f);
+    const re = /^import\s+(?:[\w{},*\s]+?\s+from\s+)?['"]([^'"]+)['"]/gm;
+    let m;
+    while ((m = re.exec(src))) {
+      const spec = m[1];
+      if (!spec.startsWith('.') || spec.endsWith('.json') || spec.endsWith('.css')) continue;
+      const resolved = stripExt(path.posix.join(path.posix.dirname(f), spec));
+      if (!registered.has(resolved)) offenders.push(`${f} imports ${spec} → '${resolved}.js' is not in sourceFiles`);
+    }
+  }
+  if (offenders.length) {
+    console.error(
+      'build_single: module(s) imported but not registered in sourceFiles.\n' +
+      'The single-file bundle strips imports and depends on concatenation, so these\n' +
+      "bindings would be undefined at runtime (and check:single can't see references\n" +
+      'made inside functions). Add the module to sourceFiles (and GAME_CHUNK_FILES if\n' +
+      'only in-game code uses it):\n  ' +
+      [...new Set(offenders)].join('\n  ')
+    );
     process.exit(1);
   }
 }
@@ -571,7 +630,7 @@ const worldBetaEnabled = process.env.EnableWorldBeta != null
   ? process.env.EnableWorldBeta === 'true'
   : Boolean(process.env.CF_PAGES_BRANCH) && process.env.CF_PAGES_BRANCH !== 'main';
 console.log(`World beta button: ${worldBetaEnabled ? 'ENABLED' : 'disabled'} (EnableWorldBeta=${process.env.EnableWorldBeta ?? 'unset'}, CF_PAGES_BRANCH=${process.env.CF_PAGES_BRANCH ?? 'unset'})`);
-const gameChunkSource = `const gameIconsData = ${gameIconsJSON};\nconst bespokeIconsData = ${bespokeIconsJSON};\nconst worldActivitiesData = ${worldActivitiesJSON};\nconst placeMapsData = ${placeMapsJSON};\nconst equipmentModelsData = ${equipmentModelsJSON};\nconst pocketAssetBase = '/public/';\nconst pocketEnable3D = ${enable3D};\nconst pocketWorldBetaEnabled = ${worldBetaEnabled};\n${gameJS}`;
+const gameChunkSource = `const gameIconsData = ${gameIconsJSON};\nconst bespokeIconsData = ${bespokeIconsJSON};\nconst worldActivitiesData = ${worldActivitiesJSON};\nconst placeMapsData = ${placeMapsJSON};\nconst equipmentModelsData = ${equipmentModelsJSON};\nconst creatures3dData = ${creatures3dJSON};\nconst hero3dData = ${hero3dJSON};\nconst biomes3dData = ${biomes3dJSON};\nconst pocketAssetBase = '/public/';\nconst pocketEnable3D = ${enable3D};\nconst pocketWorldBetaEnabled = ${worldBetaEnabled};\n${gameJS}`;
 const gameChunkScript = esbuild.transformSync(gameChunkSource, SPLIT_MINIFY).code.trim();
 const gameChunkBody = `"use strict";\n${gameChunkScript}\n`;
 const gameChunkHash = require('crypto').createHash('sha256').update(gameChunkBody).digest('hex').slice(0, 12);

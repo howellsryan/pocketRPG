@@ -1,0 +1,104 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Procedural creature harness</title>
+<!-- Phase 1 dev harness (docs/procedural-3d-plan.md): renders a creature from
+     src/data/creatures3d.json through the REAL runtime module
+     src/3d/blendShell.js. Run: python3 -m http.server from repo root, open
+     /docs/prototypes/proc-creature-harness.html?monster=pasture_bull.
+     Not part of the build. -->
+<style>html,body{margin:0;height:100%;overflow:hidden;background:#efe6d3}canvas{display:block}</style>
+<body>
+<script type="module">
+import * as THREE from '/public/vendor/three/three.module.min.js'
+import { createProcCreature } from '/src/3d/rigs.js'
+
+const Q = new URLSearchParams(location.search)
+let spec
+if (Q.get('hero') != null) {
+  // ?hero&equip=bronze_scimitar,bronze_full_helm — composed procedural hero
+  const { heroComposeSpec } = await import('/src/3d/heroCompose.js')
+  const data = await (await fetch('/src/data/hero3d.json')).json()
+  spec = heroComposeSpec(data, (Q.get('equip') || '').split(',').filter(Boolean))
+  if (!spec) throw new Error('no hero spec in hero3d.json')
+} else {
+  const monsterId = Q.get('monster') || 'pasture_bull'
+  const data = await (await fetch('/src/data/creatures3d.json')).json()
+  spec = data.monsters[monsterId]
+  if (!spec) throw new Error('no spec for ' + monsterId)
+}
+
+const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true })
+renderer.setSize(innerWidth, innerHeight)
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2))
+document.body.appendChild(renderer.domElement)
+
+const scene = new THREE.Scene()
+scene.background = new THREE.Color(0xefe6d3)
+scene.fog = new THREE.Fog(0xefe6d3, 6, 12)
+const camera = new THREE.PerspectiveCamera(38, innerWidth / innerHeight, 0.1, 50)
+if (Q.get('hero') != null) {
+  // ?front — face-on view for judging faces and gear. Cameras sit on the
+  // hero's RIGHT (-x): the arena's 90° rotation shows players that side,
+  // which is also where the weapon rides.
+  if (Q.get('front') != null) camera.position.set(-0.6, 1.45, 3.4)
+  else camera.position.set(-2.2, 1.55, 3.0)
+  camera.lookAt(0, 1.0, 0)
+} else if (Q.get('cam') === 'arena') {
+  // straight-on arena framing (CombatArena3D camera) for judging biome set
+  // dressing composition rather than the creature itself
+  camera.position.set(0, 1.7, 4.8)
+  camera.lookAt(0, 1.0, 0)
+} else { camera.position.set(2.1, 1.25, 2.9); camera.lookAt(0, 0.62, 0) }
+
+// ?biome=<id> — arena set dressing from src/data/biomes3d.json in place of
+// the plain shadow disc (visual review path for Phase 4 biomes).
+if (Q.get('biome')) {
+  const { mountArenaBiome } = await import('/src/3d/biomes.js')
+  const biomes = await (await fetch('/src/data/biomes3d.json')).json()
+  const biome = biomes.biomes[Q.get('biome')]
+  if (!biome) throw new Error('no biome ' + Q.get('biome'))
+  const mounted = mountArenaBiome(THREE, scene, biome)
+  mounted.addShadowBlob(0, 0, 0.6)
+} else {
+  const gc = document.createElement('canvas'); gc.width = gc.height = 256
+  const ctx = gc.getContext('2d')
+  const grad = ctx.createRadialGradient(128, 128, 10, 128, 128, 128)
+  grad.addColorStop(0, 'rgba(90,70,45,0.55)'); grad.addColorStop(1, 'rgba(90,70,45,0)')
+  ctx.fillStyle = grad; ctx.fillRect(0, 0, 256, 256)
+  const ground = new THREE.Mesh(
+    new THREE.CircleGeometry(2.2, 40),
+    new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(gc), transparent: true }),
+  )
+  ground.rotation.x = -Math.PI / 2; ground.position.y = 0.001
+  scene.add(ground)
+}
+
+const creature = createProcCreature(THREE, spec)
+scene.add(creature.group)
+
+let last = 0
+function renderAt(t) {
+  // step in small fixed slices so big __setTime jumps still animate the rig
+  let dt = Math.max(0, t - last)
+  last = t
+  while (dt > 0) { creature.update(Math.min(dt, 1 / 30)); dt -= 1 / 30 }
+  renderer.render(scene, camera)
+}
+
+window.__setTime = (t) => renderAt(t)
+window.__trigger = (name) => creature.trigger(name)
+window.__creatureGroup = creature.group
+window.__setFlash = (amt) => creature.setFlash(0.8, 0.05, 0.02, amt)
+window.__measureFps = (frames = 150) => new Promise((res) => {
+  let n = 0; const t0 = performance.now()
+  const step = () => {
+    renderAt(performance.now() / 1000)
+    if (++n < frames) requestAnimationFrame(step)
+    else res(Math.round(n / ((performance.now() - t0) / 1000)))
+  }
+  requestAnimationFrame(step)
+})
+renderAt(0.4)
+window.__ready = true
+</script>
+</body>

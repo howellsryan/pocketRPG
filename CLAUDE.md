@@ -87,7 +87,7 @@ Server-authoritative under `/api/pvp/*`. Full rules (matchmaking, save-lockdown,
 
 ## 13) Agent Best Practices
 - Keep changes minimal and scoped; no unrelated refactors — skill **`scope-fence`** (flag adjacent issues, don't fix them). Update logic tests with new gameplay logic.
-- **Skills** (`.claude/skills/`, auto-trigger by description; full inventory + authoring guidance in **`SKILLS.md`**): `plan-gate` (novel/multi-system work), `scope-fence`, `ruthless-editor` (public-facing prose), `memory-hygiene` (editing this file/rules), `pr-changelog` (every PR), `add-content` (game data). Path-scoped rules live in `.claude/rules/` (pvp, mcp, chat).
+- **Skills** (`.claude/skills/`, auto-trigger by description; full inventory + authoring guidance in **`SKILLS.md`**): `plan-gate` (novel/multi-system work), `scope-fence`, `ruthless-editor` (public-facing prose), `memory-hygiene` (editing this file/rules), `pr-changelog` (every PR), `add-content` (game data), `procgen-creature` (creatures3d.json specs). Path-scoped rules live in `.claude/rules/` (pvp, mcp, chat).
 - **Comments: write very few.** Only for a non-obvious invariant/constraint the code can't express. Never narrate what code does, restate the change, or explain reasoning in comments — they cost tokens on every future read and go stale.
 - Edit source of truth in `src/**` (+ `functions/**`); generated output follows from build scripts. Never commit `index.html` / `game-*.js`.
 - Direct user/developer/system instructions outrank this file. Update this guide in the same change when it goes stale.

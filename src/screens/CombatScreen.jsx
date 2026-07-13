@@ -46,6 +46,9 @@ import { hasEpicLootDrop, getItemUnitValue, getLootTotalValue } from '../utils/i
 import { splatsFromCombatEvents, HIT_SPLAT_DURATION_MS } from '../utils/hitSplats.js'
 import { HitSplatLayer } from '../components/HitSplat.jsx'
 import CombatArena3D from '../components/CombatArena3D.jsx'
+import { getCreatureSpec } from '../3d/creatures.js'
+import { composeHeroSpec3D } from '../3d/heroCreature.js'
+import { getArenaBiomeSpec } from '../3d/biomeRegistry.js'
 import { getMonsterModel, getCharacterAssetPath, getWeaponPlacement, getGearPlacements, getCharacterModel } from '../utils/equipModels.js'
 import { canRender3D } from '../utils/three3d.js'
 import ActivePotionBadges from '../components/ActivePotionBadges.jsx'
@@ -254,7 +257,7 @@ class PvpCombatErrorBoundary extends Component {
 }
 
 export default function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onCombatStatusChange, onBack, onStopBack, dungeonPlaceId }) {
-  const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, updateEquipment, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, idleCombatSetup, updateIdleCombatSetup, homeShortcuts, updateHomeShortcuts, setActiveTask, requestActivityStart, slayerTask, setSlayerTask, awardSlayerPoints, slayerTasksCompleted, setSlayerTasksCompleted, activeCombatSpell, updateActiveCombatSpell, bossKillCounts, updateBossKillCounts, raidKillCounts, updateRaidKillCounts, unlockedFeatures, completedQuests, isOneLife, isIronman, getSnapshot, loadGame, combatSkipHandlerRef, skipHourHandlerRef, chargeSkipRef, raidSkipHandlerRef, lockGame, unlockGame, resolveCombatCompletion, characterUnlocks, killCountsLoaded, recordGameEvent } = useGame()
+  const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, updateEquipment, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, idleCombatSetup, updateIdleCombatSetup, homeShortcuts, updateHomeShortcuts, setActiveTask, requestActivityStart, slayerTask, setSlayerTask, awardSlayerPoints, slayerTasksCompleted, setSlayerTasksCompleted, activeCombatSpell, updateActiveCombatSpell, bossKillCounts, updateBossKillCounts, raidKillCounts, updateRaidKillCounts, unlockedFeatures, completedQuests, isOneLife, isIronman, getSnapshot, loadGame, combatSkipHandlerRef, skipHourHandlerRef, chargeSkipRef, raidSkipHandlerRef, lockGame, unlockGame, resolveCombatCompletion, characterUnlocks, killCountsLoaded, recordGameEvent, worldLocation } = useGame()
   const pvp = usePvp()
   // Offline demo: bosses, raids and PvP are locked (server-authoritative).
   const isDemo = isDemoMode() && !(getToken() && getCharacterId())
@@ -2280,9 +2283,19 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     )
   }
 
-  // Combat view
+  // Combat view — GLB registry entry wins per-monster; a procedural
+  // blend-shell spec (creatures3d.json) covers the rest.
   const arenaModel = combat?.active && combat.monster ? getMonsterModel(combat.monster.id) : null
-  const arenaAvailable = Boolean(arenaModel) && Boolean(getCharacterAssetPath()) && canRender3D()
+  const arenaProc = combat?.active && combat.monster && !arenaModel ? getCreatureSpec(combat.monster.id) : null
+  // Procedural hero wearing whatever is equipped (unregistered items simply
+  // don't render); null falls back to the GLB hero + bone-attached gear.
+  const arenaHeroProc = useMemo(
+    () => composeHeroSpec3D(Object.values(equipment || {}).map((s) => s && s.itemId).filter(Boolean)),
+    [equipment],
+  )
+  const arenaMonsterId = combat?.active && combat.monster ? combat.monster.id : null
+  const arenaBiome = useMemo(() => getArenaBiomeSpec(worldLocation, arenaMonsterId), [worldLocation, arenaMonsterId])
+  const arenaAvailable = Boolean(arenaModel || arenaProc) && Boolean(arenaHeroProc || getCharacterAssetPath()) && canRender3D()
   const showArena = arenaAvailable && !arenaClosed
   const reopenArena = () => {
     setArenaClosed(false)
@@ -2306,10 +2319,13 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   const arenaPanel = showArena && (
     <CombatArena3D
       monsterName={combat.monster.name}
-      monsterPath={arenaModel.path}
-      monsterHeight={arenaModel.height}
-      monsterRotationDeg={arenaModel.rotationDeg}
+      monsterPath={arenaModel ? arenaModel.path : null}
+      monsterProc={arenaProc}
+      monsterHeight={(arenaModel || arenaProc).height}
+      monsterRotationDeg={(arenaModel || arenaProc).rotationDeg}
       characterPath={getCharacterAssetPath()}
+      heroProc={arenaHeroProc}
+      biome={arenaBiome}
       clips={{ idle: heroSpec.idleClip, attack: heroSpec.attackClip, special: heroSpec.specialClip }}
       weapon={equipment?.weapon ? getWeaponPlacement(equipment.weapon.itemId) : null}
       gear={getGearPlacements(equipment)}

@@ -1,0 +1,118 @@
+# Procedural 3D Generation — Design Plan
+
+Goal: generate monsters, bosses, environments, weapons, armour, and animations as **pure three.js code driven by small JSON specs** — no external asset files. End state: an AI (or dev) writes a ~15-line spec, and a seamless, animated, hand-sculpted-looking creature appears in `CombatArena3D`. Coexists with the Tripo GLB pipeline (`equipmentModels.json`); replaces it per-entry as quality allows.
+
+Status: **Phases 0–5 complete; Phase 6 first slice complete (bosses + VFX).** Delivered since the Phase 5 slice: the reactive-leg overshoot bug fixed (fixed 0.25-unit step overshoot → proportional, plus idle re-homing — legs used to flail forever after the first hit), Phase 4 arena biomes (below), a hero-gear quality pass (scimitar with pommel/grip/guard/curved blade clear of the forearm, prouder helm, highlight-metal pauldrons + skin arms, per-tier value order; **hero harness cameras now sit on the hero's right — the side the arena shows players; judge gear from there**), and Phase 6's first slice: per-part `glow` + spec-level `dissolve` death VFX in the blend-shell shader, boss creatures **The Duskmare** and **Shroudwraith Specter**, and a `monsters` → biome override so boss fights get lair set dressing. Phase 6 remaining: multiForm phase-driven part swaps (arena needs a form-keyed in-place creature swap like the hero's), more bosses (only KBD has a GLB — every other boss needs a spec to get an arena), raid-specific set pieces, and any raise of the 24-part budget (uniform-count math in blendShell.js caps it near the WebGL2 256-vector floor — verify before raising).
+
+Phase 4 (arena environments): **complete.** `src/data/biomes3d.json` (meadow default, desert, marsh, volcanic, umbral) + `src/3d/biomes.js` (mount/validate, JSON-import-free for the harness) + `src/3d/biomeRegistry.js` ((placeId, monsterId) → spec; monster override beats place). Set dressing = noise-shaded ground disc, sky-gradient backdrop, horizon haze band (band must extend below the horizon or its edge draws a line), tinted hemisphere/key lights, static blend-shell props, contact-shadow blobs added by the arena. Harness: `?biome=<id>`, `?cam=arena`; renderer: `--biome <id>`. The combat-arena hero is now a procedural blend-shell humanoid (`src/data/hero3d.json`, proportions auto-derived from the Tripo hero.glb by `scripts/derive-hero-spec.mjs`) wearing composable equipment: entries patch the hero spec (add parts into rig groups / override or remove body parts), so gear fit and animation are correct by construction — the structural dead-end of auto-fitting foreign meshes onto the GLB hero (see `docs/gear-3d-pipeline.md`) no longer applies to procedural gear. Shipped: `humanoid` archetype in `rigs.js` (two-segment arms, sword-swing attack timed to the arena's 240ms impact, hit guard, forward-crumple death), `heroCompose.js`/`heroCreature.js`, bronze scimitar + full helm + platebody + platelegs, arena wiring with in-place creature swap on gear change (GLB hero + bone-attach path intact as fallback), `render-proc.mjs --hero [equip,...] --front`. Second slice: all metal tiers (iron→runeforged + dragon scimitar/full helm/platelegs, dragon platebody doesn't exist as an item) via `variantOf` entries — a variant inherits the base entry's add/override geometry with its own palette (`heroResolveEquipEntry` in `heroCompose.js`; one level, no chains); bronze helm/torso/legs re-valued to a light→dark tier gradient. Known debt: equip-screen hero remains the GLB.
+
+Previous status — Phase 3: complete. Authoring loop: `procgen-creature` skill (`.claude/skills/procgen-creature/` — spec/rig reference verified against `src/3d/*.js`, DESIGN.md palette rules, the shader gotchas, mandatory visual review) + `scripts/render-proc.mjs` (headless SwiftShader Chromium drives the dev harness → idle/attack/hit/death PNGs in gitignored `proc-renders/`; needs `npm i --no-save playwright-core`). Exit proven by authoring **Stoneback Crab** (seventh creature, multileg) end-to-end via the skill in one session. Post-Phase-2 regression fixed: `3d/rigs.js` was never registered in `build_single.cjs`, so single-file builds referenced `createProcCreature` without defining it and the arena silently failed over to bars on procedural monsters; now registered, with `tests/buildSourceRegistration.test.ts` guarding all chunk imports. Known debt: imp wings read spiky, serpent weakest archetype, faint leg-body ink crease in some poses, multileg keel-over death reads odd on the very-wide crab.
+
+Phase 2: **complete.** Rigs (`src/3d/rigs.js`): combat state machine (idle/attack/hit/death/respawn) with eased root motion per archetype, reactive foot-planting legs (2/4/6 — feet step only when the root drags their hip past a threshold, alternating gait groups), verlet ropes with optional rest-shape stiffness (tails limp, ears springy), wing flap, serpent spine wave, hopper squash-stretch with grounded scaling. Six archetypes live in the registry: pasture_bull (quadruped), field_chicken (biped), broodfang_spider (multileg), marshfen_toad (hopper), frostbite_imp (flyer), cindermaw_serpent (serpent). Shell hardening from look-dev: oscillation-damped projection, buried-vertex tuck (kills fold-crease slivers/outline poke-through), thin-part blend cap that only bites thin parts, per-pixel `fieldColor` (per-vertex dissolved markings smaller than the proxy tessellation — cow patches), palette hex passed to the shader without color-management linearization, `colorOnly` paint-patch parts, hide-grain noise. Arena routes attack/hit into the rig and derives death/respawn from monster HP.
+
+Phase 1: Phase 0 (spike at `docs/prototypes/blend-shell-spike.html`): seam-free skin across animated poses, fused animation, toon + ink-outline variants, `MAX_VERTEX_UNIFORM_VECTORS` well above budget on tested contexts; look-dev verdict **pass** — warm carved-figurine read on parchment fits the Blacksmith's Ledger direction (default look: ink outline + rim light). Phase 1: runtime `src/3d/blendShell.js` (spec → living creature, data-driven idle behaviors) + registry `src/3d/creatures.js` over `src/data/creatures3d.json` (validator + tests), first live monster **Pasture Bull** in `CombatArena3D` (GLB entries win per-monster; procedural covers the rest), dev harness `docs/prototypes/proc-creature-harness.html`. Deviation: `procWorld.js` (standalone scene owner) deferred to Phase 2 — the creature mounts into the arena's existing scene, which met Phase 1's exit without duplicating hero-GLB mounting; the authoring harness in Phase 2/3 is where a standalone world earns its keep. Each remaining phase passes plan-gate separately before its first edit.
+
+## 1) The core technique: SDF blend-shell
+
+Reference: community-proven approach (procedural creature apps on r/threejs), grounded in standard SDF math ([Quilez, distance functions](https://iquilezles.org/articles/raymarchingdf/)).
+
+### Quality bar (first pass — monsters, hero, all assets)
+
+Reference screenshot: `docs/reference/proc-creature-quality-bar.jpeg` (from the r/threejs critter demo). What it demonstrates, and what every first-pass asset is judged against:
+
+- **Clean, seam-free skin**: one smooth matte fill per region, soft broad shading, zero surface noise/grain, no visible primitive joints or outline break-up anywhere — including mid-stride.
+- **Crisp single-weight ink outline** hugging the silhouette, even at thin parts (legs, antennae).
+- **Simple, instantly readable silhouettes**: a critter is 5–10 visible masses, not 20; details (ears, horns, tails) are few and bold.
+- **Face minimalism sells it**: tiny white dot-eyes, nothing else.
+- **Fully grounded**: feet plant convincingly, soft blob shadow under each body.
+- Our palette stays DESIGN.md-warm (their pastel-candy hues do **not** carry over — Warm Dark / No Candy rules stand), but their *cleanliness* is the bar: when a spec needs mottle patches to hide a muddy read, fix the shapes instead.
+
+Status: **first quality pass applied** — shader reworked to the bar (hide-grain noise and rim light removed, single soft top-lit ramp `mix(0.66, 1.04, smoothstep(-0.35, 0.7, d))`, outline offset 0.012→0.02 for a bolder uniform stroke), dot eyes added to every monster (tiny solid parts riding the head group; the outline ring around a tiny part is what reads as the eye), bull hoof contrast and neck crease fixed. Judged against the reference across all seven monsters + the bronze/tier hero.
+
+A creature is a list of **SDF primitives** (capsules, cones, spheres — each with position/orientation, radii, color, blend radius). Rendering avoids both raymarching (per-pixel, mobile-hostile) and marching cubes (CPU, chunky):
+
+1. **Coarse proxy meshes** — one low-poly `CapsuleGeometry`/`ConeGeometry` per primitive, merged into a single `BufferGeometry` (one draw call) with a per-vertex `primIndex` attribute.
+2. **Vertex-shader projection** — each vertex is snapped onto the isosurface of the **smooth-min union** of all primitives: iterate `p -= f(p) · ∇f(p)` a few times. Overlapping shapes converge onto the same blended surface — seams cease to exist.
+3. **Normals from the SDF gradient** (4-tap tetrahedral) — lighting flows continuously across joints.
+4. **Color by SDF proximity** — per-primitive colors weighted by distance → soft gradients at every join, free.
+
+Cost is **per-vertex, not per-pixel** (~2k verts × ~20 prims is trivial), so it is mobile-friendly. It is ordinary mesh rendering: no skinning, no raymarching, works with our existing scene/lights.
+
+Robustness details to carry over: outlines project onto an SDF offset surface (not normal inflation — avoids concave-joint artifacts); fully-buried proxy geometry tucks under the skin; thin parts (antennae, horns) cap their blend radius so they don't dissolve into the body.
+
+**Animation = moving the primitives.** Primitive transforms are the "bones": CPU updates them per frame (uniform array), the shell re-projects automatically, parts stay fused while moving. No clips, no rigs:
+- Legged: reactive IK foot-stepping (same solver for 2/4/6 legs).
+- Hoppers: squash-and-stretch state machine.
+- Flyers: hover + bank.
+- Tails/ears/tentacles: verlet rope segments that are themselves SDF primitives — they flop while staying seamlessly fused.
+
+## 2) Architecture: greenfield first, existing infra as optional mount points
+
+Deliberate stance: the current 3D setup (`CombatArena3D`, `Model3DViewer`, `equipmentModels.json`) is **not a design constraint**. It grew around loading GLBs — height-normalising foreign models, retargeting clips, R2 hosting. A pure-procedural world needs none of that, so the procedural system is designed standalone and the existing pieces plug into it, not vice versa.
+
+**Greenfield core** — a self-contained procedural renderer (working name `src/3d/`):
+- `procWorld.js` — owns scene, camera, lights, render loop, resize. Not borrowed from the arena.
+- `blendShell.js` — spec → merged geometry + shell shader + primitive-transform buffer.
+- `rigs.js` — locomotion archetypes, IK, verlet ropes, state machine.
+- `biomes.js` (Phase 4) — ground, props, atmosphere from a biome spec.
+- Specs in `src/data/creatures3d.json` (own file, own schema/version — not squeezed into `equipmentModels.json`).
+
+**Existing infra becomes adapters, kept only while they earn it:**
+- `CombatArena3D` shrinks to a thin host: mounts a `procWorld`, forwards combat events (attack tick, damage, death — the hooks it already has). Its GLB path survives as a legacy adapter per registry entry until procedural parity, then may be deleted.
+- `loadThree()` gating (WebGL check, reduced-data, paper-doll fallback, `pocketEnable3D`) is genuinely good and provider-agnostic — reuse, don't rebuild.
+- The single-file build rules (§12: chunk registration, eval-time TDZ) are repo law, not 3D architecture — they apply to whatever we write.
+
+**Registry inversion (end state):** today GLB is the default and procedural would be the exception. Once Phase 2 lands, flip it — procedural spec is the default monster path (auto-enabling the arena exactly as GLB entries do today), GLB the opt-in exception for showpieces.
+
+**Renderer options kept open:** three **r0.185** vendored, WebGL2 by default — `CapsuleGeometry`, data textures, ≥256 vertex uniform vectors (≈50+ primitives at 4 vec4; working cap 24 — confirm real `MAX_VERTEX_UNIFORM_VECTORS` in the spike). r185 also ships `WebGPURenderer` + TSL node materials; the blend-shell shader is small enough to port, so we write it as plain GLSL now but keep the SDF evaluation in one shared function to leave a TSL/WebGPU port cheap if we later want compute-shader projection or many-creature scenes (the open-world companion plan would). Decision deferred — not a spike blocker.
+
+## 3) Spec format (target authoring surface)
+
+One creature ≈ 15 lines of JSON. Sketch (schema finalised in Phase 1):
+
+```json
+{
+  "archetype": "quadruped",
+  "scale": 1.4,
+  "palette": ["#6b4a2f", "#c9a86a", "#2e2620"],
+  "parts": [
+    { "shape": "capsule", "id": "body", "from": [0,0.9,-0.5], "to": [0,1.0,0.5], "r": 0.45, "color": 0 },
+    { "shape": "capsule", "id": "head", "from": [0,1.1,0.6], "to": [0,1.15,0.95], "r": 0.28, "color": 1, "blend": 0.25 },
+    { "shape": "cone", "id": "hornL", "from": [-0.12,1.35,0.8], "to": [-0.2,1.6,0.85], "r": 0.06, "color": 2, "blend": 0.05 },
+    { "shape": "rope", "id": "tail", "anchor": [0,0.95,-0.55], "segments": 5, "r": 0.12, "taper": 0.4, "color": 0 }
+  ],
+  "legs": { "count": 4, "attach": "body", "gait": "trot" },
+  "anim": { "idle": "breathe", "attack": "lunge", "hit": "flinch", "death": "collapse" }
+}
+```
+
+`archetype` selects the locomotion rig; `parts` build the blend-shell; `palette` indexes keep specs terse and let look-dev retint whole creatures from `DESIGN.md`-derived region palettes.
+
+## 4) Phases
+
+Each phase is a separate gated task with its own plan; this is the roadmap, not the plans.
+
+**Phase 0 — Spike (throwaway allowed).** Dev-only harness (standalone page or dev-gated `Model3DViewer` mode): 3–6 primitives, blend-shell shader, SDF normals, color blending, one animated primitive. Exit: seam-free screenshot; ≥50fps desktop; measured mobile FPS + `MAX_VERTEX_UNIFORM_VECTORS`; look-dev verdict against `DESIGN.md`. **Kill/adapt decision happens here.**
+
+**Phase 1 — Greenfield runtime.** `src/3d/` core (`procWorld.js` + `blendShell.js`, chunk files): spec → living creature with `update(dt)`. `src/data/creatures3d.json` schema + validation tests. `CombatArena3D` mounts a `procWorld` when the monster has a spec (thin-host refactor can be partial — GLB path untouched). One live monster (rat/imp tier) behind the existing gate. Exit: renders in arena, paper-doll fallback intact, `npm run ci` + `check:single` green.
+
+**Phase 2 — Procedural animation library.** Locomotion rigs (biped/quadruped/multi-leg IK stepping, hopper squash-stretch, flyer hover/bank, serpent), verlet ropes, and a state machine wired to the arena's existing combat hooks (idle/attack/hit/death). Exit: one creature per archetype demonstrably animating through all states.
+
+**Phase 3 — Authoring loop (the payoff).** `procgen-creature` skill: spec conventions, palette rules, primitive budget, and a **screenshot verification harness** (`scripts/render-proc.mjs`, Playwright + preinstalled Chromium → PNG) so AI-authored specs are reviewed visually before commit — same generate-once-commit-reviewed philosophy as the Tripo pipeline. Exit: author a novel creature end-to-end via the skill in one session.
+
+**Phase 4 — Environments (complete, see Status).** Per-region arena set dressing from a biome spec: procedural ground material (noise shader), props from the same primitive vocabulary, sky/haze/light palettes keyed to `world.json` places. Exit met: five visually distinct arena biomes.
+
+**Phase 5 — Gear (re-scoped 2026-07: bespoke hero first, pulled ahead of Phase 4).** The original plan (procedural gear GLB-attached to the Tripo hero) was superseded: gear is now blend-shell parts composed into a procedural **hero** spec (`hero3d.json` equipment entries), because bone-attach only ever worked for rigid slots and skinned body/legs fitting is manual per asset (`docs/gear-3d-pipeline.md`). Exit (met): hero + one full armour set + weapon animating through all combat states in the arena.
+
+**Phase 6 — Bosses, raids, dungeons (first slice complete, see Status).** Multi-part bosses (phase-driven part swaps still open), dungeon/raid set pieces, shader-time VFX (dissolve deaths ✓, glow accents ✓). Sequenced last: it reuses everything above.
+
+## 5) Risks
+
+- **Art direction drift** — blend-shell reads "soft clay"; our brand is parchment fantasy. Mitigation: Phase 0 look-dev gate + toon/rim-light variants in the same shader before judging.
+- **Old-mobile GPU precision** — projection iteration in `highp` vertex shaders; if a device misbehaves, gate falls back to paper doll exactly as today.
+- **Spec sprawl** — the schema is content (`add-content` discipline applies): validated, tested, versioned like any `src/data` JSON.
+- **Scope gravity** — each phase ships value alone; no phase may block on a later one.
+
+## 6) Out of scope (entire effort)
+
+Server/save changes; combat logic; `build_single.cjs` mechanics beyond registering new chunk files; deleting the Tripo pipeline (it remains for showpieces until procedural parity is proven per-entry). ~~Replacing the hero GLB~~ — re-scoped 2026-07 (user decision): the arena hero is procedural now; the GLB hero + retarget pipeline stay as the arena fallback and the equip-screen hero.
