@@ -82,7 +82,7 @@ function buildGroundTexture(collision: string[], width: number, height: number, 
  * the plane is subdivided one segment per tile and each vertex is lifted to its
  * corner height — so mesh vertices coincide exactly with the HeightField's
  * corner grid. Without it (editor preview, T0) the plane stays flat. */
-export function createGround(scene: THREE.Scene, collision: string[], width: number, height: number, palette?: GroundPalette, corners?: Float32Array | null): THREE.Mesh {
+export function createGround(scene: THREE.Scene, collision: string[], width: number, height: number, palette?: GroundPalette, corners?: Float32Array | null, materialOverride?: THREE.Material): THREE.Mesh {
   const geometry = corners
     ? new THREE.PlaneGeometry(width, height, width, height)
     : new THREE.PlaneGeometry(width, height)
@@ -99,7 +99,7 @@ export function createGround(scene: THREE.Scene, collision: string[], width: num
     pos.needsUpdate = true
     geometry.computeVertexNormals()
   }
-  const material = new THREE.MeshStandardMaterial({ map: buildGroundTexture(collision, width, height, palette ?? DEFAULT_PALETTE) })
+  const material = materialOverride ?? new THREE.MeshStandardMaterial({ map: buildGroundTexture(collision, width, height, palette ?? DEFAULT_PALETTE) })
   const mesh = new THREE.Mesh(geometry, material)
   scene.add(mesh)
   return mesh

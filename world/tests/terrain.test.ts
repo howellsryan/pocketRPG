@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { createHeightField, proceduralCorners } from '../client/src/terrain'
+import { TERRAIN_PRESETS, createTerrainMaterial, isTerrainPreset } from '../client/src/terrainMaterials'
 import { groundHeight, setHeightSampler, tileToWorld } from '../client/src/scene'
 
 describe('createHeightField', () => {
@@ -48,6 +49,37 @@ describe('createHeightField', () => {
     expect(Number.isNaN(hf.heightAt(99, 99))).toBe(false)
     hf.dispose()
     setHeightSampler(null)
+  })
+})
+
+describe('terrain material presets', () => {
+  it('every preset has in-range colours, threshold and roughness', () => {
+    for (const [name, p] of Object.entries(TERRAIN_PRESETS)) {
+      for (const c of [p.low, p.mid, p.high, p.slope]) {
+        expect(c, `${name} colour`).toBeGreaterThanOrEqual(0)
+        expect(c, `${name} colour`).toBeLessThanOrEqual(0xffffff)
+      }
+      expect(p.slopeThreshold).toBeGreaterThan(0)
+      expect(p.slopeThreshold).toBeLessThan(1)
+      expect(p.roughness).toBeGreaterThan(0)
+      expect(p.roughness).toBeLessThanOrEqual(1)
+    }
+  })
+
+  it('covers every material named by the §6 place table', () => {
+    for (const name of ['meadow', 'woodland', 'highland', 'desert', 'marsh', 'volcanic', 'coastal']) {
+      expect(isTerrainPreset(name)).toBe(true)
+    }
+    expect(isTerrainPreset('nonsense')).toBe(false)
+    expect(isTerrainPreset(undefined)).toBe(false)
+  })
+
+  it('builds a MeshStandardMaterial carrying the preset roughness', () => {
+    const mat = createTerrainMaterial('desert', 0.8)
+    expect(mat.roughness).toBe(TERRAIN_PRESETS.desert.roughness)
+    expect(mat.metalness).toBe(0)
+    const fallback = createTerrainMaterial('nonsense', 1)
+    expect(fallback.roughness).toBe(TERRAIN_PRESETS.meadow.roughness)
   })
 })
 

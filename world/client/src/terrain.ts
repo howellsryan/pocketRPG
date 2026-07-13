@@ -1,5 +1,6 @@
 import * as THREE from 'three'
 import { createGround, setHeightSampler } from './scene'
+import { createTerrainMaterial, isTerrainPreset } from './terrainMaterials'
 import type { GroundPalette, ZoneTerrain } from '../../shared/protocol'
 
 // Client-render-only terrain height (docs/open-world-terrain-plan.md §3). The
@@ -128,6 +129,12 @@ export function createTerrain(
 ): { heightField: HeightField; mesh: THREE.Mesh } {
   const corners = cornersFor(width, height, terrain)
   const heightField = createHeightField(width, height, corners)
-  const mesh = createGround(scene, collision, width, height, palette, corners)
+  // Blended natural material when a preset is named and the ground is displaced;
+  // otherwise the classic checker (also the flat/no-terrain fallback).
+  const material =
+    corners && terrain && isTerrainPreset(terrain.material)
+      ? createTerrainMaterial(terrain.material, Math.min(terrain.relief, 1.5))
+      : undefined
+  const mesh = createGround(scene, collision, width, height, palette, corners, material)
   return { heightField, mesh }
 }
