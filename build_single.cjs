@@ -31,6 +31,11 @@ const sourceFiles = [
   'utils/rewardReveal.js',
   'utils/equipModels.js', // -> game chunk (equip screen 3D model registry)
   'utils/three3d.js',     // -> game chunk (lazy three.js loader; equip/combat 3D)
+  '3d/blendShell.js',     // -> game chunk (procedural blend-shell creature runtime)
+  '3d/rigs.js',           // -> game chunk (procedural animation rigs over blendShell)
+  '3d/creatures.js',      // -> game chunk (creatures3d.json registry resolver)
+  '3d/heroCompose.js',    // -> game chunk (pure hero + equipment spec composition)
+  '3d/heroCreature.js',   // -> game chunk (hero3d.json resolver over heroCompose)
   'hooks/useActionTick.js',
   'hooks/useIsDesktop.js',
   'hooks/useEscapeKey.js',
@@ -243,6 +248,11 @@ const GAME_CHUNK_FILES = new Set([
   'components/CombatArena3D.js',
   'utils/equipModels.js',
   'utils/three3d.js',
+  '3d/blendShell.js',
+  '3d/rigs.js',
+  '3d/creatures.js',
+  '3d/heroCompose.js',
+  '3d/heroCreature.js',
   'screens/HomeScreen.js',
   'screens/StatsScreen.js',
   'screens/InventoryScreen.js',
@@ -320,6 +330,8 @@ const worldJSON = readSrc('data/world.json');
 const worldActivitiesJSON = readSrc('data/worldActivities.json');
 const placeMapsJSON = readSrc('data/placeMaps.json');
 const equipmentModelsJSON = readSrc('data/equipmentModels.json');
+const creatures3dJSON = readSrc('data/creatures3d.json');
+const hero3dJSON = readSrc('data/hero3d.json');
 
 // Landing screen images. Served as external files from /public/landing/ (the
 // Cloudflare Pages output dir is the repo root) and referenced by URL rather
@@ -571,7 +583,7 @@ const worldBetaEnabled = process.env.EnableWorldBeta != null
   ? process.env.EnableWorldBeta === 'true'
   : Boolean(process.env.CF_PAGES_BRANCH) && process.env.CF_PAGES_BRANCH !== 'main';
 console.log(`World beta button: ${worldBetaEnabled ? 'ENABLED' : 'disabled'} (EnableWorldBeta=${process.env.EnableWorldBeta ?? 'unset'}, CF_PAGES_BRANCH=${process.env.CF_PAGES_BRANCH ?? 'unset'})`);
-const gameChunkSource = `const gameIconsData = ${gameIconsJSON};\nconst bespokeIconsData = ${bespokeIconsJSON};\nconst worldActivitiesData = ${worldActivitiesJSON};\nconst placeMapsData = ${placeMapsJSON};\nconst equipmentModelsData = ${equipmentModelsJSON};\nconst pocketAssetBase = '/public/';\nconst pocketEnable3D = ${enable3D};\nconst pocketWorldBetaEnabled = ${worldBetaEnabled};\n${gameJS}`;
+const gameChunkSource = `const gameIconsData = ${gameIconsJSON};\nconst bespokeIconsData = ${bespokeIconsJSON};\nconst worldActivitiesData = ${worldActivitiesJSON};\nconst placeMapsData = ${placeMapsJSON};\nconst equipmentModelsData = ${equipmentModelsJSON};\nconst creatures3dData = ${creatures3dJSON};\nconst hero3dData = ${hero3dJSON};\nconst pocketAssetBase = '/public/';\nconst pocketEnable3D = ${enable3D};\nconst pocketWorldBetaEnabled = ${worldBetaEnabled};\n${gameJS}`;
 const gameChunkScript = esbuild.transformSync(gameChunkSource, SPLIT_MINIFY).code.trim();
 const gameChunkBody = `"use strict";\n${gameChunkScript}\n`;
 const gameChunkHash = require('crypto').createHash('sha256').update(gameChunkBody).digest('hex').slice(0, 12);

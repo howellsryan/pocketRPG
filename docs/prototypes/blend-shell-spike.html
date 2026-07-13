@@ -1,0 +1,281 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>SDF blend-shell spike</title>
+<!-- Phase 0 prototype (docs/procedural-3d-plan.md). Run: python3 -m http.server from repo root,
+     open /docs/prototypes/blend-shell-spike.html. Not part of the build. -->
+<style>html,body{margin:0;height:100%;overflow:hidden;background:#efe6d3}canvas{display:block}</style>
+<body>
+<script type="importmap">{"imports":{"three":"/public/vendor/three/three.module.min.js"}}</script>
+<script type="module">
+import * as THREE from 'three'
+
+// ---------- creature spec (what would be ~15 lines of authored JSON) ----------
+// prim: rounded-cone segment {a,b,r1,r2,color,k(blend)} — sphere/capsule/cone unified
+const PALETTE = [0x8a5a34, 0xc9a86a, 0xe8d9b0] // warm brown, tan, parchment
+const PRIMS = [
+  { id:'body',  a:[0,0.62,-0.42], b:[0,0.72,0.35],  r1:0.34, r2:0.28, c:0, k:0.18 },
+  { id:'head',  a:[0,0.88,0.52],  b:[0,0.92,0.78],  r1:0.22, r2:0.18, c:0, k:0.14 },
+  { id:'snout', a:[0,0.84,0.78],  b:[0,0.82,0.98],  r1:0.10, r2:0.055,c:1, k:0.08 },
+  { id:'earL',  a:[-0.13,1.04,0.56], b:[-0.22,1.30,0.50], r1:0.055,r2:0.015,c:1, k:0.04 },
+  { id:'earR',  a:[ 0.13,1.04,0.56], b:[ 0.22,1.30,0.50], r1:0.055,r2:0.015,c:1, k:0.04 },
+  { id:'legFL', a:[-0.19,0.52,0.26], b:[-0.22,0.07,0.30], r1:0.095,r2:0.065,c:0, k:0.09 },
+  { id:'legFR', a:[ 0.19,0.52,0.26], b:[ 0.22,0.07,0.30], r1:0.095,r2:0.065,c:0, k:0.09 },
+  { id:'legBL', a:[-0.20,0.50,-0.30],b:[-0.24,0.07,-0.34],r1:0.11, r2:0.07, c:0, k:0.09 },
+  { id:'legBR', a:[ 0.20,0.50,-0.30],b:[ 0.24,0.07,-0.34],r1:0.11, r2:0.07, c:0, k:0.09 },
+  { id:'tail1', a:[0,0.66,-0.48], b:[0,0.74,-0.78],  r1:0.09, r2:0.055,c:1, k:0.10 },
+  { id:'tail2', a:[0,0.74,-0.78], b:[0,0.86,-1.02],  r1:0.055,r2:0.02, c:2, k:0.08 },
+  { id:'belly', a:[0,0.50,-0.12], b:[0,0.53,0.16],   r1:0.25, r2:0.23, c:2, k:0.20, colorOnly:true },
+]
+const N = PRIMS.length
+
+// ---------- shaders ----------
+const COMMON = `
+#define N ${N}
+uniform vec4 uA[N];      // a.xyz, r1
+uniform vec4 uB[N];      // b.xyz, r2
+uniform vec3 uCol[N];
+uniform float uK[N];
+
+float sdRoundCone(vec3 p, vec3 a, vec3 b, float r1, float r2){
+  vec3 ba = b - a; float l2 = dot(ba,ba);
+  float rr = r1 - r2; float a2 = l2 - rr*rr; float il2 = 1.0/l2;
+  vec3 pa = p - a;
+  float y = dot(pa,ba); float z = y - l2;
+  vec3 xv = pa*l2 - ba*y; float x2 = dot(xv,xv);
+  float y2 = y*y*l2; float z2 = z*z*l2;
+  float k = sign(rr)*rr*rr*x2;
+  if (sign(z)*a2*z2 > k) return sqrt(x2+z2)*il2 - r2;
+  if (sign(y)*a2*y2 < k) return sqrt(x2+y2)*il2 - r1;
+  return (sqrt(x2*a2*il2)+y*rr)*il2 - r1;
+}
+float sminP(float d1, float d2, float k){
+  float h = clamp(0.5 + 0.5*(d2-d1)/k, 0.0, 1.0);
+  return mix(d2, d1, h) - k*h*(1.0-h);
+}
+float field(vec3 p){
+  float d = 1e5;
+  for (int i=0;i<N;i++){
+    float di = sdRoundCone(p, uA[i].xyz, uB[i].xyz, uA[i].w, uB[i].w);
+    d = sminP(di, d, uK[i]);
+  }
+  return d;
+}
+vec3 fieldGrad(vec3 p){
+  const float e = 0.005;
+  vec3 g = vec3(
+    field(p+vec3(e,0.,0.)) - field(p-vec3(e,0.,0.)),
+    field(p+vec3(0.,e,0.)) - field(p-vec3(0.,e,0.)),
+    field(p+vec3(0.,0.,e)) - field(p-vec3(0.,0.,e)));
+  float l = length(g);
+  return l > 1e-6 ? g/l : vec3(0.,1.,0.);
+}
+vec3 fieldColor(vec3 p){
+  vec3 acc = vec3(0.0); float wsum = 0.0;
+  for (int i=0;i<N;i++){
+    float di = sdRoundCone(p, uA[i].xyz, uB[i].xyz, uA[i].w, uB[i].w);
+    float w = exp(-max(di,0.0)*18.0);
+    acc += uCol[i]*w; wsum += w;
+  }
+  return acc/max(wsum,1e-4);
+}`
+
+const Q = new URLSearchParams(location.search)
+const ITERS = Q.get('iters') ?? '8'
+const DEBUG = Q.get('debug') === '1'
+const VERT = COMMON + `
+attribute float primIndex;
+uniform mat4 uXf[N];
+uniform float uOffset;   // 0 = skin, >0 = outline shell
+varying vec3 vN; varying vec3 vC; varying vec3 vW;
+void main(){
+  int pi = int(primIndex + 0.5);
+  vec3 q = (uXf[pi] * vec4(position,1.0)).xyz;
+  for (int it=0; it<${ITERS}; it++){
+    float d = field(q) - uOffset;
+    q -= fieldGrad(q) * clamp(d, -0.5, 0.5) * 0.75;
+  }
+  vN = ${Q.get('nograd')==='1' ? 'vec3(0.0,1.0,0.0)' : 'fieldGrad(q)'};
+  vC = ${DEBUG ? 'vec3(fract(primIndex*0.37+0.13), fract(primIndex*0.71+0.29), fract(primIndex*0.53+0.61))' : 'fieldColor(q)'};
+  vW = q;
+  gl_Position = projectionMatrix * modelViewMatrix * vec4(q,1.0);
+}`
+
+const FRAG = `
+#define RIMAMT ${Q.get('norim')==='1' ? '0.0' : '0.18'}
+
+precision highp float;
+uniform float uToon; uniform float uOutlinePass;
+varying vec3 vN; varying vec3 vC; varying vec3 vW;
+void main(){
+  if (uOutlinePass > 0.5){ gl_FragColor = vec4(0.20,0.14,0.09,1.0); return; }
+  vec3 n = normalize(vN);
+  vec3 l1 = normalize(vec3(0.6,0.9,0.5));
+  vec3 l2 = normalize(vec3(-0.5,0.3,-0.6));
+  float d1 = max(dot(n,l1),0.0), d2 = max(dot(n,l2),0.0);
+  if (uToon > 0.5){ d1 = floor(d1*3.0+0.5)/3.0; d2 = floor(d2*2.0+0.5)/2.0; }
+  float hemi = 0.5 + 0.5*n.y;
+  vec3 col = vC * (0.28 + 0.30*hemi + 0.55*d1 + 0.18*d2);
+  vec3 v = normalize(cameraPosition - vW);
+  float rim = pow(1.0 - max(dot(v,n),0.0), 3.0);
+  col += vec3(0.9,0.75,0.5) * rim * RIMAMT;
+  gl_FragColor = vec4(col, 1.0);
+}`
+
+// ---------- proxy geometry: one low-poly capsule per prim, merged ----------
+function buildProxy(){
+  const pos = [], idx = []
+  const Y = new THREE.Vector3(0,1,0), dir = new THREE.Vector3(), quat = new THREE.Quaternion()
+  const m = new THREE.Matrix4()
+  PRIMS.forEach((p, i) => {
+    if (p.colorOnly) return
+    const a = new THREE.Vector3(...p.a), b = new THREE.Vector3(...p.b)
+    dir.subVectors(b,a); const len = dir.length(); dir.normalize()
+    const big = Math.max(p.r1,p.r2)
+    const segs = big > 0.2 ? [6,18] : [4,12]
+    let g = new THREE.CapsuleGeometry(1, len, segs[0], segs[1]).toNonIndexed()
+    // taper the unit-radius capsule to the rounded cone's actual radii so
+    // every vertex starts near the true surface (a is -Y end, b is +Y end)
+    {
+      const pa = g.attributes.position
+      for (let j=0;j<pa.count;j++){
+        const y = pa.getY(j)
+        const t = THREE.MathUtils.clamp((y + len/2) / len, 0, 1)
+        const r = p.r1 + (p.r2 - p.r1) * t
+        pa.setXYZ(j, pa.getX(j)*r, y + Math.sign(y - 0)* (0), pa.getZ(j)*r)
+        // caps: also scale the Y overshoot beyond the cylinder ends
+        if (y > len/2) pa.setY(j, len/2 + (y - len/2) * p.r2)
+        else if (y < -len/2) pa.setY(j, -len/2 + (y + len/2) * p.r1)
+      }
+    }
+    quat.setFromUnitVectors(Y, dir)
+    m.compose(a.clone().add(b).multiplyScalar(0.5), quat, new THREE.Vector3(1,1,1))
+    g.applyMatrix4(m)
+    const pa = g.attributes.position.array
+    for (let j=0;j<pa.length;j+=3){ pos.push(pa[j],pa[j+1],pa[j+2]); idx.push(i) }
+    g.dispose()
+  })
+  const geo = new THREE.BufferGeometry()
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(pos,3))
+  geo.setAttribute('primIndex', new THREE.Float32BufferAttribute(idx,1))
+  geo.boundingSphere = new THREE.Sphere(new THREE.Vector3(0,0.7,0), 3)
+  return geo
+}
+
+// ---------- uniforms + CPU animation (primitives ARE the bones) ----------
+const uA = PRIMS.map(p => new THREE.Vector4(...p.a, p.r1))
+const uB = PRIMS.map(p => new THREE.Vector4(...p.b, p.r2))
+const uXf = PRIMS.map(() => new THREE.Matrix4())
+const uniforms = {
+  uA: { value: uA }, uB: { value: uB },
+  uCol: { value: PRIMS.map(p => new THREE.Color(PALETTE[p.c])) },
+  uK: { value: PRIMS.map(p => p.k) },
+  uXf: { value: uXf },
+  uOffset: { value: 0 }, uToon: { value: 0 }, uOutlinePass: { value: 0 },
+}
+const byId = Object.fromEntries(PRIMS.map((p,i)=>[p.id,i]))
+const M = new THREE.Matrix4(), R = new THREE.Matrix4(), T1 = new THREE.Matrix4(), T2 = new THREE.Matrix4()
+function rotAbout(anchor, euler){
+  T1.makeTranslation(-anchor[0],-anchor[1],-anchor[2])
+  R.makeRotationFromEuler(euler)
+  T2.makeTranslation(anchor[0],anchor[1],anchor[2])
+  return M.copy(T2).multiply(R).multiply(T1)
+}
+const EU = new THREE.Euler()
+function applyXf(i, mat){
+  uXf[i].copy(mat)
+  const p = PRIMS[i]
+  uA[i].set(...p.a, uA[i].w); uB[i].set(...p.b, uB[i].w)
+  const va = new THREE.Vector3(uA[i].x,uA[i].y,uA[i].z).applyMatrix4(mat)
+  const vb = new THREE.Vector3(uB[i].x,uB[i].y,uB[i].z).applyMatrix4(mat)
+  uA[i].set(va.x,va.y,va.z,uA[i].w); uB[i].set(vb.x,vb.y,vb.z,uB[i].w)
+}
+function animatePrims(t){
+  PRIMS.forEach((_,i)=>{ uXf[i].identity(); const p=PRIMS[i]; uA[i].set(...p.a,p.r1); uB[i].set(...p.b,p.r2) })
+  // breathe: body + belly radius swell
+  const br = 1 + 0.035*Math.sin(t*2.1)
+  uA[byId.body].w = PRIMS[byId.body].r1*br; uB[byId.body].w = PRIMS[byId.body].r2*br
+  uA[byId.belly].w = PRIMS[byId.belly].r1*br
+  // head group: bob + slight yaw around the neck
+  const headRot = rotAbout([0,0.86,0.50], EU.set(0.10*Math.sin(t*2.1), 0.22*Math.sin(t*0.9), 0)).clone()
+  ;['head','snout','earL','earR'].forEach(id => applyXf(byId[id], headRot))
+  // ear twitch on top of head motion
+  const tw = Math.max(0, Math.sin(t*7.0)) ** 8 * 0.5
+  if (tw > 0.01){
+    const earRot = rotAbout(PRIMS[byId.earL].a, EU.set(0,0,tw)).clone().multiply(headRot)
+    applyXf(byId.earL, earRot)
+  }
+  // tail: two chained segments wagging with phase lag
+  const w1 = rotAbout(PRIMS[byId.tail1].a, EU.set(0, 0.55*Math.sin(t*3.2), 0)).clone()
+  applyXf(byId.tail1, w1)
+  const t2anchor = new THREE.Vector3(...PRIMS[byId.tail2].a).applyMatrix4(w1)
+  const w2 = rotAbout([t2anchor.x,t2anchor.y,t2anchor.z], EU.set(0, 0.65*Math.sin(t*3.2-0.7), 0)).clone().multiply(w1)
+  applyXf(byId.tail2, w2)
+}
+
+// ---------- scene ----------
+const renderer = new THREE.WebGLRenderer({ antialias:true, preserveDrawingBuffer:true })
+renderer.setSize(innerWidth, innerHeight)
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2))
+document.body.appendChild(renderer.domElement)
+const gl = renderer.getContext()
+const CAPS = {
+  maxVertexUniformVectors: gl.getParameter(gl.MAX_VERTEX_UNIFORM_VECTORS),
+  webgl2: renderer.capabilities.isWebGL2,
+  renderer: gl.getParameter(gl.RENDERER),
+}
+console.log('CAPS ' + JSON.stringify(CAPS))
+
+const scene = new THREE.Scene()
+scene.background = new THREE.Color(0xefe6d3)
+scene.fog = new THREE.Fog(0xefe6d3, 6, 12)
+const camera = new THREE.PerspectiveCamera(38, innerWidth/innerHeight, 0.1, 50)
+camera.position.set(2.1, 1.25, 2.9); camera.lookAt(0, 0.62, 0)
+
+// ground: soft radial contact shadow, no lights needed
+const gc = document.createElement('canvas'); gc.width = gc.height = 256
+const ctx = gc.getContext('2d')
+const grad = ctx.createRadialGradient(128,128,10,128,128,128)
+grad.addColorStop(0,'rgba(90,70,45,0.55)'); grad.addColorStop(1,'rgba(90,70,45,0)')
+ctx.fillStyle = grad; ctx.fillRect(0,0,256,256)
+const ground = new THREE.Mesh(
+  new THREE.CircleGeometry(2.2, 40),
+  new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(gc), transparent:true })
+)
+ground.rotation.x = -Math.PI/2; ground.position.y = 0.001
+scene.add(ground)
+
+const geo = buildProxy()
+console.log('VERTS ' + geo.attributes.position.count)
+const skinMat = new THREE.ShaderMaterial({
+  uniforms, vertexShader: VERT, fragmentShader: FRAG,
+})
+const skin = new THREE.Mesh(geo, skinMat); skin.frustumCulled = false
+scene.add(skin)
+// outline: same geometry projected onto an offset isosurface, back faces only
+const outlineUniforms = { ...uniforms, uOffset: { value: 0.012 }, uOutlinePass: { value: 1 } }
+const outlineMat = new THREE.ShaderMaterial({
+  uniforms: outlineUniforms, vertexShader: skinMat.vertexShader, fragmentShader: FRAG, side: THREE.BackSide,
+  polygonOffset: true, polygonOffsetFactor: 4, polygonOffsetUnits: 4,
+})
+const outline = new THREE.Mesh(geo, outlineMat); outline.frustumCulled = false
+scene.add(outline)
+
+function renderAt(t){ animatePrims(t); renderer.render(scene, camera) }
+
+// deterministic control for the screenshot harness
+window.__setTime = (t) => { renderAt(t) }
+window.__setToon = (v) => { uniforms.uToon.value = v ? 1 : 0 }
+window.__setOutline = (v) => { outline.visible = !!v }
+window.__measureFps = (frames = 150) => new Promise(res => {
+  let n = 0; const t0 = performance.now()
+  const step = () => {
+    renderAt(performance.now()/1000)
+    if (++n < frames) requestAnimationFrame(step)
+    else res(Math.round(n / ((performance.now()-t0)/1000)))
+  }
+  requestAnimationFrame(step)
+})
+renderAt(0.4)
+window.__ready = true
+</script>
+</body>
