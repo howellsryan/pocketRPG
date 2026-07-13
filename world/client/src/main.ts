@@ -1,7 +1,9 @@
 import { clearStoredSession, exchangeHandoff, getStoredSession, getStoredZone, parseHandoffFromHash, pocketRpgUrl, storeZone, type WorldSession } from './auth'
-import { hideConnBanner, hideOverlay, initChatInput, initHud, paintHudIcons, pushMessage, removeHpBar, removeNameplate, removeOverheadChat, renderEquipment, renderInventory, setRunState, setSpecialEnergy, setStanceActive, showConnBanner, showContextMenu, showHitsplat, showLoginRequired, showTransitionOverlay, showXpDrop, updateHpBar, updateHpPill, updateNameplate, updateOverheadChat, npcExamine } from './ui'
+import { hideConnBanner, hideOverlay, initChatInput, initHud, paintHudIcons, pushMessage, removeHpBar, removeNameplate, removeOverheadChat, renderEquipment, renderInventory, setRunState, setSpecialEnergy, setSpellButton, setStanceActive, showConnBanner, showContextMenu, showHitsplat, showLoginRequired, showTransitionOverlay, showXpDrop, updateHpBar, updateHpPill, updateNameplate, updateOverheadChat, npcExamine } from './ui'
 import { createMinimap, type Minimap, type MinimapDot } from './minimap'
 import { closeBankUI, isBankOpen, openBankUI, updateBankInventory, updateBankUI } from './bank'
+import { closeCraftUI, openCraftUI, updateCraftInventory, updateCraftStats, type SkillLevels } from './crafting'
+import { getLevelFromXP } from '../../../src/engine/experience.js'
 import { connect, onMessage, send } from './net'
 import { clampZoom, createCamera, createGround, createLights, createRenderer, createScene, tileToWorld, updateCamera } from './scene'
 import { applyEntityDiff, applyWeapon, createEntity, createHeroMesh, createMonsterMesh, updateEntity, type Entity } from './entities'
@@ -13,13 +15,20 @@ import { createLootLayer, type LootLayer } from './loot'
 import { itemName, loadItemIcons } from './itemIcon'
 import { primaryInvAction } from '../../shared/itemActions'
 import { combatLevelFromStats } from '../../../src/engine/combatLevel.js'
+import { getCombatType } from '../../../src/engine/equipment.js'
 import monstersData from '../../../src/data/monsters.json'
+import itemsData from '../../../src/data/items.json'
+import spellsData from '../../../src/data/spells.json'
 import * as THREE from 'three'
 import type { EntityDiff, ExitMarker, InvActionWire, InvSlot, ServerMessage, ZoneEvent } from '../../shared/protocol'
 import type { MenuRow, Pickable } from './picking'
 
 type Monsters = Record<string, { name?: string; combatLevel?: number } | undefined>
 const monsters = monstersData as unknown as Monsters
+type Items = Record<string, { poweredStaff?: boolean } | undefined>
+const items = itemsData as unknown as Items
+type Spells = Record<string, { name: string; levelReq: number }>
+const spells = spellsData as unknown as Spells
 
 function buildNpcPickable(diff: EntityDiff): Pickable {
   const monster = diff.monsterId ? monsters[diff.monsterId] : undefined
@@ -59,6 +68,20 @@ function enterWorld(session: WorldSession): void {
   // Local pack copy so a drag-reorder can apply optimistically; every server
   // {e:'inv'} (including the reorder echo) replaces it wholesale.
   let inventory: InvSlot[] = []
+  // Session skill levels for the recipe panel's gates: seeded from the welcome,
+  // advanced by {e:'xp'} events (level derived the same way the server does).
+  let stats: SkillLevels = {}
+  // Selected combat spell (magic weapons); server-validated, optimistic locally.
+  let selectedSpell: string | null = null
+
+  /** Shows the Combat tab's spell selector while a castable magic weapon is
+   * equipped (powered staffs need no spell — the engine has its own path). */
+  function refreshSpellUI(equipment: Record<string, string>): void {
+    const weaponId = equipment.weapon
+    const shaped = weaponId ? { weapon: { itemId: weaponId } } : {}
+    const magic = getCombatType(shaped, itemsData) === 'magic' && !(weaponId && items[weaponId]?.poweredStaff)
+    setSpellButton(magic, selectedSpell ? spells[selectedSpell]?.name ?? selectedSpell : null)
+  }
   // partysocket reconnects silently and re-fires 'open'; a repeat welcome must
   // RESYNC the existing scene, never rebuild it (a second renderer/loop breaks
   // everything until a hard refresh).
@@ -83,6 +106,7 @@ function enterWorld(session: WorldSession): void {
       inventory = event.inventory
       renderInventory(inventory)
       updateBankInventory(inventory)
+      updateCraftInventory(inventory)
     }
     else if (event.e === 'hp') updateHpPill(event.hp, event.maxHp)
     else if (event.e === 'run') {
@@ -90,12 +114,24 @@ function enterWorld(session: WorldSession): void {
       setRunState(event.energy, event.running)
     }
     else if (event.e === 'spec') setSpecialEnergy(event.energy)
-    else if (event.e === 'equip') renderEquipment(event.equipment)
+    else if (event.e === 'equip') {
+      renderEquipment(event.equipment)
+      refreshSpellUI(event.equipment)
+    }
     else if (event.e === 'bank') {
       if (event.open) openBankUI(event.bank, inventory, (op, itemId, qty) => send(socket, { t: 'bank', op, itemId, qty }))
       else if (isBankOpen()) updateBankUI(event.bank)
     }
-    else if (event.e === 'xp') showXpDrop(event.skill, event.amount)
+    else if (event.e === 'station') {
+      openCraftUI(event.station, inventory, stats, (station, recipeId, qty) => send(socket, { t: 'craft', station, recipeId, qty }))
+    }
+    else if (event.e === 'xp') {
+      const entry = stats[event.skill] ?? (stats[event.skill] = { xp: 0, level: 1 })
+      entry.xp += event.amount
+      entry.level = Math.max(entry.level, getLevelFromXP(entry.xp))
+      updateCraftStats(stats)
+      showXpDrop(event.skill, event.amount)
+    }
     else if (event.e === 'msg') pushMessage(event.text)
     else if (event.e === 'hit') {
       const mesh = meshOf(event.targetId)
@@ -227,6 +263,10 @@ function enterWorld(session: WorldSession): void {
     setSpecialEnergy(message.you.specialEnergy)
     renderEquipment(message.you.equipment)
     closeBankUI()
+    closeCraftUI()
+    stats = message.you.stats
+    selectedSpell = message.you.spell ?? null
+    refreshSpellUI(message.you.equipment)
     playerCombatLevel = combatLevelFromStats(message.you.stats)
     if (self) {
       const pos = tileToWorld(message.you.x, message.you.z)
@@ -267,7 +307,6 @@ function enterWorld(session: WorldSession): void {
         const ground = createGround(scene, message.zone.collision, message.zone.w, message.zone.h, message.zone.palette)
         exitLayer = createExitMarkers(scene, message.zone.exits ?? [])
         exitMarkers = message.zone.exits ?? []
-        minimap = createMinimap(message.zone.collision, message.zone.w, message.zone.h, message.zone.palette)
         void createProps(scene, message.zone.props ?? [])
         const marker = createClickMarker(scene)
         camera = createCamera()
@@ -317,6 +356,24 @@ function enterWorld(session: WorldSession): void {
             setStanceActive(stance)
             send(socket, { t: 'setStance', stance })
           },
+          onSpellMenu: (x, y) => {
+            const magicLevel = stats.magic?.level ?? 1
+            const castable = Object.entries(spells)
+              .filter(([, s]) => s.levelReq <= magicLevel)
+              .sort((a, b) => a[1].levelReq - b[1].levelReq)
+            const rows: MenuRow[] = [
+              ...castable.map(([, s]) => ({ text: `${s.name} (Lv ${s.levelReq})` })),
+              { text: 'No spell' },
+              { text: 'Cancel', local: 'cancel' as const },
+            ]
+            showContextMenu(rows, x, y, (row) => {
+              const index = rows.indexOf(row)
+              if (index < 0 || index >= rows.length - 1) return
+              selectedSpell = index < castable.length ? castable[index][0] : null
+              send(socket, { t: 'setSpell', spell: selectedSpell })
+              setSpellButton(true, selectedSpell ? spells[selectedSpell].name : null)
+            })
+          },
           onSpecial: () => send(socket, { t: 'special' }),
           onUnequip: (slot) => send(socket, { t: 'unequip', slot }),
           onLogout: () => {
@@ -331,6 +388,7 @@ function enterWorld(session: WorldSession): void {
           },
         })
         initChatInput((text) => send(socket, { t: 'chat', text }))
+        stats = message.you.stats
         playerCombatLevel = combatLevelFromStats(message.you.stats)
         lootLayer = createLootLayer(scene)
 
@@ -347,6 +405,8 @@ function enterWorld(session: WorldSession): void {
         setStanceActive(message.you.stance)
         setSpecialEnergy(message.you.specialEnergy)
         renderEquipment(message.you.equipment)
+        selectedSpell = message.you.spell ?? null
+        refreshSpellUI(message.you.equipment)
         paintHudIcons() // icon data is loaded by now (Promise.all above)
         statics = staticsResult
         for (const [id, depleted] of rockStates) staticsResult.setRockDepleted(id, depleted)
@@ -357,21 +417,25 @@ function enterWorld(session: WorldSession): void {
         // Rapid taps on the same tile collapse to one walk — the server path
         // wouldn't change, and it keeps tap-spam inside the rate budget.
         let lastWalk = { x: -1, z: -1, at: 0 }
+        const walkTo = (tile: { x: number; z: number }): void => {
+          closeBankUI()
+          closeCraftUI()
+          showClickMarker(marker, tile.x, tile.z)
+          const now = performance.now()
+          if (tile.x === lastWalk.x && tile.z === lastWalk.z && now - lastWalk.at < 400) return
+          lastWalk = { x: tile.x, z: tile.z, at: now }
+          send(socket, { t: 'walk', x: tile.x, z: tile.z })
+        }
+        minimap = createMinimap(message.zone.collision, message.zone.w, message.zone.h, message.zone.palette, walkTo)
         setupInput(renderer.domElement, camera, ground, {
-          onWalk: (tile) => {
-            closeBankUI()
-            showClickMarker(marker, tile.x, tile.z)
-            const now = performance.now()
-            if (tile.x === lastWalk.x && tile.z === lastWalk.z && now - lastWalk.at < 400) return
-            lastWalk = { x: tile.x, z: tile.z, at: now }
-            send(socket, { t: 'walk', x: tile.x, z: tile.z })
-          },
+          onWalk: walkTo,
           onInteract: (interact) => {
             if (interact.kind === 'exit') {
               // Client-side sugar: walking onto the tile is what transitions.
               const tile = exitLayer?.tiles.get(interact.id)
               if (tile) {
                 closeBankUI()
+                closeCraftUI()
                 showClickMarker(marker, tile.x, tile.z)
                 send(socket, { t: 'walk', x: tile.x, z: tile.z })
               }

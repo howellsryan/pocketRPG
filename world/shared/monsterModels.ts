@@ -28,6 +28,21 @@ export const MONSTER_MODELS: Record<string, MonsterModel> = {
     bounds: { minX: -1.16, minY: 0, minZ: -1.23, maxX: 1.17, maxY: 2.6, maxZ: 1.08 },
     targetHeight: 1.5,
   },
+  bogling_sprite: {
+    url: '/models/blob.glb',
+    bounds: { minX: -1.05, minY: -0.01, minZ: -1.06, maxX: 1.2, maxY: 1.84, maxZ: 1.14 },
+    targetHeight: 0.8,
+  },
+  frostbite_imp: {
+    url: '/models/imp.glb',
+    bounds: { minX: -2.31, minY: -0.01, minZ: -0.62, maxX: 2.31, maxY: 2.83, maxZ: 1.54 },
+    targetHeight: 1.2,
+  },
+  marshfen_toad: {
+    url: '/models/frog.glb',
+    bounds: { minX: -2.32, minY: -0.01, minZ: -0.58, maxX: 2.32, maxY: 2.68, maxZ: 0.97 },
+    targetHeight: 1.1,
+  },
 }
 
 /** Monsters that render with a bespoke model (registry above) or the cow

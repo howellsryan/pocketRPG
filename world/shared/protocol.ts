@@ -19,6 +19,8 @@ export type EquipmentMap = Record<string, string>
 
 export type BankSlot = { itemId: string; quantity: number }
 
+export type StationType = 'furnace' | 'anvil' | 'range'
+
 export type ClientMessage =
   | { t: 'hello'; token: string }
   | { t: 'walk'; x: number; z: number }
@@ -28,8 +30,11 @@ export type ClientMessage =
   | { t: 'moveInv'; from: number; to: number }
   | { t: 'invAction'; slot: number; action: InvActionWire }
   | { t: 'bank'; op: 'deposit' | 'withdraw'; itemId: string; qty: number }
+  | { t: 'craft'; station: StationType; recipeId: string; qty: number }
   | { t: 'setRun'; run: boolean }
   | { t: 'setStance'; stance: CombatStance }
+  /** Select the combat spell for magic weapons (null = no spell). */
+  | { t: 'setSpell'; spell: string | null }
   | { t: 'special' }
   | { t: 'unequip'; slot: string }
   | { t: 'logout' }
@@ -44,6 +49,8 @@ export type ZoneEvent =
   /** Bank contents after an op; `open: true` on arrival at a chest tells the
    * client to show the bank modal. */
   | { e: 'bank'; bank: BankSlot[]; open?: boolean }
+  /** Player arrived at a processing station — open its recipe panel. */
+  | { e: 'station'; station: StationType; open: true }
   | { e: 'chat'; charId: string; name: string; text: string }
   /** Run-energy readout (0-100) and whether run is toggled on. */
   | { e: 'run'; energy: number; running: boolean }
@@ -67,7 +74,7 @@ export type EntityDiff = {
 
 export type StaticObject = {
   id: string
-  type: 'rock' | 'bank_chest' | 'tree'
+  type: 'rock' | 'bank_chest' | 'tree' | StationType
   rock?: string
   tree?: string
   x: number
@@ -99,6 +106,8 @@ export type ServerMessage =
         runEnergy: number
         running: boolean
         stance: CombatStance
+        /** Selected combat-spell id, when one is set this session. */
+        spell?: string
         specialEnergy: number
         equipment: EquipmentMap
       }
@@ -179,6 +188,17 @@ export function parseClientMessage(raw: unknown): ClientMessage | null {
         ? { t: 'bank', op, itemId, qty: qty as number }
         : null
     }
+    case 'craft': {
+      const r = raw as Record<string, unknown>
+      const station = r.station
+      const recipeId = r.recipeId
+      const qty = r.qty
+      const validStation = station === 'furnace' || station === 'anvil' || station === 'range'
+      const validQty = Number.isInteger(qty) && (qty as number) >= 1 && (qty as number) <= 28
+      return validStation && typeof recipeId === 'string' && recipeId.length > 0 && recipeId.length <= 64 && validQty
+        ? { t: 'craft', station: station as StationType, recipeId, qty: qty as number }
+        : null
+    }
     case 'setRun': {
       const run = (raw as Record<string, unknown>).run
       return typeof run === 'boolean' ? { t: 'setRun', run } : null
@@ -188,6 +208,11 @@ export function parseClientMessage(raw: unknown): ClientMessage | null {
       return stance === 'accurate' || stance === 'aggressive' || stance === 'defensive'
         ? { t: 'setStance', stance }
         : null
+    }
+    case 'setSpell': {
+      const spell = (raw as Record<string, unknown>).spell
+      if (spell === null) return { t: 'setSpell', spell: null }
+      return typeof spell === 'string' && spell.length > 0 && spell.length <= 64 ? { t: 'setSpell', spell } : null
     }
     case 'special':
       return { t: 'special' }

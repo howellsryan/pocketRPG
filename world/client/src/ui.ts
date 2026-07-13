@@ -67,6 +67,11 @@ const HUD_CSS = `
   background: rgba(70, 58, 36, 0.9); border: 1px solid #6a5636; color: #ffe066;
   font-size: 13px; font-weight: bold; display: flex; align-items: center; justify-content: center;
 }
+#spell-btn {
+  min-height: 44px; border-radius: 6px; cursor: pointer; user-select: none;
+  background: rgba(46, 52, 74, 0.9); border: 1px solid #4a5a8a; color: #9fc0ff;
+  font-size: 13px; font-weight: bold; display: flex; align-items: center; justify-content: center;
+}
 #run-orb {
   position: fixed; right: 148px; top: 52px; z-index: 10; min-width: 44px; min-height: 44px;
   padding: 4px 8px; background: rgba(20, 16, 10, 0.82); border: 1px solid #5a4a30; border-radius: 22px;
@@ -173,6 +178,8 @@ export type InvHandlers = {
 export type HudHandlers = InvHandlers & {
   onRunToggle: () => void
   onStance: (stance: CombatStance) => void
+  /** Tap on the spell button (magic weapons) — opens the spell picker at (x,y). */
+  onSpellMenu: (x: number, y: number) => void
   onSpecial: () => void
   onUnequip: (slot: string) => void
   onLogout: () => void
@@ -387,6 +394,14 @@ export function initHud(handlers?: HudHandlers): void {
     stanceRow.appendChild(btn)
   }
   combat.appendChild(stanceRow)
+  // Spell selector — hidden unless a magic weapon (staff/wand) is equipped;
+  // main.ts toggles it via setSpellButton().
+  const spellBtn = document.createElement('div')
+  spellBtn.id = 'spell-btn'
+  spellBtn.textContent = 'Spell: none'
+  spellBtn.style.display = 'none'
+  spellBtn.addEventListener('click', (e) => handlers?.onSpellMenu(e.clientX, e.clientY))
+  combat.appendChild(spellBtn)
   const specBar = document.createElement('div')
   specBar.id = 'spec-bar'
   const specFill = document.createElement('div')
@@ -466,6 +481,18 @@ export function renderEquipment(equipment: EquipmentMap): void {
   }
 }
 
+/** Swaps the Combat tab between melee stances and the spell selector: a magic
+ * weapon REPLACES Accurate/Aggressive/Defensive with the spell button (developer
+ * decision 2026-07-12); anything else shows the stances and hides the button. */
+export function setSpellButton(visible: boolean, spellName: string | null): void {
+  const btn = document.getElementById('spell-btn')
+  const stanceRow = document.querySelector<HTMLElement>('.stance-row')
+  if (!btn) return
+  btn.style.display = visible ? 'flex' : 'none'
+  if (stanceRow) stanceRow.style.display = visible ? 'none' : 'flex'
+  btn.textContent = `Spell: ${spellName ?? 'none'}`
+}
+
 export function setStanceActive(stance: CombatStance): void {
   for (const btn of document.querySelectorAll('.stance-btn')) {
     btn.classList.toggle('active', btn.getAttribute('data-stance') === stance)
@@ -507,6 +534,9 @@ const NPC_EXAMINE: Record<string, string> = {
   field_chicken: 'A plump forest fowl. Braver than it looks, which is not very.',
   cave_goblin: 'A wiry little menace, a long way from any cave.',
   arcane_adept: 'A robed student of the arcane, practising where the trees can’t complain.',
+  bogling_sprite: 'A wobbling dollop of bog-magic. Mostly harmless, entirely gelatinous.',
+  frostbite_imp: 'A small blue troublemaker radiating a distinctly unfriendly chill.',
+  marshfen_toad: 'A toad the size of a dog. The marsh smell arrives before it does.',
 }
 
 export function npcExamine(monsterId: string): string {

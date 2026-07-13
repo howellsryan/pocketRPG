@@ -9,9 +9,14 @@ import {
   tickPlayer,
   toEntityDiff,
   type RockState,
+  type StationState,
   type TickContext,
   type TickPlayer,
 } from './tick'
+import { STATIONS, recipeFor, stationTypeForVerb, isStationType } from '../shared/recipes'
+import { hasMaterials, maxCraftable } from './crafting'
+import { resolveCombatSetup } from './combat'
+import spellsJson from '../../src/data/spells.json'
 import { npcsFromZone, tickNpc, toNpcDiff, type NpcState } from './npc'
 import { PLAYER_DROP_OWNER_TICKS, isExpired, isVisibleTo, spawnDrops, takeLoot, visibleLootFor, type LootEntity } from './loot'
 import { sanitizeChat } from '../shared/chat'
@@ -154,6 +159,7 @@ export class WorldZone extends Server<Env> {
   authTimers = new Map<string, ReturnType<typeof setTimeout>>()
   rocks: Map<string, RockState> | null = null
   npcs: Map<string, NpcState> | null = null
+  stations: Map<string, StationState> | null = null
   loot = new Map<string, LootEntity>()
   /** Presence edges + chat queued between ticks; drained by tick(). */
   pendingJoins = new Set<string>()
@@ -211,6 +217,17 @@ export class WorldZone extends Server<Env> {
   private ensureNpcs(): Map<string, NpcState> {
     if (!this.npcs) this.npcs = npcsFromZone(this.zone.npcs)
     return this.npcs
+  }
+
+  private ensureStations(): Map<string, StationState> {
+    if (!this.stations) {
+      this.stations = new Map(
+        this.zone.objects
+          .filter((o) => isStationType(o.type))
+          .map((o) => [o.id, { id: o.id, type: o.type as StationState['type'], x: o.x, z: o.z }])
+      )
+    }
+    return this.stations
   }
 
   async onConnect(connection: Connection): Promise<void> {
@@ -374,6 +391,7 @@ export class WorldZone extends Server<Env> {
       existing.path = []
       existing.pendingInteract = null
       existing.mining = null
+      existing.crafting = null
       existing.combat = null
       existing.pendingLoot = null
       existing.anim = 'idle'
@@ -431,6 +449,7 @@ export class WorldZone extends Server<Env> {
       pendingXp: {},
       minted: pools.minted,
       mining: null,
+      crafting: null,
       pendingInteract: null,
       hp: maxHp,
       maxHp,
@@ -455,6 +474,7 @@ export class WorldZone extends Server<Env> {
       runEnergy: 100,
       lastRunSent: 100,
       stance: 'accurate',
+      spell: null,
       specialEnergy: 100,
       lastSpecSent: 100,
       lingerUntilTick: null,
@@ -497,6 +517,7 @@ export class WorldZone extends Server<Env> {
         runEnergy: Math.round(player.runEnergy),
         running: player.running,
         stance: player.stance,
+        ...(player.spell ? { spell: player.spell } : {}),
         specialEnergy: Math.round(player.specialEnergy),
         equipment: equipmentMap(player.equipment),
       },
@@ -548,6 +569,9 @@ export class WorldZone extends Server<Env> {
       case 'bank':
         this.handleBank(player, message)
         break
+      case 'craft':
+        this.handleCraft(player, message)
+        break
       case 'interact':
         this.handleInteract(player, message)
         break
@@ -559,6 +583,9 @@ export class WorldZone extends Server<Env> {
         player.stance = message.stance
         // Apply mid-fight too — the engine reads stance each tick.
         if (player.combat) player.combat.state.stance = message.stance
+        break
+      case 'setSpell':
+        this.handleSetSpell(player, message.spell)
         break
       case 'special':
         // Queue the weapon's special for the next combat tick (engine checks
@@ -712,6 +739,67 @@ export class WorldZone extends Server<Env> {
     this.scheduleDirtyFlush(player)
   }
 
+  /** Sets (or clears) the session's combat spell. Level-gated against the
+   * session's Magic level; applies to an active magic fight immediately. */
+  private handleSetSpell(player: Player, spellId: string | null): void {
+    if (spellId !== null) {
+      const spell = (spellsJson as Record<string, { name?: string; levelReq?: number } | undefined>)[spellId]
+      if (!spell) return
+      const magicLevel = player.stats.magic?.level ?? 1
+      if (magicLevel < (spell.levelReq ?? 1)) {
+        player.pendingEvents.push({ e: 'msg', text: `You need Magic level ${spell.levelReq} to cast ${spell.name ?? spellId}.` })
+        return
+      }
+    }
+    player.spell = spellId
+    if (player.combat) {
+      const setup = resolveCombatSetup(player)
+      if (setup.needsSpell) {
+        // Cleared the spell mid-magic-fight: the engine would splash 0s forever.
+        player.pendingEvents.push({ e: 'msg', text: 'You stop fighting — no spell selected.' })
+        const npc = this.ensureNpcs().get(player.combat.npcId)
+        if (npc && npc.attackerId === player.charId) npc.attackerId = null
+        player.combat = null
+      } else {
+        player.combat.state.combatType = setup.combatType
+        player.combat.state.spell = setup.spell
+      }
+    }
+  }
+
+  /** Starts a craft run from the recipe panel. Everything re-validates
+   * server-side: station adjacency, recipe membership, level, materials; qty is
+   * a request clamped to what the pack's materials actually allow. */
+  private handleCraft(player: Player, message: Extract<ClientMessage, { t: 'craft' }>): void {
+    const station = [...this.ensureStations().values()].find(
+      (s) => s.type === message.station && Math.max(Math.abs(s.x - player.x), Math.abs(s.z - player.z)) <= 1
+    )
+    if (!station) return
+    const recipe = recipeFor(message.station, message.recipeId)
+    if (!recipe) return
+    const skill = STATIONS[message.station].skill
+    const level = player.stats[skill]?.level ?? 1
+    if (level < recipe.level) {
+      const skillName = skill.charAt(0).toUpperCase() + skill.slice(1)
+      player.pendingEvents.push({ e: 'msg', text: `You need ${skillName} level ${recipe.level} to make that.` })
+      return
+    }
+    if (!hasMaterials(player.inventory, recipe)) {
+      player.pendingEvents.push({ e: 'msg', text: "You don't have the materials to make that." })
+      return
+    }
+    this.clearIntents(player)
+    player.path = []
+    player.crafting = {
+      station: message.station,
+      stationId: station.id,
+      recipeId: recipe.id,
+      remaining: Math.min(message.qty, maxCraftable(player.inventory, recipe)),
+      progress: 0,
+    }
+    this.ensureTicking()
+  }
+
   private chestAdjacent(player: Player): boolean {
     return this.zone.objects.some(
       (o) => o.type === 'bank_chest' && Math.max(Math.abs(o.x - player.x), Math.abs(o.z - player.z)) <= 1
@@ -775,6 +863,7 @@ export class WorldZone extends Server<Env> {
   private clearIntents(player: Player): void {
     player.pendingInteract = null
     player.mining = null
+    player.crafting = null
     player.combat = null
     player.pendingLoot = null
   }
@@ -811,6 +900,11 @@ export class WorldZone extends Server<Env> {
       if (!chest) return
       target = chest
       intent = { kind: 'object', id: chest.id, action: 'bank' }
+    } else if (message.kind === 'object' && stationTypeForVerb(message.action)) {
+      const station = this.zone.objects.find((o) => o.id === message.id && o.type === stationTypeForVerb(message.action))
+      if (!station) return
+      target = station
+      intent = { kind: 'object', id: station.id, action: message.action }
     } else {
       return
     }
@@ -852,6 +946,7 @@ export class WorldZone extends Server<Env> {
       tick: this.tickCount,
       rocks,
       npcs,
+      stations: this.ensureStations(),
       collision: this.zone.collision,
       pathAdjacent: (from, to) => findPathAdjacent(this.zone.collision, from, to),
     }
@@ -897,6 +992,18 @@ export class WorldZone extends Server<Env> {
       for (const loot of result.newLoot) this.loot.set(loot.id, loot)
       if (result.bankOpen) {
         result.events.push({ e: 'bank', bank: this.bankList(player), open: true })
+      }
+      if (result.stationOpen) {
+        result.events.push({ e: 'station', station: result.stationOpen, open: true })
+      }
+      if (result.consumed.length > 0) {
+        // Items left the pack this tick (craft materials, spell runes) — drain
+        // the provenance pools to match, and debounce a durability flush (a
+        // consumed save-backed unit must not resurrect on a DO eviction).
+        for (const consumed of result.consumed) {
+          for (const [itemId, qty] of Object.entries(consumed)) consumeUnits(player.pools, itemId, qty)
+        }
+        this.scheduleDirtyFlush(player)
       }
       if (result.events.length > 0) eventsByChar.set(player.charId, result.events)
       if (result.died) this.respawnPlayer(player, playerEnts)

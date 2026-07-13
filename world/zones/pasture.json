@@ -107,6 +107,15 @@
       "toX": 2,
       "toZ": 24,
       "label": "the Whisperwood"
+    },
+    {
+      "id": "exit_lumbright",
+      "x": 0,
+      "z": 8,
+      "toZone": "lumbright",
+      "toX": 62,
+      "toZ": 31,
+      "label": "Lumbright"
     }
   ]
 }

@@ -22,6 +22,10 @@ const BUILDS = [
   { src: 'Chicken.glb', out: 'chicken.glb', clips: { Idle: 'idle', Walk: 'walk', Death: 'die' } },
   { src: 'Goleling.glb', out: 'goblin.glb', clips: { Flying_Idle: 'idle', Fast_Flying: 'walk', Death: 'die' } },
   { src: 'Wizard.glb', out: 'wizard.glb', clips: { Idle: 'idle', Walk: 'walk', Death: 'die' } },
+  // Phase 7 — Lumbright's outside-the-walls trio.
+  { src: 'Green Blob.glb', out: 'blob.glb', clips: { Idle: 'idle', Walk: 'walk', Death: 'die' } },
+  { src: 'Blue Demon.glb', out: 'imp.glb', clips: { Idle: 'idle', Walk: 'walk', Death: 'die' } },
+  { src: 'Frog.glb', out: 'frog.glb', clips: { Idle: 'idle', Walk: 'walk', Death: 'die' } },
 ]
 
 await MeshoptDecoder.ready

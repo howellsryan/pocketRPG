@@ -11,7 +11,7 @@ export type CatalogEntry =
   | { kind: 'rock'; label: string; icon: string; rock: string; level: number }
   | { kind: 'tree'; label: string; icon: string; tree: string; level: number }
   | { kind: 'npc'; label: string; icon: string; monsterId: string; combatLevel: number; hp: number; hasModel: boolean }
-  | { kind: 'object'; label: string; icon: string; objectType: 'bank_chest' }
+  | { kind: 'object'; label: string; icon: string; objectType: 'bank_chest' | 'furnace' | 'anvil' | 'range' }
   | { kind: 'prop'; label: string; icon: string; model: string }
 
 export type CatalogGroup = { title: string; entries: CatalogEntry[] }
@@ -50,7 +50,15 @@ export function monsterCatalog(): CatalogGroup {
 }
 
 export function objectCatalog(): CatalogGroup {
-  return { title: 'Objects', entries: [{ kind: 'object', label: 'Bank chest', icon: '🏦', objectType: 'bank_chest' }] }
+  return {
+    title: 'Objects',
+    entries: [
+      { kind: 'object', label: 'Bank chest', icon: '🏦', objectType: 'bank_chest' },
+      { kind: 'object', label: 'Furnace', icon: '🔥', objectType: 'furnace' },
+      { kind: 'object', label: 'Anvil', icon: '🔨', objectType: 'anvil' },
+      { kind: 'object', label: 'Cooking range', icon: '🍳', objectType: 'range' },
+    ],
+  }
 }
 
 export function propCatalog(models: string[]): CatalogGroup {

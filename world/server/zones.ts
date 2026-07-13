@@ -1,6 +1,7 @@
 import { validateZone, type ZoneDef } from '../shared/zone'
 import pastureZone from '../zones/pasture.json'
 import forestZone from '../zones/forest.json'
+import lumbrightZone from '../zones/lumbright.json'
 
 // Bundled zone definitions, baked into the Worker at build time. A D1 row in
 // world_zone_defs of the same id overrides these at runtime (see zoneStore.ts);
@@ -8,6 +9,7 @@ import forestZone from '../zones/forest.json'
 export const ZONES: Record<string, ZoneDef> = {
   pasture: pastureZone as ZoneDef,
   forest: forestZone as ZoneDef,
+  lumbright: lumbrightZone as ZoneDef,
 }
 
 for (const zone of Object.values(ZONES)) {

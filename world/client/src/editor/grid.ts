@@ -151,6 +151,9 @@ export class GridView {
       if (o.type === 'rock') out.push({ x: o.x, z: o.z, glyph: '⛏', color: '#c9d3dd' })
       else if (o.type === 'tree') out.push({ x: o.x, z: o.z, glyph: '🌲', color: '#8fd694' })
       else if (o.type === 'bank_chest') out.push({ x: o.x, z: o.z, glyph: '🏦', color: '#e6c56b' })
+      else if (o.type === 'furnace') out.push({ x: o.x, z: o.z, glyph: '🔥', color: '#ff9a5a' })
+      else if (o.type === 'anvil') out.push({ x: o.x, z: o.z, glyph: '🔨', color: '#c9d3dd' })
+      else if (o.type === 'range') out.push({ x: o.x, z: o.z, glyph: '🍳', color: '#ffcf7a' })
     }
     for (const n of this.def.npcs) out.push({ x: n.x, z: n.z, glyph: '☠', color: '#ff8a7a' })
     for (const e of this.def.exits ?? []) out.push({ x: e.x, z: e.z, glyph: '🚪', color: '#8ab4ff' })

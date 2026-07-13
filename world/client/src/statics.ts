@@ -26,6 +26,29 @@ const TREE_INFO: Record<string, { name: string; model: string; scale: number; ex
 const DEFAULT_TREE_INFO = { name: 'Tree', model: '/models/tree_normal.glb', scale: 1.3, examine: 'A tree of the deep wood.' }
 const TREE_STUMP_SCALE = 2.2
 
+/** Processing stations (Phase 7). No anvil asset exists in the library yet —
+ * it renders from primitives until a bespoke model lands (see the guide §14). */
+const STATION_INFO: Record<string, { name: string; label: string; action: string; model: string | null; scale: number; examine: string; fallback: () => THREE.Object3D }> = {
+  // The furnace chimney model is ~3 units tall and the range's brick ring is a
+  // flat ~0.5-unit disc — scales bring both to tile proportions; the range gets
+  // an emissive flame added over whatever renders (model or fallback).
+  furnace: {
+    name: 'Furnace', label: 'Smelt', action: 'smelt', model: '/models/furnace.glb', scale: 0.55,
+    examine: 'A stout brick furnace, hot enough to melt ore into bars.',
+    fallback: furnaceFallback,
+  },
+  anvil: {
+    name: 'Anvil', label: 'Smith', action: 'smith', model: null, scale: 1,
+    examine: 'A battered iron anvil. Bars go on, gear comes off.',
+    fallback: anvilFallback,
+  },
+  range: {
+    name: 'Cooking Range', label: 'Cook', action: 'cook', model: '/models/range.glb', scale: 1.8,
+    examine: 'A brick cooking fire. Mind you don’t burn anything.',
+    fallback: rangeFallback,
+  },
+}
+
 export type Statics = {
   pickables: THREE.Object3D[]
   setRockDepleted: (id: string, depleted: boolean) => void
@@ -70,6 +93,55 @@ function cloneTinted(template: THREE.Object3D, tint: number | null): { obj: THRE
   return { obj, materials }
 }
 
+function anvilFallback(): THREE.Object3D {
+  const metal = new THREE.MeshStandardMaterial({ color: 0x3d434a, roughness: 0.55, metalness: 0.6 })
+  const group = new THREE.Group()
+  const base = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.18, 0.34), metal)
+  base.position.y = 0.09
+  const waist = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.24, 0.2), metal)
+  waist.position.y = 0.3
+  const top = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.14, 0.26), metal)
+  top.position.y = 0.49
+  const horn = new THREE.Mesh(new THREE.ConeGeometry(0.11, 0.3, 12), metal)
+  horn.rotation.z = -Math.PI / 2
+  horn.position.set(0.45, 0.49, 0)
+  group.add(base, waist, top, horn)
+  return group
+}
+
+function furnaceFallback(): THREE.Object3D {
+  const group = new THREE.Group()
+  const body = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.45, 0.55, 1.2, 10),
+    new THREE.MeshStandardMaterial({ color: 0x8a7f74, roughness: 0.95 })
+  )
+  body.position.y = 0.6
+  const mouth = new THREE.Mesh(
+    new THREE.BoxGeometry(0.3, 0.26, 0.12),
+    new THREE.MeshStandardMaterial({ color: 0xff7722, emissive: 0xcc4400, emissiveIntensity: 1.4 })
+  )
+  mouth.position.set(0, 0.35, 0.5)
+  group.add(body, mouth)
+  return group
+}
+
+function rangeFlame(y: number): THREE.Object3D {
+  const fire = new THREE.Mesh(
+    new THREE.ConeGeometry(0.16, 0.34, 8),
+    new THREE.MeshStandardMaterial({ color: 0xffaa33, emissive: 0xdd6600, emissiveIntensity: 1.6 })
+  )
+  fire.position.y = y
+  return fire
+}
+
+function rangeFallback(): THREE.Object3D {
+  const group = new THREE.Group()
+  const bricks = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.16, 0.5), new THREE.MeshStandardMaterial({ color: 0x9a5b45, roughness: 0.95 }))
+  bricks.position.y = 0.08
+  group.add(bricks)
+  return group
+}
+
 function treeFallback(): THREE.Object3D {
   const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.16, 0.8), new THREE.MeshStandardMaterial({ color: 0x6b4a2b }))
   trunk.position.y = 0.4
@@ -83,13 +155,24 @@ function treeFallback(): THREE.Object3D {
 export async function createStatics(scene: THREE.Scene, statics: StaticObject[]): Promise<Statics> {
   const treeModels = [...new Set(statics.filter((s) => s.type === 'tree').map((s) => (TREE_INFO[s.tree ?? ''] ?? DEFAULT_TREE_INFO).model))]
   const needStump = treeModels.length > 0
-  const [rockGltf, chestGltf, stumpGltf, ...treeGltfs] = await Promise.all([
+  const stationModels = [
+    ...new Set(
+      statics
+        .map((s) => STATION_INFO[s.type]?.model)
+        .filter((m): m is string => Boolean(m))
+    ),
+  ]
+  const [rockGltf, chestGltf, stumpGltf, ...restGltfs] = await Promise.all([
     tryLoad('/models/rock.glb'),
     tryLoad('/models/chest.glb'),
     needStump ? tryLoad('/models/stump.glb') : Promise.resolve(null),
     ...treeModels.map((url) => tryLoad(url)),
+    ...stationModels.map((url) => tryLoad(url)),
   ])
+  const treeGltfs = restGltfs.slice(0, treeModels.length)
+  const stationGltfs = restGltfs.slice(treeModels.length)
   const treeTemplates = new Map(treeModels.map((url, i) => [url, treeGltfs[i]]))
+  const stationTemplates = new Map(stationModels.map((url, i) => [url, stationGltfs[i]]))
   const pickables: THREE.Object3D[] = []
   const rocks = new Map<string, RockEntry>()
   const trees = new Map<string, TreeEntry>()
@@ -133,6 +216,17 @@ export async function createStatics(scene: THREE.Scene, statics: StaticObject[])
       wrapper.userData.pick = {
         kind: 'rock', id: s.id, name: info.name,
         actions: [{ label: 'Mine', action: 'mine' }], examine: info.examine,
+      } satisfies Pickable
+    } else if (STATION_INFO[s.type]) {
+      const info = STATION_INFO[s.type]
+      const gltf = info.model ? stationTemplates.get(info.model) : null
+      wrapper.add(gltf ? gltf.scene.clone(true) : info.fallback())
+      if (s.type === 'range') wrapper.add(rangeFlame(0.22))
+      wrapper.scale.setScalar(info.scale)
+      wrapper.userData.pick = {
+        kind: 'object', id: s.id, name: info.name,
+        actions: [{ label: info.label, action: info.action }],
+        examine: info.examine,
       } satisfies Pickable
     } else {
       wrapper.add(chestGltf ? chestGltf.scene.clone(true) : chestFallback())

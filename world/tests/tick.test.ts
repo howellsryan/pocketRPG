@@ -24,6 +24,8 @@ function makePlayer(overrides: Partial<TickPlayer> = {}): TickPlayer {
     pendingXp: {},
     minted: {},
     mining: null,
+    crafting: null,
+    spell: null,
     pendingInteract: null,
     hp: 10,
     maxHp: 10,

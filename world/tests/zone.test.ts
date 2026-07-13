@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { validateExitGraph, validateZone, type ZoneDef } from '../shared/zone'
 import pastureZone from '../zones/pasture.json'
 import forestZone from '../zones/forest.json'
+import lumbrightZone from '../zones/lumbright.json'
 import monsters from '../../src/data/monsters.json'
 
 describe('validateZone', () => {
@@ -80,8 +81,16 @@ describe('Phase 6 zones', () => {
     expect(validateZone(forestZone as ZoneDef)).toEqual({ valid: true })
   })
 
-  it('validates the pasture↔forest exit graph', () => {
-    const zones = { pasture: pastureZone as ZoneDef, forest: forestZone as ZoneDef }
+  it('accepts the real lumbright zone', () => {
+    expect(validateZone(lumbrightZone as ZoneDef)).toEqual({ valid: true })
+  })
+
+  it('validates the pasture↔forest↔lumbright exit graph', () => {
+    const zones = {
+      pasture: pastureZone as ZoneDef,
+      forest: forestZone as ZoneDef,
+      lumbright: lumbrightZone as ZoneDef,
+    }
     expect(validateExitGraph(zones)).toEqual({ valid: true })
   })
 
