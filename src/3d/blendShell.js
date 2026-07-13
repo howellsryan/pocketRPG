@@ -117,35 +117,19 @@ uniform float uToon; uniform float uOutlinePass;
 uniform vec3 uFlashCol; uniform float uFlashAmt;
 varying vec3 vN; varying vec3 vW;
 
-float bsHash(vec3 p){ return fract(sin(dot(p, vec3(127.1,311.7,74.7)))*43758.5453); }
-float bsNoise(vec3 p){
-  vec3 i = floor(p), f = fract(p);
-  f = f*f*(3.0-2.0*f);
-  float n000 = bsHash(i), n100 = bsHash(i+vec3(1.,0.,0.));
-  float n010 = bsHash(i+vec3(0.,1.,0.)), n110 = bsHash(i+vec3(1.,1.,0.));
-  float n001 = bsHash(i+vec3(0.,0.,1.)), n101 = bsHash(i+vec3(1.,0.,1.));
-  float n011 = bsHash(i+vec3(0.,1.,1.)), n111 = bsHash(i+vec3(1.,1.,1.));
-  return mix(mix(mix(n000,n100,f.x), mix(n010,n110,f.x), f.y),
-             mix(mix(n001,n101,f.x), mix(n011,n111,f.x), f.y), f.z);
-}
-
 void main(){
   if (uOutlinePass > 0.5){ gl_FragColor = vec4(0.20,0.14,0.09,1.0); return; }
   vec3 n = normalize(vN);
-  vec3 l1 = normalize(vec3(0.6,0.9,0.5));
-  vec3 l2 = normalize(vec3(-0.5,0.3,-0.6));
-  float d1 = max(dot(n,l1),0.0), d2 = max(dot(n,l2),0.0);
-  if (uToon > 0.5){ d1 = floor(d1*3.0+0.5)/3.0; d2 = floor(d2*2.0+0.5)/2.0; }
-  float hemi = 0.5 + 0.5*n.y;
-  // hide grain: two octaves of value noise so the skin reads matte, not clay
-  float grain = 0.94 + 0.09*bsNoise(vW*16.0) + 0.05*bsNoise(vW*47.0);
+  // Quality bar (plan §1): bright high-key fill, ONE soft shade ramp, clean
+  // matte color — no grain, no rim, no second light. Shape reads from the
+  // ink outline and the gentle top-lit ramp, exactly like the reference.
+  float d = dot(n, normalize(vec3(0.45, 0.8, 0.45)));
+  float ramp = smoothstep(-0.35, 0.7, d);
+  if (uToon > 0.5) ramp = floor(ramp * 3.0 + 0.5) / 3.0;
+  float shade = mix(0.66, 1.04, ramp) * (0.94 + 0.06 * n.y);
   // per-pixel: per-vertex color dissolves markings smaller than the proxy
   // tessellation (cow patches fall between body vertices)
-  vec3 base = fieldColor(vW);
-  vec3 col = base * grain * (0.3 + 0.3*hemi + 0.55*d1 + 0.15*d2);
-  vec3 v = normalize(cameraPosition - vW);
-  float rim = pow(1.0 - max(dot(v,n),0.0), 3.0);
-  col += vec3(0.9,0.75,0.5) * rim * 0.1;
+  vec3 col = fieldColor(vW) * shade;
   col += uFlashCol * uFlashAmt * 0.8;
   gl_FragColor = vec4(col, 1.0);
 }`
@@ -251,7 +235,7 @@ export function createBlendShellCreature(THREE, spec) {
   const skin = new THREE.Mesh(geo, skinMat)
   skin.frustumCulled = false
   const outlineMat = new THREE.ShaderMaterial({
-    uniforms: { ...uniforms, uOffset: { value: 0.012 }, uOutlinePass: { value: 1 } },
+    uniforms: { ...uniforms, uOffset: { value: 0.02 }, uOutlinePass: { value: 1 } },
     vertexShader,
     fragmentShader,
     side: THREE.BackSide,

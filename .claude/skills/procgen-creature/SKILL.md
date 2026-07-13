@@ -21,7 +21,7 @@ A creature is a JSON spec in `src/data/creatures3d.json` — a list of rounded-c
 
 ## Judging the renders (DESIGN.md)
 
-The target read is a **warm carved figurine on parchment** — ink outline, rim light, matte hide grain. Cleanliness bar: `docs/procedural-3d-plan.md` §1 "Quality bar" (few bold masses, clean matte fills, crisp outline; if a spec needs paint patches to rescue a muddy read, fix the shapes). Check:
+The target read is a **warm carved figurine on parchment** — bold ink outline, bright high-key fill, one soft shade ramp, perfectly clean matte color (no grain, no rim — removed for the quality bar). Reference image: `docs/reference/proc-creature-quality-bar.jpeg`. Cleanliness bar: `docs/procedural-3d-plan.md` §1 "Quality bar" (few bold masses, clean matte fills, crisp outline; if a spec needs paint patches to rescue a muddy read, fix the shapes). Every creature gets **dot eyes** (tiny solid parts riding the head group — dark dots on light faces, light on dark; the thick outline ring around a tiny part IS the eye read). Check:
 
 - Silhouette readable at a glance; parts fused (no visible seams, no outline break-up inside the body).
 - Markings read as painted patches, not haze; the palette warm (Warm Dark Rule: dark parts are warm browns like `#463225`, never cool gray). Cool hues only when identity demands it (frost creatures) and still desaturated.

@@ -16,7 +16,7 @@ Reference: community-proven approach (procedural creature apps on r/threejs), gr
 
 ### Quality bar (first pass — monsters, hero, all assets)
 
-Reference screenshot: `docs/reference/proc-creature-quality-bar.png` (from the r/threejs critter demo; commit the image at that path — it arrived via chat and only the author holds the bytes). What it demonstrates, and what every first-pass asset is judged against:
+Reference screenshot: `docs/reference/proc-creature-quality-bar.jpeg` (from the r/threejs critter demo). What it demonstrates, and what every first-pass asset is judged against:
 
 - **Clean, seam-free skin**: one smooth matte fill per region, soft broad shading, zero surface noise/grain, no visible primitive joints or outline break-up anywhere — including mid-stride.
 - **Crisp single-weight ink outline** hugging the silhouette, even at thin parts (legs, antennae).
@@ -24,6 +24,8 @@ Reference screenshot: `docs/reference/proc-creature-quality-bar.png` (from the r
 - **Face minimalism sells it**: tiny white dot-eyes, nothing else.
 - **Fully grounded**: feet plant convincingly, soft blob shadow under each body.
 - Our palette stays DESIGN.md-warm (their pastel-candy hues do **not** carry over — Warm Dark / No Candy rules stand), but their *cleanliness* is the bar: when a spec needs mottle patches to hide a muddy read, fix the shapes instead.
+
+Status: **first quality pass applied** — shader reworked to the bar (hide-grain noise and rim light removed, single soft top-lit ramp `mix(0.66, 1.04, smoothstep(-0.35, 0.7, d))`, outline offset 0.012→0.02 for a bolder uniform stroke), dot eyes added to every monster (tiny solid parts riding the head group; the outline ring around a tiny part is what reads as the eye), bull hoof contrast and neck crease fixed. Judged against the reference across all seven monsters + the bronze/tier hero.
 
 A creature is a list of **SDF primitives** (capsules, cones, spheres — each with position/orientation, radii, color, blend radius). Rendering avoids both raymarching (per-pixel, mobile-hostile) and marching cubes (CPU, chunky):
 
