@@ -39,6 +39,9 @@ export function getWeaponModel(itemId) {
     position: w.position || dw.position || EQUIP_IDENTITY.position,
     rotationDeg: w.rotationDeg || dw.rotationDeg || EQUIP_IDENTITY.rotationDeg,
     scale: typeof w.scale === 'number' ? w.scale : (typeof dw.scale === 'number' ? dw.scale : EQUIP_IDENTITY.scale),
+    // metal-tier recolour applied to the model's steel materials at attach
+    // time (heroAttach.applyEquipTint) — one grey-base GLB serves every tier
+    tint: w.tint || null,
   }
 }
 
@@ -58,8 +61,9 @@ export function getGearModel(itemId) {
     position: g.position || d.position || EQUIP_IDENTITY.position,
     rotationDeg: g.rotationDeg || d.rotationDeg || EQUIP_IDENTITY.rotationDeg,
     scale: typeof g.scale === 'number' ? g.scale : (typeof d.scale === 'number' ? d.scale : EQUIP_IDENTITY.scale),
+    tint: g.tint || null,
     // covering pieces hide the body region beneath them (shader mask in
-    // Model3DViewer) so skin can't clip through in any pose
+    // heroAttach.js) so skin can't clip through in any pose
     hideHead: Boolean(g.hideHead),
     hideBody: Boolean(g.hideBody),
     hideLegs: Boolean(g.hideLegs),
@@ -77,6 +81,7 @@ export function getGearPlacement(itemId) {
     position: spec.position,
     rotationDeg: spec.rotationDeg,
     scale: spec.scale,
+    tint: spec.tint,
     hideHead: spec.hideHead,
     hideBody: spec.hideBody,
     hideLegs: spec.hideLegs,
@@ -153,6 +158,7 @@ export function getWeaponPlacement(itemId) {
     position: spec.position,
     rotationDeg: spec.rotationDeg,
     scale: spec.scale,
+    tint: spec.tint,
   }
 }
 

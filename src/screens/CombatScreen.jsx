@@ -46,7 +46,6 @@ import { splatsFromCombatEvents, HIT_SPLAT_DURATION_MS } from '../utils/hitSplat
 import { HitSplatLayer } from '../components/HitSplat.jsx'
 import CombatArena3D from '../components/CombatArena3D.jsx'
 import { getCreatureSpec } from '../3d/creatures.js'
-import { composeHeroSpec3D } from '../3d/heroCreature.js'
 import { getArenaBiomeSpec } from '../3d/biomeRegistry.js'
 import { getMonsterModel, getCharacterAssetPath, getWeaponPlacement, getGearPlacements, getCharacterModel } from '../utils/equipModels.js'
 import { canRender3D } from '../utils/three3d.js'
@@ -2284,13 +2283,14 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   // Combat view — GLB registry entry wins per-monster; a procedural
   // blend-shell spec (creatures3d.json) covers the rest.
   const arenaModel = combat?.active && combat.monster ? getMonsterModel(combat.monster.id) : null
-  const arenaProc = combat?.active && combat.monster && !arenaModel ? getCreatureSpec(combat.monster.id) : null
-  // Procedural hero wearing whatever is equipped (unregistered items simply
-  // don't render); null falls back to the GLB hero + bone-attached gear.
-  const arenaHeroProc = useMemo(
-    () => composeHeroSpec3D(Object.values(equipment || {}).map((s) => s && s.itemId).filter(Boolean)),
-    [equipment],
-  )
+  // currentForm keys multiForm bosses to their per-phase spec (creatures3d
+  // `forms`); the arena swaps the creature in place on form transitions.
+  const arenaProc = combat?.active && combat.monster && !arenaModel ? getCreatureSpec(combat.monster.id, combat.monster.currentForm) : null
+  // Hero realism (2026-07 re-scope): the arena hero is the GLB human — the
+  // blend-shell hero capped out at a mannequin read (docs/hero-realism-plan.md).
+  // Passing null here falls back to the GLB hero + bone-attach/skinned gear;
+  // the procedural hero stays authorable via render-proc.mjs --hero.
+  const arenaHeroProc = null
   const arenaMonsterId = combat?.active && combat.monster ? combat.monster.id : null
   const arenaBiome = useMemo(() => getArenaBiomeSpec(worldLocation, arenaMonsterId), [worldLocation, arenaMonsterId])
   const arenaAvailable = Boolean(arenaModel || arenaProc) && Boolean(arenaHeroProc || getCharacterAssetPath()) && canRender3D()
@@ -2322,9 +2322,10 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       monsterHeight={(arenaModel || arenaProc).height}
       monsterRotationDeg={(arenaModel || arenaProc).rotationDeg}
       characterPath={getCharacterAssetPath()}
+      characterRotationDeg={heroSpec.rotationDeg}
       heroProc={arenaHeroProc}
       biome={arenaBiome}
-      clips={{ idle: heroSpec.idleClip, attack: heroSpec.attackClip, special: heroSpec.specialClip }}
+      clips={{ idle: heroSpec.combatIdleClip || heroSpec.idleClip, attack: heroSpec.attackClip, special: heroSpec.specialClip, hit: heroSpec.hitClip, death: heroSpec.deathClip }}
       weapon={equipment?.weapon ? getWeaponPlacement(equipment.weapon.itemId) : null}
       gear={getGearPlacements(equipment)}
       attackSignal={arenaSignal}

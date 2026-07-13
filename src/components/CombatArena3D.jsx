@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'preact/hooks'
 import HPBar from './HPBar.jsx'
 import { HitSplatLayer } from './HitSplat.jsx'
 import { loadThree, canRender3D, assetUrl } from '../utils/three3d.js'
-import { disposeObject, attachGearList, setupHideMask } from './Model3DViewer.jsx'
+import { disposeObject, attachWeapon, attachGearList, setupHideMask } from '../3d/heroAttach.js'
 import { createProcCreature } from '../3d/rigs.js'
 import { mountArenaBiome } from '../3d/biomes.js'
 
@@ -35,6 +35,7 @@ function CombatArena3D({
   monsterHeight = 2,
   monsterRotationDeg = [0, -90, 0],
   characterPath,
+  characterRotationDeg = [0, 0, 0],
   heroProc = null,
   biome = null,
   clips = {},
@@ -62,9 +63,11 @@ function CombatArena3D({
     if (failed && onFailRef.current) onFailRef.current()
   }, [failed])
 
-  // The procedural hero swaps in place on equipment changes (see the effect
-  // below), so the mount effect reads it through a ref instead of re-running.
+  // The procedural hero swaps in place on equipment changes, and the
+  // procedural monster on boss form changes (see the effects below), so the
+  // mount effect reads both through refs instead of re-running.
   const heroProcRef = useRef(heroProc)
+  const monsterProcRef = useRef(monsterProc)
   const biomeRef = useRef(biome)
   biomeRef.current = biome
 
@@ -163,62 +166,78 @@ function CombatArena3D({
       }
 
       const heroSpecNow = heroProcRef.current
+      const monsterSpecNow = monsterProcRef.current
       const [heroGltf, monsterGltf] = await Promise.all([
         heroSpecNow ? Promise.resolve(null) : loadGlb(characterPath),
-        monsterProc ? Promise.resolve(null) : loadGlb(monsterPath),
+        monsterSpecNow ? Promise.resolve(null) : loadGlb(monsterPath),
       ])
       if (cancelled || st.disposed) return
 
       // Procedural hero: a rigged blend-shell creature wearing the composed
       // equipment (fit + animation come from the shared rig, so there is no
-      // weapon/gear attach path). GLB hero: clips carry a baked root
-      // orientation — animated, she faces +x (east) with no group rotation.
+      // weapon/gear attach path). GLB hero: authored facing is registry data
+      // (character `rotationDeg`, [0,90,0] turns the +z-facing Quaternius
+      // build toward the monster) so a differently-authored GLB is a JSON
+      // fix, not a code change.
       if (heroSpecNow) st.heroCreature = createProcCreature(THREE, heroSpecNow)
       st.hero = st.heroCreature
         ? mountActor({ scene: st.heroCreature.group }, heroSpecNow.height || 1.8, -ARENA_GAP_X / 2,
             THREE.MathUtils.degToRad((heroSpecNow.rotationDeg || [0, 90, 0])[1]))
-        : mountActor(heroGltf, 1.8, -ARENA_GAP_X / 2, 0)
+        : mountActor(heroGltf, 1.8, -ARENA_GAP_X / 2, THREE.MathUtils.degToRad((characterRotationDeg || [0, 0, 0])[1]))
       // Monster facing is registry data (`rotationDeg`, default faces the
       // hero) so a differently-authored GLB is a JSON fix, not a code change.
-      const [mrx, mry, mrz] = monsterRotationDeg
+      const [mrx, mry, mrz] = monsterSpecNow ? (monsterSpecNow.rotationDeg || [0, -90, 0]) : monsterRotationDeg
       // Procedural monsters build a rigged blend-shell creature in place of a
       // GLB; mount and camera framing are shared, but motion (idle, lunge,
       // flinch, death) comes from the rig, not the group offsets below.
-      if (monsterProc) st.monsterCreature = createProcCreature(THREE, monsterProc)
+      if (monsterSpecNow) st.monsterCreature = createProcCreature(THREE, monsterSpecNow)
       st.monster = mountActor(
         st.monsterCreature ? { scene: st.monsterCreature.group } : monsterGltf,
-        monsterHeight, ARENA_GAP_X / 2, THREE.MathUtils.degToRad(mry),
+        monsterSpecNow ? (monsterSpecNow.height || 1.4) : monsterHeight,
+        ARENA_GAP_X / 2, THREE.MathUtils.degToRad(mry),
       )
       st.monster.rotation.x = THREE.MathUtils.degToRad(mrx)
       st.monsterBaseRotZ = THREE.MathUtils.degToRad(mrz)
       // Long-bodied monsters (dragons) are height-normalised but can span
       // several units — place them by their NEAREST edge so the snout starts
-      // at a fixed gap from centre instead of overlapping the hero.
-      const mBox = new THREE.Box3().setFromObject(st.monster)
-      st.monsterBaseX = Math.max(0.6, st.monster.position.x + (0.35 - mBox.min.x))
-      st.monster.position.x = st.monsterBaseX
-      if (st.biome) {
-        st.biome.addShadowBlob(-ARENA_GAP_X / 2, 0, 0.55)
-        st.biome.addShadowBlob(st.monsterBaseX, 0, Math.max(0.5, (mBox.max.x - mBox.min.x) * 0.42))
+      // at a fixed gap from centre instead of overlapping the hero. Runs
+      // again on boss form swaps (the new body's bulk can differ wildly), so
+      // it also owns the monster's shadow blob and the camera framing.
+      if (st.biome) st.biome.addShadowBlob(-ARENA_GAP_X / 2, 0, 0.55)
+      st.placeMonster = () => {
+        const mBox = new THREE.Box3().setFromObject(st.monster)
+        st.monsterBaseX = Math.max(0.6, st.monster.position.x + (0.35 - mBox.min.x))
+        st.monster.position.x = st.monsterBaseX
+        if (st.biome) {
+          const blobR = Math.max(0.5, (mBox.max.x - mBox.min.x) * 0.42)
+          if (st.monsterBlob) {
+            st.monsterBlob.position.x = st.monsterBaseX
+            st.monsterBlob.scale.setScalar(blobR * 2)
+          } else {
+            st.monsterBlob = st.biome.addShadowBlob(st.monsterBaseX, 0, blobR)
+          }
+        }
+        // Frame both actors whatever the monster's bulk.
+        const allBox = new THREE.Box3().setFromObject(st.monster).union(new THREE.Box3().setFromObject(st.hero))
+        const spanX = allBox.max.x - allBox.min.x
+        const midX = (allBox.max.x + allBox.min.x) / 2 * 0.4
+        camera.position.set(midX, Math.max(1.7, allBox.max.y * 0.6), Math.max(4.8, spanX * 1.05))
+        camera.lookAt(midX, Math.max(1.0, allBox.max.y * 0.42), 0)
       }
+      st.placeMonster()
       st.heroMats = collectMats(st.hero)
       st.monsterMats = collectMats(st.monster)
       if (!st.heroCreature) {
-        let heroSkinnedMesh = null
+        const skinnedMeshes = []
         st.hero.traverse((o) => {
           if (o.isBone) st.bones[o.name] = o
-          if (o.isSkinnedMesh && !heroSkinnedMesh) heroSkinnedMesh = o
+          if (o.isSkinnedMesh) skinnedMeshes.push(o)
         })
-        st.heroSkinned = heroSkinnedMesh
-        st.headMaskCtl = setupHideMask(THREE, heroSkinnedMesh)
+        // rebind target for skinned gear: the body (largest mesh — the hero
+        // also carries small hair/eye meshes on the same skeleton)
+        st.heroSkinned = skinnedMeshes.sort((a, b) => b.geometry.attributes.position.count - a.geometry.attributes.position.count)[0] || null
+        st.headMaskCtl = setupHideMask(THREE, skinnedMeshes)
       }
-
-      // Frame both actors whatever the monster's bulk.
-      const allBox = new THREE.Box3().setFromObject(st.monster).union(new THREE.Box3().setFromObject(st.hero))
-      const spanX = allBox.max.x - allBox.min.x
-      const midX = (allBox.max.x + allBox.min.x) / 2 * 0.4
-      camera.position.set(midX, Math.max(1.7, allBox.max.y * 0.6), Math.max(4.8, spanX * 1.05))
-      camera.lookAt(midX, Math.max(1.0, allBox.max.y * 0.42), 0)
 
       if (heroGltf && heroGltf.animations && heroGltf.animations.length) {
         st.mixer = new THREE.AnimationMixer(st.hero)
@@ -234,8 +253,11 @@ function CombatArena3D({
         }
         st.attackAction = onceAction(byName(clips.attack || 'Box'))
         st.specialAction = onceAction(byName(clips.special))
+        st.hitAction = onceAction(byName(clips.hit))
+        st.deathAction = onceAction(byName(clips.death))
+        if (st.deathAction) st.deathAction.clampWhenFinished = true // stay collapsed
         st.mixer.addEventListener('finished', (e) => {
-          if (st.disposed || (e.action !== st.attackAction && e.action !== st.specialAction)) return
+          if (st.disposed || (e.action !== st.attackAction && e.action !== st.specialAction && e.action !== st.hitAction)) return
           e.action.fadeOut(0.15)
           st.idleAction.reset().fadeIn(0.15).play()
         })
@@ -263,7 +285,7 @@ function CombatArena3D({
       }
 
       if (!st.heroCreature) {
-        attachArenaWeapon(st, weaponRef.current)
+        attachWeapon(st, weaponRef.current, st.hero)
         attachGearList(st, gearRef.current, st.hero)
       }
 
@@ -365,7 +387,10 @@ function CombatArena3D({
       arenaTeardown(st, host)
       stateRef.current = null
     }
-  }, [characterPath, monsterPath, monsterProc && JSON.stringify(monsterProc), monsterHeight, monsterRotationDeg.join(), biome && biome.id])
+    // Procedural monster spec changes (boss form swaps, dev spec edits) swap
+    // the creature in place via the effect below instead of rebuilding the
+    // scene; GLB monsters keep the full remount on registry changes.
+  }, [characterPath, monsterPath, Boolean(monsterProc), monsterProc ? '' : monsterHeight + '|' + monsterRotationDeg.join(), biome && biome.id])
 
   // Weapon swaps mid-fight without a scene rebuild. Keyed on the whole spec
   // so registry transform edits re-apply live, not just path/bone swaps.
@@ -374,7 +399,7 @@ function CombatArena3D({
   useEffect(() => {
     weaponRef.current = weapon
     const st = stateRef.current
-    if (st && st.hero && !st.heroCreature) attachArenaWeapon(st, weapon)
+    if (st && st.hero && !st.heroCreature) attachWeapon(st, weapon, st.hero)
   }, [weapon && JSON.stringify(weapon)])
 
   // Gear (armour) swaps mid-fight the same way.
@@ -399,16 +424,53 @@ function CombatArena3D({
     wasDeadRef.current = dead
   }, [monsterHP && monsterHP.current <= 0])
 
-  // The procedural hero dies and respawns on-screen the same way.
+  // The hero dies and respawns on-screen the same way — the GLB hero plays
+  // its death clip and stays collapsed (clampWhenFinished) until HP recovers.
   const heroWasDeadRef = useRef(false)
   useEffect(() => {
     const st = stateRef.current
     const dead = playerHP && playerHP.current <= 0
-    if (st && st.heroCreature && dead !== heroWasDeadRef.current) {
-      st.heroCreature.trigger(dead ? 'death' : 'respawn')
+    if (st && dead !== heroWasDeadRef.current) {
+      if (st.heroCreature) {
+        st.heroCreature.trigger(dead ? 'death' : 'respawn')
+      } else if (st.deathAction) {
+        if (dead) {
+          st.idleAction && st.idleAction.fadeOut(0.1)
+          st.hitAction && st.hitAction.stop()
+          st.deathAction.reset().fadeIn(0.1).play()
+        } else {
+          st.deathAction.fadeOut(0.2)
+          st.idleAction && st.idleAction.reset().fadeIn(0.2).play()
+        }
+      }
     }
     heroWasDeadRef.current = dead
   }, [playerHP && playerHP.current <= 0])
+
+  // Boss form changes (multiForm monsters, combat.monster.currentForm) swap
+  // the monster's blend-shell creature in place — a phase transition never
+  // rebuilds the scene or re-triggers the loading hold. The new body's bulk
+  // can differ wildly (throne → spider), so placement/framing re-run too.
+  useEffect(() => {
+    const prev = monsterProcRef.current
+    monsterProcRef.current = monsterProc
+    const st = stateRef.current
+    if (!st || !st.THREE || st.disposed || !st.monster || !st.monsterCreature || !monsterProc) return
+    if (prev && JSON.stringify(prev) === JSON.stringify(monsterProc)) return
+    const T = st.THREE
+    const old = st.monsterCreature
+    st.monster.remove(old.group)
+    old.dispose()
+    st.monsterCreature = createProcCreature(T, monsterProc)
+    arenaNormalizeInto(T, st.monster, st.monsterCreature.group, monsterProc.height || 1.4)
+    const [mrx, mry, mrz] = monsterProc.rotationDeg || [0, -90, 0]
+    st.monster.rotation.y = T.MathUtils.degToRad(mry)
+    st.monster.rotation.x = T.MathUtils.degToRad(mrx)
+    st.monsterBaseRotZ = T.MathUtils.degToRad(mrz)
+    // placeMonster measures from the current position, so re-centre first.
+    st.monster.position.set(ARENA_GAP_X / 2, 0, 0)
+    if (st.placeMonster) st.placeMonster()
+  }, [monsterProc && JSON.stringify(monsterProc)])
 
   // Equipment changes recompose the hero spec: swap the blend-shell creature
   // in place (same normalisation as mountActor) instead of rebuilding the
@@ -468,8 +530,20 @@ function CombatArena3D({
       const timer = setTimeout(() => {
         st.timers.delete(timer)
         if (st.disposed) return
-        if (st.heroCreature) st.heroCreature.trigger('hit')
-        else st.heroReact = { t: 0, dur: 0.45 }
+        if (st.heroCreature) {
+          st.heroCreature.trigger('hit')
+        } else if (st.hitAction && !(st.deathAction && st.deathAction.isRunning())) {
+          // flinch clip (dying hero keeps the collapse); mid-swing hits keep
+          // the attack clip and settle for the procedural recoil
+          if (st.attackAction && st.attackAction.isRunning()) {
+            st.heroReact = { t: 0, dur: 0.45 }
+          } else {
+            st.idleAction && st.idleAction.fadeOut(0.1)
+            st.hitAction.reset().fadeIn(0.1).play()
+          }
+        } else {
+          st.heroReact = { t: 0, dur: 0.45 }
+        }
         st.heroFlash = { t: 0, dur: 0.4 }
       }, ATTACK_IMPACT_DELAY_MS)
       st.timers.add(timer)
@@ -522,35 +596,6 @@ function arenaNormalizeInto(THREE, group, model, targetHeight) {
   model.scale.setScalar(scale)
   model.position.set(-center.x * scale, -box.min.y * scale, -center.z * scale)
   group.add(model)
-}
-
-// Attach/replace the hero's weapon GLB on its bone (mirrors the equip-screen
-// attach; arena-prefixed so top-level names stay unique across the build).
-function attachArenaWeapon(st, weapon) {
-  if (!st || !st.THREE || !st.hero) return
-  if (st.weapon && st.weaponAnchor) { st.weaponAnchor.remove(st.weapon); disposeObject(st.weapon); st.weapon = null }
-  if (!weapon || !weapon.path) return
-  const token = (st.weaponToken = (st.weaponToken || 0) + 1)
-  loadThree().then(async ({ THREE, GLTFLoader, MeshoptDecoder }) => {
-    if (st.disposed || token !== st.weaponToken) return
-    const loader = new GLTFLoader()
-    loader.setMeshoptDecoder(MeshoptDecoder)
-    const wUrl = await assetUrl(weapon.path)
-    if (st.disposed || token !== st.weaponToken) return
-    loader.load(wUrl, (gltf) => {
-      if (st.disposed || token !== st.weaponToken) return
-      const obj = gltf.scene
-      const anchor = (weapon.bone && st.bones[weapon.bone]) ? st.bones[weapon.bone] : st.hero
-      const [px, py, pz] = weapon.position || [0, 0, 0]
-      const [rx, ry, rz] = weapon.rotationDeg || [0, 0, 0]
-      obj.position.set(px, py, pz)
-      obj.rotation.set(THREE.MathUtils.degToRad(rx), THREE.MathUtils.degToRad(ry), THREE.MathUtils.degToRad(rz))
-      obj.scale.setScalar(typeof weapon.scale === 'number' ? weapon.scale : 1)
-      anchor.add(obj)
-      st.weapon = obj
-      st.weaponAnchor = anchor
-    })
-  }).catch(() => {})
 }
 
 function arenaTeardown(st, host) {

@@ -11,7 +11,8 @@ A creature is a JSON spec in `src/data/creatures3d.json` — a list of rounded-c
 
 ## Workflow
 
-1. The registry key must be a real `src/data/monsters.json` id — `CombatScreen` resolves `getCreatureSpec(monster.id)` directly. A `monsters` entry in `equipmentModels.json` (GLB) wins per-monster; don't add a spec for a GLB monster unless deliberately replacing it.
+1. The registry key must be a real `src/data/monsters.json` id — `CombatScreen` resolves `getCreatureSpec(monster.id, monster.currentForm)` directly. A `monsters` entry in `equipmentModels.json` (GLB) wins per-monster; don't add a spec for a GLB monster unless deliberately replacing it.
+   **multiForm bosses**: give the entry `{ "initialForm": "<key>", "forms": { "<key>": <full spec each> } }` (no top-level `parts`) — keys must cover every key in the monster's `forms` (test-enforced); the arena swaps the creature in place on phase transitions. `render-proc.mjs` renders every form (`<id>-<form>-*.png`); harness takes `?form=<key>`. Bosses can exceed the ~1.3-unit authoring scale — the harness auto-frames.
 2. Author the spec (reference below). Torso first with the biggest radii, then head chain, limbs, thin details, paint patches last.
 3. Validate: `npx vitest run tests/creatures3d.test.ts` — every registry entry is auto-validated, no new test needed.
 4. Render: `npm i --no-save playwright-core` (once per machine), then

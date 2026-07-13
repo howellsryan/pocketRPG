@@ -10,9 +10,9 @@ describe('equipModels resolver', () => {
   })
 
   it('returns null for an unregistered weapon (icon-UI fallback)', () => {
-    expect(getWeaponModel('bronze_dagger')).toBeNull()
+    expect(getWeaponModel('bronze_spear')).toBeNull()
     expect(getWeaponModel(undefined)).toBeNull()
-    expect(hasWeaponModel('bronze_dagger')).toBe(false)
+    expect(hasWeaponModel('bronze_spear')).toBe(false)
   })
 
   it('resolves a registered weapon with a full placement spec', () => {
@@ -47,9 +47,9 @@ describe('equipModels resolver', () => {
 
   it('builds fetchable model URLs and leaves absolute ones untouched', () => {
     // explicit base wins
-    expect(modelUrl('crimson_dagger.glb', '/public/3d-samples/')).toBe('/public/3d-samples/crimson_dagger.glb')
+    expect(modelUrl('weapons/q_sword.glb', '/public/3d-samples/')).toBe('/public/3d-samples/weapons/q_sword.glb')
     // default: assetBase ('/' in Node, no injected global) + registry.modelBase
-    expect(modelUrl('crimson_dagger.glb')).toBe('/' + registry.modelBase + 'crimson_dagger.glb')
+    expect(modelUrl('weapons/q_sword.glb')).toBe('/' + registry.modelBase + 'weapons/q_sword.glb')
     expect(modelUrl('/already/abs.glb')).toBe('/already/abs.glb')
     expect(modelUrl('https://x/y.glb')).toBe('https://x/y.glb')
     expect(modelUrl(null)).toBeNull()
@@ -62,7 +62,7 @@ describe('equipModels resolver', () => {
     expect(placement).toBeTruthy()
     expect(placement!.path).toBe(registry.modelBase + registry.weapons[id].model)
     expect(placement!.path.startsWith('/')).toBe(false) // relative, resolved at runtime
-    expect(getWeaponPlacement('bronze_dagger')).toBeNull()
+    expect(getWeaponPlacement('bronze_spear')).toBeNull()
   })
 
   it('resolves registered gear with slot defaults filled in', () => {
@@ -175,9 +175,9 @@ describe('equipModels resolver', () => {
     }
   })
 
-  it('every named character clip (idle/attack/special) exists in the hero GLB', async () => {
-    const c = registry.character as { idleClip?: string; attackClip?: string; specialClip?: string }
-    const clips = [c.idleClip, c.attackClip, c.specialClip].filter(Boolean) as string[]
+  it('every named character clip (idle/combatIdle/attack/special/hit/death) exists in the hero GLB', async () => {
+    const c = registry.character as { idleClip?: string; combatIdleClip?: string; attackClip?: string; specialClip?: string; hitClip?: string; deathClip?: string }
+    const clips = [c.idleClip, c.combatIdleClip, c.attackClip, c.specialClip, c.hitClip, c.deathClip].filter(Boolean) as string[]
     if (clips.length === 0) return
     const fs = await import('node:fs')
     const path = await import('node:path')
@@ -191,17 +191,36 @@ describe('equipModels resolver', () => {
     }
   })
 
-  it('every body/legs gear model is skinned (deforms with the hero, not a rigid bone-attach)', async () => {
+  it('every body/legs gear model is skinned to the hero skeleton (deforms with it, not a rigid bone-attach)', async () => {
     const fs = await import('node:fs')
     const path = await import('node:path')
     const base = path.resolve(__dirname, '../public', registry.modelBase)
+    const readGlbJson = (file: string) => {
+      const buf = fs.readFileSync(file)
+      const jsonLen = buf.readUInt32LE(12)
+      return JSON.parse(buf.subarray(20, 20 + jsonLen).toString('utf8'))
+    }
+    // the runtime rebind maps piece skinIndex values onto the hero skeleton's
+    // bone array, so every skinned piece must carry the same joint count in
+    // the same order as the hero build
+    const heroJoints = readGlbJson(path.join(base, registry.character.model)).skins[0].joints.length
     for (const [id, g] of Object.entries(registry.gear || {}) as [string, { model: string; slot: string }][]) {
       if (g.slot !== 'body' && g.slot !== 'legs') continue
-      const buf = fs.readFileSync(path.join(base, g.model))
-      const jsonLen = buf.readUInt32LE(12)
-      const json = JSON.parse(buf.subarray(20, 20 + jsonLen).toString('utf8'))
+      const json = readGlbJson(path.join(base, g.model))
       expect(json.skins?.length, `${id} (${g.model}) has no skin — attachGearList rigid-attaches it to one bone instead of deforming with the body`).toBeGreaterThan(0)
-      expect(json.skins[0].joints?.length, `${id} skin has no joints`).toBe(41)
+      expect(json.skins[0].joints?.length, `${id} skin joint count must match the hero skeleton`).toBe(heroJoints)
+    }
+  })
+
+  it('the hero and every weapon/gear model are repo-served Quaternius builds (no Tripo/R2 URLs)', () => {
+    const models = [
+      registry.character.model,
+      ...Object.values(registry.weapons).map((w) => w.model),
+      ...Object.values(registry.gear || {}).map((g) => g.model),
+    ]
+    for (const m of models) {
+      expect(/tripo-assets/.test(m), `${m} still points at the Tripo asset store`).toBe(false)
+      expect(/^(https?:)?\/\//.test(m), `${m} should be repo-served`).toBe(false)
     }
   })
 })

@@ -230,6 +230,8 @@ export function mountArenaBiome(THREE, scene, spec) {
 
   scene.add(group)
   return {
+    // Returns the blob mesh so callers can re-place/re-size it (boss form
+    // swaps change the monster's footprint mid-fight).
     addShadowBlob: (x, z, r) => {
       const blob = new THREE.Mesh(shadowGeo, shadowMat)
       blob.rotation.x = -Math.PI / 2
@@ -237,6 +239,7 @@ export function mountArenaBiome(THREE, scene, spec) {
       blob.position.set(x, 0.012, z)
       blob.renderOrder = -1
       group.add(blob)
+      return blob
     },
     dispose: () => {
       scene.remove(group)

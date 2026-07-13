@@ -333,7 +333,7 @@ export default function EquipmentScreen() {
                 characterPath={heroPath}
                 weapon={weaponSpec}
                 gear={gearSpecs}
-                idleClip={getCharacterModel()?.idleClip || null}
+                idleClip={(weaponSpec && getCharacterModel()?.combatIdleClip) || getCharacterModel()?.idleClip || null}
                 height={360}
                 fallback={null}
                 onFail={() => setHeroFailed(true)}

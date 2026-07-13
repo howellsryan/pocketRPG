@@ -12,8 +12,17 @@ import creatures3dData from '../data/creatures3d.json'
 // world height in scene units (hero is ~1.8), `rotationDeg` matches the GLB
 // registry default (creatures are authored facing +z; [0,-90,0] faces the
 // hero from the right-hand side).
-export function getCreatureSpec(monsterId) {
-  const m = monsterId && creatures3dData.monsters && creatures3dData.monsters[monsterId]
+//
+// Multi-form bosses (monsters.json `multiForm`): an entry may carry
+// `forms: { formKey: spec }` instead of top-level parts. `formKey` picks the
+// combat form; form-less callers (previews, hasCreatureSpec) fall back to
+// the entry's `initialForm`, then the first form.
+export function getCreatureSpec(monsterId, formKey) {
+  let m = monsterId && creatures3dData.monsters && creatures3dData.monsters[monsterId]
+  if (m && m.forms && !Array.isArray(m.parts)) {
+    const keys = Object.keys(m.forms)
+    m = (formKey && m.forms[formKey]) || m.forms[m.initialForm] || m.forms[keys[0]]
+  }
   if (!m || !Array.isArray(m.parts) || !m.parts.length) return null
   return {
     ...m,
