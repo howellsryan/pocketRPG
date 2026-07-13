@@ -87,8 +87,24 @@ export function createGround(scene: THREE.Scene, collision: string[], width: num
   return mesh
 }
 
+// Per-zone terrain height sampler (world/client/src/terrain.ts registers it).
+// Kept module-level so tileToWorld — which every placed thing routes through —
+// picks up terrain height with no call-site changes. Null => flat (y=0), the
+// pre-terrain behaviour. Movement/collision stay flat and server-authoritative;
+// this only lifts render Y.
+let heightSampler: ((worldX: number, worldZ: number) => number) | null = null
+
+export function setHeightSampler(fn: ((worldX: number, worldZ: number) => number) | null): void {
+  heightSampler = fn
+}
+
+/** Ground Y at a world (x,z). 0 until a HeightField is registered. */
+export function groundHeight(worldX: number, worldZ: number): number {
+  return heightSampler ? heightSampler(worldX, worldZ) : 0
+}
+
 export function tileToWorld(x: number, z: number): THREE.Vector3 {
-  return new THREE.Vector3(x + 0.5, 0, z + 0.5)
+  return new THREE.Vector3(x + 0.5, groundHeight(x + 0.5, z + 0.5), z + 0.5)
 }
 
 export function worldToTile(point: THREE.Vector3): { x: number; z: number } {

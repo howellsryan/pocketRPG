@@ -6,6 +6,7 @@ import { closeCraftUI, openCraftUI, updateCraftInventory, updateCraftStats, type
 import { getLevelFromXP } from '../../../src/engine/experience.js'
 import { connect, onMessage, send } from './net'
 import { clampZoom, createCamera, createGround, createLights, createRenderer, createScene, tileToWorld, updateCamera } from './scene'
+import { createHeightField } from './terrain'
 import { applyEntityDiff, applyWeapon, createEntity, createHeroMesh, createMonsterMesh, updateEntity, type Entity } from './entities'
 import { createClickMarker, setupInput, showClickMarker, updateClickMarker } from './input'
 import { createStatics, type Statics } from './statics'
@@ -304,6 +305,9 @@ function enterWorld(session: WorldSession): void {
         hideOverlay()
         const scene = createScene(message.zone.ambience)
         createLights(scene, message.zone.ambience)
+        // Register the zone height sampler before anything is placed, so every
+        // tileToWorld call rides the terrain. T0: null corners => flat.
+        createHeightField(message.zone.w, message.zone.h, null)
         const ground = createGround(scene, message.zone.collision, message.zone.w, message.zone.h, message.zone.palette)
         exitLayer = createExitMarkers(scene, message.zone.exits ?? [])
         exitMarkers = message.zone.exits ?? []

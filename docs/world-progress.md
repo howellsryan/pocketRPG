@@ -518,3 +518,29 @@ Three requests; one withdrawn (bank scrolling already works on mobile — report
 **Verified**: `world:check` green (199 tests — +3 magic combat-flow tests: real-magic kill with per-cast rune consumption, out-of-runes stop, spell-less refusal). WS e2e 4/4 (char 2: spell-less attack refused, `fire_strike` level-gated at Magic 1, wind-strike bull kill +46 Magic xp with 1:1 rune drain). Playwright 5/5: minimap 40%,40% click → walk (12,12); melee shows stances/hides button; staff hides stances/shows button; picker lists Wind Strike; selection sends `{t:'setSpell'}` + relabels. **Env gotcha recorded**: `.dev.vars` must be written to `world/.dev.vars` — a shell whose cwd silently reset to repo root wrote it there and every hello failed signature verification.
 
 - [x] Minimap walk + magic spells — see commit introducing this entry — DT: on-device pass (minimap tap accuracy, spell picker on mobile, a real staff fight incl. running out of runes).
+
+## TERRAIN TRACK — `docs/open-world-terrain-plan.md`
+
+Separate from the build-guide steps above: the phased move from the flat checker
+ground to authored 3D terrain. Client-render-only; server stays flat/tile.
+
+### TERRAIN T0 — height seam (no visual change)
+Added the single integration seam so terrain height can later lift every placed
+mesh with no further call-site changes:
+- `scene.ts`: module-level `heightSampler` + `setHeightSampler`/`groundHeight`;
+  `tileToWorld` now returns `groundHeight(x+0.5, z+0.5)` as Y (0 when unset).
+- `terrain.ts` (new): `createHeightField(width, height, corners)` — bilinear
+  sampler over a `(w+1)×(h+1)` corner grid; registers itself as the active
+  sampler. Production passes `corners = null` (flat) this phase.
+- `main.ts`: registers the (flat) height field before ground/props/statics/
+  entities are placed. `input.ts`: click marker rides `groundHeight`.
+- `world/tests/terrain.test.ts`: corner exactness, bilinear midpoints, edge
+  clamping (no NaN), and the tileToWorld seam (flat when unset, lifted when set).
+
+Because the sampler is flat this phase, the game is pixel-identical; the seam is
+proven by tests and ready for T1 to fill the grid.
+
+**Verified**: `world:check` green — typecheck clean, 205 tests pass (+6 terrain),
+vite build succeeds.
+
+- [x] TERRAIN T0 — height seam landed; flat sampler, pixel-identical, tests green.
