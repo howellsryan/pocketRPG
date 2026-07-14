@@ -26,6 +26,15 @@ const CHARACTER_UNLOCKS_DEF = [
     currency: 'credits',
     stateKey: 'doubleSlayerXp',
   },
+  {
+    id: 'auto_slayer_task',
+    name: 'Auto Slayer Task',
+    description: 'While idling on a Slayer task, automatically take the next task from the same master when one finishes — the idle grind keeps completing tasks until you return. Applies to offline catch-up and Skip 1h.',
+    icon: '🗡️',
+    cost: 100,
+    currency: 'credits',
+    stateKey: 'autoSlayerTask',
+  },
 ]
 
 export default function CharacterUnlockScreen({ onBack }) {

@@ -3,6 +3,7 @@ import { useState, useContext, useCallback, useEffect, useRef } from 'preact/hoo
 import { getAllStats, getInventory, getEquipment, getBank, getPlayer, saveAllStats, saveInventory, saveEquipment, saveBank, savePlayer, getSetting, saveSetting } from '../db/stores.js'
 import { getLevelFromXP, clampXP } from '../engine/experience.js'
 import { simulateIdleSkilling, simulateIdleGather, simulateIdleCombat, simulateIdleAgility, simulateIdleHPRegen } from '../engine/idleEngine.js'
+import { simulateIdleCombatChain } from '../engine/idleSlayerLoop.js'
 import { simulateIdleThieving } from '../engine/thieving.js'
 import { simulateIdleHunting } from '../engine/hunter.js'
 import { simulateQuestIdleCascade, splitQuestXpRewards } from '../engine/questIdleCascade.js'
@@ -24,7 +25,7 @@ import {
   saveActivityProgress, getActivityProgress, hydrateActivityLedger,
   fetchAndHydrateActivityProgress, clearActivityProgress, resetActivityProgressSync,
 } from '../cloud/activityProgress.js'
-import { getSlayerTaskReward } from '../engine/slayerRewards.js'
+import { getSlayerTaskReward, resolveSlayerLoopRewards } from '../engine/slayerRewards.js'
 import { defaultIdleCombatSetup, normaliseIdleCombatSetup } from '../engine/idleSupplies.js'
 import { migrateLegacyItemIds } from '../engine/itemMigrations.js'
 import { WORLD_START_PLACE, normaliseLocation } from '../engine/world.js'
@@ -80,7 +81,7 @@ export function GameProvider({ children }) {
   const [slayerTasksCompleted, setSlayerTasksCompletedState] = useState(0)
   const [dungeoneeringTokens, setDungeoneeringTokensState] = useState(0)
   const [slayerPerks, setSlayerPerksState] = useState({ doubleQuantity: false })
-  const [characterUnlocks, setCharacterUnlocksState] = useState({ doubleSlayerXp: false })
+  const [characterUnlocks, setCharacterUnlocksState] = useState({ doubleSlayerXp: false, autoSlayerTask: false })
   const [activeCombatSpell, setActiveCombatSpellState] = useState(null)
   const [bossKillCounts, setBossKillCountsState] = useState({})
   const [raidKillCounts, setRaidKillCountsState] = useState({})
@@ -133,7 +134,7 @@ export function GameProvider({ children }) {
   const dungeoneeringTokensRef = useRef(0)
   const slayerTasksCompletedRef = useRef(0)
   const slayerPerksRef = useRef({ doubleQuantity: false })
-  const characterUnlocksRef = useRef({ doubleSlayerXp: false })
+  const characterUnlocksRef = useRef({ doubleSlayerXp: false, autoSlayerTask: false })
   const completedQuestsRef = useRef(new Set())
   const questQueueRef = useRef([])
 
@@ -260,13 +261,16 @@ export function GameProvider({ children }) {
             sim = simulateIdleGather(savedTask, elapsedMs, inv, s, itemsData, b, { autoBankExcludedItemIds: autoBankExcludedItemIdsSet })
           } else if (savedTask.type === 'combat') {
             const idleHpForLoad = savedHP != null ? savedHP : (s.hitpoints ? getLevelFromXP(s.hitpoints.xp) : 10)
-            sim = simulateIdleCombat(savedTask, elapsedMs, s, eq, inv, itemsData, savedSlayerTask, b, {
+            sim = simulateIdleCombatChain(savedTask, elapsedMs, s, eq, inv, itemsData, savedSlayerTask, b, {
               currentHP: idleHpForLoad,
               idleFood: normalisedIdleCombatSetup.food,
               idlePotions: normalisedIdleCombatSetup.potions,
               idlePrayers: normalisedIdleCombatSetup.prayers,
               prayersData,
               doubleSlayerXp: !!(savedCharacterUnlocks?.doubleSlayerXp),
+              autoSlayer: !!(savedCharacterUnlocks?.autoSlayerTask),
+              slayerPerks: savedSlayerPerks && typeof savedSlayerPerks === 'object' ? savedSlayerPerks : null,
+              completedQuests: savedCompletedQuests || [],
               autoBankExcludedItemIds: autoBankExcludedItemIdsSet,
             })
           } else if (savedTask.type === 'agility') {
@@ -369,7 +373,17 @@ export function GameProvider({ children }) {
             await saveBank(b)
           }
           // Persist slayer task update if present
-          if (savedTask.type === 'combat' && sim.slayerTaskUpdate) {
+          if (savedTask.type === 'combat' && Array.isArray(sim.slayerCompletions) && sim.slayerCompletions.length > 0) {
+            // Auto-slayer chain: award every task cleared this window (streak
+            // milestones fold in), then persist the final in-progress task.
+            const loop = resolveSlayerLoopRewards(sim.slayerCompletions, savedSlayerTasksCompleted)
+            const newSlayerPoints = normalisePointCurrency(savedSlayerPoints) + loop.pointsEarned
+            await saveSetting('slayerPoints', newSlayerPoints)
+            await saveSetting('slayerTasksCompleted', loop.totalTasks)
+            await saveSetting('slayerTask', sim.slayerTaskUpdate || null)
+            savedSlayerPoints = newSlayerPoints
+            savedSlayerTasksCompleted = loop.totalTasks
+          } else if (savedTask.type === 'combat' && sim.slayerTaskUpdate) {
             if (sim.slayerTaskUpdate.completed) {
               // Task complete — clear it and award points
               await saveSetting('slayerTask', null)
@@ -383,6 +397,13 @@ export function GameProvider({ children }) {
               // Task in progress — update monstersRemaining
               await saveSetting('slayerTask', sim.slayerTaskUpdate)
             }
+          }
+          // Auto-slayer chain switched tasks: point the active combat task at the
+          // current slayer monster so live play stays on-task and the next idle
+          // window re-engages the chain.
+          if (savedTask.type === 'combat' && sim.autoSlayerChained && sim.finalTaskMonster && !diedDuringIdle) {
+            savedTask = { ...savedTask, monster: sim.finalTaskMonster }
+            try { localStorage.setItem('pocketrpg_activeTask', JSON.stringify(savedTask)) } catch {}
           }
 
           // Quest sim handling: shared cascade helper for boot/load idle
@@ -628,7 +649,7 @@ export function GameProvider({ children }) {
     const loadedSlayerPerks = savedSlayerPerks && typeof savedSlayerPerks === 'object' ? savedSlayerPerks : { doubleQuantity: false }
     slayerPerksRef.current = loadedSlayerPerks
     setSlayerPerksState(loadedSlayerPerks)
-    const loadedCharacterUnlocks = savedCharacterUnlocks && typeof savedCharacterUnlocks === 'object' ? savedCharacterUnlocks : { doubleSlayerXp: false }
+    const loadedCharacterUnlocks = savedCharacterUnlocks && typeof savedCharacterUnlocks === 'object' ? savedCharacterUnlocks : { doubleSlayerXp: false, autoSlayerTask: false }
     characterUnlocksRef.current = loadedCharacterUnlocks
     setCharacterUnlocksState(loadedCharacterUnlocks)
     const hpLevel = s.hitpoints ? getLevelFromXP(s.hitpoints.xp) : 10

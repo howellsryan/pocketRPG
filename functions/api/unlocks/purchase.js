@@ -6,6 +6,7 @@ import { auditLog } from '../../_lib/game/audit.js'
 // Server is authoritative on id → cost so the client can't submit a cheaper price.
 const UNLOCK_REGISTRY = {
   double_slayer_xp: { cost: 100, description: 'Double Slayer XP per kill' },
+  auto_slayer_task: { cost: 100, description: 'Auto-assign the next Slayer task while idle' },
 }
 
 export async function onRequestPost({ request, env }) {
