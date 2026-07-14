@@ -16,6 +16,16 @@ const BASE_SCALE: Record<string, number> = {
   mushrooms: 1.1,
   flowers: 1.1,
   boulder: 1.3,
+  // Varrick capital landmarks (native model bounds → tile-grid units).
+  castle: 3.0,
+  fountain: 1.5,
+  stall: 1.8,
+  banner: 2.0,
+  altar: 1.6,
+  crypt: 2.2,
+  column: 2.0,
+  dungeon_stairs: 0.9,
+  dungeon_door: 0.8,
 }
 export async function createProps(scene: THREE.Scene, props: PropPlacement[]): Promise<void> {
   if (props.length === 0) return

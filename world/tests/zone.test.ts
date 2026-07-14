@@ -3,6 +3,8 @@ import { validateExitGraph, validateZone, type ZoneDef } from '../shared/zone'
 import pastureZone from '../zones/pasture.json'
 import forestZone from '../zones/forest.json'
 import lumbrightZone from '../zones/lumbright.json'
+import varrickZone from '../zones/varrick.json'
+import varrickDungeonZone from '../zones/varrick_dungeon.json'
 import monsters from '../../src/data/monsters.json'
 
 describe('validateZone', () => {
@@ -85,11 +87,27 @@ describe('Phase 6 zones', () => {
     expect(validateZone(lumbrightZone as ZoneDef)).toEqual({ valid: true })
   })
 
-  it('validates the pasture↔forest↔lumbright exit graph', () => {
+  it('accepts the real varrick zone', () => {
+    expect(validateZone(varrickZone as unknown as ZoneDef)).toEqual({ valid: true })
+  })
+
+  it('accepts the real varrick dungeon zone', () => {
+    expect(validateZone(varrickDungeonZone as unknown as ZoneDef)).toEqual({ valid: true })
+  })
+
+  it('the varrick dungeon boss references a real monster', () => {
+    for (const npc of (varrickDungeonZone as unknown as ZoneDef).npcs) {
+      expect(monsters[npc.monsterId as keyof typeof monsters], npc.monsterId).toBeTruthy()
+    }
+  })
+
+  it('validates the full pasture↔forest↔lumbright↔varrick↔dungeon exit graph', () => {
     const zones = {
       pasture: pastureZone as ZoneDef,
       forest: forestZone as ZoneDef,
       lumbright: lumbrightZone as ZoneDef,
+      varrick: varrickZone as unknown as ZoneDef,
+      varrick_dungeon: varrickDungeonZone as unknown as ZoneDef,
     }
     expect(validateExitGraph(zones)).toEqual({ valid: true })
   })

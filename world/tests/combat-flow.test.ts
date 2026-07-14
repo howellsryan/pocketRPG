@@ -127,6 +127,24 @@ describe('combat via tickPlayer', () => {
     expect(hitsAtB).toBe(0)
   })
 
+  it('a swinging monster broadcasts an attack animation, cleared between swings', () => {
+    const { npcs, bull } = bullAt(5, 5)
+    const weak = { attack: { xp: 0, level: 1 }, strength: { xp: 0, level: 1 }, defence: { xp: 0, level: 1 }, ranged: { xp: 0, level: 1 }, magic: { xp: 0, level: 1 }, hitpoints: { xp: 100000, level: 40 } }
+    const p = makePlayer({ x: 5, z: 6, stats: weak, hp: 400, maxHp: 400, pendingInteract: { kind: 'npc', id: 'bull_1', action: 'attack' } })
+    let sawAttackAnim = false
+    let sawIdleDuringCombat = false
+    let sawPlayerHit = false
+    for (let tick = 1; tick <= 60 && bull.state !== 'dead'; tick++) {
+      const r = tickPlayer(p, ctx(tick, npcs))
+      if (bull.anim === 'attack') sawAttackAnim = true
+      else if (bull.state === 'combat') sawIdleDuringCombat = true
+      if (r.hits.some((h) => h.targetId === p.charId && h.dmg > 0)) sawPlayerHit = true
+    }
+    expect(sawPlayerHit).toBe(true)
+    expect(sawAttackAnim).toBe(true)
+    expect(sawIdleDuringCombat).toBe(true) // not stuck on 'attack' every tick
+  })
+
   it('aggro hands over to a surviving attacker when the target leaves (Phase 4)', () => {
     const { npcs, bull } = bullAt(5, 5)
     const weak = { attack: { xp: 0, level: 1 }, strength: { xp: 0, level: 1 }, defence: { xp: 0, level: 1 }, ranged: { xp: 0, level: 1 }, magic: { xp: 0, level: 1 }, hitpoints: { xp: 100000, level: 40 } }
