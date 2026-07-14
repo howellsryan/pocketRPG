@@ -88,6 +88,46 @@ describe('damage attribution', () => {
   })
 })
 
+describe('aggro pursuit', () => {
+  it('chases its attacker one tile per tick when they run out of range', () => {
+    const bull = makeBull({ state: 'combat', attackerId: 'p1', lastCombatTick: 0 })
+    const players = new Map([['p1', { x: 9, z: 5 }]])
+    const before = { x: bull.x, z: bull.z }
+    tickNpc(bull, { tick: 1, rocks: new Map(), npcs: new Map(), collision: COLLISION, players }, emptyResult())
+    expect(bull.x).toBeGreaterThan(before.x)
+    expect(bull.z).toBe(before.z)
+  })
+
+  it('stands still once adjacent to its attacker again', () => {
+    const bull = makeBull({ x: 5, z: 5, state: 'combat', attackerId: 'p1', lastCombatTick: 0 })
+    const players = new Map([['p1', { x: 6, z: 5 }]])
+    tickNpc(bull, { tick: 1, rocks: new Map(), npcs: new Map(), collision: COLLISION, players }, emptyResult())
+    expect(bull).toMatchObject({ x: 5, z: 5 })
+  })
+
+  it('gives up and snaps home once the chase clears the leash radius', () => {
+    // Home is (5,5); place the bull 10 tiles out (at the leash boundary) still
+    // chasing an attacker even further away.
+    const bull = makeBull({ x: 15, z: 5, state: 'combat', attackerId: 'p1', lastCombatTick: 0 })
+    recordDamage(bull, 'p1', 3, 1)
+    const players = new Map([['p1', { x: 20, z: 5 }]])
+    const result = emptyResult()
+    tickNpc(bull, { tick: 1, rocks: new Map(), npcs: new Map(), collision: COLLISION, players }, result)
+    expect(bull.attackerId).toBeNull()
+    expect(bull.state).toBe('idle')
+    expect(bull).toMatchObject({ x: 5, z: 5, hp: 8 })
+    expect(bull.damageByChar.size).toBe(0)
+    expect(result.npcChanged).toContain('bull_1')
+  })
+
+  it('does not move while its attacker is missing from the players snapshot', () => {
+    const bull = makeBull({ state: 'combat', attackerId: 'p1', lastCombatTick: 0 })
+    const before = { x: bull.x, z: bull.z }
+    tickNpc(bull, { tick: 1, rocks: new Map(), npcs: new Map(), collision: COLLISION }, emptyResult())
+    expect(bull).toMatchObject(before)
+  })
+})
+
 describe('out-of-combat heal', () => {
   it('an abandoned bull (no attacker) heals to full and returns to idle', () => {
     const bull = makeBull({ state: 'combat', hp: 2, attackerId: null, lastCombatTick: 0 })

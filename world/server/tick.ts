@@ -84,6 +84,10 @@ export type TickContext = {
   /** Re-path to a tile adjacent to a (possibly moving) target — used to chase a
    * wandering npc that stepped away before the player finished approaching. */
   pathAdjacent?: (from: Tile, to: Tile) => Tile[] | null
+  /** Snapshot of every connected player's position this tick — lets an
+   * aggressive npc chase its attacker (npc.ts) without needing the full
+   * player record. */
+  players?: Map<string, { x: number; z: number }>
 }
 
 export type TickResult = {
@@ -340,11 +344,26 @@ export function emitRunIfChanged(player: TickPlayer, events: ZoneEvent[]): void 
   events.push({ e: 'run', energy: rounded, running: player.running })
 }
 
+/** An aggressive npc that has chased this player back into range — resumes the
+ * fight without a fresh interact, mirroring how a real aggressive monster
+ * keeps swinging once it catches up. */
+function findAdjacentAggro(player: TickPlayer, ctx: TickContext): NpcState | undefined {
+  for (const npc of ctx.npcs?.values() ?? []) {
+    if (npc.state === 'combat' && npc.attackerId === player.charId && adjacent(player, npc)) return npc
+  }
+  return undefined
+}
+
 /** One tick for one player: movement first, then interaction arrival, then
  * mining progress. Exactly one of walk/mine/idle claims the anim each tick. */
 export function tickPlayer(player: TickPlayer, ctx: TickContext): TickResult {
   const result = emptyResult()
   const before = { x: player.x, z: player.z, anim: player.anim }
+
+  if (!player.combat) {
+    const aggroNpc = findAdjacentAggro(player, ctx)
+    if (aggroNpc) startCombat(player, aggroNpc, result)
+  }
 
   let ran = false
   if (player.path.length > 0) {
