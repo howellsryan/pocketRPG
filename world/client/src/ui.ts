@@ -31,6 +31,7 @@ const HUD_CSS = `
 }
 .hud-pane { display: none; }
 .hud-pane.active { display: block; }
+.hud-body.collapsed { display: none; }
 #inv-panel {
   display: grid; grid-template-columns: repeat(${INVENTORY_COLS}, 40px);
   grid-auto-rows: 40px; gap: 3px;
@@ -298,12 +299,26 @@ const HUD_TAB_ICON_PX = 26
 const RUN_ICON_PX = 20
 
 function selectTab(id: string): void {
+  document.querySelector('.hud-body')?.classList.remove('collapsed')
   for (const tab of document.querySelectorAll('.hud-tab[data-tab]')) {
     tab.classList.toggle('active', tab.getAttribute('data-tab') === id)
   }
   for (const pane of document.querySelectorAll('.hud-pane')) {
     pane.classList.toggle('active', pane.getAttribute('data-pane') === id)
   }
+}
+
+/** Tapping the already-active tab collapses the HUD body (saves screen space);
+ * tapping it again — or picking a different tab — reopens it. The tab rail
+ * itself always stays visible so the panel can be reopened. */
+function tabClicked(id: string): void {
+  const activeTab = document.querySelector('.hud-tab[data-tab].active')
+  const body = document.querySelector('.hud-body')
+  if (activeTab?.getAttribute('data-tab') === id && !body?.classList.contains('collapsed')) {
+    body?.classList.add('collapsed')
+    return
+  }
+  selectTab(id)
 }
 
 /** Builds the tabbed HUD panel (Inventory / Equipment / Combat + Logout), the run
@@ -327,7 +342,7 @@ export function initHud(handlers?: HudHandlers): void {
     btn.setAttribute('data-icon', tab.iconKey)
     btn.setAttribute('data-icon-size', String(HUD_TAB_ICON_PX))
     btn.title = tab.title
-    btn.addEventListener('click', () => selectTab(tab.id))
+    btn.addEventListener('click', () => tabClicked(tab.id))
     tabs.appendChild(btn)
   }
   const logout = document.createElement('div')
