@@ -9,6 +9,7 @@ import pastureZone from '../../../zones/pasture.json'
 import forestZone from '../../../zones/forest.json'
 import lumbrightZone from '../../../zones/lumbright.json'
 import varrickZone from '../../../zones/varrick.json'
+import varrickDungeonZone from '../../../zones/varrick_dungeon.json'
 
 // Auth-free, server-free terrain preview. Renders a bundled zone JSON through
 // the REAL terrain pipeline (createTerrain + scatter + statics/props), so it
@@ -21,6 +22,7 @@ const ZONES: Record<string, ZoneDef> = {
   forest: forestZone as ZoneDef,
   lumbright: lumbrightZone as ZoneDef,
   varrick: varrickZone as unknown as ZoneDef,
+  varrick_dungeon: varrickDungeonZone as unknown as ZoneDef,
 }
 
 declare global {

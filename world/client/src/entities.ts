@@ -5,6 +5,7 @@ import { tileToWorld } from './scene'
 import type { EntityDiff, GearDescriptor } from '../../shared/protocol'
 import { segmentDurationMs, shouldSnap, stepYaw, yawToward } from './motion'
 import { MONSTER_MODELS } from '../../shared/monsterModels'
+import { buildProcCreature, creatureSpecFor, type ProcCreature } from './procCreature'
 
 const ANIM_CROSSFADE_S = 0.15
 const TURN_SPEED_RAD_PER_S = 14
@@ -23,11 +24,20 @@ const COW_BOUNDS = { minX: -1.12, minY: -0.07, minZ: -3.78, maxX: 1.12, maxY: 5.
 
 export type AnimName = EntityDiff['anim']
 
-export type Animator = {
+export type GltfAnimator = {
+  kind: 'gltf'
   mixer: THREE.AnimationMixer
   actions: Partial<Record<AnimName, THREE.AnimationAction>>
   current: THREE.AnimationAction | null
 }
+/** Procedural blend-shell creatures (creatures3d) drive their own rig by state
+ * rather than a mixer; `triggered` edge-detects so each server swing fires the
+ * attack once and a death→idle transition re-spawns the rig. */
+export type ProcAnimator = { kind: 'proc'; proc: ProcCreature; triggered: 'attack' | 'death' | null }
+export type Animator = GltfAnimator | ProcAnimator
+
+/** Boss/monster procedural render height in tiles (blend-shell path only). */
+const PROC_TARGET_HEIGHT: Record<string, number> = { warlord_grondar: 2.8 }
 
 type Waypoint = { x: number; z: number }
 
@@ -86,7 +96,7 @@ function loadTemplate(url: string): Promise<GLTF> {
  * and clamps. Returns null when the essential idle/walk clips are missing. */
 function makeAnimator(model: THREE.Object3D, gltf: GLTF, names: readonly AnimName[]): Animator | null {
   const mixer = new THREE.AnimationMixer(model)
-  const actions: Animator['actions'] = {}
+  const actions: GltfAnimator['actions'] = {}
   for (const name of names) {
     const clip = gltf.animations.find((c) => c.name === name)
     if (!clip) continue
@@ -98,7 +108,7 @@ function makeAnimator(model: THREE.Object3D, gltf: GLTF, names: readonly AnimNam
     actions[name] = action
   }
   if (!actions.idle || !actions.walk) return null
-  const animator: Animator = { mixer, actions, current: null }
+  const animator: GltfAnimator = { kind: 'gltf', mixer, actions, current: null }
   playAnim(animator, 'idle')
   return animator
 }
@@ -157,21 +167,35 @@ export async function createCowMesh(): Promise<{ mesh: THREE.Object3D; animator:
  * cow path (the Phase 2 default); any load failure gets the box placeholder. */
 export async function createMonsterMesh(monsterId: string | undefined): Promise<{ mesh: THREE.Object3D; animator: Animator | null }> {
   const spec = monsterId ? MONSTER_MODELS[monsterId] : undefined
-  if (!spec) return createCowMesh()
-  try {
-    const gltf = await loadTemplate(spec.url)
-    const model = cloneSkeleton(gltf.scene)
-    disableFrustumCulling(model)
-    const b = spec.bounds
-    model.position.set(-(b.minX + b.maxX) / 2, -b.minY + (spec.hover ?? 0), -(b.minZ + b.maxZ) / 2)
-    const group = new THREE.Group()
-    group.add(model)
-    group.scale.setScalar(spec.targetHeight / (b.maxY - b.minY))
-    const animator = makeAnimator(model, gltf, ['idle', 'walk', 'die'])
-    return { mesh: group, animator }
-  } catch {
-    return { mesh: boxPlaceholder(), animator: null }
+  if (spec) {
+    try {
+      const gltf = await loadTemplate(spec.url)
+      const model = cloneSkeleton(gltf.scene)
+      disableFrustumCulling(model)
+      const b = spec.bounds
+      model.position.set(-(b.minX + b.maxX) / 2, -b.minY + (spec.hover ?? 0), -(b.minZ + b.maxZ) / 2)
+      const group = new THREE.Group()
+      group.add(model)
+      group.scale.setScalar(spec.targetHeight / (b.maxY - b.minY))
+      const animator = makeAnimator(model, gltf, ['idle', 'walk', 'die'])
+      return { mesh: group, animator }
+    } catch {
+      return { mesh: boxPlaceholder(), animator: null }
+    }
   }
+  // No GLB: render a procedural blend-shell creature if the monster has a
+  // creatures3d spec (e.g. Warlord Grondar). pasture_bull keeps its cow model.
+  if (monsterId && monsterId !== 'pasture_bull' && creatureSpecFor(monsterId)) {
+    try {
+      const proc = await buildProcCreature(monsterId, PROC_TARGET_HEIGHT[monsterId] ?? 2.4)
+      if (proc) {
+        const group = new THREE.Group()
+        group.add(proc.group)
+        return { mesh: group, animator: { kind: 'proc', proc, triggered: null } }
+      }
+    } catch { /* fall through to the cow placeholder */ }
+  }
+  return createCowMesh()
 }
 
 // Weapon-in-hand (Phase 5): archetype models built by scripts/build-weapons.mjs
@@ -264,12 +288,27 @@ export function createEntity(id: string, x: number, z: number, mesh: THREE.Objec
   }
 }
 
-function playAnim(animator: Animator, name: AnimName): void {
+function playAnim(animator: GltfAnimator, name: AnimName): void {
   const action = animator.actions[name] ?? animator.actions.idle
   if (!action || action === animator.current) return
   action.reset().fadeIn(ANIM_CROSSFADE_S).play()
   animator.current?.fadeOut(ANIM_CROSSFADE_S)
   animator.current = action
+}
+
+/** Drives a procedural creature from the world's anim state: each new server
+ * swing fires the two-hand smash once, death plays once, and a return to idle
+ * after death respawns the rig. Movement (walk) is positional, not a clip. */
+function updateProcAnimator(a: ProcAnimator, name: AnimName, deltaSeconds: number): void {
+  const want = name === 'die' ? 'death' : name === 'attack' ? 'attack' : 'idle'
+  if (want === 'idle') {
+    if (a.triggered === 'death') a.proc.trigger('respawn')
+    a.triggered = null
+  } else if (a.triggered !== want) {
+    a.proc.trigger(want)
+    a.triggered = want
+  }
+  a.proc.update(deltaSeconds)
 }
 
 /** Called once per incoming diff for this entity: queues the reported tile so
@@ -326,7 +365,11 @@ export function updateEntity(entity: Entity, now: number, deltaSeconds: number):
 
   if (entity.animator) {
     const name: AnimName = entity.moving ? 'walk' : entity.serverAnim === 'walk' ? 'idle' : entity.serverAnim
-    playAnim(entity.animator, name)
-    entity.animator.mixer.update(deltaSeconds)
+    if (entity.animator.kind === 'proc') {
+      updateProcAnimator(entity.animator, name, deltaSeconds)
+    } else {
+      playAnim(entity.animator, name)
+      entity.animator.mixer.update(deltaSeconds)
+    }
   }
 }

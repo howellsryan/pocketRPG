@@ -145,6 +145,8 @@ export function stepCombat(player: TickPlayer, ctx: TickContext, result: TickRes
   combat.state = combatState
   player.anim = 'attack'
   npc.state = 'combat'
+  // Clear last tick's swing so a fresh one re-triggers the attack animation.
+  if (npc.anim === 'attack') npc.anim = 'idle'
   npc.lastCombatTick = ctx.tick
   result.npcChanged.push(npc.id)
 
@@ -184,10 +186,12 @@ export function stepCombat(player: TickPlayer, ctx: TickContext, result: TickRes
       for (const dmg of splats) result.hits.push({ targetId: npc.id, dmg })
     } else if (ev.type === 'monsterHit' || ev.type === 'dragonfireHit') {
       if (!isTarget) continue
+      npc.anim = 'attack' // the boss swings — broadcast so the client plays it
       player.hp = Math.max(0, player.hp - (ev.damage ?? 0))
       result.hits.push({ targetId: player.charId, dmg: ev.damage ?? 0 })
     } else if (ev.type === 'monsterMiss') {
       if (!isTarget) continue
+      npc.anim = 'attack'
       result.hits.push({ targetId: player.charId, dmg: 0 })
     } else if (ev.type === 'xp' && ev.xpSkills) {
       for (const [skill, amount] of Object.entries(ev.xpSkills)) {

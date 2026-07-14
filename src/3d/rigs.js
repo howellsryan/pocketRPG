@@ -208,6 +208,17 @@ export function createProcCreature(THREE, spec) {
         // strike: coil back then whip forward, nose down
         if (p < 0.3) { const e = rigEase(p / 0.3); rootPos.z -= 0.14 * S * e }
         else { const e = (p - 0.3) / 0.7; rootPos.z += 0.55 * S * Math.sin(Math.PI * e) - 0.14 * S * (1 - rigEaseOut(rigClamp(e * 2, 0, 1))); rootEuler.x += 0.18 * Math.sin(Math.PI * e) }
+      } else if (archetype === 'humanoid' && spec.attackStyle === 'smash') {
+        // two-hand overhead smash: rear up on the wind-up, then drive the whole
+        // body forward and down as both fists come crashing onto the target
+        if (p < 0.34) { const e = rigEase(p / 0.34); rootPos.y += 0.12 * S * e; rootEuler.x -= 0.14 * e }
+        else {
+          const e = (p - 0.34) / 0.66
+          const slam = rigEaseOut(rigClamp(e * 1.7, 0, 1))
+          rootPos.z += 0.2 * S * Math.sin(Math.PI * e)
+          rootPos.y += 0.12 * S * (1 - slam)
+          rootEuler.x += 0.42 * slam - 0.42 * rigEase(rigClamp((e - 0.5) / 0.5, 0, 1))
+        }
       } else if (archetype === 'humanoid') {
         // the sword arm carries the action: a modest step-in plus hip twist
         // into the slash, no quadruped-style body lunge
@@ -424,7 +435,15 @@ export function createProcCreature(THREE, spec) {
         let pitch = 0.05 * Math.sin(t * 0.83 + arm.phase) + 0.02 * Math.sin(t * 1.31 + arm.phase)
         let roll = 0.03 * Math.sin(t * 1.07 + arm.phase)
         let bend = -0.12
-        if (atkP >= 0 && arm.right) {
+        if (atkP >= 0 && spec.attackStyle === 'smash') {
+          // both arms heave overhead on the wind-up, then slam straight down
+          // together — the double-fisted smash lands at the arena impact.
+          const raise = rigEase(rigClamp(atkP / 0.34, 0, 1))
+          const strike = rigEase(rigClamp((atkP - 0.32) / 0.2, 0, 1))
+          const recover = rigEase(rigClamp((atkP - 0.55) / 0.45, 0, 1))
+          pitch += 2.5 * raise - 3.7 * strike + 1.2 * recover
+          bend += -1.0 * raise + 1.3 * strike - 0.3 * recover
+        } else if (atkP >= 0 && arm.right) {
           // sword swing: raise back over the shoulder, slash down across,
           // recover — the blade is mid-slash at the arena's 240ms impact.
           const wind = rigEase(rigClamp(atkP / 0.3, 0, 1))

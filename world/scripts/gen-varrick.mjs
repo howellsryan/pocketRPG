@@ -215,17 +215,19 @@ for (const [x, z] of [[8, 38], [12, 43], [6, 47], [9, 51], [11, 39], [5, 49]]) {
   props.push({ model: rand() < 0.5 ? 'pine_a' : 'pine_b', x, z, rot: rand() * Math.PI * 2 })
 }
 
-// ── Dungeon mouth (map 83,52): landmark east of the wall, combat future ──
-const DUNGEON_X = 86
+// ── Dungeon mouth (map 83,52): the descent to Warlord Grondar, east of wall ──
+const DUNGEON_X = 87
 props.push({ model: 'dungeon_door', x: DUNGEON_X, z: 52, rot: -Math.PI / 2, scale: 0.9 })
 props.push({ model: 'dungeon_stairs', x: DUNGEON_X + 2, z: 52, rot: -Math.PI / 2, scale: 0.9 })
-for (const [x, z] of [[84, 50], [84, 54]]) props.push({ model: 'town_tower', x, z, scale: 1.1 })
-props.push({ model: 'banner', x: 83, z: 52, scale: 2 })
-for (const [x, z] of [[88, 49], [89, 55], [84, 57]]) props.push({ model: 'boulder', x, z, scale: 1.2 })
+for (const [x, z] of [[85, 49], [85, 55]]) props.push({ model: 'town_tower', x, z, scale: 1.1 })
+for (const [x, z] of [[83, 49], [83, 55]]) props.push({ model: 'banner', x, z, scale: 2 })
+for (const [x, z] of [[89, 48], [90, 56], [85, 58]]) props.push({ model: 'boulder', x, z, scale: 1.2 })
 
-// ── Exits: south gate → Lumbright (the Lumbright side adds the return) ──
+// ── Exits: south gate → Lumbright, east mouth → the dungeon (returns added on
+//    the far side of each) ──
 const exits = [
   { id: 'exit_lumbright', x: 40, z: 95, toZone: 'lumbright', toX: 2, toZ: 32, label: 'Lumbright' },
+  { id: 'exit_dungeon', x: 84, z: 52, toZone: 'varrick_dungeon', toX: 20, toZ: 43, label: 'Varrick Dungeon' },
 ]
 
 // ── Countryside dressing outside the walls (gate roads + grove + dungeon kept clear) ──
