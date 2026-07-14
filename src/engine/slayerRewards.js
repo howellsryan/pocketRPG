@@ -1,3 +1,5 @@
+import { placesForActivity } from './worldContent.js'
+
 export const DEFAULT_SLAYER_TASK_XP_MULTIPLIER = 2
 // Bosses are tanky (high HP + high defence) so a kill takes far longer than a
 // regular monster's. Because Slayer XP/kill scales with the target's HP while
@@ -61,16 +63,24 @@ export function getSlayerTaskReward(basePoints, completedTasksBeforeCompletion =
 
 // After an auto-slayer chain switches tasks, the player should resume live
 // combat on the monster they're now assigned rather than the finished task's
-// monster. Returns { monsterId, returnTo } for the idle-result close handler to
-// re-enter combat, or null when there's nothing to switch to (no chain, died,
-// non-combat task, or the chain ended on a boss task that can't be idled — its
-// finalTaskMonster is cleared, so the player keeps that task to fight manually).
+// monster. Returns { monsterId, returnTo, placeId } for the idle-result close
+// handler to re-enter combat, or null when there's nothing to switch to (no
+// chain, died, non-combat task, or the chain ended on a boss task that can't be
+// idled — its finalTaskMonster is cleared, so the player keeps it to fight
+// manually). `placeId` is the world place that offers the new monster (or null
+// when unmapped): the sim ignores travel, so the caller teleports the player
+// there on arrival to keep their location honest with the kills they earned.
 export function chainCombatResumeTarget(result) {
   if (!result || !result.autoSlayerChained || result.died) return null
   if (result.task?.type !== 'combat') return null
   const monster = result.finalTaskMonster
   if (!monster?.id) return null
-  return { monsterId: monster.id, returnTo: result.task?.returnTo || null }
+  const places = placesForActivity('combat', monster.id)
+  return {
+    monsterId: monster.id,
+    returnTo: result.task?.returnTo || null,
+    placeId: places.length > 0 ? places[0] : null,
+  }
 }
 
 // Build the display rows for the idle-result "Slayer" card from a combat sim

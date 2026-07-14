@@ -3118,7 +3118,13 @@ function GameApp() {
     const resume = chainCombatResumeTarget(idleResult)
     resumeTicks()
     setIdleResult(null)
-    if (resume) resumeAutoStart({ kind: 'combat', monsterId: resume.monsterId }, resume.returnTo)
+    if (resume) {
+      // The chain ignored travel, so teleport to the new monster's place before
+      // resuming — otherwise the player fights it from the wrong location and
+      // the combat location-gate would block the auto-start.
+      if (resume.placeId) updateWorldLocation(resume.placeId)
+      resumeAutoStart({ kind: 'combat', monsterId: resume.monsterId }, resume.returnTo)
+    }
   }
 
   const isCloudAccount = !!getToken() && !!getCharacterId()

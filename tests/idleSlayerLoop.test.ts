@@ -194,13 +194,16 @@ describe('buildSlayerResultRows', () => {
 })
 
 describe('chainCombatResumeTarget', () => {
-  it('returns the new monster so the player resumes combat on their current task', () => {
+  it('returns the new monster + its place so the player resumes on their current task', () => {
     const target = chainCombatResumeTarget({
       autoSlayerChained: true,
       task: { type: 'combat', returnTo: { screen: 'world_map' } },
       finalTaskMonster: { id: 'rune_dragon', name: 'Rune Dragon' },
     } as any)
-    expect(target).toEqual({ monsterId: 'rune_dragon', returnTo: { screen: 'world_map' } })
+    // placeId resolves from the world-activity index at runtime (chunk data),
+    // which isn't loaded in the node harness, so it's null here.
+    expect(target).toMatchObject({ monsterId: 'rune_dragon', returnTo: { screen: 'world_map' } })
+    expect(target).toHaveProperty('placeId')
   })
 
   it('returns null when the chain ended on a boss task (finalTaskMonster cleared)', () => {
