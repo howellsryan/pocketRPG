@@ -93,6 +93,8 @@ props.push({ model: 'lantern', x: 33, z: 38 })
 const exits = [
   { id: 'exit_pasture', x: 63, z: 31, toZone: 'pasture', toX: 1, toZ: 8, label: 'the Verdant Pasture' },
   { id: 'exit_forest', x: 21, z: 63, toZone: 'forest', toX: 10, toZ: 1, label: 'the Whisperwood' },
+  // West road across the open country to the capital.
+  { id: 'exit_varrick', x: 0, z: 32, toZone: 'varrick', toX: 40, toZ: 82, label: 'Varrick' },
 ]
 
 // ── Monsters outside the walls (all passive) ──

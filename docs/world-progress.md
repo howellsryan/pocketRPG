@@ -684,3 +684,46 @@ unchanged.
 `npm run shoot:zones` re-rendered all three zones (flowers/bushes now whole).
 
 - [x] TERRAIN — relief tuning + multi-mesh scatter + editor-preview terrain landed.
+
+## Varrick — the capital city zone (TERRAIN T4 continued, developer request 2026-07-14)
+
+Developer instruction "create Varrick next" using the three-terrain updates, matching
+the place map and putting activities/monsters where the map puts them. Clarified scope
+up front (all recommended): **town zone only** (dungeon a landmark for now), **wire the
+engine-supported activities and leave the rest as landmarks**, **safe capital — no
+street monsters, combat gated behind the eastern dungeon mouth**, **96×96**.
+
+**Map-driven layout** (`src/data/placeMaps.json` `varrick` + `public/world/varrick-map.jpg`):
+a walled 96×96 capital, each labelled map spot placed at its normalised map position —
+Bank, Grand Smithy (furnace+anvil), Royal Chapel, Market Stove, Trading Post, Sawmill,
+Rooftop Course, Quests Board, Runic Sanctum, Old Forest, Dungeon. Generated deterministically
+by `world/scripts/gen-varrick.mjs` (hand-edit the constants, not the JSON), 90.6% walkable,
+518 props, 11 interactive objects, meadow terrain (relief 0.7).
+
+**Wired (engine-supported)** as interactive `objects[]`: Bank (`bank_chest`), Grand Smithy
+(`furnace`+`anvil`), Market Stove (`range` cooking), Old Forest (a 7-tree woodcutting grove
+just outside the west postern — normal + oak). **Landmark props (future phases)**: Sawmill
+(planks aren't a world action yet), Runic Sanctum, Rooftop Course, Trading Post, Quests
+Board, the eastern Dungeon mouth. No `npcs` — the capital is a safe hub; combat arrives
+with the dungeon zone.
+
+**New building assets** processed by `world/scripts/build-props.mjs` (CC0, prune/dedup only)
+into `props/`: `castle` (KayKit Medieval Builder — the cathedral/keep), `fountain`/`stall`/
+`banner` (Kenney fantasy-town), `altar`/`crypt`/`column` (Kenney graveyard — chapel/sanctum
+stonework), `dungeon_stairs`/`dungeon_door` (KayKit dungeon-remastered). Base scales added to
+`props.ts` from measured bounds.
+
+**Connectivity**: south gate → Lumbright, with the return added on the Lumbright side
+(`gen-lumbright.mjs` new west-road exit at x=0 — no wall carving, open countryside).
+Registered in `server/zones.ts` and the preview map. The JSON `as ZoneDef` cast stopped
+overlapping now that a zone mixes tree + station objects (JSON widens `type` to string and
+scatter `scaleRange` to `number[]`), so zones route through a small `asZone()` helper —
+`validateZone`, which runs on every zone at load, remains the real guard.
+
+**Verified**: `world:check` green — typecheck clean, 221 tests (+1 real-varrick-zone
+acceptance; exit-graph test extended to include varrick), client build ok. Headless preview
+(`node scripts/shoot-zone.mjs varrick`) reviewed: walls/towers/gates, cathedral, chapel,
+market square, residential + south-gate districts, Old Forest grove, and the dungeon mouth
+all read as intended. Only `world/` + `docs/` + `world/scripts` + processed `props/*.glb`
+touched — no root gate required. DT: on-device visual pass + wiring the dungeon zone / its
+bosses in a later phase.

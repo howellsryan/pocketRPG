@@ -3,6 +3,7 @@ import { validateExitGraph, validateZone, type ZoneDef } from '../shared/zone'
 import pastureZone from '../zones/pasture.json'
 import forestZone from '../zones/forest.json'
 import lumbrightZone from '../zones/lumbright.json'
+import varrickZone from '../zones/varrick.json'
 import monsters from '../../src/data/monsters.json'
 
 describe('validateZone', () => {
@@ -85,11 +86,16 @@ describe('Phase 6 zones', () => {
     expect(validateZone(lumbrightZone as ZoneDef)).toEqual({ valid: true })
   })
 
-  it('validates the pasture↔forest↔lumbright exit graph', () => {
+  it('accepts the real varrick zone', () => {
+    expect(validateZone(varrickZone as unknown as ZoneDef)).toEqual({ valid: true })
+  })
+
+  it('validates the pasture↔forest↔lumbright↔varrick exit graph', () => {
     const zones = {
       pasture: pastureZone as ZoneDef,
       forest: forestZone as ZoneDef,
       lumbright: lumbrightZone as ZoneDef,
+      varrick: varrickZone as unknown as ZoneDef,
     }
     expect(validateExitGraph(zones)).toEqual({ valid: true })
   })

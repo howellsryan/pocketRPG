@@ -8,6 +8,7 @@ import { createProps } from '../props'
 import pastureZone from '../../../zones/pasture.json'
 import forestZone from '../../../zones/forest.json'
 import lumbrightZone from '../../../zones/lumbright.json'
+import varrickZone from '../../../zones/varrick.json'
 
 // Auth-free, server-free terrain preview. Renders a bundled zone JSON through
 // the REAL terrain pipeline (createTerrain + scatter + statics/props), so it
@@ -19,6 +20,7 @@ const ZONES: Record<string, ZoneDef> = {
   pasture: pastureZone as ZoneDef,
   forest: forestZone as ZoneDef,
   lumbright: lumbrightZone as ZoneDef,
+  varrick: varrickZone as unknown as ZoneDef,
 }
 
 declare global {
