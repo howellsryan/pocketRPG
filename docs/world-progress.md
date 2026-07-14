@@ -657,3 +657,30 @@ without the DO+auth stack (and bypassing the D1 zone-def override):
    renders flat. Update it to `createTerrain` so the editor preview shows terrain.
 
 - [x] TERRAIN — preview harness; pipeline verified; D1-override + tuning + multi-mesh scatter noted as follow-ups.
+
+### TERRAIN — preview-finding follow-ups (2, 3, 4)
+Cleared the three code/data follow-ups from the preview harness findings:
+- **Relief tuning (#3)**: `zones/pasture.json` → relief 0.8→1.2, procedural
+  frequency 0.12→0.06 (broader landforms on the open meadow). Forest/lumbright
+  left as-is (forest reads well at 1.0; lumbright is a deliberately gentle
+  starter town). Confirmed live in the preview banner ("relief 1.2 · meadow").
+- **Scatter multi-mesh (#4)**: `client/src/scatter.ts` — `firstMesh` replaced
+  by `collectMeshParts`, which bakes each GLB mesh's root-relative transform
+  into a cloned geometry and builds one `InstancedMesh` per part sharing the
+  instance matrices. Multi-mesh props (flowers/bushes) now render whole; the
+  "red crescent" partials are gone (verified in the pasture preview shot). Still
+  one draw call per part.
+- **Editor preview (#5)**: `client/src/editor/preview3d.ts` — `createGround`
+  (flat) → `createTerrain` + `createScatterLayers`, disposing the height sampler
+  on close. The editor's 3D preview now shows the same displaced terrain +
+  scatter the game and headless preview render.
+
+Remaining preview follow-ups are runtime/env, not code: **#2** (pasture stale
+in-game) is the local-D1 `world_zone_defs` override — clear the row, not a code
+bug. T4's other 11 places and the T5 editor-brush/PNG-import/LOD/water track are
+unchanged.
+
+**Verified**: `world:check` green — typecheck clean, 220 tests, build ok;
+`npm run shoot:zones` re-rendered all three zones (flowers/bushes now whole).
+
+- [x] TERRAIN — relief tuning + multi-mesh scatter + editor-preview terrain landed.
