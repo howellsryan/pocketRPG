@@ -37,6 +37,9 @@ export default function CombatMobileSelect({
   collapsedSections,
   defaultCollapsed = true,
   title,
+  searchValue = '',
+  onSearchChange,
+  searchActive = false,
   onToggleSection,
   onFight,
   onMonsterInfo,
@@ -92,6 +95,15 @@ export default function CombatMobileSelect({
         <div class="cb-h1sub">{totalFoes} monsters · {uniqueRaids.length} {uniqueRaids.length === 1 ? 'raid' : 'raids'} await</div>
       </div>
 
+      <input
+        type="search"
+        value={searchValue}
+        onInput={(e) => onSearchChange?.(e.currentTarget.value)}
+        placeholder="Search monsters…"
+        aria-label="Search monsters and raids by name"
+        class="w-full min-h-[44px] px-3 mb-3 rounded-xl bg-[var(--color-void-light)] border border-[var(--color-void-border)] text-[14px] text-[var(--color-parchment)] placeholder:text-[var(--color-parchment)] placeholder:opacity-40 focus:outline-none focus:border-[var(--color-gold)]"
+      />
+
       {/* Idle toggles */}
       <div class="cb-idlerow">
         {idleToggles.map(t => (
@@ -120,7 +132,7 @@ export default function CombatMobileSelect({
       <div class="cb-arealist">
         {orderedCategories.map(category => {
           const monsters = sortedMonsters(category)
-          const isCollapsed = collapsedSections[category.key] ?? defaultCollapsed
+          const isCollapsed = searchActive ? false : (collapsedSections[category.key] ?? defaultCollapsed)
           const art = getCategoryArt(category.key)
           const empty = monsters.length === 0
           return (

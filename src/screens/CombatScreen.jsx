@@ -335,6 +335,27 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   const [collapsedSections, setCollapsedSections] = useState(() => ({
     ...Object.fromEntries(COMBAT_CATEGORIES.map(category => [category.key, true])),
   }))
+  // Monster/raid picker search: filters the current picker screen down to
+  // name matches and hides sections left with no results, without touching
+  // the underlying collapsed-section state (restored once the search clears).
+  const [monsterSearch, setMonsterSearch] = useState('')
+  const monsterSearchActive = monsterSearch.trim().length > 0
+  const monsterSearchQuery = monsterSearch.trim().toLowerCase()
+  const filteredPickerCategories = useMemo(() => {
+    if (!monsterSearchActive) return pickerCategories
+    return pickerCategories
+      .map(category => ({
+        ...category,
+        ids: category.ids.filter(id => monstersData[id]?.name?.toLowerCase().includes(monsterSearchQuery)),
+      }))
+      .filter(category => category.ids.length > 0)
+  }, [pickerCategories, monsterSearchActive, monsterSearchQuery])
+  const filteredPickerRaids = useMemo(() => {
+    if (!monsterSearchActive) return pickerRaids
+    return Object.fromEntries(
+      Object.entries(pickerRaids).filter(([, raid]) => raid.name?.toLowerCase().includes(monsterSearchQuery))
+    )
+  }, [pickerRaids, monsterSearchActive, monsterSearchQuery])
   const [lootModal, setLootModal] = useState(null)
   const [deathModal, setDeathModal] = useState(null)
   const [isDesktopCombatLayout, setIsDesktopCombatLayout] = useState(false)
@@ -1849,12 +1870,15 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       {!isDesktopCombatLayout ? (
         <div class="forge-shell h-full overflow-y-auto">
           <CombatMobileSelect
-            categories={pickerCategories}
+            categories={filteredPickerCategories}
             monstersData={monstersData}
-            raidsData={pickerRaids}
+            raidsData={filteredPickerRaids}
             collapsedSections={collapsedSections}
             defaultCollapsed={!isDungeon}
             title={isDungeon ? pickerTitle : undefined}
+            searchValue={monsterSearch}
+            onSearchChange={setMonsterSearch}
+            searchActive={monsterSearchActive}
             onToggleSection={toggleSection}
             onFight={startFight}
             onMonsterInfo={setSelectedMonsterInfo}
@@ -1883,6 +1907,15 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
         <h2 class="font-[var(--font-display)] text-sm font-bold text-[var(--color-parchment)] opacity-60 uppercase tracking-wider mb-3">
           {pickerTitle}
         </h2>
+
+        <input
+          type="search"
+          value={monsterSearch}
+          onInput={(e) => setMonsterSearch(e.currentTarget.value)}
+          placeholder="Search monsters…"
+          aria-label="Search monsters and raids by name"
+          class="w-full min-h-[44px] px-3 mb-3 rounded-xl bg-[var(--color-void-light)] border border-[var(--color-void-border)] text-[14px] text-[var(--color-parchment)] placeholder:text-[var(--color-parchment)] placeholder:opacity-40 focus:outline-none focus:border-[var(--color-gold)]"
+        />
 
         {/* Idle setup buttons */}
         <div class="flex gap-1.5 mb-2">
@@ -1937,7 +1970,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
         </div>
 
         <div class="space-y-4">
-          {pickerCategories.map(category => {
+          {filteredPickerCategories.map(category => {
             const monsters = category.ids
               .map(id => monstersData[id])
               .filter(Boolean)
@@ -1947,7 +1980,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                 }
                 return a.combatLevel - b.combatLevel
               })
-            const isCollapsed = collapsedSections[category.key] ?? !isDungeon
+            const isCollapsed = monsterSearchActive ? false : (collapsedSections[category.key] ?? !isDungeon)
             const categoryArt = getCategoryArt(category.key)
             return (
               <div key={category.key}>
@@ -2047,8 +2080,8 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           })}
         </div>
 
-        {/* Raids Section — hidden in a dungeon with no raids. */}
-        {(!isDungeon || Object.keys(pickerRaids).length > 0) && (
+        {/* Raids Section — hidden in a dungeon with no raids, or while a search has no raid matches. */}
+        {(monsterSearchActive ? Object.keys(filteredPickerRaids).length > 0 : (!isDungeon || Object.keys(pickerRaids).length > 0)) && (
         <div class="mt-6">
           <button
             type="button"
@@ -2057,11 +2090,11 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           >
             <SkillEmblem iconKey="temple_gate" accent="#9b6cff" size={24} glow={0} />
             <span class="text-xs font-semibold text-[var(--color-gold)] uppercase tracking-wider">Raids</span>
-            <span class="ml-auto text-[10px] text-[var(--color-parchment)] opacity-60">{(collapsedSections.raids ?? !isDungeon) ? '▶' : '▼'}</span>
+            <span class="ml-auto text-[10px] text-[var(--color-parchment)] opacity-60">{(monsterSearchActive ? false : (collapsedSections.raids ?? !isDungeon)) ? '▶' : '▼'}</span>
           </button>
-          {!(collapsedSections.raids ?? !isDungeon) && (
+          {!(monsterSearchActive ? false : (collapsedSections.raids ?? !isDungeon)) && (
             <div class="space-y-2">
-            {Object.values(pickerRaids).filter((raid, index, allRaids) =>
+            {Object.values(filteredPickerRaids).filter((raid, index, allRaids) =>
               allRaids.findIndex(candidate => candidate.id === raid.id) === index
             ).map(raid => {
               const raidReq = checkRaidRequirements(raid)
