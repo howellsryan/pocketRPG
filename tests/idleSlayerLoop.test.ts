@@ -3,7 +3,7 @@ import monstersData from '../src/data/monsters.json'
 import { SLAYER_MASTERS } from '../src/engine/slayerMasters.js'
 import { simulateIdleCombat } from '../src/engine/idleEngine.js'
 import { simulateIdleCombatChain } from '../src/engine/idleSlayerLoop.js'
-import { resolveSlayerLoopRewards, buildSlayerResultRows } from '../src/engine/slayerRewards.js'
+import { resolveSlayerLoopRewards, buildSlayerResultRows, chainCombatResumeTarget } from '../src/engine/slayerRewards.js'
 
 // A one-shot melee setup so kills are cheap and the whole window is spent on
 // tasks rather than a single slow grind.
@@ -190,5 +190,31 @@ describe('buildSlayerResultRows', () => {
     } as any)
     expect(rows).toHaveLength(1)
     expect(rows[0].text).toBe('20 Green Dragon / 30 remaining')
+  })
+})
+
+describe('chainCombatResumeTarget', () => {
+  it('returns the new monster so the player resumes combat on their current task', () => {
+    const target = chainCombatResumeTarget({
+      autoSlayerChained: true,
+      task: { type: 'combat', returnTo: { screen: 'world_map' } },
+      finalTaskMonster: { id: 'rune_dragon', name: 'Rune Dragon' },
+    } as any)
+    expect(target).toEqual({ monsterId: 'rune_dragon', returnTo: { screen: 'world_map' } })
+  })
+
+  it('returns null when the chain ended on a boss task (finalTaskMonster cleared)', () => {
+    const target = chainCombatResumeTarget({
+      autoSlayerChained: true,
+      task: { type: 'combat' },
+      finalTaskMonster: null,
+    } as any)
+    expect(target).toBeNull()
+  })
+
+  it('returns null for a non-chained result, a death, or a non-combat task', () => {
+    expect(chainCombatResumeTarget({ task: { type: 'combat' }, finalTaskMonster: { id: 'x' } } as any)).toBeNull()
+    expect(chainCombatResumeTarget({ autoSlayerChained: true, died: true, task: { type: 'combat' }, finalTaskMonster: { id: 'x' } } as any)).toBeNull()
+    expect(chainCombatResumeTarget({ autoSlayerChained: true, task: { type: 'skill' }, finalTaskMonster: { id: 'x' } } as any)).toBeNull()
   })
 })

@@ -59,6 +59,20 @@ export function getSlayerTaskReward(basePoints, completedTasksBeforeCompletion =
   return { totalTasks, multiplier, pointsEarned: base * multiplier }
 }
 
+// After an auto-slayer chain switches tasks, the player should resume live
+// combat on the monster they're now assigned rather than the finished task's
+// monster. Returns { monsterId, returnTo } for the idle-result close handler to
+// re-enter combat, or null when there's nothing to switch to (no chain, died,
+// non-combat task, or the chain ended on a boss task that can't be idled — its
+// finalTaskMonster is cleared, so the player keeps that task to fight manually).
+export function chainCombatResumeTarget(result) {
+  if (!result || !result.autoSlayerChained || result.died) return null
+  if (result.task?.type !== 'combat') return null
+  const monster = result.finalTaskMonster
+  if (!monster?.id) return null
+  return { monsterId: monster.id, returnTo: result.task?.returnTo || null }
+}
+
 // Build the display rows for the idle-result "Slayer" card from a combat sim
 // result. Auto-slayer chains list one row per completed task (monster + count)
 // then the current active task; a single task keeps one row. Resolves the

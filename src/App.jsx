@@ -73,7 +73,7 @@ import { SKIP_HOUR_MS, getSkipPreflight, isChargeableSkipOutcome } from './engin
 import { buildAutoStartTask } from './engine/autoStartTask.js'
 import { resolveMagicSpell } from './engine/equipment.js'
 import spellsData from './data/spells.json'
-import { getSlayerTaskReward, resolveSlayerLoopRewards, buildSlayerResultRows } from './engine/slayerRewards.js'
+import { getSlayerTaskReward, resolveSlayerLoopRewards, buildSlayerResultRows, chainCombatResumeTarget } from './engine/slayerRewards.js'
 import { hasEpicLootDrop, getItemUnitValue } from './utils/itemValue.js'
 import LootResultModal, { SummaryCard, SuppliesCard } from './components/LootResultModal.jsx'
 import GameIcon from './components/GameIcon.jsx'
@@ -3086,7 +3086,7 @@ function GameApp() {
       case SCREENS.ARMOURY:   return <ArmouryScreen onBack={backToPrev} />
       case SCREENS.BANK:      return <BankScreen onBack={returnNav || backToPrev} />
       case SCREENS.BANK_HUB:  return <BankHubScreen onNavigate={navigate} />
-      case SCREENS.COMBAT:    return <CombatScreen onNavigate={navigate} initialMonsterId={actionData?.monsterId} initialRaidId={actionData?.raidId} onCombatStatusChange={setIsInCombat} onBack={stopBackNav} onStopBack={stopBackNav} />
+      case SCREENS.COMBAT:    return <CombatScreen key={actionData?.monsterId} onNavigate={navigate} initialMonsterId={actionData?.monsterId} initialRaidId={actionData?.raidId} onCombatStatusChange={setIsInCombat} onBack={stopBackNav} onStopBack={stopBackNav} />
       case SCREENS.DUNGEONS:  return <CombatScreen onNavigate={navigate} dungeonPlaceId={actionData?.placeId} onCombatStatusChange={setIsInCombat} onBack={stopBackNav} onStopBack={stopBackNav} />
       case SCREENS.SKILLS:    return <SkillingScreen initialSkillId={actionData?.skillId} initialActionId={actionData?.actionId} initialMasterId={actionData?.masterId} initialLocationId={actionData?.locationId} idleResult={idleResult} onNavigate={navigate} onBack={stopBackNav} onStopBack={stopBackNav} />
       case SCREENS.GATHER:    return <GatherScreen initialTaskId={actionData?.gatherTaskId} idleResult={idleResult} onBack={stopBackNav} onStopBack={stopBackNav} />
@@ -3111,8 +3111,14 @@ function GameApp() {
       setScreen(SCREENS.SKILLS)
       setActionData({ skillId: 'dungeoneering' })
     }
+    // Auto-slayer chain switched tasks while away: drop the player into the live
+    // fight for the monster they're now assigned. resumeAutoStart + the
+    // monster-keyed CombatScreen remount re-runs startFight on the new target,
+    // whether or not they're already on the combat screen.
+    const resume = chainCombatResumeTarget(idleResult)
     resumeTicks()
     setIdleResult(null)
+    if (resume) resumeAutoStart({ kind: 'combat', monsterId: resume.monsterId }, resume.returnTo)
   }
 
   const isCloudAccount = !!getToken() && !!getCharacterId()
