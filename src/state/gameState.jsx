@@ -12,7 +12,7 @@ import { mergeKillCounts } from '../utils/killCountMerge.js'
 import { fetchIdleState, pushIdleState } from '../cloud/idleState.js'
 import { api, getToken, getCharacterId, getIronmanMode, getOneLifeMode, syncAccountModeFlags, CREDITS_UPDATED_EVENT } from '../cloud/api.js'
 import { resetOneLifeWithRetry } from '../utils/oneLifeDeath.js'
-import { matchTaskProgress, taskById } from '../engine/dailyTasks.js'
+import { matchTaskProgress, taskById, idleCatchupDailyEvents } from '../engine/dailyTasks.js'
 import { requestCriticalPushSave, schedulePeriodicSave, pushNow, suspendSaves, resumeSaves, isSaveConflict } from '../cloud/sync.js'
 import { CRITICAL_SAVE_REASONS, detectCountIncreases, detectLevelUps, detectSetGrowth, didNumberIncrease, extractSkillLevels } from '../cloud/criticalSavePolicy.js'
 import itemsData from '../data/items.json'
@@ -105,6 +105,11 @@ export function GameProvider({ children }) {
   const [dailyTaskStates, setDailyTaskStates] = useState([])
   const dailyTaskStatesRef = useRef([])
   const dailyTaskDateRef = useRef(null)
+  // Daily tasks load asynchronously after the boot idle catch-up runs, so events
+  // fired before the first load (notably loadGame's offline catch-up) are queued
+  // here and flushed once setDailyTasks lands, instead of being silently dropped.
+  const dailyTasksLoadedRef = useRef(false)
+  const pendingGameEventsRef = useRef([])
   const recordGameEventRef = useRef(null)
   const showInfoToastsRef = useRef(false)
 
@@ -292,6 +297,9 @@ export function GameProvider({ children }) {
           // toast.
           const hpRegenSim = simulateIdleHPRegen(elapsedMs)
           let diedDuringIdle = false
+          // Snapshot for the daily-task feed below — savedTask is reassigned by
+          // the quest cascade and cleared on an offline death before we emit.
+          const idleTask = savedTask
 
           // ── Shared apply layer (also used by MCP intents.js via applyTaskResult) ──
           // Build a normalised state object, apply the simulation result in place,
@@ -486,6 +494,17 @@ export function GameProvider({ children }) {
           // clear the offline-death task so the UI and persisted state show no
           // active task afterwards.
           if (diedDuringIdle) savedTask = null
+
+          // Feed offline catch-up gains into the daily-task tracker. This path
+          // applies XP/items straight to raw state (not via grantXP), so unlike
+          // live play and the visibility-return handler it emits nothing on its
+          // own — and it's the ONLY catch-up on a cold boot, so inactive
+          // agility / AFK combat never counted. recordGameEvent queues these
+          // until the daily-tasks fetch lands (see setDailyTasks). Uses the
+          // snapshot task since savedTask may have been cleared on an idle death.
+          const record = recordGameEventRef.current
+          if (record) for (const evt of idleCatchupDailyEvents(idleTask, sim)) record(evt)
+
           idleResult = { elapsedMs, task: savedTask, ...sim }
         }
         // Travel resolves offline (no rewards, no modal): advance the countdown
@@ -1324,9 +1343,25 @@ export function GameProvider({ children }) {
     dailyTaskDateRef.current = date
     dailyTaskStatesRef.current = tasks
     setDailyTaskStates(tasks)
+    dailyTasksLoadedRef.current = true
+    // Replay events that fired before this first load (boot idle catch-up).
+    const pending = pendingGameEventsRef.current
+    if (pending.length > 0) {
+      pendingGameEventsRef.current = []
+      for (const evt of pending) recordGameEventRef.current?.(evt)
+    }
   }, [])
 
   const recordGameEvent = useCallback((evt) => {
+    // Before daily tasks have loaded, queue events rather than drop them — the
+    // boot offline catch-up (loadGame) fires before the /api/daily-tasks fetch
+    // lands. Bounded so a non-cloud session that never loads tasks can't grow it.
+    if (!dailyTasksLoadedRef.current) {
+      const buf = pendingGameEventsRef.current
+      buf.push(evt)
+      if (buf.length > 500) buf.shift()
+      return
+    }
     const tasks = dailyTaskStatesRef.current
     if (!tasks || tasks.length === 0) return
     let changed = false
