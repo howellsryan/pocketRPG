@@ -30,7 +30,7 @@ const grid = Array.from({ length: H }, () => new Array(W).fill('.'))
 const props = []
 const objects = []
 
-const block = (x, z) => { grid[z][x] = '#' }
+const block = (x, z) => { if (x >= 0 && x < W && z >= 0 && z < H) grid[z][x] = '#' }
 const clear = (x, z) => { grid[z][x] = '.' }
 const blockRect = (x0, z0, x1, z1) => {
   for (let z = z0; z <= z1; z++) for (let x = x0; x <= x1; x++) block(x, z)
@@ -39,6 +39,33 @@ const blockRect = (x0, z0, x1, z1) => {
 const building = (model, x0, z0, x1, z1, scale, rot = 0) => {
   blockRect(x0, z0, x1, z1)
   props.push({ model, x: (x0 + x1) / 2, z: (z0 + z1) / 2, scale, rot })
+}
+
+// Props are visual-only; collision lives in the ASCII grid. So the player can't
+// walk into solid scenery, every placed prop blocks the tiles its mesh actually
+// covers — from the model's measured native half-width × base scale (props.ts) ×
+// the placement scale, as a tile radius. Low groundcover stays walkable; a thin
+// banner blocks only its pole tile. Run as a post-pass over all props below.
+const NATIVE_HALF = {
+  castle: 0.95, fountain: 1.0, stall: 0.5, banner: 0.4, altar: 0.52, crypt: 1.2,
+  column: 0.2, dungeon_stairs: 2.5, dungeon_door: 2.0, house: 0.84, market: 0.77,
+  mill: 0.85, lumbermill: 0.92, well: 0.51, watchtower: 0.88, town_tower: 0.5,
+  town_wall: 0.5, lantern: 0.11, cart: 0.69, pine_a: 0.27, pine_b: 0.27, boulder: 0.51,
+}
+const BASE = {
+  castle: 3.0, fountain: 1.5, stall: 1.8, banner: 2.0, altar: 1.6, crypt: 2.2,
+  column: 2.0, dungeon_stairs: 0.9, dungeon_door: 0.8, pine_a: 1.7, pine_b: 1.6,
+  bush: 1.4, mushrooms: 1.1, flowers: 1.1, boulder: 1.3,
+}
+const NO_COLLIDE = new Set(['flowers', 'bush', 'mushrooms']) // walkable groundcover
+const RADIUS_OVERRIDE = { banner: 0 } // thin flagpole — block only its own tile
+const blockFootprint = ({ model, x, z, scale }) => {
+  if (NO_COLLIDE.has(model)) return
+  const r = model in RADIUS_OVERRIDE
+    ? RADIUS_OVERRIDE[model]
+    : Math.max(0, Math.round((NATIVE_HALF[model] ?? 0.5) * (BASE[model] ?? 1) * (scale ?? 1) - 0.5))
+  const cx = Math.round(x), cz = Math.round(z)
+  for (let dz = -r; dz <= r; dz++) for (let dx = -r; dx <= r; dx++) block(cx + dx, cz + dz)
 }
 
 // ── Town wall: perimeter of (14,12)..(80,84); gates south / east / west ──
@@ -225,12 +252,23 @@ while (placed < 140 && guard < 20000) {
   placed += 1
 }
 
+// ── Collision post-pass: every solid prop blocks the tiles its mesh covers ──
+for (const p of props) blockFootprint(p)
+// Re-open the gate lanes in case a flanking prop's footprint spilled onto them.
+for (const x of SOUTH_GATE_X) clear(x, WALL.z1)
+for (const z of EAST_GATE_Z) clear(WALL.x1, z)
+for (const z of WEST_GATE_Z) clear(WALL.x0, z)
+// Keep interactive/spawn tiles walkable even if an adjacent footprint reached them.
+const SPAWN = { x: 40, z: 62 }
+for (const o of objects) clear(o.x, o.z)
+clear(SPAWN.x, SPAWN.z)
+
 const zone = {
   id: 'varrick',
   name: 'Varrick',
   width: W,
   height: H,
-  spawn: { x: 40, z: 62 },
+  spawn: SPAWN,
   collision: grid.map((row) => row.join('')),
   objects,
   npcs: [],
@@ -254,6 +292,24 @@ const walkable = (x, z) => grid[z] && grid[z][x] === '.'
 if (!walkable(zone.spawn.x, zone.spawn.z)) errs.push(`spawn (${zone.spawn.x},${zone.spawn.z}) blocked`)
 for (const o of objects) if (!walkable(o.x, o.z)) errs.push(`object ${o.id} (${o.x},${o.z}) blocked`)
 for (const e of exits) if (!walkable(e.x, e.z)) errs.push(`exit ${e.id} (${e.x},${e.z}) blocked`)
+// Connectivity: every object, exit, and the Lumbright arrival tile must be
+// reachable on foot from spawn (4-dir flood — a subset of the server's 8-dir).
+const reach = Array.from({ length: H }, () => new Array(W).fill(false))
+const stack = [[SPAWN.x, SPAWN.z]]
+reach[SPAWN.z][SPAWN.x] = true
+while (stack.length) {
+  const [x, z] = stack.pop()
+  for (const [dx, dz] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+    const nx = x + dx, nz = z + dz
+    if (nx >= 0 && nx < W && nz >= 0 && nz < H && !reach[nz][nx] && grid[nz][nx] === '.') {
+      reach[nz][nx] = true
+      stack.push([nx, nz])
+    }
+  }
+}
+for (const [id, x, z] of [...objects.map((o) => [o.id, o.x, o.z]), ...exits.map((e) => [e.id, e.x, e.z]), ['lumbright arrival', 40, 82]]) {
+  if (!reach[z][x]) errs.push(`${id} (${x},${z}) is unreachable from spawn`)
+}
 if (errs.length) { console.error('VARRICK GEN ERRORS:\n' + errs.join('\n')); process.exit(1) }
 
 const walk = zone.collision.join('').split('').filter((c) => c === '.').length
