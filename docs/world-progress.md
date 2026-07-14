@@ -626,3 +626,34 @@ T5 editor brush + PNG import.
 terrain blocks, build ok.
 
 - [x] TERRAIN T4 (partial) — pasture/forest/lumbright terraformed; remaining places pending their zones.
+
+### TERRAIN — headless preview harness + findings
+Built an auth-free, server-free terrain preview so terrain can be seen/reviewed
+without the DO+auth stack (and bypassing the D1 zone-def override):
+- `client/preview.html` + `client/src/preview/main.ts`: renders a bundled zone
+  JSON through the real pipeline (createTerrain + scatter + statics/props),
+  orbit camera at a lower pitch so relief reads. `?zone=<id>&yaw=<rad>`.
+  Registered as a Vite entry (`vite.config.ts`).
+- `scripts/shoot-zone.mjs` (`npm run shoot:zones`): builds client, serves via
+  `vite preview`, Playwright-screenshots each zone → `world/preview-shots/*.png`
+  (gitignored). Uses the pre-installed Chromium.
+
+**Findings from the first shots (pasture/forest/lumbright):**
+1. Pipeline is correct — blended material + displacement + scatter all render
+   (forest shows a clear hill + dense woodland; pasture shows meadow + scatter).
+2. **"Pasture looks untouched in-game" root cause = the D1 `world_zone_defs`
+   override** (`server/zones.ts` comment + `zoneStore.loadStoredZone`). Pasture
+   has a stale editor-saved row in local D1 with no terrain; forest/lumbright
+   fall through to the fresh bundled JSON. Fix: `DELETE FROM world_zone_defs
+   WHERE zone_id='pasture'` in local D1, or re-save pasture via the editor.
+3. **Relief tuning**: pasture (relief 0.8, freq 0.12) reads too flat; forest
+   (1.0) reads well because trees accentuate it. Recommend relief ~1.2 + lower
+   frequency (~0.06) for broad landforms on open zones.
+4. **Scatter multi-mesh limitation**: `createScatterLayers` instances only the
+   first mesh of a GLB (`firstMesh`), so multi-mesh props (flowers) render
+   partially (red crescents). Fix: merge the GLB's meshes into one geometry, or
+   instance a cloned group, before building the InstancedMesh.
+5. Editor's own `preview3d.ts` still calls `createGround` WITHOUT corners — it
+   renders flat. Update it to `createTerrain` so the editor preview shows terrain.
+
+- [x] TERRAIN — preview harness; pipeline verified; D1-override + tuning + multi-mesh scatter noted as follow-ups.

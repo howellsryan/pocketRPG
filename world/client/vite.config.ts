@@ -12,6 +12,7 @@ export default defineConfig({
       input: {
         index: fileURLToPath(new URL('./index.html', import.meta.url)),
         editor: fileURLToPath(new URL('./editor.html', import.meta.url)),
+        preview: fileURLToPath(new URL('./preview.html', import.meta.url)),
       },
     },
   },
