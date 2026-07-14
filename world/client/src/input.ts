@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import { worldToTile } from './scene'
+import { groundHeight, worldToTile } from './scene'
 import { pickTargetOf } from './statics'
 import { buildMenu, defaultInteract, hoverText, topPick, type Pickable } from './picking'
 import { hideContextMenu, setHoverText, showContextMenu, type MenuDispatch } from './ui'
@@ -22,7 +22,7 @@ export function createClickMarker(scene: THREE.Scene): THREE.Mesh {
 }
 
 export function showClickMarker(marker: THREE.Mesh, x: number, z: number): void {
-  marker.position.set(x + 0.5, 0.02, z + 0.5)
+  marker.position.set(x + 0.5, groundHeight(x + 0.5, z + 0.5) + 0.02, z + 0.5)
   marker.visible = true
   marker.userData.shownAt = performance.now()
 }

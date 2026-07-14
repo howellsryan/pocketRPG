@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { matchTaskProgress, isComplete, taskById, skillingGainEvents } from '../src/engine/dailyTasks.js'
+import { matchTaskProgress, isComplete, taskById, skillingGainEvents, idleCatchupDailyEvents } from '../src/engine/dailyTasks.js'
 
 function makeTask(overrides = {}) {
   return {
@@ -226,6 +226,59 @@ describe('skillingGainEvents', () => {
     expect(skillingGainEvents({ type: 'skill', skill: 'mining' }, { iron_ore: 0, coal: -2 })).toEqual([])
     expect(skillingGainEvents({ type: 'skill', skill: 'mining' }, null)).toEqual([])
     expect(skillingGainEvents({ type: 'skill', skill: 'mining' }, undefined)).toEqual([])
+  })
+})
+
+// Regression: the cold-boot offline catch-up (loadGame) applies XP/kills to raw
+// state instead of going through grantXP, so it emitted NO daily-task events —
+// inactive agility and AFK combat never counted toward daily tasks after a
+// reload/fresh open. idleCatchupDailyEvents rebuilds the feed the live and
+// visibility-return paths produce.
+describe('idleCatchupDailyEvents', () => {
+  it('emits a skill_xp event for idle agility that advances the agility XP daily', () => {
+    const task = { type: 'agility', action: { id: 'gnome_course', name: 'Gnome Course' } }
+    const sim = { xpGained: { agility: 5200 }, coinsGained: 40, laps: 20 }
+    const events = idleCatchupDailyEvents(task, sim)
+    expect(events).toContainEqual({ kind: 'skill_xp', skill: 'agility', xp: 5200 })
+    const def = taskById('gain_agility_xp')
+    expect(def).not.toBeNull()
+    expect(matchTaskProgress(def!, events[0])).toBe(5200)
+  })
+
+  it('emits a monster_kill event for idle (AFK) combat that advances a kill daily', () => {
+    const task = { type: 'combat', monster: { id: 'lesser_fiend', boss: false } }
+    const sim = { xpGained: { combat: 900, hitpoints: 300 }, monstersKilled: 24 }
+    const events = idleCatchupDailyEvents(task, sim)
+    expect(events).toContainEqual({ kind: 'monster_kill', monsterId: 'lesser_fiend', count: 24 })
+    // combat/hitpoints XP does not fire skill_xp (assigned via the reward modal).
+    expect(events.some(e => e.kind === 'skill_xp' && e.skill === 'combat')).toBe(false)
+  })
+
+  it('emits boss_kill for a boss monster and forwards a completed slayer task', () => {
+    const task = { type: 'combat', monster: { id: 'king_black_dragon', boss: true } }
+    const sim = { monstersKilled: 2, slayerXpGained: 150, slayerTaskUpdate: { completed: true } }
+    const events = idleCatchupDailyEvents(task, sim)
+    expect(events).toContainEqual({ kind: 'boss_kill', monsterId: 'king_black_dragon', count: 2 })
+    expect(events).toContainEqual({ kind: 'skill_xp', skill: 'slayer', xp: 150 })
+    expect(events).toContainEqual({ kind: 'slayer_task_complete' })
+  })
+
+  it('emits skilling item events for idle skilling/gathering', () => {
+    const skill = idleCatchupDailyEvents({ type: 'skill', skill: 'mining' }, { xpGained: { mining: 700 }, itemsGained: { iron_ore: 12 } })
+    expect(skill).toContainEqual({ kind: 'skill_xp', skill: 'mining', xp: 700 })
+    expect(skill).toContainEqual({ kind: 'skill_gather', skill: 'mining', itemId: 'iron_ore', count: 12 })
+  })
+
+  it('emits a hunter_hunt event for idle hunting', () => {
+    const events = idleCatchupDailyEvents({ type: 'hunter', action: { id: 'hunt_cow' } }, { actions: 6 })
+    expect(events).toContainEqual({ kind: 'hunter_hunt', actionId: 'hunt_cow', count: 6 })
+  })
+
+  it('emits nothing for quests, null tasks, or empty sims', () => {
+    expect(idleCatchupDailyEvents({ type: 'quest' }, { xpGained: { attack: 500 } })).toEqual([])
+    expect(idleCatchupDailyEvents(null, { xpGained: { mining: 1 } })).toEqual([])
+    expect(idleCatchupDailyEvents({ type: 'agility', action: {} }, null)).toEqual([])
+    expect(idleCatchupDailyEvents({ type: 'agility', action: {} }, { xpGained: { agility: 0 } })).toEqual([])
   })
 })
 

@@ -518,3 +518,169 @@ Three requests; one withdrawn (bank scrolling already works on mobile — report
 **Verified**: `world:check` green (199 tests — +3 magic combat-flow tests: real-magic kill with per-cast rune consumption, out-of-runes stop, spell-less refusal). WS e2e 4/4 (char 2: spell-less attack refused, `fire_strike` level-gated at Magic 1, wind-strike bull kill +46 Magic xp with 1:1 rune drain). Playwright 5/5: minimap 40%,40% click → walk (12,12); melee shows stances/hides button; staff hides stances/shows button; picker lists Wind Strike; selection sends `{t:'setSpell'}` + relabels. **Env gotcha recorded**: `.dev.vars` must be written to `world/.dev.vars` — a shell whose cwd silently reset to repo root wrote it there and every hello failed signature verification.
 
 - [x] Minimap walk + magic spells — see commit introducing this entry — DT: on-device pass (minimap tap accuracy, spell picker on mobile, a real staff fight incl. running out of runes).
+
+## TERRAIN TRACK — `docs/open-world-terrain-plan.md`
+
+Separate from the build-guide steps above: the phased move from the flat checker
+ground to authored 3D terrain. Client-render-only; server stays flat/tile.
+
+### TERRAIN T0 — height seam (no visual change)
+Added the single integration seam so terrain height can later lift every placed
+mesh with no further call-site changes:
+- `scene.ts`: module-level `heightSampler` + `setHeightSampler`/`groundHeight`;
+  `tileToWorld` now returns `groundHeight(x+0.5, z+0.5)` as Y (0 when unset).
+- `terrain.ts` (new): `createHeightField(width, height, corners)` — bilinear
+  sampler over a `(w+1)×(h+1)` corner grid; registers itself as the active
+  sampler. Production passes `corners = null` (flat) this phase.
+- `main.ts`: registers the (flat) height field before ground/props/statics/
+  entities are placed. `input.ts`: click marker rides `groundHeight`.
+- `world/tests/terrain.test.ts`: corner exactness, bilinear midpoints, edge
+  clamping (no NaN), and the tileToWorld seam (flat when unset, lifted when set).
+
+Because the sampler is flat this phase, the game is pixel-identical; the seam is
+proven by tests and ready for T1 to fill the grid.
+
+**Verified**: `world:check` green — typecheck clean, 205 tests pass (+6 terrain),
+vite build succeeds.
+
+- [x] TERRAIN T0 — height seam landed; flat sampler, pixel-identical, tests green.
+
+### TERRAIN T1 — displaced terrain mesh (procedural source)
+Zones can now carry a `terrain` block; the ground becomes a displaced, lit mesh
+and every placed thing rides it via the T0 sampler.
+- `shared/zone.ts` + `shared/protocol.ts`: `ZoneTerrain` type (`relief`,
+  `procedural{seed,frequency}`, `heightmap?`, `material?`); `validateZone`
+  bounds relief 0..1.5 and the procedural params; welcome payload forwards it;
+  `server/WorldZone.ts` includes it when present.
+- `client/src/terrain.ts`: deterministic seeded value-noise fBm
+  (`proceduralCorners`) → corner grid; `createTerrain` registers the sampler and
+  builds the mesh. `scene.createGround` gains an optional `corners` arg —
+  subdivided one segment/tile, vertices lifted to corner heights,
+  `computeVertexNormals` for lighting. Editor preview stays flat (no corners).
+- `main.ts` uses `createTerrain` (returns the ground mesh picking raycasts).
+- `zones/pasture.json`: reference `terrain` block (seed 1337, relief 0.8).
+- Tests: procedural determinism (same seed identical, different seed differs),
+  grid size, [0,relief] + 1.5 cap, and the field lifts tileToWorld.
+
+Deviation from plan ordering: procedural is wired first (fully testable
+headless, no assets); authored heightmap PNGs land with the editor brush in T4.
+Picking still resolves the right tile (height only moves Y; worldToTile floors
+x/z). Material blend (T2) still uses the checker texture this phase.
+
+**Verified**: `world:check` green — typecheck clean, 210 tests (+5), build ok.
+
+- [x] TERRAIN T1 — displaced procedural terrain; DT: on-device visual pass (relief readability, pick accuracy on slopes).
+
+### TERRAIN T2 — blended terrain material
+Replaced the checker on displaced zones with a natural elevation/slope colour
+blend per biome.
+- `client/src/terrainMaterials.ts`: 7 presets (meadow/woodland/highland/desert/
+  marsh/volcanic/coastal), colours mirroring `src/data/biomes3d.json`.
+  `createTerrainMaterial` injects an elevation (low→mid→high over [0,relief]) +
+  slope colour ramp into `MeshStandardMaterial` via `onBeforeCompile` — keeps PBR
+  lighting/shadows, no external texture assets, negligible mobile cost. Adapts
+  THREE.Terrain's `generateBlendedMaterial` (blend by elevation+slope), texture-
+  free. Injection anchor verified present in three r185 `meshphysical.glsl.js`.
+- `scene.createGround` gains a `materialOverride`; `createTerrain` uses the
+  blended material when `terrain.material` names a preset and the ground is
+  displaced, else the checker (flat/no-preset fallback).
+- Tests: preset ranges, coverage of every §6 material name, factory fallback.
+
+**Verified**: `world:check` green — 213 tests (+3), typecheck + build ok.
+
+- [x] TERRAIN T2 — blended biome material; DT: on-device visual pass per preset.
+
+### TERRAIN T3 — decorative scatter
+Seeded, mask-aware instanced flora across the terrain, reusing existing prop GLBs
+(bush/flowers/boulder/pine) — no new assets.
+- `client/src/scatter.ts`: `scatterPositions` (pure) — mulberry32-seeded
+  Fisher-Yates over walkable, unoccupied, slope-eligible tiles; density scales
+  the subset; jitter/rotation/scale per instance. `createScatterLayers` renders
+  one `InstancedMesh` per layer (one draw call each), snapped to `heightAt`,
+  first-mesh-of-GLB, skip-on-load-failure. Adapts THREE.Terrain `ScatterMeshes`.
+- `shared/{protocol,zone}.ts`: `ScatterLayer` type + `terrain.scatter[]`;
+  `validateZone` bounds model/density/scaleRange.
+- `main.ts`: builds the occupied set from statics + exits (blocked tiles skipped
+  in the placer; NPCs move so aren't masked) and spawns layers post-terrain.
+- `zones/pasture.json`: bush/flowers/boulder scatter layers.
+- Tests (`tests/scatter.test.ts`): determinism, seed variance, blocked-tile and
+  occupied-tile masks, density scaling, max-slope filter, in-tile jitter bounds.
+
+Guardrail held: scatter is decoration only — no collision, no pick target;
+interactive nodes stay server-authored `objects[]`.
+
+**Verified**: `world:check` green — 220 tests (+7), typecheck + build ok.
+
+- [x] TERRAIN T3 — decorative scatter; DT: on-device density/perf pass (draw calls, frame time on a mid phone).
+
+### TERRAIN T4 (partial) — terrain on existing zones
+Applied terrain blocks to the two remaining shipped zones (pasture already done
+in T1):
+- `zones/forest.json`: `woodland`, relief 1.0, pine/bush/mushroom scatter.
+- `zones/lumbright.json`: `meadow`, relief 0.6 (gentle starter town), flowers/bush.
+The other 11 §6 places (Varrick, Al-Karid, Draynar, Brimhollow, …) get terrain
+when their world zones are built. Full per-place heightmap authoring waits on the
+T5 editor brush + PNG import.
+
+**Verified**: `world:check` green — 220 tests, zone validation accepts all three
+terrain blocks, build ok.
+
+- [x] TERRAIN T4 (partial) — pasture/forest/lumbright terraformed; remaining places pending their zones.
+
+### TERRAIN — headless preview harness + findings
+Built an auth-free, server-free terrain preview so terrain can be seen/reviewed
+without the DO+auth stack (and bypassing the D1 zone-def override):
+- `client/preview.html` + `client/src/preview/main.ts`: renders a bundled zone
+  JSON through the real pipeline (createTerrain + scatter + statics/props),
+  orbit camera at a lower pitch so relief reads. `?zone=<id>&yaw=<rad>`.
+  Registered as a Vite entry (`vite.config.ts`).
+- `scripts/shoot-zone.mjs` (`npm run shoot:zones`): builds client, serves via
+  `vite preview`, Playwright-screenshots each zone → `world/preview-shots/*.png`
+  (gitignored). Uses the pre-installed Chromium.
+
+**Findings from the first shots (pasture/forest/lumbright):**
+1. Pipeline is correct — blended material + displacement + scatter all render
+   (forest shows a clear hill + dense woodland; pasture shows meadow + scatter).
+2. **"Pasture looks untouched in-game" root cause = the D1 `world_zone_defs`
+   override** (`server/zones.ts` comment + `zoneStore.loadStoredZone`). Pasture
+   has a stale editor-saved row in local D1 with no terrain; forest/lumbright
+   fall through to the fresh bundled JSON. Fix: `DELETE FROM world_zone_defs
+   WHERE zone_id='pasture'` in local D1, or re-save pasture via the editor.
+3. **Relief tuning**: pasture (relief 0.8, freq 0.12) reads too flat; forest
+   (1.0) reads well because trees accentuate it. Recommend relief ~1.2 + lower
+   frequency (~0.06) for broad landforms on open zones.
+4. **Scatter multi-mesh limitation**: `createScatterLayers` instances only the
+   first mesh of a GLB (`firstMesh`), so multi-mesh props (flowers) render
+   partially (red crescents). Fix: merge the GLB's meshes into one geometry, or
+   instance a cloned group, before building the InstancedMesh.
+5. Editor's own `preview3d.ts` still calls `createGround` WITHOUT corners — it
+   renders flat. Update it to `createTerrain` so the editor preview shows terrain.
+
+- [x] TERRAIN — preview harness; pipeline verified; D1-override + tuning + multi-mesh scatter noted as follow-ups.
+
+### TERRAIN — preview-finding follow-ups (2, 3, 4)
+Cleared the three code/data follow-ups from the preview harness findings:
+- **Relief tuning (#3)**: `zones/pasture.json` → relief 0.8→1.2, procedural
+  frequency 0.12→0.06 (broader landforms on the open meadow). Forest/lumbright
+  left as-is (forest reads well at 1.0; lumbright is a deliberately gentle
+  starter town). Confirmed live in the preview banner ("relief 1.2 · meadow").
+- **Scatter multi-mesh (#4)**: `client/src/scatter.ts` — `firstMesh` replaced
+  by `collectMeshParts`, which bakes each GLB mesh's root-relative transform
+  into a cloned geometry and builds one `InstancedMesh` per part sharing the
+  instance matrices. Multi-mesh props (flowers/bushes) now render whole; the
+  "red crescent" partials are gone (verified in the pasture preview shot). Still
+  one draw call per part.
+- **Editor preview (#5)**: `client/src/editor/preview3d.ts` — `createGround`
+  (flat) → `createTerrain` + `createScatterLayers`, disposing the height sampler
+  on close. The editor's 3D preview now shows the same displaced terrain +
+  scatter the game and headless preview render.
+
+Remaining preview follow-ups are runtime/env, not code: **#2** (pasture stale
+in-game) is the local-D1 `world_zone_defs` override — clear the row, not a code
+bug. T4's other 11 places and the T5 editor-brush/PNG-import/LOD/water track are
+unchanged.
+
+**Verified**: `world:check` green — typecheck clean, 220 tests, build ok;
+`npm run shoot:zones` re-rendered all three zones (flowers/bushes now whole).
+
+- [x] TERRAIN — relief tuning + multi-mesh scatter + editor-preview terrain landed.

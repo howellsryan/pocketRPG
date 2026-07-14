@@ -13,7 +13,8 @@
     "test": "vitest run",
     "ci": "npm run typecheck && npm run test && npm run build",
     "deploy": "wrangler deploy",
-    "deploy:preview": "wrangler deploy --env preview"
+    "deploy:preview": "wrangler deploy --env preview",
+    "shoot:zones": "node scripts/shoot-zone.mjs"
   },
   "dependencies": {
     "partyserver": "0.5.8",

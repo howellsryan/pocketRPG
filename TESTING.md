@@ -6,14 +6,14 @@ How PocketRPG stays regression-resistant. Deep rationale: `docs/testing-strategy
 
 - **Vitest, logic-only** (`tests/**/*.test.ts`, node env). Pure engine + server logic; no UI rendering. `npm test` runs it; `npm run test:coverage` adds v8 coverage.
 - **Tests are the primary net** (there is no full type-check of the app and no linter), so their gaps are load-bearing — new logic must be reachable by a test.
-- **CI** (`.github/workflows/logic-regression.yml`) runs the suite once with coverage, the coverage ratchet, and — on PRs — the changed-lines and UI-zone gates, then the build/single-file checks. A second job type-checks and tests the `world/` subproject.
-- **Four automated gates** hold the line:
+- **No test CI for the main app** — the logic-regression GitHub Action was removed to save Action minutes. The `npm run ci` commit gate (CLAUDE.md §11) is the net: every commit runs typecheck, the full suite, and the build/single-file checks locally before it lands. `.github/workflows/world-check.yml` still type-checks and tests the `world/` subproject (it runs only on `world/**` changes).
+- **Four ratchet/gate scripts** back the suite; they no longer run in CI, so invoke them locally (or wire into the commit gate) when in doubt —
   - `scripts/check-coverage-ratchet.cjs` — per-directory uncovered-line count never rises (`coverage-baseline.json`).
   - `scripts/check-diff-coverage.cjs` — a PR's added source lines are >=90% covered.
   - `scripts/check-ui-ratchet.cjs` — the untestable JSX zone (`App.jsx`/state/screens/components) never grows (`ui-loc-baseline.json`), forcing logic into importable modules.
   - `npm run typecheck` — `// @ts-check`-annotated files are type-checked (a growing allowlist; `tsconfig.typecheck.json`).
 - Ratchets/gates are **report-only** until their `*_BLOCKING` env is set (one release after landing).
-- If CI fails on a gate, the message names the file/line and the fix: add a test, move logic out of JSX, or update a baseline with a justification.
+- If a gate script fails, the message names the file/line and the fix: add a test, move logic out of JSX, or update a baseline with a justification.
 
 ## Feature -> test -> source-of-truth map
 

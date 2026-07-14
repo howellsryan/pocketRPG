@@ -86,3 +86,33 @@ export function skillingGainEvents(task, itemsGained) {
   }
   return events
 }
+
+// Daily-task events for a completed offline/idle catch-up window (loadGame's
+// boot path). Unlike live play and the visibility-return handler — which grant
+// XP through grantXP and so emit skill_xp implicitly — this path applies XP
+// straight to raw state, so its events must be built explicitly here. Combat/any
+// XP is skipped (assigned later via the reward modal); quests grant separately.
+export function idleCatchupDailyEvents(task, sim) {
+  if (!task || !sim || task.type === 'quest') return []
+  const events = []
+  if (sim.xpGained) {
+    for (const [skill, xp] of Object.entries(sim.xpGained)) {
+      const amt = Math.floor(Number(xp) || 0)
+      if (skill !== 'combat' && skill !== 'any' && amt > 0) events.push({ kind: 'skill_xp', skill, xp: amt })
+    }
+  }
+  if (task.type === 'combat') {
+    if (sim.slayerXpGained > 0) events.push({ kind: 'skill_xp', skill: 'slayer', xp: Math.floor(sim.slayerXpGained) })
+    if (sim.monstersKilled > 0 && task.monster?.id) {
+      events.push({ kind: task.monster?.boss === true ? 'boss_kill' : 'monster_kill', monsterId: task.monster.id, count: sim.monstersKilled })
+    }
+    if (sim.slayerTaskUpdate?.completed) events.push({ kind: 'slayer_task_complete' })
+  }
+  if ((task.type === 'skill' || task.type === 'gather') && sim.itemsGained) {
+    events.push(...skillingGainEvents(task, sim.itemsGained))
+  }
+  if (task.type === 'hunter' && sim.actions > 0 && task.action?.id) {
+    events.push({ kind: 'hunter_hunt', actionId: task.action.id, count: sim.actions })
+  }
+  return events
+}
