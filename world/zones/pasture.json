@@ -8,10 +8,10 @@
     "z": 16
   },
   "terrain": {
-    "relief": 0.8,
+    "relief": 1.2,
     "procedural": {
       "seed": 1337,
-      "frequency": 0.12
+      "frequency": 0.06
     },
     "material": "meadow",
     "scatter": [

@@ -91,12 +91,22 @@ export function scatterPositions(
   return out
 }
 
-function firstMesh(root: THREE.Object3D): THREE.Mesh | null {
-  let found: THREE.Mesh | null = null
+type MeshPart = { geometry: THREE.BufferGeometry; material: THREE.Material | THREE.Material[] }
+
+// Every mesh in the GLB, with its transform relative to the root baked into a
+// cloned geometry. Multi-mesh props (e.g. flowers = stems + petals) need all
+// parts — instancing only the first renders partial ("red crescent") props.
+function collectMeshParts(root: THREE.Object3D): MeshPart[] {
+  root.updateMatrixWorld(true)
+  const parts: MeshPart[] = []
   root.traverse((o) => {
-    if (!found && o instanceof THREE.Mesh) found = o
+    if (o instanceof THREE.Mesh) {
+      const geometry = o.geometry.clone()
+      geometry.applyMatrix4(o.matrixWorld)
+      parts.push({ geometry, material: o.material })
+    }
   })
-  return found
+  return parts
 }
 
 /** Loads each layer's model and adds one InstancedMesh per layer, snapped to the
@@ -121,25 +131,29 @@ export async function createScatterLayers(
       } catch {
         return
       }
-      const src = firstMesh(gltf.scene)
-      if (!src) return
+      const parts = collectMeshParts(gltf.scene)
+      if (!parts.length) return
       const base = SCATTER_BASE[layer.model] ?? 1
-      const mesh = new THREE.InstancedMesh(src.geometry, src.material, instances.length)
-      const m = new THREE.Matrix4()
-      const q = new THREE.Quaternion()
+      // One shared transform per instance; every mesh part of the prop reuses it
+      // so a multi-mesh GLB renders whole (one InstancedMesh — one draw call —
+      // per part).
       const up = new THREE.Vector3(0, 1, 0)
+      const q = new THREE.Quaternion()
       const pos = new THREE.Vector3()
       const scl = new THREE.Vector3()
-      instances.forEach((it, idx) => {
+      const matrices = instances.map((it) => {
         q.setFromAxisAngle(up, it.rot)
         pos.set(it.x, heightAt(it.x, it.z), it.z)
         scl.setScalar(it.scale * base)
-        m.compose(pos, q, scl)
-        mesh.setMatrixAt(idx, m)
+        return new THREE.Matrix4().compose(pos, q, scl)
       })
-      mesh.instanceMatrix.needsUpdate = true
-      mesh.frustumCulled = false
-      scene.add(mesh)
+      for (const part of parts) {
+        const mesh = new THREE.InstancedMesh(part.geometry, part.material, instances.length)
+        matrices.forEach((mat, idx) => mesh.setMatrixAt(idx, mat))
+        mesh.instanceMatrix.needsUpdate = true
+        mesh.frustumCulled = false
+        scene.add(mesh)
+      }
     }),
   )
 }
