@@ -90,7 +90,10 @@ export function extractMeshes(roots) {
   const matIndices = matLayer ? (child(matLayer, 'Materials')?.props[0].value || []) : []
 
   // Material objects, in connection order to the mesh, give per-slot names.
-  const matNames = objects.children.filter((c) => c.name === 'Material').map((m) => propVal(m, 1) || 'Material')
+  // FBX stores an object name as "Name\x00\x01Class"; keep only the name so no
+  // null byte reaches the GLTF material name (a null in the name breaks
+  // three.js shader-comment injection → "Missing main()" on strict GL paths).
+  const matNames = objects.children.filter((c) => c.name === 'Material').map((m) => String(propVal(m, 1) || 'Material').split('\x00')[0])
 
   const groups = new Map() // materialIndex -> { positions, normals, indices, key2idx }
   const groupFor = (mi) => {
