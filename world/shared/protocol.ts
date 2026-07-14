@@ -85,6 +85,25 @@ export type ExitMarker = { id: string; x: number; z: number; label: string }
 export type PropPlacement = { model: string; x: number; z: number; rot?: number; scale?: number }
 export type GroundPalette = { walkableA: string; walkableB: string; blockedA: string; blockedB: string }
 export type ZoneAmbience = { sky?: string; hemiIntensity?: number; sunIntensity?: number }
+/** Client-render-only terrain height for a zone (docs/open-world-terrain-plan.md).
+ * `relief` is peak height in tiles (≤~1.5); `procedural` seeds deterministic
+ * noise. Absent => flat ground. `material` names a T2 blend preset. */
+export type ScatterLayer = {
+  model: string
+  /** Instances per 100 eligible (walkable, unoccupied) tiles. */
+  density: number
+  jitter?: number
+  scaleRange?: [number, number]
+  minSlope?: number
+  maxSlope?: number
+}
+export type ZoneTerrain = {
+  relief: number
+  procedural?: { seed: number; frequency: number }
+  heightmap?: string
+  material?: string
+  scatter?: ScatterLayer[]
+}
 
 export type LootItem = { id: string; itemId: string; qty: number; x: number; z: number }
 
@@ -93,7 +112,7 @@ export type ServerMessage =
       t: 'welcome'
       selfId: string
       tick: number
-      zone: { id: string; name?: string; w: number; h: number; collision: string[]; exits?: ExitMarker[]; props?: PropPlacement[]; palette?: GroundPalette; ambience?: ZoneAmbience }
+      zone: { id: string; name?: string; w: number; h: number; collision: string[]; exits?: ExitMarker[]; props?: PropPlacement[]; palette?: GroundPalette; ambience?: ZoneAmbience; terrain?: ZoneTerrain }
       statics: StaticObject[]
       you: {
         x: number

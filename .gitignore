@@ -21,3 +21,6 @@ world/.dev.vars
 
 # scripts/render-proc.mjs output (review artifacts, never committed)
 /proc-renders
+
+# terrain preview screenshots
+world/preview-shots/

@@ -7,6 +7,20 @@
     "x": 5,
     "z": 24
   },
+  "terrain": {
+    "relief": 1.0,
+    "procedural": {
+      "seed": 4801,
+      "frequency": 0.09
+    },
+    "material": "woodland",
+    "scatter": [
+      { "model": "pine_a", "density": 3, "scaleRange": [0.8, 1.3] },
+      { "model": "pine_b", "density": 2, "scaleRange": [0.8, 1.2] },
+      { "model": "bush", "density": 4, "scaleRange": [0.7, 1.1] },
+      { "model": "mushrooms", "density": 2, "scaleRange": [0.8, 1.1] }
+    ]
+  },
   "palette": {
     "walkableA": "#33582b",
     "walkableB": "#3c6432",

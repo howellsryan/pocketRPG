@@ -1,12 +1,15 @@
 import * as THREE from 'three'
 import type { ZoneDef } from '../../../shared/zone'
-import { createScene, createLights, createGround, tileToWorld } from '../scene'
+import { createScene, createLights, tileToWorld } from '../scene'
+import { createTerrain } from '../terrain'
+import { createScatterLayers } from '../scatter'
 import { createStatics } from '../statics'
 import { createProps } from '../props'
 import { createMonsterMesh } from '../entities'
 
-// Read-only 3D preview of a zone using the REAL game renderer — the ground
-// checker + palette, ambience sky/lighting, actual rock/tree/chest/prop models
+// Read-only 3D preview of a zone using the REAL game renderer — the displaced
+// terrain (or flat checker when the zone has no `terrain` block) + palette,
+// ambience sky/lighting, actual rock/tree/chest/prop models, decorative scatter
 // and monster meshes players see. Lazy-loaded (three.js stays out of the main
 // editor bundle) and torn down cleanly on close. Simple orbit + zoom camera.
 
@@ -26,9 +29,16 @@ export async function openPreview3D(def: ZoneDef): Promise<void> {
 
   const scene = createScene(def.ambience)
   createLights(scene, def.ambience)
-  createGround(scene, def.collision, def.width, def.height, def.palette)
+  const { heightField } = createTerrain(scene, def.collision, def.width, def.height, def.palette, def.terrain)
   void createProps(scene, def.props ?? [])
   void createStatics(scene, def.objects)
+  if (def.terrain?.scatter?.length) {
+    const occupied = new Set<string>([
+      ...def.objects.map((o) => `${o.x},${o.z}`),
+      ...(def.exits ?? []).map((e) => `${e.x},${e.z}`),
+    ])
+    void createScatterLayers(scene, def.terrain.scatter, def.width, def.height, def.collision, occupied, (def.terrain.procedural?.seed ?? 1) | 0, heightField.heightAt)
+  }
 
   // Monster meshes at their spawn tiles (async; ignore failures).
   for (const npc of def.npcs) {
@@ -88,6 +98,7 @@ export async function openPreview3D(def: ZoneDef): Promise<void> {
   current = {
     dispose: () => {
       cancelAnimationFrame(raf)
+      heightField.dispose()
       window.removeEventListener('pointermove', onMove)
       window.removeEventListener('pointerup', onUp)
       renderer.domElement.removeEventListener('pointerdown', onDown)

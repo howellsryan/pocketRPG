@@ -76,19 +76,53 @@ function buildGroundTexture(collision: string[], width: number, height: number, 
 }
 
 /** Ground plane spanning tile (0,0)-(width,height) with its corner at the world
- * origin, so tile (tx,tz)'s center is world position (tx+0.5, 0, tz+0.5). */
-export function createGround(scene: THREE.Scene, collision: string[], width: number, height: number, palette?: GroundPalette): THREE.Mesh {
-  const geometry = new THREE.PlaneGeometry(width, height)
+ * origin, so tile (tx,tz)'s center is world position (tx+0.5, y, tz+0.5).
+ *
+ * With `corners` (a (width+1)×(height+1) row-major grid of per-corner heights)
+ * the plane is subdivided one segment per tile and each vertex is lifted to its
+ * corner height — so mesh vertices coincide exactly with the HeightField's
+ * corner grid. Without it (editor preview, T0) the plane stays flat. */
+export function createGround(scene: THREE.Scene, collision: string[], width: number, height: number, palette?: GroundPalette, corners?: Float32Array | null, materialOverride?: THREE.Material): THREE.Mesh {
+  const geometry = corners
+    ? new THREE.PlaneGeometry(width, height, width, height)
+    : new THREE.PlaneGeometry(width, height)
   geometry.rotateX(-Math.PI / 2)
   geometry.translate(width / 2, 0, height / 2)
-  const material = new THREE.MeshStandardMaterial({ map: buildGroundTexture(collision, width, height, palette ?? DEFAULT_PALETTE) })
+  if (corners) {
+    const stride = width + 1
+    const pos = geometry.attributes.position
+    for (let i = 0; i < pos.count; i++) {
+      const cx = Math.min(width, Math.max(0, Math.round(pos.getX(i))))
+      const cz = Math.min(height, Math.max(0, Math.round(pos.getZ(i))))
+      pos.setY(i, corners[cz * stride + cx])
+    }
+    pos.needsUpdate = true
+    geometry.computeVertexNormals()
+  }
+  const material = materialOverride ?? new THREE.MeshStandardMaterial({ map: buildGroundTexture(collision, width, height, palette ?? DEFAULT_PALETTE) })
   const mesh = new THREE.Mesh(geometry, material)
   scene.add(mesh)
   return mesh
 }
 
+// Per-zone terrain height sampler (world/client/src/terrain.ts registers it).
+// Kept module-level so tileToWorld — which every placed thing routes through —
+// picks up terrain height with no call-site changes. Null => flat (y=0), the
+// pre-terrain behaviour. Movement/collision stay flat and server-authoritative;
+// this only lifts render Y.
+let heightSampler: ((worldX: number, worldZ: number) => number) | null = null
+
+export function setHeightSampler(fn: ((worldX: number, worldZ: number) => number) | null): void {
+  heightSampler = fn
+}
+
+/** Ground Y at a world (x,z). 0 until a HeightField is registered. */
+export function groundHeight(worldX: number, worldZ: number): number {
+  return heightSampler ? heightSampler(worldX, worldZ) : 0
+}
+
 export function tileToWorld(x: number, z: number): THREE.Vector3 {
-  return new THREE.Vector3(x + 0.5, 0, z + 0.5)
+  return new THREE.Vector3(x + 0.5, groundHeight(x + 0.5, z + 0.5), z + 0.5)
 }
 
 export function worldToTile(point: THREE.Vector3): { x: number; z: number } {

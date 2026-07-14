@@ -7,6 +7,18 @@
   "x": 32,
   "z": 32
  },
+ "terrain": {
+  "relief": 0.6,
+  "procedural": {
+   "seed": 2048,
+   "frequency": 0.07
+  },
+  "material": "meadow",
+  "scatter": [
+   { "model": "flowers", "density": 3, "scaleRange": [0.8, 1.1] },
+   { "model": "bush", "density": 2, "scaleRange": [0.7, 1.0] }
+  ]
+ },
  "collision": [
   "................................................................",
   "................................................................",
