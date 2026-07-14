@@ -59,6 +59,62 @@ export function getSlayerTaskReward(basePoints, completedTasksBeforeCompletion =
   return { totalTasks, multiplier, pointsEarned: base * multiplier }
 }
 
+// Build the display rows for the idle-result "Slayer" card from a combat sim
+// result. Auto-slayer chains list one row per completed task (monster + count)
+// then the current active task; a single task keeps one row. Resolves the
+// monster name defensively so a bare single-sim completion (which only carries
+// points, no monsterName) never renders "undefined".
+export function buildSlayerResultRows(result) {
+  if (!result) return []
+  const rows = []
+  const completions = Array.isArray(result.slayerCompletions) ? result.slayerCompletions : []
+  const totalOnTask = Math.max(0, Math.floor(Number(result.monstersKilledOnTask) || 0))
+  const update = result.slayerTaskUpdate
+
+  const activeTaskRow = (task, killed) => {
+    if (!task || !task.monsterName) return null
+    if (task.isBoss) {
+      return { text: `${task.monsterName} — Active Task (boss — can't be idled, fight it yourself)`, active: true }
+    }
+    const remaining = Math.max(0, Math.floor(Number(task.monstersRemaining) || 0))
+    return { text: `${Math.max(0, killed).toLocaleString()} ${task.monsterName} — Active Task · ${remaining.toLocaleString()} left`, active: true }
+  }
+
+  if (completions.length > 0) {
+    let completedKills = 0
+    for (const completion of completions) {
+      const name = completion.monsterName || 'monster'
+      const count = Math.max(0, Math.floor(Number(completion.count) || 0))
+      completedKills += count
+      rows.push({ text: `${count.toLocaleString()} ${name} — Task Complete!`, active: false })
+    }
+    if (update && !update.completed) {
+      const row = activeTaskRow(update, totalOnTask - completedKills)
+      if (row) rows.push(row)
+    }
+    return rows
+  }
+
+  // Single task this window (auto-slayer off, or one task that didn't roll over).
+  if (!update) return rows
+  if (update.completed) {
+    if (totalOnTask <= 0) return rows
+    const name = update.monsterName || result.task?.monster?.name || 'monster'
+    rows.push({ text: `${totalOnTask.toLocaleString()} ${name} — Task Complete!`, active: false })
+    return rows
+  }
+  if (update.isBoss) {
+    const row = activeTaskRow(update, 0)
+    if (row) rows.push(row)
+    return rows
+  }
+  if (totalOnTask <= 0) return rows
+  const name = update.monsterName || result.task?.monster?.name || 'monster'
+  const remaining = Math.max(0, Math.floor(Number(update.monstersRemaining) || 0))
+  rows.push({ text: `${totalOnTask.toLocaleString()} ${name} / ${remaining.toLocaleString()} remaining`, active: false })
+  return rows
+}
+
 // Fold a run of auto-slayer task completions (from simulateIdleCombatChain's
 // `slayerCompletions`) into a single reward summary. Each completion advances
 // the streak counter so the ×10 / ×50 milestone bonuses land correctly across

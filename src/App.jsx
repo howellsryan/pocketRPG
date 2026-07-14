@@ -73,7 +73,7 @@ import { SKIP_HOUR_MS, getSkipPreflight, isChargeableSkipOutcome } from './engin
 import { buildAutoStartTask } from './engine/autoStartTask.js'
 import { resolveMagicSpell } from './engine/equipment.js'
 import spellsData from './data/spells.json'
-import { getSlayerTaskReward, resolveSlayerLoopRewards } from './engine/slayerRewards.js'
+import { getSlayerTaskReward, resolveSlayerLoopRewards, buildSlayerResultRows } from './engine/slayerRewards.js'
 import { hasEpicLootDrop, getItemUnitValue } from './utils/itemValue.js'
 import LootResultModal, { SummaryCard, SuppliesCard } from './components/LootResultModal.jsx'
 import GameIcon from './components/GameIcon.jsx'
@@ -3432,19 +3432,24 @@ function GameApp() {
                 <IdleResultProgressCard type='reward_complete' idleResult={idleResult} taskName={`${idleResult.task?.action?.name || 'Reward action'} completed.`} />
               )}
 
-              {/* Slayer task update */}
-              {idleResult.slayerTaskUpdate && idleResult.monstersKilledOnTask > 0 && (
-                <div class="lm-card" style={{ borderColor: 'rgba(212, 175, 55, 0.3)', borderLeft: '3px solid #d4af37' }}>
-                  <div class="lm-card__head" style={{ color: '#d4af37' }}>
-                    <span class="lm-card__icn">💀</span>Slayer Task
+              {/* Slayer task update. Auto-slayer chains list each completed task
+                  plus the current active task; a single task keeps one row. */}
+              {(() => {
+                const rows = buildSlayerResultRows(idleResult)
+                if (rows.length === 0) return null
+                return (
+                  <div class="lm-card" style={{ borderColor: 'rgba(212, 175, 55, 0.3)', borderLeft: '3px solid #d4af37' }}>
+                    <div class="lm-card__head" style={{ color: '#d4af37' }}>
+                      <span class="lm-card__icn">💀</span>Slayer {rows.length > 1 ? 'Tasks' : 'Task'}
+                    </div>
+                    {rows.map((row, i) => (
+                      <div key={i} style={{ fontSize: '12px', color: row.active ? 'var(--color-parchment)' : '#d4af37', fontWeight: 'bold', padding: '2px 0' }}>
+                        {row.text}
+                      </div>
+                    ))}
                   </div>
-                  <div style={{ fontSize: '12px', color: '#d4af37', fontWeight: 'bold' }}>
-                    {idleResult.slayerTaskUpdate.completed
-                      ? `${idleResult.monstersKilledOnTask.toLocaleString()} ${idleResult.slayerTaskUpdate.monsterName} — Task Complete!`
-                      : `${idleResult.monstersKilledOnTask.toLocaleString()} ${idleResult.slayerTaskUpdate.monsterName} / ${idleResult.slayerTaskUpdate.monstersRemaining.toLocaleString()} remaining`}
-                  </div>
-                </div>
-              )}
+                )
+              })()}
 
               {/* Quests Completed */}
               {idleResult.completedQuests && idleResult.completedQuests.length > 0 && (

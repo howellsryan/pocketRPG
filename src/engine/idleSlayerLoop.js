@@ -188,7 +188,12 @@ export function simulateIdleCombatChain(task, elapsedMs, stats, equipment, inven
     if (sim.died) { died = true; stoppedReason = 'died'; currentSlayer = sim.slayerTaskUpdate?.completed ? null : (sim.slayerTaskUpdate || currentSlayer); break }
 
     if (sim.slayerTaskUpdate?.completed) {
-      slayerCompletions.push({ pointsOnComplete: sim.slayerTaskUpdate.pointsOnComplete })
+      slayerCompletions.push({
+        monsterId: currentSlayer.monsterId,
+        monsterName: currentSlayer.monsterName,
+        count: sim.monstersKilledOnTask || currentSlayer.monstersRemaining || 0,
+        pointsOnComplete: sim.slayerTaskUpdate.pointsOnComplete,
+      })
       const next = assignNextTask(currentSlayer.masterId, stats, options)
       if (!next || !next.monster) { currentSlayer = next?.slayerTask || null; finalTaskMonster = null; stoppedReason = 'chain_no_task'; break }
       currentSlayer = next.slayerTask

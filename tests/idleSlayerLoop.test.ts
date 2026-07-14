@@ -3,7 +3,7 @@ import monstersData from '../src/data/monsters.json'
 import { SLAYER_MASTERS } from '../src/engine/slayerMasters.js'
 import { simulateIdleCombat } from '../src/engine/idleEngine.js'
 import { simulateIdleCombatChain } from '../src/engine/idleSlayerLoop.js'
-import { resolveSlayerLoopRewards } from '../src/engine/slayerRewards.js'
+import { resolveSlayerLoopRewards, buildSlayerResultRows } from '../src/engine/slayerRewards.js'
 
 // A one-shot melee setup so kills are cheap and the whole window is spent on
 // tasks rather than a single slow grind.
@@ -140,5 +140,55 @@ describe('resolveSlayerLoopRewards', () => {
     const res = resolveSlayerLoopRewards([], 8)
     expect(res.totalTasks).toBe(8)
     expect(res.pointsEarned).toBe(0)
+  })
+})
+
+describe('buildSlayerResultRows', () => {
+  it('resolves the monster name from the task when a bare completion lacks one (no "undefined")', () => {
+    const rows = buildSlayerResultRows({
+      monstersKilledOnTask: 96,
+      slayerTaskUpdate: { completed: true, pointsOnComplete: 25 },
+      task: { monster: { id: 'vicious_black_dragon', name: 'Vicious Black Dragon' } },
+    } as any)
+    expect(rows).toHaveLength(1)
+    expect(rows[0].text).toBe('96 Vicious Black Dragon — Task Complete!')
+    expect(rows[0].text).not.toContain('undefined')
+  })
+
+  it('lists each chained completion then the current active task', () => {
+    const rows = buildSlayerResultRows({
+      monstersKilledOnTask: 96 + 10 + 4,
+      slayerCompletions: [
+        { monsterName: 'Vicious Black Dragon', count: 96, pointsOnComplete: 25 },
+        { monsterName: 'Adamant Dragon', count: 10, pointsOnComplete: 25 },
+      ],
+      slayerTaskUpdate: { monsterName: 'Rune Dragon', monstersRemaining: 46, totalCount: 50, isBoss: false },
+    } as any)
+    expect(rows.map(r => r.text)).toEqual([
+      '96 Vicious Black Dragon — Task Complete!',
+      '10 Adamant Dragon — Task Complete!',
+      '4 Rune Dragon — Active Task · 46 left',
+    ])
+    expect(rows[2].active).toBe(true)
+  })
+
+  it('flags a rolled boss task as the active task that must be fought manually', () => {
+    const rows = buildSlayerResultRows({
+      monstersKilledOnTask: 96,
+      slayerCompletions: [{ monsterName: 'Vicious Black Dragon', count: 96, pointsOnComplete: 25 }],
+      slayerTaskUpdate: { monsterName: 'Krylth the Defiler', monstersRemaining: 32, totalCount: 32, isBoss: true },
+    } as any)
+    expect(rows).toHaveLength(2)
+    expect(rows[1].text).toContain('Krylth the Defiler — Active Task (boss')
+    expect(rows[1].text).toContain("can't be idled")
+  })
+
+  it('shows in-progress remaining for a single unfinished task', () => {
+    const rows = buildSlayerResultRows({
+      monstersKilledOnTask: 20,
+      slayerTaskUpdate: { monsterName: 'Green Dragon', monstersRemaining: 30 },
+    } as any)
+    expect(rows).toHaveLength(1)
+    expect(rows[0].text).toBe('20 Green Dragon / 30 remaining')
   })
 })
