@@ -39,7 +39,6 @@ export default function CombatMobileSelect({
   title,
   searchValue = '',
   onSearchChange,
-  searchActive = false,
   onToggleSection,
   onFight,
   onMonsterInfo,
@@ -132,7 +131,7 @@ export default function CombatMobileSelect({
       <div class="cb-arealist">
         {orderedCategories.map(category => {
           const monsters = sortedMonsters(category)
-          const isCollapsed = searchActive ? false : (collapsedSections[category.key] ?? defaultCollapsed)
+          const isCollapsed = collapsedSections[category.key] ?? defaultCollapsed
           const art = getCategoryArt(category.key)
           const empty = monsters.length === 0
           return (

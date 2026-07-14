@@ -338,7 +338,11 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   // Monster/raid picker search: filters the current picker screen down to
   // name matches and hides sections left with no results, without touching
   // the underlying collapsed-section state (restored once the search clears).
+  // Matched sections default open but use their own collapse state (rather
+  // than `collapsedSections`) so they can still be manually toggled while
+  // searching without disturbing the pre-search collapsed layout.
   const [monsterSearch, setMonsterSearch] = useState('')
+  const [searchCollapsedSections, setSearchCollapsedSections] = useState({})
   const monsterSearchActive = monsterSearch.trim().length > 0
   const monsterSearchQuery = monsterSearch.trim().toLowerCase()
   const filteredPickerCategories = useMemo(() => {
@@ -356,6 +360,15 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       Object.entries(pickerRaids).filter(([, raid]) => raid.name?.toLowerCase().includes(monsterSearchQuery))
     )
   }, [pickerRaids, monsterSearchActive, monsterSearchQuery])
+  // While searching, sections use their own (independently toggleable)
+  // collapse state, defaulting open so matches are visible immediately.
+  const isSectionCollapsed = (key, dungeonDefault) => monsterSearchActive
+    ? (searchCollapsedSections[key] ?? false)
+    : (collapsedSections[key] ?? dungeonDefault)
+  const handleMonsterSearchChange = (value) => {
+    setMonsterSearch(value)
+    if (!value.trim()) setSearchCollapsedSections({})
+  }
   const [lootModal, setLootModal] = useState(null)
   const [deathModal, setDeathModal] = useState(null)
   const [isDesktopCombatLayout, setIsDesktopCombatLayout] = useState(false)
@@ -1119,7 +1132,11 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
 
   const getSlayerLevel = () => getLevelFromXP(stats.slayer?.xp || 0)
   const toggleSection = (sectionKey) => {
-    setCollapsedSections(prev => ({ ...prev, [sectionKey]: !prev[sectionKey] }))
+    if (monsterSearchActive) {
+      setSearchCollapsedSections(prev => ({ ...prev, [sectionKey]: !(prev[sectionKey] ?? false) }))
+    } else {
+      setCollapsedSections(prev => ({ ...prev, [sectionKey]: !prev[sectionKey] }))
+    }
   }
 
   const checkBossRequirements = (monster) => checkBossRequirementsPure(monster, {
@@ -1873,12 +1890,11 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             categories={filteredPickerCategories}
             monstersData={monstersData}
             raidsData={filteredPickerRaids}
-            collapsedSections={collapsedSections}
-            defaultCollapsed={!isDungeon}
+            collapsedSections={monsterSearchActive ? searchCollapsedSections : collapsedSections}
+            defaultCollapsed={monsterSearchActive ? false : !isDungeon}
             title={isDungeon ? pickerTitle : undefined}
             searchValue={monsterSearch}
-            onSearchChange={setMonsterSearch}
-            searchActive={monsterSearchActive}
+            onSearchChange={handleMonsterSearchChange}
             onToggleSection={toggleSection}
             onFight={startFight}
             onMonsterInfo={setSelectedMonsterInfo}
@@ -1911,7 +1927,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
         <input
           type="search"
           value={monsterSearch}
-          onInput={(e) => setMonsterSearch(e.currentTarget.value)}
+          onInput={(e) => handleMonsterSearchChange(e.currentTarget.value)}
           placeholder="Search monsters…"
           aria-label="Search monsters and raids by name"
           class="w-full min-h-[44px] px-3 mb-3 rounded-xl bg-[var(--color-void-light)] border border-[var(--color-void-border)] text-[14px] text-[var(--color-parchment)] placeholder:text-[var(--color-parchment)] placeholder:opacity-40 focus:outline-none focus:border-[var(--color-gold)]"
@@ -1980,7 +1996,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                 }
                 return a.combatLevel - b.combatLevel
               })
-            const isCollapsed = monsterSearchActive ? false : (collapsedSections[category.key] ?? !isDungeon)
+            const isCollapsed = isSectionCollapsed(category.key, !isDungeon)
             const categoryArt = getCategoryArt(category.key)
             return (
               <div key={category.key}>
@@ -2090,9 +2106,9 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           >
             <SkillEmblem iconKey="temple_gate" accent="#9b6cff" size={24} glow={0} />
             <span class="text-xs font-semibold text-[var(--color-gold)] uppercase tracking-wider">Raids</span>
-            <span class="ml-auto text-[10px] text-[var(--color-parchment)] opacity-60">{(monsterSearchActive ? false : (collapsedSections.raids ?? !isDungeon)) ? '▶' : '▼'}</span>
+            <span class="ml-auto text-[10px] text-[var(--color-parchment)] opacity-60">{isSectionCollapsed('raids', !isDungeon) ? '▶' : '▼'}</span>
           </button>
-          {!(monsterSearchActive ? false : (collapsedSections.raids ?? !isDungeon)) && (
+          {!isSectionCollapsed('raids', !isDungeon) && (
             <div class="space-y-2">
             {Object.values(filteredPickerRaids).filter((raid, index, allRaids) =>
               allRaids.findIndex(candidate => candidate.id === raid.id) === index
