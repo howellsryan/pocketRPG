@@ -90,6 +90,7 @@ const sourceFiles = [
   'engine/worldContent.js',
   'engine/placeMaps.js',
   'engine/idleEngine.js',
+  'engine/idleSlayerLoop.js',
   'engine/applyTaskResult.js',
   'engine/tick.js',
   'engine/farming.js',

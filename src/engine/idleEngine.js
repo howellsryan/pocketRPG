@@ -1386,6 +1386,14 @@ export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory,
     // Check if this kill counts toward slayer task — cap at total task count
     if (slayerTask && doesSlayerTaskMatchMonster(slayerTask.monsterId, monster.id) && monstersKilledOnTask < slayerTask.monstersRemaining) {
       monstersKilledOnTask++
+      // Auto-slayer chain: stop the instant the task is cleared so the caller
+      // knows exactly how much idle time this task consumed and can assign the
+      // next one. Without this the loop would keep farming the same monster for
+      // the rest of the window (the default, unlock-off behaviour).
+      if (options.stopOnSlayerComplete && monstersKilledOnTask >= slayerTask.monstersRemaining) {
+        stoppedReason = 'slayer_task_complete'
+        break
+      }
     }
 
     // XP for this kill

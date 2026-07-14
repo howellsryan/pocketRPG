@@ -58,3 +58,21 @@ export function getSlayerTaskReward(basePoints, completedTasksBeforeCompletion =
   else if (totalTasks % 5 === 0) multiplier = 10
   return { totalTasks, multiplier, pointsEarned: base * multiplier }
 }
+
+// Fold a run of auto-slayer task completions (from simulateIdleCombatChain's
+// `slayerCompletions`) into a single reward summary. Each completion advances
+// the streak counter so the ×10 / ×50 milestone bonuses land correctly across
+// the whole chain. Returns the running total, the points to award, and a
+// per-task breakdown for messaging.
+export function resolveSlayerLoopRewards(completions, tasksCompletedStart = 0) {
+  let totalTasks = Math.max(0, Math.floor(Number(tasksCompletedStart) || 0))
+  let pointsEarned = 0
+  const rewards = []
+  for (const completion of (completions || [])) {
+    const reward = getSlayerTaskReward(completion?.pointsOnComplete, totalTasks)
+    totalTasks = reward.totalTasks
+    pointsEarned += reward.pointsEarned
+    rewards.push(reward)
+  }
+  return { totalTasks, pointsEarned, rewards }
+}
