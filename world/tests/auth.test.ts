@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest'
-import { parseHandoffFromHash, resolvePocketRpgUrl } from '../client/src/auth'
+import { beforeAll, describe, expect, it } from 'vitest'
+import { getRunPref, parseHandoffFromHash, resolvePocketRpgUrl, storeRunPref } from '../client/src/auth'
 
 describe('parseHandoffFromHash', () => {
   it('extracts the token from a #handoff=<jwt> hash', () => {
@@ -40,5 +40,31 @@ describe('resolvePocketRpgUrl', () => {
     expect(resolvePocketRpgUrl('', 'world.pocketrpg.co.uk')).toBe('https://pocketrpg.co.uk')
     expect(resolvePocketRpgUrl('', 'pocketrpg-world.rlh.workers.dev')).toBe('https://preview.pocketrpg.pages.dev')
     expect(resolvePocketRpgUrl('', 'localhost')).toBe('https://preview.pocketrpg.pages.dev')
+  })
+})
+
+describe('run toggle preference', () => {
+  const store = new Map<string, string>()
+  beforeAll(() => {
+    ;(globalThis as unknown as { localStorage: Storage }).localStorage = {
+      getItem: (k: string) => (store.has(k) ? store.get(k)! : null),
+      setItem: (k: string, v: string) => void store.set(k, v),
+      removeItem: (k: string) => void store.delete(k),
+      clear: () => store.clear(),
+      key: () => null,
+      length: 0,
+    } as Storage
+  })
+
+  it('defaults to off (walking) when never set', () => {
+    store.clear()
+    expect(getRunPref()).toBe(false)
+  })
+
+  it('persists the toggle so a refresh/logout/transition keeps run selected', () => {
+    storeRunPref(true)
+    expect(getRunPref()).toBe(true)
+    storeRunPref(false)
+    expect(getRunPref()).toBe(false)
   })
 })
