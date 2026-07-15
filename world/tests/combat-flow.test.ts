@@ -145,7 +145,7 @@ describe('combat via tickPlayer', () => {
     expect(sawIdleDuringCombat).toBe(true) // not stuck on 'attack' every tick
   })
 
-  it('aggro hands over to a surviving attacker when the target leaves (Phase 4)', () => {
+  it('keeps aggro on the attacker who ran instead of handing it to another attacker (pursuit)', () => {
     const { npcs, bull } = bullAt(5, 5)
     const weak = { attack: { xp: 0, level: 1 }, strength: { xp: 0, level: 1 }, defence: { xp: 0, level: 1 }, ranged: { xp: 0, level: 1 }, magic: { xp: 0, level: 1 }, hitpoints: { xp: 100000, level: 40 } }
     const a = makePlayer({ charId: '1', x: 5, z: 6, stats: weak, pendingInteract: { kind: 'npc', id: 'bull_1', action: 'attack' } })
@@ -154,11 +154,37 @@ describe('combat via tickPlayer', () => {
     tickPlayer(b, ctx(1, npcs))
     expect(bull.attackerId).toBe('1')
 
-    a.x = 10 // target walks out of adjacency
+    a.x = 10 // target runs out of adjacency but is still in the zone (world/server/npc.ts now chases them)
     tickPlayer(a, ctx(2, npcs))
-    expect(bull.attackerId).toBeNull()
+    expect(bull.attackerId).toBe('1')
     tickPlayer(b, ctx(2, npcs))
+    expect(bull.attackerId).toBe('1') // b can't steal a claim that's still held
+
+    // A genuine release (teleport/logout, WorldZone.releaseAggro) is what
+    // actually frees the claim for the next attacker.
+    bull.attackerId = null
+    tickPlayer(b, ctx(3, npcs))
     expect(bull.attackerId).toBe('2')
+  })
+
+  it('resumes the fight automatically once a pursuing npc catches back up to its attacker', () => {
+    const { npcs, bull } = bullAt(5, 5)
+    const a = makePlayer({ charId: '1', x: 10, z: 5 })
+    bull.state = 'combat'
+    bull.attackerId = '1'
+    bull.x = 9 // adjacent to the player again, as if npc.ts's chase just closed the gap
+    bull.z = 5
+
+    expect(a.combat).toBeNull()
+    const first = tickPlayer(a, ctx(1, npcs))
+    expect(a.combat).not.toBeNull() // resumed without a fresh interact
+    let landedOnBull = first.hits.some((h) => h.targetId === 'bull_1' && h.dmg > 0)
+    const isDead = (n: NpcState): boolean => n.state === 'dead'
+    for (let tick = 2; tick <= 20 && !isDead(bull) && !landedOnBull; tick++) {
+      const r = tickPlayer(a, ctx(tick, npcs))
+      if (r.hits.some((h) => h.targetId === 'bull_1' && h.dmg > 0)) landedOnBull = true
+    }
+    expect(landedOnBull).toBe(true)
   })
 
   it('a magic weapon with a spell fights with real magic: spell XP and rune consumption', () => {
@@ -225,15 +251,15 @@ describe('combat via tickPlayer', () => {
     expect(r.events.some((e) => e.e === 'msg' && e.text.includes('select a spell'))).toBe(true)
   })
 
-  it('walking out of range ends the fight (bull left in combat until it heals)', () => {
+  it('walking out of range ends the fight but keeps aggro (bull pursues, world/server/npc.ts)', () => {
     const { npcs, bull } = bullAt(5, 5)
     const player = makePlayer({ x: 5, z: 6, pendingInteract: { kind: 'npc', id: 'bull_1', action: 'attack' } })
     tickPlayer(player, ctx(1, npcs)) // engage
     expect(player.combat).not.toBeNull()
 
-    player.x = 10 // teleport out of adjacency (as a walk would)
+    player.x = 10 // walks out of adjacency without teleporting/logging out
     tickPlayer(player, ctx(2, npcs))
     expect(player.combat).toBeNull()
-    expect(bull.attackerId).toBeNull()
+    expect(bull.attackerId).toBe(player.charId)
   })
 })

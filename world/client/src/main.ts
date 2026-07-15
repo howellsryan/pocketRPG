@@ -528,6 +528,11 @@ function enterWorld(session: WorldSession): void {
             ...(lootLayer?.pickables ?? []),
           ],
           getPlayerCombatLevel: () => playerCombatLevel,
+          onPinchZoom: (ratio) => {
+            // Fingers spreading (ratio > 1) zooms in, so divide rather than
+            // multiply — mirrors the wheel handler's deltaY sign convention.
+            zoom = clampZoom(zoom / ratio)
+          },
         })
 
         renderer.domElement.addEventListener(
