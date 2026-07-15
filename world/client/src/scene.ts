@@ -7,10 +7,16 @@ const TILE_PIXELS = 16
 
 export type ZoneAmbience = { sky?: string; hemiIntensity?: number; sunIntensity?: number }
 const DEFAULT_SKY = 0x87ceeb
+// Fog near must clear the farthest the camera ever sits from its target
+// (ZOOM_MAX * |CAMERA_OFFSET| ≈ 27) or the hero itself would fog out.
+const FOG_NEAR = 45
+const FOG_FAR = 110
 
 export function createScene(ambience?: ZoneAmbience): THREE.Scene {
   const scene = new THREE.Scene()
-  scene.background = new THREE.Color(ambience?.sky ?? DEFAULT_SKY)
+  const sky = new THREE.Color(ambience?.sky ?? DEFAULT_SKY)
+  scene.background = sky
+  scene.fog = new THREE.Fog(sky, FOG_NEAR, FOG_FAR)
   return scene
 }
 
@@ -18,6 +24,8 @@ export function createRenderer(container: HTMLElement): THREE.WebGLRenderer {
   const renderer = new THREE.WebGLRenderer({ antialias: true })
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
   renderer.setSize(window.innerWidth, window.innerHeight)
+  renderer.shadowMap.enabled = true
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap
   container.appendChild(renderer.domElement)
   return renderer
 }
@@ -26,9 +34,12 @@ export function createCamera(): THREE.PerspectiveCamera {
   return new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 0.1, 200)
 }
 
-/** Positions the camera at a fixed offset from `target`, scaled by `zoom`, looking at `target`. No rotation in v1. */
-export function updateCamera(camera: THREE.PerspectiveCamera, target: THREE.Vector3, zoom: number): void {
-  camera.position.copy(target).add(CAMERA_OFFSET.clone().multiplyScalar(zoom))
+/** Positions the camera at a fixed offset from `target`, scaled by `zoom` and
+ * rotated around `target` by `yaw` (radians, default 0 — no rotation),
+ * looking at `target`. */
+export function updateCamera(camera: THREE.PerspectiveCamera, target: THREE.Vector3, zoom: number, yaw = 0): void {
+  const offset = CAMERA_OFFSET.clone().applyAxisAngle(new THREE.Vector3(0, 1, 0), yaw).multiplyScalar(zoom)
+  camera.position.copy(target).add(offset)
   camera.lookAt(target)
 }
 
@@ -36,12 +47,39 @@ export function clampZoom(zoom: number): number {
   return Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, zoom))
 }
 
-export function createLights(scene: THREE.Scene, ambience?: ZoneAmbience): void {
+const SHADOW_MAP_SIZE = 1024
+const SHADOW_RADIUS_TILES = 14
+const SUN_OFFSET = new THREE.Vector3(6, 12, 4)
+
+/** Sun casts shadows in a frustum sized for the area immediately around its
+ * target (the hero) — `updateShadowLight` recentres it every frame so a
+ * 64-tile zone doesn't need (or pay for) a zone-sized shadow map. */
+export function createLights(scene: THREE.Scene, ambience?: ZoneAmbience): { sun: THREE.DirectionalLight } {
   const hemi = new THREE.HemisphereLight(0xffffff, 0x3a3a2a, ambience?.hemiIntensity ?? 1.1)
   scene.add(hemi)
-  const dir = new THREE.DirectionalLight(0xffffff, ambience?.sunIntensity ?? 1.4)
-  dir.position.set(6, 12, 4)
-  scene.add(dir)
+  const sun = new THREE.DirectionalLight(0xffffff, ambience?.sunIntensity ?? 1.4)
+  sun.position.copy(SUN_OFFSET)
+  sun.castShadow = true
+  sun.shadow.mapSize.set(SHADOW_MAP_SIZE, SHADOW_MAP_SIZE)
+  sun.shadow.camera.near = 1
+  sun.shadow.camera.far = 60
+  sun.shadow.camera.left = -SHADOW_RADIUS_TILES
+  sun.shadow.camera.right = SHADOW_RADIUS_TILES
+  sun.shadow.camera.top = SHADOW_RADIUS_TILES
+  sun.shadow.camera.bottom = -SHADOW_RADIUS_TILES
+  scene.add(sun)
+  // A DirectionalLight's target is a plain Object3D that must be in the scene
+  // graph for its world matrix to update — otherwise the shadow frustum stays
+  // pinned at the origin forever.
+  scene.add(sun.target)
+  return { sun }
+}
+
+/** Recentres the shadow-casting sun (and its target) on `target` each frame
+ * so the shadow frustum follows the hero instead of covering the whole zone. */
+export function updateShadowLight(sun: THREE.DirectionalLight, target: THREE.Vector3): void {
+  sun.position.copy(target).add(SUN_OFFSET)
+  sun.target.position.copy(target)
 }
 
 /** Bakes a checker texture over the walkable tiles and a darker checker over
@@ -101,6 +139,7 @@ export function createGround(scene: THREE.Scene, collision: string[], width: num
   }
   const material = materialOverride ?? new THREE.MeshStandardMaterial({ map: buildGroundTexture(collision, width, height, palette ?? DEFAULT_PALETTE) })
   const mesh = new THREE.Mesh(geometry, material)
+  mesh.receiveShadow = true
   scene.add(mesh)
   return mesh
 }
