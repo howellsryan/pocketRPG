@@ -203,6 +203,7 @@ export async function createMonsterMesh(monsterId: string | undefined): Promise<
       if (proc) {
         const group = new THREE.Group()
         group.add(proc.group)
+        disableFrustumCulling(group)
         return { mesh: group, animator: { kind: 'proc', proc, triggered: null } }
       }
     } catch { /* fall through to the cow placeholder */ }
