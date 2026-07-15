@@ -1,6 +1,7 @@
 import type { CombatStance, EquipmentMap, InvSlot } from '../../shared/protocol'
 import type { MenuRow } from './picking'
 import { iconMarkup, itemName, uiIconMarkup } from './itemIcon'
+import { spellIconSvg } from './spellIcon'
 
 export type MenuDispatch = (row: MenuRow) => void
 
@@ -74,21 +75,16 @@ const HUD_CSS = `
   background: rgba(46, 52, 74, 0.9); border: 1px solid #4a5a8a; color: #9fc0ff;
   font-size: 13px; font-weight: bold; display: flex; align-items: center; justify-content: center;
 }
-#magic-panel { display: flex; flex-direction: column; gap: 3px; max-height: 340px; overflow-y: auto; }
-.spell-head {
-  font-size: 10px; color: #8a7a5a; text-transform: uppercase; letter-spacing: 0.08em;
-  margin: 5px 2px 1px; font-family: sans-serif;
+#magic-panel { max-height: 340px; overflow-y: auto; }
+.spell-grid { display: flex; flex-wrap: wrap; gap: 4px; }
+.spell-ico {
+  width: 40px; height: 40px; padding: 0; border-radius: 6px; cursor: pointer; user-select: none;
+  background: rgba(60, 50, 34, 0.55); border: 1px solid #5a4a30;
+  display: flex; align-items: center; justify-content: center; font-size: 20px; line-height: 1;
 }
-.spell-head:first-child { margin-top: 1px; }
-.spell-row {
-  min-height: 40px; display: flex; align-items: center; gap: 6px; padding: 4px 7px;
-  border-radius: 6px; background: rgba(60, 50, 34, 0.55); border: 1px solid #5a4a30;
-  color: #d8c9a2; font-size: 12px; cursor: pointer; user-select: none;
-}
-.spell-row.active { background: rgba(70, 58, 36, 0.92); color: #ffe066; border-color: #ffe066; }
-.spell-row.locked { opacity: 0.42; cursor: default; }
-.spell-row .spell-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.spell-row .spell-lv { flex-shrink: 0; font-size: 10px; color: #c9b892; }
+.spell-ico.active { background: rgba(70, 58, 36, 0.92); border-color: #ffe066; box-shadow: 0 0 0 1px #ffe066 inset; }
+.spell-ico.locked { opacity: 0.32; cursor: default; }
+.spell-ico svg { display: block; }
 #run-orb {
   position: fixed; right: 148px; top: 52px; z-index: 10; min-width: 44px; min-height: 44px;
   padding: 4px 8px; background: rgba(20, 16, 10, 0.82); border: 1px solid #5a4a30; border-radius: 22px;
@@ -556,43 +552,30 @@ export function setSpellButton(visible: boolean, spellName: string | null): void
   btn.textContent = `Spell: ${spellName ?? 'none'}`
 }
 
-/** Fills the Magic tab with the full spellbook: combat spells (tap to select an
- * autocast target — highlighted, then pick a monster) and skill spells. Rows
- * above the player's Magic level render locked. Called on welcome and whenever
- * the selection, equipment, or Magic level changes. */
+/** Fills the Magic tab with the combat spellbook as an icon grid (several per
+ * row, no text): each spell's bespoke icon shows its element (colour) and tier
+ * (silhouette). Tapping one selects it as the autocast spell — highlighted —
+ * then the player taps a monster to attack. Icons above the player's Magic level
+ * render locked. Skill spells are hidden for now (`data.skill` unused). Called
+ * on welcome and whenever the selection or Magic level changes. */
 export function renderSpellbook(data: SpellbookRender): void {
   const panel = document.getElementById('magic-panel')
   if (!panel) return
   panel.innerHTML = ''
-
-  const section = (title: string, entries: SpellbookEntry[], kind: 'combat' | 'skill'): void => {
-    if (entries.length === 0) return
-    const head = document.createElement('div')
-    head.className = 'spell-head'
-    head.textContent = title
-    panel.appendChild(head)
-    for (const entry of entries) {
-      const locked = entry.level > data.magicLevel
-      const selected = kind === 'combat' && entry.id === data.selectedSpellId
-      const row = document.createElement('div')
-      row.className = 'spell-row' + (selected ? ' active' : '') + (locked ? ' locked' : '')
-      const name = document.createElement('span')
-      name.className = 'spell-name'
-      name.textContent = entry.name
-      const lv = document.createElement('span')
-      lv.className = 'spell-lv'
-      lv.textContent = `Lv ${entry.level}`
-      row.appendChild(name)
-      row.appendChild(lv)
-      if (!locked) {
-        row.addEventListener('click', () => (kind === 'combat' ? data.onCombat(entry.id) : data.onSkill(entry.id)))
-      }
-      panel.appendChild(row)
-    }
+  const grid = document.createElement('div')
+  grid.className = 'spell-grid'
+  for (const entry of data.combat) {
+    const locked = entry.level > data.magicLevel
+    const selected = entry.id === data.selectedSpellId
+    const cell = document.createElement('button')
+    cell.type = 'button'
+    cell.className = 'spell-ico' + (selected ? ' active' : '') + (locked ? ' locked' : '')
+    cell.title = `${entry.name} (Lv ${entry.level})`
+    cell.innerHTML = spellIconSvg(entry.id, 30) || '🔮'
+    if (!locked) cell.addEventListener('click', () => data.onCombat(entry.id))
+    grid.appendChild(cell)
   }
-
-  section('Combat Spells', data.combat, 'combat')
-  section('Skill Spells', data.skill, 'skill')
+  panel.appendChild(grid)
 }
 
 export function setStanceActive(stance: CombatStance): void {
