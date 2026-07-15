@@ -46,6 +46,9 @@ export type InputHandlers = {
   /** Current picks-live set (npcs/loot move + come and go), resolved per event. */
   getPickables: () => THREE.Object3D[]
   getPlayerCombatLevel: () => number
+  /** Two-finger pinch: ratio of this move's finger distance over the last —
+   * >1 fingers spreading (zoom in), <1 pinching in (zoom out). */
+  onPinchZoom: (ratio: number) => void
 }
 
 /** Wires pointer input: left-click = default action / walk, right-click (mouse)
@@ -124,7 +127,31 @@ export function setupInput(canvas: HTMLCanvasElement, camera: THREE.Camera, grou
     longPressTimer = null
   }
 
+  // ── Two-finger pinch-to-zoom (touch) — replaces the browser's native
+  // double-tap/pinch page zoom (killed by touch-action:none in CSS) with a
+  // camera zoom, same intent as the desktop wheel handler. ──
+  const touchPoints = new Map<number, { x: number; y: number }>()
+  let pinchDist = 0
+  let pinching = false
+
+  function distanceBetween(a: { x: number; y: number }, b: { x: number; y: number }): number {
+    return Math.hypot(a.x - b.x, a.y - b.y)
+  }
+
   function handlePointerDown(event: PointerEvent): void {
+    if (event.pointerType === 'touch') {
+      touchPoints.set(event.pointerId, { x: event.clientX, y: event.clientY })
+      if (touchPoints.size >= 2) {
+        // A second finger landed: this is a pinch, not a tap/long-press.
+        clearLongPress()
+        downPos = null
+        longPressFired = false
+        pinching = true
+        const [a, b] = [...touchPoints.values()]
+        pinchDist = distanceBetween(a, b)
+        return
+      }
+    }
     hideContextMenu()
     downPos = { x: event.clientX, y: event.clientY }
     longPressFired = false
@@ -137,6 +164,16 @@ export function setupInput(canvas: HTMLCanvasElement, camera: THREE.Camera, grou
   }
 
   function handlePointerMove(event: PointerEvent): void {
+    if (event.pointerType === 'touch' && touchPoints.has(event.pointerId)) {
+      touchPoints.set(event.pointerId, { x: event.clientX, y: event.clientY })
+    }
+    if (touchPoints.size >= 2) {
+      const [a, b] = [...touchPoints.values()]
+      const dist = distanceBetween(a, b)
+      if (pinchDist > 0) h.onPinchZoom(dist / pinchDist)
+      pinchDist = dist
+      return
+    }
     if (downPos && longPressTimer) {
       const moved = Math.hypot(event.clientX - downPos.x, event.clientY - downPos.y)
       if (moved > LONG_PRESS_MOVE_PX) clearLongPress()
@@ -149,6 +186,14 @@ export function setupInput(canvas: HTMLCanvasElement, camera: THREE.Camera, grou
   }
 
   function handlePointerUp(event: PointerEvent): void {
+    if (event.pointerType === 'touch') touchPoints.delete(event.pointerId)
+    if (touchPoints.size < 2) pinchDist = 0
+    if (pinching) {
+      // Swallow taps that land while lifting fingers off a pinch — it's the
+      // end of a zoom gesture, not a walk/interact click.
+      if (touchPoints.size === 0) pinching = false
+      return
+    }
     clearLongPress()
     downPos = null
     if (longPressFired) {
@@ -160,6 +205,12 @@ export function setupInput(canvas: HTMLCanvasElement, camera: THREE.Camera, grou
     performDefault()
   }
 
+  function handlePointerCancel(event: PointerEvent): void {
+    touchPoints.delete(event.pointerId)
+    if (touchPoints.size < 2) pinchDist = 0
+    if (touchPoints.size === 0) pinching = false
+  }
+
   function handleContextMenu(event: MouseEvent): void {
     event.preventDefault()
     openMenu(event.clientX, event.clientY)
@@ -168,12 +219,14 @@ export function setupInput(canvas: HTMLCanvasElement, camera: THREE.Camera, grou
   canvas.addEventListener('pointerdown', handlePointerDown)
   canvas.addEventListener('pointermove', handlePointerMove)
   canvas.addEventListener('pointerup', handlePointerUp)
+  canvas.addEventListener('pointercancel', handlePointerCancel)
   canvas.addEventListener('contextmenu', handleContextMenu)
   return () => {
     clearLongPress()
     canvas.removeEventListener('pointerdown', handlePointerDown)
     canvas.removeEventListener('pointermove', handlePointerMove)
     canvas.removeEventListener('pointerup', handlePointerUp)
+    canvas.removeEventListener('pointercancel', handlePointerCancel)
     canvas.removeEventListener('contextmenu', handleContextMenu)
   }
 }

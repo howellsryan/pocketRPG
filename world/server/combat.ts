@@ -122,8 +122,9 @@ export function stepCombat(player: TickPlayer, ctx: TickContext, result: TickRes
     return
   }
   if (!adjacent(player, npc)) {
+    // Aggro persists: an attacker who runs out of range becomes the npc's
+    // pursuit target (npc.ts chases them) rather than releasing the claim.
     player.combat = null
-    if (npc.attackerId === player.charId) npc.attackerId = null
     player.anim = 'idle'
     resetSpecial(player, result)
     return

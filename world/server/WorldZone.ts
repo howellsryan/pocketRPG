@@ -219,6 +219,16 @@ export class WorldZone extends Server<Env> {
     return this.npcs
   }
 
+  /** Releases aggro on every npc chasing this charId. A pursuing npc's
+   * `attackerId` can outlive `player.combat` (it's cleared the instant the
+   * player isn't adjacent — see combat.ts), so this must scan all npcs rather
+   * than just the one the player was last fighting. */
+  private releaseAggro(charId: string): void {
+    for (const npc of this.ensureNpcs().values()) {
+      if (npc.attackerId === charId) npc.attackerId = null
+    }
+  }
+
   private ensureStations(): Map<string, StationState> {
     if (!this.stations) {
       this.stations = new Map(
@@ -302,10 +312,7 @@ export class WorldZone extends Server<Env> {
     // (handleHello carry-over) clears the linger; otherwise the tick loop
     // removes + flushes them once it expires. Combat/aggro is released now so
     // a frozen player can't hold a monster.
-    if (player.combat) {
-      const npc = this.npcs?.get(player.combat.npcId)
-      if (npc && npc.attackerId === charId) npc.attackerId = null
-    }
+    this.releaseAggro(charId)
     player.path = []
     this.clearIntents(player)
     player.anim = 'idle'
@@ -321,10 +328,7 @@ export class WorldZone extends Server<Env> {
    * linger expiry and explicit logout. */
   private async removeAndFlush(player: Player): Promise<void> {
     const charId = player.charId
-    if (player.combat) {
-      const npc = this.npcs?.get(player.combat.npcId)
-      if (npc && npc.attackerId === charId) npc.attackerId = null
-    }
+    this.releaseAggro(charId)
     this.players.delete(charId)
     this.dirty.delete(charId)
     this.pendingLeaves.add(charId)
@@ -384,10 +388,7 @@ export class WorldZone extends Server<Env> {
     const existing = this.players.get(liveCharId)
     if (existing) {
       existing.conn.close(1008, 'duplicate_connection')
-      if (existing.combat) {
-        const npc = this.ensureNpcs().get(existing.combat.npcId)
-        if (npc && npc.attackerId === liveCharId) npc.attackerId = null
-      }
+      this.releaseAggro(liveCharId)
       existing.path = []
       existing.pendingInteract = null
       existing.mining = null
@@ -943,6 +944,8 @@ export class WorldZone extends Server<Env> {
 
     const rocks = this.ensureRocks()
     const npcs = this.ensureNpcs()
+    const positions = new Map<string, { x: number; z: number }>()
+    for (const p of this.players.values()) positions.set(p.charId, { x: p.x, z: p.z })
     const ctx: TickContext = {
       tick: this.tickCount,
       rocks,
@@ -950,6 +953,7 @@ export class WorldZone extends Server<Env> {
       stations: this.ensureStations(),
       collision: this.zone.collision,
       pathAdjacent: (from, to) => findPathAdjacent(this.zone.collision, from, to),
+      players: positions,
     }
 
     const rockChanges = respawnedRocks(rocks, this.tickCount)
@@ -1079,10 +1083,7 @@ export class WorldZone extends Server<Env> {
     this.players.delete(player.charId)
     this.dirty.delete(player.charId)
     this.pendingLeaves.add(player.charId)
-    if (player.combat) {
-      const npc = this.npcs?.get(player.combat.npcId)
-      if (npc && npc.attackerId === player.charId) npc.attackerId = null
-    }
+    this.releaseAggro(player.charId)
     this.maybeStopTicking()
     await this.flush(player, 'transition')
     await this.env.DB.prepare(
