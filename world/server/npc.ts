@@ -4,7 +4,7 @@
 import monstersData from '../../src/data/monsters.json'
 import type { EntityDiff } from '../shared/protocol'
 import type { ZoneNpcDef } from '../shared/zone'
-import { adjacent, type TickContext, type TickResult } from './tick'
+import { monsterAttackRange, withinRange, type TickContext, type TickResult } from './tick'
 
 type Monsters = Record<string, { name?: string; hitpoints?: number }>
 
@@ -187,11 +187,12 @@ export function tickNpc(npc: NpcState, ctx: TickContext, result: TickResult): vo
       }
       return
     }
-    // Aggro'd on an attacker: stand and fight while adjacent (an active
-    // engine session drives this tick-by-tick), otherwise chase them down —
-    // leashed to a radius around home so it can't trek across the whole zone.
+    // Aggro'd on an attacker: stand and fight while within ITS attack range (an
+    // active engine session drives this tick-by-tick — melee at 1 tile, ranged/
+    // magic from afar), otherwise chase them down — leashed to a radius around
+    // home so it can't trek across the whole zone.
     const target = ctx.players?.get(npc.attackerId)
-    if (!target || adjacent(npc, target)) return
+    if (!target || withinRange(npc, target, monsterAttackRange(npc.monsterId))) return
     if (chebyshev(npc, npc.home) >= PURSUE_LEASH_TILES) {
       giveUpPursuit(npc)
       result.npcChanged.push(npc.id)

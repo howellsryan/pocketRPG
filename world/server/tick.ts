@@ -7,9 +7,13 @@ import { GATHER_SKILLS, ROCK_DEPLETED_TICKS, addToInventory, inventoryIsFull, ty
 import { STATIONS, recipeFor, stationTypeForVerb } from '../shared/recipes'
 import { craftOnce, hasMaterials } from './crafting'
 import { getLevelFromXP, clampXP } from '../../src/engine/experience.js'
-import { startCombat, stepCombat, type CombatSession } from './combat'
+import { startCombat, stepCombat, playerAttackRange, type CombatSession } from './combat'
 import type { NpcState } from './npc'
 import type { LootEntity } from './loot'
+import monstersData from '../../src/data/monsters.json'
+
+type MonsterStyles = Record<string, { attackStyle?: string } | undefined>
+const monsterStyles = monstersData as unknown as MonsterStyles
 
 export type TickAnim = EntityDiff['anim']
 
@@ -157,6 +161,27 @@ export function adjacent(a: { x: number; z: number }, b: { x: number; z: number 
   return Math.max(Math.abs(a.x - b.x), Math.abs(a.z - b.z)) === 1
 }
 
+// Attack reach in Chebyshev tiles by combat type: melee 1, ranged 5, magic 7.
+// Applies symmetrically to players (their weapon) and monsters (their attackStyle).
+export const MELEE_RANGE = 1
+export const RANGED_RANGE = 5
+export const MAGIC_RANGE = 7
+
+export function rangeForCombatType(type: string): number {
+  return type === 'magic' ? MAGIC_RANGE : type === 'ranged' ? RANGED_RANGE : MELEE_RANGE
+}
+
+/** A monster's attack reach from its attackStyle — magic/ranged strike from
+ * afar; every melee style (stab/slash/crush/melee/unset) is 1 tile. */
+export function monsterAttackRange(monsterId: string): number {
+  const style = monsterStyles[monsterId]?.attackStyle
+  return style === 'magic' ? MAGIC_RANGE : style === 'ranged' ? RANGED_RANGE : MELEE_RANGE
+}
+
+export function withinRange(a: { x: number; z: number }, b: { x: number; z: number }, range: number): boolean {
+  return Math.max(Math.abs(a.x - b.x), Math.abs(a.z - b.z)) <= range
+}
+
 function ensureSkill(stats: SessionStats, skill: string): { xp: number; level: number } {
   if (!stats[skill]) stats[skill] = { xp: 0, level: 1 }
   return stats[skill]
@@ -199,15 +224,22 @@ function startInteract(player: TickPlayer, ctx: TickContext, result: TickResult)
   if (intent.kind === 'npc' && intent.action === 'attack') {
     const npc = ctx.npcs?.get(intent.id)
     if (!npc || npc.state === 'dead') return
-    if (adjacent(player, npc)) {
+    const range = playerAttackRange(player)
+    if (withinRange(player, npc, range)) {
       startCombat(player, npc, result)
       return
     }
-    // The bull wandered off before we arrived — re-approach and keep the intent
-    // so we try again on the next arrival (it stops moving once combat starts).
+    // Out of reach — approach, but for ranged/magic stop as soon as we're within
+    // range rather than walking all the way adjacent. Keep the intent so we try
+    // again on arrival (the npc stops moving once combat starts).
     const path = ctx.pathAdjacent?.(player, npc)
     if (path && path.length > 1) {
-      player.path = path.slice(1)
+      const steps = path.slice(1)
+      let cut = steps.length
+      for (let i = 0; i < steps.length; i++) {
+        if (withinRange(steps[i], npc, range)) { cut = i + 1; break }
+      }
+      player.path = steps.slice(0, cut)
       player.pendingInteract = intent
     }
     return
@@ -344,12 +376,13 @@ export function emitRunIfChanged(player: TickPlayer, events: ZoneEvent[]): void 
   events.push({ e: 'run', energy: rounded, running: player.running })
 }
 
-/** An aggressive npc that has chased this player back into range — resumes the
- * fight without a fresh interact, mirroring how a real aggressive monster
- * keeps swinging once it catches up. */
-function findAdjacentAggro(player: TickPlayer, ctx: TickContext): NpcState | undefined {
+/** An aggressive npc that has chased this player back into ITS attack range —
+ * resumes the fight without a fresh interact, mirroring how a real aggressive
+ * monster keeps swinging once it catches up (melee at 1 tile, ranged/magic from
+ * their reach). */
+function findAggroInRange(player: TickPlayer, ctx: TickContext): NpcState | undefined {
   for (const npc of ctx.npcs?.values() ?? []) {
-    if (npc.state === 'combat' && npc.attackerId === player.charId && adjacent(player, npc)) return npc
+    if (npc.state === 'combat' && npc.attackerId === player.charId && withinRange(player, npc, monsterAttackRange(npc.monsterId))) return npc
   }
   return undefined
 }
@@ -361,29 +394,32 @@ export function tickPlayer(player: TickPlayer, ctx: TickContext): TickResult {
   const before = { x: player.x, z: player.z, anim: player.anim }
 
   if (!player.combat) {
-    const aggroNpc = findAdjacentAggro(player, ctx)
+    const aggroNpc = findAggroInRange(player, ctx)
     if (aggroNpc) startCombat(player, aggroNpc, result)
   }
 
   let ran = false
+  let moved = false
   if (player.path.length > 0) {
     ran = takeSteps(player)
+    moved = true
     player.anim = 'walk'
     if (player.path.length === 0 && player.pendingInteract) startInteract(player, ctx, result)
-    if (player.path.length === 0 && player.combat) stepCombat(player, ctx, result)
   } else if (player.pendingInteract) {
     startInteract(player, ctx, result)
-    if (player.combat) stepCombat(player, ctx, result)
-    else if (player.mining) tickMining(player, ctx, result)
-    else if (!result.bankOpen && !result.stationOpen) player.anim = 'idle'
-  } else if (player.combat) {
+  }
+
+  // Combat ticks whether or not the player is moving: a ranged/magic monster
+  // keeps attacking a fleeing player, and a kiting player keeps attacking back.
+  // stepCombat gates each side by its own reach and ends the fight once the
+  // player is beyond both. Idle activities only run on a tick the player neither
+  // moved nor is fighting — a tick that ended on a step keeps its 'walk' anim.
+  if (player.combat) {
     stepCombat(player, ctx, result)
-  } else if (player.mining) {
-    tickMining(player, ctx, result)
-  } else if (player.crafting) {
-    tickCrafting(player, ctx, result)
-  } else {
-    player.anim = 'idle'
+  } else if (!moved) {
+    if (player.mining) tickMining(player, ctx, result)
+    else if (player.crafting) tickCrafting(player, ctx, result)
+    else if (!result.bankOpen && !result.stationOpen) player.anim = 'idle'
   }
 
   // Regenerate run energy on any tick the player didn't run (walking or idle).

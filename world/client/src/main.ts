@@ -1,5 +1,5 @@
-import { clearStoredSession, exchangeHandoff, getStoredSession, getStoredZone, parseHandoffFromHash, pocketRpgUrl, storeZone, type WorldSession } from './auth'
-import { hideConnBanner, hideOverlay, initChatInput, initHud, paintHudIcons, pushMessage, removeHpBar, removeNameplate, removeOverheadChat, renderEquipment, renderInventory, setRunState, setSpecialEnergy, setSpellButton, setStanceActive, showConnBanner, showContextMenu, showHitsplat, showLoginRequired, showTransitionOverlay, showXpDrop, updateHpBar, updateHpPill, updateNameplate, updateOverheadChat, npcExamine } from './ui'
+import { clearStoredSession, exchangeHandoff, getRunPref, getStoredSession, getStoredZone, parseHandoffFromHash, pocketRpgUrl, storeRunPref, storeZone, type WorldSession } from './auth'
+import { hideConnBanner, hideOverlay, initChatInput, initHud, paintHudIcons, pushMessage, removeHpBar, removeNameplate, removeOverheadChat, renderEquipment, renderInventory, renderSpellbook, setRunState, setSpecialEnergy, setSpellButton, setStanceActive, showConnBanner, showContextMenu, showHitsplat, showLoginRequired, showTransitionOverlay, showXpDrop, updateHpBar, updateHpPill, updateNameplate, updateOverheadChat, npcExamine, type SpellbookEntry } from './ui'
 import { createMinimap, type Minimap, type MinimapDot } from './minimap'
 import { closeBankUI, isBankOpen, openBankUI, updateBankInventory, updateBankUI } from './bank'
 import { closeCraftUI, openCraftUI, updateCraftInventory, updateCraftStats, type SkillLevels } from './crafting'
@@ -21,6 +21,7 @@ import { getCombatType } from '../../../src/engine/equipment.js'
 import monstersData from '../../../src/data/monsters.json'
 import itemsData from '../../../src/data/items.json'
 import spellsData from '../../../src/data/spells.json'
+import skillsData from '../../../src/data/skills.json'
 import * as THREE from 'three'
 import type { EntityDiff, ExitMarker, InvActionWire, InvSlot, ServerMessage, ZoneEvent } from '../../shared/protocol'
 import type { MenuRow, Pickable } from './picking'
@@ -31,6 +32,16 @@ type Items = Record<string, { poweredStaff?: boolean } | undefined>
 const items = itemsData as unknown as Items
 type Spells = Record<string, { name: string; levelReq: number }>
 const spells = spellsData as unknown as Spells
+
+// Full spellbook for the Magic tab. Combat spells drive autocast (select →
+// tap a monster); skill spells are informational in the open world for now.
+const combatSpellList: SpellbookEntry[] = Object.entries(spells)
+  .map(([id, s]) => ({ id, name: s.name, level: s.levelReq }))
+  .sort((a, b) => a.level - b.level)
+type MagicAction = { id: string; name: string; level: number }
+const skillSpellList: SpellbookEntry[] = ((skillsData as { magic?: { actions?: MagicAction[] } }).magic?.actions ?? [])
+  .map((a) => ({ id: a.id, name: a.name, level: a.level }))
+  .sort((a, b) => a.level - b.level)
 
 function buildNpcPickable(diff: EntityDiff): Pickable {
   const monster = diff.monsterId ? monsters[diff.monsterId] : undefined
@@ -75,14 +86,59 @@ function enterWorld(session: WorldSession): void {
   let stats: SkillLevels = {}
   // Selected combat spell (magic weapons); server-validated, optimistic locally.
   let selectedSpell: string | null = null
+  // Whether the equipped weapon can cast the selected spell (drives the "tap a
+  // monster" vs "equip a staff" hint when a combat spell is picked).
+  let magicWeaponEquipped = false
+
+  /** Picks a combat spell from the Magic tab: highlights it, tells the server,
+   * and prompts the player to choose a target. Casts on the next monster tap
+   * once a staff is equipped (same autocast path as the Combat tab picker). */
+  function selectCombatSpell(id: string): void {
+    selectedSpell = id
+    send(socket, { t: 'setSpell', spell: id })
+    setSpellButton(magicWeaponEquipped, spells[id]?.name ?? id)
+    refreshSpellbook()
+    const name = spells[id]?.name ?? 'Spell'
+    pushMessage(magicWeaponEquipped
+      ? `${name} selected — tap a monster to attack.`
+      : `${name} selected. Equip a staff, then tap a monster to cast it.`)
+  }
+
+  function selectSkillSpell(id: string): void {
+    const name = skillSpellList.find((a) => a.id === id)?.name ?? 'That spell'
+    pushMessage(`${name} is cast from the PocketRPG game — skill spells aren’t in the open world yet.`)
+  }
+
+  /** Repaints the Magic tab spellbook against the live Magic level + selection. */
+  function refreshSpellbook(): void {
+    renderSpellbook({
+      combat: combatSpellList,
+      skill: skillSpellList,
+      magicLevel: stats.magic?.level ?? 1,
+      selectedSpellId: selectedSpell,
+      onCombat: selectCombatSpell,
+      onSkill: selectSkillSpell,
+    })
+  }
+
+  /** Re-applies the persisted run toggle after a welcome — the server always
+   * welcomes players walking, so without this the toggle resets on every
+   * refresh, logout, or zone transition. */
+  function syncRunFromPref(energy: number): void {
+    if (!getRunPref() || energy <= 0 || running) return
+    running = true
+    setRunState(energy, true)
+    send(socket, { t: 'setRun', run: true })
+  }
 
   /** Shows the Combat tab's spell selector while a castable magic weapon is
    * equipped (powered staffs need no spell — the engine has its own path). */
   function refreshSpellUI(equipment: Record<string, string>): void {
     const weaponId = equipment.weapon
     const shaped = weaponId ? { weapon: { itemId: weaponId } } : {}
-    const magic = getCombatType(shaped, itemsData) === 'magic' && !(weaponId && items[weaponId]?.poweredStaff)
-    setSpellButton(magic, selectedSpell ? spells[selectedSpell]?.name ?? selectedSpell : null)
+    magicWeaponEquipped = getCombatType(shaped, itemsData) === 'magic' && !(weaponId && items[weaponId]?.poweredStaff)
+    setSpellButton(magicWeaponEquipped, selectedSpell ? spells[selectedSpell]?.name ?? selectedSpell : null)
+    refreshSpellbook()
   }
   // partysocket reconnects silently and re-fires 'open'; a repeat welcome must
   // RESYNC the existing scene, never rebuild it (a second renderer/loop breaks
@@ -132,6 +188,7 @@ function enterWorld(session: WorldSession): void {
       entry.xp += event.amount
       entry.level = Math.max(entry.level, getLevelFromXP(entry.xp))
       updateCraftStats(stats)
+      if (event.skill === 'magic') refreshSpellbook()
       showXpDrop(event.skill, event.amount)
     }
     else if (event.e === 'msg') pushMessage(event.text)
@@ -261,6 +318,7 @@ function enterWorld(session: WorldSession): void {
     updateHpPill(message.you.hp, message.you.maxHp)
     running = message.you.running
     setRunState(message.you.runEnergy, message.you.running)
+    syncRunFromPref(message.you.runEnergy)
     setStanceActive(message.you.stance)
     setSpecialEnergy(message.you.specialEnergy)
     renderEquipment(message.you.equipment)
@@ -365,7 +423,11 @@ function enterWorld(session: WorldSession): void {
               if (action) sendInvAction(index, action)
             })
           },
-          onRunToggle: () => send(socket, { t: 'setRun', run: !running }),
+          onRunToggle: () => {
+            const next = !running
+            storeRunPref(next)
+            send(socket, { t: 'setRun', run: next })
+          },
           onStance: (stance) => {
             setStanceActive(stance)
             send(socket, { t: 'setStance', stance })
@@ -416,6 +478,7 @@ function enterWorld(session: WorldSession): void {
         updateHpPill(message.you.hp, message.you.maxHp)
         running = message.you.running
         setRunState(message.you.runEnergy, message.you.running)
+        syncRunFromPref(message.you.runEnergy)
         setStanceActive(message.you.stance)
         setSpecialEnergy(message.you.specialEnergy)
         renderEquipment(message.you.equipment)

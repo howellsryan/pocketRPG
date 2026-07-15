@@ -548,7 +548,10 @@ export class WorldZone extends Server<Env> {
       case 'walk': {
         const path = findPath(this.zone.collision, { x: player.x, z: player.z }, { x: message.x, z: message.z })
         player.path = path ? path.slice(1) : []
-        this.clearIntents(player)
+        // Keep the combat session across a walk so a ranged/magic foe keeps
+        // attacking a fleeing player and the engine's attack timers aren't reset
+        // each step; stepCombat ends it once the player is beyond every reach.
+        this.clearIntents(player, true)
         break
       }
       case 'cancel':
@@ -862,11 +865,11 @@ export class WorldZone extends Server<Env> {
     this.ensureTicking()
   }
 
-  private clearIntents(player: Player): void {
+  private clearIntents(player: Player, keepCombat = false): void {
     player.pendingInteract = null
     player.mining = null
     player.crafting = null
-    player.combat = null
+    if (!keepCombat) player.combat = null
     player.pendingLoot = null
   }
 

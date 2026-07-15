@@ -1,6 +1,7 @@
 import type { CombatStance, EquipmentMap, InvSlot } from '../../shared/protocol'
 import type { MenuRow } from './picking'
 import { iconMarkup, itemName, uiIconMarkup } from './itemIcon'
+import { spellIconSvg } from './spellIcon'
 
 export type MenuDispatch = (row: MenuRow) => void
 
@@ -16,6 +17,7 @@ const HUD_CSS = `
   width: 181px;
 }
 .hud-tabs { display: flex; gap: 3px; }
+.hud-tabs.bottom { margin-top: 1px; }
 .hud-tab {
   flex: 1; min-height: 44px; min-width: 44px;
   background: rgba(20, 16, 10, 0.82); border: 1px solid #5a4a30; border-radius: 6px;
@@ -23,7 +25,7 @@ const HUD_CSS = `
   display: flex; align-items: center; justify-content: center; user-select: none;
 }
 .hud-tab.active { background: rgba(70, 58, 36, 0.92); color: #ffe066; border-color: #6a5636; }
-.hud-tab.logout { color: #e0a05a; }
+.hud-tab.logout { color: #e0a05a; gap: 6px; font-size: 13px; font-family: sans-serif; font-weight: bold; }
 .hud-tab svg, #run-orb svg { display: block; }
 #run-orb .run-ico { display: flex; align-items: center; }
 .hud-body {
@@ -73,6 +75,16 @@ const HUD_CSS = `
   background: rgba(46, 52, 74, 0.9); border: 1px solid #4a5a8a; color: #9fc0ff;
   font-size: 13px; font-weight: bold; display: flex; align-items: center; justify-content: center;
 }
+#magic-panel { max-height: 340px; overflow-y: auto; }
+.spell-grid { display: flex; flex-wrap: wrap; gap: 4px; }
+.spell-ico {
+  width: 40px; height: 40px; padding: 0; border-radius: 6px; cursor: pointer; user-select: none;
+  background: rgba(60, 50, 34, 0.55); border: 1px solid #5a4a30;
+  display: flex; align-items: center; justify-content: center; font-size: 20px; line-height: 1;
+}
+.spell-ico.active { background: rgba(70, 58, 36, 0.92); border-color: #ffe066; box-shadow: 0 0 0 1px #ffe066 inset; }
+.spell-ico.locked { opacity: 0.32; cursor: default; }
+.spell-ico svg { display: block; }
 #run-orb {
   position: fixed; right: 148px; top: 52px; z-index: 10; min-width: 44px; min-height: 44px;
   padding: 4px 8px; background: rgba(20, 16, 10, 0.82); border: 1px solid #5a4a30; border-radius: 22px;
@@ -186,6 +198,17 @@ export type HudHandlers = InvHandlers & {
   onLogout: () => void
 }
 
+export type SpellbookEntry = { id: string; name: string; level: number }
+
+export type SpellbookRender = {
+  combat: SpellbookEntry[]
+  skill: SpellbookEntry[]
+  magicLevel: number
+  selectedSpellId: string | null
+  onCombat: (id: string) => void
+  onSkill: (id: string) => void
+}
+
 // Paperdoll layout for the Equipment tab (3 columns). null = spacer cell.
 const EQUIP_LAYOUT: (string | null)[] = [
   null, 'head', null,
@@ -293,6 +316,7 @@ const TABS: { id: string; iconKey: string; title: string }[] = [
   { id: 'inventory', iconKey: 'backpack', title: 'Inventory' },
   { id: 'equipment', iconKey: 'paperdoll', title: 'Equipment' },
   { id: 'combat', iconKey: 'combat_level', title: 'Combat' },
+  { id: 'magic', iconKey: 'magic_staff', title: 'Magic' },
 ]
 const LOGOUT_COLOR = '#e0a05a'
 const HUD_TAB_ICON_PX = 26
@@ -345,14 +369,6 @@ export function initHud(handlers?: HudHandlers): void {
     btn.addEventListener('click', () => tabClicked(tab.id))
     tabs.appendChild(btn)
   }
-  const logout = document.createElement('div')
-  logout.className = 'hud-tab logout'
-  logout.title = 'Logout'
-  logout.setAttribute('data-icon', 'door')
-  logout.setAttribute('data-icon-size', String(HUD_TAB_ICON_PX))
-  logout.setAttribute('data-icon-color', LOGOUT_COLOR)
-  logout.addEventListener('click', () => handlers?.onLogout())
-  tabs.appendChild(logout)
   panel.appendChild(tabs)
 
   const body = document.createElement('div')
@@ -436,7 +452,35 @@ export function initHud(handlers?: HudHandlers): void {
   combatPane.appendChild(combat)
   body.appendChild(combatPane)
 
+  const magicPane = document.createElement('div')
+  magicPane.className = 'hud-pane'
+  magicPane.setAttribute('data-pane', 'magic')
+  const magic = document.createElement('div')
+  magic.id = 'magic-panel'
+  magicPane.appendChild(magic)
+  body.appendChild(magicPane)
+
   panel.appendChild(body)
+
+  // Logout moved to its own full-width rail beneath the panel body (its old spot
+  // in the top rail is now the Magic tab).
+  const bottomTabs = document.createElement('div')
+  bottomTabs.className = 'hud-tabs bottom'
+  const logout = document.createElement('div')
+  logout.className = 'hud-tab logout'
+  logout.title = 'Logout'
+  const logoutIco = document.createElement('span')
+  logoutIco.setAttribute('data-icon', 'door')
+  logoutIco.setAttribute('data-icon-size', String(HUD_TAB_ICON_PX))
+  logoutIco.setAttribute('data-icon-color', LOGOUT_COLOR)
+  const logoutLabel = document.createElement('span')
+  logoutLabel.textContent = 'Logout'
+  logout.appendChild(logoutIco)
+  logout.appendChild(logoutLabel)
+  logout.addEventListener('click', () => handlers?.onLogout())
+  bottomTabs.appendChild(logout)
+  panel.appendChild(bottomTabs)
+
   document.body.appendChild(panel)
   if (handlers) setupInvDrag(inv, handlers)
 
@@ -506,6 +550,32 @@ export function setSpellButton(visible: boolean, spellName: string | null): void
   btn.style.display = visible ? 'flex' : 'none'
   if (stanceRow) stanceRow.style.display = visible ? 'none' : 'flex'
   btn.textContent = `Spell: ${spellName ?? 'none'}`
+}
+
+/** Fills the Magic tab with the combat spellbook as an icon grid (several per
+ * row, no text): each spell's bespoke icon shows its element (colour) and tier
+ * (silhouette). Tapping one selects it as the autocast spell — highlighted —
+ * then the player taps a monster to attack. Icons above the player's Magic level
+ * render locked. Skill spells are hidden for now (`data.skill` unused). Called
+ * on welcome and whenever the selection or Magic level changes. */
+export function renderSpellbook(data: SpellbookRender): void {
+  const panel = document.getElementById('magic-panel')
+  if (!panel) return
+  panel.innerHTML = ''
+  const grid = document.createElement('div')
+  grid.className = 'spell-grid'
+  for (const entry of data.combat) {
+    const locked = entry.level > data.magicLevel
+    const selected = entry.id === data.selectedSpellId
+    const cell = document.createElement('button')
+    cell.type = 'button'
+    cell.className = 'spell-ico' + (selected ? ' active' : '') + (locked ? ' locked' : '')
+    cell.title = `${entry.name} (Lv ${entry.level})`
+    cell.innerHTML = spellIconSvg(entry.id, 30) || '🔮'
+    if (!locked) cell.addEventListener('click', () => data.onCombat(entry.id))
+    grid.appendChild(cell)
+  }
+  panel.appendChild(grid)
 }
 
 export function setStanceActive(stance: CombatStance): void {
