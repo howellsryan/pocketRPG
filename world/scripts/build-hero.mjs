@@ -32,6 +32,7 @@ const OUT = path.join(worldDir, 'client', 'public', 'models', 'hero.glb')
 const CLIPS = [
   { file: UAL1, clip: 'Idle_Loop', as: 'idle' },
   { file: UAL1, clip: 'Walk_Loop', as: 'walk' },
+  { file: UAL1, clip: 'Jog_Fwd_Loop', as: 'run' },
   { file: UAL2, clip: 'TreeChopping_Loop', as: 'mine' },
   { file: UAL1, clip: 'Sword_Attack', as: 'attack' },
   { file: UAL1, clip: 'Death01', as: 'die' },

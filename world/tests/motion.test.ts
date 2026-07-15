@@ -2,7 +2,9 @@ import { describe, expect, it } from 'vitest'
 import {
   CATCHUP_DURATION_MS,
   MOVE_DURATION_MS,
+  RUN_DIST_SQ_MIN,
   SNAP_QUEUE_LEN,
+  animForSegment,
   segmentDurationMs,
   shouldSnap,
   stepYaw,
@@ -54,5 +56,20 @@ describe('yawDelta / stepYaw', () => {
     const stepped = stepYaw(0, Math.PI, 0.25)
     expect(Math.abs(stepped)).toBeCloseTo(0.25)
     expect(stepYaw(0.9, 1, 0.25)).toBe(1)
+  })
+})
+
+describe('animForSegment', () => {
+  it('reads a 1-tile step, including a diagonal one, as a walk', () => {
+    expect(animForSegment(1)).toBe('walk')
+    expect(animForSegment(2)).toBe('walk')
+  })
+  it('reads a 2-tile running step as a run', () => {
+    expect(animForSegment(4)).toBe('run')
+    expect(animForSegment(8)).toBe('run')
+  })
+  it('brackets strictly between diagonal-walk (2) and straight-run (4)', () => {
+    expect(RUN_DIST_SQ_MIN).toBeGreaterThan(2)
+    expect(RUN_DIST_SQ_MIN).toBeLessThanOrEqual(4)
   })
 })

@@ -434,6 +434,7 @@ export function toEntityDiff(player: TickPlayer): EntityDiff {
   // Gear rides every player diff (even empty) so an in-world unequip
   // propagates — omitting it would leave stale weapons on observers.
   const diff: EntityDiff = { id: player.charId, kind: 'player', x: player.x, z: player.z, anim: player.anim, name: player.name, gear: player.gear }
+  if (player.combat) diff.targetId = player.combat.npcId
   return diff
 }
 

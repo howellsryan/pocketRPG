@@ -226,6 +226,16 @@ describe('toEntityDiff', () => {
       id: '1', kind: 'player', x: 3, z: 4, anim: 'walk', name: 'WorldTester', gear: {},
     })
   })
+
+  it('carries targetId while the player is in an active fight', () => {
+    const player = makePlayer({ combat: { npcId: 'bull_1', state: {} as never } })
+    expect(toEntityDiff(player).targetId).toBe('bull_1')
+  })
+
+  it('omits targetId outside combat', () => {
+    const player = makePlayer({ combat: null })
+    expect(toEntityDiff(player).targetId).toBeUndefined()
+  })
 })
 
 describe('woodcutting', () => {
