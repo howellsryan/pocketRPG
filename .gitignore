@@ -1,4 +1,5 @@
 .claude/*
+!.claude/agents/
 !.claude/rules/
 !.claude/skills/
 !.claude/settings.json
