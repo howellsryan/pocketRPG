@@ -286,9 +286,11 @@ Each phase is independently shippable and reversible against the live game.
 - **Map art (in progress)**: the board supports a generated background image —
   `world.json` top-level `mapImage` (e.g. `/public/world/map.webp`) replaces the
   painted procedural terrain when present/loadable, with automatic fallback.
-  Generation: `TRIPO_API_KEY=… node scripts/tripo-worldmap.mjs` drives Tripo's
-  task API (text→model; the task's `rendered_image` output is the map art) with a
-  prompt describing a like-for-like OSRS-style overworld. Once the art is picked:
+  Generation (retired route, historical): map art was once produced via
+  `scripts/tripo-worldmap.mjs` + a `TRIPO_API_KEY`. That pipeline is retired —
+  PocketRPG no longer uses Tripo or any text/image-to-3D generation service.
+  Supply `map.webp` as a static asset instead; the loader/fallback is unchanged.
+  Once the art is picked:
   commit it as `public/world/map.webp`, set `mapImage`, and re-place each place's
   x/y onto its analogue region. Regions on the art with no PocketRPG place yet are
   deliberate future scope — they stay visible but uninhabited until places are
