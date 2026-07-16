@@ -1111,18 +1111,18 @@ describe('slayer intents', () => {
     expect(() => assignSlayerTask(maxedSlayer(), 'not_a_master', det())).toThrow(/No slayer master/i)
   })
 
-  it("rolls a Zul-Kaar raid-proxy task in the entry's [2,10] override range, not the master's [5,50] bossTaskRange", () => {
+  it("rolls a Zul-Kaar raid-proxy task in the entry's [5,20] override range, not the master's [5,50] bossTaskRange", () => {
     // rng≈1 selects the last eligible pool entry (a RAID_TASK_META raid-proxy,
     // appended after the plain boss entries) and the top of whichever task
     // range applies to the quantity roll. This is the regression for the
     // one-line `entry: pick.entry` fix in assignSlayerTask — without it,
     // buildSlayerTask ignores the entry's taskRange override and falls back to
-    // Zul-Kaar's bossTaskRange [5,50], so totalCount would land at 50, not 10.
+    // Zul-Kaar's bossTaskRange [5,50], so totalCount would land at 50, not 20.
     const save = maxedSlayer()
     const r = assignSlayerTask(save, 'zul_kaar', { rng: () => 0.999999, history: new Map() })
     expect(r.master.id).toBe('zul_kaar')
-    expect(r.task.totalCount).toBeGreaterThanOrEqual(2)
-    expect(r.task.totalCount).toBeLessThanOrEqual(10)
+    expect(r.task.totalCount).toBeGreaterThanOrEqual(5)
+    expect(r.task.totalCount).toBeLessThanOrEqual(20)
     expect(save.settings.slayerTask.totalCount).toBe(r.task.totalCount)
   })
 

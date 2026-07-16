@@ -63,14 +63,30 @@ describe('Zul-Kaar slayer master', () => {
     for (const id of raidMonsterIds) {
       const entry = pool.find(e => getEntryId(e) === id)
       if (RAID_TASK_META[id]) {
-        // Final bosses are allowed exactly once, and only as the [2,10] raid-clear proxy.
+        // Final bosses are allowed exactly once, and only as the [5,20] raid-clear proxy.
         expect(entry, `raid-final ${id} missing its raid-clear proxy entry`).toBeTruthy()
-        expect(Array.isArray((entry as any)?.taskRange), `raid-final ${id} proxy entry must carry a taskRange override`).toBe(true)
+        expect((entry as any)?.taskRange, `raid-final ${id} proxy entry must carry the [5,20] taskRange override`).toEqual([5, 20])
       } else {
         // Every other raid sub-boss (e.g. Gorath the Infested) must not be assignable at all.
         expect(entry, `raid sub-boss ${id} must not appear as an individually assignable task`).toBeUndefined()
       }
     }
+  })
+
+  it('a raid-completion task displays the raid\'s own name, not its final boss\'s name', () => {
+    for (const [bossId, meta] of Object.entries(RAID_TASK_META)) {
+      const entry = zulKaar.monsterPool.find(e => getEntryId(e) === bossId)
+      const task = buildSlayerTask(zulKaar, bossId, true, { rng: () => 0.5, entry })
+      const raidName = (raids as any)[meta.raidId]?.name
+      expect(raidName, `raid ${meta.raidId} has no name in raids.json`).toBeTruthy()
+      expect(task.monsterName, `task for ${bossId} should show the raid name`).toBe(raidName)
+      expect(task.monsterName).not.toBe(monsters[bossId]?.name)
+    }
+  })
+
+  it('Ashen Crucible is always a single-kill task, like Ember Tyrant', () => {
+    expect(buildSlayerTask(zulKaar, 'ashen_crucible', true, { rng: () => 0.999 }).totalCount).toBe(1)
+    expect(buildSlayerTask(zulKaar, 'ember_tyrant', true, { rng: () => 0.999 }).totalCount).toBe(1)
   })
 
   it('every pool entry is flagged boss:true (Zul-Kaar is boss/raid-only)', () => {
