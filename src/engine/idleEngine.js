@@ -1101,7 +1101,10 @@ export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory,
         itemId: entry.itemId,
         item,
         durationTicks: getBoostPotionDurationTicks(item),
-        remaining: avail,
+        // Unlimited-use items (e.g. Imbued Brain) are never depleted or
+        // deducted from real inventory — one owned copy re-triggers forever.
+        remaining: item.unlimited ? Infinity : avail,
+        unlimited: !!item.unlimited,
       })
     } else if (isPrayerRestorePotion(item)) {
       restoreQueue.push({
@@ -1140,6 +1143,7 @@ export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory,
   function consumeBoostPotionAtIndex(index) {
     const entry = boostQueue[index]
     if (!entry || entry.remaining <= 0) return null
+    if (entry.unlimited) return entry
     entry.remaining--
     potionsConsumed[entry.itemId] = (potionsConsumed[entry.itemId] || 0) + 1
     return entry

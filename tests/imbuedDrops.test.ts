@@ -82,13 +82,14 @@ describe('Imbued Crown and Imbued Brain drops', () => {
     expect(upgraded.otherBonus.slayerTaskDamageFlat).toBe(base.otherBonus.slayerTaskDamageFlat)
   })
 
-  it('Imbued Brain is a rare +18 magic boost potion lasting 5 minutes', () => {
+  it('Imbued Brain is a rare, unlimited-use +18 magic boost potion lasting 5 minutes', () => {
     const brain = items.imbued_brain
     expect(brain.type).toBe('potion')
     expect(brain.effect).toBe('magic')
     expect(brain.boost).toBe(18)
     expect(brain.duration).toBe(300)
     expect(brain.shopValue).toBe(150000000)
+    expect(brain.unlimited).toBe(true)
   })
 
   it('collection log credits Imbued Crown and Imbued Brain from both slayer-gated bosses', () => {

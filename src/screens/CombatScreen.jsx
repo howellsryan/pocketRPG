@@ -1573,14 +1573,16 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     // Potions are combo items — one per combo-delay; drop extra taps.
     if (combatRef.current.comboCooldown > 0) return
 
-    // Remove potion from inventory
-    if (newInv[potionIdx].quantity > 1) {
-      newInv[potionIdx] = { ...newInv[potionIdx], quantity: newInv[potionIdx].quantity - 1 }
-    } else {
-      newInv[potionIdx] = null
+    // Remove potion from inventory — unlimited-use items (e.g. Imbued Brain) never deplete.
+    if (!potion.unlimited) {
+      if (newInv[potionIdx].quantity > 1) {
+        newInv[potionIdx] = { ...newInv[potionIdx], quantity: newInv[potionIdx].quantity - 1 }
+      } else {
+        newInv[potionIdx] = null
+      }
+      updateInventory(newInv)
+      inventoryRef.current = newInv
     }
-    updateInventory(newInv)
-    inventoryRef.current = newInv
 
     // Apply the drink (buff registration + immediate HP heal + prayer restore)
     // via the shared consumables engine, then carry the result into combat state.

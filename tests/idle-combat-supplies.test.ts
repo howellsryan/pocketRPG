@@ -47,6 +47,15 @@ const ITEMS_FIXTURE: any = {
     boost: 18,
     duration: 300,
   },
+  unlimited_magic_potion: {
+    id: 'unlimited_magic_potion',
+    name: 'Unlimited Magic Potion',
+    type: 'potion',
+    effect: 'magic',
+    boost: 18,
+    duration: 300,
+    unlimited: true,
+  },
   prayer_potion: {
     id: 'prayer_potion',
     name: 'Prayer potion',
@@ -321,6 +330,20 @@ describe('simulateIdleCombat — super combat boost duration', () => {
     expect(sim!.potionsConsumed.super_combat).toBeLessThanOrEqual(3)
     expect(sim!.idleSupplies?.potionsAvailable.super_combat).toBe(3)
     expect(sim!.idleSupplies?.potionsConfigured.super_combat).toBe(100)
+  })
+
+  it('an unlimited-use potion never depletes and is never deducted from inventory, even from a single owned copy', () => {
+    const task: any = { stance: 'accurate', monster: WEAK_GOBLIN }
+    const inv = Array(28).fill(null)
+    inv[0] = { itemId: 'unlimited_magic_potion', quantity: 1 }
+    const sim = simulateIdleCombat(task, 60 * 60_000, ATT_99_STATS, {}, inv, ITEMS_FIXTURE, null, {}, {
+      currentHP: 99,
+      idlePotions: [{ itemId: 'unlimited_magic_potion', quantity: 1 }],
+      prayersData: PRAYERS_FIXTURE,
+    })
+    expect(sim).toBeTruthy()
+    // Consumed the whole hour re-applying the buff, yet nothing is deducted.
+    expect(sim!.potionsConsumed.unlimited_magic_potion ?? 0).toBe(0)
   })
 })
 

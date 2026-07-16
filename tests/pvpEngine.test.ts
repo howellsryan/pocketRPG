@@ -25,6 +25,7 @@ const items = {
   defence_potion: { id: 'defence_potion', type: 'potion', effect: 'defence', boost: 13, duration: 300 },
   ranging_potion: { id: 'ranging_potion', type: 'potion', effect: 'ranged', boost: 14, duration: 300 },
   prayer_potion: { id: 'prayer_potion', type: 'potion', effect: 'prayer', boost: 32, duration: 300 },
+  imbued_brain: { id: 'imbued_brain', type: 'potion', effect: 'magic', boost: 18, duration: 300, unlimited: true },
 }
 
 function buildPlayer(overrides: any = {}) {
@@ -139,6 +140,25 @@ describe('pvpEngine phase 2B contract', () => {
     expect(self.activePotions.strength_potion).toBeGreaterThan(0) // boost applied same tick
     expect(out.events.some((e: any) => e.type === 'eat')).toBe(true)
     expect(out.events.some((e: any) => e.type === 'drink')).toBe(true)
+  })
+
+  it('drinking an unlimited-use potion applies the buff without removing it from inventory', () => {
+    const a = buildPlayer({
+      characterId: 1, currentHP: 99, maxHP: 99,
+      inventory: [{ itemId: 'imbued_brain', quantity: 1 }],
+    })
+    const b = buildPlayer({ characterId: 2, currentHP: 99 })
+    const state = createPvpState(a, b, 0)
+    state.combatants['1'].attackTimer = 99
+    state.combatants['2'].attackTimer = 99
+
+    const out = processPvpTick(state, [
+      { tick_number: 1, characterId: 1, characterSeq: 1, action: { type: 'drink_potion', inventorySlot: 0 } },
+    ], items)
+
+    const self = out.stateNext.combatants['1']
+    expect(self.activePotions.imbued_brain).toBeGreaterThan(0)
+    expect(self.inventory[0]).toEqual({ itemId: 'imbued_brain', quantity: 1 })
   })
 
   it('blocks a second normal food on the same tick (shared eat cooldown)', () => {
