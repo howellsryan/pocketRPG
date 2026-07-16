@@ -70,6 +70,10 @@ export type EntityDiff = {
   monsterId?: string
   name?: string
   gear?: GearDescriptor
+  /** Combat target's entity id. Present iff this entity is actively in combat;
+   * absent means no target — the client must clear any previously-stored one,
+   * not merge/patch. */
+  targetId?: string
 }
 
 export type StaticObject = {

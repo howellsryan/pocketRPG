@@ -1,3 +1,6 @@
+/// <reference types="node" />
+import { readFileSync, readdirSync } from 'node:fs'
+import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 import { validateExitGraph, validateZone, type ZoneDef } from '../shared/zone'
 import pastureZone from '../zones/pasture.json'
@@ -176,5 +179,23 @@ describe('Phase 6 zones', () => {
     for (const npc of (forestZone as ZoneDef).npcs) {
       expect(monsters[npc.monsterId as keyof typeof monsters], npc.monsterId).toBeTruthy()
     }
+  })
+})
+
+describe('terrain-as-standard', () => {
+  // Structural, not a hand-maintained list: every zone in world/zones/ must
+  // ship a terrain block, so a new flat-checkerboard zone fails this test
+  // rather than shipping as a visual regression.
+  const zonesDir = fileURLToPath(new URL('../zones', import.meta.url))
+  const zoneFiles = readdirSync(zonesDir).filter((f) => f.endsWith('.json'))
+
+  it('found the real zone files (sanity check the directory scan itself)', () => {
+    expect(zoneFiles.length).toBeGreaterThanOrEqual(5)
+  })
+
+  it.each(zoneFiles)('%s has a valid terrain block', (file) => {
+    const zone = JSON.parse(readFileSync(`${zonesDir}/${file}`, 'utf8')) as ZoneDef
+    expect(zone.terrain, `${file} is missing a terrain block`).toBeTruthy()
+    expect(validateZone(zone)).toEqual({ valid: true })
   })
 })

@@ -3,7 +3,7 @@ import { GLTFLoader, type GLTF } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { clone as cloneSkeleton } from 'three/examples/jsm/utils/SkeletonUtils.js'
 import { tileToWorld } from './scene'
 import type { EntityDiff, GearDescriptor } from '../../shared/protocol'
-import { segmentDurationMs, shouldSnap, stepYaw, yawToward } from './motion'
+import { MOVE_DURATION_MS, animForSegment, segmentDurationMs, shouldSnap, stepYaw, yawToward } from './motion'
 import { MONSTER_MODELS } from '../../shared/monsterModels'
 import { buildProcCreature, creatureSpecFor, type ProcCreature } from './procCreature'
 
@@ -22,7 +22,10 @@ const HERO_SCALE = 0.85
 const COW_TARGET_LENGTH = 1.6
 const COW_BOUNDS = { minX: -1.12, minY: -0.07, minZ: -3.78, maxX: 1.12, maxY: 5.08, maxZ: 5.4 }
 
-export type AnimName = EntityDiff['anim']
+// 'run' is a client-local rendering choice — derived from segment length, not
+// sent over the wire — so it extends the protocol's anim union rather than
+// widening it.
+export type AnimName = EntityDiff['anim'] | 'run'
 
 export type GltfAnimator = {
   kind: 'gltf'
@@ -57,6 +60,14 @@ export type Entity = {
   maxHp?: number
   monsterId?: string
   name?: string
+  /** Combat opponent's entity id (server-reported), or null when not fighting.
+   * Snapshot semantics — set unconditionally from each diff, never merged, so
+   * combat-end (diff omits it) actually clears a stale facing target. */
+  targetId: string | null
+  /** Which clip the current movement segment plays — derived once per segment
+   * from its planar length so a 2-tile running step never plays the walk clip
+   * sped up. */
+  segmentAnim: 'walk' | 'run'
 }
 
 /** Skinned characters animate far from their bind-pose bounds, so three.js can
@@ -67,6 +78,7 @@ export type Entity = {
 function disableFrustumCulling(root: THREE.Object3D): void {
   root.traverse((obj) => {
     obj.frustumCulled = false
+    obj.castShadow = true
   })
 }
 
@@ -123,7 +135,7 @@ export async function createHeroMesh(): Promise<{ mesh: THREE.Object3D; animator
     const group = new THREE.Group()
     group.add(model)
     group.scale.setScalar(HERO_SCALE)
-    const animator = makeAnimator(model, gltf, ['idle', 'walk', 'mine', 'attack', 'die'])
+    const animator = makeAnimator(model, gltf, ['idle', 'walk', 'run', 'mine', 'attack', 'die'])
     return { mesh: group, animator }
   } catch {
     return { mesh: createCapsulePlaceholder(), animator: null }
@@ -191,6 +203,7 @@ export async function createMonsterMesh(monsterId: string | undefined): Promise<
       if (proc) {
         const group = new THREE.Group()
         group.add(proc.group)
+        disableFrustumCulling(group)
         return { mesh: group, animator: { kind: 'proc', proc, triggered: null } }
       }
     } catch { /* fall through to the cow placeholder */ }
@@ -285,11 +298,16 @@ export function createEntity(id: string, x: number, z: number, mesh: THREE.Objec
     serverAnim: 'idle',
     targetYaw: mesh.rotation.y,
     animator,
+    targetId: null,
+    segmentAnim: 'walk',
   }
 }
 
+/** `run` falls back to `walk` (not straight to idle) so a model built before a
+ * run clip existed — e.g. a stale-cached hero.glb — keeps moving instead of
+ * appearing to idle-slide across the ground. */
 function playAnim(animator: GltfAnimator, name: AnimName): void {
-  const action = animator.actions[name] ?? animator.actions.idle
+  const action = animator.actions[name] ?? (name === 'run' ? animator.actions.walk : undefined) ?? animator.actions.idle
   if (!action || action === animator.current) return
   action.reset().fadeIn(ANIM_CROSSFADE_S).play()
   animator.current?.fadeOut(ANIM_CROSSFADE_S)
@@ -320,6 +338,10 @@ export function applyEntityDiff(entity: Entity, diff: EntityDiff): void {
   if (diff.maxHp != null) entity.maxHp = diff.maxHp
   if (diff.monsterId != null) entity.monsterId = diff.monsterId
   if (diff.name != null) entity.name = diff.name
+  // Snapshot, not a merge: an absent targetId means combat ended, and that
+  // must actually clear facing — patch-merging like hp/name would leave the
+  // entity facing a stale, possibly-respawned target forever.
+  entity.targetId = diff.targetId ?? null
   entity.queue.push({ x: diff.x, z: diff.z })
   if (shouldSnap(entity.queue.length)) {
     const latest = entity.queue[entity.queue.length - 1]
@@ -329,6 +351,7 @@ export function applyEntityDiff(entity: Entity, diff: EntityDiff): void {
     entity.fromPos.copy(pos)
     entity.toPos.copy(pos)
     entity.moving = false
+    entity.segmentAnim = 'walk'
   }
 }
 
@@ -341,16 +364,24 @@ function startNextSegment(entity: Entity, now: number): void {
     entity.toPos.copy(target)
     entity.segmentStart = now
     entity.segmentDuration = segmentDurationMs(entity.queue.length)
-    entity.targetYaw = yawToward(target.x - entity.fromPos.x, target.z - entity.fromPos.z)
+    const dx = target.x - entity.fromPos.x
+    const dz = target.z - entity.fromPos.z
+    entity.targetYaw = yawToward(dx, dz)
+    // Planar length only — tileToWorld lifts Y by terrain height, and a
+    // hillside segment must not misread as a run (or vice versa).
+    entity.segmentAnim = animForSegment(dx * dx + dz * dz)
     entity.moving = true
     return
   }
 }
 
 /** Advances position playback, facing, and the animation mixer. Call every
- * animation frame. Walk/idle is derived from actual traversal so late diffs
- * can't strobe the animation; non-movement anims follow the server state. */
-export function updateEntity(entity: Entity, now: number, deltaSeconds: number): void {
+ * animation frame. Walk/run/idle is derived from actual traversal so late
+ * diffs can't strobe the animation; non-movement anims follow the server
+ * state. `targetPos`, when the entity is stationary and has a combat target,
+ * turns it to face that target — traversal facing always wins while moving,
+ * so a fleeing/kiting combatant still faces its travel direction. */
+export function updateEntity(entity: Entity, now: number, deltaSeconds: number, targetPos?: THREE.Vector3 | null): void {
   if (!entity.moving) startNextSegment(entity, now)
   if (entity.moving) {
     const t = Math.min(1, (now - entity.segmentStart) / entity.segmentDuration)
@@ -361,13 +392,23 @@ export function updateEntity(entity: Entity, now: number, deltaSeconds: number):
     }
   }
 
+  if (!entity.moving && targetPos && entity.serverAnim !== 'die') {
+    const dx = targetPos.x - entity.mesh.position.x
+    const dz = targetPos.z - entity.mesh.position.z
+    if (dx * dx + dz * dz > 1e-6) entity.targetYaw = yawToward(dx, dz)
+  }
   entity.mesh.rotation.y = stepYaw(entity.mesh.rotation.y, entity.targetYaw, TURN_SPEED_RAD_PER_S * deltaSeconds)
 
   if (entity.animator) {
-    const name: AnimName = entity.moving ? 'walk' : entity.serverAnim === 'walk' ? 'idle' : entity.serverAnim
+    const name: AnimName = entity.moving ? entity.segmentAnim : entity.serverAnim === 'walk' ? 'idle' : entity.serverAnim
     if (entity.animator.kind === 'proc') {
       updateProcAnimator(entity.animator, name, deltaSeconds)
     } else {
+      // Catch-up segments play faster (segmentDurationMs) than a full 600ms
+      // step; scale playback so a running or catching-up stride doesn't slide
+      // its feet, and reset to normal speed off any movement segment so
+      // attack/die never speed up.
+      entity.animator.mixer.timeScale = entity.moving ? MOVE_DURATION_MS / entity.segmentDuration : 1
       playAnim(entity.animator, name)
       entity.animator.mixer.update(deltaSeconds)
     }

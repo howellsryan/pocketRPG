@@ -212,5 +212,6 @@ export function toNpcDiff(npc: NpcState): EntityDiff {
   // after an out-of-combat heal — a combat-only field would leave it stale.
   const diff: EntityDiff = { id: npc.id, kind: 'npc', x: npc.x, z: npc.z, anim: npc.anim, monsterId: npc.monsterId, hp: npc.hp, maxHp: npc.maxHp }
   if (name) diff.name = name
+  if (npc.state === 'combat' && npc.attackerId) diff.targetId = npc.attackerId
   return diff
 }

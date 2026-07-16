@@ -155,4 +155,15 @@ describe('toNpcDiff', () => {
     expect(inCombat.maxHp).toBe(8)
     expect(inCombat.name).toBe('Pasture Bull')
   })
+
+  it('carries targetId while actively fighting an attacker', () => {
+    const inCombat = toNpcDiff(makeBull({ state: 'combat', attackerId: 'p1' }))
+    expect(inCombat.targetId).toBe('p1')
+  })
+
+  it('omits targetId when idle, dead, or combat with no claimed attacker', () => {
+    expect(toNpcDiff(makeBull({ state: 'idle' })).targetId).toBeUndefined()
+    expect(toNpcDiff(makeBull({ state: 'dead', attackerId: 'p1' })).targetId).toBeUndefined()
+    expect(toNpcDiff(makeBull({ state: 'combat', attackerId: null })).targetId).toBeUndefined()
+  })
 })
