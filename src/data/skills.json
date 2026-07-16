@@ -3464,62 +3464,62 @@
             "rewards": [
               {
                 "itemId": "greenthorn_leaf",
-                "quantity": [2, 5],
+                "quantity": [1, 3],
                 "chance": 0.153846
               },
               {
                 "itemId": "duskroot",
-                "quantity": [2, 5],
+                "quantity": [1, 3],
                 "chance": 0.141026
               },
               {
                 "itemId": "rynarr_weed",
-                "quantity": [2, 5],
+                "quantity": [1, 3],
                 "chance": 0.128205
               },
               {
                 "itemId": "sunblossom",
-                "quantity": [2, 5],
+                "quantity": [1, 3],
                 "chance": 0.115385
               },
               {
                 "itemId": "emberleaf",
-                "quantity": [2, 5],
+                "quantity": [1, 3],
                 "chance": 0.102564
               },
               {
                 "itemId": "wyrmspice",
-                "quantity": [2, 5],
+                "quantity": [1, 3],
                 "chance": 0.089744
               },
               {
                 "itemId": "snapdrake",
-                "quantity": [2, 5],
+                "quantity": [1, 3],
                 "chance": 0.076923
               },
               {
                 "itemId": "cinderbloom",
-                "quantity": [2, 5],
+                "quantity": [1, 3],
                 "chance": 0.064103
               },
               {
                 "itemId": "stonefern",
-                "quantity": [2, 5],
+                "quantity": [1, 3],
                 "chance": 0.051282
               },
               {
                 "itemId": "mistvine",
-                "quantity": [2, 5],
+                "quantity": [1, 3],
                 "chance": 0.038462
               },
               {
                 "itemId": "marshflax",
-                "quantity": [2, 5],
+                "quantity": [1, 3],
                 "chance": 0.025641
               },
               {
                 "itemId": "thornspire",
-                "quantity": [2, 5],
+                "quantity": [1, 3],
                 "chance": 0.012821
               }
             ]
