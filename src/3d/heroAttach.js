@@ -120,7 +120,7 @@ export function attachWeapon(st, weapon, fallbackAnchor) {
       obj.position.set(px, py, pz)
       obj.rotation.set(THREE.MathUtils.degToRad(rx), THREE.MathUtils.degToRad(ry), THREE.MathUtils.degToRad(rz))
       obj.scale.setScalar(typeof weapon.scale === 'number' ? weapon.scale : 1)
-      applyEquipTint(THREE, obj, weapon.tint)
+      applyEquipTint(THREE, obj, weapon.tint, weapon.tintAll)
       anchor.add(obj)
       st.weapon = obj
       st.weaponAnchor = anchor
@@ -188,7 +188,7 @@ export function attachGearList(st, gear, fallbackAnchor) {
         obj.position.set(px, py, pz)
         obj.rotation.set(THREE.MathUtils.degToRad(rx), THREE.MathUtils.degToRad(ry), THREE.MathUtils.degToRad(rz))
         obj.scale.setScalar(typeof piece.scale === 'number' ? piece.scale : 1)
-        applyEquipTint(THREE, obj, piece.tint)
+        applyEquipTint(THREE, obj, piece.tint, piece.tintAll)
         anchor.add(obj)
         st.gear.push({ obj, anchor })
       })

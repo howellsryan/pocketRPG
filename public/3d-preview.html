@@ -216,7 +216,7 @@ async function loadWeapon(url, spec) {
       const objs = [];
       for (const ps of pieceSkinned) {
         ps.bind(heroSkinned.skeleton, heroSkinned.bindMatrix);
-        applyEquipTint(THREE, ps, spec?.tint, true);
+        applyEquipTint(THREE, ps, spec?.tint, true); // skinned outfit: already all-materials
         heroSkinned.parent.add(ps);
         objs.push(ps);
       }
@@ -227,7 +227,7 @@ async function loadWeapon(url, spec) {
       return;
     }
     weapon = gltf.scene;
-    applyEquipTint(THREE, weapon, spec?.tint);
+    applyEquipTint(THREE, weapon, spec?.tint, spec?.tintAll);
     attachWeapon(); updateXform();
   } catch (e) { info.innerHTML += '<br><span class="err">weapon load failed: ' + e.message + '</span>'; }
 }
@@ -292,6 +292,13 @@ function updateXform() {
 
 // ── Registry mode: pick a registered weapon/gear, see exactly what ships ──
 let registry = null, regItemId = null, regKind = 'weapon', regSlot = null, charFromRegistry = false;
+// Models without a "*steel*"-named material (see src/utils/equipModels.js
+// TINT_ALL_MODELS for why) — keep this list in sync with that one.
+const TINT_ALL_MODELS = new Set([
+  'weapons/mace.glb', 'weapons/talwar.glb', 'weapons/pickaxe.glb',
+  'weapons/crossbow.glb', 'weapons/spear.glb', 'weapons/staff.glb', 'weapons/trident.glb',
+  'shields/q_celtic.gltf',
+]);
 function registryUrl(model) {
   if (!model) return null;
   if (/^(https?:)?\/\//.test(model) || model.startsWith('/')) return model;
@@ -306,6 +313,7 @@ function resolveRegistryWeapon(id) {
     rotationDeg: w.rotationDeg || dw.rotationDeg || [0, 0, 0],
     scale: typeof w.scale === 'number' ? w.scale : (typeof dw.scale === 'number' ? dw.scale : 1),
     tint: w.tint || null,
+    tintAll: TINT_ALL_MODELS.has(w.model),
   };
 }
 function resolveRegistryGear(id) {
@@ -317,6 +325,7 @@ function resolveRegistryGear(id) {
     rotationDeg: g.rotationDeg || dg.rotationDeg || [0, 0, 0],
     scale: typeof g.scale === 'number' ? g.scale : (typeof dg.scale === 'number' ? dg.scale : 1),
     tint: g.tint || null,
+    tintAll: TINT_ALL_MODELS.has(g.model),
     hideHead: Boolean(g.hideHead), hideBody: Boolean(g.hideBody), hideLegs: Boolean(g.hideLegs),
   };
 }

@@ -30,6 +30,13 @@ const registry = await (await fetch('/src/data/equipmentModels.json')).json()
 // Minimal mirror of equipModels.js resolution (that module imports JSON via
 // bundler syntax a browser can't) — defaults merging only, keep in sync.
 const modelPath = (m) => (/^(https?:)?\/\//.test(m) || m.startsWith('/')) ? m : '/public/' + (registry.modelBase || '') + m
+// Models without a "*steel*"-named material (see equipModels.js TINT_ALL_MODELS
+// for why) — keep this list in sync with that one.
+const TINT_ALL_MODELS = new Set([
+  'weapons/mace.glb', 'weapons/talwar.glb', 'weapons/pickaxe.glb',
+  'weapons/crossbow.glb', 'weapons/spear.glb', 'weapons/staff.glb', 'weapons/trident.glb',
+  'shields/q_celtic.gltf',
+])
 function weaponSpec(itemId) {
   const w = registry.weapons && registry.weapons[itemId]
   if (!w || !w.model) return null
@@ -39,6 +46,7 @@ function weaponSpec(itemId) {
     bone: w.bone === undefined ? (registry.defaults.handBone || null) : w.bone,
     position: w.position || dw.position, rotationDeg: w.rotationDeg || dw.rotationDeg,
     scale: typeof w.scale === 'number' ? w.scale : dw.scale, tint: w.tint || null,
+    tintAll: TINT_ALL_MODELS.has(w.model),
   }
 }
 function gearSpec(itemId) {
@@ -50,6 +58,7 @@ function gearSpec(itemId) {
     bone: g.bone === undefined ? (d.bone || null) : g.bone,
     position: g.position || d.position, rotationDeg: g.rotationDeg || d.rotationDeg,
     scale: typeof g.scale === 'number' ? g.scale : d.scale, tint: g.tint || null,
+    tintAll: TINT_ALL_MODELS.has(g.model),
     hideHead: Boolean(g.hideHead), hideBody: Boolean(g.hideBody), hideLegs: Boolean(g.hideLegs),
   }
 }
