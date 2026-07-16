@@ -299,7 +299,10 @@ export function findBestToolForSkill(skill, equipment, inventory, itemsData, sta
     if (item && item.toolFor === skill) {
       // Check skill-level requirement
       const reqLevel = item.requirements?.[skill] || 0
-      if (playerLevel >= reqLevel) {
+      // A scale-charged tool (e.g. shardglass) with no charges left provides
+      // no bonus at all — it doesn't count as a candidate until recharged.
+      const chargesOk = !item.scaleCharged || (equipment.weapon.charges || 0) > 0
+      if (playerLevel >= reqLevel && chargesOk) {
         candidateTools.push({ ...item, id: equipment.weapon.itemId, tier: reqLevel })
       }
     }
@@ -313,7 +316,8 @@ export function findBestToolForSkill(skill, equipment, inventory, itemsData, sta
 
     // Check skill-level requirement
     const reqLevel = item.requirements?.[skill] || 0
-    if (playerLevel >= reqLevel) {
+    const chargesOk = !item.scaleCharged || (slot.charges || 0) > 0
+    if (playerLevel >= reqLevel && chargesOk) {
       // Avoid adding duplicates (e.g., if we already have equipped version)
       if (!candidateTools.some(t => t.id === slot.itemId)) {
         candidateTools.push({ ...item, id: slot.itemId, tier: reqLevel })
@@ -361,12 +365,17 @@ export function rollGatherBonusDrops(skill, rng = Math.random) {
 }
 
 /**
- * Shardglass gathering perk. While gathering with the matching shardglass tool
- * and holding at least SHARDGLASS_SHARDS_PER_GATHER shardglass shards, each
- * action consumes that many shards and doubles the gathered output (ore, gems,
- * logs). Bonus drops added afterwards (e.g. bird's nests) are unaffected.
+ * Shardglass gathering perk. The shardglass axe/pickaxe are scale-charged
+ * tools (`scaleCharged: true`, `chargeItemId: shardglass_shards`) — charges
+ * are loaded via the normal charge UI, same as any other scale-charged
+ * weapon. While gathering with the matching shardglass tool, each action
+ * consumes SHARDGLASS_SHARDS_PER_GATHER charges from the tool itself (not
+ * loose shards from the inventory) and doubles the gathered output (ore,
+ * gems, logs). Bonus drops added afterwards (e.g. bird's nests) are
+ * unaffected. Once the tool runs out of charges it stops counting as a
+ * candidate tool at all (see findBestToolForSkill), so both the doubling and
+ * its gathering-speed bonus are lost until it's recharged.
  */
-export const SHARDGLASS_SHARD_ITEM_ID = 'shardglass_shards'
 export const SHARDGLASS_SHARDS_PER_GATHER = 2
 export const SHARDGLASS_GATHER_TOOLS = {
   mining: 'shardglass_pickaxe',
@@ -382,25 +391,40 @@ export function usesShardglassGatherTool(skill, equipment, inventory, itemsData,
 }
 
 /**
- * Consume one action's worth of shardglass shards from `inventory` (mutated in
- * place, slot-immutable) and double every quantity in `drops` (mutated in
- * place). Returns true when the perk fired; false (no change) when fewer than
- * SHARDGLASS_SHARDS_PER_GATHER shards are held. Callers must already have
- * confirmed the shardglass tool is in use via usesShardglassGatherTool.
+ * Resolves which copy of the shardglass tool for `skill` is actually in play
+ * — mirrors findBestToolForSkill's own resolution: the equipped copy wins
+ * only while it still has charges, otherwise a charged spare in the
+ * inventory takes over (a depleted equipped tool is exactly as unusable as
+ * not holding it). Returns { equipped, charges, inventoryIndex }; charges is
+ * 0 and inventoryIndex is -1 when the tool isn't carried at all.
  */
-export function consumeShardglassGatherDouble(drops, inventory) {
-  if (countItem(inventory, SHARDGLASS_SHARD_ITEM_ID) < SHARDGLASS_SHARDS_PER_GATHER) return false
-  let remaining = SHARDGLASS_SHARDS_PER_GATHER
-  for (let i = 0; i < inventory.length && remaining > 0; i++) {
-    const slot = inventory[i]
-    if (!slot || slot.itemId !== SHARDGLASS_SHARD_ITEM_ID) continue
-    const take = Math.min(slot.quantity, remaining)
-    inventory[i] = { ...slot, quantity: slot.quantity - take }
-    if (inventory[i].quantity <= 0) inventory[i] = null
-    remaining -= take
+export function resolveShardglassToolSource(skill, equipment, inventory) {
+  const toolId = SHARDGLASS_GATHER_TOOLS[skill]
+  if (!toolId) return { equipped: false, charges: 0, inventoryIndex: -1 }
+  if (equipment?.weapon?.itemId === toolId && (equipment.weapon.charges || 0) > 0) {
+    return { equipped: true, charges: equipment.weapon.charges || 0, inventoryIndex: -1 }
   }
+  const inventoryIndex = inventory ? inventory.findIndex(s => s && s.itemId === toolId) : -1
+  const charges = inventoryIndex !== -1 ? (inventory[inventoryIndex].charges || 0) : 0
+  return { equipped: false, charges, inventoryIndex }
+}
+
+/** Current charges on the shardglass tool for `skill` — equipped or held in inventory — or 0 if not carried. */
+export function getShardglassToolCharges(skill, equipment, inventory) {
+  return resolveShardglassToolSource(skill, equipment, inventory).charges
+}
+
+/**
+ * Doubles every quantity in `drops` (mutated in place) when at least
+ * SHARDGLASS_SHARDS_PER_GATHER charges remain, returning the charge total
+ * left after the action (unchanged when there weren't enough to fire). Pure
+ * on the charge count itself — callers own persisting the result back onto
+ * the tool (equipped weapon or inventory slot).
+ */
+export function consumeShardglassGatherCharge(drops, currentCharges) {
+  if (currentCharges < SHARDGLASS_SHARDS_PER_GATHER) return currentCharges
   for (const itemId of Object.keys(drops)) drops[itemId] *= 2
-  return true
+  return currentCharges - SHARDGLASS_SHARDS_PER_GATHER
 }
 
 export function getEquippedSkillXpMultiplier(skill, equipment, itemsData) {
