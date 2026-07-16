@@ -57,7 +57,7 @@ import {
   SEARCH_TOOL_NAME,
   SEARCH_TOOLS_DEF,
   searchToolsByQuery,
-  SYSTEM_PROMPT,
+  buildSystemPrompt,
   chatToolDefs,
   buildMessages,
   retrievalOnlyAnswer,
@@ -667,12 +667,12 @@ async function confirmAction({ env, authorization, identity, characterId, token 
       buildTranscript: () =>
         canChain
           ? [
-              { role: 'system', content: SYSTEM_PROMPT },
+              { role: 'system', content: buildSystemPrompt(feeEnabled) },
               { role: 'user', content: `Player asked: ${originalQuestion}` },
               { role: 'user', content: `${ACTION_CHAIN_PREFACE}\n${feeNote}\nAction just completed: ${label}\nResult JSON: ${resultText}` },
             ]
           : [
-              { role: 'system', content: SYSTEM_PROMPT },
+              { role: 'system', content: buildSystemPrompt(feeEnabled) },
               { role: 'user', content: `${ACTION_RESULT_PREFACE}\n${feeNote}\nAction: ${label}\nResult JSON: ${resultText}` },
             ],
       characterId,
@@ -798,7 +798,7 @@ export async function onRequestPost({ request, env }) {
   const sources = chunks.map((c) => ({ id: c.id, title: c.title }))
 
   const { answer: aiAnswer, pendingWrite, reason } = await resolveAnswer(env, {
-    buildTranscript: () => buildMessages({ question, history: body?.history, chunks }),
+    buildTranscript: () => buildMessages({ question, history: body?.history, chunks, feeEnabled: isChatActionFeeEnabled(env) }),
     characterId,
     authorization,
     identity: auth.identity,
