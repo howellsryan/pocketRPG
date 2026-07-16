@@ -2066,7 +2066,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                             )}
                             {bossReq.locked && !slayLocked && !slayReq && (
                               <div class="text-[9px] font-semibold text-[var(--color-blood-light)]">
-                                🔒 {monster.id === 'blighted_gauntlet' ? 'Song of the Elves' :
+                                🔒 {monster.id === 'blighted_gauntlet' ? 'Hymn of the Elves' :
                                      monster.id === 'ashen_crucible' ? 'Defeat Ember Tyrant' :
                                      (monster.id === 'adamant_dragon' || monster.id === 'rune_dragon') ? 'Dragon Slayer II' :
                                      monster.id === 'hellbound_gorilla' ? 'Monkey Madness II' : 'Locked'}
