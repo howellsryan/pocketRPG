@@ -38,11 +38,15 @@ const effStr = effectiveStrength(playerStats.strength, 0, 1.0, styleBonuses.stre
 const expectedMaxMelee = meleeMaxHit(effStr, itemsData.zul_kaars_blade.otherBonus.meleeStrength)
 
 describe("Zul-Kaar's Blade Disrupt special attack", () => {
-  it('item is registered with a percent-only special (no flat energyCost field)', () => {
+  it('item is registered with a flat 50 energy cost (not percent-of-current)', () => {
+    // A percent-of-current cost (50%, 25%, 12%, ...) never hits exactly 0, so
+    // the Master Rejuvenation unlock (auto-refill at specialAttackEnergy === 0,
+    // CombatScreen.jsx) almost never triggers with this weapon. Flat cost
+    // drains 100->50->0 in exactly 2 uses like every other special.
     const spec = itemsData.zul_kaars_blade.specialAttack
     expect(spec.type).toBe('disrupt')
-    expect(spec.energyCostPercent).toBe(50)
-    expect(spec.energyCost).toBeUndefined()
+    expect(spec.energyCost).toBe(50)
+    expect(spec.energyCostPercent).toBeUndefined()
   })
 
   it('hits regardless of monster defence — no accuracy roll at all', () => {
@@ -112,21 +116,31 @@ describe("Zul-Kaar's Blade Disrupt special attack", () => {
     expect(damage).toBe(Math.floor(boostedMaxMelee * 0.5))
   })
 
-  it('processCombatTick drains exactly 50% of current energy (percent-of-current, not flat)', () => {
+  it('drains a flat 50 energy per use — 100 -> 50 -> 0 in exactly 2 uses, then blocks a third', () => {
     let state: any = { ...createCombatState(makeMonster(50, 1000), 'melee', 'aggressive'), specialAttackQueued: true, playerAttackTimer: 0 }
     withRng(0.4, () => {
       const result = processCombatTick(state, playerStats, equipment, itemsData)
       state = result.combatState
     })
-    expect(state.specialAttackEnergy).toBe(50) // ceil(100 * 50/100) = 50, 100-50=50
+    expect(state.specialAttackEnergy).toBe(50)
 
-    // Second use spends 50% of the now-lower pool (25), not another flat 50.
+    // Second use spends the same flat 50, not 50% of the now-lower pool.
     state.specialAttackQueued = true
     state.playerAttackTimer = 0
     withRng(0.4, () => {
       const result = processCombatTick(state, playerStats, equipment, itemsData)
       state = result.combatState
     })
-    expect(state.specialAttackEnergy).toBe(25)
+    expect(state.specialAttackEnergy).toBe(0)
+
+    // A third attempt at 0 energy can't fire — no specialHit event, no further drain.
+    state.specialAttackQueued = true
+    state.playerAttackTimer = 0
+    withRng(0.4, () => {
+      const result = processCombatTick(state, playerStats, equipment, itemsData)
+      state = result.combatState
+      expect(result.events.find((e: any) => e.type === 'specialHit')).toBeUndefined()
+    })
+    expect(state.specialAttackEnergy).toBe(0)
   })
 })

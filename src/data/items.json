@@ -10433,8 +10433,8 @@
     "isUntradeable": true,
     "specialAttack": {
       "type": "disrupt",
-      "energyCostPercent": 50,
-      "description": "Disrupt: consumes 50% of current special energy. Deals guaranteed Magic damage (50-150% of max melee hit). Grants 2 Magic XP per damage dealt. Nullified against magic-immune monsters."
+      "energyCost": 50,
+      "description": "Disrupt: consumes 50% special energy. Deals guaranteed Magic damage (50-150% of max melee hit). Grants 2 Magic XP per damage dealt. Nullified against magic-immune monsters."
     }
   },
   "scythe_of_vythar": {
