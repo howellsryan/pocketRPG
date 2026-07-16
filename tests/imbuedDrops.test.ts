@@ -36,22 +36,30 @@ describe('Imbued Crown and Imbued Brain drops', () => {
     }
   })
 
-  it('the lowest-level slayer monster drops at the 1/15000 and 1/150000 anchor rates', () => {
+  it('the lowest-level slayer monster drops at the 1/25000 and 1/150000 anchor rates', () => {
     const lowestLevel = Math.min(...slayerMonsters.map((m: any) => m.slayerRequirement))
     const lowest = slayerMonsters.filter((m: any) => m.slayerRequirement === lowestLevel)
     expect(lowest.length).toBeGreaterThan(0)
     for (const m of lowest) {
-      expect(dropChance(m, 'imbued_crown')).toBeCloseTo(1 / 15000, 6)
+      expect(dropChance(m, 'imbued_crown')).toBeCloseTo(1 / 25000, 6)
       expect(dropChance(m, 'imbued_brain')).toBeCloseTo(1 / 150000, 6)
     }
   })
 
-  it('the highest-level slayer boss drops Imbued Crown 1/50 and Imbued Brain 1/500', () => {
-    const bosses = slayerMonsters.filter((m: any) => m.boss === true)
-    const highestBossLevel = Math.max(...bosses.map((m: any) => m.slayerRequirement))
-    const highestBoss = bosses.find((m: any) => m.slayerRequirement === highestBossLevel)
-    expect(dropChance(highestBoss, 'imbued_crown')).toBeCloseTo(1 / 50, 6)
-    expect(dropChance(highestBoss, 'imbued_brain')).toBeCloseTo(1 / 500, 6)
+  it('the highest-level slayer monster/boss drops Imbued Crown 1/250 and Imbued Brain 1/1500', () => {
+    const highestLevel = Math.max(...slayerMonsters.map((m: any) => m.slayerRequirement))
+    const highest = slayerMonsters.find((m: any) => m.slayerRequirement === highestLevel)
+    expect(dropChance(highest, 'imbued_crown')).toBeCloseTo(1 / 250, 6)
+    expect(dropChance(highest, 'imbued_brain')).toBeCloseTo(1 / 1500, 6)
+  })
+
+  it('both imbued items are flagged task-only on every slayer-gated monster', () => {
+    for (const m of slayerMonsters) {
+      const crown = (m.drops || []).find((d: any) => d.itemId === 'imbued_crown')
+      const brain = (m.drops || []).find((d: any) => d.itemId === 'imbued_brain')
+      expect(crown.taskOnly, `${m.id} imbued_crown should be taskOnly`).toBe(true)
+      expect(brain.taskOnly, `${m.id} imbued_brain should be taskOnly`).toBe(true)
+    }
   })
 
   it('Imbued Crown is a crafting material that combines with the slayer helmet', () => {

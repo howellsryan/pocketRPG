@@ -1666,12 +1666,14 @@
       {
         "itemId": "imbued_crown",
         "quantity": 1,
-        "chance": 0.010869565217391304
+        "chance": 0.0024509803921568627,
+        "taskOnly": true
       },
       {
         "itemId": "imbued_brain",
         "quantity": 1,
-        "chance": 0.0010905125408942203
+        "chance": 0.0004084967320261438,
+        "taskOnly": true
       }
     ],
     "legacy_id": "abyssal_demon"
@@ -1825,12 +1827,14 @@
       {
         "itemId": "imbued_crown",
         "quantity": 1,
-        "chance": 0.001303780964797914
+        "chance": 0.0004411116012351125,
+        "taskOnly": true
       },
       {
         "itemId": "imbued_brain",
         "quantity": 1,
-        "chance": 0.00013036110024768608
+        "chance": 0.00007352941176470588,
+        "taskOnly": true
       }
     ],
     "legacy_id": "blood_veld"
@@ -1968,12 +1972,14 @@
       {
         "itemId": "imbued_crown",
         "quantity": 1,
-        "chance": 0.008064516129032258
+        "chance": 0.0019193857965451055,
+        "taskOnly": true
       },
       {
         "itemId": "imbued_brain",
         "quantity": 1,
-        "chance": 0.0008051529790660225
+        "chance": 0.00031969309462915604,
+        "taskOnly": true
       }
     ],
     "legacy_id": "nechryael"
@@ -2116,12 +2122,14 @@
       {
         "itemId": "imbued_crown",
         "quantity": 1,
-        "chance": 0.0049504950495049506
+        "chance": 0.0012970168612191958,
+        "taskOnly": true
       },
       {
         "itemId": "imbued_brain",
         "quantity": 1,
-        "chance": 0.0004952947003467063
+        "chance": 0.00021602937999567941,
+        "taskOnly": true
       }
     ],
     "legacy_id": "skeletal_wyvern"
@@ -2262,12 +2270,14 @@
       {
         "itemId": "imbued_crown",
         "quantity": 1,
-        "chance": 0.010869565217391304
+        "chance": 0.0024509803921568627,
+        "taskOnly": true
       },
       {
         "itemId": "imbued_brain",
         "quantity": 1,
-        "chance": 0.0010905125408942203
+        "chance": 0.0004084967320261438,
+        "taskOnly": true
       }
     ],
     "legacy_id": "smoke_devil"
@@ -2397,12 +2407,14 @@
       {
         "itemId": "imbued_crown",
         "quantity": 1,
-        "chance": 0.012345679012345678
+        "chance": 0.002702702702702703,
+        "taskOnly": true
       },
       {
         "itemId": "imbued_brain",
         "quantity": 1,
-        "chance": 0.0012315270935960591
+        "chance": 0.00045045045045045046,
+        "taskOnly": true
       }
     ],
     "legacy_id": "kraken"
@@ -5491,12 +5503,14 @@
       {
         "itemId": "imbued_crown",
         "quantity": 1,
-        "chance": 0.0043859649122807015
+        "chance": 0.0011750881316098707,
+        "taskOnly": true
       },
       {
         "itemId": "imbued_brain",
         "quantity": 1,
-        "chance": 0.00043878894251864854
+        "chance": 0.0001958863858961802,
+        "taskOnly": true
       }
     ],
     "slayerRequirement": 70,
@@ -6823,12 +6837,14 @@
       {
         "itemId": "imbued_crown",
         "quantity": 1,
-        "chance": 0.008064516129032258
+        "chance": 0.0019193857965451055,
+        "taskOnly": true
       },
       {
         "itemId": "imbued_brain",
         "quantity": 1,
-        "chance": 0.0008051529790660225
+        "chance": 0.00031969309462915604,
+        "taskOnly": true
       }
     ],
     "legacy_id": "lizardman_shaman"
@@ -6955,12 +6971,14 @@
       {
         "itemId": "imbued_crown",
         "quantity": 1,
-        "chance": 0.00006666666666666667
+        "chance": 0.00004,
+        "taskOnly": true
       },
       {
         "itemId": "imbued_brain",
         "quantity": 1,
-        "chance": 0.000006666666666666667
+        "chance": 0.000006666666666666667,
+        "taskOnly": true
       }
     ],
     "legacy_id": "banshee"
@@ -7123,12 +7141,14 @@
       {
         "itemId": "imbued_crown",
         "quantity": 1,
-        "chance": 0.0023923444976076554
+        "chance": 0.0007199424046076314,
+        "taskOnly": true
       },
       {
         "itemId": "imbued_brain",
         "quantity": 1,
-        "chance": 0.00023917723032767282
+        "chance": 0.00012001920307249159,
+        "taskOnly": true
       }
     ],
     "legacy_id": "aberrant_spectre"
@@ -7272,12 +7292,14 @@
       {
         "itemId": "imbued_crown",
         "quantity": 1,
-        "chance": 0.002702702702702703
+        "chance": 0.0007942811755361397,
+        "taskOnly": true
       },
       {
         "itemId": "imbued_brain",
         "quantity": 1,
-        "chance": 0.00027005130974885227
+        "chance": 0.00013236267372600927,
+        "taskOnly": true
       }
     ],
     "legacy_id": "wyrm"
@@ -7415,12 +7437,14 @@
       {
         "itemId": "imbued_crown",
         "quantity": 1,
-        "chance": 0.0038910505836575876
+        "chance": 0.0010660980810234541,
+        "taskOnly": true
       },
       {
         "itemId": "imbued_brain",
         "quantity": 1,
-        "chance": 0.000388651379712398
+        "chance": 0.0001775883502042266,
+        "taskOnly": true
       }
     ],
     "legacy_id": "spiritual_warrior"
@@ -7563,12 +7587,14 @@
       {
         "itemId": "imbued_crown",
         "quantity": 1,
-        "chance": 0.009615384615384616
+        "chance": 0.0022222222222222222,
+        "taskOnly": true
       },
       {
         "itemId": "imbued_brain",
         "quantity": 1,
-        "chance": 0.0009652509652509653
+        "chance": 0.00037037037037037035,
+        "taskOnly": true
       }
     ],
     "legacy_id": "spiritual_mage"
@@ -7712,12 +7738,14 @@
       {
         "itemId": "imbued_crown",
         "quantity": 1,
-        "chance": 0.0028653295128939827
+        "chance": 0.0008340283569641367,
+        "taskOnly": true
       },
       {
         "itemId": "imbued_brain",
         "quantity": 1,
-        "chance": 0.00028694404591104734
+        "chance": 0.00013900472616068947,
+        "taskOnly": true
       }
     ],
     "legacy_id": "spiritual_ranger"
@@ -7855,12 +7883,14 @@
       {
         "itemId": "imbued_crown",
         "quantity": 1,
-        "chance": 0.005952380952380952
+        "chance": 0.0015015015015015015,
+        "taskOnly": true
       },
       {
         "itemId": "imbued_brain",
         "quantity": 1,
-        "chance": 0.0005941770647653001
+        "chance": 0.00025025025025025025,
+        "taskOnly": true
       }
     ],
     "legacy_id": "gargoyle"
@@ -8023,12 +8053,14 @@
       {
         "itemId": "imbued_crown",
         "quantity": 1,
-        "chance": 0.006711409395973154
+        "chance": 0.0016556291390728477,
+        "taskOnly": true
       },
       {
         "itemId": "imbued_brain",
         "quantity": 1,
-        "chance": 0.0006711409395973154
+        "chance": 0.0002760143527463428,
+        "taskOnly": true
       }
     ],
     "legacy_id": "brutal_black_dragon"
@@ -8177,12 +8209,14 @@
       {
         "itemId": "imbued_crown",
         "quantity": 1,
-        "chance": 0.014705882352941176
+        "chance": 0.003134796238244514,
+        "taskOnly": true
       },
       {
         "itemId": "imbued_brain",
         "quantity": 1,
-        "chance": 0.0014771048744460858
+        "chance": 0.0005219206680584551,
+        "taskOnly": true
       }
     ],
     "legacy_id": "dark_beast"
@@ -8335,12 +8369,14 @@
       {
         "itemId": "imbued_crown",
         "quantity": 1,
-        "chance": 0.015625
+        "chance": 0.003289473684210526,
+        "taskOnly": true
       },
       {
         "itemId": "imbued_brain",
         "quantity": 1,
-        "chance": 0.0015698587127158557
+        "chance": 0.000547945205479452,
+        "taskOnly": true
       }
     ],
     "legacy_id": "cerberus"
@@ -8491,12 +8527,14 @@
       {
         "itemId": "imbued_crown",
         "quantity": 1,
-        "chance": 0.02
+        "chance": 0.004,
+        "taskOnly": true
       },
       {
         "itemId": "imbued_brain",
         "quantity": 1,
-        "chance": 0.002
+        "chance": 0.0006666666666666666,
+        "taskOnly": true
       }
     ],
     "legacy_id": "hydra"
@@ -8542,12 +8580,14 @@
       {
         "itemId": "imbued_crown",
         "quantity": 1,
-        "chance": 0.00006666666666666667
+        "chance": 0.00004,
+        "taskOnly": true
       },
       {
         "itemId": "imbued_brain",
         "quantity": 1,
-        "chance": 0.000006666666666666667
+        "chance": 0.000006666666666666667,
+        "taskOnly": true
       }
     ]
   },
@@ -8596,12 +8636,14 @@
       {
         "itemId": "imbued_crown",
         "quantity": 1,
-        "chance": 0.0000752671985548698
+        "chance": 0.00004411699827943707,
+        "taskOnly": true
       },
       {
         "itemId": "imbued_brain",
         "quantity": 1,
-        "chance": 0.000007526833160216171
+        "chance": 0.0000073529411764705884,
+        "taskOnly": true
       }
     ]
   },
@@ -8650,12 +8692,14 @@
       {
         "itemId": "imbued_crown",
         "quantity": 1,
-        "chance": 0.00010194719135487817
+        "chance": 0.00005636343140570398,
+        "taskOnly": true
       },
       {
         "itemId": "imbued_brain",
         "quantity": 1,
-        "chance": 0.000010194719135487817
+        "chance": 0.000009393905234283996,
+        "taskOnly": true
       }
     ]
   },
@@ -8704,12 +8748,14 @@
       {
         "itemId": "imbued_crown",
         "quantity": 1,
-        "chance": 0.0001299545159194282
+        "chance": 0.00006856359273225918,
+        "taskOnly": true
       },
       {
         "itemId": "imbued_brain",
         "quantity": 1,
-        "chance": 0.000012995282712375408
+        "chance": 0.000011427526626137039,
+        "taskOnly": true
       }
     ]
   },
@@ -8763,12 +8809,14 @@
       {
         "itemId": "imbued_crown",
         "quantity": 1,
-        "chance": 0.00015590894917368256
+        "chance": 0.00007942180922881423,
+        "taskOnly": true
       },
       {
         "itemId": "imbued_brain",
         "quantity": 1,
-        "chance": 0.000015589922673983538
+        "chance": 0.000013236792989794433,
+        "taskOnly": true
       }
     ]
   },
@@ -8822,12 +8870,14 @@
       {
         "itemId": "imbued_crown",
         "quantity": 1,
-        "chance": 0.00021114864864864866
+        "chance": 0.00010146103896103897,
+        "taskOnly": true
       },
       {
         "itemId": "imbued_brain",
         "quantity": 1,
-        "chance": 0.000021115756577558175
+        "chance": 0.000016910745087428552,
+        "taskOnly": true
       }
     ]
   },
@@ -8881,12 +8931,14 @@
       {
         "itemId": "imbued_crown",
         "quantity": 1,
-        "chance": 0.00023837902264600716
+        "chance": 0.00011190689346463742,
+        "taskOnly": true
       },
       {
         "itemId": "imbued_brain",
         "quantity": 1,
-        "chance": 0.000023840175463691413
+        "chance": 0.000018651496782616805,
+        "taskOnly": true
       }
     ]
   },
@@ -8940,12 +8992,14 @@
       {
         "itemId": "imbued_crown",
         "quantity": 1,
-        "chance": 0.00028595939376608524
+        "chance": 0.00012963443090484831,
+        "taskOnly": true
       },
       {
         "itemId": "imbued_brain",
         "quantity": 1,
-        "chance": 0.0000286000286000286
+        "chance": 0.000021604804908611675,
+        "taskOnly": true
       }
     ]
   },
@@ -8999,12 +9053,14 @@
       {
         "itemId": "imbued_crown",
         "quantity": 1,
-        "chance": 0.00034305317324185246
+        "chance": 0.00015015015015015014,
+        "taskOnly": true
       },
       {
         "itemId": "imbued_brain",
         "quantity": 1,
-        "chance": 0.000034310025389418786
+        "chance": 0.000025025025025025026,
+        "taskOnly": true
       }
     ]
   },
@@ -9059,12 +9115,14 @@
       {
         "itemId": "imbued_crown",
         "quantity": 1,
-        "chance": 0.0004374453193350831
+        "chance": 0.00018264840182648402,
+        "taskOnly": true
       },
       {
         "itemId": "imbued_brain",
         "quantity": 1,
-        "chance": 0.00004373496610540127
+        "chance": 0.000030442327011476756,
+        "taskOnly": true
       }
     ]
   },
@@ -9128,12 +9186,14 @@
       {
         "itemId": "imbued_crown",
         "quantity": 1,
-        "chance": 0.0006293266205160479
+        "chance": 0.00024509803921568627,
+        "taskOnly": true
       },
       {
         "itemId": "imbued_brain",
         "quantity": 1,
-        "chance": 0.00006294454585510165
+        "chance": 0.00004084466772862803,
+        "taskOnly": true
       }
     ]
   },
@@ -9199,12 +9259,14 @@
       {
         "itemId": "imbued_crown",
         "quantity": 1,
-        "chance": 0.0008025682182985554
+        "chance": 0.0002981514609421586,
+        "taskOnly": true
       },
       {
         "itemId": "imbued_brain",
         "quantity": 1,
-        "chance": 0.00008023106546854942
+        "chance": 0.000049686972075921695,
+        "taskOnly": true
       }
     ]
   },
@@ -9269,12 +9331,14 @@
       {
         "itemId": "imbued_crown",
         "quantity": 1,
-        "chance": 0.0009624639076034649
+        "chance": 0.0003453038674033149,
+        "taskOnly": true
       },
       {
         "itemId": "imbued_brain",
         "quantity": 1,
-        "chance": 0.0000962556550197324
+        "chance": 0.00005755395683453237,
+        "taskOnly": true
       }
     ]
   },
@@ -9339,12 +9403,14 @@
       {
         "itemId": "imbued_crown",
         "quantity": 1,
-        "chance": 0.001303780964797914
+        "chance": 0.0004411116012351125,
+        "taskOnly": true
       },
       {
         "itemId": "imbued_brain",
         "quantity": 1,
-        "chance": 0.00013036110024768608
+        "chance": 0.00007352941176470588,
+        "taskOnly": true
       }
     ]
   },
@@ -9405,12 +9471,14 @@
       {
         "itemId": "imbued_crown",
         "quantity": 1,
-        "chance": 0.0017667844522968198
+        "chance": 0.0005636978579481398,
+        "taskOnly": true
       },
       {
         "itemId": "imbued_brain",
         "quantity": 1,
-        "chance": 0.0001765848490199541
+        "chance": 0.00009394081728511038,
+        "taskOnly": true
       }
     ]
   },
@@ -9470,12 +9538,14 @@
       {
         "itemId": "imbued_crown",
         "quantity": 1,
-        "chance": 0.00211864406779661
+        "chance": 0.0006527415143603133,
+        "taskOnly": true
       },
       {
         "itemId": "imbued_brain",
         "quantity": 1,
-        "chance": 0.00021181952976064393
+        "chance": 0.0001088139281828074,
+        "taskOnly": true
       }
     ]
   },
@@ -9535,12 +9605,14 @@
       {
         "itemId": "imbued_crown",
         "quantity": 1,
-        "chance": 0.0023923444976076554
+        "chance": 0.0007199424046076314,
+        "taskOnly": true
       },
       {
         "itemId": "imbued_brain",
         "quantity": 1,
-        "chance": 0.00023917723032767282
+        "chance": 0.00012001920307249159,
+        "taskOnly": true
       }
     ]
   },
@@ -9600,12 +9672,14 @@
       {
         "itemId": "imbued_crown",
         "quantity": 1,
-        "chance": 0.003236245954692557
+        "chance": 0.0009199632014719411,
+        "taskOnly": true
       },
       {
         "itemId": "imbued_brain",
         "quantity": 1,
-        "chance": 0.00032393909944930353
+        "chance": 0.00015332720024532353,
+        "taskOnly": true
       }
     ]
   },
@@ -9665,12 +9739,14 @@
       {
         "itemId": "imbued_crown",
         "quantity": 1,
-        "chance": 0.0038910505836575876
+        "chance": 0.0010660980810234541,
+        "taskOnly": true
       },
       {
         "itemId": "imbued_brain",
         "quantity": 1,
-        "chance": 0.000388651379712398
+        "chance": 0.0001775883502042266,
+        "taskOnly": true
       }
     ]
   },
@@ -9731,12 +9807,14 @@
       {
         "itemId": "imbued_crown",
         "quantity": 1,
-        "chance": 0.0043859649122807015
+        "chance": 0.0011750881316098707,
+        "taskOnly": true
       },
       {
         "itemId": "imbued_brain",
         "quantity": 1,
-        "chance": 0.00043878894251864854
+        "chance": 0.0001958863858961802,
+        "taskOnly": true
       }
     ]
   },
@@ -9797,12 +9875,14 @@
       {
         "itemId": "imbued_crown",
         "quantity": 1,
-        "chance": 0.005263157894736842
+        "chance": 0.0013605442176870747,
+        "taskOnly": true
       },
       {
         "itemId": "imbued_brain",
         "quantity": 1,
-        "chance": 0.0005263157894736842
+        "chance": 0.0002269117313365101,
+        "taskOnly": true
       }
     ]
   },
@@ -9863,12 +9943,14 @@
       {
         "itemId": "imbued_crown",
         "quantity": 1,
-        "chance": 0.005952380952380952
+        "chance": 0.0015015015015015015,
+        "taskOnly": true
       },
       {
         "itemId": "imbued_brain",
         "quantity": 1,
-        "chance": 0.0005941770647653001
+        "chance": 0.00025025025025025025,
+        "taskOnly": true
       }
     ]
   },
@@ -9928,12 +10010,14 @@
       {
         "itemId": "imbued_crown",
         "quantity": 1,
-        "chance": 0.006711409395973154
+        "chance": 0.0016556291390728477,
+        "taskOnly": true
       },
       {
         "itemId": "imbued_brain",
         "quantity": 1,
-        "chance": 0.0006711409395973154
+        "chance": 0.0002760143527463428,
+        "taskOnly": true
       }
     ]
   },
@@ -9994,12 +10078,14 @@
       {
         "itemId": "imbued_crown",
         "quantity": 1,
-        "chance": 0.007575757575757576
+        "chance": 0.0018281535648994515,
+        "taskOnly": true
       },
       {
         "itemId": "imbued_brain",
         "quantity": 1,
-        "chance": 0.0007575757575757576
+        "chance": 0.00030441400304414006,
+        "taskOnly": true
       }
     ]
   },
@@ -10091,12 +10177,14 @@
       {
         "itemId": "imbued_crown",
         "quantity": 1,
-        "chance": 0.008064516129032258
+        "chance": 0.0019193857965451055,
+        "taskOnly": true
       },
       {
         "itemId": "imbued_brain",
         "quantity": 1,
-        "chance": 0.0008051529790660225
+        "chance": 0.00031969309462915604,
+        "taskOnly": true
       }
     ]
   },

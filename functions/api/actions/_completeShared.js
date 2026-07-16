@@ -78,15 +78,18 @@ export function makeCompletionHandler(sourceType, deps = {}) {
       const validIds = VALID_SOURCE_IDS[sourceType]
       if (validIds && !validIds.has(sourceId)) return json({ error: 'Invalid sourceId', code: 'INVALID_SOURCE_ID' }, 403)
 
-      const resolvedRewards = typeof deps.resolveRewards === 'function'
-        ? deps.resolveRewards({ sourceType, sourceId, body })
-        : (Array.isArray(body?.rewards) ? body.rewards : [])
       // Claim the nonce against the DB before doing anything else.
       // A replay throws STALE_REPLAYED_ACTION which is mapped to 409.
       // The DB-side claim is atomic and independent of save state, so a
       // client that PUTs a stale save cannot resurrect a used nonce.
       await (deps.claimActionNonce || claimActionNonce)(env, characterId, body?.actionNonce)
       const { saveObject, saveRevision } = await (deps.loadCharacterWithSave || loadCharacterWithSave)(env, characterId, auth.identity.id)
+      // Rewards are resolved after the save loads so server-side reward tables
+      // can gate on save state (e.g. task-only drops requiring the character's
+      // active slayer task to match the killed monster).
+      const resolvedRewards = typeof deps.resolveRewards === 'function'
+        ? deps.resolveRewards({ sourceType, sourceId, body, saveObject })
+        : (Array.isArray(body?.rewards) ? body.rewards : [])
       const settled = settleActionCompletion(saveObject, {
         sourceType,
         sourceId,

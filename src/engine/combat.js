@@ -15,6 +15,7 @@ import { applyPrayerDrainTick } from './prayerDrain.js'
 import { getCombatSetMultipliers } from './combatSetBonuses.js'
 import { getMonsterSeedDrops } from './seedDrops.js'
 import { resolveSpecialEnergyCost, canAffordSpecialAttack } from './specialAttackEnergy.js'
+import { doesSlayerTaskMatchMonster } from './slayerTasks.js'
 
 
 function getAvasAmmoSaveChance(equipment) {
@@ -171,7 +172,7 @@ function getFormImmunity(monster) {
  * Handle monster death. Supports double-kill requirement (e.g. Olm), Verzik phased boss, and raid boss advancement.
  * Returns true if the monster truly died (combat ends), false if it regenerated/advanced (combat continues).
  */
-function checkMonsterDeath(state, monster, events) {
+function checkMonsterDeath(state, monster, events, isOnTask = false) {
   if (monster.currentHP > 0) return false
   monster.currentHP = 0
 
@@ -296,7 +297,7 @@ function checkMonsterDeath(state, monster, events) {
   // True death (non-raid)
   state.active = false
   state.specialAttackEnergy = 100
-  state.loot = rollDrops(monster)
+  state.loot = rollDrops(monster, isOnTask)
   events.push({
     type: 'monsterDeath',
     monster: { id: monster.id, name: monster.name, boss: monster.boss === true },
@@ -314,7 +315,8 @@ export function applyInstantKill(state) {
   const events = []
   if (!state || !state.monster) return events
   state.monster.currentHP = 0
-  checkMonsterDeath(state, state.monster, events)
+  const isOnTask = !!(state.slayerTask && doesSlayerTaskMatchMonster(state.slayerTask.monsterId, state.monster.id))
+  checkMonsterDeath(state, state.monster, events, isOnTask)
   return events
 }
 
@@ -460,6 +462,7 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
   const weaponSpeed = getAttackSpeed(equipment, itemsData)
   const weaponStyle = getMeleeAttackStyle(equipment, itemsData)
   const monster = state.monster
+  const isOnTask = !!(slayerTask && monster && doesSlayerTaskMatchMonster(slayerTask.monsterId, monster.id))
 
   // Look up equipped weapon + scale-charge info for this tick
   const equippedWeaponEntry = equipment?.weapon
@@ -479,7 +482,7 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
   // continues with combat still active.
   if (monster.currentHP <= 0 && state.active) {
     state.monster = monster
-    checkMonsterDeath(state, monster, events)
+    checkMonsterDeath(state, monster, events, isOnTask)
     return { combatState: state, events }
   }
 
@@ -884,7 +887,7 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
     // Check monster death (handles double-kill bosses like Olm)
     if (monster.currentHP <= 0) {
       state.monster = monster
-      const died = checkMonsterDeath(state, monster, events)
+      const died = checkMonsterDeath(state, monster, events, isOnTask)
       if (died) return { combatState: state, events }
       // Boss regenerated — skip monster attack this tick, timers already set
       return { combatState: state, events }
@@ -1030,10 +1033,12 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
 /**
  * Roll monster drops
  */
-function rollDrops(monster) {
+function rollDrops(monster, isOnTask = false) {
   const loot = []
   const rolls = monster.dropRolls || 1
   for (const drop of (monster.drops || [])) {
+    // Task-only drops (e.g. Imbued Crown/Brain) never roll off-task.
+    if (drop.taskOnly && !isOnTask) continue
     // Always drops (chance === 1.0) are rolled once regardless of dropRolls
     const timesToRoll = (drop.chance >= 1.0) ? 1 : rolls
     for (let r = 0; r < timesToRoll; r++) {
@@ -1196,6 +1201,7 @@ export function applySpecialAttack(combatState, playerStats, equipment, itemsDat
   const bonuses = getEquipmentBonuses(equipment, itemsData)
   const weaponStyle = getMeleeAttackStyle(equipment, itemsData)
   const monster = state.monster
+  const isOnTask = !!(slayerTask && monster && doesSlayerTaskMatchMonster(slayerTask.monsterId, monster.id))
 
   switch (spec.type) {
     case 'double_hit': {
@@ -1741,7 +1747,7 @@ export function applySpecialAttack(combatState, playerStats, equipment, itemsDat
 
   // Check monster death from special attack (handles double-kill bosses like Olm)
   if (monster.currentHP <= 0) {
-    checkMonsterDeath(state, monster, events)
+    checkMonsterDeath(state, monster, events, isOnTask)
   }
 
   // Only update monster if it's still alive — checkMonsterDeath may have changed it for raid advancement

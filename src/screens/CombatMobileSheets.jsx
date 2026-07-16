@@ -62,7 +62,9 @@ function DropRow({ drop, itemsData, accent }) {
         <span class="cb-droprow__name">{item?.name || drop.itemId}</span>
       </div>
       <div class="cb-droprow__r">
-        <span class={'cb-droprow__rate ' + rarityClass(drop.chance)}>{formatDropChance(drop.chance)}</span>
+        <span class={'cb-droprow__rate ' + rarityClass(drop.chance)}>
+          {formatDropChance(drop.chance)}{drop.taskOnly ? ' · task only' : ''}
+        </span>
         <span class="cb-droprow__qty">{qtyLabel(drop.quantity)}</span>
       </div>
     </div>
@@ -115,13 +117,18 @@ function UniquePanel({ items, itemsData, sharedChance, drops }) {
               {items.map(itemId => {
                 const item = itemsData[itemId]
                 const chance = chanceById[itemId]
+                const taskOnly = (drops || []).find(d => d.itemId === itemId)?.taskOnly
                 return (
                   <div key={itemId} class="cb-rates__row">
                     <div class="cb-rates__l">
                       <GameIcon item={item} iconKey={item?.iconId} size={40} color="#f0c040" />
                       <span>{item?.name || itemId}</span>
                     </div>
-                    {chance != null && <span class="cb-rates__rate">{formatDropChance(chance)}</span>}
+                    {chance != null && (
+                      <span class="cb-rates__rate">
+                        {formatDropChance(chance)}{taskOnly ? ' · task only' : ''}
+                      </span>
+                    )}
                   </div>
                 )
               })}

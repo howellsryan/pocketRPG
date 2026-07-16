@@ -2296,6 +2296,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                               <div class="text-[9px] text-[var(--color-parchment)] opacity-60 mt-0.5">
                                 {formatDropChance(drop.chance)}
                                 {Array.isArray(drop.quantity) ? ` · ${drop.quantity[0]}–${drop.quantity[1]} ea` : ` · ${drop.quantity}`}
+                                {drop.taskOnly ? ' · Slayer task only' : ''}
                               </div>
                             </div>
                           </div>
@@ -3507,6 +3508,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                               <div class="text-[9px] text-[var(--color-parchment)] opacity-60 mt-0.5">
                                 {formatDropChance(drop.chance)}
                                 {Array.isArray(drop.quantity) ? ` · ${drop.quantity[0]}–${drop.quantity[1]} ea` : ` · ${drop.quantity}`}
+                                {drop.taskOnly ? ' · Slayer task only' : ''}
                               </div>
                             </div>
                           </div>
