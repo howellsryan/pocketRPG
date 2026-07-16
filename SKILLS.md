@@ -20,8 +20,8 @@ This mirrors the progressive-disclosure model Anthropic published for [Agent Ski
 
 Model-invoked: each skill fires when the task matches its frontmatter description. Source of truth is always the SKILL.md file itself.
 
-### `squad-triage` — every task gets a team decision *(PocketRPG-native)*
-Fires at the start of every implementation task, before the first edit. Tiers the task — **solo** (lead works alone; checklist-covered or single-file work), **pair** (one builder + `senior-qa`), **squad** (≥2 domains, §14 boundary, migration, or plan-gate territory: `technical-ba` → `architect` → parallel builders with disjoint file ownership → `senior-qa` → lead integrates and runs the §11 gate). Carries the role-prompt template (goal / owned files / constraints / acceptance / report) and the transport rule: agent teams where the harness supports them, background subagents elsewhere (cloud sessions). Constitutes standing authorization to spawn the `.claude/agents/` roster. Design record: `docs/squad-workflow.md`.
+### `delivery-loop` — one agent, dedicated steps *(PocketRPG-native)*
+Fires at the start of every implementation task, before the first edit. Triage: **checklist** (an existing checklist fully covers it — skip the loop, apply the checklist + §11 gate) vs **stepped** (run the loop: Plan → optional Architect → Engineer / World Designer as needed → QA, all inside the one session; each step announced on one line and closed with a ≤5-line handoff note). No builder/QA/BA subagents are ever spawned — read-only Explore fan-out searches are the sole sanctioned exception. Step charters live in the skill's `steps.md` (folded from the retired `.claude/agents/` squad roster). Replaced the multi-agent squad workflow 2026-07-16 for token cost. Design record + research: `docs/delivery-workflow.md`.
 
 ### `plan-gate` — no edits until the plan exists
 For **novel or multi-system work only**: engine + server + migration together, the §14 integrity boundary (auth, grants, credits, purchases, `/api/save` guards), save format, PvP settlement, the single-file build pipeline. Forces a written plan (GOAL / UNKNOWNS / SUCCESS CRITERIA / STEPS / OUT OF SCOPE) before the first edit, built from evidence (files read first), with executable success criteria and a hard stop-and-replan rule when reality contradicts the plan. Deliberately narrowed from its upstream version, which fired on any multi-edit task — routine PocketRPG work already has checklists, and a five-block plan for "add a drop" is ceremony, not safety.
@@ -67,11 +67,11 @@ Ten compact single-file skills vendored verbatim from [`CloudAI-X/threejs-skills
 - **Exact examples over abstractions.** Agents pattern-match; the JSON snippet in `add-content` outperforms a paragraph describing the schema.
 - **When a SKILL.md grows unwieldy, split** into referenced files loaded on demand (tier 3 of progressive disclosure).
 
-## 5) Subagents, the squad roster, and token economy
+## 5) Single-agent delivery and token economy
 
-- Subagents start cold and re-read always-on context — the expensive path. `squad-triage` prices this: **solo** (no agents) is the default for small work; **pair/squad** spend the tokens only when the work spans domains or carries real risk.
-- The squad roster lives in `.claude/agents/` (`technical-ba`, `architect`, `gameplay-engineer`, `frontend-designer`, `backend-developer`, `senior-qa`). Each charter is pointer-heavy — it cites CLAUDE.md §s and rules instead of duplicating them — and doubles as an agent-teams teammate role (env flag in `.claude/settings.json`; teams are experimental, so background subagents are the guaranteed transport in cloud sessions).
-- Read-only **Explore**-type agents remain the cheap tool for broad fan-out searches — they keep file dumps out of the main context and return only conclusions.
+- Delivery is **single-agent**: the `delivery-loop` skill runs roles as steps inside one session sharing one continuous context. Multi-agent squads were retired 2026-07-16 — spawns re-load always-on context cold, re-read files already in context, and multiply spend ~4–15× for sequential build work that never parallelises in practice (research + design record: `docs/delivery-workflow.md`).
+- Step charters live in `.claude/skills/delivery-loop/steps.md`, folded from the retired `.claude/agents/` roster. They stay pointer-heavy — citing CLAUDE.md §s and path-scoped rules instead of duplicating them.
+- Read-only **Explore**-type agents remain the cheap tool for broad fan-out searches — they keep file dumps out of the main context and return only conclusions. That is the only sanctioned subagent use in delivery work; writes stay single-threaded in the session.
 - In-session discipline (output shaping, effort routing, narrow reads) is CLAUDE.md §17 and applies always; local sessions can add Headroom compression (`HEADROOM.md`).
 - The game applies the same economics server-side: the help chatbot exposes tools progressively via `search_tools` instead of declaring its full ~50-tool surface per call (`.claude/rules/chat.md`) — the in-repo precedent for why this structure works.
 
