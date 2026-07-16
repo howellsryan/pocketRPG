@@ -162,6 +162,7 @@ const sourceFiles = [
   'components/ItemDetailPanel.js',
   'components/TwoPaneLayout.js',
   'components/SharedItemModal.js',
+  'components/SellConfirmModal.js',
   'components/TradingPostSellForm.js',
   'components/QuestXpChoiceModal.js',
   'components/BuyCreditsModal.js',
