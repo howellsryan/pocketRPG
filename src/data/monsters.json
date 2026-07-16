@@ -5150,6 +5150,7 @@
         "chance": 0.02
       }
     ],
+    "questRequirement": "hymn_of_the_elves",
     "legacy_id": "corrupted_gauntlet"
   },
   "the_great_olm": {
