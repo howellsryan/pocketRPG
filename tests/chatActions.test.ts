@@ -7,6 +7,7 @@ import {
   actionCreditCost,
   actionLabel,
   actionSkipCost,
+  isChatActionFeeEnabled,
   isWriteTool,
   signPendingAction,
   validateWriteArgs,
@@ -66,6 +67,11 @@ describe('action credit cost', () => {
     expect(actionCreditCost('skip_slayer_task', {})).toEqual({ fee: 1, skip: 1, total: 2 })
   })
 
+  it('zeroes the assistant fee (keeping any skip cost) when feeEnabled is false', () => {
+    expect(actionCreditCost('sell_item', { item_id: 'oak_logs' }, false)).toEqual({ fee: 0, skip: 0, total: 0 })
+    expect(actionCreditCost('skip_slayer_task', {}, false)).toEqual({ fee: 0, skip: 1, total: 1 })
+  })
+
   it("reads a real boss's skipCost from the data", () => {
     const entry = Object.entries(monstersData as Record<string, any>).find(
       ([, m]) => Number.isFinite(m?.skipCost) && m.skipCost > 1,
@@ -74,6 +80,18 @@ describe('action credit cost', () => {
       const [monsterId, m] = entry
       expect(actionSkipCost('kill_boss', { monster_id: monsterId })).toBe(Math.floor(m.skipCost))
     }
+  })
+})
+
+describe('chat action fee feature flag', () => {
+  it('is enabled by default and when the env var is unset or anything but "false"', () => {
+    expect(isChatActionFeeEnabled({})).toBe(true)
+    expect(isChatActionFeeEnabled(undefined)).toBe(true)
+    expect(isChatActionFeeEnabled({ CHAT_ACTION_FEE_ENABLED: 'true' })).toBe(true)
+  })
+
+  it('is disabled only by the literal string "false"', () => {
+    expect(isChatActionFeeEnabled({ CHAT_ACTION_FEE_ENABLED: 'false' })).toBe(false)
   })
 })
 

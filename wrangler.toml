@@ -16,6 +16,11 @@ binding = "AI"
 
 [vars]
 APP_BASE_URL = "https://pocketrpg.co.uk"
+# Feature flag for the chat helper's 1-credit write-action fee (CHAT_ACTION_FEE
+# in functions/_lib/chat/actions.js). "false" disables it; the fee logic stays
+# in place untouched, so flipping this back to "true" (or removing it — unset
+# defaults to enabled) re-enables charging without a code change.
+CHAT_ACTION_FEE_ENABLED = "false"
 
 # NOTE: the 3D-render feature flag is BUILD-time, not a runtime binding.
 # build_single.cjs derives it from CF_PAGES_BRANCH (injected by Pages into
@@ -53,7 +58,7 @@ d1_databases = [
 r2_buckets = [
   { binding = "TRIPO_ASSETS", bucket_name = "pocketrpg-assets-preview" }
 ]
-vars = { APP_BASE_URL = "https://preview.pocketrpg.pages.dev" }
+vars = { APP_BASE_URL = "https://preview.pocketrpg.pages.dev", CHAT_ACTION_FEE_ENABLED = "false" }
 ai = { binding = "AI" }
 # Secrets for preview environment (set via `wrangler pages secret put --env preview`):
 #   STRIPE_API_KEY            — Stripe secret key (sk_test_…)

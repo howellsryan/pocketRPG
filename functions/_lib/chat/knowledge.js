@@ -2139,6 +2139,41 @@ export const KNOWLEDGE_CHUNKS = [
   "text": "Runecrafting training options with level requirements, XP per action and any ingredients required to make each item: Craft air rune (level 1, 10 XP; needs 1 Rune Essence → Air Rune), Craft mind rune (level 2, 11 XP; needs 1 Rune Essence → Mind Rune), Craft water rune (level 5, 12 XP; needs 1 Rune Essence → Water Rune), Craft earth rune (level 9, 13 XP; needs 1 Rune Essence → Earth Rune), Craft fire rune (level 14, 14 XP; needs 1 Rune Essence → Fire Rune), Craft body rune (level 20, 15 XP; needs 1 Rune Essence → Body Rune), Craft cosmic rune (level 27, 16 XP; needs 1 Rune Essence → Cosmic Rune), Craft chaos rune (level 35, 17 XP; needs 1 Rune Essence → Chaos Rune), Craft astral rune (level 40, 17.4 XP; needs 1 Rune Essence → Astral Rune), Craft nature rune (level 44, 18 XP; needs 1 Rune Essence → Nature Rune), Craft law rune (level 54, 19 XP; needs 1 Rune Essence → Law Rune), Craft death rune (level 65, 25 XP; needs 1 Rune Essence → Death Rune), Craft blood rune (level 77, 30 XP; needs 1 Rune Essence → Blood Rune), Craft soul rune (level 90, 35 XP; needs 1 Rune Essence → Soul Rune), Craft wrath rune (level 95, 40 XP; needs 1 Rune Essence → Wrath Rune)."
  },
  {
+  "id": "data_potions",
+  "title": "Potions: stat boosts, heals and durations",
+  "tags": [
+   "potion",
+   "potions",
+   "boost",
+   "buff",
+   "super combat",
+   "super strength",
+   "super attack",
+   "super defence"
+  ],
+  "text": "All potions and what they do. Stat-boost potions last a limited time, stack additively with other active potions on the same stat, and never delay your next attack (they're combo consumables). Attack Potion: +13 Attack for 5m. Strength Potion: +13 Strength for 5m. Defence Potion: +13 Defence for 5m. Combat Potion: +13 Attack, +13 Strength, +13 Defence, +14 Ranged, +4 Magic for 5m. Prayer Potion: instantly restores 20 Prayer points, no timed buff. Super Attack: +18 Attack for 5m. Super Strength: +18 Strength for 5m. Super Restore: instantly restores 22 Prayer points, no timed buff. Super Defence: +18 Defence for 5m. Ranging Potion: +14 Ranged for 5m. Magic Potion: +4 Magic for 5m. Lumira Brew: instantly heals 22 HP; also clears every other active potion buff, no timed stat buff. Super Combat: +18 Attack, +18 Strength, +18 Defence, +14 Ranged, +4 Magic for 5m."
+ },
+ {
+  "id": "data_gathering_tool_speed",
+  "title": "Gathering tool speed: woodcutting axes, mining pickaxes and fishing tools",
+  "tags": [
+   "tool",
+   "tools",
+   "axe",
+   "pickaxe",
+   "dragon axe",
+   "dragon pickaxe",
+   "shardglass",
+   "shardglass pickaxe",
+   "shardglass axe",
+   "speed",
+   "woodcutting",
+   "mining",
+   "fishing"
+  ],
+  "text": "Woodcutting, Mining and Fishing can always be done bare-handed, but holding no tool at all takes twice as long as even the most basic tool tier. Better tool tiers cut the action time further; each tier needs the shown skill (and sometimes Attack) level to use. The Shardglass Pickaxe and Shardglass Axe match the Dragon tools for speed and additionally double gathered ore/logs while charged with Shardglass Shards (loaded like any other scale-charged weapon); once their charges run out they stop counting as a tool at all until recharged. Woodcutting axes, on trees — Bronze Axe (requires Woodcutting 1): no speed bonus (baseline). Iron Axe (requires Woodcutting 1): 10% faster action time. Steel Axe (requires Woodcutting 5): 15% faster action time. Mithril Axe (requires Woodcutting 20): 25% faster action time. Adamant Axe (requires Woodcutting 30): 30% faster action time. Runeforged Axe (requires Woodcutting 40): 38% faster action time. Dragon Axe (requires Attack 60 + Woodcutting 60): 44% faster action time. Shardglass Axe (requires Attack 60 + Woodcutting 70): 50% faster action time; while charged with Shardglass Shards, also doubles the ore/log yield per action (burns 2 shards from the tool's own charge each time). 2nd Age Axe (requires Attack 65 + Woodcutting 61): 50% faster action time. Mining pickaxes, on ore — Bronze Pickaxe (requires Mining 1): no speed bonus (baseline). Iron Pickaxe (requires Mining 1): 10% faster action time. Steel Pickaxe (requires Mining 5): 15% faster action time. Mithril Pickaxe (requires Mining 20): 20% faster action time. Adamant Pickaxe (requires Mining 30): 30% faster action time. Runeforged Pickaxe (requires Mining 40): 40% faster action time. Dragon Pickaxe (requires Attack 60 + Mining 60): 50% faster action time. Shardglass Pickaxe (requires Attack 60 + Mining 70): 50% faster action time; while charged with Shardglass Shards, also doubles the ore/log yield per action (burns 2 shards from the tool's own charge each time). Fishing tools — Fishing Net (requires Fishing 1): no speed bonus (baseline). Fishing Rod (requires Fishing 20): 10% faster action time. Lobster Cage (requires Fishing 40): 20% faster action time. Harpoon (requires Fishing 50): 30% faster action time. Angler Net: 30% faster action time."
+ },
+ {
   "id": "data_special_attacks",
   "title": "Weapon special attacks: which weapons have one and what they do",
   "tags": [

@@ -173,6 +173,36 @@ describe('POST /api/chat — confirm a write action', () => {
     expect(body.creditsRemaining).toBeUndefined()
   })
 
+  it('charges no fee and issues no refund when CHAT_ACTION_FEE_ENABLED is "false"', async () => {
+    ;(callTool as any).mockResolvedValue({ content: [{ type: 'text', text: '{"sold":5}' }] })
+    const token = await signPendingAction(
+      { tool: 'sell_item', args: { item_id: 'oak_logs', quantity: 5, character_id: 42 }, characterId: 42 },
+      TEST_SECRET,
+    )
+    const { env, feeDebits } = confirmEnv(9)
+    ;(env as any).CHAT_ACTION_FEE_ENABLED = 'false'
+    const res = await onRequestPost({ request: await confirmRequest(token), env })
+    const body = (await res.json()) as any
+    expect(body.mode).toBe('action_done')
+    expect(body.creditsRemaining).toBe(9)
+    expect(feeDebits).toEqual([]) // the debit UPDATE never ran
+  })
+
+  it('never attempts a refund on failure when the fee was disabled (nothing was charged)', async () => {
+    ;(callTool as any).mockResolvedValue({ content: [{ type: 'text', text: 'Error: no such item' }], isError: true })
+    const token = await signPendingAction(
+      { tool: 'sell_item', args: { item_id: 'bad', quantity: 1, character_id: 42 }, characterId: 42 },
+      TEST_SECRET,
+    )
+    const { env, feeDebits, refunds } = confirmEnv(3)
+    ;(env as any).CHAT_ACTION_FEE_ENABLED = 'false'
+    const res = await onRequestPost({ request: await confirmRequest(token), env })
+    const body = (await res.json()) as any
+    expect(body.mode).toBe('action_error')
+    expect(feeDebits).toEqual([])
+    expect(refunds).toEqual([])
+  })
+
   it('rejects an expired/invalid confirm token without charging', async () => {
     ;(callTool as any).mockClear()
     const { env, feeDebits } = confirmEnv(9)

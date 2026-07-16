@@ -75,6 +75,15 @@ export function actionLabel(tool, args = {}) {
 // however many game-state updates that action performs.
 export const CHAT_ACTION_FEE = 1
 
+// Feature flag (CHAT_ACTION_FEE_ENABLED in wrangler.toml [vars]): lets the fee
+// be switched off without touching this file's logic, so re-enabling later is
+// just flipping the var back. Anything other than the literal string 'false'
+// is treated as enabled — an unset var (e.g. a deploy target that forgot it)
+// fails safe to the fee being charged.
+export function isChatActionFeeEnabled(env) {
+  return env?.CHAT_ACTION_FEE_ENABLED !== 'false'
+}
+
 function skipCostFor(id, table) {
   const cost = table?.[id]?.skipCost
   return Number.isFinite(cost) && cost > 0 ? Math.floor(cost) : 1
@@ -100,11 +109,13 @@ export function actionSkipCost(tool, args = {}) {
   }
 }
 
-// Full credit breakdown for a proposed action: the flat assistant fee plus any
-// credits the action's own skip spends.
-export function actionCreditCost(tool, args = {}) {
+// Full credit breakdown for a proposed action: the flat assistant fee (0 when
+// the CHAT_ACTION_FEE_ENABLED flag is off) plus any credits the action's own
+// skip spends.
+export function actionCreditCost(tool, args = {}, feeEnabled = true) {
   const skip = actionSkipCost(tool, args)
-  return { fee: CHAT_ACTION_FEE, skip, total: CHAT_ACTION_FEE + skip }
+  const fee = feeEnabled ? CHAT_ACTION_FEE : 0
+  return { fee, skip, total: fee + skip }
 }
 
 // Recursively collect string `id` values from a reference payload (skill
