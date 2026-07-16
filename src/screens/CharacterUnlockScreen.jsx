@@ -93,6 +93,7 @@ export default function CharacterUnlockScreen({ onBack }) {
         // SAVE_REVISION_EVENT (api.js).
         updateSlayerPoints(slayerPoints - unlock.cost)
         addToBank(unlock.itemId, 1)
+        recordCollectionLogDrop({ itemId: unlock.itemId, sourceType: 'skilling', sourceId: 'slayer' })
         addToast(`🎉 Purchased ${item.name} — sent to bank`, 'info')
         return
       } catch (e) {
