@@ -1,4 +1,5 @@
 import monstersData from '../data/monsters.json'
+import raidsData from '../data/raids.json'
 import { DAGANNOTH_KINGS_TASK_ID } from './slayerTasks.js'
 
 // Zul-Kaar's boss-task pool includes every boss monster EXCEPT these 4, which
@@ -13,6 +14,15 @@ export const RAID_TASK_META = {
   verin_the_defiled: { raidId: 'cryptbound_champions', flatSlayerXp: 2500 },
   warden_of_arasmus: { raidId: 'tomb_of_arasmus', flatSlayerXp: 10000 },
 }
+
+// Every monster that makes up any raid — sub-bosses (e.g. Gorath the Infested)
+// as well as each raid's final boss — derived structurally from raids.json so
+// a new raid or roster change can't silently desync this. None of these may
+// be individually assignable as a standalone kill task: only a full raid
+// clear (RAID_TASK_META's proxy entries, keyed to the final boss id) counts.
+const RAID_MONSTER_IDS = new Set(
+  Object.values(raidsData).flatMap(raid => Array.isArray(raid?.bosses) ? raid.bosses : [])
+)
 
 // PocketRPG slayer masters — requirements and monster pools from PocketRPG design references.
 //
@@ -181,10 +191,10 @@ export const SLAYER_MASTERS = [
     description: 'Assigns only full boss kills or raid clears — the realm\'s ultimate Slayer trial. Requires slayer 85.',
     bossTaskRange: [5, 50],
     monsterPool: [
-      // Every monster with boss:true in monsters.json except the 4 raid-final
-      // bosses (RAID_TASK_META), which are represented below as raid-completion
-      // proxy entries instead — they're never independently fightable.
-      ...Object.keys(monstersData).filter(id => monstersData[id]?.boss === true && !RAID_TASK_META[id]).map(id => ({ id, boss: true })),
+      // Every monster with boss:true in monsters.json except raid monsters
+      // (RAID_MONSTER_IDS — both sub-bosses and final bosses): none of them are
+      // individually assignable, only a full raid clear is.
+      ...Object.keys(monstersData).filter(id => monstersData[id]?.boss === true && !RAID_MONSTER_IDS.has(id)).map(id => ({ id, boss: true })),
       // Raid-completion proxy entries: each is the raid's final boss, overridden
       // to a [2,10] task range instead of the master's [5,50] bossTaskRange.
       ...Object.keys(RAID_TASK_META).map(id => ({ id, boss: true, taskRange: [2, 10] })),
