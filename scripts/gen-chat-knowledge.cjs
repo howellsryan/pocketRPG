@@ -185,7 +185,12 @@ function specialAttackChunk() {
   const items = readJson('items.json')
   const lines = Object.values(items)
     .filter((it) => it.specialAttack)
-    .map((it) => `${it.name} (${it.specialAttack.energyCost}% energy): ${it.specialAttack.description}`)
+    .map((it) => {
+      const cost = it.specialAttack.energyCostPercent
+        ? `${it.specialAttack.energyCostPercent}% of current energy`
+        : `${it.specialAttack.energyCost}% energy`
+      return `${it.name} (${cost}): ${it.specialAttack.description}`
+    })
   return {
     id: 'data_special_attacks',
     title: 'Weapon special attacks: which weapons have one and what they do',

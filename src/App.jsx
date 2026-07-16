@@ -342,7 +342,7 @@ const CLOUD_ONLY_SCREENS = new Set([SCREENS.STORE, SCREENS.LEADERBOARD])
 const DEMO_LOCKED_MESSAGE = '🔒 Sign in to use this — not available in the demo.'
 
 function GameApp() {
-  const { loaded, loadGame, player, stats, equipment, inventory, bank, currentHP, updateHP, getMaxHP, updateInventory, updateEquipment, updateBank, updateBankDirect, grantXP, addToast, activeTask, setActiveTask, getActiveTask, itemsData, getSnapshot, unlockedFeatures, setSlayerTask, awardSlayerPoints, slayerTasksCompleted, setSlayerTasksCompleted, completeQuest, completedQuests, questQueue, removeFromQuestQueue, updateQuestQueue,
+  const { loaded, loadGame, player, stats, equipment, inventory, bank, currentHP, updateHP, getMaxHP, updateInventory, updateEquipment, updateBank, updateBankDirect, grantXP, addToast, activeTask, setActiveTask, getActiveTask, itemsData, getSnapshot, unlockedFeatures, setSlayerTask, awardSlayerPoints, slayerTasksCompleted, setSlayerTasksCompleted, incrementSlayerMasterTaskCompletions, completeQuest, completedQuests, questQueue, removeFromQuestQueue, updateQuestQueue,
     unlockMinigameItem, unlockedMinigameItems, awardDungeoneeringTokens, farming, updateFarming, idleCombatSetup, isOneLife, revertOneLifeMode, updateBossKillCounts, updateRaidKillCounts, syncServerKillCounts, markKillCountsLoaded, combatSkipHandlerRef, skipHourHandlerRef, chargeSkipRef, raidSkipHandlerRef,
     gameLocked, lockGame, unlockGame, runLockedSave, awaitCombatCompletion, resolveCombatCompletion,
     characterUnlocks, slayerPerks, dailyTaskStates, setDailyTasks, recordGameEvent, updateWorldLocation, worldLocation, clearActivityProgress, requestActivityStart,
@@ -1295,6 +1295,9 @@ function GameApp() {
             // milestones included) into one award + summary toast.
             const loop = resolveSlayerLoopRewards(sim.slayerCompletions, slayerTasksCompleted)
             setSlayerTasksCompleted(loop.totalTasks)
+            for (const completion of sim.slayerCompletions) {
+              if (completion.masterId) incrementSlayerMasterTaskCompletions(completion.masterId, 1)
+            }
             awardSlayerPoints(loop.pointsEarned)
             setSlayerTask(sim.slayerTaskUpdate || null)
             const n = sim.slayerCompletions.length
@@ -1304,6 +1307,7 @@ function GameApp() {
               setSlayerTask(null)
               const reward = getSlayerTaskReward(sim.slayerTaskUpdate.pointsOnComplete, slayerTasksCompleted)
               setSlayerTasksCompleted(reward.totalTasks)
+              if (freshSlayerTask?.masterId) incrementSlayerMasterTaskCompletions(freshSlayerTask.masterId, 1)
               awardSlayerPoints(reward.pointsEarned)
               addToast(`💀 Slayer Task #${reward.totalTasks} Completed - ${reward.pointsEarned.toLocaleString()} points.`, 'levelup')
             } else {
@@ -2867,6 +2871,9 @@ function GameApp() {
             // award + summary toast.
             const loop = resolveSlayerLoopRewards(sim.slayerCompletions, slayerTasksCompleted)
             setSlayerTasksCompleted(loop.totalTasks)
+            for (const completion of sim.slayerCompletions) {
+              if (completion.masterId) incrementSlayerMasterTaskCompletions(completion.masterId, 1)
+            }
             awardSlayerPoints(loop.pointsEarned)
             setSlayerTask(sim.slayerTaskUpdate || null)
             const n = sim.slayerCompletions.length
@@ -2876,6 +2883,7 @@ function GameApp() {
               setSlayerTask(null)
               const reward = getSlayerTaskReward(sim.slayerTaskUpdate.pointsOnComplete, slayerTasksCompleted)
               setSlayerTasksCompleted(reward.totalTasks)
+              if (freshSlayerTask?.masterId) incrementSlayerMasterTaskCompletions(freshSlayerTask.masterId, 1)
               awardSlayerPoints(reward.pointsEarned)
               addToast(`💀 Slayer Task #${reward.totalTasks} Completed - ${reward.pointsEarned.toLocaleString()} points.`, 'levelup')
             } else {

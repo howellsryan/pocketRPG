@@ -652,10 +652,22 @@ describe('pvpEngine phase 2B contract', () => {
     })
   })
 
-  it('supports every item specialAttack type in PvP', () => {
+  it('supports every item specialAttack type in PvP, except deliberately PvE-only exceptions', () => {
+    // zul_kaars_blade's 'disrupt' is explicitly PvE-only per its feature spec
+    // (a slayer-point unlock weapon, not PvP-balanced) — pvpEngine.js's
+    // resolveSwing gate on SUPPORTED_PVP_SPECIAL_ATTACK_TYPES is what keeps it
+    // from firing in PvP. See tests/pvpSpecialAttacks.test.ts for the direct
+    // regression test on that gate staying closed.
+    const PVE_ONLY_SPECIAL_TYPES = new Set(['disrupt'])
     const types = new Set(Object.values(realItemsData as any).map((item: any) => item?.specialAttack?.type).filter(Boolean))
     expect(types.size).toBeGreaterThan(0)
-    for (const type of types) expect(SUPPORTED_PVP_SPECIAL_ATTACK_TYPES.has(type as string)).toBe(true)
+    for (const type of types) {
+      if (PVE_ONLY_SPECIAL_TYPES.has(type as string)) {
+        expect(SUPPORTED_PVP_SPECIAL_ATTACK_TYPES.has(type as string)).toBe(false)
+        continue
+      }
+      expect(SUPPORTED_PVP_SPECIAL_ATTACK_TYPES.has(type as string)).toBe(true)
+    }
   })
 })
 

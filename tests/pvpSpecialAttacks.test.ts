@@ -21,6 +21,31 @@ describe('pvpSpecialAttacks helpers', () => {
     expect(getPvpSpecialAttackLabel('missing_type')).toBe('⚡ Special Attack')
   })
 
+  it("keeps 'disrupt' out of PvP's supported special-attack types (Zul-Kaar's Blade is PvE-only)", () => {
+    // Regression: zul_kaars_blade's special is percent-cost-only (no flat
+    // energyCost), so if 'disrupt' were ever added here without also wiring
+    // its PvP damage/energy semantics, pvpEngine.js's resolveSwing gate
+    // (SUPPORTED_PVP_SPECIAL_ATTACK_TYPES.has(specType)) is the only thing
+    // stopping it from firing as a broken/free PvP special.
+    expect(SUPPORTED_PVP_SPECIAL_ATTACK_TYPES.has('disrupt')).toBe(false)
+    expect(PVP_SPECIAL_ATTACK_LABELS).not.toHaveProperty('disrupt')
+  })
+
+  it('resolves a percent-only special-attack energyCost against the combatant\'s current energy instead of silently reporting 0', () => {
+    const itemsData = {
+      zul_kaars_blade: { id: 'zul_kaars_blade', name: "Zul-Kaar's Blade", specialAttack: { type: 'disrupt', energyCostPercent: 50 } },
+    }
+    expect(getEquippedPvpSpecialAttack(
+      { equipment: { weapon: { itemId: 'zul_kaars_blade' } }, specialAttackEnergy: 80 } as any,
+      itemsData as any,
+    )).toMatchObject({ type: 'disrupt', energyCost: 40 })
+    // No energy on hand → percent of 0 is still 0, never negative/NaN.
+    expect(getEquippedPvpSpecialAttack(
+      { equipment: { weapon: { itemId: 'zul_kaars_blade' } }, specialAttackEnergy: 0 } as any,
+      itemsData as any,
+    )).toMatchObject({ energyCost: 0 })
+  })
+
   it('clamps and floors special energy with fallback handling', () => {
     expect(clampPvpSpecialEnergy(12.9)).toBe(12)
     expect(clampPvpSpecialEnergy(-1)).toBe(0)

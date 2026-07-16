@@ -120,6 +120,19 @@ export function settleActionCompletion(saveObject, { sourceType, sourceId, nonce
   }
 
 
+  // Zul-Kaar's Blade (slayer-point unlock) additionally gates on the
+  // player's Zul-Kaar task-completion count. slayerPoints alone is not
+  // sufficient for a "requiresMasterCompletions" unlock — read strictly from
+  // the server's own persisted save (settings.slayerMasterTaskCompletions),
+  // never from any client-supplied request field, or a client could grant
+  // itself the weapon by simply claiming enough completions.
+  if (rewards.some(r => r?.itemId === 'zul_kaars_blade')) {
+    const zulKaarCompletions = Math.floor(Number(saveObject.settings?.slayerMasterTaskCompletions?.zul_kaar) || 0)
+    if (zulKaarCompletions < 25) {
+      throw new GameApiError('SLAYER_MASTER_COMPLETIONS_REQUIRED', 'Requires 25 completed Zul-Kaar tasks', 403)
+    }
+  }
+
   const granted = []
   for (const reward of rewards) {
     const itemId = typeof reward?.itemId === 'string' ? reward.itemId : null

@@ -76,6 +76,7 @@ function assignNextTask(masterId, stats, options) {
   const slayerTask = buildSlayerTask(master, pick.monsterId, pick.isBoss, {
     rng: options.rng,
     quantityMultiplier,
+    entry: pick.entry,
   })
   return { slayerTask, monster: monstersData[pick.monsterId] || null }
 }
@@ -193,6 +194,7 @@ export function simulateIdleCombatChain(task, elapsedMs, stats, equipment, inven
         monsterName: currentSlayer.monsterName,
         count: sim.monstersKilledOnTask || currentSlayer.monstersRemaining || 0,
         pointsOnComplete: sim.slayerTaskUpdate.pointsOnComplete,
+        masterId: currentSlayer.masterId,
       })
       const next = assignNextTask(currentSlayer.masterId, stats, options)
       if (!next || !next.monster) { currentSlayer = next?.slayerTask || null; finalTaskMonster = null; stoppedReason = 'chain_no_task'; break }

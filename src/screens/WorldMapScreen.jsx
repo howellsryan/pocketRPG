@@ -15,6 +15,7 @@ import ActivityPickerModal from '../components/ActivityPickerModal.jsx'
 import PlaceMapView from '../components/PlaceMapView.jsx'
 import SlayerMasterModal from '../components/SlayerMasterModal.jsx'
 import { placeHasMap } from '../engine/placeMaps.js'
+import { RAID_TASK_META } from '../engine/slayerMasters.js'
 import { usePanZoomStage } from '../hooks/usePanZoomStage.js'
 import questsData from '../data/quests.json'
 import minigamesData from '../data/minigames.json'
@@ -486,7 +487,14 @@ export default function WorldMapScreen({ onNavigate, onAutoStart, initialView } 
           masterId={slayerMasterId}
           onClose={() => setSlayerMasterId(null)}
           onGetTask={() => startSlayerMaster(slayerMasterId)}
-          onSlay={(monsterId) => { setSlayerMasterId(null); activateActivity('combat', monsterId) }}
+          onSlay={(monsterId) => {
+            setSlayerMasterId(null)
+            // Raid-completion proxy tasks (RAID_TASK_META): the assigned "monster"
+            // is a raid final boss, never independently placed — route into the
+            // raid entry flow, never a bare 1-on-1 combat activity against it.
+            const raidMeta = RAID_TASK_META[monsterId]
+            activateActivity(raidMeta ? 'raid' : 'combat', raidMeta ? raidMeta.raidId : monsterId)
+          }}
         />
       )}
     </div>

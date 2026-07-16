@@ -13,6 +13,7 @@ import { HIGH_VALUE_SELL_THRESHOLD } from '../utils/constants.js'
 import { equipItem, checkEquipRequirements, placeUnequippedItems } from '../engine/equipment.js'
 import { getLevelFromXP } from '../engine/experience.js'
 import { api, getToken, getCharacterId } from '../cloud/api.js'
+import { formatSpecialEnergyCostLabel } from '../engine/specialAttackEnergy.js'
 import { pullSave, applyCloudSave, pushNow } from '../cloud/sync.js'
 
 export default function InventoryScreen() {
@@ -600,7 +601,7 @@ export default function InventoryScreen() {
                   class="w-full flex items-center justify-between px-3 py-2 active:bg-[var(--fm-parch-lo)]"
                 >
                   <span class="text-xs font-semibold text-yellow-400">⚡ Special Attack</span>
-                  <span class="text-[10px] text-yellow-600">{showSpecInfo ? '▲' : '▼'} {selected.item.specialAttack.energyCost}% energy</span>
+                  <span class="text-[10px] text-yellow-600">{showSpecInfo ? '▲' : '▼'} {formatSpecialEnergyCostLabel(selected.item.specialAttack)}</span>
                 </button>
                 {showSpecInfo && (
                   <div class="px-3 pb-3 space-y-1 border-t border-yellow-900">

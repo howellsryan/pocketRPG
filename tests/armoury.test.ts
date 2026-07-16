@@ -150,9 +150,10 @@ describe('armoury classifier', () => {
     }
   })
 
-  it('flags weapons that have a special attack (27 canonical items)', () => {
+  it('flags weapons that have a special attack (28 canonical items)', () => {
+    // 27 + Zul-Kaar's Blade (Disrupt) — a deliberate content addition, not a drift fix.
     const specials = Object.values(items).filter(hasSpecialAttack)
-    expect(specials.length).toBe(27)
+    expect(specials.length).toBe(28)
   })
 
   describe('buildArmoury over the live data', () => {

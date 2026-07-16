@@ -43,12 +43,16 @@ export function getBaseSlayerXp(defeatedMonster, currentMonster, monstersData = 
 }
 
 export function getSlayerTaskXpForKill(defeatedMonster, currentMonster, monstersData = {}, options = {}) {
-  const baseXp = getBaseSlayerXp(defeatedMonster, currentMonster, monstersData)
-  const multiplier = isBossMonster(defeatedMonster, currentMonster, monstersData)
-    ? BOSS_SLAYER_TASK_XP_MULTIPLIER
-    : DEFAULT_SLAYER_TASK_XP_MULTIPLIER
-
-  const xp = Math.floor(baseXp * multiplier)
+  let xp
+  if (options.flatXp > 0) {
+    xp = Math.floor(options.flatXp)
+  } else {
+    const baseXp = getBaseSlayerXp(defeatedMonster, currentMonster, monstersData)
+    const multiplier = isBossMonster(defeatedMonster, currentMonster, monstersData)
+      ? BOSS_SLAYER_TASK_XP_MULTIPLIER
+      : DEFAULT_SLAYER_TASK_XP_MULTIPLIER
+    xp = Math.floor(baseXp * multiplier)
+  }
   return options.doubleXp ? Math.floor(xp * 2) : xp
 }
 
