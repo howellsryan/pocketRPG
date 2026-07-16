@@ -60,3 +60,38 @@ describe('gearFromEquipment', () => {
     }
   })
 })
+
+const withArmor = (body?: string, legs?: string) => ({
+  ...(body ? { body: { itemId: body } } : {}),
+  ...(legs ? { legs: { itemId: legs } } : {}),
+})
+
+describe('gearFromEquipment armor', () => {
+  it('maps body and legs armor to their tier tint', () => {
+    expect(gearFromEquipment(withArmor('iron_platebody', 'iron_platelegs'))).toEqual({
+      armor: { body: { tint: '#8a8f96' }, legs: { tint: '#8a8f96' } },
+    })
+    expect(gearFromEquipment(withArmor('bronze_platebody'))).toEqual({ armor: { body: { tint: '#c07a3d' } } })
+  })
+
+  it('keeps the slot but emits an empty tint object for an unmatched tier prefix', () => {
+    // leather_body is a real body item with no tier prefix in TIER_TINTS.
+    expect(gearFromEquipment(withArmor('leather_body'))).toEqual({ armor: { body: {} } })
+  })
+
+  it('omits an empty armor slot entirely', () => {
+    expect(gearFromEquipment(withArmor(undefined, 'iron_platelegs'))).toEqual({ armor: { legs: { tint: '#8a8f96' } } })
+    expect(gearFromEquipment({})).toEqual({})
+  })
+
+  it('ignores a non-armor item in a body/legs field', () => {
+    expect(gearFromEquipment({ body: { itemId: 'bronze_sword' } })).toEqual({})
+  })
+
+  it('carries both weapon and armor when both are equipped', () => {
+    expect(gearFromEquipment({ weapon: { itemId: 'bronze_sword' }, body: { itemId: 'iron_platebody' } })).toEqual({
+      weapon: { archetype: 'sword', tint: '#c07a3d' },
+      armor: { body: { tint: '#8a8f96' } },
+    })
+  })
+})

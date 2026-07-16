@@ -9,7 +9,7 @@ import { resolveMagicSpell, getCombatType } from '../../src/engine/equipment.js'
 import itemsData from '../../src/data/items.json'
 import monstersData from '../../src/data/monsters.json'
 import spellsData from '../../src/data/spells.json'
-import { grantSessionXp, monsterAttackRange, rangeForCombatType, withinRange, type TickPlayer } from './tick'
+import { grantSessionXp, monsterAttackAnim, monsterAttackRange, rangeForCombatType, withinRange, type TickPlayer } from './tick'
 import { recordDamage, topDamageContributor, type NpcState } from './npc'
 import type { TickContext, TickResult } from './tick'
 import type { ZoneEvent } from '../shared/protocol'
@@ -41,6 +41,18 @@ type EngineState = Omit<ReturnType<typeof createCombatState>, 'spell'> & {
   runesConsumed?: Record<string, number> | null
 }
 export type CombatSession = { npcId: string; state: EngineState }
+
+/** True when an attack intent re-targets the npc the player is already fighting
+ * — the click must NOT reset the live engine attack timer (Q5: spam-clicking an
+ * in-combat monster granted free instant hits). */
+export function isSameFightTarget(player: TickPlayer, intent: { kind: string; id: string } | null): boolean {
+  return !!intent && intent.kind === 'npc' && player.combat?.npcId === intent.id
+}
+
+/** Attack animation wire value for a player's combat type. */
+function attackAnimFor(combatType: string): 'attack' | 'attack_ranged' | 'attack_magic' {
+  return combatType === 'magic' ? 'attack_magic' : combatType === 'ranged' ? 'attack_ranged' : 'attack'
+}
 
 const RESPAWN_TICKS = 25
 const NPC_REMOVE_AFTER_DEATH_TICKS = 3
@@ -158,14 +170,14 @@ export function stepCombat(player: TickPlayer, ctx: TickContext, result: TickRes
   // consume on a landed hit, then clear so the same cast never double-charges).
   const { combatState, events } = processCombatTick(combat.state, playerStatsFor(player), player.equipment, itemsData, {}, player.inventory, null)
   combat.state = combatState
-  // Only show the attack animation when the player can actually reach; while out
-  // of their own range (e.g. kiting a slower foe, or a melee player backing off a
-  // caster) they stand idle unless they're walking (anim set upstream).
-  if (inPlayerRange) player.anim = 'attack'
-  else if (player.path.length === 0) player.anim = 'idle'
+  // Default to idle unless walking (walk anim set upstream); the playerHit/
+  // specialHit branches below set the attack anim only on a tick the engine
+  // actually resolved a swing — mirroring the npc.anim gating so the animation
+  // no longer fires every tick regardless of the attack timer.
+  if (player.path.length === 0) player.anim = 'idle'
   npc.state = 'combat'
   // Clear last tick's swing so a fresh one re-triggers the attack animation.
-  if (npc.anim === 'attack') npc.anim = 'idle'
+  if (npc.anim === 'attack' || npc.anim === 'attack_ranged' || npc.anim === 'attack_magic') npc.anim = 'idle'
   npc.lastCombatTick = ctx.tick
   result.npcChanged.push(npc.id)
 
@@ -187,6 +199,7 @@ export function stepCombat(player: TickPlayer, ctx: TickContext, result: TickRes
   for (const ev of events as { type: string; damage?: number; hits?: number[]; totalDamage?: number; loot?: { itemId: string; quantity: number }[]; xpSkills?: Record<string, number>; spellName?: string }[]) {
     if (ev.type === 'playerHit') {
       if (!inPlayerRange) continue
+      player.anim = attackAnimFor(combat.state.combatType as string)
       npc.hp = Math.max(0, combatState.monster.currentHP)
       recordDamage(npc, player.charId, ev.damage ?? 0, ctx.tick)
       result.hits.push({ targetId: npc.id, dmg: ev.damage ?? 0 })
@@ -200,6 +213,7 @@ export function stepCombat(player: TickPlayer, ctx: TickContext, result: TickRes
       return
     } else if (ev.type === 'specialHit') {
       if (!inPlayerRange) continue
+      player.anim = attackAnimFor(combat.state.combatType as string)
       // A fired special: one or more hits, monster HP already applied on state.
       npc.hp = Math.max(0, combatState.monster.currentHP)
       recordDamage(npc, player.charId, ev.totalDamage ?? 0, ctx.tick)
@@ -209,12 +223,12 @@ export function stepCombat(player: TickPlayer, ctx: TickContext, result: TickRes
       // The monster only lands when the player is within ITS reach — a melee foe
       // can't hit a player kiting at magic range until it closes the gap.
       if (!isTarget || !inMonsterRange) continue
-      npc.anim = 'attack' // the monster swings — broadcast so the client plays it
+      npc.anim = monsterAttackAnim(npc.monsterId) // the monster swings — broadcast so the client plays it
       player.hp = Math.max(0, player.hp - (ev.damage ?? 0))
       result.hits.push({ targetId: player.charId, dmg: ev.damage ?? 0 })
     } else if (ev.type === 'monsterMiss') {
       if (!isTarget || !inMonsterRange) continue
-      npc.anim = 'attack'
+      npc.anim = monsterAttackAnim(npc.monsterId)
       result.hits.push({ targetId: player.charId, dmg: 0 })
     } else if (ev.type === 'xp' && ev.xpSkills) {
       if (!inPlayerRange) continue

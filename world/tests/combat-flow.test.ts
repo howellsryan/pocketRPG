@@ -251,6 +251,31 @@ describe('combat via tickPlayer', () => {
     expect(r.events.some((e) => e.e === 'msg' && e.text.includes('select a spell'))).toBe(true)
   })
 
+  it('shows the attack animation only on ticks the engine resolved a swing, idle otherwise', () => {
+    const { npcs, bull } = bullAt(5, 5)
+    // Weak attacker + a lot of HP so the fight runs many ticks with real gaps
+    // between swings; a stationary, in-range player must read 'idle' on the
+    // ticks the engine's attack timer hasn't completed.
+    const weak = { attack: { xp: 0, level: 1 }, strength: { xp: 0, level: 1 }, defence: { xp: 0, level: 1 }, ranged: { xp: 0, level: 1 }, magic: { xp: 0, level: 1 }, hitpoints: { xp: 200000, level: 99 } }
+    const player = makePlayer({ x: 5, z: 6, stats: weak, hp: 400, maxHp: 400, pendingInteract: { kind: 'npc', id: 'bull_1', action: 'attack' } })
+    let sawSwingAttack = false
+    let sawNonSwingIdle = false
+    for (let tick = 1; tick <= 60; tick++) {
+      const r = tickPlayer(player, ctx(tick, npcs))
+      if (!player.combat || bull.state === 'dead') break
+      const swung = r.hits.some((h) => h.targetId === 'bull_1')
+      if (swung) {
+        expect(player.anim).toBe('attack')
+        sawSwingAttack = true
+      } else {
+        expect(player.anim).toBe('idle')
+        sawNonSwingIdle = true
+      }
+    }
+    expect(sawSwingAttack).toBe(true)
+    expect(sawNonSwingIdle).toBe(true)
+  })
+
   it('walking out of range ends the fight but keeps aggro (bull pursues, world/server/npc.ts)', () => {
     const { npcs, bull } = bullAt(5, 5)
     const player = makePlayer({ x: 5, z: 6, pendingInteract: { kind: 'npc', id: 'bull_1', action: 'attack' } })

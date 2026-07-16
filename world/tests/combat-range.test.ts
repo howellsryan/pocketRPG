@@ -5,7 +5,7 @@
 // fleeing player mid-walk), and chase-to-range on the npc side.
 import { describe, expect, it } from 'vitest'
 import {
-  tickPlayer, emptyResult, rangeForCombatType, monsterAttackRange, withinRange,
+  tickPlayer, emptyResult, rangeForCombatType, monsterAttackRange, withinRange, cutPathToRange,
   MELEE_RANGE, RANGED_RANGE, MAGIC_RANGE, type TickContext, type TickPlayer,
 } from '../server/tick'
 import { npcsFromZone, tickNpc, type NpcState } from '../server/npc'
@@ -58,6 +58,64 @@ describe('attack reach', () => {
     expect(withinRange({ x: 0, z: 0 }, { x: 5, z: 3 }, 5)).toBe(true)
     expect(withinRange({ x: 0, z: 0 }, { x: 6, z: 0 }, 5)).toBe(false)
     expect(withinRange({ x: 0, z: 0 }, { x: 1, z: 1 }, 1)).toBe(true)
+  })
+
+  it('cutPathToRange trims a straight path to the first in-range tile (ranged)', () => {
+    const target = { x: 5, z: 5 }
+    const steps = [12, 11, 10, 9, 8, 7, 6].map((z) => ({ x: 5, z }))
+    const cut = cutPathToRange(steps, target, RANGED_RANGE)
+    // z=10 is Chebyshev 5 from z=5 — the first tile within ranged reach.
+    expect(cut.map((t) => t.z)).toEqual([12, 11, 10])
+    expect(withinRange(cut[cut.length - 1], target, RANGED_RANGE)).toBe(true)
+  })
+
+  it('cutPathToRange walks all the way to adjacency for melee', () => {
+    const target = { x: 5, z: 5 }
+    const steps = [12, 11, 10, 9, 8, 7, 6].map((z) => ({ x: 5, z }))
+    const cut = cutPathToRange(steps, target, MELEE_RANGE)
+    expect(cut.map((t) => t.z)).toEqual([12, 11, 10, 9, 8, 7, 6])
+  })
+})
+
+// WorldZone.handleInteract's npc/attack branch (WorldZone.ts) composes
+// withinRange + findPathAdjacent + cutPathToRange on every attack click,
+// short-circuiting to an empty path when the player is already within the
+// weapon's reach (mirrors startInteract's own withinRange-first check in
+// tick.ts) — otherwise a re-click on a target already in range/being fought
+// would nudge a ranged/magic player one tile closer every click, creeping
+// them into melee adjacency over repeated clicks and undoing the Q3 fix.
+describe('attack-click path composition (WorldZone.handleInteract)', () => {
+  function clickApproachPath(from: { x: number; z: number }, target: { x: number; z: number }, range: number) {
+    if (withinRange(from, target, range)) return []
+    const path = findPathAdjacent(COLLISION, from, target)
+    if (!path) return []
+    return cutPathToRange(path.slice(1), target, range)
+  }
+
+  it('produces no movement when the ranged player is already within weapon range', () => {
+    const player = { x: 10, z: 15 }
+    const npc = { x: 10, z: 10 } // Chebyshev 5 — exactly at RANGED_RANGE, already in reach
+    expect(withinRange(player, npc, RANGED_RANGE)).toBe(true)
+    const path = clickApproachPath(player, npc, RANGED_RANGE)
+    expect(path).toEqual([])
+  })
+
+  it('does not creep a ranged player closer on repeated same-target clicks', () => {
+    let player = { x: 10, z: 18 } // Chebyshev 8 from npc — out of 5-tile range
+    const npc = { x: 10, z: 10 }
+    // First click legitimately approaches to just within range.
+    let path = clickApproachPath(player, npc, RANGED_RANGE)
+    player = path.length > 0 ? path[path.length - 1] : player
+    expect(withinRange(player, npc, RANGED_RANGE)).toBe(true)
+    const distAfterFirstClick = Math.max(Math.abs(player.x - npc.x), Math.abs(player.z - npc.z))
+    // Now spam-click the same, already-in-range target several more times —
+    // an in-progress fight must not keep walking the attacker in.
+    for (let i = 0; i < 5; i++) {
+      path = clickApproachPath(player, npc, RANGED_RANGE)
+      if (path.length > 0) player = path[path.length - 1]
+    }
+    const distAfterSpamClicks = Math.max(Math.abs(player.x - npc.x), Math.abs(player.z - npc.z))
+    expect(distAfterSpamClicks).toBe(distAfterFirstClick)
   })
 })
 
