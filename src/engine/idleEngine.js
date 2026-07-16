@@ -10,7 +10,7 @@ import {
   effectiveRanged, rangedMaxHit, getRangedStyleBonus,
   effectiveMagic, monsterMagicDefenceRoll, magicMaxHit
 } from './formulas.js'
-import { getEquipmentBonuses, getAttackSpeed, getMeleeAttackStyle, getCombatType, getRangedAmmoRequirementFailure, getEffectiveWornMagicDamage } from './equipment.js'
+import { getEquipmentBonuses, getAttackSpeed, getMeleeAttackStyle, getCombatType, getRangedAmmoRequirementFailure, getEffectiveWornMagicDamage, chargedScaleArmourSlots } from './equipment.js'
 import { getEffectiveToolActionTicks, getEquippedSkillXpMultiplier, rollGatherBonusDrops, usesShardglassGatherTool, resolveShardglassToolSource, consumeShardglassGatherCharge, SHARDGLASS_GATHER_TOOLS } from './skilling.js'
 import { hasRequiredRunes, getRunesToConsume } from './runes.js'
 import { getHighAlchValue } from '../utils/itemValue.js'
@@ -935,7 +935,7 @@ export function estimateMonsterIncomingPerAttack(monster, equipment, itemsData, 
     ? monster.formMaxHit
     : Math.floor(0.5 + (baseStrength + 8) * ((monster.strengthBonus || 0) + 64) / 640)
   const avgDmg = Math.max(0, acc * (monsterMaxHit / 2))
-  return { avgDmg, monsterAtkSpeed, attackStyle }
+  return { avgDmg, monsterAtkSpeed, attackStyle, acc }
 }
 
 /**
@@ -1242,6 +1242,13 @@ export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory,
   // currently loaded charges allow — charges cannot be refilled mid-idle.
   const weaponScaleCharged = !!weaponItem?.scaleCharged
   const startingCharges = weaponEntry?.charges || 0
+  // Scale-charged armour (shardglass) burns one charge per worn piece per hit
+  // taken. Idle is approximate: bonuses aren't recomputed mid-window, so we
+  // just tally expected landed hits and drain each piece by that (capped).
+  const armourChargeSlots = chargedScaleArmourSlots(equipment, itemsData)
+  const armourStartCharges = {}
+  for (const slot of armourChargeSlots) armourStartCharges[slot] = equipment[slot]?.charges || 0
+  let armourHitsTaken = 0
   let maxKillsFromCharges = Infinity
   if (weaponScaleCharged && hitsNeeded < Infinity) {
     // Scale-charged weapons (ranged, powered-staff magic, scythe melee) consume
@@ -1397,6 +1404,11 @@ export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory,
     }
     damageTaken += Math.max(0, dmgFromMonster)
 
+    // Expected landed hits this kill (each armour piece burns a charge per hit).
+    if (armourChargeSlots.length) {
+      armourHitsTaken += monsterAttacks * (Number(metrics.incoming.acc) || 0)
+    }
+
     // Advance time for the kill (player attacks + respawn).
     const killTicks = metrics.ticksPerCycle
     for (const itemId of Object.keys(activeBoostTicksByItemId)) {
@@ -1537,6 +1549,15 @@ export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory,
     ? Math.min(startingCharges, hitsNeeded * monstersKilled)
     : 0
 
+  const armourChargesConsumed = {}
+  if (armourChargeSlots.length) {
+    const hits = Math.floor(armourHitsTaken)
+    for (const slot of armourChargeSlots) {
+      const consumed = Math.min(armourStartCharges[slot] || 0, hits)
+      if (consumed > 0) armourChargesConsumed[slot] = consumed
+    }
+  }
+
   const resourceLimited = (maxKillsFromResources !== Infinity) && (monstersKilled >= maxKillsFromResources) && (remainingTicks >= ticksPerCycle)
   if (resourceLimited && !stoppedReason) stoppedReason = 'resource_limited'
   if (!stoppedReason) stoppedReason = 'completed_elapsed'
@@ -1595,7 +1616,7 @@ export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory,
   return {
     xpGained, lootGained, lootLost, lootBanked, runesConsumed,
     monstersKilled, monstersKilledOnTask, finalInventory: newInv,
-    slayerXpGained, slayerTaskUpdate, chargesConsumed, ammoConsumed,
+    slayerXpGained, slayerTaskUpdate, chargesConsumed, armourChargesConsumed, ammoConsumed,
     attacksUsed: attacksPerKill * monstersKilled, resourceLimited,
     // Idle-supply outputs:
     effectiveElapsedMs,

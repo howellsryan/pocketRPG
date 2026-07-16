@@ -4,7 +4,7 @@ import {
   getMeleeXPSkill, effectiveRanged, rangedMaxHit, getRangedStyleBonus,
   effectiveMagic, monsterMagicDefenceRoll, magicMaxHit
 } from './formulas.js'
-import { getEquipmentBonuses, getAttackSpeed, getMeleeAttackStyle, getRangedAmmoRequirementFailure, getEffectiveWornMagicDamage } from './equipment.js'
+import { getEquipmentBonuses, getAttackSpeed, getMeleeAttackStyle, getRangedAmmoRequirementFailure, getEffectiveWornMagicDamage, chargedScaleArmourSlots } from './equipment.js'
 import { getLevelFromXP } from './experience.js'
 import { hasRequiredRunes, getRunesToConsume } from './runes.js'
 import { MELEE_XP_PER_DAMAGE, RANGED_XP_PER_DAMAGE, MAGIC_XP_PER_DAMAGE, HP_XP_PER_DAMAGE, EAT_TICK_COST } from '../utils/constants.js'
@@ -977,6 +977,13 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
       } else {
         events.push({ type: 'monsterHit', damage, playerHP: playerStats.currentHP - damage })
       }
+    }
+
+    // Scale-charged armour (shardglass) burns one charge per worn piece each time
+    // the wearer takes a hit; at 0 charges the piece stops giving bonuses.
+    if (damage > 0) {
+      const armourSlots = chargedScaleArmourSlots(equipment, itemsData)
+      if (armourSlots.length) events.push({ type: 'consumeArmourCharge', slots: armourSlots, qty: 1 })
     }
 
     state.monsterAttackTimer = monster.attackSpeed || 4

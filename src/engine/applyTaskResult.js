@@ -21,6 +21,7 @@ import { getLevelFromXP } from './experience.js'
  * @property {number} [finalHP]                          combat only.
  * @property {{itemId: string, quantity: number}} [ammoConsumed] combat only.
  * @property {number} [chargesConsumed]                  combat, and skill (shardglass gather tools).
+ * @property {Record<string, number>} [armourChargesConsumed] combat only (shardglass armour, per equipped slot).
  * @property {Record<string, number>} [itemsConsumed]    bank items spent.
  * @property {Array<any>} [finalInventory]               replaces inventory (skill/gather/clue/combat).
  * @property {Record<string, number>} [lootBanked]       ADDITIVE bank loot.
@@ -129,6 +130,17 @@ export function applyTaskResult(state, sim, type) {
     if (sim.ammoConsumed && equipment.ammo && equipment.ammo.itemId === sim.ammoConsumed.itemId) {
       const remaining = Math.max(0, (Number(equipment.ammo.quantity) || 0) - sim.ammoConsumed.quantity)
       equipment.ammo = remaining > 0 ? { ...equipment.ammo, quantity: remaining } : null
+    }
+
+    // Scale-charged armour (shardglass) drains one charge per worn piece per hit.
+    if (sim.armourChargesConsumed && typeof sim.armourChargesConsumed === 'object') {
+      for (const [slot, qty] of Object.entries(sim.armourChargesConsumed)) {
+        const piece = equipment[slot]
+        if (piece && (qty || 0) > 0) {
+          const remaining = Math.max(0, (Number(piece.charges) || 0) - qty)
+          equipment[slot] = { ...piece, charges: remaining }
+        }
+      }
     }
   }
 

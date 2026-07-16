@@ -212,12 +212,15 @@ describe('breaking shardglass gear down into shards', () => {
 })
 
 describe('shardglass store prices', () => {
+  // The Shardglass Bow and Shield are quest-only unlocks — kept out of the
+  // shard store. The elven warweapons (Faerdhinen Warbow, Saeldor Warblade)
+  // are the 50k-shard weapon offering instead.
   const expected: Record<string, number> = {
     shardglass_helmet: 25000,
     shardglass_plate_body: 25000,
     shardglass_platelegs: 25000,
-    shardglass_shield: 25000,
-    shardglass_bow: 50000,
+    bow_of_faerdhinen: 50000,
+    blade_of_saeldor: 50000,
     shardglass_pickaxe: 15000,
     shardglass_axe: 15000,
   }

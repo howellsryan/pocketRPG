@@ -9282,6 +9282,7 @@
     "stackable": false,
     "scaleCharged": true,
     "chargeItemId": "shardglass_shards",
+    "shardglassShopCost": 50000,
     "attackSpeed": 3,
     "attackStyle": "ranged",
     "attackBonus": {
@@ -9321,6 +9322,7 @@
     "stackable": false,
     "scaleCharged": true,
     "chargeItemId": "shardglass_shards",
+    "shardglassShopCost": 50000,
     "attackSpeed": 3,
     "attackStyle": "slash",
     "attackBonus": {
@@ -11345,7 +11347,6 @@
     "stackable": false,
     "breakdownResult": "shardglass_shards",
     "breakdownQty": 5000,
-    "shardglassShopCost": 50000,
     "attackSpeed": 4,
     "attackStyle": "ranged",
     "attackBonus": {
@@ -11388,7 +11389,6 @@
     "chargeItemId": "shardglass_shards",
     "breakdownResult": "shardglass_shards",
     "breakdownQty": 5000,
-    "shardglassShopCost": 25000,
     "isUntradeable": true,
     "questUnlock": "wandering_elves",
     "attackBonus": {
