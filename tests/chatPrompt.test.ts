@@ -10,6 +10,7 @@ import {
   SEARCH_TOOLS_DEF,
   SYSTEM_PROMPT,
   buildMessages,
+  buildSystemPrompt,
   chatToolDefs,
   retrievalOnlyAnswer,
   sanitizeHistory,
@@ -105,6 +106,19 @@ describe('chat prompt assembly', () => {
     expect(last.role).toBe('user')
     expect(last.content).toContain('Prayers drain a pool.')
     expect(last.content).toContain('How does prayer work?')
+  })
+
+  it('tells the model to mention the 1-credit action fee only when it is actually enabled', () => {
+    expect(buildSystemPrompt(true)).toMatch(/costs 1 credit/i)
+    expect(buildSystemPrompt(true)).toBe(SYSTEM_PROMPT) // SYSTEM_PROMPT is the fee-enabled default
+    expect(buildSystemPrompt(false)).not.toMatch(/costs 1 credit/i)
+    expect(buildSystemPrompt(false)).toMatch(/no assistant action fee/i)
+  })
+
+  it('threads feeEnabled into the system prompt buildMessages produces', () => {
+    const messages = buildMessages({ question: 'sell my logs', feeEnabled: false })
+    expect(messages[0].content).not.toMatch(/costs 1 credit/i)
+    expect(messages[0].content).toMatch(/no assistant action fee/i)
   })
 
   it('sanitizes history: bad roles dropped, length capped', () => {

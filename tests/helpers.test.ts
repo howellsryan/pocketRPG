@@ -7,7 +7,8 @@ import {
   clamp,
   deepClone,
   debounce,
-  calcCombatLevel
+  calcCombatLevel,
+  chatActionCostLine
 } from '../src/utils/helpers.js'
 
 describe('Helper Utilities', () => {
@@ -361,6 +362,28 @@ describe('Helper Utilities', () => {
       const combatLevel = calcCombatLevel(stats)
       // 0.25 * (99 + 99 + floor(99/2)) + 0.325 * (99 + 99) = 61.75 + 64.35 = 126
       expect(combatLevel).toBe(126)
+    })
+  })
+
+  describe('chatActionCostLine', () => {
+    it('shows the flat fee when there is no skip', () => {
+      expect(chatActionCostLine({ fee: 1, skip: 0, total: 1 })).toBe('Costs 1 credit')
+    })
+
+    it('breaks down fee + skip when both apply', () => {
+      expect(chatActionCostLine({ fee: 1, skip: 1, total: 2 })).toBe('Costs 2 credits — 1 action fee + 1 for the skip')
+    })
+
+    it('says Free when the fee is disabled and there is no skip', () => {
+      expect(chatActionCostLine({ fee: 0, skip: 0, total: 0 })).toBe('Free')
+    })
+
+    it('shows only the skip cost when the assistant fee is disabled', () => {
+      expect(chatActionCostLine({ fee: 0, skip: 1, total: 1 })).toBe('Costs 1 credit for the skip')
+    })
+
+    it('falls back to the 1-credit default when no cost is given', () => {
+      expect(chatActionCostLine(null)).toBe('Costs 1 credit')
     })
   })
 })

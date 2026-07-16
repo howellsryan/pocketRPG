@@ -59,17 +59,17 @@
 <body>
 <div id="stage"><canvas id="c"></canvas></div>
 <div id="panel">
-  <h1>3D Preview · Weapon Aligner</h1>
-  <p class="sub">Position a weapon in the hand, then copy the transform into the registry.</p>
+  <h1>3D Preview · Weapon & Gear Aligner</h1>
+  <p class="sub">Position a weapon or shield on the hero, then copy the transform into the registry. The offset is bone-relative, so it holds in every pose.</p>
 
   <div class="grp">
-    <label>Registry item</label>
+    <label>Registry item (weapons + gear/shields)</label>
     <select id="regItem"><option value="">(custom files)</option></select>
     <label>Character GLB</label>
     <input type="file" id="charFile" accept=".glb,.gltf">
-    <label>Weapon GLB</label>
+    <label>Weapon / gear GLB</label>
     <input type="file" id="weapFile" accept=".glb,.gltf">
-    <label>Attach weapon to</label>
+    <label>Attach to bone</label>
     <select id="bone"><option value="__root">(model root)</option></select>
   </div>
 
@@ -161,7 +161,13 @@ async function loadChar(url) {
     });
     if (gltf.animations.length) {
       mixer = new THREE.AnimationMixer(charRoot);
-      idleAction = mixer.clipAction(gltf.animations[0]);
+      // prefer the registry's idle clip so the hero drops out of T-pose into
+      // its in-game stance — a hand_l shield then reads next to the body
+      // instead of splayed out behind the panel
+      const idleName = registry?.character?.idleClip;
+      const clip = (idleName && gltf.animations.find(a => a.name === idleName)) || gltf.animations[0];
+      idleAction = mixer.clipAction(clip);
+      idleAction.play();
     }
     info.innerHTML = `char: ${Math.round(tris).toLocaleString()} tris · skinned:${skinned}` +
       `\nbones: ${Object.keys(bones).length}` +
@@ -204,15 +210,31 @@ function updateXform() {
     scale: r(+$('sc').value),
   };
   if (regItemId && registry) {
-    // Emit the full registry entry; collapse to { model } when the transform
-    // is exactly defaults.weapon + defaults.handBone (canonical import).
-    const d = registry.defaults || {}, dw = d.weapon || {};
+    // Emit the full registry entry; collapse to the canonical minimum when the
+    // transform is exactly the slot defaults. Existing `tint` is carried
+    // through so a copy-paste of the whole entry is lossless.
+    const d = registry.defaults || {};
+    if (regKind === 'gear') {
+      const src = registry.gear?.[regItemId] || {};
+      const dg = (d.gear || {})[regSlot] || {};
+      const matchesDefault = t.bone === (dg.bone ?? null) &&
+        JSON.stringify(t.position) === JSON.stringify(dg.position) &&
+        JSON.stringify(t.rotationDeg) === JSON.stringify(dg.rotationDeg) &&
+        t.scale === dg.scale;
+      const entry = matchesDefault ? { model: src.model, slot: regSlot } : { model: src.model, slot: regSlot, ...t };
+      if (src.tint) entry.tint = src.tint;
+      $('xform').textContent = JSON.stringify({ [regItemId]: entry }, null, 2) +
+        (matchesDefault ? `\n(matches defaults.gear.${regSlot} — canonical)` : '');
+      return { [regItemId]: entry };
+    }
+    const dw = d.weapon || {};
+    const src = registry.weapons?.[regItemId] || {};
     const matchesDefault = t.bone === (d.handBone ?? null) &&
       JSON.stringify(t.position) === JSON.stringify(dw.position) &&
       JSON.stringify(t.rotationDeg) === JSON.stringify(dw.rotationDeg) &&
       t.scale === dw.scale;
-    const model = registry.weapons?.[regItemId]?.model;
-    const entry = matchesDefault ? { model } : { model, ...t };
+    const entry = matchesDefault ? { model: src.model } : { model: src.model, ...t };
+    if (src.tint) entry.tint = src.tint;
     $('xform').textContent = JSON.stringify({ [regItemId]: entry }, null, 2) +
       (matchesDefault ? '\n(matches defaults.weapon — canonical)' : '');
     return { [regItemId]: entry };
@@ -221,8 +243,8 @@ function updateXform() {
   return t;
 }
 
-// ── Registry mode: pick a registered weapon, see exactly what ships ──
-let registry = null, regItemId = null, charFromRegistry = false;
+// ── Registry mode: pick a registered weapon/gear, see exactly what ships ──
+let registry = null, regItemId = null, regKind = 'weapon', regSlot = null, charFromRegistry = false;
 function registryUrl(model) {
   if (!model) return null;
   if (/^(https?:)?\/\//.test(model) || model.startsWith('/')) return model;
@@ -238,21 +260,40 @@ function resolveRegistryWeapon(id) {
     scale: typeof w.scale === 'number' ? w.scale : (typeof dw.scale === 'number' ? dw.scale : 1),
   };
 }
+function resolveRegistryGear(id) {
+  const g = registry.gear[id], slot = g.slot, dg = ((registry.defaults || {}).gear || {})[slot] || {};
+  return {
+    model: g.model, slot,
+    bone: g.bone === undefined ? (dg.bone || null) : g.bone,
+    position: g.position || dg.position || [0, 0, 0],
+    rotationDeg: g.rotationDeg || dg.rotationDeg || [0, 0, 0],
+    scale: typeof g.scale === 'number' ? g.scale : (typeof dg.scale === 'number' ? dg.scale : 1),
+  };
+}
 async function loadRegistry() {
   try {
     const res = await fetch('/src/data/equipmentModels.json', { cache: 'no-store' });
     if (!res.ok) return;
     registry = await res.json();
     const sel = $('regItem');
-    for (const id of Object.keys(registry.weapons || {})) {
-      const op = document.createElement('option'); op.value = id; op.textContent = id; sel.appendChild(op);
-    }
+    const group = (label, ids, prefix) => {
+      if (!ids.length) return;
+      const og = document.createElement('optgroup'); og.label = label;
+      for (const id of ids) { const op = document.createElement('option'); op.value = prefix + id; op.textContent = id; og.appendChild(op); }
+      sel.appendChild(og);
+    };
+    group('weapons', Object.keys(registry.weapons || {}), '');
+    group('gear / shields', Object.keys(registry.gear || {}), 'gear:');
   } catch { /* file-picker-only mode */ }
 }
 $('regItem').addEventListener('change', async () => {
-  regItemId = $('regItem').value || null;
-  if (!regItemId || !registry) { updateXform(); return; }
-  const spec = resolveRegistryWeapon(regItemId);
+  const raw = $('regItem').value || '';
+  if (!raw || !registry) { regItemId = null; updateXform(); return; }
+  const isGear = raw.startsWith('gear:');
+  regKind = isGear ? 'gear' : 'weapon';
+  regItemId = isGear ? raw.slice(5) : raw;
+  const spec = isGear ? resolveRegistryGear(regItemId) : resolveRegistryWeapon(regItemId);
+  regSlot = isGear ? spec.slot : null;
   if (!charFromRegistry && registry.character) {
     await loadChar(registryUrl(registry.character.model));
     charFromRegistry = true;

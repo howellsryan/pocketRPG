@@ -38,6 +38,7 @@ import {
   actionLabel,
   actionCreditCost,
   CHAT_ACTION_FEE,
+  isChatActionFeeEnabled,
   PENDING_CONFIRMATION_NOTE,
   SECONDARY_WRITE_NOTE,
 } from '../_lib/chat/actions.js'
@@ -56,7 +57,7 @@ import {
   SEARCH_TOOL_NAME,
   SEARCH_TOOLS_DEF,
   searchToolsByQuery,
-  SYSTEM_PROMPT,
+  buildSystemPrompt,
   chatToolDefs,
   buildMessages,
   retrievalOnlyAnswer,
@@ -546,9 +547,20 @@ async function resolveAnswer(env, { buildTranscript, characterId, authorization,
 }
 
 // Atomically debit the flat chatbot action fee (server-authoritative, same
-// credits column as skip-hour). Returns { ok, remaining }; ok:false = the
-// character can't afford it, so nothing runs.
+// credits column as skip-hour). Returns { ok, remaining, charged }; ok:false =
+// the character can't afford it, so nothing runs. When the fee is switched off
+// (CHAT_ACTION_FEE_ENABLED=false) nothing is debited — just the current
+// balance is read back — and `charged` is false so a later failure knows there
+// is nothing to refund.
 async function chargeActionFee(env, characterId, identityId) {
+  if (!isChatActionFeeEnabled(env)) {
+    const row = await env.DB.prepare(
+      `SELECT credits FROM characters WHERE id = ?1 AND owner_id = ?2 AND deleted_at IS NULL`,
+    )
+      .bind(characterId, identityId)
+      .first()
+    return row ? { ok: true, remaining: Number(row.credits) || 0, charged: false } : { ok: false }
+  }
   const debit = await env.DB.prepare(
     `UPDATE characters
      SET credits = credits - ?1, credits_used = credits_used + ?1
@@ -557,7 +569,7 @@ async function chargeActionFee(env, characterId, identityId) {
   )
     .bind(CHAT_ACTION_FEE, characterId, identityId)
     .first()
-  return debit ? { ok: true, remaining: debit.credits_remaining ?? 0 } : { ok: false }
+  return debit ? { ok: true, remaining: debit.credits_remaining ?? 0, charged: true } : { ok: false }
 }
 
 // Give the fee back when the action didn't actually run (a failed tool call), so
@@ -582,7 +594,7 @@ async function refundActionFee(env, characterId, identityId) {
 // is confirmed (see confirmAction).
 async function buildPendingAction(pendingWrite, { characterId, question, env }) {
   const label = actionLabel(pendingWrite.tool, pendingWrite.args)
-  const cost = actionCreditCost(pendingWrite.tool, pendingWrite.args)
+  const cost = actionCreditCost(pendingWrite.tool, pendingWrite.args, isChatActionFeeEnabled(env))
   const token = await signPendingAction({ tool: pendingWrite.tool, args: pendingWrite.args, characterId, question }, env.JWT_SECRET)
   return { token, label, cost }
 }
@@ -597,11 +609,15 @@ async function confirmAction({ env, authorization, identity, characterId, token 
     return json({ answer: "That action link has expired — just ask me again and I'll set it back up.", mode: 'action_expired' })
   }
 
+  const feeEnabled = isChatActionFeeEnabled(env)
+
   // No credit, no action — and crucially, no AI spend past this point.
   const fee = await chargeActionFee(env, characterId, identity.id)
   if (!fee.ok) {
     return json({
-      answer: `Running an action costs ${CHAT_ACTION_FEE} credit and you're out — top up credits in the shop, then ask me again.`,
+      answer: feeEnabled
+        ? `Running an action costs ${CHAT_ACTION_FEE} credit and you're out — top up credits in the shop, then ask me again.`
+        : "Something went wrong queuing that action — try again.",
       mode: 'action_no_credit',
     })
   }
@@ -613,7 +629,7 @@ async function confirmAction({ env, authorization, identity, characterId, token 
     result = { content: [{ type: 'text', text: `Error: ${String(err?.message || err)}` }], isError: true }
   }
   const isError = !!result?.isError
-  if (isError) await refundActionFee(env, characterId, identity.id)
+  if (isError && fee.charged) await refundActionFee(env, characterId, identity.id)
 
   // Re-read the true balance on success — the action may have spent more credits
   // than the fee (a boss/hour skip) — so the client can update the credits
@@ -628,8 +644,12 @@ async function confirmAction({ env, authorization, identity, characterId, token 
   const label = actionLabel(payload.tool, payload.args)
   // Let the summary state the fee (and remaining balance on success).
   const feeNote = isError
-    ? `The ${CHAT_ACTION_FEE}-credit action fee was refunded because the action failed.`
-    : `This cost ${CHAT_ACTION_FEE} credit (the assistant action fee); the player has ${creditsRemaining} credit(s) left afterwards.`
+    ? (feeEnabled
+        ? `The ${CHAT_ACTION_FEE}-credit action fee was refunded because the action failed.`
+        : 'No assistant fee was charged, and the action failed.')
+    : (feeEnabled
+        ? `This cost ${CHAT_ACTION_FEE} credit (the assistant action fee); the player has ${creditsRemaining} credit(s) left afterwards.`
+        : `No assistant fee was charged for this action; the player has ${creditsRemaining} credit(s).`)
 
   // On success, when the original ask is known, let the model continue with
   // the next step of that ask — still gated behind its own confirm, just
@@ -647,12 +667,12 @@ async function confirmAction({ env, authorization, identity, characterId, token 
       buildTranscript: () =>
         canChain
           ? [
-              { role: 'system', content: SYSTEM_PROMPT },
+              { role: 'system', content: buildSystemPrompt(feeEnabled) },
               { role: 'user', content: `Player asked: ${originalQuestion}` },
               { role: 'user', content: `${ACTION_CHAIN_PREFACE}\n${feeNote}\nAction just completed: ${label}\nResult JSON: ${resultText}` },
             ]
           : [
-              { role: 'system', content: SYSTEM_PROMPT },
+              { role: 'system', content: buildSystemPrompt(feeEnabled) },
               { role: 'user', content: `${ACTION_RESULT_PREFACE}\n${feeNote}\nAction: ${label}\nResult JSON: ${resultText}` },
             ],
       characterId,
@@ -671,8 +691,12 @@ async function confirmAction({ env, authorization, identity, characterId, token 
   }
   if (!answer) {
     answer = isError
-      ? `That didn't go through (your ${CHAT_ACTION_FEE} credit was refunded): ${resultText.replace(/^(Tool error|Error):\s*/, '')}`
-      : `Done — ${label}. That cost ${CHAT_ACTION_FEE} credit; you have ${creditsRemaining} left.`
+      ? (feeEnabled
+          ? `That didn't go through (your ${CHAT_ACTION_FEE} credit was refunded): ${resultText.replace(/^(Tool error|Error):\s*/, '')}`
+          : `That didn't go through: ${resultText.replace(/^(Tool error|Error):\s*/, '')}`)
+      : (feeEnabled
+          ? `Done — ${label}. That cost ${CHAT_ACTION_FEE} credit; you have ${creditsRemaining} left.`
+          : `Done — ${label}.`)
   }
 
   await auditLog(
@@ -774,7 +798,7 @@ export async function onRequestPost({ request, env }) {
   const sources = chunks.map((c) => ({ id: c.id, title: c.title }))
 
   const { answer: aiAnswer, pendingWrite, reason } = await resolveAnswer(env, {
-    buildTranscript: () => buildMessages({ question, history: body?.history, chunks }),
+    buildTranscript: () => buildMessages({ question, history: body?.history, chunks, feeEnabled: isChatActionFeeEnabled(env) }),
     characterId,
     authorization,
     identity: auth.identity,
