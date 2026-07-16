@@ -14,6 +14,7 @@ import { getPotionStatBoost, getActivePotionBoosts } from './consumables.js'
 import { applyPrayerDrainTick } from './prayerDrain.js'
 import { getCombatSetMultipliers } from './combatSetBonuses.js'
 import { getMonsterSeedDrops } from './seedDrops.js'
+import { resolveSpecialEnergyCost, canAffordSpecialAttack } from './specialAttackEnergy.js'
 
 
 function getAvasAmmoSaveChance(equipment) {
@@ -505,9 +506,9 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
           }
           // Check if we still have enough energy before firing
           const currentEnergy = state.specialAttackEnergy || 0
-          if (currentEnergy >= weapon.specialAttack.energyCost) {
+          if (canAffordSpecialAttack(weapon.specialAttack, currentEnergy)) {
             // Drain energy when special attack actually fires
-            state.specialAttackEnergy = Math.max(0, currentEnergy - weapon.specialAttack.energyCost)
+            state.specialAttackEnergy = Math.max(0, currentEnergy - resolveSpecialEnergyCost(weapon.specialAttack, currentEnergy))
             // Check form immunity before firing (e.g. Hellbound Gorilla)
             const specImmunity = getFormImmunity(monster)
             if (specImmunity && specImmunity === state.combatType) {
@@ -520,7 +521,7 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
               state.monster = monster
               return { combatState: state, events }
             }
-            const { combatState: newState, events: specEvents } = applySpecialAttack(state, playerStats, equipment, itemsData, slayerTask)
+            const { combatState: newState, events: specEvents } = applySpecialAttack(state, boostedPlayerStats, equipment, itemsData, slayerTask)
             // Merge events from special attack
             for (const ev of specEvents) {
               events.push(ev)
@@ -1225,6 +1226,26 @@ export function applySpecialAttack(combatState, playerStats, equipment, itemsDat
       _accXP(state, xpSkills)
       events.push({ type: 'xp', xpSkills })
       events.push({ type: 'specialHit', hits: [damage], totalDamage: actual, specType: 'zero_defence', monsterHP: monster.currentHP })
+      break
+    }
+
+    case 'disrupt': {
+      // Zul-Kaar's Blade — guaranteed Magic damage, 50-150% of max melee hit, nullified by magic immunity
+      const styleBonuses = getMeleeStyleBonuses(state.stance)
+      const effStr = effectiveStrength(playerStats.strength, 0, 1.0, styleBonuses.strengthStyleBonus)
+      const maxMelee = meleeMaxHit(effStr, bonuses.otherBonus.meleeStrength)
+      const magicImmune = monster.magicImmune === true || getFormImmunity(monster) === 'magic'
+      if (magicImmune) {
+        events.push({ type: 'immuneHit', immunity: 'magic', monsterName: monster.name })
+        break
+      }
+      const damage = Math.floor(maxMelee * (0.5 + Math.random()))
+      const actual = Math.min(damage, Math.max(0, monster.currentHP))
+      monster.currentHP -= actual
+      const xpSkills = actual > 0 ? { magic: actual * 2 } : {}
+      _accXP(state, xpSkills)
+      events.push({ type: 'xp', xpSkills })
+      events.push({ type: 'specialHit', hits: [damage], totalDamage: actual, specType: 'disrupt', monsterHP: monster.currentHP })
       break
     }
 

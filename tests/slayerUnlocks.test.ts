@@ -22,3 +22,48 @@ describe('slayer unlocks', () => {
     expect(state.allowed).toBe(true)
   })
 })
+
+describe("Zul-Kaar's Blade unlock", () => {
+  const unlock = SLAYER_UNLOCKS.find(u => u.itemId === 'zul_kaars_blade')!
+  const item = (itemsData as any)[unlock.itemId]
+
+  // TEMP: cost/requirement dropped to 10 points / 1 completion for live
+  // testing on the branch preview — revert these assertions to 2500 / 25
+  // alongside slayerUnlocks.js before this PR merges.
+  it('is registered with the correct cost and a 1-completion Zul-Kaar gate', () => {
+    expect(unlock.cost).toBe(10)
+    expect(unlock.requiresMasterCompletions).toEqual({ masterId: 'zul_kaar', count: 1 })
+  })
+
+  it('rejects the purchase below 1 Zul-Kaar completion even with sufficient points', () => {
+    const state = getSlayerUnlockPurchaseState({
+      unlock, item, slayerPoints: unlock.cost, bank: {}, inventory: [],
+      masterTaskCompletions: { zul_kaar: 0 },
+    })
+    expect(state.allowed).toBe(false)
+    expect(state.code).toBe('MASTER_COMPLETIONS_REQUIRED')
+  })
+
+  it('rejects the purchase when masterTaskCompletions is omitted entirely (defaults to 0)', () => {
+    const state = getSlayerUnlockPurchaseState({ unlock, item, slayerPoints: unlock.cost, bank: {}, inventory: [] })
+    expect(state.allowed).toBe(false)
+    expect(state.code).toBe('MASTER_COMPLETIONS_REQUIRED')
+  })
+
+  it('allows the purchase at exactly 1 completion with sufficient points', () => {
+    const state = getSlayerUnlockPurchaseState({
+      unlock, item, slayerPoints: unlock.cost, bank: {}, inventory: [],
+      masterTaskCompletions: { zul_kaar: 1 },
+    })
+    expect(state.allowed).toBe(true)
+  })
+
+  it('still enforces the points check once the completion gate is satisfied', () => {
+    const state = getSlayerUnlockPurchaseState({
+      unlock, item, slayerPoints: 1, bank: {}, inventory: [],
+      masterTaskCompletions: { zul_kaar: 1 },
+    })
+    expect(state.allowed).toBe(false)
+    expect(state.code).toBe('INSUFFICIENT_SLAYER_POINTS')
+  })
+})

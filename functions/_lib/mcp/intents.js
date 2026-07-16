@@ -1413,6 +1413,14 @@ export function runCombatTask(save, task, elapsedMs) {
       save.settings.slayerTasksCompleted = reward.totalTasks
       save.settings.slayerPoints = (Number(save.settings.slayerPoints) || 0) + reward.pointsEarned
       save.settings.slayerTask = null
+      const completedMasterId = task.slayerTask.masterId
+      if (completedMasterId) {
+        if (!save.settings.slayerMasterTaskCompletions || typeof save.settings.slayerMasterTaskCompletions !== 'object') {
+          save.settings.slayerMasterTaskCompletions = {}
+        }
+        save.settings.slayerMasterTaskCompletions[completedMasterId] =
+          (Number(save.settings.slayerMasterTaskCompletions[completedMasterId]) || 0) + 1
+      }
       slayerCredit = { completed: true, pointsEarned: reward.pointsEarned, totalSlayerPoints: save.settings.slayerPoints }
     } else {
       save.settings.slayerTask = sim.slayerTaskUpdate
@@ -1516,7 +1524,7 @@ export function assignSlayerTask(save, masterId, options = {}) {
   if (!pick) {
     throw new GameApiError('NO_SLAYER_TASK', `${master.name} has no eligible task for slayer level ${slayerLevel} and your completed quests. Raise slayer, finish required quests, or pick another master.`, 400)
   }
-  const task = buildSlayerTask(master, pick.monsterId, pick.isBoss, options)
+  const task = buildSlayerTask(master, pick.monsterId, pick.isBoss, { ...options, entry: pick.entry })
   save.settings.slayerTask = task
   return {
     action: 'assign_slayer_task',

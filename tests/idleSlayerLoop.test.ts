@@ -70,6 +70,9 @@ describe('simulateIdleCombatChain', () => {
     // finalTaskMonster is idleable (non-boss) so live play can continue on-task.
     expect(sim!.finalTaskMonster).toBeTruthy()
     expect(sim!.finalTaskMonster.boss).not.toBe(true)
+    // Every completion carries the assigning master's id (needed to credit
+    // per-master task-completion counters, e.g. the Zul-Kaar's Blade unlock gate).
+    for (const completion of sim!.slayerCompletions) expect(completion.masterId).toBe('turael')
   })
 
   it('earns more total slayer XP than a single non-chained task over the same window', () => {

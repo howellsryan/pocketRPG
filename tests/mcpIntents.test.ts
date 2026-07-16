@@ -532,6 +532,38 @@ describe('combat intents — slayer task credit', () => {
     // Slayer task settings unchanged
     expect(save.settings.slayerTask.monstersRemaining).toBe(500)
   })
+
+  it('runCombatTask increments settings.slayerMasterTaskCompletions[masterId] on completion (MCP idle path parity)', () => {
+    const save = slayerSave({
+      settings: {
+        currentHP: 73,
+        idleCombatSetup: { food: [], potions: [], prayers: {} },
+        slayerPoints: 10,
+        slayerTasksCompleted: 4,
+        slayerMasterTaskCompletions: { turael: 2 },
+        slayerTask: { monsterId: 'field_chicken', monsterName: 'Field Chicken', monstersRemaining: 1, totalCount: 10, masterId: 'turael', pointsOnComplete: 1, isBoss: false },
+      },
+    })
+    const task = buildCombatTask(save, 'field_chicken', undefined)
+    const r = runCombatTask(save, task, 60_000)
+    expect(r.slayerTask?.completed).toBe(true)
+    expect(save.settings.slayerMasterTaskCompletions.turael).toBe(3)
+  })
+
+  it('runCombatTask starts slayerMasterTaskCompletions from scratch when absent', () => {
+    const save = slayerSave({
+      settings: {
+        currentHP: 73,
+        idleCombatSetup: { food: [], potions: [], prayers: {} },
+        slayerPoints: 10,
+        slayerTasksCompleted: 4,
+        slayerTask: { monsterId: 'field_chicken', monsterName: 'Field Chicken', monstersRemaining: 1, totalCount: 10, masterId: 'turael', pointsOnComplete: 1, isBoss: false },
+      },
+    })
+    const task = buildCombatTask(save, 'field_chicken', undefined)
+    runCombatTask(save, task, 60_000)
+    expect(save.settings.slayerMasterTaskCompletions).toEqual({ turael: 1 })
+  })
 })
 
 describe('clue intents', () => {
@@ -1077,6 +1109,21 @@ describe('slayer intents', () => {
 
   it('rejects an unknown master', () => {
     expect(() => assignSlayerTask(maxedSlayer(), 'not_a_master', det())).toThrow(/No slayer master/i)
+  })
+
+  it("rolls a Zul-Kaar raid-proxy task in the entry's [2,10] override range, not the master's [5,50] bossTaskRange", () => {
+    // rng≈1 selects the last eligible pool entry (a RAID_TASK_META raid-proxy,
+    // appended after the plain boss entries) and the top of whichever task
+    // range applies to the quantity roll. This is the regression for the
+    // one-line `entry: pick.entry` fix in assignSlayerTask — without it,
+    // buildSlayerTask ignores the entry's taskRange override and falls back to
+    // Zul-Kaar's bossTaskRange [5,50], so totalCount would land at 50, not 10.
+    const save = maxedSlayer()
+    const r = assignSlayerTask(save, 'zul_kaar', { rng: () => 0.999999, history: new Map() })
+    expect(r.master.id).toBe('zul_kaar')
+    expect(r.task.totalCount).toBeGreaterThanOrEqual(2)
+    expect(r.task.totalCount).toBeLessThanOrEqual(10)
+    expect(save.settings.slayerTask.totalCount).toBe(r.task.totalCount)
   })
 
   it('summarises current task, points and master eligibility', () => {

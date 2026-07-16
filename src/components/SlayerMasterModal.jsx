@@ -4,7 +4,7 @@ import { api, getToken, getCharacterId, CREDITS_UPDATED_EVENT } from '../cloud/a
 import { requestCriticalPushSave } from '../cloud/sync.js'
 import { CRITICAL_SAVE_REASONS } from '../cloud/criticalSavePolicy.js'
 import { SLAYER_TASK_SKIP_POINT_COST } from '../engine/slayerTasks.js'
-import { SLAYER_MASTERS, resolveTaskMonsterIds, pickSlayerMonster, buildSlayerTask } from '../engine/slayerMasters.js'
+import { SLAYER_MASTERS, RAID_TASK_META, resolveTaskMonsterIds, pickSlayerMonster, buildSlayerTask } from '../engine/slayerMasters.js'
 import { getLevelFromXP } from '../engine/experience.js'
 import monstersData from '../data/monsters.json'
 import GameIcon from './GameIcon.jsx'
@@ -26,6 +26,7 @@ export default function SlayerMasterModal({ masterId, onClose, onGetTask, onSlay
 
   const hasTask = !!slayerTask
   const canAffordPoints = slayerPoints >= SLAYER_TASK_SKIP_POINT_COST
+  const isRaidTask = hasTask && !!RAID_TASK_META[slayerTask.monsterId]
 
   // Assign a task inline so we stay in this modal on the world map. onGetTask is
   // the world-map travel gate: true → we're at the master (assign now); false →
@@ -122,7 +123,7 @@ export default function SlayerMasterModal({ masterId, onClose, onGetTask, onSlay
             onClick={slay}
             class="flex items-center justify-center gap-1.5 min-h-[52px] px-4 rounded-xl bg-[var(--color-gold)] text-black font-bold text-sm uppercase tracking-wider active:opacity-80"
           >
-            ⚔️ Slay
+            {isRaidTask ? '⚔️ Enter Raid' : '⚔️ Slay'}
           </button>
         )}
 

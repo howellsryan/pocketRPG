@@ -79,6 +79,7 @@ export function GameProvider({ children }) {
   const [slayerTask, setSlayerTaskState] = useState(null)
   const [slayerPoints, setSlayerPointsState] = useState(0)
   const [slayerTasksCompleted, setSlayerTasksCompletedState] = useState(0)
+  const [slayerMasterTaskCompletions, setSlayerMasterTaskCompletionsState] = useState({})
   const [dungeoneeringTokens, setDungeoneeringTokensState] = useState(0)
   const [slayerPerks, setSlayerPerksState] = useState({ doubleQuantity: false })
   const [characterUnlocks, setCharacterUnlocksState] = useState({ doubleSlayerXp: false, autoSlayerTask: false })
@@ -133,6 +134,7 @@ export function GameProvider({ children }) {
   const slayerPointsRef = useRef(0)
   const dungeoneeringTokensRef = useRef(0)
   const slayerTasksCompletedRef = useRef(0)
+  const slayerMasterTaskCompletionsRef = useRef({})
   const slayerPerksRef = useRef({ doubleQuantity: false })
   const characterUnlocksRef = useRef({ doubleSlayerXp: false, autoSlayerTask: false })
   const completedQuestsRef = useRef(new Set())
@@ -159,14 +161,15 @@ export function GameProvider({ children }) {
   useEffect(() => { slayerPointsRef.current = normalisePointCurrency(slayerPoints) }, [slayerPoints])
   useEffect(() => { dungeoneeringTokensRef.current = dungeoneeringTokens }, [dungeoneeringTokens])
   useEffect(() => { slayerTasksCompletedRef.current = Math.max(0, Math.floor(Number(slayerTasksCompleted) || 0)) }, [slayerTasksCompleted])
+  useEffect(() => { slayerMasterTaskCompletionsRef.current = (slayerMasterTaskCompletions && typeof slayerMasterTaskCompletions === 'object') ? slayerMasterTaskCompletions : {} }, [slayerMasterTaskCompletions])
 
   // Load all state from IndexedDB — runs idle simulation inline, returns idleResult
   const loadGame = useCallback(async () => {
-    let [p, s, inv, eq, b, shortcuts, stance, savedHP, autoBankSetting, savedBankConfig, savedEquipmentPresets, savedUnlocks, savedSlayerTask, savedSlayerPoints, savedSlayerTasksCompleted, savedDungeoneeringTokens, savedBossKillCounts, savedRaidKillCounts, savedFarming, savedCompletedQuests, savedQuestQueue, savedActiveCombatSpell, savedUnlockedMinigameItems, savedIdleCombatSetup, savedSlayerPerks, savedCharacterUnlocks, savedShowInfoToasts, savedWorldLocation, savedAutoBankExcludedItems] = await Promise.all([
+    let [p, s, inv, eq, b, shortcuts, stance, savedHP, autoBankSetting, savedBankConfig, savedEquipmentPresets, savedUnlocks, savedSlayerTask, savedSlayerPoints, savedSlayerTasksCompleted, savedSlayerMasterTaskCompletions, savedDungeoneeringTokens, savedBossKillCounts, savedRaidKillCounts, savedFarming, savedCompletedQuests, savedQuestQueue, savedActiveCombatSpell, savedUnlockedMinigameItems, savedIdleCombatSetup, savedSlayerPerks, savedCharacterUnlocks, savedShowInfoToasts, savedWorldLocation, savedAutoBankExcludedItems] = await Promise.all([
       getPlayer(), getAllStats(), getInventory(), getEquipment(), getBank(),
       getSetting('homeShortcuts'), getSetting('combatStance'), getSetting('currentHP'),
       getSetting('autoBankLoot'), getSetting('bankConfig'), getSetting('equipmentPresets'), getSetting('unlockedFeatures'),
-      getSetting('slayerTask'), getSetting('slayerPoints'), getSetting('slayerTasksCompleted'), getSetting('dungeoneeringTokens'), getSetting('bossKillCounts'), getSetting('raidKillCounts'), getSetting('farming'),
+      getSetting('slayerTask'), getSetting('slayerPoints'), getSetting('slayerTasksCompleted'), getSetting('slayerMasterTaskCompletions'), getSetting('dungeoneeringTokens'), getSetting('bossKillCounts'), getSetting('raidKillCounts'), getSetting('farming'),
       getSetting('completedQuests'), getSetting('questQueue'), getSetting('activeCombatSpell'), getSetting('unlockedMinigameItems'),
       getSetting('idleCombatSetup'), getSetting('slayerPerks'), getSetting('characterUnlocks'),
       getSetting('showInfoToasts'), getSetting('worldLocation'), getSetting('autoBankExcludedItems')
@@ -185,6 +188,7 @@ export function GameProvider({ children }) {
     savedDungeoneeringTokens = normaliseDungeoneeringTokens(savedDungeoneeringTokens)
     savedSlayerPoints = normalisePointCurrency(savedSlayerPoints)
     savedSlayerTasksCompleted = Math.max(0, Math.floor(Number(savedSlayerTasksCompleted) || 0))
+    savedSlayerMasterTaskCompletions = (savedSlayerMasterTaskCompletions && typeof savedSlayerMasterTaskCompletions === 'object') ? savedSlayerMasterTaskCompletions : {}
     // Idle-engine inputs: last active timestamp and last active task.
     // D1 is authoritative when signed in + online — localStorage is only used
     // as an offline-mode fallback (and as a backup when the D1 fetch fails).
@@ -383,6 +387,12 @@ export function GameProvider({ children }) {
             await saveSetting('slayerTask', sim.slayerTaskUpdate || null)
             savedSlayerPoints = newSlayerPoints
             savedSlayerTasksCompleted = loop.totalTasks
+            for (const completion of sim.slayerCompletions) {
+              if (completion.masterId) {
+                savedSlayerMasterTaskCompletions = { ...savedSlayerMasterTaskCompletions, [completion.masterId]: (savedSlayerMasterTaskCompletions[completion.masterId] || 0) + 1 }
+              }
+            }
+            await saveSetting('slayerMasterTaskCompletions', savedSlayerMasterTaskCompletions)
           } else if (savedTask.type === 'combat' && sim.slayerTaskUpdate) {
             if (sim.slayerTaskUpdate.completed) {
               // Task complete — clear it and award points
@@ -393,6 +403,10 @@ export function GameProvider({ children }) {
               await saveSetting('slayerTasksCompleted', reward.totalTasks)
               savedSlayerPoints = newSlayerPoints
               savedSlayerTasksCompleted = reward.totalTasks
+              if (savedSlayerTask?.masterId) {
+                savedSlayerMasterTaskCompletions = { ...savedSlayerMasterTaskCompletions, [savedSlayerTask.masterId]: (savedSlayerMasterTaskCompletions[savedSlayerTask.masterId] || 0) + 1 }
+                await saveSetting('slayerMasterTaskCompletions', savedSlayerMasterTaskCompletions)
+              }
             } else {
               // Task in progress — update monstersRemaining
               await saveSetting('slayerTask', sim.slayerTaskUpdate)
@@ -631,9 +645,11 @@ export function GameProvider({ children }) {
     slayerTaskRef.current = finalSlayerTask
     slayerPointsRef.current = normalisePointCurrency(savedSlayerPoints)
     slayerTasksCompletedRef.current = savedSlayerTasksCompleted
+    slayerMasterTaskCompletionsRef.current = (savedSlayerMasterTaskCompletions && typeof savedSlayerMasterTaskCompletions === 'object') ? savedSlayerMasterTaskCompletions : {}
     setSlayerTaskState(finalSlayerTask)
     setSlayerPointsState(slayerPointsRef.current)
     setSlayerTasksCompletedState(slayerTasksCompletedRef.current)
+    setSlayerMasterTaskCompletionsState(slayerMasterTaskCompletionsRef.current)
     setDungeoneeringTokensState(savedDungeoneeringTokens)
     setActiveCombatSpellState(savedActiveCombatSpell ?? null)
     setBossKillCountsState(savedBossKillCounts ?? {})
@@ -1195,6 +1211,7 @@ export function GameProvider({ children }) {
       slayerTask: slayerTaskRef.current,
       slayerPoints: slayerPointsRef.current,
       slayerTasksCompleted: slayerTasksCompletedRef.current,
+      slayerMasterTaskCompletions: slayerMasterTaskCompletionsRef.current,
       dungeoneeringTokens: dungeoneeringTokensRef.current,
       bossKillCounts,
       raidKillCounts,
@@ -1444,6 +1461,28 @@ export function GameProvider({ children }) {
       slayerTasksCompletedRef.current = v
       setSlayerTasksCompletedState(v)
       saveSetting('slayerTasksCompleted', v)
+    },
+    slayerMasterTaskCompletions,
+    // Callers just want "add N completions for master X" — reading/merging the
+    // current map themselves would race the ref on rapid-fire calls.
+    incrementSlayerMasterTaskCompletions: (masterId, count = 1) => {
+      if (!masterId) return
+      const n = Math.max(0, Math.floor(Number(count) || 0))
+      if (n <= 0) return
+      const current = slayerMasterTaskCompletionsRef.current || {}
+      const have = Math.max(0, Math.floor(Number(current[masterId]) || 0))
+      const next = { ...current, [masterId]: have + n }
+      slayerMasterTaskCompletionsRef.current = next
+      setSlayerMasterTaskCompletionsState(next)
+      saveSetting('slayerMasterTaskCompletions', next)
+    },
+    setSlayerMasterTaskCompletions: (nextOrFn) => {
+      const current = slayerMasterTaskCompletionsRef.current || {}
+      const resolved = typeof nextOrFn === 'function' ? nextOrFn(current) : nextOrFn
+      const next = (resolved && typeof resolved === 'object') ? resolved : {}
+      slayerMasterTaskCompletionsRef.current = next
+      setSlayerMasterTaskCompletionsState(next)
+      saveSetting('slayerMasterTaskCompletions', next)
     },
     dungeoneeringTokens, awardDungeoneeringTokens, trySpendDungeoneeringTokens,
     activeCombatSpell, updateActiveCombatSpell,

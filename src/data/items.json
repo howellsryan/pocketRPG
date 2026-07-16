@@ -10395,6 +10395,48 @@
     "isGeneralStore": false,
     "isBossUnique": true
   },
+  "zul_kaars_blade": {
+    "id": "zul_kaars_blade",
+    "name": "Zul-Kaar's Blade",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": false,
+    "stackable": false,
+    "attackSpeed": 4,
+    "attackStyle": "slash",
+    "attackBonus": {
+      "stab": 55,
+      "slash": 94,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 89,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "attack": 80
+    },
+    "shopValue": 5000000,
+    "icon": "\ud83d\udde1\ufe0f",
+    "isGeneralStore": false,
+    "isBossUnique": false,
+    "isUntradeable": true,
+    "specialAttack": {
+      "type": "disrupt",
+      "energyCost": 50,
+      "description": "Disrupt: consumes 50% special energy. Deals guaranteed Magic damage (50-150% of max melee hit). Grants 2 Magic XP per damage dealt. Nullified against magic-immune monsters."
+    }
+  },
   "scythe_of_vythar": {
     "id": "scythe_of_vythar",
     "legacy_item_id": "scythe_of_vitur",

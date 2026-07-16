@@ -29,6 +29,8 @@ import { getAgilityBankDelayMs, formatBankDelay } from '../engine/agility.js'
 import { onTick, pauseTicks, resumeTicks } from '../engine/tick.js'
 import { addItem, removeItem, freeSlots } from '../engine/inventory.js'
 import { getCombatType, resolveMagicSpell, equipItem, checkEquipRequirements, placeUnequippedItems } from '../engine/equipment.js'
+import { RAID_TASK_META } from '../engine/slayerMasters.js'
+import { resolveSpecialEnergyCost, canAffordSpecialAttack, formatSpecialEnergyCostLabel } from '../engine/specialAttackEnergy.js'
 import { api, getToken, getCharacterId, getOneLifeMode, isDemoMode } from '../cloud/api.js'
 import { pullSave, applyCloudSave, requestCriticalPushSave, pushNow } from '../cloud/sync.js'
 import { pvpApi } from '../cloud/pvp.js'
@@ -298,7 +300,7 @@ function MonsterPhaseStats({ monster }) {
 }
 
 export default function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onCombatStatusChange, onBack, onStopBack, dungeonPlaceId }) {
-  const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, updateEquipment, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, idleCombatSetup, updateIdleCombatSetup, homeShortcuts, updateHomeShortcuts, setActiveTask, requestActivityStart, slayerTask, setSlayerTask, awardSlayerPoints, slayerTasksCompleted, setSlayerTasksCompleted, activeCombatSpell, updateActiveCombatSpell, bossKillCounts, updateBossKillCounts, raidKillCounts, updateRaidKillCounts, unlockedFeatures, completedQuests, isOneLife, isIronman, revertOneLifeMode, getSnapshot, loadGame, combatSkipHandlerRef, skipHourHandlerRef, chargeSkipRef, raidSkipHandlerRef, lockGame, unlockGame, resolveCombatCompletion, characterUnlocks, killCountsLoaded, recordGameEvent, worldLocation } = useGame()
+  const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, updateEquipment, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, idleCombatSetup, updateIdleCombatSetup, homeShortcuts, updateHomeShortcuts, setActiveTask, requestActivityStart, slayerTask, setSlayerTask, awardSlayerPoints, slayerTasksCompleted, setSlayerTasksCompleted, incrementSlayerMasterTaskCompletions, activeCombatSpell, updateActiveCombatSpell, bossKillCounts, updateBossKillCounts, raidKillCounts, updateRaidKillCounts, unlockedFeatures, completedQuests, isOneLife, isIronman, revertOneLifeMode, getSnapshot, loadGame, combatSkipHandlerRef, skipHourHandlerRef, chargeSkipRef, raidSkipHandlerRef, lockGame, unlockGame, resolveCombatCompletion, characterUnlocks, killCountsLoaded, recordGameEvent, worldLocation } = useGame()
   const pvp = usePvp()
   // Offline demo: bosses, raids and PvP are locked (server-authoritative).
   const isDemo = isDemoMode() && !(getToken() && getCharacterId())
@@ -640,7 +642,8 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             molten_crush: ev.defenceReducedBy > 0 ? `🌋 Molten Crush (-${ev.defenceReducedBy} Defence)` : '🌋 Molten Crush',
             volley: '🌿🌿🌿 Volley',
             soul_drain: ev.prayerRestored > 0 ? `🌑 Soul Drain (+${ev.prayerRestored} Prayer)` : '🌑 Soul Drain',
-            volatile_surge: '🌩️ Volatile Surge'
+            volatile_surge: '🌩️ Volatile Surge',
+            disrupt: '🌋 Disrupt'
           }
           const label = specLabels[ev.specType] || '⚡ Special Attack'
           setLog(prev => [...prev.slice(-20), {
@@ -966,10 +969,17 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
 
           // Slayer task tracking
           const task = slayerTaskRef.current
-          if (task && defeatedMonsterId && doesSlayerTaskMatchMonster(task.monsterId, defeatedMonsterId)) {
+          // Raid-completion proxy tasks (RAID_TASK_META) only credit progress on the
+          // raid-complete kill event (ev.fromRaidCompletion) — a matching-id kill from
+          // any other path (there shouldn't be one; the raid final bosses aren't placed
+          // standalone) is ignored as defense-in-depth alongside the Slay-button routing
+          // fix in SlayerScreen/WorldMapScreen.
+          const isRaidTaskMonster = task && RAID_TASK_META[task.monsterId]
+          const raidTaskCreditBlocked = isRaidTaskMonster && ev.fromRaidCompletion !== true
+          if (task && defeatedMonsterId && !raidTaskCreditBlocked && doesSlayerTaskMatchMonster(task.monsterId, defeatedMonsterId)) {
             // Active combat does not flow through the idle-engine slayer XP handler.
             // Grant XP on the live kill event so active and idle kills stay consistent.
-            const xpForKill = getSlayerTaskXpForKill(defeatedMonster, state.monster, monstersData, { doubleXp: characterUnlocks?.doubleSlayerXp })
+            const xpForKill = getSlayerTaskXpForKill(defeatedMonster, state.monster, monstersData, { doubleXp: characterUnlocks?.doubleSlayerXp, flatXp: RAID_TASK_META[task.monsterId]?.flatSlayerXp })
             slayerXpGained += xpForKill
             if (xpForKill > 0) {
               grantXP('slayer', xpForKill)
@@ -985,6 +995,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
               setSlayerTask(null)
               const reward = getSlayerTaskReward(slayerResult.pointsAwarded, slayerTasksCompleted)
               setSlayerTasksCompleted(reward.totalTasks)
+              if (task.masterId) incrementSlayerMasterTaskCompletions(task.masterId, 1)
               if (reward.pointsEarned > 0) {
                 awardSlayerPoints(reward.pointsEarned)
               }
@@ -1508,7 +1519,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     if (!weapon?.specialAttack) return
 
     const energy = combatRef.current.specialAttackEnergy || 0
-    if (energy < weapon.specialAttack.energyCost) return
+    if (!canAffordSpecialAttack(weapon.specialAttack, energy)) return
 
     // Scale-charged weapons must have at least one charge to fire a spec
     if (weapon.scaleCharged && (weaponEntry.charges || 0) <= 0) {
@@ -2559,7 +2570,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             const weapon = weaponEntry ? itemsData[weaponEntry.itemId] : null
             const hasSpec = weapon?.specialAttack
             const energy = combat.specialAttackEnergy || 0
-            const canSpec = hasSpec && energy >= weapon.specialAttack.energyCost
+            const canSpec = hasSpec && canAffordSpecialAttack(weapon.specialAttack, energy)
             const isMagic = weapon?.attackStyle === 'magic'
             return (
               <>
@@ -2736,7 +2747,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
         const weapon = weaponEntry ? itemsData[weaponEntry.itemId] : null
         if (!weapon?.specialAttack) return null
         const energy = combat.specialAttackEnergy || 0
-        const canSpec = energy >= weapon.specialAttack.energyCost
+        const canSpec = canAffordSpecialAttack(weapon.specialAttack, energy)
         return (
           <div class="mb-2 bg-[var(--color-void)] rounded-lg px-3 py-2">
             <div class="flex items-center justify-between mb-1">
@@ -2750,7 +2761,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
               />
             </div>
             <div class="text-[9px] text-[var(--color-parchment)] opacity-40 mt-0.5">
-              {weapon.specialAttack.energyCost}% cost · refills on kill
+              {formatSpecialEnergyCostLabel(weapon.specialAttack)} · refills on kill
             </div>
           </div>
         )
@@ -2802,7 +2813,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           const weapon = weaponEntry ? itemsData[weaponEntry.itemId] : null
           const hasSpec = weapon?.specialAttack
           const energy = combat.specialAttackEnergy || 0
-          const canSpec = hasSpec && energy >= weapon.specialAttack.energyCost
+          const canSpec = hasSpec && canAffordSpecialAttack(weapon.specialAttack, energy)
           const isMagic = weapon?.attackStyle === 'magic'
 
           const eatBtn = (
@@ -3009,7 +3020,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                 const weapon = weaponEntry ? itemsData[weaponEntry.itemId] : null
                 const hasSpec = !!weapon?.specialAttack
                 const energy = combat.specialAttackEnergy || 0
-                const canSpec = hasSpec && energy >= weapon.specialAttack.energyCost
+                const canSpec = hasSpec && canAffordSpecialAttack(weapon.specialAttack, energy)
                 const specQueued = !!combat?.specialAttackQueued
                 const isMagic = weapon?.attackStyle === 'magic'
                 const prayerActive = !!(combat?.activeProtectionPrayer || combat?.activeCombatPrayer)

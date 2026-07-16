@@ -14,6 +14,15 @@ export const SLAYER_UNLOCKS = [
     cost: 1500,
     description: 'Slayer gloves that grant +5 accuracy and +5 max damage against your assigned Slayer task.',
   },
+  {
+    // TEMP: cost/requirement dropped to 10 points / 1 completion for live
+    // testing on the branch preview — revert to cost: 2500, count: 25 before
+    // this PR merges.
+    itemId: 'zul_kaars_blade',
+    cost: 10,
+    description: 'A blade forged in raid-hardened obsidian. Special: Disrupt.',
+    requiresMasterCompletions: { masterId: 'zul_kaar', count: 1 },
+  },
 ]
 
 export function ownsItem({ itemId, bank = {}, inventory = [] }) {
@@ -21,10 +30,17 @@ export function ownsItem({ itemId, bank = {}, inventory = [] }) {
   return inventory.some(slot => slot?.itemId === itemId && (slot.quantity ?? 1) > 0)
 }
 
-export function getSlayerUnlockPurchaseState({ unlock, item, slayerPoints, bank, inventory }) {
+export function getSlayerUnlockPurchaseState({ unlock, item, slayerPoints, bank, inventory, masterTaskCompletions = {} }) {
   if (!unlock || !item) return { allowed: false, code: 'ITEM_NOT_FOUND', message: 'Item not found' }
   if (ownsItem({ itemId: unlock.itemId, bank, inventory })) {
     return { allowed: false, code: 'ALREADY_OWNED', message: `You already own a ${item.name}` }
+  }
+  if (unlock.requiresMasterCompletions) {
+    const { masterId, count } = unlock.requiresMasterCompletions
+    const have = Math.max(0, Math.floor(Number(masterTaskCompletions?.[masterId]) || 0))
+    if (have < count) {
+      return { allowed: false, code: 'MASTER_COMPLETIONS_REQUIRED', message: `Requires ${count} Zul-Kaar task completions (${have}/${count})` }
+    }
   }
   if (slayerPoints < unlock.cost) {
     return { allowed: false, code: 'INSUFFICIENT_SLAYER_POINTS', message: `Need ${unlock.cost} slayer points` }
