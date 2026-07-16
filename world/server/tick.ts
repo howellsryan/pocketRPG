@@ -241,6 +241,12 @@ function startInteract(player: TickPlayer, ctx: TickContext, result: TickResult)
   if (intent.kind === 'npc' && intent.action === 'attack') {
     const npc = ctx.npcs?.get(intent.id)
     if (!npc || npc.state === 'dead') return
+    // Already fighting this exact npc: stepCombat (called later this same tick)
+    // continues the live session. Re-arming pendingInteract every re-click
+    // otherwise re-runs this branch each tick, and startCombat always builds a
+    // fresh engine state (attack timer reset to 0) — a free instant hit that
+    // defeats WorldZone.handleInteract's keepCombat preservation.
+    if (player.combat?.npcId === npc.id) return
     const range = playerAttackRange(player)
     if (withinRange(player, npc, range)) {
       startCombat(player, npc, result)

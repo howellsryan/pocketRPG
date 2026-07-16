@@ -32,7 +32,7 @@ import { BURY_XP, healAmount, primaryInvAction } from '../shared/itemActions'
 import { checkEquipRequirements, equipItem, placeUnequippedItems } from '../../src/engine/equipment.js'
 import itemsData from '../../src/data/items.json'
 import { consumeUnits, depositUnits, emptyPools, mintUnits, withdrawUnits, type ItemPools, type Tally } from './sessionItems'
-import { grantSessionXp, cutPathToRange } from './tick'
+import { grantSessionXp, cutPathToRange, withinRange } from './tick'
 import type { BankSlot, ClientMessage, EntityDiff, LootItem, ServerMessage, StaticObject, ZoneEvent } from '../shared/protocol'
 import { parseClientMessage } from '../shared/protocol'
 import type { Env } from './env'
@@ -915,20 +915,31 @@ export class WorldZone extends Server<Env> {
     }
 
     if (!target) return
-    const path = findPathAdjacent(this.zone.collision, { x: player.x, z: player.z }, target)
-    if (!path) return
 
     // Attack clicks: stop at the weapon's reach (ranged/magic need not close to
-    // melee), and preserve the live combat session (engine attack timer) when the
-    // click re-targets the fight already in progress — Q5: re-clicking the current
-    // foe previously reset the timer into a free instant hit.
+    // melee) instead of always walking to melee adjacency, and preserve the live
+    // combat session (engine attack timer) when the click re-targets the fight
+    // already in progress — Q5: re-clicking the current foe previously reset the
+    // timer into a free instant hit.
     if (intent && intent.kind === 'npc') {
-      player.path = cutPathToRange(path.slice(1), target, playerAttackRange(player))
+      const range = playerAttackRange(player)
+      // Already within reach: no path at all — otherwise every re-click nudges
+      // the player one tile closer via the adjacency path below, creeping a
+      // ranged/magic attacker into melee range over repeated clicks.
+      if (withinRange({ x: player.x, z: player.z }, target, range)) {
+        player.path = []
+      } else {
+        const path = findPathAdjacent(this.zone.collision, { x: player.x, z: player.z }, target)
+        if (!path) return
+        player.path = cutPathToRange(path.slice(1), target, range)
+      }
       this.clearIntents(player, isSameFightTarget(player, intent))
       player.pendingInteract = intent
       return
     }
 
+    const path = findPathAdjacent(this.zone.collision, { x: player.x, z: player.z }, target)
+    if (!path) return
     player.path = path.slice(1)
     this.clearIntents(player)
     player.pendingInteract = intent
