@@ -112,3 +112,23 @@ export function withTimeout(promise, ms, fallback) {
 export function calcCombatLevel(stats) {
   return combatLevelFromLevels(stats)
 }
+
+/**
+ * One-line credit cost for the chat helper's write-action confirm card.
+ * `cost` is the { fee, skip, total } breakdown from the server
+ * (functions/_lib/chat/actions.js actionCreditCost) — `fee` is 0 when the
+ * CHAT_ACTION_FEE_ENABLED flag is off.
+ */
+export function chatActionCostLine(cost) {
+  if (!cost) return 'Costs 1 credit'
+  const fee = cost.fee ?? 1
+  const skip = cost.skip ?? 0
+  const total = cost.total ?? fee + skip
+  if (total === 0) return 'Free'
+  if (skip > 0) {
+    return fee > 0
+      ? `Costs ${total} credit${total === 1 ? '' : 's'} — ${fee} action fee + ${skip} for the skip`
+      : `Costs ${skip} credit${skip === 1 ? '' : 's'} for the skip`
+  }
+  return `Costs ${fee} credit${fee === 1 ? '' : 's'}`
+}

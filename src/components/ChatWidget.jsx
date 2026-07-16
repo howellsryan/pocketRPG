@@ -5,22 +5,12 @@ import { api, CREDITS_UPDATED_EVENT } from '../cloud/api.js'
 import { pauseTicks, resumeTicks } from '../engine/tick.js'
 import { applyCloudSave } from '../cloud/sync.js'
 import { useGame } from '../state/gameState.jsx'
+import { chatActionCostLine } from '../utils/helpers.js'
 
 const GREETING = {
   role: 'assistant',
   content:
     "Hi! I'm the PocketRPG helper. Ask me about game mechanics, items, monsters, quests — or your own character's progress. I can also do things for you (sell an item, get a slayer task, buy gear…) — just ask, and I'll confirm before anything changes.",
-}
-
-// One-line credit cost for a pending action's confirm card.
-function costLine(cost) {
-  if (!cost) return `Costs 1 credit`
-  const fee = cost.fee ?? 1
-  const total = cost.total ?? fee
-  if (cost.skip > 0) {
-    return `Costs ${total} credit${total === 1 ? '' : 's'} — ${fee} action fee + ${cost.skip} for the skip`
-  }
-  return `Costs ${fee} credit${fee === 1 ? '' : 's'}`
 }
 
 // In-game help chatbot. Cloud accounts only (the /api/chat endpoint needs an
@@ -196,7 +186,7 @@ export default function ChatWidget({ isCloudAccount = false, open = false, onOpe
                       {pending.label && (
                         <div class="text-xs font-semibold text-[var(--color-parchment)]">{pending.label}</div>
                       )}
-                      <div class="text-xs text-[var(--color-gold)]">💳 {costLine(pending.cost)}</div>
+                      <div class="text-xs text-[var(--color-gold)]">💳 {chatActionCostLine(pending.cost)}</div>
                       <div class="flex gap-2">
                         <Button
                           variant="success"
