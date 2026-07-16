@@ -14,16 +14,15 @@ import equipmentModelsData from '../data/equipmentModels.json'
 
 const EQUIP_IDENTITY = { position: [0, 0, 0], rotationDeg: [0, 0, 0], scale: 1 }
 
-// Models whose tintable metal isn't on a material named "*steel*" — the
-// Quaternius weapon/shield pipeline (scripts/build-quaternius-weapons.mjs)
-// bakes a neutral-grey material literally named e.g. "DarkSteel_Steel" so
-// applyEquipTint's name-matched multiply finds it, but the openworld weapon
-// pipeline (scripts/build-openworld-weapons.mjs: mace/talwar/pickaxe/
-// crossbow/spear/staff/trident) and q_celtic.gltf keep their source's
-// arbitrary material names — so tint silently no-oped on every tier of
-// those. Recolour the whole model instead (same as a skinned outfit piece)
-// rather than re-baking every asset's materials to match a naming
-// convention they were never authored with.
+// Models whose tintable metal isn't on a neutral-grey material named
+// "*steel*" — the Quaternius weapon/shield pipeline
+// (scripts/build-quaternius-weapons.mjs) bakes one, literally named e.g.
+// "DarkSteel_Steel", so applyEquipTint's default multiply reads cleanly. The
+// openworld weapon pipeline (scripts/build-openworld-weapons.mjs: mace/
+// talwar/pickaxe/crossbow/spear/staff/trident) and q_celtic.gltf keep their
+// source's own (often dark/textured, non-neutral) colours instead, so a
+// multiply barely shifts the result — these get a hard colour replace
+// (heroAttach.applyEquipTint 'replace' mode) instead of a re-bake.
 const TINT_ALL_MODELS = new Set([
   'weapons/mace.glb', 'weapons/talwar.glb', 'weapons/pickaxe.glb',
   'weapons/crossbow.glb', 'weapons/spear.glb', 'weapons/staff.glb', 'weapons/trident.glb',
@@ -58,7 +57,7 @@ export function getWeaponModel(itemId) {
     // metal-tier recolour applied to the model's steel materials at attach
     // time (heroAttach.applyEquipTint) — one grey-base GLB serves every tier
     tint: w.tint || null,
-    tintAll: TINT_ALL_MODELS.has(w.model),
+    tintAll: TINT_ALL_MODELS.has(w.model) ? 'replace' : false,
   }
 }
 
@@ -79,7 +78,7 @@ export function getGearModel(itemId) {
     rotationDeg: g.rotationDeg || d.rotationDeg || EQUIP_IDENTITY.rotationDeg,
     scale: typeof g.scale === 'number' ? g.scale : (typeof d.scale === 'number' ? d.scale : EQUIP_IDENTITY.scale),
     tint: g.tint || null,
-    tintAll: TINT_ALL_MODELS.has(g.model),
+    tintAll: TINT_ALL_MODELS.has(g.model) ? 'replace' : false,
     // covering pieces hide the body region beneath them (shader mask in
     // heroAttach.js) so skin can't clip through in any pose
     hideHead: Boolean(g.hideHead),

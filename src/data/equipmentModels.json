@@ -912,12 +912,16 @@
     "visage_shield": {
       "model": "shields/q_shield.gltf",
       "slot": "shield",
-      "tint": "#8f5a3c"
+      "bone": "hand_l",
+      "position": [0.02, 0.1, 0],
+      "rotationDeg": [-33, -83, 42],
+      "scale": 1.2,
+      "tint": "#c0392b"
     },
     "shardglass_shield": {
       "model": "shields/q_shield.gltf",
       "slot": "shield",
-      "tint": "#7fd6d0"
+      "tint": "#f2f2f2"
     },
     "2nd_age_kiteshield": {
       "model": "shields/q_celtic.gltf",

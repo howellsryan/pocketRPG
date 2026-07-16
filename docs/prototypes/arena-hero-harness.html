@@ -46,7 +46,7 @@ function weaponSpec(itemId) {
     bone: w.bone === undefined ? (registry.defaults.handBone || null) : w.bone,
     position: w.position || dw.position, rotationDeg: w.rotationDeg || dw.rotationDeg,
     scale: typeof w.scale === 'number' ? w.scale : dw.scale, tint: w.tint || null,
-    tintAll: TINT_ALL_MODELS.has(w.model),
+    tintAll: TINT_ALL_MODELS.has(w.model) ? 'replace' : false,
   }
 }
 function gearSpec(itemId) {
@@ -58,7 +58,7 @@ function gearSpec(itemId) {
     bone: g.bone === undefined ? (d.bone || null) : g.bone,
     position: g.position || d.position, rotationDeg: g.rotationDeg || d.rotationDeg,
     scale: typeof g.scale === 'number' ? g.scale : d.scale, tint: g.tint || null,
-    tintAll: TINT_ALL_MODELS.has(g.model),
+    tintAll: TINT_ALL_MODELS.has(g.model) ? 'replace' : false,
     hideHead: Boolean(g.hideHead), hideBody: Boolean(g.hideBody), hideLegs: Boolean(g.hideLegs),
   }
 }

@@ -313,7 +313,7 @@ function resolveRegistryWeapon(id) {
     rotationDeg: w.rotationDeg || dw.rotationDeg || [0, 0, 0],
     scale: typeof w.scale === 'number' ? w.scale : (typeof dw.scale === 'number' ? dw.scale : 1),
     tint: w.tint || null,
-    tintAll: TINT_ALL_MODELS.has(w.model),
+    tintAll: TINT_ALL_MODELS.has(w.model) ? 'replace' : false,
   };
 }
 function resolveRegistryGear(id) {
@@ -325,7 +325,7 @@ function resolveRegistryGear(id) {
     rotationDeg: g.rotationDeg || dg.rotationDeg || [0, 0, 0],
     scale: typeof g.scale === 'number' ? g.scale : (typeof dg.scale === 'number' ? dg.scale : 1),
     tint: g.tint || null,
-    tintAll: TINT_ALL_MODELS.has(g.model),
+    tintAll: TINT_ALL_MODELS.has(g.model) ? 'replace' : false,
     hideHead: Boolean(g.hideHead), hideBody: Boolean(g.hideBody), hideLegs: Boolean(g.hideLegs),
   };
 }
