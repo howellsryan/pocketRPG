@@ -12,7 +12,7 @@ import { emptySession, ratePerHour } from '../engine/activitySession.js'
 import { getActionProgress } from '../hooks/useActionTick.js'
 import { STUB_SKILLS, GATHERING_SKILLS, PRODUCTION_SKILLS, UTILITY_SKILLS, SCREENS, formatDropChance } from '../utils/constants.js'
 import { getLevelFromXP } from '../engine/experience.js'
-import { createSkillingState, processSkillingTick, getAvailableActions, checkBurn, getEffectiveToolActionTicks, hasToolForSkill, getEquippedSkillXpMultiplier, rollGatherBonusDrops, TOOL_SKILLS, skillingActionBlockedByFullInventory } from '../engine/skilling.js'
+import { createSkillingState, processSkillingTick, getAvailableActions, checkBurn, getEffectiveToolActionTicks, hasToolForSkill, getEquippedSkillXpMultiplier, rollGatherBonusDrops, TOOL_SKILLS, skillingActionBlockedByFullInventory, usesShardglassGatherTool, consumeShardglassGatherDouble } from '../engine/skilling.js'
 import { addItem, removeItem, countItem } from '../engine/inventory.js'
 import { hasRequiredRunes, getRunesToConsume } from '../engine/runes.js'
 import { onTick } from '../engine/tick.js'
@@ -322,6 +322,9 @@ export default function SkillingScreen({ initialSkillId, initialActionId, initia
             // a full inventory triggers a bank trip or stops the action.
             const drops = { [action.product]: qty }
             if (isGatheringSkill) {
+              if (usesShardglassGatherTool(state.skill, equipment, newInv, itemsData, stats)) {
+                consumeShardglassGatherDouble(drops, newInv)
+              }
               const bonus = rollGatherBonusDrops(state.skill)
               for (const [itemId, bonusQty] of Object.entries(bonus)) {
                 drops[itemId] = (drops[itemId] || 0) + bonusQty
@@ -340,6 +343,9 @@ export default function SkillingScreen({ initialSkillId, initialActionId, initia
                   : drop.quantity
                 drops[drop.itemId] = (drops[drop.itemId] || 0) + qty
               }
+            }
+            if (isGatheringSkill && Object.keys(drops).length > 0 && usesShardglassGatherTool(state.skill, equipment, newInv, itemsData, stats)) {
+              consumeShardglassGatherDouble(drops, newInv)
             }
             if (Object.keys(drops).length > 0) {
               if (!deposit(newInv, drops)) return

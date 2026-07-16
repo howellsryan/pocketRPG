@@ -11,7 +11,7 @@ import {
   effectiveMagic, monsterMagicDefenceRoll, magicMaxHit
 } from './formulas.js'
 import { getEquipmentBonuses, getAttackSpeed, getMeleeAttackStyle, getCombatType, getRangedAmmoRequirementFailure, getEffectiveWornMagicDamage } from './equipment.js'
-import { getEffectiveToolActionTicks, getEquippedSkillXpMultiplier, rollGatherBonusDrops } from './skilling.js'
+import { getEffectiveToolActionTicks, getEquippedSkillXpMultiplier, rollGatherBonusDrops, usesShardglassGatherTool, consumeShardglassGatherDouble, SHARDGLASS_SHARD_ITEM_ID } from './skilling.js'
 import { hasRequiredRunes, getRunesToConsume } from './runes.js'
 import { getHighAlchValue } from '../utils/itemValue.js'
 import { MELEE_XP_PER_DAMAGE, RANGED_XP_PER_DAMAGE, MAGIC_XP_PER_DAMAGE, HP_XP_PER_DAMAGE, GATHERING_SKILLS, IDLE_AUTOBANK_GATHERING_SKILLS, GATHER_AUTOBANK_CONSTRUCTION_LEVEL } from '../utils/constants.js'
@@ -367,6 +367,13 @@ export function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, st
     const bankDelayTicks = Math.ceil(getAgilityBankDelayFromStats(stats) / TICK_MS)
     const productQty = task.action.productQty || 1
 
+    // Shardglass tool identity is fixed for the session (locked like actionTicks);
+    // shards are kept out of bank trips so the double-output perk survives them.
+    const shardglassGather = usesShardglassGatherTool(task.skill, equipment, inventory, itemsData, stats)
+    const gatherExcludedIds = shardglassGather
+      ? new Set([SHARDGLASS_SHARD_ITEM_ID, ...(excludedItemIds || [])])
+      : excludedItemIds
+
     const startingInvState = {}
     for (const slot of newInv) {
       if (!slot) continue
@@ -381,16 +388,17 @@ export function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, st
       const drops = task.action.dropTable
         ? rollDropTableOnce(task.action.dropTable)
         : { [task.action.product]: productQty }
+      if (shardglassGather) consumeShardglassGatherDouble(drops, newInv)
       const bonus = rollGatherBonusDrops(task.skill)
       for (const [itemId, qty] of Object.entries(bonus)) {
         drops[itemId] = (drops[itemId] || 0) + qty
       }
 
       if (!canFit(newInv, drops, itemsData)) {
-        if (bankWhenFull && hasBankableItems(newInv, excludedItemIds)) {
+        if (bankWhenFull && hasBankableItems(newInv, gatherExcludedIds)) {
           if (remainingTicks < bankDelayTicks + actionTicks) break
           remainingTicks -= bankDelayTicks
-          bankEverything(newInv, itemsBanked, excludedItemIds)
+          bankEverything(newInv, itemsBanked, gatherExcludedIds)
         } else {
           inventoryFull = true
           break

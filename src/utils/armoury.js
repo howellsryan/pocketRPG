@@ -156,7 +156,10 @@ function sourceIndex(items, skills, monsters, clues, raids, minigames) {
 
   const combine = new Map() // result id -> "combine A with B" text
   for (const it of Object.values(items)) {
-    if (it.combineResult && !combine.has(it.combineResult)) combine.set(it.combineResult, `Forged by combining ${it.name} with ${name(it.combineWith)}`)
+    if (it.combineResult && !combine.has(it.combineResult)) {
+      const cost = Number(it.combineCost) || 0
+      combine.set(it.combineResult, `Forged by combining ${it.name} with ${name(it.combineWith)}${cost > 0 ? ` and ${cost.toLocaleString()} coins` : ''}`)
+    }
   }
 
   const clueTiers = new Map() // id -> Set(tier)

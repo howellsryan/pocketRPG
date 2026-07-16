@@ -6,7 +6,7 @@ import SharedItemModal from '../components/SharedItemModal.jsx'
 import WeaponChargePanel, { getChargeRecipe } from '../components/WeaponChargePanel.jsx'
 import TradingPostSellForm from '../components/TradingPostSellForm.jsx'
 import SellConfirmModal from '../components/SellConfirmModal.jsx'
-import { freeSlots, countItem } from '../engine/inventory.js'
+import { freeSlots, countItem, removeItem } from '../engine/inventory.js'
 import { isOrderBookItem } from '../engine/storeRules.js'
 import { getIronmanShopValue } from '../utils/itemValue.js'
 import { HIGH_VALUE_SELL_THRESHOLD } from '../utils/constants.js'
@@ -155,9 +155,16 @@ export default function InventoryScreen() {
       return
     }
 
+    const cost = Number(item.combineCost) || 0
+    if (cost > 0 && countItem(inventory, 'coins') < cost) {
+      addToast(`Need ${cost.toLocaleString()} coins in your inventory`, 'error')
+      return
+    }
+
     const newInv = [...inventory]
     newInv[slotIndex] = null
     newInv[targetIdx] = { itemId: resultId, quantity: 1 }
+    if (cost > 0) removeItem(newInv, 'coins', cost)
     updateInventory(newInv)
     addToast(`Created ${resultData.name}`, 'info')
     setSelected(null)
@@ -643,15 +650,18 @@ export default function InventoryScreen() {
                   const hasTarget = inventory.some(
                     (s, i) => s && i !== selected.slotIndex && s.itemId === selected.item.combineWith && !s.noted
                   )
+                  const cost = Number(selected.item.combineCost) || 0
+                  const canAfford = cost <= 0 || countItem(inventory, 'coins') >= cost
+                  const enabled = hasTarget && canAfford
                   return (
                     <button
                       onClick={handleCombine}
-                      disabled={!hasTarget}
-                      class={`py-2.5 rounded-lg font-semibold text-sm border ${hasTarget
+                      disabled={!enabled}
+                      class={`py-2.5 rounded-lg font-semibold text-sm border ${enabled
                         ? 'bg-[var(--fm-royal)] text-white border-[var(--fm-royal)] active:opacity-80'
                         : 'bg-[var(--fm-parch-lo)] text-[var(--color-parchment)] opacity-40 border-transparent cursor-not-allowed'}`}
                     >
-                      Use on {targetName}
+                      Use on {targetName}{cost > 0 ? ` (${cost.toLocaleString()} coins)` : ''}
                     </button>
                   )
                 })()}

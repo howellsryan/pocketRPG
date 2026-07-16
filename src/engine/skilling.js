@@ -360,6 +360,49 @@ export function rollGatherBonusDrops(skill, rng = Math.random) {
   return drops
 }
 
+/**
+ * Shardglass gathering perk. While gathering with the matching shardglass tool
+ * and holding at least SHARDGLASS_SHARDS_PER_GATHER shardglass shards, each
+ * action consumes that many shards and doubles the gathered output (ore, gems,
+ * logs). Bonus drops added afterwards (e.g. bird's nests) are unaffected.
+ */
+export const SHARDGLASS_SHARD_ITEM_ID = 'shardglass_shards'
+export const SHARDGLASS_SHARDS_PER_GATHER = 2
+export const SHARDGLASS_GATHER_TOOLS = {
+  mining: 'shardglass_pickaxe',
+  woodcutting: 'shardglass_axe',
+}
+
+/** True when the best available tool for `skill` is its shardglass tool. */
+export function usesShardglassGatherTool(skill, equipment, inventory, itemsData, stats = {}) {
+  const toolId = SHARDGLASS_GATHER_TOOLS[skill]
+  if (!toolId) return false
+  const best = findBestToolForSkill(skill, equipment, inventory, itemsData, stats)
+  return best?.id === toolId
+}
+
+/**
+ * Consume one action's worth of shardglass shards from `inventory` (mutated in
+ * place, slot-immutable) and double every quantity in `drops` (mutated in
+ * place). Returns true when the perk fired; false (no change) when fewer than
+ * SHARDGLASS_SHARDS_PER_GATHER shards are held. Callers must already have
+ * confirmed the shardglass tool is in use via usesShardglassGatherTool.
+ */
+export function consumeShardglassGatherDouble(drops, inventory) {
+  if (countItem(inventory, SHARDGLASS_SHARD_ITEM_ID) < SHARDGLASS_SHARDS_PER_GATHER) return false
+  let remaining = SHARDGLASS_SHARDS_PER_GATHER
+  for (let i = 0; i < inventory.length && remaining > 0; i++) {
+    const slot = inventory[i]
+    if (!slot || slot.itemId !== SHARDGLASS_SHARD_ITEM_ID) continue
+    const take = Math.min(slot.quantity, remaining)
+    inventory[i] = { ...slot, quantity: slot.quantity - take }
+    if (inventory[i].quantity <= 0) inventory[i] = null
+    remaining -= take
+  }
+  for (const itemId of Object.keys(drops)) drops[itemId] *= 2
+  return true
+}
+
 export function getEquippedSkillXpMultiplier(skill, equipment, itemsData) {
   if (!equipment?.weapon) return 1
   const weapon = itemsData?.[equipment.weapon.itemId]
