@@ -13,4 +13,18 @@ describe('slayer task equipment bonuses', () => {
     const bonuses = getSlayerTaskEquipmentBonuses({ equipment: { head: { itemId: 'slayer_helmet' } }, itemsData: itemsData as any, slayerTask: task as any, monsterId: 'cave_goblin' })
     expect(bonuses).toEqual({ accuracyFlat: 15, damageFlat: 15 })
   })
+
+  it('applies raid-completion task bonuses to every boss in the raid, not just the final boss', () => {
+    const raidTask = { monsterId: 'the_great_olm', monstersRemaining: 2 }
+    for (const monsterId of ['tekton', 'vespula', 'muttadile', 'the_great_olm']) {
+      const bonuses = getSlayerTaskEquipmentBonuses({ equipment: { head: { itemId: 'slayer_helmet' } }, itemsData: itemsData as any, slayerTask: raidTask as any, monsterId })
+      expect(bonuses).toEqual({ accuracyFlat: 15, damageFlat: 15 })
+    }
+  })
+
+  it('does not apply raid task bonuses to bosses from a different raid', () => {
+    const raidTask = { monsterId: 'the_great_olm', monstersRemaining: 2 }
+    const bonuses = getSlayerTaskEquipmentBonuses({ equipment: { head: { itemId: 'slayer_helmet' } }, itemsData: itemsData as any, slayerTask: raidTask as any, monsterId: 'sotetseg' })
+    expect(bonuses).toEqual({ accuracyFlat: 0, damageFlat: 0 })
+  })
 })
