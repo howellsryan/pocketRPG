@@ -1,16 +1,18 @@
 #!/usr/bin/env node
-// Builds public/3d-samples/weapons/{diamond_pickaxe,mace}.glb from the loose
-// Poly Pizza GLBs in assets/open-world/ (each its own CC-BY download, not part
-// of a CC0 pack — see assets/open-world/CREDITS.md). Unlike the Quaternius
-// OBJ pipeline, these arrive as already-built GLBs with arbitrary authored
-// scale/pivot (the Mace source in particular has its geometry many orders of
-// magnitude off-origin, and its long axis sits on local X rather than the
-// handle-along-Y convention the other weapons use), so this script: applies
-// an optional per-source axis-swap rotation to land the handle on Y, then
-// recentres the (post-swap) bounds and applies a uniform scale that brings
-// the longest dimension to a hand-tool size comparable to the other weapon
-// archetypes. All of this wraps the original nodes rather than rewriting
-// vertex data.
+// Builds public/3d-samples/weapons/*.glb from the loose Poly Pizza GLBs in
+// assets/open-world/ (each its own CC-BY download, not part of a CC0 pack —
+// see assets/open-world/CREDITS.md). Unlike the Quaternius OBJ pipeline,
+// these arrive as already-built GLBs with arbitrary authored scale/pivot
+// (some have geometry many orders of magnitude off-origin, and some sit on a
+// local axis other than the handle-along-Y convention the other weapons
+// use), so this script: applies an optional per-source axis-swap rotation to
+// land the handle on Y, then recentres the (post-swap) bounds and applies a
+// uniform scale that brings the longest dimension to a hand-tool size
+// comparable to the other weapon archetypes. Diagonally-authored sources
+// (e.g. the spear/staff, whose long axis isn't aligned to any single axis)
+// skip the swap and get their final in-hand orientation from the registry's
+// own per-item rotationDeg instead. All of this wraps the original nodes
+// rather than rewriting vertex data.
 //
 // Run: node scripts/build-openworld-weapons.mjs
 import { NodeIO } from '@gltf-transform/core'
@@ -24,8 +26,13 @@ const SRC_DIR = path.join(ROOT, 'assets', 'open-world')
 const OUT_DIR = path.join(ROOT, 'public', '3d-samples', 'weapons')
 
 const SOURCES = [
-  { src: 'Diamond Pickaxe.glb', out: 'diamond_pickaxe.glb', targetSize: 0.85, swapDeg: [0, 0, 0] },
   { src: 'Mace.glb', out: 'mace.glb', targetSize: 0.9, swapDeg: [0, 0, -90] },
+  { src: 'Pickaxe.glb', out: 'pickaxe.glb', targetSize: 0.85, swapDeg: [90, 0, 0] },
+  { src: 'Crossbow.glb', out: 'crossbow.glb', targetSize: 0.9, swapDeg: [0, 0, 0] },
+  { src: 'SCI-FI Blue Spear.glb', out: 'spear.glb', targetSize: 1.5, swapDeg: [0, 0, 0] },
+  { src: 'SCI-FI Staff.glb', out: 'staff.glb', targetSize: 1.5, swapDeg: [0, 0, 0] },
+  { src: 'Talwar.glb', out: 'talwar.glb', targetSize: 0.958, swapDeg: [0, 0, 0] },
+  { src: 'Trident.glb', out: 'trident.glb', targetSize: 1.4, swapDeg: [0, 0, 0] },
 ]
 
 // Quaternion for an XYZ-order Euler (matches THREE.Euler's default order,
