@@ -4,7 +4,9 @@
     "dragon_visage",
     "dragon_axe",
     "dragon_boots",
-    "uncut_onyx"
+    "uncut_onyx",
+    "imbued_crown",
+    "imbued_brain"
   ],
   "categories": [
     {
@@ -55,7 +57,9 @@
           "items": [
             "primeval_crystal",
             "skyfury_crystal",
-            "evermore_crystal"
+            "evermore_crystal",
+            "imbued_crown",
+            "imbued_brain"
           ]
         },
         {
@@ -125,7 +129,9 @@
           "icon": "\ud83d\udc51",
           "items": [
             "uncut_zyrite",
-            "colossal_ballista"
+            "colossal_ballista",
+            "imbued_crown",
+            "imbued_brain"
           ]
         },
         {
@@ -153,7 +159,9 @@
           "icon": "\ud83d\udc51",
           "items": [
             "ashen_hydra_leather",
-            "ashen_hydra_claw"
+            "ashen_hydra_claw",
+            "imbued_crown",
+            "imbued_brain"
           ]
         },
         {
@@ -189,7 +197,9 @@
           "label": "Deepmaw Kraken",
           "icon": "\ud83d\udc51",
           "items": [
-            "deepmaw_kraken_tentacle"
+            "deepmaw_kraken_tentacle",
+            "imbued_crown",
+            "imbued_brain"
           ]
         },
         {
@@ -273,7 +283,9 @@
             "sovereigns_cinderplate",
             "sovereigns_cindergreaves",
             "ashen_sovereigns_edge",
-            "ashen_slayer_helm"
+            "ashen_slayer_helm",
+            "imbued_crown",
+            "imbued_brain"
           ]
         },
         {

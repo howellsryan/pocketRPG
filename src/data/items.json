@@ -8074,6 +8074,17 @@
     "duration": 300,
     "isGeneralStore": false
   },
+  "imbued_brain": {
+    "id": "imbued_brain",
+    "name": "Imbued Brain",
+    "type": "potion",
+    "stackable": true,
+    "shopValue": 150000000,
+    "effect": "magic",
+    "boost": 25,
+    "duration": 300,
+    "isGeneralStore": false
+  },
   "lumira_brew": {
     "id": "lumira_brew",
     "legacy_item_id": "saradomin_brew",
@@ -16575,6 +16586,51 @@
       "defence": 42
     },
     "shopValue": 375000,
+    "isUntradeable": true,
+    "isGeneralStore": false
+  },
+  "imbued_crown": {
+    "id": "imbued_crown",
+    "name": "Imbued Crown",
+    "type": "resource",
+    "stackable": false,
+    "shopValue": 2000000,
+    "isGeneralStore": false,
+    "combineWith": "slayer_helmet",
+    "combineResult": "imbued_slayer_crown",
+    "combineDescription": "Combine with a Slayer Helmet to forge the Imbued Slayer Crown."
+  },
+  "imbued_slayer_crown": {
+    "id": "imbued_slayer_crown",
+    "name": "Imbued Slayer Crown",
+    "type": "armour",
+    "slot": "head",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 10,
+      "slash": 10,
+      "crush": 10,
+      "magic": 10,
+      "ranged": 10
+    },
+    "defenceBonus": {
+      "stab": 10,
+      "slash": 10,
+      "crush": 10,
+      "magic": 10,
+      "ranged": 10
+    },
+    "otherBonus": {
+      "meleeStrength": 3,
+      "rangedStrength": 3,
+      "magicDamage": 3,
+      "slayerTaskAccuracyFlat": 15,
+      "slayerTaskDamageFlat": 15
+    },
+    "requirements": {
+      "slayer": 20
+    },
+    "shopValue": 7500000,
     "isUntradeable": true,
     "isGeneralStore": false
   },

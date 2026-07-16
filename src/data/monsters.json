@@ -1662,6 +1662,16 @@
         "itemId": "magic_sapling",
         "quantity": 1,
         "chance": 0.0015
+      },
+      {
+        "itemId": "imbued_crown",
+        "quantity": 1,
+        "chance": 0.010869565217391304
+      },
+      {
+        "itemId": "imbued_brain",
+        "quantity": 1,
+        "chance": 0.0010905125408942203
       }
     ],
     "legacy_id": "abyssal_demon"
@@ -1811,6 +1821,16 @@
         "itemId": "rynarr_seed",
         "quantity": 1,
         "chance": 0.002
+      },
+      {
+        "itemId": "imbued_crown",
+        "quantity": 1,
+        "chance": 0.001303780964797914
+      },
+      {
+        "itemId": "imbued_brain",
+        "quantity": 1,
+        "chance": 0.00013036110024768608
       }
     ],
     "legacy_id": "blood_veld"
@@ -1944,6 +1964,16 @@
         "itemId": "magic_sapling",
         "quantity": 1,
         "chance": 0.0015
+      },
+      {
+        "itemId": "imbued_crown",
+        "quantity": 1,
+        "chance": 0.008064516129032258
+      },
+      {
+        "itemId": "imbued_brain",
+        "quantity": 1,
+        "chance": 0.0008051529790660225
       }
     ],
     "legacy_id": "nechryael"
@@ -2082,6 +2112,16 @@
         "itemId": "yew_sapling",
         "quantity": 1,
         "chance": 0.004
+      },
+      {
+        "itemId": "imbued_crown",
+        "quantity": 1,
+        "chance": 0.0049504950495049506
+      },
+      {
+        "itemId": "imbued_brain",
+        "quantity": 1,
+        "chance": 0.0004952947003467063
       }
     ],
     "legacy_id": "skeletal_wyvern"
@@ -2218,6 +2258,16 @@
         "itemId": "magic_sapling",
         "quantity": 1,
         "chance": 0.0015
+      },
+      {
+        "itemId": "imbued_crown",
+        "quantity": 1,
+        "chance": 0.010869565217391304
+      },
+      {
+        "itemId": "imbued_brain",
+        "quantity": 1,
+        "chance": 0.0010905125408942203
       }
     ],
     "legacy_id": "smoke_devil"
@@ -2343,6 +2393,16 @@
         "itemId": "magic_sapling",
         "quantity": 1,
         "chance": 0.008
+      },
+      {
+        "itemId": "imbued_crown",
+        "quantity": 1,
+        "chance": 0.012345679012345678
+      },
+      {
+        "itemId": "imbued_brain",
+        "quantity": 1,
+        "chance": 0.0012315270935960591
       }
     ],
     "legacy_id": "kraken"
@@ -5427,6 +5487,16 @@
         "itemId": "magic_sapling",
         "quantity": 1,
         "chance": 0.008
+      },
+      {
+        "itemId": "imbued_crown",
+        "quantity": 1,
+        "chance": 0.0043859649122807015
+      },
+      {
+        "itemId": "imbued_brain",
+        "quantity": 1,
+        "chance": 0.00043878894251864854
       }
     ],
     "slayerRequirement": 70,
@@ -6749,6 +6819,16 @@
         "itemId": "magic_sapling",
         "quantity": 1,
         "chance": 0.0015
+      },
+      {
+        "itemId": "imbued_crown",
+        "quantity": 1,
+        "chance": 0.008064516129032258
+      },
+      {
+        "itemId": "imbued_brain",
+        "quantity": 1,
+        "chance": 0.0008051529790660225
       }
     ],
     "legacy_id": "lizardman_shaman"
@@ -6871,6 +6951,16 @@
         "itemId": "oak_sapling",
         "quantity": 1,
         "chance": 0.02
+      },
+      {
+        "itemId": "imbued_crown",
+        "quantity": 1,
+        "chance": 0.00006666666666666667
+      },
+      {
+        "itemId": "imbued_brain",
+        "quantity": 1,
+        "chance": 0.000006666666666666667
       }
     ],
     "legacy_id": "banshee"
@@ -7029,6 +7119,16 @@
         "itemId": "yew_sapling",
         "quantity": 1,
         "chance": 0.004
+      },
+      {
+        "itemId": "imbued_crown",
+        "quantity": 1,
+        "chance": 0.0023923444976076554
+      },
+      {
+        "itemId": "imbued_brain",
+        "quantity": 1,
+        "chance": 0.00023917723032767282
       }
     ],
     "legacy_id": "aberrant_spectre"
@@ -7168,6 +7268,16 @@
         "itemId": "yew_sapling",
         "quantity": 1,
         "chance": 0.004
+      },
+      {
+        "itemId": "imbued_crown",
+        "quantity": 1,
+        "chance": 0.002702702702702703
+      },
+      {
+        "itemId": "imbued_brain",
+        "quantity": 1,
+        "chance": 0.00027005130974885227
       }
     ],
     "legacy_id": "wyrm"
@@ -7301,6 +7411,16 @@
         "itemId": "yew_sapling",
         "quantity": 1,
         "chance": 0.004
+      },
+      {
+        "itemId": "imbued_crown",
+        "quantity": 1,
+        "chance": 0.0038910505836575876
+      },
+      {
+        "itemId": "imbued_brain",
+        "quantity": 1,
+        "chance": 0.000388651379712398
       }
     ],
     "legacy_id": "spiritual_warrior"
@@ -7439,6 +7559,16 @@
         "itemId": "magic_sapling",
         "quantity": 1,
         "chance": 0.0015
+      },
+      {
+        "itemId": "imbued_crown",
+        "quantity": 1,
+        "chance": 0.009615384615384616
+      },
+      {
+        "itemId": "imbued_brain",
+        "quantity": 1,
+        "chance": 0.0009652509652509653
       }
     ],
     "legacy_id": "spiritual_mage"
@@ -7578,6 +7708,16 @@
         "itemId": "yew_sapling",
         "quantity": 1,
         "chance": 0.004
+      },
+      {
+        "itemId": "imbued_crown",
+        "quantity": 1,
+        "chance": 0.0028653295128939827
+      },
+      {
+        "itemId": "imbued_brain",
+        "quantity": 1,
+        "chance": 0.00028694404591104734
       }
     ],
     "legacy_id": "spiritual_ranger"
@@ -7711,6 +7851,16 @@
         "itemId": "magic_sapling",
         "quantity": 1,
         "chance": 0.0015
+      },
+      {
+        "itemId": "imbued_crown",
+        "quantity": 1,
+        "chance": 0.005952380952380952
+      },
+      {
+        "itemId": "imbued_brain",
+        "quantity": 1,
+        "chance": 0.0005941770647653001
       }
     ],
     "legacy_id": "gargoyle"
@@ -7869,6 +8019,16 @@
         "itemId": "magic_sapling",
         "quantity": 1,
         "chance": 0.0015
+      },
+      {
+        "itemId": "imbued_crown",
+        "quantity": 1,
+        "chance": 0.006711409395973154
+      },
+      {
+        "itemId": "imbued_brain",
+        "quantity": 1,
+        "chance": 0.0006711409395973154
       }
     ],
     "legacy_id": "brutal_black_dragon"
@@ -8013,6 +8173,16 @@
         "itemId": "magic_sapling",
         "quantity": 1,
         "chance": 0.0015
+      },
+      {
+        "itemId": "imbued_crown",
+        "quantity": 1,
+        "chance": 0.014705882352941176
+      },
+      {
+        "itemId": "imbued_brain",
+        "quantity": 1,
+        "chance": 0.0014771048744460858
       }
     ],
     "legacy_id": "dark_beast"
@@ -8161,6 +8331,16 @@
         "itemId": "magic_sapling",
         "quantity": 1,
         "chance": 0.008
+      },
+      {
+        "itemId": "imbued_crown",
+        "quantity": 1,
+        "chance": 0.015625
+      },
+      {
+        "itemId": "imbued_brain",
+        "quantity": 1,
+        "chance": 0.0015698587127158557
       }
     ],
     "legacy_id": "cerberus"
@@ -8307,6 +8487,16 @@
         "itemId": "magic_sapling",
         "quantity": 1,
         "chance": 0.008
+      },
+      {
+        "itemId": "imbued_crown",
+        "quantity": 1,
+        "chance": 0.02
+      },
+      {
+        "itemId": "imbued_brain",
+        "quantity": 1,
+        "chance": 0.002
       }
     ],
     "legacy_id": "hydra"
@@ -8348,6 +8538,16 @@
         "itemId": "oak_sapling",
         "quantity": 1,
         "chance": 0.02
+      },
+      {
+        "itemId": "imbued_crown",
+        "quantity": 1,
+        "chance": 0.00006666666666666667
+      },
+      {
+        "itemId": "imbued_brain",
+        "quantity": 1,
+        "chance": 0.000006666666666666667
       }
     ]
   },
@@ -8392,6 +8592,16 @@
         "itemId": "oak_sapling",
         "quantity": 1,
         "chance": 0.02
+      },
+      {
+        "itemId": "imbued_crown",
+        "quantity": 1,
+        "chance": 0.0000752671985548698
+      },
+      {
+        "itemId": "imbued_brain",
+        "quantity": 1,
+        "chance": 0.000007526833160216171
       }
     ]
   },
@@ -8436,6 +8646,16 @@
         "itemId": "oak_sapling",
         "quantity": 1,
         "chance": 0.02
+      },
+      {
+        "itemId": "imbued_crown",
+        "quantity": 1,
+        "chance": 0.00010194719135487817
+      },
+      {
+        "itemId": "imbued_brain",
+        "quantity": 1,
+        "chance": 0.000010194719135487817
       }
     ]
   },
@@ -8480,6 +8700,16 @@
         "itemId": "oak_sapling",
         "quantity": 1,
         "chance": 0.02
+      },
+      {
+        "itemId": "imbued_crown",
+        "quantity": 1,
+        "chance": 0.0001299545159194282
+      },
+      {
+        "itemId": "imbued_brain",
+        "quantity": 1,
+        "chance": 0.000012995282712375408
       }
     ]
   },
@@ -8529,6 +8759,16 @@
         "itemId": "apple_sapling",
         "quantity": 1,
         "chance": 0.015
+      },
+      {
+        "itemId": "imbued_crown",
+        "quantity": 1,
+        "chance": 0.00015590894917368256
+      },
+      {
+        "itemId": "imbued_brain",
+        "quantity": 1,
+        "chance": 0.000015589922673983538
       }
     ]
   },
@@ -8578,6 +8818,16 @@
         "itemId": "apple_sapling",
         "quantity": 1,
         "chance": 0.015
+      },
+      {
+        "itemId": "imbued_crown",
+        "quantity": 1,
+        "chance": 0.00021114864864864866
+      },
+      {
+        "itemId": "imbued_brain",
+        "quantity": 1,
+        "chance": 0.000021115756577558175
       }
     ]
   },
@@ -8627,6 +8877,16 @@
         "itemId": "apple_sapling",
         "quantity": 1,
         "chance": 0.015
+      },
+      {
+        "itemId": "imbued_crown",
+        "quantity": 1,
+        "chance": 0.00023837902264600716
+      },
+      {
+        "itemId": "imbued_brain",
+        "quantity": 1,
+        "chance": 0.000023840175463691413
       }
     ]
   },
@@ -8676,6 +8936,16 @@
         "itemId": "apple_sapling",
         "quantity": 1,
         "chance": 0.015
+      },
+      {
+        "itemId": "imbued_crown",
+        "quantity": 1,
+        "chance": 0.00028595939376608524
+      },
+      {
+        "itemId": "imbued_brain",
+        "quantity": 1,
+        "chance": 0.0000286000286000286
       }
     ]
   },
@@ -8725,6 +8995,16 @@
         "itemId": "apple_sapling",
         "quantity": 1,
         "chance": 0.015
+      },
+      {
+        "itemId": "imbued_crown",
+        "quantity": 1,
+        "chance": 0.00034305317324185246
+      },
+      {
+        "itemId": "imbued_brain",
+        "quantity": 1,
+        "chance": 0.000034310025389418786
       }
     ]
   },
@@ -8775,6 +9055,16 @@
         "itemId": "apple_sapling",
         "quantity": 1,
         "chance": 0.015
+      },
+      {
+        "itemId": "imbued_crown",
+        "quantity": 1,
+        "chance": 0.0004374453193350831
+      },
+      {
+        "itemId": "imbued_brain",
+        "quantity": 1,
+        "chance": 0.00004373496610540127
       }
     ]
   },
@@ -8834,6 +9124,16 @@
         "itemId": "rynarr_seed",
         "quantity": 1,
         "chance": 0.002
+      },
+      {
+        "itemId": "imbued_crown",
+        "quantity": 1,
+        "chance": 0.0006293266205160479
+      },
+      {
+        "itemId": "imbued_brain",
+        "quantity": 1,
+        "chance": 0.00006294454585510165
       }
     ]
   },
@@ -8895,6 +9195,16 @@
         "itemId": "rynarr_seed",
         "quantity": 1,
         "chance": 0.002
+      },
+      {
+        "itemId": "imbued_crown",
+        "quantity": 1,
+        "chance": 0.0008025682182985554
+      },
+      {
+        "itemId": "imbued_brain",
+        "quantity": 1,
+        "chance": 0.00008023106546854942
       }
     ]
   },
@@ -8955,6 +9265,16 @@
         "itemId": "rynarr_seed",
         "quantity": 1,
         "chance": 0.002
+      },
+      {
+        "itemId": "imbued_crown",
+        "quantity": 1,
+        "chance": 0.0009624639076034649
+      },
+      {
+        "itemId": "imbued_brain",
+        "quantity": 1,
+        "chance": 0.0000962556550197324
       }
     ]
   },
@@ -9015,6 +9335,16 @@
         "itemId": "rynarr_seed",
         "quantity": 1,
         "chance": 0.002
+      },
+      {
+        "itemId": "imbued_crown",
+        "quantity": 1,
+        "chance": 0.001303780964797914
+      },
+      {
+        "itemId": "imbued_brain",
+        "quantity": 1,
+        "chance": 0.00013036110024768608
       }
     ]
   },
@@ -9071,6 +9401,16 @@
         "itemId": "yew_sapling",
         "quantity": 1,
         "chance": 0.004
+      },
+      {
+        "itemId": "imbued_crown",
+        "quantity": 1,
+        "chance": 0.0017667844522968198
+      },
+      {
+        "itemId": "imbued_brain",
+        "quantity": 1,
+        "chance": 0.0001765848490199541
       }
     ]
   },
@@ -9126,6 +9466,16 @@
         "itemId": "yew_sapling",
         "quantity": 1,
         "chance": 0.004
+      },
+      {
+        "itemId": "imbued_crown",
+        "quantity": 1,
+        "chance": 0.00211864406779661
+      },
+      {
+        "itemId": "imbued_brain",
+        "quantity": 1,
+        "chance": 0.00021181952976064393
       }
     ]
   },
@@ -9181,6 +9531,16 @@
         "itemId": "yew_sapling",
         "quantity": 1,
         "chance": 0.004
+      },
+      {
+        "itemId": "imbued_crown",
+        "quantity": 1,
+        "chance": 0.0023923444976076554
+      },
+      {
+        "itemId": "imbued_brain",
+        "quantity": 1,
+        "chance": 0.00023917723032767282
       }
     ]
   },
@@ -9236,6 +9596,16 @@
         "itemId": "yew_sapling",
         "quantity": 1,
         "chance": 0.004
+      },
+      {
+        "itemId": "imbued_crown",
+        "quantity": 1,
+        "chance": 0.003236245954692557
+      },
+      {
+        "itemId": "imbued_brain",
+        "quantity": 1,
+        "chance": 0.00032393909944930353
       }
     ]
   },
@@ -9291,6 +9661,16 @@
         "itemId": "yew_sapling",
         "quantity": 1,
         "chance": 0.004
+      },
+      {
+        "itemId": "imbued_crown",
+        "quantity": 1,
+        "chance": 0.0038910505836575876
+      },
+      {
+        "itemId": "imbued_brain",
+        "quantity": 1,
+        "chance": 0.000388651379712398
       }
     ]
   },
@@ -9347,6 +9727,16 @@
         "itemId": "yew_sapling",
         "quantity": 1,
         "chance": 0.004
+      },
+      {
+        "itemId": "imbued_crown",
+        "quantity": 1,
+        "chance": 0.0043859649122807015
+      },
+      {
+        "itemId": "imbued_brain",
+        "quantity": 1,
+        "chance": 0.00043878894251864854
       }
     ]
   },
@@ -9403,6 +9793,16 @@
         "itemId": "yew_sapling",
         "quantity": 1,
         "chance": 0.004
+      },
+      {
+        "itemId": "imbued_crown",
+        "quantity": 1,
+        "chance": 0.005263157894736842
+      },
+      {
+        "itemId": "imbued_brain",
+        "quantity": 1,
+        "chance": 0.0005263157894736842
       }
     ]
   },
@@ -9459,6 +9859,16 @@
         "itemId": "magic_sapling",
         "quantity": 1,
         "chance": 0.0015
+      },
+      {
+        "itemId": "imbued_crown",
+        "quantity": 1,
+        "chance": 0.005952380952380952
+      },
+      {
+        "itemId": "imbued_brain",
+        "quantity": 1,
+        "chance": 0.0005941770647653001
       }
     ]
   },
@@ -9514,6 +9924,16 @@
         "itemId": "magic_sapling",
         "quantity": 1,
         "chance": 0.0015
+      },
+      {
+        "itemId": "imbued_crown",
+        "quantity": 1,
+        "chance": 0.006711409395973154
+      },
+      {
+        "itemId": "imbued_brain",
+        "quantity": 1,
+        "chance": 0.0006711409395973154
       }
     ]
   },
@@ -9570,6 +9990,16 @@
         "itemId": "magic_sapling",
         "quantity": 1,
         "chance": 0.0015
+      },
+      {
+        "itemId": "imbued_crown",
+        "quantity": 1,
+        "chance": 0.007575757575757576
+      },
+      {
+        "itemId": "imbued_brain",
+        "quantity": 1,
+        "chance": 0.0007575757575757576
       }
     ]
   },
@@ -9657,6 +10087,16 @@
         "itemId": "magic_sapling",
         "quantity": 1,
         "chance": 0.008
+      },
+      {
+        "itemId": "imbued_crown",
+        "quantity": 1,
+        "chance": 0.008064516129032258
+      },
+      {
+        "itemId": "imbued_brain",
+        "quantity": 1,
+        "chance": 0.0008051529790660225
       }
     ]
   },

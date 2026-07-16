@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="imbued_crown_g" x1="0.2" y1="0" x2="0.8" y2="1">
+      <stop offset="0" stop-color="#fff0a0"/><stop offset="0.5" stop-color="#e0b030"/><stop offset="1" stop-color="#8a5c10"/>
+    </linearGradient>
+    <radialGradient id="imbued_crown_glow" cx="0.5" cy="0.5" r="0.6">
+      <stop offset="0" stop-color="#e0b0ff"/><stop offset="1" stop-color="#9a3fd8" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <circle cx="256" cy="256" r="200" fill="url(#imbued_crown_glow)" opacity="0.55"/>
+  <g stroke="#1a1410" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M 128 236 L 128 176 L 176 210 L 210 148 L 256 200 L 302 148 L 336 210 L 384 176 L 384 236 C 384 250 372 260 358 260 L 154 260 C 140 260 128 250 128 236 Z" fill="url(#imbued_crown_g)" stroke="#5a3c08" stroke-width="10"/>
+    <rect x="136" y="260" width="240" height="36" rx="8" fill="#c9962c" stroke="#5a3c08" stroke-width="9"/>
+    <circle cx="256" cy="278" r="16" fill="#7030b8" stroke="#3a1868" stroke-width="6"/>
+    <circle cx="188" cy="278" r="10" fill="#c0271a" stroke="#5a0e08" stroke-width="5"/>
+    <circle cx="324" cy="278" r="10" fill="#c0271a" stroke="#5a0e08" stroke-width="5"/>
+    <circle cx="210" cy="156" r="7" fill="#fff0a0" stroke="none"/>
+    <circle cx="302" cy="156" r="7" fill="#fff0a0" stroke="none"/>
+    <circle cx="256" cy="206" r="8" fill="#e8c8ff" stroke="none"/>
+  </g>
+</svg>

@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <radialGradient id="imbued_brain_b" cx="0.4" cy="0.35" r="0.75">
+      <stop offset="0" stop-color="#e0b0ff"/><stop offset="0.5" stop-color="#9a3fd8"/><stop offset="1" stop-color="#4a1878"/>
+    </radialGradient>
+  </defs>
+  <!-- Crackling purple tendrils shooting outward -->
+  <g stroke="#c060f0" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" fill="none" opacity="0.9">
+    <path d="M 130 160 L 84 128 L 96 100 L 56 78"/>
+    <path d="M 382 160 L 428 128 L 416 100 L 456 78"/>
+    <path d="M 256 96 L 244 52 L 268 40 L 256 8"/>
+    <path d="M 120 260 L 66 250 L 74 224 L 30 214"/>
+    <path d="M 392 260 L 446 250 L 438 224 L 482 214"/>
+    <path d="M 168 372 L 140 412 L 108 402 L 88 440"/>
+    <path d="M 344 372 L 372 412 L 404 402 L 424 440"/>
+  </g>
+  <g stroke="#d8a0ff" stroke-width="4" stroke-linecap="round" fill="none" opacity="0.7">
+    <circle cx="56" cy="78" r="6" fill="#e8c8ff" stroke="none"/>
+    <circle cx="456" cy="78" r="6" fill="#e8c8ff" stroke="none"/>
+    <circle cx="256" cy="8" r="6" fill="#e8c8ff" stroke="none"/>
+    <circle cx="30" cy="214" r="6" fill="#e8c8ff" stroke="none"/>
+    <circle cx="482" cy="214" r="6" fill="#e8c8ff" stroke="none"/>
+    <circle cx="88" cy="440" r="6" fill="#e8c8ff" stroke="none"/>
+    <circle cx="424" cy="440" r="6" fill="#e8c8ff" stroke="none"/>
+  </g>
+  <!-- Brain body -->
+  <g stroke="#2a0e50" stroke-width="12" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M 190 118 C 128 118 96 168 100 214 C 66 234 56 284 84 320 C 70 356 92 400 136 412 C 150 444 194 460 232 448 C 250 462 282 462 300 448 C 344 458 388 434 396 396 C 432 384 448 342 428 306 C 448 270 434 224 396 208 C 398 162 360 122 306 126 C 288 108 254 102 230 116 C 216 108 200 110 190 118 Z" fill="url(#imbued_brain_b)"/>
+    <path d="M 256 130 L 256 442" stroke="#4a1878" stroke-width="9" fill="none"/>
+    <path d="M 190 150 C 160 168 150 200 164 226 C 140 244 138 276 158 296 C 146 320 156 350 182 362" stroke="#4a1878" stroke-width="7" fill="none"/>
+    <path d="M 322 150 C 352 168 362 200 348 226 C 372 244 374 276 354 296 C 366 320 356 350 330 362" stroke="#4a1878" stroke-width="7" fill="none"/>
+    <path d="M 208 178 C 224 190 224 210 208 222" stroke="#c884f0" stroke-width="6" fill="none"/>
+    <path d="M 304 178 C 288 190 288 210 304 222" stroke="#c884f0" stroke-width="6" fill="none"/>
+    <path d="M 200 268 C 218 280 218 300 200 312" stroke="#c884f0" stroke-width="6" fill="none"/>
+    <path d="M 312 268 C 294 280 294 300 312 312" stroke="#c884f0" stroke-width="6" fill="none"/>
+    <path d="M 224 380 C 240 390 240 406 226 416" stroke="#c884f0" stroke-width="6" fill="none"/>
+    <path d="M 288 380 C 272 390 272 406 286 416" stroke="#c884f0" stroke-width="6" fill="none"/>
+  </g>
+</svg>
