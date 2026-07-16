@@ -4,7 +4,7 @@ import {
   consumeShardglassGatherDouble,
 } from '../src/engine/skilling.js'
 import { simulateIdleSkilling } from '../src/engine/idleEngine.js'
-import { getBreakdownYield } from '../src/engine/inventory.js'
+import { getBreakdownYield, buyWithShards, countItem } from '../src/engine/inventory.js'
 import { describeObtainment } from '../src/utils/armoury.js'
 import itemsData from '../src/data/items.json'
 
@@ -149,6 +149,65 @@ describe('breaking shardglass gear down into shards', () => {
   it('returns null for an item that declares no breakdown', () => {
     expect(getBreakdownYield((itemsData as any).coins)).toBeNull()
     expect(getBreakdownYield((itemsData as any).shardglass_shards)).toBeNull()
+  })
+})
+
+describe('shardglass store prices', () => {
+  const expected: Record<string, number> = {
+    shardglass_helmet: 25000,
+    shardglass_plate_body: 25000,
+    shardglass_platelegs: 25000,
+    shardglass_shield: 25000,
+    shardglass_bow: 50000,
+    shardglass_pickaxe: 15000,
+    shardglass_axe: 15000,
+  }
+
+  it('prices every shardglass gear piece: 25k armour, 50k weapon, 15k tools', () => {
+    for (const [id, cost] of Object.entries(expected)) {
+      expect((itemsData as any)[id].shardglassShopCost).toBe(cost)
+    }
+  })
+
+  it('only shardglass gear carries a shard price', () => {
+    const priced = Object.values(itemsData as any).filter((it: any) => it.shardglassShopCost).map((it: any) => it.id).sort()
+    expect(priced).toEqual(Object.keys(expected).sort())
+  })
+})
+
+describe('buying shardglass gear with shards', () => {
+  const helmet = { id: 'shardglass_helmet', shardglassShopCost: 25000 } as any
+  const invWith = (shards: number) => [{ itemId: 'shardglass_shards', quantity: shards }, ...Array(27).fill(null)]
+
+  it('spends the shard cost and grants the gear', () => {
+    const res = buyWithShards(invWith(60000), helmet, 2)
+    expect(res.ok).toBe(true)
+    if (!res.ok) return
+    expect(res.totalCost).toBe(50000)
+    expect(countItem(res.inventory, 'shardglass_shards')).toBe(10000)
+    expect(countItem(res.inventory, 'shardglass_helmet')).toBe(2)
+  })
+
+  it('refuses when the player cannot afford the total', () => {
+    const res = buyWithShards(invWith(10000), helmet, 1)
+    expect(res).toMatchObject({ ok: false, reason: 'insufficient_shards' })
+  })
+
+  it('refuses when there is no inventory room for the gear', () => {
+    // Shards left over after the buy keep slot 0 occupied; the other 27 are full.
+    const full = [{ itemId: 'shardglass_shards', quantity: 30000 }, ...Array(27).fill({ itemId: 'coins', quantity: 1 })]
+    const res = buyWithShards(full, helmet, 1)
+    expect(res).toMatchObject({ ok: false, reason: 'no_space' })
+  })
+
+  it('never mutates the inventory passed in', () => {
+    const inv = invWith(25000)
+    buyWithShards(inv, helmet, 1)
+    expect(inv[0]).toEqual({ itemId: 'shardglass_shards', quantity: 25000 })
+  })
+
+  it('rejects items with no shard price', () => {
+    expect(buyWithShards(invWith(99999), { id: 'coins' } as any, 1)).toMatchObject({ ok: false, reason: 'not_for_sale' })
   })
 })
 

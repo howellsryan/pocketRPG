@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from 'preact/hooks'
 import { useGame } from '../state/gameState.jsx'
-import { countItem } from '../engine/inventory.js'
+import { countItem, buyWithShards } from '../engine/inventory.js'
 import { api, getToken, getCharacterId } from '../cloud/api.js'
 import { isOrderBookItem, getPurchaseRestriction } from '../engine/storeRules.js'
 import { getLevelFromXP } from '../engine/experience.js'
@@ -59,6 +59,7 @@ export default function TradingPostScreen({ onBuyCredits, onBack }) {
     completedQuests,
     loadGame,
     getSnapshot,
+    updateInventory,
   } = useGame()
   const isDesktop = useIsDesktop()
 
@@ -79,6 +80,7 @@ export default function TradingPostScreen({ onBuyCredits, onBack }) {
   const [listingsLoaded, setListingsLoaded] = useState(false)
   const [listingsPage, setListingsPage] = useState(0)
   const [pendingHighValueSell, setPendingHighValueSell] = useState(false)
+  const [shardglassMode, setShardglassMode] = useState(false)
   const searchAbortRef = useRef(0)
   const LISTINGS_PAGE_SIZE = 20
 
@@ -106,12 +108,20 @@ export default function TradingPostScreen({ onBuyCredits, onBack }) {
     return pool
   }, [itemsData])
 
-  const STORE_SECTIONS = ['Weapons & Armour', 'Minigame & Quest Unlocks', 'Runes, Robes & Staves', 'Skilling Equipment']
+  const STORE_SECTIONS = ['Weapons & Armour', 'Minigame & Quest Unlocks', 'Runes, Robes & Staves', 'Skilling Equipment', 'Shardglass']
+
+  // Shardglass gear is bought with Shardglass Shards (an inventory resource),
+  // not coins — a client-side exchange like crafting, distinct from the coin
+  // order book / general store.
+  const SHARDGLASS_SHARD_ID = 'shardglass_shards'
+  const isShardglassShopItem = (item) => !!item?.shardglassShopCost
+  const shardsOwned = countItem(inventory, SHARDGLASS_SHARD_ID)
 
   const SKILLING_WEAPON_IDS = new Set(['bronze_axe', 'bronze_pickaxe', 'fishing_net', 'fishing_rod', 'lobster_cage', 'harpoon', 'angler_net'])
   const WIZARD_IDS = new Set(['wizard_hat', 'black_wizard_hat', 'wizard_robe_top', 'wizard_robe_skirt'])
 
   function getStoreSection(id, item) {
+    if (item.shardglassShopCost) return 'Shardglass'
     if (item.questUnlock || minigameProductIds.has(id) || item.isSkillCape || item.isMaxCape) return 'Minigame & Quest Unlocks'
     if (item.type === 'rune' || (item.type === 'resource' && id.endsWith('_rune')) || id.startsWith('staff_of_') || WIZARD_IDS.has(id)) return 'Runes, Robes & Staves'
     if (SKILLING_WEAPON_IDS.has(id) || item.type === 'resource' || item.type === 'seed') return 'Skilling Equipment'
@@ -124,7 +134,7 @@ export default function TradingPostScreen({ onBuyCredits, onBack }) {
     for (const s of STORE_SECTIONS) sections[s] = []
     for (const [id, item] of Object.entries(itemsData)) {
       if (!item || (item.id && item.id !== id)) continue
-      if (!item.isGeneralStore && !item.isSkillCape && !item.isMaxCape && !minigameProductIds.has(id) && !item.questUnlock) continue
+      if (!item.isGeneralStore && !item.isSkillCape && !item.isMaxCape && !minigameProductIds.has(id) && !item.questUnlock && !item.shardglassShopCost) continue
       // Account-identity helms only appear in the store for the exact matching
       // type: standard Ironman vs One Life Ironman never see each other's helm.
       if (item.requiresAccount === 'ironman' && !(isIronman && !isOneLife)) continue
@@ -220,6 +230,31 @@ export default function TradingPostScreen({ onBuyCredits, onBack }) {
     setQty(1)
     setBidPrice(0)
     setPendingHighValueSell(false)
+    setShardglassMode(false)
+  }
+
+  const openShardglassItem = (item) => {
+    setSelected(item)
+    setPendingAction('buy')
+    setQty(1)
+    setShardglassMode(true)
+  }
+
+  // Shardglass exchange: spend Shardglass Shards from the inventory and receive
+  // the gear directly. Client-trusted like crafting — both the shards and the
+  // gear ride the save blob, so no coin endpoint is involved.
+  const handleShardglassBuy = () => {
+    if (!selected || busy) return
+    const res = buyWithShards(inventory, selected, qty, SHARDGLASS_SHARD_ID)
+    if (!res.ok) {
+      if (res.reason === 'insufficient_shards') addToast(`Need ${res.totalCost.toLocaleString()} Shardglass Shards — you have ${res.owned.toLocaleString()}.`, 'error')
+      else if (res.reason === 'no_space') addToast(`Not enough inventory space for ${selected.name}.`, 'error')
+      else addToast('This item is not sold for shards.', 'error')
+      return
+    }
+    updateInventory(res.inventory)
+    addToast(`Bought ${res.buyQty} × ${selected.name} for ${res.totalCost.toLocaleString()} Shardglass Shards.`, 'success')
+    closeModal()
   }
 
   if (!getToken() || !getCharacterId()) {
@@ -477,6 +512,33 @@ export default function TradingPostScreen({ onBuyCredits, onBack }) {
     )
   }
 
+  const renderShardglassRow = (item) => {
+    const unitCost = Math.floor(Number(item.shardglassShopCost) || 0)
+    const owned = countItem(inventory, item.id)
+    const canAfford = shardsOwned >= unitCost
+    return (
+      <div key={item.id} class="p-3 rounded-lg bg-[var(--color-void-light)] border border-[var(--color-void-border)] flex items-center gap-3">
+        <GameIcon item={item} size={48} class="shrink-0" />
+        <div class="flex-1 min-w-0">
+          <div class="text-[13px] font-semibold text-[var(--color-parchment)]">{item.name}</div>
+          <div class="text-[10px] text-[var(--fm-ink-faint)] mt-1">
+            Shardglass store
+            {owned > 0 && <span class="ml-2">· You have {owned}</span>}
+          </div>
+          {!canAfford && <div class="text-[10px] text-[var(--fm-blood)] mt-1">Need {unitCost.toLocaleString()} shards</div>}
+        </div>
+        <div class="text-right shrink-0">
+          <div class="text-[11px] font-[var(--font-mono)] text-[var(--color-gold)] inline-flex items-center gap-1">
+            <GameIcon item={itemsData[SHARDGLASS_SHARD_ID]} size={13} /> {unitCost.toLocaleString()}
+          </div>
+          <div class="flex gap-1 mt-1 justify-end">
+            <Button variant="primary" size="sm" onClick={() => openShardglassItem(item)}>Buy</Button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   const renderMyOffersList = () => {
     // Active offers (still on the book) hold a slot; ready-to-collect rows
     // float above the slot grid so the player can see what's waiting on them.
@@ -595,7 +657,9 @@ export default function TradingPostScreen({ onBuyCredits, onBack }) {
               <div class="py-10 px-4 text-center text-[var(--fm-ink-faint)] text-[12px]">No items in this section.</div>
             ) : (
               <div class="flex flex-col gap-2">
-                {rows.map((row) => renderListRow({ ...row.item, id: row.id }))}
+                {rows.map((row) => (activeStoreSection === 'Shardglass'
+                  ? renderShardglassRow({ ...row.item, id: row.id })
+                  : renderListRow({ ...row.item, id: row.id })))}
               </div>
             )}
           </div>
@@ -698,6 +762,48 @@ export default function TradingPostScreen({ onBuyCredits, onBack }) {
       </div>
     )
   }
+
+  const shardglassDetailModal = selected && shardglassMode ? (() => {
+    const unitCost = Math.floor(Number(selected.shardglassShopCost) || 0)
+    const totalCost = unitCost * qty
+    const canAfford = shardsOwned >= totalCost
+    const shardName = itemsData[SHARDGLASS_SHARD_ID]?.name || 'Shardglass Shards'
+    return (
+      <div class="space-y-3">
+        <Panel className="text-[11px] text-[var(--fm-ink-faint)] space-y-1">
+          <div class="flex justify-between"><span>Price</span><span class="text-[var(--color-gold)] font-[var(--font-mono)]">{unitCost.toLocaleString()} shards each</span></div>
+          <div class="flex justify-between"><span>You own</span><span class="font-[var(--font-mono)]">{shardsOwned.toLocaleString()} shards</span></div>
+        </Panel>
+        <div class="flex flex-col gap-2">
+          <div class="text-[12px] text-[var(--fm-ink-faint)]">Quantity</div>
+          <div class="flex gap-2 items-center">
+            <Button variant="secondary" size="md" onClick={() => setQty(Math.max(1, qty - 1))} className="w-8 h-8 p-0 flex items-center justify-center text-base">−</Button>
+            <input
+              type="number"
+              min="1"
+              value={qty}
+              onInput={(e) => setQty(Math.max(1, Math.floor(Number(e.target.value) || 1)))}
+              class="flex-1 h-9 rounded-md bg-[var(--color-void)] border border-[var(--color-void-border)] text-[var(--color-parchment)] text-[13px] font-[var(--font-mono)] text-center outline-none"
+            />
+            <Button variant="secondary" size="md" onClick={() => setQty(qty + 1)} className="w-8 h-8 p-0 flex items-center justify-center text-base">+</Button>
+          </div>
+        </div>
+        <Panel className="text-[12px] flex justify-between">
+          <span class="text-[var(--fm-ink-faint)]">Total cost</span>
+          <span class={`font-[var(--font-mono)] font-bold ${canAfford ? 'text-[var(--color-gold)]' : 'text-[var(--fm-blood)]'}`}>{totalCost.toLocaleString()} shards</span>
+        </Panel>
+        {!canAfford && (
+          <Panel className="text-[11px] text-[var(--fm-blood)]">Not enough {shardName} for this purchase.</Panel>
+        )}
+        <div class="flex gap-2">
+          <Button variant="secondary" size="lg" onClick={closeModal} className="flex-1">Cancel</Button>
+          <Button variant="primary" size="lg" onClick={handleShardglassBuy} disabled={busy || !canAfford} className="flex-1">
+            {busy ? '…' : 'Buy'}
+          </Button>
+        </div>
+      </div>
+    )
+  })() : null
 
   const detailModal = selected ? (() => {
     const orderBook = isOrderBookItem(selected)
@@ -885,10 +991,10 @@ export default function TradingPostScreen({ onBuyCredits, onBack }) {
       {selected && (
         <SharedItemModal
           item={selected}
-          title={`${pendingAction === 'buy' ? 'Buy' : 'Sell'}: ${selected.name}`}
+          title={`${shardglassMode ? 'Buy' : (pendingAction === 'buy' ? 'Buy' : 'Sell')}: ${selected.name}`}
           onClose={closeModal}
         >
-          {detailModal}
+          {shardglassMode ? shardglassDetailModal : detailModal}
         </SharedItemModal>
       )}
 
