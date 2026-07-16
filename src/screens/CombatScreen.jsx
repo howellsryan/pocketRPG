@@ -2287,11 +2287,14 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                     return (
                       <div key={drop.itemId} class="bg-[var(--color-void)] rounded-lg p-2">
                         <div class="flex items-start justify-between gap-2">
-                          <div class="text-left flex-1 min-w-0">
-                            <div class="text-[11px] font-semibold text-[var(--color-parchment)]">{item?.icon || '📦'} {item?.name || drop.itemId}</div>
-                            <div class="text-[9px] text-[var(--color-parchment)] opacity-60 mt-0.5">
-                              {formatDropChance(drop.chance)}
-                              {Array.isArray(drop.quantity) ? ` · ${drop.quantity[0]}–${drop.quantity[1]} ea` : ` · ${drop.quantity}`}
+                          <div class="flex items-center gap-1.5 text-left flex-1 min-w-0">
+                            <GameIcon item={item} iconKey={item?.iconId} size={16} />
+                            <div class="min-w-0">
+                              <div class="text-[11px] font-semibold text-[var(--color-parchment)]">{item?.name || drop.itemId}</div>
+                              <div class="text-[9px] text-[var(--color-parchment)] opacity-60 mt-0.5">
+                                {formatDropChance(drop.chance)}
+                                {Array.isArray(drop.quantity) ? ` · ${drop.quantity[0]}–${drop.quantity[1]} ea` : ` · ${drop.quantity}`}
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -2366,7 +2369,9 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                     const item = itemsData[drop.itemId]
                     return (
                       <div key={drop.itemId} class="bg-[var(--color-void)] rounded-lg p-2 flex items-center justify-between">
-                        <div class="text-[11px] text-[var(--color-parchment)]">{item?.icon || '📦'} {item?.name || drop.itemId}</div>
+                        <div class="flex items-center gap-1.5 text-[11px] text-[var(--color-parchment)]">
+                          <GameIcon item={item} iconKey={item?.iconId} size={16} /> {item?.name || drop.itemId}
+                        </div>
                         <div class="text-[9px] text-[var(--color-parchment)] opacity-50">
                           {formatDropChance(drop.chance)}
                           {Array.isArray(drop.quantity) ? ` · ${drop.quantity[0]}–${drop.quantity[1]}` : ` · ${drop.quantity}`}
@@ -2383,8 +2388,8 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                         {selectedRaidInfo.rewards.unique.items.map(u => {
                           const item = itemsData[u.itemId]
                           return (
-                            <div key={u.itemId} class="text-[10px] text-[var(--color-parchment)] opacity-70">
-                              {item?.icon || '🎁'} {item?.name || u.itemId}
+                            <div key={u.itemId} class="flex items-center gap-1.5 text-[10px] text-[var(--color-parchment)] opacity-70">
+                              <GameIcon item={item} iconKey={item?.iconId} size={14} /> {item?.name || u.itemId}
                             </div>
                           )
                         })}
@@ -2675,8 +2680,8 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                 const remainingTicks = combat.activePotions[potionId] || 0
                 const remainingSeconds = Math.ceil(remainingTicks * 0.6)
                 return (
-                  <div key={potionId} class="opacity-80">
-                    {potion.icon} {boosts.join(', ')} · {remainingSeconds}s
+                  <div key={potionId} class="opacity-80 flex items-center justify-end gap-1">
+                    <GameIcon item={potion} iconKey={potion?.iconId} size={12} /> {boosts.join(', ')} · {remainingSeconds}s
                   </div>
                 )
               })}
@@ -3165,7 +3170,9 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                   >
                     <div class="flex items-center justify-between">
                       <div class="text-left flex-1">
-                        <div class="text-sm font-semibold text-[var(--color-parchment)]">{potion.icon} {potion.name}</div>
+                        <div class="flex items-center gap-1.5 text-sm font-semibold text-[var(--color-parchment)]">
+                          <GameIcon item={potion} iconKey={potion?.iconId} size={16} /> {potion.name}
+                        </div>
                         <div class="text-[10px] text-[var(--color-parchment)] opacity-60 mt-0.5">
                           {potion.effect === 'hp' && `+${potion.boost} HP`}
                           {potion.effect === 'attack' && `+${potion.boost} Attack`}
@@ -3265,7 +3272,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                             : 'bg-[var(--fm-parch-hi)] border-[var(--color-emerald)] active:bg-[var(--fm-parch)]'
                         }`}
                       >
-                        <div class="text-lg leading-none">{item.icon}</div>
+                        <GameIcon item={item} iconKey={item?.iconId} size={22} />
                         <div class="text-[8px] text-[var(--color-parchment)] font-semibold mt-0.5 line-clamp-2 text-center leading-tight">
                           {item.name}
                         </div>
@@ -3489,13 +3496,16 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                     return (
                       <div key={drop.itemId} class="bg-[var(--color-void)] rounded-lg p-2">
                         <div class="flex items-start justify-between gap-2">
-                          <div class="text-left flex-1 min-w-0">
-                            <div class="text-[11px] font-semibold text-[var(--color-parchment)]">
-                              {item?.icon || '📦'} {item?.name || drop.itemId}
-                            </div>
-                            <div class="text-[9px] text-[var(--color-parchment)] opacity-60 mt-0.5">
-                              {formatDropChance(drop.chance)}
-                              {Array.isArray(drop.quantity) ? ` · ${drop.quantity[0]}–${drop.quantity[1]} ea` : ` · ${drop.quantity}`}
+                          <div class="flex items-center gap-1.5 text-left flex-1 min-w-0">
+                            <GameIcon item={item} iconKey={item?.iconId} size={16} />
+                            <div class="min-w-0">
+                              <div class="text-[11px] font-semibold text-[var(--color-parchment)]">
+                                {item?.name || drop.itemId}
+                              </div>
+                              <div class="text-[9px] text-[var(--color-parchment)] opacity-60 mt-0.5">
+                                {formatDropChance(drop.chance)}
+                                {Array.isArray(drop.quantity) ? ` · ${drop.quantity[0]}–${drop.quantity[1]} ea` : ` · ${drop.quantity}`}
+                              </div>
                             </div>
                           </div>
                         </div>

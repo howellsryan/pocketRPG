@@ -189,10 +189,6 @@ function formatLootEntry(entry) {
   return `${formatCompactCoins(qty)}x ${name}${charges}`
 }
 
-function getLootIcon(entry) {
-  return itemsData?.[entry?.itemId]?.icon || '▫️'
-}
-
 function getEndLootTotal(loot) {
   const value = Number(loot?.totalRiskValue ?? loot?.bankedValue ?? loot?.addedValue ?? 0)
   if (!Number.isFinite(value) || value <= 0) return 0
