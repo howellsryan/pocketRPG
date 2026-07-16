@@ -106,6 +106,11 @@ import * as THREE from './vendor/three/three.module.min.js';
 import { GLTFLoader } from './vendor/three/jsm/loaders/GLTFLoader.js';
 import { MeshoptDecoder } from './vendor/three/jsm/libs/meshopt_decoder.module.js';
 import { OrbitControls } from './vendor/three/jsm/controls/OrbitControls.js';
+// Reuse the REAL runtime tint + skinned-outfit rebind logic (same module the
+// arena-hero-harness uses) so this aligner shows exactly what ships — a piece
+// with no tint or a naive bone-parent would otherwise look right here and
+// wrong in-game.
+import { applyEquipTint, setupHideMask, disposeObject } from '/src/3d/heroAttach.js';
 
 const $ = id => document.getElementById(id);
 const info = $('info');
@@ -128,7 +133,21 @@ const rig = new THREE.Group(); scene.add(rig);         // holds character, norma
 const loader = new GLTFLoader(); loader.setMeshoptDecoder(MeshoptDecoder);
 let mixer = null, idleAction = null, clock = new THREE.Clock();
 let charRoot = null, weapon = null, weaponAnchor = null, bones = {};
+let heroSkinned = null, headMaskCtl = null, gearBound = null; // skinned-outfit rebind state
 let lungeT = 0;
+
+// Skinned outfit pieces (body/legs slot: Quaternius exports sharing the
+// hero's own skeleton) get rebound onto the hero's LIVE skeleton instead of
+// bone-parented — mirrors heroAttach.attachGearList exactly. These never take
+// a manual position/rotation/scale in production, so the sliders are
+// intentionally inert for them.
+function clearGearBound() {
+  if (gearBound) {
+    for (const o of gearBound.objs) { gearBound.anchor.remove(o); disposeObject(o); }
+    gearBound = null;
+  }
+  if (headMaskCtl) headMaskCtl.setHidden({});
+}
 
 function resize() {
   const w = stage.clientWidth, h = stage.clientHeight;
@@ -149,16 +168,20 @@ function frameCharacter(obj) {
 async function loadChar(url) {
   if (charRoot) { rig.remove(charRoot); }
   bones = {}; weaponAnchor = null; mixer = null; idleAction = null;
+  gearBound = null; heroSkinned = null; headMaskCtl = null; // old bindings died with charRoot
   const boneSel = $('bone'); boneSel.innerHTML = '<option value="__root">(model root)</option>';
   try {
     const gltf = await loader.loadAsync(url);
     charRoot = gltf.scene; rig.add(charRoot); frameCharacter(charRoot);
     let tris = 0, skinned = 0;
+    const skinnedMeshes = [];
     charRoot.traverse(o => {
       if (o.isMesh) { const g = o.geometry; tris += (g.index ? g.index.count : g.attributes.position.count) / 3; }
-      if (o.isSkinnedMesh) skinned++;
+      if (o.isSkinnedMesh) { skinned++; skinnedMeshes.push(o); }
       if (o.isBone) { bones[o.name] = o; const op = document.createElement('option'); op.value = o.name; op.textContent = o.name; boneSel.appendChild(op); }
     });
+    heroSkinned = skinnedMeshes.slice().sort((a, b) => b.geometry.attributes.position.count - a.geometry.attributes.position.count)[0] || null;
+    headMaskCtl = setupHideMask(THREE, skinnedMeshes);
     if (gltf.animations.length) {
       mixer = new THREE.AnimationMixer(charRoot);
       // prefer the registry's idle clip so the hero drops out of T-pose into
@@ -177,11 +200,35 @@ async function loadChar(url) {
   } catch (e) { info.innerHTML = '<span class="err">char load failed: ' + e.message + '</span>'; }
 }
 
-async function loadWeapon(url) {
-  if (weapon && weaponAnchor) weaponAnchor.remove(weapon);
+async function loadWeapon(url, spec) {
+  clearGearBound();
+  if (weapon && weaponAnchor) { weaponAnchor.remove(weapon); disposeObject(weapon); weapon = null; }
   try {
     const gltf = await loader.loadAsync(url);
-    weapon = gltf.scene; attachWeapon(); updateXform();
+    // Body/legs outfit pieces (Quaternius exports sharing the hero's own
+    // skeleton) never take a bone/position — they rebind onto the hero's live
+    // skeleton, exactly like heroAttach.attachGearList. A naive bone-parent
+    // (what this tool did before) left the piece unposed and duplicated the
+    // whole body, which is why armour looked like "a second character".
+    const pieceSkinned = [];
+    gltf.scene.traverse(o => { if (o.isSkinnedMesh) pieceSkinned.push(o); });
+    if (pieceSkinned.length && heroSkinned) {
+      const objs = [];
+      for (const ps of pieceSkinned) {
+        ps.bind(heroSkinned.skeleton, heroSkinned.bindMatrix);
+        applyEquipTint(THREE, ps, spec?.tint, true);
+        heroSkinned.parent.add(ps);
+        objs.push(ps);
+      }
+      gearBound = { objs, anchor: heroSkinned.parent };
+      if (headMaskCtl) headMaskCtl.setHidden({ head: !!spec?.hideHead, torso: !!spec?.hideBody, legs: !!spec?.hideLegs });
+      info.innerHTML += '<br>skinned outfit piece — rebinds to hero skeleton, sliders inactive';
+      updateXform();
+      return;
+    }
+    weapon = gltf.scene;
+    applyEquipTint(THREE, weapon, spec?.tint);
+    attachWeapon(); updateXform();
   } catch (e) { info.innerHTML += '<br><span class="err">weapon load failed: ' + e.message + '</span>'; }
 }
 
@@ -258,6 +305,7 @@ function resolveRegistryWeapon(id) {
     position: w.position || dw.position || [0, 0, 0],
     rotationDeg: w.rotationDeg || dw.rotationDeg || [0, 0, 0],
     scale: typeof w.scale === 'number' ? w.scale : (typeof dw.scale === 'number' ? dw.scale : 1),
+    tint: w.tint || null,
   };
 }
 function resolveRegistryGear(id) {
@@ -268,6 +316,8 @@ function resolveRegistryGear(id) {
     position: g.position || dg.position || [0, 0, 0],
     rotationDeg: g.rotationDeg || dg.rotationDeg || [0, 0, 0],
     scale: typeof g.scale === 'number' ? g.scale : (typeof dg.scale === 'number' ? dg.scale : 1),
+    tint: g.tint || null,
+    hideHead: Boolean(g.hideHead), hideBody: Boolean(g.hideBody), hideLegs: Boolean(g.hideLegs),
   };
 }
 async function loadRegistry() {
@@ -303,7 +353,7 @@ $('regItem').addEventListener('change', async () => {
     $(id).value = v; $(id + 'o').textContent = v;
   }
   $('bone').value = spec.bone && bones[spec.bone] ? spec.bone : '__root';
-  await loadWeapon(registryUrl(spec.model));
+  await loadWeapon(registryUrl(spec.model), spec);
   updateXform();
 });
 
