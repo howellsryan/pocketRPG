@@ -196,8 +196,8 @@ export const SLAYER_MASTERS = [
       // individually assignable, only a full raid clear is.
       ...Object.keys(monstersData).filter(id => monstersData[id]?.boss === true && !RAID_MONSTER_IDS.has(id)).map(id => ({ id, boss: true })),
       // Raid-completion proxy entries: each is the raid's final boss, overridden
-      // to a [5,20] task range instead of the master's [5,50] bossTaskRange.
-      ...Object.keys(RAID_TASK_META).map(id => ({ id, boss: true, taskRange: [5, 20] })),
+      // to a [2,10] task range instead of the master's [5,50] bossTaskRange.
+      ...Object.keys(RAID_TASK_META).map(id => ({ id, boss: true, taskRange: [2, 10] })),
     ],
   },
 ]

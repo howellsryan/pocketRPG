@@ -63,9 +63,9 @@ describe('Zul-Kaar slayer master', () => {
     for (const id of raidMonsterIds) {
       const entry = pool.find(e => getEntryId(e) === id)
       if (RAID_TASK_META[id]) {
-        // Final bosses are allowed exactly once, and only as the [5,20] raid-clear proxy.
+        // Final bosses are allowed exactly once, and only as the [2,10] raid-clear proxy.
         expect(entry, `raid-final ${id} missing its raid-clear proxy entry`).toBeTruthy()
-        expect((entry as any)?.taskRange, `raid-final ${id} proxy entry must carry the [5,20] taskRange override`).toEqual([5, 20])
+        expect((entry as any)?.taskRange, `raid-final ${id} proxy entry must carry the [2,10] taskRange override`).toEqual([2, 10])
       } else {
         // Every other raid sub-boss (e.g. Gorath the Infested) must not be assignable at all.
         expect(entry, `raid sub-boss ${id} must not appear as an individually assignable task`).toBeUndefined()
