@@ -12,6 +12,8 @@ import ItemDetailPanel from '../components/ItemDetailPanel.jsx'
 import TwoPaneLayout from '../components/TwoPaneLayout.jsx'
 import BackLink from '../components/BackLink.jsx'
 import Button from '../components/Button.jsx'
+import SellConfirmModal from '../components/SellConfirmModal.jsx'
+import { HIGH_VALUE_SELL_THRESHOLD } from '../utils/constants.js'
 import { useIsDesktop } from '../hooks/useIsDesktop.js'
 import { pullSave, applyCloudSave, pushNow, checkCloudNewer } from '../cloud/sync.js'
 import questsData from '../data/quests.json'
@@ -76,6 +78,7 @@ export default function TradingPostScreen({ onBuyCredits, onBack }) {
   const [allListings, setAllListings] = useState([])
   const [listingsLoaded, setListingsLoaded] = useState(false)
   const [listingsPage, setListingsPage] = useState(0)
+  const [pendingHighValueSell, setPendingHighValueSell] = useState(false)
   const searchAbortRef = useRef(0)
   const LISTINGS_PAGE_SIZE = 20
 
@@ -216,6 +219,7 @@ export default function TradingPostScreen({ onBuyCredits, onBack }) {
     setPendingAction(null)
     setQty(1)
     setBidPrice(0)
+    setPendingHighValueSell(false)
   }
 
   if (!getToken() || !getCharacterId()) {
@@ -286,6 +290,16 @@ export default function TradingPostScreen({ onBuyCredits, onBack }) {
   }
 
   // ── SELL HANDLER ─────────────────────────────────────────────────────────
+  const handleSellClick = () => {
+    if (!selected) return
+    const totalValue = isOrderBookItem(selected) ? bidPrice * qty : generalStoreSellPrice(selected) * qty
+    if (totalValue >= HIGH_VALUE_SELL_THRESHOLD) {
+      setPendingHighValueSell(true)
+      return
+    }
+    handleSell()
+  }
+
   const handleSell = async () => {
     if (!selected || busy) return
     setBusy(true)
@@ -767,7 +781,7 @@ export default function TradingPostScreen({ onBuyCredits, onBack }) {
           <Button
             variant="primary"
             size="lg"
-            onClick={isBuy ? handleBuy : handleSell}
+            onClick={isBuy ? handleBuy : handleSellClick}
             disabled={busy || buyLocked || (!isBuy && ownedQty < qty)}
             className="flex-1"
           >
@@ -876,6 +890,20 @@ export default function TradingPostScreen({ onBuyCredits, onBack }) {
         >
           {detailModal}
         </SharedItemModal>
+      )}
+
+      {pendingHighValueSell && selected && (
+        <SellConfirmModal
+          itemName={selected.name}
+          quantity={qty}
+          totalValue={isOrderBookItem(selected) ? bidPrice * qty : generalStoreSellPrice(selected) * qty}
+          busy={busy}
+          onCancel={() => setPendingHighValueSell(false)}
+          onConfirm={() => {
+            setPendingHighValueSell(false)
+            handleSell()
+          }}
+        />
       )}
     </div>
   )

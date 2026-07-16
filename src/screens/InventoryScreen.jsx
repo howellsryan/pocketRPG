@@ -5,9 +5,11 @@ import Modal from '../components/Modal.jsx'
 import SharedItemModal from '../components/SharedItemModal.jsx'
 import WeaponChargePanel, { getChargeRecipe } from '../components/WeaponChargePanel.jsx'
 import TradingPostSellForm from '../components/TradingPostSellForm.jsx'
+import SellConfirmModal from '../components/SellConfirmModal.jsx'
 import { freeSlots, countItem } from '../engine/inventory.js'
 import { isOrderBookItem } from '../engine/storeRules.js'
 import { getIronmanShopValue } from '../utils/itemValue.js'
+import { HIGH_VALUE_SELL_THRESHOLD } from '../utils/constants.js'
 import { equipItem, checkEquipRequirements, placeUnequippedItems } from '../engine/equipment.js'
 import { getLevelFromXP } from '../engine/experience.js'
 import { api, getToken, getCharacterId } from '../cloud/api.js'
@@ -22,6 +24,7 @@ export default function InventoryScreen() {
   const [showChargeModal, setShowChargeModal] = useState(false)
   const [showDropConfirm, setShowDropConfirm] = useState(false)
   const [sellBusy, setSellBusy] = useState(false)
+  const [pendingHighValueSell, setPendingHighValueSell] = useState(null) // { qty, overridePrice, itemName, totalValue }
   const [listQtyInput, setListQtyInput] = useState(1)
   const [listPriceInput, setListPriceInput] = useState(1)
   const hasCloudAccount = Boolean(getToken() && getCharacterId())
@@ -351,7 +354,29 @@ export default function InventoryScreen() {
   const handleSell = async (qty, overridePrice = null) => {
     if (!selected || sellBusy) return
 
-    // Re-verify the inventory slot still exists with the same item
+    const currentSlot = inventory[selected.slotIndex]
+    if (!currentSlot || currentSlot.itemId !== selected.slot.itemId) return
+
+    const { item } = selected
+    const defaultPrice = isIronman ? getIronmanShopValue(item) : Math.floor(Number(item.shopValue) || 0)
+    const price = Math.floor(Number(overridePrice ?? defaultPrice) || 0)
+    const isNoted = !!currentSlot.noted
+    const ownedQty = (item.stackable || isNoted)
+      ? currentSlot.quantity
+      : inventory.reduce((n, s) => n + ((s && s.itemId === currentSlot.itemId && !!s.noted === isNoted) ? 1 : 0), 0)
+    const sellQty = Math.max(1, Math.min(Number(qty) || 1, ownedQty))
+    const totalValue = sellQty * price
+    if (totalValue >= HIGH_VALUE_SELL_THRESHOLD) {
+      setPendingHighValueSell({ qty, overridePrice, itemName: item.name, quantity: sellQty, totalValue })
+      return
+    }
+
+    await executeSell(qty, overridePrice)
+  }
+
+  const executeSell = async (qty, overridePrice = null) => {
+    if (!selected || sellBusy) return
+
     const currentSlot = inventory[selected.slotIndex]
     if (!currentSlot || currentSlot.itemId !== selected.slot.itemId) {
       addToast('Item no longer in inventory', 'error')
@@ -359,11 +384,7 @@ export default function InventoryScreen() {
       return
     }
 
-    const { slot, item } = selected
-    // Ironmen settle the immediate-sell at the reduced Ironman vendor value, so
-    // the confirmation toast must quote that — not the full shop price. (The
-    // server is authoritative for the payout; price here is display-only on the
-    // quick-sell path.)
+    const { item } = selected
     const defaultPrice = isIronman ? getIronmanShopValue(item) : Math.floor(Number(item.shopValue) || 0)
     const price = Math.floor(Number(overridePrice ?? defaultPrice) || 0)
     if (price <= 0) {
@@ -841,6 +862,21 @@ export default function InventoryScreen() {
             onUncharge={handleUnchargeWeapon}
           />
         </Modal>
+      )}
+
+      {pendingHighValueSell && (
+        <SellConfirmModal
+          itemName={pendingHighValueSell.itemName}
+          quantity={pendingHighValueSell.quantity}
+          totalValue={pendingHighValueSell.totalValue}
+          busy={sellBusy}
+          onCancel={() => setPendingHighValueSell(null)}
+          onConfirm={async () => {
+            const { qty, overridePrice } = pendingHighValueSell
+            setPendingHighValueSell(null)
+            await executeSell(qty, overridePrice)
+          }}
+        />
       )}
 
       {showDropConfirm && selected && (
