@@ -11,7 +11,7 @@ import {
   effectiveMagic, monsterMagicDefenceRoll, magicMaxHit
 } from './formulas.js'
 import { getEquipmentBonuses, getAttackSpeed, getMeleeAttackStyle, getCombatType, getRangedAmmoRequirementFailure, getEffectiveWornMagicDamage } from './equipment.js'
-import { getEffectiveToolActionTicks, getEquippedSkillXpMultiplier, rollGatherBonusDrops, usesShardglassGatherTool, consumeShardglassGatherDouble, SHARDGLASS_SHARD_ITEM_ID } from './skilling.js'
+import { getEffectiveToolActionTicks, getEquippedSkillXpMultiplier, rollGatherBonusDrops, usesShardglassGatherTool, resolveShardglassToolSource, consumeShardglassGatherCharge, SHARDGLASS_GATHER_TOOLS } from './skilling.js'
 import { hasRequiredRunes, getRunesToConsume } from './runes.js'
 import { getHighAlchValue } from '../utils/itemValue.js'
 import { MELEE_XP_PER_DAMAGE, RANGED_XP_PER_DAMAGE, MAGIC_XP_PER_DAMAGE, HP_XP_PER_DAMAGE, GATHERING_SKILLS, IDLE_AUTOBANK_GATHERING_SKILLS, GATHER_AUTOBANK_CONSTRUCTION_LEVEL } from '../utils/constants.js'
@@ -241,6 +241,11 @@ export function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, st
   const itemsBanked = {}
   const itemsDropped = {}
   const newInv = [...inventory]
+  // Charges drained from an *equipped* shardglass gather tool this window —
+  // reported back so the caller can persist it onto equipment (mirrors
+  // combat's chargesConsumed). An inventory-held tool's charges are written
+  // directly onto its finalInventory slot instead, needing no separate field.
+  let shardglassChargesConsumed = 0
 
   const xpMultiplier = getEquippedSkillXpMultiplier(task.skill, equipment, itemsData)
   const xpPer = Math.floor((task.action.xp || 0) * xpMultiplier)
@@ -368,11 +373,13 @@ export function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, st
     const productQty = task.action.productQty || 1
 
     // Shardglass tool identity is fixed for the session (locked like actionTicks);
-    // shards are kept out of bank trips so the double-output perk survives them.
+    // its charge total is snapshotted here too and drained action-by-action below.
     const shardglassGather = usesShardglassGatherTool(task.skill, equipment, inventory, itemsData, stats)
-    const gatherExcludedIds = shardglassGather
-      ? new Set([SHARDGLASS_SHARD_ITEM_ID, ...(excludedItemIds || [])])
-      : excludedItemIds
+    const shardglassToolId = SHARDGLASS_GATHER_TOOLS[task.skill]
+    const shardglassSource = shardglassGather ? resolveShardglassToolSource(task.skill, equipment, newInv) : null
+    const shardglassEquipped = !!shardglassSource?.equipped
+    const shardglassStartCharges = shardglassSource?.charges || 0
+    let shardglassCharges = shardglassStartCharges
 
     const startingInvState = {}
     for (const slot of newInv) {
@@ -388,17 +395,17 @@ export function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, st
       const drops = task.action.dropTable
         ? rollDropTableOnce(task.action.dropTable)
         : { [task.action.product]: productQty }
-      if (shardglassGather) consumeShardglassGatherDouble(drops, newInv)
+      if (shardglassGather) shardglassCharges = consumeShardglassGatherCharge(drops, shardglassCharges)
       const bonus = rollGatherBonusDrops(task.skill)
       for (const [itemId, qty] of Object.entries(bonus)) {
         drops[itemId] = (drops[itemId] || 0) + qty
       }
 
       if (!canFit(newInv, drops, itemsData)) {
-        if (bankWhenFull && hasBankableItems(newInv, gatherExcludedIds)) {
+        if (bankWhenFull && hasBankableItems(newInv, excludedItemIds)) {
           if (remainingTicks < bankDelayTicks + actionTicks) break
           remainingTicks -= bankDelayTicks
-          bankEverything(newInv, itemsBanked, gatherExcludedIds)
+          bankEverything(newInv, itemsBanked, excludedItemIds)
         } else {
           inventoryFull = true
           break
@@ -408,6 +415,15 @@ export function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, st
       actionsCompleted++
       for (const [itemId, qty] of Object.entries(drops)) {
         if (qty > 0) addItem(newInv, itemId, qty, itemsData[itemId]?.stackable || false)
+      }
+    }
+
+    if (shardglassGather) {
+      if (shardglassEquipped) {
+        shardglassChargesConsumed = Math.max(0, shardglassStartCharges - shardglassCharges)
+      } else {
+        const toolIdx = newInv.findIndex(s => s && s.itemId === shardglassToolId)
+        if (toolIdx !== -1) newInv[toolIdx] = { ...newInv[toolIdx], charges: shardglassCharges }
       }
     }
 
@@ -676,7 +692,7 @@ export function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, st
     ? gatheringStoppedReason
     : (outOfMaterials ? 'out_of_materials' : undefined)
 
-  return { xpGained, itemsGained, itemsBanked, itemsConsumed, itemsDropped, actions, skill: task.skill, actionName: task.action.name, finalInventory: newInv, coinsGained, dungeoneeringTokensGained, stoppedReason }
+  return { xpGained, itemsGained, itemsBanked, itemsConsumed, itemsDropped, actions, skill: task.skill, actionName: task.action.name, finalInventory: newInv, coinsGained, dungeoneeringTokensGained, stoppedReason, chargesConsumed: shardglassChargesConsumed }
 }
 
 /**

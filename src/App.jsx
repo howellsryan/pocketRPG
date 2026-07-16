@@ -1275,7 +1275,7 @@ function GameApp() {
             updateEquipment({ ...freshEq })
           }
 
-          if (savedTask.type === 'combat' && sim.chargesConsumed > 0 && freshEq?.weapon) {
+          if ((savedTask.type === 'combat' || savedTask.type === 'skill') && sim.chargesConsumed > 0 && freshEq?.weapon) {
             const remainingCharges = Math.max(0, (freshEq.weapon.charges || 0) - sim.chargesConsumed)
             freshEq.weapon = { ...freshEq.weapon, charges: remainingCharges }
             updateEquipment({ ...freshEq })
@@ -2851,7 +2851,7 @@ function GameApp() {
             updateEquipment({ ...freshEq })
           }
 
-          if (savedTask.type === 'combat' && sim.chargesConsumed > 0 && freshEq?.weapon) {
+          if ((savedTask.type === 'combat' || savedTask.type === 'skill') && sim.chargesConsumed > 0 && freshEq?.weapon) {
             const remainingCharges = Math.max(0, (freshEq.weapon.charges || 0) - sim.chargesConsumed)
             freshEq.weapon = { ...freshEq.weapon, charges: remainingCharges }
             updateEquipment({ ...freshEq })

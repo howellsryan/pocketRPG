@@ -20,7 +20,7 @@ import { getLevelFromXP } from './experience.js'
  * @property {boolean} [died]                            combat only.
  * @property {number} [finalHP]                          combat only.
  * @property {{itemId: string, quantity: number}} [ammoConsumed] combat only.
- * @property {number} [chargesConsumed]                  combat only.
+ * @property {number} [chargesConsumed]                  combat, and skill (shardglass gather tools).
  * @property {Record<string, number>} [itemsConsumed]    bank items spent.
  * @property {Array<any>} [finalInventory]               replaces inventory (skill/gather/clue/combat).
  * @property {Record<string, number>} [lootBanked]       ADDITIVE bank loot.
@@ -130,6 +130,12 @@ export function applyTaskResult(state, sim, type) {
       const remaining = Math.max(0, (Number(equipment.ammo.quantity) || 0) - sim.ammoConsumed.quantity)
       equipment.ammo = remaining > 0 ? { ...equipment.ammo, quantity: remaining } : null
     }
+  }
+
+  // Weapon charge drain: combat swings and the shardglass gather perk (skill
+  // type, mining/woodcutting) both report chargesConsumed against the
+  // equipped weapon the same way.
+  if (type === 'combat' || type === 'skill') {
     const chargesConsumed = Number(sim.chargesConsumed) || 0
     if (chargesConsumed > 0 && equipment.weapon) {
       const remaining = Math.max(0, (Number(equipment.weapon.charges) || 0) - chargesConsumed)

@@ -8811,6 +8811,8 @@
     "stackable": false,
     "scaleCharged": true,
     "chargeItemId": "venomcoil_scales",
+    "breakdownResult": "venomcoil_scales",
+    "breakdownQty": 7500,
     "attackSpeed": 3,
     "attackStyle": "ranged",
     "attackBonus": {
@@ -8855,6 +8857,8 @@
     "stackable": false,
     "scaleCharged": true,
     "chargeItemId": "venomcoil_scales",
+    "breakdownResult": "venomcoil_scales",
+    "breakdownQty": 7500,
     "poweredStaff": true,
     "poweredStaffBaseDamage": 34,
     "attackSpeed": 3,
@@ -8893,6 +8897,8 @@
     "type": "armour",
     "slot": "head",
     "stackable": false,
+    "breakdownResult": "venomcoil_scales",
+    "breakdownQty": 7500,
     "attackBonus": {
       "stab": 0,
       "slash": 0,
