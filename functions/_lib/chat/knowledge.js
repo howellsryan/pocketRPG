@@ -2108,7 +2108,7 @@ export const KNOWLEDGE_CHUNKS = [
    "recipe",
    "hunter"
   ],
-  "text": "Hunter training options with level requirements, XP per action and any ingredients required to make each item: Hunt Cow (level 1, 150 XP), Hunt Wizard (level 15, 300 XP), Hunt Jeweller (level 35, 500 XP), Hunt Merchant (level 50, 800 XP), Hunt Grim Reaper (level 60, 1000 XP), Hunt Master Trader (level 85, 1500 XP)."
+  "text": "Hunter training options with level requirements, XP per action and any ingredients required to make each item: Hunt Cow (level 1, 150 XP), Hunt Wizard (level 15, 300 XP), Hunt Jeweller (level 35, 500 XP), Hunt Merchant (level 50, 800 XP), Hunt Grim Reaper (level 60, 1000 XP), Hunt Herbi (level 70, 1250 XP), Hunt Master Trader (level 85, 1500 XP)."
  },
  {
   "id": "skill_dungeoneering",
