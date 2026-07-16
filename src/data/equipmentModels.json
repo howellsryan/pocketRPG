@@ -154,14 +154,16 @@
       "bone": "hand_r",
       "position": [-0.055, 0.05, 0.125],
       "rotationDeg": [22, -9, 36],
-      "scale": 1
+      "scale": 1,
+      "tint": "#8b0000"
     },
     "morvyn_s_staff": {
       "model": "weapons/staff.glb",
       "bone": "hand_r",
       "position": [-0.055, 0.05, 0.125],
       "rotationDeg": [22, -9, 36],
-      "scale": 1
+      "scale": 1,
+      "tint": "#1a1a1a"
     },
     "battlestaff": {
       "model": "weapons/staff.glb",
@@ -190,35 +192,40 @@
       "bone": "hand_r",
       "position": [-0.055, 0.05, 0.125],
       "rotationDeg": [22, -9, 36],
-      "scale": 1
+      "scale": 1,
+      "tint": "#6a3aad"
     },
     "duskmare_staff": {
       "model": "weapons/staff.glb",
       "bone": "hand_r",
       "position": [-0.055, 0.05, 0.125],
       "rotationDeg": [22, -9, 36],
-      "scale": 1
+      "scale": 1,
+      "tint": "#1a1a1a"
     },
     "umbral_duskmare_staff": {
       "model": "weapons/staff.glb",
       "bone": "hand_r",
       "position": [-0.055, 0.05, 0.125],
       "rotationDeg": [22, -9, 36],
-      "scale": 1
+      "scale": 1,
+      "tint": "#1a1a1a"
     },
     "attuned_duskmare_staff": {
       "model": "weapons/staff.glb",
       "bone": "hand_r",
       "position": [-0.055, 0.05, 0.125],
       "rotationDeg": [22, -9, 36],
-      "scale": 1
+      "scale": 1,
+      "tint": "#1a1a1a"
     },
     "volatile_duskmare_staff": {
       "model": "weapons/staff.glb",
       "bone": "hand_r",
       "position": [-0.055, 0.05, 0.125],
       "rotationDeg": [22, -9, 36],
-      "scale": 1
+      "scale": 1,
+      "tint": "#1a1a1a"
     },
     "adamant_axe": {
       "model": "weapons/q_axe_small.glb",
@@ -400,7 +407,8 @@
       "bone": "hand_r",
       "position": [-0.045, 0.205, 0.095],
       "rotationDeg": [117, 0, -15],
-      "scale": 1
+      "scale": 1,
+      "tint": "#1a1a1a"
     },
     "chaotic_crossbow": {
       "model": "weapons/crossbow.glb",
@@ -414,7 +422,8 @@
       "bone": "hand_r",
       "position": [-0.045, 0.205, 0.095],
       "rotationDeg": [117, 0, -15],
-      "scale": 1
+      "scale": 1,
+      "tint": "#2e8b57"
     },
     "dragon_axe": {
       "model": "weapons/q_axe_small.glb",
@@ -793,7 +802,8 @@
       "bone": "hand_r",
       "position": [-0.015, 0.07, 0.1],
       "rotationDeg": [112, -8, -13],
-      "scale": 1
+      "scale": 1,
+      "tint": "#d4af37"
     },
     "ancestral_wand": { "model": "weapons/q_staff.gltf", "tint": "#d8cdb0" },
     "2nd_age_wand": { "model": "weapons/q_staff.gltf", "tint": "#c9a94a" },
