@@ -92,6 +92,26 @@ describe("Zul-Kaar's Blade Disrupt special attack", () => {
     })
   })
 
+  it('processCombatTick scales special-attack damage with active prayer/potion strength boosts, matching the normal-attack path', () => {
+    // Regression: applySpecialAttack used to be called with the raw, unboosted
+    // playerStats inside processCombatTick, so every special attack (not just
+    // Disrupt) ignored active prayers/potions entirely — only gear bonuses
+    // applied. Fixed to pass the same boostedPlayerStats the normal attack uses.
+    const prayersData = { test_str_prayer: { bonusType: 'stat', stat: 'strength', boostPercent: 20 } }
+    const boostedStrength = Math.floor(playerStats.strength * 1.2)
+    const boostedEffStr = effectiveStrength(boostedStrength, 0, 1.0, styleBonuses.strengthStyleBonus)
+    const boostedMaxMelee = meleeMaxHit(boostedEffStr, itemsData.zul_kaars_blade.otherBonus.meleeStrength)
+    expect(boostedMaxMelee).toBeGreaterThan(expectedMaxMelee)
+
+    const state: any = { ...createCombatState(makeMonster(50, 1000), 'melee', 'aggressive'), specialAttackQueued: true, playerAttackTimer: 0, activeCombatPrayer: 'test_str_prayer' }
+    const damage = withRng(0, () => {
+      const result = processCombatTick(state, playerStats, equipment, itemsData, prayersData)
+      const specHit: any = result.events.find((e: any) => e.type === 'specialHit')
+      return specHit.hits[0]
+    })
+    expect(damage).toBe(Math.floor(boostedMaxMelee * 0.5))
+  })
+
   it('processCombatTick drains exactly 50% of current energy (percent-of-current, not flat)', () => {
     let state: any = { ...createCombatState(makeMonster(50, 1000), 'melee', 'aggressive'), specialAttackQueued: true, playerAttackTimer: 0 }
     withRng(0.4, () => {

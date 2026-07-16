@@ -521,7 +521,7 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
               state.monster = monster
               return { combatState: state, events }
             }
-            const { combatState: newState, events: specEvents } = applySpecialAttack(state, playerStats, equipment, itemsData, slayerTask)
+            const { combatState: newState, events: specEvents } = applySpecialAttack(state, boostedPlayerStats, equipment, itemsData, slayerTask)
             // Merge events from special attack
             for (const ev of specEvents) {
               events.push(ev)
