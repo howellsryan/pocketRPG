@@ -35,6 +35,12 @@ const CLIPS = [
   { file: UAL1, clip: 'Jog_Fwd_Loop', as: 'run' },
   { file: UAL2, clip: 'TreeChopping_Loop', as: 'mine' },
   { file: UAL1, clip: 'Sword_Attack', as: 'attack' },
+  // No bow-draw clip exists in either UAL pack; Pistol_Shoot is the only
+  // ranged-fire animation (arm extended forward, weapon loosed) — reads as a
+  // ranged attack even though it's pistol-posed rather than a bow draw.
+  // Spell_Simple_Shoot is a genuine magic-cast clip.
+  { file: UAL1, clip: 'Pistol_Shoot', as: 'attack_ranged' },
+  { file: UAL1, clip: 'Spell_Simple_Shoot', as: 'attack_magic' },
   { file: UAL1, clip: 'Death01', as: 'die' },
 ]
 

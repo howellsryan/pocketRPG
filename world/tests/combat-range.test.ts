@@ -5,7 +5,7 @@
 // fleeing player mid-walk), and chase-to-range on the npc side.
 import { describe, expect, it } from 'vitest'
 import {
-  tickPlayer, emptyResult, rangeForCombatType, monsterAttackRange, withinRange,
+  tickPlayer, emptyResult, rangeForCombatType, monsterAttackRange, withinRange, cutPathToRange,
   MELEE_RANGE, RANGED_RANGE, MAGIC_RANGE, type TickContext, type TickPlayer,
 } from '../server/tick'
 import { npcsFromZone, tickNpc, type NpcState } from '../server/npc'
@@ -58,6 +58,22 @@ describe('attack reach', () => {
     expect(withinRange({ x: 0, z: 0 }, { x: 5, z: 3 }, 5)).toBe(true)
     expect(withinRange({ x: 0, z: 0 }, { x: 6, z: 0 }, 5)).toBe(false)
     expect(withinRange({ x: 0, z: 0 }, { x: 1, z: 1 }, 1)).toBe(true)
+  })
+
+  it('cutPathToRange trims a straight path to the first in-range tile (ranged)', () => {
+    const target = { x: 5, z: 5 }
+    const steps = [12, 11, 10, 9, 8, 7, 6].map((z) => ({ x: 5, z }))
+    const cut = cutPathToRange(steps, target, RANGED_RANGE)
+    // z=10 is Chebyshev 5 from z=5 — the first tile within ranged reach.
+    expect(cut.map((t) => t.z)).toEqual([12, 11, 10])
+    expect(withinRange(cut[cut.length - 1], target, RANGED_RANGE)).toBe(true)
+  })
+
+  it('cutPathToRange walks all the way to adjacency for melee', () => {
+    const target = { x: 5, z: 5 }
+    const steps = [12, 11, 10, 9, 8, 7, 6].map((z) => ({ x: 5, z }))
+    const cut = cutPathToRange(steps, target, MELEE_RANGE)
+    expect(cut.map((t) => t.z)).toEqual([12, 11, 10, 9, 8, 7, 6])
   })
 })
 

@@ -28,7 +28,7 @@ const ARCHETYPE_RULES: [RegExp, string][] = [
   [/spear|lance|harpoon/, 'staff'], // long-pole silhouette until a spear model exists
 ]
 
-const TIER_TINTS: [RegExp, string][] = [
+export const TIER_TINTS: [RegExp, string][] = [
   [/^bronze_/, '#c07a3d'],
   [/^iron_/, '#8a8f96'],
   [/^steel_/, '#c9ced6'],
@@ -50,15 +50,16 @@ const TIER_TINTS: [RegExp, string][] = [
   [/_of_earth$/, '#8a6b3f'],
 ]
 
-/** Visual descriptor for a character's equipped weapon, from the save blob's
- * equipment shape (`equipment.weapon = { itemId }`). Unknown/unmapped/absent
- * weapons → `{}` (bare hands). */
-export function gearFromEquipment(equipment: Record<string, unknown> | null | undefined): GearDescriptor {
-  const slot = equipment?.weapon as { itemId?: unknown } | null | undefined
-  const itemId = typeof slot?.itemId === 'string' ? slot.itemId : null
-  if (!itemId) return {}
+function itemIdInSlot(equipment: Record<string, unknown> | null | undefined, slotName: string): string | null {
+  const slot = equipment?.[slotName] as { itemId?: unknown } | null | undefined
+  return typeof slot?.itemId === 'string' ? slot.itemId : null
+}
+
+function weaponFromEquipment(equipment: Record<string, unknown> | null | undefined): { archetype: string; tint?: string } | undefined {
+  const itemId = itemIdInSlot(equipment, 'weapon')
+  if (!itemId) return undefined
   const item = (itemsData as Items)[itemId]
-  if (!item || item.slot !== 'weapon') return {}
+  if (!item || item.slot !== 'weapon') return undefined
 
   let archetype: string | null = null
   for (const [pattern, name] of ARCHETYPE_RULES) {
@@ -67,12 +68,41 @@ export function gearFromEquipment(equipment: Record<string, unknown> | null | un
       break
     }
   }
-  if (!archetype) return {}
+  if (!archetype) return undefined
   if (item.twoHanded) {
     if (archetype === 'sword') archetype = 'sword2h'
     else if (archetype === 'axe') archetype = 'axe2h'
   }
 
   const tint = TIER_TINTS.find(([pattern]) => pattern.test(itemId))?.[1]
-  return { weapon: tint ? { archetype, tint } : { archetype } }
+  return tint ? { archetype, tint } : { archetype }
+}
+
+/** Tint for an armour slot's equipped item. Absent/non-matching slot → omit
+ * (undefined); an equipped body/legs item with an unregistered tier prefix →
+ * `{}` (present, no tint). */
+function armorSlotTint(equipment: Record<string, unknown> | null | undefined, slotName: 'body' | 'legs'): { tint?: string } | undefined {
+  const itemId = itemIdInSlot(equipment, slotName)
+  if (!itemId) return undefined
+  const item = (itemsData as Items)[itemId]
+  if (!item || item.slot !== slotName) return undefined
+  const tint = TIER_TINTS.find(([pattern]) => pattern.test(itemId))?.[1]
+  return tint ? { tint } : {}
+}
+
+/** Visual descriptor for a character's equipped gear, from the save blob's
+ * equipment shape (`equipment.weapon/body/legs = { itemId }`). Unknown/unmapped/
+ * absent weapons → bare hands; empty armour slots are omitted entirely. */
+export function gearFromEquipment(equipment: Record<string, unknown> | null | undefined): GearDescriptor {
+  const gear: GearDescriptor = {}
+  const weapon = weaponFromEquipment(equipment)
+  if (weapon) gear.weapon = weapon
+  const body = armorSlotTint(equipment, 'body')
+  const legs = armorSlotTint(equipment, 'legs')
+  if (body || legs) {
+    gear.armor = {}
+    if (body) gear.armor.body = body
+    if (legs) gear.armor.legs = legs
+  }
+  return gear
 }

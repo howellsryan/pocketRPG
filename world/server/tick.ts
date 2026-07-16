@@ -178,8 +178,25 @@ export function monsterAttackRange(monsterId: string): number {
   return style === 'magic' ? MAGIC_RANGE : style === 'ranged' ? RANGED_RANGE : MELEE_RANGE
 }
 
+/** A monster's attack animation from its attackStyle — magic/ranged foes play a
+ * distinct cast/shoot animation; everything else swings. */
+export function monsterAttackAnim(monsterId: string): 'attack' | 'attack_ranged' | 'attack_magic' {
+  const style = monsterStyles[monsterId]?.attackStyle
+  return style === 'magic' ? 'attack_magic' : style === 'ranged' ? 'attack_ranged' : 'attack'
+}
+
 export function withinRange(a: { x: number; z: number }, b: { x: number; z: number }, range: number): boolean {
   return Math.max(Math.abs(a.x - b.x), Math.abs(a.z - b.z)) <= range
+}
+
+/** Trims an approach path to stop at the first tile within `range` of the
+ * target (melee walks all the way to adjacency; ranged/magic stop early). */
+export function cutPathToRange(steps: Tile[], target: { x: number; z: number }, range: number): Tile[] {
+  let cut = steps.length
+  for (let i = 0; i < steps.length; i++) {
+    if (withinRange(steps[i], target, range)) { cut = i + 1; break }
+  }
+  return steps.slice(0, cut)
 }
 
 function ensureSkill(stats: SessionStats, skill: string): { xp: number; level: number } {
@@ -234,12 +251,7 @@ function startInteract(player: TickPlayer, ctx: TickContext, result: TickResult)
     // again on arrival (the npc stops moving once combat starts).
     const path = ctx.pathAdjacent?.(player, npc)
     if (path && path.length > 1) {
-      const steps = path.slice(1)
-      let cut = steps.length
-      for (let i = 0; i < steps.length; i++) {
-        if (withinRange(steps[i], npc, range)) { cut = i + 1; break }
-      }
-      player.path = steps.slice(0, cut)
+      player.path = cutPathToRange(path.slice(1), npc, range)
       player.pendingInteract = intent
     }
     return

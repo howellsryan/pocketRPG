@@ -21,7 +21,7 @@ export type NpcState = {
   wanderCooldown: number
   respawnAtTick: number
   removeAtTick: number
-  anim: 'idle' | 'die' | 'attack'
+  anim: 'idle' | 'die' | 'attack' | 'attack_ranged' | 'attack_magic'
   /** Retaliation target: the one player whose combat session applies this npc's
    * attacks. First attacker claims it; released on leave/death/disconnect and
    * re-claimed by a surviving attacker the next tick. */

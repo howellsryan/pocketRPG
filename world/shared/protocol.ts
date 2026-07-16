@@ -7,7 +7,10 @@ export type InvSlot = { itemId: string; quantity: number } | null
 
 /** Server-computed visual appearance (equipped-gear mapping lives in
  * shared/appearance.ts). Server → client only; clients never send gear. */
-export type GearDescriptor = { weapon?: { archetype: string; tint?: string } }
+export type GearDescriptor = {
+  weapon?: { archetype: string; tint?: string }
+  armor?: { body?: { tint?: string }; legs?: { tint?: string } }
+}
 
 export type InvActionWire = 'equip' | 'eat' | 'drink' | 'bury' | 'drop'
 
@@ -64,7 +67,7 @@ export type EntityDiff = {
   kind: 'player' | 'npc'
   x: number
   z: number
-  anim: 'idle' | 'walk' | 'mine' | 'attack' | 'die'
+  anim: 'idle' | 'walk' | 'mine' | 'attack' | 'attack_ranged' | 'attack_magic' | 'die'
   hp?: number
   maxHp?: number
   monsterId?: string
