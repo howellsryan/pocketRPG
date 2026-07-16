@@ -10,9 +10,9 @@ describe('equipModels resolver', () => {
   })
 
   it('returns null for an unregistered weapon (icon-UI fallback)', () => {
-    expect(getWeaponModel('bronze_spear')).toBeNull()
+    expect(getWeaponModel('unregistered_weapon')).toBeNull()
     expect(getWeaponModel(undefined)).toBeNull()
-    expect(hasWeaponModel('bronze_spear')).toBe(false)
+    expect(hasWeaponModel('unregistered_weapon')).toBe(false)
   })
 
   it('resolves a registered weapon with a full placement spec', () => {
@@ -62,7 +62,7 @@ describe('equipModels resolver', () => {
     expect(placement).toBeTruthy()
     expect(placement!.path).toBe(registry.modelBase + registry.weapons[id].model)
     expect(placement!.path.startsWith('/')).toBe(false) // relative, resolved at runtime
-    expect(getWeaponPlacement('bronze_spear')).toBeNull()
+    expect(getWeaponPlacement('unregistered_weapon')).toBeNull()
   })
 
   it('resolves registered gear with slot defaults filled in', () => {

@@ -30,6 +30,20 @@
           0
         ],
         "scale": 0.44
+      },
+      "shield": {
+        "bone": "hand_l",
+        "position": [
+          0,
+          0.05,
+          0
+        ],
+        "rotationDeg": [
+          0,
+          0,
+          0
+        ],
+        "scale": 1.2
       }
     }
   },
@@ -253,9 +267,147 @@
     },
     "yew_shortbow": {
       "model": "weapons/q_bow.glb"
-    }
+    },
+    "staff": { "model": "weapons/q_wooden_staff.gltf", "tint": "#8a6a3a" },
+    "magic_staff": { "model": "weapons/q_staff.gltf", "tint": "#6e747e" },
+    "battlestaff": { "model": "weapons/q_staff.gltf", "tint": "#4a4a55" },
+    "staff_of_air": { "model": "weapons/q_staff.gltf", "tint": "#dfe6ee" },
+    "staff_of_water": { "model": "weapons/q_ice_staff.gltf", "tint": "#3f7cc4" },
+    "staff_of_fire": { "model": "weapons/q_staff.gltf", "tint": "#c0392b" },
+    "staff_of_earth": { "model": "weapons/q_staff.gltf", "tint": "#6b8f3a" },
+    "staff_of_the_dead": { "model": "weapons/q_staff.gltf", "tint": "#2fd0c0" },
+    "ancestral_wand": { "model": "weapons/q_staff.gltf", "tint": "#d8cdb0" },
+    "sanguine_staff": { "model": "weapons/q_staff.gltf", "tint": "#a01f2f" },
+    "morvyn_s_staff": { "model": "weapons/q_staff.gltf", "tint": "#6f5b8e" },
+    "2nd_age_wand": { "model": "weapons/q_staff.gltf", "tint": "#c9a94a" },
+    "2nd_age_druidic_staff": { "model": "weapons/q_wooden_staff.gltf", "tint": "#7a9a4a" },
+    "chaotic_staff": { "model": "weapons/q_staff.gltf", "tint": "#d06a2f" },
+    "shroud_staff": { "model": "weapons/q_ice_staff.gltf", "tint": "#5a5a6a" },
+    "archmage_wand": { "model": "weapons/q_staff.gltf", "tint": "#5566cc" },
+    "duskmare_staff": { "model": "weapons/q_ice_staff.gltf", "tint": "#6a4a8a" },
+    "umbral_duskmare_staff": { "model": "weapons/q_ice_staff.gltf", "tint": "#3a2a4a" },
+    "attuned_duskmare_staff": { "model": "weapons/q_ice_staff.gltf", "tint": "#8a5aaa" },
+    "volatile_duskmare_staff": { "model": "weapons/q_ice_staff.gltf", "tint": "#b04a6a" },
+    "bronze_spear": { "model": "weapons/q_spear.gltf", "tint": "#b87333" },
+    "krylth_spear": { "model": "weapons/q_spear.gltf", "tint": "#4a4a55" },
+    "gorath_s_warspear": { "model": "weapons/q_spear.gltf", "tint": "#8a4b32" },
+    "dragon_hunter_lance": { "model": "weapons/q_spear.gltf", "tint": "#c0392b" },
+    "grondar_godsword": { "model": "weapons/q_claymore.gltf", "tint": "#8a4b32" },
+    "zephyra_godsword": { "model": "weapons/q_claymore.gltf", "tint": "#7fa8c0" },
+    "lumira_godsword": { "model": "weapons/q_claymore.gltf", "tint": "#b58fb0" },
+    "krylth_godsword": { "model": "weapons/q_claymore.gltf", "tint": "#4a4a55" }
   },
   "gear": {
+    "bronze_kiteshield": {
+      "model": "shields/q_heater.gltf",
+      "slot": "shield",
+      "tint": "#b87333"
+    },
+    "iron_kiteshield": {
+      "model": "shields/q_heater.gltf",
+      "slot": "shield",
+      "tint": "#6e747e"
+    },
+    "steel_kiteshield": {
+      "model": "shields/q_heater.gltf",
+      "slot": "shield",
+      "tint": "#bcc6d2"
+    },
+    "mithril_kiteshield": {
+      "model": "shields/q_heater.gltf",
+      "slot": "shield",
+      "tint": "#3f57c4"
+    },
+    "adamant_kiteshield": {
+      "model": "shields/q_heater.gltf",
+      "slot": "shield",
+      "tint": "#3f8a5a"
+    },
+    "runeforged_kiteshield": {
+      "model": "shields/q_heater.gltf",
+      "slot": "shield",
+      "tint": "#2fd0c0"
+    },
+    "dragon_kiteshield": {
+      "model": "shields/q_heater.gltf",
+      "slot": "shield",
+      "tint": "#c0392b"
+    },
+    "anti_dragon_shield": {
+      "model": "shields/q_heater.gltf",
+      "slot": "shield",
+      "tint": "#7d8a99"
+    },
+    "visage_shield": {
+      "model": "shields/q_shield.gltf",
+      "slot": "shield",
+      "tint": "#8f5a3c"
+    },
+    "shardglass_shield": {
+      "model": "shields/q_shield.gltf",
+      "slot": "shield",
+      "tint": "#7fd6d0"
+    },
+    "2nd_age_kiteshield": {
+      "model": "shields/q_celtic.gltf",
+      "slot": "shield",
+      "tint": "#c9a94a"
+    },
+    "arcane_kiteshield": {
+      "model": "shields/q_heater.gltf",
+      "slot": "shield",
+      "tint": "#5566cc"
+    },
+    "eagle_eyed_kiteshield": {
+      "model": "shields/q_heater.gltf",
+      "slot": "shield",
+      "tint": "#8a9a5b"
+    },
+    "boneclaw_shield": {
+      "model": "shields/q_shield.gltf",
+      "slot": "shield",
+      "tint": "#d8cdb0"
+    },
+    "warped_buckler": {
+      "model": "shields/q_round.gltf",
+      "slot": "shield",
+      "tint": "#6f5b8e"
+    },
+    "ward_of_elidria": {
+      "model": "shields/q_shield.gltf",
+      "slot": "shield",
+      "tint": "#e0d7a8"
+    },
+    "lumira_d_hide_shield": {
+      "model": "shields/q_round.gltf",
+      "slot": "shield",
+      "tint": "#b58fb0"
+    },
+    "verdant_d_hide_shield": {
+      "model": "shields/q_round.gltf",
+      "slot": "shield",
+      "tint": "#4a7a3a"
+    },
+    "krylth_d_hide_shield": {
+      "model": "shields/q_round.gltf",
+      "slot": "shield",
+      "tint": "#4a4a55"
+    },
+    "ancient_d_hide_shield": {
+      "model": "shields/q_round.gltf",
+      "slot": "shield",
+      "tint": "#b09060"
+    },
+    "zephyra_d_hide_shield": {
+      "model": "shields/q_round.gltf",
+      "slot": "shield",
+      "tint": "#7fa8c0"
+    },
+    "grondar_d_hide_shield": {
+      "model": "shields/q_round.gltf",
+      "slot": "shield",
+      "tint": "#8a4b32"
+    },
     "adamant_full_helm": {
       "model": "adamant_full_helm.glb",
       "slot": "head",
