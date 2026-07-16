@@ -225,6 +225,13 @@ const WOODCUTTING_AXE_SPEED_MULTIPLIERS = {
   infernal_axe: 0.53, shardglass_axe: 0.50, third_age_axe: 0.50, '2nd_age_axe': 0.50,
 }
 
+// Mirrors SHARDGLASS_GATHER_TOOLS / SHARDGLASS_SHARDS_PER_GATHER in
+// src/engine/skilling.js: while charged with Shardglass Shards, these tools
+// burn shards from their own charge (not loose inventory shards) each action
+// and double the gathered yield — live, idle and offline alike.
+const SHARDGLASS_SHARDS_PER_GATHER = 2
+const SHARDGLASS_GATHER_TOOL_IDS = new Set(['shardglass_pickaxe', 'shardglass_axe'])
+
 function toolSpeedChunk() {
   const items = readJson('items.json')
   const bySkill = { woodcutting: [], mining: [], fishing: [] }
@@ -242,19 +249,23 @@ function toolSpeedChunk() {
       const pct = Math.round((1 - mult) * 100)
       const reqs = Object.entries(item.requirements || {}).map(([sk, lvl]) => `${titleCaseId(sk)} ${lvl}`).join(' + ')
       const speed = pct <= 0 ? 'no speed bonus (baseline)' : `${pct}% faster action time`
-      return `${item.name}${reqs ? ` (requires ${reqs})` : ''}: ${speed}`
+      const perk = SHARDGLASS_GATHER_TOOL_IDS.has(item.id)
+        ? `; while charged with Shardglass Shards, also doubles the ore/log yield per action (burns ${SHARDGLASS_SHARDS_PER_GATHER} shards from the tool's own charge each time)`
+        : ''
+      return `${item.name}${reqs ? ` (requires ${reqs})` : ''}: ${speed}${perk}`
     })
     return `${label[skill]} — ${lines.join('. ')}.`
   })
   return {
     id: 'data_gathering_tool_speed',
     title: 'Gathering tool speed: woodcutting axes, mining pickaxes and fishing tools',
-    tags: ['tool', 'tools', 'axe', 'pickaxe', 'dragon axe', 'dragon pickaxe', 'speed', 'woodcutting', 'mining', 'fishing'],
+    tags: ['tool', 'tools', 'axe', 'pickaxe', 'dragon axe', 'dragon pickaxe', 'shardglass', 'shardglass pickaxe', 'shardglass axe', 'speed', 'woodcutting', 'mining', 'fishing'],
     text:
       `Woodcutting, Mining and Fishing can always be done bare-handed, but holding no tool at all takes twice as long as ` +
       `even the most basic tool tier. Better tool tiers cut the action time further; each tier needs the shown skill ` +
-      `(and sometimes Attack) level to use. The Dragon Pickaxe gives the largest possible mining speed boost, halving ` +
-      `action time on ore; the Dragon Axe is the fastest non-superior woodcutting axe on trees. ${sections.join(' ')}`,
+      `(and sometimes Attack) level to use. The Shardglass Pickaxe and Shardglass Axe match the Dragon tools for speed ` +
+      `and additionally double gathered ore/logs while charged with Shardglass Shards (loaded like any other scale-charged ` +
+      `weapon); once their charges run out they stop counting as a tool at all until recharged. ${sections.join(' ')}`,
   }
 }
 
