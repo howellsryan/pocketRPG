@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   usesShardglassGatherTool,
   consumeShardglassGatherDouble,
+  getEffectiveToolActionTicks,
 } from '../src/engine/skilling.js'
 import { simulateIdleSkilling } from '../src/engine/idleEngine.js'
 import { getBreakdownYield, buyWithShards, countItem } from '../src/engine/inventory.js'
@@ -64,6 +65,11 @@ describe('shardglass gathering perk — shard consumption + doubling', () => {
 
 describe('shardglass gathering perk — idle simulation', () => {
   const miningAction = { id: 'adamantite', name: 'Mine Adamantite', level: 70, ticks: 4, xp: 95, product: 'adamantite_ore' }
+  // Derive per-action ticks from the pickaxe itself so the elapsed budget stays
+  // correct even as the tool's speed multiplier changes.
+  const pickaxeInv = pad([{ itemId: 'shardglass_pickaxe', quantity: 1 }])
+  const actionTicks = getEffectiveToolActionTicks('mining', miningAction.ticks, {}, itemsData as any, maxedMining, pickaxeInv)
+  const msForActions = (n: number) => n * actionTicks * 600
 
   it('doubles idle ore and burns 2 shards per action while shards last', () => {
     const inv = pad([
@@ -71,7 +77,7 @@ describe('shardglass gathering perk — idle simulation', () => {
       { itemId: 'shardglass_shards', quantity: 4 },
     ])
     // 3 actions worth of ticks; only 2 actions can be doubled (4 shards / 2).
-    const elapsedMs = 3 * 4 * 600
+    const elapsedMs = msForActions(3)
     const sim = simulateIdleSkilling(
       { skill: 'mining', action: miningAction } as any,
       elapsedMs,
@@ -94,7 +100,7 @@ describe('shardglass gathering perk — idle simulation', () => {
 
   it('does not double when the player holds no shards', () => {
     const inv = pad([{ itemId: 'shardglass_pickaxe', quantity: 1 }])
-    const elapsedMs = 2 * 4 * 600
+    const elapsedMs = msForActions(2)
     const sim = simulateIdleSkilling(
       { skill: 'mining', action: miningAction } as any,
       elapsedMs,
@@ -106,6 +112,16 @@ describe('shardglass gathering perk — idle simulation', () => {
       {},
     ) as any
     expect(sim.itemsGained.adamantite_ore).toBe(2)
+  })
+})
+
+describe('shardglass tool mining speed', () => {
+  it('mines at the same speed as the dragon pickaxe', () => {
+    const maxed = { mining: { xp: 200_000_000 } } as any
+    const shardTicks = getEffectiveToolActionTicks('mining', 6, {}, itemsData as any, maxed, pad([{ itemId: 'shardglass_pickaxe', quantity: 1 }]))
+    const dragonTicks = getEffectiveToolActionTicks('mining', 6, {}, itemsData as any, maxed, pad([{ itemId: 'dragon_pickaxe', quantity: 1 }]))
+    expect(shardTicks).toBe(dragonTicks)
+    expect(shardTicks).toBeLessThan(6)
   })
 })
 

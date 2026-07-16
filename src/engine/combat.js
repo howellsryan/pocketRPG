@@ -553,8 +553,9 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
     let xpSkills = {}
 
     if (state.combatType === 'melee') {
-      // Scythe of vitur: requires charges for melee attacks
-      if (equippedWeapon?.scaleCharged && equippedWeapon?.scythePassive) {
+      // Scale-charged melee weapons (Scythe, Saeldor Warblade, shardglass tools)
+      // require a charge to swing; out of charges → can't attack.
+      if (equippedWeapon?.scaleCharged) {
         if (weaponCharges <= 0) {
           events.push({ type: 'noCharges', itemId: equippedWeaponEntry.itemId })
           state.playerAttackTimer = weaponSpeed
@@ -582,8 +583,8 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
         events.push({ type: 'scythePassive', hits: [damage - hit2 - hit3, hit2, hit3] })
       }
 
-      // Consume one charge per scythe swing
-      if (equippedWeapon?.scaleCharged && equippedWeapon?.scythePassive) {
+      // Consume one charge per scale-charged melee swing.
+      if (equippedWeapon?.scaleCharged) {
         events.push({ type: 'consumeCharge', qty: 1 })
       }
 

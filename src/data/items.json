@@ -9190,6 +9190,7 @@
     "breakdownResult": "shardglass_shards",
     "breakdownQty": 5000,
     "shardglassShopCost": 15000,
+    "speedMultiplier": 0.5,
     "attackSpeed": 4,
     "attackStyle": "stab",
     "attackBonus": {
@@ -11377,6 +11378,8 @@
     "type": "armour",
     "slot": "shield",
     "stackable": false,
+    "scaleCharged": true,
+    "chargeItemId": "shardglass_shards",
     "breakdownResult": "shardglass_shards",
     "breakdownQty": 5000,
     "shardglassShopCost": 25000,
