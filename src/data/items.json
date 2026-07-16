@@ -8081,7 +8081,7 @@
     "stackable": true,
     "shopValue": 150000000,
     "effect": "magic",
-    "boost": 25,
+    "boost": 18,
     "duration": 300,
     "isGeneralStore": false
   },
