@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import {
   usesShardglassGatherTool,
-  consumeShardglassGatherDouble,
+  getShardglassToolCharges,
+  resolveShardglassToolSource,
+  consumeShardglassGatherCharge,
   getEffectiveToolActionTicks,
 } from '../src/engine/skilling.js'
 import { simulateIdleSkilling } from '../src/engine/idleEngine.js'
@@ -14,7 +16,7 @@ const shardglassGear = Object.values(itemsData as any).filter(
 ) as any[]
 
 const toolItems = {
-  shardglass_pickaxe: { id: 'shardglass_pickaxe', name: 'Shardglass Pickaxe', toolFor: 'mining', requirements: { mining: 70 } },
+  shardglass_pickaxe: { id: 'shardglass_pickaxe', name: 'Shardglass Pickaxe', toolFor: 'mining', requirements: { mining: 70 }, scaleCharged: true },
   bronze_pickaxe: { id: 'bronze_pickaxe', name: 'Bronze Pickaxe', toolFor: 'mining', requirements: { mining: 1 } },
   shardglass_shards: { id: 'shardglass_shards', name: 'Shardglass Shards', stackable: true },
   adamantite_ore: { id: 'adamantite_ore', name: 'Adamantite Ore' },
@@ -25,58 +27,74 @@ const maxedMining = { mining: { xp: 200_000_000 } } as any
 const pad = (slots: any[]) => [...slots, ...Array(28 - slots.length).fill(null)]
 
 describe('shardglass gathering perk — tool detection', () => {
-  it('recognises the shardglass pickaxe as the mining perk tool', () => {
-    const inv = pad([{ itemId: 'shardglass_pickaxe', quantity: 1 }])
+  it('recognises a charged shardglass pickaxe as the mining perk tool', () => {
+    const inv = pad([{ itemId: 'shardglass_pickaxe', quantity: 1, charges: 10 }])
     expect(usesShardglassGatherTool('mining', {}, inv, toolItems, maxedMining)).toBe(true)
   })
 
-  it('does not fire for a plain pickaxe or for fishing', () => {
+  it('does not fire for a plain pickaxe, for fishing, or for an uncharged shardglass pickaxe', () => {
     const bronze = pad([{ itemId: 'bronze_pickaxe', quantity: 1 }])
     expect(usesShardglassGatherTool('mining', {}, bronze, toolItems, maxedMining)).toBe(false)
-    const shard = pad([{ itemId: 'shardglass_pickaxe', quantity: 1 }])
+    const shard = pad([{ itemId: 'shardglass_pickaxe', quantity: 1, charges: 10 }])
     expect(usesShardglassGatherTool('fishing', {}, shard, toolItems, maxedMining)).toBe(false)
+    const uncharged = pad([{ itemId: 'shardglass_pickaxe', quantity: 1 }])
+    expect(usesShardglassGatherTool('mining', {}, uncharged, toolItems, maxedMining)).toBe(false)
   })
 })
 
-describe('shardglass gathering perk — shard consumption + doubling', () => {
-  it('consumes 2 shards and doubles the drops when shards are held', () => {
-    const inv = pad([{ itemId: 'shardglass_shards', quantity: 5 }])
+describe('shardglass gathering perk — charge consumption + doubling', () => {
+  it('consumes 2 charges from the tool and doubles the drops when enough are held', () => {
     const drops = { adamantite_ore: 1 }
-    expect(consumeShardglassGatherDouble(drops, inv)).toBe(true)
+    expect(consumeShardglassGatherCharge(drops, 5)).toBe(3)
     expect(drops.adamantite_ore).toBe(2)
-    const shards = inv.find((s) => s?.itemId === 'shardglass_shards')
-    expect(shards.quantity).toBe(3)
   })
 
-  it('leaves output single and shards untouched with fewer than 2 shards', () => {
-    const inv = pad([{ itemId: 'shardglass_shards', quantity: 1 }])
+  it('leaves output single and charges untouched with fewer than 2 charges', () => {
     const drops = { adamantite_ore: 1 }
-    expect(consumeShardglassGatherDouble(drops, inv)).toBe(false)
+    expect(consumeShardglassGatherCharge(drops, 1)).toBe(1)
     expect(drops.adamantite_ore).toBe(1)
-    expect(inv.find((s) => s?.itemId === 'shardglass_shards').quantity).toBe(1)
   })
 
-  it('clears the shard slot when the last pair is spent', () => {
-    const inv = pad([{ itemId: 'shardglass_shards', quantity: 2 }])
-    consumeShardglassGatherDouble({ adamantite_ore: 1 }, inv)
-    expect(inv.find((s) => s?.itemId === 'shardglass_shards')).toBeUndefined()
+  it('drains to zero when the last pair of charges is spent', () => {
+    const drops = { adamantite_ore: 1 }
+    expect(consumeShardglassGatherCharge(drops, 2)).toBe(0)
+    expect(drops.adamantite_ore).toBe(2)
+  })
+
+  it('never touches loose shardglass shards sitting in the inventory — charges live on the tool', () => {
+    const inv = pad([{ itemId: 'shardglass_shards', quantity: 10 }])
+    const drops = { adamantite_ore: 1 }
+    consumeShardglassGatherCharge(drops, 4)
+    expect(inv.find((s) => s?.itemId === 'shardglass_shards')?.quantity).toBe(10)
+  })
+
+  it('reads charges off the equipped tool, falling back to the matching inventory slot', () => {
+    const equipped = { weapon: { itemId: 'shardglass_pickaxe', charges: 7 } } as any
+    expect(getShardglassToolCharges('mining', equipped, [])).toBe(7)
+    const held = pad([{ itemId: 'shardglass_pickaxe', quantity: 1, charges: 3 }])
+    expect(getShardglassToolCharges('mining', {}, held)).toBe(3)
+    expect(getShardglassToolCharges('mining', {}, pad([]))).toBe(0)
+  })
+
+  it('falls back to a charged inventory spare when the equipped copy is empty', () => {
+    const equipment = { weapon: { itemId: 'shardglass_pickaxe', charges: 0 } } as any
+    const inv = pad([{ itemId: 'shardglass_pickaxe', quantity: 1, charges: 5 }])
+    const source = resolveShardglassToolSource('mining', equipment, inv)
+    expect(source).toMatchObject({ equipped: false, charges: 5, inventoryIndex: 0 })
   })
 })
 
 describe('shardglass gathering perk — idle simulation', () => {
   const miningAction = { id: 'adamantite', name: 'Mine Adamantite', level: 70, ticks: 4, xp: 95, product: 'adamantite_ore' }
-  // Derive per-action ticks from the pickaxe itself so the elapsed budget stays
-  // correct even as the tool's speed multiplier changes.
-  const pickaxeInv = pad([{ itemId: 'shardglass_pickaxe', quantity: 1 }])
+  // Derive per-action ticks from a fully-charged pickaxe so the elapsed budget
+  // stays correct even as the tool's speed multiplier changes.
+  const pickaxeInv = pad([{ itemId: 'shardglass_pickaxe', quantity: 1, charges: 100 }])
   const actionTicks = getEffectiveToolActionTicks('mining', miningAction.ticks, {}, itemsData as any, maxedMining, pickaxeInv)
   const msForActions = (n: number) => n * actionTicks * 600
 
-  it('doubles idle ore and burns 2 shards per action while shards last', () => {
-    const inv = pad([
-      { itemId: 'shardglass_pickaxe', quantity: 1 },
-      { itemId: 'shardglass_shards', quantity: 4 },
-    ])
-    // 3 actions worth of ticks; only 2 actions can be doubled (4 shards / 2).
+  it('doubles idle ore and drains 2 tool charges per action while charges last (inventory-held)', () => {
+    const inv = pad([{ itemId: 'shardglass_pickaxe', quantity: 1, charges: 4 }])
+    // 3 actions worth of ticks; only 2 actions can be doubled (4 charges / 2).
     const elapsedMs = msForActions(3)
     const sim = simulateIdleSkilling(
       { skill: 'mining', action: miningAction } as any,
@@ -91,15 +109,33 @@ describe('shardglass gathering perk — idle simulation', () => {
 
     // 2 doubled actions (2 ore each) + 1 single action = 5 ore.
     expect(sim.itemsGained.adamantite_ore).toBe(5)
-    // All 4 shards consumed; the slot survives (excluded from auto-bank) but empties.
-    const finalShards = sim.finalInventory.find((s: any) => s?.itemId === 'shardglass_shards')
-    expect(finalShards == null || finalShards.quantity === 0).toBe(true)
-    // Shards are never reported as a gain.
+    // All 4 charges consumed; the tool itself survives with 0 charges left.
+    const pickaxe = sim.finalInventory.find((s: any) => s?.itemId === 'shardglass_pickaxe')
+    expect(pickaxe.charges).toBe(0)
+    // Charges never come from loose inventory shards.
     expect(sim.itemsGained.shardglass_shards).toBeUndefined()
   })
 
-  it('does not double when the player holds no shards', () => {
-    const inv = pad([{ itemId: 'shardglass_pickaxe', quantity: 1 }])
+  it('drains charges from the equipped pickaxe and reports chargesConsumed, when equipped', () => {
+    const equipment = { weapon: { itemId: 'shardglass_pickaxe', charges: 4 } } as any
+    const elapsedMs = msForActions(3)
+    const sim = simulateIdleSkilling(
+      { skill: 'mining', action: miningAction } as any,
+      elapsedMs,
+      {},
+      equipment,
+      maxedMining,
+      itemsData as any,
+      pad([]),
+      {},
+    ) as any
+
+    expect(sim.itemsGained.adamantite_ore).toBe(5)
+    expect(sim.chargesConsumed).toBe(4)
+  })
+
+  it('does not double when the shardglass pickaxe has too few charges to fire', () => {
+    const inv = pad([{ itemId: 'shardglass_pickaxe', quantity: 1, charges: 1 }])
     const elapsedMs = msForActions(2)
     const sim = simulateIdleSkilling(
       { skill: 'mining', action: miningAction } as any,
@@ -116,12 +152,19 @@ describe('shardglass gathering perk — idle simulation', () => {
 })
 
 describe('shardglass tool mining speed', () => {
-  it('mines at the same speed as the dragon pickaxe', () => {
+  it('mines at the same speed as the dragon pickaxe when charged', () => {
     const maxed = { mining: { xp: 200_000_000 } } as any
-    const shardTicks = getEffectiveToolActionTicks('mining', 6, {}, itemsData as any, maxed, pad([{ itemId: 'shardglass_pickaxe', quantity: 1 }]))
+    const shardTicks = getEffectiveToolActionTicks('mining', 6, {}, itemsData as any, maxed, pad([{ itemId: 'shardglass_pickaxe', quantity: 1, charges: 10 }]))
     const dragonTicks = getEffectiveToolActionTicks('mining', 6, {}, itemsData as any, maxed, pad([{ itemId: 'dragon_pickaxe', quantity: 1 }]))
     expect(shardTicks).toBe(dragonTicks)
     expect(shardTicks).toBeLessThan(6)
+  })
+
+  it('loses its speed bonus entirely once out of charges — same as holding no tool at all', () => {
+    const maxed = { mining: { xp: 200_000_000 } } as any
+    const noToolTicks = getEffectiveToolActionTicks('mining', 6, {}, itemsData as any, maxed, pad([]))
+    const unchargedTicks = getEffectiveToolActionTicks('mining', 6, {}, itemsData as any, maxed, pad([{ itemId: 'shardglass_pickaxe', quantity: 1, charges: 0 }]))
+    expect(unchargedTicks).toBe(noToolTicks)
   })
 })
 
