@@ -7205,6 +7205,10 @@
       "ref": "brimhaven"
     },
     {
+      "kind": "hunter",
+      "ref": "hunt_herbi"
+    },
+    {
       "kind": "quest",
       "ref": "another_shard_of_h_a_m"
     },
