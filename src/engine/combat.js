@@ -4,7 +4,7 @@ import {
   getMeleeXPSkill, effectiveRanged, rangedMaxHit, getRangedStyleBonus,
   effectiveMagic, monsterMagicDefenceRoll, magicMaxHit
 } from './formulas.js'
-import { getEquipmentBonuses, getAttackSpeed, getMeleeAttackStyle, getRangedAmmoRequirementFailure, getEffectiveWornMagicDamage } from './equipment.js'
+import { getEquipmentBonuses, getAttackSpeed, getMeleeAttackStyle, getRangedAmmoRequirementFailure, getEffectiveWornMagicDamage, chargedScaleArmourSlots } from './equipment.js'
 import { getLevelFromXP } from './experience.js'
 import { hasRequiredRunes, getRunesToConsume } from './runes.js'
 import { MELEE_XP_PER_DAMAGE, RANGED_XP_PER_DAMAGE, MAGIC_XP_PER_DAMAGE, HP_XP_PER_DAMAGE, EAT_TICK_COST } from '../utils/constants.js'
@@ -553,8 +553,9 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
     let xpSkills = {}
 
     if (state.combatType === 'melee') {
-      // Scythe of vitur: requires charges for melee attacks
-      if (equippedWeapon?.scaleCharged && equippedWeapon?.scythePassive) {
+      // Scale-charged melee weapons (Scythe, Saeldor Warblade, shardglass tools)
+      // require a charge to swing; out of charges → can't attack.
+      if (equippedWeapon?.scaleCharged) {
         if (weaponCharges <= 0) {
           events.push({ type: 'noCharges', itemId: equippedWeaponEntry.itemId })
           state.playerAttackTimer = weaponSpeed
@@ -582,8 +583,8 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
         events.push({ type: 'scythePassive', hits: [damage - hit2 - hit3, hit2, hit3] })
       }
 
-      // Consume one charge per scythe swing
-      if (equippedWeapon?.scaleCharged && equippedWeapon?.scythePassive) {
+      // Consume one charge per scale-charged melee swing.
+      if (equippedWeapon?.scaleCharged) {
         events.push({ type: 'consumeCharge', qty: 1 })
       }
 
@@ -976,6 +977,13 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
       } else {
         events.push({ type: 'monsterHit', damage, playerHP: playerStats.currentHP - damage })
       }
+    }
+
+    // Scale-charged armour (shardglass) burns one charge per worn piece each time
+    // the wearer takes a hit; at 0 charges the piece stops giving bonuses.
+    if (damage > 0) {
+      const armourSlots = chargedScaleArmourSlots(equipment, itemsData)
+      if (armourSlots.length) events.push({ type: 'consumeArmourCharge', slots: armourSlots, qty: 1 })
     }
 
     state.monsterAttackTimer = monster.attackSpeed || 4

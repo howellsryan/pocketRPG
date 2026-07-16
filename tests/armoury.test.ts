@@ -14,6 +14,7 @@ import {
   describeObtainment,
   SKILL_CAPES_GROUP_KEY,
 } from '../src/utils/armoury.js'
+import { getBreakdownYield } from '../src/engine/inventory.js'
 
 const items = itemsData as Record<string, any>
 
@@ -219,4 +220,13 @@ describe('armoury classifier', () => {
       }
     })
   })
+})
+
+describe('breaking venom gear down into venomcoil scales', () => {
+  it.each(['venom_blowpipe', 'trident_of_venom', 'serpentine_helm'])(
+    '%s breaks down into 7500 venomcoil scales',
+    (id) => {
+      expect(getBreakdownYield(items[id])).toEqual({ itemId: 'venomcoil_scales', qty: 7500 })
+    },
+  )
 })

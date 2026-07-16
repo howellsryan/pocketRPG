@@ -144,6 +144,40 @@ export function removeItemUnnotedFirst(inventory, itemId, quantity = 1) {
 }
 
 /**
+ * Buy `qty` of a shard-priced item (item.shardglassShopCost) by spending
+ * Shardglass Shards from the inventory. Pure: returns a fresh inventory on
+ * success, or a failure reason. Never mutates the passed inventory.
+ *
+ * @returns {{ok:true, inventory:any[], totalCost:number, buyQty:number}
+ *          | {ok:false, reason:'not_for_sale'|'insufficient_shards'|'no_space', totalCost?:number, owned?:number}}
+ */
+export function buyWithShards(inventory, item, qty, shardId = 'shardglass_shards') {
+  const unitCost = Math.floor(Number(item?.shardglassShopCost) || 0)
+  const buyQty = Math.max(1, Math.floor(Number(qty) || 1))
+  if (unitCost <= 0 || !item?.id) return { ok: false, reason: 'not_for_sale' }
+  const totalCost = unitCost * buyQty
+  const owned = countItem(inventory, shardId)
+  if (owned < totalCost) return { ok: false, reason: 'insufficient_shards', totalCost, owned }
+  const newInv = inventory.map((s) => (s ? { ...s } : null))
+  removeItem(newInv, shardId, totalCost)
+  if (freeSlots(newInv) < buyQty) return { ok: false, reason: 'no_space', totalCost }
+  for (let k = 0; k < buyQty; k++) addItem(newInv, item.id, 1, false)
+  return { ok: true, inventory: newInv, totalCost, buyQty }
+}
+
+/**
+ * Resolve an item's breakdown yield — the stack a player receives when they
+ * break the item down (e.g. Shardglass gear → 5000 Shardglass Shards). Returns
+ * { itemId, qty } or null when the item declares no breakdown.
+ */
+export function getBreakdownYield(item) {
+  if (!item?.breakdownResult) return null
+  const qty = Math.max(1, Math.floor(Number(item.breakdownQty) || 0))
+  if (qty <= 0) return null
+  return { itemId: item.breakdownResult, qty }
+}
+
+/**
  * Swap two inventory slots
  */
 export function swapSlots(inventory, slotA, slotB) {

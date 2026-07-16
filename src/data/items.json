@@ -8518,6 +8518,9 @@
     "name": "Dragon Visage",
     "type": "resource",
     "stackable": false,
+    "combineWith": "anti_dragon_shield",
+    "combineResult": "visage_shield",
+    "combineCost": 10000000,
     "shopValue": 3679395,
     "icon": "\ud83d\udc09",
     "isGeneralStore": false,
@@ -8808,6 +8811,8 @@
     "stackable": false,
     "scaleCharged": true,
     "chargeItemId": "venomcoil_scales",
+    "breakdownResult": "venomcoil_scales",
+    "breakdownQty": 7500,
     "attackSpeed": 3,
     "attackStyle": "ranged",
     "attackBonus": {
@@ -8852,6 +8857,8 @@
     "stackable": false,
     "scaleCharged": true,
     "chargeItemId": "venomcoil_scales",
+    "breakdownResult": "venomcoil_scales",
+    "breakdownQty": 7500,
     "poweredStaff": true,
     "poweredStaffBaseDamage": 34,
     "attackSpeed": 3,
@@ -8890,6 +8897,8 @@
     "type": "armour",
     "slot": "head",
     "stackable": false,
+    "breakdownResult": "venomcoil_scales",
+    "breakdownQty": 7500,
     "attackBonus": {
       "stab": 0,
       "slash": 0,
@@ -9065,6 +9074,10 @@
     "slot": "head",
     "stackable": false,
     "scaleCharged": true,
+    "chargeItemId": "shardglass_shards",
+    "breakdownResult": "shardglass_shards",
+    "breakdownQty": 5000,
+    "shardglassShopCost": 25000,
     "attackBonus": {
       "stab": 0,
       "slash": 0,
@@ -9100,6 +9113,10 @@
     "slot": "body",
     "stackable": false,
     "scaleCharged": true,
+    "chargeItemId": "shardglass_shards",
+    "breakdownResult": "shardglass_shards",
+    "breakdownQty": 5000,
+    "shardglassShopCost": 25000,
     "attackBonus": {
       "stab": 0,
       "slash": 0,
@@ -9135,6 +9152,10 @@
     "slot": "legs",
     "stackable": false,
     "scaleCharged": true,
+    "chargeItemId": "shardglass_shards",
+    "breakdownResult": "shardglass_shards",
+    "breakdownQty": 5000,
+    "shardglassShopCost": 25000,
     "attackBonus": {
       "stab": 0,
       "slash": 0,
@@ -9166,15 +9187,23 @@
     "id": "shardglass_pickaxe",
     "legacy_item_id": "crystal_pickaxe",
     "name": "Shardglass Pickaxe",
-    "type": "tool",
+    "type": "weapon",
     "slot": "weapon",
+    "twoHanded": false,
     "stackable": false,
     "scaleCharged": true,
+    "chargeItemId": "shardglass_shards",
+    "breakdownResult": "shardglass_shards",
+    "breakdownQty": 5000,
+    "shardglassShopCost": 15000,
+    "speedMultiplier": 0.5,
+    "attackSpeed": 4,
+    "attackStyle": "stab",
     "attackBonus": {
-      "stab": 0,
-      "slash": 0,
-      "crush": 0,
-      "magic": 0,
+      "stab": 57,
+      "slash": -4,
+      "crush": -2,
+      "magic": -7,
       "ranged": 0
     },
     "defenceBonus": {
@@ -9185,12 +9214,13 @@
       "ranged": 0
     },
     "otherBonus": {
-      "meleeStrength": 0,
+      "meleeStrength": 44,
       "rangedStrength": 0,
       "magicDamage": 0
     },
     "toolFor": "mining",
     "requirements": {
+      "attack": 60,
       "mining": 70
     },
     "shopValue": 7500000,
@@ -9202,15 +9232,22 @@
     "id": "shardglass_axe",
     "legacy_item_id": "crystal_axe",
     "name": "Shardglass Axe",
-    "type": "tool",
+    "type": "weapon",
     "slot": "weapon",
+    "twoHanded": false,
     "stackable": false,
     "scaleCharged": true,
+    "chargeItemId": "shardglass_shards",
+    "breakdownResult": "shardglass_shards",
+    "breakdownQty": 5000,
+    "shardglassShopCost": 15000,
+    "attackSpeed": 5,
+    "attackStyle": "slash",
     "attackBonus": {
-      "stab": 0,
-      "slash": 0,
-      "crush": 0,
-      "magic": 0,
+      "stab": 2,
+      "slash": 60,
+      "crush": -10,
+      "magic": -10,
       "ranged": 0
     },
     "defenceBonus": {
@@ -9221,12 +9258,13 @@
       "ranged": 0
     },
     "otherBonus": {
-      "meleeStrength": 0,
+      "meleeStrength": 55,
       "rangedStrength": 0,
       "magicDamage": 0
     },
     "toolFor": "woodcutting",
     "requirements": {
+      "attack": 60,
       "woodcutting": 70
     },
     "shopValue": 7500000,
@@ -9244,6 +9282,7 @@
     "stackable": false,
     "scaleCharged": true,
     "chargeItemId": "shardglass_shards",
+    "shardglassShopCost": 50000,
     "attackSpeed": 3,
     "attackStyle": "ranged",
     "attackBonus": {
@@ -9283,6 +9322,7 @@
     "stackable": false,
     "scaleCharged": true,
     "chargeItemId": "shardglass_shards",
+    "shardglassShopCost": 50000,
     "attackSpeed": 3,
     "attackStyle": "slash",
     "attackBonus": {
@@ -11305,6 +11345,8 @@
     "slot": "weapon",
     "twoHanded": true,
     "stackable": false,
+    "breakdownResult": "shardglass_shards",
+    "breakdownQty": 5000,
     "attackSpeed": 4,
     "attackStyle": "ranged",
     "attackBonus": {
@@ -11343,6 +11385,10 @@
     "type": "armour",
     "slot": "shield",
     "stackable": false,
+    "scaleCharged": true,
+    "chargeItemId": "shardglass_shards",
+    "breakdownResult": "shardglass_shards",
+    "breakdownQty": 5000,
     "isUntradeable": true,
     "questUnlock": "wandering_elves",
     "attackBonus": {

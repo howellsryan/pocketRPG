@@ -213,6 +213,11 @@ export function getEquipmentBonuses(equipment, itemsData) {
     const item = itemsData[equipment[slot].itemId]
     if (!item) continue
 
+    // Scale-charged armour (shardglass set) provides no bonuses once its charges
+    // run dry — it "stops working" until recharged. Weapons keep their bonuses
+    // (their own charge gate blocks attacking instead).
+    if (item.scaleCharged && slot !== 'weapon' && slot !== 'ammo' && (equipment[slot].charges || 0) <= 0) continue
+
     if (item.attackBonus) {
       for (const [k, v] of Object.entries(item.attackBonus)) {
         bonuses.attackBonus[k] = (bonuses.attackBonus[k] || 0) + v
@@ -236,6 +241,25 @@ export function getEquipmentBonuses(equipment, itemsData) {
   }
 
   return bonuses
+}
+
+/**
+ * Worn scale-charged armour slots (shardglass set) that still have charges.
+ * Each such piece burns one charge when the wearer takes a hit; at 0 charges it
+ * stops contributing bonuses (see getEquipmentBonuses). Weapon/ammo excluded —
+ * weapons burn charges on their own swing, not on hits taken.
+ */
+export function chargedScaleArmourSlots(equipment, itemsData) {
+  const slots = []
+  if (!equipment) return slots
+  for (const slot of EQUIPMENT_SLOTS) {
+    if (slot === 'weapon' || slot === 'ammo') continue
+    const entry = equipment[slot]
+    if (!entry) continue
+    const item = itemsData?.[entry.itemId]
+    if (item?.scaleCharged && (entry.charges || 0) > 0) slots.push(slot)
+  }
+  return slots
 }
 
 /**

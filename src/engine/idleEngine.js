@@ -10,8 +10,8 @@ import {
   effectiveRanged, rangedMaxHit, getRangedStyleBonus,
   effectiveMagic, monsterMagicDefenceRoll, magicMaxHit
 } from './formulas.js'
-import { getEquipmentBonuses, getAttackSpeed, getMeleeAttackStyle, getCombatType, getRangedAmmoRequirementFailure, getEffectiveWornMagicDamage } from './equipment.js'
-import { getEffectiveToolActionTicks, getEquippedSkillXpMultiplier, rollGatherBonusDrops } from './skilling.js'
+import { getEquipmentBonuses, getAttackSpeed, getMeleeAttackStyle, getCombatType, getRangedAmmoRequirementFailure, getEffectiveWornMagicDamage, chargedScaleArmourSlots } from './equipment.js'
+import { getEffectiveToolActionTicks, getEquippedSkillXpMultiplier, rollGatherBonusDrops, usesShardglassGatherTool, resolveShardglassToolSource, consumeShardglassGatherCharge, SHARDGLASS_GATHER_TOOLS } from './skilling.js'
 import { hasRequiredRunes, getRunesToConsume } from './runes.js'
 import { getHighAlchValue } from '../utils/itemValue.js'
 import { MELEE_XP_PER_DAMAGE, RANGED_XP_PER_DAMAGE, MAGIC_XP_PER_DAMAGE, HP_XP_PER_DAMAGE, GATHERING_SKILLS, IDLE_AUTOBANK_GATHERING_SKILLS, GATHER_AUTOBANK_CONSTRUCTION_LEVEL } from '../utils/constants.js'
@@ -241,6 +241,11 @@ export function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, st
   const itemsBanked = {}
   const itemsDropped = {}
   const newInv = [...inventory]
+  // Charges drained from an *equipped* shardglass gather tool this window —
+  // reported back so the caller can persist it onto equipment (mirrors
+  // combat's chargesConsumed). An inventory-held tool's charges are written
+  // directly onto its finalInventory slot instead, needing no separate field.
+  let shardglassChargesConsumed = 0
 
   const xpMultiplier = getEquippedSkillXpMultiplier(task.skill, equipment, itemsData)
   const xpPer = Math.floor((task.action.xp || 0) * xpMultiplier)
@@ -367,6 +372,15 @@ export function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, st
     const bankDelayTicks = Math.ceil(getAgilityBankDelayFromStats(stats) / TICK_MS)
     const productQty = task.action.productQty || 1
 
+    // Shardglass tool identity is fixed for the session (locked like actionTicks);
+    // its charge total is snapshotted here too and drained action-by-action below.
+    const shardglassGather = usesShardglassGatherTool(task.skill, equipment, inventory, itemsData, stats)
+    const shardglassToolId = SHARDGLASS_GATHER_TOOLS[task.skill]
+    const shardglassSource = shardglassGather ? resolveShardglassToolSource(task.skill, equipment, newInv) : null
+    const shardglassEquipped = !!shardglassSource?.equipped
+    const shardglassStartCharges = shardglassSource?.charges || 0
+    let shardglassCharges = shardglassStartCharges
+
     const startingInvState = {}
     for (const slot of newInv) {
       if (!slot) continue
@@ -381,6 +395,7 @@ export function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, st
       const drops = task.action.dropTable
         ? rollDropTableOnce(task.action.dropTable)
         : { [task.action.product]: productQty }
+      if (shardglassGather) shardglassCharges = consumeShardglassGatherCharge(drops, shardglassCharges)
       const bonus = rollGatherBonusDrops(task.skill)
       for (const [itemId, qty] of Object.entries(bonus)) {
         drops[itemId] = (drops[itemId] || 0) + qty
@@ -400,6 +415,15 @@ export function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, st
       actionsCompleted++
       for (const [itemId, qty] of Object.entries(drops)) {
         if (qty > 0) addItem(newInv, itemId, qty, itemsData[itemId]?.stackable || false)
+      }
+    }
+
+    if (shardglassGather) {
+      if (shardglassEquipped) {
+        shardglassChargesConsumed = Math.max(0, shardglassStartCharges - shardglassCharges)
+      } else {
+        const toolIdx = newInv.findIndex(s => s && s.itemId === shardglassToolId)
+        if (toolIdx !== -1) newInv[toolIdx] = { ...newInv[toolIdx], charges: shardglassCharges }
       }
     }
 
@@ -668,7 +692,7 @@ export function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, st
     ? gatheringStoppedReason
     : (outOfMaterials ? 'out_of_materials' : undefined)
 
-  return { xpGained, itemsGained, itemsBanked, itemsConsumed, itemsDropped, actions, skill: task.skill, actionName: task.action.name, finalInventory: newInv, coinsGained, dungeoneeringTokensGained, stoppedReason }
+  return { xpGained, itemsGained, itemsBanked, itemsConsumed, itemsDropped, actions, skill: task.skill, actionName: task.action.name, finalInventory: newInv, coinsGained, dungeoneeringTokensGained, stoppedReason, chargesConsumed: shardglassChargesConsumed }
 }
 
 /**
@@ -911,7 +935,7 @@ export function estimateMonsterIncomingPerAttack(monster, equipment, itemsData, 
     ? monster.formMaxHit
     : Math.floor(0.5 + (baseStrength + 8) * ((monster.strengthBonus || 0) + 64) / 640)
   const avgDmg = Math.max(0, acc * (monsterMaxHit / 2))
-  return { avgDmg, monsterAtkSpeed, attackStyle }
+  return { avgDmg, monsterAtkSpeed, attackStyle, acc }
 }
 
 /**
@@ -1218,6 +1242,13 @@ export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory,
   // currently loaded charges allow — charges cannot be refilled mid-idle.
   const weaponScaleCharged = !!weaponItem?.scaleCharged
   const startingCharges = weaponEntry?.charges || 0
+  // Scale-charged armour (shardglass) burns one charge per worn piece per hit
+  // taken. Idle is approximate: bonuses aren't recomputed mid-window, so we
+  // just tally expected landed hits and drain each piece by that (capped).
+  const armourChargeSlots = chargedScaleArmourSlots(equipment, itemsData)
+  const armourStartCharges = {}
+  for (const slot of armourChargeSlots) armourStartCharges[slot] = equipment[slot]?.charges || 0
+  let armourHitsTaken = 0
   let maxKillsFromCharges = Infinity
   if (weaponScaleCharged && hitsNeeded < Infinity) {
     // Scale-charged weapons (ranged, powered-staff magic, scythe melee) consume
@@ -1373,6 +1404,11 @@ export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory,
     }
     damageTaken += Math.max(0, dmgFromMonster)
 
+    // Expected landed hits this kill (each armour piece burns a charge per hit).
+    if (armourChargeSlots.length) {
+      armourHitsTaken += monsterAttacks * (Number(metrics.incoming.acc) || 0)
+    }
+
     // Advance time for the kill (player attacks + respawn).
     const killTicks = metrics.ticksPerCycle
     for (const itemId of Object.keys(activeBoostTicksByItemId)) {
@@ -1513,6 +1549,15 @@ export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory,
     ? Math.min(startingCharges, hitsNeeded * monstersKilled)
     : 0
 
+  const armourChargesConsumed = {}
+  if (armourChargeSlots.length) {
+    const hits = Math.floor(armourHitsTaken)
+    for (const slot of armourChargeSlots) {
+      const consumed = Math.min(armourStartCharges[slot] || 0, hits)
+      if (consumed > 0) armourChargesConsumed[slot] = consumed
+    }
+  }
+
   const resourceLimited = (maxKillsFromResources !== Infinity) && (monstersKilled >= maxKillsFromResources) && (remainingTicks >= ticksPerCycle)
   if (resourceLimited && !stoppedReason) stoppedReason = 'resource_limited'
   if (!stoppedReason) stoppedReason = 'completed_elapsed'
@@ -1571,7 +1616,7 @@ export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory,
   return {
     xpGained, lootGained, lootLost, lootBanked, runesConsumed,
     monstersKilled, monstersKilledOnTask, finalInventory: newInv,
-    slayerXpGained, slayerTaskUpdate, chargesConsumed, ammoConsumed,
+    slayerXpGained, slayerTaskUpdate, chargesConsumed, armourChargesConsumed, ammoConsumed,
     attacksUsed: attacksPerKill * monstersKilled, resourceLimited,
     // Idle-supply outputs:
     effectiveElapsedMs,

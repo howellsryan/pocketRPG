@@ -725,6 +725,22 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             updateEquipment(newEq)
           }
         }
+        if (ev.type === 'consumeArmourCharge') {
+          // Decrement charges on each worn scale-charged armour piece that took a hit
+          const newEq = { ...equipmentRef.current }
+          let changed = false
+          for (const slot of (ev.slots || [])) {
+            const piece = newEq[slot]
+            if (piece && piece.charges && piece.charges > 0) {
+              newEq[slot] = { ...piece, charges: Math.max(0, piece.charges - (ev.qty || 1)) }
+              changed = true
+            }
+          }
+          if (changed) {
+            equipmentRef.current = newEq
+            updateEquipment(newEq)
+          }
+        }
         if (ev.type === 'consumeAmmo') {
           // Decrement ammo quantity on the equipped ammo
           const newEq = { ...equipmentRef.current }
@@ -2066,7 +2082,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                             )}
                             {bossReq.locked && !slayLocked && !slayReq && (
                               <div class="text-[9px] font-semibold text-[var(--color-blood-light)]">
-                                🔒 {monster.id === 'blighted_gauntlet' ? 'Song of the Elves' :
+                                🔒 {monster.id === 'blighted_gauntlet' ? 'Hymn of the Elves' :
                                      monster.id === 'ashen_crucible' ? 'Defeat Ember Tyrant' :
                                      (monster.id === 'adamant_dragon' || monster.id === 'rune_dragon') ? 'Dragon Slayer II' :
                                      monster.id === 'hellbound_gorilla' ? 'Monkey Madness II' : 'Locked'}
