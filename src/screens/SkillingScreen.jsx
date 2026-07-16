@@ -12,7 +12,7 @@ import { emptySession, ratePerHour } from '../engine/activitySession.js'
 import { getActionProgress } from '../hooks/useActionTick.js'
 import { STUB_SKILLS, GATHERING_SKILLS, PRODUCTION_SKILLS, UTILITY_SKILLS, SCREENS, formatDropChance } from '../utils/constants.js'
 import { getLevelFromXP } from '../engine/experience.js'
-import { createSkillingState, processSkillingTick, getAvailableActions, checkBurn, getEffectiveToolActionTicks, hasToolForSkill, getEquippedSkillXpMultiplier, rollGatherBonusDrops, TOOL_SKILLS, skillingActionBlockedByFullInventory } from '../engine/skilling.js'
+import { createSkillingState, processSkillingTick, getAvailableActions, checkBurn, getEffectiveToolActionTicks, hasToolForSkill, getEquippedSkillXpMultiplier, rollGatherBonusDrops, TOOL_SKILLS, skillingActionBlockedByFullInventory, usesShardglassGatherTool, resolveShardglassToolSource, consumeShardglassGatherCharge } from '../engine/skilling.js'
 import { addItem, removeItem, countItem } from '../engine/inventory.js'
 import { hasRequiredRunes, getRunesToConsume } from '../engine/runes.js'
 import { onTick } from '../engine/tick.js'
@@ -63,7 +63,7 @@ function calculateRemainingActions(action, inventory, bank) {
 // `onStopBack` (from App): where Stop & Back returns to — the place-map origin
 // when there is one, otherwise the previous screen.
 export default function SkillingScreen({ initialSkillId, initialActionId, initialMasterId, initialLocationId, idleResult, onNavigate, onBack, onStopBack }) {
-  const { stats, inventory, bank, equipment, isIronman, updateInventory, updateBankDirect, grantXP, addToast, setActiveTask, requestActivityStart, activeTask, dungeoneeringTokens, awardDungeoneeringTokens, trySpendDungeoneeringTokens, recordGameEvent, signalInventoryFull, resolveInventoryFull } = useGame()
+  const { stats, inventory, bank, equipment, isIronman, updateInventory, updateEquipment, updateBankDirect, grantXP, addToast, setActiveTask, requestActivityStart, activeTask, dungeoneeringTokens, awardDungeoneeringTokens, trySpendDungeoneeringTokens, recordGameEvent, signalInventoryFull, resolveInventoryFull } = useGame()
   const [selectedSkill, setSelectedSkill] = useState(initialSkillId || null)
   const [selectedAction, setSelectedAction] = useState(null)
   const [skilling, setSkilling] = useState(null)
@@ -81,6 +81,22 @@ export default function SkillingScreen({ initialSkillId, initialActionId, initia
   // Keep refs in sync with React state
   useEffect(() => { inventoryRef.current = inventory }, [inventory])
   useEffect(() => { bankRef.current = bank }, [bank])
+
+  // Shardglass gather perk: draws charges from the tool itself (equipped
+  // weapon or the matching inventory slot), doubling `drops` in place when
+  // enough remain. Persists the drained charge count back onto wherever the
+  // tool lives.
+  const applyShardglassGatherCharge = (skill, drops, inv) => {
+    if (!usesShardglassGatherTool(skill, equipment, inv, itemsData, stats)) return
+    const source = resolveShardglassToolSource(skill, equipment, inv)
+    const remaining = consumeShardglassGatherCharge(drops, source.charges)
+    if (remaining === source.charges) return
+    if (source.equipped) {
+      updateEquipment({ ...equipment, weapon: { ...equipment.weapon, charges: remaining } })
+    } else if (source.inventoryIndex !== -1) {
+      inv[source.inventoryIndex] = { ...inv[source.inventoryIndex], charges: remaining }
+    }
+  }
 
   // If agility is selected, delegate to AgilityScreen (special screen for agility only)
   if (selectedSkill === 'agility') {
@@ -322,6 +338,7 @@ export default function SkillingScreen({ initialSkillId, initialActionId, initia
             // a full inventory triggers a bank trip or stops the action.
             const drops = { [action.product]: qty }
             if (isGatheringSkill) {
+              applyShardglassGatherCharge(state.skill, drops, newInv)
               const bonus = rollGatherBonusDrops(state.skill)
               for (const [itemId, bonusQty] of Object.entries(bonus)) {
                 drops[itemId] = (drops[itemId] || 0) + bonusQty
@@ -340,6 +357,9 @@ export default function SkillingScreen({ initialSkillId, initialActionId, initia
                   : drop.quantity
                 drops[drop.itemId] = (drops[drop.itemId] || 0) + qty
               }
+            }
+            if (isGatheringSkill && Object.keys(drops).length > 0) {
+              applyShardglassGatherCharge(state.skill, drops, newInv)
             }
             if (Object.keys(drops).length > 0) {
               if (!deposit(newInv, drops)) return

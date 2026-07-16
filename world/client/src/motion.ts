@@ -34,3 +34,13 @@ export function stepYaw(current: number, target: number, maxStep: number): numbe
   if (Math.abs(delta) <= maxStep) return target
   return current + Math.sign(delta) * maxStep
 }
+
+/** Planar (x/z) distance² above which a segment reads as a run rather than a
+ * walk: a straight 1-tile step is 1, a diagonal 1-tile step is 2, a straight
+ * 2-tile running step is 4 — this sits strictly between diagonal-walk and
+ * straight-run so terrain-perturbed lengths never bracket the wrong side. */
+export const RUN_DIST_SQ_MIN = 3
+
+export function animForSegment(planarDistSq: number): 'walk' | 'run' {
+  return planarDistSq >= RUN_DIST_SQ_MIN ? 'run' : 'walk'
+}

@@ -93,6 +93,8 @@ props.push({ model: 'lantern', x: 33, z: 38 })
 const exits = [
   { id: 'exit_pasture', x: 63, z: 31, toZone: 'pasture', toX: 1, toZ: 8, label: 'the Verdant Pasture' },
   { id: 'exit_forest', x: 21, z: 63, toZone: 'forest', toX: 10, toZ: 1, label: 'the Whisperwood' },
+  // West road across the open country to the capital.
+  { id: 'exit_varrick', x: 0, z: 32, toZone: 'varrick', toX: 40, toZ: 82, label: 'Varrick' },
 ]
 
 // ── Monsters outside the walls (all passive) ──
@@ -129,6 +131,18 @@ const zone = {
   width: W,
   height: H,
   spawn: { x: 32, z: 32 },
+  // Mirrors the hand-edited terrain block in zones/lumbright.json — this
+  // script is not re-run against the committed zone (unseeded prop rotations
+  // would churn it), but a future regen must not silently drop terrain.
+  terrain: {
+    relief: 0.5,
+    procedural: { seed: 4242, frequency: 0.05 },
+    material: 'meadow',
+    scatter: [
+      { model: 'flowers', density: 2, scaleRange: [0.8, 1.1] },
+      { model: 'bush', density: 2, scaleRange: [0.7, 1.1] },
+    ],
+  },
   collision: grid.map((row) => row.join('')),
   objects,
   npcs,

@@ -1,5 +1,28 @@
 import monstersData from '../data/monsters.json'
+import raidsData from '../data/raids.json'
 import { DAGANNOTH_KINGS_TASK_ID } from './slayerTasks.js'
+
+// Zul-Kaar's boss-task pool includes every boss monster EXCEPT these 4, which
+// are raid-final-bosses only reachable via a full raid clear (never independently
+// fightable) — they're represented as raid-completion proxy entries instead
+// (see SLAYER_MASTERS below). flatSlayerXp is the flat Slayer XP per raid
+// completion (used by getSlayerTaskXpForKill's options.flatXp), replacing the
+// normal HP-based Slayer XP formula since these "kills" are whole-raid clears.
+export const RAID_TASK_META = {
+  the_great_olm: { raidId: 'vaults_of_xyren', flatSlayerXp: 10000 },
+  verzik_vitur: { raidId: 'crimson_night_theatre', flatSlayerXp: 10000 },
+  verin_the_defiled: { raidId: 'cryptbound_champions', flatSlayerXp: 2500 },
+  warden_of_arasmus: { raidId: 'tomb_of_arasmus', flatSlayerXp: 10000 },
+}
+
+// Every monster that makes up any raid — sub-bosses (e.g. Gorath the Infested)
+// as well as each raid's final boss — derived structurally from raids.json so
+// a new raid or roster change can't silently desync this. None of these may
+// be individually assignable as a standalone kill task: only a full raid
+// clear (RAID_TASK_META's proxy entries, keyed to the final boss id) counts.
+const RAID_MONSTER_IDS = new Set(
+  Object.values(raidsData).flatMap(raid => Array.isArray(raid?.bosses) ? raid.bosses : [])
+)
 
 // PocketRPG slayer masters — requirements and monster pools from PocketRPG design references.
 //
@@ -130,9 +153,9 @@ export const SLAYER_MASTERS = [
     icon: '💀',
     iconKey: 'queen_crown',
     combatReq: 0,
-    slayerReq: 90,
+    slayerReq: 80,
     pointsPerTask: 15,
-    description: 'The most prestigious master. Assigns the hardest tasks. Requires slayer 90.',
+    description: 'Assigns the hardest monster tasks. Requires slayer 80.',
     taskRange: [100, 250],
     bossTaskRange: [20, 50],
     // Combat level ~85-380, slayer 90+
@@ -155,26 +178,57 @@ export const SLAYER_MASTERS = [
       { id: 'sovrathar_the_ashen_sovereign', boss: true },
     ],
   },
+  {
+    id: 'zul_kaar',
+    name: 'Zul-Kaar',
+    location: 'Varrick',
+    placeId: 'varrick',
+    icon: '🗿',
+    iconKey: 'zul_kaar',
+    combatReq: 0,
+    slayerReq: 85,
+    pointsPerTask: 25,
+    description: 'Assigns only full boss kills or raid clears — the realm\'s ultimate Slayer trial. Requires slayer 85.',
+    bossTaskRange: [5, 50],
+    monsterPool: [
+      // Every monster with boss:true in monsters.json except raid monsters
+      // (RAID_MONSTER_IDS — both sub-bosses and final bosses): none of them are
+      // individually assignable, only a full raid clear is.
+      ...Object.keys(monstersData).filter(id => monstersData[id]?.boss === true && !RAID_MONSTER_IDS.has(id)).map(id => ({ id, boss: true })),
+      // Raid-completion proxy entries: each is the raid's final boss, overridden
+      // to a [2,10] task range instead of the master's [5,50] bossTaskRange.
+      ...Object.keys(RAID_TASK_META).map(id => ({ id, boss: true, taskRange: [2, 10] })),
+    ],
+  },
 ]
 
+// Monsters whose task is always a single kill, regardless of the master's
+// bossTaskRange — these are singular, high-effort world bosses rather than a
+// grindable pool.
+const SINGLE_KILL_MONSTER_IDS = new Set(['ember_tyrant', 'ashen_crucible'])
+
 // Build a slayer task object for an assigned monster. Shared by the game client
-// and the MCP assignment intent so the two paths can't drift: Ember Tyrant is
-// always a single kill; bosses use the master's bossTaskRange (default [20,50]);
-// everything else rolls within the master's taskRange. `options.rng` overrides
-// Math.random for deterministic assignment.
+// and the MCP assignment intent so the two paths can't drift: SINGLE_KILL_MONSTER_IDS
+// are always a single kill; RAID_TASK_META entries display the raid's own name
+// (not its final boss's); bosses use the master's bossTaskRange (default
+// [20,50]); everything else rolls within the master's taskRange. `options.rng`
+// overrides Math.random for deterministic assignment.
 export function buildSlayerTask(master, monsterId, isBoss, options = {}) {
   const rng = options.rng || Math.random
   const quantityMultiplier = (Number(options.quantityMultiplier) > 0) ? Number(options.quantityMultiplier) : 1
   const monsterData = monstersData[monsterId]
+  const raidMeta = RAID_TASK_META[monsterId]
   const monsterName = monsterId === DAGANNOTH_KINGS_TASK_ID
     ? 'Nagadoth Kings'
-    : (monsterData?.name || monsterId.replace(/_/g, ' '))
+    : raidMeta
+      ? (raidsData[raidMeta.raidId]?.name || monsterId.replace(/_/g, ' '))
+      : (monsterData?.name || monsterId.replace(/_/g, ' '))
 
   let totalCount
-  if (monsterId === 'ember_tyrant') {
+  if (SINGLE_KILL_MONSTER_IDS.has(monsterId)) {
     totalCount = 1
   } else {
-    const taskRange = isBoss ? (master.bossTaskRange || [20, 50]) : master.taskRange
+    const taskRange = options.entry?.taskRange || (isBoss ? (master.bossTaskRange || [20, 50]) : master.taskRange)
     totalCount = Math.floor(rng() * (taskRange[1] - taskRange[0] + 1)) + taskRange[0]
     totalCount = Math.floor(totalCount * quantityMultiplier)
   }

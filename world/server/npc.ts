@@ -4,7 +4,7 @@
 import monstersData from '../../src/data/monsters.json'
 import type { EntityDiff } from '../shared/protocol'
 import type { ZoneNpcDef } from '../shared/zone'
-import type { TickContext, TickResult } from './tick'
+import { monsterAttackRange, withinRange, type TickContext, type TickResult } from './tick'
 
 type Monsters = Record<string, { name?: string; hitpoints?: number }>
 
@@ -21,7 +21,7 @@ export type NpcState = {
   wanderCooldown: number
   respawnAtTick: number
   removeAtTick: number
-  anim: 'idle' | 'die'
+  anim: 'idle' | 'die' | 'attack'
   /** Retaliation target: the one player whose combat session applies this npc's
    * attacks. First attacker claims it; released on leave/death/disconnect and
    * re-claimed by a surviving attacker the next tick. */
@@ -35,6 +35,9 @@ export type NpcState = {
 const WANDER_MIN_TICKS = 5
 const WANDER_MAX_TICKS = 13
 const OUT_OF_COMBAT_HEAL_TICKS = 17
+/** How far (Chebyshev tiles from home) an aggressive npc will chase its
+ * attacker before giving up and returning to its post. */
+const PURSUE_LEASH_TILES = 10
 
 export function recordDamage(npc: NpcState, charId: string, dmg: number, tick: number): void {
   if (dmg <= 0) return
@@ -115,8 +118,50 @@ function wander(npc: NpcState, collision: string[]): boolean {
   return true
 }
 
-/** Advances one npc: respawn timer, out-of-combat heal, or wander. Mutates the
- * npc and records changes/removals/respawn on the result. */
+function chebyshev(a: { x: number; z: number }, b: { x: number; z: number }): number {
+  return Math.max(Math.abs(a.x - b.x), Math.abs(a.z - b.z))
+}
+
+/** One greedy step toward the aggro target — aimed instead of random, same
+ * "one tile if walkable, else stand still" style as wander(). Falls back to an
+ * off-axis step when the direct tile is blocked, and forbids the diagonal
+ * corner-cut pathfind.ts also forbids. */
+function chaseStep(npc: NpcState, target: { x: number; z: number }, collision: string[]): boolean {
+  const dx = Math.sign(target.x - npc.x)
+  const dz = Math.sign(target.z - npc.z)
+  if (dx === 0 && dz === 0) return false
+  const candidates: [number, number][] =
+    dx !== 0 && dz !== 0 ? [[dx, dz], [dx, 0], [0, dz]]
+    : dx !== 0 ? [[dx, 0], [dx, 1], [dx, -1]]
+    : [[0, dz], [1, dz], [-1, dz]]
+  for (const [ddx, ddz] of candidates) {
+    const nx = npc.x + ddx
+    const nz = npc.z + ddz
+    if (!walkable(collision, nx, nz)) continue
+    if (ddx !== 0 && ddz !== 0 && (!walkable(collision, npc.x + ddx, npc.z) || !walkable(collision, npc.x, npc.z + ddz))) continue
+    npc.x = nx
+    npc.z = nz
+    return true
+  }
+  return false
+}
+
+/** Gives up the chase: same reset as an out-of-combat heal (return to full,
+ * forget contributions) plus a snap home, so a leash-broken npc never gets
+ * stranded outside the wander rect it polices once idle again. */
+function giveUpPursuit(npc: NpcState): void {
+  npc.attackerId = null
+  npc.state = 'idle'
+  npc.anim = 'idle'
+  npc.hp = npc.maxHp
+  npc.x = npc.home.x
+  npc.z = npc.home.z
+  npc.wanderCooldown = randInt(WANDER_MIN_TICKS, WANDER_MAX_TICKS)
+  npc.damageByChar.clear()
+}
+
+/** Advances one npc: respawn timer, out-of-combat heal/pursuit, or wander.
+ * Mutates the npc and records changes/removals/respawn on the result. */
 export function tickNpc(npc: NpcState, ctx: TickContext, result: TickResult): void {
   if (npc.state === 'dead') {
     if (npc.removeAtTick && ctx.tick === npc.removeAtTick) result.npcRemoved.push(npc.id)
@@ -133,12 +178,27 @@ export function tickNpc(npc: NpcState, ctx: TickContext, result: TickResult): vo
   }
 
   if (npc.state === 'combat') {
-    if (!npc.attackerId && ctx.tick - npc.lastCombatTick >= OUT_OF_COMBAT_HEAL_TICKS) {
-      npc.state = 'idle'
-      npc.hp = npc.maxHp
-      npc.damageByChar.clear()
-      result.npcChanged.push(npc.id)
+    if (!npc.attackerId) {
+      if (ctx.tick - npc.lastCombatTick >= OUT_OF_COMBAT_HEAL_TICKS) {
+        npc.state = 'idle'
+        npc.hp = npc.maxHp
+        npc.damageByChar.clear()
+        result.npcChanged.push(npc.id)
+      }
+      return
     }
+    // Aggro'd on an attacker: stand and fight while within ITS attack range (an
+    // active engine session drives this tick-by-tick — melee at 1 tile, ranged/
+    // magic from afar), otherwise chase them down — leashed to a radius around
+    // home so it can't trek across the whole zone.
+    const target = ctx.players?.get(npc.attackerId)
+    if (!target || withinRange(npc, target, monsterAttackRange(npc.monsterId))) return
+    if (chebyshev(npc, npc.home) >= PURSUE_LEASH_TILES) {
+      giveUpPursuit(npc)
+      result.npcChanged.push(npc.id)
+      return
+    }
+    if (chaseStep(npc, target, ctx.collision ?? [])) result.npcChanged.push(npc.id)
     return
   }
 
@@ -152,5 +212,6 @@ export function toNpcDiff(npc: NpcState): EntityDiff {
   // after an out-of-combat heal — a combat-only field would leave it stale.
   const diff: EntityDiff = { id: npc.id, kind: 'npc', x: npc.x, z: npc.z, anim: npc.anim, monsterId: npc.monsterId, hp: npc.hp, maxHp: npc.maxHp }
   if (name) diff.name = name
+  if (npc.state === 'combat' && npc.attackerId) diff.targetId = npc.attackerId
   return diff
 }

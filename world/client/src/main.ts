@@ -1,11 +1,12 @@
-import { clearStoredSession, exchangeHandoff, getStoredSession, getStoredZone, parseHandoffFromHash, pocketRpgUrl, storeZone, type WorldSession } from './auth'
-import { hideConnBanner, hideOverlay, initChatInput, initHud, paintHudIcons, pushMessage, removeHpBar, removeNameplate, removeOverheadChat, renderEquipment, renderInventory, setRunState, setSpecialEnergy, setSpellButton, setStanceActive, showConnBanner, showContextMenu, showHitsplat, showLoginRequired, showTransitionOverlay, showXpDrop, updateHpBar, updateHpPill, updateNameplate, updateOverheadChat, npcExamine } from './ui'
+import { clearStoredSession, exchangeHandoff, getRunPref, getStoredSession, getStoredZone, parseHandoffFromHash, pocketRpgUrl, storeRunPref, storeZone, type WorldSession } from './auth'
+import { hideConnBanner, hideOverlay, initChatInput, initHud, paintHudIcons, pushMessage, removeHpBar, removeNameplate, removeOverheadChat, renderEquipment, renderInventory, renderSpellbook, setRunState, setSpecialEnergy, setSpellButton, setStanceActive, showConnBanner, showContextMenu, showHitsplat, showLoginRequired, showTransitionOverlay, showXpDrop, updateHpBar, updateHpPill, updateNameplate, updateOverheadChat, npcExamine, type SpellbookEntry } from './ui'
 import { createMinimap, type Minimap, type MinimapDot } from './minimap'
 import { closeBankUI, isBankOpen, openBankUI, updateBankInventory, updateBankUI } from './bank'
 import { closeCraftUI, openCraftUI, updateCraftInventory, updateCraftStats, type SkillLevels } from './crafting'
 import { getLevelFromXP } from '../../../src/engine/experience.js'
 import { connect, onMessage, send } from './net'
-import { clampZoom, createCamera, createLights, createRenderer, createScene, tileToWorld, updateCamera } from './scene'
+import { createCamera, createLights, createRenderer, createScene, tileToWorld, updateCamera, updateShadowLight } from './scene'
+import { attachCameraControls } from './cameraControls'
 import { createTerrain } from './terrain'
 import { createScatterLayers } from './scatter'
 import { applyEntityDiff, applyWeapon, createEntity, createHeroMesh, createMonsterMesh, updateEntity, type Entity } from './entities'
@@ -21,6 +22,7 @@ import { getCombatType } from '../../../src/engine/equipment.js'
 import monstersData from '../../../src/data/monsters.json'
 import itemsData from '../../../src/data/items.json'
 import spellsData from '../../../src/data/spells.json'
+import skillsData from '../../../src/data/skills.json'
 import * as THREE from 'three'
 import type { EntityDiff, ExitMarker, InvActionWire, InvSlot, ServerMessage, ZoneEvent } from '../../shared/protocol'
 import type { MenuRow, Pickable } from './picking'
@@ -31,6 +33,16 @@ type Items = Record<string, { poweredStaff?: boolean } | undefined>
 const items = itemsData as unknown as Items
 type Spells = Record<string, { name: string; levelReq: number }>
 const spells = spellsData as unknown as Spells
+
+// Full spellbook for the Magic tab. Combat spells drive autocast (select →
+// tap a monster); skill spells are informational in the open world for now.
+const combatSpellList: SpellbookEntry[] = Object.entries(spells)
+  .map(([id, s]) => ({ id, name: s.name, level: s.levelReq }))
+  .sort((a, b) => a.level - b.level)
+type MagicAction = { id: string; name: string; level: number }
+const skillSpellList: SpellbookEntry[] = ((skillsData as { magic?: { actions?: MagicAction[] } }).magic?.actions ?? [])
+  .map((a) => ({ id: a.id, name: a.name, level: a.level }))
+  .sort((a, b) => a.level - b.level)
 
 function buildNpcPickable(diff: EntityDiff): Pickable {
   const monster = diff.monsterId ? monsters[diff.monsterId] : undefined
@@ -52,6 +64,8 @@ function enterWorld(session: WorldSession): void {
   let exitLayer: ExitLayer | null = null
   let transitioning = false
   let camera: THREE.PerspectiveCamera | null = null
+  let cam: ReturnType<typeof attachCameraControls> | null = null
+  let sun: THREE.DirectionalLight | null = null
   const npcs = new Map<string, Entity>()
   const npcLoading = new Set<string>()
   const pendingNpcDiff = new Map<string, EntityDiff>()
@@ -61,7 +75,6 @@ function enterWorld(session: WorldSession): void {
   const overheads = new Map<string, { text: string; until: number }>()
   const rockStates = new Map<string, boolean>()
   let playerCombatLevel = 3
-  let zoom = 1
   let minimap: Minimap | null = null
   let exitMarkers: ExitMarker[] = []
   // Local run state so the toggle button sends the opposite; server {e:'run'}
@@ -75,14 +88,59 @@ function enterWorld(session: WorldSession): void {
   let stats: SkillLevels = {}
   // Selected combat spell (magic weapons); server-validated, optimistic locally.
   let selectedSpell: string | null = null
+  // Whether the equipped weapon can cast the selected spell (drives the "tap a
+  // monster" vs "equip a staff" hint when a combat spell is picked).
+  let magicWeaponEquipped = false
+
+  /** Picks a combat spell from the Magic tab: highlights it, tells the server,
+   * and prompts the player to choose a target. Casts on the next monster tap
+   * once a staff is equipped (same autocast path as the Combat tab picker). */
+  function selectCombatSpell(id: string): void {
+    selectedSpell = id
+    send(socket, { t: 'setSpell', spell: id })
+    setSpellButton(magicWeaponEquipped, spells[id]?.name ?? id)
+    refreshSpellbook()
+    const name = spells[id]?.name ?? 'Spell'
+    pushMessage(magicWeaponEquipped
+      ? `${name} selected — tap a monster to attack.`
+      : `${name} selected. Equip a staff, then tap a monster to cast it.`)
+  }
+
+  function selectSkillSpell(id: string): void {
+    const name = skillSpellList.find((a) => a.id === id)?.name ?? 'That spell'
+    pushMessage(`${name} is cast from the PocketRPG game — skill spells aren’t in the open world yet.`)
+  }
+
+  /** Repaints the Magic tab spellbook against the live Magic level + selection. */
+  function refreshSpellbook(): void {
+    renderSpellbook({
+      combat: combatSpellList,
+      skill: skillSpellList,
+      magicLevel: stats.magic?.level ?? 1,
+      selectedSpellId: selectedSpell,
+      onCombat: selectCombatSpell,
+      onSkill: selectSkillSpell,
+    })
+  }
+
+  /** Re-applies the persisted run toggle after a welcome — the server always
+   * welcomes players walking, so without this the toggle resets on every
+   * refresh, logout, or zone transition. */
+  function syncRunFromPref(energy: number): void {
+    if (!getRunPref() || energy <= 0 || running) return
+    running = true
+    setRunState(energy, true)
+    send(socket, { t: 'setRun', run: true })
+  }
 
   /** Shows the Combat tab's spell selector while a castable magic weapon is
    * equipped (powered staffs need no spell — the engine has its own path). */
   function refreshSpellUI(equipment: Record<string, string>): void {
     const weaponId = equipment.weapon
     const shaped = weaponId ? { weapon: { itemId: weaponId } } : {}
-    const magic = getCombatType(shaped, itemsData) === 'magic' && !(weaponId && items[weaponId]?.poweredStaff)
-    setSpellButton(magic, selectedSpell ? spells[selectedSpell]?.name ?? selectedSpell : null)
+    magicWeaponEquipped = getCombatType(shaped, itemsData) === 'magic' && !(weaponId && items[weaponId]?.poweredStaff)
+    setSpellButton(magicWeaponEquipped, selectedSpell ? spells[selectedSpell]?.name ?? selectedSpell : null)
+    refreshSpellbook()
   }
   // partysocket reconnects silently and re-fires 'open'; a repeat welcome must
   // RESYNC the existing scene, never rebuild it (a second renderer/loop breaks
@@ -132,6 +190,7 @@ function enterWorld(session: WorldSession): void {
       entry.xp += event.amount
       entry.level = Math.max(entry.level, getLevelFromXP(entry.xp))
       updateCraftStats(stats)
+      if (event.skill === 'magic') refreshSpellbook()
       showXpDrop(event.skill, event.amount)
     }
     else if (event.e === 'msg') pushMessage(event.text)
@@ -261,6 +320,7 @@ function enterWorld(session: WorldSession): void {
     updateHpPill(message.you.hp, message.you.maxHp)
     running = message.you.running
     setRunState(message.you.runEnergy, message.you.running)
+    syncRunFromPref(message.you.runEnergy)
     setStanceActive(message.you.stance)
     setSpecialEnergy(message.you.specialEnergy)
     renderEquipment(message.you.equipment)
@@ -278,6 +338,10 @@ function enterWorld(session: WorldSession): void {
       self.toPos.copy(pos)
       self.moving = false
       self.serverAnim = 'idle'
+      // Resync drops every npc/other, so a target from the fight we just left
+      // would otherwise dangle forever — same reason npcChanged/died clear it
+      // server-side.
+      self.targetId = null
       // A background/resume can leave the self mesh hidden (culling/context
       // churn) — make sure it's shown again on every resync.
       self.mesh.visible = true
@@ -305,17 +369,19 @@ function enterWorld(session: WorldSession): void {
       void (async () => {
         hideOverlay()
         const scene = createScene(message.zone.ambience)
-        createLights(scene, message.zone.ambience)
+        sun = createLights(scene, message.zone.ambience).sun
         // Build terrain first: registers the zone height sampler so every
         // tileToWorld call rides the surface, and returns the ground mesh that
         // picking raycasts. Flat when the zone has no `terrain` block.
         const { heightField, mesh: ground } = createTerrain(scene, message.zone.collision, message.zone.w, message.zone.h, message.zone.palette, message.zone.terrain)
-        // Decorative scatter: avoid static-object and exit tiles (blocked tiles
-        // are skipped by the placer). NPCs move, so their spawn tiles aren't masked.
+        // Decorative scatter: avoid static-object, exit, and prop tiles
+        // (blocked tiles are skipped by the placer). NPCs move, so their spawn
+        // tiles aren't masked.
         if (message.zone.terrain?.scatter?.length) {
           const occupied = new Set<string>([
             ...message.statics.map((s) => `${s.x},${s.z}`),
             ...(message.zone.exits ?? []).map((e) => `${e.x},${e.z}`),
+            ...(message.zone.props ?? []).map((p) => `${p.x},${p.z}`),
           ])
           void createScatterLayers(scene, message.zone.terrain.scatter, message.zone.w, message.zone.h, message.zone.collision, occupied, (message.zone.terrain.procedural?.seed ?? 1) | 0, heightField.heightAt)
         }
@@ -326,6 +392,7 @@ function enterWorld(session: WorldSession): void {
         camera = createCamera()
         const container = document.getElementById('scene')!
         const renderer = createRenderer(container)
+        cam = attachCameraControls(renderer.domElement)
 
         const sendInvAction = (slot: number, action: InvActionWire): void => {
           send(socket, { t: 'invAction', slot, action })
@@ -365,7 +432,11 @@ function enterWorld(session: WorldSession): void {
               if (action) sendInvAction(index, action)
             })
           },
-          onRunToggle: () => send(socket, { t: 'setRun', run: !running }),
+          onRunToggle: () => {
+            const next = !running
+            storeRunPref(next)
+            send(socket, { t: 'setRun', run: next })
+          },
           onStance: (stance) => {
             setStanceActive(stance)
             send(socket, { t: 'setStance', stance })
@@ -416,6 +487,7 @@ function enterWorld(session: WorldSession): void {
         updateHpPill(message.you.hp, message.you.maxHp)
         running = message.you.running
         setRunState(message.you.runEnergy, message.you.running)
+        syncRunFromPref(message.you.runEnergy)
         setStanceActive(message.you.stance)
         setSpecialEnergy(message.you.specialEnergy)
         renderEquipment(message.you.equipment)
@@ -465,16 +537,11 @@ function enterWorld(session: WorldSession): void {
             ...(lootLayer?.pickables ?? []),
           ],
           getPlayerCombatLevel: () => playerCombatLevel,
+          // Wheel zoom, arrow-key orbit/zoom, and middle-drag orbit all live in
+          // cam (cameraControls.ts) — pinch is the one gesture input.ts already
+          // owns (two-finger touch), forwarded into the same state.
+          onPinchZoom: (ratio) => cam?.pinch(ratio),
         })
-
-        renderer.domElement.addEventListener(
-          'wheel',
-          (event) => {
-            zoom = clampZoom(zoom + event.deltaY * 0.001)
-            event.preventDefault()
-          },
-          { passive: false }
-        )
 
         window.addEventListener('resize', () => {
           if (!camera) return
@@ -483,17 +550,24 @@ function enterWorld(session: WorldSession): void {
           renderer.setSize(window.innerWidth, window.innerHeight)
         })
 
+        // Resolves an entity's combat opponent to a live world position for
+        // facing (updateEntity); null once the opponent dies/disconnects/logs
+        // off so the entity just keeps its last yaw instead of snapping.
+        const targetPosOf = (entity: Entity): THREE.Vector3 | null => (entity.targetId ? meshOf(entity.targetId)?.position ?? null : null)
+
         let lastFrameTime = performance.now()
         let lastMinimap = 0
         function frame(now: number): void {
           const deltaSeconds = (now - lastFrameTime) / 1000
           lastFrameTime = now
-          if (self && camera) {
-            updateEntity(self, now, deltaSeconds)
-            updateCamera(camera, self.mesh.position, zoom)
+          if (self && camera && cam) {
+            cam.update(deltaSeconds)
+            updateEntity(self, now, deltaSeconds, targetPosOf(self))
+            updateCamera(camera, self.mesh.position, cam.state.zoom, cam.state.yaw)
+            if (sun) updateShadowLight(sun, self.mesh.position)
           }
           for (const npc of npcs.values()) {
-            updateEntity(npc, now, deltaSeconds)
+            updateEntity(npc, now, deltaSeconds, targetPosOf(npc))
             if (npc.hp != null && npc.maxHp && npc.hp < npc.maxHp && npc.serverAnim !== 'die') {
               const s = toScreen(npc.mesh.position, 1.4)
               updateHpBar(npc.id, s.x, s.y, npc.hp / npc.maxHp)
@@ -502,7 +576,7 @@ function enterWorld(session: WorldSession): void {
             }
           }
           for (const other of others.values()) {
-            updateEntity(other, now, deltaSeconds)
+            updateEntity(other, now, deltaSeconds, targetPosOf(other))
             const s = toScreen(other.mesh.position, 2.0)
             updateNameplate(other.id, s.x, s.y, other.name ?? 'Adventurer')
           }

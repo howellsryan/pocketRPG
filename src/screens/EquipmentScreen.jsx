@@ -17,6 +17,7 @@ import EquipmentPaperdoll, { EQ_SLOT_NAMES } from '../components/EquipmentPaperd
 import InventoryGrid from '../components/InventoryGrid.jsx'
 import WeaponChargePanel, { getChargeRecipe } from '../components/WeaponChargePanel.jsx'
 import { OTHER_BONUS_LABELS, OTHER_BONUS_PERCENT_KEYS } from '../utils/bonusLabels.js'
+import { formatSpecialEnergyCostLabel } from '../engine/specialAttackEnergy.js'
 
 export default function EquipmentScreen() {
   const { equipment, inventory, bank, stats, updateEquipment, updateInventory, updateBank, addToast, itemsData, completedQuests, equipmentPresets, updateEquipmentPresets } = useGame()
@@ -494,7 +495,7 @@ export default function EquipmentScreen() {
                   class="w-full flex items-center justify-between px-3 py-2 bg-transparent border-0 cursor-pointer"
                 >
                   <span class="text-[12px] font-semibold text-[#eab308]">⚡ Special Attack</span>
-                  <span class="text-[10px] text-[#78530a]">{showSpecInfo ? '▲' : '▼'} {selected.item.specialAttack.energyCost}% energy</span>
+                  <span class="text-[10px] text-[#78530a]">{showSpecInfo ? '▲' : '▼'} {formatSpecialEnergyCostLabel(selected.item.specialAttack)}</span>
                 </button>
                 {showSpecInfo && (
                   <div class="px-3 pb-3 border-t border-[#3a2a00]">

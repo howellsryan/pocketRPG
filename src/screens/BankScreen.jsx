@@ -3,10 +3,12 @@ import { useGame } from '../state/gameState.jsx'
 import Modal from '../components/Modal.jsx'
 import SharedItemModal from '../components/SharedItemModal.jsx'
 import TradingPostSellForm from '../components/TradingPostSellForm.jsx'
+import SellConfirmModal from '../components/SellConfirmModal.jsx'
 import { formatQuantity } from '../utils/helpers'
 import GameIcon from '../components/GameIcon.jsx'
 import { isOrderBookItem } from '../engine/storeRules.js'
 import { getIronmanShopValue } from '../utils/itemValue.js'
+import { HIGH_VALUE_SELL_THRESHOLD } from '../utils/constants.js'
 import { api, getToken, getCharacterId } from '../cloud/api.js'
 import { pullSave, applyCloudSave, pushNow } from '../cloud/sync.js'
 import BackLink from '../components/BackLink.jsx'
@@ -29,6 +31,7 @@ export default function BankScreen({ onBack }) {
   const [sellBusy, setSellBusy] = useState(false)
   const [listQtyInput, setListQtyInput] = useState(1)
   const [listPriceInput, setListPriceInput] = useState(1)
+  const [pendingHighValueSell, setPendingHighValueSell] = useState(null) // { qty, overridePrice, itemName, quantity, totalValue }
 
   const hasCloudAccount = Boolean(getToken() && getCharacterId())
 
@@ -246,6 +249,26 @@ export default function BankScreen({ onBack }) {
   }
 
   const handleSell = async (qty, overridePrice = null) => {
+    if (!selected || sellBusy) return
+
+    const bankEntry = bank[selected.itemId]
+    if (!bankEntry || bankEntry.quantity <= 0) return
+    const item = itemsData[selected.itemId]
+    if (!item) return
+
+    const defaultPrice = isIronman ? getIronmanShopValue(item) : Math.floor(Number(item.shopValue) || 0)
+    const price = Math.floor(Number(overridePrice ?? defaultPrice) || 0)
+    const sellQty = Math.max(1, Math.min(Number(qty) || 1, bankEntry.quantity))
+    const totalValue = sellQty * price
+    if (totalValue >= HIGH_VALUE_SELL_THRESHOLD) {
+      setPendingHighValueSell({ qty, overridePrice, itemName: item.name, quantity: sellQty, totalValue })
+      return
+    }
+
+    await executeSell(qty, overridePrice)
+  }
+
+  const executeSell = async (qty, overridePrice = null) => {
     if (!selected || sellBusy) return
 
     // Re-verify the item still exists in the bank with the correct quantity
@@ -931,6 +954,21 @@ export default function BankScreen({ onBack }) {
           </Modal>
         )
       })()}
+
+      {pendingHighValueSell && (
+        <SellConfirmModal
+          itemName={pendingHighValueSell.itemName}
+          quantity={pendingHighValueSell.quantity}
+          totalValue={pendingHighValueSell.totalValue}
+          busy={sellBusy}
+          onCancel={() => setPendingHighValueSell(null)}
+          onConfirm={async () => {
+            const { qty, overridePrice } = pendingHighValueSell
+            setPendingHighValueSell(null)
+            await executeSell(qty, overridePrice)
+          }}
+        />
+      )}
     </div>
   )
 }

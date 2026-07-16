@@ -12,6 +12,19 @@ export function getStoredZone(): string {
 export function storeZone(zone: string): void {
   localStorage.setItem(ZONE_KEY, zone)
 }
+
+const RUN_KEY = 'world_run'
+
+/** The run-toggle preference, persisted client-side so it survives a refresh,
+ * logout, or zone transition — the server always welcomes players walking
+ * (running:false), so without this the toggle would reset every reload. */
+export function getRunPref(): boolean {
+  return localStorage.getItem(RUN_KEY) === '1'
+}
+
+export function storeRunPref(on: boolean): void {
+  localStorage.setItem(RUN_KEY, on ? '1' : '0')
+}
 const POCKETRPG_PROD_HOSTNAME = 'world.pocketrpg.co.uk'
 const POCKETRPG_PROD_URL = 'https://pocketrpg.co.uk'
 const POCKETRPG_PREVIEW_URL = 'https://preview.pocketrpg.pages.dev'

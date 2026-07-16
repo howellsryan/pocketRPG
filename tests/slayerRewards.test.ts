@@ -135,6 +135,28 @@ describe('getSlayerTaskXpForKill', () => {
   })
 })
 
+describe('getSlayerTaskXpForKill with options.flatXp (raid-completion tasks)', () => {
+  it('returns the flat amount, ignoring baseXp/multiplier entirely', () => {
+    expect(getSlayerTaskXpForKill({ id: 'deepmaw_kraken', boss: true }, null, monstersData, { flatXp: 2500 }))
+      .toBe(2500)
+  })
+
+  it('floors a fractional flatXp', () => {
+    expect(getSlayerTaskXpForKill({ id: 'sanguine_veld' }, null, monstersData, { flatXp: 2500.7 }))
+      .toBe(2500)
+  })
+
+  it('still applies the doubleSlayerXp modifier on top of the flat amount', () => {
+    expect(getSlayerTaskXpForKill({ id: 'deepmaw_kraken', boss: true }, null, monstersData, { flatXp: 10000, doubleXp: true }))
+      .toBe(20000)
+  })
+
+  it('ignores flatXp when it is 0 or absent, falling back to the normal formula', () => {
+    expect(getSlayerTaskXpForKill({ id: 'sanguine_veld' }, null, monstersData, { flatXp: 0 }))
+      .toBe(120 * DEFAULT_SLAYER_TASK_XP_MULTIPLIER)
+  })
+})
+
 describe('getSlayerTaskReward', () => {
   it('awards base points on normal tasks', () => {
     expect(getSlayerTaskReward(10, 0)).toEqual({ totalTasks: 1, multiplier: 1, pointsEarned: 10 })

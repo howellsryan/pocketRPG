@@ -58,6 +58,7 @@ import { isRunnableBackgroundTask, getActionTicksForTask, getCarriedPendingTicks
 import { mergeSession, sessionPatchFromResult } from './engine/activitySession.js'
 import { resetActivityProgressSync } from './cloud/activityProgress.js'
 import { formatIdleTime, simulateIdleSkilling, simulateIdleGather, simulateIdleCombat, simulateIdleAgility, simulateIdleHPRegen } from './engine/idleEngine.js'
+import { simulateIdleCombatChain } from './engine/idleSlayerLoop.js'
 import { defaultIdleCombatSetup } from './engine/idleSupplies.js'
 import prayersData from './data/prayers.json'
 import minigamesData from './data/minigames.json'
@@ -72,7 +73,7 @@ import { SKIP_HOUR_MS, getSkipPreflight, isChargeableSkipOutcome } from './engin
 import { buildAutoStartTask } from './engine/autoStartTask.js'
 import { resolveMagicSpell } from './engine/equipment.js'
 import spellsData from './data/spells.json'
-import { getSlayerTaskReward } from './engine/slayerRewards.js'
+import { getSlayerTaskReward, resolveSlayerLoopRewards, buildSlayerResultRows, chainCombatResumeTarget } from './engine/slayerRewards.js'
 import { hasEpicLootDrop, getItemUnitValue } from './utils/itemValue.js'
 import LootResultModal, { SummaryCard, SuppliesCard } from './components/LootResultModal.jsx'
 import GameIcon from './components/GameIcon.jsx'
@@ -83,7 +84,7 @@ import { fetchKillCounts } from './cloud/killCounts.js'
 import { isLoggedDrop, collectIdleCombatLoggedDrops } from './engine/collectionLog.js'
 import { rollClueRewards } from './engine/clueScrolls.js'
 import dailyTasksData from './data/dailyTasks.json'
-import { skillingGainEvents } from './engine/dailyTasks.js'
+import { skillingGainEvents, idleCombatDailyEvents } from './engine/dailyTasks.js'
 import { countItem, addItem } from './engine/inventory.js'
 import { skillingActionBlockedByFullInventory } from './engine/skilling.js'
 
@@ -251,6 +252,20 @@ function recordCollectionLogDropsForIdleCombat(monsterId, sim) {
 }
 
 
+// Auto-slayer chains fight several monsters in one window; attribute logged
+// uniques per monster (each perMonster entry carries its own loot buckets).
+// Falls back to the single active-task monster when the chain didn't engage.
+function recordCollectionLogDropsForIdleCombatResult(savedTask, sim) {
+  if (Array.isArray(sim.perMonster) && sim.perMonster.length > 0) {
+    for (const pm of sim.perMonster) {
+      if (pm.monsterId) recordCollectionLogDropsForIdleCombat(pm.monsterId, pm)
+    }
+  } else if (savedTask.monster?.id) {
+    recordCollectionLogDropsForIdleCombat(savedTask.monster.id, sim)
+  }
+}
+
+
 function recordCollectionLogDropsForIdleClues(savedTask, sim) {
   const clueLevel = savedTask?.gatherTask?.clueLevel
   if (!clueLevel || !sim?.itemsBanked) return
@@ -327,10 +342,10 @@ const CLOUD_ONLY_SCREENS = new Set([SCREENS.STORE, SCREENS.LEADERBOARD])
 const DEMO_LOCKED_MESSAGE = '🔒 Sign in to use this — not available in the demo.'
 
 function GameApp() {
-  const { loaded, loadGame, player, stats, equipment, inventory, bank, currentHP, updateHP, getMaxHP, updateInventory, updateEquipment, updateBank, updateBankDirect, grantXP, addToast, activeTask, setActiveTask, getActiveTask, itemsData, getSnapshot, unlockedFeatures, setSlayerTask, awardSlayerPoints, slayerTasksCompleted, setSlayerTasksCompleted, completeQuest, completedQuests, questQueue, removeFromQuestQueue, updateQuestQueue,
+  const { loaded, loadGame, player, stats, equipment, inventory, bank, currentHP, updateHP, getMaxHP, updateInventory, updateEquipment, updateBank, updateBankDirect, grantXP, addToast, activeTask, setActiveTask, getActiveTask, itemsData, getSnapshot, unlockedFeatures, setSlayerTask, awardSlayerPoints, slayerTasksCompleted, setSlayerTasksCompleted, incrementSlayerMasterTaskCompletions, completeQuest, completedQuests, questQueue, removeFromQuestQueue, updateQuestQueue,
     unlockMinigameItem, unlockedMinigameItems, awardDungeoneeringTokens, farming, updateFarming, idleCombatSetup, isOneLife, revertOneLifeMode, updateBossKillCounts, updateRaidKillCounts, syncServerKillCounts, markKillCountsLoaded, combatSkipHandlerRef, skipHourHandlerRef, chargeSkipRef, raidSkipHandlerRef,
     gameLocked, lockGame, unlockGame, runLockedSave, awaitCombatCompletion, resolveCombatCompletion,
-    characterUnlocks, dailyTaskStates, setDailyTasks, recordGameEvent, updateWorldLocation, worldLocation, clearActivityProgress, requestActivityStart,
+    characterUnlocks, slayerPerks, dailyTaskStates, setDailyTasks, recordGameEvent, updateWorldLocation, worldLocation, clearActivityProgress, requestActivityStart,
     inventoryFull, signalInventoryFull, dismissInventoryFullPrompt, resolveInventoryFull, combatStance, activeCombatSpell,
     autoBankExcludedItems } = useGame()
   const pvp = usePvp()
@@ -1083,12 +1098,17 @@ function GameApp() {
             setActiveTask(restarted)
             activeTaskRef.current = restarted
           }
-          else if (savedTask.type === 'combat')  sim = simulateIdleCombat(savedTask, simElapsedMs, freshStats, freshEq, freshInv, itemsDataRef.current, freshSlayerTask, freshBank, {
+          else if (savedTask.type === 'combat')  sim = simulateIdleCombatChain(savedTask, simElapsedMs, freshStats, freshEq, freshInv, itemsDataRef.current, freshSlayerTask, freshBank, {
             currentHP: currentHPRef.current ?? getMaxHP(),
             idleFood: idleCombatSetupRef.current?.food || [],
             idlePotions: idleCombatSetupRef.current?.potions || [],
             idlePrayers: idleCombatSetupRef.current?.prayers || {},
             prayersData,
+            // NOTE: this visibility-return path historically omits doubleSlayerXp
+            // (unlike boot + skip-hour) — preserved as-is; see scope note.
+            autoSlayer: !!(characterUnlocks?.autoSlayerTask),
+            slayerPerks,
+            completedQuests: completedQuestsRef.current,
             autoBankExcludedItemIds: autoBankExcludedItems,
           })
           else if (savedTask.type === 'agility') sim = simulateIdleAgility(savedTask, elapsedMs)
@@ -1210,8 +1230,8 @@ function GameApp() {
           } else if (sim.itemsGained) {
             updateBankDirect(sim.itemsGained)
           }
-          if (savedTask.type === 'combat' && savedTask.monster?.id) {
-            recordCollectionLogDropsForIdleCombat(savedTask.monster.id, sim)
+          if (savedTask.type === 'combat') {
+            recordCollectionLogDropsForIdleCombatResult(savedTask, sim)
           }
           if ((savedTask.type === 'gather' || savedTask.type === 'clue') && savedTask.gatherTask?.isClue) {
             recordCollectionLogDropsForIdleClues(savedTask, sim)
@@ -1255,7 +1275,7 @@ function GameApp() {
             updateEquipment({ ...freshEq })
           }
 
-          if (savedTask.type === 'combat' && sim.chargesConsumed > 0 && freshEq?.weapon) {
+          if ((savedTask.type === 'combat' || savedTask.type === 'skill') && sim.chargesConsumed > 0 && freshEq?.weapon) {
             const remainingCharges = Math.max(0, (freshEq.weapon.charges || 0) - sim.chargesConsumed)
             freshEq.weapon = { ...freshEq.weapon, charges: remainingCharges }
             updateEquipment({ ...freshEq })
@@ -1270,16 +1290,38 @@ function GameApp() {
           }
           if (sim.dungeoneeringTokensGained > 0) awardDungeoneeringTokens(sim.dungeoneeringTokensGained)
           // Persist slayer task update if present
-          if (savedTask.type === 'combat' && sim.slayerTaskUpdate) {
+          if (savedTask.type === 'combat' && Array.isArray(sim.slayerCompletions) && sim.slayerCompletions.length > 0) {
+            // Auto-slayer chain: fold every task cleared this window (streak
+            // milestones included) into one award + summary toast.
+            const loop = resolveSlayerLoopRewards(sim.slayerCompletions, slayerTasksCompleted)
+            setSlayerTasksCompleted(loop.totalTasks)
+            for (const completion of sim.slayerCompletions) {
+              if (completion.masterId) incrementSlayerMasterTaskCompletions(completion.masterId, 1)
+            }
+            awardSlayerPoints(loop.pointsEarned)
+            setSlayerTask(sim.slayerTaskUpdate || null)
+            const n = sim.slayerCompletions.length
+            addToast(`💀 ${n} Slayer Task${n > 1 ? 's' : ''} auto-completed - ${loop.pointsEarned.toLocaleString()} points.`, 'levelup')
+          } else if (savedTask.type === 'combat' && sim.slayerTaskUpdate) {
             if (sim.slayerTaskUpdate.completed) {
               setSlayerTask(null)
               const reward = getSlayerTaskReward(sim.slayerTaskUpdate.pointsOnComplete, slayerTasksCompleted)
               setSlayerTasksCompleted(reward.totalTasks)
+              if (freshSlayerTask?.masterId) incrementSlayerMasterTaskCompletions(freshSlayerTask.masterId, 1)
               awardSlayerPoints(reward.pointsEarned)
               addToast(`💀 Slayer Task #${reward.totalTasks} Completed - ${reward.pointsEarned.toLocaleString()} points.`, 'levelup')
             } else {
               setSlayerTask(sim.slayerTaskUpdate)
             }
+          }
+          // Auto-slayer chain switched tasks — keep the active fight on the
+          // current slayer monster so live play stays on-task and the next idle
+          // window re-engages the chain.
+          if (savedTask.type === 'combat' && sim.autoSlayerChained && sim.finalTaskMonster && !idleDeath) {
+            savedTask = { ...savedTask, monster: sim.finalTaskMonster }
+            setActiveTask(savedTask)
+            activeTaskRef.current = savedTask
+            try { localStorage.setItem('pocketrpg_activeTask', JSON.stringify(savedTask)) } catch {}
           }
 
           // Update HP from regen if applicable
@@ -1300,15 +1342,11 @@ function GameApp() {
           setIdleResult({ elapsedMs, task: savedTask, ...sim })
 
           // Feed idle gains into the daily task tracker
-          if (savedTask.type === 'combat' && sim.monstersKilled > 0 && savedTask.monster?.id) {
-            const kind = savedTask.monster?.boss === true ? 'boss_kill' : 'monster_kill'
-            recordGameEvent?.({ kind, monsterId: savedTask.monster.id, count: sim.monstersKilled })
+          if (savedTask.type === 'combat') {
+            for (const evt of idleCombatDailyEvents(savedTask, sim)) recordGameEvent?.(evt)
           }
           if ((savedTask.type === 'skill' || savedTask.type === 'gather') && sim.itemsGained) {
             for (const evt of skillingGainEvents(savedTask, sim.itemsGained)) recordGameEvent?.(evt)
-          }
-          if (savedTask.type === 'combat' && sim.slayerTaskUpdate?.completed) {
-            recordGameEvent?.({ kind: 'slayer_task_complete' })
           }
           if (savedTask.type === 'hunter' && sim.actions > 0 && savedTask.action?.id) {
             recordGameEvent?.({ kind: 'hunter_hunt', actionId: savedTask.action.id, count: sim.actions })
@@ -2673,13 +2711,16 @@ function GameApp() {
             setActiveTask(restarted)
             activeTaskRef.current = restarted
           }
-          if (savedTask.type === 'combat')  sim = simulateIdleCombat(savedTask, elapsedMs, freshStats, freshEq, freshInv, itemsDataRef.current, freshSlayerTask, freshBank, {
+          if (savedTask.type === 'combat')  sim = simulateIdleCombatChain(savedTask, elapsedMs, freshStats, freshEq, freshInv, itemsDataRef.current, freshSlayerTask, freshBank, {
             currentHP: currentHPRef.current ?? getMaxHP(),
             idleFood: idleCombatSetupRef.current?.food || [],
             idlePotions: idleCombatSetupRef.current?.potions || [],
             idlePrayers: idleCombatSetupRef.current?.prayers || {},
             prayersData,
             doubleSlayerXp: !!(characterUnlocks?.doubleSlayerXp),
+            autoSlayer: !!(characterUnlocks?.autoSlayerTask),
+            slayerPerks,
+            completedQuests: completedQuestsRef.current,
             autoBankExcludedItemIds: autoBankExcludedItems,
           })
           if (savedTask.type === 'agility') sim = simulateIdleAgility(savedTask, elapsedMs)
@@ -2742,8 +2783,8 @@ function GameApp() {
           } else if (sim.itemsGained) {
             updateBankDirect(sim.itemsGained)
           }
-          if (savedTask.type === 'combat' && savedTask.monster?.id) {
-            recordCollectionLogDropsForIdleCombat(savedTask.monster.id, sim)
+          if (savedTask.type === 'combat') {
+            recordCollectionLogDropsForIdleCombatResult(savedTask, sim)
           }
           if ((savedTask.type === 'gather' || savedTask.type === 'clue') && savedTask.gatherTask?.isClue) {
             recordCollectionLogDropsForIdleClues(savedTask, sim)
@@ -2810,7 +2851,7 @@ function GameApp() {
             updateEquipment({ ...freshEq })
           }
 
-          if (savedTask.type === 'combat' && sim.chargesConsumed > 0 && freshEq?.weapon) {
+          if ((savedTask.type === 'combat' || savedTask.type === 'skill') && sim.chargesConsumed > 0 && freshEq?.weapon) {
             const remainingCharges = Math.max(0, (freshEq.weapon.charges || 0) - sim.chargesConsumed)
             freshEq.weapon = { ...freshEq.weapon, charges: remainingCharges }
             updateEquipment({ ...freshEq })
@@ -2825,29 +2866,47 @@ function GameApp() {
           }
           if (sim.dungeoneeringTokensGained > 0) awardDungeoneeringTokens(sim.dungeoneeringTokensGained)
           // Persist slayer task update if present
-          if (savedTask.type === 'combat' && sim.slayerTaskUpdate) {
+          if (savedTask.type === 'combat' && Array.isArray(sim.slayerCompletions) && sim.slayerCompletions.length > 0) {
+            // Auto-slayer chain: fold every task cleared during the skip into one
+            // award + summary toast.
+            const loop = resolveSlayerLoopRewards(sim.slayerCompletions, slayerTasksCompleted)
+            setSlayerTasksCompleted(loop.totalTasks)
+            for (const completion of sim.slayerCompletions) {
+              if (completion.masterId) incrementSlayerMasterTaskCompletions(completion.masterId, 1)
+            }
+            awardSlayerPoints(loop.pointsEarned)
+            setSlayerTask(sim.slayerTaskUpdate || null)
+            const n = sim.slayerCompletions.length
+            addToast(`💀 ${n} Slayer Task${n > 1 ? 's' : ''} auto-completed - ${loop.pointsEarned.toLocaleString()} points.`, 'levelup')
+          } else if (savedTask.type === 'combat' && sim.slayerTaskUpdate) {
             if (sim.slayerTaskUpdate.completed) {
               setSlayerTask(null)
               const reward = getSlayerTaskReward(sim.slayerTaskUpdate.pointsOnComplete, slayerTasksCompleted)
               setSlayerTasksCompleted(reward.totalTasks)
+              if (freshSlayerTask?.masterId) incrementSlayerMasterTaskCompletions(freshSlayerTask.masterId, 1)
               awardSlayerPoints(reward.pointsEarned)
               addToast(`💀 Slayer Task #${reward.totalTasks} Completed - ${reward.pointsEarned.toLocaleString()} points.`, 'levelup')
             } else {
               setSlayerTask(sim.slayerTaskUpdate)
             }
           }
+          // Auto-slayer chain switched tasks — point the active fight at the
+          // current slayer monster (savedTask is const here, so update via
+          // setActiveTask) so live play stays on-task after the skip.
+          if (savedTask.type === 'combat' && sim.autoSlayerChained && sim.finalTaskMonster && !sim.died) {
+            const chainedTask = { ...savedTask, monster: sim.finalTaskMonster }
+            setActiveTask(chainedTask)
+            activeTaskRef.current = chainedTask
+            try { localStorage.setItem('pocketrpg_activeTask', JSON.stringify(chainedTask)) } catch {}
+          }
 
           // Feed skipped-hour gains into the daily task tracker (mirrors the
           // visibility idle catch-up feed).
-          if (savedTask.type === 'combat' && sim.monstersKilled > 0 && savedTask.monster?.id) {
-            const kind = savedTask.monster?.boss === true ? 'boss_kill' : 'monster_kill'
-            recordGameEvent?.({ kind, monsterId: savedTask.monster.id, count: sim.monstersKilled })
+          if (savedTask.type === 'combat') {
+            for (const evt of idleCombatDailyEvents(savedTask, sim)) recordGameEvent?.(evt)
           }
           if ((savedTask.type === 'skill' || savedTask.type === 'gather') && sim.itemsGained) {
             for (const evt of skillingGainEvents(savedTask, sim.itemsGained)) recordGameEvent?.(evt)
-          }
-          if (savedTask.type === 'combat' && sim.slayerTaskUpdate?.completed) {
-            recordGameEvent?.({ kind: 'slayer_task_complete' })
           }
           if (savedTask.type === 'hunter' && sim.actions > 0 && savedTask.action?.id) {
             recordGameEvent?.({ kind: 'hunter_hunt', actionId: savedTask.action.id, count: sim.actions })
@@ -3035,7 +3094,7 @@ function GameApp() {
       case SCREENS.ARMOURY:   return <ArmouryScreen onBack={backToPrev} />
       case SCREENS.BANK:      return <BankScreen onBack={returnNav || backToPrev} />
       case SCREENS.BANK_HUB:  return <BankHubScreen onNavigate={navigate} />
-      case SCREENS.COMBAT:    return <CombatScreen onNavigate={navigate} initialMonsterId={actionData?.monsterId} initialRaidId={actionData?.raidId} onCombatStatusChange={setIsInCombat} onBack={stopBackNav} onStopBack={stopBackNav} />
+      case SCREENS.COMBAT:    return <CombatScreen key={actionData?.monsterId} onNavigate={navigate} initialMonsterId={actionData?.monsterId} initialRaidId={actionData?.raidId} onCombatStatusChange={setIsInCombat} onBack={stopBackNav} onStopBack={stopBackNav} />
       case SCREENS.DUNGEONS:  return <CombatScreen onNavigate={navigate} dungeonPlaceId={actionData?.placeId} onCombatStatusChange={setIsInCombat} onBack={stopBackNav} onStopBack={stopBackNav} />
       case SCREENS.SKILLS:    return <SkillingScreen initialSkillId={actionData?.skillId} initialActionId={actionData?.actionId} initialMasterId={actionData?.masterId} initialLocationId={actionData?.locationId} idleResult={idleResult} onNavigate={navigate} onBack={stopBackNav} onStopBack={stopBackNav} />
       case SCREENS.GATHER:    return <GatherScreen initialTaskId={actionData?.gatherTaskId} idleResult={idleResult} onBack={stopBackNav} onStopBack={stopBackNav} />
@@ -3060,8 +3119,20 @@ function GameApp() {
       setScreen(SCREENS.SKILLS)
       setActionData({ skillId: 'dungeoneering' })
     }
+    // Auto-slayer chain switched tasks while away: drop the player into the live
+    // fight for the monster they're now assigned. resumeAutoStart + the
+    // monster-keyed CombatScreen remount re-runs startFight on the new target,
+    // whether or not they're already on the combat screen.
+    const resume = chainCombatResumeTarget(idleResult)
     resumeTicks()
     setIdleResult(null)
+    if (resume) {
+      // The chain ignored travel, so teleport to the new monster's place before
+      // resuming — otherwise the player fights it from the wrong location and
+      // the combat location-gate would block the auto-start.
+      if (resume.placeId) updateWorldLocation(resume.placeId)
+      resumeAutoStart({ kind: 'combat', monsterId: resume.monsterId }, resume.returnTo)
+    }
   }
 
   const isCloudAccount = !!getToken() && !!getCharacterId()
@@ -3381,19 +3452,24 @@ function GameApp() {
                 <IdleResultProgressCard type='reward_complete' idleResult={idleResult} taskName={`${idleResult.task?.action?.name || 'Reward action'} completed.`} />
               )}
 
-              {/* Slayer task update */}
-              {idleResult.slayerTaskUpdate && idleResult.monstersKilledOnTask > 0 && (
-                <div class="lm-card" style={{ borderColor: 'rgba(212, 175, 55, 0.3)', borderLeft: '3px solid #d4af37' }}>
-                  <div class="lm-card__head" style={{ color: '#d4af37' }}>
-                    <span class="lm-card__icn">💀</span>Slayer Task
+              {/* Slayer task update. Auto-slayer chains list each completed task
+                  plus the current active task; a single task keeps one row. */}
+              {(() => {
+                const rows = buildSlayerResultRows(idleResult)
+                if (rows.length === 0) return null
+                return (
+                  <div class="lm-card" style={{ borderColor: 'rgba(212, 175, 55, 0.3)', borderLeft: '3px solid #d4af37' }}>
+                    <div class="lm-card__head" style={{ color: '#d4af37' }}>
+                      <span class="lm-card__icn">💀</span>Slayer {rows.length > 1 ? 'Tasks' : 'Task'}
+                    </div>
+                    {rows.map((row, i) => (
+                      <div key={i} style={{ fontSize: '12px', color: row.active ? 'var(--color-parchment)' : '#d4af37', fontWeight: 'bold', padding: '2px 0' }}>
+                        {row.text}
+                      </div>
+                    ))}
                   </div>
-                  <div style={{ fontSize: '12px', color: '#d4af37', fontWeight: 'bold' }}>
-                    {idleResult.slayerTaskUpdate.completed
-                      ? `${idleResult.monstersKilledOnTask.toLocaleString()} ${idleResult.slayerTaskUpdate.monsterName} — Task Complete!`
-                      : `${idleResult.monstersKilledOnTask.toLocaleString()} ${idleResult.slayerTaskUpdate.monsterName} / ${idleResult.slayerTaskUpdate.monstersRemaining.toLocaleString()} remaining`}
-                  </div>
-                </div>
-              )}
+                )
+              })()}
 
               {/* Quests Completed */}
               {idleResult.completedQuests && idleResult.completedQuests.length > 0 && (

@@ -6,6 +6,10 @@ export const TICKS_PER_SECOND = 1000 / TICK_DURATION
 export const INVENTORY_SIZE = 28
 export const BANK_SIZE = 500
 
+// Sells at or above this total gp trigger a confirmation prompt (mirrors the
+// item-drop confirmation) so a mistap can't lose a fortune silently.
+export const HIGH_VALUE_SELL_THRESHOLD = 1_000_000
+
 // Construction level that unlocks auto-banking for gathered resources. Below
 // this, gathering fills the inventory and stops when full; at/above it, a full
 // inventory triggers an agility-scaled bank trip so gathering continues.

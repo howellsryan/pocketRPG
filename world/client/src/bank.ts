@@ -12,6 +12,15 @@ export type BankOp = (op: 'deposit' | 'withdraw', itemId: string, qty: number) =
 
 const QTY_CHOICES = [1, 5, 10] as const
 const ALL_QTY = 1_000_000_000
+// Cells no longer set touch-action:none (native scroll needs it), so a
+// scroll-drag that ends on a cell must not read as a tap-to-deposit/withdraw.
+const TAP_MOVE_THRESHOLD_PX = 10
+
+/** True when a pointerup at (upX,upY) should count as a tap rather than the
+ * end of a scroll-drag that started at (downX,downY). */
+export function isTapNotDrag(downX: number, downY: number, upX: number, upY: number): boolean {
+  return Math.hypot(upX - downX, upY - downY) <= TAP_MOVE_THRESHOLD_PX
+}
 
 const BANK_CSS = `
 #bank-modal {
@@ -19,7 +28,7 @@ const BANK_CSS = `
   background: rgba(0, 0, 0, 0.45); font-family: sans-serif;
 }
 #bank-panel {
-  width: min(420px, 94vw); max-height: 86vh; display: flex; flex-direction: column;
+  width: min(560px, 94vw); max-height: 86vh; display: flex; flex-direction: column;
   background: rgba(24, 19, 12, 0.97); border: 1px solid #6a5636; border-radius: 10px; overflow: hidden;
 }
 #bank-panel .bank-head {
@@ -36,13 +45,12 @@ const BANK_CSS = `
 }
 #bank-panel .bank-grid {
   display: grid; grid-template-columns: repeat(auto-fill, 44px); gap: 3px;
-  padding: 4px 12px 10px; overflow-y: auto;
+  padding: 4px 12px 10px; overflow-y: auto; min-height: 96px; max-height: 34vh;
 }
-#bank-panel .bank-grid.bank-side { min-height: 96px; max-height: 38vh; }
 .bank-cell {
   width: 44px; height: 44px; position: relative; border-radius: 4px; cursor: pointer;
   background: rgba(60, 50, 34, 0.55); display: flex; align-items: center; justify-content: center;
-  user-select: none; touch-action: none;
+  user-select: none;
 }
 .bank-cell .qty {
   position: absolute; top: 0; right: 2px; font-size: 10px; color: #ffe066; text-shadow: 0 1px 2px #000;
@@ -144,9 +152,11 @@ function makeCell(itemId: string, quantity: number, verb: 'Deposit' | 'Withdraw'
   const op = verb === 'Deposit' ? 'deposit' : 'withdraw'
   let pressTimer: ReturnType<typeof setTimeout> | null = null
   let menuFired = false
+  let downPos: { x: number; y: number } | null = null
   cell.addEventListener('pointerdown', (e) => {
     if (e.button === 2) return
     menuFired = false
+    downPos = { x: e.clientX, y: e.clientY }
     pressTimer = setTimeout(() => {
       menuFired = true
       qtyMenu(verb, itemId, e.clientX, e.clientY, (qty) => onOp(op, itemId, qty))
@@ -156,11 +166,17 @@ function makeCell(itemId: string, quantity: number, verb: 'Deposit' | 'Withdraw'
     if (pressTimer) clearTimeout(pressTimer)
     pressTimer = null
   }
-  cell.addEventListener('pointermove', cancelPress)
+  cell.addEventListener('pointermove', (e) => {
+    // Native scroll is enabled now (no touch-action:none) — only a real drag
+    // should cancel the long-press timer, not finger jitter under a tap.
+    if (downPos && !isTapNotDrag(downPos.x, downPos.y, e.clientX, e.clientY)) cancelPress()
+  })
   cell.addEventListener('pointercancel', cancelPress)
-  cell.addEventListener('pointerup', () => {
+  cell.addEventListener('pointerup', (e) => {
     cancelPress()
-    if (!menuFired) onOp(op, itemId, 1)
+    const wasTap = downPos != null && isTapNotDrag(downPos.x, downPos.y, e.clientX, e.clientY)
+    downPos = null
+    if (!menuFired && wasTap) onOp(op, itemId, 1)
   })
   cell.addEventListener('contextmenu', (e) => {
     e.preventDefault()

@@ -14,6 +14,7 @@ import {
   describeObtainment,
   SKILL_CAPES_GROUP_KEY,
 } from '../src/utils/armoury.js'
+import { getBreakdownYield } from '../src/engine/inventory.js'
 
 const items = itemsData as Record<string, any>
 
@@ -150,9 +151,10 @@ describe('armoury classifier', () => {
     }
   })
 
-  it('flags weapons that have a special attack (27 canonical items)', () => {
+  it('flags weapons that have a special attack (28 canonical items)', () => {
+    // 27 + Zul-Kaar's Blade (Disrupt) — a deliberate content addition, not a drift fix.
     const specials = Object.values(items).filter(hasSpecialAttack)
-    expect(specials.length).toBe(27)
+    expect(specials.length).toBe(28)
   })
 
   describe('buildArmoury over the live data', () => {
@@ -218,4 +220,13 @@ describe('armoury classifier', () => {
       }
     })
   })
+})
+
+describe('breaking venom gear down into venomcoil scales', () => {
+  it.each(['venom_blowpipe', 'trident_of_venom', 'serpentine_helm'])(
+    '%s breaks down into 7500 venomcoil scales',
+    (id) => {
+      expect(getBreakdownYield(items[id])).toEqual({ itemId: 'venomcoil_scales', qty: 7500 })
+    },
+  )
 })

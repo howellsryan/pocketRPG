@@ -8,15 +8,23 @@
   "z": 32
  },
  "terrain": {
-  "relief": 0.6,
+  "relief": 0.5,
   "procedural": {
-   "seed": 2048,
-   "frequency": 0.07
+   "seed": 4242,
+   "frequency": 0.05
   },
   "material": "meadow",
   "scatter": [
-   { "model": "flowers", "density": 3, "scaleRange": [0.8, 1.1] },
-   { "model": "bush", "density": 2, "scaleRange": [0.7, 1.0] }
+   {
+    "model": "flowers",
+    "density": 2,
+    "scaleRange": [0.8, 1.1]
+   },
+   {
+    "model": "bush",
+    "density": 2,
+    "scaleRange": [0.7, 1.1]
+   }
   ]
  },
  "collision": [
@@ -167,6 +175,15 @@
    "toX": 10,
    "toZ": 1,
    "label": "the Whisperwood"
+  },
+  {
+   "id": "exit_varrick",
+   "x": 0,
+   "z": 32,
+   "toZone": "varrick",
+   "toX": 40,
+   "toZ": 82,
+   "label": "Varrick"
   }
  ],
  "props": [

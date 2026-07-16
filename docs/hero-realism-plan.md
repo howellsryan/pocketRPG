@@ -33,7 +33,14 @@ monsters and biomes; `hero3d.json` + the harness remain authorable
   the first asset adds a measured `defaults.gear.<slot>` transform
   (`L_Hand` / `NeckTwist01`).
 
-## Asset backlog (needs `TRIPO_API_KEY` — run locally via `threejs-3d-generator`)
+## Asset backlog
+
+> **Retired route (historical).** This backlog originally sourced grey-base
+> GLBs from the Tripo API. That pipeline is retired — PocketRPG no longer uses
+> Tripo (or any text/image-to-3D service) for new assets. Author arena
+> creatures procedurally (`procgen-creature`) and build hero/weapon/outfit gear
+> from the CC0 Quaternius packs (CLAUDE.md §12). Do not reach for a
+> `TRIPO_API_KEY`.
 
 Ordered by on-screen impact; each grey base derives all metal tiers via
 `recolor-model.mjs` (params in `scripts/model-variants.json`).

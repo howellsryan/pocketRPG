@@ -5,12 +5,15 @@ import Modal from '../components/Modal.jsx'
 import SharedItemModal from '../components/SharedItemModal.jsx'
 import WeaponChargePanel, { getChargeRecipe } from '../components/WeaponChargePanel.jsx'
 import TradingPostSellForm from '../components/TradingPostSellForm.jsx'
-import { freeSlots, countItem } from '../engine/inventory.js'
+import SellConfirmModal from '../components/SellConfirmModal.jsx'
+import { freeSlots, countItem, removeItem, addItem, getBreakdownYield } from '../engine/inventory.js'
 import { isOrderBookItem } from '../engine/storeRules.js'
 import { getIronmanShopValue } from '../utils/itemValue.js'
+import { HIGH_VALUE_SELL_THRESHOLD } from '../utils/constants.js'
 import { equipItem, checkEquipRequirements, placeUnequippedItems } from '../engine/equipment.js'
 import { getLevelFromXP } from '../engine/experience.js'
 import { api, getToken, getCharacterId } from '../cloud/api.js'
+import { formatSpecialEnergyCostLabel } from '../engine/specialAttackEnergy.js'
 import { pullSave, applyCloudSave, pushNow } from '../cloud/sync.js'
 
 export default function InventoryScreen() {
@@ -21,7 +24,9 @@ export default function InventoryScreen() {
   const [bankQuantityInput, setBankQuantityInput] = useState('')
   const [showChargeModal, setShowChargeModal] = useState(false)
   const [showDropConfirm, setShowDropConfirm] = useState(false)
+  const [showBreakdownConfirm, setShowBreakdownConfirm] = useState(false)
   const [sellBusy, setSellBusy] = useState(false)
+  const [pendingHighValueSell, setPendingHighValueSell] = useState(null) // { qty, overridePrice, itemName, totalValue }
   const [listQtyInput, setListQtyInput] = useState(1)
   const [listPriceInput, setListPriceInput] = useState(1)
   const hasCloudAccount = Boolean(getToken() && getCharacterId())
@@ -126,6 +131,24 @@ export default function InventoryScreen() {
     setSelected(null)
   }
 
+  const handleBreakdown = () => {
+    if (!selected || selected.slot.noted) return
+    setShowBreakdownConfirm(true)
+  }
+
+  const confirmBreakdown = () => {
+    if (!selected) { setShowBreakdownConfirm(false); return }
+    const yieldResult = getBreakdownYield(selected.item)
+    if (!yieldResult) { setShowBreakdownConfirm(false); return }
+    const newInv = [...inventory]
+    newInv[selected.slotIndex] = null
+    addItem(newInv, yieldResult.itemId, yieldResult.qty, itemsData[yieldResult.itemId]?.stackable || false)
+    updateInventory(newInv)
+    addToast(`Broke down ${selected.item.name} into ${yieldResult.qty.toLocaleString()} ${itemsData[yieldResult.itemId]?.name || yieldResult.itemId}`, 'info')
+    setShowBreakdownConfirm(false)
+    setSelected(null)
+  }
+
   const handleCombine = () => {
     if (!selected) return
     const { slotIndex, slot, item } = selected
@@ -151,9 +174,16 @@ export default function InventoryScreen() {
       return
     }
 
+    const cost = Number(item.combineCost) || 0
+    if (cost > 0 && countItem(inventory, 'coins') < cost) {
+      addToast(`Need ${cost.toLocaleString()} coins in your inventory`, 'error')
+      return
+    }
+
     const newInv = [...inventory]
     newInv[slotIndex] = null
     newInv[targetIdx] = { itemId: resultId, quantity: 1 }
+    if (cost > 0) removeItem(newInv, 'coins', cost)
     updateInventory(newInv)
     addToast(`Created ${resultData.name}`, 'info')
     setSelected(null)
@@ -351,7 +381,29 @@ export default function InventoryScreen() {
   const handleSell = async (qty, overridePrice = null) => {
     if (!selected || sellBusy) return
 
-    // Re-verify the inventory slot still exists with the same item
+    const currentSlot = inventory[selected.slotIndex]
+    if (!currentSlot || currentSlot.itemId !== selected.slot.itemId) return
+
+    const { item } = selected
+    const defaultPrice = isIronman ? getIronmanShopValue(item) : Math.floor(Number(item.shopValue) || 0)
+    const price = Math.floor(Number(overridePrice ?? defaultPrice) || 0)
+    const isNoted = !!currentSlot.noted
+    const ownedQty = (item.stackable || isNoted)
+      ? currentSlot.quantity
+      : inventory.reduce((n, s) => n + ((s && s.itemId === currentSlot.itemId && !!s.noted === isNoted) ? 1 : 0), 0)
+    const sellQty = Math.max(1, Math.min(Number(qty) || 1, ownedQty))
+    const totalValue = sellQty * price
+    if (totalValue >= HIGH_VALUE_SELL_THRESHOLD) {
+      setPendingHighValueSell({ qty, overridePrice, itemName: item.name, quantity: sellQty, totalValue })
+      return
+    }
+
+    await executeSell(qty, overridePrice)
+  }
+
+  const executeSell = async (qty, overridePrice = null) => {
+    if (!selected || sellBusy) return
+
     const currentSlot = inventory[selected.slotIndex]
     if (!currentSlot || currentSlot.itemId !== selected.slot.itemId) {
       addToast('Item no longer in inventory', 'error')
@@ -359,11 +411,7 @@ export default function InventoryScreen() {
       return
     }
 
-    const { slot, item } = selected
-    // Ironmen settle the immediate-sell at the reduced Ironman vendor value, so
-    // the confirmation toast must quote that — not the full shop price. (The
-    // server is authoritative for the payout; price here is display-only on the
-    // quick-sell path.)
+    const { item } = selected
     const defaultPrice = isIronman ? getIronmanShopValue(item) : Math.floor(Number(item.shopValue) || 0)
     const price = Math.floor(Number(overridePrice ?? defaultPrice) || 0)
     if (price <= 0) {
@@ -579,7 +627,7 @@ export default function InventoryScreen() {
                   class="w-full flex items-center justify-between px-3 py-2 active:bg-[var(--fm-parch-lo)]"
                 >
                   <span class="text-xs font-semibold text-yellow-400">⚡ Special Attack</span>
-                  <span class="text-[10px] text-yellow-600">{showSpecInfo ? '▲' : '▼'} {selected.item.specialAttack.energyCost}% energy</span>
+                  <span class="text-[10px] text-yellow-600">{showSpecInfo ? '▲' : '▼'} {formatSpecialEnergyCostLabel(selected.item.specialAttack)}</span>
                 </button>
                 {showSpecInfo && (
                   <div class="px-3 pb-3 space-y-1 border-t border-yellow-900">
@@ -621,18 +669,27 @@ export default function InventoryScreen() {
                   const hasTarget = inventory.some(
                     (s, i) => s && i !== selected.slotIndex && s.itemId === selected.item.combineWith && !s.noted
                   )
+                  const cost = Number(selected.item.combineCost) || 0
+                  const canAfford = cost <= 0 || countItem(inventory, 'coins') >= cost
+                  const enabled = hasTarget && canAfford
                   return (
                     <button
                       onClick={handleCombine}
-                      disabled={!hasTarget}
-                      class={`py-2.5 rounded-lg font-semibold text-sm border ${hasTarget
+                      disabled={!enabled}
+                      class={`py-2.5 rounded-lg font-semibold text-sm border ${enabled
                         ? 'bg-[var(--fm-royal)] text-white border-[var(--fm-royal)] active:opacity-80'
                         : 'bg-[var(--fm-parch-lo)] text-[var(--color-parchment)] opacity-40 border-transparent cursor-not-allowed'}`}
                     >
-                      Use on {targetName}
+                      Use on {targetName}{cost > 0 ? ` (${cost.toLocaleString()} coins)` : ''}
                     </button>
                   )
                 })()}
+                {selected.item.breakdownResult && !selected.slot.noted && (
+                  <button onClick={handleBreakdown}
+                    class="py-2.5 rounded-lg bg-[var(--fm-royal)] text-white font-semibold text-sm active:opacity-80 border border-[var(--fm-royal)]">
+                    Break down
+                  </button>
+                )}
                 <button onClick={handleDrop}
                   class="py-2.5 rounded-lg bg-[var(--color-blood-mid)] text-white font-semibold text-sm active:opacity-80">
                   Drop
@@ -843,6 +900,47 @@ export default function InventoryScreen() {
         </Modal>
       )}
 
+      {pendingHighValueSell && (
+        <SellConfirmModal
+          itemName={pendingHighValueSell.itemName}
+          quantity={pendingHighValueSell.quantity}
+          totalValue={pendingHighValueSell.totalValue}
+          busy={sellBusy}
+          onCancel={() => setPendingHighValueSell(null)}
+          onConfirm={async () => {
+            const { qty, overridePrice } = pendingHighValueSell
+            setPendingHighValueSell(null)
+            await executeSell(qty, overridePrice)
+          }}
+        />
+      )}
+
+      {showBreakdownConfirm && selected && (() => {
+        const y = getBreakdownYield(selected.item)
+        return (
+          <Modal title="Break down item?" onClose={() => setShowBreakdownConfirm(false)}>
+            <div class="space-y-4">
+              <p class="text-sm text-[var(--color-parchment)] opacity-80">
+                Break down <span class="font-bold text-[var(--color-gold)]">{selected.item.name}</span> into <span class="font-bold text-[var(--color-gold)]">{(y?.qty || 0).toLocaleString()} {itemsData[y?.itemId]?.name || y?.itemId}</span>? The item is destroyed permanently.
+              </p>
+              <div class="grid grid-cols-2 gap-2">
+                <button
+                  onClick={() => setShowBreakdownConfirm(false)}
+                  class="min-h-[44px] py-2.5 rounded-lg bg-[var(--fm-parch-lo)] text-[var(--color-parchment)] font-semibold text-sm active:opacity-80 border border-[var(--fm-rule)]"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmBreakdown}
+                  class="min-h-[44px] py-2.5 rounded-lg bg-[var(--fm-royal)] text-white font-semibold text-sm active:opacity-80"
+                >
+                  Break down
+                </button>
+              </div>
+            </div>
+          </Modal>
+        )
+      })()}
       {showDropConfirm && selected && (
         <Modal title="Drop item?" onClose={() => setShowDropConfirm(false)}>
           <div class="space-y-4">

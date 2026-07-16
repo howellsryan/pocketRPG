@@ -1,3 +1,5 @@
+import { resolveSpecialEnergyCost } from './specialAttackEnergy.js'
+
 export const PVP_SPECIAL_ATTACK_LABELS = {
   double_hit: '⚔️⚔️ Puncture',
   fang: '🗡️ Deadly Strike',
@@ -44,7 +46,13 @@ export function getEquippedPvpSpecialAttack(combatant, itemsData) {
     weaponId: weapon.id || weaponEntry.itemId,
     weaponName: weapon.name || weapon.id || weaponEntry.itemId,
     type: specialAttack.type || 'special',
-    energyCost: Math.max(0, Number(specialAttack.energyCost) || 0),
+    // Percent-cost specials (e.g. zul_kaars_blade's Disrupt, no flat
+    // energyCost field) resolve against the combatant's current energy so
+    // this never silently reports 0 for a percent-only special. Harmless
+    // today: SUPPORTED_PVP_SPECIAL_ATTACK_TYPES hard-rejects any type not in
+    // PVP_SPECIAL_ATTACK_LABELS (e.g. 'disrupt') before this value is ever
+    // used to gate a swing — see pvpEngine.js's resolveSwing.
+    energyCost: resolveSpecialEnergyCost(specialAttack, combatant?.specialAttackEnergy),
     specialAttack,
   }
 }

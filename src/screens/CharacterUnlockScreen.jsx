@@ -10,6 +10,7 @@ import SectionHeader from '../components/SectionHeader.jsx'
 import SkillActionRow from '../components/SkillActionRow.jsx'
 import { isUnlockOwned } from '../utils/completion.js'
 import { SLAYER_UNLOCKS, getSlayerUnlockPurchaseState, ownsItem } from '../engine/slayerUnlocks.js'
+import { SLAYER_MASTERS } from '../engine/slayerMasters.js'
 import { UNLOCKABLES } from '../engine/construction.js'
 import { getLevelFromXP } from '../engine/experience.js'
 import { GATHER_AUTOBANK_CONSTRUCTION_LEVEL } from '../utils/constants.js'
@@ -26,13 +27,22 @@ const CHARACTER_UNLOCKS_DEF = [
     currency: 'credits',
     stateKey: 'doubleSlayerXp',
   },
+  {
+    id: 'auto_slayer_task',
+    name: 'Auto Slayer Task',
+    description: 'While idling on a Slayer task, automatically take the next task from the same master when one finishes — the idle grind keeps completing tasks until you return. Applies to offline catch-up and Skip 1h.',
+    icon: '🗡️',
+    cost: 100,
+    currency: 'credits',
+    stateKey: 'autoSlayerTask',
+  },
 ]
 
 export default function CharacterUnlockScreen({ onBack }) {
   const {
     characterUnlocks, updateCharacterUnlock, addToast, getSnapshot,
     slayerPoints, updateSlayerPoints, bank, inventory, addToBank, itemsData,
-    slayerPerks, updateSlayerPerk,
+    slayerPerks, updateSlayerPerk, slayerMasterTaskCompletions,
     stats, unlockedFeatures, unlockFeature,
   } = useGame()
   const constructionLevel = getLevelFromXP(stats.construction?.xp || 0)
@@ -67,7 +77,7 @@ export default function CharacterUnlockScreen({ onBack }) {
   // debit), local saves grant straight to the bank.
   const handleSlayerUnlock = async (unlock) => {
     const item = itemsData[unlock.itemId]
-    const purchaseState = getSlayerUnlockPurchaseState({ unlock, item, slayerPoints, bank, inventory })
+    const purchaseState = getSlayerUnlockPurchaseState({ unlock, item, slayerPoints, bank, inventory, masterTaskCompletions: slayerMasterTaskCompletions })
     if (!purchaseState.allowed) {
       addToast(purchaseState.message || 'Unable to purchase unlock', 'error')
       return
@@ -83,6 +93,7 @@ export default function CharacterUnlockScreen({ onBack }) {
         // SAVE_REVISION_EVENT (api.js).
         updateSlayerPoints(slayerPoints - unlock.cost)
         addToBank(unlock.itemId, 1)
+        recordCollectionLogDrop({ itemId: unlock.itemId, sourceType: 'skilling', sourceId: 'slayer' })
         addToast(`🎉 Purchased ${item.name} — sent to bank`, 'info')
         return
       } catch (e) {
@@ -187,7 +198,11 @@ export default function CharacterUnlockScreen({ onBack }) {
           if (!item) return null
           const owned = ownsItem({ itemId: unlock.itemId, bank, inventory })
           const canAfford = slayerPoints >= unlock.cost
-          const disabled = owned || !canAfford
+          const reqMaster = unlock.requiresMasterCompletions
+          const masterHave = reqMaster ? Math.max(0, Math.floor(Number(slayerMasterTaskCompletions?.[reqMaster.masterId]) || 0)) : 0
+          const masterMet = !reqMaster || masterHave >= reqMaster.count
+          const masterName = reqMaster ? (SLAYER_MASTERS.find(m => m.id === reqMaster.masterId)?.name || reqMaster.masterId) : null
+          const disabled = owned || !canAfford || !masterMet
           return (
             <SkillActionRow
               key={unlock.itemId}
@@ -196,10 +211,15 @@ export default function CharacterUnlockScreen({ onBack }) {
               meta={<>
                 {unlock.description}
                 {item.requirements?.slayer > 0 && <span class="block mt-1 opacity-80">Requires Slayer {item.requirements.slayer} to wear</span>}
+                {reqMaster && (
+                  <span class={`block mt-1 ${masterMet ? 'opacity-80' : 'text-[var(--color-blood-light)]'}`}>
+                    {masterName} tasks: {masterHave}/{reqMaster.count}
+                  </span>
+                )}
               </>}
               chip={owned
                 ? <span class="text-[var(--color-hp-green)]">Owned</span>
-                : <span class={canAfford ? '' : 'text-[var(--color-blood-light)]'}>{unlock.cost.toLocaleString()} pts</span>}
+                : <span class={canAfford && masterMet ? '' : 'text-[var(--color-blood-light)]'}>{unlock.cost.toLocaleString()} pts</span>}
               disabled={disabled}
               onClick={() => handleSlayerUnlock(unlock)}
             />

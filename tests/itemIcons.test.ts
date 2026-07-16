@@ -11,6 +11,11 @@ const gameIconsData = gameIcons as Record<string, { body: string; viewBox: strin
 const bespokeIconsData = bespokeIcons as Record<string, { body: string; viewBox: string | null }>
 
 describe('itemIcons', () => {
+  it('items no longer carry the legacy emoji icon field', () => {
+    const withIcon = Object.values(itemsData).filter(item => 'icon' in item).map(item => item.id)
+    expect(withIcon, `items still have a raw "icon" field: ${withIcon.join(', ')}`).toEqual([])
+  })
+
   it('every item resolves to a present glyph', () => {
     const missing: string[] = []
     for (const item of Object.values(itemsData)) {

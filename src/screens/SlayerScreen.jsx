@@ -9,10 +9,11 @@ import { MultiStyleChip } from './CombatMobileSheets.jsx'
 import { getMonsterArt, getCategoryArt, getMonsterAttackStyles } from '../utils/combatArt.js'
 import { getLevelFromXP } from '../engine/experience.js'
 import monstersData from '../data/monsters.json'
+import raidsData from '../data/raids.json'
 import questsData from '../data/quests.json'
 import { requestCriticalPushSave } from '../cloud/sync.js'
 import { DAGANNOTH_KINGS_TASK_ID, SLAYER_TASK_SKIP_POINT_COST } from '../engine/slayerTasks.js'
-import { SLAYER_MASTERS, resolveTaskMonsterIds, pickSlayerMonster, buildSlayerTask, isEntryEligible } from '../engine/slayerMasters.js'
+import { SLAYER_MASTERS, RAID_TASK_META, resolveTaskMonsterIds, pickSlayerMonster, buildSlayerTask, isEntryEligible } from '../engine/slayerMasters.js'
 import { api, getToken, getCharacterId, CREDITS_UPDATED_EVENT } from '../cloud/api.js'
 import { CRITICAL_SAVE_REASONS } from '../cloud/criticalSavePolicy.js'
 import { SCREENS } from '../utils/constants.js'
@@ -69,9 +70,12 @@ function getTaskInfo(entry, slayerLevel, completedQuests) {
   const resolvedIds = resolveTaskMonsterIds(id)
   const resolved = resolvedIds.map(mid => monstersData[mid]).filter(Boolean)
   const lead = resolved[0] || null
+  const raidMeta = RAID_TASK_META[id]
   const name = id === DAGANNOTH_KINGS_TASK_ID
     ? 'Nagadoth Kings'
-    : (monstersData[id]?.name || id.replace(/_/g, ' '))
+    : raidMeta
+      ? (raidsData[raidMeta.raidId]?.name || id.replace(/_/g, ' '))
+      : (monstersData[id]?.name || id.replace(/_/g, ' '))
   const combatLevel = resolved.length ? Math.max(...resolved.map(m => m.combatLevel || 0)) : 0
   const slayerReq = resolved.length ? Math.max(...resolved.map(m => m.slayerRequirement || 0)) : 0
   const questReq = resolved.map(m => m.questRequirement).find(Boolean) || null
@@ -257,6 +261,17 @@ export default function SlayerScreen({ onBack, onNavigate, initialMasterId }) {
     const targetId = candidateIds.find(id => monstersData[id]) || candidateIds[0]
     if (!targetId || !monstersData[targetId]) {
       addToast('Could not find target monster', 'error')
+      return
+    }
+    // Raid-completion proxy tasks (RAID_TASK_META): the assigned "monster" is a
+    // raid's final boss, never independently placed/fightable — the task can
+    // only be worked by entering the full raid, same flow as a raid entrance
+    // elsewhere on the world map (fakeTaskFor('raid', ...) in WorldMapScreen).
+    const raidMeta = RAID_TASK_META[targetId]
+    if (raidMeta) {
+      if (requestActivityStart({ type: 'raid', raid: { id: raidMeta.raidId } })) {
+        onNavigate(SCREENS.COMBAT, { raidId: raidMeta.raidId })
+      }
       return
     }
     // Travel to the monster's place first when it lives elsewhere (standard

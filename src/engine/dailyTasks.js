@@ -92,6 +92,29 @@ export function skillingGainEvents(task, itemsGained) {
 // XP through grantXP and so emit skill_xp implicitly — this path applies XP
 // straight to raw state, so its events must be built explicitly here. Combat/any
 // XP is skipped (assigned later via the reward modal); quests grant separately.
+// Combat-only daily events (monster kills + slayer-task completions) for the
+// App's visibility/skip-hour catch-up, which apply XP via grantXP separately so
+// they only need the kill/completion feed. Chain-aware: attributes kills per
+// monster and emits one completion event per task cleared.
+export function idleCombatDailyEvents(task, sim) {
+  if (!task || task.type !== 'combat' || !sim) return []
+  const events = []
+  if (Array.isArray(sim.perMonster) && sim.perMonster.length > 0) {
+    for (const pm of sim.perMonster) {
+      if (pm.monstersKilled > 0 && pm.monsterId) {
+        events.push({ kind: 'monster_kill', monsterId: pm.monsterId, count: pm.monstersKilled })
+      }
+    }
+  } else if (sim.monstersKilled > 0 && task.monster?.id) {
+    events.push({ kind: task.monster?.boss === true ? 'boss_kill' : 'monster_kill', monsterId: task.monster.id, count: sim.monstersKilled })
+  }
+  const completions = Number.isFinite(sim.slayerTasksCompletedCount)
+    ? sim.slayerTasksCompletedCount
+    : (sim.slayerTaskUpdate?.completed ? 1 : 0)
+  for (let i = 0; i < completions; i++) events.push({ kind: 'slayer_task_complete' })
+  return events
+}
+
 export function idleCatchupDailyEvents(task, sim) {
   if (!task || !sim || task.type === 'quest') return []
   const events = []
@@ -103,10 +126,21 @@ export function idleCatchupDailyEvents(task, sim) {
   }
   if (task.type === 'combat') {
     if (sim.slayerXpGained > 0) events.push({ kind: 'skill_xp', skill: 'slayer', xp: Math.floor(sim.slayerXpGained) })
-    if (sim.monstersKilled > 0 && task.monster?.id) {
+    if (Array.isArray(sim.perMonster) && sim.perMonster.length > 0) {
+      // Auto-slayer chain fought several monsters — attribute kills per monster
+      // (all chain targets are idleable, i.e. non-boss).
+      for (const pm of sim.perMonster) {
+        if (pm.monstersKilled > 0 && pm.monsterId) {
+          events.push({ kind: 'monster_kill', monsterId: pm.monsterId, count: pm.monstersKilled })
+        }
+      }
+    } else if (sim.monstersKilled > 0 && task.monster?.id) {
       events.push({ kind: task.monster?.boss === true ? 'boss_kill' : 'monster_kill', monsterId: task.monster.id, count: sim.monstersKilled })
     }
-    if (sim.slayerTaskUpdate?.completed) events.push({ kind: 'slayer_task_complete' })
+    const completions = Number.isFinite(sim.slayerTasksCompletedCount)
+      ? sim.slayerTasksCompletedCount
+      : (sim.slayerTaskUpdate?.completed ? 1 : 0)
+    for (let i = 0; i < completions; i++) events.push({ kind: 'slayer_task_complete' })
   }
   if ((task.type === 'skill' || task.type === 'gather') && sim.itemsGained) {
     events.push(...skillingGainEvents(task, sim.itemsGained))

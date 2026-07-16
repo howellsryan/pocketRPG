@@ -684,3 +684,94 @@ unchanged.
 `npm run shoot:zones` re-rendered all three zones (flowers/bushes now whole).
 
 - [x] TERRAIN — relief tuning + multi-mesh scatter + editor-preview terrain landed.
+
+## Varrick — the capital city zone (TERRAIN T4 continued, developer request 2026-07-14)
+
+Developer instruction "create Varrick next" using the three-terrain updates, matching
+the place map and putting activities/monsters where the map puts them. Clarified scope
+up front (all recommended): **town zone only** (dungeon a landmark for now), **wire the
+engine-supported activities and leave the rest as landmarks**, **safe capital — no
+street monsters, combat gated behind the eastern dungeon mouth**, **96×96**.
+
+**Map-driven layout** (`src/data/placeMaps.json` `varrick` + `public/world/varrick-map.jpg`):
+a walled 96×96 capital, each labelled map spot placed at its normalised map position —
+Bank, Grand Smithy (furnace+anvil), Royal Chapel, Market Stove, Trading Post, Sawmill,
+Rooftop Course, Quests Board, Runic Sanctum, Old Forest, Dungeon. Generated deterministically
+by `world/scripts/gen-varrick.mjs` (hand-edit the constants, not the JSON), 90.6% walkable,
+518 props, 11 interactive objects, meadow terrain (relief 0.7).
+
+**Wired (engine-supported)** as interactive `objects[]`: Bank (`bank_chest`), Grand Smithy
+(`furnace`+`anvil`), Market Stove (`range` cooking), Old Forest (a 7-tree woodcutting grove
+just outside the west postern — normal + oak). **Landmark props (future phases)**: Sawmill
+(planks aren't a world action yet), Runic Sanctum, Rooftop Course, Trading Post, Quests
+Board, the eastern Dungeon mouth. No `npcs` — the capital is a safe hub; combat arrives
+with the dungeon zone.
+
+**New building assets** processed by `world/scripts/build-props.mjs` (CC0, prune/dedup only)
+into `props/`: `castle` (KayKit Medieval Builder — the cathedral/keep), `fountain`/`stall`/
+`banner` (Kenney fantasy-town), `altar`/`crypt`/`column` (Kenney graveyard — chapel/sanctum
+stonework), `dungeon_stairs`/`dungeon_door` (KayKit dungeon-remastered). Base scales added to
+`props.ts` from measured bounds.
+
+**Connectivity**: south gate → Lumbright, with the return added on the Lumbright side
+(`gen-lumbright.mjs` new west-road exit at x=0 — no wall carving, open countryside).
+Registered in `server/zones.ts` and the preview map. The JSON `as ZoneDef` cast stopped
+overlapping now that a zone mixes tree + station objects (JSON widens `type` to string and
+scatter `scaleRange` to `number[]`), so zones route through a small `asZone()` helper —
+`validateZone`, which runs on every zone at load, remains the real guard.
+
+**Verified**: `world:check` green — typecheck clean, 221 tests (+1 real-varrick-zone
+acceptance; exit-graph test extended to include varrick), client build ok. Headless preview
+(`node scripts/shoot-zone.mjs varrick`) reviewed: walls/towers/gates, cathedral, chapel,
+market square, residential + south-gate districts, Old Forest grove, and the dungeon mouth
+all read as intended. Only `world/` + `docs/` + `world/scripts` + processed `props/*.glb`
+touched — no root gate required. DT: on-device visual pass + wiring the dungeon zone / its
+bosses in a later phase.
+
+### Varrick — solid props block movement (bug fix)
+Props are visual-only; collision lives in the ASCII grid, so standalone scenery
+(fountain, stalls, carts, columns, the dungeon mouth) had no collision and could
+be walked through. `gen-varrick.mjs` now runs a post-pass blocking each prop's real
+footprint (measured native bounds × base × placement scale); groundcover stays
+walkable, thin banners block only their pole. A flood-fill guard asserts every
+station/tree/exit/arrival stays reachable. 86.4% walkable.
+
+## Varrick Dungeon + Warlord Grondar (developer request 2026-07-14)
+
+"Build the dungeon with a single boss, Warlord Grondar; make the asset with our monster
+tool; his attack raises both hands and smacks with both hands." Grondar was already in
+`monsters.json` (combat 624, 255 HP, crush, `legacy_id general_graardor`).
+
+**The Grondar asset — procgen tool** (`src/data/creatures3d.json`, the blend-shell system):
+a 24-primitive humanoid orc warlord matching the reference — green skin, tusks, glowing
+eyes, a horned helm, a spiked stone pauldron, a giant stone gauntlet, plated arms, a runed
+tabard, stone boots. Reviewed via `scripts/render-proc.mjs` (idle/attack/hit/death).
+
+**Two-hand smash attack** — a new `attackStyle: 'smash'` in `src/3d/rigs.js`: on the
+humanoid archetype both arms heave overhead on the wind-up and slam straight down together
+while the body drives forward, instead of the single-arm sword swing. Grondar's spec sets it.
+
+**Varrick Dungeon zone** (`world/scripts/gen-varrick-dungeon.mjs` → `varrick_dungeon.json`):
+a 48×48 enclosed dark-stone hall (dark ambience, volcanic floor), a pillared approach from
+the south entrance to Grondar's dais at the north end; one boss, no other monsters. Varrick's
+eastern dungeon mouth is now a real exit ↔ the dungeon's south entrance. Registered in
+`server/zones.ts`, the preview map, and the exit-graph test.
+
+**Procedural monsters in the world** (`world/client/src/procCreature.ts` + `entities.ts`):
+monsters with a `creatures3d` spec but no GLB (Grondar) now render as their procedural
+blend-shell creature in the world too — `createProcCreature(THREE, spec)` is portable (THREE
+is dependency-injected) and lazy-imported so the shader runtime only ships when needed. The
+`Animator` became a `gltf | proc` union; the proc rig is driven by anim state (each swing
+fires the smash once, death plays once, idle-after-death respawns). `pasture_bull` keeps its
+cow model.
+
+**Boss attack broadcast** (`server/combat.ts` + `npc.ts`): NPC `anim` gained `'attack'`; on a
+monster's swing (`monsterHit`/`monsterMiss`) the npc broadcasts `attack` for that tick (cleared
+between swings) so the client plays the smash. GLB monsters (no attack clip) safely fall back
+to idle. Unit-tested in `combat-flow.test.ts`.
+
+**Verified**: `world:check` green (224 tests, +3: dungeon acceptance, boss-references-real-monster,
+swing-broadcasts-attack; client build bundles the proc bridge); full root `npm run ci` green for
+the `src/3d` + `src/data` changes; Grondar reviewed via render-proc. **DT (needs the live world
+stack — can't headless-screenshot an npc here)**: walk into the dungeon and confirm Grondar
+renders procedurally and plays the two-hand smash mid-fight on-device.

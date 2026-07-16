@@ -29,6 +29,8 @@ import { getAgilityBankDelayMs, formatBankDelay } from '../engine/agility.js'
 import { onTick, pauseTicks, resumeTicks } from '../engine/tick.js'
 import { addItem, removeItem, freeSlots } from '../engine/inventory.js'
 import { getCombatType, resolveMagicSpell, equipItem, checkEquipRequirements, placeUnequippedItems } from '../engine/equipment.js'
+import { RAID_TASK_META } from '../engine/slayerMasters.js'
+import { resolveSpecialEnergyCost, canAffordSpecialAttack, formatSpecialEnergyCostLabel } from '../engine/specialAttackEnergy.js'
 import { api, getToken, getCharacterId, getOneLifeMode, isDemoMode } from '../cloud/api.js'
 import { pullSave, applyCloudSave, requestCriticalPushSave, pushNow } from '../cloud/sync.js'
 import { pvpApi } from '../cloud/pvp.js'
@@ -298,7 +300,7 @@ function MonsterPhaseStats({ monster }) {
 }
 
 export default function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onCombatStatusChange, onBack, onStopBack, dungeonPlaceId }) {
-  const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, updateEquipment, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, idleCombatSetup, updateIdleCombatSetup, homeShortcuts, updateHomeShortcuts, setActiveTask, requestActivityStart, slayerTask, setSlayerTask, awardSlayerPoints, slayerTasksCompleted, setSlayerTasksCompleted, activeCombatSpell, updateActiveCombatSpell, bossKillCounts, updateBossKillCounts, raidKillCounts, updateRaidKillCounts, unlockedFeatures, completedQuests, isOneLife, isIronman, revertOneLifeMode, getSnapshot, loadGame, combatSkipHandlerRef, skipHourHandlerRef, chargeSkipRef, raidSkipHandlerRef, lockGame, unlockGame, resolveCombatCompletion, characterUnlocks, killCountsLoaded, recordGameEvent, worldLocation } = useGame()
+  const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, updateEquipment, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, idleCombatSetup, updateIdleCombatSetup, homeShortcuts, updateHomeShortcuts, setActiveTask, requestActivityStart, slayerTask, setSlayerTask, awardSlayerPoints, slayerTasksCompleted, setSlayerTasksCompleted, incrementSlayerMasterTaskCompletions, activeCombatSpell, updateActiveCombatSpell, bossKillCounts, updateBossKillCounts, raidKillCounts, updateRaidKillCounts, unlockedFeatures, completedQuests, isOneLife, isIronman, revertOneLifeMode, getSnapshot, loadGame, combatSkipHandlerRef, skipHourHandlerRef, chargeSkipRef, raidSkipHandlerRef, lockGame, unlockGame, resolveCombatCompletion, characterUnlocks, killCountsLoaded, recordGameEvent, worldLocation } = useGame()
   const pvp = usePvp()
   // Offline demo: bosses, raids and PvP are locked (server-authoritative).
   const isDemo = isDemoMode() && !(getToken() && getCharacterId())
@@ -335,6 +337,40 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   const [collapsedSections, setCollapsedSections] = useState(() => ({
     ...Object.fromEntries(COMBAT_CATEGORIES.map(category => [category.key, true])),
   }))
+  // Monster/raid picker search: filters the current picker screen down to
+  // name matches and hides sections left with no results, without touching
+  // the underlying collapsed-section state (restored once the search clears).
+  // Matched sections default open but use their own collapse state (rather
+  // than `collapsedSections`) so they can still be manually toggled while
+  // searching without disturbing the pre-search collapsed layout.
+  const [monsterSearch, setMonsterSearch] = useState('')
+  const [searchCollapsedSections, setSearchCollapsedSections] = useState({})
+  const monsterSearchActive = monsterSearch.trim().length > 0
+  const monsterSearchQuery = monsterSearch.trim().toLowerCase()
+  const filteredPickerCategories = useMemo(() => {
+    if (!monsterSearchActive) return pickerCategories
+    return pickerCategories
+      .map(category => ({
+        ...category,
+        ids: category.ids.filter(id => monstersData[id]?.name?.toLowerCase().includes(monsterSearchQuery)),
+      }))
+      .filter(category => category.ids.length > 0)
+  }, [pickerCategories, monsterSearchActive, monsterSearchQuery])
+  const filteredPickerRaids = useMemo(() => {
+    if (!monsterSearchActive) return pickerRaids
+    return Object.fromEntries(
+      Object.entries(pickerRaids).filter(([, raid]) => raid.name?.toLowerCase().includes(monsterSearchQuery))
+    )
+  }, [pickerRaids, monsterSearchActive, monsterSearchQuery])
+  // While searching, sections use their own (independently toggleable)
+  // collapse state, defaulting open so matches are visible immediately.
+  const isSectionCollapsed = (key, dungeonDefault) => monsterSearchActive
+    ? (searchCollapsedSections[key] ?? false)
+    : (collapsedSections[key] ?? dungeonDefault)
+  const handleMonsterSearchChange = (value) => {
+    setMonsterSearch(value)
+    if (!value.trim()) setSearchCollapsedSections({})
+  }
   const [lootModal, setLootModal] = useState(null)
   const [deathModal, setDeathModal] = useState(null)
   const [isDesktopCombatLayout, setIsDesktopCombatLayout] = useState(false)
@@ -606,7 +642,8 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             molten_crush: ev.defenceReducedBy > 0 ? `🌋 Molten Crush (-${ev.defenceReducedBy} Defence)` : '🌋 Molten Crush',
             volley: '🌿🌿🌿 Volley',
             soul_drain: ev.prayerRestored > 0 ? `🌑 Soul Drain (+${ev.prayerRestored} Prayer)` : '🌑 Soul Drain',
-            volatile_surge: '🌩️ Volatile Surge'
+            volatile_surge: '🌩️ Volatile Surge',
+            disrupt: '🌋 Disrupt'
           }
           const label = specLabels[ev.specType] || '⚡ Special Attack'
           setLog(prev => [...prev.slice(-20), {
@@ -684,6 +721,22 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           const w = newEq.weapon
           if (w && w.charges && w.charges > 0) {
             newEq.weapon = { ...w, charges: Math.max(0, w.charges - (ev.qty || 1)) }
+            equipmentRef.current = newEq
+            updateEquipment(newEq)
+          }
+        }
+        if (ev.type === 'consumeArmourCharge') {
+          // Decrement charges on each worn scale-charged armour piece that took a hit
+          const newEq = { ...equipmentRef.current }
+          let changed = false
+          for (const slot of (ev.slots || [])) {
+            const piece = newEq[slot]
+            if (piece && piece.charges && piece.charges > 0) {
+              newEq[slot] = { ...piece, charges: Math.max(0, piece.charges - (ev.qty || 1)) }
+              changed = true
+            }
+          }
+          if (changed) {
             equipmentRef.current = newEq
             updateEquipment(newEq)
           }
@@ -932,10 +985,17 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
 
           // Slayer task tracking
           const task = slayerTaskRef.current
-          if (task && defeatedMonsterId && doesSlayerTaskMatchMonster(task.monsterId, defeatedMonsterId)) {
+          // Raid-completion proxy tasks (RAID_TASK_META) only credit progress on the
+          // raid-complete kill event (ev.fromRaidCompletion) — a matching-id kill from
+          // any other path (there shouldn't be one; the raid final bosses aren't placed
+          // standalone) is ignored as defense-in-depth alongside the Slay-button routing
+          // fix in SlayerScreen/WorldMapScreen.
+          const isRaidTaskMonster = task && RAID_TASK_META[task.monsterId]
+          const raidTaskCreditBlocked = isRaidTaskMonster && ev.fromRaidCompletion !== true
+          if (task && defeatedMonsterId && !raidTaskCreditBlocked && doesSlayerTaskMatchMonster(task.monsterId, defeatedMonsterId)) {
             // Active combat does not flow through the idle-engine slayer XP handler.
             // Grant XP on the live kill event so active and idle kills stay consistent.
-            const xpForKill = getSlayerTaskXpForKill(defeatedMonster, state.monster, monstersData, { doubleXp: characterUnlocks?.doubleSlayerXp })
+            const xpForKill = getSlayerTaskXpForKill(defeatedMonster, state.monster, monstersData, { doubleXp: characterUnlocks?.doubleSlayerXp, flatXp: RAID_TASK_META[task.monsterId]?.flatSlayerXp })
             slayerXpGained += xpForKill
             if (xpForKill > 0) {
               grantXP('slayer', xpForKill)
@@ -951,6 +1011,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
               setSlayerTask(null)
               const reward = getSlayerTaskReward(slayerResult.pointsAwarded, slayerTasksCompleted)
               setSlayerTasksCompleted(reward.totalTasks)
+              if (task.masterId) incrementSlayerMasterTaskCompletions(task.masterId, 1)
               if (reward.pointsEarned > 0) {
                 awardSlayerPoints(reward.pointsEarned)
               }
@@ -1098,7 +1159,11 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
 
   const getSlayerLevel = () => getLevelFromXP(stats.slayer?.xp || 0)
   const toggleSection = (sectionKey) => {
-    setCollapsedSections(prev => ({ ...prev, [sectionKey]: !prev[sectionKey] }))
+    if (monsterSearchActive) {
+      setSearchCollapsedSections(prev => ({ ...prev, [sectionKey]: !(prev[sectionKey] ?? false) }))
+    } else {
+      setCollapsedSections(prev => ({ ...prev, [sectionKey]: !prev[sectionKey] }))
+    }
   }
 
   const checkBossRequirements = (monster) => checkBossRequirementsPure(monster, {
@@ -1470,7 +1535,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     if (!weapon?.specialAttack) return
 
     const energy = combatRef.current.specialAttackEnergy || 0
-    if (energy < weapon.specialAttack.energyCost) return
+    if (!canAffordSpecialAttack(weapon.specialAttack, energy)) return
 
     // Scale-charged weapons must have at least one charge to fire a spec
     if (weapon.scaleCharged && (weaponEntry.charges || 0) <= 0) {
@@ -1849,12 +1914,14 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       {!isDesktopCombatLayout ? (
         <div class="forge-shell h-full overflow-y-auto">
           <CombatMobileSelect
-            categories={pickerCategories}
+            categories={filteredPickerCategories}
             monstersData={monstersData}
-            raidsData={pickerRaids}
-            collapsedSections={collapsedSections}
-            defaultCollapsed={!isDungeon}
+            raidsData={filteredPickerRaids}
+            collapsedSections={monsterSearchActive ? searchCollapsedSections : collapsedSections}
+            defaultCollapsed={monsterSearchActive ? false : !isDungeon}
             title={isDungeon ? pickerTitle : undefined}
+            searchValue={monsterSearch}
+            onSearchChange={handleMonsterSearchChange}
             onToggleSection={toggleSection}
             onFight={startFight}
             onMonsterInfo={setSelectedMonsterInfo}
@@ -1883,6 +1950,15 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
         <h2 class="font-[var(--font-display)] text-sm font-bold text-[var(--color-parchment)] opacity-60 uppercase tracking-wider mb-3">
           {pickerTitle}
         </h2>
+
+        <input
+          type="search"
+          value={monsterSearch}
+          onInput={(e) => handleMonsterSearchChange(e.currentTarget.value)}
+          placeholder="Search monsters…"
+          aria-label="Search monsters and raids by name"
+          class="w-full min-h-[44px] px-3 mb-3 rounded-xl bg-[var(--color-void-light)] border border-[var(--color-void-border)] text-[14px] text-[var(--color-parchment)] placeholder:text-[var(--color-parchment)] placeholder:opacity-40 focus:outline-none focus:border-[var(--color-gold)]"
+        />
 
         {/* Idle setup buttons */}
         <div class="flex gap-1.5 mb-2">
@@ -1937,7 +2013,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
         </div>
 
         <div class="space-y-4">
-          {pickerCategories.map(category => {
+          {filteredPickerCategories.map(category => {
             const monsters = category.ids
               .map(id => monstersData[id])
               .filter(Boolean)
@@ -1947,7 +2023,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                 }
                 return a.combatLevel - b.combatLevel
               })
-            const isCollapsed = collapsedSections[category.key] ?? !isDungeon
+            const isCollapsed = isSectionCollapsed(category.key, !isDungeon)
             const categoryArt = getCategoryArt(category.key)
             return (
               <div key={category.key}>
@@ -2006,7 +2082,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                             )}
                             {bossReq.locked && !slayLocked && !slayReq && (
                               <div class="text-[9px] font-semibold text-[var(--color-blood-light)]">
-                                🔒 {monster.id === 'blighted_gauntlet' ? 'Song of the Elves' :
+                                🔒 {monster.id === 'blighted_gauntlet' ? 'Hymn of the Elves' :
                                      monster.id === 'ashen_crucible' ? 'Defeat Ember Tyrant' :
                                      (monster.id === 'adamant_dragon' || monster.id === 'rune_dragon') ? 'Dragon Slayer II' :
                                      monster.id === 'hellbound_gorilla' ? 'Monkey Madness II' : 'Locked'}
@@ -2047,8 +2123,8 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           })}
         </div>
 
-        {/* Raids Section — hidden in a dungeon with no raids. */}
-        {(!isDungeon || Object.keys(pickerRaids).length > 0) && (
+        {/* Raids Section — hidden in a dungeon with no raids, or while a search has no raid matches. */}
+        {(monsterSearchActive ? Object.keys(filteredPickerRaids).length > 0 : (!isDungeon || Object.keys(pickerRaids).length > 0)) && (
         <div class="mt-6">
           <button
             type="button"
@@ -2057,11 +2133,11 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           >
             <SkillEmblem iconKey="temple_gate" accent="#9b6cff" size={24} glow={0} />
             <span class="text-xs font-semibold text-[var(--color-gold)] uppercase tracking-wider">Raids</span>
-            <span class="ml-auto text-[10px] text-[var(--color-parchment)] opacity-60">{(collapsedSections.raids ?? !isDungeon) ? '▶' : '▼'}</span>
+            <span class="ml-auto text-[10px] text-[var(--color-parchment)] opacity-60">{isSectionCollapsed('raids', !isDungeon) ? '▶' : '▼'}</span>
           </button>
-          {!(collapsedSections.raids ?? !isDungeon) && (
+          {!isSectionCollapsed('raids', !isDungeon) && (
             <div class="space-y-2">
-            {Object.values(pickerRaids).filter((raid, index, allRaids) =>
+            {Object.values(filteredPickerRaids).filter((raid, index, allRaids) =>
               allRaids.findIndex(candidate => candidate.id === raid.id) === index
             ).map(raid => {
               const raidReq = checkRaidRequirements(raid)
@@ -2211,11 +2287,14 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                     return (
                       <div key={drop.itemId} class="bg-[var(--color-void)] rounded-lg p-2">
                         <div class="flex items-start justify-between gap-2">
-                          <div class="text-left flex-1 min-w-0">
-                            <div class="text-[11px] font-semibold text-[var(--color-parchment)]">{item?.icon || '📦'} {item?.name || drop.itemId}</div>
-                            <div class="text-[9px] text-[var(--color-parchment)] opacity-60 mt-0.5">
-                              {formatDropChance(drop.chance)}
-                              {Array.isArray(drop.quantity) ? ` · ${drop.quantity[0]}–${drop.quantity[1]} ea` : ` · ${drop.quantity}`}
+                          <div class="flex items-center gap-1.5 text-left flex-1 min-w-0">
+                            <GameIcon item={item} iconKey={item?.iconId} size={16} />
+                            <div class="min-w-0">
+                              <div class="text-[11px] font-semibold text-[var(--color-parchment)]">{item?.name || drop.itemId}</div>
+                              <div class="text-[9px] text-[var(--color-parchment)] opacity-60 mt-0.5">
+                                {formatDropChance(drop.chance)}
+                                {Array.isArray(drop.quantity) ? ` · ${drop.quantity[0]}–${drop.quantity[1]} ea` : ` · ${drop.quantity}`}
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -2290,7 +2369,9 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                     const item = itemsData[drop.itemId]
                     return (
                       <div key={drop.itemId} class="bg-[var(--color-void)] rounded-lg p-2 flex items-center justify-between">
-                        <div class="text-[11px] text-[var(--color-parchment)]">{item?.icon || '📦'} {item?.name || drop.itemId}</div>
+                        <div class="flex items-center gap-1.5 text-[11px] text-[var(--color-parchment)]">
+                          <GameIcon item={item} iconKey={item?.iconId} size={16} /> {item?.name || drop.itemId}
+                        </div>
                         <div class="text-[9px] text-[var(--color-parchment)] opacity-50">
                           {formatDropChance(drop.chance)}
                           {Array.isArray(drop.quantity) ? ` · ${drop.quantity[0]}–${drop.quantity[1]}` : ` · ${drop.quantity}`}
@@ -2307,8 +2388,8 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                         {selectedRaidInfo.rewards.unique.items.map(u => {
                           const item = itemsData[u.itemId]
                           return (
-                            <div key={u.itemId} class="text-[10px] text-[var(--color-parchment)] opacity-70">
-                              {item?.icon || '🎁'} {item?.name || u.itemId}
+                            <div key={u.itemId} class="flex items-center gap-1.5 text-[10px] text-[var(--color-parchment)] opacity-70">
+                              <GameIcon item={item} iconKey={item?.iconId} size={14} /> {item?.name || u.itemId}
                             </div>
                           )
                         })}
@@ -2510,7 +2591,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             const weapon = weaponEntry ? itemsData[weaponEntry.itemId] : null
             const hasSpec = weapon?.specialAttack
             const energy = combat.specialAttackEnergy || 0
-            const canSpec = hasSpec && energy >= weapon.specialAttack.energyCost
+            const canSpec = hasSpec && canAffordSpecialAttack(weapon.specialAttack, energy)
             const isMagic = weapon?.attackStyle === 'magic'
             return (
               <>
@@ -2599,8 +2680,8 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                 const remainingTicks = combat.activePotions[potionId] || 0
                 const remainingSeconds = Math.ceil(remainingTicks * 0.6)
                 return (
-                  <div key={potionId} class="opacity-80">
-                    {potion.icon} {boosts.join(', ')} · {remainingSeconds}s
+                  <div key={potionId} class="opacity-80 flex items-center justify-end gap-1">
+                    <GameIcon item={potion} iconKey={potion?.iconId} size={12} /> {boosts.join(', ')} · {remainingSeconds}s
                   </div>
                 )
               })}
@@ -2687,7 +2768,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
         const weapon = weaponEntry ? itemsData[weaponEntry.itemId] : null
         if (!weapon?.specialAttack) return null
         const energy = combat.specialAttackEnergy || 0
-        const canSpec = energy >= weapon.specialAttack.energyCost
+        const canSpec = canAffordSpecialAttack(weapon.specialAttack, energy)
         return (
           <div class="mb-2 bg-[var(--color-void)] rounded-lg px-3 py-2">
             <div class="flex items-center justify-between mb-1">
@@ -2701,7 +2782,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
               />
             </div>
             <div class="text-[9px] text-[var(--color-parchment)] opacity-40 mt-0.5">
-              {weapon.specialAttack.energyCost}% cost · refills on kill
+              {formatSpecialEnergyCostLabel(weapon.specialAttack)} · refills on kill
             </div>
           </div>
         )
@@ -2753,7 +2834,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           const weapon = weaponEntry ? itemsData[weaponEntry.itemId] : null
           const hasSpec = weapon?.specialAttack
           const energy = combat.specialAttackEnergy || 0
-          const canSpec = hasSpec && energy >= weapon.specialAttack.energyCost
+          const canSpec = hasSpec && canAffordSpecialAttack(weapon.specialAttack, energy)
           const isMagic = weapon?.attackStyle === 'magic'
 
           const eatBtn = (
@@ -2960,7 +3041,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                 const weapon = weaponEntry ? itemsData[weaponEntry.itemId] : null
                 const hasSpec = !!weapon?.specialAttack
                 const energy = combat.specialAttackEnergy || 0
-                const canSpec = hasSpec && energy >= weapon.specialAttack.energyCost
+                const canSpec = hasSpec && canAffordSpecialAttack(weapon.specialAttack, energy)
                 const specQueued = !!combat?.specialAttackQueued
                 const isMagic = weapon?.attackStyle === 'magic'
                 const prayerActive = !!(combat?.activeProtectionPrayer || combat?.activeCombatPrayer)
@@ -3089,7 +3170,9 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                   >
                     <div class="flex items-center justify-between">
                       <div class="text-left flex-1">
-                        <div class="text-sm font-semibold text-[var(--color-parchment)]">{potion.icon} {potion.name}</div>
+                        <div class="flex items-center gap-1.5 text-sm font-semibold text-[var(--color-parchment)]">
+                          <GameIcon item={potion} iconKey={potion?.iconId} size={16} /> {potion.name}
+                        </div>
                         <div class="text-[10px] text-[var(--color-parchment)] opacity-60 mt-0.5">
                           {potion.effect === 'hp' && `+${potion.boost} HP`}
                           {potion.effect === 'attack' && `+${potion.boost} Attack`}
@@ -3189,7 +3272,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                             : 'bg-[var(--fm-parch-hi)] border-[var(--color-emerald)] active:bg-[var(--fm-parch)]'
                         }`}
                       >
-                        <div class="text-lg leading-none">{item.icon}</div>
+                        <GameIcon item={item} iconKey={item?.iconId} size={22} />
                         <div class="text-[8px] text-[var(--color-parchment)] font-semibold mt-0.5 line-clamp-2 text-center leading-tight">
                           {item.name}
                         </div>
@@ -3413,13 +3496,16 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                     return (
                       <div key={drop.itemId} class="bg-[var(--color-void)] rounded-lg p-2">
                         <div class="flex items-start justify-between gap-2">
-                          <div class="text-left flex-1 min-w-0">
-                            <div class="text-[11px] font-semibold text-[var(--color-parchment)]">
-                              {item?.icon || '📦'} {item?.name || drop.itemId}
-                            </div>
-                            <div class="text-[9px] text-[var(--color-parchment)] opacity-60 mt-0.5">
-                              {formatDropChance(drop.chance)}
-                              {Array.isArray(drop.quantity) ? ` · ${drop.quantity[0]}–${drop.quantity[1]} ea` : ` · ${drop.quantity}`}
+                          <div class="flex items-center gap-1.5 text-left flex-1 min-w-0">
+                            <GameIcon item={item} iconKey={item?.iconId} size={16} />
+                            <div class="min-w-0">
+                              <div class="text-[11px] font-semibold text-[var(--color-parchment)]">
+                                {item?.name || drop.itemId}
+                              </div>
+                              <div class="text-[9px] text-[var(--color-parchment)] opacity-60 mt-0.5">
+                                {formatDropChance(drop.chance)}
+                                {Array.isArray(drop.quantity) ? ` · ${drop.quantity[0]}–${drop.quantity[1]} ea` : ` · ${drop.quantity}`}
+                              </div>
                             </div>
                           </div>
                         </div>

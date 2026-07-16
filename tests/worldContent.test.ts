@@ -174,9 +174,9 @@ describe('slayer masters as place activities', () => {
   })
 
   it('locks masters by their combat/slayer requirements', () => {
-    // duradel gates on slayer 90, vannaka on combat 40, turael on nothing
-    expect(activityLockReason('slayer', 'duradel', { stats: statsAt({ slayer: 89 }) })?.reason).toContain('Slayer level 90')
-    expect(activityLockReason('slayer', 'duradel', { stats: statsAt({ slayer: 90 }) })).toBeNull()
+    // duradel gates on slayer 80 (Zul-Kaar now owns 85+), vannaka on combat 40, turael on nothing
+    expect(activityLockReason('slayer', 'duradel', { stats: statsAt({ slayer: 79 }) })?.reason).toContain('Slayer level 80')
+    expect(activityLockReason('slayer', 'duradel', { stats: statsAt({ slayer: 80 }) })).toBeNull()
     expect(activityLockReason('slayer', 'vannaka', { stats: statsAt({}) })?.reason).toContain('combat level 40')
     expect(activityLockReason('slayer', 'turael', { stats: statsAt({}) })).toBeNull()
     expect(activityLockReason('slayer', 'no_such_master', {})?.reason).toBe('Unknown slayer master')

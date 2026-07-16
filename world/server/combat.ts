@@ -5,11 +5,11 @@
 // funnels XP through the same grant pipeline mining uses. Contract pinned by
 // world/tests/combat-adapter.test.ts.
 import { createCombatState, processCombatTick } from '../../src/engine/combat.js'
-import { resolveMagicSpell } from '../../src/engine/equipment.js'
+import { resolveMagicSpell, getCombatType } from '../../src/engine/equipment.js'
 import itemsData from '../../src/data/items.json'
 import monstersData from '../../src/data/monsters.json'
 import spellsData from '../../src/data/spells.json'
-import { adjacent, grantSessionXp, type TickPlayer } from './tick'
+import { grantSessionXp, monsterAttackRange, rangeForCombatType, withinRange, type TickPlayer } from './tick'
 import { recordDamage, topDamageContributor, type NpcState } from './npc'
 import type { TickContext, TickResult } from './tick'
 import type { ZoneEvent } from '../shared/protocol'
@@ -62,16 +62,23 @@ function playerStatsFor(player: TickPlayer): Record<string, number> {
 }
 
 /** Resolves how this player fights: real magic when a magic weapon is equipped
- * (selected spell, or the engine's powered-staff path), melee otherwise.
- * Ranged weapons stay on the melee path — ranged combat is out of scope in v1.
- * `needsSpell` means a magic weapon with no castable spell: the engine would
- * splash 0s forever, so the fight must be refused. */
-export function resolveCombatSetup(player: TickPlayer): { combatType: 'melee' | 'magic'; spell: unknown; needsSpell: boolean } {
+ * (selected spell, or the engine's powered-staff path), ranged when a ranged
+ * weapon is equipped, melee otherwise. `needsSpell` means a magic weapon with no
+ * castable spell: the engine would splash 0s forever, so the fight must be
+ * refused. */
+export function resolveCombatSetup(player: TickPlayer): { combatType: 'melee' | 'ranged' | 'magic'; spell: unknown; needsSpell: boolean } {
   const activeSpell = player.spell ? { id: player.spell } : null
   const { combatType, isPoweredStaff, spell, needsSpell } = resolveMagicSpell(player.equipment, itemsData, activeSpell, spellsData)
+  if (combatType === 'ranged') return { combatType: 'ranged', spell: null, needsSpell: false }
   if (combatType !== 'magic') return { combatType: 'melee', spell: null, needsSpell: false }
   if (needsSpell) return { combatType: 'magic', spell: null, needsSpell: true }
   return { combatType: 'magic', spell: isPoweredStaff ? null : spell, needsSpell: false }
+}
+
+/** This player's attack reach (tiles) from their equipped weapon: melee 1,
+ * ranged 5, magic 7. */
+export function playerAttackRange(player: TickPlayer): number {
+  return rangeForCombatType(getCombatType(player.equipment, itemsData))
 }
 
 /** Begins a fight between the player and an npc. The engine state seeds from the
@@ -110,7 +117,8 @@ function killNpc(player: TickPlayer, npc: NpcState, loot: { itemId: string; quan
 
 /** Advances one active combat tick for a player. Movement/cancel clears
  * `player.combat` upstream, so reaching here means the player intends to fight.
- * Ends the fight (bull returns toward idle) if the player is no longer adjacent. */
+ * Ends the fight (bull returns toward idle) once the player is beyond both their
+ * own and the monster's attack reach. */
 export function stepCombat(player: TickPlayer, ctx: TickContext, result: TickResult): void {
   const combat = player.combat
   if (!combat) return
@@ -121,9 +129,16 @@ export function stepCombat(player: TickPlayer, ctx: TickContext, result: TickRes
     resetSpecial(player, result)
     return
   }
-  if (!adjacent(player, npc)) {
+  // Reach is per combat type: the player strikes from their weapon's range, the
+  // monster from its own. The fight only ends when the player is beyond BOTH —
+  // fleeing past a ranged/magic foe still leaves it able to attack while it
+  // chases. Aggro persists either way (npc.ts keeps chasing).
+  const playerRange = rangeForCombatType(combat.state.combatType as string)
+  const monsterRange = monsterAttackRange(npc.monsterId)
+  const inPlayerRange = withinRange(player, npc, playerRange)
+  const inMonsterRange = withinRange(player, npc, monsterRange)
+  if (!inPlayerRange && !inMonsterRange) {
     player.combat = null
-    if (npc.attackerId === player.charId) npc.attackerId = null
     player.anim = 'idle'
     resetSpecial(player, result)
     return
@@ -143,8 +158,14 @@ export function stepCombat(player: TickPlayer, ctx: TickContext, result: TickRes
   // consume on a landed hit, then clear so the same cast never double-charges).
   const { combatState, events } = processCombatTick(combat.state, playerStatsFor(player), player.equipment, itemsData, {}, player.inventory, null)
   combat.state = combatState
-  player.anim = 'attack'
+  // Only show the attack animation when the player can actually reach; while out
+  // of their own range (e.g. kiting a slower foe, or a melee player backing off a
+  // caster) they stand idle unless they're walking (anim set upstream).
+  if (inPlayerRange) player.anim = 'attack'
+  else if (player.path.length === 0) player.anim = 'idle'
   npc.state = 'combat'
+  // Clear last tick's swing so a fresh one re-triggers the attack animation.
+  if (npc.anim === 'attack') npc.anim = 'idle'
   npc.lastCombatTick = ctx.tick
   result.npcChanged.push(npc.id)
 
@@ -165,6 +186,7 @@ export function stepCombat(player: TickPlayer, ctx: TickContext, result: TickRes
 
   for (const ev of events as { type: string; damage?: number; hits?: number[]; totalDamage?: number; loot?: { itemId: string; quantity: number }[]; xpSkills?: Record<string, number>; spellName?: string }[]) {
     if (ev.type === 'playerHit') {
+      if (!inPlayerRange) continue
       npc.hp = Math.max(0, combatState.monster.currentHP)
       recordDamage(npc, player.charId, ev.damage ?? 0, ctx.tick)
       result.hits.push({ targetId: npc.id, dmg: ev.damage ?? 0 })
@@ -177,19 +199,25 @@ export function stepCombat(player: TickPlayer, ctx: TickContext, result: TickRes
       resetSpecial(player, result)
       return
     } else if (ev.type === 'specialHit') {
+      if (!inPlayerRange) continue
       // A fired special: one or more hits, monster HP already applied on state.
       npc.hp = Math.max(0, combatState.monster.currentHP)
       recordDamage(npc, player.charId, ev.totalDamage ?? 0, ctx.tick)
       const splats = ev.hits && ev.hits.length > 0 ? ev.hits : [ev.totalDamage ?? 0]
       for (const dmg of splats) result.hits.push({ targetId: npc.id, dmg })
     } else if (ev.type === 'monsterHit' || ev.type === 'dragonfireHit') {
-      if (!isTarget) continue
+      // The monster only lands when the player is within ITS reach — a melee foe
+      // can't hit a player kiting at magic range until it closes the gap.
+      if (!isTarget || !inMonsterRange) continue
+      npc.anim = 'attack' // the monster swings — broadcast so the client plays it
       player.hp = Math.max(0, player.hp - (ev.damage ?? 0))
       result.hits.push({ targetId: player.charId, dmg: ev.damage ?? 0 })
     } else if (ev.type === 'monsterMiss') {
-      if (!isTarget) continue
+      if (!isTarget || !inMonsterRange) continue
+      npc.anim = 'attack'
       result.hits.push({ targetId: player.charId, dmg: 0 })
     } else if (ev.type === 'xp' && ev.xpSkills) {
+      if (!inPlayerRange) continue
       for (const [skill, amount] of Object.entries(ev.xpSkills)) {
         if (amount) result.events.push(...grantSessionXp(player, skill, Math.floor(amount)))
       }
