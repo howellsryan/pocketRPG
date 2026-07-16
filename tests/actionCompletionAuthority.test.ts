@@ -217,24 +217,21 @@ describe('action completion authority helpers', () => {
     expect(save.settings.slayerPoints).toBe(100)
   })
 
-  // TEMP: server threshold dropped to 1 completion for live testing on the
-  // branch preview — revert these assertions to 25 alongside
-  // actionCompletion.js before this PR merges.
-  it("rejects Zul-Kaar's Blade when the server's own slayerMasterTaskCompletions.zul_kaar is below 1, even with ample slayer points", () => {
+  it("rejects Zul-Kaar's Blade when the server's own slayerMasterTaskCompletions.zul_kaar is below 25, even with ample slayer points", () => {
     // Server-authoritative gate: the client computes/gates on
     // slayerMasterTaskCompletions too, but per §14 that's never sufficient on
     // its own for a high-value grant. This must read strictly from the
     // server's persisted saveObject, never a client-supplied request field.
     const save = makeSave()
     save.settings.slayerPoints = 100_000
-    save.settings.slayerMasterTaskCompletions = { zul_kaar: 0 }
+    save.settings.slayerMasterTaskCompletions = { zul_kaar: 24 }
     expect(() => settleActionCompletion(save, {
       sourceType: 'slayer',
       sourceId: 'slayer',
       nonce: 'slayer:zul_kaars_blade:1',
       rewards: [{ itemId: 'zul_kaars_blade', quantity: 1 }],
-      slayerPoints: -10,
-    })).toThrow(/1 completed Zul-Kaar tasks/)
+      slayerPoints: -2500,
+    })).toThrow(/25 completed Zul-Kaar tasks/)
     // Nothing was granted or debited by the refused attempt.
     expect(save.settings.slayerPoints).toBe(100_000)
     expect(save.inventory).toEqual([])
@@ -248,20 +245,20 @@ describe('action completion authority helpers', () => {
       sourceId: 'slayer',
       nonce: 'slayer:zul_kaars_blade:2',
       rewards: [{ itemId: 'zul_kaars_blade', quantity: 1 }],
-      slayerPoints: -10,
-    })).toThrow(/1 completed Zul-Kaar tasks/)
+      slayerPoints: -2500,
+    })).toThrow(/25 completed Zul-Kaar tasks/)
   })
 
-  it("grants Zul-Kaar's Blade once the server's slayerMasterTaskCompletions.zul_kaar reaches 1", () => {
+  it("grants Zul-Kaar's Blade once the server's slayerMasterTaskCompletions.zul_kaar reaches 25", () => {
     const save = makeSave()
-    save.settings.slayerPoints = 10
-    save.settings.slayerMasterTaskCompletions = { zul_kaar: 1 }
+    save.settings.slayerPoints = 2500
+    save.settings.slayerMasterTaskCompletions = { zul_kaar: 25 }
     const out = settleActionCompletion(save, {
       sourceType: 'slayer',
       sourceId: 'slayer',
       nonce: 'slayer:zul_kaars_blade:3',
       rewards: [{ itemId: 'zul_kaars_blade', quantity: 1 }],
-      slayerPoints: -10,
+      slayerPoints: -2500,
     })
     expect(out.granted).toEqual([{ itemId: 'zul_kaars_blade', quantity: 1, destination: 'inventory' }])
     expect(save.settings.slayerPoints).toBe(0)
