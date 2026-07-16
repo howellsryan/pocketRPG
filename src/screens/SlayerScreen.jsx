@@ -9,6 +9,7 @@ import { MultiStyleChip } from './CombatMobileSheets.jsx'
 import { getMonsterArt, getCategoryArt, getMonsterAttackStyles } from '../utils/combatArt.js'
 import { getLevelFromXP } from '../engine/experience.js'
 import monstersData from '../data/monsters.json'
+import raidsData from '../data/raids.json'
 import questsData from '../data/quests.json'
 import { requestCriticalPushSave } from '../cloud/sync.js'
 import { DAGANNOTH_KINGS_TASK_ID, SLAYER_TASK_SKIP_POINT_COST } from '../engine/slayerTasks.js'
@@ -69,9 +70,12 @@ function getTaskInfo(entry, slayerLevel, completedQuests) {
   const resolvedIds = resolveTaskMonsterIds(id)
   const resolved = resolvedIds.map(mid => monstersData[mid]).filter(Boolean)
   const lead = resolved[0] || null
+  const raidMeta = RAID_TASK_META[id]
   const name = id === DAGANNOTH_KINGS_TASK_ID
     ? 'Nagadoth Kings'
-    : (monstersData[id]?.name || id.replace(/_/g, ' '))
+    : raidMeta
+      ? (raidsData[raidMeta.raidId]?.name || id.replace(/_/g, ' '))
+      : (monstersData[id]?.name || id.replace(/_/g, ' '))
   const combatLevel = resolved.length ? Math.max(...resolved.map(m => m.combatLevel || 0)) : 0
   const slayerReq = resolved.length ? Math.max(...resolved.map(m => m.slayerRequirement || 0)) : 0
   const questReq = resolved.map(m => m.questRequirement).find(Boolean) || null

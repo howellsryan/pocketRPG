@@ -202,21 +202,30 @@ export const SLAYER_MASTERS = [
   },
 ]
 
+// Monsters whose task is always a single kill, regardless of the master's
+// bossTaskRange — these are singular, high-effort world bosses rather than a
+// grindable pool.
+const SINGLE_KILL_MONSTER_IDS = new Set(['ember_tyrant', 'ashen_crucible'])
+
 // Build a slayer task object for an assigned monster. Shared by the game client
-// and the MCP assignment intent so the two paths can't drift: Ember Tyrant is
-// always a single kill; bosses use the master's bossTaskRange (default [20,50]);
-// everything else rolls within the master's taskRange. `options.rng` overrides
-// Math.random for deterministic assignment.
+// and the MCP assignment intent so the two paths can't drift: SINGLE_KILL_MONSTER_IDS
+// are always a single kill; RAID_TASK_META entries display the raid's own name
+// (not its final boss's); bosses use the master's bossTaskRange (default
+// [20,50]); everything else rolls within the master's taskRange. `options.rng`
+// overrides Math.random for deterministic assignment.
 export function buildSlayerTask(master, monsterId, isBoss, options = {}) {
   const rng = options.rng || Math.random
   const quantityMultiplier = (Number(options.quantityMultiplier) > 0) ? Number(options.quantityMultiplier) : 1
   const monsterData = monstersData[monsterId]
+  const raidMeta = RAID_TASK_META[monsterId]
   const monsterName = monsterId === DAGANNOTH_KINGS_TASK_ID
     ? 'Nagadoth Kings'
-    : (monsterData?.name || monsterId.replace(/_/g, ' '))
+    : raidMeta
+      ? (raidsData[raidMeta.raidId]?.name || monsterId.replace(/_/g, ' '))
+      : (monsterData?.name || monsterId.replace(/_/g, ' '))
 
   let totalCount
-  if (monsterId === 'ember_tyrant') {
+  if (SINGLE_KILL_MONSTER_IDS.has(monsterId)) {
     totalCount = 1
   } else {
     const taskRange = options.entry?.taskRange || (isBoss ? (master.bossTaskRange || [20, 50]) : master.taskRange)
