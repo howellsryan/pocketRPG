@@ -104,6 +104,26 @@ describe('shardglass gathering perk — idle simulation', () => {
   })
 })
 
+describe('shardglass tools mirror their dragon counterparts in combat', () => {
+  const combatKeys = ['attackSpeed', 'attackStyle', 'attackBonus', 'defenceBonus', 'otherBonus', 'twoHanded'] as const
+  const pairs: [string, string][] = [
+    ['shardglass_pickaxe', 'dragon_pickaxe'],
+    ['shardglass_axe', 'dragon_axe'],
+  ]
+
+  it.each(pairs)('%s wields exactly like %s', (shardId, dragonId) => {
+    const shard = (itemsData as any)[shardId]
+    const dragon = (itemsData as any)[dragonId]
+    expect(shard.type).toBe('weapon')
+    for (const key of combatKeys) {
+      expect(shard[key]).toEqual(dragon[key])
+    }
+    // Still a wieldable weapon gated on attack, and still its own gathering tier.
+    expect(shard.requirements.attack).toBe(dragon.requirements.attack)
+    expect(shard.toolFor).toBe(dragon.toolFor)
+  })
+})
+
 describe('visage shield combine recipe', () => {
   it('forges the visage shield from the dragon visage + anti-dragon shield + 10m coins', () => {
     const visage = (itemsData as any).dragon_visage

@@ -9169,15 +9169,18 @@
     "id": "shardglass_pickaxe",
     "legacy_item_id": "crystal_pickaxe",
     "name": "Shardglass Pickaxe",
-    "type": "tool",
+    "type": "weapon",
     "slot": "weapon",
+    "twoHanded": false,
     "stackable": false,
     "scaleCharged": true,
+    "attackSpeed": 4,
+    "attackStyle": "stab",
     "attackBonus": {
-      "stab": 0,
-      "slash": 0,
-      "crush": 0,
-      "magic": 0,
+      "stab": 57,
+      "slash": -4,
+      "crush": -2,
+      "magic": -7,
       "ranged": 0
     },
     "defenceBonus": {
@@ -9188,12 +9191,13 @@
       "ranged": 0
     },
     "otherBonus": {
-      "meleeStrength": 0,
+      "meleeStrength": 44,
       "rangedStrength": 0,
       "magicDamage": 0
     },
     "toolFor": "mining",
     "requirements": {
+      "attack": 60,
       "mining": 70
     },
     "shopValue": 7500000,
@@ -9205,15 +9209,18 @@
     "id": "shardglass_axe",
     "legacy_item_id": "crystal_axe",
     "name": "Shardglass Axe",
-    "type": "tool",
+    "type": "weapon",
     "slot": "weapon",
+    "twoHanded": false,
     "stackable": false,
     "scaleCharged": true,
+    "attackSpeed": 5,
+    "attackStyle": "slash",
     "attackBonus": {
-      "stab": 0,
-      "slash": 0,
-      "crush": 0,
-      "magic": 0,
+      "stab": 2,
+      "slash": 60,
+      "crush": -10,
+      "magic": -10,
       "ranged": 0
     },
     "defenceBonus": {
@@ -9224,12 +9231,13 @@
       "ranged": 0
     },
     "otherBonus": {
-      "meleeStrength": 0,
+      "meleeStrength": 55,
       "rangedStrength": 0,
       "magicDamage": 0
     },
     "toolFor": "woodcutting",
     "requirements": {
+      "attack": 60,
       "woodcutting": 70
     },
     "shopValue": 7500000,
