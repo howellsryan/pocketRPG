@@ -181,6 +181,83 @@ function farmingChunks() {
   return [category('herbs', 'Herbs'), category('trees', 'Trees'), category('fruitTrees', 'Fruit trees')].filter(Boolean)
 }
 
+// Mirrors src/engine/consumables.js: combat potions grant a secondary ranged +
+// magic boost on top of their primary melee boost; prayer/super_restore potions
+// restore a flat amount instantly instead of a timed stat buff (their `boost`
+// field in items.json is vestigial for those two effects).
+const COMBAT_POTION_RANGED_BOOST = 14
+const COMBAT_POTION_MAGIC_BOOST = 4
+const PRAYER_RESTORE_AMOUNTS = { prayer: 20, super_restore: 22 }
+
+function potionChunk() {
+  const items = readJson('items.json')
+  const potions = Object.values(items).filter((it) => it.type === 'potion')
+  const lines = potions.map((p) => {
+    const restore = PRAYER_RESTORE_AMOUNTS[p.effect]
+    if (restore) return `${p.name}: instantly restores ${restore} Prayer points, no timed buff`
+    if (p.effect === 'hp') {
+      const wipe = p.wipesPotions ? '; also clears every other active potion buff' : ''
+      return `${p.name}: instantly heals ${p.boost} HP${wipe}, no timed stat buff`
+    }
+    const boost = Number(p.boost) || 0
+    const dur = fmtDuration(Number(p.duration) || 300)
+    const stats = p.effect === 'combat'
+      ? `+${boost} Attack, +${boost} Strength, +${boost} Defence, +${COMBAT_POTION_RANGED_BOOST} Ranged, +${COMBAT_POTION_MAGIC_BOOST} Magic`
+      : `+${boost} ${titleCaseId(p.effect)}`
+    return `${p.name}: ${stats} for ${dur}`
+  })
+  return {
+    id: 'data_potions',
+    title: 'Potions: stat boosts, heals and durations',
+    tags: ['potion', 'potions', 'boost', 'buff', 'super combat', 'super strength', 'super attack', 'super defence'],
+    text:
+      `All potions and what they do. Stat-boost potions last a limited time, stack additively with other active potions ` +
+      `on the same stat, and never delay your next attack (they're combo consumables). ${lines.join('. ')}.`,
+  }
+}
+
+// Woodcutting axes use a dedicated override map instead of their own item
+// speedMultiplier field — mirrors WOODCUTTING_AXE_SPEED_MULTIPLIERS in
+// src/engine/skilling.js (kept in lockstep by tests/skilling.test.ts).
+const WOODCUTTING_AXE_SPEED_MULTIPLIERS = {
+  bronze_axe: 1.00, iron_axe: 0.90, steel_axe: 0.85, black_axe: 0.80,
+  mithril_axe: 0.75, adamant_axe: 0.70, runeforged_axe: 0.62, dragon_axe: 0.56,
+  infernal_axe: 0.53, shardglass_axe: 0.50, third_age_axe: 0.50, '2nd_age_axe': 0.50,
+}
+
+function toolSpeedChunk() {
+  const items = readJson('items.json')
+  const bySkill = { woodcutting: [], mining: [], fishing: [] }
+  for (const it of Object.values(items)) {
+    if (!it.toolFor || !(it.toolFor in bySkill)) continue
+    const mult = it.toolFor === 'woodcutting'
+      ? (WOODCUTTING_AXE_SPEED_MULTIPLIERS[it.id] ?? it.speedMultiplier ?? 1)
+      : (it.speedMultiplier ?? 1)
+    bySkill[it.toolFor].push({ item: it, mult })
+  }
+  const label = { woodcutting: 'Woodcutting axes, on trees', mining: 'Mining pickaxes, on ore', fishing: 'Fishing tools' }
+  const sections = Object.entries(bySkill).map(([skill, tools]) => {
+    tools.sort((a, b) => b.mult - a.mult)
+    const lines = tools.map(({ item, mult }) => {
+      const pct = Math.round((1 - mult) * 100)
+      const reqs = Object.entries(item.requirements || {}).map(([sk, lvl]) => `${titleCaseId(sk)} ${lvl}`).join(' + ')
+      const speed = pct <= 0 ? 'no speed bonus (baseline)' : `${pct}% faster action time`
+      return `${item.name}${reqs ? ` (requires ${reqs})` : ''}: ${speed}`
+    })
+    return `${label[skill]} — ${lines.join('. ')}.`
+  })
+  return {
+    id: 'data_gathering_tool_speed',
+    title: 'Gathering tool speed: woodcutting axes, mining pickaxes and fishing tools',
+    tags: ['tool', 'tools', 'axe', 'pickaxe', 'dragon axe', 'dragon pickaxe', 'speed', 'woodcutting', 'mining', 'fishing'],
+    text:
+      `Woodcutting, Mining and Fishing can always be done bare-handed, but holding no tool at all takes twice as long as ` +
+      `even the most basic tool tier. Better tool tiers cut the action time further; each tier needs the shown skill ` +
+      `(and sometimes Attack) level to use. The Dragon Pickaxe gives the largest possible mining speed boost, halving ` +
+      `action time on ore; the Dragon Axe is the fastest non-superior woodcutting axe on trees. ${sections.join(' ')}`,
+  }
+}
+
 function specialAttackChunk() {
   const items = readJson('items.json')
   const lines = Object.values(items)
@@ -339,6 +416,8 @@ const chunks = [
   minigameChunk(),
   ...farmingChunks(),
   ...skillChunks(),
+  potionChunk(),
+  toolSpeedChunk(),
   specialAttackChunk(),
   bossChunk(),
   ...monsterChunks(),
