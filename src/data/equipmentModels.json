@@ -73,9 +73,7 @@
       "tint": "#3f8a5a"
     },
     "adamant_mace": {
-      "model": "weapons/q_hammer_double.glb",
-      "tint": "#3f8a5a",
-      "scale": 0.72
+      "model": "weapons/mace.glb"
     },
     "adamant_scimitar": {
       "model": "weapons/q_sword.glb",
@@ -94,12 +92,7 @@
       "tint": "#3f8a5a"
     },
     "adamant_pickaxe": {
-      "model": "weapons/q_axe_small.glb",
-      "bone": "hand_r",
-      "position": [-0.03, 0.06, 0.215],
-      "rotationDeg": [103, 84, -6],
-      "scale": 1,
-      "tint": "#3f8a5a"
+      "model": "weapons/diamond_pickaxe.glb"
     },
     "bronze_axe": {
       "model": "weapons/q_axe_small.glb",
@@ -126,9 +119,7 @@
       "tint": "#b87333"
     },
     "bronze_mace": {
-      "model": "weapons/q_hammer_double.glb",
-      "tint": "#b87333",
-      "scale": 0.72
+      "model": "weapons/mace.glb"
     },
     "bronze_scimitar": {
       "model": "weapons/q_sword.glb",
@@ -147,12 +138,7 @@
       "tint": "#b87333"
     },
     "bronze_pickaxe": {
-      "model": "weapons/q_axe_small.glb",
-      "bone": "hand_r",
-      "position": [-0.03, 0.06, 0.215],
-      "rotationDeg": [103, 84, -6],
-      "scale": 1,
-      "tint": "#b87333"
+      "model": "weapons/diamond_pickaxe.glb"
     },
     "dragon_axe": {
       "model": "weapons/q_axe_small.glb",
@@ -164,6 +150,10 @@
     },
     "dragon_battleaxe": {
       "model": "weapons/q_axe_double.glb",
+      "bone": "hand_r",
+      "position": [-0.045, 0.09, 0],
+      "rotationDeg": [110, 0, -15],
+      "scale": 1,
       "tint": "#c0392b"
     },
     "dragon_dagger": {
@@ -183,9 +173,7 @@
       "tint": "#c0392b"
     },
     "dragon_mace": {
-      "model": "weapons/q_hammer_double.glb",
-      "tint": "#c0392b",
-      "scale": 0.72
+      "model": "weapons/mace.glb"
     },
     "dragon_scimitar": {
       "model": "weapons/q_sword.glb",
@@ -197,15 +185,14 @@
     },
     "dragon_warhammer": {
       "model": "weapons/q_hammer_double.glb",
+      "bone": "hand_r",
+      "position": [-0.02, 0.095, 0.125],
+      "rotationDeg": [105, 90, -15],
+      "scale": 0.55,
       "tint": "#c0392b"
     },
     "dragon_pickaxe": {
-      "model": "weapons/q_axe_small.glb",
-      "bone": "hand_r",
-      "position": [-0.03, 0.06, 0.215],
-      "rotationDeg": [103, 84, -6],
-      "scale": 1,
-      "tint": "#c0392b"
+      "model": "weapons/diamond_pickaxe.glb"
     },
     "iron_axe": {
       "model": "weapons/q_axe_small.glb",
@@ -232,9 +219,7 @@
       "tint": "#6e747e"
     },
     "iron_mace": {
-      "model": "weapons/q_hammer_double.glb",
-      "tint": "#6e747e",
-      "scale": 0.72
+      "model": "weapons/mace.glb"
     },
     "iron_scimitar": {
       "model": "weapons/q_sword.glb",
@@ -253,12 +238,7 @@
       "tint": "#6e747e"
     },
     "iron_pickaxe": {
-      "model": "weapons/q_axe_small.glb",
-      "bone": "hand_r",
-      "position": [-0.03, 0.06, 0.215],
-      "rotationDeg": [103, 84, -6],
-      "scale": 1,
-      "tint": "#6e747e"
+      "model": "weapons/diamond_pickaxe.glb"
     },
     "longbow": {
       "model": "weapons/q_bow.glb",
@@ -313,9 +293,7 @@
       "tint": "#3f57c4"
     },
     "mithril_mace": {
-      "model": "weapons/q_hammer_double.glb",
-      "tint": "#3f57c4",
-      "scale": 0.72
+      "model": "weapons/mace.glb"
     },
     "mithril_scimitar": {
       "model": "weapons/q_sword.glb",
@@ -334,12 +312,7 @@
       "tint": "#3f57c4"
     },
     "mithril_pickaxe": {
-      "model": "weapons/q_axe_small.glb",
-      "bone": "hand_r",
-      "position": [-0.03, 0.06, 0.215],
-      "rotationDeg": [103, 84, -6],
-      "scale": 1,
-      "tint": "#3f57c4"
+      "model": "weapons/diamond_pickaxe.glb"
     },
     "oak_longbow": {
       "model": "weapons/q_bow.glb",
@@ -388,12 +361,7 @@
       "tint": "#2fd0c0"
     },
     "runeforged_pickaxe": {
-      "model": "weapons/q_axe_small.glb",
-      "bone": "hand_r",
-      "position": [-0.03, 0.06, 0.215],
-      "rotationDeg": [103, 84, -6],
-      "scale": 1,
-      "tint": "#2fd0c0"
+      "model": "weapons/diamond_pickaxe.glb"
     },
     "shortbow": {
       "model": "weapons/q_bow.glb",
@@ -427,9 +395,7 @@
       "tint": "#bcc6d2"
     },
     "steel_mace": {
-      "model": "weapons/q_hammer_double.glb",
-      "tint": "#bcc6d2",
-      "scale": 0.72
+      "model": "weapons/mace.glb"
     },
     "steel_scimitar": {
       "model": "weapons/q_sword.glb",
@@ -448,12 +414,7 @@
       "tint": "#bcc6d2"
     },
     "steel_pickaxe": {
-      "model": "weapons/q_axe_small.glb",
-      "bone": "hand_r",
-      "position": [-0.03, 0.06, 0.215],
-      "rotationDeg": [103, 84, -6],
-      "scale": 1,
-      "tint": "#bcc6d2"
+      "model": "weapons/diamond_pickaxe.glb"
     },
     "thornspine_shortbow": {
       "model": "weapons/q_bow.glb",
@@ -491,28 +452,13 @@
       "scale": 1
     },
     "shardglass_pickaxe": {
-      "model": "weapons/q_axe_small.glb",
-      "bone": "hand_r",
-      "position": [-0.03, 0.06, 0.215],
-      "rotationDeg": [103, 84, -6],
-      "scale": 1,
-      "tint": "#dcdbe0"
+      "model": "weapons/diamond_pickaxe.glb"
     },
     "2nd_age_pickaxe": {
-      "model": "weapons/q_axe_small.glb",
-      "bone": "hand_r",
-      "position": [-0.03, 0.06, 0.215],
-      "rotationDeg": [103, 84, -6],
-      "scale": 1,
-      "tint": "#e5e4e2"
+      "model": "weapons/diamond_pickaxe.glb"
     },
     "gold_pickaxe": {
-      "model": "weapons/q_axe_small.glb",
-      "bone": "hand_r",
-      "position": [-0.03, 0.06, 0.215],
-      "rotationDeg": [103, 84, -6],
-      "scale": 1,
-      "tint": "#f39c12"
+      "model": "weapons/diamond_pickaxe.glb"
     }
   },
   "gear": {
