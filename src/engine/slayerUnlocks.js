@@ -15,10 +15,13 @@ export const SLAYER_UNLOCKS = [
     description: 'Slayer gloves that grant +5 accuracy and +5 max damage against your assigned Slayer task.',
   },
   {
+    // TEMP: cost/requirement dropped to 10 points / 1 completion for live
+    // testing on the branch preview — revert to cost: 2500, count: 25 before
+    // this PR merges.
     itemId: 'zul_kaars_blade',
-    cost: 2500,
+    cost: 10,
     description: 'A blade forged in raid-hardened obsidian. Special: Disrupt.',
-    requiresMasterCompletions: { masterId: 'zul_kaar', count: 25 },
+    requiresMasterCompletions: { masterId: 'zul_kaar', count: 1 },
   },
 ]
 

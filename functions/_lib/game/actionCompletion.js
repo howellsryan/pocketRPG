@@ -126,10 +126,12 @@ export function settleActionCompletion(saveObject, { sourceType, sourceId, nonce
   // the server's own persisted save (settings.slayerMasterTaskCompletions),
   // never from any client-supplied request field, or a client could grant
   // itself the weapon by simply claiming enough completions.
+  // TEMP: threshold dropped to 1 for live testing on the branch preview —
+  // revert to 25 (and the matching error message) before this PR merges.
   if (rewards.some(r => r?.itemId === 'zul_kaars_blade')) {
     const zulKaarCompletions = Math.floor(Number(saveObject.settings?.slayerMasterTaskCompletions?.zul_kaar) || 0)
-    if (zulKaarCompletions < 25) {
-      throw new GameApiError('SLAYER_MASTER_COMPLETIONS_REQUIRED', 'Requires 25 completed Zul-Kaar tasks', 403)
+    if (zulKaarCompletions < 1) {
+      throw new GameApiError('SLAYER_MASTER_COMPLETIONS_REQUIRED', 'Requires 1 completed Zul-Kaar tasks', 403)
     }
   }
 
