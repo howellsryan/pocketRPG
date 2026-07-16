@@ -807,9 +807,30 @@
       "scale": 1,
       "tint": "#d4af37"
     },
-    "ancestral_wand": { "model": "weapons/q_staff.gltf", "tint": "#d8cdb0" },
-    "2nd_age_wand": { "model": "weapons/q_staff.gltf", "tint": "#c9a94a" },
-    "archmage_wand": { "model": "weapons/q_staff.gltf", "tint": "#5566cc" },
+    "ancestral_wand": {
+      "model": "weapons/q_staff.gltf",
+      "bone": "hand_r",
+      "position": [-0.025, 0.095, 0],
+      "rotationDeg": [110, 0, -15],
+      "scale": 0.47,
+      "tint": "#d8cdb0"
+    },
+    "2nd_age_wand": {
+      "model": "weapons/q_staff.gltf",
+      "bone": "hand_r",
+      "position": [-0.025, 0.095, 0],
+      "rotationDeg": [110, 0, -15],
+      "scale": 0.47,
+      "tint": "#c9a94a"
+    },
+    "archmage_wand": {
+      "model": "weapons/q_staff.gltf",
+      "bone": "hand_r",
+      "position": [-0.025, 0.095, 0],
+      "rotationDeg": [110, 0, -15],
+      "scale": 0.47,
+      "tint": "#5566cc"
+    },
     "grondar_godsword": { "model": "weapons/q_claymore.gltf", "tint": "#8a4b32" },
     "zephyra_godsword": { "model": "weapons/q_claymore.gltf", "tint": "#7fa8c0" },
     "lumira_godsword": { "model": "weapons/q_claymore.gltf", "tint": "#b58fb0" },
@@ -926,48 +947,84 @@
       "tint": "#8a9a5b"
     },
     "boneclaw_shield": {
-      "model": "shields/q_shield.gltf",
+      "model": "shields/q_celtic.gltf",
       "slot": "shield",
+      "bone": "hand_l",
+      "position": [0.08, 0.01, 0.06],
+      "rotationDeg": [-18, -111, -73],
+      "scale": 1.2,
       "tint": "#d8cdb0"
     },
     "warped_buckler": {
-      "model": "shields/q_round.gltf",
+      "model": "shields/q_celtic.gltf",
       "slot": "shield",
+      "bone": "hand_l",
+      "position": [0.08, 0.01, 0.06],
+      "rotationDeg": [-18, -111, -73],
+      "scale": 1.2,
       "tint": "#6f5b8e"
     },
     "ward_of_elidria": {
-      "model": "shields/q_shield.gltf",
+      "model": "shields/q_celtic.gltf",
       "slot": "shield",
+      "bone": "hand_l",
+      "position": [0.08, 0.01, 0.06],
+      "rotationDeg": [-18, -111, -73],
+      "scale": 1.2,
       "tint": "#e0d7a8"
     },
     "lumira_d_hide_shield": {
-      "model": "shields/q_round.gltf",
+      "model": "shields/q_celtic.gltf",
       "slot": "shield",
+      "bone": "hand_l",
+      "position": [0.08, 0.01, 0.06],
+      "rotationDeg": [-18, -111, -73],
+      "scale": 1.2,
       "tint": "#b58fb0"
     },
     "verdant_d_hide_shield": {
-      "model": "shields/q_round.gltf",
+      "model": "shields/q_celtic.gltf",
       "slot": "shield",
+      "bone": "hand_l",
+      "position": [0.08, 0.01, 0.06],
+      "rotationDeg": [-18, -111, -73],
+      "scale": 1.2,
       "tint": "#4a7a3a"
     },
     "krylth_d_hide_shield": {
-      "model": "shields/q_round.gltf",
+      "model": "shields/q_celtic.gltf",
       "slot": "shield",
+      "bone": "hand_l",
+      "position": [0.08, 0.01, 0.06],
+      "rotationDeg": [-18, -111, -73],
+      "scale": 1.2,
       "tint": "#4a4a55"
     },
     "ancient_d_hide_shield": {
-      "model": "shields/q_round.gltf",
+      "model": "shields/q_celtic.gltf",
       "slot": "shield",
+      "bone": "hand_l",
+      "position": [0.08, 0.01, 0.06],
+      "rotationDeg": [-18, -111, -73],
+      "scale": 1.2,
       "tint": "#b09060"
     },
     "zephyra_d_hide_shield": {
-      "model": "shields/q_round.gltf",
+      "model": "shields/q_celtic.gltf",
       "slot": "shield",
+      "bone": "hand_l",
+      "position": [0.08, 0.01, 0.06],
+      "rotationDeg": [-18, -111, -73],
+      "scale": 1.2,
       "tint": "#7fa8c0"
     },
     "grondar_d_hide_shield": {
-      "model": "shields/q_round.gltf",
+      "model": "shields/q_celtic.gltf",
       "slot": "shield",
+      "bone": "hand_l",
+      "position": [0.08, 0.01, 0.06],
+      "rotationDeg": [-18, -111, -73],
+      "scale": 1.2,
       "tint": "#8a4b32"
     },
     "adamant_full_helm": {
