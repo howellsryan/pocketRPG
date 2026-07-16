@@ -1,6 +1,6 @@
 ---
 name: procgen-creature
-description: Use when authoring or editing procedural 3D specs in src/data/creatures3d.json (blend-shell arena monsters) or src/data/hero3d.json (the procedural hero and its composable equipment). Covers spec conventions, the 24-primitive budget, palette rules, rig field reference, shader gotchas, and the mandatory screenshot review via scripts/render-proc.mjs. Do not use for GLB/Tripo assets (threejs-3d-generator) or generic three.js work.
+description: Use when authoring or editing procedural 3D specs in src/data/creatures3d.json (blend-shell arena monsters) or src/data/hero3d.json (the procedural hero and its composable equipment). Covers spec conventions, the 24-primitive budget, palette rules, rig field reference, shader gotchas, and the mandatory screenshot review via scripts/render-proc.mjs. Do not use for GLB/imported model assets or generic three.js work.
 ---
 
 # procgen-creature: authoring blend-shell creatures

@@ -70,6 +70,30 @@
     "w": 10,
     "h": 8
    }
+  },
+  {
+   "id": "krylth_1",
+   "monsterId": "krylth_the_defiler",
+   "x": 14,
+   "z": 20,
+   "wander": {
+    "x": 9,
+    "z": 16,
+    "w": 10,
+    "h": 8
+   }
+  },
+  {
+   "id": "venomcoil_1",
+   "monsterId": "venomcoil_matriarch",
+   "x": 28,
+   "z": 20,
+   "wander": {
+    "x": 23,
+    "z": 16,
+    "w": 10,
+    "h": 8
+   }
   }
  ],
  "exits": [
