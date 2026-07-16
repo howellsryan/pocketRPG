@@ -6,7 +6,7 @@ import SharedItemModal from '../components/SharedItemModal.jsx'
 import WeaponChargePanel, { getChargeRecipe } from '../components/WeaponChargePanel.jsx'
 import TradingPostSellForm from '../components/TradingPostSellForm.jsx'
 import SellConfirmModal from '../components/SellConfirmModal.jsx'
-import { freeSlots, countItem, removeItem } from '../engine/inventory.js'
+import { freeSlots, countItem, removeItem, addItem, getBreakdownYield } from '../engine/inventory.js'
 import { isOrderBookItem } from '../engine/storeRules.js'
 import { getIronmanShopValue } from '../utils/itemValue.js'
 import { HIGH_VALUE_SELL_THRESHOLD } from '../utils/constants.js'
@@ -24,6 +24,7 @@ export default function InventoryScreen() {
   const [bankQuantityInput, setBankQuantityInput] = useState('')
   const [showChargeModal, setShowChargeModal] = useState(false)
   const [showDropConfirm, setShowDropConfirm] = useState(false)
+  const [showBreakdownConfirm, setShowBreakdownConfirm] = useState(false)
   const [sellBusy, setSellBusy] = useState(false)
   const [pendingHighValueSell, setPendingHighValueSell] = useState(null) // { qty, overridePrice, itemName, totalValue }
   const [listQtyInput, setListQtyInput] = useState(1)
@@ -127,6 +128,24 @@ export default function InventoryScreen() {
     newInv[selected.slotIndex] = null
     updateInventory(newInv)
     setShowDropConfirm(false)
+    setSelected(null)
+  }
+
+  const handleBreakdown = () => {
+    if (!selected || selected.slot.noted) return
+    setShowBreakdownConfirm(true)
+  }
+
+  const confirmBreakdown = () => {
+    if (!selected) { setShowBreakdownConfirm(false); return }
+    const yieldResult = getBreakdownYield(selected.item)
+    if (!yieldResult) { setShowBreakdownConfirm(false); return }
+    const newInv = [...inventory]
+    newInv[selected.slotIndex] = null
+    addItem(newInv, yieldResult.itemId, yieldResult.qty, itemsData[yieldResult.itemId]?.stackable || false)
+    updateInventory(newInv)
+    addToast(`Broke down ${selected.item.name} into ${yieldResult.qty.toLocaleString()} ${itemsData[yieldResult.itemId]?.name || yieldResult.itemId}`, 'info')
+    setShowBreakdownConfirm(false)
     setSelected(null)
   }
 
@@ -665,6 +684,12 @@ export default function InventoryScreen() {
                     </button>
                   )
                 })()}
+                {selected.item.breakdownResult && !selected.slot.noted && (
+                  <button onClick={handleBreakdown}
+                    class="py-2.5 rounded-lg bg-[var(--fm-royal)] text-white font-semibold text-sm active:opacity-80 border border-[var(--fm-royal)]">
+                    Break down
+                  </button>
+                )}
                 <button onClick={handleDrop}
                   class="py-2.5 rounded-lg bg-[var(--color-blood-mid)] text-white font-semibold text-sm active:opacity-80">
                   Drop
@@ -890,6 +915,32 @@ export default function InventoryScreen() {
         />
       )}
 
+      {showBreakdownConfirm && selected && (() => {
+        const y = getBreakdownYield(selected.item)
+        return (
+          <Modal title="Break down item?" onClose={() => setShowBreakdownConfirm(false)}>
+            <div class="space-y-4">
+              <p class="text-sm text-[var(--color-parchment)] opacity-80">
+                Break down <span class="font-bold text-[var(--color-gold)]">{selected.item.name}</span> into <span class="font-bold text-[var(--color-gold)]">{(y?.qty || 0).toLocaleString()} {itemsData[y?.itemId]?.name || y?.itemId}</span>? The item is destroyed permanently.
+              </p>
+              <div class="grid grid-cols-2 gap-2">
+                <button
+                  onClick={() => setShowBreakdownConfirm(false)}
+                  class="min-h-[44px] py-2.5 rounded-lg bg-[var(--fm-parch-lo)] text-[var(--color-parchment)] font-semibold text-sm active:opacity-80 border border-[var(--fm-rule)]"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmBreakdown}
+                  class="min-h-[44px] py-2.5 rounded-lg bg-[var(--fm-royal)] text-white font-semibold text-sm active:opacity-80"
+                >
+                  Break down
+                </button>
+              </div>
+            </div>
+          </Modal>
+        )
+      })()}
       {showDropConfirm && selected && (
         <Modal title="Drop item?" onClose={() => setShowDropConfirm(false)}>
           <div class="space-y-4">

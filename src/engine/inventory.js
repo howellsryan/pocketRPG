@@ -144,6 +144,18 @@ export function removeItemUnnotedFirst(inventory, itemId, quantity = 1) {
 }
 
 /**
+ * Resolve an item's breakdown yield — the stack a player receives when they
+ * break the item down (e.g. Shardglass gear → 5000 Shardglass Shards). Returns
+ * { itemId, qty } or null when the item declares no breakdown.
+ */
+export function getBreakdownYield(item) {
+  if (!item?.breakdownResult) return null
+  const qty = Math.max(1, Math.floor(Number(item.breakdownQty) || 0))
+  if (qty <= 0) return null
+  return { itemId: item.breakdownResult, qty }
+}
+
+/**
  * Swap two inventory slots
  */
 export function swapSlots(inventory, slotA, slotB) {

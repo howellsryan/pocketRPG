@@ -9068,6 +9068,9 @@
     "slot": "head",
     "stackable": false,
     "scaleCharged": true,
+    "chargeItemId": "shardglass_shards",
+    "breakdownResult": "shardglass_shards",
+    "breakdownQty": 5000,
     "attackBonus": {
       "stab": 0,
       "slash": 0,
@@ -9103,6 +9106,9 @@
     "slot": "body",
     "stackable": false,
     "scaleCharged": true,
+    "chargeItemId": "shardglass_shards",
+    "breakdownResult": "shardglass_shards",
+    "breakdownQty": 5000,
     "attackBonus": {
       "stab": 0,
       "slash": 0,
@@ -9138,6 +9144,9 @@
     "slot": "legs",
     "stackable": false,
     "scaleCharged": true,
+    "chargeItemId": "shardglass_shards",
+    "breakdownResult": "shardglass_shards",
+    "breakdownQty": 5000,
     "attackBonus": {
       "stab": 0,
       "slash": 0,
@@ -9174,6 +9183,9 @@
     "twoHanded": false,
     "stackable": false,
     "scaleCharged": true,
+    "chargeItemId": "shardglass_shards",
+    "breakdownResult": "shardglass_shards",
+    "breakdownQty": 5000,
     "attackSpeed": 4,
     "attackStyle": "stab",
     "attackBonus": {
@@ -9214,6 +9226,9 @@
     "twoHanded": false,
     "stackable": false,
     "scaleCharged": true,
+    "chargeItemId": "shardglass_shards",
+    "breakdownResult": "shardglass_shards",
+    "breakdownQty": 5000,
     "attackSpeed": 5,
     "attackStyle": "slash",
     "attackBonus": {
@@ -11316,6 +11331,8 @@
     "slot": "weapon",
     "twoHanded": true,
     "stackable": false,
+    "breakdownResult": "shardglass_shards",
+    "breakdownQty": 5000,
     "attackSpeed": 4,
     "attackStyle": "ranged",
     "attackBonus": {
@@ -11354,6 +11371,8 @@
     "type": "armour",
     "slot": "shield",
     "stackable": false,
+    "breakdownResult": "shardglass_shards",
+    "breakdownQty": 5000,
     "isUntradeable": true,
     "questUnlock": "wandering_elves",
     "attackBonus": {

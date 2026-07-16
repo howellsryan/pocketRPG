@@ -4,8 +4,13 @@ import {
   consumeShardglassGatherDouble,
 } from '../src/engine/skilling.js'
 import { simulateIdleSkilling } from '../src/engine/idleEngine.js'
+import { getBreakdownYield } from '../src/engine/inventory.js'
 import { describeObtainment } from '../src/utils/armoury.js'
 import itemsData from '../src/data/items.json'
+
+const shardglassGear = Object.values(itemsData as any).filter(
+  (it: any) => typeof it.id === 'string' && it.id.startsWith('shardglass_') && it.id !== 'shardglass_shards',
+) as any[]
 
 const toolItems = {
   shardglass_pickaxe: { id: 'shardglass_pickaxe', name: 'Shardglass Pickaxe', toolFor: 'mining', requirements: { mining: 70 } },
@@ -121,6 +126,29 @@ describe('shardglass tools mirror their dragon counterparts in combat', () => {
     // Still a wieldable weapon gated on attack, and still its own gathering tier.
     expect(shard.requirements.attack).toBe(dragon.requirements.attack)
     expect(shard.toolFor).toBe(dragon.toolFor)
+  })
+})
+
+describe('shardglass items charge with shardglass shards, never venom scales', () => {
+  it.each(shardglassGear.filter((it) => it.scaleCharged).map((it) => [it.id, it]))(
+    '%s charges with shardglass_shards',
+    (_id, item: any) => {
+      expect(item.chargeItemId).toBe('shardglass_shards')
+    },
+  )
+})
+
+describe('breaking shardglass gear down into shards', () => {
+  it.each(shardglassGear.map((it) => [it.id, it]))(
+    '%s breaks down into 5000 shardglass shards',
+    (_id, item: any) => {
+      expect(getBreakdownYield(item)).toEqual({ itemId: 'shardglass_shards', qty: 5000 })
+    },
+  )
+
+  it('returns null for an item that declares no breakdown', () => {
+    expect(getBreakdownYield((itemsData as any).coins)).toBeNull()
+    expect(getBreakdownYield((itemsData as any).shardglass_shards)).toBeNull()
   })
 })
 
