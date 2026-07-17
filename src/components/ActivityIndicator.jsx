@@ -46,14 +46,30 @@ function describeTask(task) {
 }
 
 export default function ActivityIndicator({ onNavigate }) {
-  const { activeTask } = useGame()
-  const info = describeTask(activeTask)
+  const { activeTask, combatStatus } = useGame()
+
+  // A live fight takes priority: show the combat icon with the monster's HP as
+  // the progress ring so the player can watch a background fight from any screen.
+  const inCombat = !!combatStatus?.active
+  const info = inCombat
+    ? { iconKey: 'combat_level', icon: '⚔️', screen: SCREENS.COMBAT, label: combatStatus.monsterName ? `Fighting ${combatStatus.monsterName}` : 'In combat' }
+    : describeTask(activeTask)
   if (!info) return null
 
-  const total = Number(activeTask.totalTicks) || 0
-  const remaining = Number(activeTask.ticksRemaining)
-  const hasProgress = total > 0 && Number.isFinite(remaining)
-  const progress = hasProgress ? Math.max(0, Math.min(1, (total - remaining) / total)) : 0
+  let hasProgress
+  let progress
+  if (inCombat) {
+    const max = Number(combatStatus.monsterMaxHP) || 0
+    const hp = Number(combatStatus.monsterHP)
+    hasProgress = max > 0 && Number.isFinite(hp)
+    // Ring shows remaining monster HP — full at the start, emptying as it dies.
+    progress = hasProgress ? Math.max(0, Math.min(1, hp / max)) : 0
+  } else {
+    const total = Number(activeTask.totalTicks) || 0
+    const remaining = Number(activeTask.ticksRemaining)
+    hasProgress = total > 0 && Number.isFinite(remaining)
+    progress = hasProgress ? Math.max(0, Math.min(1, (total - remaining) / total)) : 0
+  }
 
   const size = 30
   const stroke = 3

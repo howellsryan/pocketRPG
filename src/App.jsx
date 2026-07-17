@@ -54,6 +54,7 @@ import { schedulePushSave, schedulePeriodicSave, pushNow, beaconSaveNow, pullSav
 import { CRITICAL_SAVE_REASONS } from './cloud/criticalSavePolicy.js'
 import { fetchIdleState, resetIdleStateSync } from './cloud/idleState.js'
 import { isBackground, getActivityKey } from './engine/activityRegistry.js'
+import { isBackgroundCombatEligible } from './engine/backgroundCombat.js'
 import { isRunnableBackgroundTask, getActionTicksForTask, getCarriedPendingTicks, simulateTaskWindow, resultActions, isScreenRecentlyDriving } from './engine/activityRunner.js'
 import { mergeSession, sessionPatchFromResult } from './engine/activitySession.js'
 import { resetActivityProgressSync } from './cloud/activityProgress.js'
@@ -339,6 +340,10 @@ function IdleResultProgressCard({ type, idleResult, taskName }) {
 // systems — see CLAUDE.md §14). In the offline demo these stay visible in the
 // nav but are locked behind DemoLockedScreen.
 const CLOUD_ONLY_SCREENS = new Set([SCREENS.STORE, SCREENS.LEADERBOARD])
+// Item-shuffling screens that are off-limits while a fight ticks in the
+// background — banking or trading mid-fight would let items leave from under the
+// live combat state.
+const COMBAT_LOCKED_SCREENS = new Set([SCREENS.BANK, SCREENS.BANK_HUB, SCREENS.STORE])
 const DEMO_LOCKED_MESSAGE = '🔒 Sign in to use this — not available in the demo.'
 
 function GameApp() {
@@ -347,7 +352,7 @@ function GameApp() {
     gameLocked, lockGame, unlockGame, runLockedSave, awaitCombatCompletion, resolveCombatCompletion,
     characterUnlocks, slayerPerks, dailyTaskStates, setDailyTasks, recordGameEvent, updateWorldLocation, worldLocation, clearActivityProgress, requestActivityStart,
     inventoryFull, signalInventoryFull, dismissInventoryFullPrompt, resolveInventoryFull, combatStance, activeCombatSpell,
-    autoBankExcludedItems } = useGame()
+    autoBankExcludedItems, backgroundCombat, combatStatus } = useGame()
   const pvp = usePvp()
   const [screen, setScreen] = useState(SCREENS.HOME)
   const prevScreenRef = useRef(null) // screen before the current one (set by navigate)
@@ -360,6 +365,10 @@ function GameApp() {
   const [retryingBlockedSave, setRetryingBlockedSave] = useState(false)
   const [actionData, setActionData] = useState(null) // { monsterId, gatherTaskId, skillId, actionId }
   const [isInCombat, setIsInCombat] = useState(false) // Track if currently in combat
+  // Props for the persistent combat host. Captured when entering the combat
+  // screen and held (with a stable key) so a background-eligible fight keeps its
+  // mounted CombatScreen instance — and its tick loop — alive across navigation.
+  const [combatMount, setCombatMount] = useState(null) // { key, initialMonsterId, initialRaidId, returnTo }
   const [pendingXpChoices, setPendingXpChoices] = useState([]) // [{ rewards, questId, questName }, ...]
   const completedQuestsRef = useRef(completedQuests)
   const pendingXpChoicesRef = useRef(pendingXpChoices)
@@ -850,6 +859,14 @@ function GameApp() {
   // Keep a ref to activeTask so the tick closure always sees the latest value
   const activeTaskRef = useRef(activeTask)
   useEffect(() => { activeTaskRef.current = activeTask }, [activeTask])
+
+  // Drop the persistent combat mount once no fight is on-screen or kept alive in
+  // the background, so a later Combat-nav can't resurrect a stale monster.
+  useEffect(() => {
+    const keep = screen === SCREENS.COMBAT ||
+      (backgroundCombat && combatStatus?.backgroundable === true && !!combatStatus?.busy)
+    if (!keep) setCombatMount(prev => (prev ? null : prev))
+  }, [screen, backgroundCombat, combatStatus])
 
   // Keep refs to stats/equipment/inventory for visibility handler (avoids stale closures)
   const statsRef = useRef(stats)
@@ -1984,6 +2001,14 @@ function GameApp() {
       notifyDemoLocked()
       return
     }
+    const currentTask = getActiveTask()
+    const combatRunsInBackground = isBackgroundCombatEligible({ task: currentTask, enabled: backgroundCombat })
+    // Banking and the trading post are locked while a fight ticks in the
+    // background — finish or flee it first.
+    if (combatRunsInBackground && COMBAT_LOCKED_SCREENS.has(scr)) {
+      addToast('⚔️ You can’t do that mid-fight — finish or flee first.', 'warning')
+      return
+    }
     // Bank is location-gated like any other skill/combat start: a bank-less
     // place opens the standard travel prompt instead of the screen. Safe to
     // run on every navigate(BANK, ...) call, including the PlaceBankModal/
@@ -1995,13 +2020,28 @@ function GameApp() {
     // return there.
     if (scr !== screen) prevScreenRef.current = screen
     // Every activity except combat persists across screens — skills and gathering
-    // keep accruing in the background. Only combat stops when the player leaves.
-    const currentTask = getActiveTask()
-    if (!isBackground(currentTask)) {
+    // keep accruing in the background. Combat normally stops when the player
+    // leaves; when the background-combat setting is on it keeps ticking for a
+    // standard monster fight instead (bosses/raids/dungeons still flee).
+    if (!isBackground(currentTask) && !combatRunsInBackground) {
       if (currentTask) {
         addToast('You fled combat.', 'info')
       }
       setActiveTask(null)
+    }
+    // Capture / refresh the persistent combat host. A new target (monster/raid)
+    // remounts to auto-start it; resuming a background fight (no target) keeps
+    // the existing mounted instance.
+    if (scr === SCREENS.COMBAT) {
+      const hasNewTarget = !!(data?.monsterId || data?.raidId)
+      if (hasNewTarget || !combatMount) {
+        setCombatMount({
+          key: data?.monsterId || data?.raidId || `combat-${Date.now()}`,
+          initialMonsterId: data?.monsterId,
+          initialRaidId: data?.raidId,
+          returnTo: data?.returnTo || null,
+        })
+      }
     }
     setActionData(data || null)
     setScreen(scr)
@@ -3094,7 +3134,7 @@ function GameApp() {
       case SCREENS.ARMOURY:   return <ArmouryScreen onBack={backToPrev} />
       case SCREENS.BANK:      return <BankScreen onBack={returnNav || backToPrev} />
       case SCREENS.BANK_HUB:  return <BankHubScreen onNavigate={navigate} />
-      case SCREENS.COMBAT:    return <CombatScreen key={actionData?.monsterId} onNavigate={navigate} initialMonsterId={actionData?.monsterId} initialRaidId={actionData?.raidId} onCombatStatusChange={setIsInCombat} onBack={stopBackNav} onStopBack={stopBackNav} />
+      case SCREENS.COMBAT:    return null // rendered by the persistent combat host in <main>
       case SCREENS.DUNGEONS:  return <CombatScreen onNavigate={navigate} dungeonPlaceId={actionData?.placeId} onCombatStatusChange={setIsInCombat} onBack={stopBackNav} onStopBack={stopBackNav} />
       case SCREENS.SKILLS:    return <SkillingScreen initialSkillId={actionData?.skillId} initialActionId={actionData?.actionId} initialMasterId={actionData?.masterId} initialLocationId={actionData?.locationId} idleResult={idleResult} onNavigate={navigate} onBack={stopBackNav} onStopBack={stopBackNav} />
       case SCREENS.GATHER:    return <GatherScreen initialTaskId={actionData?.gatherTaskId} idleResult={idleResult} onBack={stopBackNav} onStopBack={stopBackNav} />
@@ -3141,6 +3181,25 @@ function GameApp() {
   const skipMode = activeTask?.type === 'combat' && (activeTask?.monster?.boss === true || activeTask?.raid === true) ? 'kill' : 'hour'
   const raidSkipCost = activeTask?.type === 'combat' && activeTask?.raidId ? (raidsData[activeTask.raidId]?.skipCost ?? 1) : null
 
+  // Persistent combat host: the CombatScreen stays mounted (hidden) while a
+  // background-eligible fight is still busy (ticking, or holding a loot/death
+  // modal), so its tick loop survives navigation. `busy` — not the cleared
+  // activeTask — gates this, so a death modal still renders after the fight ends.
+  const showWorldCombat = screen === SCREENS.COMBAT
+  // The Dungeons screen mounts its own CombatScreen, so never keep the world
+  // combat host alive there — two live fights would tick in parallel.
+  const backgroundCombatLive = backgroundCombat && combatStatus?.backgroundable === true &&
+    !!combatStatus?.busy && screen !== SCREENS.DUNGEONS
+  const keepCombatMounted = (showWorldCombat || backgroundCombatLive) && !!combatMount
+  // Combat Back / Run Away: on the combat screen, return to where the player
+  // came from; backgrounded, just stop the fight and stay put.
+  const combatBackHandler = () => {
+    if (screen !== SCREENS.COMBAT) return
+    const rt = combatMount?.returnTo
+    if (rt?.screen) navigate(rt.screen, rt.data)
+    else if (prevScreenRef.current) navigate(prevScreenRef.current)
+  }
+
   return (
     <div class="h-full flex flex-col md:flex-row">
       <SideNav
@@ -3171,6 +3230,19 @@ function GameApp() {
         />
         <main class="gf-main flex-1 overflow-hidden">
           {renderScreen()}
+          {keepCombatMounted && (
+            <div class="h-full" hidden={!showWorldCombat}>
+              <CombatScreen
+                key={combatMount.key}
+                onNavigate={navigate}
+                initialMonsterId={combatMount.initialMonsterId}
+                initialRaidId={combatMount.initialRaidId}
+                onCombatStatusChange={setIsInCombat}
+                onBack={combatBackHandler}
+                onStopBack={combatBackHandler}
+              />
+            </div>
+          )}
         </main>
         <GameFrameBar position="bottom" active={screen} onNavigate={(s) => navigate(s)} isInCombat={isInPvpMatch} onDisabledClick={() => addToast('⚔️ Cannot navigate during PvP combat!', 'warning')} demo={demoMode} lockedScreens={CLOUD_ONLY_SCREENS} onLockedClick={notifyDemoLocked} onLockedFeature={notifyDemoLocked} onBuyCredits={() => setShowBuyCreditsModal(true)} credits={credits} isCloudAccount={isCloudAccount} onSkip1h={isCloudAccount ? handleSkip1h : null} skipMode={skipMode} raidSkipCost={raidSkipCost} onDailyTasks={() => setShowDailyTasksModal(true)} dailyTasksCompleted={(dailyTaskStates || []).filter(t => t.completed).length} dailyTasksTotal={5} onOpenChat={() => setChatOpen(true)} />
       </div>

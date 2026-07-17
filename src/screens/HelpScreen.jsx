@@ -19,7 +19,7 @@ function worldBetaEnabled() {
 }
 
 export default function HelpScreen({ onNavigate, onShowIntroTour }) {
-  const { showInfoToasts, updateShowInfoToasts } = useGame()
+  const { showInfoToasts, updateShowInfoToasts, backgroundCombat, updateBackgroundCombat } = useGame()
 
   async function handleEnterWorld() {
     try {
@@ -56,6 +56,28 @@ export default function HelpScreen({ onNavigate, onShowIntroTour }) {
               <span
                 class="absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform duration-200"
                 style={{ transform: showInfoToasts ? 'translateX(20px)' : 'translateX(0)' }}
+              />
+            </button>
+          </div>
+        </Card>
+
+        <Card className="p-4">
+          <div class="flex items-center justify-between gap-3">
+            <div class="min-w-0">
+              <div class="text-sm font-semibold text-[var(--color-parchment)]">Continue combat in background</div>
+              <div class="text-xs text-[var(--color-parchment)] opacity-50 mt-0.5">Keep a monster fight running when you leave the combat screen. You can die while away — bosses and raids never run in the background.</div>
+            </div>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={backgroundCombat}
+              onClick={() => updateBackgroundCombat(!backgroundCombat)}
+              class="flex-shrink-0 relative w-11 h-6 rounded-full border-0 cursor-pointer transition-colors duration-200"
+              style={{ background: backgroundCombat ? 'var(--color-mana)' : '#444' }}
+            >
+              <span
+                class="absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform duration-200"
+                style={{ transform: backgroundCombat ? 'translateX(20px)' : 'translateX(0)' }}
               />
             </button>
           </div>
