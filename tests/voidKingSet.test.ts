@@ -20,6 +20,7 @@ const inactiveMultipliers = {
   rangedDamage: 1,
   magicAccuracy: 1,
   magicDamageBonusFlat: 0,
+  accuracyFlat: 0,
 }
 
 describe('hasFullVoidKingSet', () => {

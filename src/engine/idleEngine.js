@@ -972,7 +972,7 @@ function avgHitStats(playerStats, equipment, monster, stance, itemsData, spell =
     const styleBonus = getRangedStyleBonus(stance)
     const effRng = effectiveRanged(playerStats.ranged, 0, 1.0, styleBonus)
     maxHit = Math.floor(rangedMaxHit(effRng, bonuses.otherBonus.rangedStrength) * voidMult.rangedDamage)
-    atkRoll = Math.floor(maxAttackRoll(effRng, bonuses.attackBonus.ranged || 0) * voidMult.rangedAccuracy)
+    atkRoll = Math.floor(maxAttackRoll(effRng, (bonuses.attackBonus.ranged || 0) + voidMult.accuracyFlat) * voidMult.rangedAccuracy)
     defRoll = maxDefenceRoll(monster.stats.defence, monster.defenceBonus?.ranged || 0)
   } else if (combatType === 'magic') {
     const effMag = effectiveMagic(playerStats.magic || 1)
@@ -980,7 +980,7 @@ function avgHitStats(playerStats, equipment, monster, stance, itemsData, spell =
     const baseDamage = spell ? spell.baseDamage : Math.max(1, Math.floor((playerStats.magic || 1) / 3) + 9)
     const wornMagicDamage = getEffectiveWornMagicDamage(bonuses.otherBonus.magicDamage, equipment, itemsData)
     maxHit = magicMaxHit(baseDamage, wornMagicDamage + voidMult.magicDamageBonusFlat)
-    atkRoll = Math.floor(maxAttackRoll(effMag, bonuses.attackBonus.magic || 0) * voidMult.magicAccuracy)
+    atkRoll = Math.floor(maxAttackRoll(effMag, (bonuses.attackBonus.magic || 0) + voidMult.accuracyFlat) * voidMult.magicAccuracy)
     defRoll = monsterMagicDefenceRoll(monster.stats.magic || 1, monster.stats.defence, monster.defenceBonus?.magic || 0)
   } else {
     // Melee (default)
@@ -989,7 +989,7 @@ function avgHitStats(playerStats, equipment, monster, stance, itemsData, spell =
     const effStr = effectiveStrength(playerStats.strength, 0, 1.0, styleBonuses.strengthStyleBonus)
     maxHit = Math.floor(meleeMaxHit(effStr, bonuses.otherBonus.meleeStrength) * voidMult.meleeDamage)
     const effAtk = effectiveAttack(playerStats.attack, 0, 1.0, styleBonuses.attackStyleBonus)
-    atkRoll = Math.floor(maxAttackRoll(effAtk, bonuses.attackBonus[weaponStyle] || 0) * voidMult.meleeAccuracy)
+    atkRoll = Math.floor(maxAttackRoll(effAtk, (bonuses.attackBonus[weaponStyle] || 0) + voidMult.accuracyFlat) * voidMult.meleeAccuracy)
     defRoll = maxDefenceRoll(monster.stats.defence, monster.defenceBonus?.[weaponStyle] || 0)
   }
 

@@ -89,7 +89,7 @@ export function rollMeleeAttack(attacker, defender, itemsData) {
     atkMods.prayer.attack,
     atkStance.attackStyleBonus,
   )
-  const atkRoll = Math.floor(maxAttackRoll(effAtk, atkBonuses.attackBonus[style] || 0) * voidMult.meleeAccuracy)
+  const atkRoll = Math.floor(maxAttackRoll(effAtk, (atkBonuses.attackBonus[style] || 0) + voidMult.accuracyFlat) * voidMult.meleeAccuracy)
 
   const effDef = effectiveDefence(
     defender.stats.defence,
@@ -126,7 +126,7 @@ export function rollRangedAttack(attacker, defender, itemsData) {
   const effRngStrength = effectiveRanged(attacker.stats.ranged, atkMods.potions.ranged, atkMods.prayer.rangedStrength, styleBonus)
   const maxHit = Math.floor(rangedMaxHit(effRngStrength, atkBonuses.otherBonus.rangedStrength) * voidMult.rangedDamage)
 
-  const atkRoll = Math.floor(maxAttackRoll(effRngAttack, atkBonuses.attackBonus.ranged || 0) * voidMult.rangedAccuracy)
+  const atkRoll = Math.floor(maxAttackRoll(effRngAttack, (atkBonuses.attackBonus.ranged || 0) + voidMult.accuracyFlat) * voidMult.rangedAccuracy)
 
   const effDef = effectiveDefence(
     defender.stats.defence,
@@ -171,7 +171,7 @@ export function rollMagicAttack(attacker, defender, itemsData, opts = {}) {
   const defMods = getPvpCombatModifiers(defender)
 
   const effMag = effectiveMagic(attacker.stats.magic, atkMods.potions.magic, atkMods.prayer.magic)
-  const atkRoll = Math.floor(maxAttackRoll(effMag, atkBonuses.attackBonus.magic || 0) * voidMult.magicAccuracy)
+  const atkRoll = Math.floor(maxAttackRoll(effMag, (atkBonuses.attackBonus.magic || 0) + voidMult.accuracyFlat) * voidMult.magicAccuracy)
 
   // Player magic defence: effective magic level + magic defence equipment.
   // We use effectiveDefence(magicLevel) — for player vs player, magic

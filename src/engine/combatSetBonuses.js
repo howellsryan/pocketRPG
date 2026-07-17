@@ -1,8 +1,13 @@
 // Data-driven combat set bonuses. Each entry lists the itemId aliases accepted
 // per equipment slot and the combat multipliers granted when the full set is
-// worn. Bonuses from multiple active sets combine: multiplicative fields
-// multiply together, magicDamageBonusFlat values add. Adding a new set =
-// append one entry here; no engine changes required.
+// worn. An entry may also set `requiredWeapons` (itemIds) — when present, the
+// set only activates if the equipped weapon is one of them, in addition to
+// the armour slots. Bonuses from multiple active sets combine: multiplicative
+// fields multiply together, magicDamageBonusFlat/accuracyFlat values add
+// (accuracyFlat is a flat bonus added to the attack-roll bonus before the
+// per-style multiplier, applied uniformly to melee/ranged/magic). Adding a
+// new set = append one entry here; no engine changes required unless it
+// needs a new bonus shape.
 //
 // Legacy `void_knight_*` itemIds are accepted so saves that have not yet been
 // migrated still receive the Void bonus during their first load (see
@@ -39,6 +44,18 @@ const COMBAT_SETS = [
     },
     magicDamageBonusFlat: 0,
   },
+  {
+    // Armour-only set (no gloves slot). Requires one of the matching
+    // Shardglass weapons equipped too — a pure-armour full set grants nothing.
+    id: 'shardglass',
+    slots: {
+      head: ['shardglass_helmet'],
+      body: ['shardglass_plate_body'],
+      legs: ['shardglass_platelegs'],
+    },
+    requiredWeapons: ['blade_of_saeldor', 'bow_of_faerdhinen'],
+    accuracyFlat: 30,
+  },
 ]
 
 const MULTIPLIER_KEYS = [
@@ -57,6 +74,7 @@ function identityMultipliers() {
     rangedDamage: 1,
     magicAccuracy: 1,
     magicDamageBonusFlat: 0,
+    accuracyFlat: 0,
   }
 }
 
@@ -69,6 +87,7 @@ function hasFullSet(equipment, set) {
   for (const [slot, aliases] of Object.entries(set.slots)) {
     if (!aliases.includes(equippedItemId(equipment, slot))) return false
   }
+  if (set.requiredWeapons && !set.requiredWeapons.includes(equippedItemId(equipment, 'weapon'))) return false
   return true
 }
 
@@ -78,6 +97,7 @@ function applySet(out, set) {
     if (m[key]) out[key] *= m[key]
   }
   out.magicDamageBonusFlat += set.magicDamageBonusFlat || 0
+  out.accuracyFlat += set.accuracyFlat || 0
   return out
 }
 
@@ -107,6 +127,12 @@ export function getVoidKingCombatMultipliers(equipment) {
   const out = identityMultipliers()
   if (hasFullSet(equipment, VOID_SET)) applySet(out, VOID_SET)
   return out
+}
+
+const SHARDGLASS_SET = COMBAT_SETS.find(s => s.id === 'shardglass')
+
+export function hasFullShardglassSet(equipment) {
+  return hasFullSet(equipment, SHARDGLASS_SET)
 }
 
 const VOID_SET_ITEM_IDS = VOID_SET.slots
