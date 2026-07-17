@@ -35,7 +35,7 @@ export default function SkillBadge({ skill, xp, level, onClick, compact = false 
       </div>
       <ProgressBar value={progress} max={1} height="h-1.5" />
       <div class="text-[9px] font-[var(--font-mono)] text-[var(--color-parchment)] opacity-40 mt-1">
-        {level >= 99 ? 'MAX' : `${formatNumber(toNext)} to ${level + 1}`}
+        {level >= 99 ? `${formatNumber(xp)} XP` : `${formatNumber(toNext)} to ${level + 1}`}
       </div>
     </button>
   )

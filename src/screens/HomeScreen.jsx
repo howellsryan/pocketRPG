@@ -1,6 +1,6 @@
 import { useState } from 'preact/hooks'
 import { useGame } from '../state/gameState.jsx'
-import { calcCombatLevel, formatNumber } from '../utils/helpers.js'
+import { calcCombatLevel, formatNumber, formatQuantity } from '../utils/helpers.js'
 import { getLevelFromXP, getLevelProgress, getXPToNextLevel } from '../engine/experience.js'
 import { getAgilityBankDelayMs, formatBankDelay } from '../engine/agility.js'
 import { COMBAT_SKILLS, GATHERING_SKILLS, PRODUCTION_SKILLS, UTILITY_SKILLS, STUB_SKILLS, SCREENS } from '../utils/constants.js'
@@ -26,7 +26,7 @@ function titleCase(skill) {
   return skill.charAt(0).toUpperCase() + skill.slice(1)
 }
 
-function SkillCard({ skill, level, progress, toNext, onClick }) {
+function SkillCard({ skill, level, xp, progress, toNext, onClick }) {
   const art = getSkillArt(skill)
   const isMax = isSkillMaxed(level)
   return (
@@ -42,7 +42,7 @@ function SkillCard({ skill, level, progress, toNext, onClick }) {
         <div class="skill-card__bottom">
           <div class="xp-track"><div class="xp-fill" style={{ width: `${Math.round(progress * 100)}%` }} /></div>
           <div class={isMax ? 'xp-meta xp-meta--max' : 'xp-meta'}>
-            {isMax ? 'MAX' : `${formatNumber(toNext)} to ${level + 1}`}
+            {isMax ? `${formatQuantity(xp).text} XP` : `${formatNumber(toNext)} to ${level + 1}`}
           </div>
         </div>
       </button>
@@ -186,6 +186,7 @@ export default function HomeScreen({ onNavigate, onLogout, onManualSave, isCloud
                     key={`${group.title}-${skill}`}
                     skill={skill}
                     level={level}
+                    xp={data.xp}
                     progress={getLevelProgress(data.xp)}
                     toNext={getXPToNextLevel(data.xp)}
                     onClick={setSelectedSkillDetail}
