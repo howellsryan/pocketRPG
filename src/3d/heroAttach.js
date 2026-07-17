@@ -77,13 +77,21 @@ export function setupHideMask(THREE, skinnedMeshes) {
   }
 }
 
-// Tier tint: multiply the piece's metal materials by the registry `tint`
-// colour. The Quaternius weapon builds (scripts/build-quaternius-weapons.mjs)
-// bake their steel materials to a neutral grey ladder, so a multiply keeps
-// the light/dark shading while recolouring bronze → runeforged; wood handles
-// (and any other non-steel material) stay untouched. Textured outfit pieces
-// tint whole (a tier-dyed outfit read).
-export function applyEquipTint(THREE, obj, tint, allMaterials = false) {
+// Tier tint: recolour the piece's materials with the registry `tint`.
+// `mode` is false (default), true, or 'replace':
+//  - false: multiply only materials named "*steel*" — the Quaternius weapon
+//    builds (scripts/build-quaternius-weapons.mjs) bake their steel materials
+//    to a neutral grey ladder, so a multiply keeps the light/dark shading
+//    while recolouring bronze → runeforged; wood handles stay untouched.
+//  - true: multiply every material (skinned outfit pieces — a tier-dyed
+//    outfit read over its own texture).
+//  - 'replace': hard-set every material's colour to the tint AND drop any
+//    diffuse texture (equipModels.js TINT_ALL_MODELS). The openworld weapon
+//    pipeline (mace/talwar/pickaxe/crossbow/spear/staff/trident) and
+//    q_celtic.gltf keep their source's own (often dark/textured) colours, so
+//    multiplying barely shifts the result — these need a full override to
+//    read as "this item's tier colour" the way the grey-baked models do.
+export function applyEquipTint(THREE, obj, tint, mode = false) {
   if (!tint) return
   const c = new THREE.Color(tint)
   obj.traverse((o) => {
@@ -91,7 +99,12 @@ export function applyEquipTint(THREE, obj, tint, allMaterials = false) {
     const mats = Array.isArray(o.material) ? o.material : [o.material]
     for (const m of mats) {
       if (!m.color) continue
-      if (allMaterials || /steel/i.test(m.name || '')) m.color.multiply(c)
+      if (mode === 'replace') {
+        m.color.copy(c)
+        if (m.map) { m.map = null; m.needsUpdate = true }
+      } else if (mode === true || /steel/i.test(m.name || '')) {
+        m.color.multiply(c)
+      }
     }
   })
 }
@@ -120,7 +133,7 @@ export function attachWeapon(st, weapon, fallbackAnchor) {
       obj.position.set(px, py, pz)
       obj.rotation.set(THREE.MathUtils.degToRad(rx), THREE.MathUtils.degToRad(ry), THREE.MathUtils.degToRad(rz))
       obj.scale.setScalar(typeof weapon.scale === 'number' ? weapon.scale : 1)
-      applyEquipTint(THREE, obj, weapon.tint)
+      applyEquipTint(THREE, obj, weapon.tint, weapon.tintAll)
       anchor.add(obj)
       st.weapon = obj
       st.weaponAnchor = anchor
@@ -188,7 +201,7 @@ export function attachGearList(st, gear, fallbackAnchor) {
         obj.position.set(px, py, pz)
         obj.rotation.set(THREE.MathUtils.degToRad(rx), THREE.MathUtils.degToRad(ry), THREE.MathUtils.degToRad(rz))
         obj.scale.setScalar(typeof piece.scale === 'number' ? piece.scale : 1)
-        applyEquipTint(THREE, obj, piece.tint)
+        applyEquipTint(THREE, obj, piece.tint, piece.tintAll)
         anchor.add(obj)
         st.gear.push({ obj, anchor })
       })
