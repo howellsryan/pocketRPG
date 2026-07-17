@@ -70,7 +70,11 @@ ground.rotation.x = -Math.PI / 2
 scene.add(ground)
 
 const camera = new THREE.PerspectiveCamera(38, W / H, 0.01, 100)
-if (q.has('front')) { camera.position.set(0, 1.2, 3.4); camera.lookAt(0, 0.95, 0) }
+if (q.has('yaw')) {
+  const a = THREE.MathUtils.degToRad(parseFloat(q.get('yaw')))
+  const r = 3.6
+  camera.position.set(Math.sin(a) * r, 1.5, Math.cos(a) * r); camera.lookAt(0, 0.95, 0)
+} else if (q.has('front')) { camera.position.set(0, 1.2, 3.4); camera.lookAt(0, 0.95, 0) }
 else { camera.position.set(0.4, 1.5, 3.6); camera.lookAt(0, 0.95, 0) }
 
 const st = { disposed: false, THREE, bones: {}, gear: [], headMaskCtl: null, heroSkinned: null }

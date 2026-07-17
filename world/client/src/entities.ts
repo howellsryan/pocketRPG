@@ -119,6 +119,11 @@ function makeAnimator(model: THREE.Object3D, gltf: GLTF, names: readonly AnimNam
     }
     actions[name] = action
   }
+  // Boss GLBs (Warlord Grondar) ship an idle but no locomotion clip — alias
+  // walk to idle so they still render from the GLB instead of falling back to
+  // the procedural creature; a wandering boss reads as gliding, acceptable
+  // until a bespoke walk exists.
+  if (!actions.walk && actions.idle) actions.walk = actions.idle
   if (!actions.idle || !actions.walk) return null
   const animator: GltfAnimator = { kind: 'gltf', mixer, actions, current: null }
   playAnim(animator, 'idle')

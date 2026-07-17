@@ -158,7 +158,12 @@ export function attachGearList(st, gear, fallbackAnchor) {
         // the first, or whole sub-parts (boots, pauldrons) silently vanish.
         const pieceSkinnedList = []
         gltf.scene.traverse((o) => { if (o.isSkinnedMesh) pieceSkinnedList.push(o) })
-        if (pieceSkinnedList.length && st.heroSkinned) {
+        // Only body/legs outfit pieces (built to share the hero skeleton, marked
+        // by their region hide-flag) get rebound onto the hero's live skeleton.
+        // A skinned prop with its own rig (the cape's 13-bone drape) is attached
+        // rigidly to a bone below in its own bind pose instead — rebinding its
+        // mismatched joints onto the hero skeleton would tear it apart.
+        if (pieceSkinnedList.length && st.heroSkinned && (piece.hideBody || piece.hideLegs)) {
           for (const pieceSkinned of pieceSkinnedList) {
             // body/legs slot: the outfit build (build-quaternius-outfits.mjs)
             // gave this mesh a skin mirroring hero's own skeleton (same joint
@@ -188,7 +193,10 @@ export function attachGearList(st, gear, fallbackAnchor) {
         obj.position.set(px, py, pz)
         obj.rotation.set(THREE.MathUtils.degToRad(rx), THREE.MathUtils.degToRad(ry), THREE.MathUtils.degToRad(rz))
         obj.scale.setScalar(typeof piece.scale === 'number' ? piece.scale : 1)
-        applyEquipTint(THREE, obj, piece.tint)
+        // Amulets/capes are grey-baked props recoloured whole by the per-item
+        // tint (their metal/cloth isn't named 'steel'); other rigid pieces keep
+        // the name-scoped metal tint so wood/leather stays untouched.
+        applyEquipTint(THREE, obj, piece.tint, piece.slot === 'neck' || piece.slot === 'cape')
         anchor.add(obj)
         st.gear.push({ obj, anchor })
       })

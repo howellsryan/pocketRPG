@@ -85,6 +85,32 @@ describe('equipModels resolver', () => {
     }
   })
 
+  it('neck and cape slots have a bone-anchored default transform (rigid props, not skinned)', () => {
+    const gd = (registry.defaults as { gear?: Record<string, { bone?: string; scale?: number }> }).gear || {}
+    for (const slot of ['neck', 'cape']) {
+      expect(gd[slot], `defaults.gear.${slot} required for amulet/cape placement`).toBeTruthy()
+      expect(typeof gd[slot].bone, `defaults.gear.${slot}.bone`).toBe('string')
+    }
+  })
+
+  it('amulet/cape gear tints are concrete hex (the 3D attach path cannot resolve CSS vars)', () => {
+    for (const [id, g] of Object.entries(registry.gear || {}) as [string, { slot: string; tint?: string }][]) {
+      if (g.slot !== 'neck' && g.slot !== 'cape') continue
+      expect(g.tint, `${id} needs a tint`).toBeTruthy()
+      expect(/^#[0-9a-fA-F]{6}$/.test(g.tint!), `${id} tint '${g.tint}' must be a hex colour, not a CSS var`).toBe(true)
+    }
+  })
+
+  it('every repo-served monster model exists on disk (no dangling boss paths)', async () => {
+    const fs = await import('node:fs')
+    const path = await import('node:path')
+    const base = path.resolve(__dirname, '../public', registry.modelBase)
+    for (const [id, m] of Object.entries(registry.monsters || {}) as [string, { model: string }][]) {
+      if (/^(https?:)?\/\//.test(m.model) || m.model.startsWith('/')) continue // remote (Tripo/R2)
+      expect(fs.existsSync(path.join(base, m.model)), `${id} model ${m.model} missing from public/`).toBe(true)
+    }
+  })
+
   it('fully-enclosing head gear hides the head (snug fit relies on it)', () => {
     for (const [id, g] of Object.entries(registry.gear || {}) as [string, { slot: string; hideHead?: boolean }][]) {
       if (g.slot === 'head' && /full_helm/.test(id)) expect(g.hideHead, `${id} must set hideHead`).toBe(true)
