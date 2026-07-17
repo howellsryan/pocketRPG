@@ -4,10 +4,10 @@
 // surfaces, replacing the procedural blend-shell creature (src/data/creatures3d.json
 // warlord_grondar) that stood in before:
 //   • public/3d-samples/monsters/warlord_grondar.glb  — the combat arena
-//     (CombatArena3D); clips Idle + Attack.
+//     (CombatArena3D); clips Idle + Attack + Death.
 //   • world/client/public/models/warlord_grondar.glb  — the open-world client
-//     (entities.createMonsterMesh); clips idle + die (walk aliases idle in
-//     makeAnimator — the source ships no locomotion clip).
+//     (entities.createMonsterMesh); clips idle + attack + die (walk aliases
+//     idle in makeAnimator — the source ships no locomotion clip).
 //
 // The 71 MiB source is git-ignored (it exceeds Cloudflare Pages' 25 MiB
 // per-file deploy limit) — drop it at assets/open-world/Warlord+Grondar.glb to
@@ -15,13 +15,11 @@
 //
 // The source is far too heavy for the web, so it is welded + meshopt-simplified
 // (skin weights preserved), textures recompressed to webp, and the output
-// meshopt-compressed. Source clips are anonymous NlaTrack* — identified by
-// review (scripts/render-glb.mjs): NlaTrack=idle loop, NlaTrack.001=a bare-
-// handed overhead chop swing (used as the attack clip on both surfaces),
-// NlaTrack.002=a stand-in-place roar that returns upright (no collapse) — not
-// exported; there's no genuine fall/death pose in this source, so death is a
-// coded rotate-to-the-ground collapse instead (CombatArena3D.jsx / world's
-// entities.ts), not a baked clip.
+// meshopt-compressed. Source clips are anonymous NlaTrack* — per the author:
+// NlaTrack=idle loop, NlaTrack.001=fall/death (a forward tumble — root bone
+// stays ground-level while the body tucks into a roll, so it reads as a
+// collapse rather than a strike), NlaTrack.002=a two-fisted overhead chop
+// (the attack clip on both surfaces).
 //
 // Run: node scripts/build-warlord-grondar.mjs
 import { NodeIO } from '@gltf-transform/core'
@@ -83,7 +81,7 @@ async function emit(outPath, clipMap, { printBounds = false } = {}) {
   }
 }
 
-await emit(ARENA_OUT, { NlaTrack: 'Idle', 'NlaTrack.001': 'Attack' })
-await emit(WORLD_OUT, { NlaTrack: 'idle', 'NlaTrack.001': 'attack' }, { printBounds: true })
+await emit(ARENA_OUT, { NlaTrack: 'Idle', 'NlaTrack.002': 'Attack', 'NlaTrack.001': 'Death' })
+await emit(WORLD_OUT, { NlaTrack: 'idle', 'NlaTrack.002': 'attack', 'NlaTrack.001': 'die' }, { printBounds: true })
 
 fs.rmSync(TMP, { force: true })

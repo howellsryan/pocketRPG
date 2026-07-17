@@ -44,8 +44,8 @@ export const MONSTER_MODELS: Record<string, MonsterModel> = {
     targetHeight: 1.1,
   },
   // Dungeon boss — the imported GLB replaces its creatures3d blend-shell. Ships
-  // idle + die only (walk aliases idle in makeAnimator). Bounds baked from
-  // scripts/build-warlord-grondar.mjs.
+  // idle + attack + die (walk aliases idle in makeAnimator — no locomotion
+  // clip). Bounds baked from scripts/build-warlord-grondar.mjs.
   warlord_grondar: {
     url: '/models/warlord_grondar.glb',
     bounds: { minX: -1.0, minY: -0.874, minZ: -0.503, maxX: 1.0, maxY: 0.874, maxZ: 0.503 },

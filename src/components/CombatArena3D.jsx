@@ -272,8 +272,10 @@ function CombatArena3D({
       }
 
       // Rigged monsters animate from their own clips (import convention:
-      // 'Idle' loops, 'Attack' fires on hit; unnamed single clip = idle).
-      // Clip-less monsters keep the procedural bob + lunge.
+      // 'Idle' loops, 'Attack' fires on hit, 'Death' plays once and holds;
+      // unnamed single clip = idle). Monsters with no 'Death' clip fall back
+      // to the coded collapse (below) instead. Clip-less monsters keep the
+      // procedural bob + lunge.
       if (monsterGltf && monsterGltf.animations && monsterGltf.animations.length) {
         st.monsterMixer = new THREE.AnimationMixer(st.monster)
         const mAnims = monsterGltf.animations
@@ -289,6 +291,12 @@ function CombatArena3D({
             e.action.fadeOut(0.15)
             st.monsterIdleAction.reset().fadeIn(0.15).play()
           })
+        }
+        const deathClip = mAnims.find((c) => c.name === 'Death')
+        if (deathClip) {
+          st.monsterDeathAction = st.monsterMixer.clipAction(deathClip)
+          st.monsterDeathAction.setLoop(THREE.LoopOnce, 1)
+          st.monsterDeathAction.clampWhenFinished = true
         }
       }
 
@@ -431,8 +439,20 @@ function CombatArena3D({
     if (st && st.monsterCreature && dead !== wasDeadRef.current) {
       st.monsterCreature.trigger(dead ? 'death' : 'respawn')
     } else if (st && st.monster && !st.monsterCreature && dead !== wasDeadRef.current) {
-      st.monsterFallTarget = dead ? 1 : 0
-      if (dead) st.monsterAttackAction && st.monsterAttackAction.stop()
+      if (st.monsterDeathAction) {
+        // A real baked death clip takes over entirely — no coded topple.
+        if (dead) {
+          st.monsterAttackAction && st.monsterAttackAction.stop()
+          st.monsterIdleAction && st.monsterIdleAction.fadeOut(0.1)
+          st.monsterDeathAction.reset().fadeIn(0.1).play()
+        } else {
+          st.monsterDeathAction.fadeOut(0.2)
+          st.monsterIdleAction && st.monsterIdleAction.reset().fadeIn(0.2).play()
+        }
+      } else {
+        st.monsterFallTarget = dead ? 1 : 0
+        if (dead) st.monsterAttackAction && st.monsterAttackAction.stop()
+      }
     }
     wasDeadRef.current = dead
   }, [monsterHP && monsterHP.current <= 0])
