@@ -122,3 +122,11 @@ Do not:
 - No Tailwind `/N` opacity modifiers or inline `style={{}}` for static values.
 - No repurposing tier/potion/state colors as decoration.
 - No new top-level identity fonts; the four faces above are the whole cast.
+
+## 8. Before You Ship: The Critique Pass
+
+Two passes, not one: plan the screen, then critique the plan before writing CSS. A rule-by-rule read (§7) catches violations; this catches *generic* — output that breaks no rule but reads as anyone's app.
+
+- **Signature.** Name the one thing a player remembers from this screen. If the answer is "a card grid", rebuild — the illuminated-ledger identity must surface somewhere (frame, crest, ledger rule, or the ember CTA).
+- **The default tell.** Would this pass as a stock dashboard with the palette swapped in? If yes, you defaulted — return to the `fm-*` primitives.
+- **The game test.** PRODUCT.md: never SaaS, never gacha. Dense state should feel earned and legible, not like an admin panel or a gem shop.
