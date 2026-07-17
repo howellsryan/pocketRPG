@@ -16,6 +16,7 @@
 const COMBAT_SETS = [
   {
     id: 'void_king',
+    name: 'Void King',
     slots: {
       head: ['void_king_helm', 'void_knight_helm'],
       body: ['void_king_top', 'void_knight_top'],
@@ -33,6 +34,7 @@ const COMBAT_SETS = [
   },
   {
     id: 'masari',
+    name: 'Masari',
     slots: {
       head: ['masari_mask'],
       body: ['masari_body'],
@@ -48,6 +50,7 @@ const COMBAT_SETS = [
     // Armour-only set (no gloves slot). Requires one of the matching
     // Shardglass weapons equipped too — a pure-armour full set grants nothing.
     id: 'shardglass',
+    name: 'Shardglass',
     slots: {
       head: ['shardglass_helmet'],
       body: ['shardglass_plate_body'],
@@ -65,6 +68,14 @@ const MULTIPLIER_KEYS = [
   'rangedDamage',
   'magicAccuracy',
 ]
+
+const MULTIPLIER_LABELS = {
+  meleeAccuracy: 'Melee Accuracy',
+  meleeDamage: 'Melee Damage',
+  rangedAccuracy: 'Ranged Accuracy',
+  rangedDamage: 'Ranged Damage',
+  magicAccuracy: 'Magic Accuracy',
+}
 
 function identityMultipliers() {
   return {
@@ -99,6 +110,38 @@ function applySet(out, set) {
   out.magicDamageBonusFlat += set.magicDamageBonusFlat || 0
   out.accuracyFlat += set.accuracyFlat || 0
   return out
+}
+
+/**
+ * UI-friendly bonus lines for one set: percentage lines for multipliers and
+ * magicDamageBonusFlat (which is itself a percentage-point value, matching
+ * otherBonus.magicDamage), and flat (non-percent) lines for accuracyFlat
+ * since that's added to the raw attack-bonus stat, not a percentage.
+ */
+function describeSetBonuses(set) {
+  const lines = []
+  const m = set.multipliers || {}
+  for (const key of MULTIPLIER_KEYS) {
+    if (m[key]) lines.push({ label: MULTIPLIER_LABELS[key], value: Math.round((m[key] - 1) * 1000) / 10, percent: true })
+  }
+  if (set.magicDamageBonusFlat) lines.push({ label: 'Magic Damage', value: set.magicDamageBonusFlat, percent: true })
+  if (set.accuracyFlat) {
+    lines.push({ label: 'Melee Accuracy', value: set.accuracyFlat, percent: false })
+    lines.push({ label: 'Ranged Accuracy', value: set.accuracyFlat, percent: false })
+    lines.push({ label: 'Magic Accuracy', value: set.accuracyFlat, percent: false })
+  }
+  return lines
+}
+
+/**
+ * Every combat set currently active for this equipment, as UI-ready
+ * { id, name, lines } entries. Drives the Equipment screen's set-bonus
+ * panel — add a set to COMBAT_SETS and it shows up here for free.
+ */
+export function getActiveSetBonusDisplays(equipment) {
+  return COMBAT_SETS
+    .filter(set => hasFullSet(equipment, set))
+    .map(set => ({ id: set.id, name: set.name || set.id, lines: describeSetBonuses(set) }))
 }
 
 /**
