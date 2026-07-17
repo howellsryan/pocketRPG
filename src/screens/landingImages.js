@@ -30,6 +30,7 @@ export const landingImages = {
   'ss-chat':        L('ss-chat'),
 
   'lp-map':        L('lp-map'),
+  'lp-grondar':    L('lp-grondar'),
   'lp-lumbright':  L('lp-lumbright'),
   'lp-varrick':    L('lp-varrick'),
   'lp-faloden':    L('lp-faloden'),

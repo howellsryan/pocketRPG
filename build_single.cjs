@@ -30,7 +30,7 @@ const sourceFiles = [
   'utils/oneLifeDeath.js',
   'utils/rewardReveal.js',
   'utils/equipModels.js', // -> game chunk (equip screen 3D model registry)
-  'utils/three3d.js',     // -> game chunk (lazy three.js loader; equip/combat 3D)
+  'utils/three3d.js',     // core: lazy three.js loader (landing hero + equip/combat 3D)
   '3d/heroAttach.js',     // -> game chunk (hero weapon/gear attach + hide-mask runtime)
   '3d/blendShell.js',     // -> game chunk (procedural blend-shell creature runtime)
   '3d/rigs.js',           // -> game chunk (procedural animation rigs over blendShell)
@@ -217,7 +217,7 @@ const sourceFiles = [
   'screens/CharacterUnlockScreen.js',
   'screens/DemoLockedScreen.js',
   'screens/landingContent.js',
-  'screens/DesktopLandingScreen.js',
+  'components/LandingHero3D.js',
   'screens/LandingScreen.js',
   'screens/AuthScreen.js',
   'screens/OAuthConsentScreen.js',
@@ -253,7 +253,6 @@ const GAME_CHUNK_FILES = new Set([
   'utils/combatArt.js', // -> game chunk (reads placeMapsData for monster locations; only combat/place-map screens use it)
   'components/CombatArena3D.js',
   'utils/equipModels.js',
-  'utils/three3d.js',
   '3d/heroAttach.js',
   '3d/blendShell.js',
   '3d/rigs.js',
@@ -606,7 +605,7 @@ const SPLIT_MINIFY = {
 // not core: it is consumed only by icon code (GameIcon / itemIcons / skillArt),
 // never on the mobile landing/login page, so it is pure dead weight there. The
 // desktop landing — the one place an icon renders before the player is in-game —
-// fetches the chunk on mount (see DesktopLandingScreen) and GameIcon falls back
+// fetches the chunk on mount (see LandingScreen) and GameIcon falls back
 // to an emoji until it arrives.
 //
 // worldActivitiesData (the ~150 KiB content→place mapping) also rides the chunk:
@@ -694,13 +693,13 @@ const html = `<!DOCTYPE html>
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>PocketRPG</title>
 <meta name="description" content="PocketRPG — a tick-based idle fantasy RPG. Train 24 skills, fight bosses, and complete quests — progress continues whether the app is open or not.">
-<!-- LCP image: the hero world map is rendered by JS, so preload it here to
-     make the request discoverable from the initial document and fetch it at
-     high priority. Same asset is the hero on both mobile and desktop layouts.
-     imagesrcset/imagesizes mirror the mobile <img> so the preloaded variant is
-     the one actually used (no double download). Kept first (fetchpriority high)
-     so it stays ahead of the font preloads below in the queue. -->
-<link rel="preload" as="image" href="/public/landing/lp-map.webp" imagesrcset="/public/landing/lp-map-480.webp 480w, /public/landing/lp-map-760.webp 760w, /public/landing/lp-map.webp 1108w" imagesizes="(min-width: 520px) 480px, 92vw" type="image/webp" fetchpriority="high">
+<!-- LCP image: the hero Warlord Grondar poster is rendered by JS, so preload
+     it here to make the request discoverable from the initial document and
+     fetch it at high priority. imagesrcset/imagesizes mirror the hero <img>
+     so the preloaded variant is the one actually used (no double download).
+     Kept first (fetchpriority high) so it stays ahead of the font preloads
+     below in the queue. -->
+<link rel="preload" as="image" href="/public/landing/lp-grondar.webp" imagesrcset="/public/landing/lp-grondar-360.webp 360w, /public/landing/lp-grondar.webp 720w" imagesizes="(min-width: 880px) 430px, 66vw" type="image/webp" fetchpriority="high">
 <!-- Above-the-fold fonts: discover them from the initial document so they load
      in parallel instead of trailing the critical request chain. font-display:swap
      keeps text visible in a fallback meanwhile. See FONT_FACES.preload above. -->
