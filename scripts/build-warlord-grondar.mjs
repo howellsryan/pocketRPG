@@ -16,8 +16,12 @@
 // The source is far too heavy for the web, so it is welded + meshopt-simplified
 // (skin weights preserved), textures recompressed to webp, and the output
 // meshopt-compressed. Source clips are anonymous NlaTrack* — identified by
-// review (scripts/render-glb.mjs): NlaTrack=idle, NlaTrack.001=attack punch,
-// NlaTrack.002=roar/collapse (reused as the world death).
+// review (scripts/render-glb.mjs): NlaTrack=idle loop, NlaTrack.001=a bare-
+// handed overhead chop swing (used as the attack clip on both surfaces),
+// NlaTrack.002=a stand-in-place roar that returns upright (no collapse) — not
+// exported; there's no genuine fall/death pose in this source, so death is a
+// coded rotate-to-the-ground collapse instead (CombatArena3D.jsx / world's
+// entities.ts), not a baked clip.
 //
 // Run: node scripts/build-warlord-grondar.mjs
 import { NodeIO } from '@gltf-transform/core'
@@ -80,6 +84,6 @@ async function emit(outPath, clipMap, { printBounds = false } = {}) {
 }
 
 await emit(ARENA_OUT, { NlaTrack: 'Idle', 'NlaTrack.001': 'Attack' })
-await emit(WORLD_OUT, { NlaTrack: 'idle', 'NlaTrack.002': 'die' }, { printBounds: true })
+await emit(WORLD_OUT, { NlaTrack: 'idle', 'NlaTrack.001': 'attack' }, { printBounds: true })
 
 fs.rmSync(TMP, { force: true })

@@ -27,6 +27,11 @@ import { mountArenaBiome } from '../3d/biomes.js'
 const ARENA_GAP_X = 2.3          // world-space distance between the two actors
 const ATTACK_IMPACT_DELAY_MS = 240 // lunge wind-up before the victim reacts
 const LOAD_TIMEOUT_MS = 12000    // release the combat hold even if loading drags
+// GLB-rigged monsters with no death clip (e.g. Warlord Grondar — its source
+// only ships idle + a punch-swing) get a coded collapse instead: tip the
+// mounted group over its feet-pivot rather than relying on baked animation.
+const MONSTER_FALL_ANGLE = Math.PI * 0.42
+const MONSTER_FALL_RATE = 3.2
 
 function CombatArena3D({
   monsterName,
@@ -196,8 +201,11 @@ function CombatArena3D({
         monsterSpecNow ? (monsterSpecNow.height || 1.4) : monsterHeight,
         ARENA_GAP_X / 2, THREE.MathUtils.degToRad(mry),
       )
-      st.monster.rotation.x = THREE.MathUtils.degToRad(mrx)
+      st.monsterBaseRotX = THREE.MathUtils.degToRad(mrx)
+      st.monster.rotation.x = st.monsterBaseRotX
       st.monsterBaseRotZ = THREE.MathUtils.degToRad(mrz)
+      st.monsterFallCur = 0
+      st.monsterFallTarget = 0
       // Long-bodied monsters (dragons) are height-normalised but can span
       // several units — place them by their NEAREST edge so the snout starts
       // at a fixed gap from centre instead of overlapping the hero. Runs
@@ -300,7 +308,7 @@ function CombatArena3D({
         const dt = st.clock.getDelta()
         const now = st.clock.elapsedTime
         if (st.mixer) st.mixer.update(dt)
-        if (st.monsterMixer) st.monsterMixer.update(dt)
+        if (st.monsterMixer && (st.monsterFallCur || 0) < 0.98) st.monsterMixer.update(dt)
         if (st.monsterCreature) st.monsterCreature.update(dt)
         if (st.heroCreature) st.heroCreature.update(dt)
 
@@ -319,9 +327,11 @@ function CombatArena3D({
             const p = st.monsterReact.t / st.monsterReact.dur
             ox += Math.sin(p * 26) * 0.05 * (1 - p) + (1 - p) * 0.12
           }
+          st.monsterFallCur += (((st.monsterFallTarget || 0)) - st.monsterFallCur) * Math.min(1, dt * MONSTER_FALL_RATE)
           st.monster.position.x = (st.monsterBaseX ?? ARENA_GAP_X / 2) + ox
-          st.monster.position.y = oy
+          st.monster.position.y = oy * (1 - st.monsterFallCur)
           st.monster.rotation.z = (st.monsterBaseRotZ || 0) + rz
+          st.monster.rotation.x = (st.monsterBaseRotX || 0) + st.monsterFallCur * MONSTER_FALL_ANGLE
         }
         if (st.hero) {
           let ox = 0
@@ -420,6 +430,9 @@ function CombatArena3D({
     const dead = hp <= 0
     if (st && st.monsterCreature && dead !== wasDeadRef.current) {
       st.monsterCreature.trigger(dead ? 'death' : 'respawn')
+    } else if (st && st.monster && !st.monsterCreature && dead !== wasDeadRef.current) {
+      st.monsterFallTarget = dead ? 1 : 0
+      if (dead) st.monsterAttackAction && st.monsterAttackAction.stop()
     }
     wasDeadRef.current = dead
   }, [monsterHP && monsterHP.current <= 0])

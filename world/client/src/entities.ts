@@ -9,6 +9,9 @@ import { buildProcCreature, creatureSpecFor, type ProcCreature } from './procCre
 
 const ANIM_CROSSFADE_S = 0.15
 const TURN_SPEED_RAD_PER_S = 14
+// Coded collapse rate/angle for GLB monsters with no baked death clip.
+const MONSTER_FALL_ANGLE = Math.PI * 0.42
+const MONSTER_FALL_RATE = 3.2
 // hero.glb (Quaternius Male Ranger, built by scripts/build-hero.mjs) is
 // ~1.9 units tall at unit scale; scaled to read right against 1-unit tiles.
 const HERO_SCALE = 0.85
@@ -68,6 +71,9 @@ export type Entity = {
    * from its planar length so a 2-tile running step never plays the walk clip
    * sped up. */
   segmentAnim: 'walk' | 'run'
+  /** 0..1 coded collapse for GLB-rigged monsters with no baked fall/death
+   * pose (e.g. Warlord Grondar): tips the mesh over its feet-pivot instead. */
+  fallT: number
 }
 
 /** Skinned characters animate far from their bind-pose bounds, so three.js can
@@ -194,7 +200,7 @@ export async function createMonsterMesh(monsterId: string | undefined): Promise<
       const group = new THREE.Group()
       group.add(model)
       group.scale.setScalar(spec.targetHeight / (b.maxY - b.minY))
-      const animator = makeAnimator(model, gltf, ['idle', 'walk', 'die'])
+      const animator = makeAnimator(model, gltf, ['idle', 'walk', 'attack', 'die'])
       return { mesh: group, animator }
     } catch {
       return { mesh: boxPlaceholder(), animator: null }
@@ -465,6 +471,7 @@ export function createEntity(id: string, x: number, z: number, mesh: THREE.Objec
     animator,
     targetId: null,
     segmentAnim: 'walk',
+    fallT: 0,
   }
 }
 
@@ -576,7 +583,17 @@ export function updateEntity(entity: Entity, now: number, deltaSeconds: number, 
       // attack/die never speed up.
       entity.animator.mixer.timeScale = entity.moving ? MOVE_DURATION_MS / entity.segmentDuration : 1
       playAnim(entity.animator, name)
-      entity.animator.mixer.update(deltaSeconds)
+      // Warlord Grondar's source has no baked fall/death pose (only an idle
+      // loop + a chop swing) — collapse it in code instead. Other GLB actors
+      // (hero, other players) keep their own real death clip untouched.
+      if (entity.monsterId === 'warlord_grondar') {
+        const fallTarget = name === 'die' ? 1 : 0
+        entity.fallT += (fallTarget - entity.fallT) * Math.min(1, deltaSeconds * MONSTER_FALL_RATE)
+        if (entity.fallT < 0.98) entity.animator.mixer.update(deltaSeconds)
+        entity.mesh.rotation.x = entity.fallT * MONSTER_FALL_ANGLE
+      } else {
+        entity.animator.mixer.update(deltaSeconds)
+      }
     }
   }
 }
