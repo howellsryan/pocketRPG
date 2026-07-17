@@ -3040,14 +3040,6 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                 />
               )}
 
-              {/* Kill stats */}
-              {fightStartedAt && (
-                <div class="cb-kstats">
-                  <div class="cb-kstat"><span class="cb-kstat__k">Kills</span><span class="cb-kstat__v">{killCount}</span></div>
-                  <div class="cb-kstat"><span class="cb-kstat__k">Kills / hr</span><span class="cb-kstat__v">{killCount > 0 && (Date.now() - fightStartedAt) > 5000 ? Math.round(killCount / ((Date.now() - fightStartedAt) / 3600000)).toLocaleString() : '—'}</span></div>
-                </div>
-              )}
-
               {/* Action row — Special / Cast / Prayer (Eat/Potion/Gear now live in the quick-actions tabs) */}
               {combat.active && !isAutoRestarting && (() => {
                 const weaponEntry = equipment?.weapon
