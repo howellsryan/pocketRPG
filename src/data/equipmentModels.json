@@ -44,6 +44,34 @@
           0
         ],
         "scale": 1.2
+      },
+      "neck": {
+        "bone": "neck_01",
+        "position": [
+          0,
+          -0.02,
+          0.045
+        ],
+        "rotationDeg": [
+          0,
+          0,
+          0
+        ],
+        "scale": 0.25
+      },
+      "cape": {
+        "bone": "neck_01",
+        "position": [
+          0.105,
+          1,
+          -0.055
+        ],
+        "rotationDeg": [
+          13,
+          9,
+          0
+        ],
+        "scale": 0.99
       }
     }
   },
@@ -1203,12 +1231,476 @@
       "slot": "legs",
       "tint": "#d7dde4",
       "hideLegs": true
+    },
+    "amulet_of_strength": {
+      "model": "amulets/necklace1.glb",
+      "slot": "neck",
+      "bone": "neck_01",
+      "position": [0, -0.02, 0.045],
+      "rotationDeg": [0, 0, 0],
+      "scale": 0.25,
+      "tint": "#d23b2f"
+    },
+    "amulet_of_power": {
+      "model": "amulets/necklace1.glb",
+      "slot": "neck",
+      "bone": "neck_01",
+      "position": [0, -0.02, 0.045],
+      "rotationDeg": [0, 0, 0],
+      "scale": 0.25,
+      "tint": "#f5e6c8"
+    },
+    "sapphire_amulet": {
+      "model": "amulets/necklace3.glb",
+      "slot": "neck",
+      "bone": "neck_01",
+      "position": [0, -0.02, 0.045],
+      "rotationDeg": [0, 0, 0],
+      "scale": 0.25,
+      "tint": "#3498db"
+    },
+    "emerald_amulet": {
+      "model": "amulets/necklace2.glb",
+      "slot": "neck",
+      "bone": "neck_01",
+      "position": [0, -0.02, 0.045],
+      "rotationDeg": [0, 0, 0],
+      "scale": 0.25,
+      "tint": "#2ecc71"
+    },
+    "ruby_amulet": {
+      "model": "amulets/necklace2.glb",
+      "slot": "neck",
+      "bone": "neck_01",
+      "position": [0, -0.02, 0.045],
+      "rotationDeg": [0, 0, 0],
+      "scale": 0.25,
+      "tint": "#d23b2f"
+    },
+    "diamond_amulet": {
+      "model": "amulets/necklace2.glb",
+      "slot": "neck",
+      "bone": "neck_01",
+      "position": [0, -0.02, 0.045],
+      "rotationDeg": [0, 0, 0],
+      "scale": 0.25,
+      "tint": "#f5e6c8"
+    },
+    "dragonstone_amulet": {
+      "model": "amulets/necklace2.glb",
+      "slot": "neck",
+      "bone": "neck_01",
+      "position": [0, -0.02, 0.045],
+      "rotationDeg": [0, 0, 0],
+      "scale": 0.25,
+      "tint": "#9b59b6"
+    },
+    "onyx_amulet": {
+      "model": "amulets/necklace2.glb",
+      "slot": "neck",
+      "bone": "neck_01",
+      "position": [0, -0.02, 0.045],
+      "rotationDeg": [0, 0, 0],
+      "scale": 0.25,
+      "tint": "#111111"
+    },
+    "amulet_of_magic": {
+      "model": "amulets/necklace2.glb",
+      "slot": "neck",
+      "bone": "neck_01",
+      "position": [0, -0.02, 0.045],
+      "rotationDeg": [0, 0, 0],
+      "scale": 0.25,
+      "tint": "#f5e6c8"
+    },
+    "amulet_of_glory": {
+      "model": "amulets/necklace2.glb",
+      "slot": "neck",
+      "bone": "neck_01",
+      "position": [0, -0.02, 0.045],
+      "rotationDeg": [0, 0, 0],
+      "scale": 0.25,
+      "tint": "#9b59b6"
+    },
+    "amulet_of_fury": {
+      "model": "amulets/necklace2.glb",
+      "slot": "neck",
+      "bone": "neck_01",
+      "position": [0, -0.02, 0.045],
+      "rotationDeg": [0, 0, 0],
+      "scale": 0.25,
+      "tint": "#1f1f1f"
+    },
+    "zyrite_amulet": {
+      "model": "amulets/necklace1.glb",
+      "slot": "neck",
+      "bone": "neck_01",
+      "position": [0, -0.02, 0.045],
+      "rotationDeg": [0, 0, 0],
+      "scale": 0.25,
+      "tint": "#111111"
+    },
+    "zyrite_necklace": {
+      "model": "amulets/necklace2.glb",
+      "slot": "neck",
+      "bone": "neck_01",
+      "position": [0, -0.02, 0.045],
+      "rotationDeg": [0, 0, 0],
+      "scale": 0.25,
+      "tint": "#111111"
+    },
+    "amulet_of_torment": {
+      "model": "amulets/necklace2.glb",
+      "slot": "neck",
+      "bone": "neck_01",
+      "position": [0, -0.02, 0.045],
+      "rotationDeg": [0, 0, 0],
+      "scale": 0.25,
+      "tint": "#d23b2f"
+    },
+    "necklace_of_agony": {
+      "model": "amulets/necklace1.glb",
+      "slot": "neck",
+      "bone": "neck_01",
+      "position": [0, -0.02, 0.045],
+      "rotationDeg": [0, 0, 0],
+      "scale": 0.25,
+      "tint": "#2ecc71"
+    },
+    "lumira_stole": {
+      "model": "amulets/necklace3.glb",
+      "slot": "neck",
+      "bone": "neck_01",
+      "position": [0, -0.02, 0.045],
+      "rotationDeg": [0, 0, 0],
+      "scale": 0.25,
+      "tint": "#3498db"
+    },
+    "verdant_stole": {
+      "model": "amulets/necklace2.glb",
+      "slot": "neck",
+      "bone": "neck_01",
+      "position": [0, -0.02, 0.045],
+      "rotationDeg": [0, 0, 0],
+      "scale": 0.25,
+      "tint": "#2ecc71"
+    },
+    "krylth_stole": {
+      "model": "amulets/necklace3.glb",
+      "slot": "neck",
+      "bone": "neck_01",
+      "position": [0, -0.02, 0.045],
+      "rotationDeg": [0, 0, 0],
+      "scale": 0.25,
+      "tint": "#d23b2f"
+    },
+    "ancient_stole": {
+      "model": "amulets/necklace2.glb",
+      "slot": "neck",
+      "bone": "neck_01",
+      "position": [0, -0.02, 0.045],
+      "rotationDeg": [0, 0, 0],
+      "scale": 0.25,
+      "tint": "#9b59b6"
+    },
+    "zephyra_stole": {
+      "model": "amulets/necklace1.glb",
+      "slot": "neck",
+      "bone": "neck_01",
+      "position": [0, -0.02, 0.045],
+      "rotationDeg": [0, 0, 0],
+      "scale": 0.25,
+      "tint": "#f5e6c8"
+    },
+    "grondar_stole": {
+      "model": "amulets/necklace1.glb",
+      "slot": "neck",
+      "bone": "neck_01",
+      "position": [0, -0.02, 0.045],
+      "rotationDeg": [0, 0, 0],
+      "scale": 0.25,
+      "tint": "#b87333"
+    },
+    "amulet_of_glory_t": {
+      "model": "amulets/necklace1.glb",
+      "slot": "neck",
+      "bone": "neck_01",
+      "position": [0, -0.02, 0.045],
+      "rotationDeg": [0, 0, 0],
+      "scale": 0.25,
+      "tint": "#9b59b6"
+    },
+    "2nd_age_amulet": {
+      "model": "amulets/necklace2.glb",
+      "slot": "neck",
+      "bone": "neck_01",
+      "position": [0, -0.02, 0.045],
+      "rotationDeg": [0, 0, 0],
+      "scale": 0.25,
+      "tint": "#e5e4e2"
+    },
+    "occult_necklace": {
+      "model": "amulets/necklace1.glb",
+      "slot": "neck",
+      "bone": "neck_01",
+      "position": [0, -0.02, 0.045],
+      "rotationDeg": [0, 0, 0],
+      "scale": 0.25,
+      "tint": "#9b59b6"
+    },
+    "arcane_necklace": {
+      "model": "amulets/necklace2.glb",
+      "slot": "neck",
+      "bone": "neck_01",
+      "position": [0, -0.02, 0.045],
+      "rotationDeg": [0, 0, 0],
+      "scale": 0.25,
+      "tint": "#3498db"
+    },
+    "attack_cape": {
+      "model": "capes/cape.glb",
+      "slot": "cape",
+      "bone": "neck_01",
+      "position": [0.105, 1, -0.055],
+      "rotationDeg": [13, 9, 0],
+      "scale": 0.99,
+      "tint": "#cdd6e0"
+    },
+    "strength_cape": {
+      "model": "capes/cape.glb",
+      "slot": "cape",
+      "bone": "neck_01",
+      "position": [0.105, 1, -0.055],
+      "rotationDeg": [13, 9, 0],
+      "scale": 0.99,
+      "tint": "#d9904a"
+    },
+    "defence_cape": {
+      "model": "capes/cape.glb",
+      "slot": "cape",
+      "bone": "neck_01",
+      "position": [0.105, 1, -0.055],
+      "rotationDeg": [13, 9, 0],
+      "scale": 0.99,
+      "tint": "#8fa6c0"
+    },
+    "hitpoints_cape": {
+      "model": "capes/cape.glb",
+      "slot": "cape",
+      "bone": "neck_01",
+      "position": [0.105, 1, -0.055],
+      "rotationDeg": [13, 9, 0],
+      "scale": 0.99,
+      "tint": "#e8554e"
+    },
+    "ranged_cape": {
+      "model": "capes/cape.glb",
+      "slot": "cape",
+      "bone": "neck_01",
+      "position": [0.105, 1, -0.055],
+      "rotationDeg": [13, 9, 0],
+      "scale": 0.99,
+      "tint": "#b3873f"
+    },
+    "magic_cape": {
+      "model": "capes/cape.glb",
+      "slot": "cape",
+      "bone": "neck_01",
+      "position": [0.105, 1, -0.055],
+      "rotationDeg": [13, 9, 0],
+      "scale": 0.99,
+      "tint": "#9b6cff"
+    },
+    "prayer_cape": {
+      "model": "capes/cape.glb",
+      "slot": "cape",
+      "bone": "neck_01",
+      "position": [0.105, 1, -0.055],
+      "rotationDeg": [13, 9, 0],
+      "scale": 0.99,
+      "tint": "#f0c040"
+    },
+    "mining_cape": {
+      "model": "capes/cape.glb",
+      "slot": "cape",
+      "bone": "neck_01",
+      "position": [0.105, 1, -0.055],
+      "rotationDeg": [13, 9, 0],
+      "scale": 0.99,
+      "tint": "#9aa7b0"
+    },
+    "woodcutting_cape": {
+      "model": "capes/cape.glb",
+      "slot": "cape",
+      "bone": "neck_01",
+      "position": [0.105, 1, -0.055],
+      "rotationDeg": [13, 9, 0],
+      "scale": 0.99,
+      "tint": "#a9743f"
+    },
+    "fishing_cape": {
+      "model": "capes/cape.glb",
+      "slot": "cape",
+      "bone": "neck_01",
+      "position": [0.105, 1, -0.055],
+      "rotationDeg": [13, 9, 0],
+      "scale": 0.99,
+      "tint": "#46a7c4"
+    },
+    "smithing_cape": {
+      "model": "capes/cape.glb",
+      "slot": "cape",
+      "bone": "neck_01",
+      "position": [0.105, 1, -0.055],
+      "rotationDeg": [13, 9, 0],
+      "scale": 0.99,
+      "tint": "#e07b3a"
+    },
+    "cooking_cape": {
+      "model": "capes/cape.glb",
+      "slot": "cape",
+      "bone": "neck_01",
+      "position": [0.105, 1, -0.055],
+      "rotationDeg": [13, 9, 0],
+      "scale": 0.99,
+      "tint": "#e2944a"
+    },
+    "fletching_cape": {
+      "model": "capes/cape.glb",
+      "slot": "cape",
+      "bone": "neck_01",
+      "position": [0.105, 1, -0.055],
+      "rotationDeg": [13, 9, 0],
+      "scale": 0.99,
+      "tint": "#c7ab73"
+    },
+    "crafting_cape": {
+      "model": "capes/cape.glb",
+      "slot": "cape",
+      "bone": "neck_01",
+      "position": [0.105, 1, -0.055],
+      "rotationDeg": [13, 9, 0],
+      "scale": 0.99,
+      "tint": "#c0a06a"
+    },
+    "herblore_cape": {
+      "model": "capes/cape.glb",
+      "slot": "cape",
+      "bone": "neck_01",
+      "position": [0.105, 1, -0.055],
+      "rotationDeg": [13, 9, 0],
+      "scale": 0.99,
+      "tint": "#3fb56b"
+    },
+    "agility_cape": {
+      "model": "capes/cape.glb",
+      "slot": "cape",
+      "bone": "neck_01",
+      "position": [0.105, 1, -0.055],
+      "rotationDeg": [13, 9, 0],
+      "scale": 0.99,
+      "tint": "#46a0e0"
+    },
+    "thieving_cape": {
+      "model": "capes/cape.glb",
+      "slot": "cape",
+      "bone": "neck_01",
+      "position": [0.105, 1, -0.055],
+      "rotationDeg": [13, 9, 0],
+      "scale": 0.99,
+      "tint": "#8a7ae6"
+    },
+    "fire_cape": {
+      "model": "capes/cape.glb",
+      "slot": "cape",
+      "bone": "neck_01",
+      "position": [0.105, 1, -0.055],
+      "rotationDeg": [13, 9, 0],
+      "scale": 0.99,
+      "tint": "#c0392b"
+    },
+    "infernal_cape": {
+      "model": "capes/cape.glb",
+      "slot": "cape",
+      "bone": "neck_01",
+      "position": [0.105, 1, -0.055],
+      "rotationDeg": [13, 9, 0],
+      "scale": 0.99,
+      "tint": "#4a1d18"
+    },
+    "max_cape": {
+      "model": "capes/cape.glb",
+      "slot": "cape",
+      "bone": "neck_01",
+      "position": [0.105, 1, -0.055],
+      "rotationDeg": [13, 9, 0],
+      "scale": 0.99,
+      "tint": "#4a1d18"
+    },
+    "infernal_max_cape": {
+      "model": "capes/cape.glb",
+      "slot": "cape",
+      "bone": "neck_01",
+      "position": [0.105, 1, -0.055],
+      "rotationDeg": [13, 9, 0],
+      "scale": 0.99,
+      "tint": "#4a1d18"
+    },
+    "ava_s_assembler": {
+      "model": "capes/cape.glb",
+      "slot": "cape",
+      "bone": "neck_01",
+      "position": [0.105, 1, -0.055],
+      "rotationDeg": [13, 9, 0],
+      "scale": 0.99,
+      "tint": "#2ecc71"
+    },
+    "ava_s_accumulator": {
+      "model": "capes/cape.glb",
+      "slot": "cape",
+      "bone": "neck_01",
+      "position": [0.105, 1, -0.055],
+      "rotationDeg": [13, 9, 0],
+      "scale": 0.99,
+      "tint": "#2ecc71"
+    },
+    "imbued_god_cape": {
+      "model": "capes/cape.glb",
+      "slot": "cape",
+      "bone": "neck_01",
+      "position": [0.105, 1, -0.055],
+      "rotationDeg": [13, 9, 0],
+      "scale": 0.99,
+      "tint": "#1f1f1f"
+    },
+    "2nd_age_cloak": {
+      "model": "capes/cape.glb",
+      "slot": "cape",
+      "bone": "neck_01",
+      "position": [0.105, 1, -0.055],
+      "rotationDeg": [13, 9, 0],
+      "scale": 0.99,
+      "tint": "#e5e4e2"
+    },
+    "2nd_age_druidic_cloak": {
+      "model": "capes/cape.glb",
+      "slot": "cape",
+      "bone": "neck_01",
+      "position": [0.105, 1, -0.055],
+      "rotationDeg": [13, 9, 0],
+      "scale": 0.99,
+      "tint": "#e5e4e2"
     }
   },
   "monsters": {
     "king_black_dragon": {
       "model": "/api/tripo-assets/4aba171219df413d9be1bf36a0fff9cd",
       "height": 2.6
+    },
+    "warlord_grondar": {
+      "model": "monsters/warlord_grondar.glb",
+      "height": 2.6,
+      "rotationDeg": [0, -90, 0]
     }
   }
 }
