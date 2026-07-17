@@ -401,6 +401,10 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     try { return localStorage.getItem('pocketrpg_combat3d') === 'off' } catch { return false }
   })
   const [arenaSignal, setArenaSignal] = useState(null)
+  // Fired one tick BEFORE the monster's next attack lands (monsterAttackTimer
+  // reaches 1) so the 3D arena can lead a rigged monster's wind-up and have the
+  // swing connect exactly on the hit tick's splat. See CombatArena3D.
+  const [arenaWindup, setArenaWindup] = useState(null)
   const [arenaReady, setArenaReady] = useState(false)
   const arenaReadyRef = useRef(false)
   const arenaClosedRef = useRef(arenaClosed)
@@ -628,6 +632,12 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           monster: tickSplats.player.length > 0,
           special: events.some(ev => ev.type === 'specialHit'),
         }))
+      }
+
+      // Wind-up lead: the monster attacks next tick when its timer is at 1, so
+      // signal now and let the arena pre-start the swing so it lands on the hit.
+      if (combatState.active && combatState.monster.currentHP > 0 && combatState.monsterAttackTimer === 1) {
+        setArenaWindup(prev => ({ seq: (prev?.seq || 0) + 1 }))
       }
 
       for (const ev of events) {
@@ -2473,6 +2483,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       weapon={equipment?.weapon ? getWeaponPlacement(equipment.weapon.itemId) : null}
       gear={getGearPlacements(equipment)}
       attackSignal={arenaSignal}
+      windupSignal={arenaWindup}
       monsterHP={{ current: Math.max(0, Math.round(combat.monster.currentHP)), max: combat.monster.hitpoints }}
       playerHP={{ current: Math.max(0, Math.round(currentHP)), max: getMaxHP() }}
       monsterSplats={monsterSplats}
