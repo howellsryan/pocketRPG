@@ -634,10 +634,11 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
         }))
       }
 
-      // Wind-up lead: the monster attacks next tick when its timer is at 1, so
-      // signal now and let the arena pre-start the swing so it lands on the hit.
-      if (combatState.active && combatState.monster.currentHP > 0 && combatState.monsterAttackTimer === 1) {
-        setArenaWindup(prev => ({ seq: (prev?.seq || 0) + 1 }))
+      // Wind-up lead: broadcast how many ticks until the monster's next attack
+      // so the arena can pre-start a rigged swing early enough (even for clips
+      // longer than one tick) that it ENDS on the hit tick's splat.
+      if (combatState.active && combatState.monster.currentHP > 0 && combatState.monsterAttackTimer >= 1) {
+        setArenaWindup(prev => ({ seq: (prev?.seq || 0) + 1, ticks: combatState.monsterAttackTimer }))
       }
 
       for (const ev of events) {
@@ -2484,6 +2485,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       gear={getGearPlacements(equipment)}
       attackSignal={arenaSignal}
       windupSignal={arenaWindup}
+      monsterAttackImpactSec={arenaModel ? arenaModel.attackImpactSec : null}
       monsterHP={{ current: Math.max(0, Math.round(combat.monster.currentHP)), max: combat.monster.hitpoints }}
       playerHP={{ current: Math.max(0, Math.round(currentHP)), max: getMaxHP() }}
       monsterSplats={monsterSplats}

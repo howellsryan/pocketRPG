@@ -138,6 +138,10 @@ export function getMonsterModel(monsterId) {
     path: resolveModelPath(m.model),
     height: typeof m.height === 'number' ? m.height : 2,
     rotationDeg: m.rotationDeg || [0, -90, 0],
+    // When in the baked 'Attack' clip the blow actually lands (seconds). The
+    // arena leads the swing so this frame hits the engine's splat tick. Absent
+    // → the arena falls back to the clip's end. See CombatArena3D wind-up.
+    attackImpactSec: typeof m.attackImpactSec === 'number' ? m.attackImpactSec : null,
   }
 }
 

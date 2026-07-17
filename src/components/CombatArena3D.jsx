@@ -52,6 +52,7 @@ function CombatArena3D({
   gear = null,
   attackSignal = null,
   windupSignal = null,
+  monsterAttackImpactSec = null,
   monsterHP,
   playerHP,
   monsterSplats,
@@ -90,7 +91,7 @@ function CombatArena3D({
       mixer: null, monsterMixer: null, clock: null, hero: null, monster: null, monsterCreature: null, heroCreature: null, bones: {}, weapon: null,
       gear: [], gearToken: 0, headMaskCtl: null, heroSkinned: null,
       idleAction: null, attackAction: null, specialAction: null,
-      monsterIdleAction: null, monsterAttackAction: null, monsterLedAttack: false, timers: new Set(),
+      monsterIdleAction: null, monsterAttackAction: null, monsterLedAttack: false, monsterSwingScheduled: false, timers: new Set(),
       // Procedural timelines: { t, dur } advanced by the render loop.
       monsterLunge: null, monsterReact: null, heroReact: null, heroLunge: null,
       monsterFlash: null, heroFlash: null, monsterMats: [], heroMats: [],
@@ -441,7 +442,7 @@ function CombatArena3D({
     const st = stateRef.current
     const hp = monsterHP && monsterHP.current
     const dead = hp <= 0
-    if (st && dead !== wasDeadRef.current) st.monsterLedAttack = false // stale wind-up can't land through a death/respawn
+    if (st && dead !== wasDeadRef.current) { st.monsterLedAttack = false; st.monsterSwingScheduled = false } // stale wind-up can't land through a death/respawn
     if (st && st.monsterCreature && dead !== wasDeadRef.current) {
       st.monsterCreature.trigger(dead ? 'death' : 'respawn')
     } else if (st && st.monster && !st.monsterCreature && dead !== wasDeadRef.current) {
@@ -573,6 +574,7 @@ function CombatArena3D({
           st.monsterAttackAction.reset().fadeIn(0.1).play()
         }
         st.monsterLedAttack = false
+        st.monsterSwingScheduled = false // this cycle's swing has landed
       } else {
         st.monsterLunge = { t: 0, dur: 0.55 }
       }
@@ -602,25 +604,36 @@ function CombatArena3D({
     }
   }, [attackSignal && attackSignal.seq])
 
-  // The engine fires this one tick BEFORE the monster's attack lands. A rigged
-  // monster (GLB with a baked 'Attack' clip) leads its wind-up here so the
-  // swing ENDS on the next tick's hit — its own clip length is the lead, so a
-  // slow punch starts winding up now and connects exactly on the hit splat.
-  // Proc creatures / clip-less monsters own their timing and ignore this.
+  // The engine broadcasts how many ticks remain until the monster's next
+  // attack. A rigged monster (GLB with a baked 'Attack' clip) leads its swing
+  // so the blow's IMPACT frame lands on the hit tick's splat. The impact point
+  // is `attackImpactSec` into the clip (registry data — e.g. an overhead smash
+  // connects part-way through a long clip); absent → the clip's end. The swing
+  // starts on the single tick where that lead still fits before the hit, offset
+  // into the gap so the impact frame coincides with the hit, then plays its
+  // recovery until the next swing (or idle) takes over. Proc creatures /
+  // clip-less monsters own their timing and ignore this.
   useEffect(() => {
     const st = stateRef.current
     if (!windupSignal || !st || st.disposed || !st.monsterAttackAction) return
-    if ((st.monsterFallCur || 0) > 0.02) return // dead / collapsing — no swing
+    if (st.monsterSwingScheduled || (st.monsterFallCur || 0) > 0.02) return
+    const ticks = windupSignal.ticks || 0
+    if (ticks < 1) return
     const clip = st.monsterAttackAction.getClip()
-    const durMs = (clip && clip.duration ? clip.duration : 0.5) * 1000
-    const lead = Math.max(0, TICK_DURATION - durMs)
+    const clipMs = (clip && clip.duration ? clip.duration : 0.5) * 1000
+    const impactMs = Math.min(clipMs, (monsterAttackImpactSec != null ? monsterAttackImpactSec * 1000 : clipMs))
+    const msUntilHit = ticks * TICK_DURATION
+    // Only the tick whose remaining time is in [impact, impact + one tick) can
+    // host the wind-up landing on the hit; earlier ticks wait, later is too late.
+    if (msUntilHit < impactMs || msUntilHit >= impactMs + TICK_DURATION) return
+    st.monsterSwingScheduled = true
     const timer = setTimeout(() => {
       st.timers.delete(timer)
-      if (st.disposed || (st.monsterFallCur || 0) > 0.02) return
+      if (st.disposed || (st.monsterFallCur || 0) > 0.02 || (st.monsterDeathAction && st.monsterDeathAction.isRunning())) return
       st.monsterIdleAction && st.monsterIdleAction.fadeOut(0.1)
       st.monsterAttackAction.reset().fadeIn(0.1).play()
       st.monsterLedAttack = true
-    }, lead)
+    }, Math.max(0, msUntilHit - impactMs))
     st.timers.add(timer)
   }, [windupSignal && windupSignal.seq])
 
