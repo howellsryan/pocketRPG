@@ -28,9 +28,12 @@ export default function LandingHero3D({ poster, posterSmall, alt }) {
 
     let disposed = false
     let cleanup = null
+    // .bind(window): these are WindowOrWorkerGlobalScope methods with a
+    // WebIDL receiver check — calling them as idle.cancel(...) below passes
+    // `idle` as `this` and throws "Illegal invocation" without the bind.
     const idle = ('requestIdleCallback' in window)
-      ? { id: requestIdleCallback(boot, { timeout: 2000 }), cancel: cancelIdleCallback }
-      : { id: setTimeout(boot, 600), cancel: clearTimeout }
+      ? { id: requestIdleCallback(boot, { timeout: 2000 }), cancel: cancelIdleCallback.bind(window) }
+      : { id: setTimeout(boot, 600), cancel: clearTimeout.bind(window) }
 
     async function boot() {
       let three
