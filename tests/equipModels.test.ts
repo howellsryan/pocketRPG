@@ -37,7 +37,10 @@ describe('equipModels resolver', () => {
   it('fills omitted transform fields from defaults.weapon (canonical grip)', () => {
     const dw = (registry.defaults as { weapon?: { position: number[]; rotationDeg: number[]; scale: number } }).weapon
     if (!dw) return
-    const bare = Object.entries(registry.weapons).find(([, w]) => !(w as { position?: number[] }).position)
+    const bare = Object.entries(registry.weapons).find(([, w]) => {
+      const ww = w as { position?: number[]; scale?: number }
+      return !ww.position && typeof ww.scale !== 'number'
+    })
     if (!bare) return
     const spec = getWeaponModel(bare[0])
     expect(spec!.position).toEqual(dw.position)
@@ -183,6 +186,14 @@ describe('equipModels resolver', () => {
     const items = (await import('../src/data/items.json')).default as Record<string, unknown>
     for (const id of Object.keys(registry.weapons)) {
       expect(items[id], `weapon model '${id}' has no matching item`).toBeTruthy()
+    }
+  })
+
+  it('every mining pickaxe item has a registered 3D weapon model', async () => {
+    const items = (await import('../src/data/items.json')).default as Record<string, { toolFor?: string }>
+    for (const [id, item] of Object.entries(items)) {
+      if (item.toolFor !== 'mining') continue
+      expect(hasWeaponModel(id), `pickaxe '${id}' has no registered weapon model`).toBe(true)
     }
   })
 
