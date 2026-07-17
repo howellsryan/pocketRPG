@@ -59,11 +59,6 @@ import { CRITICAL_SAVE_REASONS, hasCriticalDrop } from '../cloud/criticalSavePol
 import { recordCollectionLogDrop, applyServerCollectionLogEntries } from '../cloud/collectionLog.js'
 import { filterLoggedDrops, monsterHasLoggedDrop } from '../engine/collectionLog.js'
 
-// Gives the 3D arena's death/collapse animation a moment to play before the
-// loot modal covers it. Only matters while the arena panel is actually
-// showing — the classic HP-bar layout has no death animation to protect.
-const DEATH_ANIM_MODAL_DELAY_MS = 2000
-
 const COMBAT_CATEGORIES = [
   {
     key: 'training',
@@ -378,17 +373,6 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   }
   const [lootModal, setLootModal] = useState(null)
   const [deathModal, setDeathModal] = useState(null)
-  // Mirrors `showArena` (computed later, once the monster/model are known) so
-  // the loot-modal reveal below can check it without a stale closure.
-  const showArenaRef = useRef(false)
-  // First-open of the loot modal after a kill: delayed while the 3D arena is
-  // showing so its death/collapse animation gets a moment on screen instead
-  // of being instantly covered. Later updates to an already-open modal
-  // (loading -> loaded) go through setLootModal directly, unaffected.
-  const revealLootModal = (payload) => {
-    if (showArenaRef.current) setTimeout(() => setLootModal(payload), DEATH_ANIM_MODAL_DELAY_MS)
-    else setLootModal(payload)
-  }
   const [isDesktopCombatLayout, setIsDesktopCombatLayout] = useState(false)
   const [monsterSplats, setMonsterSplats] = useState([])
   const [playerSplats, setPlayerSplats] = useState([])
@@ -401,6 +385,10 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     try { return localStorage.getItem('pocketrpg_combat3d') === 'off' } catch { return false }
   })
   const [arenaSignal, setArenaSignal] = useState(null)
+  // Fired one tick BEFORE the monster's next attack lands (monsterAttackTimer
+  // reaches 1) so the 3D arena can lead a rigged monster's wind-up and have the
+  // swing connect exactly on the hit tick's splat. See CombatArena3D.
+  const [arenaWindup, setArenaWindup] = useState(null)
   const [arenaReady, setArenaReady] = useState(false)
   const arenaReadyRef = useRef(false)
   const arenaClosedRef = useRef(arenaClosed)
@@ -628,6 +616,13 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           monster: tickSplats.player.length > 0,
           special: events.some(ev => ev.type === 'specialHit'),
         }))
+      }
+
+      // Wind-up lead: broadcast how many ticks until the monster's next attack
+      // so the arena can pre-start a rigged swing early enough (even for clips
+      // longer than one tick) that it ENDS on the hit tick's splat.
+      if (combatState.active && combatState.monster.currentHP > 0 && combatState.monsterAttackTimer >= 1) {
+        setArenaWindup(prev => ({ seq: (prev?.seq || 0) + 1, ticks: combatState.monsterAttackTimer }))
       }
 
       for (const ev of events) {
@@ -1052,9 +1047,9 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           }
 
           if (cloudAuthoritativeRaid) {
-            void claimRaidCompletion({ raidId, monster: defeatedMonsterData, slayerXpGained, isBossKill: isDefeatedBoss, deferReveal: true })
+            void claimRaidCompletion({ raidId, monster: defeatedMonsterData, slayerXpGained, isBossKill: isDefeatedBoss })
           } else if (cloudAuthoritativeMonster) {
-            revealLootModal({
+            setLootModal({
               monster: defeatedMonsterData,
               loot: [],
               slayerXpGained,
@@ -1156,7 +1151,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           }
           // Show loot modal instead of auto-restarting
           if (!cloudAuthoritativeRaid && !cloudAuthoritativeMonster) {
-            revealLootModal({
+            setLootModal({
               monster: defeatedMonsterData,
               loot: killLoot,
               slayerXpGained,
@@ -1285,9 +1280,8 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   // and surface it in the loot modal. Used both when a raid is completed live
   // and when the player skips an entire raid from the loot modal — a skip just
   // re-rolls another complete reward rather than re-simulating every boss.
-  const claimRaidCompletion = async ({ raidId, monster, slayerXpGained = 0, isBossKill = false, deferReveal = false }) => {
-    const open = deferReveal ? revealLootModal : setLootModal
-    open({ monster, loot: [], slayerXpGained, isBossKill, raidId, loading: true })
+  const claimRaidCompletion = async ({ raidId, monster, slayerXpGained = 0, isBossKill = false }) => {
+    setLootModal({ monster, loot: [], slayerXpGained, isBossKill, raidId, loading: true })
     try {
       const res = await api.completeRaid(raidId, { actionNonce: `raid:${raidId}:${Date.now()}` })
       const granted = Array.isArray(res?.granted) ? res.granted : []
@@ -2438,7 +2432,6 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   const arenaBiome = useMemo(() => getArenaBiomeSpec(worldLocation, arenaMonsterId), [worldLocation, arenaMonsterId])
   const arenaAvailable = Boolean(arenaModel || arenaProc) && Boolean(arenaHeroProc || getCharacterAssetPath()) && canRender3D()
   const showArena = arenaAvailable && !arenaClosed
-  showArenaRef.current = showArena
   const reopenArena = () => {
     setArenaClosed(false)
     try { localStorage.removeItem('pocketrpg_combat3d') } catch { /* private mode */ }
@@ -2473,6 +2466,8 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       weapon={equipment?.weapon ? getWeaponPlacement(equipment.weapon.itemId) : null}
       gear={getGearPlacements(equipment)}
       attackSignal={arenaSignal}
+      windupSignal={arenaWindup}
+      monsterAttackImpactSec={arenaModel ? arenaModel.attackImpactSec : null}
       monsterHP={{ current: Math.max(0, Math.round(combat.monster.currentHP)), max: combat.monster.hitpoints }}
       playerHP={{ current: Math.max(0, Math.round(currentHP)), max: getMaxHP() }}
       monsterSplats={monsterSplats}

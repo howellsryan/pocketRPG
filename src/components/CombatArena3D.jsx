@@ -5,6 +5,7 @@ import { loadThree, canRender3D, assetUrl } from '../utils/three3d.js'
 import { disposeObject, attachWeapon, attachGearList, setupHideMask } from '../3d/heroAttach.js'
 import { createProcCreature } from '../3d/rigs.js'
 import { mountArenaBiome } from '../3d/biomes.js'
+import { TICK_DURATION } from '../utils/constants.js'
 
 // Phase-2 combat arena (docs/3d-gameplay-investigation.md): the rigged hero
 // (equipped weapon on the hand bone) faces the monster's model in a side-on
@@ -16,6 +17,9 @@ import { mountArenaBiome } from '../3d/biomes.js'
 // hero's attack clip (a distinct special clip + charge on special attacks)
 // or the monster's transform-faked lunge (static meshes need no rig), with a
 // recoil + red flash on whoever got hurt. Splats float over each combatant.
+// A rigged monster's swing is instead LED by `windupSignal` (fired one tick
+// early) so a slow clip connects on the hit tick — its recoil/flash then
+// lands with the splat rather than 240ms later. See the wind-up effect below.
 //
 // Load gate: `onReady` fires once models are mounted and the first frame is
 // queued (or after LOAD_TIMEOUT_MS, so a slow fetch can't stall the fight
@@ -25,7 +29,7 @@ import { mountArenaBiome } from '../3d/biomes.js'
 // drops back to the classic UI — the arena is always a safe enhancement.
 
 const ARENA_GAP_X = 2.3          // world-space distance between the two actors
-const ATTACK_IMPACT_DELAY_MS = 240 // lunge wind-up before the victim reacts
+const ATTACK_IMPACT_DELAY_MS = 240 // impact point for un-led swings (proc/clip-less)
 const LOAD_TIMEOUT_MS = 12000    // release the combat hold even if loading drags
 // GLB-rigged monsters with no death clip (e.g. Warlord Grondar — its source
 // only ships idle + a punch-swing) get a coded collapse instead: tip the
@@ -47,6 +51,8 @@ function CombatArena3D({
   weapon = null,
   gear = null,
   attackSignal = null,
+  windupSignal = null,
+  monsterAttackImpactSec = null,
   monsterHP,
   playerHP,
   monsterSplats,
@@ -85,7 +91,7 @@ function CombatArena3D({
       mixer: null, monsterMixer: null, clock: null, hero: null, monster: null, monsterCreature: null, heroCreature: null, bones: {}, weapon: null,
       gear: [], gearToken: 0, headMaskCtl: null, heroSkinned: null,
       idleAction: null, attackAction: null, specialAction: null,
-      monsterIdleAction: null, monsterAttackAction: null, timers: new Set(),
+      monsterIdleAction: null, monsterAttackAction: null, monsterLedAttack: false, monsterSwingScheduled: false, timers: new Set(),
       // Procedural timelines: { t, dur } advanced by the render loop.
       monsterLunge: null, monsterReact: null, heroReact: null, heroLunge: null,
       monsterFlash: null, heroFlash: null, monsterMats: [], heroMats: [],
@@ -257,17 +263,23 @@ function CombatArena3D({
           if (!clip) return null
           const action = st.mixer.clipAction(clip)
           action.setLoop(THREE.LoopOnce, 1)
+          // Hold the final frame instead of snapping to the bind pose the
+          // instant the clip ends — the finished handler crossfades back to
+          // idle, so without this the hero jolts before idle fades in.
+          action.clampWhenFinished = true
           return action
         }
         st.attackAction = onceAction(byName(clips.attack || 'Box'))
         st.specialAction = onceAction(byName(clips.special))
         st.hitAction = onceAction(byName(clips.hit))
-        st.deathAction = onceAction(byName(clips.death))
-        if (st.deathAction) st.deathAction.clampWhenFinished = true // stay collapsed
+        st.deathAction = onceAction(byName(clips.death)) // clamped: stays collapsed
         st.mixer.addEventListener('finished', (e) => {
           if (st.disposed || (e.action !== st.attackAction && e.action !== st.specialAction && e.action !== st.hitAction)) return
-          e.action.fadeOut(0.15)
-          st.idleAction.reset().fadeIn(0.15).play()
+          // Crossfade from the clamped end pose back into the still-running idle
+          // (no reset — restarting the loop from frame 0 pops the stance).
+          e.action.fadeOut(0.25)
+          st.idleAction.enabled = true
+          st.idleAction.fadeIn(0.25).play()
         })
       }
 
@@ -286,10 +298,12 @@ function CombatArena3D({
         if (attackClip) {
           st.monsterAttackAction = st.monsterMixer.clipAction(attackClip)
           st.monsterAttackAction.setLoop(THREE.LoopOnce, 1)
+          st.monsterAttackAction.clampWhenFinished = true // hold the end frame; crossfade below (no bind-pose snap)
           st.monsterMixer.addEventListener('finished', (e) => {
             if (st.disposed || e.action !== st.monsterAttackAction) return
-            e.action.fadeOut(0.15)
-            st.monsterIdleAction.reset().fadeIn(0.15).play()
+            e.action.fadeOut(0.25)
+            st.monsterIdleAction.enabled = true
+            st.monsterIdleAction.fadeIn(0.25).play()
           })
         }
         const deathClip = mAnims.find((c) => c.name === 'Death')
@@ -436,6 +450,7 @@ function CombatArena3D({
     const st = stateRef.current
     const hp = monsterHP && monsterHP.current
     const dead = hp <= 0
+    if (st && dead !== wasDeadRef.current) { st.monsterLedAttack = false; st.monsterSwingScheduled = false } // stale wind-up can't land through a death/respawn
     if (st && st.monsterCreature && dead !== wasDeadRef.current) {
       st.monsterCreature.trigger(dead ? 'death' : 'respawn')
     } else if (st && st.monster && !st.monsterCreature && dead !== wasDeadRef.current) {
@@ -552,16 +567,26 @@ function CombatArena3D({
       st.timers.add(timer)
     }
     if (attackSignal.monster) {
+      // A rigged monster's swing is LED on the wind-up tick so it connects on
+      // this exact hit tick — the hero then flinches now, in sync with the
+      // engine's hit splat (reactDelay 0). Everything else (proc creatures,
+      // clip-less monsters, or a missed wind-up) plays from here and reacts at
+      // the clip's impact point.
+      let reactDelay = ATTACK_IMPACT_DELAY_MS
       if (st.monsterCreature) {
         st.monsterCreature.trigger('attack')
       } else if (st.monsterAttackAction) {
-        st.monsterIdleAction && st.monsterIdleAction.fadeOut(0.1)
-        st.monsterAttackAction.reset().fadeIn(0.1).play()
+        if (st.monsterLedAttack) reactDelay = 0
+        else {
+          st.monsterIdleAction && st.monsterIdleAction.fadeOut(0.1)
+          st.monsterAttackAction.reset().fadeIn(0.1).play()
+        }
+        st.monsterLedAttack = false
+        st.monsterSwingScheduled = false // this cycle's swing has landed
       } else {
         st.monsterLunge = { t: 0, dur: 0.55 }
       }
-      const timer = setTimeout(() => {
-        st.timers.delete(timer)
+      const reactHero = () => {
         if (st.disposed) return
         if (st.heroCreature) {
           st.heroCreature.trigger('hit')
@@ -578,10 +603,47 @@ function CombatArena3D({
           st.heroReact = { t: 0, dur: 0.45 }
         }
         st.heroFlash = { t: 0, dur: 0.4 }
-      }, ATTACK_IMPACT_DELAY_MS)
-      st.timers.add(timer)
+      }
+      if (reactDelay === 0) reactHero()
+      else {
+        const timer = setTimeout(() => { st.timers.delete(timer); reactHero() }, reactDelay)
+        st.timers.add(timer)
+      }
     }
   }, [attackSignal && attackSignal.seq])
+
+  // The engine broadcasts how many ticks remain until the monster's next
+  // attack. A rigged monster (GLB with a baked 'Attack' clip) leads its swing
+  // so the blow's IMPACT frame lands on the hit tick's splat. The impact point
+  // is `attackImpactSec` into the clip (registry data — e.g. an overhead smash
+  // connects part-way through a long clip); absent → the clip's end. The swing
+  // starts on the single tick where that lead still fits before the hit, offset
+  // into the gap so the impact frame coincides with the hit, then plays its
+  // recovery until the next swing (or idle) takes over. Proc creatures /
+  // clip-less monsters own their timing and ignore this.
+  useEffect(() => {
+    const st = stateRef.current
+    if (!windupSignal || !st || st.disposed || !st.monsterAttackAction) return
+    if (st.monsterSwingScheduled || (st.monsterFallCur || 0) > 0.02) return
+    const ticks = windupSignal.ticks || 0
+    if (ticks < 1) return
+    const clip = st.monsterAttackAction.getClip()
+    const clipMs = (clip && clip.duration ? clip.duration : 0.5) * 1000
+    const impactMs = Math.min(clipMs, (monsterAttackImpactSec != null ? monsterAttackImpactSec * 1000 : clipMs))
+    const msUntilHit = ticks * TICK_DURATION
+    // Only the tick whose remaining time is in [impact, impact + one tick) can
+    // host the wind-up landing on the hit; earlier ticks wait, later is too late.
+    if (msUntilHit < impactMs || msUntilHit >= impactMs + TICK_DURATION) return
+    st.monsterSwingScheduled = true
+    const timer = setTimeout(() => {
+      st.timers.delete(timer)
+      if (st.disposed || (st.monsterFallCur || 0) > 0.02 || (st.monsterDeathAction && st.monsterDeathAction.isRunning())) return
+      st.monsterIdleAction && st.monsterIdleAction.fadeOut(0.1)
+      st.monsterAttackAction.reset().fadeIn(0.1).play()
+      st.monsterLedAttack = true
+    }, Math.max(0, msUntilHit - impactMs))
+    st.timers.add(timer)
+  }, [windupSignal && windupSignal.seq])
 
   if (failed) return null
 

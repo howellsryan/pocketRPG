@@ -1700,7 +1700,8 @@
     "warlord_grondar": {
       "model": "monsters/warlord_grondar.glb",
       "height": 2.6,
-      "rotationDeg": [0, -90, 0]
+      "rotationDeg": [0, -90, 0],
+      "attackImpactSec": 2.25
     }
   }
 }
