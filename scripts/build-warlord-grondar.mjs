@@ -9,6 +9,10 @@
 //     (entities.createMonsterMesh); clips idle + die (walk aliases idle in
 //     makeAnimator — the source ships no locomotion clip).
 //
+// The 71 MiB source is git-ignored (it exceeds Cloudflare Pages' 25 MiB
+// per-file deploy limit) — drop it at assets/open-world/Warlord+Grondar.glb to
+// re-run this. The committed runtime GLBs are the decimated outputs below.
+//
 // The source is far too heavy for the web, so it is welded + meshopt-simplified
 // (skin weights preserved), textures recompressed to webp, and the output
 // meshopt-compressed. Source clips are anonymous NlaTrack* — identified by
