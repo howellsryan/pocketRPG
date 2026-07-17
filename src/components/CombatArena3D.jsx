@@ -263,17 +263,23 @@ function CombatArena3D({
           if (!clip) return null
           const action = st.mixer.clipAction(clip)
           action.setLoop(THREE.LoopOnce, 1)
+          // Hold the final frame instead of snapping to the bind pose the
+          // instant the clip ends — the finished handler crossfades back to
+          // idle, so without this the hero jolts before idle fades in.
+          action.clampWhenFinished = true
           return action
         }
         st.attackAction = onceAction(byName(clips.attack || 'Box'))
         st.specialAction = onceAction(byName(clips.special))
         st.hitAction = onceAction(byName(clips.hit))
-        st.deathAction = onceAction(byName(clips.death))
-        if (st.deathAction) st.deathAction.clampWhenFinished = true // stay collapsed
+        st.deathAction = onceAction(byName(clips.death)) // clamped: stays collapsed
         st.mixer.addEventListener('finished', (e) => {
           if (st.disposed || (e.action !== st.attackAction && e.action !== st.specialAction && e.action !== st.hitAction)) return
-          e.action.fadeOut(0.15)
-          st.idleAction.reset().fadeIn(0.15).play()
+          // Crossfade from the clamped end pose back into the still-running idle
+          // (no reset — restarting the loop from frame 0 pops the stance).
+          e.action.fadeOut(0.25)
+          st.idleAction.enabled = true
+          st.idleAction.fadeIn(0.25).play()
         })
       }
 
@@ -292,10 +298,12 @@ function CombatArena3D({
         if (attackClip) {
           st.monsterAttackAction = st.monsterMixer.clipAction(attackClip)
           st.monsterAttackAction.setLoop(THREE.LoopOnce, 1)
+          st.monsterAttackAction.clampWhenFinished = true // hold the end frame; crossfade below (no bind-pose snap)
           st.monsterMixer.addEventListener('finished', (e) => {
             if (st.disposed || e.action !== st.monsterAttackAction) return
-            e.action.fadeOut(0.15)
-            st.monsterIdleAction.reset().fadeIn(0.15).play()
+            e.action.fadeOut(0.25)
+            st.monsterIdleAction.enabled = true
+            st.monsterIdleAction.fadeIn(0.25).play()
           })
         }
         const deathClip = mAnims.find((c) => c.name === 'Death')
