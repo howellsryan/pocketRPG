@@ -1099,7 +1099,7 @@
     "heals": 25,
     "eatTicks": 3,
     "isUntradeable": true,
-    "shopValue": 300,
+    "shopValue": 1000,
     "isGeneralStore": false
   },
   "raw_karam": {
