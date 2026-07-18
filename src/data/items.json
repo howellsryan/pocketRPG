@@ -3071,6 +3071,18 @@
     "requirements": {},
     "isGeneralStore": false
   },
+  "bowyers_knife": {
+    "id": "bowyers_knife",
+    "legacy_item_id": "bowyers_knife",
+    "name": "Bowyer's Knife",
+    "type": "tool",
+    "slot": null,
+    "stackable": false,
+    "requirements": {},
+    "shopValue": 500000,
+    "isGeneralStore": false,
+    "isUntradeable": true
+  },
   "hammer": {
     "id": "hammer",
     "legacy_item_id": "hammer",

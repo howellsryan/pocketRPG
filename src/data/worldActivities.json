@@ -2791,6 +2791,10 @@
       "ref": "castle_wars"
     },
     {
+      "kind": "minigame",
+      "ref": "fletching_guild"
+    },
+    {
       "kind": "quest",
       "ref": "a_dusk_at_the_theater"
     },

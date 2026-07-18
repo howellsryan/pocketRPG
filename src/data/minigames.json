@@ -214,6 +214,19 @@
       "qty": 1,
       "minigame": "arcane_proving_grounds",
       "oneShot": true
+    },
+    {
+      "id": "fg_bowyers_knife",
+      "name": "Earn the Bowyer's Knife",
+      "icon": "🔪",
+      "iconKey": "dagger",
+      "description": "Work the Fletching Guild benches until the masters award you a Bowyer's Knife.",
+      "hours": 2,
+      "ticks": 12000,
+      "product": "bowyers_knife",
+      "qty": 1,
+      "minigame": "fletching_guild",
+      "oneShot": true
     }
   ],
   "minigames": [
@@ -259,6 +272,12 @@
       "icon": "🪄",
       "iconKey": "magic_swirl",
       "req": { "skill": "magic", "level": 50 }
+    },
+    {
+      "id": "fletching_guild",
+      "label": "Fletching Guild",
+      "icon": "🏹",
+      "iconKey": "bow"
     }
   ],
   "itemNames": {
@@ -281,6 +300,7 @@
     "boundless_boots": "Boundless Boots",
     "boundless_gloves": "Boundless Gloves",
     "arcane_grimoire": "Arcane Grimoire",
-    "archmage_wand": "Archmage Wand"
+    "archmage_wand": "Archmage Wand",
+    "bowyers_knife": "Bowyer's Knife"
   }
 }

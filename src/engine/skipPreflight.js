@@ -73,7 +73,7 @@ function getSkillSkipPreflight(activeTask, context, elapsedMs) {
     return valid(1, 'skill:reward')
   }
 
-  const effectiveTicks = getEffectiveToolActionTicks(activeTask.skill, action.ticks, context.equipment, context.itemsData || {}, context.stats || {}, context.inventory || [])
+  const effectiveTicks = getEffectiveToolActionTicks(activeTask.skill, action.ticks, context.equipment, context.itemsData || {}, context.stats || {}, context.inventory || [], action)
   let possibleActions = actionsFromTicks(elapsedMs, effectiveTicks)
   if (possibleActions <= 0) return invalid('This action cannot progress from a 1 hour skip.', 'skill', false)
   if (action.materials) possibleActions = Math.min(possibleActions, capByMaterials(action.materials, context))

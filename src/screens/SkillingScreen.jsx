@@ -482,7 +482,7 @@ export default function SkillingScreen({ initialSkillId, initialActionId, initia
     // Map-driven gating (Phase 3): must be at a place that offers this skill action.
     if (!requestActivityStart({ type: 'skill', skill: selectedSkill, action })) return
 
-    const effectiveTicks = getEffectiveToolActionTicks(selectedSkill, action.ticks, equipment, itemsData, stats, inventory)
+    const effectiveTicks = getEffectiveToolActionTicks(selectedSkill, action.ticks, equipment, itemsData, stats, inventory, action)
     const adjustedAction = effectiveTicks !== action.ticks
       ? { ...action, ticks: effectiveTicks }
       : action
@@ -512,7 +512,7 @@ export default function SkillingScreen({ initialSkillId, initialActionId, initia
   // action), seeding session totals and the current action's remaining ticks so
   // progress continues exactly where the background runner left it.
   const buildResumedState = (task, action, skill = selectedSkill) => {
-    const effectiveTicks = getEffectiveToolActionTicks(skill, action.ticks, equipment, itemsData, stats, inventory)
+    const effectiveTicks = getEffectiveToolActionTicks(skill, action.ticks, equipment, itemsData, stats, inventory, action)
     const adjustedAction = effectiveTicks !== action.ticks ? { ...action, ticks: effectiveTicks } : action
     const state = { ...createSkillingState(skill, adjustedAction), startedAt: task.session?.startedAt || Date.now() }
     state.totalActions = task.session?.actions || 0
@@ -539,7 +539,7 @@ export default function SkillingScreen({ initialSkillId, initialActionId, initia
     setShowAlchemyPicker(false)
     setSelectedAlchemyItem(item)
 
-    const effectiveTicks = getEffectiveToolActionTicks(selectedSkill, selectedAction.ticks, equipment, itemsData, stats, inventory)
+    const effectiveTicks = getEffectiveToolActionTicks(selectedSkill, selectedAction.ticks, equipment, itemsData, stats, inventory, selectedAction)
     const adjustedAction = effectiveTicks !== selectedAction.ticks
       ? { ...selectedAction, ticks: effectiveTicks }
       : selectedAction
@@ -669,7 +669,7 @@ export default function SkillingScreen({ initialSkillId, initialActionId, initia
             addToast(`Requires ${skill.name || initialSkillId} level ${action.level}.`, 'error')
             return
           }
-          const effectiveTicks = getEffectiveToolActionTicks(initialSkillId, action.ticks, equipment, itemsData, stats, inventory)
+          const effectiveTicks = getEffectiveToolActionTicks(initialSkillId, action.ticks, equipment, itemsData, stats, inventory, action)
           const adjustedAction = effectiveTicks !== action.ticks
             ? { ...action, ticks: effectiveTicks }
             : action
@@ -800,6 +800,7 @@ export default function SkillingScreen({ initialSkillId, initialActionId, initia
               itemsData,
               stats,
               inventory,
+              action,
             )
             const xpMultiplier = getEquippedSkillXpMultiplier(selectedSkill, equipment, itemsData)
             const displayXP = xpMultiplier !== 1 ? Math.floor(action.xp * xpMultiplier) : action.xp

@@ -168,7 +168,7 @@ export function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, st
 
 
   // Apply the same effective tool timing as active skilling.
-  const actionTicks = getEffectiveToolActionTicks(task.skill, task.action.ticks, equipment, itemsData, stats, inventory)
+  const actionTicks = getEffectiveToolActionTicks(task.skill, task.action.ticks, equipment, itemsData, stats, inventory, task.action)
 
   let actions = Math.floor(totalTicks / actionTicks)
   if (actions <= 0) return null
