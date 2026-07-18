@@ -1429,7 +1429,8 @@
           "tuna": 1,
           "sweetcorn": 1,
           "potato": 1
-        }
+        },
+        "burnStopLevel": 99
       }
     ]
   },
