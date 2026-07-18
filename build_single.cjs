@@ -102,6 +102,7 @@ const sourceFiles = [
   'engine/collectionLog.js',
   'engine/leaderboardFilters.js',
   'engine/activityRegistry.js',
+  'engine/backgroundCombat.js',
   'engine/activitySession.js',
   'engine/activityRunner.js',
   'engine/skipPreflight.js',

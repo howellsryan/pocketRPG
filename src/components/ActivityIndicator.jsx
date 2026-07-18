@@ -1,5 +1,6 @@
 import { useGame } from '../state/gameState.jsx'
 import { SKILL_ICONS, SCREENS } from '../utils/constants.js'
+import { monsterHpFraction } from '../engine/backgroundCombat.js'
 import SkillIcon from './SkillIcon.jsx'
 import GameIcon from './GameIcon.jsx'
 
@@ -46,14 +47,31 @@ function describeTask(task) {
 }
 
 export default function ActivityIndicator({ onNavigate }) {
-  const { activeTask } = useGame()
-  const info = describeTask(activeTask)
+  const { activeTask, combatStatus } = useGame()
+
+  // A live background-eligible fight takes priority: show the combat icon with
+  // the monster's HP as the progress ring so the player can watch it from any
+  // screen. Bosses/raids/dungeons never background, so they never show here.
+  const inCombat = !!combatStatus?.active && combatStatus?.backgroundable === true
+  const info = inCombat
+    ? { iconKey: 'combat_level', icon: '⚔️', screen: SCREENS.COMBAT, label: combatStatus.monsterName ? `Fighting ${combatStatus.monsterName}` : 'In combat' }
+    : describeTask(activeTask)
   if (!info) return null
 
-  const total = Number(activeTask.totalTicks) || 0
-  const remaining = Number(activeTask.ticksRemaining)
-  const hasProgress = total > 0 && Number.isFinite(remaining)
-  const progress = hasProgress ? Math.max(0, Math.min(1, (total - remaining) / total)) : 0
+  let hasProgress
+  let progress
+  if (inCombat) {
+    // Ring is directly proportional to the monster's remaining HP — full at the
+    // start of the fight, emptying to nothing as it dies (50 of 100 HP → half).
+    const frac = monsterHpFraction(combatStatus.monsterHP, combatStatus.monsterMaxHP)
+    hasProgress = frac !== null
+    progress = frac ?? 0
+  } else {
+    const total = Number(activeTask.totalTicks) || 0
+    const remaining = Number(activeTask.ticksRemaining)
+    hasProgress = total > 0 && Number.isFinite(remaining)
+    progress = hasProgress ? Math.max(0, Math.min(1, (total - remaining) / total)) : 0
+  }
 
   const size = 30
   const stroke = 3

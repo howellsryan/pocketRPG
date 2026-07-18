@@ -20,7 +20,10 @@ import { OTHER_BONUS_LABELS, OTHER_BONUS_PERCENT_KEYS } from '../utils/bonusLabe
 import { formatSpecialEnergyCostLabel } from '../engine/specialAttackEnergy.js'
 
 export default function EquipmentScreen() {
-  const { equipment, inventory, bank, stats, updateEquipment, updateInventory, updateBank, addToast, itemsData, completedQuests, equipmentPresets, updateEquipmentPresets } = useGame()
+  const { equipment, inventory, bank, stats, updateEquipment, updateInventory, updateBank, addToast, itemsData, completedQuests, equipmentPresets, updateEquipmentPresets, combatStatus } = useGame()
+  // Loadout presets reshuffle equipment/inventory/bank wholesale — disabled while
+  // a fight ticks in the background so gear can't swap out from under it.
+  const presetsLocked = !!combatStatus?.active
   const [selected, setSelected] = useState(null) // { slot, item }
   const [showSpecInfo, setShowSpecInfo] = useState(false)
   const [invSelected, setInvSelected] = useState(null) // { slotIndex, slot, item }
@@ -45,6 +48,7 @@ export default function EquipmentScreen() {
   const gearSpecs = useMemo(() => getGearPlacements(equipment), [equipment])
 
   const handleCreatePreset = () => {
+    if (presetsLocked) { addToast('⚔️ Finish your fight to manage presets.', 'warning'); return }
     if (presets.length >= MAX_EQUIPMENT_PRESETS) {
       addToast(`Preset limit reached (${MAX_EQUIPMENT_PRESETS})`, 'error')
       return
@@ -60,6 +64,7 @@ export default function EquipmentScreen() {
   // report anything the player lacks (missing / requirement-locked / partial
   // stacks) in a single toast so empty slots are explained.
   const handleLoadPreset = (preset) => {
+    if (presetsLocked) { addToast('⚔️ Finish your fight to swap loadouts.', 'warning'); return }
     const result = applyPreset(preset, { equipment, inventory, bank }, itemsData, stats, completedQuests)
     updateEquipment(result.equipment)
     updateInventory(result.inventory)
@@ -298,15 +303,18 @@ export default function EquipmentScreen() {
       <div class="mb-3 flex items-center gap-1.5 flex-wrap">
         <span class="text-[10px] uppercase tracking-wider text-[var(--color-gold-dim)] opacity-60 mr-1">Presets</span>
         {presets.map(p => (
-          <div key={p.id} class="flex items-stretch rounded-md overflow-hidden">
+          <div key={p.id} class={`flex items-stretch rounded-md overflow-hidden ${presetsLocked ? 'opacity-40' : ''}`}>
             <button
               onClick={() => handleLoadPreset(p)}
+              disabled={presetsLocked}
+              title={presetsLocked ? 'Locked while fighting' : undefined}
               class="px-3 py-1.5 bg-[var(--color-void-light)] text-[var(--color-parchment)] text-xs font-bold max-w-[110px] truncate active:opacity-80"
             >
               {p.name}
             </button>
             <button
               onClick={() => { setManagePreset(p); setManageName(p.name) }}
+              disabled={presetsLocked}
               class="px-2 py-1.5 bg-[var(--color-void-light)] text-[var(--color-parchment)] opacity-40 text-xs active:opacity-70"
               aria-label={`Edit preset ${p.name}`}
             >
@@ -317,7 +325,9 @@ export default function EquipmentScreen() {
         {presets.length < MAX_EQUIPMENT_PRESETS && (
           <button
             onClick={() => { setCreateOpen(true); setCreateName('') }}
-            class="px-2.5 py-1.5 rounded-md bg-[var(--color-void-light)] text-[var(--color-parchment)] opacity-50 text-sm font-bold active:opacity-80"
+            disabled={presetsLocked}
+            title={presetsLocked ? 'Locked while fighting' : undefined}
+            class={`px-2.5 py-1.5 rounded-md bg-[var(--color-void-light)] text-[var(--color-parchment)] text-sm font-bold active:opacity-80 ${presetsLocked ? 'opacity-25' : 'opacity-50'}`}
             aria-label="Save current loadout as a preset"
           >
             +

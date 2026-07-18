@@ -68,6 +68,11 @@ export function GameProvider({ children }) {
   const [autoBankLoot, setAutoBankLootState] = useState(true)
   const [autoBankExcludedItems, setAutoBankExcludedItemsState] = useState(new Set())
   const [showInfoToasts, setShowInfoToastsState] = useState(false)
+  const [backgroundCombat, setBackgroundCombatState] = useState(false)
+  // Live snapshot of the running fight, published by CombatScreen each tick so the
+  // desktop combat indicator can render the monster's HP as a progress bar while
+  // the fight ticks on another screen. Null when no fight is in progress.
+  const [combatStatus, setCombatStatus] = useState(null)
   const [activeTask, setActiveTaskState] = useState(null)
   const activeTaskInternalRef = useRef(null) // tracks latest active task for flush in setActiveTask
   const worldLocationRef = useRef(WORLD_START_PLACE) // latest location for gating in callbacks
@@ -165,14 +170,15 @@ export function GameProvider({ children }) {
 
   // Load all state from IndexedDB — runs idle simulation inline, returns idleResult
   const loadGame = useCallback(async () => {
-    let [p, s, inv, eq, b, shortcuts, stance, savedHP, autoBankSetting, savedBankConfig, savedEquipmentPresets, savedUnlocks, savedSlayerTask, savedSlayerPoints, savedSlayerTasksCompleted, savedSlayerMasterTaskCompletions, savedDungeoneeringTokens, savedBossKillCounts, savedRaidKillCounts, savedFarming, savedCompletedQuests, savedQuestQueue, savedActiveCombatSpell, savedUnlockedMinigameItems, savedIdleCombatSetup, savedSlayerPerks, savedCharacterUnlocks, savedShowInfoToasts, savedWorldLocation, savedAutoBankExcludedItems] = await Promise.all([
+    let [p, s, inv, eq, b, shortcuts, stance, savedHP, autoBankSetting, savedBankConfig, savedEquipmentPresets, savedUnlocks, savedSlayerTask, savedSlayerPoints, savedSlayerTasksCompleted, savedSlayerMasterTaskCompletions, savedDungeoneeringTokens, savedBossKillCounts, savedRaidKillCounts, savedFarming, savedCompletedQuests, savedQuestQueue, savedActiveCombatSpell, savedUnlockedMinigameItems, savedIdleCombatSetup, savedSlayerPerks, savedCharacterUnlocks, savedShowInfoToasts, savedWorldLocation, savedAutoBankExcludedItems, savedBackgroundCombat] = await Promise.all([
       getPlayer(), getAllStats(), getInventory(), getEquipment(), getBank(),
       getSetting('homeShortcuts'), getSetting('combatStance'), getSetting('currentHP'),
       getSetting('autoBankLoot'), getSetting('bankConfig'), getSetting('equipmentPresets'), getSetting('unlockedFeatures'),
       getSetting('slayerTask'), getSetting('slayerPoints'), getSetting('slayerTasksCompleted'), getSetting('slayerMasterTaskCompletions'), getSetting('dungeoneeringTokens'), getSetting('bossKillCounts'), getSetting('raidKillCounts'), getSetting('farming'),
       getSetting('completedQuests'), getSetting('questQueue'), getSetting('activeCombatSpell'), getSetting('unlockedMinigameItems'),
       getSetting('idleCombatSetup'), getSetting('slayerPerks'), getSetting('characterUnlocks'),
-      getSetting('showInfoToasts'), getSetting('worldLocation'), getSetting('autoBankExcludedItems')
+      getSetting('showInfoToasts'), getSetting('worldLocation'), getSetting('autoBankExcludedItems'),
+      getSetting('backgroundCombat')
     ])
     const normalisedIdleCombatSetup = normaliseIdleCombatSetup(savedIdleCombatSetup)
     const autoBankExcludedItemIdsSet = new Set(savedAutoBankExcludedItems || [])
@@ -631,6 +637,7 @@ export function GameProvider({ children }) {
     setAutoBankLootState(autoBankSetting !== false) // default true
     setAutoBankExcludedItemsState(autoBankExcludedItemIdsSet)
     setShowInfoToastsState(savedShowInfoToasts === true) // default false
+    setBackgroundCombatState(savedBackgroundCombat === true) // default false
     const loadedWorldLocation = normaliseLocation(savedWorldLocation) // un-migrated saves → start place
     worldLocationRef.current = loadedWorldLocation
     setWorldLocationState(loadedWorldLocation)
@@ -885,6 +892,25 @@ export function GameProvider({ children }) {
     showInfoToastsRef.current = enabled
     setShowInfoToastsState(enabled)
     saveSetting('showInfoToasts', enabled)
+  }, [])
+
+  const updateBackgroundCombat = useCallback((enabled) => {
+    setBackgroundCombatState(enabled)
+    saveSetting('backgroundCombat', enabled)
+  }, [])
+
+  // CombatScreen publishes its live fight snapshot here (or null on stop/unmount)
+  // so the desktop combat indicator and the background-combat host can react
+  // without reaching into the screen. Skip redundant identical updates so an
+  // unchanged tick doesn't churn every context consumer.
+  const combatStatusSigRef = useRef('null')
+  const publishCombatStatus = useCallback((status) => {
+    const sig = status
+      ? `${status.active}|${status.busy}|${status.backgroundable}|${status.monsterId}|${status.monsterHP}|${status.monsterMaxHP}`
+      : 'null'
+    if (sig === combatStatusSigRef.current) return
+    combatStatusSigRef.current = sig
+    setCombatStatus(status)
   }, [])
 
   const updateBankConfig = useCallback((config) => {
@@ -1200,6 +1226,7 @@ export function GameProvider({ children }) {
       autoBankExcludedItems: [...autoBankExcludedItems],
       bankConfig,
       showInfoToasts,
+      backgroundCombat,
       equipmentPresets,
       homeShortcuts,
       combatStance,
@@ -1350,6 +1377,13 @@ export function GameProvider({ children }) {
     requestCriticalPushSave(() => getSnapshot(), CRITICAL_SAVE_REASONS.INFO_TOAST_SETTING_CHANGE)
   }, [loaded, showInfoToasts, getSnapshot])
 
+  const backgroundCombatHydratedRef = useRef(false)
+  useEffect(() => {
+    if (!loaded) return
+    if (!backgroundCombatHydratedRef.current) { backgroundCombatHydratedRef.current = true; return }
+    requestCriticalPushSave(() => getSnapshot(), CRITICAL_SAVE_REASONS.BACKGROUND_COMBAT_SETTING_CHANGE)
+  }, [loaded, backgroundCombat, getSnapshot])
+
   // Stable identity for the running activity — only the activity itself (not its
   // per-tick progress/session) should restart the heartbeat interval. Without
   // this the interval would reset every 600ms (the runner and the activity
@@ -1452,6 +1486,7 @@ export function GameProvider({ children }) {
     // travel confirm that then navigates) should use this, not `activeTask`.
     getActiveTask: () => activeTaskInternalRef.current,
     activeTask, autoBankLoot, autoBankExcludedItems, toggleAutoBankExclusion, bankConfig, showInfoToasts, updateShowInfoToasts,
+    backgroundCombat, updateBackgroundCombat, combatStatus, publishCombatStatus,
     equipmentPresets, updateEquipmentPresets,
     unlockedFeatures, unlockFeature,
     slayerTask, setSlayerTask, slayerPoints, updateSlayerPoints, awardSlayerPoints,

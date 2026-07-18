@@ -300,7 +300,7 @@ function MonsterPhaseStats({ monster }) {
 }
 
 export default function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onCombatStatusChange, onBack, onStopBack, dungeonPlaceId }) {
-  const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, updateEquipment, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, idleCombatSetup, updateIdleCombatSetup, homeShortcuts, updateHomeShortcuts, setActiveTask, requestActivityStart, slayerTask, setSlayerTask, awardSlayerPoints, slayerTasksCompleted, setSlayerTasksCompleted, incrementSlayerMasterTaskCompletions, activeCombatSpell, updateActiveCombatSpell, bossKillCounts, updateBossKillCounts, raidKillCounts, updateRaidKillCounts, unlockedFeatures, completedQuests, isOneLife, isIronman, revertOneLifeMode, getSnapshot, loadGame, combatSkipHandlerRef, skipHourHandlerRef, chargeSkipRef, raidSkipHandlerRef, lockGame, unlockGame, resolveCombatCompletion, characterUnlocks, killCountsLoaded, recordGameEvent, worldLocation } = useGame()
+  const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, updateEquipment, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, idleCombatSetup, updateIdleCombatSetup, homeShortcuts, updateHomeShortcuts, setActiveTask, requestActivityStart, slayerTask, setSlayerTask, awardSlayerPoints, slayerTasksCompleted, setSlayerTasksCompleted, incrementSlayerMasterTaskCompletions, activeCombatSpell, updateActiveCombatSpell, bossKillCounts, updateBossKillCounts, raidKillCounts, updateRaidKillCounts, unlockedFeatures, completedQuests, isOneLife, isIronman, revertOneLifeMode, getSnapshot, loadGame, combatSkipHandlerRef, skipHourHandlerRef, chargeSkipRef, raidSkipHandlerRef, lockGame, unlockGame, resolveCombatCompletion, characterUnlocks, killCountsLoaded, recordGameEvent, worldLocation, publishCombatStatus, activeTask, backgroundCombat } = useGame()
   const pvp = usePvp()
   // Offline demo: bosses, raids and PvP are locked (server-authoritative).
   const isDemo = isDemoMode() && !(getToken() && getCharacterId())
@@ -546,6 +546,42 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     const isActive = combat?.active === true
     onCombatStatusChange?.(isActive)
   }, [combat?.active, onCombatStatusChange])
+
+  // Publish the live fight snapshot for the desktop combat indicator and the
+  // background-combat host. `busy` stays true while a loot/death modal is still
+  // up so the host keeps this screen mounted long enough to show it. Only normal
+  // monster fights are `backgroundable` (bosses/raids/dungeons stay foreground).
+  // Gated on the opt-in setting so combat is an exact no-op when it's off.
+  useEffect(() => {
+    if (!backgroundCombat || (!combat && !lootModal && !deathModal)) {
+      publishCombatStatus?.(null)
+      return
+    }
+    const m = combat?.monster
+    publishCombatStatus?.({
+      active: combat?.active === true,
+      busy: combat?.active === true || !!lootModal || !!deathModal,
+      backgroundable: !isDungeon && m?.boss !== true && !combat?.raid,
+      monsterId: m?.id || null,
+      monsterName: m?.name || null,
+      monsterHP: Number.isFinite(m?.currentHP) ? m.currentHP : null,
+      monsterMaxHP: Number.isFinite(m?.hitpoints) ? m.hitpoints : null,
+    })
+  }, [combat, lootModal, deathModal, backgroundCombat])
+
+  // Clear the published status when the screen unmounts entirely.
+  useEffect(() => () => publishCombatStatus?.(null), [])
+
+  // If another activity (a skill, gathering, travel) supersedes this fight while
+  // it ticks in the background, stop combat cleanly rather than running two
+  // activities at once.
+  useEffect(() => {
+    if (combatRef.current?.active && activeTask && activeTask.type !== 'combat') {
+      combatRef.current = null
+      setCombat(null)
+      setLog([])
+    }
+  }, [activeTask])
 
   // Pause ticks while the loot modal is open so combat cannot advance in the background
   useEffect(() => {
@@ -1214,7 +1250,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     setFightStartedAt(Date.now())
     const spellName = spell ? ` with ${spell.name}` : isPoweredStaff && weaponItem ? ` with ${weaponItem.name}` : ''
     setLog([{ text: `Fighting ${monster.name}${spellName}...`, type: 'info', time: Date.now() }])
-    setActiveTask({ type: 'combat', monster, stance: combatStance, bankingEnabled: true, spell: spell || null })
+    setActiveTask({ type: 'combat', monster, stance: combatStance, bankingEnabled: true, spell: spell || null, dungeon: isDungeon })
   }
 
   const startRaid = (raidData) => {
@@ -1273,7 +1309,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     state.prayerDrainAccumulator = combatRef.current?.prayerDrainAccumulator || 0
     combatRef.current = state
     setCombat(state)
-    setActiveTask({ type: 'combat', monster, stance: combatStance, bankingEnabled: true, spell: spell || null })
+    setActiveTask({ type: 'combat', monster, stance: combatStance, bankingEnabled: true, spell: spell || null, dungeon: isDungeon })
   }
 
   // Claim one full-raid reward roll from the server (the legitimate grant path)
