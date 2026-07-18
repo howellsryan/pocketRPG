@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="raw_tuna_b" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#13293a"/><stop offset="0.5" stop-color="#3f6d8c"/><stop offset="1" stop-color="#eaf4fb"/>
+    </linearGradient>
+  </defs>
+  <g stroke="#0d1b26" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M96 256 C 130 216 200 196 288 200 C 348 204 392 224 420 256 C 392 288 348 308 288 312 C 200 316 130 296 96 256 Z" fill="url(#raw_tuna_b)"/>
+    <path d="M394 232 C 424 208 448 196 470 198 C 458 220 452 240 450 256 C 452 272 458 294 470 314 C 448 316 424 304 394 280 Z" fill="#13293a"/>
+    <path d="M244 200 C 250 160 268 128 288 118 C 292 152 288 184 278 206 Z" fill="#13293a"/>
+    <path d="M170 270 C 190 300 210 322 200 340 C 176 326 156 300 154 276 Z" fill="#13293a"/>
+    <path d="M330 208 L338 192 L344 210 L354 194 L360 210 L370 196 L376 210 L386 200 L392 210" stroke="#f2c94c" stroke-width="6" fill="none"/>
+    <path d="M112 268 C 182 296 282 300 362 288 C 366 300 362 308 356 310 C 272 322 172 318 120 292 Z" fill="#eaf4fb" stroke="none"/>
+    <circle cx="150" cy="246" r="13" fill="#0d1b26" stroke="none"/>
+    <circle cx="145" cy="241" r="4" fill="#fff" stroke="none"/>
+  </g>
+</svg>

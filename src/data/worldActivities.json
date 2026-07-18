@@ -154,6 +154,14 @@
     },
     {
       "kind": "skill",
+      "ref": "cooking:cook_tuna"
+    },
+    {
+      "kind": "skill",
+      "ref": "cooking:cook_tuna_potato"
+    },
+    {
+      "kind": "skill",
       "ref": "crafting:black_d_hide_body"
     },
     {
@@ -801,6 +809,14 @@
     {
       "kind": "skill",
       "ref": "cooking:cook_trout"
+    },
+    {
+      "kind": "skill",
+      "ref": "cooking:cook_tuna"
+    },
+    {
+      "kind": "skill",
+      "ref": "cooking:cook_tuna_potato"
     },
     {
       "kind": "skill",
@@ -1839,6 +1855,14 @@
     {
       "kind": "skill",
       "ref": "cooking:cook_trout"
+    },
+    {
+      "kind": "skill",
+      "ref": "cooking:cook_tuna"
+    },
+    {
+      "kind": "skill",
+      "ref": "cooking:cook_tuna_potato"
     },
     {
       "kind": "skill",
@@ -2901,6 +2925,14 @@
     {
       "kind": "skill",
       "ref": "cooking:cook_trout"
+    },
+    {
+      "kind": "skill",
+      "ref": "cooking:cook_tuna"
+    },
+    {
+      "kind": "skill",
+      "ref": "cooking:cook_tuna_potato"
     },
     {
       "kind": "skill",
@@ -4525,6 +4557,14 @@
     {
       "kind": "skill",
       "ref": "cooking:cook_trout"
+    },
+    {
+      "kind": "skill",
+      "ref": "cooking:cook_tuna"
+    },
+    {
+      "kind": "skill",
+      "ref": "cooking:cook_tuna_potato"
     },
     {
       "kind": "skill",
@@ -6551,6 +6591,18 @@
     {
       "kind": "skill",
       "ref": "cooking:cook_trout"
+    },
+    {
+      "kind": "skill",
+      "ref": "cooking:cook_tuna"
+    },
+    {
+      "kind": "skill",
+      "ref": "cooking:cook_tuna_potato"
+    },
+    {
+      "kind": "skill",
+      "ref": "fishing:tuna"
     },
     {
       "kind": "skill",
@@ -9037,6 +9089,14 @@
     {
       "kind": "skill",
       "ref": "cooking:cook_trout"
+    },
+    {
+      "kind": "skill",
+      "ref": "cooking:cook_tuna"
+    },
+    {
+      "kind": "skill",
+      "ref": "cooking:cook_tuna_potato"
     },
     {
       "kind": "skill",

@@ -8,13 +8,15 @@ import { getReadyPatchSummaryForLocation } from '../engine/farming.ts'
 const patchTypeLabels = {
   herb: 'Herb Patch',
   tree: 'Tree Patch',
-  fruitTree: 'Fruit Tree Patch'
+  fruitTree: 'Fruit Tree Patch',
+  vegetable: 'Vegetable Patch'
 }
 
 const readyTypeLabels = {
   herb: 'Herb',
   tree: 'Tree',
-  fruitTree: 'Fruit tree'
+  fruitTree: 'Fruit tree',
+  vegetable: 'Vegetable'
 }
 
 export default function FarmLocationPicker({ farmingLevel, farmingXp = 0, farming, onSelectLocation, onBack, onHarvestAll, onPlantAll }) {

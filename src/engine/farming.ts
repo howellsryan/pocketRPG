@@ -4,7 +4,7 @@ import { countItem } from './inventory.js'
 export interface FarmingPatch {
   patchId: string
   cropId?: string
-  type: 'herb' | 'tree' | 'fruitTree'
+  type: 'herb' | 'tree' | 'fruitTree' | 'vegetable'
   stage: number // 1-4 for herb/tree, 1-4 for growth + fruit count for fruitTree
   plantedAt: number // timestamp in ms
   readyAt: number // when to transition to next stage
@@ -28,12 +28,13 @@ export interface CropDef {
   fruitLimit?: number
   icon: string
 }
-export type FarmingPatchType = 'herb' | 'tree' | 'fruitTree'
+export type FarmingPatchType = 'herb' | 'tree' | 'fruitTree' | 'vegetable'
 
 export function getCropType(seedId: string): FarmingPatchType | null {
   if (farmingData.herbs.some(c => c.id === seedId)) return 'herb'
   if (farmingData.trees.some(c => c.id === seedId)) return 'tree'
   if (farmingData.fruitTrees.some(c => c.id === seedId)) return 'fruitTree'
+  if (farmingData.vegetables.some(c => c.id === seedId)) return 'vegetable'
   return null
 }
 
@@ -46,7 +47,7 @@ export function generatePatchId(locationId: string, type: string, index: number)
 }
 
 export function getCropDef(seedId: string): CropDef | null {
-  for (const category of ['herbs', 'trees', 'fruitTrees'] as const) {
+  for (const category of ['herbs', 'trees', 'fruitTrees', 'vegetables'] as const) {
     const crop = farmingData[category].find(c => c.id === seedId)
     if (crop) return crop as CropDef
   }
@@ -96,6 +97,26 @@ export function plantCrop(
   }
 }
 
+const VEGETABLE_YIELD_MIN = 1
+const VEGETABLE_YIELD_MAX = 50
+const VEGETABLE_LEVELS_PER_EXTRA_ROLL = 14
+
+/**
+ * Vegetable yield is a flat 1-50 roll, but higher Farming levels take the best
+ * of several independent rolls — so level only weighs the odds toward a bigger
+ * harvest, it never guarantees one (a level 1 farmer can still roll 50).
+ */
+export function rollVegetableYield(farmingLevel: number): number {
+  const safeLevel = Math.max(1, Math.min(99, Math.floor(farmingLevel || 1)))
+  const rolls = 1 + Math.floor((safeLevel - 1) / VEGETABLE_LEVELS_PER_EXTRA_ROLL)
+  let best = VEGETABLE_YIELD_MIN
+  for (let i = 0; i < rolls; i++) {
+    const roll = VEGETABLE_YIELD_MIN + Math.floor(Math.random() * (VEGETABLE_YIELD_MAX - VEGETABLE_YIELD_MIN + 1))
+    if (roll > best) best = roll
+  }
+  return best
+}
+
 export function harvestCrop(
   state: FarmingState,
   patchId: string,
@@ -118,8 +139,10 @@ export function harvestCrop(
   const treeYield = 5 + Math.floor(Math.random() * (Math.max(5, maxTreeYield) - 5 + 1))
 
   const cropType = getCropType(patch.cropId)
-  const quantity = cropType === 'herb' ? herbYield : (cropType === 'tree' || cropType === 'fruitTree' ? treeYield : 1)
-  const harvestXp = cropType === 'herb' ? Math.floor(crop.harvestXp * quantity) : Math.floor(crop.harvestXp)
+  const quantity = cropType === 'herb' ? herbYield
+    : cropType === 'vegetable' ? rollVegetableYield(safeLevel)
+    : (cropType === 'tree' || cropType === 'fruitTree' ? treeYield : 1)
+  const harvestXp = (cropType === 'herb' || cropType === 'vegetable') ? Math.floor(crop.harvestXp * quantity) : Math.floor(crop.harvestXp)
 
   return {
     state: newState,
@@ -161,7 +184,8 @@ export function getPatchesForLocation(
   const results: { patchId: string; patch: FarmingPatch | null; type: string }[] = []
   let herbIndex = 0,
     treeIndex = 0,
-    fruitIndex = 0
+    fruitIndex = 0,
+    vegetableIndex = 0
 
   for (const patchDef of location.patches) {
     for (let i = 0; i < patchDef.count; i++) {
@@ -172,6 +196,8 @@ export function getPatchesForLocation(
         patchId = generatePatchId(locationId, 'tree', treeIndex++)
       } else if (patchDef.type === 'fruitTree') {
         patchId = generatePatchId(locationId, 'fruitTree', fruitIndex++)
+      } else if (patchDef.type === 'vegetable') {
+        patchId = generatePatchId(locationId, 'vegetable', vegetableIndex++)
       }
       results.push({
         patchId,
@@ -184,8 +210,11 @@ export function getPatchesForLocation(
   return results
 }
 
-export function getAvailableCrops(type: 'herb' | 'tree' | 'fruitTree', currentLevel: number): CropDef[] {
-  const cropList = type === 'herb' ? farmingData.herbs : type === 'tree' ? farmingData.trees : farmingData.fruitTrees
+export function getAvailableCrops(type: FarmingPatchType, currentLevel: number): CropDef[] {
+  const cropList = type === 'herb' ? farmingData.herbs
+    : type === 'tree' ? farmingData.trees
+    : type === 'vegetable' ? farmingData.vegetables
+    : farmingData.fruitTrees
   return cropList.filter(c => currentLevel >= c.level)
 }
 
@@ -285,7 +314,7 @@ export function getReadyPatchSummaryForLocation(state: FarmingState | null | und
     readyCounts.set(patchType, (readyCounts.get(patchType) || 0) + 1)
   }
 
-  return (['herb', 'tree', 'fruitTree'] as const)
+  return (['herb', 'tree', 'fruitTree', 'vegetable'] as const)
     .filter(type => readyCounts.has(type))
     .map(type => ({ type, count: readyCounts.get(type) || 0 }))
 }

@@ -972,6 +972,30 @@
     "shopValue": 34,
     "isGeneralStore": false
   },
+  "raw_tuna": {
+    "id": "raw_tuna",
+    "legacy_item_id": "raw_tuna",
+    "name": "Raw Tuna",
+    "type": "resource",
+    "stackable": false,
+    "cookedInto": "tuna",
+    "cookLevel": 35,
+    "cookXP": 100,
+    "burnStopLevel": 65,
+    "shopValue": 180,
+    "isGeneralStore": false
+  },
+  "tuna": {
+    "id": "tuna",
+    "legacy_item_id": "tuna",
+    "name": "Tuna",
+    "type": "food",
+    "stackable": false,
+    "heals": 10,
+    "eatTicks": 3,
+    "shopValue": 200,
+    "isGeneralStore": false
+  },
   "raw_crab": {
     "id": "raw_crab",
     "legacy_item_id": "raw_lobster",
@@ -1042,6 +1066,40 @@
     "heals": 20,
     "eatTicks": 3,
     "shopValue": 791,
+    "isGeneralStore": false
+  },
+  "potato": {
+    "id": "potato",
+    "legacy_item_id": "potato",
+    "name": "Potato",
+    "type": "food",
+    "stackable": false,
+    "heals": 3,
+    "eatTicks": 3,
+    "shopValue": 10,
+    "isGeneralStore": false
+  },
+  "sweetcorn": {
+    "id": "sweetcorn",
+    "legacy_item_id": "sweetcorn",
+    "name": "Sweetcorn",
+    "type": "food",
+    "stackable": false,
+    "heals": 4,
+    "eatTicks": 3,
+    "shopValue": 50,
+    "isGeneralStore": false
+  },
+  "tuna_potato": {
+    "id": "tuna_potato",
+    "legacy_item_id": "tuna_potato",
+    "name": "Tuna Potato",
+    "type": "food",
+    "stackable": false,
+    "heals": 25,
+    "eatTicks": 3,
+    "isUntradeable": true,
+    "shopValue": 1000,
     "isGeneralStore": false
   },
   "raw_karam": {
@@ -10520,6 +10578,24 @@
     "type": "seed",
     "stackable": true,
     "shopValue": 24623,
+    "isGeneralStore": false
+  },
+  "potato_seed": {
+    "id": "potato_seed",
+    "legacy_item_id": "potato_seed",
+    "name": "Potato Seed",
+    "type": "seed",
+    "stackable": true,
+    "shopValue": 4,
+    "isGeneralStore": false
+  },
+  "sweetcorn_seed": {
+    "id": "sweetcorn_seed",
+    "legacy_item_id": "sweetcorn_seed",
+    "name": "Sweetcorn Seed",
+    "type": "seed",
+    "stackable": true,
+    "shopValue": 12,
     "isGeneralStore": false
   },
   "oak_sapling": {

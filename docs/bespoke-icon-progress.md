@@ -88,6 +88,8 @@ emblem is now bespoke.
   raw_chicken, cooked_meat/raw_beef
 - [x] standalone: raw_crab, raw_shark, super_restore, super_combat, lumira_brew,
   feather, red_spiders_eggs, potato_cactus
+- [x] standalone: potato, potato_seed, sweetcorn, sweetcorn_seed, raw_tuna, tuna,
+  tuna_potato (real-life-styled produce/fish, not the fantasy seed/sapling template)
 
 Also: mace template reworked to a spiked morningstar head; bank-tab item icons
 enlarged (GameIcon size 22 -> 33, ~1.5x) so they don't get lost.

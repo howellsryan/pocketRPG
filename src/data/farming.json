@@ -71,6 +71,28 @@
       "icon": "🌿"
     }
   ],
+  "vegetables": [
+    {
+      "id": "potato_seed",
+      "cropId": "potato",
+      "name": "Potato",
+      "level": 1,
+      "plantXp": 10,
+      "harvestXp": 11,
+      "growthTimeMs": 4800000,
+      "icon": "🥔"
+    },
+    {
+      "id": "sweetcorn_seed",
+      "cropId": "sweetcorn",
+      "name": "Sweetcorn",
+      "level": 9,
+      "plantXp": 13,
+      "harvestXp": 15,
+      "growthTimeMs": 4800000,
+      "icon": "🌽"
+    }
+  ],
   "trees": [
     {
       "id": "oak_sapling",
@@ -210,6 +232,10 @@
         {
           "type": "tree",
           "count": 2
+        },
+        {
+          "type": "vegetable",
+          "count": 1
         }
       ]
     },
@@ -225,6 +251,10 @@
         {
           "type": "tree",
           "count": 2
+        },
+        {
+          "type": "vegetable",
+          "count": 1
         }
       ]
     },
@@ -240,6 +270,10 @@
         {
           "type": "tree",
           "count": 2
+        },
+        {
+          "type": "vegetable",
+          "count": 1
         }
       ]
     },
@@ -259,6 +293,10 @@
         {
           "type": "fruitTree",
           "count": 2
+        },
+        {
+          "type": "vegetable",
+          "count": 1
         }
       ]
     },
@@ -279,6 +317,10 @@
         {
           "type": "fruitTree",
           "count": 1
+        },
+        {
+          "type": "vegetable",
+          "count": 1
         }
       ]
     },
@@ -290,6 +332,10 @@
         {
           "type": "fruitTree",
           "count": 2
+        },
+        {
+          "type": "vegetable",
+          "count": 1
         }
       ]
     },
@@ -301,6 +347,10 @@
         {
           "type": "fruitTree",
           "count": 2
+        },
+        {
+          "type": "vegetable",
+          "count": 1
         }
       ]
     }

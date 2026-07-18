@@ -15,6 +15,7 @@ export const SEEDS_BY_LEVEL = [
   ...(farmingData.herbs || []),
   ...(farmingData.trees || []),
   ...(farmingData.fruitTrees || []),
+  ...(farmingData.vegetables || []),
 ]
   .map((s) => ({ id: s.id, level: s.level }))
   .sort((a, b) => a.level - b.level || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0))
