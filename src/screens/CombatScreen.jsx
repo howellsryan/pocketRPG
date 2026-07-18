@@ -300,7 +300,7 @@ function MonsterPhaseStats({ monster }) {
 }
 
 export default function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onCombatStatusChange, onBack, onStopBack, dungeonPlaceId }) {
-  const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, updateEquipment, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, idleCombatSetup, updateIdleCombatSetup, homeShortcuts, updateHomeShortcuts, setActiveTask, requestActivityStart, slayerTask, setSlayerTask, awardSlayerPoints, slayerTasksCompleted, setSlayerTasksCompleted, incrementSlayerMasterTaskCompletions, activeCombatSpell, updateActiveCombatSpell, bossKillCounts, updateBossKillCounts, raidKillCounts, updateRaidKillCounts, unlockedFeatures, completedQuests, isOneLife, isIronman, revertOneLifeMode, getSnapshot, loadGame, combatSkipHandlerRef, skipHourHandlerRef, chargeSkipRef, raidSkipHandlerRef, lockGame, unlockGame, resolveCombatCompletion, characterUnlocks, killCountsLoaded, recordGameEvent, worldLocation, publishCombatStatus, activeTask } = useGame()
+  const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, updateEquipment, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, idleCombatSetup, updateIdleCombatSetup, homeShortcuts, updateHomeShortcuts, setActiveTask, requestActivityStart, slayerTask, setSlayerTask, awardSlayerPoints, slayerTasksCompleted, setSlayerTasksCompleted, incrementSlayerMasterTaskCompletions, activeCombatSpell, updateActiveCombatSpell, bossKillCounts, updateBossKillCounts, raidKillCounts, updateRaidKillCounts, unlockedFeatures, completedQuests, isOneLife, isIronman, revertOneLifeMode, getSnapshot, loadGame, combatSkipHandlerRef, skipHourHandlerRef, chargeSkipRef, raidSkipHandlerRef, lockGame, unlockGame, resolveCombatCompletion, characterUnlocks, killCountsLoaded, recordGameEvent, worldLocation, publishCombatStatus, activeTask, backgroundCombat } = useGame()
   const pvp = usePvp()
   // Offline demo: bosses, raids and PvP are locked (server-authoritative).
   const isDemo = isDemoMode() && !(getToken() && getCharacterId())
@@ -551,8 +551,9 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   // background-combat host. `busy` stays true while a loot/death modal is still
   // up so the host keeps this screen mounted long enough to show it. Only normal
   // monster fights are `backgroundable` (bosses/raids/dungeons stay foreground).
+  // Gated on the opt-in setting so combat is an exact no-op when it's off.
   useEffect(() => {
-    if (!combat && !lootModal && !deathModal) {
+    if (!backgroundCombat || (!combat && !lootModal && !deathModal)) {
       publishCombatStatus?.(null)
       return
     }
@@ -566,7 +567,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       monsterHP: Number.isFinite(m?.currentHP) ? m.currentHP : null,
       monsterMaxHP: Number.isFinite(m?.hitpoints) ? m.hitpoints : null,
     })
-  }, [combat, lootModal, deathModal])
+  }, [combat, lootModal, deathModal, backgroundCombat])
 
   // Clear the published status when the screen unmounts entirely.
   useEffect(() => () => publishCombatStatus?.(null), [])

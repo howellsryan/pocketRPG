@@ -48,9 +48,10 @@ function describeTask(task) {
 export default function ActivityIndicator({ onNavigate }) {
   const { activeTask, combatStatus } = useGame()
 
-  // A live fight takes priority: show the combat icon with the monster's HP as
-  // the progress ring so the player can watch a background fight from any screen.
-  const inCombat = !!combatStatus?.active
+  // A live background-eligible fight takes priority: show the combat icon with
+  // the monster's HP as the progress ring so the player can watch it from any
+  // screen. Bosses/raids/dungeons never background, so they never show here.
+  const inCombat = !!combatStatus?.active && combatStatus?.backgroundable === true
   const info = inCombat
     ? { iconKey: 'combat_level', icon: '⚔️', screen: SCREENS.COMBAT, label: combatStatus.monsterName ? `Fighting ${combatStatus.monsterName}` : 'In combat' }
     : describeTask(activeTask)
