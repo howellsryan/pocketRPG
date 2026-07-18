@@ -3051,7 +3051,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                 const isMagic = weapon?.attackStyle === 'magic'
                 const prayerActive = !!(combat?.activeProtectionPrayer || combat?.activeCombatPrayer)
                 return (
-                  <div class="cb-actions" style={{ marginBottom: 4 }}>
+                  <div class="cb-actions" style={{ marginTop: 12, marginBottom: 12 }}>
                     <button class={'cb-act' + (specQueued ? ' is-on' : '')} disabled={!canSpec && !specQueued} onClick={canSpec ? handleSpecialAttack : undefined}>
                       <GameIcon iconKey="lightning_arc" color="currentColor" size={18} />
                       <span>Special{hasSpec ? ` ${energy}%` : ''}</span>
