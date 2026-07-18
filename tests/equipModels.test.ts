@@ -37,7 +37,10 @@ describe('equipModels resolver', () => {
   it('fills omitted transform fields from defaults.weapon (canonical grip)', () => {
     const dw = (registry.defaults as { weapon?: { position: number[]; rotationDeg: number[]; scale: number } }).weapon
     if (!dw) return
-    const bare = Object.entries(registry.weapons).find(([, w]) => !(w as { position?: number[] }).position)
+    const bare = Object.entries(registry.weapons).find(([, w]) => {
+      const ww = w as { position?: number[]; scale?: number }
+      return !ww.position && typeof ww.scale !== 'number'
+    })
     if (!bare) return
     const spec = getWeaponModel(bare[0])
     expect(spec!.position).toEqual(dw.position)
@@ -82,6 +85,32 @@ describe('equipModels resolver', () => {
       expect(getGearPlacement(id)!.hideBody).toBe(spec!.hideBody)
       expect(spec!.hideLegs).toBe(Boolean((g as { hideLegs?: boolean }).hideLegs))
       expect(getGearPlacement(id)!.hideLegs).toBe(spec!.hideLegs)
+    }
+  })
+
+  it('neck and cape slots have a bone-anchored default transform (rigid props, not skinned)', () => {
+    const gd = (registry.defaults as { gear?: Record<string, { bone?: string; scale?: number }> }).gear || {}
+    for (const slot of ['neck', 'cape']) {
+      expect(gd[slot], `defaults.gear.${slot} required for amulet/cape placement`).toBeTruthy()
+      expect(typeof gd[slot].bone, `defaults.gear.${slot}.bone`).toBe('string')
+    }
+  })
+
+  it('amulet/cape gear tints are concrete hex (the 3D attach path cannot resolve CSS vars)', () => {
+    for (const [id, g] of Object.entries(registry.gear || {}) as [string, { slot: string; tint?: string }][]) {
+      if (g.slot !== 'neck' && g.slot !== 'cape') continue
+      expect(g.tint, `${id} needs a tint`).toBeTruthy()
+      expect(/^#[0-9a-fA-F]{6}$/.test(g.tint!), `${id} tint '${g.tint}' must be a hex colour, not a CSS var`).toBe(true)
+    }
+  })
+
+  it('every repo-served monster model exists on disk (no dangling boss paths)', async () => {
+    const fs = await import('node:fs')
+    const path = await import('node:path')
+    const base = path.resolve(__dirname, '../public', registry.modelBase)
+    for (const [id, m] of Object.entries(registry.monsters || {}) as [string, { model: string }][]) {
+      if (/^(https?:)?\/\//.test(m.model) || m.model.startsWith('/')) continue // remote (Tripo/R2)
+      expect(fs.existsSync(path.join(base, m.model)), `${id} model ${m.model} missing from public/`).toBe(true)
     }
   })
 
@@ -157,6 +186,14 @@ describe('equipModels resolver', () => {
     const items = (await import('../src/data/items.json')).default as Record<string, unknown>
     for (const id of Object.keys(registry.weapons)) {
       expect(items[id], `weapon model '${id}' has no matching item`).toBeTruthy()
+    }
+  })
+
+  it('every mining pickaxe item has a registered 3D weapon model', async () => {
+    const items = (await import('../src/data/items.json')).default as Record<string, { toolFor?: string }>
+    for (const [id, item] of Object.entries(items)) {
+      if (item.toolFor !== 'mining') continue
+      expect(hasWeaponModel(id), `pickaxe '${id}' has no registered weapon model`).toBe(true)
     }
   })
 

@@ -10,13 +10,15 @@ function rollQuantity(quantity, random) {
   return Math.floor(Number(quantity) || 0)
 }
 
-export function rollMonsterRewardsById(monsterId, random = Math.random) {
+export function rollMonsterRewardsById(monsterId, random = Math.random, isOnTask = false) {
   const monster = monstersData?.[monsterId]
   if (!monster) return []
 
   const rolls = Math.max(1, Math.floor(Number(monster?.dropRolls) || 1))
   const loot = []
   for (const drop of monster?.drops || []) {
+    // Task-only drops (e.g. Imbued Crown/Brain) never roll off-task.
+    if (drop?.taskOnly && !isOnTask) continue
     const chance = Number(drop?.chance)
     const rollCount = chance === 1 ? 1 : rolls
     for (let i = 0; i < rollCount; i++) {

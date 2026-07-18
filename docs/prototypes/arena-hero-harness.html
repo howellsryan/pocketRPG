@@ -30,6 +30,13 @@ const registry = await (await fetch('/src/data/equipmentModels.json')).json()
 // Minimal mirror of equipModels.js resolution (that module imports JSON via
 // bundler syntax a browser can't) — defaults merging only, keep in sync.
 const modelPath = (m) => (/^(https?:)?\/\//.test(m) || m.startsWith('/')) ? m : '/public/' + (registry.modelBase || '') + m
+// Models without a "*steel*"-named material (see equipModels.js TINT_ALL_MODELS
+// for why) — keep this list in sync with that one.
+const TINT_ALL_MODELS = new Set([
+  'weapons/mace.glb', 'weapons/talwar.glb', 'weapons/pickaxe.glb',
+  'weapons/crossbow.glb', 'weapons/spear.glb', 'weapons/staff.glb', 'weapons/trident.glb',
+  'shields/q_celtic.gltf',
+])
 function weaponSpec(itemId) {
   const w = registry.weapons && registry.weapons[itemId]
   if (!w || !w.model) return null
@@ -39,6 +46,7 @@ function weaponSpec(itemId) {
     bone: w.bone === undefined ? (registry.defaults.handBone || null) : w.bone,
     position: w.position || dw.position, rotationDeg: w.rotationDeg || dw.rotationDeg,
     scale: typeof w.scale === 'number' ? w.scale : dw.scale, tint: w.tint || null,
+    tintAll: TINT_ALL_MODELS.has(w.model) ? 'replace' : false,
   }
 }
 function gearSpec(itemId) {
@@ -50,6 +58,7 @@ function gearSpec(itemId) {
     bone: g.bone === undefined ? (d.bone || null) : g.bone,
     position: g.position || d.position, rotationDeg: g.rotationDeg || d.rotationDeg,
     scale: typeof g.scale === 'number' ? g.scale : d.scale, tint: g.tint || null,
+    tintAll: TINT_ALL_MODELS.has(g.model) ? 'replace' : false,
     hideHead: Boolean(g.hideHead), hideBody: Boolean(g.hideBody), hideLegs: Boolean(g.hideLegs),
   }
 }
@@ -70,7 +79,11 @@ ground.rotation.x = -Math.PI / 2
 scene.add(ground)
 
 const camera = new THREE.PerspectiveCamera(38, W / H, 0.01, 100)
-if (q.has('front')) { camera.position.set(0, 1.2, 3.4); camera.lookAt(0, 0.95, 0) }
+if (q.has('yaw')) {
+  const a = THREE.MathUtils.degToRad(parseFloat(q.get('yaw')))
+  const r = 3.6
+  camera.position.set(Math.sin(a) * r, 1.5, Math.cos(a) * r); camera.lookAt(0, 0.95, 0)
+} else if (q.has('front')) { camera.position.set(0, 1.2, 3.4); camera.lookAt(0, 0.95, 0) }
 else { camera.position.set(0.4, 1.5, 3.6); camera.lookAt(0, 0.95, 0) }
 
 const st = { disposed: false, THREE, bones: {}, gear: [], headMaskCtl: null, heroSkinned: null }

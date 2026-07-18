@@ -36,6 +36,7 @@ const weapon = opt('--weapon') || ''
 const gear = opt('--gear') || ''
 const shotsArg = opt('--shots')
 const front = flag('--front')
+const yaw = opt('--yaw')
 
 const SHOTS = {
   idle: { clip: null, advance: 0 },
@@ -76,6 +77,7 @@ const query = [
   weapon && `weapon=${encodeURIComponent(weapon)}`,
   gear && `gear=${encodeURIComponent(gear)}`,
   front && 'front',
+  yaw && `yaw=${encodeURIComponent(yaw)}`,
 ].filter(Boolean).join('&')
 
 const page = await browser.newPage({ viewport: { width: 720, height: 560 } })

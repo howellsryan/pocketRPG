@@ -119,6 +119,11 @@ function makeAnimator(model: THREE.Object3D, gltf: GLTF, names: readonly AnimNam
     }
     actions[name] = action
   }
+  // Boss GLBs (Warlord Grondar) ship an idle but no locomotion clip — alias
+  // walk to idle so they still render from the GLB instead of falling back to
+  // the procedural creature; a wandering boss reads as gliding, acceptable
+  // until a bespoke walk exists.
+  if (!actions.walk && actions.idle) actions.walk = actions.idle
   if (!actions.idle || !actions.walk) return null
   const animator: GltfAnimator = { kind: 'gltf', mixer, actions, current: null }
   playAnim(animator, 'idle')
@@ -189,7 +194,7 @@ export async function createMonsterMesh(monsterId: string | undefined): Promise<
       const group = new THREE.Group()
       group.add(model)
       group.scale.setScalar(spec.targetHeight / (b.maxY - b.minY))
-      const animator = makeAnimator(model, gltf, ['idle', 'walk', 'die'])
+      const animator = makeAnimator(model, gltf, ['idle', 'walk', 'attack', 'die'])
       return { mesh: group, animator }
     } catch {
       return { mesh: boxPlaceholder(), animator: null }

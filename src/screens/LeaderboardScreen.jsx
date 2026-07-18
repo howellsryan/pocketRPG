@@ -108,16 +108,22 @@ const PROFILE_GROUPS = [
   ['Utility', UTILITY_SKILLS],
 ]
 
+function titleCaseSkill(s) {
+  return s.charAt(0).toUpperCase() + s.slice(1)
+}
+
 function PlayerStatsModal({ username, onClose }) {
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [selectedSkill, setSelectedSkill] = useState(null)
 
   useEffect(() => {
     let cancelled = false
     setLoading(true)
     setProfile(null)
     setError(null)
+    setSelectedSkill(null)
     fetch(`/api/profile?username=${encodeURIComponent(username)}`)
       .then(res => {
         if (!res.ok) throw new Error('Failed to load stats')
@@ -131,6 +137,7 @@ function PlayerStatsModal({ username, onClose }) {
 
   const bySkill = {}
   for (const s of profile?.skills || []) bySkill[s.skill] = s
+  const selected = selectedSkill ? (bySkill[selectedSkill] || { skill: selectedSkill, level: 1, xp: 0 }) : null
 
   const title = (
     <span class="flex items-center gap-2 min-w-0">
@@ -157,6 +164,16 @@ function PlayerStatsModal({ username, onClose }) {
               Combat: <span class="font-[var(--font-mono)] font-bold text-[var(--color-blood-light)]">{formatNumber(profile.combatLevel)}</span>
             </span>
           </div>
+          {selected && (
+            <div class="flex items-center justify-between rounded-lg bg-[var(--color-void-light)] border border-[var(--color-void-border)] px-3 py-2">
+              <span class="text-xs font-semibold text-[var(--color-parchment)]">
+                {titleCaseSkill(selected.skill)} · Lv {selected.level}
+              </span>
+              <span class="text-xs font-[var(--font-mono)] font-bold text-[var(--color-gold)]">
+                {formatNumber(selected.xp)} XP
+              </span>
+            </div>
+          )}
           {PROFILE_GROUPS.map(([groupTitle, skills]) => (
             <div key={groupTitle}>
               <h3 class="text-[10px] font-bold text-[var(--color-parchment)] opacity-40 uppercase tracking-widest mb-1.5">
@@ -165,11 +182,12 @@ function PlayerStatsModal({ username, onClose }) {
               <div class="grid grid-cols-2 gap-1.5">
                 {skills.map(skill => {
                   const entry = bySkill[skill] || { level: 1, xp: 0 }
-                  return <SkillBadge key={skill} skill={skill} level={entry.level} xp={entry.xp} compact />
+                  return <SkillBadge key={skill} skill={skill} level={entry.level} xp={entry.xp} onClick={setSelectedSkill} compact />
                 })}
               </div>
             </div>
           ))}
+          <p class="text-[10px] text-center text-[var(--color-parchment)] opacity-40">Tap a skill to see its total XP</p>
         </div>
       )}
     </Modal>
