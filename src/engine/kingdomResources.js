@@ -19,6 +19,17 @@ function tierWeight(level) {
   return Math.max(1, Math.round(1000 / (level + 10)))
 }
 
+// Real Farming is patch-based (plant once, wait ~80 minutes hands-off, then
+// harvest) — farming.json's growthTimeMs measures that passive wait, not an
+// active gather action, and is identical across every herb tier. Reusing it
+// as the Kingdom worker's per-action cadence made a worker take 2.67+ real
+// hours to produce a single herb (after the 50% pace factor), so Farm Herbs
+// output rounded to zero in any normal session. Kingdom workers don't model
+// planting/waiting, so herbs instead get a flat cadence in the same range as
+// the other three skills' slower tiers; rarity is entirely handled by
+// tierWeight above, not by this constant.
+const FARM_HERB_ACTION_MS = 6000
+
 function buildSkillTiers(skillId, actionIds) {
   const actions = skillsData[skillId]?.actions || []
   return actionIds
@@ -30,7 +41,7 @@ function buildSkillTiers(skillId, actionIds) {
 
 function buildHerbTiers() {
   return (farmingData.herbs || [])
-    .map(h => ({ id: h.id, product: h.cropId, level: h.level, actionMs: h.growthTimeMs, weight: tierWeight(h.level) }))
+    .map(h => ({ id: h.id, product: h.cropId, level: h.level, actionMs: FARM_HERB_ACTION_MS, weight: tierWeight(h.level) }))
     .sort((a, b) => a.level - b.level)
 }
 

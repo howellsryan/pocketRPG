@@ -66,6 +66,19 @@ describe('kingdomResources', () => {
     }
   })
 
+  it('every tier action speed is within a sane range comparable across categories', () => {
+    // Regression guard for the class of bug that made Farm Herbs produce
+    // zero output: farming.json's growthTimeMs (an 80-minute *passive wait*
+    // for a real player's planted patch) was reused as a Kingdom worker's
+    // per-action cadence, ~2000x slower than every other category's tiers.
+    // A 20x spread comfortably covers the real tick-based range (2.4s-18s)
+    // without masking a future mistake of the same shape.
+    const allActionMs = KINGDOM_CATEGORIES.flatMap(category => KINGDOM_RESOURCE_TIERS[category].map(t => t.actionMs))
+    const min = Math.min(...allActionMs)
+    const max = Math.max(...allActionMs)
+    expect(max / min).toBeLessThan(20)
+  })
+
   it('getEligibleTiers only returns tiers at or below the given level', () => {
     const tiers = getEligibleTiers('mining', 30)
     expect(tiers.every(t => t.level <= 30)).toBe(true)
@@ -259,6 +272,29 @@ describe('kingdomEngine — simulateKingdom', () => {
     // With rng pinned to 0, every pick lands on the lowest-weight-index (lowest level) tier.
     const cheapestTier = KINGDOM_RESOURCE_TIERS.mining[0]
     expect(Object.keys(a.itemsGained)).toEqual([cheapestTier.product])
+  })
+
+  it('every category produces output within a normal 1-hour session when fully staffed at max level', () => {
+    // Structural guard: whenever a category's action-speed data changes,
+    // this fails loudly instead of silently producing zero output (the
+    // Farm Herbs bug — see the kingdomResources describe block above).
+    const oneHour = 60 * 60 * 1000
+    for (const category of KINGDOM_CATEGORIES) {
+      const allocations = { mining: 0, fishing: 0, woodcutting: 0, farming: 0, [category]: KINGDOM_LABOUR_POINTS_MAX }
+      const kingdom = { ...DEFAULT_KINGDOM, cofferBalance: KINGDOM_COFFER_MAX, allocations }
+      const result = simulateKingdom(kingdom, statsAtLevel(99), oneHour, itemsData)
+      const total = Object.values(result.itemsGained).reduce((sum, qty) => sum + qty, 0)
+      expect(total, `${category} produced 0 output in a fully-staffed 1-hour session`).toBeGreaterThan(0)
+    }
+  })
+
+  it('Farm Herbs produces output at a modest Farming level with only 2 of 4 points allocated (the reported bug scenario)', () => {
+    const stats = statsAtLevel(1)
+    stats.farming = { skill: 'farming', xp: xpForLevelAtLeast(20), level: 20 }
+    const kingdom = { ...DEFAULT_KINGDOM, cofferBalance: KINGDOM_COFFER_MAX, allocations: { mining: 0, fishing: 0, woodcutting: 0, farming: 2 } }
+    const result = simulateKingdom(kingdom, stats, 60 * 60 * 1000, itemsData)
+    const total = Object.values(result.itemsGained).reduce((sum, qty) => sum + qty, 0)
+    expect(total).toBeGreaterThan(0)
   })
 })
 
