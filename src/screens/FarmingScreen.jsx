@@ -54,6 +54,7 @@ export default function FarmingScreen({ initialLocationId, onBack }) {
     herb: getPlantableCropOptions('herb', farmingLevel, inventory, bank),
     tree: getPlantableCropOptions('tree', farmingLevel, inventory, bank),
     fruitTree: getPlantableCropOptions('fruitTree', farmingLevel, inventory, bank),
+    vegetable: getPlantableCropOptions('vegetable', farmingLevel, inventory, bank),
   }
 
   const openPlantAllModal = () => {
@@ -124,7 +125,7 @@ export default function FarmingScreen({ initialLocationId, onBack }) {
       {plantAllOpen && (
       <Modal title="Plant All" onClose={() => setPlantAllOpen(false)}>
         <div class="space-y-3">
-          {['herb', 'tree', 'fruitTree'].map(type => (
+          {['herb', 'tree', 'fruitTree', 'vegetable'].map(type => (
             <div class="bg-[var(--color-void)] rounded-lg p-2" key={type}>
               <div class="text-xs font-semibold text-[var(--color-gold)] capitalize mb-2">{type === 'fruitTree' ? 'Fruit Trees' : `${type}s`}</div>
               <div class="space-y-1">

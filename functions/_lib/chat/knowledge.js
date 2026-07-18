@@ -191,7 +191,7 @@ export const KNOWLEDGE_CHUNKS = [
   "tags": [
    "guide"
   ],
-  "text": "Plant seeds in farming patches (herbs, trees and fruit trees) at different locations, wait for them to grow in real time, then harvest for crops and Farming XP. Higher Farming levels unlock better seeds. Harvest everything at once with Harvest All. Seeds and saplings come from the General Store (basics), the Trading Post, and slayer monsters — the higher a monster's Slayer requirement, the better the seeds it drops."
+  "text": "Plant seeds in farming patches (herbs, trees, fruit trees and vegetables) at different locations, wait for them to grow in real time, then harvest for crops and Farming XP. Higher Farming levels unlock better seeds. Vegetable patches (Potato at level 1, Sweetcorn at level 9) yield 1-50 crops per harvest — a higher Farming level just weighs the roll toward a bigger harvest, it never guarantees one. Harvest everything at once with Harvest All. Seeds and saplings come from the General Store (basics), the Trading Post, and slayer monsters — the higher a monster's Slayer requirement, the better the seeds it drops; Potato and Sweetcorn seeds are common early drops from low-combat monsters and the Master Farmer."
  },
  {
   "id": "guide_magic",
@@ -1940,7 +1940,7 @@ export const KNOWLEDGE_CHUNKS = [
    "recipe",
    "fishing"
   ],
-  "text": "Fishing training options with level requirements, XP per action and any ingredients required to make each item: Fish Shrimps (level 1, 10 XP), Fish Trout (level 20, 50 XP), Fish Crab (level 40, 90 XP), Fish Eel (level 50, 100 XP), Fish Karam (level 65, 105 XP), Fish Shark (level 76, 110 XP), Fish Manta Ray (level 85, 180 XP), Fish Anglerfish (level 90, 200 XP)."
+  "text": "Fishing training options with level requirements, XP per action and any ingredients required to make each item: Fish Shrimps (level 1, 10 XP), Fish Trout (level 20, 50 XP), Fish Tuna (level 35, 75 XP), Fish Crab (level 40, 90 XP), Fish Eel (level 50, 100 XP), Fish Karam (level 65, 105 XP), Fish Shark (level 76, 110 XP), Fish Manta Ray (level 85, 180 XP), Fish Anglerfish (level 90, 200 XP)."
  },
  {
   "id": "skill_smithing",
@@ -1968,7 +1968,7 @@ export const KNOWLEDGE_CHUNKS = [
    "recipe",
    "cooking"
   ],
-  "text": "Cooking training options with level requirements, XP per action and any ingredients required to make each item: Cook Shrimps (level 1, 30 XP; needs 1 Raw Shrimps → Shrimps), Cook Chicken (level 1, 30 XP; needs 1 Raw Chicken → Cooked Chicken), Cook Meat (level 1, 30 XP; needs 1 Raw Beef → Cooked Meat), Cook Trout (level 15, 70 XP; needs 1 Raw Trout → Trout), Cook Crab (level 40, 120 XP; needs 1 Raw Crab → Crab), Cook Eel (level 45, 140 XP; needs 1 Raw Eel → Eel), Cook Karam (level 65, 190 XP; needs 1 Raw Karam → Karam), Cook Shark (level 80, 210 XP; needs 1 Raw Shark → Shark), Cook Manta Ray (level 91, 250 XP; needs 1 Raw Manta Ray → Manta Ray), Cook Anglerfish (level 93, 270 XP; needs 1 Raw Anglerfish → Anglerfish)."
+  "text": "Cooking training options with level requirements, XP per action and any ingredients required to make each item: Cook Shrimps (level 1, 30 XP; needs 1 Raw Shrimps → Shrimps), Cook Chicken (level 1, 30 XP; needs 1 Raw Chicken → Cooked Chicken), Cook Meat (level 1, 30 XP; needs 1 Raw Beef → Cooked Meat), Cook Trout (level 15, 70 XP; needs 1 Raw Trout → Trout), Cook Tuna (level 35, 100 XP; needs 1 Raw Tuna → Tuna), Cook Crab (level 40, 120 XP; needs 1 Raw Crab → Crab), Cook Eel (level 45, 140 XP; needs 1 Raw Eel → Eel), Cook Karam (level 65, 190 XP; needs 1 Raw Karam → Karam), Cook Shark (level 80, 210 XP; needs 1 Raw Shark → Shark), Cook Tuna Potato (level 80, 260 XP; needs 1 Tuna + 1 Sweetcorn + 1 Potato → Tuna Potato), Cook Manta Ray (level 91, 250 XP; needs 1 Raw Manta Ray → Manta Ray), Cook Anglerfish (level 93, 270 XP; needs 1 Raw Anglerfish → Anglerfish)."
  },
  {
   "id": "skill_fletching",

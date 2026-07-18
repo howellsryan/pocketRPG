@@ -753,6 +753,13 @@
         "y": 428
       },
       {
+        "kind": "skill",
+        "group": "fishing",
+        "label": "Harbour Waters",
+        "x": 650,
+        "y": 390
+      },
+      {
         "kind": "gather",
         "ref": "burn_seaweed",
         "x": 198,

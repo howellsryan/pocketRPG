@@ -17,6 +17,7 @@ describe('seed pool', () => {
       ...farmingData.herbs,
       ...farmingData.trees,
       ...farmingData.fruitTrees,
+      ...farmingData.vegetables,
     ].length
     expect(SEEDS_BY_LEVEL).toHaveLength(expected)
     for (let i = 1; i < SEEDS_BY_LEVEL.length; i++) {
@@ -24,6 +25,16 @@ describe('seed pool', () => {
     }
     expect(SEEDS_BY_LEVEL[0].id).toBe('greenthorn_seed')
     expect(SEEDS_BY_LEVEL[SEEDS_BY_LEVEL.length - 1].id).toBe('magic_sapling')
+  })
+
+  it('includes the new vegetable seeds among the cheapest, lowest-tier seeds', () => {
+    expect(SEEDS_BY_LEVEL.some((s) => s.id === 'potato_seed')).toBe(true)
+    expect(SEEDS_BY_LEVEL.some((s) => s.id === 'sweetcorn_seed')).toBe(true)
+    const potatoRank = SEEDS_BY_LEVEL.findIndex((s) => s.id === 'potato_seed')
+    const sweetcornRank = SEEDS_BY_LEVEL.findIndex((s) => s.id === 'sweetcorn_seed')
+    // Both sit right after Greenthorn (rank 0) at the very bottom of the ladder.
+    expect(potatoRank).toBe(1)
+    expect(sweetcornRank).toBe(2)
   })
 })
 
@@ -45,6 +56,15 @@ describe('monster seed drops', () => {
     expect(maxSeedLevel(high)).toBeGreaterThan(maxSeedLevel(low))
     // Highest combat reaches the top sapling tier.
     expect(high.some((d) => d.itemId === 'magic_sapling')).toBe(true)
+  })
+
+  it('drops potato/sweetcorn seeds for monsters at or under combat level 50', () => {
+    const dropIds = new Set<string>()
+    for (let combatLevel = 1; combatLevel <= 50; combatLevel++) {
+      for (const d of getMonsterSeedDrops({ combatLevel })) dropIds.add(d.itemId)
+    }
+    expect(dropIds.has('potato_seed')).toBe(true)
+    expect(dropIds.has('sweetcorn_seed')).toBe(true)
   })
 
   it('within a window the highest-tier seed is the rarest', () => {
@@ -69,6 +89,16 @@ describe('master farmer seed rewards', () => {
     for (let i = 1; i < weights.length; i++) {
       expect(weights[i].weight).toBeLessThan(weights[i - 1].weight)
     }
+  })
+
+  it('makes potato and sweetcorn seeds the 2nd and 3rd most common rewards', () => {
+    const weights = masterFarmerSeedWeights()
+    const byId = Object.fromEntries(weights.map((w) => [w.id, w.weight]))
+    // Greenthorn is rank 0 (most common); potato and sweetcorn immediately follow.
+    expect(byId.potato_seed).toBeLessThan(byId.greenthorn_seed)
+    expect(byId.sweetcorn_seed).toBeLessThan(byId.potato_seed)
+    // Still far more common than the rest of the herb/tree/fruit ladder.
+    expect(byId.sweetcorn_seed).toBeGreaterThan(byId.miremint_seed)
   })
 
   it('rolls a single seed, biased toward the rng position', () => {

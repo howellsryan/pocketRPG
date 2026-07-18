@@ -218,6 +218,14 @@
         "product": "raw_trout"
       },
       {
+        "id": "tuna",
+        "name": "Fish Tuna",
+        "level": 35,
+        "ticks": 6,
+        "xp": 75,
+        "product": "raw_tuna"
+      },
+      {
         "id": "crab",
         "name": "Fish Crab",
         "level": 40,
@@ -1327,6 +1335,18 @@
         "burnStopLevel": 50
       },
       {
+        "id": "cook_tuna",
+        "name": "Cook Tuna",
+        "level": 35,
+        "ticks": 4,
+        "xp": 100,
+        "product": "tuna",
+        "materials": {
+          "raw_tuna": 1
+        },
+        "burnStopLevel": 65
+      },
+      {
         "id": "cook_crab",
         "name": "Cook Crab",
         "level": 40,
@@ -1373,6 +1393,19 @@
           "raw_shark": 1
         },
         "burnStopLevel": 99
+      },
+      {
+        "id": "cook_tuna_potato",
+        "name": "Cook Tuna Potato",
+        "level": 80,
+        "ticks": 4,
+        "xp": 260,
+        "product": "tuna_potato",
+        "materials": {
+          "tuna": 1,
+          "sweetcorn": 1,
+          "potato": 1
+        }
       },
       {
         "id": "cook_manta_ray",

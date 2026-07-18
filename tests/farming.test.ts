@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import {
   initFarmingState,
   getCropDef,
+  getCropType,
   getAvailableCrops,
   plantCrop,
   harvestCrop,
@@ -12,6 +13,7 @@ import {
   getReadyPatchSummaryForLocation,
   applyPlantAll,
   getPatchesForLocation,
+  rollVegetableYield,
 } from '../src/engine/farming.ts'
 import { GATHERING_SKILLS, STUB_SKILLS } from '../src/utils/constants.js'
 import farmingData from '../src/data/farming.json'
@@ -30,10 +32,17 @@ describe('farming engine', () => {
     expect(initFarmingState()).toEqual({ patchesById: {} })
   })
 
-  it('getCropDef finds herb/tree/fruit tree definitions', () => {
+  it('getCropDef finds herb/tree/fruit tree/vegetable definitions', () => {
     expect(getCropDef('greenthorn_seed')?.name).toBe('Greenthorn')
     expect(getCropDef('oak_sapling')?.name).toBe('Oak')
     expect(getCropDef('apple_sapling')?.name).toBe('Apple')
+    expect(getCropDef('potato_seed')?.name).toBe('Potato')
+    expect(getCropDef('sweetcorn_seed')?.name).toBe('Sweetcorn')
+  })
+
+  it('getCropType identifies vegetable seeds', () => {
+    expect(getCropType('potato_seed')).toBe('vegetable')
+    expect(getCropType('sweetcorn_seed')).toBe('vegetable')
   })
 
   it('getAvailableCrops respects farming level', () => {
@@ -41,6 +50,9 @@ describe('farming engine', () => {
     expect(getAvailableCrops('tree', 1).some(c => c.id === 'oak_sapling')).toBe(false)
     expect(getAvailableCrops('fruitTree', 30).some(c => c.id === 'banana_sapling')).toBe(false)
     expect(getAvailableCrops('fruitTree', 33).some(c => c.id === 'banana_sapling')).toBe(true)
+    expect(getAvailableCrops('vegetable', 1).some(c => c.id === 'potato_seed')).toBe(true)
+    expect(getAvailableCrops('vegetable', 1).some(c => c.id === 'sweetcorn_seed')).toBe(false)
+    expect(getAvailableCrops('vegetable', 9).some(c => c.id === 'sweetcorn_seed')).toBe(true)
   })
 
   it('plantCrop plants valid crop with expected fields', () => {
@@ -159,6 +171,41 @@ describe('farming engine', () => {
     expect(high?.quantity).toBe(25)
     vi.restoreAllMocks()
   })
+  it('harvestCrop rolls vegetable yield within 1-50 and scales xp by quantity', () => {
+    const planted = plantCrop(initFarmingState(), 'falador_vegetable_0', 'potato_seed', 'vegetable')!
+    vi.advanceTimersByTime(getCropDef('potato_seed')!.growthTimeMs + 1)
+
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    const low = harvestCrop(planted.state, 'falador_vegetable_0', 1)
+    expect(low?.quantity).toBe(1)
+    const baseXp = getCropDef('potato_seed')!.harvestXp
+    expect(low!.harvestXp).toBe(Math.floor(baseXp * low!.quantity))
+
+    const replanted = plantCrop(low!.state, 'falador_vegetable_0', 'potato_seed', 'vegetable')!
+    vi.advanceTimersByTime(getCropDef('potato_seed')!.growthTimeMs + 1)
+    vi.spyOn(Math, 'random').mockReturnValue(0.999999)
+    // Even a level-1 farmer can roll the max 50 - level only weighs the odds.
+    const high = harvestCrop(replanted.state, 'falador_vegetable_0', 1)
+    expect(high?.quantity).toBe(50)
+    vi.restoreAllMocks()
+  })
+
+  it('rollVegetableYield takes the best of more independent rolls at higher levels', () => {
+    const sequence = [0.02, 0.9]
+    let i = 0
+    vi.spyOn(Math, 'random').mockImplementation(() => sequence[i++ % sequence.length])
+
+    i = 0
+    const lowLevelRoll = rollVegetableYield(1) // 1 roll: only sees the low value
+    i = 0
+    const highLevelRoll = rollVegetableYield(15) // 2 rolls: best of low and high
+
+    expect(lowLevelRoll).toBe(2)
+    expect(highLevelRoll).toBe(46)
+    expect(highLevelRoll).toBeGreaterThan(lowLevelRoll)
+    vi.restoreAllMocks()
+  })
+
   it('advanceFarmingState advances planted patches by elapsed ms', () => {
     const planted = plantCrop(initFarmingState(), 'falador_tree_0', 'oak_sapling', 'tree')!
     const patchBefore = planted.state.patchesById.falador_tree_0

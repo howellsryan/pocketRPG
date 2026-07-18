@@ -101,7 +101,7 @@ Raids are multi-boss gauntlets (for example the Vaults of Xyren) with big reward
 
 ## Farming
 
-Plant seeds in farming patches (herbs, trees and fruit trees) at different locations, wait for them to grow in real time, then harvest for crops and Farming XP. Higher Farming levels unlock better seeds. Harvest everything at once with Harvest All. Seeds and saplings come from the General Store (basics), the Trading Post, and slayer monsters — the higher a monster's Slayer requirement, the better the seeds it drops.
+Plant seeds in farming patches (herbs, trees, fruit trees and vegetables) at different locations, wait for them to grow in real time, then harvest for crops and Farming XP. Higher Farming levels unlock better seeds. Vegetable patches (Potato at level 1, Sweetcorn at level 9) yield 1-50 crops per harvest — a higher Farming level just weighs the roll toward a bigger harvest, it never guarantees one. Harvest everything at once with Harvest All. Seeds and saplings come from the General Store (basics), the Trading Post, and slayer monsters — the higher a monster's Slayer requirement, the better the seeds it drops; Potato and Sweetcorn seeds are common early drops from low-combat monsters and the Master Farmer.
 
 ## Magic
 

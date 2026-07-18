@@ -10,7 +10,8 @@ import farmingData from '../data/farming.json'
 const patchViewTypeLabels = {
   herb: 'Herb Patch',
   tree: 'Tree Patch',
-  fruitTree: 'Fruit Tree Patch'
+  fruitTree: 'Fruit Tree Patch',
+  vegetable: 'Vegetable Patch'
 }
 
 export default function FarmPatchView({ locationId, farmingLevel, onBack, backLabel = 'Farms' }) {
