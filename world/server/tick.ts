@@ -72,6 +72,17 @@ export type TickPlayer = {
    * during combat, 100 between fights. `lastSpecSent` gates the {e:'spec'} echo. */
   specialEnergy: number
   lastSpecSent: number
+  /** Prayer session (world/shared/prayer.ts): pool seeded full at hello from the
+   * Prayer level, drains only during combat (copied onto the engine state each
+   * fight, synced back after each tick), persists across auto-fight kills. The
+   * active protection/combat prayer ids are the player's toggles. `lastPrayerSent`
+   * gates the {e:'prayer'} echo. */
+  prayerPoints: number
+  maxPrayerPoints: number
+  prayerDrainAccumulator: number
+  activeProtectionPrayer: string | null
+  activeCombatPrayer: string | null
+  lastPrayerSent: string | null
 }
 
 // Running: 2 tiles/tick, ~100 energy drained over ~1 min of continuous running;

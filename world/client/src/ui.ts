@@ -2,6 +2,11 @@ import type { CombatStance, EquipmentMap, InvSlot } from '../../shared/protocol'
 import type { MenuRow } from './picking'
 import { iconMarkup, itemName, uiIconMarkup } from './itemIcon'
 import { spellIconSvg } from './spellIcon'
+import prayersData from '../../../src/data/prayers.json'
+
+type PrayerDef = { id: string; name: string; icon: string; level: number; bonusType: string; description: string }
+const PRAYERS = prayersData as unknown as Record<string, PrayerDef>
+const PRAYERS_BY_LEVEL = Object.values(PRAYERS).sort((a, b) => a.level - b.level)
 
 export type MenuDispatch = (row: MenuRow) => void
 
@@ -75,6 +80,23 @@ const HUD_CSS = `
   background: rgba(46, 52, 74, 0.9); border: 1px solid #4a5a8a; color: #9fc0ff;
   font-size: 13px; font-weight: bold; display: flex; align-items: center; justify-content: center;
 }
+#prayer-bar {
+  position: relative; height: 22px; border-radius: 6px; overflow: hidden;
+  background: rgba(60, 50, 34, 0.55); border: 1px solid #5a4a30;
+}
+#prayer-bar > .fill { position: absolute; inset: 0 auto 0 0; background: #c9a13a; transition: width 0.2s; }
+#prayer-bar > .label {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: bold; color: #fff; text-shadow: 0 1px 2px #000;
+}
+#prayer-grid { display: flex; flex-wrap: wrap; gap: 3px; max-height: 200px; overflow-y: auto; }
+#prayer-grid:empty { display: none; }
+.prayer-btn {
+  width: 40px; height: 40px; border-radius: 6px; cursor: pointer; user-select: none;
+  background: rgba(60, 50, 34, 0.55); border: 1px solid #5a4a30;
+  display: flex; align-items: center; justify-content: center; font-size: 19px; line-height: 1;
+}
+.prayer-btn.active { background: rgba(70, 58, 36, 0.92); border-color: #ffe066; box-shadow: 0 0 0 1px #ffe066 inset; }
 #magic-panel { max-height: 340px; overflow-y: auto; }
 .spell-grid { display: flex; flex-wrap: wrap; gap: 4px; }
 .spell-ico {
@@ -449,6 +471,20 @@ export function initHud(handlers?: HudHandlers): void {
   specBtn.textContent = '⚡ Special Attack'
   specBtn.addEventListener('click', () => handlers?.onSpecial())
   combat.appendChild(specBtn)
+  const prayerBar = document.createElement('div')
+  prayerBar.id = 'prayer-bar'
+  const prayerFill = document.createElement('div')
+  prayerFill.className = 'fill'
+  prayerFill.style.width = '100%'
+  const prayerLabel = document.createElement('div')
+  prayerLabel.className = 'label'
+  prayerLabel.textContent = '🙏 Prayer'
+  prayerBar.appendChild(prayerFill)
+  prayerBar.appendChild(prayerLabel)
+  combat.appendChild(prayerBar)
+  const prayerGrid = document.createElement('div')
+  prayerGrid.id = 'prayer-grid'
+  combat.appendChild(prayerGrid)
   combatPane.appendChild(combat)
   body.appendChild(combatPane)
 
@@ -612,6 +648,39 @@ export function setSpecialEnergy(energy: number): void {
   ;(bar.querySelector('.fill') as HTMLElement | null)?.style.setProperty('width', `${pct}%`)
   const label = bar.querySelector('.label') as HTMLElement | null
   if (label) label.textContent = `Special ${pct}%`
+}
+
+/** Builds the Combat-tab prayer toggle grid for every prayer the player's Prayer
+ * level unlocks. Idempotent — rebuilds on each welcome/resync. */
+export function renderPrayerPanel(prayerLevel: number, onPray: (prayerId: string) => void): void {
+  const grid = document.getElementById('prayer-grid')
+  if (!grid) return
+  grid.innerHTML = ''
+  for (const p of PRAYERS_BY_LEVEL) {
+    if (p.level > prayerLevel) continue
+    const btn = document.createElement('div')
+    btn.className = 'prayer-btn'
+    btn.setAttribute('data-prayer', p.id)
+    btn.textContent = p.icon
+    btn.title = `${p.name} — ${p.description}`
+    btn.addEventListener('click', () => onPray(p.id))
+    grid.appendChild(btn)
+  }
+}
+
+/** Updates the prayer pool bar + which toggle buttons read as active. */
+export function setPrayerState(points: number, max: number, protection: string | null, combat: string | null): void {
+  const bar = document.getElementById('prayer-bar')
+  if (bar) {
+    const pct = max > 0 ? Math.max(0, Math.min(100, (points / max) * 100)) : 0
+    ;(bar.querySelector('.fill') as HTMLElement | null)?.style.setProperty('width', `${pct}%`)
+    const label = bar.querySelector('.label') as HTMLElement | null
+    if (label) label.textContent = `🙏 ${Math.ceil(points)}/${max}`
+  }
+  for (const btn of document.querySelectorAll<HTMLElement>('.prayer-btn')) {
+    const id = btn.getAttribute('data-prayer')
+    btn.classList.toggle('active', id === protection || id === combat)
+  }
 }
 
 const NPC_EXAMINE: Record<string, string> = {

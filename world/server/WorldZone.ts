@@ -15,7 +15,8 @@ import {
 } from './tick'
 import { STATIONS, recipeFor, stationTypeForVerb, isStationType } from '../shared/recipes'
 import { hasMaterials, maxCraftable } from './crafting'
-import { resolveCombatSetup, isSameFightTarget, playerAttackRange } from './combat'
+import { resolveCombatSetup, isSameFightTarget, playerAttackRange, emitPrayerIfChanged } from './combat'
+import { seedPrayer, resolvePrayerToggle } from '../shared/prayer'
 import spellsJson from '../../src/data/spells.json'
 import { npcsFromZone, tickNpc, toNpcDiff, type NpcState } from './npc'
 import { PLAYER_DROP_OWNER_TICKS, isExpired, isVisibleTo, spawnDrops, takeLoot, visibleLootFor, type LootEntity } from './loot'
@@ -501,6 +502,8 @@ export class WorldZone extends Server<Env> {
       spell: null,
       specialEnergy: 100,
       lastSpecSent: 100,
+      ...seedPrayer(stats.prayer?.level ?? getLevelFromXP(Number(stats.prayer?.xp) || 0) ?? 1),
+      lastPrayerSent: null,
       lingerUntilTick: null,
     }
     this.players.set(charId, player)
@@ -546,6 +549,12 @@ export class WorldZone extends Server<Env> {
         ...(player.spell ? { spell: player.spell } : {}),
         specialEnergy: Math.round(player.specialEnergy),
         equipment: equipmentMap(player.equipment),
+        prayer: {
+          points: Math.ceil(player.prayerPoints),
+          max: player.maxPrayerPoints,
+          protection: player.activeProtectionPrayer,
+          combat: player.activeCombatPrayer,
+        },
       },
     })
 
@@ -622,6 +631,9 @@ export class WorldZone extends Server<Env> {
         if (player.combat) player.combat.state.specialAttackQueued = true
         else player.pendingEvents.push({ e: 'msg', text: 'You need to be fighting to use a special attack.' })
         break
+      case 'pray':
+        this.handlePray(player, message.prayerId)
+        break
       case 'unequip':
         this.handleUnequip(player, message.slot)
         break
@@ -669,6 +681,41 @@ export class WorldZone extends Server<Env> {
 
   /** A pack-slot action: the primary verb (equip/eat/drink/bury, validated
    * against the shared derivation so the client can't invent one) or drop. */
+  /** Toggle a prayer on/off (§4). Validates the Prayer level requirement and a
+   * non-empty pool server-side, updates the session toggles, mirrors them onto a
+   * live fight's engine state, and echoes the readout. */
+  private handlePray(player: Player, prayerId: string): void {
+    const prayerLevel = player.stats.prayer?.level ?? getLevelFromXP(Number(player.stats.prayer?.xp) || 0) ?? 1
+    const result = resolvePrayerToggle(
+      {
+        prayerPoints: player.prayerPoints,
+        maxPrayerPoints: player.maxPrayerPoints,
+        prayerDrainAccumulator: player.prayerDrainAccumulator,
+        activeProtectionPrayer: player.activeProtectionPrayer,
+        activeCombatPrayer: player.activeCombatPrayer,
+      },
+      prayerId,
+      prayerLevel,
+    )
+    if (!result.ok) {
+      const text =
+        result.reason === 'level' ? `You need Prayer level ${result.required} for that.`
+        : result.reason === 'empty' ? 'You have run out of prayer points.'
+        : 'You cannot use that prayer.'
+      player.pendingEvents.push({ e: 'msg', text })
+      return
+    }
+    player.activeProtectionPrayer = result.session.activeProtectionPrayer
+    player.activeCombatPrayer = result.session.activeCombatPrayer
+    // Mid-fight the engine reads the active prayers off the combat state each
+    // tick — mirror the toggle there so it takes effect this fight.
+    if (player.combat) {
+      player.combat.state.activeProtectionPrayer = player.activeProtectionPrayer
+      player.combat.state.activeCombatPrayer = player.activeCombatPrayer
+    }
+    emitPrayerIfChanged(player, player.pendingEvents)
+  }
+
   private handleInvAction(player: Player, message: Extract<ClientMessage, { t: 'invAction' }>): void {
     const slot = player.inventory[message.slot]
     if (!slot) return

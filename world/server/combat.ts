@@ -9,6 +9,7 @@ import { resolveMagicSpell, getCombatType } from '../../src/engine/equipment.js'
 import itemsData from '../../src/data/items.json'
 import monstersData from '../../src/data/monsters.json'
 import spellsData from '../../src/data/spells.json'
+import prayersData from '../../src/data/prayers.json'
 import { grantSessionXp, monsterAttackAnim, monsterAttackRange, rangeForCombatType, withinRangeAndSight, type TickPlayer } from './tick'
 import { recordDamage, topDamageContributor, type NpcState } from './npc'
 import type { TickContext, TickResult } from './tick'
@@ -34,11 +35,52 @@ function resetSpecial(player: TickPlayer, result: TickResult): void {
   emitSpecIfChanged(player, result.events)
 }
 
+/** Emits a {e:'prayer'} echo when the rounded pool or an active prayer changed
+ * (drain, auto-switch-off on empty, or a toggle) — gated like emitSpecIfChanged
+ * so it doesn't fire every tick. */
+export function emitPrayerIfChanged(player: TickPlayer, events: ZoneEvent[]): void {
+  const points = Math.ceil(player.prayerPoints)
+  const key = `${points}|${player.activeProtectionPrayer ?? ''}|${player.activeCombatPrayer ?? ''}`
+  if (key === player.lastPrayerSent) return
+  player.lastPrayerSent = key
+  events.push({
+    e: 'prayer',
+    points,
+    max: player.maxPrayerPoints,
+    protection: player.activeProtectionPrayer,
+    combat: player.activeCombatPrayer,
+  })
+}
+
 // The engine's inferred state types `spell`/`runesConsumed` from their `null`
 // initialisers — widen them to what magic combat actually stores there.
-type EngineState = Omit<ReturnType<typeof createCombatState>, 'spell'> & {
+type EngineState = Omit<ReturnType<typeof createCombatState>, 'spell' | 'prayerPoints' | 'maxPrayerPoints' | 'prayerDrainAccumulator' | 'activeProtectionPrayer' | 'activeCombatPrayer'> & {
   spell: unknown
   runesConsumed?: Record<string, number> | null
+  prayerPoints: number
+  maxPrayerPoints: number
+  prayerDrainAccumulator: number
+  activeProtectionPrayer: string | null
+  activeCombatPrayer: string | null
+}
+
+/** Copies the player's session prayer pool + active toggles onto an engine state
+ * at fight start. */
+function copySessionPrayerToState(player: TickPlayer, state: EngineState): void {
+  state.prayerPoints = player.prayerPoints
+  state.maxPrayerPoints = player.maxPrayerPoints
+  state.prayerDrainAccumulator = player.prayerDrainAccumulator
+  state.activeProtectionPrayer = player.activeProtectionPrayer
+  state.activeCombatPrayer = player.activeCombatPrayer
+}
+
+/** Syncs the engine state's prayer pool back onto the session after a tick, so
+ * drain (and auto-switch-off on empty) persists across auto-fight kills. */
+function syncStatePrayerToSession(player: TickPlayer, state: EngineState): void {
+  player.prayerPoints = state.prayerPoints
+  player.prayerDrainAccumulator = state.prayerDrainAccumulator
+  player.activeProtectionPrayer = state.activeProtectionPrayer
+  player.activeCombatPrayer = state.activeCombatPrayer
 }
 export type CombatSession = { npcId: string; state: EngineState }
 
@@ -115,8 +157,12 @@ export function startCombat(player: TickPlayer, npc: NpcState, result?: TickResu
     result?.events.push({ e: 'msg', text: 'You need to select a spell to fight with that weapon.' })
     return
   }
-  const state = createCombatState(monster, setup.combatType, player.stance, setup.spell as null) as EngineState
+  const state = createCombatState(monster, setup.combatType, player.stance, setup.spell as null) as unknown as EngineState
   state.monster.currentHP = npc.hp
+  // Carry the session prayer pool + toggles onto this fight's engine state, so
+  // the engine drains the same pool and applies bonuses/protection. Persists
+  // across auto-fight kills because stepCombat syncs it back after each tick.
+  copySessionPrayerToState(player, state)
   player.combat = { npcId: npc.id, state }
   player.specialEnergy = state.specialAttackEnergy
   npc.state = 'combat'
@@ -186,8 +232,12 @@ export function stepCombat(player: TickPlayer, ctx: TickContext, result: TickRes
   // The pack rides in as the engine's inventory so magic can check runes;
   // consumption is applied below from state.runesConsumed (live-game contract:
   // consume on a landed hit, then clear so the same cast never double-charges).
-  const { combatState, events } = processCombatTick(combat.state, playerStatsFor(player), player.equipment, itemsData, {}, player.inventory, null)
+  const { combatState, events } = processCombatTick(combat.state, playerStatsFor(player), player.equipment, itemsData, prayersData, player.inventory, null)
   combat.state = combatState
+  // The engine drained the pool / may have switched prayers off on empty — carry
+  // that back onto the session and echo the readout when it moved.
+  syncStatePrayerToSession(player, combat.state as EngineState)
+  emitPrayerIfChanged(player, result.events)
   // Default to idle unless walking (walk anim set upstream); the playerHit/
   // specialHit branches below set the attack anim only on a tick the engine
   // actually resolved a swing — mirroring the npc.anim gating so the animation

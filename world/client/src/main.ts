@@ -1,5 +1,5 @@
 import { clearStoredSession, exchangeHandoff, getRunPref, getStoredSession, getStoredZone, parseHandoffFromHash, pocketRpgUrl, storeRunPref, storeZone, type WorldSession } from './auth'
-import { hideConnBanner, hideOverlay, initChatInput, initHud, paintHudIcons, pushMessage, removeHpBar, removeNameplate, removeOverheadChat, renderEquipment, renderInventory, renderSpellbook, setRunState, setSpecialEnergy, setSpellButton, setStanceActive, showConnBanner, showContextMenu, showHitsplat, showLoginRequired, showTransitionOverlay, showXpDrop, updateHpBar, updateHpPill, updateNameplate, updateOverheadChat, npcExamine, type SpellbookEntry } from './ui'
+import { hideConnBanner, hideOverlay, initChatInput, initHud, paintHudIcons, pushMessage, removeHpBar, removeNameplate, removeOverheadChat, renderEquipment, renderInventory, renderPrayerPanel, renderSpellbook, setPrayerState, setRunState, setSpecialEnergy, setSpellButton, setStanceActive, showConnBanner, showContextMenu, showHitsplat, showLoginRequired, showTransitionOverlay, showXpDrop, updateHpBar, updateHpPill, updateNameplate, updateOverheadChat, npcExamine, type SpellbookEntry } from './ui'
 import { createMinimap, type Minimap, type MinimapDot } from './minimap'
 import { closeBankUI, isBankOpen, openBankUI, updateBankInventory, updateBankUI } from './bank'
 import { closeCraftUI, openCraftUI, updateCraftInventory, updateCraftStats, type SkillLevels } from './crafting'
@@ -174,6 +174,7 @@ function enterWorld(session: WorldSession): void {
       setRunState(event.energy, event.running)
     }
     else if (event.e === 'spec') setSpecialEnergy(event.energy)
+    else if (event.e === 'prayer') setPrayerState(event.points, event.max, event.protection, event.combat)
     else if (event.e === 'equip') {
       renderEquipment(event.equipment)
       refreshSpellUI(event.equipment)
@@ -187,10 +188,13 @@ function enterWorld(session: WorldSession): void {
     }
     else if (event.e === 'xp') {
       const entry = stats[event.skill] ?? (stats[event.skill] = { xp: 0, level: 1 })
+      const before = entry.level
       entry.xp += event.amount
       entry.level = Math.max(entry.level, getLevelFromXP(entry.xp))
       updateCraftStats(stats)
       if (event.skill === 'magic') refreshSpellbook()
+      // A Prayer level-up unlocks new prayers — rebuild the toggle grid so they appear.
+      if (event.skill === 'prayer' && entry.level > before) renderPrayerPanel(entry.level, (id) => send(socket, { t: 'pray', prayerId: id }))
       showXpDrop(event.skill, event.amount)
     }
     else if (event.e === 'msg') pushMessage(event.text)
@@ -323,6 +327,8 @@ function enterWorld(session: WorldSession): void {
     syncRunFromPref(message.you.runEnergy)
     setStanceActive(message.you.stance)
     setSpecialEnergy(message.you.specialEnergy)
+    renderPrayerPanel(message.you.stats.prayer?.level ?? 1, (id) => send(socket, { t: 'pray', prayerId: id }))
+    setPrayerState(message.you.prayer.points, message.you.prayer.max, message.you.prayer.protection, message.you.prayer.combat)
     renderEquipment(message.you.equipment)
     closeBankUI()
     closeCraftUI()
@@ -490,6 +496,8 @@ function enterWorld(session: WorldSession): void {
         syncRunFromPref(message.you.runEnergy)
         setStanceActive(message.you.stance)
         setSpecialEnergy(message.you.specialEnergy)
+        renderPrayerPanel(message.you.stats.prayer?.level ?? 1, (id) => send(socket, { t: 'pray', prayerId: id }))
+        setPrayerState(message.you.prayer.points, message.you.prayer.max, message.you.prayer.protection, message.you.prayer.combat)
         renderEquipment(message.you.equipment)
         selectedSpell = message.you.spell ?? null
         refreshSpellUI(message.you.equipment)
