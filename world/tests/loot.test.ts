@@ -93,7 +93,9 @@ describe('picked-up loot survives a disconnect flush', () => {
     takeLoot(inv, minted, 'bones', 1)
 
     const save: Record<string, unknown> = { stats: {}, inventory: [], bank: {} }
-    const db = { prepare: () => ({ bind: () => ({ run: async () => ({ meta: { changes: 1 } }) }) }) }
+    // .first() → null so flushGrants' isCharacterInActiveMatch check reads "no
+    // active match" (no PvP rows seeded in this pure grant test).
+    const db = { prepare: () => ({ bind: () => ({ run: async () => ({ meta: { changes: 1 } }), first: async () => null }) }) }
     const payload: GrantPayload = {
       xpBySkill: {}, items: Object.entries(minted).map(([itemId, quantity]) => ({ itemId, quantity })),
       itemsTo: 'inventory', moveToBank: [], reason: 'disconnect',

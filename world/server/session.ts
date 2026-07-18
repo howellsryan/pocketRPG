@@ -1,4 +1,5 @@
 import { signJWT, verifyJWT } from '../../functions/_lib/jwt.js'
+import { isCharacterInActiveMatch } from './pvpLock'
 import type { Env } from './env'
 
 const WORLD_SESSION_EXPIRES_SECONDS = 60 * 60 * 24
@@ -41,6 +42,12 @@ export async function handleWorldSession(request: Request, env: Env): Promise<Re
       identityId: payload.sub, characterId: payload.character_id, boundDatabase: 'DB',
     })
     return jsonResponse({ error: 'Character not found' }, 404)
+  }
+
+  // Refuse world entry while a PvP match is active (defence in depth behind
+  // /api/world-token's check — a 60s handoff could still be replayed here).
+  if (await isCharacterInActiveMatch(env, row.id)) {
+    return jsonResponse({ error: 'character_in_active_match', code: 'CHARACTER_IN_ACTIVE_MATCH' }, 409)
   }
 
   const token = await signJWT(

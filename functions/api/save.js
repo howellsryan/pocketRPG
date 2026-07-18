@@ -5,6 +5,7 @@ import { computeSaveSummaryFromJson } from '../_lib/saveSummary.js'
 import { decodeSaveRow, gzipJsonString } from '../_lib/saveCodec.js'
 import { detectTotalLevelRegression, detectBankWipe } from '../_lib/game/saveValidation.js'
 import { stampIdleActive, stampIdleActiveStatement } from '../_lib/game/idleStamp.js'
+import { isWorldSessionLive } from '../_lib/game/worldSessions.js'
 import { auditLog } from '../_lib/game/audit.js'
 
 const MAX_SAVE_BYTES = 256 * 1024 // 256 KB ceiling — current saves are well under this
@@ -137,6 +138,14 @@ async function applySaveWrite({ env, ch, identityId, body }) {
   // Reuse the active_match_id already fetched during character resolution.
   const lock = await assertNotInActiveMatch(env, ch.id, ch.active_match_id)
   if (lock) return lock
+  // World-session lock (same lock class as the PvP lock, not economy policing):
+  // refuse idle-client saves while the open-world companion holds a live session
+  // for this character, so the two clients can never write the same save
+  // concurrently (equipment clobber / item dupe / stale-view vanish). The world
+  // DO flushes through its own grant path, not this endpoint.
+  if (await isWorldSessionLive(env, ch.id)) {
+    return json({ error: 'character_in_world_session', code: 'CHARACTER_IN_WORLD_SESSION' }, 409)
+  }
   // Probabilistic sweep — see SAVE_SWEEP_PROBABILITY above. PvP endpoints
   // already sweep on every action, so the global state stays fresh during
   // active PvP without forcing every routine save to do cleanup work.

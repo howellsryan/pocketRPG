@@ -24,6 +24,8 @@ import { addToInventory, countItem, freeSlotCount, inventoryIsFull, isStackable,
 import { getLevelFromXP } from '../../src/engine/experience.js'
 import { flushGrants, isEmptyPayload, type GrantPayload, type ItemStack } from './grants'
 import { recordBossKill } from './bossKills'
+import { isCharacterInActiveMatch } from './pvpLock'
+import { beginWorldSession, refreshWorldSession, endWorldSession } from '../../functions/_lib/game/worldSessions.js'
 import { loadCharacterWithSave } from '../../functions/_lib/game/save.js'
 import { type ZoneDef, type ZoneExitDef } from '../shared/zone'
 import { ZONES } from './zones'
@@ -343,6 +345,9 @@ export class WorldZone extends Server<Env> {
     this.maybeStopTicking()
     await this.flush(player, 'disconnect')
     await this.checkpointPlayer(player)
+    // Release the world-session lock so the idle game can save again — but only
+    // if this exact session still holds it (a reconnect may have re-claimed it).
+    await endWorldSession(this.env, Number(charId), player.sessionId)
   }
 
   private clearAuthTimer(connectionId: string): void {
@@ -387,6 +392,13 @@ export class WorldZone extends Server<Env> {
       return
     }
 
+    // Never enter the world while a PvP match is active — the world flush path
+    // mutates the save and would bypass the match's save-lockdown (§10/§14).
+    if (await isCharacterInActiveMatch(this.env, row.id)) {
+      connection.close(1008, 'in_active_match')
+      return
+    }
+
     // Reconnect while the session is still live (mobile socket drop, second
     // tab): carry the in-memory session over to the new socket. Re-seeding
     // from D1 here would teleport the player to a checkpoint up to 60s stale
@@ -408,6 +420,7 @@ export class WorldZone extends Server<Env> {
       existing.lastMsgTimes = []
       existing.lingerUntilTick = null
       connection.setState({ charId: liveCharId })
+      void beginWorldSession(this.env, row.id, existing.sessionId)
       this.sendWelcome(existing)
       this.pendingJoins.add(liveCharId)
       this.ensureTicking()
@@ -491,6 +504,7 @@ export class WorldZone extends Server<Env> {
       lingerUntilTick: null,
     }
     this.players.set(charId, player)
+    void beginWorldSession(this.env, row.id, player.sessionId)
     this.sendWelcome(player)
     this.pendingJoins.add(charId)
     this.ensureTicking()
@@ -1137,7 +1151,13 @@ export class WorldZone extends Server<Env> {
     }
     if (this.tickCount % CHECKPOINT_EVERY_TICKS === 0) {
       if (this.dirty.size > 0) void this.flushCheckpoints()
-      for (const player of this.players.values()) void this.flush(player, 'timer')
+      for (const player of this.players.values()) {
+        void this.flush(player, 'timer')
+        // Keep the world-session lock fresh (TTL self-heals a dead DO). Skip
+        // lingering players — a backgrounded tab shouldn't hold the idle game
+        // out; if they never reconnect, linger expiry ends the session anyway.
+        if (player.lingerUntilTick === null) void refreshWorldSession(this.env, Number(player.charId), player.sessionId)
+      }
     }
   }
 
