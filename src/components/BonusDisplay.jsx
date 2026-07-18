@@ -1,5 +1,6 @@
 import { useState } from 'preact/hooks'
 import SectionHeader from './SectionHeader.jsx'
+import CollapseChevron from './CollapseChevron.jsx'
 import { OTHER_BONUS_LABELS, OTHER_BONUS_PERCENT_KEYS } from '../utils/bonusLabels.js'
 
 /**
@@ -29,7 +30,7 @@ export default function BonusDisplay({ item }) {
         class="w-full flex items-center gap-2 py-1 text-left rounded-lg active:bg-[var(--color-void-light)]"
       >
         <SectionHeader size="sm" className="opacity-60">Bonuses</SectionHeader>
-        <span class="ml-auto text-[10px] text-[var(--color-parchment)] opacity-60">{expanded ? '▼' : '▶'}</span>
+        <CollapseChevron expanded={expanded} className="ml-auto text-[var(--color-parchment)] opacity-60" />
       </button>
       {expanded && (
         <div class="mt-1">

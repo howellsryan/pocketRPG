@@ -11,6 +11,7 @@ import { EQUIPMENT_SLOTS } from '../utils/constants.js'
 import SharedItemModal from '../components/SharedItemModal.jsx'
 import Card from '../components/Card.jsx'
 import Panel from '../components/Panel.jsx'
+import CollapseChevron from '../components/CollapseChevron.jsx'
 import Button from '../components/Button.jsx'
 import SectionHeader from '../components/SectionHeader.jsx'
 import EquipmentPaperdoll, { EQ_SLOT_NAMES } from '../components/EquipmentPaperdoll.jsx'
@@ -498,7 +499,10 @@ export default function EquipmentScreen() {
                   class="w-full flex items-center justify-between px-3 py-2 bg-transparent border-0 cursor-pointer"
                 >
                   <span class="text-[12px] font-semibold text-[#eab308]">⚡ Special Attack</span>
-                  <span class="text-[10px] text-[#78530a]">{showSpecInfo ? '▲' : '▼'} {formatSpecialEnergyCostLabel(selected.item.specialAttack)}</span>
+                  <span class="flex items-center gap-1 text-[10px] text-[#78530a]">
+                    <CollapseChevron expanded={showSpecInfo} />
+                    {formatSpecialEnergyCostLabel(selected.item.specialAttack)}
+                  </span>
                 </button>
                 {showSpecInfo && (
                   <div class="px-3 pb-3 border-t border-[#3a2a00]">

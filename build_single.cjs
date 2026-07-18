@@ -139,6 +139,7 @@ const sourceFiles = [
   'components/ProgressBar.js',
   'components/SkillBadge.js',
   'components/GameIcon.js',
+  'components/CollapseChevron.js',
   'components/CombatQuickActions.js',
   'components/SpellSelectGrid.js',
   'components/SkillEmblem.js',

@@ -5,6 +5,7 @@ import Button from '../components/Button.jsx'
 import Modal from '../components/Modal.jsx'
 import GameIcon from '../components/GameIcon.jsx'
 import BackLink from '../components/BackLink.jsx'
+import CollapseChevron from '../components/CollapseChevron.jsx'
 import { formatNumber } from '../utils/helpers.js'
 import { formatIdleTime } from '../engine/idleEngine.js'
 import {
@@ -149,7 +150,7 @@ export default function KingdomScreen({ onBack }) {
             <span class="text-xs text-[var(--color-parchment)] opacity-70">
               Labour ({pointsRemaining} of {KINGDOM_LABOUR_POINTS_MAX} points free)
             </span>
-            <span class="ml-auto text-[10px] text-[var(--color-parchment)] opacity-60">{labourExpanded ? '▼' : '▶'}</span>
+            <CollapseChevron expanded={labourExpanded} className="ml-auto text-[var(--color-parchment)] opacity-60" />
           </button>
           {labourExpanded && (
             <div class="divide-y divide-[var(--color-void-border)] mt-2">

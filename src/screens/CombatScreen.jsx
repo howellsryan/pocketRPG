@@ -15,6 +15,7 @@ import GameIcon from '../components/GameIcon.jsx'
 import CombatQuickActions from '../components/CombatQuickActions.jsx'
 import SpellSelectGrid from '../components/SpellSelectGrid.jsx'
 import SkillEmblem from '../components/SkillEmblem.jsx'
+import CollapseChevron from '../components/CollapseChevron.jsx'
 import CombatMobileSelect from './CombatMobileSelect.jsx'
 import { CombatMonsterInfoSheet, CombatRaidInfoSheet, MultiStyleChip } from './CombatMobileSheets.jsx'
 import { getMonsterArt, getMonsterAttackStyles, getMonsterWeakness, getCategoryArt, getRaidArt, getMonsterLocationLabel, getStyleArt } from '../utils/combatArt.js'
@@ -2083,7 +2084,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                 >
                   <SkillEmblem iconKey={categoryArt.icon} accent={categoryArt.accent} size={24} glow={0} />
                   <span class="text-xs font-semibold text-[var(--color-parchment)] uppercase tracking-wider opacity-60">{category.label}</span>
-                  <span class="ml-auto text-[10px] text-[var(--color-parchment)] opacity-60">{isCollapsed ? '▶' : '▼'}</span>
+                  <CollapseChevron expanded={!isCollapsed} className="ml-auto text-[var(--color-parchment)] opacity-60" />
                   {monsters.length === 0 && (
                     <span class="text-[10px] text-[var(--color-parchment)] opacity-30 italic">— coming soon</span>
                   )}
@@ -2182,7 +2183,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           >
             <SkillEmblem iconKey="temple_gate" accent="#9b6cff" size={24} glow={0} />
             <span class="text-xs font-semibold text-[var(--color-gold)] uppercase tracking-wider">Raids</span>
-            <span class="ml-auto text-[10px] text-[var(--color-parchment)] opacity-60">{isSectionCollapsed('raids', !isDungeon) ? '▶' : '▼'}</span>
+            <CollapseChevron expanded={!isSectionCollapsed('raids', !isDungeon)} className="ml-auto text-[var(--color-parchment)] opacity-60" />
           </button>
           {!isSectionCollapsed('raids', !isDungeon) && (
             <div class="space-y-2">
