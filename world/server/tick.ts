@@ -119,10 +119,14 @@ export type TickResult = {
   /** NPC ids whose broadcast state changed / that should be removed. */
   npcChanged: string[]
   npcRemoved: string[]
+  /** Kills resolved this tick, for the DO to record server-authoritatively
+   * (collection log + kill count + audit for bosses). `owner` is the top-damage
+   * contributor; `loot` is what was rolled for them. */
+  kills: { monsterId: string; owner: string; loot: { itemId: string; quantity: number }[] }[]
 }
 
 export function emptyResult(): TickResult {
-  return { entChanged: false, events: [], rockChanges: [], bankOpen: false, stationOpen: null, consumed: [], hits: [], died: false, equipmentDirty: false, newLoot: [], npcChanged: [], npcRemoved: [] }
+  return { entChanged: false, events: [], rockChanges: [], bankOpen: false, stationOpen: null, consumed: [], hits: [], died: false, equipmentDirty: false, newLoot: [], npcChanged: [], npcRemoved: [], kills: [] }
 }
 
 /** Seeds the 28-slot session pack from the character's PocketRPG inventory at

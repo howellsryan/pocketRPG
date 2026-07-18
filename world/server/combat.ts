@@ -135,6 +135,9 @@ function killNpc(player: TickPlayer, npc: NpcState, loot: { itemId: string; quan
   const owner = topDamageContributor(npc) ?? player.charId
   npc.damageByChar.clear()
   result.newLoot.push(...spawnDrops(loot, npc.x, npc.z, owner, ctx.tick))
+  // Surface the kill so the DO can record boss collection-log / kill-count /
+  // audit server-side (§14) — the loot itself still rides the trusted save blob.
+  result.kills.push({ monsterId: npc.monsterId, owner, loot })
   result.npcChanged.push(npc.id)
 }
 

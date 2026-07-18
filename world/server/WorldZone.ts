@@ -23,6 +23,7 @@ import { sanitizeChat } from '../shared/chat'
 import { addToInventory, countItem, freeSlotCount, inventoryIsFull, isStackable, moveInventorySlot, removeItems, removeOneAt } from './mining'
 import { getLevelFromXP } from '../../src/engine/experience.js'
 import { flushGrants, isEmptyPayload, type GrantPayload, type ItemStack } from './grants'
+import { recordBossKill } from './bossKills'
 import { loadCharacterWithSave } from '../../functions/_lib/game/save.js'
 import { type ZoneDef, type ZoneExitDef } from '../shared/zone'
 import { ZONES } from './zones'
@@ -1067,6 +1068,12 @@ export class WorldZone extends Server<Env> {
         // equipment to the save on the next flush so arrows aren't free.
         player.equipmentDirty = true
         this.scheduleDirtyFlush(player)
+      }
+      for (const kill of result.kills) {
+        // Server-authoritative boss side-effects (collection log, kill count,
+        // audit) — fire-and-forget D1 like the flushes below. No-op for
+        // non-boss monsters.
+        void recordBossKill(this.env, kill)
       }
       if (result.events.length > 0) eventsByChar.set(player.charId, result.events)
       if (result.died) this.respawnPlayer(player, playerEnts)
