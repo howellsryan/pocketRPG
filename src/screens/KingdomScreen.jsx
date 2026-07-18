@@ -30,6 +30,7 @@ export default function KingdomScreen({ onBack }) {
   const [depositModal, setDepositModal] = useState(null) // 'deposit' | 'withdraw' | null
   const [amountInput, setAmountInput] = useState('')
   const [showLootModal, setShowLootModal] = useState(false)
+  const [labourExpanded, setLabourExpanded] = useState(true)
 
   // Settle on open + initialise lastTickAt so the coffer starts ticking.
   useEffect(() => {
@@ -139,39 +140,49 @@ export default function KingdomScreen({ onBack }) {
         </Card>
 
         <Card className="p-3">
-          <div class="text-xs text-[var(--color-parchment)] opacity-70 mb-2">
-            Labour — {pointsRemaining} of {KINGDOM_LABOUR_POINTS_MAX} points free
-          </div>
-          <div class="divide-y divide-[var(--color-void-border)]">
-            {Object.keys(CATEGORY_LABELS).map((category) => {
-              const points = allocations[category] || 0
-              return (
-                <div key={category} class="flex items-center gap-3 py-3">
-                  <span class="w-9 flex justify-center items-center flex-shrink-0">
-                    <GameIcon iconKey={CATEGORY_ICONS[category]} size={28} />
-                  </span>
-                  <div class="flex-1 min-w-0 text-sm font-semibold text-[var(--color-parchment)]">
-                    {CATEGORY_LABELS[category]}
+          <button
+            type="button"
+            onClick={() => setLabourExpanded(e => !e)}
+            aria-expanded={labourExpanded}
+            class="w-full flex items-center gap-2 text-left bg-transparent border-0 cursor-pointer"
+          >
+            <span class="text-xs text-[var(--color-parchment)] opacity-70">
+              Labour ({pointsRemaining} of {KINGDOM_LABOUR_POINTS_MAX} points free)
+            </span>
+            <span class="ml-auto text-[10px] text-[var(--color-parchment)] opacity-60">{labourExpanded ? '▼' : '▶'}</span>
+          </button>
+          {labourExpanded && (
+            <div class="divide-y divide-[var(--color-void-border)] mt-2">
+              {Object.keys(CATEGORY_LABELS).map((category) => {
+                const points = allocations[category] || 0
+                return (
+                  <div key={category} class="flex items-center gap-3 py-3">
+                    <span class="w-9 flex justify-center items-center flex-shrink-0">
+                      <GameIcon iconKey={CATEGORY_ICONS[category]} size={28} />
+                    </span>
+                    <div class="flex-1 min-w-0 text-sm font-semibold text-[var(--color-parchment)]">
+                      {CATEGORY_LABELS[category]}
+                    </div>
+                    <div class="flex items-center gap-2 flex-shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => adjustAllocation(category, -1)}
+                        disabled={points <= 0}
+                        class="w-8 h-8 rounded-lg bg-[var(--color-void)] border border-[var(--color-void-border)] text-[var(--color-parchment)] disabled:opacity-30"
+                      >−</button>
+                      <span class="w-4 text-center text-sm font-bold text-[var(--color-gold)]">{points}</span>
+                      <button
+                        type="button"
+                        onClick={() => adjustAllocation(category, 1)}
+                        disabled={points >= KINGDOM_LABOUR_POINTS_MAX || pointsRemaining <= 0}
+                        class="w-8 h-8 rounded-lg bg-[var(--color-void)] border border-[var(--color-void-border)] text-[var(--color-parchment)] disabled:opacity-30"
+                      >+</button>
+                    </div>
                   </div>
-                  <div class="flex items-center gap-2 flex-shrink-0">
-                    <button
-                      type="button"
-                      onClick={() => adjustAllocation(category, -1)}
-                      disabled={points <= 0}
-                      class="w-8 h-8 rounded-lg bg-[var(--color-void)] border border-[var(--color-void-border)] text-[var(--color-parchment)] disabled:opacity-30"
-                    >−</button>
-                    <span class="w-4 text-center text-sm font-bold text-[var(--color-gold)]">{points}</span>
-                    <button
-                      type="button"
-                      onClick={() => adjustAllocation(category, 1)}
-                      disabled={points >= KINGDOM_LABOUR_POINTS_MAX || pointsRemaining <= 0}
-                      class="w-8 h-8 rounded-lg bg-[var(--color-void)] border border-[var(--color-void-border)] text-[var(--color-parchment)] disabled:opacity-30"
-                    >+</button>
-                  </div>
-                </div>
-              )
-            })}
-          </div>
+                )
+              })}
+            </div>
+          )}
         </Card>
 
         <Card className="p-3">
