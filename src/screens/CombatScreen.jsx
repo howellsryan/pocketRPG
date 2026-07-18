@@ -385,6 +385,10 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     try { return localStorage.getItem('pocketrpg_combat3d') === 'off' } catch { return false }
   })
   const [arenaSignal, setArenaSignal] = useState(null)
+  // Fired one tick BEFORE the monster's next attack lands (monsterAttackTimer
+  // reaches 1) so the 3D arena can lead a rigged monster's wind-up and have the
+  // swing connect exactly on the hit tick's splat. See CombatArena3D.
+  const [arenaWindup, setArenaWindup] = useState(null)
   const [arenaReady, setArenaReady] = useState(false)
   const arenaReadyRef = useRef(false)
   const arenaClosedRef = useRef(arenaClosed)
@@ -612,6 +616,13 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           monster: tickSplats.player.length > 0,
           special: events.some(ev => ev.type === 'specialHit'),
         }))
+      }
+
+      // Wind-up lead: broadcast how many ticks until the monster's next attack
+      // so the arena can pre-start a rigged swing early enough (even for clips
+      // longer than one tick) that it ENDS on the hit tick's splat.
+      if (combatState.active && combatState.monster.currentHP > 0 && combatState.monsterAttackTimer >= 1) {
+        setArenaWindup(prev => ({ seq: (prev?.seq || 0) + 1, ticks: combatState.monsterAttackTimer }))
       }
 
       for (const ev of events) {
@@ -2458,6 +2469,8 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       weapon={equipment?.weapon ? getWeaponPlacement(equipment.weapon.itemId) : null}
       gear={getGearPlacements(equipment)}
       attackSignal={arenaSignal}
+      windupSignal={arenaWindup}
+      monsterAttackImpactSec={arenaModel ? arenaModel.attackImpactSec : null}
       monsterHP={{ current: Math.max(0, Math.round(combat.monster.currentHP)), max: combat.monster.hitpoints }}
       playerHP={{ current: Math.max(0, Math.round(currentHP)), max: getMaxHP() }}
       monsterSplats={monsterSplats}
@@ -3030,14 +3043,6 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                 />
               )}
 
-              {/* Kill stats */}
-              {fightStartedAt && (
-                <div class="cb-kstats">
-                  <div class="cb-kstat"><span class="cb-kstat__k">Kills</span><span class="cb-kstat__v">{killCount}</span></div>
-                  <div class="cb-kstat"><span class="cb-kstat__k">Kills / hr</span><span class="cb-kstat__v">{killCount > 0 && (Date.now() - fightStartedAt) > 5000 ? Math.round(killCount / ((Date.now() - fightStartedAt) / 3600000)).toLocaleString() : '—'}</span></div>
-                </div>
-              )}
-
               {/* Action row — Special / Cast / Prayer (Eat/Potion/Gear now live in the quick-actions tabs) */}
               {combat.active && !isAutoRestarting && (() => {
                 const weaponEntry = equipment?.weapon
@@ -3049,7 +3054,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                 const isMagic = weapon?.attackStyle === 'magic'
                 const prayerActive = !!(combat?.activeProtectionPrayer || combat?.activeCombatPrayer)
                 return (
-                  <div class="cb-actions" style={{ marginBottom: 4 }}>
+                  <div class="cb-actions" style={{ marginTop: 12, marginBottom: 12 }}>
                     <button class={'cb-act' + (specQueued ? ' is-on' : '')} disabled={!canSpec && !specQueued} onClick={canSpec ? handleSpecialAttack : undefined}>
                       <GameIcon iconKey="lightning_arc" color="currentColor" size={18} />
                       <span>Special{hasSpec ? ` ${energy}%` : ''}</span>

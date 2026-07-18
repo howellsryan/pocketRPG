@@ -1,0 +1,82 @@
+<!doctype html>
+<!-- Dev harness: renders an arbitrary GLB and plays a named clip, for visual
+     review of imported monster/prop models + identifying their animation clips.
+     Driven headless by scripts/render-glb.mjs.
+
+     Query params:
+       src=<url>      GLB to load (required)
+       clip=<name>    clip to play (default: first clip)
+       height=<n>     normalise model to this height in units (default 2.4)
+       yaw=<deg>      turntable yaw (default 30)
+
+     Window hooks:
+       __ready        true once the model is mounted
+       __clips        array of { name, duration } for every clip in the GLB
+       __setTime(t)   advance the animation clock to absolute t seconds
+       __play(name)   switch the looping clip -->
+<html>
+<head><meta charset="utf-8"><style>html,body{margin:0;background:#191512}canvas{display:block}</style></head>
+<body>
+<script type="module">
+import * as THREE from '/public/vendor/three/three.module.min.js'
+import { GLTFLoader } from '/public/vendor/three/jsm/loaders/GLTFLoader.js'
+import { MeshoptDecoder } from '/public/vendor/three/jsm/libs/meshopt_decoder.module.js'
+
+const q = new URLSearchParams(location.search)
+const src = q.get('src')
+const targetH = parseFloat(q.get('height') || '2.4')
+const yaw = THREE.MathUtils.degToRad(parseFloat(q.get('yaw') || '30'))
+
+const W = innerWidth, H = innerHeight
+const renderer = new THREE.WebGLRenderer({ antialias: true })
+renderer.setSize(W, H)
+renderer.outputColorSpace = THREE.SRGBColorSpace
+document.body.appendChild(renderer.domElement)
+
+const scene = new THREE.Scene()
+scene.background = new THREE.Color(0x191512)
+scene.add(new THREE.HemisphereLight(0xfff2e0, 0x2a1c10, 1.9))
+const key = new THREE.DirectionalLight(0xfff2e0, 2.4); key.position.set(3, 6, 4); scene.add(key)
+const rim = new THREE.DirectionalLight(0x88bbff, 1.0); rim.position.set(-4, 3, -3); scene.add(rim)
+const ground = new THREE.Mesh(new THREE.CircleGeometry(4, 40), new THREE.MeshStandardMaterial({ color: 0x1c1410, roughness: 1 }))
+ground.rotation.x = -Math.PI / 2
+scene.add(ground)
+
+const loader = new GLTFLoader().setMeshoptDecoder(MeshoptDecoder)
+const gltf = await new Promise((res, rej) => loader.load(src, res, undefined, rej))
+const root = gltf.scene
+const box = new THREE.Box3().setFromObject(root)
+const size = box.getSize(new THREE.Vector3())
+const center = box.getCenter(new THREE.Vector3())
+const scale = targetH / (size.y || 1)
+root.scale.setScalar(scale)
+root.position.set(-center.x * scale, -box.min.y * scale, -center.z * scale)
+root.rotation.y = yaw
+scene.add(root)
+
+const camera = new THREE.PerspectiveCamera(40, W / H, 0.01, 100)
+camera.position.set(0, targetH * 0.62, targetH * 1.9)
+camera.lookAt(0, targetH * 0.5, 0)
+
+const mixer = new THREE.AnimationMixer(root)
+const actions = {}
+for (const clip of gltf.animations) actions[clip.name] = mixer.clipAction(clip)
+window.__clips = gltf.animations.map((c) => ({ name: c.name, duration: c.duration }))
+
+let clockT = 0
+let currentName = q.get('clip') || (gltf.animations[0] && gltf.animations[0].name)
+const play = (name) => {
+  for (const a of Object.values(actions)) a.stop()
+  if (actions[name]) actions[name].reset().play()
+  currentName = name
+}
+if (currentName) play(currentName)
+const render = () => renderer.render(scene, camera)
+window.__play = (name) => { play(name); mixer.update(0); render() }
+window.__setTime = (t) => { const dt = Math.max(0, t - clockT); clockT = t; mixer.update(dt); render() }
+mixer.update(0)
+render()
+window.__ready = true
+</script>
+</body>
+</html>

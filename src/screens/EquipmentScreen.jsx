@@ -6,7 +6,7 @@ import { canRender3D } from '../utils/three3d.js'
 import { unequipSlot, getEquipmentBonuses, checkEquipRequirements, equipItem, placeUnequippedItems } from '../engine/equipment.js'
 import { createPreset, applyPreset, renamePreset, MAX_EQUIPMENT_PRESETS } from '../engine/equipmentPresets.js'
 import Modal from '../components/Modal.jsx'
-import { hasFullVoidKingSet } from '../engine/combatSetBonuses.js'
+import { getActiveSetBonusDisplays } from '../engine/combatSetBonuses.js'
 import { EQUIPMENT_SLOTS } from '../utils/constants.js'
 import SharedItemModal from '../components/SharedItemModal.jsx'
 import Card from '../components/Card.jsx'
@@ -409,27 +409,20 @@ export default function EquipmentScreen() {
           </div>
         </div>
 
-        {/* Set bonuses — render only when active */}
-        {hasFullVoidKingSet(equipment) && (
-          <div class="border-t border-[var(--color-void-border)] mt-3 pt-3">
-            <SectionHeader size="sm" className="mb-1 opacity-40">Void King Set Bonus</SectionHeader>
+        {/* Set bonuses — render one panel per currently-active combat set */}
+        {getActiveSetBonusDisplays(equipment).map(set => (
+          <div key={set.id} class="border-t border-[var(--color-void-border)] mt-3 pt-3">
+            <SectionHeader size="sm" className="mb-1 opacity-40">{set.name} Set Bonus</SectionHeader>
             <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-1 md:gap-3 text-[11px] md:text-[13px]">
-              {[
-                ['Melee Accuracy', 12.5],
-                ['Melee Damage', 12.5],
-                ['Ranged Accuracy', 12.5],
-                ['Ranged Damage', 12.5],
-                ['Magic Accuracy', 45],
-                ['Magic Damage', 10],
-              ].map(([label, pct]) => (
-                <div key={label} class="flex justify-between text-[var(--color-parchment)] opacity-70">
-                  <span>{label}</span>
-                  <span class="font-[var(--font-mono)]" style={{ color: '#27ae60' }}>+{pct}%</span>
+              {set.lines.map(line => (
+                <div key={line.label} class="flex justify-between text-[var(--color-parchment)] opacity-70">
+                  <span>{line.label}</span>
+                  <span class="font-[var(--font-mono)]" style={{ color: '#27ae60' }}>+{line.value}{line.percent ? '%' : ''}</span>
                 </div>
               ))}
             </div>
           </div>
-        )}
+        ))}
 
         {/* Inventory display — desktop only */}
         <div class="hidden lg:block border-t border-[var(--color-void-border)] mt-3 pt-3">

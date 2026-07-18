@@ -165,6 +165,17 @@ describe('Experience System', () => {
     it('should handle negative XP', () => {
       expect(clampXP(-100)).toBe(-100)
     })
+
+    it('should keep accumulating XP past the level-99 threshold up to MAX_XP', () => {
+      const level99XP = getXPForLevel(99)
+      // A maxed skill keeps gaining XP well beyond the level-99 requirement.
+      const grown = clampXP(level99XP + 50_000_000)
+      expect(grown).toBeGreaterThan(level99XP)
+      expect(grown).toBe(level99XP + 50_000_000)
+      expect(getLevelFromXP(grown)).toBe(99)
+      // ...but never past the 200M ceiling.
+      expect(clampXP(level99XP + 500_000_000)).toBe(MAX_XP)
+    })
   })
 
   describe('XP_TABLE consistency', () => {

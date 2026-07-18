@@ -939,6 +939,12 @@
         "y": 200
       },
       {
+        "kind": "hunter",
+        "ref": "hunt_herbi",
+        "x": 340,
+        "y": 300
+      },
+      {
         "screen": "dungeons",
         "iconKey": "dungeon",
         "label": "Brimhollow Dungeon",

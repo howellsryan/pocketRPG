@@ -9,7 +9,7 @@ import { createCamera, createLights, createRenderer, createScene, tileToWorld, u
 import { attachCameraControls } from './cameraControls'
 import { createTerrain } from './terrain'
 import { createScatterLayers } from './scatter'
-import { applyEntityDiff, applyWeapon, createEntity, createHeroMesh, createMonsterMesh, updateEntity, type Entity } from './entities'
+import { applyEntityDiff, applyGear, createEntity, createHeroMesh, createMonsterMesh, updateEntity, type Entity } from './entities'
 import { createClickMarker, setupInput, showClickMarker, updateClickMarker } from './input'
 import { createStatics, type Statics } from './statics'
 import { createProps } from './props'
@@ -248,7 +248,7 @@ function enterWorld(session: WorldSession): void {
     const existing = others.get(diff.id)
     if (existing) {
       applyEntityDiff(existing, diff)
-      if (diff.gear) void applyWeapon(existing.mesh, diff.gear)
+      if (diff.gear) void applyGear(existing.mesh, diff.gear)
       return
     }
     pendingOtherDiff.set(diff.id, diff)
@@ -260,7 +260,7 @@ function enterWorld(session: WorldSession): void {
       const entity = createEntity(diff.id, d.x, d.z, mesh, animator)
       entity.serverAnim = d.anim
       entity.name = d.name
-      if (d.gear) void applyWeapon(entity.mesh, d.gear)
+      if (d.gear) void applyGear(entity.mesh, d.gear)
       scene.add(entity.mesh)
       others.set(diff.id, entity)
       otherLoading.delete(diff.id)
@@ -345,7 +345,7 @@ function enterWorld(session: WorldSession): void {
       // A background/resume can leave the self mesh hidden (culling/context
       // churn) — make sure it's shown again on every resync.
       self.mesh.visible = true
-      void applyWeapon(self.mesh, message.you.gear)
+      void applyGear(self.mesh, message.you.gear)
     }
     for (const id of [...others.keys(), ...otherLoading]) removeOther(id)
     for (const id of [...npcs.keys(), ...npcLoading]) removeNpc(id)
@@ -497,7 +497,7 @@ function enterWorld(session: WorldSession): void {
         statics = staticsResult
         for (const [id, depleted] of rockStates) staticsResult.setRockDepleted(id, depleted)
         self = createEntity(message.selfId, message.you.x, message.you.z, heroResult.mesh, heroResult.animator)
-        if (message.you.gear) void applyWeapon(self.mesh, message.you.gear)
+        if (message.you.gear) void applyGear(self.mesh, message.you.gear)
         scene.add(self.mesh)
 
         // Rapid taps on the same tile collapse to one walk — the server path
@@ -670,7 +670,7 @@ function enterWorld(session: WorldSession): void {
     for (const ent of message.ents ?? []) {
       if (self && ent.id === self.id) {
         applyEntityDiff(self, ent)
-        if (ent.gear) void applyWeapon(self.mesh, ent.gear)
+        if (ent.gear) void applyGear(self.mesh, ent.gear)
       }
       else if (ent.kind === 'npc') ensureNpc(scene, ent)
       else if (ent.kind === 'player') ensureOther(scene, ent)

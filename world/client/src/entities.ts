@@ -119,6 +119,11 @@ function makeAnimator(model: THREE.Object3D, gltf: GLTF, names: readonly AnimNam
     }
     actions[name] = action
   }
+  // Boss GLBs (Warlord Grondar) ship an idle but no locomotion clip — alias
+  // walk to idle so they still render from the GLB instead of falling back to
+  // the procedural creature; a wandering boss reads as gliding, acceptable
+  // until a bespoke walk exists.
+  if (!actions.walk && actions.idle) actions.walk = actions.idle
   if (!actions.idle || !actions.walk) return null
   const animator: GltfAnimator = { kind: 'gltf', mixer, actions, current: null }
   playAnim(animator, 'idle')
@@ -135,7 +140,7 @@ export async function createHeroMesh(): Promise<{ mesh: THREE.Object3D; animator
     const group = new THREE.Group()
     group.add(model)
     group.scale.setScalar(HERO_SCALE)
-    const animator = makeAnimator(model, gltf, ['idle', 'walk', 'run', 'mine', 'attack', 'die'])
+    const animator = makeAnimator(model, gltf, ['idle', 'walk', 'run', 'mine', 'attack', 'attack_ranged', 'attack_magic', 'die'])
     return { mesh: group, animator }
   } catch {
     return { mesh: createCapsulePlaceholder(), animator: null }
@@ -189,7 +194,7 @@ export async function createMonsterMesh(monsterId: string | undefined): Promise<
       const group = new THREE.Group()
       group.add(model)
       group.scale.setScalar(spec.targetHeight / (b.maxY - b.minY))
-      const animator = makeAnimator(model, gltf, ['idle', 'walk', 'die'])
+      const animator = makeAnimator(model, gltf, ['idle', 'walk', 'attack', 'die'])
       return { mesh: group, animator }
     } catch {
       return { mesh: boxPlaceholder(), animator: null }
@@ -230,18 +235,40 @@ const GRIP_OVERRIDES: Record<string, Grip> = {
   blunt: { rotation: [-Math.PI / 2, Math.PI / 2, Math.PI / 2], position: [0, 0.05, 0.03], scale: 0.5 },
 }
 
-function gearKey(weapon: GearDescriptor['weapon']): string {
+function weaponKey(weapon: GearDescriptor['weapon']): string {
   return weapon ? `${weapon.archetype}|${weapon.tint ?? ''}` : ''
 }
 
-/** Attaches (or replaces/removes) the weapon model matching `gear` on a hero
- * mesh. Idempotent per archetype+tint; missing hand bone (capsule fallback) or
- * a failed model load leaves the hero bare-handed. */
-export async function applyWeapon(heroMesh: THREE.Object3D, gear: GearDescriptor | undefined): Promise<void> {
+/** Recolors a cloned material by the tier tint. Weapon pieces (small, mostly
+ * untextured metal) overwrite the color outright; armor pieces (Quaternius
+ * outfit exports with webp base-color textures) multiply instead, so tinting
+ * recolors the cloth/leather read without flattening the texture detail —
+ * mirrors src/3d/heroAttach.js's applyEquipTint(..., allMaterials=true). */
+function tintMaterial(mat: THREE.Material, tint: THREE.Color, multiply: boolean): THREE.Material {
+  const m = mat.clone() as THREE.MeshStandardMaterial
+  if (m.color) multiply ? m.color.multiply(tint) : m.color.copy(tint)
+  return m
+}
+
+function tintObject(obj: THREE.Object3D, tint: string | undefined, multiply: boolean): void {
+  if (!tint) return
+  const color = new THREE.Color(tint)
+  obj.traverse((o) => {
+    if (o instanceof THREE.Mesh) {
+      o.material = Array.isArray(o.material)
+        ? o.material.map((m) => tintMaterial(m, color, multiply))
+        : tintMaterial(o.material, color, multiply)
+    }
+  })
+}
+
+/** Attaches (or replaces/removes) the weapon model matching `gear.weapon` on a
+ * hero mesh. Idempotent per archetype+tint; missing hand bone (capsule
+ * fallback) or a failed model load leaves the hero bare-handed. */
+async function applyWeaponPiece(heroMesh: THREE.Object3D, weapon: GearDescriptor['weapon']): Promise<void> {
   const hand = heroMesh.getObjectByName('hand_r')
   if (!hand) return
-  const weapon = gear?.weapon
-  const key = gearKey(weapon)
+  const key = weaponKey(weapon)
   const existing = hand.getObjectByName(WEAPON_HOLDER)
   if ((existing?.userData.key ?? '') === key) return
   existing?.removeFromParent()
@@ -249,26 +276,14 @@ export async function applyWeapon(heroMesh: THREE.Object3D, gear: GearDescriptor
 
   try {
     const gltf = await loadTemplate(`/models/weapons/${weapon.archetype}.glb`)
-    // Re-check after the await: a newer applyWeapon may have won the race.
+    // Re-check after the await: a newer applyWeaponPiece may have won the race.
     const current = hand.getObjectByName(WEAPON_HOLDER)
     if (current) {
       if (current.userData.key === key) return
       current.removeFromParent()
     }
     const model = gltf.scene.clone(true)
-    if (weapon.tint) {
-      const tint = new THREE.Color(weapon.tint)
-      model.traverse((obj) => {
-        if (obj instanceof THREE.Mesh) {
-          const tintOne = (m: THREE.Material): THREE.Material => {
-            const mat = m.clone() as THREE.MeshStandardMaterial
-            if (mat.color) mat.color.copy(tint)
-            return mat
-          }
-          obj.material = Array.isArray(obj.material) ? obj.material.map(tintOne) : tintOne(obj.material)
-        }
-      })
-    }
+    tintObject(model, weapon.tint, false)
     const grip = GRIP_OVERRIDES[weapon.archetype] ?? DEFAULT_GRIP
     const holder = new THREE.Group()
     holder.name = WEAPON_HOLDER
@@ -281,6 +296,156 @@ export async function applyWeapon(heroMesh: THREE.Object3D, gear: GearDescriptor
   } catch {
     // Bare hands on any load failure — appearance never blocks play.
   }
+}
+
+// Armor (Phase: open-world/combat-arena parity): body/legs outfit pieces
+// built by scripts/build-armor.mjs from the arena's own already-tiered
+// Quaternius outfit exports (public/3d-samples/outfits/ranger_*.glb), which
+// carry the same 65-joint universal rig as world's hero.glb — no bone
+// position/rotation needed, just a skeleton rebind. Head/gloves/boots/cape
+// are out of scope for v1 (no compatible source asset without new authoring).
+const ARMOR_SLOTS = ['body', 'legs'] as const
+type ArmorSlot = (typeof ARMOR_SLOTS)[number]
+const ARMOR_HOLDER: Record<ArmorSlot, string> = { body: '__armor_body', legs: '__armor_legs' }
+
+// Bone names are the Quaternius universal rig — mirrors
+// src/3d/heroAttach.js's HIDE_REGION_BONES (head omitted: out of scope here).
+const HIDE_REGION_BONES: Record<ArmorSlot, string[]> = {
+  body: ['spine_01', 'spine_02', 'spine_03', 'clavicle_l', 'clavicle_r'],
+  legs: ['pelvis', 'thigh_l', 'calf_l', 'foot_l', 'ball_l', 'ball_leaf_l', 'thigh_r', 'calf_r', 'foot_r', 'ball_r', 'ball_leaf_r'],
+}
+
+type HideMaskControl = { setHidden(regions: Partial<Record<ArmorSlot, boolean>>): void }
+
+/** Ports src/3d/heroAttach.js's setupHideMask for the two armor regions this
+ * file cares about: a per-vertex mask lets an equipped body/legs piece cut
+ * the hero's own baked-in clothing out of the render, exactly, in every pose
+ * — a bone-transform approach can't do that without pinching at the joints,
+ * and posed skin would otherwise bulge through the armor at animation
+ * extremes. Applied to every skinned sub-mesh of the hero (body + any hair/
+ * accessory meshes sharing the skeleton), not just the primary one. */
+function setupArmorHideMask(skinnedMeshes: THREE.SkinnedMesh[]): HideMaskControl | null {
+  const meshes = skinnedMeshes.filter((m) => m.skeleton)
+  if (!meshes.length) return null
+  const hidden = new THREE.Vector2(0, 0) // onBeforeCompile fires lazily on first
+  // render, so the desired state must be the shader's INITIAL uniform value.
+  for (const skinnedMesh of meshes) {
+    const regionIdx = ARMOR_SLOTS.map((slot) => {
+      const wanted = new Set(HIDE_REGION_BONES[slot])
+      return new Set(skinnedMesh.skeleton.bones.map((b, i) => (wanted.has(b.name) ? i : -1)).filter((i) => i >= 0))
+    })
+    const geo = skinnedMesh.geometry
+    const si = geo.attributes.skinIndex, sw = geo.attributes.skinWeight
+    const n = geo.attributes.position.count
+    const mask = new Float32Array(n * 2)
+    for (let i = 0; i < n; i++) {
+      for (let k = 0; k < 4; k++) {
+        const j = si.getComponent(i, k), w = sw.getComponent(i, k)
+        for (let r = 0; r < 2; r++) if (regionIdx[r].has(j)) mask[i * 2 + r] += w
+      }
+    }
+    geo.setAttribute('hideMask', new THREE.BufferAttribute(mask, 2))
+    const mats = Array.isArray(skinnedMesh.material) ? skinnedMesh.material : [skinnedMesh.material]
+    for (const mat of mats) {
+      const m = mat as THREE.MeshStandardMaterial
+      m.onBeforeCompile = (shader) => {
+        shader.uniforms.uHideMask = { value: hidden }
+        shader.vertexShader = shader.vertexShader
+          .replace('#include <common>', '#include <common>\nattribute vec2 hideMask;\nvarying vec2 vHideMask;')
+          .replace('#include <begin_vertex>', '#include <begin_vertex>\nvHideMask = hideMask;')
+        shader.fragmentShader = shader.fragmentShader
+          .replace('#include <common>', '#include <common>\nuniform vec2 uHideMask;\nvarying vec2 vHideMask;')
+          .replace('#include <clipping_planes_fragment>', '#include <clipping_planes_fragment>\nif (dot(uHideMask, step(vec2(0.35, 0.35), vHideMask)) > 0.0) discard;')
+      }
+      m.needsUpdate = true
+    }
+  }
+  return {
+    setHidden(regions) {
+      hidden.set(regions.body ? 1 : 0, regions.legs ? 1 : 0)
+    },
+  }
+}
+
+/** Largest-by-vertex-count skinned mesh is the hero's own base body mesh (as
+ * opposed to hair/accessory sub-meshes) — same heuristic CombatArena3D and
+ * heroAttach.js use to pick the skeleton/bindMatrix an armor piece rebinds
+ * onto. */
+function primarySkinnedMesh(meshes: THREE.SkinnedMesh[]): THREE.SkinnedMesh | null {
+  let best: THREE.SkinnedMesh | null = null
+  let bestCount = -1
+  for (const m of meshes) {
+    const count = m.geometry.attributes.position?.count ?? 0
+    if (count > bestCount) { best = m; bestCount = count }
+  }
+  return best
+}
+
+async function applyArmorPiece(
+  heroSkinned: THREE.SkinnedMesh,
+  slot: ArmorSlot,
+  piece: { tint?: string } | undefined,
+): Promise<void> {
+  const parent = heroSkinned.parent
+  if (!parent) return
+  const holderName = ARMOR_HOLDER[slot]
+  const key = piece ? `${slot}|${piece.tint ?? ''}` : ''
+  const existing = parent.getObjectByName(holderName)
+  if ((existing?.userData.key ?? '') === key) return
+  existing?.removeFromParent()
+  if (!piece) return
+
+  try {
+    const gltf = await loadTemplate(`/models/armor/${slot}.glb`)
+    // Re-check after the await: a newer applyArmorPiece may have won the race.
+    const current = parent.getObjectByName(holderName)
+    if (current) {
+      if (current.userData.key === key) return
+      current.removeFromParent()
+    }
+    const model = gltf.scene.clone(true)
+    const pieces: THREE.SkinnedMesh[] = []
+    model.traverse((o) => { if ((o as THREE.SkinnedMesh).isSkinnedMesh) pieces.push(o as THREE.SkinnedMesh) })
+    if (!pieces.length) return
+    const holder = new THREE.Group()
+    holder.name = holderName
+    holder.userData.key = key
+    for (const sm of pieces) {
+      // Rebind onto the hero's LIVE skeleton using its ORIGINAL bindMatrix
+      // (frozen at load) rather than matrixWorld — the outfit build gave this
+      // mesh a skin mirroring the hero's own joint order, so no additional
+      // position/rotation/scale is needed, only the rebind.
+      sm.bind(heroSkinned.skeleton, heroSkinned.bindMatrix)
+      tintObject(sm, piece.tint, true)
+      holder.add(sm)
+    }
+    parent.add(holder)
+  } catch {
+    // Bare slot on any load failure — appearance never blocks play.
+  }
+}
+
+async function applyArmor(heroMesh: THREE.Object3D, armor: GearDescriptor['armor']): Promise<void> {
+  const skinned: THREE.SkinnedMesh[] = []
+  heroMesh.traverse((o) => { if ((o as THREE.SkinnedMesh).isSkinnedMesh) skinned.push(o as THREE.SkinnedMesh) })
+  const heroSkinned = primarySkinnedMesh(skinned)
+  if (!heroSkinned) return // capsule/placeholder fallback: no rig to attach armor onto
+
+  let ctl = heroMesh.userData.armorHideMask as HideMaskControl | null | undefined
+  if (ctl === undefined) {
+    ctl = setupArmorHideMask(skinned)
+    heroMesh.userData.armorHideMask = ctl
+  }
+  await Promise.all(ARMOR_SLOTS.map((slot) => applyArmorPiece(heroSkinned, slot, armor?.[slot])))
+  ctl?.setHidden({ body: !!armor?.body, legs: !!armor?.legs })
+}
+
+/** Attaches (or replaces/removes) the weapon + armor matching `gear` on a
+ * hero mesh — the open-world equivalent of the combat arena's
+ * attachWeapon/attachGearList, so the same equipped loadout renders in both
+ * places. */
+export async function applyGear(heroMesh: THREE.Object3D, gear: GearDescriptor | undefined): Promise<void> {
+  await Promise.all([applyWeaponPiece(heroMesh, gear?.weapon), applyArmor(heroMesh, gear?.armor)])
 }
 
 export function createEntity(id: string, x: number, z: number, mesh: THREE.Object3D, animator: Animator | null = null): Entity {
@@ -318,7 +483,8 @@ function playAnim(animator: GltfAnimator, name: AnimName): void {
  * swing fires the two-hand smash once, death plays once, and a return to idle
  * after death respawns the rig. Movement (walk) is positional, not a clip. */
 function updateProcAnimator(a: ProcAnimator, name: AnimName, deltaSeconds: number): void {
-  const want = name === 'die' ? 'death' : name === 'attack' ? 'attack' : 'idle'
+  const isAttack = name === 'attack' || name === 'attack_ranged' || name === 'attack_magic'
+  const want = name === 'die' ? 'death' : isAttack ? 'attack' : 'idle'
   if (want === 'idle') {
     if (a.triggered === 'death') a.proc.trigger('respawn')
     a.triggered = null
