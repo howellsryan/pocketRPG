@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bowyers_knife_blade" x1="0" y1="0" x2="1" y2="0.35">
+      <stop offset="0" stop-color="#f6f9fc"/>
+      <stop offset="0.5" stop-color="#c2ccd8"/>
+      <stop offset="1" stop-color="#6f7986"/>
+    </linearGradient>
+    <linearGradient id="bowyers_knife_handle" x1="0.15" y1="0" x2="0.85" y2="1">
+      <stop offset="0" stop-color="#b3792f"/>
+      <stop offset="0.55" stop-color="#7a4a1e"/>
+      <stop offset="1" stop-color="#3a2410"/>
+    </linearGradient>
+  </defs>
+  <g transform="rotate(-38 256 256)" stroke="#1a1410" stroke-width="14" stroke-linejoin="round" stroke-linecap="round">
+    <!-- silver blade: small drop-point -->
+    <path d="M232 288 C 230 210 240 162 268 138 C 282 166 284 224 282 288 Z" fill="url(#bowyers_knife_blade)"/>
+    <!-- edge highlight -->
+    <path d="M252 170 C 250 214 250 256 252 282" stroke="#f6f9fc" stroke-width="7" fill="none"/>
+    <!-- silver bolster / collar -->
+    <rect x="220" y="284" width="74" height="26" rx="8" fill="#d2d8df" stroke-width="12"/>
+    <!-- short wooden handle -->
+    <rect x="226" y="308" width="62" height="86" rx="24" fill="url(#bowyers_knife_handle)"/>
+    <!-- wood grain -->
+    <path d="M246 326 L246 380" stroke="#3a2410" stroke-width="5" fill="none" opacity="0.4"/>
+    <path d="M268 324 L268 380" stroke="#3a2410" stroke-width="4" fill="none" opacity="0.3"/>
+    <!-- brass pommel cap -->
+    <rect x="222" y="380" width="70" height="20" rx="10" fill="#c98c34" stroke-width="12"/>
+  </g>
+</svg>

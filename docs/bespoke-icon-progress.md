@@ -140,6 +140,9 @@ masari) reusing full_helm/platebody/platelegs/plateskirt silhouettes:
 - [x] vambraces & gauntlets ×7: 2nd_age_vambraces, cryptbound_gloves, arcanist_gloves,
   ferocious_gloves, holy_wraps, razorwing_vambraces, thornhide_gauntlets
 
+### Phase 5 — minigame reward tools (file-based)
+- [x] bowyers_knife — wooden handle + silver drop-point blade (Fletching Guild reward)
+
 ## Remaining
 - **Monsters batch 2-3** (~44 glyphs): hanging_spider, masked_spider, tiger_head,
   horned_reptile, lizardman, grim_reaper, tree_face, devil_mask, bleeding_eye,
