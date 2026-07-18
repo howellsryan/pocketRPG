@@ -1395,19 +1395,6 @@
         "burnStopLevel": 99
       },
       {
-        "id": "cook_tuna_potato",
-        "name": "Cook Tuna Potato",
-        "level": 80,
-        "ticks": 4,
-        "xp": 260,
-        "product": "tuna_potato",
-        "materials": {
-          "tuna": 1,
-          "sweetcorn": 1,
-          "potato": 1
-        }
-      },
-      {
         "id": "cook_manta_ray",
         "name": "Cook Manta Ray",
         "level": 91,
@@ -1430,6 +1417,19 @@
           "raw_anglerfish": 1
         },
         "burnStopLevel": 99
+      },
+      {
+        "id": "cook_tuna_potato",
+        "name": "Cook Tuna Potato",
+        "level": 95,
+        "ticks": 4,
+        "xp": 260,
+        "product": "tuna_potato",
+        "materials": {
+          "tuna": 1,
+          "sweetcorn": 1,
+          "potato": 1
+        }
       }
     ]
   },
