@@ -72,6 +72,33 @@ function randInt(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min
 }
 
+/** Retargets an in-combat npc onto the top-damage (threat) player it can actually
+ * reach, so a boss focuses the biggest threat in a group fight instead of sticking
+ * to whoever clicked first (item 9 — every engaged player's session already rolls
+ * this npc's swings; only the `attackerId` target's land, so this is what makes
+ * group bossing hit the right person). Prefers reachable engaged players (in
+ * range + line of sight); falls back to the full engaged set so it keeps a chase
+ * target when everyone has kited out of reach. The current attacker is kept on a
+ * threat tie, so the target indicator doesn't flicker between equal contributors. */
+export function reselectAttacker(
+  npc: NpcState,
+  engaged: { charId: string; x: number; z: number }[],
+  collision: string[],
+): void {
+  if (npc.state !== 'combat') return
+  if (engaged.length === 0) {
+    npc.attackerId = null
+    return
+  }
+  const range = monsterAttackRange(npc.monsterId)
+  const inReach = engaged.filter((p) => withinRangeAndSight(npc, p, range, collision))
+  const pool = inReach.length > 0 ? inReach : engaged
+  const threat = (charId: string): number => npc.damageByChar.get(charId)?.dmg ?? 0
+  let best = pool.find((p) => p.charId === npc.attackerId) ?? pool[0]
+  for (const p of pool) if (threat(p.charId) > threat(best.charId)) best = p
+  npc.attackerId = best.charId
+}
+
 export function npcsFromZone(npcs: ZoneNpcDef[]): Map<string, NpcState> {
   const map = new Map<string, NpcState>()
   for (const def of npcs) {

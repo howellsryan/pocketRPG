@@ -16,6 +16,7 @@ import type { TickContext, TickResult } from './tick'
 import type { ZoneEvent } from '../shared/protocol'
 import { spawnDrops } from './loot'
 import { removeItems } from './mining'
+import { isBossMonster } from './bossKills'
 
 /** Special energy between fights is always full (each fight seeds 100, refills
  * on kill) — mirror the main game's PvE special model. */
@@ -101,7 +102,16 @@ function attackAnimFor(combatType: string): 'attack' | 'attack_ranged' | 'attack
 }
 
 const RESPAWN_TICKS = 25
+// Bosses respawn far slower than trash: a 255-HP, ~20k-coin boss on the 15s
+// regular timer invites a farm loop that blows past the §4 GP/hr guardrail, so
+// hold the world boss for 60s between kills (item 9).
+const BOSS_RESPAWN_TICKS = 100
 const NPC_REMOVE_AFTER_DEATH_TICKS = 3
+
+/** Ticks before a killed monster respawns — bosses far slower than trash. */
+export function respawnTicksFor(monsterId: string): number {
+  return isBossMonster(monsterId) ? BOSS_RESPAWN_TICKS : RESPAWN_TICKS
+}
 
 type Monsters = Record<string, Record<string, unknown>>
 
@@ -178,7 +188,7 @@ function killNpc(player: TickPlayer, npc: NpcState, loot: { itemId: string; quan
   npc.anim = 'die'
   npc.hp = 0
   npc.attackerId = null
-  npc.respawnAtTick = ctx.tick + RESPAWN_TICKS
+  npc.respawnAtTick = ctx.tick + respawnTicksFor(npc.monsterId)
   npc.removeAtTick = ctx.tick + NPC_REMOVE_AFTER_DEATH_TICKS
   player.combat = null
   player.anim = 'idle'

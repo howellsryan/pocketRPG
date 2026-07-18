@@ -18,7 +18,7 @@ import { hasMaterials, maxCraftable } from './crafting'
 import { resolveCombatSetup, isSameFightTarget, playerAttackRange, emitPrayerIfChanged } from './combat'
 import { seedPrayer, resolvePrayerToggle } from '../shared/prayer'
 import spellsJson from '../../src/data/spells.json'
-import { npcsFromZone, tickNpc, toNpcDiff, type NpcState } from './npc'
+import { npcsFromZone, reselectAttacker, tickNpc, toNpcDiff, type NpcState } from './npc'
 import { PLAYER_DROP_OWNER_TICKS, isExpired, isVisibleTo, spawnDrops, takeLoot, visibleLootFor, type LootEntity } from './loot'
 import { sanitizeChat } from '../shared/chat'
 import { addToInventory, countItem, freeSlotCount, inventoryIsFull, isStackable, moveInventorySlot, removeItems, removeOneAt } from './mining'
@@ -1127,6 +1127,16 @@ export class WorldZone extends Server<Env> {
     this.pendingLeaves.clear()
     const chatEvents = this.pendingChat
     this.pendingChat = []
+
+    // Retarget in-combat npcs onto the top-threat player they can reach BEFORE
+    // they step, so a boss chases/attacks the biggest threat in a group fight
+    // rather than the first attacker (item 9).
+    for (const npc of npcs.values()) {
+      if (npc.state !== 'combat') continue
+      const engaged: { charId: string; x: number; z: number }[] = []
+      for (const p of this.players.values()) if (p.combat?.npcId === npc.id) engaged.push({ charId: p.charId, x: p.x, z: p.z })
+      reselectAttacker(npc, engaged, this.zone.collision)
+    }
 
     // NPCs first (wander/respawn/heal) so player combat this tick reads fresh state.
     const npcResult = emptyResult()
