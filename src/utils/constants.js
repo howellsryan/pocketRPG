@@ -44,7 +44,7 @@ export const QUEST_QUEUE_MAX = 3
 // Kingdom of Royals — passive coffer-funded gathering, unlocked by the
 // "Crown Complications" quest. See src/engine/kingdomEngine.js.
 export const KINGDOM_UNLOCK_QUEST_ID = 'crown_complications'
-export const KINGDOM_COFFER_MAX = 100_000_000
+export const KINGDOM_COFFER_MAX = 25_000_000
 export const KINGDOM_DAILY_COST = 5_000_000 // coins drained per 24h at max labour
 export const KINGDOM_LABOUR_POINTS_MAX = 4
 export const KINGDOM_PACE_FACTOR = 0.5 // kingdom workers gather at 50% of a player's pace
