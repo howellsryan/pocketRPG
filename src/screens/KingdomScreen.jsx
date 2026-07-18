@@ -34,7 +34,7 @@ const CATEGORY_ICONS = {
 }
 
 export default function KingdomScreen({ onBack }) {
-  const { kingdom, updateKingdom, settleKingdom, bank, getSkillLevel, itemsData, addToast, updateBankDirect } = useGame()
+  const { kingdom, updateKingdom, settleKingdom, bank, getSkillLevel, itemsData, updateBankDirect } = useGame()
   const [depositModal, setDepositModal] = useState(null) // 'deposit' | 'withdraw' | null
   const [amountInput, setAmountInput] = useState('')
 
@@ -65,23 +65,40 @@ export default function KingdomScreen({ onBack }) {
     updateKingdom({ ...settled, allocations: nextAllocations })
   }
 
+  // Deposit is capped by both what's in the bank and the coffer's remaining
+  // room; withdraw is capped by the coffer balance itself.
+  const modalMax = depositModal === 'deposit'
+    ? Math.max(0, Math.min(bankCoins, KINGDOM_COFFER_MAX - coffer))
+    : coffer
+
   const openModal = (mode) => {
     setAmountInput('')
     setDepositModal(mode)
   }
 
+  const handleAmountInput = (raw) => {
+    const max = depositModal === 'deposit'
+      ? Math.max(0, Math.min(bankCoins, KINGDOM_COFFER_MAX - coffer))
+      : coffer
+    const parsed = Math.floor(Number(raw) || 0)
+    if (raw === '') { setAmountInput(''); return }
+    setAmountInput(String(Math.max(0, Math.min(parsed, max))))
+  }
+
   const confirmAmount = () => {
-    const amount = Math.floor(Number(amountInput) || 0)
+    const amount = Math.min(Math.floor(Number(amountInput) || 0), modalMax)
     if (amount <= 0) { setDepositModal(null); return }
     const settled = settleKingdom() || kingdom
     if (depositModal === 'deposit') {
-      if (amount > bankCoins) { addToast('Not enough coins in the bank', 'error'); return }
-      updateKingdom(depositToCoffer(settled, amount))
-      updateBankCoins(-amount)
+      const deposited = Math.min(amount, bankCoins, KINGDOM_COFFER_MAX - settled.cofferBalance)
+      if (deposited <= 0) { setDepositModal(null); return }
+      updateKingdom(depositToCoffer(settled, deposited))
+      updateBankCoins(-deposited)
     } else if (depositModal === 'withdraw') {
-      if (amount > settled.cofferBalance) { addToast('Not enough coins in the coffer', 'error'); return }
-      updateKingdom(withdrawFromCoffer(settled, amount))
-      updateBankCoins(amount)
+      const withdrawn = Math.min(amount, settled.cofferBalance)
+      if (withdrawn <= 0) { setDepositModal(null); return }
+      updateKingdom(withdrawFromCoffer(settled, withdrawn))
+      updateBankCoins(withdrawn)
     }
     setDepositModal(null)
   }
@@ -168,15 +185,19 @@ export default function KingdomScreen({ onBack }) {
               ? `Bank: ${formatNumber(bankCoins)} coins`
               : `Coffer: ${formatNumber(coffer)} coins`}
           </div>
-          <input
-            type="number"
-            inputMode="numeric"
-            min="0"
-            value={amountInput}
-            onInput={(e) => setAmountInput(e.currentTarget.value)}
-            class="w-full px-3 py-2 rounded-lg bg-[var(--color-void)] border border-[var(--color-void-border)] text-[var(--color-parchment)] mb-3"
-            placeholder="Amount"
-          />
+          <div class="flex gap-2 mb-3">
+            <input
+              type="number"
+              inputMode="numeric"
+              min="0"
+              max={modalMax}
+              value={amountInput}
+              onInput={(e) => handleAmountInput(e.currentTarget.value)}
+              class="flex-1 min-w-0 px-3 py-2 rounded-lg bg-[var(--color-void)] border border-[var(--color-void-border)] text-[var(--color-parchment)]"
+              placeholder="Amount"
+            />
+            <Button variant="secondary" size="sm" onClick={() => setAmountInput(String(modalMax))} disabled={modalMax <= 0}>All</Button>
+          </div>
           <div class="flex gap-2">
             <Button variant="secondary" size="sm" className="flex-1" onClick={() => setDepositModal(null)}>Cancel</Button>
             <Button variant="primary" size="sm" className="flex-1" onClick={confirmAmount}>Confirm</Button>
