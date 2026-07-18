@@ -14,3 +14,16 @@ export function isBackgroundCombatEligible({ task, enabled } = {}) {
   if (task.dungeon === true) return false
   return true
 }
+
+/**
+ * Fraction (0..1) of the monster's HP still remaining, for the combat progress
+ * indicator — directly proportional to HP left (50 of 100 HP → 0.5). Returns
+ * null when the values aren't usable yet, so the caller can hide the ring.
+ */
+export function monsterHpFraction(hp, max) {
+  if (hp == null || max == null) return null
+  const m = Number(max)
+  const h = Number(hp)
+  if (!(m > 0) || !Number.isFinite(h)) return null
+  return Math.max(0, Math.min(1, h / m))
+}

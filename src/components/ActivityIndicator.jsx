@@ -1,5 +1,6 @@
 import { useGame } from '../state/gameState.jsx'
 import { SKILL_ICONS, SCREENS } from '../utils/constants.js'
+import { monsterHpFraction } from '../engine/backgroundCombat.js'
 import SkillIcon from './SkillIcon.jsx'
 import GameIcon from './GameIcon.jsx'
 
@@ -60,11 +61,11 @@ export default function ActivityIndicator({ onNavigate }) {
   let hasProgress
   let progress
   if (inCombat) {
-    const max = Number(combatStatus.monsterMaxHP) || 0
-    const hp = Number(combatStatus.monsterHP)
-    hasProgress = max > 0 && Number.isFinite(hp)
-    // Ring shows remaining monster HP — full at the start, emptying as it dies.
-    progress = hasProgress ? Math.max(0, Math.min(1, hp / max)) : 0
+    // Ring is directly proportional to the monster's remaining HP — full at the
+    // start of the fight, emptying to nothing as it dies (50 of 100 HP → half).
+    const frac = monsterHpFraction(combatStatus.monsterHP, combatStatus.monsterMaxHP)
+    hasProgress = frac !== null
+    progress = frac ?? 0
   } else {
     const total = Number(activeTask.totalTicks) || 0
     const remaining = Number(activeTask.ticksRemaining)

@@ -4,7 +4,7 @@
 // the exact "die without realising" risk the setting guards. Pin every branch.
 
 import { describe, it, expect } from 'vitest'
-import { isBackgroundCombatEligible } from '../src/engine/backgroundCombat.js'
+import { isBackgroundCombatEligible, monsterHpFraction } from '../src/engine/backgroundCombat.js'
 
 const normalFight = { type: 'combat', monster: { id: 'rat', name: 'Rat' } }
 
@@ -43,5 +43,32 @@ describe('isBackgroundCombatEligible', () => {
 
   it('defaults enabled to falsey when omitted', () => {
     expect(isBackgroundCombatEligible({ task: normalFight })).toBe(false)
+  })
+})
+
+describe('monsterHpFraction', () => {
+  it('is directly proportional to HP left — 50 of 100 → 0.5', () => {
+    expect(monsterHpFraction(50, 100)).toBe(0.5)
+  })
+
+  it('is full at max HP and empty at 0', () => {
+    expect(monsterHpFraction(100, 100)).toBe(1)
+    expect(monsterHpFraction(0, 100)).toBe(0)
+  })
+
+  it('tracks partial HP linearly', () => {
+    expect(monsterHpFraction(10, 100)).toBeCloseTo(0.1)
+    expect(monsterHpFraction(75, 300)).toBe(0.25)
+  })
+
+  it('clamps out-of-range HP into 0..1', () => {
+    expect(monsterHpFraction(150, 100)).toBe(1)
+    expect(monsterHpFraction(-5, 100)).toBe(0)
+  })
+
+  it('returns null when the values are unusable (so the ring hides)', () => {
+    expect(monsterHpFraction(50, 0)).toBe(null)
+    expect(monsterHpFraction(null, 100)).toBe(null)
+    expect(monsterHpFraction(undefined, undefined)).toBe(null)
   })
 })
