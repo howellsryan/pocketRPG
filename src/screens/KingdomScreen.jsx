@@ -7,6 +7,7 @@ import GameIcon from '../components/GameIcon.jsx'
 import BackLink from '../components/BackLink.jsx'
 import CollapseChevron from '../components/CollapseChevron.jsx'
 import { formatNumber } from '../utils/helpers.js'
+import { getLootTotalValue } from '../utils/itemValue.js'
 import { formatIdleTime } from '../engine/idleEngine.js'
 import {
   depositToCoffer, withdrawFromCoffer, clampAllocations, totalAllocatedPoints, estimateRuntimeMs, withdrawAllLoot,
@@ -51,6 +52,7 @@ export default function KingdomScreen({ onBack }) {
   const bankCoins = bank?.coins?.quantity || 0
   const pendingLoot = kingdom.pendingLoot || {}
   const lootEntries = Object.entries(pendingLoot)
+  const lootTotalValue = getLootTotalValue(pendingLoot, itemsData)
 
   const adjustAllocation = (category, delta) => {
     // Read the current point count off the freshly-settled kingdom, not the
@@ -250,6 +252,13 @@ export default function KingdomScreen({ onBack }) {
                   </div>
                 )
               })}
+              <div class="flex items-center gap-3 py-2 mt-1 border-t border-[var(--color-void-border)]">
+                <div class="flex-1 min-w-0 text-sm font-semibold text-[var(--color-parchment)]">Total value</div>
+                <div class="flex items-center gap-1 text-sm font-bold text-[var(--color-gold)]">
+                  <GameIcon iconKey="coins" size={16} />
+                  {formatNumber(lootTotalValue)}
+                </div>
+              </div>
             </div>
           )}
         </Modal>
