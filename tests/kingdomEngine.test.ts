@@ -9,6 +9,8 @@ import {
   withdrawFromCoffer,
   simulateKingdom,
   estimateRuntimeMs,
+  mergeLoot,
+  withdrawAllLoot,
 } from '../src/engine/kingdomEngine.js'
 import { KINGDOM_RESOURCE_TIERS, getEligibleTiers, pickWeightedTier } from '../src/engine/kingdomResources.js'
 import { KINGDOM_CATEGORIES, KINGDOM_COFFER_MAX, KINGDOM_DAILY_COST, KINGDOM_LABOUR_POINTS_MAX } from '../src/utils/constants.js'
@@ -223,7 +225,7 @@ describe('kingdomEngine — simulateKingdom', () => {
     }
   })
 
-  it('auto-banks output as a flat item-id -> quantity map (no inventory/travel step)', () => {
+  it('reports gathered output as a flat item-id -> quantity map (no inventory/travel step)', () => {
     const kingdom = { ...DEFAULT_KINGDOM, cofferBalance: KINGDOM_COFFER_MAX, allocations: { mining: 4, fishing: 0, woodcutting: 0, farming: 0 } }
     const result = simulateKingdom(kingdom, statsAtLevel(99), DAY_MS, itemsData)
     expect(Object.keys(result.itemsGained).length).toBeGreaterThan(0)
@@ -257,5 +259,59 @@ describe('kingdomEngine — simulateKingdom', () => {
     // With rng pinned to 0, every pick lands on the lowest-weight-index (lowest level) tier.
     const cheapestTier = KINGDOM_RESOURCE_TIERS.mining[0]
     expect(Object.keys(a.itemsGained)).toEqual([cheapestTier.product])
+  })
+})
+
+describe('kingdomEngine — pending loot (gathered output does not auto-bank)', () => {
+  it('normaliseKingdomState defaults pendingLoot to an empty map', () => {
+    expect(normaliseKingdomState(null).pendingLoot).toEqual({})
+    expect(normaliseKingdomState({}).pendingLoot).toEqual({})
+  })
+
+  it('normaliseKingdomState drops non-positive or non-numeric pendingLoot quantities', () => {
+    const state = normaliseKingdomState({ pendingLoot: { tin_ore: 5, copper_ore: 0, iron_ore: -3, coal: 'nope' } })
+    expect(state.pendingLoot).toEqual({ tin_ore: 5 })
+  })
+
+  it('mergeLoot adds quantities for shared items and keeps unique ones from both sides', () => {
+    expect(mergeLoot({ tin_ore: 5 }, { tin_ore: 3, copper_ore: 2 })).toEqual({ tin_ore: 8, copper_ore: 2 })
+  })
+
+  it('mergeLoot does not mutate either input', () => {
+    const a = { tin_ore: 5 }
+    const b = { copper_ore: 2 }
+    mergeLoot(a, b)
+    expect(a).toEqual({ tin_ore: 5 })
+    expect(b).toEqual({ copper_ore: 2 })
+  })
+
+  it('mergeLoot treats missing/null inputs as empty', () => {
+    expect(mergeLoot(null, { tin_ore: 1 })).toEqual({ tin_ore: 1 })
+    expect(mergeLoot({ tin_ore: 1 }, undefined)).toEqual({ tin_ore: 1 })
+  })
+
+  it('withdrawAllLoot empties pendingLoot and returns exactly what was withdrawn', () => {
+    const kingdom = { ...DEFAULT_KINGDOM, pendingLoot: { tin_ore: 10, copper_ore: 4 } }
+    const { kingdom: next, withdrawn } = withdrawAllLoot(kingdom)
+    expect(withdrawn).toEqual({ tin_ore: 10, copper_ore: 4 })
+    expect(next.pendingLoot).toEqual({})
+    // Everything else on the kingdom is preserved.
+    expect(next.cofferBalance).toBe(kingdom.cofferBalance)
+    expect(next.allocations).toEqual(kingdom.allocations)
+  })
+
+  it('withdrawAllLoot on an empty pendingLoot is a no-op', () => {
+    const { withdrawn } = withdrawAllLoot(DEFAULT_KINGDOM)
+    expect(withdrawn).toEqual({})
+  })
+
+  it('simulateKingdom itself never touches pendingLoot — accumulation is the caller\'s job', () => {
+    const kingdom = { ...DEFAULT_KINGDOM, cofferBalance: KINGDOM_COFFER_MAX, allocations: { mining: 4, fishing: 0, woodcutting: 0, farming: 0 } }
+    const result = simulateKingdom(kingdom, statsAtLevel(99), DAY_MS, itemsData)
+    expect(result.pendingLoot).toBeUndefined()
+    // The caller (gameState.jsx) is expected to fold result.itemsGained into
+    // kingdom.pendingLoot via mergeLoot — verify that composition works end to end.
+    const accumulated = mergeLoot(kingdom.pendingLoot, result.itemsGained)
+    expect(Object.keys(accumulated).length).toBeGreaterThan(0)
   })
 })

@@ -17,6 +17,7 @@ export const DEFAULT_KINGDOM = Object.freeze({
   cofferBalance: 0,
   allocations: Object.freeze({ mining: 0, fishing: 0, woodcutting: 0, farming: 0 }),
   lastTickAt: null,
+  pendingLoot: Object.freeze({}),
 })
 
 function clampInt(value, min, max) {
@@ -47,7 +48,37 @@ export function normaliseKingdomState(raw) {
   }
   const cofferBalance = clampInt(base.cofferBalance, 0, KINGDOM_COFFER_MAX)
   const lastTickAt = Number.isFinite(Number(base.lastTickAt)) ? Number(base.lastTickAt) : null
-  return { cofferBalance, allocations, lastTickAt }
+  const pendingLoot = normaliseItemMap(base.pendingLoot)
+  return { cofferBalance, allocations, lastTickAt, pendingLoot }
+}
+
+function normaliseItemMap(raw) {
+  const out = {}
+  if (!raw || typeof raw !== 'object') return out
+  for (const [itemId, qty] of Object.entries(raw)) {
+    const n = Math.floor(Number(qty) || 0)
+    if (n > 0) out[itemId] = n
+  }
+  return out
+}
+
+/** Merge two item-id -> quantity maps into a new one. Never mutates either input. */
+export function mergeLoot(a, b) {
+  const out = { ...normaliseItemMap(a) }
+  for (const [itemId, qty] of Object.entries(normaliseItemMap(b))) {
+    out[itemId] = (out[itemId] || 0) + qty
+  }
+  return out
+}
+
+/**
+ * Clear pendingLoot for withdrawal to the bank. Returns the kingdom with an
+ * empty pendingLoot and the loot map that was withdrawn (for the caller to
+ * hand to updateBankDirect) — never mutates the input.
+ */
+export function withdrawAllLoot(kingdom) {
+  const state = normaliseKingdomState(kingdom)
+  return { kingdom: { ...state, pendingLoot: {} }, withdrawn: state.pendingLoot }
 }
 
 export function totalAllocatedPoints(allocations) {

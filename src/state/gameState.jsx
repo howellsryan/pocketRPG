@@ -7,7 +7,7 @@ import { simulateIdleCombatChain } from '../engine/idleSlayerLoop.js'
 import { simulateIdleThieving } from '../engine/thieving.js'
 import { simulateIdleHunting } from '../engine/hunter.js'
 import { simulateQuestIdleCascade, splitQuestXpRewards } from '../engine/questIdleCascade.js'
-import { simulateKingdom, normaliseKingdomState, DEFAULT_KINGDOM } from '../engine/kingdomEngine.js'
+import { simulateKingdom, normaliseKingdomState, DEFAULT_KINGDOM, mergeLoot } from '../engine/kingdomEngine.js'
 import { ALL_SKILLS, MAX_XP, AUTO_SAVE_DEBOUNCE, QUEST_QUEUE_MAX } from '../utils/constants.js'
 import { debounce } from '../utils/helpers.js'
 import { mergeKillCounts } from '../utils/killCountMerge.js'
@@ -608,16 +608,18 @@ export function GameProvider({ children }) {
     // active task is. Settles on its own lastTickAt, not the 24h-capped
     // elapsedMs above — output self-limits once the coffer runs dry, so an
     // absence longer than the coffer's ~10-day runtime is cheap to fast-forward.
+    // Gathered loot accumulates in pendingLoot — it does NOT auto-bank; the
+    // player withdraws it manually from the Kingdom screen.
     const normalisedKingdom = normaliseKingdomState(savedKingdom)
     const kingdomNow = Date.now()
     const kingdomElapsedMs = normalisedKingdom.lastTickAt ? Math.max(0, kingdomNow - normalisedKingdom.lastTickAt) : 0
     const kingdomSim = simulateKingdom(normalisedKingdom, s, kingdomElapsedMs, itemsData)
-    for (const [itemId, qty] of Object.entries(kingdomSim.itemsGained)) {
-      if (qty <= 0) continue
-      if (b[itemId]) b[itemId] = { ...b[itemId], quantity: b[itemId].quantity + qty }
-      else b[itemId] = { itemId, quantity: qty }
+    const loadedKingdom = {
+      ...normalisedKingdom,
+      cofferBalance: kingdomSim.cofferBalance,
+      lastTickAt: kingdomNow,
+      pendingLoot: mergeLoot(normalisedKingdom.pendingLoot, kingdomSim.itemsGained),
     }
-    const loadedKingdom = { ...normalisedKingdom, cofferBalance: kingdomSim.cofferBalance, lastTickAt: kingdomNow }
     kingdomRef.current = loadedKingdom
     saveSetting('kingdom', loadedKingdom)
 
@@ -1177,11 +1179,15 @@ export function GameProvider({ children }) {
     const elapsedMs = Math.max(0, now - current.lastTickAt)
     if (elapsedMs < 2000) return null
     const sim = simulateKingdom(current, stateRef.current.stats, elapsedMs, itemsData)
-    if (Object.keys(sim.itemsGained).length > 0) updateBankDirect(sim.itemsGained)
-    const next = { ...current, cofferBalance: sim.cofferBalance, lastTickAt: now }
+    const next = {
+      ...current,
+      cofferBalance: sim.cofferBalance,
+      lastTickAt: now,
+      pendingLoot: mergeLoot(current.pendingLoot, sim.itemsGained),
+    }
     updateKingdom(next)
     return next
-  }, [updateBankDirect, updateKingdom])
+  }, [updateKingdom])
 
   // ── Toasts ──
   const addToast = useCallback((message, type = 'info', icon = null) => {

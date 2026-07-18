@@ -8,9 +8,8 @@ import BackLink from '../components/BackLink.jsx'
 import { formatNumber } from '../utils/helpers.js'
 import { formatIdleTime } from '../engine/idleEngine.js'
 import {
-  depositToCoffer, withdrawFromCoffer, clampAllocations, totalAllocatedPoints, estimateRuntimeMs,
+  depositToCoffer, withdrawFromCoffer, clampAllocations, totalAllocatedPoints, estimateRuntimeMs, withdrawAllLoot,
 } from '../engine/kingdomEngine.js'
-import { getEligibleTiers } from '../engine/kingdomResources.js'
 import { KINGDOM_COFFER_MAX, KINGDOM_LABOUR_POINTS_MAX } from '../utils/constants.js'
 
 const CATEGORY_LABELS = {
@@ -18,13 +17,6 @@ const CATEGORY_LABELS = {
   fishing: 'Fishing',
   woodcutting: 'Woodcutting',
   farming: 'Farm Herbs',
-}
-// Farm Herbs is gated by the player's Farming level, not Herblore.
-const CATEGORY_GATE_SKILL = {
-  mining: 'mining',
-  fishing: 'fishing',
-  woodcutting: 'woodcutting',
-  farming: 'farming',
 }
 const CATEGORY_ICONS = {
   mining: 'mining',
@@ -34,9 +26,10 @@ const CATEGORY_ICONS = {
 }
 
 export default function KingdomScreen({ onBack }) {
-  const { kingdom, updateKingdom, settleKingdom, bank, getSkillLevel, itemsData, updateBankDirect } = useGame()
+  const { kingdom, updateKingdom, settleKingdom, bank, itemsData, updateBankDirect } = useGame()
   const [depositModal, setDepositModal] = useState(null) // 'deposit' | 'withdraw' | null
   const [amountInput, setAmountInput] = useState('')
+  const [showLootModal, setShowLootModal] = useState(false)
 
   // Settle on open + initialise lastTickAt so the coffer starts ticking.
   useEffect(() => {
@@ -54,6 +47,8 @@ export default function KingdomScreen({ onBack }) {
   const pointsRemaining = KINGDOM_LABOUR_POINTS_MAX - totalPoints
   const runtimeMs = estimateRuntimeMs(kingdom)
   const bankCoins = bank?.coins?.quantity || 0
+  const pendingLoot = kingdom.pendingLoot || {}
+  const lootEntries = Object.entries(pendingLoot)
 
   const adjustAllocation = (category, delta) => {
     const current = allocations[category] || 0
@@ -93,18 +88,27 @@ export default function KingdomScreen({ onBack }) {
       const deposited = Math.min(amount, bankCoins, KINGDOM_COFFER_MAX - settled.cofferBalance)
       if (deposited <= 0) { setDepositModal(null); return }
       updateKingdom(depositToCoffer(settled, deposited))
-      updateBankCoins(-deposited)
+      updateBankDirect({ coins: -deposited })
     } else if (depositModal === 'withdraw') {
       const withdrawn = Math.min(amount, settled.cofferBalance)
       if (withdrawn <= 0) { setDepositModal(null); return }
       updateKingdom(withdrawFromCoffer(settled, withdrawn))
-      updateBankCoins(withdrawn)
+      updateBankDirect({ coins: withdrawn })
     }
     setDepositModal(null)
   }
 
-  function updateBankCoins(delta) {
-    updateBankDirect({ coins: delta })
+  const openLootModal = () => {
+    settleKingdom()
+    setShowLootModal(true)
+  }
+
+  const handleWithdrawAllLoot = () => {
+    const settled = settleKingdom() || kingdom
+    const { kingdom: nextKingdom, withdrawn } = withdrawAllLoot(settled)
+    if (Object.keys(withdrawn).length > 0) updateBankDirect(withdrawn)
+    updateKingdom(nextKingdom)
+    setShowLootModal(false)
   }
 
   return (
@@ -140,21 +144,14 @@ export default function KingdomScreen({ onBack }) {
           </div>
           <div class="divide-y divide-[var(--color-void-border)]">
             {Object.keys(CATEGORY_LABELS).map((category) => {
-              const level = getSkillLevel ? getSkillLevel(CATEGORY_GATE_SKILL[category]) : 1
-              const tiers = getEligibleTiers(category, level)
-              const bestTier = tiers[tiers.length - 1]
-              const bestItem = bestTier ? itemsData?.[bestTier.product] : null
               const points = allocations[category] || 0
               return (
                 <div key={category} class="flex items-center gap-3 py-3">
                   <span class="w-9 flex justify-center items-center flex-shrink-0">
                     <GameIcon iconKey={CATEGORY_ICONS[category]} size={28} />
                   </span>
-                  <div class="flex-1 min-w-0">
-                    <div class="text-sm font-semibold text-[var(--color-parchment)]">{CATEGORY_LABELS[category]}</div>
-                    <div class="text-xs text-[var(--color-parchment)] opacity-60">
-                      {bestItem ? `Up to ${bestItem.name} (lv ${bestTier.level})` : 'Level too low to gather anything yet'}
-                    </div>
+                  <div class="flex-1 min-w-0 text-sm font-semibold text-[var(--color-parchment)]">
+                    {CATEGORY_LABELS[category]}
                   </div>
                   <div class="flex items-center gap-2 flex-shrink-0">
                     <button
@@ -175,6 +172,16 @@ export default function KingdomScreen({ onBack }) {
               )
             })}
           </div>
+        </Card>
+
+        <Card className="p-3">
+          <div class="text-xs text-[var(--color-parchment)] opacity-70 mb-1">Gathered Loot</div>
+          <div class="text-sm text-[var(--color-parchment)] mb-3">
+            {lootEntries.length > 0
+              ? `${lootEntries.length} item${lootEntries.length === 1 ? '' : 's'} waiting in the treasury`
+              : 'Nothing gathered yet'}
+          </div>
+          <Button variant="primary" size="sm" onClick={openLootModal} disabled={lootEntries.length === 0}>View Loot</Button>
         </Card>
       </div>
 
@@ -202,6 +209,32 @@ export default function KingdomScreen({ onBack }) {
             <Button variant="secondary" size="sm" className="flex-1" onClick={() => setDepositModal(null)}>Cancel</Button>
             <Button variant="primary" size="sm" className="flex-1" onClick={confirmAmount}>Confirm</Button>
           </div>
+        </Modal>
+      )}
+
+      {showLootModal && (
+        <Modal title="Gathered Loot" onClose={() => setShowLootModal(false)}>
+          <Button variant="primary" size="sm" className="w-full mb-3" onClick={handleWithdrawAllLoot} disabled={lootEntries.length === 0}>
+            Withdraw All to Bank
+          </Button>
+          {lootEntries.length === 0 ? (
+            <div class="text-sm text-[var(--color-parchment)] opacity-60 text-center py-4">Nothing gathered yet</div>
+          ) : (
+            <div class="divide-y divide-[var(--color-void-border)]">
+              {lootEntries.map(([itemId, qty]) => {
+                const item = itemsData?.[itemId]
+                return (
+                  <div key={itemId} class="flex items-center gap-3 py-2">
+                    <span class="w-8 flex justify-center items-center flex-shrink-0">
+                      <GameIcon item={item} size={24} />
+                    </span>
+                    <div class="flex-1 min-w-0 text-sm text-[var(--color-parchment)]">{item?.name || itemId}</div>
+                    <div class="text-sm font-bold text-[var(--color-gold)]">×{formatNumber(qty)}</div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
         </Modal>
       )}
     </div>
