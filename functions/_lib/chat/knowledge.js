@@ -162,6 +162,14 @@ export const KNOWLEDGE_CHUNKS = [
   "text": "Quests are journeys across the world map: meet the requirements (skill levels, quest points, combat level or earlier quests), begin the quest, and follow its trail through several places — teleporting between waypoints finishes it faster. Quests live on the world map: every settlement offers a selection (from Novice quests in the starting hamlets up to Grandmaster quests in the cities) — tap a place, or the Quests Board in Varrick, to browse and begin its quests; the ⓘ button beside each quest shows its full requirements and rewards. Rewards include coins, XP (sometimes in a skill of your choice), quest points and item unlocks; longer, harder quests pay better."
  },
  {
+  "id": "guide_kingdom_of_royals",
+  "title": "Kingdom of Royals",
+  "tags": [
+   "guide"
+  ],
+  "text": "Completing the \"Crown Complications\" quest unlocks Kingdom of Royals on the Adventures screen. Deposit coins into the royal coffer (up to 100,000,000) to fund a kingdom that gathers resources for you, even while you're offline — a full coffer runs for about 10 days. Assign your 4 labour points across Mining, Fishing, Woodcutting and Farm Herbs (any split, e.g. 1 each or all 4 on one); each point works at half a real player's pace, producing ore, logs, fish or herbs weighted toward whatever your own skill level can reach — rarer, higher-level resources are less common than basic ones. Funding the kingdom costs a flat 10,000,000 coins per 24 hours regardless of how many points are allocated; the coffer stops draining and gathering stops the instant it runs dry. Output banks directly, no inventory trip needed. You can withdraw unspent coffer coins back to your bank at any time."
+ },
+ {
   "id": "guide_clue_scrolls",
   "title": "Clue scrolls",
   "tags": [
@@ -1968,7 +1976,7 @@ export const KNOWLEDGE_CHUNKS = [
    "recipe",
    "cooking"
   ],
-  "text": "Cooking training options with level requirements, XP per action and any ingredients required to make each item: Cook Shrimps (level 1, 30 XP; needs 1 Raw Shrimps → Shrimps), Cook Chicken (level 1, 30 XP; needs 1 Raw Chicken → Cooked Chicken), Cook Meat (level 1, 30 XP; needs 1 Raw Beef → Cooked Meat), Cook Trout (level 15, 70 XP; needs 1 Raw Trout → Trout), Cook Tuna (level 35, 100 XP; needs 1 Raw Tuna → Tuna), Cook Crab (level 40, 120 XP; needs 1 Raw Crab → Crab), Cook Eel (level 45, 140 XP; needs 1 Raw Eel → Eel), Cook Karam (level 65, 190 XP; needs 1 Raw Karam → Karam), Cook Shark (level 80, 210 XP; needs 1 Raw Shark → Shark), Cook Tuna Potato (level 80, 260 XP; needs 1 Tuna + 1 Sweetcorn + 1 Potato → Tuna Potato), Cook Manta Ray (level 91, 250 XP; needs 1 Raw Manta Ray → Manta Ray), Cook Anglerfish (level 93, 270 XP; needs 1 Raw Anglerfish → Anglerfish)."
+  "text": "Cooking training options with level requirements, XP per action and any ingredients required to make each item: Cook Shrimps (level 1, 30 XP; needs 1 Raw Shrimps → Shrimps), Cook Chicken (level 1, 30 XP; needs 1 Raw Chicken → Cooked Chicken), Cook Meat (level 1, 30 XP; needs 1 Raw Beef → Cooked Meat), Cook Trout (level 15, 70 XP; needs 1 Raw Trout → Trout), Cook Tuna (level 35, 100 XP; needs 1 Raw Tuna → Tuna), Cook Crab (level 40, 120 XP; needs 1 Raw Crab → Crab), Cook Eel (level 45, 140 XP; needs 1 Raw Eel → Eel), Cook Karam (level 65, 190 XP; needs 1 Raw Karam → Karam), Cook Shark (level 80, 210 XP; needs 1 Raw Shark → Shark), Cook Manta Ray (level 91, 250 XP; needs 1 Raw Manta Ray → Manta Ray), Cook Anglerfish (level 93, 270 XP; needs 1 Raw Anglerfish → Anglerfish), Cook Tuna Potato (level 95, 260 XP; needs 1 Tuna + 1 Sweetcorn + 1 Potato → Tuna Potato)."
  },
  {
   "id": "skill_fletching",

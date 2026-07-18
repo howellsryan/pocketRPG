@@ -28,6 +28,7 @@ import TradingPostScreen from './screens/TradingPostScreen.jsx'
 import EquipmentScreen from './screens/EquipmentScreen.jsx'
 import ArmouryScreen from './screens/ArmouryScreen.jsx'
 import AdventuresScreen from './screens/AdventuresScreen.jsx'
+import KingdomScreen from './screens/KingdomScreen.jsx'
 import QuestsScreen from './screens/QuestsScreen.jsx'
 import CluesScreen from './screens/CluesScreen.jsx'
 import MinigamesScreen from './screens/MinigamesScreen.jsx'
@@ -352,7 +353,7 @@ function GameApp() {
     gameLocked, lockGame, unlockGame, runLockedSave, awaitCombatCompletion, resolveCombatCompletion,
     characterUnlocks, slayerPerks, dailyTaskStates, setDailyTasks, recordGameEvent, updateWorldLocation, worldLocation, clearActivityProgress, requestActivityStart,
     inventoryFull, signalInventoryFull, dismissInventoryFullPrompt, resolveInventoryFull, combatStance, activeCombatSpell,
-    autoBankExcludedItems, backgroundCombat, combatStatus } = useGame()
+    autoBankExcludedItems, backgroundCombat, combatStatus, settleKingdom } = useGame()
   const pvp = usePvp()
   const [screen, setScreen] = useState(SCREENS.HOME)
   const prevScreenRef = useRef(null) // screen before the current one (set by navigate)
@@ -978,6 +979,10 @@ function GameApp() {
             console.warn('[PocketRPG] Cloud freshness check failed:', e.message)
           }
 
+          // Kingdom of Royals runs independently of whatever the active task
+          // is — settle it here regardless of savedTask below.
+          settleKingdom(Date.now())
+
           // If no active task, still show "Welcome Back" modal with elapsed time
           if (!savedTask) {
             setIdleResult({ elapsedMs, task: null })
@@ -1415,7 +1420,7 @@ function GameApp() {
       window.removeEventListener('pagehide', handleUnload)
       window.removeEventListener('beforeunload', handleUnload)
     }
-  }, [gameReady, grantXP, updateInventory, updateBankDirect, isInPvpMatch])
+  }, [gameReady, grantXP, updateInventory, updateBankDirect, isInPvpMatch, settleKingdom])
 
   // Day rollover: re-fetch daily tasks when UTC date changes while game is open
   useEffect(() => {
@@ -1472,6 +1477,9 @@ function GameApp() {
         if (currentHP < maxHP) {
           updateHP(Math.min(currentHP + 1, maxHP))
         }
+        // Kingdom of Royals: live wall-clock catch-up so the coffer/output
+        // visibly progresses while the app stays open in the foreground.
+        settleKingdom(now)
       }
 
       // Quest tick — runs at the App level so quests progress on any screen
@@ -1634,7 +1642,7 @@ function GameApp() {
       }
     })
     return unsub
-  }, [gameReady, currentHP, stats, questQueue, isInPvpMatch])
+  }, [gameReady, currentHP, stats, questQueue, isInPvpMatch, settleKingdom])
 
   async function initCloudAndSave() {
     try {
@@ -2663,6 +2671,11 @@ function GameApp() {
       const elapsedMs = SKIP_HOUR_MS
       let idleResultData = { elapsedMs, task: activeTaskRef.current }
 
+      // Kingdom of Royals is a real-time system (wall-clock coffer drain), not
+      // simulated activity time — settle whatever real time has actually
+      // elapsed, independent of the skipped hour above.
+      settleKingdom(Date.now())
+
       // If there's an active task, simulate it for 1 hour
       if (activeTaskRef.current) {
         const savedTask = activeTaskRef.current
@@ -3146,6 +3159,7 @@ function GameApp() {
       case SCREENS.CLUES:          return <CluesScreen onNavigate={navigate} onBack={backToPrev} />
       case SCREENS.MINIGAMES:      return <MinigamesScreen initialTaskId={actionData?.minigameTaskId} onBack={backToPrev} onStopBack={stopBackNav} />
       case SCREENS.ADVENTURES:     return <AdventuresScreen onNavigate={navigate} />
+      case SCREENS.KINGDOM:        return <KingdomScreen onBack={backToPrev} />
       case SCREENS.COLLECTION_LOG: return <CollectionLogScreen onBack={backToPrev} />
       case SCREENS.LEADERBOARD:    return <LeaderboardScreen onBack={backToPrev} />
       case SCREENS.HELP:                return <HelpScreen onNavigate={navigate} onShowIntroTour={() => setShowIntroTour(true)} />

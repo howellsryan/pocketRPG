@@ -7,6 +7,7 @@ import { simulateIdleCombatChain } from '../engine/idleSlayerLoop.js'
 import { simulateIdleThieving } from '../engine/thieving.js'
 import { simulateIdleHunting } from '../engine/hunter.js'
 import { simulateQuestIdleCascade, splitQuestXpRewards } from '../engine/questIdleCascade.js'
+import { simulateKingdom, normaliseKingdomState, DEFAULT_KINGDOM } from '../engine/kingdomEngine.js'
 import { ALL_SKILLS, MAX_XP, AUTO_SAVE_DEBOUNCE, QUEST_QUEUE_MAX } from '../utils/constants.js'
 import { debounce } from '../utils/helpers.js'
 import { mergeKillCounts } from '../utils/killCountMerge.js'
@@ -97,6 +98,7 @@ export function GameProvider({ children }) {
   const [killCountsLoaded, setKillCountsLoaded] = useState(false)
   const [farming, setFarmingState] = useState({ patchesById: {} })
   const [completedQuests, setCompletedQuestsState] = useState(new Set())
+  const [kingdom, setKingdomState] = useState(DEFAULT_KINGDOM)
   const [unlockedMinigameItems, setUnlockedMinigameItemsState] = useState(new Set())
   const [questQueue, setQuestQueueState] = useState([])
   const [isSaving, setIsSaving] = useState(false)
@@ -144,6 +146,7 @@ export function GameProvider({ children }) {
   const characterUnlocksRef = useRef({ doubleSlayerXp: false, autoSlayerTask: false })
   const completedQuestsRef = useRef(new Set())
   const questQueueRef = useRef([])
+  const kingdomRef = useRef(DEFAULT_KINGDOM)
 
   // Keep activeTaskInternalRef in sync with state (handles setActiveTaskState calls that bypass setActiveTask)
   useEffect(() => { activeTaskInternalRef.current = activeTask }, [activeTask])
@@ -170,7 +173,7 @@ export function GameProvider({ children }) {
 
   // Load all state from IndexedDB — runs idle simulation inline, returns idleResult
   const loadGame = useCallback(async () => {
-    let [p, s, inv, eq, b, shortcuts, stance, savedHP, autoBankSetting, savedBankConfig, savedEquipmentPresets, savedUnlocks, savedSlayerTask, savedSlayerPoints, savedSlayerTasksCompleted, savedSlayerMasterTaskCompletions, savedDungeoneeringTokens, savedBossKillCounts, savedRaidKillCounts, savedFarming, savedCompletedQuests, savedQuestQueue, savedActiveCombatSpell, savedUnlockedMinigameItems, savedIdleCombatSetup, savedSlayerPerks, savedCharacterUnlocks, savedShowInfoToasts, savedWorldLocation, savedAutoBankExcludedItems, savedBackgroundCombat] = await Promise.all([
+    let [p, s, inv, eq, b, shortcuts, stance, savedHP, autoBankSetting, savedBankConfig, savedEquipmentPresets, savedUnlocks, savedSlayerTask, savedSlayerPoints, savedSlayerTasksCompleted, savedSlayerMasterTaskCompletions, savedDungeoneeringTokens, savedBossKillCounts, savedRaidKillCounts, savedFarming, savedCompletedQuests, savedQuestQueue, savedActiveCombatSpell, savedUnlockedMinigameItems, savedIdleCombatSetup, savedSlayerPerks, savedCharacterUnlocks, savedShowInfoToasts, savedWorldLocation, savedAutoBankExcludedItems, savedBackgroundCombat, savedKingdom] = await Promise.all([
       getPlayer(), getAllStats(), getInventory(), getEquipment(), getBank(),
       getSetting('homeShortcuts'), getSetting('combatStance'), getSetting('currentHP'),
       getSetting('autoBankLoot'), getSetting('bankConfig'), getSetting('equipmentPresets'), getSetting('unlockedFeatures'),
@@ -178,7 +181,7 @@ export function GameProvider({ children }) {
       getSetting('completedQuests'), getSetting('questQueue'), getSetting('activeCombatSpell'), getSetting('unlockedMinigameItems'),
       getSetting('idleCombatSetup'), getSetting('slayerPerks'), getSetting('characterUnlocks'),
       getSetting('showInfoToasts'), getSetting('worldLocation'), getSetting('autoBankExcludedItems'),
-      getSetting('backgroundCombat')
+      getSetting('backgroundCombat'), getSetting('kingdom')
     ])
     const normalisedIdleCombatSetup = normaliseIdleCombatSetup(savedIdleCombatSetup)
     const autoBankExcludedItemIdsSet = new Set(savedAutoBankExcludedItems || [])
@@ -601,12 +604,30 @@ export function GameProvider({ children }) {
       }
     }
 
+    // Kingdom of Royals: passive background sim, independent of whatever the
+    // active task is. Settles on its own lastTickAt, not the 24h-capped
+    // elapsedMs above — output self-limits once the coffer runs dry, so an
+    // absence longer than the coffer's ~10-day runtime is cheap to fast-forward.
+    const normalisedKingdom = normaliseKingdomState(savedKingdom)
+    const kingdomNow = Date.now()
+    const kingdomElapsedMs = normalisedKingdom.lastTickAt ? Math.max(0, kingdomNow - normalisedKingdom.lastTickAt) : 0
+    const kingdomSim = simulateKingdom(normalisedKingdom, s, kingdomElapsedMs, itemsData)
+    for (const [itemId, qty] of Object.entries(kingdomSim.itemsGained)) {
+      if (qty <= 0) continue
+      if (b[itemId]) b[itemId] = { ...b[itemId], quantity: b[itemId].quantity + qty }
+      else b[itemId] = { itemId, quantity: qty }
+    }
+    const loadedKingdom = { ...normalisedKingdom, cofferBalance: kingdomSim.cofferBalance, lastTickAt: kingdomNow }
+    kingdomRef.current = loadedKingdom
+    saveSetting('kingdom', loadedKingdom)
+
     const loadedPlayer = p
     const loadedStats = { ...s }
     const loadedInventory = [...inv]
     const loadedEquipment = eq
     const loadedBank = { ...b }
     setPlayer(loadedPlayer)
+    setKingdomState(loadedKingdom)
     setStats(loadedStats)
     setInventory(loadedInventory)
     setEquipment(loadedEquipment)
@@ -1058,6 +1079,12 @@ export function GameProvider({ children }) {
     saveSetting('farming', farmingState)
   }, [])
 
+  const updateKingdom = useCallback((next) => {
+    kingdomRef.current = next
+    setKingdomState(next)
+    saveSetting('kingdom', next)
+  }, [])
+
   const unlockMinigameItem = useCallback((itemId) => {
     if (!itemId) return
     setUnlockedMinigameItemsState(prev => {
@@ -1136,6 +1163,25 @@ export function GameProvider({ children }) {
       return newBank
     })
   }, [autoSave])
+
+  // Settle elapsed kingdom time (coffer drain + banked output) up to `now`.
+  // Independent of the active-task idle dispatch — called at boot (inline,
+  // see loadGame), on visibility-return, on skip-hour, and on the live 60s
+  // tick so the coffer visibly drains while the app is open.
+  // Returns the settled kingdom object (synchronously authoritative, unlike
+  // the React state which only updates on next render) or null if nothing
+  // needed settling — callers fall back to the current `kingdom` value.
+  const settleKingdom = useCallback((now = Date.now()) => {
+    const current = kingdomRef.current
+    if (!current.lastTickAt) return null
+    const elapsedMs = Math.max(0, now - current.lastTickAt)
+    if (elapsedMs < 2000) return null
+    const sim = simulateKingdom(current, stateRef.current.stats, elapsedMs, itemsData)
+    if (Object.keys(sim.itemsGained).length > 0) updateBankDirect(sim.itemsGained)
+    const next = { ...current, cofferBalance: sim.cofferBalance, lastTickAt: now }
+    updateKingdom(next)
+    return next
+  }, [updateBankDirect, updateKingdom])
 
   // ── Toasts ──
   const addToast = useCallback((message, type = 'info', icon = null) => {
@@ -1248,6 +1294,7 @@ export function GameProvider({ children }) {
       questQueue: questQueueRef.current,
       slayerPerks: slayerPerksRef.current,
       characterUnlocks: characterUnlocksRef.current,
+      kingdom: kingdomRef.current,
     },
   })
   const getSnapshot = useCallback(() => getSnapshotImplRef.current(), [])
@@ -1545,6 +1592,7 @@ export function GameProvider({ children }) {
     getActivityProgress, clearActivityProgress,
     slayerPerks, updateSlayerPerk,
     characterUnlocks, updateCharacterUnlock,
+    kingdom, updateKingdom, settleKingdom,
     isIronman: player?.is_ironman || false,
     isOneLife: player?.is_one_life || false,
     revertOneLifeMode,
