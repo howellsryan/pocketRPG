@@ -2671,11 +2671,6 @@ function GameApp() {
       const elapsedMs = SKIP_HOUR_MS
       let idleResultData = { elapsedMs, task: activeTaskRef.current }
 
-      // Kingdom of Royals is a real-time system (wall-clock coffer drain), not
-      // simulated activity time — settle whatever real time has actually
-      // elapsed, independent of the skipped hour above.
-      settleKingdom(Date.now())
-
       // If there's an active task, simulate it for 1 hour
       if (activeTaskRef.current) {
         const savedTask = activeTaskRef.current
@@ -2989,6 +2984,15 @@ function GameApp() {
       }
 
       updateFarming(advanceFarmingState(farming, SKIP_HOUR_MS))
+
+      // Kingdom of Royals is a real-time (wall-clock) system, but Skip 1h
+      // should still advance it like every other background system — settle
+      // as if the clock had jumped forward by the skipped hour. This adds on
+      // top of whatever real elapsed time had already accrued since the last
+      // settle, and stamps lastTickAt into the "paid-for" future, so the
+      // next real hour of wall-clock time has nothing further to settle
+      // until it catches up.
+      settleKingdom(Date.now() + SKIP_HOUR_MS)
 
       // Persist the paid skip to the cloud BEFORE revealing the reward.
       // persistSkipThenReveal keeps the saving overlay up until the save
