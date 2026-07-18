@@ -4,6 +4,7 @@ import Card from '../components/Card.jsx'
 import Button from '../components/Button.jsx'
 import Modal from '../components/Modal.jsx'
 import GameIcon from '../components/GameIcon.jsx'
+import ItemSlot from '../components/ItemSlot.jsx'
 import BackLink from '../components/BackLink.jsx'
 import CollapseChevron from '../components/CollapseChevron.jsx'
 import { formatNumber } from '../utils/helpers.js'
@@ -195,10 +196,18 @@ export default function KingdomScreen({ onBack }) {
 
         <Card className="p-3">
           <div class="text-xs text-[var(--color-parchment)] opacity-70 mb-1">Gathered Loot</div>
-          <div class="text-sm text-[var(--color-parchment)] mb-3">
-            {lootEntries.length > 0
-              ? `${lootEntries.length} item${lootEntries.length === 1 ? '' : 's'} waiting in the treasury`
-              : 'Nothing gathered yet'}
+          <div class="flex items-center gap-2 mb-3">
+            <div class="flex-1 min-w-0 text-sm text-[var(--color-parchment)]">
+              {lootEntries.length > 0
+                ? `${lootEntries.length} item${lootEntries.length === 1 ? '' : 's'} waiting in the treasury`
+                : 'Nothing gathered yet'}
+            </div>
+            {lootEntries.length > 0 && (
+              <div class="flex items-center gap-1 flex-shrink-0 text-sm font-bold text-[var(--color-gold)]">
+                <GameIcon iconKey="coins" size={16} />
+                {formatNumber(lootTotalValue)}
+              </div>
+            )}
           </div>
           <Button variant="primary" size="sm" onClick={openLootModal} disabled={lootEntries.length === 0}>View Loot</Button>
         </Card>
@@ -239,26 +248,10 @@ export default function KingdomScreen({ onBack }) {
           {lootEntries.length === 0 ? (
             <div class="text-sm text-[var(--color-parchment)] opacity-60 text-center py-4">Nothing gathered yet</div>
           ) : (
-            <div class="divide-y divide-[var(--color-void-border)]">
-              {lootEntries.map(([itemId, qty]) => {
-                const item = itemsData?.[itemId]
-                return (
-                  <div key={itemId} class="flex items-center gap-3 py-2">
-                    <span class="w-8 flex justify-center items-center flex-shrink-0">
-                      <GameIcon item={item} size={24} />
-                    </span>
-                    <div class="flex-1 min-w-0 text-sm text-[var(--color-parchment)]">{item?.name || itemId}</div>
-                    <div class="text-sm font-bold text-[var(--color-gold)]">×{formatNumber(qty)}</div>
-                  </div>
-                )
-              })}
-              <div class="flex items-center gap-3 py-2 mt-1 border-t border-[var(--color-void-border)]">
-                <div class="flex-1 min-w-0 text-sm font-semibold text-[var(--color-parchment)]">Total value</div>
-                <div class="flex items-center gap-1 text-sm font-bold text-[var(--color-gold)]">
-                  <GameIcon iconKey="coins" size={16} />
-                  {formatNumber(lootTotalValue)}
-                </div>
-              </div>
+            <div class="grid grid-cols-4 md:grid-cols-7 gap-2 justify-items-center">
+              {lootEntries.map(([itemId, qty]) => (
+                <ItemSlot key={itemId} slot={{ itemId, quantity: qty }} />
+              ))}
             </div>
           )}
         </Modal>
