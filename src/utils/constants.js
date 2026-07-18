@@ -41,6 +41,17 @@ export const AUTO_SAVE_DEBOUNCE = 300 // ms
 // Quests
 export const QUEST_QUEUE_MAX = 3
 
+// Kingdom of Royals — passive coffer-funded gathering, unlocked by the
+// "Crown Complications" quest. See src/engine/kingdomEngine.js.
+export const KINGDOM_UNLOCK_QUEST_ID = 'crown_complications'
+export const KINGDOM_COFFER_MAX = 25_000_000
+export const KINGDOM_DAILY_COST = 5_000_000 // coins drained per 24h at max labour
+export const KINGDOM_LABOUR_POINTS_MAX = 4
+export const KINGDOM_PACE_FACTOR = 0.5 // kingdom workers gather at 50% of a player's pace
+// Internal allocation keys — 'farming' maps to the Farm Herbs category (gated
+// by the player's Farming level, output sourced from farming.json's herbs).
+export const KINGDOM_CATEGORIES = ['mining', 'fishing', 'woodcutting', 'farming']
+
 // Skills list
 export const COMBAT_SKILLS = ['attack', 'strength', 'defence', 'hitpoints', 'ranged', 'magic', 'prayer']
 export const GATHERING_SKILLS = ['mining', 'woodcutting', 'fishing', 'farming']
@@ -113,7 +124,8 @@ export const SCREENS = {
   MAGIC: 'magic',
   WORLD_MAP: 'world_map',
   ADVENTURES: 'adventures',
-  DUNGEONS: 'dungeons'
+  DUNGEONS: 'dungeons',
+  KINGDOM: 'kingdom'
 }
 
 // Phase 1 of the map-driven overhaul (docs/map-driven-overhaul-plan.md) ships the

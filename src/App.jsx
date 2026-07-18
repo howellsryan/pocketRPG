@@ -28,6 +28,7 @@ import TradingPostScreen from './screens/TradingPostScreen.jsx'
 import EquipmentScreen from './screens/EquipmentScreen.jsx'
 import ArmouryScreen from './screens/ArmouryScreen.jsx'
 import AdventuresScreen from './screens/AdventuresScreen.jsx'
+import KingdomScreen from './screens/KingdomScreen.jsx'
 import QuestsScreen from './screens/QuestsScreen.jsx'
 import CluesScreen from './screens/CluesScreen.jsx'
 import MinigamesScreen from './screens/MinigamesScreen.jsx'
@@ -352,7 +353,7 @@ function GameApp() {
     gameLocked, lockGame, unlockGame, runLockedSave, awaitCombatCompletion, resolveCombatCompletion,
     characterUnlocks, slayerPerks, dailyTaskStates, setDailyTasks, recordGameEvent, updateWorldLocation, worldLocation, clearActivityProgress, requestActivityStart,
     inventoryFull, signalInventoryFull, dismissInventoryFullPrompt, resolveInventoryFull, combatStance, activeCombatSpell,
-    autoBankExcludedItems, backgroundCombat, combatStatus } = useGame()
+    autoBankExcludedItems, backgroundCombat, combatStatus, settleKingdom, applyKingdomSkip } = useGame()
   const pvp = usePvp()
   const [screen, setScreen] = useState(SCREENS.HOME)
   const prevScreenRef = useRef(null) // screen before the current one (set by navigate)
@@ -978,6 +979,10 @@ function GameApp() {
             console.warn('[PocketRPG] Cloud freshness check failed:', e.message)
           }
 
+          // Kingdom of Royals runs independently of whatever the active task
+          // is — settle it here regardless of savedTask below.
+          settleKingdom(Date.now())
+
           // If no active task, still show "Welcome Back" modal with elapsed time
           if (!savedTask) {
             setIdleResult({ elapsedMs, task: null })
@@ -1415,7 +1420,7 @@ function GameApp() {
       window.removeEventListener('pagehide', handleUnload)
       window.removeEventListener('beforeunload', handleUnload)
     }
-  }, [gameReady, grantXP, updateInventory, updateBankDirect, isInPvpMatch])
+  }, [gameReady, grantXP, updateInventory, updateBankDirect, isInPvpMatch, settleKingdom])
 
   // Day rollover: re-fetch daily tasks when UTC date changes while game is open
   useEffect(() => {
@@ -1472,6 +1477,9 @@ function GameApp() {
         if (currentHP < maxHP) {
           updateHP(Math.min(currentHP + 1, maxHP))
         }
+        // Kingdom of Royals: live wall-clock catch-up so the coffer/output
+        // visibly progresses while the app stays open in the foreground.
+        settleKingdom(now)
       }
 
       // Quest tick — runs at the App level so quests progress on any screen
@@ -1634,7 +1642,7 @@ function GameApp() {
       }
     })
     return unsub
-  }, [gameReady, currentHP, stats, questQueue, isInPvpMatch])
+  }, [gameReady, currentHP, stats, questQueue, isInPvpMatch, settleKingdom])
 
   async function initCloudAndSave() {
     try {
@@ -2977,6 +2985,14 @@ function GameApp() {
 
       updateFarming(advanceFarmingState(farming, SKIP_HOUR_MS))
 
+      // Kingdom of Royals is a real-time (wall-clock) system, but Skip 1h
+      // should still advance it like every other background system — add an
+      // extra hour of production on top of whatever real time has accrued.
+      // Unlike a naive future-stamp, this keeps lastTickAt at real now, so
+      // the live 60s tick and the loot modal keep updating immediately after
+      // a skip instead of freezing for the skipped hour.
+      applyKingdomSkip(SKIP_HOUR_MS)
+
       // Persist the paid skip to the cloud BEFORE revealing the reward.
       // persistSkipThenReveal keeps the saving overlay up until the save
       // lands, then shows the idle-result modal — so a refresh mid-save
@@ -3146,6 +3162,7 @@ function GameApp() {
       case SCREENS.CLUES:          return <CluesScreen onNavigate={navigate} onBack={backToPrev} />
       case SCREENS.MINIGAMES:      return <MinigamesScreen initialTaskId={actionData?.minigameTaskId} onBack={backToPrev} onStopBack={stopBackNav} />
       case SCREENS.ADVENTURES:     return <AdventuresScreen onNavigate={navigate} />
+      case SCREENS.KINGDOM:        return <KingdomScreen onBack={backToPrev} />
       case SCREENS.COLLECTION_LOG: return <CollectionLogScreen onBack={backToPrev} />
       case SCREENS.LEADERBOARD:    return <LeaderboardScreen onBack={backToPrev} />
       case SCREENS.HELP:                return <HelpScreen onNavigate={navigate} onShowIntroTour={() => setShowIntroTour(true)} />

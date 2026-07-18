@@ -1,15 +1,19 @@
 import Card from '../components/Card.jsx'
 import GameIcon from '../components/GameIcon.jsx'
-import { SCREENS } from '../utils/constants.js'
+import { useGame } from '../state/gameState.jsx'
+import { SCREENS, KINGDOM_UNLOCK_QUEST_ID } from '../utils/constants.js'
 
 const ADVENTURE_LINKS = [
   { id: SCREENS.QUESTS,    label: 'Quests Board', iconKey: 'quest_scroll_blue' },
   { id: SCREENS.CLUES,     label: 'Clues',        iconKey: 'clue_scroll_purple' },
   { id: SCREENS.MINIGAMES, label: 'Minigames',    iconKey: 'minigame_scroll_red' },
   { id: SCREENS.GATHER,    label: 'Gather',       iconKey: 'kingsherb' },
+  { id: SCREENS.KINGDOM,   label: 'Kingdom of Royals', iconKey: 'castle', requiresQuest: KINGDOM_UNLOCK_QUEST_ID },
 ]
 
 export default function AdventuresScreen({ onNavigate }) {
+  const { completedQuests } = useGame()
+  const links = ADVENTURE_LINKS.filter(link => !link.requiresQuest || completedQuests.has(link.requiresQuest))
   return (
     <div class="forge-shell h-full flex flex-col">
       <div class="flex-shrink-0 bg-[var(--color-void-light)] border-b border-[var(--color-void-border)] px-4 py-3">
@@ -21,7 +25,7 @@ export default function AdventuresScreen({ onNavigate }) {
       <div class="flex-1 overflow-y-auto px-4 py-4">
         <Card className="p-2">
           <div class="divide-y divide-[var(--color-void-border)]">
-            {ADVENTURE_LINKS.map((link) => (
+            {links.map((link) => (
               <button
                 key={link.id}
                 type="button"
