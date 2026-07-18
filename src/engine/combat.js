@@ -569,7 +569,7 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
       let maxHit = Math.floor(meleeMaxHit(effStr, bonuses.otherBonus.meleeStrength) * voidMult.meleeDamage)
       maxHit = Math.floor(maxHit + slayerEquipmentBonus.damageFlat)
       const effAtk = effectiveAttack(boostedPlayerStats.attack, 0, 1.0, styleBonuses.attackStyleBonus)
-      const atkRoll = Math.floor(maxAttackRoll(effAtk, (bonuses.attackBonus[weaponStyle] || 0) + slayerEquipmentBonus.accuracyFlat + voidMult.accuracyFlat) * voidMult.meleeAccuracy)
+      const atkRoll = Math.floor(maxAttackRoll(effAtk, (bonuses.attackBonus[weaponStyle] || 0) + slayerEquipmentBonus.accuracyFlat) * voidMult.meleeAccuracy)
       const defRoll = maxDefenceRoll(monster.stats.defence, monster.defenceBonus[weaponStyle] || 0)
       const veracProc = hasFullVeracSet(equipment, itemsData) && Math.random() < 0.25
       const acc = veracProc ? 1 : hitChance(atkRoll, defRoll)
@@ -625,7 +625,7 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
       const styleBonus = getRangedStyleBonus(state.stance)
       const effRng = effectiveRanged(boostedPlayerStats.ranged, 0, 1.0, styleBonus)
       let maxHit = Math.floor(rangedMaxHit(effRng, bonuses.otherBonus.rangedStrength) * voidMult.rangedDamage)
-      let atkRoll = Math.floor(maxAttackRoll(effRng, (bonuses.attackBonus.ranged || 0) + slayerEquipmentBonus.accuracyFlat + voidMult.accuracyFlat) * voidMult.rangedAccuracy)
+      let atkRoll = Math.floor(maxAttackRoll(effRng, (bonuses.attackBonus.ranged || 0) + slayerEquipmentBonus.accuracyFlat) * voidMult.rangedAccuracy)
 
       // Dragon Hunter Crossbow: +30% accuracy and damage vs dragon-type monsters
       if (equippedWeapon?.dragonHunter && monster.isDragon) {
@@ -747,7 +747,7 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
       }
 
       const effMag = effectiveMagic(boostedPlayerStats.magic)
-      const atkRoll = Math.floor(maxAttackRoll(effMag, (bonuses.attackBonus.magic || 0) + slayerEquipmentBonus.accuracyFlat + voidMult.accuracyFlat) * voidMult.magicAccuracy)
+      const atkRoll = Math.floor(maxAttackRoll(effMag, (bonuses.attackBonus.magic || 0) + slayerEquipmentBonus.accuracyFlat) * voidMult.magicAccuracy)
       const defRoll = monsterMagicDefenceRoll(monster.stats.magic, monster.stats.defence, monster.defenceBonus.magic || 0)
       const acc = hitChance(atkRoll, defRoll)
       // Max hit scales with magic level: base at level 75, +1 per 3 levels above.
@@ -779,7 +779,7 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
       // Only cast if runes are available
       if (hasRunes) {
         const effMag = effectiveMagic(boostedPlayerStats.magic)
-        const atkRoll = Math.floor(maxAttackRoll(effMag, (bonuses.attackBonus.magic || 0) + slayerEquipmentBonus.accuracyFlat + voidMult.accuracyFlat) * voidMult.magicAccuracy)
+        const atkRoll = Math.floor(maxAttackRoll(effMag, (bonuses.attackBonus.magic || 0) + slayerEquipmentBonus.accuracyFlat) * voidMult.magicAccuracy)
         const defRoll = monsterMagicDefenceRoll(monster.stats.magic, monster.stats.defence, monster.defenceBonus.magic || 0)
         const acc = hitChance(atkRoll, defRoll)
         const wornMagicDamage = getEffectiveWornMagicDamage(bonuses.otherBonus.magicDamage, equipment, itemsData)

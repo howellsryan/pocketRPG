@@ -21,7 +21,7 @@ describe('getActiveSetBonusDisplays', () => {
     expect(displays[0].lines).toContainEqual({ label: 'Magic Damage', value: 10, percent: true })
   })
 
-  it('lists the Shardglass set with flat (non-percent) accuracy lines when fully equipped', () => {
+  it('lists the Shardglass set with percentage accuracy/damage lines when fully equipped', () => {
     const equipment = {
       head: { itemId: 'shardglass_helmet' },
       body: { itemId: 'shardglass_plate_body' },
@@ -31,11 +31,11 @@ describe('getActiveSetBonusDisplays', () => {
     const displays = getActiveSetBonusDisplays(equipment)
     expect(displays).toHaveLength(1)
     expect(displays[0].name).toBe('Shardglass')
-    expect(displays[0].lines).toEqual([
-      { label: 'Melee Accuracy', value: 30, percent: false },
-      { label: 'Ranged Accuracy', value: 30, percent: false },
-      { label: 'Magic Accuracy', value: 30, percent: false },
-    ])
+    expect(displays[0].lines).toContainEqual({ label: 'Melee Accuracy', value: 30, percent: true })
+    expect(displays[0].lines).toContainEqual({ label: 'Ranged Accuracy', value: 30, percent: true })
+    expect(displays[0].lines).toContainEqual({ label: 'Magic Accuracy', value: 30, percent: true })
+    expect(displays[0].lines).toContainEqual({ label: 'Melee Damage', value: 15, percent: true })
+    expect(displays[0].lines).toContainEqual({ label: 'Ranged Damage', value: 15, percent: true })
   })
 
   it('lists every active set at once when multiple sets are worn simultaneously', () => {

@@ -7,17 +7,15 @@ import { rollMeleeAttack, rollRangedAttack } from '../src/engine/combatPrimitive
 import { buildPlayerCombatant } from '../src/engine/combatant.js'
 import itemsData from '../src/data/items.json'
 
-const fullSetWithSaeldor = {
+const armour = {
   head: { itemId: 'shardglass_helmet' },
   body: { itemId: 'shardglass_plate_body' },
   legs: { itemId: 'shardglass_platelegs' },
-  weapon: { itemId: 'blade_of_saeldor' },
 }
 
-const fullSetWithFaerdhinen = {
-  ...fullSetWithSaeldor,
-  weapon: { itemId: 'bow_of_faerdhinen' },
-}
+const fullSetWithSaeldor = { ...armour, weapon: { itemId: 'blade_of_saeldor' } }
+const fullSetWithFaerdhinen = { ...armour, weapon: { itemId: 'bow_of_faerdhinen' } }
+const fullSetWithShardglassBow = { ...armour, weapon: { itemId: 'shardglass_bow' } }
 
 describe('hasFullShardglassSet', () => {
   it('returns true with all 3 armour pieces + the Saeldor Warblade', () => {
@@ -28,6 +26,10 @@ describe('hasFullShardglassSet', () => {
     expect(hasFullShardglassSet(fullSetWithFaerdhinen)).toBe(true)
   })
 
+  it('returns true with all 3 armour pieces + the Shardglass Bow', () => {
+    expect(hasFullShardglassSet(fullSetWithShardglassBow)).toBe(true)
+  })
+
   it('returns false when any one armour slot is missing', () => {
     for (const slot of ['head', 'body', 'legs'] as const) {
       const partial = { ...fullSetWithSaeldor, [slot]: null }
@@ -36,8 +38,8 @@ describe('hasFullShardglassSet', () => {
   })
 
   it('returns false with the full armour set but no qualifying weapon', () => {
-    expect(hasFullShardglassSet({ ...fullSetWithSaeldor, weapon: null })).toBe(false)
-    expect(hasFullShardglassSet({ ...fullSetWithSaeldor, weapon: { itemId: 'shardglass_bow' } })).toBe(false)
+    expect(hasFullShardglassSet({ ...armour, weapon: null })).toBe(false)
+    expect(hasFullShardglassSet({ ...armour, weapon: { itemId: 'runeforged_scimitar' } })).toBe(false)
   })
 
   it('returns false for empty equipment', () => {
@@ -46,24 +48,36 @@ describe('hasFullShardglassSet', () => {
   })
 })
 
-describe('getCombatSetMultipliers accuracyFlat (Shardglass)', () => {
-  it('grants +30 accuracyFlat with the full set + a qualifying weapon', () => {
-    expect(getCombatSetMultipliers(fullSetWithSaeldor).accuracyFlat).toBe(30)
-    expect(getCombatSetMultipliers(fullSetWithFaerdhinen).accuracyFlat).toBe(30)
+describe('getCombatSetMultipliers (Shardglass)', () => {
+  it('grants +30% melee/ranged/magic accuracy and +15% melee/ranged damage with a qualifying weapon', () => {
+    for (const equipment of [fullSetWithSaeldor, fullSetWithFaerdhinen, fullSetWithShardglassBow]) {
+      const mult = getCombatSetMultipliers(equipment)
+      expect(mult.meleeAccuracy).toBe(1.3)
+      expect(mult.rangedAccuracy).toBe(1.3)
+      expect(mult.magicAccuracy).toBe(1.3)
+      expect(mult.meleeDamage).toBe(1.15)
+      expect(mult.rangedDamage).toBe(1.15)
+    }
   })
 
-  it('grants no accuracyFlat without a qualifying weapon', () => {
-    expect(getCombatSetMultipliers({ ...fullSetWithSaeldor, weapon: null }).accuracyFlat).toBe(0)
+  it('grants nothing without a qualifying weapon', () => {
+    const mult = getCombatSetMultipliers({ ...armour, weapon: null })
+    expect(mult.meleeAccuracy).toBe(1)
+    expect(mult.rangedAccuracy).toBe(1)
+    expect(mult.magicAccuracy).toBe(1)
+    expect(mult.meleeDamage).toBe(1)
+    expect(mult.rangedDamage).toBe(1)
   })
 
-  it('grants no accuracyFlat with a qualifying weapon but partial armour', () => {
-    expect(getCombatSetMultipliers({ ...fullSetWithSaeldor, legs: null }).accuracyFlat).toBe(0)
+  it('grants nothing with a qualifying weapon but partial armour', () => {
+    const mult = getCombatSetMultipliers({ ...fullSetWithSaeldor, legs: null })
+    expect(mult.meleeAccuracy).toBe(1)
+    expect(mult.meleeDamage).toBe(1)
   })
 })
 
-// Integration: the +30 flat accuracy should flow through both the melee and
-// ranged rollers as a bonus added before the maxAttackRoll formula, matching
-// the real Shardglass helmet/body/legs + Saeldor/Faerdhinen items.
+// Integration: the multipliers should flow through the real rollers exactly
+// like Void King / Masari do, using the real Shardglass items.
 describe('Shardglass set bonus flows through rollMeleeAttack / rollRangedAttack', () => {
   function combatant(equipment: any, id = 1) {
     return buildPlayerCombatant({
@@ -85,29 +99,39 @@ describe('Shardglass set bonus flows through rollMeleeAttack / rollRangedAttack'
     })
   }
 
-  it('full Shardglass set + Saeldor Warblade raises melee attackRoll vs the same weapon alone', () => {
+  it('full Shardglass set + Saeldor Warblade raises melee accuracy and max hit by 30%/15%', () => {
     const baseline = combatant({ weapon: { itemId: 'blade_of_saeldor' } }, 1)
     const setEquipped = combatant(fullSetWithSaeldor, 2)
     const target = combatant({}, 99)
     const baseSwing = rollMeleeAttack(baseline, target, itemsData)
     const setSwing = rollMeleeAttack(setEquipped, target, itemsData)
-    expect(setSwing.attackRoll).toBeGreaterThan(baseSwing.attackRoll)
-    expect(setSwing.maxHit).toBe(baseSwing.maxHit)
+    expect(setSwing.attackRoll).toBe(Math.floor(baseSwing.attackRoll * 1.3))
+    expect(setSwing.maxHit).toBe(Math.floor(baseSwing.maxHit * 1.15))
   })
 
-  it('full Shardglass set + Faerdhinen Warbow raises ranged attackRoll vs the same weapon alone', () => {
+  it('full Shardglass set + Faerdhinen Warbow raises ranged accuracy and max hit by 30%/15%', () => {
     const baseline = combatant({ weapon: { itemId: 'bow_of_faerdhinen' } }, 1)
     const setEquipped = combatant(fullSetWithFaerdhinen, 2)
     const target = combatant({}, 99)
     const baseSwing = rollRangedAttack(baseline, target, itemsData)
     const setSwing = rollRangedAttack(setEquipped, target, itemsData)
-    expect(setSwing.attackRoll).toBeGreaterThan(baseSwing.attackRoll)
+    expect(setSwing.attackRoll).toBe(Math.floor(baseSwing.attackRoll * 1.3))
+    expect(setSwing.maxHit).toBe(Math.floor(baseSwing.maxHit * 1.15))
   })
 
-  it('grants no accuracy bonus when the armour is worn with an unrelated weapon', () => {
-    const unrelated = combatant({ ...fullSetWithSaeldor, weapon: { itemId: 'shardglass_bow' } }, 1)
-    const baseline = combatant({ weapon: { itemId: 'shardglass_bow' } }, 2)
+  it('full Shardglass set + Shardglass Bow raises ranged accuracy by 30%', () => {
+    const baseline = combatant({ weapon: { itemId: 'shardglass_bow' } }, 1)
+    const setEquipped = combatant(fullSetWithShardglassBow, 2)
     const target = combatant({}, 99)
-    expect(rollRangedAttack(unrelated, target, itemsData).attackRoll).toBe(rollRangedAttack(baseline, target, itemsData).attackRoll)
+    const baseSwing = rollRangedAttack(baseline, target, itemsData)
+    const setSwing = rollRangedAttack(setEquipped, target, itemsData)
+    expect(setSwing.attackRoll).toBe(Math.floor(baseSwing.attackRoll * 1.3))
+  })
+
+  it('grants no bonus when the armour is worn with an unrelated weapon', () => {
+    const unrelated = combatant({ ...armour, weapon: { itemId: 'runeforged_scimitar' } }, 1)
+    const baseline = combatant({ weapon: { itemId: 'runeforged_scimitar' } }, 2)
+    const target = combatant({}, 99)
+    expect(rollMeleeAttack(unrelated, target, itemsData).attackRoll).toBe(rollMeleeAttack(baseline, target, itemsData).attackRoll)
   })
 })

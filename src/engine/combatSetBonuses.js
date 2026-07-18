@@ -3,11 +3,8 @@
 // worn. An entry may also set `requiredWeapons` (itemIds) — when present, the
 // set only activates if the equipped weapon is one of them, in addition to
 // the armour slots. Bonuses from multiple active sets combine: multiplicative
-// fields multiply together, magicDamageBonusFlat/accuracyFlat values add
-// (accuracyFlat is a flat bonus added to the attack-roll bonus before the
-// per-style multiplier, applied uniformly to melee/ranged/magic). Adding a
-// new set = append one entry here; no engine changes required unless it
-// needs a new bonus shape.
+// fields multiply together, magicDamageBonusFlat values add. Adding a new set
+// = append one entry here; no engine changes required.
 //
 // Legacy `void_knight_*` itemIds are accepted so saves that have not yet been
 // migrated still receive the Void bonus during their first load (see
@@ -56,8 +53,14 @@ const COMBAT_SETS = [
       body: ['shardglass_plate_body'],
       legs: ['shardglass_platelegs'],
     },
-    requiredWeapons: ['blade_of_saeldor', 'bow_of_faerdhinen'],
-    accuracyFlat: 30,
+    requiredWeapons: ['blade_of_saeldor', 'bow_of_faerdhinen', 'shardglass_bow'],
+    multipliers: {
+      meleeAccuracy: 1.3,
+      rangedAccuracy: 1.3,
+      magicAccuracy: 1.3,
+      meleeDamage: 1.15,
+      rangedDamage: 1.15,
+    },
   },
 ]
 
@@ -85,7 +88,6 @@ function identityMultipliers() {
     rangedDamage: 1,
     magicAccuracy: 1,
     magicDamageBonusFlat: 0,
-    accuracyFlat: 0,
   }
 }
 
@@ -108,15 +110,13 @@ function applySet(out, set) {
     if (m[key]) out[key] *= m[key]
   }
   out.magicDamageBonusFlat += set.magicDamageBonusFlat || 0
-  out.accuracyFlat += set.accuracyFlat || 0
   return out
 }
 
 /**
  * UI-friendly bonus lines for one set: percentage lines for multipliers and
  * magicDamageBonusFlat (which is itself a percentage-point value, matching
- * otherBonus.magicDamage), and flat (non-percent) lines for accuracyFlat
- * since that's added to the raw attack-bonus stat, not a percentage.
+ * otherBonus.magicDamage).
  */
 function describeSetBonuses(set) {
   const lines = []
@@ -125,11 +125,6 @@ function describeSetBonuses(set) {
     if (m[key]) lines.push({ label: MULTIPLIER_LABELS[key], value: Math.round((m[key] - 1) * 1000) / 10, percent: true })
   }
   if (set.magicDamageBonusFlat) lines.push({ label: 'Magic Damage', value: set.magicDamageBonusFlat, percent: true })
-  if (set.accuracyFlat) {
-    lines.push({ label: 'Melee Accuracy', value: set.accuracyFlat, percent: false })
-    lines.push({ label: 'Ranged Accuracy', value: set.accuracyFlat, percent: false })
-    lines.push({ label: 'Magic Accuracy', value: set.accuracyFlat, percent: false })
-  }
   return lines
 }
 
