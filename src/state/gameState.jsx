@@ -1170,14 +1170,18 @@ export function GameProvider({ children }) {
   // Independent of the active-task idle dispatch — called at boot (inline,
   // see loadGame), on visibility-return, on skip-hour, and on the live 60s
   // tick so the coffer visibly drains while the app is open.
-  // Returns the settled kingdom object (synchronously authoritative, unlike
-  // the React state which only updates on next render) or null if nothing
-  // needed settling — callers fall back to the current `kingdom` value.
+  // Always returns the current, ref-backed kingdom object — settled if
+  // enough time had passed to warrant it, unchanged otherwise. Callers
+  // should use this return value (not the `kingdom` render prop) when
+  // building the next update: `kingdomRef.current` is synchronously fresh,
+  // while `kingdom` is only as fresh as the last completed render, so a
+  // burst of rapid clicks reading the render prop would each compute their
+  // delta off the same stale snapshot and clobber each other.
   const settleKingdom = useCallback((now = Date.now()) => {
     const current = kingdomRef.current
-    if (!current.lastTickAt) return null
+    if (!current.lastTickAt) return current
     const elapsedMs = Math.max(0, now - current.lastTickAt)
-    if (elapsedMs < 2000) return null
+    if (elapsedMs < 2000) return current
     const sim = simulateKingdom(current, stateRef.current.stats, elapsedMs, itemsData)
     const next = {
       ...current,

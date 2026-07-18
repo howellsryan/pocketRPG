@@ -53,11 +53,16 @@ export default function KingdomScreen({ onBack }) {
   const lootEntries = Object.entries(pendingLoot)
 
   const adjustAllocation = (category, delta) => {
-    const current = allocations[category] || 0
+    // Read the current point count off the freshly-settled kingdom, not the
+    // `allocations` render prop — a burst of rapid clicks each fire before
+    // the component re-renders, so basing the delta on the render prop would
+    // have every click in the burst compute against the same stale snapshot
+    // and clobber each other instead of accumulating.
+    const settled = settleKingdom()
+    const current = settled.allocations[category] || 0
     const next = current + delta
     if (next < 0 || next > KINGDOM_LABOUR_POINTS_MAX) return
-    if (delta > 0 && pointsRemaining <= 0) return
-    const settled = settleKingdom() || kingdom
+    if (delta > 0 && totalAllocatedPoints(settled.allocations) >= KINGDOM_LABOUR_POINTS_MAX) return
     const nextAllocations = clampAllocations({ ...settled.allocations, [category]: next })
     updateKingdom({ ...settled, allocations: nextAllocations })
   }
@@ -85,7 +90,7 @@ export default function KingdomScreen({ onBack }) {
   const confirmAmount = () => {
     const amount = Math.min(Math.floor(Number(amountInput) || 0), modalMax)
     if (amount <= 0) { setDepositModal(null); return }
-    const settled = settleKingdom() || kingdom
+    const settled = settleKingdom()
     if (depositModal === 'deposit') {
       const deposited = Math.min(amount, bankCoins, KINGDOM_COFFER_MAX - settled.cofferBalance)
       if (deposited <= 0) { setDepositModal(null); return }
@@ -106,7 +111,7 @@ export default function KingdomScreen({ onBack }) {
   }
 
   const handleWithdrawAllLoot = () => {
-    const settled = settleKingdom() || kingdom
+    const settled = settleKingdom()
     const { kingdom: nextKingdom, withdrawn } = withdrawAllLoot(settled)
     if (Object.keys(withdrawn).length > 0) updateBankDirect(withdrawn)
     updateKingdom(nextKingdom)
