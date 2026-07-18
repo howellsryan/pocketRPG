@@ -10,6 +10,7 @@ import {
   hasBowyersKnife,
   BOWYERS_KNIFE_ID,
 } from '../src/engine/skilling.js'
+import { isEquippable, typeFilterOf, hasPositiveCombatBonus } from '../src/utils/armoury.js'
 
 const itemsData = items as Record<string, any>
 
@@ -30,9 +31,16 @@ describe('Fletching Guild minigame + Bowyer\'s Knife reward', () => {
   it('prices the knife as a 250k/hour untradeable minigame reward (500k for 2h)', () => {
     const item = itemsData[BOWYERS_KNIFE_ID]
     expect(item.type).toBe('tool')
-    expect(item.slot).toBeNull()
     expect(item.isUntradeable).toBe(true)
     expect(item.shopValue).toBe(500_000)
+  })
+
+  it('is a no-stat weapon-slot tool — equippable like the Angler Net, filed under Skilling', () => {
+    const item = itemsData[BOWYERS_KNIFE_ID]
+    expect(item.slot).toBe('weapon')
+    expect(isEquippable(item)).toBe(true)
+    expect(typeFilterOf(item)).toBe('skilling')
+    expect(hasPositiveCombatBonus(item)).toBe(false)
   })
 
   it('is offered at Ardounne and logged under a Fletching Guild collection slot', () => {

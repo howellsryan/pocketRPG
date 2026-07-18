@@ -3076,8 +3076,29 @@
     "legacy_item_id": "bowyers_knife",
     "name": "Bowyer's Knife",
     "type": "tool",
-    "slot": null,
+    "slot": "weapon",
     "stackable": false,
+    "attackSpeed": 4,
+    "attackStyle": "stab",
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
     "requirements": {},
     "shopValue": 500000,
     "isGeneralStore": false,
