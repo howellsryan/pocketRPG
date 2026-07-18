@@ -54,7 +54,7 @@ export function emitPrayerIfChanged(player: TickPlayer, events: ZoneEvent[]): vo
 
 // The engine's inferred state types `spell`/`runesConsumed` from their `null`
 // initialisers — widen them to what magic combat actually stores there.
-type EngineState = Omit<ReturnType<typeof createCombatState>, 'spell' | 'prayerPoints' | 'maxPrayerPoints' | 'prayerDrainAccumulator' | 'activeProtectionPrayer' | 'activeCombatPrayer'> & {
+type EngineState = Omit<ReturnType<typeof createCombatState>, 'spell' | 'prayerPoints' | 'maxPrayerPoints' | 'prayerDrainAccumulator' | 'activeProtectionPrayer' | 'activeCombatPrayer' | 'activePotions'> & {
   spell: unknown
   runesConsumed?: Record<string, number> | null
   prayerPoints: number
@@ -62,25 +62,29 @@ type EngineState = Omit<ReturnType<typeof createCombatState>, 'spell' | 'prayerP
   prayerDrainAccumulator: number
   activeProtectionPrayer: string | null
   activeCombatPrayer: string | null
+  activePotions: Record<string, number>
 }
 
-/** Copies the player's session prayer pool + active toggles onto an engine state
- * at fight start. */
-function copySessionPrayerToState(player: TickPlayer, state: EngineState): void {
+/** Copies the player's session buffs (prayer pool + toggles, active potions) onto
+ * an engine state at fight start. Potions are cloned so the fight's per-tick decay
+ * doesn't mutate the session copy until synced back. */
+function copySessionBuffsToState(player: TickPlayer, state: EngineState): void {
   state.prayerPoints = player.prayerPoints
   state.maxPrayerPoints = player.maxPrayerPoints
   state.prayerDrainAccumulator = player.prayerDrainAccumulator
   state.activeProtectionPrayer = player.activeProtectionPrayer
   state.activeCombatPrayer = player.activeCombatPrayer
+  state.activePotions = { ...player.activePotions }
 }
 
-/** Syncs the engine state's prayer pool back onto the session after a tick, so
- * drain (and auto-switch-off on empty) persists across auto-fight kills. */
-function syncStatePrayerToSession(player: TickPlayer, state: EngineState): void {
+/** Syncs the engine state's buffs back onto the session after a tick, so prayer
+ * drain / auto-switch-off and potion decay persist across auto-fight kills. */
+function syncStateBuffsToSession(player: TickPlayer, state: EngineState): void {
   player.prayerPoints = state.prayerPoints
   player.prayerDrainAccumulator = state.prayerDrainAccumulator
   player.activeProtectionPrayer = state.activeProtectionPrayer
   player.activeCombatPrayer = state.activeCombatPrayer
+  player.activePotions = state.activePotions
 }
 export type CombatSession = { npcId: string; state: EngineState }
 
@@ -162,7 +166,7 @@ export function startCombat(player: TickPlayer, npc: NpcState, result?: TickResu
   // Carry the session prayer pool + toggles onto this fight's engine state, so
   // the engine drains the same pool and applies bonuses/protection. Persists
   // across auto-fight kills because stepCombat syncs it back after each tick.
-  copySessionPrayerToState(player, state)
+  copySessionBuffsToState(player, state)
   player.combat = { npcId: npc.id, state }
   player.specialEnergy = state.specialAttackEnergy
   npc.state = 'combat'
@@ -236,7 +240,7 @@ export function stepCombat(player: TickPlayer, ctx: TickContext, result: TickRes
   combat.state = combatState
   // The engine drained the pool / may have switched prayers off on empty — carry
   // that back onto the session and echo the readout when it moved.
-  syncStatePrayerToSession(player, combat.state as EngineState)
+  syncStateBuffsToSession(player, combat.state as EngineState)
   emitPrayerIfChanged(player, result.events)
   // Default to idle unless walking (walk anim set upstream); the playerHit/
   // specialHit branches below set the attack anim only on a tick the engine

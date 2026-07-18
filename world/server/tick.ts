@@ -83,6 +83,9 @@ export type TickPlayer = {
   activeProtectionPrayer: string | null
   activeCombatPrayer: string | null
   lastPrayerSent: string | null
+  /** Active potion buffs { potionItemId: ticksRemaining } — session state copied
+   * onto the engine at fight start and decayed per combat tick (item 8). */
+  activePotions: Record<string, number>
 }
 
 // Running: 2 tiles/tick, ~100 energy drained over ~1 min of continuous running;

@@ -4,6 +4,7 @@
 import itemsData from '../../src/data/items.json'
 import skillsData from '../../src/data/skills.json'
 import { EAT_TICK_COST } from '../../src/utils/constants.js'
+import { applyConsumableEffect, isConsumablePotion } from '../../src/engine/consumables.js'
 
 export type InvActionKind = 'equip' | 'eat' | 'drink' | 'bury'
 export type PrimaryAction = { action: InvActionKind; label: string }
@@ -61,4 +62,37 @@ export function resolveEatTiming(
   return isCombo
     ? { allowed: true, eatReadyTick, comboReadyTick: next }
     : { allowed: true, eatReadyTick: next, comboReadyTick }
+}
+
+/** A combat actor for a potion drink — HP + the buff pools the effect touches. */
+export type DrinkActor = {
+  hp: number
+  maxHP: number
+  activePotions: Record<string, number>
+  prayerPoints: number
+  maxPrayerPoints: number
+}
+export type DrinkResult = { healed: number; wiped: boolean; buffed: boolean; prayerRestored?: number }
+export type DrinkResolution =
+  | { allowed: false }
+  | { allowed: true; eatReadyTick: number; comboReadyTick: number; result: DrinkResult }
+
+/** Resolve a potion drink (pure, item 8). Potions are combo consumables (§4), so
+ * they run on the combo cooldown track — usable the same tick as a normal food,
+ * never delaying the next attack. On success the actor is mutated in place with
+ * the heal / stat buff / prayer restore via the shared consumables engine
+ * (`applyConsumableEffect`), keeping world potions in lockstep with PvE + PvP. */
+export function resolveDrink(
+  actor: DrinkActor,
+  itemId: string,
+  nowTick: number,
+  eatReadyTick: number,
+  comboReadyTick: number,
+): DrinkResolution {
+  const item = items[itemId]
+  if (!isConsumablePotion(item)) return { allowed: false }
+  const timing = resolveEatTiming(nowTick, true, eatReadyTick, comboReadyTick)
+  if (!timing.allowed) return { allowed: false }
+  const result = applyConsumableEffect(actor, item, itemId, 'drink') as DrinkResult
+  return { allowed: true, eatReadyTick: timing.eatReadyTick, comboReadyTick: timing.comboReadyTick, result }
 }

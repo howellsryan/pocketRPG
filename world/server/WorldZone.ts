@@ -32,7 +32,7 @@ import { type ZoneDef, type ZoneExitDef } from '../shared/zone'
 import { ZONES } from './zones'
 import { loadStoredZone } from './zoneStore'
 import { gearFromEquipment } from '../shared/appearance'
-import { BURY_XP, healAmount, primaryInvAction, resolveEatTiming } from '../shared/itemActions'
+import { BURY_XP, healAmount, primaryInvAction, resolveEatTiming, resolveDrink } from '../shared/itemActions'
 import { checkEquipRequirements, equipItem, placeUnequippedItems } from '../../src/engine/equipment.js'
 import { applyEat, applyCombo } from '../../src/engine/combat.js'
 import { isComboConsumable } from '../../src/engine/consumables.js'
@@ -504,6 +504,7 @@ export class WorldZone extends Server<Env> {
       lastSpecSent: 100,
       ...seedPrayer(stats.prayer?.level ?? getLevelFromXP(Number(stats.prayer?.xp) || 0) ?? 1),
       lastPrayerSent: null,
+      activePotions: {},
       lingerUntilTick: null,
     }
     this.players.set(charId, player)
@@ -736,7 +737,41 @@ export class WorldZone extends Server<Env> {
     if (!primary || primary.action !== message.action) return
 
     if (message.action === 'drink') {
-      player.pendingEvents.push({ e: 'msg', text: 'Potions don’t work out here yet.' })
+      // Potions run on the combo cooldown (§4). Apply the effect to the live
+      // fight's engine state when in combat (so the boost/pool takes effect this
+      // tick and the tick sync mirrors it back to the session), else to the
+      // session directly.
+      const buffState = player.combat ? player.combat.state : player
+      const actor = {
+        hp: player.hp,
+        maxHP: player.maxHp,
+        activePotions: buffState.activePotions,
+        prayerPoints: buffState.prayerPoints,
+        maxPrayerPoints: buffState.maxPrayerPoints,
+      }
+      const res = resolveDrink(actor, itemId, this.tickCount, player.eatReadyTick, player.comboReadyTick)
+      if (!res.allowed) {
+        player.pendingEvents.push({ e: 'msg', text: 'You need to wait before drinking again.' })
+        return
+      }
+      removeOneAt(player.inventory, message.slot)
+      consumeUnits(player.pools, itemId, 1)
+      player.hp = actor.hp
+      buffState.prayerPoints = actor.prayerPoints
+      player.eatReadyTick = res.eatReadyTick
+      player.comboReadyTick = res.comboReadyTick
+      if (player.combat) {
+        player.combat.state = applyCombo(player.combat.state)
+        player.prayerPoints = player.combat.state.prayerPoints
+      }
+      const restored = res.result.prayerRestored ?? 0
+      player.pendingEvents.push({
+        e: 'msg',
+        text: restored > 0 ? `You drink the ${itemNameOf(itemId).toLowerCase()}. (+${restored} prayer)` : `You drink the ${itemNameOf(itemId).toLowerCase()}.`,
+      })
+      emitPrayerIfChanged(player, player.pendingEvents)
+      this.pendingInvEcho.add(player.charId)
+      this.scheduleDirtyFlush(player)
       return
     }
 
