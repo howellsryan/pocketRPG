@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { npcsFromZone, recordDamage, tickNpc, toNpcDiff, topDamageContributor, type NpcState } from '../server/npc'
 import { emptyResult, type TickContext } from '../server/tick'
+import { findPathAdjacent } from '../server/pathfind'
 
 const WANDER = { x: 4, z: 4, w: 4, h: 4 } // tiles 4..7 in each axis
 // All-walkable 16x16 collision.
@@ -9,6 +10,12 @@ const COLLISION = Array.from({ length: 16 }, () => '.'.repeat(16))
 function makeBull(overrides: Partial<NpcState> = {}): NpcState {
   const npc = npcsFromZone([{ id: 'bull_1', monsterId: 'pasture_bull', x: 5, z: 5, wander: WANDER }]).get('bull_1')!
   return { ...npc, ...overrides }
+}
+
+/** A chase ctx wired with the real A* pathfinder over `collision`, mirroring how
+ * WorldZone builds it (npcs chase via ctx.pathAdjacent now, not a greedy step). */
+function chaseCtx(tick: number, players: Map<string, { x: number; z: number }>, collision = COLLISION): TickContext {
+  return { tick, rocks: new Map(), npcs: new Map(), collision, players, pathAdjacent: (from, to) => findPathAdjacent(collision, from, to) }
 }
 
 function ctx(tick: number): TickContext {
@@ -93,15 +100,33 @@ describe('aggro pursuit', () => {
     const bull = makeBull({ state: 'combat', attackerId: 'p1', lastCombatTick: 0 })
     const players = new Map([['p1', { x: 9, z: 5 }]])
     const before = { x: bull.x, z: bull.z }
-    tickNpc(bull, { tick: 1, rocks: new Map(), npcs: new Map(), collision: COLLISION, players }, emptyResult())
+    tickNpc(bull, chaseCtx(1, players), emptyResult())
     expect(bull.x).toBeGreaterThan(before.x)
     expect(bull.z).toBe(before.z)
+  })
+
+  it('rounds an obstacle instead of wedging on it (A* chase, not greedy)', () => {
+    // A vertical wall at x=8 (z rows 3..7) sits directly between the bull at
+    // (7,5) and its attacker at (9,5). The old greedy step wedged against the
+    // wall forever; the A* chase must route around an end of it and close in.
+    const collision = COLLISION.map((row, z) =>
+      z >= 3 && z <= 7 ? row.slice(0, 8) + '#' + row.slice(9) : row
+    )
+    const bull = makeBull({ x: 7, z: 5, home: { x: 7, z: 5 }, state: 'combat', attackerId: 'p1', lastCombatTick: 0 })
+    const players = new Map([['p1', { x: 9, z: 5 }]])
+    let reached = false
+    for (let t = 1; t <= 40 && !reached; t++) {
+      tickNpc(bull, chaseCtx(t, players, collision), emptyResult())
+      expect(collision[bull.z][bull.x]).toBe('.') // never stands on the wall
+      if (Math.max(Math.abs(bull.x - 9), Math.abs(bull.z - 5)) <= 1) reached = true
+    }
+    expect(reached).toBe(true)
   })
 
   it('stands still once adjacent to its attacker again', () => {
     const bull = makeBull({ x: 5, z: 5, state: 'combat', attackerId: 'p1', lastCombatTick: 0 })
     const players = new Map([['p1', { x: 6, z: 5 }]])
-    tickNpc(bull, { tick: 1, rocks: new Map(), npcs: new Map(), collision: COLLISION, players }, emptyResult())
+    tickNpc(bull, chaseCtx(1, players), emptyResult())
     expect(bull).toMatchObject({ x: 5, z: 5 })
   })
 
@@ -112,7 +137,7 @@ describe('aggro pursuit', () => {
     recordDamage(bull, 'p1', 3, 1)
     const players = new Map([['p1', { x: 20, z: 5 }]])
     const result = emptyResult()
-    tickNpc(bull, { tick: 1, rocks: new Map(), npcs: new Map(), collision: COLLISION, players }, result)
+    tickNpc(bull, chaseCtx(1, players), result)
     expect(bull.attackerId).toBeNull()
     expect(bull.state).toBe('idle')
     expect(bull).toMatchObject({ x: 5, z: 5, hp: 8 })
@@ -123,7 +148,7 @@ describe('aggro pursuit', () => {
   it('does not move while its attacker is missing from the players snapshot', () => {
     const bull = makeBull({ state: 'combat', attackerId: 'p1', lastCombatTick: 0 })
     const before = { x: bull.x, z: bull.z }
-    tickNpc(bull, { tick: 1, rocks: new Map(), npcs: new Map(), collision: COLLISION }, emptyResult())
+    tickNpc(bull, chaseCtx(1, new Map()), emptyResult())
     expect(bull).toMatchObject(before)
   })
 })

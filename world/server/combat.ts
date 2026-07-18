@@ -9,7 +9,7 @@ import { resolveMagicSpell, getCombatType } from '../../src/engine/equipment.js'
 import itemsData from '../../src/data/items.json'
 import monstersData from '../../src/data/monsters.json'
 import spellsData from '../../src/data/spells.json'
-import { grantSessionXp, monsterAttackAnim, monsterAttackRange, rangeForCombatType, withinRange, type TickPlayer } from './tick'
+import { grantSessionXp, monsterAttackAnim, monsterAttackRange, rangeForCombatType, withinRangeAndSight, type TickPlayer } from './tick'
 import { recordDamage, topDamageContributor, type NpcState } from './npc'
 import type { TickContext, TickResult } from './tick'
 import type { ZoneEvent } from '../shared/protocol'
@@ -158,8 +158,12 @@ export function stepCombat(player: TickPlayer, ctx: TickContext, result: TickRes
   // chases. Aggro persists either way (npc.ts keeps chasing).
   const playerRange = rangeForCombatType(combat.state.combatType as string)
   const monsterRange = monsterAttackRange(npc.monsterId)
-  const inPlayerRange = withinRange(player, npc, playerRange)
-  const inMonsterRange = withinRange(player, npc, monsterRange)
+  const collision = ctx.collision ?? []
+  // Ranged/magic need line of sight to land (both directions) — a wall between
+  // the two blocks the shot, so a player can't kite a boss from behind a pillar
+  // it can never see through, and vice versa.
+  const inPlayerRange = withinRangeAndSight(player, npc, playerRange, collision)
+  const inMonsterRange = withinRangeAndSight(player, npc, monsterRange, collision)
   if (!inPlayerRange && !inMonsterRange) {
     player.combat = null
     player.anim = 'idle'

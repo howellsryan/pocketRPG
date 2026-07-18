@@ -10,6 +10,7 @@ import { getLevelFromXP, clampXP } from '../../src/engine/experience.js'
 import { startCombat, stepCombat, playerAttackRange, type CombatSession } from './combat'
 import type { NpcState } from './npc'
 import type { LootEntity } from './loot'
+import { hasLineOfSight } from './los'
 import monstersData from '../../src/data/monsters.json'
 
 type MonsterStyles = Record<string, { attackStyle?: string } | undefined>
@@ -191,6 +192,21 @@ export function monsterAttackAnim(monsterId: string): 'attack' | 'attack_ranged'
 
 export function withinRange(a: { x: number; z: number }, b: { x: number; z: number }, range: number): boolean {
   return Math.max(Math.abs(a.x - b.x), Math.abs(a.z - b.z)) <= range
+}
+
+/** Reach check for actually landing a hit: within Chebyshev range AND, for
+ * ranged/magic (range > melee), an unobstructed line of sight. Melee (range 1)
+ * needs only adjacency. This is the gate that closes safespotting — applied
+ * symmetrically to a player's shot and a monster's. */
+export function withinRangeAndSight(
+  a: { x: number; z: number },
+  b: { x: number; z: number },
+  range: number,
+  collision: string[],
+): boolean {
+  if (!withinRange(a, b, range)) return false
+  if (range <= MELEE_RANGE) return true
+  return hasLineOfSight(collision, a, b)
 }
 
 /** Trims an approach path to stop at the first tile within `range` of the
@@ -403,8 +419,9 @@ export function emitRunIfChanged(player: TickPlayer, events: ZoneEvent[]): void 
  * monster keeps swinging once it catches up (melee at 1 tile, ranged/magic from
  * their reach). */
 function findAggroInRange(player: TickPlayer, ctx: TickContext): NpcState | undefined {
+  const collision = ctx.collision ?? []
   for (const npc of ctx.npcs?.values() ?? []) {
-    if (npc.state === 'combat' && npc.attackerId === player.charId && withinRange(player, npc, monsterAttackRange(npc.monsterId))) return npc
+    if (npc.state === 'combat' && npc.attackerId === player.charId && withinRangeAndSight(player, npc, monsterAttackRange(npc.monsterId), collision)) return npc
   }
   return undefined
 }

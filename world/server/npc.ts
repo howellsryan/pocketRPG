@@ -4,7 +4,8 @@
 import monstersData from '../../src/data/monsters.json'
 import type { EntityDiff } from '../shared/protocol'
 import type { ZoneNpcDef } from '../shared/zone'
-import { monsterAttackRange, withinRange, type TickContext, type TickResult } from './tick'
+import { monsterAttackRange, withinRangeAndSight, type TickContext, type TickResult } from './tick'
+import type { Tile } from './pathfind'
 
 type Monsters = Record<string, { name?: string; hitpoints?: number }>
 
@@ -30,6 +31,11 @@ export type NpcState = {
   /** Damage per attacker for loot attribution; `tick` = when that total last
    * increased (tie-break: first to reach the total). */
   damageByChar: Map<string, { dmg: number; tick: number }>
+  /** Cached A* chase route toward the aggro target and the target tile it was
+   * planned for. Recomputed when the target moves or the route runs out — so the
+   * npc rounds obstacles instead of wedging on them (the old greedy step). */
+  chasePath: Tile[]
+  chaseGoal: { x: number; z: number } | null
 }
 
 const WANDER_MIN_TICKS = 5
@@ -87,6 +93,8 @@ export function npcsFromZone(npcs: ZoneNpcDef[]): Map<string, NpcState> {
       attackerId: null,
       lastCombatTick: 0,
       damageByChar: new Map(),
+      chasePath: [],
+      chaseGoal: null,
     })
   }
   return map
@@ -122,28 +130,40 @@ function chebyshev(a: { x: number; z: number }, b: { x: number; z: number }): nu
   return Math.max(Math.abs(a.x - b.x), Math.abs(a.z - b.z))
 }
 
-/** One greedy step toward the aggro target — aimed instead of random, same
- * "one tile if walkable, else stand still" style as wander(). Falls back to an
- * off-axis step when the direct tile is blocked, and forbids the diagonal
- * corner-cut pathfind.ts also forbids. */
-function chaseStep(npc: NpcState, target: { x: number; z: number }, collision: string[]): boolean {
-  const dx = Math.sign(target.x - npc.x)
-  const dz = Math.sign(target.z - npc.z)
-  if (dx === 0 && dz === 0) return false
-  const candidates: [number, number][] =
-    dx !== 0 && dz !== 0 ? [[dx, dz], [dx, 0], [0, dz]]
-    : dx !== 0 ? [[dx, 0], [dx, 1], [dx, -1]]
-    : [[0, dz], [1, dz], [-1, dz]]
-  for (const [ddx, ddz] of candidates) {
-    const nx = npc.x + ddx
-    const nz = npc.z + ddz
-    if (!walkable(collision, nx, nz)) continue
-    if (ddx !== 0 && ddz !== 0 && (!walkable(collision, npc.x + ddx, npc.z) || !walkable(collision, npc.x, npc.z + ddz))) continue
-    npc.x = nx
-    npc.z = nz
-    return true
+/** One A* step toward the aggro target. Plans a route to a tile adjacent to the
+ * target (via the shared pathfinder) and advances one tile along it, replanning
+ * when the target has moved or the cached route is spent. Unlike the old greedy
+ * step this rounds walls and pillars instead of wedging against them — the core
+ * of the safespot fix, since a boss that can path around cover will always close
+ * to melee range. Returns whether the npc moved this tick. */
+function chaseTowards(npc: NpcState, target: { x: number; z: number }, ctx: TickContext): boolean {
+  const goal = { x: target.x, z: target.z }
+  const stale =
+    npc.chasePath.length === 0 ||
+    !npc.chaseGoal ||
+    npc.chaseGoal.x !== goal.x ||
+    npc.chaseGoal.z !== goal.z
+  if (stale) {
+    const path = ctx.pathAdjacent?.({ x: npc.x, z: npc.z }, goal) ?? null
+    // pathAdjacent returns [start, ...steps]; drop the tile we're already on.
+    npc.chasePath = path && path.length > 1 ? path.slice(1) : []
+    npc.chaseGoal = goal
   }
-  return false
+  const next = npc.chasePath.shift()
+  if (!next) return false
+  // Defensive: never step onto a tile that isn't walkable anymore.
+  if (!walkable(ctx.collision ?? [], next.x, next.z)) {
+    npc.chasePath = []
+    return false
+  }
+  npc.x = next.x
+  npc.z = next.z
+  return true
+}
+
+function clearChase(npc: NpcState): void {
+  npc.chasePath = []
+  npc.chaseGoal = null
 }
 
 /** Gives up the chase: same reset as an out-of-combat heal (return to full,
@@ -158,6 +178,7 @@ function giveUpPursuit(npc: NpcState): void {
   npc.z = npc.home.z
   npc.wanderCooldown = randInt(WANDER_MIN_TICKS, WANDER_MAX_TICKS)
   npc.damageByChar.clear()
+  clearChase(npc)
 }
 
 /** Advances one npc: respawn timer, out-of-combat heal/pursuit, or wander.
@@ -172,6 +193,7 @@ export function tickNpc(npc: NpcState, ctx: TickContext, result: TickResult): vo
       npc.x = npc.home.x
       npc.z = npc.home.z
       npc.wanderCooldown = randInt(WANDER_MIN_TICKS, WANDER_MAX_TICKS)
+      clearChase(npc)
       result.npcChanged.push(npc.id)
     }
     return
@@ -183,22 +205,24 @@ export function tickNpc(npc: NpcState, ctx: TickContext, result: TickResult): vo
         npc.state = 'idle'
         npc.hp = npc.maxHp
         npc.damageByChar.clear()
+        clearChase(npc)
         result.npcChanged.push(npc.id)
       }
       return
     }
-    // Aggro'd on an attacker: stand and fight while within ITS attack range (an
-    // active engine session drives this tick-by-tick — melee at 1 tile, ranged/
-    // magic from afar), otherwise chase them down — leashed to a radius around
-    // home so it can't trek across the whole zone.
+    // Aggro'd on an attacker: stand and fight while within ITS attack range AND
+    // line of sight (an active engine session drives this tick-by-tick — melee at
+    // 1 tile, ranged/magic from afar with a clear line), otherwise chase them
+    // down to regain reach+sight — leashed to a radius around home so it can't
+    // trek across the whole zone.
     const target = ctx.players?.get(npc.attackerId)
-    if (!target || withinRange(npc, target, monsterAttackRange(npc.monsterId))) return
+    if (!target || withinRangeAndSight(npc, target, monsterAttackRange(npc.monsterId), ctx.collision ?? [])) return
     if (chebyshev(npc, npc.home) >= PURSUE_LEASH_TILES) {
       giveUpPursuit(npc)
       result.npcChanged.push(npc.id)
       return
     }
-    if (chaseStep(npc, target, ctx.collision ?? [])) result.npcChanged.push(npc.id)
+    if (chaseTowards(npc, target, ctx)) result.npcChanged.push(npc.id)
     return
   }
 
