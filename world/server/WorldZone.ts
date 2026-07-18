@@ -1037,6 +1037,12 @@ export class WorldZone extends Server<Env> {
         }
         this.scheduleDirtyFlush(player)
       }
+      if (result.equipmentDirty) {
+        // Ranged ammo was consumed from the equipped slot this tick — snapshot
+        // equipment to the save on the next flush so arrows aren't free.
+        player.equipmentDirty = true
+        this.scheduleDirtyFlush(player)
+      }
       if (result.events.length > 0) eventsByChar.set(player.charId, result.events)
       if (result.died) this.respawnPlayer(player, playerEnts)
     }

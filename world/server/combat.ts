@@ -59,6 +59,17 @@ const NPC_REMOVE_AFTER_DEATH_TICKS = 3
 
 type Monsters = Record<string, Record<string, unknown>>
 
+/** Decrements the player's equipped ammo by `qty`, nulling the slot when it
+ * empties. Only touches the slot the engine actually fired (guards against a
+ * mid-fight ammo swap). Mirrors applyTaskResult.js / pvpEngine.js. */
+function consumeEquippedAmmo(player: TickPlayer, itemId: string, qty: number): void {
+  const equipment = player.equipment as { ammo?: { itemId?: string; quantity?: number } | null }
+  const ammo = equipment.ammo
+  if (!ammo || ammo.itemId !== itemId) return
+  const remaining = Math.max(0, (Math.floor(Number(ammo.quantity)) || 0) - Math.max(1, Math.floor(qty)))
+  player.equipment = { ...player.equipment, ammo: remaining > 0 ? { ...ammo, quantity: remaining } : null }
+}
+
 function playerStatsFor(player: TickPlayer): Record<string, number> {
   const lvl = (s: string) => player.stats[s]?.level ?? 1
   return {
@@ -196,7 +207,7 @@ export function stepCombat(player: TickPlayer, ctx: TickContext, result: TickRes
     }
   }
 
-  for (const ev of events as { type: string; damage?: number; hits?: number[]; totalDamage?: number; loot?: { itemId: string; quantity: number }[]; xpSkills?: Record<string, number>; spellName?: string }[]) {
+  for (const ev of events as { type: string; damage?: number; hits?: number[]; totalDamage?: number; loot?: { itemId: string; quantity: number }[]; xpSkills?: Record<string, number>; spellName?: string; itemId?: string; qty?: number }[]) {
     if (ev.type === 'playerHit') {
       if (!inPlayerRange) continue
       player.anim = attackAnimFor(combat.state.combatType as string)
@@ -211,6 +222,21 @@ export function stepCombat(player: TickPlayer, ctx: TickContext, result: TickRes
       player.anim = 'idle'
       resetSpecial(player, result)
       return
+    } else if (ev.type === 'noAmmo') {
+      // Out of ammunition: the engine can't resolve a ranged swing, so end the
+      // fight cleanly rather than let it stall forever splashing nothing.
+      result.events.push({ e: 'msg', text: 'You have run out of ammunition.' })
+      player.combat = null
+      if (npc.attackerId === player.charId) npc.attackerId = null
+      player.anim = 'idle'
+      resetSpecial(player, result)
+      return
+    } else if (ev.type === 'consumeAmmo') {
+      // The engine fired a ranged shot: decrement the equipped ammo on the save's
+      // equipment so arrows aren't free, and flag the equipment dirty so the flush
+      // persists the reduced stack. Mirrors applyTaskResult / pvpEngine.
+      if (ev.itemId) consumeEquippedAmmo(player, ev.itemId, ev.qty ?? 1)
+      result.equipmentDirty = true
     } else if (ev.type === 'specialHit') {
       if (!inPlayerRange) continue
       player.anim = attackAnimFor(combat.state.combatType as string)

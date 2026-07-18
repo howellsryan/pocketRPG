@@ -109,6 +109,10 @@ export type TickResult = {
   hits: { targetId: string; dmg: number }[]
   /** This player's HP hit 0 this tick → respawn + {t:'dead'}. */
   died: boolean
+  /** Ranged ammo left the equipped slot this tick (combat.ts mutated
+   * player.equipment.ammo) → the DO marks equipment dirty + debounces a flush so
+   * the consumed arrows are persisted to the save. */
+  equipmentDirty: boolean
   /** Loot to add to the zone (rolled on a kill this player landed). */
   newLoot: LootEntity[]
   /** NPC ids whose broadcast state changed / that should be removed. */
@@ -117,7 +121,7 @@ export type TickResult = {
 }
 
 export function emptyResult(): TickResult {
-  return { entChanged: false, events: [], rockChanges: [], bankOpen: false, stationOpen: null, consumed: [], hits: [], died: false, newLoot: [], npcChanged: [], npcRemoved: [] }
+  return { entChanged: false, events: [], rockChanges: [], bankOpen: false, stationOpen: null, consumed: [], hits: [], died: false, equipmentDirty: false, newLoot: [], npcChanged: [], npcRemoved: [] }
 }
 
 /** Seeds the 28-slot session pack from the character's PocketRPG inventory at
