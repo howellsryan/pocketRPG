@@ -353,7 +353,7 @@ function GameApp() {
     gameLocked, lockGame, unlockGame, runLockedSave, awaitCombatCompletion, resolveCombatCompletion,
     characterUnlocks, slayerPerks, dailyTaskStates, setDailyTasks, recordGameEvent, updateWorldLocation, worldLocation, clearActivityProgress, requestActivityStart,
     inventoryFull, signalInventoryFull, dismissInventoryFullPrompt, resolveInventoryFull, combatStance, activeCombatSpell,
-    autoBankExcludedItems, backgroundCombat, combatStatus, settleKingdom } = useGame()
+    autoBankExcludedItems, backgroundCombat, combatStatus, settleKingdom, applyKingdomSkip } = useGame()
   const pvp = usePvp()
   const [screen, setScreen] = useState(SCREENS.HOME)
   const prevScreenRef = useRef(null) // screen before the current one (set by navigate)
@@ -2986,13 +2986,12 @@ function GameApp() {
       updateFarming(advanceFarmingState(farming, SKIP_HOUR_MS))
 
       // Kingdom of Royals is a real-time (wall-clock) system, but Skip 1h
-      // should still advance it like every other background system — settle
-      // as if the clock had jumped forward by the skipped hour. This adds on
-      // top of whatever real elapsed time had already accrued since the last
-      // settle, and stamps lastTickAt into the "paid-for" future, so the
-      // next real hour of wall-clock time has nothing further to settle
-      // until it catches up.
-      settleKingdom(Date.now() + SKIP_HOUR_MS)
+      // should still advance it like every other background system — add an
+      // extra hour of production on top of whatever real time has accrued.
+      // Unlike a naive future-stamp, this keeps lastTickAt at real now, so
+      // the live 60s tick and the loot modal keep updating immediately after
+      // a skip instead of freezing for the skipped hour.
+      applyKingdomSkip(SKIP_HOUR_MS)
 
       // Persist the paid skip to the cloud BEFORE revealing the reward.
       // persistSkipThenReveal keeps the saving overlay up until the save

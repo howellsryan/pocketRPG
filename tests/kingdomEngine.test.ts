@@ -11,6 +11,7 @@ import {
   estimateRuntimeMs,
   mergeLoot,
   withdrawAllLoot,
+  applyKingdomWindow,
 } from '../src/engine/kingdomEngine.js'
 import { KINGDOM_RESOURCE_TIERS, getEligibleTiers, pickWeightedTier } from '../src/engine/kingdomResources.js'
 import { KINGDOM_CATEGORIES, KINGDOM_COFFER_MAX, KINGDOM_DAILY_COST, KINGDOM_LABOUR_POINTS_MAX } from '../src/utils/constants.js'
@@ -349,5 +350,46 @@ describe('kingdomEngine — pending loot (gathered output does not auto-bank)', 
     // kingdom.pendingLoot via mergeLoot — verify that composition works end to end.
     const accumulated = mergeLoot(kingdom.pendingLoot, result.itemsGained)
     expect(Object.keys(accumulated).length).toBeGreaterThan(0)
+  })
+})
+
+describe('kingdomEngine — applyKingdomWindow (Skip-1h bonus production)', () => {
+  const HOUR_MS = 60 * 60 * 1000
+
+  it('adds a window of production and drains the coffer, folding output into pendingLoot', () => {
+    const kingdom = { ...DEFAULT_KINGDOM, cofferBalance: KINGDOM_COFFER_MAX, lastTickAt: 1000, allocations: { mining: 4, fishing: 0, woodcutting: 0, farming: 0 }, pendingLoot: { tin_ore: 5 } }
+    const next = applyKingdomWindow(kingdom, statsAtLevel(99), HOUR_MS, itemsData)
+    const total = Object.values(next.pendingLoot).reduce((sum, qty) => sum + qty, 0)
+    expect(total).toBeGreaterThan(5) // grew on top of the existing 5 tin_ore
+    expect(next.cofferBalance).toBeLessThan(KINGDOM_COFFER_MAX)
+  })
+
+  it('does NOT advance lastTickAt — the whole point, so live wall-clock settling keeps working after a skip', () => {
+    const kingdom = { ...DEFAULT_KINGDOM, cofferBalance: KINGDOM_COFFER_MAX, lastTickAt: 123456, allocations: { mining: 4, fishing: 0, woodcutting: 0, farming: 0 } }
+    const next = applyKingdomWindow(kingdom, statsAtLevel(99), HOUR_MS, itemsData)
+    expect(next.lastTickAt).toBe(123456)
+  })
+
+  it('two successive skips both add a full window of production (no future-stamp no-op)', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    const start = { ...DEFAULT_KINGDOM, cofferBalance: KINGDOM_COFFER_MAX, lastTickAt: 1000, allocations: { mining: 4, fishing: 0, woodcutting: 0, farming: 0 } }
+    const afterFirst = applyKingdomWindow(start, statsAtLevel(99), HOUR_MS, itemsData)
+    const afterSecond = applyKingdomWindow(afterFirst, statsAtLevel(99), HOUR_MS, itemsData)
+    const firstTotal = Object.values(afterFirst.pendingLoot).reduce((sum, qty) => sum + qty, 0)
+    const secondTotal = Object.values(afterSecond.pendingLoot).reduce((sum, qty) => sum + qty, 0)
+    expect(secondTotal).toBeCloseTo(firstTotal * 2, -1) // second skip added just as much again
+  })
+
+  it('does not mutate the input kingdom', () => {
+    const kingdom = { ...DEFAULT_KINGDOM, cofferBalance: KINGDOM_COFFER_MAX, lastTickAt: 1000, allocations: { mining: 4, fishing: 0, woodcutting: 0, farming: 0 }, pendingLoot: { tin_ore: 5 } }
+    applyKingdomWindow(kingdom, statsAtLevel(99), HOUR_MS, itemsData)
+    expect(kingdom.pendingLoot).toEqual({ tin_ore: 5 })
+    expect(kingdom.cofferBalance).toBe(KINGDOM_COFFER_MAX)
+  })
+
+  it('produces nothing when the coffer is empty', () => {
+    const kingdom = { ...DEFAULT_KINGDOM, cofferBalance: 0, lastTickAt: 1000, allocations: { mining: 4, fishing: 0, woodcutting: 0, farming: 0 } }
+    const next = applyKingdomWindow(kingdom, statsAtLevel(99), HOUR_MS, itemsData)
+    expect(next.pendingLoot).toEqual({})
   })
 })

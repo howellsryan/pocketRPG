@@ -7,7 +7,7 @@ import { simulateIdleCombatChain } from '../engine/idleSlayerLoop.js'
 import { simulateIdleThieving } from '../engine/thieving.js'
 import { simulateIdleHunting } from '../engine/hunter.js'
 import { simulateQuestIdleCascade, splitQuestXpRewards } from '../engine/questIdleCascade.js'
-import { simulateKingdom, normaliseKingdomState, DEFAULT_KINGDOM, mergeLoot } from '../engine/kingdomEngine.js'
+import { simulateKingdom, normaliseKingdomState, DEFAULT_KINGDOM, mergeLoot, applyKingdomWindow } from '../engine/kingdomEngine.js'
 import { ALL_SKILLS, MAX_XP, AUTO_SAVE_DEBOUNCE, QUEST_QUEUE_MAX } from '../utils/constants.js'
 import { debounce } from '../utils/helpers.js'
 import { mergeKillCounts } from '../utils/killCountMerge.js'
@@ -1193,6 +1193,20 @@ export function GameProvider({ children }) {
     return next
   }, [updateKingdom])
 
+  // Skip-1h: advance the kingdom by an extra `skipMs` of production on top of
+  // any real elapsed time, WITHOUT pushing lastTickAt into the future — so the
+  // live 60s tick keeps settling real wall-clock time afterwards. The old
+  // future-stamp (settleKingdom(now + skipMs)) froze the coffer and loot for
+  // the whole skipped hour and made repeat skips near no-ops.
+  const applyKingdomSkip = useCallback((skipMs) => {
+    settleKingdom(Date.now())            // fold in real elapsed time first
+    const current = kingdomRef.current
+    if (!current.lastTickAt) return current
+    const next = applyKingdomWindow(current, stateRef.current.stats, skipMs, itemsData)
+    updateKingdom(next)
+    return next
+  }, [settleKingdom, updateKingdom])
+
   // ── Toasts ──
   const addToast = useCallback((message, type = 'info', icon = null) => {
     if (type === 'info' && !showInfoToastsRef.current) return
@@ -1602,7 +1616,7 @@ export function GameProvider({ children }) {
     getActivityProgress, clearActivityProgress,
     slayerPerks, updateSlayerPerk,
     characterUnlocks, updateCharacterUnlock,
-    kingdom, updateKingdom, settleKingdom,
+    kingdom, updateKingdom, settleKingdom, applyKingdomSkip,
     isIronman: player?.is_ironman || false,
     isOneLife: player?.is_one_life || false,
     revertOneLifeMode,

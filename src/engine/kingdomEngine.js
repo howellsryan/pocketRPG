@@ -152,6 +152,24 @@ export function simulateKingdom(kingdom, stats, elapsedMs, itemsData = {}) {
   return { cofferBalance, coinsDrained, itemsGained }
 }
 
+/**
+ * Apply one discrete window of production to the kingdom — Skip-1h's "advance
+ * by an extra hour" — WITHOUT moving lastTickAt. Drains the coffer and folds
+ * `windowMs` of gathered output into pendingLoot on top of the current state.
+ * Leaving lastTickAt untouched is the whole point: stamping it into the future
+ * froze live wall-clock settling (and made repeat skips no-ops) for the length
+ * of the skipped window. Returns a new kingdom object; never mutates its input.
+ */
+export function applyKingdomWindow(kingdom, stats, windowMs, itemsData = {}) {
+  const state = normaliseKingdomState(kingdom)
+  const sim = simulateKingdom(state, stats, windowMs, itemsData)
+  return {
+    ...state,
+    cofferBalance: sim.cofferBalance,
+    pendingLoot: mergeLoot(state.pendingLoot, sim.itemsGained),
+  }
+}
+
 /** Estimated coffer runtime remaining, in ms, at the current allocation (0 if idle/empty). */
 export function estimateRuntimeMs(kingdom) {
   const state = normaliseKingdomState(kingdom)
