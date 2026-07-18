@@ -4,10 +4,9 @@ import Card from '../components/Card.jsx'
 import Button from '../components/Button.jsx'
 import Modal from '../components/Modal.jsx'
 import GameIcon from '../components/GameIcon.jsx'
-import ItemSlot from '../components/ItemSlot.jsx'
 import BackLink from '../components/BackLink.jsx'
 import CollapseChevron from '../components/CollapseChevron.jsx'
-import { formatNumber } from '../utils/helpers.js'
+import { formatNumber, formatQuantity } from '../utils/helpers.js'
 import { getLootTotalValue } from '../utils/itemValue.js'
 import { formatIdleTime } from '../engine/idleEngine.js'
 import {
@@ -241,17 +240,30 @@ export default function KingdomScreen({ onBack }) {
       )}
 
       {showLootModal && (
-        <Modal title="Gathered Loot" onClose={() => setShowLootModal(false)}>
-          <Button variant="primary" size="sm" className="w-full mb-3" onClick={handleWithdrawAllLoot} disabled={lootEntries.length === 0}>
-            Withdraw All to Bank
-          </Button>
+        <Modal
+          title="Gathered Loot"
+          onClose={() => setShowLootModal(false)}
+          headerActions={
+            <Button variant="primary" size="sm" onClick={handleWithdrawAllLoot} disabled={lootEntries.length === 0}>
+              Collect
+            </Button>
+          }
+        >
           {lootEntries.length === 0 ? (
             <div class="text-sm text-[var(--color-parchment)] opacity-60 text-center py-4">Nothing gathered yet</div>
           ) : (
-            <div class="grid grid-cols-4 md:grid-cols-7 gap-2 justify-items-center">
-              {lootEntries.map(([itemId, qty]) => (
-                <ItemSlot key={itemId} slot={{ itemId, quantity: qty }} />
-              ))}
+            <div class="grid grid-cols-4 md:grid-cols-7 gap-1">
+              {lootEntries.map(([itemId, qty]) => {
+                const item = itemsData?.[itemId]
+                const { text, isM } = formatQuantity(qty)
+                return (
+                  <div key={itemId} class="w-full flex flex-col items-center p-1.5 rounded-lg border border-[var(--color-void-border)] bg-[var(--color-void-light)]">
+                    <GameIcon item={item} size={28} />
+                    <span class="w-full text-center text-[8px] leading-tight text-[var(--color-parchment)] opacity-60 truncate">{item?.name || itemId}</span>
+                    <span class={`text-[9px] font-[var(--font-mono)] font-bold ${isM ? 'text-[var(--color-emerald)]' : 'text-[var(--color-gold)]'}`}>×{text}</span>
+                  </div>
+                )
+              })}
             </div>
           )}
         </Modal>

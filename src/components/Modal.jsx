@@ -21,6 +21,7 @@ function getVisualViewportHeight() {
 export default function Modal({
   title,
   titleRight = null,
+  headerActions = null,
   onClose,
   children,
   fullHeight = false,
@@ -99,7 +100,7 @@ export default function Modal({
         style={dialogSizeStyle}
         onClick={(e) => e.stopPropagation()}
       >
-        {(title || titleRight) && (
+        {(title || titleRight || headerActions) && (
           <div class="flex flex-shrink-0 items-center justify-between gap-2 border-b border-[var(--color-void-border)] px-4 py-3">
             <div class="flex min-w-0 items-center gap-2">
               <h2 class="font-[var(--font-display)] text-base font-bold text-[var(--color-gold)]">
@@ -107,15 +108,18 @@ export default function Modal({
               </h2>
               {titleRight}
             </div>
-            {onClose && (
-              <button
-                onClick={onClose}
-                class="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--color-void)] text-[var(--color-parchment)] opacity-60 hover:opacity-100 active:bg-[var(--color-void-border)]"
-                aria-label="Close modal"
-              >
-                ✕
-              </button>
-            )}
+            <div class="flex flex-shrink-0 items-center gap-2">
+              {headerActions}
+              {onClose && (
+                <button
+                  onClick={onClose}
+                  class="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--color-void)] text-[var(--color-parchment)] opacity-60 hover:opacity-100 active:bg-[var(--color-void-border)]"
+                  aria-label="Close modal"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
           </div>
         )}
 
