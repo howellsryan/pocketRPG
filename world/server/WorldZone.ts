@@ -15,10 +15,10 @@ import {
 } from './tick'
 import { STATIONS, recipeFor, stationTypeForVerb, isStationType } from '../shared/recipes'
 import { hasMaterials, maxCraftable } from './crafting'
-import { resolveCombatSetup, isSameFightTarget, playerAttackRange, emitPrayerIfChanged } from './combat'
+import { resolveCombatSetup, isSameFightTarget, playerAttackRange, emitPrayerIfChanged, startCombat } from './combat'
 import { seedPrayer, resolvePrayerToggle } from '../shared/prayer'
 import spellsJson from '../../src/data/spells.json'
-import { npcsFromZone, reselectAttacker, tickNpc, toNpcDiff, type NpcState } from './npc'
+import { npcsFromZone, pickAggroTarget, reselectAttacker, tickNpc, toNpcDiff, type NpcState } from './npc'
 import { PLAYER_DROP_OWNER_TICKS, isExpired, isVisibleTo, spawnDrops, takeLoot, visibleLootFor, type LootEntity } from './loot'
 import { sanitizeChat } from '../shared/chat'
 import { addToInventory, countItem, freeSlotCount, inventoryIsFull, isStackable, moveInventorySlot, removeItems, removeOneAt } from './mining'
@@ -1136,6 +1136,25 @@ export class WorldZone extends Server<Env> {
       const engaged: { charId: string; x: number; z: number }[] = []
       for (const p of this.players.values()) if (p.combat?.npcId === npc.id) engaged.push({ charId: p.charId, x: p.x, z: p.z })
       reselectAttacker(npc, engaged, this.zone.collision)
+    }
+
+    // Aggressive idle npcs (bosses by default) pull the nearest unengaged player
+    // in radius + sight into combat — you can't stroll past Grondar unbothered.
+    // Force-starting the player's combat is what lets the engine roll the
+    // monster's swings against them (item 9).
+    const aggroCandidates = [...this.players.values()].map((p) => ({ charId: p.charId, x: p.x, z: p.z, inCombat: !!p.combat }))
+    for (const npc of npcs.values()) {
+      const targetId = pickAggroTarget(npc, aggroCandidates, this.zone.collision)
+      if (!targetId) continue
+      const target = this.players.get(targetId)
+      // Live re-check: the snapshot is from before this loop, so a player pulled
+      // by an earlier npc this tick must not be yanked into a second fight.
+      if (!target || target.combat) continue
+      startCombat(target, npc)
+      if (target.combat) {
+        npcChanged.add(npc.id)
+        playerEnts.set(target.charId, toEntityDiff(target))
+      }
     }
 
     // NPCs first (wander/respawn/heal) so player combat this tick reads fresh state.
