@@ -28,8 +28,10 @@ import { type ZoneDef, type ZoneExitDef } from '../shared/zone'
 import { ZONES } from './zones'
 import { loadStoredZone } from './zoneStore'
 import { gearFromEquipment } from '../shared/appearance'
-import { BURY_XP, healAmount, primaryInvAction } from '../shared/itemActions'
+import { BURY_XP, healAmount, primaryInvAction, resolveEatTiming } from '../shared/itemActions'
 import { checkEquipRequirements, equipItem, placeUnequippedItems } from '../../src/engine/equipment.js'
+import { applyEat, applyCombo } from '../../src/engine/combat.js'
+import { isComboConsumable } from '../../src/engine/consumables.js'
 import itemsData from '../../src/data/items.json'
 import { consumeUnits, depositUnits, emptyPools, mintUnits, withdrawUnits, type ItemPools, type Tally } from './sessionItems'
 import { grantSessionXp, cutPathToRange, withinRange } from './tick'
@@ -81,6 +83,11 @@ type Player = TickPlayer & {
   flushAtTick: number | null
   /** Last HP value sent to this client ({e:'hp'} goes out only on change). */
   lastHpSent: number
+  /** Absolute tick at/after which the next normal-food eat (resp. combo
+   * consumable) is allowed. Enforces §4's separate eat/combo cooldowns so a
+   * client can't spam-heal many times per tick and out-tank a boss. */
+  eatReadyTick: number
+  comboReadyTick: number
   /** Events queued outside the tick (bank ops, item actions) — drained into
    * the player's next diff. */
   pendingEvents: ZoneEvent[]
@@ -468,6 +475,8 @@ export class WorldZone extends Server<Env> {
       equipmentDirty: false,
       flushAtTick: null,
       lastHpSent: maxHp,
+      eatReadyTick: 0,
+      comboReadyTick: 0,
       pendingEvents: [],
       pendingLoot: null,
       lootView: new Set(),
@@ -670,9 +679,25 @@ export class WorldZone extends Server<Env> {
     }
 
     if (message.action === 'eat') {
+      // §4 eat timing: a normal food and a combo food each have their own 3-tick
+      // cooldown (one of each may land the same tick, never faster). Without this
+      // the eat ran instantly outside the tick loop — the 15 msg/s soft limit let
+      // a client heal ~9 times per 600ms tick and out-tank any boss.
+      const combo = isComboConsumable(items[itemId])
+      const timing = resolveEatTiming(this.tickCount, combo, player.eatReadyTick, player.comboReadyTick)
+      if (!timing.allowed) {
+        player.pendingEvents.push({ e: 'msg', text: 'You need to wait before eating again.' })
+        return
+      }
       removeOneAt(player.inventory, message.slot)
       consumeUnits(player.pools, itemId, 1)
       player.hp = Math.min(player.maxHp, player.hp + healAmount(itemId))
+      player.eatReadyTick = timing.eatReadyTick
+      player.comboReadyTick = timing.comboReadyTick
+      // Mid-fight, mirror the engine's consumable timing onto the live session:
+      // a normal food delays the next attack (applyEat), a combo food doesn't
+      // (applyCombo). Keeps the world's DPS-vs-heal trade-off honest.
+      if (player.combat) player.combat.state = (combo ? applyCombo : applyEat)(player.combat.state)
       player.pendingEvents.push({ e: 'msg', text: `You eat the ${itemNameOf(itemId).toLowerCase()}.` })
       this.pendingInvEcho.add(player.charId)
       this.scheduleDirtyFlush(player)
