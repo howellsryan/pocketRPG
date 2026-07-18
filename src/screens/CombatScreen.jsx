@@ -1584,14 +1584,16 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     // Potions are combo items — one per combo-delay; drop extra taps.
     if (combatRef.current.comboCooldown > 0) return
 
-    // Remove potion from inventory
-    if (newInv[potionIdx].quantity > 1) {
-      newInv[potionIdx] = { ...newInv[potionIdx], quantity: newInv[potionIdx].quantity - 1 }
-    } else {
-      newInv[potionIdx] = null
+    // Remove potion from inventory — unlimited-use items (e.g. Imbued Brain) never deplete.
+    if (!potion.unlimited) {
+      if (newInv[potionIdx].quantity > 1) {
+        newInv[potionIdx] = { ...newInv[potionIdx], quantity: newInv[potionIdx].quantity - 1 }
+      } else {
+        newInv[potionIdx] = null
+      }
+      updateInventory(newInv)
+      inventoryRef.current = newInv
     }
-    updateInventory(newInv)
-    inventoryRef.current = newInv
 
     // Apply the drink (buff registration + immediate HP heal + prayer restore)
     // via the shared consumables engine, then carry the result into combat state.
@@ -2305,6 +2307,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                               <div class="text-[9px] text-[var(--color-parchment)] opacity-60 mt-0.5">
                                 {formatDropChance(drop.chance)}
                                 {Array.isArray(drop.quantity) ? ` · ${drop.quantity[0]}–${drop.quantity[1]} ea` : ` · ${drop.quantity}`}
+                                {drop.taskOnly ? ' · Slayer task only' : ''}
                               </div>
                             </div>
                           </div>
@@ -3510,6 +3513,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                               <div class="text-[9px] text-[var(--color-parchment)] opacity-60 mt-0.5">
                                 {formatDropChance(drop.chance)}
                                 {Array.isArray(drop.quantity) ? ` · ${drop.quantity[0]}–${drop.quantity[1]} ea` : ` · ${drop.quantity}`}
+                                {drop.taskOnly ? ' · Slayer task only' : ''}
                               </div>
                             </div>
                           </div>

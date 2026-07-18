@@ -1002,9 +1002,11 @@ function avgHitStats(playerStats, equipment, monster, stance, itemsData, spell =
  * Roll drops for one monster kill.
  * Returns array of { itemId, quantity }
  */
-function idleRollDrops(monster) {
+function idleRollDrops(monster, isOnTask = false) {
   const drops = []
   for (const drop of (monster.drops || [])) {
+    // Task-only drops (e.g. Imbued Crown/Brain) never roll off-task.
+    if (drop.taskOnly && !isOnTask) continue
     if (Math.random() < drop.chance) {
       const qty = Array.isArray(drop.quantity)
         ? Math.floor(Math.random() * (drop.quantity[1] - drop.quantity[0] + 1)) + drop.quantity[0]
@@ -1101,7 +1103,10 @@ export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory,
         itemId: entry.itemId,
         item,
         durationTicks: getBoostPotionDurationTicks(item),
-        remaining: avail,
+        // Unlimited-use items (e.g. Imbued Brain) are never depleted or
+        // deducted from real inventory — one owned copy re-triggers forever.
+        remaining: item.unlimited ? Infinity : avail,
+        unlimited: !!item.unlimited,
       })
     } else if (isPrayerRestorePotion(item)) {
       restoreQueue.push({
@@ -1140,6 +1145,7 @@ export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory,
   function consumeBoostPotionAtIndex(index) {
     const entry = boostQueue[index]
     if (!entry || entry.remaining <= 0) return null
+    if (entry.unlimited) return entry
     entry.remaining--
     potionsConsumed[entry.itemId] = (potionsConsumed[entry.itemId] || 0) + 1
     return entry
@@ -1419,8 +1425,13 @@ export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory,
     remainingTicks -= killTicks
     monstersKilled++
 
+    // Is this kill on the player's currently assigned slayer task monster?
+    // (independent of the task-completion cap below, so task-only drops like
+    // Imbued Crown/Brain are eligible on the kill that finishes the task too.)
+    const isOnTask = !!(slayerTask && doesSlayerTaskMatchMonster(slayerTask.monsterId, monster.id))
+
     // Check if this kill counts toward slayer task — cap at total task count
-    if (slayerTask && doesSlayerTaskMatchMonster(slayerTask.monsterId, monster.id) && monstersKilledOnTask < slayerTask.monstersRemaining) {
+    if (isOnTask && monstersKilledOnTask < slayerTask.monstersRemaining) {
       monstersKilledOnTask++
       // Auto-slayer chain: stop the instant the task is cleared so the caller
       // knows exactly how much idle time this task consumed and can assign the
@@ -1438,7 +1449,7 @@ export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory,
     }
 
     // Loot for this kill — place items into inventory, overflow to lost/banked
-    for (const drop of idleRollDrops(monster)) {
+    for (const drop of idleRollDrops(monster, isOnTask)) {
       const item = itemsData[drop.itemId]
       const stackable = item?.stackable || false
 
