@@ -3040,14 +3040,6 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                 />
               )}
 
-              {/* Kill stats */}
-              {fightStartedAt && (
-                <div class="cb-kstats">
-                  <div class="cb-kstat"><span class="cb-kstat__k">Kills</span><span class="cb-kstat__v">{killCount}</span></div>
-                  <div class="cb-kstat"><span class="cb-kstat__k">Kills / hr</span><span class="cb-kstat__v">{killCount > 0 && (Date.now() - fightStartedAt) > 5000 ? Math.round(killCount / ((Date.now() - fightStartedAt) / 3600000)).toLocaleString() : '—'}</span></div>
-                </div>
-              )}
-
               {/* Action row — Special / Cast / Prayer (Eat/Potion/Gear now live in the quick-actions tabs) */}
               {combat.active && !isAutoRestarting && (() => {
                 const weaponEntry = equipment?.weapon
@@ -3059,7 +3051,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                 const isMagic = weapon?.attackStyle === 'magic'
                 const prayerActive = !!(combat?.activeProtectionPrayer || combat?.activeCombatPrayer)
                 return (
-                  <div class="cb-actions" style={{ marginBottom: 4 }}>
+                  <div class="cb-actions" style={{ marginTop: 12, marginBottom: 12 }}>
                     <button class={'cb-act' + (specQueued ? ' is-on' : '')} disabled={!canSpec && !specQueued} onClick={canSpec ? handleSpecialAttack : undefined}>
                       <GameIcon iconKey="lightning_arc" color="currentColor" size={18} />
                       <span>Special{hasSpec ? ` ${energy}%` : ''}</span>
