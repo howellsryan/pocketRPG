@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <radialGradient id="potato_seed_b" cx="0.35" cy="0.3" r="0.85">
+      <stop offset="0" stop-color="#e3c08a"/><stop offset="0.55" stop-color="#b8863f"/><stop offset="1" stop-color="#7a5527"/>
+    </radialGradient>
+  </defs>
+  <g stroke="#4a3318" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
+    <ellipse cx="256" cy="392" rx="128" ry="34" fill="#5c3d1e"/>
+    <path d="M186 268 C 156 284 144 318 156 350 C 168 382 208 400 252 398 C 300 396 340 372 350 336 C 360 300 344 258 306 236 C 272 216 224 240 186 268 Z" fill="url(#potato_seed_b)"/>
+    <circle cx="228" cy="288" r="8" fill="#5c3f1e" stroke="none"/>
+    <circle cx="298" cy="284" r="7" fill="#5c3f1e" stroke="none"/>
+    <path d="M228 280 C 220 250 226 220 214 196" stroke="#8fc86a" stroke-width="8" fill="none"/>
+    <path d="M214 196 C 202 190 190 192 182 202" stroke="#8fc86a" stroke-width="8" fill="none"/>
+    <path d="M298 276 C 306 248 300 218 314 196" stroke="#8fc86a" stroke-width="8" fill="none"/>
+    <path d="M314 196 C 326 190 338 194 344 206" stroke="#8fc86a" stroke-width="8" fill="none"/>
+  </g>
+</svg>

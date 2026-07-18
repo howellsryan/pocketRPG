@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <radialGradient id="tuna_potato_skin" cx="0.4" cy="0.3" r="0.9">
+      <stop offset="0" stop-color="#e3c08a"/><stop offset="0.55" stop-color="#b8863f"/><stop offset="1" stop-color="#7a5527"/>
+    </radialGradient>
+  </defs>
+  <g stroke="#4a3318" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M110 280 C 96 240 120 200 180 188 C 220 180 292 180 332 188 C 392 200 416 240 402 280 C 388 326 340 352 256 352 C 172 352 124 326 110 280 Z" fill="url(#tuna_potato_skin)"/>
+    <path d="M156 238 C 150 208 180 194 256 194 C 332 194 362 208 356 238 C 350 266 310 278 256 278 C 202 278 162 266 156 238 Z" fill="#f0e6c8"/>
+    <path d="M186 230 C 180 212 206 200 256 200 C 306 200 332 212 326 230 C 320 248 290 256 256 256 C 222 256 192 248 186 230 Z" fill="#d9a889"/>
+    <g fill="#f2c94c" stroke="none">
+      <circle cx="214" cy="218" r="8"/><circle cx="240" cy="212" r="8"/><circle cx="270" cy="214" r="8"/><circle cx="298" cy="222" r="8"/>
+      <circle cx="228" cy="238" r="7"/><circle cx="282" cy="236" r="7"/>
+    </g>
+  </g>
+</svg>
