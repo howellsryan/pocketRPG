@@ -10,14 +10,24 @@
 // strand a character out of the idle game permanently.
 export const WORLD_SESSION_TTL_MS = 120 * 1000
 
-/** True when a live (non-expired) world session holds this character. */
+/** True when a live (non-expired) world session holds this character. Fails
+ * OPEN: the lock is a concurrency guard, not one of the two mandated /api/save
+ * guards (stale-write, total-level regression), so a read failure — e.g. the
+ * world_sessions table absent because migration 0030 hasn't been applied to
+ * this D1 yet — must degrade to "no lock" rather than 500 the whole save path
+ * for every player. */
 export async function isWorldSessionLive(env, characterId, now = Date.now()) {
   if (!env?.DB || !Number.isInteger(Number(characterId))) return false
-  const row = await env.DB.prepare(
-    'SELECT heartbeat_at FROM world_sessions WHERE character_id = ?'
-  ).bind(Number(characterId)).first()
-  const heartbeat = Number(row?.heartbeat_at)
-  return Number.isFinite(heartbeat) && now - heartbeat < WORLD_SESSION_TTL_MS
+  try {
+    const row = await env.DB.prepare(
+      'SELECT heartbeat_at FROM world_sessions WHERE character_id = ?'
+    ).bind(Number(characterId)).first()
+    const heartbeat = Number(row?.heartbeat_at)
+    return Number.isFinite(heartbeat) && now - heartbeat < WORLD_SESSION_TTL_MS
+  } catch (err) {
+    console.error('[worldSessions] isWorldSessionLive read failed, failing open:', err?.message || err)
+    return false
+  }
 }
 
 /** Claims (or refreshes) the world-session lock for this character/session. */

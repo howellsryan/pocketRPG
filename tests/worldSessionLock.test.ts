@@ -104,6 +104,23 @@ describe('PUT /api/save world-session lock', () => {
     const res = await onRequestPut({ request: savePut(5, { save_data: JSON.stringify({ stats: {} }), save_revision: 0 }), env } as any)
     expect(res.status).toBe(200)
   })
+
+  // Regression (#811 outage): the world_sessions read throwing — e.g. the table
+  // absent because migration 0030 wasn't applied to this D1 — must NOT 500 the
+  // save. The lock fails open so saves keep working. Before the fix this took
+  // down /api/save for every player and surfaced as the "Save Failed" modal.
+  it('saves succeed when the world_sessions read throws (fail-open)', async () => {
+    char(5)
+    const realPrepare = env.DB.prepare.bind(env.DB)
+    vi.spyOn(env.DB, 'prepare').mockImplementation((sql: string) => {
+      if (sql.includes('world_sessions')) {
+        return { bind: () => ({ first: async () => { throw new Error('no such table: world_sessions') } }) } as any
+      }
+      return realPrepare(sql)
+    })
+    const res = await onRequestPut({ request: savePut(5, { save_data: JSON.stringify({ stats: {} }), save_revision: 0 }), env } as any)
+    expect(res.status).toBe(200)
+  })
 })
 
 describe('POST /api/world-token PvP lock', () => {
