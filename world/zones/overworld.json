@@ -441,6 +441,92 @@
    "label": "Varrick"
   }
  ],
+ "landmarks": [
+  {
+   "id": "lumbright",
+   "label": "Lumbright",
+   "x": 178,
+   "z": 120
+  },
+  {
+   "id": "varrick",
+   "label": "Varrick",
+   "x": 238,
+   "z": 66
+  },
+  {
+   "id": "faloden",
+   "label": "Faloden",
+   "x": 84,
+   "z": 96
+  },
+  {
+   "id": "ardounne",
+   "label": "Ardounne",
+   "x": 39,
+   "z": 134
+  },
+  {
+   "id": "draynar",
+   "label": "Draynar",
+   "x": 138,
+   "z": 143
+  },
+  {
+   "id": "alkarid",
+   "label": "Al-Karid",
+   "x": 219,
+   "z": 141
+  },
+  {
+   "id": "edgevale",
+   "label": "Edgevale",
+   "x": 131,
+   "z": 30
+  },
+  {
+   "id": "barlock",
+   "label": "Barlock",
+   "x": 167,
+   "z": 82
+  },
+  {
+   "id": "catherra",
+   "label": "Catherra",
+   "x": 20,
+   "z": 91
+  },
+  {
+   "id": "seerhold",
+   "label": "Seerhold",
+   "x": 65,
+   "z": 60
+  },
+  {
+   "id": "brimhollow",
+   "label": "Brimhollow",
+   "x": 328,
+   "z": 184
+  },
+  {
+   "id": "canifel",
+   "label": "Canifel",
+   "x": 304,
+   "z": 96
+  },
+  {
+   "id": "camlann",
+   "label": "Camlann",
+   "x": 48,
+   "z": 20
+  },
+  {
+   "id": "portsarin",
+   "label": "Port Sarin",
+   "x": 103,
+   "z": 193
+  }
+ ],
  "props": [
   {
    "model": "town_tower",

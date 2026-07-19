@@ -539,6 +539,7 @@ export class WorldZone extends Server<Env> {
         h: this.zone.height,
         collision: this.zone.collision,
         ...(this.zone.exits?.length ? { exits: this.zone.exits.map((e) => ({ id: e.id, x: e.x, z: e.z, label: e.label })) } : {}),
+        ...(this.zone.landmarks?.length ? { landmarks: this.zone.landmarks } : {}),
         ...(this.zone.props?.length ? { props: this.zone.props } : {}),
         ...(this.zone.palette ? { palette: this.zone.palette } : {}),
         ...(this.zone.ambience ? { ambience: this.zone.ambience } : {}),
@@ -651,6 +652,9 @@ export class WorldZone extends Server<Env> {
         break
       case 'unequip':
         this.handleUnequip(player, message.slot)
+        break
+      case 'teleport':
+        this.handleTeleport(player, message.placeId)
         break
       case 'logout':
         void this.logout(player)
@@ -999,6 +1003,30 @@ export class WorldZone extends Server<Env> {
   private scheduleDirtyFlush(player: Player): void {
     player.flushAtTick = this.tickCount + DIRTY_FLUSH_DELAY_TICKS
     this.ensureTicking()
+  }
+
+  /** Travel-menu teleport: snap the player to a named same-zone landmark (a
+   * place centre in the merged overworld). Same-zone, so no DO switch — just set
+   * the authoritative position and tell the client to snap (no walk interp).
+   * Clears path/interacts and drops combat + aggro so it can't be used to drag a
+   * monster across the map. Unknown/blocked ids are ignored. */
+  private handleTeleport(player: Player, placeId: string): void {
+    const lm = (this.zone.landmarks ?? []).find((l) => l.id === placeId)
+    if (!lm) return
+    if (this.zone.collision[lm.z]?.[lm.x] !== '.') return
+    player.path = []
+    this.clearIntents(player)
+    this.releaseAggro(player.charId)
+    player.x = lm.x
+    player.z = lm.z
+    player.anim = 'idle'
+    this.dirty.add(player.charId)
+    // Runs outside the tick, so re-broadcast the new position to nearby players
+    // via pendingJoins (the tick converts it to an entity diff) — mark alone only
+    // checkpoints. ensureTicking flushes it even if the zone was otherwise idle.
+    this.pendingJoins.add(player.charId)
+    this.ensureTicking()
+    send(player.conn, { t: 'snap', x: lm.x, z: lm.z })
   }
 
   private clearIntents(player: Player, keepCombat = false): void {

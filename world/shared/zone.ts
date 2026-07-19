@@ -43,6 +43,11 @@ export type ZonePropDef = {
   scale?: number
 }
 
+/** A named teleport destination inside the zone — the merged overworld's
+ * per-place district centre. Travel snaps the player here (same-zone, no reload).
+ * `id` is the place id, `label` its display name; the tile must be walkable. */
+export type ZoneLandmarkDef = { id: string; label: string; x: number; z: number }
+
 export type ZonePalette = { walkableA: string; walkableB: string; blockedA: string; blockedB: string }
 
 export type { ZoneGroundRegion }
@@ -103,6 +108,9 @@ export type ZoneDef = {
    * its town entrance. Omitted => respawn at this zone's own `spawn` tile. */
   deathRespawn?: { zone: string; x: number; z: number }
   props?: ZonePropDef[]
+  /** Named same-zone teleport destinations (the overworld's place centres).
+   * Absent => no travel menu for this zone. */
+  landmarks?: ZoneLandmarkDef[]
   palette?: ZonePalette
   ambience?: ZoneAmbience
   /** Client-render-only ambient life (wandering critters, chimney smoke).
@@ -170,6 +178,14 @@ export function validateZone(zone: ZoneDef): ZoneValidationResult {
     seenIds.add(exit.id)
     if (!isWalkable(zone, exit.x, exit.z)) {
       errors.push(`exit '${exit.id}' at (${exit.x},${exit.z}) is not walkable`)
+    }
+  }
+
+  for (const lm of zone.landmarks ?? []) {
+    if (seenIds.has(lm.id)) errors.push(`duplicate id '${lm.id}'`)
+    seenIds.add(lm.id)
+    if (!isWalkable(zone, lm.x, lm.z)) {
+      errors.push(`landmark '${lm.id}' at (${lm.x},${lm.z}) is not walkable`)
     }
   }
 

@@ -1,5 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest'
-import { getRunPref, parseHandoffFromHash, resolvePocketRpgUrl, storeRunPref } from '../client/src/auth'
+import { getRunPref, parseHandoffFromHash, resolvePocketRpgUrl, resolveZone, storeRunPref } from '../client/src/auth'
 
 describe('parseHandoffFromHash', () => {
   it('extracts the token from a #handoff=<jwt> hash', () => {
@@ -40,6 +40,26 @@ describe('resolvePocketRpgUrl', () => {
     expect(resolvePocketRpgUrl('', 'world.pocketrpg.co.uk')).toBe('https://pocketrpg.co.uk')
     expect(resolvePocketRpgUrl('', 'pocketrpg-world.rlh.workers.dev')).toBe('https://preview.pocketrpg.pages.dev')
     expect(resolvePocketRpgUrl('', 'localhost')).toBe('https://preview.pocketrpg.pages.dev')
+  })
+})
+
+describe('resolveZone', () => {
+  it('routes a fresh browser (no stored zone) to the merged overworld', () => {
+    expect(resolveZone(null)).toBe('overworld')
+    expect(resolveZone(undefined)).toBe('overworld')
+    expect(resolveZone('')).toBe('overworld')
+  })
+
+  it('redirects zones folded into the overworld to it', () => {
+    expect(resolveZone('pasture')).toBe('overworld')
+    expect(resolveZone('forest')).toBe('overworld')
+    expect(resolveZone('lumbright')).toBe('overworld')
+  })
+
+  it('passes a still-standalone zone through unchanged', () => {
+    expect(resolveZone('overworld')).toBe('overworld')
+    expect(resolveZone('varrick')).toBe('varrick')
+    expect(resolveZone('varrick_dungeon')).toBe('varrick_dungeon')
   })
 })
 

@@ -56,7 +56,11 @@ export async function handleWorldSession(request: Request, env: Env): Promise<Re
     WORLD_SESSION_EXPIRES_SECONDS
   )
   // The character's current zone, so a fresh device connects to the right DO.
+  // Zones folded into the merged overworld redirect to it (mirror of
+  // client/src/auth.ts MERGED_ZONES); a fresh character has no row → overworld.
   const pos = await env.DB.prepare('SELECT zone_id FROM world_positions WHERE character_id = ?')
     .bind(row.id).first<{ zone_id: string }>()
-  return jsonResponse({ token, character: { id: row.id, name: row.username }, zone: pos?.zone_id ?? 'pasture' })
+  const merged = new Set(['pasture', 'forest', 'lumbright'])
+  const zone = pos && !merged.has(pos.zone_id) ? pos.zone_id : 'overworld'
+  return jsonResponse({ token, character: { id: row.id, name: row.username }, zone })
 }

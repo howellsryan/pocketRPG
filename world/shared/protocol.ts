@@ -43,6 +43,8 @@ export type ClientMessage =
    * requirement + non-empty pool). */
   | { t: 'pray'; prayerId: string }
   | { t: 'unequip'; slot: string }
+  /** Travel to a named same-zone landmark (the overworld's place centres). */
+  | { t: 'teleport'; placeId: string }
   | { t: 'logout' }
   | { t: 'ping'; n: number }
 
@@ -102,6 +104,8 @@ export type StaticObject = {
 }
 
 export type ExitMarker = { id: string; x: number; z: number; label: string }
+/** Same-zone travel destination surfaced to the client's Travel menu. */
+export type Landmark = { id: string; label: string; x: number; z: number }
 export type PropPlacement = { model: string; x: number; z: number; rot?: number; scale?: number }
 export type GroundPalette = { walkableA: string; walkableB: string; blockedA: string; blockedB: string }
 export type ZoneAmbience = { sky?: string; hemiIntensity?: number; sunIntensity?: number }
@@ -140,7 +144,7 @@ export type ServerMessage =
       t: 'welcome'
       selfId: string
       tick: number
-      zone: { id: string; name?: string; w: number; h: number; collision: string[]; exits?: ExitMarker[]; props?: PropPlacement[]; palette?: GroundPalette; ambience?: ZoneAmbience; ambient?: ZoneAmbient; terrain?: ZoneTerrain; ground?: ZoneGroundRegion[] }
+      zone: { id: string; name?: string; w: number; h: number; collision: string[]; exits?: ExitMarker[]; landmarks?: Landmark[]; props?: PropPlacement[]; palette?: GroundPalette; ambience?: ZoneAmbience; ambient?: ZoneAmbient; terrain?: ZoneTerrain; ground?: ZoneGroundRegion[] }
       statics: StaticObject[]
       you: {
         x: number
@@ -175,6 +179,9 @@ export type ServerMessage =
   /** Player stepped on an exit tile; save + position are already durable.
    * The client reconnects to the target zone's DO (full reload). */
   | { t: 'transition'; zone: string; x: number; z: number }
+  /** Same-zone hard teleport (travel menu): the client snaps self to (x,z) with
+   * no walk interpolation. Server has already moved the authoritative position. */
+  | { t: 'snap'; x: number; z: number }
   | { t: 'error'; code: string; msg: string }
   | { t: 'pong'; n: number }
 

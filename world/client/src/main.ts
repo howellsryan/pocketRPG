@@ -16,6 +16,7 @@ import { createStatics, type Statics } from './statics'
 import { createProps } from './props'
 import { createAmbient, type AmbientLayer } from './ambient'
 import { createExitMarkers, type ExitLayer } from './exits'
+import { initTravel } from './travel'
 import { createLootLayer, type LootLayer } from './loot'
 import { itemName, loadItemIcons } from './itemIcon'
 import { primaryInvAction } from '../../shared/itemActions'
@@ -414,6 +415,7 @@ function enterWorld(session: WorldSession): void {
         }
         exitLayer = createExitMarkers(scene, message.zone.exits ?? [])
         exitMarkers = message.zone.exits ?? []
+        initTravel(message.zone.landmarks, (placeId) => send(socket, { t: 'teleport', placeId }))
         void createProps(scene, message.zone.props ?? [])
         ambientLayer = createAmbient(scene, message.zone.ambient, heightField.heightAt)
         const marker = createClickMarker(scene)
@@ -683,6 +685,20 @@ function enterWorld(session: WorldSession): void {
       showTransitionOverlay('Entering…')
       socket.close()
       window.location.reload()
+      return
+    }
+
+    if (message.t === 'snap') {
+      // Travel teleport: hard-snap self to the server's new position (no walk
+      // interpolation across the map). Same pattern as the death respawn.
+      if (self) {
+        const pos = tileToWorld(message.x, message.z)
+        self.queue.length = 0
+        self.mesh.position.copy(pos)
+        self.fromPos.copy(pos)
+        self.toPos.copy(pos)
+        self.moving = false
+      }
       return
     }
 

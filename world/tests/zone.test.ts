@@ -220,6 +220,33 @@ describe('Phase 6 zones', () => {
     }
   })
 
+  it('gives the overworld a travel landmark at every place, each walkable and off any exit tile', () => {
+    const ow = overworldZone as unknown as ZoneDef
+    const placeIds = new Set(Object.keys((worldData as { places: Record<string, unknown> }).places))
+    const landmarks = ow.landmarks ?? []
+    expect(landmarks.length).toBe(placeIds.size)
+    const exitTiles = new Set((ow.exits ?? []).map((e) => `${e.x},${e.z}`))
+    for (const lm of landmarks) {
+      expect(placeIds.has(lm.id), `landmark id ${lm.id}`).toBe(true)
+      expect(ow.collision[lm.z]?.[lm.x], `landmark ${lm.id} at (${lm.x},${lm.z})`).toBe('.')
+      // A landmark on an exit tile would auto-warp the traveller through the
+      // portal instead of landing them in the overworld beside it.
+      expect(exitTiles.has(`${lm.x},${lm.z}`), `landmark ${lm.id} sits on an exit`).toBe(false)
+    }
+  })
+
+  it('rejects a landmark on a blocked tile', () => {
+    // (1,1) is '#'; spawn sits on the open corner so only the landmark is at fault.
+    const base: ZoneDef = {
+      id: 't', name: 't', width: 3, height: 3, spawn: { x: 0, z: 0 },
+      collision: ['...', '.#.', '...'], objects: [], npcs: [],
+    }
+    expect(validateZone({ ...base, landmarks: [{ id: 'p', label: 'P', x: 0, z: 1 }] })).toEqual({ valid: true })
+    const onBlock = validateZone({ ...base, landmarks: [{ id: 'p', label: 'P', x: 1, z: 1 }] })
+    expect(onBlock.valid).toBe(false)
+    expect(onBlock.valid === false && onBlock.errors.some((e) => e.includes('landmark'))).toBe(true)
+  })
+
   it('the varrick dungeon boss references a real monster', () => {
     for (const npc of (varrickDungeonZone as unknown as ZoneDef).npcs) {
       expect(monsters[npc.monsterId as keyof typeof monsters], npc.monsterId).toBeTruthy()

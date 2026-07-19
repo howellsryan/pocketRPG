@@ -26,6 +26,7 @@ const places = Object.values(world.places)
 const { W, H, districts } = projectPlaces(places, { scale: 0.32, margin: 20 })
 const districtById = new Map(districts.map((d) => [d.id, d]))
 const facilitiesById = new Map(places.map((p) => [p.id, p.facilities ?? []]))
+const nameById = new Map(places.map((p) => [p.id, p.name ?? p.id]))
 
 const grid = Array.from({ length: H }, () => new Array(W).fill('.'))
 const objects = []
@@ -224,6 +225,23 @@ for (const d of districts) {
   for (let k = -t.r; k <= t.r; k++) { clear(d.x, d.z + k); clear(d.x + k, d.z) } // cardinal lanes
 }
 
+// Travel-menu destinations: one per place, at its (walkable, reachability-checked)
+// district centre. The client's Travel menu teleports the player here. A centre
+// that coincides with an exit tile (Varrick's portal sits on its centre) nudges
+// to the nearest walkable non-exit tile, so travel lands you in the overworld
+// beside the portal instead of warping through it.
+const exitTiles = new Set(exits.map((e) => `${e.x},${e.z}`))
+const landmarkTile = (d) => {
+  if (!exitTiles.has(`${d.x},${d.z}`)) return { x: d.x, z: d.z }
+  for (const [dx, dz] of [[0, 3], [0, -3], [3, 0], [-3, 0], [0, 2], [2, 0], [-2, 0], [0, -2]]) {
+    const nx = d.x + dx
+    const nz = d.z + dz
+    if (grid[nz] && grid[nz][nx] === '.' && !exitTiles.has(`${nx},${nz}`)) return { x: nx, z: nz }
+  }
+  return { x: d.x, z: d.z }
+}
+const landmarks = districts.map((d) => ({ id: d.id, label: nameById.get(d.id) ?? d.id, ...landmarkTile(d) }))
+
 const zone = {
   id: 'overworld',
   name: 'Eldermoor Overworld',
@@ -234,6 +252,7 @@ const zone = {
   objects,
   npcs,
   exits,
+  landmarks,
   props: [...props, ...townProps],
   ground,
   ambient: { critters, smoke },
@@ -265,7 +284,7 @@ for (const r of townRects) {
   for (const o of townRects) if (o !== r && r.id < o.id && overlaps(r, o)) errs.push(`towns ${r.id} and ${o.id} overlap — raise scale`)
 }
 const seen = new Set()
-for (const it of [...objects, ...npcs, ...exits]) {
+for (const it of [...objects, ...npcs, ...exits, ...landmarks]) {
   if (seen.has(it.id)) errs.push(`duplicate id ${it.id}`)
   seen.add(it.id)
   if (!walkable(it.x, it.z)) errs.push(`${it.id} (${it.x},${it.z}) not walkable`)
@@ -285,7 +304,7 @@ while (stack.length) {
   }
 }
 for (const d of districts) if (!reach[d.z][d.x]) errs.push(`district ${d.id} (${d.x},${d.z}) unreachable from spawn`)
-for (const o of [...objects, ...exits]) if (!reach[o.z][o.x]) errs.push(`${o.id} (${o.x},${o.z}) unreachable from spawn`)
+for (const o of [...objects, ...exits, ...landmarks]) if (!reach[o.z][o.x]) errs.push(`${o.id} (${o.x},${o.z}) unreachable from spawn`)
 if (errs.length) { console.error('OVERWORLD GEN ERRORS:\n' + errs.join('\n')); process.exit(1) }
 
 const walk = zone.collision.join('').split('').filter((c) => c === '.').length
