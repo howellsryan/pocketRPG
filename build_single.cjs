@@ -118,6 +118,7 @@ const sourceFiles = [
   'cloud/activityProgress.js',
   'cloud/criticalSavePolicy.js',
   'cloud/sync.js',
+  'cloud/saveDurability.js',
   'cloud/pvp.js',
   'cloud/collectionLog.js',
   'cloud/killCounts.js',

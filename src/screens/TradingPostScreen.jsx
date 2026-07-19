@@ -17,6 +17,7 @@ import SellConfirmModal from '../components/SellConfirmModal.jsx'
 import { HIGH_VALUE_SELL_THRESHOLD } from '../utils/constants.js'
 import { useIsDesktop } from '../hooks/useIsDesktop.js'
 import { pullSave, applyCloudSave, pushNow, checkCloudNewer } from '../cloud/sync.js'
+import { ensureSaveDurable } from '../cloud/saveDurability.js'
 import questsData from '../data/quests.json'
 import minigamesData from '../data/minigames.json'
 
@@ -281,8 +282,15 @@ export default function TradingPostScreen({ onBuyCredits, onBack }) {
     setBusy(true)
     try {
       // Flush local state (esp. coins) so the server-side escrow sees the
-      // player's true balance rather than a stale ≤60s-old snapshot.
-      try { await pushNow(getSnapshot()) } catch (_) { /* ignore push failure */ }
+      // player's true balance rather than a stale ≤60s-old snapshot. This must
+      // land durably: the buy then adopts the server's save copy, which would
+      // otherwise overwrite unsynced client-trusted progress (a just-completed
+      // quest, a fresh level). Abort instead of clobbering.
+      if (!(await ensureSaveDurable(pushNow, getSnapshot()))) {
+        addToast('Could not sync your progress — try again in a moment.', 'error')
+        setBusy(false)
+        return
+      }
       if (isOrderBookItem(selected)) {
         const totalCoinsRequired = bidPrice * qty
         if (coins < totalCoinsRequired) {
@@ -325,6 +333,7 @@ export default function TradingPostScreen({ onBuyCredits, onBack }) {
       else if (err?.body?.code === 'IRONMAN_RESTRICTED') addToast(err.body.error, 'error')
       else if (err?.body?.code === 'INSUFFICIENT_COINS') addToast('Insufficient coins.', 'error')
       else if (err?.body?.code === 'LEVEL_REQUIREMENT_NOT_MET') addToast(err.body.error, 'error')
+      else if (err?.body?.code === 'QUEST_REQUIREMENT_NOT_MET') addToast(err.body.error, 'error')
       else addToast(`Buy failed: ${err.message}`, 'error')
     } finally {
       setBusy(false)
@@ -353,8 +362,14 @@ export default function TradingPostScreen({ onBuyCredits, onBack }) {
         return
       }
       // Flush local inventory state so the server-side escrow sees the right
-      // slot contents (e.g. items moved out of bank recently).
-      try { await pushNow(getSnapshot()) } catch (_) { /* ignore push failure */ }
+      // slot contents (e.g. items moved out of bank recently). Must land
+      // durably: the sell adopts the server's save copy afterwards, so a stale
+      // push would overwrite unsynced client-trusted progress. Abort instead.
+      if (!(await ensureSaveDurable(pushNow, getSnapshot()))) {
+        addToast('Could not sync your progress — try again in a moment.', 'error')
+        setBusy(false)
+        return
+      }
       if (isOrderBookItem(selected)) {
         const res = await api.tradingPostList('sell', selected.id, bidPrice, qty)
         const cloud = await pullSave()

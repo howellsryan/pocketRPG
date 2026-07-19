@@ -20,14 +20,14 @@ import { onRequestPost } from '../functions/api/purchase.js'
 const ITEM = 'bronze_dagger'
 const UNIT = (items as any)[ITEM].shopValue as number
 
-async function seed(DB: FakeD1, raw: any, { coins = 100_000, ownerId = 1 } = {}) {
+async function seed(DB: FakeD1, raw: any, { coins = 100_000, ownerId = 1, settings = {} } = {}) {
   raw.prepare(
     `INSERT INTO characters (id, owner_id, username, created_at, is_ironman, is_one_life, credits, total_pvp_kills, credits_used, total_level, combat_level, is_bot, total_level_at)
      VALUES (7, ?, 'tester', 0, 0, 0, 0, 0, 0, 1, 3, 0, 0)`,
   ).run(ownerId)
   const inventory = new Array(28).fill(null)
   inventory[0] = { itemId: 'coins', quantity: coins }
-  const save = JSON.stringify({ coins: 0, inventory, bank: {}, stats: {}, equipment: {}, settings: {} })
+  const save = JSON.stringify({ coins: 0, inventory, bank: {}, stats: {}, equipment: {}, settings })
   const blob = await gzipJsonString(save)
   raw.prepare(`INSERT INTO saves (character_id, save_blob, save_data, updated_at, save_revision) VALUES (7, ?, ?, 0, 3)`).run(blob, save)
 }
@@ -92,6 +92,22 @@ describe('POST /api/purchase', () => {
     expect(res.status).toBe(400)
     expect((await res.json()).code).toBe('INSUFFICIENT_COINS')
     expect(coinTotal(raw)).toBe(before) // no partial debit
+  })
+
+  it('blocks a quest-unlock item when the quest is not completed, leaving coins untouched', async () => {
+    await seed(env.DB, raw, { coins: 1_000_000 })
+    const before = coinTotal(raw)
+    const res = await onRequestPost({ request: req({ item_id: 'ava_s_assembler', quantity: 1 }), env } as any)
+    expect(res.status).toBe(403)
+    expect((await res.json()).code).toBe('QUEST_REQUIREMENT_NOT_MET')
+    expect(coinTotal(raw)).toBe(before) // no debit
+  })
+
+  it('allows a quest-unlock item once the required quest is completed', async () => {
+    await seed(env.DB, raw, { coins: 1_000_000, settings: { completedQuests: ['dragon_slayer_ii'] } })
+    const res = await onRequestPost({ request: req({ item_id: 'ava_s_assembler', quantity: 1 }), env } as any)
+    expect(res.status).toBe(200)
+    expect((await res.json()).ok).toBe(true)
   })
 
   it('404s a character the caller does not own', async () => {
