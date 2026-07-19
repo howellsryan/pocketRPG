@@ -2975,12 +2975,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                 <div class="cb-fight__id">
                   <SkillEmblem iconKey={mArt.icon} accent={mArt.accent} size={34} glow={0} />
                   <div class="min-w-0">
-                    <div class="cb-fight__name">{m.name}</div>
-                    {form && (
-                      <div class="cb-fight__phase" style={{ color: getStyleArt(form.attackStyle).color }}>
-                        {form.icon} {form.displayName}{form.immunity ? ` · 🛡 ${form.immunity}` : ''}
-                      </div>
-                    )}
+                    <div class="cb-fight__name" style={{ color: getStyleArt(form ? form.attackStyle : m.attackStyle).color }}>{m.name}</div>
                   </div>
                 </div>
                 <span class="flex items-center gap-1.5 flex-shrink-0">
