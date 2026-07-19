@@ -104,11 +104,11 @@ export function getToolSpeedMultiplier(skill, equipment, itemsData, stats = {}, 
 }
 
 /**
- * Held tool that shaves fletching-bow action time. Not equippable (slot: null)
- * — carrying it in the inventory (or the weapon slot) is enough.
+ * Held tool that shaves one game tick (~1 second) off every bow-fletching
+ * action. Carrying it in the inventory or the weapon slot is enough.
  */
 export const BOWYERS_KNIFE_ID = 'bowyers_knife'
-export const BOWYERS_KNIFE_BOW_TICK_MULTIPLIER = 0.9
+export const BOWYERS_KNIFE_BOW_TICK_REDUCTION = 1
 
 /**
  * True when a fletching action produces a bow (unstrung or strung). Every bow
@@ -163,14 +163,14 @@ function getToolAdjustedActionTicks(skill, safeBaseTicks, equipment, itemsData, 
 /**
  * Returns the effective integer action ticks after applying the best available
  * tool for the skill. Pass `action` to also apply product-specific perks — the
- * Bowyer's Knife cuts fletching-bow actions by 10%.
+ * Bowyer's Knife shaves one tick off fletching-bow actions.
  */
 export function getEffectiveToolActionTicks(skill, baseTicks, equipment, itemsData, stats = {}, inventory = [], action = null) {
   const safeBaseTicks = Math.max(1, Math.floor(Number(baseTicks) || 1))
   const toolTicks = getToolAdjustedActionTicks(skill, safeBaseTicks, equipment, itemsData, stats, inventory)
 
   if (isBowFletchingAction(skill, action) && hasBowyersKnife(equipment, inventory)) {
-    return Math.max(1, Math.floor(toolTicks * BOWYERS_KNIFE_BOW_TICK_MULTIPLIER))
+    return Math.max(1, toolTicks - BOWYERS_KNIFE_BOW_TICK_REDUCTION)
   }
   return toolTicks
 }

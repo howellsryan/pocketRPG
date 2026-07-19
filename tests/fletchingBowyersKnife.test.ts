@@ -86,12 +86,16 @@ describe('getEffectiveToolActionTicks with the Bowyer\'s Knife', () => {
   const arrowAction = { id: 'bronze_arrows', product: 'bronze_arrow', ticks: 3 }
   const knifeInv = [{ itemId: BOWYERS_KNIFE_ID, quantity: 1 }]
 
-  it('cuts bow-fletching ticks by 10% (floored) only when the knife is carried', () => {
+  it('shaves exactly one tick off bow-fletching only when the knife is carried', () => {
     expect(getEffectiveToolActionTicks('fletching', 5, {}, itemsData, {}, [], bowAction)).toBe(5)
     expect(getEffectiveToolActionTicks('fletching', 5, {}, itemsData, {}, knifeInv, bowAction)).toBe(4)
-    // floor(3 * 0.9) = 2, floor(6 * 0.9) = 5
     expect(getEffectiveToolActionTicks('fletching', 3, {}, itemsData, {}, knifeInv, { product: 'shortbow', ticks: 3 })).toBe(2)
     expect(getEffectiveToolActionTicks('fletching', 6, {}, itemsData, {}, knifeInv, { product: 'magic_shortbow', ticks: 6 })).toBe(5)
+  })
+
+  it('is a flat one-tick cut, not a 10% multiplier, at high base ticks', () => {
+    // 20 → 19 (one tick), not 18 (10%).
+    expect(getEffectiveToolActionTicks('fletching', 20, {}, itemsData, {}, knifeInv, { product: 'shortbow', ticks: 20 })).toBe(19)
   })
 
   it('does not speed up arrows/bolts even while the knife is carried', () => {
