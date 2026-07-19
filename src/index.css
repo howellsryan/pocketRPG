@@ -951,7 +951,6 @@ html, body, #app {
 .cb-fight__head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 14px; }
 .cb-fight__id { display: flex; align-items: center; gap: 11px; min-width: 0; }
 .cb-fight__name { font-family: var(--font-display); font-weight: 800; font-size: 20px; color: var(--color-parchment); line-height: 1.1; overflow-wrap: anywhere; }
-.cb-fight__chips { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
 .cb-fight__cb { flex-shrink: 0; display: inline-flex; align-items: center; gap: 5px; font-family: var(--font-mono); font-weight: 700; font-size: 13px; color: #e0564b; background: rgba(224,86,75,0.08); border: 1px solid rgba(224,86,75,0.3); border-radius: 999px; padding: 8px 12px; cursor: pointer; min-height: 36px; }
 .cb-fight__cb img, .cb-fight__cb svg { width: 13px; height: 13px; }
 

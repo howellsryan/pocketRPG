@@ -17,8 +17,8 @@ import SpellSelectGrid from '../components/SpellSelectGrid.jsx'
 import SkillEmblem from '../components/SkillEmblem.jsx'
 import CollapseChevron from '../components/CollapseChevron.jsx'
 import CombatMobileSelect from './CombatMobileSelect.jsx'
-import { CombatMonsterInfoSheet, CombatRaidInfoSheet, MultiStyleChip } from './CombatMobileSheets.jsx'
-import { getMonsterArt, getMonsterAttackStyles, getMonsterWeakness, getCategoryArt, getRaidArt, getMonsterLocationLabel, getStyleArt } from '../utils/combatArt.js'
+import { CombatMonsterInfoSheet, CombatRaidInfoSheet } from './CombatMobileSheets.jsx'
+import { getMonsterArt, getCategoryArt, getRaidArt, getMonsterLocationLabel, getStyleArt } from '../utils/combatArt.js'
 import { getSkillArt } from '../utils/skillArt.js'
 import { getPrayerStyleIcon } from '../utils/prayerIcons.js'
 import { createCombatState, createRaidCombatState, processCombatTick, applyEat, applyCombo, applySpecialAttack, applyInstantKill } from '../engine/combat.js'
@@ -2976,10 +2976,6 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                   <SkillEmblem iconKey={mArt.icon} accent={mArt.accent} size={34} glow={0} />
                   <div class="min-w-0">
                     <div class="cb-fight__name">{m.name}</div>
-                    <div class="cb-fight__chips">
-                      <MultiStyleChip chip={getMonsterAttackStyles(m)} />
-                      <MultiStyleChip chip={getMonsterWeakness(m)} prefix="Weak: " kind="!" />
-                    </div>
                   </div>
                 </div>
                 <span class="flex items-center gap-1.5 flex-shrink-0">
