@@ -17,8 +17,8 @@ import SpellSelectGrid from '../components/SpellSelectGrid.jsx'
 import SkillEmblem from '../components/SkillEmblem.jsx'
 import CollapseChevron from '../components/CollapseChevron.jsx'
 import CombatMobileSelect from './CombatMobileSelect.jsx'
-import { CombatMonsterInfoSheet, CombatRaidInfoSheet } from './CombatMobileSheets.jsx'
-import { getMonsterArt, getCategoryArt, getRaidArt, getMonsterLocationLabel, getStyleArt } from '../utils/combatArt.js'
+import { CombatMonsterInfoSheet, CombatRaidInfoSheet, MultiStyleChip } from './CombatMobileSheets.jsx'
+import { getMonsterArt, getMonsterAttackStyles, getMonsterWeakness, getCategoryArt, getRaidArt, getMonsterLocationLabel, getStyleArt } from '../utils/combatArt.js'
 import { getSkillArt } from '../utils/skillArt.js'
 import { getPrayerStyleIcon } from '../utils/prayerIcons.js'
 import { createCombatState, createRaidCombatState, processCombatTick, applyEat, applyCombo, applySpecialAttack, applyInstantKill } from '../engine/combat.js'
@@ -2976,6 +2976,11 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                   <SkillEmblem iconKey={mArt.icon} accent={mArt.accent} size={34} glow={0} />
                   <div class="min-w-0">
                     <div class="cb-fight__name">{m.name}</div>
+                    {form && (
+                      <div class="cb-fight__phase" style={{ color: getStyleArt(form.attackStyle).color }}>
+                        {form.icon} {form.displayName}{form.immunity ? ` · 🛡 ${form.immunity}` : ''}
+                      </div>
+                    )}
                   </div>
                 </div>
                 <span class="flex items-center gap-1.5 flex-shrink-0">
@@ -3014,7 +3019,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                   {/* Monster HP */}
                   <div class="cb-hpblock">
                     <div class="cb-hplabel">
-                      <span>{m.name}{form && <span class="ml-2" style={{ color: getStyleArt(form.attackStyle).color }}>{form.icon} {form.displayName}{form.immunity ? ` · 🛡 ${form.immunity}` : ''}</span>}</span>
+                      <span>Enemy Hitpoints</span>
                       <span class="cb-hplabel__v">{Math.max(0, Math.round(m.currentHP))}/{m.hitpoints}</span>
                     </div>
                     <div class="relative">
@@ -3450,6 +3455,10 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           </div>
 
           <div class="space-y-4 max-h-96 overflow-y-auto">
+            <div class="cb-fight__chips">
+              <MultiStyleChip chip={getMonsterAttackStyles(selectedMonsterInfo)} prefix="Uses " />
+              <MultiStyleChip chip={getMonsterWeakness(selectedMonsterInfo)} prefix="Weak: " kind="!" />
+            </div>
             {getMonsterLocationLabel(selectedMonsterInfo) && (
               <div class="text-[11px] text-[var(--color-parchment)] opacity-60">📍 {getMonsterLocationLabel(selectedMonsterInfo)}</div>
             )}
