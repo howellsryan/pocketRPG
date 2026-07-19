@@ -43,6 +43,8 @@ export type ClientMessage =
    * requirement + non-empty pool). */
   | { t: 'pray'; prayerId: string }
   | { t: 'unequip'; slot: string }
+  /** Travel to a named same-zone landmark (the overworld's place centres). */
+  | { t: 'teleport'; placeId: string }
   | { t: 'logout' }
   | { t: 'ping'; n: number }
 
@@ -102,9 +104,16 @@ export type StaticObject = {
 }
 
 export type ExitMarker = { id: string; x: number; z: number; label: string }
+/** Same-zone travel destination surfaced to the client's Travel menu. */
+export type Landmark = { id: string; label: string; x: number; z: number }
 export type PropPlacement = { model: string; x: number; z: number; rot?: number; scale?: number }
 export type GroundPalette = { walkableA: string; walkableB: string; blockedA: string; blockedB: string }
 export type ZoneAmbience = { sky?: string; hemiIntensity?: number; sunIntensity?: number }
+/** Client-render-only ambient life (wandering critters, chimney smoke).
+ * Decoration only — no collision, no server authority. Mirrors shared/zone.ts. */
+export type ZoneAmbientCritter = { model: string; x: number; z: number; w: number; h: number; count: number }
+export type ZoneAmbientSmoke = { x: number; z: number; y?: number }
+export type ZoneAmbient = { critters?: ZoneAmbientCritter[]; smoke?: ZoneAmbientSmoke[] }
 /** Client-render-only terrain height for a zone (docs/open-world-terrain-plan.md).
  * `relief` is peak height in tiles (≤~1.5); `procedural` seeds deterministic
  * noise. Absent => flat ground. `material` names a T2 blend preset. */
@@ -124,6 +133,9 @@ export type ZoneTerrain = {
   material?: string
   scatter?: ScatterLayer[]
 }
+/** Client-render-only painted ground kind (path/water/floor). Decoration only —
+ * collision stays in the ASCII grid. Mirrors shared/groundKinds.ts. */
+export type ZoneGroundRegion = { kind: string; x: number; z: number; w: number; h: number }
 
 export type LootItem = { id: string; itemId: string; qty: number; x: number; z: number }
 
@@ -132,7 +144,7 @@ export type ServerMessage =
       t: 'welcome'
       selfId: string
       tick: number
-      zone: { id: string; name?: string; w: number; h: number; collision: string[]; exits?: ExitMarker[]; props?: PropPlacement[]; palette?: GroundPalette; ambience?: ZoneAmbience; terrain?: ZoneTerrain }
+      zone: { id: string; name?: string; w: number; h: number; collision: string[]; exits?: ExitMarker[]; landmarks?: Landmark[]; props?: PropPlacement[]; palette?: GroundPalette; ambience?: ZoneAmbience; ambient?: ZoneAmbient; terrain?: ZoneTerrain; ground?: ZoneGroundRegion[] }
       statics: StaticObject[]
       you: {
         x: number
@@ -167,6 +179,9 @@ export type ServerMessage =
   /** Player stepped on an exit tile; save + position are already durable.
    * The client reconnects to the target zone's DO (full reload). */
   | { t: 'transition'; zone: string; x: number; z: number }
+  /** Same-zone hard teleport (travel menu): the client snaps self to (x,z) with
+   * no walk interpolation. Server has already moved the authoritative position. */
+  | { t: 'snap'; x: number; z: number }
   | { t: 'error'; code: string; msg: string }
   | { t: 'pong'; n: number }
 

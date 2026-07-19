@@ -6,8 +6,14 @@
 // prayer, pool starts full per session, empty pool blocks turning a prayer on).
 import prayersData from '../../src/data/prayers.json'
 import { getMaxPrayerPoints } from '../../src/engine/prayerDrain.js'
+import { prayerSkill } from '../../src/utils/prayerIcons.js'
 
-type PrayerDef = { level: number; bonusType: string }
+type PrayerDef = {
+  id: string
+  name: string
+  level: number
+  bonusType: string
+}
 const prayers = prayersData as unknown as Record<string, PrayerDef>
 
 /** The prayer fields carried on a player's world session and copied onto the
@@ -31,6 +37,27 @@ export function seedPrayer(prayerLevel: number): PrayerSession {
     activeProtectionPrayer: null,
     activeCombatPrayer: null,
   }
+}
+
+export type PrayerCategory = 'protection' | 'combat'
+// `skill` is the id of the skill whose crest icon represents the prayer (from
+// the game's shared prayerSkill() — combat prayers show the boosted stat,
+// protection prayers the blocked style). The HUD renders that skill's icon.
+export type PrayerView = { id: string; name: string; level: number; skill: string | null; category: PrayerCategory }
+
+/** Splits every prayer the player's Prayer level unlocks into the two HUD
+ * sections — protection prayers and combat (stat-boost) prayers — each tagged
+ * with its skill icon, level-ascending. Locked prayers are omitted. */
+export function categorisePrayers(prayerLevel: number): { protection: PrayerView[]; combat: PrayerView[] } {
+  const protection: PrayerView[] = []
+  const combat: PrayerView[] = []
+  for (const p of Object.values(prayers).sort((a, b) => a.level - b.level)) {
+    if (p.level > prayerLevel) continue
+    const category: PrayerCategory = p.bonusType === 'protection' ? 'protection' : 'combat'
+    const view: PrayerView = { id: p.id, name: p.name, level: p.level, skill: prayerSkill(p), category }
+    ;(category === 'protection' ? protection : combat).push(view)
+  }
+  return { protection, combat }
 }
 
 export type PrayerToggleResult =

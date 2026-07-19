@@ -1,18 +1,20 @@
 import { clearStoredSession, exchangeHandoff, getRunPref, getStoredSession, getStoredZone, parseHandoffFromHash, pocketRpgUrl, storeRunPref, storeZone, type WorldSession } from './auth'
-import { hideBossFrame, hideConnBanner, hideOverlay, initChatInput, initHud, paintHudIcons, pushKillFeed, pushMessage, removeHpBar, removeNameplate, removeOverheadChat, renderEquipment, renderInventory, renderPrayerPanel, renderSpellbook, setPrayerState, setRunState, setSpecialEnergy, setSpellButton, setStanceActive, setThreatPanel, showBossFrame, showConnBanner, showContextMenu, showHitsplat, showLoginRequired, showTransitionOverlay, showUniqueBanner, showXpDrop, updateHpBar, updateHpPill, updateNameplate, updateOverheadChat, npcExamine, type SpellbookEntry } from './ui'
+import { hideBossFrame, hideConnBanner, hideOverlay, initChatInput, initHud, paintHudIcons, pushKillFeed, pushMessage, removeHpBar, removeNameplate, removeOverheadChat, renderEquipment, renderInventory, renderPrayerPanel, renderSpellbook, setPrayerState, setRunState, setSpecialEnergy, setSpellButton, setStanceActive, setThreatPanel, showBossFrame, showConnBanner, showContextMenu, showHitsplat, showLoginRequired, showTransitionOverlay, showUniqueBanner, showXpDrop, updateHpBar, updateHpPill, updateNameplate, updateOverheadChat, npcExamine, type SpellbookEntry, type TeleportEntry } from './ui'
 import { createMinimap, type Minimap, type MinimapDot } from './minimap'
 import { closeBankUI, isBankOpen, openBankUI, updateBankInventory, updateBankUI } from './bank'
 import { closeCraftUI, openCraftUI, updateCraftInventory, updateCraftStats, type SkillLevels } from './crafting'
 import { getLevelFromXP } from '../../../src/engine/experience.js'
 import { connect, onMessage, send } from './net'
-import { createCamera, createLights, createRenderer, createScene, tileToWorld, updateCamera, updateShadowLight } from './scene'
+import { createCamera, createLights, createRenderer, createScene, FOG_FAR, tileToWorld, updateCamera, updateShadowLight } from './scene'
 import { attachCameraControls } from './cameraControls'
 import { createTerrain } from './terrain'
+import { chunkFollowRadius, chunkKey, CHUNK_TILES, type ChunkedTerrain } from './chunkedTerrain'
 import { createScatterLayers } from './scatter'
 import { applyEntityDiff, applyGear, createEntity, createHeroMesh, createMonsterMesh, updateEntity, type Entity } from './entities'
 import { createClickMarker, setupInput, showClickMarker, updateClickMarker } from './input'
 import { createStatics, type Statics } from './statics'
 import { createProps } from './props'
+import { createAmbient, type AmbientLayer } from './ambient'
 import { createExitMarkers, type ExitLayer } from './exits'
 import { createLootLayer, type LootLayer } from './loot'
 import { itemName, loadItemIcons } from './itemIcon'
@@ -62,6 +64,11 @@ function enterWorld(session: WorldSession): void {
   let statics: Statics | null = null
   let lootLayer: LootLayer | null = null
   let exitLayer: ExitLayer | null = null
+  let ambientLayer: AmbientLayer | null = null
+  // Chunk-streamed ground (big merged maps only; per-zone maps stay single-mesh
+  // and leave this null). Driven each frame to follow the player.
+  let chunkedTerrain: ChunkedTerrain | null = null
+  let lastChunkKey = ''
   let transitioning = false
   let camera: THREE.PerspectiveCamera | null = null
   let cam: ReturnType<typeof attachCameraControls> | null = null
@@ -91,6 +98,9 @@ function enterWorld(session: WorldSession): void {
   let stats: SkillLevels = {}
   // Selected combat spell (magic weapons); server-validated, optimistic locally.
   let selectedSpell: string | null = null
+  // The overworld's place centres, drawn as the Magic tab's Teleport section.
+  // Empty on per-zone maps (no landmarks) → the section is dropped.
+  let teleports: TeleportEntry[] = []
   // Whether the equipped weapon can cast the selected spell (drives the "tap a
   // monster" vs "equip a staff" hint when a combat spell is picked).
   let magicWeaponEquipped = false
@@ -117,10 +127,12 @@ function enterWorld(session: WorldSession): void {
   /** Repaints the Magic tab spellbook against the live Magic level + selection. */
   function refreshSpellbook(): void {
     renderSpellbook({
+      teleports,
       combat: combatSpellList,
       skill: skillSpellList,
       magicLevel: stats.magic?.level ?? 1,
       selectedSpellId: selectedSpell,
+      onTeleport: (placeId) => send(socket, { t: 'teleport', placeId }),
       onCombat: selectCombatSpell,
       onSkill: selectSkillSpell,
     })
@@ -295,9 +307,19 @@ function enterWorld(session: WorldSession): void {
     hideConnBanner()
     send(socket, { t: 'hello', token: session.token })
   })
-  socket.addEventListener('close', () => {
+  socket.addEventListener('close', (event) => {
     if (transitioning) return
     authed = false
+    // A 1008 (policy) close is a terminal rejection of this session — the token
+    // is bad/expired or the character isn't in this world's DB, so net.ts stops
+    // reconnecting. Drop the stale session (a reload lands on login) and show
+    // the login screen instead of an endless "Reconnecting…" on black.
+    if ((event as CloseEvent).code === 1008) {
+      clearStoredSession()
+      hideConnBanner()
+      showLoginRequired(pocketRpgUrl())
+      return
+    }
     showConnBanner()
   })
 
@@ -373,6 +395,7 @@ function enterWorld(session: WorldSession): void {
     if (message.t === 'welcome') {
       authed = true
       storeZone(message.zone.id)
+      teleports = (message.zone.landmarks ?? []).map((l) => ({ id: l.id, label: l.label }))
       if (sceneBuilt) {
         resyncFromWelcome(message)
         return
@@ -385,7 +408,15 @@ function enterWorld(session: WorldSession): void {
         // Build terrain first: registers the zone height sampler so every
         // tileToWorld call rides the surface, and returns the ground mesh that
         // picking raycasts. Flat when the zone has no `terrain` block.
-        const { heightField, mesh: ground } = createTerrain(scene, message.zone.collision, message.zone.w, message.zone.h, message.zone.palette, message.zone.terrain)
+        // A big merged map (overworld) streams its ground in chunks around the
+        // player; per-zone maps render whole (chunkCentre omitted → single mesh
+        // or full-map render, unchanged). Follow radius exceeds the fog so the
+        // player never sees the terrain edge.
+        const followRadius = chunkFollowRadius(FOG_FAR)
+        const terrainResult = createTerrain(scene, message.zone.collision, message.zone.w, message.zone.h, message.zone.palette, message.zone.terrain, message.zone.ground, { chunkCentre: { x: message.you.x, z: message.you.z, radius: followRadius } })
+        const { heightField, mesh: ground } = terrainResult
+        chunkedTerrain = terrainResult.chunked ?? null
+        lastChunkKey = chunkedTerrain ? chunkKey(Math.floor(message.you.x / CHUNK_TILES), Math.floor(message.you.z / CHUNK_TILES)) : ''
         // Decorative scatter: avoid static-object, exit, and prop tiles
         // (blocked tiles are skipped by the placer). NPCs move, so their spawn
         // tiles aren't masked.
@@ -400,6 +431,7 @@ function enterWorld(session: WorldSession): void {
         exitLayer = createExitMarkers(scene, message.zone.exits ?? [])
         exitMarkers = message.zone.exits ?? []
         void createProps(scene, message.zone.props ?? [])
+        ambientLayer = createAmbient(scene, message.zone.ambient, heightField.heightAt)
         const marker = createClickMarker(scene)
         camera = createCamera()
         const container = document.getElementById('scene')!
@@ -579,6 +611,17 @@ function enterWorld(session: WorldSession): void {
             updateEntity(self, now, deltaSeconds, targetPosOf(self))
             updateCamera(camera, self.mesh.position, cam.state.zoom, cam.state.yaw)
             if (sun) updateShadowLight(sun, self.mesh.position)
+            // Stream ground chunks around the player — only when they cross a
+            // chunk boundary, so most frames do no work and there's no churn.
+            if (chunkedTerrain) {
+              const cx = Math.floor(self.mesh.position.x / CHUNK_TILES)
+              const cz = Math.floor(self.mesh.position.z / CHUNK_TILES)
+              const key = chunkKey(cx, cz)
+              if (key !== lastChunkKey) {
+                lastChunkKey = key
+                chunkedTerrain.setCentre(self.mesh.position.x, self.mesh.position.z, chunkFollowRadius(FOG_FAR))
+              }
+            }
           }
           for (const npc of npcs.values()) {
             updateEntity(npc, now, deltaSeconds, targetPosOf(npc))
@@ -616,6 +659,7 @@ function enterWorld(session: WorldSession): void {
           }
           lootLayer?.update(deltaSeconds)
           exitLayer?.update(now)
+          ambientLayer?.update(deltaSeconds)
           updateClickMarker(marker, now)
           if (minimap && self && now - lastMinimap > 150) {
             lastMinimap = now
@@ -655,6 +699,20 @@ function enterWorld(session: WorldSession): void {
       showTransitionOverlay('Entering…')
       socket.close()
       window.location.reload()
+      return
+    }
+
+    if (message.t === 'snap') {
+      // Travel teleport: hard-snap self to the server's new position (no walk
+      // interpolation across the map). Same pattern as the death respawn.
+      if (self) {
+        const pos = tileToWorld(message.x, message.z)
+        self.queue.length = 0
+        self.mesh.position.copy(pos)
+        self.fromPos.copy(pos)
+        self.toPos.copy(pos)
+        self.moving = false
+      }
       return
     }
 

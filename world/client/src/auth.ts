@@ -3,10 +3,21 @@ export type WorldSession = { token: string; character: { id: number; name: strin
 const STORAGE_KEY = 'world_session'
 const ZONE_KEY = 'world_zone'
 
+/** Zones folded into the merged `overworld` (their standalone maps are gone as
+ * player destinations). A stored position pointing at one redirects to the
+ * overworld so returning players land on the one world map. */
+const MERGED_ZONES = new Set(['pasture', 'forest', 'lumbright', 'varrick', 'varrick_dungeon'])
+
+/** Redirects a merged-away zone to the overworld; passes any other id through. */
+export function resolveZone(zone: string | null | undefined): string {
+  if (!zone || MERGED_ZONES.has(zone)) return 'overworld'
+  return zone
+}
+
 /** The zone the client should connect to: last known (welcome/transition
- * updates it), 'pasture' for a fresh browser. */
+ * updates it), the merged overworld for a fresh browser or a folded-away zone. */
 export function getStoredZone(): string {
-  return localStorage.getItem(ZONE_KEY) ?? 'pasture'
+  return resolveZone(localStorage.getItem(ZONE_KEY))
 }
 
 export function storeZone(zone: string): void {

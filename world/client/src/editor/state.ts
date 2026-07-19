@@ -1,4 +1,5 @@
 import type { ZoneDef } from '../../../shared/zone'
+import { groundKindGrid, isGroundKind, type ZoneGroundRegion } from '../../../shared/groundKinds'
 
 // Editor document state: the working zone def, an undo/redo history of whole-def
 // snapshots (defs are small — JSON snapshots are simpler and safer than diffs),
@@ -207,6 +208,94 @@ export function floodFill(def: ZoneDef, x: number, z: number, blocked: boolean):
     seen.add(key)
     if (def.collision[cz][cx] !== start) continue
     paintTile(def, cx, cz, blocked)
+    stack.push([cx + 1, cz], [cx - 1, cz], [cx, cz + 1], [cx, cz - 1])
+  }
+}
+
+// ---- painted ground (pure; a per-tile kind grid <-> compact regions) --------
+// The zone stores painted ground as rectangles (ZoneGroundRegion[]), but the
+// editor paints per tile. These convert both ways: paint into a flat kind grid
+// ('' = unpainted), then greedily pack it back into rectangles on commit so the
+// JSON stays small. Greedy (not minimal) cover is fine — a road drawn tile by
+// tile collapses to a handful of rects.
+
+/** Per-tile kind ids for a def, row-major (x fastest). '' = unpainted. */
+export function groundGrid(def: ZoneDef): string[] {
+  return groundKindGrid(def.width, def.height, def.ground)
+}
+
+/** Greedy rectangle cover of a kind grid: expand each unclaimed painted tile
+ * right while the kind matches, then down while the whole row matches. */
+export function regionsFromGrid(width: number, height: number, grid: string[]): ZoneGroundRegion[] {
+  const used = new Uint8Array(width * height)
+  const out: ZoneGroundRegion[] = []
+  for (let z = 0; z < height; z++) {
+    for (let x = 0; x < width; x++) {
+      const i = z * width + x
+      const kind = grid[i]
+      if (!kind || used[i]) continue
+      let w = 1
+      while (x + w < width && grid[z * width + x + w] === kind && !used[z * width + x + w]) w++
+      let h = 1
+      grow: while (z + h < height) {
+        for (let k = 0; k < w; k++) {
+          const j = (z + h) * width + x + k
+          if (grid[j] !== kind || used[j]) break grow
+        }
+        h++
+      }
+      for (let dz = 0; dz < h; dz++) for (let dx = 0; dx < w; dx++) used[(z + dz) * width + x + dx] = 1
+      out.push({ kind, x, z, w, h })
+    }
+  }
+  return out
+}
+
+/** Commits a working kind grid onto the def (drops the field when empty). */
+export function applyGroundGrid(def: ZoneDef, grid: string[]): void {
+  const regions = regionsFromGrid(def.width, def.height, grid)
+  if (regions.length) def.ground = regions
+  else delete def.ground
+}
+
+/** Paints one tile in a working grid. `kind` '' erases. Out-of-bounds is a
+ * no-op; an unknown kind is ignored. */
+export function paintGroundTile(grid: string[], width: number, height: number, x: number, z: number, kind: string): void {
+  if (x < 0 || z < 0 || x >= width || z >= height) return
+  if (kind !== '' && !isGroundKind(kind)) return
+  grid[z * width + x] = kind
+}
+
+export function paintGroundRect(grid: string[], width: number, height: number, x0: number, z0: number, x1: number, z1: number, kind: string): void {
+  const [xa, xb] = x0 <= x1 ? [x0, x1] : [x1, x0]
+  const [za, zb] = z0 <= z1 ? [z0, z1] : [z1, z0]
+  for (let z = za; z <= zb; z++) for (let x = xa; x <= xb; x++) paintGroundTile(grid, width, height, x, z, kind)
+}
+
+/** Paints a straight path `brush` tiles wide from (x0,z0) to (x1,z1) — the
+ * path/polyline tool's per-segment stamp. Samples the line densely and lays a
+ * square footprint at each sample so diagonal runs stay unbroken. */
+export function paintGroundLine(grid: string[], width: number, height: number, x0: number, z0: number, x1: number, z1: number, brush: number, kind: string): void {
+  const r = Math.max(0, Math.floor((brush - 1) / 2))
+  const steps = Math.max(1, Math.round(Math.hypot(x1 - x0, z1 - z0)))
+  for (let s = 0; s <= steps; s++) {
+    const cx = Math.round(x0 + ((x1 - x0) * s) / steps)
+    const cz = Math.round(z0 + ((z1 - z0) * s) / steps)
+    for (let dz = -r; dz <= r; dz++) for (let dx = -r; dx <= r; dx++) paintGroundTile(grid, width, height, cx + dx, cz + dz, kind)
+  }
+}
+
+/** Flood-fills the connected same-kind region at (x,z) to `kind` (4-connected). */
+export function floodFillGround(grid: string[], width: number, height: number, x: number, z: number, kind: string): void {
+  if (x < 0 || z < 0 || x >= width || z >= height) return
+  const start = grid[z * width + x]
+  if (start === kind) return
+  const stack: [number, number][] = [[x, z]]
+  while (stack.length) {
+    const [cx, cz] = stack.pop()!
+    if (cx < 0 || cz < 0 || cx >= width || cz >= height) continue
+    if (grid[cz * width + cx] !== start) continue
+    paintGroundTile(grid, width, height, cx, cz, kind)
     stack.push([cx + 1, cz], [cx - 1, cz], [cx, cz + 1], [cx, cz - 1])
   }
 }

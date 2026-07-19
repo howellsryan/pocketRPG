@@ -19,6 +19,7 @@ import { resolveCombatSetup, isSameFightTarget, playerAttackRange, emitPrayerIfC
 import { seedPrayer, resolvePrayerToggle } from '../shared/prayer'
 import spellsJson from '../../src/data/spells.json'
 import { npcsFromZone, pickAggroTarget, reselectAttacker, threatContributors, threatKey, tickNpc, toNpcDiff, type NpcState } from './npc'
+import { computeAoi, type AoiEntity } from './aoi'
 import { PLAYER_DROP_OWNER_TICKS, isExpired, isVisibleTo, spawnDrops, takeLoot, visibleLootFor, type LootEntity } from './loot'
 import { sanitizeChat } from '../shared/chat'
 import { addToInventory, countItem, freeSlotCount, inventoryIsFull, isStackable, moveInventorySlot, removeItems, removeOneAt } from './mining'
@@ -49,7 +50,7 @@ import type { Env } from './env'
 
 type ConnState = { charId: string | null }
 type Connection = PartyConnection<ConnState>
-import pastureZone from '../zones/pasture.json'
+import overworldZone from '../zones/overworld.json'
 
 const TICK_MS = 600
 const AUTH_TIMEOUT_MS = 5000
@@ -103,6 +104,9 @@ type Player = TickPlayer & {
   pendingLoot: { id: string; x: number; z: number } | null
   /** Loot ids this client currently sees — diffed each tick for add/remove. */
   lootView: Set<string>
+  /** Entity ids this client currently sees, for AOI zones — diffed each tick
+   * for enter/leave. Unused (stays whole-view) when the zone has no aoiRadius. */
+  entView: Set<string>
   /** Set when the socket drops: the player lingers in-world (visible to others,
    * frozen) until this tick, then is really removed + flushed. Cleared on
    * reconnect. Null = connected. Backgrounding a tab must not kick you instantly. */
@@ -191,7 +195,7 @@ export class WorldZone extends Server<Env> {
   private zoneLoadPromise: Promise<ZoneDef | null> | null = null
 
   get zone(): ZoneDef {
-    return this.loadedZone ?? ZONES[this.name] ?? (pastureZone as ZoneDef)
+    return this.loadedZone ?? ZONES[this.name] ?? (overworldZone as unknown as ZoneDef)
   }
 
   /** Resolves and caches this DO's zone def once: stored D1 def first, else the
@@ -499,6 +503,7 @@ export class WorldZone extends Server<Env> {
       pendingEvents: [],
       pendingLoot: null,
       lootView: new Set(),
+      entView: new Set(),
       running: false,
       runEnergy: 100,
       lastRunSent: 100,
@@ -534,10 +539,13 @@ export class WorldZone extends Server<Env> {
         h: this.zone.height,
         collision: this.zone.collision,
         ...(this.zone.exits?.length ? { exits: this.zone.exits.map((e) => ({ id: e.id, x: e.x, z: e.z, label: e.label })) } : {}),
+        ...(this.zone.landmarks?.length ? { landmarks: this.zone.landmarks } : {}),
         ...(this.zone.props?.length ? { props: this.zone.props } : {}),
         ...(this.zone.palette ? { palette: this.zone.palette } : {}),
         ...(this.zone.ambience ? { ambience: this.zone.ambience } : {}),
+        ...(this.zone.ambient ? { ambient: this.zone.ambient } : {}),
         ...(this.zone.terrain ? { terrain: this.zone.terrain } : {}),
+        ...(this.zone.ground?.length ? { ground: this.zone.ground } : {}),
       },
       statics,
       you: {
@@ -574,6 +582,9 @@ export class WorldZone extends Server<Env> {
       .map((p) => toEntityDiff(p))
     const visibleLoot = visibleLootFor(this.loot.values(), player.charId, this.tickCount)
     player.lootView = new Set(visibleLoot.map((l) => l.id))
+    // AOI zones send the whole snapshot at join, then the first tick prunes
+    // everything out of range — so seed the view with what we just sent.
+    player.entView = new Set([...otherEnts, ...npcEnts].map((e) => e.id))
     const intro: Extract<ServerMessage, { t: 'diff' }> = { t: 'diff', tick: this.tickCount }
     if (depleted.length > 0) intro.rocks = depleted
     if (npcEnts.length > 0 || otherEnts.length > 0) intro.ents = [...otherEnts, ...npcEnts]
@@ -641,6 +652,9 @@ export class WorldZone extends Server<Env> {
         break
       case 'unequip':
         this.handleUnequip(player, message.slot)
+        break
+      case 'teleport':
+        this.handleTeleport(player, message.placeId)
         break
       case 'logout':
         void this.logout(player)
@@ -989,6 +1003,30 @@ export class WorldZone extends Server<Env> {
   private scheduleDirtyFlush(player: Player): void {
     player.flushAtTick = this.tickCount + DIRTY_FLUSH_DELAY_TICKS
     this.ensureTicking()
+  }
+
+  /** Travel-menu teleport: snap the player to a named same-zone landmark (a
+   * place centre in the merged overworld). Same-zone, so no DO switch — just set
+   * the authoritative position and tell the client to snap (no walk interp).
+   * Clears path/interacts and drops combat + aggro so it can't be used to drag a
+   * monster across the map. Unknown/blocked ids are ignored. */
+  private handleTeleport(player: Player, placeId: string): void {
+    const lm = (this.zone.landmarks ?? []).find((l) => l.id === placeId)
+    if (!lm) return
+    if (this.zone.collision[lm.z]?.[lm.x] !== '.') return
+    player.path = []
+    this.clearIntents(player)
+    this.releaseAggro(player.charId)
+    player.x = lm.x
+    player.z = lm.z
+    player.anim = 'idle'
+    this.dirty.add(player.charId)
+    // Runs outside the tick, so re-broadcast the new position to nearby players
+    // via pendingJoins (the tick converts it to an entity diff) — mark alone only
+    // checkpoints. ensureTicking flushes it even if the zone was otherwise idle.
+    this.pendingJoins.add(player.charId)
+    this.ensureTicking()
+    send(player.conn, { t: 'snap', x: lm.x, z: lm.z })
   }
 
   private clearIntents(player: Player, keepCombat = false): void {
@@ -1387,6 +1425,17 @@ export class WorldZone extends Server<Env> {
     eventsByChar: Map<string, ZoneEvent[]>
   ): void {
     const hitEvents: ZoneEvent[] = hits.map((h) => ({ e: 'hit', targetId: h.targetId, dmg: h.dmg }))
+    // AOI setup (only when the zone opts in): every live entity's position, this
+    // tick's diffs by id, and a full-diff builder for entities entering range.
+    const aoiRadius = this.zone.aoiRadius
+    let aoiEntities: AoiEntity[] = []
+    let changedById: Map<string, EntityDiff> = new Map()
+    if (aoiRadius != null) {
+      const removedSet = new Set(removed)
+      for (const p of this.players.values()) if (!removedSet.has(p.charId)) aoiEntities.push({ id: p.charId, x: p.x, z: p.z })
+      for (const n of this.ensureNpcs().values()) if (n.state !== 'dead' && !removedSet.has(n.id)) aoiEntities.push({ id: n.id, x: n.x, z: n.z })
+      changedById = new Map(ents.map((e) => [e.id, e]))
+    }
     for (const player of this.players.values()) {
       // Lingering players have a closed socket — their ent still rides `ents` to
       // everyone else, but there's nobody to receive a diff here.
@@ -1397,6 +1446,25 @@ export class WorldZone extends Server<Env> {
       const lootRemoved: string[] = [...player.lootView].filter((id) => !visibleIds.has(id))
       player.lootView = visibleIds
 
+      // Whole-view by default; AOI narrows ents/removed to the player's radius.
+      let outEnts = ents
+      let outRemoved = removed
+      if (aoiRadius != null) {
+        const slice = computeAoi(
+          player.x, player.z, player.charId, aoiRadius, aoiEntities, changedById,
+          (id) => {
+            const p = this.players.get(id)
+            if (p) return toEntityDiff(p)
+            const n = this.npcs?.get(id)
+            return n ? toNpcDiff(n) : null
+          },
+          player.entView,
+        )
+        player.entView = slice.view
+        outEnts = slice.ents
+        outRemoved = removed.length > 0 ? [...removed, ...slice.removed] : slice.removed
+      }
+
       const events: ZoneEvent[] = []
       const own = eventsByChar.get(player.charId)
       if (own) events.push(...own)
@@ -1404,9 +1472,9 @@ export class WorldZone extends Server<Env> {
       if (zoneEvents.length > 0) events.push(...zoneEvents)
 
       const message: Extract<ServerMessage, { t: 'diff' }> = { t: 'diff', tick: this.tickCount }
-      if (ents.length > 0) message.ents = ents
+      if (outEnts.length > 0) message.ents = outEnts
       if (rockChanges.length > 0) message.rocks = rockChanges
-      if (removed.length > 0) message.removed = removed
+      if (outRemoved.length > 0) message.removed = outRemoved
       if (lootAdded.length > 0) message.loot = lootAdded
       if (lootRemoved.length > 0) message.lootRemoved = lootRemoved
       if (events.length > 0) message.events = events

@@ -2,7 +2,7 @@
 // maths are the engine's (covered by combat-prayer.test.ts); this proves the
 // slotting + validation that gate a toggle before it reaches the engine.
 import { describe, expect, it } from 'vitest'
-import { seedPrayer, resolvePrayerToggle, type PrayerSession } from '../shared/prayer'
+import { seedPrayer, resolvePrayerToggle, categorisePrayers, type PrayerSession } from '../shared/prayer'
 
 describe('seedPrayer', () => {
   it('starts a full pool at the Prayer level with no prayers active', () => {
@@ -67,5 +67,48 @@ describe('resolvePrayerToggle', () => {
     const s = full()
     resolvePrayerToggle(s, 'piety', 70)
     expect(s.activeCombatPrayer).toBeNull()
+  })
+})
+
+describe('categorisePrayers', () => {
+  const id = (p: { id: string }) => p.id
+  const skillOf = (list: { id: string; skill: string | null }[], prayerId: string) => list.find((p) => p.id === prayerId)?.skill
+
+  it('omits prayers above the player Prayer level', () => {
+    const { protection, combat } = categorisePrayers(1)
+    // Level 1 unlocks Thick Skin only; no protection prayer exists below Lv 37.
+    expect(combat.map(id)).toEqual(['thick_skin'])
+    expect(protection).toEqual([])
+  })
+
+  it('splits unlocked prayers into protection and combat, each level-ascending', () => {
+    const { protection, combat } = categorisePrayers(99)
+    expect(protection.map(id)).toEqual(['protection_from_magic', 'protection_from_missiles', 'protection_from_melee'])
+    expect(combat).not.toHaveLength(0)
+    expect(combat.some((p) => p.id.startsWith('protection_from_'))).toBe(false)
+    for (let i = 1; i < combat.length; i++) expect(combat[i].level).toBeGreaterThanOrEqual(combat[i - 1].level)
+  })
+
+  it('tags every combat prayer with the skill it boosts', () => {
+    const { combat } = categorisePrayers(99)
+    expect(skillOf(combat, 'thick_skin')).toBe('defence')
+    expect(skillOf(combat, 'burst_of_strength')).toBe('strength')
+    expect(skillOf(combat, 'clarity_of_thought')).toBe('attack')
+    expect(skillOf(combat, 'sharp_eye')).toBe('ranged')
+    expect(skillOf(combat, 'mystic_will')).toBe('magic')
+  })
+
+  it('tags a multi-stat prayer with its primary style', () => {
+    const { combat } = categorisePrayers(99)
+    expect(skillOf(combat, 'piety')).toBe('strength') // melee → strength headline
+    expect(skillOf(combat, 'rigour')).toBe('ranged')
+    expect(skillOf(combat, 'augury')).toBe('magic')
+  })
+
+  it('tags each protection prayer with the style it blocks (melee → defence)', () => {
+    const { protection } = categorisePrayers(99)
+    expect(skillOf(protection, 'protection_from_magic')).toBe('magic')
+    expect(skillOf(protection, 'protection_from_missiles')).toBe('ranged')
+    expect(skillOf(protection, 'protection_from_melee')).toBe('defence')
   })
 })

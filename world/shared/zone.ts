@@ -1,3 +1,5 @@
+import { isGroundKind, type ZoneGroundRegion } from './groundKinds'
+
 export type ZoneObjectDef = {
   id: string
   type: 'rock' | 'bank_chest' | 'tree' | 'furnace' | 'anvil' | 'range'
@@ -41,7 +43,14 @@ export type ZonePropDef = {
   scale?: number
 }
 
+/** A named teleport destination inside the zone — the merged overworld's
+ * per-place district centre. Travel snaps the player here (same-zone, no reload).
+ * `id` is the place id, `label` its display name; the tile must be walkable. */
+export type ZoneLandmarkDef = { id: string; label: string; x: number; z: number }
+
 export type ZonePalette = { walkableA: string; walkableB: string; blockedA: string; blockedB: string }
+
+export type { ZoneGroundRegion }
 
 /** Sky/lighting mood for a zone — the "dark or light world" control. `sky` is
  * the background hex; the two intensities scale the hemisphere fill and the sun.
@@ -51,6 +60,15 @@ export type ZoneAmbience = {
   hemiIntensity?: number
   sunIntensity?: number
 }
+
+/** Non-combat ambient life (docs/world-design-review-2026-07.md §4.4) — the
+ * cheap "towns feel inhabited" layer. Pure client render: critters wander with
+ * no combat/collision/server involvement, smoke rises from a chimney tile.
+ * `critters[].model` is a loadable GLB basename (chicken, frog, …); the wander
+ * rectangle is [x, x+w) × [z, z+h) in tiles. Absent => today's still world. */
+export type ZoneAmbientCritter = { model: string; x: number; z: number; w: number; h: number; count: number }
+export type ZoneAmbientSmoke = { x: number; z: number; y?: number }
+export type ZoneAmbient = { critters?: ZoneAmbientCritter[]; smoke?: ZoneAmbientSmoke[] }
 
 /** Client-render-only terrain height (docs/open-world-terrain-plan.md). Pure
  * decoration: movement, collision, and pathfinding stay flat on the tile grid.
@@ -90,9 +108,23 @@ export type ZoneDef = {
    * its town entrance. Omitted => respawn at this zone's own `spawn` tile. */
   deathRespawn?: { zone: string; x: number; z: number }
   props?: ZonePropDef[]
+  /** Named same-zone teleport destinations (the overworld's place centres).
+   * Absent => no travel menu for this zone. */
+  landmarks?: ZoneLandmarkDef[]
   palette?: ZonePalette
   ambience?: ZoneAmbience
+  /** Client-render-only ambient life (wandering critters, chimney smoke).
+   * Decoration: no collision, no server authority. */
+  ambient?: ZoneAmbient
   terrain?: ZoneTerrain
+  /** Client-render-only painted ground kinds (paths, water, floors). Decoration:
+   * collision stays in the ASCII grid. Last region wins on overlap. */
+  ground?: ZoneGroundRegion[]
+  /** Area-of-interest radius in tiles (M1, docs/single-world-map-investigation.md).
+   * When set, the DO only diffs entities within this many tiles of each player —
+   * the merged-overworld broadcast optimisation. Absent => diff everything to
+   * everyone (today's per-zone behaviour). */
+  aoiRadius?: number
 }
 
 function isWalkable(zone: ZoneDef, x: number, z: number): boolean {
@@ -149,6 +181,14 @@ export function validateZone(zone: ZoneDef): ZoneValidationResult {
     }
   }
 
+  for (const lm of zone.landmarks ?? []) {
+    if (seenIds.has(lm.id)) errors.push(`duplicate id '${lm.id}'`)
+    seenIds.add(lm.id)
+    if (!isWalkable(zone, lm.x, lm.z)) {
+      errors.push(`landmark '${lm.id}' at (${lm.x},${lm.z}) is not walkable`)
+    }
+  }
+
   if (zone.terrain) {
     const t = zone.terrain
     if (typeof t.relief !== 'number' || t.relief < 0 || t.relief > 1.5) {
@@ -163,6 +203,41 @@ export function validateZone(zone: ZoneDef): ZoneValidationResult {
       if (typeof layer.density !== 'number' || layer.density <= 0 || layer.density > 100) errors.push(`terrain.scatter[${i}].density must be in 0..100`)
       if (layer.scaleRange && (layer.scaleRange.length !== 2 || layer.scaleRange[0] > layer.scaleRange[1])) errors.push(`terrain.scatter[${i}].scaleRange must be [min,max] with min<=max`)
     }
+  }
+
+  for (const [i, r] of (zone.ground ?? []).entries()) {
+    if (!isGroundKind(r.kind)) errors.push(`ground[${i}].kind '${r.kind}' is not a known ground kind`)
+    if (![r.x, r.z, r.w, r.h].every((n) => typeof n === 'number' && Number.isFinite(n))) {
+      errors.push(`ground[${i}] must have finite numeric x,z,w,h`)
+    } else if (r.w <= 0 || r.h <= 0) {
+      errors.push(`ground[${i}] must have positive width and height`)
+    } else if (r.x < 0 || r.z < 0 || r.x + r.w > zone.width || r.z + r.h > zone.height) {
+      errors.push(`ground[${i}] (${r.x},${r.z} ${r.w}x${r.h}) extends outside the zone`)
+    }
+  }
+
+  if (zone.ambient) {
+    for (const [i, c] of (zone.ambient.critters ?? []).entries()) {
+      if (!c.model || typeof c.model !== 'string') errors.push(`ambient.critters[${i}].model must be a non-empty string`)
+      if (![c.x, c.z, c.w, c.h].every((n) => typeof n === 'number' && Number.isFinite(n)) || c.w <= 0 || c.h <= 0) {
+        errors.push(`ambient.critters[${i}] must have finite x,z and positive w,h`)
+      } else if (c.x < 0 || c.z < 0 || c.x + c.w > zone.width || c.z + c.h > zone.height) {
+        errors.push(`ambient.critters[${i}] area extends outside the zone`)
+      }
+      if (typeof c.count !== 'number' || !Number.isInteger(c.count) || c.count < 1 || c.count > 24) {
+        errors.push(`ambient.critters[${i}].count must be an integer in 1..24`)
+      }
+    }
+    for (const [i, s] of (zone.ambient.smoke ?? []).entries()) {
+      if (![s.x, s.z].every((n) => typeof n === 'number' && Number.isFinite(n)) || s.x < 0 || s.z < 0 || s.x >= zone.width || s.z >= zone.height) {
+        errors.push(`ambient.smoke[${i}] must be an in-bounds tile`)
+      }
+      if (s.y != null && (typeof s.y !== 'number' || s.y < 0 || s.y > 10)) errors.push(`ambient.smoke[${i}].y must be a number in 0..10`)
+    }
+  }
+
+  if (zone.aoiRadius != null && (typeof zone.aoiRadius !== 'number' || zone.aoiRadius <= 0)) {
+    errors.push(`aoiRadius must be a positive number`)
   }
 
   if (zone.ambience) {

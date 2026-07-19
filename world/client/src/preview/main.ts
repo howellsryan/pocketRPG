@@ -5,11 +5,8 @@ import { createTerrain } from '../terrain'
 import { createScatterLayers } from '../scatter'
 import { createStatics } from '../statics'
 import { createProps } from '../props'
-import pastureZone from '../../../zones/pasture.json'
-import forestZone from '../../../zones/forest.json'
-import lumbrightZone from '../../../zones/lumbright.json'
-import varrickZone from '../../../zones/varrick.json'
-import varrickDungeonZone from '../../../zones/varrick_dungeon.json'
+import { createAmbient } from '../ambient'
+import overworldZone from '../../../zones/overworld.json'
 
 // Auth-free, server-free terrain preview. Renders a bundled zone JSON through
 // the REAL terrain pipeline (createTerrain + scatter + statics/props), so it
@@ -18,11 +15,7 @@ import varrickDungeonZone from '../../../zones/varrick_dungeon.json'
 // (headless screenshots). No gameplay, no networking.
 
 const ZONES: Record<string, ZoneDef> = {
-  pasture: pastureZone as ZoneDef,
-  forest: forestZone as ZoneDef,
-  lumbright: lumbrightZone as ZoneDef,
-  varrick: varrickZone as unknown as ZoneDef,
-  varrick_dungeon: varrickDungeonZone as unknown as ZoneDef,
+  overworld: overworldZone as unknown as ZoneDef,
 }
 
 declare global {
@@ -32,8 +25,14 @@ declare global {
 }
 
 const params = new URLSearchParams(location.search)
-const zoneId = params.get('zone') && ZONES[params.get('zone')!] ? params.get('zone')! : 'pasture'
+const zoneId = params.get('zone') && ZONES[params.get('zone')!] ? params.get('zone')! : 'overworld'
 const yawParam = params.get('yaw')
+const pitchParam = params.get('pitch')
+const distParam = params.get('dist')
+// Streaming demo: `?follow=x,z&radius=N` renders only the chunks within N chunks
+// of tile (x,z) instead of the whole map — proving far chunks stream out (M2/b).
+const followParam = params.get('follow')
+const radiusParam = params.get('radius')
 const def = ZONES[zoneId]
 
 // Zone dropdown → reload with the chosen zone.
@@ -58,10 +57,18 @@ const width = host.clientWidth || window.innerWidth
 const height = host.clientHeight || window.innerHeight
 
 const scene = createScene(def.ambience)
+// The game's fog (far ≈110) is tuned for a close gameplay camera on a ~64-tile
+// zone; a big review map seen from far would fog entirely to sky. Push fog out
+// to span the zone so the whole thing is reviewable (small zones stay as-is).
+if (scene.fog instanceof THREE.Fog) scene.fog.far = Math.max(scene.fog.far, Math.max(def.width, def.height) * 3)
 createLights(scene, def.ambience)
-const { heightField } = createTerrain(scene, def.collision, def.width, def.height, def.palette, def.terrain)
+const followCentre = followParam
+  ? (() => { const [fx, fz] = followParam.split(',').map(Number); return { x: fx, z: fz, radius: radiusParam ? Number(radiusParam) : 2 } })()
+  : undefined
+const { heightField } = createTerrain(scene, def.collision, def.width, def.height, def.palette, def.terrain, def.ground, { chunkCentre: followCentre })
 void createProps(scene, def.props ?? [])
 void createStatics(scene, def.objects)
+const ambient = createAmbient(scene, def.ambient, heightField.heightAt)
 
 const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true })
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
@@ -72,7 +79,11 @@ const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 500)
 const center = new THREE.Vector3(def.width / 2, 0, def.height / 2)
 const radius = Math.max(def.width, def.height)
 // Lower pitch than gameplay so relief reads against the horizon.
-const orbit = { yaw: yawParam != null ? Number(yawParam) : Math.PI / 4, pitch: 0.5, dist: radius * 1.05 }
+const orbit = {
+  yaw: yawParam != null ? Number(yawParam) : Math.PI / 4,
+  pitch: pitchParam != null ? Number(pitchParam) : 0.5,
+  dist: distParam != null ? Number(distParam) * radius : radius * 1.05,
+}
 
 function applyCamera(): void {
   camera.position.set(
@@ -107,7 +118,9 @@ window.addEventListener('resize', () => {
   renderer.setSize(window.innerWidth, window.innerHeight)
 })
 
+const clock = new THREE.Clock()
 function loop(): void {
+  ambient.update(clock.getDelta())
   renderer.render(scene, camera)
   requestAnimationFrame(loop)
 }

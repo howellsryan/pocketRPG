@@ -1,4 +1,5 @@
 import type { ZoneDef } from '../../../shared/zone'
+import { groundKind, groundKindGrid } from '../../../shared/groundKinds'
 
 // 2D top-down canvas view of a zone: the collision grid painted with the zone's
 // ground palette (matching the 3D client's ground checker) plus markers for
@@ -175,6 +176,17 @@ export class GridView {
         const blocked = this.def.collision[z]?.[x] === '#'
         const even = (x + z) % 2 === 0
         ctx.fillStyle = blocked ? (even ? pal.blockedA : pal.blockedB) : (even ? pal.walkableA : pal.walkableB)
+        ctx.fillRect(this.originX + x * t, this.originZ + z * t, t, t)
+      }
+    }
+
+    // Painted ground kinds over the base tiles (matches the 3D ground-paint layer).
+    const gk = groundKindGrid(this.def.width, this.def.height, this.def.ground)
+    for (let z = 0; z < this.def.height; z++) {
+      for (let x = 0; x < this.def.width; x++) {
+        const kind = groundKind(gk[z * this.def.width + x])
+        if (!kind) continue
+        ctx.fillStyle = kind.color
         ctx.fillRect(this.originX + x * t, this.originZ + z * t, t, t)
       }
     }

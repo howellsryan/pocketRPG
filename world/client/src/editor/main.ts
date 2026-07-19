@@ -1,7 +1,8 @@
 import { validateZone, type ZoneDef, type ZonePalette, type ZoneAmbience } from '../../../shared/zone'
 import { buildCatalog, type CatalogEntry, type CatalogGroup } from '../../../shared/catalog'
 import { EditorApi, type ZoneListEntry } from './api'
-import { EditorState, blankZone, paintTile, paintRect, floodFill, resizeZone } from './state'
+import { EditorState, blankZone, paintTile, paintRect, floodFill, resizeZone, groundGrid, applyGroundGrid, paintGroundTile, paintGroundLine } from './state'
+import { GROUND_KINDS } from '../../../shared/groundKinds'
 import { GridView, type TilePointer } from './grid'
 import { AMBIENCE_PRESETS, DEFAULT_AMBIENCE, DEFAULT_PALETTE, PALETTE_PRESETS, matchAmbience, matchPalette } from './presets'
 import { PROP_MODELS } from './propManifest'
@@ -11,7 +12,7 @@ import { extractRegion, loadPrefabs, savePrefab, stampPrefab, type Prefab } from
 
 const TOKEN_KEY = 'world_editor_token'
 const PROD_KEY = 'world_editor_prod'
-type Tool = 'paintWalkable' | 'paintBlocked' | 'rect' | 'fill' | 'spawn' | 'select' | 'portal' | 'scatter' | 'stamp' | 'pan'
+type Tool = 'paintWalkable' | 'paintBlocked' | 'rect' | 'fill' | 'spawn' | 'select' | 'portal' | 'scatter' | 'stamp' | 'pan' | 'paintGround' | 'paintPath'
 
 const $ = <T = HTMLElement>(id: string) => document.getElementById(id) as T
 
@@ -98,6 +99,11 @@ async function boot(): Promise<void> {
   catalog = buildCatalog(PROP_MODELS)
   wireTopbar()
   wireTools()
+  wireGroundKinds()
+  {
+    const w = $<HTMLInputElement>('pathWidth')
+    w.addEventListener('input', () => { pathBrushWidth = Number(w.value); $('pathWidthVal').textContent = w.value })
+  }
   wireMeta()
   wirePresets()
   wirePlaytest()
@@ -226,6 +232,21 @@ let paintValue: boolean | null = null
 let rectStart: { x: number; z: number } | null = null
 let rectBlocked = false
 
+let selectedGroundKind = GROUND_KINDS[0].id
+let groundStrokeGrid: string[] | null = null
+let pathPoints: { x: number; z: number }[] = []
+let pathStrokeGrid: string[] | null = null
+let pathBrushWidth = 3
+
+/** Ends an in-progress path polyline, committing its undo stroke. */
+function finishPath(): void {
+  if (!pathStrokeGrid) return
+  state.endStroke()
+  pathStrokeGrid = null
+  pathPoints = []
+  grid.setDragPreview(null)
+}
+
 let movingSelection = false
 
 function onTile(p: TilePointer): void {
@@ -291,6 +312,43 @@ function onTile(p: TilePointer): void {
     return
   }
 
+  if (activeTool === 'paintGround') {
+    const def = state.getDef()
+    const kind = rightHeld ? '' : selectedGroundKind // right-drag erases
+    if (p.phase === 'down') {
+      state.beginStroke()
+      groundStrokeGrid = groundGrid(def)
+      if (p.inside) paintGroundTile(groundStrokeGrid, def.width, def.height, p.x, p.z, kind)
+      state.applyStroke((d) => applyGroundGrid(d, groundStrokeGrid!))
+    } else if (p.phase === 'move' && groundStrokeGrid && (p.buttons & 3)) {
+      if (p.inside) paintGroundTile(groundStrokeGrid, def.width, def.height, p.x, p.z, kind)
+      state.applyStroke((d) => applyGroundGrid(d, groundStrokeGrid!))
+    } else if (p.phase === 'up' && groundStrokeGrid) {
+      state.endStroke()
+      groundStrokeGrid = null
+    }
+    return
+  }
+
+  if (activeTool === 'paintPath') {
+    // Click to drop polyline points; each click paints a wide path segment from
+    // the previous point. Right-click (or Escape, handled globally) finishes.
+    if (p.phase !== 'down' || !p.inside) return
+    const def = state.getDef()
+    if (rightHeld) { finishPath(); return }
+    if (!pathStrokeGrid) {
+      state.beginStroke()
+      pathStrokeGrid = groundGrid(def)
+      pathPoints = [{ x: p.x, z: p.z }]
+    } else {
+      const prev = pathPoints[pathPoints.length - 1]
+      paintGroundLine(pathStrokeGrid, def.width, def.height, prev.x, prev.z, p.x, p.z, pathBrushWidth, selectedGroundKind)
+      pathPoints.push({ x: p.x, z: p.z })
+      state.applyStroke((d) => applyGroundGrid(d, pathStrokeGrid!))
+    }
+    return
+  }
+
   if (activeTool === 'rect') {
     if (p.phase === 'down') {
       rectStart = { x: p.x, z: p.z }
@@ -351,8 +409,31 @@ function setTool(tool: Tool): void {
   for (const b of document.querySelectorAll('#toolGroup [data-tool]')) {
     b.classList.toggle('active', (b as HTMLElement).dataset.tool === tool)
   }
+  if (tool !== 'paintPath') finishPath()
   $('scatterControls').style.display = tool === 'scatter' ? 'flex' : 'none'
   $('stampControls').style.display = tool === 'stamp' ? 'block' : 'none'
+  $('groundControls').style.display = tool === 'paintGround' || tool === 'paintPath' ? 'block' : 'none'
+  $('pathControls').style.display = tool === 'paintPath' ? 'block' : 'none'
+}
+
+/** Builds the ground-kind swatch picker once; clicking one selects the kind the
+ * paint-ground brush lays down. */
+function wireGroundKinds(): void {
+  const host = $('groundKinds')
+  host.innerHTML = ''
+  for (const k of GROUND_KINDS) {
+    const btn = document.createElement('button')
+    btn.className = 'toolbtn'
+    btn.dataset.kind = k.id
+    btn.title = k.label
+    btn.innerHTML = `<span style="display:inline-block;width:12px;height:12px;border-radius:2px;vertical-align:-1px;margin-right:6px;background:${k.color}"></span>${k.label}`
+    btn.classList.toggle('active', k.id === selectedGroundKind)
+    btn.addEventListener('click', () => {
+      selectedGroundKind = k.id
+      for (const b of host.querySelectorAll('[data-kind]')) b.classList.toggle('active', (b as HTMLElement).dataset.kind === k.id)
+    })
+    host.appendChild(btn)
+  }
 }
 
 function clearPlacement(): void {
@@ -445,6 +526,7 @@ function wireKeyboard(): void {
       return
     }
     if (e.key === 'Escape') {
+      finishPath()
       clearPlacement()
       selection = null
       refreshInspector()

@@ -265,6 +265,55 @@ const SPAWN = { x: 40, z: 62 }
 for (const o of objects) clear(o.x, o.z)
 clear(SPAWN.x, SPAWN.z)
 
+// ── Painted ground (§4.1): the street skeleton — decoration only, collision is
+//    untouched above. Composition order: the market square is the civic heart,
+//    a cobbled grand avenue runs gate → square → cathedral, dirt lanes branch to
+//    the districts, and each gate road continues outside the walls to its exit.
+const ground = [
+  // Grand ceremonial avenue: south gate → market square (spawn sits on it).
+  { kind: 'path_cobble', x: 39, z: 52, w: 3, h: 32 },
+  // Market square: paved plaza around the fountain, stalls and banners.
+  { kind: 'plaza', x: 38, z: 45, w: 14, h: 11 },
+  // North avenue: market square → bank → cathedral grounds.
+  { kind: 'path_cobble', x: 44, z: 24, w: 3, h: 22 },
+  // Cathedral forecourt + the spur linking it to the north avenue.
+  { kind: 'plaza', x: 58, z: 24, w: 12, h: 6 },
+  { kind: 'path_cobble', x: 46, z: 24, w: 14, h: 2 },
+  // East cross-road: market square → east gate → the Dungeon mouth.
+  { kind: 'path_cobble', x: 51, z: 51, w: 29, h: 3 },
+  // West road: market square → sanctum/quests → west gate (postern).
+  { kind: 'path_dirt', x: 14, z: 43, w: 25, h: 3 },
+  // Sawmill/trading-post lane linking the north-west workshops to the avenue.
+  { kind: 'path_dirt', x: 20, z: 29, w: 24, h: 2 },
+  // West residential spine + the mill cross-lane.
+  { kind: 'path_dirt', x: 27, z: 28, w: 2, h: 28 },
+  { kind: 'path_dirt', x: 24, z: 41, w: 10, h: 2 },
+  // Chapel approach off the market square.
+  { kind: 'path_dirt', x: 48, z: 54, w: 3, h: 6 },
+  // South-gate plaza framing the ceremonial entrance.
+  { kind: 'plaza', x: 37, z: 76, w: 8, h: 8 },
+  // Gate roads continuing outside the walls to each exit / landmark.
+  { kind: 'path_dirt', x: 39, z: 84, w: 3, h: 12 },
+  { kind: 'path_dirt', x: 80, z: 51, w: 16, h: 3 },
+  { kind: 'path_dirt', x: 0, z: 43, w: 14, h: 3 },
+]
+
+// ── Ambient life (§4.4): non-combat hens on the streets and chimney smoke —
+//    render-only, no collision, no server. A safe capital reads as inhabited.
+const ambient = {
+  critters: [
+    { model: 'chicken', x: 38, z: 56, w: 10, h: 6, count: 5 }, // market avenue by spawn
+    { model: 'chicken', x: 22, z: 33, w: 10, h: 8, count: 4 }, // west residential courtyard
+  ],
+  smoke: [
+    { x: 55, z: 31, y: 2.6 }, // Grand Smithy
+    { x: 26, z: 30, y: 2.4 }, // residential
+    { x: 32, z: 38, y: 2.4 },
+    { x: 32, z: 46, y: 2.6 }, // mill
+    { x: 60, z: 36, y: 2.4 }, // eastern row
+  ],
+}
+
 const zone = {
   id: 'varrick',
   name: 'Varrick',
@@ -276,6 +325,8 @@ const zone = {
   npcs: [],
   exits,
   props,
+  ground,
+  ambient,
   palette: { walkableA: '#8a9a55', walkableB: '#7e8e4c', blockedA: '#9a9186', blockedB: '#89806f' },
   terrain: {
     relief: 0.7,

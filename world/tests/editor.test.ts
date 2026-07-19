@@ -153,9 +153,8 @@ describe('editor API zones', () => {
     const res = await handleEditorRequest(req('GET'), env, '/zones')
     const body = (await res.json()) as { zones: { id: string; source: string }[] }
     const ids = body.zones.map((z) => z.id)
-    expect(ids).toContain('pasture')
-    expect(ids).toContain('forest')
-    expect(body.zones.find((z) => z.id === 'pasture')?.source).toBe('bundled')
+    expect(ids).toContain('overworld')
+    expect(body.zones.find((z) => z.id === 'overworld')?.source).toBe('bundled')
   })
 
   it('saves a new zone, then serves it as stored', async () => {
@@ -189,11 +188,11 @@ describe('editor API zones', () => {
 
   it('overrides a bundled zone and bumps the revision on re-save', async () => {
     const { env } = makeEnv()
-    await handleEditorRequest(req('PUT', zone('pasture')), env, '/zones/pasture')
-    const second = (await (await handleEditorRequest(req('PUT', zone('pasture')), env, '/zones/pasture')).json()) as any
+    await handleEditorRequest(req('PUT', zone('overworld')), env, '/zones/overworld')
+    const second = (await (await handleEditorRequest(req('PUT', zone('overworld')), env, '/zones/overworld')).json()) as any
     expect(second.revision).toBe(2)
     const list = (await (await handleEditorRequest(req('GET'), env, '/zones')).json()) as any
-    expect(list.zones.find((z: any) => z.id === 'pasture')?.source).toBe('overridden')
+    expect(list.zones.find((z: any) => z.id === 'overworld')?.source).toBe('overridden')
   })
 
   it('rejects an exit to an unknown zone', async () => {
@@ -214,17 +213,17 @@ describe('editor API zones', () => {
 
   it('deletes a stored override and reverts to bundled', async () => {
     const { env } = makeEnv()
-    await handleEditorRequest(req('PUT', zone('pasture')), env, '/zones/pasture')
-    const del = await handleEditorRequest(req('DELETE'), env, '/zones/pasture')
+    await handleEditorRequest(req('PUT', zone('overworld')), env, '/zones/overworld')
+    const del = await handleEditorRequest(req('DELETE'), env, '/zones/overworld')
     expect(del.status).toBe(200)
     expect((await del.json()) as any).toMatchObject({ ok: true, revertedToBundled: true })
     const list = (await (await handleEditorRequest(req('GET'), env, '/zones')).json()) as any
-    expect(list.zones.find((z: any) => z.id === 'pasture')?.source).toBe('bundled')
+    expect(list.zones.find((z: any) => z.id === 'overworld')?.source).toBe('bundled')
   })
 
   it('404s deleting a zone with no stored override', async () => {
     const { env } = makeEnv()
-    const res = await handleEditorRequest(req('DELETE'), env, '/zones/pasture')
+    const res = await handleEditorRequest(req('DELETE'), env, '/zones/overworld')
     expect(res.status).toBe(404)
   })
 
