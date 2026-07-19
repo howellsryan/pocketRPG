@@ -272,6 +272,19 @@ export function paintGroundRect(grid: string[], width: number, height: number, x
   for (let z = za; z <= zb; z++) for (let x = xa; x <= xb; x++) paintGroundTile(grid, width, height, x, z, kind)
 }
 
+/** Paints a straight path `brush` tiles wide from (x0,z0) to (x1,z1) — the
+ * path/polyline tool's per-segment stamp. Samples the line densely and lays a
+ * square footprint at each sample so diagonal runs stay unbroken. */
+export function paintGroundLine(grid: string[], width: number, height: number, x0: number, z0: number, x1: number, z1: number, brush: number, kind: string): void {
+  const r = Math.max(0, Math.floor((brush - 1) / 2))
+  const steps = Math.max(1, Math.round(Math.hypot(x1 - x0, z1 - z0)))
+  for (let s = 0; s <= steps; s++) {
+    const cx = Math.round(x0 + ((x1 - x0) * s) / steps)
+    const cz = Math.round(z0 + ((z1 - z0) * s) / steps)
+    for (let dz = -r; dz <= r; dz++) for (let dx = -r; dx <= r; dx++) paintGroundTile(grid, width, height, cx + dx, cz + dz, kind)
+  }
+}
+
 /** Flood-fills the connected same-kind region at (x,z) to `kind` (4-connected). */
 export function floodFillGround(grid: string[], width: number, height: number, x: number, z: number, kind: string): void {
   if (x < 0 || z < 0 || x >= width || z >= height) return

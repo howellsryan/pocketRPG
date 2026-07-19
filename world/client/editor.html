@@ -183,6 +183,7 @@
           <button class="toolbtn" data-tool="portal">🚪 Portal</button>
           <button class="toolbtn" data-tool="scatter">✨ Scatter prop</button>
           <button class="toolbtn" data-tool="paintGround">🛣 Paint ground</button>
+          <button class="toolbtn" data-tool="paintPath">〰 Paint path</button>
           <button class="toolbtn" data-tool="stamp">▦ Stamp select</button>
           <button class="toolbtn" data-tool="pan">✋ Pan</button>
           <div class="row tight" id="scatterControls" style="display:none">
@@ -191,6 +192,10 @@
           <div id="groundControls" style="display:none">
             <div class="row tight" id="groundKinds"></div>
             <div class="hint">Left-drag paints the selected surface, right-drag erases. Paths/plazas/floors are decoration; water tiles should also be painted blocked. Strokes pack into rectangles on save.</div>
+          </div>
+          <div id="pathControls" style="display:none">
+            <div class="row tight"><label>Width</label><input id="pathWidth" type="range" min="1" max="7" step="1" value="3" /><span id="pathWidthVal">3</span></div>
+            <div class="hint">Click to drop path points; each click paints a road of the chosen width in the selected surface. Right-click or Esc finishes the line.</div>
           </div>
           <div id="stampControls" style="display:none">
             <div class="hint" id="stampInfo">Drag a box to select items, then click to stamp copies. Press S to save as a prefab.</div>
@@ -296,10 +301,15 @@
       <div class="pickerBox">
         <div class="row" style="justify-content:space-between">
           <strong id="preview3dTitle">3D preview</strong>
-          <button id="preview3dClose">Close</button>
+          <div class="row tight">
+            <button id="preview3dWalk" title="Walk the zone at ground level (WASD + drag to look)">🚶 Walk</button>
+            <button id="preview3dReview" title="Capture review angles: spawn, landmark and each exit">📷 Review</button>
+            <button id="preview3dClose">Close</button>
+          </div>
         </div>
         <div id="preview3dHost" style="width:70vw; height:70vh; max-width:900px; background:#0d0f0c; border-radius:6px; position:relative"></div>
-        <div class="hint">Drag to orbit · wheel to zoom. This is the real game renderer.</div>
+        <div id="preview3dReviewStrip" class="row tight" style="flex-wrap:wrap; gap:6px; margin-top:6px"></div>
+        <div class="hint" id="preview3dHint">Drag to orbit · wheel to zoom. Walk for a ground-level look; Review captures the screenshot-gate angles.</div>
       </div>
     </div>
 

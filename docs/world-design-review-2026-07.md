@@ -46,11 +46,11 @@ Point 5 answers "are we just not using our designer?": **yes**. The editor works
 |---|---|---|
 | P0-1 | **Ground-paint tool** — brush/rect/fill painting terrain kinds (path, plaza, water, farm dirt, interior floors) onto a new per-tile ground layer (§4.1) | The single biggest visual win, migla-proven. Editor UI is the same brush interaction the collision tools already have. |
 | P0-2 | **Heightmap brush** (raise/lower/smooth/flatten) + per-zone PNG export | Already planned as terrain-plan T5; today relief is procedural-noise-only, so nobody can author a river valley or a castle mound. |
-| P0-3 | **In-editor review mode** — one button that captures the 3D preview from 3–4 canonical angles (spawn view, landmark view, each exit) and shows them side by side | Makes the §5 screenshot gate a 10-second action instead of a script run. |
+| P0-3 | ✅ **In-editor review mode** — the 3D preview's **Review** button captures the canonical angles (spawn, overview/landmark, each exit) into side-by-side thumbnails | Makes the §5 screenshot gate a 10-second action instead of a script run. |
 | P1-4 | **Building tool** — draw a floor rect, pick wall/roof style, editor emits floor paint + wall ring + door gap; renderer synthesizes roof/door (§4.2) | Towns in minutes; replaces hand-assembling buildings from props. |
-| P1-5 | **Path tool** — click a polyline, editor paints a path of chosen width with soft edges | Roads are the skeleton of every good zone; painting them tile-by-tile is too slow. |
+| P1-5 | ✅ **Path tool** — click a polyline; each click paints a road of the chosen width in the selected surface kind (right-click/Esc finishes) | Roads are the skeleton of every good zone; painting them tile-by-tile is too slow. |
 | P1-6 | Library **thumbnails** (render each catalog GLB to a sprite once at build) instead of text rows | Finding "the right tree" among 40 props is currently blind. |
-| P1-7 | **Walk-through preview** — WASD/click-move camera in the 3D preview | Ground-level composition (sightlines, scale) is invisible from top-down. |
+| P1-7 | ✅ **Walk-through preview** — the 3D preview's **Walk** toggle drops to a ground-level WASD + drag-to-look camera | Ground-level composition (sightlines, scale) is invisible from top-down. |
 | P2-8 | Reference-image side panel (pin concept art/screenshots while editing) | Cheap, keeps authoring anchored to a target. |
 | P2-9 | Zone-revision visual diff (render rev A vs rev B side by side) | Review aid once multiple people/agents author. |
 | P2-10 | Script↔editor round-trip: `gen-*.mjs` emits a draft revision to the editor instead of the final JSON | Formalizes "scripts block out, humans/editor finish". |
@@ -70,8 +70,8 @@ Migla's recipe (floor region + wall ring → auto-fitted roof GLB, doorway gaps 
 ### 4.3 Art direction constants
 One module of named zone palettes + ambience presets per biome (mirroring `biomes3d.json` and `DESIGN.md` tokens), replacing per-zone hex guesses. Warm and saturated; no pure greys/blacks (migla's rule, and it shows). A **toon-ramp/stylized lighting pass** is worth a spike after ground paint lands — flat-colour assets (KayKit/Kenney/Quaternius) read dramatically better toon-shaded than under plain PBR lighting.
 
-### 4.4 Ambient life
-Non-combat critters (Bunny/Birb/Pigeon/sheep — already matched in `docs/open-world-asset-coverage.md`), chimney smoke, birds. Cheap wander NPCs with no combat; towns feel inhabited.
+### 4.4 Ambient life — ✅ BUILT (W2)
+Optional `ambient` block on `ZoneDef`: `critters[]` (a loadable GLB basename + a wander rectangle + count) and `smoke[]` (a chimney tile + height). Critters random-walk their patch procedurally (no mixer, one code path for every model); smoke is a recycled point-sprite plume. Pure client render — no collision, no server authority — carried on the welcome payload like ground paint and shown in the game, the terrain preview, and the editor's 3D preview. As shipped: hens in Varrick/Lumbright, frogs in the Whisperwood glades, chimney smoke on every home. *(Only `chicken`/`frog` GLBs are vendored today; the review's Bunny/Birb/Pigeon list awaits those assets — the registry in `client/src/ambient.ts` takes a new model with one line.)*
 
 ## 5) Process: the screenshot gate and the block-out rule
 
@@ -113,14 +113,14 @@ Phases are independently shippable; each gates on `world:check` + the §5 screen
 | **W1a — Ground format** | ✅ Done | `ZoneDef.ground` regions (last-wins) + validation + welcome payload; `groundKindGrid`. Tested. |
 | **W1b — Ground/water renderer** | ✅ Done | Draped lit ground-paint overlay + translucent water planes, composing over both checker and blended-terrain materials. Pasture repainted + screenshot-verified. |
 | **W1c — Editor ground-paint tool** | ✅ Done | Surface-kind swatch picker, brush/erase, greedy rectangle packing on save; 2D grid renders paint; lossless round-trip test. |
-| **W1d — Repaint existing zones** | 🟡 In progress | Pasture ✓, Lumbright ✓ (streets + market square). Left: **Varrick** (capital — biggest win), **forest**, **varrick_dungeon**. |
-| **W2 — Town re-dress + ambient life** | 🟡 Folded into W1d + later | Composition now comes from ground paint over the owned building GLBs. Still to do: ambient critters/smoke (§4.4); enterable interiors (§4.2) deferred. |
-| **W3 — Editor UX batch** | ⬜ Not started | Heightmap brush (P0-2), one-click review-mode capture (P0-3), path/polyline tool (P1-5), library thumbnails (P1-6), walk-through preview camera (P1-7). |
-| **W4 — Per-place authoring** | ⬜ Not started | Redirected by the visual-first + one-map decisions: author as **districts of the merged overworld** (M3) rather than 14 separate zones. The terrain-plan §6 table still supplies each place's biome/signature. |
+| **W1d — Repaint existing zones** | ✅ Done | All five zones now painted: pasture ✓, Lumbright ✓, **Varrick** (cobble avenue → market plaza → district lanes → gate roads), **forest** (grove/exit trails), **varrick_dungeon** (nave/arena/sanctum/causeway flagstones). Each screenshot-verified against the §5 checklist. |
+| **W2 — Ambient life** | ✅ Done | `ZoneDef.ambient` critters + chimney smoke (§4.4) — client-render only. Hens in Varrick/Lumbright, frogs in the Whisperwood, smoke on every home. Enterable interiors (§4.2) still deferred. |
+| **W3 — Editor UX batch** | 🟡 Partial | Done: path/polyline tool (P1-5), one-click **Review** capture of the screenshot-gate angles + **Walk** ground-level camera in the 3D preview (P0-3, P1-7), and per-zone auto-framing + `--pitch/--dist` in `shoot-zone.mjs`. Deferred: heightmap brush (P0-2 — needs the terrain-plan T4/T5 heightmap render path, its own phase) and library thumbnails (P1-6 — needs a build-time GLB→sprite step). |
+| **W4 — Per-place authoring** | 🟡 Specified, execution blocked | Redirected to **districts of the merged overworld** (M3), which depends on the unstarted M1 (merge) → M2 (streaming) track — so it cannot be *authored* yet. The per-place art-direction brief that makes it turn-key once M3 lands is in §9 below. |
 | **Spike — toon-ramp lighting** | ⬜ Not started | A/B stylized lighting after W1d; screenshots to `DESIGN.md`. |
 | **Assets** | ⬜ Deferred (developer choice) | Buy KayKit EXTRA / Quaternius Patreon (§6) *after* the visual/editor track, then backfill. |
 
-**Recommended next:** finish W1d (Varrick re-dress is the largest single composition win), then the W3 editor batch, then start the M1 map-merge prototype.
+**Recommended next:** the visual track (W1d/W2) and the self-contained editor tools (W3: path, review, walk) are in. The remaining work is the **M1 map-merge prototype** — it unblocks W4 and the deferred W3 heightmap brush (both want the merged-overworld render path), and is the gate for everything downstream.
 
 ## 8) Files changed / added
 
@@ -134,7 +134,38 @@ Ground-paint feature (W0–W1c):
 - Tests: `world/tests/{zone,groundPaint}.test.ts`.
 
 Zone dressing (W1d):
-- `world/zones/pasture.json`, `world/zones/lumbright.json`.
+- `world/zones/pasture.json`, `world/zones/lumbright.json`, `world/zones/forest.json`, `world/zones/varrick_dungeon.json`, `world/scripts/gen-varrick.mjs` (ground + ambient in the block-out).
+
+Ambient life (W2):
+- `world/shared/zone.ts` + `world/shared/protocol.ts` (`ambient` field + validation), `world/server/WorldZone.ts` (welcome payload).
+- `world/client/src/ambient.ts` (critters + smoke), wired into `client/src/main.ts`, `client/src/preview/main.ts`, `client/src/editor/preview3d.ts`.
+
+Editor UX (W3):
+- `world/client/src/editor/{main,state}.ts` + `editor.html` (path/polyline tool; Walk + Review buttons on the 3D preview).
+- `world/client/src/preview/main.ts` (`pitch`/`dist` URL params), `world/scripts/shoot-zone.mjs` (per-zone framing + `--pitch/--dist`).
 
 Investigation:
 - `docs/single-world-map-investigation.md`.
+
+## 9) Per-place authoring brief (W4, redirected)
+
+W4 cannot be *authored* until the M-track gives us one overworld to place districts into (M1 merge → M2 streaming → M3 layout). What it needs to be turn-key the day M3 lands is a per-place art-direction brief, which this section supplies: each place already has a biome/relief in terrain-plan §6; below adds the ground-paint kinds and ambient life the W1–W2 layers now make available. Recipe per district: **§6 terrain block → ground paint (streets/water/floors) → building GLBs facing the streets → ambient life → §5 review gate.**
+
+| Place | Signature ground paint | Ambient life |
+|---|---|---|
+| **Lumbright** ✓ | cobble high street, market plaza, farm soil (cabbage fields) | hens, chimney smoke |
+| **Varrick** ✓ | cobble avenues, market/cathedral plazas, gate roads | hens, chimney smoke |
+| **Faloden** | water river channel, plank bridge deck, dirt banked approaches | frogs, smoke at the tollhouse |
+| **Ardounne** | dirt oakwood trails, a plaza market square | hens, smoke |
+| **Draynar** | water bog pools, dirt boardwalk between stilt-houses | frogs, low marsh smoke |
+| **Al-Karid** | sand streets, sandstone plaza, dirt caravan road | smoke from kilns (no desert critter vendored yet) |
+| **Edgevale** | dirt tracks, stone floor inside the frontier fort | sparse; smoke |
+| **Barlock** | sand beach shelf, water sea, plank docks | frogs by the tideline, smoke |
+| **Catherra** | water loch, dirt lanes, plank jetties | frogs, smoke |
+| **Seerhold** | dirt ridge paths, stone floor at the seers' shrine | smoke |
+| **Brimhollow** | stone (basalt) terraces, cobble forge road | ember smoke on every forge |
+| **Canifel** | water sunken graves, dirt path through dead wood | frogs, umbral mist-smoke |
+| **Camlann** | water loch, dirt lanes, farm soil | hens, smoke |
+| **Port Sarin** | water harbour, plank quays, plaza market | smoke from the harbour houses |
+
+Gaps this brief surfaces for the asset backlog (§6): desert/coastal/marsh critters (only `chicken`/`frog` are vendored), and — for the water-heavy coastal/loch/harbour places — the shoreline/water material polish already flagged as a real gap.

@@ -16,10 +16,23 @@ import { chromium } from 'playwright'
 
 const worldDir = fileURLToPath(new URL('..', import.meta.url))
 const args = process.argv.slice(2)
-const yawIdx = args.indexOf('--yaw')
-const yaw = yawIdx >= 0 ? args[yawIdx + 1] : null
-const zones = args.filter((a) => !a.startsWith('--') && a !== yaw)
+const flag = (name) => { const i = args.indexOf(name); return i >= 0 ? args[i + 1] : null }
+const yaw = flag('--yaw')
+const pitch = flag('--pitch')
+const dist = flag('--dist')
+const flagVals = new Set([yaw, pitch, dist].filter((v) => v != null))
+const zones = args.filter((a) => !a.startsWith('--') && !flagVals.has(a))
 const ZONES = zones.length ? zones : ['pasture', 'forest', 'lumbright']
+
+// Per-zone default framing so `node scripts/shoot-zone.mjs` frames each zone for
+// review (the world-design rule's screenshot gate) without hand-tuning the
+// camera every time — big capitals want a higher, closer eye than a 32² field;
+// the dungeon reads best near top-down. CLI --yaw/--pitch/--dist override these.
+const CAMERAS = {
+  varrick: { yaw: 0.9, pitch: 0.82, dist: 0.72 },
+  varrick_dungeon: { yaw: 0.78, pitch: 0.95, dist: 0.8 },
+  lumbright: { pitch: 0.6, dist: 0.9 },
+}
 const outDir = path.join(worldDir, 'preview-shots')
 mkdirSync(outDir, { recursive: true })
 
@@ -43,7 +56,12 @@ const browser = await chromium.launch()
 try {
   const page = await browser.newPage({ viewport: { width: 1280, height: 800 }, deviceScaleFactor: 2 })
   for (const zone of ZONES) {
-    const url = `${base}/preview.html?zone=${zone}${yaw != null ? `&yaw=${yaw}` : ''}`
+    const cam = CAMERAS[zone] ?? {}
+    const y = yaw ?? cam.yaw
+    const p = pitch ?? cam.pitch
+    const d = dist ?? cam.dist
+    const qs = [['yaw', y], ['pitch', p], ['dist', d]].filter(([, v]) => v != null).map(([k, v]) => `&${k}=${v}`).join('')
+    const url = `${base}/preview.html?zone=${zone}${qs}`
     await page.goto(url, { waitUntil: 'load' })
     await page.waitForFunction(() => window.__previewReady === true, { timeout: 15000 }).catch(() => {})
     const file = path.join(outDir, `${zone}.png`)

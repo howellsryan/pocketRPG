@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { regionsFromGrid, paintGroundRect, floodFillGround, applyGroundGrid } from '../client/src/editor/state'
+import { regionsFromGrid, paintGroundRect, floodFillGround, applyGroundGrid, paintGroundLine } from '../client/src/editor/state'
 import { groundKindGrid } from '../shared/groundKinds'
 import type { ZoneDef } from '../shared/zone'
 
@@ -42,6 +42,24 @@ describe('applyGroundGrid', () => {
     expect(def.ground).toBeTruthy()
     applyGroundGrid(def, new Array(9).fill(''))
     expect(def.ground).toBeUndefined()
+  })
+})
+
+describe('paintGroundLine', () => {
+  it('paints a continuous path of the chosen width between two points', () => {
+    const grid = new Array(7 * 7).fill('')
+    paintGroundLine(grid, 7, 7, 1, 3, 5, 3, 3, 'path_cobble') // horizontal, 3 wide
+    // Every tile along the run, across the full width, is painted.
+    for (let x = 1; x <= 5; x++) for (let z = 2; z <= 4; z++) expect(grid[z * 7 + x]).toBe('path_cobble')
+    // Outside the band stays empty.
+    expect(grid[1 * 7 + 3]).toBe('')
+    expect(grid[5 * 7 + 3]).toBe('')
+  })
+
+  it('keeps a diagonal segment unbroken (no gaps between samples)', () => {
+    const grid = new Array(6 * 6).fill('')
+    paintGroundLine(grid, 6, 6, 0, 0, 5, 5, 1, 'path_dirt')
+    for (let i = 0; i <= 5; i++) expect(grid[i * 6 + i]).toBe('path_dirt')
   })
 })
 
