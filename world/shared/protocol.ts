@@ -39,6 +39,9 @@ export type ClientMessage =
   /** Select the combat spell for magic weapons (null = no spell). */
   | { t: 'setSpell'; spell: string | null }
   | { t: 'special' }
+  /** Toggle a prayer on/off (protection or combat slot; server validates level
+   * requirement + non-empty pool). */
+  | { t: 'pray'; prayerId: string }
   | { t: 'unequip'; slot: string }
   | { t: 'logout' }
   | { t: 'ping'; n: number }
@@ -59,8 +62,18 @@ export type ZoneEvent =
   | { e: 'run'; energy: number; running: boolean }
   /** Special-attack energy readout (0-100). */
   | { e: 'spec'; energy: number }
+  /** Prayer pool readout + the active protection/combat prayer ids (null = off).
+   * Emitted on toggle and when combat drain moves the pool or empties it. */
+  | { e: 'prayer'; points: number; max: number; protection: string | null; combat: string | null }
   /** Worn equipment changed (equip/unequip) — the Equipment tab re-renders. */
   | { e: 'equip'; equipment: EquipmentMap }
+  /** Zone-wide boss kill feed entry (item 11). */
+  | { e: 'kill'; monster: string; killer: string }
+  /** Zone-wide broadcast when a boss drops a collection-log unique (item 11). */
+  | { e: 'uniqueDrop'; monster: string; player: string; item: string }
+  /** Live damage-contribution readout for an in-combat boss, sorted by damage
+   * descending — makes the top-damage loot rule legible mid-fight (item 11). */
+  | { e: 'threat'; npcId: string; contributors: { charId: string; name: string; dmg: number }[] }
 
 export type EntityDiff = {
   id: string
@@ -136,6 +149,8 @@ export type ServerMessage =
         spell?: string
         specialEnergy: number
         equipment: EquipmentMap
+        /** Prayer pool + active toggles at hello (pool full per session). */
+        prayer: { points: number; max: number; protection: string | null; combat: string | null }
       }
     }
   | {
@@ -242,6 +257,10 @@ export function parseClientMessage(raw: unknown): ClientMessage | null {
     }
     case 'special':
       return { t: 'special' }
+    case 'pray': {
+      const prayerId = (raw as Record<string, unknown>).prayerId
+      return typeof prayerId === 'string' && prayerId.length > 0 && prayerId.length <= 64 ? { t: 'pray', prayerId } : null
+    }
     case 'unequip': {
       const slot = (raw as Record<string, unknown>).slot
       return typeof slot === 'string' && slot.length > 0 && slot.length <= 32 ? { t: 'unequip', slot } : null

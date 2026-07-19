@@ -17,6 +17,9 @@ function makeDb(insertChanges = 1) {
               const changes = sql.includes('INSERT INTO world_grants') ? insertChanges : 1
               return { meta: { changes } }
             },
+            // isCharacterInActiveMatch (flushGrants defence-in-depth) reads via
+            // .first(); no seeded PvP match → null → treated as not in a match.
+            first: async () => null,
           }
         },
       }

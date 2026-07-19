@@ -10,6 +10,7 @@ import { getLevelFromXP, clampXP } from '../../src/engine/experience.js'
 import { startCombat, stepCombat, playerAttackRange, type CombatSession } from './combat'
 import type { NpcState } from './npc'
 import type { LootEntity } from './loot'
+import { hasLineOfSight } from './los'
 import monstersData from '../../src/data/monsters.json'
 
 type MonsterStyles = Record<string, { attackStyle?: string } | undefined>
@@ -71,6 +72,20 @@ export type TickPlayer = {
    * during combat, 100 between fights. `lastSpecSent` gates the {e:'spec'} echo. */
   specialEnergy: number
   lastSpecSent: number
+  /** Prayer session (world/shared/prayer.ts): pool seeded full at hello from the
+   * Prayer level, drains only during combat (copied onto the engine state each
+   * fight, synced back after each tick), persists across auto-fight kills. The
+   * active protection/combat prayer ids are the player's toggles. `lastPrayerSent`
+   * gates the {e:'prayer'} echo. */
+  prayerPoints: number
+  maxPrayerPoints: number
+  prayerDrainAccumulator: number
+  activeProtectionPrayer: string | null
+  activeCombatPrayer: string | null
+  lastPrayerSent: string | null
+  /** Active potion buffs { potionItemId: ticksRemaining } — session state copied
+   * onto the engine at fight start and decayed per combat tick (item 8). */
+  activePotions: Record<string, number>
 }
 
 // Running: 2 tiles/tick, ~100 energy drained over ~1 min of continuous running;
@@ -109,15 +124,23 @@ export type TickResult = {
   hits: { targetId: string; dmg: number }[]
   /** This player's HP hit 0 this tick → respawn + {t:'dead'}. */
   died: boolean
+  /** Ranged ammo left the equipped slot this tick (combat.ts mutated
+   * player.equipment.ammo) → the DO marks equipment dirty + debounces a flush so
+   * the consumed arrows are persisted to the save. */
+  equipmentDirty: boolean
   /** Loot to add to the zone (rolled on a kill this player landed). */
   newLoot: LootEntity[]
   /** NPC ids whose broadcast state changed / that should be removed. */
   npcChanged: string[]
   npcRemoved: string[]
+  /** Kills resolved this tick, for the DO to record server-authoritatively
+   * (collection log + kill count + audit for bosses). `owner` is the top-damage
+   * contributor; `loot` is what was rolled for them. */
+  kills: { monsterId: string; owner: string; loot: { itemId: string; quantity: number }[] }[]
 }
 
 export function emptyResult(): TickResult {
-  return { entChanged: false, events: [], rockChanges: [], bankOpen: false, stationOpen: null, consumed: [], hits: [], died: false, newLoot: [], npcChanged: [], npcRemoved: [] }
+  return { entChanged: false, events: [], rockChanges: [], bankOpen: false, stationOpen: null, consumed: [], hits: [], died: false, equipmentDirty: false, newLoot: [], npcChanged: [], npcRemoved: [], kills: [] }
 }
 
 /** Seeds the 28-slot session pack from the character's PocketRPG inventory at
@@ -187,6 +210,21 @@ export function monsterAttackAnim(monsterId: string): 'attack' | 'attack_ranged'
 
 export function withinRange(a: { x: number; z: number }, b: { x: number; z: number }, range: number): boolean {
   return Math.max(Math.abs(a.x - b.x), Math.abs(a.z - b.z)) <= range
+}
+
+/** Reach check for actually landing a hit: within Chebyshev range AND, for
+ * ranged/magic (range > melee), an unobstructed line of sight. Melee (range 1)
+ * needs only adjacency. This is the gate that closes safespotting — applied
+ * symmetrically to a player's shot and a monster's. */
+export function withinRangeAndSight(
+  a: { x: number; z: number },
+  b: { x: number; z: number },
+  range: number,
+  collision: string[],
+): boolean {
+  if (!withinRange(a, b, range)) return false
+  if (range <= MELEE_RANGE) return true
+  return hasLineOfSight(collision, a, b)
 }
 
 /** Trims an approach path to stop at the first tile within `range` of the
@@ -399,8 +437,9 @@ export function emitRunIfChanged(player: TickPlayer, events: ZoneEvent[]): void 
  * monster keeps swinging once it catches up (melee at 1 tile, ranged/magic from
  * their reach). */
 function findAggroInRange(player: TickPlayer, ctx: TickContext): NpcState | undefined {
+  const collision = ctx.collision ?? []
   for (const npc of ctx.npcs?.values() ?? []) {
-    if (npc.state === 'combat' && npc.attackerId === player.charId && withinRange(player, npc, monsterAttackRange(npc.monsterId))) return npc
+    if (npc.state === 'combat' && npc.attackerId === player.charId && withinRangeAndSight(player, npc, monsterAttackRange(npc.monsterId), collision)) return npc
   }
   return undefined
 }

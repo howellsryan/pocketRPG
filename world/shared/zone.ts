@@ -14,6 +14,9 @@ export type ZoneNpcDef = {
   x: number
   z: number
   wander: { x: number; z: number; w: number; h: number }
+  /** Tiles within which this npc aggresses idle passers-by (0 = passive until
+   * clicked). Omitted → bosses default aggressive, everything else passive. */
+  aggroRadius?: number
 }
 
 export type ZoneExitDef = {
@@ -82,6 +85,10 @@ export type ZoneDef = {
   objects: ZoneObjectDef[]
   npcs: ZoneNpcDef[]
   exits?: ZoneExitDef[]
+  /** Where a death respawns the player when it should NOT be a no-penalty trip
+   * back to this zone's own spawn (item 10) — e.g. a dungeon respawning back at
+   * its town entrance. Omitted => respawn at this zone's own `spawn` tile. */
+  deathRespawn?: { zone: string; x: number; z: number }
   props?: ZonePropDef[]
   palette?: ZonePalette
   ambience?: ZoneAmbience
@@ -188,6 +195,20 @@ export function validateExitGraph(zones: Record<string, ZoneDef>): ZoneValidatio
       }
       if ((target.exits ?? []).some((e) => e.x === exit.toX && e.z === exit.toZ)) {
         errors.push(`exit '${exit.id}' arrival (${exit.toX},${exit.toZ}) lands on an exit tile in '${exit.toZone}'`)
+      }
+    }
+    const dr = zone.deathRespawn
+    if (dr) {
+      const target = zones[dr.zone]
+      if (!target) {
+        errors.push(`deathRespawn in '${zone.id}' targets unknown zone '${dr.zone}'`)
+      } else {
+        if (!isWalkable(target, dr.x, dr.z)) {
+          errors.push(`deathRespawn (${dr.x},${dr.z}) in '${dr.zone}' is not walkable`)
+        }
+        if ((target.exits ?? []).some((e) => e.x === dr.x && e.z === dr.z)) {
+          errors.push(`deathRespawn (${dr.x},${dr.z}) lands on an exit tile in '${dr.zone}'`)
+        }
       }
     }
   }

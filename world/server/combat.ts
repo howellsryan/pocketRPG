@@ -9,12 +9,14 @@ import { resolveMagicSpell, getCombatType } from '../../src/engine/equipment.js'
 import itemsData from '../../src/data/items.json'
 import monstersData from '../../src/data/monsters.json'
 import spellsData from '../../src/data/spells.json'
-import { grantSessionXp, monsterAttackAnim, monsterAttackRange, rangeForCombatType, withinRange, type TickPlayer } from './tick'
+import prayersData from '../../src/data/prayers.json'
+import { grantSessionXp, monsterAttackAnim, monsterAttackRange, rangeForCombatType, withinRangeAndSight, type TickPlayer } from './tick'
 import { recordDamage, topDamageContributor, type NpcState } from './npc'
 import type { TickContext, TickResult } from './tick'
 import type { ZoneEvent } from '../shared/protocol'
 import { spawnDrops } from './loot'
 import { removeItems } from './mining'
+import { isBossMonster } from './bossKills'
 
 /** Special energy between fights is always full (each fight seeds 100, refills
  * on kill) — mirror the main game's PvE special model. */
@@ -34,11 +36,56 @@ function resetSpecial(player: TickPlayer, result: TickResult): void {
   emitSpecIfChanged(player, result.events)
 }
 
+/** Emits a {e:'prayer'} echo when the rounded pool or an active prayer changed
+ * (drain, auto-switch-off on empty, or a toggle) — gated like emitSpecIfChanged
+ * so it doesn't fire every tick. */
+export function emitPrayerIfChanged(player: TickPlayer, events: ZoneEvent[]): void {
+  const points = Math.ceil(player.prayerPoints)
+  const key = `${points}|${player.activeProtectionPrayer ?? ''}|${player.activeCombatPrayer ?? ''}`
+  if (key === player.lastPrayerSent) return
+  player.lastPrayerSent = key
+  events.push({
+    e: 'prayer',
+    points,
+    max: player.maxPrayerPoints,
+    protection: player.activeProtectionPrayer,
+    combat: player.activeCombatPrayer,
+  })
+}
+
 // The engine's inferred state types `spell`/`runesConsumed` from their `null`
 // initialisers — widen them to what magic combat actually stores there.
-type EngineState = Omit<ReturnType<typeof createCombatState>, 'spell'> & {
+type EngineState = Omit<ReturnType<typeof createCombatState>, 'spell' | 'prayerPoints' | 'maxPrayerPoints' | 'prayerDrainAccumulator' | 'activeProtectionPrayer' | 'activeCombatPrayer' | 'activePotions'> & {
   spell: unknown
   runesConsumed?: Record<string, number> | null
+  prayerPoints: number
+  maxPrayerPoints: number
+  prayerDrainAccumulator: number
+  activeProtectionPrayer: string | null
+  activeCombatPrayer: string | null
+  activePotions: Record<string, number>
+}
+
+/** Copies the player's session buffs (prayer pool + toggles, active potions) onto
+ * an engine state at fight start. Potions are cloned so the fight's per-tick decay
+ * doesn't mutate the session copy until synced back. */
+function copySessionBuffsToState(player: TickPlayer, state: EngineState): void {
+  state.prayerPoints = player.prayerPoints
+  state.maxPrayerPoints = player.maxPrayerPoints
+  state.prayerDrainAccumulator = player.prayerDrainAccumulator
+  state.activeProtectionPrayer = player.activeProtectionPrayer
+  state.activeCombatPrayer = player.activeCombatPrayer
+  state.activePotions = { ...player.activePotions }
+}
+
+/** Syncs the engine state's buffs back onto the session after a tick, so prayer
+ * drain / auto-switch-off and potion decay persist across auto-fight kills. */
+function syncStateBuffsToSession(player: TickPlayer, state: EngineState): void {
+  player.prayerPoints = state.prayerPoints
+  player.prayerDrainAccumulator = state.prayerDrainAccumulator
+  player.activeProtectionPrayer = state.activeProtectionPrayer
+  player.activeCombatPrayer = state.activeCombatPrayer
+  player.activePotions = state.activePotions
 }
 export type CombatSession = { npcId: string; state: EngineState }
 
@@ -55,9 +102,29 @@ function attackAnimFor(combatType: string): 'attack' | 'attack_ranged' | 'attack
 }
 
 const RESPAWN_TICKS = 25
+// Bosses respawn far slower than trash: a 255-HP, ~20k-coin boss on the 15s
+// regular timer invites a farm loop that blows past the §4 GP/hr guardrail, so
+// hold the world boss for 60s between kills (item 9).
+const BOSS_RESPAWN_TICKS = 100
 const NPC_REMOVE_AFTER_DEATH_TICKS = 3
 
+/** Ticks before a killed monster respawns — bosses far slower than trash. */
+export function respawnTicksFor(monsterId: string): number {
+  return isBossMonster(monsterId) ? BOSS_RESPAWN_TICKS : RESPAWN_TICKS
+}
+
 type Monsters = Record<string, Record<string, unknown>>
+
+/** Decrements the player's equipped ammo by `qty`, nulling the slot when it
+ * empties. Only touches the slot the engine actually fired (guards against a
+ * mid-fight ammo swap). Mirrors applyTaskResult.js / pvpEngine.js. */
+function consumeEquippedAmmo(player: TickPlayer, itemId: string, qty: number): void {
+  const equipment = player.equipment as { ammo?: { itemId?: string; quantity?: number } | null }
+  const ammo = equipment.ammo
+  if (!ammo || ammo.itemId !== itemId) return
+  const remaining = Math.max(0, (Math.floor(Number(ammo.quantity)) || 0) - Math.max(1, Math.floor(qty)))
+  player.equipment = { ...player.equipment, ammo: remaining > 0 ? { ...ammo, quantity: remaining } : null }
+}
 
 function playerStatsFor(player: TickPlayer): Record<string, number> {
   const lvl = (s: string) => player.stats[s]?.level ?? 1
@@ -104,8 +171,12 @@ export function startCombat(player: TickPlayer, npc: NpcState, result?: TickResu
     result?.events.push({ e: 'msg', text: 'You need to select a spell to fight with that weapon.' })
     return
   }
-  const state = createCombatState(monster, setup.combatType, player.stance, setup.spell as null) as EngineState
+  const state = createCombatState(monster, setup.combatType, player.stance, setup.spell as null) as unknown as EngineState
   state.monster.currentHP = npc.hp
+  // Carry the session prayer pool + toggles onto this fight's engine state, so
+  // the engine drains the same pool and applies bonuses/protection. Persists
+  // across auto-fight kills because stepCombat syncs it back after each tick.
+  copySessionBuffsToState(player, state)
   player.combat = { npcId: npc.id, state }
   player.specialEnergy = state.specialAttackEnergy
   npc.state = 'combat'
@@ -117,13 +188,16 @@ function killNpc(player: TickPlayer, npc: NpcState, loot: { itemId: string; quan
   npc.anim = 'die'
   npc.hp = 0
   npc.attackerId = null
-  npc.respawnAtTick = ctx.tick + RESPAWN_TICKS
+  npc.respawnAtTick = ctx.tick + respawnTicksFor(npc.monsterId)
   npc.removeAtTick = ctx.tick + NPC_REMOVE_AFTER_DEATH_TICKS
   player.combat = null
   player.anim = 'idle'
   const owner = topDamageContributor(npc) ?? player.charId
   npc.damageByChar.clear()
   result.newLoot.push(...spawnDrops(loot, npc.x, npc.z, owner, ctx.tick))
+  // Surface the kill so the DO can record boss collection-log / kill-count /
+  // audit server-side (§14) — the loot itself still rides the trusted save blob.
+  result.kills.push({ monsterId: npc.monsterId, owner, loot })
   result.npcChanged.push(npc.id)
 }
 
@@ -147,8 +221,12 @@ export function stepCombat(player: TickPlayer, ctx: TickContext, result: TickRes
   // chases. Aggro persists either way (npc.ts keeps chasing).
   const playerRange = rangeForCombatType(combat.state.combatType as string)
   const monsterRange = monsterAttackRange(npc.monsterId)
-  const inPlayerRange = withinRange(player, npc, playerRange)
-  const inMonsterRange = withinRange(player, npc, monsterRange)
+  const collision = ctx.collision ?? []
+  // Ranged/magic need line of sight to land (both directions) — a wall between
+  // the two blocks the shot, so a player can't kite a boss from behind a pillar
+  // it can never see through, and vice versa.
+  const inPlayerRange = withinRangeAndSight(player, npc, playerRange, collision)
+  const inMonsterRange = withinRangeAndSight(player, npc, monsterRange, collision)
   if (!inPlayerRange && !inMonsterRange) {
     player.combat = null
     player.anim = 'idle'
@@ -168,8 +246,12 @@ export function stepCombat(player: TickPlayer, ctx: TickContext, result: TickRes
   // The pack rides in as the engine's inventory so magic can check runes;
   // consumption is applied below from state.runesConsumed (live-game contract:
   // consume on a landed hit, then clear so the same cast never double-charges).
-  const { combatState, events } = processCombatTick(combat.state, playerStatsFor(player), player.equipment, itemsData, {}, player.inventory, null)
+  const { combatState, events } = processCombatTick(combat.state, playerStatsFor(player), player.equipment, itemsData, prayersData, player.inventory, null)
   combat.state = combatState
+  // The engine drained the pool / may have switched prayers off on empty — carry
+  // that back onto the session and echo the readout when it moved.
+  syncStateBuffsToSession(player, combat.state as EngineState)
+  emitPrayerIfChanged(player, result.events)
   // Default to idle unless walking (walk anim set upstream); the playerHit/
   // specialHit branches below set the attack anim only on a tick the engine
   // actually resolved a swing — mirroring the npc.anim gating so the animation
@@ -196,7 +278,7 @@ export function stepCombat(player: TickPlayer, ctx: TickContext, result: TickRes
     }
   }
 
-  for (const ev of events as { type: string; damage?: number; hits?: number[]; totalDamage?: number; loot?: { itemId: string; quantity: number }[]; xpSkills?: Record<string, number>; spellName?: string }[]) {
+  for (const ev of events as { type: string; damage?: number; hits?: number[]; totalDamage?: number; loot?: { itemId: string; quantity: number }[]; xpSkills?: Record<string, number>; spellName?: string; itemId?: string; qty?: number }[]) {
     if (ev.type === 'playerHit') {
       if (!inPlayerRange) continue
       player.anim = attackAnimFor(combat.state.combatType as string)
@@ -211,6 +293,21 @@ export function stepCombat(player: TickPlayer, ctx: TickContext, result: TickRes
       player.anim = 'idle'
       resetSpecial(player, result)
       return
+    } else if (ev.type === 'noAmmo') {
+      // Out of ammunition: the engine can't resolve a ranged swing, so end the
+      // fight cleanly rather than let it stall forever splashing nothing.
+      result.events.push({ e: 'msg', text: 'You have run out of ammunition.' })
+      player.combat = null
+      if (npc.attackerId === player.charId) npc.attackerId = null
+      player.anim = 'idle'
+      resetSpecial(player, result)
+      return
+    } else if (ev.type === 'consumeAmmo') {
+      // The engine fired a ranged shot: decrement the equipped ammo on the save's
+      // equipment so arrows aren't free, and flag the equipment dirty so the flush
+      // persists the reduced stack. Mirrors applyTaskResult / pvpEngine.
+      if (ev.itemId) consumeEquippedAmmo(player, ev.itemId, ev.qty ?? 1)
+      result.equipmentDirty = true
     } else if (ev.type === 'specialHit') {
       if (!inPlayerRange) continue
       player.anim = attackAnimFor(combat.state.combatType as string)

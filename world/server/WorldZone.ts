@@ -15,21 +15,31 @@ import {
 } from './tick'
 import { STATIONS, recipeFor, stationTypeForVerb, isStationType } from '../shared/recipes'
 import { hasMaterials, maxCraftable } from './crafting'
-import { resolveCombatSetup, isSameFightTarget, playerAttackRange } from './combat'
+import { resolveCombatSetup, isSameFightTarget, playerAttackRange, emitPrayerIfChanged, startCombat } from './combat'
+import { seedPrayer, resolvePrayerToggle } from '../shared/prayer'
 import spellsJson from '../../src/data/spells.json'
-import { npcsFromZone, tickNpc, toNpcDiff, type NpcState } from './npc'
+import { npcsFromZone, pickAggroTarget, reselectAttacker, threatContributors, threatKey, tickNpc, toNpcDiff, type NpcState } from './npc'
 import { PLAYER_DROP_OWNER_TICKS, isExpired, isVisibleTo, spawnDrops, takeLoot, visibleLootFor, type LootEntity } from './loot'
 import { sanitizeChat } from '../shared/chat'
 import { addToInventory, countItem, freeSlotCount, inventoryIsFull, isStackable, moveInventorySlot, removeItems, removeOneAt } from './mining'
 import { getLevelFromXP } from '../../src/engine/experience.js'
 import { flushGrants, isEmptyPayload, type GrantPayload, type ItemStack } from './grants'
+import { isBossMonster, recordBossKill, uniqueDropsFrom } from './bossKills'
+import monstersDataJson from '../../src/data/monsters.json'
+
+type MonsterNames = Record<string, { name?: string } | undefined>
+const monsterNames = monstersDataJson as MonsterNames
+import { isCharacterInActiveMatch } from './pvpLock'
+import { beginWorldSession, refreshWorldSession, endWorldSession } from '../../functions/_lib/game/worldSessions.js'
 import { loadCharacterWithSave } from '../../functions/_lib/game/save.js'
 import { type ZoneDef, type ZoneExitDef } from '../shared/zone'
 import { ZONES } from './zones'
 import { loadStoredZone } from './zoneStore'
 import { gearFromEquipment } from '../shared/appearance'
-import { BURY_XP, healAmount, primaryInvAction } from '../shared/itemActions'
+import { BURY_XP, healAmount, primaryInvAction, resolveEatTiming, resolveDrink } from '../shared/itemActions'
 import { checkEquipRequirements, equipItem, placeUnequippedItems } from '../../src/engine/equipment.js'
+import { applyEat, applyCombo } from '../../src/engine/combat.js'
+import { isComboConsumable } from '../../src/engine/consumables.js'
 import itemsData from '../../src/data/items.json'
 import { consumeUnits, depositUnits, emptyPools, mintUnits, withdrawUnits, type ItemPools, type Tally } from './sessionItems'
 import { grantSessionXp, cutPathToRange, withinRange } from './tick'
@@ -81,6 +91,11 @@ type Player = TickPlayer & {
   flushAtTick: number | null
   /** Last HP value sent to this client ({e:'hp'} goes out only on change). */
   lastHpSent: number
+  /** Absolute tick at/after which the next normal-food eat (resp. combo
+   * consumable) is allowed. Enforces §4's separate eat/combo cooldowns so a
+   * client can't spam-heal many times per tick and out-tank a boss. */
+  eatReadyTick: number
+  comboReadyTick: number
   /** Events queued outside the tick (bank ops, item actions) — drained into
    * the player's next diff. */
   pendingEvents: ZoneEvent[]
@@ -335,6 +350,9 @@ export class WorldZone extends Server<Env> {
     this.maybeStopTicking()
     await this.flush(player, 'disconnect')
     await this.checkpointPlayer(player)
+    // Release the world-session lock so the idle game can save again — but only
+    // if this exact session still holds it (a reconnect may have re-claimed it).
+    await endWorldSession(this.env, Number(charId), player.sessionId)
   }
 
   private clearAuthTimer(connectionId: string): void {
@@ -379,6 +397,13 @@ export class WorldZone extends Server<Env> {
       return
     }
 
+    // Never enter the world while a PvP match is active — the world flush path
+    // mutates the save and would bypass the match's save-lockdown (§10/§14).
+    if (await isCharacterInActiveMatch(this.env, row.id)) {
+      connection.close(1008, 'in_active_match')
+      return
+    }
+
     // Reconnect while the session is still live (mobile socket drop, second
     // tab): carry the in-memory session over to the new socket. Re-seeding
     // from D1 here would teleport the player to a checkpoint up to 60s stale
@@ -400,6 +425,7 @@ export class WorldZone extends Server<Env> {
       existing.lastMsgTimes = []
       existing.lingerUntilTick = null
       connection.setState({ charId: liveCharId })
+      void beginWorldSession(this.env, row.id, existing.sessionId)
       this.sendWelcome(existing)
       this.pendingJoins.add(liveCharId)
       this.ensureTicking()
@@ -468,6 +494,8 @@ export class WorldZone extends Server<Env> {
       equipmentDirty: false,
       flushAtTick: null,
       lastHpSent: maxHp,
+      eatReadyTick: 0,
+      comboReadyTick: 0,
       pendingEvents: [],
       pendingLoot: null,
       lootView: new Set(),
@@ -478,9 +506,13 @@ export class WorldZone extends Server<Env> {
       spell: null,
       specialEnergy: 100,
       lastSpecSent: 100,
+      ...seedPrayer(stats.prayer?.level ?? getLevelFromXP(Number(stats.prayer?.xp) || 0) ?? 1),
+      lastPrayerSent: null,
+      activePotions: {},
       lingerUntilTick: null,
     }
     this.players.set(charId, player)
+    void beginWorldSession(this.env, row.id, player.sessionId)
     this.sendWelcome(player)
     this.pendingJoins.add(charId)
     this.ensureTicking()
@@ -522,6 +554,12 @@ export class WorldZone extends Server<Env> {
         ...(player.spell ? { spell: player.spell } : {}),
         specialEnergy: Math.round(player.specialEnergy),
         equipment: equipmentMap(player.equipment),
+        prayer: {
+          points: Math.ceil(player.prayerPoints),
+          max: player.maxPrayerPoints,
+          protection: player.activeProtectionPrayer,
+          combat: player.activeCombatPrayer,
+        },
       },
     })
 
@@ -598,6 +636,9 @@ export class WorldZone extends Server<Env> {
         if (player.combat) player.combat.state.specialAttackQueued = true
         else player.pendingEvents.push({ e: 'msg', text: 'You need to be fighting to use a special attack.' })
         break
+      case 'pray':
+        this.handlePray(player, message.prayerId)
+        break
       case 'unequip':
         this.handleUnequip(player, message.slot)
         break
@@ -645,6 +686,41 @@ export class WorldZone extends Server<Env> {
 
   /** A pack-slot action: the primary verb (equip/eat/drink/bury, validated
    * against the shared derivation so the client can't invent one) or drop. */
+  /** Toggle a prayer on/off (§4). Validates the Prayer level requirement and a
+   * non-empty pool server-side, updates the session toggles, mirrors them onto a
+   * live fight's engine state, and echoes the readout. */
+  private handlePray(player: Player, prayerId: string): void {
+    const prayerLevel = player.stats.prayer?.level ?? getLevelFromXP(Number(player.stats.prayer?.xp) || 0) ?? 1
+    const result = resolvePrayerToggle(
+      {
+        prayerPoints: player.prayerPoints,
+        maxPrayerPoints: player.maxPrayerPoints,
+        prayerDrainAccumulator: player.prayerDrainAccumulator,
+        activeProtectionPrayer: player.activeProtectionPrayer,
+        activeCombatPrayer: player.activeCombatPrayer,
+      },
+      prayerId,
+      prayerLevel,
+    )
+    if (!result.ok) {
+      const text =
+        result.reason === 'level' ? `You need Prayer level ${result.required} for that.`
+        : result.reason === 'empty' ? 'You have run out of prayer points.'
+        : 'You cannot use that prayer.'
+      player.pendingEvents.push({ e: 'msg', text })
+      return
+    }
+    player.activeProtectionPrayer = result.session.activeProtectionPrayer
+    player.activeCombatPrayer = result.session.activeCombatPrayer
+    // Mid-fight the engine reads the active prayers off the combat state each
+    // tick — mirror the toggle there so it takes effect this fight.
+    if (player.combat) {
+      player.combat.state.activeProtectionPrayer = player.activeProtectionPrayer
+      player.combat.state.activeCombatPrayer = player.activeCombatPrayer
+    }
+    emitPrayerIfChanged(player, player.pendingEvents)
+  }
+
   private handleInvAction(player: Player, message: Extract<ClientMessage, { t: 'invAction' }>): void {
     const slot = player.inventory[message.slot]
     if (!slot) return
@@ -665,14 +741,64 @@ export class WorldZone extends Server<Env> {
     if (!primary || primary.action !== message.action) return
 
     if (message.action === 'drink') {
-      player.pendingEvents.push({ e: 'msg', text: 'Potions don’t work out here yet.' })
+      // Potions run on the combo cooldown (§4). Apply the effect to the live
+      // fight's engine state when in combat (so the boost/pool takes effect this
+      // tick and the tick sync mirrors it back to the session), else to the
+      // session directly.
+      const buffState = player.combat ? player.combat.state : player
+      const actor = {
+        hp: player.hp,
+        maxHP: player.maxHp,
+        activePotions: buffState.activePotions,
+        prayerPoints: buffState.prayerPoints,
+        maxPrayerPoints: buffState.maxPrayerPoints,
+      }
+      const res = resolveDrink(actor, itemId, this.tickCount, player.eatReadyTick, player.comboReadyTick)
+      if (!res.allowed) {
+        player.pendingEvents.push({ e: 'msg', text: 'You need to wait before drinking again.' })
+        return
+      }
+      removeOneAt(player.inventory, message.slot)
+      consumeUnits(player.pools, itemId, 1)
+      player.hp = actor.hp
+      buffState.prayerPoints = actor.prayerPoints
+      player.eatReadyTick = res.eatReadyTick
+      player.comboReadyTick = res.comboReadyTick
+      if (player.combat) {
+        player.combat.state = applyCombo(player.combat.state)
+        player.prayerPoints = player.combat.state.prayerPoints
+      }
+      const restored = res.result.prayerRestored ?? 0
+      player.pendingEvents.push({
+        e: 'msg',
+        text: restored > 0 ? `You drink the ${itemNameOf(itemId).toLowerCase()}. (+${restored} prayer)` : `You drink the ${itemNameOf(itemId).toLowerCase()}.`,
+      })
+      emitPrayerIfChanged(player, player.pendingEvents)
+      this.pendingInvEcho.add(player.charId)
+      this.scheduleDirtyFlush(player)
       return
     }
 
     if (message.action === 'eat') {
+      // §4 eat timing: a normal food and a combo food each have their own 3-tick
+      // cooldown (one of each may land the same tick, never faster). Without this
+      // the eat ran instantly outside the tick loop — the 15 msg/s soft limit let
+      // a client heal ~9 times per 600ms tick and out-tank any boss.
+      const combo = isComboConsumable(items[itemId])
+      const timing = resolveEatTiming(this.tickCount, combo, player.eatReadyTick, player.comboReadyTick)
+      if (!timing.allowed) {
+        player.pendingEvents.push({ e: 'msg', text: 'You need to wait before eating again.' })
+        return
+      }
       removeOneAt(player.inventory, message.slot)
       consumeUnits(player.pools, itemId, 1)
       player.hp = Math.min(player.maxHp, player.hp + healAmount(itemId))
+      player.eatReadyTick = timing.eatReadyTick
+      player.comboReadyTick = timing.comboReadyTick
+      // Mid-fight, mirror the engine's consumable timing onto the live session:
+      // a normal food delays the next attack (applyEat), a combo food doesn't
+      // (applyCombo). Keeps the world's DPS-vs-heal trade-off honest.
+      if (player.combat) player.combat.state = (combo ? applyCombo : applyEat)(player.combat.state)
       player.pendingEvents.push({ e: 'msg', text: `You eat the ${itemNameOf(itemId).toLowerCase()}.` })
       this.pendingInvEcho.add(player.charId)
       this.scheduleDirtyFlush(player)
@@ -1005,6 +1131,38 @@ export class WorldZone extends Server<Env> {
     this.pendingLeaves.clear()
     const chatEvents = this.pendingChat
     this.pendingChat = []
+    // Zone-wide boss kill feed + unique-drop broadcasts (item 11) — same
+    // broadcast-to-everyone shape as chatEvents.
+    const broadcastEvents: ZoneEvent[] = []
+
+    // Retarget in-combat npcs onto the top-threat player they can reach BEFORE
+    // they step, so a boss chases/attacks the biggest threat in a group fight
+    // rather than the first attacker (item 9).
+    for (const npc of npcs.values()) {
+      if (npc.state !== 'combat') continue
+      const engaged: { charId: string; x: number; z: number }[] = []
+      for (const p of this.players.values()) if (p.combat?.npcId === npc.id) engaged.push({ charId: p.charId, x: p.x, z: p.z })
+      reselectAttacker(npc, engaged, this.zone.collision)
+    }
+
+    // Aggressive idle npcs (bosses by default) pull the nearest unengaged player
+    // in radius + sight into combat — you can't stroll past Grondar unbothered.
+    // Force-starting the player's combat is what lets the engine roll the
+    // monster's swings against them (item 9).
+    const aggroCandidates = [...this.players.values()].map((p) => ({ charId: p.charId, x: p.x, z: p.z, inCombat: !!p.combat }))
+    for (const npc of npcs.values()) {
+      const targetId = pickAggroTarget(npc, aggroCandidates, this.zone.collision)
+      if (!targetId) continue
+      const target = this.players.get(targetId)
+      // Live re-check: the snapshot is from before this loop, so a player pulled
+      // by an earlier npc this tick must not be yanked into a second fight.
+      if (!target || target.combat) continue
+      startCombat(target, npc)
+      if (target.combat) {
+        npcChanged.add(npc.id)
+        playerEnts.set(target.charId, toEntityDiff(target))
+      }
+    }
 
     // NPCs first (wander/respawn/heal) so player combat this tick reads fresh state.
     const npcResult = emptyResult()
@@ -1037,8 +1195,40 @@ export class WorldZone extends Server<Env> {
         }
         this.scheduleDirtyFlush(player)
       }
+      if (result.equipmentDirty) {
+        // Ranged ammo was consumed from the equipped slot this tick — snapshot
+        // equipment to the save on the next flush so arrows aren't free.
+        player.equipmentDirty = true
+        this.scheduleDirtyFlush(player)
+      }
+      for (const kill of result.kills) {
+        // Server-authoritative boss side-effects (collection log, kill count,
+        // audit) — fire-and-forget D1 like the flushes below. No-op for
+        // non-boss monsters.
+        void recordBossKill(this.env, kill)
+        if (!isBossMonster(kill.monsterId)) continue
+        const monsterName = monsterNames[kill.monsterId]?.name ?? kill.monsterId
+        const killerName = this.players.get(kill.owner)?.name ?? 'Someone'
+        broadcastEvents.push({ e: 'kill', monster: monsterName, killer: killerName })
+        for (const itemId of uniqueDropsFrom(kill.monsterId, kill.loot)) {
+          broadcastEvents.push({ e: 'uniqueDrop', monster: monsterName, player: killerName, item: itemNameOf(itemId) })
+        }
+      }
       if (result.events.length > 0) eventsByChar.set(player.charId, result.events)
       if (result.died) this.respawnPlayer(player, playerEnts)
+    }
+
+    // Damage-contribution readout for every boss fight this tick — gated on an
+    // actual change so it doesn't spam once the fight goes quiet (item 11).
+    const playerNames = new Map<string, string>()
+    for (const p of this.players.values()) playerNames.set(p.charId, p.name)
+    for (const npc of npcs.values()) {
+      if (npc.state !== 'combat' || !isBossMonster(npc.monsterId)) continue
+      const contributors = threatContributors(npc, playerNames)
+      const key = threatKey(contributors)
+      if (key === npc.lastThreatSent) continue
+      npc.lastThreatSent = key
+      broadcastEvents.push({ e: 'threat', npcId: npc.id, contributors })
     }
 
     // Loot pickups resolve after movement (the player may have just arrived).
@@ -1086,7 +1276,7 @@ export class WorldZone extends Server<Env> {
       if (npc && !npcRemoved.has(id)) npcEnts.push(toNpcDiff(npc))
     }
     const ents = [...playerEnts.values(), ...npcEnts]
-    this.broadcastDiffs(ents, rockChanges, [...npcRemoved, ...playersRemoved], hits, chatEvents, eventsByChar)
+    this.broadcastDiffs(ents, rockChanges, [...npcRemoved, ...playersRemoved], hits, [...chatEvents, ...broadcastEvents], eventsByChar)
 
     if (this.tickCount % HP_REGEN_EVERY_TICKS === 0) {
       for (const player of this.players.values()) if (player.hp < player.maxHp) player.hp += 1
@@ -1099,7 +1289,13 @@ export class WorldZone extends Server<Env> {
     }
     if (this.tickCount % CHECKPOINT_EVERY_TICKS === 0) {
       if (this.dirty.size > 0) void this.flushCheckpoints()
-      for (const player of this.players.values()) void this.flush(player, 'timer')
+      for (const player of this.players.values()) {
+        void this.flush(player, 'timer')
+        // Keep the world-session lock fresh (TTL self-heals a dead DO). Skip
+        // lingering players — a backgrounded tab shouldn't hold the idle game
+        // out; if they never reconnect, linger expiry ends the session anyway.
+        if (player.lingerUntilTick === null) void refreshWorldSession(this.env, Number(player.charId), player.sessionId)
+      }
     }
   }
 
@@ -1122,6 +1318,15 @@ export class WorldZone extends Server<Env> {
   }
 
   private respawnPlayer(player: Player, playerEnts: Map<string, EntityDiff>): void {
+    // Item 10: a zone can require dying to be a real trip back out (e.g. the
+    // dungeon respawns at Varrick's entrance, not its own spawn ~40 tiles from
+    // the bosses) — cross-zone, so it's the same DB update + reconnect the
+    // walk-onto-an-exit transition uses, not a same-zone teleport.
+    const deathRespawn = this.zone.deathRespawn
+    if (deathRespawn) {
+      void this.respawnAcrossZone(player, deathRespawn)
+      return
+    }
     const spawn = this.zone.spawn
     player.x = spawn.x
     player.z = spawn.z
@@ -1132,6 +1337,23 @@ export class WorldZone extends Server<Env> {
     send(player.conn, { t: 'dead', respawn: { x: spawn.x, z: spawn.z } })
     this.dirty.add(player.charId)
     playerEnts.set(player.charId, toEntityDiff(player))
+  }
+
+  private async respawnAcrossZone(player: Player, target: { zone: string; x: number; z: number }): Promise<void> {
+    this.players.delete(player.charId)
+    this.dirty.delete(player.charId)
+    this.pendingLeaves.add(player.charId)
+    this.releaseAggro(player.charId)
+    this.maybeStopTicking()
+    player.hp = player.maxHp
+    await this.flush(player, 'transition')
+    await this.env.DB.prepare(
+      `INSERT INTO world_positions (character_id, zone_id, x, z, updated_at) VALUES (?, ?, ?, ?, ?)
+       ON CONFLICT(character_id) DO UPDATE SET zone_id = excluded.zone_id, x = excluded.x, z = excluded.z, updated_at = excluded.updated_at`
+    ).bind(Number(player.charId), target.zone, target.x, target.z, Date.now()).run()
+    send(player.conn, { t: 'dead', respawn: { x: target.x, z: target.z } })
+    send(player.conn, { t: 'transition', zone: target.zone, x: target.x, z: target.z })
+    player.conn.close(1000, 'death')
   }
 
   /** Resolves a walked-over loot pickup: adds it to the pack, records it as a
@@ -1161,7 +1383,7 @@ export class WorldZone extends Server<Env> {
     rockChanges: { id: string; depleted: boolean }[],
     removed: string[],
     hits: { targetId: string; dmg: number }[],
-    chatEvents: ZoneEvent[],
+    zoneEvents: ZoneEvent[],
     eventsByChar: Map<string, ZoneEvent[]>
   ): void {
     const hitEvents: ZoneEvent[] = hits.map((h) => ({ e: 'hit', targetId: h.targetId, dmg: h.dmg }))
@@ -1179,7 +1401,7 @@ export class WorldZone extends Server<Env> {
       const own = eventsByChar.get(player.charId)
       if (own) events.push(...own)
       if (hitEvents.length > 0) events.push(...hitEvents)
-      if (chatEvents.length > 0) events.push(...chatEvents)
+      if (zoneEvents.length > 0) events.push(...zoneEvents)
 
       const message: Extract<ServerMessage, { t: 'diff' }> = { t: 'diff', tick: this.tickCount }
       if (ents.length > 0) message.ents = ents

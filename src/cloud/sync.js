@@ -210,6 +210,18 @@ async function performPush() {
       schedulePush(snap, ACTIVE_MATCH_RETRY_MS)
       return false
     }
+    // While this character has a live open-world session, /api/save returns
+    //   409 { code: 'CHARACTER_IN_WORLD_SESSION' }
+    // so the companion and the idle game never write the same save at once.
+    // Same handling as the PvP lock: an expected, transient lock — keep the
+    // snapshot queued, retry shortly (it clears when the player leaves the
+    // world), and NEVER count it toward the failure streak / blocking modal.
+    if (err?.status === 409 && (err?.body?.code === 'CHARACTER_IN_WORLD_SESSION' || err?.body?.error === 'character_in_world_session')) {
+      pendingSnapshot = snap
+      markUnsynced()
+      schedulePush(snap, ACTIVE_MATCH_RETRY_MS)
+      return false
+    }
     // save_revision_conflict: our local state diverged from the server's
     // authoritative copy (we got into a bad state — typically progress applied
     // faster than a prior save round-tripped). Re-pushing the same stale

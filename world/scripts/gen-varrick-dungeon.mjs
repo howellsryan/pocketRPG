@@ -2,8 +2,13 @@
 // Deterministic generator for world/zones/varrick_dungeon.json — the boss hall
 // beneath Varrick, reached through the eastern dungeon mouth. A 48×48 enclosed
 // dark-stone chamber: a pillared approach from the south entrance leading to
-// Warlord Grondar on his dais at the north end. One boss, no other monsters.
-// Re-run to regenerate; hand-edit the constants, not the JSON.
+// Warlord Grondar on his dais at the north end.
+// STALE: the checked-in JSON has since been hand-extended with two more
+// bosses (Krylth, Venomcoil) in separated wings plus a `deathRespawn` back to
+// Varrick — this script only knows about Grondar and does NOT reproduce that
+// layout. Re-running it will silently drop the other two bosses and the
+// death-respawn field. Do not re-run until it's updated to match, or hand-
+// port your change to both the script and the JSON.
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'

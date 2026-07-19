@@ -7,6 +7,7 @@ import { addItemToBank, addItemToInventory, bankQuantity, removeItemFromBank, re
 import { auditLog } from '../../functions/_lib/game/audit.js'
 import { getLevelFromXP, clampXP } from '../../src/engine/experience.js'
 import { isStackable } from './mining'
+import { isCharacterInActiveMatch } from './pvpLock'
 
 export type ItemStack = { itemId: string; quantity: number }
 
@@ -112,6 +113,11 @@ export async function flushGrants(
   io: GrantIO = defaultIO
 ): Promise<boolean> {
   if (isEmptyPayload(payload)) return true
+
+  // Defence in depth (§10/§14): world entry is refused during a PvP match, but
+  // if one somehow went active mid-session, never mutate the save through the
+  // world here — re-queue (return false) so the flush lands after the match.
+  if (await isCharacterInActiveMatch(env, who.charId)) return false
 
   const idempotencyKey = `wg:${who.charId}:${who.sessionId}:${who.flushSeq}`
   const inserted = await env.DB.prepare(

@@ -4,9 +4,11 @@
 import monstersData from '../../src/data/monsters.json'
 import type { EntityDiff } from '../shared/protocol'
 import type { ZoneNpcDef } from '../shared/zone'
-import { monsterAttackRange, withinRange, type TickContext, type TickResult } from './tick'
+import { monsterAttackRange, withinRangeAndSight, type TickContext, type TickResult } from './tick'
+import { hasLineOfSight } from './los'
+import type { Tile } from './pathfind'
 
-type Monsters = Record<string, { name?: string; hitpoints?: number }>
+type Monsters = Record<string, { name?: string; hitpoints?: number; boss?: boolean }>
 
 export type NpcState = {
   id: string
@@ -30,7 +32,43 @@ export type NpcState = {
   /** Damage per attacker for loot attribution; `tick` = when that total last
    * increased (tie-break: first to reach the total). */
   damageByChar: Map<string, { dmg: number; tick: number }>
+  /** Cached A* chase route toward the aggro target and the target tile it was
+   * planned for. Recomputed when the target moves or the route runs out — so the
+   * npc rounds obstacles instead of wedging on them (the old greedy step). */
+  chasePath: Tile[]
+  chaseGoal: { x: number; z: number } | null
+  /** Tiles within which this npc aggresses idle passers-by (0 = passive). */
+  aggroRadius: number
+  /** Serialized key of the last {e:'threat'} broadcast for this npc, so the
+   * damage-contribution readout (item 11) only re-sends on an actual change. */
+  lastThreatSent: string | null
 }
+
+export type ThreatContributor = { charId: string; name: string; dmg: number }
+
+/** Damage-contribution snapshot for an npc's current fight, sorted highest
+ * first — makes the top-damage loot rule (topDamageContributor) legible mid-fight
+ * (item 11). A contributor who's since disconnected has no name to show and is
+ * dropped from the readout (their damage total still counts for loot). */
+export function threatContributors(npc: NpcState, playerNames: Map<string, string>): ThreatContributor[] {
+  const out: ThreatContributor[] = []
+  for (const [charId, { dmg }] of npc.damageByChar) {
+    const name = playerNames.get(charId)
+    if (name) out.push({ charId, name, dmg })
+  }
+  out.sort((a, b) => b.dmg - a.dmg)
+  return out
+}
+
+/** Stable string key for a contributor snapshot, to gate the broadcast on an
+ * actual change (mirrors emitSpecIfChanged/emitPrayerIfChanged's last-sent gate). */
+export function threatKey(contributors: ThreatContributor[]): string {
+  return contributors.map((c) => `${c.charId}:${c.dmg}`).join('|')
+}
+
+/** Default aggression radius for a boss when the zone doesn't specify one — boss
+ * rooms shouldn't be walkable-through unbothered (item 9). */
+export const BOSS_DEFAULT_AGGRO_RADIUS = 6
 
 const WANDER_MIN_TICKS = 5
 const WANDER_MAX_TICKS = 13
@@ -66,10 +104,39 @@ function randInt(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min
 }
 
+/** Retargets an in-combat npc onto the top-damage (threat) player it can actually
+ * reach, so a boss focuses the biggest threat in a group fight instead of sticking
+ * to whoever clicked first (item 9 — every engaged player's session already rolls
+ * this npc's swings; only the `attackerId` target's land, so this is what makes
+ * group bossing hit the right person). Prefers reachable engaged players (in
+ * range + line of sight); falls back to the full engaged set so it keeps a chase
+ * target when everyone has kited out of reach. The current attacker is kept on a
+ * threat tie, so the target indicator doesn't flicker between equal contributors. */
+export function reselectAttacker(
+  npc: NpcState,
+  engaged: { charId: string; x: number; z: number }[],
+  collision: string[],
+): void {
+  if (npc.state !== 'combat') return
+  if (engaged.length === 0) {
+    npc.attackerId = null
+    return
+  }
+  const range = monsterAttackRange(npc.monsterId)
+  const inReach = engaged.filter((p) => withinRangeAndSight(npc, p, range, collision))
+  const pool = inReach.length > 0 ? inReach : engaged
+  const threat = (charId: string): number => npc.damageByChar.get(charId)?.dmg ?? 0
+  let best = pool.find((p) => p.charId === npc.attackerId) ?? pool[0]
+  for (const p of pool) if (threat(p.charId) > threat(best.charId)) best = p
+  npc.attackerId = best.charId
+}
+
 export function npcsFromZone(npcs: ZoneNpcDef[]): Map<string, NpcState> {
   const map = new Map<string, NpcState>()
   for (const def of npcs) {
-    const maxHp = (monstersData as Monsters)[def.monsterId]?.hitpoints ?? 1
+    const monster = (monstersData as Monsters)[def.monsterId]
+    const maxHp = monster?.hitpoints ?? 1
+    const aggroRadius = def.aggroRadius ?? (monster?.boss ? BOSS_DEFAULT_AGGRO_RADIUS : 0)
     map.set(def.id, {
       id: def.id,
       monsterId: def.monsterId,
@@ -87,6 +154,10 @@ export function npcsFromZone(npcs: ZoneNpcDef[]): Map<string, NpcState> {
       attackerId: null,
       lastCombatTick: 0,
       damageByChar: new Map(),
+      chasePath: [],
+      chaseGoal: null,
+      aggroRadius,
+      lastThreatSent: null,
     })
   }
   return map
@@ -99,6 +170,32 @@ function inRect(npc: NpcState, x: number, z: number): boolean {
 
 function walkable(collision: string[], x: number, z: number): boolean {
   return collision[z]?.[x] === '.'
+}
+
+/** Nearest player an idle aggressive npc should pull into combat: within its
+ * aggro radius (Chebyshev), with line of sight, and not already fighting
+ * something. Returns the charId or null. The DO force-starts that player's combat
+ * against the npc — monster swings are generated by the engaged player's engine
+ * session, so aggression has to engage the player, not just flag the npc (item 9). */
+export function pickAggroTarget(
+  npc: NpcState,
+  players: { charId: string; x: number; z: number; inCombat: boolean }[],
+  collision: string[],
+): string | null {
+  if (npc.state !== 'idle' || npc.aggroRadius <= 0) return null
+  let best: string | null = null
+  let bestDist = Infinity
+  for (const p of players) {
+    if (p.inCombat) continue
+    const d = chebyshev(npc, p)
+    if (d === 0 || d > npc.aggroRadius) continue
+    if (!hasLineOfSight(collision, npc, p)) continue
+    if (d < bestDist) {
+      bestDist = d
+      best = p.charId
+    }
+  }
+  return best
 }
 
 /** One idle wander step: after a random cooldown, pick a random adjacent tile
@@ -122,28 +219,40 @@ function chebyshev(a: { x: number; z: number }, b: { x: number; z: number }): nu
   return Math.max(Math.abs(a.x - b.x), Math.abs(a.z - b.z))
 }
 
-/** One greedy step toward the aggro target — aimed instead of random, same
- * "one tile if walkable, else stand still" style as wander(). Falls back to an
- * off-axis step when the direct tile is blocked, and forbids the diagonal
- * corner-cut pathfind.ts also forbids. */
-function chaseStep(npc: NpcState, target: { x: number; z: number }, collision: string[]): boolean {
-  const dx = Math.sign(target.x - npc.x)
-  const dz = Math.sign(target.z - npc.z)
-  if (dx === 0 && dz === 0) return false
-  const candidates: [number, number][] =
-    dx !== 0 && dz !== 0 ? [[dx, dz], [dx, 0], [0, dz]]
-    : dx !== 0 ? [[dx, 0], [dx, 1], [dx, -1]]
-    : [[0, dz], [1, dz], [-1, dz]]
-  for (const [ddx, ddz] of candidates) {
-    const nx = npc.x + ddx
-    const nz = npc.z + ddz
-    if (!walkable(collision, nx, nz)) continue
-    if (ddx !== 0 && ddz !== 0 && (!walkable(collision, npc.x + ddx, npc.z) || !walkable(collision, npc.x, npc.z + ddz))) continue
-    npc.x = nx
-    npc.z = nz
-    return true
+/** One A* step toward the aggro target. Plans a route to a tile adjacent to the
+ * target (via the shared pathfinder) and advances one tile along it, replanning
+ * when the target has moved or the cached route is spent. Unlike the old greedy
+ * step this rounds walls and pillars instead of wedging against them — the core
+ * of the safespot fix, since a boss that can path around cover will always close
+ * to melee range. Returns whether the npc moved this tick. */
+function chaseTowards(npc: NpcState, target: { x: number; z: number }, ctx: TickContext): boolean {
+  const goal = { x: target.x, z: target.z }
+  const stale =
+    npc.chasePath.length === 0 ||
+    !npc.chaseGoal ||
+    npc.chaseGoal.x !== goal.x ||
+    npc.chaseGoal.z !== goal.z
+  if (stale) {
+    const path = ctx.pathAdjacent?.({ x: npc.x, z: npc.z }, goal) ?? null
+    // pathAdjacent returns [start, ...steps]; drop the tile we're already on.
+    npc.chasePath = path && path.length > 1 ? path.slice(1) : []
+    npc.chaseGoal = goal
   }
-  return false
+  const next = npc.chasePath.shift()
+  if (!next) return false
+  // Defensive: never step onto a tile that isn't walkable anymore.
+  if (!walkable(ctx.collision ?? [], next.x, next.z)) {
+    npc.chasePath = []
+    return false
+  }
+  npc.x = next.x
+  npc.z = next.z
+  return true
+}
+
+function clearChase(npc: NpcState): void {
+  npc.chasePath = []
+  npc.chaseGoal = null
 }
 
 /** Gives up the chase: same reset as an out-of-combat heal (return to full,
@@ -158,6 +267,7 @@ function giveUpPursuit(npc: NpcState): void {
   npc.z = npc.home.z
   npc.wanderCooldown = randInt(WANDER_MIN_TICKS, WANDER_MAX_TICKS)
   npc.damageByChar.clear()
+  clearChase(npc)
 }
 
 /** Advances one npc: respawn timer, out-of-combat heal/pursuit, or wander.
@@ -172,6 +282,7 @@ export function tickNpc(npc: NpcState, ctx: TickContext, result: TickResult): vo
       npc.x = npc.home.x
       npc.z = npc.home.z
       npc.wanderCooldown = randInt(WANDER_MIN_TICKS, WANDER_MAX_TICKS)
+      clearChase(npc)
       result.npcChanged.push(npc.id)
     }
     return
@@ -183,22 +294,24 @@ export function tickNpc(npc: NpcState, ctx: TickContext, result: TickResult): vo
         npc.state = 'idle'
         npc.hp = npc.maxHp
         npc.damageByChar.clear()
+        clearChase(npc)
         result.npcChanged.push(npc.id)
       }
       return
     }
-    // Aggro'd on an attacker: stand and fight while within ITS attack range (an
-    // active engine session drives this tick-by-tick — melee at 1 tile, ranged/
-    // magic from afar), otherwise chase them down — leashed to a radius around
-    // home so it can't trek across the whole zone.
+    // Aggro'd on an attacker: stand and fight while within ITS attack range AND
+    // line of sight (an active engine session drives this tick-by-tick — melee at
+    // 1 tile, ranged/magic from afar with a clear line), otherwise chase them
+    // down to regain reach+sight — leashed to a radius around home so it can't
+    // trek across the whole zone.
     const target = ctx.players?.get(npc.attackerId)
-    if (!target || withinRange(npc, target, monsterAttackRange(npc.monsterId))) return
+    if (!target || withinRangeAndSight(npc, target, monsterAttackRange(npc.monsterId), ctx.collision ?? [])) return
     if (chebyshev(npc, npc.home) >= PURSUE_LEASH_TILES) {
       giveUpPursuit(npc)
       result.npcChanged.push(npc.id)
       return
     }
-    if (chaseStep(npc, target, ctx.collision ?? [])) result.npcChanged.push(npc.id)
+    if (chaseTowards(npc, target, ctx)) result.npcChanged.push(npc.id)
     return
   }
 
