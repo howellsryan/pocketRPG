@@ -25,6 +25,14 @@ function getAvasAmmoSaveChance(equipment) {
   return 0
 }
 
+// Sunbearer Ring: special-attack energy never drains while worn (PvE only —
+// PvP has its own energy model under pvpEngine.js and is deliberately
+// untouched). §7: energy still starts each fight at 100 and refills on kill;
+// this only skips the per-use drain.
+function hasSunbearerRing(equipment) {
+  return equipment?.ring?.itemId === 'sunbearer_ring'
+}
+
 /**
  * Create a new combat state
  */
@@ -510,8 +518,10 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
           // Check if we still have enough energy before firing
           const currentEnergy = state.specialAttackEnergy || 0
           if (canAffordSpecialAttack(weapon.specialAttack, currentEnergy)) {
-            // Drain energy when special attack actually fires
-            state.specialAttackEnergy = Math.max(0, currentEnergy - resolveSpecialEnergyCost(weapon.specialAttack, currentEnergy))
+            // Drain energy when special attack actually fires — Sunbearer Ring pins it at 100%
+            if (!hasSunbearerRing(equipment)) {
+              state.specialAttackEnergy = Math.max(0, currentEnergy - resolveSpecialEnergyCost(weapon.specialAttack, currentEnergy))
+            }
             // Check form immunity before firing (e.g. Hellbound Gorilla)
             const specImmunity = getFormImmunity(monster)
             if (specImmunity && specImmunity === state.combatType) {

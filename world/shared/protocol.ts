@@ -139,12 +139,17 @@ export type ZoneGroundRegion = { kind: string; x: number; z: number; w: number; 
 
 export type LootItem = { id: string; itemId: string; qty: number; x: number; z: number }
 
+/** Static monster spawn-point summary for the world map's monster markers
+ * (not live positions — those only stream inside AOI). See zoneSpawnSummary
+ * in shared/zone.ts. */
+export type NpcSpawn = { monsterId: string; x: number; z: number }
+
 export type ServerMessage =
   | {
       t: 'welcome'
       selfId: string
       tick: number
-      zone: { id: string; name?: string; w: number; h: number; collision: string[]; exits?: ExitMarker[]; landmarks?: Landmark[]; props?: PropPlacement[]; palette?: GroundPalette; ambience?: ZoneAmbience; ambient?: ZoneAmbient; terrain?: ZoneTerrain; ground?: ZoneGroundRegion[] }
+      zone: { id: string; name?: string; w: number; h: number; collision: string[]; exits?: ExitMarker[]; landmarks?: Landmark[]; props?: PropPlacement[]; palette?: GroundPalette; ambience?: ZoneAmbience; ambient?: ZoneAmbient; terrain?: ZoneTerrain; ground?: ZoneGroundRegion[]; spawns?: NpcSpawn[] }
       statics: StaticObject[]
       you: {
         x: number
@@ -279,6 +284,10 @@ export function parseClientMessage(raw: unknown): ClientMessage | null {
     case 'unequip': {
       const slot = (raw as Record<string, unknown>).slot
       return typeof slot === 'string' && slot.length > 0 && slot.length <= 32 ? { t: 'unequip', slot } : null
+    }
+    case 'teleport': {
+      const placeId = (raw as Record<string, unknown>).placeId
+      return typeof placeId === 'string' && placeId.length > 0 && placeId.length <= 64 ? { t: 'teleport', placeId } : null
     }
     case 'logout':
       return { t: 'logout' }

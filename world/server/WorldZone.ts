@@ -2,6 +2,7 @@ import { Server, type Connection as PartyConnection } from 'partyserver'
 import { verifyJWT } from '../../functions/_lib/jwt.js'
 import { findPath, findPathAdjacent } from './pathfind'
 import {
+  combatStanceFromSave,
   emptyResult,
   respawnedRocks,
   sessionInventoryFromSave,
@@ -33,7 +34,7 @@ const monsterNames = monstersDataJson as MonsterNames
 import { isCharacterInActiveMatch } from './pvpLock'
 import { beginWorldSession, refreshWorldSession, endWorldSession } from '../../functions/_lib/game/worldSessions.js'
 import { loadCharacterWithSave } from '../../functions/_lib/game/save.js'
-import { type ZoneDef, type ZoneExitDef } from '../shared/zone'
+import { zoneSpawnSummary, type ZoneDef, type ZoneExitDef } from '../shared/zone'
 import { ZONES } from './zones'
 import { loadStoredZone } from './zoneStore'
 import { gearFromEquipment } from '../shared/appearance'
@@ -44,7 +45,7 @@ import { isComboConsumable } from '../../src/engine/consumables.js'
 import itemsData from '../../src/data/items.json'
 import { consumeUnits, depositUnits, emptyPools, mintUnits, withdrawUnits, type ItemPools, type Tally } from './sessionItems'
 import { grantSessionXp, cutPathToRange, withinRange } from './tick'
-import type { BankSlot, ClientMessage, EntityDiff, LootItem, ServerMessage, StaticObject, ZoneEvent } from '../shared/protocol'
+import type { BankSlot, ClientMessage, CombatStance, EntityDiff, LootItem, ServerMessage, StaticObject, ZoneEvent } from '../shared/protocol'
 import { parseClientMessage } from '../shared/protocol'
 import type { Env } from './env'
 
@@ -88,6 +89,9 @@ type Player = TickPlayer & {
   completedQuests: Set<string>
   /** The player re-geared in-world → next flush snapshots equipment to the save. */
   equipmentDirty: boolean
+  /** The player changed combat stance in-world → next flush writes it back to
+   * the save's settings.combatStance, so the main game picks up the change. */
+  stanceDirty: boolean
   /** Debounced post-bank/equip flush tick, for durability. Null = none due. */
   flushAtTick: number | null
   /** Last HP value sent to this client ({e:'hp'} goes out only on change). */
@@ -442,6 +446,7 @@ export class WorldZone extends Server<Env> {
     let maxHp = 10
     let bankView: Tally = {}
     let completedQuests = new Set<string>()
+    let stance: CombatStance = 'accurate'
     try {
       const { saveObject } = await loadCharacterWithSave(this.env, row.id, payload.sub)
       stats = sessionStatsFromSave(saveObject)
@@ -452,6 +457,7 @@ export class WorldZone extends Server<Env> {
       bankView = bankViewFromSave(saveObject)
       const questList = (saveObject.settings as { completedQuests?: unknown } | undefined)?.completedQuests
       completedQuests = new Set(Array.isArray(questList) ? questList.filter((q): q is string => typeof q === 'string') : [])
+      stance = combatStanceFromSave(saveObject)
     } catch {
       connection.close(1008, 'character_not_found')
       return
@@ -496,6 +502,7 @@ export class WorldZone extends Server<Env> {
       bankView,
       completedQuests,
       equipmentDirty: false,
+      stanceDirty: false,
       flushAtTick: null,
       lastHpSent: maxHp,
       eatReadyTick: 0,
@@ -507,7 +514,7 @@ export class WorldZone extends Server<Env> {
       running: false,
       runEnergy: 100,
       lastRunSent: 100,
-      stance: 'accurate',
+      stance,
       spell: null,
       specialEnergy: 100,
       lastSpecSent: 100,
@@ -546,6 +553,7 @@ export class WorldZone extends Server<Env> {
         ...(this.zone.ambient ? { ambient: this.zone.ambient } : {}),
         ...(this.zone.terrain ? { terrain: this.zone.terrain } : {}),
         ...(this.zone.ground?.length ? { ground: this.zone.ground } : {}),
+        ...(this.zone.npcs.length ? { spawns: zoneSpawnSummary(this.zone) } : {}),
       },
       statics,
       you: {
@@ -635,6 +643,7 @@ export class WorldZone extends Server<Env> {
         break
       case 'setStance':
         player.stance = message.stance
+        player.stanceDirty = true
         // Apply mid-fight too — the engine reads stance each tick.
         if (player.combat) player.combat.state.stance = message.stance
         break
@@ -1516,6 +1525,11 @@ export class WorldZone extends Server<Env> {
       payload.equipment = { ...player.equipment }
       player.equipmentDirty = false
     }
+    const stanceWasDirty = player.stanceDirty
+    if (stanceWasDirty) {
+      payload.combatStance = player.stance
+      player.stanceDirty = false
+    }
     if (reason === 'disconnect' || reason === 'transition') {
       payload.items = toItemList(pools.minted)
       payload.bankToInventory = toItemList(pools.bankSourced)
@@ -1544,6 +1558,7 @@ export class WorldZone extends Server<Env> {
       mergeInto(pools.mintedToBank, payload.mintedToBank ?? [])
       mergeInto(pools.bankSourced, payload.bankToInventory ?? [])
       if (equipmentWasDirty) player.equipmentDirty = true
+      if (stanceWasDirty) player.stanceDirty = true
     }
   }
 

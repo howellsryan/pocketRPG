@@ -43,6 +43,16 @@ const BANK_CSS = `
 #bank-panel .bank-sub {
   padding: 5px 12px 3px; color: #c9b892; font-size: 12px;
 }
+#bank-search {
+  margin: 6px 12px 0; padding: 8px 10px; font-size: 13px;
+  background: rgba(60, 50, 34, 0.55); color: #f4e9c8;
+  border: 1px solid #5a4a30; border-radius: 6px; outline: none; min-height: 36px;
+  -webkit-user-select: text; user-select: text;
+}
+#bank-search::placeholder { color: #8a7a5a; }
+.bank-grid .bank-empty {
+  grid-column: 1 / -1; color: #8a7a5a; font-size: 13px; padding: 8px 0;
+}
 #bank-panel .bank-grid {
   display: grid; grid-template-columns: repeat(auto-fill, 44px); gap: 3px;
   padding: 4px 12px 10px; overflow-y: auto; min-height: 96px; max-height: 34vh;
@@ -72,7 +82,15 @@ const BANK_CSS = `
 `
 
 let cssReady = false
-let state: { bank: BankSlot[]; inventory: InvSlot[]; onOp: BankOp } | null = null
+let state: { bank: BankSlot[]; inventory: InvSlot[]; onOp: BankOp; query: string } | null = null
+
+/** Case-insensitive substring filter over a list of {itemId} entries, matched
+ * against each item's display name. Empty query passes everything through. */
+export function filterBankSlots<T extends { itemId: string }>(slots: T[], query: string, nameOf: (itemId: string) => string): T[] {
+  const q = query.trim().toLowerCase()
+  if (!q) return slots
+  return slots.filter((s) => nameOf(s.itemId).toLowerCase().includes(q))
+}
 
 function ensureCss(): void {
   if (cssReady) return
@@ -192,31 +210,44 @@ function render(): void {
   const packGrid = document.getElementById('bank-pack-grid')
   if (!bankGrid || !packGrid) return
 
+  const filteredBank = filterBankSlots(state.bank, state.query, itemName)
+
   bankGrid.textContent = ''
-  for (const entry of state.bank) {
+  for (const entry of filteredBank) {
     bankGrid.appendChild(makeCell(entry.itemId, entry.quantity, 'Withdraw', state.onOp))
   }
-  if (state.bank.length === 0) {
+  if (filteredBank.length === 0) {
     const empty = document.createElement('div')
-    empty.style.cssText = 'grid-column: 1 / -1; color: #8a7a5a; font-size: 13px; padding: 8px 0;'
-    empty.textContent = 'Your bank is empty.'
+    empty.className = 'bank-empty'
+    empty.textContent = state.bank.length === 0 ? 'Your bank is empty.' : 'No items match your search.'
     bankGrid.appendChild(empty)
   }
 
   packGrid.textContent = ''
   // One cell per distinct pack item (a deposit drains across slots server-side).
   const seen = new Set<string>()
+  const packItems: { itemId: string }[] = []
   for (const slot of state.inventory) {
     if (!slot || seen.has(slot.itemId)) continue
     seen.add(slot.itemId)
-    packGrid.appendChild(makeCell(slot.itemId, packCount(state.inventory, slot.itemId), 'Deposit', state.onOp))
+    packItems.push({ itemId: slot.itemId })
+  }
+  const filteredPack = filterBankSlots(packItems, state.query, itemName)
+  for (const { itemId } of filteredPack) {
+    packGrid.appendChild(makeCell(itemId, packCount(state.inventory, itemId), 'Deposit', state.onOp))
+  }
+  if (filteredPack.length === 0 && packItems.length > 0) {
+    const empty = document.createElement('div')
+    empty.className = 'bank-empty'
+    empty.textContent = 'No items match your search.'
+    packGrid.appendChild(empty)
   }
 }
 
 export function openBankUI(bank: BankSlot[], inventory: InvSlot[], onOp: BankOp): void {
   ensureCss()
   closeBankUI()
-  state = { bank, inventory, onOp }
+  state = { bank, inventory, onOp, query: '' }
 
   const modal = document.createElement('div')
   modal.id = 'bank-modal'
@@ -234,6 +265,24 @@ export function openBankUI(bank: BankSlot[], inventory: InvSlot[], onOp: BankOp)
   head.appendChild(title)
   head.appendChild(close)
 
+  const search = document.createElement('input')
+  search.id = 'bank-search'
+  search.type = 'text'
+  search.placeholder = 'Search items…'
+  search.autocomplete = 'off'
+  search.addEventListener('keydown', (e) => {
+    e.stopPropagation()
+    if (e.key !== 'Escape') return
+    search.value = ''
+    if (state) state.query = ''
+    render()
+    search.blur()
+  })
+  search.addEventListener('input', () => {
+    if (state) state.query = search.value
+    render()
+  })
+
   const bankSub = document.createElement('div')
   bankSub.className = 'bank-sub'
   bankSub.textContent = 'Bank — tap to withdraw 1, hold for more'
@@ -249,6 +298,7 @@ export function openBankUI(bank: BankSlot[], inventory: InvSlot[], onOp: BankOp)
   packGrid.className = 'bank-grid'
 
   panel.appendChild(head)
+  panel.appendChild(search)
   panel.appendChild(bankSub)
   panel.appendChild(bankGrid)
   panel.appendChild(packSub)

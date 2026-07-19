@@ -32,6 +32,10 @@ export type GrantPayload = {
    * save's equipment — a world session and the main game are never played
    * simultaneously by design). */
   equipment?: Record<string, unknown>
+  /** Combat stance snapshot when the player changed it in-world (mirrors the
+   * `equipment` field above — overwrites settings.combatStance so the main
+   * game reflects an in-world stance change). */
+  combatStance?: string
   /** 'transition' (zone change) drains pools exactly like 'disconnect' — the
    * pack re-seeds from the save in the destination zone. */
   reason: 'deposit' | 'disconnect' | 'timer' | 'transition'
@@ -69,6 +73,7 @@ export function isEmptyPayload(payload: GrantPayload): boolean {
     (payload.mintedToBank ?? []).length === 0 &&
     (payload.bankToInventory ?? []).length === 0 &&
     payload.equipment === undefined &&
+    payload.combatStance === undefined &&
     Object.values(payload.xpBySkill).every((v) => !v)
   )
 }
@@ -168,6 +173,11 @@ export async function flushGrants(
         io.addItemToBank(saveObject, item.itemId, item.quantity)
       }
       if (payload.equipment !== undefined) saveObject.equipment = payload.equipment
+      if (payload.combatStance !== undefined) {
+        const settings = (saveObject.settings ?? {}) as Record<string, unknown>
+        settings.combatStance = payload.combatStance
+        saveObject.settings = settings
+      }
       await io.writeSave(env, who.charId, saveObject, saveRevision)
       await io.auditLog(env, 'world_grant', {
         characterId: who.charId,
@@ -183,6 +193,7 @@ export async function flushGrants(
         mintedToBank: payload.mintedToBank ?? [],
         bankToInventory: payload.bankToInventory ?? [],
         equipmentChanged: payload.equipment !== undefined,
+        combatStanceChanged: payload.combatStance !== undefined,
       })
       return true
     } catch (err) {

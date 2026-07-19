@@ -230,6 +230,31 @@ describe('flushGrants', () => {
     expect(isEmptyPayload({ xpBySkill: {}, items: [], itemsTo: 'bank', moveToBank: [], removeFromBank: [{ itemId: 'x', quantity: 1 }], reason: 'timer' })).toBe(false)
   })
 
+  it('snapshots an in-world stance change onto the save settings', async () => {
+    const { env } = makeDb()
+    const io = makeIO({ stats: {}, settings: { combatStance: 'accurate' } })
+    await flushGrants(env, who, payload({
+      xpBySkill: {}, items: [],
+      combatStance: 'aggressive',
+      reason: 'timer',
+    }), io)
+    const { saveObject } = io.written[0] as { saveObject: any }
+    expect(saveObject.settings.combatStance).toBe('aggressive')
+  })
+
+  it('preserves other settings fields when writing back combatStance', async () => {
+    const { env } = makeDb()
+    const io = makeIO({ stats: {}, settings: { completedQuests: ['crown_complications'] } })
+    await flushGrants(env, who, payload({ xpBySkill: {}, items: [], combatStance: 'defensive', reason: 'timer' }), io)
+    const { saveObject } = io.written[0] as { saveObject: any }
+    expect(saveObject.settings.completedQuests).toEqual(['crown_complications'])
+    expect(saveObject.settings.combatStance).toBe('defensive')
+  })
+
+  it('a combatStance-only payload is not empty', () => {
+    expect(isEmptyPayload({ xpBySkill: {}, items: [], itemsTo: 'bank', moveToBank: [], combatStance: 'aggressive', reason: 'timer' })).toBe(false)
+  })
+
   it('clamps xp at the 200M cap', async () => {
     const { env } = makeDb()
     const io = makeIO({ stats: { mining: { xp: MAX_XP - 10, level: 99 } } })

@@ -24,9 +24,9 @@ const MAX_MESSAGES = 3
 
 const HUD_CSS = `
 #hud-panel {
-  position: fixed; right: 8px; top: 148px;
+  position: fixed; right: 8px; top: 200px;
   z-index: 10; font-family: sans-serif; display: flex; flex-direction: column; gap: 4px;
-  width: 181px;
+  width: 232px;
 }
 .hud-tabs { display: flex; gap: 3px; }
 .hud-tabs.bottom { margin-top: 1px; }
@@ -61,6 +61,7 @@ const HUD_CSS = `
 .equip-slot.filled { cursor: pointer; }
 .equip-slot.empty-cell { background: transparent; cursor: default; }
 #combat-panel { display: flex; flex-direction: column; gap: 6px; }
+#prayer-panel { display: flex; flex-direction: column; gap: 6px; width: 100%; }
 .stance-row { display: flex; gap: 3px; }
 .stance-btn {
   flex: 1; min-height: 44px; border-radius: 6px; cursor: pointer; user-select: none;
@@ -386,6 +387,7 @@ const TABS: { id: string; iconKey: string; title: string }[] = [
   { id: 'inventory', iconKey: 'backpack', title: 'Inventory' },
   { id: 'equipment', iconKey: 'paperdoll', title: 'Equipment' },
   { id: 'combat', iconKey: 'combat_level', title: 'Combat' },
+  { id: 'prayer', iconKey: 'prayer', title: 'Prayer' },
   { id: 'magic', iconKey: 'magic_staff', title: 'Magic' },
 ]
 const LOGOUT_COLOR = '#e0a05a'
@@ -519,6 +521,16 @@ export function initHud(handlers?: HudHandlers): void {
   specBtn.textContent = '⚡ Special Attack'
   specBtn.addEventListener('click', () => handlers?.onSpecial())
   combat.appendChild(specBtn)
+  combatPane.appendChild(combat)
+  body.appendChild(combatPane)
+
+  // Prayer has its own tab (moved off the Combat tab, 2026-07): the pool bar
+  // + Protection/Combat toggle grid, built by renderPrayerPanel/setPrayerState.
+  const prayerPane = document.createElement('div')
+  prayerPane.className = 'hud-pane'
+  prayerPane.setAttribute('data-pane', 'prayer')
+  const prayer = document.createElement('div')
+  prayer.id = 'prayer-panel'
   const prayerBar = document.createElement('div')
   prayerBar.id = 'prayer-bar'
   const prayerFill = document.createElement('div')
@@ -529,12 +541,12 @@ export function initHud(handlers?: HudHandlers): void {
   prayerLabel.textContent = '🙏 Prayer'
   prayerBar.appendChild(prayerFill)
   prayerBar.appendChild(prayerLabel)
-  combat.appendChild(prayerBar)
+  prayer.appendChild(prayerBar)
   const prayerGrid = document.createElement('div')
   prayerGrid.id = 'prayer-grid'
-  combat.appendChild(prayerGrid)
-  combatPane.appendChild(combat)
-  body.appendChild(combatPane)
+  prayer.appendChild(prayerGrid)
+  prayerPane.appendChild(prayer)
+  body.appendChild(prayerPane)
 
   const magicPane = document.createElement('div')
   magicPane.className = 'hud-pane'

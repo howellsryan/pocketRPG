@@ -180,6 +180,20 @@ export function sessionStatsFromSave(save: Record<string, unknown>): SessionStat
   return out
 }
 
+const VALID_STANCES = new Set<CombatStance>(['accurate', 'aggressive', 'defensive'])
+
+/** Seeds the session's combat stance from the save's settings at hello —
+ * mirrors the main game's persisted `settings.combatStance` (CombatScreen's
+ * stance picker) so a world session starts on whatever stance the player last
+ * chose instead of always resetting to Accurate. Anything the world doesn't
+ * support (the legacy `controlled` stance, an unset/corrupt value) folds to
+ * the same 'accurate' default the main game uses post-migration. */
+export function combatStanceFromSave(save: Record<string, unknown>): CombatStance {
+  const settings = (save?.settings ?? {}) as Record<string, unknown>
+  const stance = settings.combatStance
+  return VALID_STANCES.has(stance as CombatStance) ? (stance as CombatStance) : 'accurate'
+}
+
 export function adjacent(a: { x: number; z: number }, b: { x: number; z: number }): boolean {
   return Math.max(Math.abs(a.x - b.x), Math.abs(a.z - b.z)) === 1
 }

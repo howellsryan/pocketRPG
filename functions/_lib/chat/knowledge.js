@@ -63,7 +63,7 @@ export const KNOWLEDGE_CHUNKS = [
   "tags": [
    "guide"
   ],
-  "text": "Some weapons have a special attack, triggered manually with the ⚡ Special Attack button during a fight. Special attack energy runs 0–100: each fight starts at full energy, using a special drains its energy cost, and energy refills when you get a kill. Specials never fire automatically or while offline. Each weapon's special has its own effect — stuns, heals, bonus damage and more — shown on the button."
+  "text": "Some weapons have a special attack, triggered manually with the ⚡ Special Attack button during a fight. Special attack energy runs 0–100: each fight starts at full energy, using a special drains its energy cost, and energy refills when you get a kill. Specials never fire automatically or while offline. Each weapon's special has its own effect — stuns, heals, bonus damage and more — shown on the button. The Sunbearer Ring keeps your special attack energy pinned at 100% in PvE, letting you fire specials back-to-back with no cooldown."
  },
  {
   "id": "guide_food_potions_and_combo_eating",

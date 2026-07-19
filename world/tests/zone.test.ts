@@ -2,7 +2,7 @@
 import { readFileSync, readdirSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
-import { validateExitGraph, validateZone, type ZoneDef } from '../shared/zone'
+import { validateExitGraph, validateZone, zoneSpawnSummary, type ZoneDef } from '../shared/zone'
 import { groundKindGrid } from '../shared/groundKinds'
 import overworldZone from '../zones/overworld.json'
 import * as overworldLayout from '../scripts/overworldLayout.mjs'
@@ -172,6 +172,32 @@ describe('groundKindGrid', () => {
       { kind: 'nope', x: 0, z: 0, w: 2, h: 2 },
     ])
     expect(grid).toEqual(['', '', '', 'water'])
+  })
+})
+
+describe('zoneSpawnSummary', () => {
+  it('maps each authored npc to its monsterId and spawn tile', () => {
+    const zone = {
+      npcs: [
+        { id: 'n1', monsterId: 'cave_goblin', x: 5, z: 6, wander: { x: 0, z: 0, w: 1, h: 1 } },
+        { id: 'n2', monsterId: 'pasture_bull', x: 10, z: 12, wander: { x: 0, z: 0, w: 1, h: 1 } },
+      ],
+    } as unknown as ZoneDef
+    expect(zoneSpawnSummary(zone)).toEqual([
+      { monsterId: 'cave_goblin', x: 5, z: 6 },
+      { monsterId: 'pasture_bull', x: 10, z: 12 },
+    ])
+  })
+
+  it('is empty for a zone with no npcs', () => {
+    const zone = { npcs: [] } as unknown as ZoneDef
+    expect(zoneSpawnSummary(zone)).toEqual([])
+  })
+
+  it('matches the real overworld npc count', () => {
+    const summary = zoneSpawnSummary(overworldZone as unknown as ZoneDef)
+    expect(summary.length).toBe((overworldZone as any).npcs.length)
+    expect(summary.every((s) => typeof s.monsterId === 'string' && s.monsterId.length > 0)).toBe(true)
   })
 })
 

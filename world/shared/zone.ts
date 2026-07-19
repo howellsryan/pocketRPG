@@ -127,6 +127,16 @@ export type ZoneDef = {
   aoiRadius?: number
 }
 
+/** Static per-monster spawn point summary (id + tile), for the world map's
+ * monster markers — NOT live positions (those only stream inside each
+ * player's AOI). One row per authored npc entry; wandering npcs are still
+ * shown at their spawn tile, which is close enough for a map pin. Pure. */
+export type NpcSpawnSummary = { monsterId: string; x: number; z: number }
+
+export function zoneSpawnSummary(zone: ZoneDef): NpcSpawnSummary[] {
+  return zone.npcs.map((n) => ({ monsterId: n.monsterId, x: n.x, z: n.z }))
+}
+
 function isWalkable(zone: ZoneDef, x: number, z: number): boolean {
   const row = zone.collision[z]
   if (row == null) return false
