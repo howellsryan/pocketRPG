@@ -2,7 +2,13 @@ import * as THREE from 'three'
 import { createGround, setHeightSampler } from './scene'
 import { createTerrainMaterial, isTerrainPreset } from './terrainMaterials'
 import { createGroundPaint, createWater } from './groundPaint'
+import { chunkGridDims, createChunkedTerrain, type ChunkedTerrain } from './chunkedTerrain'
 import type { GroundPalette, ZoneTerrain, ZoneGroundRegion } from '../../shared/protocol'
+
+// Above this many tiles in either axis, a map's ground streams as chunks instead
+// of one plane (M2). Every live per-zone map is well under it (≤96), so they
+// keep the single-mesh path byte-identically; only the merged overworld chunks.
+const CHUNK_THRESHOLD = 128
 
 // Client-render-only terrain height (docs/open-world-terrain-plan.md §3). The
 // server never learns the ground has height; this only lifts render Y so meshes
@@ -128,7 +134,7 @@ export function createTerrain(
   palette: GroundPalette | undefined,
   terrain: ZoneTerrain | undefined,
   ground?: ZoneGroundRegion[],
-): { heightField: HeightField; mesh: THREE.Mesh } {
+): { heightField: HeightField; mesh: THREE.Object3D; chunked?: ChunkedTerrain } {
   const corners = cornersFor(width, height, terrain)
   const heightField = createHeightField(width, height, corners)
   // Blended natural material when a preset is named and the ground is displaced;
@@ -137,6 +143,20 @@ export function createTerrain(
     corners && terrain && isTerrainPreset(terrain.material)
       ? createTerrainMaterial(terrain.material, Math.min(terrain.relief, 1.5))
       : undefined
+  // Large maps stream their ground as chunks (M2). Chunking needs corner heights
+  // to build displaced chunk geometry; a big flat map (no corners) is cheap
+  // enough to stay single-mesh.
+  if (corners && (width > CHUNK_THRESHOLD || height > CHUNK_THRESHOLD)) {
+    const chunked = createChunkedTerrain(scene, collision, width, height, palette, corners, material)
+    // Full render for review/screenshots: centre the map and use a radius that
+    // spans the grid so every chunk is live. The live client narrows this to a
+    // player-following radius (M3).
+    const { cols, rows } = chunkGridDims(width, height)
+    chunked.setCentre(width / 2, height / 2, Math.max(cols, rows))
+    createGroundPaint(scene, width, height, ground, corners)
+    createWater(scene, ground, heightField.heightAt)
+    return { heightField, mesh: chunked.group, chunked }
+  }
   const mesh = createGround(scene, collision, width, height, palette, corners, material)
   createGroundPaint(scene, width, height, ground, corners)
   createWater(scene, ground, heightField.heightAt)

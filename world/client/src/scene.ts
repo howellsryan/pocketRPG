@@ -88,19 +88,22 @@ export function updateShadowLight(sun: THREE.DirectionalLight, target: THREE.Vec
 export type GroundPalette = { walkableA: string; walkableB: string; blockedA: string; blockedB: string }
 const DEFAULT_PALETTE: GroundPalette = { walkableA: '#4a7c3a', walkableB: '#568c44', blockedA: '#3a3428', blockedB: '#443d30' }
 
-function buildGroundTexture(collision: string[], width: number, height: number, palette: GroundPalette): THREE.CanvasTexture {
+/** Checker texture for the tile rectangle [x0,x0+w)×[z0,z0+h). The checker
+ * parity uses GLOBAL tile coords (x0+x + z0+z) so a chunk's texture lines up
+ * seamlessly with its neighbours; the whole-map call passes x0=z0=0. */
+function buildGroundTextureRegion(collision: string[], x0: number, z0: number, w: number, h: number, palette: GroundPalette): THREE.CanvasTexture {
   const canvas = document.createElement('canvas')
-  canvas.width = width * TILE_PIXELS
-  canvas.height = height * TILE_PIXELS
+  canvas.width = w * TILE_PIXELS
+  canvas.height = h * TILE_PIXELS
   const ctx = canvas.getContext('2d')!
   const { walkableA, walkableB, blockedA, blockedB } = palette
-  for (let z = 0; z < height; z++) {
-    for (let x = 0; x < width; x++) {
-      const blocked = collision[z]?.[x] === '#'
-      const even = (x + z) % 2 === 0
+  for (let z = 0; z < h; z++) {
+    for (let x = 0; x < w; x++) {
+      const blocked = collision[z0 + z]?.[x0 + x] === '#'
+      const even = (x0 + x + z0 + z) % 2 === 0
       ctx.fillStyle = blocked ? (even ? blockedA : blockedB) : (even ? walkableA : walkableB)
-      // Canvas row 0 lands on the plane's v=1 edge, which sits at world z=0
-      // after the rotateX/translate below — so tile z maps to canvas row z
+      // Canvas row 0 lands on the plane's v=1 edge, which sits at world z=z0
+      // after the rotateX/translate below — so tile (z0+z) maps to canvas row z
       // directly. (The old height-1-z flip mirrored blocked tiles north-south:
       // clicks on visually open grass hit the real, invisible fence.)
       ctx.fillRect(x * TILE_PIXELS, z * TILE_PIXELS, TILE_PIXELS, TILE_PIXELS)
@@ -111,6 +114,56 @@ function buildGroundTexture(collision: string[], width: number, height: number, 
   texture.minFilter = THREE.NearestFilter
   texture.colorSpace = THREE.SRGBColorSpace
   return texture
+}
+
+function buildGroundTexture(collision: string[], width: number, height: number, palette: GroundPalette): THREE.CanvasTexture {
+  return buildGroundTextureRegion(collision, 0, 0, width, height, palette)
+}
+
+/** Lifts each vertex of a per-tile-subdivided plane to its global corner height.
+ * The plane must already be rotated/translated into world space so a vertex's
+ * rounded (x,z) is its global corner index — shared-edge vertices between chunks
+ * read the same corner, so heights match exactly and seams don't crack. */
+function liftToCorners(geometry: THREE.PlaneGeometry, mapWidth: number, mapHeight: number, corners: Float32Array): void {
+  const stride = mapWidth + 1
+  const pos = geometry.attributes.position
+  for (let i = 0; i < pos.count; i++) {
+    const cx = Math.min(mapWidth, Math.max(0, Math.round(pos.getX(i))))
+    const cz = Math.min(mapHeight, Math.max(0, Math.round(pos.getZ(i))))
+    pos.setY(i, corners[cz * stride + cx])
+  }
+  pos.needsUpdate = true
+  geometry.computeVertexNormals()
+}
+
+/** One ground chunk covering tiles [x0,x0+cw)×[z0,z0+ch) of a mapWidth×mapHeight
+ * map — same geometry/texture/height pipeline as createGround, bounded to the
+ * chunk (docs/single-world-map-investigation.md M2). `materialOverride` (a shared
+ * terrain-preset material) skips the per-chunk canvas; otherwise the chunk owns
+ * its own checker texture. `frustumCulled` lets three.js skip off-camera chunks. */
+export function createGroundChunk(
+  parent: THREE.Object3D,
+  collision: string[],
+  mapWidth: number,
+  mapHeight: number,
+  x0: number,
+  z0: number,
+  cw: number,
+  ch: number,
+  palette: GroundPalette | undefined,
+  corners: Float32Array,
+  materialOverride?: THREE.Material,
+): THREE.Mesh {
+  const geometry = new THREE.PlaneGeometry(cw, ch, cw, ch)
+  geometry.rotateX(-Math.PI / 2)
+  geometry.translate(x0 + cw / 2, 0, z0 + ch / 2)
+  liftToCorners(geometry, mapWidth, mapHeight, corners)
+  const material = materialOverride ?? new THREE.MeshStandardMaterial({ map: buildGroundTextureRegion(collision, x0, z0, cw, ch, palette ?? DEFAULT_PALETTE) })
+  const mesh = new THREE.Mesh(geometry, material)
+  mesh.receiveShadow = true
+  mesh.frustumCulled = true
+  parent.add(mesh)
+  return mesh
 }
 
 /** Ground plane spanning tile (0,0)-(width,height) with its corner at the world
@@ -126,17 +179,7 @@ export function createGround(scene: THREE.Scene, collision: string[], width: num
     : new THREE.PlaneGeometry(width, height)
   geometry.rotateX(-Math.PI / 2)
   geometry.translate(width / 2, 0, height / 2)
-  if (corners) {
-    const stride = width + 1
-    const pos = geometry.attributes.position
-    for (let i = 0; i < pos.count; i++) {
-      const cx = Math.min(width, Math.max(0, Math.round(pos.getX(i))))
-      const cz = Math.min(height, Math.max(0, Math.round(pos.getZ(i))))
-      pos.setY(i, corners[cz * stride + cx])
-    }
-    pos.needsUpdate = true
-    geometry.computeVertexNormals()
-  }
+  if (corners) liftToCorners(geometry, width, height, corners)
   const material = materialOverride ?? new THREE.MeshStandardMaterial({ map: buildGroundTexture(collision, width, height, palette ?? DEFAULT_PALETTE) })
   const mesh = new THREE.Mesh(geometry, material)
   mesh.receiveShadow = true
