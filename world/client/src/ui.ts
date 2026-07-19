@@ -19,6 +19,19 @@ export type MenuDispatch = (row: MenuRow) => void
 
 const INVENTORY_COLS = 4
 const INVENTORY_ROWS = 7
+const INV_CELL_PX = 40
+const INV_GAP_PX = 3
+// Show 4 rows before scrolling (mirrors #prayer-grid's capped-height pattern)
+// instead of all 7 — the panel was showing mostly empty rows below the fold.
+const INV_VISIBLE_ROWS = 4
+const INV_CONTENT_W = INVENTORY_COLS * INV_CELL_PX + (INVENTORY_COLS - 1) * INV_GAP_PX
+const INV_VISIBLE_H = INV_VISIBLE_ROWS * INV_CELL_PX + (INV_VISIBLE_ROWS - 1) * INV_GAP_PX
+// The panel used to be a flat 232px regardless of content, leaving a wide
+// empty gutter to the right of every inventory row (narrower than the tab
+// rail above it). Size the panel to the inventory grid's own content width
+// (plus hud-body's padding/border) instead, clamped up only as far as the
+// top tab rail's 44px-min-tap-target floor (§9) requires.
+const HUD_PANEL_WIDTH = Math.max(INV_CONTENT_W + 14, 4 * 44 + 3 * 3)
 const XP_DROP_MS = 1200
 const MAX_MESSAGES = 3
 
@@ -26,7 +39,7 @@ const HUD_CSS = `
 #hud-panel {
   position: fixed; right: 8px; top: 200px;
   z-index: 10; font-family: sans-serif; display: flex; flex-direction: column; gap: 4px;
-  width: 232px;
+  width: ${HUD_PANEL_WIDTH}px;
 }
 .hud-tabs { display: flex; gap: 3px; }
 .hud-tabs.bottom { margin-top: 1px; }
@@ -49,8 +62,9 @@ const HUD_CSS = `
 .hud-pane.active { display: block; }
 .hud-body.collapsed { display: none; }
 #inv-panel {
-  display: grid; grid-template-columns: repeat(${INVENTORY_COLS}, 40px);
-  grid-auto-rows: 40px; gap: 3px;
+  display: grid; grid-template-columns: repeat(${INVENTORY_COLS}, ${INV_CELL_PX}px);
+  grid-auto-rows: ${INV_CELL_PX}px; gap: ${INV_GAP_PX}px;
+  max-height: ${INV_VISIBLE_H}px; overflow-y: auto;
 }
 #equip-panel {
   display: grid; grid-template-columns: repeat(3, 40px); grid-auto-rows: 40px; gap: 3px;

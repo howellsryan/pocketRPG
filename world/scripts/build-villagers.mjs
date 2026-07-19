@@ -1,15 +1,13 @@
 #!/usr/bin/env node
 // Builds world/client/public/models/villager_{a,b,c}.glb — human ambient-layer
 // walkers replacing the animal critter models in towns (R2-9,
-// docs/open-world-changes-plan.md). Follows build-cow.mjs, not build-hero.mjs:
-// these are self-contained Quaternius outfit GLBs with no clip retargeting to
-// keep — the ambient layer (ambient.ts) animates by bob only, no skeletal
-// mixer. But the outfit's own bind pose is a T-pose (arms straight out),
-// which reads as broken standing still with no animation to move out of it —
-// so this bakes frame 0 of the Universal Animation Library's Idle_Loop clip
-// (the same source build-hero.mjs retargets for the hero's actual idle
-// clip) onto each joint as a fixed local transform, using build-hero's
-// joint-name remap, then discards the animation entirely.
+// docs/open-world-changes-plan.md). Follows build-hero.mjs's actual clip
+// retargeting (rename + re-point each channel's target node onto the
+// outfit's own joint of the same name), not a baked static pose: a bob-only
+// "animation" read as broken/ridiculous for human figures (R3-4,
+// docs/open-world-changes-plan.md) — ambient.ts now runs a real
+// THREE.AnimationMixer per villager, crossfading Idle_Loop/Walk_Loop exactly
+// like the hero and monster GLBs (entities.ts's makeAnimator).
 //
 // Source note: only the "Ranger" outfits in this pack are self-contained
 // full characters (Head_Hood mesh included); "Peasant" is clothing-only,
@@ -37,7 +35,6 @@ const outfitsDir = path.join(
 const UAL1 = path.join(
   qRoot, 'Universal Animation Library[Standard] (1)', 'Universal Animation Library[Standard]', 'Unreal-Godot', 'UAL1_Standard.glb'
 )
-const IDLE_CLIP = 'Idle_Loop'
 
 const VARIANTS = [
   { id: 'villager_a', src: path.join(outfitsDir, 'Male_Ranger.gltf'), tint: null },
@@ -47,52 +44,46 @@ const VARIANTS = [
   { id: 'villager_c', src: path.join(outfitsDir, 'Male_Ranger.gltf'), tint: [1, 0.8, 0.15] },
 ]
 
+// Named 'idle'/'walk' to match entities.ts's AnimName union and makeAnimator,
+// which looks clips up by exactly those names.
+const CLIPS = [
+  { file: UAL1, clip: 'Idle_Loop', as: 'idle' },
+  { file: UAL1, clip: 'Walk_Loop', as: 'walk' },
+]
+
 await MeshoptDecoder.ready
 const io = new NodeIO().registerExtensions(ALL_EXTENSIONS).registerDependencies({ 'meshopt.decoder': MeshoptDecoder })
 
-/** Merges UAL1's Idle_Loop onto `doc`'s own joints (by name, like build-hero),
- * bakes frame 0 of each channel as that joint's static local transform, then
- * removes the animation and UAL1's own (now-unused) scene/nodes — leaving the
- * skeleton posed, not playable, and the document back to just the outfit. */
-async function bakeIdlePose(doc) {
+/** Merges UAL1's idle/walk clips onto `doc`'s own joints by name (build-hero's
+ * exact retarget: rename the clip, re-point each channel's target node to the
+ * outfit's joint of the same name), leaving them playable — not baked — then
+ * drops UAL1's own now-unused scene/nodes. */
+async function retargetClips(doc) {
   const baseScene = doc.getRoot().listScenes()[0]
   const baseNodes = new Map(doc.getRoot().listNodes().map((n) => [n.getName(), n]))
-  const src = await io.read(UAL1)
-  const idleClip = src.getRoot().listAnimations().find((a) => a.getName() === IDLE_CLIP)
-  if (!idleClip) throw new Error(`${IDLE_CLIP} not found in ${UAL1}`)
-  for (const anim of src.getRoot().listAnimations()) {
-    if (anim === idleClip) continue
-    for (const channel of anim.listChannels()) channel.dispose()
-    for (const sampler of anim.listSamplers()) sampler.dispose()
-    anim.dispose()
-  }
-  await src.transform(prune())
-  mergeDocuments(doc, src)
-  const merged = doc.getRoot().listAnimations().find((a) => a.getName() === IDLE_CLIP)
-  if (!merged) throw new Error(`${IDLE_CLIP} not found after merge`)
 
-  for (const channel of merged.listChannels()) {
-    const target = channel.getTargetNode()
-    if (!target) continue
-    const baseNode = baseNodes.get(target.getName())
-    if (!baseNode) continue // UAL rig has a few helper joints the outfit rig doesn't
-    const targetPath = channel.getTargetPath()
-    const output = channel.getSampler().getOutput()
-    if (!output) continue
-    const size = targetPath === 'rotation' ? 4 : targetPath === 'weights' ? output.getElementSize() : 3
-    const frame0 = output.getElement(0, new Array(size).fill(0))
-    if (targetPath === 'translation') baseNode.setTranslation(frame0)
-    else if (targetPath === 'rotation') baseNode.setRotation(frame0)
-    else if (targetPath === 'scale') baseNode.setScale(frame0)
+  for (const spec of CLIPS) {
+    const src = await io.read(spec.file)
+    for (const anim of src.getRoot().listAnimations()) {
+      if (anim.getName() === spec.clip) continue
+      for (const channel of anim.listChannels()) channel.dispose()
+      for (const sampler of anim.listSamplers()) sampler.dispose()
+      anim.dispose()
+    }
+    await src.transform(prune())
+    mergeDocuments(doc, src)
+    const merged = doc.getRoot().listAnimations().find((a) => a.getName() === spec.clip)
+    if (!merged) throw new Error(`clip ${spec.clip} not found in ${spec.file}`)
+    merged.setName(spec.as)
+    for (const channel of merged.listChannels()) {
+      const target = channel.getTargetNode()
+      if (!target) continue
+      const baseNode = baseNodes.get(target.getName())
+      if (!baseNode) throw new Error(`clip ${spec.as}: no villager joint named '${target.getName()}'`)
+      channel.setTargetNode(baseNode)
+    }
   }
 
-  for (const channel of merged.listChannels()) channel.dispose()
-  for (const sampler of merged.listSamplers()) sampler.dispose()
-  merged.dispose()
-
-  // mergeDocuments brought UAL1's own scene (its duplicate skeleton) in
-  // alongside the outfit's — drop it now that the pose has been copied over
-  // by name, same cleanup build-hero.mjs does after its clip merges.
   for (const scene of doc.getRoot().listScenes()) {
     if (scene === baseScene) continue
     const nodes = []
@@ -105,15 +96,7 @@ async function bakeIdlePose(doc) {
 for (const variant of VARIANTS) {
   const doc = await io.read(variant.src)
 
-  await bakeIdlePose(doc)
-
-  // Belt-and-braces: drop any animation still left (the outfit source ships
-  // none, but this keeps the output guaranteed clip-free either way).
-  for (const anim of doc.getRoot().listAnimations()) {
-    for (const channel of anim.listChannels()) channel.dispose()
-    for (const sampler of anim.listSamplers()) sampler.dispose()
-    anim.dispose()
-  }
+  await retargetClips(doc)
 
   // Same "only base color matters at this camera distance" call as build-hero.
   for (const material of doc.getRoot().listMaterials()) {

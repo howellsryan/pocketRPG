@@ -45,4 +45,25 @@ describe('pickWanderTarget', () => {
     expect(x).toBe(4)
     expect(z).toBe(4)
   })
+
+  it('keeps at least MIN_SEPARATION from an avoided point when the rect has room', () => {
+    const grid = Array.from({ length: 8 }, () => '.'.repeat(8))
+    const seq = [0.5, 0.5, 0, 0]
+    let calls = 0
+    const rand = () => seq[calls++ % seq.length]
+    // First candidate (4,4) lands exactly on the avoided point — too close —
+    // so the picker must retry past it to the second candidate (0,0).
+    const { x, z } = pickWanderTarget(grid, 0, 0, 8, 8, rand, [{ x: 4, z: 4 }])
+    expect(x).toBe(0)
+    expect(z).toBe(0)
+  })
+
+  it('falls back to a walkable point too close to avoid rather than spinning forever', () => {
+    const grid = Array.from({ length: 8 }, () => '.'.repeat(8))
+    // A single-tile rect: every candidate is (3,3), and the avoided point sits
+    // well inside MIN_SEPARATION of it — no candidate can ever clear it.
+    const { x, z } = pickWanderTarget(grid, 3, 3, 1, 1, () => 0, [{ x: 3.5, z: 3.5 }])
+    expect(x).toBe(3)
+    expect(z).toBe(3)
+  })
 })

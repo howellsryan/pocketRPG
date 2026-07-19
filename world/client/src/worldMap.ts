@@ -12,7 +12,7 @@ import { uiIconMarkup } from './itemIcon'
 import worldData from '../../../src/data/world.json'
 import monstersData from '../../../src/data/monsters.json'
 import skillsData from '../../../src/data/skills.json'
-import { MONSTER_ICONS } from '../../../src/utils/monsterIcons.js'
+import { MONSTER_ART } from '../../../src/utils/combatArt.js'
 
 const BAKE_PX_PER_TILE = 6
 const MIN_ZOOM_MULT = 1
@@ -65,7 +65,8 @@ const STATIC_CATEGORY: Record<string, string> = {
 }
 // The game's own art (bespokeIcons.json via uiIconMarkup) for every category
 // except Place (world.json's own emoji, already correct) and Monster (its own
-// per-monster emoji from monsterIcons.js — MONSTER_ICON_FALLBACK below).
+// per-monster bespoke emblem from combatArt.js's MONSTER_ART — the same table
+// the combat screen renders — not the legacy MONSTER_ICONS emoji dict).
 const CATEGORY_ICON_KEY: Record<string, string> = {
   bank: 'coins', smithing: 'anvil', cooking: 'cooking_pot', mining: 'mining', woodcutting: 'wood_axe', exit: 'door',
 }
@@ -385,8 +386,9 @@ export function openWorldMap(data: WorldMapData): void {
   // Monster spawns — one pin per authored spawn point (not live positions).
   for (const spawn of data.spawns) {
     const monster = monsters[spawn.monsterId]
-    const emoji = (MONSTER_ICONS as Record<string, string>)[spawn.monsterId] ?? MONSTER_ICON_FALLBACK
-    addMarker(spawn.x, spawn.z, 'monster', emoji, false, 1, () => {
+    const art = (MONSTER_ART as Record<string, { icon: string; accent: string }>)[spawn.monsterId]
+    const markup = art ? uiIconMarkup(art.icon, 26, art.accent) : ''
+    addMarker(spawn.x, spawn.z, 'monster', markup || MONSTER_ICON_FALLBACK, !!markup, 1, () => {
       const name = monster?.name ?? spawn.monsterId
       const level = monster?.combatLevel != null ? ` (level-${monster.combatLevel})` : ''
       showInfoCard(name, `A monster spawn point${level}.`)

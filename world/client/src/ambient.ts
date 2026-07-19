@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
+import { GLTFLoader, type GLTF } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { clone as cloneSkeleton } from 'three/examples/jsm/utils/SkeletonUtils.js'
 import { tileToWorld } from './scene'
 import type { ZoneAmbient, ZoneAmbientCritter } from '../../shared/protocol'
@@ -9,10 +9,15 @@ import type { ZoneAmbient, ZoneAmbientCritter } from '../../shared/protocol'
 // (villagers in towns, critters in fields) and smoke curling off chimneys.
 // Pure client render — no server, no gameplay — but wander respects the same
 // collision grid the terrain bakes (R2-9, docs/open-world-changes-plan.md):
-// a walker never picks, or steps into, a blocked tile. Movement is a slow
-// random walk within an authored rectangle rather than a skeletal mixer, so
-// one small module covers every model without per-clip wiring (static pose is
-// fine — the bob is the only "animation"); smoke is a recycled point sprite.
+// a walker never picks, or steps into, a blocked tile, and (R3-4,
+// docs/open-world-changes-plan.md) never picks a target too close to another
+// walker in the same group, so a town plaza's villagers spread out instead of
+// clumping onto the one open tile a mostly-building-blocked rect leaves.
+// Humanoid GLBs (villagers) play a real idle/walk THREE.AnimationMixer clip
+// pair, retargeted by build-villagers.mjs exactly like the hero/monsters
+// (entities.ts's makeAnimator) — a skeleton frozen mid-stride with only a
+// vertical bob read as broken. Animal critters (chicken/frog) ship no rig
+// clips, so they keep the cheap bob-only path; smoke is a recycled point sprite.
 
 // Loadable critter/villager GLBs with baked bounds (Box3.setFromObject is
 // unreliable for skinned meshes — same reason as monsterModels.ts). `target`
@@ -37,6 +42,11 @@ const WANDER_SPEED = 0.55 // tiles/sec — an unhurried amble
 // not spin forever hunting for a walkable point — after this many misses the
 // walker just stands at the rect's centre.
 const MAX_TARGET_ATTEMPTS = 20
+// Minimum gap (tiles) a freshly-picked wander target keeps from every other
+// walker already in the group — small enough that a tight plaza still finds
+// room, large enough that villagers read as separate people, not a clump.
+const MIN_SEPARATION = 1.2
+const ANIM_CROSSFADE_S = 0.15
 
 type Instance = {
   group: THREE.Group
@@ -44,6 +54,10 @@ type Instance = {
   tx: number; tz: number
   yaw: number
   bob: number
+  mixer: THREE.AnimationMixer | null
+  idleAction: THREE.AnimationAction | null
+  walkAction: THREE.AnimationAction | null
+  current: THREE.AnimationAction | null
 }
 
 /** Whether the tile under world-space (x, z) is walkable per the zone's
@@ -52,20 +66,29 @@ export function isWalkableTile(collision: string[], x: number, z: number): boole
   return collision[Math.floor(z)]?.[Math.floor(x)] === '.'
 }
 
-/** Picks a random walkable point inside [cx, cx+cw) x [cz, cz+ch), retrying
- * against the collision grid up to MAX_TARGET_ATTEMPTS times. A rect with no
- * walkable tile at all degrades to the rect's centre rather than looping —
- * the walker then just stands there instead of hanging the frame loop. */
+/** Picks a random walkable point inside [cx, cx+cw) x [cz, cz+ch), at least
+ * MIN_SEPARATION from every point in `avoid`, retrying up to
+ * MAX_TARGET_ATTEMPTS times. Falls back to the first walkable point found
+ * (ignoring separation) if no candidate clears every avoid point in budget,
+ * and further degrades to the rect's centre when the rect has no walkable
+ * tile at all — the walker then just stands there instead of hanging the
+ * frame loop. */
 export function pickWanderTarget(
   collision: string[], cx: number, cz: number, cw: number, ch: number,
   rand: () => number = Math.random,
+  avoid: { x: number; z: number }[] = [],
 ): { x: number; z: number } {
+  let fallback: { x: number; z: number } | null = null
+  const minSepSq = MIN_SEPARATION * MIN_SEPARATION
   for (let i = 0; i < MAX_TARGET_ATTEMPTS; i++) {
     const x = cx + rand() * cw
     const z = cz + rand() * ch
-    if (isWalkableTile(collision, x, z)) return { x, z }
+    if (!isWalkableTile(collision, x, z)) continue
+    if (!fallback) fallback = { x, z }
+    const clear = avoid.every((p) => (p.x - x) ** 2 + (p.z - z) ** 2 >= minSepSq)
+    if (clear) return { x, z }
   }
-  return { x: cx + cw / 2, z: cz + ch / 2 }
+  return fallback ?? { x: cx + cw / 2, z: cz + ch / 2 }
 }
 
 export type AmbientLayer = { update: (dt: number) => void; dispose: () => void }
@@ -93,8 +116,10 @@ export function createAmbient(
         const dx = c.tx - world.x
         const dz = c.tz - world.z
         const dist = Math.hypot(dx, dz)
+        let moving = false
         if (dist < 0.2) {
-          const next = pickWanderTarget(collision, c.cx, c.cz, c.cw, c.ch)
+          const avoid = instances.filter((o) => o !== c).map((o) => ({ x: o.group.position.x, z: o.group.position.z }))
+          const next = pickWanderTarget(collision, c.cx, c.cz, c.cw, c.ch, Math.random, avoid)
           c.tx = next.x
           c.tz = next.z
         } else {
@@ -106,16 +131,27 @@ export function createAmbient(
             world.z = nextZ
             c.yaw = Math.atan2(dx, dz)
             c.bob += dt * 8
+            moving = true
           } else {
             // The step would cross into a blocked tile — abandon this target
             // and pick a new one rather than walking through a wall.
-            const next = pickWanderTarget(collision, c.cx, c.cz, c.cw, c.ch)
+            const avoid = instances.filter((o) => o !== c).map((o) => ({ x: o.group.position.x, z: o.group.position.z }))
+            const next = pickWanderTarget(collision, c.cx, c.cz, c.cw, c.ch, Math.random, avoid)
             c.tx = next.x
             c.tz = next.z
           }
         }
-        world.y = heightAt(world.x, world.z) + Math.abs(Math.sin(c.bob)) * 0.06
+        world.y = heightAt(world.x, world.z) + (c.mixer ? 0 : Math.abs(Math.sin(c.bob)) * 0.06)
         c.group.rotation.y = c.yaw
+        if (c.mixer) {
+          const wanted = moving ? c.walkAction : c.idleAction
+          if (wanted && wanted !== c.current) {
+            wanted.reset().fadeIn(ANIM_CROSSFADE_S).play()
+            c.current?.fadeOut(ANIM_CROSSFADE_S)
+            c.current = wanted
+          }
+          c.mixer.update(dt)
+        }
       }
       for (const s of smokers) s.update(dt)
     },
@@ -124,6 +160,21 @@ export function createAmbient(
       for (const d of disposables) d()
     },
   }
+}
+
+/** Builds an idle/walk mixer from clips retargeted onto this GLB by name
+ * (build-hero.mjs/build-villagers.mjs convention — entities.ts's makeAnimator
+ * does the same for the hero/monsters). Animal critter GLBs ship no clips, so
+ * this returns nulls and the caller keeps the bob-only path. */
+function makeAmbientAnimator(model: THREE.Object3D, gltf: GLTF): Pick<Instance, 'mixer' | 'idleAction' | 'walkAction' | 'current'> {
+  const idleClip = gltf.animations.find((c) => c.name === 'idle')
+  const walkClip = gltf.animations.find((c) => c.name === 'walk')
+  if (!idleClip || !walkClip) return { mixer: null, idleAction: null, walkAction: null, current: null }
+  const mixer = new THREE.AnimationMixer(model)
+  const idleAction = mixer.clipAction(idleClip)
+  const walkAction = mixer.clipAction(walkClip)
+  idleAction.play()
+  return { mixer, idleAction, walkAction, current: idleAction }
 }
 
 async function spawnCritters(scene: THREE.Scene, spec: ZoneAmbientCritter, out: Instance[], collision: string[]): Promise<void> {
@@ -137,6 +188,7 @@ async function spawnCritters(scene: THREE.Scene, spec: ZoneAmbientCritter, out: 
   }
   const { b, target } = def
   const scale = target / (b.maxY - b.minY)
+  const placed: { x: number; z: number }[] = []
   for (let i = 0; i < spec.count; i++) {
     const model = cloneSkeleton(gltf.scene)
     model.position.set(-((b.minX + b.maxX) / 2) * scale, -b.minY * scale, -((b.minZ + b.maxZ) / 2) * scale)
@@ -147,17 +199,20 @@ async function spawnCritters(scene: THREE.Scene, spec: ZoneAmbientCritter, out: 
     const group = new THREE.Group()
     group.scale.setScalar(scale)
     group.add(model)
-    const spawnPoint = pickWanderTarget(collision, spec.x, spec.z, spec.w, spec.h)
+    const spawnPoint = pickWanderTarget(collision, spec.x, spec.z, spec.w, spec.h, Math.random, placed)
+    placed.push(spawnPoint)
     const start = tileToWorld(spawnPoint.x, spawnPoint.z)
     group.position.copy(start)
     scene.add(group)
-    const wanderTarget = pickWanderTarget(collision, spec.x, spec.z, spec.w, spec.h)
+    const wanderTarget = pickWanderTarget(collision, spec.x, spec.z, spec.w, spec.h, Math.random, placed)
+    const animator = makeAmbientAnimator(model, gltf)
     out.push({
       group,
       cx: spec.x, cz: spec.z, cw: spec.w, ch: spec.h,
       tx: wanderTarget.x, tz: wanderTarget.z,
       yaw: Math.random() * Math.PI * 2,
       bob: Math.random() * Math.PI * 2,
+      ...animator,
     })
   }
 }
