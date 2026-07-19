@@ -10,6 +10,10 @@ import lumbrightZone from '../zones/lumbright.json'
 import varrickZone from '../zones/varrick.json'
 import varrickDungeonZone from '../zones/varrick_dungeon.json'
 import overworldZone from '../zones/overworld.json'
+import * as overworldLayout from '../scripts/overworldLayout.mjs'
+import worldData from '../../src/data/world.json'
+
+const projectPlaces = overworldLayout.projectPlaces as (places: unknown[], opts?: unknown) => { W: number; H: number; districts: { id: string; x: number; z: number }[] }
 import monsters from '../../src/data/monsters.json'
 
 describe('validateZone', () => {
@@ -193,15 +197,27 @@ describe('Phase 6 zones', () => {
     expect(validateZone(varrickDungeonZone as unknown as ZoneDef)).toEqual({ valid: true })
   })
 
-  it('accepts the merged overworld prototype and gives it an aoiRadius', () => {
+  it('accepts the overworld layout and gives it an aoiRadius', () => {
     const ow = overworldZone as unknown as ZoneDef
     expect(validateZone(ow)).toEqual({ valid: true })
     expect(ow.aoiRadius).toBeGreaterThan(0)
   })
 
-  it('the merged overworld has no internal portals — only the Varrick edge survives', () => {
+  it('the overworld keeps interiors instanced — only the Varrick portal survives', () => {
     const ow = overworldZone as unknown as ZoneDef
     expect((ow.exits ?? []).map((e) => e.toZone)).toEqual(['varrick'])
+  })
+
+  it('positions every world.json place at a walkable district on the overworld', () => {
+    const ow = overworldZone as unknown as ZoneDef
+    const places = Object.values((worldData as { places: Record<string, { x: number; y: number }> }).places)
+    const { districts } = projectPlaces(places)
+    expect(districts.length).toBe(places.length)
+    // The generated collision must have open ground at every place's position —
+    // proving the layout in world.json and the emitted zone agree for all 14.
+    for (const d of districts) {
+      expect(ow.collision[d.z]?.[d.x], `district ${d.id} at (${d.x},${d.z})`).toBe('.')
+    }
   })
 
   it('the varrick dungeon boss references a real monster', () => {
