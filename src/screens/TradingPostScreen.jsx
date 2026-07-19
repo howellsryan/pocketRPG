@@ -325,6 +325,7 @@ export default function TradingPostScreen({ onBuyCredits, onBack }) {
       else if (err?.body?.code === 'IRONMAN_RESTRICTED') addToast(err.body.error, 'error')
       else if (err?.body?.code === 'INSUFFICIENT_COINS') addToast('Insufficient coins.', 'error')
       else if (err?.body?.code === 'LEVEL_REQUIREMENT_NOT_MET') addToast(err.body.error, 'error')
+      else if (err?.body?.code === 'QUEST_REQUIREMENT_NOT_MET') addToast(err.body.error, 'error')
       else addToast(`Buy failed: ${err.message}`, 'error')
     } finally {
       setBusy(false)

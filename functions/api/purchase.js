@@ -2,6 +2,7 @@ import { requireAuth, json } from '../_lib/auth.js'
 import { assertNotInActiveMatch } from '../_lib/pvp.js'
 import itemsData from '../../src/data/items.json' assert { type: 'json' }
 import minigamesData from '../../src/data/minigames.json' assert { type: 'json' }
+import questsData from '../../src/data/quests.json' assert { type: 'json' }
 import { assertPurchasable } from '../_lib/game/rewards.js'
 import { loadCharacterWithSave, writeSave } from '../_lib/game/save.js'
 import { subtractCoins } from '../_lib/game/economy.js'
@@ -45,6 +46,18 @@ export async function onRequestPost({ request, env }) {
     const allowSlayerStorePurchase = hasSlayerStoreUnlock(saveObject.settings?.slayerStoreUnlocks, itemId)
     const restriction = assertPurchasable(item, { isIronman: Boolean(row.is_ironman), isOneLife: Boolean(row.is_one_life), allowMinigameUnlockPurchase, allowSlayerStorePurchase })
     if (!restriction.allowed) return json({ error: restriction.message, code: restriction.code }, 403)
+
+    // Quest-unlock items are server-authoritative too: the client disables the
+    // Buy button until the quest is done, but the completion gate has to hold
+    // here or an account can end up owning gear it can never equip (the equip
+    // check trusts the same completedQuests set).
+    if (item.questUnlock) {
+      const completedQuests = new Set(saveObject.settings?.completedQuests || [])
+      if (!completedQuests.has(item.questUnlock)) {
+        const questName = questsData.find((q) => q.id === item.questUnlock)?.name || 'the required quest'
+        return json({ error: `You must complete ${questName} to buy this item.`, code: 'QUEST_REQUIREMENT_NOT_MET' }, 403)
+      }
+    }
 
     if (item.isSkillCape) {
       const reqSkill = Object.keys(item.requirements || {})[0]
