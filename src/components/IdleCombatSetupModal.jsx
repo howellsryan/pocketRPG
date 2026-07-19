@@ -9,7 +9,8 @@ import {
   getValidIdlePrayerSelection,
   getFoodHealAmount,
 } from '../engine/idleSupplies.js'
-import { getPrayerStyleIcon } from '../utils/prayerIcons.js'
+import { prayerSkill } from '../utils/prayerIcons.js'
+import SkillIcon from './SkillIcon.jsx'
 
 const TAB_LABEL = {
   food: 'Idle Eat',
@@ -253,7 +254,7 @@ function PrayerSection({ prayersData, prayerLevel, draft, onSelect }) {
                     : 'bg-[var(--color-void-light)] border-[var(--color-void-border)] active:bg-[var(--fm-parch)]'
                 }`}
               >
-                <div class="text-base">{prayer.icon}</div>
+                <div class="flex justify-center"><SkillIcon skill={prayerSkill(prayer)} size={20} /></div>
                 <div class="text-[10px] text-[var(--color-parchment)]">{prayer.name}</div>
                 <div class="text-[9px] text-[var(--color-gold-dim)]">Lv {prayer.level}</div>
               </button>
@@ -267,11 +268,6 @@ function PrayerSection({ prayersData, prayerLevel, draft, onSelect }) {
         <div class="grid grid-cols-2 gap-2">
           {combats.map((prayer) => {
             const isActive = cmbId === prayer.id
-            // Match the combat-screen icon vocabulary: attack ⚔️, strength
-            // 💪, defence 🛡️, ranged 🏹, magic 🔮. Falls back to the
-            // prayer's bespoke emoji when the helper has no opinion.
-            const styled = getPrayerStyleIcon(prayer)
-            const icon = styled ? styled.icon : prayer.icon
             return (
               <button
                 key={prayer.id}
@@ -282,7 +278,7 @@ function PrayerSection({ prayersData, prayerLevel, draft, onSelect }) {
                     : 'bg-[var(--color-void-light)] border-[var(--color-void-border)] active:bg-[var(--fm-parch)]'
                 }`}
               >
-                <div class="text-sm text-[var(--color-parchment)]">{icon} {prayer.name}</div>
+                <div class="flex items-center gap-1.5 text-sm text-[var(--color-parchment)]"><SkillIcon skill={prayerSkill(prayer)} size={16} /> {prayer.name}</div>
                 <div class="text-[10px] text-[var(--color-parchment)] opacity-60 line-clamp-2">{prayer.description}</div>
                 <div class="text-[9px] text-[var(--color-gold-dim)]">Lv {prayer.level}</div>
               </button>

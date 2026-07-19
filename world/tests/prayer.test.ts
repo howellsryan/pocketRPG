@@ -72,7 +72,7 @@ describe('resolvePrayerToggle', () => {
 
 describe('categorisePrayers', () => {
   const id = (p: { id: string }) => p.id
-  const iconOf = (list: { id: string; icon: string }[], prayerId: string) => list.find((p) => p.id === prayerId)?.icon
+  const skillOf = (list: { id: string; skill: string | null }[], prayerId: string) => list.find((p) => p.id === prayerId)?.skill
 
   it('omits prayers above the player Prayer level', () => {
     const { protection, combat } = categorisePrayers(1)
@@ -89,26 +89,26 @@ describe('categorisePrayers', () => {
     for (let i = 1; i < combat.length; i++) expect(combat[i].level).toBeGreaterThanOrEqual(combat[i - 1].level)
   })
 
-  it('gives every combat prayer the icon of the stat it boosts', () => {
+  it('tags every combat prayer with the skill it boosts', () => {
     const { combat } = categorisePrayers(99)
-    expect(iconOf(combat, 'thick_skin')).toBe('🛡️') // defence
-    expect(iconOf(combat, 'burst_of_strength')).toBe('💪') // strength
-    expect(iconOf(combat, 'clarity_of_thought')).toBe('⚔️') // attack
-    expect(iconOf(combat, 'sharp_eye')).toBe('🏹') // ranged
-    expect(iconOf(combat, 'mystic_will')).toBe('🔮') // magic
+    expect(skillOf(combat, 'thick_skin')).toBe('defence')
+    expect(skillOf(combat, 'burst_of_strength')).toBe('strength')
+    expect(skillOf(combat, 'clarity_of_thought')).toBe('attack')
+    expect(skillOf(combat, 'sharp_eye')).toBe('ranged')
+    expect(skillOf(combat, 'mystic_will')).toBe('magic')
   })
 
-  it('picks a multi-stat prayer’s icon from its primary style', () => {
+  it('tags a multi-stat prayer with its primary style', () => {
     const { combat } = categorisePrayers(99)
-    expect(iconOf(combat, 'piety')).toBe('💪') // melee → strength headline
-    expect(iconOf(combat, 'rigour')).toBe('🏹') // ranged
-    expect(iconOf(combat, 'augury')).toBe('🔮') // magic
+    expect(skillOf(combat, 'piety')).toBe('strength') // melee → strength headline
+    expect(skillOf(combat, 'rigour')).toBe('ranged')
+    expect(skillOf(combat, 'augury')).toBe('magic')
   })
 
-  it('gives each protection prayer the icon of the damage type it blocks', () => {
+  it('tags each protection prayer with the style it blocks (melee → defence)', () => {
     const { protection } = categorisePrayers(99)
-    expect(iconOf(protection, 'protection_from_magic')).toBe('🔮')
-    expect(iconOf(protection, 'protection_from_missiles')).toBe('🏹')
-    expect(iconOf(protection, 'protection_from_melee')).toBe('🛡️')
+    expect(skillOf(protection, 'protection_from_magic')).toBe('magic')
+    expect(skillOf(protection, 'protection_from_missiles')).toBe('ranged')
+    expect(skillOf(protection, 'protection_from_melee')).toBe('defence')
   })
 })

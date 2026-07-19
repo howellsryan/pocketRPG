@@ -19,7 +19,8 @@ import { hasEpicLootDrop } from '../utils/itemValue.js'
 import { getEquippedPvpSpecialAttack, hasEnoughPvpSpecialEnergy } from '../engine/pvpSpecialAttacks.js'
 import { calculatePvpRiskValues } from '../engine/pvpRisk.js'
 import { formatCompactCoins } from '../utils/formatters.js'
-import { getPrayerStyleIcon } from '../utils/prayerIcons.js'
+import { prayerSkill } from '../utils/prayerIcons.js'
+import SkillIcon from '../components/SkillIcon.jsx'
 import { splatsFromPvpEvents, HIT_SPLAT_DURATION_MS } from '../utils/hitSplats.js'
 import { HitSplatLayer } from '../components/HitSplat.jsx'
 
@@ -895,7 +896,6 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
                 {availablePrayers.map((prayer) => {
                   const active = visuallyActivePrayerId === prayer.id
                   const canUse = playerPrayerLevel >= (prayer.level || 1)
-                  const styled = getPrayerStyleIcon(prayer)
                   return (
                     <button
                       key={prayer.id}
@@ -912,13 +912,7 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
                             : 'bg-[var(--color-void)] border-[var(--color-void-light)] opacity-30 cursor-default'
                       }`}
                     >
-                      {styled ? (
-                        <div class="text-[10px] font-[var(--font-mono)] text-[var(--color-parchment)] leading-none whitespace-nowrap">
-                          +{styled.boostPercent}% {styled.icon}
-                        </div>
-                      ) : (
-                        <div class="text-[12px] leading-none">{prayer.icon || '✨'}</div>
-                      )}
+                      <div class="flex justify-center leading-none"><SkillIcon skill={prayerSkill(prayer)} size={16} /></div>
                       <div class="text-[8px] text-[var(--color-gold-dim)] opacity-70 mt-0.5">Lv {prayer.level}</div>
                     </button>
                   )

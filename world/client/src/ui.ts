@@ -2,7 +2,18 @@ import type { CombatStance, EquipmentMap, InvSlot } from '../../shared/protocol'
 import type { MenuRow } from './picking'
 import { iconMarkup, itemName, uiIconMarkup } from './itemIcon'
 import { spellIconSvg } from './spellIcon'
-import { categorisePrayers } from '../../shared/prayer'
+import { categorisePrayers, type PrayerView } from '../../shared/prayer'
+
+// Skill crest + accent for each skill a prayer can map to (mirrors SKILL_ART in
+// src/utils/skillArt.js; kept local so the HUD's icon lookup stays lazy instead
+// of statically pulling gameIcons.json into the core bundle).
+const PRAYER_SKILL_ICON: Record<string, { icon: string; accent: string }> = {
+  attack: { icon: 'combat_level', accent: '#cdd6e0' },
+  strength: { icon: 'muscle_up', accent: '#d9904a' },
+  defence: { icon: 'shield', accent: '#8fa6c0' },
+  ranged: { icon: 'high_shot', accent: '#b3873f' },
+  magic: { icon: 'pointy_hat', accent: '#9b6cff' },
+}
 
 export type MenuDispatch = (row: MenuRow) => void
 
@@ -93,11 +104,17 @@ const HUD_CSS = `
   color: #c9a13a; opacity: 0.85; padding: 2px 1px 0;
 }
 .prayer-btn {
-  width: 40px; height: 40px; border-radius: 6px; cursor: pointer; user-select: none;
+  position: relative; width: 40px; height: 40px; border-radius: 6px; cursor: pointer; user-select: none;
   background: rgba(60, 50, 34, 0.55); border: 1px solid #5a4a30;
   display: flex; align-items: center; justify-content: center; font-size: 19px; line-height: 1;
 }
 .prayer-btn.active { background: rgba(70, 58, 36, 0.92); border-color: #ffe066; box-shadow: 0 0 0 1px #ffe066 inset; }
+.prayer-btn__icon { display: flex; align-items: center; justify-content: center; }
+.prayer-btn__icon svg { display: block; }
+.prayer-lv {
+  position: absolute; right: 2px; bottom: 1px; font-size: 9px; font-weight: bold; line-height: 1;
+  color: #f4e9c8; text-shadow: 0 1px 2px #000, 0 0 2px #000; font-family: sans-serif; pointer-events: none;
+}
 #magic-panel { max-height: 340px; overflow-y: auto; display: flex; flex-direction: column; gap: 5px; }
 .tp-list { display: flex; flex-direction: column; gap: 3px; }
 .tp-row {
@@ -737,7 +754,7 @@ export function renderPrayerPanel(prayerLevel: number, onPray: (prayerId: string
   if (!grid) return
   grid.innerHTML = ''
   const { protection, combat } = categorisePrayers(prayerLevel)
-  const section = (heading: string, prayers: { id: string; name: string; level: number; icon: string }[]): void => {
+  const section = (heading: string, prayers: PrayerView[]): void => {
     if (!prayers.length) return
     const label = document.createElement('div')
     label.className = 'hud-sec'
@@ -749,7 +766,15 @@ export function renderPrayerPanel(prayerLevel: number, onPray: (prayerId: string
       const btn = document.createElement('div')
       btn.className = 'prayer-btn'
       btn.setAttribute('data-prayer', p.id)
-      btn.textContent = p.icon
+      const art = p.skill ? PRAYER_SKILL_ICON[p.skill] : undefined
+      const icon = document.createElement('span')
+      icon.className = 'prayer-btn__icon'
+      icon.innerHTML = (art && uiIconMarkup(art.icon, 24, art.accent)) || '🙏'
+      const lv = document.createElement('span')
+      lv.className = 'prayer-lv'
+      lv.textContent = String(p.level)
+      btn.appendChild(icon)
+      btn.appendChild(lv)
       btn.title = `${p.name} (Lv ${p.level})`
       btn.addEventListener('click', () => onPray(p.id))
       row.appendChild(btn)

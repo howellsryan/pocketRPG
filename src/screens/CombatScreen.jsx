@@ -20,7 +20,8 @@ import CombatMobileSelect from './CombatMobileSelect.jsx'
 import { CombatMonsterInfoSheet, CombatRaidInfoSheet, MultiStyleChip } from './CombatMobileSheets.jsx'
 import { getMonsterArt, getMonsterAttackStyles, getMonsterWeakness, getCategoryArt, getRaidArt, getMonsterLocationLabel, getStyleArt } from '../utils/combatArt.js'
 import { getSkillArt } from '../utils/skillArt.js'
-import { getPrayerStyleIcon } from '../utils/prayerIcons.js'
+import { prayerSkill } from '../utils/prayerIcons.js'
+import SkillIcon from '../components/SkillIcon.jsx'
 import { createCombatState, createRaidCombatState, processCombatTick, applyEat, applyCombo, applySpecialAttack, applyInstantKill } from '../engine/combat.js'
 import { applyConsumableEffect, isLumiraBrew, isComboConsumable } from '../engine/consumables.js'
 import { getLevelFromXP } from '../engine/experience.js'
@@ -2768,7 +2769,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                             : 'bg-[var(--color-void)] border-[var(--color-void-light)] opacity-30 cursor-default'
                       }`}
                     >
-                      <div class="text-[12px] leading-none">{prayer.icon}</div>
+                      <div class="flex justify-center leading-none"><SkillIcon skill={prayerSkill(prayer)} size={18} /></div>
                       <div class={`text-[8px] opacity-70 mt-0.5 ${isActive ? 'text-[#1a1206]' : 'text-[var(--color-parchment)]'}`}>{protectType}</div>
                     </button>
                   )
@@ -2778,7 +2779,6 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                 {combatPrayers.map(prayer => {
                   const canUse = prayerLevel >= prayer.level
                   const isActive = combat?.activeCombatPrayer === prayer.id
-                  const styled = getPrayerStyleIcon(prayer)
                   return (
                     <button
                       key={prayer.id}
@@ -2793,13 +2793,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                             : 'bg-[var(--color-void)] border-[var(--color-void-light)] opacity-30 cursor-default'
                       }`}
                     >
-                      {styled ? (
-                        <div class={`text-[10px] font-[var(--font-mono)] leading-none whitespace-nowrap ${isActive ? 'text-[#1a1206]' : 'text-[var(--color-parchment)]'}`}>
-                          +{styled.boostPercent}% {styled.icon}
-                        </div>
-                      ) : (
-                        <div class="text-[12px] leading-none">{prayer.icon}</div>
-                      )}
+                      <div class="flex justify-center leading-none"><SkillIcon skill={prayerSkill(prayer)} size={18} /></div>
                       <div class={`text-[8px] opacity-70 mt-0.5 ${isActive ? 'text-[#1a1206]' : 'text-[var(--color-gold-dim)]'}`}>Lv {prayer.level}</div>
                     </button>
                   )
@@ -3145,7 +3139,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                         class={'cb-prayer' + (isActive ? ' is-on' : '') + (!canUse ? ' is-locked' : '')}
                         style={{ alignItems: 'center', textAlign: 'center', minHeight: 64 }}
                       >
-                        <span class="cb-prayer__name" style={{ justifyContent: 'center' }}>Protect</span>
+                        <span class="cb-prayer__name" style={{ justifyContent: 'center', gap: '4px' }}><SkillIcon skill={prayerSkill(prayer)} size={14} /> Protect</span>
                         <span class="cb-prayer__desc" style={{ textAlign: 'center', width: '100%' }}>{protectType}</span>
                         <span class="cb-prayer__lv" style={{ margin: '0 auto' }}>Lv {prayer.level}</span>
                         {isActive && <span class="cb-prayer__chk">✓</span>}
@@ -3166,7 +3160,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                         disabled={!canUse}
                         class={'cb-prayer' + (isActive ? ' is-on' : '') + (!canUse ? ' is-locked' : '')}
                       >
-                        <span class="cb-prayer__name">{(getPrayerStyleIcon(prayer)?.icon) || prayer.icon} {prayer.name}</span>
+                        <span class="cb-prayer__name" style={{ gap: '4px' }}><SkillIcon skill={prayerSkill(prayer)} size={14} /> {prayer.name}</span>
                         <span class="cb-prayer__desc">{prayer.description}</span>
                         <span class="cb-prayer__lv">Lv {prayer.level}</span>
                         {isActive && <span class="cb-prayer__chk">✓</span>}

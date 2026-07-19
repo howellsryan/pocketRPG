@@ -1,54 +1,34 @@
 /**
- * Combat-style icon + boost amount for a prayer.
+ * The skill whose icon best represents a prayer, so every prayer surface
+ * (combat screen panel + modal, PvP, idle setup, and the open-world HUD)
+ * draws prayers with the game's real skill crest art instead of ad-hoc emoji:
+ *   - combat (stat-boost) prayers  → the stat they boost
+ *       attack · strength · defence · ranged · magic
+ *   - protection prayers           → the style they block
+ *       melee → defence (shield), ranged → ranged, magic → magic
  *
- * Used by the combat screen's prayer panel and the idle combat setup
- * modal so both surfaces share one icon vocabulary:
- *   attack   → ⚔️
- *   strength → 💪
- *   defence  → 🛡️
- *   ranged   → 🏹
- *   magic    → 🔮
- *
- * Returns `{ icon, boostPercent }` when the prayer can be reformatted as
- * "+X% <icon>", or `null` to fall back to the prayer's bespoke emoji.
- *
- * Single-stat (`bonusType: 'stat'`) prayers below level 45 always
- * reformat. Multi-stat prayers reformat when they have a clear primary
- * style:
- *   - magic key            → magic
- *   - ranged or ranged_strength → ranged (max of the two values)
- *   - strength             → strength (the headline melee-damage stat)
+ * Returns a skill id (an SKILL_ART key) or null when nothing maps — callers
+ * render it via <SkillIcon skill={…}/> (or the world HUD's icon lookup) and
+ * fall back to the prayer's own glyph on null.
  */
-export function getPrayerStyleIcon(prayer) {
+export function prayerSkill(prayer) {
   if (!prayer) return null
 
-  const STYLE_ICON = {
-    attack: '⚔️',     // ⚔️
-    strength: '💪',   // 💪
-    defence: '🛡️', // 🛡️
-    ranged: '🏹',     // 🏹
-    magic: '🔮'       // 🔮
+  if (prayer.bonusType === 'protection') {
+    if (prayer.style === 'ranged') return 'ranged'
+    if (prayer.style === 'magic') return 'magic'
+    return 'defence' // melee protection reads as a shield
   }
 
-  if (prayer.bonusType === 'stat' && prayer.level < 45) {
-    const icon = STYLE_ICON[prayer.stat]
-    if (!icon) return null
-    return { icon, boostPercent: prayer.boostPercent }
-  }
+  if (prayer.bonusType === 'stat') return prayer.stat || null
 
   if (prayer.bonusType === 'multi_stat' && prayer.stats) {
-    if (prayer.stats.magic != null) {
-      return { icon: STYLE_ICON.magic, boostPercent: prayer.stats.magic }
-    }
-    if (prayer.stats.ranged != null || prayer.stats.ranged_strength != null) {
-      return {
-        icon: STYLE_ICON.ranged,
-        boostPercent: Math.max(prayer.stats.ranged ?? 0, prayer.stats.ranged_strength ?? 0)
-      }
-    }
-    if (prayer.stats.strength != null) {
-      return { icon: STYLE_ICON.strength, boostPercent: prayer.stats.strength }
-    }
+    const s = prayer.stats
+    if (s.magic != null) return 'magic'
+    if (s.ranged != null || s.ranged_strength != null) return 'ranged'
+    if (s.strength != null) return 'strength'
+    if (s.attack != null) return 'attack'
+    if (s.defence != null) return 'defence'
   }
 
   return null
