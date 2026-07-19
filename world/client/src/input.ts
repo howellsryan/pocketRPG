@@ -81,7 +81,9 @@ export function setupInput(canvas: HTMLCanvasElement, camera: THREE.Camera, grou
   }
 
   function tileUnderPointer(): Tile | null {
-    const hits = raycaster.intersectObject(ground, false)
+    // Recursive so a chunk-streamed ground (a Group of chunk meshes) is hit; a
+    // single-mesh zone has no children, so recursive is identical there.
+    const hits = raycaster.intersectObject(ground, true)
     return hits.length === 0 ? null : worldToTile(hits[0].point)
   }
 

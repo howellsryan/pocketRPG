@@ -134,6 +134,7 @@ export function createTerrain(
   palette: GroundPalette | undefined,
   terrain: ZoneTerrain | undefined,
   ground?: ZoneGroundRegion[],
+  opts?: { chunkCentre?: { x: number; z: number; radius: number } },
 ): { heightField: HeightField; mesh: THREE.Object3D; chunked?: ChunkedTerrain } {
   const corners = cornersFor(width, height, terrain)
   const heightField = createHeightField(width, height, corners)
@@ -148,11 +149,15 @@ export function createTerrain(
   // enough to stay single-mesh.
   if (corners && (width > CHUNK_THRESHOLD || height > CHUNK_THRESHOLD)) {
     const chunked = createChunkedTerrain(scene, collision, width, height, palette, corners, material)
-    // Full render for review/screenshots: centre the map and use a radius that
-    // spans the grid so every chunk is live. The live client narrows this to a
-    // player-following radius (M3).
-    const { cols, rows } = chunkGridDims(width, height)
-    chunked.setCentre(width / 2, height / 2, Math.max(cols, rows))
+    if (opts?.chunkCentre) {
+      // Live client: stream only the chunks around the player (setCentre is
+      // re-driven every frame as they move).
+      chunked.setCentre(opts.chunkCentre.x, opts.chunkCentre.z, opts.chunkCentre.radius)
+    } else {
+      // Preview/editor/screenshots: render the whole map (radius spans the grid).
+      const { cols, rows } = chunkGridDims(width, height)
+      chunked.setCentre(width / 2, height / 2, Math.max(cols, rows))
+    }
     createGroundPaint(scene, width, height, ground, corners)
     createWater(scene, ground, heightField.heightAt)
     return { heightField, mesh: chunked.group, chunked }

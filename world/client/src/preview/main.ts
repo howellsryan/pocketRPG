@@ -39,6 +39,10 @@ const zoneId = params.get('zone') && ZONES[params.get('zone')!] ? params.get('zo
 const yawParam = params.get('yaw')
 const pitchParam = params.get('pitch')
 const distParam = params.get('dist')
+// Streaming demo: `?follow=x,z&radius=N` renders only the chunks within N chunks
+// of tile (x,z) instead of the whole map — proving far chunks stream out (M2/b).
+const followParam = params.get('follow')
+const radiusParam = params.get('radius')
 const def = ZONES[zoneId]
 
 // Zone dropdown → reload with the chosen zone.
@@ -68,7 +72,10 @@ const scene = createScene(def.ambience)
 // to span the zone so the whole thing is reviewable (small zones stay as-is).
 if (scene.fog instanceof THREE.Fog) scene.fog.far = Math.max(scene.fog.far, Math.max(def.width, def.height) * 3)
 createLights(scene, def.ambience)
-const { heightField } = createTerrain(scene, def.collision, def.width, def.height, def.palette, def.terrain, def.ground)
+const followCentre = followParam
+  ? (() => { const [fx, fz] = followParam.split(',').map(Number); return { x: fx, z: fz, radius: radiusParam ? Number(radiusParam) : 2 } })()
+  : undefined
+const { heightField } = createTerrain(scene, def.collision, def.width, def.height, def.palette, def.terrain, def.ground, { chunkCentre: followCentre })
 void createProps(scene, def.props ?? [])
 void createStatics(scene, def.objects)
 const ambient = createAmbient(scene, def.ambient, heightField.heightAt)

@@ -20,7 +20,9 @@ const flag = (name) => { const i = args.indexOf(name); return i >= 0 ? args[i + 
 const yaw = flag('--yaw')
 const pitch = flag('--pitch')
 const dist = flag('--dist')
-const flagVals = new Set([yaw, pitch, dist].filter((v) => v != null))
+const follow = flag('--follow') // "x,z" — stream only chunks near this tile (M2/b demo)
+const radius = flag('--radius')
+const flagVals = new Set([yaw, pitch, dist, follow, radius].filter((v) => v != null))
 const zones = args.filter((a) => !a.startsWith('--') && !flagVals.has(a))
 const ZONES = zones.length ? zones : ['pasture', 'forest', 'lumbright']
 
@@ -61,7 +63,7 @@ try {
     const y = yaw ?? cam.yaw
     const p = pitch ?? cam.pitch
     const d = dist ?? cam.dist
-    const qs = [['yaw', y], ['pitch', p], ['dist', d]].filter(([, v]) => v != null).map(([k, v]) => `&${k}=${v}`).join('')
+    const qs = [['yaw', y], ['pitch', p], ['dist', d], ['follow', follow], ['radius', radius]].filter(([, v]) => v != null).map(([k, v]) => `&${k}=${v}`).join('')
     const url = `${base}/preview.html?zone=${zone}${qs}`
     await page.goto(url, { waitUntil: 'load' })
     await page.waitForFunction(() => window.__previewReady === true, { timeout: 15000 }).catch(() => {})

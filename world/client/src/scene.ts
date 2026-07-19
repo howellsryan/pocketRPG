@@ -10,7 +10,7 @@ const DEFAULT_SKY = 0x87ceeb
 // Fog near must clear the farthest the camera ever sits from its target
 // (ZOOM_MAX * |CAMERA_OFFSET| ≈ 27) or the hero itself would fog out.
 const FOG_NEAR = 45
-const FOG_FAR = 110
+export const FOG_FAR = 110
 
 export function createScene(ambience?: ZoneAmbience): THREE.Scene {
   const scene = new THREE.Scene()

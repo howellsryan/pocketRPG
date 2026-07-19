@@ -5,9 +5,10 @@ import { closeBankUI, isBankOpen, openBankUI, updateBankInventory, updateBankUI 
 import { closeCraftUI, openCraftUI, updateCraftInventory, updateCraftStats, type SkillLevels } from './crafting'
 import { getLevelFromXP } from '../../../src/engine/experience.js'
 import { connect, onMessage, send } from './net'
-import { createCamera, createLights, createRenderer, createScene, tileToWorld, updateCamera, updateShadowLight } from './scene'
+import { createCamera, createLights, createRenderer, createScene, FOG_FAR, tileToWorld, updateCamera, updateShadowLight } from './scene'
 import { attachCameraControls } from './cameraControls'
 import { createTerrain } from './terrain'
+import { chunkFollowRadius, chunkKey, CHUNK_TILES, type ChunkedTerrain } from './chunkedTerrain'
 import { createScatterLayers } from './scatter'
 import { applyEntityDiff, applyGear, createEntity, createHeroMesh, createMonsterMesh, updateEntity, type Entity } from './entities'
 import { createClickMarker, setupInput, showClickMarker, updateClickMarker } from './input'
@@ -64,6 +65,10 @@ function enterWorld(session: WorldSession): void {
   let lootLayer: LootLayer | null = null
   let exitLayer: ExitLayer | null = null
   let ambientLayer: AmbientLayer | null = null
+  // Chunk-streamed ground (big merged maps only; per-zone maps stay single-mesh
+  // and leave this null). Driven each frame to follow the player.
+  let chunkedTerrain: ChunkedTerrain | null = null
+  let lastChunkKey = ''
   let transitioning = false
   let camera: THREE.PerspectiveCamera | null = null
   let cam: ReturnType<typeof attachCameraControls> | null = null
@@ -387,7 +392,15 @@ function enterWorld(session: WorldSession): void {
         // Build terrain first: registers the zone height sampler so every
         // tileToWorld call rides the surface, and returns the ground mesh that
         // picking raycasts. Flat when the zone has no `terrain` block.
-        const { heightField, mesh: ground } = createTerrain(scene, message.zone.collision, message.zone.w, message.zone.h, message.zone.palette, message.zone.terrain, message.zone.ground)
+        // A big merged map (overworld) streams its ground in chunks around the
+        // player; per-zone maps render whole (chunkCentre omitted → single mesh
+        // or full-map render, unchanged). Follow radius exceeds the fog so the
+        // player never sees the terrain edge.
+        const followRadius = chunkFollowRadius(FOG_FAR)
+        const terrainResult = createTerrain(scene, message.zone.collision, message.zone.w, message.zone.h, message.zone.palette, message.zone.terrain, message.zone.ground, { chunkCentre: { x: message.you.x, z: message.you.z, radius: followRadius } })
+        const { heightField, mesh: ground } = terrainResult
+        chunkedTerrain = terrainResult.chunked ?? null
+        lastChunkKey = chunkedTerrain ? chunkKey(Math.floor(message.you.x / CHUNK_TILES), Math.floor(message.you.z / CHUNK_TILES)) : ''
         // Decorative scatter: avoid static-object, exit, and prop tiles
         // (blocked tiles are skipped by the placer). NPCs move, so their spawn
         // tiles aren't masked.
@@ -582,6 +595,17 @@ function enterWorld(session: WorldSession): void {
             updateEntity(self, now, deltaSeconds, targetPosOf(self))
             updateCamera(camera, self.mesh.position, cam.state.zoom, cam.state.yaw)
             if (sun) updateShadowLight(sun, self.mesh.position)
+            // Stream ground chunks around the player — only when they cross a
+            // chunk boundary, so most frames do no work and there's no churn.
+            if (chunkedTerrain) {
+              const cx = Math.floor(self.mesh.position.x / CHUNK_TILES)
+              const cz = Math.floor(self.mesh.position.z / CHUNK_TILES)
+              const key = chunkKey(cx, cz)
+              if (key !== lastChunkKey) {
+                lastChunkKey = key
+                chunkedTerrain.setCentre(self.mesh.position.x, self.mesh.position.z, chunkFollowRadius(FOG_FAR))
+              }
+            }
           }
           for (const npc of npcs.values()) {
             updateEntity(npc, now, deltaSeconds, targetPosOf(npc))

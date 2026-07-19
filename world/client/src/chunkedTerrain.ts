@@ -14,6 +14,14 @@ import { createGroundChunk, type GroundPalette } from './scene'
 
 export const CHUNK_TILES = 32
 
+/** The live client streams terrain within this many chunks of the player. It
+ * must exceed the fog range (scene.ts FOG_FAR) so the player never sees the
+ * terrain edge or props floating over not-yet-built ground: 4 chunks = 128
+ * tiles > 110. Used by the live path; the preview/editor render the full map. */
+export function chunkFollowRadius(fogFar: number, chunkTiles: number = CHUNK_TILES): number {
+  return Math.ceil(fogFar / chunkTiles)
+}
+
 export type ChunkKey = string
 export function chunkKey(cx: number, cz: number): ChunkKey {
   return `${cx},${cz}`
