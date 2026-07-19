@@ -307,9 +307,19 @@ function enterWorld(session: WorldSession): void {
     hideConnBanner()
     send(socket, { t: 'hello', token: session.token })
   })
-  socket.addEventListener('close', () => {
+  socket.addEventListener('close', (event) => {
     if (transitioning) return
     authed = false
+    // A 1008 (policy) close is a terminal rejection of this session — the token
+    // is bad/expired or the character isn't in this world's DB, so net.ts stops
+    // reconnecting. Drop the stale session (a reload lands on login) and show
+    // the login screen instead of an endless "Reconnecting…" on black.
+    if ((event as CloseEvent).code === 1008) {
+      clearStoredSession()
+      hideConnBanner()
+      showLoginRequired(pocketRpgUrl())
+      return
+    }
     showConnBanner()
   })
 
