@@ -1,5 +1,5 @@
 import { clearStoredSession, exchangeHandoff, getRunPref, getStoredSession, getStoredZone, parseHandoffFromHash, pocketRpgUrl, storeRunPref, storeZone, type WorldSession } from './auth'
-import { hideBossFrame, hideConnBanner, hideOverlay, initChatInput, initHud, paintHudIcons, pushKillFeed, pushMessage, removeHpBar, removeNameplate, removeOverheadChat, renderEquipment, renderInventory, renderPrayerPanel, renderSpellbook, setPrayerState, setRunState, setSpecialEnergy, setSpellButton, setStanceActive, setThreatPanel, showBossFrame, showConnBanner, showContextMenu, showHitsplat, showLoginRequired, showTransitionOverlay, showUniqueBanner, showXpDrop, updateHpBar, updateHpPill, updateNameplate, updateOverheadChat, npcExamine, type SpellbookEntry } from './ui'
+import { hideBossFrame, hideConnBanner, hideOverlay, initChatInput, initHud, paintHudIcons, pushKillFeed, pushMessage, removeHpBar, removeNameplate, removeOverheadChat, renderEquipment, renderInventory, renderPrayerPanel, renderSpellbook, setPrayerState, setRunState, setSpecialEnergy, setSpellButton, setStanceActive, setThreatPanel, showBossFrame, showConnBanner, showContextMenu, showHitsplat, showLoginRequired, showTransitionOverlay, showUniqueBanner, showXpDrop, updateHpBar, updateHpPill, updateNameplate, updateOverheadChat, npcExamine, type SpellbookEntry, type TeleportEntry } from './ui'
 import { createMinimap, type Minimap, type MinimapDot } from './minimap'
 import { closeBankUI, isBankOpen, openBankUI, updateBankInventory, updateBankUI } from './bank'
 import { closeCraftUI, openCraftUI, updateCraftInventory, updateCraftStats, type SkillLevels } from './crafting'
@@ -16,7 +16,6 @@ import { createStatics, type Statics } from './statics'
 import { createProps } from './props'
 import { createAmbient, type AmbientLayer } from './ambient'
 import { createExitMarkers, type ExitLayer } from './exits'
-import { initTravel } from './travel'
 import { createLootLayer, type LootLayer } from './loot'
 import { itemName, loadItemIcons } from './itemIcon'
 import { primaryInvAction } from '../../shared/itemActions'
@@ -99,6 +98,9 @@ function enterWorld(session: WorldSession): void {
   let stats: SkillLevels = {}
   // Selected combat spell (magic weapons); server-validated, optimistic locally.
   let selectedSpell: string | null = null
+  // The overworld's place centres, drawn as the Magic tab's Teleport section.
+  // Empty on per-zone maps (no landmarks) → the section is dropped.
+  let teleports: TeleportEntry[] = []
   // Whether the equipped weapon can cast the selected spell (drives the "tap a
   // monster" vs "equip a staff" hint when a combat spell is picked).
   let magicWeaponEquipped = false
@@ -125,10 +127,12 @@ function enterWorld(session: WorldSession): void {
   /** Repaints the Magic tab spellbook against the live Magic level + selection. */
   function refreshSpellbook(): void {
     renderSpellbook({
+      teleports,
       combat: combatSpellList,
       skill: skillSpellList,
       magicLevel: stats.magic?.level ?? 1,
       selectedSpellId: selectedSpell,
+      onTeleport: (placeId) => send(socket, { t: 'teleport', placeId }),
       onCombat: selectCombatSpell,
       onSkill: selectSkillSpell,
     })
@@ -381,6 +385,7 @@ function enterWorld(session: WorldSession): void {
     if (message.t === 'welcome') {
       authed = true
       storeZone(message.zone.id)
+      teleports = (message.zone.landmarks ?? []).map((l) => ({ id: l.id, label: l.label }))
       if (sceneBuilt) {
         resyncFromWelcome(message)
         return
@@ -415,7 +420,6 @@ function enterWorld(session: WorldSession): void {
         }
         exitLayer = createExitMarkers(scene, message.zone.exits ?? [])
         exitMarkers = message.zone.exits ?? []
-        initTravel(message.zone.landmarks, (placeId) => send(socket, { t: 'teleport', placeId }))
         void createProps(scene, message.zone.props ?? [])
         ambientLayer = createAmbient(scene, message.zone.ambient, heightField.heightAt)
         const marker = createClickMarker(scene)

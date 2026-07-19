@@ -2,11 +2,7 @@ import type { CombatStance, EquipmentMap, InvSlot } from '../../shared/protocol'
 import type { MenuRow } from './picking'
 import { iconMarkup, itemName, uiIconMarkup } from './itemIcon'
 import { spellIconSvg } from './spellIcon'
-import prayersData from '../../../src/data/prayers.json'
-
-type PrayerDef = { id: string; name: string; icon: string; level: number; bonusType: string; description: string }
-const PRAYERS = prayersData as unknown as Record<string, PrayerDef>
-const PRAYERS_BY_LEVEL = Object.values(PRAYERS).sort((a, b) => a.level - b.level)
+import { categorisePrayers } from '../../shared/prayer'
 
 export type MenuDispatch = (row: MenuRow) => void
 
@@ -89,15 +85,26 @@ const HUD_CSS = `
   position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
   font-size: 11px; font-weight: bold; color: #fff; text-shadow: 0 1px 2px #000;
 }
-#prayer-grid { display: flex; flex-wrap: wrap; gap: 3px; max-height: 200px; overflow-y: auto; }
+#prayer-grid { display: flex; flex-direction: column; gap: 5px; max-height: 220px; overflow-y: auto; }
 #prayer-grid:empty { display: none; }
+.prayer-row { display: flex; flex-wrap: wrap; gap: 3px; }
+.hud-sec {
+  font-size: 10px; font-weight: bold; letter-spacing: 0.06em; text-transform: uppercase;
+  color: #c9a13a; opacity: 0.85; padding: 2px 1px 0;
+}
 .prayer-btn {
   width: 40px; height: 40px; border-radius: 6px; cursor: pointer; user-select: none;
   background: rgba(60, 50, 34, 0.55); border: 1px solid #5a4a30;
   display: flex; align-items: center; justify-content: center; font-size: 19px; line-height: 1;
 }
 .prayer-btn.active { background: rgba(70, 58, 36, 0.92); border-color: #ffe066; box-shadow: 0 0 0 1px #ffe066 inset; }
-#magic-panel { max-height: 340px; overflow-y: auto; }
+#magic-panel { max-height: 340px; overflow-y: auto; display: flex; flex-direction: column; gap: 5px; }
+.tp-list { display: flex; flex-direction: column; gap: 3px; }
+.tp-row {
+  min-height: 40px; padding: 8px 12px; border: 1px solid #5a4a30; border-radius: 6px; cursor: pointer;
+  text-align: left; background: rgba(60, 50, 34, 0.55); color: #f4e9c8; font-size: 13px; font-family: sans-serif;
+}
+.tp-row:hover { background: rgba(80, 66, 42, 0.75); }
 .spell-grid { display: flex; flex-wrap: wrap; gap: 4px; }
 .spell-ico {
   width: 40px; height: 40px; padding: 0; border-radius: 6px; cursor: pointer; user-select: none;
@@ -242,12 +249,15 @@ export type HudHandlers = InvHandlers & {
 }
 
 export type SpellbookEntry = { id: string; name: string; level: number }
+export type TeleportEntry = { id: string; label: string }
 
 export type SpellbookRender = {
+  teleports: TeleportEntry[]
   combat: SpellbookEntry[]
   skill: SpellbookEntry[]
   magicLevel: number
   selectedSpellId: string | null
+  onTeleport: (placeId: string) => void
   onCombat: (id: string) => void
   onSkill: (id: string) => void
 }
@@ -630,16 +640,42 @@ export function setSpellButton(visible: boolean, spellName: string | null): void
   btn.textContent = `Spell: ${spellName ?? 'none'}`
 }
 
-/** Fills the Magic tab with the combat spellbook as an icon grid (several per
- * row, no text): each spell's bespoke icon shows its element (colour) and tier
- * (silhouette). Tapping one selects it as the autocast spell — highlighted —
- * then the player taps a monster to attack. Icons above the player's Magic level
- * render locked. Skill spells are hidden for now (`data.skill` unused). Called
- * on welcome and whenever the selection or Magic level changes. */
+/** Fills the Magic tab with two sections: Teleport (the overworld's place
+ * centres — tapping one teleports there) and Combat (the autocast spellbook as
+ * an icon grid, each icon's colour = element and silhouette = tier; tap to
+ * select as the autocast spell, then tap a monster). Combat icons above the
+ * player's Magic level render locked. The Teleport section is omitted when the
+ * zone ships no landmarks (per-zone maps). Skill spells stay hidden for now
+ * (`data.skill` unused). Called on welcome and whenever selection, Magic level,
+ * or landmarks change. */
 export function renderSpellbook(data: SpellbookRender): void {
   const panel = document.getElementById('magic-panel')
   if (!panel) return
   panel.innerHTML = ''
+
+  if (data.teleports.length) {
+    const label = document.createElement('div')
+    label.className = 'hud-sec'
+    label.textContent = 'Teleport'
+    panel.appendChild(label)
+    const tpList = document.createElement('div')
+    tpList.className = 'tp-list'
+    for (const tp of [...data.teleports].sort((a, b) => a.label.localeCompare(b.label))) {
+      const row = document.createElement('button')
+      row.type = 'button'
+      row.className = 'tp-row'
+      row.textContent = tp.label
+      row.title = `Teleport to ${tp.label}`
+      row.addEventListener('click', () => data.onTeleport(tp.id))
+      tpList.appendChild(row)
+    }
+    panel.appendChild(tpList)
+  }
+
+  const combatLabel = document.createElement('div')
+  combatLabel.className = 'hud-sec'
+  combatLabel.textContent = 'Combat'
+  panel.appendChild(combatLabel)
   const grid = document.createElement('div')
   grid.className = 'spell-grid'
   for (const entry of data.combat) {
@@ -692,22 +728,36 @@ export function setSpecialEnergy(energy: number): void {
   if (label) label.textContent = `Special ${pct}%`
 }
 
-/** Builds the Combat-tab prayer toggle grid for every prayer the player's Prayer
- * level unlocks. Idempotent — rebuilds on each welcome/resync. */
+/** Builds the Combat-tab prayer toggles, split into Protection and Combat
+ * sections and each drawn with its correct icon (damage type blocked / stat
+ * boosted). Only prayers the player's Prayer level unlocks appear; an empty
+ * section drops its header. Idempotent — rebuilds on each welcome/resync. */
 export function renderPrayerPanel(prayerLevel: number, onPray: (prayerId: string) => void): void {
   const grid = document.getElementById('prayer-grid')
   if (!grid) return
   grid.innerHTML = ''
-  for (const p of PRAYERS_BY_LEVEL) {
-    if (p.level > prayerLevel) continue
-    const btn = document.createElement('div')
-    btn.className = 'prayer-btn'
-    btn.setAttribute('data-prayer', p.id)
-    btn.textContent = p.icon
-    btn.title = `${p.name} — ${p.description}`
-    btn.addEventListener('click', () => onPray(p.id))
-    grid.appendChild(btn)
+  const { protection, combat } = categorisePrayers(prayerLevel)
+  const section = (heading: string, prayers: { id: string; name: string; level: number; icon: string }[]): void => {
+    if (!prayers.length) return
+    const label = document.createElement('div')
+    label.className = 'hud-sec'
+    label.textContent = heading
+    grid.appendChild(label)
+    const row = document.createElement('div')
+    row.className = 'prayer-row'
+    for (const p of prayers) {
+      const btn = document.createElement('div')
+      btn.className = 'prayer-btn'
+      btn.setAttribute('data-prayer', p.id)
+      btn.textContent = p.icon
+      btn.title = `${p.name} (Lv ${p.level})`
+      btn.addEventListener('click', () => onPray(p.id))
+      row.appendChild(btn)
+    }
+    grid.appendChild(row)
   }
+  section('Protection', protection)
+  section('Combat', combat)
 }
 
 /** Updates the prayer pool bar + which toggle buttons read as active. */
