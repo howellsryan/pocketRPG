@@ -2975,11 +2975,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                 <div class="cb-fight__id">
                   <SkillEmblem iconKey={mArt.icon} accent={mArt.accent} size={34} glow={0} />
                   <div class="min-w-0">
-                    <div class="cb-fight__name">{m.name}</div>
-                    <div class="cb-fight__chips">
-                      <MultiStyleChip chip={getMonsterAttackStyles(m)} />
-                      <MultiStyleChip chip={getMonsterWeakness(m)} prefix="Weak: " kind="!" />
-                    </div>
+                    <div class="cb-fight__name" style={{ color: getStyleArt(form ? form.attackStyle : m.attackStyle).color }}>{m.name}</div>
                   </div>
                 </div>
                 <span class="flex items-center gap-1.5 flex-shrink-0">
@@ -3018,7 +3014,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                   {/* Monster HP */}
                   <div class="cb-hpblock">
                     <div class="cb-hplabel">
-                      <span>{m.name}{form && <span class="ml-2" style={{ color: getStyleArt(form.attackStyle).color }}>{form.icon} {form.displayName}{form.immunity ? ` · 🛡 ${form.immunity}` : ''}</span>}</span>
+                      <span>Enemy Hitpoints</span>
                       <span class="cb-hplabel__v">{Math.max(0, Math.round(m.currentHP))}/{m.hitpoints}</span>
                     </div>
                     <div class="relative">
@@ -3454,6 +3450,10 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           </div>
 
           <div class="space-y-4 max-h-96 overflow-y-auto">
+            <div class="cb-fight__chips">
+              <MultiStyleChip chip={getMonsterAttackStyles(selectedMonsterInfo)} prefix="Uses " />
+              <MultiStyleChip chip={getMonsterWeakness(selectedMonsterInfo)} prefix="Weak: " kind="!" />
+            </div>
             {getMonsterLocationLabel(selectedMonsterInfo) && (
               <div class="text-[11px] text-[var(--color-parchment)] opacity-60">📍 {getMonsterLocationLabel(selectedMonsterInfo)}</div>
             )}
