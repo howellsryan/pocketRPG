@@ -1,191 +1,187 @@
-# Open-World Changes — Plan & Build Guide (2026-07-19)
+# Open-World Changes — Plan & Build Guide
 
-> Spec for the builder agent covering the eight requested open-world items: prayer tab, minimap, Sunbearer Ring, attack-style persistence, bank search, missing-skills audit, broken teleports, and a full-screen world map. **Plan only — no code was changed in this document's PR.** Root causes below were verified in-repo at the cited file:line; re-verify before editing (files may have moved).
+> **Round 2 spec (2026-07-19) for the builder agent.** Round 1 (the original eight items) shipped in commit `478f8f7` on this branch (PR #819) — its summary is below; the detailed round-1 specs live in git history of this file. **Plan only — no code was changed in this document's commit.** Root causes below were verified in-repo at the cited file:line; re-verify before editing.
 >
 > Rules of the road: `docs/open-world-build-guide.md` §0 applies (execute in order, verify in-repo, no scope creep, progress log). Changes under `world/**` gate on `cd world && npm run ci`; anything touching `src/**` or `functions/**` also gates on the root `npm run ci`.
 
-## Priority order
+## Round 1 — shipped (commit `478f8f7`)
 
-| # | Item | Kind | Size | Why this order |
-|---|------|------|------|----------------|
-| 1 | Teleport fix | Bug (P0) | XS | One-line root cause; unblocks travel and the big map's "Travel here". |
-| 2 | Attack-style persistence | Bug (P0) | S | One seed site + optional write-back; daily annoyance. |
-| 3 | Minimap viewport | Bug (P1) | M | Broken since the merged overworld shipped. |
-| 4 | Sunbearer Ring effect | Bug/feature (P1) | S | Deferred effect, touches `src/engine` (root gate). |
-| 5 | Prayer tab | UI (P1) | S | Pure client HUD reshuffle. |
-| 6 | Bank search | UI (P2) | S | Pure client. |
-| 7 | Big world map | Feature (P2) | M/L | Depends on #1 (teleport) for its travel action. |
-| 8 | New skills | Content programme | — | Audit + per-skill recipes; each skill is its own future PR. |
+| Item | Where it landed |
+|------|-----------------|
+| Teleport fix (missing `case 'teleport'` parser) | `world/shared/protocol.ts` + `world/tests/protocol.test.ts` |
+| Attack-style persistence (seed from save + write-back on flush) | `world/server/tick.ts` `combatStanceFromSave`, `WorldZone.ts`, `grants.ts` |
+| Minimap viewport window | `world/client/src/minimap.ts` (`minimapView`) |
+| Sunbearer Ring pins PvE special energy at 100% | `src/engine/combat.js:32,520-524` + `tests/sunbearerRing.test.ts` |
+| Prayer on its own HUD tab | `world/client/src/ui.ts` (`TABS`, prayer pane) |
+| Bank search | `world/client/src/bank.ts` (`filterBankSlots`) |
+| Big world map (button, markers, info cards, wheel zoom, "Travel here") | `world/client/src/worldMap.ts`, `shared/mapClusters.ts`, `shared/zone.ts` `zoneSpawnSummary` |
+| Skills audit | Round-1 doc, git history (content programme, one PR per skill — unchanged) |
 
-Suggested PR slicing: **PR A** = items 1+2 (server fixes), **PR B** = items 3+5+6 (client UI), **PR C** = item 4 (engine, root gate), **PR D** = item 7. Item 8 spawns its own PRs later.
+Round 2 **reverses one round-1 decision**: the world map's "Travel here" button is removed (owner decision 2026-07-19 — travel is walking or Magic-tab teleports only).
+
+## Round 2 priority order
+
+| # | Item | Kind | Size | Notes |
+|---|------|------|------|-------|
+| 1 | Sunbearer Ring still drains in-world | Bug (P0) | S | Likely deploy skew, not code — verify with a test first. |
+| 2 | Remove world-map "Travel here" | Change (P0) | XS | Owner decision; do before anyone gets used to it. |
+| 3 | Equipment + World Map tabs → bottom row | UI | S | Frees the top rail; world-map button moves off the viewport. |
+| 4 | Prayers ordered highest-level first | UI | XS | One comparator + test update. |
+| 5 | Prayer bar: drop the 🙏, show points only | UI | XS | |
+| 6 | Teleport list: two per row | UI | XS | |
+| 7 | World map: real icons | UI | M | Touches `src/**` (monster icon extraction) → root gate. |
+| 8 | World map zoom on mobile/tablet/desktop | UI | M | Pinch + zoom buttons; wheel already works. |
+| 9 | Ambient NPCs: human villagers + collision | Feature | M/L | Asset build + zone regeneration + client collision. |
+
+Suggested PR slicing: items 1–6 are one small PR (all `world/**` except nothing — item 1 is test-only), item 7 its own PR (root gate), items 8–9 one PR each or combined at the builder's judgement.
 
 ---
 
-## 1) Fix teleporting — "Reconnecting" instead of teleporting (P0)
+## R2-1) Sunbearer Ring still not pinning special energy in the open world (P0)
 
-**Root cause (verified).** `parseClientMessage` in `world/shared/protocol.ts` has **no `case 'teleport'`**. The `ClientMessage` union declares `{ t: 'teleport'; placeId: string }` (protocol.ts:47) and the client sends it (`main.ts:135` `onTeleport`), and the server switch handles it (`WorldZone.ts:656`) — but the parser returns `null` for any unlisted `t`, and `WorldZone.onMessage` responds to a null parse with `connection.close(1008, 'invalid_message')` (WorldZone.ts:285-288). Every teleport click kills the socket; the player sees the connection banner / login flow instead of a snap.
+**Verified in-repo: the branch code already pins it.** The engine drain site skips the drain when the ring is worn (`src/engine/combat.js:520-524`, `hasSunbearerRing` at :32), and the world adapter runs that same engine: `processCombatTick(combat.state, …, player.equipment, …)` (`world/server/combat.ts:249`) with `player.equipment` taken raw from the save (`WorldZone.ts:454`), so `equipment.ring.itemId` is present in engine shape; the world merely mirrors `state.specialAttackEnergy` back (`combat.ts:350`) and forces 100 between fights (`combat.ts:34-37`). The ring slot is equippable in-world (`ui.ts:289`).
+
+**Most likely cause: deployment skew.** The world is a **separate Worker** (`world/wrangler.jsonc`) that bundles `src/engine/combat.js` at *its own* deploy time. Deploying the Pages preview does **not** update `pocketrpg-world-preview` — it must be redeployed from this branch (`cd world && npx wrangler deploy --env preview`) for the engine fix to reach the open world. The user's report almost certainly predates such a redeploy.
 
 **Fix.**
-- `world/shared/protocol.ts` `parseClientMessage`: add
-  ```ts
-  case 'teleport': {
-    const placeId = (raw as Record<string, unknown>).placeId
-    return typeof placeId === 'string' && placeId.length > 0 && placeId.length <= 64 ? { t: 'teleport', placeId } : null
-  }
-  ```
-  (mirror the `pray`/`unequip` cases at protocol.ts:275-282).
-- No server-side change needed — `handleTeleport` (WorldZone.ts:1013-1030) is correct: same-zone snap, clears intents/aggro, checkpoints, sends `{t:'snap'}`. All 14 overworld landmark centre tiles were verified walkable (`.`), so its collision guard passes.
+1. **Regression test first** (the deliverable either way): in `world/tests/`, using the `stepCombat` harness pattern of `world/tests/world-hud.test.ts:29,122` — seed a player with `equipment.ring = { itemId: 'sunbearer_ring' }` and a spec weapon, queue `specialAttackQueued`, run ticks until the special fires, assert `player.specialEnergy` stays 100 and no `{e:'spec'}` event below 100 is emitted.
+2. If the test **passes** (expected): no code change. Note in the PR that the fix requires redeploying the world worker, and redeploy preview.
+3. If it **fails**: the gap is in the adapter path — debug from `combat.ts:249` (equipment shape reaching the engine) before touching the engine.
 
-**Tests.** Add a `parseClientMessage` round-trip case for `teleport` (valid, missing placeId, over-length) next to wherever the parser is currently exercised (`world/tests/net.test.ts` or a new `protocol.test.ts`). **Guard for the future:** add one test that iterates every `t` literal in the `ClientMessage` union (hand-maintained list) and asserts `parseClientMessage` accepts a well-formed instance — this class of bug (union extended, parser forgotten) has now happened once.
-
-**Acceptance.** In the overworld, Magic tab → tap a Teleport row → hero snaps to the place centre with no disconnect; socket stays open (chat still works immediately after).
+**Acceptance.** After a world-worker redeploy: equip Sunbearer Ring, fight in the overworld, fire specials back-to-back — the Special bar never leaves 100%.
 
 ---
 
-## 2) Attack styles reset on every refresh (P0)
+## R2-2) Remove "Travel here" from the world map (P0 change)
 
-**Root cause (verified).** The world session hardcodes `stance: 'accurate'` when seeding a player (`world/server/WorldZone.ts:510`). The main game persists the player's stance in the save blob at `settings.combatStance` (written via `saveSetting('combatStance', …)` in `src/state/gameState.jsx:882`; rides the save as `settings.combatStance`, see `src/db/saveload.js:23`). The world never reads it, so every refresh/reconnect/zone-change resets to Accurate.
+**Status quo.** Landmark markers open an info card with a "Travel here" button that sends `{t:'teleport', placeId}` and closes the map (`world/client/src/worldMap.ts:242-253` `showInfoCard` onTravel, wired at :362).
 
-**Fix (two halves).**
-1. **Seed from the save** — in `WorldZone.handleHello`, where `stats`/`equipment`/`bankView` are already pulled from `saveObject` (WorldZone.ts:445-458), read `(saveObject.settings as { combatStance?: string })?.combatStance` and map it into the world's `CombatStance` union (`'accurate' | 'aggressive' | 'defensive'`, protocol.ts:17). Anything else (`'controlled'` legacy, `'rapid'`, undefined) → `'accurate'`. Use it at the `stance:` field of the Player seed. The client already renders `message.you.stance` via `setStanceActive` on welcome and resync (main.ts:356, 535) — no client change.
-2. **Write back on flush (recommended, keeps the two apps in sync both directions)** — add optional `combatStance?: string` to `GrantPayload` (`world/server/grants.ts:14`), include it in the flush when the player changed stance during the session (track a `stanceDirty` flag set in the `setStance` case, WorldZone.ts:636-640). In `flushGrants`, apply it to `saveObject.settings = { ...settings, combatStance }` before `writeSave`, and update `isEmptyPayload` (grants.ts:63) so a stance-only change still flushes. Add it to the `auditLog` payload fields. This mirrors the existing `equipment` snapshot pattern (grants.ts:31-34, 170).
-   - If the reviewer wants a smaller diff, half 1 alone fixes the reported bug (the world then always mirrors the main game's stance at entry); half 2 makes an in-world stance change survive into the main game. Do half 1 first, half 2 in the same PR if uncontroversial.
+**Fix.** Remove the button and the whole travel path from the map:
+- `showInfoCard`: drop the `onTravel` parameter and button (all callers pass info-only cards).
+- `openWorldMap`: drop the `onTeleport` parameter; landmark cards keep name/lore/facilities.
+- `main.ts` call site: drop the teleport callback (the `{t:'teleport'}` send stays for the Magic tab).
+- Delete the now-dead `.wm-travel` CSS rule.
 
-**Tests.** `world/tests/`: a seed-mapping unit test (extract the `saveStance → CombatStance` mapper as a pure function in `world/server/` or `world/shared/` so it's testable without the DO); if half 2 lands, extend `world/tests/grants*.test`-style coverage: payload with `combatStance` mutates `saveObject.settings.combatStance` and a stance-only payload is not "empty".
+Magic-tab teleports (`ui.ts:685-701`) remain the **only** teleport path; minimap click-to-walk is walking and stays as-is. Do not remove the server `teleport` message handling — the Magic tab uses it.
 
-**Acceptance.** Set Aggressive in the PocketRPG game → enter world → Combat tab shows Aggressive. Change to Defensive in-world, refresh → still Defensive (half 2: and the main game now shows Defensive too).
-
----
-
-## 3) Minimap not functioning / rendering (P1)
-
-**Root cause (verified).** `createMinimap` (`world/client/src/minimap.ts:42`) scales the **whole zone** into a 132px square: `cell = 132 / max(w, h)`. That was fine for 32-64-tile zones, but the merged overworld (PR #816) is **348×213** (`world/zones/overworld.json`), so `cell ≈ 0.38px`: every tile is painted as an overlapping 1px `ceil` rect (a smeared blob), the 3.2px self-dot covers ~8 tiles, NPC/other dots are unreadable, and a tap maps to a tile potentially hundreds of tiles away (then walks there through `findPath` across the whole continent). Net effect: "not functioning or rendering" on the map that players actually inhabit.
-
-**Fix — viewport minimap.** Keep the DOM/canvas approach; change what's drawn:
-- **Bake once, full-map, offscreen** at a fixed ≥2px/tile scale (`348×213 → 696×426` canvas; cheap). Reuse the existing palette logic (walkable/blocked, `palette?.walkableA/blockedA`).
-- **Each `update()`**, blit a **window of `VIEW_TILES = 41` tiles (±20)** centred on the player from the baked canvas into the 132px square (`drawImage` sub-rect → destination). Clamp the window at map edges (small zones like `lumbright` 64×64 will show a third of the map — fine; if `max(w,h) <= VIEW_TILES` just show the whole zone, which preserves today's behaviour for small zones).
-- **Dots**: convert tile → viewport px through the same window transform; skip dots outside the window. Self stays centred (except at edge clamp).
-- **Click-to-walk**: map the tap through the window transform so it targets a **nearby** tile; keep the `collision` walkability guard. This also kills the accidental cross-continent walks.
-- Extract the window/transform maths as a pure exported helper (e.g. `minimapView(selfX, selfZ, w, h, viewTiles)` returning `{x0, z0, tilesShown, toPx(tileX,tileZ)}`) so it's unit-testable in the node-env world suite (UI modules are only testable through pure exports — see `isTapNotDrag` precedent in `bank.ts:21`).
-
-**Files.** `world/client/src/minimap.ts` (all of it), `world/client/src/main.ts:561` (call site unchanged apart from any new arg), new `world/tests/minimap-view.test.ts`.
-
-**Tests.** Pure-math cases: centred window, edge clamps (player at 0,0 and at w-1,h-1), small-zone whole-map mode, tile↔px round trip, click mapping.
-
-**Acceptance.** In the overworld: minimap shows readable local terrain that scrolls as you walk; NPC dots match monsters on screen; a tap walks a short local distance. In `lumbright` the minimap still renders sanely.
+**Acceptance.** Tapping any world-map marker shows an info card with no travel action; Magic-tab teleports still work.
 
 ---
 
-## 4) Sunbearer Ring — pin special energy at 100% (P1)
+## R2-3) Equipment tab + World Map tab → bottom row (S)
 
-**Status quo (verified).** The effect was **never implemented** — `docs/tomb-of-arasmus-implementation.md:312`: "Sunbearer Ring: 2× special-attack energy regen — ⏳ DEFERRED… no regen hook yet." The item (`src/data/items.json` `sunbearer_ring`, legacy `lightbearer`) is a zero-stat ring. PocketRPG's PvE special model has no passive regen to double (energy starts each fight at 100, drains on use, refills on kill — CLAUDE.md §7), so the owner's chosen semantics are: **while `sunbearer_ring` is equipped, special energy never drains — it stays at 100%.**
-
-**Fix.** In the engine, at the single PvE drain site `src/engine/combat.js:511-514` (inside `processCombatTick`, which already receives `equipment`): if `equipment?.ring?.itemId === 'sunbearer_ring'`, skip the drain (leave `state.specialAttackEnergy` unchanged; it is already 100 at fight start and after each kill). `canAffordSpecialAttack` then always passes, so specials fire back-to-back subject only to attack timing. Prefer a tiny named helper (e.g. `hasSunbearerRing(equipment)`) beside the other set-check helpers (combat.js:326+).
-- **Do NOT touch PvP** (`src/engine/pvpEngine.js` has its own energy model under §10's path-scoped rules) — pinning energy in PvP is a balance decision nobody signed off. Flag it in the PR body as deliberately excluded.
-- The world server needs **zero changes**: `world/server/combat.ts` mirrors `state.specialAttackEnergy` into `player.specialEnergy` after every engine tick (combat.ts:350), so the pinned value flows to the world HUD automatically. Same for the main game's spec bar.
-
-**Docs (required, §16).** Add the ring's effect to `docs/game-guide.md`, run `npm run gen:knowledge`, commit the regenerated index. Update `docs/tomb-of-arasmus-implementation.md:312` from DEFERRED to shipped-with-changed-semantics (pin, not 2× regen).
-
-**Tests (root suite).** In `tests/`: with the ring equipped, firing a special leaves energy at 100 and a second special can fire immediately; without the ring, the same weapon drains normally; percent-cost specials (`energyCostPercent`) also stay at 100.
-
-**Gate.** This touches `src/engine/` → full root `npm run ci`.
-
-**Acceptance.** Equip Sunbearer Ring in the main game, fight anything with a spec weapon: spec bar never leaves 100%. In the world, same behaviour on the Combat tab's Special bar.
-
----
-
-## 5) Prayers on their own HUD tab (P1)
-
-**Status quo.** Prayers render inside the **Combat** pane: `#prayer-bar` + `#prayer-grid` are appended after the spec button in `initHud` (`world/client/src/ui.ts:522-535`), with `renderPrayerPanel`/`setPrayerState` (ui.ts:752-801) targeting those ids. The tab rail is the `TABS` array (ui.ts:385-390): Inventory / Equipment / Combat / Magic, painted with bespoke icon keys.
+**Status quo.** Top rail = 5 tabs (`TABS`, `ui.ts:386-392`); bottom rail (`hud-tabs bottom`, `ui.ts:563-578`) holds only Logout. The world-map opener is a floating 44×44 button under the minimap (`worldMap.ts:159-169` `initWorldMapButton`, `#worldmap-btn` CSS).
 
 **Fix.**
-- Add `{ id: 'prayer', iconKey: 'prayer', title: 'Prayer' }` to `TABS` (the `prayer` key exists in `src/data/bespokeIcons.json` — verified). Build a fifth `hud-pane` (`data-pane="prayer"`) and move the `#prayer-bar` + `#prayer-grid` creation into it; the Combat pane keeps stances, spell button, spec bar/button only. `renderPrayerPanel`/`setPrayerState` need no signature changes (they look elements up by id).
-- **Rail width**: `#hud-panel` is 181px and `.hud-tab` has `min-width: 44px` (ui.ts:29,34) — five tabs need ≥ 5×44 + 4×3px gap = **232px**. Do **not** shrink tap targets below 44px (§9 hard rule). Recommended: widen `#hud-panel` to 232px and let the panes centre their content (`#inv-panel`/`#equip-panel` are fixed-width grids — give `.hud-body` `display:flex; justify-content:center` or add horizontal padding). Check `#run-orb`/`#hp-pill` offsets (`right: 148px`, ui.ts:135,206) still clear the wider panel; adjust to keep 8px gap.
-- Nothing server-side changes; prayer events (`{e:'prayer'}`) and the `pray` message are untouched.
+- Remove `equipment` from `TABS`; build its tab button inside `bottomTabs` instead (before Logout), same `data-tab="equipment"` / `data-icon="paperdoll"` attributes and `tabClicked('equipment')` handler. Pane switching needs **no** change — `selectTab` queries `.hud-tab[data-tab]` globally (`ui.ts:399`), not by container.
+- Add a **World Map** tab to `bottomTabs` (icon key `globe` — already in `bespokeIcons.json`; painted by `paintHudIcons`). It is an *action*, not a pane: give it **no** `data-tab` attribute (so `selectTab` ignores it and it never shows an active state); `click` → new `HudHandlers.onWorldMap()`.
+- `main.ts`: move the `openWorldMap({...worldMapData, self: …})` wiring from `initWorldMapButton` into the `onWorldMap` handler passed to `initHud`. Delete `initWorldMapButton` and the `#worldmap-btn` CSS block.
+- Bottom row layout: Equipment (44px) + World Map (44px) + Logout (flex-fills the rest). Keep `#hud-panel` at 232px — the inventory/equip grids are sized for it; the 4-tab top rail simply gains breathing room.
+- Note the collapse behaviour: `tabClicked` on the active tab collapses the body (`ui.ts:410-418`) — verify Equipment still collapses/reopens from the bottom row.
 
-**Tests.** UI-only; world suite is node-env, so cover any extracted pure helper if one appears — otherwise this item is manual-acceptance only (list it in the PR checklist).
+**Tests.** None practical (node-env suite, no DOM); manual acceptance on phone + desktop widths.
 
-**Acceptance.** Five tabs render with 44px targets; Prayer tab shows pool bar + Protection/Combat toggle sections; toggling works mid-fight; Combat tab no longer shows prayers; collapse-on-retap still works for all five.
+**Acceptance.** Top rail shows Inventory/Combat/Prayer/Magic; bottom row shows Equipment, World Map, Logout, all ≥44px targets; Equipment pane opens/collapses from the bottom row; World Map tab opens the map without disturbing the active pane.
 
 ---
 
-## 6) Bank search (P2)
+## R2-4) Prayers ordered highest level first (XS)
 
-**Status quo.** The bank modal (`world/client/src/bank.ts`) renders every bank entry into `#bank-grid` and distinct pack items into `#bank-pack-grid` (bank.ts:189-214). No filtering. Banks accumulate hundreds of item types, so this is already unusable late-game.
+**Status quo.** `categorisePrayers` sorts level-**ascending** (`world/shared/prayer.ts:54`); `renderPrayerPanel` renders Protection then Combat sections from it (`ui.ts:764-798`).
+
+**Fix.** Change the comparator to `b.level - a.level` in `categorisePrayers` (it feeds only the HUD panel). Keep the two sections exactly as they are.
+
+**Tests.** Update `world/tests/prayer.test.ts:84-90`: protection order becomes `protection_from_melee, protection_from_missiles, protection_from_magic`; the combat monotonicity assertion flips to non-increasing. Keep the level-gating and skill-tag tests untouched.
+
+**Acceptance.** Prayer tab lists Piety/Rigour/Augury-tier prayers first in Combat; Protect from Melee first in Protection; separate section headers unchanged.
+
+---
+
+## R2-5) Prayer bar: remove the icon, show level + remaining points (XS)
+
+**Status quo.** The pool bar label renders `🙏 ${points}/${max}` (`ui.ts:807` in `setPrayerState`) and is seeded as `'🙏 Prayer'` at build (`ui.ts:541`). The 🙏 emoji is not the game's prayer icon — that's the `prayer` bespoke key used on the tab itself.
+
+**Fix.** Drop the emoji from both sites: label becomes `${Math.ceil(points)}/${max}` (the max **is** the Prayer level, so this reads as remaining/level exactly as requested); the build-time seed can be `''` — `setPrayerState` runs on every welcome (`main.ts:363`) before the player can see the pane.
+
+**Acceptance.** Prayer tab bar reads e.g. `43/52` with no icon; drains/toggles update it as before.
+
+---
+
+## R2-6) Magic-tab Teleport list: two per row (XS)
+
+**Status quo.** `.tp-list` is a single flex column (`ui.ts:120`), one full-width row per destination — 14 overworld places = a long scroll.
+
+**Fix.** `.tp-list { display: grid; grid-template-columns: 1fr 1fr; gap: 3px; }`. On `.tp-row`, keep `min-height: 40px` (44px effective target with padding) and add `white-space: nowrap; overflow: hidden; text-overflow: ellipsis;` for the longer place names at half width. No TS changes.
+
+**Acceptance.** Teleport section shows two destinations per row, names legible (ellipsised if needed), taps still land correctly.
+
+---
+
+## R2-7) World map: use the game's actual icons (M — root gate)
+
+**Status quo.** All markers are generic emoji from `CATEGORY_EMOJI` (`worldMap.ts:63-65`): every monster is ☠️, banks 🏦, etc. Only place markers already use their real `world.json` icon.
+
+**Fix — replace `CATEGORY_EMOJI` with the game's own art.** The world client already lazy-loads `bespokeIcons.json` + `gameIcons.json` and exposes `uiIconMarkup(key, px, color)` (`world/client/src/itemIcon.ts:31`); the map opens post-welcome, after `loadItemIcons()` has resolved (same guarantee `paintHudIcons` relies on), so SVG markup is safe in marker elements.
+
+| Category | Icon | Source of truth |
+|----------|------|-----------------|
+| Bank | `uiIconMarkup('coins')` | Main game's bank glyph — `FacilityGlyph`, `src/screens/WorldMapScreen.jsx:29` |
+| Smithing | `uiIconMarkup('anvil')` | `SKILL_ART.smithing`, `src/utils/skillArt.js` |
+| Cooking | `uiIconMarkup('cooking_pot')` | `SKILL_ART.cooking` |
+| Mining | `uiIconMarkup('mining')` | `SKILL_ART.mining` |
+| Woodcutting | `uiIconMarkup('wood_axe')` | `SKILL_ART.woodcutting` |
+| Exit | `uiIconMarkup('door')` | Logout glyph (gameIcons fallback path) |
+| Place | `world.json` `icon` emoji | Already correct — keep |
+| Monster | **Per-monster emoji** from the main game's `MONSTER_ICONS`, fallback `'👹'` | Currently inlined at `src/screens/CombatScreen.jsx:191` |
+
+**Monster icon extraction (the root-gate part).** `MONSTER_ICONS` is buried in a screen file the world can't import. Extract it to a new **`src/utils/monsterIcons.js`** exporting the map (do **not** use a new JSON file — a JS module is the pattern `build_single.cjs` handles; register it in `sourceFiles`; it carries no UI imports so core placement is safe. It's referenced by `CombatScreen` only inside render, so no eval-time cross-module read — §12). Update `CombatScreen.jsx:191,1804` to import it; `SlayerScreen.jsx:38` keeps its own smaller map (different art choices — leave it, flag only). World map imports the same module for per-monster emoji.
+
+Marker rendering: `addMarker` sets `innerHTML` to the SVG markup (or emoji text for places/monsters); keep the 44px marker box and count badge as-is. Optionally give SVG markers a subtle circular backing (`rgba(20,16,10,0.7)` disc) so pale icons read against grass — builder's judgement, keep it one CSS rule.
+
+**Gates/tests.** Root `npm run ci` (touches `src/**` + `build_single.cjs`). Add a tiny root test asserting `monsterIcons` keys are all valid `monsters.json` ids (catches typos at extraction). World side: no new pure logic.
+
+**Acceptance.** Map markers show the same art the game uses: coins for banks, anvil/pot/pick/axe for skilling, each monster its own emoji (chicken 🐔, bull 🐄, …); places unchanged; main-game Combat screen icons unchanged.
+
+---
+
+## R2-8) World map zoom on mobile / tablet / desktop (M)
+
+**Status quo.** Wheel zoom only (`worldMap.ts:405-418`); single-pointer drag pan; `touch-action: none` already set on the viewport (CSS :110). Mobile/tablet cannot zoom at all.
 
 **Fix.**
-- Add a search `<input>` row under `.bank-head` (id `bank-search`). On `input`, re-run `render()` with the query applied to **both** grids. Filter = case-insensitive substring of `itemName(itemId)` (from `./itemIcon`). Empty query = current behaviour. Show "No items match" in the same style as the existing empty-bank row (bank.ts:199-204).
-- Keyboard hygiene: `stopPropagation` on `keydown` (the pattern `#chat-input` uses, ui.ts:915-922) so typing doesn't leak into game hotkeys; `Escape` clears then blurs. Clear the query on `openBankUI`/`closeBankUI` (fresh state per visit; `state` is already reset there).
-- Extract the filter as a pure export — `filterBankSlots(slots: {itemId: string}[], query: string, nameOf: (id: string) => string)` — so the node-env suite can test it (same pattern as `isTapNotDrag`, bank.ts:21).
-- Style with the existing bank CSS variables/colours; input min-height 36-44px for touch.
+- **Extract the zoom-about-a-point math** (the wheel handler's world-point-fixed transform update + clamp) into an exported pure helper, e.g. `zoomAt(transform, cx, cy, newZoom, limits)` mutating/returning `{panX, panY, zoom}` — wheel, pinch, and buttons all call it, and the node-env suite can test it.
+- **Pinch**: track active pointers in a `Map<pointerId, {x,y}>` from the existing pointerdown/move/up handlers. With two pointers: each move computes the new midpoint + distance; `zoomAt(midX, midY, zoom * newDist/prevDist)`; suppress pan-drag while two pointers are down; on dropping to one pointer, reset the drag anchor (avoid the classic pinch-release jump).
+- **Zoom buttons**: two 44×44 `+` / `−` buttons overlaid bottom-right of the viewport, each `zoomAt(viewportCentre, zoom × 1.4)` / `÷ 1.4` — gives desktop-without-wheel and any struggling touch device an escape hatch.
+- Keep the existing `fitZoom×1 … fitZoom×4` clamp and `clampPan`.
 
-**Tests.** `world/tests/bank.test.ts`: filter cases — empty query passes all, substring matches, case-insensitivity, no-match.
+**Tests.** `world/tests/`: `zoomAt` keeps the anchor's world point fixed on screen; clamps at min/max; pan stays clamped after zoom-out at a corner.
 
-**Acceptance.** Open a chest, type "rune" → both grids shrink to matching items live; deposit/withdraw taps and qty menus still work on filtered cells; closing and reopening the bank clears the query.
-
----
-
-## 7) Big world map — new button, icons + place info (P2)
-
-**Goal.** A button that opens a full-screen map of the current zone with icons and info for every interactive thing: places, banks, skilling nodes, processing stations, monster areas, exits — plus the player's position, and (overworld) a "Travel here" action per place.
-
-**Data plumbing (small server change).**
-- Already in the welcome `zone` payload: `collision`, `w/h`, `ground` regions, `palette`, `landmarks`, `exits`, and **all** static objects zone-wide via `statics` (`sendWelcome`, WorldZone.ts:529-572 — `bank_chest`×11, `furnace`/`anvil`/`range`×7 each, `rock`, `tree`; verified in `world/zones/overworld.json`).
-- **Missing: monster spawn locations** — live NPCs only stream inside the AOI. Add a static spawn summary to the welcome zone payload: `spawns: { monsterId: string; x: number; z: number }[]` derived from `this.zone.npcs` (spawn definitions, not live positions — no live-tracking leak). Extend the `welcome` type in `protocol.ts:147` and `sendWelcome`. Overworld has ~12 spawn entries; trivial payload.
-- **Place info cards**: the 14 overworld landmark ids exactly match `src/data/world.json` place ids (verified). The client already imports `src/data/*.json` (main.ts:24-27), so import `world.json` and pull `name`, `icon`, `sub`, `lore`, `facilities` per landmark for the info card. Guard for landmarks with no `world.json` entry (render label only).
-
-**UI spec (new module `world/client/src/worldMap.ts`, mirroring `minimap.ts`/`bank.ts` conventions — plain DOM/canvas, CSS injected once, pure helpers exported).**
-- **Button**: fixed 44×44 button directly under the minimap (top-right column), bespoke icon key `globe` (exists in `bespokeIcons.json` — verified), painted via the `data-icon` + `paintHudIcons` mechanism (ui.ts:726-737). Toggles the map; `✕` and backdrop-tap close (modal pattern of `bank.ts:216+`).
-- **Canvas layer**: full-screen overlay; render the zone from `collision` + `ground` regions (resolve per-tile kinds with the existing shared `groundKindGrid` — `world/shared/groundKinds.ts:54` — and paint each kind's `color`; water tiles included), walkable/blocked base from the palette. Bake once per open at a scale that fits `min(90vw, 90vh)`; support pinch/wheel zoom ×1–×4 and drag pan (v1 can ship fixed-fit + zoom later if time-boxed, but the overworld at 348 tiles across really wants zoom — recommend shipping it).
-- **Marker layers** (DOM pins or canvas sprites, ≥24px, tap target ≥44px via padding):
-  - Places: `landmarks` with `world.json` `icon` emoji + label.
-  - Banks: `statics` with `type === 'bank_chest'`.
-  - Smithing: `furnace` + `anvil`; Cooking: `range` (cluster same-type markers within ~3 tiles into one pin with a count).
-  - Mining: `rock`; Woodcutting: `tree` (cluster; a forest of 16 trees is one "Woodcutting" pin per cluster).
-  - Monsters: the new `spawns` summary → pin per spawn showing name + combat level from `monsters.json` (already imported in main.ts).
-  - Exits: `exits` (present in `lumbright`, not the overworld).
-  - Self: pulsing dot at the player's tile at open time (static is fine for v1; live-update if the map stays open is a nice-to-have).
-- **Info card**: tapping a marker opens a small panel: icon, name, what's here (facility list / monster level / node skill + level requirement from `skills.json` actions where derivable), and for landmarks a **"Travel here"** button that sends the existing `{t:'teleport', placeId}` (depends on item 1) and closes the map.
-- **Filter chips** (v1 optional, recommended if cheap): toggle rows for Places / Banks / Skilling / Monsters, matching the request's "skills, monster locations, banks".
-
-**Tests.** Pure helpers: marker clustering, tile→canvas transform, spawn-summary shaping (server side: a `sendWelcome` unit is impractical, but the `spawns` derivation from a zone def can be a pure function in `world/server/zones.ts` or `shared/` with a test). Everything visual is manual acceptance.
-
-**Acceptance.** Button visible in the overworld and lumbright; map shows terrain + all marker classes; tapping Varrick's pin shows its card and "Travel here" snaps you there; markers match reality (bank pin at Lumbright is where the chest is); performance fine on mobile (single bake, no per-frame work while closed).
+**Acceptance.** Pinch-zoom works on a phone/tablet; wheel still works on desktop; buttons work everywhere; markers stay 44px and correctly positioned at every zoom (they already reposition via `reposition()`).
 
 ---
 
-## 8) Skills audit — what's missing and how to add each
+## R2-9) Ambient NPCs: human villagers that respect collision (M/L)
 
-**In the world today** (verified against `world/server/`, `world/shared/recipes.ts`, zone data): Mining and Woodcutting (depleting-node gather loop, `mining.ts` + `tick.ts`), Smithing (furnace + anvil stations), Cooking (range station), Prayer (toggle + drain in combat), Magic (combat autocast + landmark teleports), and the combat stats (Attack/Strength/Defence/Hitpoints/Ranged with ammo). Skill *spells* are explicitly stubbed out (main.ts:122-125).
+**Status quo (verified).** The non-attackable "little creatures" are the **ambient critter layer** (`world/client/src/ambient.ts`) — client-render-only chickens/frogs (`CRITTERS` :17-20) doing a pure random walk inside an authored rectangle with **no collision at all** (:53-71), so they stroll through walls, market stalls and trees the player can't. They also use the same animal models as *attackable* monsters (`field_chicken` is a real combat npc), which is the confusion being reported. Server-side combat NPCs already respect collision (`npc.ts:212` wander, `:244` chase) — they are **not** the offenders.
 
-**Missing** (from `src/data/skills.json`'s 17 skills, minus the above): **Fishing, Firemaking, Fletching, Crafting, Herblore, Agility, Thieving, Farming, Hunter, Runecraft, Dungeoneering** — plus Slayer and Construction, which live outside `skills.json` and should stay main-game-only (they're account-progression systems, not tile activities).
+> Interpretation note: the request reads "make all NPCs that you *can* fight human", but the surrounding sentence makes clear the intent is the inverse — **non-attackable ambient NPCs become humans; attackable monsters stay monsters**. Confirm with the owner only if the builder disagrees after reading the request.
 
-Recommended implementation recipes, cheapest first — each is one PR, each drives data **only** from `skills.json` actions (never hand-authored rates, per the recipes.ts precedent):
+**Fix — three parts.**
 
-| Skill | Mechanic recipe | New pieces needed | Size |
-|-------|-----------------|-------------------|------|
-| **Fishing** | Node-gather reskin: fishing spots as non-depleting (or slow-cycling) node objects; `fishing.actions` drive level/ticks/xp/product exactly like `GATHER_SKILLS` (`mining.ts:25`) — add a third entry with verb `fish`. | Water tiles already exist as a ground kind; a `fishing_spot` object type + model/marker; anim choice (build guide Phase 8 notes UAL has candidates). | S/M |
-| **Firemaking** | Inventory action, not a node: "Light" on logs (extend `shared/itemActions.ts` primary/secondary actions) → consumes log, ticks, XP, spawns a temporary fire prop on the player's tile. | Item-action plumbing + a transient world object with TTL (rock-respawn timer pattern reversed). | S/M |
-| **Fletching** | Station-less recipe panel: "Craft" on a knife (or a fletching bench object if we prefer stations) opens the existing recipe panel (`crafting.ts` client + `handleCraft` server) fed by `fletching.actions`. The station framework already does multi-input consumption + per-tick output. | One new `STATIONS`-style entry keyed off an inventory tool instead of a static object — or simpler: add benches as statics and change nothing structural. | S |
-| **Crafting** | Same as Fletching (`crafting.actions`, spinning wheel / tanning as statics). | Same. | S |
-| **Herblore** | Same recipe-panel pattern (`herblore.actions`); no station needed (pestle in pack) or an apothecary bench static. | Same. | S |
-| **Runecraft** | Station recipe with one twist: altars as statics, essence → runes via `runecraft.actions`; multiplier-per-level rules if the main game has them (check the actions data before designing). | Altar statics (one per element, placed at themed overworld spots). | M |
-| **Thieving** | New loop: "Pickpocket" NPC interact → ticks → success roll (level-based from `thieving.actions`) → loot or stun+damage. First *interactive-NPC* (non-combat) mechanic. | NPC interact verb + a stun state on the player; market-stall variant can reuse depleting nodes. | M |
-| **Agility** | Course of obstacle statics; interacting with each in sequence teleport-hops the player along a fixed path with ticks + XP, lap bonus from `agility.actions`. Varrick already has a generated rooftop course layout (`gen-varrick.mjs:111`). | Obstacle statics + forced-movement step (snap-based; the `snap` message already exists). | M/L |
-| **Farming** | Time-based, survives logout → needs durable per-player patch state (D1 or DO storage keyed per char, checked on interact — *not* per-tick writes). Plant → wait wall-clock → harvest. | New persistence + growth-check on interact; patches as statics. | L |
-| **Hunter** | Trap objects the player places (transient world objects with owner + timer), check-trap interact. | Owner-scoped transient objects. | L |
-| **Dungeoneering** | Skip as a skill; the Varrick dungeon zone already delivers the *content* shape. XP for it stays main-game. | — | — |
+1. **Villager models.** New `world/scripts/build-villagers.mjs` following the `build-hero.mjs` pattern (Quaternius **Universal Base Characters[Standard]** + **Modular Character Outfits - Fantasy[Standard]** under `assets/open-world/Quaternius/`; paid-license packs — process into small committed GLBs, never copy raw). Produce 2–3 variants (e.g. `villager_a/b/c.glb`, differing outfit/tint) into `world/client/public/models/`. Static pose is fine — the ambient layer animates by bob, not skeletal clips (`ambient.ts:11-12,69`). Register each in `CRITTERS` with baked bounds (measure with `world/scripts/inspect-glb.mjs`) and a human-scale `target` height ≈ 1.4 tiles.
+2. **Zone data.** Zone JSONs are **generated** — change the ambient specs at the source, not the output: `world/scripts/gen-varrick.mjs:301-…` (street hens → villagers) and the `lumbright.json` ambient block (`:1809`, hand-authored) which `gen-overworld.mjs:102-103` merges into the overworld. Replace every critter `model` with a villager variant (the request says *all* non-attackable walkers become human — including field/marsh critters; flag, don't second-guess). Regenerate and commit `world/zones/overworld.json` (+ varrick if regenerated).
+3. **Collision.** Thread the zone collision grid into `createAmbient` (the welcome handler has it — `main.ts:449` already passes `heightField.heightAt` from the same scope). Rules: a new wander target must be a walkable tile (`collision[tz]?.[tx] === '.'`); each update, if the tile the critter is about to enter is blocked, discard the target and pick a new one instead of stepping in. Extract the target-pick/step-check as pure exported helpers so the node suite can test them (same precedent as `minimapView`).
 
-Sequencing recommendation: **Fishing → Fletching/Crafting/Herblore (one "recipe panel" PR each, trivially parallel) → Firemaking → Thieving → Runecraft → Agility → Farming/Hunter.** Each new skill's nodes/stations should also be placed on the big map (item 7) via the same statics/marker pipeline — no extra work if item 7 keys markers off object `type`.
+**Tests.** Pure helpers: target picking never returns a blocked tile (seeded rects with walls), step-check refuses entering `#`, and a fully-blocked rect degrades gracefully (critter stands still, no infinite loop — bound the retry count).
 
-Every skill PR: XP flows through the existing `pendingXp` → `flushGrants` path untouched (client-trusted per §14 is *not* in play here — world XP is server-computed and server-flushed); update `docs/game-guide.md` + `npm run gen:knowledge` when the mechanic is player-visible.
+**Acceptance.** Towns show wandering villagers (visibly human, not attackable, no interaction); no ambient walker ever overlaps a building/prop/blocked tile; attackable monsters look unchanged; performance unchanged (same instance counts).
 
 ---
 
 ## Cross-cutting notes for the builder agent
 
-- **Two CI gates.** `world/**`-only changes: `cd world && npm run ci`. Items 4 (engine) and any `functions/**` touch: root `npm run ci` too. Never commit generated `index.html`/`game-*.js`.
-- **World UI has no DOM test env** (vitest `environment: 'node'`, `world/vitest.config.ts`) — testability comes from extracting pure helpers and testing those; follow the `isTapNotDrag` / `shouldReconnectOnClose` precedent. Don't add jsdom without asking.
-- **Protocol changes** (items 1, 7, and item 2's welcome seed) keep client and server in one repo/deploy, but stale clients linger on phones: additive fields only (`spawns?`), never repurpose existing ones.
-- **PR bodies are the public changelog** (CLAUDE.md §19 / `pr-changelog` skill): player-facing voice, no internal notes, no attribution/trailers in the body.
-- **Manual acceptance** for the visual items (3, 5, 6, 7) should be run on a phone-sized viewport as well as desktop — the HUD width change in item 5 especially.
+- **Two CI gates.** `world/**`-only items (1–6, 8, 9): `cd world && npm run ci`. Item 7 touches `src/**` + `build_single.cjs` → root `npm run ci` too. Never commit generated `index.html`/`game-*.js`.
+- **World worker deploys separately.** Nothing under `world/**` (or the engine it bundles) reaches players via the Pages deploy — `pocketrpg-world` / `pocketrpg-world-preview` need their own `wrangler deploy` (see R2-1). State this in the PR so testing skew doesn't get re-reported as a bug.
+- **World UI has no DOM test env** — testability comes from extracting pure helpers (`minimapView`, `filterBankSlots` precedent). Don't add jsdom.
+- **PR bodies are the public changelog** (CLAUDE.md §19 / `pr-changelog` skill): player-facing voice, no attribution/session/GitHub links.
+- **Manual acceptance** for items 3, 5, 6, 7, 8 on a phone-sized viewport as well as desktop; item 9 needs a visual pass in Varrick + Lumbright + the farm fields.
