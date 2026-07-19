@@ -61,11 +61,11 @@ Point 5 answers "are we just not using our designer?": **yes**. The editor works
 
 These are the code features the plan needs — listed for scoping, not built here:
 
-### 4.1 Painted ground layer
-Add an optional `ground` block to `ZoneDef`: a list of typed regions (rects and/or brush-painted runs), kinds drawn from a small registry (`path_dirt`, `path_cobble`, `plaza`, `water`, `farm`, `floor_plank`, `floor_stone`, …), last-region-wins like migla. Renderer: vertex-colour (or low-res splat texture) the **existing** terrain mesh — no new geometry, works with the current blended material as an overriding layer. Water kind additionally gets a translucent animated plane at its level and darkens the heightfield beneath. Collision stays exactly where it is (water tiles are authored blocked in the ASCII grid). Absent block = today's rendering, so all zones keep working.
+### 4.1 Painted ground layer — ✅ BUILT (W1a–c)
+Optional `ground` block on `ZoneDef`: typed regions from a shared registry (`path_dirt`, `path_cobble`, `plaza`, `water`, `farm`, `floor_plank`, `floor_stone`, `floor_tile`, `sand`), last-region-wins like migla. As built: a separate lit overlay mesh draped over the base ground (a per-tile alpha-cutout texture), composing over **both** the checker and blended-terrain materials without editing either; water kinds add a translucent surface plane. Collision stays in the ASCII grid (water tiles authored blocked). Absent block = today's rendering. *(Implementation note: the shipped renderer uses an overlay mesh, not the originally-sketched vertex-colour/splat on the terrain mesh — cleaner across both base materials. Water animation is a later polish; v1 planes are static.)*
 
-### 4.2 Building synthesis
-Migla's recipe, adapted: floor-kind region + wall props ringing it → auto-fitted roof GLB (we already own gable/hip roofs in the KayKit Medieval Builder + Kenney Fantasy Town kits), doorway gaps → door meshes, interior roof fade. Client-render-only, same contract as props.
+### 4.2 Building synthesis — ⬜ DEFERRED (not a near-term phase)
+Migla's recipe (floor region + wall ring → auto-fitted roof GLB, doorway gaps → doors, interior roof fade) earns its keep only for *enterable* interiors. We already own whole-building GLBs, so composition is solved by ground-paint streets around them (§7). Keep this documented for a future "walk inside" feature; don't build it as part of the visual-quality track.
 
 ### 4.3 Art direction constants
 One module of named zone palettes + ambience presets per biome (mirroring `biomes3d.json` and `DESIGN.md` tokens), replacing per-zone hex guesses. Warm and saturated; no pure greys/blacks (migla's rule, and it shows). A **toon-ramp/stylized lighting pass** is worth a spike after ground paint lands — flat-colour assets (KayKit/Kenney/Quaternius) read dramatically better toon-shaded than under plain PBR lighting.
@@ -98,19 +98,43 @@ Codified in `.claude/rules/world-design.md` (auto-loads whenever an agent touche
 
 License note for all paid packs on the web: our established practice (guide §2.1) already complies — commit only processed, stripped, game-specific GLBs; never the raw pack files.
 
-## 7) Delivery plan
+## 7) Delivery plan & status
 
-Phases are independently shippable; each gates on `world:check` + the §5 screenshot review. No dates — sized in agent-sessions.
+Phases are independently shippable; each gates on `world:check` + the §5 screenshot review. No dates — sized in agent-sessions. Status as of 2026-07-19, all on PR #810.
 
-- **W0 — Art direction + rules (done in this review):** quality-bar rule shipped; palette/ambience preset consolidation is the first code task.
-- **W1 — Ground paint + water (format → renderer → editor tool):** §4.1, then repaint the existing 5 zones with roads/plazas/water. Expected to be the visible step-change.
-- **W2 — Building synthesis + town re-dress:** §4.2; rebuild Varrick and Lumbright's buildings with it; add ambient life (§4.4).
-- **W3 — Editor batch:** heightmap brush, review mode, path tool, thumbnails, walk-through preview (P0-2→P1-7).
-- **W4 — Per-place authoring pass:** the terrain-plan §6 table of 14 places, each authored to the checklist with screenshot sign-off; buy KayKit EXTRA/Quaternius Patreon as gaps surface.
-- **Spike (any time after W1):** toon-ramp lighting A/B, screenshots to `DESIGN.md` review.
+**Decisions taken since the review:**
+- **Sequencing: visual-first** (developer choice). Finish the visual-quality track on the current per-zone model, then prototype the single-map merge — see `docs/single-world-map-investigation.md`.
+- **One-map target: hybrid** — one streamed overworld + instanced interiors/dungeons — as the long-term goal, reached in de-risked steps (M0 visual → M1 merge prototype → M2 client streaming → M3 overworld layout). Not started; does not block the visual track.
+- **Building synthesis dropped.** We already own whole-building GLBs (`house`, `mill`, `town_wall`, `watchtower`, `well`, `fountain`, `stall`, `market`, `castle`). migla synthesizes buildings only because it lacks them. Our §2 gap was *composition*, which ground paint (streets/plazas) addresses directly. §4.2 stays a possible future for enterable interiors, not a near-term phase.
 
-## 8) Files changed with this review
+| Phase | Status | Notes |
+|---|---|---|
+| **W0 — Art direction + rules** | ✅ Done | Quality-bar rule (`.claude/rules/world-design.md`) + shared ground-kind registry (`world/shared/groundKinds.ts`, the art-direction artifact) shipped. |
+| **W1a — Ground format** | ✅ Done | `ZoneDef.ground` regions (last-wins) + validation + welcome payload; `groundKindGrid`. Tested. |
+| **W1b — Ground/water renderer** | ✅ Done | Draped lit ground-paint overlay + translucent water planes, composing over both checker and blended-terrain materials. Pasture repainted + screenshot-verified. |
+| **W1c — Editor ground-paint tool** | ✅ Done | Surface-kind swatch picker, brush/erase, greedy rectangle packing on save; 2D grid renders paint; lossless round-trip test. |
+| **W1d — Repaint existing zones** | 🟡 In progress | Pasture ✓, Lumbright ✓ (streets + market square). Left: **Varrick** (capital — biggest win), **forest**, **varrick_dungeon**. |
+| **W2 — Town re-dress + ambient life** | 🟡 Folded into W1d + later | Composition now comes from ground paint over the owned building GLBs. Still to do: ambient critters/smoke (§4.4); enterable interiors (§4.2) deferred. |
+| **W3 — Editor UX batch** | ⬜ Not started | Heightmap brush (P0-2), one-click review-mode capture (P0-3), path/polyline tool (P1-5), library thumbnails (P1-6), walk-through preview camera (P1-7). |
+| **W4 — Per-place authoring** | ⬜ Not started | Redirected by the visual-first + one-map decisions: author as **districts of the merged overworld** (M3) rather than 14 separate zones. The terrain-plan §6 table still supplies each place's biome/signature. |
+| **Spike — toon-ramp lighting** | ⬜ Not started | A/B stylized lighting after W1d; screenshots to `DESIGN.md`. |
+| **Assets** | ⬜ Deferred (developer choice) | Buy KayKit EXTRA / Quaternius Patreon (§6) *after* the visual/editor track, then backfill. |
 
-- `docs/world-design-review-2026-07.md` (this doc — new)
-- `.claude/rules/world-design.md` (new; auto-loading quality bar + composition/process rules)
-- `CLAUDE.md` §13 (rule added to the path-scoped list)
+**Recommended next:** finish W1d (Varrick re-dress is the largest single composition win), then the W3 editor batch, then start the M1 map-merge prototype.
+
+## 8) Files changed / added
+
+Review + memory (commit 1):
+- `docs/world-design-review-2026-07.md` (this doc), `.claude/rules/world-design.md` (auto-loading quality bar), `CLAUDE.md` §13 pointer.
+
+Ground-paint feature (W0–W1c):
+- `world/shared/groundKinds.ts` (registry + `groundKindGrid`), `world/shared/zone.ts` + `world/shared/protocol.ts` (`ground` field + validation), `world/server/WorldZone.ts` (welcome payload).
+- `world/client/src/groundPaint.ts` (overlay + water), `world/client/src/terrain.ts` (+ 3 `createTerrain` call sites).
+- `world/client/src/editor/{state,grid,main}.ts` + `editor.html` (paint-ground tool + swatch picker).
+- Tests: `world/tests/{zone,groundPaint}.test.ts`.
+
+Zone dressing (W1d):
+- `world/zones/pasture.json`, `world/zones/lumbright.json`.
+
+Investigation:
+- `docs/single-world-map-investigation.md`.
