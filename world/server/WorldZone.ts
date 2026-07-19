@@ -1291,6 +1291,15 @@ export class WorldZone extends Server<Env> {
   }
 
   private respawnPlayer(player: Player, playerEnts: Map<string, EntityDiff>): void {
+    // Item 10: a zone can require dying to be a real trip back out (e.g. the
+    // dungeon respawns at Varrick's entrance, not its own spawn ~40 tiles from
+    // the bosses) — cross-zone, so it's the same DB update + reconnect the
+    // walk-onto-an-exit transition uses, not a same-zone teleport.
+    const deathRespawn = this.zone.deathRespawn
+    if (deathRespawn) {
+      void this.respawnAcrossZone(player, deathRespawn)
+      return
+    }
     const spawn = this.zone.spawn
     player.x = spawn.x
     player.z = spawn.z
@@ -1301,6 +1310,23 @@ export class WorldZone extends Server<Env> {
     send(player.conn, { t: 'dead', respawn: { x: spawn.x, z: spawn.z } })
     this.dirty.add(player.charId)
     playerEnts.set(player.charId, toEntityDiff(player))
+  }
+
+  private async respawnAcrossZone(player: Player, target: { zone: string; x: number; z: number }): Promise<void> {
+    this.players.delete(player.charId)
+    this.dirty.delete(player.charId)
+    this.pendingLeaves.add(player.charId)
+    this.releaseAggro(player.charId)
+    this.maybeStopTicking()
+    player.hp = player.maxHp
+    await this.flush(player, 'transition')
+    await this.env.DB.prepare(
+      `INSERT INTO world_positions (character_id, zone_id, x, z, updated_at) VALUES (?, ?, ?, ?, ?)
+       ON CONFLICT(character_id) DO UPDATE SET zone_id = excluded.zone_id, x = excluded.x, z = excluded.z, updated_at = excluded.updated_at`
+    ).bind(Number(player.charId), target.zone, target.x, target.z, Date.now()).run()
+    send(player.conn, { t: 'dead', respawn: { x: target.x, z: target.z } })
+    send(player.conn, { t: 'transition', zone: target.zone, x: target.x, z: target.z })
+    player.conn.close(1000, 'death')
   }
 
   /** Resolves a walked-over loot pickup: adds it to the pack, records it as a

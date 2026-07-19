@@ -60,25 +60,25 @@
  "objects": [],
  "npcs": [
   {
-   "id": "grondar_1",
-   "monsterId": "warlord_grondar",
-   "x": 20,
+   "id": "krylth_1",
+   "monsterId": "krylth_the_defiler",
+   "x": 10,
    "z": 16,
    "wander": {
-    "x": 15,
+    "x": 5,
     "z": 13,
     "w": 10,
     "h": 8
    }
   },
   {
-   "id": "krylth_1",
-   "monsterId": "krylth_the_defiler",
-   "x": 14,
-   "z": 20,
+   "id": "grondar_1",
+   "monsterId": "warlord_grondar",
+   "x": 24,
+   "z": 16,
    "wander": {
-    "x": 9,
-    "z": 16,
+    "x": 19,
+    "z": 13,
     "w": 10,
     "h": 8
    }
@@ -86,11 +86,11 @@
   {
    "id": "venomcoil_1",
    "monsterId": "venomcoil_matriarch",
-   "x": 28,
-   "z": 20,
+   "x": 38,
+   "z": 16,
    "wander": {
-    "x": 23,
-    "z": 16,
+    "x": 33,
+    "z": 13,
     "w": 10,
     "h": 8
    }
@@ -107,6 +107,11 @@
    "label": "Varrick"
   }
  ],
+ "deathRespawn": {
+  "zone": "varrick",
+  "x": 82,
+  "z": 52
+ },
  "props": [
   {
    "model": "town_wall",

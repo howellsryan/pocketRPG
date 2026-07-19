@@ -142,6 +142,67 @@ describe('Phase 6 zones', () => {
     if (!result.valid) expect(result.errors[0]).toContain('lands on an exit tile')
   })
 
+  it('the dungeon boss wings do not overlap (item 10: bosses must not drift into each other)', () => {
+    const npcs = (varrickDungeonZone as unknown as ZoneDef).npcs
+    const rects = npcs.map((n) => n.wander)
+    for (let i = 0; i < rects.length; i++) {
+      for (let j = i + 1; j < rects.length; j++) {
+        const a = rects[i]
+        const b = rects[j]
+        const overlaps = a.x < b.x + b.w && b.x < a.x + a.w && a.z < b.z + b.h && b.z < a.z + a.h
+        expect(overlaps, `${npcs[i].id} wander overlaps ${npcs[j].id}`).toBe(false)
+      }
+    }
+  })
+
+  it('the dungeon respawns a death back at Varrick, not its own spawn (item 10)', () => {
+    const zone = varrickDungeonZone as unknown as ZoneDef
+    expect(zone.deathRespawn).toBeTruthy()
+    expect(zone.deathRespawn?.zone).toBe('varrick')
+  })
+
+  it('validates a deathRespawn targeting an unknown zone', () => {
+    const zone: ZoneDef = {
+      id: 'a', name: 'A', width: 3, height: 3, spawn: { x: 0, z: 0 },
+      collision: ['...', '...', '...'], objects: [], npcs: [],
+      deathRespawn: { zone: 'nowhere', x: 1, z: 1 },
+    }
+    const result = validateExitGraph({ a: zone })
+    expect(result.valid).toBe(false)
+    if (!result.valid) expect(result.errors[0]).toContain('deathRespawn')
+  })
+
+  it('validates a deathRespawn landing on a blocked tile in the target zone', () => {
+    const a: ZoneDef = {
+      id: 'a', name: 'A', width: 3, height: 3, spawn: { x: 0, z: 0 },
+      collision: ['...', '...', '...'], objects: [], npcs: [],
+      deathRespawn: { zone: 'b', x: 0, z: 0 },
+    }
+    const b: ZoneDef = {
+      id: 'b', name: 'B', width: 3, height: 3, spawn: { x: 1, z: 1 },
+      collision: ['###', '###', '###'], objects: [], npcs: [],
+    }
+    const result = validateExitGraph({ a, b })
+    expect(result.valid).toBe(false)
+    if (!result.valid) expect(result.errors[0]).toContain('not walkable')
+  })
+
+  it('validates a deathRespawn landing on the target zone\'s own exit tile (ping-pong)', () => {
+    const a: ZoneDef = {
+      id: 'a', name: 'A', width: 3, height: 3, spawn: { x: 0, z: 0 },
+      collision: ['...', '...', '...'], objects: [], npcs: [],
+      deathRespawn: { zone: 'b', x: 1, z: 1 },
+    }
+    const b: ZoneDef = {
+      id: 'b', name: 'B', width: 3, height: 3, spawn: { x: 0, z: 0 },
+      collision: ['...', '...', '...'], objects: [], npcs: [],
+      exits: [{ id: 'eb', x: 1, z: 1, toZone: 'a', toX: 0, toZ: 0, label: 'A' }],
+    }
+    const result = validateExitGraph({ a, b })
+    expect(result.valid).toBe(false)
+    if (!result.valid) expect(result.errors[0]).toContain('lands on an exit tile')
+  })
+
   it('accepts a valid ambience block', () => {
     const zone: ZoneDef = {
       id: 'a', name: 'A', width: 3, height: 3, spawn: { x: 0, z: 0 },
