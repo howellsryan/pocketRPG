@@ -2,7 +2,7 @@
 // fight (not the first attacker), and bosses respawn far slower than trash so a
 // world boss can't be farmed on the regular timer.
 import { describe, expect, it } from 'vitest'
-import { BOSS_DEFAULT_AGGRO_RADIUS, npcsFromZone, pickAggroTarget, recordDamage, reselectAttacker, type NpcState } from '../server/npc'
+import { BOSS_DEFAULT_AGGRO_RADIUS, npcsFromZone, pickAggroTarget, recordDamage, reselectAttacker, threatContributors, threatKey, type NpcState } from '../server/npc'
 import { respawnTicksFor } from '../server/combat'
 
 const OPEN = Array.from({ length: 12 }, () => '.'.repeat(12))
@@ -104,5 +104,41 @@ describe('respawnTicksFor', () => {
     expect(respawnTicksFor('warlord_grondar')).toBe(100)
     expect(respawnTicksFor('pasture_bull')).toBe(25)
     expect(respawnTicksFor('warlord_grondar')).toBeGreaterThan(respawnTicksFor('pasture_bull'))
+  })
+})
+
+// Item 11 (P1): damage-contribution readout — makes the top-damage loot rule
+// legible mid-fight.
+describe('threatContributors / threatKey', () => {
+  it('sorts contributors by damage descending', () => {
+    const g = grondar()
+    recordDamage(g, '1', 10, 1)
+    recordDamage(g, '2', 40, 2)
+    recordDamage(g, '3', 25, 3)
+    const names = new Map([['1', 'Alice'], ['2', 'Bob'], ['3', 'Cara']])
+    expect(threatContributors(g, names)).toEqual([
+      { charId: '2', name: 'Bob', dmg: 40 },
+      { charId: '3', name: 'Cara', dmg: 25 },
+      { charId: '1', name: 'Alice', dmg: 10 },
+    ])
+  })
+
+  it('drops a contributor with no resolvable name (disconnected mid-fight)', () => {
+    const g = grondar()
+    recordDamage(g, '1', 10, 1)
+    recordDamage(g, 'gone', 99, 2)
+    expect(threatContributors(g, new Map([['1', 'Alice']]))).toEqual([{ charId: '1', name: 'Alice', dmg: 10 }])
+  })
+
+  it('threatKey changes when damage totals change and is stable when they do not', () => {
+    const g = grondar()
+    recordDamage(g, '1', 10, 1)
+    const names = new Map([['1', 'Alice']])
+    const key1 = threatKey(threatContributors(g, names))
+    const key1Again = threatKey(threatContributors(g, names))
+    expect(key1Again).toBe(key1)
+    recordDamage(g, '1', 5, 2)
+    const key2 = threatKey(threatContributors(g, names))
+    expect(key2).not.toBe(key1)
   })
 })

@@ -26,6 +26,13 @@ export function isBossMonster(monsterId: string): boolean {
   return monsters[monsterId]?.boss === true
 }
 
+/** Collection-log-eligible unique item ids in a kill's loot (deduped), for the
+ * given boss. Shared by the collection-log write below and the zone-wide
+ * unique-drop broadcast (item 11) so both agree on what counts as a "unique". */
+export function uniqueDropsFrom(monsterId: string, loot: { itemId: string; quantity: number }[]): string[] {
+  return [...new Set(loot.map((l) => l.itemId))].filter((itemId) => isValidEntry('monsters', monsterId, itemId))
+}
+
 /** Records a world boss kill: collection-log uniques from the drop (idempotent),
  * the boss kill count (monotonic), and an audit row. No-op for non-boss monsters
  * or an unresolved owner. Mirrors _completeShared's source_type ('monsters') so
@@ -36,9 +43,7 @@ export async function recordBossKill(env: { DB: D1Database }, kill: BossKill, io
   if (!Number.isInteger(characterId) || characterId <= 0) return
   const now = Date.now()
 
-  const uniqueItemIds = [...new Set(kill.loot.map((l) => l.itemId))].filter((itemId) =>
-    isValidEntry('monsters', kill.monsterId, itemId)
-  )
+  const uniqueItemIds = uniqueDropsFrom(kill.monsterId, kill.loot)
   if (uniqueItemIds.length > 0) {
     await env.DB.batch(
       uniqueItemIds.map((itemId) =>

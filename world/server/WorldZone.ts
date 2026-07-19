@@ -18,13 +18,17 @@ import { hasMaterials, maxCraftable } from './crafting'
 import { resolveCombatSetup, isSameFightTarget, playerAttackRange, emitPrayerIfChanged, startCombat } from './combat'
 import { seedPrayer, resolvePrayerToggle } from '../shared/prayer'
 import spellsJson from '../../src/data/spells.json'
-import { npcsFromZone, pickAggroTarget, reselectAttacker, tickNpc, toNpcDiff, type NpcState } from './npc'
+import { npcsFromZone, pickAggroTarget, reselectAttacker, threatContributors, threatKey, tickNpc, toNpcDiff, type NpcState } from './npc'
 import { PLAYER_DROP_OWNER_TICKS, isExpired, isVisibleTo, spawnDrops, takeLoot, visibleLootFor, type LootEntity } from './loot'
 import { sanitizeChat } from '../shared/chat'
 import { addToInventory, countItem, freeSlotCount, inventoryIsFull, isStackable, moveInventorySlot, removeItems, removeOneAt } from './mining'
 import { getLevelFromXP } from '../../src/engine/experience.js'
 import { flushGrants, isEmptyPayload, type GrantPayload, type ItemStack } from './grants'
-import { recordBossKill } from './bossKills'
+import { isBossMonster, recordBossKill, uniqueDropsFrom } from './bossKills'
+import monstersDataJson from '../../src/data/monsters.json'
+
+type MonsterNames = Record<string, { name?: string } | undefined>
+const monsterNames = monstersDataJson as MonsterNames
 import { isCharacterInActiveMatch } from './pvpLock'
 import { beginWorldSession, refreshWorldSession, endWorldSession } from '../../functions/_lib/game/worldSessions.js'
 import { loadCharacterWithSave } from '../../functions/_lib/game/save.js'
@@ -1127,6 +1131,9 @@ export class WorldZone extends Server<Env> {
     this.pendingLeaves.clear()
     const chatEvents = this.pendingChat
     this.pendingChat = []
+    // Zone-wide boss kill feed + unique-drop broadcasts (item 11) — same
+    // broadcast-to-everyone shape as chatEvents.
+    const broadcastEvents: ZoneEvent[] = []
 
     // Retarget in-combat npcs onto the top-threat player they can reach BEFORE
     // they step, so a boss chases/attacks the biggest threat in a group fight
@@ -1199,9 +1206,29 @@ export class WorldZone extends Server<Env> {
         // audit) — fire-and-forget D1 like the flushes below. No-op for
         // non-boss monsters.
         void recordBossKill(this.env, kill)
+        if (!isBossMonster(kill.monsterId)) continue
+        const monsterName = monsterNames[kill.monsterId]?.name ?? kill.monsterId
+        const killerName = this.players.get(kill.owner)?.name ?? 'Someone'
+        broadcastEvents.push({ e: 'kill', monster: monsterName, killer: killerName })
+        for (const itemId of uniqueDropsFrom(kill.monsterId, kill.loot)) {
+          broadcastEvents.push({ e: 'uniqueDrop', monster: monsterName, player: killerName, item: itemNameOf(itemId) })
+        }
       }
       if (result.events.length > 0) eventsByChar.set(player.charId, result.events)
       if (result.died) this.respawnPlayer(player, playerEnts)
+    }
+
+    // Damage-contribution readout for every boss fight this tick — gated on an
+    // actual change so it doesn't spam once the fight goes quiet (item 11).
+    const playerNames = new Map<string, string>()
+    for (const p of this.players.values()) playerNames.set(p.charId, p.name)
+    for (const npc of npcs.values()) {
+      if (npc.state !== 'combat' || !isBossMonster(npc.monsterId)) continue
+      const contributors = threatContributors(npc, playerNames)
+      const key = threatKey(contributors)
+      if (key === npc.lastThreatSent) continue
+      npc.lastThreatSent = key
+      broadcastEvents.push({ e: 'threat', npcId: npc.id, contributors })
     }
 
     // Loot pickups resolve after movement (the player may have just arrived).
@@ -1249,7 +1276,7 @@ export class WorldZone extends Server<Env> {
       if (npc && !npcRemoved.has(id)) npcEnts.push(toNpcDiff(npc))
     }
     const ents = [...playerEnts.values(), ...npcEnts]
-    this.broadcastDiffs(ents, rockChanges, [...npcRemoved, ...playersRemoved], hits, chatEvents, eventsByChar)
+    this.broadcastDiffs(ents, rockChanges, [...npcRemoved, ...playersRemoved], hits, [...chatEvents, ...broadcastEvents], eventsByChar)
 
     if (this.tickCount % HP_REGEN_EVERY_TICKS === 0) {
       for (const player of this.players.values()) if (player.hp < player.maxHp) player.hp += 1
@@ -1356,7 +1383,7 @@ export class WorldZone extends Server<Env> {
     rockChanges: { id: string; depleted: boolean }[],
     removed: string[],
     hits: { targetId: string; dmg: number }[],
-    chatEvents: ZoneEvent[],
+    zoneEvents: ZoneEvent[],
     eventsByChar: Map<string, ZoneEvent[]>
   ): void {
     const hitEvents: ZoneEvent[] = hits.map((h) => ({ e: 'hit', targetId: h.targetId, dmg: h.dmg }))
@@ -1374,7 +1401,7 @@ export class WorldZone extends Server<Env> {
       const own = eventsByChar.get(player.charId)
       if (own) events.push(...own)
       if (hitEvents.length > 0) events.push(...hitEvents)
-      if (chatEvents.length > 0) events.push(...chatEvents)
+      if (zoneEvents.length > 0) events.push(...zoneEvents)
 
       const message: Extract<ServerMessage, { t: 'diff' }> = { t: 'diff', tick: this.tickCount }
       if (ents.length > 0) message.ents = ents

@@ -129,6 +129,27 @@ const HUD_CSS = `
   font-size: 13px; color: #f4e9c8; text-shadow: 0 1px 2px #000; pointer-events: none;
 }
 #msg-strip div { margin-top: 2px; }
+#boss-frame {
+  position: fixed; left: 50%; top: 12px; transform: translateX(-50%); z-index: 10;
+  width: min(360px, 70vw); font-family: sans-serif; pointer-events: none;
+  background: rgba(20, 16, 10, 0.82); border: 1px solid #6a3030; border-radius: 8px;
+  padding: 6px 10px; display: none;
+}
+#boss-frame.visible { display: block; }
+#boss-frame .name { font-size: 13px; font-weight: bold; color: #ffd7d7; text-shadow: 0 1px 2px #000; margin-bottom: 3px; }
+#boss-frame .bar { position: relative; height: 14px; border-radius: 4px; overflow: hidden; background: rgba(60, 20, 20, 0.6); }
+#boss-frame .bar > .fill { position: absolute; inset: 0 auto 0 0; background: #c94a4a; transition: width 0.2s; }
+#boss-frame .threat { margin-top: 5px; display: flex; flex-direction: column; gap: 2px; }
+#boss-frame .threat-row { display: flex; justify-content: space-between; font-size: 10px; color: #d8c9a2; }
+#boss-frame .threat-row.self { color: #ffe066; font-weight: bold; }
+#unique-banner {
+  position: fixed; left: 50%; top: 90px; transform: translateX(-50%); z-index: 12;
+  font-family: sans-serif; font-size: 14px; font-weight: bold; color: #ffe066;
+  background: rgba(40, 30, 10, 0.9); border: 1px solid #ffe066; border-radius: 8px;
+  padding: 8px 14px; text-shadow: 0 1px 2px #000; pointer-events: none; text-align: center;
+  opacity: 0; transition: opacity 0.3s;
+}
+#unique-banner.visible { opacity: 1; }
 #chat-input {
   position: fixed; left: 8px; bottom: 8px; z-index: 10; width: min(280px, 60vw);
   padding: 5px 8px; font-family: sans-serif; font-size: 13px;
@@ -554,6 +575,27 @@ export function initHud(handlers?: HudHandlers): void {
   const fx = document.createElement('div')
   fx.id = 'fx-layer'
   document.body.appendChild(fx)
+
+  const bossFrame = document.createElement('div')
+  bossFrame.id = 'boss-frame'
+  const bossName = document.createElement('div')
+  bossName.className = 'name'
+  const bossBar = document.createElement('div')
+  bossBar.className = 'bar'
+  const bossBarFill = document.createElement('div')
+  bossBarFill.className = 'fill'
+  bossBarFill.style.width = '100%'
+  bossBar.appendChild(bossBarFill)
+  const bossThreat = document.createElement('div')
+  bossThreat.className = 'threat'
+  bossFrame.appendChild(bossName)
+  bossFrame.appendChild(bossBar)
+  bossFrame.appendChild(bossThreat)
+  document.body.appendChild(bossFrame)
+
+  const uniqueBanner = document.createElement('div')
+  uniqueBanner.id = 'unique-banner'
+  document.body.appendChild(uniqueBanner)
 }
 
 /** Renders worn equipment into the Equipment tab; empty slots show their label. */
@@ -930,6 +972,57 @@ export function pushMessage(text: string): void {
   line.textContent = text
   strip.appendChild(line)
   while (strip.children.length > MAX_MESSAGES) strip.firstChild?.remove()
+}
+
+const UNIQUE_BANNER_MS = 5000
+
+/** Zone-wide kill feed line (item 11) — reuses the message strip. */
+export function pushKillFeed(monster: string, killer: string): void {
+  pushMessage(`⚔ ${killer} has defeated ${monster}!`)
+}
+
+/** Prominent zone-wide banner for a boss unique drop (item 11). */
+export function showUniqueBanner(monster: string, player: string, item: string): void {
+  const el = document.getElementById('unique-banner')
+  if (!el) return
+  el.textContent = `✨ ${player} received ${item} from ${monster}!`
+  el.classList.add('visible')
+  window.clearTimeout(Number(el.dataset.timer) || undefined)
+  const timer = window.setTimeout(() => el.classList.remove('visible'), UNIQUE_BANNER_MS)
+  el.dataset.timer = String(timer)
+}
+
+/** Boss HP frame (item 11): a dedicated top-of-screen readout for the player's
+ * current boss target, distinct from the small overhead HP bar. */
+export function showBossFrame(name: string, hp: number, maxHp: number): void {
+  const el = document.getElementById('boss-frame')
+  if (!el) return
+  el.classList.add('visible')
+  const nameEl = el.querySelector<HTMLElement>('.name')
+  if (nameEl) nameEl.textContent = `${name} — ${Math.max(0, hp)}/${maxHp}`
+  const pct = maxHp > 0 ? Math.max(0, Math.min(100, (hp / maxHp) * 100)) : 0
+  ;(el.querySelector('.bar > .fill') as HTMLElement | null)?.style.setProperty('width', `${pct}%`)
+}
+
+export function hideBossFrame(): void {
+  document.getElementById('boss-frame')?.classList.remove('visible')
+}
+
+/** Damage-contribution rows under the boss frame — makes the top-damage loot
+ * rule legible mid-fight (item 11). Empty list clears the panel (fight just
+ * started, no damage recorded yet). */
+export function setThreatPanel(contributors: { charId: string; name: string; dmg: number }[], selfCharId: string): void {
+  const el = document.querySelector<HTMLElement>('#boss-frame .threat')
+  if (!el) return
+  el.innerHTML = ''
+  const total = contributors.reduce((sum, c) => sum + c.dmg, 0)
+  for (const c of contributors) {
+    const row = document.createElement('div')
+    row.className = 'threat-row' + (c.charId === selfCharId ? ' self' : '')
+    const pct = total > 0 ? Math.round((c.dmg / total) * 100) : 0
+    row.innerHTML = `<span>${c.name}</span><span>${pct}%</span>`
+    el.appendChild(row)
+  }
 }
 
 function appEl(): HTMLElement | null {

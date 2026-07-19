@@ -39,6 +39,31 @@ export type NpcState = {
   chaseGoal: { x: number; z: number } | null
   /** Tiles within which this npc aggresses idle passers-by (0 = passive). */
   aggroRadius: number
+  /** Serialized key of the last {e:'threat'} broadcast for this npc, so the
+   * damage-contribution readout (item 11) only re-sends on an actual change. */
+  lastThreatSent: string | null
+}
+
+export type ThreatContributor = { charId: string; name: string; dmg: number }
+
+/** Damage-contribution snapshot for an npc's current fight, sorted highest
+ * first — makes the top-damage loot rule (topDamageContributor) legible mid-fight
+ * (item 11). A contributor who's since disconnected has no name to show and is
+ * dropped from the readout (their damage total still counts for loot). */
+export function threatContributors(npc: NpcState, playerNames: Map<string, string>): ThreatContributor[] {
+  const out: ThreatContributor[] = []
+  for (const [charId, { dmg }] of npc.damageByChar) {
+    const name = playerNames.get(charId)
+    if (name) out.push({ charId, name, dmg })
+  }
+  out.sort((a, b) => b.dmg - a.dmg)
+  return out
+}
+
+/** Stable string key for a contributor snapshot, to gate the broadcast on an
+ * actual change (mirrors emitSpecIfChanged/emitPrayerIfChanged's last-sent gate). */
+export function threatKey(contributors: ThreatContributor[]): string {
+  return contributors.map((c) => `${c.charId}:${c.dmg}`).join('|')
 }
 
 /** Default aggression radius for a boss when the zone doesn't specify one — boss
@@ -132,6 +157,7 @@ export function npcsFromZone(npcs: ZoneNpcDef[]): Map<string, NpcState> {
       chasePath: [],
       chaseGoal: null,
       aggroRadius,
+      lastThreatSent: null,
     })
   }
   return map

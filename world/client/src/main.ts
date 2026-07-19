@@ -1,5 +1,5 @@
 import { clearStoredSession, exchangeHandoff, getRunPref, getStoredSession, getStoredZone, parseHandoffFromHash, pocketRpgUrl, storeRunPref, storeZone, type WorldSession } from './auth'
-import { hideConnBanner, hideOverlay, initChatInput, initHud, paintHudIcons, pushMessage, removeHpBar, removeNameplate, removeOverheadChat, renderEquipment, renderInventory, renderPrayerPanel, renderSpellbook, setPrayerState, setRunState, setSpecialEnergy, setSpellButton, setStanceActive, showConnBanner, showContextMenu, showHitsplat, showLoginRequired, showTransitionOverlay, showXpDrop, updateHpBar, updateHpPill, updateNameplate, updateOverheadChat, npcExamine, type SpellbookEntry } from './ui'
+import { hideBossFrame, hideConnBanner, hideOverlay, initChatInput, initHud, paintHudIcons, pushKillFeed, pushMessage, removeHpBar, removeNameplate, removeOverheadChat, renderEquipment, renderInventory, renderPrayerPanel, renderSpellbook, setPrayerState, setRunState, setSpecialEnergy, setSpellButton, setStanceActive, setThreatPanel, showBossFrame, showConnBanner, showContextMenu, showHitsplat, showLoginRequired, showTransitionOverlay, showUniqueBanner, showXpDrop, updateHpBar, updateHpPill, updateNameplate, updateOverheadChat, npcExamine, type SpellbookEntry } from './ui'
 import { createMinimap, type Minimap, type MinimapDot } from './minimap'
 import { closeBankUI, isBankOpen, openBankUI, updateBankInventory, updateBankUI } from './bank'
 import { closeCraftUI, openCraftUI, updateCraftInventory, updateCraftStats, type SkillLevels } from './crafting'
@@ -27,7 +27,7 @@ import * as THREE from 'three'
 import type { EntityDiff, ExitMarker, InvActionWire, InvSlot, ServerMessage, ZoneEvent } from '../../shared/protocol'
 import type { MenuRow, Pickable } from './picking'
 
-type Monsters = Record<string, { name?: string; combatLevel?: number } | undefined>
+type Monsters = Record<string, { name?: string; combatLevel?: number; boss?: boolean } | undefined>
 const monsters = monstersData as unknown as Monsters
 type Items = Record<string, { poweredStaff?: boolean } | undefined>
 const items = itemsData as unknown as Items
@@ -74,6 +74,9 @@ function enterWorld(session: WorldSession): void {
   const pendingOtherDiff = new Map<string, EntityDiff>()
   const overheads = new Map<string, { text: string; until: number }>()
   const rockStates = new Map<string, boolean>()
+  // Latest damage-contribution snapshot per boss npc id (item 11), keyed so the
+  // boss frame can look up whichever npc self.targetId currently points at.
+  const threatByNpc = new Map<string, { charId: string; name: string; dmg: number }[]>()
   let playerCombatLevel = 3
   let minimap: Minimap | null = null
   let exitMarkers: ExitMarker[] = []
@@ -175,6 +178,9 @@ function enterWorld(session: WorldSession): void {
     }
     else if (event.e === 'spec') setSpecialEnergy(event.energy)
     else if (event.e === 'prayer') setPrayerState(event.points, event.max, event.protection, event.combat)
+    else if (event.e === 'kill') pushKillFeed(event.monster, event.killer)
+    else if (event.e === 'uniqueDrop') showUniqueBanner(event.monster, event.player, event.item)
+    else if (event.e === 'threat') threatByNpc.set(event.npcId, event.contributors)
     else if (event.e === 'equip') {
       renderEquipment(event.equipment)
       refreshSpellUI(event.equipment)
@@ -582,6 +588,16 @@ function enterWorld(session: WorldSession): void {
             } else {
               removeHpBar(npc.id)
             }
+          }
+          // Boss HP frame + damage-contribution readout (item 11): shown whenever
+          // the player is targeting a boss-flagged monster.
+          const bossTarget = self?.targetId ? npcs.get(self.targetId) : null
+          const bossDef = bossTarget?.monsterId ? monsters[bossTarget.monsterId] : null
+          if (bossTarget && bossDef?.boss && bossTarget.serverAnim !== 'die' && bossTarget.hp != null && bossTarget.maxHp) {
+            showBossFrame(bossDef.name ?? bossTarget.monsterId ?? 'Boss', bossTarget.hp, bossTarget.maxHp)
+            setThreatPanel(threatByNpc.get(self!.targetId!) ?? [], self!.id)
+          } else {
+            hideBossFrame()
           }
           for (const other of others.values()) {
             updateEntity(other, now, deltaSeconds, targetPosOf(other))

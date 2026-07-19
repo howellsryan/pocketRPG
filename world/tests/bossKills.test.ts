@@ -3,7 +3,7 @@
 // log for uniques, boss kill count, audit. Regular monsters and unresolved
 // owners record nothing.
 import { describe, expect, it, vi } from 'vitest'
-import { recordBossKill, isBossMonster, type BossKillIO } from '../server/bossKills'
+import { recordBossKill, isBossMonster, uniqueDropsFrom, type BossKillIO } from '../server/bossKills'
 
 type Call = { sql: string; args: unknown[] }
 
@@ -92,5 +92,23 @@ describe('recordBossKill', () => {
     expect(inserts).toHaveLength(0)
     expect(upserts).toHaveLength(0)
     expect(io.audits).toHaveLength(0)
+  })
+})
+
+// Item 11 (P1): the unique-drop broadcast reuses this filter, so it must agree
+// exactly with what recordBossKill writes to the collection log.
+describe('uniqueDropsFrom', () => {
+  it('keeps only collection-log-eligible items, deduped', () => {
+    const ids = uniqueDropsFrom('warlord_grondar', [
+      { itemId: 'grondar_hilt', quantity: 1 },
+      { itemId: 'grondar_hilt', quantity: 1 },
+      { itemId: 'big_bones', quantity: 1 },
+      { itemId: 'coins', quantity: 20000 },
+    ])
+    expect(ids).toEqual(['grondar_hilt'])
+  })
+
+  it('returns an empty list when the drop has no unique', () => {
+    expect(uniqueDropsFrom('warlord_grondar', [{ itemId: 'big_bones', quantity: 1 }])).toEqual([])
   })
 })

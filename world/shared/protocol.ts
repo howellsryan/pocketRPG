@@ -67,6 +67,13 @@ export type ZoneEvent =
   | { e: 'prayer'; points: number; max: number; protection: string | null; combat: string | null }
   /** Worn equipment changed (equip/unequip) — the Equipment tab re-renders. */
   | { e: 'equip'; equipment: EquipmentMap }
+  /** Zone-wide boss kill feed entry (item 11). */
+  | { e: 'kill'; monster: string; killer: string }
+  /** Zone-wide broadcast when a boss drops a collection-log unique (item 11). */
+  | { e: 'uniqueDrop'; monster: string; player: string; item: string }
+  /** Live damage-contribution readout for an in-combat boss, sorted by damage
+   * descending — makes the top-damage loot rule legible mid-fight (item 11). */
+  | { e: 'threat'; npcId: string; contributors: { charId: string; name: string; dmg: number }[] }
 
 export type EntityDiff = {
   id: string
