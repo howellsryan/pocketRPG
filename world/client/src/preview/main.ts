@@ -6,11 +6,6 @@ import { createScatterLayers } from '../scatter'
 import { createStatics } from '../statics'
 import { createProps } from '../props'
 import { createAmbient } from '../ambient'
-import pastureZone from '../../../zones/pasture.json'
-import forestZone from '../../../zones/forest.json'
-import lumbrightZone from '../../../zones/lumbright.json'
-import varrickZone from '../../../zones/varrick.json'
-import varrickDungeonZone from '../../../zones/varrick_dungeon.json'
 import overworldZone from '../../../zones/overworld.json'
 
 // Auth-free, server-free terrain preview. Renders a bundled zone JSON through
@@ -20,11 +15,6 @@ import overworldZone from '../../../zones/overworld.json'
 // (headless screenshots). No gameplay, no networking.
 
 const ZONES: Record<string, ZoneDef> = {
-  pasture: pastureZone as ZoneDef,
-  forest: forestZone as ZoneDef,
-  lumbright: lumbrightZone as ZoneDef,
-  varrick: varrickZone as unknown as ZoneDef,
-  varrick_dungeon: varrickDungeonZone as unknown as ZoneDef,
   overworld: overworldZone as unknown as ZoneDef,
 }
 
@@ -35,7 +25,7 @@ declare global {
 }
 
 const params = new URLSearchParams(location.search)
-const zoneId = params.get('zone') && ZONES[params.get('zone')!] ? params.get('zone')! : 'pasture'
+const zoneId = params.get('zone') && ZONES[params.get('zone')!] ? params.get('zone')! : 'overworld'
 const yawParam = params.get('yaw')
 const pitchParam = params.get('pitch')
 const distParam = params.get('dist')

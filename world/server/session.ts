@@ -60,7 +60,7 @@ export async function handleWorldSession(request: Request, env: Env): Promise<Re
   // client/src/auth.ts MERGED_ZONES); a fresh character has no row → overworld.
   const pos = await env.DB.prepare('SELECT zone_id FROM world_positions WHERE character_id = ?')
     .bind(row.id).first<{ zone_id: string }>()
-  const merged = new Set(['pasture', 'forest', 'lumbright'])
+  const merged = new Set(['pasture', 'forest', 'lumbright', 'varrick', 'varrick_dungeon'])
   const zone = pos && !merged.has(pos.zone_id) ? pos.zone_id : 'overworld'
   return jsonResponse({ token, character: { id: row.id, name: row.username }, zone })
 }

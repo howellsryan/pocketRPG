@@ -50,7 +50,7 @@ import type { Env } from './env'
 
 type ConnState = { charId: string | null }
 type Connection = PartyConnection<ConnState>
-import pastureZone from '../zones/pasture.json'
+import overworldZone from '../zones/overworld.json'
 
 const TICK_MS = 600
 const AUTH_TIMEOUT_MS = 5000
@@ -195,7 +195,7 @@ export class WorldZone extends Server<Env> {
   private zoneLoadPromise: Promise<ZoneDef | null> | null = null
 
   get zone(): ZoneDef {
-    return this.loadedZone ?? ZONES[this.name] ?? (pastureZone as ZoneDef)
+    return this.loadedZone ?? ZONES[this.name] ?? (overworldZone as unknown as ZoneDef)
   }
 
   /** Resolves and caches this DO's zone def once: stored D1 def first, else the

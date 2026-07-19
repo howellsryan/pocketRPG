@@ -1,9 +1,4 @@
 import { validateZone, type ZoneDef } from '../shared/zone'
-import pastureZone from '../zones/pasture.json'
-import forestZone from '../zones/forest.json'
-import lumbrightZone from '../zones/lumbright.json'
-import varrickZone from '../zones/varrick.json'
-import varrickDungeonZone from '../zones/varrick_dungeon.json'
 import overworldZone from '../zones/overworld.json'
 
 // Bundled zone definitions, baked into the Worker at build time. A D1 row in
@@ -13,14 +8,13 @@ import overworldZone from '../zones/overworld.json'
 // not tuples; a zone mixing tree + station objects widens `type` to string), so
 // a direct `as ZoneDef` cast can stop structurally overlapping. validateZone
 // below is the real guarantee — it runs on every zone at module load.
+//
+// The overworld is the one true zone: every place lives in it as a district.
+// (zones/lumbright.json survives only as the generator's inline-stamp source —
+// it is not served.)
 const asZone = (z: unknown): ZoneDef => z as ZoneDef
 
 export const ZONES: Record<string, ZoneDef> = {
-  pasture: asZone(pastureZone),
-  forest: asZone(forestZone),
-  lumbright: asZone(lumbrightZone),
-  varrick: asZone(varrickZone),
-  varrick_dungeon: asZone(varrickDungeonZone),
   overworld: asZone(overworldZone),
 }
 

@@ -50,16 +50,15 @@ describe('resolveZone', () => {
     expect(resolveZone('')).toBe('overworld')
   })
 
-  it('redirects zones folded into the overworld to it', () => {
-    expect(resolveZone('pasture')).toBe('overworld')
-    expect(resolveZone('forest')).toBe('overworld')
-    expect(resolveZone('lumbright')).toBe('overworld')
+  it('redirects every zone folded into the overworld to it', () => {
+    for (const z of ['pasture', 'forest', 'lumbright', 'varrick', 'varrick_dungeon']) {
+      expect(resolveZone(z), z).toBe('overworld')
+    }
   })
 
-  it('passes a still-standalone zone through unchanged', () => {
+  it('passes the overworld (and any unknown id) through unchanged', () => {
     expect(resolveZone('overworld')).toBe('overworld')
-    expect(resolveZone('varrick')).toBe('varrick')
-    expect(resolveZone('varrick_dungeon')).toBe('varrick_dungeon')
+    expect(resolveZone('some_future_zone')).toBe('some_future_zone')
   })
 })
 

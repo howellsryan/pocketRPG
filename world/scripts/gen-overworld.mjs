@@ -104,14 +104,9 @@ for (const s of lb.ambient?.smoke ?? []) smoke.push({ ...s, x: s.x + lbOx, z: s.
 
 const SPAWN = { x: lbc.x, z: lbc.z }
 
-// ── Varrick, kept as a portal at its district (the hybrid escape hatch) ──
-const vc = districtById.get('varrick')
-townProps.push({ model: 'castle', x: vc.x, z: vc.z - 3, scale: 2.2 })
-townProps.push({ model: 'banner', x: vc.x - 4, z: vc.z, scale: 2 })
-townProps.push({ model: 'banner', x: vc.x + 4, z: vc.z, scale: 2 })
-exits.push({ id: 'exit_varrick', x: vc.x, z: vc.z, toZone: 'varrick', toX: 40, toZ: 82, label: 'Varrick' })
-
-// ── Dress the other 12 into towns ──────────────────────────────────────────
+// ── Dress the other 13 places into towns (Varrick, the capital, dressed inline
+//    like the rest but with a castle keep instead of a fountain — no portal, the
+//    overworld is the one true zone) ─────────────────────────────────────────
 // Tier template: radius, building count, whether it gets a fountain (else well).
 const TIER = {
   city: { r: 9, houses: 8, plaza: 3, centre: 'fountain' },
@@ -147,8 +142,15 @@ function dressTown(d) {
   ground.push({ kind: 'path_cobble', x: cx - t.r, z: cz - 1, w: t.r * 2 + 1, h: 3 })
 
   // Civic centrepiece, off the exact centre tile (kept walkable as the road/reach
-  // anchor) and off the cardinal lanes.
-  townProps.push({ model: t.centre, x: cx + ps, z: cz + ps, scale: t.centre === 'fountain' ? 1.6 : 1.2 })
+  // anchor) and off the cardinal lanes. Varrick the capital gets a castle keep
+  // flanked by banners; every other place a fountain or well.
+  if (d.id === 'varrick') {
+    townProps.push({ model: 'castle', x: cx + ps, z: cz + ps, scale: 2.4 })
+    townProps.push({ model: 'banner', x: cx + ps - 2, z: cz + ps, scale: 1.8 })
+    townProps.push({ model: 'banner', x: cx + ps + 2, z: cz + ps, scale: 1.8 })
+  } else {
+    townProps.push({ model: t.centre, x: cx + ps, z: cz + ps, scale: t.centre === 'fountain' ? 1.6 : 1.2 })
+  }
 
   // Facility stations from world.json. Every station sits on a cardinal spoke
   // lane (dx==0 or dz==0) — those lanes are re-cleared in the post-pass, so a
@@ -201,9 +203,61 @@ function dressTown(d) {
 }
 
 for (const d of districts) {
-  if (d.id === 'lumbright' || d.id === 'varrick') continue
+  if (d.id === 'lumbright') continue // stamped inline above
   dressTown(d)
 }
+
+// ── Wilderness content: the monsters + resource nodes that used to live in the
+//    now-merged pasture / forest / varrick / dungeon zones, re-homed into the
+//    open world between districts. Clustered into themed pockets — a starter
+//    commons S of spawn, a goblin thicket to the N, arcane woods to the W, and a
+//    boss wilds NE of Varrick — never uniform scatter. Tiles are open meadow
+//    clear of every district; the fail-fast below proves each is walkable and
+//    reachable from spawn. ──
+const wildMonsters = [
+  // Starter commons, open meadow S of the Lumbright stamp (which spans z88..152).
+  { id: 'wild_bull_1', monsterId: 'pasture_bull', x: 172, z: 164, wander: { x: 165, z: 158, w: 16, h: 14 } },
+  { id: 'wild_chicken_1', monsterId: 'field_chicken', x: 162, z: 162, wander: { x: 156, z: 157, w: 16, h: 10 } },
+  { id: 'wild_chicken_2', monsterId: 'field_chicken', x: 166, z: 166, wander: { x: 156, z: 157, w: 16, h: 10 } },
+  // Goblin thicket, N of the stamp between Barlock and Varrick.
+  { id: 'wild_goblin_1', monsterId: 'cave_goblin', x: 195, z: 72, wander: { x: 189, z: 67, w: 16, h: 12 } },
+  { id: 'wild_goblin_2', monsterId: 'cave_goblin', x: 200, z: 75, wander: { x: 189, z: 67, w: 16, h: 12 } },
+  // Arcane woods, W between Faloden and Seerhold.
+  { id: 'wild_adept_1', monsterId: 'arcane_adept', x: 104, z: 76, wander: { x: 98, z: 71, w: 14, h: 10 } },
+  // Boss wilds, NE of Varrick (the old dungeon re-homed; aggressive by default).
+  { id: 'wild_krylth', monsterId: 'krylth_the_defiler', x: 266, z: 40, wander: { x: 261, z: 36, w: 10, h: 8 } },
+  { id: 'wild_grondar', monsterId: 'warlord_grondar', x: 280, z: 42, wander: { x: 275, z: 38, w: 10, h: 8 } },
+  { id: 'wild_venomcoil', monsterId: 'venomcoil_matriarch', x: 294, z: 40, wander: { x: 289, z: 36, w: 10, h: 8 } },
+]
+const wildObjects = [
+  // Rocky outcrop by the commons (mining: tin + copper).
+  { id: 'wild_rock_tin_1', type: 'rock', rock: 'tin', x: 150, z: 160 },
+  { id: 'wild_rock_tin_2', type: 'rock', rock: 'tin', x: 152, z: 162 },
+  { id: 'wild_rock_tin_3', type: 'rock', rock: 'tin', x: 149, z: 163 },
+  { id: 'wild_rock_copper_1', type: 'rock', rock: 'copper', x: 154, z: 159 },
+  { id: 'wild_rock_copper_2', type: 'rock', rock: 'copper', x: 156, z: 161 },
+  // Starter copse (normal) by the commons.
+  { id: 'wild_tree_n1', type: 'tree', tree: 'normal', x: 185, z: 158 },
+  { id: 'wild_tree_n2', type: 'tree', tree: 'normal', x: 188, z: 161 },
+  { id: 'wild_tree_n3', type: 'tree', tree: 'normal', x: 183, z: 163 },
+  // Goblin thicket grove (normal + oak).
+  { id: 'wild_tree_n4', type: 'tree', tree: 'normal', x: 190, z: 78 },
+  { id: 'wild_tree_n5', type: 'tree', tree: 'normal', x: 193, z: 80 },
+  { id: 'wild_tree_n6', type: 'tree', tree: 'normal', x: 188, z: 82 },
+  { id: 'wild_tree_o1', type: 'tree', tree: 'oak', x: 202, z: 68 },
+  { id: 'wild_tree_o2', type: 'tree', tree: 'oak', x: 205, z: 71 },
+  // Arcane woods (normal + oak).
+  { id: 'wild_tree_n7', type: 'tree', tree: 'normal', x: 108, z: 72 },
+  { id: 'wild_tree_n8', type: 'tree', tree: 'normal', x: 111, z: 74 },
+  { id: 'wild_tree_n9', type: 'tree', tree: 'normal', x: 106, z: 78 },
+  { id: 'wild_tree_n10', type: 'tree', tree: 'normal', x: 112, z: 77 },
+  { id: 'wild_tree_n11', type: 'tree', tree: 'normal', x: 109, z: 80 },
+  { id: 'wild_tree_o3', type: 'tree', tree: 'oak', x: 98, z: 81 },
+  { id: 'wild_tree_o4', type: 'tree', tree: 'oak', x: 101, z: 83 },
+  { id: 'wild_tree_o5', type: 'tree', tree: 'oak', x: 96, z: 84 },
+]
+for (const o of wildObjects) objects.push(o)
+for (const n of wildMonsters) npcs.push(n)
 
 // ── Wilderness roads along every travel edge ──
 for (const r of roadSegments(world.edges, districts)) {
@@ -304,7 +358,7 @@ while (stack.length) {
   }
 }
 for (const d of districts) if (!reach[d.z][d.x]) errs.push(`district ${d.id} (${d.x},${d.z}) unreachable from spawn`)
-for (const o of [...objects, ...exits, ...landmarks]) if (!reach[o.z][o.x]) errs.push(`${o.id} (${o.x},${o.z}) unreachable from spawn`)
+for (const o of [...objects, ...npcs, ...exits, ...landmarks]) if (!reach[o.z][o.x]) errs.push(`${o.id} (${o.x},${o.z}) unreachable from spawn`)
 if (errs.length) { console.error('OVERWORLD GEN ERRORS:\n' + errs.join('\n')); process.exit(1) }
 
 const walk = zone.collision.join('').split('').filter((c) => c === '.').length

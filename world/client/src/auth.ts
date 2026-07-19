@@ -6,7 +6,7 @@ const ZONE_KEY = 'world_zone'
 /** Zones folded into the merged `overworld` (their standalone maps are gone as
  * player destinations). A stored position pointing at one redirects to the
  * overworld so returning players land on the one world map. */
-const MERGED_ZONES = new Set(['pasture', 'forest', 'lumbright'])
+const MERGED_ZONES = new Set(['pasture', 'forest', 'lumbright', 'varrick', 'varrick_dungeon'])
 
 /** Redirects a merged-away zone to the overworld; passes any other id through. */
 export function resolveZone(zone: string | null | undefined): string {

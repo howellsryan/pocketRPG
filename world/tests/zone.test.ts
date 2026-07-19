@@ -4,11 +4,6 @@ import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 import { validateExitGraph, validateZone, type ZoneDef } from '../shared/zone'
 import { groundKindGrid } from '../shared/groundKinds'
-import pastureZone from '../zones/pasture.json'
-import forestZone from '../zones/forest.json'
-import lumbrightZone from '../zones/lumbright.json'
-import varrickZone from '../zones/varrick.json'
-import varrickDungeonZone from '../zones/varrick_dungeon.json'
 import overworldZone from '../zones/overworld.json'
 import * as overworldLayout from '../scripts/overworldLayout.mjs'
 import worldData from '../../src/data/world.json'
@@ -17,8 +12,8 @@ const projectPlaces = overworldLayout.projectPlaces as (places: unknown[], opts?
 import monsters from '../../src/data/monsters.json'
 
 describe('validateZone', () => {
-  it('accepts the real pasture zone', () => {
-    const result = validateZone(pastureZone as ZoneDef)
+  it('accepts the real overworld zone', () => {
+    const result = validateZone(overworldZone as unknown as ZoneDef)
     expect(result).toEqual({ valid: true })
   })
 
@@ -180,32 +175,32 @@ describe('groundKindGrid', () => {
   })
 })
 
-describe('Phase 6 zones', () => {
-  it('accepts the real forest zone', () => {
-    expect(validateZone(forestZone as ZoneDef)).toEqual({ valid: true })
-  })
-
-  it('accepts the real lumbright zone', () => {
-    expect(validateZone(lumbrightZone as ZoneDef)).toEqual({ valid: true })
-  })
-
-  it('accepts the real varrick zone', () => {
-    expect(validateZone(varrickZone as unknown as ZoneDef)).toEqual({ valid: true })
-  })
-
-  it('accepts the real varrick dungeon zone', () => {
-    expect(validateZone(varrickDungeonZone as unknown as ZoneDef)).toEqual({ valid: true })
-  })
-
+describe('the one overworld', () => {
   it('accepts the overworld layout and gives it an aoiRadius', () => {
     const ow = overworldZone as unknown as ZoneDef
     expect(validateZone(ow)).toEqual({ valid: true })
     expect(ow.aoiRadius).toBeGreaterThan(0)
   })
 
-  it('the overworld keeps interiors instanced — only the Varrick portal survives', () => {
+  it('is the one true zone — no cross-zone exits remain', () => {
     const ow = overworldZone as unknown as ZoneDef
-    expect((ow.exits ?? []).map((e) => e.toZone)).toEqual(['varrick'])
+    expect(ow.exits ?? []).toEqual([])
+    expect(validateExitGraph({ overworld: ow })).toEqual({ valid: true })
+  })
+
+  it('re-homes every merged monster into the world (bosses included)', () => {
+    const ow = overworldZone as unknown as ZoneDef
+    const present = new Set(ow.npcs.map((n) => n.monsterId))
+    // The monsters that used to live only in the now-removed standalone zones.
+    for (const m of ['pasture_bull', 'field_chicken', 'cave_goblin', 'arcane_adept', 'krylth_the_defiler', 'warlord_grondar', 'venomcoil_matriarch']) {
+      expect(present.has(m), `overworld is missing ${m}`).toBe(true)
+    }
+  })
+
+  it('carries mining rocks and trees to gather (skilling did not vanish with the zones)', () => {
+    const ow = overworldZone as unknown as ZoneDef
+    expect(ow.objects.some((o) => o.type === 'rock')).toBe(true)
+    expect(ow.objects.some((o) => o.type === 'tree')).toBe(true)
   })
 
   it('positions every world.json place at a walkable district on the overworld', () => {
@@ -247,21 +242,10 @@ describe('Phase 6 zones', () => {
     expect(onBlock.valid === false && onBlock.errors.some((e) => e.includes('landmark'))).toBe(true)
   })
 
-  it('the varrick dungeon boss references a real monster', () => {
-    for (const npc of (varrickDungeonZone as unknown as ZoneDef).npcs) {
+  it('every overworld npc references a real monster', () => {
+    for (const npc of (overworldZone as unknown as ZoneDef).npcs) {
       expect(monsters[npc.monsterId as keyof typeof monsters], npc.monsterId).toBeTruthy()
     }
-  })
-
-  it('validates the full pasture↔forest↔lumbright↔varrick↔dungeon exit graph', () => {
-    const zones = {
-      pasture: pastureZone as ZoneDef,
-      forest: forestZone as ZoneDef,
-      lumbright: lumbrightZone as ZoneDef,
-      varrick: varrickZone as unknown as ZoneDef,
-      varrick_dungeon: varrickDungeonZone as unknown as ZoneDef,
-    }
-    expect(validateExitGraph(zones)).toEqual({ valid: true })
   })
 
   it('rejects an exit to an unknown zone', () => {
@@ -291,8 +275,10 @@ describe('Phase 6 zones', () => {
     if (!result.valid) expect(result.errors[0]).toContain('lands on an exit tile')
   })
 
-  it('the dungeon boss wings do not overlap (item 10: bosses must not drift into each other)', () => {
-    const npcs = (varrickDungeonZone as unknown as ZoneDef).npcs
+  it('the re-homed boss wilds wings do not overlap (bosses must not drift into each other)', () => {
+    const bosses = new Set(['krylth_the_defiler', 'warlord_grondar', 'venomcoil_matriarch'])
+    const npcs = (overworldZone as unknown as ZoneDef).npcs.filter((n) => bosses.has(n.monsterId))
+    expect(npcs.length).toBe(3)
     const rects = npcs.map((n) => n.wander)
     for (let i = 0; i < rects.length; i++) {
       for (let j = i + 1; j < rects.length; j++) {
@@ -302,12 +288,6 @@ describe('Phase 6 zones', () => {
         expect(overlaps, `${npcs[i].id} wander overlaps ${npcs[j].id}`).toBe(false)
       }
     }
-  })
-
-  it('the dungeon respawns a death back at Varrick, not its own spawn (item 10)', () => {
-    const zone = varrickDungeonZone as unknown as ZoneDef
-    expect(zone.deathRespawn).toBeTruthy()
-    expect(zone.deathRespawn?.zone).toBe('varrick')
   })
 
   it('validates a deathRespawn targeting an unknown zone', () => {
@@ -385,11 +365,6 @@ describe('Phase 6 zones', () => {
     expect(result.valid).toBe(false)
   })
 
-  it('forest npcs reference real monsters', () => {
-    for (const npc of (forestZone as ZoneDef).npcs) {
-      expect(monsters[npc.monsterId as keyof typeof monsters], npc.monsterId).toBeTruthy()
-    }
-  })
 })
 
 describe('terrain-as-standard', () => {
@@ -400,7 +375,9 @@ describe('terrain-as-standard', () => {
   const zoneFiles = readdirSync(zonesDir).filter((f) => f.endsWith('.json'))
 
   it('found the real zone files (sanity check the directory scan itself)', () => {
-    expect(zoneFiles.length).toBeGreaterThanOrEqual(5)
+    // The served overworld plus lumbright.json (kept only as the generator's
+    // inline-stamp source); both must still carry a terrain block.
+    expect(zoneFiles.length).toBeGreaterThanOrEqual(2)
   })
 
   it.each(zoneFiles)('%s has a valid terrain block', (file) => {
