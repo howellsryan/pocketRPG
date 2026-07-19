@@ -1,3 +1,5 @@
+import { isGroundKind, type ZoneGroundRegion } from './groundKinds'
+
 export type ZoneObjectDef = {
   id: string
   type: 'rock' | 'bank_chest' | 'tree' | 'furnace' | 'anvil' | 'range'
@@ -42,6 +44,8 @@ export type ZonePropDef = {
 }
 
 export type ZonePalette = { walkableA: string; walkableB: string; blockedA: string; blockedB: string }
+
+export type { ZoneGroundRegion }
 
 /** Sky/lighting mood for a zone — the "dark or light world" control. `sky` is
  * the background hex; the two intensities scale the hemisphere fill and the sun.
@@ -93,6 +97,9 @@ export type ZoneDef = {
   palette?: ZonePalette
   ambience?: ZoneAmbience
   terrain?: ZoneTerrain
+  /** Client-render-only painted ground kinds (paths, water, floors). Decoration:
+   * collision stays in the ASCII grid. Last region wins on overlap. */
+  ground?: ZoneGroundRegion[]
 }
 
 function isWalkable(zone: ZoneDef, x: number, z: number): boolean {
@@ -162,6 +169,17 @@ export function validateZone(zone: ZoneDef): ZoneValidationResult {
       if (!layer.model || typeof layer.model !== 'string') errors.push(`terrain.scatter[${i}].model must be a non-empty string`)
       if (typeof layer.density !== 'number' || layer.density <= 0 || layer.density > 100) errors.push(`terrain.scatter[${i}].density must be in 0..100`)
       if (layer.scaleRange && (layer.scaleRange.length !== 2 || layer.scaleRange[0] > layer.scaleRange[1])) errors.push(`terrain.scatter[${i}].scaleRange must be [min,max] with min<=max`)
+    }
+  }
+
+  for (const [i, r] of (zone.ground ?? []).entries()) {
+    if (!isGroundKind(r.kind)) errors.push(`ground[${i}].kind '${r.kind}' is not a known ground kind`)
+    if (![r.x, r.z, r.w, r.h].every((n) => typeof n === 'number' && Number.isFinite(n))) {
+      errors.push(`ground[${i}] must have finite numeric x,z,w,h`)
+    } else if (r.w <= 0 || r.h <= 0) {
+      errors.push(`ground[${i}] must have positive width and height`)
+    } else if (r.x < 0 || r.z < 0 || r.x + r.w > zone.width || r.z + r.h > zone.height) {
+      errors.push(`ground[${i}] (${r.x},${r.z} ${r.w}x${r.h}) extends outside the zone`)
     }
   }
 

@@ -3,6 +3,7 @@ import { readFileSync, readdirSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 import { validateExitGraph, validateZone, type ZoneDef } from '../shared/zone'
+import { groundKindGrid } from '../shared/groundKinds'
 import pastureZone from '../zones/pasture.json'
 import forestZone from '../zones/forest.json'
 import lumbrightZone from '../zones/lumbright.json'
@@ -78,6 +79,59 @@ describe('validateZone', () => {
     const result = validateZone(zone)
     expect(result.valid).toBe(false)
     if (!result.valid) expect(result.errors.some((e) => e.includes('duplicate'))).toBe(true)
+  })
+
+  it('accepts a zone with valid painted ground regions', () => {
+    const zone: ZoneDef = {
+      id: 'ground',
+      name: 'Ground',
+      width: 4,
+      height: 4,
+      spawn: { x: 0, z: 0 },
+      collision: ['....', '....', '....', '....'],
+      objects: [],
+      npcs: [],
+      ground: [{ kind: 'path_dirt', x: 1, z: 0, w: 1, h: 4 }, { kind: 'water', x: 3, z: 3, w: 1, h: 1 }],
+    }
+    expect(validateZone(zone)).toEqual({ valid: true })
+  })
+
+  it('rejects a ground region with an unknown kind or one that leaves the zone', () => {
+    const base: ZoneDef = {
+      id: 'ground',
+      name: 'Ground',
+      width: 4,
+      height: 4,
+      spawn: { x: 0, z: 0 },
+      collision: ['....', '....', '....', '....'],
+      objects: [],
+      npcs: [],
+    }
+    const badKind = validateZone({ ...base, ground: [{ kind: 'lava', x: 0, z: 0, w: 1, h: 1 }] })
+    expect(badKind.valid).toBe(false)
+    if (!badKind.valid) expect(badKind.errors.some((e) => e.includes('kind'))).toBe(true)
+    const oob = validateZone({ ...base, ground: [{ kind: 'plaza', x: 2, z: 2, w: 5, h: 1 }] })
+    expect(oob.valid).toBe(false)
+    if (!oob.valid) expect(oob.errors.some((e) => e.includes('outside'))).toBe(true)
+  })
+})
+
+describe('groundKindGrid', () => {
+  it('resolves regions to a per-tile grid with the last region winning on overlap', () => {
+    const grid = groundKindGrid(3, 2, [
+      { kind: 'path_dirt', x: 0, z: 0, w: 3, h: 1 },
+      { kind: 'plaza', x: 1, z: 0, w: 1, h: 2 },
+    ])
+    // row 0: dirt, plaza(overlap wins), dirt ; row 1: empty, plaza, empty
+    expect(grid).toEqual(['path_dirt', 'plaza', 'path_dirt', '', 'plaza', ''])
+  })
+
+  it('clamps regions to the zone bounds and ignores unknown kinds', () => {
+    const grid = groundKindGrid(2, 2, [
+      { kind: 'water', x: 1, z: 1, w: 5, h: 5 },
+      { kind: 'nope', x: 0, z: 0, w: 2, h: 2 },
+    ])
+    expect(grid).toEqual(['', '', '', 'water'])
   })
 })
 

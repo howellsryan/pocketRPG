@@ -124,6 +124,9 @@ export type ZoneTerrain = {
   material?: string
   scatter?: ScatterLayer[]
 }
+/** Client-render-only painted ground kind (path/water/floor). Decoration only —
+ * collision stays in the ASCII grid. Mirrors shared/groundKinds.ts. */
+export type ZoneGroundRegion = { kind: string; x: number; z: number; w: number; h: number }
 
 export type LootItem = { id: string; itemId: string; qty: number; x: number; z: number }
 
@@ -132,7 +135,7 @@ export type ServerMessage =
       t: 'welcome'
       selfId: string
       tick: number
-      zone: { id: string; name?: string; w: number; h: number; collision: string[]; exits?: ExitMarker[]; props?: PropPlacement[]; palette?: GroundPalette; ambience?: ZoneAmbience; terrain?: ZoneTerrain }
+      zone: { id: string; name?: string; w: number; h: number; collision: string[]; exits?: ExitMarker[]; props?: PropPlacement[]; palette?: GroundPalette; ambience?: ZoneAmbience; terrain?: ZoneTerrain; ground?: ZoneGroundRegion[] }
       statics: StaticObject[]
       you: {
         x: number

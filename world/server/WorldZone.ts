@@ -538,6 +538,7 @@ export class WorldZone extends Server<Env> {
         ...(this.zone.palette ? { palette: this.zone.palette } : {}),
         ...(this.zone.ambience ? { ambience: this.zone.ambience } : {}),
         ...(this.zone.terrain ? { terrain: this.zone.terrain } : {}),
+        ...(this.zone.ground?.length ? { ground: this.zone.ground } : {}),
       },
       statics,
       you: {
