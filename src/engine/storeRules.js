@@ -23,7 +23,7 @@ export function isOrderBookItem(item) {
   return Math.floor(Number(item.shopValue) || 0) > 0
 }
 
-export function getPurchaseRestriction(item, { isIronman = false, isOneLife = false, allowMinigameUnlockPurchase = false } = {}) {
+export function getPurchaseRestriction(item, { isIronman = false, isOneLife = false, allowMinigameUnlockPurchase = false, allowSlayerStorePurchase = false } = {}) {
   if (!item) {
     return { allowed: false, code: 'ITEM_NOT_FOUND', message: 'Item not found' }
   }
@@ -76,13 +76,18 @@ export function getPurchaseRestriction(item, { isIronman = false, isOneLife = fa
 
   const isQuestItem = Boolean(item.questUnlock)
   const isMinigameUnlockItem = allowMinigameUnlockPurchase === true
+  // Slayer unlockables sell for coins once the account has unlocked them with
+  // slayer points. The caller derives this flag from the save's
+  // `slayerStoreUnlocks` list (server-side: the loaded save; client-side: game
+  // state), so the untradeable/Ironman gates below don't block the coin sale.
+  const isSlayerStoreItem = allowSlayerStorePurchase === true
   const isSkillCape = Boolean(item.isSkillCape)
   // The Max Cape is an untradeable prestige reward bought from the store once the
   // account is maxed (the total-level gate is enforced server-side in
   // functions/api/purchase.js). Treat it like a skill cape for store rules.
   const isMaxCape = Boolean(item.isMaxCape)
 
-  if (item.isUntradeable && !isQuestItem && !isMinigameUnlockItem && !isSkillCape && !isMaxCape) {
+  if (item.isUntradeable && !isQuestItem && !isMinigameUnlockItem && !isSkillCape && !isMaxCape && !isSlayerStoreItem) {
     return {
       allowed: false,
       code: 'UNTRADEABLE_RESTRICTED',
@@ -90,10 +95,10 @@ export function getPurchaseRestriction(item, { isIronman = false, isOneLife = fa
     }
   }
 
-  // Skill capes and the max cape are self-obtained prestige rewards that
-  // Ironman accounts may buy; everything else still follows the General Store
-  // restriction for Ironmen.
-  if (isIronman && !isQuestItem && !item.isGeneralStore && !isSkillCape && !isMaxCape) {
+  // Skill capes, the max cape and unlocked slayer gear are self-obtained rewards
+  // that Ironman accounts may buy; everything else still follows the General
+  // Store restriction for Ironmen.
+  if (isIronman && !isQuestItem && !item.isGeneralStore && !isSkillCape && !isMaxCape && !isSlayerStoreItem) {
     return {
       allowed: false,
       code: 'IRONMAN_RESTRICTED',

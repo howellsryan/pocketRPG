@@ -43,7 +43,7 @@ export default function CharacterUnlockScreen({ onBack }) {
     characterUnlocks, updateCharacterUnlock, addToast, getSnapshot,
     slayerPoints, updateSlayerPoints, bank, inventory, addToBank, itemsData,
     slayerPerks, updateSlayerPerk, slayerMasterTaskCompletions,
-    stats, unlockedFeatures, unlockFeature,
+    stats, unlockedFeatures, unlockFeature, addSlayerStoreUnlock,
   } = useGame()
   const constructionLevel = getLevelFromXP(stats.construction?.xp || 0)
   const isCloud = Boolean(getToken() && getCharacterId())
@@ -93,6 +93,7 @@ export default function CharacterUnlockScreen({ onBack }) {
         // SAVE_REVISION_EVENT (api.js).
         updateSlayerPoints(slayerPoints - unlock.cost)
         addToBank(unlock.itemId, 1)
+        addSlayerStoreUnlock(unlock.itemId)
         recordCollectionLogDrop({ itemId: unlock.itemId, sourceType: 'skilling', sourceId: 'slayer' })
         addToast(`🎉 Purchased ${item.name} — sent to bank`, 'info')
         return
@@ -103,6 +104,7 @@ export default function CharacterUnlockScreen({ onBack }) {
     }
     updateSlayerPoints(slayerPoints - unlock.cost)
     addToBank(unlock.itemId, 1)
+    addSlayerStoreUnlock(unlock.itemId)
     recordCollectionLogDrop({ itemId: unlock.itemId, sourceType: 'skilling', sourceId: 'slayer' })
     requestCriticalPushSave(() => getSnapshot(), CRITICAL_SAVE_REASONS.PURCHASE)
     addToast(`🎉 Purchased ${item.name} — sent to bank`, 'info')

@@ -31,6 +31,15 @@ describe('store rules', () => {
     expect(isStoreVisibleItem(itemsData.slayer_defender, { isIronman: false })).toBe(false)
     expect(isStoreVisibleItem(itemsData.gloves_of_slaughter, { isIronman: false })).toBe(false)
   })
+  it('blocks slayer gear coin purchases until it has been unlocked with slayer points', () => {
+    // Untradeable, so blocked by default — for everyone.
+    expect(getPurchaseRestriction(itemsData.slayer_helmet, { isIronman: false }).code).toBe('UNTRADEABLE_RESTRICTED')
+    expect(getPurchaseRestriction(itemsData.slayer_helmet, { isIronman: true }).code).toBe('UNTRADEABLE_RESTRICTED')
+  })
+  it('allows slayer gear coin purchases (including for Ironman) once unlocked with slayer points', () => {
+    expect(getPurchaseRestriction(itemsData.slayer_helmet, { isIronman: false, allowSlayerStorePurchase: true }).allowed).toBe(true)
+    expect(getPurchaseRestriction(itemsData.gloves_of_slaughter, { isIronman: true, allowSlayerStorePurchase: true }).allowed).toBe(true)
+  })
   it('routes ordinary tradeable items to the order book (no infinite store)', () => {
     expect(getPurchaseRestriction(itemsData.iron_scimitar, { isIronman: false })).toMatchObject({
       allowed: false,

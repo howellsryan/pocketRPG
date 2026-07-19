@@ -89,6 +89,7 @@ export function GameProvider({ children }) {
   const [dungeoneeringTokens, setDungeoneeringTokensState] = useState(0)
   const [slayerPerks, setSlayerPerksState] = useState({ doubleQuantity: false })
   const [characterUnlocks, setCharacterUnlocksState] = useState({ doubleSlayerXp: false, autoSlayerTask: false })
+  const [slayerStoreUnlocks, setSlayerStoreUnlocksState] = useState([])
   const [activeCombatSpell, setActiveCombatSpellState] = useState(null)
   const [bossKillCounts, setBossKillCountsState] = useState({})
   const [raidKillCounts, setRaidKillCountsState] = useState({})
@@ -144,6 +145,7 @@ export function GameProvider({ children }) {
   const slayerMasterTaskCompletionsRef = useRef({})
   const slayerPerksRef = useRef({ doubleQuantity: false })
   const characterUnlocksRef = useRef({ doubleSlayerXp: false, autoSlayerTask: false })
+  const slayerStoreUnlocksRef = useRef([])
   const completedQuestsRef = useRef(new Set())
   const questQueueRef = useRef([])
   const kingdomRef = useRef(DEFAULT_KINGDOM)
@@ -173,7 +175,7 @@ export function GameProvider({ children }) {
 
   // Load all state from IndexedDB — runs idle simulation inline, returns idleResult
   const loadGame = useCallback(async () => {
-    let [p, s, inv, eq, b, shortcuts, stance, savedHP, autoBankSetting, savedBankConfig, savedEquipmentPresets, savedUnlocks, savedSlayerTask, savedSlayerPoints, savedSlayerTasksCompleted, savedSlayerMasterTaskCompletions, savedDungeoneeringTokens, savedBossKillCounts, savedRaidKillCounts, savedFarming, savedCompletedQuests, savedQuestQueue, savedActiveCombatSpell, savedUnlockedMinigameItems, savedIdleCombatSetup, savedSlayerPerks, savedCharacterUnlocks, savedShowInfoToasts, savedWorldLocation, savedAutoBankExcludedItems, savedBackgroundCombat, savedKingdom] = await Promise.all([
+    let [p, s, inv, eq, b, shortcuts, stance, savedHP, autoBankSetting, savedBankConfig, savedEquipmentPresets, savedUnlocks, savedSlayerTask, savedSlayerPoints, savedSlayerTasksCompleted, savedSlayerMasterTaskCompletions, savedDungeoneeringTokens, savedBossKillCounts, savedRaidKillCounts, savedFarming, savedCompletedQuests, savedQuestQueue, savedActiveCombatSpell, savedUnlockedMinigameItems, savedIdleCombatSetup, savedSlayerPerks, savedCharacterUnlocks, savedShowInfoToasts, savedWorldLocation, savedAutoBankExcludedItems, savedBackgroundCombat, savedKingdom, savedSlayerStoreUnlocks] = await Promise.all([
       getPlayer(), getAllStats(), getInventory(), getEquipment(), getBank(),
       getSetting('homeShortcuts'), getSetting('combatStance'), getSetting('currentHP'),
       getSetting('autoBankLoot'), getSetting('bankConfig'), getSetting('equipmentPresets'), getSetting('unlockedFeatures'),
@@ -181,7 +183,7 @@ export function GameProvider({ children }) {
       getSetting('completedQuests'), getSetting('questQueue'), getSetting('activeCombatSpell'), getSetting('unlockedMinigameItems'),
       getSetting('idleCombatSetup'), getSetting('slayerPerks'), getSetting('characterUnlocks'),
       getSetting('showInfoToasts'), getSetting('worldLocation'), getSetting('autoBankExcludedItems'),
-      getSetting('backgroundCombat'), getSetting('kingdom')
+      getSetting('backgroundCombat'), getSetting('kingdom'), getSetting('slayerStoreUnlocks')
     ])
     const normalisedIdleCombatSetup = normaliseIdleCombatSetup(savedIdleCombatSetup)
     const autoBankExcludedItemIdsSet = new Set(savedAutoBankExcludedItems || [])
@@ -698,6 +700,9 @@ export function GameProvider({ children }) {
     const loadedCharacterUnlocks = savedCharacterUnlocks && typeof savedCharacterUnlocks === 'object' ? savedCharacterUnlocks : { doubleSlayerXp: false, autoSlayerTask: false }
     characterUnlocksRef.current = loadedCharacterUnlocks
     setCharacterUnlocksState(loadedCharacterUnlocks)
+    const loadedSlayerStoreUnlocks = Array.isArray(savedSlayerStoreUnlocks) ? savedSlayerStoreUnlocks : []
+    slayerStoreUnlocksRef.current = loadedSlayerStoreUnlocks
+    setSlayerStoreUnlocksState(loadedSlayerStoreUnlocks)
     const hpLevel = s.hitpoints ? getLevelFromXP(s.hitpoints.xp) : 10
     setCurrentHP(savedHP != null ? Math.min(savedHP, hpLevel) : hpLevel)
     setLoaded(true)
@@ -1047,6 +1052,16 @@ export function GameProvider({ children }) {
     saveSetting('characterUnlocks', next)
   }, [])
 
+  // Records a slayer unlockable as coin-purchasable in the store — set the first
+  // time it's bought with slayer points. Idempotent (deduped set union).
+  const addSlayerStoreUnlock = useCallback((itemId) => {
+    if (!itemId || slayerStoreUnlocksRef.current.includes(itemId)) return
+    const next = [...slayerStoreUnlocksRef.current, itemId]
+    slayerStoreUnlocksRef.current = next
+    setSlayerStoreUnlocksState(next)
+    saveSetting('slayerStoreUnlocks', next)
+  }, [])
+
   const updateBossKillCounts = useCallback((counts) => {
     setBossKillCountsState(counts)
     saveSetting('bossKillCounts', counts)
@@ -1318,6 +1333,7 @@ export function GameProvider({ children }) {
       questQueue: questQueueRef.current,
       slayerPerks: slayerPerksRef.current,
       characterUnlocks: characterUnlocksRef.current,
+      slayerStoreUnlocks: slayerStoreUnlocksRef.current,
       kingdom: kingdomRef.current,
     },
   })
@@ -1616,6 +1632,7 @@ export function GameProvider({ children }) {
     getActivityProgress, clearActivityProgress,
     slayerPerks, updateSlayerPerk,
     characterUnlocks, updateCharacterUnlock,
+    slayerStoreUnlocks, addSlayerStoreUnlock,
     kingdom, updateKingdom, settleKingdom, applyKingdomSkip,
     isIronman: player?.is_ironman || false,
     isOneLife: player?.is_one_life || false,

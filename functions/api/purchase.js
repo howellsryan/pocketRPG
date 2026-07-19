@@ -10,6 +10,7 @@ import { auditLog } from '../_lib/game/audit.js'
 import { toErrorResponse } from '../_lib/game/errors.js'
 import { getLevelFromXP } from '../../src/engine/experience.js'
 import { ALL_SKILLS, MAX_TOTAL_LEVEL } from '../../src/utils/constants.js'
+import { hasSlayerStoreUnlock } from '../../src/engine/slayerUnlocks.js'
 
 const MINIGAME_UNLOCK_STORE_PRICE = 4_500_000
 const MINIGAME_STORE_PRODUCTS = new Set(
@@ -38,7 +39,11 @@ export async function onRequestPost({ request, env }) {
 
     const { row, saveObject, saveRevision } = await loadCharacterWithSave(env, characterId, auth.identity.id)
     const allowMinigameUnlockPurchase = MINIGAME_STORE_PRODUCTS.has(itemId) && unlockedMinigameItems.has(itemId)
-    const restriction = assertPurchasable(item, { isIronman: Boolean(row.is_ironman), isOneLife: Boolean(row.is_one_life), allowMinigameUnlockPurchase })
+    // Authorize a slayer-gear coin sale strictly from the server's own save —
+    // the unlock is recorded only when the item was bought with slayer points
+    // (settleActionCompletion). Never trust a client-supplied flag here.
+    const allowSlayerStorePurchase = hasSlayerStoreUnlock(saveObject.settings?.slayerStoreUnlocks, itemId)
+    const restriction = assertPurchasable(item, { isIronman: Boolean(row.is_ironman), isOneLife: Boolean(row.is_one_life), allowMinigameUnlockPurchase, allowSlayerStorePurchase })
     if (!restriction.allowed) return json({ error: restriction.message, code: restriction.code }, 403)
 
     if (item.isSkillCape) {

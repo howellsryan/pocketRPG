@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import itemsData from '../src/data/items.json'
-import { SLAYER_UNLOCKS, getSlayerUnlockPurchaseState, ownsItem } from '../src/engine/slayerUnlocks.js'
+import { SLAYER_UNLOCKS, getSlayerUnlockPurchaseState, ownsItem, isSlayerStoreItem, hasSlayerStoreUnlock } from '../src/engine/slayerUnlocks.js'
 
 describe('slayer unlocks', () => {
   it('contains expected unlocks and costs', () => {
@@ -20,6 +20,22 @@ describe('slayer unlocks', () => {
     expect(ownsItem({ itemId: unlock.itemId, bank: { slayer_defender: { quantity: 1 } }, inventory: [] })).toBe(true)
     const state = getSlayerUnlockPurchaseState({ unlock, item: (itemsData as any)[unlock.itemId], slayerPoints: unlock.cost, bank: {}, inventory: [] })
     expect(state.allowed).toBe(true)
+  })
+})
+
+describe('slayer store coin-purchase gating', () => {
+  it('identifies every slayer unlockable as a slayer-store item', () => {
+    for (const unlock of SLAYER_UNLOCKS) expect(isSlayerStoreItem(unlock.itemId)).toBe(true)
+    expect(isSlayerStoreItem('slayer_helmet')).toBe(true)
+    expect(isSlayerStoreItem('iron_scimitar')).toBe(false)
+  })
+  it('only counts a slayer item as store-unlocked when its id is in the unlock list', () => {
+    expect(hasSlayerStoreUnlock(['slayer_helmet'], 'slayer_helmet')).toBe(true)
+    expect(hasSlayerStoreUnlock(['slayer_helmet'], 'slayer_defender')).toBe(false)
+    expect(hasSlayerStoreUnlock([], 'slayer_helmet')).toBe(false)
+    expect(hasSlayerStoreUnlock(null as any, 'slayer_helmet')).toBe(false)
+    // A non-slayer item never qualifies even if listed.
+    expect(hasSlayerStoreUnlock(['iron_scimitar'], 'iron_scimitar')).toBe(false)
   })
 })
 

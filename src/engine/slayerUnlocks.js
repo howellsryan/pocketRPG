@@ -22,6 +22,22 @@ export const SLAYER_UNLOCKS = [
   },
 ]
 
+export const SLAYER_STORE_ITEM_IDS = new Set(SLAYER_UNLOCKS.map(u => u.itemId))
+
+// A slayer unlockable becomes coin-purchasable in the store only after the
+// player has bought it once with slayer points. That first purchase records the
+// item id in `settings.slayerStoreUnlocks` (server-side in settleActionCompletion,
+// mirrored client-side). `isSlayerStoreItem` / `hasSlayerStoreUnlock` are read at
+// runtime by both the store UI and the server purchase endpoint.
+export function isSlayerStoreItem(itemId) {
+  return SLAYER_STORE_ITEM_IDS.has(itemId)
+}
+
+export function hasSlayerStoreUnlock(unlocks, itemId) {
+  if (!isSlayerStoreItem(itemId)) return false
+  return Array.isArray(unlocks) && unlocks.includes(itemId)
+}
+
 export function ownsItem({ itemId, bank = {}, inventory = [] }) {
   if (bank?.[itemId]?.quantity > 0) return true
   return inventory.some(slot => slot?.itemId === itemId && (slot.quantity ?? 1) > 0)
