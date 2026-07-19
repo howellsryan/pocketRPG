@@ -5,6 +5,7 @@ import { createTerrain } from '../terrain'
 import { createScatterLayers } from '../scatter'
 import { createStatics } from '../statics'
 import { createProps } from '../props'
+import { createAmbient } from '../ambient'
 import pastureZone from '../../../zones/pasture.json'
 import forestZone from '../../../zones/forest.json'
 import lumbrightZone from '../../../zones/lumbright.json'
@@ -34,6 +35,8 @@ declare global {
 const params = new URLSearchParams(location.search)
 const zoneId = params.get('zone') && ZONES[params.get('zone')!] ? params.get('zone')! : 'pasture'
 const yawParam = params.get('yaw')
+const pitchParam = params.get('pitch')
+const distParam = params.get('dist')
 const def = ZONES[zoneId]
 
 // Zone dropdown → reload with the chosen zone.
@@ -62,6 +65,7 @@ createLights(scene, def.ambience)
 const { heightField } = createTerrain(scene, def.collision, def.width, def.height, def.palette, def.terrain, def.ground)
 void createProps(scene, def.props ?? [])
 void createStatics(scene, def.objects)
+const ambient = createAmbient(scene, def.ambient, heightField.heightAt)
 
 const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true })
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
@@ -72,7 +76,11 @@ const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 500)
 const center = new THREE.Vector3(def.width / 2, 0, def.height / 2)
 const radius = Math.max(def.width, def.height)
 // Lower pitch than gameplay so relief reads against the horizon.
-const orbit = { yaw: yawParam != null ? Number(yawParam) : Math.PI / 4, pitch: 0.5, dist: radius * 1.05 }
+const orbit = {
+  yaw: yawParam != null ? Number(yawParam) : Math.PI / 4,
+  pitch: pitchParam != null ? Number(pitchParam) : 0.5,
+  dist: distParam != null ? Number(distParam) * radius : radius * 1.05,
+}
 
 function applyCamera(): void {
   camera.position.set(
@@ -107,7 +115,9 @@ window.addEventListener('resize', () => {
   renderer.setSize(window.innerWidth, window.innerHeight)
 })
 
+const clock = new THREE.Clock()
 function loop(): void {
+  ambient.update(clock.getDelta())
   renderer.render(scene, camera)
   requestAnimationFrame(loop)
 }

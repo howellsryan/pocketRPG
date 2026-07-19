@@ -5,6 +5,7 @@ import { createTerrain } from '../terrain'
 import { createScatterLayers } from '../scatter'
 import { createStatics } from '../statics'
 import { createProps } from '../props'
+import { createAmbient } from '../ambient'
 import { createMonsterMesh } from '../entities'
 
 // Read-only 3D preview of a zone using the REAL game renderer — the displaced
@@ -32,6 +33,7 @@ export async function openPreview3D(def: ZoneDef): Promise<void> {
   const { heightField } = createTerrain(scene, def.collision, def.width, def.height, def.palette, def.terrain, def.ground)
   void createProps(scene, def.props ?? [])
   void createStatics(scene, def.objects)
+  const ambient = createAmbient(scene, def.ambient, heightField.heightAt)
   if (def.terrain?.scatter?.length) {
     const occupied = new Set<string>([
       ...def.objects.map((o) => `${o.x},${o.z}`),
@@ -89,7 +91,9 @@ export async function openPreview3D(def: ZoneDef): Promise<void> {
   renderer.domElement.addEventListener('wheel', onWheel, { passive: false })
 
   let raf = 0
+  const clock = new THREE.Clock()
   const loop = () => {
+    ambient.update(clock.getDelta())
     renderer.render(scene, camera)
     raf = requestAnimationFrame(loop)
   }
@@ -98,6 +102,7 @@ export async function openPreview3D(def: ZoneDef): Promise<void> {
   current = {
     dispose: () => {
       cancelAnimationFrame(raf)
+      ambient.dispose()
       heightField.dispose()
       window.removeEventListener('pointermove', onMove)
       window.removeEventListener('pointerup', onUp)

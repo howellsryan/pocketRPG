@@ -56,6 +56,15 @@ export type ZoneAmbience = {
   sunIntensity?: number
 }
 
+/** Non-combat ambient life (docs/world-design-review-2026-07.md §4.4) — the
+ * cheap "towns feel inhabited" layer. Pure client render: critters wander with
+ * no combat/collision/server involvement, smoke rises from a chimney tile.
+ * `critters[].model` is a loadable GLB basename (chicken, frog, …); the wander
+ * rectangle is [x, x+w) × [z, z+h) in tiles. Absent => today's still world. */
+export type ZoneAmbientCritter = { model: string; x: number; z: number; w: number; h: number; count: number }
+export type ZoneAmbientSmoke = { x: number; z: number; y?: number }
+export type ZoneAmbient = { critters?: ZoneAmbientCritter[]; smoke?: ZoneAmbientSmoke[] }
+
 /** Client-render-only terrain height (docs/open-world-terrain-plan.md). Pure
  * decoration: movement, collision, and pathfinding stay flat on the tile grid.
  * `relief` is peak height in tiles (≤1.5). A `procedural` block seeds
@@ -96,6 +105,9 @@ export type ZoneDef = {
   props?: ZonePropDef[]
   palette?: ZonePalette
   ambience?: ZoneAmbience
+  /** Client-render-only ambient life (wandering critters, chimney smoke).
+   * Decoration: no collision, no server authority. */
+  ambient?: ZoneAmbient
   terrain?: ZoneTerrain
   /** Client-render-only painted ground kinds (paths, water, floors). Decoration:
    * collision stays in the ASCII grid. Last region wins on overlap. */
@@ -180,6 +192,26 @@ export function validateZone(zone: ZoneDef): ZoneValidationResult {
       errors.push(`ground[${i}] must have positive width and height`)
     } else if (r.x < 0 || r.z < 0 || r.x + r.w > zone.width || r.z + r.h > zone.height) {
       errors.push(`ground[${i}] (${r.x},${r.z} ${r.w}x${r.h}) extends outside the zone`)
+    }
+  }
+
+  if (zone.ambient) {
+    for (const [i, c] of (zone.ambient.critters ?? []).entries()) {
+      if (!c.model || typeof c.model !== 'string') errors.push(`ambient.critters[${i}].model must be a non-empty string`)
+      if (![c.x, c.z, c.w, c.h].every((n) => typeof n === 'number' && Number.isFinite(n)) || c.w <= 0 || c.h <= 0) {
+        errors.push(`ambient.critters[${i}] must have finite x,z and positive w,h`)
+      } else if (c.x < 0 || c.z < 0 || c.x + c.w > zone.width || c.z + c.h > zone.height) {
+        errors.push(`ambient.critters[${i}] area extends outside the zone`)
+      }
+      if (typeof c.count !== 'number' || !Number.isInteger(c.count) || c.count < 1 || c.count > 24) {
+        errors.push(`ambient.critters[${i}].count must be an integer in 1..24`)
+      }
+    }
+    for (const [i, s] of (zone.ambient.smoke ?? []).entries()) {
+      if (![s.x, s.z].every((n) => typeof n === 'number' && Number.isFinite(n)) || s.x < 0 || s.z < 0 || s.x >= zone.width || s.z >= zone.height) {
+        errors.push(`ambient.smoke[${i}] must be an in-bounds tile`)
+      }
+      if (s.y != null && (typeof s.y !== 'number' || s.y < 0 || s.y > 10)) errors.push(`ambient.smoke[${i}].y must be a number in 0..10`)
     }
   }
 

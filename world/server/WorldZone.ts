@@ -537,6 +537,7 @@ export class WorldZone extends Server<Env> {
         ...(this.zone.props?.length ? { props: this.zone.props } : {}),
         ...(this.zone.palette ? { palette: this.zone.palette } : {}),
         ...(this.zone.ambience ? { ambience: this.zone.ambience } : {}),
+        ...(this.zone.ambient ? { ambient: this.zone.ambient } : {}),
         ...(this.zone.terrain ? { terrain: this.zone.terrain } : {}),
         ...(this.zone.ground?.length ? { ground: this.zone.ground } : {}),
       },

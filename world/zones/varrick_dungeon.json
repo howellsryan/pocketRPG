@@ -1513,5 +1513,35 @@
    "frequency": 0.1
   },
   "material": "volcanic"
- }
+ },
+ "ground": [
+  {
+   "kind": "floor_tile",
+   "x": 15,
+   "z": 7,
+   "w": 11,
+   "h": 7
+  },
+  {
+   "kind": "floor_stone",
+   "x": 6,
+   "z": 13,
+   "w": 36,
+   "h": 8
+  },
+  {
+   "kind": "plaza",
+   "x": 12,
+   "z": 20,
+   "w": 16,
+   "h": 15
+  },
+  {
+   "kind": "floor_stone",
+   "x": 18,
+   "z": 34,
+   "w": 5,
+   "h": 14
+  }
+ ]
 }

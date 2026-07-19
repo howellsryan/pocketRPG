@@ -13,6 +13,7 @@ import { applyEntityDiff, applyGear, createEntity, createHeroMesh, createMonster
 import { createClickMarker, setupInput, showClickMarker, updateClickMarker } from './input'
 import { createStatics, type Statics } from './statics'
 import { createProps } from './props'
+import { createAmbient, type AmbientLayer } from './ambient'
 import { createExitMarkers, type ExitLayer } from './exits'
 import { createLootLayer, type LootLayer } from './loot'
 import { itemName, loadItemIcons } from './itemIcon'
@@ -62,6 +63,7 @@ function enterWorld(session: WorldSession): void {
   let statics: Statics | null = null
   let lootLayer: LootLayer | null = null
   let exitLayer: ExitLayer | null = null
+  let ambientLayer: AmbientLayer | null = null
   let transitioning = false
   let camera: THREE.PerspectiveCamera | null = null
   let cam: ReturnType<typeof attachCameraControls> | null = null
@@ -400,6 +402,7 @@ function enterWorld(session: WorldSession): void {
         exitLayer = createExitMarkers(scene, message.zone.exits ?? [])
         exitMarkers = message.zone.exits ?? []
         void createProps(scene, message.zone.props ?? [])
+        ambientLayer = createAmbient(scene, message.zone.ambient, heightField.heightAt)
         const marker = createClickMarker(scene)
         camera = createCamera()
         const container = document.getElementById('scene')!
@@ -616,6 +619,7 @@ function enterWorld(session: WorldSession): void {
           }
           lootLayer?.update(deltaSeconds)
           exitLayer?.update(now)
+          ambientLayer?.update(deltaSeconds)
           updateClickMarker(marker, now)
           if (minimap && self && now - lastMinimap > 150) {
             lastMinimap = now

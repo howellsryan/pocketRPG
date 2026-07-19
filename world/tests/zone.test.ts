@@ -114,6 +114,46 @@ describe('validateZone', () => {
     expect(oob.valid).toBe(false)
     if (!oob.valid) expect(oob.errors.some((e) => e.includes('outside'))).toBe(true)
   })
+
+  it('accepts a zone with valid ambient life (critters + smoke)', () => {
+    const zone: ZoneDef = {
+      id: 'ambient',
+      name: 'Ambient',
+      width: 8,
+      height: 8,
+      spawn: { x: 0, z: 0 },
+      collision: ['........', '........', '........', '........', '........', '........', '........', '........'],
+      objects: [],
+      npcs: [],
+      ambient: {
+        critters: [{ model: 'chicken', x: 1, z: 1, w: 4, h: 4, count: 5 }],
+        smoke: [{ x: 2, z: 3, y: 2.5 }],
+      },
+    }
+    expect(validateZone(zone)).toEqual({ valid: true })
+  })
+
+  it('rejects ambient critters out of bounds, with a bad count, and smoke off the map', () => {
+    const base: ZoneDef = {
+      id: 'ambient',
+      name: 'Ambient',
+      width: 8,
+      height: 8,
+      spawn: { x: 0, z: 0 },
+      collision: ['........', '........', '........', '........', '........', '........', '........', '........'],
+      objects: [],
+      npcs: [],
+    }
+    const oob = validateZone({ ...base, ambient: { critters: [{ model: 'chicken', x: 6, z: 6, w: 5, h: 5, count: 3 }] } })
+    expect(oob.valid).toBe(false)
+    if (!oob.valid) expect(oob.errors.some((e) => e.includes('outside'))).toBe(true)
+    const badCount = validateZone({ ...base, ambient: { critters: [{ model: 'chicken', x: 0, z: 0, w: 2, h: 2, count: 99 }] } })
+    expect(badCount.valid).toBe(false)
+    if (!badCount.valid) expect(badCount.errors.some((e) => e.includes('count'))).toBe(true)
+    const badSmoke = validateZone({ ...base, ambient: { smoke: [{ x: 9, z: 1 }] } })
+    expect(badSmoke.valid).toBe(false)
+    if (!badSmoke.valid) expect(badSmoke.errors.some((e) => e.includes('in-bounds'))).toBe(true)
+  })
 })
 
 describe('groundKindGrid', () => {

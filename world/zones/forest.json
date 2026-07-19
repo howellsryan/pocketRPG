@@ -1921,5 +1921,23 @@
       "z": 29,
       "rot": 5.51
     }
-  ]
+  ],
+  "ground": [
+    { "kind": "path_dirt", "x": 4, "z": 14, "w": 2, "h": 11 },
+    { "kind": "path_dirt", "x": 4, "z": 12, "w": 6, "h": 2 },
+    { "kind": "path_dirt", "x": 8, "z": 0, "w": 2, "h": 13 },
+    { "kind": "path_dirt", "x": 0, "z": 23, "w": 5, "h": 2 },
+    { "kind": "path_dirt", "x": 9, "z": 22, "w": 18, "h": 2 },
+    { "kind": "path_dirt", "x": 24, "z": 19, "w": 8, "h": 8 },
+    { "kind": "path_dirt", "x": 9, "z": 10, "w": 9, "h": 2 },
+    { "kind": "path_dirt", "x": 5, "z": 24, "w": 2, "h": 16 },
+    { "kind": "path_dirt", "x": 6, "z": 30, "w": 8, "h": 2 },
+    { "kind": "path_dirt", "x": 6, "z": 39, "w": 11, "h": 2 }
+  ],
+  "ambient": {
+    "critters": [
+      { "model": "frog", "x": 24, "z": 20, "w": 6, "h": 5, "count": 4 },
+      { "model": "frog", "x": 6, "z": 34, "w": 6, "h": 5, "count": 3 }
+    ]
+  }
 }
