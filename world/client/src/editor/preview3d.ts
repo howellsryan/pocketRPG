@@ -29,7 +29,7 @@ export async function openPreview3D(def: ZoneDef): Promise<void> {
 
   const scene = createScene(def.ambience)
   createLights(scene, def.ambience)
-  const { heightField } = createTerrain(scene, def.collision, def.width, def.height, def.palette, def.terrain)
+  const { heightField } = createTerrain(scene, def.collision, def.width, def.height, def.palette, def.terrain, def.ground)
   void createProps(scene, def.props ?? [])
   void createStatics(scene, def.objects)
   if (def.terrain?.scatter?.length) {

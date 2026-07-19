@@ -385,7 +385,7 @@ function enterWorld(session: WorldSession): void {
         // Build terrain first: registers the zone height sampler so every
         // tileToWorld call rides the surface, and returns the ground mesh that
         // picking raycasts. Flat when the zone has no `terrain` block.
-        const { heightField, mesh: ground } = createTerrain(scene, message.zone.collision, message.zone.w, message.zone.h, message.zone.palette, message.zone.terrain)
+        const { heightField, mesh: ground } = createTerrain(scene, message.zone.collision, message.zone.w, message.zone.h, message.zone.palette, message.zone.terrain, message.zone.ground)
         // Decorative scatter: avoid static-object, exit, and prop tiles
         // (blocked tiles are skipped by the placer). NPCs move, so their spawn
         // tiles aren't masked.

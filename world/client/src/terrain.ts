@@ -1,7 +1,8 @@
 import * as THREE from 'three'
 import { createGround, setHeightSampler } from './scene'
 import { createTerrainMaterial, isTerrainPreset } from './terrainMaterials'
-import type { GroundPalette, ZoneTerrain } from '../../shared/protocol'
+import { createGroundPaint, createWater } from './groundPaint'
+import type { GroundPalette, ZoneTerrain, ZoneGroundRegion } from '../../shared/protocol'
 
 // Client-render-only terrain height (docs/open-world-terrain-plan.md §3). The
 // server never learns the ground has height; this only lifts render Y so meshes
@@ -126,6 +127,7 @@ export function createTerrain(
   height: number,
   palette: GroundPalette | undefined,
   terrain: ZoneTerrain | undefined,
+  ground?: ZoneGroundRegion[],
 ): { heightField: HeightField; mesh: THREE.Mesh } {
   const corners = cornersFor(width, height, terrain)
   const heightField = createHeightField(width, height, corners)
@@ -136,5 +138,7 @@ export function createTerrain(
       ? createTerrainMaterial(terrain.material, Math.min(terrain.relief, 1.5))
       : undefined
   const mesh = createGround(scene, collision, width, height, palette, corners, material)
+  createGroundPaint(scene, width, height, ground, corners)
+  createWater(scene, ground, heightField.heightAt)
   return { heightField, mesh }
 }
