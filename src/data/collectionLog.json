@@ -536,6 +536,14 @@
             "void_king_robe",
             "void_king_gloves"
           ]
+        },
+        {
+          "id": "fletching_guild",
+          "label": "Fletching Guild",
+          "icon": "\ud83c\udff9",
+          "items": [
+            "bowyers_knife"
+          ]
         }
       ]
     },

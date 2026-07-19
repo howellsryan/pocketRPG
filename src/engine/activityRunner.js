@@ -57,7 +57,7 @@ export function getActionTicksForTask(task, ctx = {}) {
   switch (task.type) {
     case 'skill':
       return Math.max(1, Math.ceil(
-        getEffectiveToolActionTicks(task.skill, task.action.ticks, ctx.equipment, ctx.itemsData, ctx.stats, ctx.inventory)
+        getEffectiveToolActionTicks(task.skill, task.action.ticks, ctx.equipment, ctx.itemsData, ctx.stats, ctx.inventory, task.action)
       ))
     case 'gather':   return Math.max(1, Math.ceil(task.gatherTask.ticks || 1))
     case 'agility':  return Math.max(1, Math.ceil(task.action.ticks || 1))

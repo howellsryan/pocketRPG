@@ -3129,6 +3129,40 @@
     "requirements": {},
     "isGeneralStore": false
   },
+  "bowyers_knife": {
+    "id": "bowyers_knife",
+    "legacy_item_id": "bowyers_knife",
+    "name": "Bowyer's Knife",
+    "description": "Cuts one second off the time to fletch any bow while carried or equipped.",
+    "type": "tool",
+    "slot": "weapon",
+    "stackable": false,
+    "attackSpeed": 4,
+    "attackStyle": "stab",
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {},
+    "shopValue": 500000,
+    "isGeneralStore": false,
+    "isUntradeable": true
+  },
   "hammer": {
     "id": "hammer",
     "legacy_item_id": "hammer",

@@ -97,7 +97,7 @@ Clue scrolls drop from monsters and come in four tiers: medium, hard, elite and 
 
 ## Minigames
 
-Minigames are timed grinds for specific unique rewards — for example running Viking Assault until you earn a piece of the Fighter set. Each minigame task shows its expected duration and its reward. Minigame uniques are granted server-side when the grind completes and count toward your collection log.
+Minigames are timed grinds for specific unique rewards — for example running Viking Assault until you earn a piece of the Fighter set. Each minigame task shows its expected duration and its reward. Minigame uniques are granted server-side when the grind completes and count toward your collection log. The Fletching Guild (Ardounne) is a 2-hour grind for the Bowyer's Knife — an untradeable tool that cuts one second off the time to fletch any bow while it's in your inventory or equipped.
 
 ## Raids and bosses
 
