@@ -1,7 +1,8 @@
 import { validateZone, type ZoneDef, type ZonePalette, type ZoneAmbience } from '../../../shared/zone'
 import { buildCatalog, type CatalogEntry, type CatalogGroup } from '../../../shared/catalog'
 import { EditorApi, type ZoneListEntry } from './api'
-import { EditorState, blankZone, paintTile, paintRect, floodFill, resizeZone } from './state'
+import { EditorState, blankZone, paintTile, paintRect, floodFill, resizeZone, groundGrid, applyGroundGrid, paintGroundTile } from './state'
+import { GROUND_KINDS } from '../../../shared/groundKinds'
 import { GridView, type TilePointer } from './grid'
 import { AMBIENCE_PRESETS, DEFAULT_AMBIENCE, DEFAULT_PALETTE, PALETTE_PRESETS, matchAmbience, matchPalette } from './presets'
 import { PROP_MODELS } from './propManifest'
@@ -11,7 +12,7 @@ import { extractRegion, loadPrefabs, savePrefab, stampPrefab, type Prefab } from
 
 const TOKEN_KEY = 'world_editor_token'
 const PROD_KEY = 'world_editor_prod'
-type Tool = 'paintWalkable' | 'paintBlocked' | 'rect' | 'fill' | 'spawn' | 'select' | 'portal' | 'scatter' | 'stamp' | 'pan'
+type Tool = 'paintWalkable' | 'paintBlocked' | 'rect' | 'fill' | 'spawn' | 'select' | 'portal' | 'scatter' | 'stamp' | 'pan' | 'paintGround'
 
 const $ = <T = HTMLElement>(id: string) => document.getElementById(id) as T
 
@@ -98,6 +99,7 @@ async function boot(): Promise<void> {
   catalog = buildCatalog(PROP_MODELS)
   wireTopbar()
   wireTools()
+  wireGroundKinds()
   wireMeta()
   wirePresets()
   wirePlaytest()
@@ -226,6 +228,9 @@ let paintValue: boolean | null = null
 let rectStart: { x: number; z: number } | null = null
 let rectBlocked = false
 
+let selectedGroundKind = GROUND_KINDS[0].id
+let groundStrokeGrid: string[] | null = null
+
 let movingSelection = false
 
 function onTile(p: TilePointer): void {
@@ -291,6 +296,24 @@ function onTile(p: TilePointer): void {
     return
   }
 
+  if (activeTool === 'paintGround') {
+    const def = state.getDef()
+    const kind = rightHeld ? '' : selectedGroundKind // right-drag erases
+    if (p.phase === 'down') {
+      state.beginStroke()
+      groundStrokeGrid = groundGrid(def)
+      if (p.inside) paintGroundTile(groundStrokeGrid, def.width, def.height, p.x, p.z, kind)
+      state.applyStroke((d) => applyGroundGrid(d, groundStrokeGrid!))
+    } else if (p.phase === 'move' && groundStrokeGrid && (p.buttons & 3)) {
+      if (p.inside) paintGroundTile(groundStrokeGrid, def.width, def.height, p.x, p.z, kind)
+      state.applyStroke((d) => applyGroundGrid(d, groundStrokeGrid!))
+    } else if (p.phase === 'up' && groundStrokeGrid) {
+      state.endStroke()
+      groundStrokeGrid = null
+    }
+    return
+  }
+
   if (activeTool === 'rect') {
     if (p.phase === 'down') {
       rectStart = { x: p.x, z: p.z }
@@ -353,6 +376,27 @@ function setTool(tool: Tool): void {
   }
   $('scatterControls').style.display = tool === 'scatter' ? 'flex' : 'none'
   $('stampControls').style.display = tool === 'stamp' ? 'block' : 'none'
+  $('groundControls').style.display = tool === 'paintGround' ? 'block' : 'none'
+}
+
+/** Builds the ground-kind swatch picker once; clicking one selects the kind the
+ * paint-ground brush lays down. */
+function wireGroundKinds(): void {
+  const host = $('groundKinds')
+  host.innerHTML = ''
+  for (const k of GROUND_KINDS) {
+    const btn = document.createElement('button')
+    btn.className = 'toolbtn'
+    btn.dataset.kind = k.id
+    btn.title = k.label
+    btn.innerHTML = `<span style="display:inline-block;width:12px;height:12px;border-radius:2px;vertical-align:-1px;margin-right:6px;background:${k.color}"></span>${k.label}`
+    btn.classList.toggle('active', k.id === selectedGroundKind)
+    btn.addEventListener('click', () => {
+      selectedGroundKind = k.id
+      for (const b of host.querySelectorAll('[data-kind]')) b.classList.toggle('active', (b as HTMLElement).dataset.kind === k.id)
+    })
+    host.appendChild(btn)
+  }
 }
 
 function clearPlacement(): void {
