@@ -2,6 +2,7 @@ import { isValidEntry } from '../collectionLog.js'
 import { GameApiError } from './errors.js'
 import { addItemToInventory, addItemToBank, removeItemFromInventory, removeItemFromBank, bankQuantity, getInventory } from './inventory.js'
 import { VALID_CLUE_REWARD_ITEMS } from './clueRewards.js'
+import { isSlayerStoreItem } from '../../../src/engine/slayerUnlocks.js'
 import skillsData from '../../../src/data/skills.json' assert { type: 'json' }
 import raidsData from '../../../src/data/raids.json' assert { type: 'json' }
 import monstersData from '../../../src/data/monsters.json' assert { type: 'json' }
@@ -83,6 +84,14 @@ function addUnlockedMinigameItems(saveObject, itemIds = []) {
   if (!saveObject.settings || typeof saveObject.settings !== 'object') saveObject.settings = {}
   const current = Array.isArray(saveObject.settings.unlockedMinigameItems) ? saveObject.settings.unlockedMinigameItems : []
   saveObject.settings.unlockedMinigameItems = [...new Set([...current, ...filtered])]
+}
+
+function addSlayerStoreUnlocks(saveObject, itemIds = []) {
+  const filtered = itemIds.filter(id => isSlayerStoreItem(id))
+  if (filtered.length === 0) return
+  if (!saveObject.settings || typeof saveObject.settings !== 'object') saveObject.settings = {}
+  const current = Array.isArray(saveObject.settings.slayerStoreUnlocks) ? saveObject.settings.slayerStoreUnlocks : []
+  saveObject.settings.slayerStoreUnlocks = [...new Set([...current, ...filtered])]
 }
 
 function setDungeoneeringTokenBalance(saveObject, nextValue) {
@@ -191,6 +200,13 @@ export function settleActionCompletion(saveObject, { sourceType, sourceId, nonce
   // dedicated kill_counts table (see _completeShared.js), not the save blob.
   if (sourceType === 'minigames' || sourceType === 'minigame') {
     addUnlockedMinigameItems(saveObject, granted.map(g => g.itemId))
+  }
+
+  // A slayer-points purchase of an unlockable records it in
+  // settings.slayerStoreUnlocks — that flag is what later authorizes buying the
+  // same gear for coins in the store (functions/api/purchase.js).
+  if (sourceType === 'slayer') {
+    addSlayerStoreUnlocks(saveObject, granted.map(g => g.itemId))
   }
 
   const dTokens = Math.floor(Number(dungeoneeringTokens) || 0)

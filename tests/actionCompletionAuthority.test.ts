@@ -203,6 +203,41 @@ describe('action completion authority helpers', () => {
     expect(out.granted).toEqual([{ itemId: 'slayer_helmet', quantity: 1, destination: 'inventory' }])
   })
 
+  it('records a slayer-points purchase in settings.slayerStoreUnlocks so it can later be bought for coins', () => {
+    const save = makeSave()
+    save.settings.slayerPoints = 500
+    settleActionCompletion(save, {
+      sourceType: 'slayer',
+      sourceId: 'slayer',
+      nonce: 'slayer:slayer_helmet:1',
+      rewards: [{ itemId: 'slayer_helmet', quantity: 1 }],
+      slayerPoints: -400,
+    })
+    expect(save.settings.slayerStoreUnlocks).toEqual(['slayer_helmet'])
+
+    // Idempotent: a second purchase of the same gear doesn't duplicate the id.
+    save.settings.slayerPoints = 500
+    settleActionCompletion(save, {
+      sourceType: 'slayer',
+      sourceId: 'slayer',
+      nonce: 'slayer:slayer_helmet:2',
+      rewards: [{ itemId: 'slayer_helmet', quantity: 1 }],
+      slayerPoints: -400,
+    })
+    expect(save.settings.slayerStoreUnlocks).toEqual(['slayer_helmet'])
+  })
+
+  it('does not record slayerStoreUnlocks for non-slayer completions', () => {
+    const save = makeSave()
+    settleActionCompletion(save, {
+      sourceType: 'monsters',
+      sourceId: 'goblin',
+      nonce: 'monsters:goblin:1',
+      rewards: [],
+    })
+    expect(save.settings.slayerStoreUnlocks).toBeUndefined()
+  })
+
   it('rejects a slayer-points spend the player cannot afford', () => {
     const save = makeSave()
     save.settings.slayerPoints = 100

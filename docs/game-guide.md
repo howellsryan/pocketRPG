@@ -127,7 +127,7 @@ Reach level 99 in a skill and you can buy that skill's cape of accomplishment fr
 
 ## Trading Post and shops
 
-The General Store sells a fixed catalogue of basics at fixed prices. Everything else trades on the Trading Post, a player-to-player order book: list items to sell, place buy offers, instant-sell into existing offers, and collect your coins or items when offers fill. Ironman characters cannot trade with other players.
+The General Store sells a fixed catalogue of basics at fixed prices. Everything else trades on the Trading Post, a player-to-player order book: list items to sell, place buy offers, instant-sell into existing offers, and collect your coins or items when offers fill. Ironman characters cannot trade with other players. The store's Slayer section sells slayer gear (Slayer Helmet, Slayer Defender, Gloves of Slaughter and the like) for coins at its shop value — but only after you've unlocked that piece once with slayer points on the Character Unlocks screen. Until then the row stays locked. This section is open to every account type, Ironman included.
 
 ## PvP
 

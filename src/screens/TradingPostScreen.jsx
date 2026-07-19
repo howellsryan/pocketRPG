@@ -3,6 +3,7 @@ import { useGame } from '../state/gameState.jsx'
 import { countItem, buyWithShards } from '../engine/inventory.js'
 import { api, getToken, getCharacterId } from '../cloud/api.js'
 import { isOrderBookItem, getPurchaseRestriction } from '../engine/storeRules.js'
+import { isSlayerStoreItem } from '../engine/slayerUnlocks.js'
 import { getLevelFromXP } from '../engine/experience.js'
 import { ALL_SKILLS, MAX_TOTAL_LEVEL } from '../utils/constants.js'
 import Panel from '../components/Panel.jsx'
@@ -56,6 +57,7 @@ export default function TradingPostScreen({ onBuyCredits, onBack }) {
     isOneLife,
     unlockedFeatures,
     unlockedMinigameItems,
+    slayerStoreUnlocks,
     completedQuests,
     loadGame,
     getSnapshot,
@@ -108,7 +110,11 @@ export default function TradingPostScreen({ onBuyCredits, onBack }) {
     return pool
   }, [itemsData])
 
-  const STORE_SECTIONS = ['Weapons & Armour', 'Minigame & Quest Unlocks', 'Runes, Robes & Staves', 'Skilling Equipment', 'Shardglass']
+  const STORE_SECTIONS = ['Weapons & Armour', 'Minigame & Quest Unlocks', 'Runes, Robes & Staves', 'Skilling Equipment', 'Slayer', 'Shardglass']
+
+  // Slayer gear becomes coin-purchasable (at shop value) once unlocked with
+  // slayer points — until then the row shows locked. Everyone sees the section.
+  const slayerStoreUnlockSet = useMemo(() => new Set(slayerStoreUnlocks || []), [slayerStoreUnlocks])
 
   // Shardglass gear is bought with Shardglass Shards (an inventory resource),
   // not coins — a client-side exchange like crafting, distinct from the coin
@@ -121,6 +127,7 @@ export default function TradingPostScreen({ onBuyCredits, onBack }) {
   const WIZARD_IDS = new Set(['wizard_hat', 'black_wizard_hat', 'wizard_robe_top', 'wizard_robe_skirt'])
 
   function getStoreSection(id, item) {
+    if (isSlayerStoreItem(id)) return 'Slayer'
     if (item.shardglassShopCost) return 'Shardglass'
     if (item.questUnlock || minigameProductIds.has(id) || item.isSkillCape || item.isMaxCape) return 'Minigame & Quest Unlocks'
     if (item.type === 'rune' || (item.type === 'resource' && id.endsWith('_rune')) || id.startsWith('staff_of_') || WIZARD_IDS.has(id)) return 'Runes, Robes & Staves'
@@ -134,7 +141,7 @@ export default function TradingPostScreen({ onBuyCredits, onBack }) {
     for (const s of STORE_SECTIONS) sections[s] = []
     for (const [id, item] of Object.entries(itemsData)) {
       if (!item || (item.id && item.id !== id)) continue
-      if (!item.isGeneralStore && !item.isSkillCape && !item.isMaxCape && !minigameProductIds.has(id) && !item.questUnlock && !item.shardglassShopCost) continue
+      if (!item.isGeneralStore && !item.isSkillCape && !item.isMaxCape && !minigameProductIds.has(id) && !item.questUnlock && !item.shardglassShopCost && !isSlayerStoreItem(id)) continue
       // Account-identity helms only appear in the store for the exact matching
       // type: standard Ironman vs One Life Ironman never see each other's helm.
       if (item.requiresAccount === 'ironman' && !(isIronman && !isOneLife)) continue
@@ -300,7 +307,7 @@ export default function TradingPostScreen({ onBuyCredits, onBack }) {
         closeModal()
       } else {
         // General-store path -- legacy /api/purchase endpoint.
-        const r = getPurchaseRestriction(selected, { isIronman, isOneLife, allowMinigameUnlockPurchase: minigameProductIds.has(selected.id) && unlockedMinigameItems.has(selected.id) })
+        const r = getPurchaseRestriction(selected, { isIronman, isOneLife, allowMinigameUnlockPurchase: minigameProductIds.has(selected.id) && unlockedMinigameItems.has(selected.id), allowSlayerStorePurchase: isSlayerStoreItem(selected.id) && slayerStoreUnlockSet.has(selected.id) })
         if (!r.allowed) {
           addToast(r.message || 'This item cannot be purchased here.', 'error')
           setBusy(false)
@@ -470,9 +477,11 @@ export default function TradingPostScreen({ onBuyCredits, onBack }) {
   const renderListRow = (item) => {
     const orderBook = isOrderBookItem(item)
     const isMinigameUnlocked = minigameProductIds.has(item.id) && unlockedMinigameItems.has(item.id)
-    const restriction = getPurchaseRestriction(item, { isIronman, isOneLife, allowMinigameUnlockPurchase: isMinigameUnlocked })
+    const slayerUnlocked = isSlayerStoreItem(item.id) && slayerStoreUnlockSet.has(item.id)
+    const restriction = getPurchaseRestriction(item, { isIronman, isOneLife, allowMinigameUnlockPurchase: isMinigameUnlocked, allowSlayerStorePurchase: slayerUnlocked })
     const buyDisabledReason = (() => {
       if (item.questUnlock && !completedQuests.has(item.questUnlock)) return `🔒 ${questMap[item.questUnlock] || 'Quest required'}`
+      if (isSlayerStoreItem(item.id) && !slayerUnlocked) return '🔒 Unlock with Slayer points first'
       if (minigameProductIds.has(item.id) && !isMinigameUnlocked) return '🔒 Earn from minigame first'
       const capeBlock = getSkillCapeLevelBlock(item)
       if (capeBlock) return capeBlock
@@ -821,8 +830,9 @@ export default function TradingPostScreen({ onBuyCredits, onBack }) {
       : null
     const isQuestLocked = selected.questUnlock && !completedQuests.has(selected.questUnlock)
     const isMinigameLocked = minigameProductIds.has(selected.id) && !unlockedMinigameItems.has(selected.id)
+    const isSlayerLocked = isSlayerStoreItem(selected.id) && !slayerStoreUnlockSet.has(selected.id)
     const capeBlock = getSkillCapeLevelBlock(selected)
-    const buyLocked = isBuy && (isQuestLocked || isMinigameLocked || !!capeBlock)
+    const buyLocked = isBuy && (isQuestLocked || isMinigameLocked || isSlayerLocked || !!capeBlock)
     return (
       <div class="space-y-3">
         {summary && <Panel>{summary}</Panel>}
@@ -835,7 +845,9 @@ export default function TradingPostScreen({ onBuyCredits, onBack }) {
               ? `🔒 Complete ${questMap[selected.questUnlock]} to unlock this item.`
               : isMinigameLocked
                 ? '🔒 Earn this from the minigame once before purchasing.'
-                : capeBlock}
+                : isSlayerLocked
+                  ? '🔒 Buy this with Slayer points once before purchasing it for coins.'
+                  : capeBlock}
           </Panel>
         )}
         {orderBook && (
