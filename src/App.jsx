@@ -1818,6 +1818,13 @@ function GameApp() {
   // Boot-time offline catch-up result: quest cascades reveal like clue solves
   // (no idle-result modal); everything else keeps the Welcome Back modal.
   function presentBootIdleResult(idleResult) {
+    // Boot-time idle catch-up applies its progress (quest completions, XP, loot)
+    // straight to IDB, but the milestone-diff autosave seeds its baseline from
+    // that already-applied state — so it fires no durable push for progress made
+    // during boot. Push it now, or a just-idled quest completion can be lost to a
+    // later server-authoritative round-trip (e.g. a Trading Post buy adopting the
+    // server's older save) before the debounced autosave lands.
+    if (!isInPvpMatch) requestCriticalPushSave(() => getSnapshot(), CRITICAL_SAVE_REASONS.QUEST_COMPLETE)
     if (idleResult.questCascade) {
       emitQuestCompletionReveal(idleResult.completedQuests, idleResult.aggregatedXpReward, idleResult.coinsGained, idleResult.levelUps)
       return
