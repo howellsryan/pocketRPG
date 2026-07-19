@@ -47,11 +47,11 @@ export type PrayerView = { id: string; name: string; level: number; skill: strin
 
 /** Splits every prayer the player's Prayer level unlocks into the two HUD
  * sections — protection prayers and combat (stat-boost) prayers — each tagged
- * with its skill icon, level-ascending. Locked prayers are omitted. */
+ * with its skill icon, highest-level first. Locked prayers are omitted. */
 export function categorisePrayers(prayerLevel: number): { protection: PrayerView[]; combat: PrayerView[] } {
   const protection: PrayerView[] = []
   const combat: PrayerView[] = []
-  for (const p of Object.values(prayers).sort((a, b) => a.level - b.level)) {
+  for (const p of Object.values(prayers).sort((a, b) => b.level - a.level)) {
     if (p.level > prayerLevel) continue
     const category: PrayerCategory = p.bonusType === 'protection' ? 'protection' : 'combat'
     const view: PrayerView = { id: p.id, name: p.name, level: p.level, skill: prayerSkill(p), category }

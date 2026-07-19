@@ -33,7 +33,7 @@ export async function openPreview3D(def: ZoneDef): Promise<void> {
   const { heightField } = createTerrain(scene, def.collision, def.width, def.height, def.palette, def.terrain, def.ground)
   void createProps(scene, def.props ?? [])
   void createStatics(scene, def.objects)
-  const ambient = createAmbient(scene, def.ambient, heightField.heightAt)
+  const ambient = createAmbient(scene, def.ambient, heightField.heightAt, def.collision)
   if (def.terrain?.scatter?.length) {
     const occupied = new Set<string>([
       ...def.objects.map((o) => `${o.x},${o.z}`),

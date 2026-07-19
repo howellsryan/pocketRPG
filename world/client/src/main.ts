@@ -1,7 +1,7 @@
 import { clearStoredSession, exchangeHandoff, getRunPref, getStoredSession, getStoredZone, parseHandoffFromHash, pocketRpgUrl, storeRunPref, storeZone, type WorldSession } from './auth'
 import { hideBossFrame, hideConnBanner, hideOverlay, initChatInput, initHud, paintHudIcons, pushKillFeed, pushMessage, removeHpBar, removeNameplate, removeOverheadChat, renderEquipment, renderInventory, renderPrayerPanel, renderSpellbook, setPrayerState, setRunState, setSpecialEnergy, setSpellButton, setStanceActive, setThreatPanel, showBossFrame, showConnBanner, showContextMenu, showHitsplat, showLoginRequired, showTransitionOverlay, showUniqueBanner, showXpDrop, updateHpBar, updateHpPill, updateNameplate, updateOverheadChat, npcExamine, type SpellbookEntry, type TeleportEntry } from './ui'
 import { createMinimap, type Minimap, type MinimapDot } from './minimap'
-import { initWorldMapButton, openWorldMap, type WorldMapData } from './worldMap'
+import { openWorldMap, type WorldMapData } from './worldMap'
 import { closeBankUI, isBankOpen, openBankUI, updateBankInventory, updateBankUI } from './bank'
 import { closeCraftUI, openCraftUI, updateCraftInventory, updateCraftStats, type SkillLevels } from './crafting'
 import { getLevelFromXP } from '../../../src/engine/experience.js'
@@ -446,7 +446,7 @@ function enterWorld(session: WorldSession): void {
         exitLayer = createExitMarkers(scene, message.zone.exits ?? [])
         exitMarkers = message.zone.exits ?? []
         void createProps(scene, message.zone.props ?? [])
-        ambientLayer = createAmbient(scene, message.zone.ambient, heightField.heightAt)
+        ambientLayer = createAmbient(scene, message.zone.ambient, heightField.heightAt, message.zone.collision)
         const marker = createClickMarker(scene)
         camera = createCamera()
         const container = document.getElementById('scene')!
@@ -520,6 +520,10 @@ function enterWorld(session: WorldSession): void {
           },
           onSpecial: () => send(socket, { t: 'special' }),
           onUnequip: (slot) => send(socket, { t: 'unequip', slot }),
+          onWorldMap: () => {
+            if (!self || !worldMapData) return
+            openWorldMap({ ...worldMapData, self: { x: Math.floor(self.mesh.position.x), z: Math.floor(self.mesh.position.z) } })
+          },
           onLogout: () => {
             // Reload rather than close(): partysocket auto-reconnects on a bare
             // close and would re-enter the world. A reload with the session
@@ -532,13 +536,6 @@ function enterWorld(session: WorldSession): void {
           },
         })
         initChatInput((text) => send(socket, { t: 'chat', text }))
-        initWorldMapButton(() => {
-          if (!self || !worldMapData) return
-          openWorldMap(
-            { ...worldMapData, self: { x: Math.floor(self.mesh.position.x), z: Math.floor(self.mesh.position.z) } },
-            (placeId) => send(socket, { t: 'teleport', placeId })
-          )
-        })
         stats = message.you.stats
         playerCombatLevel = combatLevelFromStats(message.you.stats)
         lootLayer = createLootLayer(scene)

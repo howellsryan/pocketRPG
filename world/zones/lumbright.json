@@ -1809,7 +1809,7 @@
   "ambient": {
     "critters": [
       {
-        "model": "chicken",
+        "model": "villager_c",
         "x": 27,
         "z": 30,
         "w": 10,

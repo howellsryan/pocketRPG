@@ -298,12 +298,13 @@ const ground = [
   { kind: 'path_dirt', x: 0, z: 43, w: 14, h: 3 },
 ]
 
-// ── Ambient life (§4.4): non-combat hens on the streets and chimney smoke —
-//    render-only, no collision, no server. A safe capital reads as inhabited.
+// ── Ambient life (§4.4): non-combat villagers on the streets and chimney
+//    smoke — client-render only, wander gated by collision (R2-9), no server.
+//    A safe capital reads as inhabited.
 const ambient = {
   critters: [
-    { model: 'chicken', x: 38, z: 56, w: 10, h: 6, count: 5 }, // market avenue by spawn
-    { model: 'chicken', x: 22, z: 33, w: 10, h: 8, count: 4 }, // west residential courtyard
+    { model: 'villager_a', x: 38, z: 56, w: 10, h: 6, count: 5 }, // market avenue by spawn
+    { model: 'villager_b', x: 22, z: 33, w: 10, h: 8, count: 4 }, // west residential courtyard
   ],
   smoke: [
     { x: 55, z: 31, y: 2.6 }, // Grand Smithy

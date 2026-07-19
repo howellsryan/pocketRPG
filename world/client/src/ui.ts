@@ -30,6 +30,8 @@ const HUD_CSS = `
 }
 .hud-tabs { display: flex; gap: 3px; }
 .hud-tabs.bottom { margin-top: 1px; }
+.hud-tabs.bottom .hud-tab:not(.logout) { flex: 0 0 44px; }
+.hud-tabs.bottom .hud-tab.logout { flex: 1; }
 .hud-tab {
   flex: 1; min-height: 44px; min-width: 44px;
   background: rgba(20, 16, 10, 0.82); border: 1px solid #5a4a30; border-radius: 6px;
@@ -117,10 +119,11 @@ const HUD_CSS = `
   color: #f4e9c8; text-shadow: 0 1px 2px #000, 0 0 2px #000; font-family: sans-serif; pointer-events: none;
 }
 #magic-panel { max-height: 340px; overflow-y: auto; display: flex; flex-direction: column; gap: 5px; }
-.tp-list { display: flex; flex-direction: column; gap: 3px; }
+.tp-list { display: grid; grid-template-columns: 1fr 1fr; gap: 3px; }
 .tp-row {
   min-height: 40px; padding: 8px 12px; border: 1px solid #5a4a30; border-radius: 6px; cursor: pointer;
   text-align: left; background: rgba(60, 50, 34, 0.55); color: #f4e9c8; font-size: 13px; font-family: sans-serif;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .tp-row:hover { background: rgba(80, 66, 42, 0.75); }
 .spell-grid { display: flex; flex-wrap: wrap; gap: 4px; }
@@ -263,6 +266,7 @@ export type HudHandlers = InvHandlers & {
   onSpellMenu: (x: number, y: number) => void
   onSpecial: () => void
   onUnequip: (slot: string) => void
+  onWorldMap: () => void
   onLogout: () => void
 }
 
@@ -383,9 +387,11 @@ function setupInvDrag(panel: HTMLElement, handlers: InvHandlers): void {
 
 // PocketRPG's own bespoke nav icons (src/data/bespokeIcons.json), matching the
 // main game's tab bar; painted by paintHudIcons() once the icon data loads.
+// Equipment lives in the bottom row (see bottomTabs in initHud) to free up
+// space in this rail — its pane switching still goes through selectTab, which
+// queries .hud-tab[data-tab] globally, not by container.
 const TABS: { id: string; iconKey: string; title: string }[] = [
   { id: 'inventory', iconKey: 'backpack', title: 'Inventory' },
-  { id: 'equipment', iconKey: 'paperdoll', title: 'Equipment' },
   { id: 'combat', iconKey: 'combat_level', title: 'Combat' },
   { id: 'prayer', iconKey: 'prayer', title: 'Prayer' },
   { id: 'magic', iconKey: 'magic_staff', title: 'Magic' },
@@ -538,7 +544,7 @@ export function initHud(handlers?: HudHandlers): void {
   prayerFill.style.width = '100%'
   const prayerLabel = document.createElement('div')
   prayerLabel.className = 'label'
-  prayerLabel.textContent = '🙏 Prayer'
+  prayerLabel.textContent = ''
   prayerBar.appendChild(prayerFill)
   prayerBar.appendChild(prayerLabel)
   prayer.appendChild(prayerBar)
@@ -558,10 +564,29 @@ export function initHud(handlers?: HudHandlers): void {
 
   panel.appendChild(body)
 
-  // Logout moved to its own full-width rail beneath the panel body (its old spot
-  // in the top rail is now the Magic tab).
+  // Bottom row: Equipment (moved off the top rail to free it up) + World Map
+  // (an action, not a pane — no data-tab, so selectTab never touches it) +
+  // Logout, which flex-fills the remaining width.
   const bottomTabs = document.createElement('div')
   bottomTabs.className = 'hud-tabs bottom'
+
+  const equipTab = document.createElement('div')
+  equipTab.className = 'hud-tab'
+  equipTab.setAttribute('data-tab', 'equipment')
+  equipTab.setAttribute('data-icon', 'paperdoll')
+  equipTab.setAttribute('data-icon-size', String(HUD_TAB_ICON_PX))
+  equipTab.title = 'Equipment'
+  equipTab.addEventListener('click', () => tabClicked('equipment'))
+  bottomTabs.appendChild(equipTab)
+
+  const worldMapTab = document.createElement('div')
+  worldMapTab.className = 'hud-tab'
+  worldMapTab.setAttribute('data-icon', 'globe')
+  worldMapTab.setAttribute('data-icon-size', String(HUD_TAB_ICON_PX))
+  worldMapTab.title = 'World Map'
+  worldMapTab.addEventListener('click', () => handlers?.onWorldMap())
+  bottomTabs.appendChild(worldMapTab)
+
   const logout = document.createElement('div')
   logout.className = 'hud-tab logout'
   logout.title = 'Logout'
@@ -804,7 +829,7 @@ export function setPrayerState(points: number, max: number, protection: string |
     const pct = max > 0 ? Math.max(0, Math.min(100, (points / max) * 100)) : 0
     ;(bar.querySelector('.fill') as HTMLElement | null)?.style.setProperty('width', `${pct}%`)
     const label = bar.querySelector('.label') as HTMLElement | null
-    if (label) label.textContent = `🙏 ${Math.ceil(points)}/${max}`
+    if (label) label.textContent = `${Math.ceil(points)}/${max}`
   }
   for (const btn of document.querySelectorAll<HTMLElement>('.prayer-btn')) {
     const id = btn.getAttribute('data-prayer')

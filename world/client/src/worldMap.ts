@@ -1,15 +1,18 @@
 // Full-screen world map: a button (top-right column, under the minimap) opens
 // a large, zoomable/pannable view of the whole zone with markers for every
-// interactive thing — places, banks, skilling nodes, monster spawns, exits —
-// plus a "Travel here" action on place markers. Pure DOM/canvas, no three.js;
-// mirrors the conventions of minimap.ts/bank.ts (module-level style injection,
-// one open/close pair, pure helpers pulled out for testability).
+// interactive thing — places, banks, skilling nodes, monster spawns, exits.
+// Info-only (no "Travel here" — travel is walking or Magic-tab teleports
+// only, 2026-07). Pure DOM/canvas, no three.js; mirrors the conventions of
+// minimap.ts/bank.ts (module-level style injection, one open/close pair, pure
+// helpers pulled out for testability).
 import type { ExitMarker, GroundPalette, Landmark, NpcSpawn, StaticObject, ZoneGroundRegion } from '../../shared/protocol'
 import { groundKind, groundKindGrid } from '../../shared/groundKinds'
 import { clusterByType, type Cluster, type ClusterInput } from '../../shared/mapClusters'
+import { uiIconMarkup } from './itemIcon'
 import worldData from '../../../src/data/world.json'
 import monstersData from '../../../src/data/monsters.json'
 import skillsData from '../../../src/data/skills.json'
+import { MONSTER_ICONS } from '../../../src/utils/monsterIcons.js'
 
 const BAKE_PX_PER_TILE = 6
 const MIN_ZOOM_MULT = 1
@@ -60,9 +63,14 @@ export type WorldMapData = {
 const STATIC_CATEGORY: Record<string, string> = {
   bank_chest: 'bank', furnace: 'smithing', anvil: 'smithing', range: 'cooking', rock: 'mining', tree: 'woodcutting',
 }
-const CATEGORY_EMOJI: Record<string, string> = {
-  bank: '🏦', smithing: '⚒️', cooking: '🍳', mining: '⛏️', woodcutting: '🪓', place: '📍', monster: '☠️', exit: '🚪',
+// The game's own art (bespokeIcons.json via uiIconMarkup) for every category
+// except Place (world.json's own emoji, already correct) and Monster (its own
+// per-monster emoji from monsterIcons.js — MONSTER_ICON_FALLBACK below).
+const CATEGORY_ICON_KEY: Record<string, string> = {
+  bank: 'coins', smithing: 'anvil', cooking: 'cooking_pot', mining: 'mining', woodcutting: 'wood_axe', exit: 'door',
 }
+const PLACE_EMOJI_FALLBACK = '📍'
+const MONSTER_ICON_FALLBACK = '👹'
 const CATEGORY_LABEL: Record<string, string> = {
   bank: 'Bank', smithing: 'Smithing', cooking: 'Cooking', mining: 'Mining', woodcutting: 'Woodcutting',
   place: 'Place', monster: 'Monster', exit: 'Exit',
@@ -76,12 +84,6 @@ const FILTER_CHIPS: { label: string; categories: string[] }[] = [
 ]
 
 const WORLD_MAP_CSS = `
-#worldmap-btn {
-  position: fixed; right: 8px; top: 148px; z-index: 10; width: 44px; height: 44px;
-  background: rgba(20, 16, 10, 0.82); border: 1px solid #5a4a30; border-radius: 6px;
-  color: #c9b892; font-size: 20px; cursor: pointer;
-  display: flex; align-items: center; justify-content: center; user-select: none;
-}
 #worldmap-modal {
   position: fixed; inset: 0; z-index: 26; display: flex; align-items: center; justify-content: center;
   background: rgba(0, 0, 0, 0.55); font-family: sans-serif;
@@ -120,6 +122,8 @@ const WORLD_MAP_CSS = `
   cursor: pointer; user-select: none; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.8));
 }
 .wm-marker.hidden-category { display: none; }
+.wm-marker.wm-svg { background: rgba(20, 16, 10, 0.7); border-radius: 50%; }
+.wm-marker.wm-svg svg { display: block; }
 .wm-marker .wm-badge {
   position: absolute; right: -2px; bottom: -2px; min-width: 15px; height: 15px; padding: 0 3px;
   border-radius: 8px; background: #46618a; color: #fff; font-size: 10px; font-weight: bold;
@@ -131,6 +135,13 @@ const WORLD_MAP_CSS = `
   animation: wm-pulse 1.6s ease-in-out infinite;
 }
 @keyframes wm-pulse { 0%, 100% { box-shadow: 0 0 0 2px rgba(0,0,0,0.6), 0 0 0 0 rgba(255,224,102,0.6); } 50% { box-shadow: 0 0 0 2px rgba(0,0,0,0.6), 0 0 0 8px rgba(255,224,102,0); } }
+#wm-zoom-controls { position: absolute; right: 8px; bottom: 8px; z-index: 5; display: flex; flex-direction: column; gap: 6px; }
+.wm-zoom-btn {
+  width: 44px; height: 44px; border-radius: 6px; cursor: pointer; user-select: none;
+  background: rgba(20, 16, 10, 0.82); border: 1px solid #5a4a30; color: #ffe066;
+  font-size: 22px; font-weight: bold; font-family: sans-serif;
+  display: flex; align-items: center; justify-content: center;
+}
 #wm-info {
   position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); z-index: 32;
   width: min(340px, 90vw); background: rgba(24, 19, 12, 0.97); border: 1px solid #6a5636;
@@ -138,10 +149,6 @@ const WORLD_MAP_CSS = `
 }
 #wm-info .wm-info-title { font-size: 15px; font-weight: bold; color: #ffe066; margin-bottom: 4px; }
 #wm-info .wm-info-body { font-size: 13px; color: #d8c9a2; line-height: 1.4; }
-#wm-info .wm-travel {
-  margin-top: 8px; width: 100%; min-height: 44px; border: none; border-radius: 6px; cursor: pointer;
-  background: #46618a; color: #fff; font-size: 14px; font-weight: bold;
-}
 `
 
 let cssReady = false
@@ -151,21 +158,6 @@ function ensureCss(): void {
   const style = document.createElement('style')
   style.textContent = WORLD_MAP_CSS
   document.head.appendChild(style)
-}
-
-/** Creates the fixed 44x44 map-open button, positioned just under the
- * minimap. Call once; painted by the same paintHudIcons() pass as the HUD
- * tabs via its data-icon attribute. */
-export function initWorldMapButton(onClick: () => void): void {
-  if (document.getElementById('worldmap-btn')) return
-  ensureCss()
-  const btn = document.createElement('div')
-  btn.id = 'worldmap-btn'
-  btn.title = 'World Map'
-  btn.setAttribute('data-icon', 'globe')
-  btn.setAttribute('data-icon-size', '24')
-  btn.addEventListener('click', onClick)
-  document.body.appendChild(btn)
 }
 
 function bakeCanvas(data: WorldMapData): HTMLCanvasElement {
@@ -216,7 +208,10 @@ function reposition(stage: HTMLElement, markers: Marker[], selfEl: HTMLElement |
   }
 }
 
-function clampPan(transform: { panX: number; panY: number; zoom: number }, bakedW: number, bakedH: number, viewportW: number, viewportH: number): void {
+export type MapTransform = { panX: number; panY: number; zoom: number }
+export type ZoomLimits = { min: number; max: number }
+
+function clampPan(transform: MapTransform, bakedW: number, bakedH: number, viewportW: number, viewportH: number): void {
   const scaledW = bakedW * transform.zoom
   const scaledH = bakedH * transform.zoom
   const minX = Math.min(0, viewportW - scaledW)
@@ -227,7 +222,24 @@ function clampPan(transform: { panX: number; panY: number; zoom: number }, baked
   transform.panY = Math.min(maxY, Math.max(minY, transform.panY))
 }
 
-function showInfoCard(title: string, body: string, onTravel: (() => void) | null): void {
+/** Zooms `transform` to `newZoom` while keeping the viewport-space point
+ * (cx, cy) fixed on screen (the wheel/pinch/zoom-button anchor), then clamps
+ * zoom to `limits` and pan to the baked canvas bounds. Returns a fresh
+ * transform — callers merge it back in (Object.assign) rather than mutating
+ * their own copy directly, so this stays a pure, testable helper. */
+export function zoomAt(
+  transform: MapTransform, cx: number, cy: number, newZoom: number, limits: ZoomLimits,
+  bakedW: number, bakedH: number, viewportW: number, viewportH: number,
+): MapTransform {
+  const zoom = Math.min(limits.max, Math.max(limits.min, newZoom))
+  const worldX = (cx - transform.panX) / transform.zoom
+  const worldY = (cy - transform.panY) / transform.zoom
+  const next: MapTransform = { zoom, panX: cx - worldX * zoom, panY: cy - worldY * zoom }
+  clampPan(next, bakedW, bakedH, viewportW, viewportH)
+  return next
+}
+
+function showInfoCard(title: string, body: string): void {
   document.getElementById('wm-info')?.remove()
   const card = document.createElement('div')
   card.id = 'wm-info'
@@ -239,18 +251,6 @@ function showInfoCard(title: string, body: string, onTravel: (() => void) | null
   bodyEl.textContent = body
   card.appendChild(titleEl)
   card.appendChild(bodyEl)
-  if (onTravel) {
-    const btn = document.createElement('button')
-    btn.className = 'wm-travel'
-    btn.textContent = 'Travel here'
-    // Travelling closes the whole map, not just the info card — the player
-    // is about to snap there, they don't need the map open anymore.
-    btn.addEventListener('click', () => {
-      onTravel()
-      closeWorldMap()
-    })
-    card.appendChild(btn)
-  }
   document.body.appendChild(card)
 }
 
@@ -261,8 +261,8 @@ export function closeWorldMap(): void {
 
 /** Opens the full-screen world map: bakes the zone terrain once, places one
  * marker per place/bank/skilling-cluster/monster-spawn/exit, and lets the
- * player pan/zoom (wheel + drag) and tap a place marker to travel there. */
-export function openWorldMap(data: WorldMapData, onTeleport: (placeId: string) => void): void {
+ * player pan/zoom (wheel + drag) and tap a marker for an info card. */
+export function openWorldMap(data: WorldMapData): void {
   ensureCss()
   closeWorldMap()
 
@@ -332,11 +332,12 @@ export function openWorldMap(data: WorldMapData, onTeleport: (placeId: string) =
   const markers: Marker[] = []
   const staticById = new Map<string, StaticObject>(data.statics.map((s) => [s.id, s]))
 
-  function addMarker(x: number, z: number, category: string, emoji: string, count: number, onTap: () => void): void {
+  function addMarker(x: number, z: number, category: string, content: string, isSvg: boolean, count: number, onTap: () => void): void {
     const el = document.createElement('div')
-    el.className = 'wm-marker'
+    el.className = isSvg ? 'wm-marker wm-svg' : 'wm-marker'
     el.dataset.category = category
-    el.textContent = emoji
+    if (isSvg) el.innerHTML = content
+    else el.textContent = content
     if (count > 1) {
       const badge = document.createElement('span')
       badge.className = 'wm-badge'
@@ -355,11 +356,11 @@ export function openWorldMap(data: WorldMapData, onTeleport: (placeId: string) =
   // src/data/world.json for name/icon/lore/facilities.
   for (const lm of data.landmarks) {
     const place = worldPlaces[lm.id]
-    const emoji = place?.icon ?? CATEGORY_EMOJI.place
-    addMarker(lm.x, lm.z, 'place', emoji, 1, () => {
+    const emoji = place?.icon ?? PLACE_EMOJI_FALLBACK
+    addMarker(lm.x, lm.z, 'place', emoji, false, 1, () => {
       const facilities = (place?.facilities ?? []).map((f) => FACILITY_LABEL[f] ?? f).join(', ')
       const body = [place?.lore, facilities ? `Facilities: ${facilities}` : ''].filter(Boolean).join('\n\n')
-      showInfoCard(place?.name ?? lm.label, body || 'A place in Eldermoor.', () => onTeleport(lm.id))
+      showInfoCard(place?.name ?? lm.label, body || 'A place in Eldermoor.')
     })
   }
 
@@ -370,29 +371,32 @@ export function openWorldMap(data: WorldMapData, onTeleport: (placeId: string) =
   const clusters: Cluster[] = clusterByType(clusterInputs, CLUSTER_RADIUS)
   for (const cluster of clusters) {
     const representative = staticById.get(cluster.ids[0])
-    addMarker(cluster.x, cluster.z, cluster.type, CATEGORY_EMOJI[cluster.type] ?? '📍', cluster.count, () => {
+    const iconKey = CATEGORY_ICON_KEY[cluster.type]
+    const markup = iconKey ? uiIconMarkup(iconKey, 26) : ''
+    addMarker(cluster.x, cluster.z, cluster.type, markup || PLACE_EMOJI_FALLBACK, !!markup, cluster.count, () => {
       const label = CATEGORY_LABEL[cluster.type] ?? cluster.type
       const body = cluster.type === 'bank'
         ? 'Deposit and withdraw items.'
         : describeSkillNode(representative, cluster.type)
-      showInfoCard(cluster.count > 1 ? `${label} (${cluster.count})` : label, body, null)
+      showInfoCard(cluster.count > 1 ? `${label} (${cluster.count})` : label, body)
     })
   }
 
   // Monster spawns — one pin per authored spawn point (not live positions).
   for (const spawn of data.spawns) {
     const monster = monsters[spawn.monsterId]
-    addMarker(spawn.x, spawn.z, 'monster', CATEGORY_EMOJI.monster, 1, () => {
+    const emoji = (MONSTER_ICONS as Record<string, string>)[spawn.monsterId] ?? MONSTER_ICON_FALLBACK
+    addMarker(spawn.x, spawn.z, 'monster', emoji, false, 1, () => {
       const name = monster?.name ?? spawn.monsterId
       const level = monster?.combatLevel != null ? ` (level-${monster.combatLevel})` : ''
-      showInfoCard(name, `A monster spawn point${level}.`, null)
+      showInfoCard(name, `A monster spawn point${level}.`)
     })
   }
 
   // Exits (present on per-zone maps; the merged overworld has none).
   for (const exit of data.exits) {
-    addMarker(exit.x, exit.z, 'exit', CATEGORY_EMOJI.exit, 1, () => {
-      showInfoCard(exit.label, 'A way out of this zone.', null)
+    addMarker(exit.x, exit.z, 'exit', uiIconMarkup('door', 26), true, 1, () => {
+      showInfoCard(exit.label, 'A way out of this zone.')
     })
   }
 
@@ -400,33 +404,70 @@ export function openWorldMap(data: WorldMapData, onTeleport: (placeId: string) =
   selfEl.className = 'wm-self'
   viewport.appendChild(selfEl)
 
+  const zoomLimits: ZoomLimits = { min: fitZoom * MIN_ZOOM_MULT, max: fitZoom * MAX_ZOOM_MULT }
+  const applyZoomAt = (cx: number, cy: number, newZoom: number): void => {
+    Object.assign(transform, zoomAt(transform, cx, cy, newZoom, zoomLimits, bakedW, bakedH, viewportSize, viewportSize))
+    reposition(stage, markers, selfEl, data.self, transform)
+  }
+
   reposition(stage, markers, selfEl, data.self, transform)
+
+  // Zoom buttons — desktop-without-wheel and touch devices that struggle with
+  // pinch get an explicit escape hatch. Both zoom about the viewport centre.
+  const zoomControls = document.createElement('div')
+  zoomControls.id = 'wm-zoom-controls'
+  for (const [label, factor] of [['+', 1.4], ['−', 1 / 1.4]] as const) {
+    const btn = document.createElement('div')
+    btn.className = 'wm-zoom-btn'
+    btn.textContent = label
+    // Stop the tap from also reaching the viewport's own pointerdown (which
+    // would start a pan drag) — mirrors how marker taps stopPropagation.
+    btn.addEventListener('pointerdown', (e) => e.stopPropagation())
+    btn.addEventListener('click', () => applyZoomAt(viewportSize / 2, viewportSize / 2, transform.zoom * factor))
+    zoomControls.appendChild(btn)
+  }
+  viewport.appendChild(zoomControls)
 
   viewport.addEventListener('wheel', (e) => {
     e.preventDefault()
     const rect = viewport.getBoundingClientRect()
-    const cx = e.clientX - rect.left
-    const cz = e.clientY - rect.top
-    const worldX = (cx - transform.panX) / transform.zoom
-    const worldZ = (cz - transform.panY) / transform.zoom
-    const newZoom = Math.min(fitZoom * MAX_ZOOM_MULT, Math.max(fitZoom * MIN_ZOOM_MULT, transform.zoom * (1 - e.deltaY * 0.001)))
-    transform.zoom = newZoom
-    transform.panX = cx - worldX * newZoom
-    transform.panY = cz - worldZ * newZoom
-    clampPan(transform, bakedW, bakedH, viewportSize, viewportSize)
-    reposition(stage, markers, selfEl, data.self, transform)
+    applyZoomAt(e.clientX - rect.left, e.clientY - rect.top, transform.zoom * (1 - e.deltaY * 0.001))
   }, { passive: false })
 
+  // Pointer tracking shared by single-finger pan and two-finger pinch-zoom.
+  const activePointers = new Map<number, { x: number; y: number }>()
   let dragging = false
   let lastX = 0
   let lastY = 0
+  let pinchDist = 0
   viewport.addEventListener('pointerdown', (e) => {
-    dragging = true
-    lastX = e.clientX
-    lastY = e.clientY
-    viewport.classList.add('dragging')
+    activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY })
+    if (activePointers.size === 2) {
+      dragging = false
+      const [a, b] = [...activePointers.values()]
+      pinchDist = Math.hypot(a.x - b.x, a.y - b.y)
+    } else if (activePointers.size === 1) {
+      dragging = true
+      lastX = e.clientX
+      lastY = e.clientY
+      viewport.classList.add('dragging')
+    }
   })
   viewport.addEventListener('pointermove', (e) => {
+    if (!activePointers.has(e.pointerId)) return
+    activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY })
+    if (activePointers.size >= 2) {
+      const [a, b] = [...activePointers.values()]
+      const dist = Math.hypot(a.x - b.x, a.y - b.y)
+      if (pinchDist > 0 && dist > 0) {
+        const rect = viewport.getBoundingClientRect()
+        const midX = (a.x + b.x) / 2 - rect.left
+        const midY = (a.y + b.y) / 2 - rect.top
+        applyZoomAt(midX, midY, transform.zoom * (dist / pinchDist))
+      }
+      pinchDist = dist
+      return
+    }
     if (!dragging) return
     transform.panX += e.clientX - lastX
     transform.panY += e.clientY - lastY
@@ -435,10 +476,21 @@ export function openWorldMap(data: WorldMapData, onTeleport: (placeId: string) =
     clampPan(transform, bakedW, bakedH, viewportSize, viewportSize)
     reposition(stage, markers, selfEl, data.self, transform)
   })
-  const endDrag = (): void => {
-    dragging = false
-    viewport.classList.remove('dragging')
+  const endPointer = (e: PointerEvent): void => {
+    activePointers.delete(e.pointerId)
+    pinchDist = 0
+    if (activePointers.size === 1) {
+      // Dropping from two fingers to one: re-anchor the drag to the
+      // remaining pointer so pan doesn't jump on the pinch release.
+      const [remaining] = activePointers.values()
+      dragging = true
+      lastX = remaining.x
+      lastY = remaining.y
+    } else {
+      dragging = false
+      viewport.classList.remove('dragging')
+    }
   }
-  viewport.addEventListener('pointerup', endDrag)
-  viewport.addEventListener('pointercancel', endDrag)
+  viewport.addEventListener('pointerup', endPointer)
+  viewport.addEventListener('pointercancel', endPointer)
 }

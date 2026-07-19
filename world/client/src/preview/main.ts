@@ -68,7 +68,7 @@ const followCentre = followParam
 const { heightField } = createTerrain(scene, def.collision, def.width, def.height, def.palette, def.terrain, def.ground, { chunkCentre: followCentre })
 void createProps(scene, def.props ?? [])
 void createStatics(scene, def.objects)
-const ambient = createAmbient(scene, def.ambient, heightField.heightAt)
+const ambient = createAmbient(scene, def.ambient, heightField.heightAt, def.collision)
 
 const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true })
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
