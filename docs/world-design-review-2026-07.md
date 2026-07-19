@@ -120,7 +120,7 @@ Phases are independently shippable; each gates on `world:check` + the §5 screen
 | **Spike — toon-ramp lighting** | ⬜ Not started | A/B stylized lighting after W1d; screenshots to `DESIGN.md`. |
 | **Assets** | ⬜ Deferred (developer choice) | Buy KayKit EXTRA / Quaternius Patreon (§6) *after* the visual/editor track, then backfill. |
 
-**Recommended next:** the visual track (W1d/W2) and the self-contained editor tools (W3: path, review, walk) are in. The remaining work is the **M1 map-merge prototype** — it unblocks W4 and the deferred W3 heightmap brush (both want the merged-overworld render path), and is the gate for everything downstream.
+**Recommended next:** the visual track (W1d/W2), the self-contained editor tools (W3: path, review, walk), and the **M1 map-merge prototype** are in — `overworld` fuses pasture+lumbright+forest into one contiguous zone with a zone-gated AOI broadcast (`docs/single-world-map-investigation.md` §"M1 results"). Next is **M2** (client chunk-streaming/LOD), which lifts the map-size ceiling and unblocks both the full 14-place overworld (M3, the redirected W4) and the deferred W3 heightmap brush.
 
 ## 8) Files changed / added
 

@@ -112,6 +112,11 @@ export type ZoneDef = {
   /** Client-render-only painted ground kinds (paths, water, floors). Decoration:
    * collision stays in the ASCII grid. Last region wins on overlap. */
   ground?: ZoneGroundRegion[]
+  /** Area-of-interest radius in tiles (M1, docs/single-world-map-investigation.md).
+   * When set, the DO only diffs entities within this many tiles of each player —
+   * the merged-overworld broadcast optimisation. Absent => diff everything to
+   * everyone (today's per-zone behaviour). */
+  aoiRadius?: number
 }
 
 function isWalkable(zone: ZoneDef, x: number, z: number): boolean {
@@ -213,6 +218,10 @@ export function validateZone(zone: ZoneDef): ZoneValidationResult {
       }
       if (s.y != null && (typeof s.y !== 'number' || s.y < 0 || s.y > 10)) errors.push(`ambient.smoke[${i}].y must be a number in 0..10`)
     }
+  }
+
+  if (zone.aoiRadius != null && (typeof zone.aoiRadius !== 'number' || zone.aoiRadius <= 0)) {
+    errors.push(`aoiRadius must be a positive number`)
   }
 
   if (zone.ambience) {

@@ -32,6 +32,7 @@ const CAMERAS = {
   varrick: { yaw: 0.9, pitch: 0.82, dist: 0.72 },
   varrick_dungeon: { yaw: 0.78, pitch: 0.95, dist: 0.8 },
   lumbright: { pitch: 0.6, dist: 0.9 },
+  overworld: { yaw: 0.35, pitch: 1.0, dist: 1.3 }, // wide strip — pull back, look down
 }
 const outDir = path.join(worldDir, 'preview-shots')
 mkdirSync(outDir, { recursive: true })

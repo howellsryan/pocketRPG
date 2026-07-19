@@ -39,7 +39,7 @@ The overworld is its own physical coordinate space; place positions on it are ne
 Target the **hybrid streamed overworld**, reached in de-risked steps rather than a big-bang rewrite:
 
 - **M0 — visual track first (in flight).** Ground paint (shipped), building synthesis, editor tools. Every bit applies unchanged to one big map; none is wasted. This keeps shipping visible quality while the architecture is decided.
-- **M1 — merge prototype.** Fuse `pasture + lumbright + forest` into ONE contiguous zone (no portals between them) in a single DO with AOI broadcast. Cheapest possible test of the whole thesis: does one DO tick a merged map acceptably, and does the client stay smooth? Screenshot + a bot-load check.
+- **M1 — merge prototype. ✅ Built.** `pasture + lumbright + forest` fused into ONE contiguous zone `overworld` (192×64) by `world/scripts/gen-merged-overworld.mjs` — internal portals gone, walkable wilderness between the places, only the `lumbright→varrick` edge kept (the hybrid escape hatch). Renders through the existing pipeline (screenshot-verified) and is served by the normal `WorldZone` DO. AOI broadcast added and **zone-gated** (`aoiRadius`): a player receives diffs only for entities within radius, with enter/leave tracked like loot (`server/aoi.ts`, `computeAoi`); absent on every other zone, so the per-zone game is byte-identical. See §"M1 results" below.
 - **M2 — client streaming.** If M1 holds, add chunked terrain/prop streaming + culling so map size stops bounding the client.
 - **M3 — overworld layout.** Define the physical coordinate positions of all 14 places + the wilderness between them; author as districts of one map (this replaces the per-zone W4 authoring pass).
 - **M4 — scale decision.** Keep single-DO+AOI if concurrency stays migla-scale; escalate to chunk-DOs only if load demands it. Interiors/dungeons stay instanced throughout.
@@ -51,3 +51,15 @@ The only near-term fork: **W1d "repaint the existing separate zones" and W4 "aut
 Two sane orders:
 - **A — Visual-first (recommended):** finish building synthesis + editor tools on the current zones, ship the quality win now, then start the M1 merge prototype. Lowest risk; value ships continuously; unification informed by a real prototype.
 - **B — Unify-first:** start the M1 merge prototype now, before more per-zone authoring, so no zone dressing is thrown away. Higher risk (architecture before the visual tools are done), but avoids redoing any per-place authoring.
+
+## M1 results (2026-07)
+
+**What shipped.** `world/scripts/gen-merged-overworld.mjs` composes the three zones into `world/zones/overworld.json`: a 192×64 map, west→east lumbright · pasture · forest, each place's collision/objects/npcs/props/ground/ambient stamped at an offset (ids namespaced), the gaps left as walkable wilderness with dirt roads linking the former gate gaps. It registers in `server/zones.ts` (validated at module load) and `client/src/preview/main.ts`. AOI lives in `server/aoi.ts` (`computeAoi`, unit-tested) and is wired into `WorldZone.broadcastDiffs` behind the `aoiRadius` gate.
+
+**Thesis check.** Renders as one contiguous world with all three places' streets, buildings, hens/frogs and chimney smoke on it — the client loads the whole 12k-tile mesh without trouble, confirming the merged-map render path works on the existing pipeline. One `WorldZone` DO serves it exactly like any zone.
+
+**Known AOI limitation (prototype).** `computeAoi` diffs off the per-tick changed set plus a full diff for entities *entering* range; a far entity that never emits a diff would only re-appear on its next change. NPCs tick/wander and players move, so this is a non-issue in practice, but a full periodic snapshot per AOI cell is the M2-adjacent hardening if it ever bites.
+
+**Bot-load check — procedure (needs live infra).** Not runnable in CI (a real load test needs `wrangler dev` + a `JWT_SECRET` + D1 + many authed WebSocket clients). To run it locally: seed a character (`npm run dev:seed`), start `wrangler dev`, then open N authed sockets to `/parties/zone/overworld` sending `{t:'hello',token}` and a walk loop, and watch the DO's tick duration (add a `console.log` around the `tick()` body) stay under 600 ms as N climbs. Expected outcome for migla-scale (tens–low-hundreds concurrent): comfortable, since the merged map has only ~9 NPCs and AOI caps per-player broadcast. Escalating past that is the **M4** chunk-DO decision, not M1.
+
+**Next (M2).** Chunked terrain/prop streaming + culling so map *size* stops bounding the client — the prerequisite for a full 14-place overworld (M3) and for the deferred editor heightmap brush.

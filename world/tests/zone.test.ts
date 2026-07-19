@@ -9,6 +9,7 @@ import forestZone from '../zones/forest.json'
 import lumbrightZone from '../zones/lumbright.json'
 import varrickZone from '../zones/varrick.json'
 import varrickDungeonZone from '../zones/varrick_dungeon.json'
+import overworldZone from '../zones/overworld.json'
 import monsters from '../../src/data/monsters.json'
 
 describe('validateZone', () => {
@@ -190,6 +191,17 @@ describe('Phase 6 zones', () => {
 
   it('accepts the real varrick dungeon zone', () => {
     expect(validateZone(varrickDungeonZone as unknown as ZoneDef)).toEqual({ valid: true })
+  })
+
+  it('accepts the merged overworld prototype and gives it an aoiRadius', () => {
+    const ow = overworldZone as unknown as ZoneDef
+    expect(validateZone(ow)).toEqual({ valid: true })
+    expect(ow.aoiRadius).toBeGreaterThan(0)
+  })
+
+  it('the merged overworld has no internal portals — only the Varrick edge survives', () => {
+    const ow = overworldZone as unknown as ZoneDef
+    expect((ow.exits ?? []).map((e) => e.toZone)).toEqual(['varrick'])
   })
 
   it('the varrick dungeon boss references a real monster', () => {

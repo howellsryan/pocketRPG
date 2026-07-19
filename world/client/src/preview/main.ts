@@ -11,6 +11,7 @@ import forestZone from '../../../zones/forest.json'
 import lumbrightZone from '../../../zones/lumbright.json'
 import varrickZone from '../../../zones/varrick.json'
 import varrickDungeonZone from '../../../zones/varrick_dungeon.json'
+import overworldZone from '../../../zones/overworld.json'
 
 // Auth-free, server-free terrain preview. Renders a bundled zone JSON through
 // the REAL terrain pipeline (createTerrain + scatter + statics/props), so it
@@ -24,6 +25,7 @@ const ZONES: Record<string, ZoneDef> = {
   lumbright: lumbrightZone as ZoneDef,
   varrick: varrickZone as unknown as ZoneDef,
   varrick_dungeon: varrickDungeonZone as unknown as ZoneDef,
+  overworld: overworldZone as unknown as ZoneDef,
 }
 
 declare global {
@@ -61,6 +63,10 @@ const width = host.clientWidth || window.innerWidth
 const height = host.clientHeight || window.innerHeight
 
 const scene = createScene(def.ambience)
+// The game's fog (far ≈110) is tuned for a close gameplay camera on a ~64-tile
+// zone; a big review map seen from far would fog entirely to sky. Push fog out
+// to span the zone so the whole thing is reviewable (small zones stay as-is).
+if (scene.fog instanceof THREE.Fog) scene.fog.far = Math.max(scene.fog.far, Math.max(def.width, def.height) * 3)
 createLights(scene, def.ambience)
 const { heightField } = createTerrain(scene, def.collision, def.width, def.height, def.palette, def.terrain, def.ground)
 void createProps(scene, def.props ?? [])
