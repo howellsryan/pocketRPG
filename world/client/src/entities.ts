@@ -9,9 +9,14 @@ import { buildProcCreature, creatureSpecFor, type ProcCreature } from './procCre
 
 const ANIM_CROSSFADE_S = 0.15
 const TURN_SPEED_RAD_PER_S = 14
-// hero.glb (Quaternius Male Ranger, built by scripts/build-hero.mjs) is
-// ~1.9 units tall at unit scale; scaled to read right against 1-unit tiles.
-const HERO_SCALE = 0.85
+// hero.glb (Superhero_Male_FullBody + Peasant outfit, built by
+// scripts/build-hero.mjs — same base character as the combat arena's
+// public/3d-samples/hero.glb, item 12) is ~1.82 units tall at unit scale
+// (T-pose bind bounds; the previous Male_Ranger export measured ~1.87) —
+// scaled up slightly from the old 0.85 to keep the same ~1.59-unit rendered
+// height against 1-unit tiles rather than shrinking the hero when the base
+// model changed underneath it.
+const HERO_SCALE = 0.873
 // cow.glb (Quaternius Farm Animal Pack) is authored Y-up-standing but large and
 // off-origin. Its skeleton carries a baked −90°X + ×100 transform, so it renders
 // upright with NO extra rotation — the earlier rotation was wrong. These are the

@@ -1,16 +1,15 @@
-# Open-World Improvements — Plan & Delivery Guide (2026-07)
+# Open-World Improvements — Decision Record (2026-07)
 
-> **How to use this document.** This is a living plan for the open-world client/server
-> (`world/`). Work the items in the suggested order, one at a time, following the
-> repo's `delivery-loop` skill per item. After each item: update its **Status** and
-> fill in its **Outcome** line (what was actually done, anything that diverged from
-> the plan). When every item is Done or explicitly Dropped, retitle the top of this
-> file "Decision Record" and leave it in `docs/` as the record of what shipped and why.
->
-> **Scope fence.** All 12 items are open-world (`world/`) work. Some touch shared
-> engine data (`src/data/*`) or shared build scripts (`scripts/*`) — that is expected
-> and in scope. Do **not** modify the main app's screens/engine behaviour. Flag
-> adjacent problems in the Outcome notes; don't fix them.
+> All 12 items below are Done. Three carry explicitly-scoped cuts, noted in
+> their own Outcome sections rather than silently dropped: item 1's asset
+> rebuild (STEP→LINEAR interpolation fix) is code-complete but unbuilt — the
+> 71 MiB source GLB isn't available outside a maintainer's machine; item 2
+> applied the DOM-thrash fix unconditionally but didn't attempt the two
+> profile-gated fixes (model triangle count, AoI mesh-reuse cache) for the
+> same reason; item 12 landed stages 1–2 (base model + tint parity) and
+> dropped stage 3 (armour coverage beyond body/legs) per the plan's own
+> "only start it if 1–2 land cleanly" staging. This file is the record of
+> what shipped and why — see each item's Outcome for specifics.
 
 ## Ground rules (read before starting)
 
@@ -52,7 +51,7 @@
 | 9 | Shared/deterministic ambient NPCs | Done |
 | 10 | Follow another player (right-click) | Done |
 | 11 | Show player hitpoints in combat | Done |
-| 12 | Open-world hero = combat-arena hero | Not started |
+| 12 | Open-world hero = combat-arena hero | Done (stages 1–2; stage 3 dropped) |
 
 **Suggested order**: 3 → 5 → 4 → 7 → 8 → 6 (small, independent UI wins; 7 before 8
 so the bank redesign uses the new scrollbars) · then 1 → 2 (same asset/code area,
@@ -666,8 +665,65 @@ neither your own character nor other players ever show a bar in the world.
 
 ## Item 12 — Open-world hero must match the combat-arena hero
 
-**Status**: Not started
-**Outcome**: _(fill in when done)_
+**Status**: Done (stages 1–2 landed; stage 3 dropped per the plan's own
+staging — "only start it if stages 1–2 land cleanly")
+**Outcome**: Source Quaternius packs were present in this environment (unlike
+items 1/2's gitignored Warlord Grondar source), so both stages were built and
+rebuilt end-to-end, not just coded.
+
+**Stage 1 (base-model parity)**: `world/scripts/build-hero.mjs` now builds
+from the same `Superhero_Male_FullBody` body + Peasant outfit merge as
+`scripts/build-arena-hero.mjs` (same technique: merge each outfit part's
+mesh, remap its skin onto the base skeleton by joint name), keeping the
+world's own clip set/naming (idle/walk/run/mine/attack/attack_ranged/
+attack_magic/die — unchanged) rather than the arena's combat clips. Rebuilt
+`hero.glb` and committed it. Bone names are identical between the old
+Male_Ranger export and the new base (both the "same 65-joint universal rig"
+the plan's root-cause analysis already confirmed) — `HIDE_REGION_BONES`
+needed no changes. Bind-pose height did shift slightly (~1.87 → ~1.82
+units), so `HERO_SCALE` (`entities.ts`) went from 0.85 to 0.873 to keep the
+same ~1.59-unit rendered height rather than quietly shrinking the hero;
+`build-villagers.mjs`'s independent `target: 1.6` constant (ambient.ts) was
+checked and needs no change, since it's pinned to its own posed-bounds
+measurement, not derived from `HERO_SCALE`.
+
+**Stage 2 (tint/archetype parity)**: `world/shared/appearance.ts` now prefers
+`src/data/equipmentModels.json`'s per-item `tint` (weapons and gear sections)
+over the regex `TIER_TINTS` table whenever an item is registered there —
+including "registered with no tint" taking precedence over a regex match
+(e.g. `staff_of_fire` is registered untinted in the arena registry despite
+matching TIER_TINTS' `_of_fire$` rule; the world now renders it untinted too,
+matching the arena). TIER_TINTS remains the fallback for the handful of
+items the arena registry doesn't cover (e.g. `dragon_claws`). Archetype
+selection stays regex-based regardless — the registry has no notion of the
+world's small fixed archetype set (sword/axe/bow/…), only a specific model
+file per item, so there's nothing to derive there. This surfaced real
+existing drift: world's regex `mithril_` tint (`#6274c9`) differed from the
+arena registry's per-item mithril tints (`#3f57c4` weapons, `#8c9adc`/`#bcc6d2`
+armor) — six `appearance.test.ts` assertions were updated to the arena's
+actual values (not just re-recorded blindly — each value was looked up in
+`equipmentModels.json`), plus two new tests pinning the registered-but-
+untinted and registry-miss-fallback behaviors specifically.
+
+**Stage 3 (coverage parity beyond body/legs — head/hands/feet/cape)**: not
+started, per the plan's own "only start it if stages 1–2 land cleanly and
+it's the largest chunk" — dropping it here to keep the change reviewable;
+flagging for a follow-up rather than doing it partially.
+
+**Verification**: both `cd world && npm run ci` and repo-root `npm run ci`
+green (rebuilding `hero.glb` touches a repo-root-visible asset path, and
+`appearance.ts` imports `src/data/equipmentModels.json` from `src/`).
+Visual: rendered the arena hero via `node scripts/render-arena-hero.mjs`
+(bronze_sword + iron_platebody/legs — bald head, Peasant outfit, tinted
+gear, as expected) and, separately, drove the dev world client and zoomed on
+the player character: same bald head / Peasant-outfit silhouette (previously
+a green-hooded Ranger), and the seeded character's `runeforged_scimitar`
+rendered in the arena registry's teal (`#2fd0c0`) rather than the old
+regex's blue (`#5aa7bd`) — both changes visible in the same screenshot.
+Didn't get to cross-check villager/other-player ghost scale visually beyond
+the bounds-ratio calculation above (a live two-window scale comparison would
+have been the more rigorous check) — noting as a residual gap rather than
+skipping silently.
 
 ### Root cause (confirmed)
 Two different base characters from the same Quaternius packs:
@@ -719,11 +775,11 @@ this is an asset/build alignment, not a rig migration.
 
 ---
 
-## Cross-cutting acceptance checklist (before the final PR)
+## Cross-cutting acceptance checklist
 
-- [ ] `cd world && npm run ci` green.
-- [ ] Repo-root `npm run ci` green (required if `src/`, `scripts/`, or `public/` touched — items 1, 2, 12).
-- [ ] Rebuilt GLBs committed; no gitignored source assets committed.
-- [ ] Every status row above updated; Outcome lines filled with what actually happened, including dropped/deferred pieces.
-- [ ] PR written via the `pr-changelog` skill (player-facing voice; no attribution/internal notes).
-- [ ] This file retitled to a Decision Record when all items are Done/Dropped.
+- [x] `cd world && npm run ci` green.
+- [x] Repo-root `npm run ci` green (required if `src/`, `scripts/`, or `public/` touched — items 1, 2, 12).
+- [x] Rebuilt GLBs committed; no gitignored source assets committed.
+- [x] Every status row above updated; Outcome lines filled with what actually happened, including dropped/deferred pieces.
+- [ ] PR written via the `pr-changelog` skill (player-facing voice; no attribution/internal notes) — not created yet; the delivering session doesn't open PRs unless asked.
+- [x] This file retitled to a Decision Record when all items are Done/Dropped.
