@@ -6,6 +6,8 @@ import {
   SNAP_QUEUE_LEN,
   animForSegment,
   gaitBob,
+  isAttackAnim,
+  resolveGltfAnim,
   segmentDurationMs,
   shouldSnap,
   stepYaw,
@@ -106,5 +108,36 @@ describe('gaitBob', () => {
     const a = gaitBob(0.37, true)
     const b = gaitBob(0.37 + rockPeriod, true)
     expect(a.rotZ).toBeCloseTo(b.rotZ, 5)
+  })
+})
+
+describe('isAttackAnim', () => {
+  it('is true for the three swing anims', () => {
+    expect(isAttackAnim('attack')).toBe(true)
+    expect(isAttackAnim('attack_ranged')).toBe(true)
+    expect(isAttackAnim('attack_magic')).toBe(true)
+  })
+  it('is false for looping and death anims', () => {
+    for (const n of ['idle', 'walk', 'run', 'mine', 'die'] as const) expect(isAttackAnim(n)).toBe(false)
+  })
+})
+
+describe('resolveGltfAnim (one-shot swing latch)', () => {
+  it('fires a fresh swing once and holds the base anim off', () => {
+    expect(resolveGltfAnim('attack', false, false, false)).toEqual({ fireSwing: true, latched: true, playBase: false })
+  })
+  it('does not re-fire the same swing while still latched', () => {
+    expect(resolveGltfAnim('attack', false, true, true)).toEqual({ fireSwing: false, latched: true, playBase: false })
+  })
+  it('keeps a landed swing playing when the server drops back to idle mid-clip', () => {
+    // The tick after a swing the server sends idle; the attack clip is still
+    // running, so the mixer must NOT be handed back to idle yet.
+    expect(resolveGltfAnim('idle', false, true, true)).toEqual({ fireSwing: false, latched: false, playBase: false })
+  })
+  it('returns to the base anim once the swing clip has finished', () => {
+    expect(resolveGltfAnim('idle', false, false, false)).toEqual({ fireSwing: false, latched: false, playBase: true })
+  })
+  it('lets movement win over a stale attack signal (walk, no swing)', () => {
+    expect(resolveGltfAnim('attack', true, false, false)).toEqual({ fireSwing: false, latched: false, playBase: true })
   })
 })

@@ -3,7 +3,7 @@ import { GLTFLoader, type GLTF } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { clone as cloneSkeleton } from 'three/examples/jsm/utils/SkeletonUtils.js'
 import { tileToWorld } from './scene'
 import type { EntityDiff, GearDescriptor } from '../../shared/protocol'
-import { MOVE_DURATION_MS, animForSegment, gaitBob, segmentDurationMs, shouldSnap, stepYaw, yawToward } from './motion'
+import { ATTACK_ANIMS, MOVE_DURATION_MS, animForSegment, gaitBob, isAttackAnim, resolveGltfAnim, segmentDurationMs, shouldSnap, stepYaw, yawToward } from './motion'
 import { MONSTER_MODELS } from '../../shared/monsterModels'
 import { buildProcCreature, creatureSpecFor, type ProcCreature } from './procCreature'
 
@@ -42,7 +42,16 @@ export type GltfAnimator = {
    * the outer group main.ts positions) and its bind-pose local Y/Z to offset
    * from each frame. */
   gait?: { target: THREE.Object3D; baseY: number; baseRotZ: number }
+  /** Edge-detects the server's one-tick attack signal so a fresh swing fires
+   * the one-shot attack clip exactly once (cleared when the signal drops back
+   * to a non-attack anim). Mirrors ProcAnimator's `triggered`. */
+  swingLatched?: boolean
 }
+
+function isAttackAction(animator: GltfAnimator, action: THREE.AnimationAction): boolean {
+  return ATTACK_ANIMS.some((n) => animator.actions[n] === action)
+}
+
 /** Procedural blend-shell creatures (creatures3d) drive their own rig by state
  * rather than a mixer; `triggered` edge-detects so each server swing fires the
  * attack once and a death→idle transition re-spawns the rig. */
@@ -123,7 +132,12 @@ function makeAnimator(model: THREE.Object3D, gltf: GLTF, names: readonly AnimNam
     const clip = gltf.animations.find((c) => c.name === name)
     if (!clip) continue
     const action = mixer.clipAction(clip)
-    if (name === 'die') {
+    if (name === 'die' || name === 'attack' || name === 'attack_ranged' || name === 'attack_magic') {
+      // die and every attack are one-shots. The server flags an attack anim for
+      // only the single tick a swing resolves, then drops back to idle — so a
+      // looping attack action gets cut off after ~1 tick and barely reads.
+      // Play it once and clamp; updateEntity latches the trigger so the whole
+      // swing plays through, matching the combat arena's monster attack.
       action.setLoop(THREE.LoopOnce, 1)
       action.clampWhenFinished = true
     }
@@ -587,10 +601,22 @@ export function updateEntity(entity: Entity, now: number, deltaSeconds: number, 
       // step; scale playback so a running or catching-up stride doesn't slide
       // its feet, and reset to normal speed off any movement segment so
       // attack/die never speed up.
-      entity.animator.mixer.timeScale = entity.moving ? MOVE_DURATION_MS / entity.segmentDuration : 1
-      playAnim(entity.animator, name)
-      entity.animator.mixer.update(deltaSeconds)
-      const gait = entity.animator.gait
+      const anim = entity.animator
+      anim.mixer.timeScale = entity.moving ? MOVE_DURATION_MS / entity.segmentDuration : 1
+      const attackAction = isAttackAnim(name) ? (anim.actions[name] ?? anim.actions.attack) : undefined
+      const playing = anim.current
+      const attackPlaying = playing != null && isAttackAction(anim, playing) && playing.isRunning()
+      const decision = resolveGltfAnim(name, entity.moving, anim.swingLatched ?? false, attackPlaying)
+      anim.swingLatched = decision.latched
+      if (decision.fireSwing && attackAction) {
+        attackAction.reset().fadeIn(ANIM_CROSSFADE_S).play()
+        if (anim.current && anim.current !== attackAction) anim.current.fadeOut(ANIM_CROSSFADE_S)
+        anim.current = attackAction
+      } else if (decision.playBase) {
+        playAnim(anim, name)
+      }
+      anim.mixer.update(deltaSeconds)
+      const gait = anim.gait
       if (gait) {
         const bob = gaitBob(now / 1000, entity.moving)
         gait.target.position.y = gait.baseY + bob.y
