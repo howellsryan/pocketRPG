@@ -309,7 +309,7 @@ The `section.id` **must equal** the raid `id` (`tomb_of_arasmus`) — `_complete
 - **Fang of Osmun: special attack — ✅ DONE.** `fang` case in `applySpecialAttack()` (PvE, `combat.js`) and in `pvpEngine.js` (PvP): two accuracy rolls (hit if either connects), damage compressed to 15%–85% of max. Label "🗡️ Deadly Strike" registered in both `CombatScreen.jsx` `specLabels` and `pvpSpecialAttacks.js`.
 - **Masari set: ranged set bonus — ✅ DONE (shared engine).** `combatSetBonuses.js` is now a data-driven registry (`COMBAT_SETS`); full Masari grants ×1.10 ranged accuracy + damage. Combines with Void via `getCombatSetMultipliers()`, consumed by live/idle/PvP. (Implemented as a Void-style multiplier rather than OSRS's ranged-strength %, per requester.)
 - **Shadow of Tumaken: ×3 worn magic damage — ✅ DONE (shared weapon passive).** Data flag `magicDamageMultiplier` on the item + `poweredStaff: true` (autocasts, no runes). Applied via shared `getWeaponMagicDamageMultiplier()` in all three magic paths (`combat.js`, `idleEngine.js`, `combatPrimitives.js`).
-- **Sunbearer Ring: 2× special-attack energy regen — ⏳ DEFERRED** (bespoke logic, held by requester). Item ships with correct zero-stat profile; no regen hook yet.
+- **Sunbearer Ring: special-attack energy pin — ✅ DONE (changed semantics, PvE only).** PocketRPG's PvE special model has no passive regen to double, so the shipped effect is: while equipped, special-attack energy never drains (`hasSunbearerRing()` in `combat.js` skips the drain at the per-use site). PvP is untouched — deliberately excluded, per §10's own energy model.
 
 ---
 

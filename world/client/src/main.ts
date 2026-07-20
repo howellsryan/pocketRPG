@@ -1,6 +1,7 @@
 import { clearStoredSession, exchangeHandoff, getRunPref, getStoredSession, getStoredZone, parseHandoffFromHash, pocketRpgUrl, storeRunPref, storeZone, type WorldSession } from './auth'
 import { hideBossFrame, hideConnBanner, hideOverlay, initChatInput, initHud, paintHudIcons, pushKillFeed, pushMessage, removeHpBar, removeNameplate, removeOverheadChat, renderEquipment, renderInventory, renderPrayerPanel, renderSpellbook, setPrayerState, setRunState, setSpecialEnergy, setSpellButton, setStanceActive, setThreatPanel, showBossFrame, showConnBanner, showContextMenu, showHitsplat, showLoginRequired, showTransitionOverlay, showUniqueBanner, showXpDrop, updateHpBar, updateHpPill, updateNameplate, updateOverheadChat, npcExamine, type SpellbookEntry, type TeleportEntry } from './ui'
 import { createMinimap, type Minimap, type MinimapDot } from './minimap'
+import { openWorldMap, type WorldMapData } from './worldMap'
 import { closeBankUI, isBankOpen, openBankUI, updateBankInventory, updateBankUI } from './bank'
 import { closeCraftUI, openCraftUI, updateCraftInventory, updateCraftStats, type SkillLevels } from './crafting'
 import { getLevelFromXP } from '../../../src/engine/experience.js'
@@ -101,6 +102,9 @@ function enterWorld(session: WorldSession): void {
   // The overworld's place centres, drawn as the Magic tab's Teleport section.
   // Empty on per-zone maps (no landmarks) → the section is dropped.
   let teleports: TeleportEntry[] = []
+  // Zone-static data the big world map bakes/marks once at welcome — none of
+  // it changes over the life of a session (a zone change is a full reload).
+  let worldMapData: Omit<WorldMapData, 'self'> | null = null
   // Whether the equipped weapon can cast the selected spell (drives the "tap a
   // monster" vs "equip a staff" hint when a combat spell is picked).
   let magicWeaponEquipped = false
@@ -396,6 +400,17 @@ function enterWorld(session: WorldSession): void {
       authed = true
       storeZone(message.zone.id)
       teleports = (message.zone.landmarks ?? []).map((l) => ({ id: l.id, label: l.label }))
+      worldMapData = {
+        collision: message.zone.collision,
+        width: message.zone.w,
+        height: message.zone.h,
+        palette: message.zone.palette,
+        ground: message.zone.ground,
+        statics: message.statics,
+        landmarks: message.zone.landmarks ?? [],
+        spawns: message.zone.spawns ?? [],
+        exits: message.zone.exits ?? [],
+      }
       if (sceneBuilt) {
         resyncFromWelcome(message)
         return
@@ -431,7 +446,7 @@ function enterWorld(session: WorldSession): void {
         exitLayer = createExitMarkers(scene, message.zone.exits ?? [])
         exitMarkers = message.zone.exits ?? []
         void createProps(scene, message.zone.props ?? [])
-        ambientLayer = createAmbient(scene, message.zone.ambient, heightField.heightAt)
+        ambientLayer = createAmbient(scene, message.zone.ambient, heightField.heightAt, message.zone.collision)
         const marker = createClickMarker(scene)
         camera = createCamera()
         const container = document.getElementById('scene')!
@@ -505,6 +520,10 @@ function enterWorld(session: WorldSession): void {
           },
           onSpecial: () => send(socket, { t: 'special' }),
           onUnequip: (slot) => send(socket, { t: 'unequip', slot }),
+          onWorldMap: () => {
+            if (!self || !worldMapData) return
+            openWorldMap({ ...worldMapData, self: { x: Math.floor(self.mesh.position.x), z: Math.floor(self.mesh.position.z) } })
+          },
           onLogout: () => {
             // Reload rather than close(): partysocket auto-reconnects on a bare
             // close and would re-enter the world. A reload with the session

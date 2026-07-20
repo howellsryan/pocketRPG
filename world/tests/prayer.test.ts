@@ -81,12 +81,12 @@ describe('categorisePrayers', () => {
     expect(protection).toEqual([])
   })
 
-  it('splits unlocked prayers into protection and combat, each level-ascending', () => {
+  it('splits unlocked prayers into protection and combat, each highest-level first', () => {
     const { protection, combat } = categorisePrayers(99)
-    expect(protection.map(id)).toEqual(['protection_from_magic', 'protection_from_missiles', 'protection_from_melee'])
+    expect(protection.map(id)).toEqual(['protection_from_melee', 'protection_from_missiles', 'protection_from_magic'])
     expect(combat).not.toHaveLength(0)
     expect(combat.some((p) => p.id.startsWith('protection_from_'))).toBe(false)
-    for (let i = 1; i < combat.length; i++) expect(combat[i].level).toBeGreaterThanOrEqual(combat[i - 1].level)
+    for (let i = 1; i < combat.length; i++) expect(combat[i].level).toBeLessThanOrEqual(combat[i - 1].level)
   })
 
   it('tags every combat prayer with the skill it boosts', () => {

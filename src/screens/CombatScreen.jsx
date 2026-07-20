@@ -21,6 +21,7 @@ import { CombatMonsterInfoSheet, CombatRaidInfoSheet, MultiStyleChip } from './C
 import { getMonsterArt, getMonsterAttackStyles, getMonsterWeakness, getCategoryArt, getRaidArt, getMonsterLocationLabel, getStyleArt } from '../utils/combatArt.js'
 import { getSkillArt } from '../utils/skillArt.js'
 import { prayerSkill } from '../utils/prayerIcons.js'
+import { MONSTER_ICONS } from '../utils/monsterIcons.js'
 import SkillIcon from '../components/SkillIcon.jsx'
 import { createCombatState, createRaidCombatState, processCombatTick, applyEat, applyCombo, applySpecialAttack, applyInstantKill } from '../engine/combat.js'
 import { applyConsumableEffect, isLumiraBrew, isComboConsumable } from '../engine/consumables.js'
@@ -186,37 +187,6 @@ function buildDungeonData(placeId) {
   const raids = {}
   for (const id of raidIds) raids[id] = raidsData[id]
   return { categories, raids }
-}
-
-const MONSTER_ICONS = {
-  field_chicken: '🐔', cave_goblin: '👺', pasture_bull: '🐄', broodfang_spider: '🕷️',
-  stoneback_crab: '🦀', duneback_crab: '🦀', highland_giant: '👊', briar_giant: '🌿', ember_giant: '🔥',
-  elder_tree_spirit: '🌳', elder_rock_golem: '🗿',
-  arcane_adept: '🧙', umbral_adept: '🧙‍♂️', hellbound_gorilla: '🦍',
-  wailing_banshee: '👻', sanguine_veld: '🩸', warped_spectre: '👁️', ash_wyrm: '🐍',
-  astral_warrior: '⚔️', astral_ranger: '🏹', astral_mage: '🔮', runestone_gargoyle: '🗿',
-  bone_wyvern: '🐲', cinder_devil: '💨', deepmaw_kraken: '🦑', nightfang_beast: '🦇',
-  marshscale_shaman: '🦎', nether_wraith: '👻', nether_demon: '😈', vicious_black_dragon: '🐉',
-  threefang_cerberus: '🐺', ashen_hydra: '🐲',
-  dustpaw_rat: '🐀', bogling_sprite: '✨', frostbite_imp: '❄️', marshfen_toad: '🐸',
-  cinderpaw_cub: '🐅', glaive_skeleton: '💀', mirebound_husk: '🪦', verdant_stalker: '🏹',
-  stoneglare_basilisk: '🦎', embertongue_lizard: '🦎', hollow_reaver: '⚰️',
-  briarheart_treant: '🌳', frostmaw_direwolf: '🐺', pyreclaw_demon: '👹',
-  wraithgale_specter: '👻', bloodmoon_stalker: '🌙', ironfang_drake: '🐲',
-  shadeglass_golem: '🗿', tidereaper_crab: '🦀',
-  voidweave_stalker: '🕸️', drakthul_wyrmling: '🐉', bonelight_pyromancer: '🔥',
-  cinderfang_reaver: '🗡️', ashen_marauder: '⚒️', sovrathar_the_ashen_sovereign: '👑',
-  green_dragon: '🐉', red_dragon: '🔴', adamant_dragon: '⚔️', rune_dragon: '🛡️', lesser_fiend: '👿',
-  warlord_grondar: '👹', commander_zephyra: '🌟', krylth_the_defiler: '🔥', skyrender_kharra: '🦅',
-  nagadoth_rex: '🦖', nagadoth_prime: '👹', nagadoth_supreme: '🏹',
-  crazy_archaeologist: '📜', king_black_dragon: '👑', venomcoil_matriarch: '🐍', ember_tyrant: '🌋', ashen_crucible: '🌋', blighted_gauntlet: '⚡',
-  tekton: '🔨', vespula: '🦟', muttadile: '🦷', the_great_olm: '🏛️',
-  the_maiden_of_sugadinti: '🩸', pestilent_bloat: '🤢', nylocas_vasilias: '🕷️',
-  sotetseg: '🔮', xarpus: '☠️', verzik_vitur: '👑',
-  gravehusk_brute: '💀', boneclaw_revenant: '🦴', shroudwraith_specter: '👻',
-  stonegale_elemental: '🪨', cindermaw_serpent: '🐍', thornhide_colossus: '🌳',
-  ironclad_guardian: '⚙️', emberhowl_warlord: '🪓',
-  gravethorn_drake: '🦎', razorwing_harpy: '🦅', duskmare: '🌑'
 }
 
 class PvpCombatErrorBoundary extends Component {

@@ -23,6 +23,7 @@ const sourceFiles = [
   'utils/idleElapsed.js',
   'utils/itemIcons.js',
   'utils/skillArt.js',
+  'utils/monsterIcons.js',
   'utils/combatArt.js',
   'utils/prayerIcons.js',
   'utils/bonusLabels.js',

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  combatStanceFromSave,
   respawnedRocks,
   sessionInventoryFromSave,
   sessionStatsFromSave,
@@ -215,6 +216,23 @@ describe('sessionStatsFromSave', () => {
     const stats = sessionStatsFromSave({ stats: { mining: { xp: 83 }, attack: { xp: 0, level: 5 } } })
     expect(stats.mining).toEqual({ xp: 83, level: 2 })
     expect(stats.attack).toEqual({ xp: 0, level: 5 })
+  })
+})
+
+describe('combatStanceFromSave', () => {
+  it('reads a valid persisted stance', () => {
+    expect(combatStanceFromSave({ settings: { combatStance: 'aggressive' } })).toBe('aggressive')
+    expect(combatStanceFromSave({ settings: { combatStance: 'defensive' } })).toBe('defensive')
+  })
+
+  it('falls back to accurate for the legacy controlled stance', () => {
+    expect(combatStanceFromSave({ settings: { combatStance: 'controlled' } })).toBe('accurate')
+  })
+
+  it('falls back to accurate when unset or the save is malformed', () => {
+    expect(combatStanceFromSave({ settings: {} })).toBe('accurate')
+    expect(combatStanceFromSave({})).toBe('accurate')
+    expect(combatStanceFromSave({ settings: { combatStance: 42 } })).toBe('accurate')
   })
 })
 

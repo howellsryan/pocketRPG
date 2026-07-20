@@ -21,6 +21,10 @@ const repoRoot = path.join(worldDir, '..')
 const load = (id) => JSON.parse(fs.readFileSync(path.join(worldDir, 'zones', `${id}.json`), 'utf8'))
 const OUT = path.join(worldDir, 'zones', 'overworld.json')
 
+// Ambient walker models (client/src/ambient.ts CRITTERS) — one per town, rng-
+// picked per district for variety.
+const VILLAGER_MODELS = ['villager_a', 'villager_b', 'villager_c']
+
 const world = JSON.parse(fs.readFileSync(path.join(repoRoot, 'src', 'data', 'world.json'), 'utf8'))
 const places = Object.values(world.places)
 const { W, H, districts } = projectPlaces(places, { scale: 0.32, margin: 20 })
@@ -195,11 +199,14 @@ function dressTown(d) {
     building(rng() < 0.25 ? 'mill' : 'house', x - 1, z - 1, x + 1, z + 1, 2.2, Math.atan2(cz - z, cx - x))
     if (rng() < 0.5) smoke.push({ x, z, y: 2.4 })
   }
-  // A couple of lanterns + a cart on the plaza; a hen flock for life.
+  // A couple of lanterns + a cart on the plaza; wandering villagers for life
+  // (R2-9, docs/open-world-changes-plan.md — non-attackable ambient walkers
+  // are human, not animal critters; attackable monsters are untouched).
   townProps.push({ model: 'lantern', x: cx - ps, z: cz - ps })
   townProps.push({ model: 'lantern', x: cx + ps, z: cz - ps })
   if (d.tier !== 'village') townProps.push({ model: 'cart', x: cx - ps, z: cz + ps, rot: rng() * Math.PI, scale: 1.1 })
-  critters.push({ model: 'chicken', x: cx - ps - 1, z: cz - ps - 1, w: ps * 2 + 3, h: ps * 2 + 3, count: d.tier === 'city' ? 5 : 3 })
+  const villagerModel = VILLAGER_MODELS[Math.floor(rng() * VILLAGER_MODELS.length)]
+  critters.push({ model: villagerModel, x: cx - ps - 1, z: cz - ps - 1, w: ps * 2 + 3, h: ps * 2 + 3, count: d.tier === 'city' ? 5 : 3 })
 }
 
 for (const d of districts) {
