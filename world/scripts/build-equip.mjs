@@ -25,6 +25,10 @@ for (const section of ['weapons', 'gear']) {
     if (entry && entry.model && !/^(https?:)?\/\//.test(entry.model) && !entry.model.startsWith('/')) models.add(entry.model)
   }
 }
+// The generic default-head model lives under defaults.gear.head.fallbackModel
+// (not the itemId-keyed `gear` map above, since it isn't tied to one item).
+const fallbackHead = registry.defaults?.gear?.head?.fallbackModel
+if (fallbackHead && !/^(https?:)?\/\//.test(fallbackHead) && !fallbackHead.startsWith('/')) models.add(fallbackHead)
 
 let copied = 0
 for (const model of [...models].sort()) {

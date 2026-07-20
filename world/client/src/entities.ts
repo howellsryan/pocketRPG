@@ -11,7 +11,7 @@ import { buildProcCreature, creatureSpecFor, type ProcCreature } from './procCre
 // so a registry-covered item renders with an identical model + bone-space
 // transform + tint on both heroes. Models copied into the world bundle by
 // world/scripts/build-equip.mjs.
-import { getWeaponModel, getGearModel } from '../../../src/utils/equipModels.js'
+import { getWeaponModel, getGearModel, getDefaultHeadGearModel } from '../../../src/utils/equipModels.js'
 
 const ANIM_CROSSFADE_S = 0.15
 const TURN_SPEED_RAD_PER_S = 14
@@ -488,11 +488,20 @@ const RIGID_HOLDER: Record<RigidSlot, string> = {
   head: '__gear_head', shield: '__gear_shield', cape: '__gear_cape', neck: '__gear_neck',
 }
 
+/** Resolves a head-slot item to its registry model, falling back to the
+ * generic default helm (defaults.gear.head.fallbackModel) when the item has
+ * no registered model of its own — most helmets aren't authored yet, and a
+ * bare head reads as more broken than a placeholder shell. */
+function resolveHeadGearModel(itemId: string | undefined): PlacementSpec | null {
+  if (!itemId) return null
+  return (getGearModel(itemId) as PlacementSpec | null) ?? (getDefaultHeadGearModel() as PlacementSpec | null)
+}
+
 /** Attaches (or replaces/removes) one rigid registry gear piece on its bone.
  * Idempotent per itemId; a spec that isn't for this slot, a missing bone, or a
  * failed load leaves the slot bare. */
 async function applyRigidGearPiece(heroMesh: THREE.Object3D, slot: RigidSlot, itemId: string | undefined): Promise<void> {
-  const spec = (itemId ? getGearModel(itemId) : null) as PlacementSpec | null
+  const spec = (itemId ? (slot === 'head' ? resolveHeadGearModel(itemId) : (getGearModel(itemId) as PlacementSpec | null)) : null)
   const valid = !!(spec && spec.slot === slot && spec.bone)
   const holderName = RIGID_HOLDER[slot]
   const key = valid ? `reg:${itemId}` : ''
@@ -608,8 +617,12 @@ async function applyArmor(heroMesh: THREE.Object3D, gear: GearDescriptor | undef
     heroMesh.userData.armorHideMask = ctl
   }
   await Promise.all([rigid, ...ARMOR_SLOTS.map((slot) => applyArmorPiece(heroSkinned, slot, armor?.[slot]))])
-  const helm = equip?.head ? (getGearModel(equip.head) as PlacementSpec | null) : null
-  ctl?.setHidden({ head: !!helm?.hideHead, body: !!armor?.body, legs: !!armor?.legs })
+  // Key the head mask off whether a helm mesh actually attached, not just the
+  // registry flag — a failed/slow load (bad asset, network hiccup) must never
+  // leave the head hidden with nothing rendered in its place.
+  const helm = equip?.head ? resolveHeadGearModel(equip.head) : null
+  const headAttached = !!heroMesh.getObjectByName(RIGID_HOLDER.head)
+  ctl?.setHidden({ head: !!helm?.hideHead && headAttached, body: !!armor?.body, legs: !!armor?.legs })
 }
 
 /** Attaches (or replaces/removes) the weapon + armor matching `gear` on a

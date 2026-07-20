@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { getCharacterModel, getWeaponModel, hasWeaponModel, modelUrl, getCharacterAssetPath, getWeaponPlacement, getMonsterModel, hasMonsterModel, getGearModel, getGearPlacement, getGearPlacements } from '../src/utils/equipModels.js'
+import { getCharacterModel, getWeaponModel, hasWeaponModel, modelUrl, getCharacterAssetPath, getWeaponPlacement, getMonsterModel, hasMonsterModel, getGearModel, getGearPlacement, getGearPlacements, getDefaultHeadGearModel } from '../src/utils/equipModels.js'
 import registry from '../src/data/equipmentModels.json'
 
 describe('equipModels resolver', () => {
@@ -131,6 +131,25 @@ describe('equipModels resolver', () => {
     expect(getGearModel('horned_full_helm')).toBeNull()
     expect(getGearModel(undefined)).toBeNull()
     expect(getGearPlacement('horned_full_helm')).toBeNull()
+  })
+
+  it('resolves the generic default head model from defaults.gear.head.fallbackModel', () => {
+    const d = (registry.defaults as { gear: Record<string, { bone?: string; fallbackModel?: string }> }).gear.head
+    expect(d.fallbackModel, 'defaults.gear.head.fallbackModel required for unimplemented helmets').toBeTruthy()
+    const spec = getDefaultHeadGearModel()
+    expect(spec).toBeTruthy()
+    expect(spec!.model).toBe(d.fallbackModel)
+    expect(spec!.slot).toBe('head')
+    expect(spec!.bone).toBe(d.bone)
+    expect(spec!.hideHead).toBe(true)
+  })
+
+  it('the default head model file exists on disk', async () => {
+    const fs = await import('node:fs')
+    const path = await import('node:path')
+    const d = (registry.defaults as { gear: Record<string, { fallbackModel?: string }> }).gear.head
+    const base = path.resolve(__dirname, '../public', registry.modelBase)
+    expect(fs.existsSync(path.join(base, d.fallbackModel!))).toBe(true)
   })
 
   it('collects placements for equipped registered gear, skipping the rest', () => {

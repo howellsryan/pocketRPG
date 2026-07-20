@@ -29,7 +29,8 @@
           -90,
           0
         ],
-        "scale": 0.44
+        "scale": 0.44,
+        "fallbackModel": "default_full_helm.glb"
       },
       "shield": {
         "bone": "hand_l",

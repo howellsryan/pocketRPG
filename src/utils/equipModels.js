@@ -87,6 +87,28 @@ export function getGearModel(itemId) {
   }
 }
 
+// Generic rigid head model used by the open-world hero when an equipped
+// head-slot item has no registry entry of its own (unimplemented armour art).
+// Sourced from defaults.gear.head.fallbackModel, not the itemId-keyed `gear`
+// map, since it isn't tied to any one item.
+export function getDefaultHeadGearModel() {
+  const d = ((equipmentModelsData.defaults || {}).gear || {}).head || {}
+  if (!d.fallbackModel) return null
+  return {
+    model: d.fallbackModel,
+    slot: 'head',
+    bone: d.bone || null,
+    position: d.position || EQUIP_IDENTITY.position,
+    rotationDeg: d.rotationDeg || EQUIP_IDENTITY.rotationDeg,
+    scale: typeof d.scale === 'number' ? d.scale : EQUIP_IDENTITY.scale,
+    tint: null,
+    tintAll: false,
+    hideHead: true,
+    hideBody: false,
+    hideLegs: false,
+  }
+}
+
 // Placement spec for one gear item with a fetchable `path`, or null.
 export function getGearPlacement(itemId) {
   const spec = getGearModel(itemId)

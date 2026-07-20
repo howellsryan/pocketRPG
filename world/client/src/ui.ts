@@ -22,6 +22,11 @@ const INVENTORY_ROWS = 7
 const INV_CELL_PX = 40
 const INV_GAP_PX = 3
 const INV_CONTENT_W = INVENTORY_COLS * INV_CELL_PX + (INVENTORY_COLS - 1) * INV_GAP_PX
+const INV_CONTENT_H = INVENTORY_ROWS * INV_CELL_PX + (INVENTORY_ROWS - 1) * INV_GAP_PX
+// The tallest pane (inventory, 7 rows) sets one fixed body height for every
+// tab — otherwise switching tabs (e.g. combat, much shorter) resizes the
+// panel and shoves the tab rail below it up/down each time.
+const HUD_BODY_H = INV_CONTENT_H + 2 * 6 // + .hud-body's own top/bottom padding
 // The panel used to be a flat 232px regardless of content, leaving a wide
 // empty gutter to the right of every inventory row (narrower than the tab
 // rail above it). Size the panel to the inventory grid's own content width
@@ -75,16 +80,20 @@ ${SCROLL_CSS}
 #run-orb .run-ico { display: flex; align-items: center; }
 .hud-body {
   background: rgba(20, 16, 10, 0.82); border: 1px solid #5a4a30; border-radius: 8px; padding: 6px;
+  height: ${HUD_BODY_H}px; box-sizing: border-box; overflow: hidden;
 }
-.hud-pane { display: none; }
+.hud-pane { display: none; height: 100%; overflow-y: auto; }
 .hud-pane.active { display: block; }
-.hud-body.collapsed { display: none; }
+/* visibility (not display:none) keeps .hud-body's fixed height reserved, so
+   collapsing doesn't pull the bottom tab row up under the top one. */
+.hud-body.collapsed { visibility: hidden; }
 #inv-panel {
   display: grid; grid-template-columns: repeat(${INVENTORY_COLS}, ${INV_CELL_PX}px);
   grid-auto-rows: ${INV_CELL_PX}px; gap: ${INV_GAP_PX}px;
 }
 #equip-panel {
   display: grid; grid-template-columns: repeat(3, 40px); grid-auto-rows: 40px; gap: 3px;
+  justify-content: center;
 }
 .equip-slot {
   background: rgba(60, 50, 34, 0.55); border-radius: 4px; position: relative;
@@ -132,7 +141,8 @@ ${SCROLL_CSS}
 }
 #prayer-grid { display: flex; flex-direction: column; gap: 5px; max-height: 220px; overflow-y: auto; }
 #prayer-grid:empty { display: none; }
-.prayer-row { display: flex; flex-wrap: wrap; gap: 3px; }
+/* Same fixed 4-column layout as #inv-panel, one grid per category row. */
+.prayer-row { display: grid; grid-template-columns: repeat(${INVENTORY_COLS}, ${INV_CELL_PX}px); gap: ${INV_GAP_PX}px; }
 .hud-sec {
   font-size: 10px; font-weight: bold; letter-spacing: 0.06em; text-transform: uppercase;
   color: #c9a13a; opacity: 0.85; padding: 2px 1px 0;
