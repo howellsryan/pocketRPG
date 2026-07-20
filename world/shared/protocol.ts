@@ -10,6 +10,13 @@ export type InvSlot = { itemId: string; quantity: number } | null
 export type GearDescriptor = {
   weapon?: { archetype: string; tint?: string }
   armor?: { body?: { tint?: string }; legs?: { tint?: string } }
+  /** Equipped itemIds for slots the combat-arena registry
+   * (src/data/equipmentModels.json) can render per-item — the client resolves
+   * each to the exact model + bone-space placement + tint the equip modal uses,
+   * so both heroes wear the same loadout. Only itemIds the registry covers are
+   * included (slot → itemId); the archetype/tint fields above stay the fallback
+   * for weapons the registry doesn't cover. */
+  equip?: Record<string, string>
 }
 
 export type InvActionWire = 'equip' | 'eat' | 'drink' | 'bury' | 'drop'

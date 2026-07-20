@@ -17,9 +17,15 @@ import itemsData from '../../src/data/items.json'
 import type { GearDescriptor } from './protocol'
 
 type Items = Record<string, { slot?: string | null; twoHanded?: boolean } | undefined>
-type EquipmentModelEntry = { tint?: string }
+type EquipmentModelEntry = { tint?: string; model?: string }
 type EquipmentModels = { weapons?: Record<string, EquipmentModelEntry>; gear?: Record<string, EquipmentModelEntry> }
 const equipmentModels = equipmentModelsData as unknown as EquipmentModels
+
+/** True when the arena registry can render this itemId per-item (as a weapon or
+ * a gear piece with a model). Gates what goes into `GearDescriptor.equip`. */
+function hasRegistryModel(itemId: string): boolean {
+  return Boolean(equipmentModels.weapons?.[itemId]?.model || equipmentModels.gear?.[itemId]?.model)
+}
 
 export const WEAPON_ARCHETYPES = ['sword', 'sword2h', 'dagger', 'axe', 'axe2h', 'blunt', 'bow', 'crossbow', 'staff', 'wand'] as const
 
@@ -126,6 +132,20 @@ export function gearFromEquipment(equipment: Record<string, unknown> | null | un
     gear.armor = {}
     if (body) gear.armor.body = body
     if (legs) gear.armor.legs = legs
+  }
+  // Registry-renderable equipped itemIds the client resolves to the arena's
+  // exact model + placement: the weapon (overrides the archetype above) and the
+  // rigid accessory slots (head/shield/cape/neck). body/legs are excluded — they
+  // ride the tinted-outfit path via `armor` above, so echoing them here would be
+  // dead weight on every entity diff.
+  if (equipment) {
+    const equip: Record<string, string> = {}
+    for (const slot of Object.keys(equipment)) {
+      if (slot === 'body' || slot === 'legs') continue
+      const itemId = itemIdInSlot(equipment, slot)
+      if (itemId && hasRegistryModel(itemId)) equip[slot] = itemId
+    }
+    if (Object.keys(equip).length) gear.equip = equip
   }
   return gear
 }
