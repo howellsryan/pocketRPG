@@ -6,6 +6,12 @@ import type { EntityDiff, GearDescriptor } from '../../shared/protocol'
 import { ATTACK_ANIMS, MOVE_DURATION_MS, animForSegment, gaitBob, isAttackAnim, resolveGltfAnim, segmentDurationMs, shouldSnap, stepYaw, yawToward } from './motion'
 import { MONSTER_MODELS } from '../../shared/monsterModels'
 import { buildProcCreature, creatureSpecFor, type ProcCreature } from './procCreature'
+// Shared per-item placement registry — the SAME resolver the combat arena /
+// equip modal uses (src/utils/equipModels.js + src/data/equipmentModels.json),
+// so a registry-covered item renders with an identical model + bone-space
+// transform + tint on both heroes. Models copied into the world bundle by
+// world/scripts/build-equip.mjs.
+import { getWeaponModel, getGearModel } from '../../../src/utils/equipModels.js'
 
 const ANIM_CROSSFADE_S = 0.15
 const TURN_SPEED_RAD_PER_S = 14
@@ -289,20 +295,89 @@ function tintObject(obj: THREE.Object3D, tint: string | undefined, multiply: boo
   })
 }
 
-/** Attaches (or replaces/removes) the weapon model matching `gear.weapon` on a
- * hero mesh. Idempotent per archetype+tint; missing hand bone (capsule
- * fallback) or a failed model load leaves the hero bare-handed. */
-async function applyWeaponPiece(heroMesh: THREE.Object3D, weapon: GearDescriptor['weapon']): Promise<void> {
+// Registry placement spec (src/utils/equipModels.js). Loosely typed — the JS
+// resolver returns object literals; we only read the render fields.
+type PlacementSpec = {
+  model: string
+  bone: string | null
+  position: [number, number, number]
+  rotationDeg: [number, number, number]
+  scale: number
+  tint: string | null
+  tintAll: 'replace' | false
+  slot?: string
+  hideHead?: boolean
+  hideBody?: boolean
+  hideLegs?: boolean
+}
+
+/** Registry `model` (e.g. 'weapons/trident.glb') → world asset URL under the
+ * equip dir populated by world/scripts/build-equip.mjs. */
+function equipModelUrl(model: string): string {
+  return `/models/equip/${model}`
+}
+
+/** Port of src/3d/heroAttach.js applyEquipTint so a registry piece recolours
+ * exactly as it does in the arena. Materials are CLONED first — loadTemplate
+ * hands back a shared cached GLTF, so mutating a material in place would bleed
+ * the tint onto every other instance of the same model. */
+function applyEquipTintRegistry(obj: THREE.Object3D, tint: string | null, mode: 'replace' | true | false): void {
+  if (!tint) return
+  const c = new THREE.Color(tint)
+  obj.traverse((o) => {
+    if (!(o instanceof THREE.Mesh) || !o.material) return
+    const one = (m: THREE.Material): THREE.Material => {
+      const mm = m.clone() as THREE.MeshStandardMaterial
+      if (mm.color) {
+        if (mode === 'replace') {
+          mm.color.copy(c)
+          if (mm.map) { mm.map = null; mm.needsUpdate = true }
+        } else if (mode === true || /steel/i.test(mm.name || '')) {
+          mm.color.multiply(c)
+        }
+      }
+      return mm
+    }
+    o.material = Array.isArray(o.material) ? o.material.map(one) : one(o.material)
+  })
+}
+
+/** Applies a registry placement spec (bone-space transform in degrees) to a
+ * freshly cloned model — the world equivalent of heroAttach.js's attach math,
+ * so the piece lands identically to the arena. */
+function placeRegistryModel(model: THREE.Object3D, spec: PlacementSpec, tintMode: 'replace' | true | false): void {
+  const [px, py, pz] = spec.position
+  const [rx, ry, rz] = spec.rotationDeg
+  model.position.set(px, py, pz)
+  model.rotation.set(THREE.MathUtils.degToRad(rx), THREE.MathUtils.degToRad(ry), THREE.MathUtils.degToRad(rz))
+  model.scale.setScalar(spec.scale)
+  applyEquipTintRegistry(model, spec.tint, tintMode)
+}
+
+/** Attaches (or replaces/removes) the equipped weapon on a hero mesh. Prefers
+ * the arena's per-item registry model (exact model + placement + tint parity
+ * with the equip modal); falls back to the archetype silhouette + tier tint for
+ * weapons the registry doesn't cover. Idempotent; a missing hand bone (capsule
+ * fallback) or a failed load leaves the hero bare-handed. */
+async function applyWeaponPiece(
+  heroMesh: THREE.Object3D,
+  weapon: GearDescriptor['weapon'],
+  weaponItemId: string | undefined,
+): Promise<void> {
   const hand = heroMesh.getObjectByName('hand_r')
   if (!hand) return
-  const key = weaponKey(weapon)
+  const spec = (weaponItemId ? getWeaponModel(weaponItemId) : null) as PlacementSpec | null
+  // Registry key is itemId-exact (tint/placement ride with it); the archetype
+  // fallback keys on archetype+tint as before.
+  const key = spec ? `reg:${weaponItemId}` : weaponKey(weapon)
   const existing = hand.getObjectByName(WEAPON_HOLDER)
   if ((existing?.userData.key ?? '') === key) return
   existing?.removeFromParent()
-  if (!weapon) return
+  if (!spec && !weapon) return
 
+  const url = spec ? equipModelUrl(spec.model) : `/models/weapons/${weapon!.archetype}.glb`
   try {
-    const gltf = await loadTemplate(`/models/weapons/${weapon.archetype}.glb`)
+    const gltf = await loadTemplate(url)
     // Re-check after the await: a newer applyWeaponPiece may have won the race.
     const current = hand.getObjectByName(WEAPON_HOLDER)
     if (current) {
@@ -310,14 +385,19 @@ async function applyWeaponPiece(heroMesh: THREE.Object3D, weapon: GearDescriptor
       current.removeFromParent()
     }
     const model = gltf.scene.clone(true)
-    tintObject(model, weapon.tint, false)
-    const grip = GRIP_OVERRIDES[weapon.archetype] ?? DEFAULT_GRIP
     const holder = new THREE.Group()
     holder.name = WEAPON_HOLDER
     holder.userData.key = key
-    model.rotation.set(...grip.rotation)
-    model.position.set(...grip.position)
-    model.scale.setScalar(grip.scale ?? WEAPON_SCALE)
+    if (spec) {
+      placeRegistryModel(model, spec, spec.tintAll)
+    } else {
+      const w = weapon!
+      tintObject(model, w.tint, false)
+      const grip = GRIP_OVERRIDES[w.archetype] ?? DEFAULT_GRIP
+      model.rotation.set(...grip.rotation)
+      model.position.set(...grip.position)
+      model.scale.setScalar(grip.scale ?? WEAPON_SCALE)
+    }
     holder.add(model)
     hand.add(holder)
   } catch {
@@ -325,72 +405,130 @@ async function applyWeaponPiece(heroMesh: THREE.Object3D, weapon: GearDescriptor
   }
 }
 
-// Armor (Phase: open-world/combat-arena parity): body/legs outfit pieces
-// built by scripts/build-armor.mjs from the arena's own already-tiered
-// Quaternius outfit exports (public/3d-samples/outfits/ranger_*.glb), which
-// carry the same 65-joint universal rig as world's hero.glb — no bone
-// position/rotation needed, just a skeleton rebind. Head/gloves/boots/cape
-// are out of scope for v1 (no compatible source asset without new authoring).
+// Armor (open-world/combat-arena parity): body/legs outfit pieces built by
+// scripts/build-armor.mjs from the arena's own already-tiered Quaternius outfit
+// exports (public/3d-samples/outfits/ranger_*.glb), which carry the same
+// 65-joint universal rig as world's hero.glb — no bone position/rotation
+// needed, just a skeleton rebind. Head/shield/cape/neck are rigid props
+// attached per-item through the shared registry (applyRigidGearPiece).
 const ARMOR_SLOTS = ['body', 'legs'] as const
 type ArmorSlot = (typeof ARMOR_SLOTS)[number]
 const ARMOR_HOLDER: Record<ArmorSlot, string> = { body: '__armor_body', legs: '__armor_legs' }
 
-// Bone names are the Quaternius universal rig — mirrors
-// src/3d/heroAttach.js's HIDE_REGION_BONES (head omitted: out of scope here).
-const HIDE_REGION_BONES: Record<ArmorSlot, string[]> = {
+// Hero-anatomy regions a covering piece can cut out (head → helm, body/legs →
+// outfit). Bone names are the Quaternius universal rig — mirrors
+// src/3d/heroAttach.js's HIDE_REGION_BONES.
+const HIDE_REGIONS = ['head', 'body', 'legs'] as const
+type HideRegion = (typeof HIDE_REGIONS)[number]
+const HIDE_REGION_BONES: Record<HideRegion, string[]> = {
+  head: ['Head'],
   body: ['spine_01', 'spine_02', 'spine_03', 'clavicle_l', 'clavicle_r'],
   legs: ['pelvis', 'thigh_l', 'calf_l', 'foot_l', 'ball_l', 'ball_leaf_l', 'thigh_r', 'calf_r', 'foot_r', 'ball_r', 'ball_leaf_r'],
 }
 
-type HideMaskControl = { setHidden(regions: Partial<Record<ArmorSlot, boolean>>): void }
+type HideMaskControl = { setHidden(regions: Partial<Record<HideRegion, boolean>>): void }
 
-/** Ports src/3d/heroAttach.js's setupHideMask for the two armor regions this
- * file cares about: a per-vertex mask lets an equipped body/legs piece cut
- * the hero's own baked-in clothing out of the render, exactly, in every pose
- * — a bone-transform approach can't do that without pinching at the joints,
- * and posed skin would otherwise bulge through the armor at animation
- * extremes. Applied to every skinned sub-mesh of the hero (body + any hair/
- * accessory meshes sharing the skeleton), not just the primary one. */
+/** Ports src/3d/heroAttach.js's setupHideMask: a per-vertex mask lets an
+ * equipped helm/body/legs piece cut the hero's own baked-in anatomy out of the
+ * render, exactly, in every pose — a bone-transform approach can't do that
+ * without pinching at the joints, and posed skin would otherwise bulge through
+ * the armor at animation extremes. Applied to every skinned sub-mesh of the
+ * hero (body + any hair/accessory meshes sharing the skeleton), not just the
+ * primary one. */
 function setupArmorHideMask(skinnedMeshes: THREE.SkinnedMesh[]): HideMaskControl | null {
   const meshes = skinnedMeshes.filter((m) => m.skeleton)
   if (!meshes.length) return null
-  const hidden = new THREE.Vector2(0, 0) // onBeforeCompile fires lazily on first
+  const hidden = new THREE.Vector3(0, 0, 0) // onBeforeCompile fires lazily on first
   // render, so the desired state must be the shader's INITIAL uniform value.
   for (const skinnedMesh of meshes) {
-    const regionIdx = ARMOR_SLOTS.map((slot) => {
-      const wanted = new Set(HIDE_REGION_BONES[slot])
+    const regionIdx = HIDE_REGIONS.map((region) => {
+      const wanted = new Set(HIDE_REGION_BONES[region])
       return new Set(skinnedMesh.skeleton.bones.map((b, i) => (wanted.has(b.name) ? i : -1)).filter((i) => i >= 0))
     })
     const geo = skinnedMesh.geometry
     const si = geo.attributes.skinIndex, sw = geo.attributes.skinWeight
     const n = geo.attributes.position.count
-    const mask = new Float32Array(n * 2)
+    const mask = new Float32Array(n * 3)
     for (let i = 0; i < n; i++) {
       for (let k = 0; k < 4; k++) {
         const j = si.getComponent(i, k), w = sw.getComponent(i, k)
-        for (let r = 0; r < 2; r++) if (regionIdx[r].has(j)) mask[i * 2 + r] += w
+        for (let r = 0; r < 3; r++) if (regionIdx[r].has(j)) mask[i * 3 + r] += w
       }
     }
-    geo.setAttribute('hideMask', new THREE.BufferAttribute(mask, 2))
+    geo.setAttribute('hideMask', new THREE.BufferAttribute(mask, 3))
     const mats = Array.isArray(skinnedMesh.material) ? skinnedMesh.material : [skinnedMesh.material]
     for (const mat of mats) {
       const m = mat as THREE.MeshStandardMaterial
       m.onBeforeCompile = (shader) => {
         shader.uniforms.uHideMask = { value: hidden }
         shader.vertexShader = shader.vertexShader
-          .replace('#include <common>', '#include <common>\nattribute vec2 hideMask;\nvarying vec2 vHideMask;')
+          .replace('#include <common>', '#include <common>\nattribute vec3 hideMask;\nvarying vec3 vHideMask;')
           .replace('#include <begin_vertex>', '#include <begin_vertex>\nvHideMask = hideMask;')
         shader.fragmentShader = shader.fragmentShader
-          .replace('#include <common>', '#include <common>\nuniform vec2 uHideMask;\nvarying vec2 vHideMask;')
-          .replace('#include <clipping_planes_fragment>', '#include <clipping_planes_fragment>\nif (dot(uHideMask, step(vec2(0.35, 0.35), vHideMask)) > 0.0) discard;')
+          .replace('#include <common>', '#include <common>\nuniform vec3 uHideMask;\nvarying vec3 vHideMask;')
+          .replace('#include <clipping_planes_fragment>', '#include <clipping_planes_fragment>\nif (dot(uHideMask, step(vec3(0.5, 0.35, 0.35), vHideMask)) > 0.0) discard;')
       }
       m.needsUpdate = true
     }
   }
   return {
     setHidden(regions) {
-      hidden.set(regions.body ? 1 : 0, regions.legs ? 1 : 0)
+      hidden.set(regions.head ? 1 : 0, regions.body ? 1 : 0, regions.legs ? 1 : 0)
     },
+  }
+}
+
+// Rigid registry gear (head/shield/cape/neck): non-skinned props attached to a
+// single bone with the arena's per-item placement — the world equivalent of
+// heroAttach.js attachGearList's rigid branch. body/legs stay on the skinned
+// rebind path above.
+const RIGID_SLOTS = ['head', 'shield', 'cape', 'neck'] as const
+type RigidSlot = (typeof RIGID_SLOTS)[number]
+const RIGID_HOLDER: Record<RigidSlot, string> = {
+  head: '__gear_head', shield: '__gear_shield', cape: '__gear_cape', neck: '__gear_neck',
+}
+
+/** Attaches (or replaces/removes) one rigid registry gear piece on its bone.
+ * Idempotent per itemId; a spec that isn't for this slot, a missing bone, or a
+ * failed load leaves the slot bare. */
+async function applyRigidGearPiece(heroMesh: THREE.Object3D, slot: RigidSlot, itemId: string | undefined): Promise<void> {
+  const spec = (itemId ? getGearModel(itemId) : null) as PlacementSpec | null
+  const valid = !!(spec && spec.slot === slot && spec.bone)
+  const holderName = RIGID_HOLDER[slot]
+  const key = valid ? `reg:${itemId}` : ''
+  const existing = heroMesh.getObjectByName(holderName)
+  if ((existing?.userData.key ?? '') === key) return
+  existing?.removeFromParent()
+  if (!valid) return
+  const bone = heroMesh.getObjectByName(spec!.bone!)
+  if (!bone) return
+  try {
+    const gltf = await loadTemplate(equipModelUrl(spec!.model))
+    // Re-check after the await: a newer call may have won the race.
+    const current = heroMesh.getObjectByName(holderName)
+    if (current) {
+      if (current.userData.key === key) return
+      current.removeFromParent()
+    }
+    // cloneSkeleton (not Object3D.clone) so a skinned prop with its own rig —
+    // the cape's drape skeleton — rebinds onto its own cloned bones instead of
+    // collapsing; a plain clone shares the cached template's skeleton and the
+    // mesh renders empty. Harmless for the static props (helm/shield/amulet).
+    const model = cloneSkeleton(gltf.scene)
+    // Posed skinned props (cape) animate away from their bind bounds, so three
+    // can frustum-cull them incorrectly once attached — same fix the hero uses.
+    model.traverse((o) => { o.frustumCulled = false })
+    // Tint parity with heroAttach.js attachGearList: tintAll ('replace') wins;
+    // else neck/cape recolour whole (multiply-all); else steel-scoped multiply.
+    const mode: 'replace' | true | false = spec!.tintAll ? spec!.tintAll : (slot === 'neck' || slot === 'cape') ? true : false
+    placeRegistryModel(model, spec!, mode)
+    const holder = new THREE.Group()
+    holder.name = holderName
+    holder.userData.key = key
+    holder.add(model)
+    bone.add(holder)
+  } catch {
+    // Bare slot on any load failure — appearance never blocks play.
   }
 }
 
@@ -452,19 +590,26 @@ async function applyArmorPiece(
   }
 }
 
-async function applyArmor(heroMesh: THREE.Object3D, armor: GearDescriptor['armor']): Promise<void> {
+async function applyArmor(heroMesh: THREE.Object3D, gear: GearDescriptor | undefined): Promise<void> {
+  const armor = gear?.armor
+  const equip = gear?.equip
   const skinned: THREE.SkinnedMesh[] = []
   heroMesh.traverse((o) => { if ((o as THREE.SkinnedMesh).isSkinnedMesh) skinned.push(o as THREE.SkinnedMesh) })
   const heroSkinned = primarySkinnedMesh(skinned)
-  if (!heroSkinned) return // capsule/placeholder fallback: no rig to attach armor onto
+  // Rigid pieces (helm/shield/cape/neck) attach to bones directly, so they
+  // still render on a capsule fallback that has a rig; skinned body/legs need
+  // the hero mesh.
+  const rigid = Promise.all(RIGID_SLOTS.map((slot) => applyRigidGearPiece(heroMesh, slot, equip?.[slot])))
+  if (!heroSkinned) { await rigid; return }
 
   let ctl = heroMesh.userData.armorHideMask as HideMaskControl | null | undefined
   if (ctl === undefined) {
     ctl = setupArmorHideMask(skinned)
     heroMesh.userData.armorHideMask = ctl
   }
-  await Promise.all(ARMOR_SLOTS.map((slot) => applyArmorPiece(heroSkinned, slot, armor?.[slot])))
-  ctl?.setHidden({ body: !!armor?.body, legs: !!armor?.legs })
+  await Promise.all([rigid, ...ARMOR_SLOTS.map((slot) => applyArmorPiece(heroSkinned, slot, armor?.[slot]))])
+  const helm = equip?.head ? (getGearModel(equip.head) as PlacementSpec | null) : null
+  ctl?.setHidden({ head: !!helm?.hideHead, body: !!armor?.body, legs: !!armor?.legs })
 }
 
 /** Attaches (or replaces/removes) the weapon + armor matching `gear` on a
@@ -472,7 +617,7 @@ async function applyArmor(heroMesh: THREE.Object3D, armor: GearDescriptor['armor
  * attachWeapon/attachGearList, so the same equipped loadout renders in both
  * places. */
 export async function applyGear(heroMesh: THREE.Object3D, gear: GearDescriptor | undefined): Promise<void> {
-  await Promise.all([applyWeaponPiece(heroMesh, gear?.weapon), applyArmor(heroMesh, gear?.armor)])
+  await Promise.all([applyWeaponPiece(heroMesh, gear?.weapon, gear?.equip?.weapon), applyArmor(heroMesh, gear)])
 }
 
 export function createEntity(id: string, x: number, z: number, mesh: THREE.Object3D, animator: Animator | null = null): Entity {

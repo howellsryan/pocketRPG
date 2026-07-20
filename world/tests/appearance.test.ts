@@ -12,14 +12,16 @@ const withWeapon = (itemId: string) => ({ weapon: { itemId } })
 
 describe('gearFromEquipment', () => {
   it('maps tiered melee weapons with their arena-registry tint', () => {
-    expect(gearFromEquipment(withWeapon('bronze_sword'))).toEqual({ weapon: { archetype: 'sword', tint: '#b87333' } })
-    expect(gearFromEquipment(withWeapon('adamant_dagger'))).toEqual({ weapon: { archetype: 'dagger', tint: '#3f8a5a' } })
-    expect(gearFromEquipment(withWeapon('dragon_mace'))).toEqual({ weapon: { archetype: 'blunt', tint: '#c0392b' } })
+    // Registry-covered weapons now also carry `equip.weapon` (the client renders
+    // the per-item arena model); the archetype/tint stay as the fallback.
+    expect(gearFromEquipment(withWeapon('bronze_sword'))).toEqual({ weapon: { archetype: 'sword', tint: '#b87333' }, equip: { weapon: 'bronze_sword' } })
+    expect(gearFromEquipment(withWeapon('adamant_dagger'))).toEqual({ weapon: { archetype: 'dagger', tint: '#3f8a5a' }, equip: { weapon: 'adamant_dagger' } })
+    expect(gearFromEquipment(withWeapon('dragon_mace'))).toEqual({ weapon: { archetype: 'blunt', tint: '#c0392b' }, equip: { weapon: 'dragon_mace' } })
   })
 
   it('scimitars share the curved-blade asset with dragon claws (developer decision)', () => {
-    expect(gearFromEquipment(withWeapon('runeforged_scimitar'))).toEqual({ weapon: { archetype: 'dagger', tint: '#2fd0c0' } })
-    expect(gearFromEquipment(withWeapon('bronze_scimitar'))).toEqual({ weapon: { archetype: 'dagger', tint: '#b87333' } })
+    expect(gearFromEquipment(withWeapon('runeforged_scimitar'))).toEqual({ weapon: { archetype: 'dagger', tint: '#2fd0c0' }, equip: { weapon: 'runeforged_scimitar' } })
+    expect(gearFromEquipment(withWeapon('bronze_scimitar'))).toEqual({ weapon: { archetype: 'dagger', tint: '#b87333' }, equip: { weapon: 'bronze_scimitar' } })
     expect(gearFromEquipment(withWeapon('dragon_scimitar'))?.weapon?.archetype).toBe(gearFromEquipment(withWeapon('dragon_claws'))?.weapon?.archetype)
   })
 
@@ -55,7 +57,7 @@ describe('gearFromEquipment', () => {
     // but with no tint — the arena renders it as a plain staff, so no more
     // does the world, even though "_of_fire$" still matches TIER_TINTS: a
     // registered-but-tintless item takes precedence over the regex fallback.
-    expect(gearFromEquipment(withWeapon('staff_of_fire'))).toEqual({ weapon: { archetype: 'staff' } })
+    expect(gearFromEquipment(withWeapon('staff_of_fire'))).toEqual({ weapon: { archetype: 'staff' }, equip: { weapon: 'staff_of_fire' } })
     expect(gearFromEquipment(withWeapon('ancestral_wand'))?.weapon?.archetype).toBe('wand')
   })
 
@@ -108,6 +110,52 @@ describe('gearFromEquipment armor', () => {
     expect(gearFromEquipment({ weapon: { itemId: 'bronze_sword' }, body: { itemId: 'iron_platebody' } })).toEqual({
       weapon: { archetype: 'sword', tint: '#b87333' },
       armor: { body: { tint: '#a8acb2' } },
+      equip: { weapon: 'bronze_sword' },
     })
+  })
+})
+
+describe('gearFromEquipment equip (per-item registry parity)', () => {
+  it('carries the weapon itemId whenever the arena registry can render it per-item', () => {
+    // The reported bug: a trident renders as a staff in the open world. The
+    // archetype fallback is still 'staff', but equip.weapon lets the client load
+    // weapons/trident.glb with the arena's exact placement instead.
+    expect(gearFromEquipment(withWeapon('trident_of_venom'))).toEqual({
+      weapon: { archetype: 'staff' },
+      equip: { weapon: 'trident_of_venom' },
+    })
+  })
+
+  it('omits equip for a weapon the registry does not cover (archetype-only fallback)', () => {
+    // dragon_claws has no equipmentModels.json weapons row — no per-item model,
+    // so no equip entry; the client keeps rendering the dagger silhouette.
+    expect(gearFromEquipment(withWeapon('dragon_claws')).equip).toBeUndefined()
+  })
+
+  it('carries head/shield/cape/neck accessory itemIds but never body/legs', () => {
+    const gear = gearFromEquipment({
+      weapon: { itemId: 'dragon_scimitar' },
+      head: { itemId: 'dragon_full_helm' },
+      shield: { itemId: 'dragon_kiteshield' },
+      cape: { itemId: 'fire_cape' },
+      neck: { itemId: 'amulet_of_glory' },
+      body: { itemId: 'iron_platebody' },
+      legs: { itemId: 'iron_platelegs' },
+    })
+    expect(gear.equip).toEqual({
+      weapon: 'dragon_scimitar',
+      head: 'dragon_full_helm',
+      shield: 'dragon_kiteshield',
+      cape: 'fire_cape',
+      neck: 'amulet_of_glory',
+    })
+    // body/legs still drive the tinted-outfit path, not equip.
+    expect(gear.armor).toEqual({ body: { tint: '#a8acb2' }, legs: { tint: '#a8acb2' } })
+  })
+
+  it('omits equip entirely when nothing equipped resolves to a registry model', () => {
+    expect(gearFromEquipment(withWeapon('dragon_claws')).equip).toBeUndefined()
+    expect(gearFromEquipment(withArmor('leather_body')).equip).toBeUndefined()
+    expect(gearFromEquipment({}).equip).toBeUndefined()
   })
 })
