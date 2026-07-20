@@ -1,15 +1,11 @@
 # Open-World Improvements — Decision Record (2026-07)
 
-> All 12 items below are Done. Three carry explicitly-scoped cuts, noted in
-> their own Outcome sections rather than silently dropped: item 1's asset
-> rebuild (STEP→LINEAR interpolation fix) is code-complete but unbuilt — the
-> 71 MiB source GLB isn't available outside a maintainer's machine; item 2
-> applied the DOM-thrash fix unconditionally but didn't attempt the two
-> profile-gated fixes (model triangle count, AoI mesh-reuse cache) for the
-> same reason; item 12 landed stages 1–2 (base model + tint parity) and
-> dropped stage 3 (armour coverage beyond body/legs) per the plan's own
-> "only start it if 1–2 land cleanly" staging. This file is the record of
-> what shipped and why — see each item's Outcome for specifics.
+> All 12 items below are Done. Item 12 keeps one explicitly-scoped cut (stage 3,
+> armour coverage beyond body/legs, dropped per the plan's own "only start it if
+> 1–2 land cleanly" staging). Items 1 and 2 were previously partial (asset
+> rebuild blocked on the missing 71 MiB source GLB); the source was re-supplied
+> and both GLBs are now rebuilt — see the 2026-07-20 follow-up notes in their
+> Outcome sections. This file is the record of what shipped and why.
 
 ## Ground rules (read before starting)
 
@@ -40,8 +36,8 @@
 
 | # | Item | Status |
 |---|------|--------|
-| 1 | Grondar idle/walk animations broken | Done (partial — see Outcome) |
-| 2 | Lag near Grondar | Done (partial — see Outcome) |
+| 1 | Grondar idle/walk animations broken | Done |
+| 2 | Lag near Grondar | Done |
 | 3 | Inventory panel: no scrollbars, full 28 slots, aligned tabs | Done |
 | 4 | F1–F5 tab shortcuts | Done |
 | 5 | Escape closes open modal | Done |
@@ -62,7 +58,18 @@ both touch tick/protocol) · 9 · 12 (largest, asset-pipeline work).
 
 ## Item 1 — Warlord Grondar plays no/wrong idle & walk animations
 
-**Status**: Done (partial — asset rebuild blocked, see below)
+**Status**: Done
+
+**2026-07-20 follow-up (asset rebuild now shipped)**: the 71 MiB source was
+re-supplied, so `scripts/build-warlord-grondar.mjs` was run and both GLBs
+committed. Verified: the idle clip's samplers went from 83 STEP / 40 LINEAR to
+**123 LINEAR** on *both* surfaces (arena `Idle`, world `idle`) — the STEP→LINEAR
+fix that had only ever existed in the script now lives in the runtime assets, so
+Grondar's 15.4 s idle plays as continuous motion instead of a stepped freeze.
+attack/die keep their authored 82 STEP / 41 LINEAR (unchanged, both surfaces).
+The world and arena now play byte-identical animation data. (The build was also
+split per-surface for item 2 — see there.) The prior partial Outcome below is
+retained for history.
 **Outcome**: Two changes landed. (1) `scripts/build-warlord-grondar.mjs`: corrected
 the root-cause mechanism — `resample()` (from `@gltf-transform/functions`) only
 dedupes keyframes *within* a sampler's existing interpolation mode; it never
@@ -151,7 +158,18 @@ Static inspection of the committed `world/client/public/models/warlord_grondar.g
 
 ## Item 2 — Severe lag near Grondar
 
-**Status**: Done (partial — see below)
+**Status**: Done
+
+**2026-07-20 follow-up (model-weight fix now shipped)**: with the source
+re-supplied, `scripts/build-warlord-grondar.mjs` now decimates per-surface from
+a shared animation-fixed base instead of one common intermediate — the arena
+keeps its close-up quality (~94k tris, 1024px textures) while the open-world GLB
+drops to **~39k tris / 512px textures (2.67 → 1.41 MiB)**, since the world draws
+Grondar as a skinned, shadow-casting, frustum-cull-disabled entity amongst many
+others (hypothesis 1). Bounds are unchanged (spec in `monsterModels.ts` needs no
+edit). Fix 3 (AoI mesh-reuse cache) remains unattempted — still "only if the
+profile confirms it", and no repeatable in-browser profile was captured this
+session. The prior partial Outcome below is retained for history.
 **Outcome**: Applied fix 2 (DOM thrash) unconditionally, per the plan — it's
 correct regardless of profiling. `world/client/src/main.ts`: `showBossFrame`/
 `setThreatPanel` (the latter clears + rebuilds rows via `innerHTML` every

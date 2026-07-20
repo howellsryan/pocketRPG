@@ -30,4 +30,6 @@ world/preview-shots/
 # + world/client/public/models/; regenerate via scripts/build-warlord-grondar.mjs.
 # Glob (not an exact name) so a re-dropped, OS-deduped copy — e.g. "Warlord+
 # Grondar (1).glb" — still gets ignored instead of silently getting tracked.
+# Cover both the canonical build path and a stray drop at the assets/ root.
 assets/open-world/Warlord+Grondar*.glb
+assets/Warlord+Grondar*.glb
