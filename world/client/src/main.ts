@@ -59,6 +59,14 @@ function buildNpcPickable(diff: EntityDiff): Pickable {
   }
 }
 
+/** Other players are menu-only (item 10): no `actions`, so topPick/hoverText
+ * skip them (HOVER_PRIORITY has no 'player' entry) and a left-click through a
+ * crowd still walks — buildMenu gives player pickables their own "Follow"
+ * row instead of running them through the normal actions list. */
+function buildPlayerPickable(diff: EntityDiff): Pickable {
+  return { kind: 'player', id: diff.id, name: diff.name ?? 'Adventurer', actions: [] }
+}
+
 function enterWorld(session: WorldSession): void {
   const socket = connect(window.location.host, getStoredZone())
   let self: Entity | null = null
@@ -278,7 +286,8 @@ function enterWorld(session: WorldSession): void {
     removeHpBar(id)
   }
 
-  // Other players are ghosts: shared hero model, name plate, no pick target.
+  // Other players: shared hero model, name plate — pickable for the Follow
+  // context-menu row only (item 10), never a hover/left-click default.
   function ensureOther(scene: THREE.Scene, diff: EntityDiff): void {
     const existing = others.get(diff.id)
     if (existing) {
@@ -295,6 +304,7 @@ function enterWorld(session: WorldSession): void {
       const entity = createEntity(diff.id, d.x, d.z, mesh, animator)
       entity.serverAnim = d.anim
       entity.name = d.name
+      mesh.userData.pick = buildPlayerPickable(d)
       if (d.gear) void applyGear(entity.mesh, d.gear)
       scene.add(entity.mesh)
       others.set(diff.id, entity)
@@ -602,7 +612,16 @@ function enterWorld(session: WorldSession): void {
               }
               return
             }
+            // Unreachable in practice — players have no `actions` (empty
+            // array in buildPlayerPickable), so topPick/defaultInteract never
+            // select one; this is here to satisfy the type narrowing below.
+            if (interact.kind === 'player') return
             send(socket, { t: 'interact', kind: interact.kind, id: interact.id, action: interact.action })
+          },
+          onFollow: (targetId) => {
+            const name = others.get(targetId)?.name ?? 'them'
+            send(socket, { t: 'follow', targetId })
+            pushMessage(`Following ${name}.`)
           },
           onMessage: (text) => pushMessage(text),
           getPickables: () => [
@@ -610,6 +629,7 @@ function enterWorld(session: WorldSession): void {
             ...(exitLayer?.pickables ?? []),
             ...[...npcs.values()].filter((e) => e.serverAnim !== 'die').map((e) => e.mesh),
             ...(lootLayer?.pickables ?? []),
+            ...[...others.values()].map((e) => e.mesh),
           ],
           getPlayerCombatLevel: () => playerCombatLevel,
           // Wheel zoom, arrow-key orbit/zoom, and middle-drag orbit all live in

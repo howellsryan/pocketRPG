@@ -42,6 +42,8 @@ export function updateClickMarker(marker: THREE.Mesh, now: number): void {
 export type InputHandlers = {
   onWalk: (tile: Tile) => void
   onInteract: (interact: Interact) => void
+  /** Right-click → Follow on a player pickable (item 10). */
+  onFollow: (targetId: string) => void
   onMessage: (text: string) => void
   /** Current picks-live set (npcs/loot move + come and go), resolved per event. */
   getPickables: () => THREE.Object3D[]
@@ -104,6 +106,7 @@ export function setupInput(canvas: HTMLCanvasElement, camera: THREE.Camera, grou
     const rows = buildMenu(picks, h.getPlayerCombatLevel())
     const dispatch: MenuDispatch = (row) => {
       if (row.interact) h.onInteract(row.interact)
+      else if (row.followTargetId) h.onFollow(row.followTargetId)
       else if (row.local === 'examine' && row.examineText) h.onMessage(row.examineText)
       else if (row.local === 'walk' && tile) h.onWalk(tile)
     }

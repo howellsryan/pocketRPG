@@ -1078,7 +1078,7 @@ function renderMenuRow(row: MenuRow): HTMLElement {
     // ("TakeCowhide"), so bind verb→name with a non-breaking space.
     const verb = row.text.slice(0, row.text.length - row.targetName.length).trimEnd()
     if (verb) el.appendChild(span(`${verb} `))
-    const nameColor = row.targetKind === 'npc' || row.targetKind === 'object' ? NAME_CYAN : undefined
+    const nameColor = row.targetKind === 'npc' || row.targetKind === 'object' || row.targetKind === 'player' ? NAME_CYAN : undefined
     el.appendChild(span(row.targetName, nameColor))
     if (row.monsterLevel != null) {
       el.appendChild(span(` (level-${row.monsterLevel})`, row.levelFavourable ? LEVEL_GREEN : LEVEL_RED))

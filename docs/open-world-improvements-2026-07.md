@@ -50,7 +50,7 @@
 | 7 | PocketRPG-styled scrollbars | Done |
 | 8 | Bank modal at ~75% screen, responsive | Done |
 | 9 | Shared/deterministic ambient NPCs | Not started |
-| 10 | Follow another player (right-click) | Not started |
+| 10 | Follow another player (right-click) | Done |
 | 11 | Show player hitpoints in combat | Done |
 | 12 | Open-world hero = combat-arena hero | Not started |
 
@@ -507,8 +507,34 @@ is about the ambient layer only.
 
 ## Item 10 — Follow another player (right-click → Follow)
 
-**Status**: Not started
-**Outcome**: _(fill in when done)_
+**Status**: Done
+**Outcome**: Built per plan with one design refinement. Protocol: new
+`{ t: 'follow'; targetId: string }` (parsed + tested, valid/malformed/
+oversized). Server: `TickPlayer` gained `following`/`followTargetTile`; a new
+`updateFollow` in `tick.ts` re-paths via `ctx.pathAdjacent` (stops adjacent,
+never onto the target's tile) only when the target's tile has changed since
+the last computed path (tested: re-path call count stays flat while the
+target is stationary, increments when it moves). Cancel conditions: combat
+start (attacking or being attacked) is checked explicitly at the top of
+`tickPlayer` — this catches every way combat can start (aggro pull, an
+interact/attack, this tick's own aggro check), not just the message handlers;
+explicit walk/interact/teleport/craft and the follower's own death/respawn
+all clear it via `WorldZone.clearIntents` (which now also clears
+`following`); the target leaving the zone is detected in `updateFollow` via
+`ctx.players` no longer containing them. A dead **target** isn't specially
+detected (players respawn rather than being removed) — the follower simply
+re-paths toward wherever they reappear on the next tick, same as any other
+movement; noted as a deliberate simplification rather than a bug. Client:
+other players are now pickable (`mesh.userData.pick`, `PickKind` gained
+`'player'`) but deliberately excluded from `HOVER_PRIORITY` so they're never
+a hover/left-click default (tap-to-walk through a crowd is unaffected) —
+`buildMenu` gives a player pickable its own "Follow \<name\>" row
+(`followTargetId`, not `interact`, since it's a different message) instead of
+running it through the normal actions list. Visually verified end-to-end
+with two simultaneous browser sessions: right-click near the other player →
+"Follow WorldFriend" row appears → clicking it sends `{t:'follow'}`, shows a
+"Following WorldFriend." status line, and the follower visibly walks to and
+tracks the target as they move away.
 
 ### Current state
 Other players are deliberately unpickable ghosts — `main.ts:272` ("no pick

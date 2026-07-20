@@ -86,6 +86,15 @@ export type TickPlayer = {
   /** Active potion buffs { potionItemId: ticksRemaining } — session state copied
    * onto the engine at fight start and decayed per combat tick (item 8). */
   activePotions: Record<string, number>
+  /** charId of another player being followed (item 10), or null. Cleared on
+   * any explicit walk/interact/teleport/craft (WorldZone's clearIntents),
+   * combat start (this file — covers both attacking and being attacked), or
+   * the target leaving the zone/disconnecting (this file, via ctx.players). */
+  following: string | null
+  /** Target's tile the last time a follow path was computed — re-path only
+   * when this changes, so a stationary target doesn't cost a pathfind every
+   * tick while the follower is still en route. */
+  followTargetTile: { x: number; z: number } | null
 }
 
 // Running: 2 tiles/tick, ~100 energy drained over ~1 min of continuous running;
@@ -458,6 +467,28 @@ function findAggroInRange(player: TickPlayer, ctx: TickContext): NpcState | unde
   return undefined
 }
 
+/** Re-paths a following player toward their target's current tile (stopping
+ * adjacent, never onto the occupied tile) when it has moved since the last
+ * path was computed. No-ops (cheaply) when the target hasn't moved — pathing
+ * is the expensive part, so this is the guard the plan calls for. Clears
+ * `following` when the target has left the zone (covers leaving/logging out;
+ * a dead target respawns rather than being removed, so a follower simply
+ * re-paths toward the respawn tile like any other movement). */
+function updateFollow(player: TickPlayer, ctx: TickContext): void {
+  if (!player.following) return
+  const targetPos = ctx.players?.get(player.following)
+  if (!targetPos) {
+    player.following = null
+    player.followTargetTile = null
+    return
+  }
+  const tile = player.followTargetTile
+  if (tile && tile.x === targetPos.x && tile.z === targetPos.z) return
+  player.followTargetTile = { x: targetPos.x, z: targetPos.z }
+  const path = ctx.pathAdjacent?.({ x: player.x, z: player.z }, targetPos)
+  player.path = path ? path.slice(1) : []
+}
+
 /** One tick for one player: movement first, then interaction arrival, then
  * mining progress. Exactly one of walk/mine/idle claims the anim each tick. */
 export function tickPlayer(player: TickPlayer, ctx: TickContext): TickResult {
@@ -467,6 +498,17 @@ export function tickPlayer(player: TickPlayer, ctx: TickContext): TickResult {
   if (!player.combat) {
     const aggroNpc = findAggroInRange(player, ctx)
     if (aggroNpc) startCombat(player, aggroNpc, result)
+  }
+
+  // Combat (attacking or being attacked) always wins over following — cancel
+  // it here rather than only at the {t:'follow'}/clearIntents call sites, so
+  // this catches every way combat can start (aggro pull, an interact/attack,
+  // this tick's own aggro check above).
+  if (player.combat) {
+    player.following = null
+    player.followTargetTile = null
+  } else {
+    updateFollow(player, ctx)
   }
 
   let ran = false

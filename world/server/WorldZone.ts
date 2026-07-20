@@ -521,6 +521,8 @@ export class WorldZone extends Server<Env> {
       ...seedPrayer(stats.prayer?.level ?? getLevelFromXP(Number(stats.prayer?.xp) || 0) ?? 1),
       lastPrayerSent: null,
       activePotions: {},
+      following: null,
+      followTargetTile: null,
       lingerUntilTick: null,
     }
     this.players.set(charId, player)
@@ -664,6 +666,9 @@ export class WorldZone extends Server<Env> {
         break
       case 'teleport':
         this.handleTeleport(player, message.placeId)
+        break
+      case 'follow':
+        this.handleFollow(player, message.targetId)
         break
       case 'logout':
         void this.logout(player)
@@ -1038,12 +1043,31 @@ export class WorldZone extends Server<Env> {
     send(player.conn, { t: 'snap', x: lm.x, z: lm.z })
   }
 
+  /** Right-click → Follow (item 10): re-paths toward the target each tick
+   * their tile changes (tick.ts's updateFollow) until cancelled — any
+   * explicit walk/interact/teleport/craft (clearIntents, called here too, so
+   * a follow replaces whatever intent was active), combat start, or the
+   * target leaving the zone. Same-zone only; there's no cross-zone follow. */
+  private handleFollow(player: Player, targetId: string): void {
+    if (targetId === player.charId) return
+    if (!this.players.has(targetId)) {
+      player.pendingEvents.push({ e: 'msg', text: "You can't see them anymore." })
+      return
+    }
+    this.clearIntents(player, true)
+    player.following = targetId
+    player.followTargetTile = null
+    this.ensureTicking()
+  }
+
   private clearIntents(player: Player, keepCombat = false): void {
     player.pendingInteract = null
     player.mining = null
     player.crafting = null
     if (!keepCombat) player.combat = null
     player.pendingLoot = null
+    player.following = null
+    player.followTargetTile = null
   }
 
   private handleInteract(player: Player, message: Extract<ClientMessage, { t: 'interact' }>): void {

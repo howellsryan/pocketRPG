@@ -11,6 +11,9 @@ const lootPile: Pickable = {
     { label: 'Take', name: 'Bones', action: 'take', id: 'loot_1' },
   ],
 }
+// Other players are menu-only (item 10): no actions, so topPick/hoverText
+// never select them — see the 'players are never a default action' tests.
+const otherPlayer: Pickable = { kind: 'player', id: '2', name: 'WorldFriend', actions: [] }
 
 describe('topPick', () => {
   it('prefers loot over npc over rock/object', () => {
@@ -26,6 +29,10 @@ describe('topPick', () => {
     const b = { ...rock, id: 'b' }
     expect(topPick([a, b])?.id).toBe('a')
   })
+  it('never picks a player as the default action, even alone under the cursor', () => {
+    expect(topPick([otherPlayer])).toBeNull()
+    expect(topPick([otherPlayer, rock])?.kind).toBe('rock')
+  })
 })
 
 describe('hoverText', () => {
@@ -38,6 +45,9 @@ describe('hoverText', () => {
   })
   it('falls back to Walk here on empty ground', () => {
     expect(hoverText([])).toBe('Walk here')
+  })
+  it('falls back to Walk here over a player (no default action)', () => {
+    expect(hoverText([otherPlayer])).toBe('Walk here')
   })
 })
 
@@ -71,5 +81,11 @@ describe('buildMenu', () => {
   })
   it('always ends with Walk here then Cancel even with no pickables', () => {
     expect(buildMenu([], 3).map((r) => r.local)).toEqual(['walk', 'cancel'])
+  })
+  it('gives a player pickable a Follow row that carries followTargetId, not interact', () => {
+    const rows = buildMenu([otherPlayer], 15)
+    expect(rows[0]).toMatchObject({ text: 'Follow WorldFriend', followTargetId: '2' })
+    expect(rows[0].interact).toBeUndefined()
+    expect(rows.map((r) => r.text)).toEqual(['Follow WorldFriend', 'Walk here', 'Cancel'])
   })
 })

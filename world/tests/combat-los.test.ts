@@ -30,7 +30,7 @@ function makeRanger(): TickPlayer {
     hp: 40, maxHp: 40,
     equipment: { weapon: { itemId: 'shortbow' }, ammo: { itemId: 'bronze_arrow', quantity: 500 } },
     gear: {}, combat: null,
-    running: false, runEnergy: 100, lastRunSent: 100, stance: 'accurate', spell: null, specialEnergy: 100, lastSpecSent: 100, prayerPoints: 1, maxPrayerPoints: 1, prayerDrainAccumulator: 0, activeProtectionPrayer: null, activeCombatPrayer: null, lastPrayerSent: null, activePotions: {},
+    running: false, runEnergy: 100, lastRunSent: 100, stance: 'accurate', spell: null, specialEnergy: 100, lastSpecSent: 100, prayerPoints: 1, maxPrayerPoints: 1, prayerDrainAccumulator: 0, activeProtectionPrayer: null, activeCombatPrayer: null, lastPrayerSent: null, activePotions: {}, following: null, followTargetTile: null,
   }
 }
 
