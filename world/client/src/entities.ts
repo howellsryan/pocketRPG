@@ -510,7 +510,14 @@ async function applyRigidGearPiece(heroMesh: THREE.Object3D, slot: RigidSlot, it
       if (current.userData.key === key) return
       current.removeFromParent()
     }
-    const model = gltf.scene.clone(true)
+    // cloneSkeleton (not Object3D.clone) so a skinned prop with its own rig —
+    // the cape's drape skeleton — rebinds onto its own cloned bones instead of
+    // collapsing; a plain clone shares the cached template's skeleton and the
+    // mesh renders empty. Harmless for the static props (helm/shield/amulet).
+    const model = cloneSkeleton(gltf.scene)
+    // Posed skinned props (cape) animate away from their bind bounds, so three
+    // can frustum-cull them incorrectly once attached — same fix the hero uses.
+    model.traverse((o) => { o.frustumCulled = false })
     // Tint parity with heroAttach.js attachGearList: tintAll ('replace') wins;
     // else neck/cape recolour whole (multiply-all); else steel-scoped multiply.
     const mode: 'replace' | true | false = spec!.tintAll ? spec!.tintAll : (slot === 'neck' || slot === 'cape') ? true : false
