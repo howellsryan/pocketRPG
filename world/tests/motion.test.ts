@@ -5,6 +5,7 @@ import {
   RUN_DIST_SQ_MIN,
   SNAP_QUEUE_LEN,
   animForSegment,
+  gaitBob,
   segmentDurationMs,
   shouldSnap,
   stepYaw,
@@ -71,5 +72,39 @@ describe('animForSegment', () => {
   it('brackets strictly between diagonal-walk (2) and straight-run (4)', () => {
     expect(RUN_DIST_SQ_MIN).toBeGreaterThan(2)
     expect(RUN_DIST_SQ_MIN).toBeLessThanOrEqual(4)
+  })
+})
+
+describe('gaitBob', () => {
+  it('gives a stationary boss no offset at all (idle clip only)', () => {
+    expect(gaitBob(0, false)).toEqual({ y: 0, rotZ: 0 })
+    expect(gaitBob(1.23, false)).toEqual({ y: 0, rotZ: 0 })
+  })
+
+  it('bobs upward (never negative — feet never sink below the idle pose) while moving', () => {
+    for (let t = 0; t < 2; t += 0.05) {
+      expect(gaitBob(t, true).y).toBeGreaterThanOrEqual(0)
+    }
+  })
+
+  it('rocks side to side (signed) at half the bob frequency while moving', () => {
+    const rocks = Array.from({ length: 40 }, (_, i) => gaitBob(i * 0.05, true).rotZ)
+    expect(rocks.some((r) => r > 0)).toBe(true)
+    expect(rocks.some((r) => r < 0)).toBe(true)
+  })
+
+  it('y repeats twice per stride cycle (both feet land once each)', () => {
+    // y = |sin(phase)|, so its period is half of rotZ's full stride cycle.
+    const yPeriod = 1 / (2 * 2.2) // BOB_HZ
+    const a = gaitBob(0.37, true)
+    const b = gaitBob(0.37 + yPeriod, true)
+    expect(a.y).toBeCloseTo(b.y, 5)
+  })
+
+  it('rotZ repeats once per full stride cycle', () => {
+    const rockPeriod = 2 / 2.2 // BOB_HZ
+    const a = gaitBob(0.37, true)
+    const b = gaitBob(0.37 + rockPeriod, true)
+    expect(a.rotZ).toBeCloseTo(b.rotZ, 5)
   })
 })

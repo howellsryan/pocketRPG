@@ -56,6 +56,20 @@ fs.mkdirSync(path.dirname(WORLD_OUT), { recursive: true })
     textureCompress({ encoder: sharp, targetFormat: 'webp', resize: [1024, 1024] }),
     resample(), dedup(), prune(),
   )
+  // resample() only dedupes redundant keyframes within a sampler's existing
+  // interpolation mode — it never converts STEP to LINEAR (gltf-transform's
+  // resample.ts branches on the sampler's own interpolation). The idle loop
+  // (NlaTrack) ships heavily STEP-interpolated from the source authoring
+  // tool, which reads as "frozen, occasional pops" rather than a breathing
+  // idle. Force it to LINEAR here — attack/death (NlaTrack.001/.002) keep
+  // whatever interpolation they were authored with, since a snappy STEP pose
+  // change may be intentional for an impact frame.
+  for (const anim of doc.getRoot().listAnimations()) {
+    if (anim.getName() !== 'NlaTrack') continue
+    for (const sampler of anim.listSamplers()) {
+      if (sampler.getInterpolation() === 'STEP') sampler.setInterpolation('LINEAR')
+    }
+  }
   await io.write(TMP, doc)
   let tris = 0
   for (const m of doc.getRoot().listMeshes()) for (const p of m.listPrimitives()) { const i = p.getIndices(); tris += i ? i.getCount() / 3 : 0 }

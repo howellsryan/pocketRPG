@@ -21,11 +21,7 @@ const INVENTORY_COLS = 4
 const INVENTORY_ROWS = 7
 const INV_CELL_PX = 40
 const INV_GAP_PX = 3
-// Show 4 rows before scrolling (mirrors #prayer-grid's capped-height pattern)
-// instead of all 7 — the panel was showing mostly empty rows below the fold.
-const INV_VISIBLE_ROWS = 4
 const INV_CONTENT_W = INVENTORY_COLS * INV_CELL_PX + (INVENTORY_COLS - 1) * INV_GAP_PX
-const INV_VISIBLE_H = INV_VISIBLE_ROWS * INV_CELL_PX + (INV_VISIBLE_ROWS - 1) * INV_GAP_PX
 // The panel used to be a flat 232px regardless of content, leaving a wide
 // empty gutter to the right of every inventory row (narrower than the tab
 // rail above it). Size the panel to the inventory grid's own content width
@@ -35,11 +31,33 @@ const HUD_PANEL_WIDTH = Math.max(INV_CONTENT_W + 14, 4 * 44 + 3 * 3)
 const XP_DROP_MS = 1200
 const MAX_MESSAGES = 3
 
+// Shared PocketRPG-styled scrollbar (parchment/gold/void palette per
+// DESIGN.md — hard-coded here since the world client doesn't load the main
+// app's src/index.css tokens). Apply the class to any scrollable container
+// that should match the game's chrome instead of the browser default;
+// defined once here and reused by bank.ts/crafting.ts via SCROLL_CLASS/
+// SCROLL_CSS so the colours live in one place.
+export const SCROLL_CLASS = 'pr-scroll'
+export const SCROLL_CSS = `
+.${SCROLL_CLASS} { scrollbar-width: thin; scrollbar-color: #b08842 rgba(20, 16, 10, 0.4); }
+.${SCROLL_CLASS}::-webkit-scrollbar { width: 8px; height: 8px; }
+.${SCROLL_CLASS}::-webkit-scrollbar-track { background: rgba(20, 16, 10, 0.4); border-radius: 6px; }
+.${SCROLL_CLASS}::-webkit-scrollbar-thumb { background: #b08842; border-radius: 6px; border: 1px solid #6e521f; }
+.${SCROLL_CLASS}::-webkit-scrollbar-thumb:hover { background: #e6c878; }
+`
+
 const HUD_CSS = `
+${SCROLL_CSS}
 #hud-panel {
   position: fixed; right: 8px; top: 200px;
   z-index: 10; font-family: sans-serif; display: flex; flex-direction: column; gap: 4px;
   width: ${HUD_PANEL_WIDTH}px;
+}
+/* Full 28-slot inventory (7 rows) is taller than the 4-row panel this was
+   tuned for; on short viewports pull the panel up (never past the minimap,
+   which ends at 140px) so the bottom tab rail stays on-screen. */
+@media (max-height: 640px) {
+  #hud-panel { top: 148px; }
 }
 .hud-tabs { display: flex; gap: 3px; }
 .hud-tabs.bottom { margin-top: 1px; }
@@ -64,7 +82,6 @@ const HUD_CSS = `
 #inv-panel {
   display: grid; grid-template-columns: repeat(${INVENTORY_COLS}, ${INV_CELL_PX}px);
   grid-auto-rows: ${INV_CELL_PX}px; gap: ${INV_GAP_PX}px;
-  max-height: ${INV_VISIBLE_H}px; overflow-y: auto;
 }
 #equip-panel {
   display: grid; grid-template-columns: repeat(3, 40px); grid-auto-rows: 40px; gap: 3px;
@@ -437,6 +454,65 @@ function tabClicked(id: string): void {
   selectTab(id)
 }
 
+const F_KEY_TAB: Record<string, string> = {
+  F1: 'inventory', F2: 'equipment', F3: 'prayer', F4: 'magic', F5: 'combat',
+}
+
+/** Pure: which HUD tab (if any) an F1–F5 keydown selects. Exported for tests. */
+export function keyToHudTab(key: string): string | null {
+  return F_KEY_TAB[key] ?? null
+}
+
+function isEditableTarget(target: EventTarget | null): boolean {
+  const el = target as HTMLElement | null
+  return !!el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable)
+}
+
+/** Closer registered by a modal/menu owner (bank, crafting, world map, the
+ * context menu…). Returns true if it closed something (consumes the Escape),
+ * false if it had nothing open (falls through to the next priority). Lower
+ * `priority` runs first — see each registerEscapeHandler call site for the
+ * ordering (1 = bank qty prompt, 2 = context menu, 3 = bank/craft/world-map). */
+export type EscapeHandler = () => boolean
+type PriorityHandler = { priority: number; handler: EscapeHandler }
+const escapeHandlers: PriorityHandler[] = []
+
+/** Lets modal owners outside ui.ts (bank/crafting/world-map, which ui.ts
+ * can't import without a circular dependency) plug into the single global
+ * Escape key. Each Escape press runs handlers in priority order and stops at
+ * the first one that reports it closed something. */
+export function registerEscapeHandler(priority: number, handler: EscapeHandler): void {
+  escapeHandlers.push({ priority, handler })
+}
+
+/** Pure priority-routing core: runs `handlers` lowest-priority-first,
+ * stopping at the first that reports it closed something. Exported (and
+ * kept separate from the live singleton registry above) so the routing
+ * itself is directly testable without touching real DOM-backed handlers. */
+export function runEscapeHandlers(handlers: PriorityHandler[]): boolean {
+  for (const { handler } of [...handlers].sort((a, b) => a.priority - b.priority)) {
+    if (handler()) return true
+  }
+  return false
+}
+
+function dispatchEscape(): boolean {
+  return runEscapeHandlers(escapeHandlers)
+}
+
+function onGlobalKeyDown(e: KeyboardEvent): void {
+  if (isEditableTarget(e.target)) return
+  if (e.key === 'Escape') {
+    if (dispatchEscape()) e.preventDefault()
+    return
+  }
+  const tab = keyToHudTab(e.key)
+  if (tab) {
+    e.preventDefault()
+    selectTab(tab)
+  }
+}
+
 /** Builds the tabbed HUD panel (Inventory / Equipment / Combat + Logout), the run
  * orb, message strip, xp-drop layer and HP pill. Call once after welcome. */
 export function initHud(handlers?: HudHandlers): void {
@@ -564,6 +640,7 @@ export function initHud(handlers?: HudHandlers): void {
   prayer.appendChild(prayerBar)
   const prayerGrid = document.createElement('div')
   prayerGrid.id = 'prayer-grid'
+  prayerGrid.className = SCROLL_CLASS
   prayer.appendChild(prayerGrid)
   prayerPane.appendChild(prayer)
   body.appendChild(prayerPane)
@@ -573,6 +650,7 @@ export function initHud(handlers?: HudHandlers): void {
   magicPane.setAttribute('data-pane', 'magic')
   const magic = document.createElement('div')
   magic.id = 'magic-panel'
+  magic.className = SCROLL_CLASS
   magicPane.appendChild(magic)
   body.appendChild(magicPane)
 
@@ -674,6 +752,8 @@ export function initHud(handlers?: HudHandlers): void {
   const uniqueBanner = document.createElement('div')
   uniqueBanner.id = 'unique-banner'
   document.body.appendChild(uniqueBanner)
+
+  window.addEventListener('keydown', onGlobalKeyDown)
 }
 
 /** Renders worn equipment into the Equipment tab; empty slots show their label. */
@@ -1018,6 +1098,14 @@ export function hideContextMenu(): void {
     closeMenuListener = null
   }
 }
+
+// Priority 2: the right-click/long-press context menu, above the bank/craft/
+// world-map modals (priority 3) but below the bank qty prompt (priority 1).
+registerEscapeHandler(2, () => {
+  if (!document.getElementById('ctx-menu')) return false
+  hideContextMenu()
+  return true
+})
 
 /** Opens the right-click / long-press menu at (x,y), clamped on-screen. Rows
  * dispatch through `onPick`; clicking outside or a row closes it. */

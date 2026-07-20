@@ -44,3 +44,25 @@ export const RUN_DIST_SQ_MIN = 3
 export function animForSegment(planarDistSq: number): 'walk' | 'run' {
   return planarDistSq >= RUN_DIST_SQ_MIN ? 'run' : 'walk'
 }
+
+// Bosses whose GLB ships no walk clip (e.g. Warlord Grondar — see
+// monsterModels.ts's `noLocomotionClip`) alias walk to idle in makeAnimator,
+// which reads as a frozen statue gliding across the ground. This gives them a
+// cheap procedural gait instead: a vertical bob + a slight side-to-side rock,
+// applied only while moving, on top of whatever the idle clip is doing.
+const BOB_HZ = 2.2
+const BOB_AMPLITUDE = 0.035
+const ROCK_AMPLITUDE_RAD = 0.05
+
+export type GaitBob = { y: number; rotZ: number }
+
+/** Pure: procedural gait offset for a given elapsed time (seconds) and
+ * movement state. Stationary bosses get no offset — only the idle clip. */
+export function gaitBob(elapsedSeconds: number, moving: boolean): GaitBob {
+  if (!moving) return { y: 0, rotZ: 0 }
+  const phase = elapsedSeconds * BOB_HZ * Math.PI * 2
+  // Double-frequency bob (both feet land per stride) vs. single-frequency
+  // rock (weight shifts once per stride) — this is what keeps a plain sine
+  // bob from reading as a bounce-in-place.
+  return { y: Math.abs(Math.sin(phase)) * BOB_AMPLITUDE, rotZ: Math.sin(phase / 2) * ROCK_AMPLITUDE_RAD }
+}

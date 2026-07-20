@@ -5,6 +5,7 @@
 import type { InvSlot, StationType } from '../../shared/protocol'
 import { STATIONS, type Recipe } from '../../shared/recipes'
 import { iconMarkup, itemName } from './itemIcon'
+import { registerEscapeHandler, SCROLL_CLASS } from './ui'
 
 export type CraftHandler = (station: StationType, recipeId: string, qty: number) => void
 export type SkillLevels = Record<string, { xp: number; level: number }>
@@ -163,6 +164,7 @@ export function openCraftUI(station: StationType, inventory: InvSlot[], stats: S
 
   const list = document.createElement('div')
   list.id = 'craft-list'
+  list.className = SCROLL_CLASS
 
   panel.appendChild(head)
   panel.appendChild(list)
@@ -192,3 +194,11 @@ export function closeCraftUI(): void {
   state = null
   document.getElementById('craft-modal')?.remove()
 }
+
+// Priority 3: same tier as the bank/world-map modals — they're mutually
+// exclusive in practice, so ordering between them doesn't matter.
+registerEscapeHandler(3, () => {
+  if (!isCraftOpen()) return false
+  closeCraftUI()
+  return true
+})

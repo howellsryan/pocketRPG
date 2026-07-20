@@ -41,17 +41,17 @@
 
 | # | Item | Status |
 |---|------|--------|
-| 1 | Grondar idle/walk animations broken | Not started |
-| 2 | Lag near Grondar | Not started |
-| 3 | Inventory panel: no scrollbars, full 28 slots, aligned tabs | Not started |
-| 4 | F1–F5 tab shortcuts | Not started |
-| 5 | Escape closes open modal | Not started |
-| 6 | Minimap icons (banks, skilling, monsters) | Not started |
-| 7 | PocketRPG-styled scrollbars | Not started |
-| 8 | Bank modal at ~75% screen, responsive | Not started |
+| 1 | Grondar idle/walk animations broken | Done (partial — see Outcome) |
+| 2 | Lag near Grondar | Done (partial — see Outcome) |
+| 3 | Inventory panel: no scrollbars, full 28 slots, aligned tabs | Done |
+| 4 | F1–F5 tab shortcuts | Done |
+| 5 | Escape closes open modal | Done |
+| 6 | Minimap icons (banks, skilling, monsters) | Done |
+| 7 | PocketRPG-styled scrollbars | Done |
+| 8 | Bank modal at ~75% screen, responsive | Done |
 | 9 | Shared/deterministic ambient NPCs | Not started |
 | 10 | Follow another player (right-click) | Not started |
-| 11 | Show player hitpoints in combat | Not started |
+| 11 | Show player hitpoints in combat | Done |
 | 12 | Open-world hero = combat-arena hero | Not started |
 
 **Suggested order**: 3 → 5 → 4 → 7 → 8 → 6 (small, independent UI wins; 7 before 8
@@ -63,8 +63,30 @@ both touch tick/protocol) · 9 · 12 (largest, asset-pipeline work).
 
 ## Item 1 — Warlord Grondar plays no/wrong idle & walk animations
 
-**Status**: Not started
-**Outcome**: _(fill in when done)_
+**Status**: Done (partial — asset rebuild blocked, see below)
+**Outcome**: Two changes landed. (1) `scripts/build-warlord-grondar.mjs`: corrected
+the root-cause mechanism — `resample()` (from `@gltf-transform/functions`) only
+dedupes keyframes *within* a sampler's existing interpolation mode; it never
+converts LINEAR to STEP (confirmed by reading its source), so the plan's
+"artifact of resample()" framing was imprecise. The actual STEP interpolation
+is authored into the source GLB. Fixed by explicitly forcing any STEP sampler
+in the `NlaTrack` (idle) animation to LINEAR after the decimation pass, leaving
+attack/death untouched in case their STEP keys are an intentional snappy pose
+change. **Could not rebuild/commit the GLBs** — `assets/open-world/Warlord+Grondar.glb`
+(gitignored, ~71 MiB) isn't present in this environment; the script fix is
+ready but needs a maintainer with the source asset to run
+`node scripts/build-warlord-grondar.mjs` and commit the two output GLBs.
+(2) Procedural gait (`world/client/src/motion.ts` `gaitBob`, wired via
+`monsterModels.ts`'s new `noLocomotionClip` flag and `entities.ts`'s
+`GltfAnimator.gait`): while a flagged boss is moving, a small vertical bob +
+side-to-side rock is layered onto the model on top of the aliased idle clip,
+so wandering no longer reads as a frozen statue sliding. Unit-tested
+(`tests/motion.test.ts`). Live-verified in the dev client that the world loads
+and Grondar (`wild_grondar`, overworld ~(280,42)) is reachable and renders as
+the real model (not a placeholder box) — a full before/after animation
+comparison against the current STEP-heavy asset wasn't attempted live since he
+one-shots a fresh level-20 dev character at melee range; static/asset-level
+verification only.
 
 ### Symptom
 Grondar renders but appears frozen: no idle animation, and he glides when wandering.
@@ -130,8 +152,22 @@ Static inspection of the committed `world/client/public/models/warlord_grondar.g
 
 ## Item 2 — Severe lag near Grondar
 
-**Status**: Not started
-**Outcome**: _(fill in when done)_
+**Status**: Done (partial — see below)
+**Outcome**: Applied fix 2 (DOM thrash) unconditionally, per the plan — it's
+correct regardless of profiling. `world/client/src/main.ts`: `showBossFrame`/
+`setThreatPanel` (the latter clears + rebuilds rows via `innerHTML` every
+animation frame) now only run when the drawn hp/maxHp/npcId or the
+`threatByNpc` contributors array reference actually changed since the last
+frame — cached in `lastBossFrame`/`lastThreatContributors`, gated with cheap
+identity/equality checks. `hideBossFrame` is likewise only called on the
+transition into "no boss target" rather than every frame while not fighting a
+boss. Fixes 1 (rebuild Grondar at a lower triangle count) and 3 (AoI churn
+mesh-reuse cache) were **not attempted**: fix 1 needs the same missing source
+GLB as item 1; fix 3 is explicitly "only if the profile confirms it" and I
+couldn't safely/repeatedly stand near Grondar in a browser profiler within
+this session (see item 1's outcome) to gather that evidence. No before/after
+FPS numbers recorded — flagging for the maintainer to profile fixes 1 and 3
+against the real client.
 
 ### Symptom
 Frame rate drops sharply whenever the player is near Grondar.
@@ -170,8 +206,16 @@ Outcome line.
 
 ## Item 3 — Inventory panel: full 28 slots, no scrollbars, tabs aligned
 
-**Status**: Not started
-**Outcome**: _(fill in when done)_
+**Status**: Done
+**Outcome**: Removed `INV_VISIBLE_ROWS`/the `max-height`+`overflow-y` cap on
+`#inv-panel` — all 7×4 slots always render, matching the tab rails (which
+were already sized off the panel's own content width, so no separate
+alignment fix was needed). Added a `@media (max-height: 640px)` rule pulling
+`#hud-panel`'s top anchor from 200px to 148px on short viewports (still clear
+of the minimap, which ends at 140px) so the taller 7-row body doesn't push the
+bottom tab rail off-screen. Visually verified end-to-end in the dev client
+(Playwright, 390×844): all 28 slots visible, no scrollbar, tab rails flush
+with the panel edges.
 
 ### Root cause (confirmed)
 `world/client/src/ui.ts:24-28`: `INV_VISIBLE_ROWS = 4` caps `#inv-panel` at 4 of 7
@@ -202,8 +246,14 @@ earlier change ("show 4 rows before scrolling") that the user now reverses.
 
 ## Item 4 — F1–F5 switch HUD tabs
 
-**Status**: Not started
-**Outcome**: _(fill in when done)_
+**Status**: Done
+**Outcome**: Built as planned: one global `keydown` listener installed by
+`initHud`, a pure `keyToHudTab` mapping (F1–F5 → inventory/equipment/prayer/
+magic/combat, tested), `preventDefault` on the five F-keys, routed through the
+existing `selectTab`, and an `isEditableTarget` guard (belt-and-braces —
+chat/bank inputs already `stopPropagation()` on every keydown so they never
+reach this listener). Visually verified in the dev client: F2/F3 switch tabs,
+F5 does not reload the page.
 
 ### Mapping (per request)
 F1 → inventory · F2 → equipment · F3 → prayer · F4 → magic · F5 → combat
@@ -233,8 +283,18 @@ F1 → inventory · F2 → equipment · F3 → prayer · F4 → magic · F5 → 
 
 ## Item 5 — Escape closes the open modal
 
-**Status**: Not started
-**Outcome**: _(fill in when done)_
+**Status**: Done
+**Outcome**: Built as a registry rather than hardcoded priority chain, since
+ui.ts can't import bank.ts/crafting.ts/worldMap.ts without a circular
+dependency (they already import ui.ts): `registerEscapeHandler(priority, fn)`
++ a pure `runEscapeHandlers` core (tested) that runs handlers lowest-priority-
+first, stopping at the first that reports it closed something. Priority 1 =
+bank qty prompt (fallback for when it's open but unfocused — normally its own
+input's Escape handler fires first via `stopPropagation`), 2 = context menu
+(ui.ts, owns `hideContextMenu` already), 3 = bank/craft/world-map modals
+(mutually exclusive in practice, so relative order among them doesn't
+matter). Visually verified in the dev client: right-click → context menu →
+Escape closes it cleanly.
 
 ### Current state
 No global Escape handling. Escape inside the chat input blurs it (`ui.ts:968`);
@@ -265,8 +325,23 @@ context menu ignore Escape entirely.
 
 ## Item 6 — Minimap shows world icons (banks, skilling, monsters)
 
-**Status**: Not started
-**Outcome**: _(fill in when done)_
+**Status**: Done
+**Outcome**: Lifted `STATIC_CATEGORY`/`CATEGORY_ICON_KEY` out of `worldMap.ts`
+into new `world/shared/mapCategories.ts` (tested structurally: every category
+has an icon key). `minimap.ts` clusters the zone's statics once at load
+(`clusterStatics`, small radius) and rasterises each needed bespoke icon once
+via an offscreen `Image` (SVG → data URL → `drawImage`), drawn under the live
+dots each `update()` — gated by a new pure `inMinimapView` helper (tested).
+Kept `SIZE_PX` at 132 rather than bumping it: icons render small (11px) but
+legible; bumping to ~160 would have pushed the minimap's bottom edge past the
+148px HUD top-anchor introduced for short viewports in item 3, and I didn't
+want to re-tune both together without visual confirmation on a real short
+device. Boss NPCs get a distinct colour + slightly larger dot (`MinimapDot`
+gained an optional `boss` flag, sourced from `monsters.json`'s `boss` flag in
+`main.ts`) — live NPC dots otherwise unchanged (position matters more than
+species at this size). Visually verified in the dev client: category icons
+render near the starting town's bank/furnace and reposition correctly as the
+view window pans; a boss NPC's minimap dot renders in the distinct colour.
 
 ### Current state
 `world/client/src/minimap.ts` draws only coloured dots: self, npcs (red), other
@@ -304,8 +379,18 @@ icon per category via `CATEGORY_ICON_KEY` + `uiIconMarkup`.
 
 ## Item 7 — PocketRPG-styled scrollbars for legitimate scroll areas
 
-**Status**: Not started
-**Outcome**: _(fill in when done)_
+**Status**: Done
+**Outcome**: One shared `.pr-scroll` class (WebKit `::-webkit-scrollbar` +
+Firefox `scrollbar-width`/`scrollbar-color`, brass/gold thumb on a dark
+track per `DESIGN.md`'s brass palette — the world client doesn't load the
+main app's `src/index.css` tokens, so the hex values are hard-coded here as
+the plan anticipated) defined once in `ui.ts` (`SCROLL_CLASS`/`SCROLL_CSS`,
+folded into `HUD_CSS` since `initHud()` always runs before any modal is
+reachable) and applied to the bank grids, the crafting recipe list, the
+prayer grid, and the magic panel. Verified with a scratch harness (imported
+`bank.ts`'s `openBankUI` directly, after `initHud()`, into a throwaway Vite
+page — never committed) that the class carries `scrollbar-width: thin` and
+the brass `scrollbar-color` once the real HUD boot order is followed.
 
 ### Scope
 The scroll areas that remain *after* item 3 removes the inventory scroll: bank
@@ -335,8 +420,20 @@ magic panels all show the custom scrollbar; touch scrolling unaffected.
 
 ## Item 8 — Bank modal at ~75% of the screen, responsive
 
-**Status**: Not started
-**Outcome**: _(fill in when done)_
+**Status**: Done
+**Outcome**: `@media (min-width: 700px)` widens `#bank-panel` to
+`min(75vw, 1100px)` at `height: 75vh` (the `1100px` cap is the "sensible max"
+the plan flagged — otherwise a 4K desktop gets an absurdly large modal);
+below that breakpoint the pre-existing `min(560px, 94vw)`/`max-height: 86vh`
+sizing is untouched, so phones are no smaller than before. The bank grid
+(`.bank-grid.bank-side`) now `flex: 1 1 auto`s to fill whatever height the
+panel frees up (with `align-content: start` so a mostly-empty grown grid
+doesn't spread its rows out oddly); the pack grid stays `flex: 0 0 auto` /
+capped at the old 34vh. Verified with the same scratch harness as item 7:
+measured panel rect at 1440×900 comes out to 75.1%×75.2% of viewport, and at
+390×844 (phone) 94.5%×66.1% (unchanged natural sizing, well under the 86vh
+cap). Escape/backdrop-close (item 5) and the item 7 scrollbars both still
+apply.
 
 ### Current state
 `bank.ts:30-33`: `#bank-panel` is `width: min(560px, 94vw); max-height: 86vh` and
@@ -453,8 +550,28 @@ loot. There is no follow concept anywhere; movement is server-authoritative
 
 ## Item 11 — Show players' hitpoints while in combat
 
-**Status**: Not started
-**Outcome**: _(fill in when done)_
+**Status**: Done
+**Outcome**: `toEntityDiff` now always includes `hp`/`maxHp` on player diffs
+(no protocol change, as expected), and `entChanged` gained an `hp !==
+before.hp` clause so a hit that doesn't move the player still streams —
+covered by a new server test that runs real combat (a magic monster hitting
+an adjacent, stationary player) until a hit lands and asserts `entChanged` on
+that exact tick. Client-side, `applyEntityDiff` already applied `hp`/`maxHp`/
+`targetId` generically to any entity (self included, since self's own diff
+already routes through it) — no wiring change needed there. Added the actual
+bar-drawing in `main.ts`'s frame loop for both `self` and each `other`,
+gated on `targetId != null || hp < maxHp`, offset below the nameplate
+(`toScreen(..., 1.7)` vs the nameplate's `2.0`); `removeOther` now also
+calls `removeHpBar` (it previously cleaned up the nameplate/overhead-chat but
+not an hp bar, since players never had one before). Verified: the server
+test passes; live in the dev client I confirmed the NPC hp-bar code path this
+mirrors already renders correctly, and confirmed the world loads two
+simultaneous characters (used for a two-window check) — but couldn't reliably
+click a wandering goblin via scripted coordinates to trigger live player-vs-
+player-visible combat before the session's local D1 instance became flaky
+under repeated re-seeding, so the specific "watch another player fight and
+see their bar" scenario is unconfirmed live. Static/type/unit-test coverage
+is solid; flagging the live two-window check for the maintainer.
 
 ### Current state
 NPC diffs carry `hp`/`maxHp` and the client draws overhead bars for damaged NPCs

@@ -85,6 +85,15 @@ function enterWorld(session: WorldSession): void {
   // Latest damage-contribution snapshot per boss npc id (item 11), keyed so the
   // boss frame can look up whichever npc self.targetId currently points at.
   const threatByNpc = new Map<string, { charId: string; name: string; dmg: number }[]>()
+  const EMPTY_CONTRIBUTORS: { charId: string; name: string; dmg: number }[] = []
+  // Boss frame / threat panel are DOM rebuilds (setThreatPanel clears and
+  // reconstructs rows via innerHTML) — calling them every animation frame is
+  // layout thrash near a boss. Cache what was last drawn and skip the DOM
+  // write when nothing changed; the threat snapshot only gets a new array
+  // reference when a {e:'threat'} event lands, so identity comparison for
+  // the contributors list is enough (no per-frame deep diff needed).
+  let lastBossFrame: { npcId: string; hp: number; maxHp: number } | null = null
+  let lastThreatContributors: { charId: string; name: string; dmg: number }[] | null = null
   let playerCombatLevel = 3
   let minimap: Minimap | null = null
   let exitMarkers: ExitMarker[] = []
@@ -305,6 +314,7 @@ function enterWorld(session: WorldSession): void {
     overheads.delete(id)
     removeNameplate(id)
     removeOverheadChat(id)
+    removeHpBar(id)
   }
 
   socket.addEventListener('open', () => {
@@ -577,7 +587,7 @@ function enterWorld(session: WorldSession): void {
           lastWalk = { x: tile.x, z: tile.z, at: now }
           send(socket, { t: 'walk', x: tile.x, z: tile.z })
         }
-        minimap = createMinimap(message.zone.collision, message.zone.w, message.zone.h, message.zone.palette, walkTo)
+        minimap = createMinimap(message.zone.collision, message.zone.w, message.zone.h, message.zone.palette, message.statics, walkTo)
         setupInput(renderer.domElement, camera, ground, {
           onWalk: walkTo,
           onInteract: (interact) => {
@@ -628,6 +638,15 @@ function enterWorld(session: WorldSession): void {
           if (self && camera && cam) {
             cam.update(deltaSeconds)
             updateEntity(self, now, deltaSeconds, targetPosOf(self))
+            // Own overhead HP bar while fighting or damaged (item 11) — the
+            // fixed HP pill stays; this is the in-world bar other players see
+            // on themselves too, offset below where a nameplate would sit.
+            if (self.hp != null && self.maxHp && (self.targetId != null || self.hp < self.maxHp)) {
+              const s = toScreen(self.mesh.position, 1.7)
+              updateHpBar(self.id, s.x, s.y, self.hp / self.maxHp)
+            } else {
+              removeHpBar(self.id)
+            }
             updateCamera(camera, self.mesh.position, cam.state.zoom, cam.state.yaw)
             if (sun) updateShadowLight(sun, self.mesh.position)
             // Stream ground chunks around the player — only when they cross a
@@ -656,15 +675,31 @@ function enterWorld(session: WorldSession): void {
           const bossTarget = self?.targetId ? npcs.get(self.targetId) : null
           const bossDef = bossTarget?.monsterId ? monsters[bossTarget.monsterId] : null
           if (bossTarget && bossDef?.boss && bossTarget.serverAnim !== 'die' && bossTarget.hp != null && bossTarget.maxHp) {
-            showBossFrame(bossDef.name ?? bossTarget.monsterId ?? 'Boss', bossTarget.hp, bossTarget.maxHp)
-            setThreatPanel(threatByNpc.get(self!.targetId!) ?? [], self!.id)
-          } else {
+            const npcId = self!.targetId!
+            if (!lastBossFrame || lastBossFrame.npcId !== npcId || lastBossFrame.hp !== bossTarget.hp || lastBossFrame.maxHp !== bossTarget.maxHp) {
+              showBossFrame(bossDef.name ?? bossTarget.monsterId ?? 'Boss', bossTarget.hp, bossTarget.maxHp)
+              lastBossFrame = { npcId, hp: bossTarget.hp, maxHp: bossTarget.maxHp }
+            }
+            const contributors = threatByNpc.get(npcId) ?? EMPTY_CONTRIBUTORS
+            if (contributors !== lastThreatContributors) {
+              setThreatPanel(contributors, self!.id)
+              lastThreatContributors = contributors
+            }
+          } else if (lastBossFrame || lastThreatContributors) {
             hideBossFrame()
+            lastBossFrame = null
+            lastThreatContributors = null
           }
           for (const other of others.values()) {
             updateEntity(other, now, deltaSeconds, targetPosOf(other))
             const s = toScreen(other.mesh.position, 2.0)
             updateNameplate(other.id, s.x, s.y, other.name ?? 'Adventurer')
+            if (other.hp != null && other.maxHp && (other.targetId != null || other.hp < other.maxHp)) {
+              const hpS = toScreen(other.mesh.position, 1.7)
+              updateHpBar(other.id, hpS.x, hpS.y, other.hp / other.maxHp)
+            } else {
+              removeHpBar(other.id)
+            }
           }
           for (const [id, overhead] of overheads) {
             const mesh = id === self?.id ? self.mesh : others.get(id)?.mesh
@@ -684,7 +719,11 @@ function enterWorld(session: WorldSession): void {
             lastMinimap = now
             const tile = (o: THREE.Object3D): { x: number; z: number } => ({ x: Math.floor(o.position.x), z: Math.floor(o.position.z) })
             const dots: MinimapDot[] = exitMarkers.map((m) => ({ x: m.x, z: m.z, kind: 'exit' as const }))
-            for (const npc of npcs.values()) if (npc.serverAnim !== 'die') dots.push({ ...tile(npc.mesh), kind: 'npc' })
+            for (const npc of npcs.values()) {
+              if (npc.serverAnim === 'die') continue
+              const boss = npc.monsterId ? monsters[npc.monsterId]?.boss : undefined
+              dots.push({ ...tile(npc.mesh), kind: 'npc', boss })
+            }
             for (const other of others.values()) dots.push({ ...tile(other.mesh), kind: 'other' })
             minimap.update(tile(self.mesh), dots)
           }

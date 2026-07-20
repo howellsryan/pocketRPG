@@ -14,6 +14,7 @@ import { npcsFromZone, type NpcState } from '../server/npc'
 import { emptyInventory } from '../server/mining'
 import { findPathAdjacent } from '../server/pathfind'
 import type { Tile } from '../server/pathfind'
+import { keyToHudTab, runEscapeHandlers } from '../client/src/ui'
 
 const COLLISION = Array.from({ length: 16 }, () => '.'.repeat(16))
 
@@ -125,5 +126,38 @@ describe('special attack', () => {
     expect(specEnergyAfterFire).not.toBeNull()
     // dragon_dagger's special costs 25.
     expect(specEnergyAfterFire).toBeLessThanOrEqual(75)
+  })
+})
+
+describe('F1-F5 tab shortcuts', () => {
+  it('maps each F-key to its HUD tab', () => {
+    expect(keyToHudTab('F1')).toBe('inventory')
+    expect(keyToHudTab('F2')).toBe('equipment')
+    expect(keyToHudTab('F3')).toBe('prayer')
+    expect(keyToHudTab('F4')).toBe('magic')
+    expect(keyToHudTab('F5')).toBe('combat')
+  })
+
+  it('ignores every other key', () => {
+    expect(keyToHudTab('F6')).toBeNull()
+    expect(keyToHudTab('a')).toBeNull()
+    expect(keyToHudTab('Escape')).toBeNull()
+  })
+})
+
+describe('Escape priority routing', () => {
+  it('runs handlers in priority order (independent of registration order) and stops at the first that closes something', () => {
+    const calls: number[] = []
+    const closesEverything = runEscapeHandlers([
+      { priority: 3, handler: () => (calls.push(3), true) },
+      { priority: 1, handler: () => (calls.push(1), false) },
+      { priority: 2, handler: () => (calls.push(2), true) },
+    ])
+    expect(closesEverything).toBe(true)
+    expect(calls).toEqual([1, 2])
+  })
+
+  it('returns false when nothing is open', () => {
+    expect(runEscapeHandlers([{ priority: 1, handler: () => false }])).toBe(false)
   })
 })

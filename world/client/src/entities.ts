@@ -3,7 +3,7 @@ import { GLTFLoader, type GLTF } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { clone as cloneSkeleton } from 'three/examples/jsm/utils/SkeletonUtils.js'
 import { tileToWorld } from './scene'
 import type { EntityDiff, GearDescriptor } from '../../shared/protocol'
-import { MOVE_DURATION_MS, animForSegment, segmentDurationMs, shouldSnap, stepYaw, yawToward } from './motion'
+import { MOVE_DURATION_MS, animForSegment, gaitBob, segmentDurationMs, shouldSnap, stepYaw, yawToward } from './motion'
 import { MONSTER_MODELS } from '../../shared/monsterModels'
 import { buildProcCreature, creatureSpecFor, type ProcCreature } from './procCreature'
 
@@ -32,6 +32,11 @@ export type GltfAnimator = {
   mixer: THREE.AnimationMixer
   actions: Partial<Record<AnimName, THREE.AnimationAction>>
   current: THREE.AnimationAction | null
+  /** Set only for boss GLBs with no walk clip (monsterModels.ts's
+   * `noLocomotionClip`) — the procedural gait target (the cloned model, not
+   * the outer group main.ts positions) and its bind-pose local Y/Z to offset
+   * from each frame. */
+  gait?: { target: THREE.Object3D; baseY: number; baseRotZ: number }
 }
 /** Procedural blend-shell creatures (creatures3d) drive their own rig by state
  * rather than a mixer; `triggered` edge-detects so each server swing fires the
@@ -195,6 +200,9 @@ export async function createMonsterMesh(monsterId: string | undefined): Promise<
       group.add(model)
       group.scale.setScalar(spec.targetHeight / (b.maxY - b.minY))
       const animator = makeAnimator(model, gltf, ['idle', 'walk', 'attack', 'die'])
+      if (spec.noLocomotionClip && animator?.kind === 'gltf') {
+        animator.gait = { target: model, baseY: model.position.y, baseRotZ: model.rotation.z }
+      }
       return { mesh: group, animator }
     } catch {
       return { mesh: boxPlaceholder(), animator: null }
@@ -577,6 +585,12 @@ export function updateEntity(entity: Entity, now: number, deltaSeconds: number, 
       entity.animator.mixer.timeScale = entity.moving ? MOVE_DURATION_MS / entity.segmentDuration : 1
       playAnim(entity.animator, name)
       entity.animator.mixer.update(deltaSeconds)
+      const gait = entity.animator.gait
+      if (gait) {
+        const bob = gaitBob(now / 1000, entity.moving)
+        gait.target.position.y = gait.baseY + bob.y
+        gait.target.rotation.z = gait.baseRotZ + bob.rotZ
+      }
     }
   }
 }

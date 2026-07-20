@@ -10,19 +10,28 @@
 // VIEW_TILES-wide window centred on the player; a zone smaller than the window
 // in a given axis (e.g. lumbright, 64x64) is shown in full on that axis,
 // exactly like the old whole-zone behaviour, via the same clamp math.
-import type { GroundPalette } from '../../shared/protocol'
+import type { GroundPalette, StaticObject } from '../../shared/protocol'
+import { clusterByType, type Cluster } from '../../shared/mapClusters'
+import { CATEGORY_ICON_KEY, STATIC_CATEGORY } from '../../shared/mapCategories'
+import { uiIconMarkup } from './itemIcon'
 
 const SIZE_PX = 132
 const SELF_COLOR = '#ffe066'
 const NPC_COLOR = '#e05a5a'
+const BOSS_COLOR = '#ff3ad6'
 const OTHER_COLOR = '#ffffff'
 const EXIT_COLOR = '#61d0d8'
 const DEFAULT_WALKABLE = '#4a7c3a'
 const DEFAULT_BLOCKED = '#2c2620'
 const BAKE_PX_PER_TILE = 4
 const VIEW_TILES = 41
+// Statics never move, so they're clustered once at zone-load time (same
+// technique as the big world map, smaller radius to suit the minimap's tight
+// icon size) rather than re-clustered every update().
+const STATIC_CLUSTER_RADIUS = 3
+const STATIC_ICON_PX = 11
 
-export type MinimapDot = { x: number; z: number; kind: 'npc' | 'other' | 'exit' }
+export type MinimapDot = { x: number; z: number; kind: 'npc' | 'other' | 'exit'; boss?: boolean }
 
 export type Minimap = {
   update(self: { x: number; z: number }, dots: MinimapDot[]): void
@@ -44,6 +53,22 @@ export function minimapView(selfX: number, selfZ: number, width: number, height:
   return { x0, z0, tilesShownX, tilesShownZ }
 }
 
+/** True when a tile position falls inside the current view window — used to
+ * skip drawing static-icon clusters that have scrolled off the minimap. Pure. */
+export function inMinimapView(x: number, z: number, view: MinimapView): boolean {
+  return x >= view.x0 && x < view.x0 + view.tilesShownX && z >= view.z0 && z < view.z0 + view.tilesShownZ
+}
+
+/** Clusters a zone's statics into one marker per category per nearby group
+ * (a mining site's five rocks becomes one "mining" icon), same technique as
+ * the big world map. Pure — statics never move, so callers cluster once. */
+export function clusterStatics(statics: { id: string; type: string; x: number; z: number }[], radius: number): Cluster[] {
+  const inputs = statics
+    .filter((s) => STATIC_CATEGORY[s.type])
+    .map((s) => ({ id: s.id, type: STATIC_CATEGORY[s.type], x: s.x, z: s.z }))
+  return clusterByType(inputs, radius)
+}
+
 const MINIMAP_CSS = `
 #minimap {
   position: fixed; right: 8px; top: 8px; z-index: 10;
@@ -62,11 +87,33 @@ function ensureStyle(): void {
   document.head.appendChild(style)
 }
 
+/** Renders `key`'s bespoke icon (via uiIconMarkup) to an offscreen Image so
+ * canvas drawImage() can blit it — uiIconMarkup returns SVG markup, which
+ * canvas can't draw directly. Resolves once the image has decoded. */
+function rasteriseIcon(key: string): Promise<HTMLImageElement> {
+  const svg = uiIconMarkup(key, STATIC_ICON_PX)
+  const url = URL.createObjectURL(new Blob([svg], { type: 'image/svg+xml' }))
+  return new Promise((resolve, reject) => {
+    const img = new Image()
+    img.onload = () => {
+      URL.revokeObjectURL(url)
+      resolve(img)
+    }
+    img.onerror = (err) => {
+      URL.revokeObjectURL(url)
+      reject(err)
+    }
+    img.src = url
+  })
+}
+
 /** Bakes the zone collision to an offscreen canvas once at BAKE_PX_PER_TILE
  * resolution; each update() blits the current view window (see minimapView)
- * from that bake and draws the live dots on top. A click/tap walks the player
- * to the tapped tile via `onClickTile`, mapped through the same window. */
-export function createMinimap(collision: string[], width: number, height: number, palette?: GroundPalette, onClickTile?: (tile: { x: number; z: number }) => void): Minimap {
+ * from that bake, draws the zone's static-object category icons (banks,
+ * skilling nodes — clustered once here, since statics never move) under the
+ * live dots, then the dots on top. A click/tap walks the player to the
+ * tapped tile via `onClickTile`, mapped through the same window. */
+export function createMinimap(collision: string[], width: number, height: number, palette: GroundPalette | undefined, statics: StaticObject[], onClickTile?: (tile: { x: number; z: number }) => void): Minimap {
   ensureStyle()
   const container = document.createElement('div')
   container.id = 'minimap'
@@ -99,6 +146,19 @@ export function createMinimap(collision: string[], width: number, height: number
   let cell = SIZE_PX / Math.max(view.tilesShownX, view.tilesShownZ)
   let offsetX = (SIZE_PX - view.tilesShownX * cell) / 2
   let offsetZ = (SIZE_PX - view.tilesShownZ * cell) / 2
+
+  // Statics never move — cluster once and rasterise each needed category
+  // icon once. update() just skips a cluster if its icon hasn't finished
+  // decoding yet (a few ms on first draw); no re-clustering per frame.
+  const staticClusters = clusterStatics(statics, STATIC_CLUSTER_RADIUS)
+  const staticIcons = new Map<string, HTMLImageElement>()
+  for (const type of new Set(staticClusters.map((c) => c.type))) {
+    const iconKey = CATEGORY_ICON_KEY[type]
+    if (!iconKey) continue
+    rasteriseIcon(iconKey)
+      .then((img) => staticIcons.set(type, img))
+      .catch(() => {})
+  }
 
   if (onClickTile) {
     canvas.addEventListener('pointerdown', (e) => {
@@ -134,11 +194,19 @@ export function createMinimap(collision: string[], width: number, height: number
         view.tilesShownX * BAKE_PX_PER_TILE, view.tilesShownZ * BAKE_PX_PER_TILE,
         offsetX, offsetZ, view.tilesShownX * cell, view.tilesShownZ * cell
       )
+      for (const cluster of staticClusters) {
+        if (!inMinimapView(cluster.x, cluster.z, view)) continue
+        const icon = staticIcons.get(cluster.type)
+        if (!icon) continue
+        const px = offsetX + (cluster.x - view.x0 + 0.5) * cell
+        const pz = offsetZ + (cluster.z - view.z0 + 0.5) * cell
+        ctx.drawImage(icon, px - STATIC_ICON_PX / 2, pz - STATIC_ICON_PX / 2, STATIC_ICON_PX, STATIC_ICON_PX)
+      }
       for (const dot of dots) {
         if (dot.kind === 'exit') dotAt(dot.x, dot.z, EXIT_COLOR, 2.5)
       }
       for (const dot of dots) {
-        if (dot.kind === 'npc') dotAt(dot.x, dot.z, NPC_COLOR, 2.5)
+        if (dot.kind === 'npc') dotAt(dot.x, dot.z, dot.boss ? BOSS_COLOR : NPC_COLOR, dot.boss ? 3.6 : 2.5)
         else if (dot.kind === 'other') dotAt(dot.x, dot.z, OTHER_COLOR, 2.5)
       }
       dotAt(self.x, self.z, SELF_COLOR, 3.2)

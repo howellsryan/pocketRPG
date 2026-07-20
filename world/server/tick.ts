@@ -462,7 +462,7 @@ function findAggroInRange(player: TickPlayer, ctx: TickContext): NpcState | unde
  * mining progress. Exactly one of walk/mine/idle claims the anim each tick. */
 export function tickPlayer(player: TickPlayer, ctx: TickContext): TickResult {
   const result = emptyResult()
-  const before = { x: player.x, z: player.z, anim: player.anim }
+  const before = { x: player.x, z: player.z, anim: player.anim, hp: player.hp }
 
   if (!player.combat) {
     const aggroNpc = findAggroInRange(player, ctx)
@@ -497,14 +497,19 @@ export function tickPlayer(player: TickPlayer, ctx: TickContext): TickResult {
   if (!ran && player.runEnergy < 100) player.runEnergy = Math.min(100, player.runEnergy + RUN_REGEN_PER_TICK)
   emitRunIfChanged(player, result.events)
 
-  result.entChanged = player.x !== before.x || player.z !== before.z || player.anim !== before.anim
+  result.entChanged = player.x !== before.x || player.z !== before.z || player.anim !== before.anim || player.hp !== before.hp
   return result
 }
 
 export function toEntityDiff(player: TickPlayer): EntityDiff {
   // Gear rides every player diff (even empty) so an in-world unequip
-  // propagates — omitting it would leave stale weapons on observers.
-  const diff: EntityDiff = { id: player.charId, kind: 'player', x: player.x, z: player.z, anim: player.anim, name: player.name, gear: player.gear }
+  // propagates — omitting it would leave stale weapons on observers. hp/maxHp
+  // ride every diff too (item 11 — players show an overhead HP bar like
+  // NPCs), always, same as gear: the client decides when to draw it.
+  const diff: EntityDiff = {
+    id: player.charId, kind: 'player', x: player.x, z: player.z, anim: player.anim, name: player.name,
+    gear: player.gear, hp: player.hp, maxHp: player.maxHp,
+  }
   if (player.combat) diff.targetId = player.combat.npcId
   return diff
 }
