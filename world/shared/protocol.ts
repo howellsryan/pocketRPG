@@ -45,6 +45,9 @@ export type ClientMessage =
   | { t: 'unequip'; slot: string }
   /** Travel to a named same-zone landmark (the overworld's place centres). */
   | { t: 'teleport'; placeId: string }
+  /** Follow another player until cancelled (explicit walk/interact/teleport/
+   * combat, or the target dying/leaving/logging out — see tick.ts). */
+  | { t: 'follow'; targetId: string }
   | { t: 'logout' }
   | { t: 'ping'; n: number }
 
@@ -288,6 +291,10 @@ export function parseClientMessage(raw: unknown): ClientMessage | null {
     case 'teleport': {
       const placeId = (raw as Record<string, unknown>).placeId
       return typeof placeId === 'string' && placeId.length > 0 && placeId.length <= 64 ? { t: 'teleport', placeId } : null
+    }
+    case 'follow': {
+      const targetId = (raw as Record<string, unknown>).targetId
+      return typeof targetId === 'string' && targetId.length > 0 && targetId.length <= 64 ? { t: 'follow', targetId } : null
     }
     case 'logout':
       return { t: 'logout' }

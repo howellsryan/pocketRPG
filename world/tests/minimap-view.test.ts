@@ -2,7 +2,7 @@
 // being unreadable when the whole zone was squeezed into a 132px square, and
 // makes sure small zones (lumbright, 64x64) still behave sanely.
 import { describe, expect, it } from 'vitest'
-import { minimapView } from '../client/src/minimap'
+import { clusterStatics, inMinimapView, minimapView } from '../client/src/minimap'
 
 describe('minimapView', () => {
   it('centres a full window on the player away from any edge', () => {
@@ -54,5 +54,40 @@ describe('minimapView', () => {
       expect(z).toBeGreaterThanOrEqual(view.z0)
       expect(z).toBeLessThan(view.z0 + view.tilesShownZ)
     }
+  })
+})
+
+describe('inMinimapView', () => {
+  const view = minimapView(174, 106, 348, 213, 41)
+
+  it('is true for a point inside the window', () => {
+    expect(inMinimapView(174, 106, view)).toBe(true)
+  })
+
+  it('is false for a point outside the window', () => {
+    expect(inMinimapView(0, 0, view)).toBe(false)
+  })
+
+  it('excludes the far edge (half-open range, matching the window math)', () => {
+    expect(inMinimapView(view.x0 + view.tilesShownX, view.z0, view)).toBe(false)
+    expect(inMinimapView(view.x0, view.z0, view)).toBe(true)
+  })
+})
+
+describe('clusterStatics', () => {
+  it('clusters banks/skilling statics into map categories, dropping unmapped static types', () => {
+    const clusters = clusterStatics([
+      { id: 'r1', type: 'rock', x: 10, z: 10 },
+      { id: 'r2', type: 'rock', x: 11, z: 10 },
+      { id: 'bank1', type: 'bank_chest', x: 20, z: 20 },
+      { id: 'other1', type: 'furnace_anvil_station_that_does_not_exist', x: 30, z: 30 },
+    ], 3)
+    expect(clusters).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ type: 'mining', count: 2 }),
+        expect.objectContaining({ type: 'bank', count: 1 }),
+      ])
+    )
+    expect(clusters).toHaveLength(2)
   })
 })

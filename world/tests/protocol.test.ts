@@ -23,6 +23,7 @@ const WELL_FORMED: Record<string, unknown> = {
   pray: { t: 'pray', prayerId: 'protect_from_melee' },
   unequip: { t: 'unequip', slot: 'weapon' },
   teleport: { t: 'teleport', placeId: 'lumbright' },
+  follow: { t: 'follow', targetId: '2' },
   logout: { t: 'logout' },
   ping: { t: 'ping', n: 1 },
 }
@@ -59,5 +60,24 @@ describe('parseClientMessage — teleport', () => {
 
   it('rejects an over-length placeId', () => {
     expect(parseClientMessage({ t: 'teleport', placeId: 'x'.repeat(65) })).toBeNull()
+  })
+})
+
+describe('parseClientMessage — follow', () => {
+  it('accepts a well-formed targetId', () => {
+    expect(parseClientMessage({ t: 'follow', targetId: '42' })).toEqual({ t: 'follow', targetId: '42' })
+  })
+
+  it('rejects a missing or empty targetId', () => {
+    expect(parseClientMessage({ t: 'follow' })).toBeNull()
+    expect(parseClientMessage({ t: 'follow', targetId: '' })).toBeNull()
+  })
+
+  it('rejects a non-string targetId', () => {
+    expect(parseClientMessage({ t: 'follow', targetId: 42 })).toBeNull()
+  })
+
+  it('rejects an over-length targetId', () => {
+    expect(parseClientMessage({ t: 'follow', targetId: 'x'.repeat(65) })).toBeNull()
   })
 })

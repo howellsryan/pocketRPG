@@ -3,10 +3,23 @@
 // world/client/public/models/weapons/ (built by scripts/build-weapons.mjs);
 // coverage tracked in docs/open-world-asset-coverage.md. Unmapped items render
 // bare-handed — appearance never blocks gameplay.
+//
+// Tint (item 12, stage 2): the combat arena's src/data/equipmentModels.json
+// already carries a per-item `tint` for everything in its own registry —
+// that IS "what colour is mithril" for the arena, authored per item rather
+// than derived from a tier-prefix regex. Prefer it here whenever an item is
+// registered there, so both renderers agree; TIER_TINTS below is now only a
+// fallback for weapons/armour the arena registry doesn't cover yet (archetype
+// selection stays regex-based regardless — the registry has no notion of the
+// world's small fixed archetype set, only a specific model file per item).
+import equipmentModelsData from '../../src/data/equipmentModels.json'
 import itemsData from '../../src/data/items.json'
 import type { GearDescriptor } from './protocol'
 
 type Items = Record<string, { slot?: string | null; twoHanded?: boolean } | undefined>
+type EquipmentModelEntry = { tint?: string }
+type EquipmentModels = { weapons?: Record<string, EquipmentModelEntry>; gear?: Record<string, EquipmentModelEntry> }
+const equipmentModels = equipmentModelsData as unknown as EquipmentModels
 
 export const WEAPON_ARCHETYPES = ['sword', 'sword2h', 'dagger', 'axe', 'axe2h', 'blunt', 'bow', 'crossbow', 'staff', 'wand'] as const
 
@@ -55,6 +68,16 @@ function itemIdInSlot(equipment: Record<string, unknown> | null | undefined, slo
   return typeof slot?.itemId === 'string' ? slot.itemId : null
 }
 
+/** Tint for `itemId` from a registry section (equipmentModels.json's `weapons`
+ * or `gear`) if it's listed there — even if that entry has no `tint` (the
+ * arena renders it untinted, so the world should too) — else the regex
+ * TIER_TINTS fallback for items the arena registry doesn't cover. */
+function tintFor(itemId: string, registry: Record<string, EquipmentModelEntry> | undefined): string | undefined {
+  const entry = registry?.[itemId]
+  if (entry) return entry.tint
+  return TIER_TINTS.find(([pattern]) => pattern.test(itemId))?.[1]
+}
+
 function weaponFromEquipment(equipment: Record<string, unknown> | null | undefined): { archetype: string; tint?: string } | undefined {
   const itemId = itemIdInSlot(equipment, 'weapon')
   if (!itemId) return undefined
@@ -74,19 +97,19 @@ function weaponFromEquipment(equipment: Record<string, unknown> | null | undefin
     else if (archetype === 'axe') archetype = 'axe2h'
   }
 
-  const tint = TIER_TINTS.find(([pattern]) => pattern.test(itemId))?.[1]
+  const tint = tintFor(itemId, equipmentModels.weapons)
   return tint ? { archetype, tint } : { archetype }
 }
 
 /** Tint for an armour slot's equipped item. Absent/non-matching slot → omit
- * (undefined); an equipped body/legs item with an unregistered tier prefix →
- * `{}` (present, no tint). */
+ * (undefined); an equipped body/legs item with no tint (registered untinted,
+ * or unregistered with no matching tier prefix) → `{}` (present, no tint). */
 function armorSlotTint(equipment: Record<string, unknown> | null | undefined, slotName: 'body' | 'legs'): { tint?: string } | undefined {
   const itemId = itemIdInSlot(equipment, slotName)
   if (!itemId) return undefined
   const item = (itemsData as Items)[itemId]
   if (!item || item.slot !== slotName) return undefined
-  const tint = TIER_TINTS.find(([pattern]) => pattern.test(itemId))?.[1]
+  const tint = tintFor(itemId, equipmentModels.gear)
   return tint ? { tint } : {}
 }
 

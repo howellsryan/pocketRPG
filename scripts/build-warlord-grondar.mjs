@@ -35,36 +35,55 @@ const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..')
 const SRC = path.join(ROOT, 'assets', 'open-world', 'Warlord+Grondar.glb')
 const ARENA_OUT = path.join(ROOT, 'public', '3d-samples', 'monsters', 'warlord_grondar.glb')
 const WORLD_OUT = path.join(ROOT, 'world', 'client', 'public', 'models', 'warlord_grondar.glb')
-const TMP = path.join(ROOT, 'public', '3d-samples', 'monsters', '.grondar-decimated.glb')
+const TMP = path.join(ROOT, 'public', '3d-samples', 'monsters', '.grondar-base.glb')
 
-const SIMPLIFY_RATIO = 0.05 // 1.87M tris → ~90k, plenty for boss silhouette
 const SIMPLIFY_ERROR = 0.005
+// The arena renders a single close-up monster, so it keeps the richer mesh; the
+// open world draws Grondar as a skinned + shadow-casting, frustum-cull-disabled
+// entity amongst many others, where ~90k tris measurably drop the frame rate
+// near him — so he decimates harder there (~40k tris) with half-res textures.
+// Animations are untouched by either (simplify preserves the skin + clips), so
+// both surfaces play byte-identical idle/attack/death.
+const ARENA_RATIO = 0.05 // 1.87M tris → ~90k
+const WORLD_RATIO = 0.021 // 1.87M tris → ~40k
 
 await Promise.all([MeshoptDecoder.ready, MeshoptEncoder.ready, MeshoptSimplifier.ready])
 const io = new NodeIO().registerExtensions(ALL_EXTENSIONS).registerDependencies({
   'meshopt.decoder': MeshoptDecoder, 'meshopt.encoder': MeshoptEncoder,
 })
 
-// ── Heavy pass (once): decimate + recompress textures → intermediate GLB ──
+// ── Heavy pass (once): weld geometry + fix animation interpolation → base GLB
+// (still full-res; each surface decimates it independently below). ──
 fs.mkdirSync(path.dirname(ARENA_OUT), { recursive: true })
 fs.mkdirSync(path.dirname(WORLD_OUT), { recursive: true })
 {
   const doc = await io.read(SRC)
-  await doc.transform(
-    weld(),
-    simplify({ simplifier: MeshoptSimplifier, ratio: SIMPLIFY_RATIO, error: SIMPLIFY_ERROR }),
-    textureCompress({ encoder: sharp, targetFormat: 'webp', resize: [1024, 1024] }),
-    resample(), dedup(), prune(),
-  )
+  await doc.transform(weld(), resample(), dedup(), prune())
+  // resample() only dedupes redundant keyframes within a sampler's existing
+  // interpolation mode — it never converts STEP to LINEAR (gltf-transform's
+  // resample.ts branches on the sampler's own interpolation). The idle loop
+  // (NlaTrack) ships heavily STEP-interpolated from the source authoring
+  // tool, which reads as "frozen, occasional pops" rather than a breathing
+  // idle. Force it to LINEAR here — attack/death (NlaTrack.001/.002) keep
+  // whatever interpolation they were authored with, since a snappy STEP pose
+  // change may be intentional for an impact frame.
+  for (const anim of doc.getRoot().listAnimations()) {
+    if (anim.getName() !== 'NlaTrack') continue
+    for (const sampler of anim.listSamplers()) {
+      if (sampler.getInterpolation() === 'STEP') sampler.setInterpolation('LINEAR')
+    }
+  }
   await io.write(TMP, doc)
-  let tris = 0
-  for (const m of doc.getRoot().listMeshes()) for (const p of m.listPrimitives()) { const i = p.getIndices(); tris += i ? i.getCount() / 3 : 0 }
-  console.log(`decimated → ${(tris).toFixed(0)} tris`)
 }
 
-// ── Light passes: per-surface clip naming + final compression ──
-async function emit(outPath, clipMap, { printBounds = false } = {}) {
+// ── Per-surface passes: decimate to the target weight, recompress textures,
+// rename clips → final compressed GLB. ──
+async function emit(outPath, clipMap, { ratio, textureSize, printBounds = false }) {
   const doc = await io.read(TMP)
+  await doc.transform(
+    simplify({ simplifier: MeshoptSimplifier, ratio, error: SIMPLIFY_ERROR }),
+    textureCompress({ encoder: sharp, targetFormat: 'webp', resize: [textureSize, textureSize] }),
+  )
   const anims = doc.getRoot().listAnimations()
   for (const anim of anims) {
     const as = clipMap[anim.getName()]
@@ -73,7 +92,9 @@ async function emit(outPath, clipMap, { printBounds = false } = {}) {
   }
   await doc.transform(quantize(), prune())
   await io.write(outPath, doc)
-  console.log(`wrote ${outPath} (${(fs.statSync(outPath).size / 1024 / 1024).toFixed(2)} MiB) clips: ${doc.getRoot().listAnimations().map((a) => a.getName()).join(', ')}`)
+  let tris = 0
+  for (const m of doc.getRoot().listMeshes()) for (const p of m.listPrimitives()) { const i = p.getIndices(); tris += i ? i.getCount() / 3 : 0 }
+  console.log(`wrote ${outPath} (${(fs.statSync(outPath).size / 1024 / 1024).toFixed(2)} MiB, ${tris.toFixed(0)} tris) clips: ${doc.getRoot().listAnimations().map((a) => a.getName()).join(', ')}`)
   if (printBounds) {
     const scene = doc.getRoot().getDefaultScene() ?? doc.getRoot().listScenes()[0]
     const b = getBounds(scene)
@@ -81,7 +102,7 @@ async function emit(outPath, clipMap, { printBounds = false } = {}) {
   }
 }
 
-await emit(ARENA_OUT, { NlaTrack: 'Idle', 'NlaTrack.002': 'Attack', 'NlaTrack.001': 'Death' })
-await emit(WORLD_OUT, { NlaTrack: 'idle', 'NlaTrack.002': 'attack', 'NlaTrack.001': 'die' }, { printBounds: true })
+await emit(ARENA_OUT, { NlaTrack: 'Idle', 'NlaTrack.002': 'Attack', 'NlaTrack.001': 'Death' }, { ratio: ARENA_RATIO, textureSize: 1024 })
+await emit(WORLD_OUT, { NlaTrack: 'idle', 'NlaTrack.002': 'attack', 'NlaTrack.001': 'die' }, { ratio: WORLD_RATIO, textureSize: 512, printBounds: true })
 
 fs.rmSync(TMP, { force: true })

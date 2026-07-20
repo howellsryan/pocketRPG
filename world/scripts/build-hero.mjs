@@ -1,9 +1,13 @@
 #!/usr/bin/env node
-// Builds world/client/public/models/hero.glb from the Quaternius library in
-// assets/open-world: the Modular Fantasy "Male_Ranger" outfit character (the
-// Universal Base Character body with the ranger outfit pre-fitted, 65-joint
-// universal rig) + Universal Animation Library clips retargeted onto it by
-// joint name and renamed to the protocol's anim states (§5 EntityDiff.anim).
+// Builds world/client/public/models/hero.glb from the same Quaternius base
+// character + default outfit as scripts/build-arena-hero.mjs (item 12 —
+// "open-world hero must match the combat-arena hero"): the Universal Base
+// Character "Superhero_Male_FullBody" body (65-joint universal rig) with the
+// Modular Fantasy Peasant outfit baked in as the default clothed look, same
+// technique as the arena script (merge outfit-part meshes, remap their skins
+// onto the base skeleton by joint name). Only the clip set differs — the
+// world keeps its own animation states (§5 EntityDiff.anim) rather than the
+// arena's combat-focused clips, retargeted onto this body exactly as before.
 import { NodeIO } from '@gltf-transform/core'
 import { ALL_EXTENSIONS } from '@gltf-transform/extensions'
 import { mergeDocuments, prune, dedup, resample, unpartition, textureCompress } from '@gltf-transform/functions'
@@ -18,8 +22,8 @@ const repoRoot = path.join(worldDir, '..')
 const qRoot = path.join(repoRoot, 'assets', 'open-world', 'Quaternius')
 const CHARACTER = path.join(
   qRoot,
-  'Modular Character Outfits - Fantasy[Standard]', 'Modular Character Outfits - Fantasy[Standard]',
-  'Exports', 'glTF (Godot-Unreal)', 'Outfits', 'Male_Ranger.gltf'
+  'Universal Base Characters[Standard]', 'Universal Base Characters[Standard]',
+  'Base Characters', 'Godot - UE', 'Superhero_Male_FullBody.gltf'
 )
 const UAL1 = path.join(
   qRoot, 'Universal Animation Library[Standard] (1)', 'Universal Animation Library[Standard]', 'Unreal-Godot', 'UAL1_Standard.glb'
@@ -27,6 +31,14 @@ const UAL1 = path.join(
 const UAL2 = path.join(
   qRoot, 'Universal Animation Library 2[Standard]', 'Universal Animation Library 2[Standard]', 'Unreal-Godot', 'UAL2_Standard.glb'
 )
+const OUTFIT_PARTS_DIR = path.join(
+  qRoot,
+  'Modular Character Outfits - Fantasy[Standard]', 'Modular Character Outfits - Fantasy[Standard]',
+  'Exports', 'glTF (Godot-Unreal)', 'Modular Parts'
+)
+// Same default clothed look as the arena hero — no Arms piece so equipped
+// bracers/sleeves never fight baked cloth on the forearms.
+const OUTFIT_PARTS = ['Male_Peasant_Body.gltf', 'Male_Peasant_Legs.gltf', 'Male_Peasant_Feet.gltf']
 const OUT = path.join(worldDir, 'client', 'public', 'models', 'hero.glb')
 
 const CLIPS = [
@@ -47,9 +59,64 @@ const CLIPS = [
 await MeshoptDecoder.ready
 const io = new NodeIO().registerExtensions(ALL_EXTENSIONS).registerDependencies({ 'meshopt.decoder': MeshoptDecoder })
 
-const doc = await io.read(CHARACTER)
+// The pack's .gltf references two texture URIs with a stray `_png` suffix
+// (T_Hair_1_Normal_png.png, T_Eye_Normal_png.png) that don't exist on disk —
+// the real files do, minus the suffix (same fix as build-arena-hero.mjs).
+function readGltfWithPatchedUris(gltfPath) {
+  const dir = path.dirname(gltfPath)
+  const json = JSON.parse(fs.readFileSync(gltfPath, 'utf8'))
+  for (const img of json.images || []) {
+    if (img.uri && img.uri.endsWith('_png.png') && !fs.existsSync(path.join(dir, img.uri))) {
+      img.uri = img.uri.replace(/_png\.png$/, '.png')
+    }
+  }
+  const resources = {}
+  for (const uri of [
+    ...(json.buffers || []).map((b) => b.uri),
+    ...(json.images || []).map((i) => i.uri),
+  ]) {
+    if (uri && !resources[uri]) resources[uri] = fs.readFileSync(path.join(dir, decodeURIComponent(uri)))
+  }
+  return io.readJSON({ json, resources })
+}
+
+const doc = await readGltfWithPatchedUris(CHARACTER)
 const baseNodes = new Map(doc.getRoot().listNodes().map((n) => [n.getName(), n]))
 const baseScene = doc.getRoot().listScenes()[0]
+
+// Merge each outfit part (skinned to the same universal rig) into the base
+// character: move its mesh nodes into the base scene and rebuild each skin
+// over the base skeleton's joints (matched by name), then drop the part's own
+// duplicate skeleton. Same-rig bind poses make this a pure joint remap.
+for (const partFile of OUTFIT_PARTS) {
+  const src = await readGltfWithPatchedUris(path.join(OUTFIT_PARTS_DIR, partFile))
+  const scenesBefore = new Set(doc.getRoot().listScenes())
+  mergeDocuments(doc, src)
+  const mergedScenes = doc.getRoot().listScenes().filter((s) => !scenesBefore.has(s))
+  for (const scene of mergedScenes) {
+    const nodes = []
+    scene.traverse((n) => nodes.push(n))
+    for (const node of nodes) {
+      if (!node.getMesh()) continue
+      const oldSkin = node.getSkin()
+      if (oldSkin) {
+        const skin = doc.createSkin(node.getName() + '_skin')
+        for (const joint of oldSkin.listJoints()) {
+          const baseJoint = baseNodes.get(joint.getName())
+          if (!baseJoint) throw new Error(`${partFile}: no base joint named '${joint.getName()}'`)
+          skin.addJoint(baseJoint)
+        }
+        skin.setInverseBindMatrices(oldSkin.getInverseBindMatrices())
+        node.setSkin(skin)
+      }
+      baseScene.addChild(node)
+    }
+    const leftovers = []
+    scene.traverse((n) => leftovers.push(n))
+    scene.dispose()
+    for (const n of leftovers) n.dispose()
+  }
+}
 
 for (const spec of CLIPS) {
   const src = await io.read(spec.file)

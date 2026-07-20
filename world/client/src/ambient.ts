@@ -37,7 +37,6 @@ const CRITTERS: Record<string, { url: string; target: number; b: { minX: number;
   villager_c: { url: '/models/villager_c.glb', target: 1.6, b: { minX: -0.36, maxX: 0.395, minY: -0.004, maxY: 1.796, minZ: -0.323, maxZ: 0.388 } },
 }
 
-const WANDER_SPEED = 0.55 // tiles/sec — an unhurried amble
 // A rect fully walled in (author error, or a rect drawn over a building) must
 // not spin forever hunting for a walkable point — after this many misses the
 // walker just stands at the rect's centre.
@@ -50,10 +49,10 @@ const ANIM_CROSSFADE_S = 0.15
 
 type Instance = {
   group: THREE.Group
-  cx: number; cz: number; cw: number; ch: number
-  tx: number; tz: number
-  yaw: number
-  bob: number
+  /** Index into the shared `walkers`/`walkerFramesAt` arrays — position/yaw
+   * are looked up here each frame rather than integrated locally, so every
+   * client's instances read the same deterministic simulation. */
+  walkerIndex: number
   mixer: THREE.AnimationMixer | null
   idleAction: THREE.AnimationAction | null
   walkAction: THREE.AnimationAction | null
@@ -91,66 +90,157 @@ export function pickWanderTarget(
   return fallback ?? { x: cx + cw / 2, z: cz + ch / 2 }
 }
 
+// ── Deterministic ambient simulation (item 9) ──────────────────────────────
+// Ambient walkers used to be seeded and stepped from Math.random() every
+// frame — private to each client, so two players standing in the same town
+// saw two different crowds. Every value here is instead a pure function of a
+// stable seed + a leg index, evaluated against a shared wall-clock epoch —
+// any client, joining at any moment, computes the exact same walker position
+// without replaying the zone's whole history: "the seed at step N" is a
+// direct hash, never an RNG stream advanced N times.
+//
+// A walker's path is a sequence of fixed-duration legs; leg L runs from
+// waypoint(L) to waypoint(L+1), and both waypoints are themselves pure
+// functions of L (via legWaypoints below) — so computing "where is everyone
+// right now" costs one pass over the walkers, not one pass per elapsed leg.
+// Trade-off: the straight line between two individually-walkable waypoints
+// isn't re-validated tile-by-tile (unlike the old per-frame step check), so a
+// pathological non-convex wander rect could walk a leg through a blocked
+// tile. Every rect authored so far is a simple open area, so this hasn't
+// been observed — flagging it rather than adding mid-leg pathfinding, which
+// would reintroduce the same non-determinism this rewrite removes.
+export const AMBIENT_LEG_SECONDS = 4.5
+
+/** Deterministic 32-bit hash → [0,1), addressed by (seed, ...ints) rather than
+ * advanced call-by-call: the same inputs always produce the same output, with
+ * no state to replay to get there. Not cryptographic — just needs to spread
+ * wander targets around a rect. */
+export function hashRand(seed: number, ...ints: number[]): number {
+  let h = seed >>> 0
+  for (const n of ints) {
+    h = Math.imul(h ^ n, 2654435761) >>> 0
+    h ^= h >>> 15
+  }
+  h = Math.imul(h ^ (h >>> 16), 2246822507) >>> 0
+  h = Math.imul(h ^ (h >>> 13), 3266489909) >>> 0
+  h ^= h >>> 16
+  return (h >>> 0) / 4294967296
+}
+
+/** Stable identity for one walker: the zone (so two zones never collide),
+ * which critter spec in ambient.critters, and which instance of that spec —
+ * every walker in the world gets a distinct, reproducible seed. */
+export function walkerSeed(zoneId: string, specIndex: number, instanceIndex: number): number {
+  let h = 2166136261 >>> 0
+  const key = `${zoneId}:${specIndex}:${instanceIndex}`
+  for (let i = 0; i < key.length; i++) h = Math.imul(h ^ key.charCodeAt(i), 16777619) >>> 0
+  return h >>> 0
+}
+
+/** An addressable rand() stream for one (seed, legIndex)'s target pick —
+ * pickWanderTarget's internal retries (up to MAX_TARGET_ATTEMPTS) each get
+ * their own reproducible draw via the attempt counter, without needing the
+ * earlier draws to have actually happened first. */
+function legRandStream(seed: number, legIndex: number): () => number {
+  let attempt = 0
+  return () => hashRand(seed, legIndex, attempt++)
+}
+
+export type WanderRect = { cx: number; cz: number; cw: number; ch: number }
+export type Walker = { seed: number; rect: WanderRect }
+
+/** Every walker's waypoint for leg `legIndex`, resolved in the caller's fixed
+ * order (spec index, then instance index) so each walker's separation check
+ * only ever avoids already-resolved waypoints — no circular dependency, and
+ * no need to know any OTHER leg's waypoints to compute this one. */
+export function legWaypoints(collision: string[], walkers: Walker[], legIndex: number): { x: number; z: number }[] {
+  const points: { x: number; z: number }[] = []
+  for (const w of walkers) {
+    points.push(pickWanderTarget(collision, w.rect.cx, w.rect.cz, w.rect.cw, w.rect.ch, legRandStream(w.seed, legIndex), points))
+  }
+  return points
+}
+
+export type WalkerFrame = { x: number; z: number; yaw: number }
+
+/** Position + facing for every walker at `elapsedSeconds` since the shared
+ * ambient epoch. The one function two independent clients must agree on for
+ * item 9 to work: same `walkers`/`collision`/`elapsedSeconds` in, same
+ * `WalkerFrame[]` out, regardless of which client computed it or when. */
+export function walkerFramesAt(collision: string[], walkers: Walker[], elapsedSeconds: number, legSeconds = AMBIENT_LEG_SECONDS): WalkerFrame[] {
+  const legIndex = Math.floor(elapsedSeconds / legSeconds)
+  const frac = elapsedSeconds / legSeconds - legIndex
+  const starts = legWaypoints(collision, walkers, legIndex)
+  const ends = legWaypoints(collision, walkers, legIndex + 1)
+  return walkers.map((_, i) => {
+    const a = starts[i]
+    const b = ends[i]
+    const dx = b.x - a.x
+    const dz = b.z - a.z
+    return { x: a.x + dx * frac, z: a.z + dz * frac, yaw: Math.hypot(dx, dz) < 1e-6 ? 0 : Math.atan2(dx, dz) }
+  })
+}
+
 export type AmbientLayer = { update: (dt: number) => void; dispose: () => void }
 
 /** Builds the ambient layer: kicks off critter/villager model loads (instances
  * appear as each GLB resolves) and adds the smoke emitters. Returns an
  * update/dispose handle; `heightAt` floors walkers onto the (render-only)
- * terrain relief; `collision` gates wander targets and steps. */
+ * terrain relief; `collision` gates wander targets; `zoneId` seeds the
+ * deterministic walker identities (item 9) so every client in the same zone
+ * simulates the same crowd. */
 export function createAmbient(
   scene: THREE.Scene,
   ambient: ZoneAmbient | undefined,
   heightAt: (worldX: number, worldZ: number) => number,
   collision: string[],
+  zoneId: string,
 ): AmbientLayer {
   const instances: Instance[] = []
   const smokers = (ambient?.smoke ?? []).map((s) => createSmoke(scene, s.x + 0.5, (s.y ?? 0) + heightAt(s.x + 0.5, s.z + 0.5), s.z + 0.5))
   const disposables: Array<() => void> = smokers.map((s) => s.dispose)
 
-  for (const spec of ambient?.critters ?? []) void spawnCritters(scene, spec, instances, collision)
+  // Flat, fixed-order walker list spanning every spec's every instance —
+  // this order is what makes cross-spec separation (a chicken avoiding a
+  // villager's waypoint, not just other chickens) deterministic: each
+  // walker's leg target only ever avoids walkers earlier in this list.
+  const specs = ambient?.critters ?? []
+  const walkers: Walker[] = []
+  const walkerIndexBase: number[] = []
+  specs.forEach((spec, specIndex) => {
+    walkerIndexBase.push(walkers.length)
+    for (let i = 0; i < spec.count; i++) {
+      walkers.push({ seed: walkerSeed(zoneId, specIndex, i), rect: { cx: spec.x, cz: spec.z, cw: spec.w, ch: spec.h } })
+    }
+  })
 
+  specs.forEach((spec, specIndex) => void spawnCritters(scene, spec, walkerIndexBase[specIndex], instances))
+
+  let bob = 0
   return {
     update: (dt: number) => {
-      for (const c of instances) {
-        const world = c.group.position
-        const dx = c.tx - world.x
-        const dz = c.tz - world.z
-        const dist = Math.hypot(dx, dz)
-        let moving = false
-        if (dist < 0.2) {
-          const avoid = instances.filter((o) => o !== c).map((o) => ({ x: o.group.position.x, z: o.group.position.z }))
-          const next = pickWanderTarget(collision, c.cx, c.cz, c.cw, c.ch, Math.random, avoid)
-          c.tx = next.x
-          c.tz = next.z
-        } else {
-          const step = Math.min(WANDER_SPEED * dt, dist)
-          const nextX = world.x + (dx / dist) * step
-          const nextZ = world.z + (dz / dist) * step
-          if (isWalkableTile(collision, nextX, nextZ)) {
-            world.x = nextX
-            world.z = nextZ
-            c.yaw = Math.atan2(dx, dz)
-            c.bob += dt * 8
-            moving = true
-          } else {
-            // The step would cross into a blocked tile — abandon this target
-            // and pick a new one rather than walking through a wall.
-            const avoid = instances.filter((o) => o !== c).map((o) => ({ x: o.group.position.x, z: o.group.position.z }))
-            const next = pickWanderTarget(collision, c.cx, c.cz, c.cw, c.ch, Math.random, avoid)
-            c.tx = next.x
-            c.tz = next.z
+      if (instances.length > 0) {
+        const elapsedSeconds = Date.now() / 1000
+        const frames = walkerFramesAt(collision, walkers, elapsedSeconds)
+        bob += dt * 8
+        const bobOffset = Math.abs(Math.sin(bob)) * 0.06
+        for (const c of instances) {
+          const frame = frames[c.walkerIndex]
+          if (!frame) continue
+          const world = c.group.position
+          world.x = frame.x
+          world.z = frame.z
+          world.y = heightAt(world.x, world.z) + (c.mixer ? 0 : bobOffset)
+          c.group.rotation.y = frame.yaw
+          if (c.mixer) {
+            const wanted = c.walkAction
+            if (wanted && wanted !== c.current) {
+              wanted.reset().fadeIn(ANIM_CROSSFADE_S).play()
+              c.current?.fadeOut(ANIM_CROSSFADE_S)
+              c.current = wanted
+            }
+            c.mixer.update(dt)
           }
-        }
-        world.y = heightAt(world.x, world.z) + (c.mixer ? 0 : Math.abs(Math.sin(c.bob)) * 0.06)
-        c.group.rotation.y = c.yaw
-        if (c.mixer) {
-          const wanted = moving ? c.walkAction : c.idleAction
-          if (wanted && wanted !== c.current) {
-            wanted.reset().fadeIn(ANIM_CROSSFADE_S).play()
-            c.current?.fadeOut(ANIM_CROSSFADE_S)
-            c.current = wanted
-          }
-          c.mixer.update(dt)
         }
       }
       for (const s of smokers) s.update(dt)
@@ -177,7 +267,12 @@ function makeAmbientAnimator(model: THREE.Object3D, gltf: GLTF): Pick<Instance, 
   return { mixer, idleAction, walkAction, current: idleAction }
 }
 
-async function spawnCritters(scene: THREE.Scene, spec: ZoneAmbientCritter, out: Instance[], collision: string[]): Promise<void> {
+/** Loads one critter spec's GLB and spawns its `spec.count` instances, tagged
+ * with their flat walker index (`walkerIndexBase + i`) into the shared
+ * deterministic simulation — `update()` positions them from `walkerFramesAt`
+ * once the mesh exists, so initial placement doesn't need its own spawn-point
+ * logic (it's just this walker's frame at whatever moment the load resolves). */
+async function spawnCritters(scene: THREE.Scene, spec: ZoneAmbientCritter, walkerIndexBase: number, out: Instance[]): Promise<void> {
   const def = CRITTERS[spec.model]
   if (!def) return
   let gltf
@@ -188,7 +283,6 @@ async function spawnCritters(scene: THREE.Scene, spec: ZoneAmbientCritter, out: 
   }
   const { b, target } = def
   const scale = target / (b.maxY - b.minY)
-  const placed: { x: number; z: number }[] = []
   for (let i = 0; i < spec.count; i++) {
     const model = cloneSkeleton(gltf.scene)
     model.position.set(-((b.minX + b.maxX) / 2) * scale, -b.minY * scale, -((b.minZ + b.maxZ) / 2) * scale)
@@ -199,21 +293,10 @@ async function spawnCritters(scene: THREE.Scene, spec: ZoneAmbientCritter, out: 
     const group = new THREE.Group()
     group.scale.setScalar(scale)
     group.add(model)
-    const spawnPoint = pickWanderTarget(collision, spec.x, spec.z, spec.w, spec.h, Math.random, placed)
-    placed.push(spawnPoint)
-    const start = tileToWorld(spawnPoint.x, spawnPoint.z)
-    group.position.copy(start)
+    group.position.copy(tileToWorld(spec.x + spec.w / 2, spec.z + spec.h / 2))
     scene.add(group)
-    const wanderTarget = pickWanderTarget(collision, spec.x, spec.z, spec.w, spec.h, Math.random, placed)
     const animator = makeAmbientAnimator(model, gltf)
-    out.push({
-      group,
-      cx: spec.x, cz: spec.z, cw: spec.w, ch: spec.h,
-      tx: wanderTarget.x, tz: wanderTarget.z,
-      yaw: Math.random() * Math.PI * 2,
-      bob: Math.random() * Math.PI * 2,
-      ...animator,
-    })
+    out.push({ group, walkerIndex: walkerIndexBase + i, ...animator })
   }
 }
 

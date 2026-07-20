@@ -3,7 +3,7 @@
 // the right-click menu, so the ordering rules are unit-testable in isolation.
 // Spec: docs/open-world-build-guide.md §8 STEP 2.1.
 
-export type PickKind = 'rock' | 'object' | 'npc' | 'loot' | 'exit'
+export type PickKind = 'rock' | 'object' | 'npc' | 'loot' | 'exit' | 'player'
 
 /** One selectable action on a pickable. `action` is the wire verb sent in an
  * `interact` message ('mine'/'deposit'/'attack'/'take'); `id` overrides the
@@ -24,7 +24,9 @@ export type Pickable = {
 
 // Hover picks the highest-priority thing under the cursor; the context menu
 // lists everything in ray order (near-to-far), which the caller preserves.
-const HOVER_PRIORITY: Record<PickKind, number> = { loot: 0, npc: 1, rock: 2, object: 2, exit: 3 }
+// 'player' has no entry deliberately — other players are menu-only (Follow),
+// never a hover/left-click default, so tapping through a crowd still walks.
+const HOVER_PRIORITY: Partial<Record<PickKind, number>> = { loot: 0, npc: 1, rock: 2, object: 2, exit: 3 }
 
 /** The thing a left-click acts on: highest hover-priority, ties broken by the
  * caller's near-to-far order. Null when only the ground is under the cursor. */
@@ -33,7 +35,7 @@ export function topPick(pickables: Pickable[]): Pickable | null {
   let bestRank = Infinity
   for (let i = 0; i < pickables.length; i++) {
     const rank = HOVER_PRIORITY[pickables[i].kind]
-    if (rank < bestRank) {
+    if (rank !== undefined && rank < bestRank) {
       bestRank = rank
       best = pickables[i]
     }
@@ -62,6 +64,9 @@ export type MenuRow = {
   text: string
   /** Present on rows that send a server interaction. */
   interact?: { kind: PickKind; id: string; action: string }
+  /** Present on the "Follow <name>" row for a player pickable — sends
+   * {t:'follow', targetId} rather than an interact (item 10). */
+  followTargetId?: string
   /** Client-only rows. */
   local?: 'examine' | 'walk' | 'cancel'
   examineText?: string
@@ -79,6 +84,13 @@ export type MenuRow = {
 export function buildMenu(pickables: Pickable[], playerCombatLevel: number): MenuRow[] {
   const rows: MenuRow[] = []
   for (const pick of pickables) {
+    // Players are menu-only and never attacked/interacted with here (item
+    // 10) — Follow is a distinct message ({t:'follow'}, not {t:'interact'}),
+    // so it gets its own row shape instead of running through `actions`.
+    if (pick.kind === 'player') {
+      rows.push({ text: `Follow ${pick.name}`, followTargetId: pick.id, targetName: pick.name, targetKind: pick.kind })
+      continue
+    }
     const favourable = pick.monsterLevel == null ? undefined : playerCombatLevel >= pick.monsterLevel
     for (const action of pick.actions) {
       const name = action.name ?? pick.name
