@@ -24,12 +24,3 @@ world/.dev.vars
 
 # terrain preview screenshots
 world/preview-shots/
-
-# Oversized build-time-only source assets (exceed Cloudflare Pages' 25 MiB
-# per-file deploy limit). The decimated runtime GLBs live in public/3d-samples/
-# + world/client/public/models/; regenerate via scripts/build-warlord-grondar.mjs.
-# Glob (not an exact name) so a re-dropped, OS-deduped copy — e.g. "Warlord+
-# Grondar (1).glb" — still gets ignored instead of silently getting tracked.
-# Cover both the canonical build path and a stray drop at the assets/ root.
-assets/open-world/Warlord+Grondar*.glb
-assets/Warlord+Grondar*.glb
