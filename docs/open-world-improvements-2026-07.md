@@ -70,6 +70,17 @@ attack/die keep their authored 82 STEP / 41 LINEAR (unchanged, both surfaces).
 The world and arena now play byte-identical animation data. (The build was also
 split per-surface for item 2 — see there.) The prior partial Outcome below is
 retained for history.
+
+**2026-07-20 follow-up (attack clip now plays in the open world)**: separate
+from the asset, the world client never played a boss's *attack* swing. The
+server flags `npc.anim = 'attack'` for only the single tick a swing resolves
+(then drops back to idle — combat.ts), and the GLB path looped the attack action
+and drove it straight off `serverAnim`, so the idle the very next tick cut the
+clip off before it read. Fixed to mirror the arena: attack clips are now
+`LoopOnce` + `clampWhenFinished` (`makeAnimator`), and `updateEntity` latches the
+one-tick swing signal (pure `resolveGltfAnim` in `motion.ts`, unit-tested) so the
+whole swing plays to completion before idle/walk reclaims the mixer. Applies to
+every GLB-rigged entity (hero swings too), not just Grondar.
 **Outcome**: Two changes landed. (1) `scripts/build-warlord-grondar.mjs`: corrected
 the root-cause mechanism — `resample()` (from `@gltf-transform/functions`) only
 dedupes keyframes *within* a sampler's existing interpolation mode; it never
