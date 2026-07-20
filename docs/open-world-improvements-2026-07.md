@@ -49,7 +49,7 @@
 | 6 | Minimap icons (banks, skilling, monsters) | Done |
 | 7 | PocketRPG-styled scrollbars | Done |
 | 8 | Bank modal at ~75% screen, responsive | Done |
-| 9 | Shared/deterministic ambient NPCs | Not started |
+| 9 | Shared/deterministic ambient NPCs | Done |
 | 10 | Follow another player (right-click) | Done |
 | 11 | Show player hitpoints in combat | Done |
 | 12 | Open-world hero = combat-arena hero | Not started |
@@ -462,8 +462,44 @@ desktop, few visible rows.
 
 ## Item 9 — NPCs identical for every player (ambient villagers)
 
-**Status**: Not started
-**Outcome**: _(fill in when done)_
+**Status**: Done
+**Outcome**: Landed a cleaner variant of the plan's mechanism that avoids the
+"cap the catch-up, accept approximate convergence" complexity entirely.
+Instead of a per-walker RNG *stream* advanced call-by-call (which would still
+need bounded replay for a late joiner), every value is a pure function
+*addressed* by its inputs — `hashRand(seed, ...ints)` is a stateless 32-bit
+hash, not a PRNG you advance. A walker's path is a sequence of fixed-duration
+legs (`AMBIENT_LEG_SECONDS = 4.5`); leg L runs from `waypoint(L)` to
+`waypoint(L+1)`, and **both** waypoints are themselves pure functions of L
+(`legWaypoints`, reusing the existing `pickWanderTarget` with an
+attempt-addressable rand stream) — so any client, at any wall-clock moment,
+computes `legIndex = floor(elapsedSeconds / LEG_SECONDS)` and gets the exact
+current position in one pass over the walker list (`walkerFramesAt`), with
+**zero replay** regardless of how long the walker has "existed." A late
+joiner isn't approximately converging within a leg — it's computing the
+identical answer. Separation-avoidance stays deterministic via a fixed order
+(spec index, then instance index) spanning *all* specs combined (previously
+per-spec-call only, so a chicken can now avoid spawning on a villager's
+waypoint too — a small behavioural improvement, noted since it wasn't
+strictly asked for). Walker identity: `walkerSeed(zoneId, specIndex,
+instanceIndex)`. Known trade-off (documented in ambient.ts and tested against
+it): the straight line between two individually-walkable waypoints isn't
+re-validated tile-by-tile like the old per-frame step check, so a
+pathological non-convex wander rect could in theory walk a leg through a
+blocked tile — every rect authored so far is a simple open area, so this
+hasn't been observed; flagging rather than adding mid-leg pathfinding, which
+would reintroduce per-client state. Unit-tested extensively (`tests/ambientWander.test.ts`):
+hash/seed determinism, fixed-order separation, and the core guarantee — two
+independent calls to `walkerFramesAt` with the same inputs (including a
+"joining hours later" instant) produce byte-identical output. Visually
+verified with two simultaneous browser sessions teleported into the
+`villager_c` ambient rect near the default spawn (`x:173 z:118` in
+`overworld.json` — it turns out the humanoid figures visible near the
+spawn-town well/furnace throughout this whole session's earlier screenshots
+*were* these ambient villagers, not the `cave_goblin` combat NPCs I'd assumed
+— cave goblins spawn at `x:189-200 z:67-75`, well away from spawn): both
+clients showed the same villager cluster at the same moment, and both showed
+matching movement ~6s later (`AMBIENT_LEG_SECONDS` later).
 
 ### Root cause (confirmed)
 Ambient villagers/critters are **pure client-side decoration** spawned and wandered

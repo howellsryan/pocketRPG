@@ -466,7 +466,7 @@ function enterWorld(session: WorldSession): void {
         exitLayer = createExitMarkers(scene, message.zone.exits ?? [])
         exitMarkers = message.zone.exits ?? []
         void createProps(scene, message.zone.props ?? [])
-        ambientLayer = createAmbient(scene, message.zone.ambient, heightField.heightAt, message.zone.collision)
+        ambientLayer = createAmbient(scene, message.zone.ambient, heightField.heightAt, message.zone.collision, message.zone.id)
         const marker = createClickMarker(scene)
         camera = createCamera()
         const container = document.getElementById('scene')!
