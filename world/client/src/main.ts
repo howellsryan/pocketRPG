@@ -59,6 +59,14 @@ function buildNpcPickable(diff: EntityDiff): Pickable {
   }
 }
 
+/** Other players are menu-only (item 10): no `actions`, so topPick/hoverText
+ * skip them (HOVER_PRIORITY has no 'player' entry) and a left-click through a
+ * crowd still walks — buildMenu gives player pickables their own "Follow"
+ * row instead of running them through the normal actions list. */
+function buildPlayerPickable(diff: EntityDiff): Pickable {
+  return { kind: 'player', id: diff.id, name: diff.name ?? 'Adventurer', actions: [] }
+}
+
 function enterWorld(session: WorldSession): void {
   const socket = connect(window.location.host, getStoredZone())
   let self: Entity | null = null
@@ -85,6 +93,15 @@ function enterWorld(session: WorldSession): void {
   // Latest damage-contribution snapshot per boss npc id (item 11), keyed so the
   // boss frame can look up whichever npc self.targetId currently points at.
   const threatByNpc = new Map<string, { charId: string; name: string; dmg: number }[]>()
+  const EMPTY_CONTRIBUTORS: { charId: string; name: string; dmg: number }[] = []
+  // Boss frame / threat panel are DOM rebuilds (setThreatPanel clears and
+  // reconstructs rows via innerHTML) — calling them every animation frame is
+  // layout thrash near a boss. Cache what was last drawn and skip the DOM
+  // write when nothing changed; the threat snapshot only gets a new array
+  // reference when a {e:'threat'} event lands, so identity comparison for
+  // the contributors list is enough (no per-frame deep diff needed).
+  let lastBossFrame: { npcId: string; hp: number; maxHp: number } | null = null
+  let lastThreatContributors: { charId: string; name: string; dmg: number }[] | null = null
   let playerCombatLevel = 3
   let minimap: Minimap | null = null
   let exitMarkers: ExitMarker[] = []
@@ -269,7 +286,8 @@ function enterWorld(session: WorldSession): void {
     removeHpBar(id)
   }
 
-  // Other players are ghosts: shared hero model, name plate, no pick target.
+  // Other players: shared hero model, name plate — pickable for the Follow
+  // context-menu row only (item 10), never a hover/left-click default.
   function ensureOther(scene: THREE.Scene, diff: EntityDiff): void {
     const existing = others.get(diff.id)
     if (existing) {
@@ -286,6 +304,7 @@ function enterWorld(session: WorldSession): void {
       const entity = createEntity(diff.id, d.x, d.z, mesh, animator)
       entity.serverAnim = d.anim
       entity.name = d.name
+      mesh.userData.pick = buildPlayerPickable(d)
       if (d.gear) void applyGear(entity.mesh, d.gear)
       scene.add(entity.mesh)
       others.set(diff.id, entity)
@@ -305,6 +324,7 @@ function enterWorld(session: WorldSession): void {
     overheads.delete(id)
     removeNameplate(id)
     removeOverheadChat(id)
+    removeHpBar(id)
   }
 
   socket.addEventListener('open', () => {
@@ -446,7 +466,7 @@ function enterWorld(session: WorldSession): void {
         exitLayer = createExitMarkers(scene, message.zone.exits ?? [])
         exitMarkers = message.zone.exits ?? []
         void createProps(scene, message.zone.props ?? [])
-        ambientLayer = createAmbient(scene, message.zone.ambient, heightField.heightAt, message.zone.collision)
+        ambientLayer = createAmbient(scene, message.zone.ambient, heightField.heightAt, message.zone.collision, message.zone.id)
         const marker = createClickMarker(scene)
         camera = createCamera()
         const container = document.getElementById('scene')!
@@ -577,7 +597,7 @@ function enterWorld(session: WorldSession): void {
           lastWalk = { x: tile.x, z: tile.z, at: now }
           send(socket, { t: 'walk', x: tile.x, z: tile.z })
         }
-        minimap = createMinimap(message.zone.collision, message.zone.w, message.zone.h, message.zone.palette, walkTo)
+        minimap = createMinimap(message.zone.collision, message.zone.w, message.zone.h, message.zone.palette, message.statics, walkTo)
         setupInput(renderer.domElement, camera, ground, {
           onWalk: walkTo,
           onInteract: (interact) => {
@@ -592,7 +612,16 @@ function enterWorld(session: WorldSession): void {
               }
               return
             }
+            // Unreachable in practice — players have no `actions` (empty
+            // array in buildPlayerPickable), so topPick/defaultInteract never
+            // select one; this is here to satisfy the type narrowing below.
+            if (interact.kind === 'player') return
             send(socket, { t: 'interact', kind: interact.kind, id: interact.id, action: interact.action })
+          },
+          onFollow: (targetId) => {
+            const name = others.get(targetId)?.name ?? 'them'
+            send(socket, { t: 'follow', targetId })
+            pushMessage(`Following ${name}.`)
           },
           onMessage: (text) => pushMessage(text),
           getPickables: () => [
@@ -600,6 +629,7 @@ function enterWorld(session: WorldSession): void {
             ...(exitLayer?.pickables ?? []),
             ...[...npcs.values()].filter((e) => e.serverAnim !== 'die').map((e) => e.mesh),
             ...(lootLayer?.pickables ?? []),
+            ...[...others.values()].map((e) => e.mesh),
           ],
           getPlayerCombatLevel: () => playerCombatLevel,
           // Wheel zoom, arrow-key orbit/zoom, and middle-drag orbit all live in
@@ -628,6 +658,15 @@ function enterWorld(session: WorldSession): void {
           if (self && camera && cam) {
             cam.update(deltaSeconds)
             updateEntity(self, now, deltaSeconds, targetPosOf(self))
+            // Own overhead HP bar while fighting or damaged (item 11) — the
+            // fixed HP pill stays; this is the in-world bar other players see
+            // on themselves too, offset below where a nameplate would sit.
+            if (self.hp != null && self.maxHp && (self.targetId != null || self.hp < self.maxHp)) {
+              const s = toScreen(self.mesh.position, 1.7)
+              updateHpBar(self.id, s.x, s.y, self.hp / self.maxHp)
+            } else {
+              removeHpBar(self.id)
+            }
             updateCamera(camera, self.mesh.position, cam.state.zoom, cam.state.yaw)
             if (sun) updateShadowLight(sun, self.mesh.position)
             // Stream ground chunks around the player — only when they cross a
@@ -656,15 +695,31 @@ function enterWorld(session: WorldSession): void {
           const bossTarget = self?.targetId ? npcs.get(self.targetId) : null
           const bossDef = bossTarget?.monsterId ? monsters[bossTarget.monsterId] : null
           if (bossTarget && bossDef?.boss && bossTarget.serverAnim !== 'die' && bossTarget.hp != null && bossTarget.maxHp) {
-            showBossFrame(bossDef.name ?? bossTarget.monsterId ?? 'Boss', bossTarget.hp, bossTarget.maxHp)
-            setThreatPanel(threatByNpc.get(self!.targetId!) ?? [], self!.id)
-          } else {
+            const npcId = self!.targetId!
+            if (!lastBossFrame || lastBossFrame.npcId !== npcId || lastBossFrame.hp !== bossTarget.hp || lastBossFrame.maxHp !== bossTarget.maxHp) {
+              showBossFrame(bossDef.name ?? bossTarget.monsterId ?? 'Boss', bossTarget.hp, bossTarget.maxHp)
+              lastBossFrame = { npcId, hp: bossTarget.hp, maxHp: bossTarget.maxHp }
+            }
+            const contributors = threatByNpc.get(npcId) ?? EMPTY_CONTRIBUTORS
+            if (contributors !== lastThreatContributors) {
+              setThreatPanel(contributors, self!.id)
+              lastThreatContributors = contributors
+            }
+          } else if (lastBossFrame || lastThreatContributors) {
             hideBossFrame()
+            lastBossFrame = null
+            lastThreatContributors = null
           }
           for (const other of others.values()) {
             updateEntity(other, now, deltaSeconds, targetPosOf(other))
             const s = toScreen(other.mesh.position, 2.0)
             updateNameplate(other.id, s.x, s.y, other.name ?? 'Adventurer')
+            if (other.hp != null && other.maxHp && (other.targetId != null || other.hp < other.maxHp)) {
+              const hpS = toScreen(other.mesh.position, 1.7)
+              updateHpBar(other.id, hpS.x, hpS.y, other.hp / other.maxHp)
+            } else {
+              removeHpBar(other.id)
+            }
           }
           for (const [id, overhead] of overheads) {
             const mesh = id === self?.id ? self.mesh : others.get(id)?.mesh
@@ -684,7 +739,11 @@ function enterWorld(session: WorldSession): void {
             lastMinimap = now
             const tile = (o: THREE.Object3D): { x: number; z: number } => ({ x: Math.floor(o.position.x), z: Math.floor(o.position.z) })
             const dots: MinimapDot[] = exitMarkers.map((m) => ({ x: m.x, z: m.z, kind: 'exit' as const }))
-            for (const npc of npcs.values()) if (npc.serverAnim !== 'die') dots.push({ ...tile(npc.mesh), kind: 'npc' })
+            for (const npc of npcs.values()) {
+              if (npc.serverAnim === 'die') continue
+              const boss = npc.monsterId ? monsters[npc.monsterId]?.boss : undefined
+              dots.push({ ...tile(npc.mesh), kind: 'npc', boss })
+            }
             for (const other of others.values()) dots.push({ ...tile(other.mesh), kind: 'other' })
             minimap.update(tile(self.mesh), dots)
           }

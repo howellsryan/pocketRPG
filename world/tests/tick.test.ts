@@ -11,6 +11,8 @@ import {
   type TickPlayer,
 } from '../server/tick'
 import { ROCK_DEPLETED_TICKS, emptyInventory } from '../server/mining'
+import { npcsFromZone, type NpcState } from '../server/npc'
+import { findPathAdjacent } from '../server/pathfind'
 
 function makePlayer(overrides: Partial<TickPlayer> = {}): TickPlayer {
   return {
@@ -38,7 +40,7 @@ function makePlayer(overrides: Partial<TickPlayer> = {}): TickPlayer {
     lastRunSent: 100,
     stance: 'accurate',
     specialEnergy: 100,
-    lastSpecSent: 100, prayerPoints: 1, maxPrayerPoints: 1, prayerDrainAccumulator: 0, activeProtectionPrayer: null, activeCombatPrayer: null, lastPrayerSent: null, activePotions: {},
+    lastSpecSent: 100, prayerPoints: 1, maxPrayerPoints: 1, prayerDrainAccumulator: 0, activeProtectionPrayer: null, activeCombatPrayer: null, lastPrayerSent: null, activePotions: {}, following: null, followTargetTile: null,
     ...overrides,
   }
 }
@@ -49,6 +51,12 @@ function makeRock(overrides: Partial<RockState> = {}): RockState {
 
 function makeCtx(rock: RockState, tick = 1): TickContext {
   return { tick, rocks: new Map([[rock.id, rock]]) }
+}
+
+const COMBAT_COLLISION = Array.from({ length: 16 }, () => '.'.repeat(16))
+
+function combatCtx(tick: number, npcs: Map<string, NpcState>): TickContext {
+  return { tick, rocks: new Map(), npcs, collision: COMBAT_COLLISION, pathAdjacent: (from, to) => findPathAdjacent(COMBAT_COLLISION, from, to) }
 }
 
 function mineIntent(rockId = 'rock_tin_1'): TickPlayer['pendingInteract'] {
@@ -241,7 +249,7 @@ describe('toEntityDiff', () => {
     const player = makePlayer({ x: 3, z: 4, anim: 'walk' })
     // gear always rides player diffs (even empty) so unequips propagate.
     expect(toEntityDiff(player)).toEqual({
-      id: '1', kind: 'player', x: 3, z: 4, anim: 'walk', name: 'WorldTester', gear: {},
+      id: '1', kind: 'player', x: 3, z: 4, anim: 'walk', name: 'WorldTester', gear: {}, hp: 10, maxHp: 10,
     })
   })
 
@@ -253,6 +261,45 @@ describe('toEntityDiff', () => {
   it('omits targetId outside combat', () => {
     const player = makePlayer({ combat: null })
     expect(toEntityDiff(player).targetId).toBeUndefined()
+  })
+
+  it('carries hp/maxHp (item 11 — players show an overhead HP bar like NPCs)', () => {
+    const player = makePlayer({ hp: 7, maxHp: 40 })
+    expect(toEntityDiff(player)).toMatchObject({ hp: 7, maxHp: 40 })
+  })
+})
+
+describe('entChanged on hp change', () => {
+  it('marks the entity changed on a tick where a monster hits the player, even standing still mid-fight', () => {
+    // A ranged/magic monster can hit an adjacent, non-moving player without
+    // ever changing their x/z/anim — entChanged must still catch the hp drop
+    // (tick.ts:500), or a hit like this would never stream to observers.
+    const npcs = npcsFromZone([{ id: 'mage_1', monsterId: 'arcane_adept', x: 5, z: 5, wander: { x: 0, z: 0, w: 16, h: 16 } }])
+    const player = makePlayer({
+      charId: '1', x: 5, z: 6, hp: 400, maxHp: 400,
+      stats: {
+        attack: { xp: 0, level: 1 }, strength: { xp: 0, level: 1 }, defence: { xp: 0, level: 1 },
+        ranged: { xp: 0, level: 1 }, magic: { xp: 0, level: 1 }, hitpoints: { xp: 200000, level: 99 },
+      },
+      pendingInteract: { kind: 'npc', id: 'mage_1', action: 'attack' },
+    })
+    let tick = 0
+    tick++
+    tickPlayer(player, combatCtx(tick, npcs)) // engage adjacent
+    expect(player.combat).not.toBeNull()
+
+    let sawEntChangedOnHit = false
+    for (let i = 0; i < 30 && !sawEntChangedOnHit; i++) {
+      tick++
+      const before = player.hp
+      const r = tickPlayer(player, combatCtx(tick, npcs))
+      const wasHit = player.hp < before
+      if (wasHit) {
+        expect(r.entChanged).toBe(true)
+        sawEntChangedOnHit = true
+      }
+    }
+    expect(sawEntChangedOnHit).toBe(true)
   })
 })
 

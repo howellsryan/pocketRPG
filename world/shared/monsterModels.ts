@@ -9,6 +9,11 @@ export type MonsterModel = {
   bounds: { minX: number; minY: number; minZ: number; maxX: number; maxY: number; maxZ: number }
   targetHeight: number
   hover?: number
+  /** True when the GLB ships no walk clip, so makeAnimator aliases walk to
+   * idle (a wandering boss would otherwise glide with no visible gait) —
+   * entities.ts layers a procedural bob/rock (motion.ts gaitBob) on top of
+   * the idle clip while moving instead. */
+  noLocomotionClip?: boolean
 }
 
 export const MONSTER_MODELS: Record<string, MonsterModel> = {
@@ -50,6 +55,7 @@ export const MONSTER_MODELS: Record<string, MonsterModel> = {
     url: '/models/warlord_grondar.glb',
     bounds: { minX: -1.0, minY: -0.874, minZ: -0.503, maxX: 1.0, maxY: 0.874, maxZ: 0.503 },
     targetHeight: 2.8,
+    noLocomotionClip: true,
   },
 }
 

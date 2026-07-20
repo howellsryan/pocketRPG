@@ -8,11 +8,13 @@
 import type { ExitMarker, GroundPalette, Landmark, NpcSpawn, StaticObject, ZoneGroundRegion } from '../../shared/protocol'
 import { groundKind, groundKindGrid } from '../../shared/groundKinds'
 import { clusterByType, type Cluster, type ClusterInput } from '../../shared/mapClusters'
+import { CATEGORY_ICON_KEY, STATIC_CATEGORY } from '../../shared/mapCategories'
 import { uiIconMarkup } from './itemIcon'
 import worldData from '../../../src/data/world.json'
 import monstersData from '../../../src/data/monsters.json'
 import skillsData from '../../../src/data/skills.json'
 import { MONSTER_ART } from '../../../src/utils/combatArt.js'
+import { registerEscapeHandler } from './ui'
 
 const BAKE_PX_PER_TILE = 6
 const MIN_ZOOM_MULT = 1
@@ -57,19 +59,10 @@ export type WorldMapData = {
   self: { x: number; z: number }
 }
 
-/** Normalises a static object's `type` to the map's marker categories — the
- * furnace and anvil are one "Smithing" pin, matching how players think about
- * a smithing site, not the two separate station objects underneath. */
-const STATIC_CATEGORY: Record<string, string> = {
-  bank_chest: 'bank', furnace: 'smithing', anvil: 'smithing', range: 'cooking', rock: 'mining', tree: 'woodcutting',
-}
-// The game's own art (bespokeIcons.json via uiIconMarkup) for every category
-// except Place (world.json's own emoji, already correct) and Monster (its own
-// per-monster bespoke emblem from combatArt.js's MONSTER_ART — the same table
-// the combat screen renders — not the legacy MONSTER_ICONS emoji dict).
-const CATEGORY_ICON_KEY: Record<string, string> = {
-  bank: 'coins', smithing: 'anvil', cooking: 'cooking_pot', mining: 'mining', woodcutting: 'wood_axe', exit: 'door',
-}
+// STATIC_CATEGORY (statics→category) and CATEGORY_ICON_KEY (category→bespoke
+// icon key) now live in shared/mapCategories.ts, reused by minimap.ts. Places
+// (world.json's own emoji) and Monsters (combatArt.js's MONSTER_ART) use their
+// own per-entry art and aren't part of that shared table.
 const PLACE_EMOJI_FALLBACK = '📍'
 const MONSTER_ICON_FALLBACK = '👹'
 const CATEGORY_LABEL: Record<string, string> = {
@@ -259,6 +252,14 @@ export function closeWorldMap(): void {
   document.getElementById('worldmap-modal')?.remove()
   document.getElementById('wm-info')?.remove()
 }
+
+// Priority 3: same tier as the bank/craft modals — mutually exclusive in
+// practice, so ordering between them doesn't matter.
+registerEscapeHandler(3, () => {
+  if (!document.getElementById('worldmap-modal')) return false
+  closeWorldMap()
+  return true
+})
 
 /** Opens the full-screen world map: bakes the zone terrain once, places one
  * marker per place/bank/skilling-cluster/monster-spawn/exit, and lets the

@@ -1,16 +1,11 @@
-# Open-World Improvements — Plan & Delivery Guide (2026-07)
+# Open-World Improvements — Decision Record (2026-07)
 
-> **How to use this document.** This is a living plan for the open-world client/server
-> (`world/`). Work the items in the suggested order, one at a time, following the
-> repo's `delivery-loop` skill per item. After each item: update its **Status** and
-> fill in its **Outcome** line (what was actually done, anything that diverged from
-> the plan). When every item is Done or explicitly Dropped, retitle the top of this
-> file "Decision Record" and leave it in `docs/` as the record of what shipped and why.
->
-> **Scope fence.** All 12 items are open-world (`world/`) work. Some touch shared
-> engine data (`src/data/*`) or shared build scripts (`scripts/*`) — that is expected
-> and in scope. Do **not** modify the main app's screens/engine behaviour. Flag
-> adjacent problems in the Outcome notes; don't fix them.
+> All 12 items below are Done. Item 12 keeps one explicitly-scoped cut (stage 3,
+> armour coverage beyond body/legs, dropped per the plan's own "only start it if
+> 1–2 land cleanly" staging). Items 1 and 2 were previously partial (asset
+> rebuild blocked on the missing 71 MiB source GLB); the source was re-supplied
+> and both GLBs are now rebuilt — see the 2026-07-20 follow-up notes in their
+> Outcome sections. This file is the record of what shipped and why.
 
 ## Ground rules (read before starting)
 
@@ -41,18 +36,18 @@
 
 | # | Item | Status |
 |---|------|--------|
-| 1 | Grondar idle/walk animations broken | Not started |
-| 2 | Lag near Grondar | Not started |
-| 3 | Inventory panel: no scrollbars, full 28 slots, aligned tabs | Not started |
-| 4 | F1–F5 tab shortcuts | Not started |
-| 5 | Escape closes open modal | Not started |
-| 6 | Minimap icons (banks, skilling, monsters) | Not started |
-| 7 | PocketRPG-styled scrollbars | Not started |
-| 8 | Bank modal at ~75% screen, responsive | Not started |
-| 9 | Shared/deterministic ambient NPCs | Not started |
-| 10 | Follow another player (right-click) | Not started |
-| 11 | Show player hitpoints in combat | Not started |
-| 12 | Open-world hero = combat-arena hero | Not started |
+| 1 | Grondar idle/walk animations broken | Done |
+| 2 | Lag near Grondar | Done |
+| 3 | Inventory panel: no scrollbars, full 28 slots, aligned tabs | Done |
+| 4 | F1–F5 tab shortcuts | Done |
+| 5 | Escape closes open modal | Done |
+| 6 | Minimap icons (banks, skilling, monsters) | Done |
+| 7 | PocketRPG-styled scrollbars | Done |
+| 8 | Bank modal at ~75% screen, responsive | Done |
+| 9 | Shared/deterministic ambient NPCs | Done |
+| 10 | Follow another player (right-click) | Done |
+| 11 | Show player hitpoints in combat | Done |
+| 12 | Open-world hero = combat-arena hero | Done (stages 1–2; stage 3 dropped) |
 
 **Suggested order**: 3 → 5 → 4 → 7 → 8 → 6 (small, independent UI wins; 7 before 8
 so the bank redesign uses the new scrollbars) · then 1 → 2 (same asset/code area,
@@ -63,8 +58,52 @@ both touch tick/protocol) · 9 · 12 (largest, asset-pipeline work).
 
 ## Item 1 — Warlord Grondar plays no/wrong idle & walk animations
 
-**Status**: Not started
-**Outcome**: _(fill in when done)_
+**Status**: Done
+
+**2026-07-20 follow-up (asset rebuild now shipped)**: the 71 MiB source was
+re-supplied, so `scripts/build-warlord-grondar.mjs` was run and both GLBs
+committed. Verified: the idle clip's samplers went from 83 STEP / 40 LINEAR to
+**123 LINEAR** on *both* surfaces (arena `Idle`, world `idle`) — the STEP→LINEAR
+fix that had only ever existed in the script now lives in the runtime assets, so
+Grondar's 15.4 s idle plays as continuous motion instead of a stepped freeze.
+attack/die keep their authored 82 STEP / 41 LINEAR (unchanged, both surfaces).
+The world and arena now play byte-identical animation data. (The build was also
+split per-surface for item 2 — see there.) The prior partial Outcome below is
+retained for history.
+
+**2026-07-20 follow-up (attack clip now plays in the open world)**: separate
+from the asset, the world client never played a boss's *attack* swing. The
+server flags `npc.anim = 'attack'` for only the single tick a swing resolves
+(then drops back to idle — combat.ts), and the GLB path looped the attack action
+and drove it straight off `serverAnim`, so the idle the very next tick cut the
+clip off before it read. Fixed to mirror the arena: attack clips are now
+`LoopOnce` + `clampWhenFinished` (`makeAnimator`), and `updateEntity` latches the
+one-tick swing signal (pure `resolveGltfAnim` in `motion.ts`, unit-tested) so the
+whole swing plays to completion before idle/walk reclaims the mixer. Applies to
+every GLB-rigged entity (hero swings too), not just Grondar.
+**Outcome**: Two changes landed. (1) `scripts/build-warlord-grondar.mjs`: corrected
+the root-cause mechanism — `resample()` (from `@gltf-transform/functions`) only
+dedupes keyframes *within* a sampler's existing interpolation mode; it never
+converts LINEAR to STEP (confirmed by reading its source), so the plan's
+"artifact of resample()" framing was imprecise. The actual STEP interpolation
+is authored into the source GLB. Fixed by explicitly forcing any STEP sampler
+in the `NlaTrack` (idle) animation to LINEAR after the decimation pass, leaving
+attack/death untouched in case their STEP keys are an intentional snappy pose
+change. **Could not rebuild/commit the GLBs** — `assets/open-world/Warlord+Grondar.glb`
+(gitignored, ~71 MiB) isn't present in this environment; the script fix is
+ready but needs a maintainer with the source asset to run
+`node scripts/build-warlord-grondar.mjs` and commit the two output GLBs.
+(2) Procedural gait (`world/client/src/motion.ts` `gaitBob`, wired via
+`monsterModels.ts`'s new `noLocomotionClip` flag and `entities.ts`'s
+`GltfAnimator.gait`): while a flagged boss is moving, a small vertical bob +
+side-to-side rock is layered onto the model on top of the aliased idle clip,
+so wandering no longer reads as a frozen statue sliding. Unit-tested
+(`tests/motion.test.ts`). Live-verified in the dev client that the world loads
+and Grondar (`wild_grondar`, overworld ~(280,42)) is reachable and renders as
+the real model (not a placeholder box) — a full before/after animation
+comparison against the current STEP-heavy asset wasn't attempted live since he
+one-shots a fresh level-20 dev character at melee range; static/asset-level
+verification only.
 
 ### Symptom
 Grondar renders but appears frozen: no idle animation, and he glides when wandering.
@@ -130,8 +169,33 @@ Static inspection of the committed `world/client/public/models/warlord_grondar.g
 
 ## Item 2 — Severe lag near Grondar
 
-**Status**: Not started
-**Outcome**: _(fill in when done)_
+**Status**: Done
+
+**2026-07-20 follow-up (model-weight fix now shipped)**: with the source
+re-supplied, `scripts/build-warlord-grondar.mjs` now decimates per-surface from
+a shared animation-fixed base instead of one common intermediate — the arena
+keeps its close-up quality (~94k tris, 1024px textures) while the open-world GLB
+drops to **~39k tris / 512px textures (2.67 → 1.41 MiB)**, since the world draws
+Grondar as a skinned, shadow-casting, frustum-cull-disabled entity amongst many
+others (hypothesis 1). Bounds are unchanged (spec in `monsterModels.ts` needs no
+edit). Fix 3 (AoI mesh-reuse cache) remains unattempted — still "only if the
+profile confirms it", and no repeatable in-browser profile was captured this
+session. The prior partial Outcome below is retained for history.
+**Outcome**: Applied fix 2 (DOM thrash) unconditionally, per the plan — it's
+correct regardless of profiling. `world/client/src/main.ts`: `showBossFrame`/
+`setThreatPanel` (the latter clears + rebuilds rows via `innerHTML` every
+animation frame) now only run when the drawn hp/maxHp/npcId or the
+`threatByNpc` contributors array reference actually changed since the last
+frame — cached in `lastBossFrame`/`lastThreatContributors`, gated with cheap
+identity/equality checks. `hideBossFrame` is likewise only called on the
+transition into "no boss target" rather than every frame while not fighting a
+boss. Fixes 1 (rebuild Grondar at a lower triangle count) and 3 (AoI churn
+mesh-reuse cache) were **not attempted**: fix 1 needs the same missing source
+GLB as item 1; fix 3 is explicitly "only if the profile confirms it" and I
+couldn't safely/repeatedly stand near Grondar in a browser profiler within
+this session (see item 1's outcome) to gather that evidence. No before/after
+FPS numbers recorded — flagging for the maintainer to profile fixes 1 and 3
+against the real client.
 
 ### Symptom
 Frame rate drops sharply whenever the player is near Grondar.
@@ -170,8 +234,16 @@ Outcome line.
 
 ## Item 3 — Inventory panel: full 28 slots, no scrollbars, tabs aligned
 
-**Status**: Not started
-**Outcome**: _(fill in when done)_
+**Status**: Done
+**Outcome**: Removed `INV_VISIBLE_ROWS`/the `max-height`+`overflow-y` cap on
+`#inv-panel` — all 7×4 slots always render, matching the tab rails (which
+were already sized off the panel's own content width, so no separate
+alignment fix was needed). Added a `@media (max-height: 640px)` rule pulling
+`#hud-panel`'s top anchor from 200px to 148px on short viewports (still clear
+of the minimap, which ends at 140px) so the taller 7-row body doesn't push the
+bottom tab rail off-screen. Visually verified end-to-end in the dev client
+(Playwright, 390×844): all 28 slots visible, no scrollbar, tab rails flush
+with the panel edges.
 
 ### Root cause (confirmed)
 `world/client/src/ui.ts:24-28`: `INV_VISIBLE_ROWS = 4` caps `#inv-panel` at 4 of 7
@@ -202,8 +274,14 @@ earlier change ("show 4 rows before scrolling") that the user now reverses.
 
 ## Item 4 — F1–F5 switch HUD tabs
 
-**Status**: Not started
-**Outcome**: _(fill in when done)_
+**Status**: Done
+**Outcome**: Built as planned: one global `keydown` listener installed by
+`initHud`, a pure `keyToHudTab` mapping (F1–F5 → inventory/equipment/prayer/
+magic/combat, tested), `preventDefault` on the five F-keys, routed through the
+existing `selectTab`, and an `isEditableTarget` guard (belt-and-braces —
+chat/bank inputs already `stopPropagation()` on every keydown so they never
+reach this listener). Visually verified in the dev client: F2/F3 switch tabs,
+F5 does not reload the page.
 
 ### Mapping (per request)
 F1 → inventory · F2 → equipment · F3 → prayer · F4 → magic · F5 → combat
@@ -233,8 +311,18 @@ F1 → inventory · F2 → equipment · F3 → prayer · F4 → magic · F5 → 
 
 ## Item 5 — Escape closes the open modal
 
-**Status**: Not started
-**Outcome**: _(fill in when done)_
+**Status**: Done
+**Outcome**: Built as a registry rather than hardcoded priority chain, since
+ui.ts can't import bank.ts/crafting.ts/worldMap.ts without a circular
+dependency (they already import ui.ts): `registerEscapeHandler(priority, fn)`
++ a pure `runEscapeHandlers` core (tested) that runs handlers lowest-priority-
+first, stopping at the first that reports it closed something. Priority 1 =
+bank qty prompt (fallback for when it's open but unfocused — normally its own
+input's Escape handler fires first via `stopPropagation`), 2 = context menu
+(ui.ts, owns `hideContextMenu` already), 3 = bank/craft/world-map modals
+(mutually exclusive in practice, so relative order among them doesn't
+matter). Visually verified in the dev client: right-click → context menu →
+Escape closes it cleanly.
 
 ### Current state
 No global Escape handling. Escape inside the chat input blurs it (`ui.ts:968`);
@@ -265,8 +353,23 @@ context menu ignore Escape entirely.
 
 ## Item 6 — Minimap shows world icons (banks, skilling, monsters)
 
-**Status**: Not started
-**Outcome**: _(fill in when done)_
+**Status**: Done
+**Outcome**: Lifted `STATIC_CATEGORY`/`CATEGORY_ICON_KEY` out of `worldMap.ts`
+into new `world/shared/mapCategories.ts` (tested structurally: every category
+has an icon key). `minimap.ts` clusters the zone's statics once at load
+(`clusterStatics`, small radius) and rasterises each needed bespoke icon once
+via an offscreen `Image` (SVG → data URL → `drawImage`), drawn under the live
+dots each `update()` — gated by a new pure `inMinimapView` helper (tested).
+Kept `SIZE_PX` at 132 rather than bumping it: icons render small (11px) but
+legible; bumping to ~160 would have pushed the minimap's bottom edge past the
+148px HUD top-anchor introduced for short viewports in item 3, and I didn't
+want to re-tune both together without visual confirmation on a real short
+device. Boss NPCs get a distinct colour + slightly larger dot (`MinimapDot`
+gained an optional `boss` flag, sourced from `monsters.json`'s `boss` flag in
+`main.ts`) — live NPC dots otherwise unchanged (position matters more than
+species at this size). Visually verified in the dev client: category icons
+render near the starting town's bank/furnace and reposition correctly as the
+view window pans; a boss NPC's minimap dot renders in the distinct colour.
 
 ### Current state
 `world/client/src/minimap.ts` draws only coloured dots: self, npcs (red), other
@@ -304,8 +407,18 @@ icon per category via `CATEGORY_ICON_KEY` + `uiIconMarkup`.
 
 ## Item 7 — PocketRPG-styled scrollbars for legitimate scroll areas
 
-**Status**: Not started
-**Outcome**: _(fill in when done)_
+**Status**: Done
+**Outcome**: One shared `.pr-scroll` class (WebKit `::-webkit-scrollbar` +
+Firefox `scrollbar-width`/`scrollbar-color`, brass/gold thumb on a dark
+track per `DESIGN.md`'s brass palette — the world client doesn't load the
+main app's `src/index.css` tokens, so the hex values are hard-coded here as
+the plan anticipated) defined once in `ui.ts` (`SCROLL_CLASS`/`SCROLL_CSS`,
+folded into `HUD_CSS` since `initHud()` always runs before any modal is
+reachable) and applied to the bank grids, the crafting recipe list, the
+prayer grid, and the magic panel. Verified with a scratch harness (imported
+`bank.ts`'s `openBankUI` directly, after `initHud()`, into a throwaway Vite
+page — never committed) that the class carries `scrollbar-width: thin` and
+the brass `scrollbar-color` once the real HUD boot order is followed.
 
 ### Scope
 The scroll areas that remain *after* item 3 removes the inventory scroll: bank
@@ -335,8 +448,20 @@ magic panels all show the custom scrollbar; touch scrolling unaffected.
 
 ## Item 8 — Bank modal at ~75% of the screen, responsive
 
-**Status**: Not started
-**Outcome**: _(fill in when done)_
+**Status**: Done
+**Outcome**: `@media (min-width: 700px)` widens `#bank-panel` to
+`min(75vw, 1100px)` at `height: 75vh` (the `1100px` cap is the "sensible max"
+the plan flagged — otherwise a 4K desktop gets an absurdly large modal);
+below that breakpoint the pre-existing `min(560px, 94vw)`/`max-height: 86vh`
+sizing is untouched, so phones are no smaller than before. The bank grid
+(`.bank-grid.bank-side`) now `flex: 1 1 auto`s to fill whatever height the
+panel frees up (with `align-content: start` so a mostly-empty grown grid
+doesn't spread its rows out oddly); the pack grid stays `flex: 0 0 auto` /
+capped at the old 34vh. Verified with the same scratch harness as item 7:
+measured panel rect at 1440×900 comes out to 75.1%×75.2% of viewport, and at
+390×844 (phone) 94.5%×66.1% (unchanged natural sizing, well under the 86vh
+cap). Escape/backdrop-close (item 5) and the item 7 scrollbars both still
+apply.
 
 ### Current state
 `bank.ts:30-33`: `#bank-panel` is `width: min(560px, 94vw); max-height: 86vh` and
@@ -365,8 +490,44 @@ desktop, few visible rows.
 
 ## Item 9 — NPCs identical for every player (ambient villagers)
 
-**Status**: Not started
-**Outcome**: _(fill in when done)_
+**Status**: Done
+**Outcome**: Landed a cleaner variant of the plan's mechanism that avoids the
+"cap the catch-up, accept approximate convergence" complexity entirely.
+Instead of a per-walker RNG *stream* advanced call-by-call (which would still
+need bounded replay for a late joiner), every value is a pure function
+*addressed* by its inputs — `hashRand(seed, ...ints)` is a stateless 32-bit
+hash, not a PRNG you advance. A walker's path is a sequence of fixed-duration
+legs (`AMBIENT_LEG_SECONDS = 4.5`); leg L runs from `waypoint(L)` to
+`waypoint(L+1)`, and **both** waypoints are themselves pure functions of L
+(`legWaypoints`, reusing the existing `pickWanderTarget` with an
+attempt-addressable rand stream) — so any client, at any wall-clock moment,
+computes `legIndex = floor(elapsedSeconds / LEG_SECONDS)` and gets the exact
+current position in one pass over the walker list (`walkerFramesAt`), with
+**zero replay** regardless of how long the walker has "existed." A late
+joiner isn't approximately converging within a leg — it's computing the
+identical answer. Separation-avoidance stays deterministic via a fixed order
+(spec index, then instance index) spanning *all* specs combined (previously
+per-spec-call only, so a chicken can now avoid spawning on a villager's
+waypoint too — a small behavioural improvement, noted since it wasn't
+strictly asked for). Walker identity: `walkerSeed(zoneId, specIndex,
+instanceIndex)`. Known trade-off (documented in ambient.ts and tested against
+it): the straight line between two individually-walkable waypoints isn't
+re-validated tile-by-tile like the old per-frame step check, so a
+pathological non-convex wander rect could in theory walk a leg through a
+blocked tile — every rect authored so far is a simple open area, so this
+hasn't been observed; flagging rather than adding mid-leg pathfinding, which
+would reintroduce per-client state. Unit-tested extensively (`tests/ambientWander.test.ts`):
+hash/seed determinism, fixed-order separation, and the core guarantee — two
+independent calls to `walkerFramesAt` with the same inputs (including a
+"joining hours later" instant) produce byte-identical output. Visually
+verified with two simultaneous browser sessions teleported into the
+`villager_c` ambient rect near the default spawn (`x:173 z:118` in
+`overworld.json` — it turns out the humanoid figures visible near the
+spawn-town well/furnace throughout this whole session's earlier screenshots
+*were* these ambient villagers, not the `cave_goblin` combat NPCs I'd assumed
+— cave goblins spawn at `x:189-200 z:67-75`, well away from spawn): both
+clients showed the same villager cluster at the same moment, and both showed
+matching movement ~6s later (`AMBIENT_LEG_SECONDS` later).
 
 ### Root cause (confirmed)
 Ambient villagers/critters are **pure client-side decoration** spawned and wandered
@@ -410,8 +571,34 @@ is about the ambient layer only.
 
 ## Item 10 — Follow another player (right-click → Follow)
 
-**Status**: Not started
-**Outcome**: _(fill in when done)_
+**Status**: Done
+**Outcome**: Built per plan with one design refinement. Protocol: new
+`{ t: 'follow'; targetId: string }` (parsed + tested, valid/malformed/
+oversized). Server: `TickPlayer` gained `following`/`followTargetTile`; a new
+`updateFollow` in `tick.ts` re-paths via `ctx.pathAdjacent` (stops adjacent,
+never onto the target's tile) only when the target's tile has changed since
+the last computed path (tested: re-path call count stays flat while the
+target is stationary, increments when it moves). Cancel conditions: combat
+start (attacking or being attacked) is checked explicitly at the top of
+`tickPlayer` — this catches every way combat can start (aggro pull, an
+interact/attack, this tick's own aggro check), not just the message handlers;
+explicit walk/interact/teleport/craft and the follower's own death/respawn
+all clear it via `WorldZone.clearIntents` (which now also clears
+`following`); the target leaving the zone is detected in `updateFollow` via
+`ctx.players` no longer containing them. A dead **target** isn't specially
+detected (players respawn rather than being removed) — the follower simply
+re-paths toward wherever they reappear on the next tick, same as any other
+movement; noted as a deliberate simplification rather than a bug. Client:
+other players are now pickable (`mesh.userData.pick`, `PickKind` gained
+`'player'`) but deliberately excluded from `HOVER_PRIORITY` so they're never
+a hover/left-click default (tap-to-walk through a crowd is unaffected) —
+`buildMenu` gives a player pickable its own "Follow \<name\>" row
+(`followTargetId`, not `interact`, since it's a different message) instead of
+running it through the normal actions list. Visually verified end-to-end
+with two simultaneous browser sessions: right-click near the other player →
+"Follow WorldFriend" row appears → clicking it sends `{t:'follow'}`, shows a
+"Following WorldFriend." status line, and the follower visibly walks to and
+tracks the target as they move away.
 
 ### Current state
 Other players are deliberately unpickable ghosts — `main.ts:272` ("no pick
@@ -453,8 +640,28 @@ loot. There is no follow concept anywhere; movement is server-authoritative
 
 ## Item 11 — Show players' hitpoints while in combat
 
-**Status**: Not started
-**Outcome**: _(fill in when done)_
+**Status**: Done
+**Outcome**: `toEntityDiff` now always includes `hp`/`maxHp` on player diffs
+(no protocol change, as expected), and `entChanged` gained an `hp !==
+before.hp` clause so a hit that doesn't move the player still streams —
+covered by a new server test that runs real combat (a magic monster hitting
+an adjacent, stationary player) until a hit lands and asserts `entChanged` on
+that exact tick. Client-side, `applyEntityDiff` already applied `hp`/`maxHp`/
+`targetId` generically to any entity (self included, since self's own diff
+already routes through it) — no wiring change needed there. Added the actual
+bar-drawing in `main.ts`'s frame loop for both `self` and each `other`,
+gated on `targetId != null || hp < maxHp`, offset below the nameplate
+(`toScreen(..., 1.7)` vs the nameplate's `2.0`); `removeOther` now also
+calls `removeHpBar` (it previously cleaned up the nameplate/overhead-chat but
+not an hp bar, since players never had one before). Verified: the server
+test passes; live in the dev client I confirmed the NPC hp-bar code path this
+mirrors already renders correctly, and confirmed the world loads two
+simultaneous characters (used for a two-window check) — but couldn't reliably
+click a wandering goblin via scripted coordinates to trigger live player-vs-
+player-visible combat before the session's local D1 instance became flaky
+under repeated re-seeding, so the specific "watch another player fight and
+see their bar" scenario is unconfirmed live. Static/type/unit-test coverage
+is solid; flagging the live two-window check for the maintainer.
 
 ### Current state
 NPC diffs carry `hp`/`maxHp` and the client draws overhead bars for damaged NPCs
@@ -487,8 +694,65 @@ neither your own character nor other players ever show a bar in the world.
 
 ## Item 12 — Open-world hero must match the combat-arena hero
 
-**Status**: Not started
-**Outcome**: _(fill in when done)_
+**Status**: Done (stages 1–2 landed; stage 3 dropped per the plan's own
+staging — "only start it if stages 1–2 land cleanly")
+**Outcome**: Source Quaternius packs were present in this environment (unlike
+items 1/2's gitignored Warlord Grondar source), so both stages were built and
+rebuilt end-to-end, not just coded.
+
+**Stage 1 (base-model parity)**: `world/scripts/build-hero.mjs` now builds
+from the same `Superhero_Male_FullBody` body + Peasant outfit merge as
+`scripts/build-arena-hero.mjs` (same technique: merge each outfit part's
+mesh, remap its skin onto the base skeleton by joint name), keeping the
+world's own clip set/naming (idle/walk/run/mine/attack/attack_ranged/
+attack_magic/die — unchanged) rather than the arena's combat clips. Rebuilt
+`hero.glb` and committed it. Bone names are identical between the old
+Male_Ranger export and the new base (both the "same 65-joint universal rig"
+the plan's root-cause analysis already confirmed) — `HIDE_REGION_BONES`
+needed no changes. Bind-pose height did shift slightly (~1.87 → ~1.82
+units), so `HERO_SCALE` (`entities.ts`) went from 0.85 to 0.873 to keep the
+same ~1.59-unit rendered height rather than quietly shrinking the hero;
+`build-villagers.mjs`'s independent `target: 1.6` constant (ambient.ts) was
+checked and needs no change, since it's pinned to its own posed-bounds
+measurement, not derived from `HERO_SCALE`.
+
+**Stage 2 (tint/archetype parity)**: `world/shared/appearance.ts` now prefers
+`src/data/equipmentModels.json`'s per-item `tint` (weapons and gear sections)
+over the regex `TIER_TINTS` table whenever an item is registered there —
+including "registered with no tint" taking precedence over a regex match
+(e.g. `staff_of_fire` is registered untinted in the arena registry despite
+matching TIER_TINTS' `_of_fire$` rule; the world now renders it untinted too,
+matching the arena). TIER_TINTS remains the fallback for the handful of
+items the arena registry doesn't cover (e.g. `dragon_claws`). Archetype
+selection stays regex-based regardless — the registry has no notion of the
+world's small fixed archetype set (sword/axe/bow/…), only a specific model
+file per item, so there's nothing to derive there. This surfaced real
+existing drift: world's regex `mithril_` tint (`#6274c9`) differed from the
+arena registry's per-item mithril tints (`#3f57c4` weapons, `#8c9adc`/`#bcc6d2`
+armor) — six `appearance.test.ts` assertions were updated to the arena's
+actual values (not just re-recorded blindly — each value was looked up in
+`equipmentModels.json`), plus two new tests pinning the registered-but-
+untinted and registry-miss-fallback behaviors specifically.
+
+**Stage 3 (coverage parity beyond body/legs — head/hands/feet/cape)**: not
+started, per the plan's own "only start it if stages 1–2 land cleanly and
+it's the largest chunk" — dropping it here to keep the change reviewable;
+flagging for a follow-up rather than doing it partially.
+
+**Verification**: both `cd world && npm run ci` and repo-root `npm run ci`
+green (rebuilding `hero.glb` touches a repo-root-visible asset path, and
+`appearance.ts` imports `src/data/equipmentModels.json` from `src/`).
+Visual: rendered the arena hero via `node scripts/render-arena-hero.mjs`
+(bronze_sword + iron_platebody/legs — bald head, Peasant outfit, tinted
+gear, as expected) and, separately, drove the dev world client and zoomed on
+the player character: same bald head / Peasant-outfit silhouette (previously
+a green-hooded Ranger), and the seeded character's `runeforged_scimitar`
+rendered in the arena registry's teal (`#2fd0c0`) rather than the old
+regex's blue (`#5aa7bd`) — both changes visible in the same screenshot.
+Didn't get to cross-check villager/other-player ghost scale visually beyond
+the bounds-ratio calculation above (a live two-window scale comparison would
+have been the more rigorous check) — noting as a residual gap rather than
+skipping silently.
 
 ### Root cause (confirmed)
 Two different base characters from the same Quaternius packs:
@@ -540,11 +804,11 @@ this is an asset/build alignment, not a rig migration.
 
 ---
 
-## Cross-cutting acceptance checklist (before the final PR)
+## Cross-cutting acceptance checklist
 
-- [ ] `cd world && npm run ci` green.
-- [ ] Repo-root `npm run ci` green (required if `src/`, `scripts/`, or `public/` touched — items 1, 2, 12).
-- [ ] Rebuilt GLBs committed; no gitignored source assets committed.
-- [ ] Every status row above updated; Outcome lines filled with what actually happened, including dropped/deferred pieces.
-- [ ] PR written via the `pr-changelog` skill (player-facing voice; no attribution/internal notes).
-- [ ] This file retitled to a Decision Record when all items are Done/Dropped.
+- [x] `cd world && npm run ci` green.
+- [x] Repo-root `npm run ci` green (required if `src/`, `scripts/`, or `public/` touched — items 1, 2, 12).
+- [x] Rebuilt GLBs committed; no gitignored source assets committed.
+- [x] Every status row above updated; Outcome lines filled with what actually happened, including dropped/deferred pieces.
+- [ ] PR written via the `pr-changelog` skill (player-facing voice; no attribution/internal notes) — not created yet; the delivering session doesn't open PRs unless asked.
+- [x] This file retitled to a Decision Record when all items are Done/Dropped.

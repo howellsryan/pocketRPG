@@ -25,7 +25,7 @@ function makeMeleePlayer(overrides: Partial<TickPlayer> = {}): TickPlayer {
     specialEnergy: 100, lastSpecSent: 100,
     prayerPoints: 1, maxPrayerPoints: 1, prayerDrainAccumulator: 0,
     activeProtectionPrayer: null, activeCombatPrayer: null, lastPrayerSent: null,
-    activePotions: {},
+    activePotions: {}, following: null, followTargetTile: null,
     ...overrides,
   }
 }

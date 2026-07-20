@@ -5,7 +5,7 @@
 // expresses intent.
 import type { BankSlot, InvSlot } from '../../shared/protocol'
 import { iconMarkup, itemName } from './itemIcon'
-import { showContextMenu } from './ui'
+import { registerEscapeHandler, showContextMenu, SCROLL_CLASS } from './ui'
 import type { MenuRow } from './picking'
 
 export type BankOp = (op: 'deposit' | 'withdraw', itemId: string, qty: number) => void
@@ -31,6 +31,12 @@ const BANK_CSS = `
   width: min(560px, 94vw); max-height: 86vh; display: flex; flex-direction: column;
   background: rgba(24, 19, 12, 0.97); border: 1px solid #6a5636; border-radius: 10px; overflow: hidden;
 }
+/* Phones keep the pre-2026-07 sizing above (lots of dead space there was a
+   desktop-only problem); tablets/desktop get a panel that actually uses the
+   screen instead of a small fixed box in the middle of it. */
+@media (min-width: 700px) {
+  #bank-panel { width: min(75vw, 1100px); height: 75vh; max-height: 75vh; }
+}
 #bank-panel .bank-head {
   display: flex; align-items: center; justify-content: space-between;
   padding: 8px 12px; color: #ffe066; font-weight: bold; font-size: 15px;
@@ -55,8 +61,13 @@ const BANK_CSS = `
 }
 #bank-panel .bank-grid {
   display: grid; grid-template-columns: repeat(auto-fill, 44px); gap: 3px;
-  padding: 4px 12px 10px; overflow-y: auto; min-height: 96px; max-height: 34vh;
+  align-content: start;
+  padding: 4px 12px 10px; overflow-y: auto; min-height: 96px;
 }
+/* The bank grid is the long list — let it flex-grow to fill whatever height
+   the panel frees up. The pack section stays compact underneath it. */
+#bank-panel .bank-grid.bank-side { flex: 1 1 auto; }
+#bank-panel .bank-grid:not(.bank-side) { flex: 0 0 auto; max-height: 34vh; }
 .bank-cell {
   width: 44px; height: 44px; position: relative; border-radius: 4px; cursor: pointer;
   background: rgba(60, 50, 34, 0.55); display: flex; align-items: center; justify-content: center;
@@ -288,14 +299,14 @@ export function openBankUI(bank: BankSlot[], inventory: InvSlot[], onOp: BankOp)
   bankSub.textContent = 'Bank — tap to withdraw 1, hold for more'
   const bankGrid = document.createElement('div')
   bankGrid.id = 'bank-grid'
-  bankGrid.className = 'bank-grid bank-side'
+  bankGrid.className = `bank-grid bank-side ${SCROLL_CLASS}`
 
   const packSub = document.createElement('div')
   packSub.className = 'bank-sub'
   packSub.textContent = 'Your pack — tap to deposit 1, hold for more'
   const packGrid = document.createElement('div')
   packGrid.id = 'bank-pack-grid'
-  packGrid.className = 'bank-grid'
+  packGrid.className = `bank-grid ${SCROLL_CLASS}`
 
   panel.appendChild(head)
   panel.appendChild(search)
@@ -329,3 +340,21 @@ export function closeBankUI(): void {
   document.getElementById('bank-modal')?.remove()
   document.getElementById('bank-qty-prompt')?.remove()
 }
+
+// Priority 1: the qty prompt sits on top of the bank modal. In the normal
+// case its own input already blurs/closes it on Escape (stopPropagation
+// keeps this from firing) — this is the fallback for when the prompt is open
+// but not focused (e.g. its OK button was just clicked).
+registerEscapeHandler(1, () => {
+  const prompt = document.getElementById('bank-qty-prompt')
+  if (!prompt) return false
+  prompt.remove()
+  return true
+})
+
+// Priority 3: the bank modal itself, below the context menu (priority 2).
+registerEscapeHandler(3, () => {
+  if (!isBankOpen()) return false
+  closeBankUI()
+  return true
+})
