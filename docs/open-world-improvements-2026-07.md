@@ -1,0 +1,550 @@
+# Open-World Improvements — Plan & Delivery Guide (2026-07)
+
+> **How to use this document.** This is a living plan for the open-world client/server
+> (`world/`). Work the items in the suggested order, one at a time, following the
+> repo's `delivery-loop` skill per item. After each item: update its **Status** and
+> fill in its **Outcome** line (what was actually done, anything that diverged from
+> the plan). When every item is Done or explicitly Dropped, retitle the top of this
+> file "Decision Record" and leave it in `docs/` as the record of what shipped and why.
+>
+> **Scope fence.** All 12 items are open-world (`world/`) work. Some touch shared
+> engine data (`src/data/*`) or shared build scripts (`scripts/*`) — that is expected
+> and in scope. Do **not** modify the main app's screens/engine behaviour. Flag
+> adjacent problems in the Outcome notes; don't fix them.
+
+## Ground rules (read before starting)
+
+- **Verify commands** (run before every commit that touches `world/`):
+  - `cd world && npm run ci` — typecheck + vitest + client build (or `npm run world:check` from repo root).
+  - Repo-root `npm run ci` as well if the change touches anything under `src/` or `scripts/` (shared data/build scripts).
+- **Local dev loop**: `cd world && npm run dev` (DO server) + `npm run dev:client`
+  (Vite client), `npm run dev:seed` to seed a character. Grondar spawns: overworld
+  `wild_grondar` (`world/zones/overworld.json`) and `grondar_1` in the Varrick
+  dungeon (`world/scripts/gen-varrick-dungeon.mjs:98`).
+- **Protocol changes** (items 10, 11): `world/shared/protocol.ts` is the single
+  source of truth; every new `ClientMessage` must be added to `parseClientMessage`
+  (unknown/malformed ⇒ `null` ⇒ connection close) and covered in
+  `world/tests/protocol.test.ts`.
+- **Model/asset changes** (items 1, 2, 12): rebuilt GLBs under
+  `world/client/public/models/` and `public/3d-samples/` are committed artifacts —
+  rebuild via the named script and commit the output. Source packs live in
+  `assets/open-world/` (the ~71 MiB Grondar source GLB is gitignored; it must be
+  present locally at `assets/open-world/Warlord+Grondar.glb` to re-run its build).
+- **Tests**: every logic change gets a test in `world/tests/`. UI-DOM heavy code
+  (ui.ts panels) is tested where a pure helper can be extracted (see
+  `world-hud.test.ts`, `minimap-view.test.ts`, `bank.test.ts` for the pattern:
+  extract pure functions, test those).
+- **No PR without the `pr-changelog` skill** — PR title/body publish verbatim to the
+  players' Discord changelog. Player-facing voice, no internal notes.
+
+## Status board
+
+| # | Item | Status |
+|---|------|--------|
+| 1 | Grondar idle/walk animations broken | Not started |
+| 2 | Lag near Grondar | Not started |
+| 3 | Inventory panel: no scrollbars, full 28 slots, aligned tabs | Not started |
+| 4 | F1–F5 tab shortcuts | Not started |
+| 5 | Escape closes open modal | Not started |
+| 6 | Minimap icons (banks, skilling, monsters) | Not started |
+| 7 | PocketRPG-styled scrollbars | Not started |
+| 8 | Bank modal at ~75% screen, responsive | Not started |
+| 9 | Shared/deterministic ambient NPCs | Not started |
+| 10 | Follow another player (right-click) | Not started |
+| 11 | Show player hitpoints in combat | Not started |
+| 12 | Open-world hero = combat-arena hero | Not started |
+
+**Suggested order**: 3 → 5 → 4 → 7 → 8 → 6 (small, independent UI wins; 7 before 8
+so the bank redesign uses the new scrollbars) · then 1 → 2 (same asset/code area,
+diagnose together) · 11 → 10 (10 builds on the "players are pickable" change and
+both touch tick/protocol) · 9 · 12 (largest, asset-pipeline work).
+
+---
+
+## Item 1 — Warlord Grondar plays no/wrong idle & walk animations
+
+**Status**: Not started
+**Outcome**: _(fill in when done)_
+
+### Symptom
+Grondar renders but appears frozen: no idle animation, and he glides when wandering.
+
+### What is already verified (don't re-derive)
+Static inspection of the committed `world/client/public/models/warlord_grondar.glb`
+(2.8 MiB) confirms the asset is structurally sound:
+- Clips `idle` / `attack` / `die` all present (123 channels each, 41 bone targets,
+  15.4 s idle). **No `walk` clip exists** — `makeAnimator` deliberately aliases
+  walk → idle for bosses (`world/client/src/entities.ts:122-126`), so gliding while
+  wandering is the *designed* current behaviour, not a regression.
+- Skinning survived decimation (`JOINTS_0`/`WEIGHTS_0` present; 1 skinned node,
+  41-joint skin; all node names unique — so `SkeletonUtils.clone` + mixer
+  property-binding should resolve).
+- Extensions are only `EXT_texture_webp` + `KHR_mesh_quantization` (both natively
+  supported by GLTFLoader; **no** meshopt compression despite the build-script
+  comment claiming it — flag the stale comment, don't fix the script for this).
+- Of the idle clip's 123 samplers, **83 are STEP-interpolated** and only 40 LINEAR
+  (an artifact of `resample()` in `scripts/build-warlord-grondar.mjs`). A mostly-STEP
+  idle can read as "frozen with occasional pops" — this is the leading asset-side
+  suspect for "no idle animation".
+
+### Diagnosis steps (do first, in order)
+1. Run the dev client, stand near Grondar (dungeon spawn is easiest), open the
+   browser console/network tab:
+   - If Grondar renders as a **brown box**, the GLB failed to load (`createMonsterMesh`
+     catch → `boxPlaceholder`, `entities.ts:199-201`) — check the network tab for the
+     404/error and fix the asset path/deploy.
+   - If he renders as the real model, temporarily log inside `makeAnimator`
+     (`entities.ts:109`) whether the idle action was found and is playing.
+2. Compare against the combat arena: the arena consumes the same decimated
+   intermediate (`public/3d-samples/monsters/warlord_grondar.glb` with `Idle` clip)
+   via `CombatArena3D`. If the arena's Grondar idles visibly and the world's does
+   not, the bug is world-client wiring; if **both** look frozen, it's the asset
+   (STEP interpolation), and the fix is in the build script.
+3. Useful tools: `world/scripts/list-anims.mjs`, `world/scripts/inspect-glb.mjs`.
+
+### Fix plan
+- **Asset fix (likely)**: in `scripts/build-warlord-grondar.mjs`, stop `resample()`
+  collapsing tracks to STEP (drop resample for this model or configure its
+  tolerance), rebuild both outputs, and confirm the idle clip's samplers come out
+  LINEAR with dense keys. Requires the gitignored source GLB — if it isn't present
+  locally, say so in the Outcome and hand the rebuild step back to the maintainer
+  rather than skipping the item silently.
+- **Walk animation**: the rig is bespoke (Tripo/CC-style bone names `L_Foot`,
+  `L_Thigh`…), so UAL clips can't be merged by name like the hero's. Do **not**
+  attempt a full retarget. Instead give moving bosses a cheap procedural gait in
+  the client: while `entity.moving` and the current GLTF action is the aliased
+  idle, apply a subtle rhythmic body sway/bob to the mesh group (same spirit as
+  `ambient.ts`'s bob). Keep it behind a per-model flag in
+  `world/shared/monsterModels.ts` (e.g. "has no locomotion clip") so normal
+  monsters with real walk clips are untouched.
+- Keep `attack`/`die` behaviour as-is unless diagnosis shows them broken too.
+
+### Tests & verification
+- Unit: extend `world/tests/` motion/entities coverage where a pure helper is
+  extracted (e.g. the bob function: input time/moving → offset).
+- Manual: Grondar visibly breathes/sways at idle; wandering no longer reads as a
+  frozen statue sliding; attack + death still play. Check both dungeon and
+  overworld spawns.
+
+---
+
+## Item 2 — Severe lag near Grondar
+
+**Status**: Not started
+**Outcome**: _(fill in when done)_
+
+### Symptom
+Frame rate drops sharply whenever the player is near Grondar.
+
+### Ranked hypotheses (verify with the browser performance profiler before fixing)
+1. **Model weight.** Grondar is ~94 k triangles — 10–40× every other world model
+   (goblin ~156 KiB GLB, hero 2 MiB but far fewer tris) — skinned, with
+   `castShadow` forced on every sub-mesh and frustum culling disabled
+   (`entities.ts:78-83`), so he's skinned + drawn twice (shadow pass + main pass)
+   every frame even partially off-screen. On integrated GPUs this alone can halve
+   the frame rate. **Fix**: rebuild at a lower `SIMPLIFY_RATIO` (0.05 → ~0.02,
+   target ≤ 40 k tris — the boss silhouette survives) and drop texture resize to
+   512 px in `scripts/build-warlord-grondar.mjs`; same source-GLB caveat as item 1.
+2. **Per-frame DOM rebuild while targeting a boss.** `main.ts:654-663` calls
+   `showBossFrame` + `setThreatPanel` **every animation frame**; `setThreatPanel`
+   (`ui.ts:1140-1152`) clears and rebuilds its rows with innerHTML each call —
+   layout thrash at 60 fps. **Fix**: only touch the DOM when the values actually
+   changed (cache last hp/contributor snapshot; the threat snapshot object in
+   `threatByNpc` only changes when a `{e:'threat'}` event lands, so identity
+   comparison is enough).
+3. **Entity churn at the AoI boundary.** If Grondar's wander rectangle straddles
+   the player's AoI radius (`WorldZone.ts:1437-1463`), the client repeatedly
+   destroys and recreates his entity (`removeNpc`/`ensureNpc`, `main.ts:235-270`),
+   and every recreation re-clones the 94 k-tri skinned mesh. **Fix if observed**:
+   keep a small client-side cache of recently-removed boss meshes keyed by
+   monsterId and reuse instead of re-cloning (template GLTF is already cached —
+   the clone is the expensive part).
+
+### Verification
+Record before/after FPS (browser FPS meter or profiler) in the same spot near the
+dungeon spawn. All three fixes are independent; apply 2 unconditionally (it's
+correct regardless), 1 and 3 as the profile confirms them. Note findings in the
+Outcome line.
+
+---
+
+## Item 3 — Inventory panel: full 28 slots, no scrollbars, tabs aligned
+
+**Status**: Not started
+**Outcome**: _(fill in when done)_
+
+### Root cause (confirmed)
+`world/client/src/ui.ts:24-28`: `INV_VISIBLE_ROWS = 4` caps `#inv-panel` at 4 of 7
+rows with `max-height` + `overflow-y: auto` (`ui.ts:64-68`). This was a deliberate
+earlier change ("show 4 rows before scrolling") that the user now reverses.
+
+### Fix plan
+- Remove the visible-rows cap: `#inv-panel` always shows the full 7×4 grid
+  (`INVENTORY_COLS`/`INVENTORY_ROWS`), no `max-height`, no `overflow-y`.
+- Panel width: `HUD_PANEL_WIDTH` (`ui.ts:34`) already sizes the panel off the grid
+  content width clamped to the tab rail's 44 px tap-target floor — keep that, and
+  confirm the top tab rail (4 tabs) and bottom rail (equipment/map/logout,
+  `ui.ts:44-47`) both span exactly the panel width so tabs align flush with the
+  inventory's edges on desktop and mobile.
+- Sanity-check the vertical fit on a short mobile viewport (e.g. 667 px tall):
+  the HUD is `position: fixed; top: 200px` (`ui.ts:40`) — with 7 rows the body may
+  overflow the viewport bottom. If it does, adjust the panel's top anchor or make
+  *only non-inventory* panes cap their height; the inventory itself must never
+  scroll. Note what you chose in the Outcome.
+
+### Tests & verification
+- `world/tests/world-hud.test.ts` covers HUD constants/derivations — extend for the
+  new sizing rule (e.g. panel height derivation, or at minimum the removed cap).
+- Manual: desktop + narrow window: all 28 slots visible, no scrollbar, tab rails
+  flush with panel edges; drag-reorder still works across all 7 rows.
+
+---
+
+## Item 4 — F1–F5 switch HUD tabs
+
+**Status**: Not started
+**Outcome**: _(fill in when done)_
+
+### Mapping (per request)
+F1 → inventory · F2 → equipment · F3 → prayer · F4 → magic · F5 → combat
+(attack styles + special attack live on the combat pane).
+
+### Fix plan
+- Add one global `keydown` listener in `ui.ts` (installed by `initHud`):
+  - `event.preventDefault()` on the five F-keys — this is the point of the item
+    (F5 currently refreshes the page, F1 opens browser help).
+  - Route to the existing `selectTab(id)` (`ui.ts:417`) — it already handles the
+    bottom-rail equipment tab because it queries `.hud-tab[data-tab]` globally,
+    and un-collapses the body.
+  - Ignore the shortcut when focus is in an input/textarea (`document.activeElement`)
+    — the chat input and bank search already `stopPropagation()` on their own
+    keydowns (`ui.ts:966-973`, `bank.ts:273-284`), but belt-and-braces the guard
+    anyway for future inputs.
+- Do not bind F6+ or plain letters; camera arrows stay in `cameraControls.ts`.
+
+### Tests & verification
+- Extract the key→tab mapping as a pure exported helper; test it in
+  `world-hud.test.ts` (including "returns null while an input is focused" logic if
+  expressed purely).
+- Manual: each F-key switches tabs and never triggers the browser default (F5 must
+  not reload); typing in chat with F-keys does nothing to tabs.
+
+---
+
+## Item 5 — Escape closes the open modal
+
+**Status**: Not started
+**Outcome**: _(fill in when done)_
+
+### Current state
+No global Escape handling. Escape inside the chat input blurs it (`ui.ts:968`);
+inside the bank search clears it (`bank.ts:273-280`); inside the qty prompt closes
+just that box (`bank.ts:130-134`). The bank/crafting/world-map modals and the
+context menu ignore Escape entirely.
+
+### Fix plan
+- One global `keydown` (share the listener from item 4) handling Escape by
+  priority — close only the **topmost** thing, one per press:
+  1. bank qty prompt (`#bank-qty-prompt`)
+  2. context menu (`hideContextMenu`, `ui.ts:1014`)
+  3. bank modal (`closeBankUI`), crafting modal (`closeCraftUI`), world-map
+     overlay (check `worldMap.ts` for its close function) — whichever is open
+     (they're mutually exclusive in practice).
+- Because the focused chat input and bank search `stopPropagation()`, their
+  existing per-input Escape behaviour is naturally preserved (first Escape blurs/
+  clears, second Escape reaches the global handler and closes the modal). Keep it
+  that way.
+
+### Tests & verification
+- If the priority routing is expressed as a pure helper (list of open-modal flags →
+  action), test it; otherwise cover via the existing bank test seams.
+- Manual: Escape closes bank, crafting, world map, context menu, qty prompt — one
+  layer per press; Escape with nothing open does nothing.
+
+---
+
+## Item 6 — Minimap shows world icons (banks, skilling, monsters)
+
+**Status**: Not started
+**Outcome**: _(fill in when done)_
+
+### Current state
+`world/client/src/minimap.ts` draws only coloured dots: self, npcs (red), other
+players (white), exits (cyan). The **big world map** (`worldMap.ts:357-395`) already
+solves categorisation + icons: statics → category via its `CATEGORY_OF` map
+(bank_chest → bank, rock → mining, tree → woodcutting, furnace/anvil → smithing,
+range → cooking), clustered with `clusterByType` (`world/shared/mapClusters.ts`),
+icon per category via `CATEGORY_ICON_KEY` + `uiIconMarkup`.
+
+### Fix plan
+- Reuse, don't duplicate: lift the statics→category and category→icon-key tables
+  out of `worldMap.ts` into a small shared module both maps import.
+- In `createMinimap`, accept the zone statics (already available in `main.ts` at
+  minimap creation time — `message.statics`), cluster them once with
+  `clusterByType` at a small radius (statics never move), and rasterise each
+  needed category icon once (SVG markup → `Image`/`ImageBitmap` → offscreen
+  canvas) at ~10–12 px.
+- Each `update()` draws the cluster icons that fall inside the current view
+  window (same `minimapView` transform as the dots), **under** the live dots.
+- Monsters: live NPC positions already render as red dots each update. Keep the
+  live dots (positions matter more than species at 132 px) but colour/mark boss
+  NPCs distinctly if trivially possible. If icon legibility at 132 px is poor,
+  bumping `SIZE_PX` modestly (e.g. 132 → 160) is acceptable — note it in the
+  Outcome and keep it clear of the HUD panel below (`#minimap` is `top: 8px`,
+  HUD starts at 200 px).
+
+### Tests & verification
+- `mapClusters.test.ts` and `minimap-view.test.ts` exist — add coverage for the
+  shared category tables and any new pure windowing/placement helper.
+- Manual: near Lumbright bank + mine: bank icon, mining icon, tree icon appear on
+  the minimap in the right spots, pan correctly with the view window, and don't
+  obscure the player dot. Zone without statics (dungeon) renders as before.
+
+---
+
+## Item 7 — PocketRPG-styled scrollbars for legitimate scroll areas
+
+**Status**: Not started
+**Outcome**: _(fill in when done)_
+
+### Scope
+The scroll areas that remain *after* item 3 removes the inventory scroll: bank
+grids (`bank.ts` `.bank-grid`), crafting/station recipe list (`crafting.ts`),
+prayer grid (`#prayer-grid`), magic panel (`#magic-panel`), world-map side
+panels/lists if any scroll.
+
+### Fix plan
+- One shared CSS block (inject once; a tiny module both `ui.ts` and the modals'
+  CSS strings can reference, or simply include in `HUD_CSS` since it loads first)
+  defining a custom scrollbar consistent with the game's parchment/gold/void
+  palette (`DESIGN.md`; tokens live in `src/index.css :root` — hard-code the same
+  hex values here, since the world client doesn't load the main app's CSS):
+  - WebKit: `::-webkit-scrollbar` ~8 px wide, transparent/dark track, rounded
+    gold-brown thumb with hover state.
+  - Firefox: `scrollbar-width: thin` + `scrollbar-color` on the same containers.
+- Apply via a shared class (e.g. add the class to each scrollable container)
+  rather than styling `*` — modals created later (bank) must get it too.
+- Read `DESIGN.md` before choosing colours (§18 of CLAUDE.md: mandatory for
+  UI/UX design work).
+
+### Verification
+Manual on Chrome + Firefox, desktop + touch: bank grid, crafting list, prayer and
+magic panels all show the custom scrollbar; touch scrolling unaffected.
+
+---
+
+## Item 8 — Bank modal at ~75% of the screen, responsive
+
+**Status**: Not started
+**Outcome**: _(fill in when done)_
+
+### Current state
+`bank.ts:30-33`: `#bank-panel` is `width: min(560px, 94vw); max-height: 86vh` and
+each grid caps at `max-height: 34vh` (`bank.ts:56-59`) — lots of dead screen on
+desktop, few visible rows.
+
+### Fix plan
+- Panel: `width: min(75vw, sensible-max)` and `height: 75vh` on desktop; keep
+  ~94vw/86vh behaviour on small screens (a media query or `min()`/`max()` clamp —
+  phones must not get a *smaller* bank than today).
+- Grids: `repeat(auto-fill, 44px)` columns already adapt to width — keep 44 px
+  cells (tap-target floor, CLAUDE.md §9); make the **bank grid** flex-grow to fill
+  the freed height (it's the long list; the pack section stays compact), replacing
+  the fixed 34vh caps with flex sizing inside the panel column.
+- Both grids keep their (item 7) custom scrollbars when content still overflows.
+- Escape/backdrop close behaviour from item 5 must keep working.
+
+### Tests & verification
+- `bank.test.ts` covers pure helpers (`filterBankSlots`, `isTapNotDrag`) — no new
+  logic expected; if you add a layout-calculation helper, test it.
+- Manual: 1440 px desktop — bank fills ~75% each axis, many more rows visible;
+  390 px phone — unchanged usability; search, deposit/withdraw menus, drag-scroll
+  all still work.
+
+---
+
+## Item 9 — NPCs identical for every player (ambient villagers)
+
+**Status**: Not started
+**Outcome**: _(fill in when done)_
+
+### Root cause (confirmed)
+Ambient villagers/critters are **pure client-side decoration** spawned and wandered
+with `Math.random()` (`world/client/src/ambient.ts:110-142, 202-213`): every client
+sees its own private villagers in different positions doing different things.
+Combat NPCs are server-authoritative and already identical for everyone — this item
+is about the ambient layer only.
+
+### Fix plan (recommended: deterministic client simulation — no server/protocol change)
+- Make the ambient simulation a **pure function of (zone data, wall-clock time)**
+  so every client computes identical villagers:
+  - Seed a small deterministic PRNG per critter spec (zone id + spec index +
+    instance index) for spawn point, initial yaw, and every subsequent wander
+    target pick. `pickWanderTarget` already accepts an injected `rand`
+    (`ambient.ts:76-92`) — the hooks exist.
+  - Replace per-frame `dt` integration with a **fixed-step simulation clocked off
+    `Date.now()`** from a global epoch: each client steps the same sequence of
+    fixed ticks (e.g. 100 ms) and interpolates rendering between steps. A client
+    joining later fast-forwards cheaply (cap the catch-up: beyond a few minutes,
+    re-derive from the seed at the current step index rather than replaying — the
+    walk is a deterministic function of step count, so design the state so
+    fast-forward is bounded, e.g. by capping replayed steps and accepting
+    convergence within one wander leg).
+- The separation-avoidance input (`avoid` = other walkers' live positions) is
+  deterministic too once all walkers are stepped in a fixed order — keep the order
+  fixed (spec order, instance index).
+- **Alternative (bigger, only if the deterministic sim proves impractical)**:
+  promote villagers to server-side non-combat NPCs streamed like monsters. That
+  costs protocol + DO tick work and per-player AoI traffic for pure decoration —
+  don't start there.
+
+### Tests & verification
+- `world/tests/ambientWander.test.ts` exists — add: two independently-constructed
+  simulations with the same zone/spec/time produce identical positions at several
+  timestamps; a late-joining sim converges with an early one.
+- Manual: two browser windows side by side in the same town — villagers stand in
+  the same spots and walk the same paths (small transient divergence right at a
+  wander-leg boundary is acceptable; note observed behaviour).
+
+---
+
+## Item 10 — Follow another player (right-click → Follow)
+
+**Status**: Not started
+**Outcome**: _(fill in when done)_
+
+### Current state
+Other players are deliberately unpickable ghosts — `main.ts:272` ("no pick
+target") and `getPickables` (`main.ts:598-603`) exposes only npcs/statics/exits/
+loot. There is no follow concept anywhere; movement is server-authoritative
+(`{t:'walk'}` → pathfind → per-tick steps in `world/server/tick.ts`).
+
+### Fix plan
+- **Protocol** (`world/shared/protocol.ts`): new `ClientMessage`
+  `{ t: 'follow', targetId: string }` (and reuse the existing walk/cancel paths for
+  stopping). Add to `parseClientMessage` with length-bounded string validation like
+  the other id fields, + `protocol.test.ts` cases (valid, malformed, oversized).
+- **Server** (`tick.ts` / `WorldZone.ts`): a `following` field on the player state.
+  Each tick while following: if the target (another live player in the same zone)
+  moved, re-path toward the target's current tile (stop adjacent — pathfind to a
+  neighbouring tile, not the occupied tile). Cancel follow on: any explicit walk,
+  interact, teleport, combat start, the target dying/leaving/logging out, or the
+  follower being attacked. This mirrors "until they click away again" — clicking
+  anywhere issues a walk, which cancels. Guard the re-path cost: only re-path when
+  the target's tile changed.
+- **Client**:
+  - Make other players pickable: give their meshes a `userData.pick` of a new
+    kind `'player'` (name from the diff) and include `others` in `getPickables`.
+    Check `picking.ts` for how hover text + menu rows are built for npcs and
+    mirror it (left-click on a player should *not* have a default action — menu
+    only, so tap-to-walk through a crowd isn't hijacked).
+  - Context menu rows: `Follow <name>`, `Cancel`. On Follow → send the new
+    message + a status line via `pushMessage`.
+- **PvP note**: this is follow-only; no trade/attack rows. Don't touch pvpLock.
+
+### Tests & verification
+- Server: `world/tests/tick.test.ts` (or a new `follow.test.ts`): follower re-paths
+  as target moves; stops adjacent; every cancel condition clears the state.
+- Protocol: parse tests as above.
+- Manual: two windows; right-click player → Follow tracks them around obstacles;
+  clicking the ground stops following; target logout stops cleanly.
+
+---
+
+## Item 11 — Show players' hitpoints while in combat
+
+**Status**: Not started
+**Outcome**: _(fill in when done)_
+
+### Current state
+NPC diffs carry `hp`/`maxHp` and the client draws overhead bars for damaged NPCs
+(`main.ts:647-652`). **Player** diffs omit hp entirely — `toEntityDiff`
+(`world/server/tick.ts:504-508`) sends only position/anim/name/gear/targetId — so
+neither your own character nor other players ever show a bar in the world.
+
+### Fix plan
+- **Server**: include `hp`/`maxHp` in player entity diffs (the `EntityDiff` type
+  already has the optional fields — no protocol change). Simplest correct rule:
+  always include them, and let the client decide when to draw; that matches how
+  NPCs work and avoids flicker rules server-side. Confirm diff-emission is
+  change-gated (`entChanged`, `tick.ts:500`) so hp changes mark the entity changed
+  — otherwise a hit that doesn't move the player never streams its hp.
+- **Client**: in the `others` render loop (`main.ts:664-668`), draw the same
+  `updateHpBar` used for NPCs when the player is in combat (`targetId` set) or
+  recently damaged (`hp < maxHp`), offset below the nameplate so the two don't
+  collide; remove the bar via `removeHpBar` when it no longer applies and on
+  `removeOther`. Apply the same to **self** (the user asked for "players in
+  combat" — include your own overhead bar while fighting; the HP pill stays).
+- Sanity-check PvP flag: open-world PvP combat between players isn't live
+  (targets are npcIds) — this is display-only, no balance concern.
+
+### Tests & verification
+- `tick.test.ts`: player diff now carries hp/maxHp; hp change flips `entChanged`.
+- Manual: two windows; watch another player fight a goblin — their bar appears,
+  tracks damage, disappears after combat/full heal; own bar shows while fighting.
+
+---
+
+## Item 12 — Open-world hero must match the combat-arena hero
+
+**Status**: Not started
+**Outcome**: _(fill in when done)_
+
+### Root cause (confirmed)
+Two different base characters from the same Quaternius packs:
+- **Arena** (`scripts/build-arena-hero.mjs` → `public/3d-samples/hero.glb`):
+  `Superhero_Male_FullBody` base + Modular Fantasy **Peasant** outfit baked in,
+  UAL clips, hide-mask regions, gear attached per `src/data/equipmentModels.json`
+  (weapons + full outfit archetypes recoloured by registry `tint`).
+- **World** (`world/scripts/build-hero.mjs` → `world/client/public/models/hero.glb`):
+  a **Ranger**-outfit character (see the script header + `ambient.ts:29-31`
+  comments), its own clip set (idle/walk/run/mine/attack/…), gear via
+  `world/shared/appearance.ts` — regex archetype rules + a *duplicated*
+  `TIER_TINTS` table, armour limited to body/legs rebinds
+  (`entities.ts:301-441`).
+
+Both use the same 65-joint universal rig (that's why the armour rebind works), so
+this is an asset/build alignment, not a rig migration.
+
+### Fix plan (staged — stop after stage 2 if time-boxed, record the cut)
+1. **Base-model parity**: change `world/scripts/build-hero.mjs` to build from the
+   same `Superhero_Male_FullBody` + default-outfit sources as
+   `build-arena-hero.mjs`, keeping the **world's** clip set and naming convention
+   (idle/walk/run/mine/attack/attack_ranged/attack_magic/die — see
+   `entities.ts:143`). The arena script is the reference for source paths and the
+   outfit-bake/remap technique. Rebuild `hero.glb`, and check
+   `world/scripts/build-villagers.mjs` outputs still read at the same scale
+   (villagers borrow the hero-height convention, `ambient.ts:29-31`); update
+   `HERO_SCALE` (`entities.ts:14`) and the armour `HIDE_REGION_BONES` if the new
+   base's proportions/bone usage differ.
+2. **Tint/archetype parity**: make `world/shared/appearance.ts` derive weapon
+   archetype + tint from `src/data/equipmentModels.json` entries where they exist,
+   keeping the regex rules only as fallback for unregistered items — one source of
+   truth for "what colour is mithril" in both renderers. (The world build imports
+   from `src/` already — see `main.ts` importing `src/engine/*` — so a data import
+   is fine.) Update `world/tests/appearance.test.ts` accordingly.
+3. **Coverage parity (stretch)**: extend `world/scripts/build-armor.mjs` +
+   `entities.ts` armour slots beyond body/legs (head/hands/feet/cape) using the
+   arena's already-tiered outfit exports in `public/3d-samples/outfits/`. This is
+   the largest chunk and each slot needs its own hide-region bone list — only
+   start it if stages 1–2 land cleanly.
+
+### Tests & verification
+- `appearance.test.ts` for stage 2 mapping changes.
+- Visual: same character, same equipped loadout, screenshot arena
+  (`node scripts/render-arena-hero.mjs --weapon <id> --gear <id,id>`) vs the world
+  client — same silhouette, outfit and metal tints. Check other-player ghosts and
+  villager scale too.
+- Both `cd world && npm run ci` and repo-root `npm run ci` (shared scripts/data
+  touched).
+
+---
+
+## Cross-cutting acceptance checklist (before the final PR)
+
+- [ ] `cd world && npm run ci` green.
+- [ ] Repo-root `npm run ci` green (required if `src/`, `scripts/`, or `public/` touched — items 1, 2, 12).
+- [ ] Rebuilt GLBs committed; no gitignored source assets committed.
+- [ ] Every status row above updated; Outcome lines filled with what actually happened, including dropped/deferred pieces.
+- [ ] PR written via the `pr-changelog` skill (player-facing voice; no attribution/internal notes).
+- [ ] This file retitled to a Decision Record when all items are Done/Dropped.
