@@ -682,6 +682,11 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           updateHP(newHP)
           hpRef.current = newHP
           if (newHP <= 0) {
+            // Stop the fight synchronously: the tick loop reads combatRef.current,
+            // so leaving it active lets the next tick re-activate combat (line ~613)
+            // after HP was reset to full — the player never dies and the boss keeps
+            // its damaged HP.
+            if (combatRef.current) combatRef.current.active = false
             setCombat(prev => ({ ...prev, active: false }))
             setActiveTask(null)
             updateHP(getMaxHP())
@@ -700,6 +705,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             time: Date.now()
           }])
           if (newHP <= 0) {
+            if (combatRef.current) combatRef.current.active = false
             setCombat(prev => ({ ...prev, active: false }))
             setActiveTask(null)
             updateHP(getMaxHP())
