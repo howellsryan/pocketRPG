@@ -143,7 +143,11 @@ export function gearFromEquipment(equipment: Record<string, unknown> | null | un
     for (const slot of Object.keys(equipment)) {
       if (slot === 'body' || slot === 'legs') continue
       const itemId = itemIdInSlot(equipment, slot)
-      if (itemId && hasRegistryModel(itemId)) equip[slot] = itemId
+      if (!itemId) continue
+      // Every equipped head item renders the generic default helm client-side
+      // (per-item art isn't authored yet), so send it regardless of registry
+      // coverage; other rigid slots still need a registry model to render.
+      if (slot === 'head' || hasRegistryModel(itemId)) equip[slot] = itemId
     }
     if (Object.keys(equip).length) gear.equip = equip
   }
