@@ -21,15 +21,16 @@
         "bone": "Head",
         "position": [
           0,
-          0.09,
-          0.01
+          0.05,
+          0
         ],
         "rotationDeg": [
-          0,
+          -9,
           -90,
           0
         ],
-        "scale": 0.44
+        "scale": 0.5,
+        "fallbackModel": "full_helm.glb"
       },
       "shield": {
         "bone": "hand_l",
@@ -72,6 +73,11 @@
           0
         ],
         "scale": 0.99
+      },
+      "boots": {
+        "model": "outfits/ranger_boots.glb",
+        "tint": "#7a5433",
+        "hideFeet": true
       }
     }
   },
@@ -1690,6 +1696,110 @@
       "rotationDeg": [13, 9, 0],
       "scale": 0.99,
       "tint": "#e5e4e2"
+    },
+    "wizard_hat": {
+      "model": "wizard_hat.glb",
+      "slot": "head",
+      "bone": "Head",
+      "position": [0, 0.14, -0.01],
+      "rotationDeg": [0, 0, 0],
+      "scale": 0.48
+    },
+    "black_wizard_hat": {
+      "model": "wizard_hat.glb",
+      "slot": "head",
+      "bone": "Head",
+      "position": [0, 0.14, -0.01],
+      "rotationDeg": [0, 0, 0],
+      "scale": 0.48
+    },
+    "kodai_hat": {
+      "model": "wizard_hat.glb",
+      "slot": "head",
+      "bone": "Head",
+      "position": [0, 0.14, -0.01],
+      "rotationDeg": [0, 0, 0],
+      "scale": 0.48
+    },
+    "2nd_age_mage_hat": {
+      "model": "wizard_hat.glb",
+      "slot": "head",
+      "bone": "Head",
+      "position": [0, 0.14, -0.01],
+      "rotationDeg": [0, 0, 0],
+      "scale": 0.48
+    },
+    "arcanist_hat": {
+      "model": "wizard_hat.glb",
+      "slot": "head",
+      "bone": "Head",
+      "position": [0, 0.14, -0.01],
+      "rotationDeg": [0, 0, 0],
+      "scale": 0.48
+    },
+    "boundless_hat": {
+      "model": "wizard_hat.glb",
+      "slot": "head",
+      "bone": "Head",
+      "position": [0, 0.14, -0.01],
+      "rotationDeg": [0, 0, 0],
+      "scale": 0.48
+    },
+    "morvyn_s_hood": {
+      "model": "wizard_hat.glb",
+      "slot": "head",
+      "bone": "Head",
+      "position": [0, 0.14, -0.01],
+      "rotationDeg": [0, 0, 0],
+      "scale": 0.48
+    },
+    "lumira_mitre": {
+      "model": "wizard_hat.glb",
+      "slot": "head",
+      "bone": "Head",
+      "position": [0, 0.14, -0.01],
+      "rotationDeg": [0, 0, 0],
+      "scale": 0.48
+    },
+    "verdant_mitre": {
+      "model": "wizard_hat.glb",
+      "slot": "head",
+      "bone": "Head",
+      "position": [0, 0.14, -0.01],
+      "rotationDeg": [0, 0, 0],
+      "scale": 0.48
+    },
+    "krylth_mitre": {
+      "model": "wizard_hat.glb",
+      "slot": "head",
+      "bone": "Head",
+      "position": [0, 0.14, -0.01],
+      "rotationDeg": [0, 0, 0],
+      "scale": 0.48
+    },
+    "ancient_mitre": {
+      "model": "wizard_hat.glb",
+      "slot": "head",
+      "bone": "Head",
+      "position": [0, 0.14, -0.01],
+      "rotationDeg": [0, 0, 0],
+      "scale": 0.48
+    },
+    "zephyra_mitre": {
+      "model": "wizard_hat.glb",
+      "slot": "head",
+      "bone": "Head",
+      "position": [0, 0.14, -0.01],
+      "rotationDeg": [0, 0, 0],
+      "scale": 0.48
+    },
+    "grondar_mitre": {
+      "model": "wizard_hat.glb",
+      "slot": "head",
+      "bone": "Head",
+      "position": [0, 0.14, -0.01],
+      "rotationDeg": [0, 0, 0],
+      "scale": 0.48
     }
   },
   "monsters": {

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { getCharacterModel, getWeaponModel, hasWeaponModel, modelUrl, getCharacterAssetPath, getWeaponPlacement, getMonsterModel, hasMonsterModel, getGearModel, getGearPlacement, getGearPlacements } from '../src/utils/equipModels.js'
+import { getCharacterModel, getWeaponModel, hasWeaponModel, modelUrl, getCharacterAssetPath, getWeaponPlacement, getMonsterModel, hasMonsterModel, getGearModel, getGearPlacement, getGearPlacements, getDefaultHeadGearModel, getDefaultHeadGearPlacement, resolveHeadGearModel, resolveHeadGearPlacement, getDefaultBootsModels, getDefaultBootsPlacements } from '../src/utils/equipModels.js'
 import registry from '../src/data/equipmentModels.json'
 
 describe('equipModels resolver', () => {
@@ -133,6 +133,25 @@ describe('equipModels resolver', () => {
     expect(getGearPlacement('horned_full_helm')).toBeNull()
   })
 
+  it('resolves the generic default head model from defaults.gear.head.fallbackModel', () => {
+    const d = (registry.defaults as { gear: Record<string, { bone?: string; fallbackModel?: string }> }).gear.head
+    expect(d.fallbackModel, 'defaults.gear.head.fallbackModel required for unimplemented helmets').toBeTruthy()
+    const spec = getDefaultHeadGearModel()
+    expect(spec).toBeTruthy()
+    expect(spec!.model).toBe(d.fallbackModel)
+    expect(spec!.slot).toBe('head')
+    expect(spec!.bone).toBe(d.bone)
+    expect(spec!.hideHead).toBe(true)
+  })
+
+  it('the default head model file exists on disk', async () => {
+    const fs = await import('node:fs')
+    const path = await import('node:path')
+    const d = (registry.defaults as { gear: Record<string, { fallbackModel?: string }> }).gear.head
+    const base = path.resolve(__dirname, '../public', registry.modelBase)
+    expect(fs.existsSync(path.join(base, d.fallbackModel!))).toBe(true)
+  })
+
   it('collects placements for equipped registered gear, skipping the rest', () => {
     const [id] = Object.keys(registry.gear || {})
     if (!id) return
@@ -148,6 +167,80 @@ describe('equipModels resolver', () => {
     expect(placements[0].slot).toBe(slot)
     expect(typeof placements[0].path).toBe('string')
     expect(getGearPlacements(null)).toEqual([])
+  })
+
+  it('renders the default helm shell for a full helm, overriding its registered per-tier model', () => {
+    const headId = Object.entries(registry.gear || {}).find(([id, g]) => (g as { slot: string }).slot === 'head' && /full_helm/.test(id))?.[0]
+    expect(headId, 'a registered full helm is needed to prove the override').toBeTruthy()
+    const fallbackModel = (registry.defaults as { gear: Record<string, { fallbackModel: string }> }).gear.head.fallbackModel
+    const dflt = getDefaultHeadGearPlacement()
+    expect(dflt).toBeTruthy()
+    expect(dflt!.path).toBe(registry.modelBase + fallbackModel)
+    const placements = getGearPlacements({ head: { itemId: headId } })
+    expect(placements).toHaveLength(1)
+    expect(placements[0].slot).toBe('head')
+    // default shell path (not the registered per-tier model) proves the override
+    expect(placements[0].path).toBe(dflt!.path)
+    expect(placements[0].path).not.toBe(registry.modelBase + (registry.gear as Record<string, { model: string }>)[headId!].model)
+    expect(placements[0].hideHead).toBe(true)
+  })
+
+  it('open headwear (no hideHead) renders its own model on top of the head, not the default helm', () => {
+    // A wizard hat sits ON the head (head stays visible) — it must resolve to
+    // its OWN registry art, unlike a full helm which overrides the head with the
+    // shared default shell. Regression: the head branch used to force EVERY head
+    // item to the default helm, so a hat rendered as a metal helm.
+    const g = getGearModel('wizard_hat')
+    expect(g, 'wizard_hat must be a registered head gear entry').toBeTruthy()
+    expect(g!.slot).toBe('head')
+    expect(g!.hideHead).toBe(false)
+    const dflt = getDefaultHeadGearPlacement()
+    const placements = getGearPlacements({ head: { itemId: 'wizard_hat' } })
+    expect(placements).toHaveLength(1)
+    expect(placements[0].path).toBe(registry.modelBase + 'wizard_hat.glb')
+    expect(placements[0].path).not.toBe(dflt!.path) // NOT the default helm
+    expect(placements[0].hideHead).toBe(false)
+    // model-form resolver agrees with the placement-form resolver
+    expect(resolveHeadGearModel('wizard_hat')!.model).toBe('wizard_hat.glb')
+    expect(resolveHeadGearPlacement('wizard_hat')!.path).toBe(placements[0].path)
+  })
+
+  it('a full helm still resolves to the shared default shell (override), not per-tier art', () => {
+    const helmId = Object.entries(registry.gear || {}).find(([id, g]) => (g as { slot: string }).slot === 'head' && /full_helm/.test(id))?.[0]
+    expect(helmId, 'a registered full helm is needed').toBeTruthy()
+    expect(resolveHeadGearModel(helmId)!.model).toBe((registry.defaults as { gear: Record<string, { head: { fallbackModel: string } }> }).gear.head.fallbackModel)
+    expect(resolveHeadGearPlacement(helmId)!.hideHead).toBe(true)
+  })
+
+  it('boots resolve to a single skinned piece that hides the feet', () => {
+    const b = (registry.defaults as { gear: Record<string, unknown> }).gear.boots
+    expect(b, 'defaults.gear.boots required for boots placement').toBeTruthy()
+    const models = getDefaultBootsModels()
+    expect(models).toHaveLength(1)
+    // skinned rebind (shares the hero skeleton, deforms with the leg), NOT a
+    // rigid bone-attach — so no bone and hideFeet cuts the base footwear.
+    expect(models[0].bone).toBeNull()
+    expect(models[0].hideFeet).toBe(true)
+    const placements = getDefaultBootsPlacements()
+    expect(placements).toHaveLength(1)
+    expect(placements[0].slot).toBe('boots')
+    expect(placements[0].path.startsWith(registry.modelBase)).toBe(true)
+    expect(placements[0].hideHead).toBe(false)
+    expect(placements[0].hideFeet).toBe(true)
+    // any equipped boots item → the shared default skinned boots (like helms → default helm)
+    const viaEquip = getGearPlacements({ boots: { itemId: 'leather_boots' } })
+    expect(viaEquip).toHaveLength(1)
+    expect(viaEquip[0].slot).toBe('boots')
+    expect(viaEquip[0].hideFeet).toBe(true)
+  })
+
+  it('the default boot model files exist on disk', async () => {
+    const fs = await import('node:fs')
+    const path = await import('node:path')
+    const base = path.resolve(__dirname, '../public', registry.modelBase)
+    for (const m of getDefaultBootsModels()) {
+      expect(fs.existsSync(path.join(base, m.model)), `${m.model} missing from public/`).toBe(true)
+    }
   })
 
   it('every registered gear id exists in items.json with a matching slot', async () => {

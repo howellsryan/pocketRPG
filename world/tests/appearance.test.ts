@@ -153,6 +153,24 @@ describe('gearFromEquipment equip (per-item registry parity)', () => {
     expect(gear.armor).toEqual({ body: { tint: '#a8acb2' }, legs: { tint: '#a8acb2' } })
   })
 
+  it('carries an unregistered head item so the client renders the default helm on it', () => {
+    // Regression: a helmet with no arena-registry model (e.g. slayer_helmet) was
+    // dropped from equip, so no helm ever showed on the open-world hero. Head is
+    // now always carried — the client renders the generic default helm for any
+    // head item until per-item art exists.
+    const gear = gearFromEquipment({ head: { itemId: 'slayer_helmet' } })
+    expect(gear.equip).toEqual({ head: 'slayer_helmet' })
+  })
+
+  it('renders boots as a skinned armour piece (armor.boots), not a rigid equip slot', () => {
+    // Boots are a skinned outfit piece sharing the hero skeleton (like body/legs),
+    // so they ride the `armor` path with the shared default boots tint, NOT the
+    // rigid per-item `equip` path.
+    const gear = gearFromEquipment({ boots: { itemId: 'leather_boots' } })
+    expect(gear.armor).toEqual({ boots: { tint: '#7a5433' } })
+    expect(gear.equip).toBeUndefined()
+  })
+
   it('omits equip entirely when nothing equipped resolves to a registry model', () => {
     expect(gearFromEquipment(withWeapon('dragon_claws')).equip).toBeUndefined()
     expect(gearFromEquipment(withArmor('leather_body')).equip).toBeUndefined()

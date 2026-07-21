@@ -84,7 +84,118 @@ export function getGearModel(itemId) {
     hideHead: Boolean(g.hideHead),
     hideBody: Boolean(g.hideBody),
     hideLegs: Boolean(g.hideLegs),
+    hideFeet: Boolean(g.hideFeet),
   }
+}
+
+// Generic rigid head model used by the open-world hero when an equipped
+// head-slot item has no registry entry of its own (unimplemented armour art).
+// Sourced from defaults.gear.head.fallbackModel, not the itemId-keyed `gear`
+// map, since it isn't tied to any one item.
+export function getDefaultHeadGearModel() {
+  const d = ((equipmentModelsData.defaults || {}).gear || {}).head || {}
+  if (!d.fallbackModel) return null
+  return {
+    model: d.fallbackModel,
+    slot: 'head',
+    bone: d.bone || null,
+    position: d.position || EQUIP_IDENTITY.position,
+    rotationDeg: d.rotationDeg || EQUIP_IDENTITY.rotationDeg,
+    scale: typeof d.scale === 'number' ? d.scale : EQUIP_IDENTITY.scale,
+    tint: null,
+    tintAll: false,
+    hideHead: true,
+    hideBody: false,
+    hideLegs: false,
+    hideFeet: false,
+  }
+}
+
+// Fetchable-path placement for the generic default head model, or null.
+// Same shape as getGearPlacement but sourced from getDefaultHeadGearModel so
+// the combat arena / equip-screen hero can render it for any head slot.
+export function getDefaultHeadGearPlacement() {
+  const spec = getDefaultHeadGearModel()
+  if (!spec) return null
+  return {
+    path: resolveModelPath(spec.model),
+    slot: spec.slot,
+    bone: spec.bone,
+    position: spec.position,
+    rotationDeg: spec.rotationDeg,
+    scale: spec.scale,
+    tint: spec.tint,
+    tintAll: spec.tintAll,
+    hideHead: spec.hideHead,
+    hideBody: spec.hideBody,
+    hideLegs: spec.hideLegs,
+    hideFeet: spec.hideFeet,
+  }
+}
+
+// Resolve any equipped head item to its render spec (model-form). Open headwear
+// (hats/circlets that leave the head visible — no `hideHead`) renders its OWN
+// registry model on top of the head, exactly like a body/legs plate renders its
+// own art. Full helms and any head item without registered art render the
+// shared default helm shell that overrides (hides) the head — so a metal helm
+// "just works" like a platebody without per-item tuning, while a wizard hat
+// sits on top instead of replacing the head.
+export function resolveHeadGearModel(itemId) {
+  if (!itemId) return null
+  const g = getGearModel(itemId)
+  return (g && g.slot === 'head' && !g.hideHead) ? g : getDefaultHeadGearModel()
+}
+
+// Same head resolution as resolveHeadGearModel but path-form (fetchable), for
+// the combat-arena / equip-screen attach path.
+export function resolveHeadGearPlacement(itemId) {
+  if (!itemId) return null
+  const g = getGearPlacement(itemId)
+  return (g && g.slot === 'head' && !g.hideHead) ? g : getDefaultHeadGearPlacement()
+}
+
+// The generic default boots (model-form), sourced from defaults.gear.boots —
+// the boots equivalent of getDefaultHeadGearModel. Boots are a SKINNED mesh
+// sharing the hero's own skeleton (built by build-quaternius-outfits.mjs, like
+// platebody/legs), so they deform with the calf/foot and layer flawlessly with
+// platelegs — not a rigid bone-attach. `hideFeet` cuts the hero's built-in
+// footwear (feet channel in heroAttach.js / entities.ts setupHideMask). Returned
+// as a one-element array so getGearPlacements can splat it. [] when unconfigured.
+export function getDefaultBootsModels() {
+  const b = ((equipmentModelsData.defaults || {}).gear || {}).boots
+  if (!b || !b.model) return []
+  return [{
+    model: b.model,
+    slot: 'boots',
+    bone: null,
+    position: EQUIP_IDENTITY.position,
+    rotationDeg: EQUIP_IDENTITY.rotationDeg,
+    scale: EQUIP_IDENTITY.scale,
+    tint: b.tint || null,
+    tintAll: false,
+    hideHead: false,
+    hideBody: false,
+    hideLegs: false,
+    hideFeet: b.hideFeet !== false,
+  }]
+}
+
+// Path-form of getDefaultBootsModels for the arena / equip-screen attach path.
+export function getDefaultBootsPlacements() {
+  return getDefaultBootsModels().map((spec) => ({
+    path: resolveModelPath(spec.model),
+    slot: spec.slot,
+    bone: spec.bone,
+    position: spec.position,
+    rotationDeg: spec.rotationDeg,
+    scale: spec.scale,
+    tint: spec.tint,
+    tintAll: spec.tintAll,
+    hideHead: spec.hideHead,
+    hideBody: spec.hideBody,
+    hideLegs: spec.hideLegs,
+    hideFeet: spec.hideFeet,
+  }))
 }
 
 // Placement spec for one gear item with a fetchable `path`, or null.
@@ -115,7 +226,13 @@ export function getGearPlacements(equipment) {
   for (const slot of Object.keys(equipment)) {
     if (slot === 'weapon') continue
     const itemId = equipment[slot] && equipment[slot].itemId
-    const p = itemId ? getGearPlacement(itemId) : null
+    if (!itemId) continue
+    // Head resolves per-item: open headwear (wizard hat) → own model on top of
+    // the head; full helm / unmodeled → shared default shell (see
+    // resolveHeadGearPlacement). Boots emit one rigid prop per foot bone.
+    if (slot === 'head') { const p = resolveHeadGearPlacement(itemId); if (p) out.push(p); continue }
+    if (slot === 'boots') { for (const p of getDefaultBootsPlacements()) out.push(p); continue }
+    const p = getGearPlacement(itemId)
     if (p) out.push(p)
   }
   return out

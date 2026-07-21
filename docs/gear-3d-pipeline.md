@@ -90,6 +90,19 @@ the shoulder, hip, knee, ankle or spine along with the body, so each needs
 to be a **skinned mesh sharing the hero's own skeleton**, not a rigid
 bone-attach.
 
+**Boots** ship this way too: the shared default boot is `outfits/ranger_boots.glb`,
+built by `build-quaternius-outfits.mjs` from the same rigged `Male_Ranger_Feet_Boots`
+part baked into `ranger_legs.glb`, so it carries the hero's 65-joint skeleton and
+`attachGearList` rebinds it exactly like a platebody — it deforms with the
+calf/foot and layers flawlessly under platelegs. One boots item renders that
+shared default (the boots analogue of `defaults.gear.head.fallbackModel`),
+resolved by `getDefaultBootsModels()` / `getDefaultBootsPlacements()`, with
+`hideFeet` cutting the hero's built-in footwear. World copy: `build-armor.mjs`
+re-exports it to `models/armor/boots.glb` alongside body/legs. Preview: the
+"Default Boots (skinned)" preset (sliders inert — nothing to tune). A rigid
+per-foot bone-attach was tried first and looked wrong (a knee-high boot on the
+foot bone tilts with the ankle); the skinned rebind is the fix.
+
 **The fit is a one-time manual Blender step per base asset** (~10–15 min):
 import `public/3d-samples/hero.glb`, arrange the piece on the body, export
 the piece alone — full walkthrough in `docs/gear-asset-process.md`. This is
@@ -159,12 +172,15 @@ accidentally exported static fails CI instead of silently rigid-attaching.
 **Hide masks**: even a well-fitted plate clips in extreme poses (a ~1k-tri
 plate triangle chords across a curved 7k-tri thigh), so covering pieces set
 `hideBody`/`hideLegs`: the same per-vertex shader mask that hides the head
-under a full helm (`setupHideMask` in `Model3DViewer.jsx`, a vec3 of
-head/torso/legs region weights with per-channel thresholds) discards the
+under a full helm (`setupHideMask` in `Model3DViewer.jsx`, a vec4 of
+head/torso/legs/feet region weights with per-channel thresholds) discards the
 hero's covered anatomy, so skin can never bulge through in any pose while
-bare arms/neck/hips still show around the piece's edges. Boots/gloves/cape
-have no mask region yet — the first such asset adds its bone list to
-`HIDE_REGION_BONES`.
+bare arms/neck/hips still show around the piece's edges. Boots added the
+`feet` channel (`foot_*`/`ball_*`) so equipped boots hide the hero's built-in
+Peasant footwear (`hideFeet`); those bones are ALSO in `legs`, so platelegs
+keep hiding the feet unchanged. Gloves/cape still have no region — the first
+such asset adds its bone list to `HIDE_REGION_BONES` (mirror the change in both
+`src/3d/heroAttach.js` and `world/client/src/entities.ts`).
 
 The output mesh is built inside `hero.glb`'s own document, sharing its
 actual skin/joint hierarchy (so the copied joint indices are correct by

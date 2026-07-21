@@ -20,6 +20,7 @@ const OUT_DIR = path.join(worldDir, 'client', 'public', 'models', 'armor')
 const SLOTS = {
   body: 'ranger_body.glb',
   legs: 'ranger_legs.glb',
+  boots: 'ranger_boots.glb',
 }
 
 fs.mkdirSync(OUT_DIR, { recursive: true })

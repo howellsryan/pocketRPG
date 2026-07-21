@@ -50,6 +50,33 @@ function weaponSpec(itemId) {
   }
 }
 function gearSpec(itemId) {
+  // Synthetic id `head:default` resolves the shared default helm shell that
+  // every full helm renders (defaults.gear.head.fallbackModel + hideHead) — the
+  // in-game head render, which the itemId-keyed `gear` map's per-tier models are
+  // NOT (mirrors getDefaultHeadGearPlacement).
+  if (itemId === 'head:default') {
+    const d = ((registry.defaults || {}).gear || {}).head || {}
+    if (!d.fallbackModel) return null
+    return {
+      path: modelPath(d.fallbackModel), slot: 'head', bone: d.bone || null,
+      position: d.position || [0, 0, 0], rotationDeg: d.rotationDeg || [0, 0, 0],
+      scale: typeof d.scale === 'number' ? d.scale : 1, tint: null,
+      tintAll: false, hideHead: true, hideBody: false, hideLegs: false, hideFeet: false,
+    }
+  }
+  // Synthetic id `boots` resolves the shared default skinned boots from
+  // defaults.gear.boots (mirrors getDefaultBootsPlacements) — a skinned mesh
+  // that rebinds onto the hero skeleton, so this is how the boots visual-review
+  // works (not in the itemId-keyed `gear` map).
+  if (itemId === 'boots') {
+    const b = ((registry.defaults || {}).gear || {}).boots
+    if (!b || !b.model) return null
+    return {
+      path: modelPath(b.model), slot: 'boots', bone: null,
+      position: [0, 0, 0], rotationDeg: [0, 0, 0], scale: 1, tint: b.tint || null,
+      tintAll: false, hideHead: false, hideBody: false, hideLegs: false, hideFeet: true,
+    }
+  }
   const g = registry.gear && registry.gear[itemId]
   if (!g || !g.model || !g.slot) return null
   const d = ((registry.defaults || {}).gear || {})[g.slot] || {}

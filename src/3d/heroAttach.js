@@ -28,7 +28,14 @@ const HIDE_REGION_BONES = {
     'thigh_l', 'calf_l', 'foot_l', 'ball_l', 'ball_leaf_l',
     'thigh_r', 'calf_r', 'foot_r', 'ball_r', 'ball_leaf_r',
   ],
+  // Feet only — equipped boots hide the base hero's built-in footwear (the
+  // hero always wears the Peasant boots), so a boot prop reads cleanly instead
+  // of clipping through it. These bones are ALSO in `legs`, so platelegs keep
+  // hiding the feet exactly as before; this adds an independent channel that
+  // boots trip without touching leg behaviour.
+  feet: ['foot_l', 'ball_l', 'ball_leaf_l', 'foot_r', 'ball_r', 'ball_leaf_r'],
 }
+const HIDE_REGIONS = ['head', 'torso', 'legs', 'feet']
 
 // The hero is several skinned meshes sharing one skeleton (body + hair +
 // eyes), so the mask must cover ALL of them — a helm that hides the head has
@@ -37,42 +44,42 @@ const HIDE_REGION_BONES = {
 export function setupHideMask(THREE, skinnedMeshes) {
   const meshes = (Array.isArray(skinnedMeshes) ? skinnedMeshes : [skinnedMeshes]).filter((m) => m && m.skeleton)
   if (!meshes.length) return null
-  const hidden = new THREE.Vector3(0, 0, 0) // onBeforeCompile fires lazily on
+  const hidden = new THREE.Vector4(0, 0, 0, 0) // onBeforeCompile fires lazily on
   // first render, so the desired state must be the shader's INITIAL uniform
   // value — a set-then-compile ordering silently no-ops otherwise.
   for (const skinnedMesh of meshes) {
-    const regionIdx = ['head', 'torso', 'legs'].map((r) => {
+    const regionIdx = HIDE_REGIONS.map((r) => {
       const wanted = new Set(HIDE_REGION_BONES[r])
       return new Set(skinnedMesh.skeleton.bones.map((b, i) => (wanted.has(b.name) ? i : -1)).filter((i) => i >= 0))
     })
     const geo = skinnedMesh.geometry
     const si = geo.attributes.skinIndex, sw = geo.attributes.skinWeight
     const n = geo.attributes.position.count
-    const mask = new Float32Array(n * 3)
+    const mask = new Float32Array(n * 4)
     for (let i = 0; i < n; i++) {
       for (let k = 0; k < 4; k++) {
         const j = si.getComponent(i, k), w = sw.getComponent(i, k)
-        for (let r = 0; r < 3; r++) if (regionIdx[r].has(j)) mask[i * 3 + r] += w
+        for (let r = 0; r < 4; r++) if (regionIdx[r].has(j)) mask[i * 4 + r] += w
       }
     }
-    geo.setAttribute('hideMask', new THREE.BufferAttribute(mask, 3))
+    geo.setAttribute('hideMask', new THREE.BufferAttribute(mask, 4))
     const mats = Array.isArray(skinnedMesh.material) ? skinnedMesh.material : [skinnedMesh.material]
     for (const mat of mats) {
       mat.onBeforeCompile = (shader) => {
         shader.uniforms.uHideMask = { value: hidden }
         shader.vertexShader = shader.vertexShader
-          .replace('#include <common>', '#include <common>\nattribute vec3 hideMask;\nvarying vec3 vHideMask;')
+          .replace('#include <common>', '#include <common>\nattribute vec4 hideMask;\nvarying vec4 vHideMask;')
           .replace('#include <begin_vertex>', '#include <begin_vertex>\nvHideMask = hideMask;')
         shader.fragmentShader = shader.fragmentShader
-          .replace('#include <common>', '#include <common>\nuniform vec3 uHideMask;\nvarying vec3 vHideMask;')
-          .replace('#include <clipping_planes_fragment>', '#include <clipping_planes_fragment>\nif (dot(uHideMask, step(vec3(0.5, 0.35, 0.35), vHideMask)) > 0.0) discard;')
+          .replace('#include <common>', '#include <common>\nuniform vec4 uHideMask;\nvarying vec4 vHideMask;')
+          .replace('#include <clipping_planes_fragment>', '#include <clipping_planes_fragment>\nif (dot(uHideMask, step(vec4(0.5, 0.35, 0.35, 0.35), vHideMask)) > 0.0) discard;')
       }
       mat.needsUpdate = true
     }
   }
   return {
-    setHidden({ head = false, torso = false, legs = false } = {}) {
-      hidden.set(head ? 1 : 0, torso ? 1 : 0, legs ? 1 : 0)
+    setHidden({ head = false, torso = false, legs = false, feet = false } = {}) {
+      hidden.set(head ? 1 : 0, torso ? 1 : 0, legs ? 1 : 0, feet ? 1 : 0)
     },
   }
 }
@@ -154,6 +161,7 @@ export function attachGearList(st, gear, fallbackAnchor) {
     head: list.some((p) => p.hideHead),
     torso: list.some((p) => p.hideBody),
     legs: list.some((p) => p.hideLegs),
+    feet: list.some((p) => p.hideFeet),
   })
   if (!list.length) return
   loadThree().then(async ({ THREE, GLTFLoader, MeshoptDecoder }) => {
@@ -176,7 +184,7 @@ export function attachGearList(st, gear, fallbackAnchor) {
         // A skinned prop with its own rig (the cape's 13-bone drape) is attached
         // rigidly to a bone below in its own bind pose instead — rebinding its
         // mismatched joints onto the hero skeleton would tear it apart.
-        if (pieceSkinnedList.length && st.heroSkinned && (piece.hideBody || piece.hideLegs)) {
+        if (pieceSkinnedList.length && st.heroSkinned && (piece.hideBody || piece.hideLegs || piece.hideFeet)) {
           for (const pieceSkinned of pieceSkinnedList) {
             // body/legs slot: the outfit build (build-quaternius-outfits.mjs)
             // gave this mesh a skin mirroring hero's own skeleton (same joint

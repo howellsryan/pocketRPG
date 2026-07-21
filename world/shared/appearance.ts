@@ -18,8 +18,15 @@ import type { GearDescriptor } from './protocol'
 
 type Items = Record<string, { slot?: string | null; twoHanded?: boolean } | undefined>
 type EquipmentModelEntry = { tint?: string; model?: string }
-type EquipmentModels = { weapons?: Record<string, EquipmentModelEntry>; gear?: Record<string, EquipmentModelEntry> }
+type EquipmentModels = {
+  weapons?: Record<string, EquipmentModelEntry>
+  gear?: Record<string, EquipmentModelEntry>
+  defaults?: { gear?: { boots?: { tint?: string } } }
+}
 const equipmentModels = equipmentModelsData as unknown as EquipmentModels
+// Every boots item shares one default skinned boot + tint (like helms → default
+// helm), so boots don't take a per-tier tint.
+const DEFAULT_BOOTS_TINT = equipmentModels.defaults?.gear?.boots?.tint
 
 /** True when the arena registry can render this itemId per-item (as a weapon or
  * a gear piece with a model). Gates what goes into `GearDescriptor.equip`. */
@@ -110,11 +117,12 @@ function weaponFromEquipment(equipment: Record<string, unknown> | null | undefin
 /** Tint for an armour slot's equipped item. Absent/non-matching slot → omit
  * (undefined); an equipped body/legs item with no tint (registered untinted,
  * or unregistered with no matching tier prefix) → `{}` (present, no tint). */
-function armorSlotTint(equipment: Record<string, unknown> | null | undefined, slotName: 'body' | 'legs'): { tint?: string } | undefined {
+function armorSlotTint(equipment: Record<string, unknown> | null | undefined, slotName: 'body' | 'legs' | 'boots'): { tint?: string } | undefined {
   const itemId = itemIdInSlot(equipment, slotName)
   if (!itemId) return undefined
   const item = (itemsData as Items)[itemId]
   if (!item || item.slot !== slotName) return undefined
+  if (slotName === 'boots') return DEFAULT_BOOTS_TINT ? { tint: DEFAULT_BOOTS_TINT } : {}
   const tint = tintFor(itemId, equipmentModels.gear)
   return tint ? { tint } : {}
 }
@@ -128,10 +136,12 @@ export function gearFromEquipment(equipment: Record<string, unknown> | null | un
   if (weapon) gear.weapon = weapon
   const body = armorSlotTint(equipment, 'body')
   const legs = armorSlotTint(equipment, 'legs')
-  if (body || legs) {
+  const boots = armorSlotTint(equipment, 'boots')
+  if (body || legs || boots) {
     gear.armor = {}
     if (body) gear.armor.body = body
     if (legs) gear.armor.legs = legs
+    if (boots) gear.armor.boots = boots
   }
   // Registry-renderable equipped itemIds the client resolves to the arena's
   // exact model + placement: the weapon (overrides the archetype above) and the
@@ -141,9 +151,16 @@ export function gearFromEquipment(equipment: Record<string, unknown> | null | un
   if (equipment) {
     const equip: Record<string, string> = {}
     for (const slot of Object.keys(equipment)) {
-      if (slot === 'body' || slot === 'legs') continue
+      // body/legs/boots ride the skinned-outfit `armor` path above, not the
+      // rigid per-item `equip` path.
+      if (slot === 'body' || slot === 'legs' || slot === 'boots') continue
       const itemId = itemIdInSlot(equipment, slot)
-      if (itemId && hasRegistryModel(itemId)) equip[slot] = itemId
+      if (!itemId) continue
+      // head renders a generic default helm shell client-side even without
+      // registry coverage (per-item art isn't authored); other rigid slots need
+      // a registry model. (A modelled head item — a wizard hat — resolves to its
+      // own art and also has a registry model, so it passes either arm.)
+      if (slot === 'head' || hasRegistryModel(itemId)) equip[slot] = itemId
     }
     if (Object.keys(equip).length) gear.equip = equip
   }

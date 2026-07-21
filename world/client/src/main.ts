@@ -13,6 +13,7 @@ import { chunkFollowRadius, chunkKey, CHUNK_TILES, type ChunkedTerrain } from '.
 import { createScatterLayers } from './scatter'
 import { applyEntityDiff, applyGear, createEntity, createHeroMesh, createMonsterMesh, updateEntity, type Entity } from './entities'
 import { createClickMarker, setupInput, showClickMarker, updateClickMarker } from './input'
+import { preventPageZoom } from './preventZoom'
 import { createStatics, type Statics } from './statics'
 import { createProps } from './props'
 import { createAmbient, type AmbientLayer } from './ambient'
@@ -472,6 +473,7 @@ function enterWorld(session: WorldSession): void {
         const container = document.getElementById('scene')!
         const renderer = createRenderer(container)
         cam = attachCameraControls(renderer.domElement)
+        preventPageZoom()
 
         const sendInvAction = (slot: number, action: InvActionWire): void => {
           send(socket, { t: 'invAction', slot, action })

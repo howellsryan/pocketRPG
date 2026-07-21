@@ -1,6 +1,7 @@
 import * as THREE from 'three'
 import { GLTFLoader, type GLTF } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { clone as cloneSkeleton } from 'three/examples/jsm/utils/SkeletonUtils.js'
+import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js'
 import { tileToWorld } from './scene'
 import type { EntityDiff, GearDescriptor } from '../../shared/protocol'
 import { ATTACK_ANIMS, MOVE_DURATION_MS, animForSegment, gaitBob, isAttackAnim, resolveGltfAnim, segmentDurationMs, shouldSnap, stepYaw, yawToward } from './motion'
@@ -11,7 +12,7 @@ import { buildProcCreature, creatureSpecFor, type ProcCreature } from './procCre
 // so a registry-covered item renders with an identical model + bone-space
 // transform + tint on both heroes. Models copied into the world bundle by
 // world/scripts/build-equip.mjs.
-import { getWeaponModel, getGearModel } from '../../../src/utils/equipModels.js'
+import { getWeaponModel, getGearModel, resolveHeadGearModel as resolveHeadGearModelShared } from '../../../src/utils/equipModels.js'
 
 const ANIM_CROSSFADE_S = 0.15
 const TURN_SPEED_RAD_PER_S = 14
@@ -119,10 +120,20 @@ export function createCapsulePlaceholder(): THREE.Object3D {
 
 const templates = new Map<string, Promise<GLTF>>()
 
-function loadTemplate(url: string): Promise<GLTF> {
+/** The arena registry's *_full_helm.glb exports are meshopt-compressed
+ * (EXT_meshopt_compression) — GLTFLoader throws "setMeshoptDecoder must be
+ * called before loading compressed files" without this, which the caller's
+ * try/catch swallows into "appearance never blocks play", silently leaving
+ * every helm slot bare. Capes/shields/weapons aren't compressed so this was
+ * invisible until a head-slot item exercised it.
+ * Exported so a regression test can drive the exact production loader (with a
+ * mocked fetch) rather than re-implementing the decoder wiring separately. */
+export function loadTemplate(url: string): Promise<GLTF> {
   let t = templates.get(url)
   if (!t) {
-    t = new GLTFLoader().loadAsync(url)
+    const loader = new GLTFLoader()
+    loader.setMeshoptDecoder(MeshoptDecoder)
+    t = loader.loadAsync(url)
     templates.set(url, t)
   }
   return t
@@ -309,6 +320,7 @@ type PlacementSpec = {
   hideHead?: boolean
   hideBody?: boolean
   hideLegs?: boolean
+  hideFeet?: boolean
 }
 
 /** Registry `model` (e.g. 'weapons/trident.glb') → world asset URL under the
@@ -411,19 +423,23 @@ async function applyWeaponPiece(
 // 65-joint universal rig as world's hero.glb — no bone position/rotation
 // needed, just a skeleton rebind. Head/shield/cape/neck are rigid props
 // attached per-item through the shared registry (applyRigidGearPiece).
-const ARMOR_SLOTS = ['body', 'legs'] as const
+const ARMOR_SLOTS = ['body', 'legs', 'boots'] as const
 type ArmorSlot = (typeof ARMOR_SLOTS)[number]
-const ARMOR_HOLDER: Record<ArmorSlot, string> = { body: '__armor_body', legs: '__armor_legs' }
+const ARMOR_HOLDER: Record<ArmorSlot, string> = { body: '__armor_body', legs: '__armor_legs', boots: '__armor_boots' }
 
 // Hero-anatomy regions a covering piece can cut out (head → helm, body/legs →
 // outfit). Bone names are the Quaternius universal rig — mirrors
 // src/3d/heroAttach.js's HIDE_REGION_BONES.
-const HIDE_REGIONS = ['head', 'body', 'legs'] as const
+const HIDE_REGIONS = ['head', 'body', 'legs', 'feet'] as const
 type HideRegion = (typeof HIDE_REGIONS)[number]
 const HIDE_REGION_BONES: Record<HideRegion, string[]> = {
   head: ['Head'],
   body: ['spine_01', 'spine_02', 'spine_03', 'clavicle_l', 'clavicle_r'],
   legs: ['pelvis', 'thigh_l', 'calf_l', 'foot_l', 'ball_l', 'ball_leaf_l', 'thigh_r', 'calf_r', 'foot_r', 'ball_r', 'ball_leaf_r'],
+  // Feet only — equipped boots hide the base hero's built-in footwear. These
+  // bones are also in `legs`, so platelegs keep hiding the feet unchanged; this
+  // is an independent channel boots trip. Mirrors heroAttach.js.
+  feet: ['foot_l', 'ball_l', 'ball_leaf_l', 'foot_r', 'ball_r', 'ball_leaf_r'],
 }
 
 type HideMaskControl = { setHidden(regions: Partial<Record<HideRegion, boolean>>): void }
@@ -438,7 +454,7 @@ type HideMaskControl = { setHidden(regions: Partial<Record<HideRegion, boolean>>
 function setupArmorHideMask(skinnedMeshes: THREE.SkinnedMesh[]): HideMaskControl | null {
   const meshes = skinnedMeshes.filter((m) => m.skeleton)
   if (!meshes.length) return null
-  const hidden = new THREE.Vector3(0, 0, 0) // onBeforeCompile fires lazily on first
+  const hidden = new THREE.Vector4(0, 0, 0, 0) // onBeforeCompile fires lazily on first
   // render, so the desired state must be the shader's INITIAL uniform value.
   for (const skinnedMesh of meshes) {
     const regionIdx = HIDE_REGIONS.map((region) => {
@@ -448,32 +464,32 @@ function setupArmorHideMask(skinnedMeshes: THREE.SkinnedMesh[]): HideMaskControl
     const geo = skinnedMesh.geometry
     const si = geo.attributes.skinIndex, sw = geo.attributes.skinWeight
     const n = geo.attributes.position.count
-    const mask = new Float32Array(n * 3)
+    const mask = new Float32Array(n * 4)
     for (let i = 0; i < n; i++) {
       for (let k = 0; k < 4; k++) {
         const j = si.getComponent(i, k), w = sw.getComponent(i, k)
-        for (let r = 0; r < 3; r++) if (regionIdx[r].has(j)) mask[i * 3 + r] += w
+        for (let r = 0; r < 4; r++) if (regionIdx[r].has(j)) mask[i * 4 + r] += w
       }
     }
-    geo.setAttribute('hideMask', new THREE.BufferAttribute(mask, 3))
+    geo.setAttribute('hideMask', new THREE.BufferAttribute(mask, 4))
     const mats = Array.isArray(skinnedMesh.material) ? skinnedMesh.material : [skinnedMesh.material]
     for (const mat of mats) {
       const m = mat as THREE.MeshStandardMaterial
       m.onBeforeCompile = (shader) => {
         shader.uniforms.uHideMask = { value: hidden }
         shader.vertexShader = shader.vertexShader
-          .replace('#include <common>', '#include <common>\nattribute vec3 hideMask;\nvarying vec3 vHideMask;')
+          .replace('#include <common>', '#include <common>\nattribute vec4 hideMask;\nvarying vec4 vHideMask;')
           .replace('#include <begin_vertex>', '#include <begin_vertex>\nvHideMask = hideMask;')
         shader.fragmentShader = shader.fragmentShader
-          .replace('#include <common>', '#include <common>\nuniform vec3 uHideMask;\nvarying vec3 vHideMask;')
-          .replace('#include <clipping_planes_fragment>', '#include <clipping_planes_fragment>\nif (dot(uHideMask, step(vec3(0.5, 0.35, 0.35), vHideMask)) > 0.0) discard;')
+          .replace('#include <common>', '#include <common>\nuniform vec4 uHideMask;\nvarying vec4 vHideMask;')
+          .replace('#include <clipping_planes_fragment>', '#include <clipping_planes_fragment>\nif (dot(uHideMask, step(vec4(0.5, 0.35, 0.35, 0.35), vHideMask)) > 0.0) discard;')
       }
       m.needsUpdate = true
     }
   }
   return {
     setHidden(regions) {
-      hidden.set(regions.head ? 1 : 0, regions.body ? 1 : 0, regions.legs ? 1 : 0)
+      hidden.set(regions.head ? 1 : 0, regions.body ? 1 : 0, regions.legs ? 1 : 0, regions.feet ? 1 : 0)
     },
   }
 }
@@ -488,11 +504,20 @@ const RIGID_HOLDER: Record<RigidSlot, string> = {
   head: '__gear_head', shield: '__gear_shield', cape: '__gear_cape', neck: '__gear_neck',
 }
 
+/** Resolves a head-slot item to its render spec. Open headwear (wizard hat —
+ * no hideHead) renders its own registry model on top of the head; full helms
+ * and unmodeled head items render the shared default helm shell (hideHead
+ * override). Same rule the arena uses (src/utils/equipModels.js). */
+function resolveHeadGearModel(itemId: string | undefined): PlacementSpec | null {
+  if (!itemId) return null
+  return resolveHeadGearModelShared(itemId) as PlacementSpec | null
+}
+
 /** Attaches (or replaces/removes) one rigid registry gear piece on its bone.
  * Idempotent per itemId; a spec that isn't for this slot, a missing bone, or a
  * failed load leaves the slot bare. */
 async function applyRigidGearPiece(heroMesh: THREE.Object3D, slot: RigidSlot, itemId: string | undefined): Promise<void> {
-  const spec = (itemId ? getGearModel(itemId) : null) as PlacementSpec | null
+  const spec = (itemId ? (slot === 'head' ? resolveHeadGearModel(itemId) : (getGearModel(itemId) as PlacementSpec | null)) : null)
   const valid = !!(spec && spec.slot === slot && spec.bone)
   const holderName = RIGID_HOLDER[slot]
   const key = valid ? `reg:${itemId}` : ''
@@ -531,6 +556,7 @@ async function applyRigidGearPiece(heroMesh: THREE.Object3D, slot: RigidSlot, it
     // Bare slot on any load failure — appearance never blocks play.
   }
 }
+
 
 /** Largest-by-vertex-count skinned mesh is the hero's own base body mesh (as
  * opposed to hair/accessory sub-meshes) — same heuristic CombatArena3D and
@@ -597,8 +623,8 @@ async function applyArmor(heroMesh: THREE.Object3D, gear: GearDescriptor | undef
   heroMesh.traverse((o) => { if ((o as THREE.SkinnedMesh).isSkinnedMesh) skinned.push(o as THREE.SkinnedMesh) })
   const heroSkinned = primarySkinnedMesh(skinned)
   // Rigid pieces (helm/shield/cape/neck) attach to bones directly, so they
-  // still render on a capsule fallback that has a rig; skinned body/legs need
-  // the hero mesh.
+  // still render on a capsule fallback that has a rig; skinned body/legs/boots
+  // need the hero mesh (they rebind onto its skeleton).
   const rigid = Promise.all(RIGID_SLOTS.map((slot) => applyRigidGearPiece(heroMesh, slot, equip?.[slot])))
   if (!heroSkinned) { await rigid; return }
 
@@ -608,8 +634,14 @@ async function applyArmor(heroMesh: THREE.Object3D, gear: GearDescriptor | undef
     heroMesh.userData.armorHideMask = ctl
   }
   await Promise.all([rigid, ...ARMOR_SLOTS.map((slot) => applyArmorPiece(heroSkinned, slot, armor?.[slot]))])
-  const helm = equip?.head ? (getGearModel(equip.head) as PlacementSpec | null) : null
-  ctl?.setHidden({ head: !!helm?.hideHead, body: !!armor?.body, legs: !!armor?.legs })
+  // Key the head mask off whether a helm mesh actually attached, not just the
+  // registry flag — a failed/slow load (bad asset, network hiccup) must never
+  // leave the head hidden with nothing rendered in its place.
+  const helm = equip?.head ? resolveHeadGearModel(equip.head) : null
+  const headAttached = !!heroMesh.getObjectByName(RIGID_HOLDER.head)
+  // body/legs/boots hide their region off the descriptor (skinned pieces, like
+  // the arena); the feet channel cuts the hero's built-in footwear under boots.
+  ctl?.setHidden({ head: !!helm?.hideHead && headAttached, body: !!armor?.body, legs: !!armor?.legs, feet: !!armor?.boots })
 }
 
 /** Attaches (or replaces/removes) the weapon + armor matching `gear` on a

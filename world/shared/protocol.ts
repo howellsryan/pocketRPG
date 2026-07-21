@@ -9,7 +9,7 @@ export type InvSlot = { itemId: string; quantity: number } | null
  * shared/appearance.ts). Server → client only; clients never send gear. */
 export type GearDescriptor = {
   weapon?: { archetype: string; tint?: string }
-  armor?: { body?: { tint?: string }; legs?: { tint?: string } }
+  armor?: { body?: { tint?: string }; legs?: { tint?: string }; boots?: { tint?: string } }
   /** Equipped itemIds for slots the combat-arena registry
    * (src/data/equipmentModels.json) can render per-item — the client resolves
    * each to the exact model + bone-space placement + tint the equip modal uses,
