@@ -50,6 +50,20 @@ function weaponSpec(itemId) {
   }
 }
 function gearSpec(itemId) {
+  // Synthetic id `head:default` resolves the shared default helm shell that
+  // every full helm renders (defaults.gear.head.fallbackModel + hideHead) — the
+  // in-game head render, which the itemId-keyed `gear` map's per-tier models are
+  // NOT (mirrors getDefaultHeadGearPlacement).
+  if (itemId === 'head:default') {
+    const d = ((registry.defaults || {}).gear || {}).head || {}
+    if (!d.fallbackModel) return null
+    return {
+      path: modelPath(d.fallbackModel), slot: 'head', bone: d.bone || null,
+      position: d.position || [0, 0, 0], rotationDeg: d.rotationDeg || [0, 0, 0],
+      scale: typeof d.scale === 'number' ? d.scale : 1, tint: null,
+      tintAll: false, hideHead: true, hideBody: false, hideLegs: false, hideFeet: false,
+    }
+  }
   // Synthetic ids `boots:left` / `boots:right` resolve the shared default boots
   // from defaults.gear.boots (mirrors getDefaultBootsPlacements) — they aren't
   // in the itemId-keyed `gear` map, so this is how the boots visual-review works.

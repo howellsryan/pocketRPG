@@ -169,18 +169,19 @@ describe('equipModels resolver', () => {
     expect(getGearPlacements(null)).toEqual([])
   })
 
-  it('renders the default helm for any equipped head item, overriding its registered model', () => {
-    const headId = Object.entries(registry.gear || {}).find(([, g]) => (g as { slot: string }).slot === 'head')?.[0]
-    expect(headId, 'a registered head item is needed to prove the override').toBeTruthy()
+  it('renders the default helm shell for a full helm, overriding its registered per-tier model', () => {
+    const headId = Object.entries(registry.gear || {}).find(([id, g]) => (g as { slot: string }).slot === 'head' && /full_helm/.test(id))?.[0]
+    expect(headId, 'a registered full helm is needed to prove the override').toBeTruthy()
+    const fallbackModel = (registry.defaults as { gear: Record<string, { fallbackModel: string }> }).gear.head.fallbackModel
     const dflt = getDefaultHeadGearPlacement()
     expect(dflt).toBeTruthy()
-    expect(dflt!.path).toBe(registry.modelBase + (registry.defaults as { gear: Record<string, { fallbackModel: string }> }).gear.head.fallbackModel)
+    expect(dflt!.path).toBe(registry.modelBase + fallbackModel)
     const placements = getGearPlacements({ head: { itemId: headId } })
     expect(placements).toHaveLength(1)
     expect(placements[0].slot).toBe('head')
-    // default path (not the registered per-item model) proves the override
+    // default shell path (not the registered per-tier model) proves the override
     expect(placements[0].path).toBe(dflt!.path)
-    expect(placements[0].path).toBe(registry.modelBase + 'default_full_helm.glb')
+    expect(placements[0].path).not.toBe(registry.modelBase + (registry.gear as Record<string, { model: string }>)[headId!].model)
     expect(placements[0].hideHead).toBe(true)
   })
 

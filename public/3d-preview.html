@@ -23,7 +23,7 @@
   aren't uploaded yet (R2 URLs only resolve on a deployment, not local dev).
 
   PRESETS (head/boots): three extra dropdown entries load
-  public/3d-samples/default_full_helm.glb and default_boots_{left,right}.glb
+  public/3d-samples/full_helm.glb and default_boots_{left,right}.glb
   directly — they're the SHARED default art (one helm shell + one L/R boot pair
   every helmet/boots item renders until per-item art exists), sourced from
   defaults.gear.head.fallbackModel and defaults.gear.boots.{left,right}, so
@@ -381,7 +381,7 @@ function presetDefs() {
   const dHead = g.head || {}, dBoots = g.boots || {};
   const bootSeed = (b, bone) => { b = b || {}; return { position: b.position || [0, 0, 0], rotationDeg: b.rotationDeg || [0, 0, 0], scale: typeof b.scale === 'number' ? b.scale : 0.16, bone: b.bone || bone }; };
   return {
-    head: { url: './3d-samples/' + (dHead.fallbackModel || 'default_full_helm.glb'),
+    head: { url: './3d-samples/' + (dHead.fallbackModel || 'full_helm.glb'),
       seed: { position: dHead.position || [0, 0.09, 0.01], rotationDeg: dHead.rotationDeg || [0, 0, 0], scale: typeof dHead.scale === 'number' ? dHead.scale : 0.44, bone: dHead.bone || 'Head' } },
     boots_l: { url: './3d-samples/' + ((dBoots.left || {}).model || 'default_boots_left.glb'), seed: bootSeed(dBoots.left, 'foot_l') },
     boots_r: { url: './3d-samples/' + ((dBoots.right || {}).model || 'default_boots_right.glb'), seed: bootSeed(dBoots.right, 'foot_r') },
