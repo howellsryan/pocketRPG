@@ -57,7 +57,13 @@ ${SCROLL_CSS}
   position: fixed; right: 8px; top: 200px;
   z-index: 10; font-family: sans-serif; display: flex; flex-direction: column; gap: 4px;
   width: ${HUD_PANEL_WIDTH}px;
+  /* The panel column has no visual of its own — only the tab rows and the open
+     body are interactive. Making the container click-through (and re-enabling
+     it on the real controls below) lets taps in the gaps, and over a collapsed
+     body, reach the game world behind the panel. */
+  pointer-events: none;
 }
+.hud-tabs, .hud-body { pointer-events: auto; }
 /* Full 28-slot inventory (7 rows) is taller than the 4-row panel this was
    tuned for; on short viewports pull the panel up (never past the minimap,
    which ends at 140px) so the bottom tab rail stays on-screen. */
@@ -85,8 +91,9 @@ ${SCROLL_CSS}
 .hud-pane { display: none; height: 100%; overflow-y: auto; }
 .hud-pane.active { display: block; }
 /* visibility (not display:none) keeps .hud-body's fixed height reserved, so
-   collapsing doesn't pull the bottom tab row up under the top one. */
-.hud-body.collapsed { visibility: hidden; }
+   collapsing doesn't pull the bottom tab row up under the top one; pointer-events
+   none lets taps over the reserved space reach the game world behind it. */
+.hud-body.collapsed { visibility: hidden; pointer-events: none; }
 #inv-panel {
   display: grid; grid-template-columns: repeat(${INVENTORY_COLS}, ${INV_CELL_PX}px);
   grid-auto-rows: ${INV_CELL_PX}px; gap: ${INV_GAP_PX}px;

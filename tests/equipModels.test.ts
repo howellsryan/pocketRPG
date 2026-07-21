@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { getCharacterModel, getWeaponModel, hasWeaponModel, modelUrl, getCharacterAssetPath, getWeaponPlacement, getMonsterModel, hasMonsterModel, getGearModel, getGearPlacement, getGearPlacements, getDefaultHeadGearModel } from '../src/utils/equipModels.js'
+import { getCharacterModel, getWeaponModel, hasWeaponModel, modelUrl, getCharacterAssetPath, getWeaponPlacement, getMonsterModel, hasMonsterModel, getGearModel, getGearPlacement, getGearPlacements, getDefaultHeadGearModel, getDefaultHeadGearPlacement } from '../src/utils/equipModels.js'
 import registry from '../src/data/equipmentModels.json'
 
 describe('equipModels resolver', () => {
@@ -167,6 +167,21 @@ describe('equipModels resolver', () => {
     expect(placements[0].slot).toBe(slot)
     expect(typeof placements[0].path).toBe('string')
     expect(getGearPlacements(null)).toEqual([])
+  })
+
+  it('renders the default helm for any equipped head item, overriding its registered model', () => {
+    const headId = Object.entries(registry.gear || {}).find(([, g]) => (g as { slot: string }).slot === 'head')?.[0]
+    expect(headId, 'a registered head item is needed to prove the override').toBeTruthy()
+    const dflt = getDefaultHeadGearPlacement()
+    expect(dflt).toBeTruthy()
+    expect(dflt!.path).toBe(registry.modelBase + (registry.defaults as { gear: Record<string, { fallbackModel: string }> }).gear.head.fallbackModel)
+    const placements = getGearPlacements({ head: { itemId: headId } })
+    expect(placements).toHaveLength(1)
+    expect(placements[0].slot).toBe('head')
+    // default path (not the registered per-item model) proves the override
+    expect(placements[0].path).toBe(dflt!.path)
+    expect(placements[0].path).toBe(registry.modelBase + 'default_full_helm.glb')
+    expect(placements[0].hideHead).toBe(true)
   })
 
   it('every registered gear id exists in items.json with a matching slot', async () => {

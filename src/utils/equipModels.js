@@ -109,6 +109,27 @@ export function getDefaultHeadGearModel() {
   }
 }
 
+// Fetchable-path placement for the generic default head model, or null.
+// Same shape as getGearPlacement but sourced from getDefaultHeadGearModel so
+// the combat arena / equip-screen hero can render it for any head slot.
+export function getDefaultHeadGearPlacement() {
+  const spec = getDefaultHeadGearModel()
+  if (!spec) return null
+  return {
+    path: resolveModelPath(spec.model),
+    slot: spec.slot,
+    bone: spec.bone,
+    position: spec.position,
+    rotationDeg: spec.rotationDeg,
+    scale: spec.scale,
+    tint: spec.tint,
+    tintAll: spec.tintAll,
+    hideHead: spec.hideHead,
+    hideBody: spec.hideBody,
+    hideLegs: spec.hideLegs,
+  }
+}
+
 // Placement spec for one gear item with a fetchable `path`, or null.
 export function getGearPlacement(itemId) {
   const spec = getGearModel(itemId)
@@ -137,7 +158,11 @@ export function getGearPlacements(equipment) {
   for (const slot of Object.keys(equipment)) {
     if (slot === 'weapon') continue
     const itemId = equipment[slot] && equipment[slot].itemId
-    const p = itemId ? getGearPlacement(itemId) : null
+    if (!itemId) continue
+    // Every head-slot item renders the generic default helm for now — per-item
+    // helmet art isn't authored yet. Drop this branch (fall through to
+    // getGearPlacement) once real per-item head models exist in the registry.
+    const p = slot === 'head' ? getDefaultHeadGearPlacement() : getGearPlacement(itemId)
     if (p) out.push(p)
   }
   return out

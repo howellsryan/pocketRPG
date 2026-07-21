@@ -488,13 +488,13 @@ const RIGID_HOLDER: Record<RigidSlot, string> = {
   head: '__gear_head', shield: '__gear_shield', cape: '__gear_cape', neck: '__gear_neck',
 }
 
-/** Resolves a head-slot item to its registry model, falling back to the
- * generic default helm (defaults.gear.head.fallbackModel) when the item has
- * no registered model of its own — most helmets aren't authored yet, and a
- * bare head reads as more broken than a placeholder shell. */
+/** Resolves any head-slot item to the generic default helm
+ * (defaults.gear.head.fallbackModel). Per-item helmet art isn't authored yet,
+ * so every helmet renders the placeholder shell — swap back to a
+ * getGearModel(itemId) lookup once real per-item head models land. */
 function resolveHeadGearModel(itemId: string | undefined): PlacementSpec | null {
   if (!itemId) return null
-  return (getGearModel(itemId) as PlacementSpec | null) ?? (getDefaultHeadGearModel() as PlacementSpec | null)
+  return getDefaultHeadGearModel() as PlacementSpec | null
 }
 
 /** Attaches (or replaces/removes) one rigid registry gear piece on its bone.
