@@ -34,6 +34,10 @@ const OUT_DIR = path.join(ROOT, 'public', '3d-samples', 'outfits')
 const OUTFITS = [
   { out: 'ranger_body.glb', parts: ['Male_Ranger_Body.gltf', 'Male_Ranger_Arms.gltf'] },
   { out: 'ranger_legs.glb', parts: ['Male_Ranger_Legs.gltf', 'Male_Ranger_Feet_Boots.gltf'] },
+  // Boots slot: just the rigged feet/boots part (same one baked into
+  // ranger_legs), so an equipped boots item is a skinned mesh sharing the hero
+  // skeleton — deforms with the calf/foot and layers flawlessly with platelegs.
+  { out: 'ranger_boots.glb', parts: ['Male_Ranger_Feet_Boots.gltf'] },
 ]
 
 const io = new NodeIO().registerExtensions(ALL_EXTENSIONS)

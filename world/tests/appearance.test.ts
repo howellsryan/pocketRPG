@@ -162,11 +162,13 @@ describe('gearFromEquipment equip (per-item registry parity)', () => {
     expect(gear.equip).toEqual({ head: 'slayer_helmet' })
   })
 
-  it('carries a boots item so the client renders the default L/R boots on it', () => {
-    // Boots (like head) render generic default art client-side — the shared L/R
-    // pair — so they're carried regardless of per-item registry coverage.
+  it('renders boots as a skinned armour piece (armor.boots), not a rigid equip slot', () => {
+    // Boots are a skinned outfit piece sharing the hero skeleton (like body/legs),
+    // so they ride the `armor` path with the shared default boots tint, NOT the
+    // rigid per-item `equip` path.
     const gear = gearFromEquipment({ boots: { itemId: 'leather_boots' } })
-    expect(gear.equip).toEqual({ boots: 'leather_boots' })
+    expect(gear.armor).toEqual({ boots: { tint: '#7a5433' } })
+    expect(gear.equip).toBeUndefined()
   })
 
   it('omits equip entirely when nothing equipped resolves to a registry model', () => {

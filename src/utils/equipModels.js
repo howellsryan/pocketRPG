@@ -154,36 +154,30 @@ export function resolveHeadGearPlacement(itemId) {
   return (g && g.slot === 'head' && !g.hideHead) ? g : getDefaultHeadGearPlacement()
 }
 
-// The generic left+right boot models (model-form), sourced from
-// defaults.gear.boots — the boots equivalent of getDefaultHeadGearModel. Boots
-// are two rigid props, one per foot bone, because the feet move independently
-// through the walk cycle. Returns [] when no default boots are configured.
+// The generic default boots (model-form), sourced from defaults.gear.boots —
+// the boots equivalent of getDefaultHeadGearModel. Boots are a SKINNED mesh
+// sharing the hero's own skeleton (built by build-quaternius-outfits.mjs, like
+// platebody/legs), so they deform with the calf/foot and layer flawlessly with
+// platelegs — not a rigid bone-attach. `hideFeet` cuts the hero's built-in
+// footwear (feet channel in heroAttach.js / entities.ts setupHideMask). Returned
+// as a one-element array so getGearPlacements can splat it. [] when unconfigured.
 export function getDefaultBootsModels() {
   const b = ((equipmentModelsData.defaults || {}).gear || {}).boots
-  if (!b) return []
-  const out = []
-  for (const side of ['left', 'right']) {
-    const s = b[side]
-    if (!s || !s.model) continue
-    out.push({
-      model: s.model,
-      slot: 'boots',
-      bone: s.bone || null,
-      position: s.position || EQUIP_IDENTITY.position,
-      rotationDeg: s.rotationDeg || EQUIP_IDENTITY.rotationDeg,
-      scale: typeof s.scale === 'number' ? s.scale : EQUIP_IDENTITY.scale,
-      tint: s.tint || null,
-      tintAll: false,
-      hideHead: false,
-      hideBody: false,
-      hideLegs: false,
-      // Boots hide the base hero's built-in footwear so the boot prop reads
-      // cleanly instead of clipping through it (feet channel in heroAttach.js /
-      // entities.ts setupHideMask).
-      hideFeet: true,
-    })
-  }
-  return out
+  if (!b || !b.model) return []
+  return [{
+    model: b.model,
+    slot: 'boots',
+    bone: null,
+    position: EQUIP_IDENTITY.position,
+    rotationDeg: EQUIP_IDENTITY.rotationDeg,
+    scale: EQUIP_IDENTITY.scale,
+    tint: b.tint || null,
+    tintAll: false,
+    hideHead: false,
+    hideBody: false,
+    hideLegs: false,
+    hideFeet: b.hideFeet !== false,
+  }]
 }
 
 // Path-form of getDefaultBootsModels for the arena / equip-screen attach path.

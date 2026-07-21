@@ -184,7 +184,7 @@ export function attachGearList(st, gear, fallbackAnchor) {
         // A skinned prop with its own rig (the cape's 13-bone drape) is attached
         // rigidly to a bone below in its own bind pose instead — rebinding its
         // mismatched joints onto the hero skeleton would tear it apart.
-        if (pieceSkinnedList.length && st.heroSkinned && (piece.hideBody || piece.hideLegs)) {
+        if (pieceSkinnedList.length && st.heroSkinned && (piece.hideBody || piece.hideLegs || piece.hideFeet)) {
           for (const pieceSkinned of pieceSkinnedList) {
             // body/legs slot: the outfit build (build-quaternius-outfits.mjs)
             // gave this mesh a skin mirroring hero's own skeleton (same joint

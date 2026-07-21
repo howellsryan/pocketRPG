@@ -12,7 +12,7 @@ import { buildProcCreature, creatureSpecFor, type ProcCreature } from './procCre
 // so a registry-covered item renders with an identical model + bone-space
 // transform + tint on both heroes. Models copied into the world bundle by
 // world/scripts/build-equip.mjs.
-import { getWeaponModel, getGearModel, resolveHeadGearModel as resolveHeadGearModelShared, getDefaultBootsModels } from '../../../src/utils/equipModels.js'
+import { getWeaponModel, getGearModel, resolveHeadGearModel as resolveHeadGearModelShared } from '../../../src/utils/equipModels.js'
 
 const ANIM_CROSSFADE_S = 0.15
 const TURN_SPEED_RAD_PER_S = 14
@@ -423,9 +423,9 @@ async function applyWeaponPiece(
 // 65-joint universal rig as world's hero.glb — no bone position/rotation
 // needed, just a skeleton rebind. Head/shield/cape/neck are rigid props
 // attached per-item through the shared registry (applyRigidGearPiece).
-const ARMOR_SLOTS = ['body', 'legs'] as const
+const ARMOR_SLOTS = ['body', 'legs', 'boots'] as const
 type ArmorSlot = (typeof ARMOR_SLOTS)[number]
-const ARMOR_HOLDER: Record<ArmorSlot, string> = { body: '__armor_body', legs: '__armor_legs' }
+const ARMOR_HOLDER: Record<ArmorSlot, string> = { body: '__armor_body', legs: '__armor_legs', boots: '__armor_boots' }
 
 // Hero-anatomy regions a covering piece can cut out (head → helm, body/legs →
 // outfit). Bone names are the Quaternius universal rig — mirrors
@@ -557,52 +557,6 @@ async function applyRigidGearPiece(heroMesh: THREE.Object3D, slot: RigidSlot, it
   }
 }
 
-// Boots are two rigid props, one per foot bone — the feet move independently
-// through the walk cycle, so a single pelvis-anchored pair would detach as the
-// hero steps. Any equipped boots item renders the shared default L/R pair (per-
-// item boot art isn't authored), mirroring resolveHeadGearModel's default helm.
-const BOOT_HOLDER: Record<'left' | 'right', string> = { left: '__gear_boot_l', right: '__gear_boot_r' }
-
-/** Attaches (or replaces/removes) one boot on its foot bone. Idempotent per
- * model; a missing bone or failed load leaves the foot bare. */
-async function applyBootPiece(heroMesh: THREE.Object3D, side: 'left' | 'right', spec: PlacementSpec | undefined): Promise<void> {
-  const holderName = BOOT_HOLDER[side]
-  const key = spec ? `boot:${spec.model}` : ''
-  const existing = heroMesh.getObjectByName(holderName)
-  if ((existing?.userData.key ?? '') === key) return
-  existing?.removeFromParent()
-  if (!spec || !spec.bone) return
-  const bone = heroMesh.getObjectByName(spec.bone)
-  if (!bone) return
-  try {
-    const gltf = await loadTemplate(equipModelUrl(spec.model))
-    const current = heroMesh.getObjectByName(holderName)
-    if (current) {
-      if (current.userData.key === key) return
-      current.removeFromParent()
-    }
-    const model = cloneSkeleton(gltf.scene)
-    model.traverse((o) => { o.frustumCulled = false })
-    placeRegistryModel(model, spec, false)
-    const holder = new THREE.Group()
-    holder.name = holderName
-    holder.userData.key = key
-    holder.add(model)
-    bone.add(holder)
-  } catch {
-    // Bare slot on any load failure — appearance never blocks play.
-  }
-}
-
-/** Attaches (or removes) the default boots — one prop per leg. getDefaultBootsModels
- * returns [left, right] each carrying its own bone (calf_l/calf_r), so bind side
- * to index rather than a hardcoded bone name. */
-async function applyBoots(heroMesh: THREE.Object3D, itemId: string | undefined): Promise<void> {
-  const specs = (itemId ? getDefaultBootsModels() : []) as PlacementSpec[]
-  await Promise.all((['left', 'right'] as const).map(
-    (side, i) => applyBootPiece(heroMesh, side, specs[i]),
-  ))
-}
 
 /** Largest-by-vertex-count skinned mesh is the hero's own base body mesh (as
  * opposed to hair/accessory sub-meshes) — same heuristic CombatArena3D and
@@ -668,13 +622,10 @@ async function applyArmor(heroMesh: THREE.Object3D, gear: GearDescriptor | undef
   const skinned: THREE.SkinnedMesh[] = []
   heroMesh.traverse((o) => { if ((o as THREE.SkinnedMesh).isSkinnedMesh) skinned.push(o as THREE.SkinnedMesh) })
   const heroSkinned = primarySkinnedMesh(skinned)
-  // Rigid pieces (helm/shield/cape/neck + boots) attach to bones directly, so
-  // they still render on a capsule fallback that has a rig; skinned body/legs
-  // need the hero mesh. Boots resolve to two props (one per foot bone).
-  const rigid = Promise.all([
-    ...RIGID_SLOTS.map((slot) => applyRigidGearPiece(heroMesh, slot, equip?.[slot])),
-    applyBoots(heroMesh, equip?.boots),
-  ])
+  // Rigid pieces (helm/shield/cape/neck) attach to bones directly, so they
+  // still render on a capsule fallback that has a rig; skinned body/legs/boots
+  // need the hero mesh (they rebind onto its skeleton).
+  const rigid = Promise.all(RIGID_SLOTS.map((slot) => applyRigidGearPiece(heroMesh, slot, equip?.[slot])))
   if (!heroSkinned) { await rigid; return }
 
   let ctl = heroMesh.userData.armorHideMask as HideMaskControl | null | undefined
@@ -688,10 +639,9 @@ async function applyArmor(heroMesh: THREE.Object3D, gear: GearDescriptor | undef
   // leave the head hidden with nothing rendered in its place.
   const helm = equip?.head ? resolveHeadGearModel(equip.head) : null
   const headAttached = !!heroMesh.getObjectByName(RIGID_HOLDER.head)
-  // Only hide the base feet once a boot mesh actually attached — a failed/slow
-  // load must never leave the feet hidden with nothing rendered in their place.
-  const bootsAttached = !!heroMesh.getObjectByName(BOOT_HOLDER.left) || !!heroMesh.getObjectByName(BOOT_HOLDER.right)
-  ctl?.setHidden({ head: !!helm?.hideHead && headAttached, body: !!armor?.body, legs: !!armor?.legs, feet: !!equip?.boots && bootsAttached })
+  // body/legs/boots hide their region off the descriptor (skinned pieces, like
+  // the arena); the feet channel cuts the hero's built-in footwear under boots.
+  ctl?.setHidden({ head: !!helm?.hideHead && headAttached, body: !!armor?.body, legs: !!armor?.legs, feet: !!armor?.boots })
 }
 
 /** Attaches (or replaces/removes) the weapon + armor matching `gear` on a

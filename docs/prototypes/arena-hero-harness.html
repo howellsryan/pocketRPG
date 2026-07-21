@@ -64,16 +64,16 @@ function gearSpec(itemId) {
       tintAll: false, hideHead: true, hideBody: false, hideLegs: false, hideFeet: false,
     }
   }
-  // Synthetic ids `boots:left` / `boots:right` resolve the shared default boots
-  // from defaults.gear.boots (mirrors getDefaultBootsPlacements) — they aren't
-  // in the itemId-keyed `gear` map, so this is how the boots visual-review works.
-  if (itemId === 'boots:left' || itemId === 'boots:right') {
-    const b = (((registry.defaults || {}).gear || {}).boots || {})[itemId.slice(6)]
+  // Synthetic id `boots` resolves the shared default skinned boots from
+  // defaults.gear.boots (mirrors getDefaultBootsPlacements) — a skinned mesh
+  // that rebinds onto the hero skeleton, so this is how the boots visual-review
+  // works (not in the itemId-keyed `gear` map).
+  if (itemId === 'boots') {
+    const b = ((registry.defaults || {}).gear || {}).boots
     if (!b || !b.model) return null
     return {
-      path: modelPath(b.model), slot: 'boots', bone: b.bone || null,
-      position: b.position || [0, 0, 0], rotationDeg: b.rotationDeg || [0, 0, 0],
-      scale: typeof b.scale === 'number' ? b.scale : 1, tint: b.tint || null,
+      path: modelPath(b.model), slot: 'boots', bone: null,
+      position: [0, 0, 0], rotationDeg: [0, 0, 0], scale: 1, tint: b.tint || null,
       tintAll: false, hideHead: false, hideBody: false, hideLegs: false, hideFeet: true,
     }
   }

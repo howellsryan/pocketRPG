@@ -83,23 +83,25 @@ are raw — run `process-3d-model.mjs` (and `fit-headgear.mjs` /
 `canonicalize-weapon.mjs`, if the slot needs it) on each afterwards, same as
 any authored asset.
 
-## Body / legs / gloves / cape slots (skinned; fit is manual)
+## Body / legs / boots / gloves / cape slots (skinned; fit is manual)
 
 Unlike the helmet, these pieces can't ride one bone — they have to bend at
-the shoulder, hip, knee or spine along with the body, so each needs
+the shoulder, hip, knee, ankle or spine along with the body, so each needs
 to be a **skinned mesh sharing the hero's own skeleton**, not a rigid
 bone-attach.
 
-**Boots are the exception — they ship rigid, not skinned.** A knee-high boot
-barely deforms, so each foot's boot is a rigid prop bone-attached to the
-`calf_l`/`calf_r` bone (the shaft rides the shin; only ankle flex is lost,
-which reads fine). One boots item renders the shared default L/R pair from
-`defaults.gear.boots.{left,right}` (the boots analogue of
-`defaults.gear.head.fallbackModel`), resolved by `getDefaultBootsModels()` /
-`getDefaultBootsPlacements()`. A paired-boots upload is split per foot by
-`scripts/split-boots-glb.mjs` (connected-component islands → nearest boot →
-recentre), then `process-3d-model.mjs` each half. Tune the per-foot transform
-in `public/3d-preview.html` (the "Default Boot · Left/Right" presets).
+**Boots** ship this way too: the shared default boot is `outfits/ranger_boots.glb`,
+built by `build-quaternius-outfits.mjs` from the same rigged `Male_Ranger_Feet_Boots`
+part baked into `ranger_legs.glb`, so it carries the hero's 65-joint skeleton and
+`attachGearList` rebinds it exactly like a platebody — it deforms with the
+calf/foot and layers flawlessly under platelegs. One boots item renders that
+shared default (the boots analogue of `defaults.gear.head.fallbackModel`),
+resolved by `getDefaultBootsModels()` / `getDefaultBootsPlacements()`, with
+`hideFeet` cutting the hero's built-in footwear. World copy: `build-armor.mjs`
+re-exports it to `models/armor/boots.glb` alongside body/legs. Preview: the
+"Default Boots (skinned)" preset (sliders inert — nothing to tune). A rigid
+per-foot bone-attach was tried first and looked wrong (a knee-high boot on the
+foot bone tilts with the ankle); the skinned rebind is the fix.
 
 **The fit is a one-time manual Blender step per base asset** (~10–15 min):
 import `public/3d-samples/hero.glb`, arrange the piece on the body, export

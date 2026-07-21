@@ -75,20 +75,9 @@
         "scale": 0.99
       },
       "boots": {
-        "left": {
-          "bone": "calf_l",
-          "model": "default_boots_left.glb",
-          "position": [0, 0.55, 0.03],
-          "rotationDeg": [180, 0, 0],
-          "scale": 0.4
-        },
-        "right": {
-          "bone": "calf_r",
-          "model": "default_boots_right.glb",
-          "position": [0, 0.55, 0.03],
-          "rotationDeg": [180, 0, 0],
-          "scale": 0.4
-        }
+        "model": "outfits/ranger_boots.glb",
+        "tint": "#7a5433",
+        "hideFeet": true
       }
     }
   },

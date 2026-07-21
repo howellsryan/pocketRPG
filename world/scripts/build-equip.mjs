@@ -29,12 +29,9 @@ for (const section of ['weapons', 'gear']) {
 // (not the itemId-keyed `gear` map above, since it isn't tied to one item).
 const fallbackHead = registry.defaults?.gear?.head?.fallbackModel
 if (fallbackHead && !/^(https?:)?\/\//.test(fallbackHead) && !fallbackHead.startsWith('/')) models.add(fallbackHead)
-// The generic default boots live under defaults.gear.boots.{left,right}.model
-// (same reason — one shared L/R pair, not tied to any one boots item).
-for (const side of ['left', 'right']) {
-  const b = registry.defaults?.gear?.boots?.[side]?.model
-  if (b && !/^(https?:)?\/\//.test(b) && !b.startsWith('/')) models.add(b)
-}
+// Boots are a skinned outfit piece (defaults.gear.boots.model =
+// outfits/ranger_boots.glb) handled by world/scripts/build-armor.mjs alongside
+// body/legs, not copied here.
 
 let copied = 0
 for (const model of [...models].sort()) {

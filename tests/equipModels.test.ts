@@ -212,27 +212,26 @@ describe('equipModels resolver', () => {
     expect(resolveHeadGearPlacement(helmId)!.hideHead).toBe(true)
   })
 
-  it('boots resolve to two rigid props, one per foot bone', () => {
+  it('boots resolve to a single skinned piece that hides the feet', () => {
     const b = (registry.defaults as { gear: Record<string, unknown> }).gear.boots
     expect(b, 'defaults.gear.boots required for boots placement').toBeTruthy()
     const models = getDefaultBootsModels()
-    expect(models).toHaveLength(2)
-    // two distinct leg bones (one per foot), whatever they're tuned to
-    const bones = models.map((m) => m.bone)
-    expect(new Set(bones).size).toBe(2)
-    for (const b of bones) expect(typeof b).toBe('string')
+    expect(models).toHaveLength(1)
+    // skinned rebind (shares the hero skeleton, deforms with the leg), NOT a
+    // rigid bone-attach — so no bone and hideFeet cuts the base footwear.
+    expect(models[0].bone).toBeNull()
+    expect(models[0].hideFeet).toBe(true)
     const placements = getDefaultBootsPlacements()
-    expect(placements).toHaveLength(2)
-    for (const p of placements) {
-      expect(p.slot).toBe('boots')
-      expect(p.path.startsWith(registry.modelBase)).toBe(true)
-      expect(p.hideHead).toBe(false)
-      expect(p.hideFeet).toBe(true) // boots hide the base hero footwear
-    }
-    // any equipped boots item → the two shared default boots (like helms → default helm)
+    expect(placements).toHaveLength(1)
+    expect(placements[0].slot).toBe('boots')
+    expect(placements[0].path.startsWith(registry.modelBase)).toBe(true)
+    expect(placements[0].hideHead).toBe(false)
+    expect(placements[0].hideFeet).toBe(true)
+    // any equipped boots item → the shared default skinned boots (like helms → default helm)
     const viaEquip = getGearPlacements({ boots: { itemId: 'leather_boots' } })
-    expect(viaEquip).toHaveLength(2)
-    expect(new Set(viaEquip.map((p) => p.bone)).size).toBe(2)
+    expect(viaEquip).toHaveLength(1)
+    expect(viaEquip[0].slot).toBe('boots')
+    expect(viaEquip[0].hideFeet).toBe(true)
   })
 
   it('the default boot model files exist on disk', async () => {
