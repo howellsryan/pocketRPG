@@ -1,6 +1,7 @@
 import * as THREE from 'three'
 import { GLTFLoader, type GLTF } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { clone as cloneSkeleton } from 'three/examples/jsm/utils/SkeletonUtils.js'
+import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js'
 import { tileToWorld } from './scene'
 import type { EntityDiff, GearDescriptor } from '../../shared/protocol'
 import { ATTACK_ANIMS, MOVE_DURATION_MS, animForSegment, gaitBob, isAttackAnim, resolveGltfAnim, segmentDurationMs, shouldSnap, stepYaw, yawToward } from './motion'
@@ -119,10 +120,20 @@ export function createCapsulePlaceholder(): THREE.Object3D {
 
 const templates = new Map<string, Promise<GLTF>>()
 
-function loadTemplate(url: string): Promise<GLTF> {
+/** The arena registry's *_full_helm.glb exports are meshopt-compressed
+ * (EXT_meshopt_compression) — GLTFLoader throws "setMeshoptDecoder must be
+ * called before loading compressed files" without this, which the caller's
+ * try/catch swallows into "appearance never blocks play", silently leaving
+ * every helm slot bare. Capes/shields/weapons aren't compressed so this was
+ * invisible until a head-slot item exercised it.
+ * Exported so a regression test can drive the exact production loader (with a
+ * mocked fetch) rather than re-implementing the decoder wiring separately. */
+export function loadTemplate(url: string): Promise<GLTF> {
   let t = templates.get(url)
   if (!t) {
-    t = new GLTFLoader().loadAsync(url)
+    const loader = new GLTFLoader()
+    loader.setMeshoptDecoder(MeshoptDecoder)
+    t = loader.loadAsync(url)
     templates.set(url, t)
   }
   return t
