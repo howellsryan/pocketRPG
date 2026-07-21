@@ -144,10 +144,13 @@ export function gearFromEquipment(equipment: Record<string, unknown> | null | un
       if (slot === 'body' || slot === 'legs') continue
       const itemId = itemIdInSlot(equipment, slot)
       if (!itemId) continue
-      // Every equipped head item renders the generic default helm client-side
-      // (per-item art isn't authored yet), so send it regardless of registry
-      // coverage; other rigid slots still need a registry model to render.
-      if (slot === 'head' || hasRegistryModel(itemId)) equip[slot] = itemId
+      // head + boots render a generic default model client-side (a full helm
+      // shell / the shared L/R boot pair — per-item art isn't authored yet), so
+      // send them regardless of registry coverage; other rigid slots still need
+      // a registry model to render. (A head item that IS modelled — a wizard hat
+      // — resolves to its own art client-side; it also has a registry model, so
+      // it would pass either arm of this test.)
+      if (slot === 'head' || slot === 'boots' || hasRegistryModel(itemId)) equip[slot] = itemId
     }
     if (Object.keys(equip).length) gear.equip = equip
   }

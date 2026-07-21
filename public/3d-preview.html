@@ -22,16 +22,19 @@
   (a canonical import needs nothing else). File pickers remain for GLBs that
   aren't uploaded yet (R2 URLs only resolve on a deployment, not local dev).
 
-  PRESETS (head/boots): two extra dropdown entries load
-  public/3d-samples/default_full_helm.glb and default_boots.glb directly —
-  they aren't itemId-keyed registry entries (the helm is only referenced via
-  defaults.gear.head.fallbackModel; boots have no registry slot yet at all),
-  so they're not in the registry list above. The head preset seeds sliders
-  from the live defaults.gear.head transform; boots seeds identity (no
-  shipped transform exists yet). Since neither is a registry item, the
-  readout is the plain { bone, position, rotationDeg, scale } object — for
-  head, paste it back into defaults.gear.head; boots has no runtime slot
-  wired up yet, so its readout is just handed back for that follow-up.
+  PRESETS (head/boots): three extra dropdown entries load
+  public/3d-samples/default_full_helm.glb and default_boots_{left,right}.glb
+  directly — they're the SHARED default art (one helm shell + one L/R boot pair
+  every helmet/boots item renders until per-item art exists), sourced from
+  defaults.gear.head.fallbackModel and defaults.gear.boots.{left,right}, so
+  they aren't itemId-keyed registry entries and don't appear in the registry
+  list above. Each seeds its sliders from the live default transform; since none
+  is a registry item the readout is the plain { bone, position, rotationDeg,
+  scale } object — paste head back into defaults.gear.head and each boot into
+  defaults.gear.boots.left / .right (the two feet are tuned separately because
+  they attach to independent foot bones). Individually-modelled head gear (the
+  wizard hat) IS a registry entry, so it shows up under "gear / shields" above
+  and emits its own full entry.
 
   Uses the same vendored three.js the app will use (public/vendor/three/*),
   loaded via relative paths so it works both in Vite dev (served at /) and in
@@ -78,7 +81,8 @@
     <select id="regItem">
       <option value="">(custom files)</option>
       <option value="preset:head">— Default Head (helm) —</option>
-      <option value="preset:boots">— Default Boots —</option>
+      <option value="preset:boots_l">— Default Boot · Left —</option>
+      <option value="preset:boots_r">— Default Boot · Right —</option>
     </select>
     <label>Character GLB</label>
     <input type="file" id="charFile" accept=".glb,.gltf">
@@ -227,7 +231,13 @@ async function loadWeapon(url, spec) {
     // whole body, which is why armour looked like "a second character".
     const pieceSkinned = [];
     gltf.scene.traverse(o => { if (o.isSkinnedMesh) pieceSkinned.push(o); });
-    if (pieceSkinned.length && heroSkinned) {
+    // Only body/legs outfit pieces (marked by their region hide-flag) rebind
+    // onto the hero skeleton — exactly heroAttach.attachGearList's guard. A
+    // skinned PROP with its own rig (the cape's drape skeleton) must NOT rebind:
+    // binding its 13 mismatched bones onto the hero's 41-bone skeleton with the
+    // hero's bindMatrix blew the cape up to hero scale (huge). It falls through
+    // to rigid bone-attach with its registry transform instead.
+    if (pieceSkinned.length && heroSkinned && (spec?.hideBody || spec?.hideLegs)) {
       const objs = [];
       for (const ps of pieceSkinned) {
         ps.bind(heroSkinned.skeleton, heroSkinned.bindMatrix);
@@ -363,28 +373,33 @@ async function loadRegistry() {
 // Unregistered defaults (head/boots): loaded straight from a known
 // public/3d-samples path rather than a registry itemId, so updateXform's
 // registry branch is skipped and the plain { bone, position, rotationDeg,
-// scale } transform is emitted — that's the whole shape either
-// defaults.gear.head or a future defaults.gear.boots needs.
-const PRESET_SLOTS = {
-  head: { url: () => './3d-samples/' + ((((registry || {}).defaults || {}).gear || {}).head?.fallbackModel || 'default_full_helm.glb') },
-  boots: { url: () => './3d-samples/default_boots.glb' },
-};
+// scale } transform is emitted — head → paste into defaults.gear.head; boot L/R
+// → defaults.gear.boots.{left,right}. Boots are two rigid props (one per foot
+// bone) because the feet move independently, so each foot is tuned separately.
+function presetDefs() {
+  const g = ((registry || {}).defaults || {}).gear || {};
+  const dHead = g.head || {}, dBoots = g.boots || {};
+  const bootSeed = (b, bone) => { b = b || {}; return { position: b.position || [0, 0, 0], rotationDeg: b.rotationDeg || [0, 0, 0], scale: typeof b.scale === 'number' ? b.scale : 0.16, bone: b.bone || bone }; };
+  return {
+    head: { url: './3d-samples/' + (dHead.fallbackModel || 'default_full_helm.glb'),
+      seed: { position: dHead.position || [0, 0.09, 0.01], rotationDeg: dHead.rotationDeg || [0, 0, 0], scale: typeof dHead.scale === 'number' ? dHead.scale : 0.44, bone: dHead.bone || 'Head' } },
+    boots_l: { url: './3d-samples/' + ((dBoots.left || {}).model || 'default_boots_left.glb'), seed: bootSeed(dBoots.left, 'foot_l') },
+    boots_r: { url: './3d-samples/' + ((dBoots.right || {}).model || 'default_boots_right.glb'), seed: bootSeed(dBoots.right, 'foot_r') },
+  };
+}
 async function loadPreset(slot) {
   regItemId = null; regKind = 'gear'; regSlot = null;
   if (!charRoot) {
     if (registry?.character) { await loadChar(registryUrl(registry.character.model)); charFromRegistry = true; }
     else await loadChar('./3d-samples/hero.glb');
   }
-  const dHead = ((registry?.defaults || {}).gear || {}).head || {};
-  const seed = slot === 'head'
-    ? { position: dHead.position || [0, 0.09, 0.01], rotationDeg: dHead.rotationDeg || [0, 0, 0], scale: typeof dHead.scale === 'number' ? dHead.scale : 0.44, bone: dHead.bone || 'Head' }
-    : { position: [0, 0, 0], rotationDeg: [0, 0, 0], scale: 1, bone: null };
+  const def = presetDefs()[slot]; const seed = def.seed;
   for (const [id, v] of [['px', seed.position[0]], ['py', seed.position[1]], ['pz', seed.position[2]],
     ['rx', seed.rotationDeg[0]], ['ry', seed.rotationDeg[1]], ['rz', seed.rotationDeg[2]], ['sc', seed.scale]]) {
     $(id).value = v; $(id + 'o').textContent = v;
   }
   $('bone').value = seed.bone && bones[seed.bone] ? seed.bone : '__root';
-  await loadWeapon(PRESET_SLOTS[slot].url());
+  await loadWeapon(def.url);
   updateXform();
 }
 $('regItem').addEventListener('change', async () => {

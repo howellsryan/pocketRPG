@@ -84,6 +84,7 @@ export function getGearModel(itemId) {
     hideHead: Boolean(g.hideHead),
     hideBody: Boolean(g.hideBody),
     hideLegs: Boolean(g.hideLegs),
+    hideFeet: Boolean(g.hideFeet),
   }
 }
 
@@ -106,6 +107,7 @@ export function getDefaultHeadGearModel() {
     hideHead: true,
     hideBody: false,
     hideLegs: false,
+    hideFeet: false,
   }
 }
 
@@ -127,7 +129,79 @@ export function getDefaultHeadGearPlacement() {
     hideHead: spec.hideHead,
     hideBody: spec.hideBody,
     hideLegs: spec.hideLegs,
+    hideFeet: spec.hideFeet,
   }
+}
+
+// Resolve any equipped head item to its render spec (model-form). Open headwear
+// (hats/circlets that leave the head visible — no `hideHead`) renders its OWN
+// registry model on top of the head, exactly like a body/legs plate renders its
+// own art. Full helms and any head item without registered art render the
+// shared default helm shell that overrides (hides) the head — so a metal helm
+// "just works" like a platebody without per-item tuning, while a wizard hat
+// sits on top instead of replacing the head.
+export function resolveHeadGearModel(itemId) {
+  if (!itemId) return null
+  const g = getGearModel(itemId)
+  return (g && g.slot === 'head' && !g.hideHead) ? g : getDefaultHeadGearModel()
+}
+
+// Same head resolution as resolveHeadGearModel but path-form (fetchable), for
+// the combat-arena / equip-screen attach path.
+export function resolveHeadGearPlacement(itemId) {
+  if (!itemId) return null
+  const g = getGearPlacement(itemId)
+  return (g && g.slot === 'head' && !g.hideHead) ? g : getDefaultHeadGearPlacement()
+}
+
+// The generic left+right boot models (model-form), sourced from
+// defaults.gear.boots — the boots equivalent of getDefaultHeadGearModel. Boots
+// are two rigid props, one per foot bone, because the feet move independently
+// through the walk cycle. Returns [] when no default boots are configured.
+export function getDefaultBootsModels() {
+  const b = ((equipmentModelsData.defaults || {}).gear || {}).boots
+  if (!b) return []
+  const out = []
+  for (const side of ['left', 'right']) {
+    const s = b[side]
+    if (!s || !s.model) continue
+    out.push({
+      model: s.model,
+      slot: 'boots',
+      bone: s.bone || null,
+      position: s.position || EQUIP_IDENTITY.position,
+      rotationDeg: s.rotationDeg || EQUIP_IDENTITY.rotationDeg,
+      scale: typeof s.scale === 'number' ? s.scale : EQUIP_IDENTITY.scale,
+      tint: s.tint || null,
+      tintAll: false,
+      hideHead: false,
+      hideBody: false,
+      hideLegs: false,
+      // Boots hide the base hero's built-in footwear so the boot prop reads
+      // cleanly instead of clipping through it (feet channel in heroAttach.js /
+      // entities.ts setupHideMask).
+      hideFeet: true,
+    })
+  }
+  return out
+}
+
+// Path-form of getDefaultBootsModels for the arena / equip-screen attach path.
+export function getDefaultBootsPlacements() {
+  return getDefaultBootsModels().map((spec) => ({
+    path: resolveModelPath(spec.model),
+    slot: spec.slot,
+    bone: spec.bone,
+    position: spec.position,
+    rotationDeg: spec.rotationDeg,
+    scale: spec.scale,
+    tint: spec.tint,
+    tintAll: spec.tintAll,
+    hideHead: spec.hideHead,
+    hideBody: spec.hideBody,
+    hideLegs: spec.hideLegs,
+    hideFeet: spec.hideFeet,
+  }))
 }
 
 // Placement spec for one gear item with a fetchable `path`, or null.
@@ -159,10 +233,12 @@ export function getGearPlacements(equipment) {
     if (slot === 'weapon') continue
     const itemId = equipment[slot] && equipment[slot].itemId
     if (!itemId) continue
-    // Every head-slot item renders the generic default helm for now — per-item
-    // helmet art isn't authored yet. Drop this branch (fall through to
-    // getGearPlacement) once real per-item head models exist in the registry.
-    const p = slot === 'head' ? getDefaultHeadGearPlacement() : getGearPlacement(itemId)
+    // Head resolves per-item: open headwear (wizard hat) → own model on top of
+    // the head; full helm / unmodeled → shared default shell (see
+    // resolveHeadGearPlacement). Boots emit one rigid prop per foot bone.
+    if (slot === 'head') { const p = resolveHeadGearPlacement(itemId); if (p) out.push(p); continue }
+    if (slot === 'boots') { for (const p of getDefaultBootsPlacements()) out.push(p); continue }
+    const p = getGearPlacement(itemId)
     if (p) out.push(p)
   }
   return out

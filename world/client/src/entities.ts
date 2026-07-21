@@ -12,7 +12,7 @@ import { buildProcCreature, creatureSpecFor, type ProcCreature } from './procCre
 // so a registry-covered item renders with an identical model + bone-space
 // transform + tint on both heroes. Models copied into the world bundle by
 // world/scripts/build-equip.mjs.
-import { getWeaponModel, getGearModel, getDefaultHeadGearModel } from '../../../src/utils/equipModels.js'
+import { getWeaponModel, getGearModel, resolveHeadGearModel as resolveHeadGearModelShared, getDefaultBootsModels } from '../../../src/utils/equipModels.js'
 
 const ANIM_CROSSFADE_S = 0.15
 const TURN_SPEED_RAD_PER_S = 14
@@ -320,6 +320,7 @@ type PlacementSpec = {
   hideHead?: boolean
   hideBody?: boolean
   hideLegs?: boolean
+  hideFeet?: boolean
 }
 
 /** Registry `model` (e.g. 'weapons/trident.glb') → world asset URL under the
@@ -429,12 +430,16 @@ const ARMOR_HOLDER: Record<ArmorSlot, string> = { body: '__armor_body', legs: '_
 // Hero-anatomy regions a covering piece can cut out (head → helm, body/legs →
 // outfit). Bone names are the Quaternius universal rig — mirrors
 // src/3d/heroAttach.js's HIDE_REGION_BONES.
-const HIDE_REGIONS = ['head', 'body', 'legs'] as const
+const HIDE_REGIONS = ['head', 'body', 'legs', 'feet'] as const
 type HideRegion = (typeof HIDE_REGIONS)[number]
 const HIDE_REGION_BONES: Record<HideRegion, string[]> = {
   head: ['Head'],
   body: ['spine_01', 'spine_02', 'spine_03', 'clavicle_l', 'clavicle_r'],
   legs: ['pelvis', 'thigh_l', 'calf_l', 'foot_l', 'ball_l', 'ball_leaf_l', 'thigh_r', 'calf_r', 'foot_r', 'ball_r', 'ball_leaf_r'],
+  // Feet only — equipped boots hide the base hero's built-in footwear. These
+  // bones are also in `legs`, so platelegs keep hiding the feet unchanged; this
+  // is an independent channel boots trip. Mirrors heroAttach.js.
+  feet: ['foot_l', 'ball_l', 'ball_leaf_l', 'foot_r', 'ball_r', 'ball_leaf_r'],
 }
 
 type HideMaskControl = { setHidden(regions: Partial<Record<HideRegion, boolean>>): void }
@@ -449,7 +454,7 @@ type HideMaskControl = { setHidden(regions: Partial<Record<HideRegion, boolean>>
 function setupArmorHideMask(skinnedMeshes: THREE.SkinnedMesh[]): HideMaskControl | null {
   const meshes = skinnedMeshes.filter((m) => m.skeleton)
   if (!meshes.length) return null
-  const hidden = new THREE.Vector3(0, 0, 0) // onBeforeCompile fires lazily on first
+  const hidden = new THREE.Vector4(0, 0, 0, 0) // onBeforeCompile fires lazily on first
   // render, so the desired state must be the shader's INITIAL uniform value.
   for (const skinnedMesh of meshes) {
     const regionIdx = HIDE_REGIONS.map((region) => {
@@ -459,32 +464,32 @@ function setupArmorHideMask(skinnedMeshes: THREE.SkinnedMesh[]): HideMaskControl
     const geo = skinnedMesh.geometry
     const si = geo.attributes.skinIndex, sw = geo.attributes.skinWeight
     const n = geo.attributes.position.count
-    const mask = new Float32Array(n * 3)
+    const mask = new Float32Array(n * 4)
     for (let i = 0; i < n; i++) {
       for (let k = 0; k < 4; k++) {
         const j = si.getComponent(i, k), w = sw.getComponent(i, k)
-        for (let r = 0; r < 3; r++) if (regionIdx[r].has(j)) mask[i * 3 + r] += w
+        for (let r = 0; r < 4; r++) if (regionIdx[r].has(j)) mask[i * 4 + r] += w
       }
     }
-    geo.setAttribute('hideMask', new THREE.BufferAttribute(mask, 3))
+    geo.setAttribute('hideMask', new THREE.BufferAttribute(mask, 4))
     const mats = Array.isArray(skinnedMesh.material) ? skinnedMesh.material : [skinnedMesh.material]
     for (const mat of mats) {
       const m = mat as THREE.MeshStandardMaterial
       m.onBeforeCompile = (shader) => {
         shader.uniforms.uHideMask = { value: hidden }
         shader.vertexShader = shader.vertexShader
-          .replace('#include <common>', '#include <common>\nattribute vec3 hideMask;\nvarying vec3 vHideMask;')
+          .replace('#include <common>', '#include <common>\nattribute vec4 hideMask;\nvarying vec4 vHideMask;')
           .replace('#include <begin_vertex>', '#include <begin_vertex>\nvHideMask = hideMask;')
         shader.fragmentShader = shader.fragmentShader
-          .replace('#include <common>', '#include <common>\nuniform vec3 uHideMask;\nvarying vec3 vHideMask;')
-          .replace('#include <clipping_planes_fragment>', '#include <clipping_planes_fragment>\nif (dot(uHideMask, step(vec3(0.5, 0.35, 0.35), vHideMask)) > 0.0) discard;')
+          .replace('#include <common>', '#include <common>\nuniform vec4 uHideMask;\nvarying vec4 vHideMask;')
+          .replace('#include <clipping_planes_fragment>', '#include <clipping_planes_fragment>\nif (dot(uHideMask, step(vec4(0.5, 0.35, 0.35, 0.35), vHideMask)) > 0.0) discard;')
       }
       m.needsUpdate = true
     }
   }
   return {
     setHidden(regions) {
-      hidden.set(regions.head ? 1 : 0, regions.body ? 1 : 0, regions.legs ? 1 : 0)
+      hidden.set(regions.head ? 1 : 0, regions.body ? 1 : 0, regions.legs ? 1 : 0, regions.feet ? 1 : 0)
     },
   }
 }
@@ -499,13 +504,13 @@ const RIGID_HOLDER: Record<RigidSlot, string> = {
   head: '__gear_head', shield: '__gear_shield', cape: '__gear_cape', neck: '__gear_neck',
 }
 
-/** Resolves any head-slot item to the generic default helm
- * (defaults.gear.head.fallbackModel). Per-item helmet art isn't authored yet,
- * so every helmet renders the placeholder shell — swap back to a
- * getGearModel(itemId) lookup once real per-item head models land. */
+/** Resolves a head-slot item to its render spec. Open headwear (wizard hat —
+ * no hideHead) renders its own registry model on top of the head; full helms
+ * and unmodeled head items render the shared default helm shell (hideHead
+ * override). Same rule the arena uses (src/utils/equipModels.js). */
 function resolveHeadGearModel(itemId: string | undefined): PlacementSpec | null {
   if (!itemId) return null
-  return getDefaultHeadGearModel() as PlacementSpec | null
+  return resolveHeadGearModelShared(itemId) as PlacementSpec | null
 }
 
 /** Attaches (or replaces/removes) one rigid registry gear piece on its bone.
@@ -550,6 +555,53 @@ async function applyRigidGearPiece(heroMesh: THREE.Object3D, slot: RigidSlot, it
   } catch {
     // Bare slot on any load failure — appearance never blocks play.
   }
+}
+
+// Boots are two rigid props, one per foot bone — the feet move independently
+// through the walk cycle, so a single pelvis-anchored pair would detach as the
+// hero steps. Any equipped boots item renders the shared default L/R pair (per-
+// item boot art isn't authored), mirroring resolveHeadGearModel's default helm.
+const BOOT_HOLDER: Record<'left' | 'right', string> = { left: '__gear_boot_l', right: '__gear_boot_r' }
+
+/** Attaches (or replaces/removes) one boot on its foot bone. Idempotent per
+ * model; a missing bone or failed load leaves the foot bare. */
+async function applyBootPiece(heroMesh: THREE.Object3D, side: 'left' | 'right', spec: PlacementSpec | undefined): Promise<void> {
+  const holderName = BOOT_HOLDER[side]
+  const key = spec ? `boot:${spec.model}` : ''
+  const existing = heroMesh.getObjectByName(holderName)
+  if ((existing?.userData.key ?? '') === key) return
+  existing?.removeFromParent()
+  if (!spec || !spec.bone) return
+  const bone = heroMesh.getObjectByName(spec.bone)
+  if (!bone) return
+  try {
+    const gltf = await loadTemplate(equipModelUrl(spec.model))
+    const current = heroMesh.getObjectByName(holderName)
+    if (current) {
+      if (current.userData.key === key) return
+      current.removeFromParent()
+    }
+    const model = cloneSkeleton(gltf.scene)
+    model.traverse((o) => { o.frustumCulled = false })
+    placeRegistryModel(model, spec, false)
+    const holder = new THREE.Group()
+    holder.name = holderName
+    holder.userData.key = key
+    holder.add(model)
+    bone.add(holder)
+  } catch {
+    // Bare slot on any load failure — appearance never blocks play.
+  }
+}
+
+/** Attaches (or removes) the default boots — one prop per leg. getDefaultBootsModels
+ * returns [left, right] each carrying its own bone (calf_l/calf_r), so bind side
+ * to index rather than a hardcoded bone name. */
+async function applyBoots(heroMesh: THREE.Object3D, itemId: string | undefined): Promise<void> {
+  const specs = (itemId ? getDefaultBootsModels() : []) as PlacementSpec[]
+  await Promise.all((['left', 'right'] as const).map(
+    (side, i) => applyBootPiece(heroMesh, side, specs[i]),
+  ))
 }
 
 /** Largest-by-vertex-count skinned mesh is the hero's own base body mesh (as
@@ -616,10 +668,13 @@ async function applyArmor(heroMesh: THREE.Object3D, gear: GearDescriptor | undef
   const skinned: THREE.SkinnedMesh[] = []
   heroMesh.traverse((o) => { if ((o as THREE.SkinnedMesh).isSkinnedMesh) skinned.push(o as THREE.SkinnedMesh) })
   const heroSkinned = primarySkinnedMesh(skinned)
-  // Rigid pieces (helm/shield/cape/neck) attach to bones directly, so they
-  // still render on a capsule fallback that has a rig; skinned body/legs need
-  // the hero mesh.
-  const rigid = Promise.all(RIGID_SLOTS.map((slot) => applyRigidGearPiece(heroMesh, slot, equip?.[slot])))
+  // Rigid pieces (helm/shield/cape/neck + boots) attach to bones directly, so
+  // they still render on a capsule fallback that has a rig; skinned body/legs
+  // need the hero mesh. Boots resolve to two props (one per foot bone).
+  const rigid = Promise.all([
+    ...RIGID_SLOTS.map((slot) => applyRigidGearPiece(heroMesh, slot, equip?.[slot])),
+    applyBoots(heroMesh, equip?.boots),
+  ])
   if (!heroSkinned) { await rigid; return }
 
   let ctl = heroMesh.userData.armorHideMask as HideMaskControl | null | undefined
@@ -633,7 +688,10 @@ async function applyArmor(heroMesh: THREE.Object3D, gear: GearDescriptor | undef
   // leave the head hidden with nothing rendered in its place.
   const helm = equip?.head ? resolveHeadGearModel(equip.head) : null
   const headAttached = !!heroMesh.getObjectByName(RIGID_HOLDER.head)
-  ctl?.setHidden({ head: !!helm?.hideHead && headAttached, body: !!armor?.body, legs: !!armor?.legs })
+  // Only hide the base feet once a boot mesh actually attached — a failed/slow
+  // load must never leave the feet hidden with nothing rendered in their place.
+  const bootsAttached = !!heroMesh.getObjectByName(BOOT_HOLDER.left) || !!heroMesh.getObjectByName(BOOT_HOLDER.right)
+  ctl?.setHidden({ head: !!helm?.hideHead && headAttached, body: !!armor?.body, legs: !!armor?.legs, feet: !!equip?.boots && bootsAttached })
 }
 
 /** Attaches (or replaces/removes) the weapon + armor matching `gear` on a

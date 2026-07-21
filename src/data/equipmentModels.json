@@ -73,6 +73,22 @@
           0
         ],
         "scale": 0.99
+      },
+      "boots": {
+        "left": {
+          "bone": "calf_l",
+          "model": "default_boots_left.glb",
+          "position": [0, 0.55, 0.03],
+          "rotationDeg": [180, 0, 0],
+          "scale": 0.4
+        },
+        "right": {
+          "bone": "calf_r",
+          "model": "default_boots_right.glb",
+          "position": [0, 0.55, 0.03],
+          "rotationDeg": [180, 0, 0],
+          "scale": 0.4
+        }
       }
     }
   },
@@ -1691,6 +1707,14 @@
       "rotationDeg": [13, 9, 0],
       "scale": 0.99,
       "tint": "#e5e4e2"
+    },
+    "wizard_hat": {
+      "model": "wizard_hat.glb",
+      "slot": "head",
+      "bone": "Head",
+      "position": [0, 0.19, 0],
+      "rotationDeg": [0, 0, 0],
+      "scale": 0.32
     }
   },
   "monsters": {
