@@ -336,26 +336,28 @@ ${SCROLL_CSS}
   opacity: 0; transition: opacity 0.3s;
 }
 #unique-banner.visible { opacity: 1; }
+/* The wrapper is the visual input box (border/background/rounded corners); the
+   <input> and the send button are transparent children inside it, so nothing
+   pokes out past the button — the whole control reads as one aligned field. */
 #chat-input-wrap {
   position: fixed; left: 8px; z-index: 10; width: min(280px, 60vw);
-  display: flex; align-items: stretch;
+  display: flex; align-items: stretch; overflow: hidden;
+  background: rgba(20, 16, 10, 0.82); border: 1px solid #5a4a30; border-radius: 8px;
 }
 #chat-input {
   flex: 1; min-width: 0;
-  padding: 7px 42px 7px 10px; font-family: sans-serif; font-size: 13px;
-  background: rgba(20, 16, 10, 0.82); color: #f4e9c8;
-  border: 1px solid #5a4a30; border-radius: 8px; outline: none;
+  padding: 8px 8px 8px 12px; font-family: sans-serif; font-size: 13px;
+  background: transparent; color: #f4e9c8; border: none; outline: none;
   -webkit-user-select: text; user-select: text; touch-action: auto;
 }
 #chat-input::placeholder { color: #8a7a5a; }
-/* Tap-to-send button tucked inside the input's right edge (keyboardless send). */
+/* Full-height tap-to-send button flush against the right edge (keyboardless send). */
 #chat-send {
-  position: absolute; right: 5px; top: 50%; transform: translateY(-50%);
-  width: 30px; height: 30px; padding: 0; border: none; border-radius: 6px; cursor: pointer;
-  background: rgba(70, 58, 36, 0.9); color: #ffe066;
+  flex: none; width: 42px; padding: 0; border: none; border-left: 1px solid #4a3d26; cursor: pointer;
+  background: transparent; color: #ffe066;
   display: flex; align-items: center; justify-content: center;
 }
-#chat-send:active { background: rgba(90, 74, 42, 0.95); }
+#chat-send:active { background: rgba(255, 224, 102, 0.14); }
 #chat-send svg { display: block; }
 :root[data-hud-orient="portrait"] #chat-input-wrap { bottom: calc(72px + env(safe-area-inset-bottom, 0px)); }
 /* Landscape has no bottom rail — drop the input into the true bottom-left

@@ -95,6 +95,7 @@ const WORLD_MAP_CSS = `
   min-width: 44px; min-height: 32px; border: none; border-radius: 6px; cursor: pointer;
   background: rgba(140, 40, 40, 0.9); color: #fff; font-size: 15px;
 }
+#wm-body { display: flex; flex-direction: column; min-height: 0; }
 #wm-filters { display: flex; gap: 6px; padding: 8px 12px 0; flex-wrap: wrap; }
 .wm-chip {
   min-height: 36px; padding: 0 12px; border-radius: 18px; cursor: pointer; user-select: none;
@@ -104,10 +105,9 @@ const WORLD_MAP_CSS = `
 .wm-chip.active { background: rgba(70, 58, 36, 0.92); color: #ffe066; border-color: #ffe066; }
 #worldmap-viewport {
   position: relative; overflow: hidden; margin: 10px auto; touch-action: none;
-  /* Square, but capped by height too so the whole panel (header + filters +
-     map) fits on landscape phones — otherwise the header/close button clipped
-     off-screen and the map, measured non-square, rendered over-zoomed. */
-  width: min(88vw, 54vh); height: min(88vw, 54vh); background: #1a140e; border-radius: 6px;
+  /* Portrait: a square that fits the phone width. Landscape gets a big
+     rectangle filling the free horizontal space (see the media query below). */
+  width: min(88vw, 62vh); height: min(88vw, 62vh); background: #1a140e; border-radius: 6px;
   cursor: grab;
 }
 #worldmap-viewport.dragging { cursor: grabbing; }
@@ -146,6 +146,20 @@ const WORLD_MAP_CSS = `
 }
 #wm-info .wm-info-title { font-size: 15px; font-weight: bold; color: #ffe066; margin-bottom: 4px; }
 #wm-info .wm-info-body { font-size: 13px; color: #d8c9a2; line-height: 1.4; }
+
+/* Landscape: short on height, long on width. Header stays on top; the filters
+   become a slim left sidebar and the map fills all the remaining space as one
+   big rectangle (the openWorldMap JS fits/centres it using both axes). */
+@media (orientation: landscape) {
+  #worldmap-panel { width: min(96vw, 1040px); height: 92vh; max-height: 92vh; }
+  #wm-body { flex-direction: row; flex: 1; min-height: 0; }
+  #wm-filters {
+    flex-direction: column; flex-wrap: nowrap; flex: 0 0 132px; box-sizing: border-box;
+    padding: 10px; gap: 8px; overflow: hidden;
+  }
+  .wm-chip { width: 100%; box-sizing: border-box; padding: 0 8px; }
+  #worldmap-viewport { width: auto; height: auto; flex: 1; min-width: 0; margin: 8px 8px 8px 0; }
+}
 `
 
 let cssReady = false
@@ -307,7 +321,9 @@ export function openWorldMap(data: WorldMapData): void {
     })
     filters.appendChild(btn)
   }
-  panel.appendChild(filters)
+  const wmBody = document.createElement('div')
+  wmBody.id = 'wm-body'
+  wmBody.appendChild(filters)
 
   const viewport = document.createElement('div')
   viewport.id = 'worldmap-viewport'
@@ -316,7 +332,8 @@ export function openWorldMap(data: WorldMapData): void {
   const canvas = bakeCanvas(data)
   stage.appendChild(canvas)
   viewport.appendChild(stage)
-  panel.appendChild(viewport)
+  wmBody.appendChild(viewport)
+  panel.appendChild(wmBody)
   modal.appendChild(panel)
   modal.addEventListener('pointerdown', (e) => {
     if (e.target === modal) closeWorldMap()
@@ -326,13 +343,17 @@ export function openWorldMap(data: WorldMapData): void {
   const bakedW = data.width * BAKE_PX_PER_TILE
   const bakedH = data.height * BAKE_PX_PER_TILE
   const viewportRect = viewport.getBoundingClientRect()
-  const viewportSize = viewportRect.width || 1
-  const fitZoom = viewportSize / Math.max(bakedW, bakedH)
+  const vw = viewportRect.width || 1
+  const vh = viewportRect.height || 1
+  // Fit the whole zone using BOTH axes (min ratio so nothing clips), then centre
+  // on the player. The viewport is a wide rectangle in landscape and a square in
+  // portrait — measuring width and height separately lets the map fill the free
+  // horizontal space instead of assuming a square (which rendered it tiny).
+  const fitZoom = Math.min(vw / bakedW, vh / bakedH)
   const transform = { panX: 0, panY: 0, zoom: fitZoom * MIN_ZOOM_MULT }
-  // Centre the initial view on the player.
-  transform.panX = viewportSize / 2 - data.self.x * BAKE_PX_PER_TILE * transform.zoom
-  transform.panY = viewportSize / 2 - data.self.z * BAKE_PX_PER_TILE * transform.zoom
-  clampPan(transform, bakedW, bakedH, viewportSize, viewportSize)
+  transform.panX = vw / 2 - data.self.x * BAKE_PX_PER_TILE * transform.zoom
+  transform.panY = vh / 2 - data.self.z * BAKE_PX_PER_TILE * transform.zoom
+  clampPan(transform, bakedW, bakedH, vw, vh)
 
   const markers: Marker[] = []
   const staticById = new Map<string, StaticObject>(data.statics.map((s) => [s.id, s]))
@@ -412,7 +433,7 @@ export function openWorldMap(data: WorldMapData): void {
 
   const zoomLimits: ZoomLimits = { min: fitZoom * MIN_ZOOM_MULT, max: fitZoom * MAX_ZOOM_MULT }
   const applyZoomAt = (cx: number, cy: number, newZoom: number): void => {
-    Object.assign(transform, zoomAt(transform, cx, cy, newZoom, zoomLimits, bakedW, bakedH, viewportSize, viewportSize))
+    Object.assign(transform, zoomAt(transform, cx, cy, newZoom, zoomLimits, bakedW, bakedH, vw, vh))
     reposition(stage, markers, selfEl, data.self, transform)
   }
 
@@ -429,7 +450,7 @@ export function openWorldMap(data: WorldMapData): void {
     // Stop the tap from also reaching the viewport's own pointerdown (which
     // would start a pan drag) — mirrors how marker taps stopPropagation.
     btn.addEventListener('pointerdown', (e) => e.stopPropagation())
-    btn.addEventListener('click', () => applyZoomAt(viewportSize / 2, viewportSize / 2, transform.zoom * factor))
+    btn.addEventListener('click', () => applyZoomAt(vw / 2, vh / 2, transform.zoom * factor))
     zoomControls.appendChild(btn)
   }
   viewport.appendChild(zoomControls)
@@ -479,7 +500,7 @@ export function openWorldMap(data: WorldMapData): void {
     transform.panY += e.clientY - lastY
     lastX = e.clientX
     lastY = e.clientY
-    clampPan(transform, bakedW, bakedH, viewportSize, viewportSize)
+    clampPan(transform, bakedW, bakedH, vw, vh)
     reposition(stage, markers, selfEl, data.self, transform)
   })
   const endPointer = (e: PointerEvent): void => {
