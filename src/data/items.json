@@ -9181,14 +9181,14 @@
       "stab": 0,
       "slash": 0,
       "crush": 0,
-      "magic": 4,
+      "magic": 16,
       "ranged": 0
     },
     "defenceBonus": {
       "stab": 0,
       "slash": 0,
       "crush": 0,
-      "magic": 5,
+      "magic": 30,
       "ranged": 0
     },
     "otherBonus": {
@@ -9215,14 +9215,14 @@
       "stab": 0,
       "slash": 0,
       "crush": 0,
-      "magic": 35,
+      "magic": 50,
       "ranged": -15
     },
     "defenceBonus": {
       "stab": 0,
       "slash": 0,
       "crush": 0,
-      "magic": 26,
+      "magic": 45,
       "ranged": -15
     },
     "otherBonus": {
@@ -9249,14 +9249,14 @@
       "stab": 0,
       "slash": 0,
       "crush": 0,
-      "magic": 26,
+      "magic": 38,
       "ranged": -11
     },
     "defenceBonus": {
       "stab": 0,
       "slash": 0,
       "crush": 0,
-      "magic": 20,
+      "magic": 35,
       "ranged": -11
     },
     "otherBonus": {
