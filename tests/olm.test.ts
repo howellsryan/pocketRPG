@@ -313,9 +313,9 @@ describe('New Items', () => {
     expect((hat as any).otherBonus.magicDamage).toBe(3)
   })
 
-  it('kodai robe top should give +4% magic damage bonus', () => {
+  it('kodai robe top should give +8% magic damage bonus', () => {
     const top = itemsData['kodai_robe_top' as keyof typeof itemsData]
-    expect((top as any).otherBonus.magicDamage).toBe(4)
+    expect((top as any).otherBonus.magicDamage).toBe(8)
   })
 
   it('kodai robe bottom should give +3% magic damage bonus', () => {

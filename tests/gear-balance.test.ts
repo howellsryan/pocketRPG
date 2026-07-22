@@ -22,11 +22,11 @@ describe('Kodai magic robe tier', () => {
     }
   })
 
-  it('Kodai and Shardglass magic-damage sets both total +10%', () => {
+  it('Kodai is best-in-class magic damage, ahead of the +10% Shardglass set', () => {
     const kodai = magicDmg('kodai_hat') + magicDmg('kodai_robe_top') + magicDmg('kodai_robe_bottom')
     const shard = magicDmg('shardglass_helmet') + magicDmg('shardglass_plate_body') + magicDmg('shardglass_platelegs')
-    expect(kodai).toBe(10)
     expect(shard).toBe(10)
+    expect(kodai).toBeGreaterThan(shard)
   })
 
   it('full Kodai set grants a +30% magic-accuracy bonus', () => {

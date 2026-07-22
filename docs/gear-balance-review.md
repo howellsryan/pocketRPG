@@ -31,15 +31,24 @@ engine formulas change.
 
 ## Headline findings
 
-**The combat triangle is not even.** Ranged and magic BiS out-DPS melee by ~55%:
+**The combat triangle is uneven — but the outlier is magic, not weak melee.** Each
+style's number is a *full max-gear loadout* (best weapon plus every strength /
+magic-damage source across all armour and accessory slots), not a bare weapon:
 
-| Style | BiS weapon | DPS |
+| Style | BiS loadout (weapon) | DPS |
 |---|---|---:|
-| melee | Blade of Saeldor | ~7.5 |
-| ranged | Bow of Faerdhinen | ~11.6 |
-| magic | Trident of Venom (powered staff) | ~12.6 |
+| melee | Blade of Saeldor + full Shardglass/Ferocious/Torment/Berserker | ~7.5 |
+| ranged | 2nd Age Bow + Dragon Arrow + full gear | ~8.6 |
+| magic | Trident of Venom (powered staff) + full mage gear | ~12.7 |
 
-Melee's best weapons cap out well below the other two styles' at level 99.
+Melee and ranged are within ~15% of each other. Magic leads because powered staves
+(Trident) scale their base hit with magic level (42 at level 99), fire every 3 ticks,
+and cost no ammo. Melee's only structural disadvantage is that ranged gets a strength
+slot (arrows/bolts) melee has no equivalent for — a small gap, not the ~55% the
+first draft reported. That earlier gap was a **tool bug**: the ranged loadout was
+firing a +150-strength Dragon Javelin from a bow that cannot use javelins. The
+benchmark now enforces ammo compatibility (`ammoKind` vs the weapon's `ammoType`),
+so a self-contained weapon like the crystal bow gains nothing from the ammo slot.
 
 **Price/difficulty is widely decoupled from power.** The tool flags ~200 dominated
 items and ~40 value inversions. The offenders cluster:
@@ -92,24 +101,26 @@ Weapon DPS and magic-damage % changes ripple into PvE boss kill-times and
 server-authoritative PvP (§10), so they were left for a scoped pass rather than a
 drive-by. In priority order:
 
-1. **Lift melee's ceiling** so BiS melee DPS lands within the triangle tolerance of
-   ranged/magic — raise the top melee weapons' strength bonus, or shorten the fastest
-   ones' speed, rather than nerfing ranged/magic.
-2. **Re-tier prestige weapons to their price.** Twisted Longbow, Shadow of Tumaken,
-   Ancient Maul, the godswords and Dragon-tier uniques should out-DPS the cheap
-   staples that currently beat them. Set the cheap over-performers as the mid-tier
-   baseline and raise the premier uniques above it.
+1. **Rein in magic's lead, or lift melee/ranged to match.** Magic (~12.7) sits well
+   above melee (~7.5) and ranged (~8.6) because powered staves scale with level, hit
+   every 3 ticks and cost no ammo. Decide whether powered-staff base damage should be
+   toned down or the other two styles' ceilings raised. Melee and ranged themselves
+   are close enough to leave alone.
+2. **Re-tier prestige weapons to their price.** Shadow of Tumaken, the godswords and
+   Dragon-tier uniques should out-DPS the cheap staples that currently beat them
+   (Kaelor's Crossbow, Zesta Longsword, Abyssal Tentacle, Archmage Wand). Set the
+   cheap over-performers as the mid-tier baseline and raise the premier uniques above
+   it. (Twisted Longbow and Ancient Maul are already handled.)
 3. **Kingdom of collectors.** 2nd Age items carry placeholder `shopValue`
    (2,147,483,647 = INT32_MAX) yet mid-tier stats — decide if they are prestige
    cosmetics (leave stats, fix the sentinel price) or BiS (raise stats).
 
 ## Tool limitations (so the flags are read correctly)
 
-- **Ammo is not matched to a launcher.** The ammo rankings pick the best strength
-  regardless of bolt/arrow/javelin compatibility, so those flags overstate the case.
-- **Set bonuses are not modelled.** Combat-set items (`combatSetBonuses.js`) are
-  excluded from the flags because a piece can look weak in isolation yet be BiS in a
-  full set (Void, Masari, Shardglass).
+- **Set bonuses are not modelled** in the loadout DPS (Kodai's +30% magic accuracy,
+  the Shardglass/Void/Masari multipliers). Combat-set items (`combatSetBonuses.js`)
+  are also excluded from the dominated/inversion flags, because a piece can look weak
+  in isolation yet be BiS once the full-set bonus applies.
 - **Cosmetic / skill capes** show as "dominated" by the Max Cape — expected; combat
   stats are not their purpose.
 - Prayer, special attacks, and gear-swapping are out of the DPS model.

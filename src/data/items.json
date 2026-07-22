@@ -9228,7 +9228,7 @@
     "otherBonus": {
       "meleeStrength": 0,
       "rangedStrength": 0,
-      "magicDamage": 4
+      "magicDamage": 8
     },
     "requirements": {
       "magic": 75,

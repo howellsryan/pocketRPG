@@ -168,8 +168,21 @@ for (const slot of GEAR_SLOTS) {
 
 // ── DPS of a full loadout ──
 
+// Ammo only contributes if the equipped weapon actually fires it: the ammo's
+// ammoKind must match the weapon's ammoType. A weapon with no ammoType (crystal
+// bow, blowpipe) is self-contained and gains nothing from the ammo slot.
+function ammoCompatible(weapon, ammoItem) {
+  if (!ammoItem) return true
+  if (ammoItem.slot !== 'ammo') return true
+  const wt = weapon?.ammoType
+  if (!wt) return false
+  return ammoItem.ammoKind === wt
+}
+
 function loadoutDPS(style, weapon, gear) {
-  const worn = [weapon, ...Object.values(gear)].filter(Boolean)
+  const worn = [weapon, ...Object.values(gear)]
+    .filter(Boolean)
+    .filter((it) => ammoCompatible(weapon, it))
   const attackBonus = worn.reduce((s, it) => s + styleAttackBonus(it, style), 0)
   const speed = Number(weapon?.attackSpeed) || 4
   const interval = speed * TICK_SECONDS
