@@ -22,9 +22,10 @@ const PRAYER_SKILL_ICON: Record<string, { icon: string; accent: string }> = {
 export type MenuDispatch = (row: MenuRow) => void
 
 // Prayer/spell/equip panes keep a fixed 40px cell grid; inventory reflows its
-// columns responsively (7 wide in the portrait sheet, 4 in the landscape
-// slide-out) via CSS keyed off the orientation attribute, so it needs no fixed
-// width. INVENTORY_ROWS only sizes the 28-slot build loop now.
+// columns responsively (7 wide in both orientations; the landscape slide-out
+// shrinks the icons so all 28 slots fit on one screen without scrolling) via
+// CSS keyed off the orientation attribute, so it needs no fixed width.
+// INVENTORY_ROWS only sizes the 28-slot build loop now.
 const INVENTORY_COLS = 4
 const INVENTORY_ROWS = 7
 const INV_GAP_PX = 3
@@ -83,7 +84,7 @@ ${SCROLL_CSS}
 }
 #hud-eye { width: 44px; height: 44px; border-radius: 12px; }
 :root[data-hud-hidden="1"] #hud-eye { color: #ffe066; background: rgba(20, 16, 10, 0.6); }
-#hud-compass { border-radius: 999px; color: #ffe066; }
+#hud-compass { width: 44px; height: 44px; border-radius: 12px; }
 #hud-eye svg, #hud-compass svg { display: block; }
 :root:not([data-minimap="compass"]) #hud-compass { display: none; }
 
@@ -193,8 +194,12 @@ ${SCROLL_CSS}
   display: grid; gap: ${INV_GAP_PX}px; padding-top: 4px;
 }
 :root[data-hud-orient="portrait"] #inv-panel { grid-template-columns: repeat(7, 1fr); }
-:root[data-hud-orient="landscape"] #inv-panel { grid-template-columns: repeat(4, 1fr); }
+:root[data-hud-orient="landscape"] #inv-panel { grid-template-columns: repeat(7, 1fr); }
 #inv-panel .inv-slot { aspect-ratio: 1; }
+/* Landscape's slide-out is narrow, so shrink the 7-wide grid's icons to keep
+   all 28 slots visible without scrolling. */
+:root[data-hud-orient="landscape"] #inv-panel .inv-slot svg { width: 25px; height: 25px; }
+:root[data-hud-orient="landscape"] #inv-panel .inv-slot span:not(.qty) { font-size: 17px; }
 #equip-panel {
   display: grid; grid-template-columns: repeat(3, 40px); grid-auto-rows: 40px; gap: 3px;
   justify-content: center;
@@ -268,14 +273,15 @@ ${SCROLL_CSS}
 }
 #magic-panel { max-height: 340px; overflow-y: auto; display: flex; flex-direction: column; gap: 5px; }
 .tp-list { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
-/* The narrow landscape slide-out can't read four teleport labels across. */
-:root[data-hud-orient="landscape"] .tp-list { grid-template-columns: repeat(2, 1fr); }
 .tp-row {
   min-height: 40px; padding: 8px 12px; border: 1px solid #5a4a30; border-radius: 6px; cursor: pointer;
   text-align: left; background: rgba(60, 50, 34, 0.55); color: #f4e9c8; font-size: 13px; font-family: sans-serif;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .tp-row:hover { background: rgba(80, 66, 42, 0.75); }
+/* Four columns in the narrow landscape slide-out: trim the padding/size so the
+   place labels get as much width as possible before ellipsising. */
+:root[data-hud-orient="landscape"] .tp-row { padding: 8px 6px; font-size: 12px; }
 .spell-grid { display: flex; flex-wrap: wrap; gap: 4px; }
 .spell-ico {
   width: 40px; height: 40px; padding: 0; border-radius: 6px; cursor: pointer; user-select: none;
@@ -330,17 +336,32 @@ ${SCROLL_CSS}
   opacity: 0; transition: opacity 0.3s;
 }
 #unique-banner.visible { opacity: 1; }
-#chat-input {
+#chat-input-wrap {
   position: fixed; left: 8px; z-index: 10; width: min(280px, 60vw);
-  padding: 7px 10px; font-family: sans-serif; font-size: 13px;
+  display: flex; align-items: stretch;
+}
+#chat-input {
+  flex: 1; min-width: 0;
+  padding: 7px 42px 7px 10px; font-family: sans-serif; font-size: 13px;
   background: rgba(20, 16, 10, 0.82); color: #f4e9c8;
   border: 1px solid #5a4a30; border-radius: 8px; outline: none;
   -webkit-user-select: text; user-select: text; touch-action: auto;
 }
 #chat-input::placeholder { color: #8a7a5a; }
-:root[data-hud-orient="portrait"] #chat-input { bottom: calc(72px + env(safe-area-inset-bottom, 0px)); }
-:root[data-hud-orient="landscape"] #chat-input { bottom: calc(10px + env(safe-area-inset-bottom, 0px)); }
-:root[data-hud-orient="landscape"][data-hud-dock="left"] #chat-input { left: 68px; }
+/* Tap-to-send button tucked inside the input's right edge (keyboardless send). */
+#chat-send {
+  position: absolute; right: 5px; top: 50%; transform: translateY(-50%);
+  width: 30px; height: 30px; padding: 0; border: none; border-radius: 6px; cursor: pointer;
+  background: rgba(70, 58, 36, 0.9); color: #ffe066;
+  display: flex; align-items: center; justify-content: center;
+}
+#chat-send:active { background: rgba(90, 74, 42, 0.95); }
+#chat-send svg { display: block; }
+:root[data-hud-orient="portrait"] #chat-input-wrap { bottom: calc(72px + env(safe-area-inset-bottom, 0px)); }
+/* Landscape has no bottom rail — drop the input into the true bottom-left
+   corner (no safe-area lift; the home indicator sits centre, clear of it). */
+:root[data-hud-orient="landscape"] #chat-input-wrap { bottom: 8px; left: 6px; }
+:root[data-hud-orient="landscape"][data-hud-dock="left"] #chat-input-wrap { left: 68px; }
 .nameplate {
   position: absolute; transform: translate(-50%, -100%); pointer-events: none;
   font-family: sans-serif; font-size: 12px; color: #ffffff; text-shadow: 0 1px 2px #000;
@@ -788,11 +809,12 @@ function onGlobalKeyDown(e: KeyboardEvent): void {
 // chevron) — the map button still uses the bespoke `globe` via data-icon.
 const EYE_SVG = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 12S6 5.8 12 5.8 21.5 12 21.5 12 18 18.2 12 18.2 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.7"/></svg>'
 const EYE_OFF_SVG = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 12S6 5.8 12 5.8 21.5 12 21.5 12 18 18.2 12 18.2 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.7"/><path d="M4 3.5l16 17"/></svg>'
-const COMPASS_SVG = '<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="transform:rotate(20deg)"><path d="M12 2.8l5.4 15.4L12 13.7l-5.4 4.5z"/></svg>'
+const COMPASS_SVG = '<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" style="transform:rotate(20deg)"><path d="M12 2.8l5.4 15.4L12 13.7l-5.4 4.5z"/></svg>'
 const GEAR_SVG = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M18.7 5.3l-2.1 2.1M7.4 16.6l-2.1 2.1"/></svg>'
 const CHEVRON_SVG = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 10l6 6 6-6"/></svg>'
 const XMARK_SVG = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg>'
 const DOOR_SVG = '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13.5 4.5H6.5v15h7"/><path d="M10.5 12H21M18 9l3 3-3 3"/></svg>'
+const SEND_SVG = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 3L3 10.5l7 2.6 2.6 7L21 3z"/><path d="M10 13.1L21 3"/></svg>'
 
 function railTabButton(tab: { id: string; iconKey: string; title: string }): HTMLElement {
   const btn = document.createElement('div')
@@ -1546,21 +1568,36 @@ export function removeOverheadChat(id: string): void {
  * textContent on the way back out. */
 export function initChatInput(onSend: (text: string) => void): void {
   if (document.getElementById('chat-input')) return
+  const wrap = document.createElement('div')
+  wrap.id = 'chat-input-wrap'
   const input = document.createElement('input')
   input.id = 'chat-input'
   input.type = 'text'
   input.placeholder = 'Say something…'
   input.maxLength = 120
   input.autocomplete = 'off'
+  const send = (): void => {
+    const text = input.value.trim()
+    input.value = ''
+    if (text) onSend(text)
+  }
   input.addEventListener('keydown', (e) => {
     e.stopPropagation()
     if (e.key === 'Escape') input.blur()
     if (e.key !== 'Enter') return
-    const text = input.value.trim()
-    input.value = ''
-    if (text) onSend(text)
+    send()
   })
-  document.body.appendChild(input)
+  const sendBtn = document.createElement('button')
+  sendBtn.id = 'chat-send'
+  sendBtn.type = 'button'
+  sendBtn.title = 'Send'
+  sendBtn.setAttribute('aria-label', 'Send message')
+  sendBtn.innerHTML = SEND_SVG
+  // Keep focus so the on-screen keyboard stays up for a quick second message.
+  sendBtn.addEventListener('click', () => { send(); input.focus() })
+  wrap.appendChild(input)
+  wrap.appendChild(sendBtn)
+  document.body.appendChild(wrap)
 }
 
 const NAME_CYAN = '#61d0d8'

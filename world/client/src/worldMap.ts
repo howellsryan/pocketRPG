@@ -104,7 +104,10 @@ const WORLD_MAP_CSS = `
 .wm-chip.active { background: rgba(70, 58, 36, 0.92); color: #ffe066; border-color: #ffe066; }
 #worldmap-viewport {
   position: relative; overflow: hidden; margin: 10px auto; touch-action: none;
-  width: min(90vw, 70vh); height: min(90vw, 70vh); background: #1a140e; border-radius: 6px;
+  /* Square, but capped by height too so the whole panel (header + filters +
+     map) fits on landscape phones — otherwise the header/close button clipped
+     off-screen and the map, measured non-square, rendered over-zoomed. */
+  width: min(88vw, 54vh); height: min(88vw, 54vh); background: #1a140e; border-radius: 6px;
   cursor: grab;
 }
 #worldmap-viewport.dragging { cursor: grabbing; }
