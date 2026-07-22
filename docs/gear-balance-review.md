@@ -37,11 +37,12 @@ magic-damage source across all armour and accessory slots), not a bare weapon:
 
 | Style | BiS loadout (weapon) | DPS |
 |---|---|---:|
-| melee | Blade of Saeldor + full Shardglass/Ferocious/Torment/Berserker | ~7.5 |
+| melee | Blade of Saeldor + full Grondar/Ferocious/Torment/Berserker | ~8.3 |
 | ranged | 2nd Age Bow + Dragon Arrow + full gear | ~8.6 |
-| magic | Trident of Venom (powered staff) + full mage gear | ~12.7 |
+| magic | Trident of Venom (powered staff) + full mage gear | ~13.0 |
 
-Melee and ranged are within ~15% of each other. Magic leads because powered staves
+Melee and ranged are within ~4% of each other (Grondar's strength/accuracy buff,
+below, closed most of the earlier gap). Magic leads because powered staves
 (Trident) scale their base hit with magic level (42 at level 99), fire every 3 ticks,
 and cost no ammo. Melee's only structural disadvantage is that ranged gets a strength
 slot (arrows/bolts) melee has no equivalent for — a small gap, not the ~55% the
@@ -94,6 +95,21 @@ worthwhile crush weapon for its price.
 
 **Black dragonhide** now out-defends Red on every axis (body and legs), fixing the
 higher-tier set being the weaker one.
+
+**Grondar (Bandos) tank set** — the chestplate/tassets/boots carried a defensive
+budget but a near-zero strength/accuracy one (chestplate +4 str, tassets +2 str,
+boots +4 str, 0 accuracy on all three), so cheaper alternatives like Shardglass
+Plate Body (+10 str) and Spiked Manacles (+8 str, +10 accuracy) out-DPS'd the boss
+unique. Buffed to lead every rival in their slot on both axes:
+
+| Item | melee strength | accuracy (stab/slash/crush) |
+|---|---|---|
+| Grondar Chestplate | 4 → **14** | 0 → **14** |
+| Grondar Tassets | 2 → **10** | 0 → **10** |
+| Grondar Boots | 4 → **9** | 0 → **11** |
+
+This also closed most of the melee/ranged gap: melee's max-gear DPS rose from
+~7.5 to ~8.3, now within 4% of ranged's ~8.6.
 
 ## Recommended follow-up (needs a deliberate pass, not applied here)
 

@@ -60,6 +60,32 @@ describe('Black dragonhide out-defends Red', () => {
   })
 })
 
+describe('Grondar (Bandos) melee tank set', () => {
+  const str = (id: string) => (itemsData as any)[id].otherBonus.meleeStrength as number
+  const acc = (id: string) => (itemsData as any)[id].attackBonus.stab as number
+
+  it('Grondar Chestplate leads body slot on melee strength and accuracy', () => {
+    for (const rival of ['shardglass_plate_body', 'zesta_vest', 'fighter_body']) {
+      expect(str('grondar_chestplate')).toBeGreaterThan(str(rival))
+      expect(acc('grondar_chestplate')).toBeGreaterThan(acc(rival))
+    }
+  })
+
+  it('Grondar Tassets leads legs slot on melee strength and accuracy', () => {
+    for (const rival of ['shardglass_platelegs', 'zesta_skirt', 'freminnik_kilt']) {
+      expect(str('grondar_tassets')).toBeGreaterThan(str(rival))
+      expect(acc('grondar_tassets')).toBeGreaterThan(acc(rival))
+    }
+  })
+
+  it('Grondar Boots leads boots slot on melee strength and accuracy', () => {
+    for (const rival of ['spiked_manacles', 'primeval_boots', 'dragon_boots']) {
+      expect(str('grondar_boots')).toBeGreaterThan(str(rival))
+      expect(acc('grondar_boots')).toBeGreaterThan(acc(rival))
+    }
+  })
+})
+
 describe('Ancient Maul', () => {
   it('is a 5-tick weapon with the gargoyle-maul triple-hit special', () => {
     const maul = (itemsData as any).ancient_maul

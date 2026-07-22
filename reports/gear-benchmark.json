@@ -11,9 +11,9 @@
     {
       "style": "melee",
       "weapon": "blade_of_saeldor",
-      "dps": 7.532805829246512,
-      "maxHit": 49,
-      "acc": 0.5423620197057488
+      "dps": 8.274795505269513,
+      "maxHit": 51,
+      "acc": 0.57287045805712
     },
     {
       "style": "ranged",
@@ -30,7 +30,7 @@
       "acc": 0.5513350785340314
     }
   ],
-  "triangleRatio": 1.728125494510763,
+  "triangleRatio": 1.573166828162746,
   "triangleOk": false,
   "dominated": [
     {
@@ -89,7 +89,7 @@
         "name": "Infernal Max Cape",
         "req": 0,
         "value": 0,
-        "dps": 0.912,
+        "dps": 1.043,
         "def": 125
       }
     },
@@ -141,7 +141,7 @@
         "name": "Max Cape",
         "req": 0,
         "value": 1000000000,
-        "dps": 0.192,
+        "dps": 0.169,
         "def": 50
       },
       "by": {
@@ -149,7 +149,7 @@
         "name": "Infernal Max Cape",
         "req": 0,
         "value": 0,
-        "dps": 0.912,
+        "dps": 1.043,
         "def": 125
       }
     },
@@ -209,7 +209,7 @@
         "name": "Infernal Max Cape",
         "req": 0,
         "value": 0,
-        "dps": 0.912,
+        "dps": 1.043,
         "def": 125
       }
     },
@@ -269,7 +269,7 @@
         "name": "Grondar Chestplate",
         "req": 65,
         "value": 24546165,
-        "dps": 0.151,
+        "dps": 0.703,
         "def": 468
       }
     },
@@ -305,12 +305,12 @@
         "def": 150
       },
       "by": {
-        "id": "zesta_skirt",
-        "name": "Zesta Skirt",
-        "req": 45,
-        "value": 130000,
-        "dps": 0.151,
-        "def": 159
+        "id": "grondar_tassets",
+        "name": "Grondar Tassets",
+        "req": 65,
+        "value": 16462681,
+        "dps": 0.481,
+        "def": 326
       }
     },
     {
@@ -421,7 +421,7 @@
         "name": "Fang Of Osmun",
         "req": 82,
         "value": 75000000,
-        "dps": 3.114,
+        "dps": 3.468,
         "def": 0
       },
       "by": {
@@ -429,7 +429,7 @@
         "name": "Ghraxis Rapier",
         "req": 80,
         "value": 26610515,
-        "dps": 4.951,
+        "dps": 5.411,
         "def": 0
       }
     },
@@ -441,7 +441,7 @@
         "name": "Dragon Hunter Lance",
         "req": 78,
         "value": 64737500,
-        "dps": 4.547,
+        "dps": 5.025,
         "def": 0
       },
       "by": {
@@ -449,7 +449,7 @@
         "name": "Abyssal Tentacle",
         "req": 75,
         "value": 1714037,
-        "dps": 4.786,
+        "dps": 5.246,
         "def": 0
       }
     },
@@ -481,7 +481,7 @@
         "name": "Ashen Sovereign's Edge",
         "req": 80,
         "value": 50000000,
-        "dps": 4.292,
+        "dps": 4.86,
         "def": 0
       },
       "by": {
@@ -489,7 +489,7 @@
         "name": "Zul-Kaar's Blade",
         "req": 80,
         "value": 5000000,
-        "dps": 4.951,
+        "dps": 5.411,
         "def": 0
       }
     },
@@ -509,7 +509,7 @@
         "name": "Dragon Defender",
         "req": 60,
         "value": 500000,
-        "dps": 0.642,
+        "dps": 0.593,
         "def": 67
       }
     },
@@ -541,7 +541,7 @@
         "name": "Dragon Claws",
         "req": 60,
         "value": 44438421,
-        "dps": 3.613,
+        "dps": 4.043,
         "def": 0
       },
       "by": {
@@ -549,7 +549,7 @@
         "name": "Boneclaw Rapier",
         "req": 60,
         "value": 3800000,
-        "dps": 4.364,
+        "dps": 4.825,
         "def": 0
       }
     },
@@ -565,12 +565,12 @@
         "def": 150
       },
       "by": {
-        "id": "zesta_skirt",
-        "name": "Zesta Skirt",
-        "req": 45,
-        "value": 130000,
-        "dps": 0.151,
-        "def": 159
+        "id": "grondar_tassets",
+        "name": "Grondar Tassets",
+        "req": 65,
+        "value": 16462681,
+        "dps": 0.481,
+        "def": 326
       }
     },
     {
@@ -605,12 +605,12 @@
         "def": 124
       },
       "by": {
-        "id": "zesta_vest",
-        "name": "Zesta Vest",
-        "req": 45,
-        "value": 150000,
-        "dps": 0.301,
-        "def": 236
+        "id": "grondar_chestplate",
+        "name": "Grondar Chestplate",
+        "req": 65,
+        "value": 24546165,
+        "dps": 0.703,
+        "def": 468
       }
     },
     {
@@ -729,7 +729,7 @@
         "name": "Grondar Boots",
         "req": 65,
         "value": 675775,
-        "dps": 0,
+        "dps": 0.498,
         "def": 24
       }
     },
@@ -761,7 +761,7 @@
         "name": "Lumira Godsword",
         "req": 75,
         "value": 28950625,
-        "dps": 4.181,
+        "dps": 4.477,
         "def": 0
       },
       "by": {
@@ -769,7 +769,7 @@
         "name": "Abyssal Tentacle",
         "req": 75,
         "value": 1714037,
-        "dps": 4.786,
+        "dps": 5.246,
         "def": 0
       }
     },
@@ -785,12 +785,12 @@
         "def": 96
       },
       "by": {
-        "id": "zesta_skirt",
-        "name": "Zesta Skirt",
-        "req": 45,
-        "value": 130000,
-        "dps": 0.151,
-        "def": 159
+        "id": "grondar_tassets",
+        "name": "Grondar Tassets",
+        "req": 65,
+        "value": 16462681,
+        "dps": 0.481,
+        "def": 326
       }
     },
     {
@@ -854,6 +854,26 @@
       }
     },
     {
+      "style": "melee",
+      "slot": "boots",
+      "item": {
+        "id": "primeval_boots",
+        "name": "Primeval Boots",
+        "req": 75,
+        "value": 21902457,
+        "dps": 0.156,
+        "def": 61
+      },
+      "by": {
+        "id": "emberhowl_boots",
+        "name": "Emberhowl Boots",
+        "req": 60,
+        "value": 1700000,
+        "dps": 0.156,
+        "def": 115
+      }
+    },
+    {
       "style": "ranged",
       "slot": "boots",
       "item": {
@@ -901,7 +921,7 @@
         "name": "Krylth Godsword",
         "req": 75,
         "value": 19571258,
-        "dps": 4.181,
+        "dps": 4.477,
         "def": 0
       },
       "by": {
@@ -909,7 +929,7 @@
         "name": "Abyssal Tentacle",
         "req": 75,
         "value": 1714037,
-        "dps": 4.786,
+        "dps": 5.246,
         "def": 0
       }
     },
@@ -921,7 +941,7 @@
         "name": "Grondar Godsword",
         "req": 75,
         "value": 19029248,
-        "dps": 4.181,
+        "dps": 4.477,
         "def": 0
       },
       "by": {
@@ -929,7 +949,7 @@
         "name": "Abyssal Tentacle",
         "req": 75,
         "value": 1714037,
-        "dps": 4.786,
+        "dps": 5.246,
         "def": 0
       }
     },
@@ -1021,7 +1041,7 @@
         "name": "Dragon Warhammer",
         "req": 60,
         "value": 16074033,
-        "dps": 3.24,
+        "dps": 3.54,
         "def": 0
       },
       "by": {
@@ -1029,7 +1049,7 @@
         "name": "Boneclaw Rapier",
         "req": 60,
         "value": 3800000,
-        "dps": 4.364,
+        "dps": 4.825,
         "def": 0
       }
     },
@@ -1049,7 +1069,7 @@
         "name": "Dragon Defender",
         "req": 60,
         "value": 500000,
-        "dps": 0.642,
+        "dps": 0.593,
         "def": 67
       }
     },
@@ -1189,7 +1209,7 @@
         "name": "Imbued Slayer Crown",
         "req": 20,
         "value": 7500000,
-        "dps": 0.345,
+        "dps": 0.215,
         "def": 50
       }
     },
@@ -1241,7 +1261,7 @@
         "name": "Zephyra Godsword",
         "req": 75,
         "value": 8108827,
-        "dps": 4.181,
+        "dps": 4.477,
         "def": 0
       },
       "by": {
@@ -1249,7 +1269,7 @@
         "name": "Abyssal Tentacle",
         "req": 75,
         "value": 1714037,
-        "dps": 4.786,
+        "dps": 5.246,
         "def": 0
       }
     },
@@ -1261,7 +1281,7 @@
         "name": "Shardglass Pickaxe",
         "req": 70,
         "value": 7500000,
-        "dps": 3.64,
+        "dps": 4.058,
         "def": 0
       },
       "by": {
@@ -1269,7 +1289,7 @@
         "name": "Nether Demon Whip",
         "req": 70,
         "value": 1214445,
-        "dps": 4.565,
+        "dps": 5.138,
         "def": 0
       }
     },
@@ -1281,7 +1301,7 @@
         "name": "Shardglass Axe",
         "req": 70,
         "value": 7500000,
-        "dps": 3.093,
+        "dps": 3.442,
         "def": 0
       },
       "by": {
@@ -1289,7 +1309,7 @@
         "name": "Nether Demon Whip",
         "req": 70,
         "value": 1214445,
-        "dps": 4.565,
+        "dps": 5.138,
         "def": 0
       }
     },
@@ -1355,33 +1375,13 @@
     },
     {
       "style": "melee",
-      "slot": "gloves",
-      "item": {
-        "id": "gloves_of_slaughter",
-        "name": "Gloves of Slaughter",
-        "req": 85,
-        "value": 5000000,
-        "dps": 0.513,
-        "def": 0
-      },
-      "by": {
-        "id": "cryptbound_gloves",
-        "name": "Cryptbound Gloves",
-        "req": 0,
-        "value": 130000,
-        "dps": 0.52,
-        "def": 54
-      }
-    },
-    {
-      "style": "melee",
       "slot": "shield",
       "item": {
         "id": "slayer_defender",
         "name": "Slayer Defender",
         "req": 85,
         "value": 5000000,
-        "dps": 0.595,
+        "dps": 0.577,
         "def": -50
       },
       "by": {
@@ -1389,7 +1389,7 @@
         "name": "Dragon Defender",
         "req": 60,
         "value": 500000,
-        "dps": 0.642,
+        "dps": 0.593,
         "def": 67
       }
     },
@@ -1409,7 +1409,7 @@
         "name": "Grondar Boots",
         "req": 65,
         "value": 675775,
-        "dps": 0,
+        "dps": 0.498,
         "def": 24
       }
     },
@@ -1441,7 +1441,7 @@
         "name": "Cindermaw Maul",
         "req": 60,
         "value": 4500000,
-        "dps": 3.111,
+        "dps": 3.498,
         "def": 0
       },
       "by": {
@@ -1449,7 +1449,7 @@
         "name": "Zesta Longsword",
         "req": 60,
         "value": 120000,
-        "dps": 4.181,
+        "dps": 4.635,
         "def": 3
       }
     },
@@ -1469,7 +1469,7 @@
         "name": "Zesta Vest",
         "req": 45,
         "value": 150000,
-        "dps": 0.301,
+        "dps": 0.309,
         "def": 236
       }
     },
@@ -1561,7 +1561,7 @@
         "name": "Emberhowl Axe",
         "req": 60,
         "value": 3600000,
-        "dps": 3.582,
+        "dps": 3.957,
         "def": 0
       },
       "by": {
@@ -1569,7 +1569,7 @@
         "name": "Zesta Longsword",
         "req": 60,
         "value": 120000,
-        "dps": 4.181,
+        "dps": 4.635,
         "def": 3
       }
     },
@@ -1589,7 +1589,7 @@
         "name": "Zesta Vest",
         "req": 45,
         "value": 150000,
-        "dps": 0.301,
+        "dps": 0.309,
         "def": 236
       }
     },
@@ -1621,7 +1621,7 @@
         "name": "Ironclad Longsword",
         "req": 60,
         "value": 3400000,
-        "dps": 3.48,
+        "dps": 3.934,
         "def": 0
       },
       "by": {
@@ -1629,7 +1629,7 @@
         "name": "Zesta Longsword",
         "req": 60,
         "value": 120000,
-        "dps": 4.181,
+        "dps": 4.635,
         "def": 3
       }
     },
@@ -1661,7 +1661,7 @@
         "name": "Boneclaw Shield",
         "req": 60,
         "value": 2900000,
-        "dps": -0.042,
+        "dps": -0.038,
         "def": 184
       },
       "by": {
@@ -1705,12 +1705,12 @@
         "def": 100
       },
       "by": {
-        "id": "gravehusk_helm",
-        "name": "Gravehusk Helm",
-        "req": 60,
-        "value": 2400000,
-        "dps": 0.128,
-        "def": 170
+        "id": "runeforged_full_helm",
+        "name": "Runeforged Full Helm",
+        "req": 40,
+        "value": 20685,
+        "dps": 0,
+        "def": 118
       }
     },
     {
@@ -1741,7 +1741,7 @@
         "name": "Dravok's Greataxe",
         "req": 70,
         "value": 1927923,
-        "dps": 3.027,
+        "dps": 3.355,
         "def": 0
       },
       "by": {
@@ -1749,7 +1749,7 @@
         "name": "Zesta Longsword",
         "req": 60,
         "value": 120000,
-        "dps": 4.181,
+        "dps": 4.635,
         "def": 3
       }
     },
@@ -1829,7 +1829,7 @@
         "name": "Zesta Vest",
         "req": 45,
         "value": 150000,
-        "dps": 0.301,
+        "dps": 0.309,
         "def": 236
       }
     },
@@ -1974,26 +1974,6 @@
       }
     },
     {
-      "style": "melee",
-      "slot": "boots",
-      "item": {
-        "id": "grondar_boots",
-        "name": "Grondar Boots",
-        "req": 65,
-        "value": 675775,
-        "dps": 0,
-        "def": 24
-      },
-      "by": {
-        "id": "dragon_boots",
-        "name": "Dragon Boots",
-        "req": 60,
-        "value": 254942,
-        "dps": 0,
-        "def": 47
-      }
-    },
-    {
       "style": "ranged",
       "slot": "boots",
       "item": {
@@ -2021,7 +2001,7 @@
         "name": "Dragon Pickaxe",
         "req": 60,
         "value": 571536,
-        "dps": 3.64,
+        "dps": 4.058,
         "def": 0
       },
       "by": {
@@ -2029,7 +2009,7 @@
         "name": "Zesta Longsword",
         "req": 60,
         "value": 120000,
-        "dps": 4.181,
+        "dps": 4.635,
         "def": 3
       }
     },
@@ -2069,7 +2049,7 @@
         "name": "Zesta Skirt",
         "req": 45,
         "value": 130000,
-        "dps": 0.151,
+        "dps": 0.156,
         "def": 159
       }
     },
@@ -2189,7 +2169,7 @@
         "name": "Zesta Vest",
         "req": 45,
         "value": 150000,
-        "dps": 0.301,
+        "dps": 0.309,
         "def": 236
       }
     },
@@ -2211,6 +2191,26 @@
         "value": 29647,
         "dps": -0.527,
         "def": 239
+      }
+    },
+    {
+      "style": "melee",
+      "slot": "weapon",
+      "item": {
+        "id": "chaotic_maul",
+        "name": "Chaotic Maul",
+        "req": 90,
+        "value": 200000,
+        "dps": 4.606,
+        "def": 0
+      },
+      "by": {
+        "id": "zesta_longsword",
+        "name": "Zesta Longsword",
+        "req": 60,
+        "value": 120000,
+        "dps": 4.635,
+        "def": 3
       }
     },
     {
@@ -2261,7 +2261,7 @@
         "name": "Lumira Sword",
         "req": 70,
         "value": 169802,
-        "dps": 3.922,
+        "dps": 4.478,
         "def": 0
       },
       "by": {
@@ -2269,7 +2269,7 @@
         "name": "Zesta Longsword",
         "req": 60,
         "value": 120000,
-        "dps": 4.181,
+        "dps": 4.635,
         "def": 3
       }
     },
@@ -2289,7 +2289,7 @@
         "name": "Zesta Skirt",
         "req": 45,
         "value": 130000,
-        "dps": 0.151,
+        "dps": 0.156,
         "def": 159
       }
     },
@@ -2309,7 +2309,7 @@
         "name": "Zesta Skirt",
         "req": 45,
         "value": 130000,
-        "dps": 0.151,
+        "dps": 0.156,
         "def": 159
       }
     },
@@ -2329,7 +2329,7 @@
         "name": "Zesta Skirt",
         "req": 45,
         "value": 130000,
-        "dps": 0.151,
+        "dps": 0.156,
         "def": 159
       }
     },
@@ -2401,7 +2401,7 @@
         "name": "Dragon Battleaxe",
         "req": 60,
         "value": 119143,
-        "dps": 3.24,
+        "dps": 3.54,
         "def": 0
       },
       "by": {
@@ -2409,7 +2409,7 @@
         "name": "Runeforged Axe",
         "req": 40,
         "value": 7401,
-        "dps": 3.826,
+        "dps": 4.362,
         "def": 0
       }
     },
@@ -2489,7 +2489,7 @@
         "name": "Infernal Max Cape",
         "req": 0,
         "value": 0,
-        "dps": 0.912,
+        "dps": 1.043,
         "def": 125
       }
     },
@@ -2509,7 +2509,7 @@
         "name": "Infernal Max Cape",
         "req": 0,
         "value": 0,
-        "dps": 0.912,
+        "dps": 1.043,
         "def": 125
       }
     },
@@ -2529,7 +2529,7 @@
         "name": "Infernal Max Cape",
         "req": 0,
         "value": 0,
-        "dps": 0.912,
+        "dps": 1.043,
         "def": 125
       }
     },
@@ -2549,7 +2549,7 @@
         "name": "Infernal Max Cape",
         "req": 0,
         "value": 0,
-        "dps": 0.912,
+        "dps": 1.043,
         "def": 125
       }
     },
@@ -2569,7 +2569,7 @@
         "name": "Infernal Max Cape",
         "req": 0,
         "value": 0,
-        "dps": 0.912,
+        "dps": 1.043,
         "def": 125
       }
     },
@@ -2589,7 +2589,7 @@
         "name": "Infernal Max Cape",
         "req": 0,
         "value": 0,
-        "dps": 0.912,
+        "dps": 1.043,
         "def": 125
       }
     },
@@ -2609,7 +2609,7 @@
         "name": "Infernal Max Cape",
         "req": 0,
         "value": 0,
-        "dps": 0.912,
+        "dps": 1.043,
         "def": 125
       }
     },
@@ -2629,7 +2629,7 @@
         "name": "Infernal Max Cape",
         "req": 0,
         "value": 0,
-        "dps": 0.912,
+        "dps": 1.043,
         "def": 125
       }
     },
@@ -2649,7 +2649,7 @@
         "name": "Infernal Max Cape",
         "req": 0,
         "value": 0,
-        "dps": 0.912,
+        "dps": 1.043,
         "def": 125
       }
     },
@@ -2669,7 +2669,7 @@
         "name": "Infernal Max Cape",
         "req": 0,
         "value": 0,
-        "dps": 0.912,
+        "dps": 1.043,
         "def": 125
       }
     },
@@ -2689,7 +2689,7 @@
         "name": "Infernal Max Cape",
         "req": 0,
         "value": 0,
-        "dps": 0.912,
+        "dps": 1.043,
         "def": 125
       }
     },
@@ -2709,7 +2709,7 @@
         "name": "Infernal Max Cape",
         "req": 0,
         "value": 0,
-        "dps": 0.912,
+        "dps": 1.043,
         "def": 125
       }
     },
@@ -2729,7 +2729,7 @@
         "name": "Infernal Max Cape",
         "req": 0,
         "value": 0,
-        "dps": 0.912,
+        "dps": 1.043,
         "def": 125
       }
     },
@@ -2749,7 +2749,7 @@
         "name": "Infernal Max Cape",
         "req": 0,
         "value": 0,
-        "dps": 0.912,
+        "dps": 1.043,
         "def": 125
       }
     },
@@ -2769,7 +2769,7 @@
         "name": "Infernal Max Cape",
         "req": 0,
         "value": 0,
-        "dps": 0.912,
+        "dps": 1.043,
         "def": 125
       }
     },
@@ -2789,7 +2789,7 @@
         "name": "Infernal Max Cape",
         "req": 0,
         "value": 0,
-        "dps": 0.912,
+        "dps": 1.043,
         "def": 125
       }
     },
@@ -2809,7 +2809,7 @@
         "name": "Infernal Max Cape",
         "req": 0,
         "value": 0,
-        "dps": 0.912,
+        "dps": 1.043,
         "def": 125
       }
     },
@@ -3521,7 +3521,7 @@
         "name": "Torvek's Hammers",
         "req": 70,
         "value": 96264,
-        "dps": 3.686,
+        "dps": 4.038,
         "def": 0
       },
       "by": {
@@ -3529,7 +3529,7 @@
         "name": "Dragon Scimitar",
         "req": 60,
         "value": 59656,
-        "dps": 4.153,
+        "dps": 4.607,
         "def": 0
       }
     },
@@ -3581,7 +3581,7 @@
         "name": "Dragon Axe",
         "req": 60,
         "value": 81914,
-        "dps": 3.093,
+        "dps": 3.442,
         "def": 0
       },
       "by": {
@@ -3589,7 +3589,7 @@
         "name": "Runeforged Axe",
         "req": 40,
         "value": 7401,
-        "dps": 3.826,
+        "dps": 4.362,
         "def": 0
       }
     },
@@ -3621,7 +3621,7 @@
         "name": "Dragon Longsword",
         "req": 60,
         "value": 59258,
-        "dps": 3.345,
+        "dps": 3.708,
         "def": 3
       },
       "by": {
@@ -3629,7 +3629,7 @@
         "name": "Adamant Mace",
         "req": 30,
         "value": 723,
-        "dps": 3.564,
+        "dps": 3.98,
         "def": 4
       }
     },
@@ -3641,7 +3641,7 @@
         "name": "Dragon Dagger",
         "req": 60,
         "value": 17298,
-        "dps": 3.336,
+        "dps": 3.837,
         "def": 0
       },
       "by": {
@@ -3649,7 +3649,7 @@
         "name": "Runeforged Axe",
         "req": 40,
         "value": 7401,
-        "dps": 3.826,
+        "dps": 4.362,
         "def": 0
       }
     },
@@ -3991,7 +3991,7 @@
         "name": "Shardglass Shield",
         "req": 70,
         "value": 300000,
-        "dps": 0,
+        "dps": 0.149,
         "def": 345
       }
     },
@@ -4051,7 +4051,7 @@
         "name": "Helmet of Venom",
         "req": 75,
         "value": 25000000,
-        "dps": 0.128,
+        "dps": 0.139,
         "def": 217
       }
     },
@@ -4103,7 +4103,7 @@
         "name": "Ghraxis Rapier",
         "req": 80,
         "value": 26610515,
-        "dps": 4.951,
+        "dps": 5.411,
         "def": 0
       },
       "vs": {
@@ -4111,7 +4111,7 @@
         "name": "Zul-Kaar's Blade",
         "req": 80,
         "value": 5000000,
-        "dps": 4.951,
+        "dps": 5.411,
         "def": 0
       }
     },
@@ -4196,26 +4196,6 @@
       }
     },
     {
-      "style": "melee",
-      "slot": "legs",
-      "item": {
-        "id": "grondar_tassets",
-        "name": "Grondar Tassets",
-        "req": 65,
-        "value": 16462681,
-        "dps": 0,
-        "def": 326
-      },
-      "vs": {
-        "id": "dravok_s_platelegs",
-        "name": "Dravok's Platelegs",
-        "req": 70,
-        "value": 822566,
-        "dps": 0,
-        "def": 332
-      }
-    },
-    {
       "style": "ranged",
       "slot": "legs",
       "item": {
@@ -4283,7 +4263,7 @@
         "name": "Zul-Kaar's Blade",
         "req": 80,
         "value": 5000000,
-        "dps": 4.951,
+        "dps": 5.411,
         "def": 0
       },
       "vs": {
@@ -4291,7 +4271,7 @@
         "name": "Chaotic Longsword",
         "req": 90,
         "value": 200000,
-        "dps": 4.811,
+        "dps": 5.256,
         "def": 0
       }
     },
@@ -4343,7 +4323,7 @@
         "name": "Boneclaw Rapier",
         "req": 60,
         "value": 3800000,
-        "dps": 4.364,
+        "dps": 4.825,
         "def": 0
       },
       "vs": {
@@ -4351,7 +4331,7 @@
         "name": "Chaotic Longsword",
         "req": 90,
         "value": 200000,
-        "dps": 4.811,
+        "dps": 5.256,
         "def": 0
       }
     },
@@ -4399,6 +4379,46 @@
       "style": "melee",
       "slot": "head",
       "item": {
+        "id": "ironclad_helm",
+        "name": "Ironclad Helm",
+        "req": 60,
+        "value": 2500000,
+        "dps": 0,
+        "def": 162
+      },
+      "vs": {
+        "id": "dravok_s_helm",
+        "name": "Dravok's Helm",
+        "req": 70,
+        "value": 311364,
+        "dps": 0,
+        "def": 187
+      }
+    },
+    {
+      "style": "melee",
+      "slot": "head",
+      "item": {
+        "id": "gravehusk_helm",
+        "name": "Gravehusk Helm",
+        "req": 60,
+        "value": 2400000,
+        "dps": 0,
+        "def": 170
+      },
+      "vs": {
+        "id": "dravok_s_helm",
+        "name": "Dravok's Helm",
+        "req": 70,
+        "value": 311364,
+        "dps": 0,
+        "def": 187
+      }
+    },
+    {
+      "style": "melee",
+      "slot": "head",
+      "item": {
         "id": "stonegale_coif",
         "name": "Stonegale Coif",
         "req": 60,
@@ -4423,7 +4443,7 @@
         "name": "Abyssal Tentacle",
         "req": 75,
         "value": 1714037,
-        "dps": 4.786,
+        "dps": 5.246,
         "def": 0
       },
       "vs": {
@@ -4431,7 +4451,7 @@
         "name": "Chaotic Longsword",
         "req": 90,
         "value": 200000,
-        "dps": 4.811,
+        "dps": 5.256,
         "def": 0
       }
     },
@@ -4443,7 +4463,7 @@
         "name": "Angler Net",
         "req": 0,
         "value": 1250000,
-        "dps": 2.318,
+        "dps": 2.736,
         "def": 0
       },
       "vs": {
@@ -4451,7 +4471,7 @@
         "name": "Chaotic Longsword",
         "req": 90,
         "value": 200000,
-        "dps": 4.811,
+        "dps": 5.256,
         "def": 0
       }
     },
@@ -4463,7 +4483,7 @@
         "name": "Nether Demon Whip",
         "req": 70,
         "value": 1214445,
-        "dps": 4.565,
+        "dps": 5.138,
         "def": 0
       },
       "vs": {
@@ -4471,7 +4491,7 @@
         "name": "Chaotic Longsword",
         "req": 90,
         "value": 200000,
-        "dps": 4.811,
+        "dps": 5.256,
         "def": 0
       }
     },
@@ -4523,7 +4543,7 @@
         "name": "Slayer Helmet",
         "req": 20,
         "value": 1000000,
-        "dps": 0.345,
+        "dps": 0.215,
         "def": 28
       },
       "vs": {
@@ -4531,7 +4551,7 @@
         "name": "Fighter Helm",
         "req": 45,
         "value": 500000,
-        "dps": 1.266,
+        "dps": 1.199,
         "def": 32
       }
     },
@@ -4543,7 +4563,7 @@
         "name": "Freminnik Kilt",
         "req": 0,
         "value": 1000000,
-        "dps": 0.151,
+        "dps": 0.156,
         "def": 0
       },
       "vs": {
@@ -4551,7 +4571,7 @@
         "name": "Zesta Skirt",
         "req": 45,
         "value": 130000,
-        "dps": 0.151,
+        "dps": 0.156,
         "def": 159
       }
     },
@@ -4656,26 +4676,6 @@
       }
     },
     {
-      "style": "melee",
-      "slot": "weapon",
-      "item": {
-        "id": "chaotic_maul",
-        "name": "Chaotic Maul",
-        "req": 90,
-        "value": 200000,
-        "dps": 4.221,
-        "def": 0
-      },
-      "vs": {
-        "id": "dragon_scimitar",
-        "name": "Dragon Scimitar",
-        "req": 60,
-        "value": 59656,
-        "dps": 4.153,
-        "def": 0
-      }
-    },
-    {
       "style": "ranged",
       "slot": "weapon",
       "item": {
@@ -4706,7 +4706,7 @@
           "name": "Saeldor Warblade",
           "req": 75,
           "value": 100000000,
-          "dps": 7.533,
+          "dps": 8.275,
           "def": 130
         },
         {
@@ -4714,7 +4714,7 @@
           "name": "Ancient Maul",
           "req": 75,
           "value": 102009502,
-          "dps": 5.331,
+          "dps": 5.697,
           "def": 0
         },
         {
@@ -4722,7 +4722,7 @@
           "name": "Ghraxis Rapier",
           "req": 80,
           "value": 26610515,
-          "dps": 4.951,
+          "dps": 5.411,
           "def": 0
         },
         {
@@ -4730,7 +4730,7 @@
           "name": "Zul-Kaar's Blade",
           "req": 80,
           "value": 5000000,
-          "dps": 4.951,
+          "dps": 5.411,
           "def": 0
         },
         {
@@ -4738,7 +4738,7 @@
           "name": "Chaotic Longsword",
           "req": 90,
           "value": 200000,
-          "dps": 4.811,
+          "dps": 5.256,
           "def": 0
         },
         {
@@ -4746,7 +4746,7 @@
           "name": "Abyssal Tentacle",
           "req": 75,
           "value": 1714037,
-          "dps": 4.786,
+          "dps": 5.246,
           "def": 0
         },
         {
@@ -4754,7 +4754,7 @@
           "name": "Chaotic Rapier",
           "req": 90,
           "value": 200000,
-          "dps": 4.772,
+          "dps": 5.232,
           "def": 0
         },
         {
@@ -4762,15 +4762,7 @@
           "name": "Nether Demon Whip",
           "req": 70,
           "value": 1214445,
-          "dps": 4.565,
-          "def": 0
-        },
-        {
-          "id": "dragon_hunter_lance",
-          "name": "Dragon Hunter Lance",
-          "req": 78,
-          "value": 64737500,
-          "dps": 4.547,
+          "dps": 5.138,
           "def": 0
         },
         {
@@ -4778,15 +4770,15 @@
           "name": "Krylth Spear",
           "req": 70,
           "value": 7500000,
-          "dps": 4.507,
+          "dps": 5.069,
           "def": 12
         },
         {
-          "id": "boneclaw_rapier",
-          "name": "Boneclaw Rapier",
-          "req": 60,
-          "value": 3800000,
-          "dps": 4.364,
+          "id": "dragon_hunter_lance",
+          "name": "Dragon Hunter Lance",
+          "req": 78,
+          "value": 64737500,
+          "dps": 5.025,
           "def": 0
         },
         {
@@ -4794,47 +4786,15 @@
           "name": "Ashen Sovereign's Edge",
           "req": 80,
           "value": 50000000,
-          "dps": 4.292,
+          "dps": 4.86,
           "def": 0
         },
         {
-          "id": "chaotic_maul",
-          "name": "Chaotic Maul",
-          "req": 90,
-          "value": 200000,
-          "dps": 4.221,
-          "def": 0
-        },
-        {
-          "id": "grondar_godsword",
-          "name": "Grondar Godsword",
-          "req": 75,
-          "value": 19029248,
-          "dps": 4.181,
-          "def": 0
-        },
-        {
-          "id": "zephyra_godsword",
-          "name": "Zephyra Godsword",
-          "req": 75,
-          "value": 8108827,
-          "dps": 4.181,
-          "def": 0
-        },
-        {
-          "id": "lumira_godsword",
-          "name": "Lumira Godsword",
-          "req": 75,
-          "value": 28950625,
-          "dps": 4.181,
-          "def": 0
-        },
-        {
-          "id": "krylth_godsword",
-          "name": "Krylth Godsword",
-          "req": 75,
-          "value": 19571258,
-          "dps": 4.181,
+          "id": "boneclaw_rapier",
+          "name": "Boneclaw Rapier",
+          "req": 60,
+          "value": 3800000,
+          "dps": 4.825,
           "def": 0
         },
         {
@@ -4842,7 +4802,7 @@
           "name": "Zesta Longsword",
           "req": 60,
           "value": 120000,
-          "dps": 4.181,
+          "dps": 4.635,
           "def": 3
         },
         {
@@ -4850,7 +4810,7 @@
           "name": "Dragon Scimitar",
           "req": 60,
           "value": 59656,
-          "dps": 4.153,
+          "dps": 4.607,
           "def": 0
         },
         {
@@ -4858,7 +4818,55 @@
           "name": "Dragon Mace",
           "req": 60,
           "value": 100000,
-          "dps": 4.153,
+          "dps": 4.607,
+          "def": 0
+        },
+        {
+          "id": "chaotic_maul",
+          "name": "Chaotic Maul",
+          "req": 90,
+          "value": 200000,
+          "dps": 4.606,
+          "def": 0
+        },
+        {
+          "id": "lumira_sword",
+          "name": "Lumira Sword",
+          "req": 70,
+          "value": 169802,
+          "dps": 4.478,
+          "def": 0
+        },
+        {
+          "id": "grondar_godsword",
+          "name": "Grondar Godsword",
+          "req": 75,
+          "value": 19029248,
+          "dps": 4.477,
+          "def": 0
+        },
+        {
+          "id": "zephyra_godsword",
+          "name": "Zephyra Godsword",
+          "req": 75,
+          "value": 8108827,
+          "dps": 4.477,
+          "def": 0
+        },
+        {
+          "id": "lumira_godsword",
+          "name": "Lumira Godsword",
+          "req": 75,
+          "value": 28950625,
+          "dps": 4.477,
+          "def": 0
+        },
+        {
+          "id": "krylth_godsword",
+          "name": "Krylth Godsword",
+          "req": 75,
+          "value": 19571258,
+          "dps": 4.477,
           "def": 0
         },
         {
@@ -4866,31 +4874,15 @@
           "name": "Scythe of Vythar",
           "req": 90,
           "value": 300000000,
-          "dps": 4.025,
+          "dps": 4.435,
           "def": 14
-        },
-        {
-          "id": "lumira_sword",
-          "name": "Lumira Sword",
-          "req": 70,
-          "value": 169802,
-          "dps": 3.922,
-          "def": 0
         },
         {
           "id": "runeforged_axe",
           "name": "Runeforged Axe",
           "req": 40,
           "value": 7401,
-          "dps": 3.826,
-          "def": 0
-        },
-        {
-          "id": "torvek_s_hammers",
-          "name": "Torvek's Hammers",
-          "req": 70,
-          "value": 96264,
-          "dps": 3.686,
+          "dps": 4.362,
           "def": 0
         },
         {
@@ -4898,7 +4890,7 @@
           "name": "Dragon Pickaxe",
           "req": 60,
           "value": 571536,
-          "dps": 3.64,
+          "dps": 4.058,
           "def": 0
         },
         {
@@ -4906,7 +4898,7 @@
           "name": "Shardglass Pickaxe",
           "req": 70,
           "value": 7500000,
-          "dps": 3.64,
+          "dps": 4.058,
           "def": 0
         },
         {
@@ -4914,47 +4906,31 @@
           "name": "Dragon Claws",
           "req": 60,
           "value": 44438421,
-          "dps": 3.613,
+          "dps": 4.043,
           "def": 0
         },
         {
-          "id": "emberhowl_axe",
-          "name": "Emberhowl Axe",
-          "req": 60,
-          "value": 3600000,
-          "dps": 3.582,
-          "def": 0
-        },
-        {
-          "id": "verin_s_flail",
-          "name": "Verin's Flail",
+          "id": "torvek_s_hammers",
+          "name": "Torvek's Hammers",
           "req": 70,
-          "value": 96301,
-          "dps": 3.571,
-          "def": 6
+          "value": 96264,
+          "dps": 4.038,
+          "def": 0
         },
         {
           "id": "adamant_mace",
           "name": "Adamant Mace",
           "req": 30,
           "value": 723,
-          "dps": 3.564,
+          "dps": 3.98,
           "def": 4
         },
         {
-          "id": "runeforged_pickaxe",
-          "name": "Runeforged Pickaxe",
-          "req": 40,
-          "value": 18685,
-          "dps": 3.513,
-          "def": 0
-        },
-        {
-          "id": "runeforged_sword",
-          "name": "Runeforged Sword",
-          "req": 40,
-          "value": 12059,
-          "dps": 3.5,
+          "id": "emberhowl_axe",
+          "name": "Emberhowl Axe",
+          "req": 60,
+          "value": 3600000,
+          "dps": 3.957,
           "def": 0
         },
         {
@@ -4962,23 +4938,47 @@
           "name": "Gorath's Warspear",
           "req": 70,
           "value": 110919,
-          "dps": 3.491,
+          "dps": 3.945,
           "def": 25
         },
         {
-          "id": "runeforged_scimitar",
-          "name": "Runeforged Scimitar",
-          "req": 40,
-          "value": 14925,
-          "dps": 3.487,
-          "def": 0
+          "id": "verin_s_flail",
+          "name": "Verin's Flail",
+          "req": 70,
+          "value": 96301,
+          "dps": 3.935,
+          "def": 6
         },
         {
           "id": "ironclad_longsword",
           "name": "Ironclad Longsword",
           "req": 60,
           "value": 3400000,
-          "dps": 3.48,
+          "dps": 3.934,
+          "def": 0
+        },
+        {
+          "id": "runeforged_pickaxe",
+          "name": "Runeforged Pickaxe",
+          "req": 40,
+          "value": 18685,
+          "dps": 3.928,
+          "def": 0
+        },
+        {
+          "id": "runeforged_sword",
+          "name": "Runeforged Sword",
+          "req": 40,
+          "value": 12059,
+          "dps": 3.915,
+          "def": 0
+        },
+        {
+          "id": "runeforged_scimitar",
+          "name": "Runeforged Scimitar",
+          "req": 40,
+          "value": 14925,
+          "dps": 3.902,
           "def": 0
         },
         {
@@ -4986,23 +4986,15 @@
           "name": "Adamant Axe",
           "req": 30,
           "value": 570,
-          "dps": 3.349,
+          "dps": 3.85,
           "def": 0
-        },
-        {
-          "id": "dragon_longsword",
-          "name": "Dragon Longsword",
-          "req": 60,
-          "value": 59258,
-          "dps": 3.345,
-          "def": 3
         },
         {
           "id": "dragon_dagger",
           "name": "Dragon Dagger",
           "req": 60,
           "value": 17298,
-          "dps": 3.336,
+          "dps": 3.837,
           "def": 0
         },
         {
@@ -5010,15 +5002,39 @@
           "name": "Adamant Longsword",
           "req": 30,
           "value": 1682,
-          "dps": 3.285,
+          "dps": 3.719,
           "def": 4
+        },
+        {
+          "id": "dragon_longsword",
+          "name": "Dragon Longsword",
+          "req": 60,
+          "value": 59258,
+          "dps": 3.708,
+          "def": 3
+        },
+        {
+          "id": "mithril_mace",
+          "name": "Mithril Mace",
+          "req": 20,
+          "value": 106,
+          "dps": 3.583,
+          "def": 4
+        },
+        {
+          "id": "adamant_pickaxe",
+          "name": "Adamant Pickaxe",
+          "req": 30,
+          "value": 1750,
+          "dps": 3.546,
+          "def": 0
         },
         {
           "id": "dragon_battleaxe",
           "name": "Dragon Battleaxe",
           "req": 60,
           "value": 119143,
-          "dps": 3.24,
+          "dps": 3.54,
           "def": 0
         },
         {
@@ -5026,23 +5042,7 @@
           "name": "Dragon Warhammer",
           "req": 60,
           "value": 16074033,
-          "dps": 3.24,
-          "def": 0
-        },
-        {
-          "id": "runeforged_2h_sword",
-          "name": "Runeforged 2h Sword",
-          "req": 40,
-          "value": 38240,
-          "dps": 3.226,
-          "def": 0
-        },
-        {
-          "id": "adamant_pickaxe",
-          "name": "Adamant Pickaxe",
-          "req": 30,
-          "value": 1750,
-          "dps": 3.152,
+          "dps": 3.54,
           "def": 0
         },
         {
@@ -5050,7 +5050,15 @@
           "name": "Mithril Axe",
           "req": 20,
           "value": 201,
-          "dps": 3.14,
+          "dps": 3.534,
+          "def": 0
+        },
+        {
+          "id": "runeforged_2h_sword",
+          "name": "Runeforged 2h Sword",
+          "req": 40,
+          "value": 38240,
+          "dps": 3.514,
           "def": 0
         },
         {
@@ -5058,15 +5066,7 @@
           "name": "Adamant Dagger",
           "req": 30,
           "value": 208,
-          "dps": 3.116,
-          "def": 0
-        },
-        {
-          "id": "fang_of_osmun",
-          "name": "Fang Of Osmun",
-          "req": 82,
-          "value": 75000000,
-          "dps": 3.114,
+          "dps": 3.509,
           "def": 0
         },
         {
@@ -5074,23 +5074,23 @@
           "name": "Cindermaw Maul",
           "req": 60,
           "value": 4500000,
-          "dps": 3.111,
+          "dps": 3.498,
           "def": 0
         },
         {
-          "id": "mithril_mace",
-          "name": "Mithril Mace",
-          "req": 20,
-          "value": 106,
-          "dps": 3.102,
-          "def": 4
+          "id": "fang_of_osmun",
+          "name": "Fang Of Osmun",
+          "req": 82,
+          "value": 75000000,
+          "dps": 3.468,
+          "def": 0
         },
         {
           "id": "dragon_axe",
           "name": "Dragon Axe",
           "req": 60,
           "value": 81914,
-          "dps": 3.093,
+          "dps": 3.442,
           "def": 0
         },
         {
@@ -5098,7 +5098,7 @@
           "name": "Shardglass Axe",
           "req": 70,
           "value": 7500000,
-          "dps": 3.093,
+          "dps": 3.442,
           "def": 0
         },
         {
@@ -5106,7 +5106,7 @@
           "name": "Adamant Scimitar",
           "req": 30,
           "value": 1479,
-          "dps": 3.032,
+          "dps": 3.417,
           "def": 0
         },
         {
@@ -5114,7 +5114,7 @@
           "name": "Dravok's Greataxe",
           "req": 70,
           "value": 1927923,
-          "dps": 3.027,
+          "dps": 3.355,
           "def": 0
         },
         {
@@ -5122,7 +5122,7 @@
           "name": "Mithril Pickaxe",
           "req": 20,
           "value": 469,
-          "dps": 2.891,
+          "dps": 3.266,
           "def": 0
         },
         {
@@ -5130,23 +5130,7 @@
           "name": "Steel Axe",
           "req": 5,
           "value": 155,
-          "dps": 2.868,
-          "def": 0
-        },
-        {
-          "id": "mithril_scimitar",
-          "name": "Mithril Scimitar",
-          "req": 20,
-          "value": 452,
-          "dps": 2.857,
-          "def": 0
-        },
-        {
-          "id": "mithril_dagger",
-          "name": "Mithril Dagger",
-          "req": 20,
-          "value": 106,
-          "dps": 2.845,
+          "dps": 3.243,
           "def": 0
         },
         {
@@ -5154,39 +5138,31 @@
           "name": "Mithril Longsword",
           "req": 20,
           "value": 540,
-          "dps": 2.827,
+          "dps": 3.236,
           "def": 4
+        },
+        {
+          "id": "mithril_scimitar",
+          "name": "Mithril Scimitar",
+          "req": 20,
+          "value": 452,
+          "dps": 3.231,
+          "def": 0
         },
         {
           "id": "steel_mace",
           "name": "Steel Mace",
           "req": 5,
           "value": 72,
-          "dps": 2.775,
+          "dps": 3.231,
           "def": 4
         },
         {
-          "id": "iron_axe",
-          "name": "Iron Axe",
-          "req": 1,
-          "value": 95,
-          "dps": 2.72,
-          "def": 0
-        },
-        {
-          "id": "steel_pickaxe",
-          "name": "Steel Pickaxe",
-          "req": 5,
-          "value": 470,
-          "dps": 2.72,
-          "def": 0
-        },
-        {
-          "id": "steel_scimitar",
-          "name": "Steel Scimitar",
-          "req": 5,
-          "value": 85,
-          "dps": 2.709,
+          "id": "mithril_dagger",
+          "name": "Mithril Dagger",
+          "req": 20,
+          "value": 106,
+          "dps": 3.219,
           "def": 0
         },
         {
@@ -5194,15 +5170,31 @@
           "name": "Adamant Sword",
           "req": 30,
           "value": 1010,
-          "dps": 2.699,
+          "dps": 3.101,
           "def": 0
         },
         {
-          "id": "gargoyle_maul",
-          "name": "Gargoyle Maul",
-          "req": 50,
-          "value": 188827,
-          "dps": 2.6,
+          "id": "iron_axe",
+          "name": "Iron Axe",
+          "req": 1,
+          "value": 95,
+          "dps": 3.084,
+          "def": 0
+        },
+        {
+          "id": "steel_pickaxe",
+          "name": "Steel Pickaxe",
+          "req": 5,
+          "value": 470,
+          "dps": 3.084,
+          "def": 0
+        },
+        {
+          "id": "steel_scimitar",
+          "name": "Steel Scimitar",
+          "req": 5,
+          "value": 85,
+          "dps": 3.073,
           "def": 0
         },
         {
@@ -5210,7 +5202,7 @@
           "name": "Steel Dagger",
           "req": 5,
           "value": 122,
-          "dps": 2.597,
+          "dps": 3.039,
           "def": 0
         },
         {
@@ -5218,7 +5210,7 @@
           "name": "Iron Pickaxe",
           "req": 1,
           "value": 593,
-          "dps": 2.586,
+          "dps": 2.941,
           "def": 0
         },
         {
@@ -5226,7 +5218,7 @@
           "name": "Iron Mace",
           "req": 1,
           "value": 60,
-          "dps": 2.586,
+          "dps": 2.941,
           "def": 4
         },
         {
@@ -5234,7 +5226,7 @@
           "name": "Iron Scimitar",
           "req": 1,
           "value": 74,
-          "dps": 2.575,
+          "dps": 2.93,
           "def": 0
         },
         {
@@ -5242,7 +5234,7 @@
           "name": "Bronze Axe",
           "req": 1,
           "value": 86,
-          "dps": 2.575,
+          "dps": 2.93,
           "def": 0
         },
         {
@@ -5250,7 +5242,7 @@
           "name": "Iron Dagger",
           "req": 1,
           "value": 90,
-          "dps": 2.476,
+          "dps": 2.908,
           "def": 0
         },
         {
@@ -5258,7 +5250,7 @@
           "name": "Bronze Scimitar",
           "req": 1,
           "value": 71,
-          "dps": 2.466,
+          "dps": 2.897,
           "def": 0
         },
         {
@@ -5266,7 +5258,15 @@
           "name": "Bronze Pickaxe",
           "req": 1,
           "value": 82,
-          "dps": 2.466,
+          "dps": 2.897,
+          "def": 0
+        },
+        {
+          "id": "gargoyle_maul",
+          "name": "Gargoyle Maul",
+          "req": 50,
+          "value": 188827,
+          "dps": 2.866,
           "def": 0
         },
         {
@@ -5274,7 +5274,7 @@
           "name": "Bronze Mace",
           "req": 1,
           "value": 29,
-          "dps": 2.456,
+          "dps": 2.801,
           "def": 4
         },
         {
@@ -5282,15 +5282,7 @@
           "name": "Bronze Dagger",
           "req": 1,
           "value": 83,
-          "dps": 2.435,
-          "def": 0
-        },
-        {
-          "id": "mithril_sword",
-          "name": "Mithril Sword",
-          "req": 20,
-          "value": 442,
-          "dps": 2.435,
+          "dps": 2.779,
           "def": 0
         },
         {
@@ -5298,15 +5290,23 @@
           "name": "Steel Longsword",
           "req": 5,
           "value": 90,
-          "dps": 2.385,
+          "dps": 2.762,
           "def": 4
+        },
+        {
+          "id": "mithril_sword",
+          "name": "Mithril Sword",
+          "req": 20,
+          "value": 442,
+          "dps": 2.743,
+          "def": 0
         },
         {
           "id": "fishing_net",
           "name": "Fishing Net",
           "req": 1,
           "value": 50,
-          "dps": 2.318,
+          "dps": 2.736,
           "def": 0
         },
         {
@@ -5314,7 +5314,7 @@
           "name": "Fishing Rod",
           "req": 20,
           "value": 112,
-          "dps": 2.318,
+          "dps": 2.736,
           "def": 0
         },
         {
@@ -5322,7 +5322,7 @@
           "name": "Lobster Cage",
           "req": 40,
           "value": 200,
-          "dps": 2.318,
+          "dps": 2.736,
           "def": 0
         },
         {
@@ -5330,7 +5330,7 @@
           "name": "Harpoon",
           "req": 50,
           "value": 107,
-          "dps": 2.318,
+          "dps": 2.736,
           "def": 0
         },
         {
@@ -5338,7 +5338,15 @@
           "name": "Angler Net",
           "req": 0,
           "value": 1250000,
-          "dps": 2.318,
+          "dps": 2.736,
+          "def": 0
+        },
+        {
+          "id": "steel_sword",
+          "name": "Steel Sword",
+          "req": 5,
+          "value": 90,
+          "dps": 2.547,
           "def": 0
         },
         {
@@ -5346,23 +5354,15 @@
           "name": "Iron Longsword",
           "req": 1,
           "value": 13,
-          "dps": 2.193,
+          "dps": 2.486,
           "def": 4
-        },
-        {
-          "id": "steel_sword",
-          "name": "Steel Sword",
-          "req": 5,
-          "value": 90,
-          "dps": 2.185,
-          "def": 0
         },
         {
           "id": "bronze_longsword",
           "name": "Bronze Longsword",
           "req": 1,
           "value": 39,
-          "dps": 2.052,
+          "dps": 2.335,
           "def": 4
         },
         {
@@ -5370,7 +5370,7 @@
           "name": "Iron Sword",
           "req": 1,
           "value": 39,
-          "dps": 2.043,
+          "dps": 2.326,
           "def": 0
         },
         {
@@ -5378,7 +5378,7 @@
           "name": "Bronze Spear",
           "req": 1,
           "value": 285,
-          "dps": 1.956,
+          "dps": 2.232,
           "def": 2
         },
         {
@@ -5386,7 +5386,7 @@
           "name": "Bronze Sword",
           "req": 1,
           "value": 89,
-          "dps": 1.948,
+          "dps": 2.223,
           "def": 0
         },
         {
@@ -5394,7 +5394,7 @@
           "name": "Durn's Bulwark",
           "req": 75,
           "value": 13720296,
-          "dps": 1.868,
+          "dps": 2.168,
           "def": 614
         }
       ]
@@ -5408,7 +5408,7 @@
           "name": "Fighter Helm",
           "req": 45,
           "value": 500000,
-          "dps": 1.266,
+          "dps": 1.199,
           "def": 32
         },
         {
@@ -5416,7 +5416,7 @@
           "name": "Halo",
           "req": 0,
           "value": 750000,
-          "dps": 0.67,
+          "dps": 0.663,
           "def": 0
         },
         {
@@ -5424,7 +5424,7 @@
           "name": "Ashen Slayer Helm",
           "req": 80,
           "value": 7500000,
-          "dps": 0.453,
+          "dps": 0.462,
           "def": 112
         },
         {
@@ -5432,7 +5432,7 @@
           "name": "Slayer Helmet",
           "req": 20,
           "value": 1000000,
-          "dps": 0.345,
+          "dps": 0.215,
           "def": 28
         },
         {
@@ -5440,7 +5440,7 @@
           "name": "Imbued Slayer Crown",
           "req": 20,
           "value": 7500000,
-          "dps": 0.345,
+          "dps": 0.215,
           "def": 50
         },
         {
@@ -5448,7 +5448,7 @@
           "name": "Helmet of Venom",
           "req": 75,
           "value": 25000000,
-          "dps": 0.128,
+          "dps": 0.139,
           "def": 217
         },
         {
@@ -5456,24 +5456,8 @@
           "name": "Shardglass Helmet",
           "req": 70,
           "value": 7500000,
-          "dps": 0.128,
+          "dps": 0.139,
           "def": 360
-        },
-        {
-          "id": "gravehusk_helm",
-          "name": "Gravehusk Helm",
-          "req": 60,
-          "value": 2400000,
-          "dps": 0.128,
-          "def": 170
-        },
-        {
-          "id": "ironclad_helm",
-          "name": "Ironclad Helm",
-          "req": 60,
-          "value": 2500000,
-          "dps": 0.128,
-          "def": 162
         },
         {
           "id": "bronze_full_helm",
@@ -5652,6 +5636,14 @@
           "def": 228
         },
         {
+          "id": "gravehusk_helm",
+          "name": "Gravehusk Helm",
+          "req": 60,
+          "value": 2400000,
+          "dps": 0,
+          "def": 170
+        },
+        {
           "id": "stonegale_coif",
           "name": "Stonegale Coif",
           "req": 60,
@@ -5660,11 +5652,19 @@
           "def": 139
         },
         {
+          "id": "ironclad_helm",
+          "name": "Ironclad Helm",
+          "req": 60,
+          "value": 2500000,
+          "dps": 0,
+          "def": 162
+        },
+        {
           "id": "berserker_helm",
           "name": "Berserker Helm",
           "req": 45,
           "value": 40666,
-          "dps": -0.002,
+          "dps": -0.133,
           "def": 27
         }
       ]
@@ -5674,11 +5674,19 @@
       "slot": "body",
       "items": [
         {
+          "id": "grondar_chestplate",
+          "name": "Grondar Chestplate",
+          "req": 65,
+          "value": 24546165,
+          "dps": 0.703,
+          "def": 468
+        },
+        {
           "id": "shardglass_plate_body",
           "name": "Shardglass Plate Body",
           "req": 70,
           "value": 7500000,
-          "dps": 0.301,
+          "dps": 0.309,
           "def": 555
         },
         {
@@ -5686,23 +5694,15 @@
           "name": "Zesta Vest",
           "req": 45,
           "value": 150000,
-          "dps": 0.301,
+          "dps": 0.309,
           "def": 236
-        },
-        {
-          "id": "grondar_chestplate",
-          "name": "Grondar Chestplate",
-          "req": 65,
-          "value": 24546165,
-          "dps": 0.151,
-          "def": 468
         },
         {
           "id": "fighter_body",
           "name": "Fighter Body",
           "req": 40,
           "value": 1250000,
-          "dps": 0.151,
+          "dps": 0.155,
           "def": 263
         },
         {
@@ -5984,11 +5984,19 @@
       "slot": "legs",
       "items": [
         {
+          "id": "grondar_tassets",
+          "name": "Grondar Tassets",
+          "req": 65,
+          "value": 16462681,
+          "dps": 0.481,
+          "def": 326
+        },
+        {
           "id": "shardglass_platelegs",
           "name": "Shardglass Platelegs",
           "req": 70,
           "value": 7500000,
-          "dps": 0.151,
+          "dps": 0.156,
           "def": 415
         },
         {
@@ -5996,7 +6004,7 @@
           "name": "Freminnik Kilt",
           "req": 0,
           "value": 1000000,
-          "dps": 0.151,
+          "dps": 0.156,
           "def": 0
         },
         {
@@ -6004,7 +6012,7 @@
           "name": "Zesta Skirt",
           "req": 45,
           "value": 130000,
-          "dps": 0.151,
+          "dps": 0.156,
           "def": 159
         },
         {
@@ -6110,14 +6118,6 @@
           "value": 37986,
           "dps": 0,
           "def": 192
-        },
-        {
-          "id": "grondar_tassets",
-          "name": "Grondar Tassets",
-          "req": 65,
-          "value": 16462681,
-          "dps": 0,
-          "def": 326
         },
         {
           "id": "zephyra_chainskirt",
@@ -6306,31 +6306,31 @@
           "name": "Ferocious Gloves",
           "req": 95,
           "value": 10200000,
-          "dps": 0.594,
+          "dps": 0.736,
           "def": 3
-        },
-        {
-          "id": "cryptbound_gloves",
-          "name": "Cryptbound Gloves",
-          "req": 0,
-          "value": 130000,
-          "dps": 0.52,
-          "def": 54
         },
         {
           "id": "gloves_of_slaughter",
           "name": "Gloves of Slaughter",
           "req": 85,
           "value": 5000000,
-          "dps": 0.513,
+          "dps": 0.641,
           "def": 0
+        },
+        {
+          "id": "cryptbound_gloves",
+          "name": "Cryptbound Gloves",
+          "req": 0,
+          "value": 130000,
+          "dps": 0.512,
+          "def": 54
         },
         {
           "id": "thornhide_gauntlets",
           "name": "Thornhide Gloves",
           "req": 60,
           "value": 1700000,
-          "dps": 0.145,
+          "dps": 0.154,
           "def": 82
         },
         {
@@ -6364,27 +6364,51 @@
       "slot": "boots",
       "items": [
         {
+          "id": "grondar_boots",
+          "name": "Grondar Boots",
+          "req": 65,
+          "value": 675775,
+          "dps": 0.498,
+          "def": 24
+        },
+        {
           "id": "spiked_manacles",
           "name": "Spiked Manacles",
           "req": 0,
           "value": 447157,
-          "dps": 0.334,
+          "dps": 0.322,
           "def": 0
+        },
+        {
+          "id": "dragon_boots",
+          "name": "Dragon Boots",
+          "req": 60,
+          "value": 254942,
+          "dps": 0.156,
+          "def": 47
         },
         {
           "id": "primeval_boots",
           "name": "Primeval Boots",
           "req": 75,
           "value": 21902457,
-          "dps": 0.147,
+          "dps": 0.156,
           "def": 61
+        },
+        {
+          "id": "emberhowl_boots",
+          "name": "Emberhowl Boots",
+          "req": 60,
+          "value": 1700000,
+          "dps": 0.156,
+          "def": 115
         },
         {
           "id": "climbing_boots",
           "name": "Climbing Boots",
           "req": 0,
           "value": 55000,
-          "dps": 0.037,
+          "dps": 0.033,
           "def": 0
         },
         {
@@ -6396,28 +6420,12 @@
           "def": 4
         },
         {
-          "id": "grondar_boots",
-          "name": "Grondar Boots",
-          "req": 65,
-          "value": 675775,
-          "dps": 0,
-          "def": 24
-        },
-        {
           "id": "climbing_boots_g",
           "name": "Climbing Boots (G)",
           "req": 0,
           "value": 46800,
           "dps": 0,
           "def": 2
-        },
-        {
-          "id": "dragon_boots",
-          "name": "Dragon Boots",
-          "req": 60,
-          "value": 254942,
-          "dps": 0,
-          "def": 47
         },
         {
           "id": "skyfury_boots",
@@ -6434,14 +6442,6 @@
           "value": 4926153,
           "dps": 0,
           "def": 23
-        },
-        {
-          "id": "emberhowl_boots",
-          "name": "Emberhowl Boots",
-          "req": 60,
-          "value": 1700000,
-          "dps": 0,
-          "def": 115
         }
       ]
     },
@@ -6454,7 +6454,7 @@
           "name": "Avernal Defender",
           "req": 70,
           "value": 80000000,
-          "dps": 0.735,
+          "dps": 0.834,
           "def": 252
         },
         {
@@ -6462,7 +6462,7 @@
           "name": "Dragon Defender",
           "req": 60,
           "value": 500000,
-          "dps": 0.642,
+          "dps": 0.593,
           "def": 67
         },
         {
@@ -6470,7 +6470,7 @@
           "name": "Slayer Defender",
           "req": 85,
           "value": 5000000,
-          "dps": 0.595,
+          "dps": 0.577,
           "def": -50
         },
         {
@@ -6478,7 +6478,7 @@
           "name": "Runeforged Defender",
           "req": 40,
           "value": 750000,
-          "dps": 0.548,
+          "dps": 0.509,
           "def": 52
         },
         {
@@ -6486,8 +6486,16 @@
           "name": "Visage Shield",
           "req": 75,
           "value": 3700524,
-          "dps": 0.349,
+          "dps": 0.487,
           "def": 90
+        },
+        {
+          "id": "shardglass_shield",
+          "name": "Shardglass Shield",
+          "req": 70,
+          "value": 300000,
+          "dps": 0.149,
+          "def": 345
         },
         {
           "id": "bronze_kiteshield",
@@ -6570,14 +6578,6 @@
           "def": 40
         },
         {
-          "id": "shardglass_shield",
-          "name": "Shardglass Shield",
-          "req": 70,
-          "value": 300000,
-          "dps": 0,
-          "def": 345
-        },
-        {
           "id": "2nd_age_kiteshield",
           "name": "2nd Age Kiteshield",
           "req": 65,
@@ -6606,7 +6606,7 @@
           "name": "Boneclaw Shield",
           "req": 60,
           "value": 2900000,
-          "dps": -0.042,
+          "dps": -0.038,
           "def": 184
         }
       ]
@@ -6620,7 +6620,7 @@
           "name": "Infernal Max Cape",
           "req": 0,
           "value": 0,
-          "dps": 0.912,
+          "dps": 1.043,
           "def": 125
         },
         {
@@ -6628,24 +6628,24 @@
           "name": "Infernal Cape",
           "req": 0,
           "value": 0,
-          "dps": 0.522,
+          "dps": 0.487,
           "def": 84
-        },
-        {
-          "id": "max_cape",
-          "name": "Max Cape",
-          "req": 0,
-          "value": 1000000000,
-          "dps": 0.192,
-          "def": 50
         },
         {
           "id": "fire_cape",
           "name": "Fire Cape",
           "req": 0,
           "value": 0,
-          "dps": 0.097,
+          "dps": 0.238,
           "def": 15
+        },
+        {
+          "id": "max_cape",
+          "name": "Max Cape",
+          "req": 0,
+          "value": 1000000000,
+          "dps": 0.169,
+          "def": 50
         },
         {
           "id": "attack_cape",
@@ -6826,55 +6826,39 @@
           "name": "Amulet of Torment",
           "req": 0,
           "value": 20539001,
-          "dps": 1.151,
+          "dps": 1.281,
           "def": 0
-        },
-        {
-          "id": "amulet_of_glory",
-          "name": "Amulet of Glory",
-          "req": 0,
-          "value": 11259,
-          "dps": 0.337,
-          "def": 15
         },
         {
           "id": "amulet_of_fury",
           "name": "Amulet of Fury",
           "req": 0,
           "value": 2609432,
-          "dps": 0.337,
+          "dps": 0.476,
           "def": 75
+        },
+        {
+          "id": "amulet_of_glory",
+          "name": "Amulet of Glory",
+          "req": 0,
+          "value": 11259,
+          "dps": 0.323,
+          "def": 15
         },
         {
           "id": "amulet_of_glory_t",
           "name": "Amulet of Glory (T)",
           "req": 0,
           "value": 39981,
-          "dps": 0.337,
+          "dps": 0.323,
           "def": 50
-        },
-        {
-          "id": "diamond_amulet",
-          "name": "Diamond Amulet",
-          "req": 0,
-          "value": 2236,
-          "dps": 0.277,
-          "def": 30
         },
         {
           "id": "amulet_of_strength",
           "name": "Amulet of Strength",
           "req": 0,
           "value": 1897,
-          "dps": 0.139,
-          "def": 0
-        },
-        {
-          "id": "emerald_amulet",
-          "name": "Emerald Amulet",
-          "req": 0,
-          "value": 698,
-          "dps": 0.139,
+          "dps": 0.298,
           "def": 0
         },
         {
@@ -6882,16 +6866,32 @@
           "name": "Ruby Amulet",
           "req": 0,
           "value": 1188,
-          "dps": 0.139,
+          "dps": 0.298,
           "def": 0
+        },
+        {
+          "id": "diamond_amulet",
+          "name": "Diamond Amulet",
+          "req": 0,
+          "value": 2236,
+          "dps": 0.298,
+          "def": 30
         },
         {
           "id": "amulet_of_power",
           "name": "Amulet of Power",
           "req": 0,
           "value": 2370,
-          "dps": 0.04,
+          "dps": 0.184,
           "def": 10
+        },
+        {
+          "id": "emerald_amulet",
+          "name": "Emerald Amulet",
+          "req": 0,
+          "value": 698,
+          "dps": 0.149,
+          "def": 0
         }
       ]
     },
@@ -6904,7 +6904,7 @@
           "name": "Berserker Ring",
           "req": 0,
           "value": 3252765,
-          "dps": 0.452,
+          "dps": 0.477,
           "def": 0
         },
         {
@@ -6912,7 +6912,7 @@
           "name": "Warriors Ring",
           "req": 0,
           "value": 100000,
-          "dps": 0.151,
+          "dps": 0,
           "def": 0
         },
         {
