@@ -79,11 +79,19 @@ const FILTER_CHIPS: { label: string; categories: string[] }[] = [
 
 const WORLD_MAP_CSS = `
 #worldmap-modal {
-  position: fixed; inset: 0; z-index: 26; display: flex; align-items: center; justify-content: center;
+  /* Height is the VISIBLE viewport (dvh), not vh — on iOS Safari vh counts the
+     area behind the toolbars, which pushed the panel's header/close button
+     off-screen in landscape. Safe-area padding keeps the panel clear of the
+     notch/home indicator, and the flex centring then fits it every time. */
+  position: fixed; left: 0; right: 0; top: 0; height: 100vh; height: 100dvh;
+  z-index: 26; display: flex; align-items: center; justify-content: center; box-sizing: border-box;
+  padding: 10px;
+  padding-top: max(10px, env(safe-area-inset-top)); padding-bottom: max(10px, env(safe-area-inset-bottom));
+  padding-left: max(10px, env(safe-area-inset-left)); padding-right: max(10px, env(safe-area-inset-right));
   background: rgba(0, 0, 0, 0.55); font-family: sans-serif;
 }
 #worldmap-panel {
-  width: min(96vw, 900px); max-height: 94vh; display: flex; flex-direction: column;
+  width: min(96vw, 900px); max-height: 100%; display: flex; flex-direction: column;
   background: rgba(24, 19, 12, 0.97); border: 1px solid #6a5636; border-radius: 10px; overflow: hidden;
 }
 #worldmap-panel .wm-head {
@@ -151,7 +159,7 @@ const WORLD_MAP_CSS = `
    become a slim left sidebar and the map fills all the remaining space as one
    big rectangle (the openWorldMap JS fits/centres it using both axes). */
 @media (orientation: landscape) {
-  #worldmap-panel { width: min(96vw, 1040px); height: 92vh; max-height: 92vh; }
+  #worldmap-panel { width: min(96vw, 1040px); height: 100%; }
   #wm-body { flex-direction: row; flex: 1; min-height: 0; }
   #wm-filters {
     flex-direction: column; flex-wrap: nowrap; flex: 0 0 132px; box-sizing: border-box;
