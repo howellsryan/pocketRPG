@@ -62,6 +62,21 @@ const COMBAT_SETS = [
       rangedDamage: 1.15,
     },
   },
+  {
+    // Full Kodai robes (hat + top + bottom). Pure offensive-mage set: a large
+    // magic-accuracy multiplier on top of the highest magic-attack robes, so
+    // the req-75 boss set is the decisive best-in-slot magic setup.
+    id: 'kodai',
+    name: 'Kodai',
+    slots: {
+      head: ['kodai_hat'],
+      body: ['kodai_robe_top'],
+      legs: ['kodai_robe_bottom'],
+    },
+    multipliers: {
+      magicAccuracy: 1.3,
+    },
+  },
 ]
 
 const MULTIPLIER_KEYS = [

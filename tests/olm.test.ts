@@ -308,19 +308,19 @@ describe('Dragon Hunter passive on dragon monsters', () => {
 })
 
 describe('New Items', () => {
-  it('ancestral hat should give +2% magic damage bonus', () => {
+  it('kodai hat should give +3% magic damage bonus', () => {
     const hat = itemsData['kodai_hat' as keyof typeof itemsData]
-    expect((hat as any).otherBonus.magicDamage).toBe(2)
+    expect((hat as any).otherBonus.magicDamage).toBe(3)
   })
 
-  it('ancestral robe top should give +2% magic damage bonus', () => {
+  it('kodai robe top should give +8% magic damage bonus', () => {
     const top = itemsData['kodai_robe_top' as keyof typeof itemsData]
-    expect((top as any).otherBonus.magicDamage).toBe(2)
+    expect((top as any).otherBonus.magicDamage).toBe(8)
   })
 
-  it('ancestral robe bottom should give +2% magic damage bonus', () => {
+  it('kodai robe bottom should give +3% magic damage bonus', () => {
     const bot = itemsData['kodai_robe_bottom' as keyof typeof itemsData]
-    expect((bot as any).otherBonus.magicDamage).toBe(2)
+    expect((bot as any).otherBonus.magicDamage).toBe(3)
   })
 
   it('ancestral wand should give +15% magic damage bonus and provide water runes', () => {
