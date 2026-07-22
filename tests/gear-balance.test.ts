@@ -84,6 +84,15 @@ describe('Grondar (Bandos) melee tank set', () => {
       expect(acc('grondar_boots')).toBeGreaterThan(acc(rival))
     }
   })
+
+  it('Grondar accuracy is in line with the best melee armour accuracy bonuses in the game', () => {
+    // Ferocious Gloves (endgame gloves, +16) and Gloves of Slaughter (+20) are
+    // the top single-slot melee-armour accuracy bonuses outside accessories
+    // (amulets/shields/capes carry their own separate budget). Grondar's body
+    // piece should sit at or above that bar, not trail it.
+    expect(acc('grondar_chestplate')).toBeGreaterThanOrEqual(acc('gloves_of_slaughter'))
+    expect(acc('grondar_chestplate')).toBeGreaterThan(acc('ferocious_gloves'))
+  })
 })
 
 describe('Ancient Maul', () => {

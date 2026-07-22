@@ -7222,9 +7222,9 @@
     "slot": "body",
     "stackable": false,
     "attackBonus": {
-      "stab": 14,
-      "slash": 14,
-      "crush": 14,
+      "stab": 22,
+      "slash": 22,
+      "crush": 22,
       "magic": -30,
       "ranged": -15
     },
@@ -7255,9 +7255,9 @@
     "slot": "legs",
     "stackable": false,
     "attackBonus": {
-      "stab": 10,
-      "slash": 10,
-      "crush": 10,
+      "stab": 16,
+      "slash": 16,
+      "crush": 16,
       "magic": -21,
       "ranged": -11
     },
@@ -7288,9 +7288,9 @@
     "slot": "boots",
     "stackable": false,
     "attackBonus": {
-      "stab": 11,
-      "slash": 11,
-      "crush": 11,
+      "stab": 13,
+      "slash": 13,
+      "crush": 13,
       "magic": -1,
       "ranged": -1
     },

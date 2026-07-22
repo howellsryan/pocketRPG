@@ -37,11 +37,11 @@ magic-damage source across all armour and accessory slots), not a bare weapon:
 
 | Style | BiS loadout (weapon) | DPS |
 |---|---|---:|
-| melee | Blade of Saeldor + full Grondar/Ferocious/Torment/Berserker | ~8.3 |
+| melee | Blade of Saeldor + full Grondar/Ferocious/Torment/Berserker | ~8.5 |
 | ranged | 2nd Age Bow + Dragon Arrow + full gear | ~8.6 |
 | magic | Trident of Venom (powered staff) + full mage gear | ~13.0 |
 
-Melee and ranged are within ~4% of each other (Grondar's strength/accuracy buff,
+Melee and ranged are within ~2% of each other (Grondar's strength/accuracy buff,
 below, closed most of the earlier gap). Magic leads because powered staves
 (Trident) scale their base hit with magic level (42 at level 99), fire every 3 ticks,
 and cost no ammo. Melee's only structural disadvantage is that ranged gets a strength
@@ -100,16 +100,19 @@ higher-tier set being the weaker one.
 budget but a near-zero strength/accuracy one (chestplate +4 str, tassets +2 str,
 boots +4 str, 0 accuracy on all three), so cheaper alternatives like Shardglass
 Plate Body (+10 str) and Spiked Manacles (+8 str, +10 accuracy) out-DPS'd the boss
-unique. Buffed to lead every rival in their slot on both axes:
+unique. Buffed in two passes: first to lead every direct rival in its own slot,
+then again to bring accuracy up to the bar set by the best melee-armour accuracy
+bonuses anywhere in the game (Gloves of Slaughter +20, Ferocious Gloves +16),
+not just within-slot rivals:
 
 | Item | melee strength | accuracy (stab/slash/crush) |
 |---|---|---|
-| Grondar Chestplate | 4 → **14** | 0 → **14** |
-| Grondar Tassets | 2 → **10** | 0 → **10** |
-| Grondar Boots | 4 → **9** | 0 → **11** |
+| Grondar Chestplate | 4 → **14** | 0 → 14 → **22** |
+| Grondar Tassets | 2 → **10** | 0 → 10 → **16** |
+| Grondar Boots | 4 → **9** | 0 → 11 → **13** |
 
 This also closed most of the melee/ranged gap: melee's max-gear DPS rose from
-~7.5 to ~8.3, now within 4% of ranged's ~8.6.
+~7.5 to ~8.5, now within 2% of ranged's ~8.6.
 
 ## Recommended follow-up (needs a deliberate pass, not applied here)
 
