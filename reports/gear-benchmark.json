@@ -25,34 +25,14 @@
     {
       "style": "magic",
       "weapon": "trident_of_venom",
-      "dps": 12.558187899941828,
-      "maxHit": 81,
+      "dps": 12.711336532867948,
+      "maxHit": 82,
       "acc": 0.5513350785340314
     }
   ],
-  "triangleRatio": 1.6671328299986186,
+  "triangleRatio": 1.6874637181693335,
   "triangleOk": false,
   "dominated": [
-    {
-      "style": "ranged",
-      "slot": "weapon",
-      "item": {
-        "id": "twisted_longbow",
-        "name": "Twisted Longbow",
-        "req": 75,
-        "value": 1581879938,
-        "dps": 5.156,
-        "def": 0
-      },
-      "by": {
-        "id": "2nd_age_bow",
-        "name": "2nd Age Bow",
-        "req": 65,
-        "value": 1419450502,
-        "dps": 11.348,
-        "def": 0
-      }
-    },
     {
       "style": "magic",
       "slot": "weapon",
@@ -69,7 +49,7 @@
         "name": "Sanguine Staff",
         "req": 82,
         "value": 150000000,
-        "dps": 9.419,
+        "dps": 9.534,
         "def": 15
       }
     },
@@ -129,7 +109,7 @@
         "name": "Infernal Max Cape",
         "req": 0,
         "value": 0,
-        "dps": 2.063,
+        "dps": 2.073,
         "def": 125
       }
     },
@@ -181,7 +161,7 @@
         "name": "Max Cape",
         "req": 0,
         "value": 1000000000,
-        "dps": 0.286,
+        "dps": 0.29,
         "def": 50
       },
       "by": {
@@ -189,7 +169,7 @@
         "name": "Infernal Max Cape",
         "req": 0,
         "value": 0,
-        "dps": 2.063,
+        "dps": 2.073,
         "def": 125
       }
     },
@@ -249,7 +229,7 @@
         "name": "Infernal Max Cape",
         "req": 0,
         "value": 0,
-        "dps": 2.063,
+        "dps": 2.073,
         "def": 125
       }
     },
@@ -294,26 +274,6 @@
       }
     },
     {
-      "style": "ranged",
-      "slot": "body",
-      "item": {
-        "id": "kodai_robe_top",
-        "name": "Kodai Robe Top",
-        "req": 75,
-        "value": 129932252,
-        "dps": -0.358,
-        "def": 30
-      },
-      "by": {
-        "id": "drake_leather_body",
-        "name": "Drake Leather Body",
-        "req": 60,
-        "value": 4200000,
-        "dps": 1.04,
-        "def": 155
-      }
-    },
-    {
       "style": "melee",
       "slot": "legs",
       "item": {
@@ -334,26 +294,6 @@
       }
     },
     {
-      "style": "melee",
-      "slot": "weapon",
-      "item": {
-        "id": "ancient_maul",
-        "name": "Ancient Maul",
-        "req": 75,
-        "value": 102009502,
-        "dps": 4.443,
-        "def": 0
-      },
-      "by": {
-        "id": "abyssal_tentacle",
-        "name": "Abyssal Tentacle",
-        "req": 75,
-        "value": 1714037,
-        "dps": 4.786,
-        "def": 0
-      }
-    },
-    {
       "style": "magic",
       "slot": "weapon",
       "item": {
@@ -361,7 +301,7 @@
         "name": "Duskmare Staff",
         "req": 65,
         "value": 100000000,
-        "dps": 5.487,
+        "dps": 5.577,
         "def": 12
       },
       "by": {
@@ -369,28 +309,8 @@
         "name": "Archmage Wand",
         "req": 50,
         "value": 1000000,
-        "dps": 6.892,
+        "dps": 7.007,
         "def": 12
-      }
-    },
-    {
-      "style": "ranged",
-      "slot": "legs",
-      "item": {
-        "id": "kodai_robe_bottom",
-        "name": "Kodai Robe Bottom",
-        "req": 75,
-        "value": 90889870,
-        "dps": -0.222,
-        "def": 24
-      },
-      "by": {
-        "id": "lumira_d_hide_chaps",
-        "name": "Lumira D'Hide Chaps",
-        "req": 70,
-        "value": 120000,
-        "dps": 0.629,
-        "def": 70
       }
     },
     {
@@ -441,7 +361,7 @@
         "name": "Avernal Defender",
         "req": 70,
         "value": 80000000,
-        "dps": -0.169,
+        "dps": -0.171,
         "def": 252
       },
       "by": {
@@ -501,7 +421,7 @@
         "name": "2nd Age Amulet",
         "req": 70,
         "value": 51352500,
-        "dps": 0.474,
+        "dps": 0.487,
         "def": 0
       },
       "by": {
@@ -509,7 +429,7 @@
         "name": "Occult Necklace",
         "req": 0,
         "value": 415548,
-        "dps": 0.953,
+        "dps": 0.963,
         "def": 0
       }
     },
@@ -781,7 +701,7 @@
         "name": "Skyfury Boots",
         "req": 75,
         "value": 29422433,
-        "dps": -0.118,
+        "dps": -0.121,
         "def": 19
       },
       "by": {
@@ -789,7 +709,7 @@
         "name": "Evermore Boots",
         "req": 75,
         "value": 4926153,
-        "dps": 0.228,
+        "dps": 0.234,
         "def": 23
       }
     },
@@ -834,6 +754,26 @@
       }
     },
     {
+      "style": "ranged",
+      "slot": "legs",
+      "item": {
+        "id": "zephyra_chainskirt",
+        "name": "Zephyra Chainskirt",
+        "req": 70,
+        "value": 27872221,
+        "dps": 0.542,
+        "def": 96
+      },
+      "by": {
+        "id": "black_d_hide_chaps",
+        "name": "Black D'Hide Chaps",
+        "req": 70,
+        "value": 3878,
+        "dps": 0.546,
+        "def": 178
+      }
+    },
+    {
       "style": "magic",
       "slot": "legs",
       "item": {
@@ -841,7 +781,7 @@
         "name": "Zephyra Chainskirt",
         "req": 70,
         "value": 27872221,
-        "dps": -0.351,
+        "dps": -0.356,
         "def": 96
       },
       "by": {
@@ -849,7 +789,7 @@
         "name": "Kaelor's Leatherskirt",
         "req": 70,
         "value": 464568,
-        "dps": -0.246,
+        "dps": -0.249,
         "def": 130
       }
     },
@@ -889,7 +829,7 @@
         "name": "Imbued Slayer Crown",
         "req": 20,
         "value": 7500000,
-        "dps": 0.461,
+        "dps": 0.465,
         "def": 50
       }
     },
@@ -921,7 +861,7 @@
         "name": "Primeval Boots",
         "req": 75,
         "value": 21902457,
-        "dps": -0.118,
+        "dps": -0.121,
         "def": 61
       },
       "by": {
@@ -981,7 +921,7 @@
         "name": "2nd Age Mage Hat",
         "req": 65,
         "value": 18941223,
-        "dps": 0.252,
+        "dps": 0.255,
         "def": 0
       },
       "by": {
@@ -989,7 +929,7 @@
         "name": "Halo",
         "req": 0,
         "value": 750000,
-        "dps": 1.057,
+        "dps": 1.066,
         "def": 0
       }
     },
@@ -1049,7 +989,7 @@
         "name": "Cryptbound Gloves",
         "req": 0,
         "value": 130000,
-        "dps": 0.174,
+        "dps": 0.177,
         "def": 54
       }
     },
@@ -1161,7 +1101,7 @@
         "name": "Ferocious Gloves",
         "req": 95,
         "value": 10200000,
-        "dps": -0.488,
+        "dps": -0.495,
         "def": 3
       },
       "by": {
@@ -1169,7 +1109,7 @@
         "name": "Cryptbound Gloves",
         "req": 0,
         "value": 130000,
-        "dps": 0.174,
+        "dps": 0.177,
         "def": 54
       }
     },
@@ -1201,7 +1141,7 @@
         "name": "Justicar Legguards",
         "req": 75,
         "value": 9858691,
-        "dps": -0.421,
+        "dps": -0.427,
         "def": 217
       },
       "by": {
@@ -1209,7 +1149,7 @@
         "name": "Thornhide Platelegs",
         "req": 60,
         "value": 4000000,
-        "dps": -0.421,
+        "dps": -0.427,
         "def": 231
       }
     },
@@ -1261,7 +1201,7 @@
         "name": "Zephyra Helmet",
         "req": 70,
         "value": 9327472,
-        "dps": -0.164,
+        "dps": -0.166,
         "def": 33
       },
       "by": {
@@ -1269,7 +1209,7 @@
         "name": "Imbued Slayer Crown",
         "req": 20,
         "value": 7500000,
-        "dps": 0.461,
+        "dps": 0.465,
         "def": 50
       }
     },
@@ -1381,7 +1321,7 @@
         "name": "Staff of the Dead",
         "req": 75,
         "value": 5659314,
-        "dps": 5.681,
+        "dps": 5.771,
         "def": 12
       },
       "by": {
@@ -1389,7 +1329,7 @@
         "name": "Archmage Wand",
         "req": 50,
         "value": 1000000,
-        "dps": 6.892,
+        "dps": 7.007,
         "def": 12
       }
     },
@@ -1561,7 +1501,7 @@
         "name": "Visage Shield",
         "req": 75,
         "value": 3700524,
-        "dps": -0.169,
+        "dps": -0.171,
         "def": 90
       },
       "by": {
@@ -1661,7 +1601,7 @@
         "name": "Shroud Staff",
         "req": 55,
         "value": 3000000,
-        "dps": 5.671,
+        "dps": 5.766,
         "def": 12
       },
       "by": {
@@ -1669,7 +1609,7 @@
         "name": "Archmage Wand",
         "req": 50,
         "value": 1000000,
-        "dps": 6.892,
+        "dps": 7.007,
         "def": 12
       }
     },
@@ -1790,7 +1730,7 @@
         "req": 70,
         "value": 7322,
         "dps": 0.915,
-        "def": 130
+        "def": 278
       }
     },
     {
@@ -1851,6 +1791,26 @@
         "value": 150000,
         "dps": 0.301,
         "def": 236
+      }
+    },
+    {
+      "style": "ranged",
+      "slot": "body",
+      "item": {
+        "id": "kaelor_s_leathertop",
+        "name": "Kaelor's Leathertop",
+        "req": 70,
+        "value": 1077940,
+        "dps": 0.634,
+        "def": 234
+      },
+      "by": {
+        "id": "black_d_hide_body",
+        "name": "Black D'Hide Body",
+        "req": 70,
+        "value": 7322,
+        "dps": 0.915,
+        "def": 278
       }
     },
     {
@@ -1981,7 +1941,7 @@
         "name": "Dravok's Platelegs",
         "req": 70,
         "value": 822566,
-        "dps": -0.737,
+        "dps": -0.747,
         "def": 332
       },
       "by": {
@@ -1989,7 +1949,7 @@
         "name": "Verin's Plateskirt",
         "req": 70,
         "value": 286454,
-        "dps": -0.737,
+        "dps": -0.747,
         "def": 340
       }
     },
@@ -2075,6 +2035,26 @@
     },
     {
       "style": "ranged",
+      "slot": "legs",
+      "item": {
+        "id": "kaelor_s_leatherskirt",
+        "name": "Kaelor's Leatherskirt",
+        "req": 70,
+        "value": 464568,
+        "dps": 0.319,
+        "def": 130
+      },
+      "by": {
+        "id": "black_d_hide_chaps",
+        "name": "Black D'Hide Chaps",
+        "req": 70,
+        "value": 3878,
+        "dps": 0.546,
+        "def": 178
+      }
+    },
+    {
+      "style": "ranged",
       "slot": "head",
       "item": {
         "id": "morvyn_s_hood",
@@ -2141,7 +2121,7 @@
         "name": "Dravok's Helm",
         "req": 70,
         "value": 311364,
-        "dps": -0.197,
+        "dps": -0.2,
         "def": 187
       },
       "by": {
@@ -2149,7 +2129,7 @@
         "name": "Gorath's Helm",
         "req": 70,
         "value": 139250,
-        "dps": -0.197,
+        "dps": -0.2,
         "def": 228
       }
     },
@@ -2221,7 +2201,7 @@
         "name": "Morvyn's Staff",
         "req": 70,
         "value": 177860,
-        "dps": 5.205,
+        "dps": 5.294,
         "def": 6
       },
       "by": {
@@ -2229,7 +2209,7 @@
         "name": "Magic Staff",
         "req": 1,
         "value": 375,
-        "dps": 5.205,
+        "dps": 5.294,
         "def": 27
       }
     },
@@ -2410,7 +2390,7 @@
         "req": 70,
         "value": 7322,
         "dps": 0.915,
-        "def": 130
+        "def": 278
       }
     },
     {
@@ -2430,7 +2410,7 @@
         "req": 70,
         "value": 7322,
         "dps": 0.915,
-        "def": 130
+        "def": 278
       }
     },
     {
@@ -2450,7 +2430,7 @@
         "req": 70,
         "value": 7322,
         "dps": 0.915,
-        "def": 130
+        "def": 278
       }
     },
     {
@@ -3149,7 +3129,7 @@
         "name": "Infernal Max Cape",
         "req": 0,
         "value": 0,
-        "dps": 2.063,
+        "dps": 2.073,
         "def": 125
       }
     },
@@ -3169,7 +3149,7 @@
         "name": "Infernal Max Cape",
         "req": 0,
         "value": 0,
-        "dps": 2.063,
+        "dps": 2.073,
         "def": 125
       }
     },
@@ -3189,7 +3169,7 @@
         "name": "Infernal Max Cape",
         "req": 0,
         "value": 0,
-        "dps": 2.063,
+        "dps": 2.073,
         "def": 125
       }
     },
@@ -3209,7 +3189,7 @@
         "name": "Infernal Max Cape",
         "req": 0,
         "value": 0,
-        "dps": 2.063,
+        "dps": 2.073,
         "def": 125
       }
     },
@@ -3229,7 +3209,7 @@
         "name": "Infernal Max Cape",
         "req": 0,
         "value": 0,
-        "dps": 2.063,
+        "dps": 2.073,
         "def": 125
       }
     },
@@ -3249,7 +3229,7 @@
         "name": "Infernal Max Cape",
         "req": 0,
         "value": 0,
-        "dps": 2.063,
+        "dps": 2.073,
         "def": 125
       }
     },
@@ -3269,7 +3249,7 @@
         "name": "Infernal Max Cape",
         "req": 0,
         "value": 0,
-        "dps": 2.063,
+        "dps": 2.073,
         "def": 125
       }
     },
@@ -3289,7 +3269,7 @@
         "name": "Infernal Max Cape",
         "req": 0,
         "value": 0,
-        "dps": 2.063,
+        "dps": 2.073,
         "def": 125
       }
     },
@@ -3309,7 +3289,7 @@
         "name": "Infernal Max Cape",
         "req": 0,
         "value": 0,
-        "dps": 2.063,
+        "dps": 2.073,
         "def": 125
       }
     },
@@ -3329,7 +3309,7 @@
         "name": "Infernal Max Cape",
         "req": 0,
         "value": 0,
-        "dps": 2.063,
+        "dps": 2.073,
         "def": 125
       }
     },
@@ -3349,7 +3329,7 @@
         "name": "Infernal Max Cape",
         "req": 0,
         "value": 0,
-        "dps": 2.063,
+        "dps": 2.073,
         "def": 125
       }
     },
@@ -3369,7 +3349,7 @@
         "name": "Infernal Max Cape",
         "req": 0,
         "value": 0,
-        "dps": 2.063,
+        "dps": 2.073,
         "def": 125
       }
     },
@@ -3389,7 +3369,7 @@
         "name": "Infernal Max Cape",
         "req": 0,
         "value": 0,
-        "dps": 2.063,
+        "dps": 2.073,
         "def": 125
       }
     },
@@ -3409,7 +3389,7 @@
         "name": "Infernal Max Cape",
         "req": 0,
         "value": 0,
-        "dps": 2.063,
+        "dps": 2.073,
         "def": 125
       }
     },
@@ -3429,7 +3409,7 @@
         "name": "Infernal Max Cape",
         "req": 0,
         "value": 0,
-        "dps": 2.063,
+        "dps": 2.073,
         "def": 125
       }
     },
@@ -3449,7 +3429,7 @@
         "name": "Infernal Max Cape",
         "req": 0,
         "value": 0,
-        "dps": 2.063,
+        "dps": 2.073,
         "def": 125
       }
     },
@@ -3469,7 +3449,7 @@
         "name": "Infernal Max Cape",
         "req": 0,
         "value": 0,
-        "dps": 2.063,
+        "dps": 2.073,
         "def": 125
       }
     },
@@ -3490,7 +3470,7 @@
         "req": 70,
         "value": 7322,
         "dps": 0.915,
-        "def": 130
+        "def": 278
       }
     },
     {
@@ -3530,7 +3510,7 @@
         "req": 70,
         "value": 7322,
         "dps": 0.915,
-        "def": 130
+        "def": 278
       }
     },
     {
@@ -3550,7 +3530,7 @@
         "req": 70,
         "value": 7322,
         "dps": 0.915,
-        "def": 130
+        "def": 278
       }
     },
     {
@@ -3734,46 +3714,6 @@
       }
     },
     {
-      "style": "melee",
-      "slot": "body",
-      "item": {
-        "id": "black_d_hide_body",
-        "name": "Black D'Hide Body",
-        "req": 70,
-        "value": 7322,
-        "dps": 0,
-        "def": 130
-      },
-      "by": {
-        "id": "red_d_hide_body",
-        "name": "Red D'Hide Body",
-        "req": 60,
-        "value": 5954,
-        "dps": 0,
-        "def": 192
-      }
-    },
-    {
-      "style": "magic",
-      "slot": "body",
-      "item": {
-        "id": "black_d_hide_body",
-        "name": "Black D'Hide Body",
-        "req": 70,
-        "value": 7322,
-        "dps": -0.702,
-        "def": 130
-      },
-      "by": {
-        "id": "red_d_hide_body",
-        "name": "Red D'Hide Body",
-        "req": 60,
-        "value": 5954,
-        "dps": -0.527,
-        "def": 192
-      }
-    },
-    {
       "style": "ranged",
       "slot": "ammo",
       "item": {
@@ -3791,46 +3731,6 @@
         "value": 782,
         "dps": 4.327,
         "def": 0
-      }
-    },
-    {
-      "style": "melee",
-      "slot": "legs",
-      "item": {
-        "id": "black_d_hide_chaps",
-        "name": "Black D'Hide Chaps",
-        "req": 70,
-        "value": 3878,
-        "dps": 0,
-        "def": 90
-      },
-      "by": {
-        "id": "red_d_hide_chaps",
-        "name": "Red D'Hide Chaps",
-        "req": 60,
-        "value": 3062,
-        "dps": 0,
-        "def": 104
-      }
-    },
-    {
-      "style": "magic",
-      "slot": "legs",
-      "item": {
-        "id": "black_d_hide_chaps",
-        "name": "Black D'Hide Chaps",
-        "req": 70,
-        "value": 3878,
-        "dps": -0.702,
-        "def": 90
-      },
-      "by": {
-        "id": "red_d_hide_chaps",
-        "name": "Red D'Hide Chaps",
-        "req": 60,
-        "value": 3062,
-        "dps": -0.351,
-        "def": 104
       }
     },
     {
@@ -4036,46 +3936,6 @@
   ],
   "inversions": [
     {
-      "style": "magic",
-      "slot": "body",
-      "item": {
-        "id": "2nd_age_druidic_robe_top",
-        "name": "2nd Age Druidic Robe Top",
-        "req": 65,
-        "value": 2147483647,
-        "dps": 1.333,
-        "def": 0
-      },
-      "vs": {
-        "id": "kodai_robe_top",
-        "name": "Kodai Robe Top",
-        "req": 75,
-        "value": 129932252,
-        "dps": 1.777,
-        "def": 30
-      }
-    },
-    {
-      "style": "magic",
-      "slot": "legs",
-      "item": {
-        "id": "2nd_age_druidic_robe_bottoms",
-        "name": "2nd Age Druidic Robe Bottoms",
-        "req": 65,
-        "value": 2147483647,
-        "dps": 0.971,
-        "def": 0
-      },
-      "vs": {
-        "id": "kodai_robe_bottom",
-        "name": "Kodai Robe Bottom",
-        "req": 75,
-        "value": 90889870,
-        "dps": 1.355,
-        "def": 24
-      }
-    },
-    {
       "style": "ranged",
       "slot": "gloves",
       "item": {
@@ -4143,7 +4003,7 @@
         "name": "Dragon Kiteshield",
         "req": 60,
         "value": 77250000,
-        "dps": -0.271,
+        "dps": -0.274,
         "def": 212
       },
       "vs": {
@@ -4151,7 +4011,7 @@
         "name": "Arcane Kiteshield",
         "req": 90,
         "value": 200000,
-        "dps": 2.176,
+        "dps": 2.196,
         "def": 215
       }
     },
@@ -4203,7 +4063,7 @@
         "name": "Ward Of Elidria",
         "req": 75,
         "value": 50000000,
-        "dps": 0.786,
+        "dps": 0.932,
         "def": 40
       },
       "vs": {
@@ -4211,7 +4071,7 @@
         "name": "Arcane Kiteshield",
         "req": 90,
         "value": 200000,
-        "dps": 2.176,
+        "dps": 2.196,
         "def": 215
       }
     },
@@ -4551,7 +4411,7 @@
         "name": "Arcane Kiteshield",
         "req": 90,
         "value": 200000,
-        "dps": 2.176,
+        "dps": 2.196,
         "def": 215
       }
     },
@@ -4703,7 +4563,7 @@
         "name": "Arcane Grimoire",
         "req": 50,
         "value": 1000000,
-        "dps": 0.544,
+        "dps": 0.688,
         "def": 11
       },
       "vs": {
@@ -4711,7 +4571,7 @@
         "name": "Arcane Kiteshield",
         "req": 90,
         "value": 200000,
-        "dps": 2.176,
+        "dps": 2.196,
         "def": 215
       }
     },
@@ -4763,7 +4623,7 @@
         "name": "Dragon Defender",
         "req": 60,
         "value": 500000,
-        "dps": -0.101,
+        "dps": -0.103,
         "def": 67
       },
       "vs": {
@@ -4771,7 +4631,7 @@
         "name": "Arcane Kiteshield",
         "req": 90,
         "value": 200000,
-        "dps": 2.176,
+        "dps": 2.196,
         "def": 215
       }
     },
@@ -4793,6 +4653,26 @@
         "value": 200000,
         "dps": 0.922,
         "def": 215
+      }
+    },
+    {
+      "style": "ranged",
+      "slot": "body",
+      "item": {
+        "id": "dragon_chainbody",
+        "name": "Dragon Chainbody",
+        "req": 60,
+        "value": 273651,
+        "dps": 0,
+        "def": 231
+      },
+      "vs": {
+        "id": "black_d_hide_body",
+        "name": "Black D'Hide Body",
+        "req": 70,
+        "value": 7322,
+        "dps": 0.915,
+        "def": 278
       }
     },
     {
@@ -4828,6 +4708,14 @@
           "value": 100000000,
           "dps": 7.533,
           "def": 130
+        },
+        {
+          "id": "ancient_maul",
+          "name": "Ancient Maul",
+          "req": 75,
+          "value": 102009502,
+          "dps": 5.331,
+          "def": 0
         },
         {
           "id": "ghraxis_rapier",
@@ -4892,14 +4780,6 @@
           "value": 7500000,
           "dps": 4.507,
           "def": 12
-        },
-        {
-          "id": "ancient_maul",
-          "name": "Ancient Maul",
-          "req": 75,
-          "value": 102009502,
-          "dps": 4.443,
-          "def": 0
         },
         {
           "id": "boneclaw_rapier",
@@ -6039,7 +5919,7 @@
           "req": 70,
           "value": 7322,
           "dps": 0,
-          "def": 130
+          "def": 278
         },
         {
           "id": "2nd_age_platebody",
@@ -6373,7 +6253,7 @@
           "req": 70,
           "value": 3878,
           "dps": 0,
-          "def": 90
+          "def": 178
         },
         {
           "id": "2nd_age_platelegs",
@@ -7058,6 +6938,14 @@
           "def": 30
         },
         {
+          "id": "twisted_longbow",
+          "name": "Twisted Longbow",
+          "req": 75,
+          "value": 1581879938,
+          "dps": 11.371,
+          "def": 0
+        },
+        {
           "id": "2nd_age_bow",
           "name": "2nd Age Bow",
           "req": 65,
@@ -7191,14 +7079,6 @@
           "req": 5,
           "value": 31,
           "dps": 5.186,
-          "def": 0
-        },
-        {
-          "id": "twisted_longbow",
-          "name": "Twisted Longbow",
-          "req": 75,
-          "value": 1581879938,
-          "dps": 5.156,
           "def": 0
         },
         {
@@ -7675,7 +7555,7 @@
           "req": 70,
           "value": 7322,
           "dps": 0.915,
-          "def": 130
+          "def": 278
         },
         {
           "id": "zephyra_chestplate",
@@ -8121,7 +8001,7 @@
           "req": 70,
           "value": 3878,
           "dps": 0.546,
-          "def": 90
+          "def": 178
         },
         {
           "id": "zephyra_chainskirt",
@@ -9384,7 +9264,7 @@
           "name": "Trident of Venom",
           "req": 75,
           "value": 25000000,
-          "dps": 12.558,
+          "dps": 12.711,
           "def": 0
         },
         {
@@ -9392,7 +9272,7 @@
           "name": "Sanguine Staff",
           "req": 82,
           "value": 150000000,
-          "dps": 9.419,
+          "dps": 9.534,
           "def": 15
         },
         {
@@ -9408,7 +9288,7 @@
           "name": "Ancestral Wand",
           "req": 75,
           "value": 78743682,
-          "dps": 7.397,
+          "dps": 7.514,
           "def": 20
         },
         {
@@ -9416,7 +9296,7 @@
           "name": "Chaotic Staff",
           "req": 90,
           "value": 200000,
-          "dps": 7.227,
+          "dps": 7.337,
           "def": 0
         },
         {
@@ -9424,7 +9304,7 @@
           "name": "Attuned Duskmare Staff",
           "req": 75,
           "value": 14000000,
-          "dps": 7.186,
+          "dps": 7.3,
           "def": 15
         },
         {
@@ -9432,7 +9312,7 @@
           "name": "Archmage Wand",
           "req": 50,
           "value": 1000000,
-          "dps": 6.892,
+          "dps": 7.007,
           "def": 12
         },
         {
@@ -9440,7 +9320,7 @@
           "name": "Umbral Duskmare Staff",
           "req": 75,
           "value": 14000000,
-          "dps": 5.722,
+          "dps": 5.813,
           "def": 15
         },
         {
@@ -9448,7 +9328,7 @@
           "name": "Volatile Duskmare Staff",
           "req": 75,
           "value": 14000000,
-          "dps": 5.722,
+          "dps": 5.813,
           "def": 15
         },
         {
@@ -9456,7 +9336,7 @@
           "name": "Staff of the Dead",
           "req": 75,
           "value": 5659314,
-          "dps": 5.681,
+          "dps": 5.771,
           "def": 12
         },
         {
@@ -9464,7 +9344,7 @@
           "name": "Shroud Staff",
           "req": 55,
           "value": 3000000,
-          "dps": 5.671,
+          "dps": 5.766,
           "def": 12
         },
         {
@@ -9472,7 +9352,7 @@
           "name": "Duskmare Staff",
           "req": 65,
           "value": 100000000,
-          "dps": 5.487,
+          "dps": 5.577,
           "def": 12
         },
         {
@@ -9480,7 +9360,7 @@
           "name": "Magic Staff",
           "req": 1,
           "value": 375,
-          "dps": 5.205,
+          "dps": 5.294,
           "def": 27
         },
         {
@@ -9488,7 +9368,7 @@
           "name": "Morvyn's Staff",
           "req": 70,
           "value": 177860,
-          "dps": 5.205,
+          "dps": 5.294,
           "def": 6
         },
         {
@@ -9496,7 +9376,7 @@
           "name": "Battlestaff",
           "req": 30,
           "value": 7534,
-          "dps": 5.205,
+          "dps": 5.294,
           "def": 18
         },
         {
@@ -9504,7 +9384,7 @@
           "name": "Staff",
           "req": 0,
           "value": 116,
-          "dps": 5.139,
+          "dps": 5.228,
           "def": 16
         },
         {
@@ -9512,7 +9392,7 @@
           "name": "Staff of Air",
           "req": 1,
           "value": 1868,
-          "dps": 5.139,
+          "dps": 5.228,
           "def": 18
         },
         {
@@ -9520,7 +9400,7 @@
           "name": "Staff of Water",
           "req": 1,
           "value": 1805,
-          "dps": 5.139,
+          "dps": 5.228,
           "def": 18
         },
         {
@@ -9528,7 +9408,7 @@
           "name": "Staff of Fire",
           "req": 1,
           "value": 1331,
-          "dps": 5.139,
+          "dps": 5.228,
           "def": 18
         },
         {
@@ -9536,7 +9416,7 @@
           "name": "Staff of Earth",
           "req": 1,
           "value": 794,
-          "dps": 5.139,
+          "dps": 5.228,
           "def": 18
         }
       ]
@@ -9550,31 +9430,31 @@
           "name": "Halo",
           "req": 0,
           "value": 750000,
-          "dps": 1.057,
+          "dps": 1.066,
           "def": 0
-        },
-        {
-          "id": "shardglass_helmet",
-          "name": "Shardglass Helmet",
-          "req": 70,
-          "value": 7500000,
-          "dps": 0.763,
-          "def": 360
         },
         {
           "id": "kodai_hat",
           "name": "Kodai Hat",
           "req": 75,
           "value": 53913947,
-          "dps": 0.643,
+          "dps": 0.649,
           "def": 30
+        },
+        {
+          "id": "shardglass_helmet",
+          "name": "Shardglass Helmet",
+          "req": 70,
+          "value": 7500000,
+          "dps": 0.619,
+          "def": 360
         },
         {
           "id": "imbued_slayer_crown",
           "name": "Imbued Slayer Crown",
           "req": 20,
           "value": 7500000,
-          "dps": 0.461,
+          "dps": 0.465,
           "def": 50
         },
         {
@@ -9582,7 +9462,7 @@
           "name": "2nd Age Mage Hat",
           "req": 65,
           "value": 18941223,
-          "dps": 0.252,
+          "dps": 0.255,
           "def": 0
         },
         {
@@ -9590,7 +9470,7 @@
           "name": "Boundless Hat",
           "req": 50,
           "value": 500000,
-          "dps": 0.252,
+          "dps": 0.255,
           "def": 3
         },
         {
@@ -9598,7 +9478,7 @@
           "name": "Morvyn's Hood",
           "req": 70,
           "value": 337839,
-          "dps": 0.19,
+          "dps": 0.193,
           "def": 6
         },
         {
@@ -9606,7 +9486,7 @@
           "name": "Black Wizard Hat",
           "req": 0,
           "value": 10,
-          "dps": 0.128,
+          "dps": 0.129,
           "def": 3
         },
         {
@@ -9614,7 +9494,7 @@
           "name": "Lumira Mitre",
           "req": 40,
           "value": 10461,
-          "dps": 0.128,
+          "dps": 0.129,
           "def": 0
         },
         {
@@ -9622,7 +9502,7 @@
           "name": "Verdant Mitre",
           "req": 40,
           "value": 8847,
-          "dps": 0.128,
+          "dps": 0.129,
           "def": 0
         },
         {
@@ -9630,7 +9510,7 @@
           "name": "Krylth Mitre",
           "req": 40,
           "value": 16298,
-          "dps": 0.128,
+          "dps": 0.129,
           "def": 0
         },
         {
@@ -9638,7 +9518,7 @@
           "name": "Ancient Mitre",
           "req": 40,
           "value": 19405,
-          "dps": 0.128,
+          "dps": 0.129,
           "def": 0
         },
         {
@@ -9646,7 +9526,7 @@
           "name": "Zephyra Mitre",
           "req": 40,
           "value": 16925,
-          "dps": 0.128,
+          "dps": 0.129,
           "def": 0
         },
         {
@@ -9654,7 +9534,7 @@
           "name": "Grondar Mitre",
           "req": 40,
           "value": 10151,
-          "dps": 0.128,
+          "dps": 0.129,
           "def": 0
         },
         {
@@ -9662,7 +9542,7 @@
           "name": "Arcanist Hat",
           "req": 40,
           "value": 10840,
-          "dps": 0.096,
+          "dps": 0.097,
           "def": 5
         },
         {
@@ -9670,7 +9550,7 @@
           "name": "Wizard Hat",
           "req": 0,
           "value": 126,
-          "dps": 0.064,
+          "dps": 0.065,
           "def": 2
         },
         {
@@ -9718,7 +9598,7 @@
           "name": "Dragon Full Helm",
           "req": 60,
           "value": 58753000,
-          "dps": -0.032,
+          "dps": -0.033,
           "def": 178
         },
         {
@@ -9726,7 +9606,7 @@
           "name": "Kaelor's Coif",
           "req": 70,
           "value": 70249,
-          "dps": -0.032,
+          "dps": -0.033,
           "def": 19
         },
         {
@@ -9734,7 +9614,7 @@
           "name": "Cinderforged Helm",
           "req": 80,
           "value": 8000000,
-          "dps": -0.065,
+          "dps": -0.066,
           "def": 228
         },
         {
@@ -9742,7 +9622,7 @@
           "name": "Stonegale Coif",
           "req": 60,
           "value": 2400000,
-          "dps": -0.065,
+          "dps": -0.066,
           "def": 139
         },
         {
@@ -9750,7 +9630,7 @@
           "name": "Runeforged Med Helm",
           "req": 40,
           "value": 11127,
-          "dps": -0.098,
+          "dps": -0.099,
           "def": 86
         },
         {
@@ -9758,7 +9638,7 @@
           "name": "Berserker Helm",
           "req": 45,
           "value": 40666,
-          "dps": -0.098,
+          "dps": -0.099,
           "def": 27
         },
         {
@@ -9766,7 +9646,7 @@
           "name": "Slayer Helmet",
           "req": 20,
           "value": 1000000,
-          "dps": -0.098,
+          "dps": -0.099,
           "def": 28
         },
         {
@@ -9774,7 +9654,7 @@
           "name": "Zephyra Helmet",
           "req": 70,
           "value": 9327472,
-          "dps": -0.164,
+          "dps": -0.166,
           "def": 33
         },
         {
@@ -9782,7 +9662,7 @@
           "name": "Fighter Helm",
           "req": 45,
           "value": 500000,
-          "dps": -0.164,
+          "dps": -0.166,
           "def": 32
         },
         {
@@ -9790,7 +9670,7 @@
           "name": "Bronze Full Helm",
           "req": 1,
           "value": 284,
-          "dps": -0.197,
+          "dps": -0.2,
           "def": 15
         },
         {
@@ -9798,7 +9678,7 @@
           "name": "Iron Full Helm",
           "req": 1,
           "value": 105,
-          "dps": -0.197,
+          "dps": -0.2,
           "def": 27
         },
         {
@@ -9806,7 +9686,7 @@
           "name": "Ironman Full Helm",
           "req": 1,
           "value": 1000,
-          "dps": -0.197,
+          "dps": -0.2,
           "def": 27
         },
         {
@@ -9814,7 +9694,7 @@
           "name": "Hardcore Ironman Helmet",
           "req": 1,
           "value": 10000,
-          "dps": -0.197,
+          "dps": -0.2,
           "def": 39
         },
         {
@@ -9822,7 +9702,7 @@
           "name": "Steel Full Helm",
           "req": 5,
           "value": 171,
-          "dps": -0.197,
+          "dps": -0.2,
           "def": 36
         },
         {
@@ -9830,7 +9710,7 @@
           "name": "Mithril Full Helm",
           "req": 20,
           "value": 850,
-          "dps": -0.197,
+          "dps": -0.2,
           "def": 57
         },
         {
@@ -9838,7 +9718,7 @@
           "name": "Adamant Full Helm",
           "req": 30,
           "value": 1866,
-          "dps": -0.197,
+          "dps": -0.2,
           "def": 77
         },
         {
@@ -9846,7 +9726,7 @@
           "name": "Runeforged Full Helm",
           "req": 40,
           "value": 20685,
-          "dps": -0.197,
+          "dps": -0.2,
           "def": 118
         },
         {
@@ -9854,7 +9734,7 @@
           "name": "Justicar Faceguard",
           "req": 75,
           "value": 11884929,
-          "dps": -0.197,
+          "dps": -0.2,
           "def": 231
         },
         {
@@ -9862,7 +9742,7 @@
           "name": "Dravok's Helm",
           "req": 70,
           "value": 311364,
-          "dps": -0.197,
+          "dps": -0.2,
           "def": 187
         },
         {
@@ -9870,7 +9750,7 @@
           "name": "Gorath's Helm",
           "req": 70,
           "value": 139250,
-          "dps": -0.197,
+          "dps": -0.2,
           "def": 228
         },
         {
@@ -9878,7 +9758,7 @@
           "name": "Torvek's Helm",
           "req": 70,
           "value": 177535,
-          "dps": -0.197,
+          "dps": -0.2,
           "def": 206
         },
         {
@@ -9886,7 +9766,7 @@
           "name": "Verin's Helm",
           "req": 70,
           "value": 174353,
-          "dps": -0.197,
+          "dps": -0.2,
           "def": 220
         }
       ]
@@ -9900,7 +9780,7 @@
           "name": "Kodai Robe Top",
           "req": 75,
           "value": 129932252,
-          "dps": 1.777,
+          "dps": 1.93,
           "def": 30
         },
         {
@@ -9918,14 +9798,6 @@
           "value": 3500000,
           "dps": 1.106,
           "def": 60
-        },
-        {
-          "id": "shardglass_plate_body",
-          "name": "Shardglass Plate Body",
-          "req": 70,
-          "value": 7500000,
-          "dps": 1.085,
-          "def": 555
         },
         {
           "id": "morvyn_s_robetop",
@@ -9950,6 +9822,14 @@
           "value": 500000,
           "dps": 0.831,
           "def": 4
+        },
+        {
+          "id": "shardglass_plate_body",
+          "name": "Shardglass Plate Body",
+          "req": 70,
+          "value": 7500000,
+          "dps": 0.806,
+          "def": 555
         },
         {
           "id": "arcanist_robe_top",
@@ -10133,7 +10013,7 @@
           "req": 70,
           "value": 7322,
           "dps": -0.702,
-          "def": 130
+          "def": 278
         },
         {
           "id": "cindermaw_scale_body",
@@ -10266,7 +10146,7 @@
           "name": "Kodai Robe Bottom",
           "req": 75,
           "value": 90889870,
-          "dps": 1.355,
+          "dps": 1.37,
           "def": 24
         },
         {
@@ -10274,23 +10154,15 @@
           "name": "2nd Age Druidic Robe Bottoms",
           "req": 65,
           "value": 2147483647,
-          "dps": 0.971,
+          "dps": 0.983,
           "def": 0
-        },
-        {
-          "id": "shardglass_platelegs",
-          "name": "Shardglass Platelegs",
-          "req": 70,
-          "value": 7500000,
-          "dps": 0.771,
-          "def": 415
         },
         {
           "id": "morvyn_s_robeskirt",
           "name": "Morvyn's Robeskirt",
           "req": 70,
           "value": 1992430,
-          "dps": 0.729,
+          "dps": 0.738,
           "def": 22
         },
         {
@@ -10298,7 +10170,7 @@
           "name": "2nd Age Robe Legs",
           "req": 65,
           "value": 2200000,
-          "dps": 0.729,
+          "dps": 0.738,
           "def": 0
         },
         {
@@ -10306,7 +10178,7 @@
           "name": "Boundless Robe Bottom",
           "req": 50,
           "value": 500000,
-          "dps": 0.603,
+          "dps": 0.611,
           "def": 4
         },
         {
@@ -10314,15 +10186,23 @@
           "name": "Arcanist Robe Bottom",
           "req": 40,
           "value": 47497,
-          "dps": 0.507,
+          "dps": 0.513,
           "def": 18
+        },
+        {
+          "id": "shardglass_platelegs",
+          "name": "Shardglass Platelegs",
+          "req": 70,
+          "value": 7500000,
+          "dps": 0.49,
+          "def": 415
         },
         {
           "id": "wizard_robe_skirt",
           "name": "Wizard Robe Skirt",
           "req": 0,
           "value": 3,
-          "dps": 0.07,
+          "dps": 0.071,
           "def": 2
         },
         {
@@ -10394,7 +10274,7 @@
           "name": "Leather Chaps",
           "req": 1,
           "value": 17,
-          "dps": -0.035,
+          "dps": -0.036,
           "def": 15
         },
         {
@@ -10402,7 +10282,7 @@
           "name": "Sovereign's Cindergreaves",
           "req": 80,
           "value": 12000000,
-          "dps": -0.211,
+          "dps": -0.213,
           "def": 238
         },
         {
@@ -10410,7 +10290,7 @@
           "name": "Green D'Hide Chaps",
           "req": 40,
           "value": 2239,
-          "dps": -0.246,
+          "dps": -0.249,
           "def": 70
         },
         {
@@ -10418,7 +10298,7 @@
           "name": "Kaelor's Leatherskirt",
           "req": 70,
           "value": 464568,
-          "dps": -0.246,
+          "dps": -0.249,
           "def": 130
         },
         {
@@ -10426,7 +10306,7 @@
           "name": "Red D'Hide Chaps",
           "req": 60,
           "value": 3062,
-          "dps": -0.351,
+          "dps": -0.356,
           "def": 104
         },
         {
@@ -10434,7 +10314,7 @@
           "name": "Studded Chaps",
           "req": 20,
           "value": 305,
-          "dps": -0.351,
+          "dps": -0.356,
           "def": 59
         },
         {
@@ -10442,7 +10322,7 @@
           "name": "Zephyra Chainskirt",
           "req": 70,
           "value": 27872221,
-          "dps": -0.351,
+          "dps": -0.356,
           "def": 96
         },
         {
@@ -10450,7 +10330,7 @@
           "name": "Justicar Legguards",
           "req": 75,
           "value": 9858691,
-          "dps": -0.421,
+          "dps": -0.427,
           "def": 217
         },
         {
@@ -10458,7 +10338,7 @@
           "name": "Thornhide Platelegs",
           "req": 60,
           "value": 4000000,
-          "dps": -0.421,
+          "dps": -0.427,
           "def": 231
         },
         {
@@ -10466,15 +10346,15 @@
           "name": "Black D'Hide Chaps",
           "req": 70,
           "value": 3878,
-          "dps": -0.702,
-          "def": 90
+          "dps": -0.711,
+          "def": 178
         },
         {
           "id": "bronze_platelegs",
           "name": "Bronze Platelegs",
           "req": 1,
           "value": 218,
-          "dps": -0.737,
+          "dps": -0.747,
           "def": 21
         },
         {
@@ -10482,7 +10362,7 @@
           "name": "Iron Platelegs",
           "req": 1,
           "value": 85,
-          "dps": -0.737,
+          "dps": -0.747,
           "def": 34
         },
         {
@@ -10490,7 +10370,7 @@
           "name": "Steel Platelegs",
           "req": 5,
           "value": 490,
-          "dps": -0.737,
+          "dps": -0.747,
           "def": 65
         },
         {
@@ -10498,7 +10378,7 @@
           "name": "Mithril Platelegs",
           "req": 20,
           "value": 1304,
-          "dps": -0.737,
+          "dps": -0.747,
           "def": 109
         },
         {
@@ -10506,7 +10386,7 @@
           "name": "Adamant Platelegs",
           "req": 30,
           "value": 3478,
-          "dps": -0.737,
+          "dps": -0.747,
           "def": 159
         },
         {
@@ -10514,7 +10394,7 @@
           "name": "Runeforged Platelegs",
           "req": 40,
           "value": 37913,
-          "dps": -0.737,
+          "dps": -0.747,
           "def": 192
         },
         {
@@ -10522,7 +10402,7 @@
           "name": "Dragon Platelegs",
           "req": 60,
           "value": 161152,
-          "dps": -0.737,
+          "dps": -0.747,
           "def": 258
         },
         {
@@ -10530,7 +10410,7 @@
           "name": "Dragon Plateskirt",
           "req": 60,
           "value": 161075,
-          "dps": -0.737,
+          "dps": -0.747,
           "def": 258
         },
         {
@@ -10538,7 +10418,7 @@
           "name": "Runeforged Plateskirt",
           "req": 40,
           "value": 37986,
-          "dps": -0.737,
+          "dps": -0.747,
           "def": 192
         },
         {
@@ -10546,7 +10426,7 @@
           "name": "Grondar Tassets",
           "req": 65,
           "value": 16462681,
-          "dps": -0.737,
+          "dps": -0.747,
           "def": 326
         },
         {
@@ -10554,7 +10434,7 @@
           "name": "Dravok's Platelegs",
           "req": 70,
           "value": 822566,
-          "dps": -0.737,
+          "dps": -0.747,
           "def": 332
         },
         {
@@ -10562,7 +10442,7 @@
           "name": "Gorath's Chainskirt",
           "req": 70,
           "value": 189163,
-          "dps": -0.737,
+          "dps": -0.747,
           "def": 332
         },
         {
@@ -10570,7 +10450,7 @@
           "name": "Torvek's Platelegs",
           "req": 70,
           "value": 315686,
-          "dps": -0.737,
+          "dps": -0.747,
           "def": 332
         },
         {
@@ -10578,7 +10458,7 @@
           "name": "Verin's Plateskirt",
           "req": 70,
           "value": 286454,
-          "dps": -0.737,
+          "dps": -0.747,
           "def": 340
         },
         {
@@ -10586,7 +10466,7 @@
           "name": "Mithril Plateskirt",
           "req": 20,
           "value": 1147,
-          "dps": -0.737,
+          "dps": -0.747,
           "def": 109
         },
         {
@@ -10594,7 +10474,7 @@
           "name": "Adamant Plateskirt",
           "req": 30,
           "value": 3715,
-          "dps": -0.737,
+          "dps": -0.747,
           "def": 159
         },
         {
@@ -10602,7 +10482,7 @@
           "name": "Zesta Skirt",
           "req": 45,
           "value": 130000,
-          "dps": -0.737,
+          "dps": -0.747,
           "def": 159
         }
       ]
@@ -10616,7 +10496,7 @@
           "name": "Afflicted Bracelet",
           "req": 0,
           "value": 20377850,
-          "dps": 2.496,
+          "dps": 2.508,
           "def": 0
         },
         {
@@ -10624,7 +10504,7 @@
           "name": "Gloves of Slaughter",
           "req": 85,
           "value": 5000000,
-          "dps": 1.155,
+          "dps": 1.312,
           "def": 0
         },
         {
@@ -10632,7 +10512,7 @@
           "name": "Cryptbound Gloves",
           "req": 0,
           "value": 130000,
-          "dps": 0.174,
+          "dps": 0.177,
           "def": 54
         },
         {
@@ -10640,7 +10520,7 @@
           "name": "Boundless Gloves",
           "req": 50,
           "value": 500000,
-          "dps": 0.174,
+          "dps": 0.177,
           "def": 4
         },
         {
@@ -10648,7 +10528,7 @@
           "name": "Arcanist Gloves",
           "req": 40,
           "value": 5587,
-          "dps": 0.088,
+          "dps": 0.089,
           "def": 3
         },
         {
@@ -10680,7 +10560,7 @@
           "name": "Ferocious Gloves",
           "req": 95,
           "value": 10200000,
-          "dps": -0.488,
+          "dps": -0.495,
           "def": 3
         }
       ]
@@ -10694,7 +10574,7 @@
           "name": "Spellweaver Boots",
           "req": 20,
           "value": 119551,
-          "dps": 0.743,
+          "dps": 0.597,
           "def": 0
         },
         {
@@ -10702,7 +10582,7 @@
           "name": "Evermore Boots",
           "req": 75,
           "value": 4926153,
-          "dps": 0.228,
+          "dps": 0.234,
           "def": 23
         },
         {
@@ -10710,7 +10590,7 @@
           "name": "Boundless Boots",
           "req": 50,
           "value": 500000,
-          "dps": 0.144,
+          "dps": 0.148,
           "def": 3
         },
         {
@@ -10718,7 +10598,7 @@
           "name": "Arcanist Boots",
           "req": 40,
           "value": 5876,
-          "dps": 0.087,
+          "dps": 0.089,
           "def": 3
         },
         {
@@ -10734,7 +10614,7 @@
           "name": "Grondar Boots",
           "req": 65,
           "value": 675775,
-          "dps": -0.029,
+          "dps": -0.03,
           "def": 24
         },
         {
@@ -10742,7 +10622,7 @@
           "name": "Dragon Boots",
           "req": 60,
           "value": 254942,
-          "dps": -0.088,
+          "dps": -0.091,
           "def": 47
         },
         {
@@ -10750,7 +10630,7 @@
           "name": "Primeval Boots",
           "req": 75,
           "value": 21902457,
-          "dps": -0.118,
+          "dps": -0.121,
           "def": 61
         },
         {
@@ -10758,7 +10638,7 @@
           "name": "Skyfury Boots",
           "req": 75,
           "value": 29422433,
-          "dps": -0.118,
+          "dps": -0.121,
           "def": 19
         }
       ]
@@ -10772,7 +10652,7 @@
           "name": "Arcane Kiteshield",
           "req": 90,
           "value": 200000,
-          "dps": 2.176,
+          "dps": 2.196,
           "def": 215
         },
         {
@@ -10780,7 +10660,7 @@
           "name": "Ward Of Elidria",
           "req": 75,
           "value": 50000000,
-          "dps": 0.786,
+          "dps": 0.932,
           "def": 40
         },
         {
@@ -10788,7 +10668,7 @@
           "name": "Arcane Grimoire",
           "req": 50,
           "value": 1000000,
-          "dps": 0.544,
+          "dps": 0.688,
           "def": 11
         },
         {
@@ -10820,7 +10700,7 @@
           "name": "Runeforged Defender",
           "req": 40,
           "value": 750000,
-          "dps": -0.101,
+          "dps": -0.103,
           "def": 52
         },
         {
@@ -10828,7 +10708,7 @@
           "name": "Dragon Defender",
           "req": 60,
           "value": 500000,
-          "dps": -0.101,
+          "dps": -0.103,
           "def": 67
         },
         {
@@ -10836,7 +10716,7 @@
           "name": "Visage Shield",
           "req": 75,
           "value": 3700524,
-          "dps": -0.169,
+          "dps": -0.171,
           "def": 90
         },
         {
@@ -10844,7 +10724,7 @@
           "name": "Avernal Defender",
           "req": 70,
           "value": 80000000,
-          "dps": -0.169,
+          "dps": -0.171,
           "def": 252
         },
         {
@@ -10852,7 +10732,7 @@
           "name": "Bronze Kiteshield",
           "req": 1,
           "value": 132,
-          "dps": -0.271,
+          "dps": -0.274,
           "def": 26
         },
         {
@@ -10860,7 +10740,7 @@
           "name": "Iron Kiteshield",
           "req": 1,
           "value": 138,
-          "dps": -0.271,
+          "dps": -0.274,
           "def": 38
         },
         {
@@ -10868,7 +10748,7 @@
           "name": "Steel Kiteshield",
           "req": 5,
           "value": 557,
-          "dps": -0.271,
+          "dps": -0.274,
           "def": 65
         },
         {
@@ -10876,7 +10756,7 @@
           "name": "Mithril Kiteshield",
           "req": 20,
           "value": 1036,
-          "dps": -0.271,
+          "dps": -0.274,
           "def": 95
         },
         {
@@ -10884,7 +10764,7 @@
           "name": "Adamant Kiteshield",
           "req": 30,
           "value": 3075,
-          "dps": -0.271,
+          "dps": -0.274,
           "def": 140
         },
         {
@@ -10892,7 +10772,7 @@
           "name": "Runeforged Kiteshield",
           "req": 40,
           "value": 32108,
-          "dps": -0.271,
+          "dps": -0.274,
           "def": 188
         },
         {
@@ -10900,7 +10780,7 @@
           "name": "Dragon Kiteshield",
           "req": 60,
           "value": 77250000,
-          "dps": -0.271,
+          "dps": -0.274,
           "def": 212
         }
       ]
@@ -10914,7 +10794,7 @@
           "name": "Infernal Max Cape",
           "req": 0,
           "value": 0,
-          "dps": 2.063,
+          "dps": 2.073,
           "def": 125
         },
         {
@@ -10922,7 +10802,7 @@
           "name": "Imbued God Cape",
           "req": 50,
           "value": 500000,
-          "dps": 0.572,
+          "dps": 0.728,
           "def": 15
         },
         {
@@ -10930,7 +10810,7 @@
           "name": "Max Cape",
           "req": 0,
           "value": 1000000000,
-          "dps": 0.286,
+          "dps": 0.29,
           "def": 50
         },
         {
@@ -11120,7 +11000,7 @@
           "name": "Arcane Necklace",
           "req": 90,
           "value": 100000,
-          "dps": 2.25,
+          "dps": 2.129,
           "def": 0
         },
         {
@@ -11128,7 +11008,7 @@
           "name": "Occult Necklace",
           "req": 0,
           "value": 415548,
-          "dps": 0.953,
+          "dps": 0.963,
           "def": 0
         },
         {
@@ -11136,7 +11016,7 @@
           "name": "Amulet of Fury",
           "req": 0,
           "value": 2609432,
-          "dps": 0.474,
+          "dps": 0.487,
           "def": 75
         },
         {
@@ -11144,7 +11024,7 @@
           "name": "2nd Age Amulet",
           "req": 70,
           "value": 51352500,
-          "dps": 0.474,
+          "dps": 0.487,
           "def": 0
         },
         {
@@ -11152,7 +11032,7 @@
           "name": "Amulet of Glory",
           "req": 0,
           "value": 11259,
-          "dps": 0.321,
+          "dps": 0.329,
           "def": 15
         },
         {
@@ -11160,7 +11040,7 @@
           "name": "Amulet of Glory (T)",
           "req": 0,
           "value": 39981,
-          "dps": 0.321,
+          "dps": 0.329,
           "def": 50
         },
         {
@@ -11168,7 +11048,7 @@
           "name": "Amulet of Magic",
           "req": 0,
           "value": 594,
-          "dps": 0.162,
+          "dps": 0.167,
           "def": 0
         },
         {
@@ -11176,7 +11056,7 @@
           "name": "Amulet of Power",
           "req": 0,
           "value": 2370,
-          "dps": 0.065,
+          "dps": 0.067,
           "def": 10
         },
         {
@@ -11184,7 +11064,7 @@
           "name": "Sapphire Amulet",
           "req": 0,
           "value": 401,
-          "dps": 0.065,
+          "dps": 0.067,
           "def": 0
         }
       ]

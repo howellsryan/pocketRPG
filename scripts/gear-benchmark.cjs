@@ -176,8 +176,7 @@ function loadoutDPS(style, weapon, gear) {
 
   let maxHit
   const effAtkLevel = effective(PLAYER_LEVEL, style === 'melee' ? 0 : 0)
-  const atkRoll = attackRoll(effAtkLevel, attackBonus)
-  const acc = hitChance(atkRoll, targetDefenceRoll())
+  let atkRoll = attackRoll(effAtkLevel, attackBonus)
 
   if (style === 'melee') {
     const strengthBonus = worn.reduce((s, it) => s + styleDamageBonus(it, 'melee'), 0)
@@ -185,6 +184,18 @@ function loadoutDPS(style, weapon, gear) {
   } else if (style === 'ranged') {
     const strengthBonus = worn.reduce((s, it) => s + styleDamageBonus(it, 'ranged'), 0)
     maxHit = rangedMaxHit(effective(PLAYER_LEVEL), strengthBonus)
+    // Twisted-Bow-style magic scaling (combat.js): accuracy and damage scale
+    // with the target's magic level. Our target's magic level == TARGET_LEVEL,
+    // so a bow built for high-magic monsters is rated on that target.
+    if (weapon?.scalesWithMagic) {
+      const M = Math.min(250, Math.max(1, TARGET_LEVEL))
+      const accInner = Math.floor((3 * M) / 10) - 100
+      const dmgInner = Math.floor((3 * M) / 10) - 140
+      const accMult = Math.min(140, Math.max(0, 140 + Math.floor((3 * M - 10) / 100) - Math.floor((accInner * accInner) / 100))) / 100
+      const dmgMult = Math.min(250, Math.max(0, 250 + Math.floor((3 * M - 14) / 100) - Math.floor((dmgInner * dmgInner) / 100))) / 100
+      atkRoll = Math.floor(atkRoll * accMult)
+      maxHit = Math.floor(maxHit * dmgMult)
+    }
   } else {
     const rawMagicDamage = worn.reduce((s, it) => s + styleDamageBonus(it, 'magic'), 0)
     const magicDamage = effectiveWornMagicDamage(rawMagicDamage, weapon)
@@ -192,6 +203,7 @@ function loadoutDPS(style, weapon, gear) {
     maxHit = magicMaxHit(base, magicDamage)
   }
 
+  const acc = hitChance(atkRoll, targetDefenceRoll())
   const avgDamage = acc * ((1 + maxHit) / 2)
   return { dps: avgDamage / interval, acc, maxHit, attackBonus }
 }

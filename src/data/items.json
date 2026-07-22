@@ -8806,7 +8806,7 @@
     "otherBonus": {
       "meleeStrength": 5,
       "rangedStrength": 5,
-      "magicDamage": 5
+      "magicDamage": 2
     },
     "requirements": {
       "defence": 70
@@ -8844,7 +8844,7 @@
     "otherBonus": {
       "meleeStrength": 10,
       "rangedStrength": 10,
-      "magicDamage": 10
+      "magicDamage": 5
     },
     "requirements": {
       "defence": 70
@@ -8882,7 +8882,7 @@
     "otherBonus": {
       "meleeStrength": 7,
       "rangedStrength": 7,
-      "magicDamage": 7
+      "magicDamage": 3
     },
     "requirements": {
       "defence": 70
@@ -9194,7 +9194,7 @@
     "otherBonus": {
       "meleeStrength": 0,
       "rangedStrength": 0,
-      "magicDamage": 2
+      "magicDamage": 3
     },
     "requirements": {
       "magic": 75,
@@ -9228,7 +9228,7 @@
     "otherBonus": {
       "meleeStrength": 0,
       "rangedStrength": 0,
-      "magicDamage": 2
+      "magicDamage": 4
     },
     "requirements": {
       "magic": 75,
@@ -9262,7 +9262,7 @@
     "otherBonus": {
       "meleeStrength": 0,
       "rangedStrength": 0,
-      "magicDamage": 2
+      "magicDamage": 3
     },
     "requirements": {
       "magic": 75,
@@ -9321,7 +9321,7 @@
     "slot": "weapon",
     "twoHanded": true,
     "stackable": false,
-    "attackSpeed": 6,
+    "attackSpeed": 5,
     "attackStyle": "crush",
     "attackBonus": {
       "stab": 0,
@@ -9345,6 +9345,11 @@
     "requirements": {
       "attack": 75,
       "strength": 75
+    },
+    "specialAttack": {
+      "type": "triple_hit",
+      "energyCost": 100,
+      "description": "Quake: Smashes the target three times in a single attack, each strike rolling its own damage."
     },
     "shopValue": 102009502,
     "isGeneralStore": false,
@@ -13797,11 +13802,11 @@
       "ranged": 45
     },
     "defenceBonus": {
-      "stab": 20,
-      "slash": 20,
-      "crush": 20,
+      "stab": 50,
+      "slash": 54,
+      "crush": 46,
       "magic": 50,
-      "ranged": 20
+      "ranged": 78
     },
     "otherBonus": {
       "meleeStrength": 0,
@@ -13830,11 +13835,11 @@
       "ranged": 30
     },
     "defenceBonus": {
-      "stab": 10,
-      "slash": 10,
-      "crush": 10,
+      "stab": 30,
+      "slash": 32,
+      "crush": 26,
       "magic": 50,
-      "ranged": 10
+      "ranged": 40
     },
     "otherBonus": {
       "meleeStrength": 0,

@@ -44,11 +44,12 @@ Melee's best weapons cap out well below the other two styles' at level 99.
 **Price/difficulty is widely decoupled from power.** The tool flags ~200 dominated
 items and ~40 value inversions. The offenders cluster:
 
-- **Prestige weapons statted below cheap staples.** Twisted Longbow (1.58B, req 75)
-  does *half* the DPS of the Bow of Faerdhinen (100M). Shadow of Tumaken (1.5B,
-  req 85) is beaten by the Sanguine Staff (150M). Ancient Maul (102M) loses to the
-  Abyssal Tentacle (1.7M). Nearly every Dragon-tier and godsword melee weapon is
-  out-DPS'd by a far cheaper alternative.
+- **Prestige weapons statted below cheap staples.** Shadow of Tumaken (1.5B,
+  req 85) is beaten by the Sanguine Staff (150M). Nearly every Dragon-tier and
+  godsword melee weapon is out-DPS'd by a far cheaper alternative.
+  (The Twisted Longbow is *not* one of these — it has `scalesWithMagic`, so its
+  damage climbs against high-magic targets; the benchmark now models that and
+  rates it alongside the Bow of Faerdhinen.)
 - **A handful of cheap over-performers set the DPS bar for their whole style:**
   Kaelor's Crossbow (~98k), Magic Shortbow (~800), Zesta Longsword (120k),
   Abyssal Tentacle (1.7M), Archmage Wand (1M).
@@ -59,20 +60,31 @@ items and ~40 value inversions. The offenders cluster:
 
 ## Fixed in this change
 
-The Kodai magic-robe tier — the flagship value inversion. Kodai (req 75 boss unique)
+**Kodai magic-robe tier** — the flagship value inversion. Kodai (req 75 boss unique)
 was only +7 magic attack over the Shroud robe (req 55) for ~37× the price, and had
-*worse* magic defence. Buffed magic attack and magic defence so it is the decisive
-premier magic-*attack* robe, without touching magic damage % (the ripple-heavy lever):
+*worse* magic defence. Buffed to be the decisive best-in-slot mage set:
 
 | Item | magic atk | magic def | magic dmg % |
 |---|---|---|---|
-| Kodai Hat | 4 → **16** | 5 → **30** | 2 (unchanged) |
-| Kodai Robe Top | 35 → **50** | 26 → **45** | 2 (unchanged) |
-| Kodai Robe Bottom | 26 → **38** | 20 → **35** | 2 (unchanged) |
+| Kodai Hat | 4 → **16** | 5 → **30** | 2 → **3** |
+| Kodai Robe Top | 35 → **50** | 26 → **45** | 2 → **4** |
+| Kodai Robe Bottom | 26 → **38** | 20 → **35** | 2 → **3** |
 
-After: Kodai Robe Top leads magic bodies at ~1.78 marginal DPS (Shroud ~1.11), and
-Kodai Bottom leads legs — the acquisition cost now buys a real lead. Magic attack is
-an accuracy lever, so this does not inflate max hits into PvE/PvP.
+Plus a **full-set bonus: +30% magic accuracy** (`combatSetBonuses.js`, 3-piece
+armour-only). Kodai now leads magic body/legs on marginal DPS, and the set bonus
+makes it the definitive mage setup.
+
+**Shardglass magic damage rebalanced to a +10% set** (was +22%): helmet 5 → 2,
+body 10 → 5, legs 7 → 3 — matching Kodai's new +10% set so the two premier magic
+armours share the top of the magic-damage ladder rather than the cheap Shardglass
+set running away with it.
+
+**Ancient Maul** (102M, was out-DPS'd by cheaper weapons): sped up 6 → 5 ticks and
+given the gargoyle maul's `triple_hit` "Quake" special attack, restoring it as a
+worthwhile crush weapon for its price.
+
+**Black dragonhide** now out-defends Red on every axis (body and legs), fixing the
+higher-tier set being the weaker one.
 
 ## Recommended follow-up (needs a deliberate pass, not applied here)
 
@@ -87,13 +99,9 @@ drive-by. In priority order:
    Ancient Maul, the godswords and Dragon-tier uniques should out-DPS the cheap
    staples that currently beat them. Set the cheap over-performers as the mid-tier
    baseline and raise the premier uniques above it.
-3. **Rationalise the magic-damage ladder.** Decide whether Shardglass (cheap, +22%
-   set) or Kodai (expensive) should own top magic damage, then make the ladder
-   monotonic. Kodai's magic damage was deliberately left at +2%/piece pending this.
-4. **Kingdom of collectors.** 2nd Age items carry placeholder `shopValue`
+3. **Kingdom of collectors.** 2nd Age items carry placeholder `shopValue`
    (2,147,483,647 = INT32_MAX) yet mid-tier stats — decide if they are prestige
    cosmetics (leave stats, fix the sentinel price) or BiS (raise stats).
-5. **Data bug:** Black d'hide has *lower* defence than Red d'hide (should be higher).
 
 ## Tool limitations (so the flags are read correctly)
 

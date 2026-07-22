@@ -10,9 +10,9 @@ Best-in-slot loadout DPS per style. Tolerance band: max/min ≤ **1.35**.
 |---|---|---:|---:|---:|
 | melee | Saeldor Warblade | 49 | 54.2% | 7.53 |
 | ranged | Faerdhinen Warbow | 66 | 62.3% | 11.60 |
-| magic | Trident of Venom | 81 | 55.1% | 12.56 |
+| magic | Trident of Venom | 82 | 55.1% | 12.71 |
 
-**Ratio (max/min): 1.67 — OUT OF tolerance ⚠️**
+**Ratio (max/min): 1.69 — OUT OF tolerance ⚠️**
 
 Reference loadouts (greedy BiS per style):
 
@@ -26,30 +26,26 @@ An equally-or-less demanding, equally-or-cheaper item is at least as good on **b
 
 | Style | Slot | Item | Req | Value | DPS | Def | Dominated by | by DPS | by Def | by Req | by Value |
 |---|---|---|---:|---:|---:|---:|---|---:|---:|---:|---:|
-| ranged | weapon | Twisted Longbow | 75 | 1,581,879,938 | 5.16 | 0 | 2nd Age Bow | 11.35 | 0 | 65 | 1,419,450,502 |
-| magic | weapon | Shadow Of Tumaken | 85 | 1,500,000,000 | 7.98 | 15 | Sanguine Staff | 9.42 | 15 | 82 | 150,000,000 |
+| magic | weapon | Shadow Of Tumaken | 85 | 1,500,000,000 | 7.98 | 15 | Sanguine Staff | 9.53 | 15 | 82 | 150,000,000 |
 | melee | cape | 2nd Age Druidic Cloak | 65 | 1,255,173,674 | 0.00 | 50 | Infernal Max Cape | 0.91 | 125 | 0 | 0 |
 | ranged | cape | 2nd Age Druidic Cloak | 65 | 1,255,173,674 | 0.00 | 50 | Infernal Max Cape | 0.94 | 125 | 0 | 0 |
-| magic | cape | 2nd Age Druidic Cloak | 65 | 1,255,173,674 | 0.00 | 50 | Infernal Max Cape | 2.06 | 125 | 0 | 0 |
+| magic | cape | 2nd Age Druidic Cloak | 65 | 1,255,173,674 | 0.00 | 50 | Infernal Max Cape | 2.07 | 125 | 0 | 0 |
 | melee | cape | Max Cape | 0 | 1,000,000,000 | 0.19 | 50 | Infernal Max Cape | 0.91 | 125 | 0 | 0 |
 | ranged | cape | Max Cape | 0 | 1,000,000,000 | 0.17 | 50 | Infernal Max Cape | 0.94 | 125 | 0 | 0 |
-| magic | cape | Max Cape | 0 | 1,000,000,000 | 0.29 | 50 | Infernal Max Cape | 2.06 | 125 | 0 | 0 |
+| magic | cape | Max Cape | 0 | 1,000,000,000 | 0.29 | 50 | Infernal Max Cape | 2.07 | 125 | 0 | 0 |
 | melee | cape | 2nd Age Cloak | 65 | 375,060,000 | 0.00 | 45 | Infernal Max Cape | 0.91 | 125 | 0 | 0 |
 | ranged | cape | 2nd Age Cloak | 65 | 375,060,000 | 0.00 | 45 | Infernal Max Cape | 0.94 | 125 | 0 | 0 |
-| magic | cape | 2nd Age Cloak | 65 | 375,060,000 | 0.00 | 45 | Infernal Max Cape | 2.06 | 125 | 0 | 0 |
+| magic | cape | 2nd Age Cloak | 65 | 375,060,000 | 0.00 | 45 | Infernal Max Cape | 2.07 | 125 | 0 | 0 |
 | melee | body | 2nd Age Platebody | 65 | 186,888,502 | 0.00 | 238 | Grondar Chestplate | 0.15 | 468 | 65 | 24,546,165 |
 | magic | body | 2nd Age Robe Top | 65 | 166,601,004 | 1.02 | 0 | Shroud Robes Top | 1.11 | 60 | 55 | 3,500,000 |
-| ranged | body | Kodai Robe Top | 75 | 129,932,252 | -0.36 | 30 | Drake Leather Body | 1.04 | 155 | 60 | 4,200,000 |
 | melee | legs | 2nd Age Platelegs | 65 | 126,165,027 | 0.00 | 150 | Zesta Skirt | 0.15 | 159 | 45 | 130,000 |
-| melee | weapon | Ancient Maul | 75 | 102,009,502 | 4.44 | 0 | Abyssal Tentacle | 4.79 | 0 | 75 | 1,714,037 |
-| magic | weapon | Duskmare Staff | 65 | 100,000,000 | 5.49 | 12 | Archmage Wand | 6.89 | 12 | 50 | 1,000,000 |
-| ranged | legs | Kodai Robe Bottom | 75 | 90,889,870 | -0.22 | 24 | Lumira D'Hide Chaps | 0.63 | 70 | 70 | 120,000 |
+| magic | weapon | Duskmare Staff | 65 | 100,000,000 | 5.58 | 12 | Archmage Wand | 7.01 | 12 | 50 | 1,000,000 |
 | melee | shield | 2nd Age Kiteshield | 65 | 85,861,682 | 0.00 | 139 | Adamant Kiteshield | 0.00 | 140 | 30 | 3,075 |
 | ranged | shield | Avernal Defender | 70 | 80,000,000 | -0.07 | 252 | Shardglass Shield | 0.00 | 345 | 70 | 300,000 |
 | magic | shield | Avernal Defender | 70 | 80,000,000 | -0.17 | 252 | Shardglass Shield | 0.00 | 345 | 70 | 300,000 |
 | melee | weapon | Fang Of Osmun | 82 | 75,000,000 | 3.11 | 0 | Ghraxis Rapier | 4.95 | 0 | 80 | 26,610,515 |
 | melee | weapon | Dragon Hunter Lance | 78 | 64,737,500 | 4.55 | 0 | Abyssal Tentacle | 4.79 | 0 | 75 | 1,714,037 |
-| magic | neck | 2nd Age Amulet | 70 | 51,352,500 | 0.47 | 0 | Occult Necklace | 0.95 | 0 | 0 | 415,548 |
+| magic | neck | 2nd Age Amulet | 70 | 51,352,500 | 0.49 | 0 | Occult Necklace | 0.96 | 0 | 0 | 415,548 |
 | melee | weapon | Ashen Sovereign's Edge | 80 | 50,000,000 | 4.29 | 0 | Zul-Kaar's Blade | 4.95 | 0 | 80 | 5,000,000 |
 | melee | shield | Ward Of Elidria | 75 | 50,000,000 | 0.00 | 40 | Dragon Defender | 0.64 | 67 | 60 | 500,000 |
 | ranged | shield | Ward Of Elidria | 75 | 50,000,000 | 0.00 | 40 | Warped Buckler | 0.28 | 60 | 75 | 13,978,735 |
@@ -66,34 +62,35 @@ An equally-or-less demanding, equally-or-cheaper item is at least as good on **b
 | magic | boots | Skyfury Boots | 75 | 29,422,433 | -0.12 | 19 | Evermore Boots | 0.23 | 23 | 75 | 4,926,153 |
 | melee | weapon | Lumira Godsword | 75 | 28,950,625 | 4.18 | 0 | Abyssal Tentacle | 4.79 | 0 | 75 | 1,714,037 |
 | melee | legs | Zephyra Chainskirt | 70 | 27,872,221 | 0.00 | 96 | Zesta Skirt | 0.15 | 159 | 45 | 130,000 |
-| magic | legs | Zephyra Chainskirt | 70 | 27,872,221 | -0.35 | 96 | Kaelor's Leatherskirt | -0.25 | 130 | 70 | 464,568 |
+| ranged | legs | Zephyra Chainskirt | 70 | 27,872,221 | 0.54 | 96 | Black D'Hide Chaps | 0.55 | 178 | 70 | 3,878 |
+| magic | legs | Zephyra Chainskirt | 70 | 27,872,221 | -0.36 | 96 | Kaelor's Leatherskirt | -0.25 | 130 | 70 | 464,568 |
 | ranged | head | 2nd Age Range Coif | 65 | 22,605,480 | 0.19 | 2 | Fighter Helm | 1.20 | 32 | 45 | 500,000 |
-| magic | head | 2nd Age Range Coif | 65 | 22,605,480 | 0.00 | 2 | Imbued Slayer Crown | 0.46 | 50 | 20 | 7,500,000 |
+| magic | head | 2nd Age Range Coif | 65 | 22,605,480 | 0.00 | 2 | Imbued Slayer Crown | 0.47 | 50 | 20 | 7,500,000 |
 | ranged | boots | Primeval Boots | 75 | 21,902,457 | -0.02 | 61 | Emberhowl Boots | 0.00 | 115 | 60 | 1,700,000 |
 | magic | boots | Primeval Boots | 75 | 21,902,457 | -0.12 | 61 | Emberhowl Boots | 0.00 | 115 | 60 | 1,700,000 |
 | melee | weapon | Krylth Godsword | 75 | 19,571,258 | 4.18 | 0 | Abyssal Tentacle | 4.79 | 0 | 75 | 1,714,037 |
 | melee | weapon | Grondar Godsword | 75 | 19,029,248 | 4.18 | 0 | Abyssal Tentacle | 4.79 | 0 | 75 | 1,714,037 |
-| magic | head | 2nd Age Mage Hat | 65 | 18,941,223 | 0.25 | 0 | Halo | 1.06 | 0 | 0 | 750,000 |
+| magic | head | 2nd Age Mage Hat | 65 | 18,941,223 | 0.26 | 0 | Halo | 1.07 | 0 | 0 | 750,000 |
 | ranged | legs | 2nd Age Range Legs | 65 | 17,143,324 | 0.36 | 30 | Red D'Hide Chaps | 0.37 | 104 | 60 | 3,062 |
 | ranged | gloves | 2nd Age Vambraces | 65 | 16,917,650 | 0.22 | 11 | Razorwing Vambraces | 0.27 | 68 | 60 | 1,900,000 |
-| magic | gloves | 2nd Age Vambraces | 65 | 16,917,650 | 0.00 | 11 | Cryptbound Gloves | 0.17 | 54 | 0 | 130,000 |
+| magic | gloves | 2nd Age Vambraces | 65 | 16,917,650 | 0.00 | 11 | Cryptbound Gloves | 0.18 | 54 | 0 | 130,000 |
 | melee | weapon | Dragon Warhammer | 60 | 16,074,033 | 3.24 | 0 | Boneclaw Rapier | 4.36 | 0 | 60 | 3,800,000 |
 | melee | shield | Warped Buckler | 75 | 13,978,735 | 0.00 | 60 | Dragon Defender | 0.64 | 67 | 60 | 500,000 |
 | magic | shield | Warped Buckler | 75 | 13,978,735 | 0.00 | 60 | Shardglass Shield | 0.00 | 345 | 70 | 300,000 |
 | melee | legs | Sovereign's Cindergreaves | 80 | 12,000,000 | 0.00 | 238 | Dragon Platelegs | 0.00 | 258 | 60 | 161,152 |
 | ranged | gloves | Ferocious Gloves | 95 | 10,200,000 | -0.29 | 3 | Razorwing Vambraces | 0.27 | 68 | 60 | 1,900,000 |
-| magic | gloves | Ferocious Gloves | 95 | 10,200,000 | -0.49 | 3 | Cryptbound Gloves | 0.17 | 54 | 0 | 130,000 |
+| magic | gloves | Ferocious Gloves | 95 | 10,200,000 | -0.50 | 3 | Cryptbound Gloves | 0.18 | 54 | 0 | 130,000 |
 | melee | legs | Justicar Legguards | 75 | 9,858,691 | 0.00 | 217 | Dragon Platelegs | 0.00 | 258 | 60 | 161,152 |
-| magic | legs | Justicar Legguards | 75 | 9,858,691 | -0.42 | 217 | Thornhide Platelegs | -0.42 | 231 | 60 | 4,000,000 |
+| magic | legs | Justicar Legguards | 75 | 9,858,691 | -0.43 | 217 | Thornhide Platelegs | -0.43 | 231 | 60 | 4,000,000 |
 | melee | head | Zephyra Helmet | 70 | 9,327,472 | 0.00 | 33 | Imbued Slayer Crown | 0.34 | 50 | 20 | 7,500,000 |
 | ranged | head | Zephyra Helmet | 70 | 9,327,472 | 0.37 | 33 | Imbued Slayer Crown | 0.37 | 50 | 20 | 7,500,000 |
-| magic | head | Zephyra Helmet | 70 | 9,327,472 | -0.16 | 33 | Imbued Slayer Crown | 0.46 | 50 | 20 | 7,500,000 |
+| magic | head | Zephyra Helmet | 70 | 9,327,472 | -0.17 | 33 | Imbued Slayer Crown | 0.47 | 50 | 20 | 7,500,000 |
 | melee | weapon | Zephyra Godsword | 75 | 8,108,827 | 4.18 | 0 | Abyssal Tentacle | 4.79 | 0 | 75 | 1,714,037 |
 | melee | weapon | Shardglass Pickaxe | 70 | 7,500,000 | 3.64 | 0 | Nether Demon Whip | 4.57 | 0 | 70 | 1,214,445 |
 | melee | weapon | Shardglass Axe | 70 | 7,500,000 | 3.09 | 0 | Nether Demon Whip | 4.57 | 0 | 70 | 1,214,445 |
 | ranged | head | Ashen Slayer Helm | 80 | 7,500,000 | 0.00 | 112 | Stonegale Coif | 0.17 | 139 | 60 | 2,400,000 |
 | magic | head | Ashen Slayer Helm | 80 | 7,500,000 | 0.00 | 112 | Gravehusk Helm | 0.00 | 170 | 60 | 2,400,000 |
-| magic | weapon | Staff of the Dead | 75 | 5,659,314 | 5.68 | 12 | Archmage Wand | 6.89 | 12 | 50 | 1,000,000 |
+| magic | weapon | Staff of the Dead | 75 | 5,659,314 | 5.77 | 12 | Archmage Wand | 7.01 | 12 | 50 | 1,000,000 |
 | melee | gloves | Gloves of Slaughter | 85 | 5,000,000 | 0.51 | 0 | Cryptbound Gloves | 0.52 | 54 | 0 | 130,000 |
 | melee | shield | Slayer Defender | 85 | 5,000,000 | 0.59 | -50 | Dragon Defender | 0.64 | 67 | 60 | 500,000 |
 | melee | boots | Evermore Boots | 75 | 4,926,153 | 0.00 | 23 | Grondar Boots | 0.00 | 24 | 65 | 675,775 |
@@ -107,27 +104,29 @@ An equally-or-less demanding, equally-or-cheaper item is at least as good on **b
 | melee | body | Shroud Robes Top | 55 | 3,500,000 | 0.00 | 60 | Zesta Vest | 0.30 | 236 | 45 | 150,000 |
 | ranged | body | Shroud Robes Top | 55 | 3,500,000 | -0.24 | 60 | Green D'Hide Body | 0.43 | 160 | 40 | 4,405 |
 | melee | weapon | Ironclad Longsword | 60 | 3,400,000 | 3.48 | 0 | Zesta Longsword | 4.18 | 3 | 60 | 120,000 |
-| magic | weapon | Shroud Staff | 55 | 3,000,000 | 5.67 | 12 | Archmage Wand | 6.89 | 12 | 50 | 1,000,000 |
+| magic | weapon | Shroud Staff | 55 | 3,000,000 | 5.77 | 12 | Archmage Wand | 7.01 | 12 | 50 | 1,000,000 |
 | melee | shield | Boneclaw Shield | 60 | 2,900,000 | -0.04 | 184 | Runeforged Kiteshield | 0.00 | 188 | 40 | 32,108 |
 | ranged | body | Rangers' Tunic | 40 | 2,655,566 | 0.33 | 0 | Green D'Hide Body | 0.43 | 160 | 40 | 4,405 |
 | melee | head | 2nd Age Full Helm | 65 | 2,500,000 | 0.00 | 100 | Gravehusk Helm | 0.13 | 170 | 60 | 2,400,000 |
 | ranged | legs | Morvyn's Robeskirt | 70 | 1,992,430 | -0.14 | 22 | Lumira D'Hide Chaps | 0.63 | 70 | 70 | 120,000 |
 | melee | weapon | Dravok's Greataxe | 70 | 1,927,923 | 3.03 | 0 | Zesta Longsword | 4.18 | 3 | 60 | 120,000 |
-| ranged | body | Morvyn's Robetop | 70 | 1,923,000 | -0.24 | 30 | Black D'Hide Body | 0.92 | 130 | 70 | 7,322 |
+| ranged | body | Morvyn's Robetop | 70 | 1,923,000 | -0.24 | 30 | Black D'Hide Body | 0.92 | 278 | 70 | 7,322 |
 | ranged | body | Fighter Body | 40 | 1,250,000 | -0.48 | 263 | Runeforged Platebody | -0.36 | 308 | 40 | 38,478 |
 | magic | body | Fighter Body | 40 | 1,250,000 | -1.40 | 263 | Runeforged Platebody | -1.05 | 308 | 40 | 38,478 |
 | melee | body | Kaelor's Leathertop | 70 | 1,077,940 | 0.00 | 234 | Zesta Vest | 0.30 | 236 | 45 | 150,000 |
+| ranged | body | Kaelor's Leathertop | 70 | 1,077,940 | 0.63 | 234 | Black D'Hide Body | 0.92 | 278 | 70 | 7,322 |
 | ranged | weapon | Colossal Ballista | 75 | 1,050,000 | 6.25 | 0 | Kaelor's Crossbow | 8.17 | 0 | 70 | 97,788 |
 | ranged | head | Slayer Helmet | 20 | 1,000,000 | -0.11 | 28 | Hardcore Ironman Helmet | -0.06 | 39 | 1 | 10,000 |
 | ranged | shield | Arcane Grimoire | 50 | 1,000,000 | 0.00 | 11 | Anti-Dragon Shield | 0.00 | 35 | 1 | 89 |
 | ranged | weapon | Nightfang Bow | 60 | 918,105 | 2.78 | 0 | Magic Shortbow | 5.96 | 0 | 50 | 814 |
 | melee | legs | Dravok's Platelegs | 70 | 822,566 | 0.00 | 332 | Verin's Plateskirt | 0.00 | 340 | 70 | 286,454 |
 | ranged | legs | Dravok's Platelegs | 70 | 822,566 | -0.14 | 332 | Verin's Plateskirt | -0.14 | 340 | 70 | 286,454 |
-| magic | legs | Dravok's Platelegs | 70 | 822,566 | -0.74 | 332 | Verin's Plateskirt | -0.74 | 340 | 70 | 286,454 |
+| magic | legs | Dravok's Platelegs | 70 | 822,566 | -0.75 | 332 | Verin's Plateskirt | -0.75 | 340 | 70 | 286,454 |
 | melee | boots | Grondar Boots | 65 | 675,775 | 0.00 | 24 | Dragon Boots | 0.00 | 47 | 60 | 254,942 |
 | ranged | boots | Grondar Boots | 65 | 675,775 | -0.02 | 24 | Dragon Boots | -0.02 | 47 | 60 | 254,942 |
 | melee | weapon | Dragon Pickaxe | 60 | 571,536 | 3.64 | 0 | Zesta Longsword | 4.18 | 3 | 60 | 120,000 |
 | melee | legs | Kaelor's Leatherskirt | 70 | 464,568 | 0.00 | 130 | Zesta Skirt | 0.15 | 159 | 45 | 130,000 |
+| ranged | legs | Kaelor's Leatherskirt | 70 | 464,568 | 0.32 | 130 | Black D'Hide Chaps | 0.55 | 178 | 70 | 3,878 |
 | ranged | head | Morvyn's Hood | 70 | 337,839 | -0.04 | 6 | Kaelor's Coif | 0.15 | 19 | 70 | 70,249 |
 | melee | head | Dravok's Helm | 70 | 311,364 | 0.00 | 187 | Gorath's Helm | 0.00 | 228 | 70 | 139,250 |
 | ranged | head | Dravok's Helm | 70 | 311,364 | -0.06 | 187 | Gorath's Helm | -0.06 | 228 | 70 | 139,250 |
@@ -135,7 +134,7 @@ An equally-or-less demanding, equally-or-cheaper item is at least as good on **b
 | melee | body | Dragon Chainbody | 60 | 273,651 | 0.00 | 231 | Zesta Vest | 0.30 | 236 | 45 | 150,000 |
 | magic | body | Dragon Chainbody | 60 | 273,651 | -0.53 | 231 | Runeforged Chainbody | -0.53 | 239 | 40 | 29,647 |
 | ranged | weapon | Chaotic Crossbow | 90 | 200,000 | 6.50 | 0 | Kaelor's Crossbow | 8.17 | 0 | 70 | 97,788 |
-| magic | weapon | Morvyn's Staff | 70 | 177,860 | 5.20 | 6 | Magic Staff | 5.20 | 27 | 1 | 375 |
+| magic | weapon | Morvyn's Staff | 70 | 177,860 | 5.29 | 6 | Magic Staff | 5.29 | 27 | 1 | 375 |
 | melee | weapon | Lumira Sword | 70 | 169,802 | 3.92 | 0 | Zesta Longsword | 4.18 | 3 | 60 | 120,000 |
 | melee | legs | Ancient D'Hide Chaps | 70 | 140,000 | 0.00 | 70 | Zesta Skirt | 0.15 | 159 | 45 | 130,000 |
 | melee | legs | Zephyra D'Hide Chaps | 70 | 130,000 | 0.00 | 70 | Zesta Skirt | 0.15 | 159 | 45 | 130,000 |
@@ -144,9 +143,9 @@ An equally-or-less demanding, equally-or-cheaper item is at least as good on **b
 | melee | legs | Verdant D'Hide Chaps | 70 | 120,000 | 0.00 | 70 | Red D'Hide Chaps | 0.00 | 104 | 60 | 3,062 |
 | melee | legs | Krylth D'Hide Chaps | 70 | 120,000 | 0.00 | 70 | Red D'Hide Chaps | 0.00 | 104 | 60 | 3,062 |
 | melee | weapon | Dragon Battleaxe | 60 | 119,143 | 3.24 | 0 | Runeforged Axe | 3.83 | 0 | 40 | 7,401 |
-| ranged | body | Ancient D'Hide Body | 70 | 118,755 | 0.63 | 0 | Black D'Hide Body | 0.92 | 130 | 70 | 7,322 |
-| ranged | body | Krylth D'Hide Body | 70 | 115,466 | 0.63 | 0 | Black D'Hide Body | 0.92 | 130 | 70 | 7,322 |
-| ranged | body | Zephyra D'Hide Body | 70 | 103,033 | 0.63 | 0 | Black D'Hide Body | 0.92 | 130 | 70 | 7,322 |
+| ranged | body | Ancient D'Hide Body | 70 | 118,755 | 0.63 | 0 | Black D'Hide Body | 0.92 | 278 | 70 | 7,322 |
+| ranged | body | Krylth D'Hide Body | 70 | 115,466 | 0.63 | 0 | Black D'Hide Body | 0.92 | 278 | 70 | 7,322 |
+| ranged | body | Zephyra D'Hide Body | 70 | 103,033 | 0.63 | 0 | Black D'Hide Body | 0.92 | 278 | 70 | 7,322 |
 | melee | cape | Attack Cape | 99 | 99,000 | 0.00 | 45 | Infernal Max Cape | 0.91 | 125 | 0 | 0 |
 | melee | cape | Strength Cape | 99 | 99,000 | 0.00 | 45 | Infernal Max Cape | 0.91 | 125 | 0 | 0 |
 | melee | cape | Defence Cape | 99 | 99,000 | 0.00 | 45 | Infernal Max Cape | 0.91 | 125 | 0 | 0 |
@@ -181,27 +180,27 @@ An equally-or-less demanding, equally-or-cheaper item is at least as good on **b
 | ranged | cape | Herblore Cape | 99 | 99,000 | 0.00 | 45 | Infernal Max Cape | 0.94 | 125 | 0 | 0 |
 | ranged | cape | Agility Cape | 99 | 99,000 | 0.00 | 45 | Infernal Max Cape | 0.94 | 125 | 0 | 0 |
 | ranged | cape | Thieving Cape | 99 | 99,000 | 0.00 | 45 | Infernal Max Cape | 0.94 | 125 | 0 | 0 |
-| magic | cape | Attack Cape | 99 | 99,000 | 0.00 | 45 | Infernal Max Cape | 2.06 | 125 | 0 | 0 |
-| magic | cape | Strength Cape | 99 | 99,000 | 0.00 | 45 | Infernal Max Cape | 2.06 | 125 | 0 | 0 |
-| magic | cape | Defence Cape | 99 | 99,000 | 0.00 | 45 | Infernal Max Cape | 2.06 | 125 | 0 | 0 |
-| magic | cape | Hitpoints Cape | 99 | 99,000 | 0.00 | 45 | Infernal Max Cape | 2.06 | 125 | 0 | 0 |
-| magic | cape | Ranged Cape | 99 | 99,000 | 0.00 | 45 | Infernal Max Cape | 2.06 | 125 | 0 | 0 |
-| magic | cape | Magic Cape | 99 | 99,000 | 0.00 | 45 | Infernal Max Cape | 2.06 | 125 | 0 | 0 |
-| magic | cape | Prayer Cape | 99 | 99,000 | 0.00 | 45 | Infernal Max Cape | 2.06 | 125 | 0 | 0 |
-| magic | cape | Mining Cape | 99 | 99,000 | 0.00 | 45 | Infernal Max Cape | 2.06 | 125 | 0 | 0 |
-| magic | cape | Woodcutting Cape | 99 | 99,000 | 0.00 | 45 | Infernal Max Cape | 2.06 | 125 | 0 | 0 |
-| magic | cape | Fishing Cape | 99 | 99,000 | 0.00 | 45 | Infernal Max Cape | 2.06 | 125 | 0 | 0 |
-| magic | cape | Smithing Cape | 99 | 99,000 | 0.00 | 45 | Infernal Max Cape | 2.06 | 125 | 0 | 0 |
-| magic | cape | Cooking Cape | 99 | 99,000 | 0.00 | 45 | Infernal Max Cape | 2.06 | 125 | 0 | 0 |
-| magic | cape | Fletching Cape | 99 | 99,000 | 0.00 | 45 | Infernal Max Cape | 2.06 | 125 | 0 | 0 |
-| magic | cape | Crafting Cape | 99 | 99,000 | 0.00 | 45 | Infernal Max Cape | 2.06 | 125 | 0 | 0 |
-| magic | cape | Herblore Cape | 99 | 99,000 | 0.00 | 45 | Infernal Max Cape | 2.06 | 125 | 0 | 0 |
-| magic | cape | Agility Cape | 99 | 99,000 | 0.00 | 45 | Infernal Max Cape | 2.06 | 125 | 0 | 0 |
-| magic | cape | Thieving Cape | 99 | 99,000 | 0.00 | 45 | Infernal Max Cape | 2.06 | 125 | 0 | 0 |
-| ranged | body | Verdant D'Hide Body | 70 | 97,706 | 0.63 | 0 | Black D'Hide Body | 0.92 | 130 | 70 | 7,322 |
+| magic | cape | Attack Cape | 99 | 99,000 | 0.00 | 45 | Infernal Max Cape | 2.07 | 125 | 0 | 0 |
+| magic | cape | Strength Cape | 99 | 99,000 | 0.00 | 45 | Infernal Max Cape | 2.07 | 125 | 0 | 0 |
+| magic | cape | Defence Cape | 99 | 99,000 | 0.00 | 45 | Infernal Max Cape | 2.07 | 125 | 0 | 0 |
+| magic | cape | Hitpoints Cape | 99 | 99,000 | 0.00 | 45 | Infernal Max Cape | 2.07 | 125 | 0 | 0 |
+| magic | cape | Ranged Cape | 99 | 99,000 | 0.00 | 45 | Infernal Max Cape | 2.07 | 125 | 0 | 0 |
+| magic | cape | Magic Cape | 99 | 99,000 | 0.00 | 45 | Infernal Max Cape | 2.07 | 125 | 0 | 0 |
+| magic | cape | Prayer Cape | 99 | 99,000 | 0.00 | 45 | Infernal Max Cape | 2.07 | 125 | 0 | 0 |
+| magic | cape | Mining Cape | 99 | 99,000 | 0.00 | 45 | Infernal Max Cape | 2.07 | 125 | 0 | 0 |
+| magic | cape | Woodcutting Cape | 99 | 99,000 | 0.00 | 45 | Infernal Max Cape | 2.07 | 125 | 0 | 0 |
+| magic | cape | Fishing Cape | 99 | 99,000 | 0.00 | 45 | Infernal Max Cape | 2.07 | 125 | 0 | 0 |
+| magic | cape | Smithing Cape | 99 | 99,000 | 0.00 | 45 | Infernal Max Cape | 2.07 | 125 | 0 | 0 |
+| magic | cape | Cooking Cape | 99 | 99,000 | 0.00 | 45 | Infernal Max Cape | 2.07 | 125 | 0 | 0 |
+| magic | cape | Fletching Cape | 99 | 99,000 | 0.00 | 45 | Infernal Max Cape | 2.07 | 125 | 0 | 0 |
+| magic | cape | Crafting Cape | 99 | 99,000 | 0.00 | 45 | Infernal Max Cape | 2.07 | 125 | 0 | 0 |
+| magic | cape | Herblore Cape | 99 | 99,000 | 0.00 | 45 | Infernal Max Cape | 2.07 | 125 | 0 | 0 |
+| magic | cape | Agility Cape | 99 | 99,000 | 0.00 | 45 | Infernal Max Cape | 2.07 | 125 | 0 | 0 |
+| magic | cape | Thieving Cape | 99 | 99,000 | 0.00 | 45 | Infernal Max Cape | 2.07 | 125 | 0 | 0 |
+| ranged | body | Verdant D'Hide Body | 70 | 97,706 | 0.63 | 0 | Black D'Hide Body | 0.92 | 278 | 70 | 7,322 |
 | melee | weapon | Torvek's Hammers | 70 | 96,264 | 3.69 | 0 | Dragon Scimitar | 4.15 | 0 | 60 | 59,656 |
-| ranged | body | Grondar D'Hide Body | 70 | 94,484 | 0.63 | 0 | Black D'Hide Body | 0.92 | 130 | 70 | 7,322 |
-| ranged | body | Lumira D'Hide Body | 70 | 92,013 | 0.63 | 0 | Black D'Hide Body | 0.92 | 130 | 70 | 7,322 |
+| ranged | body | Grondar D'Hide Body | 70 | 94,484 | 0.63 | 0 | Black D'Hide Body | 0.92 | 278 | 70 | 7,322 |
+| ranged | body | Lumira D'Hide Body | 70 | 92,013 | 0.63 | 0 | Black D'Hide Body | 0.92 | 278 | 70 | 7,322 |
 | melee | weapon | Dragon Axe | 60 | 81,914 | 3.09 | 0 | Runeforged Axe | 3.83 | 0 | 40 | 7,401 |
 | melee | head | Kaelor's Coif | 70 | 70,249 | 0.00 | 19 | Iron Full Helm | 0.00 | 27 | 1 | 105 |
 | melee | weapon | Dragon Longsword | 60 | 59,258 | 3.34 | 3 | Adamant Mace | 3.56 | 4 | 30 | 723 |
@@ -211,11 +210,7 @@ An equally-or-less demanding, equally-or-cheaper item is at least as good on **b
 | ranged | weapon | Runeforged Crossbow | 61 | 9,460 | 5.65 | 0 | Magic Shortbow | 5.96 | 0 | 50 | 814 |
 | ranged | ammo | Onyx Dragon Bolt | 64 | 8,800 | 3.98 | 0 | Dragon Javelin | 4.33 | 0 | 0 | 782 |
 | ranged | ammo | Onyx Bolt | 61 | 7,500 | 3.29 | 0 | Dragon Javelin | 4.33 | 0 | 0 | 782 |
-| melee | body | Black D'Hide Body | 70 | 7,322 | 0.00 | 130 | Red D'Hide Body | 0.00 | 192 | 60 | 5,954 |
-| magic | body | Black D'Hide Body | 70 | 7,322 | -0.70 | 130 | Red D'Hide Body | -0.53 | 192 | 60 | 5,954 |
 | ranged | ammo | Dragonstone Dragon Bolt (E) | 64 | 4,800 | 3.63 | 0 | Dragon Javelin | 4.33 | 0 | 0 | 782 |
-| melee | legs | Black D'Hide Chaps | 70 | 3,878 | 0.00 | 90 | Red D'Hide Chaps | 0.00 | 104 | 60 | 3,062 |
-| magic | legs | Black D'Hide Chaps | 70 | 3,878 | -0.70 | 90 | Red D'Hide Chaps | -0.35 | 104 | 60 | 3,062 |
 | ranged | ammo | Dragonstone Dragon Bolt | 64 | 3,600 | 3.63 | 0 | Dragon Javelin | 4.33 | 0 | 0 | 782 |
 | melee | legs | Red D'Hide Chaps | 60 | 3,062 | 0.00 | 104 | Mithril Platelegs | 0.00 | 109 | 20 | 1,304 |
 | ranged | ammo | Dragon Arrow | 60 | 2,894 | 1.73 | 0 | Dragon Javelin | 4.33 | 0 | 0 | 782 |
@@ -233,15 +228,13 @@ A far cheaper item (≤ half the price) lands within 5% of this item's DPS while
 
 | Style | Slot | Pricey item | Req | Value | DPS | Def | Cheap alt | alt Req | alt Value | alt DPS | alt Def |
 |---|---|---|---:|---:|---:|---:|---|---:|---:|---:|---:|
-| magic | body | 2nd Age Druidic Robe Top | 65 | 2,147,483,647 | 1.33 | 0 | Kodai Robe Top | 75 | 129,932,252 | 1.78 | 30 |
-| magic | legs | 2nd Age Druidic Robe Bottoms | 65 | 2,147,483,647 | 0.97 | 0 | Kodai Robe Bottom | 75 | 90,889,870 | 1.36 | 24 |
 | ranged | gloves | Zaryth Vambraces | 80 | 78,427,233 | 0.48 | 0 | Gloves of Slaughter | 85 | 5,000,000 | 0.68 | 0 |
 | melee | shield | Dragon Kiteshield | 60 | 77,250,000 | 0.00 | 212 | Shardglass Shield | 70 | 300,000 | 0.00 | 345 |
 | ranged | shield | Dragon Kiteshield | 60 | 77,250,000 | -0.05 | 212 | Eagle Eyed Kiteshield | 90 | 200,000 | 0.92 | 215 |
-| magic | shield | Dragon Kiteshield | 60 | 77,250,000 | -0.27 | 212 | Arcane Kiteshield | 90 | 200,000 | 2.18 | 215 |
+| magic | shield | Dragon Kiteshield | 60 | 77,250,000 | -0.27 | 212 | Arcane Kiteshield | 90 | 200,000 | 2.20 | 215 |
 | melee | head | Dragon Full Helm | 60 | 58,753,000 | 0.00 | 178 | Helmet of Venom | 75 | 25,000,000 | 0.13 | 217 |
 | ranged | head | Dragon Full Helm | 60 | 58,753,000 | -0.02 | 178 | Helmet of Venom | 75 | 25,000,000 | 0.00 | 217 |
-| magic | shield | Ward Of Elidria | 75 | 50,000,000 | 0.79 | 40 | Arcane Kiteshield | 90 | 200,000 | 2.18 | 215 |
+| magic | shield | Ward Of Elidria | 75 | 50,000,000 | 0.93 | 40 | Arcane Kiteshield | 90 | 200,000 | 2.20 | 215 |
 | melee | weapon | Ghraxis Rapier | 80 | 26,610,515 | 4.95 | 0 | Zul-Kaar's Blade | 80 | 5,000,000 | 4.95 | 0 |
 | ranged | body | Grondar Chestplate | 65 | 24,546,165 | -0.36 | 468 | Justicar Chestguard | 75 | 11,331,967 | -0.16 | 501 |
 | magic | body | Grondar Chestplate | 65 | 24,546,165 | -1.05 | 468 | Justicar Chestguard | 75 | 11,331,967 | -0.56 | 501 |
@@ -258,7 +251,7 @@ A far cheaper item (≤ half the price) lands within 5% of this item's DPS while
 | melee | weapon | Boneclaw Rapier | 60 | 3,800,000 | 4.36 | 0 | Chaotic Longsword | 90 | 200,000 | 4.81 | 0 |
 | ranged | weapon | Thornspine Shortbow | 60 | 3,600,000 | 7.43 | 0 | Kaelor's Crossbow | 70 | 97,788 | 8.17 | 0 |
 | ranged | shield | Boneclaw Shield | 60 | 2,900,000 | 0.00 | 184 | Eagle Eyed Kiteshield | 90 | 200,000 | 0.92 | 215 |
-| magic | shield | Boneclaw Shield | 60 | 2,900,000 | 0.00 | 184 | Arcane Kiteshield | 90 | 200,000 | 2.18 | 215 |
+| magic | shield | Boneclaw Shield | 60 | 2,900,000 | 0.00 | 184 | Arcane Kiteshield | 90 | 200,000 | 2.20 | 215 |
 | melee | head | Stonegale Coif | 60 | 2,400,000 | 0.00 | 139 | Dravok's Helm | 70 | 311,364 | 0.00 | 187 |
 | melee | weapon | Abyssal Tentacle | 75 | 1,714,037 | 4.79 | 0 | Chaotic Longsword | 90 | 200,000 | 4.81 | 0 |
 | melee | weapon | Angler Net | 0 | 1,250,000 | 2.32 | 0 | Chaotic Longsword | 90 | 200,000 | 4.81 | 0 |
@@ -266,11 +259,12 @@ A far cheaper item (≤ half the price) lands within 5% of this item's DPS while
 | ranged | head | Robin Hood Hat | 40 | 1,007,096 | 0.83 | 0 | Fighter Helm | 45 | 500,000 | 1.20 | 32 |
 | melee | head | Slayer Helmet | 20 | 1,000,000 | 0.34 | 28 | Fighter Helm | 45 | 500,000 | 1.27 | 32 |
 | melee | legs | Freminnik Kilt | 0 | 1,000,000 | 0.15 | 0 | Zesta Skirt | 45 | 130,000 | 0.15 | 159 |
-| magic | shield | Arcane Grimoire | 50 | 1,000,000 | 0.54 | 11 | Arcane Kiteshield | 90 | 200,000 | 2.18 | 215 |
+| magic | shield | Arcane Grimoire | 50 | 1,000,000 | 0.69 | 11 | Arcane Kiteshield | 90 | 200,000 | 2.20 | 215 |
 | melee | body | Dravok's Platebody | 70 | 826,212 | 0.00 | 475 | Gorath's Platebody | 70 | 231,500 | 0.00 | 475 |
 | ranged | shield | Dragon Defender | 60 | 500,000 | -0.03 | 67 | Eagle Eyed Kiteshield | 90 | 200,000 | 0.92 | 215 |
-| magic | shield | Dragon Defender | 60 | 500,000 | -0.10 | 67 | Arcane Kiteshield | 90 | 200,000 | 2.18 | 215 |
+| magic | shield | Dragon Defender | 60 | 500,000 | -0.10 | 67 | Arcane Kiteshield | 90 | 200,000 | 2.20 | 215 |
 | ranged | shield | Krylth D'Hide Shield | 70 | 414,130 | 0.11 | 0 | Eagle Eyed Kiteshield | 90 | 200,000 | 0.92 | 215 |
+| ranged | body | Dragon Chainbody | 60 | 273,651 | 0.00 | 231 | Black D'Hide Body | 70 | 7,322 | 0.92 | 278 |
 | melee | weapon | Chaotic Maul | 90 | 200,000 | 4.22 | 0 | Dragon Scimitar | 60 | 59,656 | 4.15 | 0 |
 
 ## Per-slot rankings
@@ -282,6 +276,7 @@ Top items per (style, slot) by marginal DPS added to the BiS loadout. `def` is s
 | Item | Req | Value | DPS | Def |
 |---|---:|---:|---:|---:|
 | Saeldor Warblade | 75 | 100,000,000 | 7.53 | 130 |
+| Ancient Maul | 75 | 102,009,502 | 5.33 | 0 |
 | Ghraxis Rapier | 80 | 26,610,515 | 4.95 | 0 |
 | Zul-Kaar's Blade | 80 | 5,000,000 | 4.95 | 0 |
 | Chaotic Longsword | 90 | 200,000 | 4.81 | 0 |
@@ -290,7 +285,6 @@ Top items per (style, slot) by marginal DPS added to the BiS loadout. `def` is s
 | Nether Demon Whip | 70 | 1,214,445 | 4.57 | 0 |
 | Dragon Hunter Lance | 78 | 64,737,500 | 4.55 | 0 |
 | Krylth Spear | 70 | 7,500,000 | 4.51 | 12 |
-| Ancient Maul | 75 | 102,009,502 | 4.44 | 0 |
 
 ### melee — head
 
@@ -421,6 +415,7 @@ Top items per (style, slot) by marginal DPS added to the BiS loadout. `def` is s
 | Item | Req | Value | DPS | Def |
 |---|---:|---:|---:|---:|
 | Faerdhinen Warbow | 75 | 100,000,000 | 11.60 | 30 |
+| Twisted Longbow | 75 | 1,581,879,938 | 11.37 | 0 |
 | 2nd Age Bow | 65 | 1,419,450,502 | 11.35 | 0 |
 | Venom Blowpipe | 75 | 25,000,000 | 9.73 | 0 |
 | Kaelor's Crossbow | 70 | 97,788 | 8.17 | 0 |
@@ -429,7 +424,6 @@ Top items per (style, slot) by marginal DPS added to the BiS loadout. `def` is s
 | Thornspine Shortbow | 60 | 3,600,000 | 7.43 | 0 |
 | Zephyra Crossbow | 70 | 33,658,260 | 6.55 | 0 |
 | Dragon Slayer Crossbow | 70 | 40,597,168 | 6.50 | -1 |
-| Chaotic Crossbow | 90 | 200,000 | 6.50 | 0 |
 
 ### ranged — head
 
@@ -452,7 +446,7 @@ Top items per (style, slot) by marginal DPS added to the BiS loadout. `def` is s
 |---|---:|---:|---:|---:|
 | Masari Body | 80 | 375,000,000 | 1.24 | 261 |
 | Drake Leather Body | 60 | 4,200,000 | 1.04 | 155 |
-| Black D'Hide Body | 70 | 7,322 | 0.92 | 130 |
+| Black D'Hide Body | 70 | 7,322 | 0.92 | 278 |
 | Zephyra Chestplate | 70 | 37,739,588 | 0.69 | 124 |
 | 2nd Age Range Top | 65 | 36,063,781 | 0.67 | 50 |
 | Red D'Hide Body | 60 | 5,954 | 0.63 | 192 |
@@ -472,7 +466,7 @@ Top items per (style, slot) by marginal DPS added to the BiS loadout. `def` is s
 | Zephyra D'Hide Chaps | 70 | 130,000 | 0.63 | 70 |
 | Grondar D'Hide Chaps | 70 | 130,000 | 0.63 | 70 |
 | Masari Chaps | 80 | 250,000,000 | 0.60 | 156 |
-| Black D'Hide Chaps | 70 | 3,878 | 0.55 | 90 |
+| Black D'Hide Chaps | 70 | 3,878 | 0.55 | 178 |
 | Zephyra Chainskirt | 70 | 27,872,221 | 0.54 | 96 |
 | Red D'Hide Chaps | 60 | 3,062 | 0.37 | 104 |
 
@@ -572,27 +566,27 @@ Top items per (style, slot) by marginal DPS added to the BiS loadout. `def` is s
 
 | Item | Req | Value | DPS | Def |
 |---|---:|---:|---:|---:|
-| Trident of Venom | 75 | 25,000,000 | 12.56 | 0 |
-| Sanguine Staff | 82 | 150,000,000 | 9.42 | 15 |
+| Trident of Venom | 75 | 25,000,000 | 12.71 | 0 |
+| Sanguine Staff | 82 | 150,000,000 | 9.53 | 15 |
 | Shadow Of Tumaken | 85 | 1,500,000,000 | 7.98 | 15 |
-| Ancestral Wand | 75 | 78,743,682 | 7.40 | 20 |
-| Chaotic Staff | 90 | 200,000 | 7.23 | 0 |
-| Attuned Duskmare Staff | 75 | 14,000,000 | 7.19 | 15 |
-| Archmage Wand | 50 | 1,000,000 | 6.89 | 12 |
-| Umbral Duskmare Staff | 75 | 14,000,000 | 5.72 | 15 |
-| Volatile Duskmare Staff | 75 | 14,000,000 | 5.72 | 15 |
-| Staff of the Dead | 75 | 5,659,314 | 5.68 | 12 |
+| Ancestral Wand | 75 | 78,743,682 | 7.51 | 20 |
+| Chaotic Staff | 90 | 200,000 | 7.34 | 0 |
+| Attuned Duskmare Staff | 75 | 14,000,000 | 7.30 | 15 |
+| Archmage Wand | 50 | 1,000,000 | 7.01 | 12 |
+| Umbral Duskmare Staff | 75 | 14,000,000 | 5.81 | 15 |
+| Volatile Duskmare Staff | 75 | 14,000,000 | 5.81 | 15 |
+| Staff of the Dead | 75 | 5,659,314 | 5.77 | 12 |
 
 ### magic — head
 
 | Item | Req | Value | DPS | Def |
 |---|---:|---:|---:|---:|
-| Halo | 0 | 750,000 | 1.06 | 0 |
-| Shardglass Helmet | 70 | 7,500,000 | 0.76 | 360 |
-| Kodai Hat | 75 | 53,913,947 | 0.64 | 30 |
-| Imbued Slayer Crown | 20 | 7,500,000 | 0.46 | 50 |
-| 2nd Age Mage Hat | 65 | 18,941,223 | 0.25 | 0 |
-| Boundless Hat | 50 | 500,000 | 0.25 | 3 |
+| Halo | 0 | 750,000 | 1.07 | 0 |
+| Kodai Hat | 75 | 53,913,947 | 0.65 | 30 |
+| Shardglass Helmet | 70 | 7,500,000 | 0.62 | 360 |
+| Imbued Slayer Crown | 20 | 7,500,000 | 0.47 | 50 |
+| 2nd Age Mage Hat | 65 | 18,941,223 | 0.26 | 0 |
+| Boundless Hat | 50 | 500,000 | 0.26 | 3 |
 | Morvyn's Hood | 70 | 337,839 | 0.19 | 6 |
 | Black Wizard Hat | 0 | 10 | 0.13 | 3 |
 | Lumira Mitre | 40 | 10,461 | 0.13 | 0 |
@@ -602,13 +596,13 @@ Top items per (style, slot) by marginal DPS added to the BiS loadout. `def` is s
 
 | Item | Req | Value | DPS | Def |
 |---|---:|---:|---:|---:|
-| Kodai Robe Top | 75 | 129,932,252 | 1.78 | 30 |
+| Kodai Robe Top | 75 | 129,932,252 | 1.93 | 30 |
 | 2nd Age Druidic Robe Top | 65 | 2,147,483,647 | 1.33 | 0 |
 | Shroud Robes Top | 55 | 3,500,000 | 1.11 | 60 |
-| Shardglass Plate Body | 70 | 7,500,000 | 1.08 | 555 |
 | Morvyn's Robetop | 70 | 1,923,000 | 1.02 | 30 |
 | 2nd Age Robe Top | 65 | 166,601,004 | 1.02 | 0 |
 | Boundless Robe Top | 50 | 500,000 | 0.83 | 4 |
+| Shardglass Plate Body | 70 | 7,500,000 | 0.81 | 555 |
 | Arcanist Robe Top | 40 | 72,146 | 0.70 | 20 |
 | Black Wizard Robe | 0 | 25 | 0.42 | 13 |
 | Wizard Robe Top | 0 | 5 | 0.11 | 3 |
@@ -617,13 +611,13 @@ Top items per (style, slot) by marginal DPS added to the BiS loadout. `def` is s
 
 | Item | Req | Value | DPS | Def |
 |---|---:|---:|---:|---:|
-| Kodai Robe Bottom | 75 | 90,889,870 | 1.36 | 24 |
-| 2nd Age Druidic Robe Bottoms | 65 | 2,147,483,647 | 0.97 | 0 |
-| Shardglass Platelegs | 70 | 7,500,000 | 0.77 | 415 |
-| Morvyn's Robeskirt | 70 | 1,992,430 | 0.73 | 22 |
-| 2nd Age Robe Legs | 65 | 2,200,000 | 0.73 | 0 |
-| Boundless Robe Bottom | 50 | 500,000 | 0.60 | 4 |
+| Kodai Robe Bottom | 75 | 90,889,870 | 1.37 | 24 |
+| 2nd Age Druidic Robe Bottoms | 65 | 2,147,483,647 | 0.98 | 0 |
+| Morvyn's Robeskirt | 70 | 1,992,430 | 0.74 | 22 |
+| 2nd Age Robe Legs | 65 | 2,200,000 | 0.74 | 0 |
+| Boundless Robe Bottom | 50 | 500,000 | 0.61 | 4 |
 | Arcanist Robe Bottom | 40 | 47,497 | 0.51 | 18 |
+| Shardglass Platelegs | 70 | 7,500,000 | 0.49 | 415 |
 | Wizard Robe Skirt | 0 | 3 | 0.07 | 2 |
 | Masari Chaps | 80 | 250,000,000 | 0.00 | 156 |
 | Lumira D'Hide Chaps | 70 | 120,000 | 0.00 | 70 |
@@ -632,23 +626,23 @@ Top items per (style, slot) by marginal DPS added to the BiS loadout. `def` is s
 
 | Item | Req | Value | DPS | Def |
 |---|---:|---:|---:|---:|
-| Afflicted Bracelet | 0 | 20,377,850 | 2.50 | 0 |
-| Gloves of Slaughter | 85 | 5,000,000 | 1.16 | 0 |
-| Cryptbound Gloves | 0 | 130,000 | 0.17 | 54 |
-| Boundless Gloves | 50 | 500,000 | 0.17 | 4 |
+| Afflicted Bracelet | 0 | 20,377,850 | 2.51 | 0 |
+| Gloves of Slaughter | 85 | 5,000,000 | 1.31 | 0 |
+| Cryptbound Gloves | 0 | 130,000 | 0.18 | 54 |
+| Boundless Gloves | 50 | 500,000 | 0.18 | 4 |
 | Arcanist Gloves | 40 | 5,587 | 0.09 | 3 |
 | 2nd Age Vambraces | 65 | 16,917,650 | 0.00 | 11 |
 | Thornhide Gloves | 60 | 1,700,000 | 0.00 | 82 |
 | Razorwing Vambraces | 60 | 1,900,000 | 0.00 | 68 |
-| Ferocious Gloves | 95 | 10,200,000 | -0.49 | 3 |
+| Ferocious Gloves | 95 | 10,200,000 | -0.50 | 3 |
 
 ### magic — boots
 
 | Item | Req | Value | DPS | Def |
 |---|---:|---:|---:|---:|
-| Spellweaver Boots | 20 | 119,551 | 0.74 | 0 |
+| Spellweaver Boots | 20 | 119,551 | 0.60 | 0 |
 | Evermore Boots | 75 | 4,926,153 | 0.23 | 23 |
-| Boundless Boots | 50 | 500,000 | 0.14 | 3 |
+| Boundless Boots | 50 | 500,000 | 0.15 | 3 |
 | Arcanist Boots | 40 | 5,876 | 0.09 | 3 |
 | Emberhowl Boots | 60 | 1,700,000 | 0.00 | 115 |
 | Grondar Boots | 65 | 675,775 | -0.03 | 24 |
@@ -660,9 +654,9 @@ Top items per (style, slot) by marginal DPS added to the BiS loadout. `def` is s
 
 | Item | Req | Value | DPS | Def |
 |---|---:|---:|---:|---:|
-| Arcane Kiteshield | 90 | 200,000 | 2.18 | 215 |
-| Ward Of Elidria | 75 | 50,000,000 | 0.79 | 40 |
-| Arcane Grimoire | 50 | 1,000,000 | 0.54 | 11 |
+| Arcane Kiteshield | 90 | 200,000 | 2.20 | 215 |
+| Ward Of Elidria | 75 | 50,000,000 | 0.93 | 40 |
+| Arcane Grimoire | 50 | 1,000,000 | 0.69 | 11 |
 | Warped Buckler | 75 | 13,978,735 | 0.00 | 60 |
 | Shardglass Shield | 70 | 300,000 | 0.00 | 345 |
 | Boneclaw Shield | 60 | 2,900,000 | 0.00 | 184 |
@@ -675,8 +669,8 @@ Top items per (style, slot) by marginal DPS added to the BiS loadout. `def` is s
 
 | Item | Req | Value | DPS | Def |
 |---|---:|---:|---:|---:|
-| Infernal Max Cape | 0 | 0 | 2.06 | 125 |
-| Imbued God Cape | 50 | 500,000 | 0.57 | 15 |
+| Infernal Max Cape | 0 | 0 | 2.07 | 125 |
+| Imbued God Cape | 50 | 500,000 | 0.73 | 15 |
 | Max Cape | 0 | 1,000,000,000 | 0.29 | 50 |
 | Attack Cape | 99 | 99,000 | 0.00 | 45 |
 | Strength Cape | 99 | 99,000 | 0.00 | 45 |
@@ -690,13 +684,13 @@ Top items per (style, slot) by marginal DPS added to the BiS loadout. `def` is s
 
 | Item | Req | Value | DPS | Def |
 |---|---:|---:|---:|---:|
-| Arcane Necklace | 90 | 100,000 | 2.25 | 0 |
-| Occult Necklace | 0 | 415,548 | 0.95 | 0 |
-| Amulet of Fury | 0 | 2,609,432 | 0.47 | 75 |
-| 2nd Age Amulet | 70 | 51,352,500 | 0.47 | 0 |
-| Amulet of Glory | 0 | 11,259 | 0.32 | 15 |
-| Amulet of Glory (T) | 0 | 39,981 | 0.32 | 50 |
-| Amulet of Magic | 0 | 594 | 0.16 | 0 |
+| Arcane Necklace | 90 | 100,000 | 2.13 | 0 |
+| Occult Necklace | 0 | 415,548 | 0.96 | 0 |
+| Amulet of Fury | 0 | 2,609,432 | 0.49 | 75 |
+| 2nd Age Amulet | 70 | 51,352,500 | 0.49 | 0 |
+| Amulet of Glory | 0 | 11,259 | 0.33 | 15 |
+| Amulet of Glory (T) | 0 | 39,981 | 0.33 | 50 |
+| Amulet of Magic | 0 | 594 | 0.17 | 0 |
 | Amulet of Power | 0 | 2,370 | 0.07 | 10 |
 | Sapphire Amulet | 0 | 401 | 0.07 | 0 |
 
