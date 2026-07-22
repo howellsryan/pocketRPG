@@ -27,7 +27,6 @@ export type MenuDispatch = (row: MenuRow) => void
 // width. INVENTORY_ROWS only sizes the 28-slot build loop now.
 const INVENTORY_COLS = 4
 const INVENTORY_ROWS = 7
-const INV_CELL_PX = 40
 const INV_GAP_PX = 3
 const XP_DROP_MS = 1200
 const MAX_MESSAGES = 3
@@ -110,8 +109,11 @@ ${SCROLL_CSS}
 /* landscape: slim edge rail on the dock side */
 #hud-rail-l {
   top: 0; bottom: 0; width: 58px; flex-direction: column; align-items: center; gap: 7px;
-  padding: 60px 0 calc(12px + env(safe-area-inset-bottom, 0px));
+  padding: 10px 0 calc(12px + env(safe-area-inset-bottom, 0px));
   background: rgba(16, 13, 8, 0.6); backdrop-filter: blur(5px);
+  /* Short landscape viewports (mobile browser chrome) can't fit every control —
+     scroll rather than clip the ones past the fold. */
+  overflow-y: auto;
 }
 #hud-rail-l .rail-spacer { flex: 1; }
 
@@ -127,14 +129,17 @@ ${SCROLL_CSS}
 :root[data-hud-orient="landscape"][data-hud-dock="right"] #hud-vitals { left: 12px; }
 :root[data-hud-orient="landscape"][data-hud-dock="left"] #hud-vitals { right: 12px; }
 
+/* The eye lives next to the compass in BOTH orientations (never inside the
+   landscape rail): portrait stacks eye-over-compass top-right; landscape puts
+   the eye + compass in a row below the vitals, in the corner opposite the dock. */
 :root[data-hud-orient="portrait"] #hud-eye { top: 44px; right: 8px; }
-:root[data-hud-orient="landscape"] #hud-eye { top: 10px; }
-:root[data-hud-orient="landscape"][data-hud-dock="right"] #hud-eye { right: 7px; }
-:root[data-hud-orient="landscape"][data-hud-dock="left"] #hud-eye { left: 7px; }
+:root[data-hud-orient="landscape"] #hud-eye { top: 74px; }
+:root[data-hud-orient="landscape"][data-hud-dock="right"] #hud-eye { left: 12px; right: auto; }
+:root[data-hud-orient="landscape"][data-hud-dock="left"] #hud-eye { right: 12px; left: auto; }
 
 :root[data-hud-orient="portrait"] #hud-compass { top: 96px; right: 8px; }
-:root[data-hud-orient="landscape"][data-hud-dock="right"] #hud-compass { top: 74px; left: 12px; }
-:root[data-hud-orient="landscape"][data-hud-dock="left"] #hud-compass { top: 74px; right: 12px; }
+:root[data-hud-orient="landscape"][data-hud-dock="right"] #hud-compass { top: 74px; left: 64px; }
+:root[data-hud-orient="landscape"][data-hud-dock="left"] #hud-compass { top: 74px; right: 64px; }
 
 /* ---- panel body: portrait bottom sheet / landscape slide-out ---- */
 #hud-body {
@@ -179,8 +184,8 @@ ${SCROLL_CSS}
    default top-right anchor so it sits opposite the landscape rail and clears
    the portrait eye). Higher specificity than minimap.ts's #minimap rule. ---- */
 :root[data-hud-orient="portrait"] #minimap { top: 96px; right: 8px; left: auto; }
-:root[data-hud-orient="landscape"][data-hud-dock="right"] #minimap { top: 74px; left: 12px; right: auto; }
-:root[data-hud-orient="landscape"][data-hud-dock="left"] #minimap { top: 74px; right: 12px; left: auto; }
+:root[data-hud-orient="landscape"][data-hud-dock="right"] #minimap { top: 126px; left: 12px; right: auto; }
+:root[data-hud-orient="landscape"][data-hud-dock="left"] #minimap { top: 126px; right: 12px; left: auto; }
 :root:not([data-minimap="full"]) #minimap { display: none; }
 :root[data-hud-hidden="1"] #minimap { display: none !important; }
 
@@ -240,16 +245,19 @@ ${SCROLL_CSS}
 }
 #prayer-grid { display: flex; flex-direction: column; gap: 5px; max-height: 220px; overflow-y: auto; }
 #prayer-grid:empty { display: none; }
-/* Same fixed 4-column layout as #inv-panel, one grid per category row. */
-.prayer-row { display: grid; grid-template-columns: repeat(${INVENTORY_COLS}, ${INV_CELL_PX}px); gap: ${INV_GAP_PX}px; }
+/* Six per row in both orientations (each button is 1/6 of the row width, so a
+   full row fills and the narrow landscape pane still fits six), flex-centred so
+   a partial category row (e.g. 3 protection prayers) sits centred, not left-hugging. */
+.prayer-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 5px; }
 .hud-sec {
   font-size: 10px; font-weight: bold; letter-spacing: 0.06em; text-transform: uppercase;
   color: #c9a13a; opacity: 0.85; padding: 2px 1px 0;
 }
 .prayer-btn {
-  position: relative; width: 40px; height: 40px; border-radius: 6px; cursor: pointer; user-select: none;
+  position: relative; box-sizing: border-box; flex: 0 0 calc((100% - 32px) / 6); max-width: 52px; aspect-ratio: 1;
+  border-radius: 8px; cursor: pointer; user-select: none;
   background: rgba(60, 50, 34, 0.55); border: 1px solid #5a4a30;
-  display: flex; align-items: center; justify-content: center; font-size: 19px; line-height: 1;
+  display: flex; align-items: center; justify-content: center; font-size: 24px; line-height: 1;
 }
 .prayer-btn.active { background: rgba(70, 58, 36, 0.92); border-color: #ffe066; box-shadow: 0 0 0 1px #ffe066 inset; }
 .prayer-btn__icon { display: flex; align-items: center; justify-content: center; }
@@ -259,7 +267,9 @@ ${SCROLL_CSS}
   color: #f4e9c8; text-shadow: 0 1px 2px #000, 0 0 2px #000; font-family: sans-serif; pointer-events: none;
 }
 #magic-panel { max-height: 340px; overflow-y: auto; display: flex; flex-direction: column; gap: 5px; }
-.tp-list { display: grid; grid-template-columns: 1fr 1fr; gap: 3px; }
+.tp-list { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
+/* The narrow landscape slide-out can't read four teleport labels across. */
+:root[data-hud-orient="landscape"] .tp-list { grid-template-columns: repeat(2, 1fr); }
 .tp-row {
   min-height: 40px; padding: 8px 12px; border: 1px solid #5a4a30; border-radius: 6px; cursor: pointer;
   text-align: left; background: rgba(60, 50, 34, 0.55); color: #f4e9c8; font-size: 13px; font-family: sans-serif;
@@ -1395,7 +1405,7 @@ export function renderPrayerPanel(prayerLevel: number, onPray: (prayerId: string
       const art = p.skill ? PRAYER_SKILL_ICON[p.skill] : undefined
       const icon = document.createElement('span')
       icon.className = 'prayer-btn__icon'
-      icon.innerHTML = (art && uiIconMarkup(art.icon, 24, art.accent)) || '🙏'
+      icon.innerHTML = (art && uiIconMarkup(art.icon, 30, art.accent)) || '🙏'
       const lv = document.createElement('span')
       lv.className = 'prayer-lv'
       lv.textContent = String(p.level)

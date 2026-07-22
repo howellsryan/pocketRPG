@@ -67,6 +67,27 @@ describe('stepCombat swing animation (scripted engine events)', () => {
     expect(player.anim).toBe('attack')
   })
 
+  it('keeps the attack anim on the killing tick so a one-hit kill still swings', () => {
+    // Regression: killNpc used to reset player.anim to 'idle' on the same tick
+    // the fatal playerHit set it to 'attack' (monsterDeath fires after playerHit
+    // in the engine's event list), so the killing swing was never broadcast and
+    // the client saw the animation cut off. The kill tick must broadcast the
+    // attack; the next idle tick returns to idle upstream (tick.ts).
+    const { npcs, bull } = bullAt(5, 5)
+    const player = makePlayer()
+    startCombat(player, bull)
+
+    mockedProcessCombatTick.mockReturnValue({
+      combatState: player.combat!.state,
+      events: [{ type: 'playerHit', damage: 12 }, { type: 'monsterDeath', loot: [] }],
+    } as never)
+
+    player.anim = 'idle'
+    stepCombat(player, ctx(1, npcs), emptyResult())
+    expect(player.anim).toBe('attack')
+    expect(player.combat).toBeNull()
+  })
+
   it('stays idle on a tick with no playerHit/specialHit event (engine still winding up)', () => {
     const { npcs, bull } = bullAt(5, 5)
     const player = makePlayer()
