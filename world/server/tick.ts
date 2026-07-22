@@ -72,6 +72,12 @@ export type TickPlayer = {
    * during combat, 100 between fights. `lastSpecSent` gates the {e:'spec'} echo. */
   specialEnergy: number
   lastSpecSent: number
+  /** Gates the {e:'spec'} echo's `queued` field alongside lastSpecSent. */
+  lastSpecQueuedSent: boolean
+  /** Armed by a {t:'special'} sent with no active fight (combat.ts): fires as
+   * the first swing of the next fight this player starts, instead of refusing
+   * the tap outright. Cleared by startCombat once consumed. */
+  pendingSpecial: boolean
   /** Prayer session (world/shared/prayer.ts): pool seeded full at hello from the
    * Prayer level, drains only during combat (copied onto the engine state each
    * fight, synced back after each tick), persists across auto-fight kills. The

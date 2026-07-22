@@ -72,8 +72,10 @@ export type ZoneEvent =
   | { e: 'chat'; charId: string; name: string; text: string }
   /** Run-energy readout (0-100) and whether run is toggled on. */
   | { e: 'run'; energy: number; running: boolean }
-  /** Special-attack energy readout (0-100). */
-  | { e: 'spec'; energy: number }
+  /** Special-attack energy readout (0-100). `queued` (when present) says
+   * whether a special is currently armed/queued to fire next — lets the
+   * client highlight the button while armed and clear it once it fires. */
+  | { e: 'spec'; energy: number; queued?: boolean }
   /** Prayer pool readout + the active protection/combat prayer ids (null = off).
    * Emitted on toggle and when combat drain moves the pool or empties it. */
   | { e: 'prayer'; points: number; max: number; protection: string | null; combat: string | null }

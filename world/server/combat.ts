@@ -22,12 +22,24 @@ import { isBossMonster } from './bossKills'
  * on kill) — mirror the main game's PvE special model. */
 export const FULL_SPECIAL_ENERGY = 100
 
-/** Emits a {e:'spec'} echo when the special-energy readout changed. */
+/** How many ticks before a monster's swing actually lands its anim broadcasts,
+ * so the client's clip has time to play before the hit event/splat arrives —
+ * otherwise the swing visibly starts only once the damage number is already
+ * on screen. A coarse stand-in for the combat arena's per-clip windup lead
+ * (CombatScreen.jsx's arenaWindup); the open-world monster registry carries no
+ * per-clip impact-second metadata to do the arena's exact frame alignment. */
+export const MONSTER_ATTACK_LEAD_TICKS = 1
+
+/** Emits a {e:'spec'} echo when the energy readout OR the armed/queued state
+ * changed — the latter lets the client highlight the button the instant a tap
+ * arms/cancels a special, even on a tick where energy itself doesn't move. */
 export function emitSpecIfChanged(player: TickPlayer, events: ZoneEvent[]): void {
   const rounded = Math.round(player.specialEnergy)
-  if (rounded === player.lastSpecSent) return
+  const queued = player.combat ? !!(player.combat.state as EngineState).specialAttackQueued : player.pendingSpecial
+  if (rounded === player.lastSpecSent && queued === player.lastSpecQueuedSent) return
   player.lastSpecSent = rounded
-  events.push({ e: 'spec', energy: rounded })
+  player.lastSpecQueuedSent = queued
+  events.push({ e: 'spec', energy: rounded, queued })
 }
 
 /** Combat ended (fled/died/killed) → the spec bar shows full again. */
@@ -177,10 +189,17 @@ export function startCombat(player: TickPlayer, npc: NpcState, result?: TickResu
   // the engine drains the same pool and applies bonuses/protection. Persists
   // across auto-fight kills because stepCombat syncs it back after each tick.
   copySessionBuffsToState(player, state)
+  // A special armed before this fight existed (tapped Special with no target)
+  // fires as the opening swing instead of being dropped on the floor.
+  if (player.pendingSpecial) {
+    state.specialAttackQueued = true
+    player.pendingSpecial = false
+  }
   player.combat = { npcId: npc.id, state }
   player.specialEnergy = state.specialAttackEnergy
   npc.state = 'combat'
   if (!npc.attackerId) npc.attackerId = player.charId
+  if (result) emitSpecIfChanged(player, result.events)
 }
 
 function killNpc(player: TickPlayer, npc: NpcState, loot: { itemId: string; quantity: number }[], ctx: TickContext, result: TickResult): void {
@@ -263,6 +282,15 @@ export function stepCombat(player: TickPlayer, ctx: TickContext, result: TickRes
   npc.state = 'combat'
   // Clear last tick's swing so a fresh one re-triggers the attack animation.
   if (npc.anim === 'attack' || npc.anim === 'attack_ranged' || npc.anim === 'attack_magic') npc.anim = 'idle'
+  // Pre-signal the NEXT swing one tick before it actually resolves: without
+  // this the client only sees 'attack' on the tick the hit event fires, so
+  // the monster's swing visibly starts AFTER its damage number is already on
+  // screen. The real hit/miss event below (on a later tick) still fires the
+  // splat at the true resolved tick — this only gives the clip a head start,
+  // mirroring the combat arena's windup lead (CombatScreen.jsx's arenaWindup).
+  if (isTarget && inMonsterRange && combat.state.monsterAttackTimer === MONSTER_ATTACK_LEAD_TICKS) {
+    npc.anim = monsterAttackAnim(npc.monsterId)
+  }
   npc.lastCombatTick = ctx.tick
   result.npcChanged.push(npc.id)
 

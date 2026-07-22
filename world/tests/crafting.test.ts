@@ -35,7 +35,7 @@ function makePlayer(overrides: Partial<TickPlayer> = {}): TickPlayer {
     lastRunSent: 100,
     stance: 'accurate',
     specialEnergy: 100,
-    lastSpecSent: 100, prayerPoints: 1, maxPrayerPoints: 1, prayerDrainAccumulator: 0, activeProtectionPrayer: null, activeCombatPrayer: null, lastPrayerSent: null, activePotions: {}, following: null, followTargetTile: null,
+    lastSpecSent: 100, lastSpecQueuedSent: false, pendingSpecial: false, prayerPoints: 1, maxPrayerPoints: 1, prayerDrainAccumulator: 0, activeProtectionPrayer: null, activeCombatPrayer: null, lastPrayerSent: null, activePotions: {}, following: null, followTargetTile: null,
     ...overrides,
   }
 }

@@ -234,6 +234,15 @@ ${SCROLL_CSS}
   background: rgba(70, 58, 36, 0.9); border: 1px solid #6a5636; color: #ffe066;
   font-size: 13px; font-weight: bold; display: flex; align-items: center; justify-content: center;
 }
+/* Armed = queued to fire on the next swing (in combat) or the next fight
+   (armed ahead of time) — same gold-fill "on" language the rest of the HUD
+   uses for an active toggle, so the state reads as armed, not just idle-gold. */
+#spec-btn.armed, #spec-bar.armed {
+  background: linear-gradient(180deg, #ffe066, #d4a017 60%, #8a5a10);
+  border-color: #ffe066; color: #2a1c04;
+}
+#spec-bar.armed > .fill { background: #d4a017; }
+#spec-bar.armed > .label { color: #2a1c04; text-shadow: none; }
 #spell-btn {
   min-height: 44px; border-radius: 6px; cursor: pointer; user-select: none;
   background: rgba(46, 52, 74, 0.9); border: 1px solid #4a5a8a; color: #9fc0ff;
@@ -630,7 +639,7 @@ const TAB_LABEL: Record<string, string> = {
 
 // ---- live HUD/layout state (single source, mirrored into <html> data-attrs by
 // applyLayout so the CSS above does the reflow). ----
-let settings: UxSettings = { minimapMode: null, hudScale: 'normal', dock: 'right', panelOpacity: 0.92, chatAutoFade: true, haptics: true }
+let settings: UxSettings = { minimapMode: null, hudScale: 'normal', dock: 'right', panelOpacity: 0.92, chatAutoFade: true, haptics: true, hideChatBar: false }
 let hudVisible = true
 let orientation: 'portrait' | 'landscape' = 'portrait'
 let tablet = false
@@ -703,6 +712,8 @@ function applyLayout(): void {
   if (orientation === 'portrait' && (!sheetHeightPx || sheetHeightPx <= 0)) {
     setSheetHeight(sheetHeightFor('peek', h || 800))
   }
+  const chatWrap = document.getElementById('chat-input-wrap')
+  if (chatWrap) chatWrap.style.display = settings.hideChatBar ? 'none' : ''
   paintOrbs()
 }
 
@@ -1258,6 +1269,8 @@ function showSettingsSheet(handlers?: HudHandlers): void {
   label('Chat & feedback')
   row('Chat auto-fade', 'Dim the log after a few quiet seconds',
     toggle(settings.chatAutoFade, (v) => { commit({ chatAutoFade: v }); if (!v) unfadeChat(); else armChatFade() }))
+  row('Hide chat bar', 'Removes the "Say something…" input — messages still show',
+    toggle(settings.hideChatBar, (v) => commit({ hideChatBar: v })))
   row('Haptics', 'Light tick on taps', toggle(settings.haptics, (v) => commit({ haptics: v })))
 
   label('System')
@@ -1396,13 +1409,21 @@ export function paintHudIcons(): void {
   }
 }
 
-export function setSpecialEnergy(energy: number): void {
+/** `queued` highlights the bar + button while a special is armed (about to
+ * fire on the next swing, in combat or arming ahead of the next fight) and
+ * clears the highlight once it fires or is cancelled — the tap otherwise gave
+ * no feedback at all, reading as broken even when it queued correctly. */
+export function setSpecialEnergy(energy: number, queued = false): void {
   const bar = document.getElementById('spec-bar')
-  if (!bar) return
+  const btn = document.getElementById('spec-btn')
   const pct = Math.max(0, Math.min(100, Math.round(energy)))
-  ;(bar.querySelector('.fill') as HTMLElement | null)?.style.setProperty('width', `${pct}%`)
-  const label = bar.querySelector('.label') as HTMLElement | null
-  if (label) label.textContent = `Special ${pct}%`
+  if (bar) {
+    ;(bar.querySelector('.fill') as HTMLElement | null)?.style.setProperty('width', `${pct}%`)
+    const label = bar.querySelector('.label') as HTMLElement | null
+    if (label) label.textContent = queued ? `Special ${pct}% — armed` : `Special ${pct}%`
+    bar.classList.toggle('armed', queued)
+  }
+  if (btn) btn.classList.toggle('armed', queued)
 }
 
 /** Builds the Combat-tab prayer toggles, split into Protection and Combat
@@ -1599,6 +1620,7 @@ export function initChatInput(onSend: (text: string) => void): void {
   sendBtn.addEventListener('click', () => { send(); input.focus() })
   wrap.appendChild(input)
   wrap.appendChild(sendBtn)
+  wrap.style.display = settings.hideChatBar ? 'none' : ''
   document.body.appendChild(wrap)
 }
 

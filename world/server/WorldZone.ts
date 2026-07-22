@@ -16,7 +16,7 @@ import {
 } from './tick'
 import { STATIONS, recipeFor, stationTypeForVerb, isStationType } from '../shared/recipes'
 import { hasMaterials, maxCraftable } from './crafting'
-import { resolveCombatSetup, isSameFightTarget, playerAttackRange, emitPrayerIfChanged, startCombat } from './combat'
+import { resolveCombatSetup, isSameFightTarget, playerAttackRange, emitPrayerIfChanged, emitSpecIfChanged, startCombat } from './combat'
 import { seedPrayer, resolvePrayerToggle } from '../shared/prayer'
 import spellsJson from '../../src/data/spells.json'
 import { npcsFromZone, pickAggroTarget, reselectAttacker, threatContributors, threatKey, tickNpc, toNpcDiff, type NpcState } from './npc'
@@ -518,6 +518,8 @@ export class WorldZone extends Server<Env> {
       spell: null,
       specialEnergy: 100,
       lastSpecSent: 100,
+      lastSpecQueuedSent: false,
+      pendingSpecial: false,
       ...seedPrayer(stats.prayer?.level ?? getLevelFromXP(Number(stats.prayer?.xp) || 0) ?? 1),
       lastPrayerSent: null,
       activePotions: {},
@@ -652,12 +654,17 @@ export class WorldZone extends Server<Env> {
       case 'setSpell':
         this.handleSetSpell(player, message.spell)
         break
-      case 'special':
+      case 'special': {
         // Queue the weapon's special for the next combat tick (engine checks
-        // energy + weapon and drains on fire). Ignored out of combat.
-        if (player.combat) player.combat.state.specialAttackQueued = true
-        else player.pendingEvents.push({ e: 'msg', text: 'You need to be fighting to use a special attack.' })
+        // energy + weapon and drains on fire). Out of combat, arm it instead
+        // of refusing — startCombat fires it as the very first swing of the
+        // next fight this player starts. A second tap while still queued (not
+        // yet fired) cancels it, so the client can toggle the button off.
+        if (player.combat) player.combat.state.specialAttackQueued = !player.combat.state.specialAttackQueued
+        else player.pendingSpecial = !player.pendingSpecial
+        emitSpecIfChanged(player, player.pendingEvents)
         break
+      }
       case 'pray':
         this.handlePray(player, message.prayerId)
         break

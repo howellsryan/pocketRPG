@@ -210,7 +210,7 @@ function enterWorld(session: WorldSession): void {
       running = event.running
       setRunState(event.energy, event.running)
     }
-    else if (event.e === 'spec') setSpecialEnergy(event.energy)
+    else if (event.e === 'spec') setSpecialEnergy(event.energy, event.queued)
     else if (event.e === 'prayer') setPrayerState(event.points, event.max, event.protection, event.combat)
     else if (event.e === 'kill') pushKillFeed(event.monster, event.killer)
     else if (event.e === 'uniqueDrop') showUniqueBanner(event.monster, event.player, event.item)
