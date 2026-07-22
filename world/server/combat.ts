@@ -191,7 +191,10 @@ function killNpc(player: TickPlayer, npc: NpcState, loot: { itemId: string; quan
   npc.respawnAtTick = ctx.tick + respawnTicksFor(npc.monsterId)
   npc.removeAtTick = ctx.tick + NPC_REMOVE_AFTER_DEATH_TICKS
   player.combat = null
-  player.anim = 'idle'
+  // Leave player.anim as the attack set by this tick's fatal playerHit/specialHit
+  // — resetting it to 'idle' here cut the killing swing off (a one-hit kill never
+  // broadcast the attack). The next idle tick returns to idle upstream (tick.ts),
+  // and the client latch plays the broadcast swing through to completion.
   const owner = topDamageContributor(npc) ?? player.charId
   npc.damageByChar.clear()
   result.newLoot.push(...spawnDrops(loot, npc.x, npc.z, owner, ctx.tick))

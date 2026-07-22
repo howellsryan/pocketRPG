@@ -3,6 +3,10 @@ import type { MenuRow } from './picking'
 import { iconMarkup, itemName, uiIconMarkup } from './itemIcon'
 import { spellIconSvg } from './spellIcon'
 import { categorisePrayers, type PrayerView } from '../../shared/prayer'
+import {
+  hudScaleValue, isTabletViewport, loadSettings, resolveMinimapMode, saveSettings,
+  sheetHeightFor, sheetSnap, type MinimapMode, type UxSettings,
+} from './uxSettings'
 
 // Skill crest + accent for each skill a prayer can map to (mirrors SKILL_ART in
 // src/utils/skillArt.js; kept local so the HUD's icon lookup stays lazy instead
@@ -17,22 +21,14 @@ const PRAYER_SKILL_ICON: Record<string, { icon: string; accent: string }> = {
 
 export type MenuDispatch = (row: MenuRow) => void
 
+// Prayer/spell/equip panes keep a fixed 40px cell grid; inventory reflows its
+// columns responsively (7 wide in both orientations; the landscape slide-out
+// shrinks the icons so all 28 slots fit on one screen without scrolling) via
+// CSS keyed off the orientation attribute, so it needs no fixed width.
+// INVENTORY_ROWS only sizes the 28-slot build loop now.
 const INVENTORY_COLS = 4
 const INVENTORY_ROWS = 7
-const INV_CELL_PX = 40
 const INV_GAP_PX = 3
-const INV_CONTENT_W = INVENTORY_COLS * INV_CELL_PX + (INVENTORY_COLS - 1) * INV_GAP_PX
-const INV_CONTENT_H = INVENTORY_ROWS * INV_CELL_PX + (INVENTORY_ROWS - 1) * INV_GAP_PX
-// The tallest pane (inventory, 7 rows) sets one fixed body height for every
-// tab — otherwise switching tabs (e.g. combat, much shorter) resizes the
-// panel and shoves the tab rail below it up/down each time.
-const HUD_BODY_H = INV_CONTENT_H + 2 * 6 // + .hud-body's own top/bottom padding
-// The panel used to be a flat 232px regardless of content, leaving a wide
-// empty gutter to the right of every inventory row (narrower than the tab
-// rail above it). Size the panel to the inventory grid's own content width
-// (plus hud-body's padding/border) instead, clamped up only as far as the
-// top tab rail's 44px-min-tap-target floor (§9) requires.
-const HUD_PANEL_WIDTH = Math.max(INV_CONTENT_W + 14, 4 * 44 + 3 * 3)
 const XP_DROP_MS = 1200
 const MAX_MESSAGES = 3
 
@@ -51,53 +47,159 @@ export const SCROLL_CSS = `
 .${SCROLL_CLASS}::-webkit-scrollbar-thumb:hover { background: #e6c878; }
 `
 
+// Layout is driven by attributes on <html> (set by applyLayout): data-hud-orient
+// (portrait|landscape), data-hud-dock (left|right), data-hud-hidden ("1" when the
+// eye is toggling everything off), data-minimap (full|compass|off), data-hud-sheet
+// (open|closed). This keeps the reflow in CSS — one attribute flip repositions
+// every element instantly, with no per-element JS branching.
 const HUD_CSS = `
 ${SCROLL_CSS}
-#hud-panel {
-  position: fixed; right: 8px; top: 200px;
-  z-index: 10; font-family: sans-serif; display: flex; flex-direction: column; gap: 4px;
-  width: ${HUD_PANEL_WIDTH}px;
-  /* The panel column has no visual of its own — only the tab rows and the open
-     body are interactive. Making the container click-through (and re-enabling
-     it on the real controls below) lets taps in the gaps, and over a collapsed
-     body, reach the game world behind the panel. */
-  pointer-events: none;
+:root { --hud-pop: 0.92; }
+#world-hud, #world-hud * { box-sizing: border-box; }
+/* Everything the eye hides, in one bucket. The eye button, overlays (settings,
+   world map, context menu) and the top-centre band (boss frame, banners) sit
+   outside it and survive HUD-hide. */
+:root[data-hud-hidden="1"] .hud-hideable { display: none !important; }
+
+/* ---- vitals orbs ---- */
+#hud-vitals {
+  position: fixed; z-index: 11; display: flex; gap: 7px; align-items: flex-start;
+  font-family: sans-serif;
 }
-.hud-tabs, .hud-body { pointer-events: auto; }
-/* Full 28-slot inventory (7 rows) is taller than the 4-row panel this was
-   tuned for; on short viewports pull the panel up (never past the minimap,
-   which ends at 140px) so the bottom tab rail stays on-screen. */
-@media (max-height: 640px) {
-  #hud-panel { top: 148px; }
+.hud-orb { position: relative; cursor: pointer; flex: none; }
+.hud-orb svg { display: block; transform: rotate(-90deg); }
+.hud-orb .orb-in {
+  position: absolute; inset: 0; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; line-height: 1; pointer-events: none;
 }
-.hud-tabs { display: flex; gap: 3px; }
-.hud-tabs.bottom { margin-top: 1px; }
-.hud-tabs.bottom .hud-tab:not(.logout) { flex: 0 0 44px; }
-.hud-tabs.bottom .hud-tab.logout { flex: 1; }
+.hud-orb .orb-v { font-weight: 800; text-shadow: 0 1px 2px #000; font-variant-numeric: tabular-nums; }
+.hud-orb .orb-l { font-size: 7px; font-weight: 800; letter-spacing: 0.1em; color: #c9b892; margin-top: 1px; }
+.hud-orb.low { filter: drop-shadow(0 0 6px rgba(226, 59, 59, 0.7)); }
+
+/* ---- eye (HUD hide/show) + compass ---- */
+#hud-eye, #hud-compass {
+  position: fixed; z-index: 13; cursor: pointer; flex: none;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(20, 16, 10, 0.82); border: 1.5px solid #6a5636; color: #c9b892;
+}
+#hud-eye { width: 44px; height: 44px; border-radius: 12px; }
+:root[data-hud-hidden="1"] #hud-eye { color: #ffe066; background: rgba(20, 16, 10, 0.6); }
+#hud-compass { width: 44px; height: 44px; border-radius: 12px; }
+#hud-eye svg, #hud-compass svg { display: block; }
+:root:not([data-minimap="compass"]) #hud-compass { display: none; }
+
+/* ---- tab rails (portrait bottom / landscape edge) ---- */
 .hud-tab {
-  flex: 1; min-height: 44px; min-width: 44px;
-  background: rgba(20, 16, 10, 0.82); border: 1px solid #5a4a30; border-radius: 6px;
-  color: #c9b892; font-size: 20px; cursor: pointer;
+  min-height: 44px; min-width: 44px; flex: none;
+  background: rgba(20, 16, 10, 0.82); border: 1px solid #5a4a30; border-radius: 8px;
+  color: #c9b892; cursor: pointer;
   display: flex; align-items: center; justify-content: center; user-select: none;
 }
+.hud-tab svg, #hud-eye svg { display: block; }
 .hud-tab.active { background: rgba(70, 58, 36, 0.92); color: #ffe066; border-color: #6a5636; }
-.hud-tab.logout { color: #e0a05a; gap: 6px; font-size: 13px; font-family: sans-serif; font-weight: bold; }
-.hud-tab svg, #run-orb svg { display: block; }
-#run-orb .run-ico { display: flex; align-items: center; }
-.hud-body {
-  background: rgba(20, 16, 10, 0.82); border: 1px solid #5a4a30; border-radius: 8px; padding: 6px;
-  height: ${HUD_BODY_H}px; box-sizing: border-box; overflow: hidden;
+#hud-rail-p, #hud-rail-l { position: fixed; z-index: 12; display: flex; }
+/* portrait: thumb rail across the bottom */
+#hud-rail-p {
+  left: 0; right: 0; bottom: 0; gap: 6px; align-items: center;
+  padding: 8px 10px calc(8px + env(safe-area-inset-bottom, 0px));
+  overflow-x: auto; background: rgba(20, 16, 10, 0.72); backdrop-filter: blur(5px);
+  border-top: 1px solid #4a3d26;
 }
-.hud-pane { display: none; height: 100%; overflow-y: auto; }
+#hud-rail-p .rail-spacer { flex: 1; }
+#hud-rail-p .rail-div { width: 1px; height: 28px; background: #4a3d26; flex: none; margin: 0 2px; }
+/* landscape: slim edge rail on the dock side */
+#hud-rail-l {
+  top: 0; bottom: 0; width: 58px; flex-direction: column; align-items: center; gap: 7px;
+  padding: 10px 0 calc(12px + env(safe-area-inset-bottom, 0px));
+  background: rgba(16, 13, 8, 0.6); backdrop-filter: blur(5px);
+  /* Short landscape viewports (mobile browser chrome) can't fit every control —
+     scroll rather than clip the ones past the fold. */
+  overflow-y: auto;
+}
+#hud-rail-l .rail-spacer { flex: 1; }
+
+/* ---- placement + orientation gating (only the matching rail shows; vitals,
+   eye and compass anchor to the corner opposite the landscape dock) ---- */
+:root[data-hud-orient="portrait"] #hud-rail-l,
+:root[data-hud-orient="landscape"] #hud-rail-p { display: none; }
+:root[data-hud-orient="landscape"][data-hud-dock="right"] #hud-rail-l { right: 0; }
+:root[data-hud-orient="landscape"][data-hud-dock="left"] #hud-rail-l { left: 0; }
+
+:root[data-hud-orient="portrait"] #hud-vitals { top: 44px; left: 8px; }
+:root[data-hud-orient="landscape"] #hud-vitals { top: 12px; }
+:root[data-hud-orient="landscape"][data-hud-dock="right"] #hud-vitals { left: 12px; }
+:root[data-hud-orient="landscape"][data-hud-dock="left"] #hud-vitals { right: 12px; }
+
+/* The eye lives next to the compass in BOTH orientations (never inside the
+   landscape rail): portrait stacks eye-over-compass top-right; landscape puts
+   the eye + compass in a row below the vitals, in the corner opposite the dock. */
+:root[data-hud-orient="portrait"] #hud-eye { top: 44px; right: 8px; }
+:root[data-hud-orient="landscape"] #hud-eye { top: 74px; }
+:root[data-hud-orient="landscape"][data-hud-dock="right"] #hud-eye { left: 12px; right: auto; }
+:root[data-hud-orient="landscape"][data-hud-dock="left"] #hud-eye { right: 12px; left: auto; }
+
+:root[data-hud-orient="portrait"] #hud-compass { top: 96px; right: 8px; }
+:root[data-hud-orient="landscape"][data-hud-dock="right"] #hud-compass { top: 74px; left: 64px; }
+:root[data-hud-orient="landscape"][data-hud-dock="left"] #hud-compass { top: 74px; right: 64px; }
+
+/* ---- panel body: portrait bottom sheet / landscape slide-out ---- */
+#hud-body {
+  position: fixed; z-index: 11; font-family: sans-serif;
+  background: rgba(26, 21, 13, var(--hud-pop)); backdrop-filter: blur(6px);
+  border: 1px solid #5a4a30; overflow-y: auto;
+}
+:root[data-hud-sheet="closed"] #hud-body { display: none; }
+.hud-sheet-handle { display: none; }
+.hud-pane { display: none; }
 .hud-pane.active { display: block; }
-/* visibility (not display:none) keeps .hud-body's fixed height reserved, so
-   collapsing doesn't pull the bottom tab row up under the top one; pointer-events
-   none lets taps over the reserved space reach the game world behind it. */
-.hud-body.collapsed { visibility: hidden; pointer-events: none; }
-#inv-panel {
-  display: grid; grid-template-columns: repeat(${INVENTORY_COLS}, ${INV_CELL_PX}px);
-  grid-auto-rows: ${INV_CELL_PX}px; gap: ${INV_GAP_PX}px;
+
+/* portrait: sheet docks above the bottom rail, drag handle at the top */
+:root[data-hud-orient="portrait"] #hud-body {
+  left: 0; right: 0; bottom: 64px; border-radius: 16px 16px 0 0;
+  border-left: none; border-right: none; border-bottom: none;
+  padding: 0 12px 10px; box-shadow: 0 -6px 22px rgba(0, 0, 0, 0.35);
 }
+:root[data-hud-orient="portrait"] .hud-sheet-handle {
+  display: flex; justify-content: center; padding: 9px 0 6px; cursor: grab;
+  touch-action: none; position: sticky; top: 0;
+  background: rgba(26, 21, 13, var(--hud-pop));
+}
+:root[data-hud-orient="portrait"] .hud-sheet-handle span {
+  width: 44px; height: 5px; border-radius: 999px; background: #6a5a3a;
+}
+/* landscape: slide-out beside the rail, full height, no handle */
+:root[data-hud-orient="landscape"] #hud-body {
+  top: 0; bottom: 0; width: 300px; padding: 12px 12px 14px;
+}
+:root[data-hud-orient="landscape"][data-hud-dock="right"] #hud-body { right: 58px; border-right: none; }
+:root[data-hud-orient="landscape"][data-hud-dock="left"] #hud-body { left: 58px; border-left: none; }
+.hud-pane-head { display: none; }
+:root[data-hud-orient="landscape"] .hud-pane-head {
+  display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;
+}
+.hud-pane-head b { color: #ffe066; font-weight: 800; font-size: 14px; text-transform: capitalize; }
+.hud-pane-head button { background: none; border: none; color: #a5a284; cursor: pointer; padding: 4px; }
+.hud-pane-head button svg { display: block; }
+
+/* ---- minimap positioning (minimap.ts owns #minimap; these override its
+   default top-right anchor so it sits opposite the landscape rail and clears
+   the portrait eye). Higher specificity than minimap.ts's #minimap rule. ---- */
+:root[data-hud-orient="portrait"] #minimap { top: 96px; right: 8px; left: auto; }
+:root[data-hud-orient="landscape"][data-hud-dock="right"] #minimap { top: 126px; left: 12px; right: auto; }
+:root[data-hud-orient="landscape"][data-hud-dock="left"] #minimap { top: 126px; right: 12px; left: auto; }
+:root:not([data-minimap="full"]) #minimap { display: none; }
+:root[data-hud-hidden="1"] #minimap { display: none !important; }
+
+#inv-panel {
+  display: grid; gap: ${INV_GAP_PX}px; padding-top: 4px;
+}
+:root[data-hud-orient="portrait"] #inv-panel { grid-template-columns: repeat(7, 1fr); }
+:root[data-hud-orient="landscape"] #inv-panel { grid-template-columns: repeat(7, 1fr); }
+#inv-panel .inv-slot { aspect-ratio: 1; }
+/* Landscape's slide-out is narrow, so shrink the 7-wide grid's icons to keep
+   all 28 slots visible without scrolling. */
+:root[data-hud-orient="landscape"] #inv-panel .inv-slot svg { width: 25px; height: 25px; }
+:root[data-hud-orient="landscape"] #inv-panel .inv-slot span:not(.qty) { font-size: 17px; }
 #equip-panel {
   display: grid; grid-template-columns: repeat(3, 40px); grid-auto-rows: 40px; gap: 3px;
   justify-content: center;
@@ -148,16 +250,19 @@ ${SCROLL_CSS}
 }
 #prayer-grid { display: flex; flex-direction: column; gap: 5px; max-height: 220px; overflow-y: auto; }
 #prayer-grid:empty { display: none; }
-/* Same fixed 4-column layout as #inv-panel, one grid per category row. */
-.prayer-row { display: grid; grid-template-columns: repeat(${INVENTORY_COLS}, ${INV_CELL_PX}px); gap: ${INV_GAP_PX}px; }
+/* Six per row in both orientations (each button is 1/6 of the row width, so a
+   full row fills and the narrow landscape pane still fits six), flex-centred so
+   a partial category row (e.g. 3 protection prayers) sits centred, not left-hugging. */
+.prayer-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 5px; }
 .hud-sec {
   font-size: 10px; font-weight: bold; letter-spacing: 0.06em; text-transform: uppercase;
   color: #c9a13a; opacity: 0.85; padding: 2px 1px 0;
 }
 .prayer-btn {
-  position: relative; width: 40px; height: 40px; border-radius: 6px; cursor: pointer; user-select: none;
+  position: relative; box-sizing: border-box; flex: 0 0 calc((100% - 32px) / 6); max-width: 52px; aspect-ratio: 1;
+  border-radius: 8px; cursor: pointer; user-select: none;
   background: rgba(60, 50, 34, 0.55); border: 1px solid #5a4a30;
-  display: flex; align-items: center; justify-content: center; font-size: 19px; line-height: 1;
+  display: flex; align-items: center; justify-content: center; font-size: 24px; line-height: 1;
 }
 .prayer-btn.active { background: rgba(70, 58, 36, 0.92); border-color: #ffe066; box-shadow: 0 0 0 1px #ffe066 inset; }
 .prayer-btn__icon { display: flex; align-items: center; justify-content: center; }
@@ -167,13 +272,16 @@ ${SCROLL_CSS}
   color: #f4e9c8; text-shadow: 0 1px 2px #000, 0 0 2px #000; font-family: sans-serif; pointer-events: none;
 }
 #magic-panel { max-height: 340px; overflow-y: auto; display: flex; flex-direction: column; gap: 5px; }
-.tp-list { display: grid; grid-template-columns: 1fr 1fr; gap: 3px; }
+.tp-list { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
 .tp-row {
   min-height: 40px; padding: 8px 12px; border: 1px solid #5a4a30; border-radius: 6px; cursor: pointer;
   text-align: left; background: rgba(60, 50, 34, 0.55); color: #f4e9c8; font-size: 13px; font-family: sans-serif;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .tp-row:hover { background: rgba(80, 66, 42, 0.75); }
+/* Four columns in the narrow landscape slide-out: trim the padding/size so the
+   place labels get as much width as possible before ellipsising. */
+:root[data-hud-orient="landscape"] .tp-row { padding: 8px 6px; font-size: 12px; }
 .spell-grid { display: flex; flex-wrap: wrap; gap: 4px; }
 .spell-ico {
   width: 40px; height: 40px; padding: 0; border-radius: 6px; cursor: pointer; user-select: none;
@@ -183,13 +291,6 @@ ${SCROLL_CSS}
 .spell-ico.active { background: rgba(70, 58, 36, 0.92); border-color: #ffe066; box-shadow: 0 0 0 1px #ffe066 inset; }
 .spell-ico.locked { opacity: 0.32; cursor: default; }
 .spell-ico svg { display: block; }
-#run-orb {
-  position: fixed; right: 148px; top: 52px; z-index: 10; min-width: 44px; min-height: 44px;
-  padding: 4px 8px; background: rgba(20, 16, 10, 0.82); border: 1px solid #5a4a30; border-radius: 22px;
-  font-family: sans-serif; font-size: 12px; font-weight: bold; color: #c9b892; cursor: pointer;
-  display: flex; align-items: center; justify-content: center; gap: 3px; user-select: none;
-}
-#run-orb.running { color: #ffe066; border-color: #ffe066; background: rgba(70, 58, 36, 0.92); }
 .inv-slot {
   background: rgba(60, 50, 34, 0.55); border-radius: 4px; position: relative;
   display: flex; align-items: center; justify-content: center; font-size: 22px;
@@ -200,11 +301,20 @@ ${SCROLL_CSS}
   position: absolute; top: 0; right: 2px; font-size: 10px; color: #ffe066;
   text-shadow: 0 1px 2px #000;
 }
+/* Chat log + input sit bottom-left, lifted clear of the portrait bottom rail
+   (and its safe-area inset). Landscape has no bottom rail, so they drop back
+   near the corner. The log fades to its last line after a quiet spell. */
 #msg-strip {
-  position: fixed; left: 8px; bottom: 40px; z-index: 10; font-family: sans-serif;
-  font-size: 13px; color: #f4e9c8; text-shadow: 0 1px 2px #000; pointer-events: none;
+  position: fixed; left: 8px; z-index: 10; font-family: sans-serif;
+  font-size: 13px; color: #f4e9c8; text-shadow: 0 1px 2px #000; pointer-events: auto;
+  cursor: pointer; max-width: 72vw; transition: opacity 0.5s;
 }
+#msg-strip.faded { opacity: 0.4; }
+#msg-strip.faded div:not(:last-child) { display: none; }
 #msg-strip div { margin-top: 2px; }
+:root[data-hud-orient="portrait"] #msg-strip { bottom: calc(108px + env(safe-area-inset-bottom, 0px)); }
+:root[data-hud-orient="landscape"] #msg-strip { bottom: calc(46px + env(safe-area-inset-bottom, 0px)); max-width: 40vw; }
+:root[data-hud-orient="landscape"][data-hud-dock="left"] #msg-strip { left: 68px; }
 #boss-frame {
   position: fixed; left: 50%; top: 12px; transform: translateX(-50%); z-index: 10;
   width: min(360px, 70vw); font-family: sans-serif; pointer-events: none;
@@ -226,14 +336,34 @@ ${SCROLL_CSS}
   opacity: 0; transition: opacity 0.3s;
 }
 #unique-banner.visible { opacity: 1; }
+/* The wrapper is the visual input box (border/background/rounded corners); the
+   <input> and the send button are transparent children inside it, so nothing
+   pokes out past the button — the whole control reads as one aligned field. */
+#chat-input-wrap {
+  position: fixed; left: 8px; z-index: 10; width: min(280px, 60vw);
+  display: flex; align-items: stretch; overflow: hidden;
+  background: rgba(20, 16, 10, 0.82); border: 1px solid #5a4a30; border-radius: 8px;
+}
 #chat-input {
-  position: fixed; left: 8px; bottom: 8px; z-index: 10; width: min(280px, 60vw);
-  padding: 5px 8px; font-family: sans-serif; font-size: 13px;
-  background: rgba(20, 16, 10, 0.82); color: #f4e9c8;
-  border: 1px solid #5a4a30; border-radius: 6px; outline: none;
+  flex: 1; min-width: 0;
+  padding: 8px 8px 8px 12px; font-family: sans-serif; font-size: 13px;
+  background: transparent; color: #f4e9c8; border: none; outline: none;
   -webkit-user-select: text; user-select: text; touch-action: auto;
 }
 #chat-input::placeholder { color: #8a7a5a; }
+/* Full-height tap-to-send button flush against the right edge (keyboardless send). */
+#chat-send {
+  flex: none; width: 42px; padding: 0; border: none; border-left: 1px solid #4a3d26; cursor: pointer;
+  background: transparent; color: #ffe066;
+  display: flex; align-items: center; justify-content: center;
+}
+#chat-send:active { background: rgba(255, 224, 102, 0.14); }
+#chat-send svg { display: block; }
+:root[data-hud-orient="portrait"] #chat-input-wrap { bottom: calc(72px + env(safe-area-inset-bottom, 0px)); }
+/* Landscape has no bottom rail — drop the input into the true bottom-left
+   corner (no safe-area lift; the home indicator sits centre, clear of it). */
+:root[data-hud-orient="landscape"] #chat-input-wrap { bottom: 8px; left: 6px; }
+:root[data-hud-orient="landscape"][data-hud-dock="left"] #chat-input-wrap { left: 68px; }
 .nameplate {
   position: absolute; transform: translate(-50%, -100%); pointer-events: none;
   font-family: sans-serif; font-size: 12px; color: #ffffff; text-shadow: 0 1px 2px #000;
@@ -254,13 +384,60 @@ ${SCROLL_CSS}
   position: fixed; left: 8px; top: 6px; z-index: 10; pointer-events: none;
   font-family: sans-serif; font-size: 15px; color: #ffe066; text-shadow: 0 1px 2px #000;
 }
-#hp-pill {
-  position: fixed; right: 148px; top: 8px; z-index: 10; padding: 4px 10px;
-  background: rgba(20, 16, 10, 0.82); border: 1px solid #5a4a30; border-radius: 12px;
-  font-family: sans-serif; font-size: 13px; font-weight: bold; color: #5fd35f;
-  text-shadow: 0 1px 2px #000; pointer-events: none;
+/* ---- settings sheet ---- */
+#hud-settings-scrim {
+  position: fixed; inset: 0; z-index: 80; background: rgba(0, 0, 0, 0.5);
+  display: flex; font-family: sans-serif;
 }
-#hp-pill.low { color: #e05a5a; }
+:root[data-hud-orient="portrait"] #hud-settings-scrim { align-items: flex-end; justify-content: center; }
+:root[data-hud-orient="landscape"] #hud-settings-scrim { align-items: center; justify-content: center; padding: 20px; }
+#hud-settings {
+  background: #221c11; border: 1px solid #6a5636; overflow-y: auto;
+  box-shadow: 0 -8px 40px rgba(0, 0, 0, 0.5);
+}
+:root[data-hud-orient="portrait"] #hud-settings { width: 100%; max-height: 86%; border-radius: 20px 20px 0 0; }
+:root[data-hud-orient="landscape"] #hud-settings { width: min(440px, 96%); max-height: 92%; border-radius: 18px; }
+.set-head {
+  position: sticky; top: 0; z-index: 1; background: #221c11;
+  padding: 15px 18px 11px; display: flex; align-items: center; justify-content: space-between;
+  border-bottom: 1px solid #4a3d26;
+}
+.set-head b { color: #ffe066; font-weight: 800; font-size: 17px; display: flex; align-items: center; gap: 9px; }
+.set-head b svg, .set-head button svg { display: block; }
+.set-head button { background: none; border: none; color: #c9b892; cursor: pointer; padding: 4px; }
+.set-body { padding: 4px 18px 18px; }
+.set-label {
+  font-size: 11px; font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase;
+  color: #b08842; margin: 16px 0 2px;
+}
+.set-row { display: flex; align-items: center; gap: 12px; padding: 12px 0; }
+.set-row.stack { flex-direction: column; align-items: stretch; gap: 9px; }
+.set-row + .set-row { border-top: 1px solid rgba(90, 74, 48, 0.35); }
+.set-row .set-txt { flex: 1; min-width: 0; }
+.set-row .set-txt b { display: block; font-size: 14px; color: #f4e9c8; font-weight: 700; }
+.set-row .set-txt span { font-size: 12px; color: #8a7553; }
+.set-seg { display: flex; gap: 3px; background: #191510; border: 1px solid #3d3322; border-radius: 9px; padding: 3px; }
+.set-seg button {
+  flex: 1; border: none; border-radius: 6px; padding: 8px 10px; min-height: 34px;
+  font-size: 12px; font-weight: 700; cursor: pointer; background: transparent; color: #c9b892;
+  white-space: nowrap; font-family: sans-serif;
+}
+.set-seg button.on { background: #b08842; color: #14110d; }
+.set-tgl {
+  width: 46px; height: 28px; border-radius: 999px; flex: none; cursor: pointer; position: relative;
+  border: 1px solid #3d3322; background: #443c26; transition: background 0.15s;
+}
+.set-tgl.on { background: #ffe066; border-color: #b08842; }
+.set-tgl i { position: absolute; top: 2px; left: 2px; width: 22px; height: 22px; border-radius: 999px; background: #cfc7ac; transition: left 0.15s; }
+.set-tgl.on i { left: 20px; background: #14110d; }
+.set-slider { width: 100%; accent-color: #ffe066; }
+.set-logout {
+  width: 100%; margin-top: 14px; min-height: 46px; border-radius: 10px; cursor: pointer;
+  border: 1.5px solid #7a4020; background: transparent; color: #e0a05a; font-weight: 800; font-size: 14px;
+  display: flex; align-items: center; justify-content: center; gap: 8px; font-family: sans-serif;
+}
+.set-logout.armed { background: #c2410c; border-color: #8a3a10; color: #fff7ea; }
+.set-logout svg { display: block; }
 #ctx-menu {
   position: fixed; z-index: 30; min-width: 120px; padding: 0 0 2px;
   background: rgba(20, 16, 10, 0.95); border: 1px solid #6a5636; border-radius: 4px;
@@ -435,40 +612,140 @@ function setupInvDrag(panel: HTMLElement, handlers: InvHandlers): void {
 
 // PocketRPG's own bespoke nav icons (src/data/bespokeIcons.json), matching the
 // main game's tab bar; painted by paintHudIcons() once the icon data loads.
-// Equipment lives in the bottom row (see bottomTabs in initHud) to free up
-// space in this rail — its pane switching still goes through selectTab, which
-// queries .hud-tab[data-tab] globally, not by container.
+// Equipment sits on the main rail now (the old fixed panel kept it in a cramped
+// bottom row); pane switching goes through selectTab, which queries
+// .hud-tab[data-tab] globally, so both rails' buttons toggle together.
 const TABS: { id: string; iconKey: string; title: string }[] = [
   { id: 'inventory', iconKey: 'backpack', title: 'Inventory' },
+  { id: 'equipment', iconKey: 'paperdoll', title: 'Equipment' },
   { id: 'combat', iconKey: 'combat_level', title: 'Combat' },
   { id: 'prayer', iconKey: 'prayer', title: 'Prayer' },
   { id: 'magic', iconKey: 'magic_staff', title: 'Magic' },
 ]
-const LOGOUT_COLOR = '#e0a05a'
-const HUD_TAB_ICON_PX = 26
-const RUN_ICON_PX = 20
+const HUD_TAB_ICON_PX = 24
 
+const TAB_LABEL: Record<string, string> = {
+  inventory: 'Inventory', equipment: 'Equipment', combat: 'Combat', prayer: 'Prayer', magic: 'Magic',
+}
+
+// ---- live HUD/layout state (single source, mirrored into <html> data-attrs by
+// applyLayout so the CSS above does the reflow). ----
+let settings: UxSettings = { minimapMode: null, hudScale: 'normal', dock: 'right', panelOpacity: 0.92, chatAutoFade: true, haptics: true }
+let hudVisible = true
+let orientation: 'portrait' | 'landscape' = 'portrait'
+let tablet = false
+let sheetHeightPx = 0
+// Cached vitals so an orb can be repainted on a scale/orientation change
+// without waiting for the next server event.
+const vitalsState = { hp: 0, maxHp: 1, run: 100, running: false, prayer: 0, maxPrayer: 1 }
+
+function haptic(): void {
+  if (settings.haptics && typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') navigator.vibrate(8)
+}
+
+function isSheetOpen(): boolean {
+  return document.documentElement.getAttribute('data-hud-sheet') === 'open'
+}
+
+function setSheetOpen(open: boolean): void {
+  document.documentElement.setAttribute('data-hud-sheet', open ? 'open' : 'closed')
+}
+
+/** Opens the panel body on `id`: marks the tab + pane active and titles the
+ * landscape pane header. Shared by tab taps, the prayer-orb shortcut, and the
+ * F1–F5 keys. */
 function selectTab(id: string): void {
-  document.querySelector('.hud-body')?.classList.remove('collapsed')
+  setSheetOpen(true)
   for (const tab of document.querySelectorAll('.hud-tab[data-tab]')) {
     tab.classList.toggle('active', tab.getAttribute('data-tab') === id)
   }
   for (const pane of document.querySelectorAll('.hud-pane')) {
     pane.classList.toggle('active', pane.getAttribute('data-pane') === id)
   }
+  const head = document.querySelector<HTMLElement>('#hud-body .hud-pane-head b')
+  if (head) head.textContent = TAB_LABEL[id] ?? id
+  if (orientation === 'portrait') setSheetHeight(sheetHeightPx || sheetHeightFor('peek', window.innerHeight || 800))
 }
 
-/** Tapping the already-active tab collapses the HUD body (saves screen space);
- * tapping it again — or picking a different tab — reopens it. The tab rail
- * itself always stays visible so the panel can be reopened. */
+/** Tapping the active tab again dismisses the sheet/pane (frees the screen);
+ * any other tap opens/switches. The tab rails always stay visible. */
 function tabClicked(id: string): void {
-  const activeTab = document.querySelector('.hud-tab[data-tab].active')
-  const body = document.querySelector('.hud-body')
-  if (activeTab?.getAttribute('data-tab') === id && !body?.classList.contains('collapsed')) {
-    body?.classList.add('collapsed')
+  haptic()
+  const active = document.querySelector('.hud-tab[data-tab].active')
+  if (isSheetOpen() && active?.getAttribute('data-tab') === id) {
+    setSheetOpen(false)
     return
   }
   selectTab(id)
+}
+
+function setSheetHeight(px: number): void {
+  sheetHeightPx = px
+  document.documentElement.style.setProperty('--sheet-h', `${px}px`)
+}
+
+/** Recomputes orientation + tablet from the viewport and re-stamps every layout
+ * attribute on <html>; also repaints the orbs (JS-sized per HUD scale) and the
+ * panel-opacity variable. The single place layout is applied. */
+function applyLayout(): void {
+  const w = window.innerWidth || 0
+  const h = window.innerHeight || 0
+  orientation = w >= h ? 'landscape' : 'portrait'
+  tablet = isTabletViewport(Math.min(w, h))
+  const root = document.documentElement
+  root.setAttribute('data-hud-orient', orientation)
+  root.setAttribute('data-hud-dock', settings.dock)
+  root.setAttribute('data-hud-scale', settings.hudScale)
+  root.setAttribute('data-minimap', resolveMinimapMode(settings, tablet))
+  if (hudVisible) root.removeAttribute('data-hud-hidden')
+  else root.setAttribute('data-hud-hidden', '1')
+  root.style.setProperty('--hud-pop', String(settings.panelOpacity))
+  if (orientation === 'portrait' && (!sheetHeightPx || sheetHeightPx <= 0)) {
+    setSheetHeight(sheetHeightFor('peek', h || 800))
+  }
+  paintOrbs()
+}
+
+const ORBS: { key: 'hp' | 'prayer' | 'run'; label: string }[] = [
+  { key: 'hp', label: 'HP' },
+  { key: 'prayer', label: 'PRAY' },
+  { key: 'run', label: 'RUN' },
+]
+
+function orbColor(key: 'hp' | 'prayer' | 'run', low: boolean): string {
+  if (key === 'hp') return low ? '#e05a5a' : '#5fd35f'
+  if (key === 'prayer') return '#c9a13a'
+  return vitalsState.running ? '#ffe066' : '#b8a86a'
+}
+
+function paintOneOrb(key: 'hp' | 'prayer' | 'run', label: string): void {
+  const el = document.querySelector<HTMLElement>(`.hud-orb[data-orb="${key}"]`)
+  if (!el) return
+  const value = key === 'hp' ? vitalsState.hp : key === 'prayer' ? Math.ceil(vitalsState.prayer) : Math.round(vitalsState.run)
+  const max = key === 'hp' ? vitalsState.maxHp : key === 'prayer' ? vitalsState.maxPrayer : 100
+  const scale = hudScaleValue(settings.hudScale)
+  const d = Math.round(52 * scale)
+  const r = d / 2 - 3.5
+  const circ = 2 * Math.PI * r
+  const pct = max > 0 ? Math.max(0, Math.min(1, value / max)) : 0
+  const low = key === 'hp' && pct <= 0.25 && pct > 0
+  const col = orbColor(key, low)
+  el.classList.toggle('low', low)
+  el.style.width = `${d}px`
+  el.style.height = `${d}px`
+  el.title = `${label} ${value}/${max}`
+  el.innerHTML =
+    `<svg width="${d}" height="${d}">` +
+    `<circle cx="${d / 2}" cy="${d / 2}" r="${r}" fill="rgba(16,13,8,0.86)" stroke="#3d3322" stroke-width="2"></circle>` +
+    `<circle cx="${d / 2}" cy="${d / 2}" r="${r}" fill="none" stroke="${col}" stroke-width="4" stroke-linecap="round" ` +
+    `stroke-dasharray="${circ.toFixed(2)}" stroke-dashoffset="${(circ * (1 - pct)).toFixed(2)}"></circle>` +
+    `</svg>` +
+    `<div class="orb-in"><span class="orb-v" style="color:${col};font-size:${Math.round(13 * scale)}px">${value}</span>` +
+    `<span class="orb-l">${label}</span></div>`
+}
+
+function paintOrbs(): void {
+  for (const o of ORBS) paintOneOrb(o.key, o.label)
 }
 
 const F_KEY_TAB: Record<string, string> = {
@@ -530,34 +807,102 @@ function onGlobalKeyDown(e: KeyboardEvent): void {
   }
 }
 
-/** Builds the tabbed HUD panel (Inventory / Equipment / Combat + Logout), the run
- * orb, message strip, xp-drop layer and HP pill. Call once after welcome. */
+// Inline SVGs for the few controls with no bespoke-icon entry (eye/compass/gear/
+// chevron) — the map button still uses the bespoke `globe` via data-icon.
+const EYE_SVG = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 12S6 5.8 12 5.8 21.5 12 21.5 12 18 18.2 12 18.2 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.7"/></svg>'
+const EYE_OFF_SVG = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 12S6 5.8 12 5.8 21.5 12 21.5 12 18 18.2 12 18.2 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.7"/><path d="M4 3.5l16 17"/></svg>'
+const COMPASS_SVG = '<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" style="transform:rotate(20deg)"><path d="M12 2.8l5.4 15.4L12 13.7l-5.4 4.5z"/></svg>'
+const GEAR_SVG = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M18.7 5.3l-2.1 2.1M7.4 16.6l-2.1 2.1"/></svg>'
+const CHEVRON_SVG = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 10l6 6 6-6"/></svg>'
+const XMARK_SVG = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg>'
+const DOOR_SVG = '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13.5 4.5H6.5v15h7"/><path d="M10.5 12H21M18 9l3 3-3 3"/></svg>'
+const SEND_SVG = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 3L3 10.5l7 2.6 2.6 7L21 3z"/><path d="M10 13.1L21 3"/></svg>'
+
+function railTabButton(tab: { id: string; iconKey: string; title: string }): HTMLElement {
+  const btn = document.createElement('div')
+  btn.className = 'hud-tab' + (tab.id === 'inventory' ? ' active' : '')
+  btn.setAttribute('data-tab', tab.id)
+  btn.setAttribute('data-icon', tab.iconKey)
+  btn.setAttribute('data-icon-size', String(HUD_TAB_ICON_PX))
+  btn.title = tab.title
+  btn.addEventListener('click', () => tabClicked(tab.id))
+  return btn
+}
+
+function railActionButton(html: string, title: string, onClick: () => void): HTMLElement {
+  const btn = document.createElement('div')
+  btn.className = 'hud-tab'
+  btn.title = title
+  btn.setAttribute('aria-label', title)
+  btn.innerHTML = html
+  btn.addEventListener('click', onClick)
+  return btn
+}
+
+/** One tab rail (both orientations build the same controls; CSS shows whichever
+ * matches the current orientation). Tabs, then a spacer, then World Map +
+ * Settings pushed to the far end (right in portrait, bottom in landscape). */
+function buildRail(id: string, handlers: HudHandlers | undefined, openSettings: () => void): HTMLElement {
+  const rail = document.createElement('div')
+  rail.id = id
+  rail.className = 'hud-hideable'
+  for (const tab of TABS) rail.appendChild(railTabButton(tab))
+  const spacer = document.createElement('div')
+  spacer.className = 'rail-spacer'
+  rail.appendChild(spacer)
+  rail.appendChild(railActionButton(`<span data-icon="globe" data-icon-size="${HUD_TAB_ICON_PX}"></span>`, 'World Map', () => handlers?.onWorldMap()))
+  rail.appendChild(railActionButton(GEAR_SVG, 'Settings', openSettings))
+  return rail
+}
+
+/** Builds the HUD: vitals orbs, the tabbed panel body (portrait bottom sheet /
+ * landscape slide-out), both tab rails, the eye (hide-HUD) button, compass,
+ * message log, xp-drop layer, fx layer and boss frame. Call once after welcome. */
 export function initHud(handlers?: HudHandlers): void {
   if (hudReady) return
   hudReady = true
+  settings = loadSettings()
   const style = document.createElement('style')
   style.textContent = HUD_CSS
   document.head.appendChild(style)
 
-  const panel = document.createElement('div')
-  panel.id = 'hud-panel'
-
-  const tabs = document.createElement('div')
-  tabs.className = 'hud-tabs'
-  for (const tab of TABS) {
-    const btn = document.createElement('div')
-    btn.className = 'hud-tab' + (tab.id === 'inventory' ? ' active' : '')
-    btn.setAttribute('data-tab', tab.id)
-    btn.setAttribute('data-icon', tab.iconKey)
-    btn.setAttribute('data-icon-size', String(HUD_TAB_ICON_PX))
-    btn.title = tab.title
-    btn.addEventListener('click', () => tabClicked(tab.id))
-    tabs.appendChild(btn)
+  // ---- vitals orbs (hp / prayer / run) ----
+  const vitals = document.createElement('div')
+  vitals.id = 'hud-vitals'
+  vitals.className = 'hud-hideable'
+  for (const o of ORBS) {
+    const orb = document.createElement('div')
+    orb.className = 'hud-orb'
+    orb.setAttribute('data-orb', o.key)
+    orb.setAttribute('role', 'button')
+    orb.setAttribute('tabindex', '0')
+    if (o.key === 'run') orb.addEventListener('click', () => { haptic(); handlers?.onRunToggle() })
+    else if (o.key === 'prayer') orb.addEventListener('click', () => selectTab('prayer'))
+    vitals.appendChild(orb)
   }
-  panel.appendChild(tabs)
+  document.body.appendChild(vitals)
 
+  // ---- panel body (one instance, positioned as sheet or slide-out by CSS) ----
   const body = document.createElement('div')
-  body.className = 'hud-body'
+  body.id = 'hud-body'
+  body.className = 'hud-hideable ' + SCROLL_CLASS
+
+  const handle = document.createElement('div')
+  handle.className = 'hud-sheet-handle'
+  handle.appendChild(document.createElement('span'))
+  body.appendChild(handle)
+
+  const paneHead = document.createElement('div')
+  paneHead.className = 'hud-pane-head'
+  const paneTitle = document.createElement('b')
+  paneTitle.textContent = TAB_LABEL.inventory
+  const paneClose = document.createElement('button')
+  paneClose.setAttribute('aria-label', 'Close panel')
+  paneClose.innerHTML = CHEVRON_SVG
+  paneClose.addEventListener('click', () => setSheetOpen(false))
+  paneHead.appendChild(paneTitle)
+  paneHead.appendChild(paneClose)
+  body.appendChild(paneHead)
 
   const invPane = document.createElement('div')
   invPane.className = 'hud-pane active'
@@ -671,70 +1016,43 @@ export function initHud(handlers?: HudHandlers): void {
   magicPane.appendChild(magic)
   body.appendChild(magicPane)
 
-  panel.appendChild(body)
-
-  // Bottom row: Equipment (moved off the top rail to free it up) + World Map
-  // (an action, not a pane — no data-tab, so selectTab never touches it) +
-  // Logout, which flex-fills the remaining width.
-  const bottomTabs = document.createElement('div')
-  bottomTabs.className = 'hud-tabs bottom'
-
-  const equipTab = document.createElement('div')
-  equipTab.className = 'hud-tab'
-  equipTab.setAttribute('data-tab', 'equipment')
-  equipTab.setAttribute('data-icon', 'paperdoll')
-  equipTab.setAttribute('data-icon-size', String(HUD_TAB_ICON_PX))
-  equipTab.title = 'Equipment'
-  equipTab.addEventListener('click', () => tabClicked('equipment'))
-  bottomTabs.appendChild(equipTab)
-
-  const worldMapTab = document.createElement('div')
-  worldMapTab.className = 'hud-tab'
-  worldMapTab.setAttribute('data-icon', 'globe')
-  worldMapTab.setAttribute('data-icon-size', String(HUD_TAB_ICON_PX))
-  worldMapTab.title = 'World Map'
-  worldMapTab.addEventListener('click', () => handlers?.onWorldMap())
-  bottomTabs.appendChild(worldMapTab)
-
-  const logout = document.createElement('div')
-  logout.className = 'hud-tab logout'
-  logout.title = 'Logout'
-  const logoutIco = document.createElement('span')
-  logoutIco.setAttribute('data-icon', 'door')
-  logoutIco.setAttribute('data-icon-size', String(HUD_TAB_ICON_PX))
-  logoutIco.setAttribute('data-icon-color', LOGOUT_COLOR)
-  const logoutLabel = document.createElement('span')
-  logoutLabel.textContent = 'Logout'
-  logout.appendChild(logoutIco)
-  logout.appendChild(logoutLabel)
-  logout.addEventListener('click', () => handlers?.onLogout())
-  bottomTabs.appendChild(logout)
-  panel.appendChild(bottomTabs)
-
-  document.body.appendChild(panel)
+  document.body.appendChild(body)
   if (handlers) setupInvDrag(inv, handlers)
 
-  const runOrb = document.createElement('div')
-  runOrb.id = 'run-orb'
-  runOrb.title = 'Toggle run'
-  const runIco = document.createElement('span')
-  runIco.className = 'run-ico'
-  runIco.setAttribute('data-icon', 'sprint')
-  runIco.setAttribute('data-icon-size', String(RUN_ICON_PX))
-  const runPct = document.createElement('span')
-  runPct.className = 'run-pct'
-  runPct.textContent = '100%'
-  runOrb.appendChild(runIco)
-  runOrb.appendChild(runPct)
-  runOrb.addEventListener('click', () => handlers?.onRunToggle())
-  document.body.appendChild(runOrb)
+  // ---- eye (hide/show all HUD) — outside .hud-hideable so it always survives ----
+  const eye = document.createElement('button')
+  eye.id = 'hud-eye'
+  eye.title = 'Hide HUD'
+  eye.setAttribute('aria-label', 'Hide HUD')
+  eye.innerHTML = EYE_SVG
+  eye.addEventListener('click', () => {
+    hudVisible = !hudVisible
+    eye.innerHTML = hudVisible ? EYE_SVG : EYE_OFF_SVG
+    eye.title = hudVisible ? 'Hide HUD' : 'Show HUD'
+    if (hudVisible) unfadeChat()
+    applyLayout()
+  })
+  document.body.appendChild(eye)
 
-  const hpPill = document.createElement('div')
-  hpPill.id = 'hp-pill'
-  document.body.appendChild(hpPill)
+  // ---- compass (phone default; opens the world map) ----
+  const compass = document.createElement('button')
+  compass.id = 'hud-compass'
+  compass.className = 'hud-hideable'
+  compass.title = 'Open world map'
+  compass.setAttribute('aria-label', 'Open world map')
+  compass.innerHTML = COMPASS_SVG
+  compass.addEventListener('click', () => handlers?.onWorldMap())
+  document.body.appendChild(compass)
+
+  // ---- tab rails (portrait bottom + landscape edge) + settings ----
+  const openSettings = (): void => showSettingsSheet(handlers)
+  document.body.appendChild(buildRail('hud-rail-p', handlers, openSettings))
+  document.body.appendChild(buildRail('hud-rail-l', handlers, openSettings))
 
   const msgs = document.createElement('div')
   msgs.id = 'msg-strip'
+  msgs.className = 'hud-hideable'
+  msgs.addEventListener('click', unfadeChat)
   document.body.appendChild(msgs)
 
   const drops = document.createElement('div')
@@ -770,8 +1088,204 @@ export function initHud(handlers?: HudHandlers): void {
   uniqueBanner.id = 'unique-banner'
   document.body.appendChild(uniqueBanner)
 
+  setupSheetDrag(handle)
   window.addEventListener('keydown', onGlobalKeyDown)
+  window.addEventListener('resize', applyLayout)
+  window.addEventListener('orientationchange', applyLayout)
+  applyLayout()
+  selectTab('inventory')
 }
+
+// The portrait sheet's drag-to-resize handle: press-drag adjusts the sheet
+// height live, release snaps to peek/full or dismisses (sheetSnap). Landscape
+// ignores it (the handle is CSS-hidden and the body is full-height).
+function setupSheetDrag(handle: HTMLElement): void {
+  let start: { y: number; h: number } | null = null
+  const onMove = (e: PointerEvent): void => {
+    if (!start) return
+    const h = Math.max(0, Math.min(window.innerHeight * 0.9, start.h - (e.clientY - start.y)))
+    setSheetHeight(h)
+  }
+  const onUp = (): void => {
+    if (!start) return
+    start = null
+    window.removeEventListener('pointermove', onMove)
+    window.removeEventListener('pointerup', onUp)
+    const snap = sheetSnap(sheetHeightPx, window.innerHeight || 800)
+    if (snap === 'dismiss') setSheetOpen(false)
+    else setSheetHeight(sheetHeightFor(snap, window.innerHeight || 800))
+  }
+  handle.addEventListener('pointerdown', (e) => {
+    if (orientation !== 'portrait') return
+    start = { y: e.clientY, h: sheetHeightPx || sheetHeightFor('peek', window.innerHeight || 800) }
+    window.addEventListener('pointermove', onMove)
+    window.addEventListener('pointerup', onUp)
+    e.preventDefault()
+  })
+}
+
+// ---- chat auto-fade: the message log dims to its last line after a quiet
+// spell, waking on tap (or any HUD-reveal). Respects the chatAutoFade setting. ----
+let chatFadeTimer: ReturnType<typeof setTimeout> | null = null
+
+function unfadeChat(): void {
+  document.getElementById('msg-strip')?.classList.remove('faded')
+  armChatFade()
+}
+
+function armChatFade(): void {
+  if (chatFadeTimer) clearTimeout(chatFadeTimer)
+  if (!settings.chatAutoFade) return
+  chatFadeTimer = setTimeout(() => {
+    document.getElementById('msg-strip')?.classList.add('faded')
+  }, 5000)
+}
+
+// ---- settings sheet ----
+function showSettingsSheet(handlers?: HudHandlers): void {
+  if (document.getElementById('hud-settings-scrim')) return
+  let logoutArmed = false
+
+  const scrim = document.createElement('div')
+  scrim.id = 'hud-settings-scrim'
+  const close = (): void => { scrim.remove() }
+  scrim.addEventListener('click', (e) => { if (e.target === scrim) close() })
+
+  const sheet = document.createElement('div')
+  sheet.id = 'hud-settings'
+  sheet.className = SCROLL_CLASS
+
+  const head = document.createElement('div')
+  head.className = 'set-head'
+  const headTitle = document.createElement('b')
+  headTitle.innerHTML = `${GEAR_SVG}<span>Settings</span>`
+  const headClose = document.createElement('button')
+  headClose.setAttribute('aria-label', 'Close settings')
+  headClose.innerHTML = XMARK_SVG
+  headClose.addEventListener('click', close)
+  head.appendChild(headTitle)
+  head.appendChild(headClose)
+  sheet.appendChild(head)
+
+  const bodyEl = document.createElement('div')
+  bodyEl.className = 'set-body'
+
+  const label = (text: string): void => {
+    const l = document.createElement('div')
+    l.className = 'set-label'
+    l.textContent = text
+    bodyEl.appendChild(l)
+  }
+  const row = (title: string, sub: string | null, control: HTMLElement, stack = false): void => {
+    const r = document.createElement('div')
+    r.className = 'set-row' + (stack ? ' stack' : '')
+    const txt = document.createElement('div')
+    txt.className = 'set-txt'
+    const b = document.createElement('b')
+    b.textContent = title
+    txt.appendChild(b)
+    if (sub) {
+      const s = document.createElement('span')
+      s.textContent = sub
+      txt.appendChild(s)
+    }
+    r.appendChild(txt)
+    r.appendChild(control)
+    bodyEl.appendChild(r)
+  }
+  const segmented = <T extends string>(current: T, options: { value: T; label: string }[], onPick: (v: T) => void, width?: number): HTMLElement => {
+    const seg = document.createElement('div')
+    seg.className = 'set-seg'
+    if (width) seg.style.width = `${width}px`
+    for (const o of options) {
+      const btn = document.createElement('button')
+      btn.type = 'button'
+      btn.textContent = o.label
+      btn.className = o.value === current ? 'on' : ''
+      btn.addEventListener('click', () => {
+        for (const sib of seg.children) sib.classList.toggle('on', sib === btn)
+        onPick(o.value)
+      })
+      seg.appendChild(btn)
+    }
+    return seg
+  }
+  const toggle = (on: boolean, onChange: (v: boolean) => void): HTMLElement => {
+    const t = document.createElement('button')
+    t.type = 'button'
+    t.className = 'set-tgl' + (on ? ' on' : '')
+    t.setAttribute('role', 'switch')
+    t.setAttribute('aria-checked', String(on))
+    t.innerHTML = '<i></i>'
+    t.addEventListener('click', () => {
+      const next = !t.classList.contains('on')
+      t.classList.toggle('on', next)
+      t.setAttribute('aria-checked', String(next))
+      onChange(next)
+    })
+    return t
+  }
+  const commit = (patch: Partial<UxSettings>): void => {
+    settings = { ...settings, ...patch }
+    saveSettings(settings)
+    applyLayout()
+  }
+
+  label('Map')
+  row('Minimap', 'Compass is a small button that opens the full map',
+    segmented<MinimapMode>(resolveMinimapMode(settings, tablet),
+      [{ value: 'full', label: 'Full' }, { value: 'compass', label: 'Compass' }, { value: 'off', label: 'Off' }],
+      (v) => commit({ minimapMode: v })), undefined)
+
+  label('Layout')
+  row('HUD size', null,
+    segmented(settings.hudScale,
+      [{ value: 'compact', label: 'S' }, { value: 'normal', label: 'M' }, { value: 'large', label: 'L' }],
+      (v) => commit({ hudScale: v }), 160))
+  row('Panel side', 'Landscape — dock it under your thumb',
+    segmented(settings.dock,
+      [{ value: 'left', label: 'Left' }, { value: 'right', label: 'Right' }],
+      (v) => commit({ dock: v }), 150))
+  const slider = document.createElement('input')
+  slider.type = 'range'
+  slider.min = '60'
+  slider.max = '100'
+  slider.value = String(Math.round(settings.panelOpacity * 100))
+  slider.className = 'set-slider'
+  slider.addEventListener('input', () => commit({ panelOpacity: Number(slider.value) / 100 }))
+  row('Panel opacity', 'See the world behind open panels', slider, true)
+
+  label('Chat & feedback')
+  row('Chat auto-fade', 'Dim the log after a few quiet seconds',
+    toggle(settings.chatAutoFade, (v) => { commit({ chatAutoFade: v }); if (!v) unfadeChat(); else armChatFade() }))
+  row('Haptics', 'Light tick on taps', toggle(settings.haptics, (v) => commit({ haptics: v })))
+
+  label('System')
+  const logout = document.createElement('button')
+  logout.className = 'set-logout'
+  logout.innerHTML = `${DOOR_SVG}<span>Log out of the world</span>`
+  logout.addEventListener('click', () => {
+    if (logoutArmed) { close(); handlers?.onLogout(); return }
+    logoutArmed = true
+    logout.classList.add('armed')
+    logout.querySelector('span')!.textContent = 'Tap again to log out'
+  })
+  bodyEl.appendChild(logout)
+
+  sheet.appendChild(bodyEl)
+  scrim.appendChild(sheet)
+  document.body.appendChild(scrim)
+  paintHudIcons()
+}
+
+// Priority 3 (same as the world-map/bank/craft modals): Escape closes the
+// settings sheet if it's open.
+registerEscapeHandler(3, () => {
+  const scrim = document.getElementById('hud-settings-scrim')
+  if (!scrim) return false
+  scrim.remove()
+  return true
+})
 
 /** Renders worn equipment into the Equipment tab; empty slots show their label. */
 export function renderEquipment(equipment: EquipmentMap): void {
@@ -864,11 +1378,9 @@ export function setStanceActive(stance: CombatStance): void {
 }
 
 export function setRunState(energy: number, running: boolean): void {
-  const orb = document.getElementById('run-orb')
-  if (!orb) return
-  const pct = orb.querySelector('.run-pct')
-  if (pct) pct.textContent = `${Math.round(energy)}%`
-  orb.classList.toggle('running', running)
+  vitalsState.run = energy
+  vitalsState.running = running
+  paintOneOrb('run', 'RUN')
 }
 
 /** Paints the bespoke SVG art into every HUD icon slot (tabs, logout, run orb).
@@ -917,7 +1429,7 @@ export function renderPrayerPanel(prayerLevel: number, onPray: (prayerId: string
       const art = p.skill ? PRAYER_SKILL_ICON[p.skill] : undefined
       const icon = document.createElement('span')
       icon.className = 'prayer-btn__icon'
-      icon.innerHTML = (art && uiIconMarkup(art.icon, 24, art.accent)) || '🙏'
+      icon.innerHTML = (art && uiIconMarkup(art.icon, 30, art.accent)) || '🙏'
       const lv = document.createElement('span')
       lv.className = 'prayer-lv'
       lv.textContent = String(p.level)
@@ -933,8 +1445,12 @@ export function renderPrayerPanel(prayerLevel: number, onPray: (prayerId: string
   section('Combat', combat)
 }
 
-/** Updates the prayer pool bar + which toggle buttons read as active. */
+/** Updates the prayer pool orb + the in-pane pool bar + which toggle buttons
+ * read as active. */
 export function setPrayerState(points: number, max: number, protection: string | null, combat: string | null): void {
+  vitalsState.prayer = points
+  vitalsState.maxPrayer = max
+  paintOneOrb('prayer', 'PRAY')
   const bar = document.getElementById('prayer-bar')
   if (bar) {
     const pct = max > 0 ? Math.max(0, Math.min(100, (points / max) * 100)) : 0
@@ -1054,21 +1570,36 @@ export function removeOverheadChat(id: string): void {
  * textContent on the way back out. */
 export function initChatInput(onSend: (text: string) => void): void {
   if (document.getElementById('chat-input')) return
+  const wrap = document.createElement('div')
+  wrap.id = 'chat-input-wrap'
   const input = document.createElement('input')
   input.id = 'chat-input'
   input.type = 'text'
   input.placeholder = 'Say something…'
   input.maxLength = 120
   input.autocomplete = 'off'
+  const send = (): void => {
+    const text = input.value.trim()
+    input.value = ''
+    if (text) onSend(text)
+  }
   input.addEventListener('keydown', (e) => {
     e.stopPropagation()
     if (e.key === 'Escape') input.blur()
     if (e.key !== 'Enter') return
-    const text = input.value.trim()
-    input.value = ''
-    if (text) onSend(text)
+    send()
   })
-  document.body.appendChild(input)
+  const sendBtn = document.createElement('button')
+  sendBtn.id = 'chat-send'
+  sendBtn.type = 'button'
+  sendBtn.title = 'Send'
+  sendBtn.setAttribute('aria-label', 'Send message')
+  sendBtn.innerHTML = SEND_SVG
+  // Keep focus so the on-screen keyboard stays up for a quick second message.
+  sendBtn.addEventListener('click', () => { send(); input.focus() })
+  wrap.appendChild(input)
+  wrap.appendChild(sendBtn)
+  document.body.appendChild(wrap)
 }
 
 const NAME_CYAN = '#61d0d8'
@@ -1178,11 +1709,12 @@ export function renderInventory(inventory: InvSlot[]): void {
   }
 }
 
+/** Feeds the HP orb (named for the pill it replaced — main.ts still calls it on
+ * every {e:'hp'} and welcome). */
 export function updateHpPill(hp: number, maxHp: number): void {
-  const el = document.getElementById('hp-pill')
-  if (!el) return
-  el.textContent = `❤ ${hp}/${maxHp}`
-  el.classList.toggle('low', maxHp > 0 && hp / maxHp <= 0.3)
+  vitalsState.hp = hp
+  vitalsState.maxHp = maxHp
+  paintOneOrb('hp', 'HP')
 }
 
 export function showXpDrop(skill: string, amount: number): void {
@@ -1203,6 +1735,7 @@ export function pushMessage(text: string): void {
   line.textContent = text
   strip.appendChild(line)
   while (strip.children.length > MAX_MESSAGES) strip.firstChild?.remove()
+  unfadeChat()
 }
 
 const UNIQUE_BANNER_MS = 5000

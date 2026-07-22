@@ -56,6 +56,11 @@ describe('combat via tickPlayer', () => {
     expect(player.stats.attack.xp).toBeGreaterThan(100000)
     expect(player.pendingXp.attack).toBe(8 * 4)
     expect(player.combat).toBeNull()
+    // The killing tick keeps the attack anim so the swing still plays out (a
+    // one-hit kill used to reset it to idle mid-swing); the next idle tick
+    // returns to idle.
+    expect(player.anim).toBe('attack')
+    tickPlayer(player, ctx(tick + 1, npcs))
     expect(player.anim).toBe('idle')
   })
 
