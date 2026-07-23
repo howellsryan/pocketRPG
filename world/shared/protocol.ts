@@ -94,7 +94,7 @@ export type EntityDiff = {
   kind: 'player' | 'npc'
   x: number
   z: number
-  anim: 'idle' | 'walk' | 'mine' | 'attack' | 'attack_ranged' | 'attack_magic' | 'die'
+  anim: 'idle' | 'walk' | 'mine' | 'attack' | 'attack_ranged' | 'attack_magic' | 'attack_special' | 'die'
   hp?: number
   maxHp?: number
   monsterId?: string

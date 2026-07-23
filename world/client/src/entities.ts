@@ -161,7 +161,7 @@ function makeAnimator(model: THREE.Object3D, gltf: GLTF, names: readonly AnimNam
     const clip = gltf.animations.find((c) => c.name === name)
     if (!clip) continue
     const action = mixer.clipAction(clip)
-    if (name === 'die' || name === 'attack' || name === 'attack_ranged' || name === 'attack_magic') {
+    if (name === 'die' || name === 'attack' || name === 'attack_ranged' || name === 'attack_magic' || name === 'attack_special') {
       // die and every attack are one-shots. The server flags an attack anim for
       // only the single tick a swing resolves, then drops back to idle — so a
       // looping attack action gets cut off after ~1 tick and barely reads.
@@ -193,7 +193,7 @@ export async function createHeroMesh(): Promise<{ mesh: THREE.Object3D; animator
     const group = new THREE.Group()
     group.add(model)
     group.scale.setScalar(HERO_SCALE)
-    const animator = makeAnimator(model, gltf, ['idle', 'walk', 'run', 'mine', 'attack', 'attack_ranged', 'attack_magic', 'die'])
+    const animator = makeAnimator(model, gltf, ['idle', 'walk', 'run', 'mine', 'attack', 'attack_ranged', 'attack_magic', 'attack_special', 'die'])
     return { mesh: group, animator }
   } catch {
     return { mesh: createCapsulePlaceholder(), animator: null }
@@ -709,7 +709,7 @@ function playSwing(animator: GltfAnimator, action: THREE.AnimationAction): void 
  * swing fires the two-hand smash once, death plays once, and a return to idle
  * after death respawns the rig. Movement (walk) is positional, not a clip. */
 function updateProcAnimator(a: ProcAnimator, name: AnimName, deltaSeconds: number): void {
-  const isAttack = name === 'attack' || name === 'attack_ranged' || name === 'attack_magic'
+  const isAttack = isAttackAnim(name)
   const want = name === 'die' ? 'death' : isAttack ? 'attack' : 'idle'
   if (want === 'idle') {
     if (a.triggered === 'death') a.proc.trigger('respawn')

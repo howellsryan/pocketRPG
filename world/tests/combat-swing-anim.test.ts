@@ -103,7 +103,10 @@ describe('stepCombat swing animation (scripted engine events)', () => {
     expect(player.anim).toBe('idle')
   })
 
-  it('sets the ranged attack anim on specialHit for a ranged combat type', () => {
+  it('plays the distinct special clip on specialHit regardless of combat type', () => {
+    // A fired special plays the hero's dedicated attack_special combo (parity
+    // with the combat arena's specialClip), NOT the per-type swing — so even a
+    // ranged special reads as the special flourish, not attack_ranged.
     const { npcs, bull } = bullAt(5, 5)
     const player = makePlayer()
     player.equipment = { weapon: { itemId: 'oak_shortbow' } }
@@ -117,6 +120,6 @@ describe('stepCombat swing animation (scripted engine events)', () => {
 
     player.anim = 'idle'
     stepCombat(player, ctx(1, npcs), emptyResult())
-    expect(player.anim).toBe('attack_ranged')
+    expect(player.anim).toBe('attack_special')
   })
 })

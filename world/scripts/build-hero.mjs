@@ -53,6 +53,10 @@ const CLIPS = [
   // Spell_Simple_Shoot is a genuine magic-cast clip.
   { file: UAL1, clip: 'Pistol_Shoot', as: 'attack_ranged' },
   { file: UAL1, clip: 'Spell_Simple_Shoot', as: 'attack_magic' },
+  // Special-attack combo — the same UAL2 clip the combat arena hero uses for
+  // its specialClip (sword_regular_combo), so a fired special reads as a
+  // distinct flourish in both views rather than a plain swing.
+  { file: UAL2, clip: 'Sword_Regular_Combo', as: 'attack_special' },
   { file: UAL1, clip: 'Death01', as: 'die' },
 ]
 

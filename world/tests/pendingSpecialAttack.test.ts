@@ -53,6 +53,24 @@ describe('special attack armed before combat exists', () => {
     expect(sawSpecialHit).toBe(true)
   })
 
+  it('broadcasts the distinct attack_special anim on the tick the special fires, not the normal swing', () => {
+    const { npcs, npc } = bull()
+    const player = makePlayer({ pendingSpecial: true })
+    startCombat(player, npc)
+
+    let specialAnim: string | null = null
+    let normalAnim: string | null = null
+    for (let tick = 1; tick <= 12 && player.combat; tick++) {
+      const r = tickPlayer(player, ctx(tick, npcs))
+      if (r.hits.some((h) => h.targetId === npc.id)) {
+        if (r.hits.filter((h) => h.targetId === npc.id).length >= 2) specialAnim = player.anim // dragon dagger double_hit
+        else normalAnim = player.anim
+      }
+    }
+    expect(specialAnim).toBe('attack_special')
+    expect(normalAnim).toBe('attack')
+  })
+
   it('a second tap before any fight starts disarms it (toggle off)', () => {
     const player = makePlayer()
     // Mirrors WorldZone's case 'special' handler: no player.combat -> toggles pendingSpecial.

@@ -353,7 +353,9 @@ export function stepCombat(player: TickPlayer, ctx: TickContext, result: TickRes
       result.equipmentDirty = true
     } else if (ev.type === 'specialHit') {
       if (!inPlayerRange) continue
-      player.anim = attackAnimFor(combat.state.combatType as string)
+      // A fired special plays the hero's distinct special clip (parity with the
+      // combat arena's specialClip), not the normal per-type swing.
+      player.anim = 'attack_special'
       // A fired special: one or more hits, monster HP already applied on state.
       npc.hp = Math.max(0, combatState.monster.currentHP)
       recordDamage(npc, player.charId, ev.totalDamage ?? 0, ctx.tick)
