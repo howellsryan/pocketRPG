@@ -2,9 +2,9 @@
 // them without a DOM/WebGL environment.
 import type { AnimName } from './entities'
 
-/** The three server anim states that are one-shot swings (as opposed to the
- * looping idle/walk/run and the one-shot die). */
-export const ATTACK_ANIMS: readonly AnimName[] = ['attack', 'attack_ranged', 'attack_magic']
+/** The server anim states that are one-shot swings (as opposed to the looping
+ * idle/walk/run and the one-shot die) — including the special-attack combo. */
+export const ATTACK_ANIMS: readonly AnimName[] = ['attack', 'attack_ranged', 'attack_magic', 'attack_special']
 export function isAttackAnim(name: AnimName): boolean {
   return ATTACK_ANIMS.includes(name)
 }

@@ -17,18 +17,30 @@ import type { ZoneEvent } from '../shared/protocol'
 import { spawnDrops } from './loot'
 import { removeItems } from './mining'
 import { isBossMonster } from './bossKills'
+import { getMonsterModel } from '../../src/utils/equipModels.js'
+import { monsterAttackWindup } from '../../src/utils/combatWindup.js'
+import { TICK_DURATION } from '../../src/utils/constants.js'
 
 /** Special energy between fights is always full (each fight seeds 100, refills
  * on kill) — mirror the main game's PvE special model. */
 export const FULL_SPECIAL_ENERGY = 100
 
-/** How many ticks before a monster's swing actually lands its anim broadcasts,
- * so the client's clip has time to play before the hit event/splat arrives —
- * otherwise the swing visibly starts only once the damage number is already
- * on screen. A coarse stand-in for the combat arena's per-clip windup lead
- * (CombatScreen.jsx's arenaWindup); the open-world monster registry carries no
- * per-clip impact-second metadata to do the arena's exact frame alignment. */
-export const MONSTER_ATTACK_LEAD_TICKS = 1
+/** How many ticks before a monster's swing lands the server broadcasts the
+ * single 'attack' pulse, so the client can pre-start (and sub-tick-delay) the
+ * clip and have its IMPACT frame coincide with the hit event/splat — the same
+ * alignment the combat arena does, driven by the SHARED src/utils/combatWindup.js
+ * off the clip's `attackImpactSec` (src/data/equipmentModels.json). Monsters
+ * with no impact metadata keep the coarse 1-tick lead. Memoised per monsterId. */
+const windupLeadCache = new Map<string, number>()
+export function monsterWindupLeadTicks(monsterId: string): number {
+  let lead = windupLeadCache.get(monsterId)
+  if (lead === undefined) {
+    const impactSec = getMonsterModel(monsterId)?.attackImpactSec ?? null
+    lead = monsterAttackWindup(impactSec, TICK_DURATION).leadTicks
+    windupLeadCache.set(monsterId, lead)
+  }
+  return lead
+}
 
 /** Emits a {e:'spec'} echo when the energy readout OR the armed/queued state
  * changed — the latter lets the client highlight the button the instant a tap
@@ -282,13 +294,13 @@ export function stepCombat(player: TickPlayer, ctx: TickContext, result: TickRes
   npc.state = 'combat'
   // Clear last tick's swing so a fresh one re-triggers the attack animation.
   if (npc.anim === 'attack' || npc.anim === 'attack_ranged' || npc.anim === 'attack_magic') npc.anim = 'idle'
-  // Pre-signal the NEXT swing one tick before it actually resolves: without
-  // this the client only sees 'attack' on the tick the hit event fires, so
-  // the monster's swing visibly starts AFTER its damage number is already on
-  // screen. The real hit/miss event below (on a later tick) still fires the
-  // splat at the true resolved tick — this only gives the clip a head start,
-  // mirroring the combat arena's windup lead (CombatScreen.jsx's arenaWindup).
-  if (isTarget && inMonsterRange && combat.state.monsterAttackTimer === MONSTER_ATTACK_LEAD_TICKS) {
+  // Pre-signal the swing as a SINGLE pulse `leadTicks` before it resolves — the
+  // client edge-detects this to start the clip (with its sub-tick delay) so the
+  // impact frame lands on the hit event's splat below. The hit/miss branches do
+  // NOT re-broadcast 'attack' (a second, non-adjacent pulse would restart the
+  // clip on the splat tick and desync it) — the pulse alone drives the whole
+  // swing, mirroring the combat arena's shared windup (src/utils/combatWindup.js).
+  if (isTarget && inMonsterRange && combat.state.monsterAttackTimer === monsterWindupLeadTicks(npc.monsterId)) {
     npc.anim = monsterAttackAnim(npc.monsterId)
   }
   npc.lastCombatTick = ctx.tick
@@ -341,7 +353,9 @@ export function stepCombat(player: TickPlayer, ctx: TickContext, result: TickRes
       result.equipmentDirty = true
     } else if (ev.type === 'specialHit') {
       if (!inPlayerRange) continue
-      player.anim = attackAnimFor(combat.state.combatType as string)
+      // A fired special plays the hero's distinct special clip (parity with the
+      // combat arena's specialClip), not the normal per-type swing.
+      player.anim = 'attack_special'
       // A fired special: one or more hits, monster HP already applied on state.
       npc.hp = Math.max(0, combatState.monster.currentHP)
       recordDamage(npc, player.charId, ev.totalDamage ?? 0, ctx.tick)
@@ -349,14 +363,14 @@ export function stepCombat(player: TickPlayer, ctx: TickContext, result: TickRes
       for (const dmg of splats) result.hits.push({ targetId: npc.id, dmg })
     } else if (ev.type === 'monsterHit' || ev.type === 'dragonfireHit') {
       // The monster only lands when the player is within ITS reach — a melee foe
-      // can't hit a player kiting at magic range until it closes the gap.
+      // can't hit a player kiting at magic range until it closes the gap. The
+      // swing anim was already led by the pre-signal above; don't re-broadcast
+      // it here (that would restart the clip on the splat tick).
       if (!isTarget || !inMonsterRange) continue
-      npc.anim = monsterAttackAnim(npc.monsterId) // the monster swings — broadcast so the client plays it
       player.hp = Math.max(0, player.hp - (ev.damage ?? 0))
       result.hits.push({ targetId: player.charId, dmg: ev.damage ?? 0 })
     } else if (ev.type === 'monsterMiss') {
       if (!isTarget || !inMonsterRange) continue
-      npc.anim = monsterAttackAnim(npc.monsterId)
       result.hits.push({ targetId: player.charId, dmg: 0 })
     } else if (ev.type === 'xp' && ev.xpSkills) {
       if (!inPlayerRange) continue
