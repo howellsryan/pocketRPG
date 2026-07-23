@@ -1,9 +1,10 @@
-// Regression: the open-world monster attack animation used to only broadcast
-// on the exact tick the hit event landed, so the client's swing visibly
-// started AFTER the damage number was already on screen — unlike the combat
-// arena, which pre-starts the swing so it ends on the hit tick. combat.ts now
-// pre-signals the anim one tick (MONSTER_ATTACK_LEAD_TICKS) before the real
-// hit event fires. Scripted-engine pattern mirrors combat-swing-anim.test.ts.
+// The open-world monster swing is led so its animation's IMPACT frame lands on
+// the hit splat, exactly like the combat arena (shared src/utils/combatWindup.js).
+// combat.ts broadcasts a SINGLE 'attack' pulse `leadTicks` before the resolve —
+// derived from the monster's `attackImpactSec` — and the hit/miss events no
+// longer re-broadcast the anim (a second, non-adjacent pulse would restart the
+// clip on the splat tick and desync it). Scripted-engine pattern mirrors
+// combat-swing-anim.test.ts.
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 vi.mock('../../src/engine/combat.js', () => ({
@@ -38,9 +39,9 @@ function makePlayer(): TickPlayer {
   }
 }
 
-function bullAt(x: number, z: number): { npcs: Map<string, NpcState>; bull: NpcState } {
-  const npcs = npcsFromZone([{ id: 'bull_1', monsterId: 'pasture_bull', x, z, wander: { x: 0, z: 0, w: 16, h: 16 } }])
-  return { npcs, bull: npcs.get('bull_1')! }
+function npcAt(monsterId: string, x: number, z: number): { npcs: Map<string, NpcState>; npc: NpcState } {
+  const npcs = npcsFromZone([{ id: 'm_1', monsterId, x, z, wander: { x: 0, z: 0, w: 16, h: 16 } }])
+  return { npcs, npc: npcs.get('m_1')! }
 }
 
 function ctx(tick: number, npcs: Map<string, NpcState>): TickContext {
@@ -50,51 +51,81 @@ function ctx(tick: number, npcs: Map<string, NpcState>): TickContext {
 afterEach(() => vi.clearAllMocks())
 
 describe('stepCombat monster attack windup lead', () => {
-  it('broadcasts the attack anim one tick before the monsterHit event actually lands', () => {
-    const { npcs, bull } = bullAt(5, 5)
+  it('pre-signals a no-impact monster one tick before the hit, and the resolve tick does not re-broadcast the swing', () => {
+    const { npcs, npc } = npcAt('pasture_bull', 5, 5) // no attackImpactSec => 1-tick lead
     const player = makePlayer()
-    startCombat(player, bull)
+    startCombat(player, npc)
     expect(player.combat).not.toBeNull()
 
-    // Tick 1: no event yet, monster is 2 ticks from swinging (post-decrement 1)
-    // -> this is the lead tick, anim should pre-signal now.
+    // Lead tick: one tick from the swing (post-decrement 1) -> single pulse now.
     mockedProcessCombatTick.mockReturnValueOnce({
       combatState: { ...player.combat!.state, monsterAttackTimer: 1 },
       events: [],
     } as never)
     stepCombat(player, ctx(1, npcs), emptyResult())
-    expect(bull.anim).toBe('attack')
+    expect(npc.anim).toBe('attack')
 
-    // Tick 2: the real hit lands (monsterAttackTimer resets after resolving).
+    // Resolve tick: the real hit lands. The anim is NOT re-broadcast (idle), but
+    // the splat still fires at the true resolved tick.
     mockedProcessCombatTick.mockReturnValueOnce({
       combatState: { ...player.combat!.state, monsterAttackTimer: 4 },
       events: [{ type: 'monsterHit', damage: 5 }],
     } as never)
     const r2 = emptyResult()
     stepCombat(player, ctx(2, npcs), r2)
-    expect(bull.anim).toBe('attack')
+    expect(npc.anim).toBe('idle')
     expect(r2.hits.some((h) => h.targetId === player.charId && h.dmg === 5)).toBe(true)
+  })
 
-    // Tick 3: nothing pending (still 3 ticks from the next swing) -> idle.
+  it('leads a mid-clip-impact boss (Grondar, 2.25s) by four ticks, not one', () => {
+    const { npcs, npc } = npcAt('warlord_grondar', 5, 5)
+    const player = makePlayer()
+    startCombat(player, npc)
+
+    // A one-tick lead would fire here — but Grondar's impact needs four ticks,
+    // so this tick must stay idle.
     mockedProcessCombatTick.mockReturnValueOnce({
-      combatState: { ...player.combat!.state, monsterAttackTimer: 3 },
+      combatState: { ...player.combat!.state, monsterAttackTimer: 1 },
       events: [],
     } as never)
-    stepCombat(player, ctx(3, npcs), emptyResult())
-    expect(bull.anim).toBe('idle')
+    stepCombat(player, ctx(1, npcs), emptyResult())
+    expect(npc.anim).toBe('idle')
+
+    // Four ticks out is the lead tick for a 2.25s impact.
+    mockedProcessCombatTick.mockReturnValueOnce({
+      combatState: { ...player.combat!.state, monsterAttackTimer: 4 },
+      events: [],
+    } as never)
+    stepCombat(player, ctx(2, npcs), emptyResult())
+    expect(npc.anim).toBe('attack')
+  })
+
+  it('a miss still fires a 0 splat without re-broadcasting the swing anim', () => {
+    const { npcs, npc } = npcAt('pasture_bull', 5, 5)
+    const player = makePlayer()
+    startCombat(player, npc)
+
+    mockedProcessCombatTick.mockReturnValueOnce({
+      combatState: { ...player.combat!.state, monsterAttackTimer: 4 },
+      events: [{ type: 'monsterMiss' }],
+    } as never)
+    const r = emptyResult()
+    stepCombat(player, ctx(1, npcs), r)
+    expect(npc.anim).toBe('idle')
+    expect(r.hits.some((h) => h.targetId === player.charId && h.dmg === 0)).toBe(true)
   })
 
   it('never pre-signals for a fight where this player is not the retaliation target', () => {
-    const { npcs, bull } = bullAt(5, 5)
+    const { npcs, npc } = npcAt('pasture_bull', 5, 5)
     const player = makePlayer()
-    startCombat(player, bull)
-    bull.attackerId = 'someone-else'
+    startCombat(player, npc)
+    npc.attackerId = 'someone-else'
 
     mockedProcessCombatTick.mockReturnValueOnce({
       combatState: { ...player.combat!.state, monsterAttackTimer: 1 },
       events: [],
     } as never)
     stepCombat(player, ctx(1, npcs), emptyResult())
-    expect(bull.anim).not.toBe('attack')
+    expect(npc.anim).not.toBe('attack')
   })
 })

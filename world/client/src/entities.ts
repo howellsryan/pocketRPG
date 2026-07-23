@@ -12,7 +12,9 @@ import { buildProcCreature, creatureSpecFor, type ProcCreature } from './procCre
 // so a registry-covered item renders with an identical model + bone-space
 // transform + tint on both heroes. Models copied into the world bundle by
 // world/scripts/build-equip.mjs.
-import { getWeaponModel, getGearModel, resolveHeadGearModel as resolveHeadGearModelShared } from '../../../src/utils/equipModels.js'
+import { getWeaponModel, getGearModel, getMonsterModel, resolveHeadGearModel as resolveHeadGearModelShared } from '../../../src/utils/equipModels.js'
+import { monsterAttackWindup } from '../../../src/utils/combatWindup.js'
+import { TICK_DURATION } from '../../../src/utils/constants.js'
 
 const ANIM_CROSSFADE_S = 0.15
 const TURN_SPEED_RAD_PER_S = 14
@@ -53,6 +55,16 @@ export type GltfAnimator = {
    * the one-shot attack clip exactly once (cleared when the signal drops back
    * to a non-attack anim). Mirrors ProcAnimator's `triggered`. */
   swingLatched?: boolean
+  /** Sub-tick delay (ms) between the server's swing pre-signal and actually
+   * starting the clip, so the clip's impact frame lands on the hit splat — the
+   * SHARED windup the combat arena uses (src/utils/combatWindup.js), derived from
+   * the monster's `attackImpactSec`. 0/undefined => start immediately (hero,
+   * monsters with no impact metadata). */
+  swingDelayMs?: number
+  /** A pre-signalled swing waiting for `swingDelayMs` to elapse before its clip
+   * starts; set on the edge, fired (or cancelled by death) in updateEntity. */
+  pendingSwingAt?: number
+  pendingSwingAction?: THREE.AnimationAction | null
 }
 
 function isAttackAction(animator: GltfAnimator, action: THREE.AnimationAction): boolean {
@@ -236,8 +248,11 @@ export async function createMonsterMesh(monsterId: string | undefined): Promise<
       group.add(model)
       group.scale.setScalar(spec.targetHeight / (b.maxY - b.minY))
       const animator = makeAnimator(model, gltf, ['idle', 'walk', 'attack', 'die'])
-      if (spec.noLocomotionClip && animator?.kind === 'gltf') {
-        animator.gait = { target: model, baseY: model.position.y, baseRotZ: model.rotation.z }
+      if (animator?.kind === 'gltf') {
+        if (spec.noLocomotionClip) animator.gait = { target: model, baseY: model.position.y, baseRotZ: model.rotation.z }
+        // Sub-tick swing delay so this monster's impact frame lands on the hit
+        // splat, exactly as the combat arena aligns it (shared windup helper).
+        animator.swingDelayMs = monsterAttackWindup(getMonsterModel(monsterId!)?.attackImpactSec ?? null, TICK_DURATION).startDelayMs
       }
       return { mesh: group, animator }
     } catch {
@@ -683,6 +698,13 @@ function playAnim(animator: GltfAnimator, name: AnimName): void {
   animator.current = action
 }
 
+/** Starts a fresh one-shot swing clip, crossfading out whatever was playing. */
+function playSwing(animator: GltfAnimator, action: THREE.AnimationAction): void {
+  action.reset().fadeIn(ANIM_CROSSFADE_S).play()
+  if (animator.current && animator.current !== action) animator.current.fadeOut(ANIM_CROSSFADE_S)
+  animator.current = action
+}
+
 /** Drives a procedural creature from the world's anim state: each new server
  * swing fires the two-hand smash once, death plays once, and a return to idle
  * after death respawns the rig. Movement (walk) is positional, not a clip. */
@@ -786,11 +808,27 @@ export function updateEntity(entity: Entity, now: number, deltaSeconds: number, 
       const decision = resolveGltfAnim(name, entity.moving, anim.swingLatched ?? false, attackPlaying)
       anim.swingLatched = decision.latched
       if (decision.fireSwing && attackAction) {
-        attackAction.reset().fadeIn(ANIM_CROSSFADE_S).play()
-        if (anim.current && anim.current !== attackAction) anim.current.fadeOut(ANIM_CROSSFADE_S)
-        anim.current = attackAction
+        if ((anim.swingDelayMs ?? 0) > 0) {
+          // Defer the clip start by this monster's sub-tick impact delay so the
+          // impact frame coincides with the hit splat (same alignment the arena
+          // does — src/utils/combatWindup.js).
+          anim.pendingSwingAt = now + anim.swingDelayMs!
+          anim.pendingSwingAction = attackAction
+        } else {
+          playSwing(anim, attackAction)
+        }
       } else if (decision.playBase) {
         playAnim(anim, name)
+      }
+      // Release a deferred swing once its lead elapses; a death cancels it so a
+      // stale wind-up can't land through the collapse (mirrors CombatArena3D).
+      if (anim.pendingSwingAt != null) {
+        if (name === 'die') { anim.pendingSwingAt = undefined; anim.pendingSwingAction = null }
+        else if (now >= anim.pendingSwingAt) {
+          if (anim.pendingSwingAction) playSwing(anim, anim.pendingSwingAction)
+          anim.pendingSwingAt = undefined
+          anim.pendingSwingAction = null
+        }
       }
       anim.mixer.update(deltaSeconds)
       const gait = anim.gait
