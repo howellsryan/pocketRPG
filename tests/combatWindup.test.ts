@@ -49,17 +49,21 @@ describe('resolveWindupTick (arena live per-tick form)', () => {
 })
 
 describe('shipped monster attackImpactSec authoring constraint', () => {
-  // The wind-up can only fit if the impact lands before the swing does — i.e.
-  // the impact must be shorter than the monster's attack cycle. A mis-authored
-  // value would make the lead tick unreachable and the swing never animate.
-  it('every registered attackImpactSec is shorter than that monster attack cycle', () => {
+  // The wind-up can only fit if the impact lands before the swing does. The
+  // engine's monsterAttackTimer counts S-1, S-2 … 1 before the first swing of a
+  // fight and only reaches S again on a swing tick (where it resets), so a lead
+  // equal to the attack speed skips the OPENING swing's animation and a longer
+  // lead is never reachable at all. The lead must therefore be strictly under
+  // the attack speed: impact < (attackSpeed - 1) cycles.
+  it('every registered attackImpactSec leaves a reachable lead tick inside the attack cycle', () => {
     const monsterModels = (equipmentModels as { monsters?: Record<string, { attackImpactSec?: number }> }).monsters ?? {}
     const monsterData = monsters as Record<string, { attackSpeed?: number }>
     for (const [id, spec] of Object.entries(monsterModels)) {
       if (typeof spec.attackImpactSec !== 'number') continue
       const attackSpeed = monsterData[id]?.attackSpeed
       expect(attackSpeed, `monster ${id} has attackImpactSec but no attackSpeed`).toBeTypeOf('number')
-      expect(spec.attackImpactSec * 1000, `${id} impact must fit inside its attack cycle`).toBeLessThan((attackSpeed as number) * TICK)
+      const { leadTicks } = monsterAttackWindup(spec.attackImpactSec, TICK)
+      expect(leadTicks, `${id} lead must be reachable before its first swing`).toBeLessThan(attackSpeed as number)
     }
   })
 })
