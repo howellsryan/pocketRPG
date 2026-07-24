@@ -18193,6 +18193,17 @@
     "isGeneralStore": false,
     "description": "A high-tier Summoning charm dropped by the deadliest monsters. Infuse it with a secondary to make a pouch."
   },
+  "empty_pouch": {
+    "id": "empty_pouch",
+    "legacy_item_id": "empty_pouch",
+    "name": "Empty Pouch",
+    "type": "resource",
+    "stackable": true,
+    "isUntradeable": false,
+    "shopValue": 15,
+    "isGeneralStore": true,
+    "description": "A plain leather pouch. Infuse it with a charm and a secondary to make a creature pouch."
+  },
   "chicken_pouch": {
     "id": "chicken_pouch",
     "legacy_item_id": "chicken_pouch",

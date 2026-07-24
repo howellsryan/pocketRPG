@@ -8,6 +8,10 @@ import {
   getUnlockedCreatures,
   getPouchRecipe,
   getScrollRecipe,
+  craftableTimes,
+  craftOnce,
+  EMPTY_POUCH_ID,
+  CRAFT_ACTION_TICKS,
   charmForCombatLevel,
   getMonsterCharmDrops,
   rollSummonAttack,
@@ -50,27 +54,80 @@ describe('summoning — content integrity', () => {
 })
 
 describe('summoning — recipes', () => {
-  it('a pouch recipe consumes one charm + one secondary and yields one pouch', () => {
+  it('a pouch recipe consumes one charm + secondary + empty pouch and grants pouch XP', () => {
     const dragon = getSummoningCreature('dragon')!
     const recipe = getPouchRecipe(dragon)!
     expect(recipe.product).toBe('dragon_pouch')
     expect(recipe.productQty).toBe(1)
-    expect(recipe.materials).toEqual({ red_charm: 1, dragon_bones: 1 })
+    expect(recipe.materials).toEqual({ red_charm: 1, dragon_bones: 1, [EMPTY_POUCH_ID]: 1 })
+    expect(recipe.xp).toBe(dragon.pouchXp)
+    expect(recipe.xp).toBeGreaterThan(0)
   })
 
-  it('a scroll recipe infuses one pouch into ten scrolls', () => {
+  it('a scroll recipe infuses one pouch into ten scrolls and grants scroll XP', () => {
     const titan = getSummoningCreature('steel_titan')!
     const recipe = getScrollRecipe(titan)!
     expect(recipe.product).toBe('steel_titan_scroll')
     expect(recipe.productQty).toBe(SCROLLS_PER_POUCH)
     expect(recipe.productQty).toBe(10)
     expect(recipe.materials).toEqual({ steel_titan_pouch: 1 })
+    expect(recipe.xp).toBe(titan.scrollXp)
+    expect(recipe.xp).toBeGreaterThan(0)
+  })
+
+  it('the empty pouch is a buyable Skilling-Equipment shop resource', () => {
+    const pouch = items[EMPTY_POUCH_ID]
+    expect(pouch).toBeDefined()
+    expect(pouch.isGeneralStore).toBe(true)
+    expect(pouch.type).toBe('resource')
+    expect(pouch.shopValue).toBeGreaterThan(0)
   })
 
   it('resolves creatures back from their pouch and scroll ids', () => {
     expect(creatureForPouch('gargoyle_crab_pouch')?.id).toBe('gargoyle_crab')
     expect(creatureForScroll('fire_giant_scroll')?.id).toBe('fire_giant')
     expect(creatureForPouch('nonsense')).toBeNull()
+  })
+})
+
+describe('summoning — crafting (inventory + bank)', () => {
+  const slot = (id: string, quantity: number) => ({ itemId: id, quantity })
+  // Real inventories are fixed 28-slot arrays padded with nulls (addItem needs a
+  // free slot for a new stackable product).
+  const inv = (...slots: any[]) => { const a = slots.slice(); while (a.length < 28) a.push(null); return a }
+  const chicken = getSummoningCreature('chicken')!
+  const pouchRecipe = getPouchRecipe(chicken)! // green_charm + raw_chicken + empty_pouch
+
+  it('counts makeable batches across inventory and bank combined', () => {
+    const inventory = inv(slot('green_charm', 1), slot('raw_chicken', 3), slot('empty_pouch', 5))
+    const bank = { green_charm: { quantity: 4 } }
+    // limited by raw_chicken (3 in inv, 0 in bank)
+    expect(craftableTimes(pouchRecipe, inventory, bank)).toBe(3)
+  })
+
+  it('completes one craft, draining inventory first then bank, and reports XP', () => {
+    const inventory = inv(slot('green_charm', 1), slot('empty_pouch', 1))
+    const bank = { raw_chicken: { quantity: 2 } }
+    const result = craftOnce(pouchRecipe, inventory, bank, items)
+    expect(result.ok).toBe(true)
+    expect(result.xp).toBe(chicken.pouchXp)
+    // charm + empty pouch came from inventory; raw_chicken had to come from bank
+    expect(result.bankUpdates).toEqual({ raw_chicken: -1 })
+    const invMap = Object.fromEntries(result.newInventory.filter(Boolean).map((s: any) => [s.itemId, s.quantity]))
+    expect(invMap.green_charm ?? 0).toBe(0)
+    expect(invMap.empty_pouch ?? 0).toBe(0)
+    expect(invMap.chicken_pouch).toBe(1)
+  })
+
+  it('refuses to craft when a material is missing from both inventory and bank', () => {
+    const inventory = inv(slot('green_charm', 1), slot('empty_pouch', 1))
+    const result = craftOnce(pouchRecipe, inventory, {}, items)
+    expect(result.ok).toBe(false)
+    expect(result.reason).toBe('materials')
+  })
+
+  it('crafts one product every two ticks', () => {
+    expect(CRAFT_ACTION_TICKS).toBe(2)
   })
 })
 

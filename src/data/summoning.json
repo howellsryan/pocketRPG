@@ -14,7 +14,9 @@
       "attackBonus": 8,
       "attackStyle": "crush",
       "accuracyTier": "low",
-      "summonXp": 8
+      "summonXp": 8,
+      "pouchXp": 8,
+      "scrollXp": 5
     },
     {
       "id": "dog",
@@ -30,7 +32,9 @@
       "attackBonus": 12,
       "attackStyle": "crush",
       "accuracyTier": "low",
-      "summonXp": 15
+      "summonXp": 15,
+      "pouchXp": 14,
+      "scrollXp": 8
     },
     {
       "id": "gargoyle_crab",
@@ -46,7 +50,9 @@
       "attackBonus": 18,
       "attackStyle": "crush",
       "accuracyTier": "low",
-      "summonXp": 30
+      "summonXp": 30,
+      "pouchXp": 30,
+      "scrollXp": 16
     },
     {
       "id": "fire_giant",
@@ -62,7 +68,9 @@
       "attackBonus": 44,
       "attackStyle": "crush",
       "accuracyTier": "medium",
-      "summonXp": 65
+      "summonXp": 65,
+      "pouchXp": 60,
+      "scrollXp": 33
     },
     {
       "id": "dragon",
@@ -78,7 +86,9 @@
       "attackBonus": 90,
       "attackStyle": "crush",
       "accuracyTier": "high",
-      "summonXp": 120
+      "summonXp": 120,
+      "pouchXp": 110,
+      "scrollXp": 60
     },
     {
       "id": "steel_titan",
@@ -94,7 +104,9 @@
       "attackBonus": 55,
       "attackStyle": "crush",
       "accuracyTier": "medium",
-      "summonXp": 250
+      "summonXp": 250,
+      "pouchXp": 220,
+      "scrollXp": 120
     }
   ]
 }

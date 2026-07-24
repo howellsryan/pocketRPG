@@ -3,23 +3,27 @@
  * engine, and the idle engine. No UI imports.
  *
  * Two crafting steps and one combat use:
- *   - Make a pouch:  charm + secondary  → 1 <creature> pouch
- *   - Infuse scrolls: 1 pouch           → SCROLLS_PER_POUCH <creature> scrolls
+ *   - Make a pouch:  charm + secondary + empty pouch → 1 <creature> pouch
+ *   - Infuse scrolls: 1 pouch                        → SCROLLS_PER_POUCH scrolls
  *   - Summon:        1 pouch consumed in a live fight spawns the creature for
  *                    SUMMON_DURATION_TICKS; each of its attacks spends 1 scroll.
  *
- * XP is granted only on summon (per-creature `summonXp`) — the two crafting
- * steps grant none. See CLAUDE.md §4 (this file is the source of truth for the
- * Summoning creature registry and its combat rolls).
+ * The two crafting steps are tick-based skilling actions (one product every
+ * CRAFT_ACTION_TICKS ticks) that grant per-creature `pouchXp`/`scrollXp`;
+ * summoning in a live fight grants `summonXp`. See CLAUDE.md §4 (this file is
+ * the source of truth for the Summoning creature registry and its combat rolls).
  */
 
 import summoningData from '../data/summoning.json'
 import { maxAttackRoll, maxDefenceRoll, hitChance, rollDamage } from './formulas.js'
+import { countItem, addItem, removeItem } from './inventory.js'
 
 export const SUMMON_DURATION_TICKS = 100 // 60s at TICK_MS = 600
 export const SUMMON_ATTACK_TICKS = 4     // creature swings every 4 ticks (2.4s)
 export const SCROLLS_PER_POUCH = 10
 export const CHARM_DROP_CHANCE = 0.05    // flat per-kill chance of a tier charm
+export const CRAFT_ACTION_TICKS = 2      // one pouch/scroll batch every 2 ticks
+export const EMPTY_POUCH_ID = 'empty_pouch'
 
 export const SUMMONING_CREATURES = summoningData.creatures
 
@@ -47,13 +51,14 @@ export function getUnlockedCreatures(summoningLevel) {
 
 // ── Crafting recipes ────────────────────────────────────────────────────────
 
-/** charm + secondary → 1 pouch. Materials shaped like skills.json actions. */
+/** charm + secondary + empty pouch → 1 pouch. Shaped like skills.json actions. */
 export function getPouchRecipe(creature) {
   if (!creature) return null
   return {
     product: creature.pouch,
     productQty: 1,
-    materials: { [creature.charm]: 1, [creature.secondary]: 1 },
+    xp: creature.pouchXp || 0,
+    materials: { [creature.charm]: 1, [creature.secondary]: 1, [EMPTY_POUCH_ID]: 1 },
   }
 }
 
@@ -63,8 +68,45 @@ export function getScrollRecipe(creature) {
   return {
     product: creature.scroll,
     productQty: SCROLLS_PER_POUCH,
+    xp: creature.scrollXp || 0,
     materials: { [creature.pouch]: 1 },
   }
+}
+
+const bankQty = (bank, id) => bank?.[id]?.quantity || 0
+
+/** Times a recipe can run given inventory + bank stock (materials combined). */
+export function craftableTimes(recipe, inventory, bank) {
+  if (!recipe) return 0
+  let max = Infinity
+  for (const [id, per] of Object.entries(recipe.materials)) {
+    max = Math.min(max, Math.floor((countItem(inventory, id) + bankQty(bank, id)) / per))
+  }
+  return max === Infinity ? 0 : max
+}
+
+/**
+ * Resolve one crafting completion: consume each material from inventory first,
+ * then bank; add the product; report the XP to grant. Pure — returns the new
+ * inventory array and a bank-delta map for the caller to apply. `reason` is
+ * 'materials' (not enough) or 'full' (no inventory room) when `ok` is false.
+ */
+export function craftOnce(recipe, inventory, bank, itemsData = {}) {
+  for (const [id, per] of Object.entries(recipe.materials)) {
+    if (countItem(inventory, id) + bankQty(bank, id) < per) return { ok: false, reason: 'materials' }
+  }
+  const newInventory = [...inventory]
+  if (!addItem(newInventory, recipe.product, recipe.productQty, !!itemsData[recipe.product]?.stackable)) {
+    return { ok: false, reason: 'full' }
+  }
+  const bankUpdates = {}
+  for (const [id, per] of Object.entries(recipe.materials)) {
+    const fromInv = Math.min(per, countItem(newInventory, id))
+    if (fromInv > 0) removeItem(newInventory, id, fromInv)
+    const fromBank = per - fromInv
+    if (fromBank > 0) bankUpdates[id] = (bankUpdates[id] || 0) - fromBank
+  }
+  return { ok: true, newInventory, bankUpdates, xp: recipe.xp || 0 }
 }
 
 // ── Charm drops (universal, combat-level tiered) ─────────────────────────────

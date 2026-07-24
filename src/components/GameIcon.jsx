@@ -2,6 +2,17 @@ import gameIconsData from '../data/gameIcons.json'
 import bespokeIconsData from '../data/bespokeIcons.json'
 import { getItemIconKey, getItemIconTint, isCryptboundChampion } from '../utils/itemIcons'
 
+// Item ids that share one bespoke icon body, recoloured per variant. The three
+// Summoning charm tiers use the same engraved-plate art, tinted by BESPOKE_TINT.
+const BESPOKE_ALIAS = {
+  green_charm: 'charm', red_charm: 'charm', blue_charm: 'charm',
+}
+const BESPOKE_TINT = {
+  green_charm: 'var(--tier-jewel-green)',
+  red_charm:   'var(--tier-jewel-red)',
+  blue_charm:  'var(--tier-jewel-blue)',
+}
+
 // Outline / glow palette.
 const RIM = {
   white: '#ffffff', black: '#000000', red: '#d23b2f',
@@ -148,18 +159,23 @@ export default function GameIcon({ item, iconKey, size = 24, color, class: cls =
   // art carries its own colours. Like gameIconsData, the map ships in the lazy
   // game chunk, so guard the access with `typeof`.
   const bespoke    = typeof bespokeIconsData !== 'undefined' ? bespokeIconsData : null
-  const bespokeKey = iconKey || item?.id
+  const bespokeKey = iconKey || BESPOKE_ALIAS[item?.id] || item?.id
   const bespokeEntry = bespoke && bespokeKey ? bespoke[bespokeKey] : undefined
   if (bespokeEntry) {
     const px        = typeof size === 'number' ? size : undefined
     const sizeStyle = px ? { width: px, height: px, flexShrink: 0 } : undefined
+    // Most bespoke art carries its own colours and renders untinted. A `tintable`
+    // entry authors its body with `currentColor` so one shape recolours per
+    // variant (e.g. the three charm tiers share one plate icon).
+    const tint = bespokeEntry.tintable ? (color || BESPOKE_TINT[item?.id] || (item ? getItemIconTint(item) : 'currentColor')) : undefined
     return (
       <svg
         viewBox={bespokeEntry.viewBox || '0 0 512 512'}
-        style={sizeStyle}
+        style={tint ? { ...(sizeStyle || {}), color: tint } : sizeStyle}
         class={cls}
         role="img"
         aria-label={title || item?.name || bespokeKey}
+        {...(tint ? { fill: tint } : {})}
         dangerouslySetInnerHTML={{ __html: bespokeEntry.body }}
       />
     )
