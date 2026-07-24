@@ -101,6 +101,9 @@ export function charmForCombatLevel(combatLevel) {
 /** Charm drop entries for a monster, shaped like normal drops. */
 export function getMonsterCharmDrops(monster) {
   if (!monster || monster.boss === true || monster.raidBoss === true) return []
+  // Opt-out (mirrors seed drops' noSeedDrops) for monsters that want fully
+  // deterministic authored loot.
+  if (monster.noCharmDrops === true) return []
   const charm = charmForCombatLevel(monster.combatLevel)
   if (!charm) return []
   return [{ itemId: charm, quantity: 1, chance: CHARM_DROP_CHANCE }]

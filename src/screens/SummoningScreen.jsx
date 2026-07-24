@@ -1,10 +1,14 @@
+import { useState } from 'preact/hooks'
 import { useGame } from '../state/gameState.jsx'
 import GameIcon from '../components/GameIcon.jsx'
 import SkillScreenHeader from '../components/SkillScreenHeader.jsx'
 import SkillActionRow from '../components/SkillActionRow.jsx'
+import SkillActivePanel from '../components/SkillActivePanel.jsx'
 import SectionHeader from '../components/SectionHeader.jsx'
 import { getLevelFromXP } from '../engine/experience.js'
-import { emptySession } from '../engine/activitySession.js'
+import { emptySession, ratePerHour } from '../engine/activitySession.js'
+import { getActionProgress } from '../hooks/useActionTick.js'
+import { formatNumber } from '../utils/helpers.js'
 import { formatActionDuration } from '../utils/formatters.js'
 import { SUMMONING_CREATURES, getPouchRecipe, getScrollRecipe, SCROLLS_PER_POUCH, CRAFT_ACTION_TICKS, craftableTimes } from '../engine/summoning.js'
 import itemsData from '../data/items.json'
@@ -35,16 +39,55 @@ export default function SummoningScreen({ onBack }) {
   const summoningLevel = getLevelFromXP(stats.summoning?.xp || 0)
 
   const activeAction = (activeTask?.type === 'skill' && activeTask.skill === 'summoning') ? activeTask.action : null
+  // Show the active-action panel while a craft runs (matching every other
+  // skill). Back drops to the list but leaves the task running; re-entering the
+  // screen resumes straight onto the panel.
+  const [showPanel, setShowPanel] = useState(!!activeAction)
 
   const recipeFor = (kind, creature) =>
     kind === 'pouch' ? getPouchRecipe(creature) : getScrollRecipe(creature)
 
   const toggle = (kind, creature, recipe) => {
     const action = actionFor(kind, creature, recipe)
-    if (activeAction?.id === action.id) { setActiveTask(null); return }
+    if (activeAction?.id === action.id) { setActiveTask(null); setShowPanel(false); return }
     if (craftableTimes(recipe, inventory, bank) <= 0) { addToast('Not enough materials', 'error'); return }
     if (!requestActivityStart({ type: 'skill', skill: 'summoning', action })) return
     setActiveTask({ type: 'skill', skill: 'summoning', action, bankingEnabled: true, session: emptySession(Date.now()) })
+    setShowPanel(true)
+  }
+
+  const stop = () => { setActiveTask(null); setShowPanel(false) }
+
+  // Active-action panel — the "action screen" every skill drops into on start.
+  if (activeAction && showPanel) {
+    const totalTicks = activeTask?.totalTicks || CRAFT_ACTION_TICKS
+    const ticksRemaining = activeTask?.ticksRemaining ?? totalTicks
+    const progress = getActionProgress(true, ticksRemaining, totalTicks)
+    const session = activeTask?.session || emptySession()
+    const actionsPerHr = ratePerHour(session.actions, session.startedAt)
+    const xpPerHr = ratePerHour(session.xp, session.startedAt)
+    const productItem = itemsData[activeAction.product]
+    return (
+      <SkillActivePanel
+        skill="summoning"
+        icon={productItem ? <GameIcon item={productItem} size={50} /> : undefined}
+        title={activeAction.name}
+        progress={progress}
+        producing={productItem && <>
+          <GameIcon item={productItem} size={32} />
+          <span class="text-[12px] font-semibold text-[var(--color-parchment)] opacity-60">Making</span>
+          <span class="text-[13px] font-semibold text-[var(--color-gold-dim)]">{productItem.name}</span>
+        </>}
+        stats={[
+          { label: 'Actions completed', value: (session.actions || 0).toLocaleString() },
+          { label: 'Actions / hr', value: actionsPerHr !== null ? actionsPerHr.toLocaleString() : '—', accent: actionsPerHr !== null },
+          { label: 'XP gained', value: formatNumber(session.xp || 0) },
+          { label: 'XP / hr', value: xpPerHr !== null ? formatNumber(xpPerHr) : '—', accent: xpPerHr !== null },
+        ]}
+        onBack={() => setShowPanel(false)}
+        onStop={stop}
+      />
+    )
   }
 
   const renderRow = (creature, kind) => {
