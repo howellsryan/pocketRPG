@@ -111,6 +111,15 @@ let savesSuspended = false
 // stale snapshot (it only repeats the 409) and let the app roll back to the
 // cloud copy. Cleared on resetSyncState / a fresh page boot.
 let conflictPending = false
+// Consecutive total-level-regression rollbacks with no successful save in
+// between. A transient regression self-heals: roll back to cloud once and the
+// next push lands. A DETERMINISTIC one (the reconstructed save is genuinely
+// below the cloud copy every round-trip — e.g. the cloud save carries a stat
+// key this build's ALL_SKILLS drops) would otherwise re-roll-back forever. Past
+// this many rollbacks we stop retrying and hard-stop with the Retry/Logout
+// modal instead of spinning. Reset on any successful save.
+let regressionRollbacks = 0
+const MAX_REGRESSION_ROLLBACKS = 1
 
 if (typeof window !== 'undefined') {
   window.addEventListener(SAVE_REVISION_EVENT, (event) => {
@@ -178,6 +187,7 @@ async function performPush() {
       pendingSaveOptions = {}
       hasUnsyncedChanges = false
       consecutiveFailures = 0
+      regressionRollbacks = 0
       emitCloudSaveStatus('saved', { updatedAt: lastPushedAt || null, skipped: true })
       return true
     }
@@ -193,6 +203,7 @@ async function performPush() {
     lastPushedContentKey = contentKey
     hasUnsyncedChanges = false
     consecutiveFailures = 0
+    regressionRollbacks = 0
     emitCloudSaveStatus('saved', { updatedAt: res?.updatedAt || null })
     console.log('[PocketRPG] Cloud save pushed, size:', json.length)
     return true
@@ -244,7 +255,22 @@ async function performPush() {
     // streak and hard-blocked play with the "Save Failed" modal; instead roll
     // back to the cloud copy (which holds the correct higher total level), which
     // clears the false regression and lets saves resume.
-    if (err?.status === 409 && (err?.body?.code === 'SAVE_REVISION_CONFLICT' || err?.body?.error === 'save_revision_conflict' || err?.message === 'save_revision_conflict' || err?.body?.code === 'BANK_WIPE_REJECTED' || err?.body?.error === 'bank_wipe_rejected' || err?.body?.code === 'TOTAL_LEVEL_REGRESSION' || err?.body?.error === 'total_level_regression_rejected')) {
+    const isRegression = err?.status === 409 && (err?.body?.code === 'TOTAL_LEVEL_REGRESSION' || err?.body?.error === 'total_level_regression_rejected')
+    if (err?.status === 409 && (err?.body?.code === 'SAVE_REVISION_CONFLICT' || err?.body?.error === 'save_revision_conflict' || err?.message === 'save_revision_conflict' || err?.body?.code === 'BANK_WIPE_REJECTED' || err?.body?.error === 'bank_wipe_rejected' || isRegression)) {
+      // A regression that recurs after we already rolled back is deterministic,
+      // not transient: rolling back again just re-pulls the same cloud copy and
+      // re-regresses. Stop the loop and hard-stop with the Retry/Logout modal so
+      // the player can escape (Log Out clears local state) instead of an endless
+      // re-sync. A successful save resets the counter, so a genuine transient
+      // regression still self-heals silently.
+      if (isRegression && ++regressionRollbacks > MAX_REGRESSION_ROLLBACKS) {
+        pendingSnapshot = null
+        pendingSaveOptions = {}
+        hasUnsyncedChanges = false
+        if (pendingTimer) { clearTimeout(pendingTimer); pendingTimer = null }
+        emitCloudSaveStatus('blocked', { error: 'total_level_regression_unresolved', regression: true })
+        return false
+      }
       conflictPending = true
       pendingSnapshot = null
       pendingSaveOptions = {}
@@ -597,6 +623,7 @@ export function resetSyncState() {
   pendingSaveOptions = {}
   savesSuspended = false
   conflictPending = false
+  regressionRollbacks = 0
   pendingCriticalSnapshotSource = null
   pendingCriticalReasons.clear()
   if (pendingTimer) { clearTimeout(pendingTimer); pendingTimer = null }

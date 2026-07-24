@@ -257,6 +257,30 @@ describe('cloud sync save status events', () => {
     expect(sync.isSaveConflict()).toBe(true)
   })
 
+  it('hard-stops (blocked) when a total-level regression recurs after a rollback, instead of looping', async () => {
+    // A DETERMINISTIC regression — the reconstructed save is below the cloud
+    // copy every round-trip (e.g. the cloud save carries a stat key this build
+    // drops) — would re-roll-back forever. After the first self-heal rollback,
+    // a recurrence must escalate to 'blocked' so the player can Retry/Log Out
+    // rather than spin in an endless re-sync.
+    putSaveMock.mockRejectedValue({ status: 409, body: { code: 'TOTAL_LEVEL_REGRESSION', error: 'total_level_regression_rejected' } })
+    const sync = await import('../src/cloud/sync.js')
+
+    // First hit: self-heal attempt → conflict (app rolls back to cloud).
+    await sync.pushNow({ player: { name: 'Hero' } })
+    let calls = (window.dispatchEvent as any).mock.calls.map((c: any[]) => c[0].detail.status)
+    expect(calls).toContain('conflict')
+    expect(calls).not.toContain('blocked')
+
+    // App finished rolling back to the cloud copy and cleared the conflict.
+    sync.clearSaveConflict()
+
+    // Second hit: same regression persists → hard stop, no infinite loop.
+    await sync.pushNow({ player: { name: 'Hero' } })
+    calls = (window.dispatchEvent as any).mock.calls.map((c: any[]) => c[0].detail.status)
+    expect(calls).toContain('blocked')
+  })
+
   it('short-circuits further pushes once a conflict is detected', async () => {
     putSaveMock.mockRejectedValue({ status: 409, body: { code: 'SAVE_REVISION_CONFLICT', current_revision: 5 } })
     const sync = await import('../src/cloud/sync.js')
