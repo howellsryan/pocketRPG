@@ -236,7 +236,15 @@ async function performPush() {
     // rollback path as a revision conflict: flag it, drop the bad snapshot, and
     // emit 'conflict' so the app re-pulls and re-applies the intact cloud copy,
     // restoring the bank instead of retrying the wipe.
-    if (err?.status === 409 && (err?.body?.code === 'SAVE_REVISION_CONFLICT' || err?.body?.error === 'save_revision_conflict' || err?.message === 'save_revision_conflict' || err?.body?.code === 'BANK_WIPE_REJECTED' || err?.body?.error === 'bank_wipe_rejected')) {
+    // TOTAL_LEVEL_REGRESSION: the server refused a save whose total level fell
+    // below the stored one (local state drifted below the authoritative cloud
+    // copy — e.g. a partial/failed read on a preview sharing prod's D1). Total
+    // level only ever goes up outside a One-Life DELETE, so re-pushing just
+    // repeats the 409. Without this branch it fell through to the generic-failure
+    // streak and hard-blocked play with the "Save Failed" modal; instead roll
+    // back to the cloud copy (which holds the correct higher total level), which
+    // clears the false regression and lets saves resume.
+    if (err?.status === 409 && (err?.body?.code === 'SAVE_REVISION_CONFLICT' || err?.body?.error === 'save_revision_conflict' || err?.message === 'save_revision_conflict' || err?.body?.code === 'BANK_WIPE_REJECTED' || err?.body?.error === 'bank_wipe_rejected' || err?.body?.code === 'TOTAL_LEVEL_REGRESSION' || err?.body?.error === 'total_level_regression_rejected')) {
       conflictPending = true
       pendingSnapshot = null
       pendingSaveOptions = {}
