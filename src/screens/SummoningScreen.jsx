@@ -8,13 +8,12 @@ import { getLevelFromXP } from '../engine/experience.js'
 import { SUMMONING_CREATURES, getPouchRecipe, getScrollRecipe, SCROLLS_PER_POUCH, CRAFT_ACTION_TICKS, craftableTimes, craftOnce } from '../engine/summoning.js'
 import itemsData from '../data/items.json'
 
-const TICK_MS = 600
-
 function itemName(id) {
   return itemsData[id]?.name || id
 }
 
 export default function SummoningScreen({ onBack }) {
+  const TICK_MS = 600
   const { stats, inventory, bank, updateInventory, updateBankDirect, grantXP, addToast } = useGame()
   const summoningLevel = getLevelFromXP(stats.summoning?.xp || 0)
 
