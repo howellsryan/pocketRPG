@@ -26,6 +26,8 @@ const TURN_SPEED_RAD_PER_S = 14
 // height against 1-unit tiles rather than shrinking the hero when the base
 // model changed underneath it.
 const HERO_SCALE = 0.873
+// Rendered height (1.82 bind-pose units × HERO_SCALE) — the pick proxy's span.
+const HERO_HEIGHT = 1.82 * HERO_SCALE
 // cow.glb (Quaternius Farm Animal Pack) is authored Y-up-standing but large and
 // off-origin. Its skeleton carries a baked −90°X + ×100 transform, so it renders
 // upright with NO extra rotation — the earlier rotation was wrong. These are the
@@ -120,6 +122,50 @@ function disableFrustumCulling(root: THREE.Object3D): void {
   })
 }
 
+/** Name/handle of the invisible box input.ts raycasts instead of the model.
+ * three.js resolves a SkinnedMesh hit by bone-transforming EVERY vertex of
+ * EVERY triangle (SkinnedMesh.getVertexPosition), and it does that for any ray
+ * that merely clips the bind-pose bounding sphere — measured at 40–50 ms for
+ * Warlord Grondar's 39 k-triangle mesh, hit once per animation frame while the
+ * cursor sits on him (hover is rAF-throttled) plus once per click. That alone
+ * pinned the frame budget while attacking him. A 12-triangle box costs
+ * microseconds and gives the same Pickable, since pickTargetOf walks up to the
+ * entity group. */
+export const PICK_PROXY = '__pick'
+
+// Shared across every entity: never rendered (visible=false), never disposed
+// on entity removal, so one geometry/material for all of them.
+const PICK_PROXY_GEOMETRY = new THREE.BoxGeometry(1, 1, 1)
+const PICK_PROXY_MATERIAL = new THREE.MeshBasicMaterial()
+
+/** Footprint of the pick box: roughly the tile the entity stands on, capped so
+ * a 2.8-tile boss doesn't swallow clicks on everything beside him. */
+function proxyFootprint(height: number): number {
+  return Math.min(1.6, Math.max(0.6, height * 0.55))
+}
+
+/** Adds the pick proxy to a rendered entity group. `height` is in world units;
+ * the group's uniform scale is divided out because the proxy rides inside it. */
+function addPickProxy(group: THREE.Object3D, height: number): void {
+  const scale = group.scale.x || 1
+  const width = proxyFootprint(height)
+  const proxy = new THREE.Mesh(PICK_PROXY_GEOMETRY, PICK_PROXY_MATERIAL)
+  proxy.name = PICK_PROXY
+  proxy.visible = false
+  proxy.castShadow = false
+  proxy.receiveShadow = false
+  proxy.scale.set(width / scale, height / scale, width / scale)
+  proxy.position.y = height / 2 / scale
+  group.add(proxy)
+  group.userData.pickProxy = proxy
+}
+
+/** The object input.ts should raycast for this entity — its pick proxy, or the
+ * mesh itself when it has none (placeholders). */
+export function pickProxyOf(mesh: THREE.Object3D): THREE.Object3D {
+  return (mesh.userData.pickProxy as THREE.Object3D | undefined) ?? mesh
+}
+
 export function createCapsulePlaceholder(): THREE.Object3D {
   const geometry = new THREE.CapsuleGeometry(0.3, 0.6, 4, 8)
   const material = new THREE.MeshStandardMaterial({ color: 0xd8b06a })
@@ -193,6 +239,7 @@ export async function createHeroMesh(): Promise<{ mesh: THREE.Object3D; animator
     const group = new THREE.Group()
     group.add(model)
     group.scale.setScalar(HERO_SCALE)
+    addPickProxy(group, HERO_HEIGHT)
     const animator = makeAnimator(model, gltf, ['idle', 'walk', 'run', 'mine', 'attack', 'attack_ranged', 'attack_magic', 'attack_special', 'die'])
     return { mesh: group, animator }
   } catch {
@@ -225,6 +272,7 @@ export async function createCowMesh(): Promise<{ mesh: THREE.Object3D; animator:
     const group = new THREE.Group()
     group.add(model)
     group.scale.setScalar(COW_TARGET_LENGTH / (b.maxZ - b.minZ))
+    addPickProxy(group, (b.maxY - b.minY) * group.scale.y)
     const animator = makeAnimator(model, gltf, ['idle', 'walk', 'die'])
     return { mesh: group, animator }
   } catch {
@@ -247,6 +295,7 @@ export async function createMonsterMesh(monsterId: string | undefined): Promise<
       const group = new THREE.Group()
       group.add(model)
       group.scale.setScalar(spec.targetHeight / (b.maxY - b.minY))
+      addPickProxy(group, spec.targetHeight + (spec.hover ?? 0))
       const animator = makeAnimator(model, gltf, ['idle', 'walk', 'attack', 'die'])
       if (animator?.kind === 'gltf') {
         if (spec.noLocomotionClip) animator.gait = { target: model, baseY: model.position.y, baseRotZ: model.rotation.z }
@@ -262,12 +311,16 @@ export async function createMonsterMesh(monsterId: string | undefined): Promise<
   // No GLB: render a procedural blend-shell creature if the monster has a
   // creatures3d spec (e.g. Warlord Grondar). pasture_bull keeps its cow model.
   if (monsterId && monsterId !== 'pasture_bull' && creatureSpecFor(monsterId)) {
+    const height = PROC_TARGET_HEIGHT[monsterId] ?? 2.4
     try {
-      const proc = await buildProcCreature(monsterId, PROC_TARGET_HEIGHT[monsterId] ?? 2.4)
+      const proc = await buildProcCreature(monsterId, height)
       if (proc) {
         const group = new THREE.Group()
         group.add(proc.group)
         disableFrustumCulling(group)
+        // After disableFrustumCulling — it forces castShadow on everything it
+        // walks, and the proxy must stay out of the shadow pass.
+        addPickProxy(group, height)
         return { mesh: group, animator: { kind: 'proc', proc, triggered: null } }
       }
     } catch { /* fall through to the cow placeholder */ }

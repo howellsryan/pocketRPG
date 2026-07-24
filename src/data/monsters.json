@@ -7192,14 +7192,6 @@
         "chance": 0.7
       },
       {
-        "itemId": "gargoyle_dust",
-        "quantity": [
-          5,
-          25
-        ],
-        "chance": 1
-      },
-      {
         "itemId": "arcanist_robe_top",
         "quantity": 1,
         "chance": 0.0015
@@ -7792,6 +7784,14 @@
         "itemId": "gargoyle_maul",
         "quantity": 1,
         "chance": 0.00075
+      },
+      {
+        "itemId": "gargoyle_dust",
+        "quantity": [
+          5,
+          25
+        ],
+        "chance": 0.25
       },
       {
         "itemId": "runeforged_full_helm",

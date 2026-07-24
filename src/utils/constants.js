@@ -62,7 +62,7 @@ export const GATHERING_SKILLS = ['mining', 'woodcutting', 'fishing', 'farming']
 // excluded (it still banks only once the Construction unlock is earned).
 export const IDLE_AUTOBANK_GATHERING_SKILLS = ['mining', 'woodcutting', 'fishing']
 export const PRODUCTION_SKILLS = ['smithing', 'cooking', 'crafting', 'fletching', 'herblore', 'runecraft', 'firemaking']
-export const UTILITY_SKILLS = ['agility', 'thieving', 'hunter', 'slayer', 'construction', 'dungeoneering']
+export const UTILITY_SKILLS = ['agility', 'thieving', 'hunter', 'slayer', 'construction', 'dungeoneering', 'summoning']
 
 export const ALL_SKILLS = [...COMBAT_SKILLS, ...GATHERING_SKILLS, ...PRODUCTION_SKILLS, ...UTILITY_SKILLS]
 
@@ -97,7 +97,7 @@ export const SKILL_ICONS = {
   mining: '⛏️', woodcutting: '🪓', fishing: '🎣', farming: '🌾', hunter: '🪤',
   smithing: '🔨', cooking: '🍳', crafting: '✂️', fletching: '🏹', herblore: '🧪', runecraft: '🔴',
   agility: '🏃', thieving: '🗝️', slayer: '💀', firemaking: '🔥', construction: '🏠',
-  dungeoneering: '🏰'
+  dungeoneering: '🏰', summoning: '🐾'
 }
 
 // Screen tabs
@@ -125,7 +125,8 @@ export const SCREENS = {
   WORLD_MAP: 'world_map',
   ADVENTURES: 'adventures',
   DUNGEONS: 'dungeons',
-  KINGDOM: 'kingdom'
+  KINGDOM: 'kingdom',
+  SUMMONING: 'summoning'
 }
 
 // Phase 1 of the map-driven overhaul (docs/map-driven-overhaul-plan.md) ships the

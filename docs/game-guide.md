@@ -121,9 +121,17 @@ Construction is trained by building with planks — each build consumes one plan
 
 Dungeoneering is trained by clearing dungeons of increasing difficulty, from novice upward. Every clear grants Dungeoneering XP and also earns Dungeoneering tokens (0.15 tokens per XP, rounded up per clear). Spend tokens on exclusive rewards with level requirements — for example the Arcane Necklace at level 65 for 65,000 tokens, or the Chaotic weapons and kiteshields at level 80 for 300,000 tokens each. Dungeoneering rewards count toward your collection log.
 
+## Summoning
+
+Summoning lets you call a creature to fight alongside you in combat. Every non-boss monster can drop a charm scaled to its combat level — green charms below level 51, red charms up to level 100, and blue charms above — at a flat 5% chance. On the Summoning screen you infuse a charm, a secondary item, and an empty pouch into a creature pouch, and you can infuse one pouch into ten scrolls. Empty pouches are bought cheaply from the Skilling Equipment section of the shop. Both actions run one at a time, completing every two ticks, and draw their materials from your inventory and bank. Pouches and scrolls are named after their creature (for example a Steel Titan Pouch and Steel Titan Scroll).
+
+The creatures, each with a Summoning level, its charm and secondary, and its combat power: Chicken (level 1, green charm + raw chicken, max hit 5, low accuracy), Dog (level 10, green charm + bones, max hit 7), Gargoyle Crab (level 25, green charm + gargoyle dust, max hit 10), Fire Giant (level 50, red charm + staff of fire, max hit 10, medium accuracy), Dragon (level 70, red charm + dragon bones, max hit 15, high accuracy) and Steel Titan (level 99, blue charm + steel platebody, max hit 25 and three hits per attack, medium accuracy).
+
+During a live fight, tap Summon and pick a creature to spend one pouch and call it for 60 seconds. It attacks your target on its own with orange hit splats, spending one scroll per attack, and vanishes when the timer runs out — re-summon with another pouch. It keeps fighting across auto-fight kills until its 60 seconds are up. The combat summon works only in live PvE, not idle catch-up or PvP. Making pouches and infusing scrolls, however, trains like any production skill — the action keeps running while you're away and settles through idle catch-up and Skip 1h. Making pouches, infusing scrolls, and summoning a creature all grant Summoning XP, with higher-tier creatures worth more. Reach level 99 for the Summoning Cape.
+
 ## Skill capes and the Max cape
 
-Reach level 99 in a skill and you can buy that skill's cape of accomplishment from the store — a prestige item showing off your mastery. The Max cape requires being fully maxed: 2,376 total level (99 in every skill). Skill capes and the Max cape are self-obtained prestige rewards, so Ironman characters can buy them too.
+Reach level 99 in a skill and you can buy that skill's cape of accomplishment from the store — a prestige item showing off your mastery. The Max cape requires being fully maxed: 2,475 total level (99 in every skill). Skill capes and the Max cape are self-obtained prestige rewards, so Ironman characters can buy them too.
 
 ## Trading Post and shops
 

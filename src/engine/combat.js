@@ -14,6 +14,8 @@ import { getPotionStatBoost, getActivePotionBoosts } from './consumables.js'
 import { applyPrayerDrainTick } from './prayerDrain.js'
 import { getCombatSetMultipliers } from './combatSetBonuses.js'
 import { getMonsterSeedDrops } from './seedDrops.js'
+import { getMonsterCharmDrops, getSummoningCreature, rollSummonAttack, SUMMON_ATTACK_TICKS } from './summoning.js'
+import { countItem } from './inventory.js'
 import { resolveSpecialEnergyCost, canAffordSpecialAttack } from './specialAttackEnergy.js'
 import { doesSlayerTaskMatchMonster } from './slayerTasks.js'
 
@@ -63,7 +65,8 @@ export function createCombatState(monster, combatType = 'melee', stance = 'accur
     prayerDrainAccumulator: 0,     // fractional carry for sub-1/tick drain
     activePotions: {},             // { potionItemId: durationInTicks } - multiple different potion types allowed
     doubleKillCount: 0,            // tracks how many times a requiresDoubleKill boss has been defeated
-    raid: null                     // raid state: { raidId, bosses[], currentBossIndex, monstersData }
+    raid: null,                    // raid state: { raidId, bosses[], currentBossIndex, monstersData }
+    summon: null                   // active summoned creature: { creatureId, ticksLeft, attackTimer }
   }
 }
 
@@ -494,6 +497,44 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
     return { combatState: state, events }
   }
 
+  // ── Summoned creature ──
+  // Runs before the player attack (which can early-return on no ammo/charges),
+  // so the creature keeps swinging regardless. Lasts SUMMON_DURATION_TICKS;
+  // each swing spends one of the creature's scrolls from the inventory. The UI
+  // removes the scroll in response to the consumeScroll event (like consumeCharge).
+  if (state.summon && state.active) {
+    const creature = getSummoningCreature(state.summon.creatureId)
+    if (!creature) {
+      state.summon = null
+    } else {
+      state.summon.ticksLeft--
+      if (state.summon.ticksLeft <= 0) {
+        events.push({ type: 'summonExpired', creatureId: creature.id })
+        state.summon = null
+      } else {
+        state.summon.attackTimer--
+        if (state.summon.attackTimer <= 0) {
+          state.summon.attackTimer = SUMMON_ATTACK_TICKS
+          if (countItem(inventory, creature.scroll) > 0) {
+            const swing = rollSummonAttack(creature, monster)
+            const actualDamage = Math.min(swing.damage, Math.max(0, monster.currentHP))
+            monster.currentHP -= actualDamage
+            triggerEnrageIfNeeded(state, monster, events)
+            events.push({ type: 'summonHit', creatureId: creature.id, damage: actualDamage, hits: swing.hits, monsterHP: monster.currentHP })
+            events.push({ type: 'consumeScroll', itemId: creature.scroll, qty: 1 })
+            if (monster.currentHP <= 0) {
+              state.monster = monster
+              checkMonsterDeath(state, monster, events, isOnTask)
+              return { combatState: state, events }
+            }
+          } else {
+            events.push({ type: 'summonNoScrolls', creatureId: creature.id })
+          }
+        }
+      }
+    }
+  }
+
   // ── Player Attack ──
   if (state.playerAttackTimer <= 0 && state.eatCooldown <= 0) {
     // Check if special attack is queued
@@ -580,9 +621,9 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
       const styleBonuses = getMeleeStyleBonuses(state.stance)
       const effStr = effectiveStrength(boostedPlayerStats.strength, 0, 1.0, styleBonuses.strengthStyleBonus)
       let maxHit = Math.floor(meleeMaxHit(effStr, bonuses.otherBonus.meleeStrength) * voidMult.meleeDamage)
-      maxHit = Math.floor(maxHit + slayerEquipmentBonus.damageFlat)
+      maxHit = Math.floor(maxHit * (1 + slayerEquipmentBonus.damagePercent / 100))
       const effAtk = effectiveAttack(boostedPlayerStats.attack, 0, 1.0, styleBonuses.attackStyleBonus)
-      const atkRoll = Math.floor(maxAttackRoll(effAtk, (bonuses.attackBonus[weaponStyle] || 0) + slayerEquipmentBonus.accuracyFlat) * voidMult.meleeAccuracy)
+      const atkRoll = Math.floor(maxAttackRoll(effAtk, bonuses.attackBonus[weaponStyle] || 0) * voidMult.meleeAccuracy * (1 + slayerEquipmentBonus.accuracyPercent / 100))
       const defRoll = maxDefenceRoll(monster.stats.defence, monster.defenceBonus[weaponStyle] || 0)
       const veracProc = hasFullVeracSet(equipment, itemsData) && Math.random() < 0.25
       const acc = veracProc ? 1 : hitChance(atkRoll, defRoll)
@@ -638,7 +679,7 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
       const styleBonus = getRangedStyleBonus(state.stance)
       const effRng = effectiveRanged(boostedPlayerStats.ranged, 0, 1.0, styleBonus)
       let maxHit = Math.floor(rangedMaxHit(effRng, bonuses.otherBonus.rangedStrength) * voidMult.rangedDamage)
-      let atkRoll = Math.floor(maxAttackRoll(effRng, (bonuses.attackBonus.ranged || 0) + slayerEquipmentBonus.accuracyFlat) * voidMult.rangedAccuracy)
+      let atkRoll = Math.floor(maxAttackRoll(effRng, bonuses.attackBonus.ranged || 0) * voidMult.rangedAccuracy * (1 + slayerEquipmentBonus.accuracyPercent / 100))
 
       // Dragon Hunter Crossbow: +30% accuracy and damage vs dragon-type monsters
       if (equippedWeapon?.dragonHunter && monster.isDragon) {
@@ -659,7 +700,7 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
 
       const defRoll = maxDefenceRoll(monster.stats.defence, monster.defenceBonus.ranged || 0)
       const acc = hitChance(atkRoll, defRoll)
-      maxHit = Math.floor(maxHit + slayerEquipmentBonus.damageFlat)
+      maxHit = Math.floor(maxHit * (1 + slayerEquipmentBonus.damagePercent / 100))
       damage = rollDamage(acc, maxHit)
 
       // ── Karil Set Bonus: 25% chance to fire an extra shot for the same damage roll ──
@@ -760,7 +801,7 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
       }
 
       const effMag = effectiveMagic(boostedPlayerStats.magic)
-      const atkRoll = Math.floor(maxAttackRoll(effMag, (bonuses.attackBonus.magic || 0) + slayerEquipmentBonus.accuracyFlat) * voidMult.magicAccuracy)
+      const atkRoll = Math.floor(maxAttackRoll(effMag, bonuses.attackBonus.magic || 0) * voidMult.magicAccuracy * (1 + slayerEquipmentBonus.accuracyPercent / 100))
       const defRoll = monsterMagicDefenceRoll(monster.stats.magic, monster.stats.defence, monster.defenceBonus.magic || 0)
       const acc = hitChance(atkRoll, defRoll)
       // Max hit scales with magic level: base at level 75, +1 per 3 levels above.
@@ -768,7 +809,7 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
       const magicLevel = boostedPlayerStats.magic || 1
       const baseDamage = Math.max(1, Math.floor(magicLevel / 3) + 9)
       const wornMagicDamage = getEffectiveWornMagicDamage(bonuses.otherBonus.magicDamage, equipment, itemsData)
-      const maxHit = Math.floor(magicMaxHit(baseDamage, wornMagicDamage + voidMult.magicDamageBonusFlat) + slayerEquipmentBonus.damageFlat)
+      const maxHit = Math.floor(magicMaxHit(baseDamage, wornMagicDamage + voidMult.magicDamageBonusFlat) * (1 + slayerEquipmentBonus.damagePercent / 100))
       damage = rollDamage(acc, maxHit)
 
       if (weaponIsScaleCharged) {
@@ -792,11 +833,11 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
       // Only cast if runes are available
       if (hasRunes) {
         const effMag = effectiveMagic(boostedPlayerStats.magic)
-        const atkRoll = Math.floor(maxAttackRoll(effMag, (bonuses.attackBonus.magic || 0) + slayerEquipmentBonus.accuracyFlat) * voidMult.magicAccuracy)
+        const atkRoll = Math.floor(maxAttackRoll(effMag, bonuses.attackBonus.magic || 0) * voidMult.magicAccuracy * (1 + slayerEquipmentBonus.accuracyPercent / 100))
         const defRoll = monsterMagicDefenceRoll(monster.stats.magic, monster.stats.defence, monster.defenceBonus.magic || 0)
         const acc = hitChance(atkRoll, defRoll)
         const wornMagicDamage = getEffectiveWornMagicDamage(bonuses.otherBonus.magicDamage, equipment, itemsData)
-        const maxHit = Math.floor(magicMaxHit(state.spell.baseDamage, wornMagicDamage + voidMult.magicDamageBonusFlat) + slayerEquipmentBonus.damageFlat)
+        const maxHit = Math.floor(magicMaxHit(state.spell.baseDamage, wornMagicDamage + voidMult.magicDamageBonusFlat) * (1 + slayerEquipmentBonus.damagePercent / 100))
         damage = rollDamage(acc, maxHit)
 
         // Track which runes to consume (excluding those provided by staff)
@@ -1063,6 +1104,11 @@ function rollDrops(monster, isOnTask = false) {
   // Seeds / saplings — universal bonus drop scaled by combat level. Rolled once
   // each (independent of dropRolls) so high-multi-roll monsters don't inflate it.
   for (const drop of getMonsterSeedDrops(monster)) {
+    if (Math.random() < drop.chance) loot.push({ itemId: drop.itemId, quantity: drop.quantity })
+  }
+  // Summoning charms — universal, combat-level tiered. Rolled once, independent
+  // of dropRolls, same as seeds.
+  for (const drop of getMonsterCharmDrops(monster)) {
     if (Math.random() < drop.chance) loot.push({ itemId: drop.itemId, quantity: drop.quantity })
   }
   return loot

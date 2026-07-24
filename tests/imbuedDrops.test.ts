@@ -86,8 +86,8 @@ describe('Imbued Crown and Imbued Brain drops', () => {
     expect(upgraded.otherBonus.rangedStrength).toBe(upgraded.otherBonus.meleeStrength)
     expect(upgraded.otherBonus.magicDamage).toBe(upgraded.otherBonus.meleeStrength)
     // Slayer task bonuses carry over unchanged from the base helmet.
-    expect(upgraded.otherBonus.slayerTaskAccuracyFlat).toBe(base.otherBonus.slayerTaskAccuracyFlat)
-    expect(upgraded.otherBonus.slayerTaskDamageFlat).toBe(base.otherBonus.slayerTaskDamageFlat)
+    expect(upgraded.otherBonus.slayerTaskAccuracyPercent).toBe(base.otherBonus.slayerTaskAccuracyPercent)
+    expect(upgraded.otherBonus.slayerTaskDamagePercent).toBe(base.otherBonus.slayerTaskDamagePercent)
   })
 
   it('Imbued Brain is a rare, unlimited-use +18 magic boost potion lasting 5 minutes', () => {

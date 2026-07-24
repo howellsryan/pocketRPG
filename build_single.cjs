@@ -55,6 +55,7 @@ const sourceFiles = [
   'engine/equipment.js',
   'engine/equipmentPresets.js',
   'engine/inventory.js',
+  'engine/summoning.js',
   'engine/createDefaultSave.js',
   'engine/storeRules.js',
   'engine/agility.js',
@@ -206,6 +207,7 @@ const sourceFiles = [
   'screens/HunterScreen.js',
   'screens/SkillingScreen.js',
   'screens/ConstructionScreen.js',
+  'screens/SummoningScreen.js',
   'screens/MagicScreen.js',
   'screens/WorldMapScreen.js',
   'screens/SlayerScreen.js',
@@ -286,6 +288,7 @@ const GAME_CHUNK_FILES = new Set([
   'screens/HunterScreen.js',
   'screens/SkillingScreen.js',
   'screens/ConstructionScreen.js',
+  'screens/SummoningScreen.js',
   'screens/MagicScreen.js',
   'screens/WorldMapScreen.js',
   'screens/SlayerScreen.js',
@@ -343,6 +346,7 @@ const minigamesJSON = readSrc('data/minigames.json');
 const cluesJSON = readSrc('data/clues.json');
 const collectionLogJSON = readSrc('data/collectionLog.json');
 const dailyTasksJSON = readSrc('data/dailyTasks.json');
+const summoningJSON = readSrc('data/summoning.json');
 const worldJSON = readSrc('data/world.json');
 const worldActivitiesJSON = readSrc('data/worldActivities.json');
 const placeMapsJSON = readSrc('data/placeMaps.json');
@@ -681,6 +685,7 @@ const minigamesData = ${minigamesJSON};
 const cluesData = ${cluesJSON};
 const collectionLogData = ${collectionLogJSON};
 const dailyTasksData = ${dailyTasksJSON};
+const summoningData = ${summoningJSON};
 const worldData = ${worldJSON};
 const landingImages = ${landingImagesJSON};
 const homeLogo = ${homeLogoJSON};

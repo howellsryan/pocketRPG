@@ -31,15 +31,16 @@ import ThievingScreen from './ThievingScreen.jsx'
 import HunterScreen from './HunterScreen.jsx'
 import FarmingScreen from './FarmingScreen.jsx'
 import ConstructionScreen from './ConstructionScreen.jsx'
+import SummoningScreen from './SummoningScreen.jsx'
 import MagicScreen from './MagicScreen.jsx'
 import { recordCollectionLogDrop } from '../cloud/collectionLog.js'
 
 // Farming, Agility, Prayer, Thieving, Hunter, Slayer, Construction, and Dungeoneering are special
 // skills shown here in the Skills tab.
-const SPECIAL_SKILLS = ['farming', 'agility', 'prayer', 'thieving', 'hunter', 'slayer', 'construction', 'dungeoneering', 'magic']
+const SPECIAL_SKILLS = ['farming', 'agility', 'prayer', 'thieving', 'hunter', 'slayer', 'construction', 'dungeoneering', 'magic', 'summoning']
 // Skills this screen delegates to a dedicated sub-screen — those screens own
 // their own resume-from-background logic, so the generic resume path skips them.
-const DELEGATED_SKILLS = new Set(['agility', 'slayer', 'thieving', 'hunter', 'farming', 'construction', 'magic'])
+const DELEGATED_SKILLS = new Set(['agility', 'slayer', 'thieving', 'hunter', 'farming', 'construction', 'magic', 'summoning'])
 const trainableSkills = [...GATHERING_SKILLS, ...PRODUCTION_SKILLS].filter(s => !STUB_SKILLS.has(s) && skillsData[s]?.actions?.length > 0)
 const allSkillsInTab = [...trainableSkills, ...SPECIAL_SKILLS]
 
@@ -171,6 +172,15 @@ export default function SkillingScreen({ initialSkillId, initialActionId, initia
       <MagicScreen
         onBack={onBack || (() => setSelectedSkill(null))}
         onStopBack={onStopBack}
+      />
+    )
+  }
+
+  // If summoning is selected, delegate to SummoningScreen
+  if (selectedSkill === 'summoning') {
+    return (
+      <SummoningScreen
+        onBack={onBack || (() => setSelectedSkill(null))}
       />
     )
   }

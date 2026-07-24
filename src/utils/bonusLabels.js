@@ -13,8 +13,8 @@ export const OTHER_BONUS_LABELS = {
   barrowsKarilBonus: "Kaelor's Set Effect",
   barrowsToragBonus: "Torvek's Set Effect",
   barrowsVeracBonus: "Verin's Set Effect",
-  slayerTaskAccuracyFlat: 'Slayer Task Accuracy',
-  slayerTaskDamageFlat: 'Slayer Task Damage'
+  slayerTaskAccuracyPercent: 'Slayer Task Accuracy',
+  slayerTaskDamagePercent: 'Slayer Task Damage'
 }
 
-export const OTHER_BONUS_PERCENT_KEYS = new Set(['magicDamage', 'fishingXpPercent'])
+export const OTHER_BONUS_PERCENT_KEYS = new Set(['magicDamage', 'fishingXpPercent', 'slayerTaskAccuracyPercent', 'slayerTaskDamagePercent'])
