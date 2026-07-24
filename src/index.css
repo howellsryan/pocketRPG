@@ -2350,6 +2350,11 @@ html, body, #app {
   background: radial-gradient(circle at 38% 30%, #4a7ab8 0%, #2a5288 55%, #1a3258 100%);
   border: 1px solid rgba(140, 180, 230, 0.6);
 }
+/* Summoned-creature hits — orange, to read apart from the player's red splats. */
+.hit-splat--summon {
+  background: radial-gradient(circle at 38% 30%, #ffb057 0%, #f07d1a 55%, #b8500c 100%);
+  border: 1px solid rgba(255, 200, 140, 0.6);
+}
 
 /* Reduced motion: splats appear/disappear without floating, still readable. */
 @media (prefers-reduced-motion: reduce) {

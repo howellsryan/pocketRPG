@@ -78,7 +78,7 @@ export async function onRequestPost({ request, env }) {
         0,
       )
       if (totalLevel < MAX_TOTAL_LEVEL) {
-        return json({ error: 'You must be maxed (2376 total level) to buy this cape.', code: 'MAX_LEVEL_REQUIREMENT_NOT_MET' }, 403)
+        return json({ error: `You must be maxed (${MAX_TOTAL_LEVEL} total level) to buy this cape.`, code: 'MAX_LEVEL_REQUIREMENT_NOT_MET' }, 403)
       }
     }
 

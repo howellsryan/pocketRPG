@@ -30,7 +30,8 @@ import { checkBossRequirementsPure, checkRaidRequirementsPure } from '../engine/
 import { getMonsterSeedDrops } from '../engine/seedDrops.js'
 import { getAgilityBankDelayMs, formatBankDelay } from '../engine/agility.js'
 import { onTick, pauseTicks, resumeTicks } from '../engine/tick.js'
-import { addItem, removeItem, freeSlots } from '../engine/inventory.js'
+import { addItem, removeItem, freeSlots, countItem } from '../engine/inventory.js'
+import { SUMMONING_CREATURES, getSummoningCreature, createSummonState, getMonsterCharmDrops } from '../engine/summoning.js'
 import { getCombatType, resolveMagicSpell, equipItem, checkEquipRequirements, placeUnequippedItems } from '../engine/equipment.js'
 import { RAID_TASK_META } from '../engine/slayerMasters.js'
 import { resolveSpecialEnergyCost, canAffordSpecialAttack, formatSpecialEnergyCostLabel } from '../engine/specialAttackEnergy.js'
@@ -301,6 +302,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   const [idleSetupMode, setIdleSetupMode] = useState(null) // 'food' | 'potion' | 'prayer' | null
   const [showEquipmentModal, setShowEquipmentModal] = useState(false)
   const [showSpellModal, setShowSpellModal] = useState(false)
+  const [showSummonModal, setShowSummonModal] = useState(false)
   const [selectedMonsterInfo, setSelectedMonsterInfo] = useState(null)
   const [selectedRaidInfo, setSelectedRaidInfo] = useState(null)
   // Section collapse state. Read sites default an unset key to collapsed in the
@@ -374,6 +376,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   // Timestamp-throttles the "out of runes" error toast so a spell that splashes
   // every tick for lack of runes raises one toast, not one per 600ms tick.
   const noRunesToastRef = useRef(0)
+  const noScrollsToastRef = useRef(0)
   const inventoryRef = useRef(inventory)
   const bankRef = useRef(bank)
   const statsRef = useRef(stats)
@@ -727,6 +730,36 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             for (const [skill, xp] of Object.entries(ev.xpSkills)) {
               if (xp > 0) grantXP(skill, xp)
             }
+          }
+        }
+        if (ev.type === 'summonHit') {
+          const cname = getSummoningCreature(ev.creatureId)?.name || 'Creature'
+          setLog(prev => [...prev.slice(-20), {
+            text: ev.damage > 0 ? `Your ${cname} hits ${ev.damage}` : `Your ${cname} misses`,
+            type: ev.damage > 0 ? 'hit' : 'miss',
+            time: Date.now()
+          }])
+        }
+        if (ev.type === 'consumeScroll') {
+          const newInv = [...inventoryRef.current]
+          removeItem(newInv, ev.itemId, ev.qty || 1)
+          updateInventory(newInv)
+          inventoryRef.current = newInv
+        }
+        if (ev.type === 'summonExpired') {
+          const cname = getSummoningCreature(ev.creatureId)?.name || 'Creature'
+          setLog(prev => [...prev.slice(-20), {
+            text: `Your ${cname} vanishes.`,
+            type: 'special',
+            time: Date.now()
+          }])
+        }
+        if (ev.type === 'summonNoScrolls') {
+          const c = getSummoningCreature(ev.creatureId)
+          const now = Date.now()
+          if (now - noScrollsToastRef.current > 3500) {
+            noScrollsToastRef.current = now
+            addToast(`Out of ${itemsData[c?.scroll]?.name || 'scrolls'} — your ${c?.name || 'creature'} can't attack!`, 'error')
           }
         }
         if (ev.type === 'noRunesForSpell') {
@@ -1286,6 +1319,9 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     state.maxPrayerPoints = combatRef.current?.maxPrayerPoints ?? getLevelFromXP(stats.prayer?.xp || 0)
     state.prayerPoints = combatRef.current?.prayerPoints ?? state.maxPrayerPoints
     state.prayerDrainAccumulator = combatRef.current?.prayerDrainAccumulator || 0
+    // Carry an active summon across auto-fight kills so it lasts its full 60s
+    // (the engine keeps ticking down ticksLeft and expires it naturally).
+    state.summon = combatRef.current?.summon || null
     combatRef.current = state
     setCombat(state)
     setActiveTask({ type: 'combat', monster, stance: combatStance, bankingEnabled: true, spell: spell || null, dungeon: isDungeon })
@@ -1578,6 +1614,35 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     }
     combatRef.current = newState
     setCombat({ ...newState })
+  }
+
+  const handleSummon = (creatureId) => {
+    if (!combatRef.current || !combatRef.current.active) return
+    const creature = getSummoningCreature(creatureId)
+    if (!creature) return
+    if (getLevelFromXP(stats.summoning?.xp || 0) < creature.level) {
+      addToast(`Requires Summoning ${creature.level}`, 'error')
+      return
+    }
+    if (combatRef.current.summon) {
+      addToast('A creature is already summoned', 'error')
+      return
+    }
+    if (countItem(inventoryRef.current, creature.pouch) <= 0) {
+      addToast(`No ${itemsData[creature.pouch]?.name || 'pouch'} in your inventory`, 'error')
+      return
+    }
+    const newInv = [...inventoryRef.current]
+    removeItem(newInv, creature.pouch, 1)
+    updateInventory(newInv)
+    inventoryRef.current = newInv
+    // Summoning XP is granted only here — the act of summoning.
+    grantXP('summoning', creature.summonXp)
+    const newState = { ...combatRef.current, summon: createSummonState(creatureId) }
+    combatRef.current = newState
+    setCombat({ ...newState })
+    setShowSummonModal(false)
+    setLog(prev => [...prev.slice(-20), { text: `You summon a ${creature.name}!`, type: 'victory', time: Date.now() }])
   }
 
   const handlePotion = (potionItemId) => {
@@ -2310,7 +2375,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
               <div>
                 <h4 class="text-xs font-semibold text-[var(--color-gold-dim)] uppercase tracking-wider mb-2 opacity-70">Drops</h4>
                 <div class="space-y-1">
-                  {[...(selectedMonsterInfo.drops || []), ...getMonsterSeedDrops(selectedMonsterInfo)].map(drop => {
+                  {[...(selectedMonsterInfo.drops || []), ...getMonsterSeedDrops(selectedMonsterInfo), ...getMonsterCharmDrops(selectedMonsterInfo)].map(drop => {
                     const item = itemsData[drop.itemId]
                     return (
                       <div key={drop.itemId} class="bg-[var(--color-void)] rounded-lg p-2">
@@ -2909,6 +2974,16 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
               🙏 Prayer
             </button>
           )
+          const summonActive = !!combat?.summon
+          const ownsPouch = SUMMONING_CREATURES.some(c => countItem(inventory, c.pouch) > 0)
+          const summonSecs = summonActive ? Math.ceil((combat.summon.ticksLeft || 0) * 0.6) : 0
+          const summonBtn = (ownsPouch || summonActive) ? (
+            <button onClick={summonActive ? undefined : () => setShowSummonModal(true)} disabled={summonActive}
+              class={`py-2.5 rounded-lg font-semibold text-sm ${summonActive ? 'opacity-70 cursor-default' : 'active:opacity-80'}`}
+              style="background:linear-gradient(135deg,#12303a,#1f5566);border:1px solid rgba(120,200,224,0.4);color:#bfe0ee">
+              🐾 {summonActive ? `${summonSecs}s` : 'Summon'}
+            </button>
+          ) : null
 
           return (
             <>
@@ -2920,6 +2995,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                 <div class="grid grid-cols-3 gap-2">
                   {specBtn}{castBtn}{prayerBtn}
                 </div>
+                {summonBtn && <div class="grid grid-cols-1 gap-2">{summonBtn}</div>}
               </div>
               {/* Desktop: only Spec + Cast remain (Gear/Prayer moved to side
                   panes; Eat/Potion are now click-an-inventory-item flows). */}
@@ -3063,6 +3139,9 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                 const specQueued = !!combat?.specialAttackQueued
                 const isMagic = weapon?.attackStyle === 'magic'
                 const prayerActive = !!(combat?.activeProtectionPrayer || combat?.activeCombatPrayer)
+                const summonActive = !!combat?.summon
+                const ownsPouch = SUMMONING_CREATURES.some(c => countItem(inventory, c.pouch) > 0)
+                const summonSecs = summonActive ? Math.ceil((combat.summon.ticksLeft || 0) * 0.6) : 0
                 return (
                   <div class="cb-actions" style={{ marginTop: 12, marginBottom: 12 }}>
                     <button class={'cb-act' + (specQueued ? ' is-on' : '')} disabled={!canSpec && !specQueued} onClick={canSpec ? handleSpecialAttack : undefined}>
@@ -3077,6 +3156,12 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                       <GameIcon iconKey="prayer" color="currentColor" size={18} />
                       <span>Prayer</span>
                     </button>
+                    {(ownsPouch || summonActive) && (
+                      <button class={'cb-act' + (summonActive ? ' is-on' : '')} disabled={summonActive} onClick={summonActive ? undefined : () => setShowSummonModal(true)}>
+                        <GameIcon iconKey="summoning" color="currentColor" size={18} />
+                        <span>{summonActive ? `Summon ${summonSecs}s` : 'Summon'}</span>
+                      </button>
+                    )}
                   </div>
                 )
               })()}
@@ -3311,6 +3396,53 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
               }}
             />
           </div>
+        </Modal>
+      )}
+
+      {/* Summon modal — pick a creature to summon into the fight */}
+      {showSummonModal && (
+        <Modal onClose={() => setShowSummonModal(false)}>
+          <div class="cb-prayhead">
+            <h3>Summon a Creature</h3>
+            <button onClick={() => setShowSummonModal(false)} class="cb-x" aria-label="Close">
+              <GameIcon iconKey="cancel" color="var(--fm-ink-soft)" size={16} />
+            </button>
+          </div>
+          <div class="max-h-96 overflow-y-auto flex flex-col gap-2">
+            {(() => {
+              const summoningLevel = getLevelFromXP(stats.summoning?.xp || 0)
+              return SUMMONING_CREATURES.map(c => {
+                const unlocked = summoningLevel >= c.level
+                const pouches = countItem(inventory, c.pouch)
+                const scrolls = countItem(inventory, c.scroll)
+                const canSummon = unlocked && pouches > 0 && !combat?.summon
+                return (
+                  <button key={c.id} disabled={!canSummon} onClick={canSummon ? () => handleSummon(c.id) : undefined}
+                    class={`flex items-center gap-3 p-2.5 rounded-lg text-left ${canSummon ? 'active:opacity-80' : 'opacity-45 cursor-default'}`}
+                    style="background:var(--color-void);border:1px solid var(--color-void-light)">
+                    <GameIcon iconKey="summoning" size={30} />
+                    <div class="flex-1 min-w-0">
+                      <div class="text-[13px] font-bold text-[var(--color-parchment)]">{c.name}</div>
+                      <div class="text-[10px] text-[var(--color-parchment)] opacity-55">
+                        Max {c.maxHit}{c.hits > 1 ? ` ×${c.hits} hits` : ''} · {c.accuracyTier} accuracy · {c.summonXp} XP
+                      </div>
+                      <div class="text-[10px] text-[var(--color-parchment)] opacity-40">
+                        {pouches} pouch{pouches === 1 ? '' : 'es'} · {scrolls} scroll{scrolls === 1 ? '' : 's'}
+                      </div>
+                    </div>
+                    {!unlocked
+                      ? <span class="text-[10px] text-[var(--color-blood-light)] font-bold">Lv {c.level}</span>
+                      : pouches <= 0
+                        ? <span class="text-[10px] text-[var(--color-blood-light)]">No pouch</span>
+                        : <span class="text-[11px] text-[var(--color-gold)] font-bold">Summon</span>}
+                  </button>
+                )
+              })
+            })()}
+          </div>
+          <p class="text-[10px] text-[var(--color-parchment)] opacity-40 mt-3 text-center">
+            A summoned creature fights for 60s, spending one scroll per attack.
+          </p>
         </Modal>
       )}
 
@@ -3589,7 +3721,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
               <div>
                 <h4 class="text-xs font-semibold text-[var(--color-gold-dim)] uppercase tracking-wider mb-2 opacity-70">Drops</h4>
                 <div class="space-y-1">
-                  {[...(selectedMonsterInfo.drops || []), ...getMonsterSeedDrops(selectedMonsterInfo)].map(drop => {
+                  {[...(selectedMonsterInfo.drops || []), ...getMonsterSeedDrops(selectedMonsterInfo), ...getMonsterCharmDrops(selectedMonsterInfo)].map(drop => {
                     const item = itemsData[drop.itemId]
                     return (
                       <div key={drop.itemId} class="bg-[var(--color-void)] rounded-lg p-2">

@@ -248,7 +248,7 @@ export default function LandingScreen({ onGitHubLogin, onGoogleLogin, onPlayDemo
       <section class="lp-section lp-section--band" id="lp-skills">
         <div class="lp-head lp-reveal">
           <div class="lp-eyebrow lp-eyebrow--brass">Skilling</div>
-          <h2 class="lp-title">Train 24 skills to 99</h2>
+          <h2 class="lp-title">Train 25 skills to 99</h2>
           <p class="lp-lead">
             Every skill ticks live and idles offline. Combat, gathering, production, and
             utility — pick your path to the max cape.

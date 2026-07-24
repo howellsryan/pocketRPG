@@ -6,7 +6,7 @@ import {
   isMinigameItemUnlocked,
   isUnlockOwned,
 } from '../src/utils/completion.js'
-import { MAX_TOTAL_LEVEL } from '../src/utils/constants.js'
+import { MAX_TOTAL_LEVEL, ALL_SKILLS, MAX_LEVEL } from '../src/utils/constants.js'
 
 describe('isSkillMaxed', () => {
   it('is true only at level 99 or above', () => {
@@ -23,19 +23,19 @@ describe('isSkillMaxed', () => {
 })
 
 describe('isMaxedTotal', () => {
-  it('caps at 2376 (24 skills × 99)', () => {
-    expect(MAX_TOTAL_LEVEL).toBe(2376)
+  it('caps at 99 in every skill', () => {
+    expect(MAX_TOTAL_LEVEL).toBe(ALL_SKILLS.length * MAX_LEVEL)
   })
 
   it('is true only at the total-level cap or above', () => {
-    expect(isMaxedTotal(2375)).toBe(false)
-    expect(isMaxedTotal(2376)).toBe(true)
-    expect(isMaxedTotal(2377)).toBe(true)
+    expect(isMaxedTotal(MAX_TOTAL_LEVEL - 1)).toBe(false)
+    expect(isMaxedTotal(MAX_TOTAL_LEVEL)).toBe(true)
+    expect(isMaxedTotal(MAX_TOTAL_LEVEL + 1)).toBe(true)
   })
 
   it('coerces strings and handles missing input', () => {
-    expect(isMaxedTotal('2376')).toBe(true)
-    expect(isMaxedTotal('2375')).toBe(false)
+    expect(isMaxedTotal(String(MAX_TOTAL_LEVEL))).toBe(true)
+    expect(isMaxedTotal(String(MAX_TOTAL_LEVEL - 1))).toBe(false)
     expect(isMaxedTotal(undefined)).toBe(false)
   })
 })

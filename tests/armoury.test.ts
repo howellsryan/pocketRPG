@@ -190,7 +190,7 @@ describe('armoury classifier', () => {
       expect(capeGroups.length).toBe(1)
       const capes = capeGroups[0]
       expect(capes.label).toBe('Skill Capes')
-      expect(capes.items.length).toBe(17) // attack…thieving
+      expect(capes.items.length).toBe(18) // attack…thieving + summoning
       expect(capes.items.every(isSkillCape)).toBe(true)
       // tier 99 → last group in the list
       expect(groups[groups.length - 1].key).toBe(SKILL_CAPES_GROUP_KEY)

@@ -777,7 +777,7 @@ export function GameProvider({ children }) {
             ranged: '🏹', magic: '🔮', prayer: '🙏',
             mining: '⛏️', woodcutting: '🪓', fishing: '🎣', farming: '🌾', hunter: '🪤',
             smithing: '🔨', cooking: '🍳', crafting: '✂️', fletching: '🏹', herblore: '🧪', runecraft: '🔴',
-            agility: '🏃', thieving: '🗝️', slayer: '💀', firemaking: '🔥', construction: '🏠', dungeoneering: '🏰'
+            agility: '🏃', thieving: '🗝️', slayer: '💀', firemaking: '🔥', construction: '🏠', dungeoneering: '🏰', summoning: '🐾'
           }
           const icon = SKILL_ICONS[skill] || '⭐'
           const msg = `Congratulations! Your ${skillName} is now ${newLevel}`

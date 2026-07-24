@@ -18159,5 +18159,215 @@
       "energyCost": 55,
       "description": "Volatile Surge: a high-accuracy blast whose max hit scales with your Magic level."
     }
+  },
+  "green_charm": {
+    "id": "green_charm",
+    "legacy_item_id": "green_charm",
+    "name": "Green Charm",
+    "type": "resource",
+    "stackable": true,
+    "isUntradeable": true,
+    "shopValue": 50,
+    "isGeneralStore": false,
+    "description": "A low-tier Summoning charm shed by weaker creatures. Infuse it with a secondary to make a pouch."
+  },
+  "red_charm": {
+    "id": "red_charm",
+    "legacy_item_id": "red_charm",
+    "name": "Red Charm",
+    "type": "resource",
+    "stackable": true,
+    "isUntradeable": true,
+    "shopValue": 150,
+    "isGeneralStore": false,
+    "description": "A mid-tier Summoning charm dropped by stronger foes. Infuse it with a secondary to make a pouch."
+  },
+  "blue_charm": {
+    "id": "blue_charm",
+    "legacy_item_id": "blue_charm",
+    "name": "Blue Charm",
+    "type": "resource",
+    "stackable": true,
+    "isUntradeable": true,
+    "shopValue": 400,
+    "isGeneralStore": false,
+    "description": "A high-tier Summoning charm dropped by the deadliest monsters. Infuse it with a secondary to make a pouch."
+  },
+  "empty_pouch": {
+    "id": "empty_pouch",
+    "legacy_item_id": "empty_pouch",
+    "name": "Empty Pouch",
+    "type": "resource",
+    "stackable": true,
+    "isUntradeable": false,
+    "shopValue": 15,
+    "isGeneralStore": true,
+    "description": "A plain leather pouch. Infuse it with a charm and a secondary to make a creature pouch."
+  },
+  "chicken_pouch": {
+    "id": "chicken_pouch",
+    "legacy_item_id": "chicken_pouch",
+    "name": "Chicken Pouch",
+    "type": "resource",
+    "stackable": true,
+    "isUntradeable": true,
+    "shopValue": 60,
+    "isGeneralStore": false,
+    "description": "Summon a chicken in combat, or infuse it into 10 Chicken Scrolls."
+  },
+  "dog_pouch": {
+    "id": "dog_pouch",
+    "legacy_item_id": "dog_pouch",
+    "name": "Dog Pouch",
+    "type": "resource",
+    "stackable": true,
+    "isUntradeable": true,
+    "shopValue": 90,
+    "isGeneralStore": false,
+    "description": "Summon a dog in combat, or infuse it into 10 Dog Scrolls."
+  },
+  "gargoyle_crab_pouch": {
+    "id": "gargoyle_crab_pouch",
+    "legacy_item_id": "gargoyle_crab_pouch",
+    "name": "Gargoyle Crab Pouch",
+    "type": "resource",
+    "stackable": true,
+    "isUntradeable": true,
+    "shopValue": 140,
+    "isGeneralStore": false,
+    "description": "Summon a gargoyle crab in combat, or infuse it into 10 Gargoyle Crab Scrolls."
+  },
+  "fire_giant_pouch": {
+    "id": "fire_giant_pouch",
+    "legacy_item_id": "fire_giant_pouch",
+    "name": "Fire Giant Pouch",
+    "type": "resource",
+    "stackable": true,
+    "isUntradeable": true,
+    "shopValue": 260,
+    "isGeneralStore": false,
+    "description": "Summon a fire giant in combat, or infuse it into 10 Fire Giant Scrolls."
+  },
+  "dragon_pouch": {
+    "id": "dragon_pouch",
+    "legacy_item_id": "dragon_pouch",
+    "name": "Dragon Pouch",
+    "type": "resource",
+    "stackable": true,
+    "isUntradeable": true,
+    "shopValue": 480,
+    "isGeneralStore": false,
+    "description": "Summon a dragon in combat, or infuse it into 10 Dragon Scrolls."
+  },
+  "steel_titan_pouch": {
+    "id": "steel_titan_pouch",
+    "legacy_item_id": "steel_titan_pouch",
+    "name": "Steel Titan Pouch",
+    "type": "resource",
+    "stackable": true,
+    "isUntradeable": true,
+    "shopValue": 900,
+    "isGeneralStore": false,
+    "description": "Summon a steel titan in combat, or infuse it into 10 Steel Titan Scrolls."
+  },
+  "chicken_scroll": {
+    "id": "chicken_scroll",
+    "legacy_item_id": "chicken_scroll",
+    "name": "Chicken Scroll",
+    "type": "resource",
+    "stackable": true,
+    "isUntradeable": true,
+    "shopValue": 6,
+    "isGeneralStore": false,
+    "description": "Spent one per attack by a summoned chicken."
+  },
+  "dog_scroll": {
+    "id": "dog_scroll",
+    "legacy_item_id": "dog_scroll",
+    "name": "Dog Scroll",
+    "type": "resource",
+    "stackable": true,
+    "isUntradeable": true,
+    "shopValue": 9,
+    "isGeneralStore": false,
+    "description": "Spent one per attack by a summoned dog."
+  },
+  "gargoyle_crab_scroll": {
+    "id": "gargoyle_crab_scroll",
+    "legacy_item_id": "gargoyle_crab_scroll",
+    "name": "Gargoyle Crab Scroll",
+    "type": "resource",
+    "stackable": true,
+    "isUntradeable": true,
+    "shopValue": 14,
+    "isGeneralStore": false,
+    "description": "Spent one per attack by a summoned gargoyle crab."
+  },
+  "fire_giant_scroll": {
+    "id": "fire_giant_scroll",
+    "legacy_item_id": "fire_giant_scroll",
+    "name": "Fire Giant Scroll",
+    "type": "resource",
+    "stackable": true,
+    "isUntradeable": true,
+    "shopValue": 26,
+    "isGeneralStore": false,
+    "description": "Spent one per attack by a summoned fire giant."
+  },
+  "dragon_scroll": {
+    "id": "dragon_scroll",
+    "legacy_item_id": "dragon_scroll",
+    "name": "Dragon Scroll",
+    "type": "resource",
+    "stackable": true,
+    "isUntradeable": true,
+    "shopValue": 48,
+    "isGeneralStore": false,
+    "description": "Spent one per attack by a summoned dragon."
+  },
+  "steel_titan_scroll": {
+    "id": "steel_titan_scroll",
+    "legacy_item_id": "steel_titan_scroll",
+    "name": "Steel Titan Scroll",
+    "type": "resource",
+    "stackable": true,
+    "isUntradeable": true,
+    "shopValue": 90,
+    "isGeneralStore": false,
+    "description": "Spent one per attack by a summoned steel titan."
+  },
+  "summoning_cape": {
+    "id": "summoning_cape",
+    "legacy_item_id": "summoning_cape",
+    "name": "Summoning Cape",
+    "type": "armour",
+    "slot": "cape",
+    "stackable": false,
+    "isUntradeable": true,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 9,
+      "slash": 9,
+      "crush": 9,
+      "magic": 9,
+      "ranged": 9
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "summoning": 99
+    },
+    "shopValue": 99000,
+    "isGeneralStore": false,
+    "isSkillCape": true
   }
 }
