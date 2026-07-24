@@ -97,7 +97,7 @@ describe('store rules', () => {
       'wizard_hat', 'black_wizard_hat', 'wizard_robe_top', 'wizard_robe_skirt',
       'anti_dragon_shield', 'feather', 'greenthorn_seed',
       'fishing_net', 'harpoon', 'lobster_cage', 'fishing_rod',
-      'empty_bird_s_nest',
+      'empty_bird_s_nest', 'empty_pouch',
       // Account-identity helms — store-sold, gated to the matching account type.
       'ironman_helm', 'onelife_ironman_helm',
     ])

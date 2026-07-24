@@ -14,6 +14,8 @@ import { getPotionStatBoost, getActivePotionBoosts } from './consumables.js'
 import { applyPrayerDrainTick } from './prayerDrain.js'
 import { getCombatSetMultipliers } from './combatSetBonuses.js'
 import { getMonsterSeedDrops } from './seedDrops.js'
+import { getMonsterCharmDrops, getSummoningCreature, rollSummonAttack, SUMMON_ATTACK_TICKS } from './summoning.js'
+import { countItem } from './inventory.js'
 import { resolveSpecialEnergyCost, canAffordSpecialAttack } from './specialAttackEnergy.js'
 import { doesSlayerTaskMatchMonster } from './slayerTasks.js'
 
@@ -63,7 +65,8 @@ export function createCombatState(monster, combatType = 'melee', stance = 'accur
     prayerDrainAccumulator: 0,     // fractional carry for sub-1/tick drain
     activePotions: {},             // { potionItemId: durationInTicks } - multiple different potion types allowed
     doubleKillCount: 0,            // tracks how many times a requiresDoubleKill boss has been defeated
-    raid: null                     // raid state: { raidId, bosses[], currentBossIndex, monstersData }
+    raid: null,                    // raid state: { raidId, bosses[], currentBossIndex, monstersData }
+    summon: null                   // active summoned creature: { creatureId, ticksLeft, attackTimer }
   }
 }
 
@@ -492,6 +495,44 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
     state.monster = monster
     checkMonsterDeath(state, monster, events, isOnTask)
     return { combatState: state, events }
+  }
+
+  // ── Summoned creature ──
+  // Runs before the player attack (which can early-return on no ammo/charges),
+  // so the creature keeps swinging regardless. Lasts SUMMON_DURATION_TICKS;
+  // each swing spends one of the creature's scrolls from the inventory. The UI
+  // removes the scroll in response to the consumeScroll event (like consumeCharge).
+  if (state.summon && state.active) {
+    const creature = getSummoningCreature(state.summon.creatureId)
+    if (!creature) {
+      state.summon = null
+    } else {
+      state.summon.ticksLeft--
+      if (state.summon.ticksLeft <= 0) {
+        events.push({ type: 'summonExpired', creatureId: creature.id })
+        state.summon = null
+      } else {
+        state.summon.attackTimer--
+        if (state.summon.attackTimer <= 0) {
+          state.summon.attackTimer = SUMMON_ATTACK_TICKS
+          if (countItem(inventory, creature.scroll) > 0) {
+            const swing = rollSummonAttack(creature, monster)
+            const actualDamage = Math.min(swing.damage, Math.max(0, monster.currentHP))
+            monster.currentHP -= actualDamage
+            triggerEnrageIfNeeded(state, monster, events)
+            events.push({ type: 'summonHit', creatureId: creature.id, damage: actualDamage, hits: swing.hits, monsterHP: monster.currentHP })
+            events.push({ type: 'consumeScroll', itemId: creature.scroll, qty: 1 })
+            if (monster.currentHP <= 0) {
+              state.monster = monster
+              checkMonsterDeath(state, monster, events, isOnTask)
+              return { combatState: state, events }
+            }
+          } else {
+            events.push({ type: 'summonNoScrolls', creatureId: creature.id })
+          }
+        }
+      }
+    }
   }
 
   // ── Player Attack ──
@@ -1063,6 +1104,11 @@ function rollDrops(monster, isOnTask = false) {
   // Seeds / saplings — universal bonus drop scaled by combat level. Rolled once
   // each (independent of dropRolls) so high-multi-roll monsters don't inflate it.
   for (const drop of getMonsterSeedDrops(monster)) {
+    if (Math.random() < drop.chance) loot.push({ itemId: drop.itemId, quantity: drop.quantity })
+  }
+  // Summoning charms — universal, combat-level tiered. Rolled once, independent
+  // of dropRolls, same as seeds.
+  for (const drop of getMonsterCharmDrops(monster)) {
     if (Math.random() < drop.chance) loot.push({ itemId: drop.itemId, quantity: drop.quantity })
   }
   return loot
