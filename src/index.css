@@ -1000,16 +1000,20 @@ html, body, #app {
 
 /* ── Quick-actions inventory (replaces the combat log + Eat/Potion/Gear) ── */
 .cb-qa { margin-top: 4px; border-radius: 16px; padding: 11px; background: linear-gradient(180deg, rgba(0,0,0,0.32), rgba(0,0,0,0.18)); border: 1px solid rgba(255,255,255,0.07); box-shadow: inset 0 2px 8px rgba(0,0,0,0.4); }
-.cb-qa__tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; margin-bottom: 11px; }
-.cb-qa__tab { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-height: 44px; padding: 7px 4px; border-radius: 10px; cursor: pointer; font-family: var(--font-body); font-weight: 800; font-size: 11.5px; color: var(--color-parchment); opacity: 0.55; background: rgba(255,255,255,0.03); border: 1px solid transparent; transition: all .14s; }
+.cb-qa__tabs { display: flex; gap: 5px; margin-bottom: 11px; }
+.cb-qa__tab { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-height: 44px; padding: 7px 4px; border-radius: 10px; cursor: pointer; font-family: var(--font-body); font-weight: 800; font-size: 11.5px; color: var(--color-parchment); opacity: 0.55; background: rgba(255,255,255,0.03); border: 1px solid transparent; transition: all .14s; }
 .cb-qa__tab:active { transform: scale(0.96); }
 .cb-qa__tab.is-on { opacity: 1; color: var(--color-gold-light); background: linear-gradient(160deg, rgba(240,192,64,0.14), rgba(240,192,64,0.04)); border-color: rgba(240,192,64,0.4); }
 .cb-qa__tabn { font-family: var(--font-mono); font-size: 9px; font-weight: 700; opacity: 0.6; }
+.cb-qa__edit { flex: 0 0 auto; min-width: 44px; min-height: 44px; display: flex; align-items: center; justify-content: center; font-size: 15px; border-radius: 10px; cursor: pointer; background: rgba(240,192,64,0.08); border: 1px solid rgba(240,192,64,0.35); transition: transform .1s; }
+.cb-qa__edit:active { transform: scale(0.94); }
 .cb-qa__empty { grid-column: 1 / -1; text-align: center; font-size: 12px; font-weight: 600; color: var(--color-parchment); opacity: 0.4; padding: 20px 8px; }
 .cb-qa__grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
 .cb-slot { position: relative; min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-height: 46px; padding: 6px 3px 5px; border-radius: 10px; cursor: pointer; background: linear-gradient(160deg, #1b1810, #120f0a); border: 1px solid rgba(255,255,255,0.07); transition: border-color .14s, transform .1s, background .14s; }
 .cb-slot:active { transform: scale(0.95); }
 .cb-slot.is-active { border-color: rgba(240,192,64,0.55); background: radial-gradient(120% 90% at 50% 0%, rgba(240,192,64,0.12), transparent 62%), linear-gradient(160deg, #1f1a10, #130f09); box-shadow: inset 0 0 18px -8px rgba(240,192,64,0.5); }
+.cb-slot.is-locked { opacity: 0.4; cursor: default; }
+.cb-slot.is-locked:active { transform: none; }
 .cb-slot__ring { position: absolute; inset: -1px; border-radius: 10px; pointer-events: none; box-shadow: 0 0 0 1.5px rgba(240,192,64,0.5), 0 0 14px -3px rgba(240,192,64,0.5); }
 .cb-slot__ping { position: absolute; inset: -1px; border-radius: 10px; pointer-events: none; box-shadow: 0 0 0 2px rgba(240,192,64,0.85), 0 0 18px -2px rgba(240,192,64,0.7); animation: cbSlotPing .3s ease-out forwards; }
 @keyframes cbSlotPing { from { opacity: 1; transform: scale(1); } to { opacity: 0; transform: scale(1.05); } }
