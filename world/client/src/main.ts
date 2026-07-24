@@ -11,7 +11,7 @@ import { attachCameraControls } from './cameraControls'
 import { createTerrain } from './terrain'
 import { chunkFollowRadius, chunkKey, CHUNK_TILES, type ChunkedTerrain } from './chunkedTerrain'
 import { createScatterLayers } from './scatter'
-import { applyEntityDiff, applyGear, createEntity, createHeroMesh, createMonsterMesh, updateEntity, type Entity } from './entities'
+import { applyEntityDiff, applyGear, createEntity, createHeroMesh, createMonsterMesh, pickProxyOf, updateEntity, type Entity } from './entities'
 import { createClickMarker, setupInput, showClickMarker, updateClickMarker } from './input'
 import { preventPageZoom } from './preventZoom'
 import { createStatics, type Statics } from './statics'
@@ -629,9 +629,11 @@ function enterWorld(session: WorldSession): void {
           getPickables: () => [
             ...(statics?.pickables ?? []),
             ...(exitLayer?.pickables ?? []),
-            ...[...npcs.values()].filter((e) => e.serverAnim !== 'die').map((e) => e.mesh),
+            // Proxies, never the models: raycasting a skinned character costs a
+            // full per-triangle bone transform (entities.ts PICK_PROXY).
+            ...[...npcs.values()].filter((e) => e.serverAnim !== 'die').map((e) => pickProxyOf(e.mesh)),
             ...(lootLayer?.pickables ?? []),
-            ...[...others.values()].map((e) => e.mesh),
+            ...[...others.values()].map((e) => pickProxyOf(e.mesh)),
           ],
           getPlayerCombatLevel: () => playerCombatLevel,
           // Wheel zoom, arrow-key orbit/zoom, and middle-drag orbit all live in

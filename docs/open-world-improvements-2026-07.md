@@ -171,6 +171,24 @@ Static inspection of the committed `world/client/public/models/warlord_grondar.g
 
 **Status**: Done
 
+**2026-07-24 follow-up (real root cause: the hover raycast)**: lag persisted
+after the model-weight and DOM-thrash fixes, specifically *while attacking* him.
+It was neither of the three ranked hypotheses below: `input.ts`'s pick raycast
+ran against the entity **models**, and three.js resolves a `SkinnedMesh` hit by
+bone-transforming every vertex of every triangle for any ray that merely clips
+the bind-pose bounding sphere. Measured (three r185, V8): **40–50 ms per
+raycast** for a 39 k-triangle skinned mesh — 40 ms even when the ray hits zero
+triangles — against 6 ms unskinned at the same triangle count and 0.009 ms when
+the ray misses the sphere entirely. Hover is throttled to one raycast per
+animation frame and every click casts again, so a cursor parked on the boss (the
+whole fight) cost 40–50 ms of main thread *per frame*. Fixed by picking against
+an invisible 12-triangle proxy box per entity (`entities.ts` `PICK_PROXY` /
+`pickProxyOf`, wired into `main.ts`'s `getPickables`); `pickTargetOf` still walks
+up to the entity group, so hover/left-click/right-click resolve unchanged.
+Regression test: `world/tests/pickProxy.test.ts`. This is why hypothesis 1 (model
+weight) looked plausible — cost did scale with triangle count — but the 94 k → 39 k
+rebuild only made the stall 2.4× shorter instead of removing it.
+
 **2026-07-20 follow-up (model-weight fix now shipped)**: with the source
 re-supplied, `scripts/build-warlord-grondar.mjs` now decimates per-surface from
 a shared animation-fixed base instead of one common intermediate — the arena
