@@ -24,6 +24,16 @@ describe('splatsFromCombatEvents', () => {
     expect(monster[0].value).toBe(0)
   })
 
+  it('maps a summonHit to an orange-variant monster splat', () => {
+    const { monster, player } = splatsFromCombatEvents([
+      { type: 'summonHit', creatureId: 'dragon', damage: 14, monsterHP: 40 },
+    ])
+    expect(monster).toHaveLength(1)
+    expect(monster[0].value).toBe(14)
+    expect(monster[0].variant).toBe('summon')
+    expect(player).toHaveLength(0)
+  })
+
   it('maps each specialHit hit to its own monster splat', () => {
     const { monster } = splatsFromCombatEvents([
       { type: 'specialHit', hits: [8, 0, 15], totalDamage: 23, specType: 'double_hit' },

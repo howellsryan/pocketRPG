@@ -32,6 +32,7 @@ export const SKILL_ART = {
   slayer:        { icon: 'death_skull',    accent: '#c0453b' },
   construction:  { icon: 'castle',         accent: '#9aa3ac' },
   dungeoneering: { icon: 'dungeon_gate',   accent: '#7f8c95' },
+  summoning:     { icon: 'summoning',      accent: '#8fc4dc' },
 }
 
 const DEFAULT_SKILL_ART = { icon: 'default', accent: '#cdd6e0' }

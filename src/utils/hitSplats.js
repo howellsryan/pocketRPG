@@ -7,13 +7,16 @@ export const HIT_SPLAT_DURATION_MS = 900
 
 let hitSplatSeq = 0
 
-function makeHitSplat(value) {
+function makeHitSplat(value, variant) {
   hitSplatSeq += 1
   return {
     id: hitSplatSeq,
     value: Math.max(0, Math.floor(Number(value) || 0)),
     // Random horizontal offset so simultaneous splats don't stack exactly.
     left: 25 + Math.floor(Math.random() * 50),
+    // Optional colour variant (e.g. 'summon' → orange). Undefined = default
+    // red damage / blue zero splat.
+    ...(variant ? { variant } : {}),
   }
 }
 
@@ -30,6 +33,8 @@ export function splatsFromCombatEvents(events) {
       monster.push(makeHitSplat(ev.damage))
     } else if (ev.type === 'specialHit') {
       for (const hit of ev.hits || []) monster.push(makeHitSplat(hit))
+    } else if (ev.type === 'summonHit') {
+      monster.push(makeHitSplat(ev.damage, 'summon'))
     } else if (ev.type === 'monsterHit') {
       player.push(makeHitSplat(ev.damage))
     } else if (ev.type === 'monsterMiss') {

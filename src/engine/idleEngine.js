@@ -26,6 +26,7 @@ export { simulateIdleAgility }
 import { resolveSlayerTaskKill, doesSlayerTaskMatchMonster } from './slayerTasks.js'
 import { calculateDungeoneeringTokensForAction } from './dungeoneeringTokens.js'
 import { getMonsterSeedDrops } from './seedDrops.js'
+import { getMonsterCharmDrops } from './summoning.js'
 import { getSlayerTaskEquipmentBonuses } from './slayerCombatBonuses.js'
 import { getCombatSetMultipliers } from './combatSetBonuses.js'
 import {
@@ -1016,6 +1017,10 @@ function idleRollDrops(monster, isOnTask = false) {
   }
   // Seeds / saplings — universal bonus drop scaled by combat level.
   for (const drop of getMonsterSeedDrops(monster)) {
+    if (Math.random() < drop.chance) drops.push({ itemId: drop.itemId, quantity: drop.quantity })
+  }
+  // Summoning charms — universal, combat-level tiered.
+  for (const drop of getMonsterCharmDrops(monster)) {
     if (Math.random() < drop.chance) drops.push({ itemId: drop.itemId, quantity: drop.quantity })
   }
   return drops

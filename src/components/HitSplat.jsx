@@ -9,7 +9,7 @@ export function HitSplatLayer({ splats }) {
       {splats.map((s) => (
         <div
           key={s.id}
-          class={`hit-splat ${s.value > 0 ? 'hit-splat--damage' : 'hit-splat--zero'}`}
+          class={`hit-splat ${s.variant === 'summon' ? 'hit-splat--summon' : s.value > 0 ? 'hit-splat--damage' : 'hit-splat--zero'}`}
           style={{ left: `${s.left}%` }}
         >
           {s.value}

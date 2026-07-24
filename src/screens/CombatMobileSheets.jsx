@@ -4,6 +4,7 @@ import GameIcon from '../components/GameIcon.jsx'
 import collectionLogData from '../data/collectionLog.json'
 import { formatDropChance } from '../utils/constants.js'
 import { getMonsterSeedDrops } from '../engine/seedDrops.js'
+import { getMonsterCharmDrops } from '../engine/summoning.js'
 import {
   getMonsterArt,
   getRaidArt,
@@ -150,6 +151,7 @@ export function CombatMonsterInfoSheet({ monster, categoryKey, itemsData, onClos
   const regularDrops = [
     ...(monster.drops || []).filter(d => !uniques.includes(d.itemId)),
     ...getMonsterSeedDrops(monster),
+    ...getMonsterCharmDrops(monster),
   ]
   const location = getMonsterLocationLabel(monster)
 
