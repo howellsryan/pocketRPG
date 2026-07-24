@@ -307,7 +307,7 @@ export default function SlayerScreen({ onBack, onNavigate, initialMasterId }) {
             {onNavigate && (
               <button
                 onClick={handleSlayTask}
-                class="px-3.5 py-1.5 rounded-lg bg-[var(--color-gold)] text-[#0f0f0f] text-[11px] font-bold uppercase tracking-wider active:opacity-80 min-h-[36px] min-w-[64px]"
+                class="fm-btn fm-btn--brass fm-btn--sm text-[11px] uppercase tracking-wider min-w-[64px]"
               >
                 ⚔️ Slay
               </button>

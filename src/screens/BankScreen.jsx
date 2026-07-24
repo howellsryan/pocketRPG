@@ -721,14 +721,14 @@ export default function BankScreen({ onBack }) {
             </div>
             <button
               onClick={confirmRename}
-              class="w-full py-2.5 rounded-lg bg-[var(--color-mana)] text-white font-semibold text-sm active:opacity-80"
+              class="fm-btn fm-btn--woad fm-btn--sm w-full"
             >
               Rename
             </button>
             {tabMenu !== 0 && (
               <button
                 onClick={() => deleteTab(tabMenu)}
-                class="w-full py-2.5 rounded-lg bg-red-900 text-white font-semibold text-sm active:opacity-80"
+                class="fm-btn fm-btn--blood fm-btn--sm w-full"
               >
                 Delete Tab
               </button>
@@ -803,7 +803,7 @@ export default function BankScreen({ onBack }) {
                   <button
                     key={qty}
                     onClick={() => handleWithdraw(selected.itemId, Math.min(qty, selected.quantity))}
-                    class="py-2.5 rounded-lg bg-[var(--color-mana)] text-white font-semibold text-sm active:opacity-80"
+                    class="fm-btn fm-btn--woad fm-btn--sm"
                   >
                     Take {qty}
                   </button>
@@ -814,7 +814,7 @@ export default function BankScreen({ onBack }) {
               <div class="grid grid-cols-2 gap-2">
                 <button
                   onClick={() => handleWithdraw(selected.itemId, selected.quantity)}
-                  class="py-2.5 rounded-lg bg-[var(--color-gold-dim)] text-white font-semibold text-sm active:opacity-80"
+                  class="fm-btn fm-btn--brass fm-btn--sm"
                 >
                   Take All
                 </button>
@@ -823,7 +823,7 @@ export default function BankScreen({ onBack }) {
                     setQuantityModalMode('take')
                     setQuantityInput('')
                   }}
-                  class="py-2.5 rounded-lg bg-[var(--color-gold)] text-white font-semibold text-sm active:opacity-80"
+                  class="fm-btn fm-btn--brass fm-btn--sm"
                 >
                   Take X
                 </button>
@@ -838,7 +838,7 @@ export default function BankScreen({ onBack }) {
                       <button
                         key={qty}
                         onClick={() => handleWithdraw(selected.itemId, Math.min(qty, selected.quantity), true)}
-                        class="py-2 rounded-lg bg-[var(--color-emerald-mid)] text-white font-semibold text-sm active:opacity-80"
+                        class="fm-btn fm-btn--verdigris fm-btn--sm"
                       >
                         Note {qty}
                       </button>
@@ -849,7 +849,7 @@ export default function BankScreen({ onBack }) {
                   <div class="grid grid-cols-2 gap-2">
                     <button
                       onClick={() => handleWithdraw(selected.itemId, selected.quantity, true)}
-                      class="py-2 rounded-lg bg-[var(--color-emerald)] text-white font-semibold text-sm active:opacity-80"
+                      class="fm-btn fm-btn--verdigris fm-btn--sm"
                     >
                       Note All
                     </button>
@@ -858,7 +858,7 @@ export default function BankScreen({ onBack }) {
                         setQuantityModalMode('note')
                         setQuantityInput('')
                       }}
-                      class="py-2 rounded-lg bg-[var(--color-emerald-light)] text-white font-semibold text-sm active:opacity-80"
+                      class="fm-btn fm-btn--verdigris fm-btn--sm"
                     >
                       Note X
                     </button>
@@ -885,13 +885,13 @@ export default function BankScreen({ onBack }) {
                         {[1, 5, 10].map(qty => (
                           <button key={qty} onClick={() => handleSell(qty)}
                             disabled={selected.quantity < qty || sellBusy}
-                            class={`py-2 rounded-lg text-white font-semibold text-sm ${selected.quantity < qty || sellBusy ? 'bg-[var(--fm-parch-lo)] opacity-30' : 'bg-[var(--color-gold-dim)] active:opacity-80'}`}>
+                            class="fm-btn fm-btn--brass fm-btn--sm">
                             Sell {qty}
                           </button>
                         ))}
                         <button onClick={() => handleSell(selected.quantity)}
                           disabled={sellBusy}
-                          class={`py-2 rounded-lg text-white font-semibold text-sm col-span-3 ${sellBusy ? 'bg-[var(--fm-parch-lo)] opacity-30' : 'bg-[var(--color-gold-dim)] active:opacity-80'}`}>
+                          class="fm-btn fm-btn--brass fm-btn--sm col-span-3">
                           Sell All ({selected.quantity * sellUnit} gp)
                         </button>
                       </div>
@@ -942,11 +942,7 @@ export default function BankScreen({ onBack }) {
               <button
                 onClick={handleQuantityModalSubmit}
                 disabled={!quantityInput || isNaN(parseInt(quantityInput, 10)) || parseInt(quantityInput, 10) <= 0}
-                class={`w-full py-2.5 rounded-lg font-semibold text-sm active:opacity-80 ${
-                  quantityModalMode === 'note'
-                    ? 'bg-[var(--color-emerald)] text-white'
-                    : 'bg-[var(--color-gold-dim)] text-white'
-                }`}
+                class={`fm-btn fm-btn--sm w-full ${quantityModalMode === 'note' ? 'fm-btn--verdigris' : 'fm-btn--brass'}`}
               >
                 {quantityModalMode === 'note' ? 'Note' : 'Take'} {quantityInput || '0'}
               </button>

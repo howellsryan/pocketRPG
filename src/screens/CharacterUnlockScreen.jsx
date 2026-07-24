@@ -166,7 +166,7 @@ export default function CharacterUnlockScreen({ onBack }) {
                   ) : (
                     <button
                       onClick={() => handlePurchase(unlock)}
-                      class="min-h-[44px] min-w-[72px] px-3 py-1.5 rounded-lg bg-[var(--color-gold)] text-black font-bold text-[11px] uppercase tracking-wider active:opacity-80"
+                      class="fm-btn fm-btn--brass fm-btn--sm min-w-[72px] text-[11px] uppercase tracking-wider"
                     >
                       {unlock.cost} credits
                     </button>
@@ -283,11 +283,7 @@ export default function CharacterUnlockScreen({ onBack }) {
                   <button
                     onClick={() => available && handleConstructionUnlock(unlockable)}
                     disabled={!available}
-                    class={`shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
-                      available
-                        ? 'bg-[var(--color-gold)] text-[#0f0f0f] active:opacity-80'
-                        : 'bg-[var(--color-void-light)] text-[var(--fm-ink-faint)] cursor-not-allowed'
-                    }`}
+                    class={`fm-btn fm-btn--sm shrink-0 text-xs ${available ? 'fm-btn--brass' : ''}`}
                   >
                     {available ? 'Create' : `Lv ${unlockable.level}`}
                   </button>

@@ -2057,33 +2057,27 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
         <div class="flex gap-1.5 mb-2">
           <button
             onClick={() => setIdleSetupMode('food')}
-            class="flex-1 py-1.5 rounded-lg text-[10px] font-semibold bg-[var(--color-void-light)] text-[var(--color-parchment)] active:bg-[var(--color-void-lighter)] flex items-center justify-center gap-1.5"
+            class={`fm-toggle fm-toggle--sm flex-1${idleCombatSetup?.food?.length > 0 ? ' is-on' : ''}`}
             title="Configure food the simulator can use during idle/skip combat"
           >
-            <GameIcon iconKey="meat" color={idleCombatSetup?.food?.length > 0 ? 'var(--color-gold)' : '#9b978c'} size={14} /> Idle Eat
-            {idleCombatSetup?.food?.length > 0 && (
-              <span class="ml-1 text-[var(--color-gold)]">✓</span>
-            )}
+            <GameIcon iconKey="meat" color={idleCombatSetup?.food?.length > 0 ? 'var(--fm-btn-ink-on)' : 'var(--fm-btn-ink)'} size={14} /> Idle Eat
+            {idleCombatSetup?.food?.length > 0 && <span class="ml-1">✓</span>}
           </button>
           <button
             onClick={() => setIdleSetupMode('prayer')}
-            class="flex-1 py-1.5 rounded-lg text-[10px] font-semibold bg-[var(--color-void-light)] text-[var(--color-parchment)] active:bg-[var(--color-void-lighter)] flex items-center justify-center gap-1.5"
+            class={`fm-toggle fm-toggle--sm flex-1${(idleCombatSetup?.prayers?.protectionPrayerId || idleCombatSetup?.prayers?.combatPrayerId) ? ' is-on' : ''}`}
             title="Configure prayers the simulator should use during idle/skip combat"
           >
-            <GameIcon iconKey="prayer" color={(idleCombatSetup?.prayers?.protectionPrayerId || idleCombatSetup?.prayers?.combatPrayerId) ? 'var(--color-gold)' : '#9b978c'} size={14} /> Idle Pray
-            {(idleCombatSetup?.prayers?.protectionPrayerId || idleCombatSetup?.prayers?.combatPrayerId) && (
-              <span class="ml-1 text-[var(--color-gold)]">✓</span>
-            )}
+            <GameIcon iconKey="prayer" color={(idleCombatSetup?.prayers?.protectionPrayerId || idleCombatSetup?.prayers?.combatPrayerId) ? 'var(--fm-btn-ink-on)' : 'var(--fm-btn-ink)'} size={14} /> Idle Pray
+            {(idleCombatSetup?.prayers?.protectionPrayerId || idleCombatSetup?.prayers?.combatPrayerId) && <span class="ml-1">✓</span>}
           </button>
           <button
             onClick={() => setIdleSetupMode('potion')}
-            class="flex-1 py-1.5 rounded-lg text-[10px] font-semibold bg-[var(--color-void-light)] text-[var(--color-parchment)] active:bg-[var(--color-void-lighter)] flex items-center justify-center gap-1.5"
+            class={`fm-toggle fm-toggle--sm flex-1${idleCombatSetup?.potions?.length > 0 ? ' is-on' : ''}`}
             title="Configure potions the simulator can drink during idle/skip combat"
           >
-            <GameIcon iconKey="potion_ball" color={idleCombatSetup?.potions?.length > 0 ? 'var(--color-gold)' : '#9b978c'} size={14} /> Idle Potion
-            {idleCombatSetup?.potions?.length > 0 && (
-              <span class="ml-1 text-[var(--color-gold)]">✓</span>
-            )}
+            <GameIcon iconKey="potion_ball" color={idleCombatSetup?.potions?.length > 0 ? 'var(--fm-btn-ink-on)' : 'var(--fm-btn-ink)'} size={14} /> Idle Potion
+            {idleCombatSetup?.potions?.length > 0 && <span class="ml-1">✓</span>}
           </button>
         </div>
 
@@ -2095,10 +2089,9 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
               <button
                 key={s}
                 onClick={() => updateCombatStance(s)}
-                class={`flex-1 py-1.5 rounded-lg text-[10px] font-semibold capitalize transition-colors flex items-center justify-center gap-1
-                  ${combatStance === s ? 'bg-[var(--color-gold-dim)] text-white' : 'bg-[var(--color-void-light)] text-[var(--color-parchment)] opacity-50'}`}
+                class={`fm-toggle fm-toggle--sm flex-1 capitalize${combatStance === s ? ' is-on' : ''}`}
               >
-                <GameIcon iconKey={art.icon} color={art.accent} size={14} />
+                <GameIcon iconKey={art.icon} color={combatStance === s ? 'var(--fm-btn-ink-on)' : art.accent} size={14} />
                 {s}
               </button>
             )
@@ -2927,23 +2920,17 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           const isMagic = weapon?.attackStyle === 'magic'
 
           const eatBtn = (
-            <button onClick={handleEat}
-              class="py-2.5 rounded-lg font-semibold text-sm active:opacity-80"
-              style="background:linear-gradient(135deg,#1a3a2a,#2a5a3a);border:1px solid rgba(100,200,120,0.35);color:#7de8a0">
+            <button onClick={handleEat} class="fm-btn fm-btn--sm">
               🍖 Eat
             </button>
           )
           const potionBtn = (
-            <button onClick={() => setShowPotionModal(true)}
-              class="py-2.5 rounded-lg font-semibold text-sm active:opacity-80"
-              style="background:linear-gradient(135deg,#1a3a2a,#2a5a3a);border:1px solid rgba(100,200,120,0.35);color:#7de8a0">
+            <button onClick={() => setShowPotionModal(true)} class="fm-btn fm-btn--sm">
               🧪 Potion
             </button>
           )
           const gearBtn = (
-            <button onClick={() => setShowEquipmentModal(true)}
-              class="py-2.5 rounded-lg font-semibold text-sm active:opacity-80"
-              style="background:linear-gradient(135deg,#2a2a3a,#3a3a5a);border:1px solid rgba(150,150,200,0.35);color:#a8a8d8">
+            <button onClick={() => setShowEquipmentModal(true)} class="fm-btn fm-btn--sm">
               ⚙️ Gear
             </button>
           )
@@ -2951,8 +2938,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             <button
               onClick={canSpec ? handleSpecialAttack : undefined}
               disabled={!canSpec}
-              class={`py-2.5 rounded-lg font-semibold text-sm transition-opacity ${canSpec ? 'active:opacity-80' : 'opacity-40 cursor-default'}`}
-              style={canSpec ? 'background:linear-gradient(135deg,#3a2a00,#6a4a00);border:1px solid rgba(234,179,8,0.5);color:#fde047' : 'background:#1a1a1a;border:1px solid #2a2a2a;color:#888'}
+              class={`fm-btn fm-btn--sm ${canSpec ? 'fm-btn--ember' : ''}`}
             >
               ⚡ {hasSpec ? `Spec` : 'No Spec'}
             </button>
@@ -2961,16 +2947,13 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             <button
               onClick={() => isMagic && setShowSpellModal(true)}
               disabled={!isMagic}
-              class={`py-2.5 rounded-lg font-semibold text-sm transition-opacity ${isMagic ? 'active:opacity-80' : 'opacity-40 cursor-default'}`}
-              style={isMagic ? 'background:linear-gradient(135deg,#1a2a3a,#2a3a5a);border:1px solid rgba(100,150,200,0.35);color:#a8d8ff' : 'background:#1a1a1a;border:1px solid #2a2a2a;color:#888'}
+              class={`fm-btn fm-btn--sm ${isMagic ? 'fm-btn--woad' : ''}`}
             >
               🔮 Cast Spell
             </button>
           )
           const prayerBtn = (
-            <button onClick={() => setShowPrayerModal(true)}
-              class="py-2.5 rounded-lg font-semibold text-sm active:opacity-80"
-              style="background:linear-gradient(135deg,#1a3a2a,#2a5a3a);border:1px solid rgba(100,200,120,0.35);color:#7de8a0">
+            <button onClick={() => setShowPrayerModal(true)} class="fm-btn fm-btn--sm">
               🙏 Prayer
             </button>
           )
@@ -2979,8 +2962,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           const summonSecs = summonActive ? Math.ceil((combat.summon.ticksLeft || 0) * 0.6) : 0
           const summonBtn = (ownsPouch || summonActive) ? (
             <button onClick={summonActive ? undefined : () => setShowSummonModal(true)} disabled={summonActive}
-              class={`py-2.5 rounded-lg font-semibold text-sm ${summonActive ? 'opacity-70 cursor-default' : 'active:opacity-80'}`}
-              style="background:linear-gradient(135deg,#12303a,#1f5566);border:1px solid rgba(120,200,224,0.4);color:#bfe0ee">
+              class={`fm-btn fm-btn--sm ${summonActive ? '' : 'fm-btn--woad'}`}>
               🐾 {summonActive ? `${summonSecs}s` : 'Summon'}
             </button>
           ) : null

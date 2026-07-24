@@ -11,7 +11,7 @@ typography:
   body: Nunito (base) / Spectral (Forgemark)
   lore: IM Fell English (italic)
   numerals: JetBrains Mono (base) / Spline Sans Mono (Forgemark, tabular)
-rounded: fm-r-sharp 2px · fm-r-sm 4px · fm-r-frame 7px — never larger
+rounded: fm-r-sharp 2px · fm-r-sm 4px · fm-r-frame 7px — never larger (Tailwind's own radius scale is retuned to match in the @theme block)
 components: fm-frame, fm-parch, fm-banner, fm-eyebrow, fm-lore, fm-num, fm-btn, fm-ledger/fm-row, fm-tag, fm-corner, fm-divider, fm-rule-head, fm-crest
 source of truth: src/index.css (:root tokens) · brand brief: PRODUCT.md
 ```
@@ -36,7 +36,7 @@ Key characteristics:
 What's in the kit:
 - **Frames & surfaces** — `fm-frame` (iron plate, riveted corners via `fm-rivet--tl/tr/bl/br`), `fm-parch` (vellum panel with `--fm-parch-inset`), `fm-corner` + `fm-divider` (SVG ornaments, `public/forge/`).
 - **Type roles** — `fm-banner` (display heads, `--gilt` variant for gold-leaf fills), `fm-eyebrow` (tracked small caps), `fm-lore` (italic Fell flavour text), `fm-num` (tabular numerals).
-- **Buttons** — `fm-btn` base; `--ember` (primary action, ember-gradient face), `--iron` (secondary on dark), `--ghost` (tertiary on parchment); sizes `--lg`/`--sm`. Active state presses down 1px.
+- **Buttons** — three primitives cover every control: `fm-btn` (actions), `fm-toggle` (on/off + segments), `fm-tile` (selection cards). See §6.
 - **Data** — `fm-ledger` + `fm-row` (`--head`, `--alt` zebra, `__label`/`__val` slots) for stat tables, drop logs, inventories.
 - **Status** — `fm-tag` with meaning-bearing tints: `--ember` (action/heat), `--verdigris` (success/nature), `--blood` (danger), `--woad` (magic/info), `--brass` (neutral/metal).
 - **Identity** — `fm-crest`, `fm-rule-head` (hairline-flanked headings).
@@ -92,13 +92,20 @@ Shadow vocabulary:
 Material rules:
 - *The Hairline First Rule.* Separate with 1px `--fm-rule` lines and `fm-divider` ornaments before reaching for shadow or background shifts.
 - *The Texture Pays Rent Rule.* Parchment/iron textures (`--fm-tex-*`) and corner ornaments appear where they explain the material; opacity ≤ 0.5, never watermark spam.
-- *The Pressed Metal Rule.* Interactive feedback is physical: buttons translate down 1px on press; rivets and frames use the `--fm-rivet` radial. No glassmorphism, no blur, ever.
+- *The Pressed Metal Rule.* Interactive feedback is physical: buttons translate down 1px on press and take an inset press shadow (`--fm-btn-press`); rivets and frames use the `--fm-rivet` radial. Buttons carry bevel *relief* (`--fm-btn-relief`), never a drop shadow — they sit in the page, not above it. No glassmorphism, no blur, ever.
 - *The Reduced Motion Rule.* Every animated effect (skill pulses, hit flashes, toasts) has a `prefers-reduced-motion` alternative (PRODUCT.md accessibility baseline).
 - *The Ease Rule.* Transitions use `--fm-ease` `cubic-bezier(0.2, 0.9, 0.3, 1)` at `--fm-dur` 0.16s — quick, mechanical, no bounce.
 
 ## 6. Components
 
-- **Buttons** — Primary: `fm-btn--ember` (one per view). Secondary on iron: `fm-btn--iron` (brass text on hover). Tertiary on parchment: `fm-btn--ghost`. All ≥ 44×44px tap area.
+- **Buttons** — one pressed-metal language, three primitives:
+  - `fm-btn` — actions. Variants `--ember` (primary, one per view), `--brass`, `--iron`, `--ghost`, plus the meaning faces `--blood` / `--verdigris` / `--woad` / `--royal` (§3). Sizes `--sm` / `--lg`.
+  - `fm-toggle` — anything that reads ON or OFF: idle switches, attack stances, tab strips (`--stack` + `fm-toggle__n` for a count), filter chips (`--sm`).
+  - `fm-tile` — selection cards in a grid: item slots, prayers, spells (`fm-tile__name` + `fm-tile__sub`).
+
+  Shared contract: ON is matte struck brass with ink text — never a gloss, never a glow. Press is `translateY(1px)` plus an inset press shadow. Disabled/locked is a **solid dead face with faint ink**, never an opacity fade (a dimmed tile is illegible on parchment and on iron alike). Radius `--fm-r-sm`, tap area ≥ 44×44px, brass `:focus-visible` ring.
+
+  The resting face follows the surface, not the screen: `--fm-btn-face/-ink/-edge/-relief/-press/-dead*` are iron at `:root` and re-pointed to vellum by `.forge-shell`, `.fm-parch` and the other parchment containers (`.fm-on-parch` / `.fm-on-iron` opt a nested panel either way). Button rules read the tokens and never hard-code a face — including the named screen classes (`.cb-*`, `.wm-*`). Add a variant to the kit before inventing a bespoke button.
 - **Panels** — `fm-frame` (iron, rivets at 8px corners) wrapping `fm-parch` (vellum content). Corner ornaments at 7px inset, opacity 0.5.
 - **Ledgers** — `fm-ledger` for every stat/inventory/log table: `fm-row--head` under a 2px ink rule, zebra via `--alt`, values right-aligned in `fm-num`.
 - **Tags** — `fm-tag` small-caps chips; tint by meaning (§3), never by aesthetics.
