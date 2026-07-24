@@ -108,8 +108,8 @@ describe('Sovrathar endgame items', () => {
     // Off-task strength bonus must NOT exceed current top-tier (Ancient Maul = 147)
     expect(w.otherBonus.meleeStrength).toBeLessThan(items.ancient_maul.otherBonus.meleeStrength)
     // But on-task slayer bonuses are significant
-    expect(w.otherBonus.slayerTaskAccuracyFlat).toBeGreaterThanOrEqual(20)
-    expect(w.otherBonus.slayerTaskDamageFlat).toBeGreaterThanOrEqual(5)
+    expect(w.otherBonus.slayerTaskAccuracyPercent).toBeGreaterThanOrEqual(20)
+    expect(w.otherBonus.slayerTaskDamagePercent).toBeGreaterThanOrEqual(5)
   })
 
   it('Sovrathar armour pieces are magic-defence specialised with lower combat req than Justicar', () => {
@@ -119,13 +119,13 @@ describe('Sovrathar endgame items', () => {
     expect(plate.defenceBonus.stab).toBeLessThan(justicarBody.defenceBonus.stab)
     // Magic defence is the situational niche — much higher than Justicar's negative magic def
     expect(plate.defenceBonus.magic).toBeGreaterThan(justicarBody.defenceBonus.magic)
-    expect(plate.otherBonus.slayerTaskAccuracyFlat).toBeGreaterThan(0)
+    expect(plate.otherBonus.slayerTaskAccuracyPercent).toBeGreaterThan(0)
 
     for (const id of ['cinderforged_helm', 'sovereigns_cindergreaves']) {
       const piece = items[id]
       expect(piece.requirements.defence).toBe(60)
       expect(piece.requirements.slayer).toBe(80)
-      expect(piece.otherBonus.slayerTaskAccuracyFlat).toBeGreaterThan(0)
+      expect(piece.otherBonus.slayerTaskAccuracyPercent).toBeGreaterThan(0)
     }
   })
 
@@ -141,8 +141,8 @@ describe('Sovrathar endgame items', () => {
     const base = items.slayer_helmet
     const upgraded = items.ashen_slayer_helm
     expect(upgraded.slot).toBe('head')
-    expect(upgraded.otherBonus.slayerTaskAccuracyFlat).toBeGreaterThan(base.otherBonus.slayerTaskAccuracyFlat)
-    expect(upgraded.otherBonus.slayerTaskDamageFlat).toBeGreaterThan(base.otherBonus.slayerTaskDamageFlat)
+    expect(upgraded.otherBonus.slayerTaskAccuracyPercent).toBeGreaterThan(base.otherBonus.slayerTaskAccuracyPercent)
+    expect(upgraded.otherBonus.slayerTaskDamagePercent).toBeGreaterThan(base.otherBonus.slayerTaskDamagePercent)
     expect(upgraded.defenceBonus.stab).toBeGreaterThan(base.defenceBonus.stab)
     expect(upgraded.requirements.slayer).toBe(80)
   })

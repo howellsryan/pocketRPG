@@ -7815,8 +7815,8 @@
       "meleeStrength": 3,
       "rangedStrength": 0,
       "magicDamage": 0,
-      "slayerTaskAccuracyFlat": 15,
-      "slayerTaskDamageFlat": 15
+      "slayerTaskAccuracyPercent": 15,
+      "slayerTaskDamagePercent": 15
     },
     "requirements": {
       "slayer": 20
@@ -15538,8 +15538,8 @@
       "meleeStrength": 10,
       "rangedStrength": 10,
       "magicDamage": 10,
-      "slayerTaskAccuracyFlat": 5,
-      "slayerTaskDamageFlat": 5
+      "slayerTaskAccuracyPercent": 5,
+      "slayerTaskDamagePercent": 5
     },
     "defenceBonus": {
       "stab": 0,
@@ -15576,8 +15576,8 @@
       "meleeStrength": 10,
       "rangedStrength": 0,
       "magicDamage": 0,
-      "slayerTaskAccuracyFlat": 5,
-      "slayerTaskDamageFlat": 5
+      "slayerTaskAccuracyPercent": 5,
+      "slayerTaskDamagePercent": 5
     },
     "defenceBonus": {
       "stab": -10,
@@ -16740,8 +16740,8 @@
       "meleeStrength": 3,
       "rangedStrength": 3,
       "magicDamage": 3,
-      "slayerTaskAccuracyFlat": 15,
-      "slayerTaskDamageFlat": 15
+      "slayerTaskAccuracyPercent": 15,
+      "slayerTaskDamagePercent": 15
     },
     "requirements": {
       "slayer": 20
@@ -16786,8 +16786,8 @@
       "meleeStrength": 5,
       "rangedStrength": 0,
       "magicDamage": 0,
-      "slayerTaskAccuracyFlat": 25,
-      "slayerTaskDamageFlat": 25
+      "slayerTaskAccuracyPercent": 25,
+      "slayerTaskDamagePercent": 25
     },
     "requirements": {
       "defence": 60,
@@ -16824,8 +16824,8 @@
       "meleeStrength": 75,
       "rangedStrength": 0,
       "magicDamage": 0,
-      "slayerTaskAccuracyFlat": 30,
-      "slayerTaskDamageFlat": 8
+      "slayerTaskAccuracyPercent": 30,
+      "slayerTaskDamagePercent": 8
     },
     "requirements": {
       "attack": 60,
@@ -16859,8 +16859,8 @@
       "meleeStrength": 0,
       "rangedStrength": 0,
       "magicDamage": 0,
-      "slayerTaskAccuracyFlat": 8,
-      "slayerTaskDamageFlat": 8
+      "slayerTaskAccuracyPercent": 8,
+      "slayerTaskDamagePercent": 8
     },
     "requirements": {
       "defence": 60,
@@ -16894,8 +16894,8 @@
       "meleeStrength": 0,
       "rangedStrength": 0,
       "magicDamage": 0,
-      "slayerTaskAccuracyFlat": 10,
-      "slayerTaskDamageFlat": 10
+      "slayerTaskAccuracyPercent": 10,
+      "slayerTaskDamagePercent": 10
     },
     "requirements": {
       "defence": 60,
@@ -16929,8 +16929,8 @@
       "meleeStrength": 0,
       "rangedStrength": 0,
       "magicDamage": 0,
-      "slayerTaskAccuracyFlat": 8,
-      "slayerTaskDamageFlat": 8
+      "slayerTaskAccuracyPercent": 8,
+      "slayerTaskDamagePercent": 8
     },
     "requirements": {
       "defence": 60,
