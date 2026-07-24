@@ -3129,7 +3129,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                 />
               )}
 
-              {/* Action row — Special / Cast / Prayer (Eat/Potion/Gear now live in the quick-actions tabs) */}
+              {/* Action row — Special / Cast / Summon (Eat/Potion/Gear/Prayer now live in the quick-actions tabs) */}
               {combat.active && !isAutoRestarting && (() => {
                 const weaponEntry = equipment?.weapon
                 const weapon = weaponEntry ? itemsData[weaponEntry.itemId] : null
@@ -3138,7 +3138,6 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                 const canSpec = hasSpec && canAffordSpecialAttack(weapon.specialAttack, energy)
                 const specQueued = !!combat?.specialAttackQueued
                 const isMagic = weapon?.attackStyle === 'magic'
-                const prayerActive = !!(combat?.activeProtectionPrayer || combat?.activeCombatPrayer)
                 const summonActive = !!combat?.summon
                 const ownsPouch = SUMMONING_CREATURES.some(c => countItem(inventory, c.pouch) > 0)
                 const summonSecs = summonActive ? Math.ceil((combat.summon.ticksLeft || 0) * 0.6) : 0
@@ -3151,10 +3150,6 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                     <button class="cb-act" disabled={!isMagic} onClick={isMagic ? () => setShowSpellModal(true) : undefined}>
                       <GameIcon iconKey="crystal_ball" color="currentColor" size={18} />
                       <span>Cast Spell</span>
-                    </button>
-                    <button class={'cb-act' + (prayerActive ? ' is-on' : '')} onClick={() => setShowPrayerModal(true)}>
-                      <GameIcon iconKey="prayer" color="currentColor" size={18} />
-                      <span>Prayer</span>
                     </button>
                     {(ownsPouch || summonActive) && (
                       <button class={'cb-act' + (summonActive ? ' is-on' : '')} disabled={summonActive} onClick={summonActive ? undefined : () => setShowSummonModal(true)}>
