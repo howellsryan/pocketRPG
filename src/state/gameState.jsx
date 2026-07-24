@@ -81,6 +81,7 @@ export function GameProvider({ children }) {
   const travelPromptRef = useRef(null) // latest travelPrompt for startTravelTo's auto-start capture
   const [bankConfig, setBankConfig] = useState({ tabs: [], itemTabMap: {} })
   const [equipmentPresets, setEquipmentPresetsState] = useState([])
+  const [quickPrayers, setQuickPrayersState] = useState([])
   const [unlockedFeatures, setUnlockedFeatures] = useState(new Set())
   const [slayerTask, setSlayerTaskState] = useState(null)
   const [slayerPoints, setSlayerPointsState] = useState(0)
@@ -175,7 +176,7 @@ export function GameProvider({ children }) {
 
   // Load all state from IndexedDB — runs idle simulation inline, returns idleResult
   const loadGame = useCallback(async () => {
-    let [p, s, inv, eq, b, shortcuts, stance, savedHP, autoBankSetting, savedBankConfig, savedEquipmentPresets, savedUnlocks, savedSlayerTask, savedSlayerPoints, savedSlayerTasksCompleted, savedSlayerMasterTaskCompletions, savedDungeoneeringTokens, savedBossKillCounts, savedRaidKillCounts, savedFarming, savedCompletedQuests, savedQuestQueue, savedActiveCombatSpell, savedUnlockedMinigameItems, savedIdleCombatSetup, savedSlayerPerks, savedCharacterUnlocks, savedShowInfoToasts, savedWorldLocation, savedAutoBankExcludedItems, savedBackgroundCombat, savedKingdom, savedSlayerStoreUnlocks] = await Promise.all([
+    let [p, s, inv, eq, b, shortcuts, stance, savedHP, autoBankSetting, savedBankConfig, savedEquipmentPresets, savedUnlocks, savedSlayerTask, savedSlayerPoints, savedSlayerTasksCompleted, savedSlayerMasterTaskCompletions, savedDungeoneeringTokens, savedBossKillCounts, savedRaidKillCounts, savedFarming, savedCompletedQuests, savedQuestQueue, savedActiveCombatSpell, savedUnlockedMinigameItems, savedIdleCombatSetup, savedSlayerPerks, savedCharacterUnlocks, savedShowInfoToasts, savedWorldLocation, savedAutoBankExcludedItems, savedBackgroundCombat, savedKingdom, savedSlayerStoreUnlocks, savedQuickPrayers] = await Promise.all([
       getPlayer(), getAllStats(), getInventory(), getEquipment(), getBank(),
       getSetting('homeShortcuts'), getSetting('combatStance'), getSetting('currentHP'),
       getSetting('autoBankLoot'), getSetting('bankConfig'), getSetting('equipmentPresets'), getSetting('unlockedFeatures'),
@@ -183,7 +184,7 @@ export function GameProvider({ children }) {
       getSetting('completedQuests'), getSetting('questQueue'), getSetting('activeCombatSpell'), getSetting('unlockedMinigameItems'),
       getSetting('idleCombatSetup'), getSetting('slayerPerks'), getSetting('characterUnlocks'),
       getSetting('showInfoToasts'), getSetting('worldLocation'), getSetting('autoBankExcludedItems'),
-      getSetting('backgroundCombat'), getSetting('kingdom'), getSetting('slayerStoreUnlocks')
+      getSetting('backgroundCombat'), getSetting('kingdom'), getSetting('slayerStoreUnlocks'), getSetting('quickPrayers')
     ])
     const normalisedIdleCombatSetup = normaliseIdleCombatSetup(savedIdleCombatSetup)
     const autoBankExcludedItemIdsSet = new Set(savedAutoBankExcludedItems || [])
@@ -668,6 +669,7 @@ export function GameProvider({ children }) {
     setWorldLocationState(loadedWorldLocation)
     setBankConfig(savedBankConfig ?? { tabs: [], itemTabMap: {} })
     setEquipmentPresetsState(Array.isArray(savedEquipmentPresets) ? savedEquipmentPresets : [])
+    setQuickPrayersState(Array.isArray(savedQuickPrayers) ? savedQuickPrayers : [])
     setUnlockedFeatures(new Set(savedUnlocks || []))
     setActiveTaskState(savedTask ?? null)
     // Update slayer task if idle simulation modified it
@@ -950,6 +952,12 @@ export function GameProvider({ children }) {
     const next = Array.isArray(presets) ? presets : []
     setEquipmentPresetsState(next)
     saveSetting('equipmentPresets', next)
+  }, [])
+
+  const updateQuickPrayers = useCallback((prayerIds) => {
+    const next = Array.isArray(prayerIds) ? prayerIds : []
+    setQuickPrayersState(next)
+    saveSetting('quickPrayers', next)
   }, [])
 
   const unlockFeature = useCallback((featureId) => {
@@ -1313,6 +1321,7 @@ export function GameProvider({ children }) {
       showInfoToasts,
       backgroundCombat,
       equipmentPresets,
+      quickPrayers,
       homeShortcuts,
       combatStance,
       worldLocation: worldLocationRef.current,
@@ -1450,6 +1459,13 @@ export function GameProvider({ children }) {
   // if the tab/container closes first — the same loss the presets push above
   // guards against. Push each critically so a tab reorg or a toggle reaches the
   // cloud promptly. First post-load run is hydration; skip it.
+  const quickPrayersHydratedRef = useRef(false)
+  useEffect(() => {
+    if (!loaded) return
+    if (!quickPrayersHydratedRef.current) { quickPrayersHydratedRef.current = true; return }
+    requestCriticalPushSave(() => getSnapshot(), CRITICAL_SAVE_REASONS.QUICK_PRAYERS_CHANGE)
+  }, [loaded, quickPrayers, getSnapshot])
+
   const bankConfigHydratedRef = useRef(false)
   useEffect(() => {
     if (!loaded) return
@@ -1575,6 +1591,7 @@ export function GameProvider({ children }) {
     activeTask, autoBankLoot, autoBankExcludedItems, toggleAutoBankExclusion, bankConfig, showInfoToasts, updateShowInfoToasts,
     backgroundCombat, updateBackgroundCombat, combatStatus, publishCombatStatus,
     equipmentPresets, updateEquipmentPresets,
+    quickPrayers, updateQuickPrayers,
     unlockedFeatures, unlockFeature,
     slayerTask, setSlayerTask, slayerPoints, updateSlayerPoints, awardSlayerPoints,
     slayerTasksCompleted,

@@ -272,7 +272,7 @@ function MonsterPhaseStats({ monster }) {
 }
 
 export default function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onCombatStatusChange, onBack, onStopBack, dungeonPlaceId }) {
-  const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, updateEquipment, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, idleCombatSetup, updateIdleCombatSetup, homeShortcuts, updateHomeShortcuts, setActiveTask, requestActivityStart, slayerTask, setSlayerTask, awardSlayerPoints, slayerTasksCompleted, setSlayerTasksCompleted, incrementSlayerMasterTaskCompletions, activeCombatSpell, updateActiveCombatSpell, bossKillCounts, updateBossKillCounts, raidKillCounts, updateRaidKillCounts, unlockedFeatures, completedQuests, isOneLife, isIronman, revertOneLifeMode, getSnapshot, loadGame, combatSkipHandlerRef, skipHourHandlerRef, chargeSkipRef, raidSkipHandlerRef, lockGame, unlockGame, resolveCombatCompletion, characterUnlocks, killCountsLoaded, recordGameEvent, worldLocation, publishCombatStatus, activeTask, backgroundCombat } = useGame()
+  const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, updateEquipment, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, idleCombatSetup, updateIdleCombatSetup, homeShortcuts, updateHomeShortcuts, setActiveTask, requestActivityStart, slayerTask, setSlayerTask, awardSlayerPoints, slayerTasksCompleted, setSlayerTasksCompleted, incrementSlayerMasterTaskCompletions, activeCombatSpell, updateActiveCombatSpell, bossKillCounts, updateBossKillCounts, raidKillCounts, updateRaidKillCounts, unlockedFeatures, completedQuests, isOneLife, isIronman, revertOneLifeMode, getSnapshot, loadGame, combatSkipHandlerRef, skipHourHandlerRef, chargeSkipRef, raidSkipHandlerRef, lockGame, unlockGame, resolveCombatCompletion, characterUnlocks, killCountsLoaded, recordGameEvent, worldLocation, publishCombatStatus, activeTask, backgroundCombat, quickPrayers, updateQuickPrayers } = useGame()
   const pvp = usePvp()
   // Offline demo: bosses, raids and PvP are locked (server-authoritative).
   const isDemo = isDemoMode() && !(getToken() && getCharacterId())
@@ -296,6 +296,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   const [fightStartedAt, setFightStartedAt] = useState(null)
   const [isAutoRestarting, setIsAutoRestarting] = useState(false)
   const [showPrayerModal, setShowPrayerModal] = useState(false)
+  const [showQuickPrayerConfig, setShowQuickPrayerConfig] = useState(false)
   const [showPotionModal, setShowPotionModal] = useState(false)
   const [idleSetupMode, setIdleSetupMode] = useState(null) // 'food' | 'potion' | 'prayer' | null
   const [showEquipmentModal, setShowEquipmentModal] = useState(false)
@@ -3043,6 +3044,12 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                   onPotion={(entry) => handlePotion(entry.itemId)}
                   onEquip={(entry) => handleEquipItem(entry.itemId)}
                   isPotionActive={(item) => Object.keys(combat?.activePotions || {}).some(pid => itemsData[pid]?.effect === item.effect)}
+                  quickPrayers={quickPrayers}
+                  prayersData={prayersData}
+                  prayerLevel={getLevelFromXP(stats.prayer?.xp || 0)}
+                  onPrayer={handlePrayer}
+                  onEditPrayers={() => setShowQuickPrayerConfig(true)}
+                  isPrayerActive={(prayerId) => combat?.activeProtectionPrayer === prayerId || combat?.activeCombatPrayer === prayerId}
                 />
               )}
 
@@ -3136,6 +3143,82 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                         <span class="cb-prayer__desc">{prayer.description}</span>
                         <span class="cb-prayer__lv">Lv {prayer.level}</span>
                         {isActive && <span class="cb-prayer__chk">✓</span>}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            )
+          })()}
+        </Modal>
+      )}
+
+      {/* Quick-prayer config modal — same prayer grid, but tapping a prayer toggles
+          its membership in the quick-prayer list (persisted via updateQuickPrayers)
+          rather than activating it. */}
+      {showQuickPrayerConfig && (
+        <Modal onClose={() => setShowQuickPrayerConfig(false)}>
+          <div class="cb-prayhead">
+            <h3>Quick Prayers</h3>
+            <button onClick={() => setShowQuickPrayerConfig(false)} class="cb-x" aria-label="Close">
+              <GameIcon iconKey="cancel" color="var(--fm-ink-soft)" size={16} />
+            </button>
+          </div>
+
+          {(() => {
+            const selected = Array.isArray(quickPrayers) ? quickPrayers : []
+            const toggle = (prayerId) => {
+              updateQuickPrayers(selected.includes(prayerId)
+                ? selected.filter(id => id !== prayerId)
+                : [...selected, prayerId])
+            }
+            const prayerLevel = getLevelFromXP(stats.prayer?.xp || 0)
+            const protectionPrayers = Object.values(prayersData).filter(p => p.bonusType === 'protection')
+            const combatPrayers = Object.values(prayersData)
+              .filter(p => p.bonusType !== 'protection')
+              .sort((a, b) => b.level - a.level)
+            return (
+              <div class="max-h-96 overflow-y-auto">
+                <p class="text-[11px] text-[var(--color-parchment)] opacity-50 mb-2 px-0.5">Pick the prayers to show in the combat Prayers tab.</p>
+                <div class="cb-praysec">Protection</div>
+                <div class="cb-praygrid cb-praygrid--prot">
+                  {protectionPrayers.map(prayer => {
+                    const canUse = prayerLevel >= prayer.level
+                    const isPicked = selected.includes(prayer.id)
+                    const protectType = prayer.style === 'magic' ? 'Magic' : prayer.style === 'ranged' ? 'Ranged' : 'Melee'
+                    return (
+                      <button
+                        key={prayer.id}
+                        onClick={() => canUse && toggle(prayer.id)}
+                        disabled={!canUse}
+                        class={'cb-prayer' + (isPicked ? ' is-on' : '') + (!canUse ? ' is-locked' : '')}
+                        style={{ alignItems: 'center', textAlign: 'center', minHeight: 64 }}
+                      >
+                        <span class="cb-prayer__name" style={{ justifyContent: 'center', gap: '4px' }}><SkillIcon skill={prayerSkill(prayer)} size={14} /> Protect</span>
+                        <span class="cb-prayer__desc" style={{ textAlign: 'center', width: '100%' }}>{protectType}</span>
+                        <span class="cb-prayer__lv" style={{ margin: '0 auto' }}>Lv {prayer.level}</span>
+                        {isPicked && <span class="cb-prayer__chk">✓</span>}
+                      </button>
+                    )
+                  })}
+                </div>
+
+                <div class="cb-praysec">Combat</div>
+                <div class="cb-praygrid">
+                  {combatPrayers.map(prayer => {
+                    const canUse = prayerLevel >= prayer.level
+                    const isPicked = selected.includes(prayer.id)
+                    return (
+                      <button
+                        key={prayer.id}
+                        onClick={() => canUse && toggle(prayer.id)}
+                        disabled={!canUse}
+                        class={'cb-prayer' + (isPicked ? ' is-on' : '') + (!canUse ? ' is-locked' : '')}
+                      >
+                        <span class="cb-prayer__name" style={{ gap: '4px' }}><SkillIcon skill={prayerSkill(prayer)} size={14} /> {prayer.name}</span>
+                        <span class="cb-prayer__desc">{prayer.description}</span>
+                        <span class="cb-prayer__lv">Lv {prayer.level}</span>
+                        {isPicked && <span class="cb-prayer__chk">✓</span>}
                       </button>
                     )
                   })}

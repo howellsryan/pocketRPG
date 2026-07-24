@@ -1,13 +1,18 @@
 import { useState, useRef } from 'preact/hooks'
 import GameIcon from './GameIcon.jsx'
+import SkillIcon from './SkillIcon.jsx'
+import { prayerSkill } from '../utils/prayerIcons.js'
 import { isConsumableFood, isConsumablePotion } from '../engine/consumables.js'
 
-// Shared mobile combat quick-actions panel (Food & Potions / Weapons / Armour
-// tabs). Used by BOTH PvE (CombatScreen) and PvP (PvpCombatScreen) so the layout
-// lives in one place. Each screen supplies its own dispatch: PvE acts immediately
-// by itemId, PvP queues by inventory slot index — both read the same resolved
-// `entry` ({ itemId, item, qty, slotIdx }). Pass `isPotionActive` to light up the
-// highlight ring on potions whose effect is currently active.
+// Shared mobile combat quick-actions panel (Consume / Weapons / Armour tabs, plus
+// a PvE-only Prayers tab). Used by BOTH PvE (CombatScreen) and PvP
+// (PvpCombatScreen) so the layout lives in one place. Each screen supplies its own
+// dispatch: PvE acts immediately by itemId, PvP queues by inventory slot index —
+// both read the same resolved `entry` ({ itemId, item, qty, slotIdx }). Pass
+// `isPotionActive` to light up the highlight ring on potions whose effect is
+// currently active. The Prayers tab only renders when `onPrayer` is supplied (PvE);
+// it lists the player's configured `quickPrayers` and toggles them exactly like the
+// full prayer modal, with a pencil to (re)configure the list via `onEditPrayers`.
 export default function CombatQuickActions({
   inventory,
   itemsData,
@@ -15,6 +20,12 @@ export default function CombatQuickActions({
   onPotion,
   onEquip,
   isPotionActive,
+  quickPrayers,
+  prayersData,
+  prayerLevel,
+  onPrayer,
+  onEditPrayers,
+  isPrayerActive,
 }) {
   const [tab, setTab] = useState('consumable')
 
@@ -33,6 +44,7 @@ export default function CombatQuickActions({
   const handleEat = (entry) => { flash(entry.itemId); if (onEat) onEat(entry) }
   const handlePotion = (entry) => { flash(entry.itemId); if (onPotion) onPotion(entry) }
   const handleEquip = (entry) => { flash(entry.itemId); if (onEquip) onEquip(entry) }
+  const handlePrayer = (prayer) => { flash(prayer.id); if (onPrayer) onPrayer(prayer.id) }
   const ping = (entry) => (pinged && pinged.id === entry.itemId
     ? <span key={pinged.n} class="cb-slot__ping" />
     : null)
@@ -75,7 +87,19 @@ export default function CombatQuickActions({
   const consumables = [...foods, ...potions]
   const weapons = groupInv(it => it.slot === 'weapon').sort(byName)
   const armour = groupInv(it => it.slot && it.slot !== 'weapon').sort(byName)
-  const tabs = [['consumable', 'Food & Potions', consumables.length], ['weapon', 'Weapons', weapons.length], ['armour', 'Armour', armour.length]]
+
+  // Prayers tab is PvE-only — surfaced when the screen wires an onPrayer handler.
+  // Resolve the configured quick-prayer ids to live prayer defs (dropping any that
+  // no longer exist), preserving the player's configured order.
+  const showPrayers = typeof onPrayer === 'function'
+  const quickPrayerDefs = showPrayers
+    ? (Array.isArray(quickPrayers) ? quickPrayers : [])
+      .map(id => (prayersData ? prayersData[id] : null))
+      .filter(Boolean)
+    : []
+
+  const tabs = [['consumable', 'Consume', consumables.length], ['weapon', 'Weapons', weapons.length], ['armour', 'Armour', armour.length]]
+  if (showPrayers) tabs.push(['prayer', 'Prayers', quickPrayerDefs.length])
 
   return (
     <div class="cb-qa">
@@ -85,6 +109,9 @@ export default function CombatQuickActions({
             {label}<span class="cb-qa__tabn">{n}</span>
           </button>
         ))}
+        {tab === 'prayer' && showPrayers && (
+          <button class="cb-qa__edit" onClick={() => onEditPrayers && onEditPrayers()} aria-label="Configure quick prayers">✏️</button>
+        )}
       </div>
 
       <div class="cb-qa__grid">
@@ -129,6 +156,27 @@ export default function CombatQuickActions({
               {ping(entry)}
             </button>
           )))}
+
+        {tab === 'prayer' && showPrayers && (quickPrayerDefs.length === 0
+          ? <div class="cb-qa__empty">Tap ✏️ to pick your quick prayers</div>
+          : quickPrayerDefs.map((prayer) => {
+            const active = isPrayerActive ? isPrayerActive(prayer.id) : false
+            const locked = typeof prayerLevel === 'number' && prayerLevel < prayer.level
+            return (
+              <button
+                key={prayer.id}
+                class={'cb-slot' + (active ? ' is-active' : '') + (locked ? ' is-locked' : '')}
+                disabled={locked}
+                onClick={() => !locked && handlePrayer(prayer)}
+              >
+                <SkillIcon skill={prayerSkill(prayer)} size={18} />
+                <span class="cb-slot__name">{prayer.name}</span>
+                <span class="cb-slot__tag">Lv {prayer.level}</span>
+                {active && <span class="cb-slot__ring" />}
+                {pinged && pinged.id === prayer.id ? <span key={pinged.n} class="cb-slot__ping" /> : null}
+              </button>
+            )
+          }))}
       </div>
     </div>
   )
