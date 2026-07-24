@@ -3151,12 +3151,10 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                       <GameIcon iconKey="crystal_ball" color="currentColor" size={18} />
                       <span>Cast Spell</span>
                     </button>
-                    {(ownsPouch || summonActive) && (
-                      <button class={'cb-act' + (summonActive ? ' is-on' : '')} disabled={summonActive} onClick={summonActive ? undefined : () => setShowSummonModal(true)}>
-                        <GameIcon iconKey="summoning" color="currentColor" size={18} />
-                        <span>{summonActive ? `Summon ${summonSecs}s` : 'Summon'}</span>
-                      </button>
-                    )}
+                    <button class={'cb-act' + (summonActive ? ' is-on' : '')} disabled={summonActive || !ownsPouch} onClick={(summonActive || !ownsPouch) ? undefined : () => setShowSummonModal(true)}>
+                      <GameIcon iconKey="summoning" color="currentColor" size={18} />
+                      <span>{summonActive ? `Summon ${summonSecs}s` : 'Summon'}</span>
+                    </button>
                   </div>
                 )
               })()}
