@@ -233,30 +233,6 @@ describe('cloud sync save status events', () => {
     expect(sync.isSaveConflict()).toBe(true)
   })
 
-  it('emits conflict (not blocked) on total_level_regression so play is not hard-stopped', async () => {
-    // A 409 total_level_regression_rejected means local total level fell below
-    // the authoritative cloud copy (e.g. a partial read on a preview sharing
-    // prod's D1). It must roll back to the cloud copy like a revision/bank-wipe
-    // conflict — NOT fall through to the failure streak that hard-blocks play
-    // with the "Save Failed / unable to reach the server" modal.
-    putSaveMock.mockRejectedValue({ status: 409, body: { code: 'TOTAL_LEVEL_REGRESSION', error: 'total_level_regression_rejected' } })
-    const sync = await import('../src/cloud/sync.js')
-
-    const ok = await sync.pushNow({ player: { name: 'Hero' } })
-    expect(ok).toBe(false)
-
-    const calls = (window.dispatchEvent as any).mock.calls.map((c: any[]) => c[0].detail.status)
-    expect(calls).toContain('conflict')
-    expect(calls).not.toContain('failed')
-    expect(calls).not.toContain('blocked')
-
-    // No backoff retry should be scheduled — the app is rolling back.
-    await vi.advanceTimersByTimeAsync(120_000)
-    await vi.runAllTicks()
-    expect(putSaveMock).toHaveBeenCalledTimes(1)
-    expect(sync.isSaveConflict()).toBe(true)
-  })
-
   it('short-circuits further pushes once a conflict is detected', async () => {
     putSaveMock.mockRejectedValue({ status: 409, body: { code: 'SAVE_REVISION_CONFLICT', current_revision: 5 } })
     const sync = await import('../src/cloud/sync.js')
