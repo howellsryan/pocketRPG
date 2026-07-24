@@ -21,7 +21,8 @@ import { countItem } from './inventory.js'
 export const SUMMON_DURATION_TICKS = 100 // 60s at TICK_MS = 600
 export const SUMMON_ATTACK_TICKS = 4     // creature swings every 4 ticks (2.4s)
 export const SCROLLS_PER_POUCH = 10
-export const CHARM_DROP_CHANCE = 0.05    // flat per-kill chance of a tier charm
+export const CHARM_DROP_CHANCE_BASE = 0.05 // per-kill chance at the bottom of a monster's charm-tier bracket
+export const CHARM_DROP_CHANCE_MAX = 0.25  // per-kill chance at the top of a bracket (and beyond, for blue)
 export const CRAFT_ACTION_TICKS = 2      // one pouch/scroll batch every 2 ticks
 export const EMPTY_POUCH_ID = 'empty_pouch'
 
@@ -98,6 +99,26 @@ export function charmForCombatLevel(combatLevel) {
   return 'blue_charm'
 }
 
+// Combat-level span each charm tier scales across: chance rises linearly from
+// CHARM_DROP_CHANCE_BASE at `floor` to CHARM_DROP_CHANCE_MAX at `ceiling`.
+// Blue has no natural top bracket (highest non-boss monster is 380), so it
+// caps at 200 — everything at or above that combat level hits the max.
+const CHARM_TIER_BRACKETS = {
+  green_charm: { floor: 1, ceiling: 50 },
+  red_charm: { floor: 51, ceiling: 100 },
+  blue_charm: { floor: 101, ceiling: 200 },
+}
+
+/** Per-kill charm chance for a combat level: scales within its tier bracket. */
+export function charmDropChance(combatLevel) {
+  const charm = charmForCombatLevel(combatLevel)
+  if (!charm) return 0
+  const { floor, ceiling } = CHARM_TIER_BRACKETS[charm]
+  const t = Math.min(1, Math.max(0, (Number(combatLevel) - floor) / (ceiling - floor)))
+  const chance = CHARM_DROP_CHANCE_BASE + (CHARM_DROP_CHANCE_MAX - CHARM_DROP_CHANCE_BASE) * t
+  return Math.round(chance * 10000) / 10000
+}
+
 /** Charm drop entries for a monster, shaped like normal drops. */
 export function getMonsterCharmDrops(monster) {
   if (!monster || monster.boss === true || monster.raidBoss === true) return []
@@ -106,7 +127,7 @@ export function getMonsterCharmDrops(monster) {
   if (monster.noCharmDrops === true) return []
   const charm = charmForCombatLevel(monster.combatLevel)
   if (!charm) return []
-  return [{ itemId: charm, quantity: 1, chance: CHARM_DROP_CHANCE }]
+  return [{ itemId: charm, quantity: 1, chance: charmDropChance(monster.combatLevel) }]
 }
 
 // ── Combat roll ──────────────────────────────────────────────────────────────
