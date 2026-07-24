@@ -12,6 +12,7 @@ import {
   EMPTY_POUCH_ID,
   CRAFT_ACTION_TICKS,
   charmForCombatLevel,
+  charmDropChance,
   getMonsterCharmDrops,
   rollSummonAttack,
   summonHitChance,
@@ -19,7 +20,8 @@ import {
   SCROLLS_PER_POUCH,
   SUMMON_DURATION_TICKS,
   SUMMON_ATTACK_TICKS,
-  CHARM_DROP_CHANCE,
+  CHARM_DROP_CHANCE_BASE,
+  CHARM_DROP_CHANCE_MAX,
 } from '../src/engine/summoning.js'
 import { createCombatState, processCombatTick } from '../src/engine/combat.js'
 
@@ -134,10 +136,31 @@ describe('summoning — charm drops', () => {
     expect(charmForCombatLevel(101)).toBe('blue_charm')
   })
 
-  it('drops the tier charm at a flat 5% for a regular monster', () => {
+  it('drops the tier charm at the bracket-floor rate for the lowest monster in a tier', () => {
+    expect(getMonsterCharmDrops({ combatLevel: 1 })).toEqual([{ itemId: 'green_charm', quantity: 1, chance: CHARM_DROP_CHANCE_BASE }])
+    expect(getMonsterCharmDrops({ combatLevel: 51 })).toEqual([{ itemId: 'red_charm', quantity: 1, chance: CHARM_DROP_CHANCE_BASE }])
+    expect(getMonsterCharmDrops({ combatLevel: 101 })).toEqual([{ itemId: 'blue_charm', quantity: 1, chance: CHARM_DROP_CHANCE_BASE }])
+    expect(CHARM_DROP_CHANCE_BASE).toBe(0.05)
+    expect(CHARM_DROP_CHANCE_MAX).toBe(0.25)
+  })
+
+  it('scales charm chance up toward the max as combat level rises within a bracket', () => {
     const drops = getMonsterCharmDrops({ combatLevel: 40 })
-    expect(drops).toEqual([{ itemId: 'green_charm', quantity: 1, chance: CHARM_DROP_CHANCE }])
-    expect(CHARM_DROP_CHANCE).toBe(0.05)
+    expect(drops).toEqual([{ itemId: 'green_charm', quantity: 1, chance: charmDropChance(40) }])
+    expect(charmDropChance(40)).toBeGreaterThan(CHARM_DROP_CHANCE_BASE)
+    expect(charmDropChance(40)).toBeLessThan(CHARM_DROP_CHANCE_MAX)
+  })
+
+  it('hits the max chance at the top of the green and red brackets', () => {
+    expect(charmDropChance(50)).toBe(CHARM_DROP_CHANCE_MAX)
+    expect(charmDropChance(100)).toBe(CHARM_DROP_CHANCE_MAX)
+  })
+
+  it('caps blue-tier chance at combat level 200 and holds it flat beyond', () => {
+    expect(charmDropChance(200)).toBe(CHARM_DROP_CHANCE_MAX)
+    expect(charmDropChance(380)).toBe(CHARM_DROP_CHANCE_MAX)
+    expect(charmDropChance(150)).toBeGreaterThan(CHARM_DROP_CHANCE_BASE)
+    expect(charmDropChance(150)).toBeLessThan(CHARM_DROP_CHANCE_MAX)
   })
 
   it('never drops charms for bosses or raid bosses', () => {
