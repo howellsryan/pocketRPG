@@ -210,7 +210,7 @@
 .forge-shell,
 .fm-parch,
 .wm-actmodal-panel,
-.clog-sheet,
+.clog-sheet:not(.is-done),
 .cb-qa,
 .fm-on-parch {
   --fm-btn-face: var(--fm-btn-vellum);
@@ -225,7 +225,8 @@
 }
 
 /* Dark panels nested inside a parchment screen flip back to iron. */
-.fm-on-iron {
+.fm-on-iron,
+.clog-sheet.is-done {
   --fm-btn-face: var(--fm-btn-iron);
   --fm-btn-ink: var(--fm-parch);
   --fm-btn-sub: var(--fm-brass);
@@ -833,8 +834,7 @@ html, body, #app {
 .forge-shell .welcome-card__title { background-image: var(--fm-gilt-text); }
 .forge-shell .wstat { color: var(--fm-ink-soft); }
 .forge-shell .wstat b { color: var(--fm-ember); }
-.forge-shell .rune-btn { border-color: var(--fm-rule); background: var(--fm-parch-lo); box-shadow: var(--fm-parch-inset); }
-.forge-shell .rune-btn:hover { border-color: var(--fm-brass); background: var(--fm-parch-hi); }
+
 .forge-shell .skill-card { background: #e6d8b6; background-image: var(--fm-tex-parch); background-size: cover; border-color: var(--fm-rule); box-shadow: var(--fm-parch-inset); }
 .forge-shell .skill-card:hover { border-color: var(--fm-brass); }
 .forge-shell .skill-card__name span { color: var(--fm-ink); text-shadow: none; }
@@ -976,26 +976,28 @@ html, body, #app {
 .skill-emblem__art { position: absolute; inset: 0; }
 
 /* Armoury grid + cards */
-.armoury-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-@media (min-width: 640px) { .armoury-grid { grid-template-columns: repeat(3, 1fr); } }
-@media (min-width: 1024px) { .armoury-grid { grid-template-columns: repeat(4, 1fr); } }
+/* Armoury reads as an inventory: a dense grid of square item tiles (icon over
+   name over level), not a list of wide cards. Same tile metal as every other
+   item grid in the game. */
+.armoury-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+@media (min-width: 480px) { .armoury-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+@media (min-width: 700px) { .armoury-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
+@media (min-width: 1024px) { .armoury-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
 .armoury-card {
-  position: relative; width: 100%; min-height: 52px; display: flex; align-items: center; gap: 9px;
-  text-align: left; cursor: pointer; border-radius: 10px; padding: 8px 10px;
-  background: linear-gradient(150deg, #1a1813 0%, #100e0a 100%);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  box-shadow: 0 6px 16px -12px rgba(0, 0, 0, 0.9);
-  transition: transform 0.12s ease, border-color 0.12s ease;
+  position: relative; min-width: 0; width: 100%; min-height: 88px;
+  display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 5px;
+  text-align: center; cursor: pointer; border-radius: var(--fm-r-sm); padding: 10px 5px 8px;
+  color: var(--fm-btn-ink); background: var(--fm-btn-face);
+  border: 1px solid var(--fm-btn-edge); box-shadow: var(--fm-btn-relief);
+  transition: transform var(--fm-dur) var(--fm-ease), border-color var(--fm-dur), box-shadow var(--fm-dur);
 }
-.armoury-card:hover { border-color: rgba(240, 192, 64, 0.35); transform: translateY(-1px); }
-.armoury-card:active { transform: translateY(1px); }
-.armoury-card__name { display: block; font-size: 11px; font-weight: 700; line-height: 1.2; color: var(--color-parchment); text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7); }
-.armoury-card__tier { display: block; font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.04em; color: var(--color-gold-light); opacity: 0.8; }
-.armoury-card__spec { position: absolute; top: 4px; right: 6px; font-size: 11px; line-height: 1; filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.85)); }
-.forge-shell .armoury-card { background: var(--fm-parch); background-image: var(--fm-tex-parch); background-size: cover; border-color: var(--fm-rule); box-shadow: var(--fm-parch-inset); }
-.forge-shell .armoury-card:hover { border-color: var(--fm-brass); }
-.forge-shell .armoury-card__name { color: var(--fm-ink); text-shadow: none; }
-.forge-shell .armoury-card__tier { color: var(--fm-ember-deep); opacity: 1; }
+.armoury-card:hover { border-color: var(--fm-brass); }
+.armoury-card:active { transform: translateY(1px); box-shadow: var(--fm-btn-press); }
+.armoury-card:focus-visible { outline: 2px solid var(--fm-brass); outline-offset: 2px; }
+.armoury-card__name { display: block; font-family: var(--fm-serif); font-size: 10px; font-weight: 700; line-height: 1.15; color: inherit; max-width: 100%; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.armoury-card__tier { display: block; font-family: var(--fm-num); font-variant-numeric: tabular-nums; font-size: 9px; letter-spacing: 0.04em; color: var(--fm-btn-sub); }
+.armoury-card__spec { position: absolute; top: 3px; right: 5px; font-size: 11px; line-height: 1; }
+
 .forge-shell .section-head span { color: var(--fm-ink-faint); }
 .forge-shell .section-head__rule { background: linear-gradient(90deg, var(--fm-brass-lo), transparent); }
 
@@ -1111,14 +1113,16 @@ html, body, #app {
 .cb-hplabel > span:first-child { flex: 1 1 auto; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .cb-hplabel__v { font-family: var(--font-mono); opacity: 0.9; white-space: nowrap; flex-shrink: 0; }
 
-.cb-logwrap { margin-top: 4px; height: 168px; overflow-y: auto; border-radius: 14px; padding: 12px 14px; background: linear-gradient(180deg, rgba(0,0,0,0.4), rgba(0,0,0,0.25)); border: 1px solid rgba(255,255,255,0.06); box-shadow: inset 0 2px 8px rgba(0,0,0,0.5); display: flex; flex-direction: column; gap: 7px; }
+/* Deliberately a dark terminal feed on a parchment page — so its type is
+   stated in light tones, not --color-parchment (which is ink under .forge-shell). */
+.cb-logwrap { margin-top: 4px; height: 168px; overflow-y: auto; border-radius: var(--fm-r-frame); color: var(--fm-parch); padding: 12px 14px; background: linear-gradient(180deg, #17140f, #100d09); border: 1px solid #000; box-shadow: inset 0 2px 8px rgba(0,0,0,0.6); display: flex; flex-direction: column; gap: 7px; }
 .cb-logwrap::-webkit-scrollbar { width: 3px; }
 .cb-logwrap::-webkit-scrollbar-thumb { background: rgba(240,192,64,0.25); border-radius: 999px; }
 .cb-logline { display: flex; align-items: flex-start; gap: 7px; font-family: var(--font-mono); font-size: 12px; line-height: 1.35; animation: cbLogIn .25s ease; }
 .cb-logline .cb-art { margin-top: 1px; flex-shrink: 0; }
 .cb-logline span { flex: 1; min-width: 0; }
 @keyframes cbLogIn { from { opacity: 0; transform: translateX(-4px); } }
-.cb-logline--sys { color: var(--color-parchment); opacity: 0.5; }
+.cb-logline--sys { color: var(--fm-parch); opacity: 0.62; }
 .cb-logline--hit { color: #7ce88a; }
 .cb-logline--dmg { color: #e8857e; }
 .cb-logline--eat { color: #7fd4ff; }
@@ -2700,6 +2704,11 @@ html, body, #app {
 }
 .clog-overlay--center .clog-sheet { max-width: 680px; max-height: 84vh; border-radius: 20px; border: 1px solid rgba(240,192,64,0.3); animation: clogPop .24s cubic-bezier(.22,1,.36,1); }
 .clog-sheet.is-done { background: radial-gradient(120% 60% at 50% 0%, rgba(247,221,142,0.12), transparent 55%), linear-gradient(180deg, #211a0e 0%, #130f09 100%); }
+/* Light type on the mastered sheet: --color-parchment is ink inside .forge-shell. */
+.clog-sheet.is-done .clog-sheet__name, .clog-sheet.is-done .clog-sheet__sub,
+.clog-sheet.is-done .clog-secthead span, .clog-sheet.is-done .clog-sec__name,
+.clog-sheet.is-done .clog-sec__count, .clog-sheet.is-done .clog-sheet__count span { color: var(--fm-parch); }
+.clog-sheet.is-done .clog-sheet__count b, .clog-sheet.is-done .clog-sec__count.is-done { color: var(--fm-brass-hi); }
 @keyframes clogSlideUp { from { transform: translateY(100%); } }
 @keyframes clogPop { from { transform: scale(.94); opacity: 0; } }
 .clog-sheet__grab { width: 38px; height: 4px; border-radius: 3px; background: rgba(245,230,200,0.25); margin: 0 auto 14px; flex-shrink: 0; }
@@ -2732,12 +2741,15 @@ html, body, #app {
 .clog-slotgrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 @media (min-width: 480px) { .clog-slotgrid { grid-template-columns: repeat(4, 1fr); } }
 @media (min-width: 700px) { .clog-slotgrid { grid-template-columns: repeat(5, 1fr); } }
-.clog-slot { position: relative; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 12px 6px 10px; border-radius: 12px; text-align: center; background: linear-gradient(160deg,#15130d,#0e0c08); border: 1px solid rgba(255,255,255,0.05); transition: border-color .14s, background .14s; }
-.clog-slot.is-got { border-color: rgba(240,192,64,0.22); background: linear-gradient(160deg,#1c180f,#100d08); }
-.clog-slot.is-got.gold-card { border-color: rgba(240,192,64,0.42); box-shadow: inset 0 0 16px -6px rgba(240,192,64,0.45); }
-.clog-slot__name { font-size: 10px; font-weight: 700; line-height: 1.2; letter-spacing: .01em; color: var(--color-parchment); opacity: .85; min-height: 24px; display: flex; align-items: center; }
-.clog-slot.is-locked .clog-slot__name { opacity: .32; }
-.clog-slot__lock { position: absolute; top: 5px; right: 7px; font-size: 11px; opacity: .4; line-height: 1; }
+/* Trophy slots are tiles on the sheet, so they take the sheet's button metal.
+   They were dark cards carrying --color-parchment text, which .forge-shell
+   re-points to ink — near-black text on a near-black tile. */
+.clog-slot { position: relative; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 12px 6px 10px; border-radius: var(--fm-r-sm); text-align: center; color: var(--fm-btn-ink); background: var(--fm-btn-face); border: 1px solid var(--fm-btn-edge); box-shadow: var(--fm-btn-relief); transition: border-color var(--fm-dur), background var(--fm-dur), box-shadow var(--fm-dur); }
+.clog-slot.is-got { border-color: var(--fm-brass); }
+.clog-slot.is-got.gold-card { border-color: var(--fm-brass-lo); box-shadow: var(--fm-btn-relief), inset 0 0 16px -6px rgba(176,136,66,0.55); }
+.clog-slot.is-locked { background: var(--fm-btn-dead); background-image: none; border-color: var(--fm-btn-dead-edge); box-shadow: none; color: var(--fm-btn-dead-ink); }
+.clog-slot__name { font-family: var(--fm-serif); font-size: 10px; font-weight: 700; line-height: 1.2; letter-spacing: .01em; color: inherit; min-height: 24px; display: flex; align-items: center; }
+.clog-slot__lock { position: absolute; top: 5px; right: 7px; font-size: 11px; opacity: .55; line-height: 1; }
 
 /* ════ World Map (map-driven overhaul, phase 1) ═══════════════════════════ */
 /* The "desk" the chart sits on: hammered Forgemark iron, not flat void. */
@@ -2796,12 +2808,15 @@ html, body, #app {
 @media (max-width: 560px) { .wm-legend { display: none; } }
 
 .wm-ctl { position: absolute; right: 14px; bottom: 14px; z-index: 20; display: flex; flex-direction: column; gap: 8px; }
+/* The map desk is always hammered iron, so these are pinned to the vellum face
+   rather than inheriting the surrounding token set — an iron key on an iron
+   desk is the dark-on-dark case this avoids. */
 .wm-ctl button { width: 44px; height: 44px; border-radius: var(--fm-r-sm); cursor: pointer; color: var(--fm-ink);
-  background: var(--fm-btn-face); border: 1px solid var(--fm-btn-edge); box-shadow: var(--fm-btn-relief);
+  background: var(--fm-btn-vellum); border: 1px solid var(--fm-rule); box-shadow: var(--fm-btn-relief-vellum);
   font-size: 20px; font-family: var(--fm-display); display: grid; place-items: center;
   transition: transform var(--fm-dur) var(--fm-ease), border-color var(--fm-dur), box-shadow var(--fm-dur), color var(--fm-dur); }
-.wm-ctl button:hover { color: var(--fm-ember-deep); border-color: var(--fm-brass); }
-.wm-ctl button:active { transform: translateY(1px); box-shadow: var(--fm-btn-press); }
+.wm-ctl button:hover { color: var(--fm-brass-hi); border-color: var(--fm-brass); }
+.wm-ctl button:active { transform: translateY(1px); box-shadow: var(--fm-btn-press-vellum); }
 
 .wm-scrim { position: absolute; inset: 0; z-index: 40; background: rgba(8,6,4,0.62); }
 .wm-hub { position: absolute; z-index: 50; right: 0; top: 0; height: 100%; width: min(460px, 100%);
