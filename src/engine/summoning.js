@@ -16,7 +16,7 @@
 
 import summoningData from '../data/summoning.json'
 import { maxAttackRoll, maxDefenceRoll, hitChance, rollDamage } from './formulas.js'
-import { countItem, addItem, removeItem } from './inventory.js'
+import { countItem } from './inventory.js'
 
 export const SUMMON_DURATION_TICKS = 100 // 60s at TICK_MS = 600
 export const SUMMON_ATTACK_TICKS = 4     // creature swings every 4 ticks (2.4s)
@@ -83,30 +83,6 @@ export function craftableTimes(recipe, inventory, bank) {
     max = Math.min(max, Math.floor((countItem(inventory, id) + bankQty(bank, id)) / per))
   }
   return max === Infinity ? 0 : max
-}
-
-/**
- * Resolve one crafting completion: consume each material from inventory first,
- * then bank; add the product; report the XP to grant. Pure — returns the new
- * inventory array and a bank-delta map for the caller to apply. `reason` is
- * 'materials' (not enough) or 'full' (no inventory room) when `ok` is false.
- */
-export function craftOnce(recipe, inventory, bank, itemsData = {}) {
-  for (const [id, per] of Object.entries(recipe.materials)) {
-    if (countItem(inventory, id) + bankQty(bank, id) < per) return { ok: false, reason: 'materials' }
-  }
-  const newInventory = [...inventory]
-  if (!addItem(newInventory, recipe.product, recipe.productQty, !!itemsData[recipe.product]?.stackable)) {
-    return { ok: false, reason: 'full' }
-  }
-  const bankUpdates = {}
-  for (const [id, per] of Object.entries(recipe.materials)) {
-    const fromInv = Math.min(per, countItem(newInventory, id))
-    if (fromInv > 0) removeItem(newInventory, id, fromInv)
-    const fromBank = per - fromInv
-    if (fromBank > 0) bankUpdates[id] = (bankUpdates[id] || 0) - fromBank
-  }
-  return { ok: true, newInventory, bankUpdates, xp: recipe.xp || 0 }
 }
 
 // ── Charm drops (universal, combat-level tiered) ─────────────────────────────

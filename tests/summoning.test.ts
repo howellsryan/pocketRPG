@@ -9,7 +9,6 @@ import {
   getPouchRecipe,
   getScrollRecipe,
   craftableTimes,
-  craftOnce,
   EMPTY_POUCH_ID,
   CRAFT_ACTION_TICKS,
   charmForCombatLevel,
@@ -105,25 +104,9 @@ describe('summoning — crafting (inventory + bank)', () => {
     expect(craftableTimes(pouchRecipe, inventory, bank)).toBe(3)
   })
 
-  it('completes one craft, draining inventory first then bank, and reports XP', () => {
+  it('returns zero makeable when a material is missing from both inventory and bank', () => {
     const inventory = inv(slot('green_charm', 1), slot('empty_pouch', 1))
-    const bank = { raw_chicken: { quantity: 2 } }
-    const result = craftOnce(pouchRecipe, inventory, bank, items)
-    expect(result.ok).toBe(true)
-    expect(result.xp).toBe(chicken.pouchXp)
-    // charm + empty pouch came from inventory; raw_chicken had to come from bank
-    expect(result.bankUpdates).toEqual({ raw_chicken: -1 })
-    const invMap = Object.fromEntries(result.newInventory.filter(Boolean).map((s: any) => [s.itemId, s.quantity]))
-    expect(invMap.green_charm ?? 0).toBe(0)
-    expect(invMap.empty_pouch ?? 0).toBe(0)
-    expect(invMap.chicken_pouch).toBe(1)
-  })
-
-  it('refuses to craft when a material is missing from both inventory and bank', () => {
-    const inventory = inv(slot('green_charm', 1), slot('empty_pouch', 1))
-    const result = craftOnce(pouchRecipe, inventory, {}, items)
-    expect(result.ok).toBe(false)
-    expect(result.reason).toBe('materials')
+    expect(craftableTimes(pouchRecipe, inventory, {})).toBe(0)
   })
 
   it('crafts one product every two ticks', () => {
