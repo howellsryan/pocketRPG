@@ -5,6 +5,7 @@ import SkillActionRow from '../components/SkillActionRow.jsx'
 import SectionHeader from '../components/SectionHeader.jsx'
 import { getLevelFromXP } from '../engine/experience.js'
 import { emptySession } from '../engine/activitySession.js'
+import { formatActionDuration } from '../utils/formatters.js'
 import { SUMMONING_CREATURES, getPouchRecipe, getScrollRecipe, SCROLLS_PER_POUCH, CRAFT_ACTION_TICKS, craftableTimes } from '../engine/summoning.js'
 import itemsData from '../data/items.json'
 
@@ -50,35 +51,27 @@ export default function SummoningScreen({ onBack }) {
     const recipe = recipeFor(kind, creature)
     const action = actionFor(kind, creature, recipe)
     const available = summoningLevel >= creature.level
+    const levelLocked = !available
     const maxTimes = available ? craftableTimes(recipe, inventory, bank) : 0
     const isActive = activeAction?.id === action.id
-    const total = (isActive && activeTask.totalTicks) || CRAFT_ACTION_TICKS
-    const remaining = isActive && typeof activeTask.ticksRemaining === 'number' ? activeTask.ticksRemaining : total
-    const progress = isActive ? Math.max(0, Math.min(1, 1 - remaining / total)) : 0
-    const matLine = Object.entries(recipe.materials)
-      .map(([id, per]) => `${per}× ${itemName(id)}`)
-      .join(' + ')
+    const productItem = itemsData[recipe.product]
     return (
       <SkillActionRow
         key={`${kind}_${creature.id}`}
-        icon={<GameIcon iconKey={creature.pouch} size={26} />}
+        icon={<GameIcon item={productItem} size={52} />}
         title={kind === 'pouch' ? `${creature.name} Pouch` : `${creature.name} Scroll (${SCROLLS_PER_POUCH})`}
         active={isActive}
         meta={<>
-          <span class="text-[var(--color-gold)] font-bold opacity-100">Lv {creature.level}</span> · {matLine} · {recipe.xp} xp
+          <span class="text-[var(--color-gold)] font-bold opacity-100">Lv {creature.level}</span> · {recipe.xp} XP · {formatActionDuration(CRAFT_ACTION_TICKS)}
+          <span class="text-[var(--color-gold)]"> · {maxTimes.toLocaleString()} actions</span>
           {available && !isActive && maxTimes <= 0 && <span class="block text-[var(--color-blood-ember)] mt-1">Not enough materials</span>}
         </>}
-        chip={isActive ? <>Making…</> : <>{maxTimes.toLocaleString()} makeable</>}
-        locked={!available}
+        below={!levelLocked ? <span class="text-[12.5px] font-semibold text-[var(--color-gold)]">{Object.entries(recipe.materials).map(([id, per]) => `${itemName(id)} ×${per}`).join(', ')}</span> : undefined}
+        locked={levelLocked}
         lockBadge={`LV ${creature.level}`}
         lockHint={`Unlocks at Summoning ${creature.level}`}
         disabled={available && !isActive && maxTimes <= 0}
         onClick={() => toggle(kind, creature, recipe)}
-        below={isActive && (
-          <div class="mt-1 h-1.5 rounded-full bg-[var(--color-void)] overflow-hidden">
-            <div class="h-full bg-[var(--color-gold)] transition-[width] duration-150" style={{ width: `${Math.round(progress * 100)}%` }} />
-          </div>
-        )}
       />
     )
   }
