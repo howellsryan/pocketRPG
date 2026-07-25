@@ -11,8 +11,20 @@
   // rather than relying on wrangler's default, which has changed before.
   "workers_dev": false,
   "assets": { "directory": "client/dist", "binding": "ASSETS" },
-  "durable_objects": { "bindings": [{ "name": "WorldZone", "class_name": "WorldZone" }] },
-  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["WorldZone"] }],
+  // CoopBossRoom is hosted here but never routed here: the Pages app binds it
+  // cross-script (see the root wrangler.toml). Pages projects cannot export
+  // Durable Object classes, and this Worker already has the DO runtime and the
+  // same D1 database the co-op tables live in.
+  "durable_objects": {
+    "bindings": [
+      { "name": "WorldZone", "class_name": "WorldZone" },
+      { "name": "CoopBossRoom", "class_name": "CoopBossRoom" }
+    ]
+  },
+  "migrations": [
+    { "tag": "v1", "new_sqlite_classes": ["WorldZone"] },
+    { "tag": "v2", "new_sqlite_classes": ["CoopBossRoom"] }
+  ],
   "d1_databases": [
     {
       "binding": "DB",
@@ -31,7 +43,12 @@
     "preview": {
       "workers_dev": true,
       "assets": { "directory": "client/dist", "binding": "ASSETS" },
-      "durable_objects": { "bindings": [{ "name": "WorldZone", "class_name": "WorldZone" }] },
+      "durable_objects": {
+        "bindings": [
+          { "name": "WorldZone", "class_name": "WorldZone" },
+          { "name": "CoopBossRoom", "class_name": "CoopBossRoom" }
+        ]
+      },
       "d1_databases": [
         {
           "binding": "DB",

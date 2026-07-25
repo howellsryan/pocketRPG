@@ -16,11 +16,11 @@ import {
   listOpenSessions,
   parseSessionState,
   readSession,
+  parseCoopSessionId,
   settleCoopKill,
   sweepStaleCoopSessions,
 } from '../functions/_lib/game/coopBoss.js'
 import { validateCoopAction } from '../functions/api/coop/session/[id]/intent.js'
-import { shouldAdvanceCoopTick } from '../functions/api/coop/session/[id]/tick.js'
 import { MAX_XP } from '../src/utils/constants.js'
 import { COOP_MAX_MEMBERS } from '../src/engine/coopBossEngine.js'
 
@@ -148,7 +148,7 @@ describe('joining a co-op session', () => {
     await seedCharacter(7, { save: baseSave({ completedQuests: [] }) })
     await expect(
       joinCoopSession(env as never, { characterId: 7, identityId: 1, bossId: BOSS, username: 'player7' }),
-    ).rejects.toMatchObject({ code: 'QUEST_REQUIRED' })
+    ).rejects.toMatchObject({ code: 'BOSS_REQUIREMENTS_NOT_MET' })
     expect(await activeSessionIdFor(env as never, 7)).toBeNull()
   })
 
@@ -346,11 +346,11 @@ describe('coop save lock', () => {
     expect(await isCoopSessionLive(env as never, 7)).toBe(true)
   })
 
-  it('lapses the lock once nobody has ticked, so a closed tab cannot strand a save', async () => {
+  it('lapses the lock once the MEMBER stops checking in, so a closed tab cannot strand a save', async () => {
     await seedCharacter(7)
     const { sessionId } = await joinCoopSession(env as never, { characterId: 7, identityId: 1, bossId: BOSS, username: 'player7' })
-    raw.prepare('UPDATE coop_boss_sessions SET last_tick_at = ? WHERE id = ?')
-      .run(Date.now() - COOP_SESSION_STALE_MS - 1, sessionId)
+    raw.prepare('UPDATE coop_session_members SET last_seen_at = ? WHERE session_id = ? AND character_id = ?')
+      .run(Date.now() - COOP_SESSION_STALE_MS - 1, sessionId, 7)
     expect(await isCoopSessionLive(env as never, 7)).toBe(false)
   })
 
@@ -424,21 +424,21 @@ describe('coop intent validation', () => {
   })
 })
 
-describe('coop tick pacing', () => {
-  it('advances on the first ever tick', () => {
-    expect(shouldAdvanceCoopTick(1_000, 0).advance).toBe(true)
+// Tick pacing used to be a per-request decision (whoever polled first inside
+// the 600ms window advanced the fight). The room's own clock owns it now, so
+// there is no request-level pacing left to test — CoopBossRoom drives it and
+// tests/coopRoomProjection.test.ts covers what a poll gets back.
+
+describe('coop session id parsing', () => {
+  it('accepts a plain positive integer', () => {
+    expect(parseCoopSessionId('12')).toBe(12)
   })
 
-  it('refuses a tick that arrives inside the 600ms window', () => {
-    expect(shouldAdvanceCoopTick(1_100, 1_000).advance).toBe(false)
-  })
-
-  it('advances once the window has elapsed', () => {
-    expect(shouldAdvanceCoopTick(1_600, 1_000).advance).toBe(true)
-  })
-
-  it('allows a small grace so a slightly early poll is not wasted', () => {
-    expect(shouldAdvanceCoopTick(1_540, 1_000).advance).toBe(true)
+  it('rejects the trailing-garbage ids parseInt used to wave through', () => {
+    expect(parseCoopSessionId('12abc')).toBeNull()
+    expect(parseCoopSessionId('-4')).toBeNull()
+    expect(parseCoopSessionId('1.5')).toBeNull()
+    expect(parseCoopSessionId('')).toBeNull()
   })
 })
 

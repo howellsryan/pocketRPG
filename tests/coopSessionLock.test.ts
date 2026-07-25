@@ -107,10 +107,10 @@ describe('PUT /api/save co-op session lock', () => {
     expect(res.status).toBe(200)
   })
 
-  it('self-heals: a session nobody has ticked stops blocking the save', async () => {
+  it('self-heals: a member who stops checking in stops blocking their save', async () => {
     const { sessionId } = await join(5)
-    raw.prepare('UPDATE coop_boss_sessions SET last_tick_at = ? WHERE id = ?')
-      .run(Date.now() - COOP_SESSION_STALE_MS - 1, sessionId)
+    raw.prepare('UPDATE coop_session_members SET last_seen_at = ? WHERE session_id = ? AND character_id = ?')
+      .run(Date.now() - COOP_SESSION_STALE_MS - 1, sessionId, 5)
     const res = await onRequestPut({ request: savePut(5, currentRevision(5)), env } as any)
     expect(res.status).toBe(200)
   })

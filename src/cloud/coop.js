@@ -36,14 +36,32 @@ async function coopRequest(path, options = {}) {
 // catch-up modal) must stay out of the way — the same role `pvp.phase ===
 // 'in_match'` plays for duels.
 let activeCoopSessionId = null
-export function setActiveCoopSession(sessionId) { activeCoopSessionId = sessionId ?? null }
+export const COOP_SESSION_EVENT = 'pocketrpg:coop-session'
+export function setActiveCoopSession(sessionId) {
+  const next = sessionId ?? null
+  if (next === activeCoopSessionId) return
+  activeCoopSessionId = next
+  // Plain module state is invisible to Preact, so a screen reading it during
+  // render never re-renders when it changes. The event is what lets App gate on
+  // it reactively instead of by luck of the next unrelated render.
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent(COOP_SESSION_EVENT, { detail: { sessionId: activeCoopSessionId } }))
+  }
+}
 export function getActiveCoopSession() { return activeCoopSessionId }
 
 export const coopApi = {
   listBosses: () => coopRequest('/api/coop/bosses'),
   join: (bossId) => coopRequest('/api/coop/join', { method: 'POST', body: JSON.stringify({ bossId }) }),
   readSession: (sessionId) => coopRequest(`/api/coop/session/${sessionId}`),
-  tick: (sessionId) => coopRequest(`/api/coop/session/${sessionId}/tick`, { method: 'POST', body: '{}' }),
+  // sinceTick is the last tick this client rendered. The room replays
+  // everything after it, so a poll that lands between beats still sees every
+  // hit splat, XP drop and kill rather than only the ticks it happened to
+  // arrive on.
+  tick: (sessionId, sinceTick) => coopRequest(`/api/coop/session/${sessionId}/tick`, {
+    method: 'POST',
+    body: JSON.stringify(Number.isFinite(sinceTick) ? { sinceTick } : {}),
+  }),
   sendAction: (sessionId, action) => coopRequest(`/api/coop/session/${sessionId}/intent`, {
     method: 'POST',
     body: JSON.stringify({ action }),

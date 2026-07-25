@@ -2,6 +2,8 @@ import { requireAuth, json } from '../../_lib/auth.js'
 import { assertNotInActiveMatch, getOwnedCharacter } from '../../_lib/pvp.js'
 import { isWorldSessionLive } from '../../_lib/game/worldSessions.js'
 import { joinCoopSession, readSession, parseSessionState, sweepStaleCoopSessions } from '../../_lib/game/coopBoss.js'
+import { projectStateForMember } from '../../_lib/game/coopProjection.js'
+import { coopRoomsAvailable } from '../../_lib/game/coopRoom.js'
 import { toErrorResponse } from '../../_lib/game/errors.js'
 
 export async function onRequestPost({ request, env }) {
@@ -21,8 +23,12 @@ export async function onRequestPost({ request, env }) {
 
   await sweepStaleCoopSessions(env)
 
+  if (!coopRoomsAvailable(env)) {
+    return json({ error: 'Group boss fights are temporarily unavailable', code: 'COOP_UNAVAILABLE' }, 503)
+  }
+
   try {
-    const body = await request.json()
+    const body = await request.json().catch(() => null)
     const bossId = typeof body?.bossId === 'string' ? body.bossId : null
     if (!bossId) return json({ error: 'Missing bossId', code: 'INVALID_COOP_BOSS' }, 400)
 
@@ -34,11 +40,12 @@ export async function onRequestPost({ request, env }) {
     })
 
     const row = await readSession(env, sessionId)
+    const state = row ? parseSessionState(row) : null
     return json({
       ok: true,
       sessionId,
       rejoined,
-      state: row ? parseSessionState(row) : null,
+      state: state ? projectStateForMember(state, ch.id) : null,
       current_tick: row?.current_tick ?? 0,
     })
   } catch (err) {

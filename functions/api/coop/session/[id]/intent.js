@@ -1,14 +1,17 @@
 import { requireAuth, json } from '../../../../_lib/auth.js'
 import { getOwnedCharacter } from '../../../../_lib/pvp.js'
-import { parseSessionState, readSession } from '../../../../_lib/game/coopBoss.js'
+import { callCoopRoom } from '../../../../_lib/game/coopRoom.js'
+import { parseCoopSessionId } from '../../../../_lib/game/coopBoss.js'
+import { toErrorResponse } from '../../../../_lib/game/errors.js'
 import prayersData from '../../../../../src/data/prayers.json' assert { type: 'json' }
 import spellsData from '../../../../../src/data/spells.json' assert { type: 'json' }
 
 const VALID_STANCES = new Set(['accurate', 'aggressive', 'controlled', 'defensive', 'rapid', 'longrange'])
-const MAX_QUEUED_PER_TICK = 4
 
-/** Server-side shape check. The engine ignores nonsense actions, but rejecting
- * them here keeps junk out of the intents table and gives the client a reason. */
+/** Server-side shape check, at the edge rather than in the room: the engine
+ * ignores nonsense actions, but validating here keeps junk out of the room's
+ * queue and gives the client a reason. Returns a NORMALISED action — extra
+ * fields never reach the engine. */
 export function validateCoopAction(action) {
   if (!action || typeof action !== 'object') return { error: 'invalid_action' }
   switch (action.type) {
@@ -46,33 +49,25 @@ export async function onRequestPost({ request, env, params }) {
   const ch = await getOwnedCharacter(request, env, auth.identity.id)
   if (ch.error) return json({ error: ch.error }, ch.status)
 
-  const sessionId = parseInt(params.id, 10)
-  if (!Number.isFinite(sessionId)) return json({ error: 'Invalid session id' }, 400)
+  const sessionId = parseCoopSessionId(params.id)
+  if (sessionId === null) return json({ error: 'Invalid session id' }, 400)
 
-  const row = await readSession(env, sessionId)
-  if (!row) return json({ error: 'coop_session_not_found' }, 404)
-  if (row.status !== 'active') return json({ error: 'coop_session_not_active' }, 409)
+  // Malformed JSON is a 400, not the unhandled 500 an un-guarded request.json()
+  // produced.
+  const body = await request.json().catch(() => null)
+  if (body === null) return json({ error: 'invalid_json' }, 400)
 
-  const state = parseSessionState(row)
-  const member = state?.members?.[String(ch.id)]
-  if (!member) return json({ error: 'not_a_member' }, 403)
-  if (member.status !== 'alive') return json({ error: 'member_dead' }, 409)
-
-  const body = await request.json()
   const validated = validateCoopAction(body?.action)
   if (validated.error) return json({ error: validated.error }, 400)
 
-  const targetTick = (state.tick || 0) + 1
-  const queued = await env.DB.prepare(
-    'SELECT COUNT(*) AS n FROM coop_intents WHERE session_id = ? AND character_id = ? AND applied = 0',
-  ).bind(sessionId, ch.id).first()
-  if ((Number(queued?.n) || 0) >= MAX_QUEUED_PER_TICK) return json({ error: 'too_many_queued_actions' }, 429)
-
-  const now = Date.now()
-  await env.DB.prepare(
-    `INSERT INTO coop_intents (session_id, character_id, tick_number, character_seq, action_json, applied, created_at)
-     VALUES (?, ?, ?, ?, ?, 0, ?)`,
-  ).bind(sessionId, ch.id, targetTick, now % 100000, JSON.stringify(validated.action), now).run()
-
-  return json({ ok: true, tick_number: targetTick })
+  try {
+    const { status, body: roomBody } = await callCoopRoom(env, sessionId, 'intent', {
+      characterId: ch.id,
+      action: validated.action,
+    })
+    return json(roomBody ?? { error: 'coop_room_unavailable' }, status)
+  } catch (err) {
+    const mapped = toErrorResponse(err)
+    return json(mapped.body, mapped.status)
+  }
 }

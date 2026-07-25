@@ -36,7 +36,7 @@ const COOP_ERROR_BACKOFF_MS = 2000
  * server. The client renders only: every hit is resolved server-side and
  * arrives through the tick poll, and actions are queued as intents.
  */
-export default function CoopBossScreen({ sessionId, characterId, onExit, addToast }) {
+export default function CoopBossScreen({ sessionId, characterId, onExit, onDeath, addToast }) {
   const { stats, quickPrayers, updateQuickPrayers, activeCombatSpell, updateActiveCombatSpell } = useGame()
   const [state, setState] = useState(null)
   const [error, setError] = useState(null)
@@ -50,6 +50,10 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, addToas
   const stoppedRef = useRef(false)
   const splatTimersRef = useRef(new Set())
   const leavingRef = useRef(false)
+  // Last tick this client has rendered. The room replays everything after it,
+  // so nothing is missed between polls — under the old transport a member only
+  // saw the ticks their own request happened to advance, roughly one in eight.
+  const sinceTickRef = useRef(null)
 
   const me = state?.members?.[String(characterId)] || null
   const boss = state?.boss || null
@@ -74,12 +78,23 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, addToas
     splatTimersRef.current.clear()
   }, [])
 
+  // Dying in a group fight has to cost exactly what dying to the same boss
+  // alone costs — one-life protection included. Without this the safest place
+  // in the game to fight a boss was in a group.
+  const deathReportedRef = useRef(false)
+  useEffect(() => {
+    if (me?.status !== 'dead' || deathReportedRef.current) return
+    deathReportedRef.current = true
+    onDeath?.()
+  }, [me?.status, onDeath])
+
   const poll = useCallback(async () => {
     if (stoppedRef.current) return
     try {
-      const res = await coopApi.tick(sessionId)
+      const res = await coopApi.tick(sessionId, sinceTickRef.current ?? undefined)
       if (stoppedRef.current) return
       if (res.state) setState(res.state)
+      if (Number.isFinite(res.current_tick)) sinceTickRef.current = res.current_tick
       if (res.events?.length) {
         emitXpDrops(xpDropsFromCombatEvents(res.events, characterId))
 
@@ -94,23 +109,21 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, addToas
             addToast?.(describeCoopEquipRefusal(ev), 'error')
           }
         }
-      }
-      // Read names off the response, not the render closure — this callback is
-      // captured once for the life of the session, so anything from render is
-      // stale by the time a kill lands.
-      if (res.kill) {
-        const owner = res.kill.ownerCharacterId
-        const killedName = monstersData?.[res.state?.bossId]?.name || 'The boss'
-        if (Number(owner) === Number(characterId)) {
-          const granted = res.kill.settlement?.granted || []
-          setLootModal({
-            monsterName: killedName,
-            loot: granted,
-            killCount: res.kill.settlement?.killCount ?? null,
-          })
-        } else {
-          const winner = res.state?.members?.[String(owner)]
-          addToast?.(`${killedName} defeated — loot went to ${winner?.username || 'the top attacker'}.`, 'info')
+        // Read names off the response, not the render closure — this callback
+        // is captured once for the life of the session, so anything from render
+        // is stale by the time a kill lands. The kill arrives as an event in
+        // the replayed stream, so the winner sees their own loot modal whether
+        // or not their poll was the one in flight when the boss died.
+        for (const ev of res.events) {
+          if (ev.type !== 'killSettled') continue
+          const owner = ev.ownerCharacterId
+          const killedName = monstersData?.[res.state?.bossId]?.name || 'The boss'
+          if (Number(owner) === Number(characterId)) {
+            setLootModal({ monsterName: killedName, loot: ev.granted || [], killCount: ev.killCount ?? null })
+          } else {
+            const winner = res.state?.members?.[String(owner)]
+            addToast?.(`${killedName} defeated — loot went to ${winner?.username || 'the top attacker'}.`, 'info')
+          }
         }
       }
       setError(null)

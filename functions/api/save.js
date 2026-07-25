@@ -6,7 +6,7 @@ import { decodeSaveRow, gzipJsonString } from '../_lib/saveCodec.js'
 import { detectTotalLevelRegression, detectBankWipe } from '../_lib/game/saveValidation.js'
 import { stampIdleActive, stampIdleActiveStatement } from '../_lib/game/idleStamp.js'
 import { isWorldSessionLive } from '../_lib/game/worldSessions.js'
-import { isCoopSessionLive } from '../_lib/game/coopBoss.js'
+import { isCoopSessionLive, sweepStaleCoopSessions } from '../_lib/game/coopBoss.js'
 import { auditLog } from '../_lib/game/audit.js'
 
 const MAX_SAVE_BYTES = 256 * 1024 // 256 KB ceiling — current saves are well under this
@@ -158,6 +158,13 @@ async function applySaveWrite({ env, ch, identityId, body }) {
   // active PvP without forcing every routine save to do cleanup work.
   if (shouldSweepOnSave()) {
     sweepStaleRows(env).catch(() => {})
+    // Co-op has no endpoint that every player hits, so without piggybacking on
+    // the save cadence a quiet period leaves abandoned rooms — and the save
+    // locks they hold — sitting until someone next opens the boss picker.
+    // Retention (pruneCoopExhaust) deliberately stays off this path: it writes
+    // unconditionally, and the save endpoint should stay read-only when there
+    // is nothing stale to clean up.
+    sweepStaleCoopSessions(env).catch(() => {})
   }
 
   const save_data = body.save_data

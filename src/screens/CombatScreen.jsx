@@ -1300,15 +1300,26 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     setActiveCoopSession(coopSessionId)
     return () => {
       setActiveCoopSession(null)
-      resumeSaves()
       // Releasing the client-side suspension is not enough: the server holds
       // `characters.active_coop_session_id` and refuses every save until the
       // membership actually ends. Leaving via the back link already did this
       // (exitCoopFight), but navigating away with the nav bar lands here
-      // instead, and skipping it would block this character's saves for as
-      // long as anyone else keeps ticking the session.
-      if (!coopLeavingRef.current) coopApi.leave(coopSessionId).catch(() => { /* stale sweep covers it */ })
-      coopLeavingRef.current = false
+      // instead, and skipping it would block this character's saves until the
+      // member heartbeat lapses.
+      if (coopLeavingRef.current) {
+        coopLeavingRef.current = false
+        resumeSaves()
+        return
+      }
+      // Resume saving only AFTER the server has written the fight back and we
+      // have re-pulled it. Resuming first races the write-back with a push of
+      // the client's pre-fight copy, which the revision guard then rejects —
+      // correct, but it costs the player a rollback for no reason.
+      coopApi.leave(coopSessionId)
+        .then(() => pullSave())
+        .then((pulled) => (pulled?.payload ? applyCloudSave(pulled.payload, pulled.updatedAt).then(loadGame) : null))
+        .catch(() => { /* the member heartbeat lapsing covers it */ })
+        .finally(() => resumeSaves())
     }
   }, [coopSessionId])
 
@@ -1366,8 +1377,13 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       setCoopSessionId(res.sessionId)
     } catch (err) {
       const code = err?.body?.code
-      if (code === 'QUEST_REQUIRED') addToast(`Requires the quest ${monster.questRequirement?.replace(/_/g, ' ') || ''}.`, 'error')
+      // BOSS_REQUIREMENTS_NOT_MET carries the same player-ready sentence the
+      // client's own gate shows ("Complete X to fight Y"), so pass it through
+      // rather than rebuilding a worse one from the monster.
+      if (code === 'BOSS_REQUIREMENTS_NOT_MET') addToast(err?.body?.error || 'You have not unlocked this boss yet.', 'error')
       else if (code === 'CHARACTER_IN_WORLD_SESSION') addToast('You are adventuring in the World.', 'error')
+      else if (code === 'CHARACTER_IN_ACTIVE_MATCH') addToast('Finish your duel first.', 'error')
+      else if (code === 'COOP_UNAVAILABLE') addToast('Group boss fights are offline right now — fight alone for the moment.', 'error')
       else addToast(err?.message || 'Could not join the fight.', 'error')
     } finally {
       setCoopJoining(null)
@@ -2164,6 +2180,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
         characterId={parseInt(getCharacterId(), 10)}
         addToast={addToast}
         onExit={exitCoopFight}
+        onDeath={() => { if (oneLifeModeRef.current) revertOneLifeAfterDeath() }}
       />
     )
   }

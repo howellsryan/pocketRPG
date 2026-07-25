@@ -456,9 +456,17 @@ function applyCoopIntent(state, member, action, itemsData, spellsData, events) {
       if (!slot || !isConsumableFood(item)) return
       const combo = isComboConsumable(item)
       if (combo ? member.combat.comboCooldown > 0 : member.combat.eatCooldown > 0) return
-      const target = { hp: member.hp, maxHP: member.maxHP, currentHP: member.hp, stats: member.stats }
+      // activePotions has to be the member's real map, not a throwaway: a
+      // Lumira brew wipes every active buff (§4 combo food), and handing
+      // applyConsumableEffect a fresh object meant the brew silently wiped
+      // nothing here while it worked in solo and PvP.
+      const target = {
+        hp: member.hp, maxHP: member.maxHP, currentHP: member.hp, stats: member.stats,
+        activePotions: member.combat.activePotions,
+      }
       const res = applyConsumableEffect(target, item, slot.itemId, 'eat')
       member.hp = Math.min(member.maxHP, target.hp ?? target.currentHP ?? member.hp)
+      member.combat.activePotions = { ...(target.activePotions || {}) }
       if (combo) {
         member.combat.comboCooldown = COOP_EAT_TICK_COST
       } else {

@@ -14,6 +14,7 @@
 
 import { requireAuth, json } from '../../../_lib/auth.js'
 import { getOwnedCharacter, sweepStaleRows, assertNotInActiveMatch } from '../../../_lib/pvp.js'
+import { assertNotInCoopSession } from '../../../_lib/game/coopBoss.js'
 import { readCombatLevel } from '../../../_lib/combatLevel.js'
 import { buildInvitationLists } from '../../../_lib/pvpLobby.js'
 import { createMatch } from '../../../_lib/pvpMatchCreate.js'
@@ -54,6 +55,10 @@ export async function onRequestPost({ request, env }) {
 
   const lock = await assertNotInActiveMatch(env, ch.id)
   if (lock) return lock
+  // A co-op boss fight owns this save the same way a PvP match does: the room
+  // is mutating the pack tick by tick and replays its snapshot on write-back.
+  const coopLock = await assertNotInCoopSession(env, ch.id)
+  if (coopLock) return coopLock
 
   let body
   try { body = await request.json() } catch { return json({ error: 'Invalid JSON' }, 400) }

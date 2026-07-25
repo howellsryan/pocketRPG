@@ -4,13 +4,19 @@
 //
 // A character's save is locked (characters.active_coop_session_id) for the
 // duration, in the same lock class as the PvP active match and the world
-// session: the server mutates inventory tick by tick, so the idle client must
-// not write over the top of it.
+// session: the server mutates inventory tick by tick, so nothing else may write
+// the save underneath it.
+//
+// The tick loop itself does NOT live here — it runs in the CoopBossRoom Durable
+// Object (world/server/CoopBossRoom.ts). This module is the D1 side: joining,
+// leaving, the save write-back, kill settlement, and the crash-recovery sweep.
+// The room imports it exactly as the world DO imports save.js.
 
 import monstersData from '../../../src/data/monsters.json' assert { type: 'json' }
 import itemsData from '../../../src/data/items.json' assert { type: 'json' }
 import prayersData from '../../../src/data/prayers.json' assert { type: 'json' }
 import spellsData from '../../../src/data/spells.json' assert { type: 'json' }
+import questsData from '../../../src/data/quests.json' assert { type: 'json' }
 import { MAX_XP } from '../../../src/utils/constants.js'
 import {
   COOP_BOSS_IDS,
@@ -21,6 +27,8 @@ import {
   memberCount,
   removeCoopMember,
 } from '../../../src/engine/coopBossEngine.js'
+import { checkBossRequirementsPure } from '../../../src/engine/combatRequirements.js'
+import { getLevelFromXP } from '../../../src/engine/experience.js'
 import { rollMonsterRewardsById } from './monsterRewards.js'
 import { settleActionCompletion } from './actionCompletion.js'
 import { loadCharacterWithSave, writeSave } from './save.js'
@@ -30,10 +38,19 @@ import { auditLog } from './audit.js'
 
 export const COOP_ENGINE_DEPS = { itemsData, monstersData, prayersData, spellsData }
 export { COOP_BOSS_IDS }
-/** A session nobody has ticked for this long is dead and gets swept, releasing
- * its members' save locks. */
+/** A member nobody has heard from for this long is gone: their lock is released
+ * and they are written back out of the fight. Keyed per MEMBER, not per session
+ * — a session stays alive as long as anyone is in it, so a session-wide timer
+ * would leave a crashed player's save locked for as long as the others keep
+ * fighting. Mirrors WORLD_SESSION_TTL_MS. */
 export const COOP_SESSION_STALE_MS = 90 * 1000
 const JOIN_ATTEMPTS = 4
+/** Applied intents and the state blobs of ended sessions are pure exhaust once
+ * the fight is over; without a retention pass they grow without bound. */
+export const COOP_RETENTION_MS = 24 * 60 * 60 * 1000
+/** Placeholder the join path parks in active_coop_session_id between claiming
+ * the character and knowing which room they landed in. */
+const LOCK_PENDING = -1
 
 export function isCoopBoss(bossId) {
   return typeof bossId === 'string' && COOP_BOSS_IDS.has(bossId) && monstersData?.[bossId]?.boss === true
@@ -49,8 +66,17 @@ export function coopBossSummary(bossId) {
     hitpoints: monster.hitpoints,
     maxHit: monster.maxHit,
     questRequirement: monster.questRequirement ?? null,
+    slayerRequirement: monster.slayerRequirement ?? null,
     maxMembers: COOP_MAX_MEMBERS,
   }
+}
+
+/** Strict session id from a route param. parseInt happily accepted "12abc" and
+ * negative ids; a room key has to be exactly a positive integer. */
+export function parseCoopSessionId(raw) {
+  if (typeof raw !== 'string' || !/^[0-9]+$/.test(raw)) return null
+  const id = Number(raw)
+  return Number.isSafeInteger(id) && id > 0 ? id : null
 }
 
 export function parseSessionState(row) {
@@ -63,42 +89,107 @@ export function parseSessionState(row) {
 
 export async function readSession(env, sessionId) {
   return env.DB.prepare(
-    `SELECT id, boss_id, status, member_count, current_tick, state_json, last_tick_at, created_at, ended_at
+    `SELECT id, boss_id, status, member_count, current_tick, state_json, last_tick_at, created_at, ended_at, kill_seq
        FROM coop_boss_sessions WHERE id = ?`,
   ).bind(sessionId).first()
 }
 
 export async function readMembership(env, sessionId, characterId) {
   return env.DB.prepare(
-    'SELECT session_id, character_id, joined_at, left_at FROM coop_session_members WHERE session_id = ? AND character_id = ?',
+    'SELECT session_id, character_id, joined_at, left_at, last_seen_at FROM coop_session_members WHERE session_id = ? AND character_id = ?',
   ).bind(sessionId, characterId).first()
 }
 
 export async function activeSessionIdFor(env, characterId) {
   const row = await env.DB.prepare('SELECT active_coop_session_id FROM characters WHERE id = ?').bind(characterId).first()
-  return row?.active_coop_session_id ?? null
+  const id = row?.active_coop_session_id ?? null
+  return id === LOCK_PENDING ? null : id
 }
 
-/** Save-lock predicate for /api/save, mirroring isWorldSessionLive. */
+/** Marks a member as still present. The save lock reads this, so it has to be
+ * bumped by every path that proves the player is still in the fight. */
+export async function touchCoopMember(env, sessionId, characterId, now = Date.now()) {
+  await env.DB.prepare(
+    'UPDATE coop_session_members SET last_seen_at = ? WHERE session_id = ? AND character_id = ? AND left_at IS NULL',
+  ).bind(now, sessionId, characterId).run()
+}
+
+/**
+ * Save-lock predicate for /api/save and every other server path that writes the
+ * save, mirroring isWorldSessionLive.
+ *
+ * Keyed on the MEMBER's own heartbeat: a session refreshed by seven other
+ * players must not keep an eighth player — whose tab crashed — locked out of
+ * their own save. COALESCE keeps sessions created before migration 0032 (no
+ * per-member heartbeat yet) locked on the session clock rather than instantly
+ * unlocked.
+ */
 export async function isCoopSessionLive(env, characterId, now = Date.now()) {
+  if (!env?.DB || !Number.isFinite(Number(characterId))) return false
   const row = await env.DB.prepare(
-    `SELECT s.last_tick_at FROM characters c
+    `SELECT COALESCE(m.last_seen_at, s.last_tick_at) AS seen_at
+       FROM characters c
        JOIN coop_boss_sessions s ON s.id = c.active_coop_session_id
+       JOIN coop_session_members m ON m.session_id = s.id AND m.character_id = c.id AND m.left_at IS NULL
       WHERE c.id = ? AND s.status = 'active'`,
-  ).bind(characterId).first()
+  ).bind(Number(characterId)).first()
   if (!row) return false
-  return now - (Number(row.last_tick_at) || 0) < COOP_SESSION_STALE_MS
+  return now - (Number(row.seen_at) || 0) < COOP_SESSION_STALE_MS
 }
 
-/** Releases members of sessions nobody has ticked for a while. Without this a
- * client that closes its tab mid-fight would leave its save locked forever. */
+/**
+ * Refuses an action while a co-op fight owns this character, the same shape
+ * assertNotInActiveMatch returns. Every server path that writes the save has to
+ * call this: the room is mutating that save's inventory and XP tick by tick,
+ * and the write-back replaces the pack wholesale, so a concurrent write is
+ * either lost or — worse — rolled back into a duplicate.
+ */
+export async function assertNotInCoopSession(env, characterId, now = Date.now()) {
+  if (!(await isCoopSessionLive(env, characterId, now))) return null
+  return new Response(
+    JSON.stringify({ error: 'character_in_coop_session', code: 'CHARACTER_IN_COOP_SESSION' }),
+    { status: 409, headers: { 'Content-Type': 'application/json' } },
+  )
+}
+
+async function ownerIdFor(env, characterId) {
+  const row = await env.DB.prepare('SELECT owner_id FROM characters WHERE id = ?').bind(characterId).first()
+  return row?.owner_id ?? null
+}
+
+/**
+ * Releases sessions whose room is gone — a Durable Object evicted with nobody
+ * left to wake it, or a session stranded by a deploy. Members are written back
+ * before the lock is released, so a dropped connection costs the fight, never
+ * the XP earned in it.
+ *
+ * Live sessions eject their own stale members inside the room, which sees each
+ * member's heartbeat directly; this is only the crash path behind that.
+ */
 export async function sweepStaleCoopSessions(env, now = Date.now()) {
   const cutoff = now - COOP_SESSION_STALE_MS
   const stale = await env.DB.prepare(
-    "SELECT id FROM coop_boss_sessions WHERE status = 'active' AND last_tick_at < ?",
+    "SELECT id, boss_id, state_json FROM coop_boss_sessions WHERE status = 'active' AND last_tick_at < ?",
   ).bind(cutoff).all()
-  const ids = (stale.results || []).map((r) => r.id)
-  if (ids.length === 0) return 0
+  const rows = stale.results || []
+  if (rows.length === 0) return 0
+
+  for (const row of rows) {
+    const state = parseSessionState(row)
+    for (const member of Object.values(state?.members || {})) {
+      try {
+        const identityId = member.ownerId ?? await ownerIdFor(env, member.characterId)
+        if (identityId == null) continue
+        await writeBackMember(env, { characterId: member.characterId, identityId, member, sessionId: row.id })
+      } catch (err) {
+        console.error('[PocketRPG][coop] sweep write-back failed', {
+          sessionId: row.id, characterId: member?.characterId, message: err?.message || err,
+        })
+      }
+    }
+  }
+
+  const ids = rows.map((r) => r.id)
   const placeholders = ids.map(() => '?').join(',')
   await env.DB.batch([
     env.DB.prepare(
@@ -114,33 +205,110 @@ export async function sweepStaleCoopSessions(env, now = Date.now()) {
   return ids.length
 }
 
+/** Drops the exhaust of finished fights: applied intents, and the state blob of
+ * sessions that ended long enough ago that nobody is going to inspect them. */
+export async function pruneCoopExhaust(env, now = Date.now()) {
+  const cutoff = now - COOP_RETENTION_MS
+  await env.DB.batch([
+    env.DB.prepare('DELETE FROM coop_intents WHERE applied = 1 AND created_at < ?').bind(cutoff),
+    env.DB.prepare(
+      `UPDATE coop_boss_sessions SET state_json = '{}'
+        WHERE status != 'active' AND ended_at IS NOT NULL AND ended_at < ? AND state_json != '{}'`,
+    ).bind(cutoff),
+    // The settlement ledger only has to outlive its room — once the session is
+    // ended nothing can replay a kill against it, and one row per boss kill
+    // adds up fast at a 6-second respawn.
+    env.DB.prepare(
+      `DELETE FROM coop_kill_settlements WHERE session_id IN (
+         SELECT id FROM coop_boss_sessions WHERE status != 'active' AND ended_at IS NOT NULL AND ended_at < ?)`,
+    ).bind(cutoff),
+  ])
+}
+
+/**
+ * Open rooms for the picker. Reads the denormalised HP columns rather than
+ * state_json — the blob carries every member's full inventory, so pulling it
+ * per room to render two numbers is tens of MB on a busy boss.
+ */
 export async function listOpenSessions(env, bossId, now = Date.now()) {
   const rows = await env.DB.prepare(
-    `SELECT id, member_count, current_tick, state_json, last_tick_at
+    `SELECT id, boss_id, member_count, current_tick, boss_hp, boss_max_hp
        FROM coop_boss_sessions
       WHERE boss_id = ? AND status = 'active' AND last_tick_at >= ?
       ORDER BY member_count DESC, id ASC`,
   ).bind(bossId, now - COOP_SESSION_STALE_MS).all()
-  return (rows.results || []).map((row) => {
-    const state = parseSessionState(row)
-    return {
-      sessionId: row.id,
-      memberCount: row.member_count,
-      maxMembers: COOP_MAX_MEMBERS,
-      bossHP: state?.boss?.currentHP ?? null,
-      bossMaxHP: state?.boss?.maxHP ?? null,
-      tick: row.current_tick,
-      full: row.member_count >= COOP_MAX_MEMBERS,
-    }
-  })
+  return (rows.results || []).map(toOpenSession)
 }
 
-function questCompleted(saveObject, questId) {
-  if (!questId) return true
+/** Every boss's open rooms in ONE query. The picker asks about all 25 co-op
+ * bosses at once, so per-boss queries made it an N+1 against the hottest table. */
+export async function listAllOpenSessions(env, bossIds, now = Date.now()) {
+  const ids = [...bossIds]
+  const byBoss = new Map(ids.map((id) => [id, []]))
+  if (ids.length === 0) return byBoss
+  const placeholders = ids.map(() => '?').join(',')
+  const rows = await env.DB.prepare(
+    `SELECT id, boss_id, member_count, current_tick, boss_hp, boss_max_hp
+       FROM coop_boss_sessions
+      WHERE boss_id IN (${placeholders}) AND status = 'active' AND last_tick_at >= ?
+      ORDER BY member_count DESC, id ASC`,
+  ).bind(...ids, now - COOP_SESSION_STALE_MS).all()
+  for (const row of rows.results || []) byBoss.get(row.boss_id)?.push(toOpenSession(row))
+  return byBoss
+}
+
+function toOpenSession(row) {
+  return {
+    sessionId: row.id,
+    memberCount: row.member_count,
+    maxMembers: COOP_MAX_MEMBERS,
+    bossHP: row.boss_hp ?? null,
+    bossMaxHP: row.boss_max_hp ?? null,
+    tick: row.current_tick,
+    full: row.member_count >= COOP_MAX_MEMBERS,
+  }
+}
+
+function questIdSet(saveObject) {
   const completed = saveObject?.completedQuests
-  if (Array.isArray(completed)) return completed.includes(questId)
-  if (completed && typeof completed === 'object') return !!completed[questId]
-  return false
+  if (Array.isArray(completed)) return new Set(completed)
+  if (completed && typeof completed === 'object') {
+    return new Set(Object.keys(completed).filter((q) => completed[q]))
+  }
+  return new Set()
+}
+
+function slayerLevelOf(saveObject) {
+  const slayer = saveObject?.stats?.slayer
+  if (typeof slayer === 'number') return Math.max(1, Math.floor(slayer))
+  const level = Number(slayer?.level)
+  if (Number.isFinite(level) && level > 0) return Math.floor(level)
+  return getLevelFromXP(Number(slayer?.xp) || 0)
+}
+
+function bossKillCountsFrom(saveObject) {
+  const counts = saveObject?.bossKillCounts
+  return counts && typeof counts === 'object' ? counts : {}
+}
+
+/**
+ * The full boss gate, server-side. The client runs the same check to grey the
+ * button out, but the server grants this boss's drop table (§14) — so the
+ * Slayer level and the kill-count prerequisites have to be enforced here too,
+ * not just the quest. A crafted POST otherwise walked straight into a boss the
+ * player had not unlocked and collected its uniques.
+ */
+export function coopBossRequirementFailure(bossId, saveObject) {
+  const monster = monstersData?.[bossId]
+  if (!monster) return { code: 'INVALID_COOP_BOSS', message: 'Boss is not available co-operatively' }
+  const gate = checkBossRequirementsPure({ ...monster, id: bossId }, {
+    slayerLevel: slayerLevelOf(saveObject),
+    completedQuests: questIdSet(saveObject),
+    bossKillCounts: bossKillCountsFrom(saveObject),
+    questsData,
+  })
+  if (!gate.locked) return null
+  return { code: 'BOSS_REQUIREMENTS_NOT_MET', message: gate.reason }
 }
 
 /**
@@ -154,64 +322,85 @@ export async function joinCoopSession(env, { characterId, identityId, bossId, us
   const existing = await activeSessionIdFor(env, characterId)
   if (existing) {
     const row = await readSession(env, existing)
-    if (row?.status === 'active') return { sessionId: existing, rejoined: true }
+    if (row?.status === 'active') {
+      await touchCoopMember(env, existing, characterId, now)
+      return { sessionId: existing, rejoined: true }
+    }
     await env.DB.prepare('UPDATE characters SET active_coop_session_id = NULL WHERE id = ?').bind(characterId).run()
   }
 
   const { saveObject, saveRevision } = await loadCharacterWithSave(env, characterId, identityId)
-  const monster = monstersData[bossId]
-  if (!questCompleted(saveObject, monster?.questRequirement)) {
-    throw new GameApiError('QUEST_REQUIRED', 'Quest requirement not met', 403)
-  }
+  const gate = coopBossRequirementFailure(bossId, saveObject)
+  if (gate) throw new GameApiError(gate.code, gate.message, 403)
 
-  const member = createCoopMember({ characterId, username, savePayload: saveObject, itemsData, now })
+  const monster = monstersData[bossId]
 
   // The session snapshot becomes the authority on this character's inventory
   // and equipment until they leave, so bump the revision now: any save the
-  // idle client had in flight is stale from this point on.
-  await writeSave(env, characterId, saveObject, saveRevision)
+  // idle client had in flight is stale from this point on. The revision the
+  // write lands on is stamped onto the member — every write-back checks it, so
+  // a save that changed underneath the fight is refused rather than rolled back
+  // (a snapshot replayed over a changed save IS an item duplication).
+  const written = await writeSave(env, characterId, saveObject, saveRevision)
+  const member = createCoopMember({ characterId, username, savePayload: saveObject, itemsData, now })
+  member.saveRevision = written.saveRevision
+  member.ownerId = identityId
 
-  // Claiming a slot races other joiners: the optimistic UPDATE fails if the
-  // session ticked or filled up in between, so re-pick and try again. Bounded,
-  // and never re-runs the writeSave above — its revision is already spent.
-  let sessionId = null
-  for (let attempt = 0; attempt < JOIN_ATTEMPTS && sessionId === null; attempt++) {
-    const open = await listOpenSessions(env, bossId, now)
-    const target = open.find((s) => !s.full)
-
-    if (!target) {
-      const fresh = addCoopMember(createCoopBossState(bossId, monstersData, now), member)
-      const res = await env.DB.prepare(
-        `INSERT INTO coop_boss_sessions (boss_id, status, member_count, created_at, current_tick, state_json, last_tick_at)
-         VALUES (?, 'active', 1, ?, 0, ?, ?)`,
-      ).bind(bossId, now, JSON.stringify(fresh), now).run()
-      sessionId = res.meta.last_row_id
-      break
-    }
-
-    const row = await readSession(env, target.sessionId)
-    const state = row ? parseSessionState(row) : null
-    if (!state || row.status !== 'active' || memberCount(state) >= COOP_MAX_MEMBERS) continue
-
-    const nextState = addCoopMember(state, member)
-    const res = await env.DB.prepare(
-      `UPDATE coop_boss_sessions SET state_json = ?, member_count = ?
-        WHERE id = ? AND status = 'active' AND current_tick = ? AND member_count < ?`,
-    ).bind(JSON.stringify(nextState), memberCount(nextState), row.id, row.current_tick, COOP_MAX_MEMBERS).run()
-    if (res.meta.changes) sessionId = row.id
-  }
-  if (sessionId === null) throw new GameApiError('COOP_JOIN_CONTENDED', 'Could not join the fight — try again', 409)
-
+  // Claim the character BEFORE putting them in a room. The other order leaves a
+  // member inside a fight they hold no lock for whenever the lock is contended
+  // — ticked by the server, burning their snapshot supplies, with no session id
+  // on the client to leave with, recoverable only by the sweep.
   const lock = await env.DB.prepare(
     'UPDATE characters SET active_coop_session_id = ? WHERE id = ? AND active_coop_session_id IS NULL',
-  ).bind(sessionId, characterId).run()
+  ).bind(LOCK_PENDING, characterId).run()
   if (!lock.meta.changes) throw new GameApiError('CHARACTER_IN_COOP_SESSION', 'Already in a boss fight', 409)
 
+  let sessionId = null
+  try {
+    // Claiming a slot races other joiners: the optimistic UPDATE fails if the
+    // session ticked or filled up in between, so re-pick and try again.
+    for (let attempt = 0; attempt < JOIN_ATTEMPTS && sessionId === null; attempt++) {
+      const open = await listOpenSessions(env, bossId, now)
+      const target = open.find((s) => !s.full)
+
+      if (!target) {
+        const fresh = addCoopMember(createCoopBossState(bossId, monstersData, now), member)
+        const res = await env.DB.prepare(
+          `INSERT INTO coop_boss_sessions (boss_id, status, member_count, created_at, current_tick, state_json, last_tick_at, boss_hp, boss_max_hp, kill_seq)
+           VALUES (?, 'active', 1, ?, 0, ?, ?, ?, ?, 0)`,
+        ).bind(bossId, now, JSON.stringify(fresh), now, fresh.boss.currentHP, fresh.boss.maxHP).run()
+        sessionId = res.meta.last_row_id
+        break
+      }
+
+      const row = await readSession(env, target.sessionId)
+      const state = row ? parseSessionState(row) : null
+      if (!state || row.status !== 'active' || memberCount(state) >= COOP_MAX_MEMBERS) continue
+
+      const nextState = addCoopMember(state, member)
+      const res = await env.DB.prepare(
+        `UPDATE coop_boss_sessions SET state_json = ?, member_count = ?
+          WHERE id = ? AND status = 'active' AND current_tick = ? AND member_count < ?`,
+      ).bind(JSON.stringify(nextState), memberCount(nextState), row.id, row.current_tick, COOP_MAX_MEMBERS).run()
+      if (res.meta.changes) sessionId = row.id
+    }
+    if (sessionId === null) throw new GameApiError('COOP_JOIN_CONTENDED', 'Could not join the fight — try again', 409)
+  } catch (err) {
+    await env.DB.prepare(
+      'UPDATE characters SET active_coop_session_id = NULL WHERE id = ? AND active_coop_session_id = ?',
+    ).bind(characterId, LOCK_PENDING).run()
+    throw err
+  }
+
   await env.DB.prepare(
-    `INSERT INTO coop_session_members (session_id, character_id, joined_at, left_at)
-     VALUES (?, ?, ?, NULL)
-     ON CONFLICT(session_id, character_id) DO UPDATE SET joined_at = excluded.joined_at, left_at = NULL`,
-  ).bind(sessionId, characterId, now).run()
+    'UPDATE characters SET active_coop_session_id = ? WHERE id = ? AND active_coop_session_id = ?',
+  ).bind(sessionId, characterId, LOCK_PENDING).run()
+
+  await env.DB.prepare(
+    `INSERT INTO coop_session_members (session_id, character_id, joined_at, left_at, last_seen_at)
+     VALUES (?, ?, ?, NULL, ?)
+     ON CONFLICT(session_id, character_id) DO UPDATE SET joined_at = excluded.joined_at, left_at = NULL, last_seen_at = excluded.last_seen_at`,
+  ).bind(sessionId, characterId, now, now).run()
 
   await auditLog(env, 'coop.session.join', { sessionId, characterId, bossId }, { swallow: true })
   return { sessionId, rejoined: false }
@@ -250,18 +439,62 @@ export function applyMemberToSave(saveObject, member) {
 }
 
 /**
+ * The tripwire behind every save write-back.
+ *
+ * The room's copy of this character's pack is authoritative only for as long as
+ * nothing else has written the save. If something did, the write-back is
+ * REFUSED outright rather than reconciled: replaying the snapshot restores
+ * items sold in the meantime, and writing the XP alone refunds every supply
+ * consumed in the fight. Both directions duplicate, so the safe answer is to
+ * write nothing and let the audit trail show it.
+ *
+ * Every save-writing endpoint calls assertNotInCoopSession, so in normal play
+ * this never trips — it is the backstop for a missed lock, not a routine path.
+ */
+export function isMemberSaveOwned(member, saveRevision) {
+  const stamped = Number(member?.saveRevision)
+  return Number.isFinite(stamped) && stamped === Number(saveRevision)
+}
+
+/**
  * Persists one member's fight results and releases their save lock. Loot for a
  * kill is granted separately (settleCoopKill) so a member leaving mid-fight can
  * never be handed drops.
  */
 export async function writeBackMember(env, { characterId, identityId, member, sessionId }) {
-  const { saveObject, saveRevision } = await loadCharacterWithSave(env, characterId, identityId)
-  const next = applyMemberToSave(saveObject, member)
-  const write = await writeSave(env, characterId, next, saveRevision)
-  await env.DB.prepare(
+  const releaseLock = () => env.DB.prepare(
     'UPDATE characters SET active_coop_session_id = NULL WHERE id = ? AND active_coop_session_id = ?',
   ).bind(characterId, sessionId).run()
-  return write
+
+  const { saveObject, saveRevision } = await loadCharacterWithSave(env, characterId, identityId)
+  if (!isMemberSaveOwned(member, saveRevision)) {
+    await auditLog(env, 'coop.writeback.diverged', {
+      sessionId, characterId, expected: member?.saveRevision ?? null, found: saveRevision,
+    }, { swallow: true })
+    await releaseLock()
+    return { ok: false, reason: 'diverged' }
+  }
+
+  const next = applyMemberToSave(saveObject, member)
+  const write = await writeSave(env, characterId, next, saveRevision)
+  member.saveRevision = write.saveRevision
+  member.xpGained = {}
+  await releaseLock()
+  return { ok: true, ...write }
+}
+
+/** Closes the membership row after the ROOM has done the write-back. Split out
+ * because the room owns the save write while it lives — this is only the D1
+ * bookkeeping that follows it. */
+export async function closeCoopMembership(env, sessionId, characterId, now = Date.now()) {
+  await env.DB.batch([
+    env.DB.prepare(
+      'UPDATE coop_session_members SET left_at = ?, last_seen_at = ? WHERE session_id = ? AND character_id = ? AND left_at IS NULL',
+    ).bind(now, now, sessionId, characterId),
+    env.DB.prepare(
+      'UPDATE characters SET active_coop_session_id = NULL WHERE id = ? AND active_coop_session_id = ?',
+    ).bind(characterId, sessionId),
+  ])
 }
 
 export async function leaveCoopSession(env, { characterId, identityId, sessionId }, now = Date.now()) {
@@ -274,18 +507,29 @@ export async function leaveCoopSession(env, { characterId, identityId, sessionId
     await writeBackMember(env, { characterId, identityId, member, sessionId })
     const nextState = removeCoopMember(state, characterId)
     const remaining = memberCount(nextState)
+    // CAS on current_tick, the same guard the room's own writes use: a tick
+    // that read this session before the leave must not resurrect the departed
+    // member, or their already-banked XP is granted a second time.
     const sessionUpdate = remaining > 0
-      ? env.DB.prepare('UPDATE coop_boss_sessions SET state_json = ?, member_count = ? WHERE id = ?')
-        .bind(JSON.stringify(nextState), remaining, sessionId)
+      ? env.DB.prepare(
+        'UPDATE coop_boss_sessions SET state_json = ?, member_count = ? WHERE id = ? AND current_tick = ?',
+      ).bind(JSON.stringify(nextState), remaining, sessionId, row.current_tick)
       : env.DB.prepare(
-        "UPDATE coop_boss_sessions SET state_json = ?, member_count = ?, status = 'completed', ended_at = ? WHERE id = ?",
-      ).bind(JSON.stringify(nextState), remaining, now, sessionId)
-    await env.DB.batch([
+        `UPDATE coop_boss_sessions SET state_json = ?, member_count = ?, status = 'completed', ended_at = ?
+          WHERE id = ? AND current_tick = ?`,
+      ).bind(JSON.stringify(nextState), remaining, now, sessionId, row.current_tick)
+    const [updateRes] = await env.DB.batch([
       sessionUpdate,
       env.DB.prepare(
-        'UPDATE coop_session_members SET left_at = ? WHERE session_id = ? AND character_id = ? AND left_at IS NULL',
-      ).bind(now, sessionId, characterId),
+        'UPDATE coop_session_members SET left_at = ?, last_seen_at = ? WHERE session_id = ? AND character_id = ? AND left_at IS NULL',
+      ).bind(now, now, sessionId, characterId),
     ])
+    // The room ticked underneath us. The membership row is already closed and
+    // the lock released, so the room drops them on the next heartbeat check —
+    // the write-back has happened exactly once either way.
+    if (!updateRes.meta.changes) {
+      await auditLog(env, 'coop.session.leave.contended', { sessionId, characterId }, { swallow: true })
+    }
   } else {
     await env.DB.prepare(
       'UPDATE characters SET active_coop_session_id = NULL WHERE id = ? AND active_coop_session_id = ?',
@@ -301,24 +545,54 @@ export async function leaveCoopSession(env, { characterId, identityId, sessionId
  * drop table, settles it onto that character's save, and records the
  * collection-log slots, kill count and audit row — the same authoritative
  * side-effects /api/actions/monster/complete performs for a solo kill.
+ *
+ * `killSeq` makes it exactly-once. The room is single-threaded, but it can be
+ * evicted mid-settlement and replay the tick on restart, so the idempotency key
+ * has to live in D1 (coop_kill_settlements) rather than in the room's memory.
  */
-export async function settleCoopKill(env, { session, state, kill }, now = Date.now()) {
+export async function settleCoopKill(env, { session, state, kill, killSeq }, now = Date.now()) {
   const ownerId = kill?.ownerCharacterId
-  if (!ownerId) return { granted: [], ownerCharacterId: null }
+  const empty = { granted: [], ownerCharacterId: null }
+  if (!ownerId) return empty
   const member = state.members?.[String(ownerId)]
-  if (!member) return { granted: [], ownerCharacterId: null }
+  if (!member) return empty
 
-  const ownerRow = await env.DB.prepare('SELECT owner_id FROM characters WHERE id = ?').bind(ownerId).first()
-  if (!ownerRow) return { granted: [], ownerCharacterId: null }
+  const seq = Math.max(0, Math.floor(Number(killSeq) || 0))
+  const claim = await env.DB.prepare(
+    `INSERT INTO coop_kill_settlements (session_id, kill_seq, character_id, boss_id, settled_at)
+     VALUES (?, ?, ?, ?, ?)
+     ON CONFLICT(session_id, kill_seq) DO NOTHING`,
+  ).bind(session.id, seq, ownerId, session.boss_id, now).run()
+  if (!claim.meta.changes) {
+    // Already settled — a replayed tick after the room restarted. Hand back
+    // what the first settlement granted rather than rolling the table again.
+    const prior = await env.DB.prepare(
+      'SELECT character_id, granted_json FROM coop_kill_settlements WHERE session_id = ? AND kill_seq = ?',
+    ).bind(session.id, seq).first()
+    let granted = []
+    try { granted = JSON.parse(prior?.granted_json || '[]') } catch { granted = [] }
+    return { ownerCharacterId: prior?.character_id ?? ownerId, granted, replayed: true }
+  }
+
+  const identityId = member.ownerId ?? await ownerIdFor(env, ownerId)
+  if (!identityId) return empty
+
+  const { saveObject, saveRevision } = await loadCharacterWithSave(env, ownerId, identityId)
+  // Same tripwire as writeBackMember: the winner is still fighting, so their
+  // live supplies and XP have to land in the same write as the loot. If the
+  // save moved underneath the fight, grant nothing rather than write a snapshot
+  // over it.
+  if (!isMemberSaveOwned(member, saveRevision)) {
+    await auditLog(env, 'coop.writeback.diverged', {
+      sessionId: session.id, characterId: ownerId, expected: member?.saveRevision ?? null, found: saveRevision, at: 'kill',
+    }, { swallow: true })
+    return { ...empty, diverged: true }
+  }
 
   const rewards = rollMonsterRewardsById(session.boss_id, Math.random, false)
-  const { saveObject, saveRevision } = await loadCharacterWithSave(env, ownerId, ownerRow.owner_id)
-  // The owner is still fighting, so their live session supplies/XP must land in
-  // the same write as the loot — otherwise whichever write lands second wins and
-  // silently discards the other.
   const withSession = applyMemberToSave(saveObject, member)
   const settled = settleActionCompletion(withSession, { sourceType: 'monsters', sourceId: session.boss_id, rewards })
-  await writeSave(env, ownerId, withSession, saveRevision)
+  const write = await writeSave(env, ownerId, withSession, saveRevision)
 
   // The winner keeps fighting, and their session inventory is what gets written
   // back when they eventually leave — so drops that landed in the pack have to
@@ -326,6 +600,7 @@ export async function settleCoopKill(env, { session, state, kill }, now = Date.n
   // by the write above, so clear it rather than granting it twice.
   member.inventory = Array.isArray(withSession.inventory) ? withSession.inventory.map((s) => (s ? { ...s } : null)) : []
   member.xpGained = {}
+  member.saveRevision = write.saveRevision
 
   const grantedItemIds = [...new Set((settled.granted || []).map((g) => g?.itemId).filter(Boolean))]
   const logged = grantedItemIds.filter((itemId) => isValidEntry('monsters', session.boss_id, itemId))
@@ -349,8 +624,13 @@ export async function settleCoopKill(env, { session, state, kill }, now = Date.n
      RETURNING kill_count`,
   ).bind(ownerId, session.boss_id, now).first()
 
+  await env.DB.prepare(
+    'UPDATE coop_kill_settlements SET granted_json = ? WHERE session_id = ? AND kill_seq = ?',
+  ).bind(JSON.stringify(settled.granted || []), session.id, seq).run()
+
   await auditLog(env, 'coop.boss.kill', {
     sessionId: session.id,
+    killSeq: seq,
     bossId: session.boss_id,
     ownerCharacterId: ownerId,
     granted: settled.granted?.length ?? 0,
