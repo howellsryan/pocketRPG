@@ -13,14 +13,14 @@ export default function SellConfirmModal({ itemName, quantity, totalValue, onCan
           <button
             onClick={onCancel}
             disabled={busy}
-            class="min-h-[44px] py-2.5 rounded-lg bg-[var(--fm-parch-lo)] text-[var(--color-parchment)] font-semibold text-sm active:opacity-80 border border-[var(--fm-rule)]"
+            class="fm-btn fm-btn--sm"
           >
             Cancel
           </button>
           <button
             onClick={onConfirm}
             disabled={busy}
-            class="min-h-[44px] py-2.5 rounded-lg bg-[var(--color-blood-mid)] text-white font-semibold text-sm active:opacity-80"
+            class="fm-btn fm-btn--blood fm-btn--sm"
           >
             Sell
           </button>

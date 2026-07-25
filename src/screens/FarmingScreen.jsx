@@ -143,7 +143,7 @@ export default function FarmingScreen({ initialLocationId, onBack }) {
           ))}
           <div class="flex gap-2">
             <button onClick={() => setPlantAllOpen(false)} class="flex-1 py-2 rounded-lg bg-[var(--color-void-light)] text-[var(--color-parchment)] text-sm">Cancel</button>
-            <button disabled={!Object.values(plantSelections).some(Boolean)} onClick={confirmPlantAll} class="flex-1 py-2 rounded-lg bg-[var(--color-gold)] text-[#111] text-sm font-semibold disabled:opacity-50">Plant</button>
+            <button disabled={!Object.values(plantSelections).some(Boolean)} onClick={confirmPlantAll} class="fm-btn fm-btn--brass fm-btn--sm flex-1">Plant</button>
           </div>
         </div>
       </Modal>

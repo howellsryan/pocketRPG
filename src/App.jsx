@@ -3096,7 +3096,7 @@ function GameApp() {
           <div className="max-w-md w-full rounded-xl border border-[var(--color-void-border)] bg-[var(--color-void-light)] p-4">
             <h2 className="font-[var(--font-display)] text-[var(--color-gold)] mb-2">Cloud save unavailable</h2>
             <p className="text-sm mb-4">{cloudLoadError}</p>
-            <button onClick={() => { setGameReady(false); setCloudPhase('pending'); setCloudLoadError(null); initCloudAndSave() }} className="w-full mb-2 rounded-lg px-3 py-2 bg-[var(--color-gold)] text-black font-semibold">Retry</button>
+            <button onClick={() => { setGameReady(false); setCloudPhase('pending'); setCloudLoadError(null); initCloudAndSave() }} className="fm-btn fm-btn--brass fm-btn--sm w-full mb-2">Retry</button>
             <button onClick={forceRestart} className="w-full rounded-lg px-3 py-2 border border-[var(--color-void-border)]">Force Restart</button>
           </div>
         </div>

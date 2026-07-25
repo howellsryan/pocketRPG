@@ -4,6 +4,20 @@
   font-family: var(--font-display);
 }
 
+/* Forgemark caps corner radius at 7px (DESIGN.md §7) — retune Tailwind's own
+   scale rather than police `rounded-lg` at 250-odd call sites. `rounded-full`
+   is a literal 9999px in Tailwind and stays a pill. */
+@theme {
+  --radius-xs: 2px;
+  --radius-sm: 2px;
+  --radius-md: 4px;
+  --radius-lg: 4px;
+  --radius-xl: 7px;
+  --radius-2xl: 7px;
+  --radius-3xl: 7px;
+  --radius-4xl: 7px;
+}
+
 :root {
   --color-parchment: #f5e6c8;
   --color-parchment-dark: #e8d5a8;
@@ -120,6 +134,7 @@
   --fm-r-sm: 4px;
   --fm-r-frame: 7px;
 
+
   --fm-frame-shadow:
     0 2px 0 rgba(0,0,0,0.5),
     0 14px 28px -14px rgba(0,0,0,0.85),
@@ -138,6 +153,46 @@
   --fm-ease: cubic-bezier(0.2, 0.9, 0.3, 1);
   --fm-dur: 0.16s;
 
+  /* ── Button metal ──────────────────────────────────────────────────────
+     Every control in the game is struck from the same die. The *geometry*
+     (radius, 1px press, brass ON state, ember primary) is identical on every
+     screen; only the resting face follows the material it sits on, because a
+     vellum slab on a dark page is as wrong as an iron slab on parchment.
+     So `--fm-btn-face/-ink/-edge/-relief/-press` are surface-scoped: iron by
+     default (the dark base shell), re-pointed to vellum inside .forge-shell
+     and any other parchment container. A button rule reads the tokens and
+     stops caring which screen it is on.
+     Brass is deliberately matte — a two-stop gradient plus a 1px top light
+     line reads as struck metal, where the old glossy highlight-to-shadow ramp
+     read as gacha candy (DESIGN.md §7 The No Candy Rule). */
+  --fm-btn-vellum: linear-gradient(180deg, #f0e4c4 0%, #e2d2ab 100%);
+  --fm-btn-iron: linear-gradient(180deg, #262220 0%, #1a1714 100%);
+  --fm-btn-brass: linear-gradient(180deg, #c39a4e 0%, #ab8038 62%, #96702e 100%);
+  --fm-btn-brass-hi: linear-gradient(180deg, #cda558 0%, #b58a3f 62%, #a07a34 100%);
+  --fm-btn-royal: linear-gradient(180deg, #6c4a99 0%, #5b3a86 62%, #4a2e6f 100%);
+  --fm-btn-blood: linear-gradient(180deg, #9a2626 0%, #7f1d1d 62%, #641414 100%);
+  --fm-btn-verdigris: linear-gradient(180deg, #3a806f 0%, #2f6b5e 62%, #24564b 100%);
+  --fm-btn-woad: linear-gradient(180deg, #365a87 0%, #2c4a73 62%, #223a5c 100%);
+  /* Relief = light catching the top bevel, shade under the bottom one. Never a
+     drop shadow: buttons sit *in* the page, they do not float above it. */
+  --fm-btn-relief-vellum: inset 0 1px 0 rgba(255,250,232,0.75), inset 0 -1px 0 rgba(140,112,64,0.24);
+  --fm-btn-relief-iron: inset 0 1px 0 rgba(255,255,255,0.08), inset 0 -1px 0 rgba(0,0,0,0.5);
+  --fm-btn-relief-brass: inset 0 1px 0 rgba(255,238,196,0.45), inset 0 -1px 0 rgba(58,40,12,0.4);
+  --fm-btn-press-vellum: inset 0 2px 4px rgba(74,54,28,0.38);
+  --fm-btn-press-iron: inset 0 2px 5px rgba(0,0,0,0.6);
+  --fm-btn-ink-on: #2a1e0c;
+
+  /* Surface-scoped set — iron is the default because the base shell is dark. */
+  --fm-btn-face: var(--fm-btn-iron);
+  --fm-btn-ink: var(--fm-parch);
+  --fm-btn-sub: var(--fm-brass);
+  --fm-btn-edge: #3a332b;
+  --fm-btn-relief: var(--fm-btn-relief-iron);
+  --fm-btn-press: var(--fm-btn-press-iron);
+  --fm-btn-dead: #211e1a;
+  --fm-btn-dead-ink: #8d8478;
+  --fm-btn-dead-edge: #2b2620;
+
   /* Pre-baked bitmaps of the SVG noise sources (scripts/gen-forge-textures.mjs).
      The SVGs' feTurbulence filters re-evaluate per pixel at raster time and cost
      seconds of RasterTask as tiled page backgrounds on mobile — never point
@@ -146,6 +201,41 @@
   --fm-tex-iron: url('/public/forge/iron.webp');
   --fm-orn-corner: url('/public/forge/corner.svg');
   --fm-orn-divider: url('/public/forge/divider.svg');
+}
+
+/* Parchment surfaces re-point the button token set to vellum, so every button
+   rule below (.fm-btn, .fm-toggle, .fm-tile, .cb-*, .wm-*) picks up the right
+   resting face from its container without a single per-screen override. Add a
+   parchment container here rather than restyling its buttons. */
+.forge-shell,
+.fm-parch,
+.wm-actmodal-panel,
+.clog-sheet:not(.is-done),
+.cb-qa,
+.fm-on-parch {
+  --fm-btn-face: var(--fm-btn-vellum);
+  --fm-btn-ink: var(--fm-ink);
+  --fm-btn-sub: var(--fm-ink-faint);
+  --fm-btn-edge: var(--fm-rule);
+  --fm-btn-relief: var(--fm-btn-relief-vellum);
+  --fm-btn-press: var(--fm-btn-press-vellum);
+  --fm-btn-dead: #cfbd99;
+  --fm-btn-dead-ink: var(--fm-ink-soft);
+  --fm-btn-dead-edge: #9c7c50;
+}
+
+/* Dark panels nested inside a parchment screen flip back to iron. */
+.fm-on-iron,
+.clog-sheet.is-done {
+  --fm-btn-face: var(--fm-btn-iron);
+  --fm-btn-ink: var(--fm-parch);
+  --fm-btn-sub: var(--fm-brass);
+  --fm-btn-edge: #3a332b;
+  --fm-btn-relief: var(--fm-btn-relief-iron);
+  --fm-btn-press: var(--fm-btn-press-iron);
+  --fm-btn-dead: #211e1a;
+  --fm-btn-dead-ink: #8d8478;
+  --fm-btn-dead-edge: #2b2620;
 }
 
 /* Opt-in per screen — wrap a screen's own root element in .forge-shell (see
@@ -257,29 +347,118 @@
 .fm-lore { font-family: var(--fm-fell); font-style: italic; color: var(--fm-ink-soft); line-height: 1.5; }
 .fm-num { font-family: var(--fm-num); font-variant-numeric: tabular-nums; }
 
+/* ════════════════════════════════════════════════════════════════════════
+   BUTTONS — one pressed-metal language for every control in the game.
+   Three primitives cover the whole surface area:
+     .fm-btn    — action buttons          (ember | brass | iron | ghost | blood)
+     .fm-toggle — on/off + segmented sets (idle toggles, stances, tabs, filters)
+     .fm-tile   — selection cards         (quick-action slots, prayer tiles)
+   Shared contract, so a control behaves the same wherever it appears:
+     · resting = vellum key face on parchment, iron face on dark
+     · ON      = matte struck brass, ink text — never a glow, never a gloss
+     · press   = translateY(1px) + inset press shadow (The Pressed Metal Rule)
+     · off     = a solid dead face with faint ink, NOT an opacity fade — a
+                 dimmed tile is illegible mush on parchment and on iron alike
+     · radius  = --fm-r-sm, tap area ≥ 44px, brass focus ring
+   Named screen classes (.cb-*, .wm-*) consume these same tokens rather than
+   re-inventing a face; add a variant here before adding a bespoke button.
+   ════════════════════════════════════════════════════════════════════════ */
+.fm-btn, .fm-toggle, .fm-tile {
+  position: relative; cursor: pointer;
+  border: 1px solid var(--fm-btn-edge); border-radius: var(--fm-r-sm);
+  background: var(--fm-btn-face); color: var(--fm-btn-ink);
+  box-shadow: var(--fm-btn-relief);
+  transition: transform var(--fm-dur) var(--fm-ease), background var(--fm-dur),
+              border-color var(--fm-dur), box-shadow var(--fm-dur), color var(--fm-dur);
+}
+.fm-btn:hover, .fm-toggle:hover, .fm-tile:hover { border-color: var(--fm-brass); }
+.fm-btn:active, .fm-toggle:active, .fm-tile:active { transform: translateY(1px); box-shadow: var(--fm-btn-press); }
+.fm-btn:focus-visible, .fm-toggle:focus-visible, .fm-tile:focus-visible { outline: 2px solid var(--fm-brass); outline-offset: 2px; }
+.fm-btn:disabled, .fm-toggle:disabled, .fm-tile:disabled,
+.fm-toggle.is-locked, .fm-tile.is-locked {
+  background: var(--fm-btn-dead); background-image: none; color: var(--fm-btn-dead-ink);
+  border-color: var(--fm-btn-dead-edge); box-shadow: none; cursor: not-allowed;
+}
+.fm-btn:disabled:active, .fm-toggle:disabled:active, .fm-tile:disabled:active,
+.fm-toggle.is-locked:active, .fm-tile.is-locked:active { transform: none; box-shadow: none; }
+.fm-btn:disabled:hover, .fm-toggle:disabled:hover, .fm-tile:disabled:hover,
+.fm-toggle.is-locked:hover, .fm-tile.is-locked:hover { border-color: var(--fm-btn-dead-edge); }
+
 .fm-btn {
   display: inline-flex; align-items: center; justify-content: center; gap: 9px;
   font-family: var(--fm-display); font-weight: 700; letter-spacing: 0.03em;
-  border: 1px solid #000; border-radius: var(--fm-r-sm); cursor: pointer;
-  padding: 12px 22px; font-size: 16px; position: relative;
-  transition: transform var(--fm-dur) var(--fm-ease), filter var(--fm-dur), box-shadow var(--fm-dur);
+  padding: 12px 22px; font-size: 16px; min-height: 44px;
 }
-.fm-btn:active { transform: translateY(1px); }
 .fm-btn--ember {
-  color: #2a0f02; background: var(--fm-ember-face);
-  box-shadow: inset 0 1px 0 rgba(255,220,180,0.55), inset 0 -2px 4px rgba(120,40,8,0.6), 0 4px 14px -6px rgba(194,65,12,0.7);
-  text-shadow: 0 1px 0 rgba(255,210,160,0.4);
+  color: #2a0f02; background: var(--fm-ember-face); border-color: var(--fm-ember-deep);
+  box-shadow: inset 0 1px 0 rgba(255,220,180,0.5), inset 0 -1px 0 rgba(90,30,4,0.55);
+  text-shadow: 0 1px 0 rgba(255,210,160,0.35);
 }
-.fm-btn--ember:hover { filter: brightness(1.07); box-shadow: inset 0 1px 0 rgba(255,220,180,0.6), 0 7px 20px -6px rgba(240,116,42,0.8); }
+/* The one glow in the system (DESIGN.md §5) — primary action only. */
+.fm-btn--ember:hover { border-color: var(--fm-ember-deep); box-shadow: inset 0 1px 0 rgba(255,220,180,0.55), 0 6px 18px -8px rgba(240,116,42,0.75); }
+.fm-btn--brass, .fm-btn.is-on {
+  color: var(--fm-btn-ink-on); background: var(--fm-btn-brass); border-color: var(--fm-brass-lo);
+  box-shadow: var(--fm-btn-relief-brass);
+}
+.fm-btn--brass:hover, .fm-btn.is-on:hover { border-color: var(--fm-brass-lo); background: var(--fm-btn-brass-hi); }
 .fm-btn--iron {
-  color: var(--fm-parch); background-color: #221f1b; background-image: var(--fm-tex-iron); background-size: 200px;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.07), 0 3px 10px -6px rgba(0,0,0,0.8);
+  color: var(--fm-parch); background: var(--fm-btn-iron); border-color: #000;
+  box-shadow: var(--fm-btn-relief-iron);
 }
-.fm-btn--iron:hover { color: var(--fm-brass-hi); }
-.fm-btn--ghost { background: transparent; border-color: var(--fm-rule); color: var(--fm-ink); font-family: var(--fm-serif); font-weight: 600; }
-.fm-btn--ghost:hover { border-color: var(--fm-ink-soft); background: rgba(74,54,28,0.08); }
+.fm-btn--iron:hover { color: var(--fm-brass-hi); border-color: var(--fm-brass-lo); }
+.fm-btn--iron:active { box-shadow: var(--fm-btn-press-iron); }
+.fm-btn--blood { color: #f7e4dc; background: var(--fm-btn-blood); border-color: #4d1010; box-shadow: inset 0 1px 0 rgba(255,190,175,0.2), inset 0 -1px 0 rgba(0,0,0,0.4); }
+.fm-btn--blood:hover { border-color: #4d1010; background: linear-gradient(180deg, #ab2c2c 0%, #8d2222 62%, #711818 100%); }
+.fm-btn--verdigris { color: #eaf5f1; background: var(--fm-btn-verdigris); border-color: #1c4239; box-shadow: inset 0 1px 0 rgba(190,240,225,0.2), inset 0 -1px 0 rgba(0,0,0,0.35); }
+.fm-btn--verdigris:hover { border-color: #1c4239; background: linear-gradient(180deg, #438e7c 0%, #357667 62%, #295f53 100%); }
+/* Meaning-bearing faces (DESIGN.md §3 The Meaning Is Sacred Rule): woad =
+   magic/info, royal = rare/prestige. Same metal, never decorative. */
+.fm-btn--woad { color: #e6eef8; background: var(--fm-btn-woad); border-color: #1b2e47; box-shadow: inset 0 1px 0 rgba(190,215,245,0.2), inset 0 -1px 0 rgba(0,0,0,0.38); }
+.fm-btn--woad:hover { border-color: #1b2e47; background: linear-gradient(180deg, #3d6394 0%, #315480 62%, #27436a 100%); }
+.fm-btn--royal { color: #f2ecfa; background: var(--fm-btn-royal); border-color: #3a2456; box-shadow: inset 0 1px 0 rgba(214,190,246,0.22), inset 0 -1px 0 rgba(0,0,0,0.38); }
+.fm-btn--royal:hover { border-color: #3a2456; background: linear-gradient(180deg, #7a55ab 0%, #674394 62%, #55367d 100%); }
+.fm-btn--ghost { background: transparent; background-image: none; box-shadow: none; border-color: var(--fm-btn-edge); color: var(--fm-btn-ink); font-family: var(--fm-serif); font-weight: 600; }
+.fm-btn--ghost:hover { border-color: var(--fm-brass); }
 .fm-btn--lg { font-size: 18px; padding: 15px 30px; }
-.fm-btn--sm { font-size: 13px; padding: 8px 14px; }
+.fm-btn--sm { font-size: 13px; padding: 8px 14px; min-height: 40px; }
+
+/* Toggle / segment — a control whose whole job is to read ON or OFF at a
+   glance. Body face, not display face: these carry labels, not commands. */
+.fm-toggle {
+  display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+  min-height: 44px; padding: 10px 12px; text-align: center;
+  font-family: var(--fm-serif); font-weight: 700; font-size: 13px; line-height: 1.15;
+}
+.fm-toggle.is-on {
+  color: var(--fm-btn-ink-on); background: var(--fm-btn-brass);
+  border-color: var(--fm-brass-lo); box-shadow: var(--fm-btn-relief-brass);
+}
+.fm-toggle.is-on:hover { border-color: var(--fm-brass-lo); }
+.fm-toggle--sm { min-height: 44px; padding: 7px 10px; font-size: 12px; }
+.fm-toggle__n { font-family: var(--fm-num); font-variant-numeric: tabular-nums; font-size: 11px; font-weight: 600; color: var(--fm-btn-sub); }
+.fm-toggle.is-on .fm-toggle__n { color: var(--fm-brass-lo); }
+/* Stacked label-over-count form used by tab strips. */
+.fm-toggle--stack { flex-direction: column; gap: 2px; padding: 6px 6px; }
+
+/* Tile — a selection card in a grid (item slot, prayer, spell). Same metal,
+   card proportions: icon, name, then a tabular sub-value. */
+.fm-tile {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+  min-width: 0; min-height: 46px; padding: 7px 4px 6px; text-align: center;
+}
+.fm-tile.is-on, .fm-tile.is-active {
+  color: var(--fm-btn-ink-on); background: var(--fm-btn-brass);
+  border-color: var(--fm-brass-lo); box-shadow: var(--fm-btn-relief-brass);
+}
+.fm-tile.is-on:hover, .fm-tile.is-active:hover { border-color: var(--fm-brass-lo); }
+.fm-tile__name { font-family: var(--fm-serif); font-weight: 700; font-size: 10px; line-height: 1.1; max-width: 100%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.fm-tile__sub { font-family: var(--fm-num); font-variant-numeric: tabular-nums; font-size: 9px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--fm-btn-sub); }
+.fm-tile.is-on .fm-tile__sub, .fm-tile.is-active .fm-tile__sub { color: var(--fm-brass-lo); }
+
+@media (prefers-reduced-motion: reduce) {
+  .fm-btn, .fm-toggle, .fm-tile { transition: none; }
+  .fm-btn:active, .fm-toggle:active, .fm-tile:active { transform: none; }
+}
 
 .fm-ledger { width: 100%; }
 .fm-row { display: flex; align-items: center; gap: 12px; padding: 9px 12px; border-bottom: 1px solid var(--fm-rule); }
@@ -576,16 +755,16 @@ html, body, #app {
   .welcome-card__stats { gap: 10px; }
 }
 .rune-btn {
-  width: 44px; height: 44px; border-radius: 12px;
-  border: 1px solid rgba(212, 160, 23, 0.28);
-  background: linear-gradient(180deg, #211d14, #14110b);
+  width: 44px; height: 44px; border-radius: var(--fm-r-sm);
+  border: 1px solid var(--fm-btn-edge); background: var(--fm-btn-face); color: var(--fm-btn-ink);
   display: flex; align-items: center; justify-content: center; cursor: pointer;
-  box-shadow: inset 0 1px 0 rgba(240, 192, 64, 0.12);
-  transition: transform 0.12s ease, border-color 0.12s ease, background 0.12s ease;
+  box-shadow: var(--fm-btn-relief);
+  transition: transform var(--fm-dur) var(--fm-ease), border-color var(--fm-dur), background var(--fm-dur), box-shadow var(--fm-dur);
 }
-.rune-btn:hover { border-color: rgba(240, 192, 64, 0.55); background: linear-gradient(180deg, #2a2417, #18140c); }
-.rune-btn:active { transform: scale(0.92); }
-.rune-btn:disabled { opacity: 0.45; cursor: default; }
+.rune-btn:hover { border-color: var(--fm-brass); }
+.rune-btn:active { transform: translateY(1px); box-shadow: var(--fm-btn-press); }
+.rune-btn:focus-visible { outline: 2px solid var(--fm-brass); outline-offset: 2px; }
+.rune-btn:disabled { background: var(--fm-btn-dead); background-image: none; color: var(--fm-btn-dead-ink); border-color: var(--fm-btn-dead-edge); box-shadow: none; cursor: not-allowed; }
 
 /* Hero emblem band */
 .hero-band { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 16px 2px 6px; }
@@ -614,7 +793,7 @@ html, body, #app {
   transition: transform 0.12s ease, border-color 0.12s ease;
 }
 .skill-card:hover { border-color: rgba(240, 192, 64, 0.35); transform: translateY(-1px); }
-.skill-card:active { transform: scale(0.98); }
+.skill-card:active { transform: translateY(1px); }
 .skill-card__emblem { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 1; opacity: 0.9; }
 .skill-card__top { position: relative; z-index: 2; display: flex; align-items: center; justify-content: space-between; gap: 6px; }
 .skill-card__name { display: flex; align-items: center; gap: 7px; }
@@ -655,8 +834,7 @@ html, body, #app {
 .forge-shell .welcome-card__title { background-image: var(--fm-gilt-text); }
 .forge-shell .wstat { color: var(--fm-ink-soft); }
 .forge-shell .wstat b { color: var(--fm-ember); }
-.forge-shell .rune-btn { border-color: var(--fm-rule); background: var(--fm-parch-lo); box-shadow: var(--fm-parch-inset); }
-.forge-shell .rune-btn:hover { border-color: var(--fm-brass); background: var(--fm-parch-hi); }
+
 .forge-shell .skill-card { background: #e6d8b6; background-image: var(--fm-tex-parch); background-size: cover; border-color: var(--fm-rule); box-shadow: var(--fm-parch-inset); }
 .forge-shell .skill-card:hover { border-color: var(--fm-brass); }
 .forge-shell .skill-card__name span { color: var(--fm-ink); text-shadow: none; }
@@ -668,13 +846,12 @@ html, body, #app {
 /* Forgemark pilot — Combat screen: area/monster picker rows + stat tiles
    flip to parchment. The combat log keeps its dark terminal-feed look
    (hit/damage/loot colors are gameplay signal, not brand decoration). */
+/* Buttons (.cb-act/.cb-idle/.cb-styleseg) are NOT listed here — they carry the
+   shared button metal at their own definition, on every screen. */
 .forge-shell .cb-area,
 .forge-shell .cb-mon,
 .forge-shell .cb-kstat,
-.forge-shell .cb-stat,
-.forge-shell .cb-act:not(.is-on),
-.forge-shell .cb-idle:not(.is-on),
-.forge-shell .cb-styleseg:not(.is-on) {
+.forge-shell .cb-stat {
   background: #e6d8b6; background-image: var(--fm-tex-parch); background-size: cover;
   border-color: var(--fm-rule); box-shadow: var(--fm-parch-inset);
 }
@@ -688,7 +865,6 @@ html, body, #app {
 .forge-shell .cb-back { color: var(--fm-ember); }
 .forge-shell .cb-kstat__k, .forge-shell .cb-stat__k { color: var(--fm-ink-faint); }
 .forge-shell .cb-kstat__v, .forge-shell .cb-stat__v { color: var(--fm-ember-deep); }
-.forge-shell .cb-act:not(.is-on) { color: var(--fm-ink); }
 .forge-shell .cb-mon__kc { color: var(--fm-ember-deep); }
 
 /* Forgemark pilot — Collection Log: category cards flip to parchment (the
@@ -716,21 +892,10 @@ html, body, #app {
 .clog-sheet:not(.is-done) .clog-sheet__sub { color: var(--fm-ink-faint); }
 .clog-sheet:not(.is-done) .clog-sheet__count b { color: var(--fm-ember-deep); }
 .clog-sheet:not(.is-done) .clog-sheet__count span, .clog-sheet:not(.is-done) .clog-sheet__count em { color: var(--fm-ink-faint); }
-.forge-shell .cb-idle:not(.is-on), .forge-shell .cb-styleseg:not(.is-on) { color: var(--fm-ink); opacity: 1; }
-.forge-shell .cb-idle:not(.is-on):hover, .forge-shell .cb-styleseg:not(.is-on):hover { border-color: var(--fm-brass); }
 .forge-shell .cb-h1 { background-image: var(--fm-gilt-text); }
 
-/* Quick-actions panel (Food & Potions / Weapons / Armour tabs + item slots) —
-   was a translucent dark overlay (looks fine on a dark page, turns to grey
-   mush on parchment), so it needs the same paper treatment as everything else. */
-.forge-shell .cb-qa { background: var(--fm-parch-lo); box-shadow: var(--fm-parch-inset); border-color: var(--fm-rule); }
-.forge-shell .cb-qa__tab:not(.is-on) { background: rgba(43,33,20,0.05); color: var(--fm-ink-soft); opacity: 1; }
-.forge-shell .cb-qa__tab.is-on { color: var(--fm-ember-deep); }
-.forge-shell .cb-qa__tabn { color: var(--fm-ink-faint); opacity: 1; }
-.forge-shell .cb-qa__empty { color: var(--fm-ink-faint); opacity: 1; }
-.forge-shell .cb-slot:not(.is-active) { background: var(--fm-parch-hi); border-color: var(--fm-rule); }
-.forge-shell .cb-slot__qty, .forge-shell .cb-slot__tag { color: var(--fm-ink-faint); opacity: 1; }
-.forge-shell .cb-slot__name { color: var(--fm-ink); opacity: 1; }
+/* Quick-actions panel — the panel itself is paper; its tabs and slots carry the
+   shared button metal at their own definitions, on every screen. */
 
 /* Forgemark pilot — World Map place hub: the sheet below the banner becomes a
    genuine parchment page (this screen is where the "Forgemark" identity
@@ -751,11 +916,13 @@ html, body, #app {
 .wm-cat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 4px; }
 .wm-cat-btn {
   display: flex; align-items: center; gap: 9px; min-height: 44px; padding: 10px 12px;
-  border-radius: 10px; cursor: pointer; text-align: left;
-  background: var(--fm-parch-hi); border: 1px solid var(--fm-rule);
+  border-radius: var(--fm-r-sm); cursor: pointer; text-align: left;
+  background: var(--fm-btn-face); border: 1px solid var(--fm-btn-edge); box-shadow: var(--fm-btn-relief);
+  transition: transform var(--fm-dur) var(--fm-ease), border-color var(--fm-dur), box-shadow var(--fm-dur);
 }
 .wm-cat-btn:hover { border-color: var(--fm-brass); }
-.wm-cat-btn:active { transform: scale(0.98); }
+.wm-cat-btn:active { transform: translateY(1px); box-shadow: var(--fm-btn-press); }
+.wm-cat-btn:focus-visible { outline: 2px solid var(--fm-brass); outline-offset: 2px; }
 .wm-cat-btn__dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
 .wm-cat-btn__label { flex: 1; min-width: 0; font-family: var(--fm-serif); font-weight: 700; font-size: 13.5px; color: var(--fm-ink); }
 .wm-cat-btn__count { font-family: var(--fm-num); font-size: 12px; font-weight: 600; color: var(--fm-ink-faint); flex-shrink: 0; }
@@ -809,26 +976,28 @@ html, body, #app {
 .skill-emblem__art { position: absolute; inset: 0; }
 
 /* Armoury grid + cards */
-.armoury-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-@media (min-width: 640px) { .armoury-grid { grid-template-columns: repeat(3, 1fr); } }
-@media (min-width: 1024px) { .armoury-grid { grid-template-columns: repeat(4, 1fr); } }
+/* Armoury reads as an inventory: a dense grid of square item tiles (icon over
+   name over level), not a list of wide cards. Same tile metal as every other
+   item grid in the game. */
+.armoury-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+@media (min-width: 480px) { .armoury-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+@media (min-width: 700px) { .armoury-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
+@media (min-width: 1024px) { .armoury-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
 .armoury-card {
-  position: relative; width: 100%; min-height: 52px; display: flex; align-items: center; gap: 9px;
-  text-align: left; cursor: pointer; border-radius: 10px; padding: 8px 10px;
-  background: linear-gradient(150deg, #1a1813 0%, #100e0a 100%);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  box-shadow: 0 6px 16px -12px rgba(0, 0, 0, 0.9);
-  transition: transform 0.12s ease, border-color 0.12s ease;
+  position: relative; min-width: 0; width: 100%; min-height: 88px;
+  display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 5px;
+  text-align: center; cursor: pointer; border-radius: var(--fm-r-sm); padding: 10px 5px 8px;
+  color: var(--fm-btn-ink); background: var(--fm-btn-face);
+  border: 1px solid var(--fm-btn-edge); box-shadow: var(--fm-btn-relief);
+  transition: transform var(--fm-dur) var(--fm-ease), border-color var(--fm-dur), box-shadow var(--fm-dur);
 }
-.armoury-card:hover { border-color: rgba(240, 192, 64, 0.35); transform: translateY(-1px); }
-.armoury-card:active { transform: scale(0.98); }
-.armoury-card__name { display: block; font-size: 11px; font-weight: 700; line-height: 1.2; color: var(--color-parchment); text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7); }
-.armoury-card__tier { display: block; font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.04em; color: var(--color-gold-light); opacity: 0.8; }
-.armoury-card__spec { position: absolute; top: 4px; right: 6px; font-size: 11px; line-height: 1; filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.85)); }
-.forge-shell .armoury-card { background: var(--fm-parch); background-image: var(--fm-tex-parch); background-size: cover; border-color: var(--fm-rule); box-shadow: var(--fm-parch-inset); }
-.forge-shell .armoury-card:hover { border-color: var(--fm-brass); }
-.forge-shell .armoury-card__name { color: var(--fm-ink); text-shadow: none; }
-.forge-shell .armoury-card__tier { color: var(--fm-ember-deep); opacity: 1; }
+.armoury-card:hover { border-color: var(--fm-brass); }
+.armoury-card:active { transform: translateY(1px); box-shadow: var(--fm-btn-press); }
+.armoury-card:focus-visible { outline: 2px solid var(--fm-brass); outline-offset: 2px; }
+.armoury-card__name { display: block; font-family: var(--fm-serif); font-size: 10px; font-weight: 700; line-height: 1.15; color: inherit; max-width: 100%; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.armoury-card__tier { display: block; font-family: var(--fm-num); font-variant-numeric: tabular-nums; font-size: 9px; letter-spacing: 0.04em; color: var(--fm-btn-sub); }
+.armoury-card__spec { position: absolute; top: 3px; right: 5px; font-size: 11px; line-height: 1; }
+
 .forge-shell .section-head span { color: var(--fm-ink-faint); }
 .forge-shell .section-head__rule { background: linear-gradient(90deg, var(--fm-brass-lo), transparent); }
 
@@ -863,46 +1032,28 @@ html, body, #app {
 
 /* Idle toggle row */
 .cb-idlerow { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 9px; }
-.cb-idle {
+/* Idle toggles and the attack-style segments are the same control — a labelled
+   ON/OFF switch — so they are literally the same metal (.fm-toggle tokens). */
+.cb-idle, .cb-styleseg {
   position: relative; display: flex; align-items: center; justify-content: center; gap: 6px;
-  min-height: 44px; padding: 11px 6px; border-radius: 12px; cursor: pointer; font-family: var(--font-body);
-  font-size: 12.5px; font-weight: 800; color: var(--color-parchment);
-  background: linear-gradient(160deg, #16140e, #100d09); border: 1px solid rgba(255,255,255,0.07);
-  transition: border-color .14s, background .14s, transform .1s;
+  min-height: 44px; padding: 11px 6px; border-radius: var(--fm-r-sm); cursor: pointer;
+  font-family: var(--fm-serif); font-size: 12.5px; font-weight: 700; line-height: 1.15;
+  color: var(--fm-btn-ink); background: var(--fm-btn-face); border: 1px solid var(--fm-btn-edge);
+  box-shadow: var(--fm-btn-relief);
+  transition: transform var(--fm-dur) var(--fm-ease), background var(--fm-dur), border-color var(--fm-dur), box-shadow var(--fm-dur), color var(--fm-dur);
 }
-.cb-idle:active { transform: scale(0.97); }
-.cb-idle.is-on {
-  color: #1a1206;
-  background: linear-gradient(180deg, var(--color-gold-light), var(--color-gold) 60%, #b3851a);
-  border-color: rgba(240,192,64,0.6);
-  box-shadow: 0 6px 16px -8px rgba(212,160,23,0.6), inset 0 1px 0 rgba(255,255,255,0.4);
+.cb-idle:hover, .cb-styleseg:hover { border-color: var(--fm-brass); }
+.cb-idle:active, .cb-styleseg:active { transform: translateY(1px); box-shadow: var(--fm-btn-press); }
+.cb-idle:focus-visible, .cb-styleseg:focus-visible { outline: 2px solid var(--fm-brass); outline-offset: 2px; }
+.cb-idle.is-on, .cb-styleseg.is-on, .cb-prayon {
+  color: var(--fm-btn-ink-on); background: var(--fm-btn-brass);
+  border-color: var(--fm-brass-lo); box-shadow: var(--fm-btn-relief-brass);
 }
 .cb-idle__chk { width: 13px; height: 13px; }
 
-/* Prayer quick-tiles (desktop combat column) toggled ON — same gold fill as
-   the idle-toggle buttons (.cb-idle.is-on) so an active prayer reads clearly
-   as ON rather than a near-invisible border swap. */
-.cb-prayon {
-  background: linear-gradient(180deg, var(--color-gold-light), var(--color-gold) 60%, #b3851a);
-  border-color: rgba(240,192,64,0.6);
-  box-shadow: 0 6px 16px -8px rgba(212,160,23,0.6), inset 0 1px 0 rgba(255,255,255,0.4);
-}
-
 /* Attack-style selector */
 .cb-styles { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 18px; }
-.cb-styleseg {
-  display: flex; align-items: center; justify-content: center; gap: 6px; min-height: 44px; padding: 12px 6px; border-radius: 12px;
-  cursor: pointer; font-family: var(--font-body); font-weight: 800; font-size: 13px; color: var(--color-parchment); opacity: 0.6;
-  background: linear-gradient(160deg, #16140e, #100d09); border: 1px solid rgba(255,255,255,0.07);
-  transition: all .14s;
-}
-.cb-styleseg:active { transform: scale(0.97); }
-.cb-styleseg.is-on {
-  opacity: 1; color: #1a1206;
-  background: linear-gradient(180deg, var(--color-gold-light), var(--color-gold) 60%, #b3851a);
-  border-color: rgba(240,192,64,0.6);
-  box-shadow: 0 6px 16px -8px rgba(212,160,23,0.6), inset 0 1px 0 rgba(255,255,255,0.4);
-}
+.cb-styleseg { font-size: 13px; padding: 12px 6px; }
 
 /* Area list */
 .cb-arealist { display: flex; flex-direction: column; gap: 11px; }
@@ -928,7 +1079,7 @@ html, body, #app {
 /* Monster row */
 .cb-mon { position: relative; display: flex; align-items: center; gap: 11px; min-height: 44px; padding: 11px 12px; border-radius: 13px; cursor: pointer; background: linear-gradient(160deg, #1b1810, #120f0a); border: 1px solid rgba(255,255,255,0.06); transition: border-color .14s, transform .1s; }
 .cb-mon:hover { border-color: rgba(240,192,64,0.3); }
-.cb-mon:active { transform: scale(0.99); }
+.cb-mon:active { transform: translateY(1px); }
 .cb-mon--locked { opacity: 0.5; cursor: default; }
 .cb-mon--task { background: linear-gradient(160deg, #1f1d08, #161206); border-color: rgba(240,192,64,0.28); }
 .cb-mon__art { flex-shrink: 0; }
@@ -942,12 +1093,14 @@ html, body, #app {
 .cb-mon__meta { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; flex-shrink: 0; }
 .cb-mon__cb { font-family: var(--font-mono); font-weight: 700; font-size: 13px; color: #e0564b; }
 .cb-mon__kc { font-family: var(--font-mono); font-weight: 700; font-size: 11px; color: var(--color-gold-light); }
-.cb-mon__info { width: 44px; height: 44px; flex-shrink: 0; border-radius: 50%; background: rgba(240,192,64,0.06); border: 1px solid rgba(240,192,64,0.3); cursor: pointer; display: flex; align-items: center; justify-content: center; }
-.cb-mon__info:active { transform: scale(0.92); }
+.cb-mon__info { width: 44px; height: 44px; flex-shrink: 0; border-radius: 50%; background: var(--fm-btn-face); border: 1px solid var(--fm-btn-edge); box-shadow: var(--fm-btn-relief); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform var(--fm-dur) var(--fm-ease), border-color var(--fm-dur), box-shadow var(--fm-dur); }
+.cb-mon__info:hover { border-color: var(--fm-brass); }
+.cb-mon__info:active { transform: translateY(1px); box-shadow: var(--fm-btn-press); }
 .cb-mon__info img, .cb-mon__info svg { width: 18px; height: 18px; }
 
 /* ── Live combat view ── */
-.cb-back { background: none; border: none; cursor: pointer; font-family: var(--font-body); font-weight: 800; font-size: 15px; color: var(--color-gold-light); padding: 4px 0 12px; display: inline-flex; align-items: center; gap: 7px; min-height: 44px; }
+.cb-back { background: none; border: none; cursor: pointer; font-family: var(--fm-serif); font-weight: 700; font-size: 15px; color: var(--fm-ember-deep); padding: 4px 0 12px; display: inline-flex; align-items: center; gap: 7px; min-height: 44px; }
+.cb-back:hover { color: var(--fm-ember); }
 .cb-fight__head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 14px; }
 .cb-fight__id { display: flex; align-items: center; gap: 11px; min-width: 0; }
 .cb-fight__name { font-family: var(--font-display); font-weight: 800; font-size: 20px; color: var(--color-parchment); line-height: 1.1; overflow-wrap: anywhere; }
@@ -960,14 +1113,16 @@ html, body, #app {
 .cb-hplabel > span:first-child { flex: 1 1 auto; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .cb-hplabel__v { font-family: var(--font-mono); opacity: 0.9; white-space: nowrap; flex-shrink: 0; }
 
-.cb-logwrap { margin-top: 4px; height: 168px; overflow-y: auto; border-radius: 14px; padding: 12px 14px; background: linear-gradient(180deg, rgba(0,0,0,0.4), rgba(0,0,0,0.25)); border: 1px solid rgba(255,255,255,0.06); box-shadow: inset 0 2px 8px rgba(0,0,0,0.5); display: flex; flex-direction: column; gap: 7px; }
+/* Deliberately a dark terminal feed on a parchment page — so its type is
+   stated in light tones, not --color-parchment (which is ink under .forge-shell). */
+.cb-logwrap { margin-top: 4px; height: 168px; overflow-y: auto; border-radius: var(--fm-r-frame); color: var(--fm-parch); padding: 12px 14px; background: linear-gradient(180deg, #17140f, #100d09); border: 1px solid #000; box-shadow: inset 0 2px 8px rgba(0,0,0,0.6); display: flex; flex-direction: column; gap: 7px; }
 .cb-logwrap::-webkit-scrollbar { width: 3px; }
 .cb-logwrap::-webkit-scrollbar-thumb { background: rgba(240,192,64,0.25); border-radius: 999px; }
 .cb-logline { display: flex; align-items: flex-start; gap: 7px; font-family: var(--font-mono); font-size: 12px; line-height: 1.35; animation: cbLogIn .25s ease; }
 .cb-logline .cb-art { margin-top: 1px; flex-shrink: 0; }
 .cb-logline span { flex: 1; min-width: 0; }
 @keyframes cbLogIn { from { opacity: 0; transform: translateX(-4px); } }
-.cb-logline--sys { color: var(--color-parchment); opacity: 0.5; }
+.cb-logline--sys { color: var(--fm-parch); opacity: 0.62; }
 .cb-logline--hit { color: #7ce88a; }
 .cb-logline--dmg { color: #e8857e; }
 .cb-logline--eat { color: #7fd4ff; }
@@ -981,47 +1136,75 @@ html, body, #app {
 .cb-kstat__v { font-family: var(--font-mono); font-weight: 700; font-size: 19px; color: var(--color-gold-light); }
 
 .cb-actions { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 9px; }
-.cb-act { display: flex; align-items: center; justify-content: center; gap: 7px; min-height: 48px; padding: 13px 6px; border-radius: 13px; cursor: pointer; font-family: var(--font-body); font-weight: 800; font-size: 14px; color: var(--color-parchment); background: linear-gradient(160deg, #16140e, #100d09); border: 1px solid rgba(255,255,255,0.08); transition: transform .1s; }
-.cb-act:active { transform: scale(0.96); }
-/* Active/toggled action (an active prayer) reuses the screen's gold-fill "on"
-   language — same as .cb-idle.is-on / .cb-styleseg.is-on — so state reads
-   consistently. Special/Cast are plain buttons: normal by default, dimmed when
-   unavailable, pressed on tap. */
-.cb-act.is-on {
-  color: #1a1206;
-  background: linear-gradient(180deg, var(--color-gold-light), var(--color-gold) 60%, #b3851a);
-  border-color: rgba(240,192,64,0.6);
-  box-shadow: 0 6px 16px -8px rgba(212,160,23,0.6), inset 0 1px 0 rgba(255,255,255,0.4);
+.cb-act {
+  display: flex; align-items: center; justify-content: center; gap: 7px; min-height: 48px; padding: 13px 6px;
+  border-radius: var(--fm-r-sm); cursor: pointer; font-family: var(--fm-serif); font-weight: 700; font-size: 14px;
+  color: var(--fm-btn-ink); background: var(--fm-btn-face); border: 1px solid var(--fm-btn-edge);
+  box-shadow: var(--fm-btn-relief);
+  transition: transform var(--fm-dur) var(--fm-ease), background var(--fm-dur), border-color var(--fm-dur), box-shadow var(--fm-dur), color var(--fm-dur);
 }
-.cb-act:disabled, .cb-act--dim { opacity: 0.4; cursor: default; }
+.cb-act:hover { border-color: var(--fm-brass); }
+.cb-act:active { transform: translateY(1px); box-shadow: var(--fm-btn-press); }
+.cb-act:focus-visible { outline: 2px solid var(--fm-brass); outline-offset: 2px; }
+/* Active/toggled action (an active prayer) is struck brass, exactly as every
+   other ON control. Special/Cast are plain buttons: resting metal by default,
+   dead metal when unavailable. */
+.cb-act.is-on { color: var(--fm-btn-ink-on); background: var(--fm-btn-brass); border-color: var(--fm-brass-lo); box-shadow: var(--fm-btn-relief-brass); }
+.cb-act:disabled, .cb-act--dim {
+  background: var(--fm-btn-dead); background-image: none; color: var(--fm-btn-dead-ink);
+  border-color: var(--fm-btn-dead-edge); box-shadow: none; cursor: not-allowed;
+}
+.cb-act:disabled:active, .cb-act--dim:active { transform: none; box-shadow: none; }
 
 .cb-killflash { position: absolute; inset: 0; pointer-events: none; z-index: 5; background: radial-gradient(circle at 50% 38%, rgba(240,192,64,0.18), transparent 55%); animation: cbKF .5s ease-out forwards; }
 @keyframes cbKF { from { opacity: 1; } to { opacity: 0; } }
 
 /* ── Quick-actions inventory (replaces the combat log + Eat/Potion/Gear) ── */
-.cb-qa { margin-top: 4px; border-radius: 16px; padding: 11px; background: linear-gradient(180deg, rgba(0,0,0,0.32), rgba(0,0,0,0.18)); border: 1px solid rgba(255,255,255,0.07); box-shadow: inset 0 2px 8px rgba(0,0,0,0.4); }
+.cb-qa { margin-top: 4px; border-radius: var(--fm-r-frame); padding: 11px; background: var(--fm-parch-lo); border: 1px solid var(--fm-rule); box-shadow: var(--fm-parch-inset); }
 .cb-qa__tabs { display: flex; gap: 5px; margin-bottom: 11px; }
-.cb-qa__tab { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-height: 44px; padding: 7px 4px; border-radius: 10px; cursor: pointer; font-family: var(--font-body); font-weight: 800; font-size: 11.5px; color: var(--color-parchment); opacity: 0.55; background: rgba(255,255,255,0.03); border: 1px solid transparent; transition: all .14s; }
-.cb-qa__tab:active { transform: scale(0.96); }
-.cb-qa__tab.is-on { opacity: 1; color: var(--color-gold-light); background: linear-gradient(160deg, rgba(240,192,64,0.14), rgba(240,192,64,0.04)); border-color: rgba(240,192,64,0.4); }
-.cb-qa__tabn { font-family: var(--font-mono); font-size: 9px; font-weight: 700; opacity: 0.6; }
-.cb-qa__edit { flex: 0 0 auto; min-width: 44px; min-height: 44px; display: flex; align-items: center; justify-content: center; font-size: 15px; border-radius: 10px; cursor: pointer; background: rgba(240,192,64,0.08); border: 1px solid rgba(240,192,64,0.35); transition: transform .1s; }
-.cb-qa__edit:active { transform: scale(0.94); }
-.cb-qa__empty { grid-column: 1 / -1; text-align: center; font-size: 12px; font-weight: 600; color: var(--color-parchment); opacity: 0.4; padding: 20px 8px; }
+.cb-qa__tab, .cb-qa__edit {
+  min-height: 44px; border-radius: var(--fm-r-sm); cursor: pointer;
+  color: var(--fm-btn-ink); background: var(--fm-btn-face); border: 1px solid var(--fm-btn-edge);
+  box-shadow: var(--fm-btn-relief);
+  transition: transform var(--fm-dur) var(--fm-ease), background var(--fm-dur), border-color var(--fm-dur), box-shadow var(--fm-dur), color var(--fm-dur);
+}
+.cb-qa__tab { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 7px 4px; font-family: var(--fm-serif); font-weight: 700; font-size: 11.5px; }
+.cb-qa__tab:hover, .cb-qa__edit:hover { border-color: var(--fm-brass); }
+.cb-qa__tab:active, .cb-qa__edit:active { transform: translateY(1px); box-shadow: var(--fm-btn-press); }
+.cb-qa__tab:focus-visible, .cb-qa__edit:focus-visible { outline: 2px solid var(--fm-brass); outline-offset: 2px; }
+.cb-qa__tab.is-on { color: var(--fm-btn-ink-on); background: var(--fm-btn-brass); border-color: var(--fm-brass-lo); box-shadow: var(--fm-btn-relief-brass); }
+.cb-qa__tabn { font-family: var(--fm-num); font-variant-numeric: tabular-nums; font-size: 10px; font-weight: 600; color: var(--fm-ink-faint); }
+.cb-qa__tab.is-on .cb-qa__tabn { color: var(--fm-brass-lo); }
+.cb-qa__edit { flex: 0 0 auto; min-width: 44px; display: flex; align-items: center; justify-content: center; font-size: 15px; }
+.cb-qa__empty { grid-column: 1 / -1; text-align: center; font-family: var(--fm-serif); font-size: 12px; font-weight: 600; color: var(--fm-ink-faint); padding: 20px 8px; }
 .cb-qa__grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
-.cb-slot { position: relative; min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-height: 46px; padding: 6px 3px 5px; border-radius: 10px; cursor: pointer; background: linear-gradient(160deg, #1b1810, #120f0a); border: 1px solid rgba(255,255,255,0.07); transition: border-color .14s, transform .1s, background .14s; }
-.cb-slot:active { transform: scale(0.95); }
-.cb-slot.is-active { border-color: rgba(240,192,64,0.55); background: radial-gradient(120% 90% at 50% 0%, rgba(240,192,64,0.12), transparent 62%), linear-gradient(160deg, #1f1a10, #130f09); box-shadow: inset 0 0 18px -8px rgba(240,192,64,0.5); }
-.cb-slot.is-locked { opacity: 0.4; cursor: default; }
-.cb-slot.is-locked:active { transform: none; }
-.cb-slot__ring { position: absolute; inset: -1px; border-radius: 10px; pointer-events: none; box-shadow: 0 0 0 1.5px rgba(240,192,64,0.5), 0 0 14px -3px rgba(240,192,64,0.5); }
-.cb-slot__ping { position: absolute; inset: -1px; border-radius: 10px; pointer-events: none; box-shadow: 0 0 0 2px rgba(240,192,64,0.85), 0 0 18px -2px rgba(240,192,64,0.7); animation: cbSlotPing .3s ease-out forwards; }
-@keyframes cbSlotPing { from { opacity: 1; transform: scale(1); } to { opacity: 0; transform: scale(1.05); } }
-.cb-slot__qty { position: absolute; top: 3px; right: 4px; font-family: var(--font-mono); font-size: 8px; font-weight: 700; color: var(--color-parchment); opacity: 0.55; }
-.cb-slot__name { font-size: 8.5px; font-weight: 700; line-height: 1.05; text-align: center; color: var(--color-parchment); opacity: 0.78; max-width: 100%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
-.cb-slot.is-active .cb-slot__name { opacity: 1; }
-.cb-slot__tag { font-family: var(--font-mono); font-size: 7px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--color-parchment); opacity: 0.4; }
-.cb-slot__tag.heal { color: #7ce88a; opacity: 0.85; }
+.cb-slot {
+  position: relative; min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+  min-height: 46px; padding: 6px 3px 5px; border-radius: var(--fm-r-sm); cursor: pointer;
+  color: var(--fm-btn-ink); background: var(--fm-btn-face); border: 1px solid var(--fm-btn-edge);
+  box-shadow: var(--fm-btn-relief);
+  transition: transform var(--fm-dur) var(--fm-ease), background var(--fm-dur), border-color var(--fm-dur), box-shadow var(--fm-dur), color var(--fm-dur);
+}
+.cb-slot:hover { border-color: var(--fm-brass); }
+.cb-slot:active { transform: translateY(1px); box-shadow: var(--fm-btn-press); }
+.cb-slot:focus-visible { outline: 2px solid var(--fm-brass); outline-offset: 2px; }
+.cb-slot.is-active { color: var(--fm-btn-ink-on); background: var(--fm-btn-brass); border-color: var(--fm-brass-lo); box-shadow: var(--fm-btn-relief-brass); }
+/* Locked = dead metal with ink-faint text, never a dimmed tile — an opacity
+   fade on a parchment page makes the level requirement unreadable. */
+.cb-slot.is-locked, .cb-slot:disabled {
+  background: var(--fm-btn-dead); background-image: none; color: var(--fm-btn-dead-ink);
+  border-color: var(--fm-btn-dead-edge); box-shadow: none; cursor: not-allowed;
+}
+.cb-slot.is-locked:active, .cb-slot:disabled:active { transform: none; box-shadow: none; }
+.cb-slot.is-locked:hover, .cb-slot:disabled:hover { border-color: var(--fm-btn-dead-edge); }
+.cb-slot__ring { position: absolute; inset: -1px; border-radius: var(--fm-r-sm); pointer-events: none; box-shadow: 0 0 0 1.5px var(--fm-brass-lo); }
+.cb-slot__ping { position: absolute; inset: -1px; border-radius: var(--fm-r-sm); pointer-events: none; box-shadow: 0 0 0 2px var(--fm-ember), 0 0 14px -3px var(--fm-ember-hi); animation: cbSlotPing .3s ease-out forwards; }
+@keyframes cbSlotPing { from { opacity: 1; } to { opacity: 0; } }
+.cb-slot__qty { position: absolute; top: 3px; right: 4px; font-family: var(--fm-num); font-variant-numeric: tabular-nums; font-size: 8.5px; font-weight: 700; color: var(--fm-ink-faint); }
+.cb-slot.is-active .cb-slot__qty, .cb-slot.is-active .cb-slot__tag { color: var(--fm-brass-lo); }
+.cb-slot__name { font-family: var(--fm-serif); font-size: 9px; font-weight: 700; line-height: 1.1; text-align: center; color: inherit; max-width: 100%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.cb-slot__tag { font-family: var(--fm-num); font-variant-numeric: tabular-nums; font-size: 7.5px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--fm-ink-faint); }
+.cb-slot__tag.heal { color: var(--fm-verdigris); }
 
 /* Potion timer / active-boost badges sit on the right of the Your-HP row */
 .cb-hplabel__right { display: inline-flex; align-items: center; gap: 9px; flex-shrink: 0; }
@@ -1032,14 +1215,29 @@ html, body, #app {
 .cb-praysec { font-family: var(--font-mono); font-size: 10.5px; font-weight: 700; letter-spacing: 0.22em; text-transform: uppercase; color: var(--fm-ink-faint); margin: 16px 2px 9px; }
 .cb-praygrid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .cb-praygrid--prot { grid-template-columns: 1fr 1fr 1fr; }
-.cb-prayer { position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: 3px; min-height: 60px; padding: 11px 12px; border-radius: 13px; cursor: pointer; text-align: left; background: var(--fm-parch-hi); border: 1px solid var(--fm-rule); transition: border-color .14s, background .14s, transform .1s; }
-.cb-prayer:active { transform: scale(0.97); }
-.cb-prayer.is-on { border-color: #2e7d32; background: rgba(60,176,67,0.16); box-shadow: inset 0 0 18px -8px rgba(46,125,50,0.4); }
-.cb-prayer.is-locked { opacity: 0.4; cursor: default; }
-.cb-prayer__name { font-family: var(--font-display); font-weight: 700; font-size: 13.5px; color: var(--fm-ink); display: flex; align-items: center; gap: 6px; }
-.cb-prayer__desc { font-size: 10px; color: var(--fm-ink-soft); line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-.cb-prayer__lv { font-family: var(--font-mono); font-size: 9px; font-weight: 700; color: var(--color-gold-dim); margin-top: auto; }
-.cb-prayer__chk { position: absolute; top: 8px; right: 10px; color: #7ce88a; font-size: 13px; font-weight: 700; }
+.cb-prayer {
+  position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: 3px;
+  min-height: 60px; padding: 11px 12px; border-radius: var(--fm-r-sm); cursor: pointer; text-align: left;
+  color: var(--fm-btn-ink); background: var(--fm-btn-face); border: 1px solid var(--fm-btn-edge);
+  box-shadow: var(--fm-btn-relief);
+  transition: transform var(--fm-dur) var(--fm-ease), background var(--fm-dur), border-color var(--fm-dur), box-shadow var(--fm-dur), color var(--fm-dur);
+}
+.cb-prayer:hover { border-color: var(--fm-brass); }
+.cb-prayer:active { transform: translateY(1px); box-shadow: var(--fm-btn-press); }
+.cb-prayer:focus-visible { outline: 2px solid var(--fm-brass); outline-offset: 2px; }
+.cb-prayer.is-on { color: var(--fm-btn-ink-on); background: var(--fm-btn-brass); border-color: var(--fm-brass-lo); box-shadow: var(--fm-btn-relief-brass); }
+.cb-prayer.is-locked {
+  background: var(--fm-btn-dead); background-image: none; color: var(--fm-btn-dead-ink);
+  border-color: var(--fm-btn-dead-edge); box-shadow: none; cursor: not-allowed;
+}
+.cb-prayer.is-locked:active { transform: none; box-shadow: none; }
+.cb-prayer.is-locked:hover { border-color: var(--fm-btn-dead-edge); }
+.cb-prayer__name { font-family: var(--fm-display); font-weight: 700; font-size: 13.5px; color: inherit; display: flex; align-items: center; gap: 6px; }
+.cb-prayer__desc { font-family: var(--fm-serif); font-size: 10px; color: var(--fm-ink-soft); line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.cb-prayer.is-on .cb-prayer__desc, .cb-prayer.is-locked .cb-prayer__desc { color: inherit; }
+.cb-prayer__lv { font-family: var(--fm-num); font-variant-numeric: tabular-nums; font-size: 9.5px; font-weight: 700; color: var(--fm-ink-faint); margin-top: auto; }
+.cb-prayer.is-on .cb-prayer__lv { color: var(--fm-brass-lo); }
+.cb-prayer__chk { position: absolute; top: 8px; right: 10px; color: var(--fm-ember-deep); font-size: 13px; font-weight: 700; }
 
 /* Attack-style / weakness chip */
 .cb-stylechip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 9px; border-radius: 999px; border: 1px solid; font-size: 11px; font-weight: 800; letter-spacing: 0.02em; font-family: var(--font-body); white-space: nowrap; }
@@ -1145,8 +1343,9 @@ html, body, #app {
 .cb-reqs { display: flex; flex-wrap: wrap; gap: 7px; }
 .cb-req { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; color: var(--color-parchment); opacity: 0.8; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 999px; padding: 6px 11px; }
 .cb-req img, .cb-req svg { width: 13px; height: 13px; }
-.cb-raid__enter { margin-top: 14px; flex-shrink: 0; width: 100%; min-height: 48px; padding: 14px; border: none; cursor: pointer; border-radius: 14px; font-family: var(--font-display); font-weight: 800; font-size: 16px; letter-spacing: 0.03em; color: #1a1206; background: linear-gradient(180deg, var(--color-gold-light), var(--color-gold) 60%, #b3851a); box-shadow: 0 8px 20px -8px rgba(212,160,23,0.6), inset 0 1px 0 rgba(255,255,255,0.4); }
-.cb-raid__enter:active { transform: scale(0.98); }
+.cb-raid__enter { margin-top: 14px; flex-shrink: 0; width: 100%; min-height: 48px; padding: 14px; cursor: pointer; border-radius: var(--fm-r-sm); font-family: var(--fm-display); font-weight: 700; font-size: 16px; letter-spacing: 0.03em; color: #2a0f02; background: var(--fm-ember-face); border: 1px solid var(--fm-ember-deep); box-shadow: inset 0 1px 0 rgba(255,220,180,0.5), inset 0 -1px 0 rgba(90,30,4,0.55); text-shadow: 0 1px 0 rgba(255,210,160,0.35); transition: transform var(--fm-dur) var(--fm-ease), box-shadow var(--fm-dur); }
+.cb-raid__enter:hover { box-shadow: inset 0 1px 0 rgba(255,220,180,0.55), 0 6px 18px -8px rgba(240,116,42,0.75); }
+.cb-raid__enter:active { transform: translateY(1px); }
 
 /* Bestiary/task bottom sheet (CombatMobileSheets, SlayerScreen) — always
    Forgemark parchment; both consumers are fully reskinned so this doesn't
@@ -1166,23 +1365,29 @@ html, body, #app {
 .cb-idlehead { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; flex-shrink: 0; }
 .cb-idlehead__title { display: flex; align-items: center; gap: 9px; }
 .cb-idlehead__title h2 { font-family: var(--font-display); font-weight: 800; font-size: 20px; margin: 0; background: var(--fm-gilt-text); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent; }
-.cb-x { width: 44px; height: 44px; border-radius: 50%; background: var(--fm-parch-hi); border: 1px solid var(--fm-rule); cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.cb-x { width: 44px; height: 44px; border-radius: 50%; background: var(--fm-btn-face); border: 1px solid var(--fm-btn-edge); box-shadow: var(--fm-btn-relief); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform var(--fm-dur) var(--fm-ease), border-color var(--fm-dur), box-shadow var(--fm-dur); }
+.cb-x:hover { border-color: var(--fm-brass); }
+.cb-x:active { transform: translateY(1px); box-shadow: var(--fm-btn-press); }
 .cb-x img, .cb-x svg { width: 16px; height: 16px; }
 .cb-idledesc { font-size: 13px; line-height: 1.5; color: var(--fm-ink-soft); margin: 6px 2px 14px; flex-shrink: 0; }
 .cb-idlelist { overflow-y: auto; display: flex; flex-direction: column; gap: 9px; padding: 2px; }
 .cb-idlelist::-webkit-scrollbar { width: 4px; }
 .cb-idlelist::-webkit-scrollbar-thumb { background: rgba(240,192,64,0.3); border-radius: 999px; }
-.cb-fooditem { display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 12px 13px; border-radius: 14px; cursor: pointer; background: var(--fm-parch-hi); border: 1px solid var(--fm-rule); transition: border-color .14s, background .14s; }
-.cb-fooditem.is-sel { border-color: var(--fm-brass); background: radial-gradient(120% 90% at 100% 0%, rgba(176,136,66,0.2), transparent 60%), var(--fm-parch-hi); box-shadow: var(--fm-parch-inset); }
+.cb-fooditem { display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 12px 13px; border-radius: var(--fm-r-sm); cursor: pointer; color: var(--fm-btn-ink); background: var(--fm-btn-face); border: 1px solid var(--fm-btn-edge); box-shadow: var(--fm-btn-relief); transition: transform var(--fm-dur) var(--fm-ease), background var(--fm-dur), border-color var(--fm-dur), box-shadow var(--fm-dur), color var(--fm-dur); }
+.cb-fooditem:hover { border-color: var(--fm-brass); }
+.cb-fooditem:active { transform: translateY(1px); box-shadow: var(--fm-btn-press); }
+.cb-fooditem.is-sel { color: var(--fm-btn-ink-on); background: var(--fm-btn-brass); border-color: var(--fm-brass-lo); box-shadow: var(--fm-btn-relief-brass); }
 .cb-fooditem__art { flex-shrink: 0; }
 .cb-fooditem__body { flex: 1; min-width: 0; }
-.cb-fooditem__name { font-family: var(--font-display); font-weight: 700; font-size: 16px; color: var(--fm-ink); }
-.cb-fooditem__heal { color: #2e7d32; font-family: var(--font-mono); font-size: 13px; font-weight: 700; }
+.cb-fooditem__name { font-family: var(--fm-display); font-weight: 700; font-size: 16px; color: inherit; }
+.cb-fooditem__heal { color: var(--fm-verdigris); font-family: var(--fm-num); font-variant-numeric: tabular-nums; font-size: 13px; font-weight: 700; }
+.cb-fooditem.is-sel .cb-fooditem__heal, .cb-fooditem.is-sel .cb-fooditem__sub { color: var(--fm-brass-lo); }
 .cb-fooditem__sub { font-size: 11.5px; color: var(--fm-ink-soft); margin-top: 2px; font-weight: 600; }
-.cb-fooditem__btn { flex-shrink: 0; font-family: var(--font-body); font-weight: 800; font-size: 13px; color: var(--fm-ink-soft); padding: 7px 15px; border-radius: 999px; border: 1px solid var(--fm-rule); }
-.cb-fooditem__btn.is-sel { color: var(--fm-ember-deep); border-color: var(--fm-brass); background: rgba(176,136,66,0.15); }
-.cb-done { margin-top: 14px; flex-shrink: 0; align-self: flex-end; min-height: 44px; padding: 11px 28px; border: none; cursor: pointer; border-radius: 12px; font-family: var(--font-display); font-weight: 800; font-size: 15px; color: #1a1206; background: linear-gradient(180deg, var(--color-gold-light), var(--color-gold) 60%, #b3851a); box-shadow: 0 6px 16px -8px rgba(212,160,23,0.6); }
-.cb-done:active { transform: scale(0.97); }
+.cb-fooditem__btn { flex-shrink: 0; font-family: var(--fm-serif); font-weight: 700; font-size: 13px; color: var(--fm-ink-soft); padding: 7px 15px; border-radius: var(--fm-r-sharp); border: 1px solid var(--fm-rule); }
+.cb-fooditem__btn.is-sel { color: var(--fm-btn-ink-on); border-color: var(--fm-brass-lo); background: transparent; }
+.cb-done { margin-top: 14px; flex-shrink: 0; align-self: flex-end; min-height: 44px; padding: 11px 28px; cursor: pointer; border-radius: var(--fm-r-sm); font-family: var(--fm-display); font-weight: 700; font-size: 15px; color: #2a0f02; background: var(--fm-ember-face); border: 1px solid var(--fm-ember-deep); box-shadow: inset 0 1px 0 rgba(255,220,180,0.5), inset 0 -1px 0 rgba(90,30,4,0.55); transition: transform var(--fm-dur) var(--fm-ease), box-shadow var(--fm-dur); }
+.cb-done:hover { box-shadow: inset 0 1px 0 rgba(255,220,180,0.55), 0 6px 18px -8px rgba(240,116,42,0.75); }
+.cb-done:active { transform: translateY(1px); }
 
 /* ──────────────────────────────────────────────────────────────────────────
    Landing page — "Night Forge" marketing skin. One responsive `.lp-*` page
@@ -2439,7 +2644,7 @@ html, body, #app {
   box-shadow: 0 8px 20px -14px rgba(0,0,0,0.9); transition: transform .14s ease, border-color .14s ease, box-shadow .14s ease;
 }
 .clog-cat:hover { transform: translateY(-2px); border-color: rgba(240,192,64,0.32); }
-.clog-cat:active { transform: scale(.99); }
+.clog-cat:active { transform: translateY(1px); }
 .clog-cat__body { position: relative; z-index: 2; padding: 14px 15px 13px; }
 .clog-cat__top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
 .clog-cat__id { display: flex; align-items: center; gap: 9px; min-width: 0; }
@@ -2499,6 +2704,11 @@ html, body, #app {
 }
 .clog-overlay--center .clog-sheet { max-width: 680px; max-height: 84vh; border-radius: 20px; border: 1px solid rgba(240,192,64,0.3); animation: clogPop .24s cubic-bezier(.22,1,.36,1); }
 .clog-sheet.is-done { background: radial-gradient(120% 60% at 50% 0%, rgba(247,221,142,0.12), transparent 55%), linear-gradient(180deg, #211a0e 0%, #130f09 100%); }
+/* Light type on the mastered sheet: --color-parchment is ink inside .forge-shell. */
+.clog-sheet.is-done .clog-sheet__name, .clog-sheet.is-done .clog-sheet__sub,
+.clog-sheet.is-done .clog-secthead span, .clog-sheet.is-done .clog-sec__name,
+.clog-sheet.is-done .clog-sec__count, .clog-sheet.is-done .clog-sheet__count span { color: var(--fm-parch); }
+.clog-sheet.is-done .clog-sheet__count b, .clog-sheet.is-done .clog-sec__count.is-done { color: var(--fm-brass-hi); }
 @keyframes clogSlideUp { from { transform: translateY(100%); } }
 @keyframes clogPop { from { transform: scale(.94); opacity: 0; } }
 .clog-sheet__grab { width: 38px; height: 4px; border-radius: 3px; background: rgba(245,230,200,0.25); margin: 0 auto 14px; flex-shrink: 0; }
@@ -2512,7 +2722,8 @@ html, body, #app {
 .clog-sheet__count b { font-family: var(--font-mono); font-weight: 700; font-size: 19px; color: var(--color-gold-light); }
 .clog-sheet__count span { font-family: var(--font-mono); opacity: 0.5; font-size: 14px; }
 .clog-sheet__count em { display: block; font-family: var(--font-mono); font-size: 10px; font-style: normal; opacity: 0.45; margin-top: 1px; }
-.clog-sheet__close { position: absolute; top: 12px; right: 14px; width: 34px; height: 34px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.12); background: rgba(0,0,0,0.3); color: var(--color-parchment); font-size: 18px; line-height: 1; cursor: pointer; display: none; align-items: center; justify-content: center; }
+.clog-sheet__close { position: absolute; top: 12px; right: 14px; width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--fm-btn-edge); background: var(--fm-btn-face); box-shadow: var(--fm-btn-relief); color: var(--fm-btn-ink); font-size: 18px; line-height: 1; cursor: pointer; display: none; align-items: center; justify-content: center; }
+.clog-sheet__close:active { transform: translateY(1px); box-shadow: var(--fm-btn-press); }
 .clog-overlay--center .clog-sheet__close { display: flex; }
 .clog-sheet__scroll { overflow-y: auto; overflow-x: hidden; padding: 2px 2px 4px; }
 .clog-sheet__scroll::-webkit-scrollbar { width: 4px; }
@@ -2530,12 +2741,15 @@ html, body, #app {
 .clog-slotgrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 @media (min-width: 480px) { .clog-slotgrid { grid-template-columns: repeat(4, 1fr); } }
 @media (min-width: 700px) { .clog-slotgrid { grid-template-columns: repeat(5, 1fr); } }
-.clog-slot { position: relative; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 12px 6px 10px; border-radius: 12px; text-align: center; background: linear-gradient(160deg,#15130d,#0e0c08); border: 1px solid rgba(255,255,255,0.05); transition: border-color .14s, background .14s; }
-.clog-slot.is-got { border-color: rgba(240,192,64,0.22); background: linear-gradient(160deg,#1c180f,#100d08); }
-.clog-slot.is-got.gold-card { border-color: rgba(240,192,64,0.42); box-shadow: inset 0 0 16px -6px rgba(240,192,64,0.45); }
-.clog-slot__name { font-size: 10px; font-weight: 700; line-height: 1.2; letter-spacing: .01em; color: var(--color-parchment); opacity: .85; min-height: 24px; display: flex; align-items: center; }
-.clog-slot.is-locked .clog-slot__name { opacity: .32; }
-.clog-slot__lock { position: absolute; top: 5px; right: 7px; font-size: 11px; opacity: .4; line-height: 1; }
+/* Trophy slots are tiles on the sheet, so they take the sheet's button metal.
+   They were dark cards carrying --color-parchment text, which .forge-shell
+   re-points to ink — near-black text on a near-black tile. */
+.clog-slot { position: relative; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 12px 6px 10px; border-radius: var(--fm-r-sm); text-align: center; color: var(--fm-btn-ink); background: var(--fm-btn-face); border: 1px solid var(--fm-btn-edge); box-shadow: var(--fm-btn-relief); transition: border-color var(--fm-dur), background var(--fm-dur), box-shadow var(--fm-dur); }
+.clog-slot.is-got { border-color: var(--fm-brass); }
+.clog-slot.is-got.gold-card { border-color: var(--fm-brass-lo); box-shadow: var(--fm-btn-relief), inset 0 0 16px -6px rgba(176,136,66,0.55); }
+.clog-slot.is-locked { background: var(--fm-btn-dead); background-image: none; border-color: var(--fm-btn-dead-edge); box-shadow: none; color: var(--fm-btn-dead-ink); }
+.clog-slot__name { font-family: var(--fm-serif); font-size: 10px; font-weight: 700; line-height: 1.2; letter-spacing: .01em; color: inherit; min-height: 24px; display: flex; align-items: center; }
+.clog-slot__lock { position: absolute; top: 5px; right: 7px; font-size: 11px; opacity: .55; line-height: 1; }
 
 /* ════ World Map (map-driven overhaul, phase 1) ═══════════════════════════ */
 /* The "desk" the chart sits on: hammered Forgemark iron, not flat void. */
@@ -2594,12 +2808,15 @@ html, body, #app {
 @media (max-width: 560px) { .wm-legend { display: none; } }
 
 .wm-ctl { position: absolute; right: 14px; bottom: 14px; z-index: 20; display: flex; flex-direction: column; gap: 8px; }
-.wm-ctl button { width: 44px; height: 44px; border-radius: 8px; cursor: pointer; color: var(--fm-ink);
-  background-color: var(--fm-vellum); background-image: var(--fm-tex-parch); background-size: 240px;
-  border: 1px solid var(--fm-rule); box-shadow: 0 4px 12px -6px #000, var(--fm-parch-inset);
-  font-size: 20px; font-family: var(--fm-display); display: grid; place-items: center; }
-.wm-ctl button:hover { color: var(--fm-ember-deep); border-color: var(--fm-brass); }
-.wm-ctl button:active { transform: translateY(1px); }
+/* The map desk is always hammered iron, so these are pinned to the vellum face
+   rather than inheriting the surrounding token set — an iron key on an iron
+   desk is the dark-on-dark case this avoids. */
+.wm-ctl button { width: 44px; height: 44px; border-radius: var(--fm-r-sm); cursor: pointer; color: var(--fm-ink);
+  background: var(--fm-btn-vellum); border: 1px solid var(--fm-rule); box-shadow: var(--fm-btn-relief-vellum);
+  font-size: 20px; font-family: var(--fm-display); display: grid; place-items: center;
+  transition: transform var(--fm-dur) var(--fm-ease), border-color var(--fm-dur), box-shadow var(--fm-dur), color var(--fm-dur); }
+.wm-ctl button:hover { color: var(--fm-brass-hi); border-color: var(--fm-brass); }
+.wm-ctl button:active { transform: translateY(1px); box-shadow: var(--fm-btn-press-vellum); }
 
 .wm-scrim { position: absolute; inset: 0; z-index: 40; background: rgba(8,6,4,0.62); }
 .wm-hub { position: absolute; z-index: 50; right: 0; top: 0; height: 100%; width: min(460px, 100%);
@@ -2629,15 +2846,19 @@ html, body, #app {
 .wm-hub-sectionhead { display: flex; align-items: center; gap: 12px; margin: 4px 0 12px; }
 .wm-hub-sectionhead::before, .wm-hub-sectionhead::after { content: ''; height: 1px; flex: 1; background: var(--color-void-border); }
 .wm-hub-sectionhead span { font-family: var(--font-display); font-weight: 600; font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--color-parchment-dark); }
-.wm-act { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; padding: 11px 12px; margin-bottom: 9px;
-  border-radius: 8px; background: var(--color-void); border: 1px solid var(--color-void-border); }
+.wm-act { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; padding: 11px 12px; margin-bottom: 9px; cursor: pointer;
+  border-radius: var(--fm-r-sm); background: var(--fm-btn-face); border: 1px solid var(--fm-btn-edge); box-shadow: var(--fm-btn-relief);
+  transition: transform var(--fm-dur) var(--fm-ease), border-color var(--fm-dur), box-shadow var(--fm-dur); }
+.wm-act:hover { border-color: var(--fm-brass); }
+.wm-act:active { transform: translateY(1px); box-shadow: var(--fm-btn-press); }
+.wm-act:focus-visible { outline: 2px solid var(--fm-brass); outline-offset: 2px; }
 .wm-act-icon { width: 42px; height: 42px; flex: 0 0 auto; border-radius: 50%; display: grid; place-items: center; font-size: 22px;
   background: radial-gradient(circle at 38% 30%, #2a2622, #100e0c); box-shadow: inset 0 0 0 2px var(--color-gold-dim); }
 .wm-act-main { flex: 1; min-width: 0; }
-.wm-act-name { display: block; font-family: var(--font-display); font-weight: 600; font-size: 16px; color: var(--color-parchment); line-height: 1.1; }
-.wm-act-note { display: block; font-size: 12px; color: var(--color-parchment-dark); margin-top: 2px; }
+.wm-act-name { display: block; font-family: var(--fm-display); font-weight: 700; font-size: 16px; color: var(--fm-ink); line-height: 1.1; }
+.wm-act-note { display: block; font-family: var(--fm-serif); font-size: 12px; color: var(--fm-ink-soft); margin-top: 2px; }
 .wm-act-right { text-align: right; flex: 0 0 auto; }
-.wm-act-lvl { font-family: var(--font-mono); font-size: 12px; font-weight: 600; color: var(--color-parchment); opacity: .7; display: block; margin-bottom: 4px; }
+.wm-act-lvl { font-family: var(--fm-num); font-variant-numeric: tabular-nums; font-size: 12px; font-weight: 600; color: var(--fm-ink-faint); display: block; margin-bottom: 4px; }
 
 /* World Map — place hub facilities */
 .wm-hub-facilities { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
@@ -2652,14 +2873,17 @@ html, body, #app {
 .wm-tp-sub { margin: 0; font-size: 13px; color: var(--color-parchment-dark); }
 .wm-tp-list { display: flex; flex-direction: column; gap: 8px; }
 .wm-tp-option { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px;
-  width: 100%; text-align: left; padding: 10px 14px; border-radius: 8px; cursor: pointer;
-  background: var(--color-void); border: 1px solid var(--color-gold-dim); color: var(--color-parchment); }
-.wm-tp-option:hover { border-color: var(--color-gold); background: var(--color-void-border); }
+  width: 100%; text-align: left; padding: 10px 14px; border-radius: var(--fm-r-sm); cursor: pointer;
+  background: var(--fm-btn-face); border: 1px solid var(--fm-btn-edge); color: var(--fm-btn-ink); box-shadow: var(--fm-btn-relief);
+  transition: transform var(--fm-dur) var(--fm-ease), border-color var(--fm-dur), box-shadow var(--fm-dur); }
+.wm-tp-option:hover { border-color: var(--fm-brass); }
+.wm-tp-option:active { transform: translateY(1px); box-shadow: var(--fm-btn-press); }
 .wm-tp-place { font-family: var(--font-display); font-weight: 600; font-size: 15px; }
 .wm-tp-ticks { font-family: var(--font-mono); font-size: 13px; color: var(--color-gold-dim); }
-.wm-tp-cancel { min-height: 44px; padding: 10px 14px; border-radius: 8px; cursor: pointer;
-  background: transparent; border: 1px solid var(--color-void-border); color: var(--color-parchment-dark); }
-.wm-tp-cancel:hover { color: var(--color-parchment); border-color: var(--color-parchment-dark); }
+.wm-tp-cancel { min-height: 44px; padding: 10px 14px; border-radius: var(--fm-r-sm); cursor: pointer;
+  background: transparent; border: 1px solid var(--fm-rule); color: var(--fm-ink-soft); font-family: var(--fm-serif); font-weight: 600; }
+.wm-tp-cancel:hover { color: var(--fm-ink); border-color: var(--fm-ink-soft); background: rgba(74,54,28,0.08); }
+.wm-tp-cancel:active { transform: translateY(1px); }
 
 /* World Map — travel (phase 2) */
 .wm-token { position: absolute; z-index: 6; transform: translate(-50%, -50%); width: 30px; height: 30px;
@@ -2680,47 +2904,47 @@ html, body, #app {
   box-shadow: inset 0 1px 0 rgba(255,220,180,.5); transition: width .55s linear; }
 .wm-travelbar-route { margin-top: 8px; font-style: italic; font-size: 12px; color: var(--color-parchment-dark); }
 .wm-travelbar-actions { margin-top: 10px; display: flex; gap: 8px; }
-.wm-travelbar-cancel { flex: 1; min-height: 44px; font-family: var(--font-display); font-weight: 600;
-  font-size: 13px; color: var(--color-parchment); background: transparent; border: 1px solid var(--color-void-border);
-  border-radius: 8px; cursor: pointer; }
-.wm-travelbar-cancel:hover { border-color: var(--color-gold); color: var(--color-gold-light); }
+.wm-travelbar-cancel { flex: 1; min-height: 44px; font-family: var(--fm-serif); font-weight: 600;
+  font-size: 13px; color: var(--fm-ink-soft); background: transparent; border: 1px solid var(--fm-rule);
+  border-radius: var(--fm-r-sm); cursor: pointer; }
+.wm-travelbar-cancel:hover { border-color: var(--fm-ink-soft); color: var(--fm-ink); background: rgba(74,54,28,0.08); }
+.wm-travelbar-cancel:active { transform: translateY(1px); }
 .wm-travelbar-skip { flex: 1; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-  font-family: var(--font-display); font-weight: 700; font-size: 13px; color: var(--color-ink); cursor: pointer;
-  border-radius: 8px; background: linear-gradient(180deg, var(--color-gold-light), var(--color-gold-dim));
-  border: 1px solid var(--color-gold-dim); box-shadow: 0 2px 8px -3px #000; }
-.wm-travelbar-skip:hover { filter: brightness(1.05); }
-.wm-travelbar-skip:active { transform: translateY(1px); }
-.wm-travelbar-skip:disabled { opacity: 0.6; cursor: default; }
+  font-family: var(--fm-display); font-weight: 700; font-size: 13px; color: var(--fm-btn-ink-on); cursor: pointer;
+  border-radius: var(--fm-r-sm); background: var(--fm-btn-brass);
+  border: 1px solid var(--fm-brass-lo); box-shadow: var(--fm-btn-relief-brass); }
+.wm-travelbar-skip:active { transform: translateY(1px); box-shadow: var(--fm-btn-press); }
+.wm-travelbar-skip:disabled { background: var(--fm-btn-dead); background-image: none; color: var(--fm-btn-dead-ink); border-color: var(--fm-btn-dead-edge); box-shadow: none; cursor: not-allowed; }
 .wm-travelbar-tele { flex: 1; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-  font-family: var(--font-display); font-weight: 700;
-  font-size: 13px; color: #fff; cursor: pointer; border-radius: 8px;
-  background: linear-gradient(180deg, color-mix(in srgb, var(--fm-royal) 72%, white), var(--fm-royal));
-  border: 1px solid var(--fm-royal); box-shadow: 0 2px 8px -3px #000; }
-.wm-travelbar-tele:hover { filter: brightness(1.08); }
-.wm-travelbar-tele:active { transform: translateY(1px); }
-.wm-travelbar-tele.is-locked { cursor: default; color: var(--fm-ink-faint, var(--color-parchment)); background: var(--fm-parch-hi, transparent); border-color: var(--fm-rule, var(--color-void-border)); box-shadow: none; filter: none; transform: none; }
+  font-family: var(--fm-display); font-weight: 700;
+  font-size: 13px; color: #f2ecfa; cursor: pointer; border-radius: var(--fm-r-sm);
+  background: var(--fm-btn-royal);
+  border: 1px solid #3a2456; box-shadow: inset 0 1px 0 rgba(214,190,246,0.22), inset 0 -1px 0 rgba(0,0,0,0.38); }
+.wm-travelbar-tele:active { transform: translateY(1px); box-shadow: var(--fm-btn-press-iron); }
+.wm-travelbar-tele.is-locked { cursor: not-allowed; color: var(--fm-btn-dead-ink); background: var(--fm-btn-dead); background-image: none; border-color: var(--fm-btn-dead-edge); box-shadow: none; transform: none; }
 
-.wm-travel-btn { width: 100%; min-height: 44px; margin: 0 0 16px; font-family: var(--font-display); font-weight: 700;
-  font-size: 15px; color: var(--color-ink); cursor: pointer; border-radius: 8px;
-  background: linear-gradient(180deg, var(--color-gold-light), var(--color-gold-dim));
-  border: 1px solid var(--color-gold-dim); box-shadow: 0 2px 8px -3px #000; }
-.wm-travel-btn:hover { filter: brightness(1.06); }
+.wm-travel-btn { width: 100%; min-height: 44px; margin: 0 0 16px; font-family: var(--fm-display); font-weight: 700;
+  font-size: 15px; color: #2a0f02; cursor: pointer; border-radius: var(--fm-r-sm);
+  background: var(--fm-ember-face); border: 1px solid var(--fm-ember-deep);
+  box-shadow: inset 0 1px 0 rgba(255,220,180,0.5), inset 0 -1px 0 rgba(90,30,4,0.55);
+  text-shadow: 0 1px 0 rgba(255,210,160,0.35);
+  transition: transform var(--fm-dur) var(--fm-ease), box-shadow var(--fm-dur); }
+.wm-travel-btn:hover { box-shadow: inset 0 1px 0 rgba(255,220,180,0.55), 0 6px 18px -8px rgba(240,116,42,0.75); }
 .wm-travel-btn:active { transform: translateY(1px); }
 
 /* Hub teleport button — arcane royal against the gold travel button; locked
    state flattens to a vellum ghost carrying the unmet requirement. */
-.wm-tele-btn { width: 100%; min-height: 44px; margin: 0 0 16px; padding: 6px 12px; cursor: pointer; border-radius: 8px;
+.wm-tele-btn { width: 100%; min-height: 44px; margin: 0 0 16px; padding: 6px 12px; cursor: pointer; border-radius: var(--fm-r-sm);
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
-  font-family: var(--font-display);
-  background: linear-gradient(180deg, color-mix(in srgb, var(--fm-royal) 72%, white), var(--fm-royal));
-  border: 1px solid var(--fm-royal); box-shadow: 0 2px 8px -3px #000; }
-.wm-tele-btn__lead { display: inline-flex; align-items: center; gap: 6px; font-weight: 700; font-size: 14px; color: #fff; }
-.wm-tele-btn__cost { font-family: var(--font-body); font-size: 11px; color: #fff; }
-.wm-tele-btn:hover { filter: brightness(1.08); }
-.wm-tele-btn:active { transform: translateY(1px); }
-.wm-tele-btn.is-locked { cursor: default; background: var(--fm-parch-hi, transparent); border-color: var(--fm-rule, var(--color-void-border)); box-shadow: none; filter: none; transform: none; }
-.wm-tele-btn.is-locked .wm-tele-btn__lead { color: var(--fm-ink-faint, var(--color-parchment)); }
-.wm-tele-btn.is-locked .wm-tele-btn__cost { color: var(--fm-ink-faint, var(--color-parchment)); }
+  font-family: var(--fm-display);
+  background: var(--fm-btn-royal);
+  border: 1px solid #3a2456; box-shadow: inset 0 1px 0 rgba(214,190,246,0.22), inset 0 -1px 0 rgba(0,0,0,0.38);
+  transition: transform var(--fm-dur) var(--fm-ease), box-shadow var(--fm-dur); }
+.wm-tele-btn__lead { display: inline-flex; align-items: center; gap: 6px; font-weight: 700; font-size: 14px; color: #f2ecfa; }
+.wm-tele-btn__cost { font-family: var(--fm-num); font-variant-numeric: tabular-nums; font-size: 11px; color: #d9cbee; }
+.wm-tele-btn:active { transform: translateY(1px); box-shadow: var(--fm-btn-press-iron); }
+.wm-tele-btn.is-locked { cursor: not-allowed; background: var(--fm-btn-dead); background-image: none; border-color: var(--fm-btn-dead-edge); box-shadow: none; transform: none; }
+.wm-tele-btn.is-locked .wm-tele-btn__lead, .wm-tele-btn.is-locked .wm-tele-btn__cost { color: var(--fm-ink-faint); }
 
 /* ── Place map (PlaceMapView) — per-place interactive town map, the world map's
    interaction model one level down. Reuses .wm-stage/.wm-board/.wm-ctl; the
@@ -2731,11 +2955,11 @@ html, body, #app {
   box-shadow: 0 0 0 2px rgba(50,32,8,0.65), 0 24px 70px -20px #000; }
 .pm-topbar { position: absolute; top: 12px; left: 12px; right: 12px; z-index: 20;
   display: flex; align-items: center; gap: 12px; pointer-events: none; }
-.pm-back { pointer-events: auto; min-height: 44px; padding: 0 16px; border-radius: 10px; cursor: pointer;
-  font-family: var(--font-display); font-weight: 700; font-size: 13px; color: var(--color-parchment);
-  background: var(--color-void-light); border: 1px solid var(--color-void-border); box-shadow: 0 6px 18px -8px #000; }
-.pm-back:hover { color: var(--color-gold-light); border-color: var(--color-gold); }
-.pm-back:active { transform: translateY(1px); }
+.pm-back { pointer-events: auto; min-height: 44px; padding: 0 16px; border-radius: var(--fm-r-sm); cursor: pointer;
+  font-family: var(--fm-display); font-weight: 700; font-size: 13px; color: var(--fm-parch);
+  background: var(--fm-btn-iron); border: 1px solid #000; box-shadow: var(--fm-btn-relief-iron); }
+.pm-back:hover { color: var(--fm-brass-hi); border-color: var(--fm-brass-lo); }
+.pm-back:active { transform: translateY(1px); box-shadow: var(--fm-btn-press-iron); }
 .pm-title { display: flex; flex-direction: column; min-width: 0; padding: 6px 14px; border-radius: 10px;
   background: var(--color-void-light); border: 1px solid var(--color-void-border); box-shadow: 0 6px 18px -8px #000; }
 .pm-title__name { font-family: var(--font-display); font-weight: 700; font-size: 17px; line-height: 1.15; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

@@ -107,9 +107,9 @@ export default function CombatMobileSelect({
       <div class="cb-idlerow">
         {idleToggles.map(t => (
           <button key={t.id} class={'cb-idle' + (t.on ? ' is-on' : '')} onClick={() => onOpenIdle(t.id)}>
-            <GameIcon iconKey={t.icon} color={t.on ? '#1a1206' : 'var(--fm-ink-soft)'} size={17} />
+            <GameIcon iconKey={t.icon} color={t.on ? 'var(--fm-btn-ink-on)' : 'var(--fm-btn-ink)'} size={17} />
             <span>{t.label}</span>
-            {t.on && <GameIcon class="cb-idle__chk" iconKey="check_mark" color="#1a1206" size={13} />}
+            {t.on && <GameIcon class="cb-idle__chk" iconKey="check_mark" color="var(--fm-btn-ink-on)" size={13} />}
           </button>
         ))}
       </div>
@@ -120,8 +120,8 @@ export default function CombatMobileSelect({
           const art = getSkillArt(skill)
           return (
             <button key={s} class={'cb-styleseg' + (combatStance === s ? ' is-on' : '')} onClick={() => onStance(s)}>
-              <GameIcon iconKey={art.icon} color={art.accent} size={15} />
-              <span style={{ textTransform: 'capitalize' }}>{s}</span>
+              <GameIcon iconKey={art.icon} color={combatStance === s ? 'var(--fm-btn-ink-on)' : art.accent} size={15} />
+              <span class="capitalize">{s}</span>
             </button>
           )
         })}
