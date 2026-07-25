@@ -10,6 +10,7 @@ import { describe, it, expect } from 'vitest'
 import { preserveBankCharges } from '../src/engine/bankCharges.js'
 import { applyPreset } from '../src/engine/equipmentPresets.js'
 import { simulateIdleSkilling } from '../src/engine/idleEngine.js'
+import { applyTaskResult } from '../src/engine/applyTaskResult.js'
 
 describe('preserveBankCharges', () => {
   it('restores charges a rewritten entry silently dropped', () => {
@@ -106,7 +107,7 @@ describe('idle auto-bank', () => {
   const miningAction = { id: 'adamantite', name: 'Adamantite', xp: 95, ticks: 5, product: 'adamantite_ore', levelReq: 70 } as any
   const pad = (slots: any[]) => [...slots, ...Array(28 - slots.length).fill(null)]
 
-  it('leaves a charged tool in the inventory instead of banking its charges away', () => {
+  it('reports the charges of anything it banked so they can be pooled', () => {
     // A bank trip moved every inventory slot into a quantity-only totals map,
     // so a charged tool that got swept up lost its whole pool.
     const inv = pad([{ itemId: 'shardglass_pickaxe', quantity: 1, charges: 500 }])
@@ -121,9 +122,33 @@ describe('idle auto-bank', () => {
       {},
     ) as any
 
-    // The ore banked proves a bank trip ran; the tool stayed out of it.
+    // The ore banked proves a bank trip ran, and it took the pickaxe with it.
     expect(sim.itemsBanked.adamantite_ore).toBeGreaterThan(0)
-    expect(sim.itemsBanked.shardglass_pickaxe).toBeUndefined()
-    expect(sim.finalInventory.find((s: any) => s?.itemId === 'shardglass_pickaxe')).toBeTruthy()
+    expect(sim.itemsBanked.shardglass_pickaxe).toBe(1)
+    expect(sim.chargesBanked.shardglass_pickaxe).toBeGreaterThan(0)
+  })
+
+  it('pools banked charges onto the bank entry rather than dropping them', () => {
+    const state: any = {
+      stats: {},
+      inventory: [],
+      bank: { shardglass_pickaxe: { itemId: 'shardglass_pickaxe', quantity: 1, charges: 1000 } },
+      equipment: {},
+      settings: {},
+    }
+    applyTaskResult(state, {
+      itemsBanked: { shardglass_pickaxe: 1 },
+      chargesBanked: { shardglass_pickaxe: 400 },
+      finalInventory: [],
+    } as any, 'skill')
+
+    expect(state.bank.shardglass_pickaxe).toEqual({ itemId: 'shardglass_pickaxe', quantity: 2, charges: 1400 })
+  })
+
+  it('writes no charges field for banked items that carry none', () => {
+    // An explicit 0 would read as "deliberately emptied" and wipe a real pool.
+    const state: any = { stats: {}, inventory: [], bank: {}, equipment: {}, settings: {} }
+    applyTaskResult(state, { itemsBanked: { adamantite_ore: 5 }, finalInventory: [] } as any, 'skill')
+    expect(state.bank.adamantite_ore.charges).toBeUndefined()
   })
 })

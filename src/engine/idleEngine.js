@@ -43,27 +43,29 @@ function hasGatherAutoBankUnlock(stats) {
   return getLevelFromXP(stats?.construction?.xp || 0) >= GATHER_AUTOBANK_CONSTRUCTION_LEVEL
 }
 
-// A charged item (charged weapon, shardglass tool) is gear in use, not loot:
-// the bank pools charges into one per-item scalar with no per-instance
-// identity, so banking it can only lose charges. Bank trips leave it carried.
-function isUnbankableSlot(slot, excludedItemIds) {
-  if (!slot) return true
-  if (excludedItemIds && excludedItemIds.has(slot.itemId)) return true
-  return (Number(slot.charges) || 0) > 0
-}
-
-/** Move every inventory slot into the banked totals and clear the inventory, skipping excludedItemIds. */
-function bankEverything(inv, itemsBanked, excludedItemIds) {
+/**
+ * Move every inventory slot into the banked totals and clear the inventory,
+ * skipping excludedItemIds. A banked slot's `charges` are accumulated into
+ * `chargesBanked` so the caller can pool them onto the bank entry — dropping
+ * them here would destroy the charges of anything carried on a bank trip.
+ */
+function bankEverything(inv, itemsBanked, excludedItemIds, chargesBanked) {
   for (let i = 0; i < inv.length; i++) {
-    if (isUnbankableSlot(inv[i], excludedItemIds)) continue
+    if (!inv[i]) continue
+    if (excludedItemIds && excludedItemIds.has(inv[i].itemId)) continue
     itemsBanked[inv[i].itemId] = (itemsBanked[inv[i].itemId] || 0) + inv[i].quantity
+    const charges = Math.max(0, Math.floor(Number(inv[i].charges) || 0))
+    if (charges > 0 && chargesBanked) {
+      chargesBanked[inv[i].itemId] = (chargesBanked[inv[i].itemId] || 0) + charges
+    }
     inv[i] = null
   }
 }
 
 /** True if a bank trip would actually free a slot (i.e. not every occupied slot is excluded). */
 function hasBankableItems(inv, excludedItemIds) {
-  return inv.some(slot => slot && !isUnbankableSlot(slot, excludedItemIds))
+  if (!excludedItemIds || excludedItemIds.size === 0) return inv.some(Boolean)
+  return inv.some(slot => slot && !excludedItemIds.has(slot.itemId))
 }
 
 /**
@@ -247,6 +249,7 @@ export function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, st
   const xpGained = {}
   const itemsGained = {}
   const itemsBanked = {}
+  const chargesBanked = {}
   const itemsDropped = {}
   const newInv = [...inventory]
   // Charges drained from an *equipped* shardglass gather tool this window —
@@ -413,7 +416,7 @@ export function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, st
         if (bankWhenFull && hasBankableItems(newInv, excludedItemIds)) {
           if (remainingTicks < bankDelayTicks + actionTicks) break
           remainingTicks -= bankDelayTicks
-          bankEverything(newInv, itemsBanked, excludedItemIds)
+          bankEverything(newInv, itemsBanked, excludedItemIds, chargesBanked)
         } else {
           inventoryFull = true
           break
@@ -504,7 +507,7 @@ export function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, st
         if (newInv.indexOf(null) === -1 && hasBankableItems(newInv, excludedItemIds)) {
           if (remainingTicks < bankDelayTicks) break
           remainingTicks -= bankDelayTicks
-          bankEverything(newInv, itemsBanked, excludedItemIds)
+          bankEverything(newInv, itemsBanked, excludedItemIds, chargesBanked)
         }
       }
 
@@ -615,7 +618,7 @@ export function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, st
         if (newInv.indexOf(null) === -1 && hasBankableItems(newInv, excludedItemIds)) {
           if (remainingTicks < bankDelayTicks) break
           remainingTicks -= bankDelayTicks
-          bankEverything(newInv, itemsBanked, excludedItemIds)
+          bankEverything(newInv, itemsBanked, excludedItemIds, chargesBanked)
         }
       }
 
@@ -700,7 +703,7 @@ export function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, st
     ? gatheringStoppedReason
     : (outOfMaterials ? 'out_of_materials' : undefined)
 
-  return { xpGained, itemsGained, itemsBanked, itemsConsumed, itemsDropped, actions, skill: task.skill, actionName: task.action.name, finalInventory: newInv, coinsGained, dungeoneeringTokensGained, stoppedReason, chargesConsumed: shardglassChargesConsumed }
+  return { xpGained, itemsGained, itemsBanked, chargesBanked, itemsConsumed, itemsDropped, actions, skill: task.skill, actionName: task.action.name, finalInventory: newInv, coinsGained, dungeoneeringTokensGained, stoppedReason, chargesConsumed: shardglassChargesConsumed }
 }
 
 /**
@@ -810,6 +813,7 @@ export function simulateIdleGather(task, elapsedMs, inventory = [], stats = {}, 
 
   const itemsGained = {}
   const itemsBanked = {}
+  const chargesBanked = {}
   const itemsDropped = {}
   const newInv = [...inventory]
   let remainingTicks = totalTicks
@@ -833,7 +837,7 @@ export function simulateIdleGather(task, elapsedMs, inventory = [], stats = {}, 
         // Bank trip: need time for the trip plus the next action.
         if (remainingTicks < bankDelayTicks + actionTicks) break
         remainingTicks -= bankDelayTicks
-        bankEverything(newInv, itemsBanked, excludedItemIds)
+        bankEverything(newInv, itemsBanked, excludedItemIds, chargesBanked)
       } else {
         inventoryFull = true
         break
@@ -900,7 +904,7 @@ export function simulateIdleGather(task, elapsedMs, inventory = [], stats = {}, 
     ? 'inventory_full'
     : (outOfMaterials ? 'out_of_materials' : undefined)
 
-  return { itemsGained, itemsBanked, itemsDropped, itemsConsumed, actions: actionsCompleted, actionName: task.gatherTask.name, finalInventory: newInv, stoppedReason }
+  return { itemsGained, itemsBanked, chargesBanked, itemsDropped, itemsConsumed, actions: actionsCompleted, actionName: task.gatherTask.name, finalInventory: newInv, stoppedReason }
 }
 
 /**
@@ -1285,6 +1289,7 @@ export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory,
   const newInv = [...inventory]
   const lootLost   = {}
   const lootBanked = {}
+  const chargesBanked = {}
   const xpGained   = {}
   let monstersKilled = 0
   let monstersKilledOnTask = 0
@@ -1503,7 +1508,7 @@ export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory,
     if (bankingEnabled && newInv.indexOf(null) === -1 && hasBankableItems(newInv, excludedItemIds)) {
       if (remainingTicks < bankDelayTicks) break
       remainingTicks -= bankDelayTicks
-      bankEverything(newInv, lootBanked, excludedItemIds)
+      bankEverything(newInv, lootBanked, excludedItemIds, chargesBanked)
     }
   }
 
@@ -1637,7 +1642,7 @@ export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory,
   const finalHP = died ? 0 : Math.max(1, Math.min(maxHP, Math.floor(hp)))
 
   return {
-    xpGained, lootGained, lootLost, lootBanked, runesConsumed,
+    xpGained, lootGained, lootLost, lootBanked, chargesBanked, runesConsumed,
     monstersKilled, monstersKilledOnTask, finalInventory: newInv,
     slayerXpGained, slayerTaskUpdate, chargesConsumed, armourChargesConsumed, ammoConsumed,
     attacksUsed: attacksPerKill * monstersKilled, resourceLimited,
