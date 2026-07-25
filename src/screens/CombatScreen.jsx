@@ -4,6 +4,7 @@ import { useGame } from '../state/gameState.jsx'
 import { usePvp } from '../state/pvpState.jsx'
 import PvpLobbyModal from './PvpLobbyModal.jsx'
 import PvpCombatScreen from './PvpCombatScreen.jsx'
+import CoopBossScreen from './CoopBossScreen.jsx'
 import Modal from '../components/Modal.jsx'
 import LootResultModal from '../components/LootResultModal.jsx'
 import HPBar from '../components/HPBar.jsx'
@@ -47,6 +48,8 @@ import itemsData from '../data/items.json'
 import prayersData from '../data/prayers.json'
 import spellsData from '../data/spells.json'
 import raidsData from '../data/raids.json'
+import { isCoopBossId } from '../engine/coopBossEngine.js'
+import { coopApi } from '../cloud/coop.js'
 import { SCREENS, formatDropChance } from '../utils/constants.js'
 import { hasEpicLootDrop, getItemUnitValue, getLootTotalValue } from '../utils/itemValue.js'
 import { splatsFromCombatEvents, HIT_SPLAT_DURATION_MS } from '../utils/hitSplats.js'
@@ -280,11 +283,15 @@ function MonsterPhaseStats({ monster }) {
 }
 
 export default function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onCombatStatusChange, onBack, onStopBack, dungeonPlaceId }) {
-  const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, updateEquipment, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, idleCombatSetup, updateIdleCombatSetup, homeShortcuts, updateHomeShortcuts, setActiveTask, requestActivityStart, slayerTask, setSlayerTask, awardSlayerPoints, slayerTasksCompleted, setSlayerTasksCompleted, incrementSlayerMasterTaskCompletions, activeCombatSpell, updateActiveCombatSpell, bossKillCounts, updateBossKillCounts, raidKillCounts, updateRaidKillCounts, unlockedFeatures, completedQuests, isOneLife, isIronman, revertOneLifeMode, getSnapshot, loadGame, combatSkipHandlerRef, skipHourHandlerRef, chargeSkipRef, raidSkipHandlerRef, lockGame, unlockGame, resolveCombatCompletion, characterUnlocks, killCountsLoaded, recordGameEvent, worldLocation, publishCombatStatus, activeTask, backgroundCombat, quickPrayers, updateQuickPrayers } = useGame()
+  const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, updateEquipment, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, idleCombatSetup, updateIdleCombatSetup, homeShortcuts, updateHomeShortcuts, setActiveTask, requestActivityStart, slayerTask, setSlayerTask, awardSlayerPoints, slayerTasksCompleted, setSlayerTasksCompleted, incrementSlayerMasterTaskCompletions, activeCombatSpell, updateActiveCombatSpell, bossKillCounts, updateBossKillCounts, raidKillCounts, updateRaidKillCounts, unlockedFeatures, completedQuests, isOneLife, isIronman, revertOneLifeMode, getSnapshot, loadGame, combatSkipHandlerRef, skipHourHandlerRef, chargeSkipRef, raidSkipHandlerRef, lockGame, unlockGame, runLockedSave, resolveCombatCompletion, characterUnlocks, killCountsLoaded, recordGameEvent, worldLocation, publishCombatStatus, activeTask, backgroundCombat, quickPrayers, updateQuickPrayers } = useGame()
   const pvp = usePvp()
   // Offline demo: bosses, raids and PvP are locked (server-authoritative).
   const isDemo = isDemoMode() && !(getToken() && getCharacterId())
   const [showPvpLobby, setShowPvpLobby] = useState(false)
+  // Co-op boss session. The server owns the fight and locks the save for its
+  // duration, so this takes over the screen exactly like an active PvP match.
+  const [coopSessionId, setCoopSessionId] = useState(null)
+  const [coopJoining, setCoopJoining] = useState(null)
 
   // Dungeon mode: this screen renders one place's foes (Monsters / Bosses /
   // Raids) instead of the world-wide picker. PvP is hidden (not place-bound);
@@ -1269,6 +1276,66 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
 
   const checkRaidRequirements = (raid) => checkRaidRequirementsPure(raid, { completedQuests })
 
+  // The local save loop is suspended for exactly as long as a co-op session is
+  // held. Tying it to the session state rather than the join/leave handlers
+  // means navigating away mid-fight releases it too, instead of stranding the
+  // client with saves suspended.
+  useEffect(() => {
+    if (!coopSessionId) return undefined
+    lockGame()
+    return () => unlockGame()
+  }, [coopSessionId, lockGame, unlockGame])
+
+  // Joins the shared fight for a boss. The save is flushed first: the server
+  // snapshots it on join and owns inventory/XP from that moment, so anything
+  // still only in the local client would be lost.
+  const startCoopFight = async (monster) => {
+    if (isDemo) {
+      addToast('🔒 Group bossing is available with a free account.', 'info')
+      return
+    }
+    const req = checkBossRequirements(monster)
+    if (req.locked) {
+      addToast(req.reason, 'error')
+      return
+    }
+    setCoopJoining(monster.id)
+    try {
+      const saved = await runLockedSave()
+      if (!saved) {
+        addToast('Could not save before joining — try again.', 'error')
+        return
+      }
+      const res = await coopApi.join(monster.id)
+      setCoopSessionId(res.sessionId)
+    } catch (err) {
+      const code = err?.body?.code
+      if (code === 'QUEST_REQUIRED') addToast(`Requires the quest ${monster.questRequirement?.replace(/_/g, ' ') || ''}.`, 'error')
+      else if (code === 'CHARACTER_IN_WORLD_SESSION') addToast('You are adventuring in the World.', 'error')
+      else addToast(err?.message || 'Could not join the fight.', 'error')
+    } finally {
+      setCoopJoining(null)
+    }
+  }
+
+  // Leaving pulls the server's copy back down: it holds the authoritative
+  // inventory, XP and HP from the fight, and the in-memory client copy is stale.
+  const exitCoopFight = async () => {
+    try {
+      const pulled = await pullSave()
+      if (pulled?.payload) {
+        await applyCloudSave(pulled.payload, pulled.updatedAt)
+        await loadGame()
+      } else {
+        addToast('Refresh to see your latest progress.', 'info')
+      }
+    } catch {
+      addToast('Refresh to see your latest progress.', 'info')
+    } finally {
+      setCoopSessionId(null)
+    }
+  }
+
   const startFight = (monster) => {
     if (isDemo && monster.boss === true) {
       addToast('🔒 Bosses are available with a free account.', 'info')
@@ -2025,6 +2092,17 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     )
   }
 
+  if (coopSessionId) {
+    return (
+      <CoopBossScreen
+        sessionId={coopSessionId}
+        characterId={parseInt(getCharacterId(), 10)}
+        addToast={addToast}
+        onExit={exitCoopFight}
+      />
+    )
+  }
+
   // Don't render the combat screen until the server kill-count fetch has
   // settled (success or fail) — on a cold cache boss KC would briefly show 0.
   // Scoped to this screen so global startup time is unaffected.
@@ -2230,6 +2308,17 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                           )}
                         </div>
                       </button>
+                      {isCoopBossId(monster.id) && !isLocked && (
+                        <button
+                          onClick={() => startCoopFight(monster)}
+                          disabled={coopJoining === monster.id}
+                          aria-label={`Fight ${monster.name} with other players`}
+                          title="Fight together — loot goes to the highest damage"
+                          class="flex-shrink-0 w-9 h-9 rounded-full border border-[var(--color-gold-dim)] bg-[var(--color-void-light)] text-[var(--color-gold)] text-[13px] font-bold flex items-center justify-center active:opacity-70 disabled:opacity-40"
+                        >
+                          {coopJoining === monster.id ? '…' : '⚔'}
+                        </button>
+                      )}
                       <button
                         onClick={() => setSelectedMonsterInfo(monster)}
                         aria-label="Monster info"

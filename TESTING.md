@@ -29,6 +29,7 @@ How PocketRPG stays regression-resistant. Deep rationale: `docs/testing-strategy
 | Save / sync integrity | `saveEndpoint`, `saveRevisionMandatory`, `totalLevelRegression`, `criticalSavePolicy` | `functions/api/save.js`, `functions/_lib/game/saveValidation.js` |
 | Server-authoritative grants | `actionCompletion*`, `rewardClaimAuthority`, `serverAuthority` | `functions/api/actions/**` |
 | PvP | `pvp*` | `functions/_lib/pvp*`, `src/engine/pvp*` |
+| Co-op bosses | `coopBoss*`, `coopSessionLock` | `src/engine/coopBossEngine.js`, `functions/_lib/game/coopBoss.js`, `functions/api/coop/**` |
 | MCP / chat | `mcp*`, `chat*` | `functions/api/mcp.js`, `functions/_lib/chat/**` |
 
 ## Invariant specs (`tests/spec/`)
