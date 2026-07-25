@@ -24,9 +24,10 @@ import { getCombatType, equipItem, placeUnequippedItems } from './equipment.js'
 export const COOP_MAX_MEMBERS = 8
 export const COOP_TICK_MS = 600
 /** Bosses playable co-operatively: every boss in monsters.json except the raid
- * bosses, which stay inside their own instanced raid content, and the Ember Pits
- * pair (`ember_tyrant`, `ashen_crucible`) plus `venomcoil_matriarch`, which stay
- * solo. Still an explicit allowlist rather than a filter over the monster data,
+ * bosses, which stay inside their own instanced raid content, and the four that
+ * stay solo: the Ember Pits pair (`ember_tyrant`, `ashen_crucible`),
+ * `venomcoil_matriarch` and `blighted_gauntlet`.
+ * Still an explicit allowlist rather than a filter over the monster data,
  * so opening a boss to groups is a deliberate edit and both sides gate on one
  * list.
  *
@@ -64,7 +65,6 @@ export const COOP_BOSSES = {
   warlord_grondar: { respawnTicks: 50 },
   krylth_the_defiler: { respawnTicks: 50 },
   corporeal_horror: { respawnTicks: 10 },
-  blighted_gauntlet: { respawnTicks: 13 },
 }
 export const COOP_BOSS_IDS = new Set(Object.keys(COOP_BOSSES))
 /** Fallback for a boss added to the map without explicit pacing. */

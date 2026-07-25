@@ -113,9 +113,9 @@ describe('coopBossEngine — session shape', () => {
     }
   })
 
-  it('opens every boss to groups except the raid bosses and the solo-only three', () => {
+  it('opens every boss to groups except the raid bosses and the solo-only four', () => {
     const raidBosses = new Set(Object.values(raidsData).flatMap((r) => r.bosses ?? []))
-    const soloOnly = new Set(['ember_tyrant', 'ashen_crucible', 'venomcoil_matriarch'])
+    const soloOnly = new Set(['ember_tyrant', 'ashen_crucible', 'venomcoil_matriarch', 'blighted_gauntlet'])
     const expected = Object.entries(monstersData)
       .filter(([id, m]) => m.boss === true && !m.raidBoss && !raidBosses.has(id) && !soloOnly.has(id))
       .map(([id]) => id)
