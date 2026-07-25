@@ -8,6 +8,7 @@ import LootResultModal from '../components/LootResultModal.jsx'
 import SpellSelectGrid from '../components/SpellSelectGrid.jsx'
 import ActivePotionBadges from '../components/ActivePotionBadges.jsx'
 import CombatQuickActions from '../components/CombatQuickActions.jsx'
+import QuickPrayerConfigModal from '../components/QuickPrayerConfigModal.jsx'
 import { CombatFightHead, CombatHPBlock, CombatPrayerBlock } from '../components/CombatHud.jsx'
 import { useGame } from '../state/gameState.jsx'
 import { coopApi } from '../cloud/coop.js'
@@ -33,13 +34,14 @@ const COOP_ERROR_BACKOFF_MS = 2000
  * arrives through the tick poll, and actions are queued as intents.
  */
 export default function CoopBossScreen({ sessionId, characterId, onExit, addToast }) {
-  const { stats, quickPrayers, activeCombatSpell, updateActiveCombatSpell } = useGame()
+  const { stats, quickPrayers, updateQuickPrayers, activeCombatSpell, updateActiveCombatSpell } = useGame()
   const [state, setState] = useState(null)
   const [error, setError] = useState(null)
   const [bossSplats, setBossSplats] = useState([])
   const [addSplats, setAddSplats] = useState([])
   const [playerSplats, setPlayerSplats] = useState([])
   const [showSpellModal, setShowSpellModal] = useState(false)
+  const [showQuickPrayerConfig, setShowQuickPrayerConfig] = useState(false)
   const pollTimer = useRef(null)
   const stoppedRef = useRef(false)
   const splatTimersRef = useRef(new Set())
@@ -261,6 +263,7 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, addToas
             prayerLevel={getLevelFromXP(stats?.prayer?.xp || 0)}
             onPrayer={(prayerId) => send({ type: 'toggle_prayer', prayerId })}
             isPrayerActive={(prayerId) => combatState?.activeProtectionPrayer === prayerId || combatState?.activeCombatPrayer === prayerId}
+            onEditPrayers={() => setShowQuickPrayerConfig(true)}
           />
         )}
 
@@ -285,6 +288,15 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, addToas
           <div class="text-[11px] text-[var(--color-blood-light)] text-center">{error}</div>
         )}
       </div>
+
+      {showQuickPrayerConfig && (
+        <QuickPrayerConfigModal
+          prayerLevel={getLevelFromXP(stats?.prayer?.xp || 0)}
+          selected={quickPrayers}
+          onChange={updateQuickPrayers}
+          onClose={() => setShowQuickPrayerConfig(false)}
+        />
+      )}
 
       {showSpellModal && (
         <Modal onClose={() => setShowSpellModal(false)}>

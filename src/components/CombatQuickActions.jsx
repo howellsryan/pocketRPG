@@ -116,8 +116,11 @@ export default function CombatQuickActions({
             {label}<span class="cb-qa__tabn">{n}</span>
           </button>
         ))}
-        {tab === 'prayer' && showPrayers && (
-          <button class="cb-qa__edit" onClick={() => onEditPrayers && onEditPrayers()} aria-label="Configure quick prayers">✏️</button>
+        {/* Only render the pencil when a screen can actually handle it —
+            rendering it unconditionally is how it became a dead tap in the
+            co-op fight, which passed onPrayer but not onEditPrayers. */}
+        {tab === 'prayer' && showPrayers && typeof onEditPrayers === 'function' && (
+          <button class="cb-qa__edit" onClick={onEditPrayers} aria-label="Configure quick prayers">✏️</button>
         )}
       </div>
 

@@ -153,6 +153,7 @@ const sourceFiles = [
   'components/CollapseChevron.js',
   'components/CombatQuickActions.js',
   'components/CombatHud.js',
+  'components/QuickPrayerConfigModal.js',
   'components/SpellSelectGrid.js',
   'components/SkillEmblem.js',
   'components/SkillIcon.js',
