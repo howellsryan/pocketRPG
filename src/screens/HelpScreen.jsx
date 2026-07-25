@@ -4,16 +4,12 @@ import { DiscordMark, DISCORD_INVITE_URL } from '../components/DiscordButton.jsx
 import { useGame } from '../state/gameState.jsx'
 import { SETTINGS_NAV_LINKS } from '../components/navTabs.js'
 import { api } from '../cloud/api.js'
-
-// The world beta button only ever renders on preview (pocketWorldBetaEnabled
-// below), so this must be the preview world deployment, not production —
-// production is reached at world.pocketrpg.co.uk and never shows this button.
-const WORLD_ORIGIN = 'https://pocketrpg-world-preview.rlh.workers.dev'
+import { worldOrigin } from '../utils/worldOrigin.js'
 
 // `pocketWorldBetaEnabled` is baked in at build time by build_single.cjs
-// (same CF_PAGES_BRANCH-derived pattern as pocketEnable3D — preview on,
-// production off; override with EnableWorldBeta). Guarded because Vite dev
-// never defines it (no single-file build step runs there).
+// (on by default; `EnableWorldBeta=false` in the build env is the kill
+// switch). Guarded because Vite dev never defines it (no single-file build
+// step runs there).
 function worldBetaEnabled() {
   return typeof pocketWorldBetaEnabled !== 'undefined' ? Boolean(pocketWorldBetaEnabled) : true
 }
@@ -24,7 +20,7 @@ export default function HelpScreen({ onNavigate, onShowIntroTour }) {
   async function handleEnterWorld() {
     try {
       const { handoff } = await api.requestWorldHandoff()
-      window.open(`${WORLD_ORIGIN}/#handoff=${handoff}`, '_blank')
+      window.open(`${worldOrigin()}/#handoff=${handoff}`, '_blank')
     } catch (err) {
       console.error('[PocketRPG][World] failed to get handoff token', err)
     }

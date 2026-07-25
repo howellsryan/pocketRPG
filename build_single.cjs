@@ -30,6 +30,7 @@ const sourceFiles = [
   'utils/bonusLabels.js',
   'utils/armoury.js',
   'utils/oneLifeDeath.js',
+  'utils/worldOrigin.js',
   'utils/rewardReveal.js',
   'utils/equipModels.js', // -> game chunk (equip screen 3D model registry)
   'utils/three3d.js',     // core: lazy three.js loader (landing hero + equip/combat 3D)
@@ -637,15 +638,13 @@ const enable3D = process.env.Enable3dRender != null
   ? process.env.Enable3dRender === 'true'
   : Boolean(process.env.CF_PAGES_BRANCH) && process.env.CF_PAGES_BRANCH !== 'main';
 console.log(`3D render: ${enable3D ? 'ENABLED' : 'disabled'} (Enable3dRender=${process.env.Enable3dRender ?? 'unset'}, CF_PAGES_BRANCH=${process.env.CF_PAGES_BRANCH ?? 'unset'})`);
-// Open-world beta button flag, same build-time-bake pattern as enable3D
-// above (and for the same reason: this is a client-bundle toggle, and
+// Open-world entry button. Build-time bake (a client-bundle toggle, and
 // wrangler.toml [vars] never reach the client build — only functions/**).
-// `EnableWorldBeta` ("true"/anything) is an explicit override when set;
-// otherwise derive from CF_PAGES_BRANCH the same way: preview = enabled,
-// production (main) = disabled. Fail-safe: no branch info disables.
-const worldBetaEnabled = process.env.EnableWorldBeta != null
-  ? process.env.EnableWorldBeta === 'true'
-  : Boolean(process.env.CF_PAGES_BRANCH) && process.env.CF_PAGES_BRANCH !== 'main';
+// On everywhere by default; `EnableWorldBeta=false` in the build env is the
+// kill switch. Which world deployment it points at is a runtime host check,
+// not this flag — see src/utils/worldOrigin.js.
+const worldBetaEnabled = process.env.EnableWorldBeta == null
+  || process.env.EnableWorldBeta === 'true';
 console.log(`World beta button: ${worldBetaEnabled ? 'ENABLED' : 'disabled'} (EnableWorldBeta=${process.env.EnableWorldBeta ?? 'unset'}, CF_PAGES_BRANCH=${process.env.CF_PAGES_BRANCH ?? 'unset'})`);
 const gameChunkSource = `const gameIconsData = ${gameIconsJSON};\nconst bespokeIconsData = ${bespokeIconsJSON};\nconst worldActivitiesData = ${worldActivitiesJSON};\nconst placeMapsData = ${placeMapsJSON};\nconst equipmentModelsData = ${equipmentModelsJSON};\nconst creatures3dData = ${creatures3dJSON};\nconst hero3dData = ${hero3dJSON};\nconst biomes3dData = ${biomes3dJSON};\nconst pocketAssetBase = '/public/';\nconst pocketEnable3D = ${enable3D};\nconst pocketWorldBetaEnabled = ${worldBetaEnabled};\n${gameJS}`;
 const gameChunkScript = esbuild.transformSync(gameChunkSource, SPLIT_MINIFY).code.trim();
