@@ -16,6 +16,7 @@ import {
 } from '../src/engine/coopBossEngine.js'
 import itemsData from '../src/data/items.json'
 import monstersData from '../src/data/monsters.json'
+import raidsData from '../src/data/raids.json'
 import prayersData from '../src/data/prayers.json'
 import spellsData from '../src/data/spells.json'
 
@@ -112,8 +113,18 @@ describe('coopBossEngine — session shape', () => {
     }
   })
 
-  it('opens Warlord Grondar to groups', () => {
-    expect(isCoopBossId('warlord_grondar')).toBe(true)
+  it('opens every boss to groups except the raid bosses', () => {
+    const raidBosses = new Set(Object.values(raidsData).flatMap((r) => r.bosses ?? []))
+    const expected = Object.entries(monstersData)
+      .filter(([id, m]) => m.boss === true && !m.raidBoss && !raidBosses.has(id))
+      .map(([id]) => id)
+    expect(Object.keys(COOP_BOSSES).sort()).toEqual(expected.sort())
+  })
+
+  it('keeps raid bosses out of the allowlist — they stay inside their raid', () => {
+    for (const raid of Object.values(raidsData)) {
+      for (const bossId of raid.bosses ?? []) expect(isCoopBossId(bossId), bossId).toBe(false)
+    }
   })
 })
 

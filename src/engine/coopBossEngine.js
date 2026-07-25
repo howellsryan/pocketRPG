@@ -23,20 +23,49 @@ import { getCombatType, equipItem, placeUnequippedItems } from './equipment.js'
 
 export const COOP_MAX_MEMBERS = 8
 export const COOP_TICK_MS = 600
-/** Bosses playable co-operatively. Deliberately an allowlist rather than "every
- * boss": each one's mechanics need checking against the shared-HP model before
- * it opens up. Shared with the server so both sides gate on one list.
+/** Bosses playable co-operatively: every boss in monsters.json except the raid
+ * bosses, which stay inside their own instanced raid content. Still an explicit
+ * allowlist rather than a filter over the monster data, so opening a boss to
+ * groups is a deliberate edit and both sides gate on one list.
  *
  * `respawnTicks` paces the farm loop. A group melts a low-HP boss far faster
- * than a solo player, so the short default only suits bosses with enough HP to
+ * than a solo player, so the short floor only suits bosses with enough HP to
  * take real time to kill — anything squishy needs a longer wait between kills
- * or its GP/hr runs away from the §4 boss guardrails. */
+ * or its GP/hr runs away from the §4 boss guardrails. Every value below is
+ * `clamp(round(12750 / hitpoints), 10, 100)`, the curve through the two
+ * hand-tuned anchors: Warlord Grondar (255 HP, ~20k coins a kill) at 50 ticks
+ * and The Corporeal Horror (2000 HP) at the 10-tick floor. Ordered by combat
+ * level. */
 export const COOP_BOSSES = {
-  // 2000 HP: a group still needs a sustained fight, so the short default holds.
-  corporeal_horror: { respawnTicks: 10 },
-  // 255 HP and ~20k coins a kill — eight players would otherwise clear it every
-  // few seconds. 30s between kills keeps the loop closer to the solo pace.
+  gravehusk_brute: { respawnTicks: 100 },
+  boneclaw_revenant: { respawnTicks: 100 },
+  stonegale_elemental: { respawnTicks: 100 },
+  gravethorn_drake: { respawnTicks: 100 },
+  shroudwraith_specter: { respawnTicks: 100 },
+  cindermaw_serpent: { respawnTicks: 100 },
+  ironclad_guardian: { respawnTicks: 100 },
+  thornhide_colossus: { respawnTicks: 100 },
+  razorwing_harpy: { respawnTicks: 91 },
+  emberhowl_warlord: { respawnTicks: 85 },
+  ashen_hydra: { respawnTicks: 40 },
+  sovrathar_the_ashen_sovereign: { respawnTicks: 27 },
+  hellbound_gorilla: { respawnTicks: 62 },
+  king_black_dragon: { respawnTicks: 85 },
+  deepmaw_kraken: { respawnTicks: 50 },
+  nagadoth_prime: { respawnTicks: 85 },
+  nagadoth_rex: { respawnTicks: 85 },
+  nagadoth_supreme: { respawnTicks: 85 },
+  threefang_cerberus: { respawnTicks: 21 },
+  duskmare: { respawnTicks: 10 },
+  skyrender_kharra: { respawnTicks: 50 },
+  commander_zephyra: { respawnTicks: 50 },
   warlord_grondar: { respawnTicks: 50 },
+  krylth_the_defiler: { respawnTicks: 50 },
+  ember_tyrant: { respawnTicks: 51 },
+  venomcoil_matriarch: { respawnTicks: 26 },
+  corporeal_horror: { respawnTicks: 10 },
+  blighted_gauntlet: { respawnTicks: 13 },
+  ashen_crucible: { respawnTicks: 21 },
 }
 export const COOP_BOSS_IDS = new Set(Object.keys(COOP_BOSSES))
 /** Fallback for a boss added to the map without explicit pacing. */

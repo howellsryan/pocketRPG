@@ -2706,14 +2706,14 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                 {coopJoining === coopChoice.id ? 'Joining\u2026' : 'Fight together'}
               </div>
               <div class="text-[10px] text-[var(--color-parchment)] opacity-60 mt-0.5">
-                Share one boss with other players. The drop goes to whoever deals the most damage \u2014 everyone keeps their own XP.
+                Share one boss with other players. The drop goes to whoever deals the most damage. Everyone keeps their own XP.
               </div>
               <div class="text-[10px] text-[var(--color-gold)] opacity-80 mt-1">
                 {coopOpenSessions === null
                   ? 'Checking who is in there\u2026'
                   : (() => {
                     const fighters = coopOpenSessions.reduce((sum, s) => sum + (s.memberCount || 0), 0)
-                    if (fighters === 0) return 'Nobody in there yet \u2014 you would start a new fight.'
+                    if (fighters === 0) return 'Nobody in there yet, so you would start a new fight.'
                     return `${fighters} ${fighters === 1 ? 'player is' : 'players are'} fighting right now.`
                   })()}
               </div>
