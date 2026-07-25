@@ -17,6 +17,10 @@ npm run logs:tail:preview   # preview environment
 npm run logs:errors         # production, --status error only
 ```
 
+Wrangler is deliberately **not** a dependency — it and `@cloudflare/*` weigh ~152 MB, and
+Cloudflare Pages installs devDependencies on every build for a tool the build never uses.
+The scripts call `npx -y wrangler@4`, which fetches it on demand and caches it locally.
+
 Auth, either one:
 
 - `npx wrangler login` — OAuth, best for interactive use.
@@ -59,9 +63,9 @@ live Cloudflare docs rather than model memory.
 
 `.claude/settings.json` registers Cloudflare's own skill marketplace (GitHub
 `cloudflare/skills`) and auto-enables the `cloudflare@cloudflare` plugin — nothing is
-vendored into this repo, so it updates upstream. Useful members: `wrangler` (correct CLI
-syntax), `cloudflare` (platform), `durable-objects` (the open-world session DO),
-`workers-best-practices`, `web-perf`. See SKILLS.md for the full list and its listing cost.
+vendored into this repo, so it updates upstream. Five skills are kept (`cloudflare`,
+`wrangler`, `durable-objects`, `workers-best-practices`, `web-perf`); the other six are
+suppressed with `skillOverrides: "off"`. See SKILLS.md for which and why.
 
 `wrangler --install-skills` is the CLI's own installer for the same content, but it writes
 to `~/.claude/skills/` (per-machine, not the repo) and its package download fails behind

@@ -13,5 +13,13 @@
   },
   "enabledPlugins": {
     "cloudflare@cloudflare": true
+  },
+  "skillOverrides": {
+    "agents-sdk": "off",
+    "cloudflare-email-service": "off",
+    "cloudflare-one": "off",
+    "cloudflare-one-migrations": "off",
+    "sandbox-sdk": "off",
+    "turnstile-spin": "off"
   }
 }
