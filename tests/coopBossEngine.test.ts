@@ -1,7 +1,10 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
 import {
+  COOP_BOSSES,
   COOP_MAX_MEMBERS,
   addCoopMember,
+  coopRespawnTicks,
+  isCoopBossId,
   createCoopBossState,
   createCoopMember,
   damageTable,
@@ -97,6 +100,54 @@ describe('coopBossEngine — session shape', () => {
 
   it('caps are exposed for the join picker', () => {
     expect(COOP_MAX_MEMBERS).toBeGreaterThan(1)
+  })
+
+  it('builds a session for every boss on the allowlist', () => {
+    for (const bossId of Object.keys(COOP_BOSSES)) {
+      const state = createCoopBossState(bossId, monstersData)
+      expect(state, bossId).not.toBeNull()
+      expect(state!.boss.currentHP, bossId).toBe(monstersData[bossId].hitpoints)
+      expect(monstersData[bossId].boss, bossId).toBe(true)
+    }
+  })
+
+  it('opens Warlord Grondar to groups', () => {
+    expect(isCoopBossId('warlord_grondar')).toBe(true)
+  })
+})
+
+describe('coopBossEngine — respawn pacing', () => {
+  it('gives every allowlisted boss a positive respawn delay', () => {
+    for (const bossId of Object.keys(COOP_BOSSES)) {
+      expect(coopRespawnTicks(bossId), bossId).toBeGreaterThan(0)
+    }
+  })
+
+  it('makes a low-HP boss wait longer between kills than a high-HP one', () => {
+    // A group melts 255 HP far faster than 2000, so the squishy boss has to
+    // wait longer or its kills-per-hour runs away.
+    expect(monstersData.warlord_grondar.hitpoints).toBeLessThan(monstersData.corporeal_horror.hitpoints)
+    expect(coopRespawnTicks('warlord_grondar')).toBeGreaterThan(coopRespawnTicks('corporeal_horror'))
+  })
+
+  it('falls back to the default for a boss with no explicit pacing', () => {
+    expect(coopRespawnTicks('not_configured')).toBe(10)
+  })
+
+  it('waits the boss-specific delay before respawning', () => {
+    let state = createCoopBossState('warlord_grondar', monstersData)!
+    state = addCoopMember(state, createCoopMember({ characterId: 1, username: 'p1', savePayload: savePayload(), itemsData }))
+    state.boss.currentHP = 0
+
+    const wait = coopRespawnTicks('warlord_grondar')
+    let respawnedAt = null
+    for (let i = 1; i <= wait + 5 && respawnedAt === null; i++) {
+      const out = processCoopTick(state, [], deps, Date.now())
+      state = out.stateNext
+      if (out.events.some((e: any) => e.type === 'bossRespawned')) respawnedAt = i
+    }
+    // Kill lands on tick 1 and arms the countdown, so the respawn is one tick later.
+    expect(respawnedAt).toBe(wait + 1)
   })
 })
 

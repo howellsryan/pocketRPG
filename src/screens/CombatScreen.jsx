@@ -292,6 +292,9 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   // duration, so this takes over the screen exactly like an active PvP match.
   const [coopSessionId, setCoopSessionId] = useState(null)
   const [coopJoining, setCoopJoining] = useState(null)
+  // Solo-or-group prompt: which boss was tapped, and how busy its instances are.
+  const [coopChoice, setCoopChoice] = useState(null)
+  const [coopOpenSessions, setCoopOpenSessions] = useState(null)
 
   // Dungeon mode: this screen renders one place's foes (Monsters / Bosses /
   // Raids) instead of the world-wide picker. PvP is hidden (not place-bound);
@@ -1286,6 +1289,28 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     return () => unlockGame()
   }, [coopSessionId, lockGame, unlockGame])
 
+  // Co-op needs a cloud account (the server owns the fight), so the offline demo
+  // always goes straight to the solo path.
+  const offersCoop = (monster) => isCoopBossId(monster.id) && !isDemo
+
+  // Live headcount for the prompt, so "Fight together" says whether anyone is
+  // actually in there. Best-effort — the prompt still works without it.
+  useEffect(() => {
+    if (!coopChoice) {
+      setCoopOpenSessions(null)
+      return undefined
+    }
+    let cancelled = false
+    coopApi.listBosses()
+      .then((res) => {
+        if (cancelled) return
+        const entry = (res?.bosses || []).find((b) => b.bossId === coopChoice.id)
+        setCoopOpenSessions(entry?.sessions || [])
+      })
+      .catch(() => { if (!cancelled) setCoopOpenSessions([]) })
+    return () => { cancelled = true }
+  }, [coopChoice])
+
   // Joins the shared fight for a boss. The save is flushed first: the server
   // snapshots it on join and owns inventory/XP from that moment, so anything
   // still only in the local client would be lost.
@@ -2255,7 +2280,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                     return (
                     <div key={monster.id} class="flex gap-2 items-center" title={isLocked ? (bossReq.locked ? bossReq.reason : '') : ''}>
                       <button
-                        onClick={() => !isLocked && startFight(monster)}
+                        onClick={() => !isLocked && (offersCoop(monster) ? setCoopChoice(monster) : startFight(monster))}
                         disabled={isLocked}
                         title={isLocked && bossReq.locked ? bossReq.reason : ''}
                         class={`flex-1 flex items-center justify-between p-3 rounded-xl border transition-colors
@@ -2269,6 +2294,9 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                             <div class="flex items-center gap-1.5">
                               <span class="text-sm font-semibold text-[var(--color-parchment)]">{monster.name}</span>
                               {isOnTask && <span class="text-[9px] bg-yellow-500 text-black font-bold px-1 rounded">TASK</span>}
+                              {offersCoop(monster) && !isLocked && (
+                                <span class="text-[9px] border border-[var(--color-gold-dim)] text-[var(--color-gold)] font-bold px-1 rounded">GROUP</span>
+                              )}
                             </div>
                             <div class="text-[10px] text-[var(--color-parchment)]">
                               HP {monster.hitpoints} · Att {monster.stats.attack} · Def {monster.stats.defence}
@@ -2308,17 +2336,6 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                           )}
                         </div>
                       </button>
-                      {isCoopBossId(monster.id) && !isLocked && (
-                        <button
-                          onClick={() => startCoopFight(monster)}
-                          disabled={coopJoining === monster.id}
-                          aria-label={`Fight ${monster.name} with other players`}
-                          title="Fight together — loot goes to the highest damage"
-                          class="flex-shrink-0 w-9 h-9 rounded-full border border-[var(--color-gold-dim)] bg-[var(--color-void-light)] text-[var(--color-gold)] text-[13px] font-bold flex items-center justify-center active:opacity-70 disabled:opacity-40"
-                        >
-                          {coopJoining === monster.id ? '…' : '⚔'}
-                        </button>
-                      )}
                       <button
                         onClick={() => setSelectedMonsterInfo(monster)}
                         aria-label="Monster info"
@@ -3769,6 +3786,54 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       )}
 
       {/* Monster Info Modal */}
+      {coopChoice && (
+        <Modal onClose={() => setCoopChoice(null)}>
+          <div class="flex items-center gap-2 mb-1">
+            <SkillEmblem iconKey={getMonsterArt(coopChoice).icon} accent={getMonsterArt(coopChoice).accent} size={28} glow={0} />
+            <h3 class="font-[var(--font-display)] text-base font-bold text-[var(--color-gold)]">{coopChoice.name}</h3>
+          </div>
+          <p class="text-[11px] text-[var(--color-parchment)] opacity-70 mb-4">How do you want to fight this?</p>
+
+          <div class="space-y-2">
+            <button
+              onClick={() => { const m = coopChoice; setCoopChoice(null); startFight(m) }}
+              class="w-full text-left p-3 rounded-xl border border-[var(--color-void-border)] bg-[var(--color-void-light)] active:bg-[var(--color-void-lighter)]"
+            >
+              <div class="text-sm font-semibold text-[var(--color-parchment)]">Fight alone</div>
+              <div class="text-[10px] text-[var(--color-parchment)] opacity-60 mt-0.5">
+                The whole drop table is yours. Kill count and collection log as normal.
+              </div>
+            </button>
+
+            <button
+              onClick={() => { const m = coopChoice; setCoopChoice(null); startCoopFight(m) }}
+              disabled={coopJoining === coopChoice.id}
+              class="w-full text-left p-3 rounded-xl border border-[var(--color-gold-dim)] bg-[var(--color-void-light)] active:bg-[var(--color-void-lighter)] disabled:opacity-40"
+            >
+              <div class="text-sm font-semibold text-[var(--color-gold)]">
+                {coopJoining === coopChoice.id ? 'Joining…' : 'Fight together'}
+              </div>
+              <div class="text-[10px] text-[var(--color-parchment)] opacity-60 mt-0.5">
+                Share one boss with other players. The drop goes to whoever deals the most damage — everyone keeps their own XP.
+              </div>
+              <div class="text-[10px] text-[var(--color-gold)] opacity-80 mt-1">
+                {coopOpenSessions === null
+                  ? 'Checking who is in there…'
+                  : (() => {
+                    const fighters = coopOpenSessions.reduce((sum, s) => sum + (s.memberCount || 0), 0)
+                    if (fighters === 0) return 'Nobody in there yet — you would start a new fight.'
+                    return `${fighters} ${fighters === 1 ? 'player is' : 'players are'} fighting right now.`
+                  })()}
+              </div>
+            </button>
+          </div>
+
+          <p class="text-[10px] text-[var(--color-parchment)] opacity-50 mt-3">
+            While you are in a group fight the server runs your character, so the rest of the game is paused until you leave.
+          </p>
+        </Modal>
+      )}
+
       {selectedMonsterInfo && (
         <Modal onClose={() => setSelectedMonsterInfo(null)}>
           <div class="flex items-center justify-between mb-3">

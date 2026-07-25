@@ -77,6 +77,10 @@ describe('coop boss allowlist', () => {
     expect(isCoopBoss(BOSS)).toBe(true)
   })
 
+  it('accepts Warlord Grondar', () => {
+    expect(isCoopBoss('warlord_grondar')).toBe(true)
+  })
+
   it('rejects a boss that has not been opened up for co-op', () => {
     expect(isCoopBoss('tekton')).toBe(false)
   })
@@ -190,6 +194,27 @@ describe('joining a co-op session', () => {
     // A retry that re-ran the pre-join save write would have thrown a revision
     // conflict instead of landing the join.
     expect(raw.prepare('SELECT save_revision FROM saves WHERE character_id = 8').get().save_revision).toBe(2)
+  })
+
+  it('opens a Grondar fight, which needs no quest', async () => {
+    await seedCharacter(7, { save: baseSave({ completedQuests: [] }) })
+    const { sessionId } = await joinCoopSession(env as never, {
+      characterId: 7, identityId: 1, bossId: 'warlord_grondar', username: 'player7',
+    })
+    const row = await readSession(env as never, sessionId)
+    expect(row.boss_id).toBe('warlord_grondar')
+    expect(parseSessionState(row).boss.currentHP).toBe(255)
+  })
+
+  it('keeps each boss in its own instances', async () => {
+    await seedCharacter(7)
+    await seedCharacter(8)
+    const horror = await joinCoopSession(env as never, { characterId: 7, identityId: 1, bossId: BOSS, username: 'player7' })
+    const grondar = await joinCoopSession(env as never, { characterId: 8, identityId: 1, bossId: 'warlord_grondar', username: 'player8' })
+
+    expect(grondar.sessionId).not.toBe(horror.sessionId)
+    expect(await listOpenSessions(env as never, BOSS)).toHaveLength(1)
+    expect(await listOpenSessions(env as never, 'warlord_grondar')).toHaveLength(1)
   })
 
   it('lists an open session for the picker with live boss HP', async () => {

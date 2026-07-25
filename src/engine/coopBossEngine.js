@@ -25,15 +25,30 @@ export const COOP_MAX_MEMBERS = 8
 export const COOP_TICK_MS = 600
 /** Bosses playable co-operatively. Deliberately an allowlist rather than "every
  * boss": each one's mechanics need checking against the shared-HP model before
- * it opens up. Shared with the server so both sides gate on one list. */
-export const COOP_BOSS_IDS = new Set(['corporeal_horror'])
+ * it opens up. Shared with the server so both sides gate on one list.
+ *
+ * `respawnTicks` paces the farm loop. A group melts a low-HP boss far faster
+ * than a solo player, so the short default only suits bosses with enough HP to
+ * take real time to kill — anything squishy needs a longer wait between kills
+ * or its GP/hr runs away from the §4 boss guardrails. */
+export const COOP_BOSSES = {
+  // 2000 HP: a group still needs a sustained fight, so the short default holds.
+  corporeal_horror: { respawnTicks: 10 },
+  // 255 HP and ~20k coins a kill — eight players would otherwise clear it every
+  // few seconds. 30s between kills keeps the loop closer to the solo pace.
+  warlord_grondar: { respawnTicks: 50 },
+}
+export const COOP_BOSS_IDS = new Set(Object.keys(COOP_BOSSES))
+/** Fallback for a boss added to the map without explicit pacing. */
+export const COOP_RESPAWN_TICKS = 10
 
 export function isCoopBossId(bossId) {
-  return typeof bossId === 'string' && COOP_BOSS_IDS.has(bossId)
+  return typeof bossId === 'string' && Object.prototype.hasOwnProperty.call(COOP_BOSSES, bossId)
 }
-/** Ticks a finished session stays readable so every member sees the kill before
- * it is swept, and the boss respawns for whoever is still standing there. */
-export const COOP_RESPAWN_TICKS = 10
+
+export function coopRespawnTicks(bossId) {
+  return COOP_BOSSES[bossId]?.respawnTicks ?? COOP_RESPAWN_TICKS
+}
 const COOP_EAT_TICK_COST = 3
 const COOP_VALID_STANCES = new Set(['accurate', 'aggressive', 'controlled', 'defensive', 'rapid', 'longrange'])
 const COMBAT_STAT_KEYS = ['attack', 'strength', 'defence', 'hitpoints', 'ranged', 'magic', 'prayer']
@@ -499,7 +514,7 @@ export function processCoopTick(state, intents, { itemsData, monstersData, praye
 
   if (next.boss.currentHP <= 0 && !next.boss.killedAt) {
     next.boss.killedAt = now
-    next.boss.respawnCountdown = COOP_RESPAWN_TICKS
+    next.boss.respawnCountdown = coopRespawnTicks(next.bossId)
     const ownerCharId = topDamageCharacterId(next)
     kill = {
       ...(kill || { bossId: next.bossId }),
