@@ -51,6 +51,22 @@ dataset and its dimensions before writing a query — the schema shifts, so intr
 rather than copying a query from here. `httpRequestsAdaptiveGroups` covers edge-level
 traffic for the zone if you want request volume independent of Functions.
 
+`.mcp.json` also registers `cloudflare-docs` (`https://docs.mcp.cloudflare.com/mcp`), which
+needs no account access and answers "what does this binding/limit/API actually do" against
+live Cloudflare docs rather than model memory.
+
+## 3. Cloudflare agent skills
+
+`.claude/settings.json` registers Cloudflare's own skill marketplace (GitHub
+`cloudflare/skills`) and auto-enables the `cloudflare@cloudflare` plugin — nothing is
+vendored into this repo, so it updates upstream. Useful members: `wrangler` (correct CLI
+syntax), `cloudflare` (platform), `durable-objects` (the open-world session DO),
+`workers-best-practices`, `web-perf`. See SKILLS.md for the full list and its listing cost.
+
+`wrangler --install-skills` is the CLI's own installer for the same content, but it writes
+to `~/.claude/skills/` (per-machine, not the repo) and its package download fails behind
+some proxies. The settings.json registration above is the repo-level equivalent — prefer it.
+
 ## Still not covered
 
 - **Historical individual log lines.** Requires a Logpush job to R2/a log sink; none is

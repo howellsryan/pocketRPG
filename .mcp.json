@@ -3,6 +3,10 @@
     "cloudflare-graphql": {
       "type": "http",
       "url": "https://graphql.mcp.cloudflare.com/mcp"
+    },
+    "cloudflare-docs": {
+      "type": "http",
+      "url": "https://docs.mcp.cloudflare.com/mcp"
     }
   }
 }
