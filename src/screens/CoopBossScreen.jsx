@@ -13,8 +13,11 @@ import { CombatFightHead, CombatHPBlock, CombatPrayerBlock } from '../components
 import { useGame } from '../state/gameState.jsx'
 import { coopApi } from '../cloud/coop.js'
 import { splatsFromCoopEvents, HIT_SPLAT_DURATION_MS } from '../utils/hitSplats.js'
+import { xpDropsFromCombatEvents, emitXpDrops } from '../utils/xpDrops.js'
+import { shapeLootForModal, lootRowsForModal } from '../utils/lootModal.js'
 import { describeCoopEquipRefusal } from '../engine/coopBossEngine.js'
 import { getMonsterArt, getStyleArt } from '../utils/combatArt.js'
+import { hasEpicLootDrop } from '../utils/itemValue.js'
 import { getLevelFromXP } from '../engine/experience.js'
 import { canAffordSpecialAttack } from '../engine/specialAttackEnergy.js'
 import itemsData from '../data/items.json'
@@ -42,6 +45,7 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, addToas
   const [playerSplats, setPlayerSplats] = useState([])
   const [showSpellModal, setShowSpellModal] = useState(false)
   const [showQuickPrayerConfig, setShowQuickPrayerConfig] = useState(false)
+  const [lootModal, setLootModal] = useState(null)
   const pollTimer = useRef(null)
   const stoppedRef = useRef(false)
   const splatTimersRef = useRef(new Set())
@@ -77,6 +81,8 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, addToas
       if (stoppedRef.current) return
       if (res.state) setState(res.state)
       if (res.events?.length) {
+        emitXpDrops(xpDropsFromCombatEvents(res.events, characterId))
+
         const tickSplats = splatsFromCoopEvents(res.events, characterId)
         pushSplats(setBossSplats, tickSplats.boss)
         pushSplats(setAddSplats, tickSplats.add)
@@ -97,7 +103,11 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, addToas
         const killedName = monstersData?.[res.state?.bossId]?.name || 'The boss'
         if (Number(owner) === Number(characterId)) {
           const granted = res.kill.settlement?.granted || []
-          addToast?.(granted.length > 0 ? `${killedName} defeated — loot is yours!` : `${killedName} defeated!`, 'success')
+          setLootModal({
+            monsterName: killedName,
+            loot: granted,
+            killCount: res.kill.settlement?.killCount ?? null,
+          })
         } else {
           const winner = res.state?.members?.[String(owner)]
           addToast?.(`${killedName} defeated — loot went to ${winner?.username || 'the top attacker'}.`, 'info')
@@ -245,8 +255,9 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, addToas
         )}
 
         {boss?.respawnCountdown > 0 && (
-          <div class="mb-3 text-[11px] text-[var(--color-gold)] text-center">
-            Defeated — the next one is on its way…
+          <div class="cb-respawn">
+            <span class="cb-respawn__label">Next {bossName} in</span>
+            <span class="cb-respawn__v">{Math.ceil(boss.respawnCountdown * 0.6)}s</span>
           </div>
         )}
 
@@ -288,6 +299,35 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, addToas
           <div class="text-[11px] text-[var(--color-blood-light)] text-center">{error}</div>
         )}
       </div>
+
+      {lootModal && (() => {
+        const { hero, heroItem, rest, total } = shapeLootForModal(lootModal.loot, itemsData)
+        return (
+          <LootResultModal
+            theme={hasEpicLootDrop(lootModal.loot, itemsData) ? 'purple' : 'gold'}
+            kind="loot"
+            eyebrow="Boss Defeated"
+            title={lootModal.monsterName}
+            sub={lootModal.killCount ? `Kill ${lootModal.killCount.toLocaleString()}` : undefined}
+            heroItem={heroItem}
+            heroName={hero ? (heroItem?.name || hero.itemId) : null}
+            heroQuantity={hero ? hero.quantity : null}
+            heroGp={hero ? hero.totalGp : 0}
+            heroUnitGp={hero ? hero.unitGp : 0}
+            loot={rest.length > 0 ? lootRowsForModal(rest, itemsData) : null}
+            lootTitle="Loot Secured"
+            lootTotal={total}
+            primaryAction={{ label: 'Keep Fighting', onClick: () => setLootModal(null) }}
+            onClose={() => setLootModal(null)}
+          >
+            {(lootModal.loot?.length ?? 0) === 0 && (
+              <div class="text-center text-[12px] text-[var(--color-parchment)] opacity-70 py-4" style={{ position: 'relative', zIndex: 4 }}>
+                No drops this time — the kill still counts.
+              </div>
+            )}
+          </LootResultModal>
+        )
+      })()}
 
       {showQuickPrayerConfig && (
         <QuickPrayerConfigModal

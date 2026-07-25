@@ -20,6 +20,8 @@ const sourceFiles = [
   'utils/formatters.js',
   'utils/itemValue.js',
   'utils/hitSplats.js',
+  'utils/xpDrops.js',
+  'utils/lootModal.js',
   'utils/killCountMerge.js',
   'utils/idleElapsed.js',
   'utils/itemIcons.js',

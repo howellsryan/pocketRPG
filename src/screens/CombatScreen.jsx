@@ -53,6 +53,8 @@ import { coopApi, setActiveCoopSession } from '../cloud/coop.js'
 import { SCREENS, formatDropChance } from '../utils/constants.js'
 import { hasEpicLootDrop, getItemUnitValue, getLootTotalValue } from '../utils/itemValue.js'
 import { splatsFromCombatEvents, HIT_SPLAT_DURATION_MS } from '../utils/hitSplats.js'
+import { xpDropsFromCombatEvents, emitXpDrops } from '../utils/xpDrops.js'
+import { shapeLootForModal, lootRowsForModal } from '../utils/lootModal.js'
 import { HitSplatLayer } from '../components/HitSplat.jsx'
 import { CombatFightHead, CombatHPBlock, CombatPrayerBlock } from '../components/CombatHud.jsx'
 import QuickPrayerConfigModal from '../components/QuickPrayerConfigModal.jsx'
@@ -641,6 +643,8 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       setCombat({ ...combatState })
 
       // Hit splats replace the chat-style "You hit X" / "Monster hits X" lines.
+      emitXpDrops(xpDropsFromCombatEvents(events))
+
       const tickSplats = splatsFromCombatEvents(events)
       pushSplats(setMonsterSplats, tickSplats.monster)
       pushSplats(setAddSplats, tickSplats.add)
@@ -3683,22 +3687,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       {/* Loot Modal */}
       {lootModal && (() => {
         const drops = !lootModal.loading && lootModal.loot ? lootModal.loot : []
-        const valuedDrops = drops.map(d => {
-          const unitVal = getItemUnitValue(d.itemId, itemsData) || 0
-          return { ...d, unitGp: unitVal, totalGp: unitVal * (d.quantity || 1) }
-        })
-        const sorted = [...valuedDrops].sort((a, b) => b.totalGp - a.totalGp)
-        // Spotlight the highest *unit* shop value (the rare/prestige drop), not
-        // the biggest stack — a billion coins shouldn't outrank dragon claws.
-        // Tie-break by total gp. The loot list keeps its total-gp ordering.
-        const hero = valuedDrops.reduce((best, d) => {
-          if (!best) return d
-          if ((d.unitGp || 0) !== (best.unitGp || 0)) return (d.unitGp || 0) > (best.unitGp || 0) ? d : best
-          return (d.totalGp || 0) > (best.totalGp || 0) ? d : best
-        }, null)
-        const rest = sorted.filter(d => d !== hero)
-        const heroItemData = hero ? (itemsData[hero.itemId] || null) : null
-        const lootTotal = valuedDrops.reduce((s, d) => s + d.totalGp, 0)
+        const { hero, heroItem: heroItemData, rest, total: lootTotal } = shapeLootForModal(drops, itemsData)
         const isRaid = !!lootModal.raidId
 
         return (
@@ -3721,16 +3710,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
               ? (isRaid ? `Skip raid (${raidsData[lootModal.raidId]?.skipCost ?? 1})` : 'Skip')
               : null}
             onSkip={skipAgain}
-            loot={!lootModal.loading && rest.length > 0
-              ? rest.map((drop, idx) => ({
-                  key: idx,
-                  item: itemsData[drop.itemId] || null,
-                  name: itemsData[drop.itemId]?.name || drop.itemId,
-                  quantity: drop.quantity,
-                  gp: drop.totalGp,
-                  unitGp: drop.unitGp,
-                }))
-              : null}
+            loot={!lootModal.loading && rest.length > 0 ? lootRowsForModal(rest, itemsData) : null}
             lootTitle="Loot Secured"
             lootTotal={lootTotal}
             primaryAction={!lootModal.loading ? {

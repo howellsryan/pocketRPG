@@ -1140,6 +1140,9 @@ span.cb-fight__cb { cursor: default; }
 
 .cb-actions { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 9px; }
 .cb-actions--two { grid-template-columns: 1fr 1fr; }
+.cb-respawn { display: flex; align-items: baseline; justify-content: center; gap: 8px; margin-bottom: 11px; padding: 8px 12px; border: 1px solid var(--color-gold-dim); border-radius: 10px; background: var(--color-void); }
+.cb-respawn__label { font-size: 11px; font-weight: 700; color: var(--color-parchment); opacity: 0.62; }
+.cb-respawn__v { font-family: var(--font-mono); font-weight: 700; font-size: 15px; color: var(--color-gold); }
 .cb-act {
   display: flex; align-items: center; justify-content: center; gap: 7px; min-height: 48px; padding: 13px 6px;
   border-radius: var(--fm-r-sm); cursor: pointer; font-family: var(--fm-serif); font-weight: 700; font-size: 14px;

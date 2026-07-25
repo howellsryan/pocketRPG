@@ -1,0 +1,39 @@
+import { getItemUnitValue } from './itemValue.js'
+
+// Shared shaping for the post-kill loot modal, so a solo kill and a co-op kill
+// present the same way.
+//
+// The spotlight is the highest *unit* shop value — the rare/prestige drop — not
+// the biggest stack, or a million coins would outrank dragon claws. Ties break
+// on total value. The remaining list keeps total-value ordering.
+export function shapeLootForModal(drops, itemsData) {
+  const valued = (drops || []).map((d) => {
+    const unitGp = getItemUnitValue(d.itemId, itemsData) || 0
+    return { ...d, unitGp, totalGp: unitGp * (d.quantity || 1) }
+  })
+  const hero = valued.reduce((best, d) => {
+    if (!best) return d
+    if ((d.unitGp || 0) !== (best.unitGp || 0)) return (d.unitGp || 0) > (best.unitGp || 0) ? d : best
+    return (d.totalGp || 0) > (best.totalGp || 0) ? d : best
+  }, null)
+  const rest = [...valued].sort((a, b) => b.totalGp - a.totalGp).filter((d) => d !== hero)
+  return {
+    valued,
+    hero,
+    heroItem: hero ? (itemsData[hero.itemId] || null) : null,
+    rest,
+    total: valued.reduce((sum, d) => sum + d.totalGp, 0),
+  }
+}
+
+/** The `loot` rows <LootResultModal> expects, for everything but the hero. */
+export function lootRowsForModal(rest, itemsData) {
+  return (rest || []).map((drop, idx) => ({
+    key: idx,
+    item: itemsData[drop.itemId] || null,
+    name: itemsData[drop.itemId]?.name || drop.itemId,
+    quantity: drop.quantity,
+    gp: drop.totalGp,
+    unitGp: drop.unitGp,
+  }))
+}
