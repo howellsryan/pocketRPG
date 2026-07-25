@@ -30,3 +30,30 @@ export function preserveBankCharges(prevBank, nextBank) {
   }
   return restored || nextBank
 }
+
+/**
+ * Split a bank charge pool for a withdrawal: the withdrawn copies take their
+ * proportional share (the whole pool when the entry empties), the bank keeps
+ * the rest. Shared by the bank screen and the MCP withdraw intent so both
+ * sides move charges by the same rule.
+ */
+export function splitBankCharges(poolCharges, withdrawQty, bankedQty) {
+  const pool = Math.max(0, Math.floor(Number(poolCharges) || 0))
+  const taking = Math.max(0, Math.floor(Number(withdrawQty) || 0))
+  const banked = Math.max(0, Math.floor(Number(bankedQty) || 0))
+  if (pool <= 0 || taking <= 0 || banked <= 0) return { taken: 0, remaining: pool }
+  const taken = taking >= banked ? pool : Math.floor((pool * taking) / banked)
+  return { taken, remaining: pool - taken }
+}
+
+/**
+ * Spread `total` charges over `slotCount` withdrawn copies — even floor split
+ * with the remainder on the last slot, so no charge is lost to rounding.
+ */
+export function distributeCharges(total, slotCount) {
+  const amount = Math.max(0, Math.floor(Number(total) || 0))
+  const slots = Math.max(0, Math.floor(Number(slotCount) || 0))
+  if (slots <= 0) return []
+  const per = Math.floor(amount / slots)
+  return Array.from({ length: slots }, (_, i) => (i === slots - 1 ? amount - per * (slots - 1) : per))
+}

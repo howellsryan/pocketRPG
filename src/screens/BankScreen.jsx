@@ -7,6 +7,7 @@ import SellConfirmModal from '../components/SellConfirmModal.jsx'
 import { formatQuantity } from '../utils/helpers'
 import GameIcon from '../components/GameIcon.jsx'
 import { isOrderBookItem } from '../engine/storeRules.js'
+import { splitBankCharges, distributeCharges } from '../engine/bankCharges.js'
 import { getIronmanShopValue } from '../utils/itemValue.js'
 import { HIGH_VALUE_SELL_THRESHOLD } from '../utils/constants.js'
 import { api, getToken, getCharacterId } from '../cloud/api.js'
@@ -143,20 +144,14 @@ export default function BankScreen({ onBack }) {
       if (actualWithdrawn === 0) { addToast('Inventory full', 'error'); return }
     }
 
-    // Distribute the withdrawn share of the charge pool over the new slots
-    // (Math.floor split, remainder on the last slot so no charge is lost).
-    const withdrawnPool = poolCharges > 0 && newSlotIndices.length > 0
-      ? (actualWithdrawn >= bankEntry.quantity
-          ? poolCharges
-          : Math.floor(poolCharges * actualWithdrawn / bankEntry.quantity))
+    // Distribute the withdrawn share of the charge pool over the new slots.
+    const withdrawnPool = newSlotIndices.length > 0
+      ? splitBankCharges(poolCharges, actualWithdrawn, bankEntry.quantity).taken
       : 0
     if (withdrawnPool > 0) {
-      const per = Math.floor(withdrawnPool / newSlotIndices.length)
+      const share = distributeCharges(withdrawnPool, newSlotIndices.length)
       newSlotIndices.forEach((slotIdx, i) => {
-        const charges = i === newSlotIndices.length - 1
-          ? withdrawnPool - per * (newSlotIndices.length - 1)
-          : per
-        if (charges > 0) newInv[slotIdx] = { ...newInv[slotIdx], charges }
+        if (share[i] > 0) newInv[slotIdx] = { ...newInv[slotIdx], charges: share[i] }
       })
     }
 

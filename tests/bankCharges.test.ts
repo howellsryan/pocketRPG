@@ -87,4 +87,20 @@ describe('removeItemFromBank', () => {
     removeItemFromBank(save, 'venom_blowpipe', 1)
     expect(save.bank.venom_blowpipe).toBeUndefined()
   })
+
+  it('returns no charges unless the caller asks to take them (a sell leaves the pool)', () => {
+    const save = {
+      bank: { venom_blowpipe: { itemId: 'venom_blowpipe', quantity: 2, charges: 8000 } },
+    }
+    expect(removeItemFromBank(save, 'venom_blowpipe', 1)).toBe(0)
+    expect(save.bank.venom_blowpipe.charges).toBe(8000)
+  })
+
+  it('hands the withdrawn share to the caller and keeps the remainder banked', () => {
+    const save = {
+      bank: { venom_blowpipe: { itemId: 'venom_blowpipe', quantity: 4, charges: 8000 } },
+    }
+    expect(removeItemFromBank(save, 'venom_blowpipe', 1, { takeCharges: true })).toBe(2000)
+    expect(save.bank.venom_blowpipe).toEqual({ itemId: 'venom_blowpipe', quantity: 3, charges: 6000 })
+  })
 })
