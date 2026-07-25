@@ -124,6 +124,12 @@ const COMBAT_CATEGORIES = [
     ids: ['ember_tyrant', 'ashen_crucible'],
   },
   {
+    key: 'corporeal_horror',
+    label: 'Corporeal Horror',
+    icon: '👁️',
+    ids: ['corporeal_horror'],
+  },
+  {
     key: 'blighted_gauntlet',
     label: 'Blighted Gauntlet',
     icon: '⚡',
@@ -861,6 +867,13 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           if (!phaseChangeMonsters.includes(state.monster.id)) {
             addToast(`${ev.icon || '🐍'} ${monsterName}: ${ev.displayName} form${immunityNote}`, 'info')
           }
+        }
+        if (ev.type === 'prayerDrained') {
+          setLog(prev => [...prev.slice(-20), {
+            text: `🔮 ${ev.monsterName || 'Monster'} drains ${ev.amount} prayer points!`,
+            type: 'miss',
+            time: Date.now()
+          }])
         }
         if (ev.type === 'bossPhaseReset') {
           const name = ev.monsterName || 'Boss'

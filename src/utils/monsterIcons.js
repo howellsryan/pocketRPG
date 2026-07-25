@@ -11,6 +11,7 @@ export const MONSTER_ICONS = {
   bone_wyvern: '🐲', cinder_devil: '💨', deepmaw_kraken: '🦑', nightfang_beast: '🦇',
   marshscale_shaman: '🦎', nether_wraith: '👻', nether_demon: '😈', vicious_black_dragon: '🐉',
   threefang_cerberus: '🐺', ashen_hydra: '🐲',
+  corporeal_horror: '👁️',
   dustpaw_rat: '🐀', bogling_sprite: '✨', frostbite_imp: '❄️', marshfen_toad: '🐸',
   cinderpaw_cub: '🐅', glaive_skeleton: '💀', mirebound_husk: '🪦', verdant_stalker: '🏹',
   stoneglare_basilisk: '🦎', embertongue_lizard: '🦎', hollow_reaver: '⚰️',

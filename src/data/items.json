@@ -284,6 +284,7 @@
   },
   "bronze_spear": {
     "id": "bronze_spear",
+    "weaponClass": "spear",
     "legacy_item_id": "bronze_spear",
     "name": "Bronze Spear",
     "type": "weapon",
@@ -7531,6 +7532,7 @@
   },
   "krylth_spear": {
     "id": "krylth_spear",
+    "weaponClass": "spear",
     "legacy_item_id": "zamorak_spear",
     "name": "Krylth Spear",
     "type": "weapon",
@@ -11545,6 +11547,7 @@
   },
   "gorath_s_warspear": {
     "id": "gorath_s_warspear",
+    "weaponClass": "spear",
     "legacy_item_id": "guthans_warspear",
     "name": "Gorath's Warspear",
     "type": "weapon",
@@ -18369,5 +18372,240 @@
     "shopValue": 99000,
     "isGeneralStore": false,
     "isSkillCape": true
+  },
+  "wraithbone_shield": {
+    "id": "wraithbone_shield",
+    "legacy_item_id": "spirit_shield",
+    "name": "Wraithbone Shield",
+    "type": "armour",
+    "slot": "shield",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 40,
+      "slash": 40,
+      "crush": 40,
+      "magic": 5,
+      "ranged": 40
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0,
+      "prayer": 2
+    },
+    "requirements": {
+      "defence": 45,
+      "prayer": 55
+    },
+    "shopValue": 5000000,
+    "isGeneralStore": false,
+    "isBossUnique": true,
+    "description": "Bone plate torn from the Corporeal Horror. Anoint it with a Sanctified Elixir to hallow it."
+  },
+  "sanctified_elixir": {
+    "id": "sanctified_elixir",
+    "legacy_item_id": "holy_elixir",
+    "name": "Sanctified Elixir",
+    "type": "material",
+    "stackable": false,
+    "shopValue": 25000000,
+    "isGeneralStore": false,
+    "isBossUnique": true,
+    "description": "Hallows a Wraithbone Shield, readying it to bear a sigil.",
+    "combineWith": "wraithbone_shield",
+    "combineResult": "hallowed_wraithbone_shield"
+  },
+  "hallowed_wraithbone_shield": {
+    "id": "hallowed_wraithbone_shield",
+    "legacy_item_id": "blessed_spirit_shield",
+    "name": "Hallowed Wraithbone Shield",
+    "type": "armour",
+    "slot": "shield",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 55,
+      "slash": 55,
+      "crush": 55,
+      "magic": 5,
+      "ranged": 55
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0,
+      "prayer": 3
+    },
+    "requirements": {
+      "defence": 70,
+      "prayer": 60
+    },
+    "shopValue": 30000000,
+    "isGeneralStore": false,
+    "isBossUnique": true,
+    "description": "A hallowed Wraithbone Shield. A sigil bound to it awakens its true power."
+  },
+  "runeward_sigil": {
+    "id": "runeward_sigil",
+    "legacy_item_id": "arcane_sigil",
+    "name": "Runeward Sigil",
+    "type": "material",
+    "stackable": false,
+    "shopValue": 350000000,
+    "isGeneralStore": false,
+    "isBossUnique": true,
+    "description": "Binds to a Hallowed Wraithbone Shield, forging the Runeward Wraithbone Shield.",
+    "combineWith": "hallowed_wraithbone_shield",
+    "combineResult": "runeward_wraithbone_shield"
+  },
+  "aegis_sigil": {
+    "id": "aegis_sigil",
+    "legacy_item_id": "elysian_sigil",
+    "name": "Aegis Sigil",
+    "type": "material",
+    "stackable": false,
+    "shopValue": 400000000,
+    "isGeneralStore": false,
+    "isBossUnique": true,
+    "description": "Binds to a Hallowed Wraithbone Shield, forging the Aegis Wraithbone Shield.",
+    "combineWith": "hallowed_wraithbone_shield",
+    "combineResult": "aegis_wraithbone_shield"
+  },
+  "vigil_sigil": {
+    "id": "vigil_sigil",
+    "legacy_item_id": "spectral_sigil",
+    "name": "Vigil Sigil",
+    "type": "material",
+    "stackable": false,
+    "shopValue": 350000000,
+    "isGeneralStore": false,
+    "isBossUnique": true,
+    "description": "Binds to a Hallowed Wraithbone Shield, forging the Vigil Wraithbone Shield.",
+    "combineWith": "hallowed_wraithbone_shield",
+    "combineResult": "vigil_wraithbone_shield"
+  },
+  "runeward_wraithbone_shield": {
+    "id": "runeward_wraithbone_shield",
+    "legacy_item_id": "arcane_spirit_shield",
+    "name": "Runeward Wraithbone Shield",
+    "type": "armour",
+    "slot": "shield",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 20,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 55,
+      "slash": 55,
+      "crush": 55,
+      "magic": 5,
+      "ranged": 55
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 10,
+      "prayer": 3
+    },
+    "requirements": {
+      "defence": 70,
+      "prayer": 75
+    },
+    "shopValue": 400000000,
+    "isGeneralStore": false,
+    "isBossUnique": true,
+    "description": "A Runeward Sigil bound to hallowed bone. The finest magic shield in the realm."
+  },
+  "aegis_wraithbone_shield": {
+    "id": "aegis_wraithbone_shield",
+    "legacy_item_id": "elysian_spirit_shield",
+    "name": "Aegis Wraithbone Shield",
+    "type": "armour",
+    "slot": "shield",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 65,
+      "slash": 65,
+      "crush": 65,
+      "magic": 3,
+      "ranged": 65
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0,
+      "prayer": 3,
+      "damageReductionChance": 70,
+      "damageReductionPercent": 25
+    },
+    "requirements": {
+      "defence": 75,
+      "prayer": 75
+    },
+    "shopValue": 900000000,
+    "isGeneralStore": false,
+    "isBossUnique": true,
+    "description": "An Aegis Sigil bound to hallowed bone. Turns aside a quarter of most blows."
+  },
+  "vigil_wraithbone_shield": {
+    "id": "vigil_wraithbone_shield",
+    "legacy_item_id": "spectral_spirit_shield",
+    "name": "Vigil Wraithbone Shield",
+    "type": "armour",
+    "slot": "shield",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 55,
+      "slash": 55,
+      "crush": 55,
+      "magic": 25,
+      "ranged": 55
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0,
+      "prayer": 3,
+      "prayerDrainReduction": 50
+    },
+    "requirements": {
+      "defence": 70,
+      "prayer": 75
+    },
+    "shopValue": 400000000,
+    "isGeneralStore": false,
+    "isBossUnique": true,
+    "description": "A Vigil Sigil bound to hallowed bone. Prayers burn half as fast while it is carried."
   }
 }

@@ -51,6 +51,22 @@
           ]
         },
         {
+          "id": "corporeal_horror",
+          "label": "The Corporeal Horror",
+          "icon": "\ud83d\udc41\ufe0f",
+          "items": [
+            "wraithbone_shield",
+            "sanctified_elixir",
+            "runeward_sigil",
+            "aegis_sigil",
+            "vigil_sigil",
+            "hallowed_wraithbone_shield",
+            "runeward_wraithbone_shield",
+            "aegis_wraithbone_shield",
+            "vigil_wraithbone_shield"
+          ]
+        },
+        {
           "id": "threefang_cerberus",
           "label": "Threefang Cerberus",
           "icon": "\ud83d\udc51",

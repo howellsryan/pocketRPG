@@ -1,168 +1,124 @@
-# The Corporeal Horror — boss + drop table plan
+# The Corporeal Horror — boss + drop chain
 
-Plan only. No code written yet. Adapts the OSRS Corporeal Beast (spear-gated damage sponge, spirit-shield drop chain) into PocketRPG-owned naming and this repo's data/engine conventions.
+Design record for the OSRS Corporeal Beast adaptation: a spear-gated damage sponge with a two-form Dread Core mechanic and the Wraithbone shield/sigil drop chain. **Shipped** — this document describes what was built and why.
 
 ## 1) Naming
 
 | OSRS | PocketRPG |
 |---|---|
 | Corporeal Beast | **The Corporeal Horror** (`corporeal_horror`) |
-| Dark energy core | **Dread Core** (phase-2 stretch, §7) |
-| Spirit shield | **Wraithbone Shield** (`wraithbone_shield`) |
-| Holy elixir | **Sanctified Elixir** (`sanctified_elixir`) |
-| Blessed spirit shield | **Hallowed Wraithbone Shield** (`hallowed_wraithbone_shield`) |
+| Dark energy core | **Dread Core** (a form of the boss, not a separate monster) |
+| Spirit shield | **Wraithbone Shield** |
+| Holy elixir | **Sanctified Elixir** |
+| Blessed spirit shield | **Hallowed Wraithbone Shield** |
 | Arcane sigil / shield | **Runeward Sigil** → **Runeward Wraithbone Shield** |
 | Elysian sigil / shield | **Aegis Sigil** → **Aegis Wraithbone Shield** |
 | Spectral sigil / shield | **Vigil Sigil** → **Vigil Wraithbone Shield** |
 
-Precedent for literal naming exists (`king_black_dragon`), but §8 prefers owned names and `data-contracts.test.ts` blocks the legacy-name list, so everything above is PocketRPG-owned. Keep `legacy_id` / `legacy_item_id` fields for provenance, as existing entries do.
+Every item keeps its OSRS id in `legacy_item_id` / `legacy_id` for provenance. `data-contracts.test.ts` blocks the legacy-name list from player-facing data.
 
-## 2) Monster definition — `src/data/monsters.json`
+## 2) Monster — `src/data/monsters.json`
 
-Slots between the God Wars tier (580–650) and the raid bosses (940–1040). No Slayer requirement (not a slayer monster in OSRS, and `slayerMasters.js` should not list it).
+Combat level 785, 2,000 hitpoints — between the God Wars tier (580–650) and the raid bosses (940–1040). No Slayer requirement; gated on the quest `the_heart_of_shadows` via the existing data-driven `questRequirement` field (`src/engine/combatRequirements.js:38`). `skipCost: 5` — read by `functions/api/skip-hour.js`, the existing credit-debit authority.
+
+Defences are lopsided (`slash`/`crush`/`ranged` 200, `magic` 150, **`stab` 25**) so a spear is both exempt from the resistance and the accurate choice.
+
+## 3) Spear resistance
 
 ```jsonc
-"corporeal_horror": {
-  "id": "corporeal_horror",
-  "name": "The Corporeal Horror",
-  "boss": true,
-  "combatLevel": 785,
-  "hitpoints": 2000,
-  "questRequirement": "the_heart_of_shadows",
-  "stats": { "attack": 320, "strength": 320, "defence": 310, "magic": 350, "ranged": 150 },
-  "attackSpeed": 4,
-  "attackStyle": "crush",
-  "attackBonus": 200,
-  "strengthBonus": 180,
-  "defenceBonus": { "stab": 25, "slash": 200, "crush": 200, "magic": 150, "ranged": 200 },
-  "resistance": { "multiplier": 0.5, "exemptWeaponClass": "spear" },
-  "dropRolls": 1,
-  "drops": [ /* §4 */ ],
-  "legacy_id": "corporeal_beast"
-}
+"resistance": { "multiplier": 0.5, "exemptWeaponClass": "spear" }
 ```
 
-Notes:
-- Low `stab` defence + the spear exemption is what makes a spear the correct answer without hard-locking any other style out.
-- `questRequirement` is already honoured by `checkBossRequirementsPure` (`src/engine/combatRequirements.js:38`) — data-only gate, no code change. `the_heart_of_shadows` is the closest existing Master-tier quest; a bespoke unlock quest is the alternative (§9, decision 1).
-- Target kill time with best-in-slot melee + Krylth Spear: **~2.5–3.5 min**. Verify with `npm run check:drops -- corporeal_horror` and compare XP/hr against the GWD bosses (CLAUDE.md §4 keeps boss XP/hr ≤ ~2× the best regular monster).
+Every player hit is halved unless the equipped weapon carries `weaponClass: "spear"` (tagged on `bronze_spear`, `krylth_spear`, `gorath_s_warspear`). Rules live in `src/engine/monsterDamageRules.js` and are applied in both PvE damage paths, which compute damage independently:
 
-## 3) The spear mechanic (the one real engine change)
+- `src/engine/combat.js` — normal swings, and every branch of `applySpecialAttack` (per hit, so reported hits still sum to the damage that landed).
+- `src/engine/idleEngine.js` — `avgHitStats`, so idle/offline/skip-hour can't kill the boss twice as fast as live play.
 
-Non-spear weapons deal **half damage**. PvE damage is computed in two independent places — live combat and the idle sim — so the rule must be shared, not duplicated:
+PvP is deliberately untouched: the field lives on monsters and no PvP path reads monster definitions.
 
-1. New pure module `src/engine/monsterDamageRules.js`:
-   ```js
-   export function monsterDamageMultiplier(monster, weapon) // 1 or monster.resistance.multiplier
-   ```
-   No imports from UI; no top-level reads of other modules' bindings (§12).
-2. Tag the spears in `src/data/items.json` with `"weaponClass": "spear"` — `bronze_spear`, `krylth_spear`, `gorath_s_warspear`. Data-driven so future spears/hastas inherit it.
-3. Apply in `src/engine/combat.js` at the player-damage site (post-roll, pre-clamp, `Math.floor`), and in `src/engine/idleEngine.js` at the `avgDmgPerHit` calculation (~`idleEngine.js:998`) so idle/offline/skip-hour kill rates match live.
-4. Register the new file in `build_single.cjs` `sourceFiles` (engine → core, **not** `GAME_CHUNK_FILES`).
-5. **Out of scope for PvP.** `pvpEngine.js` / `combatPrimitives.js` are untouched — the field lives on monsters, and no PvP path reads monster definitions.
+## 4) Dread Core
 
-Tests: `tests/monsterDamageRules.test.ts` (multiplier resolution incl. no-weapon/unarmed), plus one live-combat and one idle-sim assertion that a spear kills roughly twice as fast as an equal-DPS non-spear.
+The boss cycles two forms using the existing `multiForm` engine, plus one new data field:
 
-## 4) Drop table
+| Form | Attack style | Max hit | Lasts | Extra |
+|---|---|---|---|---|
+| The Corporeal Horror | crush | 55 | 8–14 attacks | — |
+| Dread Core | magic | 25 | 3–5 attacks | **8 prayer points burned per landed hit** |
 
-`dropRolls: 1`; every entry rolls independently, matching `rollMonsterRewardsById` (`functions/_lib/game/monsterRewards.js`). Server rolls loot from this same table, so **no separate server loot table is needed** — `/api/actions/monster/complete` already resolves through `monsters.json`.
+Two small engine additions carry it:
+- `switchAfterAttacks` (number or `[min, max]`) on a form overrides the monster-level `formSwitchMin/Max`, so a short punish phase can alternate with a long main phase.
+- `prayerDrainPerHit` on a form (or the monster) drains the live prayer pool on a landed hit and emits a `prayerDrained` event, surfaced in the combat log.
+
+The idle sim approximates multi-form bosses with base stats — pre-existing behaviour, unchanged here.
+
+## 5) Drop table
+
+`dropRolls: 1`; the server rolls this same table via `functions/_lib/game/monsterRewards.js`, so **no separate server loot table exists**.
 
 ### Uniques
 
-| Item | Chance | Notes |
-|---|---|---|
-| `wraithbone_shield` | `0.015625` (1/64) | Base shield, tradeable |
-| `sanctified_elixir` | `0.0078125` (1/128) | Combines onto the base shield |
-| `runeward_sigil` | `0.000733` (~1/1365) | Magic sigil |
-| `aegis_sigil` | `0.000733` (~1/1365) | Defence sigil |
-| `vigil_sigil` | `0.000733` (~1/1365) | Prayer sigil |
-
-All five get `isBossUnique: true`, a positive finite `shopValue` (required by `data-contracts.test.ts` for PvP coin conversion), and must be added to `EXPECTED_BOSS_UNIQUE_ITEM_IDS` in `tests/data-contracts.test.ts` or the "marked isBossUnique but not verified" assertion fails.
-
-### Commons
-
-| Item | Qty | Chance |
-|---|---|---|
-| `big_bones` | 1 | 1 |
-| `coins` | 40,000–100,000 | 0.5 |
-| `blood_rune` | 60–150 | 0.2 |
-| `death_rune` | 50–120 | 0.18 |
-| `soul_rune` | 30–80 | 0.12 |
-| `runeforged_ore` | 5–12 | 0.15 |
-| `uncut_onyx` | 1 | 0.004 |
-| `rynarr_weed` | 3–6 | 0.1 |
-| `snapdrake` | 2–4 | 0.08 |
-| `clue_scroll_master` | 1 | 0.025 |
-
-Deliberately **no** spear drop — the boss requires one, and dropping it collapses the gear check.
-
-## 5) The shield chain — `src/data/items.json`
-
-Uses the existing one-step `combineWith` / `combineResult` pattern (`InventoryScreen.jsx:161`), chained exactly like the three Duskmare orbs:
-
-```
-Wraithbone Shield  + Sanctified Elixir  → Hallowed Wraithbone Shield
-Hallowed Wraithbone Shield + <sigil>    → Runeward / Aegis / Vigil Wraithbone Shield
-```
-
-Each sigil carries `"combineWith": "hallowed_wraithbone_shield"` and its own `combineResult`. All are `slot: "shield"`, so the **Armoury lists them automatically** (§8) and `describeObtainment` picks up the source once the drop and recipe exist.
-
-Proposed stats (tiered above `arcane_kiteshield` / `dragon_kiteshield`, below raid gear):
-
-| Item | Def (stab/slash/crush/magic/ranged) | Other | Requirements | shopValue |
-|---|---|---|---|---|
-| Wraithbone Shield | 40/40/40/5/40 | prayer +2 | defence 70 | 5,000,000 |
-| Hallowed Wraithbone Shield | 45/45/45/8/45 | prayer +3 | defence 75 | 30,000,000 |
-| Runeward Wraithbone Shield | 40/40/40/55/40 | atk magic +30, magicDamage +5, prayer +3 | defence 75, magic 75 | 350,000,000 |
-| Aegis Wraithbone Shield | 65/65/62/15/65 | meleeStrength 0, prayer +3 | defence 80 | 400,000,000 |
-| Vigil Wraithbone Shield | 50/50/50/60/45 | prayer +5, `prayerDrainReduction: 0.5` | defence 75, prayer 75 | 350,000,000 |
-
-- **Runeward** intentionally beats `arcane_kiteshield` (magic 50 / magicDamage 8 defence-bonus profile) on attack bonus rather than raw magic damage, so it complements rather than obsoletes it.
-- **Aegis**: v1 is **stats-only**. The OSRS 70%/25% damage-reduction proc would touch the shared damage-taken path (and therefore PvP), so it is deferred (§9, decision 2).
-- **Vigil**: `prayerDrainReduction` is the one perk worth shipping in v1 because it has a clean, contained home — `getActivePrayerDrainPerTick` in `src/engine/prayerDrain.js` (the CLAUDE.md §4 source of truth). Must be **mirrored in `src/engine/idleSupplies.js`**, which keeps its own idle prayer pool, or idle and live diverge. PvP already forces protection prayers off, so the perk only affects offensive-prayer drain there — note it in `.claude/rules/pvp.md` if PvP drain parity is asserted anywhere.
-
-## 6) Wiring checklist (data + UI, all mechanical)
-
-| File | Change |
+| Item | Chance |
 |---|---|
-| `src/data/collectionLog.json` | New `monsters` section `corporeal_horror` with the 5 uniques + 3 crafted shields |
-| `scripts/seed-collection-log.cjs` | Re-run / verify the seeded section |
-| `src/data/dailyTasks.json` | Grandmaster entry `slay_corporeal_horror`, `boss_kill` trigger, target 5 |
-| `src/data/worldActivities.json` | `{ kind: 'combat', ref: 'corporeal_horror' }` at **`edgevale`** ("last town before the wilds" — closest to the OSRS wilderness lair). Prefer re-running `node scripts/seedWorldContent.cjs` and committing the output |
-| `src/screens/CombatScreen.jsx` | New `COMBAT_CATEGORIES` entry (own category, icon 👁️) |
-| `src/utils/combatArt.js` | `MONSTER_ART` entry (glyph must exist in `gameIcons.json` or `bespokeIcons.json` — `combatArt.test.ts` enforces this) |
-| `src/utils/monsterIcons.js` | Emoji fallback |
-| `src/data/equipmentModels.json` | *Optional* `monsters` entry — enables the 3D arena, needs a GLB per `docs/gear-asset-process.md`. Ship without it; paper-doll/HP-bar fallback is automatic |
-| `docs/game-guide.md` + `npm run gen:knowledge` | Player-visible mechanic → guide + regenerated knowledge index, committed |
+| Wraithbone Shield | 1/64 |
+| Sanctified Elixir | 1/128 |
+| Runeward Sigil | ~1/1,365 |
+| Aegis Sigil | ~1/1,365 |
+| Vigil Sigil | ~1/1,365 |
 
-Server: **no new endpoint**. Grants flow through the existing `/api/actions/monster/complete` → `rollMonsterRewardsById` path, which is already the §14 server-authoritative route for boss uniques.
+### Secondaries (OSRS-shaped)
 
-## 7) Stretch: Dread Core phase (not v1)
+Coins 20k–40k · blood/death/law/soul runes in 150–400 stacks · **Onyx Bolts (E) 100–200** · **blue/red/green charms** · Runeforged platebody & 2h sword · Rynarr Weed / Snapdrake / Thornspire · Uncut Onyx · Clue Scroll (Elite).
 
-`multiForm` already exists (`verzik_vitur` in `monsters.json:5831`) and would support a two-form Horror where a "Dread Core" form periodically spawns, drains the prayer pool, and must be killed before damage resumes. It needs form-switch tuning plus an idle-sim story (the idle sim flattens phases into average DPS). Defer until v1 is balanced.
+No spear drops from it — the boss requires one, and dropping it collapses the gear check. Pinned by a test.
 
-## 8) Build order
+Economy check: ~1.21m gp per kill on average, ~41m gp/hr at a 1.8-minute spear kill. Roughly 823k of that average is the three sigils, i.e. the mean is lottery-dominated exactly as in OSRS; excluding sigils it sits at ~13m gp/hr, below Threefang Cerberus.
 
-1. Items: 5 uniques + 3 crafted shields + spear `weaponClass` tags.
-2. Monster entry + drop table.
-3. `monsterDamageRules.js` + `combat.js` / `idleEngine.js` application + `build_single.cjs` registration.
-4. `prayerDrain.js` + `idleSupplies.js` drain-reduction hook.
-5. Collection log, daily task, world activity, combat screen/art/icons.
-6. Tests (§ below), `npm run check:drops -- corporeal_horror`, economy eyeball.
-7. `docs/game-guide.md` + `npm run gen:knowledge`.
-8. Commit gate: `npm run ci`.
+## 6) The shield chain
 
-## 9) Decisions needed before implementation
+One-step `combineWith` / `combineResult` recipes (the Duskmare orb pattern), chained:
 
-1. **Unlock gate** — reuse `the_heart_of_shadows` (data-only, recommended) or author a bespoke unlock quest (larger scope: `quests.json`, journey content, `build_quests.cjs`)?
-2. **Aegis perk** — ship stats-only in v1 (recommended), or implement the damage-reduction proc now and accept the shared damage-taken/PvP surface?
-3. **Drop rates** — the 1/1365 sigil rate is OSRS-faithful but this game's kill rates differ (idle catch-up, skip-hour). Confirm after `check:drops` reports gp/hr, or loosen to ~1/800.
-4. **3D model** — ship without the arena entry, or budget the GLB work?
+```
+Wraithbone Shield + Sanctified Elixir     → Hallowed Wraithbone Shield
+Hallowed Wraithbone Shield + <sigil>      → Runeward / Aegis / Vigil Wraithbone Shield
+```
 
-## 10) Tests to add
+Defensive stats and requirements mirror their OSRS counterparts; all are `slot: "shield"`, so the Armoury lists them automatically.
 
-- `tests/corporeal-horror.test.ts` — monster exists, drop items all resolve, uniques marked `isBossUnique`, collection-log section covers every unique (the §8 regression-test requirement).
-- `tests/monsterDamageRules.test.ts` — spear vs non-spear multiplier, unarmed, monsters without `resistance`.
-- Idle-sim parity: spear vs non-spear kill count over a fixed window.
-- `tests/prayerDrain.test.ts` — extend for `prayerDrainReduction`, plus the `idleSupplies` mirror.
-- `tests/data-contracts.test.ts` — add the 5 uniques + 3 shields to `EXPECTED_BOSS_UNIQUE_ITEM_IDS`.
+| Item | Def (stab/slash/crush/magic/ranged) | Other | Requirements |
+|---|---|---|---|
+| Wraithbone Shield | 40/40/40/5/40 | prayer +2 | 45 Def, 55 Prayer |
+| Hallowed Wraithbone Shield | 55/55/55/5/55 | prayer +3 | 70 Def, 60 Prayer |
+| Runeward Wraithbone Shield | 55/55/55/5/55 | +20 magic attack, **magicDamage +10**, prayer +3 | 70 Def, 75 Prayer |
+| Aegis Wraithbone Shield | 65/65/65/3/65 | prayer +3, **70% chance to cut a hit by 25%** | 75 Def, 75 Prayer |
+| Vigil Wraithbone Shield | 55/55/55/25/55 | prayer +3, **halves prayer drain** | 70 Def, 75 Prayer |
+
+### Perk implementation
+
+Perks are **scalar** `otherBonus` keys (`damageReductionChance`, `damageReductionPercent`, `prayerDrainReduction`) because `getEquipmentBonuses` sums `otherBonus` values numerically — an object value there corrupts the sum. They are authored as 0–100 percentages so the equipment screen renders them like any other bonus (labels in `src/utils/bonusLabels.js`); `src/engine/damageReduction.js` clamps and converts them after summing.
+
+- **Aegis** is live in PvE (`combat.js`, rolled after protection prayers so the two stack multiplicatively), in PvP (`pvpEngine.js`, applied to the incoming swing so a multi-hit special's reported hits still sum to its damage), and in the idle sim (as its expected multiplier, since idle models averages rather than rolling hits).
+- **Vigil** threads a drain multiplier through `applyPrayerDrainTick` — the §4 source of truth — used by live combat and PvP, and mirrored in the idle sim's separate prayer pool.
+
+## 7) MCP surface
+
+- `inspect_monster` now returns a `mechanics` block (`monsterMechanics` in `functions/_lib/mcp/reference.js`): the resistance in actionable terms, the quest/Slayer gates, the credit skip cost, and every form with its style, weakness, max hit, immunity and prayer burn. Generic — every multi-form or gated boss gains it.
+- `inspect_monster` drops now carry item **names**, so a client can read the table without one `inspect_item` per row.
+- `itemSources` indexes **combine recipes** in both directions (`combines` on the result, `combinesInto` on each ingredient), so "how do I get an Aegis Wraithbone Shield?" resolves the whole chain instead of dead-ending at the drop. This also fixes the pre-existing Duskmare orb chain.
+
+## 8) Wiring
+
+Collection log section (all 9 items) · Grandmaster daily task (`slay_corporeal_horror`, 3 kills) · world activity at **Edgevale** · Combat screen category · `combatArt` + `monsterIcons` entries · `docs/game-guide.md` + regenerated chat knowledge index · both new engine modules registered in `build_single.cjs` `sourceFiles` (core, not the lazy chunk).
+
+No D1 migration, no new endpoint, no save-format change.
+
+## 9) Tests
+
+- `tests/corporealHorror.test.ts` — monster data, drop table shape and rates, shield chain, resistance and perk helpers, collection log / daily task / world wiring.
+- `tests/corporealHorrorCombat.test.ts` — spear vs non-spear damage in live combat *and* the idle sim, Aegis reduction in PvE and PvP (including hits summing to the reduced damage), Dread Core prayer burn and its zero floor.
+- `tests/mcpMonsterMechanics.test.ts` — the mechanics block and combine-recipe sources.
+- `tests/data-contracts.test.ts` — the nine new items added to the verified boss-unique list.
+
+## 10) Known gaps
+
+- **`npm run check:drops` is broken on Node 22** (`ERR_IMPORT_ATTRIBUTE_MISSING` on `src/data/world.json`) for *every* monster, not just this one. Pre-existing; flagged, not fixed. The economy figures in §5 were computed directly from the drop table instead.
+- No 3D arena model — the boss falls back to the paper doll / HP bars.

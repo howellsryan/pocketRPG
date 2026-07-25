@@ -14,7 +14,10 @@ export const OTHER_BONUS_LABELS = {
   barrowsToragBonus: "Torvek's Set Effect",
   barrowsVeracBonus: "Verin's Set Effect",
   slayerTaskAccuracyPercent: 'Slayer Task Accuracy',
-  slayerTaskDamagePercent: 'Slayer Task Damage'
+  slayerTaskDamagePercent: 'Slayer Task Damage',
+  damageReductionChance: 'Damage Block Chance',
+  damageReductionPercent: 'Damage Blocked',
+  prayerDrainReduction: 'Prayer Drain Reduction'
 }
 
-export const OTHER_BONUS_PERCENT_KEYS = new Set(['magicDamage', 'fishingXpPercent', 'slayerTaskAccuracyPercent', 'slayerTaskDamagePercent'])
+export const OTHER_BONUS_PERCENT_KEYS = new Set(['magicDamage', 'fishingXpPercent', 'slayerTaskAccuracyPercent', 'slayerTaskDamagePercent', 'damageReductionChance', 'damageReductionPercent', 'prayerDrainReduction'])

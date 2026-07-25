@@ -112,6 +112,7 @@ export const MONSTER_ART = {
   "deepmaw_kraken": { icon: "tentacle_strike", accent: "#c0453b" },
   "nightfang_beast": { icon: "bat", accent: "#c0453b" },
   "threefang_cerberus": { icon: "wolf_head", accent: "#c0453b" },
+  "corporeal_horror": { icon: "bleeding_eye", accent: "#8b4fd6" },
   "ashen_hydra": { icon: "hydra", accent: "#c0453b" },
   "green_dragon": { icon: "dragon_head", accent: "#3fb56b" },
   "red_dragon": { icon: "dragon_head", accent: "#d23b2f" },

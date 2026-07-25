@@ -1,10 +1,11 @@
 import { addItem } from './inventory.js'
-import { equipItem, unequipSlot, getAttackSpeed, getRangedAmmoRequirementFailure, getCombatType, placeUnequippedItems } from './equipment.js'
+import { equipItem, unequipSlot, getAttackSpeed, getRangedAmmoRequirementFailure, getCombatType, placeUnequippedItems, getEquipmentBonuses } from './equipment.js'
 import { rollMeleeAttack, rollRangedAttack, rollMagicAttack, resolveMagicSwing } from './combatPrimitives.js'
 import prayersData from '../data/prayers.json'
 import spellsData from '../data/spells.json'
 import { isConsumableFood, isConsumablePotion, isComboConsumable, applyConsumableEffect } from './consumables.js'
 import { applyPrayerDrainTick } from './prayerDrain.js'
+import { getDamageReductionPerk, applySwingDamageReduction, getPrayerDrainMultiplier } from './damageReduction.js'
 import { hitChance, rollDamage } from './formulas.js'
 import {
   buildPvpSpecialAttackMeta,
@@ -65,6 +66,17 @@ export function applyPvpSpecialAttackRegenToState(state, now = Date.now()) {
 }
 function rapidAdjustedSpeed(combatant, itemsData) { const base = getAttackSpeed(combatant.equipment, itemsData); return (combatant.combatType === 'ranged' && combatant.stance === 'rapid') ? Math.max(1, base - 1) : base }
 function attackSnapshot(attacker, defender, itemsData) { if (attacker.combatType === 'ranged') return rollRangedAttack(attacker, defender, itemsData); if (attacker.combatType === 'magic') return rollMagicAttack(attacker, defender, itemsData); return rollMeleeAttack(attacker, defender, itemsData) }
+// Worn damage-reduction perks (Aegis Wraithbone Shield) cut the incoming swing
+// before it is reported, so the attack event's hits still sum to its damage.
+function reduceIncomingSwing(swing, defender, itemsData) {
+  if (!swing || swing.blocked) return swing
+  const perk = getDamageReductionPerk(getEquipmentBonuses(defender?.equipment, itemsData))
+  if (!perk) return swing
+  const out = applySwingDamageReduction(swing.damage, Array.isArray(swing.hits) ? swing.hits : null, perk)
+  if (!out.reduced) return swing
+  return { ...swing, damage: out.damage, hit: out.damage > 0, ...(out.hits ? { hits: out.hits } : {}), damageReduced: true }
+}
+
 function pvpRandInt(min, max) { const lo = Math.ceil(Math.min(min, max)); const hi = Math.floor(Math.max(min, max)); return lo + Math.floor(Math.random() * (hi - lo + 1)) }
 function consumeEquippedAmmo(combatant, qty = 1) { const ammo = combatant?.equipment?.ammo; if (!ammo) return false; const currentQty = Number.isFinite(Number(ammo.quantity)) ? Number(ammo.quantity) : 1; const nextQty = Math.max(0, currentQty - qty); combatant.equipment.ammo = nextQty <= 0 ? null : { ...ammo, quantity: nextQty }; return true }
 function consumeRunes(combatant, runesToConsume) {
@@ -168,9 +180,9 @@ export function processPvpTick(state, intents, itemsData, now = Date.now()) {
   for (const c of [left, right]) applyPvpSpecialAttackRegenToCombatant(c, now)
   const orderedIntents = [...(intents || [])].sort((x, y) => ((x.tick_number || 0) - (y.tick_number || 0)) || ((x.characterId || 0) - (y.characterId || 0)) || ((x.characterSeq || 0) - (y.characterSeq || 0)))
   for (const intent of orderedIntents) { const c = next.combatants[String(intent?.characterId)]; if (!c) continue; const action = intent?.action || {}; if (action.type === 'forfeit') { events.push({ type: 'forfeit', characterId: c.characterId }); const opponent = c.characterId === left.characterId ? right : left; next.tick = (next.tick || 0) + 1; for (const ev of events) ev.tick = next.tick; next.recentEvents = [...next.recentEvents, ...events].slice(-20); return terminalResult(next, opponent.characterId, c.characterId, 'forfeit', events) } applyIntent(c, action, itemsData, events) }
-  for (const c of [left, right]) { c.attackTimer = (c.attackTimer || 0) - 1; c.eatCooldown = (c.eatCooldown || 0) - 1; c.potionCooldown = (c.potionCooldown || 0) - 1; c.comboCooldown = (c.comboCooldown || 0) - 1; applyPrayerDrainTick(c, prayersData); for (const [pid, ticks] of Object.entries(c.activePotions || {})) { c.activePotions[pid] = Math.max(0, (ticks || 0) - 1); if (c.activePotions[pid] <= 0) delete c.activePotions[pid] } clampCooldowns(c) }
-  const leftSwing = (left.hp > 0 && left.attackTimer === 0 && left.eatCooldown === 0) ? resolveSwing(left, right, itemsData, events) : null
-  const rightSwing = (right.hp > 0 && right.attackTimer === 0 && right.eatCooldown === 0) ? resolveSwing(right, left, itemsData, events) : null
+  for (const c of [left, right]) { c.attackTimer = (c.attackTimer || 0) - 1; c.eatCooldown = (c.eatCooldown || 0) - 1; c.potionCooldown = (c.potionCooldown || 0) - 1; c.comboCooldown = (c.comboCooldown || 0) - 1; applyPrayerDrainTick(c, prayersData, getPrayerDrainMultiplier(getEquipmentBonuses(c.equipment, itemsData))); for (const [pid, ticks] of Object.entries(c.activePotions || {})) { c.activePotions[pid] = Math.max(0, (ticks || 0) - 1); if (c.activePotions[pid] <= 0) delete c.activePotions[pid] } clampCooldowns(c) }
+  const leftSwing = (left.hp > 0 && left.attackTimer === 0 && left.eatCooldown === 0) ? reduceIncomingSwing(resolveSwing(left, right, itemsData, events), right, itemsData) : null
+  const rightSwing = (right.hp > 0 && right.attackTimer === 0 && right.eatCooldown === 0) ? reduceIncomingSwing(resolveSwing(right, left, itemsData, events), left, itemsData) : null
   const leftDamage = leftSwing ? Math.max(0, Math.min(right.hp, leftSwing.damage || 0)) : 0
   const rightDamage = rightSwing ? Math.max(0, Math.min(left.hp, rightSwing.damage || 0)) : 0
   if (leftSwing?.blocked) { events.push(leftSwing.blockType === 'magic' ? { type: 'no_runes', characterId: left.characterId, reason: leftSwing.reason, ...(leftSwing.spellId ? { spellId: leftSwing.spellId } : {}) } : { type: 'no_ammo', characterId: left.characterId, ...(leftSwing.ammoFailure || {}) }); left.attackTimer = rapidAdjustedSpeed(left, itemsData) }

@@ -74,6 +74,8 @@ const sourceFiles = [
   'engine/combatSetBonuses.js',
   'engine/itemMigrations.js',
   'engine/prayerDrain.js',
+  'engine/monsterDamageRules.js',
+  'engine/damageReduction.js',
   'engine/consumables.js',
   'engine/combat.js',
   'engine/combatRequirements.js',

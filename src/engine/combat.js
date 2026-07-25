@@ -12,6 +12,8 @@ import { randInt } from '../utils/helpers.js'
 import { getSlayerTaskEquipmentBonuses } from './slayerCombatBonuses.js'
 import { getPotionStatBoost, getActivePotionBoosts } from './consumables.js'
 import { applyPrayerDrainTick } from './prayerDrain.js'
+import { applyMonsterResistance } from './monsterDamageRules.js'
+import { getDamageReductionPerk, applyDamageReduction, getPrayerDrainMultiplier } from './damageReduction.js'
 import { getCombatSetMultipliers } from './combatSetBonuses.js'
 import { getMonsterSeedDrops } from './seedDrops.js'
 import { getMonsterCharmDrops, getSummoningCreature, rollSummonAttack, SUMMON_ATTACK_TICKS } from './summoning.js'
@@ -81,7 +83,7 @@ function prepareMonster(monster) {
     if (form) {
       preparedMonster.currentForm = formKey
       preparedMonster.formAttackCount = 0
-      preparedMonster.formSwitchThreshold = monster.randomFormEveryAttack ? 1 : randomFormSwitchThreshold(monster)
+      preparedMonster.formSwitchThreshold = monster.randomFormEveryAttack ? 1 : randomFormSwitchThreshold(monster, formKey)
       preparedMonster.attackStyle = form.attackStyle
       preparedMonster.attackBonus = form.attackBonus ?? monster.attackBonus ?? 0
       preparedMonster.strengthBonus = form.strengthBonus ?? monster.strengthBonus ?? 0
@@ -120,9 +122,19 @@ export function createRaidCombatState(raidData, monstersData, combatType = 'mele
  * Pick a random number of attacks (within formSwitchMin..formSwitchMax)
  * that a multi-form monster will use before switching forms.
  */
-function randomFormSwitchThreshold(monster) {
-  const min = monster.formSwitchMin || 1
-  const max = monster.formSwitchMax || 5
+function randomFormSwitchThreshold(monster, formKey) {
+  // A form may override how long it lasts (`switchAfterAttacks`: n or [min, max]),
+  // so a short punish phase can alternate with a long main phase.
+  const override = formKey ? monster.forms?.[formKey]?.switchAfterAttacks : null
+  let min = monster.formSwitchMin || 1
+  let max = monster.formSwitchMax || 5
+  if (Array.isArray(override)) {
+    min = Number(override[0]) || min
+    max = Number(override[1]) || max
+  } else if (Number.isFinite(Number(override)) && Number(override) > 0) {
+    min = max = Number(override)
+  }
+  if (max < min) max = min
   return Math.floor(Math.random() * (max - min + 1)) + min
 }
 
@@ -235,7 +247,7 @@ function checkMonsterDeath(state, monster, events, isOnTask = false) {
       if (form) {
         monster.currentForm = formKey
         monster.formAttackCount = 0
-        monster.formSwitchThreshold = monster.randomFormEveryAttack ? 1 : randomFormSwitchThreshold(monster)
+        monster.formSwitchThreshold = monster.randomFormEveryAttack ? 1 : randomFormSwitchThreshold(monster, formKey)
         monster.attackStyle = form.attackStyle
         monster.attackBonus = form.attackBonus ?? monster.attackBonus
         monster.strengthBonus = form.strengthBonus ?? monster.strengthBonus
@@ -432,9 +444,11 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
   if (state.potionCooldown > 0) state.potionCooldown--
   if (state.comboCooldown > 0) state.comboCooldown--
 
+  const bonuses = getEquipmentBonuses(equipment, itemsData)
+
   // Drain the prayer pool for this tick (higher-tier prayers drain faster). When
   // it empties, active prayers switch off — so their bonuses below are skipped.
-  applyPrayerDrainTick(state, prayersData)
+  applyPrayerDrainTick(state, prayersData, getPrayerDrainMultiplier(bonuses))
 
   // Decrement potion durations and remove expired potions
   for (const [potionId, duration] of Object.entries(state.activePotions)) {
@@ -469,7 +483,6 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
     }
   }
 
-  const bonuses = getEquipmentBonuses(equipment, itemsData)
   const weaponSpeed = getAttackSpeed(equipment, itemsData)
   const weaponStyle = getMeleeAttackStyle(equipment, itemsData)
   const monster = state.monster
@@ -887,6 +900,10 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
       state.monsterAttackTimer += 5
     }
 
+    // Monster damage resistance (e.g. the Corporeal Horror halves every hit not
+    // dealt with a spear). Applied last so set bonuses and specials are resisted too.
+    if (!isImmune && damage > 0) damage = applyMonsterResistance(damage, monster, equippedWeapon)
+
     const actualDamage = Math.min(damage, Math.max(0, monster.currentHP))
     monster.currentHP -= actualDamage
     triggerEnrageIfNeeded(state, monster, events)
@@ -1026,6 +1043,27 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
         }
       }
 
+      // Worn damage-reduction perk (Aegis Wraithbone Shield) — rolled after
+      // protection prayers so the two stack multiplicatively.
+      damage = applyDamageReduction(damage, getDamageReductionPerk(bonuses))
+
+      // Dread Core form: a landed hit also burns prayer points.
+      if (damage > 0) {
+        const formPrayerDrain = Number(monster.multiForm && monster.currentForm
+          ? monster.forms?.[monster.currentForm]?.prayerDrainPerHit
+          : monster.prayerDrainPerHit) || 0
+        if (formPrayerDrain > 0 && typeof state.prayerPoints === 'number' && state.prayerPoints > 0) {
+          const drained = Math.min(state.prayerPoints, formPrayerDrain)
+          state.prayerPoints -= drained
+          if (state.prayerPoints <= 0) {
+            state.prayerPoints = 0
+            state.activeProtectionPrayer = null
+            state.activeCombatPrayer = null
+          }
+          events.push({ type: 'prayerDrained', amount: drained, prayerPoints: state.prayerPoints, monsterName: monster.name })
+        }
+      }
+
       if (damage === 0 && acc < 1.0) {
         events.push({ type: 'monsterMiss', playerHP: playerStats.currentHP })
       } else {
@@ -1058,7 +1096,7 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
           monster.formMaxHit = nextForm.maxHit
           monster.formAttackCount = 0
           // For per-attack randomization, keep threshold at 1; otherwise randomize
-          monster.formSwitchThreshold = monster.randomFormEveryAttack ? 1 : randomFormSwitchThreshold(monster)
+          monster.formSwitchThreshold = monster.randomFormEveryAttack ? 1 : randomFormSwitchThreshold(monster, nextKey)
           // Delay next attack by one cycle after a form change so the player can adapt
           state.monsterAttackTimer = (monster.attackSpeed || 4)
           events.push({
@@ -1257,6 +1295,9 @@ export function applySpecialAttack(combatState, playerStats, equipment, itemsDat
   const bonuses = getEquipmentBonuses(equipment, itemsData)
   const weaponStyle = getMeleeAttackStyle(equipment, itemsData)
   const monster = state.monster
+  // Monster damage resistance applies to specials exactly as it does to normal
+  // swings, per hit, so reported hits still sum to the damage that landed.
+  const resist = (dmg) => applyMonsterResistance(dmg, monster, weapon)
   const isOnTask = !!(slayerTask && monster && doesSlayerTaskMatchMonster(slayerTask.monsterId, monster.id))
 
   switch (spec.type) {
@@ -1270,6 +1311,7 @@ export function applySpecialAttack(combatState, playerStats, equipment, itemsDat
       const defRoll = maxDefenceRoll(monster.stats.defence, monster.defenceBonus[weaponStyle] || 0)
       const acc = hitChance(atkRoll, defRoll)
       const hits = [rollDamage(acc, maxHit), rollDamage(acc, maxHit)]
+      for (let i = 0; i < hits.length; i++) hits[i] = resist(hits[i])
       const rawTotal = hits[0] + hits[1]
       const actual = Math.min(rawTotal, Math.max(0, monster.currentHP))
       monster.currentHP -= actual
@@ -1290,12 +1332,12 @@ export function applySpecialAttack(combatState, playerStats, equipment, itemsDat
       const defRoll = maxDefenceRoll(0, 0)
       const acc = hitChance(atkRoll, defRoll)
       const damage = rollDamage(acc, maxHit)
-      const actual = Math.min(damage, Math.max(0, monster.currentHP))
+      const actual = Math.min(resist(damage), Math.max(0, monster.currentHP))
       monster.currentHP -= actual
       const xpSkills = _meleeXP(state.stance, actual)
       _accXP(state, xpSkills)
       events.push({ type: 'xp', xpSkills })
-      events.push({ type: 'specialHit', hits: [damage], totalDamage: actual, specType: 'zero_defence', monsterHP: monster.currentHP })
+      events.push({ type: 'specialHit', hits: [resist(damage)], totalDamage: actual, specType: 'zero_defence', monsterHP: monster.currentHP })
       break
     }
 
@@ -1310,12 +1352,12 @@ export function applySpecialAttack(combatState, playerStats, equipment, itemsDat
         break
       }
       const damage = Math.floor(maxMelee * (0.5 + Math.random()))
-      const actual = Math.min(damage, Math.max(0, monster.currentHP))
+      const actual = Math.min(resist(damage), Math.max(0, monster.currentHP))
       monster.currentHP -= actual
       const xpSkills = actual > 0 ? { magic: actual * 2 } : {}
       _accXP(state, xpSkills)
       events.push({ type: 'xp', xpSkills })
-      events.push({ type: 'specialHit', hits: [damage], totalDamage: actual, specType: 'disrupt', monsterHP: monster.currentHP })
+      events.push({ type: 'specialHit', hits: [resist(damage)], totalDamage: actual, specType: 'disrupt', monsterHP: monster.currentHP })
       break
     }
 
@@ -1334,12 +1376,12 @@ export function applySpecialAttack(combatState, playerStats, equipment, itemsDat
       const minHit = Math.floor(maxHit * 0.15)
       const cappedMax = Math.floor(maxHit * 0.85)
       const damage = hit ? minHit + Math.floor(Math.random() * (cappedMax - minHit + 1)) : 0
-      const actual = Math.min(damage, Math.max(0, monster.currentHP))
+      const actual = Math.min(resist(damage), Math.max(0, monster.currentHP))
       monster.currentHP -= actual
       const xpSkills = _meleeXP(state.stance, actual)
       _accXP(state, xpSkills)
       events.push({ type: 'xp', xpSkills })
-      events.push({ type: 'specialHit', hits: [damage], totalDamage: actual, specType: 'fang', monsterHP: monster.currentHP })
+      events.push({ type: 'specialHit', hits: [resist(damage)], totalDamage: actual, specType: 'fang', monsterHP: monster.currentHP })
       break
     }
 
@@ -1353,14 +1395,14 @@ export function applySpecialAttack(combatState, playerStats, equipment, itemsDat
       const defRoll = maxDefenceRoll(monster.stats.defence, monster.defenceBonus[weaponStyle] || 0)
       const acc = hitChance(atkRoll, defRoll)
       const damage = rollDamage(acc, maxHit)
-      const actual = Math.min(damage, Math.max(0, monster.currentHP))
+      const actual = Math.min(resist(damage), Math.max(0, monster.currentHP))
       monster.currentHP -= actual
       const stunned = damage > 0
       if (stunned) state.monsterAttackTimer += (monster.attackSpeed || 4)
       const xpSkills = _meleeXP(state.stance, actual)
       _accXP(state, xpSkills)
       events.push({ type: 'xp', xpSkills })
-      events.push({ type: 'specialHit', hits: [damage], totalDamage: actual, specType: 'stun', stunned, monsterHP: monster.currentHP })
+      events.push({ type: 'specialHit', hits: [resist(damage)], totalDamage: actual, specType: 'stun', stunned, monsterHP: monster.currentHP })
       break
     }
 
@@ -1374,12 +1416,12 @@ export function applySpecialAttack(combatState, playerStats, equipment, itemsDat
       const defRoll = maxDefenceRoll(monster.stats.defence, monster.defenceBonus[weaponStyle] || 0)
       const acc = hitChance(atkRoll, defRoll)
       const damage = rollDamage(acc, maxHit)
-      const actual = Math.min(damage, Math.max(0, monster.currentHP))
+      const actual = Math.min(resist(damage), Math.max(0, monster.currentHP))
       monster.currentHP -= actual
       const xpSkills = _meleeXP(state.stance, actual)
       _accXP(state, xpSkills)
       events.push({ type: 'xp', xpSkills })
-      events.push({ type: 'specialHit', hits: [damage], totalDamage: actual, specType: 'judgement', monsterHP: monster.currentHP })
+      events.push({ type: 'specialHit', hits: [resist(damage)], totalDamage: actual, specType: 'judgement', monsterHP: monster.currentHP })
       break
     }
 
@@ -1393,14 +1435,14 @@ export function applySpecialAttack(combatState, playerStats, equipment, itemsDat
       const defRoll = maxDefenceRoll(monster.stats.defence, monster.defenceBonus[weaponStyle] || 0)
       const acc = hitChance(atkRoll, defRoll)
       const damage = rollDamage(acc, maxHit)
-      const actual = Math.min(damage, Math.max(0, monster.currentHP))
+      const actual = Math.min(resist(damage), Math.max(0, monster.currentHP))
       monster.currentHP -= actual
       const minHeal = spec.minHeal || 10
       const healAmount = Math.max(minHeal, Math.floor(actual / 2))
       const xpSkills = _meleeXP(state.stance, actual)
       _accXP(state, xpSkills)
       events.push({ type: 'xp', xpSkills })
-      events.push({ type: 'specialHit', hits: [damage], totalDamage: actual, specType: 'healing_blade', healAmount, monsterHP: monster.currentHP })
+      events.push({ type: 'specialHit', hits: [resist(damage)], totalDamage: actual, specType: 'healing_blade', healAmount, monsterHP: monster.currentHP })
       break
     }
 
@@ -1414,13 +1456,13 @@ export function applySpecialAttack(combatState, playerStats, equipment, itemsDat
       const defRoll = maxDefenceRoll(monster.stats.defence, monster.defenceBonus[weaponStyle] || 0)
       const acc = hitChance(atkRoll, defRoll)
       const damage = rollDamage(acc, maxHit)
-      const actual = Math.min(damage, Math.max(0, monster.currentHP))
+      const actual = Math.min(resist(damage), Math.max(0, monster.currentHP))
       monster.currentHP -= actual
       state.monsterAttackTimer += (spec.stunTicks || 33)
       const xpSkills = _meleeXP(state.stance, actual)
       _accXP(state, xpSkills)
       events.push({ type: 'xp', xpSkills })
-      events.push({ type: 'specialHit', hits: [damage], totalDamage: actual, specType: 'freeze', monsterHP: monster.currentHP })
+      events.push({ type: 'specialHit', hits: [resist(damage)], totalDamage: actual, specType: 'freeze', monsterHP: monster.currentHP })
       break
     }
 
@@ -1434,7 +1476,7 @@ export function applySpecialAttack(combatState, playerStats, equipment, itemsDat
       const defRoll = maxDefenceRoll(monster.stats.defence, monster.defenceBonus[weaponStyle] || 0)
       const acc = hitChance(atkRoll, defRoll)
       const damage = rollDamage(acc, maxHit)
-      const actual = Math.min(damage, Math.max(0, monster.currentHP))
+      const actual = Math.min(resist(damage), Math.max(0, monster.currentHP))
       monster.currentHP -= actual
       if (actual > 0) {
         for (const k of Object.keys(monster.defenceBonus)) {
@@ -1444,7 +1486,7 @@ export function applySpecialAttack(combatState, playerStats, equipment, itemsDat
       const xpSkills = _meleeXP(state.stance, actual)
       _accXP(state, xpSkills)
       events.push({ type: 'xp', xpSkills })
-      events.push({ type: 'specialHit', hits: [damage], totalDamage: actual, specType: 'warstrike', monsterHP: monster.currentHP })
+      events.push({ type: 'specialHit', hits: [resist(damage)], totalDamage: actual, specType: 'warstrike', monsterHP: monster.currentHP })
       break
     }
 
@@ -1458,7 +1500,7 @@ export function applySpecialAttack(combatState, playerStats, equipment, itemsDat
       const defRoll = maxDefenceRoll(monster.stats.defence, monster.defenceBonus[weaponStyle] || 0)
       const acc = hitChance(atkRoll, defRoll)
       const damage = rollDamage(acc, maxHit)
-      const actual = Math.min(damage, Math.max(0, monster.currentHP))
+      const actual = Math.min(resist(damage), Math.max(0, monster.currentHP))
       monster.currentHP -= actual
       let defenceReducedBy = 0
       if (actual > 0) {
@@ -1469,7 +1511,7 @@ export function applySpecialAttack(combatState, playerStats, equipment, itemsDat
       const xpSkills = _meleeXP(state.stance, actual)
       _accXP(state, xpSkills)
       events.push({ type: 'xp', xpSkills })
-      events.push({ type: 'specialHit', hits: [damage], totalDamage: actual, specType: 'smash', defenceReducedBy, monsterHP: monster.currentHP })
+      events.push({ type: 'specialHit', hits: [resist(damage)], totalDamage: actual, specType: 'smash', defenceReducedBy, monsterHP: monster.currentHP })
       break
     }
 
@@ -1482,8 +1524,8 @@ export function applySpecialAttack(combatState, playerStats, equipment, itemsDat
       const atkRoll = maxAttackRoll(effAtk, bonuses.attackBonus[weaponStyle] || 0)
       const defRoll = maxDefenceRoll(monster.stats.defence, monster.defenceBonus[weaponStyle] || 0)
       const acc = hitChance(atkRoll, defRoll)
-      const meleeDmg = rollDamage(acc, maxHit)
-      const lightningDmg = randInt(1, spec.lightningMax || 16)
+      const meleeDmg = resist(rollDamage(acc, maxHit))
+      const lightningDmg = resist(randInt(1, spec.lightningMax || 16))
       const rawTotal = meleeDmg + lightningDmg
       const actual = Math.min(rawTotal, Math.max(0, monster.currentHP))
       monster.currentHP -= actual
@@ -1506,6 +1548,7 @@ export function applySpecialAttack(combatState, playerStats, equipment, itemsDat
       const defRoll = maxDefenceRoll(monster.stats.defence, monster.defenceBonus.ranged || 0)
       const acc = hitChance(atkRoll, defRoll)
       const hits = [rollDamage(acc, maxHit), rollDamage(acc, maxHit)]
+      for (let i = 0; i < hits.length; i++) hits[i] = resist(hits[i])
       const rawTotal = hits[0] + hits[1]
       const actual = Math.min(rawTotal, Math.max(0, monster.currentHP))
       monster.currentHP -= actual
@@ -1522,12 +1565,12 @@ export function applySpecialAttack(combatState, playerStats, equipment, itemsDat
       const effRng = effectiveRanged(playerStats.ranged, 0, 1.0, styleBonus)
       const maxHit = Math.floor(rangedMaxHit(effRng, bonuses.otherBonus.rangedStrength) * 1.25)
       const damage = randInt(1, Math.max(1, maxHit))
-      const actual = Math.min(damage, Math.max(0, monster.currentHP))
+      const actual = Math.min(resist(damage), Math.max(0, monster.currentHP))
       monster.currentHP -= actual
       const xpSkills = { ranged: actual * RANGED_XP_PER_DAMAGE, hitpoints: Math.floor(actual * HP_XP_PER_DAMAGE) }
       _accXP(state, xpSkills)
       events.push({ type: 'xp', xpSkills })
-      events.push({ type: 'specialHit', hits: [damage], totalDamage: actual, specType: 'pebble_shot', monsterHP: monster.currentHP })
+      events.push({ type: 'specialHit', hits: [resist(damage)], totalDamage: actual, specType: 'pebble_shot', monsterHP: monster.currentHP })
       break
     }
 
@@ -1538,13 +1581,13 @@ export function applySpecialAttack(combatState, playerStats, equipment, itemsDat
       const effRng = effectiveRanged(playerStats.ranged, 0, 1.0, styleBonus)
       const maxHit = Math.floor(rangedMaxHit(effRng, bonuses.otherBonus.rangedStrength) * 1.5)
       const damage = randInt(1, Math.max(1, maxHit))
-      const actual = Math.min(damage, Math.max(0, monster.currentHP))
+      const actual = Math.min(resist(damage), Math.max(0, monster.currentHP))
       monster.currentHP -= actual
       const healAmount = Math.floor(actual / 2)
       const xpSkills = { ranged: actual * RANGED_XP_PER_DAMAGE, hitpoints: Math.floor(actual * HP_XP_PER_DAMAGE) }
       _accXP(state, xpSkills)
       events.push({ type: 'xp', xpSkills })
-      events.push({ type: 'specialHit', hits: [damage], totalDamage: actual, specType: 'toxic_siphon', healAmount, monsterHP: monster.currentHP })
+      events.push({ type: 'specialHit', hits: [resist(damage)], totalDamage: actual, specType: 'toxic_siphon', healAmount, monsterHP: monster.currentHP })
       // Consume one scale charge on spec — emit so the UI decrements charges.
       events.push({ type: 'consumeCharge', qty: 1 })
       break
@@ -1560,13 +1603,13 @@ export function applySpecialAttack(combatState, playerStats, equipment, itemsDat
       const defRoll = maxDefenceRoll(monster.stats.defence, monster.defenceBonus[weaponStyle] || 0)
       const acc = hitChance(atkRoll, defRoll)
       const damage = rollDamage(acc, maxHit)
-      const actual = Math.min(damage, Math.max(0, monster.currentHP))
+      const actual = Math.min(resist(damage), Math.max(0, monster.currentHP))
       monster.currentHP -= actual
       state.monsterAttackTimer += (monster.attackSpeed || 4) * 2
       const xpSkills = _meleeXP(state.stance, actual)
       _accXP(state, xpSkills)
       events.push({ type: 'xp', xpSkills })
-      events.push({ type: 'specialHit', hits: [damage], totalDamage: actual, specType: 'shove', monsterHP: monster.currentHP })
+      events.push({ type: 'specialHit', hits: [resist(damage)], totalDamage: actual, specType: 'shove', monsterHP: monster.currentHP })
       break
     }
 
@@ -1579,7 +1622,7 @@ export function applySpecialAttack(combatState, playerStats, equipment, itemsDat
       const atkRoll = maxAttackRoll(effAtk, bonuses.attackBonus[weaponStyle] || 0)
       const defRoll = maxDefenceRoll(monster.stats.defence, monster.defenceBonus[weaponStyle] || 0)
       const acc = hitChance(atkRoll, defRoll)
-      const h1 = rollDamage(acc, maxHit)
+      const h1 = resist(rollDamage(acc, maxHit))
       const h2 = Math.floor(h1 / 2)
       const h3 = Math.floor(h2 / 2)
       const h4 = Math.max(h1 > 0 ? 1 : 0, h3)
@@ -1597,12 +1640,12 @@ export function applySpecialAttack(combatState, playerStats, equipment, itemsDat
     case 'lunge': {
       // Dinh's Bulwark — guaranteed 40–64 damage, ignoring all combat calculations
       const damage = randInt(40, 64)
-      const actual = Math.min(damage, Math.max(0, monster.currentHP))
+      const actual = Math.min(resist(damage), Math.max(0, monster.currentHP))
       monster.currentHP -= actual
       const xpSkills = _meleeXP(state.stance, actual)
       _accXP(state, xpSkills)
       events.push({ type: 'xp', xpSkills })
-      events.push({ type: 'specialHit', hits: [damage], totalDamage: actual, specType: 'lunge', monsterHP: monster.currentHP })
+      events.push({ type: 'specialHit', hits: [resist(damage)], totalDamage: actual, specType: 'lunge', monsterHP: monster.currentHP })
       break
     }
 
@@ -1616,6 +1659,7 @@ export function applySpecialAttack(combatState, playerStats, equipment, itemsDat
       const defRoll = maxDefenceRoll(monster.stats.defence, monster.defenceBonus[weaponStyle] || 0)
       const acc = hitChance(atkRoll, defRoll)
       const hits = [rollDamage(acc, maxHit), rollDamage(acc, maxHit), rollDamage(acc, maxHit)]
+      for (let i = 0; i < hits.length; i++) hits[i] = resist(hits[i])
       const rawTotal = hits[0] + hits[1] + hits[2]
       const actual = Math.min(rawTotal, Math.max(0, monster.currentHP))
       monster.currentHP -= actual
@@ -1635,6 +1679,7 @@ export function applySpecialAttack(combatState, playerStats, equipment, itemsDat
       const defRoll = maxDefenceRoll(monster.stats.defence, monster.defenceBonus.ranged || 0)
       const acc = hitChance(atkRoll, defRoll)
       const hits = [rollDamage(acc, maxHit), rollDamage(acc, maxHit)]
+      for (let i = 0; i < hits.length; i++) hits[i] = resist(hits[i])
       const rawTotal = hits[0] + hits[1]
       const actual = Math.min(rawTotal, Math.max(0, monster.currentHP))
       monster.currentHP -= actual
@@ -1655,12 +1700,12 @@ export function applySpecialAttack(combatState, playerStats, equipment, itemsDat
       const defRoll = maxDefenceRoll(monster.stats.defence, monster.defenceBonus[weaponStyle] || 0)
       const acc = hitChance(atkRoll, defRoll)
       const damage = rollDamage(acc, maxHit)
-      const actual = Math.min(damage, Math.max(0, monster.currentHP))
+      const actual = Math.min(resist(damage), Math.max(0, monster.currentHP))
       monster.currentHP -= actual
       const xpSkills = _meleeXP(state.stance, actual)
       _accXP(state, xpSkills)
       events.push({ type: 'xp', xpSkills })
-      events.push({ type: 'specialHit', hits: [damage], totalDamage: actual, specType: 'overpower', monsterHP: monster.currentHP })
+      events.push({ type: 'specialHit', hits: [resist(damage)], totalDamage: actual, specType: 'overpower', monsterHP: monster.currentHP })
       break
     }
 
@@ -1673,8 +1718,8 @@ export function applySpecialAttack(combatState, playerStats, equipment, itemsDat
       const atkRoll = maxAttackRoll(effAtk, bonuses.attackBonus[weaponStyle] || 0)
       const defRoll = maxDefenceRoll(monster.stats.defence, monster.defenceBonus[weaponStyle] || 0)
       const acc = hitChance(atkRoll, defRoll)
-      const h1 = rollDamage(acc, maxHit)
-      const h2 = rollDamage(acc, maxHit)
+      const h1 = resist(rollDamage(acc, maxHit))
+      const h2 = resist(rollDamage(acc, maxHit))
       const rawTotal = h1 + h2
       const actual = Math.min(rawTotal, Math.max(0, monster.currentHP))
       monster.currentHP -= actual
@@ -1692,13 +1737,13 @@ export function applySpecialAttack(combatState, playerStats, equipment, itemsDat
       const effRng = effectiveRanged(playerStats.ranged, 0, 1.0, styleBonus)
       const maxHit = Math.floor(rangedMaxHit(effRng, bonuses.otherBonus.rangedStrength) * 1.4)
       const damage = randInt(1, Math.max(1, maxHit))
-      const actual = Math.min(damage, Math.max(0, monster.currentHP))
+      const actual = Math.min(resist(damage), Math.max(0, monster.currentHP))
       monster.currentHP -= actual
       state.monsterAttackTimer += (monster.attackSpeed || 4)
       const xpSkills = { ranged: actual * RANGED_XP_PER_DAMAGE, hitpoints: Math.floor(actual * HP_XP_PER_DAMAGE) }
       _accXP(state, xpSkills)
       events.push({ type: 'xp', xpSkills })
-      events.push({ type: 'specialHit', hits: [damage], totalDamage: actual, specType: 'gale_shot', stunned: true, monsterHP: monster.currentHP })
+      events.push({ type: 'specialHit', hits: [resist(damage)], totalDamage: actual, specType: 'gale_shot', stunned: true, monsterHP: monster.currentHP })
       break
     }
 
@@ -1712,7 +1757,7 @@ export function applySpecialAttack(combatState, playerStats, equipment, itemsDat
       const defRoll = maxDefenceRoll(monster.stats.defence, monster.defenceBonus[weaponStyle] || 0)
       const acc = hitChance(atkRoll, defRoll)
       const damage = rollDamage(acc, maxHit)
-      const actual = Math.min(damage, Math.max(0, monster.currentHP))
+      const actual = Math.min(resist(damage), Math.max(0, monster.currentHP))
       monster.currentHP -= actual
       let defenceReducedBy = 0
       if (actual > 0) {
@@ -1723,7 +1768,7 @@ export function applySpecialAttack(combatState, playerStats, equipment, itemsDat
       const xpSkills = _meleeXP(state.stance, actual)
       _accXP(state, xpSkills)
       events.push({ type: 'xp', xpSkills })
-      events.push({ type: 'specialHit', hits: [damage], totalDamage: actual, specType: 'molten_crush', defenceReducedBy, monsterHP: monster.currentHP })
+      events.push({ type: 'specialHit', hits: [resist(damage)], totalDamage: actual, specType: 'molten_crush', defenceReducedBy, monsterHP: monster.currentHP })
       break
     }
 
@@ -1736,6 +1781,7 @@ export function applySpecialAttack(combatState, playerStats, equipment, itemsDat
       const defRoll = maxDefenceRoll(monster.stats.defence, monster.defenceBonus.ranged || 0)
       const acc = hitChance(atkRoll, defRoll)
       const hits = [rollDamage(acc, maxHit), rollDamage(acc, maxHit), rollDamage(acc, maxHit)]
+      for (let i = 0; i < hits.length; i++) hits[i] = resist(hits[i])
       const rawTotal = hits[0] + hits[1] + hits[2]
       const actual = Math.min(rawTotal, Math.max(0, monster.currentHP))
       monster.currentHP -= actual
@@ -1758,7 +1804,7 @@ export function applySpecialAttack(combatState, playerStats, equipment, itemsDat
       const baseDamage = Math.max(1, Math.floor(magicLevel / 3) + 12)
       const maxHit = magicMaxHit(baseDamage, wornMagicDamage)
       const damage = rollDamage(acc, Math.max(1, maxHit))
-      const actual = Math.min(damage, Math.max(0, monster.currentHP))
+      const actual = Math.min(resist(damage), Math.max(0, monster.currentHP))
       monster.currentHP -= actual
       let prayerRestored = 0
       if (actual > 0 && Number.isFinite(state.maxPrayerPoints)) {
@@ -1770,7 +1816,7 @@ export function applySpecialAttack(combatState, playerStats, equipment, itemsDat
       const xpSkills = { magic: actual * MAGIC_XP_PER_DAMAGE, hitpoints: Math.floor(actual * HP_XP_PER_DAMAGE) }
       _accXP(state, xpSkills)
       events.push({ type: 'xp', xpSkills })
-      events.push({ type: 'specialHit', hits: [damage], totalDamage: actual, specType: 'soul_drain', prayerRestored, monsterHP: monster.currentHP })
+      events.push({ type: 'specialHit', hits: [resist(damage)], totalDamage: actual, specType: 'soul_drain', prayerRestored, monsterHP: monster.currentHP })
       break
     }
 
@@ -1786,12 +1832,12 @@ export function applySpecialAttack(combatState, playerStats, equipment, itemsDat
       const baseDamage = Math.max(1, Math.floor(magicLevel * 0.6))
       const maxHit = magicMaxHit(baseDamage, wornMagicDamage)
       const damage = rollDamage(acc, Math.max(1, maxHit))
-      const actual = Math.min(damage, Math.max(0, monster.currentHP))
+      const actual = Math.min(resist(damage), Math.max(0, monster.currentHP))
       monster.currentHP -= actual
       const xpSkills = { magic: actual * MAGIC_XP_PER_DAMAGE, hitpoints: Math.floor(actual * HP_XP_PER_DAMAGE) }
       _accXP(state, xpSkills)
       events.push({ type: 'xp', xpSkills })
-      events.push({ type: 'specialHit', hits: [damage], totalDamage: actual, specType: 'volatile_surge', monsterHP: monster.currentHP })
+      events.push({ type: 'specialHit', hits: [resist(damage)], totalDamage: actual, specType: 'volatile_surge', monsterHP: monster.currentHP })
       break
     }
 

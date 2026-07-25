@@ -103,6 +103,18 @@ Minigames are timed grinds for specific unique rewards — for example running V
 
 Raids are multi-boss gauntlets (for example the Vaults of Xyren) with big reward tables: guaranteed loot plus a chance at rare uniques. Bosses are tougher single monsters with their own drop tables and kill counts. Boss and raid uniques are granted by the server when you complete the kill, and every kill is recorded — check the Collection Log and Leaderboard. You can spend credits to skip to a boss kill or pay a raid's skip cost.
 
+## The Corporeal Horror
+
+The Corporeal Horror is a 2,000-hitpoint boss at Edgevale, unlocked by the quest The Heart of Shadows. It halves every hit that is not dealt with a spear, so bringing one roughly doubles your damage — a Krylth Spear is the standard choice. It alternates between two forms: the Horror itself, which hits up to 55 with crush, and the Dread Core, a short punish phase that hits softer but burns 8 prayer points on every landed hit. Skipping the fight costs 5 credits.
+
+Its drop table is the best shield source in the game. A Wraithbone Shield (1/64) plus a Sanctified Elixir (1/128) makes a Hallowed Wraithbone Shield; bind one of three sigils to that (each around 1/1,365) for the finished shield:
+
+- **Runeward Wraithbone Shield** — +20 magic attack and +10% magic damage, the strongest magic shield in the realm.
+- **Aegis Wraithbone Shield** — the heaviest defences of the three, and a 70% chance to turn aside a quarter of any incoming hit. The reduction works in PvE and PvP alike.
+- **Vigil Wraithbone Shield** — halves how fast your prayers drain, in live and idle combat.
+
+It also drops onyx bolts (e), charms, large rune stacks, herbs and elite clue scrolls.
+
 ## Farming
 
 Plant seeds in farming patches (herbs, trees, fruit trees and vegetables) at different locations, wait for them to grow in real time, then harvest for crops and Farming XP. Higher Farming levels unlock better seeds. Vegetable patches (Potato at level 1, Sweetcorn at level 9) yield 1-50 crops per harvest — a higher Farming level just weighs the roll toward a bigger harvest, it never guarantees one. Harvest everything at once with Harvest All. Seeds and saplings come from the General Store (basics), the Trading Post, and slayer monsters — the higher a monster's Slayer requirement, the better the seeds it drops; Potato and Sweetcorn seeds are common early drops from low-combat monsters and the Master Farmer.
