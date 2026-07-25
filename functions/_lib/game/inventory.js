@@ -1,4 +1,5 @@
 import { GameApiError } from './errors.js'
+import { splitBankCharges, distributeCharges } from '../../../src/engine/bankCharges.js'
 
 // Save data on old clients still carries pre-migration item ids (e.g.
 // "rune_scimitar" for "runeforged_scimitar"). The redundant legacy-keyed
@@ -87,14 +88,17 @@ export function getInventory(save) {
   return save.inventory
 }
 
-export function addItemToInventory(save, itemId, quantity, { stackable = true, noted = false } = {}) {
+export function addItemToInventory(save, itemId, quantity, { stackable = true, noted = false, charges = 0 } = {}) {
   const inv = getInventory(save)
   const qty = Math.floor(Number(quantity) || 0)
   if (qty < 1) throw new GameApiError('INVALID_QUANTITY', 'Invalid quantity', 400)
 
   if (!stackable && !noted) {
     if (inv.length + qty > 28) throw new GameApiError('INVENTORY_FULL', 'Inventory is full', 409)
-    for (let i = 0; i < qty; i += 1) inv.push({ itemId, quantity: 1 })
+    const share = distributeCharges(charges, qty)
+    for (let i = 0; i < qty; i += 1) {
+      inv.push(share[i] > 0 ? { itemId, quantity: 1, charges: share[i] } : { itemId, quantity: 1 })
+    }
     return
   }
 
@@ -108,6 +112,9 @@ export function addItemToInventory(save, itemId, quantity, { stackable = true, n
 }
 
 
+// Returns the total `charges` carried by the slots it consumed, so callers
+// moving an item somewhere else (deposit) can carry the charges along instead
+// of dropping them with the slot.
 export function removeItemFromInventory(save, itemId, quantity) {
   const inv = getInventory(save)
   const qty = Math.floor(Number(quantity) || 0)
@@ -119,22 +126,29 @@ export function removeItemFromInventory(save, itemId, quantity) {
   if (available < qty) throw new GameApiError('INSUFFICIENT_SUPPLIES', 'Insufficient supplies', 400)
   // Walk slots back-to-front so spliced indices don't shift the iteration.
   let remaining = qty
+  let chargesRemoved = 0
   for (let i = inv.length - 1; i >= 0 && remaining > 0; i--) {
     const s = inv[i]
     if (!s || s.itemId !== itemId) continue
     const cur = Number(s.quantity) || 0
     if (cur <= remaining) {
       remaining -= cur
+      chargesRemoved += Math.max(0, Math.floor(Number(s.charges) || 0))
       inv.splice(i, 1)
     } else {
       s.quantity = cur - remaining
       remaining = 0
     }
   }
+  return chargesRemoved
 }
 
 
-export function addItemToBank(save, itemId, quantity) {
+// `charges` pools the incoming item's charges into the entry's shared pool
+// (the bank holds one charge total per itemId). Never write an explicit 0 for
+// an item that has none — an absent field means "untouched" to the client's
+// preserve pass, an explicit 0 would wipe a pool this call knows nothing about.
+export function addItemToBank(save, itemId, quantity, { charges = 0 } = {}) {
   const qty = Math.floor(Number(quantity) || 0)
   if (qty < 1) throw new GameApiError('INVALID_QUANTITY', 'Invalid quantity', 400)
   if (!save.bank || typeof save.bank !== 'object') save.bank = {}
@@ -142,12 +156,15 @@ export function addItemToBank(save, itemId, quantity) {
   const curQty = typeof existing === 'number'
     ? Math.floor(existing)
     : Math.floor(Number(existing?.quantity) || 0)
+  const incoming = Math.max(0, Math.floor(Number(charges) || 0))
   // Spread the existing entry so fields like `charges` survive the merge.
-  save.bank[itemId] = {
+  const entry = {
     ...(existing && typeof existing === 'object' ? existing : {}),
     itemId,
     quantity: curQty + qty,
   }
+  if (incoming > 0) entry.charges = (Math.max(0, Math.floor(Number(entry.charges) || 0))) + incoming
+  save.bank[itemId] = entry
 }
 
 export function bankQuantity(save, itemId) {
@@ -155,21 +172,35 @@ export function bankQuantity(save, itemId) {
   return typeof existing === 'number' ? Math.floor(existing) : Math.floor(Number(existing?.quantity) || 0)
 }
 
-export function removeItemFromBank(save, itemId, quantity) {
+// `takeCharges` moves the withdrawn copies' share of the charge pool out with
+// them (returned to the caller, which attaches it to wherever the item lands)
+// and writes the bank's remainder back explicitly. Without it the pool stays
+// put — the right call when the item is leaving the game entirely (a sell),
+// where charges must not change while the rest sits in the bank.
+export function removeItemFromBank(save, itemId, quantity, { takeCharges = false } = {}) {
   const qty = Math.floor(Number(quantity) || 0)
   if (qty < 1) throw new GameApiError('INVALID_QUANTITY', 'Invalid quantity', 400)
   const cur = bankQuantity(save, itemId)
   if (cur < qty) throw new GameApiError('INSUFFICIENT_SUPPLIES', 'Not enough of that item in the bank', 400)
   const next = cur - qty
   const existing = save.bank[itemId]
+  const pool = Math.max(0, Math.floor(Number(existing?.charges) || 0))
+  const { taken, remaining } = takeCharges
+    ? splitBankCharges(pool, qty, cur)
+    : { taken: 0, remaining: pool }
   if (next <= 0) delete save.bank[itemId]
   // Spread the existing entry so fields like `charges` survive a partial
-  // withdrawal — banked charges must never change while the item sits there.
-  else save.bank[itemId] = {
-    ...(existing && typeof existing === 'object' ? existing : {}),
-    itemId,
-    quantity: next,
+  // withdrawal — banked charges never change unless this call moved them.
+  else {
+    const entry = {
+      ...(existing && typeof existing === 'object' ? existing : {}),
+      itemId,
+      quantity: next,
+    }
+    if (takeCharges && pool > 0) entry.charges = remaining
+    save.bank[itemId] = entry
   }
+  return taken
 }
 
 // Remove `quantity` of `itemId` from whichever store the caller names. The

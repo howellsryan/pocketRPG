@@ -68,9 +68,9 @@ function buildPool(equipment, inventory, bank) {
     const qty = Number(quantity) || 0
     if (!itemId || qty <= 0) return
     let p = pool.get(itemId)
-    if (!p) { p = { quantity: 0, charges: [] }; pool.set(itemId, p) }
+    if (!p) { p = { quantity: 0, charges: [], charged: false }; pool.set(itemId, p) }
     p.quantity += qty
-    if ((charges || 0) > 0) p.charges.push(charges)
+    if ((charges || 0) > 0) { p.charges.push(charges); p.charged = true }
   }
   for (const slot of EQUIPMENT_SLOTS) {
     const e = equipment?.[slot]
@@ -166,12 +166,15 @@ export function applyPreset(preset, state, itemsData, stats, completedQuests) {
     if (drawn.quantity < wantQty) notePartial(want.itemId, wantQty, drawn.quantity)
   }
 
-  // Everything still in the pool returns to the bank.
+  // Everything still in the pool returns to the bank. Undrawn charges are
+  // re-pooled in full (the bank holds one charge total per item), and an item
+  // whose charges all went onto the player writes an explicit 0 — an absent
+  // field means "untouched" to preserveBankCharges and would duplicate them.
   const newBank = {}
   for (const [itemId, p] of pool.entries()) {
     if (p.quantity <= 0) continue
     const entry = { itemId, quantity: p.quantity }
-    if (p.charges.length > 0) entry.charges = p.charges[0]
+    if (p.charged) entry.charges = p.charges.reduce((sum, c) => sum + c, 0)
     newBank[itemId] = entry
   }
 

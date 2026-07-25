@@ -78,6 +78,45 @@ describe('bank intents', () => {
     expect(save.inventory.find((s: any) => s.itemId === 'feather')?.quantity).toBe(100)
   })
 
+  it('deposit carries the item’s charges into the bank pool', () => {
+    // Depositing dropped the slot and its charges with it — a maxed trident
+    // banked through MCP came back empty.
+    const save = makeSave({ inventory: [{ itemId: 'trident_of_venom', quantity: 1, charges: 20000 }] })
+    depositToBank(save, 'trident_of_venom', 1)
+    expect(save.bank.trident_of_venom).toEqual({ itemId: 'trident_of_venom', quantity: 1, charges: 20000 })
+    expect(save.inventory.find((s: any) => s.itemId === 'trident_of_venom')).toBeUndefined()
+  })
+
+  it('deposit pools charges onto an already-banked copy', () => {
+    const save = makeSave({
+      inventory: [{ itemId: 'trident_of_venom', quantity: 1, charges: 5000 }],
+      bank: { trident_of_venom: { itemId: 'trident_of_venom', quantity: 1, charges: 20000 } },
+    })
+    depositToBank(save, 'trident_of_venom', 1)
+    expect(save.bank.trident_of_venom).toEqual({ itemId: 'trident_of_venom', quantity: 2, charges: 25000 })
+  })
+
+  it('deposit of an uncharged item writes no charges field', () => {
+    // An explicit 0 would read as "deliberately emptied" and wipe a real pool.
+    const save = makeSave({ inventory: [{ itemId: 'oak_logs', quantity: 1 }] })
+    depositToBank(save, 'oak_logs', 1)
+    expect(save.bank.oak_logs.charges).toBeUndefined()
+  })
+
+  it('withdraw takes the charge pool out with the item', () => {
+    const save = makeSave({ bank: { trident_of_venom: { itemId: 'trident_of_venom', quantity: 1, charges: 20000 } } })
+    withdrawFromBank(save, 'trident_of_venom', 1)
+    expect(save.bank.trident_of_venom).toBeUndefined()
+    expect(save.inventory.find((s: any) => s.itemId === 'trident_of_venom')?.charges).toBe(20000)
+  })
+
+  it('withdrawing one of several copies takes a proportional share and leaves the rest banked', () => {
+    const save = makeSave({ bank: { trident_of_venom: { itemId: 'trident_of_venom', quantity: 2, charges: 20000 } } })
+    withdrawFromBank(save, 'trident_of_venom', 1)
+    expect(save.inventory.find((s: any) => s.itemId === 'trident_of_venom')?.charges).toBe(10000)
+    expect(save.bank.trident_of_venom).toEqual({ itemId: 'trident_of_venom', quantity: 1, charges: 10000 })
+  })
+
   it('withdraw beyond bank stock throws', () => {
     const save = makeSave({ bank: { feather: { itemId: 'feather', quantity: 10 } } })
     expect(() => withdrawFromBank(save, 'feather', 999)).toThrow()

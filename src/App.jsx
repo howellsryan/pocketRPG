@@ -1247,7 +1247,7 @@ function GameApp() {
             updateInventory(sim.finalInventory)
             const bankedItems = sim.lootBanked || sim.itemsBanked || {}
             if (Object.keys(bankedItems).length > 0) {
-              updateBankDirect(bankedItems)
+              updateBankDirect(bankedItems, { charges: sim.chargesBanked })
             }
           } else if (sim.itemsGained) {
             updateBankDirect(sim.itemsGained)
@@ -2180,7 +2180,7 @@ function GameApp() {
       updateInventory(result.finalInventory)
       for (const evt of skillingGainEvents(task, result.itemsGained)) recordGameEvent?.(evt)
       const banked = result.itemsBanked || {}
-      if (Object.keys(banked).length > 0) updateBankDirect(banked)
+      if (Object.keys(banked).length > 0) updateBankDirect(banked, { charges: result.chargesBanked })
       if (result.itemsConsumed && Object.keys(result.itemsConsumed).length > 0) {
         const negated = {}
         for (const [itemId, qty] of Object.entries(result.itemsConsumed)) negated[itemId] = -qty
@@ -2833,7 +2833,7 @@ function GameApp() {
             updateInventory(sim.finalInventory)
             const bankedItems = sim.lootBanked || sim.itemsBanked || {}
             if (Object.keys(bankedItems).length > 0) {
-              updateBankDirect(bankedItems)
+              updateBankDirect(bankedItems, { charges: sim.chargesBanked })
             }
           } else if (sim.itemsGained) {
             updateBankDirect(sim.itemsGained)

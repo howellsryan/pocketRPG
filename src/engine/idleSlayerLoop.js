@@ -107,7 +107,7 @@ export function simulateIdleCombatChain(task, elapsedMs, stats, equipment, inven
   }
 
   const aggregate = {
-    xpGained: {}, lootGained: {}, lootLost: {}, lootBanked: {}, runesConsumed: {},
+    xpGained: {}, lootGained: {}, lootLost: {}, lootBanked: {}, chargesBanked: {}, runesConsumed: {},
     itemsConsumed: {}, foodConsumed: {}, potionsConsumed: {},
     monstersKilled: 0, monstersKilledOnTask: 0, slayerXpGained: 0,
     chargesConsumed: 0, attacksUsed: 0,
@@ -143,6 +143,7 @@ export function simulateIdleCombatChain(task, elapsedMs, stats, equipment, inven
     addCounts(aggregate.lootGained, sim.lootGained)
     addCounts(aggregate.lootLost, sim.lootLost)
     addCounts(aggregate.lootBanked, sim.lootBanked)
+    addCounts(aggregate.chargesBanked, sim.chargesBanked)
     addCounts(aggregate.runesConsumed, sim.runesConsumed)
     addCounts(aggregate.itemsConsumed, sim.itemsConsumed)
     addCounts(aggregate.foodConsumed, sim.foodConsumed)
@@ -232,6 +233,7 @@ export function simulateIdleCombatChain(task, elapsedMs, stats, equipment, inven
     lootGained: aggregate.lootGained,
     lootLost: aggregate.lootLost,
     lootBanked: aggregate.lootBanked,
+    chargesBanked: aggregate.chargesBanked,
     runesConsumed: aggregate.runesConsumed,
     itemsConsumed: aggregate.itemsConsumed,
     foodConsumed: aggregate.foodConsumed,

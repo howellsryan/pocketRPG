@@ -26,6 +26,7 @@ import { getLevelFromXP } from './experience.js'
  * @property {Array<any>} [finalInventory]               replaces inventory (skill/gather/clue/combat).
  * @property {Record<string, number>} [lootBanked]       ADDITIVE bank loot.
  * @property {Record<string, number>} [itemsBanked]      ADDITIVE bank loot (alias).
+ * @property {Record<string, number>} [chargesBanked]    ADDITIVE charges carried in by banked items.
  * @property {Record<string, number>} [itemsGained]      NET for skill/gather, ADDITIVE otherwise.
  * @property {number} [coinsGained]                      agility/thieving.
  * @property {Array<{itemId: string, quantity: number}>} [rewards] hunter.
@@ -53,13 +54,20 @@ import { getLevelFromXP } from './experience.js'
 
 const XP_CAP = 200_000_000
 
-/** @param {Record<string, any>} bank @param {string} itemId @param {number} qty */
-function bankAdd(bank, itemId, qty) {
+// `charges` pools an auto-banked item's charges onto the entry. Never write an
+// explicit 0 for an item carrying none: an absent field means "untouched" to
+// preserveBankCharges, an explicit 0 would wipe a pool this call knows nothing
+// about (src/engine/bankCharges.js).
+/** @param {Record<string, any>} bank @param {string} itemId @param {number} qty @param {number} [charges] */
+function bankAdd(bank, itemId, qty, charges = 0) {
   if (qty <= 0) return
   const existing = bank[itemId]
-  bank[itemId] = existing
+  const entry = existing
     ? { ...existing, quantity: (Number(existing.quantity) || 0) + qty }
     : { itemId, quantity: qty }
+  const incoming = Math.max(0, Math.floor(Number(charges) || 0))
+  if (incoming > 0) entry.charges = (Math.max(0, Math.floor(Number(entry.charges) || 0))) + incoming
+  bank[itemId] = entry
 }
 
 // Coins from agility/thieving land in the inventory (stackable, coalescing),
@@ -171,7 +179,8 @@ export function applyTaskResult(state, sim, type) {
   if (type === 'skill' || type === 'gather' || type === 'clue' || type === 'combat') {
     if (Array.isArray(sim.finalInventory)) state.inventory = sim.finalInventory
     banked = sim.lootBanked || sim.itemsBanked || {}
-    for (const [itemId, qty] of Object.entries(banked)) bankAdd(bank, itemId, qty)
+    const bankedCharges = sim.chargesBanked || {}
+    for (const [itemId, qty] of Object.entries(banked)) bankAdd(bank, itemId, qty, bankedCharges[itemId])
   } else if (type === 'agility' || type === 'thieving') {
     addCoinsInventoryFirst(state.inventory, bank, Number(sim.coinsGained) || 0)
     // Master Farmer seed rewards (thieving) bank like other idle skill loot.

@@ -21,6 +21,7 @@ import itemsData from '../data/items.json'
 import prayersData from '../data/prayers.json'
 import { normaliseDungeoneeringTokens, isDungeoneeringRewardAction } from '../engine/dungeoneeringTokens.js'
 import { applyTaskResult } from '../engine/applyTaskResult.js'
+import { preserveBankCharges } from '../engine/bankCharges.js'
 import { isBackground, getActivityKey } from '../engine/activityRegistry.js'
 import {
   saveActivityProgress, getActivityProgress, hydrateActivityLedger,
@@ -811,7 +812,10 @@ export function GameProvider({ children }) {
   }, [markDirty])
 
   const updateBank = useCallback((newBank) => {
-    setBank({ ...newBank })
+    // Wholesale bank replacement is the one funnel every screen writes through,
+    // so the charge-preservation invariant (src/engine/bankCharges.js) is
+    // enforced here rather than trusted to each call site.
+    setBank(prev => ({ ...preserveBankCharges(prev, newBank) }))
     markDirty('bank')
   }, [markDirty])
 
@@ -1167,8 +1171,10 @@ export function GameProvider({ children }) {
     saveSetting('questQueue', nextQueue)
   }, [])
 
-  // Direct bank update without inventory changes (for skill/gather item routing)
-  const updateBankDirect = useCallback((itemUpdates) => {
+  // Direct bank update without inventory changes (for skill/gather item routing).
+  // `charges` pools an auto-banked item's charges onto its entry — a bank trip
+  // that carried charged gear must not drop them (src/engine/bankCharges.js).
+  const updateBankDirect = useCallback((itemUpdates, { charges = null } = {}) => {
     setBank(prev => {
       const newBank = { ...prev }
       for (const [itemId, qty] of Object.entries(itemUpdates)) {
@@ -1181,6 +1187,11 @@ export function GameProvider({ children }) {
           }
         } else if (qty > 0) {
           newBank[itemId] = { itemId, quantity: qty }
+        }
+        const incoming = Math.max(0, Math.floor(Number(charges?.[itemId]) || 0))
+        if (incoming > 0 && newBank[itemId]) {
+          const pooled = Math.max(0, Math.floor(Number(newBank[itemId].charges) || 0))
+          newBank[itemId] = { ...newBank[itemId], charges: pooled + incoming }
         }
       }
       dirty.current.bank = true

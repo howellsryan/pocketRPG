@@ -1126,7 +1126,11 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                   if (reward?.destination === 'bank') {
                     const existing = newBank[itemId]
                     const existingQty = Math.floor(Number(existing?.quantity ?? existing) || 0)
-                    newBank[itemId] = { itemId, quantity: existingQty + quantity }
+                    newBank[itemId] = {
+                      ...(existing && typeof existing === 'object' ? existing : {}),
+                      itemId,
+                      quantity: existingQty + quantity,
+                    }
                   } else {
                     addItem(newInv, itemId, quantity, item?.stackable || false)
                   }
@@ -1347,7 +1351,11 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           if (reward?.destination === 'bank') {
             const existing = newBank[itemId]
             const existingQty = Math.floor(Number(existing?.quantity ?? existing) || 0)
-            newBank[itemId] = { itemId, quantity: existingQty + quantity }
+            newBank[itemId] = {
+              ...(existing && typeof existing === 'object' ? existing : {}),
+              itemId,
+              quantity: existingQty + quantity,
+            }
           } else {
             addItem(newInv, itemId, quantity, item?.stackable || false)
           }

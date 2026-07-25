@@ -105,16 +105,16 @@ function progressSummary(save, xpGained) {
 export function depositToBank(save, rawItemId, quantity) {
   normalizeSaveItemIds(save, itemsData)
   const { itemId } = resolveItem(rawItemId)
-  removeItemFromInventory(save, itemId, quantity) // throws if not enough in inventory
-  addItemToBank(save, itemId, quantity)
+  const charges = removeItemFromInventory(save, itemId, quantity) // throws if not enough in inventory
+  addItemToBank(save, itemId, quantity, { charges })
   return { action: 'deposit', itemId, name: itemsData[itemId]?.name || itemId, quantity: Math.floor(Number(quantity)) }
 }
 
 export function withdrawFromBank(save, rawItemId, quantity) {
   normalizeSaveItemIds(save, itemsData)
   const { itemId } = resolveItem(rawItemId)
-  removeItemFromBank(save, itemId, quantity) // throws if not enough in bank
-  addItemToInventory(save, itemId, quantity, { stackable: isStackable(itemId) }) // throws if inventory full
+  const charges = removeItemFromBank(save, itemId, quantity, { takeCharges: true }) // throws if not enough in bank
+  addItemToInventory(save, itemId, quantity, { stackable: isStackable(itemId), charges }) // throws if inventory full
   return { action: 'withdraw', itemId, name: itemsData[itemId]?.name || itemId, quantity: Math.floor(Number(quantity)) }
 }
 
