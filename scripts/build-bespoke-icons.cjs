@@ -46,7 +46,11 @@ function parseSvg(raw, label) {
   const inner = raw.slice(openTag.index + openTag[0].length, raw.lastIndexOf('</svg>'))
   const body = minifySvgBody(inner)
   if (!body) throw new Error(`${label}: empty body`)
-  return { body, viewBox: viewBox === '0 0 512 512' ? null : viewBox }
+  // A body painted with `currentColor` is one shape recoloured per variant;
+  // GameIcon keys its tint override off this flag (see BESPOKE_TINT).
+  const entry = { body, viewBox: viewBox === '0 0 512 512' ? null : viewBox }
+  if (body.includes('currentColor')) entry.tintable = true
+  return entry
 }
 
 const result = {}

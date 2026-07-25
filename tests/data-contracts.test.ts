@@ -124,6 +124,17 @@ const EXPECTED_BOSS_UNIQUE_ITEM_IDS = new Set([
   'emberhowl_boots',
   'razorwing_crossbow',
   'razorwing_vambraces',
+
+  // The Corporeal Horror — drops plus the shields they combine into
+  'wraithbone_shield',
+  'sanctified_elixir',
+  'runeward_sigil',
+  'aegis_sigil',
+  'vigil_sigil',
+  'hallowed_wraithbone_shield',
+  'runeward_wraithbone_shield',
+  'aegis_wraithbone_shield',
+  'vigil_wraithbone_shield',
 ])
 describe('data contracts', () => {
   it('item ids match keys and equipment slots are valid when present', () => {

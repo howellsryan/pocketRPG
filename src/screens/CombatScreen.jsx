@@ -23,7 +23,8 @@ import { getSkillArt } from '../utils/skillArt.js'
 import { prayerSkill } from '../utils/prayerIcons.js'
 import { MONSTER_ICONS } from '../utils/monsterIcons.js'
 import SkillIcon from '../components/SkillIcon.jsx'
-import { createCombatState, createRaidCombatState, processCombatTick, applyEat, applyCombo, applySpecialAttack, applyInstantKill } from '../engine/combat.js'
+import { createCombatState, createRaidCombatState, processCombatTick, applyEat, applyCombo, applySpecialAttack, applyInstantKill, setCombatTarget } from '../engine/combat.js'
+import { isAddAlive } from '../engine/bossAdds.js'
 import { applyConsumableEffect, isLumiraBrew, isComboConsumable } from '../engine/consumables.js'
 import { getLevelFromXP } from '../engine/experience.js'
 import { checkBossRequirementsPure, checkRaidRequirementsPure } from '../engine/combatRequirements.js'
@@ -122,6 +123,12 @@ const COMBAT_CATEGORIES = [
     label: 'Ember Pits',
     icon: '🔥',
     ids: ['ember_tyrant', 'ashen_crucible'],
+  },
+  {
+    key: 'corporeal_horror',
+    label: 'Corporeal Horror',
+    icon: '👁️',
+    ids: ['corporeal_horror'],
   },
   {
     key: 'blighted_gauntlet',
@@ -350,6 +357,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   const [deathModal, setDeathModal] = useState(null)
   const [isDesktopCombatLayout, setIsDesktopCombatLayout] = useState(false)
   const [monsterSplats, setMonsterSplats] = useState([])
+  const [addSplats, setAddSplats] = useState([])
   const [playerSplats, setPlayerSplats] = useState([])
   // 3D combat arena (Phase 2): renders inline in place of the HP bars for
   // monsters with a registered model; the 🎥/📊 chip swaps between the two,
@@ -620,11 +628,12 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       // Hit splats replace the chat-style "You hit X" / "Monster hits X" lines.
       const tickSplats = splatsFromCombatEvents(events)
       pushSplats(setMonsterSplats, tickSplats.monster)
+      pushSplats(setAddSplats, tickSplats.add)
       pushSplats(setPlayerSplats, tickSplats.player)
-      if (tickSplats.monster.length || tickSplats.player.length) {
+      if (tickSplats.monster.length || tickSplats.add.length || tickSplats.player.length) {
         setArenaSignal(prev => ({
           seq: (prev?.seq || 0) + 1,
-          hero: tickSplats.monster.length > 0,
+          hero: tickSplats.monster.length > 0 || tickSplats.add.length > 0,
           monster: tickSplats.player.length > 0,
           special: events.some(ev => ev.type === 'specialHit'),
         }))
@@ -861,6 +870,28 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           if (!phaseChangeMonsters.includes(state.monster.id)) {
             addToast(`${ev.icon || '🐍'} ${monsterName}: ${ev.displayName} form${immunityNote}`, 'info')
           }
+        }
+        if (ev.type === 'addSpawned') {
+          setLog(prev => [...prev.slice(-20), {
+            text: `${ev.icon || '🔮'} ${ev.bossName || 'The boss'} spawns a ${ev.monsterName}! (${ev.hitpoints} HP)`,
+            type: 'formChange',
+            time: Date.now()
+          }])
+          addToast(`${ev.icon || '🔮'} ${ev.monsterName} spawns — switch target to kill it`, 'info')
+        }
+        if (ev.type === 'addDefeated') {
+          setLog(prev => [...prev.slice(-20), {
+            text: `💥 ${ev.monsterName} destroyed!`,
+            type: 'heal',
+            time: Date.now()
+          }])
+        }
+        if (ev.type === 'prayerDrained') {
+          setLog(prev => [...prev.slice(-20), {
+            text: `🔮 ${ev.monsterName || 'Monster'} drains ${ev.amount} prayer points!`,
+            type: 'miss',
+            time: Date.now()
+          }])
         }
         if (ev.type === 'bossPhaseReset') {
           const name = ev.monsterName || 'Boss'
@@ -1253,7 +1284,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     const { combatType: weaponCombatType, weaponItem, isPoweredStaff, spell, needsSpell } = resolveMagicSpell(equipment, itemsData, activeCombatSpell, spellsData)
     const combatType = needsSpell ? 'melee' : weaponCombatType
     if (needsSpell) addToast('No spell selected — attacking with melee. Use the 🔮 Cast Spell button to fight with magic.', 'info')
-    const state = createCombatState(monster, combatType, combatStance, spell)
+    const state = createCombatState(monster, combatType, combatStance, spell, monstersData)
     // Reset special attack energy on new fight; preserve active potions so they last their full 5 minutes
     state.specialAttackEnergy = 100
     // Prayer pool starts full (= Prayer level) at the start of a combat session.
@@ -1313,7 +1344,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     // A magic weapon with no castable spell fights with melee instead of
     // stopping the auto-fight — see resolveMagicSpell.
     const combatType = needsSpell ? 'melee' : weaponCombatType
-    const state = createCombatState(monster, combatType, combatStance, spell)
+    const state = createCombatState(monster, combatType, combatStance, spell, monstersData)
     // Reset special attack energy on kill; preserve active potions and prayers so they last their full duration
     state.specialAttackEnergy = 100
     state.activePotions = combatRef.current ? { ...combatRef.current.activePotions } : {}
@@ -2533,6 +2564,49 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       {arenaClosed ? '🎥 3D' : '📊 Bars'}
     </button>
   )
+  // ── Boss add (e.g. the Dread Core) ──
+  // A second live enemy, not a phase: it attacks alongside the boss until it is
+  // killed, so the player needs its own HP bar and a way to swing at it.
+  const activeAdd = isAddAlive(combat) ? combat.add : null
+  const switchTarget = (which) => {
+    if (!combatRef.current) return
+    const next = setCombatTarget(combatRef.current, which)
+    combatRef.current = next
+    setCombat(next)
+  }
+  const addPanel = activeAdd && (
+    <div class="cb-qa" style={{ marginBottom: 12 }}>
+      <div class="cb-hplabel">
+        <span>{activeAdd.icon} {activeAdd.name}</span>
+        <span class="cb-hplabel__v">{Math.max(0, Math.round(activeAdd.currentHP))}/{activeAdd.hitpoints}</span>
+      </div>
+      <div class="relative mb-2">
+        <HPBar current={Math.max(0, activeAdd.currentHP)} max={activeAdd.hitpoints} size="large" />
+        <HitSplatLayer splats={addSplats} />
+      </div>
+      {/* Target picker — same brass "on" treatment as the quick-prayer tiles, so
+          the enemy you are hitting reads at a glance mid-fight. */}
+      <div class="cb-qa__grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(118px, 1fr))' }}>
+        <button
+          class={'cb-slot' + (combat.addTargeted ? '' : ' is-active')}
+          onClick={() => switchTarget('boss')}
+        >
+          <span class="cb-slot__name">{combat.monster.name}</span>
+          <span class="cb-slot__tag">{combat.addTargeted ? 'Attack' : 'Attacking'}</span>
+          {!combat.addTargeted && <span class="cb-slot__ring" />}
+        </button>
+        <button
+          class={'cb-slot' + (combat.addTargeted ? ' is-active' : '')}
+          onClick={() => switchTarget('add')}
+        >
+          <span class="cb-slot__name">{activeAdd.name}</span>
+          <span class="cb-slot__tag">{combat.addTargeted ? 'Attacking' : 'Attack'}</span>
+          {combat.addTargeted && <span class="cb-slot__ring" />}
+        </button>
+      </div>
+    </div>
+  )
+
   // Inline 3D arena — replaces the HP-bar block in whichever layout renders.
   const heroSpec = getCharacterModel() || {}
   const arenaPanel = showArena && (
@@ -2607,6 +2681,8 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           </div>
         )}
       </div>
+
+      {addPanel}
 
       {/* Inline 3D arena replaces both HP bars (its own bars ride the scene) */}
       {arenaPanel && <div class="mb-2">{arenaPanel}</div>}
@@ -3076,6 +3152,8 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                   </div>
                 </>
               )}
+
+              {addPanel}
 
               {/* Prayer pool */}
               {typeof combat?.maxPrayerPoints === 'number' && (

@@ -65,6 +65,73 @@ export function raidForBoss(monsterId) {
   return raidBossRaidNames.get(monsterId) || null
 }
 
+/**
+ * Human-readable summary of a monster's non-obvious combat rules — damage
+ * resistances, per-phase forms and their punish mechanics — so an MCP client
+ * can explain *how* to fight a boss, not just its stat block.
+ */
+export function monsterMechanics(monster) {
+  if (!monster) return null
+  const notes = []
+  const resistance = monster.resistance
+  if (resistance?.multiplier != null) {
+    const pct = Math.round((1 - Number(resistance.multiplier)) * 100)
+    const exempt = resistance.exemptWeaponClass
+    notes.push(exempt
+      ? `Resists ${pct}% of all damage from weapons that are not a ${exempt} (item field weaponClass: "${exempt}"). A ${exempt} deals full damage — bringing one roughly doubles your kill speed.`
+      : `Resists ${pct}% of all incoming damage.`)
+  }
+  if (monster.slayerRequirement) notes.push(`Requires Slayer level ${monster.slayerRequirement}.`)
+  if (monster.questRequirement) notes.push(`Locked until the quest '${monster.questRequirement}' is complete.`)
+  if (monster.skipCost) notes.push(`Skipping this fight with the skip-hour credit costs ${monster.skipCost} credits.`)
+  const forms = monster.multiForm && monster.forms
+    ? Object.entries(monster.forms).map(([key, form]) => ({
+        id: key,
+        name: form.displayName || key,
+        attackStyle: form.attackStyle ?? null,
+        weakness: form.weakness ?? null,
+        maxHit: form.maxHit ?? null,
+        ...(form.immunity ? { immuneTo: form.immunity } : {}),
+        ...(form.prayerDrainPerHit ? { prayerDrainPerHit: form.prayerDrainPerHit } : {}),
+      }))
+    : null
+  if (forms) {
+    notes.push(`Cycles between ${forms.length} forms; each form has its own attack style, max hit and defences.`)
+    for (const form of forms) {
+      if (form.prayerDrainPerHit) notes.push(`${form.name}: every landed hit also burns ${form.prayerDrainPerHit} prayer points.`)
+      if (form.immuneTo) notes.push(`${form.name}: immune to ${form.immuneTo}.`)
+    }
+  }
+  if (monster.weakness) notes.push(`Weak to ${monster.weakness} — attack with a ${monster.weakness} weapon style.`)
+
+  // A spawned add is a second live monster, not a phase: both attack at once and
+  // the add has to be killed separately. Clients get its full stat block so they
+  // can decide whether to switch targets.
+  const spec = monster.spawnsAdd
+  const addDefinition = spec?.monsterId ? monstersData[spec.monsterId] : null
+  let add = null
+  if (addDefinition) {
+    add = {
+      id: addDefinition.id,
+      name: addDefinition.name,
+      hitpoints: addDefinition.hitpoints ?? null,
+      attackStyle: addDefinition.attackStyle ?? null,
+      weakness: addDefinition.weakness ?? null,
+      maxHit: addDefinition.maxHit ?? null,
+      attackSpeed: addDefinition.attackSpeed ?? null,
+      ...(addDefinition.prayerDrainPerHit ? { prayerDrainPerHit: addDefinition.prayerDrainPerHit } : {}),
+      firstSpawnAfterBossAttacks: spec.firstSpawnAfterAttacks ?? null,
+      respawnAfterBossAttacks: spec.respawnAfterAttacks ?? null,
+    }
+    notes.push(`Spawns a ${add.name} (${add.hitpoints} HP) mid-fight. It is a separate monster, not a phase — ${monster.name} keeps attacking while it is up, so you take hits from both until you kill it.`)
+    notes.push(`${add.name} attacks with ${add.attackStyle} for up to ${add.maxHit}${add.prayerDrainPerHit ? `, and every landed hit burns ${add.prayerDrainPerHit} prayer points` : ''}. It drops nothing and does not count as a kill.`)
+    notes.push(`Killing a ${add.name} only clears it; ${monster.name} spawns another after a few more of its own attacks.`)
+  }
+
+  if (!notes.length && !forms && !add) return null
+  return { notes, ...(forms ? { forms } : {}), ...(add ? { spawnsAdd: add } : {}) }
+}
+
 // ── Compact indexes (items.json/monsters.json are large; detail via inspect_*) ─
 
 export function itemsIndex() {
@@ -79,7 +146,8 @@ export function itemsIndex() {
 }
 
 export function monstersIndex() {
-  return monsterList().map((m) => ({
+  // Adds exist only as a boss spawn — they are never a fight a client can pick.
+  return monsterList().filter((m) => !m.isAdd).map((m) => ({
     id: m.id,
     name: m.name,
     combatLevel: m.combatLevel ?? null,
@@ -193,6 +261,21 @@ function buildItemSourcesIndex() {
       e.skills.push({ skill: s.name, action: a.name, level: a.level })
     }
   }
+  // Combine recipes (sigil onto a shield, orb onto a staff): both the result
+  // and the two ingredients get an entry, so "how do I get X?" resolves the
+  // whole chain instead of dead-ending at the drop.
+  for (const it of Object.values(itemsData)) {
+    if (!it?.combineWith || !it?.combineResult) continue
+    const recipe = { ingredients: [it.id, it.combineWith].map((id) => ({ id, name: itemName(id) })), result: { id: it.combineResult, name: itemName(it.combineResult) } }
+    const result = entry(it.combineResult)
+    if (!result.combines) result.combines = []
+    result.combines.push(recipe)
+    for (const ingredientId of [it.id, it.combineWith]) {
+      const e = entry(ingredientId)
+      if (!e.combinesInto) e.combinesInto = []
+      e.combinesInto.push(recipe)
+    }
+  }
   return map
 }
 
@@ -211,6 +294,8 @@ export function itemSources(id) {
   if (src?.clues) out.clues = src.clues
   if (src?.raids) out.raids = src.raids
   if (src?.skills) out.skills = src.skills
+  if (src?.combines) out.combines = src.combines
+  if (src?.combinesInto) out.combinesInto = src.combinesInto
   if (getItem(id)?.isGeneralStore) out.shop = 'General Store'
   return Object.keys(out).length ? out : null
 }

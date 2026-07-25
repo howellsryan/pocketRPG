@@ -45,11 +45,14 @@ export function getPrayerRestoreFromPotion(item) {
  * `prayerPoints`, `prayerDrainAccumulator`, `activeProtectionPrayer` and/or
  * `activeCombatPrayer` (mutated in place). No-op until `prayerPoints` is a
  * number, so call sites that never set it (e.g. the idle sim) are unaffected.
+ * `drainMultiplier` carries worn drain-reduction perks (Vigil sigil shield).
  * Returns true on the tick the pool empties (prayers were switched off).
  */
-export function applyPrayerDrainTick(state, prayersData) {
+export function applyPrayerDrainTick(state, prayersData, drainMultiplier = 1) {
   if (!state || typeof state.prayerPoints !== 'number') return false
-  const drain = getActivePrayerDrainPerTick([state.activeProtectionPrayer, state.activeCombatPrayer], prayersData)
+  const raw = Number(drainMultiplier)
+  const multiplier = Number.isFinite(raw) ? Math.max(0, Math.min(1, raw)) : 1
+  const drain = getActivePrayerDrainPerTick([state.activeProtectionPrayer, state.activeCombatPrayer], prayersData) * multiplier
   if (drain <= 0) return false
   state.prayerDrainAccumulator = (state.prayerDrainAccumulator || 0) + drain
   if (state.prayerDrainAccumulator >= 1) {

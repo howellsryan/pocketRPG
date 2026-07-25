@@ -57,6 +57,7 @@ describe('content -> place coverage', () => {
   it('maps every non-raid monster to at least one place', () => {
     for (const m of asArray(monstersData)) {
       if (raidBossIds.has(m.id)) continue // raid bosses are placed as kind 'raid', not combat
+      if (m.isAdd) continue // adds are spawned mid-fight by a boss, never travelled to
       expect(placesForActivity('combat', m.id).length, `monster ${m.id}`).toBeGreaterThan(0)
     }
   })

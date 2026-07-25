@@ -26,6 +26,8 @@ export { simulateIdleAgility }
 import { resolveSlayerTaskKill, doesSlayerTaskMatchMonster } from './slayerTasks.js'
 import { calculateDungeoneeringTokensForAction } from './dungeoneeringTokens.js'
 import { getMonsterSeedDrops } from './seedDrops.js'
+import { monsterDamageMultiplier } from './monsterDamageRules.js'
+import { getDamageReductionPerk, expectedDamageMultiplier, getPrayerDrainMultiplier } from './damageReduction.js'
 import { getMonsterCharmDrops } from './summoning.js'
 import { getSlayerTaskEquipmentBonuses } from './slayerCombatBonuses.js'
 import { getCombatSetMultipliers } from './combatSetBonuses.js'
@@ -946,7 +948,10 @@ export function estimateMonsterIncomingPerAttack(monster, equipment, itemsData, 
   const monsterMaxHit = monster.formMaxHit != null
     ? monster.formMaxHit
     : Math.floor(0.5 + (baseStrength + 8) * ((monster.strengthBonus || 0) + 64) / 640)
-  const avgDmg = Math.max(0, acc * (monsterMaxHit / 2))
+  // Worn damage-reduction perk (Aegis Wraithbone Shield) — the idle sim models
+  // averages, so the proc applies as its expected multiplier.
+  const reductionMultiplier = expectedDamageMultiplier(getDamageReductionPerk(bonuses))
+  const avgDmg = Math.max(0, acc * (monsterMaxHit / 2) * reductionMultiplier)
   return { avgDmg, monsterAtkSpeed, attackStyle, acc }
 }
 
@@ -1006,8 +1011,11 @@ function avgHitStats(playerStats, equipment, monster, stance, itemsData, spell =
   }
 
   acc = hitChance(atkRoll, defRoll)
-  const avgDmgPerHit = acc * (maxHit / 2)
-  return { avgDmgPerHit, weaponSpeed, acc, combatType }
+  // Monster damage resistance (spear-gated bosses) — mirrors live combat so a
+  // resisted boss can't be killed twice as fast by idling it.
+  const resistance = monsterDamageMultiplier(monster, weaponItem)
+  const avgDmgPerHit = acc * (maxHit / 2) * resistance
+  return { avgDmgPerHit, weaponSpeed, acc, combatType, resistance }
 }
 
 /**
@@ -1306,6 +1314,8 @@ export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory,
   // Prayer pool: starts at the player's current Prayer level only when an
   // idle prayer is active; otherwise no drain or restore-potion consumption.
   const idlePrayerActiveInitially = !!(idlePrayers.protectionPrayerId || idlePrayers.combatPrayerId)
+  // Worn drain-reduction perk (Vigil Wraithbone Shield) stretches the pool.
+  const prayerDrainMultiplier = getPrayerDrainMultiplier(getEquipmentBonuses(equipment, itemsData))
   const prayerPointsStarted = idlePrayerActiveInitially ? prayerLevel : 0
   let prayerPool = prayerPointsStarted
   let prayerPointsUsed = 0
@@ -1369,23 +1379,24 @@ export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory,
     // mid-session it stays off (no idle resurrection).
     let protectionActive = false
     let prayerCoverFraction = 0
-    if (idlePrayerActiveInitially && events > 0) {
-      while (prayerPool < events && restoreQueue.length > 0) {
+    const prayerCost = Math.max(0, Math.ceil(events * prayerDrainMultiplier))
+    if (idlePrayerActiveInitially && prayerCost > 0) {
+      while (prayerPool < prayerCost && restoreQueue.length > 0) {
         const restored = consumeRestorePotion()
         if (restored <= 0) break
         prayerPool += restored
         prayerPointsRestored += restored
       }
-      if (prayerPool >= events) {
+      if (prayerPool >= prayerCost) {
         protectionActive = !!idlePrayers.protectionPrayerId
-        prayerPool -= events
-        prayerPointsUsed += events
+        prayerPool -= prayerCost
+        prayerPointsUsed += prayerCost
         prayerCoverFraction = 1
       } else if (prayerPool > 0) {
         // Partial coverage on the way out — protect the first portion of
         // damage proportionally, then prayer goes dark for the remainder of
         // the session.
-        prayerCoverFraction = prayerPool / events
+        prayerCoverFraction = prayerPool / prayerCost
         protectionActive = !!idlePrayers.protectionPrayerId
         prayerPointsUsed += prayerPool
         prayerPool = 0

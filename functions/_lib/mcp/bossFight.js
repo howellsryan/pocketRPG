@@ -8,7 +8,9 @@
 
 import itemsData from '../../../src/data/items.json' assert { type: 'json' }
 import spellsData from '../../../src/data/spells.json' assert { type: 'json' }
-import { createCombatState, processCombatTick, applyEat } from '../../../src/engine/combat.js'
+import monstersData from '../../../src/data/monsters.json' assert { type: 'json' }
+import { createCombatState, processCombatTick, applyEat, setCombatTarget } from '../../../src/engine/combat.js'
+import { isAddAlive } from '../../../src/engine/bossAdds.js'
 import { combatTypeFromEquipment } from '../../../src/engine/combatant.js'
 import { getLevelFromXP } from '../../../src/engine/experience.js'
 import { normaliseIdleCombatSetup, getFoodHealAmount } from '../../../src/engine/idleSupplies.js'
@@ -97,7 +99,7 @@ export function simulateBossFight(save, monster) {
   // runesConsumed via applyBossFightOutcome).
   const workingInventory = (save.inventory || []).map((s) => (s ? { ...s } : s))
 
-  let state = createCombatState(monster, combatType, save.settings?.combatStance || 'accurate', spell)
+  let state = createCombatState(monster, combatType, save.settings?.combatStance || 'accurate', spell, monstersData)
   let died = false
   let ticks = 0
 
@@ -113,6 +115,10 @@ export function simulateBossFight(save, monster) {
         state = applyEat(state)
       }
     }
+
+    // Adds hit alongside the boss and never stop, so clear them first — the same
+    // call a player makes with the target toggle.
+    state = setCombatTarget(state, isAddAlive(state) ? 'add' : 'boss')
 
     const playerStats = { ...levels, currentHP: hp }
     const { combatState, events } = processCombatTick(state, playerStats, equipment, itemsData, {}, workingInventory, null)

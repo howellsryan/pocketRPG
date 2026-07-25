@@ -5438,6 +5438,10 @@
     },
     {
       "kind": "combat",
+      "ref": "corporeal_horror"
+    },
+    {
+      "kind": "combat",
       "ref": "ironclad_guardian"
     },
     {
