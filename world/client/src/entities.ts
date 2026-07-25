@@ -845,7 +845,10 @@ export function updateEntity(entity: Entity, now: number, deltaSeconds: number, 
   entity.mesh.rotation.y = stepYaw(entity.mesh.rotation.y, entity.targetYaw, TURN_SPEED_RAD_PER_S * deltaSeconds)
 
   if (entity.animator) {
-    const name: AnimName = entity.moving ? entity.segmentAnim : entity.serverAnim === 'walk' ? 'idle' : entity.serverAnim
+    // A corpse never keeps walking: death wins over an in-flight movement
+    // segment, which otherwise plays walk/run until the queue drains.
+    const dying = entity.serverAnim === 'die'
+    const name: AnimName = dying ? 'die' : entity.moving ? entity.segmentAnim : entity.serverAnim === 'walk' ? 'idle' : entity.serverAnim
     if (entity.animator.kind === 'proc') {
       updateProcAnimator(entity.animator, name, deltaSeconds)
     } else {
@@ -854,7 +857,7 @@ export function updateEntity(entity: Entity, now: number, deltaSeconds: number, 
       // its feet, and reset to normal speed off any movement segment so
       // attack/die never speed up.
       const anim = entity.animator
-      anim.mixer.timeScale = entity.moving ? MOVE_DURATION_MS / entity.segmentDuration : 1
+      anim.mixer.timeScale = entity.moving && !dying ? MOVE_DURATION_MS / entity.segmentDuration : 1
       const attackAction = isAttackAnim(name) ? (anim.actions[name] ?? anim.actions.attack) : undefined
       const playing = anim.current
       const attackPlaying = playing != null && isAttackAction(anim, playing) && playing.isRunning()

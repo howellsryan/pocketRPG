@@ -16,7 +16,7 @@ import {
 } from './tick'
 import { STATIONS, recipeFor, stationTypeForVerb, isStationType } from '../shared/recipes'
 import { hasMaterials, maxCraftable } from './crafting'
-import { resolveCombatSetup, isSameFightTarget, playerAttackRange, emitPrayerIfChanged, emitSpecIfChanged, startCombat } from './combat'
+import { resolveCombatSetup, isSameFightTarget, playerAttackRange, emitPrayerIfChanged, emitSpecIfChanged, startCombat, FULL_SPECIAL_ENERGY } from './combat'
 import { seedPrayer, resolvePrayerToggle } from '../shared/prayer'
 import spellsJson from '../../src/data/spells.json'
 import { npcsFromZone, pickAggroTarget, reselectAttacker, threatContributors, threatKey, tickNpc, toNpcDiff, type NpcState } from './npc'
@@ -516,8 +516,8 @@ export class WorldZone extends Server<Env> {
       lastRunSent: 100,
       stance,
       spell: null,
-      specialEnergy: 100,
-      lastSpecSent: 100,
+      specialEnergy: FULL_SPECIAL_ENERGY,
+      lastSpecSent: FULL_SPECIAL_ENERGY,
       lastSpecQueuedSent: false,
       pendingSpecial: false,
       ...seedPrayer(stats.prayer?.level ?? getLevelFromXP(Number(stats.prayer?.xp) || 0) ?? 1),

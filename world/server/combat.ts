@@ -19,11 +19,39 @@ import { removeItems } from './mining'
 import { isBossMonster } from './bossKills'
 import { getMonsterModel } from '../../src/utils/equipModels.js'
 import { monsterAttackWindup } from '../../src/utils/combatWindup.js'
+import { resolveSpecialEnergyCost } from '../../src/engine/specialAttackEnergy.js'
 import { TICK_DURATION } from '../../src/utils/constants.js'
 
-/** Special energy between fights is always full (each fight seeds 100, refills
- * on kill) — mirror the main game's PvE special model. */
+type Items = Record<string, { specialAttack?: Record<string, unknown> } | undefined>
+
 export const FULL_SPECIAL_ENERGY = 100
+
+/** The world does NOT use the idle game's per-fight special model (§7: seed 100,
+ * refill on kill). Out here energy is a persistent session resource that only
+ * comes back on the clock (tick.ts `SPECIAL_REGEN_PER_TICK`), so neither leaving
+ * a fight nor killing the thing refunds a spent special.
+ *
+ * The shared engine still resets its own `specialAttackEnergy` to 100 on kills,
+ * boss phase resets and double-kills, so `player.specialEnergy` is the session's
+ * truth: it is debited explicitly when a special fires (see the `specialHit`
+ * branch) and pushed back onto the engine state every tick, which is what the
+ * engine's own affordability check then reads. */
+export function pinSpecialToSession(player: TickPlayer): void {
+  const state = player.combat?.state as EngineState | undefined
+  if (state) state.specialAttackEnergy = player.specialEnergy
+}
+
+/** Energy a fired special costs the session. Mirrors the engine's own drain
+ * (src/engine/combat.js) including the Sunbearer Ring, which pins energy at
+ * full — read here rather than off the engine state, whose value is unusable on
+ * any tick the engine also refilled it. */
+function specialEnergyCost(player: TickPlayer): number {
+  const equipment = player.equipment as Record<string, { itemId?: string } | undefined>
+  if (equipment?.ring?.itemId === 'sunbearer_ring') return 0
+  const weaponId = equipment?.weapon?.itemId
+  const special = weaponId ? (itemsData as Items)[weaponId]?.specialAttack : null
+  return special ? resolveSpecialEnergyCost(special, player.specialEnergy) : 0
+}
 
 /** How many ticks before a monster's swing lands the server broadcasts the
  * single 'attack' pulse, so the client can pre-start (and sub-tick-delay) the
@@ -54,9 +82,10 @@ export function emitSpecIfChanged(player: TickPlayer, events: ZoneEvent[]): void
   events.push({ e: 'spec', energy: rounded, queued })
 }
 
-/** Combat ended (fled/died/killed) → the spec bar shows full again. */
-function resetSpecial(player: TickPlayer, result: TickResult): void {
-  player.specialEnergy = FULL_SPECIAL_ENERGY
+/** Combat ended (fled/died/killed). Energy is deliberately left where it was —
+ * it carries out of the fight and regenerates on the clock — but the echo still
+ * fires so the client drops the "armed" highlight with the fight. */
+function endCombatSpecial(player: TickPlayer, result: TickResult): void {
   emitSpecIfChanged(player, result.events)
 }
 
@@ -130,7 +159,10 @@ const RESPAWN_TICKS = 25
 // regular timer invites a farm loop that blows past the §4 GP/hr guardrail, so
 // hold the world boss for 60s between kills (item 9).
 const BOSS_RESPAWN_TICKS = 100
-const NPC_REMOVE_AFTER_DEATH_TICKS = 3
+// Long enough for the longest shipped death clip to finish before the corpse is
+// removed — Warlord Grondar's `die` runs 3.042s, so the old 3 ticks (1.8s) cut
+// every boss death off mid-collapse.
+export const NPC_REMOVE_AFTER_DEATH_TICKS = 6
 
 /** Ticks before a killed monster respawns — bosses far slower than trash. */
 export function respawnTicksFor(monsterId: string): number {
@@ -208,7 +240,9 @@ export function startCombat(player: TickPlayer, npc: NpcState, result?: TickResu
     player.pendingSpecial = false
   }
   player.combat = { npcId: npc.id, state }
-  player.specialEnergy = state.specialAttackEnergy
+  // Special energy carries INTO the fight from the session rather than seeding
+  // at full — a fight is not a refill (see pinSpecialToSession).
+  pinSpecialToSession(player)
   npc.state = 'combat'
   if (!npc.attackerId) npc.attackerId = player.charId
   if (result) emitSpecIfChanged(player, result.events)
@@ -246,7 +280,7 @@ export function stepCombat(player: TickPlayer, ctx: TickContext, result: TickRes
   if (!npc || npc.state === 'dead') {
     player.combat = null
     player.anim = 'idle'
-    resetSpecial(player, result)
+    endCombatSpecial(player, result)
     return
   }
   // Reach is per combat type: the player strikes from their weapon's range, the
@@ -264,7 +298,7 @@ export function stepCombat(player: TickPlayer, ctx: TickContext, result: TickRes
   if (!inPlayerRange && !inMonsterRange) {
     player.combat = null
     player.anim = 'idle'
-    resetSpecial(player, result)
+    endCombatSpecial(player, result)
     return
   }
 
@@ -334,7 +368,7 @@ export function stepCombat(player: TickPlayer, ctx: TickContext, result: TickRes
       player.combat = null
       if (npc.attackerId === player.charId) npc.attackerId = null
       player.anim = 'idle'
-      resetSpecial(player, result)
+      endCombatSpecial(player, result)
       return
     } else if (ev.type === 'noAmmo') {
       // Out of ammunition: the engine can't resolve a ranged swing, so end the
@@ -343,7 +377,7 @@ export function stepCombat(player: TickPlayer, ctx: TickContext, result: TickRes
       player.combat = null
       if (npc.attackerId === player.charId) npc.attackerId = null
       player.anim = 'idle'
-      resetSpecial(player, result)
+      endCombatSpecial(player, result)
       return
     } else if (ev.type === 'consumeAmmo') {
       // The engine fired a ranged shot: decrement the equipped ammo on the save's
@@ -353,6 +387,10 @@ export function stepCombat(player: TickPlayer, ctx: TickContext, result: TickRes
       result.equipmentDirty = true
     } else if (ev.type === 'specialHit') {
       if (!inPlayerRange) continue
+      // Debit the session here, not from the engine state — a special that lands
+      // the killing blow leaves the engine's energy back at 100 (its refill-on-
+      // kill), which would silently refund the cost.
+      player.specialEnergy = Math.max(0, player.specialEnergy - specialEnergyCost(player))
       // A fired special plays the hero's distinct special clip (parity with the
       // combat arena's specialClip), not the normal per-type swing.
       player.anim = 'attack_special'
@@ -386,12 +424,12 @@ export function stepCombat(player: TickPlayer, ctx: TickContext, result: TickRes
     player.combat = null
     if (npc.attackerId === player.charId) npc.attackerId = null
     result.died = true
-    resetSpecial(player, result)
+    endCombatSpecial(player, result)
     return
   }
 
-  // Mirror the engine's live special energy to the client (drains on a fired
-  // special, refills to 100 on the kill handled in killNpc).
-  player.specialEnergy = combat.state ? combat.state.specialAttackEnergy : player.specialEnergy
+  // Re-pin the engine to the session value so the next tick's affordability
+  // check reads the session's truth, not whatever the engine refilled itself to.
+  pinSpecialToSession(player)
   emitSpecIfChanged(player, result.events)
 }

@@ -59,6 +59,7 @@
 ## 7) Special Attacks
 - PvE special energy (`combatState.specialAttackEnergy`) **0–100**: starts each fight at 100, drains on use, refills on kill.
 - Manual trigger only (`⚡ Special Attack`). No automatic/offline firing. Adding one → skill **`add-content`**.
+- **The open world deliberately diverges**: energy is a persistent *session* resource there, never refilled by a fight ending or a kill — it only regenerates on the clock (`SPECIAL_REGEN_PER_TICK`, 10 per 30s, `world/server/tick.ts`). `player.specialEnergy` is the truth and is pushed onto the engine state each tick (`pinSpecialToSession`), because the shared engine still resets its own value on kills/phase resets. Don't "fix" the world back to the per-fight model above.
 
 ## 8) Drops & Data Authoring
 Full authoring checklist (items, drops, specials, collection log, monsters) → skill **`add-content`**. Non-negotiables: every referenced item must exist in `src/data/items.json`; item names **Title Case**; new boss/raid/minigame/clue unique needs its `src/data/collectionLog.json` slot + regression test in the same change.
