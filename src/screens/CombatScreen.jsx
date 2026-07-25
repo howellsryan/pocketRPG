@@ -18,7 +18,7 @@ import SkillEmblem from '../components/SkillEmblem.jsx'
 import CollapseChevron from '../components/CollapseChevron.jsx'
 import CombatMobileSelect from './CombatMobileSelect.jsx'
 import { CombatMonsterInfoSheet, CombatRaidInfoSheet, MultiStyleChip } from './CombatMobileSheets.jsx'
-import { getMonsterArt, getMonsterAttackStyles, getMonsterWeakness, getCategoryArt, getRaidArt, getMonsterLocationLabel, getStyleArt } from '../utils/combatArt.js'
+import { getMonsterArt, getMonsterAttackStyles, getMonsterWeakness, getCategoryArt, getRaidArt, getMonsterLocationLabel, getStyleArt, getMonsterAddInfo } from '../utils/combatArt.js'
 import { getSkillArt } from '../utils/skillArt.js'
 import { prayerSkill } from '../utils/prayerIcons.js'
 import { MONSTER_ICONS } from '../utils/monsterIcons.js'
@@ -274,6 +274,49 @@ function MonsterPhaseStats({ monster }) {
             )}
           </div>
         ))}
+      </div>
+    </div>
+  )
+}
+
+// Stat block for a boss's mid-fight add (e.g. the Corporeal Horror's Dread
+// Core). Both monsters are alive and targetable at once, so the info modal has
+// to show the add's numbers next to the boss's own.
+function MonsterAddStats({ monster }) {
+  const info = getMonsterAddInfo(monster)
+  if (!info) return null
+  const { add, spawnLabel, maxHit } = info
+  return (
+    <div>
+      <h4 class="text-xs font-semibold text-[var(--color-gold-dim)] uppercase tracking-wider mb-2 opacity-70">Summoned</h4>
+      <div class="bg-[var(--color-void)] rounded-lg p-3 space-y-2">
+        <div class="flex items-center justify-between">
+          <span class="text-[11px] font-semibold" style={{ color: getStyleArt(add.attackStyle).color }}>
+            {add.icon ? `${add.icon} ` : ''}{add.name}
+          </span>
+          <span class="text-[9px] text-[var(--color-parchment)] opacity-50 font-[var(--font-mono)]">Max Hit {maxHit}</span>
+        </div>
+        <div class="flex justify-between text-[10px] text-[var(--color-parchment)] opacity-80">
+          <span>Combat <span class="font-[var(--font-mono)]">{add.combatLevel}</span></span>
+          <span>HP <span class="font-[var(--font-mono)]">{add.hitpoints}</span></span>
+          <span>Attack Bonus <span class="font-[var(--font-mono)]">{add.attackBonus ?? 0}</span></span>
+        </div>
+        <div class="grid grid-cols-5 gap-1 text-[9px] text-[var(--color-parchment)] pt-1 border-t border-[var(--fm-rule)]">
+          {DEFENCE_STYLES.map(style => (
+            <div key={style} class="text-center">
+              <div class="opacity-50 capitalize">{style}</div>
+              <div class={(add.defenceBonus?.[style] ?? 0) >= 0 ? 'text-green-400' : 'text-red-400'}>
+                {(add.defenceBonus?.[style] ?? 0) >= 0 ? '+' : ''}{add.defenceBonus?.[style] ?? 0}
+              </div>
+            </div>
+          ))}
+        </div>
+        {add.weakness && (
+          <div class="text-[9px] text-[var(--color-parchment)] opacity-50 capitalize">Weak to: {add.weakness}</div>
+        )}
+        {spawnLabel && (
+          <div class="text-[9px] text-[var(--color-parchment)] opacity-50">{spawnLabel}</div>
+        )}
       </div>
     </div>
   )
@@ -2403,6 +2446,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
               </div>
             </div>
             <MonsterPhaseStats monster={selectedMonsterInfo} />
+            <MonsterAddStats monster={selectedMonsterInfo} />
             {selectedMonsterInfo.drops && selectedMonsterInfo.drops.length > 0 && (
               <div>
                 <h4 class="text-xs font-semibold text-[var(--color-gold-dim)] uppercase tracking-wider mb-2 opacity-70">Drops</h4>
@@ -3776,6 +3820,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             </div>
 
             <MonsterPhaseStats monster={selectedMonsterInfo} />
+            <MonsterAddStats monster={selectedMonsterInfo} />
 
             {/* Drops */}
             {selectedMonsterInfo.drops && selectedMonsterInfo.drops.length > 0 && (

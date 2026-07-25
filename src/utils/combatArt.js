@@ -2,7 +2,9 @@ import { meleeMaxHit, rangedMaxHit, magicMaxHit } from '../engine/formulas.js'
 import { skillEmblemMask, skillArtTreatment } from './skillArt.js'
 import raidsData from '../data/raids.json'
 import placeMapsData from '../data/placeMaps.json'
+import monstersData from '../data/monsters.json'
 import { getPlace } from '../engine/world.js'
+import { getAddSpec } from '../engine/bossAdds.js'
 
 // ──────────────────────────────────────────────────────────────────────────
 // Combat art system for the mobile combat redesign.
@@ -330,6 +332,22 @@ export function getMonsterMaxHit(monster) {
   }
   // stab / slash / crush / melee / undefined → melee
   return meleeMaxHit(monster.stats.strength || 1, monster.strengthBonus || 0)
+}
+
+// A boss's mid-fight add (`spawnsAdd`), resolved for the info surfaces. The add
+// is a second live monster the player can target, so its stat block appears
+// nowhere in the boss's own numbers and has to be surfaced alongside them.
+// Returns { add, spawnLabel } or null.
+export function getMonsterAddInfo(monster) {
+  const spec = getAddSpec(monster)
+  const add = spec && monstersData[spec.monsterId]
+  if (!add) return null
+  const range = spec.respawnAfterAttacks ?? spec.firstSpawnAfterAttacks
+  const bounds = Array.isArray(range) ? range : (Number.isFinite(Number(range)) ? [range, range] : null)
+  const spawnLabel = bounds
+    ? `Spawns every ${bounds[0] === bounds[1] ? bounds[0] : `${bounds[0]}–${bounds[1]}`} boss attacks`
+    : null
+  return { add, spawnLabel, maxHit: add.maxHit ?? getMonsterMaxHit(add) }
 }
 
 // Convenience: build the masked-emblem mask + metallic treatment in one call,
