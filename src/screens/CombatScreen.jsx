@@ -1293,6 +1293,14 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   // always goes straight to the solo path.
   const offersCoop = (monster) => isCoopBossId(monster.id) && !isDemo
 
+  // Every picker tap goes through here so mobile and desktop behave the same —
+  // the mobile picker is the primary layout, so wiring only one of them is how
+  // the prompt goes missing for most players.
+  const pickMonsterForFight = (monster) => {
+    if (offersCoop(monster)) setCoopChoice(monster)
+    else startFight(monster)
+  }
+
   // Live headcount for the prompt, so "Fight together" says whether anyone is
   // actually in there. Best-effort — the prompt still works without it.
   useEffect(() => {
@@ -2158,7 +2166,8 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             searchValue={monsterSearch}
             onSearchChange={handleMonsterSearchChange}
             onToggleSection={toggleSection}
-            onFight={startFight}
+            onFight={pickMonsterForFight}
+            offersCoop={offersCoop}
             onMonsterInfo={setSelectedMonsterInfo}
             onStartRaid={startRaid}
             onRaidInfo={setSelectedRaidInfo}
@@ -2280,7 +2289,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                     return (
                     <div key={monster.id} class="flex gap-2 items-center" title={isLocked ? (bossReq.locked ? bossReq.reason : '') : ''}>
                       <button
-                        onClick={() => !isLocked && (offersCoop(monster) ? setCoopChoice(monster) : startFight(monster))}
+                        onClick={() => !isLocked && pickMonsterForFight(monster)}
                         disabled={isLocked}
                         title={isLocked && bossReq.locked ? bossReq.reason : ''}
                         class={`flex-1 flex items-center justify-between p-3 rounded-xl border transition-colors
@@ -2634,6 +2643,57 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           </div>
         </Modal>
       )}
+
+      {/* Solo-or-group prompt. Lives in the PICKER block: this is the only
+          render path where a boss is chosen, and both layouts route into it. */}
+      {coopChoice && (
+        <Modal onClose={() => setCoopChoice(null)}>
+          <div class="flex items-center gap-2 mb-1">
+            <SkillEmblem iconKey={getMonsterArt(coopChoice).icon} accent={getMonsterArt(coopChoice).accent} size={28} glow={0} />
+            <h3 class="font-[var(--font-display)] text-base font-bold text-[var(--color-gold)]">{coopChoice.name}</h3>
+          </div>
+          <p class="text-[11px] text-[var(--color-parchment)] opacity-70 mb-4">How do you want to fight this?</p>
+
+          <div class="space-y-2">
+            <button
+              onClick={() => { const m = coopChoice; setCoopChoice(null); startFight(m) }}
+              class="w-full text-left p-3 rounded-xl border border-[var(--color-void-border)] bg-[var(--color-void-light)] active:bg-[var(--color-void-lighter)]"
+            >
+              <div class="text-sm font-semibold text-[var(--color-parchment)]">Fight alone</div>
+              <div class="text-[10px] text-[var(--color-parchment)] opacity-60 mt-0.5">
+                The whole drop table is yours. Kill count and collection log as normal.
+              </div>
+            </button>
+
+            <button
+              onClick={() => { const m = coopChoice; setCoopChoice(null); startCoopFight(m) }}
+              disabled={coopJoining === coopChoice.id}
+              class="w-full text-left p-3 rounded-xl border border-[var(--color-gold-dim)] bg-[var(--color-void-light)] active:bg-[var(--color-void-lighter)] disabled:opacity-40"
+            >
+              <div class="text-sm font-semibold text-[var(--color-gold)]">
+                {coopJoining === coopChoice.id ? 'Joining\u2026' : 'Fight together'}
+              </div>
+              <div class="text-[10px] text-[var(--color-parchment)] opacity-60 mt-0.5">
+                Share one boss with other players. The drop goes to whoever deals the most damage \u2014 everyone keeps their own XP.
+              </div>
+              <div class="text-[10px] text-[var(--color-gold)] opacity-80 mt-1">
+                {coopOpenSessions === null
+                  ? 'Checking who is in there\u2026'
+                  : (() => {
+                    const fighters = coopOpenSessions.reduce((sum, s) => sum + (s.memberCount || 0), 0)
+                    if (fighters === 0) return 'Nobody in there yet \u2014 you would start a new fight.'
+                    return `${fighters} ${fighters === 1 ? 'player is' : 'players are'} fighting right now.`
+                  })()}
+              </div>
+            </button>
+          </div>
+
+          <p class="text-[10px] text-[var(--color-parchment)] opacity-50 mt-3">
+            While you are in a group fight the server runs your character, so the rest of the game is paused until you leave.
+          </p>
+        </Modal>
+      )}
+
       </>
     )
   }
@@ -3786,54 +3846,6 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       )}
 
       {/* Monster Info Modal */}
-      {coopChoice && (
-        <Modal onClose={() => setCoopChoice(null)}>
-          <div class="flex items-center gap-2 mb-1">
-            <SkillEmblem iconKey={getMonsterArt(coopChoice).icon} accent={getMonsterArt(coopChoice).accent} size={28} glow={0} />
-            <h3 class="font-[var(--font-display)] text-base font-bold text-[var(--color-gold)]">{coopChoice.name}</h3>
-          </div>
-          <p class="text-[11px] text-[var(--color-parchment)] opacity-70 mb-4">How do you want to fight this?</p>
-
-          <div class="space-y-2">
-            <button
-              onClick={() => { const m = coopChoice; setCoopChoice(null); startFight(m) }}
-              class="w-full text-left p-3 rounded-xl border border-[var(--color-void-border)] bg-[var(--color-void-light)] active:bg-[var(--color-void-lighter)]"
-            >
-              <div class="text-sm font-semibold text-[var(--color-parchment)]">Fight alone</div>
-              <div class="text-[10px] text-[var(--color-parchment)] opacity-60 mt-0.5">
-                The whole drop table is yours. Kill count and collection log as normal.
-              </div>
-            </button>
-
-            <button
-              onClick={() => { const m = coopChoice; setCoopChoice(null); startCoopFight(m) }}
-              disabled={coopJoining === coopChoice.id}
-              class="w-full text-left p-3 rounded-xl border border-[var(--color-gold-dim)] bg-[var(--color-void-light)] active:bg-[var(--color-void-lighter)] disabled:opacity-40"
-            >
-              <div class="text-sm font-semibold text-[var(--color-gold)]">
-                {coopJoining === coopChoice.id ? 'Joining…' : 'Fight together'}
-              </div>
-              <div class="text-[10px] text-[var(--color-parchment)] opacity-60 mt-0.5">
-                Share one boss with other players. The drop goes to whoever deals the most damage — everyone keeps their own XP.
-              </div>
-              <div class="text-[10px] text-[var(--color-gold)] opacity-80 mt-1">
-                {coopOpenSessions === null
-                  ? 'Checking who is in there…'
-                  : (() => {
-                    const fighters = coopOpenSessions.reduce((sum, s) => sum + (s.memberCount || 0), 0)
-                    if (fighters === 0) return 'Nobody in there yet — you would start a new fight.'
-                    return `${fighters} ${fighters === 1 ? 'player is' : 'players are'} fighting right now.`
-                  })()}
-              </div>
-            </button>
-          </div>
-
-          <p class="text-[10px] text-[var(--color-parchment)] opacity-50 mt-3">
-            While you are in a group fight the server runs your character, so the rest of the game is paused until you leave.
-          </p>
-        </Modal>
-      )}
-
       {selectedMonsterInfo && (
         <Modal onClose={() => setSelectedMonsterInfo(null)}>
           <div class="flex items-center justify-between mb-3">

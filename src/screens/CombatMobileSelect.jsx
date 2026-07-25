@@ -41,6 +41,7 @@ export default function CombatMobileSelect({
   onSearchChange,
   onToggleSection,
   onFight,
+  offersCoop,
   onMonsterInfo,
   onStartRaid,
   onRaidInfo,
@@ -172,6 +173,7 @@ export default function CombatMobileSelect({
                           <div class="cb-mon__name">
                             {monster.name}
                             {isOnTask && <span class="cb-mon__tasktag">TASK</span>}
+                            {!isLocked && offersCoop?.(monster) && <span class="cb-mon__grouptag">GROUP</span>}
                           </div>
                           <div class="cb-mon__stats">
                             <span>HP {monster.hitpoints}</span><i /><span>Att {monster.stats.attack}</span><i /><span>Def {monster.stats.defence}</span>
