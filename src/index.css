@@ -1108,6 +1108,8 @@ html, body, #app {
 .cb-fight__chips { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
 .cb-fight__cb { flex-shrink: 0; display: inline-flex; align-items: center; gap: 5px; font-family: var(--font-mono); font-weight: 700; font-size: 13px; color: #e0564b; background: rgba(224,86,75,0.08); border: 1px solid rgba(224,86,75,0.3); border-radius: 999px; padding: 8px 12px; cursor: pointer; min-height: 36px; }
 .cb-fight__cb img, .cb-fight__cb svg { width: 13px; height: 13px; }
+.cb-fight__sub { font-size: 11px; font-weight: 700; color: var(--color-parchment); opacity: 0.55; margin-top: 3px; }
+span.cb-fight__cb { cursor: default; }
 
 .cb-hpblock { margin-bottom: 11px; }
 .cb-hplabel { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-bottom: 6px; font-size: 11px; font-weight: 700; color: var(--color-parchment); opacity: 0.62; letter-spacing: 0.02em; }
@@ -1137,6 +1139,7 @@ html, body, #app {
 .cb-kstat__v { font-family: var(--font-mono); font-weight: 700; font-size: 19px; color: var(--color-gold-light); }
 
 .cb-actions { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 9px; }
+.cb-actions--two { grid-template-columns: 1fr 1fr; }
 .cb-act {
   display: flex; align-items: center; justify-content: center; gap: 7px; min-height: 48px; padding: 13px 6px;
   border-radius: var(--fm-r-sm); cursor: pointer; font-family: var(--fm-serif); font-weight: 700; font-size: 14px;

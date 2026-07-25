@@ -54,6 +54,7 @@ import { SCREENS, formatDropChance } from '../utils/constants.js'
 import { hasEpicLootDrop, getItemUnitValue, getLootTotalValue } from '../utils/itemValue.js'
 import { splatsFromCombatEvents, HIT_SPLAT_DURATION_MS } from '../utils/hitSplats.js'
 import { HitSplatLayer } from '../components/HitSplat.jsx'
+import { CombatFightHead, CombatHPBlock, CombatPrayerBlock } from '../components/CombatHud.jsx'
 import CombatArena3D from '../components/CombatArena3D.jsx'
 import { getCreatureSpec } from '../3d/creatures.js'
 import { getArenaBiomeSpec } from '../3d/biomeRegistry.js'
@@ -3256,21 +3257,15 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           return (
             <>
               {/* Fight header */}
-              <div class="cb-fight__head">
-                <div class="cb-fight__id">
-                  <SkillEmblem iconKey={mArt.icon} accent={mArt.accent} size={34} glow={0} />
-                  <div class="min-w-0">
-                    <div class="cb-fight__name" style={{ color: getStyleArt(form ? form.attackStyle : m.attackStyle).color }}>{m.name}</div>
-                  </div>
-                </div>
-                <span class="flex items-center gap-1.5 flex-shrink-0">
-                  {arenaChip}
-                  <button class="cb-fight__cb" onClick={() => setSelectedMonsterInfo(m)} aria-label={`${m.name} info`}>
-                    CB {m.combatLevel}
-                    <GameIcon iconKey="info" color="#e0564b" size={13} />
-                  </button>
-                </span>
-              </div>
+              <CombatFightHead
+                icon={mArt.icon}
+                accent={mArt.accent}
+                name={m.name}
+                nameColor={getStyleArt(form ? form.attackStyle : m.attackStyle).color}
+                combatLevel={m.combatLevel}
+                onInfo={() => setSelectedMonsterInfo(m)}
+                aside={arenaChip}
+              />
 
               {/* Raid progress */}
               {combat.raid && (
@@ -3297,31 +3292,22 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
               ) : (
                 <>
                   {/* Monster HP */}
-                  <div class="cb-hpblock">
-                    <div class="cb-hplabel">
-                      <span>Enemy Hitpoints</span>
-                      <span class="cb-hplabel__v">{Math.max(0, Math.round(m.currentHP))}/{m.hitpoints}</span>
-                    </div>
-                    <div class="relative">
-                      <HPBar current={Math.max(0, m.currentHP)} max={m.hitpoints} size="large" />
-                      <HitSplatLayer splats={monsterSplats} />
-                    </div>
-                  </div>
+                  <CombatHPBlock
+                    label="Enemy Hitpoints"
+                    current={m.currentHP}
+                    max={m.hitpoints}
+                    splats={monsterSplats}
+                  />
 
                   {/* Player HP */}
-                  <div class="cb-hpblock">
-                    <div class="cb-hplabel">
-                      <span>Your Hitpoints</span>
-                      <span class="cb-hplabel__right">
-                        <ActivePotionBadges activePotions={combat?.activePotions} itemsData={itemsData} />
-                        <span class="cb-hplabel__v" style={{ color: '#7ce88a' }}>{Math.max(0, Math.round(currentHP))}/{getMaxHP()}</span>
-                      </span>
-                    </div>
-                    <div class="relative">
-                      <HPBar current={currentHP} max={getMaxHP()} size="large" />
-                      <HitSplatLayer splats={playerSplats} />
-                    </div>
-                  </div>
+                  <CombatHPBlock
+                    label="Your Hitpoints"
+                    current={currentHP}
+                    max={getMaxHP()}
+                    splats={playerSplats}
+                    valueColor="#7ce88a"
+                    right={<ActivePotionBadges activePotions={combat?.activePotions} itemsData={itemsData} />}
+                  />
                 </>
               )}
 
@@ -3329,18 +3315,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
 
               {/* Prayer pool */}
               {typeof combat?.maxPrayerPoints === 'number' && (
-                <div class="cb-hpblock">
-                  <div class="cb-hplabel">
-                    <span>🙏 Prayer</span>
-                    <span class="cb-hplabel__v" style={{ color: '#7ec8ff' }}>{Math.ceil(combat.prayerPoints || 0)}/{combat.maxPrayerPoints}</span>
-                  </div>
-                  <div class="h-2 rounded-full bg-[rgba(255,255,255,0.07)] overflow-hidden">
-                    <div
-                      class="h-full rounded-full bg-gradient-to-r from-[#3b82f6] to-[#7ec8ff]"
-                      style={{ width: `${Math.max(0, Math.min(100, ((combat.prayerPoints || 0) / combat.maxPrayerPoints) * 100))}%` }}
-                    />
-                  </div>
-                </div>
+                <CombatPrayerBlock current={combat.prayerPoints} max={combat.maxPrayerPoints} />
               )}
 
               {/* Slayer task indicator */}

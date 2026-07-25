@@ -151,6 +151,7 @@ const sourceFiles = [
   'components/GameIcon.js',
   'components/CollapseChevron.js',
   'components/CombatQuickActions.js',
+  'components/CombatHud.js',
   'components/SpellSelectGrid.js',
   'components/SkillEmblem.js',
   'components/SkillIcon.js',

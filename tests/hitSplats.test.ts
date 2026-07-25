@@ -4,7 +4,7 @@
 // the player takes shows over the player's; misses are 0-value splats.
 
 import { describe, it, expect } from 'vitest'
-import { splatsFromCombatEvents, splatsFromPvpEvents, HIT_SPLAT_DURATION_MS } from '../src/utils/hitSplats.js'
+import { splatsFromCombatEvents, splatsFromPvpEvents, splatsFromCoopEvents, HIT_SPLAT_DURATION_MS } from '../src/utils/hitSplats.js'
 
 describe('splatsFromCombatEvents', () => {
   it('maps playerHit damage to a monster splat', () => {
@@ -134,5 +134,81 @@ describe('splatsFromPvpEvents', () => {
     ], 1)
     expect(self).toHaveLength(0)
     expect(opp).toHaveLength(0)
+  })
+})
+
+describe('splatsFromCoopEvents', () => {
+  it('splats every member\'s damage on the shared boss bar', () => {
+    const { boss } = splatsFromCoopEvents([
+      { type: 'playerHit', characterId: 1, damage: 12 },
+      { type: 'playerHit', characterId: 2, damage: 30 },
+    ], 1)
+    expect(boss.map((s) => s.value)).toEqual([12, 30])
+  })
+
+  it('only splats incoming damage on the member the boss actually swung at', () => {
+    const events = [
+      { type: 'monsterHit', characterId: 1, damage: 25, isTarget: true },
+      { type: 'monsterHit', characterId: 2, damage: 25, isTarget: true },
+    ]
+    expect(splatsFromCoopEvents(events, 1).player.map((s) => s.value)).toEqual([25])
+    expect(splatsFromCoopEvents(events, 2).player.map((s) => s.value)).toEqual([25])
+    expect(splatsFromCoopEvents(events, 3).player).toHaveLength(0)
+  })
+
+  it('ignores an incoming hit tagged for a member who was not the target', () => {
+    const { player } = splatsFromCoopEvents([
+      { type: 'monsterHit', characterId: 1, damage: 25, isTarget: false },
+    ], 1)
+    expect(player).toHaveLength(0)
+  })
+
+  it('routes add damage away from the boss bar', () => {
+    const { boss, add } = splatsFromCoopEvents([
+      { type: 'playerHit', characterId: 1, damage: 9, toAdd: true },
+      { type: 'playerHit', characterId: 2, damage: 4 },
+    ], 1)
+    expect(add.map((s) => s.value)).toEqual([9])
+    expect(boss.map((s) => s.value)).toEqual([4])
+  })
+
+  it('splats each hit of a special separately', () => {
+    const { boss } = splatsFromCoopEvents([
+      { type: 'specialHit', characterId: 2, hits: [11, 0, 7] },
+    ], 1)
+    expect(boss.map((s) => s.value)).toEqual([11, 0, 7])
+  })
+
+  it('shows a miss against you as a 0-value splat', () => {
+    const { player } = splatsFromCoopEvents([
+      { type: 'monsterMiss', characterId: 1, isTarget: true },
+    ], 1)
+    expect(player.map((s) => s.value)).toEqual([0])
+  })
+
+  it('splats bolt-proc recoil on the shooter regardless of who is targeted', () => {
+    const { player } = splatsFromCoopEvents([
+      { type: 'boltProc', characterId: 1, selfDamage: 6, isTarget: false },
+    ], 1)
+    expect(player.map((s) => s.value)).toEqual([6])
+  })
+
+  it('matches character ids across string/number forms', () => {
+    const { player } = splatsFromCoopEvents([
+      { type: 'monsterHit', characterId: '7', damage: 3, isTarget: true },
+    ], 7)
+    expect(player.map((s) => s.value)).toEqual([3])
+  })
+
+  it('ignores non-combat events', () => {
+    const { boss, add, player } = splatsFromCoopEvents([
+      { type: 'eat', characterId: 1, itemId: 'shark', heal: 20 },
+      { type: 'memberDeath', characterId: 1 },
+      { type: 'bossRespawned', bossId: 'warlord_grondar' },
+      null,
+    ], 1)
+    expect(boss).toHaveLength(0)
+    expect(add).toHaveLength(0)
+    expect(player).toHaveLength(0)
   })
 })
