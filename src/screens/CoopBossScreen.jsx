@@ -12,6 +12,7 @@ import { CombatFightHead, CombatHPBlock, CombatPrayerBlock } from '../components
 import { useGame } from '../state/gameState.jsx'
 import { coopApi } from '../cloud/coop.js'
 import { splatsFromCoopEvents, HIT_SPLAT_DURATION_MS } from '../utils/hitSplats.js'
+import { describeCoopEquipRefusal } from '../engine/coopBossEngine.js'
 import { getMonsterArt, getStyleArt } from '../utils/combatArt.js'
 import { getLevelFromXP } from '../engine/experience.js'
 import { canAffordSpecialAttack } from '../engine/specialAttackEnergy.js'
@@ -78,6 +79,13 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, addToas
         pushSplats(setBossSplats, tickSplats.boss)
         pushSplats(setAddSplats, tickSplats.add)
         pushSplats(setPlayerSplats, tickSplats.player)
+        // A refused equip is resolved a tick later on the server, so without
+        // this the tap just looks ignored.
+        for (const ev of res.events) {
+          if (ev.type === 'equipRefused' && Number(ev.characterId) === Number(characterId)) {
+            addToast?.(describeCoopEquipRefusal(ev), 'error')
+          }
+        }
       }
       // Read names off the response, not the render closure — this callback is
       // captured once for the life of the session, so anything from render is
@@ -246,7 +254,7 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, addToas
             itemsData={itemsData}
             onEat={(entry) => send({ type: 'eat', inventorySlot: entry.slotIdx })}
             onPotion={(entry) => send({ type: 'drink_potion', inventorySlot: entry.slotIdx })}
-            onEquip={() => addToast?.('Gear cannot be swapped during a group boss fight.', 'info')}
+            onEquip={(entry) => send({ type: 'equip', inventorySlot: entry.slotIdx })}
             isPotionActive={(item) => Object.keys(combatState?.activePotions || {}).some(pid => itemsData[pid]?.effect === item.effect)}
             quickPrayers={quickPrayers}
             prayersData={prayersData}

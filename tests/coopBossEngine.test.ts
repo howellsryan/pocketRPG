@@ -12,6 +12,7 @@ import {
   removeCoopMember,
   reselectTarget,
   topDamageCharacterId,
+  describeCoopEquipRefusal,
 } from '../src/engine/coopBossEngine.js'
 import itemsData from '../src/data/items.json'
 import monstersData from '../src/data/monsters.json'
@@ -427,5 +428,134 @@ describe('coopBossEngine — XP', () => {
         expect(member.xpGained.hitpoints).toBeGreaterThan(0)
       }
     }
+  })
+})
+
+describe('equip intent', () => {
+  const equipIntent = (characterId: number, inventorySlot: number) => ([
+    { tick_number: 1, characterId, characterSeq: 0, action: { type: 'equip', inventorySlot } },
+  ])
+
+  function stateWithInventory(inventory: unknown[], statOverrides: Record<string, unknown> = {}, quests: unknown = []) {
+    const payload = savePayload({ inventory, completedQuests: quests })
+    if (Object.keys(statOverrides).length > 0) Object.assign(payload.stats as object, statOverrides)
+    let state = createCoopBossState(BOSS, monstersData)!
+    state = addCoopMember(state, createCoopMember({ characterId: 1, username: 'p1', savePayload: payload, itemsData }))
+    return state
+  }
+
+  it('moves the item from the pack onto the character', () => {
+    const state = stateWithInventory([{ itemId: 'nether_demon_whip', quantity: 1 }, null, null])
+    const { stateNext } = processCoopTick(state, equipIntent(1, 0), deps, Date.now())
+    const me = stateNext.members['1']
+    expect(me.equipment.weapon.itemId).toBe('nether_demon_whip')
+    // The spear that was worn goes back into the freed slot, not into the void.
+    expect(me.inventory.filter((s: any) => s?.itemId === 'krylth_spear')).toHaveLength(1)
+    expect(me.inventory.filter((s: any) => s?.itemId === 'nether_demon_whip')).toHaveLength(0)
+  })
+
+  it('refuses gear the member has no level for, and says why', () => {
+    const state = stateWithInventory(
+      [{ itemId: 'nether_demon_whip', quantity: 1 }, null, null],
+      { attack: { xp: 0 } },
+    )
+    const { stateNext, events } = processCoopTick(state, equipIntent(1, 0), deps, Date.now())
+    expect(stateNext.members['1'].equipment.weapon.itemId).toBe('krylth_spear')
+    const refusal = events.find((e: any) => e.type === 'equipRefused')
+    expect(refusal).toMatchObject({ reason: 'skill', skill: 'attack', required: 70, characterId: 1 })
+  })
+
+  it('refuses quest-locked gear the member has not unlocked', () => {
+    const state = stateWithInventory([{ itemId: 'dragon_dagger', quantity: 1 }, null, null])
+    const { stateNext, events } = processCoopTick(state, equipIntent(1, 0), deps, Date.now())
+    expect(stateNext.members['1'].equipment.weapon.itemId).toBe('krylth_spear')
+    expect(events.find((e: any) => e.type === 'equipRefused')).toMatchObject({ reason: 'quest', questUnlock: 'forsaken_city' })
+  })
+
+  it('allows quest-locked gear once the quest is on the member', () => {
+    const state = stateWithInventory([{ itemId: 'dragon_dagger', quantity: 1 }, null, null], {}, ['forsaken_city'])
+    const { stateNext } = processCoopTick(state, equipIntent(1, 0), deps, Date.now())
+    expect(stateNext.members['1'].equipment.weapon.itemId).toBe('dragon_dagger')
+  })
+
+  it('fails closed for a member whose session predates the level map', () => {
+    const state = stateWithInventory([{ itemId: 'nether_demon_whip', quantity: 1 }, null, null])
+    delete state.members['1'].levels
+    const { stateNext, events } = processCoopTick(state, equipIntent(1, 0), deps, Date.now())
+    expect(stateNext.members['1'].equipment.weapon.itemId).toBe('krylth_spear')
+    expect(events.find((e: any) => e.type === 'equipRefused')).toMatchObject({ reason: 'skill' })
+  })
+
+  it('aborts the swap rather than dropping gear it cannot put down', () => {
+    // A two-hander displaces both weapon and shield but frees only one slot.
+    let state = createCoopBossState(BOSS, monstersData)!
+    const payload = savePayload({
+      equipment: {
+        weapon: { itemId: 'krylth_spear', quantity: 1 },
+        shield: { itemId: 'bronze_kiteshield', quantity: 1 },
+      },
+      inventory: [{ itemId: 'shortbow', quantity: 1 }],
+    })
+    state = addCoopMember(state, createCoopMember({ characterId: 1, username: 'p1', savePayload: payload, itemsData }))
+    const { stateNext, events } = processCoopTick(state, equipIntent(1, 0), deps, Date.now())
+    const me = stateNext.members['1']
+    expect(me.equipment.weapon.itemId).toBe('krylth_spear')
+    expect(me.equipment.shield.itemId).toBe('bronze_kiteshield')
+    expect(me.inventory[0]).toMatchObject({ itemId: 'shortbow' })
+    expect(events.find((e: any) => e.type === 'equipRefused')).toMatchObject({ reason: 'inventory_full' })
+  })
+
+  it('equips a whole ammo stack rather than one arrow', () => {
+    const state = stateWithInventory([{ itemId: 'bronze_arrow', quantity: 500 }, null, null])
+    const { stateNext } = processCoopTick(state, equipIntent(1, 0), deps, Date.now())
+    const me = stateNext.members['1']
+    expect(me.equipment.ammo).toMatchObject({ itemId: 'bronze_arrow', quantity: 500 })
+    expect(me.inventory[0]).toBeNull()
+  })
+
+  it('re-derives the combat type on a weapon swap so ranged gear ranges', () => {
+    const state = stateWithInventory([{ itemId: 'shortbow', quantity: 1 }, null, null])
+    expect(state.members['1'].combat.combatType).toBe('melee')
+    const { stateNext } = processCoopTick(state, equipIntent(1, 0), deps, Date.now())
+    expect(stateNext.members['1'].combat.combatType).toBe('ranged')
+  })
+
+  it('ignores an equip pointed at an empty or non-equippable slot', () => {
+    const state = stateWithInventory([{ itemId: 'shark', quantity: 5 }, null, null])
+    const before = JSON.stringify(state.members['1'].equipment)
+    const empty = processCoopTick(state, equipIntent(1, 1), deps, Date.now())
+    expect(JSON.stringify(empty.stateNext.members['1'].equipment)).toBe(before)
+    const food = processCoopTick(state, equipIntent(1, 0), deps, Date.now())
+    expect(JSON.stringify(food.stateNext.members['1'].equipment)).toBe(before)
+    expect(food.stateNext.members['1'].inventory[0]).toMatchObject({ itemId: 'shark', quantity: 5 })
+  })
+
+  it('only equips for the member who sent the intent', () => {
+    let state = joinedState([1, 2])
+    state.members['1'].inventory = [{ itemId: 'nether_demon_whip', quantity: 1 }, null, null]
+    const { stateNext } = processCoopTick(state, equipIntent(1, 0), deps, Date.now())
+    expect(stateNext.members['1'].equipment.weapon.itemId).toBe('nether_demon_whip')
+    expect(stateNext.members['2'].equipment.weapon.itemId).toBe('krylth_spear')
+  })
+})
+
+describe('describeCoopEquipRefusal', () => {
+  it('names the skill and level a piece of gear needs', () => {
+    expect(describeCoopEquipRefusal({ reason: 'skill', skill: 'attack', required: 70 }))
+      .toBe('Need attack level 70 to equip')
+  })
+
+  it('reads the quest id back as words', () => {
+    expect(describeCoopEquipRefusal({ reason: 'quest', questUnlock: 'forsaken_city' }))
+      .toBe('Complete quest to equip: forsaken city')
+  })
+
+  it('explains a full pack', () => {
+    expect(describeCoopEquipRefusal({ reason: 'inventory_full' })).toMatch(/Inventory full/)
+  })
+
+  it('still says something for a reason it does not know', () => {
+    expect(describeCoopEquipRefusal({ reason: 'wat' })).toBe('Could not equip that')
+    expect(describeCoopEquipRefusal(undefined)).toBe('Could not equip that')
   })
 })

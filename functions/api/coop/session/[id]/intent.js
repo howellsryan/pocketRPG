@@ -27,6 +27,7 @@ export function validateCoopAction(action) {
       const slot = prayersData[action.prayerId]?.bonusType === 'protection' ? 'protection' : 'combat'
       return { action: { type: 'toggle_prayer', prayerId: action.prayerId, slot } }
     }
+    case 'equip':
     case 'eat':
     case 'drink_potion': {
       const slot = action.inventorySlot

@@ -19,7 +19,7 @@
 import { createCombatState, processCombatTick } from './combat.js'
 import { getLevelFromXP } from './experience.js'
 import { isConsumableFood, isConsumablePotion, isComboConsumable, applyConsumableEffect } from './consumables.js'
-import { getCombatType } from './equipment.js'
+import { getCombatType, equipItem, placeUnequippedItems } from './equipment.js'
 
 export const COOP_MAX_MEMBERS = 8
 export const COOP_TICK_MS = 600
@@ -74,6 +74,53 @@ export function combatStatLevels(savePayload) {
   const out = {}
   for (const key of COMBAT_STAT_KEYS) out[key] = levelFrom(stats[key])
   return out
+}
+
+/** Every skill as a level, not just the combat ones: gear gates on Slayer,
+ * Dungeoneering and the rest too, and the session state is the only thing the
+ * tick has to check an equip against. */
+export function allStatLevels(savePayload) {
+  const stats = savePayload?.stats || {}
+  const out = {}
+  for (const key of Object.keys(stats)) out[key] = levelFrom(stats[key])
+  return out
+}
+
+/** Player-facing reason an equip was refused. Lives here so the screen never
+ * has to leave a failed tap silent. */
+export function describeCoopEquipRefusal(event) {
+  if (event?.reason === 'quest') return `Complete quest to equip: ${String(event.questUnlock || '').replace(/_/g, ' ')}`
+  if (event?.reason === 'skill') return `Need ${event.skill} level ${event.required} to equip`
+  if (event?.reason === 'inventory_full') return 'Inventory full — no room for the gear you are wearing'
+  return 'Could not equip that'
+}
+
+function questIdList(completedQuests) {
+  if (Array.isArray(completedQuests)) return completedQuests.filter((q) => typeof q === 'string')
+  if (completedQuests && typeof completedQuests === 'object') {
+    return Object.keys(completedQuests).filter((q) => completedQuests[q])
+  }
+  return []
+}
+
+/** Mirrors checkEquipRequirements, but against the level map the session
+ * carries rather than an xp-keyed stats blob. Fails CLOSED: a member whose
+ * session predates `levels` cannot equip anything gated, rather than being
+ * waved through. */
+export function coopEquipRequirementFailure(item, member) {
+  const questUnlock = item?.questUnlock
+  if (questUnlock && !(member?.completedQuests || []).includes(questUnlock)) {
+    return { reason: 'quest', questUnlock }
+  }
+  const requirements = item?.requirements
+  if (requirements) {
+    const levels = member?.levels || {}
+    for (const [skill, required] of Object.entries(requirements)) {
+      const have = Number(levels[skill]) || 1
+      if (have < required) return { reason: 'skill', skill, required, current: have }
+    }
+  }
+  return null
 }
 
 function cloneCoopInventory(inventory) {
@@ -154,6 +201,8 @@ export function createCoopMember({ characterId, username, savePayload, itemsData
     hp,
     maxHP,
     stats,
+    levels: allStatLevels(savePayload),
+    completedQuests: questIdList(savePayload?.completedQuests),
     equipment,
     inventory,
     status: 'alive',
@@ -329,6 +378,46 @@ function applyCoopIntent(state, member, action, itemsData, spellsData, events) {
       const turningOn = member.combat[key] !== action.prayerId
       if (turningOn && (member.combat.prayerPoints || 0) <= 0) return
       member.combat[key] = turningOn ? action.prayerId : null
+      return
+    }
+    case 'equip': {
+      const i = action.inventorySlot
+      if (typeof i !== 'number' || i < 0 || i >= member.inventory.length) return
+      const slot = member.inventory[i]
+      const item = slot ? itemsData?.[slot.itemId] : null
+      if (!slot || !item?.slot) return
+      const failure = coopEquipRequirementFailure(item, member)
+      if (failure) {
+        events.push({ type: 'equipRefused', characterId: member.characterId, itemId: slot.itemId, ...failure })
+        return
+      }
+      const nextEquipment = { ...member.equipment }
+      const result = equipItem(nextEquipment, item, itemsData, slot)
+      if (!result?.equipped) return
+      const nextInventory = [...member.inventory]
+      // Ammo equips as a whole stack (equipItem carries the quantity across), so
+      // the source slot clears; everything else moves a single unit.
+      if (item.slot === 'ammo' || (slot.quantity || 1) <= 1) {
+        nextInventory[i] = null
+      } else {
+        nextInventory[i] = { ...slot, quantity: slot.quantity - 1 }
+      }
+      // A two-hander displaces a weapon AND a shield but only frees one slot;
+      // rather than silently dropping the piece that doesn't fit, abort.
+      const placed = placeUnequippedItems(result.unequipped, nextInventory, itemsData)
+      if (!placed.ok) {
+        events.push({ type: 'equipRefused', characterId: member.characterId, itemId: slot.itemId, reason: 'inventory_full' })
+        return
+      }
+      member.equipment = nextEquipment
+      member.inventory = placed.inventory
+      if (item.slot === 'weapon') {
+        member.combat.combatType = getCombatType(member.equipment, itemsData)
+        // A weapon swap re-arms the attack timer, so switching gear mid-fight
+        // costs a beat instead of landing a free instant hit.
+        member.combat.playerAttackTimer = Math.max(member.combat.playerAttackTimer, 1)
+      }
+      events.push({ type: 'equip', characterId: member.characterId, itemId: slot.itemId, slot: item.slot })
       return
     }
     case 'eat': {

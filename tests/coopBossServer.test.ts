@@ -384,6 +384,13 @@ describe('coop intent validation', () => {
     expect(validateCoopAction({ type: 'queue_special' }).action).toEqual({ type: 'queue_special' })
     expect(validateCoopAction({ type: 'eat', inventorySlot: 3 }).action).toEqual({ type: 'eat', inventorySlot: 3 })
     expect(validateCoopAction({ type: 'drink_potion', inventorySlot: 0 }).action).toEqual({ type: 'drink_potion', inventorySlot: 0 })
+    expect(validateCoopAction({ type: 'equip', inventorySlot: 5 }).action).toEqual({ type: 'equip', inventorySlot: 5 })
+  })
+
+  it('bounds an equip slot to the pack, like the other slot actions', () => {
+    expect(validateCoopAction({ type: 'equip', inventorySlot: 28 }).error).toBe('invalid_inventory_slot')
+    expect(validateCoopAction({ type: 'equip', inventorySlot: -1 }).error).toBe('invalid_inventory_slot')
+    expect(validateCoopAction({ type: 'equip' }).error).toBe('invalid_inventory_slot')
   })
 
   it('rejects an unknown action type', () => {
