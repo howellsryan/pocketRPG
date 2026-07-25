@@ -10,6 +10,7 @@ import { buildSavePayloadFromSnapshot, applySavePayload } from '../db/saveload.j
 import { LOCAL_WRITE_MARKER_KEY } from '../db/stores.js'
 import { withTimeout } from '../utils/helpers.js'
 import { CRITICAL_SAVE_COALESCE_MS, CRITICAL_SAVE_REASONS, normaliseCriticalSaveReason } from './criticalSavePolicy.js'
+import { classifySaveError, activeMatchIdFromSaveError } from './saveErrors.js'
 
 const PUSH_DEBOUNCE_MS = 120_000
 // Engagement-aware idle throttle. The periodic autosave + activity heartbeat
@@ -198,26 +199,16 @@ async function performPush() {
     console.log('[PocketRPG] Cloud save pushed, size:', json.length)
     return true
   } catch (err) {
-    // While a PvP match is active, /api/save intentionally returns:
-    //   409 { error: 'character_in_active_match' }
-    // Keep the latest snapshot queued and retry shortly after so we don't
-    // spam warnings every minute and we resume syncing automatically on exit.
-    // This is an expected, transient lock — it must NOT count toward the
-    // failure streak that escalates to the blocking modal.
-    if (err?.status === 409 && (err?.body?.error === 'character_in_active_match' || err?.message === 'character_in_active_match')) {
-      emitSaveSyncActiveMatchConflict(err?.body?.match_id)
-      pendingSnapshot = snap
-      markUnsynced()
-      schedulePush(snap, ACTIVE_MATCH_RETRY_MS)
-      return false
-    }
-    // While this character has a live open-world session, /api/save returns
-    //   409 { code: 'CHARACTER_IN_WORLD_SESSION' }
-    // so the companion and the idle game never write the same save at once.
-    // Same handling as the PvP lock: an expected, transient lock — keep the
-    // snapshot queued, retry shortly (it clears when the player leaves the
-    // world), and NEVER count it toward the failure streak / blocking modal.
-    if (err?.status === 409 && (err?.body?.code === 'CHARACTER_IN_WORLD_SESSION' || err?.body?.error === 'character_in_world_session')) {
+    const kind = classifySaveError(err)
+    // A save lock means something else legitimately owns this character right
+    // now — a PvP match, a live open-world session, or a co-op boss fight — so
+    // the companion app and the idle game never write the same save at once.
+    // Expected and transient: keep the latest snapshot queued, retry shortly
+    // (it clears when the player leaves), and NEVER count it toward the failure
+    // streak that escalates to the blocking "save failed" modal.
+    if (kind === 'lock') {
+      const matchId = activeMatchIdFromSaveError(err)
+      if (matchId !== null) emitSaveSyncActiveMatchConflict(matchId)
       pendingSnapshot = snap
       markUnsynced()
       schedulePush(snap, ACTIVE_MATCH_RETRY_MS)
@@ -237,7 +228,7 @@ async function performPush() {
     // rollback path as a revision conflict: flag it, drop the bad snapshot, and
     // emit 'conflict' so the app re-pulls and re-applies the intact cloud copy,
     // restoring the bank instead of retrying the wipe.
-    if (err?.status === 409 && (err?.body?.code === 'SAVE_REVISION_CONFLICT' || err?.body?.error === 'save_revision_conflict' || err?.message === 'save_revision_conflict' || err?.body?.code === 'BANK_WIPE_REJECTED' || err?.body?.error === 'bank_wipe_rejected')) {
+    if (kind === 'conflict') {
       conflictPending = true
       pendingSnapshot = null
       pendingSaveOptions = {}

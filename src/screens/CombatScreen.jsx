@@ -292,6 +292,9 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   // Co-op boss session. The server owns the fight and locks the save for its
   // duration, so this takes over the screen exactly like an active PvP match.
   const [coopSessionId, setCoopSessionId] = useState(null)
+  // Set while exitCoopFight is releasing the session, so the effect cleanup
+  // that fires straight after doesn't send a second leave for the same fight.
+  const coopLeavingRef = useRef(false)
   const [coopJoining, setCoopJoining] = useState(null)
   // Solo-or-group prompt: which boss was tapped, and how busy its instances are.
   const [coopChoice, setCoopChoice] = useState(null)
@@ -1293,6 +1296,14 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     return () => {
       setActiveCoopSession(null)
       resumeSaves()
+      // Releasing the client-side suspension is not enough: the server holds
+      // `characters.active_coop_session_id` and refuses every save until the
+      // membership actually ends. Leaving via the back link already did this
+      // (exitCoopFight), but navigating away with the nav bar lands here
+      // instead, and skipping it would block this character's saves for as
+      // long as anyone else keeps ticking the session.
+      if (!coopLeavingRef.current) coopApi.leave(coopSessionId).catch(() => { /* stale sweep covers it */ })
+      coopLeavingRef.current = false
     }
   }, [coopSessionId])
 
@@ -1361,6 +1372,15 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   // Leaving pulls the server's copy back down: it holds the authoritative
   // inventory, XP and HP from the fight, and the in-memory client copy is stale.
   const exitCoopFight = async () => {
+    // Leave BEFORE pulling: leaving is what writes the server-owned inventory,
+    // XP and HP back onto the save, so pulling first would fetch the pre-fight
+    // copy and throw the whole session away.
+    coopLeavingRef.current = true
+    try {
+      if (coopSessionId) await coopApi.leave(coopSessionId)
+    } catch (err) {
+      addToast(err?.message || 'Could not leave the fight cleanly — your progress may take a moment.', 'error')
+    }
     try {
       const pulled = await pullSave()
       if (pulled?.payload) {

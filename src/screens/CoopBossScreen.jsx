@@ -127,16 +127,14 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, addToas
   }
 
   // Leaving the fight is the back arrow, exactly as it is in a solo fight.
-  const handleLeave = async () => {
+  // Releasing the session is CombatScreen's job (it owns the session id, so it
+  // is also what releases it when the player navigates away instead) — this
+  // just stops polling and hands over.
+  const handleLeave = () => {
     if (leavingRef.current) return
     leavingRef.current = true
     stoppedRef.current = true
     if (pollTimer.current) clearTimeout(pollTimer.current)
-    try {
-      await coopApi.leave(sessionId)
-    } catch (err) {
-      addToast?.(err.message || 'Could not leave cleanly', 'error')
-    }
     onExit?.()
   }
 

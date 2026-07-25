@@ -125,6 +125,7 @@ const sourceFiles = [
   'cloud/idleState.js',
   'cloud/activityProgress.js',
   'cloud/criticalSavePolicy.js',
+  'cloud/saveErrors.js',
   'cloud/sync.js',
   'cloud/saveDurability.js',
   'cloud/pvp.js',
