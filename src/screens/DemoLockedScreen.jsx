@@ -36,7 +36,7 @@ export default function DemoLockedScreen({ screen, onBack }) {
         {onBack && (
           <button
             onClick={onBack}
-            class="w-full font-[var(--font-display)] font-bold text-sm py-3 rounded-xl min-h-[48px] bg-[var(--color-gold)] text-[var(--color-void)] hover:bg-[var(--color-gold-light)] transition-colors"
+            class="fm-btn fm-btn--ember w-full"
           >
             Back to Home
           </button>

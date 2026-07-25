@@ -544,7 +544,7 @@ export default function EquipmentScreen() {
             </div>
             <button
               onClick={handleCreatePreset}
-              class="w-full py-2.5 rounded-lg bg-[var(--color-mana)] text-white font-semibold text-sm active:opacity-80"
+              class="fm-btn fm-btn--woad fm-btn--sm w-full"
             >
               Save Loadout
             </button>
@@ -569,13 +569,13 @@ export default function EquipmentScreen() {
             </div>
             <button
               onClick={handleRenamePreset}
-              class="w-full py-2.5 rounded-lg bg-[var(--color-mana)] text-white font-semibold text-sm active:opacity-80"
+              class="fm-btn fm-btn--woad fm-btn--sm w-full"
             >
               Rename
             </button>
             <button
               onClick={handleDeletePreset}
-              class="w-full py-2.5 rounded-lg bg-red-900 text-white font-semibold text-sm active:opacity-80"
+              class="fm-btn fm-btn--blood fm-btn--sm w-full"
             >
               Delete Preset
             </button>

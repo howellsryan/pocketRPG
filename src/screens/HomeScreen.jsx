@@ -248,7 +248,7 @@ export default function HomeScreen({ onNavigate, onLogout, onManualSave, isCloud
                   if (selectedSkillDetail === 'magic') onNavigate?.(SCREENS.MAGIC)
                   else onNavigate?.(SCREENS.SKILLS, { skillId: selectedSkillDetail })
                 }}
-                class="w-full py-2.5 rounded-lg bg-[var(--color-gold)] text-[#111] font-semibold text-sm active:opacity-80 flex items-center justify-center gap-2"
+                class="fm-btn fm-btn--ember fm-btn--sm w-full"
               >
                 <GameIcon iconKey={selArt.icon} size={16} color="#111" /> Skill Actions
               </button>

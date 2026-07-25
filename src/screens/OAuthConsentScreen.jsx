@@ -88,7 +88,7 @@ export default function OAuthConsentScreen({ requestToken, onClose }) {
               {account?.provider ? ` (${account.provider})` : ''}
             </div>
             <button
-              class="w-full rounded-lg px-4 py-3 bg-[var(--color-gold)] text-[var(--color-void)] font-bold disabled:opacity-40"
+              class="fm-btn fm-btn--brass w-full"
               disabled={busy}
               onClick={() => decide('allow')}
             >
@@ -116,13 +116,13 @@ export default function OAuthConsentScreen({ requestToken, onClose }) {
           <div class="space-y-3">
             <p class="text-xs text-center opacity-60 mb-1">Sign in to authorize this connection.</p>
             <button
-              class="w-full rounded-lg px-4 py-3 bg-[#24292f] text-white font-semibold"
+              class="fm-btn fm-btn--iron w-full"
               onClick={() => startGitHubLogin()}
             >
               Sign in with GitHub
             </button>
             <button
-              class="w-full rounded-lg px-4 py-3 bg-white text-[#1f1f1f] font-semibold"
+              class="fm-btn w-full"
               onClick={() => startGoogleLogin()}
             >
               Sign in with Google

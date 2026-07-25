@@ -261,7 +261,7 @@ function PatchDetails({ patch, onHarvest }) {
       ) : (
         <button
           onClick={onHarvest}
-          class="w-full py-2.5 rounded-lg bg-[var(--color-gold)] text-[#111] font-semibold text-sm active:opacity-80"
+          class="fm-btn fm-btn--brass fm-btn--sm w-full"
         >
           🌾 Harvest
         </button>

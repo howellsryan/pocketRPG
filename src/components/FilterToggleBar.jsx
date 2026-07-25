@@ -13,14 +13,11 @@ export default function FilterToggleBar({ options, value, onChange, className = 
     <div class={`flex gap-[6px] overflow-x-auto pb-1 ${className}`}>
       {options.map(opt => {
         const isActive = opt.id === value
-        const pillClass = isActive
-          ? 'border-[var(--color-gold)] bg-[rgba(212,175,55,0.15)] text-[var(--color-gold)] opacity-100'
-          : 'border-[var(--color-void-border)] bg-[var(--color-void-light)] text-[var(--color-parchment)] opacity-60'
         return (
           <button
             key={opt.id}
             onClick={() => onChange(opt.id)}
-            class={`flex-shrink-0 inline-flex items-center gap-1.5 min-h-[44px] px-3 rounded-[20px] text-[11px] font-semibold border whitespace-nowrap ${pillClass}`}
+            class={`fm-toggle fm-toggle--sm flex-shrink-0 whitespace-nowrap${isActive ? ' is-on' : ''}`}
           >
             {opt.item
               ? <GameIcon item={opt.item} size={16} class="flex-shrink-0" />

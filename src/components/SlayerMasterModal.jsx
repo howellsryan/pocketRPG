@@ -121,7 +121,7 @@ export default function SlayerMasterModal({ masterId, onClose, onGetTask, onSlay
         {hasTask && (
           <button
             onClick={slay}
-            class="flex items-center justify-center gap-1.5 min-h-[52px] px-4 rounded-xl bg-[var(--color-gold)] text-black font-bold text-sm uppercase tracking-wider active:opacity-80"
+            class="fm-btn fm-btn--ember uppercase tracking-wider"
           >
             {isRaidTask ? '⚔️ Enter Raid' : '⚔️ Slay'}
           </button>
@@ -130,7 +130,7 @@ export default function SlayerMasterModal({ masterId, onClose, onGetTask, onSlay
         <button
           onClick={getTask}
           disabled={hasTask}
-          class={`flex items-center justify-center min-h-[52px] px-4 rounded-xl font-bold text-sm uppercase tracking-wider active:opacity-80 disabled:opacity-40 disabled:pointer-events-none ${hasTask ? 'border border-[var(--color-void-border)] bg-[var(--color-void)] text-[var(--color-parchment)]' : 'bg-[var(--color-gold)] text-black'}`}
+          class={`fm-btn uppercase tracking-wider ${hasTask ? '' : 'fm-btn--brass'}`}
         >
           Get New Task
         </button>
