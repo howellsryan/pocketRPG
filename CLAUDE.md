@@ -75,6 +75,7 @@ Server-authoritative under `/api/pvp/*`. Full rules (matchmaking, save-lockdown,
 ## 11) Build/Test Commands (Authoritative)
 - `npm test` → full Vitest. `npm run test:coverage` → same suite with v8 coverage (writes `coverage/`, gitignored). `npm run build` → `prebuild` (`npm test`) + `vite build`. `npm run rebuild` → `tsc` + single-file concat (`build_single.cjs`). `npm run check:single` → duplicate-identifier/syntax check + eval-time TDZ smoke-run of the bundle. `npm run ci` → `build` + `rebuild` + `check:single` (so `ci` **runs the full suite** via `build`'s prebuild). `npm run build:app` → Capacitor/iOS.
 - No lint script — style is review + `check:single`.
+- Prod logs: `npm run logs:tail` / `logs:errors` (live only, nothing retained). Pages Functions do **not** feed Workers Logs, so the Observability MCP server is useless here — aggregates come from the `cloudflare-graphql` MCP server in `.mcp.json`. Runbook: `docs/cloudflare-logs.md`.
 
 **Commit gate (required)** — run `npm run ci` (it runs the full suite via `build`'s prebuild, then `typecheck` + `rebuild` + `check:single`). Don't commit with failing checks. Testing strategy, gates, and the feature→test map: **`TESTING.md`** + `.claude/rules/testing.md` (auto-loads on `tests/**`).
 

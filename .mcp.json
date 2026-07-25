@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "cloudflare-graphql": {
+      "type": "http",
+      "url": "https://graphql.mcp.cloudflare.com/mcp"
+    }
+  }
+}
