@@ -59,8 +59,8 @@ describe('The Corporeal Horror — monster data', () => {
     expect(boss.multiForm).toBeUndefined()
     expect(boss.forms).toBeUndefined()
     expect(boss.spawnsAdd.monsterId).toBe('dread_core')
-    expect(boss.spawnsAdd.firstSpawnAfterAttacks).toEqual([4, 7])
-    expect(boss.spawnsAdd.respawnAfterAttacks).toEqual([10, 16])
+    expect(boss.spawnsAdd.firstSpawnAfterAttacks).toEqual([7, 10])
+    expect(boss.spawnsAdd.respawnAfterAttacks).toEqual([7, 10])
   })
 
   it('gives the Dread Core its own stat block as a drop-less, unpickable add', () => {

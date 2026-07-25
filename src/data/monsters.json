@@ -10613,8 +10613,8 @@
     "weakness": "stab",
     "spawnsAdd": {
       "monsterId": "dread_core",
-      "firstSpawnAfterAttacks": [4, 7],
-      "respawnAfterAttacks": [10, 16]
+      "firstSpawnAfterAttacks": [7, 10],
+      "respawnAfterAttacks": [7, 10]
     },
     "dropRolls": 1,
     "drops": [

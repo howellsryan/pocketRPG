@@ -4,8 +4,8 @@ import SkillIcon from './SkillIcon.jsx'
 import { prayerSkill } from '../utils/prayerIcons.js'
 import { isConsumableFood, isConsumablePotion } from '../engine/consumables.js'
 
-// Shared mobile combat quick-actions panel (Consume / Weapons / Armour tabs, plus
-// a PvE-only Prayers tab). Used by BOTH PvE (CombatScreen) and PvP
+// Shared mobile combat quick-actions panel (a PvE-only Prayers tab first, then
+// Consume / Weapons / Armour). Used by BOTH PvE (CombatScreen) and PvP
 // (PvpCombatScreen) so the layout lives in one place. Each screen supplies its own
 // dispatch: PvE acts immediately by itemId, PvP queues by inventory slot index —
 // both read the same resolved `entry` ({ itemId, item, qty, slotIdx }). Pass
@@ -27,7 +27,13 @@ export default function CombatQuickActions({
   onEditPrayers,
   isPrayerActive,
 }) {
-  const [tab, setTab] = useState('consumable')
+  // Open on Prayers when the player has some configured — landing on an empty
+  // "pick your quick prayers" pane would be worse than opening on Consume.
+  const [tab, setTab] = useState(
+    typeof onPrayer === 'function' && Array.isArray(quickPrayers) && quickPrayers.length > 0
+      ? 'prayer'
+      : 'consumable'
+  )
 
   // Tap-acknowledgement flash. PvP queues intents (no instant inventory change),
   // so blink the tapped slot to confirm the action registered — same feedback in
@@ -98,8 +104,9 @@ export default function CombatQuickActions({
       .filter(Boolean)
     : []
 
-  const tabs = [['consumable', 'Consume', consumables.length], ['weapon', 'Weapons', weapons.length], ['armour', 'Armour', armour.length]]
-  if (showPrayers) tabs.push(['prayer', 'Prayers', quickPrayerDefs.length])
+  // Prayers lead: in PvE they are the most time-critical tap in a fight.
+  const tabs = showPrayers ? [['prayer', 'Prayers', quickPrayerDefs.length]] : []
+  tabs.push(['consumable', 'Consume', consumables.length], ['weapon', 'Weapons', weapons.length], ['armour', 'Armour', armour.length])
 
   return (
     <div class="cb-qa">

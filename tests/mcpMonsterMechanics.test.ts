@@ -30,7 +30,7 @@ describe('monsterMechanics', () => {
     expect(add.maxHit).toBe(25)
     expect(add.weakness).toBe('stab')
     expect(add.prayerDrainPerHit).toBe(8)
-    expect(add.respawnAfterBossAttacks).toEqual([10, 16])
+    expect(add.respawnAfterBossAttacks).toEqual([7, 10])
     const text = mechanics!.notes.join(' ')
     // The whole point of the correction: a client must not tell a player the
     // boss stops attacking while the Core is up.

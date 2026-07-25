@@ -51,15 +51,15 @@ The Core is a **second live monster**, not a form of the boss. Both are on the f
 `dread_core` is its own `monsters.json` entry flagged `isAdd: true`; the boss carries the spawn cadence:
 
 ```jsonc
-"spawnsAdd": { "monsterId": "dread_core", "firstSpawnAfterAttacks": [4, 7], "respawnAfterAttacks": [10, 16] }
+"spawnsAdd": { "monsterId": "dread_core", "firstSpawnAfterAttacks": [7, 10], "respawnAfterAttacks": [7, 10] }
 ```
 
-Spawn delays are counted in **boss attacks**, so the cadence tracks the pace of the fight rather than wall-clock ticks. Killing a Core only clears it — the boss sends another after a few more of its own attacks — so the fight is a running trade between damage on the boss and control of the prayer pool. Killing the boss takes its Core off the field.
+Spawn delays are counted in **boss attacks**, so the cadence tracks the pace of the fight rather than wall-clock ticks. Killing a Core only clears it — the boss sends another every 7–10 of its own attacks — so the fight is a running trade between damage on the boss and control of the prayer pool. Killing the boss takes its Core off the field.
 
 Rules live in `src/engine/bossAdds.js` (spec parsing, spawn-delay rolls, target resolution). `combat.js` holds only the wiring:
 
 - `createCombatState(monster, type, stance, spell, monstersData)` resolves the add definition and arms the first spawn.
-- `setCombatTarget(state, 'add' | 'boss')` — the only way to switch; a request to target a dead or absent add falls back to the boss, so a stale flag can never strand the player hitting nothing.
+- `setCombatTarget(state, 'add' | 'boss')` — the only way to switch; a request to target a dead or absent add falls back to the boss, so a stale flag can never strand the player hitting nothing. The screen's target picker reuses the quick-prayer tile styling (`cb-slot.is-active` + ring), so the enemy being hit reads at a glance.
 - `resolveEnemySwing` is shared by the boss and the add, so both obey one accuracy/max-hit/mitigation/prayer-burn path. Two `monsterHit` events can land in one tick; the screen subtracts each event's damage rather than reading its `playerHP`, so they apply cumulatively.
 - `resolveTargetDeath` splits the two deaths: an add despawns and queues a replacement, only the boss can end the fight.
 - Specials follow the selected target, so a queued spec is never silently redirected to the boss.

@@ -2565,28 +2565,32 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     setCombat(next)
   }
   const addPanel = activeAdd && (
-    <div class="mb-3 rounded-lg border border-[var(--color-blood)] bg-[var(--color-void)] px-3 py-2">
-      <div class="flex items-center justify-between mb-1">
-        <span class="text-sm font-semibold text-[var(--color-parchment)]">
-          {activeAdd.icon} {activeAdd.name}
-        </span>
-        <span class="text-[10px] font-[var(--font-mono)] text-[var(--color-parchment)] opacity-70">
-          {Math.max(0, Math.round(activeAdd.currentHP))}/{activeAdd.hitpoints}
-        </span>
+    <div class="cb-qa" style={{ marginBottom: 12 }}>
+      <div class="cb-hplabel">
+        <span>{activeAdd.icon} {activeAdd.name}</span>
+        <span class="cb-hplabel__v">{Math.max(0, Math.round(activeAdd.currentHP))}/{activeAdd.hitpoints}</span>
       </div>
-      <HPBar current={Math.max(0, activeAdd.currentHP)} max={activeAdd.hitpoints} size="large" />
-      <div class="flex gap-2 mt-2">
+      <div class="relative mb-2">
+        <HPBar current={Math.max(0, activeAdd.currentHP)} max={activeAdd.hitpoints} size="large" />
+      </div>
+      {/* Target picker — same brass "on" treatment as the quick-prayer tiles, so
+          the enemy you are hitting reads at a glance mid-fight. */}
+      <div class="cb-qa__grid" style={{ gridTemplateColumns: 'repeat(2, minmax(0, 1fr))' }}>
         <button
-          class={`flex-1 min-h-[44px] rounded-md text-xs font-semibold border ${combat.addTargeted ? 'border-[var(--color-void-border)] text-[var(--color-parchment)] opacity-70' : 'border-[var(--color-gold)] text-[var(--color-gold)]'}`}
+          class={'cb-slot' + (combat.addTargeted ? '' : ' is-active')}
           onClick={() => switchTarget('boss')}
         >
-          Attack {combat.monster.name}
+          <span class="cb-slot__name">{combat.monster.name}</span>
+          <span class="cb-slot__tag">{combat.addTargeted ? 'Attack' : 'Attacking'}</span>
+          {!combat.addTargeted && <span class="cb-slot__ring" />}
         </button>
         <button
-          class={`flex-1 min-h-[44px] rounded-md text-xs font-semibold border ${combat.addTargeted ? 'border-[var(--color-gold)] text-[var(--color-gold)]' : 'border-[var(--color-void-border)] text-[var(--color-parchment)] opacity-70'}`}
+          class={'cb-slot' + (combat.addTargeted ? ' is-active' : '')}
           onClick={() => switchTarget('add')}
         >
-          Attack {activeAdd.name}
+          <span class="cb-slot__name">{activeAdd.name}</span>
+          <span class="cb-slot__tag">{combat.addTargeted ? 'Attacking' : 'Attack'}</span>
+          {combat.addTargeted && <span class="cb-slot__ring" />}
         </button>
       </div>
     </div>
