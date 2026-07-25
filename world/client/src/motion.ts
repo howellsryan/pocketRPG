@@ -2,9 +2,9 @@
 // them without a DOM/WebGL environment.
 import type { AnimName } from './entities'
 
-/** The three server anim states that are one-shot swings (as opposed to the
- * looping idle/walk/run and the one-shot die). */
-export const ATTACK_ANIMS: readonly AnimName[] = ['attack', 'attack_ranged', 'attack_magic']
+/** The server anim states that are one-shot swings (as opposed to the looping
+ * idle/walk/run and the one-shot die) — including the special-attack combo. */
+export const ATTACK_ANIMS: readonly AnimName[] = ['attack', 'attack_ranged', 'attack_magic', 'attack_special']
 export function isAttackAnim(name: AnimName): boolean {
   return ATTACK_ANIMS.includes(name)
 }
@@ -22,6 +22,11 @@ export function resolveGltfAnim(
   latched: boolean,
   attackPlaying: boolean,
 ): { fireSwing: boolean; latched: boolean; playBase: boolean } {
+  // Death outranks a running swing. A monster whose attack clip outlasts its
+  // attack cycle (Grondar: 6.6s clip, re-triggered every 3.0s) keeps
+  // `attackPlaying` true for the whole fight, so gating `die` behind it meant
+  // the death clip was never handed to the mixer at all.
+  if (name === 'die') return { fireSwing: false, latched: false, playBase: true }
   if (!moving && isAttackAnim(name)) return { fireSwing: !latched, latched: true, playBase: false }
   return { fireSwing: false, latched: false, playBase: !attackPlaying }
 }

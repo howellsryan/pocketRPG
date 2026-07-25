@@ -13,6 +13,7 @@ function readSrc(rel) { return fs.readFileSync(path.join(SRC, rel), 'utf-8'); }
 // Source file order (from dist_tmp, already transpiled)
 const sourceFiles = [
   'utils/constants.js',
+  'utils/combatWindup.js',
   'utils/helpers.js',
   'utils/complexityColors.js',
   'utils/completion.js',

@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest'
 import {
   RUN_DRAIN_PER_TILE,
   RUN_REGEN_PER_TICK,
+  SPECIAL_REGEN_PER_TICK,
   tickPlayer,
   type TickContext,
   type TickPlayer,
@@ -27,7 +28,7 @@ function makePlayer(overrides: Partial<TickPlayer> = {}): TickPlayer {
     },
     inventory: emptyInventory(), pendingXp: {}, minted: {}, mining: null, crafting: null, pendingInteract: null,
     hp: 40, maxHp: 40, equipment: {}, gear: {}, combat: null,
-    running: false, runEnergy: 100, lastRunSent: 100, stance: 'accurate', spell: null, specialEnergy: 100, lastSpecSent: 100, prayerPoints: 1, maxPrayerPoints: 1, prayerDrainAccumulator: 0, activeProtectionPrayer: null, activeCombatPrayer: null, lastPrayerSent: null, activePotions: {}, following: null, followTargetTile: null,
+    running: false, runEnergy: 100, lastRunSent: 100, stance: 'accurate', spell: null, specialEnergy: 100, lastSpecSent: 100, lastSpecQueuedSent: false, pendingSpecial: false, prayerPoints: 1, maxPrayerPoints: 1, prayerDrainAccumulator: 0, activeProtectionPrayer: null, activeCombatPrayer: null, lastPrayerSent: null, activePotions: {}, following: null, followTargetTile: null,
     ...overrides,
   }
 }
@@ -94,8 +95,8 @@ describe('combat stance', () => {
 describe('special attack', () => {
   it('fires the weapon special on queue, draining special energy and dealing hits', () => {
     const { npcs } = bull()
-    // Weak attacker so the bull survives the special — otherwise the kill
-    // refills special energy to 100 and masks the drain we're asserting.
+    // Weak attacker so the fight outlives the special and the drain is easy to
+    // read off a single tick.
     const weak = { attack: { xp: 0, level: 1 }, strength: { xp: 0, level: 1 }, defence: { xp: 0, level: 1 }, hitpoints: { xp: 1154, level: 10 } }
     const player = makePlayer({
       x: 5, z: 6, stats: weak,
@@ -124,8 +125,9 @@ describe('special attack', () => {
     }
     expect(specEventSeen).toBe(true)
     expect(specEnergyAfterFire).not.toBeNull()
-    // dragon_dagger's special costs 25.
-    expect(specEnergyAfterFire).toBeLessThanOrEqual(75)
+    // dragon_dagger's special costs 25. The firing tick also pays out one tick
+    // of clock regen, so the reading sits just above the raw 100 - 25.
+    expect(specEnergyAfterFire).toBeCloseTo(75 + SPECIAL_REGEN_PER_TICK, 5)
   })
 })
 

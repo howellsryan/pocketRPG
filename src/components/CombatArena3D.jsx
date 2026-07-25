@@ -6,6 +6,7 @@ import { disposeObject, attachWeapon, attachGearList, setupHideMask } from '../3
 import { createProcCreature } from '../3d/rigs.js'
 import { mountArenaBiome } from '../3d/biomes.js'
 import { TICK_DURATION } from '../utils/constants.js'
+import { resolveWindupTick } from '../utils/combatWindup.js'
 
 // Phase-2 combat arena (docs/3d-gameplay-investigation.md): the rigged hero
 // (equipped weapon on the hand bone) faces the monster's model in a side-on
@@ -630,10 +631,10 @@ function CombatArena3D({
     const clip = st.monsterAttackAction.getClip()
     const clipMs = (clip && clip.duration ? clip.duration : 0.5) * 1000
     const impactMs = Math.min(clipMs, (monsterAttackImpactSec != null ? monsterAttackImpactSec * 1000 : clipMs))
-    const msUntilHit = ticks * TICK_DURATION
-    // Only the tick whose remaining time is in [impact, impact + one tick) can
-    // host the wind-up landing on the hit; earlier ticks wait, later is too late.
-    if (msUntilHit < impactMs || msUntilHit >= impactMs + TICK_DURATION) return
+    // Shared timing (src/utils/combatWindup.js) — the same helper the open-world
+    // path uses, so both align the impact frame onto the hit tick identically.
+    const windup = resolveWindupTick(ticks, impactMs, TICK_DURATION)
+    if (!windup) return
     st.monsterSwingScheduled = true
     const timer = setTimeout(() => {
       st.timers.delete(timer)
@@ -641,7 +642,7 @@ function CombatArena3D({
       st.monsterIdleAction && st.monsterIdleAction.fadeOut(0.1)
       st.monsterAttackAction.reset().fadeIn(0.1).play()
       st.monsterLedAttack = true
-    }, Math.max(0, msUntilHit - impactMs))
+    }, windup.startDelayMs)
     st.timers.add(timer)
   }, [windupSignal && windupSignal.seq])
 

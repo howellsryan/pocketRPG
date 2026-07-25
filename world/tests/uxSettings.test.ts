@@ -20,8 +20,13 @@ describe('mergeSettings', () => {
   })
 
   it('keeps valid stored fields', () => {
-    const merged = mergeSettings({ minimapMode: 'off', hudScale: 'large', dock: 'left', panelOpacity: 0.75, chatAutoFade: false, haptics: false })
-    expect(merged).toEqual({ minimapMode: 'off', hudScale: 'large', dock: 'left', panelOpacity: 0.75, chatAutoFade: false, haptics: false })
+    const merged = mergeSettings({ minimapMode: 'off', hudScale: 'large', dock: 'left', panelOpacity: 0.75, chatAutoFade: false, haptics: false, hideChatBar: true })
+    expect(merged).toEqual({ minimapMode: 'off', hudScale: 'large', dock: 'left', panelOpacity: 0.75, chatAutoFade: false, haptics: false, hideChatBar: true })
+  })
+
+  it('keeps a stored hideChatBar and rejects a non-boolean back to the default', () => {
+    expect(mergeSettings({ hideChatBar: true }).hideChatBar).toBe(true)
+    expect(mergeSettings({ hideChatBar: 'yes' }).hideChatBar).toBe(DEFAULT_SETTINGS.hideChatBar)
   })
 
   it('drops invalid fields back to their default individually', () => {

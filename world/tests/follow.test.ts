@@ -15,7 +15,7 @@ function makePlayer(overrides: Partial<TickPlayer> = {}): TickPlayer {
     stats: { mining: { xp: 0, level: 1 } },
     inventory: emptyInventory(), pendingXp: {}, minted: {}, mining: null, crafting: null, spell: null, pendingInteract: null,
     hp: 10, maxHp: 10, equipment: {}, gear: {}, combat: null,
-    running: false, runEnergy: 100, lastRunSent: 100, stance: 'accurate', specialEnergy: 100, lastSpecSent: 100,
+    running: false, runEnergy: 100, lastRunSent: 100, stance: 'accurate', specialEnergy: 100, lastSpecSent: 100, lastSpecQueuedSent: false, pendingSpecial: false,
     prayerPoints: 1, maxPrayerPoints: 1, prayerDrainAccumulator: 0, activeProtectionPrayer: null, activeCombatPrayer: null,
     lastPrayerSent: null, activePotions: {}, following: null, followTargetTile: null,
     ...overrides,

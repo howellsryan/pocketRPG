@@ -20,6 +20,9 @@ export type UxSettings = {
   panelOpacity: number
   chatAutoFade: boolean
   haptics: boolean
+  /** Hides the "Say something…" chat input bar entirely; incoming chat
+   * messages/overheads still show — this only removes the send control. */
+  hideChatBar: boolean
 }
 
 export const DEFAULT_SETTINGS: UxSettings = {
@@ -29,6 +32,7 @@ export const DEFAULT_SETTINGS: UxSettings = {
   panelOpacity: 0.92,
   chatAutoFade: true,
   haptics: true,
+  hideChatBar: false,
 }
 
 const STORAGE_KEY = 'world_ux'
@@ -101,6 +105,7 @@ export function mergeSettings(stored: unknown): UxSettings {
     panelOpacity: opacity,
     chatAutoFade: typeof s.chatAutoFade === 'boolean' ? s.chatAutoFade : DEFAULT_SETTINGS.chatAutoFade,
     haptics: typeof s.haptics === 'boolean' ? s.haptics : DEFAULT_SETTINGS.haptics,
+    hideChatBar: typeof s.hideChatBar === 'boolean' ? s.hideChatBar : DEFAULT_SETTINGS.hideChatBar,
   }
 }
 

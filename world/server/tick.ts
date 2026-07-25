@@ -7,7 +7,7 @@ import { GATHER_SKILLS, ROCK_DEPLETED_TICKS, addToInventory, inventoryIsFull, ty
 import { STATIONS, recipeFor, stationTypeForVerb } from '../shared/recipes'
 import { craftOnce, hasMaterials } from './crafting'
 import { getLevelFromXP, clampXP } from '../../src/engine/experience.js'
-import { startCombat, stepCombat, playerAttackRange, type CombatSession } from './combat'
+import { startCombat, stepCombat, playerAttackRange, pinSpecialToSession, emitSpecIfChanged, FULL_SPECIAL_ENERGY, type CombatSession } from './combat'
 import type { NpcState } from './npc'
 import type { LootEntity } from './loot'
 import { hasLineOfSight } from './los'
@@ -68,10 +68,17 @@ export type TickPlayer = {
   stance: CombatStance
   /** Selected combat-spell id (magic weapons); session-local, null = none. */
   spell: string | null
-  /** Special-attack energy readout (0-100); mirrors the engine's per-fight value
-   * during combat, 100 between fights. `lastSpecSent` gates the {e:'spec'} echo. */
+  /** Special-attack energy (0-100). The SESSION's value, not the engine's: it
+   * persists across fights, is debited when a special fires, and only recovers
+   * on the clock. `lastSpecSent` gates the {e:'spec'} echo. */
   specialEnergy: number
   lastSpecSent: number
+  /** Gates the {e:'spec'} echo's `queued` field alongside lastSpecSent. */
+  lastSpecQueuedSent: boolean
+  /** Armed by a {t:'special'} sent with no active fight (combat.ts): fires as
+   * the first swing of the next fight this player starts, instead of refusing
+   * the tap outright. Cleared by startCombat once consumed. */
+  pendingSpecial: boolean
   /** Prayer session (world/shared/prayer.ts): pool seeded full at hello from the
    * Prayer level, drains only during combat (copied onto the engine state each
    * fight, synced back after each tick), persists across auto-fight kills. The
@@ -101,6 +108,10 @@ export type TickPlayer = {
 // regenerates while walking/idle. Tunable — not an engine formula.
 export const RUN_DRAIN_PER_TILE = 0.6
 export const RUN_REGEN_PER_TICK = 0.45
+/** Special energy is a session resource out here, not a per-fight one: it only
+ * ever comes back on the clock, at 10 points per 30s (50 ticks) — so a spent
+ * special stays spent whether you keep fighting, walk away, or kill the thing. */
+export const SPECIAL_REGEN_PER_TICK = 10 / 50
 
 export type TickContext = {
   tick: number
@@ -538,6 +549,14 @@ export function tickPlayer(player: TickPlayer, ctx: TickContext): TickResult {
   // Regenerate run energy on any tick the player didn't run (walking or idle).
   if (!ran && player.runEnergy < 100) player.runEnergy = Math.min(100, player.runEnergy + RUN_REGEN_PER_TICK)
   emitRunIfChanged(player, result.events)
+
+  // Special energy ticks back up everywhere — mid-fight, walking, standing
+  // still — and is pushed onto the live engine state so the fight sees it.
+  if (player.specialEnergy < FULL_SPECIAL_ENERGY) {
+    player.specialEnergy = Math.min(FULL_SPECIAL_ENERGY, player.specialEnergy + SPECIAL_REGEN_PER_TICK)
+    pinSpecialToSession(player)
+    emitSpecIfChanged(player, result.events)
+  }
 
   result.entChanged = player.x !== before.x || player.z !== before.z || player.anim !== before.anim || player.hp !== before.hp
   return result
