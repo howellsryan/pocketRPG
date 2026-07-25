@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <radialGradient id="sanctified_elixir_halo" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.8"/>
+      <stop offset="0.55" stop-color="#eaf6ff" stop-opacity="0.32"/>
+      <stop offset="1" stop-color="#eaf6ff" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="sanctified_elixir_glass" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f2fbff"/><stop offset="1" stop-color="#b8d4e2"/>
+    </linearGradient>
+    <radialGradient id="sanctified_elixir_liquid" cx="0.42" cy="0.3" r="0.8">
+      <stop offset="0" stop-color="#ffffff"/><stop offset="0.55" stop-color="#f6fbff"/><stop offset="1" stop-color="#c2dcec"/>
+    </radialGradient>
+  </defs>
+  <g>
+    <!-- Baked-in halo: bespoke icons render unfiltered, so the glow is art -->
+    <circle cx="256" cy="310" r="180" fill="url(#sanctified_elixir_halo)"/>
+    <g stroke="#1f2630" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
+      <path d="M214 190 L214 244 C150 278 128 356 178 404 C222 448 290 448 334 404 C384 356 362 278 298 244 L298 190 Z" fill="url(#sanctified_elixir_glass)"/>
+      <path d="M162 314 C210 348 302 348 350 314 C362 380 320 428 256 428 C192 428 150 380 162 314 Z" fill="url(#sanctified_elixir_liquid)" stroke="none"/>
+      <ellipse cx="256" cy="316" rx="94" ry="15" fill="#ffffff" stroke="none"/>
+      <rect x="212" y="146" width="88" height="50" rx="6" fill="url(#sanctified_elixir_glass)"/>
+      <rect x="204" y="130" width="104" height="28" rx="9" fill="#e0b94a" stroke="#7a5a16"/>
+      <rect x="222" y="84" width="68" height="52" rx="12" fill="#f6efdc"/>
+      <path d="M234 332 C226 358 228 386 242 406" fill="none" stroke="#ffffff" stroke-width="12"/>
+    </g>
+    <path d="M142 208 L151 240 L183 249 L151 258 L142 290 L133 258 L101 249 L133 240 Z" fill="#ffffff" opacity="0.95"/>
+    <path d="M376 268 L382 290 L404 296 L382 302 L376 324 L370 302 L348 296 L370 290 Z" fill="#ffffff" opacity="0.85"/>
+    <circle cx="356" cy="196" r="10" fill="#ffffff" opacity="0.8"/>
+    <circle cx="118" cy="330" r="8" fill="#ffffff" opacity="0.7"/>
+  </g>
+</svg>

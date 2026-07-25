@@ -145,6 +145,15 @@ masari) reusing full_helm/platebody/platelegs/plateskirt silhouettes:
 ### Phase 5 — minigame reward tools (file-based)
 - [x] bowyers_knife — wooden handle + silver drop-point blade (Fletching Guild reward)
 
+### Phase 6 — Corporeal Horror drop chain ✅ (now 820)
+Two new templates, so a variant costs a palette entry rather than a drawing:
+- [x] `wraithbone_shield` (horned shield face with a sigil socket) ×5 — wraithbone
+  grey, hallowed white-grey, runeward purple, aegis red, vigil light blue
+- [x] `sigil` (teardrop plaque, etched spiral) ×3 — runeward / aegis / vigil,
+  sharing each shield's palette so the sigil reads as the shield's key
+- [x] hand-drawn: `sanctified_elixir` — round flask, luminous white liquid, with
+  the glow baked into the art (bespoke icons render unfiltered)
+
 ## Remaining
 - **Monsters batch 2-3** (~44 glyphs): hanging_spider, masked_spider, tiger_head,
   horned_reptile, lizardman, grim_reaper, tree_face, devil_mask, bleeding_eye,

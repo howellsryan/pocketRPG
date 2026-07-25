@@ -112,7 +112,12 @@
     "ranger_green":{ "base": "#4a8a5a", "light": "#80c490", "shade": "#236b35" },
     "arcane_blue":{ "base": "#4a72c8", "light": "#8aacf0", "shade": "#263f8a" },
     "shardglass": { "base": "#90c4d8", "light": "#e0f4ff", "shade": "#4a8aaa" },
-    "studded":    { "base": "#7a8090", "light": "#b4bcc6", "shade": "#4a505a" }
+    "studded":    { "base": "#7a8090", "light": "#b4bcc6", "shade": "#4a505a" },
+    "wraithbone": { "base": "#9aa1a8", "light": "#e2e7ec", "shade": "#4c525a" },
+    "hallowed":   { "base": "#d9dee4", "light": "#ffffff", "shade": "#8b939c" },
+    "runeward":   { "base": "#8e44ad", "light": "#d8a7f2", "shade": "#471a63" },
+    "aegis":      { "base": "#c0392b", "light": "#ff7f6c", "shade": "#6d1710" },
+    "vigil":      { "base": "#5ab4e8", "light": "#c9edff", "shade": "#22668f" }
   },
   "items": {
     "scimitar":  ["bronze", "iron", "steel", "mithril", "adamant", "runeforged", "dragon"],
@@ -156,7 +161,8 @@
     "herb": [],
     "hide": [],
     "crystal": [],
-    "clue_scroll": []
+    "clue_scroll": [],
+    "sigil": ["runeward", "aegis", "vigil"]
   },
   "sets": {
     "full_helm": {
@@ -375,6 +381,13 @@
       "2nd_age_axe": "gold", "emberhowl_axe": "fire_orange",
       "shardglass_axe": "shardglass", "gold_spade": "gold"
     },
-    "2h_sword": {}
+    "2h_sword": {},
+    "wraithbone_shield": {
+      "wraithbone_shield": "wraithbone",
+      "hallowed_wraithbone_shield": "hallowed",
+      "runeward_wraithbone_shield": "runeward",
+      "aegis_wraithbone_shield": "aegis",
+      "vigil_wraithbone_shield": "vigil"
+    }
   }
 }
