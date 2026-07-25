@@ -113,12 +113,14 @@ describe('coopBossEngine — session shape', () => {
     }
   })
 
-  it('opens every boss to groups except the raid bosses', () => {
+  it('opens every boss to groups except the raid bosses and the solo-only three', () => {
     const raidBosses = new Set(Object.values(raidsData).flatMap((r) => r.bosses ?? []))
+    const soloOnly = new Set(['ember_tyrant', 'ashen_crucible', 'venomcoil_matriarch'])
     const expected = Object.entries(monstersData)
-      .filter(([id, m]) => m.boss === true && !m.raidBoss && !raidBosses.has(id))
+      .filter(([id, m]) => m.boss === true && !m.raidBoss && !raidBosses.has(id) && !soloOnly.has(id))
       .map(([id]) => id)
     expect(Object.keys(COOP_BOSSES).sort()).toEqual(expected.sort())
+    for (const id of soloOnly) expect(isCoopBossId(id), id).toBe(false)
   })
 
   it('keeps raid bosses out of the allowlist — they stay inside their raid', () => {

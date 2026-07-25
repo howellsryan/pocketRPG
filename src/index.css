@@ -1084,9 +1084,11 @@ html, body, #app {
 .cb-mon--task { background: linear-gradient(160deg, #1f1d08, #161206); border-color: rgba(240,192,64,0.28); }
 .cb-mon__art { flex-shrink: 0; }
 .cb-mon__body { flex: 1; min-width: 0; }
-.cb-mon__name { font-family: var(--font-display); font-weight: 700; font-size: 16px; color: var(--color-parchment); display: flex; align-items: center; gap: 6px; }
-.cb-mon__tasktag { font-family: var(--font-mono); font-size: 8.5px; font-weight: 800; letter-spacing: 0.08em; color: #1a1206; background: var(--color-gold-light); padding: 1px 4px; border-radius: 4px; }
-.cb-mon__grouptag { font-family: var(--font-mono); font-size: 8.5px; font-weight: 800; letter-spacing: 0.08em; color: var(--color-gold); border: 1px solid var(--color-gold-dim); padding: 0 4px; border-radius: 4px; }
+/* Tags wrap under the name instead of squeezing it: a boss can carry TASK and
+   GROUP at once, and long boss names leave no room for both on one line. */
+.cb-mon__name { font-family: var(--font-display); font-weight: 700; font-size: 16px; color: var(--color-parchment); display: flex; align-items: center; flex-wrap: wrap; gap: 3px 6px; }
+.cb-mon__tasktag { flex-shrink: 0; font-family: var(--font-mono); font-size: 8.5px; font-weight: 800; letter-spacing: 0.08em; color: #1a1206; background: var(--color-gold-light); padding: 1px 4px; border-radius: 4px; }
+.cb-mon__grouptag { flex-shrink: 0; font-family: var(--font-mono); font-size: 8.5px; font-weight: 800; letter-spacing: 0.08em; color: var(--color-gold); border: 1px solid var(--color-gold-dim); padding: 0 4px; border-radius: 4px; }
 .cb-mon__stats { display: flex; align-items: center; gap: 7px; margin-top: 3px; font-family: var(--font-mono); font-size: 10.5px; color: var(--color-parchment); opacity: 0.5; }
 .cb-mon__stats i { width: 3px; height: 3px; border-radius: 50%; background: currentColor; opacity: 0.5; }
 .cb-mon__lock { font-size: 9px; font-weight: 700; color: var(--color-blood-light); margin-top: 2px; }

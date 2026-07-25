@@ -24,9 +24,11 @@ import { getCombatType, equipItem, placeUnequippedItems } from './equipment.js'
 export const COOP_MAX_MEMBERS = 8
 export const COOP_TICK_MS = 600
 /** Bosses playable co-operatively: every boss in monsters.json except the raid
- * bosses, which stay inside their own instanced raid content. Still an explicit
- * allowlist rather than a filter over the monster data, so opening a boss to
- * groups is a deliberate edit and both sides gate on one list.
+ * bosses, which stay inside their own instanced raid content, and the Ember Pits
+ * pair (`ember_tyrant`, `ashen_crucible`) plus `venomcoil_matriarch`, which stay
+ * solo. Still an explicit allowlist rather than a filter over the monster data,
+ * so opening a boss to groups is a deliberate edit and both sides gate on one
+ * list.
  *
  * `respawnTicks` paces the farm loop. A group melts a low-HP boss far faster
  * than a solo player, so the short floor only suits bosses with enough HP to
@@ -61,11 +63,8 @@ export const COOP_BOSSES = {
   commander_zephyra: { respawnTicks: 50 },
   warlord_grondar: { respawnTicks: 50 },
   krylth_the_defiler: { respawnTicks: 50 },
-  ember_tyrant: { respawnTicks: 51 },
-  venomcoil_matriarch: { respawnTicks: 26 },
   corporeal_horror: { respawnTicks: 10 },
   blighted_gauntlet: { respawnTicks: 13 },
-  ashen_crucible: { respawnTicks: 21 },
 }
 export const COOP_BOSS_IDS = new Set(Object.keys(COOP_BOSSES))
 /** Fallback for a boss added to the map without explicit pacing. */

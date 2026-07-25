@@ -223,7 +223,7 @@ export default function CombatMobileSelect({
                 <div class="cb-area__icon"><SkillEmblem iconKey={art.icon} accent={art.accent} size={30} glow={0} /></div>
                 <div class="cb-area__txt">
                   <div class="cb-area__name">{raid.name}</div>
-                  <div class="cb-area__blurb">{isLocked ? '🔒 ' + raidLockReason : raid.description}</div>
+                  {isLocked && <div class="cb-area__blurb">🔒 {raidLockReason}</div>}
                 </div>
                 {raidKillCounts[raid.id] > 0 && <span class="cb-mon__kc">KC {raidKillCounts[raid.id].toLocaleString()}</span>}
                 <span class="cb-area__raidtag">RAID</span>

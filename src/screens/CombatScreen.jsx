@@ -2429,7 +2429,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                       <SkillEmblem iconKey={getRaidArt(raid.id).icon} accent={getRaidArt(raid.id).accent} size={36} glow={0} />
                       <div>
                         <div class="text-sm font-semibold text-[var(--color-parchment)]">{raid.name}</div>
-                        <div class={`text-[10px] ${isRaidLocked ? 'text-[var(--color-blood-light)]' : 'text-[var(--color-parchment)]'}`}>{isRaidLocked ? '🔒 ' + raidLockReason : raid.description}</div>
+                        {isRaidLocked && <div class="text-[10px] text-[var(--color-blood-light)]">🔒 {raidLockReason}</div>}
                       </div>
                     </div>
                     {raidKillCounts[raid.id] > 0 && (
