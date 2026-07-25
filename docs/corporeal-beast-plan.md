@@ -56,12 +56,15 @@ The Core is a **second live monster**, not a form of the boss. Both are on the f
 
 Spawn delays are counted in **boss attacks**, so the cadence tracks the pace of the fight rather than wall-clock ticks. Killing a Core only clears it — the boss sends another every 7–10 of its own attacks — so the fight is a running trade between damage on the boss and control of the prayer pool. Killing the boss takes its Core off the field.
 
+**Adds are a generic, data-driven capability, not a Corporeal Horror special case.** No engine or UI file mentions `dread_core`. A future boss gets an add by adding data only: point its `spawnsAdd` at a monster and flag that monster `isAdd`. `tests/bossAdds.test.ts` proves it — every behavioural test there runs on a synthetic boss/add pair with invented ids — and pins the contract (`spawnsAdd` resolves to a real `isAdd` monster; adds carry no drops).
+
 Rules live in `src/engine/bossAdds.js` (spec parsing, spawn-delay rolls, target resolution). `combat.js` holds only the wiring:
 
 - `createCombatState(monster, type, stance, spell, monstersData)` resolves the add definition and arms the first spawn.
 - `setCombatTarget(state, 'add' | 'boss')` — the only way to switch; a request to target a dead or absent add falls back to the boss, so a stale flag can never strand the player hitting nothing. The screen's target picker reuses the quick-prayer tile styling (`cb-slot.is-active` + ring), so the enemy being hit reads at a glance.
 - `resolveEnemySwing` is shared by the boss and the add, so both obey one accuracy/max-hit/mitigation/prayer-burn path. Two `monsterHit` events can land in one tick; the screen subtracts each event's damage rather than reading its `playerHP`, so they apply cumulatively.
 - `resolveTargetDeath` splits the two deaths: an add despawns and queues a replacement, only the boss can end the fight.
+- Damage events carry `toAdd`, so hit splats land over the HP bar of the enemy actually hit (`splatsFromCombatEvents` returns `{ monster, add, player }`).
 - Specials follow the selected target, so a queued spec is never silently redirected to the boss.
 
 Adds only exist on bosses, and `simulateIdleCombat` refuses bosses outright, so no idle-sim modelling was needed. The MCP boss-fight simulator targets the add on sight, the same call a player makes.
@@ -129,7 +132,8 @@ No D1 migration, no new endpoint, no save-format change.
 ## 9) Tests
 
 - `tests/corporealHorror.test.ts` — monster data, drop table shape and rates, shield chain, resistance and perk helpers, collection log / daily task / world wiring.
-- `tests/corporealHorrorCombat.test.ts` — spear vs non-spear damage in live combat *and* the idle sim, Aegis reduction in PvE and PvP (including hits summing to the reduced damage), Dread Core prayer burn and its zero floor, and the add lifecycle: spawn, both enemies swinging in one fight, damage following the selected target, an add death that neither ends the fight nor grants loot, replacement spawns, and the add clearing when the boss dies.
+- `tests/corporealHorrorCombat.test.ts` — spear vs non-spear damage in live combat *and* the idle sim, Aegis reduction in PvE and PvP (including hits summing to the reduced damage), Dread Core prayer burn and its zero floor.
+- `tests/bossAdds.test.ts` — the generic add engine on a synthetic boss: spawn, both enemies swinging in one fight, damage following the selected target, an add death that neither ends the fight nor grants loot, replacement spawns, the add clearing when the boss dies, hit-splat routing, and the JSON contract for adding another one.
 - `tests/mcpMonsterMechanics.test.ts` — the mechanics block and combine-recipe sources.
 - `tests/data-contracts.test.ts` — the nine new items added to the verified boss-unique list.
 

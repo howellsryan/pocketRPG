@@ -357,6 +357,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   const [deathModal, setDeathModal] = useState(null)
   const [isDesktopCombatLayout, setIsDesktopCombatLayout] = useState(false)
   const [monsterSplats, setMonsterSplats] = useState([])
+  const [addSplats, setAddSplats] = useState([])
   const [playerSplats, setPlayerSplats] = useState([])
   // 3D combat arena (Phase 2): renders inline in place of the HP bars for
   // monsters with a registered model; the 🎥/📊 chip swaps between the two,
@@ -627,11 +628,12 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       // Hit splats replace the chat-style "You hit X" / "Monster hits X" lines.
       const tickSplats = splatsFromCombatEvents(events)
       pushSplats(setMonsterSplats, tickSplats.monster)
+      pushSplats(setAddSplats, tickSplats.add)
       pushSplats(setPlayerSplats, tickSplats.player)
-      if (tickSplats.monster.length || tickSplats.player.length) {
+      if (tickSplats.monster.length || tickSplats.add.length || tickSplats.player.length) {
         setArenaSignal(prev => ({
           seq: (prev?.seq || 0) + 1,
-          hero: tickSplats.monster.length > 0,
+          hero: tickSplats.monster.length > 0 || tickSplats.add.length > 0,
           monster: tickSplats.player.length > 0,
           special: events.some(ev => ev.type === 'specialHit'),
         }))
@@ -2572,10 +2574,11 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       </div>
       <div class="relative mb-2">
         <HPBar current={Math.max(0, activeAdd.currentHP)} max={activeAdd.hitpoints} size="large" />
+        <HitSplatLayer splats={addSplats} />
       </div>
       {/* Target picker — same brass "on" treatment as the quick-prayer tiles, so
           the enemy you are hitting reads at a glance mid-fight. */}
-      <div class="cb-qa__grid" style={{ gridTemplateColumns: 'repeat(2, minmax(0, 1fr))' }}>
+      <div class="cb-qa__grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(118px, 1fr))' }}>
         <button
           class={'cb-slot' + (combat.addTargeted ? '' : ' is-active')}
           onClick={() => switchTarget('boss')}

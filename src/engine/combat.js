@@ -1030,7 +1030,7 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
     if (isImmune) {
       events.push({ type: 'immuneHit', immunity: formImmunity, monsterName: target.name })
     } else {
-      events.push({ type: 'playerHit', damage: actualDamage, monsterHP: target.currentHP })
+      events.push({ type: 'playerHit', damage: actualDamage, monsterHP: target.currentHP, toAdd: isAddTarget(state, target) })
       if (guthanHealAmount > 0) {
         events.push({ type: 'guthanHeal', healAmount: guthanHealAmount })
       }
@@ -1927,6 +1927,14 @@ export function applySpecialAttack(combatState, playerStats, equipment, itemsDat
 
     default:
       return { combatState, events: [] }
+  }
+
+  // Splats render over the HP bar of whichever enemy was hit, so every event
+  // from this spec carries the target it landed on.
+  if (targetsAdd) {
+    for (const ev of events) {
+      if (ev && (ev.type === 'specialHit' || ev.type === 'playerHit')) ev.toAdd = true
+    }
   }
 
   triggerEnrageIfNeeded(state, monster, events)

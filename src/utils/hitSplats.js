@@ -21,19 +21,23 @@ function makeHitSplat(value, variant) {
 }
 
 // Maps one tick's PvE combat events to splats per target.
-// Returns { monster: [...], player: [...] } — splats to show over the
-// monster's HP bar (damage the player dealt) and the player's HP bar
-// (damage the player took). A 0-value splat is a miss/blocked hit.
+// Returns { monster, add, player } — damage the player dealt to the boss, to
+// its spawned add, and damage the player took. Damage the player dealt is
+// routed by the event's `toAdd` flag, so hitting the add never splats over the
+// boss's HP bar. A 0-value splat is a miss/blocked hit.
 export function splatsFromCombatEvents(events) {
   const monster = []
+  const add = []
   const player = []
   for (const ev of events || []) {
     if (!ev) continue
+    const dealt = ev.toAdd ? add : monster
     if (ev.type === 'playerHit') {
-      monster.push(makeHitSplat(ev.damage))
+      dealt.push(makeHitSplat(ev.damage))
     } else if (ev.type === 'specialHit') {
-      for (const hit of ev.hits || []) monster.push(makeHitSplat(hit))
+      for (const hit of ev.hits || []) dealt.push(makeHitSplat(hit))
     } else if (ev.type === 'summonHit') {
+      // The summon always attacks the boss, never the add.
       monster.push(makeHitSplat(ev.damage, 'summon'))
     } else if (ev.type === 'monsterHit') {
       player.push(makeHitSplat(ev.damage))
@@ -43,7 +47,7 @@ export function splatsFromCombatEvents(events) {
       player.push(makeHitSplat(ev.damage))
     }
   }
-  return { monster, player }
+  return { monster, add, player }
 }
 
 // Maps PvP tick events (the engine's tick-tagged recentEvents entries) to
