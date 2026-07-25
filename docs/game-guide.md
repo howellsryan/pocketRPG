@@ -105,7 +105,7 @@ Raids are multi-boss gauntlets (for example the Vaults of Xyren) with big reward
 
 ## The Corporeal Horror
 
-The Corporeal Horror is a 2,000-hitpoint boss at Edgevale, unlocked by the quest The Heart of Shadows. It halves every hit that is not dealt with a spear, so bringing one roughly doubles your damage — a Krylth Spear is the standard choice. It alternates between two forms: the Horror itself, which hits up to 55 with crush, and the Dread Core, a short punish phase that hits softer but burns 8 prayer points on every landed hit. Skipping the fight costs 5 credits.
+The Corporeal Horror is a 2,000-hitpoint boss at Edgevale, unlocked by the quest The Heart of Shadows. It halves every hit that is not dealt with a spear, so bringing one roughly doubles your damage — a Krylth Spear is the standard choice. It hits up to 55 with crush, and partway into the fight it spawns a Dread Core: a separate 180-hitpoint monster, not a phase. The Horror keeps attacking the whole time the Core is up, so you take hits from both, and every landed Core hit burns 8 prayer points. Switch targets to destroy the Core — it drops nothing and does not count as a kill — then switch back to the boss. Clear one and the Horror sends in another after a few more of its own attacks, so you are trading damage on the boss for control of your prayer pool all fight. Skipping the fight costs 5 credits.
 
 Its drop table is the best shield source in the game. A Wraithbone Shield (1/64) plus a Sanctified Elixir (1/128) makes a Hallowed Wraithbone Shield; bind one of three sigils to that (each around 1/1,365) for the finished shield:
 

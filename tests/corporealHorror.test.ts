@@ -53,14 +53,26 @@ describe('The Corporeal Horror — monster data', () => {
     expect(monsterDamageMultiplier(boss, null)).toBe(0.5)
   })
 
-  it('cycles a long Horror phase and a short prayer-draining Dread Core', () => {
-    expect(boss.multiForm).toBe(true)
-    expect(boss.formCycleOrder).toEqual(['horror', 'dread_core'])
-    expect(boss.forms.horror.switchAfterAttacks).toEqual([8, 14])
-    expect(boss.forms.dread_core.switchAfterAttacks).toEqual([3, 5])
-    expect(boss.forms.dread_core.prayerDrainPerHit).toBe(8)
-    // The Dread Core is the punish phase, not the damage phase.
-    expect(boss.forms.dread_core.maxHit).toBeLessThan(boss.forms.horror.maxHit)
+  it('spawns the Dread Core as a second monster rather than switching into it', () => {
+    // A form change swaps one monster's stats; the Core is a separate enemy that
+    // fights alongside the boss, so the boss must NOT be multi-form.
+    expect(boss.multiForm).toBeUndefined()
+    expect(boss.forms).toBeUndefined()
+    expect(boss.spawnsAdd.monsterId).toBe('dread_core')
+    expect(boss.spawnsAdd.firstSpawnAfterAttacks).toEqual([4, 7])
+    expect(boss.spawnsAdd.respawnAfterAttacks).toEqual([10, 16])
+  })
+
+  it('gives the Dread Core its own stat block as a drop-less, unpickable add', () => {
+    const core = monsters.dread_core
+    expect(core.isAdd).toBe(true)
+    expect(core.summonedBy).toBe('corporeal_horror')
+    expect(core.prayerDrainPerHit).toBe(8)
+    // The Core is the punish, not the damage — and it must be killable quickly
+    // enough to be worth switching to.
+    expect(core.maxHit).toBeLessThan(boss.maxHit)
+    expect(core.hitpoints).toBeLessThan(boss.hitpoints / 5)
+    expect(core.drops).toEqual([])
   })
 
   it('drops every unique plus the OSRS-shaped secondaries', () => {

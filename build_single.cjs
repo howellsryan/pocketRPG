@@ -76,6 +76,7 @@ const sourceFiles = [
   'engine/prayerDrain.js',
   'engine/monsterDamageRules.js',
   'engine/damageReduction.js',
+  'engine/bossAdds.js',
   'engine/consumables.js',
   'engine/combat.js',
   'engine/combatRequirements.js',

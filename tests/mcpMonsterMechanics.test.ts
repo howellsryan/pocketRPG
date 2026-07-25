@@ -2,7 +2,7 @@
 // comes from — not just echo the stat block. Without these, an assistant tells
 // a player to bring a whip to a spear-gated boss.
 import { describe, expect, it } from 'vitest'
-import { monsterMechanics, itemSources } from '../functions/_lib/mcp/reference.js'
+import { monsterMechanics, itemSources, monstersIndex } from '../functions/_lib/mcp/reference.js'
 import monsters from '../src/data/monsters.json'
 
 const monstersData = monsters as Record<string, any>
@@ -23,14 +23,26 @@ describe('monsterMechanics', () => {
     expect(text).toMatch(/the_heart_of_shadows/)
   })
 
-  it('describes every form, its weakness and the Dread Core prayer burn', () => {
-    const forms = mechanics!.forms!
-    expect(forms.map((f: any) => f.id)).toEqual(['horror', 'dread_core'])
-    const core = forms.find((f: any) => f.id === 'dread_core')!
-    expect(core.prayerDrainPerHit).toBe(8)
-    expect(core.weakness).toBe('stab')
-    expect(core.maxHit).toBe(25)
-    expect(mechanics!.notes.join(' ')).toMatch(/burns 8 prayer points/)
+  it('describes the Dread Core as a second live monster, not a phase', () => {
+    const add = mechanics!.spawnsAdd!
+    expect(add.id).toBe('dread_core')
+    expect(add.hitpoints).toBe(180)
+    expect(add.maxHit).toBe(25)
+    expect(add.weakness).toBe('stab')
+    expect(add.prayerDrainPerHit).toBe(8)
+    expect(add.respawnAfterBossAttacks).toEqual([10, 16])
+    const text = mechanics!.notes.join(' ')
+    // The whole point of the correction: a client must not tell a player the
+    // boss stops attacking while the Core is up.
+    expect(text).toMatch(/separate monster, not a phase/)
+    expect(text).toMatch(/keeps attacking while it is up/)
+    expect(text).toMatch(/burns 8 prayer points/)
+    expect(text).toMatch(/does not count as a kill/)
+  })
+
+  it('keeps adds out of the monster index so they cannot be picked as a fight', () => {
+    expect(monstersIndex().some((m: any) => m.id === 'dread_core')).toBe(false)
+    expect(monstersIndex().some((m: any) => m.id === 'corporeal_horror')).toBe(true)
   })
 
   it('returns null for a monster with no special rules', () => {

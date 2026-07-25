@@ -12,9 +12,10 @@ const monsters = monstersData as Record<string, any>
 
 const getEntryId = (entry: any) => (typeof entry === 'object' ? entry.id : entry)
 
-// Every assignable monster: not a boss and not a raid boss.
+// Every assignable monster: not a boss, not a raid boss, and not an add (adds
+// only exist while their boss spawns them, so they are never a task).
 const assignableIds = Object.entries(monsters)
-  .filter(([, m]: [string, any]) => !m.boss && !m.raidBoss)
+  .filter(([, m]: [string, any]) => !m.boss && !m.raidBoss && !m.isAdd)
   .map(([id]) => id)
 
 // All monster ids referenced by any master pool (excluding composite task ids).

@@ -10609,56 +10609,12 @@
       "multiplier": 0.5,
       "exemptWeaponClass": "spear"
     },
-    "multiForm": true,
-    "initialForm": "horror",
-    "formCycleOrder": [
-      "horror",
-      "dread_core"
-    ],
-    "formSwitchMin": 8,
-    "formSwitchMax": 14,
-    "forms": {
-      "horror": {
-        "displayName": "The Corporeal Horror",
-        "icon": "\ud83d\udc41\ufe0f",
-        "attackStyle": "crush",
-        "weakness": "stab",
-        "maxHit": 55,
-        "attackBonus": 200,
-        "strengthBonus": 180,
-        "switchAfterAttacks": [
-          8,
-          14
-        ],
-        "defenceBonus": {
-          "stab": 25,
-          "slash": 200,
-          "crush": 200,
-          "magic": 150,
-          "ranged": 200
-        }
-      },
-      "dread_core": {
-        "displayName": "Dread Core",
-        "icon": "\ud83d\udd2e",
-        "attackStyle": "magic",
-        "weakness": "stab",
-        "maxHit": 25,
-        "attackBonus": 250,
-        "strengthBonus": 120,
-        "prayerDrainPerHit": 8,
-        "switchAfterAttacks": [
-          3,
-          5
-        ],
-        "defenceBonus": {
-          "stab": 60,
-          "slash": 220,
-          "crush": 220,
-          "magic": 200,
-          "ranged": 220
-        }
-      }
+    "maxHit": 55,
+    "weakness": "stab",
+    "spawnsAdd": {
+      "monsterId": "dread_core",
+      "firstSpawnAfterAttacks": [4, 7],
+      "respawnAfterAttacks": [10, 16]
     },
     "dropRolls": 1,
     "drops": [
@@ -10805,5 +10761,39 @@
       }
     ],
     "legacy_id": "corporeal_beast"
+  },
+  "dread_core": {
+    "id": "dread_core",
+    "name": "Dread Core",
+    "icon": "🔮",
+    "isAdd": true,
+    "summonedBy": "corporeal_horror",
+    "combatLevel": 210,
+    "hitpoints": 180,
+    "stats": {
+      "attack": 180,
+      "strength": 120,
+      "defence": 90,
+      "magic": 250,
+      "ranged": 1
+    },
+    "attackSpeed": 3,
+    "attackStyle": "magic",
+    "maxHit": 25,
+    "weakness": "stab",
+    "attackBonus": 250,
+    "strengthBonus": 120,
+    "prayerDrainPerHit": 8,
+    "defenceBonus": {
+      "stab": 20,
+      "slash": 60,
+      "crush": 60,
+      "magic": 40,
+      "ranged": 60
+    },
+    "drops": [],
+    "noSeedDrops": true,
+    "noCharmDrops": true,
+    "legacy_id": "dark_energy_core"
   }
 }

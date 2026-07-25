@@ -93,7 +93,6 @@ export function monsterMechanics(monster) {
         maxHit: form.maxHit ?? null,
         ...(form.immunity ? { immuneTo: form.immunity } : {}),
         ...(form.prayerDrainPerHit ? { prayerDrainPerHit: form.prayerDrainPerHit } : {}),
-        ...(form.switchAfterAttacks ? { lastsForAttacks: form.switchAfterAttacks } : {}),
       }))
     : null
   if (forms) {
@@ -103,8 +102,34 @@ export function monsterMechanics(monster) {
       if (form.immuneTo) notes.push(`${form.name}: immune to ${form.immuneTo}.`)
     }
   }
-  if (!notes.length && !forms) return null
-  return { notes, ...(forms ? { forms } : {}) }
+  if (monster.weakness) notes.push(`Weak to ${monster.weakness} — attack with a ${monster.weakness} weapon style.`)
+
+  // A spawned add is a second live monster, not a phase: both attack at once and
+  // the add has to be killed separately. Clients get its full stat block so they
+  // can decide whether to switch targets.
+  const spec = monster.spawnsAdd
+  const addDefinition = spec?.monsterId ? monstersData[spec.monsterId] : null
+  let add = null
+  if (addDefinition) {
+    add = {
+      id: addDefinition.id,
+      name: addDefinition.name,
+      hitpoints: addDefinition.hitpoints ?? null,
+      attackStyle: addDefinition.attackStyle ?? null,
+      weakness: addDefinition.weakness ?? null,
+      maxHit: addDefinition.maxHit ?? null,
+      attackSpeed: addDefinition.attackSpeed ?? null,
+      ...(addDefinition.prayerDrainPerHit ? { prayerDrainPerHit: addDefinition.prayerDrainPerHit } : {}),
+      firstSpawnAfterBossAttacks: spec.firstSpawnAfterAttacks ?? null,
+      respawnAfterBossAttacks: spec.respawnAfterAttacks ?? null,
+    }
+    notes.push(`Spawns a ${add.name} (${add.hitpoints} HP) mid-fight. It is a separate monster, not a phase — ${monster.name} keeps attacking while it is up, so you take hits from both until you kill it.`)
+    notes.push(`${add.name} attacks with ${add.attackStyle} for up to ${add.maxHit}${add.prayerDrainPerHit ? `, and every landed hit burns ${add.prayerDrainPerHit} prayer points` : ''}. It drops nothing and does not count as a kill.`)
+    notes.push(`Killing a ${add.name} only clears it; ${monster.name} spawns another after a few more of its own attacks.`)
+  }
+
+  if (!notes.length && !forms && !add) return null
+  return { notes, ...(forms ? { forms } : {}), ...(add ? { spawnsAdd: add } : {}) }
 }
 
 // ── Compact indexes (items.json/monsters.json are large; detail via inspect_*) ─
@@ -121,7 +146,8 @@ export function itemsIndex() {
 }
 
 export function monstersIndex() {
-  return monsterList().map((m) => ({
+  // Adds exist only as a boss spawn — they are never a fight a client can pick.
+  return monsterList().filter((m) => !m.isAdd).map((m) => ({
     id: m.id,
     name: m.name,
     combatLevel: m.combatLevel ?? null,

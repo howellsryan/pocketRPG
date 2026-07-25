@@ -36,20 +36,35 @@ Every player hit is halved unless the equipped weapon carries `weaponClass: "spe
 
 PvP is deliberately untouched: the field lives on monsters and no PvP path reads monster definitions.
 
-## 4) Dread Core
+## 4) Dread Core — an add, not a phase
 
-The boss cycles two forms using the existing `multiForm` engine, plus one new data field:
+The Core is a **second live monster**, not a form of the boss. Both are on the field at once, both attack on their own timers, and the player chooses which to swing at:
 
-| Form | Attack style | Max hit | Lasts | Extra |
-|---|---|---|---|---|
-| The Corporeal Horror | crush | 55 | 8–14 attacks | — |
-| Dread Core | magic | 25 | 3–5 attacks | **8 prayer points burned per landed hit** |
+| | The Corporeal Horror | Dread Core |
+|---|---|---|
+| Role | the kill | the punish |
+| Hitpoints | 2,000 | 180 |
+| Attack | crush, speed 4, max 55 | magic, speed 3, max 25 |
+| Extra | halves non-spear damage | **8 prayer points burned per landed hit** |
+| Reward | full drop table | none — no loot, no kill count, no slayer credit |
 
-Two small engine additions carry it:
-- `switchAfterAttacks` (number or `[min, max]`) on a form overrides the monster-level `formSwitchMin/Max`, so a short punish phase can alternate with a long main phase.
-- `prayerDrainPerHit` on a form (or the monster) drains the live prayer pool on a landed hit and emits a `prayerDrained` event, surfaced in the combat log.
+`dread_core` is its own `monsters.json` entry flagged `isAdd: true`; the boss carries the spawn cadence:
 
-The idle sim approximates multi-form bosses with base stats — pre-existing behaviour, unchanged here.
+```jsonc
+"spawnsAdd": { "monsterId": "dread_core", "firstSpawnAfterAttacks": [4, 7], "respawnAfterAttacks": [10, 16] }
+```
+
+Spawn delays are counted in **boss attacks**, so the cadence tracks the pace of the fight rather than wall-clock ticks. Killing a Core only clears it — the boss sends another after a few more of its own attacks — so the fight is a running trade between damage on the boss and control of the prayer pool. Killing the boss takes its Core off the field.
+
+Rules live in `src/engine/bossAdds.js` (spec parsing, spawn-delay rolls, target resolution). `combat.js` holds only the wiring:
+
+- `createCombatState(monster, type, stance, spell, monstersData)` resolves the add definition and arms the first spawn.
+- `setCombatTarget(state, 'add' | 'boss')` — the only way to switch; a request to target a dead or absent add falls back to the boss, so a stale flag can never strand the player hitting nothing.
+- `resolveEnemySwing` is shared by the boss and the add, so both obey one accuracy/max-hit/mitigation/prayer-burn path. Two `monsterHit` events can land in one tick; the screen subtracts each event's damage rather than reading its `playerHP`, so they apply cumulatively.
+- `resolveTargetDeath` splits the two deaths: an add despawns and queues a replacement, only the boss can end the fight.
+- Specials follow the selected target, so a queued spec is never silently redirected to the boss.
+
+Adds only exist on bosses, and `simulateIdleCombat` refuses bosses outright, so no idle-sim modelling was needed. The MCP boss-fight simulator targets the add on sight, the same call a player makes.
 
 ## 5) Drop table
 
@@ -114,11 +129,11 @@ No D1 migration, no new endpoint, no save-format change.
 ## 9) Tests
 
 - `tests/corporealHorror.test.ts` — monster data, drop table shape and rates, shield chain, resistance and perk helpers, collection log / daily task / world wiring.
-- `tests/corporealHorrorCombat.test.ts` — spear vs non-spear damage in live combat *and* the idle sim, Aegis reduction in PvE and PvP (including hits summing to the reduced damage), Dread Core prayer burn and its zero floor.
+- `tests/corporealHorrorCombat.test.ts` — spear vs non-spear damage in live combat *and* the idle sim, Aegis reduction in PvE and PvP (including hits summing to the reduced damage), Dread Core prayer burn and its zero floor, and the add lifecycle: spawn, both enemies swinging in one fight, damage following the selected target, an add death that neither ends the fight nor grants loot, replacement spawns, and the add clearing when the boss dies.
 - `tests/mcpMonsterMechanics.test.ts` — the mechanics block and combine-recipe sources.
 - `tests/data-contracts.test.ts` — the nine new items added to the verified boss-unique list.
 
 ## 10) Known gaps
 
 - **`npm run check:drops` is broken on Node 22** (`ERR_IMPORT_ATTRIBUTE_MISSING` on `src/data/world.json`) for *every* monster, not just this one. Pre-existing; flagged, not fixed. The economy figures in §5 were computed directly from the drop table instead.
-- No 3D arena model — the boss falls back to the paper doll / HP bars.
+- No 3D arena model — the boss falls back to the paper doll / HP bars. The add's HP bar and target toggle render alongside the arena panel rather than inside it.

@@ -199,7 +199,7 @@ export const KNOWLEDGE_CHUNKS = [
   "tags": [
    "guide"
   ],
-  "text": "The Corporeal Horror is a 2,000-hitpoint boss at Edgevale, unlocked by the quest The Heart of Shadows. It halves every hit that is not dealt with a spear, so bringing one roughly doubles your damage — a Krylth Spear is the standard choice. It alternates between two forms: the Horror itself, which hits up to 55 with crush, and the Dread Core, a short punish phase that hits softer but burns 8 prayer points on every landed hit. Skipping the fight costs 5 credits. Its drop table is the best shield source in the game. A Wraithbone Shield (1/64) plus a Sanctified Elixir (1/128) makes a Hallowed Wraithbone Shield; bind one of three sigils to that (each around 1/1,365) for the finished shield: - **Runeward Wraithbone Shield** — +20 magic attack and +10% magic damage, the strongest magic shield in the realm. - **Aegis Wraithbone Shield** — the heaviest defences of the three, and a 70% chance to turn aside a quarter of any incoming hit. The reduction works in PvE and PvP alike. - **Vigil Wraithbone Shield** — halves how fast your prayers drain, in live and idle combat. It also drops onyx bolts (e), charms, large rune stacks, herbs and elite clue scrolls."
+  "text": "The Corporeal Horror is a 2,000-hitpoint boss at Edgevale, unlocked by the quest The Heart of Shadows. It halves every hit that is not dealt with a spear, so bringing one roughly doubles your damage — a Krylth Spear is the standard choice. It hits up to 55 with crush, and partway into the fight it spawns a Dread Core: a separate 180-hitpoint monster, not a phase. The Horror keeps attacking the whole time the Core is up, so you take hits from both, and every landed Core hit burns 8 prayer points. Switch targets to destroy the Core — it drops nothing and does not count as a kill — then switch back to the boss. Clear one and the Horror sends in another after a few more of its own attacks, so you are trading damage on the boss for control of your prayer pool all fight. Skipping the fight costs 5 credits. Its drop table is the best shield source in the game. A Wraithbone Shield (1/64) plus a Sanctified Elixir (1/128) makes a Hallowed Wraithbone Shield; bind one of three sigils to that (each around 1/1,365) for the finished shield: - **Runeward Wraithbone Shield** — +20 magic attack and +10% magic damage, the strongest magic shield in the realm. - **Aegis Wraithbone Shield** — the heaviest defences of the three, and a 70% chance to turn aside a quarter of any incoming hit. The reduction works in PvE and PvP alike. - **Vigil Wraithbone Shield** — halves how fast your prayers drain, in live and idle combat. It also drops onyx bolts (e), charms, large rune stacks, herbs and elite clue scrolls."
  },
  {
   "id": "guide_farming",
@@ -3248,6 +3248,15 @@ export const KNOWLEDGE_CHUNKS = [
    "boss"
   ],
   "text": "The Corporeal Horror is a boss at combat level 785 with 2000 HP, attacking with crush. Drops: Runeward Sigil (1 in 1,364), Aegis Sigil (1 in 1,364), Vigil Sigil (1 in 1,364), Uncut Onyx (1 in 500), Sanctified Elixir (1 in 128), Wraithbone Shield (1 in 64), Runeforged Platebody (1 in 50), Runeforged 2h Sword (1 in 50), Clue Scroll Elite (1 in 50), Onyx Bolt E (1 in 25), Thornspire (1 in 13), Snapdrake (1 in 10), Rynarr Weed (1 in 8), Red Charm (1 in 7), Soul Rune (1 in 7), Law Rune (1 in 6), Death Rune (1 in 5), Blood Rune (1 in 5), Blue Charm (1 in 4), Green Charm (1 in 3), Coins (1 in 2)."
+ },
+ {
+  "id": "monster_dread_core",
+  "title": "Monster: Dread Core — stats and drops",
+  "tags": [
+   "monster",
+   "drops"
+  ],
+  "text": "Dread Core is a monster at combat level 210 with 180 HP, attacking with magic."
  },
  {
   "id": "clue_medium",
