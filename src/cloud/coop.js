@@ -30,6 +30,15 @@ async function coopRequest(path, options = {}) {
   return body
 }
 
+// The live session id, mirrored at module scope so App can tell a co-op fight
+// is in progress without threading state through every screen. While it is set
+// the server owns this character, so client-side progress reporting (the idle
+// catch-up modal) must stay out of the way — the same role `pvp.phase ===
+// 'in_match'` plays for duels.
+let activeCoopSessionId = null
+export function setActiveCoopSession(sessionId) { activeCoopSessionId = sessionId ?? null }
+export function getActiveCoopSession() { return activeCoopSessionId }
+
 export const coopApi = {
   listBosses: () => coopRequest('/api/coop/bosses'),
   join: (bossId) => coopRequest('/api/coop/join', { method: 'POST', body: JSON.stringify({ bossId }) }),

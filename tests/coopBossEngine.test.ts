@@ -163,14 +163,38 @@ describe('coopBossEngine — shared boss', () => {
   })
 
   it('never lets the boss hit more than one member on the same tick', () => {
+    alwaysHit()
     let state = joinedState([1, 2, 3])
-    for (let i = 0; i < 40; i++) {
+    for (let i = 0; i < 60; i++) {
       const hpBefore = Object.fromEntries(Object.entries(state.members).map(([id, m]: any) => [id, m.hp]))
       const out = processCoopTick(state, [], deps, Date.now())
       state = out.stateNext
       const struck = Object.entries(state.members).filter(([id, m]: any) => m.hp < hpBefore[id])
       expect(struck.length).toBeLessThanOrEqual(1)
     }
+  })
+
+  it('does not hand the boss a free extra swing when it kills its target', () => {
+    alwaysHit()
+    let state = joinedState([1, 2])
+    // Member 1 is the target and about to die; member 2 ticks after them, so a
+    // mid-tick retarget must not let the boss swing again on the same tick.
+    state.targetCharId = '1'
+    state.members['1'].hp = 1
+    state.members['1'].combat.monsterAttackTimer = 0
+    state.members['2'].combat.monsterAttackTimer = 0
+    const hpBefore = state.members['2'].hp
+
+    let died = false
+    for (let i = 0; i < 12 && !died; i++) {
+      const out = processCoopTick(state, [], deps, Date.now())
+      state = out.stateNext
+      died = out.events.some((e: any) => e.type === 'memberDeath')
+      if (died) expect(state.members['2'].hp).toBe(hpBefore)
+    }
+    expect(died).toBe(true)
+    expect(state.members['1'].status).toBe('dead')
+    expect(state.targetCharId).toBe('2')
   })
 
   it('a member who joins mid-fight fights the damaged boss, not a fresh one', () => {

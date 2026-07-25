@@ -106,6 +106,7 @@ let hasUnsyncedChanges = false
 // push — that race is what drove the intermittent save_revision_conflict. The
 // operation calls pushNow() directly, which deliberately bypasses this gate.
 let savesSuspended = false
+let saveSuspendCount = 0
 // Set once the server rejects a push with save_revision_conflict — our local
 // state has diverged from the authoritative cloud copy. We stop pushing the
 // stale snapshot (it only repeats the 409) and let the app roll back to the
@@ -357,8 +358,15 @@ if (typeof window !== 'undefined') {
 // Public: freeze/unfreeze the background save cadence while a critical,
 // all-or-nothing operation (paid skip) owns the single in-flight write. The
 // operation drives its own durable save via pushNow(), which bypasses this gate.
-export function suspendSaves() { savesSuspended = true }
-export function resumeSaves() { savesSuspended = false }
+// Refcounted so nested/overlapping holders are safe: a short blocking op (the
+// game lock) can run inside a long one (a co-op boss session, where the server
+// owns the save) without the inner resume lifting the outer suspension.
+export function suspendSaves() { saveSuspendCount += 1; savesSuspended = true }
+export function resumeSaves() {
+  saveSuspendCount = Math.max(0, saveSuspendCount - 1)
+  savesSuspended = saveSuspendCount > 0
+}
+export function saveSuspensionDepth() { return saveSuspendCount }
 // Public: has the server rejected our state as diverged? The app uses this to
 // short-circuit its own save retry loops and trigger a cloud rollback.
 export function isSaveConflict() { return conflictPending }
@@ -588,6 +596,7 @@ export function resetSyncState() {
   inFlightPromise = null
   pendingSaveOptions = {}
   savesSuspended = false
+  saveSuspendCount = 0
   conflictPending = false
   pendingCriticalSnapshotSource = null
   pendingCriticalReasons.clear()

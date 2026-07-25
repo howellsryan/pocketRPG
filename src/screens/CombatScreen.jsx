@@ -38,7 +38,7 @@ import { getCombatType, resolveMagicSpell, equipItem, checkEquipRequirements, pl
 import { RAID_TASK_META } from '../engine/slayerMasters.js'
 import { resolveSpecialEnergyCost, canAffordSpecialAttack, formatSpecialEnergyCostLabel } from '../engine/specialAttackEnergy.js'
 import { api, getToken, getCharacterId, getOneLifeMode, isDemoMode } from '../cloud/api.js'
-import { pullSave, applyCloudSave, requestCriticalPushSave, pushNow } from '../cloud/sync.js'
+import { pullSave, applyCloudSave, requestCriticalPushSave, pushNow, suspendSaves, resumeSaves } from '../cloud/sync.js'
 import { pvpApi } from '../cloud/pvp.js'
 import monstersData from '../data/monsters.json'
 import worldData from '../data/world.json'
@@ -49,7 +49,7 @@ import prayersData from '../data/prayers.json'
 import spellsData from '../data/spells.json'
 import raidsData from '../data/raids.json'
 import { isCoopBossId } from '../engine/coopBossEngine.js'
-import { coopApi } from '../cloud/coop.js'
+import { coopApi, setActiveCoopSession } from '../cloud/coop.js'
 import { SCREENS, formatDropChance } from '../utils/constants.js'
 import { hasEpicLootDrop, getItemUnitValue, getLootTotalValue } from '../utils/itemValue.js'
 import { splatsFromCombatEvents, HIT_SPLAT_DURATION_MS } from '../utils/hitSplats.js'
@@ -1280,14 +1280,20 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   const checkRaidRequirements = (raid) => checkRaidRequirementsPure(raid, { completedQuests })
 
   // The local save loop is suspended for exactly as long as a co-op session is
-  // held. Tying it to the session state rather than the join/leave handlers
-  // means navigating away mid-fight releases it too, instead of stranding the
-  // client with saves suspended.
+  // held, because the server owns this character's save for the duration.
+  // Deliberately NOT lockGame(): that also raises the "Saving your progress…"
+  // blocking overlay, which is meant for short operations and would sit on top
+  // of the whole fight. Tying it to the session state rather than the
+  // join/leave handlers means navigating away mid-fight releases it too.
   useEffect(() => {
     if (!coopSessionId) return undefined
-    lockGame()
-    return () => unlockGame()
-  }, [coopSessionId, lockGame, unlockGame])
+    suspendSaves()
+    setActiveCoopSession(coopSessionId)
+    return () => {
+      setActiveCoopSession(null)
+      resumeSaves()
+    }
+  }, [coopSessionId])
 
   // Co-op needs a cloud account (the server owns the fight), so the offline demo
   // always goes straight to the solo path.

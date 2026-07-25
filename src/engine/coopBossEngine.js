@@ -444,13 +444,18 @@ export function processCoopTick(state, intents, { itemsData, monstersData, praye
   reselectTarget(next)
   const memberIds = Object.keys(next.members).sort((a, b) => Number(a) - Number(b))
   let kill = null
+  // One boss, one swing per tick. Killing the target retargets mid-loop, so
+  // without this the newly-picked target's session would resolve a SECOND boss
+  // attack on the same tick — the boss getting a free extra hit for every
+  // player it drops.
+  let bossSwungThisTick = false
 
   for (const id of memberIds) {
     const member = next.members[id]
     if (member.status !== 'alive') continue
     if (next.boss.currentHP <= 0) break
 
-    const isTarget = next.targetCharId === id
+    const isTarget = next.targetCharId === id && !bossSwungThisTick
     const engine = hydrateCombatState(next, member, monstersData, spellsData)
     if (!engine) continue
     // Invariant 1: a non-target member's session must never resolve a boss
@@ -491,9 +496,15 @@ export function processCoopTick(state, intents, { itemsData, monstersData, praye
     }
 
     for (const ev of engineEvents) {
-      if (ev.type === 'monsterHit' && isTarget) {
+      // Incoming from the boss — only the member it is actually facing.
+      if ((ev.type === 'monsterHit' || ev.type === 'dragonfireHit') && isTarget) {
         member.hp = Math.max(0, member.hp - (ev.damage || 0))
-      } else if ((ev.type === 'dragonfireHit' || ev.type === 'boltProc') && isTarget && ev.selfDamage) {
+        bossSwungThisTick = true
+      } else if (ev.type === 'monsterMiss' && isTarget) {
+        bossSwungThisTick = true
+      // Self-inflicted (blood-forfeit bolts): costs the shooter regardless of
+      // who the boss happens to be facing.
+      } else if (ev.type === 'boltProc' && ev.selfDamage) {
         member.hp = Math.max(0, member.hp - ev.selfDamage)
       } else if (ev.type === 'guthanHeal' || ev.type === 'sangHeal') {
         member.hp = Math.min(member.maxHP, member.hp + (ev.healAmount || 0))
