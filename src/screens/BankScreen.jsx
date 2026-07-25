@@ -163,9 +163,10 @@ export default function BankScreen({ onBack }) {
     const newBank = { ...bank }
     const updatedEntry = { ...bankEntry, quantity: bankEntry.quantity - actualWithdrawn }
     if (withdrawnPool > 0) {
-      const remainingCharges = poolCharges - withdrawnPool
-      if (remainingCharges > 0) updatedEntry.charges = remainingCharges
-      else delete updatedEntry.charges
+      // Explicit 0 rather than deleting the field: an absent `charges` means
+      // "untouched" to preserveBankCharges and would restore the pool we just
+      // handed to the player.
+      updatedEntry.charges = poolCharges - withdrawnPool
     }
     if (updatedEntry.quantity <= 0) {
       delete newBank[itemId]

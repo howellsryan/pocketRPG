@@ -21,6 +21,7 @@ import itemsData from '../data/items.json'
 import prayersData from '../data/prayers.json'
 import { normaliseDungeoneeringTokens, isDungeoneeringRewardAction } from '../engine/dungeoneeringTokens.js'
 import { applyTaskResult } from '../engine/applyTaskResult.js'
+import { preserveBankCharges } from '../engine/bankCharges.js'
 import { isBackground, getActivityKey } from '../engine/activityRegistry.js'
 import {
   saveActivityProgress, getActivityProgress, hydrateActivityLedger,
@@ -811,7 +812,10 @@ export function GameProvider({ children }) {
   }, [markDirty])
 
   const updateBank = useCallback((newBank) => {
-    setBank({ ...newBank })
+    // Wholesale bank replacement is the one funnel every screen writes through,
+    // so the charge-preservation invariant (src/engine/bankCharges.js) is
+    // enforced here rather than trusted to each call site.
+    setBank(prev => ({ ...preserveBankCharges(prev, newBank) }))
     markDirty('bank')
   }, [markDirty])
 

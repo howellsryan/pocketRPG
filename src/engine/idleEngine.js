@@ -43,11 +43,19 @@ function hasGatherAutoBankUnlock(stats) {
   return getLevelFromXP(stats?.construction?.xp || 0) >= GATHER_AUTOBANK_CONSTRUCTION_LEVEL
 }
 
+// A charged item (charged weapon, shardglass tool) is gear in use, not loot:
+// the bank pools charges into one per-item scalar with no per-instance
+// identity, so banking it can only lose charges. Bank trips leave it carried.
+function isUnbankableSlot(slot, excludedItemIds) {
+  if (!slot) return true
+  if (excludedItemIds && excludedItemIds.has(slot.itemId)) return true
+  return (Number(slot.charges) || 0) > 0
+}
+
 /** Move every inventory slot into the banked totals and clear the inventory, skipping excludedItemIds. */
 function bankEverything(inv, itemsBanked, excludedItemIds) {
   for (let i = 0; i < inv.length; i++) {
-    if (!inv[i]) continue
-    if (excludedItemIds && excludedItemIds.has(inv[i].itemId)) continue
+    if (isUnbankableSlot(inv[i], excludedItemIds)) continue
     itemsBanked[inv[i].itemId] = (itemsBanked[inv[i].itemId] || 0) + inv[i].quantity
     inv[i] = null
   }
@@ -55,8 +63,7 @@ function bankEverything(inv, itemsBanked, excludedItemIds) {
 
 /** True if a bank trip would actually free a slot (i.e. not every occupied slot is excluded). */
 function hasBankableItems(inv, excludedItemIds) {
-  if (!excludedItemIds || excludedItemIds.size === 0) return inv.some(Boolean)
-  return inv.some(slot => slot && !excludedItemIds.has(slot.itemId))
+  return inv.some(slot => slot && !isUnbankableSlot(slot, excludedItemIds))
 }
 
 /**
