@@ -1296,6 +1296,7 @@ html, body, #app {
 .cb-phase__bonuses { display: flex; justify-content: space-between; font-size: 10.5px; font-weight: 700; color: var(--fm-ink-soft); margin-bottom: 8px; }
 .cb-phase__v { font-family: var(--font-mono); color: var(--fm-ember-deep); }
 .cb-phase__weak { font-size: 10px; color: var(--fm-ink-faint); text-transform: capitalize; margin-top: 6px; }
+.cb-phase__note { font-size: 10px; color: var(--fm-ink-faint); margin-top: 4px; }
 .cb-statgrid--tight { grid-template-columns: repeat(5, 1fr); gap: 5px; }
 .cb-statgrid--tight .cb-stat { padding: 6px 4px; gap: 1px; border-radius: 8px; }
 .cb-statgrid--tight .cb-stat__k { font-size: 8px; }

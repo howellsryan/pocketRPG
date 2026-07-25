@@ -14,6 +14,7 @@ import {
   getMonsterWeakness,
   getMonsterAttackStyles,
   getMonsterMaxHit,
+  getMonsterAddInfo,
 } from '../src/utils/combatArt.js'
 import monsters from '../src/data/monsters.json' assert { type: 'json' }
 
@@ -139,5 +140,27 @@ describe('combatArt', () => {
     expect(getStyleArt('ranged').label).toBe('Ranged')
     expect(getStyleArt('magic').label).toBe('Magic')
     expect(getStyleArt(undefined as any).label).toBe('Melee')
+  })
+
+  it('resolves a boss add so the info modals can show both monsters', () => {
+    const info = getMonsterAddInfo(monstersData.corporeal_horror)!
+    expect(info.add.id).toBe('dread_core')
+    expect(info.add.name).toBe('Dread Core')
+    expect(info.maxHit).toBe(monstersData.dread_core.maxHit)
+    expect(info.spawnLabel).toBe('Spawns every 7–10 boss attacks')
+  })
+
+  it('returns null for monsters that summon nothing', () => {
+    expect(getMonsterAddInfo(monstersData.cave_goblin)).toBeNull()
+    expect(getMonsterAddInfo(null as any)).toBeNull()
+  })
+
+  it('covers every authored add, so a new one surfaces without code changes', () => {
+    for (const monster of Object.values(monstersData)) {
+      if (!(monster as any).spawnsAdd) continue
+      const info = getMonsterAddInfo(monster as any)
+      expect(info, `${(monster as any).id} add must resolve`).not.toBeNull()
+      expect(info!.add.isAdd).toBe(true)
+    }
   })
 })

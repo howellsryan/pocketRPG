@@ -13,6 +13,7 @@ import {
   getMonsterAttackStyles,
   getMonsterMaxHit,
   getMonsterLocationLabel,
+  getMonsterAddInfo,
 } from '../utils/combatArt.js'
 
 // Rarity colour bucket from a 0–1 drop chance (mirrors the design's tiers).
@@ -148,6 +149,7 @@ export function CombatMonsterInfoSheet({ monster, categoryKey, itemsData, onClos
   const weakness = getMonsterWeakness(monster)
   const maxHit = getMonsterMaxHit(monster)
   const uniques = loggedUniques('monsters', monster.id)
+  const addInfo = getMonsterAddInfo(monster)
   const regularDrops = [
     ...(monster.drops || []).filter(d => !uniques.includes(d.itemId)),
     ...getMonsterSeedDrops(monster),
@@ -230,6 +232,39 @@ export function CombatMonsterInfoSheet({ monster, categoryKey, itemsData, onClos
                     {form.weakness && <div class="cb-phase__weak">Weak to: {form.weakness}</div>}
                   </div>
                 ))}
+              </div>
+            </>
+          )}
+
+          {addInfo && (
+            <>
+              <div class="cb-sheet__sec">Summoned</div>
+              <div class="cb-phases">
+                <div class="cb-phase">
+                  <div class="cb-phase__head">
+                    <span class="cb-phase__name" style={{ color: getStyleArt(addInfo.add.attackStyle).color }}>
+                      {addInfo.add.icon ? `${addInfo.add.icon} ` : ''}{addInfo.add.name}
+                    </span>
+                    <span class="cb-phase__maxhit">Max Hit {addInfo.maxHit}</span>
+                  </div>
+                  <div class="cb-phase__bonuses">
+                    <span>CB <span class="cb-phase__v">{addInfo.add.combatLevel}</span></span>
+                    <span>HP <span class="cb-phase__v">{addInfo.add.hitpoints}</span></span>
+                    <span>ATK <span class="cb-phase__v">{addInfo.add.attackBonus ?? 0}</span></span>
+                  </div>
+                  <div class="cb-statgrid cb-statgrid--tight">
+                    {['stab', 'slash', 'crush', 'magic', 'ranged'].map(s => (
+                      <div key={s} class="cb-stat">
+                        <span class="cb-stat__k">{s}</span>
+                        <span class="cb-stat__v" style={{ color: (addInfo.add.defenceBonus?.[s] ?? 0) >= 0 ? '#2e7d32' : '#a93226' }}>
+                          {(addInfo.add.defenceBonus?.[s] ?? 0) >= 0 ? '+' : ''}{addInfo.add.defenceBonus?.[s] ?? 0}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                  {addInfo.add.weakness && <div class="cb-phase__weak">Weak to: {addInfo.add.weakness}</div>}
+                  {addInfo.spawnLabel && <div class="cb-phase__note">{addInfo.spawnLabel}</div>}
+                </div>
               </div>
             </>
           )}
