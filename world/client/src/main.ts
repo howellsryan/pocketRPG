@@ -379,6 +379,17 @@ function enterWorld(session: WorldSession): void {
     }
   })
 
+  // Closing the tab is a deliberate exit, so say so: the server flushes the save
+  // and releases the world lock immediately instead of holding both for the
+  // 60s linger, which is what left the idle game unable to save on the way back.
+  // `persisted` means the page went into the back/forward cache and may return —
+  // that IS what linger is for, so leave those alone. Best-effort by nature: a
+  // frame that never makes it off the tab just falls back to the linger flush.
+  window.addEventListener('pagehide', (event) => {
+    if ((event as PageTransitionEvent).persisted) return
+    if (authed && socket.readyState === WebSocket.OPEN) send(socket, { t: 'leave' })
+  })
+
   /** Repeat welcome after a reconnect: snap self to the server's position,
    * replace pack/stats, and drop every other entity — the intro diff that
    * follows the welcome repopulates npcs/others/loot/rock states. */

@@ -25,6 +25,7 @@ const WELL_FORMED: Record<string, unknown> = {
   teleport: { t: 'teleport', placeId: 'lumbright' },
   follow: { t: 'follow', targetId: '2' },
   logout: { t: 'logout' },
+  leave: { t: 'leave' },
   ping: { t: 'ping', n: 1 },
 }
 

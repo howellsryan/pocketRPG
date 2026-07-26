@@ -56,6 +56,10 @@ export type ClientMessage =
    * combat, or the target dying/leaving/logging out — see tick.ts). */
   | { t: 'follow'; targetId: string }
   | { t: 'logout' }
+  /** The tab is really going away (closed or navigated off), as opposed to a
+   * socket that dropped by accident. Flushes and releases the save lock now
+   * instead of waiting out the linger grace. */
+  | { t: 'leave' }
   | { t: 'ping'; n: number }
 
 export type ZoneEvent =
@@ -307,6 +311,8 @@ export function parseClientMessage(raw: unknown): ClientMessage | null {
     }
     case 'logout':
       return { t: 'logout' }
+    case 'leave':
+      return { t: 'leave' }
     case 'ping': {
       const n = (raw as Record<string, unknown>).n
       return typeof n === 'number' ? { t: 'ping', n } : null

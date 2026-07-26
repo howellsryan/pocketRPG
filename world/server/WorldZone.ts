@@ -707,20 +707,27 @@ export class WorldZone extends Server<Env> {
         this.handleFollow(player, message.targetId)
         break
       case 'logout':
-        void this.logout(player)
+        void this.depart(player, 'logout')
+        break
+      case 'leave':
+        void this.depart(player, 'leave')
         break
       case 'hello':
         break
     }
   }
 
-  /** Explicit logout: remove the player now (no linger), flush + checkpoint, tell
-   * others they left, and close the socket. The client clears its session. */
-  private async logout(player: Player): Promise<void> {
+  /** Leaving on purpose — an explicit logout, or a tab actually being closed.
+   * Removes the player now, with no linger: the grace period exists for sockets
+   * that dropped by accident, and sitting on the save lock for a minute after a
+   * deliberate exit is what leaves the idle game unable to save when the player
+   * switches straight back to it. Flushes, checkpoints, releases the lock, then
+   * closes. `logout` also tells the client, which clears its stored session. */
+  private async depart(player: Player, reason: 'logout' | 'leave'): Promise<void> {
     const conn = player.conn
     await this.removeAndFlush(player)
-    send(conn, { t: 'error', code: 'logged_out', msg: 'You have left the world.' })
-    conn.close(1000, 'logout')
+    if (reason === 'logout') send(conn, { t: 'error', code: 'logged_out', msg: 'You have left the world.' })
+    conn.close(1000, reason)
   }
 
   /** Takes an equipped item off, returning it to the pack (reverse of equip):
