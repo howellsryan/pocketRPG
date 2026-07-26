@@ -5,6 +5,7 @@ import { usePvp } from '../state/pvpState.jsx'
 import PvpLobbyModal from './PvpLobbyModal.jsx'
 import PvpCombatScreen from './PvpCombatScreen.jsx'
 import CoopBossScreen from './CoopBossScreen.jsx'
+import CoopSessionBrowser, { CoopSessionList } from '../components/CoopSessionBrowser.jsx'
 import Modal from '../components/Modal.jsx'
 import LootResultModal from '../components/LootResultModal.jsx'
 import HPBar from '../components/HPBar.jsx'
@@ -185,6 +186,11 @@ function getMonsterCategoryKey(monsterId) {
   return MONSTER_CATEGORY_KEY[monsterId]
 }
 
+// How often the picker re-reads the open co-op rooms. Slow enough that an idle
+// picker is cheap, fast enough that a group opened while the player is browsing
+// shows up before they have finished scrolling.
+const COOP_BROWSER_POLL_MS = 15000
+
 // Dungeon mode (per-place foe list): the place's combat monsters split into
 // Monsters / Bosses plus its raids — the same rows the world-wide picker shows,
 // filtered to one place and re-grouped. Refs come from the same
@@ -348,6 +354,10 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   // A room the server still holds this character for, from the picker's own
   // headcount fetch. Only read while recovering a join, never rendered.
   const heldCoopSessionRef = useRef(null)
+  // Every open room across every boss, for the picker's session browser.
+  const [coopBrowser, setCoopBrowser] = useState({ sessions: [], loading: true, activeSessionId: null })
+  const [coopJoiningSession, setCoopJoiningSession] = useState(null)
+  const [showCoopSessions, setShowCoopSessions] = useState(false)
 
   // Dungeon mode: this screen renders one place's foes (Monsters / Bosses /
   // Raids) instead of the world-wide picker. PvP is hidden (not place-bound);
@@ -1403,14 +1413,46 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     return () => { cancelled = true }
   }, [coopChoice])
 
+  // The session browser's poll. Runs only while the picker is the visible
+  // screen: a fight has its own tick, and this endpoint sweeps stale rooms on
+  // every call, so polling it from a backgrounded screen is pure server load.
+  const coopBrowserActive = !combat && !coopSessionId && !isDungeon && !isDemo
+  const reloadCoopBrowserRef = useRef(null)
+  useEffect(() => {
+    if (!coopBrowserActive) return undefined
+    let cancelled = false
+    const load = async () => {
+      try {
+        const res = await coopApi.listBosses()
+        if (cancelled) return
+        const activeSessionId = Number.isFinite(res?.activeSessionId) ? res.activeSessionId : null
+        heldCoopSessionRef.current = activeSessionId
+        const sessions = (res?.bosses || [])
+          .flatMap((boss) => (boss.sessions || []).map((s) => ({ ...s, bossId: s.bossId || boss.bossId })))
+          .sort((a, b) => (b.memberCount || 0) - (a.memberCount || 0) || a.sessionId - b.sessionId)
+        setCoopBrowser({ sessions, loading: false, activeSessionId })
+      } catch {
+        if (!cancelled) setCoopBrowser((prev) => ({ ...prev, loading: false }))
+      }
+    }
+    reloadCoopBrowserRef.current = load
+    load()
+    const timer = setInterval(load, COOP_BROWSER_POLL_MS)
+    return () => {
+      cancelled = true
+      clearInterval(timer)
+      reloadCoopBrowserRef.current = null
+    }
+  }, [coopBrowserActive])
+
   // Joins, releasing a stale hold first if one is in the way. The server refuses
   // to move a character between rooms ("leave it first") because the old room
   // still holds their pack — but a player whose last fight ended in a refresh has
   // no way to leave it by hand, so do it for them and take them where they asked
   // to go. Leaving writes that fight's XP and supplies back onto the save.
-  const joinCoopWithRecovery = async (bossId) => {
+  const joinCoopWithRecovery = async (bossId, sessionId = null) => {
     try {
-      return await coopApi.join(bossId)
+      return await coopApi.join(bossId, sessionId)
     } catch (err) {
       const held = heldCoopSessionRef.current
       if (err?.body?.code !== 'CHARACTER_IN_COOP_SESSION' || !held) throw err
@@ -1418,14 +1460,14 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       // there first) — that is the outcome we wanted, so try the join either way.
       try { await coopApi.leave(held) } catch { /* the join below reports the real state */ }
       heldCoopSessionRef.current = null
-      return await coopApi.join(bossId)
+      return await coopApi.join(bossId, sessionId)
     }
   }
 
   // Joins the shared fight for a boss. The save is flushed first: the server
   // snapshots it on join and owns inventory/XP from that moment, so anything
   // still only in the local client would be lost.
-  const startCoopFight = async (monster) => {
+  const startCoopFight = async (monster, sessionId = null) => {
     if (isDemo) {
       addToast('🔒 Group bossing is available with a free account.', 'info')
       return
@@ -1436,6 +1478,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       return
     }
     setCoopJoining(monster.id)
+    setCoopJoiningSession(sessionId)
     try {
       const saved = await runLockedSave()
       // A co-op lock is not a failed save. It means a room ALREADY owns this
@@ -1447,10 +1490,14 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
         addToast('Could not save before joining — try again.', 'error')
         return
       }
-      const res = await joinCoopWithRecovery(monster.id)
+      const res = await joinCoopWithRecovery(monster.id, sessionId)
+      setShowCoopSessions(false)
       setCoopSessionId(res.sessionId)
     } catch (err) {
       const code = err?.body?.code
+      // The group filled up or ended between the browser rendering it and the
+      // tap. Re-poll so the row the player is looking at stops lying to them.
+      if (code === 'COOP_SESSION_UNAVAILABLE') reloadCoopBrowserRef.current?.()
       // BOSS_REQUIREMENTS_NOT_MET carries the same player-ready sentence the
       // client's own gate shows ("Complete X to fight Y"), so pass it through
       // rather than rebuilding a worse one from the monster.
@@ -1459,9 +1506,11 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       else if (code === 'CHARACTER_IN_ACTIVE_MATCH') addToast('Finish your duel first.', 'error')
       else if (code === 'CHARACTER_IN_COOP_SESSION') addToast(err?.body?.error || 'Leave your current group fight first.', 'error')
       else if (code === 'COOP_UNAVAILABLE') addToast('Group boss fights are offline right now — fight alone for the moment.', 'error')
+      else if (code === 'COOP_SESSION_UNAVAILABLE') addToast(err?.body?.error || 'That group is no longer taking fighters.', 'error')
       else addToast(err?.message || 'Could not join the fight.', 'error')
     } finally {
       setCoopJoining(null)
+      setCoopJoiningSession(null)
     }
   }
 
@@ -2274,6 +2323,14 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
 
   // Monster picker
   if (!combat) {
+    const coopBrowserPanel = coopBrowserActive ? (
+      <CoopSessionBrowser
+        sessions={coopBrowser.sessions}
+        monstersData={monstersData}
+        loading={coopBrowser.loading}
+        onOpen={() => setShowCoopSessions(true)}
+      />
+    ) : null
     return (
       <>
       {/* Mobile uses the artsy CombatMobileSelect; desktop keeps the responsive
@@ -2309,6 +2366,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             showPvp={!isIronman && !isOneLife && !isDemo && !isDungeon}
             onOpenPvp={() => setShowPvpLobby(true)}
             demoLockBosses={isDemo}
+            coopBrowserPanel={coopBrowserPanel}
             onBack={onStopBack || onBack}
           />
         </div>
@@ -2372,6 +2430,8 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             )
           })}
         </div>
+
+        {coopBrowserPanel}
 
         <div class="space-y-4">
           {filteredPickerCategories.map(category => {
@@ -2765,6 +2825,26 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                 </div>
               </div>
             )}
+          </div>
+        </Modal>
+      )}
+
+      {/* Live group fights. A modal rather than an inline list: a busy night
+          would otherwise push the foe list off the screen. */}
+      {showCoopSessions && (
+        <Modal title="Live Group Fights" onClose={() => setShowCoopSessions(false)}>
+          <p class="text-[11px] text-[var(--color-parchment)] opacity-70 mb-3">
+            Join a boss someone is already fighting. The drop goes to whoever deals the most damage; everyone keeps their own XP.
+          </p>
+          <div class="max-h-96 overflow-y-auto">
+            <CoopSessionList
+              sessions={coopBrowser.sessions}
+              monstersData={monstersData}
+              activeSessionId={coopBrowser.activeSessionId}
+              joiningSessionId={coopJoiningSession}
+              checkBossRequirements={checkBossRequirements}
+              onJoin={(session, monster) => startCoopFight(monster, session.sessionId)}
+            />
           </div>
         </Modal>
       )}

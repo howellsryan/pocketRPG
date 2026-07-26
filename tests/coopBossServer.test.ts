@@ -13,6 +13,7 @@ import {
   isCoopSessionLive,
   joinCoopSession,
   leaveCoopSession,
+  listAllOpenSessions,
   listOpenSessions,
   parseSessionState,
   readSession,
@@ -245,6 +246,81 @@ describe('joining a co-op session', () => {
     const open = await listOpenSessions(env as never, BOSS)
     expect(open).toHaveLength(1)
     expect(open[0]).toMatchObject({ memberCount: 1, bossHP: 2000, bossMaxHP: 2000, full: false })
+  })
+})
+
+describe('browsing the open co-op sessions', () => {
+  it('names everyone in each open room so the browser can show who is in there', async () => {
+    await seedCharacter(7)
+    await seedCharacter(8)
+    const { sessionId } = await joinCoopSession(env as never, { characterId: 7, identityId: 1, bossId: BOSS, username: 'player7' })
+    await joinCoopSession(env as never, { characterId: 8, identityId: 1, bossId: BOSS, username: 'player8' })
+
+    const byBoss = await listAllOpenSessions(env as never, [BOSS])
+    const sessions = byBoss.get(BOSS)!
+    expect(sessions).toHaveLength(1)
+    expect(sessions[0]).toMatchObject({ sessionId, bossId: BOSS, memberCount: 2 })
+    expect(sessions[0].members.map((m: any) => m.username)).toEqual(['player7', 'player8'])
+  })
+
+  it('drops a member who has left, and one whose heartbeat lapsed, from the roster', async () => {
+    await seedCharacter(7)
+    await seedCharacter(8)
+    await seedCharacter(9)
+    const { sessionId } = await joinCoopSession(env as never, { characterId: 7, identityId: 1, bossId: BOSS, username: 'player7' })
+    await joinCoopSession(env as never, { characterId: 8, identityId: 1, bossId: BOSS, username: 'player8' })
+    await joinCoopSession(env as never, { characterId: 9, identityId: 1, bossId: BOSS, username: 'player9' })
+
+    raw.prepare('UPDATE coop_session_members SET left_at = ? WHERE session_id = ? AND character_id = 8').run(Date.now(), sessionId)
+    raw.prepare('UPDATE coop_session_members SET last_seen_at = ? WHERE session_id = ? AND character_id = 9')
+      .run(Date.now() - COOP_SESSION_STALE_MS - 1000, sessionId)
+
+    const sessions = (await listAllOpenSessions(env as never, [BOSS])).get(BOSS)!
+    expect(sessions[0].members.map((m: any) => m.username)).toEqual(['player7'])
+  })
+
+  it('joins the exact session the browser was showing rather than the fullest one', async () => {
+    for (const id of [7, 8, 9]) await seedCharacter(id)
+    const first = await joinCoopSession(env as never, { characterId: 7, identityId: 1, bossId: BOSS, username: 'player7' })
+    // A second room for the same boss: the picker would send the next joiner to
+    // `first` (fullest with a slot), so a plain join cannot prove the targeting.
+    raw.prepare(
+      `INSERT INTO coop_boss_sessions (boss_id, status, member_count, created_at, current_tick, state_json, last_tick_at, boss_hp, boss_max_hp, kill_seq)
+       VALUES (?, 'active', 0, ?, 0, ?, ?, 2000, 2000, 0)`,
+    ).run(BOSS, Date.now(), JSON.stringify({ bossId: BOSS, boss: { currentHP: 2000, maxHP: 2000 }, members: {} }), Date.now())
+    const second = raw.prepare("SELECT id FROM coop_boss_sessions WHERE id != ? AND status = 'active'").get(first.sessionId).id
+
+    const joined = await joinCoopSession(env as never, {
+      characterId: 8, identityId: 1, bossId: BOSS, username: 'player8', sessionId: second,
+    })
+    expect(joined.sessionId).toBe(second)
+    expect(await activeSessionIdFor(env as never, 8)).toBe(second)
+  })
+
+  it('refuses a targeted session that filled up, instead of quietly rerouting the player', async () => {
+    const ids = Array.from({ length: COOP_MAX_MEMBERS }, (_, i) => 40 + i)
+    for (const id of ids) await seedCharacter(id)
+    await seedCharacter(90)
+    let full = 0
+    for (const id of ids) {
+      full = (await joinCoopSession(env as never, { characterId: id, identityId: 1, bossId: BOSS, username: `player${id}` })).sessionId
+    }
+
+    await expect(joinCoopSession(env as never, {
+      characterId: 90, identityId: 1, bossId: BOSS, username: 'player90', sessionId: full,
+    })).rejects.toMatchObject({ code: 'COOP_SESSION_UNAVAILABLE' })
+    // The failed join must not leave the character locked out of their own save.
+    expect(await activeSessionIdFor(env as never, 90)).toBeNull()
+  })
+
+  it('refuses a session id belonging to a different boss', async () => {
+    await seedCharacter(7)
+    await seedCharacter(8)
+    const grondar = await joinCoopSession(env as never, { characterId: 7, identityId: 1, bossId: 'warlord_grondar', username: 'player7' })
+
+    await expect(joinCoopSession(env as never, {
+      characterId: 8, identityId: 1, bossId: BOSS, username: 'player8', sessionId: grondar.sessionId,
+    })).rejects.toMatchObject({ code: 'COOP_SESSION_UNAVAILABLE' })
   })
 })
 

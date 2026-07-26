@@ -33,6 +33,8 @@ Key characteristics:
 
 *The Opt-In Rule.* Forgemark is piloted per screen: wrap a screen's own root in `.forge-shell` (HomeScreen, CombatScreen, WorldMapScreen). Persistent chrome (nav rail, header) stays on the base palette until the full rollout — a screen must never flip the shared shell.
 
+*The Two-Skin Trap.* Screen-prefixed classes (`.cb-*`, `.wm-*`, `.clog-*`) are defined **twice** in `src/index.css`: the pre-Forgemark iron skin at the class's own definition, then a `.forge-shell .<class>` parchment override that is what actually ships on a piloted screen. So a neighbouring rule is never a colour template — copying one gives you a dark panel on a parchment screen. Adding a surface to a piloted screen means reusing an existing class or adding yours to that override block; a new class of your own carries **layout only**.
+
 What's in the kit:
 - **Frames & surfaces** — `fm-frame` (iron plate, riveted corners via `fm-rivet--tl/tr/bl/br`), `fm-parch` (vellum panel with `--fm-parch-inset`), `fm-corner` + `fm-divider` (SVG ornaments, `public/forge/`).
 - **Type roles** — `fm-banner` (display heads, `--gilt` variant for gold-leaf fills), `fm-eyebrow` (tracked small caps), `fm-lore` (italic Fell flavour text), `fm-num` (tabular numerals).
@@ -128,6 +130,7 @@ Do not:
 - No glassmorphism, backdrop blur, or cool-gray dark mode.
 - No Tailwind `/N` opacity modifiers or inline `style={{}}` for static values.
 - No repurposing tier/potion/state colors as decoration.
+- No copying a screen-prefixed class's colours as a starting point for a new one — see the Two-Skin Trap (§2).
 - No new top-level identity fonts; the four faces above are the whole cast.
 
 ## 8. Before You Ship: The Critique Pass

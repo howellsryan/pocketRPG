@@ -1013,6 +1013,14 @@ html, body, #app {
    Masked gradient game-icon emblems (see .cb-art / SkillEmblem), gold display
    headings, gilded selectors, slide-up sheets, and a gilded rare-drop panel.
    Tap targets are ≥44px per the UI rules.
+
+   DO NOT COPY THE COLOURS BELOW INTO A NEW CLASS. The surfaces here are the
+   pre-Forgemark iron skin; the combat screens all render inside `.forge-shell`,
+   so what actually ships is the parchment override block above
+   (`.forge-shell .cb-area, .forge-shell .cb-mon, …`). A new `cb-` class copied
+   from these rules inherits no override and lands on screen as a dark panel in
+   a parchment picker. Reuse an existing class, or add the class to that
+   override block — DESIGN.md §2 (Kit Consumption Rule).
    ────────────────────────────────────────────────────────────────────────── */
 
 /* Mobile combat scroll padding */
@@ -1054,6 +1062,18 @@ html, body, #app {
 /* Attack-style selector */
 .cb-styles { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 18px; }
 .cb-styleseg { font-size: 13px; padding: 12px 6px; }
+
+/* Live co-op session browser — LAYOUT ONLY. Every surface is an existing
+   picker class (.cb-area / .cb-mon) or a kit primitive (.fm-btn), so the panel
+   follows whichever skin the shell is wearing instead of pinning its own. */
+.cb-live { margin-bottom: 18px; }
+.cb-live__list { display: flex; flex-direction: column; gap: 8px; }
+.cb-live__row { cursor: default; }
+.cb-live__seats { flex-shrink: 0; white-space: nowrap; }
+.cb-live__roster { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cb-live__hp { margin-top: 6px; }
+.cb-live__join { flex-shrink: 0; min-width: 68px; }
+.cb-live__empty { margin: 0 3px 5px; }
 
 /* Area list */
 .cb-arealist { display: flex; flex-direction: column; gap: 11px; }

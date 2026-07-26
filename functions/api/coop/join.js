@@ -1,7 +1,7 @@
 import { requireAuth, json } from '../../_lib/auth.js'
 import { assertNotInActiveMatch, getOwnedCharacter } from '../../_lib/pvp.js'
 import { isWorldSessionLive } from '../../_lib/game/worldSessions.js'
-import { currentSaveRevision, joinCoopSession, readSession, parseSessionState, sweepStaleCoopSessions } from '../../_lib/game/coopBoss.js'
+import { currentSaveRevision, joinCoopSession, parseCoopSessionId, readSession, parseSessionState, sweepStaleCoopSessions } from '../../_lib/game/coopBoss.js'
 import { projectStateForMember } from '../../_lib/game/coopProjection.js'
 import { coopRoomsAvailable } from '../../_lib/game/coopRoom.js'
 import { toErrorResponse } from '../../_lib/game/errors.js'
@@ -32,11 +32,22 @@ export async function onRequestPost({ request, env }) {
     const bossId = typeof body?.bossId === 'string' ? body.bossId : null
     if (!bossId) return json({ error: 'Missing bossId', code: 'INVALID_COOP_BOSS' }, 400)
 
+    // Optional: the session browser joins one named group rather than letting
+    // the picker choose.
+    const rawSessionId = body?.sessionId
+    const requestedSessionId = rawSessionId === undefined || rawSessionId === null
+      ? null
+      : parseCoopSessionId(String(rawSessionId))
+    if (rawSessionId !== undefined && rawSessionId !== null && requestedSessionId === null) {
+      return json({ error: 'Invalid session', code: 'INVALID_COOP_SESSION' }, 400)
+    }
+
     const { sessionId, rejoined, saveRevision } = await joinCoopSession(env, {
       characterId: ch.id,
       identityId: auth.identity.id,
       bossId,
       username: ch.username,
+      sessionId: requestedSessionId,
     })
 
     const row = await readSession(env, sessionId)

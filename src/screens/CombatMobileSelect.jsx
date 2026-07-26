@@ -58,6 +58,8 @@ export default function CombatMobileSelect({
   onOpenIdle,
   showPvp,
   onOpenPvp,
+  // The live co-op session browser, rendered by the screen that owns the poll.
+  coopBrowserPanel = null,
   demoLockBosses = false,
   onBack,
 }) {
@@ -127,6 +129,8 @@ export default function CombatMobileSelect({
           )
         })}
       </div>
+
+      {coopBrowserPanel}
 
       {/* Area list */}
       <div class="cb-arealist">
