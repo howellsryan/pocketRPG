@@ -18,6 +18,7 @@ import {
   parseSessionState,
   readSession,
   parseCoopSessionId,
+  applyQuickPrayersToSave,
   settleCoopKill,
   sweepStaleCoopSessions,
   writeBackMember,
@@ -579,6 +580,21 @@ describe('coop intent validation', () => {
     expect(validateCoopAction('eat' as never).error).toBe('invalid_action')
   })
 
+  it('accepts a quick-prayer loadout of real prayers', () => {
+    expect(validateCoopAction({ type: 'set_quick_prayers', prayerIds: ['burst_of_strength'] }).action)
+      .toEqual({ type: 'set_quick_prayers', prayerIds: ['burst_of_strength'] })
+    expect(validateCoopAction({ type: 'set_quick_prayers', prayerIds: [] }).action)
+      .toEqual({ type: 'set_quick_prayers', prayerIds: [] })
+  })
+
+  it('refuses a quick-prayer loadout carrying anything that is not a prayer', () => {
+    // The room carries this list until write-back, so it must not become a free
+    // text field on the save.
+    expect(validateCoopAction({ type: 'set_quick_prayers', prayerIds: ['invincibility'] }).error).toBe('invalid_prayer')
+    expect(validateCoopAction({ type: 'set_quick_prayers', prayerIds: [{} as never] }).error).toBe('invalid_prayer')
+    expect(validateCoopAction({ type: 'set_quick_prayers' }).error).toBe('invalid_prayer')
+  })
+
   it('strips extra fields rather than passing them through to the engine', () => {
     expect(validateCoopAction({ type: 'queue_special', damage: 99999, characterId: 7 } as never).action)
       .toEqual({ type: 'queue_special' })
@@ -899,5 +915,43 @@ describe('settlement against the pre-0032 schema', () => {
     // outage; an empty granted list alone is indistinguishable from bad luck.
     expect(out.settlements[0].failed).toBe(true)
     expect(out.settlements[0].granted).toEqual([])
+  })
+})
+
+describe('quick prayers written back from a fight', () => {
+  it('carries a mid-fight edit onto the save', () => {
+    const save: any = { settings: { quickPrayers: ['burst_of_strength'], combatStance: 'aggressive' } }
+    const member = { quickPrayers: ['clarity_of_thought', 'rock_skin'] }
+
+    const next = applyMemberToSave(save, { ...member, inventory: [], equipment: {}, xpGained: {}, maxHP: 99, hp: 99 })
+
+    expect(next.settings.quickPrayers).toEqual(['clarity_of_thought', 'rock_skin'])
+    // Everything else in settings survives the write.
+    expect(next.settings.combatStance).toBe('aggressive')
+  })
+
+  it('leaves the configured prayers alone for a session that predates the field', () => {
+    // Writing an empty list here would silently clear the player's bar for
+    // anyone mid-fight across the deploy.
+    const save: any = { settings: { quickPrayers: ['burst_of_strength'] } }
+    expect(applyQuickPrayersToSave(save, { hp: 1 }).settings.quickPrayers).toEqual(['burst_of_strength'])
+  })
+
+  it('accepts an edit that empties the bar', () => {
+    const save: any = { settings: { quickPrayers: ['burst_of_strength'] } }
+    expect(applyQuickPrayersToSave(save, { quickPrayers: [] }).settings.quickPrayers).toEqual([])
+  })
+
+  it('survives a real join and write-back round trip', async () => {
+    await seedCharacter(7, { save: baseSave({ settings: { combatStance: 'aggressive', quickPrayers: ['burst_of_strength'] } }) })
+    const { sessionId } = await joinCoopSession(env as never, { characterId: 7, identityId: 1, bossId: BOSS, username: 'player7' })
+    const state = parseSessionState(await readSession(env as never, sessionId))
+    const member = state.members['7']
+    expect(member.quickPrayers).toEqual(['burst_of_strength'])
+
+    member.quickPrayers = ['clarity_of_thought']
+    await writeBackMember(env as never, { characterId: 7, identityId: 1, member, sessionId })
+
+    expect(readSave(7).settings.quickPrayers).toEqual(['clarity_of_thought'])
   })
 })

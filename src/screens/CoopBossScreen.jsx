@@ -217,6 +217,10 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onDeath
     ? monster.forms[boss.monster.currentForm]
     : null
   const combatState = me?.combat
+  // The room's copy is authoritative for the length of the fight — it is what
+  // gets written back — so the bar renders from it and falls back to the local
+  // setting only until the first poll lands.
+  const activeQuickPrayers = Array.isArray(me?.quickPrayers) ? me.quickPrayers : quickPrayers
   const weaponEntry = me?.equipment?.weapon
   const weapon = weaponEntry ? itemsData[weaponEntry.itemId] : null
   const hasSpec = !!weapon?.specialAttack
@@ -312,7 +316,7 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onDeath
             onPotion={(entry) => send({ type: 'drink_potion', inventorySlot: entry.slotIdx })}
             onEquip={(entry) => send({ type: 'equip', inventorySlot: entry.slotIdx })}
             isPotionActive={(item) => Object.keys(combatState?.activePotions || {}).some(pid => itemsData[pid]?.effect === item.effect)}
-            quickPrayers={quickPrayers}
+            quickPrayers={activeQuickPrayers}
             prayersData={prayersData}
             prayerLevel={getLevelFromXP(stats?.prayer?.xp || 0)}
             onPrayer={(prayerId) => send({ type: 'toggle_prayer', prayerId })}
@@ -375,8 +379,14 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onDeath
       {showQuickPrayerConfig && (
         <QuickPrayerConfigModal
           prayerLevel={getLevelFromXP(stats?.prayer?.xp || 0)}
-          selected={quickPrayers}
-          onChange={updateQuickPrayers}
+          selected={activeQuickPrayers}
+          onChange={(prayerIds) => {
+            updateQuickPrayers(prayerIds)
+            // The co-op lock refuses this character's own save while the room
+            // owns it, so the local write alone is undone by the pull on exit.
+            // The room carries the edit and writes it back with everything else.
+            send({ type: 'set_quick_prayers', prayerIds })
+          }}
           onClose={() => setShowQuickPrayerConfig(false)}
         />
       )}

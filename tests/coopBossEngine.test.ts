@@ -896,3 +896,127 @@ describe('coopBossEngine — the 10% loot threshold', () => {
     expect(over.sharePct).toBe(80)
   })
 })
+
+describe('coopBossEngine — the respawn wait is prep time', () => {
+  // The wait between kills used to drop every intent on the floor: the quick
+  // actions were on screen, taps did nothing, and the group went into the next
+  // pull on whatever supplies the last one left them.
+  function waitingState(ids: number[]) {
+    const state = joinedState(ids)
+    state.boss.currentHP = 0
+    state.boss.killedAt = Date.now()
+    state.boss.respawnCountdown = 20
+    for (const id of ids) state.members[String(id)].hp = 20
+    return state
+  }
+
+  const eat = (characterId: number, slot = 0) => ({
+    tick_number: 1, characterId, characterSeq: 1, action: { type: 'eat', inventorySlot: slot },
+  })
+
+  it('lets a member eat while waiting for the boss to come back', () => {
+    const state = waitingState([1])
+    const before = state.members['1'].inventory[0].quantity
+
+    const out = processCoopTick(state, [eat(1)], deps, Date.now())
+
+    expect(out.stateNext.members['1'].hp).toBeGreaterThan(20)
+    expect(out.stateNext.members['1'].inventory[0].quantity).toBe(before - 1)
+    // Still counting down — eating does not stall or restart the wait.
+    expect(out.stateNext.boss.respawnCountdown).toBe(19)
+  })
+
+  it('lets a member swap gear while waiting', () => {
+    const state = waitingState([1])
+    state.members['1'].inventory[1] = { itemId: 'iron_platebody', quantity: 1 }
+    const intent = {
+      tick_number: 1, characterId: 1, characterSeq: 1, action: { type: 'equip', inventorySlot: 1 },
+    }
+
+    const out = processCoopTick(state, [intent], deps, Date.now())
+
+    expect(out.stateNext.members['1'].equipment.body?.itemId).toBe('iron_platebody')
+  })
+
+  it('walks the eat cooldown down so the wait is not one bite long', () => {
+    // Nothing calls processCombatTick while the boss is down, so without this
+    // the cooldown set by the first bite never expires and the rest of the wait
+    // is unusable.
+    let state = waitingState([1])
+    let out = processCoopTick(state, [eat(1)], deps, Date.now())
+    expect(out.stateNext.members['1'].combat.eatCooldown).toBeGreaterThan(0)
+
+    state = out.stateNext
+    for (let i = 0; i < 4; i++) {
+      out = processCoopTick(state, [], deps, Date.now())
+      state = out.stateNext
+    }
+    expect(state.members['1'].combat.eatCooldown).toBe(0)
+
+    const hpBefore = state.members['1'].hp
+    out = processCoopTick(state, [eat(1)], deps, Date.now())
+    expect(out.stateNext.members['1'].hp).toBeGreaterThan(hpBefore)
+  })
+
+  it('keeps a dead member out of it', () => {
+    const state = waitingState([1])
+    state.members['1'].status = 'dead'
+    const before = state.members['1'].inventory[0].quantity
+
+    const out = processCoopTick(state, [eat(1)], deps, Date.now())
+
+    expect(out.stateNext.members['1'].inventory[0].quantity).toBe(before)
+  })
+
+  it('does not resolve combat while the boss is down', () => {
+    const state = waitingState([1])
+    const out = processCoopTick(state, [eat(1)], deps, Date.now())
+    expect(out.stateNext.boss.currentHP).toBe(0)
+    expect(out.events.some((e: any) => e.type === 'playerHit' || e.type === 'monsterHit')).toBe(false)
+    expect(out.kill).toBeNull()
+  })
+})
+
+describe('coopBossEngine — quick prayers survive the fight', () => {
+  // The co-op lock refuses this character's own /api/save while the room owns
+  // it, and the client pulls rather than pushes on exit — so a quick-prayer edit
+  // made mid-fight reached the account only if the room carried it.
+  it('seeds the member from the save', () => {
+    const state = joinedState([1], { 1: { settings: { quickPrayers: ['burst_of_strength'] } } })
+    expect(state.members['1'].quickPrayers).toEqual(['burst_of_strength'])
+  })
+
+  it('defaults to an empty list rather than undefined', () => {
+    expect(joinedState([1]).members['1'].quickPrayers).toEqual([])
+  })
+
+  it('applies an edit made mid-fight', () => {
+    const state = joinedState([1])
+    const intent = {
+      tick_number: 1, characterId: 1, characterSeq: 1,
+      action: { type: 'set_quick_prayers', prayerIds: ['burst_of_strength', 'clarity_of_thought'] },
+    }
+    const out = processCoopTick(state, [intent], deps, Date.now())
+    expect(out.stateNext.members['1'].quickPrayers).toEqual(['burst_of_strength', 'clarity_of_thought'])
+  })
+
+  it('survives the state clone every tick makes', () => {
+    let state = joinedState([1], { 1: { settings: { quickPrayers: ['burst_of_strength'] } } })
+    state = processCoopTick(state, [], deps, Date.now()).stateNext
+    state = processCoopTick(state, [], deps, Date.now()).stateNext
+    expect(state.members['1'].quickPrayers).toEqual(['burst_of_strength'])
+  })
+
+  it('can be edited while waiting for the respawn', () => {
+    const state = joinedState([1])
+    state.boss.currentHP = 0
+    state.boss.killedAt = Date.now()
+    state.boss.respawnCountdown = 10
+    const intent = {
+      tick_number: 1, characterId: 1, characterSeq: 1,
+      action: { type: 'set_quick_prayers', prayerIds: ['burst_of_strength'] },
+    }
+    expect(processCoopTick(state, [intent], deps, Date.now()).stateNext.members['1'].quickPrayers)
+      .toEqual(['burst_of_strength'])
+  })
+})

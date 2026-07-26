@@ -179,6 +179,7 @@ export function cloneCoopState(state) {
       inventory: cloneCoopInventory(m.inventory),
       combat: { ...m.combat, activePotions: { ...(m.combat?.activePotions || {}) } },
       xpGained: { ...(m.xpGained || {}) },
+      ...(Array.isArray(m.quickPrayers) ? { quickPrayers: [...m.quickPrayers] } : {}),
     }
   }
   return {
@@ -314,6 +315,10 @@ export function createCoopMember({ characterId, username, savePayload, itemsData
     slayerTasksCompleted: Math.max(0, Math.floor(Number(settings.slayerTasksCompleted) || 0)),
     doubleSlayerXp: !!settings.characterUnlocks?.doubleSlayerXp,
     slayerCredit: emptySlayerCredit(),
+    // Carried through the fight because the room owns the save while it lives:
+    // a quick-prayer edit made mid-fight cannot reach /api/save (the co-op lock
+    // refuses it), so without this it survives only until the exit pull.
+    quickPrayers: Array.isArray(settings.quickPrayers) ? settings.quickPrayers.filter((id) => typeof id === 'string') : [],
     joinedAt: now,
     combat: {
       combatType: getCombatType(equipment, itemsData),
@@ -545,6 +550,13 @@ function applyCoopIntent(state, member, action, itemsData, spellsData, prayersDa
     case 'queue_special':
       member.combat.specialAttackQueued = !member.combat.specialAttackQueued
       return
+    case 'set_quick_prayers':
+      // Loadout, not a combat action — no level gate here. Toggling one ON still
+      // goes through the gate in `toggle_prayer` below.
+      member.quickPrayers = Array.isArray(action.prayerIds)
+        ? action.prayerIds.filter((id) => typeof id === 'string')
+        : []
+      return
     case 'target_add':
       member.combat.addTargeted = !!action.value && !!state.boss.add
       return
@@ -713,12 +725,6 @@ export function processCoopTick(state, intents, { itemsData, monstersData, praye
   const events = []
   next.tick = (next.tick || 0) + 1
 
-  if (next.boss.respawnCountdown > 0) {
-    next.boss.respawnCountdown -= 1
-    if (next.boss.respawnCountdown === 0) respawnBoss(next, monstersData, events)
-    return finishTick(next, events, null)
-  }
-
   const orderedIntents = [...(intents || [])].sort(
     (a, b) => (a.tick_number || 0) - (b.tick_number || 0) || (a.characterId || 0) - (b.characterId || 0) || (a.characterSeq || 0) - (b.characterSeq || 0),
   )
@@ -726,6 +732,18 @@ export function processCoopTick(state, intents, { itemsData, monstersData, praye
     const member = next.members[String(intent?.characterId)]
     if (!member || member.status !== 'alive') continue
     applyCoopIntent(next, member, intent.action || {}, itemsData, spellsData, prayersData, events)
+  }
+
+  // The respawn wait is prep time, not dead time: intents are applied above
+  // before this returns, so the group can eat, drink and swap gear for the next
+  // pull. Nothing else about the wait changes — no combat resolves, so the
+  // consumable cooldowns have to be walked down here or one bite would block
+  // the rest of the wait.
+  if (next.boss.respawnCountdown > 0) {
+    for (const member of Object.values(next.members)) tickIdleCooldowns(member)
+    next.boss.respawnCountdown -= 1
+    if (next.boss.respawnCountdown === 0) respawnBoss(next, monstersData, events)
+    return finishTick(next, events, null)
   }
 
   reselectTarget(next)
@@ -843,6 +861,18 @@ export function processCoopTick(state, intents, { itemsData, monstersData, praye
   }
 
   return finishTick(next, events, kill)
+}
+
+/** Walks down the timers processCombatTick would have advanced. Only the
+ * consumable cooldowns and the attack timer: prayer does not drain and no potion
+ * expires while there is nothing to fight. */
+function tickIdleCooldowns(member) {
+  const c = member.combat
+  if (!c) return
+  c.eatCooldown = Math.max(0, (c.eatCooldown || 0) - 1)
+  c.potionCooldown = Math.max(0, (c.potionCooldown || 0) - 1)
+  c.comboCooldown = Math.max(0, (c.comboCooldown || 0) - 1)
+  c.playerAttackTimer = Math.max(0, (c.playerAttackTimer || 0) - 1)
 }
 
 function respawnBoss(state, monstersData, events) {

@@ -556,6 +556,24 @@ export function applySlayerCreditToSave(saveObject, member) {
   return saveObject
 }
 
+/**
+ * Folds a mid-fight quick-prayer edit back into the save.
+ *
+ * The room owns the save for the length of the fight, so the client's own
+ * critical push is refused by the co-op lock and dropped — the edit reaches the
+ * player's account only by riding the write-back. Absent field means a session
+ * that predates the feature: leave the player's configured prayers alone rather
+ * than writing an empty list over them.
+ */
+export function applyQuickPrayersToSave(saveObject, member) {
+  if (!Object.prototype.hasOwnProperty.call(member || {}, 'quickPrayers')) return saveObject
+  if (!Array.isArray(member.quickPrayers)) return saveObject
+  const settings = { ...(saveObject.settings && typeof saveObject.settings === 'object' ? saveObject.settings : {}) }
+  settings.quickPrayers = member.quickPrayers.filter((id) => typeof id === 'string')
+  saveObject.settings = settings
+  return saveObject
+}
+
 /** Writes a member's session state (supplies, HP, XP, slayer progress) back
  * onto their save. */
 export function applyMemberToSave(saveObject, member) {
@@ -566,6 +584,7 @@ export function applyMemberToSave(saveObject, member) {
   )
   applyXpGainedToSave(next, member.xpGained)
   applySlayerCreditToSave(next, member)
+  applyQuickPrayersToSave(next, member)
   // Dying in a group has to cost exactly what dying to the same boss alone
   // costs. The solo screen restores HP to full on death; writing the member's
   // literal 0 back would leave a corpse regenerating at +1/60s, so a group
