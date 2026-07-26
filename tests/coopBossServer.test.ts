@@ -840,3 +840,64 @@ describe('writing slayer progress back to the save', () => {
     expect(readSave(7).settings.slayerMasterTaskCompletions.zul_kaar).toBe(1)
   })
 })
+
+describe('settlement against the pre-0032 schema', () => {
+  // Migrations are pasted into the D1 console by hand, so the deploy lands
+  // before the DDL does. The per-member ledger key arrived in 0032; the claim
+  // named `ON CONFLICT(session_id, kill_seq, character_id)`, and SQLite rejects
+  // a conflict target matching no index at RUNTIME — so in that window EVERY
+  // co-op kill threw, was swallowed per member, and reached the player as a
+  // granted-nothing kill.
+  function rollBackToSingleWinnerKey() {
+    raw.exec(`DROP TABLE coop_kill_settlements;
+      CREATE TABLE coop_kill_settlements (
+        session_id   INTEGER NOT NULL,
+        kill_seq     INTEGER NOT NULL,
+        character_id INTEGER NOT NULL,
+        boss_id      TEXT    NOT NULL,
+        granted_json TEXT,
+        settled_at   INTEGER NOT NULL,
+        PRIMARY KEY (session_id, kill_seq));`)
+  }
+
+  async function killWith(characterIds: number[]) {
+    for (const id of characterIds) await seedCharacter(id)
+    const { sessionId } = await joinCoopSession(env as never, {
+      characterId: characterIds[0], identityId: 1, bossId: BOSS, username: 'p0',
+    })
+    for (const id of characterIds.slice(1)) {
+      await joinCoopSession(env as never, { characterId: id, identityId: 1, bossId: BOSS, username: `p${id}` })
+    }
+    const session = await readSession(env as never, sessionId)
+    const state = parseSessionState(session)
+    for (const id of characterIds) state.members[String(id)].damage = 500
+    return { session, state, kill: { bossId: BOSS, ownerCharacterId: characterIds[0], lootCharacterIds: characterIds, contributors: [] } }
+  }
+
+  it('still grants the top-damage winner their drop', async () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    const { session, state, kill } = await killWith([7, 8])
+    rollBackToSingleWinnerKey()
+
+    const out = await settleCoopKill(env as never, { session, state, kill, killSeq: 1 })
+
+    const top = out.settlements.find((s: any) => s.characterId === 7)
+    expect(top.failed).toBeFalsy()
+    expect(top.granted.length).toBeGreaterThan(0)
+    expect(raw.prepare('SELECT kill_count FROM kill_counts WHERE character_id = 7').get().kill_count).toBe(1)
+  })
+
+  it('never reports a thrown grant as an ordinary empty drop', async () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    const { session, state, kill } = await killWith([7])
+    // Any failure at all — the claim table gone entirely.
+    raw.exec('DROP TABLE coop_kill_settlements')
+
+    const out = await settleCoopKill(env as never, { session, state, kill, killSeq: 1 })
+
+    // `failed` is what stops the client showing "no drops this time" for an
+    // outage; an empty granted list alone is indistinguishable from bad luck.
+    expect(out.settlements[0].failed).toBe(true)
+    expect(out.settlements[0].granted).toEqual([])
+  })
+})

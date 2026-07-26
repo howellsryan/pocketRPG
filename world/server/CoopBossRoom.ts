@@ -279,17 +279,21 @@ export class CoopBossRoom {
         { session: { id: this.sessionId, boss_id: this.bossId }, state: this.state, kill, killSeq: seq },
         now,
       ) as AnyState
+      const shares = (settlement.settlements || []) as AnyState[]
       this.events = pushEvents(this.events, [{
         type: 'killSettled',
         tick: this.state!.tick || 0,
         // One event carries every winner's share: a client that is not on the
         // list has to be able to tell "I missed the cut" from "the poll dropped
         // my event", and per-winner events would toast a bystander eight times.
-        settlements: (settlement.settlements || []).map((s: AnyState) => ({
+        settlements: shares.map((s: AnyState) => ({
           characterId: s.characterId,
           granted: s.granted || [],
           killCount: s.killCount ?? null,
           diverged: !!s.diverged,
+          // A grant that threw must never reach the player as an empty drop
+          // list — that reads as an unlucky kill and hides the outage.
+          failed: !!s.failed,
         })),
         lootDamageRequired: kill.lootDamageRequired ?? null,
         // Legacy single-winner fields, for a client deployed ahead of this Worker.
@@ -297,11 +301,29 @@ export class CoopBossRoom {
         granted: settlement.granted || [],
         killCount: settlement.killCount ?? null,
         diverged: !!settlement.diverged,
+        // Every share threw: the kill is an outage, not a dry roll.
+        failed: shares.length > 0 && shares.every((s: AnyState) => !!s.failed),
       }], this.state!.tick || 0)
     } catch (err) {
       console.error('[PocketRPG][coop] kill settlement failed', {
         sessionId: this.sessionId, bossId: this.bossId, killSeq: seq, message: (err as Error)?.message || err,
       })
+      // A kill the client is never told about is the worst failure mode there
+      // is: the boss drops, nothing happens, and the player has no idea whether
+      // they were robbed or simply unlucky. Say so instead of going silent.
+      this.events = pushEvents(this.events, [{
+        type: 'killSettled',
+        tick: this.state?.tick || 0,
+        settlements: (kill.lootCharacterIds || []).map((characterId: number) => ({
+          characterId, granted: [], killCount: null, diverged: false, failed: true,
+        })),
+        lootDamageRequired: kill.lootDamageRequired ?? null,
+        ownerCharacterId: kill.ownerCharacterId ?? null,
+        granted: [],
+        killCount: null,
+        diverged: false,
+        failed: true,
+      }], this.state?.tick || 0)
     }
   }
 

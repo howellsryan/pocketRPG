@@ -320,3 +320,71 @@ describe('state swaps never land inside a tick', () => {
     expect(lock.active_coop_session_id).toBeNull()
   })
 })
+
+describe('a kill is never silent', () => {
+  // The room used to swallow a settlement failure and push no event at all, so
+  // the boss died and absolutely nothing happened on screen — no loot modal, no
+  // toast, no way for the player to tell a broken grant from an unlucky one.
+  async function roomWithOneMember(characterId: number) {
+    await seedCharacter(characterId)
+    const { sessionId } = await joinCoopSession(env as never, {
+      characterId, identityId: 1, bossId: BOSS, username: `player${characterId}`,
+    })
+    await callRoom(sessionId, 'poll', { characterId })
+    return { sessionId, room: rooms.get(`coop:${sessionId}`)! as any }
+  }
+
+  async function killEventFor(sessionId: number, characterId: number) {
+    const res = await callRoom(sessionId, 'poll', { characterId, sinceTick: 0 })
+    return ((await res.json()) as any).events.find((e: any) => e.type === 'killSettled')
+  }
+
+  it('still reports the kill when the settlement throws outright', async () => {
+    const { sessionId, room } = await roomWithOneMember(7)
+    room.state.members['7'].damage = 2000
+    room.state.boss.currentHP = 0
+    // Whatever the cause — a missing table, a D1 outage — the player has to be
+    // told something happened.
+    raw.exec('DROP TABLE coop_kill_settlements')
+
+    await room.tick()
+
+    const ev = await killEventFor(sessionId, 7)
+    expect(ev).toBeTruthy()
+    expect(ev.failed).toBe(true)
+    expect(ev.settlements.find((s: any) => s.characterId === 7).failed).toBe(true)
+  })
+
+  it('delivers the winner their own loot on an ordinary kill', async () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    const { sessionId, room } = await roomWithOneMember(7)
+    room.state.members['7'].damage = 2000
+    room.state.boss.currentHP = 0
+
+    await room.tick()
+
+    const ev = await killEventFor(sessionId, 7)
+    const mine = ev.settlements.find((s: any) => s.characterId === 7)
+    expect(mine.failed).toBeFalsy()
+    expect(mine.granted.length).toBeGreaterThan(0)
+  })
+
+  it('delivers a non-top-damage winner their own loot too', async () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    const { sessionId, room } = await roomWithOneMember(7)
+    await seedCharacter(8)
+    await joinCoopSession(env as never, { characterId: 8, identityId: 1, bossId: BOSS, username: 'player8' })
+    await callRoom(sessionId, 'poll', { characterId: 8 })
+    room.state.members['7'].damage = 1500
+    room.state.members['8'].damage = 500
+    room.state.boss.currentHP = 0
+
+    await room.tick()
+
+    // The second winner's poll must carry THEIR drops, not the top attacker's.
+    const ev = await killEventFor(sessionId, 8)
+    const theirs = ev.settlements.find((s: any) => s.characterId === 8)
+    expect(theirs.granted.length).toBeGreaterThan(0)
+    expect(ev.settlements.find((s: any) => s.characterId === 7).granted).toBeUndefined()
+  })
+})

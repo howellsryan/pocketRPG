@@ -765,10 +765,16 @@ async function settleKillShare(env, { session, state, kill, killSeq, characterId
   if (!member) return empty
 
   const seq = Math.max(0, Math.floor(Number(killSeq) || 0))
+  // OR IGNORE rather than `ON CONFLICT(session_id, kill_seq, character_id)`:
+  // migrations are pasted into the D1 console by hand, so there is a real window
+  // where this code runs against 0031's `(session_id, kill_seq)` key — and
+  // SQLite rejects a conflict target that matches no index at RUNTIME, which
+  // turned every co-op kill in that window into a granted-nothing kill. OR
+  // IGNORE names no target, so it is correct on the new key and merely degrades
+  // to first-winner-only on the old one.
   const claim = await env.DB.prepare(
-    `INSERT INTO coop_kill_settlements (session_id, kill_seq, character_id, boss_id, settled_at)
-     VALUES (?, ?, ?, ?, ?)
-     ON CONFLICT(session_id, kill_seq, character_id) DO NOTHING`,
+    `INSERT OR IGNORE INTO coop_kill_settlements (session_id, kill_seq, character_id, boss_id, settled_at)
+     VALUES (?, ?, ?, ?, ?)`,
   ).bind(session.id, seq, characterId, session.boss_id, now).run()
   if (!claim.meta.changes) {
     // Already settled — a replayed tick after the room restarted. Hand back

@@ -133,6 +133,10 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onDeath
             // The server refused to grant because something else wrote this
             // save mid-fight. Showing the usual modal would read as a dry kill.
             addToast?.('Your loot could not be granted — something else changed your save. Leave and rejoin.', 'error')
+          } else if (mine?.failed) {
+            // The grant threw server-side. An empty loot modal here would read
+            // as an unlucky kill and hide the outage completely.
+            addToast?.(`${killedName} defeated, but the loot could not be granted. Leave and rejoin.`, 'error')
           } else if (mine) {
             setLootModal({ monsterName: killedName, loot: mine.granted || [], killCount: mine.killCount ?? null })
           } else {
