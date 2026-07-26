@@ -3,6 +3,7 @@ import type { MenuRow } from './picking'
 import { iconMarkup, itemName, uiIconMarkup } from './itemIcon'
 import { spellIconSvg } from './spellIcon'
 import { categorisePrayers, type PrayerView } from '../../shared/prayer'
+import { CHAT_MAX_CHARS } from '../../shared/chat'
 import {
   hudScaleValue, isTabletViewport, loadSettings, resolveMinimapMode, saveSettings,
   sheetHeightFor, sheetSnap, type MinimapMode, type UxSettings,
@@ -378,10 +379,12 @@ ${SCROLL_CSS}
   font-family: sans-serif; font-size: 12px; color: #ffffff; text-shadow: 0 1px 2px #000;
   white-space: nowrap;
 }
+/* Overhead speech wraps to as many lines as the message needs — nothing the
+   player types is ellipsised away. */
 .overhead-chat {
   position: absolute; transform: translate(-50%, -100%); pointer-events: none;
   font-family: sans-serif; font-size: 13px; color: #ffe850; text-shadow: 0 1px 2px #000;
-  white-space: nowrap; max-width: 60vw; overflow: hidden; text-overflow: ellipsis;
+  max-width: 60vw; text-align: center; overflow-wrap: anywhere;
 }
 #xp-drops {
   position: fixed; left: 50%; top: 38%; z-index: 10; pointer-events: none;
@@ -518,17 +521,20 @@ export type SpellbookRender = {
   onSkill: (id: string) => void
 }
 
-// Paperdoll layout for the Equipment tab (3 columns). null = spacer cell.
-const EQUIP_LAYOUT: (string | null)[] = [
+// Paperdoll layout for the Equipment tab (3 columns). null = spacer cell. Ids
+// are the save's own equipment slot keys (EQUIPMENT_SLOTS in
+// src/utils/constants.js) — the equipment map and the unequip intent are both
+// keyed by them, so a display-only alias renders the slot permanently empty.
+export const EQUIP_LAYOUT: (string | null)[] = [
   null, 'head', null,
   'cape', 'neck', 'ammo',
   'weapon', 'body', 'shield',
   null, 'legs', null,
-  'hands', 'feet', 'ring',
+  'gloves', 'boots', 'ring',
 ]
 const EQUIP_SLOT_LABEL: Record<string, string> = {
   head: 'Head', cape: 'Cape', neck: 'Neck', ammo: 'Ammo', weapon: 'Weapon',
-  body: 'Body', shield: 'Shield', legs: 'Legs', hands: 'Hands', feet: 'Feet', ring: 'Ring',
+  body: 'Body', shield: 'Shield', legs: 'Legs', gloves: 'Gloves', boots: 'Boots', ring: 'Ring',
 }
 const STANCES: { stance: CombatStance; label: string }[] = [
   { stance: 'accurate', label: 'Accurate' },
@@ -1597,7 +1603,7 @@ export function initChatInput(onSend: (text: string) => void): void {
   input.id = 'chat-input'
   input.type = 'text'
   input.placeholder = 'Say something…'
-  input.maxLength = 120
+  input.maxLength = CHAT_MAX_CHARS
   input.autocomplete = 'off'
   const send = (): void => {
     const text = input.value.trim()

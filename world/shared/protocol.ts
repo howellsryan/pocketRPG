@@ -103,6 +103,9 @@ export type EntityDiff = {
   maxHp?: number
   monsterId?: string
   name?: string
+  /** Player entities only: combat level, for the right-click menu's `(level-N)`
+   * suffix — the same readout npcs get from their monster data. */
+  combatLevel?: number
   gear?: GearDescriptor
   /** Combat target's entity id. Present iff this entity is actively in combat;
    * absent means no target — the client must clear any previously-stored one,

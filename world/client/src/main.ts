@@ -67,7 +67,7 @@ function buildNpcPickable(diff: EntityDiff): Pickable {
  * crowd still walks — buildMenu gives player pickables their own "Follow"
  * row instead of running them through the normal actions list. */
 function buildPlayerPickable(diff: EntityDiff): Pickable {
-  return { kind: 'player', id: diff.id, name: diff.name ?? 'Adventurer', actions: [] }
+  return { kind: 'player', id: diff.id, name: diff.name ?? 'Adventurer', actions: [], monsterLevel: diff.combatLevel }
 }
 
 function enterWorld(session: WorldSession): void {
@@ -298,6 +298,10 @@ function enterWorld(session: WorldSession): void {
     const existing = others.get(diff.id)
     if (existing) {
       applyEntityDiff(existing, diff)
+      // The pickable is built once at mesh creation; patch the level in place so
+      // a level-up mid-session isn't stale in the menu (and no per-tick alloc).
+      const pick = existing.mesh.userData.pick as Pickable | undefined
+      if (pick) pick.monsterLevel = diff.combatLevel
       if (diff.gear) void applyGear(existing.mesh, diff.gear)
       return
     }

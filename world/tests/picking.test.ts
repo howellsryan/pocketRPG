@@ -13,7 +13,7 @@ const lootPile: Pickable = {
 }
 // Other players are menu-only (item 10): no actions, so topPick/hoverText
 // never select them — see the 'players are never a default action' tests.
-const otherPlayer: Pickable = { kind: 'player', id: '2', name: 'WorldFriend', actions: [] }
+const otherPlayer: Pickable = { kind: 'player', id: '2', name: 'WorldFriend', actions: [], monsterLevel: 42 }
 
 describe('topPick', () => {
   it('prefers loot over npc over rock/object', () => {
@@ -87,5 +87,14 @@ describe('buildMenu', () => {
     expect(rows[0]).toMatchObject({ text: 'Follow WorldFriend', followTargetId: '2' })
     expect(rows[0].interact).toBeUndefined()
     expect(rows.map((r) => r.text)).toEqual(['Follow WorldFriend', 'Walk here', 'Cancel'])
+  })
+  it('shows another player’s combat level beside their name, coloured by comparison', () => {
+    expect(buildMenu([otherPlayer], 42)[0]).toMatchObject({ monsterLevel: 42, levelFavourable: true, targetName: 'WorldFriend' })
+    expect(buildMenu([otherPlayer], 41)[0].levelFavourable).toBe(false)
+  })
+  it('leaves the Follow row levelless when the server sent no combat level', () => {
+    const row = buildMenu([{ ...otherPlayer, monsterLevel: undefined }], 42)[0]
+    expect(row.monsterLevel).toBeUndefined()
+    expect(row.levelFavourable).toBeUndefined()
   })
 })

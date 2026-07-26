@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   combatStanceFromSave,
   respawnedRocks,
+  sessionCombatLevel,
   sessionInventoryFromSave,
   sessionStatsFromSave,
   tickPlayer,
@@ -249,8 +250,23 @@ describe('toEntityDiff', () => {
     const player = makePlayer({ x: 3, z: 4, anim: 'walk' })
     // gear always rides player diffs (even empty) so unequips propagate.
     expect(toEntityDiff(player)).toEqual({
-      id: '1', kind: 'player', x: 3, z: 4, anim: 'walk', name: 'WorldTester', gear: {}, hp: 10, maxHp: 10,
+      id: '1', kind: 'player', x: 3, z: 4, anim: 'walk', name: 'WorldTester', combatLevel: 3, gear: {}, hp: 10, maxHp: 10,
     })
+  })
+
+  it('carries the combat level so other clients can show it on the right-click menu', () => {
+    const player = makePlayer({
+      stats: {
+        attack: { xp: 0, level: 40 }, strength: { xp: 0, level: 40 }, defence: { xp: 0, level: 40 },
+        hitpoints: { xp: 0, level: 40 }, prayer: { xp: 0, level: 20 }, ranged: { xp: 0, level: 1 }, magic: { xp: 0, level: 1 },
+      },
+    })
+    expect(toEntityDiff(player).combatLevel).toBe(sessionCombatLevel(player.stats))
+    expect(toEntityDiff(player).combatLevel).toBe(48)
+  })
+
+  it('floors the combat level at 3 for a fresh session', () => {
+    expect(sessionCombatLevel({ mining: { xp: 0, level: 1 } })).toBe(3)
   })
 
   it('carries targetId while the player is in an active fight', () => {

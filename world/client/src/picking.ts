@@ -17,7 +17,7 @@ export type Pickable = {
   name: string
   /** Ordered; the first is the left-click default action. */
   actions: PickAction[]
-  /** Combat level for npc menu colour-coding. */
+  /** Combat level for npc/player menu colour-coding. */
   monsterLevel?: number
   examine?: string
 }
@@ -87,11 +87,18 @@ export function buildMenu(pickables: Pickable[], playerCombatLevel: number): Men
     // Players are menu-only and never attacked/interacted with here (item
     // 10) — Follow is a distinct message ({t:'follow'}, not {t:'interact'}),
     // so it gets its own row shape instead of running through `actions`.
+    const favourable = pick.monsterLevel == null ? undefined : playerCombatLevel >= pick.monsterLevel
     if (pick.kind === 'player') {
-      rows.push({ text: `Follow ${pick.name}`, followTargetId: pick.id, targetName: pick.name, targetKind: pick.kind })
+      rows.push({
+        text: `Follow ${pick.name}`,
+        followTargetId: pick.id,
+        targetName: pick.name,
+        targetKind: pick.kind,
+        monsterLevel: pick.monsterLevel,
+        levelFavourable: favourable,
+      })
       continue
     }
-    const favourable = pick.monsterLevel == null ? undefined : playerCombatLevel >= pick.monsterLevel
     for (const action of pick.actions) {
       const name = action.name ?? pick.name
       rows.push({

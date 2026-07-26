@@ -15,7 +15,8 @@ import { npcsFromZone, type NpcState } from '../server/npc'
 import { emptyInventory } from '../server/mining'
 import { findPathAdjacent } from '../server/pathfind'
 import type { Tile } from '../server/pathfind'
-import { keyToHudTab, runEscapeHandlers } from '../client/src/ui'
+import { EQUIP_LAYOUT, keyToHudTab, runEscapeHandlers } from '../client/src/ui'
+import { EQUIPMENT_SLOTS } from '../../src/utils/constants.js'
 
 const COLLISION = Array.from({ length: 16 }, () => '.'.repeat(16))
 
@@ -161,5 +162,22 @@ describe('Escape priority routing', () => {
 
   it('returns false when nothing is open', () => {
     expect(runEscapeHandlers([{ priority: 1, handler: () => false }])).toBe(false)
+  })
+})
+
+describe('Equipment tab paperdoll slots', () => {
+  it('names every cell after a real save equipment slot', () => {
+    // Regression: the paperdoll used display aliases ('hands'/'feet') for the
+    // save's 'gloves'/'boots' keys, so those two cells were always empty in the
+    // open world however the character was geared, and unequipping them sent a
+    // slot the server had nothing under.
+    const slots = EQUIP_LAYOUT.filter((slot): slot is string => slot !== null)
+    for (const slot of slots) expect(EQUIPMENT_SLOTS).toContain(slot)
+  })
+
+  it('lays out every equipment slot exactly once', () => {
+    const slots = EQUIP_LAYOUT.filter((slot): slot is string => slot !== null)
+    expect(new Set(slots).size).toBe(slots.length)
+    expect([...slots].sort()).toEqual([...EQUIPMENT_SLOTS].sort())
   })
 })
