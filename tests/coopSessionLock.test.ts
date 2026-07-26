@@ -20,6 +20,7 @@ vi.mock('../functions/_lib/auth.js', () => ({
 
 import { onRequestPut } from '../functions/api/save.js'
 import { onRequestPost as skipHour } from '../functions/api/skip-hour.js'
+import { onRequestPost as slayerSkip } from '../functions/api/slayer/skip.js'
 
 const BOSS = 'corporeal_horror'
 const QUEST = 'the_heart_of_shadows'
@@ -90,7 +91,9 @@ describe('a skip cannot be spent from inside a group boss fight', () => {
   // Loot in a co-op room is gated on personally dealing 10% of the boss's max
   // HP. A skip is the one thing a player could reach for to jump a kill they
   // have not contributed to, so the endpoint has to refuse before it debits —
-  // otherwise the credit is spent AND the threshold is sidestepped.
+  // otherwise the credit is spent AND the threshold is sidestepped. The slayer
+  // skip is the same lock class: it debits credits and its rerolled task is
+  // written back through the room.
   function skipRequest(characterId: number) {
     return new Request('https://x', {
       method: 'POST',
@@ -99,25 +102,32 @@ describe('a skip cannot be spent from inside a group boss fight', () => {
     })
   }
 
-  it('refuses the skip and leaves the credits alone', async () => {
-    raw.prepare('UPDATE characters SET credits = 50 WHERE id = 5').run()
-    await join(5)
+  const endpoints: [string, (ctx: any) => Promise<Response>][] = [
+    ['/api/skip-hour', skipHour],
+    ['/api/slayer/skip', slayerSkip],
+  ]
 
-    const res = await skipHour({ request: skipRequest(5), env } as any)
+  for (const [name, handler] of endpoints) {
+    it(`${name} refuses and leaves the credits alone`, async () => {
+      raw.prepare('UPDATE characters SET credits = 50 WHERE id = 5').run()
+      await join(5)
 
-    expect(res.status).toBe(409)
-    expect((await res.json()).code).toBe('CHARACTER_IN_COOP_SESSION')
-    expect(raw.prepare('SELECT credits FROM characters WHERE id = 5').get().credits).toBe(50)
-  })
+      const res = await handler({ request: skipRequest(5), env } as any)
 
-  it('allows it again once the fight is left', async () => {
-    raw.prepare('UPDATE characters SET credits = 50 WHERE id = 5').run()
-    const { sessionId } = await join(5)
-    await leaveCoopSession(env, { characterId: 5, identityId: 1, sessionId })
+      expect(res.status).toBe(409)
+      expect((await res.json()).code).toBe('CHARACTER_IN_COOP_SESSION')
+      expect(raw.prepare('SELECT credits FROM characters WHERE id = 5').get().credits).toBe(50)
+    })
 
-    const res = await skipHour({ request: skipRequest(5), env } as any)
-    expect(res.status).toBe(200)
-  })
+    it(`${name} allows it again once the fight is left`, async () => {
+      raw.prepare('UPDATE characters SET credits = 50 WHERE id = 5').run()
+      const { sessionId } = await join(5)
+      await leaveCoopSession(env, { characterId: 5, identityId: 1, sessionId })
+
+      const res = await handler({ request: skipRequest(5), env } as any)
+      expect(res.status).toBe(200)
+    })
+  }
 })
 
 describe('PUT /api/save co-op session lock', () => {

@@ -194,6 +194,22 @@ export const KNOWLEDGE_CHUNKS = [
   "text": "Raids are multi-boss gauntlets (for example the Vaults of Xyren) with big reward tables: guaranteed loot plus a chance at rare uniques. Bosses are tougher single monsters with their own drop tables and kill counts. Boss and raid uniques are granted by the server when you complete the kill, and every kill is recorded — check the Collection Log and Leaderboard. You can spend credits to skip to a boss kill or pay a raid's skip cost."
  },
  {
+  "id": "guide_group_boss_fights",
+  "title": "Group boss fights",
+  "tags": [
+   "guide"
+  ],
+  "text": "Tap most bosses in the combat picker and you are asked whether to fight solo or join a group. A group holds up to 8 players against one shared boss; you join the fullest group with room, or open a new one. Raid bosses stay inside their raids, and four bosses are solo only: Ember Tyrant, Ashen Crucible, Venomcoil Matriarch and Blighted Gauntlet. The server runs the whole fight — every swing, your XP, the food and potions you use and the loot roll. The fight plays the same as a solo one: same tick speed, prayers, special attacks, combo eating and gear swaps, and dying costs exactly what dying to that boss alone costs. The boss's entry requirements still apply to each player, quest, Slayer level and kill count alike. After a kill the boss comes back on a timer shown as a countdown."
+ },
+ {
+  "id": "guide_group_boss_loot_and_the_10_rule",
+  "title": "Group boss loot and the 10% rule",
+  "tags": [
+   "guide"
+  ],
+  "text": "Every player who personally deals at least 10% of the boss's maximum hitpoints gets their own roll of its drop table — not a share of one drop. Two players over the line means two independent rolls, each with its own collection log entries and kill count. Miss the line and you get nothing from that kill. Damage from any source counts, including specials and summons, and it resets each time the boss respawns. The Loot Share board in the fight lists every player's damage as a bar filling toward the threshold: a full bar means your drop is secured. With the group capped at 8, the top contributor always clears the line, so a kill never comes out empty for everyone. Being defeated does not cancel a drop you had already earned. Slayer task credit works differently — it goes to everyone still alive at the kill who has that boss as their task, whatever their damage. While you are in a group fight the server owns your save, so saving, skipping time, buying and Trading Post activity are all locked until you leave with the back arrow."
+ },
+ {
   "id": "guide_the_corporeal_horror",
   "title": "The Corporeal Horror",
   "tags": [
