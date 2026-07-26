@@ -48,17 +48,21 @@ Auth: `wrangler login`, or `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID`.
 
 Tell the player to reload the game. The revision bump means their open tab's next push is rejected as stale, and the client pulls the new save.
 
+## Or in the browser: the `/admin` portal
+
+The usual route for a support grant. Open `https://<host>/admin`, enter `ADMIN_SECRET`, pick character + item + quantity from the dropdowns, **Preview** (dry run), then **Grant**. The secret lives in the tab's memory only — reloading re-locks it, and nothing is stored.
+
 ## Or over HTTP: `POST /api/admin/grant-item`
 
-Same guarantees (item resolution, three save locks, revision guard), no wrangler needed, and it can target the **bank** as well as the inventory. Admin auth is the `MAINTENANCE_SECRET` — a session JWT grants nothing.
+Same guarantees (item resolution, three save locks, revision guard), no wrangler needed, and it can target the **bank** as well as the inventory. Admin auth is `ADMIN_SECRET` — a session JWT grants nothing.
 
 ```bash
 curl -X POST https://<host>/api/admin/grant-item \
-  -H "X-Maintenance-Secret: $MAINTENANCE_SECRET" -H 'Content-Type: application/json' \
+  -H "X-Admin-Secret: $ADMIN_SECRET" -H 'Content-Type: application/json' \
   -d '{"character_id":12,"item_id":"dragon_scimitar","quantity":1,"destination":"inventory","dry_run":true}'
 ```
 
-Body: `character_id`, `item_id` (id or legacy id — not a name), `quantity` (1…1e9, default 1), `destination` `inventory`|`bank` (default inventory), `noted`, `dry_run`, `reason` (audited). Non-stackables take one slot per copy and 409 `INVENTORY_FULL` if they don't fit — use `noted` or `destination:"bank"`. Every grant writes an `admin_item_grant` audit row. Handler: `functions/api/admin/grant-item.js`, tests `tests/adminGrantItem.test.ts`.
+Body: `character_id`, `item_id` (id or legacy id — not a name), `quantity` (1…1e9, default 1), `destination` `inventory`|`bank` (default inventory), `noted`, `dry_run`, `reason` (audited). Non-stackables take one slot per copy and 409 `INVENTORY_FULL` if they don't fit — use `noted` or `destination:"bank"`. Every grant writes an `admin_item_grant` audit row. Handlers: `functions/api/admin/grant-item.js`, `functions/api/admin/catalog.js`, `functions/admin.js`; tests `tests/adminGrantItem.test.ts`, `tests/adminPortal.test.ts`.
 
 ## Limits
 

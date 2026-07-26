@@ -8,7 +8,7 @@ import { gzipJsonString } from '../functions/_lib/saveCodec.js'
 
 import { onRequestPost } from '../functions/api/admin/grant-item.js'
 
-const SECRET = 'a-very-long-maintenance-secret'
+const SECRET = 'a-very-long-admin-portal-secret'
 const NOW = 1_760_000_000_000
 
 let raw: any
@@ -26,7 +26,7 @@ async function seedCharacter(id = 7, { ownerId = 1, inventory = [] as any[], ban
 
 function req(body: any, { secret = SECRET as string | null } = {}) {
   const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-  if (secret !== null) headers['X-Maintenance-Secret'] = secret
+  if (secret !== null) headers['X-Admin-Secret'] = secret
   return new Request('https://x/api/admin/grant-item', { method: 'POST', headers, body: JSON.stringify(body) })
 }
 
@@ -39,7 +39,7 @@ beforeEach(() => {
   vi.useFakeTimers()
   vi.setSystemTime(NOW)
   const d = makeD1()
-  env = { DB: d.DB as FakeD1, MAINTENANCE_SECRET: SECRET }
+  env = { DB: d.DB as FakeD1, ADMIN_SECRET: SECRET }
   raw = d.raw
 })
 afterEach(() => {
@@ -47,14 +47,14 @@ afterEach(() => {
 })
 
 describe('POST /api/admin/grant-item authorization', () => {
-  it('rejects a request with no maintenance secret', async () => {
+  it('rejects a request with no admin secret', async () => {
     await seedCharacter()
     const res = await onRequestPost({ request: req({ character_id: 7, item_id: 'coins' }, { secret: null }), env } as any)
     expect(res.status).toBe(401)
     expect(storedSave().revision).toBe(4)
   })
 
-  it('rejects a wrong maintenance secret', async () => {
+  it('rejects a wrong admin secret', async () => {
     await seedCharacter()
     const res = await onRequestPost({ request: req({ character_id: 7, item_id: 'coins' }, { secret: 'wrong-but-long-enough-secret' }), env } as any)
     expect(res.status).toBe(401)
@@ -66,16 +66,16 @@ describe('POST /api/admin/grant-item authorization', () => {
     expect(res.status).toBe(401)
   })
 
-  it('fails closed when MAINTENANCE_SECRET is not configured', async () => {
+  it('fails closed when ADMIN_SECRET is not configured', async () => {
     await seedCharacter()
-    env.MAINTENANCE_SECRET = undefined
+    env.ADMIN_SECRET = undefined
     const res = await onRequestPost({ request: req({ character_id: 7, item_id: 'coins' }, { secret: '' }), env } as any)
     expect(res.status).toBe(401)
   })
 
-  it('fails closed when MAINTENANCE_SECRET is configured too short to be a real secret', async () => {
+  it('fails closed when ADMIN_SECRET is configured too short to be a real secret', async () => {
     await seedCharacter()
-    env.MAINTENANCE_SECRET = 'short'
+    env.ADMIN_SECRET = 'short'
     const res = await onRequestPost({ request: req({ character_id: 7, item_id: 'coins' }, { secret: 'short' }), env } as any)
     expect(res.status).toBe(401)
   })

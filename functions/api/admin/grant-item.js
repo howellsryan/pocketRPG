@@ -6,8 +6,9 @@
 // of the save, and the write is guarded on the save_revision read in the same
 // request so a concurrent player save can never be clobbered.
 //
-// Authorization is the MAINTENANCE_SECRET only (functions/_lib/adminAuth.js) —
-// a session JWT grants nothing here, however the account is flagged.
+// Authorization is the ADMIN_SECRET only (functions/_lib/adminAuth.js) — a
+// session JWT grants nothing here, however the account is flagged. The /admin
+// portal is a front end for this endpoint and sends the same header.
 import { json } from '../../_lib/auth.js'
 import { isAdminRequest } from '../../_lib/adminAuth.js'
 import { assertNotInActiveMatch } from '../../_lib/pvp.js'
@@ -119,7 +120,7 @@ export async function onRequestPost({ request, env }) {
 
     const write = await writeSave(env, characterId, saveObject, saveRevision)
 
-    // No identityId: the maintenance secret is not an account, and stamping the
+    // No identityId: the admin secret is not an account, and stamping the
     // character's OWNER into the actor column would read as the player having
     // granted it to themselves.
     await auditLog(env, 'admin_item_grant', {
