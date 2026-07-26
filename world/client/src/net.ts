@@ -10,6 +10,14 @@ export function shouldReconnectOnClose(event: { code: number }): boolean {
   return event.code !== 1008
 }
 
+/** A 1008 close that refuses the ROOM, not the session: an instanced boss lair
+ * that filled up between being assigned and being joined. The token is still
+ * good, so this must not be treated as a logout — the caller falls back to the
+ * overworld instead of dropping the player at the login screen. */
+export function isInstanceFullClose(event: { code: number; reason?: string }): boolean {
+  return event.code === 1008 && event.reason === 'instance_full'
+}
+
 export function connect(host: string, room: string): PartySocket {
   return new PartySocket({ host, party: 'world-zone', room, shouldReconnectOnClose })
 }

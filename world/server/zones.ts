@@ -1,5 +1,6 @@
 import { validateZone, type ZoneDef } from '../shared/zone'
 import overworldZone from '../zones/overworld.json'
+import grondarLairZone from '../zones/grondar_lair.json'
 
 // Bundled zone definitions, baked into the Worker at build time. A D1 row in
 // world_zone_defs of the same id overrides these at runtime (see zoneStore.ts);
@@ -9,13 +10,16 @@ import overworldZone from '../zones/overworld.json'
 // a direct `as ZoneDef` cast can stop structurally overlapping. validateZone
 // below is the real guarantee — it runs on every zone at module load.
 //
-// The overworld is the one true zone: every place lives in it as a district.
-// (zones/lumbright.json survives only as the generator's inline-stamp source —
-// it is not served.)
+// The overworld is the one true zone for open play: every place lives in it as
+// a district. (zones/lumbright.json survives only as the generator's inline-stamp
+// source — it is not served.) Instanced boss lairs are the exception: they are
+// keyed here by their BASE id and served under numbered room names
+// (world/shared/instances.ts).
 const asZone = (z: unknown): ZoneDef => z as ZoneDef
 
 export const ZONES: Record<string, ZoneDef> = {
   overworld: asZone(overworldZone),
+  grondar_lair: asZone(grondarLairZone),
 }
 
 for (const zone of Object.values(ZONES)) {

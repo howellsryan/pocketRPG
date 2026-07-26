@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { shouldReconnectOnClose } from '../client/src/net'
+import { isInstanceFullClose, shouldReconnectOnClose } from '../client/src/net'
 
 describe('shouldReconnectOnClose', () => {
   it('does not reconnect after a 1008 policy close (terminal session rejection)', () => {
@@ -16,5 +16,22 @@ describe('shouldReconnectOnClose', () => {
 
   it('reconnects after a normal close (1000)', () => {
     expect(shouldReconnectOnClose({ code: 1000 })).toBe(true)
+  })
+})
+
+describe('isInstanceFullClose', () => {
+  it('recognises a lair that filled up between assignment and joining', () => {
+    expect(isInstanceFullClose({ code: 1008, reason: 'instance_full' })).toBe(true)
+  })
+
+  it('does not claim any other 1008 rejection — those really are logouts', () => {
+    for (const reason of ['invalid_token', 'character_not_found', 'in_coop_session', '']) {
+      expect(isInstanceFullClose({ code: 1008, reason })).toBe(false)
+    }
+    expect(isInstanceFullClose({ code: 1008 })).toBe(false)
+  })
+
+  it('does not claim a network drop that happens to carry the reason', () => {
+    expect(isInstanceFullClose({ code: 1006, reason: 'instance_full' })).toBe(false)
   })
 })

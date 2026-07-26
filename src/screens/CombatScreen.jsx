@@ -49,6 +49,8 @@ import prayersData from '../data/prayers.json'
 import spellsData from '../data/spells.json'
 import raidsData from '../data/raids.json'
 import { isCoopBossId } from '../engine/coopBossEngine.js'
+import { hasWorldLair, worldLairZone } from '../engine/worldLairs.js'
+import { openWorld, worldBetaEnabled } from '../utils/helpers.js'
 import { coopApi, setActiveCoopSession } from '../cloud/coop.js'
 import { SCREENS, formatDropChance } from '../utils/constants.js'
 import { hasEpicLootDrop, getItemUnitValue, getLootTotalValue } from '../utils/itemValue.js'
@@ -342,6 +344,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   // that fires straight after doesn't send a second leave for the same fight.
   const coopLeavingRef = useRef(false)
   const [coopJoining, setCoopJoining] = useState(null)
+  const [worldJoining, setWorldJoining] = useState(null)
   // Solo-or-group prompt: which boss was tapped, and how busy its instances are.
   const [coopChoice, setCoopChoice] = useState(null)
   const [coopOpenSessions, setCoopOpenSessions] = useState(null)
@@ -1372,12 +1375,15 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   // Co-op needs a cloud account (the server owns the fight), so the offline demo
   // always goes straight to the solo path.
   const offersCoop = (monster) => isCoopBossId(monster.id) && !isDemo
+  // The open world is a separate deployment still in beta, so its route into a
+  // boss only appears where that beta is enabled.
+  const offersWorldLair = (monster) => hasWorldLair(monster.id) && !isDemo && worldBetaEnabled()
 
   // Every picker tap goes through here so mobile and desktop behave the same —
   // the mobile picker is the primary layout, so wiring only one of them is how
   // the prompt goes missing for most players.
   const pickMonsterForFight = (monster) => {
-    if (offersCoop(monster)) setCoopChoice(monster)
+    if (offersCoop(monster) || offersWorldLair(monster)) setCoopChoice(monster)
     else startFight(monster)
   }
 
@@ -1462,6 +1468,39 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       else addToast(err?.message || 'Could not join the fight.', 'error')
     } finally {
       setCoopJoining(null)
+    }
+  }
+
+  // Sends the player into the boss's own instanced room in the open world. From
+  // the moment they connect the world server owns their save, so flush first —
+  // the same reason the co-op join above does. The world opens in its own tab;
+  // this screen is left as it was.
+  const startWorldLairFight = async (monster) => {
+    const zone = worldLairZone(monster.id)
+    if (!zone) return
+    const req = checkBossRequirements(monster)
+    if (req.locked) {
+      addToast(req.reason, 'error')
+      return
+    }
+    setWorldJoining(monster.id)
+    try {
+      // A co-op lock is not a failed save — it means a room already owns this
+      // character. Let the handoff request run: it refuses with the code that
+      // produces the accurate "leave your group fight" message below, rather
+      // than this path guessing at a save problem that isn't one.
+      if (!(await runLockedSave()) && lastSaveLockCode() !== 'CHARACTER_IN_COOP_SESSION') {
+        addToast('Could not save before setting out — try again.', 'error')
+        return
+      }
+      await openWorld(api, zone)
+    } catch (err) {
+      const code = err?.body?.code
+      if (code === 'CHARACTER_IN_COOP_SESSION') addToast('Leave your current group fight first.', 'error')
+      else if (code === 'CHARACTER_IN_ACTIVE_MATCH') addToast('Finish your duel first.', 'error')
+      else addToast(err?.message || 'Could not reach the world.', 'error')
+    } finally {
+      setWorldJoining(null)
     }
   }
 
@@ -2790,31 +2829,48 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
               </div>
             </button>
 
-            <button
-              onClick={() => { const m = coopChoice; setCoopChoice(null); startCoopFight(m) }}
-              disabled={coopJoining === coopChoice.id}
-              class="w-full text-left p-3 rounded-xl border border-[var(--color-gold-dim)] bg-[var(--color-void-light)] active:bg-[var(--color-void-lighter)] disabled:opacity-40"
-            >
-              <div class="text-sm font-semibold text-[var(--color-gold)]">
-                {coopJoining === coopChoice.id ? 'Joining\u2026' : 'Fight together'}
-              </div>
-              <div class="text-[10px] text-[var(--color-parchment)] opacity-60 mt-0.5">
-                Share one boss with other players. The drop goes to whoever deals the most damage. Everyone keeps their own XP.
-              </div>
-              <div class="text-[10px] text-[var(--color-gold)] opacity-80 mt-1">
-                {coopOpenSessions === null
-                  ? 'Checking who is in there\u2026'
-                  : (() => {
-                    const fighters = coopOpenSessions.reduce((sum, s) => sum + (s.memberCount || 0), 0)
-                    if (fighters === 0) return 'Nobody in there yet, so you would start a new fight.'
-                    return `${fighters} ${fighters === 1 ? 'player is' : 'players are'} fighting right now.`
-                  })()}
-              </div>
-            </button>
+            {offersCoop(coopChoice) && (
+              <button
+                onClick={() => { const m = coopChoice; setCoopChoice(null); startCoopFight(m) }}
+                disabled={coopJoining === coopChoice.id}
+                class="w-full text-left p-3 rounded-xl border border-[var(--color-gold-dim)] bg-[var(--color-void-light)] active:bg-[var(--color-void-lighter)] disabled:opacity-40"
+              >
+                <div class="text-sm font-semibold text-[var(--color-gold)]">
+                  {coopJoining === coopChoice.id ? 'Joining\u2026' : 'Fight together'}
+                </div>
+                <div class="text-[10px] text-[var(--color-parchment)] opacity-60 mt-0.5">
+                  Share one boss with other players. The drop goes to whoever deals the most damage. Everyone keeps their own XP.
+                </div>
+                <div class="text-[10px] text-[var(--color-gold)] opacity-80 mt-1">
+                  {coopOpenSessions === null
+                    ? 'Checking who is in there\u2026'
+                    : (() => {
+                      const fighters = coopOpenSessions.reduce((sum, s) => sum + (s.memberCount || 0), 0)
+                      if (fighters === 0) return 'Nobody in there yet, so you would start a new fight.'
+                      return `${fighters} ${fighters === 1 ? 'player is' : 'players are'} fighting right now.`
+                    })()}
+                </div>
+              </button>
+            )}
+
+            {offersWorldLair(coopChoice) && (
+              <button
+                onClick={() => { const m = coopChoice; setCoopChoice(null); startWorldLairFight(m) }}
+                disabled={worldJoining === coopChoice.id}
+                class="w-full text-left p-3 rounded-xl border border-[var(--color-mana)] bg-[var(--color-void-light)] active:bg-[var(--color-void-lighter)] disabled:opacity-40"
+              >
+                <div class="text-sm font-semibold text-[var(--color-mana)]">
+                  {worldJoining === coopChoice.id ? 'Setting out\u2026' : 'Fight in the open world'}
+                </div>
+                <div class="text-[10px] text-[var(--color-parchment)] opacity-60 mt-0.5">
+                  Walk into the boss's own lair in 3D, up to eight of you, and fight it where it lives. Opens in a new tab.
+                </div>
+              </button>
+            )}
           </div>
 
           <p class="text-[10px] text-[var(--color-parchment)] opacity-50 mt-3">
-            While you are in a group fight the server runs your character, so the rest of the game is paused until you leave.
+            While you are in a group fight or out in the world the server runs your character, so the rest of the game is paused until you come back.
           </p>
         </Modal>
       )}

@@ -114,6 +114,34 @@ export function calcCombatLevel(stats) {
 }
 
 /**
+ * The 3D open-world deployment. Only ever opened from surfaces gated behind
+ * `worldBetaEnabled()`, which is preview-only — so this is the preview world
+ * Worker, never production (production is world.pocketrpg.co.uk).
+ */
+export const WORLD_ORIGIN = 'https://pocketrpg-world-preview.rlh.workers.dev'
+
+/**
+ * Whether open-world entry points may render. `pocketWorldBetaEnabled` is baked
+ * in at build time by build_single.cjs (preview on, production off; override
+ * with EnableWorldBeta) and lives in the game chunk, so it is read lazily here
+ * — never at module evaluation (CLAUDE.md §12) — and guarded for Vite dev,
+ * where no single-file build runs.
+ */
+export function worldBetaEnabled() {
+  return typeof pocketWorldBetaEnabled !== 'undefined' ? Boolean(pocketWorldBetaEnabled) : true
+}
+
+/**
+ * Opens the open world in a new tab, optionally asking to land in a specific
+ * instanced zone (a boss lair). The handoff is single-use and 60s-lived, so it
+ * is fetched at click time, never held.
+ */
+export async function openWorld(api, zone) {
+  const { handoff } = await api.requestWorldHandoff(zone)
+  window.open(`${WORLD_ORIGIN}/#handoff=${handoff}`, '_blank')
+}
+
+/**
  * One-line credit cost for the chat helper's write-action confirm card.
  * `cost` is the { fee, skip, total } breakdown from the server
  * (functions/_lib/chat/actions.js actionCreditCost) — `fee` is 0 when the

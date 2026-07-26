@@ -92,6 +92,7 @@ const sourceFiles = [
   'engine/pvpEndSummary.js',
   'engine/pvpEngine.js',
   'engine/coopBossEngine.js',
+  'engine/worldLairs.js',
   'engine/lootTransfer.js',
   'engine/skilling.js',
   'engine/dungeoneeringTokens.js',
