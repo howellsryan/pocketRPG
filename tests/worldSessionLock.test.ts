@@ -10,6 +10,7 @@ import {
   beginWorldSession,
   refreshWorldSession,
   endWorldSession,
+  expireWorldSessionAfter,
 } from '../functions/_lib/game/worldSessions.js'
 
 vi.mock('../functions/_lib/auth.js', () => ({
@@ -76,6 +77,44 @@ describe('worldSessions lib', () => {
     expect(worldRow(5).heartbeat_at).toBe(now + 10)
     await endWorldSession(env, 5, 'old')
     expect(worldRow(5).session_id).toBe('new')
+  })
+})
+
+describe('world session expiry armed on a socket close', () => {
+  it('lapses the lock at the grace period instead of a full TTL', async () => {
+    char(5)
+    const now = 3_000_000
+    await beginWorldSession(env, 5, 'sess-a', now)
+    await expireWorldSessionAfter(env, 5, 'sess-a', 15_000, now)
+    // Still locked through the grace period (the DO is expected to flush and
+    // release inside it), and lapsed straight after — never a TTL later.
+    expect(await isWorldSessionLive(env, 5, now + 14_999)).toBe(true)
+    expect(await isWorldSessionLive(env, 5, now + 15_001)).toBe(false)
+  })
+
+  it('is undone by a reconnect re-claiming the session', async () => {
+    char(5)
+    const now = 3_000_000
+    await beginWorldSession(env, 5, 'sess-a', now)
+    await expireWorldSessionAfter(env, 5, 'sess-a', 15_000, now)
+    await beginWorldSession(env, 5, 'sess-a', now + 5_000)
+    expect(await isWorldSessionLive(env, 5, now + 20_000)).toBe(true)
+  })
+
+  it('never pushes an expiry further out, and ignores a session it does not own', async () => {
+    char(5)
+    const now = 3_000_000
+    await beginWorldSession(env, 5, 'sess-a', now)
+    await expireWorldSessionAfter(env, 5, 'sess-a', 15_000, now)
+    const armed = worldRow(5).heartbeat_at
+    // A later, longer arming (a second close, or one that raced the first) must
+    // not extend the lock it already shortened.
+    await expireWorldSessionAfter(env, 5, 'sess-a', 60_000, now + 1_000)
+    expect(worldRow(5).heartbeat_at).toBe(armed)
+    // A stale session's close must not touch a row a newer session re-claimed.
+    await beginWorldSession(env, 5, 'sess-b', now + 2_000)
+    await expireWorldSessionAfter(env, 5, 'sess-a', 1_000, now + 2_000)
+    expect(worldRow(5).heartbeat_at).toBe(now + 2_000)
   })
 })
 

@@ -40,6 +40,20 @@ export async function refreshWorldSession(env, characterId, sessionId, now = Dat
   ).bind(now, Number(characterId), String(sessionId)).run()
 }
 
+/** Back-dates heartbeat_at so the lock lapses `ms` from now instead of a full
+ * TTL from the last heartbeat. Called when a world socket closes: the DO still
+ * intends to release the lock itself once the linger grace period expires, but
+ * if it is evicted or crashes first the row would otherwise sit on the save for
+ * up to a TTL — which is what left a player unable to save for minutes after
+ * closing the world. A reconnect re-claims the row via beginWorldSession. */
+export async function expireWorldSessionAfter(env, characterId, sessionId, ms, now = Date.now()) {
+  if (!env?.DB) return
+  const heartbeat = now + Number(ms) - WORLD_SESSION_TTL_MS
+  await env.DB.prepare(
+    'UPDATE world_sessions SET heartbeat_at = ? WHERE character_id = ? AND session_id = ? AND heartbeat_at > ?'
+  ).bind(heartbeat, Number(characterId), String(sessionId), heartbeat).run()
+}
+
 /** Releases the lock, but only if THIS session still holds it — a disconnect
  * flush from an old session must not clear a row a reconnect already re-claimed. */
 export async function endWorldSession(env, characterId, sessionId) {

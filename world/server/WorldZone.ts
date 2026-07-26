@@ -32,7 +32,7 @@ import monstersDataJson from '../../src/data/monsters.json'
 type MonsterNames = Record<string, { name?: string } | undefined>
 const monsterNames = monstersDataJson as MonsterNames
 import { isCharacterInActiveMatch } from './pvpLock'
-import { beginWorldSession, refreshWorldSession, endWorldSession } from '../../functions/_lib/game/worldSessions.js'
+import { beginWorldSession, refreshWorldSession, endWorldSession, expireWorldSessionAfter } from '../../functions/_lib/game/worldSessions.js'
 import { isCoopSessionLive } from '../../functions/_lib/game/coopBoss.js'
 import { loadCharacterWithSave } from '../../functions/_lib/game/save.js'
 import { zoneSpawnSummary, type ZoneDef, type ZoneExitDef } from '../shared/zone'
@@ -72,10 +72,19 @@ const RATE_LIMIT_HARD_KICK = 40
 // Every player's ent re-broadcasts on this cadence even when idle, so a client
 // that missed a join edge (reconnect gap, suspended tab) self-heals within 30s.
 const PRESENCE_KEYFRAME_TICKS = 50
-// A dropped socket lingers this long before the player really leaves the zone.
-// Backgrounding a browser tab drops the socket in ~10s; without a grace period
-// others would see the player vanish that fast. 100 ticks ≈ 60s.
-const LINGER_TICKS = 100
+// A dropped socket lingers this long before the player really leaves the zone —
+// a grace period so a brief mobile socket drop doesn't make the player vanish
+// for everyone. It is deliberately SHORT (17 ticks ≈ 10s) because a lingering
+// player still holds this character's save lock, and the idle game cannot write
+// a single cloud save until it lapses. Don't lengthen it: a reconnect past the
+// grace period just re-enters at the checkpoint, whereas a longer grace period
+// strands the player's save.
+const LINGER_TICKS = 17
+// Fallback expiry written to the world_sessions row on a socket close, so the
+// save lock lapses on its own shortly after the linger even if this DO never
+// runs the linger expiry (evicted/crashed). Sits just past the linger to leave
+// the flush + release its D1 round-trips in the normal case.
+const LINGER_LOCK_GRACE_MS = LINGER_TICKS * 600 + 5_000
 
 type Player = TickPlayer & {
   conn: Connection
@@ -210,6 +219,19 @@ export class WorldZone extends Server<Env> {
    * Lingering players still hold their slot — they are in-world, just frozen. */
   playerCount(): number {
     return this.players.size
+  }
+
+  /** Departs a character on behalf of the exit beacon (server/leave.ts), which
+   * a closing tab fires because its `leave` frame may never flush. Called as a
+   * Durable Object RPC. Treats a still-connected player and a lingering one the
+   * same: both are flushed and the save lock released now, so closing the
+   * browser costs nothing the Log out button wouldn't. False means the room has
+   * already let them go — the socket close won the race, which is fine. */
+  async departCharacter(charId: string): Promise<boolean> {
+    const player = this.players.get(String(charId))
+    if (!player) return false
+    await this.depart(player, 'leave')
+    return true
   }
 
   /** Resolves and caches this DO's zone def once: stored D1 def first, else the
@@ -355,6 +377,9 @@ export class WorldZone extends Server<Env> {
     player.anim = 'idle'
     player.running = false
     player.lingerUntilTick = this.tickCount + LINGER_TICKS
+    // Arm the save lock to lapse with the linger even if this instance never
+    // gets to run the linger expiry below.
+    void expireWorldSessionAfter(this.env, Number(charId), player.sessionId, LINGER_LOCK_GRACE_MS)
     // Keep ticking so the linger timer advances even if this was the last
     // connected player.
     this.ensureTicking()

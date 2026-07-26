@@ -6,6 +6,8 @@ import { closeBankUI, isBankOpen, openBankUI, updateBankInventory, updateBankUI 
 import { closeCraftUI, openCraftUI, updateCraftInventory, updateCraftStats, type SkillLevels } from './crafting'
 import { getLevelFromXP } from '../../../src/engine/experience.js'
 import { connect, isInstanceFullClose, onMessage, send } from './net'
+import { createAwayWatch } from './away'
+import { sendLeaveBeacon } from './leaveBeacon'
 import { createCamera, createLights, createRenderer, createScene, FOG_FAR, tileToWorld, updateCamera, updateShadowLight } from './scene'
 import { attachCameraControls } from './cameraControls'
 import { createTerrain } from './terrain'
@@ -69,7 +71,10 @@ function buildPlayerPickable(diff: EntityDiff): Pickable {
 }
 
 function enterWorld(session: WorldSession): void {
-  const socket = connect(window.location.host, getStoredZone())
+  // The room this socket is bound to, kept so the exit beacon can name it — it
+  // travels without a socket, so the server can't infer the room from the caller.
+  const room = getStoredZone()
+  const socket = connect(window.location.host, room)
   let self: Entity | null = null
   let statics: Statics | null = null
   let lootLayer: LootLayer | null = null
@@ -370,24 +375,66 @@ function enterWorld(session: WorldSession): void {
       socket.reconnect()
     }
   }, 10000)
+  // Backgrounding the world tab counts as leaving it (see away.ts): the world
+  // holds this character's save lock while its socket is open, so a tab left
+  // running behind the idle game blocks every cloud save. Departing releases the
+  // lock now; coming back reconnects and re-enters at the checkpoint.
+  const awayWatch = createAwayWatch({
+    isHidden: () => document.visibilityState === 'hidden',
+    depart: () => {
+      if (authed && socket.readyState === WebSocket.OPEN) send(socket, { t: 'leave' })
+      // close() (unlike a dropped socket) stops partysocket reconnecting, so we
+      // stay out until the player is actually looking at the world again.
+      socket.close()
+    },
+    resume: () => {
+      showConnBanner()
+      lastServerMsg = performance.now()
+      socket.reconnect()
+    },
+  })
   // Threshold sits above the 10s ping cadence — a quick app switch on a
   // healthy connection must never trigger a reconnect.
   document.addEventListener('visibilitychange', () => {
+    // Ordering matters: a resume above reconnects and re-stamps lastServerMsg,
+    // so the watchdog below can't fire a second reconnect on the same event.
+    awayWatch.onVisibilityChange()
     if (document.visibilityState === 'visible' && performance.now() - lastServerMsg > 15000) {
       lastServerMsg = performance.now()
       socket.reconnect()
     }
   })
 
-  // Closing the tab is a deliberate exit, so say so: the server flushes the save
-  // and releases the world lock immediately instead of holding both for the
-  // 60s linger, which is what left the idle game unable to save on the way back.
+  // Closing the tab/browser is a deliberate exit, so it gets exactly what the
+  // Log out button gets: the server flushes the save and releases the world lock
+  // now, instead of holding both for the linger grace period — which is what
+  // left the idle game unable to save on the way back.
+  //
+  // The `leave` frame alone is not enough: during unload there is no guarantee a
+  // socket write is flushed before the socket dies, and a beacon is the one
+  // request browsers promise to deliver (see leaveBeacon.ts). Both are sent —
+  // whichever lands first departs the player, and the second is a no-op.
+  //
   // `persisted` means the page went into the back/forward cache and may return —
-  // that IS what linger is for, so leave those alone. Best-effort by nature: a
-  // frame that never makes it off the tab just falls back to the linger flush.
+  // that IS what linger is for, so leave those alone. A zone transition is not
+  // an exit either: the player is mid-handoff to the next room.
+  function departOnUnload(): void {
+    if (transitioning) return
+    if (authed && socket.readyState === WebSocket.OPEN) send(socket, { t: 'leave' })
+    sendLeaveBeacon({
+      token: session.token,
+      room,
+      origin: window.location.origin,
+      sendBeacon: navigator.sendBeacon ? (url, body) => navigator.sendBeacon(url, body) : null,
+      keepaliveFetch: (url, body) => {
+        void fetch(url, { method: 'POST', body, keepalive: true, headers: { 'Content-Type': 'application/json' } })
+          .catch(() => {})
+      },
+    })
+  }
   window.addEventListener('pagehide', (event) => {
     if ((event as PageTransitionEvent).persisted) return
-    if (authed && socket.readyState === WebSocket.OPEN) send(socket, { t: 'leave' })
+    departOnUnload()
   })
 
   /** Repeat welcome after a reconnect: snap self to the server's position,

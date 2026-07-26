@@ -1,7 +1,8 @@
-import { routePartykitRequest } from 'partyserver'
+import { getServerByName, routePartykitRequest } from 'partyserver'
 import { WorldZone } from './WorldZone'
 import { CoopBossRoom } from './CoopBossRoom'
 import { handleWorldSession } from './session'
+import { handleWorldLeave, type DepartInRoom } from './leave'
 import { handleEditorRequest } from './editor'
 import { setQuestGateBypass, resolveQuestGateBypass } from '../../src/engine/questGates.js'
 import type { Env } from './env'
@@ -15,6 +16,17 @@ export type { Env }
 
 const EDITOR_PREFIX = '/api/world/editor'
 
+/** Durable Object side of the exit beacon: hand the departure to the room the
+ * beacon named. Lives here rather than in leave.ts so that module (and its
+ * tests) stay free of the `cloudflare:workers` runtime import. */
+const departInRoom: DepartInRoom = async (env, room, charId) => {
+  const stub = await getServerByName<Env, WorldZone>(
+    env.WorldZone as unknown as DurableObjectNamespace<WorldZone>,
+    room
+  )
+  return await stub.departCharacter(charId)
+}
+
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url)
@@ -26,6 +38,12 @@ export default {
 
     if (url.pathname === '/api/world/session' && request.method === 'POST') {
       return handleWorldSession(request, env)
+    }
+
+    // Exit beacon from a closing tab — see server/leave.ts. Plain HTTP rather
+    // than a socket frame precisely because the socket may already be gone.
+    if (url.pathname === '/api/world/leave' && request.method === 'POST') {
+      return handleWorldLeave(request, env, departInRoom)
     }
 
     if (url.pathname === EDITOR_PREFIX || url.pathname.startsWith(EDITOR_PREFIX + '/')) {
