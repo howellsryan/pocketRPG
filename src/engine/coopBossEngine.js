@@ -31,53 +31,54 @@ export const COOP_TICK_MS = 600
  * `venomcoil_matriarch` and `blighted_gauntlet`.
  * Still an explicit allowlist rather than a filter over the monster data,
  * so opening a boss to groups is a deliberate edit and both sides gate on one
- * list.
- *
- * `respawnTicks` paces the farm loop. A group melts a low-HP boss far faster
- * than a solo player, so the short floor only suits bosses with enough HP to
- * take real time to kill — anything squishy needs a longer wait between kills
- * or its GP/hr runs away from the §4 boss guardrails. Every value below is
- * `clamp(round(12750 / hitpoints), 10, 100)`, the curve through the two
- * hand-tuned anchors: Warlord Grondar (255 HP, ~20k coins a kill) at 50 ticks
- * and The Corporeal Horror (2000 HP) at the 10-tick floor. Ordered by combat
- * level. */
+ * list. Ordered by combat level. */
 export const COOP_BOSSES = {
-  gravehusk_brute: { respawnTicks: 100 },
-  boneclaw_revenant: { respawnTicks: 100 },
-  stonegale_elemental: { respawnTicks: 100 },
-  gravethorn_drake: { respawnTicks: 100 },
-  shroudwraith_specter: { respawnTicks: 100 },
-  cindermaw_serpent: { respawnTicks: 100 },
-  ironclad_guardian: { respawnTicks: 100 },
-  thornhide_colossus: { respawnTicks: 100 },
-  razorwing_harpy: { respawnTicks: 91 },
-  emberhowl_warlord: { respawnTicks: 85 },
-  ashen_hydra: { respawnTicks: 40 },
-  sovrathar_the_ashen_sovereign: { respawnTicks: 27 },
-  hellbound_gorilla: { respawnTicks: 62 },
-  king_black_dragon: { respawnTicks: 85 },
-  deepmaw_kraken: { respawnTicks: 50 },
-  nagadoth_prime: { respawnTicks: 85 },
-  nagadoth_rex: { respawnTicks: 85 },
-  nagadoth_supreme: { respawnTicks: 85 },
-  threefang_cerberus: { respawnTicks: 21 },
-  duskmare: { respawnTicks: 10 },
-  skyrender_kharra: { respawnTicks: 50 },
-  commander_zephyra: { respawnTicks: 50 },
-  warlord_grondar: { respawnTicks: 50 },
-  krylth_the_defiler: { respawnTicks: 50 },
-  corporeal_horror: { respawnTicks: 10 },
+  gravehusk_brute: {},
+  boneclaw_revenant: {},
+  stonegale_elemental: {},
+  gravethorn_drake: {},
+  shroudwraith_specter: {},
+  cindermaw_serpent: {},
+  ironclad_guardian: {},
+  thornhide_colossus: {},
+  razorwing_harpy: {},
+  emberhowl_warlord: {},
+  ashen_hydra: {},
+  sovrathar_the_ashen_sovereign: {},
+  hellbound_gorilla: {},
+  king_black_dragon: {},
+  deepmaw_kraken: {},
+  nagadoth_prime: {},
+  nagadoth_rex: {},
+  nagadoth_supreme: {},
+  threefang_cerberus: {},
+  duskmare: {},
+  skyrender_kharra: {},
+  commander_zephyra: {},
+  warlord_grondar: {},
+  krylth_the_defiler: {},
+  corporeal_horror: {},
 }
 export const COOP_BOSS_IDS = new Set(Object.keys(COOP_BOSSES))
-/** Fallback for a boss added to the map without explicit pacing. */
-export const COOP_RESPAWN_TICKS = 10
+/**
+ * The wait between kills, for every co-op boss: 25 ticks, 15 seconds.
+ *
+ * This replaced a per-boss curve (`clamp(round(12750 / hitpoints), 10, 100)`)
+ * that paced the farm loop off the boss's HP, so a group could not melt a
+ * 255 HP boss at the same rate as a 2000 HP one. A flat wait is the deliberate
+ * call: predictable for players, and short enough that the wait reads as a
+ * breather rather than downtime. It does mean a squishy boss's GP and XP per
+ * hour are no longer held back by its respawn — pace those with the drop table
+ * or the boss's own HP, not by reintroducing a per-boss delay here.
+ */
+export const COOP_RESPAWN_TICKS = 25
 
 export function isCoopBossId(bossId) {
   return typeof bossId === 'string' && Object.prototype.hasOwnProperty.call(COOP_BOSSES, bossId)
 }
 
-export function coopRespawnTicks(bossId) {
-  return COOP_BOSSES[bossId]?.respawnTicks ?? COOP_RESPAWN_TICKS
+export function coopRespawnTicks() {
+  return COOP_RESPAWN_TICKS
 }
 const COOP_EAT_TICK_COST = 3
 const COOP_VALID_STANCES = new Set(['accurate', 'aggressive', 'controlled', 'defensive', 'rapid', 'longrange'])

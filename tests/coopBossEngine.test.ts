@@ -4,6 +4,7 @@ import {
   COOP_MAX_MEMBERS,
   addCoopMember,
   coopRespawnTicks,
+  COOP_RESPAWN_TICKS,
   isCoopBossId,
   createCoopBossState,
   createCoopMember,
@@ -142,15 +143,17 @@ describe('coopBossEngine — respawn pacing', () => {
     }
   })
 
-  it('makes a low-HP boss wait longer between kills than a high-HP one', () => {
-    // A group melts 255 HP far faster than 2000, so the squishy boss has to
-    // wait longer or its kills-per-hour runs away.
-    expect(monstersData.warlord_grondar.hitpoints).toBeLessThan(monstersData.corporeal_horror.hitpoints)
-    expect(coopRespawnTicks('warlord_grondar')).toBeGreaterThan(coopRespawnTicks('corporeal_horror'))
+  it('waits the same 15 seconds for every boss', () => {
+    // Deliberate replacement of the old HP-based curve, which made a 255 HP boss
+    // wait 30s and a 2000 HP one 6s. Players get one predictable number instead.
+    expect(COOP_RESPAWN_TICKS).toBe(25)
+    expect(COOP_RESPAWN_TICKS * 0.6).toBe(15)
+    const waits = new Set(Object.keys(COOP_BOSSES).map((id) => coopRespawnTicks(id)))
+    expect([...waits]).toEqual([COOP_RESPAWN_TICKS])
   })
 
-  it('falls back to the default for a boss with no explicit pacing', () => {
-    expect(coopRespawnTicks('not_configured')).toBe(10)
+  it('answers for a boss that is not configured at all', () => {
+    expect(coopRespawnTicks('not_configured')).toBe(COOP_RESPAWN_TICKS)
   })
 
   it('waits the boss-specific delay before respawning', () => {
