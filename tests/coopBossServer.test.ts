@@ -19,6 +19,7 @@ import {
   parseCoopSessionId,
   settleCoopKill,
   sweepStaleCoopSessions,
+  writeBackMember,
 } from '../functions/_lib/game/coopBoss.js'
 import { validateCoopAction } from '../functions/api/coop/session/[id]/intent.js'
 import { MAX_XP } from '../src/utils/constants.js'
@@ -519,5 +520,163 @@ describe('coop member writeback', () => {
     applyMemberToSave(save, member)
     expect(save.inventory).toEqual([])
     expect(save.player.currentHP).toBe(99)
+  })
+})
+
+describe('death parity with a solo fight', () => {
+  it('restores a dead member to full HP, exactly as dying alone does', () => {
+    // The solo screen calls updateHP(getMaxHP()) on death. Writing the member's
+    // literal 0 back left a group death strictly harsher — a corpse that had to
+    // regenerate from nothing at +1/60s.
+    const save: any = { stats: {}, player: { currentHP: 99, name: 'Tester' } }
+    const dead = { hp: 0, maxHP: 99, status: 'dead', inventory: [], equipment: {}, xpGained: {} }
+    expect(applyMemberToSave(save, dead).player.currentHP).toBe(99)
+  })
+
+  it('leaves a living member on the HP they actually have', () => {
+    const save: any = { stats: {}, player: { currentHP: 99 } }
+    const alive = { hp: 12, maxHP: 99, status: 'alive', inventory: [], equipment: {}, xpGained: {} }
+    expect(applyMemberToSave(save, alive).player.currentHP).toBe(12)
+  })
+
+  it('keeps the death restore off a member with no status at all', () => {
+    const save: any = { stats: {}, player: { currentHP: 99 } }
+    const legacy = { hp: 3, maxHP: 99, inventory: [], equipment: {}, xpGained: {} }
+    expect(applyMemberToSave(save, legacy).player.currentHP).toBe(3)
+  })
+})
+
+describe('the kill settlement ledger', () => {
+  async function sessionFor(characterId: number) {
+    await seedCharacter(characterId)
+    const { sessionId } = await joinCoopSession(env as never, {
+      characterId, identityId: 1, bossId: BOSS, username: `player${characterId}`,
+    })
+    const session = await readSession(env as never, sessionId)
+    const state = parseSessionState(session)
+    state.members[String(characterId)].damage = 1500
+    return { session, state, kill: { bossId: BOSS, ownerCharacterId: characterId, contributors: [] } }
+  }
+
+  function claimRows(sessionId: number) {
+    return raw.prepare('SELECT kill_seq, granted_json FROM coop_kill_settlements WHERE session_id = ?').all(sessionId)
+  }
+
+  it('hands the sequence back when the save diverged, so the kill is not recorded as settled', async () => {
+    const { session, state, kill } = await sessionFor(7)
+    // Something else wrote this character's save mid-fight — the tripwire that
+    // makes the room refuse to grant.
+    state.members['7'].saveRevision = 999
+
+    const out = await settleCoopKill(env as never, { session, state, kill, killSeq: 1 })
+    expect(out.diverged).toBe(true)
+    expect(out.granted).toEqual([])
+    // The claim row must be gone. Left behind it marks the kill settled with a
+    // NULL grant: the drop is voided permanently and the replay path answers
+    // with an empty list forever after.
+    expect(claimRows(session.id)).toHaveLength(0)
+  })
+
+  it('keeps the claim when the grant actually landed', async () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    const { session, state, kill } = await sessionFor(7)
+
+    const out = await settleCoopKill(env as never, { session, state, kill, killSeq: 1 })
+    expect(out.granted.length).toBeGreaterThan(0)
+    const rows = claimRows(session.id)
+    expect(rows).toHaveLength(1)
+    expect(JSON.parse(rows[0].granted_json)).toHaveLength(out.granted.length)
+  })
+
+  it('replays a settled sequence instead of rolling the drop table twice', async () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    const { session, state, kill } = await sessionFor(7)
+
+    const first = await settleCoopKill(env as never, { session, state, kill, killSeq: 1 })
+    const replay = await settleCoopKill(env as never, { session, state, kill, killSeq: 1 })
+    expect(replay.replayed).toBe(true)
+    expect(replay.granted).toEqual(first.granted)
+    expect(claimRows(session.id)).toHaveLength(1)
+  })
+})
+
+describe('rejoining while already in a fight', () => {
+  it('returns the existing session when it is the same boss', async () => {
+    await seedCharacter(7)
+    const first = await joinCoopSession(env as never, { characterId: 7, identityId: 1, bossId: BOSS, username: 'player7' })
+    const again = await joinCoopSession(env as never, { characterId: 7, identityId: 1, bossId: BOSS, username: 'player7' })
+    expect(again.sessionId).toBe(first.sessionId)
+    expect(again.rejoined).toBe(true)
+  })
+
+  it('refuses a DIFFERENT boss rather than silently returning the old fight', async () => {
+    await seedCharacter(7)
+    await joinCoopSession(env as never, { characterId: 7, identityId: 1, bossId: BOSS, username: 'player7' })
+    // Tapping "Fight together" on another boss used to hand back the session
+    // for the boss they were already in, dropping them into the wrong fight.
+    await expect(joinCoopSession(env as never, {
+      characterId: 7, identityId: 1, bossId: 'warlord_grondar', username: 'player7',
+    })).rejects.toMatchObject({ code: 'CHARACTER_IN_COOP_SESSION' })
+  })
+})
+
+describe('writing slayer progress back to the save', () => {
+  const baseMember = () => ({
+    hp: 50, maxHP: 99, status: 'alive', inventory: [], equipment: {}, xpGained: {},
+    slayerTask: { monsterId: BOSS, monstersRemaining: 3, masterId: 'zul_kaar' },
+    slayerTasksCompleted: 0,
+    slayerCredit: { pointsEarned: 0, tasksCompleted: 0, masterCompletions: {} },
+  })
+
+  it('writes the decremented task back under settings', () => {
+    const save: any = { stats: {}, player: {}, settings: { slayerTask: { monsterId: BOSS, monstersRemaining: 4 } } }
+    const next = applyMemberToSave(save, baseMember())
+    expect(next.settings.slayerTask.monstersRemaining).toBe(3)
+  })
+
+  it('adds banked points, the completion total and the master count', () => {
+    const save: any = {
+      stats: {}, player: {},
+      settings: { slayerPoints: 30, slayerTasksCompleted: 4, slayerMasterTaskCompletions: { zul_kaar: 4 } },
+    }
+    const member = {
+      ...baseMember(),
+      slayerTask: null,
+      slayerTasksCompleted: 5,
+      slayerCredit: { pointsEarned: 150, tasksCompleted: 1, masterCompletions: { zul_kaar: 1 } },
+    }
+    const next = applyMemberToSave(save, member)
+    expect(next.settings.slayerPoints).toBe(180)
+    expect(next.settings.slayerTasksCompleted).toBe(5)
+    expect(next.settings.slayerMasterTaskCompletions.zul_kaar).toBe(5)
+    expect(next.settings.slayerTask).toBeNull()
+  })
+
+  it('leaves an existing task alone for a member whose session predates slayer support', () => {
+    // No slayerTask field at all on the member — writing null would cancel a
+    // task the player is really on.
+    const save: any = { stats: {}, player: {}, settings: { slayerTask: { monsterId: BOSS, monstersRemaining: 9 } } }
+    const legacy = { hp: 50, maxHP: 99, status: 'alive', inventory: [], equipment: {}, xpGained: {} }
+    expect(applyMemberToSave(save, legacy).settings.slayerTask.monstersRemaining).toBe(9)
+  })
+
+  it('clears the banked credit on write-back so a second one cannot pay twice', async () => {
+    await seedCharacter(7)
+    const { sessionId } = await joinCoopSession(env as never, { characterId: 7, identityId: 1, bossId: BOSS, username: 'player7' })
+    const row = await readSession(env as never, sessionId)
+    const state = parseSessionState(row)
+    const member = state.members['7']
+    member.slayerTask = null
+    member.slayerTasksCompleted = 1
+    member.slayerCredit = { pointsEarned: 15, tasksCompleted: 1, masterCompletions: { zul_kaar: 1 } }
+
+    await writeBackMember(env as never, { characterId: 7, identityId: 1, member, sessionId })
+    expect(readSave(7).settings.slayerPoints).toBe(15)
+    expect(member.slayerCredit).toEqual({ pointsEarned: 0, tasksCompleted: 0, masterCompletions: {} })
+
+    // Re-running the write-back must not pay the completion again.
+    await writeBackMember(env as never, { characterId: 7, identityId: 1, member, sessionId })
+    expect(readSave(7).settings.slayerPoints).toBe(15)
+    expect(readSave(7).settings.slayerMasterTaskCompletions.zul_kaar).toBe(1)
   })
 })

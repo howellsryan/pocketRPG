@@ -13,6 +13,7 @@ import {
   reselectTarget,
   topDamageCharacterId,
   describeCoopEquipRefusal,
+  describeCoopActionRefusal,
 } from '../src/engine/coopBossEngine.js'
 import itemsData from '../src/data/items.json'
 import monstersData from '../src/data/monsters.json'
@@ -570,5 +571,228 @@ describe('describeCoopEquipRefusal', () => {
   it('still says something for a reason it does not know', () => {
     expect(describeCoopEquipRefusal({ reason: 'wat' })).toBe('Could not equip that')
     expect(describeCoopEquipRefusal(undefined)).toBe('Could not equip that')
+  })
+})
+
+// The engine applies a spell's damage and a prayer's boost with no level check
+// of its own (combat.js only ever checks runes, applyPrayerBonuses checks
+// nothing), and the server grants the resulting damage and XP — so the unlock
+// gate lives in applyCoopIntent or nowhere. PvP has enforced the same two
+// checks since it shipped; co-op did not.
+describe('spell and prayer unlock gates', () => {
+  function memberState(statOverrides: Record<string, unknown> = {}) {
+    const payload = savePayload({})
+    Object.assign(payload.stats as object, statOverrides)
+    let state = createCoopBossState(BOSS, monstersData)!
+    state = addCoopMember(state, createCoopMember({ characterId: 1, username: 'p1', savePayload: payload, itemsData }))
+    return state
+  }
+  const intent = (action: unknown) => ([{ tick_number: 1, characterId: 1, characterSeq: 0, action }])
+
+  it('refuses a spell above the member Magic level and says which level it needs', () => {
+    // fire_surge is levelReq 95; this member sits at level 1 Magic.
+    const state = memberState({ magic: { xp: 0 } })
+    const { stateNext, events } = processCoopTick(
+      state, intent({ type: 'change_combat_spell', spellId: 'fire_surge' }), deps, Date.now(),
+    )
+    expect(stateNext.members['1'].combat.spellId).toBeNull()
+    expect(events.find((e: any) => e.type === 'actionRefused')).toMatchObject({
+      reason: 'spell_level', spellId: 'fire_surge', required: 95, characterId: 1,
+    })
+  })
+
+  it('allows a spell the member has the level for', () => {
+    const state = memberState()
+    const { stateNext, events } = processCoopTick(
+      state, intent({ type: 'change_combat_spell', spellId: 'fire_surge' }), deps, Date.now(),
+    )
+    expect(stateNext.members['1'].combat.spellId).toBe('fire_surge')
+    expect(events.find((e: any) => e.type === 'actionRefused')).toBeUndefined()
+  })
+
+  it('still lets a member clear their spell', () => {
+    const state = memberState({ magic: { xp: 0 } })
+    state.members['1'].combat.spellId = 'wind_strike'
+    const { stateNext } = processCoopTick(
+      state, intent({ type: 'change_combat_spell', spellId: null }), deps, Date.now(),
+    )
+    expect(stateNext.members['1'].combat.spellId).toBeNull()
+  })
+
+  it('refuses a prayer above the member Prayer level', () => {
+    // piety is level 70; this member is level 10.
+    const state = memberState({ prayer: { xp: 1154 } })
+    const { stateNext, events } = processCoopTick(
+      state, intent({ type: 'toggle_prayer', prayerId: 'piety', slot: 'combat' }), deps, Date.now(),
+    )
+    expect(stateNext.members['1'].combat.activeCombatPrayer).toBeNull()
+    expect(events.find((e: any) => e.type === 'actionRefused')).toMatchObject({
+      reason: 'prayer_level', prayerId: 'piety', required: 70,
+    })
+  })
+
+  it('allows a prayer the member has the level for', () => {
+    const state = memberState()
+    const { stateNext } = processCoopTick(
+      state, intent({ type: 'toggle_prayer', prayerId: 'piety', slot: 'combat' }), deps, Date.now(),
+    )
+    expect(stateNext.members['1'].combat.activeCombatPrayer).toBe('piety')
+  })
+
+  it('never strands a member with a prayer they cannot switch off', () => {
+    // A prayer already running when the level map says they cannot start it —
+    // turning it OFF has to stay allowed or the drain runs to empty.
+    const state = memberState({ prayer: { xp: 1154 } })
+    state.members['1'].combat.activeCombatPrayer = 'piety'
+    const { stateNext } = processCoopTick(
+      state, intent({ type: 'toggle_prayer', prayerId: 'piety', slot: 'combat' }), deps, Date.now(),
+    )
+    expect(stateNext.members['1'].combat.activeCombatPrayer).toBeNull()
+  })
+
+  it('fails closed for a member whose session predates the level map', () => {
+    const state = memberState()
+    delete state.members['1'].levels
+    delete state.members['1'].stats.magic
+    const { stateNext, events } = processCoopTick(
+      state, intent({ type: 'change_combat_spell', spellId: 'fire_surge' }), deps, Date.now(),
+    )
+    expect(stateNext.members['1'].combat.spellId).toBeNull()
+    expect(events.find((e: any) => e.type === 'actionRefused')).toMatchObject({ reason: 'spell_level' })
+  })
+})
+
+describe('describeCoopActionRefusal', () => {
+  it('names the Magic level a spell needs', () => {
+    expect(describeCoopActionRefusal({ reason: 'spell_level', name: 'Fire Surge', required: 95 }))
+      .toBe('Need Magic level 95 to cast Fire Surge')
+  })
+
+  it('names the Prayer level a prayer needs', () => {
+    expect(describeCoopActionRefusal({ reason: 'prayer_level', name: 'Piety', required: 70 }))
+      .toBe('Need Prayer level 70 to use Piety')
+  })
+
+  it('still says something for a reason it does not know', () => {
+    expect(describeCoopActionRefusal({ reason: 'wat' })).toBe('Could not do that')
+    expect(describeCoopActionRefusal(undefined)).toBe('Could not do that')
+  })
+})
+
+// A group kill has one loot winner but every member fighting it is on their own
+// slayer task. Credit is deliberately independent of damage — the member who
+// contributed nothing still gets the kill toward their task — and gated only on
+// being alive for it, so dying on purpose in an eight-player room is not the
+// cheapest slayer task in the game.
+describe('slayer credit on a group boss kill', () => {
+  function taskFor(monsterId: string, remaining: number, extra: Record<string, unknown> = {}) {
+    return { monsterId, monsterName: 'The Corporeal Horror', monstersRemaining: remaining, pointsOnComplete: 15, masterId: 'zul_kaar', ...extra }
+  }
+
+  function stateWithMembers(members: Array<{ id: number; task?: unknown; settings?: Record<string, unknown> }>) {
+    let state = createCoopBossState(BOSS, monstersData)!
+    for (const m of members) {
+      const payload = savePayload({}) as any
+      payload.settings = { ...(payload.settings || {}), slayerTask: m.task ?? null, ...(m.settings || {}) }
+      state = addCoopMember(state, createCoopMember({
+        characterId: m.id, username: `p${m.id}`, savePayload: payload, itemsData,
+      }))
+    }
+    return state
+  }
+
+  /** Drops the boss so the next tick resolves a kill. */
+  function killTick(state: any) {
+    state.boss.currentHP = 0
+    return processCoopTick(state, [], deps, Date.now())
+  }
+
+  it('credits every living member on task, not just the one who dealt the damage', () => {
+    const state = stateWithMembers([
+      { id: 1, task: taskFor(BOSS, 5) },
+      { id: 2, task: taskFor(BOSS, 5) },
+    ])
+    // Only member 1 did anything at all.
+    state.members['1'].damage = 2000
+    const { stateNext, events } = killTick(state)
+
+    expect(stateNext.members['1'].slayerTask.monstersRemaining).toBe(4)
+    expect(stateNext.members['2'].slayerTask.monstersRemaining).toBe(4)
+    const credits = events.filter((e: any) => e.type === 'slayerCredit')
+    expect(credits.map((c: any) => c.characterId).sort()).toEqual([1, 2])
+  })
+
+  it('grants slayer XP for the kill to each member on task', () => {
+    const state = stateWithMembers([{ id: 1, task: taskFor(BOSS, 5) }])
+    const { stateNext } = killTick(state)
+    // Boss with no explicit slayerXP falls back to HP (2000) at the ×4 boss
+    // multiplier — §4's guardrail against inflated boss slayer XP.
+    expect(stateNext.members['1'].xpGained.slayer).toBe(8000)
+  })
+
+  it('doubles the slayer XP for a member who bought the unlock', () => {
+    const state = stateWithMembers([
+      { id: 1, task: taskFor(BOSS, 5), settings: { characterUnlocks: { doubleSlayerXp: true } } },
+    ])
+    const { stateNext } = killTick(state)
+    expect(stateNext.members['1'].xpGained.slayer).toBe(16000)
+  })
+
+  it('leaves a member with no task, or a task for another monster, untouched', () => {
+    const state = stateWithMembers([
+      { id: 1, task: null },
+      { id: 2, task: taskFor('warlord_grondar', 5) },
+    ])
+    const { stateNext, events } = killTick(state)
+    expect(stateNext.members['1'].slayerTask).toBeNull()
+    expect(stateNext.members['2'].slayerTask.monstersRemaining).toBe(5)
+    expect(stateNext.members['2'].xpGained.slayer).toBeUndefined()
+    expect(events.filter((e: any) => e.type === 'slayerCredit')).toHaveLength(0)
+  })
+
+  it('does NOT credit a member who is dead when the boss falls', () => {
+    const state = stateWithMembers([{ id: 1, task: taskFor(BOSS, 5) }, { id: 2, task: taskFor(BOSS, 5) }])
+    state.members['2'].status = 'dead'
+    state.members['2'].hp = 0
+    const { stateNext } = killTick(state)
+    expect(stateNext.members['1'].slayerTask.monstersRemaining).toBe(4)
+    expect(stateNext.members['2'].slayerTask.monstersRemaining).toBe(5)
+  })
+
+  it('completes the task on the last kill and banks the points', () => {
+    const state = stateWithMembers([{ id: 1, task: taskFor(BOSS, 1) }])
+    const { stateNext, events } = killTick(state)
+    const me = stateNext.members['1']
+    expect(me.slayerTask).toBeNull()
+    expect(me.slayerCredit.tasksCompleted).toBe(1)
+    expect(me.slayerCredit.pointsEarned).toBe(15)
+    expect(me.slayerCredit.masterCompletions).toEqual({ zul_kaar: 1 })
+    expect(events.find((e: any) => e.type === 'slayerCredit')).toMatchObject({ completed: true, totalTasks: 1 })
+  })
+
+  it('pays the milestone multiplier off the running total, not the joined-at total', () => {
+    // Completing task #5 in-session must pay ×10, and #6 must not.
+    const state = stateWithMembers([
+      { id: 1, task: taskFor(BOSS, 1), settings: { slayerTasksCompleted: 4 } },
+    ])
+    const first = killTick(state).stateNext
+    expect(first.members['1'].slayerCredit.pointsEarned).toBe(150)
+    expect(first.members['1'].slayerTasksCompleted).toBe(5)
+
+    first.members['1'].slayerTask = taskFor(BOSS, 1)
+    // Clear the respawn wait too, or the next tick just counts it down.
+    first.boss.killedAt = null
+    first.boss.respawnCountdown = 0
+    const second = killTick(first).stateNext
+    expect(second.members['1'].slayerTasksCompleted).toBe(6)
+    // 150 from task #5 plus a plain 15 for #6 — the delta accumulates.
+    expect(second.members['1'].slayerCredit.pointsEarned).toBe(165)
+  })
+
+  it('marks the on-task members on the kill so the winner rolls their table on task', () => {
+    const state = stateWithMembers([{ id: 1, task: taskFor(BOSS, 5) }, { id: 2, task: null }])
+    state.members['1'].damage = 2000
+    const { kill } = killTick(state)
+    expect(kill.onTaskCharacterIds).toEqual([1])
   })
 })

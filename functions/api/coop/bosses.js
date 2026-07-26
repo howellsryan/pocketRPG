@@ -6,6 +6,7 @@ import {
   coopBossSummary,
   listAllOpenSessions,
   pruneCoopExhaust,
+  shouldPruneCoopExhaust,
   sweepStaleCoopSessions,
 } from '../../_lib/game/coopBoss.js'
 
@@ -16,8 +17,12 @@ export async function onRequestGet({ request, env }) {
   const ch = await getOwnedCharacter(request, env, auth.identity.id)
   if (ch.error) return json({ error: ch.error }, ch.status)
 
+  // The sweep releases save locks held by abandoned rooms, so it stays on every
+  // request — it reads first and only writes when something is actually stale.
   await sweepStaleCoopSessions(env)
-  await pruneCoopExhaust(env)
+  // Retention writes unconditionally, and this endpoint is hit on every boss
+  // tap, so it is sampled rather than run inline.
+  if (shouldPruneCoopExhaust()) await pruneCoopExhaust(env)
 
   const now = Date.now()
   // One query for every boss's rooms, reading the denormalised HP columns. The

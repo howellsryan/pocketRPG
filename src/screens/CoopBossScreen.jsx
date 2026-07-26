@@ -15,7 +15,7 @@ import { coopApi } from '../cloud/coop.js'
 import { splatsFromCoopEvents, HIT_SPLAT_DURATION_MS } from '../utils/hitSplats.js'
 import { xpDropsFromCombatEvents, emitXpDrops } from '../utils/xpDrops.js'
 import { shapeLootForModal, lootRowsForModal } from '../utils/lootModal.js'
-import { describeCoopEquipRefusal } from '../engine/coopBossEngine.js'
+import { describeCoopActionRefusal, describeCoopEquipRefusal } from '../engine/coopBossEngine.js'
 import { getMonsterArt, getStyleArt } from '../utils/combatArt.js'
 import { hasEpicLootDrop } from '../utils/itemValue.js'
 import { getLevelFromXP } from '../engine/experience.js'
@@ -105,8 +105,11 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onDeath
         // A refused equip is resolved a tick later on the server, so without
         // this the tap just looks ignored.
         for (const ev of res.events) {
-          if (ev.type === 'equipRefused' && Number(ev.characterId) === Number(characterId)) {
-            addToast?.(describeCoopEquipRefusal(ev), 'error')
+          if (Number(ev.characterId) !== Number(characterId)) continue
+          if (ev.type === 'equipRefused') addToast?.(describeCoopEquipRefusal(ev), 'error')
+          else if (ev.type === 'actionRefused') addToast?.(describeCoopActionRefusal(ev), 'error')
+          else if (ev.type === 'slayerCredit' && ev.completed) {
+            addToast?.(`\u{1F480} Slayer Task #${ev.totalTasks} Completed - ${(ev.pointsEarned || 0).toLocaleString()} points.`, 'levelup')
           }
         }
         // Read names off the response, not the render closure — this callback
@@ -118,7 +121,11 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onDeath
           if (ev.type !== 'killSettled') continue
           const owner = ev.ownerCharacterId
           const killedName = monstersData?.[res.state?.bossId]?.name || 'The boss'
-          if (Number(owner) === Number(characterId)) {
+          if (Number(owner) === Number(characterId) && ev.diverged) {
+            // The server refused to grant because something else wrote this
+            // save mid-fight. Showing the usual modal would read as a dry kill.
+            addToast?.('Your loot could not be granted — something else changed your save. Leave and rejoin.', 'error')
+          } else if (Number(owner) === Number(characterId)) {
             setLootModal({ monsterName: killedName, loot: ev.granted || [], killCount: ev.killCount ?? null })
           } else {
             const winner = res.state?.members?.[String(owner)]
