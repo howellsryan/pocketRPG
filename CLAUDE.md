@@ -70,6 +70,7 @@ Full authoring checklist (items, drops, specials, collection log, monsters) → 
 - Min tap target **44×44px**. Prefer Tailwind utilities + `:root` CSS variables.
 - Avoid inline `style={{}}` unless truly dynamic per render. No Tailwind `/N` opacity modifiers — use solid CSS variable colors.
 - Reuse `src/components/` before new wrappers. New shared component → register in `build_single.cjs` `sourceFiles`; in-game screens also go in `GAME_CHUNK_FILES` (§12).
+- **Read `DESIGN.md` before writing any CSS** (§18) — screens are skinned twice (`.cb-*` iron base + `.forge-shell` parchment override), so a neighbouring rule is never a colour template. Build new surfaces from existing screen classes + `fm-*` kit primitives; a new class of your own carries layout only. `DESIGN.md` §2, the Two-Skin Trap.
 
 ## 10) PvP
 Server-authoritative under `/api/pvp/*`. Full rules (matchmaking, save-lockdown, special-energy/equip-swap timing, magic parity, bots) live in path-scoped rule **`.claude/rules/pvp.md`** (auto-loads on `functions/api/pvp/**`, `functions/_lib/pvp*`, `src/engine/pvp*`, `src/data/pvpBots.json`, `functions/api/leaderboard.js`). Tick model §6; prayer/combo §4.
