@@ -266,7 +266,9 @@ export async function listOpenSessions(env, bossId, now = Date.now()) {
 }
 
 /** Every boss's open rooms in ONE query. The picker asks about all 25 co-op
- * bosses at once, so per-boss queries made it an N+1 against the hottest table. */
+ * bosses at once, so per-boss queries made it an N+1 against the hottest table.
+ * Carries each room's roster (the join path's listOpenSessions deliberately
+ * does not — it runs inside the retry loop and only needs free slots). */
 export async function listAllOpenSessions(env, bossIds, now = Date.now()) {
   const ids = [...bossIds]
   const byBoss = new Map(ids.map((id) => [id, []]))
@@ -278,13 +280,49 @@ export async function listAllOpenSessions(env, bossIds, now = Date.now()) {
       WHERE boss_id IN (${placeholders}) AND status = 'active' AND last_tick_at >= ?
       ORDER BY member_count DESC, id ASC`,
   ).bind(...ids, now - COOP_SESSION_STALE_MS).all()
-  for (const row of rows.results || []) byBoss.get(row.boss_id)?.push(toOpenSession(row))
+  const sessions = (rows.results || []).map(toOpenSession)
+  const roster = await listSessionMembers(env, sessions.map((s) => s.sessionId), now)
+  for (const session of sessions) {
+    session.members = roster.get(session.sessionId) || []
+    byBoss.get(session.bossId)?.push(session)
+  }
   return byBoss
+}
+
+/**
+ * Who is in each room, for the session browser. Filtered by the same member
+ * heartbeat the sweep uses, so a crashed player stops being advertised as
+ * present at the moment their lock is released rather than lingering in the
+ * list. `last_seen_at` predates the heartbeat on old rows, hence the coalesce.
+ */
+export async function listSessionMembers(env, sessionIds, now = Date.now()) {
+  const ids = [...new Set(sessionIds)]
+  const bySession = new Map(ids.map((id) => [id, []]))
+  if (ids.length === 0) return bySession
+  const placeholders = ids.map(() => '?').join(',')
+  const rows = await env.DB.prepare(
+    `SELECT m.session_id, c.id AS character_id, c.username, c.combat_level
+       FROM coop_session_members m
+       JOIN characters c ON c.id = m.character_id
+      WHERE m.session_id IN (${placeholders})
+        AND m.left_at IS NULL
+        AND COALESCE(m.last_seen_at, m.joined_at) >= ?
+      ORDER BY m.joined_at ASC, m.character_id ASC`,
+  ).bind(...ids, now - COOP_SESSION_STALE_MS).all()
+  for (const row of rows.results || []) {
+    bySession.get(row.session_id)?.push({
+      characterId: row.character_id,
+      username: row.username,
+      combatLevel: row.combat_level ?? null,
+    })
+  }
+  return bySession
 }
 
 function toOpenSession(row) {
   return {
     sessionId: row.id,
+    bossId: row.boss_id,
     memberCount: row.member_count,
     maxMembers: COOP_MAX_MEMBERS,
     bossHP: row.boss_hp ?? null,
@@ -341,7 +379,7 @@ export function coopBossRequirementFailure(bossId, saveObject) {
  * every instance is full (or none exists). Snapshots the character's save into
  * the session and takes the save lock.
  */
-export async function joinCoopSession(env, { characterId, identityId, bossId, username }, now = Date.now()) {
+export async function joinCoopSession(env, { characterId, identityId, bossId, username, sessionId: requestedSessionId = null }, now = Date.now()) {
   if (!isCoopBoss(bossId)) throw new GameApiError('INVALID_COOP_BOSS', 'Boss is not available co-operatively', 400)
 
   const existing = await activeSessionIdFor(env, characterId)
@@ -402,7 +440,16 @@ export async function joinCoopSession(env, { characterId, identityId, bossId, us
     // session ticked or filled up in between, so re-pick and try again.
     for (let attempt = 0; attempt < JOIN_ATTEMPTS && sessionId === null; attempt++) {
       const open = await listOpenSessions(env, bossId, now)
-      const target = open.find((s) => !s.full && !exhausted.has(s.sessionId))
+      // A player who tapped a specific group in the browser gets that group or
+      // an honest refusal — quietly rerouting them into a different room is the
+      // one thing the browser promises not to do. The list is already filtered
+      // to this boss, so a foreign session id simply is not found.
+      const target = requestedSessionId
+        ? open.find((s) => s.sessionId === requestedSessionId && !exhausted.has(s.sessionId))
+        : open.find((s) => !s.full && !exhausted.has(s.sessionId))
+      if (requestedSessionId && (!target || target.full)) {
+        throw new GameApiError('COOP_SESSION_UNAVAILABLE', 'That group is full or has finished — pick another', 409)
+      }
 
       if (!target) {
         const fresh = addCoopMember(createCoopBossState(bossId, monstersData, now), member)

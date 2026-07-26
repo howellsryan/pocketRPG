@@ -56,7 +56,12 @@ export function getActiveCoopSession() { return activeCoopSessionId }
 
 export const coopApi = {
   listBosses: () => coopRequest('/api/coop/bosses'),
-  join: (bossId) => coopRequest('/api/coop/join', { method: 'POST', body: JSON.stringify({ bossId }) }),
+  // sessionId targets one specific open group (the session browser); without it
+  // the server picks the fullest room with a free slot.
+  join: (bossId, sessionId = null) => coopRequest('/api/coop/join', {
+    method: 'POST',
+    body: JSON.stringify(sessionId === null ? { bossId } : { bossId, sessionId }),
+  }),
   readSession: (sessionId) => coopRequest(`/api/coop/session/${sessionId}`),
   // sinceTick is the last tick this client rendered. The room replays
   // everything after it, so a poll that lands between beats still sees every
