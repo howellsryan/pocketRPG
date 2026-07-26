@@ -7,6 +7,7 @@ import { makeD1, FakeD1 } from './helpers/d1'
 import { gzipJsonString } from '../functions/_lib/saveCodec.js'
 
 import { onRequestPost } from '../functions/api/admin/grant-item.js'
+import { writeSave } from '../functions/_lib/game/save.js'
 
 const SECRET = 'a-very-long-admin-portal-secret'
 const NOW = 1_760_000_000_000
@@ -223,6 +224,29 @@ describe('POST /api/admin/grant-item grants', () => {
     expect(row.character_id).toBe(7)
     const payload = JSON.parse(row.payload_json)
     expect(payload).toMatchObject({ itemId: 'coins', quantity: 12, destination: 'inventory', reason: 'compensation', ownerId: 1 })
+  })
+
+  it('writes no audit row when the guarded save write loses a revision race', async () => {
+    // Exercised against writeSave directly: the endpoint reads and writes the
+    // revision inside one request, so a conflict can only be staged at the
+    // layer that carries the guarantee. A stale revision must write neither the
+    // save nor an audit row claiming a grant that never landed.
+    await seedCharacter()
+    await expect(
+      writeSave(env, 7, { coins: 1 }, 1, {
+        auditEvent: { eventType: 'admin_item_grant', identityId: null, payload: { itemId: 'coins' } },
+      }),
+    ).rejects.toMatchObject({ code: 'SAVE_REVISION_CONFLICT' })
+    expect(raw.prepare(`SELECT COUNT(*) AS n FROM audit_events WHERE event_type = 'admin_item_grant'`).get().n).toBe(0)
+    expect(storedSave().revision).toBe(4)
+  })
+
+  it('commits the audit row in the same write as the grant, so neither can land alone', async () => {
+    await seedCharacter()
+    await onRequestPost({ request: req({ character_id: 7, item_id: 'coins', quantity: 5 }), env } as any)
+    const audits = raw.prepare(`SELECT COUNT(*) AS n FROM audit_events WHERE event_type = 'admin_item_grant'`).get().n
+    expect(audits).toBe(1)
+    expect(storedSave().revision).toBe(5)
   })
 
   it('does not credit the character owner as the actor on the audit row', async () => {

@@ -31,17 +31,47 @@ async function hydrateCharacterSave(env, characterId, row) {
   return { row, saveObject, saveRevision: Number(row?.save_revision) || 0 }
 }
 
-export async function writeSave(env, characterId, saveObject, expectedRevision) {
+// The audit INSERT only applies if the save actually reached `requiredRevision`,
+// which is what ties it to the write it records.
+function auditStatement(env, auditEvent, now, characterId, requiredRevision) {
+  return env.DB.prepare(
+    `INSERT INTO audit_events (event_type, identity_id, character_id, payload_json, created_at)
+     SELECT ?, ?, ?, ?, ?
+      WHERE EXISTS (SELECT 1 FROM saves WHERE character_id = ? AND save_revision = ?)`
+  ).bind(
+    String(auditEvent.eventType || 'unknown'),
+    auditEvent.identityId ?? null,
+    characterId,
+    JSON.stringify(auditEvent.payload || {}),
+    now,
+    characterId,
+    requiredRevision,
+  )
+}
+
+/**
+ * `auditEvent` ({ eventType, identityId, payload }) makes the audit
+ * row commit in the SAME D1 batch as the save write, instead of as a separate
+ * best-effort insert afterwards. A privileged mutation whose audit row can be
+ * dropped independently is not auditable, so any caller that must never grant
+ * unrecorded (admin grants) passes it. The INSERT carries the same revision
+ * precondition as the UPDATE, so a lost revision race writes neither row rather
+ * than logging a grant that never landed.
+ */
+export async function writeSave(env, characterId, saveObject, expectedRevision, { auditEvent = null } = {}) {
   if (!Number.isFinite(expectedRevision) || expectedRevision < 0) {
     throw new GameApiError('SAVE_REVISION_REQUIRED', 'save_revision_required', 400)
   }
   const now = Date.now()
   const save_data = JSON.stringify(saveObject)
   const save_blob = await gzipJsonString(save_data)
-  const updateRes = await env.DB.prepare(
+  const updateStmt = env.DB.prepare(
     `UPDATE saves SET save_blob = ?, save_data = ?, updated_at = ?, save_revision = save_revision + 1
        WHERE character_id = ? AND save_revision = ?`
-  ).bind(save_blob, save_data, now, characterId, expectedRevision).run()
+  ).bind(save_blob, save_data, now, characterId, expectedRevision)
+  const updateRes = auditEvent
+    ? (await env.DB.batch([updateStmt, auditStatement(env, auditEvent, now, characterId, expectedRevision + 1)]))[0]
+    : await updateStmt.run()
   if (!updateRes?.meta?.changes) {
     // No row matched. Either there's no save yet (first write), or a
     // concurrent writer moved the revision forward. Only the first-write
@@ -56,6 +86,10 @@ export async function writeSave(env, characterId, saveObject, expectedRevision) 
       if (!insertRes?.meta?.changes) {
         throw new GameApiError('SAVE_REVISION_CONFLICT', 'save_revision_conflict', 409)
       }
+      // The batched audit above was preconditioned on the UPDATE that did not
+      // apply, so it wrote nothing. This path created the save instead, and it
+      // still has to be recorded — awaited, never swallowed.
+      if (auditEvent) await auditStatement(env, auditEvent, now, characterId, 1).run()
     } else {
       throw new GameApiError('SAVE_REVISION_CONFLICT', 'save_revision_conflict', 409)
     }

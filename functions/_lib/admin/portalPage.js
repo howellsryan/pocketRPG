@@ -161,22 +161,51 @@ body{
 .field{margin-top:16px}
 .field>label{display:block;font-family:'Spectral',Georgia,serif;font-weight:600;font-size:12px;letter-spacing:0.2em;text-transform:uppercase;color:var(--fm-ink-faint);margin-bottom:6px}
 .field__hint{font-size:13px;color:var(--fm-ink-soft);margin:6px 0 0}
-input[type="text"],input[type="password"],input[type="number"],select{
+input[type="text"],input[type="password"],input[type="number"]{
   width:100%;min-height:44px;padding:10px 12px;
+  /* Light: these sit on parchment. Without it a dark-mode OS repaints the
+     control internals (text, caret, spinners) with light-on-light. */
+  color-scheme:light;
   background:rgba(255,250,232,0.72);color:var(--fm-ink);
   border:1px solid var(--fm-rule);border-radius:var(--fm-r-sm);
   box-shadow:inset 0 1px 3px rgba(74,54,28,0.22);
   font-family:'Spectral',Georgia,serif;font-size:16px;
 }
 input[type="number"],.fm-num-input{font-family:'Spline Sans Mono',ui-monospace,monospace;font-variant-numeric:tabular-nums}
-select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--fm-ink-soft) 50%),linear-gradient(135deg,var(--fm-ink-soft) 50%,transparent 50%);background-position:calc(100% - 18px) 20px,calc(100% - 13px) 20px;background-size:5px 5px,5px 5px;background-repeat:no-repeat;padding-right:36px}
-select[size]{appearance:auto;background-image:none;padding-right:12px;min-height:auto}
-input:focus-visible,select:focus-visible{outline:2px solid var(--fm-brass);outline-offset:1px}
+input:focus-visible{outline:2px solid var(--fm-brass);outline-offset:1px}
 input::placeholder{color:var(--fm-ink-faint)}
 .filter{margin-bottom:6px}
-.picklist{height:186px;overflow-y:auto}
-.picklist option{padding:7px 8px;font-size:15px}
-.picklist option:checked{background:var(--fm-brass) linear-gradient(0deg,var(--fm-brass),var(--fm-brass));color:var(--fm-btn-ink-on)}
+
+/* Buttons, not a native sized listbox. A native list paints its rows with the
+   platform's own colours — Safari and iOS ignore the inherited colour entirely
+   — so on a dark-mode OS the rows came out light-on-parchment and unreadable.
+   Owning the rows is the only way to guarantee legible text. */
+.picklist{
+  max-height:196px;overflow-y:auto;-webkit-overflow-scrolling:touch;
+  background:rgba(255,250,232,0.72);
+  border:1px solid var(--fm-rule);border-radius:var(--fm-r-sm);
+  box-shadow:inset 0 1px 3px rgba(74,54,28,0.22);
+}
+.picklist:focus-visible{outline:2px solid var(--fm-brass);outline-offset:1px}
+.pick{
+  display:block;width:100%;text-align:left;cursor:pointer;
+  min-height:44px;padding:10px 12px;
+  background:transparent;color:var(--fm-ink);
+  border:0;border-bottom:1px solid rgba(182,160,121,0.5);
+  font-family:'Spectral',Georgia,serif;font-size:15px;line-height:1.3;
+}
+.pick:last-child{border-bottom:0}
+.pick:hover:not(:disabled){background:rgba(184,160,121,0.22)}
+.pick:focus-visible{outline:2px solid var(--fm-brass);outline-offset:-2px}
+.pick__meta{display:block;margin-top:2px;font-size:12px;color:var(--fm-ink-faint);font-variant-numeric:tabular-nums}
+.pick[aria-selected="true"]{background:var(--fm-btn-brass);color:var(--fm-btn-ink-on);box-shadow:var(--fm-btn-relief-brass)}
+.pick[aria-selected="true"] .pick__meta{color:#4a3712}
+/* Solid dead face with faint ink — never an opacity fade (DESIGN.md §6). */
+.pick:disabled{background:#d5c7a3;color:#8d8071;cursor:not-allowed}
+.pick:disabled .pick__meta{color:#8d8071}
+.picklist__empty{padding:14px 12px;color:var(--fm-ink-faint);font-style:italic}
+.chosen{margin:8px 0 0;font-size:13px;color:var(--fm-ink-soft)}
+.chosen strong{color:var(--fm-ink);font-weight:600}
 .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
 .chips button{
   min-height:34px;padding:6px 11px;cursor:pointer;
@@ -228,6 +257,8 @@ const SCRIPT = `
   var catalog = { items: [], characters: [] };
   var destination = 'inventory';
   var noted = false;
+  var selectedCharacter = null;
+  var selectedItem = null;
 
   var $ = function(id){ return document.getElementById(id); };
 
@@ -244,6 +275,8 @@ const SCRIPT = `
   function lock(reason){
     secret = null;
     catalog = { items: [], characters: [] };
+    selectedCharacter = null;
+    selectedItem = null;
     $('portal').hidden = true;
     $('gate').hidden = false;
     $('secret').value = '';
@@ -251,16 +284,36 @@ const SCRIPT = `
     $('secret').focus();
   }
 
-  // Options are built with DOM APIs, never innerHTML: usernames are
-  // player-authored text and must never be parsed as markup.
-  function fillOptions(select, entries){
-    select.textContent = '';
+  // Rows are built with DOM APIs, never innerHTML: usernames are player-authored
+  // text and must never be parsed as markup.
+  function fillList(listId, entries, selectedValue, onPick){
+    var list = $(listId);
+    list.textContent = '';
+    if (!entries.length){
+      var empty = document.createElement('p');
+      empty.className = 'picklist__empty';
+      empty.textContent = 'Nothing matches that filter.';
+      list.appendChild(empty);
+      return;
+    }
     for (var i = 0; i < entries.length; i++){
-      var opt = document.createElement('option');
-      opt.value = entries[i].value;
-      opt.textContent = entries[i].label;
-      if (entries[i].disabled) opt.disabled = true;
-      select.appendChild(opt);
+      var entry = entries[i];
+      var row = document.createElement('button');
+      row.type = 'button';
+      row.className = 'pick';
+      row.setAttribute('role', 'option');
+      row.setAttribute('data-value', entry.value);
+      row.setAttribute('aria-selected', String(entry.value === selectedValue));
+      if (entry.disabled) row.disabled = true;
+      var name = document.createElement('span');
+      name.textContent = entry.label;
+      row.appendChild(name);
+      var meta = document.createElement('span');
+      meta.className = 'pick__meta';
+      meta.textContent = entry.meta;
+      row.appendChild(meta);
+      row.addEventListener('click', onPick);
+      list.appendChild(row);
     }
   }
 
@@ -270,15 +323,11 @@ const SCRIPT = `
     for (var i = 0; i < catalog.characters.length; i++){
       var c = catalog.characters[i];
       if (q && c.username.toLowerCase().indexOf(q) === -1 && String(c.id) !== q) continue;
-      var marks = [];
+      var marks = ['#' + c.id, 'level ' + c.totalLevel];
       if (c.isIronman) marks.push('ironman');
       if (c.isOneLife) marks.push('one life');
-      if (!c.hasSave) marks.push('no save');
-      out.push({
-        value: String(c.id),
-        label: c.username + '  #' + c.id + '  · lvl ' + c.totalLevel + (marks.length ? '  · ' + marks.join(', ') : ''),
-        disabled: !c.hasSave,
-      });
+      if (!c.hasSave) marks.push('never synced — cannot grant');
+      out.push({ value: String(c.id), label: c.username, meta: marks.join(' · '), disabled: !c.hasSave });
     }
     return out;
   }
@@ -289,22 +338,56 @@ const SCRIPT = `
     for (var i = 0; i < catalog.items.length; i++){
       var it = catalog.items[i];
       if (q && it.name.toLowerCase().indexOf(q) === -1 && it.id.indexOf(q) === -1) continue;
-      out.push({ value: it.id, label: it.name + (it.stackable ? '  · stacks' : '') });
+      out.push({ value: it.id, label: it.name, meta: it.id + (it.stackable ? ' · stacks' : '') });
     }
     return out;
   }
 
+  function pickHandler(kind){
+    return function(e){
+      var value = e.currentTarget.getAttribute('data-value');
+      if (kind === 'character') selectedCharacter = value; else selectedItem = value;
+      refreshLists();
+    };
+  }
+
+  function describeChosen(kind){
+    var el = $(kind + '-chosen');
+    var value = kind === 'character' ? selectedCharacter : selectedItem;
+    el.textContent = '';
+    if (!value){
+      el.textContent = 'Nothing chosen yet.';
+      return;
+    }
+    var strong = document.createElement('strong');
+    if (kind === 'character'){
+      var c = null;
+      for (var i = 0; i < catalog.characters.length; i++) if (String(catalog.characters[i].id) === value) c = catalog.characters[i];
+      strong.textContent = c ? c.username + ' (#' + c.id + ')' : value;
+    } else {
+      var it = null;
+      for (var j = 0; j < catalog.items.length; j++) if (catalog.items[j].id === value) it = catalog.items[j];
+      strong.textContent = it ? it.name : value;
+    }
+    el.appendChild(document.createTextNode('Chosen: '));
+    el.appendChild(strong);
+  }
+
   function refreshLists(){
-    var itemSel = $('item');
-    var charSel = $('character');
-    var keptItem = itemSel.value;
-    var keptChar = charSel.value;
-    fillOptions(itemSel, itemEntries($('item-filter').value));
-    fillOptions(charSel, characterEntries($('character-filter').value));
-    if (keptItem) itemSel.value = keptItem;
-    if (keptChar) charSel.value = keptChar;
-    $('item-count').textContent = itemSel.options.length + ' of ' + catalog.items.length + ' items';
-    $('character-count').textContent = charSel.options.length + ' of ' + catalog.characters.length + ' characters';
+    var itemMatches = itemEntries($('item-filter').value);
+    var charMatches = characterEntries($('character-filter').value);
+
+    // Filtering down to a single grantable match and then still having to click
+    // it is a step with no decision in it — take it.
+    if (itemMatches.length === 1) selectedItem = itemMatches[0].value;
+    if (charMatches.length === 1 && !charMatches[0].disabled) selectedCharacter = charMatches[0].value;
+
+    fillList('item', itemMatches, selectedItem, pickHandler('item'));
+    fillList('character', charMatches, selectedCharacter, pickHandler('character'));
+    $('item-count').textContent = itemMatches.length + ' of ' + catalog.items.length + ' items';
+    $('character-count').textContent = charMatches.length + ' of ' + catalog.characters.length + ' characters';
+    describeChosen('item');
+    describeChosen('character');
   }
 
   function num(n){ return Number(n).toLocaleString('en-GB'); }
@@ -346,8 +429,8 @@ const SCRIPT = `
     var msg = $('form-msg');
     msg.hidden = true;
     $('receipt').hidden = true;
-    var characterId = Number($('character').value);
-    var itemId = $('item').value;
+    var characterId = Number(selectedCharacter);
+    var itemId = selectedItem;
     var quantity = Math.floor(Number($('quantity').value));
     if (!characterId) return message(msg, 'err', 'Choose a character.');
     if (!itemId) return message(msg, 'err', 'Choose an item.');
@@ -505,7 +588,8 @@ const BODY = `
           <div class="field">
             <label for="character-filter">Character</label>
             <input id="character-filter" class="filter" type="text" autocomplete="off" spellcheck="false" placeholder="Filter by name or id…">
-            <select id="character" class="picklist" size="6" aria-label="Character"></select>
+            <div id="character" class="picklist" role="listbox" aria-label="Character"></div>
+            <p class="chosen" id="character-chosen"></p>
             <p class="field__hint" id="character-count"></p>
           </div>
 
@@ -513,7 +597,8 @@ const BODY = `
           <div class="field">
             <label for="item-filter">Item</label>
             <input id="item-filter" class="filter" type="text" autocomplete="off" spellcheck="false" placeholder="Filter by name or id…">
-            <select id="item" class="picklist" size="6" aria-label="Item"></select>
+            <div id="item" class="picklist" role="listbox" aria-label="Item"></div>
+            <p class="chosen" id="item-chosen"></p>
             <p class="field__hint" id="item-count"></p>
           </div>
 

@@ -16,7 +16,6 @@ import { assertNotInCoopSession } from '../../_lib/game/coopBoss.js'
 import { isWorldSessionLive } from '../../_lib/game/worldSessions.js'
 import { loadAnyCharacterWithSave, writeSave } from '../../_lib/game/save.js'
 import { addItemToInventory, addItemToBank, canonicalItemId, bankQuantity, getInventory } from '../../_lib/game/inventory.js'
-import { auditLog } from '../../_lib/game/audit.js'
 import { toErrorResponse } from '../../_lib/game/errors.js'
 import itemsData from '../../../src/data/items.json' assert { type: 'json' }
 
@@ -118,23 +117,29 @@ export async function onRequestPost({ request, env }) {
       })
     }
 
-    const write = await writeSave(env, characterId, saveObject, saveRevision)
-
-    // No identityId: the admin secret is not an account, and stamping the
+    // The audit row commits in the same batch as the save write: an admin grant
+    // that lands without a record is the one outcome this endpoint must not
+    // have. No identityId — the admin secret is not an account, and stamping the
     // character's OWNER into the actor column would read as the player having
     // granted it to themselves.
-    await auditLog(env, 'admin_item_grant', {
-      characterId,
-      ownerId: row.owner_id,
-      itemId,
-      requestedItemId,
-      quantity,
-      destination,
-      noted,
-      before,
-      after,
-      reason: typeof body?.reason === 'string' ? body.reason.slice(0, 200) : null,
-    }, { swallow: true })
+    const write = await writeSave(env, characterId, saveObject, saveRevision, {
+      auditEvent: {
+        eventType: 'admin_item_grant',
+        identityId: null,
+        payload: {
+          characterId,
+          ownerId: row.owner_id,
+          itemId,
+          requestedItemId,
+          quantity,
+          destination,
+          noted,
+          before,
+          after,
+          reason: typeof body?.reason === 'string' ? body.reason.slice(0, 200) : null,
+        },
+      },
+    })
 
     return json({
       ok: true,
