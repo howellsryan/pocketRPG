@@ -3,6 +3,7 @@ import { WorldZone } from './WorldZone'
 import { CoopBossRoom } from './CoopBossRoom'
 import { handleWorldSession } from './session'
 import { handleEditorRequest } from './editor'
+import { setQuestGateBypass, resolveQuestGateBypass } from '../../src/engine/questGates.js'
 import type { Env } from './env'
 
 // CoopBossRoom is reached only as a Durable Object, by the Pages app's
@@ -17,6 +18,11 @@ const EDITOR_PREFIX = '/api/world/editor'
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url)
+
+    // Preview-only quest-gate bypass, installed per request (false included) so
+    // the equip gates this Worker shares with the client agree with it. Both
+    // production locks live in questGates.js.
+    setQuestGateBypass(resolveQuestGateBypass(env, request.url))
 
     if (url.pathname === '/api/world/session' && request.method === 'POST') {
       return handleWorldSession(request, env)

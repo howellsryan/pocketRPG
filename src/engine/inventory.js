@@ -178,6 +178,58 @@ export function getBreakdownYield(item) {
 }
 
 /**
+ * Plan a whole-inventory deposit: which quantities go to the bank, which charge
+ * pools travel with them, and what the inventory looks like afterwards. Pure —
+ * the caller applies the result.
+ *
+ * `excludedItemIds` is the player's auto-bank exclusion set; those item types
+ * stay in the inventory (charges and all). `charges` only carries entries for
+ * items that actually hold charges: an absent field means "untouched" on a bank
+ * rewrite, so writing a 0 here would wipe the banked pool (see bankCharges.js).
+ *
+ * @returns {{updates:Record<string,number>, charges:Record<string,number>,
+ *            inventory:any[], deposited:number}}
+ */
+export function collectDepositAll(inventory, excludedItemIds = null) {
+  const updates = {}
+  const charges = {}
+  const nextInventory = []
+  let deposited = 0
+
+  for (const slot of inventory) {
+    if (!slot || (excludedItemIds && excludedItemIds.has(slot.itemId))) {
+      nextInventory.push(slot || null)
+      continue
+    }
+    updates[slot.itemId] = (updates[slot.itemId] || 0) + slot.quantity
+    const slotCharges = Math.max(0, Math.floor(Number(slot.charges) || 0))
+    if (slotCharges > 0) charges[slot.itemId] = (charges[slot.itemId] || 0) + slotCharges
+    nextInventory.push(null)
+    deposited++
+  }
+
+  return { updates, charges, inventory: nextInventory, deposited }
+}
+
+/**
+ * Total the charges carried by the first `depositQty` un-noted copies of
+ * `itemId` — the copies a non-stackable bank deposit actually moves. Reading a
+ * single slot's charges instead destroyed the rest of the stack's pool.
+ */
+export function sumSlotCharges(inventory, itemId, depositQty) {
+  const wanted = Math.max(0, Math.floor(Number(depositQty) || 0))
+  let counted = 0
+  let total = 0
+  for (const slot of inventory) {
+    if (counted >= wanted) break
+    if (!slot || slot.itemId !== itemId || slot.noted) continue
+    total += Math.max(0, Math.floor(Number(slot.charges) || 0))
+    counted++
+  }
+  return total
+}
+
+/**
  * Swap two inventory slots
  */
 export function swapSlots(inventory, slotA, slotB) {

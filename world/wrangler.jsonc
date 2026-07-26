@@ -42,6 +42,9 @@
   "env": {
     "preview": {
       "workers_dev": true,
+      // Preview-ONLY quest-gate bypass. Never add this to the top-level
+      // (production) config — see src/engine/questGates.js.
+      "vars": { "DISABLE_QUEST_REQUIREMENTS": "true" },
       "assets": { "directory": "client/dist", "binding": "ASSETS" },
       "durable_objects": {
         "bindings": [

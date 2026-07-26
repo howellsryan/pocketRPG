@@ -41,6 +41,7 @@ import { loadStoredZone } from './zoneStore'
 import { gearFromEquipment } from '../shared/appearance'
 import { BURY_XP, healAmount, primaryInvAction, resolveEatTiming, resolveDrink } from '../shared/itemActions'
 import { checkEquipRequirements, equipItem, placeUnequippedItems } from '../../src/engine/equipment.js'
+import { setQuestGateBypass, resolveQuestGateBypass } from '../../src/engine/questGates.js'
 import { applyEat, applyCombo } from '../../src/engine/combat.js'
 import { isComboConsumable } from '../../src/engine/consumables.js'
 import itemsData from '../../src/data/items.json'
@@ -264,7 +265,10 @@ export class WorldZone extends Server<Env> {
     return this.stations
   }
 
-  async onConnect(connection: Connection): Promise<void> {
+  async onConnect(connection: Connection, ctx: { request: Request }): Promise<void> {
+    // This DO is its own isolate — the Worker's fetch handler installed the
+    // preview quest-gate bypass over there, not here.
+    setQuestGateBypass(resolveQuestGateBypass(this.env, ctx?.request?.url))
     const zone = await this.resolveZone()
     if (!zone) {
       connection.close(1008, 'unknown_zone')

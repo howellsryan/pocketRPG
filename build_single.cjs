@@ -107,6 +107,7 @@ const sourceFiles = [
   'engine/applyTaskResult.js',
   'engine/tick.js',
   'engine/farming.js',
+  'engine/questGates.js',
   'engine/quests.js',
   'engine/questIdleCascade.js',
   'engine/clueScrolls.js',
@@ -664,6 +665,20 @@ const worldBetaEnabled = process.env.EnableWorldBeta != null
   ? process.env.EnableWorldBeta === 'true'
   : Boolean(process.env.CF_PAGES_BRANCH) && process.env.CF_PAGES_BRANCH !== 'main';
 console.log(`World beta button: ${worldBetaEnabled ? 'ENABLED' : 'disabled'} (EnableWorldBeta=${process.env.EnableWorldBeta ?? 'unset'}, CF_PAGES_BRANCH=${process.env.CF_PAGES_BRANCH ?? 'unset'})`);
+// Quest-requirement bypass (src/engine/questGates.js), same build-time-bake
+// pattern as the two flags above — a preview-only testing aid, so main and
+// branch-less local builds bake `false` and the production bundle cannot
+// express the bypass at all. This one goes in the CORE preamble, not the game
+// chunk: engine gates run before the chunk loads (boot-time idle catch-up), and
+// a `typeof`-undefined read there would silently mean "enforced" mid-session.
+// Unlike the two flags above, the `main` branch is an unconditional NO: the
+// override can only turn this on somewhere that is already not production.
+const questGatesDisabled = process.env.CF_PAGES_BRANCH === 'main'
+  ? false
+  : process.env.DisableQuestRequirements != null
+    ? process.env.DisableQuestRequirements === 'true'
+    : Boolean(process.env.CF_PAGES_BRANCH);
+console.log(`Quest requirements: ${questGatesDisabled ? 'BYPASSED (preview)' : 'enforced'} (DisableQuestRequirements=${process.env.DisableQuestRequirements ?? 'unset'}, CF_PAGES_BRANCH=${process.env.CF_PAGES_BRANCH ?? 'unset'})`);
 const gameChunkSource = `const gameIconsData = ${gameIconsJSON};\nconst bespokeIconsData = ${bespokeIconsJSON};\nconst worldActivitiesData = ${worldActivitiesJSON};\nconst placeMapsData = ${placeMapsJSON};\nconst equipmentModelsData = ${equipmentModelsJSON};\nconst creatures3dData = ${creatures3dJSON};\nconst hero3dData = ${hero3dJSON};\nconst biomes3dData = ${biomes3dJSON};\nconst pocketAssetBase = '/public/';\nconst pocketEnable3D = ${enable3D};\nconst pocketWorldBetaEnabled = ${worldBetaEnabled};\n${gameJS}`;
 const gameChunkScript = esbuild.transformSync(gameChunkSource, SPLIT_MINIFY).code.trim();
 const gameChunkBody = `"use strict";\n${gameChunkScript}\n`;
@@ -704,6 +719,7 @@ const collectionLogData = ${collectionLogJSON};
 const dailyTasksData = ${dailyTasksJSON};
 const summoningData = ${summoningJSON};
 const worldData = ${worldJSON};
+const pocketQuestGatesDisabled = ${questGatesDisabled};
 const landingImages = ${landingImagesJSON};
 const homeLogo = ${homeLogoJSON};
 

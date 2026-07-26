@@ -22,6 +22,7 @@ import { resolveSlayerTaskKill } from './slayerTasks.js'
 import { getSlayerTaskReward, getSlayerTaskXpForKill } from './slayerRewards.js'
 import { isConsumableFood, isConsumablePotion, isComboConsumable, applyConsumableEffect } from './consumables.js'
 import { getCombatType, equipItem, placeUnequippedItems } from './equipment.js'
+import { questRequirementMet } from './questGates.js'
 
 export const COOP_MAX_MEMBERS = 8
 export const COOP_TICK_MS = 600
@@ -148,7 +149,7 @@ function questIdList(completedQuests) {
  * waved through. */
 export function coopEquipRequirementFailure(item, member) {
   const questUnlock = item?.questUnlock
-  if (questUnlock && !(member?.completedQuests || []).includes(questUnlock)) {
+  if (!questRequirementMet(member?.completedQuests || [], questUnlock)) {
     return { reason: 'quest', questUnlock }
   }
   const requirements = item?.requirements

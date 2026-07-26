@@ -30,6 +30,7 @@ import {
   memberCount,
   removeCoopMember,
 } from '../../src/engine/coopBossEngine.js'
+import { setQuestGateBypass, resolveQuestGateBypass } from '../../src/engine/questGates.js'
 import {
   COOP_ENGINE_DEPS,
   COOP_SESSION_STALE_MS,
@@ -111,6 +112,9 @@ export class CoopBossRoom {
   }
 
   async fetch(request: Request): Promise<Response> {
+    // A cross-script DO call never runs the Worker's own fetch handler, so the
+    // preview quest-gate bypass has to be installed in this isolate too.
+    setQuestGateBypass(resolveQuestGateBypass(this.env, request.url))
     const action = new URL(request.url).pathname.split('/').filter(Boolean).pop()
     const body = await request.json().catch(() => ({})) as Record<string, any>
     const sessionId = Number(body?.sessionId)

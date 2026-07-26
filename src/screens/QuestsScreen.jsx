@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'preact/hooks'
 import { useGame } from '../state/gameState.jsx'
+import { questRequirementMet } from '../engine/questGates.js'
 import Panel from '../components/Panel.jsx'
 import Button from '../components/Button.jsx'
 import Modal from '../components/Modal.jsx'
@@ -460,7 +461,7 @@ function QuestDetailsBody({ quest, stats, completedQuests, itemsData, worldLocat
               ))}
               {questPrereqs.map(pid => {
                 const prereq = questsData.find(q => q.id === pid)
-                const ok = completedQuests.has(pid)
+                const ok = questRequirementMet(completedQuests, pid)
                 return (
                   <RequirementRow key={pid} label={`Quest: ${prereq ? prereq.name : pid}`} ok={ok} />
                 )

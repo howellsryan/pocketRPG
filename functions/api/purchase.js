@@ -13,6 +13,7 @@ import { toErrorResponse } from '../_lib/game/errors.js'
 import { getLevelFromXP } from '../../src/engine/experience.js'
 import { ALL_SKILLS, MAX_TOTAL_LEVEL } from '../../src/utils/constants.js'
 import { hasSlayerStoreUnlock } from '../../src/engine/slayerUnlocks.js'
+import { questRequirementMet } from '../../src/engine/questGates.js'
 
 const MINIGAME_UNLOCK_STORE_PRICE = 4_500_000
 const MINIGAME_STORE_PRODUCTS = new Set(
@@ -56,12 +57,9 @@ export async function onRequestPost({ request, env }) {
     // Buy button until the quest is done, but the completion gate has to hold
     // here or an account can end up owning gear it can never equip (the equip
     // check trusts the same completedQuests set).
-    if (item.questUnlock) {
-      const completedQuests = new Set(saveObject.settings?.completedQuests || [])
-      if (!completedQuests.has(item.questUnlock)) {
-        const questName = questsData.find((q) => q.id === item.questUnlock)?.name || 'the required quest'
-        return json({ error: `You must complete ${questName} to buy this item.`, code: 'QUEST_REQUIREMENT_NOT_MET' }, 403)
-      }
+    if (!questRequirementMet(saveObject.settings?.completedQuests || [], item.questUnlock)) {
+      const questName = questsData.find((q) => q.id === item.questUnlock)?.name || 'the required quest'
+      return json({ error: `You must complete ${questName} to buy this item.`, code: 'QUEST_REQUIREMENT_NOT_MET' }, 403)
     }
 
     if (item.isSkillCape) {
