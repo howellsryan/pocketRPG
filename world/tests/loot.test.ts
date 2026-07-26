@@ -5,6 +5,7 @@ import {
   PLAYER_DROP_OWNER_TICKS,
   isExpired,
   isVisibleTo,
+  mayTake,
   spawnDrops,
   takeLoot,
   visibleLootFor,
@@ -79,6 +80,21 @@ describe('Ironman floor loot', () => {
     expect(isVisibleTo(mine, iron('1'), 0)).toBe(true)
     expect(isVisibleTo(mine, iron('1'), LOOT_OWNER_TICKS + 1)).toBe(true)
     expect(isVisibleTo(mine, iron('1'), LOOT_DESPAWN_TICKS)).toBe(false)
+  })
+
+  // The last-word guard: even if visibility leaks the entity (stale client
+  // view, replayed take, a future change to the windows), the item must not
+  // reach the pack.
+  it('refuses the take itself, not just the view, for loot an Ironman does not own', () => {
+    const theirs = loot({ ownerCharId: '2' })
+    expect(mayTake(theirs, iron('1'))).toBe(false)
+    expect(mayTake(theirs, main('1'))).toBe(true)
+  })
+  it('lets an Ironman take their own loot, and never blocks a standard account', () => {
+    const mine = loot({ ownerCharId: '1' })
+    expect(mayTake(mine, iron('1'))).toBe(true)
+    expect(mayTake(mine, main('1'))).toBe(true)
+    expect(mayTake(loot({ ownerCharId: '2', ownerTicks: PLAYER_DROP_OWNER_TICKS }), iron('1'))).toBe(false)
   })
 
   it('shows an Ironman only their own pile when a group shares a boss instance', () => {
