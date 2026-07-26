@@ -34,6 +34,7 @@ import { settleActionCompletion } from './actionCompletion.js'
 import { loadCharacterWithSave, writeSave } from './save.js'
 import { isValidEntry } from '../collectionLog.js'
 import { GameApiError } from './errors.js'
+import { callCoopRoom, coopRoomsAvailable } from './coopRoom.js'
 import { auditLog } from './audit.js'
 
 export const COOP_ENGINE_DEPS = { itemsData, monstersData, prayersData, spellsData }
@@ -205,12 +206,22 @@ export async function sweepStaleCoopSessions(env, now = Date.now()) {
   return ids.length
 }
 
-/** Drops the exhaust of finished fights: applied intents, and the state blob of
- * sessions that ended long enough ago that nobody is going to inspect them. */
+/** How often a picker request pays for retention. Every call writes whether or
+ * not there is anything to drop, and the picker is opened on every boss tap, so
+ * running it unconditionally billed a scan-and-write to a read. Mirrors
+ * SAVE_SWEEP_PROBABILITY. */
+const COOP_PRUNE_PROBABILITY = 0.05
+
+export function shouldPruneCoopExhaust(rng = Math.random) {
+  return rng() < COOP_PRUNE_PROBABILITY
+}
+
+/** Drops the exhaust of finished fights: the state blob of sessions that ended
+ * long enough ago that nobody is going to inspect them, and their settlement
+ * ledger rows. */
 export async function pruneCoopExhaust(env, now = Date.now()) {
   const cutoff = now - COOP_RETENTION_MS
   await env.DB.batch([
-    env.DB.prepare('DELETE FROM coop_intents WHERE applied = 1 AND created_at < ?').bind(cutoff),
     env.DB.prepare(
       `UPDATE coop_boss_sessions SET state_json = '{}'
         WHERE status != 'active' AND ended_at IS NOT NULL AND ended_at < ? AND state_json != '{}'`,
@@ -323,6 +334,17 @@ export async function joinCoopSession(env, { characterId, identityId, bossId, us
   if (existing) {
     const row = await readSession(env, existing)
     if (row?.status === 'active') {
+      // Rejoining the fight they are already in is fine. A DIFFERENT boss is
+      // not: the old room still holds this character's pack and save revision,
+      // so silently repointing them would strand that fight's XP behind a
+      // diverged write-back. Make them leave it first.
+      if (row.boss_id !== bossId) {
+        throw new GameApiError(
+          'CHARACTER_IN_COOP_SESSION',
+          'You are already in another group boss fight — leave it first',
+          409,
+        )
+      }
       await touchCoopMember(env, existing, characterId, now)
       return { sessionId: existing, rejoined: true }
     }
@@ -356,12 +378,17 @@ export async function joinCoopSession(env, { characterId, identityId, bossId, us
   if (!lock.meta.changes) throw new GameApiError('CHARACTER_IN_COOP_SESSION', 'Already in a boss fight', 409)
 
   let sessionId = null
+  // Rooms this attempt has already been turned away from. member_count in D1 is
+  // a mirror the room writes, so the picker can hand back a room that is
+  // actually full; without this the retry loop would keep choosing it.
+  const exhausted = new Set()
+  const useRoom = coopRoomsAvailable(env)
   try {
     // Claiming a slot races other joiners: the optimistic UPDATE fails if the
     // session ticked or filled up in between, so re-pick and try again.
     for (let attempt = 0; attempt < JOIN_ATTEMPTS && sessionId === null; attempt++) {
       const open = await listOpenSessions(env, bossId, now)
-      const target = open.find((s) => !s.full)
+      const target = open.find((s) => !s.full && !exhausted.has(s.sessionId))
 
       if (!target) {
         const fresh = addCoopMember(createCoopBossState(bossId, monstersData, now), member)
@@ -373,6 +400,20 @@ export async function joinCoopSession(env, { characterId, identityId, bossId, us
         break
       }
 
+      // The room owns membership for a session that is already running: it
+      // holds the fight in memory and overwrites state_json on every
+      // checkpoint, so a member added only in D1 is erased within a tick or two
+      // and never exists as far as the fight is concerned.
+      if (useRoom) {
+        const { status, body } = await callCoopRoom(env, target.sessionId, 'join', { characterId, member })
+        if (status === 200 && body?.ok) sessionId = target.sessionId
+        else exhausted.add(target.sessionId)
+        continue
+      }
+
+      // No room binding (a Pages deploy ahead of the Worker). Degraded path:
+      // write the member into the session blob and let the room pick them up
+      // when it cold-loads.
       const row = await readSession(env, target.sessionId)
       const state = row ? parseSessionState(row) : null
       if (!state || row.status !== 'active' || memberCount(state) >= COOP_MAX_MEMBERS) continue
@@ -430,10 +471,16 @@ export function applyMemberToSave(saveObject, member) {
     Object.entries(member.equipment || {}).map(([slot, item]) => [slot, item ? { ...item } : null]),
   )
   applyXpGainedToSave(next, member.xpGained)
+  // Dying in a group has to cost exactly what dying to the same boss alone
+  // costs. The solo screen restores HP to full on death; writing the member's
+  // literal 0 back would leave a corpse regenerating at +1/60s, so a group
+  // death was strictly harsher than a solo one.
+  const maxHP = Math.max(1, Math.floor(Number(member.maxHP) || 1))
+  const restedHP = member.status === 'dead' ? maxHP : Math.max(0, member.hp)
   if (next.player && typeof next.player === 'object') {
-    next.player = { ...next.player, currentHP: Math.max(0, member.hp) }
+    next.player = { ...next.player, currentHP: restedHP }
   } else {
-    next.player = { currentHP: Math.max(0, member.hp) }
+    next.player = { currentHP: restedHP }
   }
   return next
 }
@@ -574,10 +621,29 @@ export async function settleCoopKill(env, { session, state, kill, killSeq }, now
     return { ownerCharacterId: prior?.character_id ?? ownerId, granted, replayed: true }
   }
 
-  const identityId = member.ownerId ?? await ownerIdFor(env, ownerId)
-  if (!identityId) return empty
+  // The claim above is what makes the grant exactly-once, but it is taken
+  // BEFORE any of the work — so every path that gives up after it has to hand
+  // the sequence back. Leaving the row behind marks the kill settled with
+  // granted_json NULL: the drop is voided permanently, the replay path returns
+  // an empty list, and the player is shown a dry kill that never rolled.
+  const releaseClaim = () => env.DB.prepare(
+    'DELETE FROM coop_kill_settlements WHERE session_id = ? AND kill_seq = ? AND granted_json IS NULL',
+  ).bind(session.id, seq).run().catch(() => {})
 
-  const { saveObject, saveRevision } = await loadCharacterWithSave(env, ownerId, identityId)
+  const identityId = member.ownerId ?? await ownerIdFor(env, ownerId)
+  if (!identityId) {
+    await releaseClaim()
+    return empty
+  }
+
+  let saveObject
+  let saveRevision
+  try {
+    ({ saveObject, saveRevision } = await loadCharacterWithSave(env, ownerId, identityId))
+  } catch (err) {
+    await releaseClaim()
+    throw err
+  }
   // Same tripwire as writeBackMember: the winner is still fighting, so their
   // live supplies and XP have to land in the same write as the loot. If the
   // save moved underneath the fight, grant nothing rather than write a snapshot
@@ -586,13 +652,21 @@ export async function settleCoopKill(env, { session, state, kill, killSeq }, now
     await auditLog(env, 'coop.writeback.diverged', {
       sessionId: session.id, characterId: ownerId, expected: member?.saveRevision ?? null, found: saveRevision, at: 'kill',
     }, { swallow: true })
+    await releaseClaim()
     return { ...empty, diverged: true }
   }
 
   const rewards = rollMonsterRewardsById(session.boss_id, Math.random, false)
   const withSession = applyMemberToSave(saveObject, member)
-  const settled = settleActionCompletion(withSession, { sourceType: 'monsters', sourceId: session.boss_id, rewards })
-  const write = await writeSave(env, ownerId, withSession, saveRevision)
+  let settled
+  let write
+  try {
+    settled = settleActionCompletion(withSession, { sourceType: 'monsters', sourceId: session.boss_id, rewards })
+    write = await writeSave(env, ownerId, withSession, saveRevision)
+  } catch (err) {
+    await releaseClaim()
+    throw err
+  }
 
   // The winner keeps fighting, and their session inventory is what gets written
   // back when they eventually leave — so drops that landed in the pack have to

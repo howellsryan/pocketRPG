@@ -5,6 +5,7 @@ import { loadCharacterWithSave, writeSave } from '../game/save.js'
 import { createDefaultSave } from '../../../src/engine/createDefaultSave.js'
 import { auditLog } from '../game/audit.js'
 import { assertNotInActiveMatch } from '../pvp.js'
+import { assertNotInCoopSession } from '../game/coopBoss.js'
 import { depositToBank, withdrawFromBank, equip, unequip, buildIdleTask, runIdleTask, isClaimableTask, buildGatherTask, buildClueTask, CLUE_LEVELS, buildMinigameTask, trainPrayer, trainConstruction, unlockConstructionPerk, farmSummary, plantSeed, harvestPatch, harvestAll, castMagic, buildQuestTask, applyQuestTask, questStatuses, buildCombatTask, runCombatTask, planDungeoneeringReward, setIdleCombatSetup, idleCombatSetupSummary, idleFoodWarning, addQuestToQueueIntent, removeQuestFromQueueIntent, dropFromQueue, assignSlayerTask, skipSlayerTask, slayerStatus } from './intents.js'
 import { getIdleRow, setIdleTask, resetIdleActiveAt, clearIdleTask, advanceIdleClock } from './idle.js'
 import { SKIP_HOUR_MS } from '../../../src/engine/skipPreflight.js'
@@ -69,14 +70,35 @@ async function resolveCharacterId(env, authorization, provided) {
   throw new Error(`Multiple characters found — pass character_id. Options: ${list}`)
 }
 
+/**
+ * Refuses a tool call while another system owns this character's save.
+ *
+ * Both lock classes, always together: every one of these tools reaches
+ * writeSave, and a write landing mid-fight is not a lost write but a
+ * DUPLICATED one — the co-op room replays its own snapshot on write-back, and
+ * the world's grant flush does the same. The PvP check alone used to be the
+ * only guard here, so a single chat action during a group boss fight cost the
+ * player the whole fight's XP and supplies (§14, §20).
+ *
+ * Adding a lock class to functions/api/save.js means adding it here too; this
+ * surface does not route through /api/save.
+ */
+export async function assertCharacterFree(env, id) {
+  if (await assertNotInActiveMatch(env, id)) {
+    throw new Error('Blocked: the character is in an active PvP match.')
+  }
+  if (await assertNotInCoopSession(env, id)) {
+    throw new Error('Blocked: the character is in a group boss fight.')
+  }
+}
+
 // Apply a Phase C save intent: resolve + own the character, refuse during PvP,
 // load → mutate (throws abort the write) → save → audit. No value is created;
 // intents only relocate items the character already owns.
 async function applySaveIntent({ env, authorization, identity }, characterIdArg, intentFn, auditType) {
   if (!identity?.id) throw new Error('Not authenticated.')
   const id = await resolveCharacterId(env, authorization, characterIdArg)
-  const lock = await assertNotInActiveMatch(env, id)
-  if (lock) throw new Error('Blocked: the character is in an active PvP match.')
+  await assertCharacterFree(env, id)
   const { row, saveObject, saveRevision } = await loadCharacterWithSave(env, id, identity.id)
   const result = intentFn(saveObject, { isIronman: !!row?.is_ironman })
   const write = await writeSave(env, id, saveObject, saveRevision)
@@ -640,8 +662,7 @@ const TOOLS = {
   async start_skilling({ skill, action_id, character_id }, { env, authorization, identity }) {
     if (!identity?.id) throw new Error('Not authenticated.')
     const id = await resolveCharacterId(env, authorization, character_id)
-    const lock = await assertNotInActiveMatch(env, id)
-    if (lock) throw new Error('Blocked: the character is in an active PvP match.')
+    await assertCharacterFree(env, id)
     await assertNoActiveQuest(env, id)
 
     // Bank any pending rewards from a current supported task before switching;
@@ -674,8 +695,7 @@ const TOOLS = {
     if (!identity?.id) throw new Error('Not authenticated.')
     if (!task_id) throw new Error('task_id is required.')
     const id = await resolveCharacterId(env, authorization, character_id)
-    const lock = await assertNotInActiveMatch(env, id)
-    if (lock) throw new Error('Blocked: the character is in an active PvP match.')
+    await assertCharacterFree(env, id)
     await assertNoActiveQuest(env, id)
 
     const autoClaimed = await claimIdleCore(env, id, identity.id, authorization)
@@ -706,8 +726,7 @@ const TOOLS = {
     if (!identity?.id) throw new Error('Not authenticated.')
     if (!clue_level) throw new Error('clue_level is required.')
     const id = await resolveCharacterId(env, authorization, character_id)
-    const lock = await assertNotInActiveMatch(env, id)
-    if (lock) throw new Error('Blocked: the character is in an active PvP match.')
+    await assertCharacterFree(env, id)
     await assertNoActiveQuest(env, id)
 
     const autoClaimed = await claimIdleCore(env, id, identity.id, authorization)
@@ -738,8 +757,7 @@ const TOOLS = {
     if (!identity?.id) throw new Error('Not authenticated.')
     if (!minigame_task_id) throw new Error('minigame_task_id is required.')
     const id = await resolveCharacterId(env, authorization, character_id)
-    const lock = await assertNotInActiveMatch(env, id)
-    if (lock) throw new Error('Blocked: the character is in an active PvP match.')
+    await assertCharacterFree(env, id)
     await assertNoActiveQuest(env, id)
 
     const autoClaimed = await claimIdleCore(env, id, identity.id, authorization)
@@ -864,8 +882,7 @@ const TOOLS = {
   async claim_activity({ character_id }, { env, authorization, identity }) {
     if (!identity?.id) throw new Error('Not authenticated.')
     const id = await resolveCharacterId(env, authorization, character_id)
-    const lock = await assertNotInActiveMatch(env, id)
-    if (lock) throw new Error('Blocked: the character is in an active PvP match.')
+    await assertCharacterFree(env, id)
     const result = await claimIdleCore(env, id, identity.id, authorization)
     if (!result.claimed) {
       if (result.reason === 'unsupported_type') {
@@ -895,8 +912,7 @@ const TOOLS = {
     if (!identity?.id) throw new Error('Not authenticated.')
     if (!quest_id) throw new Error('quest_id is required.')
     const id = await resolveCharacterId(env, authorization, character_id)
-    const lock = await assertNotInActiveMatch(env, id)
-    if (lock) throw new Error('Blocked: the character is in an active PvP match.')
+    await assertCharacterFree(env, id)
     await assertNoActiveQuest(env, id)
 
     // Bank/clear any pending supported skilling task first; refuse if an
@@ -973,8 +989,7 @@ const TOOLS = {
     if (!identity?.id) throw new Error('Not authenticated.')
     if (!monster_id) throw new Error('monster_id is required.')
     const id = await resolveCharacterId(env, authorization, character_id)
-    const lock = await assertNotInActiveMatch(env, id)
-    if (lock) throw new Error('Blocked: the character is in an active PvP match.')
+    await assertCharacterFree(env, id)
     if (await isOneLifeCharacter(env, id)) {
       throw new Error('Refused: One-Life characters can die permanently. Fight in the game client, where death is handled explicitly.')
     }
@@ -1025,8 +1040,7 @@ const TOOLS = {
     if (!identity?.id) throw new Error('Not authenticated.')
     if (!monster_id) throw new Error('monster_id is required.')
     const id = await resolveCharacterId(env, authorization, character_id)
-    const lock = await assertNotInActiveMatch(env, id)
-    if (lock) throw new Error('Blocked: the character is in an active PvP match.')
+    await assertCharacterFree(env, id)
     const monster = getMonster(monster_id)
     if (!monster) throw new Error(`No monster with id '${monster_id}'. Browse ids via pocketrpg://reference/monsters.`)
     if (monster.boss !== true) throw new Error(`${monster.name || monster_id} is not a boss — use start_fight for normal monsters.`)
@@ -1057,8 +1071,7 @@ const TOOLS = {
     if (!identity?.id) throw new Error('Not authenticated.')
     if (!monster_id) throw new Error('monster_id is required.')
     const id = await resolveCharacterId(env, authorization, character_id)
-    const lock = await assertNotInActiveMatch(env, id)
-    if (lock) throw new Error('Blocked: the character is in an active PvP match.')
+    await assertCharacterFree(env, id)
     if (await isOneLifeCharacter(env, id)) {
       throw new Error('Refused: One-Life characters fight bosses in the game client, where death is permanent.')
     }
@@ -1120,8 +1133,7 @@ const TOOLS = {
     const raid = raidsData[raid_id]
     if (!raid) throw new Error(`No raid with id '${raid_id}'. Browse ids via pocketrpg://reference/raids.`)
     const id = await resolveCharacterId(env, authorization, character_id)
-    const lock = await assertNotInActiveMatch(env, id)
-    if (lock) throw new Error('Blocked: the character is in an active PvP match.')
+    await assertCharacterFree(env, id)
 
     const skip = await callHandler(postSkipHour, env, { method: 'POST', authorization, characterId: id, body: { raidId: raid_id } })
     if (!skip.ok) throw httpError(skip)

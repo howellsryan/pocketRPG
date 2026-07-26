@@ -23,7 +23,13 @@
 // The save is still written only through functions/_lib/game/coopBoss.js, the
 // same way world/server/grants.ts is the world's only save writer.
 
-import { processCoopTick, memberCount, removeCoopMember } from '../../src/engine/coopBossEngine.js'
+import {
+  COOP_MAX_MEMBERS,
+  addCoopMember,
+  processCoopTick,
+  memberCount,
+  removeCoopMember,
+} from '../../src/engine/coopBossEngine.js'
 import {
   COOP_ENGINE_DEPS,
   COOP_SESSION_STALE_MS,
@@ -71,7 +77,24 @@ export class CoopBossRoom {
   private dirty = false
   private lastCheckpointTick = 0
   private busy = false
+  private queue: Promise<unknown> = Promise.resolve()
   private env: Env
+
+  /**
+   * Serialises everything that REPLACES this.state.
+   *
+   * addCoopMember/removeCoopMember clone the state, so the member objects in
+   * the new state are new objects. A swap landing inside a tick's await —
+   * settlement is several D1 round-trips — leaves that tick mutating members
+   * nobody can see any more: the loot winner's granted inventory and their
+   * bumped saveRevision are written to the orphan, so the drop is silently
+   * dropped and their next write-back is refused as diverged.
+   */
+  private runExclusive<T>(fn: () => Promise<T> | T): Promise<T> {
+    const next = this.queue.then(fn, fn)
+    this.queue = next.catch(() => {})
+    return next
+  }
 
   constructor(_ctx: DurableObjectState, env: Env) {
     this.env = env
@@ -89,6 +112,9 @@ export class CoopBossRoom {
     if (!this.state) return jsonResponse({ error: 'coop_session_not_found' }, 404)
 
     const key = String(characterId)
+    // `join` is what MAKES someone a member, so it has to run before the
+    // membership gate — everything else is gated.
+    if (action === 'join') return this.handleJoin(key, body)
     if (!this.state.members?.[key]) return jsonResponse({ error: 'not_a_member' }, 403)
 
     switch (action) {
@@ -97,6 +123,53 @@ export class CoopBossRoom {
       case 'depart': return this.handleDepart(key)
       default: return jsonResponse({ error: 'unknown_action' }, 404)
     }
+  }
+
+  /**
+   * Adds a member to a fight that is already running.
+   *
+   * This exists because the room, not D1, is the authority on who is in a
+   * fight. joinCoopSession used to write the new member into the session's
+   * state_json and stop there — which worked only while the room was cold. A
+   * warm room never re-reads D1 (ensureLoaded short-circuits) and overwrites
+   * state_json on its next checkpoint, so the joiner was dropped and every poll
+   * they made answered `not_a_member`. Only whoever opened the session could
+   * actually fight.
+   *
+   * The member cap is enforced here for the same reason: D1's member_count is a
+   * mirror this room writes, so a cap checked against it is checked against
+   * stale data. A caller that picked a full room gets `session_full` and tries
+   * the next one.
+   */
+  private handleJoin(key: string, body: Record<string, any>): Promise<Response> {
+    return this.runExclusive(async () => {
+      if (!this.state) return jsonResponse({ error: 'coop_session_not_found' }, 404)
+      // Idempotent: a cold room has already loaded this member from the row the
+      // caller just wrote, and a retried request must not re-seed their combat
+      // state (it would re-arm timers and reset accrued damage).
+      if (this.state.members?.[key]) {
+        this.lastSeen[key] = Date.now()
+        this.startTicking()
+        return jsonResponse({ ok: true, alreadyPresent: true, tick: this.state.tick || 0 })
+      }
+      const member = body?.member
+      if (!member || typeof member !== 'object' || String(member.characterId) !== key || !member.combat) {
+        return jsonResponse({ error: 'invalid_member' }, 400)
+      }
+      if (memberCount(this.state) >= COOP_MAX_MEMBERS) return jsonResponse({ error: 'session_full' }, 409)
+
+      const joined = addCoopMember(this.state, member) as AnyState
+      this.state = joined
+      this.lastSeen[key] = Date.now()
+      this.dirty = true
+      this.startTicking()
+      const tick = joined.tick || 0
+      // Checkpoint before answering: the caller stamps the save lock on the
+      // strength of this reply, and a room evicted before its next periodic
+      // checkpoint would otherwise come back without them.
+      await this.checkpoint(Date.now())
+      return jsonResponse({ ok: true, tick })
+    })
   }
 
   /** Hydrates the room from D1 the first time anyone reaches it (a cold DO, or
@@ -160,7 +233,13 @@ export class CoopBossRoom {
   private async tick(): Promise<void> {
     if (!this.state || this.busy) return
     this.busy = true
-    try {
+    // `busy` skips a beat that arrives while one is still running; the queue
+    // additionally keeps joins and departures out of the middle of it.
+    return this.runExclusive(() => this.tickInner()).finally(() => { this.busy = false })
+  }
+
+  private async tickInner(): Promise<void> {
+    {
       const now = Date.now()
       await this.ejectStaleMembers(now)
       if (!this.state) return
@@ -189,8 +268,6 @@ export class CoopBossRoom {
       }
 
       if ((next.tick || 0) - this.lastCheckpointTick >= CHECKPOINT_EVERY_TICKS) await this.checkpoint(now)
-    } finally {
-      this.busy = false
     }
   }
 
@@ -285,13 +362,17 @@ export class CoopBossRoom {
     return jsonResponse({ ok: true, tick_number: (this.state!.tick || 0) + 1 })
   }
 
-  private async handleDepart(key: string): Promise<Response> {
-    if (this.state?.members?.[key]) {
-      this.lastSeen[key] = 0
-      await this.ejectStaleMembers(Date.now())
-      if (this.state && memberCount(this.state) === 0) await this.closeRoom(Date.now())
-    }
-    return jsonResponse({ ok: true })
+  private handleDepart(key: string): Promise<Response> {
+    // Same queue as the tick: the write-back and the state swap below must not
+    // land in the middle of a beat that is awaiting D1.
+    return this.runExclusive(async () => {
+      if (this.state?.members?.[key]) {
+        this.lastSeen[key] = 0
+        await this.ejectStaleMembers(Date.now())
+        if (this.state && memberCount(this.state) === 0) await this.closeRoom(Date.now())
+      }
+      return jsonResponse({ ok: true })
+    })
   }
 
   /** Mirrors the live fight back to D1 so the crash sweep has something recent

@@ -521,3 +521,100 @@ describe('coop member writeback', () => {
     expect(save.player.currentHP).toBe(99)
   })
 })
+
+describe('death parity with a solo fight', () => {
+  it('restores a dead member to full HP, exactly as dying alone does', () => {
+    // The solo screen calls updateHP(getMaxHP()) on death. Writing the member's
+    // literal 0 back left a group death strictly harsher — a corpse that had to
+    // regenerate from nothing at +1/60s.
+    const save: any = { stats: {}, player: { currentHP: 99, name: 'Tester' } }
+    const dead = { hp: 0, maxHP: 99, status: 'dead', inventory: [], equipment: {}, xpGained: {} }
+    expect(applyMemberToSave(save, dead).player.currentHP).toBe(99)
+  })
+
+  it('leaves a living member on the HP they actually have', () => {
+    const save: any = { stats: {}, player: { currentHP: 99 } }
+    const alive = { hp: 12, maxHP: 99, status: 'alive', inventory: [], equipment: {}, xpGained: {} }
+    expect(applyMemberToSave(save, alive).player.currentHP).toBe(12)
+  })
+
+  it('keeps the death restore off a member with no status at all', () => {
+    const save: any = { stats: {}, player: { currentHP: 99 } }
+    const legacy = { hp: 3, maxHP: 99, inventory: [], equipment: {}, xpGained: {} }
+    expect(applyMemberToSave(save, legacy).player.currentHP).toBe(3)
+  })
+})
+
+describe('the kill settlement ledger', () => {
+  async function sessionFor(characterId: number) {
+    await seedCharacter(characterId)
+    const { sessionId } = await joinCoopSession(env as never, {
+      characterId, identityId: 1, bossId: BOSS, username: `player${characterId}`,
+    })
+    const session = await readSession(env as never, sessionId)
+    const state = parseSessionState(session)
+    state.members[String(characterId)].damage = 1500
+    return { session, state, kill: { bossId: BOSS, ownerCharacterId: characterId, contributors: [] } }
+  }
+
+  function claimRows(sessionId: number) {
+    return raw.prepare('SELECT kill_seq, granted_json FROM coop_kill_settlements WHERE session_id = ?').all(sessionId)
+  }
+
+  it('hands the sequence back when the save diverged, so the kill is not recorded as settled', async () => {
+    const { session, state, kill } = await sessionFor(7)
+    // Something else wrote this character's save mid-fight — the tripwire that
+    // makes the room refuse to grant.
+    state.members['7'].saveRevision = 999
+
+    const out = await settleCoopKill(env as never, { session, state, kill, killSeq: 1 })
+    expect(out.diverged).toBe(true)
+    expect(out.granted).toEqual([])
+    // The claim row must be gone. Left behind it marks the kill settled with a
+    // NULL grant: the drop is voided permanently and the replay path answers
+    // with an empty list forever after.
+    expect(claimRows(session.id)).toHaveLength(0)
+  })
+
+  it('keeps the claim when the grant actually landed', async () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    const { session, state, kill } = await sessionFor(7)
+
+    const out = await settleCoopKill(env as never, { session, state, kill, killSeq: 1 })
+    expect(out.granted.length).toBeGreaterThan(0)
+    const rows = claimRows(session.id)
+    expect(rows).toHaveLength(1)
+    expect(JSON.parse(rows[0].granted_json)).toHaveLength(out.granted.length)
+  })
+
+  it('replays a settled sequence instead of rolling the drop table twice', async () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    const { session, state, kill } = await sessionFor(7)
+
+    const first = await settleCoopKill(env as never, { session, state, kill, killSeq: 1 })
+    const replay = await settleCoopKill(env as never, { session, state, kill, killSeq: 1 })
+    expect(replay.replayed).toBe(true)
+    expect(replay.granted).toEqual(first.granted)
+    expect(claimRows(session.id)).toHaveLength(1)
+  })
+})
+
+describe('rejoining while already in a fight', () => {
+  it('returns the existing session when it is the same boss', async () => {
+    await seedCharacter(7)
+    const first = await joinCoopSession(env as never, { characterId: 7, identityId: 1, bossId: BOSS, username: 'player7' })
+    const again = await joinCoopSession(env as never, { characterId: 7, identityId: 1, bossId: BOSS, username: 'player7' })
+    expect(again.sessionId).toBe(first.sessionId)
+    expect(again.rejoined).toBe(true)
+  })
+
+  it('refuses a DIFFERENT boss rather than silently returning the old fight', async () => {
+    await seedCharacter(7)
+    await joinCoopSession(env as never, { characterId: 7, identityId: 1, bossId: BOSS, username: 'player7' })
+    // Tapping "Fight together" on another boss used to hand back the session
+    // for the boss they were already in, dropping them into the wrong fight.
+    await expect(joinCoopSession(env as never, {
+      characterId: 7, identityId: 1, bossId: 'warlord_grondar', username: 'player7',
+    })).rejects.toMatchObject({ code: 'CHARACTER_IN_COOP_SESSION' })
+  })
+})

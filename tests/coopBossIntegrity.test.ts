@@ -11,6 +11,7 @@ import {
   leaveCoopSession,
   parseSessionState,
   pruneCoopExhaust,
+  shouldPruneCoopExhaust,
   readSession,
   settleCoopKill,
   sweepStaleCoopSessions,
@@ -330,31 +331,38 @@ describe('an abandoned room does not eat the XP earned in it', () => {
 })
 
 describe('finished fights do not accumulate forever', () => {
-  it('drops applied intents and the state blob of long-ended sessions', async () => {
+  it('drops the state blob and settlement ledger of long-ended sessions', async () => {
     await seedCharacter(7)
     const { sessionId } = await joinCoopSession(env as never, { characterId: 7, identityId: 1, bossId: BOSS, username: 'p7' })
     const old = Date.now() - 48 * 60 * 60 * 1000
     raw.prepare("UPDATE coop_boss_sessions SET status = 'completed', ended_at = ? WHERE id = ?").run(old, sessionId)
     raw.prepare(
-      'INSERT INTO coop_intents (session_id, character_id, tick_number, character_seq, action_json, applied, created_at) VALUES (?, 7, 1, 1, ?, 1, ?)',
-    ).run(sessionId, '{}', old)
+      'INSERT INTO coop_kill_settlements (session_id, kill_seq, character_id, boss_id, granted_json, settled_at) VALUES (?, 1, 7, ?, ?, ?)',
+    ).run(sessionId, BOSS, '[]', old)
 
     await pruneCoopExhaust(env as never)
 
-    expect(raw.prepare('SELECT COUNT(*) AS n FROM coop_intents').get().n).toBe(0)
+    expect(raw.prepare('SELECT COUNT(*) AS n FROM coop_kill_settlements').get().n).toBe(0)
     expect((await readSession(env as never, sessionId)).state_json).toBe('{}')
   })
 
-  it('leaves a live session and its recent history alone', async () => {
+  it('leaves a live session and its settlement ledger alone', async () => {
     await seedCharacter(7)
     const { sessionId } = await joinCoopSession(env as never, { characterId: 7, identityId: 1, bossId: BOSS, username: 'p7' })
     raw.prepare(
-      'INSERT INTO coop_intents (session_id, character_id, tick_number, character_seq, action_json, applied, created_at) VALUES (?, 7, 1, 1, ?, 1, ?)',
-    ).run(sessionId, '{}', Date.now())
+      'INSERT INTO coop_kill_settlements (session_id, kill_seq, character_id, boss_id, granted_json, settled_at) VALUES (?, 1, 7, ?, ?, ?)',
+    ).run(sessionId, BOSS, '[]', Date.now())
 
     await pruneCoopExhaust(env as never)
 
-    expect(raw.prepare('SELECT COUNT(*) AS n FROM coop_intents').get().n).toBe(1)
+    expect(raw.prepare('SELECT COUNT(*) AS n FROM coop_kill_settlements').get().n).toBe(1)
     expect((await readSession(env as never, sessionId)).state_json).not.toBe('{}')
+  })
+
+  it('is sampled rather than run on every picker request', () => {
+    // The picker is opened on every boss tap and retention writes
+    // unconditionally, so running it inline billed a scan-and-write to a read.
+    expect(shouldPruneCoopExhaust(() => 0.01)).toBe(true)
+    expect(shouldPruneCoopExhaust(() => 0.99)).toBe(false)
   })
 })

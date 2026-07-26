@@ -123,6 +123,14 @@ export function describeCoopEquipRefusal(event) {
   return 'Could not equip that'
 }
 
+/** Player-facing reason a spell or prayer was refused. Separate from the equip
+ * describer so each message stays accurate about what was rejected. */
+export function describeCoopActionRefusal(event) {
+  if (event?.reason === 'spell_level') return `Need Magic level ${event.required} to cast ${event.name || 'that spell'}`
+  if (event?.reason === 'prayer_level') return `Need Prayer level ${event.required} to use ${event.name || 'that prayer'}`
+  return 'Could not do that'
+}
+
 function questIdList(completedQuests) {
   if (Array.isArray(completedQuests)) return completedQuests.filter((q) => typeof q === 'string')
   if (completedQuests && typeof completedQuests === 'object') {
@@ -386,15 +394,39 @@ function removeFromInventory(inventory, itemId, qty) {
   return remaining === 0
 }
 
-function applyCoopIntent(state, member, action, itemsData, spellsData, events) {
+/** A member's level in one skill. Both maps are seeded by createCoopMember;
+ * missing means an old session blob, and the caller fails closed on 1. */
+function memberLevel(member, skill) {
+  const level = Number(member?.levels?.[skill] ?? member?.stats?.[skill])
+  return Number.isFinite(level) && level > 0 ? Math.floor(level) : 1
+}
+
+function applyCoopIntent(state, member, action, itemsData, spellsData, prayersData, events) {
   if (!action || typeof action !== 'object') return
   switch (action.type) {
     case 'change_stance':
       if (COOP_VALID_STANCES.has(action.stance)) member.combat.stance = action.stance
       return
-    case 'change_combat_spell':
-      member.combat.spellId = action.spellId && spellsData?.[action.spellId] ? action.spellId : null
+    case 'change_combat_spell': {
+      const spell = action.spellId ? spellsData?.[action.spellId] : null
+      if (!spell) {
+        member.combat.spellId = null
+        return
+      }
+      // The server grants this damage and its XP, so the level gate has to be
+      // enforced here — the engine itself only ever checked runes, and the
+      // client's spellbook filter is not a gate. Mirrors the PvP intent check.
+      const required = Math.max(1, Math.floor(Number(spell.levelReq) || 1))
+      if (memberLevel(member, 'magic') < required) {
+        events.push({
+          type: 'actionRefused', characterId: member.characterId, reason: 'spell_level',
+          spellId: action.spellId, name: spell.name, required,
+        })
+        return
+      }
+      member.combat.spellId = action.spellId
       return
+    }
     case 'queue_special':
       member.combat.specialAttackQueued = !member.combat.specialAttackQueued
       return
@@ -405,6 +437,21 @@ function applyCoopIntent(state, member, action, itemsData, spellsData, events) {
       const key = action.slot === 'protection' ? 'activeProtectionPrayer' : 'activeCombatPrayer'
       const turningOn = member.combat[key] !== action.prayerId
       if (turningOn && (member.combat.prayerPoints || 0) <= 0) return
+      // applyPrayerBonuses applies the boost with no level check of its own, so
+      // the unlock gate lives here or not at all. Turning a prayer OFF is always
+      // allowed — never strand a member with a prayer they cannot disable.
+      if (turningOn) {
+        const prayer = prayersData?.[action.prayerId]
+        if (!prayer) return
+        const required = Math.max(1, Math.floor(Number(prayer.level) || 1))
+        if (memberLevel(member, 'prayer') < required) {
+          events.push({
+            type: 'actionRefused', characterId: member.characterId, reason: 'prayer_level',
+            prayerId: action.prayerId, name: prayer.name, required,
+          })
+          return
+        }
+      }
       member.combat[key] = turningOn ? action.prayerId : null
       return
     }
@@ -563,7 +610,7 @@ export function processCoopTick(state, intents, { itemsData, monstersData, praye
   for (const intent of orderedIntents) {
     const member = next.members[String(intent?.characterId)]
     if (!member || member.status !== 'alive') continue
-    applyCoopIntent(next, member, intent.action || {}, itemsData, spellsData, events)
+    applyCoopIntent(next, member, intent.action || {}, itemsData, spellsData, prayersData, events)
   }
 
   reselectTarget(next)

@@ -1383,6 +1383,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       if (code === 'BOSS_REQUIREMENTS_NOT_MET') addToast(err?.body?.error || 'You have not unlocked this boss yet.', 'error')
       else if (code === 'CHARACTER_IN_WORLD_SESSION') addToast('You are adventuring in the World.', 'error')
       else if (code === 'CHARACTER_IN_ACTIVE_MATCH') addToast('Finish your duel first.', 'error')
+      else if (code === 'CHARACTER_IN_COOP_SESSION') addToast(err?.body?.error || 'Leave your current group fight first.', 'error')
       else if (code === 'COOP_UNAVAILABLE') addToast('Group boss fights are offline right now — fight alone for the moment.', 'error')
       else addToast(err?.message || 'Could not join the fight.', 'error')
     } finally {

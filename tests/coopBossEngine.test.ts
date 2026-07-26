@@ -13,6 +13,7 @@ import {
   reselectTarget,
   topDamageCharacterId,
   describeCoopEquipRefusal,
+  describeCoopActionRefusal,
 } from '../src/engine/coopBossEngine.js'
 import itemsData from '../src/data/items.json'
 import monstersData from '../src/data/monsters.json'
@@ -570,5 +571,110 @@ describe('describeCoopEquipRefusal', () => {
   it('still says something for a reason it does not know', () => {
     expect(describeCoopEquipRefusal({ reason: 'wat' })).toBe('Could not equip that')
     expect(describeCoopEquipRefusal(undefined)).toBe('Could not equip that')
+  })
+})
+
+// The engine applies a spell's damage and a prayer's boost with no level check
+// of its own (combat.js only ever checks runes, applyPrayerBonuses checks
+// nothing), and the server grants the resulting damage and XP — so the unlock
+// gate lives in applyCoopIntent or nowhere. PvP has enforced the same two
+// checks since it shipped; co-op did not.
+describe('spell and prayer unlock gates', () => {
+  function memberState(statOverrides: Record<string, unknown> = {}) {
+    const payload = savePayload({})
+    Object.assign(payload.stats as object, statOverrides)
+    let state = createCoopBossState(BOSS, monstersData)!
+    state = addCoopMember(state, createCoopMember({ characterId: 1, username: 'p1', savePayload: payload, itemsData }))
+    return state
+  }
+  const intent = (action: unknown) => ([{ tick_number: 1, characterId: 1, characterSeq: 0, action }])
+
+  it('refuses a spell above the member Magic level and says which level it needs', () => {
+    // fire_surge is levelReq 95; this member sits at level 1 Magic.
+    const state = memberState({ magic: { xp: 0 } })
+    const { stateNext, events } = processCoopTick(
+      state, intent({ type: 'change_combat_spell', spellId: 'fire_surge' }), deps, Date.now(),
+    )
+    expect(stateNext.members['1'].combat.spellId).toBeNull()
+    expect(events.find((e: any) => e.type === 'actionRefused')).toMatchObject({
+      reason: 'spell_level', spellId: 'fire_surge', required: 95, characterId: 1,
+    })
+  })
+
+  it('allows a spell the member has the level for', () => {
+    const state = memberState()
+    const { stateNext, events } = processCoopTick(
+      state, intent({ type: 'change_combat_spell', spellId: 'fire_surge' }), deps, Date.now(),
+    )
+    expect(stateNext.members['1'].combat.spellId).toBe('fire_surge')
+    expect(events.find((e: any) => e.type === 'actionRefused')).toBeUndefined()
+  })
+
+  it('still lets a member clear their spell', () => {
+    const state = memberState({ magic: { xp: 0 } })
+    state.members['1'].combat.spellId = 'wind_strike'
+    const { stateNext } = processCoopTick(
+      state, intent({ type: 'change_combat_spell', spellId: null }), deps, Date.now(),
+    )
+    expect(stateNext.members['1'].combat.spellId).toBeNull()
+  })
+
+  it('refuses a prayer above the member Prayer level', () => {
+    // piety is level 70; this member is level 10.
+    const state = memberState({ prayer: { xp: 1154 } })
+    const { stateNext, events } = processCoopTick(
+      state, intent({ type: 'toggle_prayer', prayerId: 'piety', slot: 'combat' }), deps, Date.now(),
+    )
+    expect(stateNext.members['1'].combat.activeCombatPrayer).toBeNull()
+    expect(events.find((e: any) => e.type === 'actionRefused')).toMatchObject({
+      reason: 'prayer_level', prayerId: 'piety', required: 70,
+    })
+  })
+
+  it('allows a prayer the member has the level for', () => {
+    const state = memberState()
+    const { stateNext } = processCoopTick(
+      state, intent({ type: 'toggle_prayer', prayerId: 'piety', slot: 'combat' }), deps, Date.now(),
+    )
+    expect(stateNext.members['1'].combat.activeCombatPrayer).toBe('piety')
+  })
+
+  it('never strands a member with a prayer they cannot switch off', () => {
+    // A prayer already running when the level map says they cannot start it —
+    // turning it OFF has to stay allowed or the drain runs to empty.
+    const state = memberState({ prayer: { xp: 1154 } })
+    state.members['1'].combat.activeCombatPrayer = 'piety'
+    const { stateNext } = processCoopTick(
+      state, intent({ type: 'toggle_prayer', prayerId: 'piety', slot: 'combat' }), deps, Date.now(),
+    )
+    expect(stateNext.members['1'].combat.activeCombatPrayer).toBeNull()
+  })
+
+  it('fails closed for a member whose session predates the level map', () => {
+    const state = memberState()
+    delete state.members['1'].levels
+    delete state.members['1'].stats.magic
+    const { stateNext, events } = processCoopTick(
+      state, intent({ type: 'change_combat_spell', spellId: 'fire_surge' }), deps, Date.now(),
+    )
+    expect(stateNext.members['1'].combat.spellId).toBeNull()
+    expect(events.find((e: any) => e.type === 'actionRefused')).toMatchObject({ reason: 'spell_level' })
+  })
+})
+
+describe('describeCoopActionRefusal', () => {
+  it('names the Magic level a spell needs', () => {
+    expect(describeCoopActionRefusal({ reason: 'spell_level', name: 'Fire Surge', required: 95 }))
+      .toBe('Need Magic level 95 to cast Fire Surge')
+  })
+
+  it('names the Prayer level a prayer needs', () => {
+    expect(describeCoopActionRefusal({ reason: 'prayer_level', name: 'Piety', required: 70 }))
+      .toBe('Need Prayer level 70 to use Piety')
+  })
+
+  it('still says something for a reason it does not know', () => {
+    expect(describeCoopActionRefusal({ reason: 'wat' })).toBe('Could not do that')
+    expect(describeCoopActionRefusal(undefined)).toBe('Could not do that')
   })
 })
