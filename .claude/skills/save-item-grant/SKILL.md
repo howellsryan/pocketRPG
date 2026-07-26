@@ -48,8 +48,24 @@ Auth: `wrangler login`, or `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID`.
 
 Tell the player to reload the game. The revision bump means their open tab's next push is rejected as stale, and the client pulls the new save.
 
+## Or in the browser: the `/admin` portal
+
+The usual route for a support grant. Open `https://<host>/admin`, enter `ADMIN_SECRET`, pick character + item + quantity from the dropdowns, **Preview** (dry run), then **Grant**. The secret lives in the tab's memory only — reloading re-locks it, and nothing is stored.
+
+## Or over HTTP: `POST /api/admin/grant-item`
+
+Same guarantees (item resolution, three save locks, revision guard), no wrangler needed, and it can target the **bank** as well as the inventory. Admin auth is `ADMIN_SECRET` — a session JWT grants nothing.
+
+```bash
+curl -X POST https://<host>/api/admin/grant-item \
+  -H "X-Admin-Secret: $ADMIN_SECRET" -H 'Content-Type: application/json' \
+  -d '{"character_id":12,"item_id":"dragon_scimitar","quantity":1,"destination":"inventory","dry_run":true}'
+```
+
+Body: `character_id`, `item_id` (id or legacy id — not a name), `quantity` (1…1e9, default 1), `destination` `inventory`|`bank` (default inventory), `noted`, `dry_run`, `reason` (audited). Non-stackables take one slot per copy and 409 `INVENTORY_FULL` if they don't fit — use `noted` or `destination:"bank"`. Every grant writes an `admin_item_grant` audit row. Handlers: `functions/api/admin/grant-item.js`, `functions/api/admin/catalog.js`, `functions/admin.js`; tests `tests/adminGrantItem.test.ts`, `tests/adminPortal.test.ts`.
+
 ## Limits
 
-- Inventory only. Bank grants, equipment, XP and credits are deliberately out of scope — credits in particular are server-authoritative (§14) and must not be hand-edited into a save.
+- The script is inventory only. Bank grants need the endpoint above; equipment, XP and credits are deliberately out of scope for both — credits in particular are server-authoritative (§14) and must not be hand-edited into a save.
 - Charged weapons land with no `charges`. Set them through normal play.
 - Pure logic lives in `scripts/lib/saveItemGrant.mjs`, covered by `tests/saveItemGrant.test.ts`. Change the insert semantics there and update the test in the same edit.
