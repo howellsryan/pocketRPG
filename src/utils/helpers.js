@@ -113,22 +113,39 @@ export function calcCombatLevel(stats) {
   return combatLevelFromLevels(stats)
 }
 
-/**
- * The 3D open-world deployment. Only ever opened from surfaces gated behind
- * `worldBetaEnabled()`, which is preview-only — so this is the preview world
- * Worker, never production (production is world.pocketrpg.co.uk).
- */
-export const WORLD_ORIGIN = 'https://pocketrpg-world-preview.rlh.workers.dev'
+/** Fallback world deployment for Vite dev, where no single-file build runs and
+ * nothing is baked. The preview Worker, never production. */
+const WORLD_ORIGIN_FALLBACK = 'https://pocketrpg-world-preview.rlh.workers.dev'
 
 /**
- * Whether open-world entry points may render. `pocketWorldBetaEnabled` is baked
- * in at build time by build_single.cjs (preview on, production off; override
- * with EnableWorldBeta) and lives in the game chunk, so it is read lazily here
- * — never at module evaluation (CLAUDE.md §12) — and guarded for Vite dev,
- * where no single-file build runs.
+ * The 3D open-world deployment this build hands off to. Baked by
+ * build_single.cjs (main → world.pocketrpg.co.uk, everything else → preview)
+ * and read lazily for the same reason as the flags below.
+ */
+export function worldOrigin() {
+  return typeof pocketWorldOrigin !== 'undefined' ? pocketWorldOrigin : WORLD_ORIGIN_FALLBACK
+}
+
+/**
+ * Whether the whole open world may be entered — the Help screen's "Enter
+ * World" button, which lands the player in the overworld. `pocketWorldBetaEnabled`
+ * is baked in at build time by build_single.cjs (preview on, production off;
+ * override with EnableWorldBeta) and lives in the game chunk, so it is read
+ * lazily here — never at module evaluation (CLAUDE.md §12) — and guarded for
+ * Vite dev, where no single-file build runs.
  */
 export function worldBetaEnabled() {
   return typeof pocketWorldBetaEnabled !== 'undefined' ? Boolean(pocketWorldBetaEnabled) : true
+}
+
+/**
+ * Whether a boss's instanced open-world lair may be entered from the combat
+ * picker. Deliberately independent of `worldBetaEnabled()` above: a lair is a
+ * single authored room, so it ships to production while the overworld does
+ * not. Don't collapse the two back together.
+ */
+export function worldBossLairsEnabled() {
+  return typeof pocketWorldLairsEnabled !== 'undefined' ? Boolean(pocketWorldLairsEnabled) : true
 }
 
 /**
@@ -138,7 +155,7 @@ export function worldBetaEnabled() {
  */
 export async function openWorld(api, zone) {
   const { handoff } = await api.requestWorldHandoff(zone)
-  window.open(`${WORLD_ORIGIN}/#handoff=${handoff}`, '_blank')
+  window.open(`${worldOrigin()}/#handoff=${handoff}`, '_blank')
 }
 
 /**

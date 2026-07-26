@@ -51,7 +51,7 @@ import spellsData from '../data/spells.json'
 import raidsData from '../data/raids.json'
 import { isCoopBossId } from '../engine/coopBossEngine.js'
 import { hasWorldLair, worldLairZone } from '../engine/worldLairs.js'
-import { openWorld, worldBetaEnabled } from '../utils/helpers.js'
+import { openWorld, worldBossLairsEnabled } from '../utils/helpers.js'
 import { coopApi, setActiveCoopSession } from '../cloud/coop.js'
 import { SCREENS, formatDropChance } from '../utils/constants.js'
 import { hasEpicLootDrop, getItemUnitValue, getLootTotalValue } from '../utils/itemValue.js'
@@ -1385,9 +1385,9 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   // Co-op needs a cloud account (the server owns the fight), so the offline demo
   // always goes straight to the solo path.
   const offersCoop = (monster) => isCoopBossId(monster.id) && !isDemo
-  // The open world is a separate deployment still in beta, so its route into a
-  // boss only appears where that beta is enabled.
-  const offersWorldLair = (monster) => hasWorldLair(monster.id) && !isDemo && worldBetaEnabled()
+  // Gated on the lair flag, NOT the world beta: an authored boss room ships
+  // ahead of the overworld it lives in.
+  const offersWorldLair = (monster) => hasWorldLair(monster.id) && !isDemo && worldBossLairsEnabled()
 
   // Every picker tap goes through here so mobile and desktop behave the same —
   // the mobile picker is the primary layout, so wiring only one of them is how

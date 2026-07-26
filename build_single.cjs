@@ -666,6 +666,25 @@ const worldBetaEnabled = process.env.EnableWorldBeta != null
   ? process.env.EnableWorldBeta === 'true'
   : Boolean(process.env.CF_PAGES_BRANCH) && process.env.CF_PAGES_BRANCH !== 'main';
 console.log(`World beta button: ${worldBetaEnabled ? 'ENABLED' : 'disabled'} (EnableWorldBeta=${process.env.EnableWorldBeta ?? 'unset'}, CF_PAGES_BRANCH=${process.env.CF_PAGES_BRANCH ?? 'unset'})`);
+// Boss lairs are a SEPARATE flag from the world beta above, deliberately: a
+// lair is one authored instanced room entered from the boss picker and left by
+// closing the tab, so it ships to production while the beta button — which
+// drops the player into the whole overworld — stays off. Default on; the
+// `EnableWorldLairs` override exists so a bad night is one redeploy, not a
+// code change. What may have a lair is still the allowlist in
+// src/engine/worldLairs.js.
+const worldLairsEnabled = process.env.EnableWorldLairs != null
+  ? process.env.EnableWorldLairs === 'true'
+  : true;
+console.log(`World boss lairs: ${worldLairsEnabled ? 'ENABLED' : 'disabled'} (EnableWorldLairs=${process.env.EnableWorldLairs ?? 'unset'})`);
+// Which world Worker the handoff opens. Fail-safe by design: only an explicit
+// `main` build targets the production Worker, so a local or branch build can
+// never send a player into production world state.
+const worldOrigin = process.env.WorldOrigin
+  || (process.env.CF_PAGES_BRANCH === 'main'
+    ? 'https://world.pocketrpg.co.uk'
+    : 'https://pocketrpg-world-preview.rlh.workers.dev');
+console.log(`World origin: ${worldOrigin} (WorldOrigin=${process.env.WorldOrigin ?? 'unset'}, CF_PAGES_BRANCH=${process.env.CF_PAGES_BRANCH ?? 'unset'})`);
 // Quest-requirement bypass (src/engine/questGates.js), same build-time-bake
 // pattern as the two flags above — a preview-only testing aid, so main and
 // branch-less local builds bake `false` and the production bundle cannot
@@ -680,7 +699,7 @@ const questGatesDisabled = process.env.CF_PAGES_BRANCH === 'main'
     ? process.env.DisableQuestRequirements === 'true'
     : Boolean(process.env.CF_PAGES_BRANCH);
 console.log(`Quest requirements: ${questGatesDisabled ? 'BYPASSED (preview)' : 'enforced'} (DisableQuestRequirements=${process.env.DisableQuestRequirements ?? 'unset'}, CF_PAGES_BRANCH=${process.env.CF_PAGES_BRANCH ?? 'unset'})`);
-const gameChunkSource = `const gameIconsData = ${gameIconsJSON};\nconst bespokeIconsData = ${bespokeIconsJSON};\nconst worldActivitiesData = ${worldActivitiesJSON};\nconst placeMapsData = ${placeMapsJSON};\nconst equipmentModelsData = ${equipmentModelsJSON};\nconst creatures3dData = ${creatures3dJSON};\nconst hero3dData = ${hero3dJSON};\nconst biomes3dData = ${biomes3dJSON};\nconst pocketAssetBase = '/public/';\nconst pocketEnable3D = ${enable3D};\nconst pocketWorldBetaEnabled = ${worldBetaEnabled};\n${gameJS}`;
+const gameChunkSource = `const gameIconsData = ${gameIconsJSON};\nconst bespokeIconsData = ${bespokeIconsJSON};\nconst worldActivitiesData = ${worldActivitiesJSON};\nconst placeMapsData = ${placeMapsJSON};\nconst equipmentModelsData = ${equipmentModelsJSON};\nconst creatures3dData = ${creatures3dJSON};\nconst hero3dData = ${hero3dJSON};\nconst biomes3dData = ${biomes3dJSON};\nconst pocketAssetBase = '/public/';\nconst pocketEnable3D = ${enable3D};\nconst pocketWorldBetaEnabled = ${worldBetaEnabled};\nconst pocketWorldLairsEnabled = ${worldLairsEnabled};\nconst pocketWorldOrigin = ${JSON.stringify(worldOrigin)};\n${gameJS}`;
 const gameChunkScript = esbuild.transformSync(gameChunkSource, SPLIT_MINIFY).code.trim();
 const gameChunkBody = `"use strict";\n${gameChunkScript}\n`;
 const gameChunkHash = require('crypto').createHash('sha256').update(gameChunkBody).digest('hex').slice(0, 12);
