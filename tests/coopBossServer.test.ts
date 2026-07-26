@@ -382,7 +382,7 @@ describe('coop kill settlement', () => {
     return { session: row, state, kill: { bossId: BOSS, ownerCharacterId: topDamageId, contributors: [] } }
   }
 
-  it('grants the drop, collection log and kill count to the top-damage member only', async () => {
+  it('falls back to the top-damage member when the room sends no eligible list', async () => {
     // Force every drop roll to land so the settlement has something to grant.
     vi.spyOn(Math, 'random').mockReturnValue(0)
     const { session, state, kill } = await sessionWithKill(7)
@@ -434,6 +434,69 @@ describe('coop kill settlement', () => {
     const out = await settleCoopKill(env as never, { session, state, kill: { bossId: BOSS, ownerCharacterId: null, contributors: [] } })
     expect(out.granted).toEqual([])
     expect(out.ownerCharacterId).toBeNull()
+  })
+
+  it('rolls the drop table separately for every member past the damage threshold', async () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    const { session, state } = await sessionWithKill(7)
+    state.members['8'].damage = 500
+    const kill = { bossId: BOSS, ownerCharacterId: 7, lootCharacterIds: [7, 8], contributors: [] }
+
+    const out = await settleCoopKill(env as never, { session, state, kill, killSeq: 1 })
+
+    expect(out.settlements.map((s: any) => s.characterId)).toEqual([7, 8])
+    for (const s of out.settlements) expect(s.granted.length).toBeGreaterThan(0)
+    // Each winner gets the full solo side-effects, not a share of one drop.
+    for (const id of [7, 8]) {
+      const kc = raw.prepare('SELECT kill_count FROM kill_counts WHERE character_id = ? AND source_id = ?').get(id, BOSS)
+      expect(kc.kill_count).toBe(1)
+      expect(raw.prepare('SELECT item_id FROM collection_log WHERE character_id = ?').all(id).length).toBeGreaterThan(0)
+    }
+  })
+
+  it('grants nothing to a member who missed the threshold', async () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    const { session, state } = await sessionWithKill(7)
+    const kill = { bossId: BOSS, ownerCharacterId: 7, lootCharacterIds: [7], contributors: [] }
+
+    await settleCoopKill(env as never, { session, state, kill, killSeq: 1 })
+
+    expect(raw.prepare('SELECT kill_count FROM kill_counts WHERE character_id = 8').get()).toBeUndefined()
+    expect(raw.prepare('SELECT item_id FROM collection_log WHERE character_id = 8').all()).toHaveLength(0)
+  })
+
+  it('pays the other winners even when one of them has a diverged save', async () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    const { session, state } = await sessionWithKill(7)
+    state.members['8'].damage = 500
+    state.members['8'].saveRevision = 999
+    const kill = { bossId: BOSS, ownerCharacterId: 7, lootCharacterIds: [7, 8], contributors: [] }
+
+    const out = await settleCoopKill(env as never, { session, state, kill, killSeq: 1 })
+
+    expect(out.settlements.find((s: any) => s.characterId === 7).granted.length).toBeGreaterThan(0)
+    expect(out.settlements.find((s: any) => s.characterId === 8).diverged).toBe(true)
+    // The refused winner's sequence goes back so their claim is not left behind
+    // marking a kill settled with nothing granted.
+    const rows = raw.prepare('SELECT character_id FROM coop_kill_settlements WHERE session_id = ?').all(session.id)
+    expect(rows.map((r: any) => r.character_id)).toEqual([7])
+  })
+
+  it('replays a multi-winner kill without rolling anybody a second table', async () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    const { session, state } = await sessionWithKill(7)
+    state.members['8'].damage = 500
+    const kill = { bossId: BOSS, ownerCharacterId: 7, lootCharacterIds: [7, 8], contributors: [] }
+
+    const first = await settleCoopKill(env as never, { session, state, kill, killSeq: 1 })
+    const replay = await settleCoopKill(env as never, { session, state, kill, killSeq: 1 })
+
+    for (const s of replay.settlements) expect(s.replayed).toBe(true)
+    expect(replay.settlements.map((s: any) => s.granted)).toEqual(first.settlements.map((s: any) => s.granted))
+    for (const id of [7, 8]) {
+      const kc = raw.prepare('SELECT kill_count FROM kill_counts WHERE character_id = ? AND source_id = ?').get(id, BOSS)
+      expect(kc.kill_count).toBe(1)
+    }
   })
 })
 

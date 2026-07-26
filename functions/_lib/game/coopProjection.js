@@ -54,6 +54,30 @@ export function projectStateForMember(state, characterId) {
   }
 }
 
+/**
+ * A kill now pays every member past the damage threshold, so its event carries
+ * each winner's drops — and the event ring is shared by the whole room. Strip
+ * the other winners' item lists per poll, exactly as projectStateForMember
+ * strips their packs: who won is public, what they got is not, and eight full
+ * drop tables on every kill is payload nobody reads.
+ */
+export function projectEventsForMember(events, characterId) {
+  const self = String(characterId)
+  return (events || []).map((ev) => {
+    if (ev?.type !== 'killSettled' || !Array.isArray(ev.settlements)) return ev
+    const mine = String(ev.ownerCharacterId) === self
+    return {
+      ...ev,
+      settlements: ev.settlements.map((s) => (
+        String(s.characterId) === self ? s : { characterId: s.characterId, diverged: !!s.diverged }
+      )),
+      // Legacy single-winner fields describe the top-damage member.
+      granted: mine ? ev.granted : [],
+      killCount: mine ? ev.killCount : null,
+    }
+  })
+}
+
 /** Everything that happened after the tick this client last acknowledged. */
 export function eventsSince(events, sinceTick) {
   const since = Number(sinceTick)

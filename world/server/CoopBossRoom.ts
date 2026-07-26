@@ -40,6 +40,7 @@ import {
 } from '../../functions/_lib/game/coopBoss.js'
 import {
   eventsSince,
+  projectEventsForMember,
   projectStateForMember,
   pushEvents,
   staleMemberIds,
@@ -281,6 +282,17 @@ export class CoopBossRoom {
       this.events = pushEvents(this.events, [{
         type: 'killSettled',
         tick: this.state!.tick || 0,
+        // One event carries every winner's share: a client that is not on the
+        // list has to be able to tell "I missed the cut" from "the poll dropped
+        // my event", and per-winner events would toast a bystander eight times.
+        settlements: (settlement.settlements || []).map((s: AnyState) => ({
+          characterId: s.characterId,
+          granted: s.granted || [],
+          killCount: s.killCount ?? null,
+          diverged: !!s.diverged,
+        })),
+        lootDamageRequired: kill.lootDamageRequired ?? null,
+        // Legacy single-winner fields, for a client deployed ahead of this Worker.
         ownerCharacterId: settlement.ownerCharacterId ?? kill.ownerCharacterId ?? null,
         granted: settlement.granted || [],
         killCount: settlement.killCount ?? null,
@@ -338,7 +350,7 @@ export class CoopBossRoom {
       // Replayed from the room's ring rather than "whatever happened on the one
       // request that advanced the tick", so every member sees every hit, every
       // XP drop and every kill — not just the ~1-in-8 they won the race for.
-      events: eventsSince(this.events, Number.isFinite(since) ? since : currentTick - 1),
+      events: projectEventsForMember(eventsSince(this.events, Number.isFinite(since) ? since : currentTick - 1), key),
       current_tick: currentTick,
       next_tick_at: Date.now() + TICK_MS,
     })

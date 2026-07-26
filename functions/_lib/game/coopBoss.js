@@ -686,37 +686,99 @@ export async function leaveCoopSession(env, { characterId, identityId, sessionId
 }
 
 /**
- * Grants a kill's loot to the top-damage member, server-side: rolls the boss's
- * drop table, settles it onto that character's save, and records the
- * collection-log slots, kill count and audit row — the same authoritative
- * side-effects /api/actions/monster/complete performs for a solo kill.
+ * Everyone the kill owes a loot roll to.
+ *
+ * The engine works this out (`lootEligibleCharacterIds` — §4's 10%-of-max-HP
+ * gate) and ships the list on the kill record. The fallback to
+ * `ownerCharacterId` is deploy skew insurance: a Worker still running the
+ * single-winner build sends no list, and settling nothing at all would be a
+ * dry kill for the whole room.
+ */
+function lootWinnerIds(state, kill) {
+  const listed = Array.isArray(kill?.lootCharacterIds) ? kill.lootCharacterIds : null
+  const ids = listed ?? (kill?.ownerCharacterId != null ? [kill.ownerCharacterId] : [])
+  const seen = new Set()
+  const out = []
+  for (const raw of ids) {
+    const id = Number(raw)
+    if (!Number.isFinite(id) || seen.has(id) || !state?.members?.[String(id)]) continue
+    seen.add(id)
+    out.push(id)
+  }
+  return out
+}
+
+/**
+ * Grants a kill's loot, server-side, to every member who passed the damage
+ * threshold: each one rolls the boss's drop table independently, and each roll
+ * is settled onto that character's own save with the collection-log slots and
+ * kill count /api/actions/monster/complete would give a solo kill.
  *
  * `killSeq` makes it exactly-once. The room is single-threaded, but it can be
  * evicted mid-settlement and replay the tick on restart, so the idempotency key
- * has to live in D1 (coop_kill_settlements) rather than in the room's memory.
+ * has to live in D1 (coop_kill_settlements) rather than in the room's memory —
+ * and since one kill now pays several players, the key is per CHARACTER
+ * (migration 0032), not per kill.
+ *
+ * The per-member settlements are independent on purpose: one winner's save
+ * having diverged, or their write throwing, must not cost the other seven the
+ * drop they earned.
  */
 export async function settleCoopKill(env, { session, state, kill, killSeq }, now = Date.now()) {
-  const ownerId = kill?.ownerCharacterId
-  const empty = { granted: [], ownerCharacterId: null }
-  if (!ownerId) return empty
-  const member = state.members?.[String(ownerId)]
+  const winners = lootWinnerIds(state, kill)
+  if (winners.length === 0) return { settlements: [], granted: [], ownerCharacterId: null }
+
+  const settlements = []
+  for (const characterId of winners) {
+    try {
+      settlements.push(await settleKillShare(env, { session, state, kill, killSeq, characterId }, now))
+    } catch (err) {
+      console.error('[PocketRPG][coop] loot share failed', {
+        sessionId: session.id, characterId, killSeq, message: err?.message || err,
+      })
+      settlements.push({ characterId, granted: [], failed: true })
+    }
+  }
+
+  await auditLog(env, 'coop.boss.kill', {
+    sessionId: session.id,
+    killSeq: Math.max(0, Math.floor(Number(killSeq) || 0)),
+    bossId: session.boss_id,
+    ownerCharacterId: kill?.ownerCharacterId ?? null,
+    lootDamageRequired: kill?.lootDamageRequired ?? null,
+    winners: settlements.map((s) => ({ characterId: s.characterId, granted: s.granted?.length ?? 0 })),
+    contributors: (kill.contributors || []).map((c) => ({ characterId: c.characterId, damage: c.damage })),
+  }, { swallow: true })
+
+  // Top-level fields mirror the top-damage member's share. Callers written
+  // against the single-winner shape (and the room's own killSettled event) keep
+  // reading what they always read; `settlements` is the full picture.
+  const primary = settlements.find((s) => Number(s.characterId) === Number(kill?.ownerCharacterId)) || settlements[0]
+  return { settlements, ...primary, ownerCharacterId: primary.characterId }
+}
+
+/** One member's share of one kill. Claims their sequence, rolls their own
+ * table, writes their own save. */
+async function settleKillShare(env, { session, state, kill, killSeq, characterId }, now) {
+  const member = state.members?.[String(characterId)]
+  const empty = { characterId, granted: [] }
   if (!member) return empty
 
   const seq = Math.max(0, Math.floor(Number(killSeq) || 0))
   const claim = await env.DB.prepare(
     `INSERT INTO coop_kill_settlements (session_id, kill_seq, character_id, boss_id, settled_at)
      VALUES (?, ?, ?, ?, ?)
-     ON CONFLICT(session_id, kill_seq) DO NOTHING`,
-  ).bind(session.id, seq, ownerId, session.boss_id, now).run()
+     ON CONFLICT(session_id, kill_seq, character_id) DO NOTHING`,
+  ).bind(session.id, seq, characterId, session.boss_id, now).run()
   if (!claim.meta.changes) {
     // Already settled — a replayed tick after the room restarted. Hand back
     // what the first settlement granted rather than rolling the table again.
     const prior = await env.DB.prepare(
-      'SELECT character_id, granted_json FROM coop_kill_settlements WHERE session_id = ? AND kill_seq = ?',
-    ).bind(session.id, seq).first()
+      'SELECT granted_json FROM coop_kill_settlements WHERE session_id = ? AND kill_seq = ? AND character_id = ?',
+    ).bind(session.id, seq, characterId).first()
     let granted = []
     try { granted = JSON.parse(prior?.granted_json || '[]') } catch { granted = [] }
-    return { ownerCharacterId: prior?.character_id ?? ownerId, granted, replayed: true }
+    return { characterId, granted, replayed: true }
   }
 
   // The claim above is what makes the grant exactly-once, but it is taken
@@ -725,10 +787,10 @@ export async function settleCoopKill(env, { session, state, kill, killSeq }, now
   // granted_json NULL: the drop is voided permanently, the replay path returns
   // an empty list, and the player is shown a dry kill that never rolled.
   const releaseClaim = () => env.DB.prepare(
-    'DELETE FROM coop_kill_settlements WHERE session_id = ? AND kill_seq = ? AND granted_json IS NULL',
-  ).bind(session.id, seq).run().catch(() => {})
+    'DELETE FROM coop_kill_settlements WHERE session_id = ? AND kill_seq = ? AND character_id = ? AND granted_json IS NULL',
+  ).bind(session.id, seq, characterId).run().catch(() => {})
 
-  const identityId = member.ownerId ?? await ownerIdFor(env, ownerId)
+  const identityId = member.ownerId ?? await ownerIdFor(env, characterId)
   if (!identityId) {
     await releaseClaim()
     return empty
@@ -737,7 +799,7 @@ export async function settleCoopKill(env, { session, state, kill, killSeq }, now
   let saveObject
   let saveRevision
   try {
-    ({ saveObject, saveRevision } = await loadCharacterWithSave(env, ownerId, identityId))
+    ({ saveObject, saveRevision } = await loadCharacterWithSave(env, characterId, identityId))
   } catch (err) {
     await releaseClaim()
     throw err
@@ -748,22 +810,22 @@ export async function settleCoopKill(env, { session, state, kill, killSeq }, now
   // over it.
   if (!isMemberSaveOwned(member, saveRevision)) {
     await auditLog(env, 'coop.writeback.diverged', {
-      sessionId: session.id, characterId: ownerId, expected: member?.saveRevision ?? null, found: saveRevision, at: 'kill',
+      sessionId: session.id, characterId, expected: member?.saveRevision ?? null, found: saveRevision, at: 'kill',
     }, { swallow: true })
     await releaseClaim()
     return { ...empty, diverged: true }
   }
 
-  // The winner rolls their table on-task when this kill counted toward their
-  // own slayer task, so task-only drops behave exactly as they do solo.
-  const onTask = Array.isArray(kill?.onTaskCharacterIds) && kill.onTaskCharacterIds.some((id) => Number(id) === Number(ownerId))
+  // Each winner rolls their table on-task when this kill counted toward their
+  // OWN slayer task, so task-only drops behave exactly as they do solo.
+  const onTask = Array.isArray(kill?.onTaskCharacterIds) && kill.onTaskCharacterIds.some((id) => Number(id) === Number(characterId))
   const rewards = rollMonsterRewardsById(session.boss_id, Math.random, onTask)
   const withSession = applyMemberToSave(saveObject, member)
   let settled
   let write
   try {
     settled = settleActionCompletion(withSession, { sourceType: 'monsters', sourceId: session.boss_id, rewards })
-    write = await writeSave(env, ownerId, withSession, saveRevision)
+    write = await writeSave(env, characterId, withSession, saveRevision)
   } catch (err) {
     await releaseClaim()
     throw err
@@ -787,7 +849,7 @@ export async function settleCoopKill(env, { session, state, kill, killSeq }, now
           `INSERT INTO collection_log (character_id, item_id, source_type, source_id, obtained_at)
            VALUES (?, ?, 'monsters', ?, ?)
            ON CONFLICT(character_id, item_id, source_type, source_id) DO NOTHING`,
-        ).bind(ownerId, itemId, session.boss_id, now),
+        ).bind(characterId, itemId, session.boss_id, now),
       ),
     )
   }
@@ -798,24 +860,14 @@ export async function settleCoopKill(env, { session, state, kill, killSeq }, now
      ON CONFLICT(character_id, source_type, source_id)
      DO UPDATE SET kill_count = kill_count + 1, updated_at = excluded.updated_at
      RETURNING kill_count`,
-  ).bind(ownerId, session.boss_id, now).first()
+  ).bind(characterId, session.boss_id, now).first()
 
   await env.DB.prepare(
-    'UPDATE coop_kill_settlements SET granted_json = ? WHERE session_id = ? AND kill_seq = ?',
-  ).bind(JSON.stringify(settled.granted || []), session.id, seq).run()
-
-  await auditLog(env, 'coop.boss.kill', {
-    sessionId: session.id,
-    killSeq: seq,
-    bossId: session.boss_id,
-    ownerCharacterId: ownerId,
-    granted: settled.granted?.length ?? 0,
-    collectionLog: logged,
-    contributors: (kill.contributors || []).map((c) => ({ characterId: c.characterId, damage: c.damage })),
-  }, { swallow: true })
+    'UPDATE coop_kill_settlements SET granted_json = ? WHERE session_id = ? AND kill_seq = ? AND character_id = ?',
+  ).bind(JSON.stringify(settled.granted || []), session.id, seq, characterId).run()
 
   return {
-    ownerCharacterId: ownerId,
+    characterId,
     granted: settled.granted || [],
     collectionLogEntries: logged.map((itemId) => ({ itemId, sourceType: 'monsters', sourceId: session.boss_id })),
     killCount: Math.max(0, Math.floor(Number(kcRow?.kill_count) || 0)),

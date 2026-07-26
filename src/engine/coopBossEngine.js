@@ -363,6 +363,52 @@ export function memberCount(state) {
   return Object.keys(state.members || {}).length
 }
 
+/** Share of the boss's max HP a member has to deal PERSONALLY to earn a loot
+ * roll. Everyone past the line rolls the drop table independently — a group kill
+ * is not one prize handed to the top attacker. */
+export const COOP_LOOT_DAMAGE_SHARE = 0.1
+
+/**
+ * Damage that qualifies a member for loot on this boss instance.
+ *
+ * Ceil, against the §4 house rule, for two reasons: the HUD advertises "10%" and
+ * must not pay out at 9.6%, and a boss small enough to floor to 0 would
+ * otherwise hand a drop to a member who never swung. The floor of 1 is what
+ * makes `damage >= required` imply `damage > 0`.
+ */
+export function coopLootDamageRequired(maxHP) {
+  const hp = Math.max(0, Math.floor(Number(maxHP) || 0))
+  return Math.max(1, Math.ceil(hp * COOP_LOOT_DAMAGE_SHARE))
+}
+
+/** Everyone owed a loot roll for the kill, biggest contributor first. Damage —
+ * not survival: a member who earned their share and then died is still paid, the
+ * same way the top-damage owner used to be. */
+export function lootEligibleCharacterIds(state) {
+  const required = coopLootDamageRequired(state?.boss?.maxHP)
+  return Object.values(state?.members || {})
+    .filter((m) => (m.damage || 0) >= required)
+    .sort((a, b) => b.damage - a.damage || (a.damageTick || 0) - (b.damageTick || 0))
+    .map((m) => Number(m.characterId))
+}
+
+/** One member's progress toward their loot roll, for the fight HUD. Lives here
+ * rather than in the screen so the bar and the server's gate cannot drift. */
+export function coopLootProgress(member, maxHP) {
+  const required = coopLootDamageRequired(maxHP)
+  const damage = Math.max(0, Math.floor(Number(member?.damage) || 0))
+  return {
+    damage,
+    required,
+    qualified: damage >= required,
+    remaining: Math.max(0, required - damage),
+    // Against the threshold, not the boss's whole health bar: the bar answers
+    // "am I getting a drop", so a full bar has to mean exactly that.
+    pct: Math.max(0, Math.min(100, (damage / required) * 100)),
+    sharePct: maxHP > 0 ? Math.max(0, Math.min(100, (damage / maxHP) * 100)) : 0,
+  }
+}
+
 /** Loot owner: most damage dealt to the boss; equal totals resolve to whoever
  * reached the total first. Same rule the open world uses (npc.ts). */
 export function topDamageCharacterId(state) {
@@ -781,10 +827,17 @@ export function processCoopTick(state, intents, { itemsData, monstersData, praye
     kill = {
       ...(kill || { bossId: next.bossId }),
       ownerCharacterId: ownerCharId ? Number(ownerCharId) : null,
+      lootCharacterIds: lootEligibleCharacterIds(next),
+      lootDamageRequired: coopLootDamageRequired(next.boss.maxHP),
       contributors: damageTable(next),
       onTaskCharacterIds,
     }
-    events.push({ type: 'bossDefeated', bossId: next.bossId, ownerCharacterId: kill.ownerCharacterId })
+    events.push({
+      type: 'bossDefeated',
+      bossId: next.bossId,
+      ownerCharacterId: kill.ownerCharacterId,
+      lootCharacterIds: kill.lootCharacterIds,
+    })
   } else if (next.boss.currentHP > 0) {
     kill = null
   }

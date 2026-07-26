@@ -12,6 +12,10 @@ import {
   removeCoopMember,
   reselectTarget,
   topDamageCharacterId,
+  COOP_LOOT_DAMAGE_SHARE,
+  coopLootDamageRequired,
+  coopLootProgress,
+  lootEligibleCharacterIds,
   describeCoopEquipRefusal,
   describeCoopActionRefusal,
 } from '../src/engine/coopBossEngine.js'
@@ -794,5 +798,101 @@ describe('slayer credit on a group boss kill', () => {
     state.members['1'].damage = 2000
     const { kill } = killTick(state)
     expect(kill.onTaskCharacterIds).toEqual([1])
+  })
+})
+
+describe('coopBossEngine — the 10% loot threshold', () => {
+  it('asks for a tenth of the boss max HP', () => {
+    expect(COOP_LOOT_DAMAGE_SHARE).toBe(0.1)
+    expect(coopLootDamageRequired(2000)).toBe(200)
+    expect(coopLootDamageRequired(255)).toBe(26)
+  })
+
+  it('never lets a member who has not swung qualify', () => {
+    // Floor would make the requirement 0 on a boss this small, so `damage >= 0`
+    // would pay every member in the room for standing there.
+    expect(coopLootDamageRequired(5)).toBe(1)
+    expect(coopLootDamageRequired(0)).toBe(1)
+    expect(coopLootProgress({ damage: 0 }, 5).qualified).toBe(false)
+  })
+
+  it('pays everyone past the line, not just the top attacker', () => {
+    const state = joinedState([1, 2, 3])
+    state.members['1'].damage = 1400
+    state.members['2'].damage = 400
+    state.members['3'].damage = 199
+    expect(lootEligibleCharacterIds(state)).toEqual([1, 2])
+  })
+
+  it('is exactly at-least, not more-than', () => {
+    const state = joinedState([1])
+    state.members['1'].damage = 200
+    expect(lootEligibleCharacterIds(state)).toEqual([1])
+    state.members['1'].damage = 199
+    expect(lootEligibleCharacterIds(state)).toEqual([])
+  })
+
+  it('still pays a member who earned their share and then died', () => {
+    const state = joinedState([1, 2])
+    state.members['1'].damage = 1000
+    state.members['2'].damage = 500
+    state.members['2'].status = 'dead'
+    expect(lootEligibleCharacterIds(state)).toContain(2)
+  })
+
+  it('ships the eligible list on the kill record', () => {
+    const state = joinedState([1, 2, 3])
+    state.boss.currentHP = 0
+    state.members['1'].damage = 1500
+    state.members['2'].damage = 400
+    state.members['3'].damage = 100
+
+    const out = processCoopTick(state, [], deps, Date.now())
+    expect(out.kill!.lootCharacterIds).toEqual([1, 2])
+    expect(out.kill!.lootDamageRequired).toBe(200)
+    // The top attacker is still named, but as the owner of the audit trail —
+    // not as the only player paid.
+    expect(out.kill!.ownerCharacterId).toBe(1)
+  })
+
+  it('always leaves at least one member eligible on a full room', () => {
+    // Eight is the cap, so the biggest contributor holds at least 12.5% of the
+    // damage — a kill can never come out dry for everybody.
+    const ids = [1, 2, 3, 4, 5, 6, 7, 8]
+    const state = joinedState(ids)
+    state.boss.currentHP = 0
+    for (const id of ids) state.members[String(id)].damage = 2000 / ids.length
+    expect(lootEligibleCharacterIds(state)).toHaveLength(8)
+  })
+
+  it('resets every member back below the line when the boss respawns', () => {
+    let state = joinedState([1, 2])
+    state.boss.currentHP = 0
+    state.members['1'].damage = 1500
+    state.members['2'].damage = 500
+    let out = processCoopTick(state, [], deps, Date.now())
+    state = out.stateNext
+    const wait = state.boss.respawnCountdown
+    for (let i = 0; i < wait; i++) {
+      out = processCoopTick(state, [], deps, Date.now())
+      state = out.stateNext
+    }
+    expect(state.boss.currentHP).toBeGreaterThan(0)
+    expect(lootEligibleCharacterIds(state)).toEqual([])
+  })
+
+  it('measures progress against the threshold, not the boss health bar', () => {
+    // A full bar has to mean "drop secured" and nothing else — scaling it to the
+    // boss's HP would leave a qualified member showing a tenth of a bar.
+    const half = coopLootProgress({ damage: 100 }, 2000)
+    expect(half.pct).toBe(50)
+    expect(half.remaining).toBe(100)
+    expect(half.qualified).toBe(false)
+
+    const over = coopLootProgress({ damage: 1600 }, 2000)
+    expect(over.pct).toBe(100)
+    expect(over.remaining).toBe(0)
+    expect(over.qualified).toBe(true)
+    expect(over.sharePct).toBe(80)
   })
 })

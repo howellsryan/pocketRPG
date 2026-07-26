@@ -8,6 +8,7 @@ import LootResultModal from '../components/LootResultModal.jsx'
 import SpellSelectGrid from '../components/SpellSelectGrid.jsx'
 import ActivePotionBadges from '../components/ActivePotionBadges.jsx'
 import CombatQuickActions from '../components/CombatQuickActions.jsx'
+import CoopLootShare from '../components/CoopLootShare.jsx'
 import QuickPrayerConfigModal from '../components/QuickPrayerConfigModal.jsx'
 import { CombatFightHead, CombatHPBlock, CombatPrayerBlock } from '../components/CombatHud.jsx'
 import { useGame } from '../state/gameState.jsx'
@@ -119,17 +120,28 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onDeath
         // or not their poll was the one in flight when the boss died.
         for (const ev of res.events) {
           if (ev.type !== 'killSettled') continue
-          const owner = ev.ownerCharacterId
           const killedName = monstersData?.[res.state?.bossId]?.name || 'The boss'
-          if (Number(owner) === Number(characterId) && ev.diverged) {
+          // Every member past the damage threshold is paid, so the event carries
+          // a list. `settlements` is absent only while a client runs ahead of the
+          // Worker; fall back to the single-winner fields it used to send.
+          const settlements = ev.settlements
+            ?? (ev.ownerCharacterId != null
+              ? [{ characterId: ev.ownerCharacterId, granted: ev.granted, killCount: ev.killCount, diverged: ev.diverged }]
+              : [])
+          const mine = settlements.find((s) => Number(s.characterId) === Number(characterId))
+          if (mine?.diverged) {
             // The server refused to grant because something else wrote this
             // save mid-fight. Showing the usual modal would read as a dry kill.
             addToast?.('Your loot could not be granted — something else changed your save. Leave and rejoin.', 'error')
-          } else if (Number(owner) === Number(characterId)) {
-            setLootModal({ monsterName: killedName, loot: ev.granted || [], killCount: ev.killCount ?? null })
+          } else if (mine) {
+            setLootModal({ monsterName: killedName, loot: mine.granted || [], killCount: mine.killCount ?? null })
           } else {
-            const winner = res.state?.members?.[String(owner)]
-            addToast?.(`${killedName} defeated — loot went to ${winner?.username || 'the top attacker'}.`, 'info')
+            const paid = settlements.length
+            addToast?.(
+              `${killedName} defeated — you did not deal enough damage for a drop.`
+              + (paid > 0 ? ` ${paid} ${paid === 1 ? 'player' : 'players'} looted it.` : ''),
+              'info',
+            )
           }
         }
       }
@@ -273,6 +285,13 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onDeath
         {typeof combatState?.maxPrayerPoints === 'number' && (
           <CombatPrayerBlock current={combatState.prayerPoints} max={combatState.maxPrayerPoints} />
         )}
+
+        <CoopLootShare
+          members={state.members}
+          maxHP={boss?.maxHP ?? 0}
+          characterId={Number(characterId)}
+          targetCharId={state.targetCharId}
+        />
 
         {boss?.respawnCountdown > 0 && (
           <div class="cb-respawn">

@@ -19,6 +19,7 @@ vi.mock('../functions/_lib/auth.js', () => ({
 }))
 
 import { onRequestPut } from '../functions/api/save.js'
+import { onRequestPost as skipHour } from '../functions/api/skip-hour.js'
 
 const BOSS = 'corporeal_horror'
 const QUEST = 'the_heart_of_shadows'
@@ -83,6 +84,40 @@ beforeEach(async () => {
   raw = d.raw
   char(5)
   await save(5)
+})
+
+describe('a skip cannot be spent from inside a group boss fight', () => {
+  // Loot in a co-op room is gated on personally dealing 10% of the boss's max
+  // HP. A skip is the one thing a player could reach for to jump a kill they
+  // have not contributed to, so the endpoint has to refuse before it debits —
+  // otherwise the credit is spent AND the threshold is sidestepped.
+  function skipRequest(characterId: number) {
+    return new Request('https://x', {
+      method: 'POST',
+      headers: { 'X-Character-Id': String(characterId), 'Content-Type': 'application/json' },
+      body: JSON.stringify({ bossId: BOSS }),
+    })
+  }
+
+  it('refuses the skip and leaves the credits alone', async () => {
+    raw.prepare('UPDATE characters SET credits = 50 WHERE id = 5').run()
+    await join(5)
+
+    const res = await skipHour({ request: skipRequest(5), env } as any)
+
+    expect(res.status).toBe(409)
+    expect((await res.json()).code).toBe('CHARACTER_IN_COOP_SESSION')
+    expect(raw.prepare('SELECT credits FROM characters WHERE id = 5').get().credits).toBe(50)
+  })
+
+  it('allows it again once the fight is left', async () => {
+    raw.prepare('UPDATE characters SET credits = 50 WHERE id = 5').run()
+    const { sessionId } = await join(5)
+    await leaveCoopSession(env, { characterId: 5, identityId: 1, sessionId })
+
+    const res = await skipHour({ request: skipRequest(5), env } as any)
+    expect(res.status).toBe(200)
+  })
 })
 
 describe('PUT /api/save co-op session lock', () => {

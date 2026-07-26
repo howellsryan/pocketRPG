@@ -7,6 +7,7 @@ import {
   COOP_EVENT_HISTORY_MAX,
   COOP_EVENT_HISTORY_TICKS,
   eventsSince,
+  projectEventsForMember,
   projectStateForMember,
   publicMember,
   pushEvents,
@@ -158,5 +159,49 @@ describe('spotting members whose client has gone quiet', () => {
     // member refreshed — so a crashed player stayed locked out of their own
     // save for as long as anybody else kept fighting.
     expect(staleMemberIds(s, { 7: 0, 8: 100_000 }, 100_000, 90_000)).toEqual(['7'])
+  })
+})
+
+describe('projectEventsForMember', () => {
+  const settled = {
+    type: 'killSettled',
+    tick: 12,
+    ownerCharacterId: 7,
+    granted: [{ itemId: 'dragon_axe', quantity: 1 }],
+    killCount: 4,
+    settlements: [
+      { characterId: 7, granted: [{ itemId: 'dragon_axe', quantity: 1 }], killCount: 4, diverged: false },
+      { characterId: 8, granted: [{ itemId: 'shard_of_night', quantity: 1 }], killCount: 9, diverged: false },
+    ],
+  }
+
+  it('hands a winner their own drops in full', () => {
+    const [ev] = projectEventsForMember([settled], 8) as any[]
+    expect(ev.settlements.find((s: any) => s.characterId === 8).granted).toEqual([{ itemId: 'shard_of_night', quantity: 1 }])
+  })
+
+  it('tells everyone WHO won without telling them WHAT they got', () => {
+    // The event ring is shared by the whole room, so eight winners' drop tables
+    // would otherwise ride every poll — the same leak projectStateForMember
+    // exists to close for packs.
+    const [ev] = projectEventsForMember([settled], 8) as any[]
+    const other = ev.settlements.find((s: any) => s.characterId === 7)
+    expect(other.granted).toBeUndefined()
+    expect(ev.settlements).toHaveLength(2)
+    // Legacy single-winner fields describe the top-damage member, so they are
+    // emptied for everybody else too.
+    expect(ev.granted).toEqual([])
+    expect(ev.killCount).toBeNull()
+  })
+
+  it('keeps the top-damage member their legacy fields', () => {
+    const [ev] = projectEventsForMember([settled], 7) as any[]
+    expect(ev.granted).toEqual([{ itemId: 'dragon_axe', quantity: 1 }])
+    expect(ev.killCount).toBe(4)
+  })
+
+  it('leaves every other event exactly as it was', () => {
+    const hit = { type: 'playerHit', tick: 3, damage: 12 }
+    expect(projectEventsForMember([hit], 7)[0]).toBe(hit)
   })
 })
