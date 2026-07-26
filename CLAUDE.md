@@ -109,6 +109,7 @@ Server is source of truth for everything that *can* be authoritative. The one de
 - **Daily task credit grants** — `/api/daily-tasks/complete` atomically flips `credited=0→1` (idempotency key) then increments `credits`; replay returns `creditsGranted: 0`. PvP-lockdown enforced.
 - **PvP settlement / trading post** — own server-authoritative paths (§10).
 - **Co-op boss fights** (`/api/coop/**`, §20) — the server resolves every swing, so XP, supply consumption and the kill's loot roll/grant are all authoritative, not save-blob.
+- **Admin grants** — `POST /api/admin/grant-item` puts any item/quantity into any character's inventory or bank. Admin auth for every `/api/admin/*` route is the deploy-time `MAINTENANCE_SECRET` via `X-Maintenance-Secret` (`functions/_lib/adminAuth.js`, fails closed when unset/short); a session JWT grants nothing there. It respects all three save locks and the revision guard — the server twin of `scripts/grant-save-item.mjs` (skill `save-item-grant`).
 - New economy/progression mutations must emit **audit events** (`functions/_lib/game/audit.js`).
 
 **Client-trusted (the save blob — deliberate, bounded):**

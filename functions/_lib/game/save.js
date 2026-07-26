@@ -3,8 +3,23 @@ import { GameApiError } from './errors.js'
 import { migrateLegacyNonces } from './nonces.js'
 import { computeSaveSummary } from '../saveSummary.js'
 
+const CHARACTER_SAVE_COLUMNS = `c.id, c.owner_id, c.username, c.is_ironman, c.is_one_life, c.credits, s.save_data, s.save_blob, s.updated_at, s.save_revision`
+
 export async function loadCharacterWithSave(env, characterId, identityId) {
-  const row = await env.DB.prepare(`SELECT c.id, c.owner_id, c.is_ironman, c.is_one_life, c.credits, s.save_data, s.save_blob, s.updated_at, s.save_revision FROM characters c LEFT JOIN saves s ON s.character_id = c.id WHERE c.id = ? AND c.owner_id = ? AND c.deleted_at IS NULL`).bind(characterId, identityId).first()
+  const row = await env.DB.prepare(`SELECT ${CHARACTER_SAVE_COLUMNS} FROM characters c LEFT JOIN saves s ON s.character_id = c.id WHERE c.id = ? AND c.owner_id = ? AND c.deleted_at IS NULL`).bind(characterId, identityId).first()
+  return hydrateCharacterSave(env, characterId, row)
+}
+
+// Ownership-free variant for /api/admin/* only: an admin acts on a character
+// they do not own, so there is no identity to scope the row by. Kept as its own
+// named export rather than an option on loadCharacterWithSave so a caller can
+// never drop the ownership filter by passing a stray argument.
+export async function loadAnyCharacterWithSave(env, characterId) {
+  const row = await env.DB.prepare(`SELECT ${CHARACTER_SAVE_COLUMNS} FROM characters c LEFT JOIN saves s ON s.character_id = c.id WHERE c.id = ? AND c.deleted_at IS NULL`).bind(characterId).first()
+  return hydrateCharacterSave(env, characterId, row)
+}
+
+async function hydrateCharacterSave(env, characterId, row) {
   if (!row) throw new GameApiError('CHARACTER_NOT_FOUND', 'Character not found', 404)
   const decoded = await decodeSaveRow(row)
   const save_data = decoded?.save_data || null
