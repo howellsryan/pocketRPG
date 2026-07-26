@@ -389,7 +389,9 @@ const SCRIPT = `
   }
 
   function unlock(){
-    var entered = $('secret').value;
+    // Trimmed so what the "not stored" hint implies matches what actually gets
+    // compared — the header itself is auto-trimmed by fetch() regardless.
+    var entered = $('secret').value.trim();
     var msg = $('gate-msg');
     msg.hidden = true;
     if (!entered) return message(msg, 'err', 'Enter the admin secret.');

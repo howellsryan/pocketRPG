@@ -79,6 +79,23 @@ describe('POST /api/admin/grant-item authorization', () => {
     const res = await onRequestPost({ request: req({ character_id: 7, item_id: 'coins' }, { secret: 'short' }), env } as any)
     expect(res.status).toBe(401)
   })
+
+  it('accepts the real secret even when ADMIN_SECRET carries a trailing newline (openssl / dashboard paste)', async () => {
+    // The header itself can never carry one — fetch() strips leading/trailing
+    // whitespace from header values before it reaches the wire — so only the
+    // env var side needs the accidental newline to reproduce the mismatch.
+    await seedCharacter()
+    env.ADMIN_SECRET = SECRET + '\n'
+    const res = await onRequestPost({ request: req({ character_id: 7, item_id: 'coins' }), env } as any)
+    expect(res.status).toBe(200)
+  })
+
+  it('accepts the real secret even when ADMIN_SECRET carries leading/trailing spaces', async () => {
+    await seedCharacter()
+    env.ADMIN_SECRET = `  ${SECRET}  `
+    const res = await onRequestPost({ request: req({ character_id: 7, item_id: 'coins' }), env } as any)
+    expect(res.status).toBe(200)
+  })
 })
 
 describe('POST /api/admin/grant-item validation', () => {

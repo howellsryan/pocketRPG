@@ -16,9 +16,15 @@ function timingSafeEqual(a, b) {
 }
 
 export function isAdminRequest(request, env) {
-  const expected = env?.ADMIN_SECRET
-  if (typeof expected !== 'string' || expected.length < MIN_SECRET_LENGTH) return false
-  const provided = request.headers.get(ADMIN_SECRET_HEADER) || ''
+  // Trimmed defensively: a secret pasted into the Cloudflare dashboard (or piped
+  // into `wrangler pages secret put` from `openssl rand ...`, which itself ends
+  // in \n) commonly carries a trailing newline that the source never intended
+  // as part of the value. The header never can — the Fetch API strips leading/
+  // trailing whitespace from header values before it hits the wire — so an
+  // untrimmed env var silently never matches a correctly-typed secret.
+  const expected = typeof env?.ADMIN_SECRET === 'string' ? env.ADMIN_SECRET.trim() : ''
+  if (expected.length < MIN_SECRET_LENGTH) return false
+  const provided = (request.headers.get(ADMIN_SECRET_HEADER) || '').trim()
   if (!provided) return false
   return timingSafeEqual(provided, expected)
 }
