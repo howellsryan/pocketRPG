@@ -6,6 +6,7 @@ import { closeBankUI, isBankOpen, openBankUI, updateBankInventory, updateBankUI 
 import { closeCraftUI, openCraftUI, updateCraftInventory, updateCraftStats, type SkillLevels } from './crafting'
 import { getLevelFromXP } from '../../../src/engine/experience.js'
 import { connect, isInstanceFullClose, onMessage, send } from './net'
+import { createAwayWatch } from './away'
 import { createCamera, createLights, createRenderer, createScene, FOG_FAR, tileToWorld, updateCamera, updateShadowLight } from './scene'
 import { attachCameraControls } from './cameraControls'
 import { createTerrain } from './terrain'
@@ -370,9 +371,30 @@ function enterWorld(session: WorldSession): void {
       socket.reconnect()
     }
   }, 10000)
+  // Backgrounding the world tab counts as leaving it (see away.ts): the world
+  // holds this character's save lock while its socket is open, so a tab left
+  // running behind the idle game blocks every cloud save. Departing releases the
+  // lock now; coming back reconnects and re-enters at the checkpoint.
+  const awayWatch = createAwayWatch({
+    isHidden: () => document.visibilityState === 'hidden',
+    depart: () => {
+      if (authed && socket.readyState === WebSocket.OPEN) send(socket, { t: 'leave' })
+      // close() (unlike a dropped socket) stops partysocket reconnecting, so we
+      // stay out until the player is actually looking at the world again.
+      socket.close()
+    },
+    resume: () => {
+      showConnBanner()
+      lastServerMsg = performance.now()
+      socket.reconnect()
+    },
+  })
   // Threshold sits above the 10s ping cadence — a quick app switch on a
   // healthy connection must never trigger a reconnect.
   document.addEventListener('visibilitychange', () => {
+    // Ordering matters: a resume above reconnects and re-stamps lastServerMsg,
+    // so the watchdog below can't fire a second reconnect on the same event.
+    awayWatch.onVisibilityChange()
     if (document.visibilityState === 'visible' && performance.now() - lastServerMsg > 15000) {
       lastServerMsg = performance.now()
       socket.reconnect()
@@ -381,7 +403,8 @@ function enterWorld(session: WorldSession): void {
 
   // Closing the tab is a deliberate exit, so say so: the server flushes the save
   // and releases the world lock immediately instead of holding both for the
-  // 60s linger, which is what left the idle game unable to save on the way back.
+  // linger grace period, which is what left the idle game unable to save on the
+  // way back.
   // `persisted` means the page went into the back/forward cache and may return —
   // that IS what linger is for, so leave those alone. Best-effort by nature: a
   // frame that never makes it off the tab just falls back to the linger flush.
