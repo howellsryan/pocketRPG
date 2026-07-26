@@ -61,6 +61,15 @@ export function isOwnedBy(loot: LootEntity, viewer: LootViewer): boolean {
   return loot.ownerCharId === viewer.charId
 }
 
+/** The account rule at the moment of pickup, deliberately independent of
+ * isVisibleTo: an Ironman may only take loot they own. Visibility already hides
+ * it, so this only fires on a stale client view, a replayed take, or a future
+ * change to the windows above — none of which may put the item in the pack.
+ * Checked immediately before the inventory mutation, so it is the last word. */
+export function mayTake(loot: LootEntity, viewer: LootViewer): boolean {
+  return !viewer.isIronman || isOwnedBy(loot, viewer)
+}
+
 /** Owner-only until the owner window elapses, then visible to everyone (until
  * despawn, which the caller removes separately) — except to an Ironman, for
  * whom loot they don't own never becomes visible at all. */

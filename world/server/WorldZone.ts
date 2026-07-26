@@ -21,7 +21,7 @@ import { seedPrayer, resolvePrayerToggle } from '../shared/prayer'
 import spellsJson from '../../src/data/spells.json'
 import { npcsFromZone, pickAggroTarget, reselectAttacker, threatContributors, threatKey, tickNpc, toNpcDiff, type NpcState } from './npc'
 import { computeAoi, type AoiEntity } from './aoi'
-import { PLAYER_DROP_OWNER_TICKS, isExpired, isVisibleTo, spawnDrops, takeLoot, visibleLootFor, type LootEntity, type LootViewer } from './loot'
+import { PLAYER_DROP_OWNER_TICKS, isExpired, isVisibleTo, mayTake, spawnDrops, takeLoot, visibleLootFor, type LootEntity, type LootViewer } from './loot'
 import { sanitizeChat } from '../shared/chat'
 import { addToInventory, countItem, freeSlotCount, inventoryIsFull, isStackable, moveInventorySlot, removeItems, removeOneAt } from './mining'
 import { getLevelFromXP } from '../../src/engine/experience.js'
@@ -591,6 +591,10 @@ export class WorldZone extends Server<Env> {
       followTargetTile: null,
       lingerUntilTick: null,
     }
+    // One line per login so `wrangler tail` can answer "does the world think
+    // this character is an Ironman?" without a D1 query — the floor-loot rule
+    // is only as good as this flag.
+    console.log('[World][hello]', { charId, zone: this.name, isIronman: player.isIronman })
     this.players.set(charId, player)
     void beginWorldSession(this.env, row.id, player.sessionId)
     this.sendWelcome(player)
@@ -1155,10 +1159,15 @@ export class WorldZone extends Server<Env> {
     // Loot pickup paths ONTO the tile (not adjacent) and resolves on arrival.
     if (message.kind === 'loot' && message.action === 'take') {
       const loot = this.loot.get(message.id)
-      // Visibility is the pickup right (tryTakeLoot re-checks it on arrival);
-      // refusing here as well stops an Ironman walking across the zone to loot
-      // they were never shown and can never take.
-      if (!loot || !isVisibleTo(loot, lootViewer(player), this.tickCount)) return
+      if (!loot) return
+      // Refuse before the walk, not silently on arrival: an Ironman asking for
+      // loot they were never shown gets told why instead of pathing across the
+      // zone for nothing.
+      if (!mayTake(loot, lootViewer(player))) {
+        player.pendingEvents.push({ e: 'msg', text: 'Ironman characters can only take their own loot.' })
+        return
+      }
+      if (!isVisibleTo(loot, lootViewer(player), this.tickCount)) return
       const path = findPath(this.zone.collision, { x: player.x, z: player.z }, { x: loot.x, z: loot.z })
       if (!path) return
       player.path = path.slice(1)
@@ -1523,6 +1532,15 @@ export class WorldZone extends Server<Env> {
       return
     }
     const events = eventsByChar.get(player.charId) ?? []
+    if (!mayTake(loot, lootViewer(player))) {
+      console.warn('[World][loot] refused ironman pickup of unowned loot', {
+        charId: player.charId, isIronman: player.isIronman, lootId: loot.id, itemId: loot.itemId, ownerCharId: loot.ownerCharId,
+      })
+      events.push({ e: 'msg', text: 'Ironman characters can only take their own loot.' })
+      player.pendingLoot = null
+      if (!eventsByChar.has(player.charId)) eventsByChar.set(player.charId, events)
+      return
+    }
     if (takeLoot(player.inventory, player.minted, loot.itemId, loot.qty)) {
       this.loot.delete(loot.id)
       events.push({ e: 'inv', inventory: player.inventory })
