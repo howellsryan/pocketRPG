@@ -221,6 +221,19 @@ export class WorldZone extends Server<Env> {
     return this.players.size
   }
 
+  /** Departs a character on behalf of the exit beacon (server/leave.ts), which
+   * a closing tab fires because its `leave` frame may never flush. Called as a
+   * Durable Object RPC. Treats a still-connected player and a lingering one the
+   * same: both are flushed and the save lock released now, so closing the
+   * browser costs nothing the Log out button wouldn't. False means the room has
+   * already let them go — the socket close won the race, which is fine. */
+  async departCharacter(charId: string): Promise<boolean> {
+    const player = this.players.get(String(charId))
+    if (!player) return false
+    await this.depart(player, 'leave')
+    return true
+  }
+
   /** Resolves and caches this DO's zone def once: stored D1 def first, else the
    * bundled def, else null (unknown zone → connection rejected). Concurrent
    * connects share one in-flight load. */

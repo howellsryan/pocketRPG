@@ -7,6 +7,7 @@ import { closeCraftUI, openCraftUI, updateCraftInventory, updateCraftStats, type
 import { getLevelFromXP } from '../../../src/engine/experience.js'
 import { connect, isInstanceFullClose, onMessage, send } from './net'
 import { createAwayWatch } from './away'
+import { sendLeaveBeacon } from './leaveBeacon'
 import { createCamera, createLights, createRenderer, createScene, FOG_FAR, tileToWorld, updateCamera, updateShadowLight } from './scene'
 import { attachCameraControls } from './cameraControls'
 import { createTerrain } from './terrain'
@@ -70,7 +71,10 @@ function buildPlayerPickable(diff: EntityDiff): Pickable {
 }
 
 function enterWorld(session: WorldSession): void {
-  const socket = connect(window.location.host, getStoredZone())
+  // The room this socket is bound to, kept so the exit beacon can name it — it
+  // travels without a socket, so the server can't infer the room from the caller.
+  const room = getStoredZone()
+  const socket = connect(window.location.host, room)
   let self: Entity | null = null
   let statics: Statics | null = null
   let lootLayer: LootLayer | null = null
@@ -401,16 +405,36 @@ function enterWorld(session: WorldSession): void {
     }
   })
 
-  // Closing the tab is a deliberate exit, so say so: the server flushes the save
-  // and releases the world lock immediately instead of holding both for the
-  // linger grace period, which is what left the idle game unable to save on the
-  // way back.
+  // Closing the tab/browser is a deliberate exit, so it gets exactly what the
+  // Log out button gets: the server flushes the save and releases the world lock
+  // now, instead of holding both for the linger grace period — which is what
+  // left the idle game unable to save on the way back.
+  //
+  // The `leave` frame alone is not enough: during unload there is no guarantee a
+  // socket write is flushed before the socket dies, and a beacon is the one
+  // request browsers promise to deliver (see leaveBeacon.ts). Both are sent —
+  // whichever lands first departs the player, and the second is a no-op.
+  //
   // `persisted` means the page went into the back/forward cache and may return —
-  // that IS what linger is for, so leave those alone. Best-effort by nature: a
-  // frame that never makes it off the tab just falls back to the linger flush.
+  // that IS what linger is for, so leave those alone. A zone transition is not
+  // an exit either: the player is mid-handoff to the next room.
+  function departOnUnload(): void {
+    if (transitioning) return
+    if (authed && socket.readyState === WebSocket.OPEN) send(socket, { t: 'leave' })
+    sendLeaveBeacon({
+      token: session.token,
+      room,
+      origin: window.location.origin,
+      sendBeacon: navigator.sendBeacon ? (url, body) => navigator.sendBeacon(url, body) : null,
+      keepaliveFetch: (url, body) => {
+        void fetch(url, { method: 'POST', body, keepalive: true, headers: { 'Content-Type': 'application/json' } })
+          .catch(() => {})
+      },
+    })
+  }
   window.addEventListener('pagehide', (event) => {
     if ((event as PageTransitionEvent).persisted) return
-    if (authed && socket.readyState === WebSocket.OPEN) send(socket, { t: 'leave' })
+    departOnUnload()
   })
 
   /** Repeat welcome after a reconnect: snap self to the server's position,
