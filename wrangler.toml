@@ -85,6 +85,10 @@ durable_objects = { bindings = [
 vars = { APP_BASE_URL = "https://preview.pocketrpg.pages.dev", CHAT_ACTION_FEE_ENABLED = "false", DISABLE_QUEST_REQUIREMENTS = "true" }
 ai = { binding = "AI" }
 # Secrets for preview environment (set via `wrangler pages secret put --env preview`):
+#   ADMIN_SECRET              — deliberately NOT set here. /admin exists on every
+#                               preview URL too, and an unset secret denies every
+#                               request. If preview ever needs it, give it its own
+#                               value — never reuse production's.
 #   STRIPE_API_KEY            — Stripe secret key (sk_test_…)
 #   STRIPE_WEBHOOK_SECRET     — Stripe webhook signing secret (whsec_…), test environment
 #   STRIPE_PRICE_REMOVE_ADS   — test Stripe Price ID
