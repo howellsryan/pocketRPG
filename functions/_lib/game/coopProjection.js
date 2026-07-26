@@ -78,12 +78,27 @@ export function projectEventsForMember(events, characterId) {
   })
 }
 
-/** Everything that happened after the tick this client last acknowledged. */
-export function eventsSince(events, sinceTick) {
+/**
+ * Everything that happened after the tick this client last acknowledged, up to
+ * the last tick the room is willing to publish.
+ *
+ * `untilTick` is not decoration. Events are keyed by the tick they happened on
+ * and a client acknowledges the tick it was told about, so anything appended to
+ * a tick AFTER a client acknowledged it is filtered out by `> since` forever.
+ * That is exactly the shape of a kill: the engine emits `bossDefeated`
+ * immediately, then settlement takes several D1 round-trips per winner and
+ * appends `killSettled` to the same tick. A poll landing in that window used to
+ * acknowledge the tick and never see the loot.
+ */
+export function eventsSince(events, sinceTick, untilTick = Infinity) {
   const since = Number(sinceTick)
+  const until = Number(untilTick)
   if (!Array.isArray(events)) return []
-  if (!Number.isFinite(since)) return [...events]
-  return events.filter((ev) => (Number(ev?.tick) || 0) > since)
+  const capped = Number.isFinite(until)
+    ? events.filter((ev) => (Number(ev?.tick) || 0) <= until)
+    : events
+  if (!Number.isFinite(since)) return [...capped]
+  return capped.filter((ev) => (Number(ev?.tick) || 0) > since)
 }
 
 /** Appends a tick's events and trims the ring by both age and count. */

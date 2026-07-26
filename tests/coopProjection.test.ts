@@ -205,3 +205,30 @@ describe('projectEventsForMember', () => {
     expect(projectEventsForMember([hit], 7)[0]).toBe(hit)
   })
 })
+
+describe('eventsSince — the publish ceiling', () => {
+  const ring = [
+    { type: 'bossDefeated', tick: 5 },
+    { type: 'killSettled', tick: 5 },
+    { type: 'playerHit', tick: 6 },
+  ]
+
+  it('holds back a tick the room has not finished publishing', () => {
+    // Tick 5 is still being settled: showing the client bossDefeated now would
+    // have them acknowledge tick 5, and killSettled — appended to tick 5 after
+    // settlement — could then never pass `> since`.
+    expect(eventsSince(ring, 4, 4)).toEqual([])
+  })
+
+  it('delivers the whole tick once it is published', () => {
+    expect(eventsSince(ring, 4, 5).map((e) => e.type)).toEqual(['bossDefeated', 'killSettled'])
+  })
+
+  it('does not re-deliver a tick the client already has', () => {
+    expect(eventsSince(ring, 5, 5)).toEqual([])
+  })
+
+  it('is unbounded when no ceiling is given', () => {
+    expect(eventsSince(ring, 4)).toHaveLength(3)
+  })
+})

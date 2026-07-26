@@ -414,6 +414,48 @@ export function coopLootProgress(member, maxHP) {
   }
 }
 
+/**
+ * What a `killSettled` event means for ONE member — the whole decision behind
+ * "do I show the loot modal".
+ *
+ * Pure, and here rather than in the screen, because this is the branch that
+ * decides whether a player sees their drop: buried in JSX it could not be
+ * tested, and every shape below is one that reached a real player.
+ *
+ *   loot     — their own roll, modal.
+ *   diverged — the server refused to grant; a modal would read as a dry kill.
+ *   failed   — the grant threw; likewise, and it is an outage, not bad luck.
+ *   missed   — under the damage threshold, so nothing was owed.
+ *
+ * `settlements` is absent only when the room is older than the multi-winner
+ * build; the legacy single-winner fields are read in that case rather than
+ * showing every member a dry kill through a deploy.
+ */
+export function coopKillOutcome(event, characterId) {
+  const settlements = Array.isArray(event?.settlements)
+    ? event.settlements
+    : (event?.ownerCharacterId != null
+      ? [{
+        characterId: event.ownerCharacterId,
+        granted: event.granted,
+        killCount: event.killCount,
+        diverged: event.diverged,
+        failed: event.failed,
+      }]
+      : [])
+  const winners = settlements.length
+  const mine = settlements.find((s) => Number(s?.characterId) === Number(characterId))
+  if (!mine) return { kind: 'missed', winners }
+  if (mine.diverged) return { kind: 'diverged', winners }
+  if (mine.failed) return { kind: 'failed', winners }
+  return {
+    kind: 'loot',
+    winners,
+    loot: Array.isArray(mine.granted) ? mine.granted : [],
+    killCount: Number.isFinite(Number(mine.killCount)) ? Number(mine.killCount) : null,
+  }
+}
+
 /** Loot owner: most damage dealt to the boss; equal totals resolve to whoever
  * reached the total first. Same rule the open world uses (npc.ts). */
 export function topDamageCharacterId(state) {

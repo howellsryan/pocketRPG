@@ -16,6 +16,7 @@ import {
   COOP_LOOT_DAMAGE_SHARE,
   coopLootDamageRequired,
   coopLootProgress,
+  coopKillOutcome,
   lootEligibleCharacterIds,
   describeCoopEquipRefusal,
   describeCoopActionRefusal,
@@ -1020,5 +1021,73 @@ describe('coopBossEngine — quick prayers survive the fight', () => {
     }
     expect(processCoopTick(state, [intent], deps, Date.now()).stateNext.members['1'].quickPrayers)
       .toEqual(['burst_of_strength'])
+  })
+})
+
+describe('coopBossEngine — what a settled kill means for one member', () => {
+  // This is the branch that decides whether a player sees their drop. It lived
+  // in the poll handler inside CoopBossScreen, where the harness cannot reach
+  // it, and every shape below is one that reached a real player.
+  const settled = (over: Record<string, unknown> = {}) => ({
+    type: 'killSettled',
+    ownerCharacterId: 7,
+    settlements: [
+      { characterId: 7, granted: [{ itemId: 'uncut_onyx', quantity: 1 }], killCount: 12, diverged: false, failed: false },
+      { characterId: 8, diverged: false },
+    ],
+    ...over,
+  })
+
+  it('gives a winner their own loot and kill count', () => {
+    const out = coopKillOutcome(settled(), 7)
+    expect(out.kind).toBe('loot')
+    expect(out.loot).toEqual([{ itemId: 'uncut_onyx', quantity: 1 }])
+    expect(out.killCount).toBe(12)
+  })
+
+  it('still shows the modal for a winner whose roll came up dry', () => {
+    // An empty drop list is an ordinary unlucky kill — it is not a failure, and
+    // the modal is what tells the player the kill counted.
+    const out = coopKillOutcome(settled({
+      settlements: [{ characterId: 7, granted: [], killCount: 13 }],
+    }), 7)
+    expect(out.kind).toBe('loot')
+    expect(out.loot).toEqual([])
+  })
+
+  it('reports a member who missed the damage threshold, with the winner count', () => {
+    const out = coopKillOutcome(settled(), 99)
+    expect(out.kind).toBe('missed')
+    expect(out.winners).toBe(2)
+  })
+
+  it('never dresses a diverged save up as a dry kill', () => {
+    const out = coopKillOutcome(settled({
+      settlements: [{ characterId: 7, granted: [], diverged: true }],
+    }), 7)
+    expect(out.kind).toBe('diverged')
+  })
+
+  it('never dresses a thrown grant up as a dry kill', () => {
+    const out = coopKillOutcome(settled({
+      settlements: [{ characterId: 7, granted: [], failed: true }],
+    }), 7)
+    expect(out.kind).toBe('failed')
+  })
+
+  it('reads the legacy single-winner event a room deployed behind the client sends', () => {
+    const legacy = { type: 'killSettled', ownerCharacterId: 7, granted: [{ itemId: 'coins', quantity: 5 }], killCount: 3 }
+    expect(coopKillOutcome(legacy, 7)).toMatchObject({ kind: 'loot', killCount: 3 })
+    expect(coopKillOutcome(legacy, 8).kind).toBe('missed')
+  })
+
+  it('matches a member id whatever type it arrives as', () => {
+    expect(coopKillOutcome(settled(), '7' as never).kind).toBe('loot')
+    expect(coopKillOutcome({ ...settled(), settlements: [{ characterId: '7', granted: [] }] }, 7).kind).toBe('loot')
+  })
+
+  it('does not fall over on an event carrying nothing usable', () => {
+    expect(coopKillOutcome({ type: 'killSettled' }, 7).kind).toBe('missed')
+    expect(coopKillOutcome(null, 7).kind).toBe('missed')
   })
 })

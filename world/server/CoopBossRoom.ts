@@ -69,6 +69,15 @@ export class CoopBossRoom {
   private sessionId = 0
   private bossId = ''
   private killSeq = 0
+  /**
+   * The last tick the room will admit to. A tick is only published once
+   * everything belonging to it exists — settlement included — because a client
+   * that acknowledges a tick can never be shown anything appended to it
+   * afterwards. Kills are settled across several D1 round-trips per winner, so
+   * without this a poll landing mid-settlement acknowledged the tick and the
+   * loot event was filtered out of every poll that followed.
+   */
+  private publishedTick = 0
   private events: AnyState[] = []
   private lastSeen: Record<string, number> = {}
   private pending: QueuedIntent[] = []
@@ -188,6 +197,7 @@ export class CoopBossRoom {
       this.sessionId = sessionId
       this.bossId = row.boss_id
       this.lastCheckpointTick = Number(this.state?.tick) || 0
+      this.publishedTick = Number(this.state?.tick) || 0
 
       // Seed killSeq from the settlement table, not the session row: a DO
       // evicted between granting a kill and checkpointing would otherwise come
@@ -240,7 +250,7 @@ export class CoopBossRoom {
   }
 
   private async tickInner(): Promise<void> {
-    {
+    try {
       const now = Date.now()
       await this.ejectStaleMembers(now)
       if (!this.state) return
@@ -269,6 +279,10 @@ export class CoopBossRoom {
       }
 
       if ((next.tick || 0) - this.lastCheckpointTick >= CHECKPOINT_EVERY_TICKS) await this.checkpoint(now)
+    } finally {
+      // Every exit from the beat, including the kill path's early return: the
+      // tick becomes visible only now that nothing more can be appended to it.
+      if (this.state) this.publishedTick = this.state.tick || 0
     }
   }
 
@@ -365,14 +379,17 @@ export class CoopBossRoom {
     this.lastSeen[key] = Date.now()
     this.startTicking()
     const since = Number(body?.sinceTick)
-    const currentTick = this.state!.tick || 0
+    const currentTick = this.publishedTick
     return jsonResponse({
       ok: true,
       state: projectStateForMember(this.state, key),
       // Replayed from the room's ring rather than "whatever happened on the one
       // request that advanced the tick", so every member sees every hit, every
       // XP drop and every kill — not just the ~1-in-8 they won the race for.
-      events: projectEventsForMember(eventsSince(this.events, Number.isFinite(since) ? since : currentTick - 1), key),
+      events: projectEventsForMember(
+        eventsSince(this.events, Number.isFinite(since) ? since : currentTick - 1, currentTick),
+        key,
+      ),
       current_tick: currentTick,
       next_tick_at: Date.now() + TICK_MS,
     })

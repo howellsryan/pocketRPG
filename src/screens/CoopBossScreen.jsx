@@ -16,7 +16,7 @@ import { coopApi } from '../cloud/coop.js'
 import { splatsFromCoopEvents, HIT_SPLAT_DURATION_MS } from '../utils/hitSplats.js'
 import { xpDropsFromCombatEvents, emitXpDrops } from '../utils/xpDrops.js'
 import { shapeLootForModal, lootRowsForModal } from '../utils/lootModal.js'
-import { describeCoopActionRefusal, describeCoopEquipRefusal } from '../engine/coopBossEngine.js'
+import { coopKillOutcome, describeCoopActionRefusal, describeCoopEquipRefusal } from '../engine/coopBossEngine.js'
 import { getMonsterArt, getStyleArt } from '../utils/combatArt.js'
 import { hasEpicLootDrop } from '../utils/itemValue.js'
 import { getLevelFromXP } from '../engine/experience.js'
@@ -121,29 +121,17 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onDeath
         for (const ev of res.events) {
           if (ev.type !== 'killSettled') continue
           const killedName = monstersData?.[res.state?.bossId]?.name || 'The boss'
-          // Every member past the damage threshold is paid, so the event carries
-          // a list. `settlements` is absent only while a client runs ahead of the
-          // Worker; fall back to the single-winner fields it used to send.
-          const settlements = ev.settlements
-            ?? (ev.ownerCharacterId != null
-              ? [{ characterId: ev.ownerCharacterId, granted: ev.granted, killCount: ev.killCount, diverged: ev.diverged }]
-              : [])
-          const mine = settlements.find((s) => Number(s.characterId) === Number(characterId))
-          if (mine?.diverged) {
-            // The server refused to grant because something else wrote this
-            // save mid-fight. Showing the usual modal would read as a dry kill.
+          const outcome = coopKillOutcome(ev, characterId)
+          if (outcome.kind === 'loot') {
+            setLootModal({ monsterName: killedName, loot: outcome.loot, killCount: outcome.killCount })
+          } else if (outcome.kind === 'diverged') {
             addToast?.('Your loot could not be granted — something else changed your save. Leave and rejoin.', 'error')
-          } else if (mine?.failed) {
-            // The grant threw server-side. An empty loot modal here would read
-            // as an unlucky kill and hide the outage completely.
+          } else if (outcome.kind === 'failed') {
             addToast?.(`${killedName} defeated, but the loot could not be granted. Leave and rejoin.`, 'error')
-          } else if (mine) {
-            setLootModal({ monsterName: killedName, loot: mine.granted || [], killCount: mine.killCount ?? null })
           } else {
-            const paid = settlements.length
             addToast?.(
               `${killedName} defeated — you did not deal enough damage for a drop.`
-              + (paid > 0 ? ` ${paid} ${paid === 1 ? 'player' : 'players'} looted it.` : ''),
+              + (outcome.winners > 0 ? ` ${outcome.winners} ${outcome.winners === 1 ? 'player' : 'players'} looted it.` : ''),
               'info',
             )
           }
