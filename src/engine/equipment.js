@@ -1,5 +1,6 @@
 import { EQUIPMENT_SLOTS } from '../utils/constants.js'
 import { getLevelFromXP } from './experience.js'
+import { questRequirementMet } from './questGates.js'
 
 /**
  * Validate that the player meets an item's equip requirements.
@@ -13,7 +14,7 @@ import { getLevelFromXP } from './experience.js'
  *   reason === 'skill' → { reason, skill, required, current }
  */
 export function checkEquipRequirements(itemData, stats, completedQuests) {
-  if (itemData?.questUnlock && !(completedQuests && completedQuests.has && completedQuests.has(itemData.questUnlock))) {
+  if (!questRequirementMet(completedQuests, itemData?.questUnlock)) {
     return { reason: 'quest', questUnlock: itemData.questUnlock }
   }
   if (itemData?.requirements) {

@@ -1,6 +1,7 @@
 import monstersData from '../data/monsters.json'
 import raidsData from '../data/raids.json'
 import { DAGANNOTH_KINGS_TASK_ID } from './slayerTasks.js'
+import { questRequirementMet } from './questGates.js'
 
 // Zul-Kaar's boss-task pool includes every boss monster EXCEPT these 4, which
 // are raid-final-bosses only reachable via a full raid clear (never independently
@@ -261,9 +262,7 @@ function meetsQuestRequirement(monster, completedQuests) {
   const required = monster?.questRequirement
   if (!required) return true
   if (completedQuests == null) return true
-  if (typeof completedQuests.has === 'function') return completedQuests.has(required)
-  if (Array.isArray(completedQuests)) return completedQuests.includes(required)
-  return true
+  return questRequirementMet(completedQuests, required)
 }
 
 // A pool entry is eligible only when the player meets the slayer requirement —

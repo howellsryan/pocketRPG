@@ -12,6 +12,8 @@
  * so keeping this logic in one tested place avoids drift.
  */
 
+import { questRequirementMet } from './questGates.js'
+
 /**
  * @param {object} monster - monster definition (id, name, slayerRequirement?, questRequirement?)
  * @param {object} ctx
@@ -36,7 +38,7 @@ export function checkBossRequirementsPure(monster, ctx = {}) {
 
   // Quest gates are data-driven (monster.questRequirement) so the slayer master
   // assignment and this combat gate share one source of truth.
-  if (monster.questRequirement && !completedQuests.has(monster.questRequirement)) {
+  if (!questRequirementMet(completedQuests, monster.questRequirement)) {
     const questName = questsData.find((q) => q.id === monster.questRequirement)?.name
       || monster.questRequirement.replace(/_/g, ' ')
     return { locked: true, reason: `Complete ${questName} to fight ${monster.name}` }
@@ -61,7 +63,7 @@ export function checkRaidRequirementsPure(raid, ctx = {}) {
 
   if (!raid) return { locked: false }
 
-  if (raid.id === 'theatre_of_blood' && !completedQuests.has('a_night_at_the_theatre')) {
+  if (raid.id === 'theatre_of_blood' && !questRequirementMet(completedQuests, 'a_night_at_the_theatre')) {
     return { locked: true, reason: 'Complete A Night at the Theatre to access Crimson Night Theatre' }
   }
 

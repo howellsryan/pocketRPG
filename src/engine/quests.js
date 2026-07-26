@@ -4,6 +4,7 @@
  */
 
 import { getLevelFromXP } from './experience.js'
+import { questRequirementMet } from './questGates.js'
 import { combatLevelFromStats } from './combatLevel.js'
 import { TICK_DURATION } from '../utils/constants.js'
 
@@ -58,7 +59,7 @@ export function checkQuestEligibility(quest, stats, completedQuestIds, questsDat
 
   // Quest prerequisites
   for (const prereqId of quest.questRequirements || []) {
-    if (!completedQuestIds.has(prereqId)) {
+    if (!questRequirementMet(completedQuestIds, prereqId)) {
       const prereq = questsData.find(q => q.id === prereqId)
       reasons.push(`Complete ${prereq ? prereq.name : prereqId}`)
     }

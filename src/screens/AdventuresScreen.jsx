@@ -1,6 +1,7 @@
 import Card from '../components/Card.jsx'
 import GameIcon from '../components/GameIcon.jsx'
 import { useGame } from '../state/gameState.jsx'
+import { questRequirementMet } from '../engine/questGates.js'
 import { SCREENS, KINGDOM_UNLOCK_QUEST_ID } from '../utils/constants.js'
 
 const ADVENTURE_LINKS = [
@@ -13,7 +14,7 @@ const ADVENTURE_LINKS = [
 
 export default function AdventuresScreen({ onNavigate }) {
   const { completedQuests } = useGame()
-  const links = ADVENTURE_LINKS.filter(link => !link.requiresQuest || completedQuests.has(link.requiresQuest))
+  const links = ADVENTURE_LINKS.filter(link => questRequirementMet(completedQuests, link.requiresQuest))
   return (
     <div class="forge-shell h-full flex flex-col">
       <div class="flex-shrink-0 bg-[var(--color-void-light)] border-b border-[var(--color-void-border)] px-4 py-3">

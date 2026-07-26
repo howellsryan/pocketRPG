@@ -1,5 +1,6 @@
 import { useState } from 'preact/hooks'
 import Modal from './Modal.jsx'
+import { questRequirementMet } from '../engine/questGates.js'
 import GameIcon from './GameIcon.jsx'
 import ActivityIcon from './ActivityIcon.jsx'
 import { useGame } from '../state/gameState.jsx'
@@ -178,7 +179,7 @@ function QuestInfoModal({ questId, onClose }) {
                 !elig.reasons.some((r) => r.toLowerCase().startsWith(skill.toLowerCase())), skill))}
               {questPrereqs.map((pid) => {
                 const prereq = questsData.find((q) => q.id === pid)
-                return reqRow(`Quest: ${prereq ? prereq.name : pid}`, completedQuests.has(pid), pid)
+                return reqRow(`Quest: ${prereq ? prereq.name : pid}`, questRequirementMet(completedQuests, pid), pid)
               })}
             </div>
           </div>

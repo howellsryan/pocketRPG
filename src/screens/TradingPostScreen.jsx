@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from 'preact/hooks'
 import { useGame } from '../state/gameState.jsx'
 import { countItem, buyWithShards } from '../engine/inventory.js'
+import { questRequirementMet } from '../engine/questGates.js'
 import { api, getToken, getCharacterId } from '../cloud/api.js'
 import { isOrderBookItem, getPurchaseRestriction } from '../engine/storeRules.js'
 import { isSlayerStoreItem } from '../engine/slayerUnlocks.js'
@@ -495,7 +496,7 @@ export default function TradingPostScreen({ onBuyCredits, onBack }) {
     const slayerUnlocked = isSlayerStoreItem(item.id) && slayerStoreUnlockSet.has(item.id)
     const restriction = getPurchaseRestriction(item, { isIronman, isOneLife, allowMinigameUnlockPurchase: isMinigameUnlocked, allowSlayerStorePurchase: slayerUnlocked })
     const buyDisabledReason = (() => {
-      if (item.questUnlock && !completedQuests.has(item.questUnlock)) return `🔒 ${questMap[item.questUnlock] || 'Quest required'}`
+      if (!questRequirementMet(completedQuests, item.questUnlock)) return `🔒 ${questMap[item.questUnlock] || 'Quest required'}`
       if (isSlayerStoreItem(item.id) && !slayerUnlocked) return '🔒 Unlock with Slayer points first'
       if (minigameProductIds.has(item.id) && !isMinigameUnlocked) return '🔒 Earn from minigame first'
       const capeBlock = getSkillCapeLevelBlock(item)
@@ -843,7 +844,7 @@ export default function TradingPostScreen({ onBuyCredits, onBack }) {
         </div>
       )
       : null
-    const isQuestLocked = selected.questUnlock && !completedQuests.has(selected.questUnlock)
+    const isQuestLocked = !questRequirementMet(completedQuests, selected.questUnlock)
     const isMinigameLocked = minigameProductIds.has(selected.id) && !unlockedMinigameItems.has(selected.id)
     const isSlayerLocked = isSlayerStoreItem(selected.id) && !slayerStoreUnlockSet.has(selected.id)
     const capeBlock = getSkillCapeLevelBlock(selected)
