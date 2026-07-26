@@ -11,6 +11,19 @@ database_id = "439e810b-8dce-4697-94c2-a7392520ad8f"
 binding = "TRIPO_ASSETS"
 bucket_name = "pocketrpg-assets"
 
+# Co-op boss rooms. The class is defined in the pocketrpg-world Worker
+# (world/server/CoopBossRoom.ts) because a Pages project cannot export a Durable
+# Object class — `script_name` is what binds across the two deployments.
+#
+# Consequence worth knowing: co-op bossing now needs pocketrpg-world deployed.
+# A missing binding is handled (functions/_lib/game/coopRoom.js returns
+# COOP_UNAVAILABLE and the picker says group fights are offline) rather than
+# throwing, so a Pages-only deploy degrades instead of breaking the screen.
+[[durable_objects.bindings]]
+name = "COOP_ROOM"
+class_name = "CoopBossRoom"
+script_name = "pocketrpg-world"
+
 [ai]
 binding = "AI"
 
@@ -58,6 +71,9 @@ d1_databases = [
 r2_buckets = [
   { binding = "TRIPO_ASSETS", bucket_name = "pocketrpg-assets-preview" }
 ]
+durable_objects = { bindings = [
+  { name = "COOP_ROOM", class_name = "CoopBossRoom", script_name = "pocketrpg-world-preview" }
+] }
 vars = { APP_BASE_URL = "https://preview.pocketrpg.pages.dev", CHAT_ACTION_FEE_ENABLED = "false" }
 ai = { binding = "AI" }
 # Secrets for preview environment (set via `wrangler pages secret put --env preview`):

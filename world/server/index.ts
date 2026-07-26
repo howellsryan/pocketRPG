@@ -1,10 +1,15 @@
 import { routePartykitRequest } from 'partyserver'
 import { WorldZone } from './WorldZone'
+import { CoopBossRoom } from './CoopBossRoom'
 import { handleWorldSession } from './session'
 import { handleEditorRequest } from './editor'
 import type { Env } from './env'
 
-export { WorldZone }
+// CoopBossRoom is reached only as a Durable Object, by the Pages app's
+// /api/coop/* routes over a cross-script binding — this Worker exposes no HTTP
+// route for it. It lives here because Pages projects cannot export DO classes,
+// and this Worker already has the DO infrastructure and the same D1 binding.
+export { WorldZone, CoopBossRoom }
 export type { Env }
 
 const EDITOR_PREFIX = '/api/world/editor'

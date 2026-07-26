@@ -4,6 +4,7 @@ import { useGame } from '../state/gameState.jsx'
 import { usePvp } from '../state/pvpState.jsx'
 import PvpLobbyModal from './PvpLobbyModal.jsx'
 import PvpCombatScreen from './PvpCombatScreen.jsx'
+import CoopBossScreen from './CoopBossScreen.jsx'
 import Modal from '../components/Modal.jsx'
 import LootResultModal from '../components/LootResultModal.jsx'
 import HPBar from '../components/HPBar.jsx'
@@ -37,7 +38,7 @@ import { getCombatType, resolveMagicSpell, equipItem, checkEquipRequirements, pl
 import { RAID_TASK_META } from '../engine/slayerMasters.js'
 import { resolveSpecialEnergyCost, canAffordSpecialAttack, formatSpecialEnergyCostLabel } from '../engine/specialAttackEnergy.js'
 import { api, getToken, getCharacterId, getOneLifeMode, isDemoMode } from '../cloud/api.js'
-import { pullSave, applyCloudSave, requestCriticalPushSave, pushNow } from '../cloud/sync.js'
+import { pullSave, applyCloudSave, requestCriticalPushSave, pushNow, suspendSaves, resumeSaves, lastSaveLockCode } from '../cloud/sync.js'
 import { pvpApi } from '../cloud/pvp.js'
 import monstersData from '../data/monsters.json'
 import worldData from '../data/world.json'
@@ -47,10 +48,16 @@ import itemsData from '../data/items.json'
 import prayersData from '../data/prayers.json'
 import spellsData from '../data/spells.json'
 import raidsData from '../data/raids.json'
+import { isCoopBossId } from '../engine/coopBossEngine.js'
+import { coopApi, setActiveCoopSession } from '../cloud/coop.js'
 import { SCREENS, formatDropChance } from '../utils/constants.js'
 import { hasEpicLootDrop, getItemUnitValue, getLootTotalValue } from '../utils/itemValue.js'
 import { splatsFromCombatEvents, HIT_SPLAT_DURATION_MS } from '../utils/hitSplats.js'
+import { xpDropsFromCombatEvents, emitXpDrops } from '../utils/xpDrops.js'
+import { shapeLootForModal, lootRowsForModal } from '../utils/lootModal.js'
 import { HitSplatLayer } from '../components/HitSplat.jsx'
+import { CombatFightHead, CombatHPBlock, CombatPrayerBlock } from '../components/CombatHud.jsx'
+import QuickPrayerConfigModal from '../components/QuickPrayerConfigModal.jsx'
 import CombatArena3D from '../components/CombatArena3D.jsx'
 import { getCreatureSpec } from '../3d/creatures.js'
 import { getArenaBiomeSpec } from '../3d/biomeRegistry.js'
@@ -323,11 +330,24 @@ function MonsterAddStats({ monster }) {
 }
 
 export default function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onCombatStatusChange, onBack, onStopBack, dungeonPlaceId }) {
-  const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, updateEquipment, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, idleCombatSetup, updateIdleCombatSetup, homeShortcuts, updateHomeShortcuts, setActiveTask, requestActivityStart, slayerTask, setSlayerTask, awardSlayerPoints, slayerTasksCompleted, setSlayerTasksCompleted, incrementSlayerMasterTaskCompletions, activeCombatSpell, updateActiveCombatSpell, bossKillCounts, updateBossKillCounts, raidKillCounts, updateRaidKillCounts, unlockedFeatures, completedQuests, isOneLife, isIronman, revertOneLifeMode, getSnapshot, loadGame, combatSkipHandlerRef, skipHourHandlerRef, chargeSkipRef, raidSkipHandlerRef, lockGame, unlockGame, resolveCombatCompletion, characterUnlocks, killCountsLoaded, recordGameEvent, worldLocation, publishCombatStatus, activeTask, backgroundCombat, quickPrayers, updateQuickPrayers } = useGame()
+  const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, updateEquipment, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, idleCombatSetup, updateIdleCombatSetup, homeShortcuts, updateHomeShortcuts, setActiveTask, requestActivityStart, slayerTask, setSlayerTask, awardSlayerPoints, slayerTasksCompleted, setSlayerTasksCompleted, incrementSlayerMasterTaskCompletions, activeCombatSpell, updateActiveCombatSpell, bossKillCounts, updateBossKillCounts, raidKillCounts, updateRaidKillCounts, unlockedFeatures, completedQuests, isOneLife, isIronman, revertOneLifeMode, getSnapshot, loadGame, combatSkipHandlerRef, skipHourHandlerRef, chargeSkipRef, raidSkipHandlerRef, lockGame, unlockGame, runLockedSave, resolveCombatCompletion, characterUnlocks, killCountsLoaded, recordGameEvent, worldLocation, publishCombatStatus, activeTask, backgroundCombat, quickPrayers, updateQuickPrayers } = useGame()
   const pvp = usePvp()
   // Offline demo: bosses, raids and PvP are locked (server-authoritative).
   const isDemo = isDemoMode() && !(getToken() && getCharacterId())
   const [showPvpLobby, setShowPvpLobby] = useState(false)
+  // Co-op boss session. The server owns the fight and locks the save for its
+  // duration, so this takes over the screen exactly like an active PvP match.
+  const [coopSessionId, setCoopSessionId] = useState(null)
+  // Set while exitCoopFight is releasing the session, so the effect cleanup
+  // that fires straight after doesn't send a second leave for the same fight.
+  const coopLeavingRef = useRef(false)
+  const [coopJoining, setCoopJoining] = useState(null)
+  // Solo-or-group prompt: which boss was tapped, and how busy its instances are.
+  const [coopChoice, setCoopChoice] = useState(null)
+  const [coopOpenSessions, setCoopOpenSessions] = useState(null)
+  // A room the server still holds this character for, from the picker's own
+  // headcount fetch. Only read while recovering a join, never rendered.
+  const heldCoopSessionRef = useRef(null)
 
   // Dungeon mode: this screen renders one place's foes (Monsters / Bosses /
   // Raids) instead of the world-wide picker. PvP is hidden (not place-bound);
@@ -669,6 +689,8 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       setCombat({ ...combatState })
 
       // Hit splats replace the chat-style "You hit X" / "Monster hits X" lines.
+      emitXpDrops(xpDropsFromCombatEvents(events))
+
       const tickSplats = splatsFromCombatEvents(events)
       pushSplats(setMonsterSplats, tickSplats.monster)
       pushSplats(setAddSplats, tickSplats.add)
@@ -1311,6 +1333,164 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   })
 
   const checkRaidRequirements = (raid) => checkRaidRequirementsPure(raid, { completedQuests })
+
+  // The local save loop is suspended for exactly as long as a co-op session is
+  // held, because the server owns this character's save for the duration.
+  // Deliberately NOT lockGame(): that also raises the "Saving your progress…"
+  // blocking overlay, which is meant for short operations and would sit on top
+  // of the whole fight. Tying it to the session state rather than the
+  // join/leave handlers means navigating away mid-fight releases it too.
+  useEffect(() => {
+    if (!coopSessionId) return undefined
+    suspendSaves()
+    setActiveCoopSession(coopSessionId)
+    return () => {
+      setActiveCoopSession(null)
+      // Releasing the client-side suspension is not enough: the server holds
+      // `characters.active_coop_session_id` and refuses every save until the
+      // membership actually ends. Leaving via the back link already did this
+      // (exitCoopFight), but navigating away with the nav bar lands here
+      // instead, and skipping it would block this character's saves until the
+      // member heartbeat lapses.
+      if (coopLeavingRef.current) {
+        coopLeavingRef.current = false
+        resumeSaves()
+        return
+      }
+      // Resume saving only AFTER the server has written the fight back and we
+      // have re-pulled it. Resuming first races the write-back with a push of
+      // the client's pre-fight copy, which the revision guard then rejects —
+      // correct, but it costs the player a rollback for no reason.
+      coopApi.leave(coopSessionId)
+        .then(() => pullSave())
+        .then((pulled) => (pulled?.payload ? applyCloudSave(pulled.payload, pulled.updatedAt).then(loadGame) : null))
+        .catch(() => { /* the member heartbeat lapsing covers it */ })
+        .finally(() => resumeSaves())
+    }
+  }, [coopSessionId])
+
+  // Co-op needs a cloud account (the server owns the fight), so the offline demo
+  // always goes straight to the solo path.
+  const offersCoop = (monster) => isCoopBossId(monster.id) && !isDemo
+
+  // Every picker tap goes through here so mobile and desktop behave the same —
+  // the mobile picker is the primary layout, so wiring only one of them is how
+  // the prompt goes missing for most players.
+  const pickMonsterForFight = (monster) => {
+    if (offersCoop(monster)) setCoopChoice(monster)
+    else startFight(monster)
+  }
+
+  // Live headcount for the prompt, so "Fight together" says whether anyone is
+  // actually in there. Best-effort — the prompt still works without it.
+  useEffect(() => {
+    if (!coopChoice) {
+      setCoopOpenSessions(null)
+      return undefined
+    }
+    let cancelled = false
+    coopApi.listBosses()
+      .then((res) => {
+        if (cancelled) return
+        // A session this character is STILL held by — a fight they refreshed or
+        // crashed out of. The server keeps their save locked for it, so the
+        // recovery in startCoopFight needs the id to release it.
+        heldCoopSessionRef.current = Number.isFinite(res?.activeSessionId) ? res.activeSessionId : null
+        const entry = (res?.bosses || []).find((b) => b.bossId === coopChoice.id)
+        setCoopOpenSessions(entry?.sessions || [])
+      })
+      .catch(() => { if (!cancelled) setCoopOpenSessions([]) })
+    return () => { cancelled = true }
+  }, [coopChoice])
+
+  // Joins, releasing a stale hold first if one is in the way. The server refuses
+  // to move a character between rooms ("leave it first") because the old room
+  // still holds their pack — but a player whose last fight ended in a refresh has
+  // no way to leave it by hand, so do it for them and take them where they asked
+  // to go. Leaving writes that fight's XP and supplies back onto the save.
+  const joinCoopWithRecovery = async (bossId) => {
+    try {
+      return await coopApi.join(bossId)
+    } catch (err) {
+      const held = heldCoopSessionRef.current
+      if (err?.body?.code !== 'CHARACTER_IN_COOP_SESSION' || !held) throw err
+      // A leave that 404s has already happened (the room ended, or the sweep got
+      // there first) — that is the outcome we wanted, so try the join either way.
+      try { await coopApi.leave(held) } catch { /* the join below reports the real state */ }
+      heldCoopSessionRef.current = null
+      return await coopApi.join(bossId)
+    }
+  }
+
+  // Joins the shared fight for a boss. The save is flushed first: the server
+  // snapshots it on join and owns inventory/XP from that moment, so anything
+  // still only in the local client would be lost.
+  const startCoopFight = async (monster) => {
+    if (isDemo) {
+      addToast('🔒 Group bossing is available with a free account.', 'info')
+      return
+    }
+    const req = checkBossRequirements(monster)
+    if (req.locked) {
+      addToast(req.reason, 'error')
+      return
+    }
+    setCoopJoining(monster.id)
+    try {
+      const saved = await runLockedSave()
+      // A co-op lock is not a failed save. It means a room ALREADY owns this
+      // character's save — a fight they refreshed or crashed out of — and the
+      // join below is what sweeps that room and puts them back in. Aborting here
+      // left the player wedged: every save refused, and the one call that would
+      // release the lock never made.
+      if (!saved && lastSaveLockCode() !== 'CHARACTER_IN_COOP_SESSION') {
+        addToast('Could not save before joining — try again.', 'error')
+        return
+      }
+      const res = await joinCoopWithRecovery(monster.id)
+      setCoopSessionId(res.sessionId)
+    } catch (err) {
+      const code = err?.body?.code
+      // BOSS_REQUIREMENTS_NOT_MET carries the same player-ready sentence the
+      // client's own gate shows ("Complete X to fight Y"), so pass it through
+      // rather than rebuilding a worse one from the monster.
+      if (code === 'BOSS_REQUIREMENTS_NOT_MET') addToast(err?.body?.error || 'You have not unlocked this boss yet.', 'error')
+      else if (code === 'CHARACTER_IN_WORLD_SESSION') addToast('You are adventuring in the World.', 'error')
+      else if (code === 'CHARACTER_IN_ACTIVE_MATCH') addToast('Finish your duel first.', 'error')
+      else if (code === 'CHARACTER_IN_COOP_SESSION') addToast(err?.body?.error || 'Leave your current group fight first.', 'error')
+      else if (code === 'COOP_UNAVAILABLE') addToast('Group boss fights are offline right now — fight alone for the moment.', 'error')
+      else addToast(err?.message || 'Could not join the fight.', 'error')
+    } finally {
+      setCoopJoining(null)
+    }
+  }
+
+  // Leaving pulls the server's copy back down: it holds the authoritative
+  // inventory, XP and HP from the fight, and the in-memory client copy is stale.
+  const exitCoopFight = async () => {
+    // Leave BEFORE pulling: leaving is what writes the server-owned inventory,
+    // XP and HP back onto the save, so pulling first would fetch the pre-fight
+    // copy and throw the whole session away.
+    coopLeavingRef.current = true
+    try {
+      if (coopSessionId) await coopApi.leave(coopSessionId)
+    } catch (err) {
+      addToast(err?.message || 'Could not leave the fight cleanly — your progress may take a moment.', 'error')
+    }
+    try {
+      const pulled = await pullSave()
+      if (pulled?.payload) {
+        await applyCloudSave(pulled.payload, pulled.updatedAt)
+        await loadGame()
+      } else {
+        addToast('Refresh to see your latest progress.', 'info')
+      }
+    } catch {
+      addToast('Refresh to see your latest progress.', 'info')
+    } finally {
+      setCoopSessionId(null)
+    }
+  }
 
   const startFight = (monster) => {
     if (isDemo && monster.boss === true) {
@@ -2068,6 +2248,18 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     )
   }
 
+  if (coopSessionId) {
+    return (
+      <CoopBossScreen
+        sessionId={coopSessionId}
+        characterId={parseInt(getCharacterId(), 10)}
+        addToast={addToast}
+        onExit={exitCoopFight}
+        onDeath={() => { if (oneLifeModeRef.current) revertOneLifeAfterDeath() }}
+      />
+    )
+  }
+
   // Don't render the combat screen until the server kill-count fetch has
   // settled (success or fail) — on a cold cache boss KC would briefly show 0.
   // Scoped to this screen so global startup time is unaffected.
@@ -2098,7 +2290,8 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             searchValue={monsterSearch}
             onSearchChange={handleMonsterSearchChange}
             onToggleSection={toggleSection}
-            onFight={startFight}
+            onFight={pickMonsterForFight}
+            offersCoop={offersCoop}
             onMonsterInfo={setSelectedMonsterInfo}
             onStartRaid={startRaid}
             onRaidInfo={setSelectedRaidInfo}
@@ -2220,7 +2413,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                     return (
                     <div key={monster.id} class="flex gap-2 items-center" title={isLocked ? (bossReq.locked ? bossReq.reason : '') : ''}>
                       <button
-                        onClick={() => !isLocked && startFight(monster)}
+                        onClick={() => !isLocked && pickMonsterForFight(monster)}
                         disabled={isLocked}
                         title={isLocked && bossReq.locked ? bossReq.reason : ''}
                         class={`flex-1 flex items-center justify-between p-3 rounded-xl border transition-colors
@@ -2234,6 +2427,9 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                             <div class="flex items-center gap-1.5">
                               <span class="text-sm font-semibold text-[var(--color-parchment)]">{monster.name}</span>
                               {isOnTask && <span class="text-[9px] bg-yellow-500 text-black font-bold px-1 rounded">TASK</span>}
+                              {offersCoop(monster) && !isLocked && (
+                                <span class="text-[9px] border border-[var(--color-gold-dim)] text-[var(--color-gold)] font-bold px-1 rounded">GROUP</span>
+                              )}
                             </div>
                             <div class="text-[10px] text-[var(--color-parchment)]">
                               HP {monster.hitpoints} · Att {monster.stats.attack} · Def {monster.stats.defence}
@@ -2325,7 +2521,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                       <SkillEmblem iconKey={getRaidArt(raid.id).icon} accent={getRaidArt(raid.id).accent} size={36} glow={0} />
                       <div>
                         <div class="text-sm font-semibold text-[var(--color-parchment)]">{raid.name}</div>
-                        <div class={`text-[10px] ${isRaidLocked ? 'text-[var(--color-blood-light)]' : 'text-[var(--color-parchment)]'}`}>{isRaidLocked ? '🔒 ' + raidLockReason : raid.description}</div>
+                        {isRaidLocked && <div class="text-[10px] text-[var(--color-blood-light)]">🔒 {raidLockReason}</div>}
                       </div>
                     </div>
                     {raidKillCounts[raid.id] > 0 && (
@@ -2572,6 +2768,57 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           </div>
         </Modal>
       )}
+
+      {/* Solo-or-group prompt. Lives in the PICKER block: this is the only
+          render path where a boss is chosen, and both layouts route into it. */}
+      {coopChoice && (
+        <Modal onClose={() => setCoopChoice(null)}>
+          <div class="flex items-center gap-2 mb-1">
+            <SkillEmblem iconKey={getMonsterArt(coopChoice).icon} accent={getMonsterArt(coopChoice).accent} size={28} glow={0} />
+            <h3 class="font-[var(--font-display)] text-base font-bold text-[var(--color-gold)]">{coopChoice.name}</h3>
+          </div>
+          <p class="text-[11px] text-[var(--color-parchment)] opacity-70 mb-4">How do you want to fight this?</p>
+
+          <div class="space-y-2">
+            <button
+              onClick={() => { const m = coopChoice; setCoopChoice(null); startFight(m) }}
+              class="w-full text-left p-3 rounded-xl border border-[var(--color-void-border)] bg-[var(--color-void-light)] active:bg-[var(--color-void-lighter)]"
+            >
+              <div class="text-sm font-semibold text-[var(--color-parchment)]">Fight alone</div>
+              <div class="text-[10px] text-[var(--color-parchment)] opacity-60 mt-0.5">
+                The whole drop table is yours. Kill count and collection log as normal.
+              </div>
+            </button>
+
+            <button
+              onClick={() => { const m = coopChoice; setCoopChoice(null); startCoopFight(m) }}
+              disabled={coopJoining === coopChoice.id}
+              class="w-full text-left p-3 rounded-xl border border-[var(--color-gold-dim)] bg-[var(--color-void-light)] active:bg-[var(--color-void-lighter)] disabled:opacity-40"
+            >
+              <div class="text-sm font-semibold text-[var(--color-gold)]">
+                {coopJoining === coopChoice.id ? 'Joining\u2026' : 'Fight together'}
+              </div>
+              <div class="text-[10px] text-[var(--color-parchment)] opacity-60 mt-0.5">
+                Share one boss with other players. The drop goes to whoever deals the most damage. Everyone keeps their own XP.
+              </div>
+              <div class="text-[10px] text-[var(--color-gold)] opacity-80 mt-1">
+                {coopOpenSessions === null
+                  ? 'Checking who is in there\u2026'
+                  : (() => {
+                    const fighters = coopOpenSessions.reduce((sum, s) => sum + (s.memberCount || 0), 0)
+                    if (fighters === 0) return 'Nobody in there yet, so you would start a new fight.'
+                    return `${fighters} ${fighters === 1 ? 'player is' : 'players are'} fighting right now.`
+                  })()}
+              </div>
+            </button>
+          </div>
+
+          <p class="text-[10px] text-[var(--color-parchment)] opacity-50 mt-3">
+            While you are in a group fight the server runs your character, so the rest of the game is paused until you leave.
+          </p>
+        </Modal>
+      )}
+
       </>
     )
   }
@@ -3128,21 +3375,15 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           return (
             <>
               {/* Fight header */}
-              <div class="cb-fight__head">
-                <div class="cb-fight__id">
-                  <SkillEmblem iconKey={mArt.icon} accent={mArt.accent} size={34} glow={0} />
-                  <div class="min-w-0">
-                    <div class="cb-fight__name" style={{ color: getStyleArt(form ? form.attackStyle : m.attackStyle).color }}>{m.name}</div>
-                  </div>
-                </div>
-                <span class="flex items-center gap-1.5 flex-shrink-0">
-                  {arenaChip}
-                  <button class="cb-fight__cb" onClick={() => setSelectedMonsterInfo(m)} aria-label={`${m.name} info`}>
-                    CB {m.combatLevel}
-                    <GameIcon iconKey="info" color="#e0564b" size={13} />
-                  </button>
-                </span>
-              </div>
+              <CombatFightHead
+                icon={mArt.icon}
+                accent={mArt.accent}
+                name={m.name}
+                nameColor={getStyleArt(form ? form.attackStyle : m.attackStyle).color}
+                combatLevel={m.combatLevel}
+                onInfo={() => setSelectedMonsterInfo(m)}
+                aside={arenaChip}
+              />
 
               {/* Raid progress */}
               {combat.raid && (
@@ -3169,31 +3410,22 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
               ) : (
                 <>
                   {/* Monster HP */}
-                  <div class="cb-hpblock">
-                    <div class="cb-hplabel">
-                      <span>Enemy Hitpoints</span>
-                      <span class="cb-hplabel__v">{Math.max(0, Math.round(m.currentHP))}/{m.hitpoints}</span>
-                    </div>
-                    <div class="relative">
-                      <HPBar current={Math.max(0, m.currentHP)} max={m.hitpoints} size="large" />
-                      <HitSplatLayer splats={monsterSplats} />
-                    </div>
-                  </div>
+                  <CombatHPBlock
+                    label="Enemy Hitpoints"
+                    current={m.currentHP}
+                    max={m.hitpoints}
+                    splats={monsterSplats}
+                  />
 
                   {/* Player HP */}
-                  <div class="cb-hpblock">
-                    <div class="cb-hplabel">
-                      <span>Your Hitpoints</span>
-                      <span class="cb-hplabel__right">
-                        <ActivePotionBadges activePotions={combat?.activePotions} itemsData={itemsData} />
-                        <span class="cb-hplabel__v" style={{ color: '#7ce88a' }}>{Math.max(0, Math.round(currentHP))}/{getMaxHP()}</span>
-                      </span>
-                    </div>
-                    <div class="relative">
-                      <HPBar current={currentHP} max={getMaxHP()} size="large" />
-                      <HitSplatLayer splats={playerSplats} />
-                    </div>
-                  </div>
+                  <CombatHPBlock
+                    label="Your Hitpoints"
+                    current={currentHP}
+                    max={getMaxHP()}
+                    splats={playerSplats}
+                    valueColor="#7ce88a"
+                    right={<ActivePotionBadges activePotions={combat?.activePotions} itemsData={itemsData} />}
+                  />
                 </>
               )}
 
@@ -3201,18 +3433,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
 
               {/* Prayer pool */}
               {typeof combat?.maxPrayerPoints === 'number' && (
-                <div class="cb-hpblock">
-                  <div class="cb-hplabel">
-                    <span>🙏 Prayer</span>
-                    <span class="cb-hplabel__v" style={{ color: '#7ec8ff' }}>{Math.ceil(combat.prayerPoints || 0)}/{combat.maxPrayerPoints}</span>
-                  </div>
-                  <div class="h-2 rounded-full bg-[rgba(255,255,255,0.07)] overflow-hidden">
-                    <div
-                      class="h-full rounded-full bg-gradient-to-r from-[#3b82f6] to-[#7ec8ff]"
-                      style={{ width: `${Math.max(0, Math.min(100, ((combat.prayerPoints || 0) / combat.maxPrayerPoints) * 100))}%` }}
-                    />
-                  </div>
-                </div>
+                <CombatPrayerBlock current={combat.prayerPoints} max={combat.maxPrayerPoints} />
               )}
 
               {/* Slayer task indicator */}
@@ -3347,76 +3568,12 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           its membership in the quick-prayer list (persisted via updateQuickPrayers)
           rather than activating it. */}
       {showQuickPrayerConfig && (
-        <Modal onClose={() => setShowQuickPrayerConfig(false)}>
-          <div class="cb-prayhead">
-            <h3>Quick Prayers</h3>
-            <button onClick={() => setShowQuickPrayerConfig(false)} class="cb-x" aria-label="Close">
-              <GameIcon iconKey="cancel" color="var(--fm-ink-soft)" size={16} />
-            </button>
-          </div>
-
-          {(() => {
-            const selected = Array.isArray(quickPrayers) ? quickPrayers : []
-            const toggle = (prayerId) => {
-              updateQuickPrayers(selected.includes(prayerId)
-                ? selected.filter(id => id !== prayerId)
-                : [...selected, prayerId])
-            }
-            const prayerLevel = getLevelFromXP(stats.prayer?.xp || 0)
-            const protectionPrayers = Object.values(prayersData).filter(p => p.bonusType === 'protection')
-            const combatPrayers = Object.values(prayersData)
-              .filter(p => p.bonusType !== 'protection')
-              .sort((a, b) => b.level - a.level)
-            return (
-              <div class="max-h-96 overflow-y-auto">
-                <p class="text-[11px] text-[var(--color-parchment)] opacity-50 mb-2 px-0.5">Pick the prayers to show in the combat Prayers tab.</p>
-                <div class="cb-praysec">Protection</div>
-                <div class="cb-praygrid cb-praygrid--prot">
-                  {protectionPrayers.map(prayer => {
-                    const canUse = prayerLevel >= prayer.level
-                    const isPicked = selected.includes(prayer.id)
-                    const protectType = prayer.style === 'magic' ? 'Magic' : prayer.style === 'ranged' ? 'Ranged' : 'Melee'
-                    return (
-                      <button
-                        key={prayer.id}
-                        onClick={() => canUse && toggle(prayer.id)}
-                        disabled={!canUse}
-                        class={'cb-prayer' + (isPicked ? ' is-on' : '') + (!canUse ? ' is-locked' : '')}
-                        style={{ alignItems: 'center', textAlign: 'center', minHeight: 64 }}
-                      >
-                        <span class="cb-prayer__name" style={{ justifyContent: 'center', gap: '4px' }}><SkillIcon skill={prayerSkill(prayer)} size={14} /> Protect</span>
-                        <span class="cb-prayer__desc" style={{ textAlign: 'center', width: '100%' }}>{protectType}</span>
-                        <span class="cb-prayer__lv" style={{ margin: '0 auto' }}>Lv {prayer.level}</span>
-                        {isPicked && <span class="cb-prayer__chk">✓</span>}
-                      </button>
-                    )
-                  })}
-                </div>
-
-                <div class="cb-praysec">Combat</div>
-                <div class="cb-praygrid">
-                  {combatPrayers.map(prayer => {
-                    const canUse = prayerLevel >= prayer.level
-                    const isPicked = selected.includes(prayer.id)
-                    return (
-                      <button
-                        key={prayer.id}
-                        onClick={() => canUse && toggle(prayer.id)}
-                        disabled={!canUse}
-                        class={'cb-prayer' + (isPicked ? ' is-on' : '') + (!canUse ? ' is-locked' : '')}
-                      >
-                        <span class="cb-prayer__name" style={{ gap: '4px' }}><SkillIcon skill={prayerSkill(prayer)} size={14} /> {prayer.name}</span>
-                        <span class="cb-prayer__desc">{prayer.description}</span>
-                        <span class="cb-prayer__lv">Lv {prayer.level}</span>
-                        {isPicked && <span class="cb-prayer__chk">✓</span>}
-                      </button>
-                    )
-                  })}
-                </div>
-              </div>
-            )
-          })()}
-        </Modal>
+        <QuickPrayerConfigModal
+          prayerLevel={getLevelFromXP(stats.prayer?.xp || 0)}
+          selected={quickPrayers}
+          onChange={updateQuickPrayers}
+          onClose={() => setShowQuickPrayerConfig(false)}
+        />
       )}
 
       {/* Potion modal */}
@@ -3623,22 +3780,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       {/* Loot Modal */}
       {lootModal && (() => {
         const drops = !lootModal.loading && lootModal.loot ? lootModal.loot : []
-        const valuedDrops = drops.map(d => {
-          const unitVal = getItemUnitValue(d.itemId, itemsData) || 0
-          return { ...d, unitGp: unitVal, totalGp: unitVal * (d.quantity || 1) }
-        })
-        const sorted = [...valuedDrops].sort((a, b) => b.totalGp - a.totalGp)
-        // Spotlight the highest *unit* shop value (the rare/prestige drop), not
-        // the biggest stack — a billion coins shouldn't outrank dragon claws.
-        // Tie-break by total gp. The loot list keeps its total-gp ordering.
-        const hero = valuedDrops.reduce((best, d) => {
-          if (!best) return d
-          if ((d.unitGp || 0) !== (best.unitGp || 0)) return (d.unitGp || 0) > (best.unitGp || 0) ? d : best
-          return (d.totalGp || 0) > (best.totalGp || 0) ? d : best
-        }, null)
-        const rest = sorted.filter(d => d !== hero)
-        const heroItemData = hero ? (itemsData[hero.itemId] || null) : null
-        const lootTotal = valuedDrops.reduce((s, d) => s + d.totalGp, 0)
+        const { hero, heroItem: heroItemData, rest, total: lootTotal } = shapeLootForModal(drops, itemsData)
         const isRaid = !!lootModal.raidId
 
         return (
@@ -3661,16 +3803,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
               ? (isRaid ? `Skip raid (${raidsData[lootModal.raidId]?.skipCost ?? 1})` : 'Skip')
               : null}
             onSkip={skipAgain}
-            loot={!lootModal.loading && rest.length > 0
-              ? rest.map((drop, idx) => ({
-                  key: idx,
-                  item: itemsData[drop.itemId] || null,
-                  name: itemsData[drop.itemId]?.name || drop.itemId,
-                  quantity: drop.quantity,
-                  gp: drop.totalGp,
-                  unitGp: drop.unitGp,
-                }))
-              : null}
+            loot={!lootModal.loading && rest.length > 0 ? lootRowsForModal(rest, itemsData) : null}
             lootTitle="Loot Secured"
             lootTotal={lootTotal}
             primaryAction={!lootModal.loading ? {

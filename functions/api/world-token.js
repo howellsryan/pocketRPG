@@ -1,6 +1,7 @@
 import { requireAuth, json } from '../_lib/auth.js'
 import { signJWT } from '../_lib/jwt.js'
 import { assertNotInActiveMatch } from '../_lib/pvp.js'
+import { assertNotInCoopSession } from '../_lib/game/coopBoss.js'
 
 const HANDOFF_EXPIRES_SECONDS = 60
 
@@ -21,6 +22,11 @@ export async function onRequestPost({ request, env }) {
   // path mutates the save and would bypass the match's save-lockdown (§10/§14).
   const lock = await assertNotInActiveMatch(env, row.id)
   if (lock) return lock
+  // Same for a co-op boss fight, and for the same reason: the world's grant
+  // flush writes the save directly, so it does not pass through /api/save's
+  // co-op lock at all.
+  const coopLock = await assertNotInCoopSession(env, row.id)
+  if (coopLock) return coopLock
 
   const handoff = await signJWT(
     { sub: auth.identity.id, character_id: row.id, scope: 'world_handoff' },

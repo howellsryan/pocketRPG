@@ -52,6 +52,7 @@ import { startTicks, stopTicks, onTick, pauseTicks, resumeTicks } from './engine
 import { wipeLocalSave } from './db/saveload.js'
 import { api, captureTokenFromHash, getToken, getCharacterId, getCharacterName, setCharacter, clearAuth, getLocalCharacterId, setLocalCharacterId, getIronmanMode, getOneLifeMode, syncAccountModeFlags, isDemoMode, setDemoMode, CREDITS_UPDATED_EVENT } from './cloud/api.js'
 import { schedulePushSave, schedulePeriodicSave, pushNow, beaconSaveNow, pullSave, applyCloudSave, checkCloudNewer, isLocalWriteNewerThanCloud, resetSyncState, requestCriticalPushSave, retrySaveNow, isSaveConflict, clearSaveConflict, CLOUD_SAVE_STATUS_EVENT } from './cloud/sync.js'
+import { getActiveCoopSession, COOP_SESSION_EVENT } from './cloud/coop.js'
 import { CRITICAL_SAVE_REASONS } from './cloud/criticalSavePolicy.js'
 import { fetchIdleState, resetIdleStateSync } from './cloud/idleState.js'
 import { isBackground, getActivityKey } from './engine/activityRegistry.js'
@@ -403,6 +404,15 @@ function GameApp() {
   const prevPvpPhaseRef = useRef(pvp.phase)
   const isInPvpMatch = pvp.phase === 'in_match'
   const [suppressIdleModalUntil, setSuppressIdleModalUntil] = useState(0)
+  // Mirrors the co-op session id into render state. Reading the module getter
+  // during render only worked when some unrelated re-render happened to follow
+  // the change.
+  const [inCoopFight, setInCoopFight] = useState(() => !!getActiveCoopSession())
+  useEffect(() => {
+    const onCoop = (e) => setInCoopFight(!!e.detail?.sessionId)
+    window.addEventListener(COOP_SESSION_EVENT, onCoop)
+    return () => window.removeEventListener(COOP_SESSION_EVENT, onCoop)
+  }, [])
 
   // Refs for tick-based systems
   const hpRegenCounter = useRef(0)
@@ -3340,7 +3350,7 @@ function GameApp() {
       )}
 
       {/* Idle Result Modal */}
-      {idleResult && !skipSaving && !gameLocked && pvp.phase !== 'in_match' && Date.now() >= suppressIdleModalUntil && (() => {
+      {idleResult && !skipSaving && !gameLocked && pvp.phase !== 'in_match' && !inCoopFight && Date.now() >= suppressIdleModalUntil && (() => {
         const hrs = idleResult.elapsedMs / 3600000
         const perHr = (n) => hrs > 0 ? Math.round(n / hrs).toLocaleString() : '—'
 

@@ -66,3 +66,35 @@ export function splatsFromPvpEvents(events, selfCharacterId) {
   }
   return { self, opp }
 }
+
+// Maps a co-op boss tick's events to splats for one viewer. Every member's
+// events arrive tagged with the `characterId` whose session produced them, so
+// damage dealt to the boss shows for the whole group (that is the shared HP
+// bar everyone is chipping at) while incoming damage only splats for the member
+// the boss actually swung at. Returns { boss, add, player }.
+export function splatsFromCoopEvents(events, selfCharacterId) {
+  const boss = []
+  const add = []
+  const player = []
+  const selfId = Number(selfCharacterId)
+  for (const ev of events || []) {
+    if (!ev) continue
+    const mine = Number(ev.characterId) === selfId
+    const dealt = ev.toAdd ? add : boss
+    if (ev.type === 'playerHit') {
+      dealt.push(makeHitSplat(ev.damage))
+    } else if (ev.type === 'specialHit') {
+      for (const hit of ev.hits || []) dealt.push(makeHitSplat(hit))
+    } else if (ev.type === 'summonHit') {
+      boss.push(makeHitSplat(ev.damage, 'summon'))
+    } else if (mine && ev.isTarget && (ev.type === 'monsterHit' || ev.type === 'dragonfireHit')) {
+      player.push(makeHitSplat(ev.damage))
+    } else if (mine && ev.isTarget && ev.type === 'monsterMiss') {
+      player.push(makeHitSplat(0))
+    } else if (mine && ev.type === 'boltProc' && ev.selfDamage) {
+      // Blood-forfeit recoil: self-inflicted, so it lands whoever the boss faces.
+      player.push(makeHitSplat(ev.selfDamage))
+    }
+  }
+  return { boss, add, player }
+}

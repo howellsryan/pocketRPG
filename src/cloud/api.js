@@ -30,7 +30,7 @@ function emitActiveMatchConflict(matchId = null) {
   window.dispatchEvent(new CustomEvent(ACTIVE_MATCH_EVENT, { detail: { matchId: safeMatchId } }))
 }
 
-function emitSaveRevision(revision) {
+export function emitSaveRevision(revision) {
   if (typeof window === 'undefined') return
   const parsed = Number(revision)
   if (!Number.isFinite(parsed) || parsed < 0) return

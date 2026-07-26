@@ -33,6 +33,7 @@ type MonsterNames = Record<string, { name?: string } | undefined>
 const monsterNames = monstersDataJson as MonsterNames
 import { isCharacterInActiveMatch } from './pvpLock'
 import { beginWorldSession, refreshWorldSession, endWorldSession } from '../../functions/_lib/game/worldSessions.js'
+import { isCoopSessionLive } from '../../functions/_lib/game/coopBoss.js'
 import { loadCharacterWithSave } from '../../functions/_lib/game/save.js'
 import { zoneSpawnSummary, type ZoneDef, type ZoneExitDef } from '../shared/zone'
 import { ZONES } from './zones'
@@ -409,6 +410,13 @@ export class WorldZone extends Server<Env> {
     // mutates the save and would bypass the match's save-lockdown (§10/§14).
     if (await isCharacterInActiveMatch(this.env, row.id)) {
       connection.close(1008, 'in_active_match')
+      return
+    }
+
+    // Same for a live co-op boss fight: the room is the authority on this
+    // character's pack and XP until they leave it.
+    if (await isCoopSessionLive(this.env, row.id)) {
+      connection.close(1008, 'in_coop_session')
       return
     }
 

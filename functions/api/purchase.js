@@ -1,5 +1,6 @@
 import { requireAuth, json } from '../_lib/auth.js'
 import { assertNotInActiveMatch } from '../_lib/pvp.js'
+import { assertNotInCoopSession } from '../_lib/game/coopBoss.js'
 import itemsData from '../../src/data/items.json' assert { type: 'json' }
 import minigamesData from '../../src/data/minigames.json' assert { type: 'json' }
 import questsData from '../../src/data/quests.json' assert { type: 'json' }
@@ -34,6 +35,10 @@ export async function onRequestPost({ request, env }) {
 
     const lock = await assertNotInActiveMatch(env, characterId)
     if (lock) return lock
+    // A co-op boss fight owns this save the same way a PvP match does: the room
+    // is mutating the pack tick by tick and replays its snapshot on write-back.
+    const coopLock = await assertNotInCoopSession(env, characterId)
+    if (coopLock) return coopLock
 
     const item = itemsData[itemId]
     if (!item) return json({ error: 'Item not found', code: 'ITEM_NOT_FOUND' }, 404)

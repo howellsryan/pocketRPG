@@ -50,21 +50,20 @@ function makeRequest(body: Record<string, unknown> = {}, { characterId = '42', a
   })
 }
 
-// Mirrors the slayer-skip harness: prepare call order is
-//   1: SELECT characters (existence) · 2: assertNotInActiveMatch SELECT
-//   active_match_id · 3: debit UPDATE. With active_match_id null (the common
-//   case) the pvp_matches probe is skipped, so the debit is call #3.
+// Routed on the SQL rather than the prepare-call index: the endpoint's lock
+// checks (PvP active match, live co-op session) sit between the existence probe
+// and the debit, so a positional mock breaks every time one is added.
+// Everything unmatched resolves null, which reads as "no lock held".
 function mockEnv({ characterRow = { id: 42 }, debitResult = { credits_remaining: 0 } } = {}) {
   const characterFirst = vi.fn().mockResolvedValue(characterRow)
   const debitFirst = vi.fn().mockResolvedValue(debitResult)
   const lockFirst = vi.fn().mockResolvedValue(null)
-  let prepareCallCount = 0
-  const prepare = vi.fn((_sql: string) => {
-    prepareCallCount += 1
-    const localCount = prepareCallCount
+  const prepare = vi.fn((sql: string) => {
+    const isDebit = /UPDATE\s+characters/i.test(sql) && /credits/i.test(sql)
+    const isExistence = /SELECT\s+id\s+FROM\s+characters/i.test(sql)
     const bind = vi.fn(() => {
-      if (localCount === 1) return { first: characterFirst, all: vi.fn(), run: vi.fn() }
-      if (localCount === 3) return { first: debitFirst, all: vi.fn(), run: vi.fn() }
+      if (isDebit) return { first: debitFirst, all: vi.fn(), run: vi.fn() }
+      if (isExistence) return { first: characterFirst, all: vi.fn(), run: vi.fn() }
       return { first: lockFirst, all: vi.fn(), run: vi.fn() }
     })
     return { bind }

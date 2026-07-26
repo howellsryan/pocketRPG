@@ -275,6 +275,44 @@ describe('cloud sync save status events', () => {
     expect(putSaveMock).toHaveBeenCalledTimes(2)
   })
 
+  it('keeps saves suspended until every holder has resumed', async () => {
+    putSaveMock.mockResolvedValue({ updatedAt: 1, save_revision: 2 })
+    const sync = await import('../src/cloud/sync.js')
+
+    // A long hold (co-op boss session — the server owns the save) with a short
+    // blocking op nested inside it.
+    sync.suspendSaves()
+    sync.suspendSaves()
+    expect(sync.saveSuspensionDepth()).toBe(2)
+
+    // The inner holder finishing must NOT lift the outer suspension.
+    sync.resumeSaves()
+    expect(sync.saveSuspensionDepth()).toBe(1)
+    sync.schedulePushSave({ player: { name: 'Hero' } })
+    await vi.advanceTimersByTimeAsync(120_000)
+    await vi.runAllTicks()
+    expect(putSaveMock).not.toHaveBeenCalled()
+
+    // Only once the outer holder releases does the cadence come back.
+    sync.resumeSaves()
+    expect(sync.saveSuspensionDepth()).toBe(0)
+    sync.schedulePushSave({ player: { name: 'Hero', hp: 42 } })
+    await vi.advanceTimersByTimeAsync(120_000)
+    await vi.runAllTicks()
+    expect(putSaveMock).toHaveBeenCalledTimes(1)
+  })
+
+  it('never drops the suspension depth below zero on an unbalanced resume', async () => {
+    const sync = await import('../src/cloud/sync.js')
+    sync.resumeSaves()
+    sync.resumeSaves()
+    expect(sync.saveSuspensionDepth()).toBe(0)
+    sync.suspendSaves()
+    expect(sync.saveSuspensionDepth()).toBe(1)
+    sync.resumeSaves()
+    expect(sync.saveSuspensionDepth()).toBe(0)
+  })
+
   it('resetSyncState clears suspension and conflict flags', async () => {
     putSaveMock.mockRejectedValueOnce({ status: 409, body: { code: 'SAVE_REVISION_CONFLICT', current_revision: 5 } })
     const sync = await import('../src/cloud/sync.js')

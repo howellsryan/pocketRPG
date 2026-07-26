@@ -84,7 +84,12 @@ describe('special energy is a session resource, not a per-fight one', () => {
     const { npcs, npc } = bull()
     const player = makePlayer({ specialEnergy: 20 })
     startCombat(player, npc, emptyResult())
+    // A level-40 player one-shots an 8 HP bull often enough to make this flaky;
+    // the tick under test has to land mid-fight, so put the kill out of reach.
+    npc.hp = 999
+    player.combat!.state.monster.currentHP = 999
     tickPlayer(player, ctx(1, npcs))
+    expect(player.combat).toBeTruthy()
     expect(player.specialEnergy).toBeGreaterThan(20)
     expect(player.combat!.state.specialAttackEnergy).toBe(player.specialEnergy)
   })

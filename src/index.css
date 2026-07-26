@@ -1084,8 +1084,11 @@ html, body, #app {
 .cb-mon--task { background: linear-gradient(160deg, #1f1d08, #161206); border-color: rgba(240,192,64,0.28); }
 .cb-mon__art { flex-shrink: 0; }
 .cb-mon__body { flex: 1; min-width: 0; }
-.cb-mon__name { font-family: var(--font-display); font-weight: 700; font-size: 16px; color: var(--color-parchment); display: flex; align-items: center; gap: 6px; }
-.cb-mon__tasktag { font-family: var(--font-mono); font-size: 8.5px; font-weight: 800; letter-spacing: 0.08em; color: #1a1206; background: var(--color-gold-light); padding: 1px 4px; border-radius: 4px; }
+/* Tags wrap under the name instead of squeezing it: a boss can carry TASK and
+   GROUP at once, and long boss names leave no room for both on one line. */
+.cb-mon__name { font-family: var(--font-display); font-weight: 700; font-size: 16px; color: var(--color-parchment); display: flex; align-items: center; flex-wrap: wrap; gap: 3px 6px; }
+.cb-mon__tasktag { flex-shrink: 0; font-family: var(--font-mono); font-size: 8.5px; font-weight: 800; letter-spacing: 0.08em; color: #1a1206; background: var(--color-gold-light); padding: 1px 4px; border-radius: 4px; }
+.cb-mon__grouptag { flex-shrink: 0; font-family: var(--font-mono); font-size: 8.5px; font-weight: 800; letter-spacing: 0.08em; color: var(--color-gold); border: 1px solid var(--color-gold-dim); padding: 0 4px; border-radius: 4px; }
 .cb-mon__stats { display: flex; align-items: center; gap: 7px; margin-top: 3px; font-family: var(--font-mono); font-size: 10.5px; color: var(--color-parchment); opacity: 0.5; }
 .cb-mon__stats i { width: 3px; height: 3px; border-radius: 50%; background: currentColor; opacity: 0.5; }
 .cb-mon__lock { font-size: 9px; font-weight: 700; color: var(--color-blood-light); margin-top: 2px; }
@@ -1107,6 +1110,8 @@ html, body, #app {
 .cb-fight__chips { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
 .cb-fight__cb { flex-shrink: 0; display: inline-flex; align-items: center; gap: 5px; font-family: var(--font-mono); font-weight: 700; font-size: 13px; color: #e0564b; background: rgba(224,86,75,0.08); border: 1px solid rgba(224,86,75,0.3); border-radius: 999px; padding: 8px 12px; cursor: pointer; min-height: 36px; }
 .cb-fight__cb img, .cb-fight__cb svg { width: 13px; height: 13px; }
+.cb-fight__sub { font-size: 11px; font-weight: 700; color: var(--color-parchment); opacity: 0.55; margin-top: 3px; }
+span.cb-fight__cb { cursor: default; }
 
 .cb-hpblock { margin-bottom: 11px; }
 .cb-hplabel { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-bottom: 6px; font-size: 11px; font-weight: 700; color: var(--color-parchment); opacity: 0.62; letter-spacing: 0.02em; }
@@ -1136,6 +1141,10 @@ html, body, #app {
 .cb-kstat__v { font-family: var(--font-mono); font-weight: 700; font-size: 19px; color: var(--color-gold-light); }
 
 .cb-actions { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 9px; }
+.cb-actions--two { grid-template-columns: 1fr 1fr; }
+.cb-respawn { display: flex; align-items: baseline; justify-content: center; gap: 8px; margin-bottom: 11px; padding: 8px 12px; border: 1px solid var(--color-gold-dim); border-radius: 10px; background: var(--color-void); }
+.cb-respawn__label { font-size: 11px; font-weight: 700; color: var(--color-parchment); opacity: 0.62; }
+.cb-respawn__v { font-family: var(--font-mono); font-weight: 700; font-size: 15px; color: var(--color-gold); }
 .cb-act {
   display: flex; align-items: center; justify-content: center; gap: 7px; min-height: 48px; padding: 13px 6px;
   border-radius: var(--fm-r-sm); cursor: pointer; font-family: var(--fm-serif); font-weight: 700; font-size: 14px;

@@ -29,6 +29,10 @@ How PocketRPG stays regression-resistant. Deep rationale: `docs/testing-strategy
 | Save / sync integrity | `saveEndpoint`, `saveRevisionMandatory`, `totalLevelRegression`, `criticalSavePolicy` | `functions/api/save.js`, `functions/_lib/game/saveValidation.js` |
 | Server-authoritative grants | `actionCompletion*`, `rewardClaimAuthority`, `serverAuthority` | `functions/api/actions/**` |
 | PvP | `pvp*` | `functions/_lib/pvp*`, `src/engine/pvp*` |
+| Co-op bosses | `coopBoss*`, `coopSessionLock`, `coopProjection` | `src/engine/coopBossEngine.js`, `functions/_lib/game/coopBoss.js`, `functions/_lib/game/coopProjection.js`, `functions/api/coop/**`, `world/server/CoopBossRoom.ts` |
+| Co-op integrity (§14) | `coopBossIntegrity` | exactly-once kill settlement, the save-revision write-back tripwire, server-side boss gating, per-member save lock, sweep write-back, retention |
+| Combat feedback | `hitSplats`, `xpDrops`, `lootModal` | `src/utils/hitSplats.js`, `src/utils/xpDrops.js`, `src/utils/lootModal.js` |
+| Save-lock classification | `saveErrors` | `src/cloud/saveErrors.js` (every lock in `functions/api/save.js` must be listed there) |
 | MCP / chat | `mcp*`, `chat*` | `functions/api/mcp.js`, `functions/_lib/chat/**` |
 
 ## Invariant specs (`tests/spec/`)

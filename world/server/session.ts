@@ -1,5 +1,6 @@
 import { signJWT, verifyJWT } from '../../functions/_lib/jwt.js'
 import { isCharacterInActiveMatch } from './pvpLock'
+import { isCoopSessionLive } from '../../functions/_lib/game/coopBoss.js'
 import type { Env } from './env'
 
 const WORLD_SESSION_EXPIRES_SECONDS = 60 * 60 * 24
@@ -48,6 +49,11 @@ export async function handleWorldSession(request: Request, env: Env): Promise<Re
   // /api/world-token's check — a 60s handoff could still be replayed here).
   if (await isCharacterInActiveMatch(env, row.id)) {
     return jsonResponse({ error: 'character_in_active_match', code: 'CHARACTER_IN_ACTIVE_MATCH' }, 409)
+  }
+  // Same for a live co-op boss fight: the room owns this save's pack and XP,
+  // and flushGrants would write straight over it.
+  if (await isCoopSessionLive(env, row.id)) {
+    return jsonResponse({ error: 'character_in_coop_session', code: 'CHARACTER_IN_COOP_SESSION' }, 409)
   }
 
   const token = await signJWT(
