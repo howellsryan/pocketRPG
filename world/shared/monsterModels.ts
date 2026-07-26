@@ -14,6 +14,10 @@ export type MonsterModel = {
    * entities.ts layers a procedural bob/rock (motion.ts gaitBob) on top of
    * the idle clip while moving instead. */
   noLocomotionClip?: boolean
+  /** Keep this monster out of the sun's shadow pass. The shadow map is sized
+   * for the area around the hero, so a model several tiles tall smears a shadow
+   * across it that reads worse than none — especially indoors, under a dim sun. */
+  noShadow?: boolean
 }
 
 export const MONSTER_MODELS: Record<string, MonsterModel> = {
@@ -56,6 +60,7 @@ export const MONSTER_MODELS: Record<string, MonsterModel> = {
     bounds: { minX: -1.0, minY: -0.874, minZ: -0.503, maxX: 1.0, maxY: 0.874, maxZ: 0.503 },
     targetHeight: 2.8,
     noLocomotionClip: true,
+    noShadow: true,
   },
 }
 

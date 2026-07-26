@@ -290,6 +290,9 @@ export async function createMonsterMesh(monsterId: string | undefined): Promise<
       const gltf = await loadTemplate(spec.url)
       const model = cloneSkeleton(gltf.scene)
       disableFrustumCulling(model)
+      // After disableFrustumCulling — it forces castShadow on everything it
+      // walks, so opting out has to come second.
+      if (spec.noShadow) model.traverse((obj) => { obj.castShadow = false })
       const b = spec.bounds
       model.position.set(-(b.minX + b.maxX) / 2, -b.minY + (spec.hover ?? 0), -(b.minZ + b.maxZ) / 2)
       const group = new THREE.Group()

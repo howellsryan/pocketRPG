@@ -7,6 +7,7 @@ import { createStatics } from '../statics'
 import { createProps } from '../props'
 import { createAmbient } from '../ambient'
 import overworldZone from '../../../zones/overworld.json'
+import grondarLairZone from '../../../zones/grondar_lair.json'
 
 // Auth-free, server-free terrain preview. Renders a bundled zone JSON through
 // the REAL terrain pipeline (createTerrain + scatter + statics/props), so it
@@ -16,6 +17,7 @@ import overworldZone from '../../../zones/overworld.json'
 
 const ZONES: Record<string, ZoneDef> = {
   overworld: overworldZone as unknown as ZoneDef,
+  grondar_lair: grondarLairZone as unknown as ZoneDef,
 }
 
 declare global {

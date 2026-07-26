@@ -1,6 +1,8 @@
 import { signJWT, verifyJWT } from '../../functions/_lib/jwt.js'
 import { isCharacterInActiveMatch } from './pvpLock'
 import { isCoopSessionLive } from '../../functions/_lib/game/coopBoss.js'
+import { isInstancedRoom, isInstancedZone } from '../shared/instances'
+import { assignInstanceRoom } from './instances'
 import type { Env } from './env'
 
 const WORLD_SESSION_EXPIRES_SECONDS = 60 * 60 * 24
@@ -61,12 +63,25 @@ export async function handleWorldSession(request: Request, env: Env): Promise<Re
     env.JWT_SECRET,
     WORLD_SESSION_EXPIRES_SECONDS
   )
-  // The character's current zone, so a fresh device connects to the right DO.
-  // Zones folded into the merged overworld redirect to it (mirror of
+  // An entry target asked for by the idle game (the boss picker's "fight in the
+  // open world"). Only instanced zones are accepted — this is a doorway into a
+  // boss lair, not a free teleport into arbitrary geography — and the room is
+  // picked here so the player joins whichever copy has space.
+  const requested = typeof payload.world_zone === 'string' ? payload.world_zone : null
+  if (requested && isInstancedZone(requested)) {
+    const zone = await assignInstanceRoom(env, requested)
+    return jsonResponse({ token, character: { id: row.id, name: row.username }, zone })
+  }
+
+  // Otherwise the character's current zone, so a fresh device connects to the
+  // right DO. Zones folded into the merged overworld redirect to it (mirror of
   // client/src/auth.ts MERGED_ZONES); a fresh character has no row → overworld.
+  // An instance is a visit, never a home: logging back in from inside one lands
+  // in the overworld rather than reserving a slot in a room that may be full.
   const pos = await env.DB.prepare('SELECT zone_id FROM world_positions WHERE character_id = ?')
     .bind(row.id).first<{ zone_id: string }>()
   const merged = new Set(['pasture', 'forest', 'lumbright', 'varrick', 'varrick_dungeon'])
-  const zone = pos && !merged.has(pos.zone_id) ? pos.zone_id : 'overworld'
+  const resumable = pos && !merged.has(pos.zone_id) && !isInstancedRoom(pos.zone_id)
+  const zone = resumable ? pos.zone_id : 'overworld'
   return jsonResponse({ token, character: { id: row.id, name: row.username }, zone })
 }

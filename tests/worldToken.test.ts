@@ -9,10 +9,14 @@ async function makeAuthHeader(identityId = 'identity-1') {
   return `Bearer ${token}`
 }
 
-function makeRequest({ characterId = '42', auth = '' } = {}) {
+function makeRequest({ characterId = '42', auth = '', body = undefined as unknown } = {}) {
   const headers: Record<string, string> = { 'X-Character-Id': characterId }
   if (auth) headers.Authorization = auth
-  return new Request('https://example.test/api/world-token', { method: 'POST', headers })
+  return new Request('https://example.test/api/world-token', {
+    method: 'POST',
+    headers,
+    ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+  })
 }
 
 function mockEnv({ characterRow = { id: 42 } as any } = {}) {
@@ -46,5 +50,24 @@ describe('POST /api/world-token', () => {
     const payload = await verifyJWT(body.handoff, TEST_SECRET)
     expect(payload).toMatchObject({ sub: 'identity-1', character_id: 42, scope: 'world_handoff' })
     expect(payload.exp - payload.iat).toBe(60)
+    expect(payload.world_zone).toBeUndefined()
+  })
+
+  it('carries a requested entry zone through as a claim', async () => {
+    const env = mockEnv({ characterRow: { id: 42 } })
+    const auth = await makeAuthHeader('identity-1')
+    const res = await onRequestPost({ request: makeRequest({ auth, body: { zone: 'grondar_lair' } }), env } as any)
+    const payload = await verifyJWT((await res.json()).handoff, TEST_SECRET)
+    expect(payload.world_zone).toBe('grondar_lair')
+  })
+
+  it('drops a zone that is not a plain zone id, rather than signing it', async () => {
+    const env = mockEnv({ characterRow: { id: 42 } })
+    const auth = await makeAuthHeader('identity-1')
+    for (const zone of ['../../etc', 'Grondar Lair', 'grondar_lair~3', 42, null]) {
+      const res = await onRequestPost({ request: makeRequest({ auth, body: { zone } }), env } as any)
+      const payload = await verifyJWT((await res.json()).handoff, TEST_SECRET)
+      expect(payload.world_zone, String(zone)).toBeUndefined()
+    }
   })
 })

@@ -36,6 +36,7 @@ import { beginWorldSession, refreshWorldSession, endWorldSession } from '../../f
 import { isCoopSessionLive } from '../../functions/_lib/game/coopBoss.js'
 import { loadCharacterWithSave } from '../../functions/_lib/game/save.js'
 import { zoneSpawnSummary, type ZoneDef, type ZoneExitDef } from '../shared/zone'
+import { baseRoomZone, isInstancedRoom, MAX_PLAYERS_PER_INSTANCE } from '../shared/instances'
 import { ZONES } from './zones'
 import { loadStoredZone } from './zoneStore'
 import { gearFromEquipment } from '../shared/appearance'
@@ -201,7 +202,14 @@ export class WorldZone extends Server<Env> {
   private zoneLoadPromise: Promise<ZoneDef | null> | null = null
 
   get zone(): ZoneDef {
-    return this.loadedZone ?? ZONES[this.name] ?? (overworldZone as unknown as ZoneDef)
+    return this.loadedZone ?? ZONES[baseRoomZone(this.name)] ?? (overworldZone as unknown as ZoneDef)
+  }
+
+  /** Live occupancy, for the instance assigner (server/instances.ts). Called as
+   * a Durable Object RPC, so it must stay serializable and side-effect free.
+   * Lingering players still hold their slot — they are in-world, just frozen. */
+  playerCount(): number {
+    return this.players.size
   }
 
   /** Resolves and caches this DO's zone def once: stored D1 def first, else the
@@ -211,8 +219,9 @@ export class WorldZone extends Server<Env> {
     if (this.loadedZone) return this.loadedZone
     if (!this.zoneLoadPromise) {
       this.zoneLoadPromise = (async () => {
-        const stored = await loadStoredZone(this.env.DB, this.name).catch(() => null)
-        return stored ?? ZONES[this.name] ?? null
+        const base = baseRoomZone(this.name)
+        const stored = await loadStoredZone(this.env.DB, base).catch(() => null)
+        return stored ?? ZONES[base] ?? null
       })()
     }
     const zone = await this.zoneLoadPromise
@@ -452,6 +461,15 @@ export class WorldZone extends Server<Env> {
       return
     }
 
+    // Instance capacity. Checked only after the reconnect branch above, so a
+    // player already holding a slot is never locked out of their own fight by
+    // a dropped socket. The assigner (server/instances.ts) normally routes
+    // around a full room; this is the race-proof backstop.
+    if (isInstancedRoom(this.name) && this.players.size >= MAX_PLAYERS_PER_INSTANCE) {
+      connection.close(1008, 'instance_full')
+      return
+    }
+
     let stats
     let seeded
     let equipment: Record<string, unknown> = {}
@@ -556,12 +574,15 @@ export class WorldZone extends Server<Env> {
       selfId: player.charId,
       tick: this.tickCount,
       zone: {
-        id: this.zone.id,
+        // The ROOM name, not the authored zone id: the client stores this and
+        // reconnects to it, and an instance must be re-entered by room or the
+        // player rejoins a different copy of the lair.
+        id: this.name,
         name: this.zone.name,
         w: this.zone.width,
         h: this.zone.height,
         collision: this.zone.collision,
-        ...(this.zone.exits?.length ? { exits: this.zone.exits.map((e) => ({ id: e.id, x: e.x, z: e.z, label: e.label })) } : {}),
+        ...(this.zone.exits?.length ? { exits: this.zone.exits.map((e) => ({ id: e.id, x: e.x, z: e.z, label: e.label, ...(e.hideMarker ? { hideMarker: true } : {}) })) } : {}),
         ...(this.zone.landmarks?.length ? { landmarks: this.zone.landmarks } : {}),
         ...(this.zone.props?.length ? { props: this.zone.props } : {}),
         ...(this.zone.palette ? { palette: this.zone.palette } : {}),
@@ -690,20 +711,27 @@ export class WorldZone extends Server<Env> {
         this.handleFollow(player, message.targetId)
         break
       case 'logout':
-        void this.logout(player)
+        void this.depart(player, 'logout')
+        break
+      case 'leave':
+        void this.depart(player, 'leave')
         break
       case 'hello':
         break
     }
   }
 
-  /** Explicit logout: remove the player now (no linger), flush + checkpoint, tell
-   * others they left, and close the socket. The client clears its session. */
-  private async logout(player: Player): Promise<void> {
+  /** Leaving on purpose — an explicit logout, or a tab actually being closed.
+   * Removes the player now, with no linger: the grace period exists for sockets
+   * that dropped by accident, and sitting on the save lock for a minute after a
+   * deliberate exit is what leaves the idle game unable to save when the player
+   * switches straight back to it. Flushes, checkpoints, releases the lock, then
+   * closes. `logout` also tells the client, which clears its stored session. */
+  private async depart(player: Player, reason: 'logout' | 'leave'): Promise<void> {
     const conn = player.conn
     await this.removeAndFlush(player)
-    send(conn, { t: 'error', code: 'logged_out', msg: 'You have left the world.' })
-    conn.close(1000, 'logout')
+    if (reason === 'logout') send(conn, { t: 'error', code: 'logged_out', msg: 'You have left the world.' })
+    conn.close(1000, reason)
   }
 
   /** Takes an equipped item off, returning it to the pack (reverse of equip):
@@ -1616,7 +1644,7 @@ export class WorldZone extends Server<Env> {
         this.env.DB.prepare(
           `INSERT INTO world_positions (character_id, zone_id, x, z, updated_at) VALUES (?, ?, ?, ?, ?)
            ON CONFLICT(character_id) DO UPDATE SET zone_id = excluded.zone_id, x = excluded.x, z = excluded.z, updated_at = excluded.updated_at`
-        ).bind(Number(p.charId), this.zone.id, p.x, p.z, now)
+        ).bind(Number(p.charId), this.name, p.x, p.z, now)
       )
     if (statements.length > 0) await this.env.DB.batch(statements)
   }
@@ -1626,6 +1654,6 @@ export class WorldZone extends Server<Env> {
     await this.env.DB.prepare(
       `INSERT INTO world_positions (character_id, zone_id, x, z, updated_at) VALUES (?, ?, ?, ?, ?)
        ON CONFLICT(character_id) DO UPDATE SET zone_id = excluded.zone_id, x = excluded.x, z = excluded.z, updated_at = excluded.updated_at`
-    ).bind(Number(player.charId), this.zone.id, player.x, player.z, now).run()
+    ).bind(Number(player.charId), this.name, player.x, player.z, now).run()
   }
 }

@@ -5,7 +5,7 @@ import { openWorldMap, type WorldMapData } from './worldMap'
 import { closeBankUI, isBankOpen, openBankUI, updateBankInventory, updateBankUI } from './bank'
 import { closeCraftUI, openCraftUI, updateCraftInventory, updateCraftStats, type SkillLevels } from './crafting'
 import { getLevelFromXP } from '../../../src/engine/experience.js'
-import { connect, onMessage, send } from './net'
+import { connect, isInstanceFullClose, onMessage, send } from './net'
 import { createCamera, createLights, createRenderer, createScene, FOG_FAR, tileToWorld, updateCamera, updateShadowLight } from './scene'
 import { attachCameraControls } from './cameraControls'
 import { createTerrain } from './terrain'
@@ -339,6 +339,17 @@ function enterWorld(session: WorldSession): void {
     // is bad/expired or the character isn't in this world's DB, so net.ts stops
     // reconnecting. Drop the stale session (a reload lands on login) and show
     // the login screen instead of an endless "Reconnecting…" on black.
+    // A full boss lair is a refusal of the ROOM, not of the session: the token
+    // is fine and clearing it would log the player out over a queueing problem.
+    // Send them to the overworld instead.
+    if (isInstanceFullClose(event as CloseEvent)) {
+      transitioning = true
+      storeZone('overworld')
+      hideConnBanner()
+      showTransitionOverlay('That lair is full — heading back to the world…')
+      window.location.reload()
+      return
+    }
     if ((event as CloseEvent).code === 1008) {
       clearStoredSession()
       hideConnBanner()
@@ -366,6 +377,17 @@ function enterWorld(session: WorldSession): void {
       lastServerMsg = performance.now()
       socket.reconnect()
     }
+  })
+
+  // Closing the tab is a deliberate exit, so say so: the server flushes the save
+  // and releases the world lock immediately instead of holding both for the
+  // 60s linger, which is what left the idle game unable to save on the way back.
+  // `persisted` means the page went into the back/forward cache and may return —
+  // that IS what linger is for, so leave those alone. Best-effort by nature: a
+  // frame that never makes it off the tab just falls back to the linger flush.
+  window.addEventListener('pagehide', (event) => {
+    if ((event as PageTransitionEvent).persisted) return
+    if (authed && socket.readyState === WebSocket.OPEN) send(socket, { t: 'leave' })
   })
 
   /** Repeat welcome after a reconnect: snap self to the server's position,
