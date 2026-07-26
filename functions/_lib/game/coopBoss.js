@@ -154,6 +154,19 @@ export async function assertNotInCoopSession(env, characterId, now = Date.now())
   )
 }
 
+/**
+ * The character's live save revision.
+ *
+ * Joining WRITES the save (the session snapshot below), so the client's idea of
+ * the revision goes stale the moment it asks to join. Handing the new one back
+ * is what stops its next autosave being rejected as a stale write — which the
+ * player sees as a save failure caused by walking into a boss fight.
+ */
+export async function currentSaveRevision(env, characterId) {
+  const row = await env.DB.prepare('SELECT save_revision FROM saves WHERE character_id = ?').bind(characterId).first()
+  return Number(row?.save_revision) || 0
+}
+
 async function ownerIdFor(env, characterId) {
   const row = await env.DB.prepare('SELECT owner_id FROM characters WHERE id = ?').bind(characterId).first()
   return row?.owner_id ?? null
@@ -347,7 +360,7 @@ export async function joinCoopSession(env, { characterId, identityId, bossId, us
         )
       }
       await touchCoopMember(env, existing, characterId, now)
-      return { sessionId: existing, rejoined: true }
+      return { sessionId: existing, rejoined: true, saveRevision: await currentSaveRevision(env, characterId) }
     }
     await env.DB.prepare('UPDATE characters SET active_coop_session_id = NULL WHERE id = ?').bind(characterId).run()
   }
@@ -445,7 +458,7 @@ export async function joinCoopSession(env, { characterId, identityId, bossId, us
   ).bind(sessionId, characterId, now, now).run()
 
   await auditLog(env, 'coop.session.join', { sessionId, characterId, bossId }, { swallow: true })
-  return { sessionId, rejoined: false }
+  return { sessionId, rejoined: false, saveRevision: written.saveRevision }
 }
 
 /** Adds one member's accrued XP to a save, respecting the 200m cap. */

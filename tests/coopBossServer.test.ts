@@ -117,6 +117,27 @@ describe('joining a co-op session', () => {
     expect(await activeSessionIdFor(env as never, 7)).toBe(sessionId)
   })
 
+  it('hands back the revision its snapshot write produced', async () => {
+    await seedCharacter(7)
+    const before = raw.prepare('SELECT save_revision FROM saves WHERE character_id = 7').get().save_revision
+    const { saveRevision } = await joinCoopSession(env as never, {
+      characterId: 7, identityId: 1, bossId: BOSS, username: 'player7',
+    })
+    // Without this the client keeps pushing `before` and every save after the
+    // fight is rejected as a stale write — a save failure caused by walking into
+    // a boss fight.
+    expect(saveRevision).toBe(before + 1)
+    expect(raw.prepare('SELECT save_revision FROM saves WHERE character_id = 7').get().save_revision).toBe(saveRevision)
+  })
+
+  it('hands back the live revision on a rejoin, which writes no snapshot', async () => {
+    await seedCharacter(7)
+    const first = await joinCoopSession(env as never, { characterId: 7, identityId: 1, bossId: BOSS, username: 'player7' })
+    const again = await joinCoopSession(env as never, { characterId: 7, identityId: 1, bossId: BOSS, username: 'player7' })
+    expect(again.rejoined).toBe(true)
+    expect(again.saveRevision).toBe(first.saveRevision)
+  })
+
   it('puts a second joiner into the SAME instance rather than a new one', async () => {
     await seedCharacter(7)
     await seedCharacter(8)
