@@ -8,6 +8,7 @@ import {
 } from '../src/engine/skilling.js'
 import { simulateIdleSkilling } from '../src/engine/idleEngine.js'
 import { getBreakdownYield, buyWithShards, countItem } from '../src/engine/inventory.js'
+import { getPurchaseRestriction } from '../src/engine/storeRules.js'
 import { describeObtainment } from '../src/utils/armoury.js'
 import itemsData from '../src/data/items.json'
 
@@ -198,7 +199,9 @@ describe('shardglass items charge with shardglass shards, never venom scales', (
 })
 
 describe('breaking shardglass gear down into shards', () => {
-  it.each(shardglassGear.map((it) => [it.id, it]))(
+  const breakable = shardglassGear.filter((it) => it.breakdownResult)
+
+  it.each(breakable.map((it) => [it.id, it]))(
     '%s breaks down into 5000 shardglass shards',
     (_id, item: any) => {
       expect(getBreakdownYield(item)).toEqual({ itemId: 'shardglass_shards', qty: 5000 })
@@ -208,6 +211,20 @@ describe('breaking shardglass gear down into shards', () => {
   it('returns null for an item that declares no breakdown', () => {
     expect(getBreakdownYield((itemsData as any).coins)).toBeNull()
     expect(getBreakdownYield((itemsData as any).shardglass_shards)).toBeNull()
+  })
+
+  // A coin-priced item that breaks down mints its yield out of coins: buy the
+  // Shardglass Bow from the quest shop for 300k, break it for 5000 shards.
+  it('never lets a coin-purchasable item break down', () => {
+    const offenders = Object.values(itemsData as any)
+      .filter((it: any) => getBreakdownYield(it) && getPurchaseRestriction(it).allowed)
+      .map((it: any) => it.id)
+    expect(offenders).toEqual([])
+  })
+
+  it('keeps the quest-shop shardglass bow and shield out of the breakdown path', () => {
+    expect(getBreakdownYield((itemsData as any).shardglass_bow)).toBeNull()
+    expect(getBreakdownYield((itemsData as any).shardglass_shield)).toBeNull()
   })
 })
 
