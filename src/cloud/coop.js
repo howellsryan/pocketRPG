@@ -1,7 +1,7 @@
 // Client wrapper for /api/coop/* (co-operative boss fights). Same auth +
 // character-header pattern as cloud/pvp.js.
 
-import { getToken, getCharacterId, clearAuth } from './api.js'
+import { getToken, getCharacterId, clearAuth, emitSaveRevision } from './api.js'
 import { apiUrl } from './apiBase.js'
 
 async function coopRequest(path, options = {}) {
@@ -21,6 +21,10 @@ async function coopRequest(path, options = {}) {
   }
   let body = null
   try { body = await res.json() } catch { /* non-JSON */ }
+  // Co-op writes the save server-side (the join snapshot, every write-back), so
+  // any response carrying a revision re-anchors the save loop. Read on the error
+  // path too: a join that fails after its snapshot write still moved it.
+  if (Number.isFinite(body?.save_revision)) emitSaveRevision(body.save_revision)
   if (!res.ok) {
     const err = new Error(body?.error || `Request failed (${res.status})`)
     err.status = res.status

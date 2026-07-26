@@ -38,7 +38,7 @@ import { getCombatType, resolveMagicSpell, equipItem, checkEquipRequirements, pl
 import { RAID_TASK_META } from '../engine/slayerMasters.js'
 import { resolveSpecialEnergyCost, canAffordSpecialAttack, formatSpecialEnergyCostLabel } from '../engine/specialAttackEnergy.js'
 import { api, getToken, getCharacterId, getOneLifeMode, isDemoMode } from '../cloud/api.js'
-import { pullSave, applyCloudSave, requestCriticalPushSave, pushNow, suspendSaves, resumeSaves } from '../cloud/sync.js'
+import { pullSave, applyCloudSave, requestCriticalPushSave, pushNow, suspendSaves, resumeSaves, lastSaveLockCode } from '../cloud/sync.js'
 import { pvpApi } from '../cloud/pvp.js'
 import monstersData from '../data/monsters.json'
 import worldData from '../data/world.json'
@@ -302,6 +302,9 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   // Solo-or-group prompt: which boss was tapped, and how busy its instances are.
   const [coopChoice, setCoopChoice] = useState(null)
   const [coopOpenSessions, setCoopOpenSessions] = useState(null)
+  // A room the server still holds this character for, from the picker's own
+  // headcount fetch. Only read while recovering a join, never rendered.
+  const heldCoopSessionRef = useRef(null)
 
   // Dungeon mode: this screen renders one place's foes (Monsters / Bosses /
   // Raids) instead of the world-wide picker. PvP is hidden (not place-bound);
@@ -1346,12 +1349,35 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     coopApi.listBosses()
       .then((res) => {
         if (cancelled) return
+        // A session this character is STILL held by — a fight they refreshed or
+        // crashed out of. The server keeps their save locked for it, so the
+        // recovery in startCoopFight needs the id to release it.
+        heldCoopSessionRef.current = Number.isFinite(res?.activeSessionId) ? res.activeSessionId : null
         const entry = (res?.bosses || []).find((b) => b.bossId === coopChoice.id)
         setCoopOpenSessions(entry?.sessions || [])
       })
       .catch(() => { if (!cancelled) setCoopOpenSessions([]) })
     return () => { cancelled = true }
   }, [coopChoice])
+
+  // Joins, releasing a stale hold first if one is in the way. The server refuses
+  // to move a character between rooms ("leave it first") because the old room
+  // still holds their pack — but a player whose last fight ended in a refresh has
+  // no way to leave it by hand, so do it for them and take them where they asked
+  // to go. Leaving writes that fight's XP and supplies back onto the save.
+  const joinCoopWithRecovery = async (bossId) => {
+    try {
+      return await coopApi.join(bossId)
+    } catch (err) {
+      const held = heldCoopSessionRef.current
+      if (err?.body?.code !== 'CHARACTER_IN_COOP_SESSION' || !held) throw err
+      // A leave that 404s has already happened (the room ended, or the sweep got
+      // there first) — that is the outcome we wanted, so try the join either way.
+      try { await coopApi.leave(held) } catch { /* the join below reports the real state */ }
+      heldCoopSessionRef.current = null
+      return await coopApi.join(bossId)
+    }
+  }
 
   // Joins the shared fight for a boss. The save is flushed first: the server
   // snapshots it on join and owns inventory/XP from that moment, so anything
@@ -1369,11 +1395,16 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     setCoopJoining(monster.id)
     try {
       const saved = await runLockedSave()
-      if (!saved) {
+      // A co-op lock is not a failed save. It means a room ALREADY owns this
+      // character's save — a fight they refreshed or crashed out of — and the
+      // join below is what sweeps that room and puts them back in. Aborting here
+      // left the player wedged: every save refused, and the one call that would
+      // release the lock never made.
+      if (!saved && lastSaveLockCode() !== 'CHARACTER_IN_COOP_SESSION') {
         addToast('Could not save before joining — try again.', 'error')
         return
       }
-      const res = await coopApi.join(monster.id)
+      const res = await joinCoopWithRecovery(monster.id)
       setCoopSessionId(res.sessionId)
     } catch (err) {
       const code = err?.body?.code

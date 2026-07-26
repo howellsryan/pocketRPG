@@ -10,7 +10,7 @@ import { buildSavePayloadFromSnapshot, applySavePayload } from '../db/saveload.j
 import { LOCAL_WRITE_MARKER_KEY } from '../db/stores.js'
 import { withTimeout } from '../utils/helpers.js'
 import { CRITICAL_SAVE_COALESCE_MS, CRITICAL_SAVE_REASONS, normaliseCriticalSaveReason } from './criticalSavePolicy.js'
-import { classifySaveError, activeMatchIdFromSaveError } from './saveErrors.js'
+import { classifySaveError, activeMatchIdFromSaveError, saveLockCode } from './saveErrors.js'
 
 const PUSH_DEBOUNCE_MS = 120_000
 // Engagement-aware idle throttle. The periodic autosave + activity heartbeat
@@ -113,6 +113,11 @@ let saveSuspendCount = 0
 // stale snapshot (it only repeats the 409) and let the app roll back to the
 // cloud copy. Cleared on resetSyncState / a fresh page boot.
 let conflictPending = false
+// Which lock refused the last push, or null if the last push wasn't lock-refused.
+// A lock is the server saying "something else owns this save right now", not a
+// failure — the co-op join path reads this to tell "the room already has me"
+// apart from a save that genuinely didn't land.
+let lastLockCode = null
 
 if (typeof window !== 'undefined') {
   window.addEventListener(SAVE_REVISION_EVENT, (event) => {
@@ -180,6 +185,7 @@ async function performPush() {
       pendingSaveOptions = {}
       hasUnsyncedChanges = false
       consecutiveFailures = 0
+      lastLockCode = null
       emitCloudSaveStatus('saved', { updatedAt: lastPushedAt || null, skipped: true })
       return true
     }
@@ -195,6 +201,7 @@ async function performPush() {
     lastPushedContentKey = contentKey
     hasUnsyncedChanges = false
     consecutiveFailures = 0
+    lastLockCode = null
     emitCloudSaveStatus('saved', { updatedAt: res?.updatedAt || null })
     console.log('[PocketRPG] Cloud save pushed, size:', json.length)
     return true
@@ -207,6 +214,19 @@ async function performPush() {
     // (it clears when the player leaves), and NEVER count it toward the failure
     // streak that escalates to the blocking "save failed" modal.
     if (kind === 'lock') {
+      lastLockCode = saveLockCode(err)
+      // A co-op room owns this save for the whole fight, and the client re-pulls
+      // the server's copy on the way out — it never pushes its own (§20). Keeping
+      // this snapshot queued lands the PRE-FIGHT state on top of the room's
+      // write-back the instant the lock lifts, taking the fight's XP, supplies
+      // and drops with it. Drop it instead: the pull is the source of truth.
+      if (lastLockCode === 'CHARACTER_IN_COOP_SESSION') {
+        pendingSnapshot = null
+        hasUnsyncedChanges = false
+        if (pendingTimer) { clearTimeout(pendingTimer); pendingTimer = null }
+        emitCloudSaveStatus('saved', { updatedAt: lastPushedAt || null, skipped: true })
+        return false
+      }
       const matchId = activeMatchIdFromSaveError(err)
       if (matchId !== null) emitSaveSyncActiveMatchConflict(matchId)
       pendingSnapshot = snap
@@ -361,6 +381,10 @@ export function saveSuspensionDepth() { return saveSuspendCount }
 // Public: has the server rejected our state as diverged? The app uses this to
 // short-circuit its own save retry loops and trigger a cloud rollback.
 export function isSaveConflict() { return conflictPending }
+// Public: the lock code behind the last refused push ('CHARACTER_IN_COOP_SESSION',
+// …), or null when the last push wasn't lock-refused. Lets a caller that owns the
+// lock's own flow continue instead of reading the false return as lost progress.
+export function lastSaveLockCode() { return lastLockCode }
 // Public: the app finished rolling back to the authoritative cloud copy
 // (pullSave + applyCloudSave re-adopted the server's revision) — pushes may
 // resume. Only the rollback path should call this.
@@ -586,6 +610,7 @@ export function resetSyncState() {
   consecutiveFailures = 0
   inFlightPromise = null
   pendingSaveOptions = {}
+  lastLockCode = null
   savesSuspended = false
   saveSuspendCount = 0
   conflictPending = false
