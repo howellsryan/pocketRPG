@@ -240,6 +240,7 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onDeath
           name={bossName}
           nameColor={getStyleArt(form ? form.attackStyle : monster?.attackStyle).color}
           sub={`${memberCount} ${memberCount === 1 ? 'player' : 'players'} in this fight`}
+          meta={<CoopLootShare member={me} maxHP={boss?.maxHP ?? 0} />}
           combatLevel={monster?.combatLevel}
         />
 
@@ -293,13 +294,6 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onDeath
         {typeof combatState?.maxPrayerPoints === 'number' && (
           <CombatPrayerBlock current={combatState.prayerPoints} max={combatState.maxPrayerPoints} />
         )}
-
-        <CoopLootShare
-          members={state.members}
-          maxHP={boss?.maxHP ?? 0}
-          characterId={Number(characterId)}
-          targetCharId={state.targetCharId}
-        />
 
         {boss?.respawnCountdown > 0 && (
           <div class="cb-respawn">

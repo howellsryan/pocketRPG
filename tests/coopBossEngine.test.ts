@@ -896,7 +896,6 @@ describe('coopBossEngine — the 10% loot threshold', () => {
     expect(over.pct).toBe(100)
     expect(over.remaining).toBe(0)
     expect(over.qualified).toBe(true)
-    expect(over.sharePct).toBe(80)
   })
 })
 

@@ -1238,25 +1238,18 @@ span.cb-fight__cb { cursor: default; }
 /* Potion timer / active-boost badges sit on the right of the Your-HP row */
 .cb-hplabel__right { display: inline-flex; align-items: center; gap: 9px; flex-shrink: 0; }
 
-/* ── Co-op loot share board ──
-   Written against the fm-* tokens directly (like .cb-qa above it, and unlike the
-   pre-Forgemark block further down), so it needs no .forge-shell override —
-   DESIGN.md §2. One column on a phone, ledger columns as the viewport allows. */
-/* Two columns on a phone at the 8-member cap, or the roster buries the food and
-   prayer rows below the fold mid-fight. */
-.cb-share { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 9px; }
-.cb-share__row { padding: 8px 10px; border-radius: var(--fm-r-sm); border: 1px solid var(--fm-rule); background: var(--fm-parch-hi); }
-.cb-share__row.is-me { border-color: var(--fm-brass); }
-.cb-share__head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-bottom: 5px; }
-.cb-share__name { display: flex; align-items: baseline; gap: 6px; min-width: 0; font-family: var(--fm-serif); font-weight: 700; font-size: 12px; color: var(--fm-ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.cb-share__aggro { flex-shrink: 0; font-family: var(--fm-num); font-variant-numeric: tabular-nums; font-size: 7.5px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--fm-blood); }
-.cb-share__v { flex-shrink: 0; font-family: var(--fm-num); font-variant-numeric: tabular-nums; font-weight: 700; font-size: 12px; color: var(--fm-ink-soft); }
-.cb-share__track { position: relative; height: 7px; border-radius: var(--fm-r-sharp); overflow: hidden; background: var(--fm-parch-lo); box-shadow: inset 0 1px 2px rgba(43, 33, 20, 0.35); }
-.cb-share__fill { height: 100%; background: var(--fm-brass); transition: width var(--fm-dur) var(--fm-ease); }
-.cb-share__row.is-paid .cb-share__fill { background: var(--fm-verdigris); }
-.cb-share__note { margin-top: 4px; font-family: var(--fm-num); font-variant-numeric: tabular-nums; font-size: 9.5px; font-weight: 600; letter-spacing: 0.02em; color: var(--fm-ink-faint); }
-.cb-share__row.is-paid .cb-share__note { color: var(--fm-verdigris); }
-@media (prefers-reduced-motion: reduce) { .cb-share__fill { transition: none; } }
+/* ── Co-op loot share bar ──
+   A hairline readout under the boss's name, not a panel: it answers "am I
+   getting a drop" at a glance and gives the fight HUD back its vertical space.
+   Written against the fm-* tokens directly (like .cb-qa), so it needs no
+   .forge-shell override — DESIGN.md §2. */
+.cb-loot { display: flex; align-items: center; gap: 6px; margin-top: 4px; }
+.cb-loot__track { flex: 1 1 auto; min-width: 40px; max-width: 120px; height: 4px; border-radius: var(--fm-r-sharp); overflow: hidden; background: var(--fm-parch-lo); box-shadow: inset 0 1px 2px rgba(43, 33, 20, 0.35); }
+.cb-loot__fill { height: 100%; background: var(--fm-brass); transition: width var(--fm-dur) var(--fm-ease); }
+.cb-loot.is-paid .cb-loot__fill { background: var(--fm-verdigris); }
+.cb-loot__v { flex-shrink: 0; font-family: var(--fm-num); font-variant-numeric: tabular-nums; font-size: 9px; font-weight: 700; letter-spacing: 0.02em; color: var(--fm-ink-faint); }
+.cb-loot.is-paid .cb-loot__v { color: var(--fm-verdigris); }
+@media (prefers-reduced-motion: reduce) { .cb-loot__fill { transition: none; } }
 
 /* ── Prayer picker (mobile combat prayer modal) ── */
 .cb-prayhead { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }

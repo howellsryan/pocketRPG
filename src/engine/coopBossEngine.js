@@ -411,7 +411,6 @@ export function coopLootProgress(member, maxHP) {
     // Against the threshold, not the boss's whole health bar: the bar answers
     // "am I getting a drop", so a full bar has to mean exactly that.
     pct: Math.max(0, Math.min(100, (damage / required) * 100)),
-    sharePct: maxHP > 0 ? Math.max(0, Math.min(100, (damage / maxHP) * 100)) : 0,
   }
 }
 
