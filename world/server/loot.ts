@@ -44,15 +44,30 @@ export function spawnDrops(
   return out
 }
 
+/** Who is looking at the floor. Passed as an object rather than a charId + flag
+ * so adding an account rule here is a compile error at every call site instead
+ * of a silently permissive default. */
+export type LootViewer = { charId: string; isIronman: boolean }
+
 export function isExpired(loot: LootEntity, tick: number): boolean {
   return tick - loot.spawnTick >= LOOT_DESPAWN_TICKS
 }
 
+/** An Ironman may only ever have loot they own — a public window never opens
+ * for them, so another player cannot hand them items by dropping on the floor
+ * (the world equivalent of the Trading Post ban). Their own drops and kill loot
+ * are unaffected. */
+export function isOwnedBy(loot: LootEntity, viewer: LootViewer): boolean {
+  return loot.ownerCharId === viewer.charId
+}
+
 /** Owner-only until the owner window elapses, then visible to everyone (until
- * despawn, which the caller removes separately). */
-export function isVisibleTo(loot: LootEntity, charId: string, tick: number): boolean {
+ * despawn, which the caller removes separately) — except to an Ironman, for
+ * whom loot they don't own never becomes visible at all. */
+export function isVisibleTo(loot: LootEntity, viewer: LootViewer, tick: number): boolean {
   if (isExpired(loot, tick)) return false
-  if (tick - loot.spawnTick < (loot.ownerTicks ?? LOOT_OWNER_TICKS)) return loot.ownerCharId === charId
+  if (viewer.isIronman && !isOwnedBy(loot, viewer)) return false
+  if (tick - loot.spawnTick < (loot.ownerTicks ?? LOOT_OWNER_TICKS)) return isOwnedBy(loot, viewer)
   return true
 }
 
@@ -69,10 +84,10 @@ export function takeLoot(inventory: InvSlot[], minted: Record<string, number>, i
 
 /** The loot list to send a given client: everything currently visible to them.
  * (WorldZone compares this to the client's last view to derive add/remove.) */
-export function visibleLootFor(loot: Iterable<LootEntity>, charId: string, tick: number): LootItem[] {
+export function visibleLootFor(loot: Iterable<LootEntity>, viewer: LootViewer, tick: number): LootItem[] {
   const out: LootItem[] = []
   for (const l of loot) {
-    if (isVisibleTo(l, charId, tick)) out.push({ id: l.id, itemId: l.itemId, qty: l.qty, x: l.x, z: l.z })
+    if (isVisibleTo(l, viewer, tick)) out.push({ id: l.id, itemId: l.itemId, qty: l.qty, x: l.x, z: l.z })
   }
   return out
 }

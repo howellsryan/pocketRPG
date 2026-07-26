@@ -181,7 +181,7 @@ The public leaderboard ranks characters by total level, and separately by kill c
 
 ## Ironman and one-life modes
 
-When creating a character you can pick special modes. Ironman characters are self-sufficient: no Trading Post trading with other players. One-life characters are hardcore — dying loses the one-life badge for good, reverting the character to a standard account (or a standard Ironman, if it was also an Ironman). Both modes are badges of honour on the leaderboard.
+When creating a character you can pick special modes. Ironman characters are self-sufficient: no Trading Post trading with other players, and in the open world they can only pick up loot they earned themselves — another player's kill drops and dropped items never become visible to them. Fighting alongside others is fine, boss lairs included: a kill's drop belongs to whoever dealt the most damage, so an Ironman who leads the damage keeps the drop no matter how many people helped. One-life characters are hardcore — dying loses the one-life badge for good, reverting the character to a standard account (or a standard Ironman, if it was also an Ironman). Both modes are badges of honour on the leaderboard.
 
 ## Account, characters and saving
 

@@ -21,7 +21,7 @@ import { seedPrayer, resolvePrayerToggle } from '../shared/prayer'
 import spellsJson from '../../src/data/spells.json'
 import { npcsFromZone, pickAggroTarget, reselectAttacker, threatContributors, threatKey, tickNpc, toNpcDiff, type NpcState } from './npc'
 import { computeAoi, type AoiEntity } from './aoi'
-import { PLAYER_DROP_OWNER_TICKS, isExpired, isVisibleTo, spawnDrops, takeLoot, visibleLootFor, type LootEntity } from './loot'
+import { PLAYER_DROP_OWNER_TICKS, isExpired, isVisibleTo, spawnDrops, takeLoot, visibleLootFor, type LootEntity, type LootViewer } from './loot'
 import { sanitizeChat } from '../shared/chat'
 import { addToInventory, countItem, freeSlotCount, inventoryIsFull, isStackable, moveInventorySlot, removeItems, removeOneAt } from './mining'
 import { getLevelFromXP } from '../../src/engine/experience.js'
@@ -90,6 +90,10 @@ type Player = TickPlayer & {
   conn: Connection
   lastMsgTimes: number[]
   identityId: string
+  /** From characters.is_ironman, stamped at hello: gates floor loot to this
+   * player's own drops (see loot.ts). Lives on the session so a reconnect keeps
+   * it without a second D1 read. */
+  isIronman: boolean
   sessionId: string
   flushSeq: number
   /** Provenance pools for every unit in the pack (see sessionItems.ts).
@@ -127,6 +131,10 @@ type Player = TickPlayer & {
    * frozen) until this tick, then is really removed + flushed. Cleared on
    * reconnect. Null = connected. Backgrounding a tab must not kick you instantly. */
   lingerUntilTick: number | null
+}
+
+function lootViewer(player: Player): LootViewer {
+  return { charId: player.charId, isIronman: player.isIronman }
 }
 
 type Items = Record<string, { name?: string; slot?: string | null; type?: string } | undefined>
@@ -437,8 +445,8 @@ export class WorldZone extends Server<Env> {
     }
 
     const row = await this.env.DB.prepare(
-      'SELECT id, username FROM characters WHERE id = ? AND owner_id = ? AND deleted_at IS NULL'
-    ).bind(payload.character_id, payload.sub).first<{ id: number; username: string }>()
+      'SELECT id, username, is_ironman FROM characters WHERE id = ? AND owner_id = ? AND deleted_at IS NULL'
+    ).bind(payload.character_id, payload.sub).first<{ id: number; username: string; is_ironman: number | null }>()
     if (!row) {
       connection.close(1008, 'character_not_found')
       return
@@ -551,6 +559,7 @@ export class WorldZone extends Server<Env> {
       conn: connection,
       lastMsgTimes: [],
       identityId: String(payload.sub),
+      isIronman: !!row.is_ironman,
       sessionId: crypto.randomUUID(),
       flushSeq: 0,
       pools,
@@ -650,7 +659,7 @@ export class WorldZone extends Server<Env> {
     const otherEnts = [...this.players.values()]
       .filter((p) => p.charId !== player.charId)
       .map((p) => toEntityDiff(p))
-    const visibleLoot = visibleLootFor(this.loot.values(), player.charId, this.tickCount)
+    const visibleLoot = visibleLootFor(this.loot.values(), lootViewer(player), this.tickCount)
     player.lootView = new Set(visibleLoot.map((l) => l.id))
     // AOI zones send the whole snapshot at join, then the first tick prunes
     // everything out of range — so seed the view with what we just sent.
@@ -1146,7 +1155,10 @@ export class WorldZone extends Server<Env> {
     // Loot pickup paths ONTO the tile (not adjacent) and resolves on arrival.
     if (message.kind === 'loot' && message.action === 'take') {
       const loot = this.loot.get(message.id)
-      if (!loot) return
+      // Visibility is the pickup right (tryTakeLoot re-checks it on arrival);
+      // refusing here as well stops an Ironman walking across the zone to loot
+      // they were never shown and can never take.
+      if (!loot || !isVisibleTo(loot, lootViewer(player), this.tickCount)) return
       const path = findPath(this.zone.collision, { x: player.x, z: player.z }, { x: loot.x, z: loot.z })
       if (!path) return
       player.path = path.slice(1)
@@ -1506,7 +1518,7 @@ export class WorldZone extends Server<Env> {
     const pending = player.pendingLoot
     if (!pending || player.path.length > 0) return
     const loot = this.loot.get(pending.id)
-    if (!loot || !isVisibleTo(loot, player.charId, this.tickCount) || player.x !== loot.x || player.z !== loot.z) {
+    if (!loot || !isVisibleTo(loot, lootViewer(player), this.tickCount) || player.x !== loot.x || player.z !== loot.z) {
       player.pendingLoot = null
       return
     }
@@ -1545,7 +1557,7 @@ export class WorldZone extends Server<Env> {
       // Lingering players have a closed socket — their ent still rides `ents` to
       // everyone else, but there's nobody to receive a diff here.
       if (player.lingerUntilTick !== null) continue
-      const visible = visibleLootFor(this.loot.values(), player.charId, this.tickCount)
+      const visible = visibleLootFor(this.loot.values(), lootViewer(player), this.tickCount)
       const visibleIds = new Set(visible.map((l) => l.id))
       const lootAdded: LootItem[] = visible.filter((l) => !player.lootView.has(l.id))
       const lootRemoved: string[] = [...player.lootView].filter((id) => !visibleIds.has(id))

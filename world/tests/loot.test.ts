@@ -2,12 +2,14 @@ import { describe, expect, it } from 'vitest'
 import {
   LOOT_DESPAWN_TICKS,
   LOOT_OWNER_TICKS,
+  PLAYER_DROP_OWNER_TICKS,
   isExpired,
   isVisibleTo,
   spawnDrops,
   takeLoot,
   visibleLootFor,
   type LootEntity,
+  type LootViewer,
 } from '../server/loot'
 import { emptyInventory } from '../server/mining'
 import { flushGrants, type GrantIO, type GrantPayload } from '../server/grants'
@@ -28,23 +30,64 @@ function loot(overrides: Partial<LootEntity> = {}): LootEntity {
   return { id: 'loot_1', itemId: 'bones', qty: 1, x: 0, z: 0, ownerCharId: '1', spawnTick: 0, ...overrides }
 }
 
+function main(charId: string): LootViewer {
+  return { charId, isIronman: false }
+}
+function iron(charId: string): LootViewer {
+  return { charId, isIronman: true }
+}
+
 describe('visibility windows', () => {
   it('is owner-only inside the owner window, public after', () => {
     const l = loot({ spawnTick: 0 })
-    expect(isVisibleTo(l, '1', LOOT_OWNER_TICKS - 1)).toBe(true)
-    expect(isVisibleTo(l, '2', LOOT_OWNER_TICKS - 1)).toBe(false)
-    expect(isVisibleTo(l, '2', LOOT_OWNER_TICKS)).toBe(true)
+    expect(isVisibleTo(l, main('1'), LOOT_OWNER_TICKS - 1)).toBe(true)
+    expect(isVisibleTo(l, main('2'), LOOT_OWNER_TICKS - 1)).toBe(false)
+    expect(isVisibleTo(l, main('2'), LOOT_OWNER_TICKS)).toBe(true)
   })
   it('is invisible + expired once the despawn window elapses', () => {
     const l = loot({ spawnTick: 0 })
     expect(isExpired(l, LOOT_DESPAWN_TICKS)).toBe(true)
-    expect(isVisibleTo(l, '1', LOOT_DESPAWN_TICKS)).toBe(false)
+    expect(isVisibleTo(l, main('1'), LOOT_DESPAWN_TICKS)).toBe(false)
   })
   it('visibleLootFor filters to the requesting client', () => {
     const mine = loot({ id: 'a', ownerCharId: '1', spawnTick: 0 })
     const theirs = loot({ id: 'b', ownerCharId: '2', spawnTick: 0 })
-    const ids = visibleLootFor([mine, theirs], '1', 5).map((l) => l.id)
+    const ids = visibleLootFor([mine, theirs], main('1'), 5).map((l) => l.id)
     expect(ids).toEqual(['a'])
+  })
+})
+
+describe('Ironman floor loot', () => {
+  it('never opens the public window on another player kill drop, at any tick', () => {
+    const theirs = loot({ ownerCharId: '2', spawnTick: 0 })
+    for (const tick of [0, LOOT_OWNER_TICKS - 1, LOOT_OWNER_TICKS, LOOT_OWNER_TICKS + 1, LOOT_DESPAWN_TICKS - 1]) {
+      expect(isVisibleTo(theirs, iron('1'), tick)).toBe(false)
+    }
+    // A standard account still gets the drop once the window elapses.
+    expect(isVisibleTo(theirs, main('1'), LOOT_OWNER_TICKS)).toBe(true)
+  })
+
+  it('never opens the faster public window on an item another player dropped', () => {
+    const dropped = loot({ ownerCharId: '2', spawnTick: 0, ownerTicks: PLAYER_DROP_OWNER_TICKS })
+    expect(isVisibleTo(dropped, iron('1'), PLAYER_DROP_OWNER_TICKS)).toBe(false)
+    expect(isVisibleTo(dropped, iron('1'), PLAYER_DROP_OWNER_TICKS + 500)).toBe(false)
+    expect(isVisibleTo(dropped, main('1'), PLAYER_DROP_OWNER_TICKS)).toBe(true)
+  })
+
+  it('keeps the Ironman own kill loot and own drops, inside and outside the window', () => {
+    const mine = loot({ ownerCharId: '1', spawnTick: 0 })
+    expect(isVisibleTo(mine, iron('1'), 0)).toBe(true)
+    expect(isVisibleTo(mine, iron('1'), LOOT_OWNER_TICKS + 1)).toBe(true)
+    expect(isVisibleTo(mine, iron('1'), LOOT_DESPAWN_TICKS)).toBe(false)
+  })
+
+  it('shows an Ironman only their own pile when a group shares a boss instance', () => {
+    const own = loot({ id: 'a', itemId: 'grondar_godsword', ownerCharId: '1', spawnTick: 0 })
+    const killed = loot({ id: 'b', itemId: 'grondar_godsword', ownerCharId: '2', spawnTick: 0 })
+    const dropped = loot({ id: 'c', itemId: 'coins', ownerCharId: '3', spawnTick: 0, ownerTicks: PLAYER_DROP_OWNER_TICKS })
+    const tick = LOOT_OWNER_TICKS + 10
+    expect(visibleLootFor([own, killed, dropped], iron('1'), tick).map((l) => l.id)).toEqual(['a'])
+    expect(visibleLootFor([own, killed, dropped], main('1'), tick).map((l) => l.id)).toEqual(['a', 'b', 'c'])
   })
 })
 
