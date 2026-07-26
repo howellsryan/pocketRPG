@@ -73,7 +73,8 @@
    "toZone": "overworld",
    "toX": 280,
    "toZ": 56,
-   "label": "The Wilds"
+   "label": "The Wilds",
+   "hideMarker": true
   }
  ],
  "deathRespawn": {

@@ -578,7 +578,7 @@ export class WorldZone extends Server<Env> {
         w: this.zone.width,
         h: this.zone.height,
         collision: this.zone.collision,
-        ...(this.zone.exits?.length ? { exits: this.zone.exits.map((e) => ({ id: e.id, x: e.x, z: e.z, label: e.label })) } : {}),
+        ...(this.zone.exits?.length ? { exits: this.zone.exits.map((e) => ({ id: e.id, x: e.x, z: e.z, label: e.label, ...(e.hideMarker ? { hideMarker: true } : {}) })) } : {}),
         ...(this.zone.landmarks?.length ? { landmarks: this.zone.landmarks } : {}),
         ...(this.zone.props?.length ? { props: this.zone.props } : {}),
         ...(this.zone.palette ? { palette: this.zone.palette } : {}),

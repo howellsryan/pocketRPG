@@ -18,6 +18,10 @@ export function createExitMarkers(scene: THREE.Scene, exits: ExitMarker[]): Exit
   const pulsing: THREE.MeshBasicMaterial[] = []
 
   for (const exit of exits) {
+    // Marker suppressed by the zone: the scene already shows the way out (a
+    // door, an arch), so no pad and no click target — walking onto the tile is
+    // what transitions, and that is the server's business either way.
+    if (exit.hideMarker) continue
     const wrapper = new THREE.Group()
     const pad = new THREE.Mesh(
       new THREE.CylinderGeometry(0.42, 0.42, 0.04, 24),

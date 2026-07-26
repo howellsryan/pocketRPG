@@ -113,9 +113,10 @@ const npcs = [
 ]
 
 // The lair has no walk-in entrance: players arrive by instance handoff and the
-// door is the way back out. Dying does the same trip the hard way.
+// door is the way back out. Dying does the same trip the hard way. No marker —
+// the door prop is the signpost; a glowing pad on a barrow floor is not.
 const exits = [
-  { id: 'exit_wilds', x: 20, z: 39, toZone: 'overworld', toX: 280, toZ: 56, label: 'The Wilds' },
+  { id: 'exit_wilds', x: 20, z: 39, toZone: 'overworld', toX: 280, toZ: 56, label: 'The Wilds', hideMarker: true },
 ]
 
 // ── Collision post-pass, then reopen everything that must stay walkable ──

@@ -30,6 +30,11 @@ export type ZoneExitDef = {
   toZ: number
   /** Destination name for hover text: "Go-to <label>". */
   label: string
+  /** Suppress the pulsing gold exit pad (and with it the click target) for this
+   * exit. For places where the way out is already built into the scene — a door
+   * you walk through — and a glowing marker on the floor would only break the
+   * mood. The tile still transitions when stepped on; that is server-side. */
+  hideMarker?: boolean
 }
 
 /** Visual dressing only — no collision (that stays in the ASCII grid), no pick
