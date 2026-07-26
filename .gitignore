@@ -22,5 +22,8 @@ world/.dev.vars
 # scripts/render-proc.mjs output (review artifacts, never committed)
 /proc-renders
 
+# scripts/grant-save-item.mjs pre-change save snapshots (real player data)
+/.save-backups
+
 # terrain preview screenshots
 world/preview-shots/
