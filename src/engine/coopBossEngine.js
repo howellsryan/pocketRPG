@@ -31,53 +31,54 @@ export const COOP_TICK_MS = 600
  * `venomcoil_matriarch` and `blighted_gauntlet`.
  * Still an explicit allowlist rather than a filter over the monster data,
  * so opening a boss to groups is a deliberate edit and both sides gate on one
- * list.
- *
- * `respawnTicks` paces the farm loop. A group melts a low-HP boss far faster
- * than a solo player, so the short floor only suits bosses with enough HP to
- * take real time to kill — anything squishy needs a longer wait between kills
- * or its GP/hr runs away from the §4 boss guardrails. Every value below is
- * `clamp(round(12750 / hitpoints), 10, 100)`, the curve through the two
- * hand-tuned anchors: Warlord Grondar (255 HP, ~20k coins a kill) at 50 ticks
- * and The Corporeal Horror (2000 HP) at the 10-tick floor. Ordered by combat
- * level. */
+ * list. Ordered by combat level. */
 export const COOP_BOSSES = {
-  gravehusk_brute: { respawnTicks: 100 },
-  boneclaw_revenant: { respawnTicks: 100 },
-  stonegale_elemental: { respawnTicks: 100 },
-  gravethorn_drake: { respawnTicks: 100 },
-  shroudwraith_specter: { respawnTicks: 100 },
-  cindermaw_serpent: { respawnTicks: 100 },
-  ironclad_guardian: { respawnTicks: 100 },
-  thornhide_colossus: { respawnTicks: 100 },
-  razorwing_harpy: { respawnTicks: 91 },
-  emberhowl_warlord: { respawnTicks: 85 },
-  ashen_hydra: { respawnTicks: 40 },
-  sovrathar_the_ashen_sovereign: { respawnTicks: 27 },
-  hellbound_gorilla: { respawnTicks: 62 },
-  king_black_dragon: { respawnTicks: 85 },
-  deepmaw_kraken: { respawnTicks: 50 },
-  nagadoth_prime: { respawnTicks: 85 },
-  nagadoth_rex: { respawnTicks: 85 },
-  nagadoth_supreme: { respawnTicks: 85 },
-  threefang_cerberus: { respawnTicks: 21 },
-  duskmare: { respawnTicks: 10 },
-  skyrender_kharra: { respawnTicks: 50 },
-  commander_zephyra: { respawnTicks: 50 },
-  warlord_grondar: { respawnTicks: 50 },
-  krylth_the_defiler: { respawnTicks: 50 },
-  corporeal_horror: { respawnTicks: 10 },
+  gravehusk_brute: {},
+  boneclaw_revenant: {},
+  stonegale_elemental: {},
+  gravethorn_drake: {},
+  shroudwraith_specter: {},
+  cindermaw_serpent: {},
+  ironclad_guardian: {},
+  thornhide_colossus: {},
+  razorwing_harpy: {},
+  emberhowl_warlord: {},
+  ashen_hydra: {},
+  sovrathar_the_ashen_sovereign: {},
+  hellbound_gorilla: {},
+  king_black_dragon: {},
+  deepmaw_kraken: {},
+  nagadoth_prime: {},
+  nagadoth_rex: {},
+  nagadoth_supreme: {},
+  threefang_cerberus: {},
+  duskmare: {},
+  skyrender_kharra: {},
+  commander_zephyra: {},
+  warlord_grondar: {},
+  krylth_the_defiler: {},
+  corporeal_horror: {},
 }
 export const COOP_BOSS_IDS = new Set(Object.keys(COOP_BOSSES))
-/** Fallback for a boss added to the map without explicit pacing. */
-export const COOP_RESPAWN_TICKS = 10
+/**
+ * The wait between kills, for every co-op boss: 25 ticks, 15 seconds.
+ *
+ * This replaced a per-boss curve (`clamp(round(12750 / hitpoints), 10, 100)`)
+ * that paced the farm loop off the boss's HP, so a group could not melt a
+ * 255 HP boss at the same rate as a 2000 HP one. A flat wait is the deliberate
+ * call: predictable for players, and short enough that the wait reads as a
+ * breather rather than downtime. It does mean a squishy boss's GP and XP per
+ * hour are no longer held back by its respawn — pace those with the drop table
+ * or the boss's own HP, not by reintroducing a per-boss delay here.
+ */
+export const COOP_RESPAWN_TICKS = 25
 
 export function isCoopBossId(bossId) {
   return typeof bossId === 'string' && Object.prototype.hasOwnProperty.call(COOP_BOSSES, bossId)
 }
 
-export function coopRespawnTicks(bossId) {
-  return COOP_BOSSES[bossId]?.respawnTicks ?? COOP_RESPAWN_TICKS
+export function coopRespawnTicks() {
+  return COOP_RESPAWN_TICKS
 }
 const COOP_EAT_TICK_COST = 3
 const COOP_VALID_STANCES = new Set(['accurate', 'aggressive', 'controlled', 'defensive', 'rapid', 'longrange'])
@@ -179,6 +180,7 @@ export function cloneCoopState(state) {
       inventory: cloneCoopInventory(m.inventory),
       combat: { ...m.combat, activePotions: { ...(m.combat?.activePotions || {}) } },
       xpGained: { ...(m.xpGained || {}) },
+      ...(Array.isArray(m.quickPrayers) ? { quickPrayers: [...m.quickPrayers] } : {}),
     }
   }
   return {
@@ -314,6 +316,10 @@ export function createCoopMember({ characterId, username, savePayload, itemsData
     slayerTasksCompleted: Math.max(0, Math.floor(Number(settings.slayerTasksCompleted) || 0)),
     doubleSlayerXp: !!settings.characterUnlocks?.doubleSlayerXp,
     slayerCredit: emptySlayerCredit(),
+    // Carried through the fight because the room owns the save while it lives:
+    // a quick-prayer edit made mid-fight cannot reach /api/save (the co-op lock
+    // refuses it), so without this it survives only until the exit pull.
+    quickPrayers: Array.isArray(settings.quickPrayers) ? settings.quickPrayers.filter((id) => typeof id === 'string') : [],
     joinedAt: now,
     combat: {
       combatType: getCombatType(equipment, itemsData),
@@ -361,6 +367,93 @@ export function livingMembers(state) {
 
 export function memberCount(state) {
   return Object.keys(state.members || {}).length
+}
+
+/** Share of the boss's max HP a member has to deal PERSONALLY to earn a loot
+ * roll. Everyone past the line rolls the drop table independently — a group kill
+ * is not one prize handed to the top attacker. */
+export const COOP_LOOT_DAMAGE_SHARE = 0.1
+
+/**
+ * Damage that qualifies a member for loot on this boss instance.
+ *
+ * Ceil, against the §4 house rule, for two reasons: the HUD advertises "10%" and
+ * must not pay out at 9.6%, and a boss small enough to floor to 0 would
+ * otherwise hand a drop to a member who never swung. The floor of 1 is what
+ * makes `damage >= required` imply `damage > 0`.
+ */
+export function coopLootDamageRequired(maxHP) {
+  const hp = Math.max(0, Math.floor(Number(maxHP) || 0))
+  return Math.max(1, Math.ceil(hp * COOP_LOOT_DAMAGE_SHARE))
+}
+
+/** Everyone owed a loot roll for the kill, biggest contributor first. Damage —
+ * not survival: a member who earned their share and then died is still paid, the
+ * same way the top-damage owner used to be. */
+export function lootEligibleCharacterIds(state) {
+  const required = coopLootDamageRequired(state?.boss?.maxHP)
+  return Object.values(state?.members || {})
+    .filter((m) => (m.damage || 0) >= required)
+    .sort((a, b) => b.damage - a.damage || (a.damageTick || 0) - (b.damageTick || 0))
+    .map((m) => Number(m.characterId))
+}
+
+/** One member's progress toward their loot roll, for the fight HUD. Lives here
+ * rather than in the screen so the bar and the server's gate cannot drift. */
+export function coopLootProgress(member, maxHP) {
+  const required = coopLootDamageRequired(maxHP)
+  const damage = Math.max(0, Math.floor(Number(member?.damage) || 0))
+  return {
+    damage,
+    required,
+    qualified: damage >= required,
+    remaining: Math.max(0, required - damage),
+    // Against the threshold, not the boss's whole health bar: the bar answers
+    // "am I getting a drop", so a full bar has to mean exactly that.
+    pct: Math.max(0, Math.min(100, (damage / required) * 100)),
+  }
+}
+
+/**
+ * What a `killSettled` event means for ONE member — the whole decision behind
+ * "do I show the loot modal".
+ *
+ * Pure, and here rather than in the screen, because this is the branch that
+ * decides whether a player sees their drop: buried in JSX it could not be
+ * tested, and every shape below is one that reached a real player.
+ *
+ *   loot     — their own roll, modal.
+ *   diverged — the server refused to grant; a modal would read as a dry kill.
+ *   failed   — the grant threw; likewise, and it is an outage, not bad luck.
+ *   missed   — under the damage threshold, so nothing was owed.
+ *
+ * `settlements` is absent only when the room is older than the multi-winner
+ * build; the legacy single-winner fields are read in that case rather than
+ * showing every member a dry kill through a deploy.
+ */
+export function coopKillOutcome(event, characterId) {
+  const settlements = Array.isArray(event?.settlements)
+    ? event.settlements
+    : (event?.ownerCharacterId != null
+      ? [{
+        characterId: event.ownerCharacterId,
+        granted: event.granted,
+        killCount: event.killCount,
+        diverged: event.diverged,
+        failed: event.failed,
+      }]
+      : [])
+  const winners = settlements.length
+  const mine = settlements.find((s) => Number(s?.characterId) === Number(characterId))
+  if (!mine) return { kind: 'missed', winners }
+  if (mine.diverged) return { kind: 'diverged', winners }
+  if (mine.failed) return { kind: 'failed', winners }
+  return {
+    kind: 'loot',
+    winners,
+    loot: Array.isArray(mine.granted) ? mine.granted : [],
+    killCount: Number.isFinite(Number(mine.killCount)) ? Number(mine.killCount) : null,
+  }
 }
 
 /** Loot owner: most damage dealt to the boss; equal totals resolve to whoever
@@ -498,6 +591,13 @@ function applyCoopIntent(state, member, action, itemsData, spellsData, prayersDa
     }
     case 'queue_special':
       member.combat.specialAttackQueued = !member.combat.specialAttackQueued
+      return
+    case 'set_quick_prayers':
+      // Loadout, not a combat action — no level gate here. Toggling one ON still
+      // goes through the gate in `toggle_prayer` below.
+      member.quickPrayers = Array.isArray(action.prayerIds)
+        ? action.prayerIds.filter((id) => typeof id === 'string')
+        : []
       return
     case 'target_add':
       member.combat.addTargeted = !!action.value && !!state.boss.add
@@ -667,12 +767,6 @@ export function processCoopTick(state, intents, { itemsData, monstersData, praye
   const events = []
   next.tick = (next.tick || 0) + 1
 
-  if (next.boss.respawnCountdown > 0) {
-    next.boss.respawnCountdown -= 1
-    if (next.boss.respawnCountdown === 0) respawnBoss(next, monstersData, events)
-    return finishTick(next, events, null)
-  }
-
   const orderedIntents = [...(intents || [])].sort(
     (a, b) => (a.tick_number || 0) - (b.tick_number || 0) || (a.characterId || 0) - (b.characterId || 0) || (a.characterSeq || 0) - (b.characterSeq || 0),
   )
@@ -680,6 +774,18 @@ export function processCoopTick(state, intents, { itemsData, monstersData, praye
     const member = next.members[String(intent?.characterId)]
     if (!member || member.status !== 'alive') continue
     applyCoopIntent(next, member, intent.action || {}, itemsData, spellsData, prayersData, events)
+  }
+
+  // The respawn wait is prep time, not dead time: intents are applied above
+  // before this returns, so the group can eat, drink and swap gear for the next
+  // pull. Nothing else about the wait changes — no combat resolves, so the
+  // consumable cooldowns have to be walked down here or one bite would block
+  // the rest of the wait.
+  if (next.boss.respawnCountdown > 0) {
+    for (const member of Object.values(next.members)) tickIdleCooldowns(member)
+    next.boss.respawnCountdown -= 1
+    if (next.boss.respawnCountdown === 0) respawnBoss(next, monstersData, events)
+    return finishTick(next, events, null)
   }
 
   reselectTarget(next)
@@ -781,15 +887,34 @@ export function processCoopTick(state, intents, { itemsData, monstersData, praye
     kill = {
       ...(kill || { bossId: next.bossId }),
       ownerCharacterId: ownerCharId ? Number(ownerCharId) : null,
+      lootCharacterIds: lootEligibleCharacterIds(next),
+      lootDamageRequired: coopLootDamageRequired(next.boss.maxHP),
       contributors: damageTable(next),
       onTaskCharacterIds,
     }
-    events.push({ type: 'bossDefeated', bossId: next.bossId, ownerCharacterId: kill.ownerCharacterId })
+    events.push({
+      type: 'bossDefeated',
+      bossId: next.bossId,
+      ownerCharacterId: kill.ownerCharacterId,
+      lootCharacterIds: kill.lootCharacterIds,
+    })
   } else if (next.boss.currentHP > 0) {
     kill = null
   }
 
   return finishTick(next, events, kill)
+}
+
+/** Walks down the timers processCombatTick would have advanced. Only the
+ * consumable cooldowns and the attack timer: prayer does not drain and no potion
+ * expires while there is nothing to fight. */
+function tickIdleCooldowns(member) {
+  const c = member.combat
+  if (!c) return
+  c.eatCooldown = Math.max(0, (c.eatCooldown || 0) - 1)
+  c.potionCooldown = Math.max(0, (c.potionCooldown || 0) - 1)
+  c.comboCooldown = Math.max(0, (c.comboCooldown || 0) - 1)
+  c.playerAttackTimer = Math.max(0, (c.playerAttackTimer || 0) - 1)
 }
 
 function respawnBoss(state, monstersData, events) {

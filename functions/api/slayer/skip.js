@@ -1,5 +1,6 @@
 import { requireAuth, json } from '../../_lib/auth.js'
 import { assertNotInActiveMatch } from '../../_lib/pvp.js'
+import { assertNotInCoopSession } from '../../_lib/game/coopBoss.js'
 import { auditLog } from '../../_lib/game/audit.js'
 
 export async function onRequestPost({ request, env }) {
@@ -17,6 +18,10 @@ export async function onRequestPost({ request, env }) {
 
     const lock = await assertNotInActiveMatch(env, characterId)
     if (lock) return lock
+    // A co-op room owns this character's save while the fight runs, and the
+    // skipped task is written through it — same lock class as a PvP match.
+    const coopLock = await assertNotInCoopSession(env, characterId)
+    if (coopLock) return coopLock
 
     const debit = await env.DB.prepare(`
       UPDATE characters

@@ -1,12 +1,20 @@
-import { describe, it, expect, vi } from 'vitest'
+// POST /api/slayer/skip against the real schema. The credit debit is
+// server-authoritative (§14), so the endpoint is exercised end to end rather
+// than through a mock: the previous version counted DB.prepare() calls to decide
+// which one was the debit, which made adding any lock check to the handler look
+// like a broken debit.
+import { describe, it, expect, beforeEach } from 'vitest'
 import { onRequestPost } from '../functions/api/slayer/skip.js'
 import { signJWT } from '../functions/_lib/jwt.js'
+import { makeD1, FakeD1 } from './helpers/d1'
 
 const TEST_SECRET = 'test-jwt-secret'
+const OWNER = 1
+let raw: any
+let env: any
 
-async function makeAuthHeader(identityId = 'identity-1') {
-  const token = await signJWT({ sub: identityId, provider: 'test' }, TEST_SECRET)
-  return `Bearer ${token}`
+async function makeAuthHeader(identityId: number | string = OWNER) {
+  return `Bearer ${await signJWT({ sub: identityId, provider: 'test' }, TEST_SECRET)}`
 }
 
 function makeRequest({ characterId = '42', auth = '' } = {}) {
@@ -22,94 +30,62 @@ function makeRequest({ characterId = '42', auth = '' } = {}) {
   })
 }
 
-function mockEnv({ characterRow, debitResult }: { characterRow: any, debitResult: any }) {
-  const characterFirst = vi.fn().mockResolvedValue(characterRow)
-  const debitFirst = vi.fn().mockResolvedValue(debitResult)
-  // Two prepare calls: SELECT character, then UPDATE+RETURNING debit.
-  // assertNotInActiveMatch makes a separate SELECT first if invoked; we mock
-  // that to return no active match by returning null for any other .first().
-  const lockFirst = vi.fn().mockResolvedValue(null)
-  let prepareCallCount = 0
-  const prepare = vi.fn((_sql: string) => {
-    prepareCallCount += 1
-    const bind = vi.fn(() => {
-      // Order of prepare calls in handler:
-      //   1: SELECT characters (existence check)
-      //   2: assertNotInActiveMatch: SELECT active_match_id (null here)
-      //   3: UPDATE characters ... RETURNING credits_remaining
-      // With active_match_id null the pvp_matches probe is skipped, so the
-      // debit is call #3.
-      if (prepareCallCount === 1) return { first: characterFirst, all: vi.fn(), run: vi.fn() }
-      if (prepareCallCount === 3) return { first: debitFirst, all: vi.fn(), run: vi.fn() }
-      return { first: lockFirst, all: vi.fn(), run: vi.fn() }
-    })
-    return { bind }
-  })
-  return { DB: { prepare }, JWT_SECRET: TEST_SECRET }
+function seedCharacter(id: number, credits: number, ownerId = OWNER) {
+  raw.prepare(
+    `INSERT INTO characters (id, owner_id, username, created_at, is_ironman, is_one_life, credits, active_match_id, total_pvp_kills, credits_used, total_level, combat_level, is_bot, total_level_at)
+     VALUES (?, ?, ?, 0, 0, 0, ?, NULL, 0, 0, 700, 126, 0, 0)`,
+  ).run(id, ownerId, 'c' + id, credits)
 }
+
+function creditsOf(id: number) {
+  return raw.prepare('SELECT credits, credits_used FROM characters WHERE id = ?').get(id)
+}
+
+beforeEach(() => {
+  const d = makeD1()
+  env = { DB: d.DB as FakeD1, JWT_SECRET: TEST_SECRET }
+  raw = d.raw
+  raw.prepare("INSERT INTO oauth_identities (id, provider, provider_user_id, created_at) VALUES (?, 'test', 'u1', 0)").run(OWNER)
+})
 
 describe('POST /api/slayer/skip', () => {
   it('deducts a credit and returns remaining balance', async () => {
-    const env = mockEnv({
-      characterRow: { id: 42 },
-      debitResult: { credits_remaining: 9 },
-    })
-    const res = await onRequestPost({
-      request: makeRequest({ auth: await makeAuthHeader() }),
-      env: env as any,
-    })
+    seedCharacter(42, 10)
+    const res = await onRequestPost({ request: makeRequest({ auth: await makeAuthHeader() }), env } as any)
+
     expect(res.status).toBe(200)
-    const body = await res.json() as any
-    expect(body).toEqual({ ok: true, credits_remaining: 9 })
+    expect(await res.json()).toEqual({ ok: true, credits_remaining: 9 })
+    expect(creditsOf(42)).toMatchObject({ credits: 9, credits_used: 1 })
   })
 
   it('returns 402 when the character has no credits', async () => {
-    const env = mockEnv({
-      characterRow: { id: 42 },
-      debitResult: null,
-    })
-    const res = await onRequestPost({
-      request: makeRequest({ auth: await makeAuthHeader() }),
-      env: env as any,
-    })
+    seedCharacter(42, 0)
+    const res = await onRequestPost({ request: makeRequest({ auth: await makeAuthHeader() }), env } as any)
+
     expect(res.status).toBe(402)
-    const body = await res.json() as any
-    expect(body.error).toBe('Insufficient credits')
+    expect((await res.json() as any).error).toBe('Insufficient credits')
+    expect(creditsOf(42).credits).toBe(0)
   })
 
   it('rejects unauthenticated requests', async () => {
-    const env = mockEnv({
-      characterRow: { id: 42 },
-      debitResult: { credits_remaining: 1 },
-    })
-    const res = await onRequestPost({
-      request: makeRequest(),
-      env: env as any,
-    })
+    seedCharacter(42, 10)
+    const res = await onRequestPost({ request: makeRequest(), env } as any)
     expect(res.status).toBe(401)
+    expect(creditsOf(42).credits).toBe(10)
   })
 
   it('rejects when X-Character-Id is missing', async () => {
-    const env = mockEnv({
-      characterRow: { id: 42 },
-      debitResult: { credits_remaining: 1 },
-    })
-    const res = await onRequestPost({
-      request: makeRequest({ characterId: '', auth: await makeAuthHeader() }),
-      env: env as any,
-    })
+    seedCharacter(42, 10)
+    const res = await onRequestPost({ request: makeRequest({ characterId: '', auth: await makeAuthHeader() }), env } as any)
     expect(res.status).toBe(400)
   })
 
   it('returns 404 when the character is not owned by the caller', async () => {
-    const env = mockEnv({
-      characterRow: null,
-      debitResult: { credits_remaining: 5 },
-    })
-    const res = await onRequestPost({
-      request: makeRequest({ auth: await makeAuthHeader() }),
-      env: env as any,
-    })
+    raw.prepare("INSERT INTO oauth_identities (id, provider, provider_user_id, created_at) VALUES (2, 'test', 'u2', 0)").run()
+    seedCharacter(42, 10, 2)
+    const res = await onRequestPost({ request: makeRequest({ auth: await makeAuthHeader() }), env } as any)
+
     expect(res.status).toBe(404)
+    expect(creditsOf(42).credits).toBe(10)
   })
 })

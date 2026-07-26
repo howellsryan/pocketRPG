@@ -103,6 +103,24 @@ Minigames are timed grinds for specific unique rewards — for example running V
 
 Raids are multi-boss gauntlets (for example the Vaults of Xyren) with big reward tables: guaranteed loot plus a chance at rare uniques. Bosses are tougher single monsters with their own drop tables and kill counts. Boss and raid uniques are granted by the server when you complete the kill, and every kill is recorded — check the Collection Log and Leaderboard. You can spend credits to skip to a boss kill or pay a raid's skip cost.
 
+## Group boss fights
+
+Tap most bosses in the combat picker and you are asked whether to fight solo or join a group. A group holds up to 8 players against one shared boss; you join the fullest group with room, or open a new one. Raid bosses stay inside their raids, and four bosses are solo only: Ember Tyrant, Ashen Crucible, Venomcoil Matriarch and Blighted Gauntlet.
+
+The server runs the whole fight — every swing, your XP, the food and potions you use and the loot roll. The fight plays the same as a solo one: same tick speed, prayers, special attacks, combo eating and gear swaps, and dying costs exactly what dying to that boss alone costs. The boss's entry requirements still apply to each player, quest, Slayer level and kill count alike.
+
+After a kill the boss comes back 15 seconds later, shown as a countdown. That wait is preparation time, not dead time: eat, drink potions, toggle prayers and swap gear as normal, and the group goes into the next pull ready.
+
+## Group boss loot and the 10% rule
+
+Every player who personally deals at least 10% of the boss's maximum hitpoints gets their own roll of its drop table — not a share of one drop. Two players over the line means two independent rolls, each with its own collection log entries and kill count. Miss the line and you get nothing from that kill.
+
+Damage from any source counts, including specials and summons, and it resets each time the boss respawns. The bar under the boss's name tracks your own progress toward the threshold: it fills as you deal the 10% you need and turns green when your drop is secured. With the group capped at 8, the top contributor always clears the line, so a kill never comes out empty for everyone. Being defeated does not cancel a drop you had already earned.
+
+Slayer task credit works differently — it goes to everyone still alive at the kill who has that boss as their task, whatever their damage.
+
+While you are in a group fight the server owns your save, so saving, skipping time, buying and Trading Post activity are all locked until you leave with the back arrow.
+
 ## The Corporeal Horror
 
 The Corporeal Horror is a 2,000-hitpoint boss at Edgevale, unlocked by the quest The Heart of Shadows. It halves every hit that is not dealt with a spear, so bringing one roughly doubles your damage — a Krylth Spear is the standard choice. It hits up to 55 with crush, and partway into the fight it spawns a Dread Core: a separate 180-hitpoint monster, not a phase. The Horror keeps attacking the whole time the Core is up, so you take hits from both, and every landed Core hit burns 8 prayer points. Switch targets to destroy the Core — it drops nothing and does not count as a kill — then switch back to the boss. Clear one and the Horror sends in another after a few more of its own attacks, so you are trading damage on the boss for control of your prayer pool all fight. Skipping the fight costs 5 credits.

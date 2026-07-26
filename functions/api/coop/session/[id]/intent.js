@@ -23,6 +23,14 @@ export function validateCoopAction(action) {
       return { action: { type: 'change_combat_spell', spellId: action.spellId ?? null } }
     case 'queue_special':
       return { action: { type: 'queue_special' } }
+    case 'set_quick_prayers': {
+      if (!Array.isArray(action.prayerIds)) return { error: 'invalid_prayer' }
+      // Deduped and filtered to real prayers, which also bounds the list: the
+      // room carries it until write-back, so it must not be a free text field.
+      const prayerIds = [...new Set(action.prayerIds)].filter((id) => typeof id === 'string' && prayersData?.[id])
+      if (prayerIds.length !== new Set(action.prayerIds).size) return { error: 'invalid_prayer' }
+      return { action: { type: 'set_quick_prayers', prayerIds } }
+    }
     case 'target_add':
       return { action: { type: 'target_add', value: !!action.value } }
     case 'toggle_prayer': {

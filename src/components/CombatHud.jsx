@@ -7,7 +7,10 @@ import { HitSplatLayer } from './HitSplat.jsx'
 // CombatScreen and the co-op CoopBossScreen so the two fights look identical.
 // Pure presentation — each screen supplies its own values and handlers.
 
-export function CombatFightHead({ icon, accent, name, nameColor, sub, combatLevel, onInfo, aside }) {
+// `meta` is a slot under the name for fight-specific readouts the solo screen
+// has no equivalent of (the co-op loot-share bar). Optional, so adding one never
+// changes the solo header.
+export function CombatFightHead({ icon, accent, name, nameColor, sub, meta, combatLevel, onInfo, aside }) {
   return (
     <div class="cb-fight__head">
       <div class="cb-fight__id">
@@ -15,6 +18,7 @@ export function CombatFightHead({ icon, accent, name, nameColor, sub, combatLeve
         <div class="min-w-0">
           <div class="cb-fight__name" style={{ color: nameColor }}>{name}</div>
           {sub && <div class="cb-fight__sub">{sub}</div>}
+          {meta}
         </div>
       </div>
       <span class="flex items-center gap-1.5 flex-shrink-0">

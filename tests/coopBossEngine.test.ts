@@ -4,6 +4,7 @@ import {
   COOP_MAX_MEMBERS,
   addCoopMember,
   coopRespawnTicks,
+  COOP_RESPAWN_TICKS,
   isCoopBossId,
   createCoopBossState,
   createCoopMember,
@@ -12,6 +13,11 @@ import {
   removeCoopMember,
   reselectTarget,
   topDamageCharacterId,
+  COOP_LOOT_DAMAGE_SHARE,
+  coopLootDamageRequired,
+  coopLootProgress,
+  coopKillOutcome,
+  lootEligibleCharacterIds,
   describeCoopEquipRefusal,
   describeCoopActionRefusal,
 } from '../src/engine/coopBossEngine.js'
@@ -138,15 +144,17 @@ describe('coopBossEngine — respawn pacing', () => {
     }
   })
 
-  it('makes a low-HP boss wait longer between kills than a high-HP one', () => {
-    // A group melts 255 HP far faster than 2000, so the squishy boss has to
-    // wait longer or its kills-per-hour runs away.
-    expect(monstersData.warlord_grondar.hitpoints).toBeLessThan(monstersData.corporeal_horror.hitpoints)
-    expect(coopRespawnTicks('warlord_grondar')).toBeGreaterThan(coopRespawnTicks('corporeal_horror'))
+  it('waits the same 15 seconds for every boss', () => {
+    // Deliberate replacement of the old HP-based curve, which made a 255 HP boss
+    // wait 30s and a 2000 HP one 6s. Players get one predictable number instead.
+    expect(COOP_RESPAWN_TICKS).toBe(25)
+    expect(COOP_RESPAWN_TICKS * 0.6).toBe(15)
+    const waits = new Set(Object.keys(COOP_BOSSES).map((id) => coopRespawnTicks(id)))
+    expect([...waits]).toEqual([COOP_RESPAWN_TICKS])
   })
 
-  it('falls back to the default for a boss with no explicit pacing', () => {
-    expect(coopRespawnTicks('not_configured')).toBe(10)
+  it('answers for a boss that is not configured at all', () => {
+    expect(coopRespawnTicks('not_configured')).toBe(COOP_RESPAWN_TICKS)
   })
 
   it('waits the boss-specific delay before respawning', () => {
@@ -794,5 +802,292 @@ describe('slayer credit on a group boss kill', () => {
     state.members['1'].damage = 2000
     const { kill } = killTick(state)
     expect(kill.onTaskCharacterIds).toEqual([1])
+  })
+})
+
+describe('coopBossEngine — the 10% loot threshold', () => {
+  it('asks for a tenth of the boss max HP', () => {
+    expect(COOP_LOOT_DAMAGE_SHARE).toBe(0.1)
+    expect(coopLootDamageRequired(2000)).toBe(200)
+    expect(coopLootDamageRequired(255)).toBe(26)
+  })
+
+  it('never lets a member who has not swung qualify', () => {
+    // Floor would make the requirement 0 on a boss this small, so `damage >= 0`
+    // would pay every member in the room for standing there.
+    expect(coopLootDamageRequired(5)).toBe(1)
+    expect(coopLootDamageRequired(0)).toBe(1)
+    expect(coopLootProgress({ damage: 0 }, 5).qualified).toBe(false)
+  })
+
+  it('pays everyone past the line, not just the top attacker', () => {
+    const state = joinedState([1, 2, 3])
+    state.members['1'].damage = 1400
+    state.members['2'].damage = 400
+    state.members['3'].damage = 199
+    expect(lootEligibleCharacterIds(state)).toEqual([1, 2])
+  })
+
+  it('is exactly at-least, not more-than', () => {
+    const state = joinedState([1])
+    state.members['1'].damage = 200
+    expect(lootEligibleCharacterIds(state)).toEqual([1])
+    state.members['1'].damage = 199
+    expect(lootEligibleCharacterIds(state)).toEqual([])
+  })
+
+  it('still pays a member who earned their share and then died', () => {
+    const state = joinedState([1, 2])
+    state.members['1'].damage = 1000
+    state.members['2'].damage = 500
+    state.members['2'].status = 'dead'
+    expect(lootEligibleCharacterIds(state)).toContain(2)
+  })
+
+  it('ships the eligible list on the kill record', () => {
+    const state = joinedState([1, 2, 3])
+    state.boss.currentHP = 0
+    state.members['1'].damage = 1500
+    state.members['2'].damage = 400
+    state.members['3'].damage = 100
+
+    const out = processCoopTick(state, [], deps, Date.now())
+    expect(out.kill!.lootCharacterIds).toEqual([1, 2])
+    expect(out.kill!.lootDamageRequired).toBe(200)
+    // The top attacker is still named, but as the owner of the audit trail —
+    // not as the only player paid.
+    expect(out.kill!.ownerCharacterId).toBe(1)
+  })
+
+  it('always leaves at least one member eligible on a full room', () => {
+    // Eight is the cap, so the biggest contributor holds at least 12.5% of the
+    // damage — a kill can never come out dry for everybody.
+    const ids = [1, 2, 3, 4, 5, 6, 7, 8]
+    const state = joinedState(ids)
+    state.boss.currentHP = 0
+    for (const id of ids) state.members[String(id)].damage = 2000 / ids.length
+    expect(lootEligibleCharacterIds(state)).toHaveLength(8)
+  })
+
+  it('resets every member back below the line when the boss respawns', () => {
+    let state = joinedState([1, 2])
+    state.boss.currentHP = 0
+    state.members['1'].damage = 1500
+    state.members['2'].damage = 500
+    let out = processCoopTick(state, [], deps, Date.now())
+    state = out.stateNext
+    const wait = state.boss.respawnCountdown
+    for (let i = 0; i < wait; i++) {
+      out = processCoopTick(state, [], deps, Date.now())
+      state = out.stateNext
+    }
+    expect(state.boss.currentHP).toBeGreaterThan(0)
+    expect(lootEligibleCharacterIds(state)).toEqual([])
+  })
+
+  it('measures progress against the threshold, not the boss health bar', () => {
+    // A full bar has to mean "drop secured" and nothing else — scaling it to the
+    // boss's HP would leave a qualified member showing a tenth of a bar.
+    const half = coopLootProgress({ damage: 100 }, 2000)
+    expect(half.pct).toBe(50)
+    expect(half.remaining).toBe(100)
+    expect(half.qualified).toBe(false)
+
+    const over = coopLootProgress({ damage: 1600 }, 2000)
+    expect(over.pct).toBe(100)
+    expect(over.remaining).toBe(0)
+    expect(over.qualified).toBe(true)
+  })
+})
+
+describe('coopBossEngine — the respawn wait is prep time', () => {
+  // The wait between kills used to drop every intent on the floor: the quick
+  // actions were on screen, taps did nothing, and the group went into the next
+  // pull on whatever supplies the last one left them.
+  function waitingState(ids: number[]) {
+    const state = joinedState(ids)
+    state.boss.currentHP = 0
+    state.boss.killedAt = Date.now()
+    state.boss.respawnCountdown = 20
+    for (const id of ids) state.members[String(id)].hp = 20
+    return state
+  }
+
+  const eat = (characterId: number, slot = 0) => ({
+    tick_number: 1, characterId, characterSeq: 1, action: { type: 'eat', inventorySlot: slot },
+  })
+
+  it('lets a member eat while waiting for the boss to come back', () => {
+    const state = waitingState([1])
+    const before = state.members['1'].inventory[0].quantity
+
+    const out = processCoopTick(state, [eat(1)], deps, Date.now())
+
+    expect(out.stateNext.members['1'].hp).toBeGreaterThan(20)
+    expect(out.stateNext.members['1'].inventory[0].quantity).toBe(before - 1)
+    // Still counting down — eating does not stall or restart the wait.
+    expect(out.stateNext.boss.respawnCountdown).toBe(19)
+  })
+
+  it('lets a member swap gear while waiting', () => {
+    const state = waitingState([1])
+    state.members['1'].inventory[1] = { itemId: 'iron_platebody', quantity: 1 }
+    const intent = {
+      tick_number: 1, characterId: 1, characterSeq: 1, action: { type: 'equip', inventorySlot: 1 },
+    }
+
+    const out = processCoopTick(state, [intent], deps, Date.now())
+
+    expect(out.stateNext.members['1'].equipment.body?.itemId).toBe('iron_platebody')
+  })
+
+  it('walks the eat cooldown down so the wait is not one bite long', () => {
+    // Nothing calls processCombatTick while the boss is down, so without this
+    // the cooldown set by the first bite never expires and the rest of the wait
+    // is unusable.
+    let state = waitingState([1])
+    let out = processCoopTick(state, [eat(1)], deps, Date.now())
+    expect(out.stateNext.members['1'].combat.eatCooldown).toBeGreaterThan(0)
+
+    state = out.stateNext
+    for (let i = 0; i < 4; i++) {
+      out = processCoopTick(state, [], deps, Date.now())
+      state = out.stateNext
+    }
+    expect(state.members['1'].combat.eatCooldown).toBe(0)
+
+    const hpBefore = state.members['1'].hp
+    out = processCoopTick(state, [eat(1)], deps, Date.now())
+    expect(out.stateNext.members['1'].hp).toBeGreaterThan(hpBefore)
+  })
+
+  it('keeps a dead member out of it', () => {
+    const state = waitingState([1])
+    state.members['1'].status = 'dead'
+    const before = state.members['1'].inventory[0].quantity
+
+    const out = processCoopTick(state, [eat(1)], deps, Date.now())
+
+    expect(out.stateNext.members['1'].inventory[0].quantity).toBe(before)
+  })
+
+  it('does not resolve combat while the boss is down', () => {
+    const state = waitingState([1])
+    const out = processCoopTick(state, [eat(1)], deps, Date.now())
+    expect(out.stateNext.boss.currentHP).toBe(0)
+    expect(out.events.some((e: any) => e.type === 'playerHit' || e.type === 'monsterHit')).toBe(false)
+    expect(out.kill).toBeNull()
+  })
+})
+
+describe('coopBossEngine — quick prayers survive the fight', () => {
+  // The co-op lock refuses this character's own /api/save while the room owns
+  // it, and the client pulls rather than pushes on exit — so a quick-prayer edit
+  // made mid-fight reached the account only if the room carried it.
+  it('seeds the member from the save', () => {
+    const state = joinedState([1], { 1: { settings: { quickPrayers: ['burst_of_strength'] } } })
+    expect(state.members['1'].quickPrayers).toEqual(['burst_of_strength'])
+  })
+
+  it('defaults to an empty list rather than undefined', () => {
+    expect(joinedState([1]).members['1'].quickPrayers).toEqual([])
+  })
+
+  it('applies an edit made mid-fight', () => {
+    const state = joinedState([1])
+    const intent = {
+      tick_number: 1, characterId: 1, characterSeq: 1,
+      action: { type: 'set_quick_prayers', prayerIds: ['burst_of_strength', 'clarity_of_thought'] },
+    }
+    const out = processCoopTick(state, [intent], deps, Date.now())
+    expect(out.stateNext.members['1'].quickPrayers).toEqual(['burst_of_strength', 'clarity_of_thought'])
+  })
+
+  it('survives the state clone every tick makes', () => {
+    let state = joinedState([1], { 1: { settings: { quickPrayers: ['burst_of_strength'] } } })
+    state = processCoopTick(state, [], deps, Date.now()).stateNext
+    state = processCoopTick(state, [], deps, Date.now()).stateNext
+    expect(state.members['1'].quickPrayers).toEqual(['burst_of_strength'])
+  })
+
+  it('can be edited while waiting for the respawn', () => {
+    const state = joinedState([1])
+    state.boss.currentHP = 0
+    state.boss.killedAt = Date.now()
+    state.boss.respawnCountdown = 10
+    const intent = {
+      tick_number: 1, characterId: 1, characterSeq: 1,
+      action: { type: 'set_quick_prayers', prayerIds: ['burst_of_strength'] },
+    }
+    expect(processCoopTick(state, [intent], deps, Date.now()).stateNext.members['1'].quickPrayers)
+      .toEqual(['burst_of_strength'])
+  })
+})
+
+describe('coopBossEngine — what a settled kill means for one member', () => {
+  // This is the branch that decides whether a player sees their drop. It lived
+  // in the poll handler inside CoopBossScreen, where the harness cannot reach
+  // it, and every shape below is one that reached a real player.
+  const settled = (over: Record<string, unknown> = {}) => ({
+    type: 'killSettled',
+    ownerCharacterId: 7,
+    settlements: [
+      { characterId: 7, granted: [{ itemId: 'uncut_onyx', quantity: 1 }], killCount: 12, diverged: false, failed: false },
+      { characterId: 8, diverged: false },
+    ],
+    ...over,
+  })
+
+  it('gives a winner their own loot and kill count', () => {
+    const out = coopKillOutcome(settled(), 7)
+    expect(out.kind).toBe('loot')
+    expect(out.loot).toEqual([{ itemId: 'uncut_onyx', quantity: 1 }])
+    expect(out.killCount).toBe(12)
+  })
+
+  it('still shows the modal for a winner whose roll came up dry', () => {
+    // An empty drop list is an ordinary unlucky kill — it is not a failure, and
+    // the modal is what tells the player the kill counted.
+    const out = coopKillOutcome(settled({
+      settlements: [{ characterId: 7, granted: [], killCount: 13 }],
+    }), 7)
+    expect(out.kind).toBe('loot')
+    expect(out.loot).toEqual([])
+  })
+
+  it('reports a member who missed the damage threshold, with the winner count', () => {
+    const out = coopKillOutcome(settled(), 99)
+    expect(out.kind).toBe('missed')
+    expect(out.winners).toBe(2)
+  })
+
+  it('never dresses a diverged save up as a dry kill', () => {
+    const out = coopKillOutcome(settled({
+      settlements: [{ characterId: 7, granted: [], diverged: true }],
+    }), 7)
+    expect(out.kind).toBe('diverged')
+  })
+
+  it('never dresses a thrown grant up as a dry kill', () => {
+    const out = coopKillOutcome(settled({
+      settlements: [{ characterId: 7, granted: [], failed: true }],
+    }), 7)
+    expect(out.kind).toBe('failed')
+  })
+
+  it('reads the legacy single-winner event a room deployed behind the client sends', () => {
+    const legacy = { type: 'killSettled', ownerCharacterId: 7, granted: [{ itemId: 'coins', quantity: 5 }], killCount: 3 }
+    expect(coopKillOutcome(legacy, 7)).toMatchObject({ kind: 'loot', killCount: 3 })
+    expect(coopKillOutcome(legacy, 8).kind).toBe('missed')
+  })
+
+  it('matches a member id whatever type it arrives as', () => {
+    expect(coopKillOutcome(settled(), '7' as never).kind).toBe('loot')
+    expect(coopKillOutcome({ ...settled(), settlements: [{ characterId: '7', granted: [] }] }, 7).kind).toBe('loot')
+  })
+
+  it('does not fall over on an event carrying nothing usable', () => {
+    expect(coopKillOutcome({ type: 'killSettled' }, 7).kind).toBe('missed')
+    expect(coopKillOutcome(null, 7).kind).toBe('missed')
   })
 })

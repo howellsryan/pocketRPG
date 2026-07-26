@@ -47,3 +47,33 @@ describe('the co-op migration', () => {
     await expect(isCoopSessionLive({ DB: new FakeD1(db) } as never, 1)).resolves.toBe(false)
   })
 })
+
+const PER_MEMBER = join(__dirname, '..', 'migrations', '0032_coop_kill_settlement_per_member.sql')
+const perMemberSql = readFileSync(PER_MEMBER, 'utf8')
+
+describe('the per-member settlement migration', () => {
+  it('re-applies cleanly', () => {
+    const db = migratedDb()
+    expect(() => db.exec(perMemberSql)).not.toThrow()
+  })
+
+  it('keys the ledger on the character, so one kill can pay several members', () => {
+    const db = migratedDb()
+    const row = db.prepare("SELECT sql FROM sqlite_master WHERE name = 'coop_kill_settlements'").get() as any
+    expect(row.sql).toMatch(/PRIMARY KEY \(session_id, kill_seq, character_id\)/)
+
+    const insert = (characterId: number) => db.prepare(
+      "INSERT INTO coop_kill_settlements (session_id, kill_seq, character_id, boss_id, settled_at) VALUES (1, 1, ?, 'corporeal_horror', 0)",
+    ).run(characterId)
+    insert(7)
+    insert(8)
+    // ...but the same member still cannot be paid twice for the same kill.
+    expect(() => insert(7)).toThrow()
+  })
+
+  it('has to come after 0031, which recreates the table on the old key', () => {
+    // 0031 is re-runnable by design and DROPs this table; running it again on a
+    // live database would silently put the single-winner key back.
+    expect(PER_MEMBER > FILE).toBe(true)
+  })
+})

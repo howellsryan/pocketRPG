@@ -18,6 +18,7 @@ import {
   parseSessionState,
   readSession,
   parseCoopSessionId,
+  applyQuickPrayersToSave,
   settleCoopKill,
   sweepStaleCoopSessions,
   writeBackMember,
@@ -382,7 +383,7 @@ describe('coop kill settlement', () => {
     return { session: row, state, kill: { bossId: BOSS, ownerCharacterId: topDamageId, contributors: [] } }
   }
 
-  it('grants the drop, collection log and kill count to the top-damage member only', async () => {
+  it('falls back to the top-damage member when the room sends no eligible list', async () => {
     // Force every drop roll to land so the settlement has something to grant.
     vi.spyOn(Math, 'random').mockReturnValue(0)
     const { session, state, kill } = await sessionWithKill(7)
@@ -434,6 +435,69 @@ describe('coop kill settlement', () => {
     const out = await settleCoopKill(env as never, { session, state, kill: { bossId: BOSS, ownerCharacterId: null, contributors: [] } })
     expect(out.granted).toEqual([])
     expect(out.ownerCharacterId).toBeNull()
+  })
+
+  it('rolls the drop table separately for every member past the damage threshold', async () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    const { session, state } = await sessionWithKill(7)
+    state.members['8'].damage = 500
+    const kill = { bossId: BOSS, ownerCharacterId: 7, lootCharacterIds: [7, 8], contributors: [] }
+
+    const out = await settleCoopKill(env as never, { session, state, kill, killSeq: 1 })
+
+    expect(out.settlements.map((s: any) => s.characterId)).toEqual([7, 8])
+    for (const s of out.settlements) expect(s.granted.length).toBeGreaterThan(0)
+    // Each winner gets the full solo side-effects, not a share of one drop.
+    for (const id of [7, 8]) {
+      const kc = raw.prepare('SELECT kill_count FROM kill_counts WHERE character_id = ? AND source_id = ?').get(id, BOSS)
+      expect(kc.kill_count).toBe(1)
+      expect(raw.prepare('SELECT item_id FROM collection_log WHERE character_id = ?').all(id).length).toBeGreaterThan(0)
+    }
+  })
+
+  it('grants nothing to a member who missed the threshold', async () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    const { session, state } = await sessionWithKill(7)
+    const kill = { bossId: BOSS, ownerCharacterId: 7, lootCharacterIds: [7], contributors: [] }
+
+    await settleCoopKill(env as never, { session, state, kill, killSeq: 1 })
+
+    expect(raw.prepare('SELECT kill_count FROM kill_counts WHERE character_id = 8').get()).toBeUndefined()
+    expect(raw.prepare('SELECT item_id FROM collection_log WHERE character_id = 8').all()).toHaveLength(0)
+  })
+
+  it('pays the other winners even when one of them has a diverged save', async () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    const { session, state } = await sessionWithKill(7)
+    state.members['8'].damage = 500
+    state.members['8'].saveRevision = 999
+    const kill = { bossId: BOSS, ownerCharacterId: 7, lootCharacterIds: [7, 8], contributors: [] }
+
+    const out = await settleCoopKill(env as never, { session, state, kill, killSeq: 1 })
+
+    expect(out.settlements.find((s: any) => s.characterId === 7).granted.length).toBeGreaterThan(0)
+    expect(out.settlements.find((s: any) => s.characterId === 8).diverged).toBe(true)
+    // The refused winner's sequence goes back so their claim is not left behind
+    // marking a kill settled with nothing granted.
+    const rows = raw.prepare('SELECT character_id FROM coop_kill_settlements WHERE session_id = ?').all(session.id)
+    expect(rows.map((r: any) => r.character_id)).toEqual([7])
+  })
+
+  it('replays a multi-winner kill without rolling anybody a second table', async () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    const { session, state } = await sessionWithKill(7)
+    state.members['8'].damage = 500
+    const kill = { bossId: BOSS, ownerCharacterId: 7, lootCharacterIds: [7, 8], contributors: [] }
+
+    const first = await settleCoopKill(env as never, { session, state, kill, killSeq: 1 })
+    const replay = await settleCoopKill(env as never, { session, state, kill, killSeq: 1 })
+
+    for (const s of replay.settlements) expect(s.replayed).toBe(true)
+    expect(replay.settlements.map((s: any) => s.granted)).toEqual(first.settlements.map((s: any) => s.granted))
+    for (const id of [7, 8]) {
+      const kc = raw.prepare('SELECT kill_count FROM kill_counts WHERE character_id = ? AND source_id = ?').get(id, BOSS)
+      expect(kc.kill_count).toBe(1)
+    }
   })
 })
 
@@ -514,6 +578,21 @@ describe('coop intent validation', () => {
   it('rejects a non-object action', () => {
     expect(validateCoopAction(null).error).toBe('invalid_action')
     expect(validateCoopAction('eat' as never).error).toBe('invalid_action')
+  })
+
+  it('accepts a quick-prayer loadout of real prayers', () => {
+    expect(validateCoopAction({ type: 'set_quick_prayers', prayerIds: ['burst_of_strength'] }).action)
+      .toEqual({ type: 'set_quick_prayers', prayerIds: ['burst_of_strength'] })
+    expect(validateCoopAction({ type: 'set_quick_prayers', prayerIds: [] }).action)
+      .toEqual({ type: 'set_quick_prayers', prayerIds: [] })
+  })
+
+  it('refuses a quick-prayer loadout carrying anything that is not a prayer', () => {
+    // The room carries this list until write-back, so it must not become a free
+    // text field on the save.
+    expect(validateCoopAction({ type: 'set_quick_prayers', prayerIds: ['invincibility'] }).error).toBe('invalid_prayer')
+    expect(validateCoopAction({ type: 'set_quick_prayers', prayerIds: [{} as never] }).error).toBe('invalid_prayer')
+    expect(validateCoopAction({ type: 'set_quick_prayers' }).error).toBe('invalid_prayer')
   })
 
   it('strips extra fields rather than passing them through to the engine', () => {
@@ -775,5 +854,104 @@ describe('writing slayer progress back to the save', () => {
     await writeBackMember(env as never, { characterId: 7, identityId: 1, member, sessionId })
     expect(readSave(7).settings.slayerPoints).toBe(15)
     expect(readSave(7).settings.slayerMasterTaskCompletions.zul_kaar).toBe(1)
+  })
+})
+
+describe('settlement against the pre-0032 schema', () => {
+  // Migrations are pasted into the D1 console by hand, so the deploy lands
+  // before the DDL does. The per-member ledger key arrived in 0032; the claim
+  // named `ON CONFLICT(session_id, kill_seq, character_id)`, and SQLite rejects
+  // a conflict target matching no index at RUNTIME — so in that window EVERY
+  // co-op kill threw, was swallowed per member, and reached the player as a
+  // granted-nothing kill.
+  function rollBackToSingleWinnerKey() {
+    raw.exec(`DROP TABLE coop_kill_settlements;
+      CREATE TABLE coop_kill_settlements (
+        session_id   INTEGER NOT NULL,
+        kill_seq     INTEGER NOT NULL,
+        character_id INTEGER NOT NULL,
+        boss_id      TEXT    NOT NULL,
+        granted_json TEXT,
+        settled_at   INTEGER NOT NULL,
+        PRIMARY KEY (session_id, kill_seq));`)
+  }
+
+  async function killWith(characterIds: number[]) {
+    for (const id of characterIds) await seedCharacter(id)
+    const { sessionId } = await joinCoopSession(env as never, {
+      characterId: characterIds[0], identityId: 1, bossId: BOSS, username: 'p0',
+    })
+    for (const id of characterIds.slice(1)) {
+      await joinCoopSession(env as never, { characterId: id, identityId: 1, bossId: BOSS, username: `p${id}` })
+    }
+    const session = await readSession(env as never, sessionId)
+    const state = parseSessionState(session)
+    for (const id of characterIds) state.members[String(id)].damage = 500
+    return { session, state, kill: { bossId: BOSS, ownerCharacterId: characterIds[0], lootCharacterIds: characterIds, contributors: [] } }
+  }
+
+  it('still grants the top-damage winner their drop', async () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    const { session, state, kill } = await killWith([7, 8])
+    rollBackToSingleWinnerKey()
+
+    const out = await settleCoopKill(env as never, { session, state, kill, killSeq: 1 })
+
+    const top = out.settlements.find((s: any) => s.characterId === 7)
+    expect(top.failed).toBeFalsy()
+    expect(top.granted.length).toBeGreaterThan(0)
+    expect(raw.prepare('SELECT kill_count FROM kill_counts WHERE character_id = 7').get().kill_count).toBe(1)
+  })
+
+  it('never reports a thrown grant as an ordinary empty drop', async () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    const { session, state, kill } = await killWith([7])
+    // Any failure at all — the claim table gone entirely.
+    raw.exec('DROP TABLE coop_kill_settlements')
+
+    const out = await settleCoopKill(env as never, { session, state, kill, killSeq: 1 })
+
+    // `failed` is what stops the client showing "no drops this time" for an
+    // outage; an empty granted list alone is indistinguishable from bad luck.
+    expect(out.settlements[0].failed).toBe(true)
+    expect(out.settlements[0].granted).toEqual([])
+  })
+})
+
+describe('quick prayers written back from a fight', () => {
+  it('carries a mid-fight edit onto the save', () => {
+    const save: any = { settings: { quickPrayers: ['burst_of_strength'], combatStance: 'aggressive' } }
+    const member = { quickPrayers: ['clarity_of_thought', 'rock_skin'] }
+
+    const next = applyMemberToSave(save, { ...member, inventory: [], equipment: {}, xpGained: {}, maxHP: 99, hp: 99 })
+
+    expect(next.settings.quickPrayers).toEqual(['clarity_of_thought', 'rock_skin'])
+    // Everything else in settings survives the write.
+    expect(next.settings.combatStance).toBe('aggressive')
+  })
+
+  it('leaves the configured prayers alone for a session that predates the field', () => {
+    // Writing an empty list here would silently clear the player's bar for
+    // anyone mid-fight across the deploy.
+    const save: any = { settings: { quickPrayers: ['burst_of_strength'] } }
+    expect(applyQuickPrayersToSave(save, { hp: 1 }).settings.quickPrayers).toEqual(['burst_of_strength'])
+  })
+
+  it('accepts an edit that empties the bar', () => {
+    const save: any = { settings: { quickPrayers: ['burst_of_strength'] } }
+    expect(applyQuickPrayersToSave(save, { quickPrayers: [] }).settings.quickPrayers).toEqual([])
+  })
+
+  it('survives a real join and write-back round trip', async () => {
+    await seedCharacter(7, { save: baseSave({ settings: { combatStance: 'aggressive', quickPrayers: ['burst_of_strength'] } }) })
+    const { sessionId } = await joinCoopSession(env as never, { characterId: 7, identityId: 1, bossId: BOSS, username: 'player7' })
+    const state = parseSessionState(await readSession(env as never, sessionId))
+    const member = state.members['7']
+    expect(member.quickPrayers).toEqual(['burst_of_strength'])
+
+    member.quickPrayers = ['clarity_of_thought']
+    await writeBackMember(env as never, { characterId: 7, identityId: 1, member, sessionId })
+
+    expect(readSave(7).settings.quickPrayers).toEqual(['clarity_of_thought'])
   })
 })

@@ -8,6 +8,7 @@ import LootResultModal from '../components/LootResultModal.jsx'
 import SpellSelectGrid from '../components/SpellSelectGrid.jsx'
 import ActivePotionBadges from '../components/ActivePotionBadges.jsx'
 import CombatQuickActions from '../components/CombatQuickActions.jsx'
+import CoopLootShare from '../components/CoopLootShare.jsx'
 import QuickPrayerConfigModal from '../components/QuickPrayerConfigModal.jsx'
 import { CombatFightHead, CombatHPBlock, CombatPrayerBlock } from '../components/CombatHud.jsx'
 import { useGame } from '../state/gameState.jsx'
@@ -15,7 +16,7 @@ import { coopApi } from '../cloud/coop.js'
 import { splatsFromCoopEvents, HIT_SPLAT_DURATION_MS } from '../utils/hitSplats.js'
 import { xpDropsFromCombatEvents, emitXpDrops } from '../utils/xpDrops.js'
 import { shapeLootForModal, lootRowsForModal } from '../utils/lootModal.js'
-import { describeCoopActionRefusal, describeCoopEquipRefusal } from '../engine/coopBossEngine.js'
+import { coopKillOutcome, describeCoopActionRefusal, describeCoopEquipRefusal } from '../engine/coopBossEngine.js'
 import { getMonsterArt, getStyleArt } from '../utils/combatArt.js'
 import { hasEpicLootDrop } from '../utils/itemValue.js'
 import { getLevelFromXP } from '../engine/experience.js'
@@ -119,17 +120,20 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onDeath
         // or not their poll was the one in flight when the boss died.
         for (const ev of res.events) {
           if (ev.type !== 'killSettled') continue
-          const owner = ev.ownerCharacterId
           const killedName = monstersData?.[res.state?.bossId]?.name || 'The boss'
-          if (Number(owner) === Number(characterId) && ev.diverged) {
-            // The server refused to grant because something else wrote this
-            // save mid-fight. Showing the usual modal would read as a dry kill.
+          const outcome = coopKillOutcome(ev, characterId)
+          if (outcome.kind === 'loot') {
+            setLootModal({ monsterName: killedName, loot: outcome.loot, killCount: outcome.killCount })
+          } else if (outcome.kind === 'diverged') {
             addToast?.('Your loot could not be granted — something else changed your save. Leave and rejoin.', 'error')
-          } else if (Number(owner) === Number(characterId)) {
-            setLootModal({ monsterName: killedName, loot: ev.granted || [], killCount: ev.killCount ?? null })
+          } else if (outcome.kind === 'failed') {
+            addToast?.(`${killedName} defeated, but the loot could not be granted. Leave and rejoin.`, 'error')
           } else {
-            const winner = res.state?.members?.[String(owner)]
-            addToast?.(`${killedName} defeated — loot went to ${winner?.username || 'the top attacker'}.`, 'info')
+            addToast?.(
+              `${killedName} defeated — you did not deal enough damage for a drop.`
+              + (outcome.winners > 0 ? ` ${outcome.winners} ${outcome.winners === 1 ? 'player' : 'players'} looted it.` : ''),
+              'info',
+            )
           }
         }
       }
@@ -201,6 +205,10 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onDeath
     ? monster.forms[boss.monster.currentForm]
     : null
   const combatState = me?.combat
+  // The room's copy is authoritative for the length of the fight — it is what
+  // gets written back — so the bar renders from it and falls back to the local
+  // setting only until the first poll lands.
+  const activeQuickPrayers = Array.isArray(me?.quickPrayers) ? me.quickPrayers : quickPrayers
   const weaponEntry = me?.equipment?.weapon
   const weapon = weaponEntry ? itemsData[weaponEntry.itemId] : null
   const hasSpec = !!weapon?.specialAttack
@@ -220,6 +228,7 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onDeath
           name={bossName}
           nameColor={getStyleArt(form ? form.attackStyle : monster?.attackStyle).color}
           sub={`${memberCount} ${memberCount === 1 ? 'player' : 'players'} in this fight`}
+          meta={<CoopLootShare member={me} maxHP={boss?.maxHP ?? 0} />}
           combatLevel={monster?.combatLevel}
         />
 
@@ -289,7 +298,7 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onDeath
             onPotion={(entry) => send({ type: 'drink_potion', inventorySlot: entry.slotIdx })}
             onEquip={(entry) => send({ type: 'equip', inventorySlot: entry.slotIdx })}
             isPotionActive={(item) => Object.keys(combatState?.activePotions || {}).some(pid => itemsData[pid]?.effect === item.effect)}
-            quickPrayers={quickPrayers}
+            quickPrayers={activeQuickPrayers}
             prayersData={prayersData}
             prayerLevel={getLevelFromXP(stats?.prayer?.xp || 0)}
             onPrayer={(prayerId) => send({ type: 'toggle_prayer', prayerId })}
@@ -352,8 +361,14 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onDeath
       {showQuickPrayerConfig && (
         <QuickPrayerConfigModal
           prayerLevel={getLevelFromXP(stats?.prayer?.xp || 0)}
-          selected={quickPrayers}
-          onChange={updateQuickPrayers}
+          selected={activeQuickPrayers}
+          onChange={(prayerIds) => {
+            updateQuickPrayers(prayerIds)
+            // The co-op lock refuses this character's own save while the room
+            // owns it, so the local write alone is undone by the pull on exit.
+            // The room carries the edit and writes it back with everything else.
+            send({ type: 'set_quick_prayers', prayerIds })
+          }}
           onClose={() => setShowQuickPrayerConfig(false)}
         />
       )}

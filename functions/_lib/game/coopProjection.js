@@ -54,12 +54,51 @@ export function projectStateForMember(state, characterId) {
   }
 }
 
-/** Everything that happened after the tick this client last acknowledged. */
-export function eventsSince(events, sinceTick) {
+/**
+ * A kill now pays every member past the damage threshold, so its event carries
+ * each winner's drops — and the event ring is shared by the whole room. Strip
+ * the other winners' item lists per poll, exactly as projectStateForMember
+ * strips their packs: who won is public, what they got is not, and eight full
+ * drop tables on every kill is payload nobody reads.
+ */
+export function projectEventsForMember(events, characterId) {
+  const self = String(characterId)
+  return (events || []).map((ev) => {
+    if (ev?.type !== 'killSettled' || !Array.isArray(ev.settlements)) return ev
+    const mine = String(ev.ownerCharacterId) === self
+    return {
+      ...ev,
+      settlements: ev.settlements.map((s) => (
+        String(s.characterId) === self ? s : { characterId: s.characterId, diverged: !!s.diverged }
+      )),
+      // Legacy single-winner fields describe the top-damage member.
+      granted: mine ? ev.granted : [],
+      killCount: mine ? ev.killCount : null,
+    }
+  })
+}
+
+/**
+ * Everything that happened after the tick this client last acknowledged, up to
+ * the last tick the room is willing to publish.
+ *
+ * `untilTick` is not decoration. Events are keyed by the tick they happened on
+ * and a client acknowledges the tick it was told about, so anything appended to
+ * a tick AFTER a client acknowledged it is filtered out by `> since` forever.
+ * That is exactly the shape of a kill: the engine emits `bossDefeated`
+ * immediately, then settlement takes several D1 round-trips per winner and
+ * appends `killSettled` to the same tick. A poll landing in that window used to
+ * acknowledge the tick and never see the loot.
+ */
+export function eventsSince(events, sinceTick, untilTick = Infinity) {
   const since = Number(sinceTick)
+  const until = Number(untilTick)
   if (!Array.isArray(events)) return []
-  if (!Number.isFinite(since)) return [...events]
-  return events.filter((ev) => (Number(ev?.tick) || 0) > since)
+  const capped = Number.isFinite(until)
+    ? events.filter((ev) => (Number(ev?.tick) || 0) <= until)
+    : events
+  if (!Number.isFinite(since)) return [...capped]
+  return capped.filter((ev) => (Number(ev?.tick) || 0) > since)
 }
 
 /** Appends a tick's events and trims the ring by both age and count. */

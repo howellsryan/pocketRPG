@@ -40,6 +40,7 @@ import {
 } from '../../functions/_lib/game/coopBoss.js'
 import {
   eventsSince,
+  projectEventsForMember,
   projectStateForMember,
   pushEvents,
   staleMemberIds,
@@ -68,6 +69,15 @@ export class CoopBossRoom {
   private sessionId = 0
   private bossId = ''
   private killSeq = 0
+  /**
+   * The last tick the room will admit to. A tick is only published once
+   * everything belonging to it exists — settlement included — because a client
+   * that acknowledges a tick can never be shown anything appended to it
+   * afterwards. Kills are settled across several D1 round-trips per winner, so
+   * without this a poll landing mid-settlement acknowledged the tick and the
+   * loot event was filtered out of every poll that followed.
+   */
+  private publishedTick = 0
   private events: AnyState[] = []
   private lastSeen: Record<string, number> = {}
   private pending: QueuedIntent[] = []
@@ -187,6 +197,7 @@ export class CoopBossRoom {
       this.sessionId = sessionId
       this.bossId = row.boss_id
       this.lastCheckpointTick = Number(this.state?.tick) || 0
+      this.publishedTick = Number(this.state?.tick) || 0
 
       // Seed killSeq from the settlement table, not the session row: a DO
       // evicted between granting a kill and checkpointing would otherwise come
@@ -239,7 +250,7 @@ export class CoopBossRoom {
   }
 
   private async tickInner(): Promise<void> {
-    {
+    try {
       const now = Date.now()
       await this.ejectStaleMembers(now)
       if (!this.state) return
@@ -268,6 +279,10 @@ export class CoopBossRoom {
       }
 
       if ((next.tick || 0) - this.lastCheckpointTick >= CHECKPOINT_EVERY_TICKS) await this.checkpoint(now)
+    } finally {
+      // Every exit from the beat, including the kill path's early return: the
+      // tick becomes visible only now that nothing more can be appended to it.
+      if (this.state) this.publishedTick = this.state.tick || 0
     }
   }
 
@@ -278,18 +293,51 @@ export class CoopBossRoom {
         { session: { id: this.sessionId, boss_id: this.bossId }, state: this.state, kill, killSeq: seq },
         now,
       ) as AnyState
+      const shares = (settlement.settlements || []) as AnyState[]
       this.events = pushEvents(this.events, [{
         type: 'killSettled',
         tick: this.state!.tick || 0,
+        // One event carries every winner's share: a client that is not on the
+        // list has to be able to tell "I missed the cut" from "the poll dropped
+        // my event", and per-winner events would toast a bystander eight times.
+        settlements: shares.map((s: AnyState) => ({
+          characterId: s.characterId,
+          granted: s.granted || [],
+          killCount: s.killCount ?? null,
+          diverged: !!s.diverged,
+          // A grant that threw must never reach the player as an empty drop
+          // list — that reads as an unlucky kill and hides the outage.
+          failed: !!s.failed,
+        })),
+        lootDamageRequired: kill.lootDamageRequired ?? null,
+        // Legacy single-winner fields, for a client deployed ahead of this Worker.
         ownerCharacterId: settlement.ownerCharacterId ?? kill.ownerCharacterId ?? null,
         granted: settlement.granted || [],
         killCount: settlement.killCount ?? null,
         diverged: !!settlement.diverged,
+        // Every share threw: the kill is an outage, not a dry roll.
+        failed: shares.length > 0 && shares.every((s: AnyState) => !!s.failed),
       }], this.state!.tick || 0)
     } catch (err) {
       console.error('[PocketRPG][coop] kill settlement failed', {
         sessionId: this.sessionId, bossId: this.bossId, killSeq: seq, message: (err as Error)?.message || err,
       })
+      // A kill the client is never told about is the worst failure mode there
+      // is: the boss drops, nothing happens, and the player has no idea whether
+      // they were robbed or simply unlucky. Say so instead of going silent.
+      this.events = pushEvents(this.events, [{
+        type: 'killSettled',
+        tick: this.state?.tick || 0,
+        settlements: (kill.lootCharacterIds || []).map((characterId: number) => ({
+          characterId, granted: [], killCount: null, diverged: false, failed: true,
+        })),
+        lootDamageRequired: kill.lootDamageRequired ?? null,
+        ownerCharacterId: kill.ownerCharacterId ?? null,
+        granted: [],
+        killCount: null,
+        diverged: false,
+        failed: true,
+      }], this.state?.tick || 0)
     }
   }
 
@@ -331,14 +379,17 @@ export class CoopBossRoom {
     this.lastSeen[key] = Date.now()
     this.startTicking()
     const since = Number(body?.sinceTick)
-    const currentTick = this.state!.tick || 0
+    const currentTick = this.publishedTick
     return jsonResponse({
       ok: true,
       state: projectStateForMember(this.state, key),
       // Replayed from the room's ring rather than "whatever happened on the one
       // request that advanced the tick", so every member sees every hit, every
       // XP drop and every kill — not just the ~1-in-8 they won the race for.
-      events: eventsSince(this.events, Number.isFinite(since) ? since : currentTick - 1),
+      events: projectEventsForMember(
+        eventsSince(this.events, Number.isFinite(since) ? since : currentTick - 1, currentTick),
+        key,
+      ),
       current_tick: currentTick,
       next_tick_at: Date.now() + TICK_MS,
     })
