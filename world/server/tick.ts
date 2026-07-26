@@ -7,6 +7,7 @@ import { GATHER_SKILLS, ROCK_DEPLETED_TICKS, addToInventory, inventoryIsFull, ty
 import { STATIONS, recipeFor, stationTypeForVerb } from '../shared/recipes'
 import { craftOnce, hasMaterials } from './crafting'
 import { getLevelFromXP, clampXP } from '../../src/engine/experience.js'
+import { combatLevelFromLevels } from '../../src/engine/combatLevel.js'
 import { startCombat, stepCombat, playerAttackRange, pinSpecialToSession, emitSpecIfChanged, FULL_SPECIAL_ENERGY, type CombatSession } from './combat'
 import type { NpcState } from './npc'
 import type { LootEntity } from './loot'
@@ -562,6 +563,14 @@ export function tickPlayer(player: TickPlayer, ctx: TickContext): TickResult {
   return result
 }
 
+/** Combat level from a live session's stats. SessionStats already carries a
+ * `level` per skill, so this never re-derives levels from XP. */
+export function sessionCombatLevel(stats: SessionStats): number {
+  const levels: Record<string, number> = {}
+  for (const skill in stats) levels[skill] = stats[skill].level
+  return combatLevelFromLevels(levels)
+}
+
 export function toEntityDiff(player: TickPlayer): EntityDiff {
   // Gear rides every player diff (even empty) so an in-world unequip
   // propagates — omitting it would leave stale weapons on observers. hp/maxHp
@@ -569,6 +578,7 @@ export function toEntityDiff(player: TickPlayer): EntityDiff {
   // NPCs), always, same as gear: the client decides when to draw it.
   const diff: EntityDiff = {
     id: player.charId, kind: 'player', x: player.x, z: player.z, anim: player.anim, name: player.name,
+    combatLevel: sessionCombatLevel(player.stats),
     gear: player.gear, hp: player.hp, maxHp: player.maxHp,
   }
   if (player.combat) diff.targetId = player.combat.npcId
