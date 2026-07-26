@@ -678,3 +678,121 @@ describe('describeCoopActionRefusal', () => {
     expect(describeCoopActionRefusal(undefined)).toBe('Could not do that')
   })
 })
+
+// A group kill has one loot winner but every member fighting it is on their own
+// slayer task. Credit is deliberately independent of damage — the member who
+// contributed nothing still gets the kill toward their task — and gated only on
+// being alive for it, so dying on purpose in an eight-player room is not the
+// cheapest slayer task in the game.
+describe('slayer credit on a group boss kill', () => {
+  function taskFor(monsterId: string, remaining: number, extra: Record<string, unknown> = {}) {
+    return { monsterId, monsterName: 'The Corporeal Horror', monstersRemaining: remaining, pointsOnComplete: 15, masterId: 'zul_kaar', ...extra }
+  }
+
+  function stateWithMembers(members: Array<{ id: number; task?: unknown; settings?: Record<string, unknown> }>) {
+    let state = createCoopBossState(BOSS, monstersData)!
+    for (const m of members) {
+      const payload = savePayload({}) as any
+      payload.settings = { ...(payload.settings || {}), slayerTask: m.task ?? null, ...(m.settings || {}) }
+      state = addCoopMember(state, createCoopMember({
+        characterId: m.id, username: `p${m.id}`, savePayload: payload, itemsData,
+      }))
+    }
+    return state
+  }
+
+  /** Drops the boss so the next tick resolves a kill. */
+  function killTick(state: any) {
+    state.boss.currentHP = 0
+    return processCoopTick(state, [], deps, Date.now())
+  }
+
+  it('credits every living member on task, not just the one who dealt the damage', () => {
+    const state = stateWithMembers([
+      { id: 1, task: taskFor(BOSS, 5) },
+      { id: 2, task: taskFor(BOSS, 5) },
+    ])
+    // Only member 1 did anything at all.
+    state.members['1'].damage = 2000
+    const { stateNext, events } = killTick(state)
+
+    expect(stateNext.members['1'].slayerTask.monstersRemaining).toBe(4)
+    expect(stateNext.members['2'].slayerTask.monstersRemaining).toBe(4)
+    const credits = events.filter((e: any) => e.type === 'slayerCredit')
+    expect(credits.map((c: any) => c.characterId).sort()).toEqual([1, 2])
+  })
+
+  it('grants slayer XP for the kill to each member on task', () => {
+    const state = stateWithMembers([{ id: 1, task: taskFor(BOSS, 5) }])
+    const { stateNext } = killTick(state)
+    // Boss with no explicit slayerXP falls back to HP (2000) at the ×4 boss
+    // multiplier — §4's guardrail against inflated boss slayer XP.
+    expect(stateNext.members['1'].xpGained.slayer).toBe(8000)
+  })
+
+  it('doubles the slayer XP for a member who bought the unlock', () => {
+    const state = stateWithMembers([
+      { id: 1, task: taskFor(BOSS, 5), settings: { characterUnlocks: { doubleSlayerXp: true } } },
+    ])
+    const { stateNext } = killTick(state)
+    expect(stateNext.members['1'].xpGained.slayer).toBe(16000)
+  })
+
+  it('leaves a member with no task, or a task for another monster, untouched', () => {
+    const state = stateWithMembers([
+      { id: 1, task: null },
+      { id: 2, task: taskFor('warlord_grondar', 5) },
+    ])
+    const { stateNext, events } = killTick(state)
+    expect(stateNext.members['1'].slayerTask).toBeNull()
+    expect(stateNext.members['2'].slayerTask.monstersRemaining).toBe(5)
+    expect(stateNext.members['2'].xpGained.slayer).toBeUndefined()
+    expect(events.filter((e: any) => e.type === 'slayerCredit')).toHaveLength(0)
+  })
+
+  it('does NOT credit a member who is dead when the boss falls', () => {
+    const state = stateWithMembers([{ id: 1, task: taskFor(BOSS, 5) }, { id: 2, task: taskFor(BOSS, 5) }])
+    state.members['2'].status = 'dead'
+    state.members['2'].hp = 0
+    const { stateNext } = killTick(state)
+    expect(stateNext.members['1'].slayerTask.monstersRemaining).toBe(4)
+    expect(stateNext.members['2'].slayerTask.monstersRemaining).toBe(5)
+  })
+
+  it('completes the task on the last kill and banks the points', () => {
+    const state = stateWithMembers([{ id: 1, task: taskFor(BOSS, 1) }])
+    const { stateNext, events } = killTick(state)
+    const me = stateNext.members['1']
+    expect(me.slayerTask).toBeNull()
+    expect(me.slayerCredit.tasksCompleted).toBe(1)
+    expect(me.slayerCredit.pointsEarned).toBe(15)
+    expect(me.slayerCredit.masterCompletions).toEqual({ zul_kaar: 1 })
+    expect(events.find((e: any) => e.type === 'slayerCredit')).toMatchObject({ completed: true, totalTasks: 1 })
+  })
+
+  it('pays the milestone multiplier off the running total, not the joined-at total', () => {
+    // Completing task #5 in-session must pay ×10, and #6 must not.
+    const state = stateWithMembers([
+      { id: 1, task: taskFor(BOSS, 1), settings: { slayerTasksCompleted: 4 } },
+    ])
+    const first = killTick(state).stateNext
+    expect(first.members['1'].slayerCredit.pointsEarned).toBe(150)
+    expect(first.members['1'].slayerTasksCompleted).toBe(5)
+
+    first.members['1'].slayerTask = taskFor(BOSS, 1)
+    // Clear the respawn wait too, or the next tick just counts it down.
+    first.boss.killedAt = null
+    first.boss.respawnCountdown = 0
+    const second = killTick(first).stateNext
+    expect(second.members['1'].slayerTasksCompleted).toBe(6)
+    // 150 from task #5 plus a plain 15 for #6 — the delta accumulates.
+    expect(second.members['1'].slayerCredit.pointsEarned).toBe(165)
+  })
+
+  it('marks the on-task members on the kill so the winner rolls their table on task', () => {
+    const state = stateWithMembers([{ id: 1, task: taskFor(BOSS, 5) }, { id: 2, task: null }])
+    state.members['1'].damage = 2000
+    const { kill } = killTick(state)
+    expect(kill.onTaskCharacterIds).toEqual([1])
+  })
+})

@@ -24,6 +24,7 @@ import {
   addCoopMember,
   createCoopBossState,
   createCoopMember,
+  emptySlayerCredit,
   memberCount,
   removeCoopMember,
 } from '../../../src/engine/coopBossEngine.js'
@@ -463,7 +464,40 @@ export function applyXpGainedToSave(saveObject, xpGained) {
   return applied
 }
 
-/** Writes a member's session state (supplies, HP, XP) back onto their save. */
+/**
+ * Folds a member's banked slayer progress into a save.
+ *
+ * The task itself is state and is written outright; points and completion
+ * counts are DELTAS and are added, so the caller must clear the credit after a
+ * successful write or a second write-back pays them twice.
+ */
+export function applySlayerCreditToSave(saveObject, member) {
+  // A session that predates slayer support carries no task field at all —
+  // writing `null` over the player's real task would cancel it.
+  if (!Object.prototype.hasOwnProperty.call(member || {}, 'slayerTask')) return saveObject
+  const settings = { ...(saveObject.settings && typeof saveObject.settings === 'object' ? saveObject.settings : {}) }
+  settings.slayerTask = member.slayerTask || null
+
+  const credit = member.slayerCredit
+  if (credit?.tasksCompleted > 0 || credit?.pointsEarned > 0) {
+    settings.slayerPoints = Math.max(0, Math.floor(Number(settings.slayerPoints) || 0))
+      + Math.max(0, Math.floor(Number(credit.pointsEarned) || 0))
+    settings.slayerTasksCompleted = Math.max(
+      Math.max(0, Math.floor(Number(settings.slayerTasksCompleted) || 0)),
+      Math.max(0, Math.floor(Number(member.slayerTasksCompleted) || 0)),
+    )
+    const completions = { ...(settings.slayerMasterTaskCompletions && typeof settings.slayerMasterTaskCompletions === 'object' ? settings.slayerMasterTaskCompletions : {}) }
+    for (const [masterId, count] of Object.entries(credit.masterCompletions || {})) {
+      completions[masterId] = (Math.floor(Number(completions[masterId]) || 0)) + Math.max(0, Math.floor(Number(count) || 0))
+    }
+    settings.slayerMasterTaskCompletions = completions
+  }
+  saveObject.settings = settings
+  return saveObject
+}
+
+/** Writes a member's session state (supplies, HP, XP, slayer progress) back
+ * onto their save. */
 export function applyMemberToSave(saveObject, member) {
   const next = { ...saveObject }
   next.inventory = Array.isArray(member.inventory) ? member.inventory.map((s) => (s ? { ...s } : null)) : []
@@ -471,6 +505,7 @@ export function applyMemberToSave(saveObject, member) {
     Object.entries(member.equipment || {}).map(([slot, item]) => [slot, item ? { ...item } : null]),
   )
   applyXpGainedToSave(next, member.xpGained)
+  applySlayerCreditToSave(next, member)
   // Dying in a group has to cost exactly what dying to the same boss alone
   // costs. The solo screen restores HP to full on death; writing the member's
   // literal 0 back would leave a corpse regenerating at +1/60s, so a group
@@ -526,6 +561,9 @@ export async function writeBackMember(env, { characterId, identityId, member, se
   const write = await writeSave(env, characterId, next, saveRevision)
   member.saveRevision = write.saveRevision
   member.xpGained = {}
+  // Banked slayer points/completions are deltas — clearing them is what stops a
+  // second write-back paying the same completed task again.
+  member.slayerCredit = emptySlayerCredit()
   await releaseLock()
   return { ok: true, ...write }
 }
@@ -656,7 +694,10 @@ export async function settleCoopKill(env, { session, state, kill, killSeq }, now
     return { ...empty, diverged: true }
   }
 
-  const rewards = rollMonsterRewardsById(session.boss_id, Math.random, false)
+  // The winner rolls their table on-task when this kill counted toward their
+  // own slayer task, so task-only drops behave exactly as they do solo.
+  const onTask = Array.isArray(kill?.onTaskCharacterIds) && kill.onTaskCharacterIds.some((id) => Number(id) === Number(ownerId))
+  const rewards = rollMonsterRewardsById(session.boss_id, Math.random, onTask)
   const withSession = applyMemberToSave(saveObject, member)
   let settled
   let write
@@ -674,6 +715,7 @@ export async function settleCoopKill(env, { session, state, kill, killSeq }, now
   // by the write above, so clear it rather than granting it twice.
   member.inventory = Array.isArray(withSession.inventory) ? withSession.inventory.map((s) => (s ? { ...s } : null)) : []
   member.xpGained = {}
+  member.slayerCredit = emptySlayerCredit()
   member.saveRevision = write.saveRevision
 
   const grantedItemIds = [...new Set((settled.granted || []).map((g) => g?.itemId).filter(Boolean))]

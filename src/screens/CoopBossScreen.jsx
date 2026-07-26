@@ -108,6 +108,9 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onDeath
           if (Number(ev.characterId) !== Number(characterId)) continue
           if (ev.type === 'equipRefused') addToast?.(describeCoopEquipRefusal(ev), 'error')
           else if (ev.type === 'actionRefused') addToast?.(describeCoopActionRefusal(ev), 'error')
+          else if (ev.type === 'slayerCredit' && ev.completed) {
+            addToast?.(`\u{1F480} Slayer Task #${ev.totalTasks} Completed - ${(ev.pointsEarned || 0).toLocaleString()} points.`, 'levelup')
+          }
         }
         // Read names off the response, not the render closure — this callback
         // is captured once for the life of the session, so anything from render

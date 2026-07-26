@@ -18,6 +18,8 @@
 
 import { createCombatState, processCombatTick } from './combat.js'
 import { getLevelFromXP } from './experience.js'
+import { resolveSlayerTaskKill } from './slayerTasks.js'
+import { getSlayerTaskReward, getSlayerTaskXpForKill } from './slayerRewards.js'
 import { isConsumableFood, isConsumablePotion, isComboConsumable, applyConsumableEffect } from './consumables.js'
 import { getCombatType, equipItem, placeUnequippedItems } from './equipment.js'
 
@@ -221,6 +223,64 @@ function pickMutableMonsterFields(monster) {
   return out
 }
 
+/** Slayer progress a member has banked in this session but not yet had written
+ * to their save. A DELTA, like xpGained — the write-back adds it and clears it,
+ * so a member who is written back twice is not paid twice. */
+export function emptySlayerCredit() {
+  return { pointsEarned: 0, tasksCompleted: 0, masterCompletions: {} }
+}
+
+/**
+ * Credits one boss kill against a member's own slayer task.
+ *
+ * Deliberately independent of damage: a group kill counts for everyone who was
+ * in the fight for it, not just the top-damage member who takes the loot. The
+ * one thing it is gated on is being ALIVE at the kill — otherwise dying on
+ * purpose in an eight-player room is the cheapest slayer task in the game.
+ *
+ * Mutates the member (task, accrued XP, banked credit) and returns what
+ * happened so the caller can tell the player.
+ */
+export function creditSlayerKill(member, bossId, monstersData) {
+  if (!member || member.status !== 'alive') return null
+  const task = member.slayerTask
+  if (!task) return null
+  const result = resolveSlayerTaskKill(task, bossId, 1)
+  if (!result.onTask) return null
+
+  const monster = monstersData?.[bossId] || null
+  const xp = getSlayerTaskXpForKill(monster, monster, monstersData, { doubleXp: member.doubleSlayerXp })
+  if (xp > 0) member.xpGained.slayer = (member.xpGained.slayer || 0) + xp
+
+  if (!member.slayerCredit) member.slayerCredit = emptySlayerCredit()
+  if (!result.completed) {
+    member.slayerTask = result.task
+    return {
+      characterId: member.characterId,
+      completed: false,
+      slayerXp: xp,
+      monstersRemaining: result.task?.monstersRemaining ?? 0,
+    }
+  }
+
+  const reward = getSlayerTaskReward(result.pointsAwarded, member.slayerTasksCompleted)
+  member.slayerTask = null
+  member.slayerTasksCompleted = reward.totalTasks
+  member.slayerCredit.pointsEarned += reward.pointsEarned
+  member.slayerCredit.tasksCompleted += 1
+  if (task.masterId) {
+    member.slayerCredit.masterCompletions[task.masterId] =
+      (member.slayerCredit.masterCompletions[task.masterId] || 0) + 1
+  }
+  return {
+    characterId: member.characterId,
+    completed: true,
+    slayerXp: xp,
+    pointsEarned: reward.pointsEarned,
+    totalTasks: reward.totalTasks,
+  }
+}
+
 /** Seeds a member's compact combat record from their save snapshot. */
 export function createCoopMember({ characterId, username, savePayload, itemsData, now = Date.now() }) {
   const stats = combatStatLevels(savePayload)
@@ -231,6 +291,7 @@ export function createCoopMember({ characterId, username, savePayload, itemsData
   const hp = Number.isFinite(savedHP) && savedHP > 0 ? Math.min(savedHP, maxHP) : maxHP
   const stance = savePayload?.settings?.combatStance
   const savedSpell = savePayload?.settings?.activeCombatSpell ?? savePayload?.activeCombatSpell
+  const settings = savePayload?.settings || {}
   return {
     characterId,
     username,
@@ -245,6 +306,14 @@ export function createCoopMember({ characterId, username, savePayload, itemsData
     damage: 0,
     damageTick: 0,
     xpGained: {},
+    // Slayer state rides the session so a group kill credits the member's own
+    // task. The running completion total comes along because the task-reward
+    // multiplier keys off it (every 5th task ×10, every 50th ×50) — snapshotting
+    // it once and reusing it would pay the same milestone twice in one session.
+    slayerTask: settings.slayerTask || null,
+    slayerTasksCompleted: Math.max(0, Math.floor(Number(settings.slayerTasksCompleted) || 0)),
+    doubleSlayerXp: !!settings.characterUnlocks?.doubleSlayerXp,
+    slayerCredit: emptySlayerCredit(),
     joinedAt: now,
     combat: {
       combatType: getCombatType(equipment, itemsData),
@@ -699,10 +768,21 @@ export function processCoopTick(state, intents, { itemsData, monstersData, praye
     next.boss.killedAt = now
     next.boss.respawnCountdown = coopRespawnTicks(next.bossId)
     const ownerCharId = topDamageCharacterId(next)
+    // Slayer credit is per member and independent of damage, so it is settled
+    // here rather than in the loot path — the loot goes to one player, the task
+    // progress goes to everyone still standing.
+    const onTaskCharacterIds = []
+    for (const member of Object.values(next.members)) {
+      const credited = creditSlayerKill(member, next.bossId, monstersData)
+      if (!credited) continue
+      onTaskCharacterIds.push(Number(member.characterId))
+      events.push({ type: 'slayerCredit', ...credited })
+    }
     kill = {
       ...(kill || { bossId: next.bossId }),
       ownerCharacterId: ownerCharId ? Number(ownerCharId) : null,
       contributors: damageTable(next),
+      onTaskCharacterIds,
     }
     events.push({ type: 'bossDefeated', bossId: next.bossId, ownerCharacterId: kill.ownerCharacterId })
   } else if (next.boss.currentHP > 0) {
