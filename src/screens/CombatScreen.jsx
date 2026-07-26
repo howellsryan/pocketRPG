@@ -5,7 +5,7 @@ import { usePvp } from '../state/pvpState.jsx'
 import PvpLobbyModal from './PvpLobbyModal.jsx'
 import PvpCombatScreen from './PvpCombatScreen.jsx'
 import CoopBossScreen from './CoopBossScreen.jsx'
-import CoopSessionBrowser from '../components/CoopSessionBrowser.jsx'
+import CoopSessionBrowser, { CoopSessionList } from '../components/CoopSessionBrowser.jsx'
 import Modal from '../components/Modal.jsx'
 import LootResultModal from '../components/LootResultModal.jsx'
 import HPBar from '../components/HPBar.jsx'
@@ -357,6 +357,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   // Every open room across every boss, for the picker's session browser.
   const [coopBrowser, setCoopBrowser] = useState({ sessions: [], loading: true, activeSessionId: null })
   const [coopJoiningSession, setCoopJoiningSession] = useState(null)
+  const [showCoopSessions, setShowCoopSessions] = useState(false)
 
   // Dungeon mode: this screen renders one place's foes (Monsters / Bosses /
   // Raids) instead of the world-wide picker. PvP is hidden (not place-bound);
@@ -1490,6 +1491,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
         return
       }
       const res = await joinCoopWithRecovery(monster.id, sessionId)
+      setShowCoopSessions(false)
       setCoopSessionId(res.sessionId)
     } catch (err) {
       const code = err?.body?.code
@@ -2326,10 +2328,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
         sessions={coopBrowser.sessions}
         monstersData={monstersData}
         loading={coopBrowser.loading}
-        activeSessionId={coopBrowser.activeSessionId}
-        joiningSessionId={coopJoiningSession}
-        checkBossRequirements={checkBossRequirements}
-        onJoin={(session, monster) => startCoopFight(monster, session.sessionId)}
+        onOpen={() => setShowCoopSessions(true)}
       />
     ) : null
     return (
@@ -2826,6 +2825,26 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                 </div>
               </div>
             )}
+          </div>
+        </Modal>
+      )}
+
+      {/* Live group fights. A modal rather than an inline list: a busy night
+          would otherwise push the foe list off the screen. */}
+      {showCoopSessions && (
+        <Modal title="Live Group Fights" onClose={() => setShowCoopSessions(false)}>
+          <p class="text-[11px] text-[var(--color-parchment)] opacity-70 mb-3">
+            Join a boss someone is already fighting. The drop goes to whoever deals the most damage; everyone keeps their own XP.
+          </p>
+          <div class="max-h-96 overflow-y-auto">
+            <CoopSessionList
+              sessions={coopBrowser.sessions}
+              monstersData={monstersData}
+              activeSessionId={coopBrowser.activeSessionId}
+              joiningSessionId={coopJoiningSession}
+              checkBossRequirements={checkBossRequirements}
+              onJoin={(session, monster) => startCoopFight(monster, session.sessionId)}
+            />
           </div>
         </Modal>
       )}

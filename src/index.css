@@ -1067,7 +1067,7 @@ html, body, #app {
    picker class (.cb-area / .cb-mon) or a kit primitive (.fm-btn), so the panel
    follows whichever skin the shell is wearing instead of pinning its own. */
 .cb-live { margin-bottom: 18px; }
-.cb-live__head { cursor: default; }
+.cb-live__list { display: flex; flex-direction: column; gap: 8px; }
 .cb-live__row { cursor: default; }
 .cb-live__seats { flex-shrink: 0; white-space: nowrap; }
 .cb-live__roster { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
