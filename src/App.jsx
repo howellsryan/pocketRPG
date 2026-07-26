@@ -88,7 +88,7 @@ import { isLoggedDrop, collectIdleCombatLoggedDrops } from './engine/collectionL
 import { rollClueRewards } from './engine/clueScrolls.js'
 import dailyTasksData from './data/dailyTasks.json'
 import { skillingGainEvents, idleCombatDailyEvents } from './engine/dailyTasks.js'
-import { countItem, addItem } from './engine/inventory.js'
+import { countItem, addItem, collectDepositAll } from './engine/inventory.js'
 import { skillingActionBlockedByFullInventory } from './engine/skilling.js'
 
 // ── Lazy in-game code chunk ──────────────────────────────────────────────────
@@ -2253,16 +2253,18 @@ function GameApp() {
   // "Bank & continue" from the inventory-full prompt: deposit the whole
   // inventory and let the paused action resume on the next tick.
   function bankFullInventory() {
-    const inv = inventoryRef.current
-    const updates = {}
-    for (const slot of inv) {
-      if (!slot) continue
-      updates[slot.itemId] = (updates[slot.itemId] || 0) + slot.quantity
+    const { updates, charges, inventory: nextInv, deposited } =
+      collectDepositAll(inventoryRef.current, autoBankExcludedItems)
+    if (deposited === 0) {
+      // Every occupied slot is excluded from auto-bank, so there is nothing this
+      // button can free. Dismiss rather than resolve: resolving would let the
+      // still-full inventory raise the same prompt again on the next tick.
+      addToast('Everything here is excluded from auto-bank.', 'warning')
+      dismissInventoryFullPrompt()
+      return
     }
-    if (Object.keys(updates).length > 0) {
-      updateBankDirect(updates)
-      updateInventory(new Array(28).fill(null))
-    }
+    updateBankDirect(updates, { charges })
+    updateInventory(nextInv)
     resolveInventoryFull()
   }
 

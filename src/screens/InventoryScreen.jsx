@@ -7,7 +7,7 @@ import WeaponChargePanel, { getChargeRecipe } from '../components/WeaponChargePa
 import CollapseChevron from '../components/CollapseChevron.jsx'
 import TradingPostSellForm from '../components/TradingPostSellForm.jsx'
 import SellConfirmModal from '../components/SellConfirmModal.jsx'
-import { freeSlots, countItem, removeItem, addItem, getBreakdownYield } from '../engine/inventory.js'
+import { freeSlots, countItem, removeItem, addItem, getBreakdownYield, sumSlotCharges } from '../engine/inventory.js'
 import { isOrderBookItem } from '../engine/storeRules.js'
 import { getIronmanShopValue } from '../utils/itemValue.js'
 import { HIGH_VALUE_SELL_THRESHOLD } from '../utils/constants.js'
@@ -361,15 +361,17 @@ export default function InventoryScreen() {
         }
       }
       if (deposited > 0) {
+        // Every deposited copy carries its own charges, so the pool is summed
+        // over the slots the loop above took, not read off the clicked one.
+        const movedCharges = sumSlotCharges(inventory, slot.itemId, deposited)
         if (newBank[slot.itemId]) {
           newBank[slot.itemId] = { ...newBank[slot.itemId], quantity: newBank[slot.itemId].quantity + deposited }
-          // Preserve charges if the item being deposited has them
-          if (slot.charges && slot.charges > 0) {
-            newBank[slot.itemId] = { ...newBank[slot.itemId], charges: (newBank[slot.itemId].charges || 0) + slot.charges }
+          if (movedCharges > 0) {
+            newBank[slot.itemId] = { ...newBank[slot.itemId], charges: (newBank[slot.itemId].charges || 0) + movedCharges }
           }
         } else {
           const bankEntry = { itemId: slot.itemId, quantity: deposited }
-          if (slot.charges && slot.charges > 0) bankEntry.charges = slot.charges
+          if (movedCharges > 0) bankEntry.charges = movedCharges
           newBank[slot.itemId] = bankEntry
         }
         updateInventory(newInv)

@@ -1,6 +1,7 @@
 import { useState } from 'preact/hooks'
 import Panel from './Panel.jsx'
 import Button from './Button.jsx'
+import GameIcon from './GameIcon.jsx'
 
 const DEFAULT_CHARGE_ITEM_ID = 'venomcoil_scales'
 
@@ -39,9 +40,6 @@ export default function WeaponChargePanel({ item, currentCharges = 0, inventory,
 
   const parsedInput = parseInt(chargeInput, 10)
   const customQty = Number.isFinite(parsedInput) && parsedInput > 0 ? parsedInput : 0
-  const isRecipe = recipe.length > 1 || recipe[0].qty > 1
-  const chargeIcon = recipe.length === 1 && recipe[0].itemId === 'blood_rune' ? '🩸'
-    : isRecipe ? '🔮' : '🐍'
   const costLabel = recipe.map(r => `${r.qty}× ${itemsData[r.itemId]?.name || r.itemId}`).join(' + ')
 
   const doCharge = (qty) => { onCharge(qty); setChargeInput('') }
@@ -49,7 +47,14 @@ export default function WeaponChargePanel({ item, currentCharges = 0, inventory,
   return (
     <Panel className="border-[#1a3a2a]">
       <div class="flex items-center justify-between mb-2">
-        <span class="text-[12px] font-semibold text-[#4ade80]">{chargeIcon} Charges</span>
+        {/* Icon comes from the charge material, never the weapon — a hardcoded
+            fallback used to show Venomcoil scales on every Shardglass item. */}
+        <span class="flex items-center gap-1 text-[12px] font-semibold text-[#4ade80]">
+          {recipe.map(r => (
+            <GameIcon key={r.itemId} item={itemsData[r.itemId]} size={14} color="currentColor" title={itemsData[r.itemId]?.name || r.itemId} />
+          ))}
+          Charges
+        </span>
         <span class="font-[var(--font-mono)] text-[12px] text-[var(--color-parchment)]">
           {currentCharges} / ∞
         </span>
