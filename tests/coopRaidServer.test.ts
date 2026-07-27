@@ -317,3 +317,19 @@ describe('the start-raid intent', () => {
     expect(validateCoopAction({ type: 'start_raid', characterId: 99 })).toEqual({ action: { type: 'start_raid' } })
   })
 })
+
+describe('the set-ready intent', () => {
+  it('reaches the room at all', () => {
+    // The edge validator is an allowlist: an action missing from it is a 400
+    // `unknown_action` that never reaches the engine, so the button errors and
+    // the client's echo un-does itself. Every new intent needs a case here.
+    expect(validateCoopAction({ type: 'set_ready', value: true })).toEqual({
+      action: { type: 'set_ready', value: true },
+    })
+  })
+
+  it('normalises the flag rather than passing what it was sent', () => {
+    expect(validateCoopAction({ type: 'set_ready' })).toEqual({ action: { type: 'set_ready', value: false } })
+    expect(validateCoopAction({ type: 'set_ready', value: 'yes' })).toEqual({ action: { type: 'set_ready', value: true } })
+  })
+})

@@ -180,9 +180,14 @@ export default function CoopRaidLobby({
           // The slot a non-host used to lose to a dead "Host starts" button.
           // Telling the party you have finished restocking is the one thing a
           // guest in a lobby actually has to do.
-          <button class={'cb-act' + (ready ? ' is-on' : '')} onClick={() => onReady?.(!ready)}>
-            <GameIcon iconKey="check_mark" color="currentColor" size={18} />
-            <span>{ready ? "I'm Ready" : 'Not ready'}</span>
+          //
+          // The button names what the TAP does, not what you currently are —
+          // labelled by state it reads as the opposite of the truth, and the
+          // roster tag beside your name already says which you are. Lit while
+          // you are not ready, because then it is the thing to do.
+          <button class={'cb-act' + (ready ? '' : ' is-on')} onClick={() => onReady?.(!ready)}>
+            <GameIcon iconKey={ready ? 'cancel' : 'check_mark'} color="currentColor" size={18} />
+            <span>{ready ? 'Not ready' : "I'm Ready"}</span>
           </button>
         )}
       </div>

@@ -20,6 +20,10 @@ export function validateCoopAction(action) {
       // No payload — the room decides whether this member is the host and
       // whether there is a lobby to end.
       return { action: { type: 'start_raid' } }
+    case 'set_ready':
+      // Lobby readiness. The room decides whether there is a lobby to be ready
+      // in; the edge only fixes the shape.
+      return { action: { type: 'set_ready', value: !!action.value } }
     case 'change_stance':
       if (!VALID_STANCES.has(action.stance)) return { error: 'invalid_stance' }
       return { action: { type: 'change_stance', stance: action.stance } }

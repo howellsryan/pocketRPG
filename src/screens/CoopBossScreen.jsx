@@ -236,7 +236,10 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onDeath
         setEcho((prev) => (prev && prev.at === at ? { ...prev, tick: Number(res?.tick_number) || null } : prev))
       }
     } catch (err) {
+      // A refused action un-does its echo now, rather than leaving the button
+      // showing something that did not happen until the poll's backstop.
       if (patch) setEcho((prev) => (prev && prev.at === at ? null : prev))
+      if (action?.type === 'set_ready') setReadyEcho(null)
       addToast?.(err.message || 'Action failed', 'error')
     }
   }
