@@ -8,9 +8,19 @@
 import { EQUIPMENT_SLOTS, INVENTORY_SIZE } from '../utils/constants.js'
 import { checkEquipRequirements } from './equipment.js'
 
-// Cap on saved loadouts per character.
+// Loadout slots every character starts with. Extra tabs are bought one at a
+// time on the Character Unlocks screen (`extra_equipment_tab`, 10 credits each,
+// no limit) and counted in the save's characterUnlocks — so the real cap is
+// equipmentPresetLimit(), never this constant on its own.
 export const MAX_EQUIPMENT_PRESETS = 3
 const MAX_PRESET_NAME = 24
+
+// How many loadout tabs this character may hold: the base three plus every
+// extra tab purchased. Tolerates the pre-feature save shape (absent key = 0).
+export function equipmentPresetLimit(characterUnlocks) {
+  const extra = Math.floor(Number(characterUnlocks?.extraEquipmentTabs) || 0)
+  return MAX_EQUIPMENT_PRESETS + Math.max(0, extra)
+}
 
 // ── Snapshot creation ────────────────────────────────────────────────────────
 // Capture the fields needed to re-create each item (id, quantity, charges, noted).

@@ -966,6 +966,24 @@
       "scale": 1.2,
       "tint": "#c9a94a"
     },
+    "arcane_grimoire": {
+      "model": "shields/q_heater.gltf",
+      "slot": "shield",
+      "bone": "hand_l",
+      "position": [0.025, -0.025, 0],
+      "rotationDeg": [-89, -88, 9],
+      "scale": 1.14,
+      "tint": "#5a45c8"
+    },
+    "tomb_of_fire": {
+      "model": "shields/q_heater.gltf",
+      "slot": "shield",
+      "bone": "hand_l",
+      "position": [0.025, -0.025, 0],
+      "rotationDeg": [-89, -88, 9],
+      "scale": 1.14,
+      "tint": "#a8341a"
+    },
     "arcane_kiteshield": {
       "model": "shields/q_heater.gltf",
       "slot": "shield",

@@ -29,6 +29,8 @@ Your combat level summarises your fighting power for quests and PvP matchmaking.
 
 You have 11 equipment slots: weapon, ammo, head, body, legs, shield, neck, gloves, boots, cape and ring. Each piece adds attack, strength and defence bonuses that feed directly into the combat formulas. Metal gear progresses through tiers — Bronze, Iron, Steel, Mithril, Adamant, Rune and Dragon — with level requirements to equip. Compare an item's stats before equipping, and remember special gear effects (like dragonfire protection) only work while the item is worn.
 
+Equipment tabs save a full loadout — everything worn plus your inventory — and load it back by re-arranging gear you already own between bank, inventory and equipment. Every character gets three tabs; more can be bought on the Character Unlocks screen for 10 credits each, with no limit on how many you buy.
+
 ## Ranged combat and ammunition
 
 Ranged weapons need matching ammunition equipped in your ammo slot (for example arrows for a bow), and ammunition is consumed as you shoot — in live and idle combat alike. If you run out mid-fight your attacks stop with a warning, so stock plenty before long idle sessions. A few special weapons use built-in charges instead of ammunition.
@@ -107,7 +109,7 @@ Clue scrolls drop from monsters and come in four tiers: medium, hard, elite and 
 
 ## Minigames
 
-Minigames are timed grinds for specific unique rewards — for example running Viking Assault until you earn a piece of the Fighter set. Each minigame task shows its expected duration and its reward. Minigame uniques are granted server-side when the grind completes and count toward your collection log. The Fletching Guild (Ardounne) is a 2-hour grind for the Bowyer's Knife — an untradeable tool that cuts one tick off the time to fletch any bow while it's in your inventory or equipped.
+Minigames are timed grinds for specific unique rewards — for example running Viking Assault until you earn a piece of the Fighter set. Each minigame task shows its expected duration and its reward. Minigame uniques are granted server-side when the grind completes and count toward your collection log. The Fletching Guild (Ardounne) is a 2-hour grind for the Bowyer's Knife — an untradeable tool that cuts one tick off the time to fletch any bow while it's in your inventory or equipped. Autumntodt (Catherra, unlocked at Firemaking 80) is a 5-hour grind for the Tomb of Fire.
 
 ## Raids and bosses
 
@@ -156,6 +158,8 @@ Plant seeds in farming patches (herbs, trees, fruit trees and vegetables) at dif
 ## Magic
 
 Magic is trained by casting combat spells, which need runes. Each spell has a level requirement, base damage, and rune cost per cast; you earn the spell's base XP plus 2 XP per damage dealt. Higher tiers (strike, bolt, blast and beyond) hit harder and cost pricier runes.
+
+The Tomb of Fire is a shield-slot book earned from Autumntodt (Catherra, Firemaking 80) and worn at Magic 80. It supplies every fire rune your spells need, adds 10% magic damage to fire spells, and gives +15 magic attack with any spell. It carries no defence bonuses.
 
 The Arcane Proving Grounds minigame (Edgevale, unlocked at Magic 50) is a timed grind for magic gear: the Boundless hat, robe top, robe bottom, boots and gloves (2 hours each), the Arcane Grimoire off-hand (4 hours) and the Archmage Wand (4 hours). The Duskmare boss (Canifel) drops the Duskmare Staff plus three orbs — Umbral, Attuned and Volatile. Attaching an orb to a Duskmare Staff forges a unique staff: Umbral's special restores Prayer points, Attuned casts standard spells one tick faster for the highest sustained DPS, and Volatile's special hits harder the higher your Magic level.
 

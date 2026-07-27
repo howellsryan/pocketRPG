@@ -1,7 +1,7 @@
 import { useState } from 'preact/hooks'
 import SectionHeader from './SectionHeader.jsx'
 import CollapseChevron from './CollapseChevron.jsx'
-import { OTHER_BONUS_LABELS, OTHER_BONUS_PERCENT_KEYS } from '../utils/bonusLabels.js'
+import { OTHER_BONUS_LABELS, OTHER_BONUS_PERCENT_KEYS, spellRuneDamageLabel } from '../utils/bonusLabels.js'
 
 /**
  * Displays all bonuses from an item (attack, defence, other).
@@ -15,8 +15,11 @@ export default function BonusDisplay({ item }) {
   const hasAttackBonus = item.attackBonus && Object.values(item.attackBonus).some(v => v !== 0)
   const hasDefenceBonus = item.defenceBonus && Object.values(item.defenceBonus).some(v => v !== 0)
   const hasOtherBonus = item.otherBonus && Object.values(item.otherBonus).some(v => v !== 0)
+  // Element-only magic damage lives in its own field, not otherBonus, so it can
+  // never be read as a bonus to every spell.
+  const spellRuneDamage = Object.entries(item.spellRuneDamage || {}).filter(([, v]) => v !== 0)
 
-  if (!hasAttackBonus && !hasDefenceBonus && !hasOtherBonus) {
+  if (!hasAttackBonus && !hasDefenceBonus && !hasOtherBonus && spellRuneDamage.length === 0) {
     return null
   }
 
@@ -66,10 +69,10 @@ export default function BonusDisplay({ item }) {
             </div>
           )}
 
-          {hasOtherBonus && (
+          {(hasOtherBonus || spellRuneDamage.length > 0) && (
             <div>
               <SectionHeader size="sm" className="mb-1 opacity-40">Other Bonuses</SectionHeader>
-              {Object.entries(item.otherBonus).map(([k, v]) =>
+              {Object.entries(item.otherBonus || {}).map(([k, v]) =>
                 v !== 0 ? (
                   <div key={k} class="flex justify-between text-[var(--color-parchment)] opacity-70 py-[2px]">
                     <span>{OTHER_BONUS_LABELS[k] || k}</span>
@@ -79,6 +82,14 @@ export default function BonusDisplay({ item }) {
                   </div>
                 ) : null
               )}
+              {spellRuneDamage.map(([runeId, v]) => (
+                <div key={runeId} class="flex justify-between text-[var(--color-parchment)] opacity-70 py-[2px]">
+                  <span>{spellRuneDamageLabel(runeId)}</span>
+                  <span class="font-[var(--font-mono)]" style={{ color: v > 0 ? '#27ae60' : '#c0392b' }}>
+                    {v > 0 ? '+' : ''}{v}%
+                  </span>
+                </div>
+              ))}
             </div>
           )}
         </div>

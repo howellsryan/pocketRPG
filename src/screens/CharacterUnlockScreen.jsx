@@ -36,6 +36,17 @@ const CHARACTER_UNLOCKS_DEF = [
     currency: 'credits',
     stateKey: 'autoSlayerTask',
   },
+  {
+    id: 'extra_equipment_tab',
+    name: 'Extra Equipment Tab',
+    description: 'Adds one more loadout tab on the Equipment screen, on top of the three every character starts with. Buy as many as you like — each one costs 10 credits.',
+    icon: '🎽',
+    iconKey: 'body',
+    cost: 10,
+    currency: 'credits',
+    stateKey: 'extraEquipmentTabs',
+    repeatable: true,
+  },
 ]
 
 export default function CharacterUnlockScreen({ onBack }) {
@@ -53,7 +64,7 @@ export default function CharacterUnlockScreen({ onBack }) {
       addToast('Sign in to purchase permanent unlocks.', 'error')
       return
     }
-    if (characterUnlocks?.[unlock.stateKey]) {
+    if (!unlock.repeatable && characterUnlocks?.[unlock.stateKey]) {
       addToast('Already unlocked.', 'error')
       return
     }
@@ -63,9 +74,10 @@ export default function CharacterUnlockScreen({ onBack }) {
       if (Number.isFinite(remaining)) {
         window.dispatchEvent(new CustomEvent(CREDITS_UPDATED_EVENT, { detail: { credits_remaining: remaining } }))
       }
-      updateCharacterUnlock(unlock.stateKey, true)
+      if (unlock.repeatable) updateCharacterUnlock(unlock.stateKey, prev => (Math.floor(Number(prev) || 0)) + 1)
+      else updateCharacterUnlock(unlock.stateKey, true)
       requestCriticalPushSave(() => getSnapshot(), CRITICAL_SAVE_REASONS.PURCHASE)
-      addToast(`✨ ${unlock.name} unlocked permanently!`, 'info')
+      addToast(unlock.repeatable ? `✨ ${unlock.name} purchased!` : `✨ ${unlock.name} unlocked permanently!`, 'info')
     } catch (err) {
       if (err?.status === 402) addToast('Not enough credits.', 'error')
       else addToast(err?.message || 'Purchase failed.', 'error')
@@ -145,19 +157,28 @@ export default function CharacterUnlockScreen({ onBack }) {
 
       <div class="space-y-3">
         {CHARACTER_UNLOCKS_DEF.map(unlock => {
-          const owned = isUnlockOwned(characterUnlocks, unlock.stateKey)
+          // A repeatable unlock holds a count, not a flag: it never reads as
+          // "Owned" (there is always another to buy), so it shows how many the
+          // character holds beside a button that stays live.
+          const ownedCount = unlock.repeatable ? Math.max(0, Math.floor(Number(characterUnlocks?.[unlock.stateKey]) || 0)) : 0
+          const owned = unlock.repeatable ? false : isUnlockOwned(characterUnlocks, unlock.stateKey)
           return (
             <GildedComplete key={unlock.id} complete={owned} className="rounded-xl">
               <div
                 class={`flex items-center justify-between p-3 rounded-xl border ${owned ? 'bg-[var(--fm-parch-hi)] border-[var(--color-hp-green)]' : 'bg-[var(--color-void-light)] border-[var(--color-void-border)]'}`}
               >
                 <div class="flex items-center gap-3 min-w-0">
-                  <GameIcon iconKey="death_skull" size={36} color="#c0453b" class="flex-shrink-0" />
+                  <GameIcon iconKey={unlock.iconKey || 'death_skull'} size={36} color="#c0453b" class="flex-shrink-0" />
                   <div class="min-w-0">
                     <div class="text-sm font-semibold text-[var(--color-parchment)]">{unlock.name}</div>
                     <div class="text-[9px] text-[var(--color-parchment)] opacity-50 mt-0.5 leading-tight">
                       {unlock.description}
                     </div>
+                    {unlock.repeatable && ownedCount > 0 && (
+                      <div class="text-[10px] font-bold text-[var(--color-hp-green)] mt-1">
+                        {ownedCount} owned
+                      </div>
+                    )}
                   </div>
                 </div>
                 <div class="flex-shrink-0 ml-3 text-right">

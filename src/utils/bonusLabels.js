@@ -21,3 +21,14 @@ export const OTHER_BONUS_LABELS = {
 }
 
 export const OTHER_BONUS_PERCENT_KEYS = new Set(['magicDamage', 'fishingXpPercent', 'slayerTaskAccuracyPercent', 'slayerTaskDamagePercent', 'damageReductionChance', 'damageReductionPercent', 'prayerDrainReduction'])
+
+/**
+ * Label for a conditional, element-only magic damage bonus (`spellRuneDamage`)
+ * — "Magic Damage (Fire spells)". The element is derived from the rune id, so a
+ * book keyed on any rune labels itself with no table to extend here.
+ */
+export function spellRuneDamageLabel(runeId) {
+  const element = String(runeId || '').replace(/_rune$/, '').replace(/_/g, ' ').trim()
+  if (!element) return 'Magic Damage %'
+  return `Magic Damage (${element.charAt(0).toUpperCase() + element.slice(1)} spells)`
+}

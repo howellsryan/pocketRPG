@@ -29,7 +29,7 @@ import {
   getMeleeStyleBonuses, getRangedStyleBonus,
   effectiveDefence, playerDefenceRoll,
 } from './formulas.js'
-import { getEquipmentBonuses, getAttackStyle, getEffectiveWornMagicDamage } from './equipment.js'
+import { getEquipmentBonuses, getAttackStyle, getEffectiveWornMagicDamage, getSpellRuneMagicDamage } from './equipment.js'
 import { getCombatSetMultipliers } from './combatSetBonuses.js'
 import { getPvpCombatModifiers } from './pvpCombatModifiers.js'
 import { hasRequiredRunes, getRunesToConsume } from './runes.js'
@@ -188,7 +188,7 @@ export function rollMagicAttack(attacker, defender, itemsData, opts = {}) {
   if (typeof maxHitOverride === 'number') {
     maxHit = magicMaxHit(maxHitOverride, wornMagicDamage + voidMult.magicDamageBonusFlat)
   } else if (spell) {
-    maxHit = magicMaxHit(spell.baseDamage, wornMagicDamage + voidMult.magicDamageBonusFlat)
+    maxHit = magicMaxHit(spell.baseDamage, wornMagicDamage + voidMult.magicDamageBonusFlat + getSpellRuneMagicDamage(attacker.equipment, itemsData, spell))
   } else {
     // No spell, no override — caller is misusing the API. Bail with 0.
     return { hit: false, damage: 0, accuracy: 0, maxHit: 0, attackRoll: atkRoll, defenceRoll: defRoll, style: 'magic' }

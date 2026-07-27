@@ -216,6 +216,19 @@
       "oneShot": true
     },
     {
+      "id": "at_tomb_of_fire",
+      "name": "Stoke the Autumntodt Brazier",
+      "icon": "\ud83d\udcd5",
+      "iconKey": "tomb_of_fire",
+      "description": "Feed the braziers against the Autumntodt until the wardens hand over the Tomb of Fire.",
+      "hours": 5,
+      "ticks": 30000,
+      "product": "tomb_of_fire",
+      "qty": 1,
+      "minigame": "autumntodt",
+      "oneShot": true
+    },
+    {
       "id": "fg_bowyers_knife",
       "name": "Earn the Bowyer's Knife",
       "icon": "🔪",
@@ -274,6 +287,13 @@
       "req": { "skill": "magic", "level": 50 }
     },
     {
+      "id": "autumntodt",
+      "label": "Autumntodt",
+      "icon": "\ud83d\udd25",
+      "iconKey": "autumntodt",
+      "req": { "skill": "firemaking", "level": 80 }
+    },
+    {
       "id": "fletching_guild",
       "label": "Fletching Guild",
       "icon": "🏹",
@@ -301,6 +321,7 @@
     "boundless_gloves": "Boundless Gloves",
     "arcane_grimoire": "Arcane Grimoire",
     "archmage_wand": "Archmage Wand",
-    "bowyers_knife": "Bowyer's Knife"
+    "bowyers_knife": "Bowyer's Knife",
+    "tomb_of_fire": "Tomb of Fire"
   }
 }
