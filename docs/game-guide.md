@@ -131,6 +131,12 @@ Slayer task credit works differently — it goes to everyone still alive at the 
 
 While you are in a group fight the server owns your save, so saving, skipping time, buying and Trading Post activity are all locked until you leave with the back arrow.
 
+## Talking in a group fight
+
+Group boss fights have chat. The bar at the foot of the fight is one line when closed — the newest message — and opens into a short log with an input. Everyone in your instance sees what you send, and you can still talk while dead or during the respawn wait. Messages are kept for safety review, so keep it civil.
+
+Whenever anyone in your instance receives a drop worth over a million coins, the whole instance is told what it was and who got it. It reads in the fight chat in the idle game, and as a purple banner in the open world — where any kill counts, not just a boss.
+
 ## The Corporeal Horror
 
 The Corporeal Horror is a 2,000-hitpoint boss at Edgevale, unlocked by the quest The Heart of Shadows. It halves every hit that is not dealt with a spear, so bringing one roughly doubles your damage — a Krylth Spear is the standard choice. It hits up to 55 with crush, and partway into the fight it spawns a Dread Core: a separate 180-hitpoint monster, not a phase. The Horror keeps attacking the whole time the Core is up, so you take hits from both, and every landed Core hit burns 8 prayer points. Switch targets to destroy the Core — it drops nothing and does not count as a kill — then switch back to the boss. Clear one and the Horror sends in another after a few more of its own attacks, so you are trading damage on the boss for control of your prayer pool all fight. Skipping the fight costs 5 credits.

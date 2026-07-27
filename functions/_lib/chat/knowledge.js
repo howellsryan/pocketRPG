@@ -218,6 +218,14 @@ export const KNOWLEDGE_CHUNKS = [
   "text": "Every player who personally deals at least 10% of the boss's maximum hitpoints gets their own roll of its drop table — not a share of one drop. Two players over the line means two independent rolls, each with its own collection log entries and kill count. Miss the line and you get nothing from that kill. Damage from any source counts, including specials and summons, and it resets each time the boss respawns. The bar under the boss's name tracks your own progress toward the threshold: it fills as you deal the 10% you need and turns green when your drop is secured. With the group capped at 8, the top contributor always clears the line, so a kill never comes out empty for everyone. Being defeated does not cancel a drop you had already earned. Slayer task credit works differently — it goes to everyone still alive at the kill who has that boss as their task, whatever their damage. While you are in a group fight the server owns your save, so saving, skipping time, buying and Trading Post activity are all locked until you leave with the back arrow."
  },
  {
+  "id": "guide_talking_in_a_group_fight",
+  "title": "Talking in a group fight",
+  "tags": [
+   "guide"
+  ],
+  "text": "Group boss fights have chat. The bar at the foot of the fight is one line when closed — the newest message — and opens into a short log with an input. Everyone in your instance sees what you send, and you can still talk while dead or during the respawn wait. Messages are kept for safety review, so keep it civil. Whenever anyone in your instance receives a drop worth over a million coins, the whole instance is told what it was and who got it. It reads in the fight chat in the idle game, and as a purple banner in the open world — where any kill counts, not just a boss."
+ },
+ {
   "id": "guide_the_corporeal_horror",
   "title": "The Corporeal Horror",
   "tags": [
