@@ -210,6 +210,14 @@ export const KNOWLEDGE_CHUNKS = [
   "text": "Every player who personally deals at least 10% of the boss's maximum hitpoints gets their own roll of its drop table — not a share of one drop. Two players over the line means two independent rolls, each with its own collection log entries and kill count. Miss the line and you get nothing from that kill. Damage from any source counts, including specials and summons, and it resets each time the boss respawns. The bar under the boss's name tracks your own progress toward the threshold: it fills as you deal the 10% you need and turns green when your drop is secured. With the group capped at 8, the top contributor always clears the line, so a kill never comes out empty for everyone. Being defeated does not cancel a drop you had already earned. Slayer task credit works differently — it goes to everyone still alive at the kill who has that boss as their task, whatever their damage. While you are in a group fight the server owns your save, so saving, skipping time, buying and Trading Post activity are all locked until you leave with the back arrow."
  },
  {
+  "id": "guide_raid_parties",
+  "title": "Raid parties",
+  "tags": [
+   "guide"
+  ],
+  "text": "Tap a raid and you can run it alone or take a party. Unlike bosses, a raid party is not drop-in: you either start a party and become its host, or join a party that is still waiting in its lobby. Once the host presses Start Raid, nobody else can join that run. The lobby lists everyone who has joined, with their combat level, and you can open any member's worn gear and inventory to see what they are bringing. Eat, drink and swap gear in the lobby — the wait between bosses works the same way, 15 seconds while the next boss walks in. The raid itself is the group boss fight: the server runs every swing, and it plays exactly like a solo run — same tick speed, prayers, specials and combo eating. The bosses come in order, and only the last one pays. Deal at least 10% of the whole raid's hitpoints — counted across every boss, not reset between them — and you roll the raid's reward table yourself, with your own collection log entries and raid kill count. Miss the line and you get nothing from the clear. Finishing the raid puts the party back in its lobby, so the host can start another run without everyone regrouping. If the whole party is wiped out, the run ends the same way. Dying costs what dying in a solo raid costs."
+ },
+ {
   "id": "guide_the_corporeal_horror",
   "title": "The Corporeal Horror",
   "tags": [

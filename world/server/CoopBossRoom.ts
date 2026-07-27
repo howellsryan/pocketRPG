@@ -69,6 +69,7 @@ export class CoopBossRoom {
   private state: AnyState | null = null
   private sessionId = 0
   private bossId = ''
+  private raidId: string | null = null
   private killSeq = 0
   /**
    * The last tick the room will admit to. A tick is only published once
@@ -87,6 +88,11 @@ export class CoopBossRoom {
   private loading: Promise<void> | null = null
   private dirty = false
   private lastCheckpointTick = 0
+  /** The phase the D1 row was last told about. A raid party setting off has to
+   * stop being advertised as joinable NOW, not at the next periodic checkpoint
+   * — the lobby list is read from the row, so a 25-tick lag is 15 seconds of
+   * offering people a run they cannot enter. */
+  private checkpointedPhase = ''
   private busy = false
   private queue: Promise<unknown> = Promise.resolve()
   private env: Env
@@ -171,6 +177,12 @@ export class CoopBossRoom {
         return jsonResponse({ error: 'invalid_member' }, 400)
       }
       if (memberCount(this.state) >= COOP_MAX_MEMBERS) return jsonResponse({ error: 'session_full' }, 409)
+      // A raid is a run with a beginning. The room is the only thing that knows
+      // whether the host has pressed Start — the D1 row is a checkpoint behind —
+      // so the lobby gate has to be enforced here, not just in the join path.
+      if (this.state.raid && this.state.phase !== 'lobby') {
+        return jsonResponse({ error: 'raid_in_progress' }, 409)
+      }
 
       const joined = addCoopMember(this.state, member) as AnyState
       this.state = joined
@@ -200,8 +212,10 @@ export class CoopBossRoom {
       this.state = parseSessionState(row)
       this.sessionId = sessionId
       this.bossId = row.boss_id
+      this.raidId = row.raid_id ?? null
       this.lastCheckpointTick = Number(this.state?.tick) || 0
       this.publishedTick = Number(this.state?.tick) || 0
+      this.checkpointedPhase = String(row.phase || this.state?.phase || 'active')
 
       // Seed killSeq from the settlement table, not the session row: a DO
       // evicted between granting a kill and checkpointing would otherwise come
@@ -282,7 +296,10 @@ export class CoopBossRoom {
         return
       }
 
-      if ((next.tick || 0) - this.lastCheckpointTick >= CHECKPOINT_EVERY_TICKS) await this.checkpoint(now)
+      const phaseChanged = String(next.phase || 'active') !== this.checkpointedPhase
+      if (phaseChanged || (next.tick || 0) - this.lastCheckpointTick >= CHECKPOINT_EVERY_TICKS) {
+        await this.checkpoint(now)
+      }
     } finally {
       // Every exit from the beat, including the kill path's early return: the
       // tick becomes visible only now that nothing more can be appended to it.
@@ -294,7 +311,14 @@ export class CoopBossRoom {
     try {
       const settlement = await settleCoopKill(
         this.env as never,
-        { session: { id: this.sessionId, boss_id: this.bossId }, state: this.state, kill, killSeq: seq },
+        {
+          // boss_id is whatever the room is fighting RIGHT NOW; for a raid the
+          // kill record names the raid, and settlement rolls that table.
+          session: { id: this.sessionId, boss_id: this.state?.bossId || this.bossId, raid_id: this.raidId },
+          state: this.state,
+          kill,
+          killSeq: seq,
+        },
         now,
       ) as AnyState
       const shares = (settlement.settlements || []) as AnyState[]
@@ -436,14 +460,20 @@ export class CoopBossRoom {
     if (!this.state || !this.dirty) return
     this.dirty = false
     this.lastCheckpointTick = this.state.tick || 0
+    this.checkpointedPhase = String(this.state.phase || 'active')
+    // boss_id, phase and host_character_id are mirrored so the lobby list can be
+    // rendered from the row alone — a party browser must not have to wake every
+    // room to find out whether it has set off yet.
     await this.env.DB.prepare(
       `UPDATE coop_boss_sessions
           SET state_json = ?, current_tick = ?, last_tick_at = ?, member_count = ?,
-              boss_hp = ?, boss_max_hp = ?, kill_seq = ?
+              boss_hp = ?, boss_max_hp = ?, kill_seq = ?, boss_id = ?, phase = ?, host_character_id = ?
         WHERE id = ?`,
     ).bind(
       JSON.stringify(this.state), this.state.tick || 0, now, memberCount(this.state),
-      this.state.boss?.currentHP ?? null, this.state.boss?.maxHP ?? null, this.killSeq, this.sessionId,
+      this.state.boss?.currentHP ?? null, this.state.boss?.maxHP ?? null, this.killSeq,
+      this.state.bossId || this.bossId, this.state.phase || 'active',
+      this.state.hostCharacterId ?? null, this.sessionId,
     ).run()
     // /api/save reads coop_session_members.last_seen_at to decide whether this
     // character's save is locked, so each member's OWN last poll has to reach

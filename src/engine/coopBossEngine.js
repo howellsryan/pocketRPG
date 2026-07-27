@@ -23,6 +23,14 @@ import { getSlayerTaskReward, getSlayerTaskXpForKill } from './slayerRewards.js'
 import { isConsumableFood, isConsumablePotion, isComboConsumable, applyConsumableEffect } from './consumables.js'
 import { getCombatType, equipItem, placeUnequippedItems } from './equipment.js'
 import { questRequirementMet } from './questGates.js'
+import {
+  COOP_RAID_ADVANCE_TICKS,
+  coopRaidData,
+  isCoopHost,
+  nextHostCharacterId,
+  raidBossOrder,
+  raidTotalHitpoints,
+} from './coopRaidEngine.js'
 
 export const COOP_MAX_MEMBERS = 8
 export const COOP_TICK_MS = 600
@@ -187,6 +195,7 @@ export function cloneCoopState(state) {
   return {
     ...state,
     boss: { ...state.boss, add: state.boss?.add ? { ...state.boss.add } : null, monster: { ...(state.boss?.monster || {}) } },
+    ...(state.raid ? { raid: { ...state.raid, bosses: [...(state.raid.bosses || [])] } } : {}),
     members,
     recentEvents: Array.isArray(state.recentEvents) ? [...state.recentEvents] : [],
   }
@@ -215,6 +224,40 @@ export function createCoopBossState(bossId, monstersData, now = Date.now()) {
     members: {},
     targetCharId: null,
     recentEvents: [],
+    // A boss room is drop-in, so it is live from the moment it exists. Raids
+    // override this with a lobby (createCoopRaidState).
+    phase: 'active',
+    hostCharacterId: null,
+  }
+}
+
+/**
+ * A raid party, waiting in its lobby.
+ *
+ * The boss record is seeded with the raid's FIRST boss so every reader that
+ * already understands a co-op session — the projection, the checkpoint, the
+ * fight HUD — works before anyone presses Start. `raid.maxHP` is the whole
+ * run's hitpoints, because the loot gate measures a member's share of the raid
+ * rather than of whichever boss happened to be last.
+ */
+export function createCoopRaidState(raidId, monstersData, { hostCharacterId = null, now = Date.now() } = {}) {
+  const raid = coopRaidData(raidId)
+  if (!raid) return null
+  const bosses = raidBossOrder(raidId)
+  const seed = createCoopBossState(bosses[0], monstersData, now)
+  if (!seed) return null
+  return {
+    ...seed,
+    phase: 'lobby',
+    hostCharacterId: hostCharacterId == null ? null : Number(hostCharacterId),
+    raid: {
+      raidId,
+      name: raid.name,
+      bosses,
+      currentBossIndex: 0,
+      maxHP: raidTotalHitpoints(raidId, monstersData),
+      completions: 0,
+    },
   }
 }
 
@@ -351,6 +394,9 @@ export function addCoopMember(state, member) {
   member.combat.monsterAttackTimer = next.boss.attackSpeed || 4
   next.members[String(member.characterId)] = member
   if (!next.targetCharId) next.targetCharId = String(member.characterId)
+  // First through the door owns the Start button. Set explicitly by the raid
+  // join path; this is the fallback for a room whose host has been swept.
+  if (next.hostCharacterId == null) next.hostCharacterId = Number(member.characterId)
   return next
 }
 
@@ -358,6 +404,11 @@ export function removeCoopMember(state, characterId) {
   const next = cloneCoopState(state)
   delete next.members[String(characterId)]
   if (next.targetCharId === String(characterId)) next.targetCharId = null
+  // A party whose host closed their tab must not be left with a Start button
+  // nobody can press.
+  if (next.hostCharacterId != null && Number(next.hostCharacterId) === Number(characterId)) {
+    next.hostCharacterId = nextHostCharacterId(next)
+  }
   reselectTarget(next)
   return next
 }
@@ -388,11 +439,25 @@ export function coopLootDamageRequired(maxHP) {
   return Math.max(1, Math.ceil(hp * COOP_LOOT_DAMAGE_SHARE))
 }
 
+/**
+ * The health pool the 10% gate is measured against.
+ *
+ * A boss room pays per kill, so it is that boss's max HP. A raid pays once, at
+ * the end, so it is every boss in the run added together and member damage is
+ * never reset between them — otherwise a member could carry five bosses and
+ * still be dry because they were low on supplies for the sixth.
+ */
+export function coopLootBasisHP(state) {
+  const raidHP = Number(state?.raid?.maxHP)
+  if (Number.isFinite(raidHP) && raidHP > 0) return raidHP
+  return Number(state?.boss?.maxHP) || 0
+}
+
 /** Everyone owed a loot roll for the kill, biggest contributor first. Damage —
  * not survival: a member who earned their share and then died is still paid, the
  * same way the top-damage owner used to be. */
 export function lootEligibleCharacterIds(state) {
-  const required = coopLootDamageRequired(state?.boss?.maxHP)
+  const required = coopLootDamageRequired(coopLootBasisHP(state))
   return Object.values(state?.members || {})
     .filter((m) => (m.damage || 0) >= required)
     .sort((a, b) => b.damage - a.damage || (a.damageTick || 0) - (b.damageTick || 0))
@@ -564,9 +629,23 @@ function memberLevel(member, skill) {
   return Number.isFinite(level) && level > 0 ? Math.floor(level) : 1
 }
 
-function applyCoopIntent(state, member, action, itemsData, spellsData, prayersData, events) {
+function applyCoopIntent(state, member, action, itemsData, spellsData, prayersData, monstersData, events) {
   if (!action || typeof action !== 'object') return
   switch (action.type) {
+    case 'start_raid':
+      // The one intent that is not a combat action: it ends the lobby. Host
+      // only, and only from a lobby — a member who taps a stale button while
+      // the run is already going gets told why rather than nothing happening.
+      if (!state.raid || state.phase !== 'lobby') {
+        events.push({ type: 'actionRefused', characterId: member.characterId, reason: 'raid_in_progress' })
+        return
+      }
+      if (!isCoopHost(state, member.characterId)) {
+        events.push({ type: 'actionRefused', characterId: member.characterId, reason: 'not_host' })
+        return
+      }
+      startCoopRaid(state, monstersData, events)
+      return
     case 'change_stance':
       if (COOP_VALID_STANCES.has(action.stance)) member.combat.stance = action.stance
       return
@@ -774,7 +853,16 @@ export function processCoopTick(state, intents, { itemsData, monstersData, praye
   for (const intent of orderedIntents) {
     const member = next.members[String(intent?.characterId)]
     if (!member || member.status !== 'alive') continue
-    applyCoopIntent(next, member, intent.action || {}, itemsData, spellsData, prayersData, events)
+    applyCoopIntent(next, member, intent.action || {}, itemsData, spellsData, prayersData, monstersData, events)
+  }
+
+  // A raid lobby is prep time in the same sense the respawn wait is: nothing
+  // fights, but the intents above have already run, so the party gears up, eats
+  // and drinks while they wait for the host. The cooldowns still have to be
+  // walked down by hand — no combat tick is doing it.
+  if (next.phase === 'lobby') {
+    for (const member of Object.values(next.members)) tickIdleCooldowns(member)
+    return finishTick(next, events, null)
   }
 
   // The respawn wait is prep time, not dead time: intents are applied above
@@ -785,7 +873,10 @@ export function processCoopTick(state, intents, { itemsData, monstersData, praye
   if (next.boss.respawnCountdown > 0) {
     for (const member of Object.values(next.members)) tickIdleCooldowns(member)
     next.boss.respawnCountdown -= 1
-    if (next.boss.respawnCountdown === 0) respawnBoss(next, monstersData, events)
+    if (next.boss.respawnCountdown === 0) {
+      if (next.raid) advanceRaidBoss(next, monstersData, events)
+      else respawnBoss(next, monstersData, events)
+    }
     return finishTick(next, events, null)
   }
 
@@ -871,7 +962,10 @@ export function processCoopTick(state, intents, { itemsData, monstersData, praye
     }
   }
 
-  if (next.boss.currentHP <= 0 && !next.boss.killedAt) {
+  if (next.boss.currentHP <= 0 && !next.boss.killedAt && next.raid) {
+    next.boss.killedAt = now
+    kill = resolveRaidBossDeath(next, monstersData, events, now)
+  } else if (next.boss.currentHP <= 0 && !next.boss.killedAt) {
     next.boss.killedAt = now
     next.boss.respawnCountdown = coopRespawnTicks(next.bossId)
     const ownerCharId = topDamageCharacterId(next)
@@ -903,7 +997,164 @@ export function processCoopTick(state, intents, { itemsData, monstersData, praye
     kill = null
   }
 
+  // A raid that kills the whole party is over — the boss keeps its health and
+  // the party goes back to the lobby. Without this the room sits forever with a
+  // live boss and nobody able to swing at it.
+  if (next.raid && next.phase === 'active' && memberCount(next) > 0 && livingMembers(next).length === 0) {
+    events.push({ type: 'raidWiped', raidId: next.raid.raidId, bossId: next.bossId })
+    returnPartyToLobby(next, monstersData, events, 'wipe')
+  }
+
   return finishTick(next, events, kill)
+}
+
+/** Ends the lobby and puts the first boss on the field. */
+function startCoopRaid(state, monstersData, events) {
+  const bosses = state.raid.bosses || []
+  const fresh = createCoopBossState(bosses[0], monstersData, Date.now())
+  if (!fresh) return
+  state.phase = 'active'
+  state.bossId = bosses[0]
+  state.boss = fresh.boss
+  state.raid = { ...state.raid, currentBossIndex: 0 }
+  for (const member of Object.values(state.members)) {
+    member.damage = 0
+    member.damageTick = 0
+    member.combat.playerAttackTimer = 0
+    member.combat.monsterAttackTimer = state.boss.attackSpeed || 4
+    member.combat.addTargeted = false
+  }
+  reselectTarget(state)
+  events.push({
+    type: 'raidStarted',
+    raidId: state.raid.raidId,
+    bossId: bosses[0],
+    bossName: monstersData?.[bosses[0]]?.name || bosses[0],
+    totalBosses: bosses.length,
+  })
+}
+
+/**
+ * One raid boss down.
+ *
+ * Only the LAST one settles anything: a raid pays out of its own reward table,
+ * once, exactly as the solo raid does (combat.js emits loot on `raidComplete`
+ * and nothing on the bosses before it). Returning a kill record for an
+ * intermediate boss would hand the party a full monster drop table per boss.
+ */
+function resolveRaidBossDeath(state, monstersData, events, now) {
+  const raid = state.raid
+  const index = Math.max(0, Number(raid.currentBossIndex) || 0)
+  const bosses = raid.bosses || []
+  events.push({
+    type: 'raidBossDefeated',
+    raidId: raid.raidId,
+    bossId: state.bossId,
+    bossName: monstersData?.[state.bossId]?.name || state.bossId,
+    bossIndex: index,
+    totalBosses: bosses.length,
+  })
+
+  if (index < bosses.length - 1) {
+    state.boss.respawnCountdown = COOP_RAID_ADVANCE_TICKS
+    return null
+  }
+
+  // Slayer credit lands on the final boss only, mirroring the solo raid's
+  // `fromRaidCompletion` gate — a raid-task boss must not be creditable by
+  // walking into the raid and killing the first thing in it.
+  const onTaskCharacterIds = []
+  for (const member of Object.values(state.members)) {
+    const credited = creditSlayerKill(member, state.bossId, monstersData)
+    if (!credited) continue
+    onTaskCharacterIds.push(Number(member.characterId))
+    events.push({ type: 'slayerCredit', ...credited })
+  }
+
+  const ownerCharId = topDamageCharacterId(state)
+  const kill = {
+    sourceType: 'raids',
+    raidId: raid.raidId,
+    bossId: state.bossId,
+    completedAt: now,
+    ownerCharacterId: ownerCharId ? Number(ownerCharId) : null,
+    lootCharacterIds: lootEligibleCharacterIds(state),
+    lootDamageRequired: coopLootDamageRequired(coopLootBasisHP(state)),
+    contributors: damageTable(state),
+    onTaskCharacterIds,
+  }
+  events.push({
+    type: 'raidComplete',
+    raidId: raid.raidId,
+    raidName: raid.name || raid.raidId,
+    lootCharacterIds: kill.lootCharacterIds,
+  })
+  // Eligibility is read above, before the reset below clears the damage it is
+  // measured from.
+  returnPartyToLobby(state, monstersData, events, 'complete')
+  return kill
+}
+
+/** Swaps in the next boss of the run. */
+function advanceRaidBoss(state, monstersData, events) {
+  const raid = state.raid
+  const nextIndex = (Math.max(0, Number(raid.currentBossIndex) || 0)) + 1
+  const bossId = (raid.bosses || [])[nextIndex]
+  const fresh = bossId ? createCoopBossState(bossId, monstersData, Date.now()) : null
+  if (!fresh) {
+    returnPartyToLobby(state, monstersData, events, 'aborted')
+    return
+  }
+  state.bossId = bossId
+  state.boss = fresh.boss
+  state.raid = { ...raid, currentBossIndex: nextIndex }
+  for (const member of Object.values(state.members)) {
+    // Damage is deliberately NOT reset: the loot gate measures a member's share
+    // of the whole raid (coopLootBasisHP), not of the boss in front of them.
+    member.combat.playerAttackTimer = 0
+    member.combat.monsterAttackTimer = state.boss.attackSpeed || 4
+    member.combat.addTargeted = false
+  }
+  reselectTarget(state)
+  events.push({
+    type: 'raidBossAdvance',
+    raidId: raid.raidId,
+    bossId,
+    bossName: monstersData?.[bossId]?.name || bossId,
+    bossIndex: nextIndex,
+    totalBosses: (raid.bosses || []).length,
+  })
+}
+
+/**
+ * Puts the party back in its lobby, run reset, for the host to start again.
+ *
+ * Dead members are deliberately NOT revived. Death in a group has to cost what
+ * death costs solo — reviving here would make the last boss of a raid the
+ * safest fight in the game, and it would also hide the death from the client,
+ * which is what reverts one-life mode.
+ */
+function returnPartyToLobby(state, monstersData, events, reason) {
+  const raid = state.raid
+  const bosses = raid.bosses || []
+  const fresh = createCoopBossState(bosses[0], monstersData, Date.now())
+  state.phase = 'lobby'
+  if (fresh) {
+    state.bossId = bosses[0]
+    state.boss = fresh.boss
+  }
+  state.raid = {
+    ...raid,
+    currentBossIndex: 0,
+    completions: (Number(raid.completions) || 0) + (reason === 'complete' ? 1 : 0),
+  }
+  state.targetCharId = null
+  for (const member of Object.values(state.members)) {
+    member.damage = 0
+    member.damageTick = 0
+    member.combat.addTargeted = false
+  }
+  events.push({ type: 'raidEnded', raidId: raid.raidId, reason })
 }
 
 /** Walks down the timers processCombatTick would have advanced. Only the

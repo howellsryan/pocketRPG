@@ -1075,6 +1075,21 @@ html, body, #app {
 .cb-live__join { flex-shrink: 0; min-width: 68px; }
 .cb-live__empty { margin: 0 3px 5px; }
 
+/* Raid party lobby — LAYOUT ONLY, same rule as .cb-live above: colour comes
+   from .cb-area / .cb-actions / .fm-ledger / .fm-btn, never from here. */
+.cb-party { display: flex; flex-direction: column; }
+.cb-party__head { margin-bottom: 14px; }
+.cb-party__label { margin: 0 2px 6px; }
+.cb-party__roster { margin-bottom: 14px; }
+.cb-party__row { gap: 8px; }
+.cb-party__name { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.cb-party__who { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cb-party__tag { flex-shrink: 0; }
+.cb-party__lvl { flex-shrink: 0; }
+.cb-party__peek { flex-shrink: 0; min-width: 58px; min-height: 44px; }
+.cb-party__note { margin: 0 3px 12px; }
+.cb-party__actions { margin-bottom: 16px; }
+
 /* Area list */
 .cb-arealist { display: flex; flex-direction: column; gap: 11px; }
 .cb-area { border-radius: 16px; overflow: hidden; background: linear-gradient(155deg, #16140e 0%, #100d09 100%); border: 1px solid rgba(255,255,255,0.06); box-shadow: 0 8px 20px -16px rgba(0,0,0,0.9); transition: border-color .14s; }

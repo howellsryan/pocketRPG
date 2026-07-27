@@ -121,6 +121,16 @@ Slayer task credit works differently — it goes to everyone still alive at the 
 
 While you are in a group fight the server owns your save, so saving, skipping time, buying and Trading Post activity are all locked until you leave with the back arrow.
 
+## Raid parties
+
+Tap a raid and you can run it alone or take a party. Unlike bosses, a raid party is not drop-in: you either start a party and become its host, or join a party that is still waiting in its lobby. Once the host presses Start Raid, nobody else can join that run.
+
+The lobby lists everyone who has joined, with their combat level, and you can open any member's worn gear and inventory to see what they are bringing. Eat, drink and swap gear in the lobby — the wait between bosses works the same way, 15 seconds while the next boss walks in.
+
+The raid itself is the group boss fight: the server runs every swing, and it plays exactly like a solo run — same tick speed, prayers, specials and combo eating. The bosses come in order, and only the last one pays. Deal at least 10% of the whole raid's hitpoints — counted across every boss, not reset between them — and you roll the raid's reward table yourself, with your own collection log entries and raid kill count. Miss the line and you get nothing from the clear.
+
+Finishing the raid puts the party back in its lobby, so the host can start another run without everyone regrouping. If the whole party is wiped out, the run ends the same way. Dying costs what dying in a solo raid costs.
+
 ## The Corporeal Horror
 
 The Corporeal Horror is a 2,000-hitpoint boss at Edgevale, unlocked by the quest The Heart of Shadows. It halves every hit that is not dealt with a spear, so bringing one roughly doubles your damage — a Krylth Spear is the standard choice. It hits up to 55 with crush, and partway into the fight it spawns a Dread Core: a separate 180-hitpoint monster, not a phase. The Horror keeps attacking the whole time the Core is up, so you take hits from both, and every landed Core hit burns 8 prayer points. Switch targets to destroy the Core — it drops nothing and does not count as a kill — then switch back to the boss. Clear one and the Horror sends in another after a few more of its own attacks, so you are trading damage on the boss for control of your prayer pool all fight. Skipping the fight costs 5 credits.

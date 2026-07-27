@@ -62,6 +62,14 @@ export const coopApi = {
     method: 'POST',
     body: JSON.stringify(sessionId === null ? { bossId } : { bossId, sessionId }),
   }),
+  listRaids: () => coopRequest('/api/coop/raids'),
+  // sessionId null opens a NEW party with this character as host; a sessionId
+  // joins that party's lobby. There is deliberately no "pick one for me" —
+  // which party you raid with is the player's call.
+  joinRaid: (raidId, sessionId = null) => coopRequest('/api/coop/raid/join', {
+    method: 'POST',
+    body: JSON.stringify(sessionId === null ? { raidId } : { raidId, sessionId }),
+  }),
   readSession: (sessionId) => coopRequest(`/api/coop/session/${sessionId}`),
   // sinceTick is the last tick this client rendered. The room replays
   // everything after it, so a poll that lands between beats still sees every

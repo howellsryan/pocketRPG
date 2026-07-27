@@ -163,7 +163,10 @@ export default function InventoryGrid({
               showName={showName}
               highlight={isOver}
             />
-            {slot && (
+            {/* No reorder handler means the grid is a read-only view (the raid
+                lobby's kit viewer): dragging already did nothing there, so the
+                grip was an affordance that lied. */}
+            {slot && onReorder && (
               <span
                 class="absolute bottom-0.5 right-0.5 text-[10px] text-[var(--color-parchment)] opacity-25 leading-none select-none z-10 px-0.5 cursor-grab"
                 style={{ touchAction: 'none' }}
