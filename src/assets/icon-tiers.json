@@ -144,7 +144,7 @@
     "rune":      ["air", "water", "earth", "fire", "mind", "body", "chaos", "death", "nature", "law", "cosmic", "blood", "soul", "astral", "wrath"],
     "amulet":    ["sapphire", "emerald", "ruby", "diamond", "dragonstone", "onyx", "zyrite"],
     "stole":     ["lumira", "verdant", "krylth", "ancient", "zephyra", "grondar"],
-    "arrow":     ["bronze", "iron", "steel", "mithril", "adamant", "runeforged", "dragon"],
+    "arrow":     ["bronze", "iron", "steel", "mithril", "adamant", "runeforged", "dragon", "shardglass"],
     "shortbow":  ["oak", "willow", "maple", "yew", "magic"],
     "shortbow_u": ["oak", "willow", "maple", "yew", "magic"],
     "longbow":   ["oak", "willow", "maple"],
@@ -199,7 +199,8 @@
     },
     "arrowtip": {
       "bronze_arrowtips": "bronze", "iron_arrowtips": "iron", "steel_arrowtips": "steel",
-      "mithril_arrowtips": "mithril", "adamant_arrowtips": "adamant", "runeforged_arrowtips": "runeforged"
+      "mithril_arrowtips": "mithril", "adamant_arrowtips": "adamant", "runeforged_arrowtips": "runeforged",
+      "shardglass_arrowtips": "shardglass"
     },
     "charm": {
       "sacred_charm": "gold",
