@@ -5,7 +5,7 @@ import SkillEmblem from './SkillEmblem.jsx'
 import EquipmentPaperdoll from './EquipmentPaperdoll.jsx'
 import InventoryGrid from './InventoryGrid.jsx'
 import { combatLevelFromLevels } from '../engine/combatLevel.js'
-import { isCoopHost } from '../engine/coopRaidEngine.js'
+import { isCoopHost, raidReadyCount } from '../engine/coopRaidEngine.js'
 import { getRaidArt } from '../utils/combatArt.js'
 
 // The raid lobby: who is coming, what they are bringing, and the host's Start
@@ -71,6 +71,10 @@ export default function CoopRaidLobby({
   bossNames = [],
   onStart,
   onLeave,
+  onReady,
+  // Own readiness comes from the caller, not the roster: the screen shows the
+  // tap immediately and the room confirms it a beat later.
+  ready = false,
   starting = false,
 }) {
   const [inspecting, setInspecting] = useState(null)
@@ -81,6 +85,7 @@ export default function CoopRaidLobby({
   const iAmHost = isCoopHost(state, characterId)
   const hostName = members.find((m) => Number(m.characterId) === Number(state?.hostCharacterId))?.username || 'the host'
   const maxMembers = 8
+  const readiness = raidReadyCount(state)
 
   return (
     <div class="cb-party">
@@ -122,7 +127,21 @@ export default function CoopRaidLobby({
                   ? <span class="fm-tag fm-tag--ember cb-party__tag">{isMe ? 'You · Host' : 'Host'}</span>
                   : isMe && <span class="fm-tag fm-tag--brass cb-party__tag">You</span>}
               </span>
-              <span class="fm-row__val cb-party__lvl">{level ? `Cmb ${level}` : '—'}</span>
+              <span class="fm-row__val cb-party__lvl">
+                {/* The host's answer is the Start button, so a "waiting" mark
+                    against their name would be reading the wrong thing. */}
+                {!isHost && (() => {
+                  // Verdigris is already this screen family's "settled" colour —
+                  // it is what the loot-share bar turns when a drop is secured.
+                  const rowReady = isMe ? ready : !!member.ready
+                  return (
+                    <span class={'fm-tag cb-party__ready' + (rowReady ? ' fm-tag--verdigris' : '')}>
+                      {rowReady ? 'Ready' : 'Waiting'}
+                    </span>
+                  )
+                })()}
+                {level ? `Cmb ${level}` : '—'}
+              </span>
               <button
                 type="button"
                 class="fm-btn fm-btn--sm cb-party__peek"
@@ -139,7 +158,11 @@ export default function CoopRaidLobby({
 
       <p class="cb-area__blurb cb-party__note">
         {iAmHost
-          ? 'Nobody can join once you set off, so wait for your party before you start.'
+          ? (readiness.total > 0
+            // Readiness informs the host, it does not gate them: a party must
+            // never be stranded by one member who walked away from their phone.
+            ? `${readiness.ready}/${readiness.total} ready. Nobody can join once you set off.`
+            : 'Nobody can join once you set off, so wait for your party before you start.')
           : `Waiting for ${hostName} to start the raid. Eat, drink and swap gear while you wait.`}
       </p>
 
@@ -148,14 +171,20 @@ export default function CoopRaidLobby({
           <GameIcon iconKey="cancel" color="currentColor" size={18} />
           <span>Leave party</span>
         </button>
-        <button
-          class={'cb-act' + (iAmHost ? ' is-on' : '')}
-          disabled={!iAmHost || starting}
-          onClick={iAmHost && !starting ? onStart : undefined}
-        >
-          <GameIcon iconKey="temple_gate" color="currentColor" size={18} />
-          <span>{starting ? 'Starting…' : iAmHost ? 'Start Raid' : 'Host starts'}</span>
-        </button>
+        {iAmHost ? (
+          <button class="cb-act is-on" disabled={starting} onClick={starting ? undefined : onStart}>
+            <GameIcon iconKey="temple_gate" color="currentColor" size={18} />
+            <span>{starting ? 'Starting…' : 'Start Raid'}</span>
+          </button>
+        ) : (
+          // The slot a non-host used to lose to a dead "Host starts" button.
+          // Telling the party you have finished restocking is the one thing a
+          // guest in a lobby actually has to do.
+          <button class={'cb-act' + (ready ? ' is-on' : '')} onClick={() => onReady?.(!ready)}>
+            <GameIcon iconKey="check_mark" color="currentColor" size={18} />
+            <span>{ready ? "I'm Ready" : 'Not ready'}</span>
+          </button>
+        )}
       </div>
 
       {bossNames.length > 0 && (

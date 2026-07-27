@@ -56,6 +56,8 @@ export function lobbyMember(member) {
     equipment: member.equipment || {},
     inventory: Array.isArray(member.inventory) ? member.inventory : [],
     joinedAt: member.joinedAt ?? null,
+    // The whole point of the flag is that the rest of the party can see it.
+    ready: !!member.ready,
   }
 }
 

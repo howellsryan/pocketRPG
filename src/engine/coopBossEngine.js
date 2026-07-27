@@ -371,6 +371,10 @@ export function createCoopMember({ characterId, username, savePayload, itemsData
     // a quick-prayer edit made mid-fight cannot reach /api/save (the co-op lock
     // refuses it), so without this it survives only until the exit pull.
     quickPrayers: Array.isArray(settings.quickPrayers) ? settings.quickPrayers.filter((id) => typeof id === 'string') : [],
+    // Raid lobby only: the party's own signal that they have finished eating,
+    // banking and re-gearing. It gates nothing — the host can always set off —
+    // because a party must never be stranded by one member who walked away.
+    ready: false,
     joinedAt: now,
     combat: {
       combatType: getCombatType(equipment, itemsData),
@@ -638,6 +642,47 @@ function memberLevel(member, skill) {
   return Number.isFinite(level) && level > 0 ? Math.floor(level) : 1
 }
 
+/** Which of a member's two prayer slots a prayer belongs in. Data, not caller
+ * intent: `bonusType: 'protection'` is what makes combat.js mitigate with it. */
+export function coopPrayerSlot(prayerId, prayersData) {
+  return prayersData?.[prayerId]?.bonusType === 'protection' ? 'activeProtectionPrayer' : 'activeCombatPrayer'
+}
+
+/**
+ * What a tap SHOULD do to the member's combat record, worked out on the client
+ * so the button answers immediately.
+ *
+ * A co-op action is a round trip plus a wait for the room's next 600ms beat plus
+ * the poll that reports it — up to about a second and a half before a prayer
+ * lights up. That is long enough that players tap again, which is how a flick
+ * ends up flicked twice. The screen renders this over its own record until the
+ * tick the room stamped the intent for arrives, then drops it: the server is
+ * still the only thing that decides, and a refusal simply un-does the echo.
+ *
+ * Returns null for actions with no instant local meaning (eat, equip, drink —
+ * those change the pack, which is the server's to say). Only the toggles are
+ * echoed, and each mirrors its case in applyCoopIntent above.
+ */
+export function coopIntentEcho(combat, action, prayersData) {
+  if (!combat || !action) return null
+  switch (action.type) {
+    case 'toggle_prayer': {
+      const key = coopPrayerSlot(action.prayerId, prayersData)
+      const turningOn = combat[key] !== action.prayerId
+      if (turningOn && (combat.prayerPoints || 0) <= 0) return null
+      return { [key]: turningOn ? action.prayerId : null }
+    }
+    case 'queue_special':
+      return { specialAttackQueued: !combat.specialAttackQueued }
+    case 'target_add':
+      return { addTargeted: !!action.value }
+    case 'change_combat_spell':
+      return { spellId: action.spellId ?? null }
+    default:
+      return null
+  }
+}
+
 function applyCoopIntent(state, member, action, itemsData, spellsData, prayersData, monstersData, events) {
   if (!action || typeof action !== 'object') return
   switch (action.type) {
@@ -654,6 +699,11 @@ function applyCoopIntent(state, member, action, itemsData, spellsData, prayersDa
         return
       }
       startCoopRaid(state, monstersData, events)
+      return
+    case 'set_ready':
+      // Lobby-only, and silent outside one: a stale button from a party that has
+      // already set off is not worth a refusal toast mid-fight.
+      if (state.phase === 'lobby') member.ready = !!action.value
       return
     case 'change_stance':
       if (COOP_VALID_STANCES.has(action.stance)) member.combat.stance = action.stance
@@ -692,7 +742,12 @@ function applyCoopIntent(state, member, action, itemsData, spellsData, prayersDa
       member.combat.addTargeted = !!action.value && !!state.boss.add
       return
     case 'toggle_prayer': {
-      const key = action.slot === 'protection' ? 'activeProtectionPrayer' : 'activeCombatPrayer'
+      // The prayer's own type decides its slot, exactly as the solo screen does
+      // it. Taking the slot from the caller meant every protection prayer landed
+      // in the offensive slot — combat.js mitigates from activeProtectionPrayer,
+      // so protect-from-X blocked nothing and quietly cancelled your offensive
+      // prayer as well. Flicking a boss in a group could not work at all.
+      const key = coopPrayerSlot(action.prayerId, prayersData)
       const turningOn = member.combat[key] !== action.prayerId
       if (turningOn && (member.combat.prayerPoints || 0) <= 0) return
       // applyPrayerBonuses applies the boost with no level check of its own, so
@@ -1035,6 +1090,7 @@ function startCoopRaid(state, monstersData, events) {
   for (const member of Object.values(state.members)) {
     member.damage = 0
     member.damageTick = 0
+    member.ready = false
     member.combat.playerAttackTimer = 0
     member.combat.monsterAttackTimer = state.boss.attackSpeed || 4
     member.combat.addTargeted = false
@@ -1167,6 +1223,10 @@ function returnPartyToLobby(state, monstersData, events, reason) {
   for (const member of Object.values(state.members)) {
     member.damage = 0
     member.damageTick = 0
+    // A party back from a run has restocking to do, so nobody is ready until
+    // they say so again — a roster still reading "Ready" from the last run is
+    // worse than no signal at all.
+    member.ready = false
     member.combat.addTargeted = false
   }
   events.push({ type: 'raidEnded', raidId: raid.raidId, reason })

@@ -18,8 +18,9 @@ import { coopApi } from '../cloud/coop.js'
 import { splatsFromCoopEvents, HIT_SPLAT_DURATION_MS } from '../utils/hitSplats.js'
 import { xpDropsFromCombatEvents, emitXpDrops } from '../utils/xpDrops.js'
 import { shapeLootForModal, lootRowsForModal } from '../utils/lootModal.js'
-import { coopKillOutcome, coopLootBasisHP, describeCoopActionRefusal, describeCoopEquipRefusal } from '../engine/coopBossEngine.js'
+import { coopIntentEcho, coopKillOutcome, coopLootBasisHP, describeCoopActionRefusal, describeCoopEquipRefusal } from '../engine/coopBossEngine.js'
 import { coopRaidSummary, raidProgress } from '../engine/coopRaidEngine.js'
+import { nextPollDelayMs } from '../utils/coopPolling.js'
 import { appendChatLines, chatLinesFromCoopEvents } from '../utils/coopChat.js'
 import { getMonsterArt, getStyleArt } from '../utils/combatArt.js'
 import { hasEpicLootDrop } from '../utils/itemValue.js'
@@ -29,7 +30,6 @@ import itemsData from '../data/items.json'
 import prayersData from '../data/prayers.json'
 import monstersData from '../data/monsters.json'
 
-const COOP_POLL_MS = 600
 // The server rejects a tick that arrives early anyway, so a failed poll just
 // backs off rather than hammering.
 const COOP_ERROR_BACKOFF_MS = 2000
@@ -55,6 +55,14 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onDeath
   // cannot queue two starts (the second is refused server-side either way).
   const [startingRaid, setStartingRaid] = useState(false)
   const [chatLog, setChatLog] = useState([])
+  // What the last tap should have done, rendered over the room's record until
+  // the beat it was stamped for comes back. `tick` is null until the intent is
+  // acknowledged; `at` is the escape hatch for a request that never answers.
+  const [echo, setEcho] = useState(null)
+  // The same trick for the lobby's Ready button, which is a member field rather
+  // than a combat one: a button that waits a beat and a round trip to light up
+  // gets pressed twice.
+  const [readyEcho, setReadyEcho] = useState(null)
   const chatIdRef = useRef(0)
   const pollTimer = useRef(null)
   const stoppedRef = useRef(false)
@@ -66,6 +74,10 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onDeath
   const sinceTickRef = useRef(null)
 
   const me = state?.members?.[String(characterId)] || null
+  // The room's record with the last tap laid over it. Everything reads this, so
+  // a queued prayer or spec looks the way the player left it rather than
+  // flicking back for the beat it takes the room to agree.
+  const combatState = { ...(me?.combat || {}), ...(echo?.patch || {}) }
   const boss = state?.boss || null
   const monster = monstersData?.[state?.bossId] || null
   const bossName = monster?.name || 'Boss'
@@ -106,12 +118,27 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onDeath
 
   const poll = useCallback(async () => {
     if (stoppedRef.current) return
+    const sentAt = Date.now()
     try {
       const res = await coopApi.tick(sessionId, sinceTickRef.current ?? undefined)
       if (stoppedRef.current) return
       if (res.state) {
         setState(res.state)
         if (res.state.phase !== 'lobby') setStartingRaid(false)
+        // The room has now spoken for the beat the tap was stamped for, so its
+        // answer replaces the echo — including a refusal, which un-does it.
+        // Time is the backstop for an intent that was never acknowledged.
+        const tick = Number(res.state.tick) || 0
+        setEcho((prev) => {
+          if (!prev) return prev
+          if (prev.tick != null && tick >= prev.tick) return null
+          return sentAt - prev.at > 3000 ? null : prev
+        })
+        setReadyEcho((prev) => {
+          if (!prev) return prev
+          const mine = res.state.members?.[String(characterId)]
+          return (!!mine?.ready === prev.value || sentAt - prev.at > 3000) ? null : prev
+        })
       }
       if (Number.isFinite(res.current_tick)) sinceTickRef.current = res.current_tick
       if (res.events?.length) {
@@ -169,7 +196,10 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onDeath
         }
       }
       setError(null)
-      pollTimer.current = setTimeout(poll, COOP_POLL_MS)
+      // Aimed at the room's next beat rather than a flat tick from now: polling
+      // 600ms after each response lands means a period of 600ms plus the round
+      // trip, which drifts out of phase and delivers the fight in clumps.
+      pollTimer.current = setTimeout(poll, nextPollDelayMs(res.next_tick_in_ms, Date.now() - sentAt))
     } catch (err) {
       if (stoppedRef.current) return
       if (err.status === 403 || err.status === 404 || err.status === 409) {
@@ -194,9 +224,19 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onDeath
   }, [sessionId])
 
   const send = async (action) => {
+    // Computed against the echoed view, not the room's: tapping the same prayer
+    // twice before either beat lands has to read as on-then-off.
+    const patch = coopIntentEcho(combatState, action, prayersData)
+    const at = Date.now()
+    if (patch) setEcho((prev) => ({ patch: { ...(prev?.patch || {}), ...patch }, tick: null, at }))
     try {
-      await coopApi.sendAction(sessionId, action)
+      const res = await coopApi.sendAction(sessionId, action)
+      // The tick the room stamped it for — the beat whose state supersedes this.
+      if (patch) {
+        setEcho((prev) => (prev && prev.at === at ? { ...prev, tick: Number(res?.tick_number) || null } : prev))
+      }
     } catch (err) {
+      if (patch) setEcho((prev) => (prev && prev.at === at ? null : prev))
       addToast?.(err.message || 'Action failed', 'error')
     }
   }
@@ -285,6 +325,11 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onDeath
             bossNames={summary?.bossNames || []}
             starting={startingRaid}
             onLeave={handleLeave}
+            ready={readyEcho ? readyEcho.value : !!me?.ready}
+            onReady={(value) => {
+              setReadyEcho({ value, at: Date.now() })
+              send({ type: 'set_ready', value })
+            }}
             onStart={() => {
               setStartingRaid(true)
               send({ type: 'start_raid' })
@@ -292,6 +337,9 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onDeath
           />
           {error && <div class="text-[11px] text-[var(--color-blood-light)] text-center">{error}</div>}
         </div>
+        {/* The party waits here, so this is exactly where it needs to talk —
+            same band as the fight, so nothing moves when the run starts. */}
+        <CoopChatPanel messages={chatLog} onSend={sendChat} />
         {lootModalNode}
       </div>
     )
@@ -301,7 +349,6 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onDeath
   const form = monster?.multiForm && boss?.monster?.currentForm && monster.forms?.[boss.monster.currentForm]
     ? monster.forms[boss.monster.currentForm]
     : null
-  const combatState = me?.combat
   // The room's copy is authoritative for the length of the fight — it is what
   // gets written back — so the bar renders from it and falls back to the local
   // setting only until the first poll lands.

@@ -1085,7 +1085,8 @@ html, body, #app {
 .cb-party__name { display: flex; align-items: center; gap: 6px; min-width: 0; }
 .cb-party__who { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .cb-party__tag { flex-shrink: 0; }
-.cb-party__lvl { flex-shrink: 0; }
+.cb-party__lvl { flex-shrink: 0; display: flex; align-items: center; gap: 8px; }
+.cb-party__ready { flex-shrink: 0; }
 .cb-party__peek { flex-shrink: 0; min-width: 58px; min-height: 44px; }
 .cb-party__note { margin: 0 3px 12px; }
 .cb-party__actions { margin-bottom: 16px; }

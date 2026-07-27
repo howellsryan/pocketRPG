@@ -126,6 +126,20 @@ export function isCoopLobby(state) {
   return state?.phase === 'lobby'
 }
 
+/**
+ * How much of the party has said it is ready, for the host's Start button.
+ *
+ * The host is excluded on both counts: pressing Start IS their answer, so
+ * counting them would leave the button reading "3/4 ready" at the moment the
+ * host is the only one left to press it.
+ */
+export function raidReadyCount(state) {
+  const hostId = state?.hostCharacterId
+  const others = Object.values(state?.members || {})
+    .filter((m) => hostId == null || Number(m.characterId) !== Number(hostId))
+  return { ready: others.filter((m) => m.ready).length, total: others.length }
+}
+
 /** Progress line for the fight HUD: "Boss 3/6", and the name of what is next. */
 export function raidProgress(state, monstersData) {
   const raid = state?.raid

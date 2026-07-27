@@ -17,10 +17,12 @@ import {
   coopLootDamageRequired,
   coopLootProgress,
   coopKillOutcome,
+  coopIntentEcho,
   lootEligibleCharacterIds,
   describeCoopEquipRefusal,
   describeCoopActionRefusal,
 } from '../src/engine/coopBossEngine.js'
+import { prepareAdd } from '../src/engine/bossAdds.js'
 import itemsData from '../src/data/items.json'
 import monstersData from '../src/data/monsters.json'
 import raidsData from '../src/data/raids.json'
@@ -668,6 +670,81 @@ describe('spell and prayer unlock gates', () => {
     )
     expect(stateNext.members['1'].combat.spellId).toBeNull()
     expect(events.find((e: any) => e.type === 'actionRefused')).toMatchObject({ reason: 'spell_level' })
+  })
+})
+
+describe('prayer slots in a group fight', () => {
+  const intent = (action: unknown) => ([{ tick_number: 1, characterId: 1, characterSeq: 0, action }])
+
+  it('puts a protection prayer in the protection slot, though the client names no slot', () => {
+    // The screen sends { type: 'toggle_prayer', prayerId } and nothing else.
+    // Filed as an offensive prayer, protect-from-X mitigates nothing at all —
+    // combat.js reads activeProtectionPrayer — and silently cancels whatever
+    // offensive prayer was running. Flicking a boss in a group could not work.
+    let state = joinedState([1])
+    state = processCoopTick(state, intent({ type: 'toggle_prayer', prayerId: 'piety' }), deps, Date.now()).stateNext
+    state = processCoopTick(
+      state, intent({ type: 'toggle_prayer', prayerId: 'protection_from_melee' }), deps, Date.now(),
+    ).stateNext
+    expect(state.members['1'].combat.activeProtectionPrayer).toBe('protection_from_melee')
+    expect(state.members['1'].combat.activeCombatPrayer).toBe('piety')
+  })
+
+  it('flicks one protection prayer straight onto another', () => {
+    let state = joinedState([1])
+    state = processCoopTick(
+      state, intent({ type: 'toggle_prayer', prayerId: 'protection_from_melee' }), deps, Date.now(),
+    ).stateNext
+    state = processCoopTick(
+      state, intent({ type: 'toggle_prayer', prayerId: 'protection_from_magic' }), deps, Date.now(),
+    ).stateNext
+    expect(state.members['1'].combat.activeProtectionPrayer).toBe('protection_from_magic')
+  })
+})
+
+describe('coopIntentEcho — the client-side preview of a tap', () => {
+  const intent = (action: unknown) => ([{ tick_number: 1, characterId: 1, characterSeq: 0, action }])
+  const ACTIONS = [
+    { type: 'toggle_prayer', prayerId: 'protection_from_melee' },
+    { type: 'toggle_prayer', prayerId: 'piety' },
+    { type: 'queue_special' },
+    { type: 'target_add', value: true },
+    { type: 'change_combat_spell', spellId: 'fire_surge' },
+  ]
+
+  it('predicts exactly what the room does with each echoed action', () => {
+    // The echo is what the player sees for the beat before the room answers, so
+    // a prediction that disagrees with applyCoopIntent is a button that lies.
+    for (const action of ACTIONS) {
+      const state = joinedState([1])
+      // A real add: target_add only takes when one is actually on the field.
+      state.boss.add = prepareAdd(monstersData[monstersData[BOSS].spawnsAdd.monsterId])
+      // Compared during the respawn wait, where intents still apply but no
+      // combat resolves — otherwise the same tick that queues a special also
+      // spends it, and the echo would be blamed for the engine agreeing.
+      state.boss.respawnCountdown = 5
+      const before = state.members['1'].combat
+      const patch = coopIntentEcho(before, action, prayersData)!
+      expect(patch, action.type).not.toBeNull()
+      const after = processCoopTick(state, intent(action), deps, Date.now()).stateNext.members['1'].combat
+      for (const key of Object.keys(patch)) expect(patch[key], `${action.type}.${key}`).toBe(after[key])
+    }
+  })
+
+  it('leaves actions the server owns alone', () => {
+    const combat = joinedState([1]).members['1'].combat
+    expect(coopIntentEcho(combat, { type: 'eat', inventorySlot: 0 }, prayersData)).toBeNull()
+    expect(coopIntentEcho(combat, { type: 'equip', inventorySlot: 0 }, prayersData)).toBeNull()
+    expect(coopIntentEcho(combat, { type: 'start_raid' }, prayersData)).toBeNull()
+  })
+
+  it('does not promise a prayer an empty pool cannot pay for', () => {
+    const combat = { ...joinedState([1]).members['1'].combat, prayerPoints: 0 }
+    expect(coopIntentEcho(combat, { type: 'toggle_prayer', prayerId: 'piety' }, prayersData)).toBeNull()
+    // Turning one OFF is always allowed, empty pool or not.
+    const running = { ...combat, activeCombatPrayer: 'piety' }
+    expect(coopIntentEcho(running, { type: 'toggle_prayer', prayerId: 'piety' }, prayersData))
+      .toEqual({ activeCombatPrayer: null })
   })
 })
 

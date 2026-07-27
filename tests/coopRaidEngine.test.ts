@@ -20,6 +20,7 @@ import {
   nextHostCharacterId,
   raidBossOrder,
   raidProgress,
+  raidReadyCount,
   raidTotalHitpoints,
 } from '../src/engine/coopRaidEngine.js'
 import { lobbyMember, projectStateForMember } from '../functions/_lib/game/coopProjection.js'
@@ -118,6 +119,57 @@ describe('coopRaidEngine — raid catalogue', () => {
     const openingBars = raidBossOrder(raidId).reduce((sum, id) => sum + monstersData[id].hitpoints, 0)
     expect(monstersData.the_great_olm.requiresDoubleKill).toBe(true)
     expect(raidTotalHitpoints(raidId, monstersData)).toBe(openingBars + monstersData.the_great_olm.hitpoints)
+  })
+})
+
+describe('coopRaidEngine — readiness in the lobby', () => {
+  const readyIntent = (characterId: number, value: boolean) =>
+    ({ tick_number: 1, characterId, characterSeq: 1, action: { type: 'set_ready', value } })
+
+  it('lets a member say they are ready, and take it back', () => {
+    let state = tick(party([7, 8]), [readyIntent(8, true)]).stateNext
+    expect(state.members['8'].ready).toBe(true)
+    state = tick(state, [readyIntent(8, false)]).stateNext
+    expect(state.members['8'].ready).toBe(false)
+  })
+
+  it('counts readiness for the host without counting the host', () => {
+    // Pressing Start is the host's answer, so counting them would leave the
+    // button reading "1/2 ready" at the moment the host is all that is left.
+    const state = tick(party([7, 8, 9]), [readyIntent(8, true)]).stateNext
+    expect(raidReadyCount(state)).toEqual({ ready: 1, total: 2 })
+  })
+
+  it('does not gate the start on it', () => {
+    // A party must never be stranded by one member who walked away.
+    const state = tick(party([7, 8]), [startIntent(7)]).stateNext
+    expect(state.phase).toBe('active')
+  })
+
+  it('clears readiness when the run starts and again when the party comes back', () => {
+    let state = tick(party([7, 8]), [readyIntent(8, true)]).stateNext
+    state = tick(state, [startIntent(7)]).stateNext
+    expect(state.members['8'].ready).toBe(false)
+
+    state.members['8'].ready = true
+    // Wiping the party is the fastest way back to the lobby.
+    for (const member of Object.values(state.members) as any[]) { member.status = 'dead'; member.hp = 0 }
+    state = tick(state).stateNext
+    expect(state.phase).toBe('lobby')
+    expect(state.members['8'].ready).toBe(false)
+  })
+
+  it('shows the rest of the party who is ready', () => {
+    const state = tick(party([7, 8]), [readyIntent(8, true)]).stateNext
+    const seenBy7: any = projectStateForMember(state, '7')
+    expect(seenBy7.members['8'].ready).toBe(true)
+    expect(lobbyMember(state.members['8']).ready).toBe(true)
+  })
+
+  it('ignores a stale ready tap once the party has set off', () => {
+    let state = tick(party([7, 8]), [startIntent(7)]).stateNext
+    state = tick(state, [readyIntent(8, true)]).stateNext
+    expect(state.members['8'].ready).toBe(false)
   })
 })
 

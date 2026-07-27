@@ -23,6 +23,7 @@ const sourceFiles = [
   'utils/xpDrops.js',
   'utils/lootModal.js',
   'utils/coopChat.js',
+  'utils/coopPolling.js',
   'utils/killCountMerge.js',
   'utils/idleElapsed.js',
   'utils/itemIcons.js',

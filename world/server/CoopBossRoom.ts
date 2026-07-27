@@ -110,6 +110,10 @@ export class CoopBossRoom {
    * offering people a run they cannot enter. */
   private checkpointedPhase = ''
   private busy = false
+  /** When the last beat ran. Sent to clients as the time LEFT of the current
+   * beat so they can poll in step with the fight instead of drifting a round
+   * trip further out of phase with every request. */
+  private lastTickAt = Date.now()
   private queue: Promise<unknown> = Promise.resolve()
   private env: Env
 
@@ -265,6 +269,7 @@ export class CoopBossRoom {
 
   private startTicking(): void {
     if (this.tickTimer) return
+    this.lastTickAt = Date.now()
     this.tickTimer = setInterval(() => { void this.tick() }, TICK_MS)
   }
 
@@ -294,6 +299,7 @@ export class CoopBossRoom {
   private async tickInner(): Promise<void> {
     try {
       const now = Date.now()
+      this.lastTickAt = now
       await this.ejectStaleMembers(now)
       if (!this.state) return
       if (memberCount(this.state) === 0) {
@@ -463,6 +469,10 @@ export class CoopBossRoom {
       ),
       current_tick: currentTick,
       next_tick_at: Date.now() + TICK_MS,
+      // Relative, so it survives a client clock that is minutes off. A poll
+      // aimed at this lands just after the beat rather than a round trip into
+      // it, which is what keeps the fight arriving one tick at a time.
+      next_tick_in_ms: Math.max(0, this.lastTickAt + TICK_MS - Date.now()),
     })
   }
 
