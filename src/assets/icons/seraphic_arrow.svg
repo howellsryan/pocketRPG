@@ -10,11 +10,11 @@
       <stop offset="0" stop-color="#ffffff"/><stop offset="0.6" stop-color="#f4ead0"/><stop offset="1" stop-color="#d8b45c"/>
     </linearGradient>
     <radialGradient id="seraphic_arrow_glow" cx="0.5" cy="0.5" r="0.5">
-      <stop offset="0.2" stop-color="#fff4b0" stop-opacity="0.3"/><stop offset="1" stop-color="#f0c040" stop-opacity="0"/>
+      <stop offset="0.25" stop-color="#fff4b0" stop-opacity="0.5"/><stop offset="1" stop-color="#f0c040" stop-opacity="0"/>
     </radialGradient>
   </defs>
   <g transform="rotate(-45 256 256)" stroke="#1a1410" stroke-width="12" stroke-linejoin="round" stroke-linecap="round">
-    <circle cx="256" cy="104" r="72" fill="url(#seraphic_arrow_glow)" stroke="none"/>
+    <circle cx="256" cy="106" r="104" fill="url(#seraphic_arrow_glow)" stroke="none"/>
     <rect x="248" y="138" width="16" height="278" rx="6" fill="url(#seraphic_arrow_shaft)"/>
     <polygon points="256,44 298,148 272,134 256,160 240,134 214,148" fill="url(#seraphic_arrow_head)"/>
     <path d="M250 66 L250 128" stroke="#fffbe4" stroke-width="7" opacity="0.75"/>
@@ -23,5 +23,7 @@
     <path d="M232 372 L216 410" stroke="#c9a24a" stroke-width="6" opacity="0.7"/>
     <path d="M280 372 L296 410" stroke="#c9a24a" stroke-width="6" opacity="0.7"/>
     <rect x="248" y="404" width="16" height="30" rx="5" fill="#c8952c"/>
+    <path d="M340 84 L340 58 M327 71 L353 71" stroke="#ffe98a" stroke-width="8" opacity="0.7"/>
+    <path d="M182 152 L182 134 M173 143 L191 143" stroke="#ffe98a" stroke-width="7" opacity="0.6"/>
   </g>
 </svg>
