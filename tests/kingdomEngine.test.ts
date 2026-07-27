@@ -14,6 +14,7 @@ import {
   applyKingdomWindow,
 } from '../src/engine/kingdomEngine.js'
 import { KINGDOM_RESOURCE_TIERS, getEligibleTiers, pickWeightedTier } from '../src/engine/kingdomResources.js'
+import { GATHER_TASKS } from '../src/engine/gatherTasks.js'
 import { KINGDOM_CATEGORIES, KINGDOM_COFFER_MAX, KINGDOM_DAILY_COST, KINGDOM_LABOUR_POINTS_MAX } from '../src/utils/constants.js'
 import { createDefaultStats } from '../src/engine/createDefaultSave.js'
 import itemsData from '../src/data/items.json'
@@ -22,7 +23,9 @@ const DAY_MS = 24 * 60 * 60 * 1000
 
 function statsAtLevel(level: number) {
   const stats = createDefaultStats()
-  for (const category of KINGDOM_CATEGORIES) {
+  // Only the categories backed by a real skill — 'gathering' has none, and
+  // fabricating one here would hide the fact that it must work without it.
+  for (const category of KINGDOM_CATEGORIES.filter(c => stats[c])) {
     // XP value doesn't matter for these tests beyond producing the target level;
     // use a very generous xp so every category clears any tested level.
     stats[category] = { skill: category, xp: level >= 99 ? 200_000_000 : xpForLevelAtLeast(level), level }
@@ -80,6 +83,41 @@ describe('kingdomResources', () => {
     expect(max / min).toBeLessThan(20)
   })
 
+  it('Gathering tiers only cover Gather tasks that consume nothing', () => {
+    const eligible = KINGDOM_RESOURCE_TIERS.gathering
+    expect(eligible.length).toBeGreaterThan(0)
+    const byId = new Map(GATHER_TASKS.map((t: any) => [t.id, t]))
+    for (const tier of eligible) {
+      const task: any = byId.get(tier.id)
+      expect(task, `${tier.id} is not a real gather task`).toBeTruthy()
+      expect(task.materials, `${tier.id} would mint its product from nothing`).toBeUndefined()
+      expect(task.gpCost, `${tier.id} costs coins the kingdom cannot pay`).toBeUndefined()
+      expect(tier.product).toBe(task.product)
+    }
+    // Every consuming task is excluded — the plank conversions are the canonical case.
+    const consuming = (GATHER_TASKS as any[]).filter(t => t.materials || t.gpCost)
+    expect(consuming.length).toBeGreaterThan(0)
+    for (const task of consuming) {
+      expect(eligible.some(t => t.id === task.id), `${task.id} must not be a kingdom tier`).toBe(false)
+    }
+  })
+
+  it('Gathering tiers are all level 1 and equally weighted — the category is ungated', () => {
+    const tiers = KINGDOM_RESOURCE_TIERS.gathering
+    for (const tier of tiers) expect(tier.level).toBe(1)
+    const weights = new Set(tiers.map(t => t.weight))
+    expect(weights.size).toBe(1)
+    // Ungated: a brand-new character sees the whole ladder.
+    expect(getEligibleTiers('gathering', 1).length).toBe(tiers.length)
+  })
+
+  it('Gathering covers the potion secondaries players cannot otherwise farm passively', () => {
+    const products = new Set(KINGDOM_RESOURCE_TIERS.gathering.map(t => t.product))
+    for (const secondary of ['eye_of_newt', 'limpwurt_root', 'snape_grass', 'white_berries', 'red_spiders_eggs']) {
+      expect(products.has(secondary), `${secondary} missing from the Gathering ladder`).toBe(true)
+    }
+  })
+
   it('getEligibleTiers only returns tiers at or below the given level', () => {
     const tiers = getEligibleTiers('mining', 30)
     expect(tiers.every(t => t.level <= 30)).toBe(true)
@@ -120,12 +158,23 @@ describe('kingdomEngine — allocations', () => {
   })
 
   it('clampAllocations mirrors normaliseKingdomState for a raw allocations map', () => {
-    expect(clampAllocations({ mining: 1, fishing: 1, woodcutting: 1, farming: 1 })).toEqual({ mining: 1, fishing: 1, woodcutting: 1, farming: 1 })
+    expect(clampAllocations({ mining: 1, fishing: 1, woodcutting: 1, farming: 1 })).toEqual({ mining: 1, fishing: 1, woodcutting: 1, farming: 1, gathering: 0 })
   })
 
   it('a valid 1/1/1/1 split is accepted unchanged', () => {
     const state = normaliseKingdomState({ allocations: { mining: 1, fishing: 1, woodcutting: 1, farming: 1 } })
-    expect(state.allocations).toEqual({ mining: 1, fishing: 1, woodcutting: 1, farming: 1 })
+    expect(state.allocations).toEqual({ mining: 1, fishing: 1, woodcutting: 1, farming: 1, gathering: 0 })
+  })
+
+  it('a save written before Gathering existed defaults it to 0 without disturbing the others', () => {
+    const state = normaliseKingdomState({ allocations: { mining: 2, fishing: 1, woodcutting: 1, farming: 0 } })
+    expect(state.allocations).toEqual({ mining: 2, fishing: 1, woodcutting: 1, farming: 0, gathering: 0 })
+    expect(totalAllocatedPoints(state.allocations)).toBe(4)
+  })
+
+  it('Gathering cannot push the total past the 4-point budget', () => {
+    const state = normaliseKingdomState({ allocations: { mining: 2, fishing: 2, woodcutting: 0, farming: 0, gathering: 4 } })
+    expect(totalAllocatedPoints(state.allocations)).toBe(KINGDOM_LABOUR_POINTS_MAX)
   })
 
   it('all 4 points on one category is accepted unchanged', () => {
@@ -236,6 +285,27 @@ describe('kingdomEngine — simulateKingdom', () => {
     const herbProducts = new Set(KINGDOM_RESOURCE_TIERS.farming.map(t => t.product))
     for (const itemId of Object.keys(result.itemsGained)) {
       expect(herbProducts.has(itemId)).toBe(true)
+    }
+  })
+
+  it('Gathering produces output for a level-1 character with no gathering skill in their stats', () => {
+    const stats = createDefaultStats() // no `gathering` entry exists, and never will
+    expect(stats.gathering).toBeUndefined()
+    const kingdom = { ...DEFAULT_KINGDOM, cofferBalance: KINGDOM_COFFER_MAX, allocations: { mining: 0, fishing: 0, woodcutting: 0, farming: 0, gathering: 4 } }
+    const result = simulateKingdom(kingdom, stats, 60 * 60 * 1000, itemsData)
+    const total = Object.values(result.itemsGained).reduce((sum, qty) => sum + qty, 0)
+    expect(total).toBeGreaterThan(0)
+    const products = new Set(KINGDOM_RESOURCE_TIERS.gathering.map(t => t.product))
+    for (const itemId of Object.keys(result.itemsGained)) {
+      expect(products.has(itemId), `${itemId} is not a Gathering product`).toBe(true)
+    }
+  })
+
+  it('Gathering never produces a conversion product the kingdom has no materials for', () => {
+    const kingdom = { ...DEFAULT_KINGDOM, cofferBalance: KINGDOM_COFFER_MAX, allocations: { mining: 0, fishing: 0, woodcutting: 0, farming: 0, gathering: 4 } }
+    const result = simulateKingdom(kingdom, statsAtLevel(99), DAY_MS, itemsData)
+    for (const itemId of ['plank', 'oak_plank', 'teak_plank', 'mahogany_plank', 'soda_ash', 'crushed_bird_s_nest']) {
+      expect(result.itemsGained[itemId], `${itemId} was minted from nothing`).toBeUndefined()
     }
   })
 

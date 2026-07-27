@@ -49,8 +49,9 @@ export const KINGDOM_DAILY_COST = 5_000_000 // coins drained per 24h at max labo
 export const KINGDOM_LABOUR_POINTS_MAX = 4
 export const KINGDOM_PACE_FACTOR = 0.5 // kingdom workers gather at 50% of a player's pace
 // Internal allocation keys — 'farming' maps to the Farm Herbs category (gated
-// by the player's Farming level, output sourced from farming.json's herbs).
-export const KINGDOM_CATEGORIES = ['mining', 'fishing', 'woodcutting', 'farming']
+// by the player's Farming level, output sourced from farming.json's herbs);
+// 'gathering' maps to the Gathering category (GATHER_TASKS, no skill, ungated).
+export const KINGDOM_CATEGORIES = ['mining', 'fishing', 'woodcutting', 'farming', 'gathering']
 
 // Skills list
 export const COMBAT_SKILLS = ['attack', 'strength', 'defence', 'hitpoints', 'ranged', 'magic', 'prayer']
