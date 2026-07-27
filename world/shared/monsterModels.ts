@@ -18,6 +18,11 @@ export type MonsterModel = {
    * for the area around the hero, so a model several tiles tall smears a shadow
    * across it that reads worse than none — especially indoors, under a dim sun. */
   noShadow?: boolean
+  /** Material name → replacement colour, applied on load so several monsters
+   * can share one GLB (the three dragons do). Keyed by material name because
+   * these Quaternius models are untextured solid colours — recolouring
+   * everything would flatten horns and eyes into the hide. */
+  tint?: Record<string, string>
 }
 
 export const MONSTER_MODELS: Record<string, MonsterModel> = {
@@ -52,6 +57,42 @@ export const MONSTER_MODELS: Record<string, MonsterModel> = {
     bounds: { minX: -2.32, minY: -0.01, minZ: -0.58, maxX: 2.32, maxY: 2.68, maxZ: 0.97 },
     targetHeight: 1.1,
   },
+  lesser_fiend: {
+    url: '/models/demon.glb',
+    bounds: { minX: -2.33, minY: -0.02, minZ: -1.33, maxX: 2.33, maxY: 3.1, maxZ: 0.99 },
+    targetHeight: 2.0,
+  },
+  // The bull predates the registry and rendered through the unregistered-monster
+  // fallback (createCowMesh, which scales by body LENGTH). targetHeight is that
+  // same on-screen size expressed as a height: 1.6 * 5.15 / 9.18.
+  pasture_bull: {
+    url: '/models/cow.glb',
+    bounds: { minX: -1.12, minY: -0.07, minZ: -3.78, maxX: 1.12, maxY: 5.08, maxZ: 5.4 },
+    targetHeight: 0.8976,
+  },
+  // One dragon build, three hides. Sized by combat level (79 / 152 / 227); the
+  // GLB only flies (Flying_Idle / Fast_Flying), so they hover as they wander.
+  green_dragon: {
+    url: '/models/dragon.glb',
+    bounds: { minX: -2.19, minY: 1.6, minZ: -1.43, maxX: 2.19, maxY: 3.14, maxZ: 1.0 },
+    targetHeight: 2.2,
+    hover: 0.25,
+    tint: { Dragon_Main: '#3f7a35', Dragon_Secondary: '#24451f' },
+  },
+  red_dragon: {
+    url: '/models/dragon.glb',
+    bounds: { minX: -2.19, minY: 1.6, minZ: -1.43, maxX: 2.19, maxY: 3.14, maxZ: 1.0 },
+    targetHeight: 2.5,
+    hover: 0.25,
+    tint: { Dragon_Main: '#8f2118', Dragon_Secondary: '#3d0f0a' },
+  },
+  black_dragon: {
+    url: '/models/dragon.glb',
+    bounds: { minX: -2.19, minY: 1.6, minZ: -1.43, maxX: 2.19, maxY: 3.14, maxZ: 1.0 },
+    targetHeight: 2.8,
+    hover: 0.25,
+    tint: { Dragon_Main: '#26262b', Dragon_Secondary: '#111114' },
+  },
   // Dungeon boss — the imported GLB replaces its creatures3d blend-shell. Ships
   // idle + attack + die (walk aliases idle in makeAnimator — no locomotion
   // clip). Bounds baked from scripts/build-warlord-grondar.mjs.
@@ -64,7 +105,6 @@ export const MONSTER_MODELS: Record<string, MonsterModel> = {
   },
 }
 
-/** Monsters that render with a bespoke model (registry above) or the cow
- * fallback used by unregistered monsters (`pasture_bull`). Anything else falls
- * back to a placeholder box in-game. */
-export const MODELED_MONSTERS = new Set<string>([...Object.keys(MONSTER_MODELS), 'pasture_bull'])
+/** Monsters that render with a bespoke model (registry above). Anything else
+ * falls back to the cow, or to a placeholder box in-game. */
+export const MODELED_MONSTERS = new Set<string>(Object.keys(MONSTER_MODELS))

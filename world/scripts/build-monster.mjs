@@ -26,6 +26,11 @@ const BUILDS = [
   { src: 'Green Blob.glb', out: 'blob.glb', clips: { Idle: 'idle', Walk: 'walk', Death: 'die' } },
   { src: 'Blue Demon.glb', out: 'imp.glb', clips: { Idle: 'idle', Walk: 'walk', Death: 'die' } },
   { src: 'Frog.glb', out: 'frog.glb', clips: { Idle: 'idle', Walk: 'walk', Death: 'die' } },
+  // The bundle ships two demons: the flying one (Demon.glb) and this ground one,
+  // which carries a trident and reads as a melee fiend.
+  { src: 'Demon-LnfIziKv4o.glb', out: 'demon.glb', clips: { Idle: 'idle', Walk: 'walk', Death: 'die' } },
+  // Dragons fly; one grey-base build serves green/red/black via the registry tint.
+  { src: 'Dragon.glb', out: 'dragon.glb', clips: { Flying_Idle: 'idle', Fast_Flying: 'walk', Death: 'die' } },
 ]
 
 await MeshoptDecoder.ready
