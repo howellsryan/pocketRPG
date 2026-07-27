@@ -13,12 +13,18 @@
 //      client last acknowledged, or a player watching a fight they are losing
 //      sees a silent boss and none of their own hit splats.
 
-/** Ticks of history the room keeps. ~72s at 600ms, comfortably longer than the
- * poll gap a backgrounded phone produces before its member is ejected anyway. */
-export const COOP_EVENT_HISTORY_TICKS = 120
-/** Hard ceiling so eight members swinging at once cannot grow the ring without
- * bound between the tick-window trims. */
-export const COOP_EVENT_HISTORY_MAX = 600
+import {
+  ROOM_EVENT_HISTORY_MAX,
+  ROOM_EVENT_HISTORY_TICKS,
+  eventsSince,
+  pushEvents,
+} from './roomEvents.js'
+
+// The event ring is transport machinery the PvP match room needs too, so it
+// lives in roomEvents.js. Re-exported under the co-op names its callers use.
+export const COOP_EVENT_HISTORY_TICKS = ROOM_EVENT_HISTORY_TICKS
+export const COOP_EVENT_HISTORY_MAX = ROOM_EVENT_HISTORY_MAX
+export { eventsSince, pushEvents }
 
 /** Public view of somebody else in the fight: enough to render the damage
  * table and the boss's current target, and nothing else. */
@@ -76,37 +82,6 @@ export function projectEventsForMember(events, characterId) {
       killCount: mine ? ev.killCount : null,
     }
   })
-}
-
-/**
- * Everything that happened after the tick this client last acknowledged, up to
- * the last tick the room is willing to publish.
- *
- * `untilTick` is not decoration. Events are keyed by the tick they happened on
- * and a client acknowledges the tick it was told about, so anything appended to
- * a tick AFTER a client acknowledged it is filtered out by `> since` forever.
- * That is exactly the shape of a kill: the engine emits `bossDefeated`
- * immediately, then settlement takes several D1 round-trips per winner and
- * appends `killSettled` to the same tick. A poll landing in that window used to
- * acknowledge the tick and never see the loot.
- */
-export function eventsSince(events, sinceTick, untilTick = Infinity) {
-  const since = Number(sinceTick)
-  const until = Number(untilTick)
-  if (!Array.isArray(events)) return []
-  const capped = Number.isFinite(until)
-    ? events.filter((ev) => (Number(ev?.tick) || 0) <= until)
-    : events
-  if (!Number.isFinite(since)) return [...capped]
-  return capped.filter((ev) => (Number(ev?.tick) || 0) > since)
-}
-
-/** Appends a tick's events and trims the ring by both age and count. */
-export function pushEvents(ring, events, currentTick) {
-  const next = [...(ring || []), ...(events || [])]
-  const cutoff = (Number(currentTick) || 0) - COOP_EVENT_HISTORY_TICKS
-  const aged = next.filter((ev) => (Number(ev?.tick) || 0) > cutoff)
-  return aged.length > COOP_EVENT_HISTORY_MAX ? aged.slice(-COOP_EVENT_HISTORY_MAX) : aged
 }
 
 /**

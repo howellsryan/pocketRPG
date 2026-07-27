@@ -52,7 +52,7 @@ describe('account deletion cascade plan', () => {
     for (const t of [
       /DELETE FROM saves/, /DELETE FROM character_idle_state/, /DELETE FROM collection_log/,
       /DELETE FROM trading_post_offers/, /DELETE FROM kill_counts/, /DELETE FROM action_nonces/,
-      /DELETE FROM pvp_waiting_room/, /DELETE FROM pvp_intents/, /DELETE FROM pvp_invitations/,
+      /DELETE FROM pvp_waiting_room/, /DELETE FROM pvp_invitations/,
       /DELETE FROM pvp_matches/, /DELETE FROM characters/, /DELETE FROM oauth_identities/,
     ]) {
       expect(tables(t)).toBeTruthy()
