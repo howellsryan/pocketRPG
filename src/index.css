@@ -1085,7 +1085,8 @@ html, body, #app {
 .cb-party__name { display: flex; align-items: center; gap: 6px; min-width: 0; }
 .cb-party__who { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .cb-party__tag { flex-shrink: 0; }
-.cb-party__lvl { flex-shrink: 0; }
+.cb-party__lvl { flex-shrink: 0; display: flex; align-items: center; gap: 8px; }
+.cb-party__ready { flex-shrink: 0; }
 .cb-party__peek { flex-shrink: 0; min-width: 58px; min-height: 44px; }
 .cb-party__note { margin: 0 3px 12px; }
 .cb-party__actions { margin-bottom: 16px; }
@@ -2996,7 +2997,7 @@ span.cb-fight__cb { cursor: default; }
   border: 1px solid var(--fm-brass-lo); box-shadow: var(--fm-btn-relief-brass); }
 .wm-travelbar-skip:active { transform: translateY(1px); box-shadow: var(--fm-btn-press); }
 .wm-travelbar-skip:disabled { background: var(--fm-btn-dead); background-image: none; color: var(--fm-btn-dead-ink); border-color: var(--fm-btn-dead-edge); box-shadow: none; cursor: not-allowed; }
-.wm-travelbar-tele { flex: 1; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+.wm-travelbar-tele { flex: 1; min-height: 44px; display: inline-flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 4px 8px;
   font-family: var(--fm-display); font-weight: 700;
   font-size: 13px; color: #f2ecfa; cursor: pointer; border-radius: var(--fm-r-sm);
   background: var(--fm-btn-royal);
@@ -3024,6 +3025,17 @@ span.cb-fight__cb { cursor: default; }
 .wm-tele-btn__lead { display: inline-flex; align-items: center; gap: 6px; font-weight: 700; font-size: 14px; color: #f2ecfa; }
 .wm-tele-btn__cost { font-family: var(--fm-num); font-variant-numeric: tabular-nums; font-size: 11px; color: #d9cbee; }
 .wm-tele-btn:active { transform: translateY(1px); box-shadow: var(--fm-btn-press-iron); }
+/* Rune bill on the teleport buttons. Layout only — the icons carry themselves,
+   and a rune the player is short of borrows the blood the rest of the UI uses
+   for "you cannot pay this". */
+.wm-runecost { display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: center; }
+.wm-runecost__item { display: inline-flex; align-items: center; gap: 3px; }
+.wm-runecost__n { font-family: var(--fm-num); font-variant-numeric: tabular-nums; font-size: 11px; font-weight: 700; color: #d9cbee; }
+.wm-runecost__item.is-short .wm-runecost__n { color: var(--fm-blood); }
+.wm-travelbar-tele__lead { display: inline-flex; align-items: center; gap: 6px; }
+.wm-tele-btn.is-locked .wm-runecost__n { color: var(--fm-ink-faint); }
+.wm-tele-btn.is-locked .wm-runecost__item.is-short .wm-runecost__n,
+.wm-travelbar-tele.is-locked .wm-runecost__item.is-short .wm-runecost__n { color: var(--fm-blood); }
 .wm-tele-btn.is-locked { cursor: not-allowed; background: var(--fm-btn-dead); background-image: none; border-color: var(--fm-btn-dead-edge); box-shadow: none; transform: none; }
 .wm-tele-btn.is-locked .wm-tele-btn__lead, .wm-tele-btn.is-locked .wm-tele-btn__cost { color: var(--fm-ink-faint); }
 

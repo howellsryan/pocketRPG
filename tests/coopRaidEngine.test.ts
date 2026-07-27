@@ -5,6 +5,7 @@ import {
   coopKillOutcome,
   coopLootBasisHP,
   coopLootDamageRequired,
+  createCoopBossState,
   createCoopMember,
   createCoopRaidState,
   lootEligibleCharacterIds,
@@ -18,7 +19,9 @@ import {
   isCoopRaidId,
   nextHostCharacterId,
   raidBossOrder,
+  raidPartyReady,
   raidProgress,
+  raidReadyCount,
   raidTotalHitpoints,
 } from '../src/engine/coopRaidEngine.js'
 import { lobbyMember, projectStateForMember } from '../functions/_lib/game/coopProjection.js'
@@ -50,7 +53,9 @@ function savePayload(overrides: Record<string, unknown> = {}) {
   }
 }
 
-function party(ids: number[], hostId = ids[0]) {
+/** A party in its lobby. Readied by default, since that is now the precondition
+ * for starting at all — pass `{ ready: false }` to test the gate itself. */
+function party(ids: number[], hostId = ids[0], { ready = true } = {}) {
   let state: any = createCoopRaidState(RAID, monstersData, { hostCharacterId: hostId, now: 1_000 })!
   for (const [i, id] of ids.entries()) {
     state = addCoopMember(
@@ -64,6 +69,7 @@ function party(ids: number[], hostId = ids[0]) {
       }),
     )
   }
+  if (ready) for (const member of Object.values(state.members) as any[]) member.ready = true
   return state
 }
 
@@ -100,6 +106,141 @@ describe('coopRaidEngine — raid catalogue', () => {
     const total = raidTotalHitpoints(RAID, monstersData)
     const biggest = Math.max(...raidBossOrder(RAID).map((id) => monstersData[id].hitpoints))
     expect(total).toBeGreaterThan(biggest)
+  })
+
+  it('counts every phase of a phased boss, not the bar it opens on', () => {
+    // Verzik hands out three health bars (2000 / 3250 / 2500). Counting only the
+    // first charges the loot gate for a quarter of the fight she actually is.
+    const raidId = 'crimson_night_theatre'
+    const openingBars = raidBossOrder(raidId).reduce((sum, id) => sum + monstersData[id].hitpoints, 0)
+    const verzik = monstersData.verzik_vitur
+    const laterPhases = verzik.forms.phase2.phaseHP + verzik.forms.phase3.phaseHP
+    expect(raidTotalHitpoints(raidId, monstersData)).toBe(openingBars + laterPhases)
+  })
+
+  it('counts a double-kill boss twice — the party removes its health twice', () => {
+    const raidId = 'vaults_of_xyren'
+    const openingBars = raidBossOrder(raidId).reduce((sum, id) => sum + monstersData[id].hitpoints, 0)
+    expect(monstersData.the_great_olm.requiresDoubleKill).toBe(true)
+    expect(raidTotalHitpoints(raidId, monstersData)).toBe(openingBars + monstersData.the_great_olm.hitpoints)
+  })
+})
+
+describe('coopRaidEngine — readiness in the lobby', () => {
+  const readyIntent = (characterId: number, value: boolean) =>
+    ({ tick_number: 1, characterId, characterSeq: 1, action: { type: 'set_ready', value } })
+
+  it('lets a member say they are ready, and take it back', () => {
+    let state = tick(party([7, 8], 7, { ready: false }), [readyIntent(8, true)]).stateNext
+    expect(state.members['8'].ready).toBe(true)
+    state = tick(state, [readyIntent(8, false)]).stateNext
+    expect(state.members['8'].ready).toBe(false)
+  })
+
+  it('counts readiness for the host without counting the host', () => {
+    // Pressing Start is the host's answer, so counting them would leave the
+    // button reading "1/2 ready" at the moment the host is all that is left.
+    const state = tick(party([7, 8, 9], 7, { ready: false }), [readyIntent(8, true)]).stateNext
+    expect(raidReadyCount(state)).toEqual({ ready: 1, total: 2 })
+    expect(raidPartyReady(state)).toBe(false)
+  })
+
+  it('refuses to start while anyone is still getting set', () => {
+    // The party sets off together: nobody is left mid-restock by a host who
+    // pressed Start while they were still in the bank.
+    const { stateNext, events } = tick(party([7, 8, 9], 7, { ready: false }), [startIntent(7)])
+    expect(stateNext.phase).toBe('lobby')
+    expect(events.find((e: any) => e.type === 'actionRefused')).toMatchObject({
+      reason: 'party_not_ready', ready: 0, total: 2, characterId: 7,
+    })
+  })
+
+  it('starts once the last of them says so', () => {
+    let state = party([7, 8], 7, { ready: false })
+    state = tick(state, [startIntent(7)]).stateNext
+    expect(state.phase).toBe('lobby')
+    state = tick(state, [readyIntent(8, true)]).stateNext
+    state = tick(state, [startIntent(7)]).stateNext
+    expect(state.phase).toBe('active')
+  })
+
+  it('lets a host with nobody to wait for set off alone', () => {
+    const state = tick(party([7], 7, { ready: false }), [startIntent(7)]).stateNext
+    expect(state.phase).toBe('active')
+  })
+
+  it('is not held up by a member who died on the last run', () => {
+    // A wipe returns the party to its lobby with its casualties still in it,
+    // they are never revived, and the intent path refuses actions from a dead
+    // member — so counting them would strand the party behind somebody who
+    // cannot answer.
+    const state = party([7, 8], 7, { ready: false })
+    state.members['8'].status = 'dead'
+    state.members['8'].hp = 0
+    expect(raidReadyCount(state)).toEqual({ ready: 0, total: 0 })
+    expect(raidPartyReady(state)).toBe(true)
+    expect(tick(state, [startIntent(7)]).stateNext.phase).toBe('active')
+  })
+
+  it('clears readiness when the run starts and again when the party comes back', () => {
+    let state = tick(party([7, 8], 7, { ready: false }), [readyIntent(8, true)]).stateNext
+    state = tick(state, [startIntent(7)]).stateNext
+    expect(state.members['8'].ready).toBe(false)
+
+    state.members['8'].ready = true
+    // Wiping the party is the fastest way back to the lobby.
+    for (const member of Object.values(state.members) as any[]) { member.status = 'dead'; member.hp = 0 }
+    state = tick(state).stateNext
+    expect(state.phase).toBe('lobby')
+    expect(state.members['8'].ready).toBe(false)
+  })
+
+  it('shows the rest of the party who is ready', () => {
+    const state = tick(party([7, 8], 7, { ready: false }), [readyIntent(8, true)]).stateNext
+    const seenBy7: any = projectStateForMember(state, '7')
+    expect(seenBy7.members['8'].ready).toBe(true)
+    expect(lobbyMember(state.members['8']).ready).toBe(true)
+  })
+
+  it('ignores a stale ready tap once the party has set off', () => {
+    let state = tick(party([7, 8]), [startIntent(7)]).stateNext
+    state = tick(state, [readyIntent(8, true)]).stateNext
+    expect(state.members['8'].ready).toBe(false)
+  })
+})
+
+describe('coopRaidEngine — a double-kill boss in the room', () => {
+  it('survives its first death and dies on the second', () => {
+    // The health raidTotalHitpoints counts twice has to be health that exists.
+    // doubleKillCount lives on the combat state, and a member's session is built
+    // from scratch every tick — kept off the shared boss record, Olm regenerates
+    // to full forever and the raid can never be finished.
+    let state: any = createCoopBossState('the_great_olm', monstersData, 1_000)
+    state = addCoopMember(
+      state,
+      createCoopMember({ characterId: 7, username: 'player7', savePayload: savePayload(), itemsData, now: 1_000 }),
+    )
+
+    let regenerated = false
+    let kill: any = null
+    for (let i = 0; i < 400 && !kill; i++) {
+      // On the edge, so the next landed hit resolves a death without having to
+      // grind the boss down through its defence.
+      state.boss.currentHP = 1
+      state.members['7'].hp = state.members['7'].maxHP
+      const result = tick(state)
+      state = result.stateNext
+      if (result.events.some((e: any) => e.type === 'bossPhaseReset')) {
+        regenerated = true
+        expect(result.kill).toBeNull()
+        expect(state.boss.currentHP).toBe(monstersData.the_great_olm.hitpoints)
+        expect(state.boss.doubleKillCount).toBe(1)
+      }
+      kill = result.kill
+    }
+
+    expect(regenerated).toBe(true)
+    expect(kill).not.toBeNull()
   })
 })
 

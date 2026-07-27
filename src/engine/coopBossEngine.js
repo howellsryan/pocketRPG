@@ -29,6 +29,8 @@ import {
   isCoopHost,
   nextHostCharacterId,
   raidBossOrder,
+  raidPartyReady,
+  raidReadyCount,
   raidTotalHitpoints,
 } from './coopRaidEngine.js'
 
@@ -143,6 +145,11 @@ export function describeCoopEquipRefusal(event) {
 export function describeCoopActionRefusal(event) {
   if (event?.reason === 'spell_level') return `Need Magic level ${event.required} to cast ${event.name || 'that spell'}`
   if (event?.reason === 'prayer_level') return `Need Prayer level ${event.required} to use ${event.name || 'that prayer'}`
+  if (event?.reason === 'party_not_ready') {
+    const waiting = Math.max(0, (event.total ?? 0) - (event.ready ?? 0))
+    return `The party is not ready — ${waiting} ${waiting === 1 ? 'raider is' : 'raiders are'} still getting set`
+  }
+  if (event?.reason === 'not_host') return 'Only the host can start the raid'
   return 'Could not do that'
 }
 
@@ -221,6 +228,10 @@ export function createCoopBossState(bossId, monstersData, now = Date.now()) {
       add: null,
       addSpawnCountdown: seed.addSpawnCountdown,
       addsDefeated: 0,
+      // Shared, because a double-kill boss's first death is the ROOM's progress,
+      // not the progress of whichever member happened to land the last hit — a
+      // member's engine is rebuilt from scratch every tick.
+      doubleKillCount: 0,
       killedAt: null,
       respawnCountdown: 0,
     },
@@ -367,6 +378,10 @@ export function createCoopMember({ characterId, username, savePayload, itemsData
     // a quick-prayer edit made mid-fight cannot reach /api/save (the co-op lock
     // refuses it), so without this it survives only until the exit pull.
     quickPrayers: Array.isArray(settings.quickPrayers) ? settings.quickPrayers.filter((id) => typeof id === 'string') : [],
+    // Raid lobby only: the party's own signal that they have finished eating,
+    // banking and re-gearing. It gates nothing — the host can always set off —
+    // because a party must never be stranded by one member who walked away.
+    ready: false,
     joinedAt: now,
     combat: {
       combatType: getCombatType(equipment, itemsData),
@@ -446,9 +461,10 @@ export function coopLootDamageRequired(maxHP) {
  * The health pool the 10% gate is measured against.
  *
  * A boss room pays per kill, so it is that boss's max HP. A raid pays once, at
- * the end, so it is every boss in the run added together and member damage is
- * never reset between them — otherwise a member could carry five bosses and
- * still be dry because they were low on supplies for the sixth.
+ * the end, so it is every boss in the run added together — every phase and every
+ * kill of them (raidTotalHitpoints) — and member damage is never reset between
+ * them, otherwise a member could carry five bosses and still be dry because they
+ * were low on supplies for the sixth.
  */
 export function coopLootBasisHP(state) {
   const raidHP = Number(state?.raid?.maxHP)
@@ -564,6 +580,7 @@ function hydrateCombatState(state, member, monstersData, spellsData) {
   const engine = createCombatState(monster, member.combat.combatType, member.combat.stance, spell, monstersData)
   Object.assign(engine.monster, state.boss.monster || {})
   engine.monster.currentHP = state.boss.currentHP
+  engine.doubleKillCount = state.boss.doubleKillCount || 0
   engine.playerAttackTimer = member.combat.playerAttackTimer
   engine.monsterAttackTimer = member.combat.monsterAttackTimer
   engine.eatCooldown = member.combat.eatCooldown
@@ -632,6 +649,47 @@ function memberLevel(member, skill) {
   return Number.isFinite(level) && level > 0 ? Math.floor(level) : 1
 }
 
+/** Which of a member's two prayer slots a prayer belongs in. Data, not caller
+ * intent: `bonusType: 'protection'` is what makes combat.js mitigate with it. */
+export function coopPrayerSlot(prayerId, prayersData) {
+  return prayersData?.[prayerId]?.bonusType === 'protection' ? 'activeProtectionPrayer' : 'activeCombatPrayer'
+}
+
+/**
+ * What a tap SHOULD do to the member's combat record, worked out on the client
+ * so the button answers immediately.
+ *
+ * A co-op action is a round trip plus a wait for the room's next 600ms beat plus
+ * the poll that reports it — up to about a second and a half before a prayer
+ * lights up. That is long enough that players tap again, which is how a flick
+ * ends up flicked twice. The screen renders this over its own record until the
+ * tick the room stamped the intent for arrives, then drops it: the server is
+ * still the only thing that decides, and a refusal simply un-does the echo.
+ *
+ * Returns null for actions with no instant local meaning (eat, equip, drink —
+ * those change the pack, which is the server's to say). Only the toggles are
+ * echoed, and each mirrors its case in applyCoopIntent above.
+ */
+export function coopIntentEcho(combat, action, prayersData) {
+  if (!combat || !action) return null
+  switch (action.type) {
+    case 'toggle_prayer': {
+      const key = coopPrayerSlot(action.prayerId, prayersData)
+      const turningOn = combat[key] !== action.prayerId
+      if (turningOn && (combat.prayerPoints || 0) <= 0) return null
+      return { [key]: turningOn ? action.prayerId : null }
+    }
+    case 'queue_special':
+      return { specialAttackQueued: !combat.specialAttackQueued }
+    case 'target_add':
+      return { addTargeted: !!action.value }
+    case 'change_combat_spell':
+      return { spellId: action.spellId ?? null }
+    default:
+      return null
+  }
+}
+
 function applyCoopIntent(state, member, action, itemsData, spellsData, prayersData, monstersData, events) {
   if (!action || typeof action !== 'object') return
   switch (action.type) {
@@ -647,7 +705,22 @@ function applyCoopIntent(state, member, action, itemsData, spellsData, prayersDa
         events.push({ type: 'actionRefused', characterId: member.characterId, reason: 'not_host' })
         return
       }
+      // The party sets off together: nobody is left mid-restock by a host who
+      // pressed Start while they were still in the bank. Enforced here rather
+      // than by disabling the button, because the button is not the authority.
+      if (!raidPartyReady(state)) {
+        const { ready, total } = raidReadyCount(state)
+        events.push({
+          type: 'actionRefused', characterId: member.characterId, reason: 'party_not_ready', ready, total,
+        })
+        return
+      }
       startCoopRaid(state, monstersData, events)
+      return
+    case 'set_ready':
+      // Lobby-only, and silent outside one: a stale button from a party that has
+      // already set off is not worth a refusal toast mid-fight.
+      if (state.phase === 'lobby') member.ready = !!action.value
       return
     case 'change_stance':
       if (COOP_VALID_STANCES.has(action.stance)) member.combat.stance = action.stance
@@ -686,7 +759,12 @@ function applyCoopIntent(state, member, action, itemsData, spellsData, prayersDa
       member.combat.addTargeted = !!action.value && !!state.boss.add
       return
     case 'toggle_prayer': {
-      const key = action.slot === 'protection' ? 'activeProtectionPrayer' : 'activeCombatPrayer'
+      // The prayer's own type decides its slot, exactly as the solo screen does
+      // it. Taking the slot from the caller meant every protection prayer landed
+      // in the offensive slot — combat.js mitigates from activeProtectionPrayer,
+      // so protect-from-X blocked nothing and quietly cancelled your offensive
+      // prayer as well. Flicking a boss in a group could not work at all.
+      const key = coopPrayerSlot(action.prayerId, prayersData)
       const turningOn = member.combat[key] !== action.prayerId
       if (turningOn && (member.combat.prayerPoints || 0) <= 0) return
       // applyPrayerBonuses applies the boost with no level check of its own, so
@@ -923,6 +1001,12 @@ export function processCoopTick(state, intents, { itemsData, monstersData, praye
     }
     next.boss.currentHP = Math.max(0, combatState.monster.currentHP)
     Object.assign(next.boss.monster, pickMutableMonsterFields(combatState.monster))
+    // A phase change hands the boss a new bar (Verzik's second form is bigger
+    // than her first), and its first death is progress the room owns — the
+    // member sessions are rebuilt each tick and would each ask for their own.
+    const phaseHP = Math.floor(Number(combatState.monster.hitpoints) || 0)
+    if (phaseHP > 0) next.boss.maxHP = phaseHP
+    next.boss.doubleKillCount = combatState.doubleKillCount || 0
 
     // Invariant 2: only the target advances the add's spawn countdown, but any
     // member's damage to a live add sticks.
@@ -1023,6 +1107,7 @@ function startCoopRaid(state, monstersData, events) {
   for (const member of Object.values(state.members)) {
     member.damage = 0
     member.damageTick = 0
+    member.ready = false
     member.combat.playerAttackTimer = 0
     member.combat.monsterAttackTimer = state.boss.attackSpeed || 4
     member.combat.addTargeted = false
@@ -1155,6 +1240,10 @@ function returnPartyToLobby(state, monstersData, events, reason) {
   for (const member of Object.values(state.members)) {
     member.damage = 0
     member.damageTick = 0
+    // A party back from a run has restocking to do, so nobody is ready until
+    // they say so again — a roster still reading "Ready" from the last run is
+    // worse than no signal at all.
+    member.ready = false
     member.combat.addTargeted = false
   }
   events.push({ type: 'raidEnded', raidId: raid.raidId, reason })
