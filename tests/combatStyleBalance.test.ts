@@ -4,7 +4,7 @@ import spellsData from '../src/data/spells.json' assert { type: 'json' }
 import skillsData from '../src/data/skills.json' assert { type: 'json' }
 import raidsData from '../src/data/raids.json' assert { type: 'json' }
 import { wornMeleeMaxHit, wornRangedMaxHit, meleeMaxHit, rangedMaxHit, effectiveStrength, effectiveRanged } from '../src/engine/formulas.js'
-import { poweredStaffMagicBaseDamage } from '../src/engine/combatPrimitives.js'
+import { poweredStaffMagicBaseDamage, poweredStaffDamageSummary } from '../src/engine/combatPrimitives.js'
 import { getEquipmentBonuses } from '../src/engine/equipment.js'
 
 const items = itemsData as Record<string, any>
@@ -80,6 +80,29 @@ describe('powered staff tiering', () => {
 
   it('never returns less than 1 for a level-1 caster', () => {
     expect(poweredStaffMagicBaseDamage(1, items.duskmare_staff)).toBeGreaterThanOrEqual(1)
+  })
+})
+
+describe('powered staff damage summary (item modal)', () => {
+  it('reports the max hit the staff lands at the caster level', () => {
+    expect(poweredStaffDamageSummary(items.sanguine_staff, 99)).toEqual({
+      maxHit: poweredStaffMagicBaseDamage(99, items.sanguine_staff),
+      magicLevel: 99,
+    })
+    expect(poweredStaffDamageSummary(items.trident_of_venom, 82)?.maxHit)
+      .toBe(poweredStaffMagicBaseDamage(82, items.trident_of_venom))
+  })
+
+  it('summarises nothing for a weapon whose damage already shows in its bonuses', () => {
+    expect(poweredStaffDamageSummary(items.chaotic_staff, 99)).toBeNull()
+    expect(poweredStaffDamageSummary(items.venom_blowpipe, 99)).toBeNull()
+    expect(poweredStaffDamageSummary(null, 99)).toBeNull()
+  })
+
+  it('floors a missing or fractional Magic level at 1 rather than reporting a broken hit', () => {
+    expect(poweredStaffDamageSummary(items.sanguine_staff, 0)?.magicLevel).toBe(1)
+    expect(poweredStaffDamageSummary(items.sanguine_staff, undefined)?.magicLevel).toBe(1)
+    expect(poweredStaffDamageSummary(items.sanguine_staff, 74.9)?.magicLevel).toBe(74)
   })
 })
 

@@ -5,7 +5,7 @@
 //   - group: the item *kind* — the noun in its name, so every Shortbow groups
 //     with other shortbows, every Amulet with amulets, etc. (not by material
 //     family). Max-level (99) skill capes collapse into one "Skill Capes" group.
-//   - tier: the lowest equip requirement (used to order items within a group).
+//   - tier: the highest equip requirement (used to order items within a group).
 // Everything is presented as one flat list of kind groups, ordered alphabetically
 // (Skill Capes last), with items inside each group ordered by tier.
 import itemsData from '../data/items.json'
@@ -78,10 +78,13 @@ export function categoryOf(item) {
   return 'melee'
 }
 
-// Tier sort key: lowest equip requirement (0 when unrestricted).
+// Tier: the HIGHEST equip requirement (0 when unrestricted) — the level a
+// player actually has to reach to wield the item. The lowest would report a
+// Chaotic Rapier as 80 (its Dungeoneering gate) when Strength 90 is what holds
+// it back, and a Red D'Hide Body as 1 rather than Ranged 60.
 export function tierOf(item) {
   const reqs = Object.values(item?.requirements || {}).filter(v => typeof v === 'number')
-  return reqs.length ? Math.min(...reqs) : 0
+  return reqs.length ? Math.max(...reqs) : 0
 }
 
 // Gathering skills whose training uses an equipped tool-weapon (an axe for
