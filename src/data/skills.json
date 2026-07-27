@@ -3791,7 +3791,7 @@
         "xp": 0,
         "product": "chaotic_rapier",
         "category": "reward",
-        "tokenCost": 1000000
+        "tokenCost": 300000
       },
       {
         "id": "unlock_chaotic_longsword",
@@ -3801,7 +3801,7 @@
         "xp": 0,
         "product": "chaotic_longsword",
         "category": "reward",
-        "tokenCost": 1000000
+        "tokenCost": 300000
       },
       {
         "id": "unlock_chaotic_maul",
@@ -3811,7 +3811,7 @@
         "xp": 0,
         "product": "chaotic_maul",
         "category": "reward",
-        "tokenCost": 1000000
+        "tokenCost": 300000
       },
       {
         "id": "unlock_chaotic_crossbow",
@@ -3821,7 +3821,7 @@
         "xp": 0,
         "product": "chaotic_crossbow",
         "category": "reward",
-        "tokenCost": 1000000
+        "tokenCost": 300000
       },
       {
         "id": "unlock_chaotic_staff",
@@ -3831,7 +3831,7 @@
         "xp": 0,
         "product": "chaotic_staff",
         "category": "reward",
-        "tokenCost": 1000000
+        "tokenCost": 300000
       },
       {
         "id": "unlock_eagle_eyed_kiteshield",
