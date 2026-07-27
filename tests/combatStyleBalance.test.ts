@@ -184,6 +184,51 @@ describe('new arrows are obtainable', () => {
   })
 })
 
+describe('the shardglass arrow chain is not a money printer', () => {
+  const TICK_MS = 600
+  const PROFIT_CEILING_PER_HOUR = 2_000_000
+
+  // Mirrors scripts/economy-benchmark.cjs: the player sells everything at
+  // shopValue, so an action's profit is its product value less its materials.
+  const netCoinsPerHour = (action: any) => {
+    const gross = (action.productQty || 1) * (items[action.product].shopValue || 0)
+    const cost = Object.entries(action.materials || {})
+      .reduce((sum, [id, qty]) => sum + (items[id].shopValue || 0) * (qty as number), 0)
+    return (gross - cost) * (3_600_000 / (TICK_MS * action.ticks))
+  }
+
+  const actionFor = (skill: string, product: string) =>
+    (skillsData as any)[skill].actions.find((a: any) => a.product === product)
+
+  it('the arrow ladder is priced in tier order, so a better arrow never sells for less', () => {
+    const ladder = ['runeforged_arrow', 'dragon_arrow', 'shardglass_arrow', 'seraphic_arrow']
+    for (let i = 1; i < ladder.length; i++) {
+      expect(items[ladder[i]].shopValue, `${ladder[i]} vs ${ladder[i - 1]}`)
+        .toBeGreaterThan(items[ladder[i - 1]].shopValue)
+    }
+  })
+
+  it('neither smithing the arrowtips nor fletching the arrows clears 2m coins an hour', () => {
+    const steps = [actionFor('smithing', 'shardglass_arrowtips'), actionFor('fletching', 'shardglass_arrow')]
+    for (const step of steps) {
+      expect(netCoinsPerHour(step), step.id).toBeLessThanOrEqual(PROFIT_CEILING_PER_HOUR)
+    }
+  })
+
+  it('smithing then fletching the whole chain stays under the same ceiling', () => {
+    const tips = actionFor('smithing', 'shardglass_arrowtips')
+    const arrows = actionFor('fletching', 'shardglass_arrow')
+    // One fletch consumes more tips than one smith produces, so the chain runs
+    // a fractional number of smithing actions per batch of arrows.
+    const smithsPerBatch = arrows.materials.shardglass_arrowtips / tips.productQty
+    const seconds = (smithsPerBatch * tips.ticks + arrows.ticks) * (TICK_MS / 1000)
+    const cost = smithsPerBatch * tips.materials.shardglass_shards * items.shardglass_shards.shopValue
+      + arrows.materials.headless_arrow * items.headless_arrow.shopValue
+    const net = arrows.productQty * items.shardglass_arrow.shopValue - cost
+    expect(net * (3600 / seconds)).toBeLessThanOrEqual(PROFIT_CEILING_PER_HOUR)
+  })
+})
+
 describe('standard spell ladder', () => {
   const tiers = ['strike', 'bolt', 'blast', 'wave', 'surge']
 

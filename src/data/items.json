@@ -2320,7 +2320,7 @@
     "name": "Shardglass Arrowtips",
     "type": "resource",
     "stackable": true,
-    "shopValue": 700,
+    "shopValue": 2850,
     "isGeneralStore": false,
     "description": "Knapped shardglass points, waiting on a shaft."
   },
@@ -2403,7 +2403,7 @@
       "rangedStrength": 85,
       "magicDamage": 0
     },
-    "shopValue": 900,
+    "shopValue": 2894,
     "isGeneralStore": false,
     "description": "Arrows tipped with knapped shardglass. Fletched, not found."
   },
@@ -2423,7 +2423,7 @@
       "rangedStrength": 60,
       "magicDamage": 0
     },
-    "shopValue": 2894,
+    "shopValue": 900,
     "isGeneralStore": false
   },
   "seraphic_arrow": {
