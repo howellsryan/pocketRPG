@@ -18669,5 +18669,42 @@
     "isGeneralStore": false,
     "isBossUnique": true,
     "description": "A Vigil Sigil bound to hallowed bone. Prayers burn half as fast while it is carried."
+  },
+  "tomb_of_fire": {
+    "id": "tomb_of_fire",
+    "name": "Tomb of Fire",
+    "type": "armour",
+    "slot": "shield",
+    "stackable": false,
+    "isUntradeable": true,
+    "elemental": "fire_rune",
+    "spellRuneDamage": {
+      "fire_rune": 20
+    },
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 15,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "magic": 80
+    },
+    "shopValue": 1250000,
+    "isGeneralStore": false,
+    "description": "A grimoire bound in ember-scorched leather. It never runs out of fire runes and stokes every fire spell that leaves its pages."
   }
 }

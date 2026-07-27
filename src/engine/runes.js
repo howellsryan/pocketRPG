@@ -1,13 +1,24 @@
+// Slots that can supply an element's rune for free. The weapon slot holds the
+// elemental staves; the shield slot holds the tomes (Tomb of Fire). Ordered —
+// the first match wins, so a staff and a tome of the same element don't stack
+// (there is nothing to stack: an unlimited supply is already unlimited).
+const RUNE_SOURCE_SLOTS = ['weapon', 'shield']
+
 /**
- * Get the elemental staff equipped by the player (if any)
+ * Get the equipped item that supplies an element's rune for free — an elemental
+ * staff (weapon) or an elemental tome (shield).
  * @param {object} equipment - equipment state
  * @param {object} itemsData - items.json lookup
- * @returns {object|null} the elemental staff item data or null
+ * @returns {object|null} the item data of the rune source, or null
  */
 export function getEquippedElementalStaff(equipment, itemsData) {
-  if (!equipment?.weapon) return null
-  const staff = itemsData[equipment.weapon.itemId]
-  return (staff && staff.elemental) ? staff : null
+  for (const slot of RUNE_SOURCE_SLOTS) {
+    const entry = equipment?.[slot]
+    if (!entry) continue
+    const item = itemsData?.[entry.itemId]
+    if (item?.elemental) return item
+  }
+  return null
 }
 
 /**

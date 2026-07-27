@@ -90,7 +90,7 @@ export function GameProvider({ children }) {
   const [slayerMasterTaskCompletions, setSlayerMasterTaskCompletionsState] = useState({})
   const [dungeoneeringTokens, setDungeoneeringTokensState] = useState(0)
   const [slayerPerks, setSlayerPerksState] = useState({ doubleQuantity: false })
-  const [characterUnlocks, setCharacterUnlocksState] = useState({ doubleSlayerXp: false, autoSlayerTask: false })
+  const [characterUnlocks, setCharacterUnlocksState] = useState({ doubleSlayerXp: false, autoSlayerTask: false, extraEquipmentTabs: 0 })
   const [slayerStoreUnlocks, setSlayerStoreUnlocksState] = useState([])
   const [activeCombatSpell, setActiveCombatSpellState] = useState(null)
   const [bossKillCounts, setBossKillCountsState] = useState({})
@@ -146,7 +146,7 @@ export function GameProvider({ children }) {
   const slayerTasksCompletedRef = useRef(0)
   const slayerMasterTaskCompletionsRef = useRef({})
   const slayerPerksRef = useRef({ doubleQuantity: false })
-  const characterUnlocksRef = useRef({ doubleSlayerXp: false, autoSlayerTask: false })
+  const characterUnlocksRef = useRef({ doubleSlayerXp: false, autoSlayerTask: false, extraEquipmentTabs: 0 })
   const slayerStoreUnlocksRef = useRef([])
   const completedQuestsRef = useRef(new Set())
   const questQueueRef = useRef([])
@@ -700,7 +700,7 @@ export function GameProvider({ children }) {
     const loadedSlayerPerks = savedSlayerPerks && typeof savedSlayerPerks === 'object' ? savedSlayerPerks : { doubleQuantity: false }
     slayerPerksRef.current = loadedSlayerPerks
     setSlayerPerksState(loadedSlayerPerks)
-    const loadedCharacterUnlocks = savedCharacterUnlocks && typeof savedCharacterUnlocks === 'object' ? savedCharacterUnlocks : { doubleSlayerXp: false, autoSlayerTask: false }
+    const loadedCharacterUnlocks = savedCharacterUnlocks && typeof savedCharacterUnlocks === 'object' ? savedCharacterUnlocks : { doubleSlayerXp: false, autoSlayerTask: false, extraEquipmentTabs: 0 }
     characterUnlocksRef.current = loadedCharacterUnlocks
     setCharacterUnlocksState(loadedCharacterUnlocks)
     const loadedSlayerStoreUnlocks = Array.isArray(savedSlayerStoreUnlocks) ? savedSlayerStoreUnlocks : []
@@ -1057,8 +1057,12 @@ export function GameProvider({ children }) {
     saveSetting('slayerPerks', next)
   }, [])
 
+  // `value` may be an updater fn — repeatable unlocks (extra equipment tabs)
+  // increment off the ref so two purchases in flight can't both read the same
+  // stale count from a render.
   const updateCharacterUnlock = useCallback((key, value) => {
-    const next = { ...characterUnlocksRef.current, [key]: value }
+    const prev = characterUnlocksRef.current
+    const next = { ...prev, [key]: typeof value === 'function' ? value(prev[key]) : value }
     characterUnlocksRef.current = next
     setCharacterUnlocksState(next)
     saveSetting('characterUnlocks', next)

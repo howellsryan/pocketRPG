@@ -300,6 +300,31 @@ export function getEffectiveWornMagicDamage(baseMagicDamage, equipment, itemsDat
 }
 
 /**
+ * Magic-damage percentage points that worn gear grants only to the spell being
+ * cast, keyed off the runes the spell needs (`spellRuneDamage` on the item —
+ * e.g. the Tomb of Fire's `{ fire_rune: 20 }` boosts every fire spell). It is a
+ * flat addend to the max-hit percentage, deliberately outside
+ * getEffectiveWornMagicDamage: a conditional bonus is not part of the worn
+ * passive a weapon multiplier scales and caps. Returns 0 for a spell-less swing
+ * (powered staff, special attack), which is why those sites don't call it.
+ */
+export function getSpellRuneMagicDamage(equipment, itemsData, spell) {
+  const runeReq = spell?.runeReq
+  if (!runeReq || !equipment) return 0
+  let bonus = 0
+  for (const slot of EQUIPMENT_SLOTS) {
+    const entry = equipment[slot]
+    if (!entry) continue
+    const table = itemsData?.[entry.itemId]?.spellRuneDamage
+    if (!table) continue
+    for (const [runeId, value] of Object.entries(table)) {
+      if ((runeReq[runeId] || 0) > 0) bonus += Number(value) || 0
+    }
+  }
+  return bonus
+}
+
+/**
  * Get the attack speed of the equipped weapon (default 4 ticks unarmed)
  */
 export function getAttackSpeed(equipment, itemsData) {

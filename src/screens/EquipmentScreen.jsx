@@ -4,7 +4,7 @@ import Model3DViewer from '../components/Model3DViewer.jsx'
 import { getCharacterAssetPath, getCharacterModel, getWeaponPlacement, getGearPlacements } from '../utils/equipModels.js'
 import { canRender3D } from '../utils/three3d.js'
 import { unequipSlot, getEquipmentBonuses, checkEquipRequirements, equipItem, placeUnequippedItems } from '../engine/equipment.js'
-import { createPreset, applyPreset, renamePreset, MAX_EQUIPMENT_PRESETS } from '../engine/equipmentPresets.js'
+import { createPreset, applyPreset, renamePreset, equipmentPresetLimit } from '../engine/equipmentPresets.js'
 import Modal from '../components/Modal.jsx'
 import { getActiveSetBonusDisplays } from '../engine/combatSetBonuses.js'
 import { EQUIPMENT_SLOTS } from '../utils/constants.js'
@@ -21,7 +21,7 @@ import { OTHER_BONUS_LABELS, OTHER_BONUS_PERCENT_KEYS } from '../utils/bonusLabe
 import { formatSpecialEnergyCostLabel } from '../engine/specialAttackEnergy.js'
 
 export default function EquipmentScreen() {
-  const { equipment, inventory, bank, stats, updateEquipment, updateInventory, updateBank, addToast, itemsData, completedQuests, equipmentPresets, updateEquipmentPresets, combatStatus } = useGame()
+  const { equipment, inventory, bank, stats, updateEquipment, updateInventory, updateBank, addToast, itemsData, completedQuests, equipmentPresets, updateEquipmentPresets, combatStatus, characterUnlocks } = useGame()
   // Loadout presets reshuffle equipment/inventory/bank wholesale — disabled while
   // a fight ticks in the background so gear can't swap out from under it.
   const presetsLocked = !!combatStatus?.active
@@ -34,6 +34,7 @@ export default function EquipmentScreen() {
   const [manageName, setManageName] = useState('')
 
   const presets = Array.isArray(equipmentPresets) ? equipmentPresets : []
+  const presetLimit = equipmentPresetLimit(characterUnlocks)
   const nameOf = (id) => itemsData[id]?.name || id
 
   // 3D hero preview (replaces the paper doll as the centerpiece when supported).
@@ -50,8 +51,8 @@ export default function EquipmentScreen() {
 
   const handleCreatePreset = () => {
     if (presetsLocked) { addToast('⚔️ Finish your fight to manage presets.', 'warning'); return }
-    if (presets.length >= MAX_EQUIPMENT_PRESETS) {
-      addToast(`Preset limit reached (${MAX_EQUIPMENT_PRESETS})`, 'error')
+    if (presets.length >= presetLimit) {
+      addToast(`Preset limit reached (${presetLimit}) — buy another tab in Character Unlocks`, 'error')
       return
     }
     const preset = createPreset(createName.trim() || `Preset ${presets.length + 1}`, equipment, inventory)
@@ -323,7 +324,7 @@ export default function EquipmentScreen() {
             </button>
           </div>
         ))}
-        {presets.length < MAX_EQUIPMENT_PRESETS && (
+        {presets.length < presetLimit && (
           <button
             onClick={() => { setCreateOpen(true); setCreateName('') }}
             disabled={presetsLocked}
