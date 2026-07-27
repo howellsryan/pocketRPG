@@ -99,18 +99,22 @@ export function createWater(
 ): THREE.Mesh[] {
   const planes: THREE.Mesh[] = []
   for (const r of ground ?? []) {
-    if (!groundKind(r.kind)?.water) continue
+    const kind = groundKind(r.kind)
+    if (!kind?.water) continue
     const cx = r.x + r.w / 2
     const cz = r.z + r.h / 2
     const geometry = new THREE.PlaneGeometry(r.w, r.h)
     geometry.rotateX(-Math.PI / 2)
     geometry.translate(cx, heightAt(cx, cz) + 0.06, cz)
     const material = new THREE.MeshStandardMaterial({
-      color: 0x3b6b88,
+      color: kind.surface ?? '#3b6b88',
       transparent: true,
       opacity: 0.74,
-      roughness: 0.15,
-      metalness: 0.2,
+      // Molten rock is lit from inside and barely reflects; water is the reverse.
+      roughness: kind.molten ? 0.85 : 0.15,
+      metalness: kind.molten ? 0 : 0.2,
+      emissive: new THREE.Color(kind.molten ? (kind.surface ?? '#d2571d') : '#000000'),
+      emissiveIntensity: kind.molten ? 0.7 : 0,
     })
     const mesh = new THREE.Mesh(geometry, material)
     mesh.receiveShadow = true

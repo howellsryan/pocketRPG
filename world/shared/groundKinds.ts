@@ -19,6 +19,10 @@ export type GroundKind = {
   /** Water kinds also get a translucent animated surface plane; the painted
    * colour is the riverbed beneath it. */
   water?: boolean
+  /** Colour of that surface plane. Defaults to river blue. */
+  surface?: string
+  /** Surface plane lights itself — molten rock, not water reflecting a sky. */
+  molten?: boolean
 }
 
 export const GROUND_KINDS: GroundKind[] = [
@@ -30,7 +34,11 @@ export const GROUND_KINDS: GroundKind[] = [
   { id: 'floor_plank', label: 'Wood Floor', color: '#7a5a38' },
   { id: 'floor_stone', label: 'Stone Floor', color: '#8b8578' },
   { id: 'floor_tile', label: 'Tiled Floor', color: '#9a9488' },
+  { id: 'ash', label: 'Ash / Scorched', color: '#4a3b33' },
   { id: 'water', label: 'Water', color: '#2f5a74', water: true },
+  // Lava is a water kind: it wants the same animated surface plane, just poured
+  // in a colour that reads as molten rather than wet.
+  { id: 'lava', label: 'Lava', color: '#8f3312', water: true, surface: '#d2571d', molten: true },
 ]
 
 const KIND_BY_ID = new Map(GROUND_KINDS.map((k) => [k.id, k]))
