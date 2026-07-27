@@ -22,7 +22,7 @@ import { COOP_RAID_IDS, coopRaidData, coopRaidSummary, isCoopRaidId } from '../.
 import { checkRaidRequirementsPure } from '../../../src/engine/combatRequirements.js'
 import { loadCharacterWithSave, writeSave } from './save.js'
 import { GameApiError } from './errors.js'
-import { callCoopRoom, coopRoomsAvailable } from './coopRoom.js'
+import { callCoopRoom, coopRoomSupportsRaids, coopRoomsAvailable } from './coopRoom.js'
 import { auditLog } from './audit.js'
 import {
   COOP_LOCK_PENDING,
@@ -115,6 +115,12 @@ export async function joinCoopRaidParty(env, { characterId, identityId, raidId, 
     throw new GameApiError('INVALID_COOP_RAID', 'That raid cannot be run as a party', 400)
   }
   if (!coopRoomsAvailable(env)) {
+    throw new GameApiError('COOP_UNAVAILABLE', 'Raid parties are temporarily unavailable', 503)
+  }
+  // Refuse rather than hand the party to a room that would farm the raid's
+  // first boss and pay that boss's table — the grant is server-side, so a
+  // version mismatch here is an economy bug, not a cosmetic one.
+  if (!(await coopRoomSupportsRaids(env))) {
     throw new GameApiError('COOP_UNAVAILABLE', 'Raid parties are temporarily unavailable', 503)
   }
 

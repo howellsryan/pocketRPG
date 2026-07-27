@@ -74,6 +74,13 @@ async function beats(count: number) {
   }
 }
 
+/** Lets work that resolves off the microtask queue finish — the save codec's
+ * gunzip runs on the thread pool, which fake timers never reach. */
+async function flushRealAsync() {
+  vi.useRealTimers()
+  await new Promise((resolve) => setTimeout(resolve, 200))
+}
+
 beforeEach(() => {
   vi.useFakeTimers()
   const d = makeD1()
@@ -92,6 +99,42 @@ async function openParty(characterId: number) {
     characterId, identityId: 1, raidId: RAID, username: `player${characterId}`,
   })
 }
+
+describe('a world Worker that is older than the Pages build', () => {
+  /** A room from before raids: it has no `capabilities` action, so it falls
+   * through to the session lookup the real old room does. */
+  function makeOldRoomBinding() {
+    return {
+      idFromName: (name: string) => name,
+      get: () => ({
+        fetch: async () => new Response(JSON.stringify({ error: 'invalid_session' }), { status: 400 }),
+      }),
+    }
+  }
+
+  it('answers the capability probe, so a current room is recognised', async () => {
+    const res = await (env.COOP_ROOM as any)
+      .get('coop:capabilities')
+      .fetch('https://coop-room/capabilities', { method: 'POST', body: '{}' })
+    expect(res.status).toBe(200)
+    expect((await res.json() as any).raids).toBe(true)
+  })
+
+  it('refuses the party rather than farming the raid\'s first boss for its own drop table', async () => {
+    // The failure this prevents: an old room ignores `state.raid`, so it
+    // respawns boss one forever and settles every kill against that boss's
+    // table — server-granted, so it is an economy bug and has to be a refusal.
+    await seedCharacter(7)
+    env.COOP_ROOM = makeOldRoomBinding()
+    await expect(joinCoopRaidParty(env as never, {
+      characterId: 7, identityId: 1, raidId: RAID, username: 'player7',
+    })).rejects.toMatchObject({ code: 'COOP_UNAVAILABLE' })
+
+    // And it must not leave the character locked out of their own save.
+    const row = raw.prepare('SELECT active_coop_session_id AS id FROM characters WHERE id = 7').all()[0]
+    expect(row.id).toBeNull()
+  })
+})
 
 describe('a raid party lobby', () => {
   it('takes members while it waits', async () => {
@@ -180,6 +223,56 @@ describe('a raid party that has set off', () => {
     expect(again).toMatchObject({ sessionId, rejoined: true })
     const poll = await callRoom(sessionId, 'poll', { characterId: 7 })
     expect(poll.status).toBe(200)
+  })
+
+  it('walks on to the next boss instead of respawning the first one and paying its table', async () => {
+    const sessionId = await startedParty()
+    const room = rooms.get(`coop:${sessionId}`)! as any
+    const bosses = raidBossOrder(RAID)
+    expect(room.state.bossId).toBe(bosses[0])
+
+    room.state.boss.currentHP = 0
+    await beats(1)
+    // An intermediate boss pays nothing: the raid settles once, at the end.
+    expect(raw.prepare('SELECT COUNT(*) AS n FROM coop_kill_settlements WHERE session_id = ?').all(sessionId)[0].n).toBe(0)
+
+    await beats(10)
+    expect(room.state.bossId).toBe(bosses[1])
+    expect(room.state.raid.currentBossIndex).toBe(1)
+  })
+
+  it('walks the whole run to its end when the party actually fights it down', async () => {
+    const sessionId = await startedParty()
+    const room = rooms.get(`coop:${sessionId}`)! as any
+    const bosses = raidBossOrder(RAID)
+    const seen: string[] = [room.state.bossId]
+
+    for (let i = 0; i < 4000 && room.state.phase === 'active'; i++) {
+      // Chip the boss down rather than waiting out real damage rolls: the point
+      // is the SEQUENCE the room walks, not how long each boss survives.
+      if (room.state.boss.currentHP > 0) room.state.boss.currentHP = 1
+      // Damage is what the loot gate measures, and chipping the bosses down
+      // never accrues it — credit the run's worth so the clear actually pays.
+      room.state.members['7'].damage = room.state.raid.maxHP
+      await beats(1)
+      if (room.state.phase === 'active' && room.state.bossId !== seen[seen.length - 1]) seen.push(room.state.bossId)
+    }
+
+    expect(seen).toEqual(bosses)
+    // Finishing returns the party to its lobby on the raid's first boss.
+    expect(room.state.phase).toBe('lobby')
+    expect(room.state.bossId).toBe(bosses[0])
+
+    // Settlement gunzips the save, and zlib resolves on the thread pool rather
+    // than the microtask queue — under fake timers it never lands, which reads
+    // as a raid that paid nothing.
+    await flushRealAsync()
+    // One settlement for the whole run, filed under the RAID.
+    const rows = raw.prepare('SELECT boss_id FROM coop_kill_settlements WHERE session_id = ?').all(sessionId)
+    expect(rows.map((r: any) => r.boss_id)).toEqual([RAID])
+    expect(raw.prepare('SELECT source_type, source_id FROM kill_counts WHERE character_id = 7').all()).toEqual([
+      { source_type: 'raids', source_id: RAID },
+    ])
   })
 
   it('refuses a start from anyone who is not the host', async () => {
