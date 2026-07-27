@@ -85,3 +85,95 @@ export function depositUnits(pools: ItemPools, itemId: string, qty: number): voi
 export function withdrawUnits(pools: ItemPools, itemId: string, qty: number): void {
   add(pools.bankSourced, itemId, qty)
 }
+
+// ---------------------------------------------------------------------------
+// Flush bookkeeping
+//
+// The three functions below are the whole handshake between the pools and a
+// grant flush, and they live here rather than in WorldZone because the zone is
+// a Durable Object the test harness cannot import — which is how the bug they
+// fix shipped unnoticed.
+//
+// `minted` is the one pool with nothing backing it outside this DO's memory: a
+// save-backed unit is still in the save's inventory and a bank-sourced one is
+// still in the save's bank, but a minted one exists nowhere else until a flush
+// grants it. It therefore rides EVERY flush. Granting it only on `disconnect`
+// was the bug: taking gear off mints it into the pack AND marks equipment
+// dirty, and the equipment snapshot flushed on the 3s timer while the minted
+// unit waited. From that flush until a clean disconnect the item was in neither
+// the save's equipment nor its inventory, so any session that ended without a
+// disconnect flush destroyed it outright.
+//
+// `bankSourced` stays disconnect/transition-only on purpose: a withdrawn unit is
+// still in the save's bank, so losing the DO returns it to the bank rather than
+// deleting it.
+
+export type ItemStack = { itemId: string; quantity: number }
+
+/** The pool state a flush claimed, held so it can be committed or put back. */
+export type DrainedFlush = {
+  items: ItemStack[]
+  moveToBank: ItemStack[]
+  removeFromInventory: ItemStack[]
+  removeFromBank: ItemStack[]
+  mintedToBank: ItemStack[]
+  bankToInventory: ItemStack[]
+}
+
+export type FlushReason = 'deposit' | 'disconnect' | 'timer' | 'transition'
+
+function toItemList(tally: Tally): ItemStack[] {
+  return Object.entries(tally)
+    .filter(([, quantity]) => quantity > 0)
+    .map(([itemId, quantity]) => ({ itemId, quantity }))
+}
+
+function mergeInto(target: Tally, items: ItemStack[]): void {
+  for (const item of items) add(target, item.itemId, item.quantity)
+}
+
+/**
+ * Claims every pending pool mutation for one flush, clearing them so the next
+ * flush cannot double-count. `minted` is emptied IN PLACE: the record is
+ * aliased by TickPlayer.minted (mining and loot pickups write through that
+ * reference), so reassigning would sever the alias and silently stop counting
+ * everything gathered afterwards.
+ */
+export function drainForFlush(pools: ItemPools, reason: FlushReason): DrainedFlush {
+  const drained: DrainedFlush = {
+    items: toItemList(pools.minted),
+    moveToBank: toItemList(pools.depositedSaveBacked),
+    removeFromInventory: toItemList(pools.consumedSaveBacked),
+    removeFromBank: toItemList(pools.consumedBankSourced),
+    mintedToBank: toItemList(pools.mintedToBank),
+    bankToInventory: [],
+  }
+  for (const key of Object.keys(pools.minted)) delete pools.minted[key]
+  pools.depositedSaveBacked = {}
+  pools.consumedSaveBacked = {}
+  pools.consumedBankSourced = {}
+  pools.mintedToBank = {}
+  if (reason === 'disconnect' || reason === 'transition') {
+    drained.bankToInventory = toItemList(pools.bankSourced)
+    pools.bankSourced = {}
+  }
+  return drained
+}
+
+/** The grant landed. Minted units are in the save's inventory from now on, so
+ * consuming one has to remove it there rather than draining a tally that
+ * nothing backs. */
+export function commitFlush(pools: ItemPools, drained: DrainedFlush): void {
+  mergeInto(pools.saveBacked, drained.items)
+}
+
+/** The grant failed. Put every claimed mutation back so the next flush retries
+ * it — including the minted units, which stay minted until a flush lands. */
+export function restoreFlush(pools: ItemPools, drained: DrainedFlush): void {
+  mergeInto(pools.minted, drained.items)
+  mergeInto(pools.depositedSaveBacked, drained.moveToBank)
+  mergeInto(pools.consumedSaveBacked, drained.removeFromInventory)
+  mergeInto(pools.consumedBankSourced, drained.removeFromBank)
+  mergeInto(pools.mintedToBank, drained.mintedToBank)
+  mergeInto(pools.bankSourced, drained.bankToInventory)
+}
