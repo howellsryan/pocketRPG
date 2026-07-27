@@ -239,6 +239,38 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onDeath
     )
   }
 
+  // Built before the lobby branch below and rendered by BOTH: clearing a raid
+  // settles the loot and puts the party back in its lobby on the same tick, so
+  // a modal rendered only by the fight view is set and never seen.
+  const lootModalNode = lootModal ? (() => {
+    const { hero, heroItem, rest, total } = shapeLootForModal(lootModal.loot, itemsData)
+    return (
+      <LootResultModal
+        theme={hasEpicLootDrop(lootModal.loot, itemsData) ? 'purple' : 'gold'}
+        kind="loot"
+        eyebrow={lootModal.isRaid ? 'Raid Complete' : 'Boss Defeated'}
+        title={lootModal.monsterName}
+        sub={lootModal.killCount ? `Kill ${lootModal.killCount.toLocaleString()}` : undefined}
+        heroItem={heroItem}
+        heroName={hero ? (heroItem?.name || hero.itemId) : null}
+        heroQuantity={hero ? hero.quantity : null}
+        heroGp={hero ? hero.totalGp : 0}
+        heroUnitGp={hero ? hero.unitGp : 0}
+        loot={rest.length > 0 ? lootRowsForModal(rest, itemsData) : null}
+        lootTitle="Loot Secured"
+        lootTotal={total}
+        primaryAction={{ label: lootModal.isRaid ? 'Back to Lobby' : 'Keep Fighting', onClick: () => setLootModal(null) }}
+        onClose={() => setLootModal(null)}
+      >
+        {(lootModal.loot?.length ?? 0) === 0 && (
+          <div class="text-center text-[12px] text-[var(--color-parchment)] opacity-70 py-4" style={{ position: 'relative', zIndex: 4 }}>
+            No drops this time — the kill still counts.
+          </div>
+        )}
+      </LootResultModal>
+    )
+  })() : null
+
   if (inLobby && raid) {
     const summary = coopRaidSummary(raid.raidId, monstersData)
     return (
@@ -260,6 +292,7 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onDeath
           />
           {error && <div class="text-[11px] text-[var(--color-blood-light)] text-center">{error}</div>}
         </div>
+        {lootModalNode}
       </div>
     )
   }
@@ -401,34 +434,7 @@ export default function CoopBossScreen({ sessionId, characterId, onExit, onDeath
           mid-fight, and shut it costs a single row. */}
       <CoopChatPanel messages={chatLog} onSend={sendChat} />
 
-      {lootModal && (() => {
-        const { hero, heroItem, rest, total } = shapeLootForModal(lootModal.loot, itemsData)
-        return (
-          <LootResultModal
-            theme={hasEpicLootDrop(lootModal.loot, itemsData) ? 'purple' : 'gold'}
-            kind="loot"
-            eyebrow={lootModal.isRaid ? 'Raid Complete' : 'Boss Defeated'}
-            title={lootModal.monsterName}
-            sub={lootModal.killCount ? `Kill ${lootModal.killCount.toLocaleString()}` : undefined}
-            heroItem={heroItem}
-            heroName={hero ? (heroItem?.name || hero.itemId) : null}
-            heroQuantity={hero ? hero.quantity : null}
-            heroGp={hero ? hero.totalGp : 0}
-            heroUnitGp={hero ? hero.unitGp : 0}
-            loot={rest.length > 0 ? lootRowsForModal(rest, itemsData) : null}
-            lootTitle="Loot Secured"
-            lootTotal={total}
-            primaryAction={{ label: 'Keep Fighting', onClick: () => setLootModal(null) }}
-            onClose={() => setLootModal(null)}
-          >
-            {(lootModal.loot?.length ?? 0) === 0 && (
-              <div class="text-center text-[12px] text-[var(--color-parchment)] opacity-70 py-4" style={{ position: 'relative', zIndex: 4 }}>
-                No drops this time — the kill still counts.
-              </div>
-            )}
-          </LootResultModal>
-        )
-      })()}
+      {lootModalNode}
 
       {showQuickPrayerConfig && (
         <QuickPrayerConfigModal

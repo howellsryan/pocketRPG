@@ -1,6 +1,8 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
 import {
   addCoopMember,
+  COOP_RESPAWN_TICKS,
+  coopKillOutcome,
   coopLootBasisHP,
   coopLootDamageRequired,
   createCoopMember,
@@ -185,6 +187,12 @@ describe('coopRaidEngine — the run', () => {
     expect(stateNext.raid.currentBossIndex).toBe(0)
   })
 
+  it('waits the same 5 seconds between raid bosses as between boss respawns', () => {
+    expect(COOP_RAID_ADVANCE_TICKS).toBe(COOP_RESPAWN_TICKS)
+    // The HUD counts the wait down in ceil(ticks * 0.6) seconds, and it reads "5s".
+    expect(Math.ceil(COOP_RAID_ADVANCE_TICKS * 0.6)).toBe(5)
+  })
+
   it('advances to the next boss when the wait runs out', () => {
     let state = tick(party([7]), [startIntent(7)]).stateNext
     state = tick(killBoss(state)).stateNext
@@ -248,6 +256,33 @@ describe('coopRaidEngine — settling the run', () => {
     expect(events.some((e: any) => e.type === 'raidComplete')).toBe(true)
     expect(stateNext.phase).toBe('lobby')
     expect(stateNext.raid.completions).toBe(1)
+  })
+
+  it('owes every earner a loot modal on the same tick the party lands back in its lobby', () => {
+    // The regression this locks: clearing a raid settles the loot and calls
+    // returnPartyToLobby on ONE tick, so the killSettled the room publishes for
+    // that tick arrives at a client whose state already says 'lobby'. A loot
+    // modal only the fight view renders is set and never seen.
+    let state = tick(party([7, 8]), [startIntent(7)]).stateNext
+    state = toFinalBoss(state)
+    const required = coopLootDamageRequired(coopLootBasisHP(state))
+    state.members['7'].damage = required
+    state.members['8'].damage = required
+    const { stateNext, kill } = tick(killBoss(state))
+
+    expect(stateNext.phase).toBe('lobby')
+    expect(kill!.lootCharacterIds).toEqual(expect.arrayContaining([7, 8]))
+
+    // The event the room builds from that kill record, as CoopBossScreen reads it.
+    const killSettled = {
+      type: 'killSettled',
+      settlements: kill!.lootCharacterIds.map((characterId: number) => ({
+        characterId, granted: [{ itemId: 'coins', quantity: 50_000 }], killCount: 3, diverged: false, failed: false,
+      })),
+    }
+    for (const characterId of [7, 8]) {
+      expect(coopKillOutcome(killSettled, characterId)).toMatchObject({ kind: 'loot', winners: 2 })
+    }
   })
 
   it('rolls the raid table, not the final boss table', () => {

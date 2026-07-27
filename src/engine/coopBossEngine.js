@@ -70,7 +70,7 @@ export const COOP_BOSSES = {
 }
 export const COOP_BOSS_IDS = new Set(Object.keys(COOP_BOSSES))
 /**
- * The wait between kills, for every co-op boss: 25 ticks, 15 seconds.
+ * The wait between kills, for every co-op boss: 8 ticks, the HUD's 5 seconds.
  *
  * This replaced a per-boss curve (`clamp(round(12750 / hitpoints), 10, 100)`)
  * that paced the farm loop off the boss's HP, so a group could not melt a
@@ -79,8 +79,11 @@ export const COOP_BOSS_IDS = new Set(Object.keys(COOP_BOSSES))
  * breather rather than downtime. It does mean a squishy boss's GP and XP per
  * hour are no longer held back by its respawn — pace those with the drop table
  * or the boss's own HP, not by reintroducing a per-boss delay here.
+ *
+ * 8 rather than 5s-to-the-millisecond: the countdown renders as
+ * `ceil(ticks * 0.6)`, so 8 is the longest wait that still reads "5s".
  */
-export const COOP_RESPAWN_TICKS = 25
+export const COOP_RESPAWN_TICKS = 8
 
 export function isCoopBossId(bossId) {
   return typeof bossId === 'string' && Object.prototype.hasOwnProperty.call(COOP_BOSSES, bossId)

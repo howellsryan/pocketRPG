@@ -18,13 +18,12 @@ import raidsData from '../data/raids.json'
 import { createCombatState } from './combat.js'
 
 /**
- * The wait between a raid boss dying and the next one walking in: 25 ticks,
- * 15 seconds — the same beat as COOP_RESPAWN_TICKS, and prep time in the same
- * way (intents still apply, so the party eats, drinks and re-gears in it).
- * The solo raid's 5-tick pause is a solo number; a group needs long enough for
- * eight people to react.
+ * The wait between a raid boss dying and the next one walking in: 8 ticks, the
+ * HUD's 5 seconds — the same beat as COOP_RESPAWN_TICKS, and prep time in the
+ * same way (intents still apply, so the party eats, drinks and re-gears in it).
+ * Keep the two equal: one number the party can learn covers both waits.
  */
-export const COOP_RAID_ADVANCE_TICKS = 25
+export const COOP_RAID_ADVANCE_TICKS = 8
 
 /**
  * Canonical raid ids. raids.json carries each raid twice — once under its own

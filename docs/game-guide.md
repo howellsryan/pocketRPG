@@ -109,7 +109,7 @@ Tap most bosses in the combat picker and you are asked whether to fight solo or 
 
 The server runs the whole fight — every swing, your XP, the food and potions you use and the loot roll. The fight plays the same as a solo one: same tick speed, prayers, special attacks, combo eating and gear swaps, and dying costs exactly what dying to that boss alone costs. The boss's entry requirements still apply to each player, quest, Slayer level and kill count alike.
 
-After a kill the boss comes back 15 seconds later, shown as a countdown. That wait is preparation time, not dead time: eat, drink potions, toggle prayers and swap gear as normal, and the group goes into the next pull ready.
+After a kill the boss comes back 5 seconds later, shown as a countdown. That wait is preparation time, not dead time: eat, drink potions, toggle prayers and swap gear as normal, and the group goes into the next pull ready.
 
 ## Group boss loot and the 10% rule
 
@@ -125,7 +125,7 @@ While you are in a group fight the server owns your save, so saving, skipping ti
 
 Tap a raid and you can run it alone or take a party. Unlike bosses, a raid party is not drop-in: you either start a party and become its host, or join a party that is still waiting in its lobby. Once the host presses Start Raid, nobody else can join that run.
 
-The lobby lists everyone who has joined, with their combat level, and you can open any member's worn gear and inventory to see what they are bringing. Eat, drink and swap gear in the lobby — the wait between bosses works the same way, 15 seconds while the next boss walks in.
+The lobby lists everyone who has joined, with their combat level, and you can open any member's worn gear and inventory to see what they are bringing. Eat, drink and swap gear in the lobby — the wait between bosses works the same way, 5 seconds while the next boss walks in.
 
 The raid itself is the group boss fight: the server runs every swing, and it plays exactly like a solo run — same tick speed, prayers, specials and combo eating. The bosses come in order, and only the last one pays. Deal at least 10% of the whole raid's hitpoints — counted across every boss, not reset between them — and you roll the raid's reward table yourself, with your own collection log entries and raid kill count. Miss the line and you get nothing from the clear.
 
