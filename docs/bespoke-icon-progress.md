@@ -44,7 +44,8 @@ cave_goblin, mining.
 - [x] potion ×7 (attack,strength,defence,combat,prayer,ranging,magic) — prayer_potion file removed
 - [x] gem ×7 + uncut_gem ×7 (sapphire..zyrite) — ruby file removed
 - [x] amulet ×7 (gem-based)
-- [x] arrow ×8 (metal tiers + shardglass), arrowtips ×7 (metal tiers + shardglass)
+- [x] arrow ×8 (metal tiers + shardglass), arrowtips ×7 (metal tiers + shardglass);
+  seraphic_arrow is file-based (gold head + halo, outside the tier palettes)
 - [x] shortbow ×5 (wood), longbow ×3 (wood), crossbow ×5 (metal)
 - [x] cape ×17 (skill capes, per-skill accent)
 - [x] d_hide_body ×9, d_hide_chaps ×9 (per hide colour)

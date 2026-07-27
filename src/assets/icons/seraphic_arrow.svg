@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="seraphic_arrow_head" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fff6c8"/><stop offset="0.45" stop-color="#f5cf5a"/><stop offset="1" stop-color="#b07d16"/>
+    </linearGradient>
+    <linearGradient id="seraphic_arrow_shaft" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#f6f1e0"/><stop offset="0.55" stop-color="#ded6bc"/><stop offset="1" stop-color="#a89a76"/>
+    </linearGradient>
+    <linearGradient id="seraphic_arrow_plume" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffffff"/><stop offset="0.6" stop-color="#f4ead0"/><stop offset="1" stop-color="#d8b45c"/>
+    </linearGradient>
+    <radialGradient id="seraphic_arrow_glow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0.2" stop-color="#fff4b0" stop-opacity="0.3"/><stop offset="1" stop-color="#f0c040" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <g transform="rotate(-45 256 256)" stroke="#1a1410" stroke-width="12" stroke-linejoin="round" stroke-linecap="round">
+    <circle cx="256" cy="104" r="72" fill="url(#seraphic_arrow_glow)" stroke="none"/>
+    <rect x="248" y="138" width="16" height="278" rx="6" fill="url(#seraphic_arrow_shaft)"/>
+    <polygon points="256,44 298,148 272,134 256,160 240,134 214,148" fill="url(#seraphic_arrow_head)"/>
+    <path d="M250 66 L250 128" stroke="#fffbe4" stroke-width="7" opacity="0.75"/>
+    <path d="M248 330 L196 428 L240 408 L248 378 Z" fill="url(#seraphic_arrow_plume)"/>
+    <path d="M264 330 L316 428 L272 408 L264 378 Z" fill="url(#seraphic_arrow_plume)"/>
+    <path d="M232 372 L216 410" stroke="#c9a24a" stroke-width="6" opacity="0.7"/>
+    <path d="M280 372 L296 410" stroke="#c9a24a" stroke-width="6" opacity="0.7"/>
+    <rect x="248" y="404" width="16" height="30" rx="5" fill="#c8952c"/>
+  </g>
+</svg>
