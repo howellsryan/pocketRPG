@@ -388,3 +388,112 @@ describe('a kill is never silent', () => {
     expect(ev.settlements.find((s: any) => s.characterId === 7).granted).toBeUndefined()
   })
 })
+
+describe('fight chat', () => {
+  async function roomWith(ids: number[]) {
+    for (const id of ids) await seedCharacter(id)
+    const { sessionId } = await joinCoopSession(env as never, {
+      characterId: ids[0], identityId: 1, bossId: BOSS, username: `player${ids[0]}`,
+    })
+    await callRoom(sessionId, 'poll', { characterId: ids[0] })
+    for (const id of ids.slice(1)) {
+      await joinCoopSession(env as never, { characterId: id, identityId: 1, bossId: BOSS, username: `player${id}` })
+      await callRoom(sessionId, 'poll', { characterId: id })
+    }
+    return { sessionId, room: rooms.get(`coop:${sessionId}`)! as any }
+  }
+
+  const say = (sessionId: number, characterId: number, text: string) =>
+    callRoom(sessionId, 'intent', { characterId, action: { type: 'chat', text } })
+
+  async function eventsFor(sessionId: number, characterId: number, sinceTick: number) {
+    const res = await callRoom(sessionId, 'poll', { characterId, sinceTick })
+    return ((await res.json()) as any).events
+  }
+
+  it('reaches the other players in the fight', async () => {
+    const { sessionId, room } = await roomWith([7, 8])
+    const before = room.state.tick
+
+    expect((await say(sessionId, 7, 'pray melee')).status).toBe(200)
+    await room.tick()
+
+    const seen = await eventsFor(sessionId, 8, before)
+    const chat = seen.find((e: any) => e.type === 'chatMessage')
+    expect(chat).toMatchObject({ characterId: 7, username: 'player7', text: 'pray melee' })
+  })
+
+  // A message appended to a tick the listener has already acknowledged is
+  // filtered out by `> since` forever — the bug that ate the loot modal. Chat
+  // has to ride the NEXT tick for the same reason.
+  it('is not swallowed by a listener who already acknowledged the current tick', async () => {
+    const { sessionId, room } = await roomWith([7, 8])
+    const ack = ((await (await callRoom(sessionId, 'poll', { characterId: 8 })).json()) as any).current_tick
+
+    await say(sessionId, 7, 'after the ack')
+    expect(await eventsFor(sessionId, 8, ack)).toEqual([])
+
+    await room.tick()
+    const seen = await eventsFor(sessionId, 8, ack)
+    expect(seen.some((e: any) => e.type === 'chatMessage' && e.text === 'after the ack')).toBe(true)
+  })
+
+  it('works while dead, when a player most needs to talk to the group', async () => {
+    const { sessionId, room } = await roomWith([7, 8])
+    room.state.members['7'].status = 'dead'
+    const before = room.state.tick
+
+    expect((await say(sessionId, 7, 'wiped, sorry')).status).toBe(200)
+    // A combat action from the same member is still refused.
+    const act = await callRoom(sessionId, 'intent', { characterId: 7, action: { type: 'queue_special' } })
+    expect(act.status).toBe(409)
+
+    await room.tick()
+    const seen = await eventsFor(sessionId, 8, before)
+    expect(seen.some((e: any) => e.type === 'chatMessage' && e.text === 'wiped, sorry')).toBe(true)
+  })
+
+  it('never spends a combat action slot', async () => {
+    const { sessionId, room } = await roomWith([7])
+    for (let i = 0; i < 6; i++) await say(sessionId, 7, `line ${i}`)
+    expect(room.pending).toHaveLength(0)
+
+    const act = await callRoom(sessionId, 'intent', { characterId: 7, action: { type: 'queue_special' } })
+    expect(act.status).toBe(200)
+  })
+
+  it('rate-limits a flood without disconnecting the speaker', async () => {
+    const { sessionId, room } = await roomWith([7])
+    let refused = 0
+    for (let i = 0; i < 12; i++) {
+      if ((await say(sessionId, 7, `spam ${i}`)).status === 429) refused += 1
+    }
+    expect(refused).toBeGreaterThan(0)
+
+    // The cap is per member: someone else in the room is unaffected.
+    await seedCharacter(9)
+    await joinCoopSession(env as never, { characterId: 9, identityId: 1, bossId: BOSS, username: 'player9' })
+    await callRoom(sessionId, 'poll', { characterId: 9 })
+    expect((await say(sessionId, 9, 'hello')).status).toBe(200)
+    expect(room.state.members['7']).toBeTruthy()
+  })
+
+  it('drops a message with nothing displayable in it', async () => {
+    const { sessionId, room } = await roomWith([7])
+    const before = room.state.tick
+    expect((await say(sessionId, 7, '   ')).status).toBe(400)
+    await room.tick()
+    expect((await eventsFor(sessionId, 7, before)).some((e: any) => e.type === 'chatMessage')).toBe(false)
+  })
+
+  it('writes an audit row for every message, so there is a history to review', async () => {
+    const { sessionId, room } = await roomWith([7])
+    await say(sessionId, 7, 'on my way')
+    await room.tick()
+
+    const row = raw.prepare("SELECT * FROM audit_events WHERE event_type = 'coop_chat'").get() as any
+    expect(row).toBeTruthy()
+    expect(row.character_id).toBe(7)
+    expect(JSON.parse(row.payload_json).text).toBe('on my way')
+  })
+})

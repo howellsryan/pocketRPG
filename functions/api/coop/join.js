@@ -64,6 +64,14 @@ export async function onRequestPost({ request, env }) {
     })
   } catch (err) {
     const mapped = toErrorResponse(err)
+    // An unmapped failure becomes a bare 500 the player cannot act on and that
+    // leaves nothing in `wrangler tail` — name it here or the next one is just
+    // as blind.
+    if (mapped.status >= 500) {
+      console.error('[PocketRPG][coop] join failed', {
+        characterId: ch.id, message: (err && (err.message || String(err))) || 'unknown',
+      })
+    }
     // A join can fail AFTER the snapshot write (a contended slot, a full room),
     // and the bumped revision outlives the failure. Send it with the error too,
     // or the player's next autosave is rejected for a fight they never entered.

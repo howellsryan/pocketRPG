@@ -3,6 +3,7 @@ import { getOwnedCharacter } from '../../../../_lib/pvp.js'
 import { callCoopRoom } from '../../../../_lib/game/coopRoom.js'
 import { parseCoopSessionId } from '../../../../_lib/game/coopBoss.js'
 import { toErrorResponse } from '../../../../_lib/game/errors.js'
+import { sanitizeChat } from '../../../../../src/engine/playerChat.js'
 import prayersData from '../../../../../src/data/prayers.json' assert { type: 'json' }
 import spellsData from '../../../../../src/data/spells.json' assert { type: 'json' }
 
@@ -33,6 +34,14 @@ export function validateCoopAction(action) {
     }
     case 'target_add':
       return { action: { type: 'target_add', value: !!action.value } }
+    case 'chat': {
+      // Sanitised at the edge as well as in the room: this is the one action
+      // carrying free text to other players, and the room broadcasts what it is
+      // handed.
+      const text = sanitizeChat(action.text)
+      if (!text) return { error: 'invalid_chat' }
+      return { action: { type: 'chat', text } }
+    }
     case 'toggle_prayer': {
       if (typeof action.prayerId !== 'string' || !prayersData?.[action.prayerId]) return { error: 'invalid_prayer' }
       const slot = prayersData[action.prayerId]?.bonusType === 'protection' ? 'protection' : 'combat'

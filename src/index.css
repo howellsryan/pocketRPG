@@ -1251,6 +1251,29 @@ span.cb-fight__cb { cursor: default; }
 .cb-loot.is-paid .cb-loot__v { color: var(--fm-verdigris); }
 @media (prefers-reduced-motion: reduce) { .cb-loot__fill { transition: none; } }
 
+/* ── Co-op fight chat ──
+   Shut it is one 44px row showing the newest line; open it grows a short
+   scrolling log above the same row. Same tokens-direct approach as .cb-loot, so
+   no .forge-shell override is needed (DESIGN.md §2). */
+.cb-chat { flex-shrink: 0; margin-top: 8px; border-top: 1px solid var(--fm-rule); padding-top: 8px; }
+.cb-chat__log { max-height: 132px; overflow-y: auto; margin-bottom: 6px; padding: 6px 8px; border: 1px solid var(--fm-rule); border-radius: var(--fm-r-sm); background: var(--fm-parch-hi); box-shadow: var(--fm-parch-inset); }
+.cb-chat__line { font-size: 12px; line-height: 1.45; color: var(--fm-ink); overflow-wrap: anywhere; }
+.cb-chat__line.is-drop { color: var(--fm-royal); font-weight: 700; }
+.cb-chat__who { font-weight: 700; color: var(--fm-ink-soft); margin-right: 5px; }
+.cb-chat__who::after { content: ':'; }
+.cb-chat__empty { font-size: 11px; color: var(--fm-ink-faint); font-style: italic; }
+.cb-chat__bar { display: flex; align-items: stretch; gap: 6px; }
+.cb-chat__toggle { position: relative; flex: 0 0 auto; width: 44px; min-height: 44px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--fm-btn-edge); border-radius: var(--fm-r-sm); background: var(--fm-btn-face); color: var(--fm-btn-ink); box-shadow: var(--fm-btn-relief); }
+.cb-chat__toggle:active { transform: translateY(1px); box-shadow: var(--fm-btn-press); }
+.cb-chat__badge { position: absolute; top: 2px; right: 2px; min-width: 15px; padding: 0 3px; border-radius: var(--fm-r-sharp); background: var(--fm-ember); color: var(--fm-parch-hi); font-family: var(--fm-num); font-variant-numeric: tabular-nums; font-size: 9px; font-weight: 700; line-height: 15px; text-align: center; }
+.cb-chat__form { flex: 1 1 auto; display: flex; align-items: stretch; gap: 6px; min-width: 0; }
+.cb-chat__input { flex: 1 1 auto; min-width: 0; min-height: 44px; padding: 0 10px; border: 1px solid var(--fm-rule); border-radius: var(--fm-r-sm); background: var(--fm-parch-hi); color: var(--fm-ink); font-size: 13px; }
+.cb-chat__input::placeholder { color: var(--fm-ink-faint); }
+.cb-chat__send { flex: 0 0 auto; min-height: 44px; padding: 0 12px; border: 1px solid var(--fm-btn-edge); border-radius: var(--fm-r-sm); background: var(--fm-btn-face); color: var(--fm-btn-ink); font-size: 12px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; box-shadow: var(--fm-btn-relief); }
+.cb-chat__send:active { transform: translateY(1px); box-shadow: var(--fm-btn-press); }
+.cb-chat__send:disabled { background: var(--fm-btn-dead); color: var(--fm-btn-dead-ink); box-shadow: none; }
+.cb-chat__latest { flex: 1 1 auto; min-width: 0; min-height: 44px; padding: 0 10px; display: flex; align-items: center; border: 1px solid var(--fm-rule); border-radius: var(--fm-r-sm); background: var(--fm-parch); color: var(--fm-ink-soft); font-size: 12px; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
 /* ── Prayer picker (mobile combat prayer modal) ── */
 .cb-prayhead { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
 .cb-prayhead h3 { font-family: var(--font-display); font-weight: 800; font-size: 20px; margin: 0; background: var(--fm-gilt-text); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent; }

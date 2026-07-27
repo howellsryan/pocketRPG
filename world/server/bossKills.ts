@@ -8,6 +8,7 @@
 import monstersData from '../../src/data/monsters.json'
 import { isValidEntry } from '../../functions/_lib/collectionLog.js'
 import { auditLog } from '../../functions/_lib/game/audit.js'
+import { epicDropsFrom } from '../../src/engine/lootBroadcast.js'
 
 type Monsters = Record<string, { boss?: boolean } | undefined>
 const monsters = monstersData as Monsters
@@ -31,6 +32,24 @@ export function isBossMonster(monsterId: string): boolean {
  * unique-drop broadcast (item 11) so both agree on what counts as a "unique". */
 export function uniqueDropsFrom(monsterId: string, loot: { itemId: string; quantity: number }[]): string[] {
   return [...new Set(loot.map((l) => l.itemId))].filter((itemId) => isValidEntry('monsters', monsterId, itemId))
+}
+
+/**
+ * Everything in a kill worth announcing zone-wide, deduped: a boss's
+ * collection-log uniques, plus any item past the purple-loot threshold from any
+ * kill at all — the value is the reason to shout, not the monster. `epic` marks
+ * the latter, and a boss unique that is ALSO legendary announces once, as epic.
+ */
+export function dropBroadcastsFrom(
+  monsterId: string,
+  loot: { itemId: string; quantity: number }[],
+  itemsData: unknown,
+): { itemId: string; epic: boolean }[] {
+  const epic = new Set(epicDropsFrom(loot, itemsData))
+  const ids = isBossMonster(monsterId)
+    ? new Set([...uniqueDropsFrom(monsterId, loot), ...epic])
+    : epic
+  return [...ids].map((itemId) => ({ itemId, epic: epic.has(itemId) }))
 }
 
 /** Records a world boss kill: collection-log uniques from the drop (idempotent),

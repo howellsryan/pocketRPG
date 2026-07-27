@@ -194,6 +194,13 @@ describe('projectEventsForMember', () => {
     expect(ev.killCount).toBeNull()
   })
 
+  it('leaves a purple-drop announcement intact for a player who did not win it', () => {
+    // The deliberate inverse of the rule above: a settlement's item list is
+    // private, but the room is MEANT to be told who pulled a legendary.
+    const epic = { type: 'epicDrop', tick: 12, characterId: 7, username: 'player7', item: 'Onyx', monster: 'Grondar' }
+    expect(projectEventsForMember([epic], 8)[0]).toEqual(epic)
+  })
+
   it('keeps the top-damage member their legacy fields', () => {
     const [ev] = projectEventsForMember([settled], 7) as any[]
     expect(ev.granted).toEqual([{ itemId: 'dragon_axe', quantity: 1 }])
