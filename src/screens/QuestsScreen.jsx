@@ -473,21 +473,18 @@ function QuestDetailsBody({ quest, stats, completedQuests, itemsData, worldLocat
         <div class="flex flex-col gap-2">
           <div class="flex gap-2">
             {showCloseButton && (
-              <Button variant="secondary" size="lg" onClick={onClose} className="flex-1">
+              <Button variant="secondary" onClick={onClose} className="flex-1">
                 Close
               </Button>
             )}
             {!completed && (
               <Button
                 variant="primary"
-                size="lg"
                 disabled={!elig.eligible}
                 onClick={() => onStartJourney(quest)}
                 className="flex-1"
               >
-                {elig.eligible
-                  ? <span class="inline-flex items-center justify-center gap-1.5"><GameIcon iconKey="quest_scroll_blue" size={18} /> Begin Quest</span>
-                  : 'Locked'}
+                {elig.eligible ? 'Begin' : 'Locked'}
               </Button>
             )}
           </div>

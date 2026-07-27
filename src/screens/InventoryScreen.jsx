@@ -8,6 +8,9 @@ import CollapseChevron from '../components/CollapseChevron.jsx'
 import TradingPostSellForm from '../components/TradingPostSellForm.jsx'
 import SellConfirmModal from '../components/SellConfirmModal.jsx'
 import { freeSlots, countItem, removeItem, addItem, getBreakdownYield, sumSlotCharges } from '../engine/inventory.js'
+import { resolveInventoryEat } from '../engine/consumables.js'
+import GameIcon from '../components/GameIcon.jsx'
+import { getSkillArt } from '../utils/skillArt.js'
 import { isOrderBookItem } from '../engine/storeRules.js'
 import { getIronmanShopValue } from '../utils/itemValue.js'
 import { HIGH_VALUE_SELL_THRESHOLD } from '../utils/constants.js'
@@ -95,26 +98,24 @@ export default function InventoryScreen() {
     setSelected(null)
   }
 
+  // Every outcome here reports as 'success'/'error', never 'info' — info toasts
+  // are off by default, which made a refused eat completely indistinguishable
+  // from a broken button.
   const handleEat = () => {
-    if (!selected || selected.item.type !== 'food') return
+    if (!selected) return
     const { slotIndex, item } = selected
-    const maxHP = getMaxHP()
-    if (currentHP >= maxHP) {
-      addToast('Already at full health', 'info')
+    const result = resolveInventoryEat({
+      inventory, slotIndex, item, currentHP, maxHP: getMaxHP(),
+    })
+    if (!result.ok) {
+      if (result.reason === 'full_hp') addToast('Already at full health', 'error')
+      else if (result.reason === 'no_heal') addToast(`${item.name} heals nothing`, 'error')
       setSelected(null)
       return
     }
-
-    const newInv = [...inventory]
-    const slot = newInv[slotIndex]
-    if (slot.quantity > 1) {
-      newInv[slotIndex] = { ...slot, quantity: slot.quantity - 1 }
-    } else {
-      newInv[slotIndex] = null
-    }
-    updateInventory(newInv)
-    updateHP(Math.min(currentHP + item.heals, maxHP))
-    addToast(`Ate ${item.name}, healed ${item.heals} HP`, 'info')
+    updateInventory(result.inventory)
+    updateHP(result.hp)
+    addToast(`Ate ${item.name}, healed ${result.healed} HP`, 'success')
     setSelected(null)
   }
 
@@ -593,6 +594,13 @@ export default function InventoryScreen() {
           >
             Deposit All
           </button>
+          {/* Outside combat nothing else shows HP, so "should I eat?" was unanswerable. */}
+          <span class={`inline-flex items-center gap-1 text-xs font-[var(--font-mono)] ${currentHP < getMaxHP()
+            ? 'text-[var(--color-blood)] font-bold'
+            : 'text-[var(--color-parchment)] opacity-40'}`}>
+            <GameIcon iconKey={getSkillArt('hitpoints').icon} size={14} title="Hitpoints" />
+            {currentHP}/{getMaxHP()}
+          </span>
           <span class="text-xs font-[var(--font-mono)] text-[var(--color-parchment)] opacity-40">
             {free} free
           </span>
@@ -660,7 +668,7 @@ export default function InventoryScreen() {
                 {selected.item.type === 'food' && !selected.slot.noted && (
                   <button onClick={handleEat}
                     class="fm-btn fm-btn--verdigris fm-btn--sm">
-                    Eat
+                    Eat ({currentHP}/{getMaxHP()} HP)
                   </button>
                 )}
                 {selected.item.scaleCharged && !selected.slot.noted && (

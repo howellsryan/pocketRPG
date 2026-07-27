@@ -88,7 +88,7 @@ import { isLoggedDrop, collectIdleCombatLoggedDrops } from './engine/collectionL
 import { rollClueRewards } from './engine/clueScrolls.js'
 import dailyTasksData from './data/dailyTasks.json'
 import { skillingGainEvents, idleCombatDailyEvents } from './engine/dailyTasks.js'
-import { countItem, addItem, collectDepositAll } from './engine/inventory.js'
+import { countItem, addItem, collectDepositAll, applyServerConsumed } from './engine/inventory.js'
 import { skillingActionBlockedByFullInventory } from './engine/skilling.js'
 
 // ── Lazy in-game code chunk ──────────────────────────────────────────────────
@@ -193,13 +193,21 @@ function clueRevealTitle(clueTask) {
 // records kill-count/collection-log and replay nonce server-side); otherwise
 // rolls locally and banks the rewards. Mirrors the path previously inlined in
 // CluesScreen so the App-level tick can drive clues on any screen.
-function completeClueSolve(clueTask, { updateBankDirect, getSnapshot, addToast, isInPvpMatch }) {
+function completeClueSolve(clueTask, { updateBankDirect, updateInventory, getInventory, getSnapshot, addToast, isInPvpMatch }) {
   const title = clueRevealTitle(clueTask)
   if (getToken() && getCharacterId()) {
     return api.completeClue(clueTask.clueLevel, {
       actionNonce: `clue:${clueTask.clueLevel}:${Date.now()}`,
       consumptions: [{ itemId: clueTask.requiresItem, quantity: 1 }],
     }).then(async (res) => {
+      // Mirror the server's scroll debit locally. The save blob is
+      // client-trusted (§14), so skipping this pushes the scroll straight back
+      // and the same clue can be solved forever.
+      const debit = applyServerConsumed(getInventory?.() || [], res?.consumed)
+      if (debit.changed) {
+        updateInventory?.(debit.inventory)
+        if (Object.keys(debit.bankDeltas).length > 0) updateBankDirect(debit.bankDeltas)
+      }
       // NOTE: deliberately NOT applyCloudSave(res.save.save_data) — that snapshot
       // is whatever the server read at the START of this request, which can
       // predate a later local-only change (e.g. travel) if the round trip is
@@ -535,6 +543,16 @@ function GameApp() {
     return () => window.removeEventListener('pocketrpg:pvp-active-match', onActiveMatchConflict)
   }, [addToast, pvp.enterMatch])
 
+  // The scroll debit has to land on inventoryRef too, not just state: the paid
+  // skip chains several solves inside one call stack, and the ref is what the
+  // next iteration reads.
+  const clueSolveDeps = () => ({
+    updateBankDirect,
+    updateInventory: (inv) => { inventoryRef.current = inv; updateInventory(inv) },
+    getInventory: () => inventoryRef.current,
+    getSnapshot, addToast, isInPvpMatch,
+  })
+
   // A finished journey grants its content through the exact same paths idling
   // used — completeClueSolve consumes the scroll + rolls/banks rewards
   // (server-authoritative when signed in), and handleQuestCompletion awards
@@ -552,7 +570,7 @@ function GameApp() {
       // asynchronously): ≥2 now means one is still left after this solve.
       const snap = getSnapshot()
       const scrollsNow = (snap.bank?.[clueTask.requiresItem]?.quantity || 0) + countItem(snap.inventory || [], clueTask.requiresItem)
-      const settled = completeClueSolve(clueTask, { updateBankDirect, getSnapshot, addToast, isInPvpMatch })
+      const settled = completeClueSolve(clueTask, clueSolveDeps())
       recordGameEvent?.({ kind: 'clue_complete', tier: clueTask.clueLevel })
       if (scrollsNow >= 2) {
         const nextTask = planClueJourney(clueTask, endedAt)
@@ -1641,7 +1659,7 @@ function GameApp() {
         } else {
           const remaining = (task.ticksRemaining ?? total) - 1
           if (remaining <= 0) {
-            completeClueSolve(clueTask, { updateBankDirect, getSnapshot, addToast, isInPvpMatch })
+            completeClueSolve(clueTask, clueSolveDeps())
             recordGameEvent?.({ kind: 'clue_complete', tier: clueTask.clueLevel })
             const session = mergeSession(task.session, { actions: 1 })
             setActiveTask({ ...task, ticksRemaining: 0, totalTicks: total, justCompleted: true, session }, { skipCloudSync: true })

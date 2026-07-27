@@ -111,6 +111,11 @@ function isStackableItem(itemId) {
 // arg is accepted and ignored here for backward compatibility with any
 // caller that hasn't migrated yet (tests can still pass it).
 export function settleActionCompletion(saveObject, { sourceType, sourceId, nonce: _nonce, rewards = [], consumptions = [], slayerPoints = 0, dungeoneeringTokens = 0 }) {
+  // Reported back to the client so it can mirror the debit into its own save
+  // blob. Without that mirror the next client /api/save push (client-trusted,
+  // §14) writes the consumed item straight back and the action is repeatable
+  // forever — which is exactly what happened to clue scrolls.
+  const consumed = []
   for (const c of consumptions) {
     // Consume inventory-first-then-bank: clue scrolls (and most supplies) are
     // auto-banked on drop and the client gates on inventory+bank, so an
@@ -124,8 +129,14 @@ export function settleActionCompletion(saveObject, { sourceType, sourceId, nonce
       throw new GameApiError('INSUFFICIENT_SUPPLIES', 'Insufficient supplies', 400)
     }
     const fromInventory = Math.min(inInventory, qty)
-    if (fromInventory > 0) removeItemFromInventory(saveObject, c.itemId, fromInventory)
-    if (qty - fromInventory > 0) removeItemFromBank(saveObject, c.itemId, qty - fromInventory)
+    if (fromInventory > 0) {
+      removeItemFromInventory(saveObject, c.itemId, fromInventory)
+      consumed.push({ itemId: c.itemId, quantity: fromInventory, source: 'inventory' })
+    }
+    if (qty - fromInventory > 0) {
+      removeItemFromBank(saveObject, c.itemId, qty - fromInventory)
+      consumed.push({ itemId: c.itemId, quantity: qty - fromInventory, source: 'bank' })
+    }
   }
 
 
@@ -216,5 +227,5 @@ export function settleActionCompletion(saveObject, { sourceType, sourceId, nonce
     setDungeoneeringTokenBalance(saveObject, cur + dTokens)
   }
 
-  return { granted, slayerPoints: sPoints, dungeoneeringTokens: dTokens }
+  return { granted, consumed, slayerPoints: sPoints, dungeoneeringTokens: dTokens }
 }

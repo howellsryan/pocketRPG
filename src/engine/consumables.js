@@ -104,6 +104,33 @@ export function getActivePotionBoosts(activePotions, itemsData) {
 }
 
 /**
+ * Resolve eating one item straight out of the inventory (outside combat). Pure:
+ * returns the next inventory rather than mutating, so the caller only has to
+ * commit it. Refusals carry a `reason` because every one of them is invisible to
+ * the player otherwise — nothing on the inventory surface shows HP.
+ *
+ * @returns { ok: false, reason } | { ok: true, inventory, hp, healed }
+ */
+export function resolveInventoryEat({ inventory, slotIndex, item, currentHP, maxHP }) {
+  const slot = Array.isArray(inventory) ? inventory[slotIndex] : null
+  if (!slot || !item || slot.itemId !== item.id) return { ok: false, reason: 'missing' }
+  if (slot.noted) return { ok: false, reason: 'noted' }
+  if (!isConsumableFood(item)) return { ok: false, reason: 'not_food' }
+
+  const max = Math.max(0, Math.floor(Number(maxHP) || 0))
+  const hp = Math.max(0, Math.floor(Number(currentHP) || 0))
+  if (hp >= max) return { ok: false, reason: 'full_hp' }
+
+  const actor = { hp, maxHP: max, activePotions: {} }
+  const { healed } = applyConsumableEffect(actor, item, item.id, 'eat')
+  if (healed <= 0) return { ok: false, reason: 'no_heal' }
+
+  const next = [...inventory]
+  next[slotIndex] = slot.quantity > 1 ? { ...slot, quantity: slot.quantity - 1 } : null
+  return { ok: true, inventory: next, hp: actor.hp, healed }
+}
+
+/**
  * Apply a consumable's immediate effect to a normalized combat actor
  * `{ hp, maxHP, activePotions }` (mutated in place). The caller owns inventory
  * decrement, cooldowns, attack-timer binding and logging — those legitimately
