@@ -25,7 +25,7 @@ import { PLAYER_DROP_OWNER_TICKS, isExpired, isVisibleTo, mayTake, spawnDrops, t
 import { sanitizeChat } from '../shared/chat'
 import { addToInventory, countItem, freeSlotCount, inventoryIsFull, isStackable, moveInventorySlot, removeItems, removeOneAt } from './mining'
 import { getLevelFromXP } from '../../src/engine/experience.js'
-import { flushGrants, isEmptyPayload, type GrantPayload, type ItemStack } from './grants'
+import { flushGrants, isEmptyPayload, type GrantPayload } from './grants'
 import { isBossMonster, recordBossKill, uniqueDropsFrom } from './bossKills'
 import monstersDataJson from '../../src/data/monsters.json'
 
@@ -46,7 +46,7 @@ import { setQuestGateBypass, resolveQuestGateBypass } from '../../src/engine/que
 import { applyEat, applyCombo } from '../../src/engine/combat.js'
 import { isComboConsumable } from '../../src/engine/consumables.js'
 import itemsData from '../../src/data/items.json'
-import { consumeUnits, depositUnits, emptyPools, mintUnits, withdrawUnits, type ItemPools, type Tally } from './sessionItems'
+import { commitFlush, consumeUnits, depositUnits, drainForFlush, emptyPools, mintUnits, restoreFlush, withdrawUnits, type ItemPools, type Tally } from './sessionItems'
 import { grantSessionXp, cutPathToRange, withinRange } from './tick'
 import type { BankSlot, ClientMessage, CombatStance, EntityDiff, LootItem, ServerMessage, StaticObject, ZoneEvent } from '../shared/protocol'
 import { parseClientMessage } from '../shared/protocol'
@@ -146,16 +146,6 @@ function itemNameOf(itemId: string): string {
 
 /** Ticks between a bank/equip mutation and its durability flush (debounced). */
 const DIRTY_FLUSH_DELAY_TICKS = 5
-
-function toItemList(record: Record<string, number>): ItemStack[] {
-  return Object.entries(record)
-    .filter(([, quantity]) => quantity > 0)
-    .map(([itemId, quantity]) => ({ itemId, quantity }))
-}
-
-function mergeInto(target: Record<string, number>, items: ItemStack[]): void {
-  for (const item of items) target[item.itemId] = (target[item.itemId] ?? 0) + item.quantity
-}
 
 /** Quantities-only session view of the save's bank. Charge-carrying entries
  * are excluded entirely — the world session can't preserve charges, so those
@@ -402,9 +392,12 @@ export class WorldZone extends Server<Env> {
     this.players.delete(charId)
     this.dirty.delete(charId)
     this.pendingLeaves.add(charId)
-    this.maybeStopTicking()
     await this.flush(player, 'disconnect')
     await this.checkpointPlayer(player)
+    // Only once the writes are done: stopping the clock first left the last
+    // player out of an empty zone with no socket and no timer holding this DO
+    // open while its flush was still round-tripping to D1.
+    this.maybeStopTicking()
     // Release the world-session lock so the idle game can save again — but only
     // if this exact session still holds it (a reconnect may have re-claimed it).
     await endWorldSession(this.env, Number(charId), player.sessionId)
@@ -1622,30 +1615,28 @@ export class WorldZone extends Server<Env> {
 
   /** Snapshots and clears the player's pending grant tallies, then applies
    * them to the save blob. Every flush carries XP, consumed units (eaten,
-   * buried, dropped, equipped), bank deposits and — when the player re-geared —
-   * the equipment snapshot. A disconnect additionally lands the pack's
-   * remaining minted units in the save's inventory and returns withdrawn bank
+   * buried, dropped, equipped), bank deposits, the world-minted units the pack
+   * has picked up (mined, looted, taken off) and — when the player re-geared —
+   * the equipment snapshot. A disconnect additionally returns withdrawn bank
    * units still held (bank → inventory); remaining save-backed units simply
    * stay in the save's inventory where they always were. On failure the
-   * snapshot merges back so the next flush retries it. */
+   * snapshot merges back so the next flush retries it.
+   *
+   * Minted units ride EVERY flush, not just the disconnect: they are the one
+   * pool with no copy outside this DO's memory, so deferring them meant a
+   * session that ended without a clean disconnect flush deleted them outright
+   * (see sessionItems.ts). Their reclassification to save-backed happens only
+   * after the grant is known to have landed. */
   private async flush(player: Player, reason: GrantPayload['reason']): Promise<void> {
     const pools = player.pools
+    const drained = drainForFlush(pools, reason)
     const payload: GrantPayload = {
       xpBySkill: player.pendingXp,
-      items: [],
       itemsTo: 'inventory',
-      moveToBank: toItemList(pools.depositedSaveBacked),
-      removeFromInventory: toItemList(pools.consumedSaveBacked),
-      removeFromBank: toItemList(pools.consumedBankSourced),
-      mintedToBank: toItemList(pools.mintedToBank),
-      bankToInventory: [],
       reason,
+      ...drained,
     }
     player.pendingXp = {}
-    pools.depositedSaveBacked = {}
-    pools.consumedSaveBacked = {}
-    pools.consumedBankSourced = {}
-    pools.mintedToBank = {}
     const equipmentWasDirty = player.equipmentDirty
     if (equipmentWasDirty) {
       payload.equipment = { ...player.equipment }
@@ -1656,14 +1647,6 @@ export class WorldZone extends Server<Env> {
       payload.combatStance = player.stance
       player.stanceDirty = false
     }
-    if (reason === 'disconnect' || reason === 'transition') {
-      payload.items = toItemList(pools.minted)
-      payload.bankToInventory = toItemList(pools.bankSourced)
-      // pools.minted is aliased by player.minted (mining/loot write through
-      // it), so empty it in place — reassigning would sever the alias.
-      for (const key of Object.keys(pools.minted)) delete pools.minted[key]
-      pools.bankSourced = {}
-    }
     if (isEmptyPayload(payload)) return
     player.flushSeq += 1
 
@@ -1673,16 +1656,18 @@ export class WorldZone extends Server<Env> {
       sessionId: player.sessionId,
       flushSeq: player.flushSeq,
     }, payload)
-    if (!ok) {
+    if (ok) {
+      commitFlush(pools, drained)
+    } else {
+      // A dropped payload is real lost progress and is otherwise completely
+      // invisible — `wrangler tail` is the only place this surfaces.
+      console.error('[World][flush] grant not applied, re-queued', {
+        charId: player.charId, zone: this.name, reason, flushSeq: player.flushSeq,
+      })
       for (const [skill, amount] of Object.entries(payload.xpBySkill)) {
         player.pendingXp[skill] = (player.pendingXp[skill] ?? 0) + amount
       }
-      mergeInto(pools.minted, payload.items)
-      mergeInto(pools.depositedSaveBacked, payload.moveToBank)
-      mergeInto(pools.consumedSaveBacked, payload.removeFromInventory ?? [])
-      mergeInto(pools.consumedBankSourced, payload.removeFromBank ?? [])
-      mergeInto(pools.mintedToBank, payload.mintedToBank ?? [])
-      mergeInto(pools.bankSourced, payload.bankToInventory ?? [])
+      restoreFlush(pools, drained)
       if (equipmentWasDirty) player.equipmentDirty = true
       if (stanceWasDirty) player.stanceDirty = true
     }
