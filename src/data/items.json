@@ -326,7 +326,7 @@
     "slot": "weapon",
     "twoHanded": true,
     "stackable": false,
-    "attackSpeed": 4,
+    "attackSpeed": 3,
     "attackStyle": "ranged",
     "ammoType": "arrow",
     "attackBonus": {
@@ -2507,7 +2507,7 @@
     "slot": "weapon",
     "twoHanded": true,
     "stackable": false,
-    "attackSpeed": 4,
+    "attackSpeed": 3,
     "attackStyle": "ranged",
     "ammoType": "arrow",
     "attackBonus": {
@@ -2543,7 +2543,7 @@
     "slot": "weapon",
     "twoHanded": true,
     "stackable": false,
-    "attackSpeed": 4,
+    "attackSpeed": 3,
     "attackStyle": "ranged",
     "ammoType": "arrow",
     "attackBonus": {
@@ -2579,7 +2579,7 @@
     "slot": "weapon",
     "twoHanded": true,
     "stackable": false,
-    "attackSpeed": 4,
+    "attackSpeed": 3,
     "attackStyle": "ranged",
     "ammoType": "arrow",
     "attackBonus": {
@@ -2615,7 +2615,7 @@
     "slot": "weapon",
     "twoHanded": true,
     "stackable": false,
-    "attackSpeed": 4,
+    "attackSpeed": 3,
     "attackStyle": "ranged",
     "ammoType": "arrow",
     "attackBonus": {
@@ -2651,7 +2651,7 @@
     "slot": "weapon",
     "twoHanded": true,
     "stackable": false,
-    "attackSpeed": 4,
+    "attackSpeed": 3,
     "attackStyle": "ranged",
     "ammoType": "arrow",
     "attackBonus": {
@@ -4547,7 +4547,7 @@
     "slot": "weapon",
     "twoHanded": false,
     "stackable": false,
-    "attackSpeed": 5,
+    "attackSpeed": 4,
     "attackStyle": "ranged",
     "ammoType": "bolt",
     "attackBonus": {
@@ -4583,7 +4583,7 @@
     "slot": "weapon",
     "twoHanded": false,
     "stackable": false,
-    "attackSpeed": 5,
+    "attackSpeed": 4,
     "attackStyle": "ranged",
     "ammoType": "bolt",
     "attackBonus": {
@@ -4619,7 +4619,7 @@
     "slot": "weapon",
     "twoHanded": false,
     "stackable": false,
-    "attackSpeed": 5,
+    "attackSpeed": 4,
     "attackStyle": "ranged",
     "ammoType": "bolt",
     "attackBonus": {
@@ -4655,7 +4655,7 @@
     "slot": "weapon",
     "twoHanded": false,
     "stackable": false,
-    "attackSpeed": 5,
+    "attackSpeed": 4,
     "attackStyle": "ranged",
     "ammoType": "bolt",
     "attackBonus": {
@@ -4691,7 +4691,7 @@
     "slot": "weapon",
     "twoHanded": false,
     "stackable": false,
-    "attackSpeed": 5,
+    "attackSpeed": 4,
     "attackStyle": "ranged",
     "ammoType": "bolt",
     "attackBonus": {
@@ -7049,7 +7049,7 @@
     "slot": "weapon",
     "twoHanded": true,
     "stackable": false,
-    "attackSpeed": 5,
+    "attackSpeed": 4,
     "attackStyle": "ranged",
     "ammoType": "bolt",
     "attackBonus": {
@@ -7546,7 +7546,7 @@
     "slot": "weapon",
     "twoHanded": false,
     "stackable": false,
-    "attackSpeed": 5,
+    "attackSpeed": 4,
     "attackStyle": "ranged",
     "ammoType": "bolt",
     "attackBonus": {
@@ -9154,7 +9154,7 @@
     "slot": "weapon",
     "twoHanded": false,
     "stackable": false,
-    "attackSpeed": 5,
+    "attackSpeed": 4,
     "attackStyle": "ranged",
     "ammoType": "bolt",
     "dragonHunter": true,
@@ -15871,7 +15871,7 @@
     "slot": "weapon",
     "twoHanded": false,
     "stackable": false,
-    "attackSpeed": 5,
+    "attackSpeed": 4,
     "attackStyle": "ranged",
     "ammoType": "bolt",
     "attackBonus": {
@@ -17131,7 +17131,7 @@
     "slot": "weapon",
     "twoHanded": true,
     "stackable": false,
-    "attackSpeed": 4,
+    "attackSpeed": 3,
     "attackStyle": "ranged",
     "ammoType": "arrow",
     "attackBonus": {
@@ -17277,7 +17277,7 @@
     "slot": "weapon",
     "twoHanded": false,
     "stackable": false,
-    "attackSpeed": 5,
+    "attackSpeed": 4,
     "attackStyle": "ranged",
     "ammoType": "bolt",
     "attackBonus": {

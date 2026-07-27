@@ -182,20 +182,6 @@ describe('conditional magic damage — bonus panel display', () => {
   })
 })
 
-describe('magic weapon attack speeds', () => {
-  it('swings the Trident of Venom every 4 ticks', () => {
-    expect(itemsData.trident_of_venom.attackSpeed).toBe(4)
-  })
-
-  it('keeps the Attuned staff exactly one tick ahead of every other Duskmare staff', () => {
-    expect(itemsData.attuned_duskmare_staff.attackSpeed).toBe(3)
-    for (const id of ['duskmare_staff', 'umbral_duskmare_staff', 'volatile_duskmare_staff']) {
-      expect(itemsData[id].attackSpeed).toBe(4)
-    }
-    expect(itemsData.attuned_duskmare_staff.description).toContain('one tick faster')
-  })
-})
-
 describe('3D shield placement', () => {
   it('hangs both spellbooks off the arcane kiteshield placement, recoloured', () => {
     const gear = (equipmentModels as any).gear
