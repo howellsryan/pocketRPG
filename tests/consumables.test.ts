@@ -10,6 +10,7 @@ import {
   applyConsumableEffect,
   isComboConsumable,
   isNormalFood,
+  resolveInventoryEat,
 } from '../src/engine/consumables.js'
 
 const ITEMS: any = {
@@ -162,5 +163,51 @@ describe('consumables — applyConsumableEffect', () => {
     applyConsumableEffect(actor, ITEMS.super_restore, 'super_restore', 'drink')
     expect(actor.activePotions).toEqual({})
     expect(actor.prayerPoints).toBe(47)             // +22 super restore
+  })
+})
+
+describe('resolveInventoryEat (out-of-combat eating)', () => {
+  const inv = (...slots: any[]) => [...slots, null, null]
+
+  it('heals and consumes one food, leaving the rest of the stack', () => {
+    const inventory = inv({ itemId: 'shark', quantity: 3 })
+    const r: any = resolveInventoryEat({ inventory, slotIndex: 0, item: ITEMS.shark, currentHP: 40, maxHP: 99 })
+    expect(r.ok).toBe(true)
+    expect(r.healed).toBe(20)
+    expect(r.hp).toBe(60)
+    expect(r.inventory[0]).toEqual({ itemId: 'shark', quantity: 2 })
+    expect(inventory[0]).toEqual({ itemId: 'shark', quantity: 3 })   // pure: input untouched
+  })
+
+  it('clears the slot when the last one is eaten and clamps the heal to max HP', () => {
+    const inventory = inv({ itemId: 'shark', quantity: 1 })
+    const r: any = resolveInventoryEat({ inventory, slotIndex: 0, item: ITEMS.shark, currentHP: 95, maxHP: 99 })
+    expect(r.ok).toBe(true)
+    expect(r.hp).toBe(99)
+    expect(r.healed).toBe(4)
+    expect(r.inventory[0]).toBe(null)
+  })
+
+  it('refuses at full HP without consuming the food', () => {
+    const inventory = inv({ itemId: 'shark', quantity: 1 })
+    const r: any = resolveInventoryEat({ inventory, slotIndex: 0, item: ITEMS.shark, currentHP: 99, maxHP: 99 })
+    expect(r).toEqual({ ok: false, reason: 'full_hp' })
+  })
+
+  it('refuses noted food, non-food and a slot that no longer holds the item', () => {
+    expect(resolveInventoryEat({ inventory: inv({ itemId: 'shark', quantity: 1, noted: true }), slotIndex: 0, item: ITEMS.shark, currentHP: 10, maxHP: 99 }))
+      .toEqual({ ok: false, reason: 'noted' })
+    expect(resolveInventoryEat({ inventory: inv({ itemId: 'bronze_dagger', quantity: 1 }), slotIndex: 0, item: ITEMS.bronze_dagger, currentHP: 10, maxHP: 99 }))
+      .toEqual({ ok: false, reason: 'not_food' })
+    expect(resolveInventoryEat({ inventory: inv({ itemId: 'trout', quantity: 1 }), slotIndex: 0, item: ITEMS.shark, currentHP: 10, maxHP: 99 }))
+      .toEqual({ ok: false, reason: 'missing' })
+    expect(resolveInventoryEat({ inventory: inv(null), slotIndex: 5, item: ITEMS.shark, currentHP: 10, maxHP: 99 }))
+      .toEqual({ ok: false, reason: 'missing' })
+  })
+
+  it('honours the legacy `heal` field the same way live combat does', () => {
+    const r: any = resolveInventoryEat({ inventory: inv({ itemId: 'trout', quantity: 1 }), slotIndex: 0, item: ITEMS.trout, currentHP: 10, maxHP: 99 })
+    expect(r.ok).toBe(true)
+    expect(r.healed).toBe(getHealAmount(ITEMS.trout))
   })
 })
