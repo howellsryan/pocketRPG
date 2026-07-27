@@ -169,6 +169,33 @@ describe('action completion authority helpers', () => {
     expect(save.bank.clue_scroll_medium).toBeUndefined()
   })
 
+  it('reports what it consumed, and from where, so the client can mirror the debit', () => {
+    // The save blob is client-trusted: without this the client never debits its
+    // own copy, its next /api/save push writes the scroll back, and the clue is
+    // solvable forever.
+    const save = makeSave()
+    save.inventory = [{ itemId: 'clue_scroll_medium', quantity: 1 }]
+    save.bank = { clue_scroll_medium: { itemId: 'clue_scroll_medium', quantity: 3 } }
+    const settled: any = settleActionCompletion(save, {
+      sourceType: 'clues',
+      sourceId: 'medium',
+      nonce: 'clue:medium:consumed',
+      rewards: [],
+      consumptions: [{ itemId: 'clue_scroll_medium', quantity: 3 }],
+    })
+    expect(settled.consumed).toEqual([
+      { itemId: 'clue_scroll_medium', quantity: 1, source: 'inventory' },
+      { itemId: 'clue_scroll_medium', quantity: 2, source: 'bank' },
+    ])
+  })
+
+  it('reports an empty consumed list when nothing was consumed', () => {
+    const settled: any = settleActionCompletion(makeSave(), {
+      sourceType: 'clues', sourceId: 'medium', nonce: 'clue:medium:none', rewards: [], consumptions: [],
+    })
+    expect(settled.consumed).toEqual([])
+  })
+
   it('still rejects a consumption that inventory and bank together cannot cover', () => {
     const save = makeSave()
     save.bank = { clue_scroll_medium: { itemId: 'clue_scroll_medium', quantity: 1 } }

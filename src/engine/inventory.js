@@ -237,3 +237,39 @@ export function swapSlots(inventory, slotA, slotB) {
   inventory[slotA] = inventory[slotB]
   inventory[slotB] = temp
 }
+
+/**
+ * Mirror a server completion's `consumed` list into the local save. The server
+ * owns the debit (`settleActionCompletion`), but the save blob is client-trusted
+ * (§14) — so without mirroring it, the next /api/save push writes the consumed
+ * item straight back and the action can be repeated forever.
+ *
+ * Pure: returns the next inventory plus the bank deltas the caller should feed
+ * to updateBankDirect. Splitting them is deliberate — the client's bank and
+ * inventory are updated through two different funnels.
+ *
+ * @returns { inventory, bankDeltas, changed }
+ */
+export function applyServerConsumed(inventory, consumed) {
+  const next = (inventory || []).map(slot => (slot ? { ...slot } : null))
+  const bankDeltas = {}
+  let changed = false
+  for (const entry of Array.isArray(consumed) ? consumed : []) {
+    const itemId = typeof entry?.itemId === 'string' ? entry.itemId : null
+    const qty = Math.floor(Number(entry?.quantity) || 0)
+    if (!itemId || qty < 1) continue
+    changed = true
+    if (entry.source === 'bank') {
+      bankDeltas[itemId] = (bankDeltas[itemId] || 0) - qty
+      continue
+    }
+    // Take whatever the inventory actually still holds; anything the local pack
+    // has already lost (a bank trip since the request went out) comes off the
+    // bank instead, so the mirror never silently under-debits.
+    const have = countItem(next, itemId)
+    const fromInventory = Math.min(have, qty)
+    if (fromInventory > 0) removeItem(next, itemId, fromInventory)
+    if (qty - fromInventory > 0) bankDeltas[itemId] = (bankDeltas[itemId] || 0) - (qty - fromInventory)
+  }
+  return { inventory: next, bankDeltas, changed }
+}

@@ -7,7 +7,8 @@ import {
   countItem,
   addItem,
   removeItem,
-  swapSlots
+  swapSlots,
+  applyServerConsumed
 } from '../src/engine/inventory.js'
 
 const INVENTORY_SIZE = 28
@@ -360,5 +361,40 @@ describe('Inventory System', () => {
 
       expect(freeSlots(inventory)).toBe(28)
     })
+  })
+})
+
+describe('applyServerConsumed (mirroring a server debit into the local save)', () => {
+  it('debits the inventory when the server took it from there', () => {
+    const inv: any[] = [{ itemId: 'clue_scroll_medium', quantity: 1 }, null]
+    const r = applyServerConsumed(inv, [{ itemId: 'clue_scroll_medium', quantity: 1, source: 'inventory' }])
+    expect(r.changed).toBe(true)
+    expect(countItem(r.inventory, 'clue_scroll_medium')).toBe(0)
+    expect(r.bankDeltas).toEqual({})
+    expect(countItem(inv, 'clue_scroll_medium')).toBe(1)   // pure: input untouched
+  })
+
+  it('emits a negative bank delta when the server took it from the bank', () => {
+    const r = applyServerConsumed([null], [{ itemId: 'clue_scroll_medium', quantity: 2, source: 'bank' }])
+    expect(r.bankDeltas).toEqual({ clue_scroll_medium: -2 })
+    expect(r.changed).toBe(true)
+  })
+
+  it('splits an inventory debit onto the bank when the local pack no longer holds enough', () => {
+    // The pack can bank itself between the request going out and the response
+    // landing; the mirror must still remove the full amount somewhere.
+    const r = applyServerConsumed([{ itemId: 'clue_scroll_medium', quantity: 1 }],
+      [{ itemId: 'clue_scroll_medium', quantity: 3, source: 'inventory' }])
+    expect(countItem(r.inventory, 'clue_scroll_medium')).toBe(0)
+    expect(r.bankDeltas).toEqual({ clue_scroll_medium: -2 })
+  })
+
+  it('is a no-op for a missing, empty or malformed consumed list', () => {
+    for (const consumed of [undefined, null, [], [{ quantity: 1 }], [{ itemId: 'x', quantity: 0 }]] as any[]) {
+      const r = applyServerConsumed([{ itemId: 'clue_scroll_medium', quantity: 1 }], consumed)
+      expect(r.changed).toBe(false)
+      expect(r.bankDeltas).toEqual({})
+      expect(countItem(r.inventory, 'clue_scroll_medium')).toBe(1)
+    }
   })
 })
